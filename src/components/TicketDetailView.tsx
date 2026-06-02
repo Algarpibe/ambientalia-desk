@@ -1,10 +1,33 @@
 import React from 'react';
+import { useState } from 'react';
+import type { Ticket, Message } from '../../shared/types';
+import { useAsync } from '../hooks/useAsync';
+import { fetchTicket, fetchConversations, updateTicketStatus, replyTicket } from '../api/client';
+import { COLUMNS } from '../../shared/columns';
 
 interface TicketDetailViewProps {
+    ticketId: string;
     onClose: () => void;
 }
 
-export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ onClose }) => {
+export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose }) => {
+    const { data: ticket, loading } = useAsync<Ticket>(() => fetchTicket(ticketId), [ticketId]);
+    const { data: messages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
+    const [replyText, setReplyText] = useState('');
+    const [confirming, setConfirming] = useState<null | { kind: 'reply' } | { kind: 'status'; status: string }>(null);
+
+    async function doConfirm() {
+        if (!confirming) return;
+        try {
+            if (confirming.kind === 'reply') await replyTicket(ticketId, replyText);
+            else await updateTicketStatus(ticketId, confirming.status);
+            setConfirming(null);
+            setReplyText('');
+        } catch (e) {
+            alert('La acción falló: ' + String(e));
+        }
+    }
+
     return (
         <div className="fixed inset-0 z-[60] bg-white flex flex-col overflow-hidden animate-in fade-in duration-200">
             {/* Top Bar with Navigation Tabs */}
@@ -159,15 +182,15 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ onClose }) =
                                 <div className="flex-1">
                                     <h2 className="text-[20px] font-bold text-slate-800 flex items-center gap-2">
                                         <span className="material-symbols-outlined text-[24px]">mail</span>
-                                        Servicio Técnico COROLA Monitor de Partículas CG_18A20021_EDM180C_251027
+                                        {ticket?.title ?? (loading ? 'Cargando…' : '')}
                                     </h2>
                                     <div className="flex items-center gap-4 mt-2">
-                                        <span className="text-[12px] font-bold text-slate-500">#825</span>
+                                        <span className="text-[12px] font-bold text-slate-500">{ticket?.number}</span>
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-[12px] font-medium text-slate-400">Mario Ávila</span>
+                                            <span className="text-[12px] font-medium text-slate-400">{ticket?.assignee?.name}</span>
                                             <span className="text-[12px] text-slate-400">•</span>
                                             <span className="material-symbols-outlined text-[16px] text-slate-400">schedule</span>
-                                            <span className="text-[12px] font-medium text-slate-400">12 Nov 2025 02:47 PM</span>
+                                            <span className="text-[12px] font-medium text-slate-400">{ticket?.time}</span>
                                         </div>
                                         <span className="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 font-bold flex items-center gap-1">
                                             <span className="material-symbols-outlined text-[16px]">psychology</span> Resumen
@@ -204,42 +227,20 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ onClose }) =
                             {/* Vertical connection line */}
                             <div className="absolute left-[38px] top-0 bottom-0 w-[2px] bg-slate-100"></div>
 
-                            {[
-                                { author: 'Equipo Técnico', type: 'Privado', time: '09 Dic 2025 02:22 PM', content: 'Cliente recoge el equipo. Se adjunta remisión de salida.', attachment: { name: '251201 - COROL...', size: '1.1 MB' } },
-                                { author: 'Alfonso Garcia del Pino Beneitez', type: 'Privado', time: '02 Dic 2025 08:57 AM', content: 'Crédito' },
-                                { author: 'Alfonso Garcia del Pino Beneitez', type: 'Privado', time: '02 Dic 2025 08:56 AM', content: 'AM 1248 y AM 1249' },
-                                { author: 'Equipo Técnico', type: 'Privado', time: '02 Dic 2025 08:35 AM', content: 'El equipo fue calibrado en Torre GRIMM con éxito.\n**Se adjunta documentación de Calibración', attachment: { name: 'CG_18A20021_E...', size: '2.4 MB' } }
-                            ].map((msg, idx) => (
-                                <div key={idx} className="flex gap-4 relative z-10">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm font-bold text-[12px] ${msg.author.includes('Alfonso') ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
-                                        }`}>
-                                        {msg.author.includes('Alfonso') ? 'AG' : 'ET'}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="text-[13px] font-bold text-slate-800">{msg.author}</span>
-                                            <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold border border-amber-100">{msg.type}</span>
-                                            <span className="text-[11px] text-slate-400 font-medium">{msg.time}</span>
-                                            <div className="ml-auto flex items-center gap-2">
-                                                <span className="material-symbols-outlined text-[16px] text-slate-300">attach_file</span>
-                                                <span className="material-symbols-outlined text-[16px] text-slate-300">more_horiz</span>
-                                            </div>
-                                        </div>
-                                        <div className="text-[13px] text-slate-700 leading-relaxed max-w-[800px]">
-                                            {msg.content}
-                                        </div>
-                                        {msg.attachment && (
-                                            <div className="mt-3 flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded w-[200px] cursor-pointer hover:bg-slate-100">
-                                                <span className="material-symbols-outlined text-slate-400">description</span>
-                                                <div className="flex-1 overflow-hidden">
-                                                    <div className="text-[11px] font-bold text-slate-700 truncate">{msg.attachment.name}</div>
-                                                    <div className="text-[10px] text-slate-400 uppercase">{msg.attachment.size}</div>
-                                                </div>
-                                                <span className="material-symbols-outlined text-slate-400 text-[18px]">download</span>
-                                            </div>
-                                        )}
-                                    </div>
+                            {(messages ?? []).map((msg) => (
+                              <div key={msg.id} className="flex gap-4 relative z-10">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm font-bold text-[12px] bg-slate-100 text-slate-700">
+                                  {msg.author.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
                                 </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span className="text-[13px] font-bold text-slate-800">{msg.author}</span>
+                                    <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold border border-amber-100">{msg.type}</span>
+                                    <span className="text-[11px] text-slate-400 font-medium">{msg.time}</span>
+                                  </div>
+                                  <div className="text-[13px] text-slate-700 leading-relaxed max-w-[800px] whitespace-pre-line">{msg.content}</div>
+                                </div>
+                              </div>
                             ))}
                         </div>
 
@@ -266,6 +267,48 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ onClose }) =
                     </div>
                 </div>
             </div>
+            <div className="absolute bottom-16 right-4 left-[660px] bg-white border border-slate-200 rounded-lg shadow-lg p-3 flex flex-col gap-2">
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Escribe una respuesta…"
+                className="border border-slate-200 rounded p-2 text-[13px] resize-none h-16"
+              />
+              <div className="flex items-center justify-between">
+                <select
+                  defaultValue=""
+                  onChange={(e) => e.target.value && setConfirming({ kind: 'status', status: e.target.value })}
+                  className="border border-slate-200 rounded text-[12px] px-2 py-1"
+                >
+                  <option value="" disabled>Cambiar estado…</option>
+                  {COLUMNS.map((c) => <option key={c.id} value={c.statuses[0]}>{c.label}</option>)}
+                </select>
+                <button
+                  onClick={() => setConfirming({ kind: 'reply' })}
+                  disabled={!replyText.trim()}
+                  className="bg-[#2C7BE5] text-white px-4 py-1.5 rounded text-[13px] font-bold disabled:opacity-40"
+                >
+                  Responder
+                </button>
+              </div>
+            </div>
+
+            {confirming && (
+              <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center">
+                <div className="bg-white rounded-lg p-6 w-[360px] flex flex-col gap-4">
+                  <p className="text-[14px] text-slate-700">
+                    {confirming.kind === 'reply'
+                      ? '¿Enviar esta respuesta al cliente en Zoho Desk?'
+                      : `¿Cambiar el estado del ticket a "${confirming.status}"?`}
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setConfirming(null)} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
+                    <button onClick={doConfirm} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold">Confirmar</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Help Button */}
             <button className="fixed bottom-4 right-4 bg-[#2C7BE5] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[13px] font-bold">
                 <span className="material-symbols-outlined text-[20px]">help</span> Need Help
