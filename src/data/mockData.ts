@@ -1,4 +1,5 @@
-export type { Ticket } from '../../shared/types'
+import type { Ticket } from '../../shared/types'
+export type { Ticket }
 
 export const TICKETS: Ticket[] = [
     {
