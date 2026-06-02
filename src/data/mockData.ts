@@ -1,20 +1,4 @@
-export interface Ticket {
-    id: string;
-    number: string;
-    title: string;
-    company: string;
-    time: string;
-    status: string;
-    assignee?: {
-        name: string;
-        avatar?: string;
-        initials?: string;
-        type?: string;
-    };
-    urgent?: boolean;
-    messages?: number;
-    description?: string;
-}
+export type { Ticket } from '../../shared/types'
 
 export const TICKETS: Ticket[] = [
     {
