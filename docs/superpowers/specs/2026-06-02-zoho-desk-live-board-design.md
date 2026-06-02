@@ -1,8 +1,85 @@
-# Diseño — Tablero Ambientalia conectado en vivo a Zoho Desk
+# Diseño — Tablero Ambientalia conectado a Zoho Desk (vía Postgres autoalojado)
 
 **Fecha:** 2026-06-02
-**Estado:** Aprobado para planificación
+**Estado:** Aprobado para planificación · **Revisado** (pivote a Postgres, ver abajo)
 **Autor:** Claude + comercial@ambientalia.com.co
+
+---
+
+## ⚑ Revisión 2026-06-02b — Pivote a base de datos autoalojada (Postgres)
+
+> Esta sección **supersede la ruta de lectura** descrita más abajo. El backend ya no
+> lee en vivo de Zoho: lee de **Postgres** (autoalojado en el VPS del usuario, gestionado
+> con EasyPanel). Un **job de sincronización dentro del propio backend** (no n8n) replica
+> Zoho Desk → Postgres. Las **escrituras** siguen yendo a Zoho (fuente de verdad) y tras
+> escribir se re-sincroniza el ticket afectado.
+
+**Decisiones de este pivote:**
+
+| Decisión | Elección |
+|---|---|
+| Origen de lecturas | Postgres autoalojado (réplica de Zoho) |
+| Motor | PostgreSQL (servicio EasyPanel) |
+| Sincronización | Job dentro del backend Express (`setInterval`), no n8n |
+| Fuente de verdad | Zoho Desk; Postgres es réplica de lectura |
+| Escrituras | Van a Zoho; luego re-sync del ticket afectado |
+| Driver / tests DB | `pg` (node-postgres) + `pg-mem` para tests sin DB real |
+
+**Arquitectura revisada:**
+```
+Zoho Desk (fuente de verdad)
+   ▲ escrituras (reply, status)         │ sync: backfill inicial + polling incremental
+   │ (vía zohoClient/tokenManager)      ▼ (zohoClient → ticketRowFromZoho → upsert)
+Express backend ───────────────────► Postgres (tablas tickets, conversations)
+   │  lecturas (normalizeTicket(raw))
+   ▼
+Tablero React (sin cambios respecto al plan original)
+```
+
+**Reutilización de lo ya construido (Tareas 0–3):** `shared/types.ts`, `shared/columns.ts`,
+`server/normalize.ts` (con `normalizeTicket`/`normalizeConversation`) se reutilizan **sin
+cambios** en la ruta de lectura: la DB guarda el JSON crudo de Zoho en una columna `raw jsonb`
+y al leer se aplica `normalizeTicket(row.raw)`. `tokenManager`/`zohoClient` alimentan el sync.
+
+**Modelo de datos (Postgres):**
+- `tickets`: `id text pk`, `ticket_number text`, `status text`, `status_type text`,
+  `created_time timestamptz`, `modified_time timestamptz`, `raw jsonb`, `synced_at timestamptz`.
+  Las columnas tipadas permiten filtrar/ordenar/reportar; `raw` conserva el payload completo.
+- `conversations`: `id text pk`, `ticket_id text`, `commented_time timestamptz`, `raw jsonb`.
+
+**Sincronización (dentro del backend):**
+- *Backfill* al arrancar si `tickets` está vacía: pagina `/tickets` (from=0,100,…) y hace upsert.
+  Se ejecuta en segundo plano para no bloquear el `listen`.
+- *Incremental*: `setInterval` (`SYNC_INTERVAL_MS`, def. 180000) re-trae la primera página
+  ordenada por tiempo y hace upsert.
+- *Conversaciones*: carga perezosa — el endpoint de detalle sincroniza las conversaciones del
+  ticket si la DB no las tiene aún, luego lee de DB.
+- *Tras escritura*: PATCH estado / POST reply → re-sync de ese ticket (y sus conversaciones).
+
+**Endpoints (revisados):**
+- `GET /api/tickets` → lee `tickets` de Postgres (sólo no-cerrados), mapea con `normalizeTicket`.
+- `GET /api/tickets/:id` → lee DB; si falta, sincroniza ese ticket y lee.
+- `GET /api/tickets/:id/conversations` → lee DB; si vacío, sincroniza y lee.
+- `PATCH /api/tickets/:id/status` → Zoho PATCH (guard `ENABLE_WRITES`) → re-sync ticket.
+- `POST /api/tickets/:id/reply` → Zoho sendReply (guard) → re-sync conversaciones.
+
+**Config nueva:** `DATABASE_URL` (requerida, connection string de EasyPanel),
+`SYNC_INTERVAL_MS` (opcional, def. 180000). Se mantienen todas las `ZOHO_*` y `ENABLE_WRITES`.
+
+**Tests:** las funciones puras (`normalize`, `columns`, mappers de fila) se testean directo;
+los repositorios se testean con `pg-mem` (Postgres en memoria, sin DB real); el sync se testea
+con `zohoFetch` y repos mockeados.
+
+**Riesgos nuevos:** frescura limitada por el intervalo de sync; backfill inicial lento por los
+límites de la API de Zoho (mitigado: corre en background, por lotes); conectividad del backend
+a la Postgres del VPS (EasyPanel expone host/puerto o red interna). Webhooks de Zoho para
+casi-tiempo-real quedan como mejora futura.
+
+---
+
+> _Lo que sigue es el diseño original (ruta de lectura en vivo). Mantén las secciones de
+> backend OAuth, escritura, frontend, columnas y normalización; sólo la **fuente de lectura**
+> cambia de "Zoho en vivo" a "Postgres" según la revisión de arriba._
 
 ## Objetivo
 
