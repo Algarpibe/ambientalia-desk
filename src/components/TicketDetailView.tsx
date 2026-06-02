@@ -12,15 +12,19 @@ interface TicketDetailViewProps {
 
 export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose }) => {
     const { data: ticket, loading } = useAsync<Ticket>(() => fetchTicket(ticketId), [ticketId]);
-    const { data: messages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
+    const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const [replyText, setReplyText] = useState('');
     const [confirming, setConfirming] = useState<null | { kind: 'reply' } | { kind: 'status'; status: string }>(null);
 
     async function doConfirm() {
         if (!confirming) return;
         try {
-            if (confirming.kind === 'reply') await replyTicket(ticketId, replyText);
-            else await updateTicketStatus(ticketId, confirming.status);
+            if (confirming.kind === 'reply') {
+                await replyTicket(ticketId, replyText);
+                reloadMessages(); // refresca el hilo tras enviar la respuesta
+            } else {
+                await updateTicketStatus(ticketId, confirming.status);
+            }
             setConfirming(null);
             setReplyText('');
         } catch (e) {

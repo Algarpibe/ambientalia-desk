@@ -25,12 +25,14 @@ async function readData(res: Response): Promise<any> {
 }
 
 export function createSync({ zohoFetch, db, config }: Deps): Sync {
-  async function fetchTicketPage(from: number): Promise<ZohoTicketRaw[]> {
+  // Zoho Desk usa `from` 1-based. sortBy admite createdTime/recentThread/dueDate;
+  // el prefijo `-` ordena descendente (no expuesto en el enum del MCP, pero válido en la API REST).
+  async function fetchTicketPage(from: number, sortBy = 'createdTime'): Promise<ZohoTicketRaw[]> {
     const params = new URLSearchParams({
       departmentId: config.departmentId,
       from: String(from),
       limit: String(PAGE_SIZE),
-      sortBy: 'createdTime',
+      sortBy,
     })
     const res = await zohoFetch(`/tickets?${params.toString()}`)
     if (!res.ok) throw new Error(`Zoho /tickets ${res.status}: ${await res.text()}`)
@@ -43,10 +45,10 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
 
   return {
     async backfillTickets(): Promise<number> {
-      let from = 0
+      let from = 1 // Zoho `from` es 1-based; avanzar en pasos de PAGE_SIZE: 1, 101, 201…
       let total = 0
       for (;;) {
-        const page = await fetchTicketPage(from === 0 ? 1 : from)
+        const page = await fetchTicketPage(from)
         if (page.length === 0) break
         await upsertTickets(page)
         total += page.length
@@ -57,7 +59,8 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     },
 
     async syncRecent(): Promise<number> {
-      const page = await fetchTicketPage(1)
+      // Más recientemente activos primero, para captar cambios en tickets antiguos.
+      const page = await fetchTicketPage(1, '-recentThread')
       await upsertTickets(page)
       return page.length
     },

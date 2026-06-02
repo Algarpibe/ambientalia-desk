@@ -80,7 +80,8 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   app.post('/api/tickets/:id/reply', guardWrites, async (req, res) => {
     try {
       const id = String(req.params.id)
-      const addrRes = await zohoFetch(`/tickets/${id}/sendReplyMailIDs`)
+      // Direcciones de remitente válidas del departamento (Zoho: GET /mailReplyAddress).
+      const addrRes = await zohoFetch(`/mailReplyAddress?departmentId=${config.departmentId}&isActive=true`)
       const addrText = await addrRes.text()
       const addrBody = addrText ? JSON.parse(addrText) : { data: [] }
       const fromEmailAddress = addrBody.data?.[0]?.email ?? addrBody.data?.[0]?.value

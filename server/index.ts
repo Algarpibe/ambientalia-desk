@@ -41,8 +41,14 @@ async function main() {
     })
     .catch((e) => console.error('Backfill falló:', e))
 
+  let syncing = false
   setInterval(() => {
-    sync.syncRecent().catch((e) => console.error('Sync incremental falló:', e))
+    if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
+    syncing = true
+    sync
+      .syncRecent()
+      .catch((e) => console.error('Sync incremental falló:', e))
+      .finally(() => { syncing = false })
   }, config.syncIntervalMs)
 }
 
