@@ -62,14 +62,15 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.patch('/api/tickets/:id/status', guardWrites, async (req, res) => {
     try {
-      const zres = await zohoFetch(`/tickets/${req.params.id}`, {
+      const id = String(req.params.id)
+      const zres = await zohoFetch(`/tickets/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: req.body.status }),
       })
       if (!zres.ok) return res.status(zres.status).json({ error: await zres.text() })
-      await sync.syncTicket(req.params.id)
-      const raw = await getTicketRaw(db, req.params.id)
+      await sync.syncTicket(id)
+      const raw = await getTicketRaw(db, id)
       res.json(raw ? normalizeTicket(raw) : {})
     } catch (err) {
       res.status(502).json({ error: String(err) })
@@ -78,11 +79,12 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.post('/api/tickets/:id/reply', guardWrites, async (req, res) => {
     try {
-      const addrRes = await zohoFetch(`/tickets/${req.params.id}/sendReplyMailIDs`)
+      const id = String(req.params.id)
+      const addrRes = await zohoFetch(`/tickets/${id}/sendReplyMailIDs`)
       const addrText = await addrRes.text()
       const addrBody = addrText ? JSON.parse(addrText) : { data: [] }
       const fromEmailAddress = addrBody.data?.[0]?.email ?? addrBody.data?.[0]?.value
-      const zres = await zohoFetch(`/tickets/${req.params.id}/sendReply`, {
+      const zres = await zohoFetch(`/tickets/${id}/sendReply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +93,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
         }),
       })
       if (!zres.ok) return res.status(zres.status).json({ error: await zres.text() })
-      await sync.syncConversations(req.params.id)
+      await sync.syncConversations(id)
       res.json({ ok: true })
     } catch (err) {
       res.status(502).json({ error: String(err) })
