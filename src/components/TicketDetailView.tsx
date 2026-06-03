@@ -218,6 +218,33 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             ))}
                         </div>
 
+                        {/* Caja de respuesta + acciones — al pie del hilo, en el flujo (sin solapar) */}
+                        <div className="border-t border-slate-200 bg-white p-3 flex flex-col gap-2 shrink-0">
+                          <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Escribe una respuesta…"
+                            className="border border-slate-200 rounded p-2 text-[13px] resize-none h-16"
+                          />
+                          <div className="flex items-center justify-between">
+                            <select
+                              defaultValue=""
+                              onChange={(e) => e.target.value && setConfirming({ kind: 'status', status: e.target.value })}
+                              className="border border-slate-200 rounded text-[12px] px-2 py-1"
+                            >
+                              <option value="" disabled>Cambiar estado…</option>
+                              {COLUMNS.map((c) => <option key={c.id} value={c.statuses[0]}>{c.label}</option>)}
+                            </select>
+                            <button
+                              onClick={() => setConfirming({ kind: 'reply' })}
+                              disabled={!replyText.trim()}
+                              className="bg-[#2C7BE5] text-white px-4 py-1.5 rounded text-[13px] font-bold disabled:opacity-40"
+                            >
+                              Responder
+                            </button>
+                          </div>
+                        </div>
+
                         {/* Bottom Footer Bar */}
                         <div className="h-[40px] border-t border-slate-200 bg-[#F8F9FA] flex items-center justify-between px-4 shrink-0">
                             <div className="flex items-center gap-6">
@@ -241,32 +268,6 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                     </div>
                 </div>
             </div>
-            <div className="absolute bottom-16 right-4 left-[660px] bg-white border border-slate-200 rounded-lg shadow-lg p-3 flex flex-col gap-2">
-              <textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Escribe una respuesta…"
-                className="border border-slate-200 rounded p-2 text-[13px] resize-none h-16"
-              />
-              <div className="flex items-center justify-between">
-                <select
-                  defaultValue=""
-                  onChange={(e) => e.target.value && setConfirming({ kind: 'status', status: e.target.value })}
-                  className="border border-slate-200 rounded text-[12px] px-2 py-1"
-                >
-                  <option value="" disabled>Cambiar estado…</option>
-                  {COLUMNS.map((c) => <option key={c.id} value={c.statuses[0]}>{c.label}</option>)}
-                </select>
-                <button
-                  onClick={() => setConfirming({ kind: 'reply' })}
-                  disabled={!replyText.trim()}
-                  className="bg-[#2C7BE5] text-white px-4 py-1.5 rounded text-[13px] font-bold disabled:opacity-40"
-                >
-                  Responder
-                </button>
-              </div>
-            </div>
-
             {confirming && (
               <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center">
                 <div className="bg-white rounded-lg p-6 w-[360px] flex flex-col gap-4">
