@@ -10,6 +10,7 @@ export interface AppConfig {
   port: number
   databaseUrl: string
   syncIntervalMs: number
+  adminToken: string   // protege endpoints /api/admin/* (vacío = deshabilitados)
 }
 
 type Env = Record<string, string | undefined>
@@ -33,5 +34,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     port: env.PORT ? Number(env.PORT) : 3001,
     databaseUrl: required(env, 'DATABASE_URL'),
     syncIntervalMs: env.SYNC_INTERVAL_MS ? Number(env.SYNC_INTERVAL_MS) : 180000,
+    adminToken: env.ADMIN_TOKEN || '',
   }
 }

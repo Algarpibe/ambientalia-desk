@@ -4,6 +4,16 @@ import type { Queryable } from './db/migrate'
 import type { Sync } from './sync'
 import { normalizeTicket, normalizeTicketDetail, normalizeConversation } from './normalize'
 import { getActiveTicketsRaw, getTicketRaw, getConversationsRaw } from './db/repo'
+import { createMeasurer } from './measure'
+
+function humanBytes(n: number): string {
+  if (n < 1024) return `${n} B`
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let v = n / 1024
+  let i = 0
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++ }
+  return `${v.toFixed(2)} ${units[i]}`
+}
 
 interface Deps {
   db: Queryable
@@ -15,6 +25,8 @@ interface Deps {
 export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   const app = express()
   app.use(express.json())
+
+  const measurer = createMeasurer({ zohoFetch, config })
 
   const guardWrites = (_req: Request, res: Response, next: () => void) => {
     if (!config.enableWrites) {
@@ -62,6 +74,20 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     } catch (err) {
       res.status(500).json({ error: String(err) })
     }
+  })
+
+  // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.
+  // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
+  app.get('/api/admin/measure-attachments', (req, res) => {
+    if (!config.adminToken || req.query.token !== config.adminToken) {
+      res.status(403).json({ error: 'No autorizado' })
+      return
+    }
+    if (req.query.restart === '1' || (!measurer.state().running && !measurer.state().done)) {
+      measurer.start()
+    }
+    const s = measurer.state()
+    res.json({ ...s, totalHuman: humanBytes(s.totalBytes) })
   })
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
