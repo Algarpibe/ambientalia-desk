@@ -23,7 +23,7 @@ function formatTime(iso: string): string {
 
 export function normalizeTicket(raw: ZohoTicketRaw): Ticket {
   const assigneeName = fullName(raw.assignee) || 'Sin asignar'
-  const company = raw.contact?.accountName || fullName(raw.contact) || ''
+  const company = raw.accountName || raw.contact?.accountName || fullName(raw.contact) || ''
   return {
     id: raw.id,
     number: `#${raw.ticketNumber}`,

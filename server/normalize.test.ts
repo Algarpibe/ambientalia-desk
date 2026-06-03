@@ -44,6 +44,11 @@ describe('normalizeTicket', () => {
     expect(t.assignee?.name).toBe('Sin asignar')
     expect(t.assignee?.initials).toBe('SA')
   })
+
+  it('prefiere accountName del ticket (inyectado por el sync) como empresa', () => {
+    const t = normalizeTicket({ ...raw, accountName: 'Gecelca S.A. E.S.P.' })
+    expect(t.company).toBe('Gecelca S.A. E.S.P.')
+  })
 })
 
 describe('normalizeConversation', () => {

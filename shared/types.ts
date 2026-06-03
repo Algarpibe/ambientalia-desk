@@ -45,6 +45,10 @@ export interface ZohoTicketRaw {
   createdTime: string
   commentCount?: string
   threadCount?: string
+  accountId?: string | null
+  // Nombre de la empresa/cuenta. Zoho no lo trae en el ticket; el sync lo inyecta
+  // resolviéndolo desde el accountId (GET /accounts/:id).
+  accountName?: string | null
   contact?: {
     firstName?: string | null
     lastName?: string | null
