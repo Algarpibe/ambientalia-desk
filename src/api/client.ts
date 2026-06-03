@@ -32,3 +32,21 @@ export function replyTicket(id: string, content: string, to?: string): Promise<u
     body: JSON.stringify({ content, to }),
   }).then((r) => json<unknown>(r))
 }
+
+/** Ejecuta una transición del Blueprint. Lanza con los errores de validación si los hay. */
+export async function executeTransition(
+  id: string,
+  transitionId: string,
+  values: Record<string, unknown>,
+): Promise<TicketDetail> {
+  const res = await fetch(`/api/tickets/${id}/transition`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transitionId, values }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { errors?: string[]; error?: string }
+    throw new Error(body.errors ? body.errors.join(' · ') : body.error || `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<TicketDetail>
+}

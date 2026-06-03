@@ -2,9 +2,9 @@ import React from 'react';
 import { useState } from 'react';
 import type { TicketDetail, Message } from '../../shared/types';
 import { useAsync } from '../hooks/useAsync';
-import { fetchTicket, fetchConversations, updateTicketStatus, replyTicket } from '../api/client';
-import { COLUMNS } from '../../shared/columns';
+import { fetchTicket, fetchConversations, replyTicket } from '../api/client';
 import { TicketProperties } from './TicketProperties';
+import { TransitionPanel } from './TransitionPanel';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -12,21 +12,16 @@ interface TicketDetailViewProps {
 }
 
 export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose }) => {
-    const { data: ticket, loading } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
+    const { data: ticket, loading, reload: reloadTicket } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const [replyText, setReplyText] = useState('');
-    const [confirming, setConfirming] = useState<null | { kind: 'reply' } | { kind: 'status'; status: string }>(null);
+    const [confirmingReply, setConfirmingReply] = useState(false);
 
-    async function doConfirm() {
-        if (!confirming) return;
+    async function doReply() {
         try {
-            if (confirming.kind === 'reply') {
-                await replyTicket(ticketId, replyText);
-                reloadMessages(); // refresca el hilo tras enviar la respuesta
-            } else {
-                await updateTicketStatus(ticketId, confirming.status);
-            }
-            setConfirming(null);
+            await replyTicket(ticketId, replyText);
+            reloadMessages(); // refresca el hilo tras enviar la respuesta
+            setConfirmingReply(false);
             setReplyText('');
         } catch (e) {
             alert('La acción falló: ' + String(e));
@@ -218,25 +213,24 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             ))}
                         </div>
 
-                        {/* Caja de respuesta + acciones — al pie del hilo, en el flujo (sin solapar) */}
+                        {/* Caja de respuesta + transiciones — al pie del hilo, en el flujo (sin solapar) */}
                         <div className="border-t border-slate-200 bg-white p-3 flex flex-col gap-2 shrink-0">
+                          {ticket && (
+                            <TransitionPanel
+                              ticketId={ticketId}
+                              status={ticket.status}
+                              onDone={() => { reloadTicket(); reloadMessages(); }}
+                            />
+                          )}
                           <textarea
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                             placeholder="Escribe una respuesta…"
                             className="border border-slate-200 rounded p-2 text-[13px] resize-none h-16"
                           />
-                          <div className="flex items-center justify-between">
-                            <select
-                              defaultValue=""
-                              onChange={(e) => e.target.value && setConfirming({ kind: 'status', status: e.target.value })}
-                              className="border border-slate-200 rounded text-[12px] px-2 py-1"
-                            >
-                              <option value="" disabled>Cambiar estado…</option>
-                              {COLUMNS.map((c) => <option key={c.id} value={c.statuses[0]}>{c.label}</option>)}
-                            </select>
+                          <div className="flex justify-end">
                             <button
-                              onClick={() => setConfirming({ kind: 'reply' })}
+                              onClick={() => setConfirmingReply(true)}
                               disabled={!replyText.trim()}
                               className="bg-[#2C7BE5] text-white px-4 py-1.5 rounded text-[13px] font-bold disabled:opacity-40"
                             >
@@ -268,17 +262,13 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                     </div>
                 </div>
             </div>
-            {confirming && (
+            {confirmingReply && (
               <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center">
                 <div className="bg-white rounded-lg p-6 w-[360px] flex flex-col gap-4">
-                  <p className="text-[14px] text-slate-700">
-                    {confirming.kind === 'reply'
-                      ? '¿Enviar esta respuesta al cliente en Zoho Desk?'
-                      : `¿Cambiar el estado del ticket a "${confirming.status}"?`}
-                  </p>
+                  <p className="text-[14px] text-slate-700">¿Enviar esta respuesta al cliente en Zoho Desk?</p>
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setConfirming(null)} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
-                    <button onClick={doConfirm} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold">Confirmar</button>
+                    <button onClick={() => setConfirmingReply(false)} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
+                    <button onClick={doReply} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold">Confirmar</button>
                   </div>
                 </div>
               </div>
