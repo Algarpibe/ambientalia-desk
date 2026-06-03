@@ -107,17 +107,21 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     res.json(detailBackfiller.state())
   })
 
-  // DIAGNÓSTICO read-only: transiciones de Blueprint aplicables a un ticket (no escribe nada).
-  // Para investigar la estructura real antes de construir el motor de transiciones.
+  // DIAGNÓSTICO read-only de Blueprint (no escribe nada). Por defecto consulta los blueprints
+  // aplicados al ticket; admite ?path= (lista blanca) para probar otras rutas GET de blueprint.
   app.get('/api/admin/blueprint', async (req, res) => {
     if (!requireAdmin(req, res)) return
     const id = String(req.query.id ?? '')
-    if (!/^\d+$/.test(id)) {
-      res.status(400).json({ error: 'Parámetro id inválido' })
+    const path = req.query.path
+      ? String(req.query.path)
+      : /^\d+$/.test(id) ? `/tickets/${id}/appliedblueprints` : ''
+    // Solo GET de rutas relacionadas con Blueprint (evita SSRF a rutas arbitrarias).
+    if (!/^\/(tickets\/\d+\/(appliedblueprints|blueprints|transitions)|blueprints\/\d+|departments\/\d+\/blueprints)([/?].*)?$/.test(path)) {
+      res.status(400).json({ error: 'Ruta no permitida o id inválido', path })
       return
     }
     try {
-      const zres = await zohoFetch(`/tickets/${id}/transitions`)
+      const zres = await zohoFetch(path)
       const text = await zres.text()
       res.status(zres.status).type('application/json').send(text || '{}')
     } catch (err) {
