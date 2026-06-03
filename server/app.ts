@@ -5,6 +5,7 @@ import type { Sync } from './sync'
 import { normalizeTicket, normalizeTicketDetail, normalizeConversation } from './normalize'
 import { getActiveTicketsRaw, getTicketRaw, getConversationsRaw } from './db/repo'
 import { createMeasurer } from './measure'
+import { createDetailBackfiller } from './backfill'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -27,6 +28,15 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   app.use(express.json())
 
   const measurer = createMeasurer({ zohoFetch, config })
+  const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config })
+
+  const requireAdmin = (req: Request, res: Response): boolean => {
+    if (!config.adminToken || req.query.token !== config.adminToken) {
+      res.status(403).json({ error: 'No autorizado' })
+      return false
+    }
+    return true
+  }
 
   const guardWrites = (_req: Request, res: Response, next: () => void) => {
     if (!config.enableWrites) {
@@ -79,15 +89,22 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.
   // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
   app.get('/api/admin/measure-attachments', (req, res) => {
-    if (!config.adminToken || req.query.token !== config.adminToken) {
-      res.status(403).json({ error: 'No autorizado' })
-      return
-    }
+    if (!requireAdmin(req, res)) return
     if (req.query.restart === '1' || (!measurer.state().running && !measurer.state().done)) {
       measurer.start()
     }
     const s = measurer.state()
     res.json({ ...s, totalHuman: humanBytes(s.totalBytes) })
+  })
+
+  // Pre-puebla detalle (customFields) + conversaciones de TODOS los tickets en la BD.
+  // Token-protegido, segundo plano, throttled. ?restart=1 reinicia.
+  app.get('/api/admin/backfill-details', (req, res) => {
+    if (!requireAdmin(req, res)) return
+    if (req.query.restart === '1' || (!detailBackfiller.state().running && !detailBackfiller.state().done)) {
+      detailBackfiller.start()
+    }
+    res.json(detailBackfiller.state())
   })
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
