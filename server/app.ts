@@ -107,6 +107,24 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     res.json(detailBackfiller.state())
   })
 
+  // DIAGNÓSTICO read-only: transiciones de Blueprint aplicables a un ticket (no escribe nada).
+  // Para investigar la estructura real antes de construir el motor de transiciones.
+  app.get('/api/admin/blueprint', async (req, res) => {
+    if (!requireAdmin(req, res)) return
+    const id = String(req.query.id ?? '')
+    if (!/^\d+$/.test(id)) {
+      res.status(400).json({ error: 'Parámetro id inválido' })
+      return
+    }
+    try {
+      const zres = await zohoFetch(`/tickets/${id}/transitions`)
+      const text = await zres.text()
+      res.status(zres.status).type('application/json').send(text || '{}')
+    } catch (err) {
+      res.status(502).json({ error: String(err) })
+    }
+  })
+
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
   app.get('/api/attachment', async (req, res) => {
     const path = String(req.query.path ?? '')
