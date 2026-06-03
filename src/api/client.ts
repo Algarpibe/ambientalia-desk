@@ -1,4 +1,4 @@
-import type { Ticket, Message } from '../../shared/types'
+import type { Ticket, TicketDetail, Message } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
@@ -9,8 +9,8 @@ export function fetchTickets(): Promise<Ticket[]> {
   return fetch('/api/tickets').then((r) => json<Ticket[]>(r))
 }
 
-export function fetchTicket(id: string): Promise<Ticket> {
-  return fetch(`/api/tickets/${id}`).then((r) => json<Ticket>(r))
+export function fetchTicket(id: string): Promise<TicketDetail> {
+  return fetch(`/api/tickets/${id}`).then((r) => json<TicketDetail>(r))
 }
 
 export function fetchConversations(id: string): Promise<Message[]> {

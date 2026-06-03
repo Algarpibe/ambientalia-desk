@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeTicket, normalizeConversation } from './normalize'
+import { normalizeTicket, normalizeTicketDetail, normalizeConversation } from './normalize'
 import type { ZohoTicketRaw, ZohoConversationRaw } from '../shared/types'
 
 const raw: ZohoTicketRaw = {
@@ -48,6 +48,30 @@ describe('normalizeTicket', () => {
   it('prefiere accountName del ticket (inyectado por el sync) como empresa', () => {
     const t = normalizeTicket({ ...raw, accountName: 'Gecelca S.A. E.S.P.' })
     expect(t.company).toBe('Gecelca S.A. E.S.P.')
+  })
+})
+
+describe('normalizeTicketDetail', () => {
+  it('incluye contacto, clasificación y customFields', () => {
+    const d = normalizeTicketDetail({
+      ...raw,
+      email: 'slaguna@gecelca.com.co',
+      classification: 'Equipo Para Servicio',
+      channel: 'Email',
+      contact: { firstName: 'Sebastián', lastName: 'Laguna', phone: '301 5297268', accountName: 'Gecelca S.A. E.S.P.' },
+      customFields: { 'Serial': '18A22053', 'Ciudad': 'Barranquilla' },
+    } as any)
+    expect(d.number).toBe('#864')
+    expect(d.contactName).toBe('Sebastián Laguna')
+    expect(d.email).toBe('slaguna@gecelca.com.co')
+    expect(d.phone).toBe('301 5297268')
+    expect(d.classification).toBe('Equipo Para Servicio')
+    expect(d.channel).toBe('Email')
+    expect(d.customFields.Serial).toBe('18A22053')
+  })
+
+  it('customFields siempre es un objeto aunque falte en el raw', () => {
+    expect(normalizeTicketDetail(raw).customFields).toEqual({})
   })
 })
 

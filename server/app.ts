@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from 'express'
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import type { Sync } from './sync'
-import { normalizeTicket, normalizeConversation } from './normalize'
+import { normalizeTicket, normalizeTicketDetail, normalizeConversation } from './normalize'
 import { getActiveTicketsRaw, getTicketRaw, getConversationsRaw } from './db/repo'
 
 interface Deps {
@@ -35,13 +35,17 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.get('/api/tickets/:id', async (req, res) => {
     try {
-      let raw = await getTicketRaw(db, req.params.id)
-      if (!raw) {
-        await sync.syncTicket(req.params.id)
-        raw = await getTicketRaw(db, req.params.id)
+      const id = String(req.params.id)
+      // Siempre trae el DETALLE fresco de Zoho (incluye customFields, contacto y empresa)
+      // y lo guarda en la BD. Si Zoho falla, caemos a lo que haya en la BD.
+      try {
+        await sync.syncTicket(id)
+      } catch (e) {
+        console.error(`syncTicket(${id}) falló, sirvo desde BD:`, e)
       }
+      const raw = await getTicketRaw(db, id)
       if (!raw) return res.status(404).json({ error: 'Ticket no encontrado' })
-      res.json(normalizeTicket(raw))
+      res.json(normalizeTicketDetail(raw))
     } catch (err) {
       res.status(500).json({ error: String(err) })
     }

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useState } from 'react';
-import type { Ticket, Message } from '../../shared/types';
+import type { TicketDetail, Message } from '../../shared/types';
 import { useAsync } from '../hooks/useAsync';
 import { fetchTicket, fetchConversations, updateTicketStatus, replyTicket } from '../api/client';
 import { COLUMNS } from '../../shared/columns';
+import { TicketProperties } from './TicketProperties';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -11,7 +12,7 @@ interface TicketDetailViewProps {
 }
 
 export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose }) => {
-    const { data: ticket, loading } = useAsync<Ticket>(() => fetchTicket(ticketId), [ticketId]);
+    const { data: ticket, loading } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const [replyText, setReplyText] = useState('');
     const [confirming, setConfirming] = useState<null | { kind: 'reply' } | { kind: 'status'; status: string }>(null);
@@ -109,75 +110,17 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
 
                 {/* Main Content Area */}
                 <div className="flex-1 flex overflow-hidden">
-                    {/* Properties Panel (Left side of main scroll) */}
-                    <div className="w-[300px] border-r border-slate-200 overflow-y-auto bg-white p-4">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-[14px] font-bold text-slate-800">Propiedades de Ticket</h3>
-                            <span className="material-symbols-outlined text-slate-400 text-[18px]">mode_edit</span>
+                    {/* Properties Panel — datos reales del ticket */}
+                    {ticket ? (
+                        <TicketProperties detail={ticket} />
+                    ) : (
+                        <div className="w-[300px] border-r border-slate-200 bg-white p-4 shrink-0">
+                            <div className="h-5 w-40 bg-slate-200/70 rounded animate-pulse mb-4" />
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <div key={i} className="h-10 bg-slate-100 rounded animate-pulse mb-3" />
+                            ))}
                         </div>
-
-                        <div className="space-y-6">
-                            <div className="border-b border-slate-100 pb-3 cursor-pointer flex items-center justify-between">
-                                <span className="text-[13px] font-bold text-slate-700">Zia Insights</span>
-                                <span className="material-symbols-outlined text-slate-400">expand_more</span>
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between mb-4 cursor-pointer">
-                                    <span className="text-[13px] font-bold text-slate-700">Información de Contacto</span>
-                                    <span className="material-symbols-outlined text-slate-400">expand_less</span>
-                                </div>
-                                <div className="space-y-3 pl-1">
-                                    <div className="text-[14px] font-bold text-slate-800">Mario Ávila</div>
-                                    <div className="text-[12px] text-slate-500">Corola Ambiental S.A.S.</div>
-                                    <div className="text-[12px] text-blue-600 truncate">mario.avila@corolaambiental.com</div>
-                                    <div className="text-[12px] text-slate-500">3212865332</div>
-                                    <div className="text-[12px] text-slate-500">corolaambiental.com</div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between mb-4 cursor-pointer">
-                                    <span className="text-[13px] font-bold text-slate-700">Información clave</span>
-                                    <span className="material-symbols-outlined text-slate-400 font-bold">expand_less</span>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="text-[11px] text-slate-400 mb-1">Propietario de Ticket</div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">ET</div>
-                                            <span className="text-[12px] font-medium text-slate-700">Equipo Técnico</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[11px] text-slate-400 mb-1">Estado</div>
-                                        <span className="text-[11px] text-green-600 px-2 py-0.5 bg-green-50 border border-green-100 rounded font-bold">Finalizado <span className="material-symbols-outlined text-[14px] align-middle">expand_more</span></span>
-                                    </div>
-                                    <div>
-                                        <div className="text-[11px] text-slate-400 mb-1">Hora de cierre</div>
-                                        <div className="text-[12px] font-medium text-slate-700">09 Dic 2025 02:22 PM</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between mb-4 cursor-pointer">
-                                    <span className="text-[13px] font-bold text-slate-700">Campos Criterio</span>
-                                    <span className="material-symbols-outlined text-slate-400">expand_less</span>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="text-[11px] text-slate-400 mb-1">Último Servicio</div>
-                                        <div className="text-[12px] font-medium text-slate-700 leading-tight">Servicio Técnico COROLA Monitor de p...</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[11px] text-slate-400 mb-1">Clasificaciones</div>
-                                        <span className="text-[11px] text-orange-600 px-2 py-0.5 bg-orange-50 rounded-full font-bold">Equipo Para Servicio</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Chat/Thread Content (Right side) */}
                     <div className="flex-1 flex flex-col bg-[#F3F5F7] overflow-hidden">

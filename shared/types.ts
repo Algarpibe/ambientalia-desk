@@ -63,6 +63,26 @@ export interface ZohoTicketRaw {
     lastName?: string | null
     photoURL?: string | null
   } | null
+  // Campos extra presentes solo en el endpoint de DETALLE (getTicket):
+  email?: string | null
+  phone?: string | null
+  channel?: string | null
+  classification?: string | null
+  onholdTime?: string | null
+  customFields?: Record<string, string | null>
+}
+
+/** Detalle completo del ticket para el panel de propiedades. */
+export interface TicketDetail extends Ticket {
+  contactName?: string
+  email?: string
+  phone?: string
+  ownerName?: string
+  onholdSince?: string
+  classification?: string
+  priority?: string
+  channel?: string
+  customFields: Record<string, string | null>
 }
 
 /** Subconjunto de un item de /conversations. */

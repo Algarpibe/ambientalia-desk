@@ -1,4 +1,4 @@
-import type { Ticket, Message, ZohoTicketRaw, ZohoConversationRaw } from '../shared/types'
+import type { Ticket, TicketDetail, Message, ZohoTicketRaw, ZohoConversationRaw } from '../shared/types'
 
 function fullName(p?: { firstName?: string | null; lastName?: string | null } | null): string {
   if (!p) return ''
@@ -38,6 +38,22 @@ export function normalizeTicket(raw: ZohoTicketRaw): Ticket {
     },
     urgent: raw.priority === 'High' || raw.priority === 'Urgent',
     messages: raw.commentCount ? Number(raw.commentCount) : undefined,
+  }
+}
+
+/** Detalle completo para el panel de propiedades (incluye customFields tal cual). */
+export function normalizeTicketDetail(raw: ZohoTicketRaw): TicketDetail {
+  return {
+    ...normalizeTicket(raw),
+    contactName: fullName(raw.contact) || undefined,
+    email: raw.email ?? raw.contact?.email ?? undefined,
+    phone: raw.phone ?? raw.contact?.phone ?? undefined,
+    ownerName: fullName(raw.assignee) || undefined,
+    onholdSince: raw.onholdTime ? formatTime(raw.onholdTime) : undefined,
+    classification: raw.classification ?? undefined,
+    priority: raw.priority ?? undefined,
+    channel: raw.channel ?? undefined,
+    customFields: raw.customFields ?? {},
   }
 }
 
