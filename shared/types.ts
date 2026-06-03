@@ -45,9 +45,11 @@ export interface ZohoTicketRaw {
   createdTime: string
   commentCount?: string
   threadCount?: string
+  contactId?: string | null
+  // OJO: el endpoint de LISTA de Zoho devuelve accountId=null; solo el de detalle lo trae.
+  // Por eso el sync resuelve la empresa vía contactId → contacto.accountId → cuenta.
   accountId?: string | null
-  // Nombre de la empresa/cuenta. Zoho no lo trae en el ticket; el sync lo inyecta
-  // resolviéndolo desde el accountId (GET /accounts/:id).
+  // Nombre de la empresa/cuenta. Zoho no lo trae en el ticket; el sync lo inyecta.
   accountName?: string | null
   contact?: {
     firstName?: string | null

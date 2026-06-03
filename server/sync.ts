@@ -25,27 +25,46 @@ async function readData(res: Response): Promise<any> {
 }
 
 export function createSync({ zohoFetch, db, config }: Deps): Sync {
-  // Caché de nombres de empresa por accountId (vive durante todo el proceso; las cuentas
-  // cambian rara vez). Evita repetir GET /accounts/:id en el backfill.
-  const accountNames = new Map<string, string>()
+  // Cachés por proceso (cuentas/contactos cambian rara vez) para no repetir llamadas
+  // en el backfill. El endpoint de LISTA de Zoho no trae accountId, así que la empresa
+  // se resuelve vía contactId → contacto.accountId → cuenta.accountName.
+  const nameByAccountId = new Map<string, string>()
+  const accountIdByContactId = new Map<string, string>()
 
-  async function resolveAccountName(accountId: string): Promise<string> {
-    const cached = accountNames.get(accountId)
+  async function accountNameFromId(accountId: string): Promise<string> {
+    const cached = nameByAccountId.get(accountId)
     if (cached !== undefined) return cached
     let name = ''
     try {
       const res = await zohoFetch(`/accounts/${accountId}`)
       if (res.ok) name = ((await readData(res)).accountName ?? '') as string
     } catch {
-      /* si falla, dejamos la empresa vacía; no es crítico */
+      /* empresa vacía si falla; no es crítico */
     }
-    accountNames.set(accountId, name)
+    nameByAccountId.set(accountId, name)
     return name
   }
 
+  async function accountIdFromContact(contactId: string): Promise<string> {
+    const cached = accountIdByContactId.get(contactId)
+    if (cached !== undefined) return cached
+    let accountId = ''
+    try {
+      const res = await zohoFetch(`/contacts/${contactId}`)
+      if (res.ok) accountId = ((await readData(res)).accountId ?? '') as string
+    } catch {
+      /* sin cuenta si falla */
+    }
+    accountIdByContactId.set(contactId, accountId)
+    return accountId
+  }
+
   // Inyecta el nombre de la empresa (accountName) en el ticket crudo antes de guardarlo.
-  async function withAccount(t: ZohoTicketRaw): Promise<ZohoTicketRaw> {
-    if (!t.accountName && t.accountId) t.accountName = await resolveAccountName(t.accountId)
+  async function withCompany(t: ZohoTicketRaw): Promise<ZohoTicketRaw> {
+    if (t.accountName) return t
+    let accountId = t.accountId ?? ''
+    if (!accountId && t.contactId) accountId = await accountIdFromContact(t.contactId)
+    if (accountId) t.accountName = await accountNameFromId(accountId)
     return t
   }
 
@@ -64,7 +83,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
   }
 
   async function upsertTickets(tickets: ZohoTicketRaw[]): Promise<void> {
-    for (const t of tickets) await upsertTicket(db, ticketRowFromZoho(await withAccount(t)))
+    for (const t of tickets) await upsertTicket(db, ticketRowFromZoho(await withCompany(t)))
   }
 
   return {
@@ -92,7 +111,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     async syncTicket(id: string): Promise<void> {
       const res = await zohoFetch(`/tickets/${id}?include=contacts,assignee`)
       if (!res.ok) throw new Error(`Zoho /tickets/${id} ${res.status}`)
-      await upsertTicket(db, ticketRowFromZoho(await withAccount((await readData(res)) as ZohoTicketRaw)))
+      await upsertTicket(db, ticketRowFromZoho(await withCompany((await readData(res)) as ZohoTicketRaw)))
     },
 
     async syncConversations(id: string): Promise<void> {
