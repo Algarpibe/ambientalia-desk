@@ -54,3 +54,36 @@ describe('escrituras', () => {
     expect(sync.syncTicket).toHaveBeenCalledWith('1')
   })
 })
+
+describe('POST /api/tickets/:id/transition', () => {
+  it('403 si enableWrites=false', async () => {
+    const { app, zohoFetch } = appWith({ enableWrites: false })
+    const res = await request(app).post('/api/tickets/1/transition').send({ transitionId: 'aprobacion', values: { comment: 'ok' } })
+    expect(res.status).toBe(403)
+    expect(zohoFetch).not.toHaveBeenCalled()
+  })
+
+  it('422 si faltan campos obligatorios', async () => {
+    const { app } = appWith({ enableWrites: true })
+    const res = await request(app).post('/api/tickets/1/transition').send({ transitionId: 'ingreso_a_servicio', values: {} })
+    expect(res.status).toBe(422)
+    expect(res.body.errors.length).toBeGreaterThan(0)
+  })
+
+  it('ejecuta: PATCH status+cf, comentario y re-sync', async () => {
+    const { app, zohoFetch, sync } = appWith({ enableWrites: true })
+    const res = await request(app).post('/api/tickets/1/transition').send({
+      transitionId: 'escalado_a_revision',
+      values: { comment: 'a revisión', priority: 'High', 'Días de entrega': 20 },
+    })
+    expect(res.status).toBe(200)
+    const patch = zohoFetch.mock.calls.find((c: any[]) => c[0] === '/tickets/1' && c[1]?.method === 'PATCH')
+    expect(patch).toBeTruthy()
+    const body = JSON.parse(patch![1].body)
+    expect(body.status).toBe('Notificado')
+    expect(body.priority).toBe('High')
+    expect(body.cf.cf_dias_de_entrega).toBe(20)
+    expect(zohoFetch).toHaveBeenCalledWith('/tickets/1/comments', expect.objectContaining({ method: 'POST' }))
+    expect(sync.syncTicket).toHaveBeenCalledWith('1')
+  })
+})
