@@ -179,13 +179,40 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                 <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm font-bold text-[12px] bg-slate-100 text-slate-700">
                                   {msg.author.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-3 mb-2">
                                     <span className="text-[13px] font-bold text-slate-800">{msg.author}</span>
                                     <span className="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold border border-amber-100">{msg.type}</span>
                                     <span className="text-[11px] text-slate-400 font-medium">{msg.time}</span>
                                   </div>
-                                  <div className="text-[13px] text-slate-700 leading-relaxed max-w-[800px] whitespace-pre-line">{msg.content}</div>
+                                  {msg.isHtml ? (
+                                    <div
+                                      className="text-[13px] text-slate-700 leading-relaxed max-w-[800px] overflow-x-auto [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline"
+                                      dangerouslySetInnerHTML={{ __html: msg.content }}
+                                    />
+                                  ) : (
+                                    <div className="text-[13px] text-slate-700 leading-relaxed max-w-[800px] whitespace-pre-line">{msg.content}</div>
+                                  )}
+                                  {msg.attachments && msg.attachments.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                      {msg.attachments.map((att) => (
+                                        <a
+                                          key={att.path}
+                                          href={`/api/attachment?path=${encodeURIComponent(att.path)}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded w-[200px] hover:bg-slate-100"
+                                        >
+                                          <span className="material-symbols-outlined text-slate-400">description</span>
+                                          <div className="flex-1 overflow-hidden">
+                                            <div className="text-[11px] font-bold text-slate-700 truncate">{att.name}</div>
+                                            <div className="text-[10px] text-slate-400 uppercase">{att.size}</div>
+                                          </div>
+                                          <span className="material-symbols-outlined text-slate-400 text-[18px]">download</span>
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ))}

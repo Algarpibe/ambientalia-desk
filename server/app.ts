@@ -64,6 +64,30 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     }
   })
 
+  // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
+  app.get('/api/attachment', async (req, res) => {
+    const path = String(req.query.path ?? '')
+    // Solo rutas de adjuntos de tickets (evita SSRF a rutas arbitrarias de la API).
+    if (!/^\/tickets\/\d+\/(comments|threads)\/\d+\/attachments\/\d+\/content$/.test(path)) {
+      res.status(400).json({ error: 'Ruta de adjunto inválida' })
+      return
+    }
+    try {
+      const zres = await zohoFetch(path)
+      if (!zres.ok) {
+        res.status(zres.status).json({ error: await zres.text() })
+        return
+      }
+      const ct = zres.headers.get('content-type')
+      if (ct) res.setHeader('Content-Type', ct)
+      const cd = zres.headers.get('content-disposition')
+      if (cd) res.setHeader('Content-Disposition', cd)
+      res.send(Buffer.from(await zres.arrayBuffer()))
+    } catch (err) {
+      res.status(502).json({ error: String(err) })
+    }
+  })
+
   app.patch('/api/tickets/:id/status', guardWrites, async (req, res) => {
     try {
       const id = String(req.params.id)

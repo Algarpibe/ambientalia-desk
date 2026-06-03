@@ -50,7 +50,7 @@ export async function upsertConversation(db: Queryable, row: ConversationRow): P
 
 export async function getConversationsRaw(db: Queryable, ticketId: string): Promise<ZohoConversationRaw[]> {
   const res = await db.query(
-    `SELECT raw FROM conversations WHERE ticket_id = $1 ORDER BY commented_time ASC NULLS LAST`,
+    `SELECT raw FROM conversations WHERE ticket_id = $1 ORDER BY commented_time DESC NULLS LAST`,
     [ticketId],
   )
   return res.rows.map((r) => r.raw as ZohoConversationRaw)

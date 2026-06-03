@@ -87,4 +87,23 @@ describe('normalizeConversation', () => {
     expect(m.type).toBe('Privado')
     expect(m.content).toBe('Crédito')
   })
+
+  it('resuelve autor desde commenter.name, marca HTML y mapea adjuntos', () => {
+    const c: ZohoConversationRaw = {
+      id: '2', type: 'comment', content: '<div>Informe</div>', contentType: 'html', isPublic: false,
+      commenter: { name: 'Equipo Técnico' }, commentedTime: '2026-05-28T20:40:59.000Z',
+      attachments: [{
+        name: 'MT_18A22053.pdf', size: '718521',
+        href: 'https://desk.zoho.com/api/v1/tickets/9/comments/8/attachments/7/content',
+      }],
+    } as ZohoConversationRaw
+    const m = normalizeConversation(c)
+    expect(m.author).toBe('Equipo Técnico')
+    expect(m.isHtml).toBe(true)
+    expect(m.attachments).toHaveLength(1)
+    expect(m.attachments![0]).toEqual({
+      name: 'MT_18A22053.pdf', size: '701.7 KB',
+      path: '/tickets/9/comments/8/attachments/7/content',
+    })
+  })
 })

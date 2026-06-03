@@ -17,6 +17,13 @@ export interface Ticket {
   description?: string
 }
 
+/** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */
+export interface Attachment {
+  name: string
+  size: string   // ya formateado, p.ej. "701.7 KB"
+  path: string
+}
+
 /** Un mensaje del hilo de conversación en el detalle. */
 export interface Message {
   id: string
@@ -24,7 +31,8 @@ export interface Message {
   type: 'Público' | 'Privado'
   time: string
   content: string
-  attachment?: { name: string; size: string }
+  isHtml?: boolean
+  attachments?: Attachment[]
 }
 
 /** Definición de una columna del tablero Kanban. */
@@ -96,6 +104,9 @@ export interface ZohoConversationRaw {
   commenterName?: string | null
   authorName?: string | null
   author?: { name?: string | null } | null
+  commenter?: { name?: string | null } | null
+  contentType?: string | null   // "html" | "text/html" | "plainText"
+  attachments?: Array<{ name?: string | null; size?: string | number | null; href?: string | null }>
   commentedTime?: string | null
   createdTime?: string | null
 }

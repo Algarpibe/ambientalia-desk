@@ -57,17 +57,42 @@ export function normalizeTicketDetail(raw: ZohoTicketRaw): TicketDetail {
   }
 }
 
+function formatSize(bytes?: string | number | null): string {
+  const n = Number(bytes)
+  if (!n || Number.isNaN(n)) return ''
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Extrae la ruta para el proxy /api/attachment desde el href absoluto de Zoho. */
+function attachmentPath(href?: string | null): string {
+  if (!href) return ''
+  try {
+    return new URL(href).pathname.replace(/^\/api\/v1/, '')
+  } catch {
+    return ''
+  }
+}
+
 export function normalizeConversation(raw: ZohoConversationRaw): Message {
+  // El feed real trae commenter.name (comentarios) o author.name (hilos).
   const author =
-    raw.commenterName || raw.authorName || raw.author?.name || 'Desconocido'
+    raw.commenter?.name || raw.author?.name || raw.commenterName || raw.authorName || 'Desconocido'
   const isPublic =
     raw.visibility === 'public' || raw.isPublic === true || raw.isPublic === 'true'
   const time = formatTime(raw.commentedTime || raw.createdTime || '')
+  const attachments = (raw.attachments ?? [])
+    .filter((a) => a?.href)
+    .map((a) => ({ name: a.name ?? 'adjunto', size: formatSize(a.size), path: attachmentPath(a.href) }))
+    .filter((a) => a.path)
   return {
     id: raw.id,
     author,
     type: isPublic ? 'Público' : 'Privado',
     time,
     content: (raw.content || raw.summary || '').toString(),
+    isHtml: raw.contentType === 'html' || raw.contentType === 'text/html',
+    attachments: attachments.length ? attachments : undefined,
   }
 }
