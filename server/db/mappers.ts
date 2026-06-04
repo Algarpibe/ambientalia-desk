@@ -125,7 +125,7 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
     dueDate: row.due_date ?? null,
     createdAt: row.created_time ?? null,
     channel: row.channel ?? null,
-    diasEntrega: row.dias_entrega ?? null,
+    diasEntrega: row.dias_entrega == null ? null : String(row.dias_entrega),
   }
 }
 

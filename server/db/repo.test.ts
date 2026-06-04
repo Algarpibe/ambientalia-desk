@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { upsertAccount, upsertTicket, getTicketRow, countTickets } from './repo'
-import { getActiveTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
+import { getActiveTickets, getAllTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
 import { applyTransition, createTicket } from './repo'
 import { upsertClient } from '../books/repo'
 import { clientFromBooks } from '../books/mappers'
@@ -65,6 +65,15 @@ describe('repo queries', () => {
     await insertTransition(db, { ticketId: '1', transitionId: 'aprobacion', transitionName: 'Aprobación', fromStatus: 'Notificación cliente', toStatus: 'En Proceso', area: 'Comercial', performedBy: 'app', values: { comment: 'ok' }, commentId: null })
     const r = await db.query('SELECT to_status FROM ticket_transitions WHERE ticket_id=$1', ['1'])
     expect(r.rows[0].to_status).toBe('En Proceso')
+  })
+})
+
+describe('getAllTickets', () => {
+  it('incluye cerrados; getActiveTickets no', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('a',1,'A','Ingresado','Open',now())")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('b',2,'B','Finalizado','Closed',now())")
+    expect((await getActiveTickets(db)).length).toBe(1)
+    expect((await getAllTickets(db)).length).toBe(2)
   })
 })
 

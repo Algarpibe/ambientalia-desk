@@ -58,6 +58,20 @@ describe('GET /api/tickets', () => {
   })
 })
 
+describe('GET /api/tickets?scope=all', () => {
+  it('scope=all incluye cerrados; sin scope solo activos; campos enriquecidos', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,priority,due_date,created_time,channel,dias_entrega) VALUES ('a',1,'A','Ingresado','Open','High','2026-06-10',now(),'Email','5')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('b',2,'B','Finalizado','Closed',now())")
+    const { app } = appWith()
+    const active = await request(app).get('/api/tickets').set('Cookie', cookie)
+    expect(active.body.map((t: any) => t.number)).toEqual(['#1'])
+    const all = await request(app).get('/api/tickets?scope=all').set('Cookie', cookie)
+    expect(all.body.length).toBe(2)
+    expect(all.body.find((t: any) => t.number === '#1')).toMatchObject({ priority: 'High', statusType: 'Open', channel: 'Email', diasEntrega: '5' })
+  })
+})
+
 describe('escrituras', () => {
   it('POST reply → 403 si enableWrites=false', async () => {
     const cookie = await adminCookie()

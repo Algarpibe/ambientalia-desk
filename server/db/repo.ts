@@ -107,6 +107,16 @@ export async function getActiveTickets(db: Queryable): Promise<TicketWithRefs[]>
   return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name } }))
 }
 
+export async function getAllTickets(db: Queryable): Promise<TicketWithRefs[]> {
+  const r = await db.query(
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name
+     FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
+     LEFT JOIN clients cl ON t.client_id=cl.id
+     ORDER BY t.created_time DESC NULLS LAST`,
+  )
+  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name } }))
+}
+
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {
   const r = await db.query(
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name,
