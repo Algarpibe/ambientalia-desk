@@ -38,3 +38,12 @@ export function parseEquiposCsv(text: string): EquipoRow[] {
   }
   return out
 }
+
+import type { Queryable } from './migrate'
+import { upsertEquipo } from './equipos'
+
+export async function seedEquipos(db: Queryable, csvText: string): Promise<number> {
+  const rows = parseEquiposCsv(csvText)
+  for (const r of rows) await upsertEquipo(db, r)
+  return rows.length
+}

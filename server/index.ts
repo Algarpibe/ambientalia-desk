@@ -14,6 +14,9 @@ import { hashPassword } from './auth/passwords'
 import { createBooksClient } from './books/booksClient'
 import { createBooksSync } from './books/sync'
 import { maxLastModified } from './books/repo'
+import { readFileSync } from 'node:fs'
+import { seedEquipos } from './db/seedEquipos'
+import { countEquipos } from './db/equipos'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -25,6 +28,16 @@ async function main() {
   await migrate(pool)
   // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
   try { await reseedTicketNumber(pool) } catch (e) { console.error('reseed inicial omitido:', e) }
+
+  try {
+    if ((await countEquipos(pool)) === 0) {
+      const csv = readFileSync(new URL('./db/equipos.seed.csv', import.meta.url), 'utf8')
+      const n = await seedEquipos(pool, csv)
+      console.log(`Equipos: semilla cargada (${n})`)
+    } else {
+      console.log('Equipos: ya hay datos, no se siembra')
+    }
+  } catch (e) { console.error('Seed de equipos falló:', e) }
 
   // Bootstrap: si no hay usuarios y hay credenciales en env, crea el admin inicial.
   if (config.adminEmail && config.adminPassword && (await countUsers(pool)) === 0) {
