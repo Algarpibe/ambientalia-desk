@@ -1,0 +1,70 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import request from 'supertest'
+import { newDb } from 'pg-mem'
+import { migrate, type Queryable } from '../db/migrate'
+import { createApp } from '../app'
+import { createUser } from './users'
+import { hashPassword } from './passwords'
+import type { AppConfig } from '../config'
+
+let db: Queryable
+beforeEach(async () => {
+  const pg = newDb().adapters.createPg()
+  db = new pg.Pool()
+  await migrate(db)
+})
+
+function app() {
+  const sync = { backfillTickets: vi.fn(), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn() }
+  const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+  return createApp({ db, zohoFetch, sync, config: { enableWrites: false } as AppConfig })
+}
+async function seedAdmin() {
+  await createUser(db, { email: 'admin@x.co', name: 'Admin', passwordHash: await hashPassword('password123'), isAdmin: true })
+}
+
+describe('auth routes', () => {
+  it('login ok devuelve usuario y cookie; me funciona', async () => {
+    await seedAdmin()
+    const a = app()
+    const login = await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })
+    expect(login.status).toBe(200)
+    expect(login.body.email).toBe('admin@x.co')
+    const cookie = login.headers['set-cookie']
+    const me = await request(a).get('/api/auth/me').set('Cookie', cookie)
+    expect(me.status).toBe(200)
+    expect(me.body.isAdmin).toBe(true)
+  })
+
+  it('credenciales malas → 401 genérico', async () => {
+    await seedAdmin()
+    const res = await request(app()).post('/api/auth/login').send({ email: 'admin@x.co', password: 'mala' })
+    expect(res.status).toBe(401)
+    expect(res.body.error).toBe('Correo o contraseña incorrectos')
+  })
+
+  it('me sin cookie → 401', async () => {
+    const res = await request(app()).get('/api/auth/me')
+    expect(res.status).toBe(401)
+  })
+
+  it('usuario admin crea otro usuario; no-admin recibe 403', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const created = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'op@x.co', name: 'Op', password: 'password123' })
+    expect(created.status).toBe(201)
+    expect((await request(a).get('/api/users').set('Cookie', cookie)).body.length).toBe(2)
+    const opCookie = (await request(a).post('/api/auth/login').send({ email: 'op@x.co', password: 'password123' })).headers['set-cookie']
+    const forbidden = await request(a).get('/api/users').set('Cookie', opCookie)
+    expect(forbidden.status).toBe(403)
+  })
+
+  it('correo duplicado → 409', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const dup = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'admin@x.co', name: 'X', password: 'password123' })
+    expect(dup.status).toBe(409)
+  })
+})

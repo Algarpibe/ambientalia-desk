@@ -10,6 +10,8 @@ import { migrate, reseedTicketNumber } from './db/migrate'
 import { transitionById } from '../shared/transitions'
 import { buildTransitionPlan } from './transitionExec'
 import { TRANSITION_ACTOR } from './transitionActor'
+import cookieParser from 'cookie-parser'
+import { registerAuthRoutes } from './auth/routes'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -30,6 +32,8 @@ interface Deps {
 export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   const app = express()
   app.use(express.json())
+  app.use(cookieParser())
+  registerAuthRoutes(app, db)
 
   const measurer = createMeasurer({ zohoFetch, config })
   const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config })
