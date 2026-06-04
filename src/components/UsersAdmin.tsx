@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { UserPublic } from '../../shared/types'
-import { listUsers, createUser, updateUser } from '../api/client'
+import { listUsers, createUser, updateUser, listRoles, type Role } from '../api/client'
 
 export function UsersAdmin({ onClose }: { onClose: () => void }) {
   const [users, setUsers] = useState<UserPublic[]>([])
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [roles, setRoles] = useState<Role[]>([])
+  useEffect(() => { listRoles().then(setRoles).catch(() => {}) }, [])
 
   async function reload() {
     try { setUsers(await listUsers()) } catch (e) { setError(String(e instanceof Error ? e.message : e)) }
@@ -14,6 +16,9 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
 
   async function toggleActive(u: UserPublic) {
     await updateUser(u.id, { active: !u.active }); reload()
+  }
+  async function changeRole(u: UserPublic, roleId: string) {
+    await updateUser(u.id, { roleId: roleId || null }); reload()
   }
   async function resetPassword(u: UserPublic) {
     const pw = prompt(`Nueva contraseña para ${u.email} (mínimo 8 caracteres):`)
@@ -33,7 +38,7 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-auto p-4">
         <table className="w-full text-[13px]">
           <thead><tr className="text-left text-slate-500 border-b">
-            <th className="py-2">Correo</th><th>Nombre</th><th>Admin</th><th>Activo</th><th></th>
+            <th className="py-2">Correo</th><th>Nombre</th><th>Admin</th><th>Activo</th><th>Rol</th><th></th>
           </tr></thead>
           <tbody>
             {users.map((u) => (
@@ -42,6 +47,12 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
                 <td>{u.name}</td>
                 <td>{u.isAdmin ? 'Sí' : 'No'}</td>
                 <td>{u.active ? 'Sí' : 'No'}</td>
+                <td>
+                  <select value={u.roleId ?? ''} onChange={(e) => changeRole(u, e.target.value)} className="border border-slate-200 rounded p-1 text-[12px]">
+                    <option value="">— Sin rol —</option>
+                    {roles.filter((r) => r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                </td>
                 <td className="text-right">
                   <button onClick={() => toggleActive(u)} className="text-[12px] text-blue-600 mr-3">{u.active ? 'Desactivar' : 'Activar'}</button>
                   <button onClick={() => resetPassword(u)} className="text-[12px] text-blue-600">Resetear contraseña</button>

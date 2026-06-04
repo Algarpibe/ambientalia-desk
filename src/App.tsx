@@ -10,11 +10,13 @@ import { fetchTickets } from './api/client';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
 import { UsersAdmin } from './components/UsersAdmin'
+import { RolesAdmin } from './components/RolesAdmin'
 
 function App() {
   const { user, loading: authLoading } = useAuth();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [showUsers, setShowUsers] = useState(false)
+  const [showRoles, setShowRoles] = useState(false)
   const { data: tickets, loading, error, reload } = useAsync(fetchTickets, [user?.id]);
   const groups = groupTicketsByColumn(tickets ?? []);
 
@@ -23,7 +25,7 @@ function App() {
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header onOpenUsers={() => setShowUsers(true)} />
+      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
@@ -80,6 +82,7 @@ function App() {
       )}
 
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
+      {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
     </div>
   );
 }
