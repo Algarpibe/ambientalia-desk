@@ -11,8 +11,9 @@ async function json<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function fetchTickets(): Promise<Ticket[]> {
-  return fetch('/api/tickets', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
+export function fetchTickets(scope?: 'all'): Promise<Ticket[]> {
+  const qs = scope === 'all' ? '?scope=all' : ''
+  return fetch(`/api/tickets${qs}`, { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
 
 export function fetchTicket(id: string): Promise<TicketDetail> {

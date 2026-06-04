@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
-import { TicketCard } from './components/TicketCard';
 import { TicketDetailView } from './components/TicketDetailView';
 import { COLUMNS } from '../shared/columns';
-import { groupTicketsByColumn, visibleColumns } from './board';
+import { groupTicketsByColumn, groupByPriority, groupByDueDate, PRIORITY_COLUMNS, DUEDATE_COLUMNS } from './board';
 import { useHideEmptyColumns } from './boardSettings';
+import { useViewMode } from './viewSettings';
+import { KanbanBoard } from './components/KanbanBoard';
+import { TicketList } from './components/TicketList';
+import { TicketTable } from './components/TicketTable';
+import { ViewModeMenu } from './components/ViewModeMenu';
 import { useAsync } from './hooks/useAsync';
 import { fetchTickets } from './api/client';
 import { useAuth } from './auth/AuthContext';
@@ -23,9 +27,10 @@ function App() {
   const [showCreate, setShowCreate] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
   const hideEmpty = useHideEmptyColumns()
-  const { data: tickets, loading, error, reload } = useAsync(fetchTickets, [user?.id]);
-  const groups = groupTicketsByColumn(tickets ?? []);
-  const counts = Object.fromEntries(COLUMNS.map((c) => [c.id, groups[c.id]?.length ?? 0]));
+  const [mode, setMode] = useViewMode()
+  const { data: tickets, loading, error, reload } = useAsync(() => fetchTickets('all'), [user?.id]);
+  const all = tickets ?? [];
+  const activos = all.filter((t) => t.statusType !== 'Closed');
 
   if (authLoading) return <div className="h-screen flex items-center justify-center text-slate-400">Cargando…</div>
   if (!user) return <Login />
@@ -46,7 +51,10 @@ function App() {
                 <span className="material-symbols-outlined text-[18px] text-slate-400">refresh</span>
               </button>
             </div>
-            <button onClick={() => setShowCreate(true)} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold">Nuevo ticket</button>
+            <div className="flex items-center gap-2">
+              <ViewModeMenu mode={mode} onChange={setMode} />
+              <button onClick={() => setShowCreate(true)} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold">Nuevo ticket</button>
+            </div>
           </div>
 
           {error && (
@@ -56,32 +64,21 @@ function App() {
             </div>
           )}
 
-          <main className="flex-1 flex overflow-x-auto p-3 gap-2 bg-[#E9EDF2] dark:bg-slate-950">
-            {visibleColumns(COLUMNS, counts, hideEmpty).map((column) => {
-              const colTickets = groups[column.id] ?? [];
-              return (
-                <section key={column.id} className="w-[280px] min-w-[280px] flex flex-col">
-                  <div className="px-1 py-2 flex items-center justify-between">
-                    <h3 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                      {column.label} ({colTickets.length})
-                    </h3>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 hide-scrollbar">
-                    {loading && <div className="h-20 rounded-lg bg-slate-200/60 animate-pulse" />}
-                    {!loading && colTickets.map((ticket) => (
-                      <TicketCard key={ticket.id} ticket={ticket} onClick={() => setSelectedTicketId(ticket.id)} />
-                    ))}
-                    {!loading && colTickets.length === 0 && (
-                      <div className="h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center opacity-40">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Sin Tickets</span>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              );
-            })}
-          </main>
+          {mode === 'estado' && (
+            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(activos)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+          )}
+          {mode === 'prioridad' && (
+            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(all)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+          )}
+          {mode === 'cuenta-regresiva' && (
+            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(all, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+          )}
+          {(mode === 'clasica' || mode === 'compacta') && (
+            <TicketList tickets={all} dense={mode === 'compacta'} onSelect={setSelectedTicketId} />
+          )}
+          {mode === 'tabla' && (
+            <TicketTable tickets={all} onSelect={setSelectedTicketId} />
+          )}
         </div>
       </div>
 
