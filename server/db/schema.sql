@@ -71,3 +71,23 @@ CREATE INDEX IF NOT EXISTS idx_conversations_ticket ON conversations (ticket_id)
 CREATE INDEX IF NOT EXISTS idx_transitions_ticket ON ticket_transitions (ticket_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_account ON contacts (account_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_ticket ON attachments (ticket_id);
+
+CREATE TABLE IF NOT EXISTS users (
+  id text PRIMARY KEY,
+  email text UNIQUE NOT NULL,
+  name text NOT NULL,
+  password_hash text NOT NULL,
+  is_admin boolean NOT NULL DEFAULT false,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token text PRIMARY KEY,
+  user_id text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
