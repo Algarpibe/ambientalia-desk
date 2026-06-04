@@ -2,8 +2,8 @@ import express, { type Express, type Request, type Response } from 'express'
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import type { Sync } from './sync'
-import { normalizeTicket, normalizeTicketDetail, normalizeConversation } from './normalize'
-import { getActiveTicketsRaw, getTicketRaw, getConversationsRaw } from './db/repo'
+import { getActiveTickets, getTicketWithRefs, getConversations } from './db/repo'
+import { rowToTicket, rowToTicketDetail, rowToMessage } from './db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
 import { transitionById } from '../shared/transitions'
@@ -50,42 +50,28 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.get('/api/tickets', async (_req, res) => {
     try {
-      const raws = await getActiveTicketsRaw(db)
-      res.json(raws.map((r) => normalizeTicket(r)))
-    } catch (err) {
-      res.status(500).json({ error: String(err) })
-    }
+      const list = await getActiveTickets(db)
+      res.json(list.map(({ row, refs }) => rowToTicket(row, refs)))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
   app.get('/api/tickets/:id', async (req, res) => {
     try {
       const id = String(req.params.id)
-      // Siempre trae el DETALLE fresco de Zoho (incluye customFields, contacto y empresa)
-      // y lo guarda en la BD. Si Zoho falla, caemos a lo que haya en la BD.
-      try {
-        await sync.syncTicket(id)
-      } catch (e) {
-        console.error(`syncTicket(${id}) falló, sirvo desde BD:`, e)
-      }
-      const raw = await getTicketRaw(db, id)
-      if (!raw) return res.status(404).json({ error: 'Ticket no encontrado' })
-      res.json(normalizeTicketDetail(raw))
-    } catch (err) {
-      res.status(500).json({ error: String(err) })
-    }
+      try { await sync.syncTicket(id) } catch (e) { console.error(`syncTicket(${id}) falló:`, e) }
+      const found = await getTicketWithRefs(db, id)
+      if (!found) return res.status(404).json({ error: 'Ticket no encontrado' })
+      res.json(rowToTicketDetail(found.row, found.refs))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
   app.get('/api/tickets/:id/conversations', async (req, res) => {
     try {
-      let raws = await getConversationsRaw(db, req.params.id)
-      if (raws.length === 0) {
-        await sync.syncConversations(req.params.id)
-        raws = await getConversationsRaw(db, req.params.id)
-      }
-      res.json(raws.map((r) => normalizeConversation(r)))
-    } catch (err) {
-      res.status(500).json({ error: String(err) })
-    }
+      const id = String(req.params.id)
+      let convs = await getConversations(db, id)
+      if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
+      res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.
@@ -165,8 +151,8 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
       await sync.syncTicket(id)
       await sync.syncConversations(id)
-      const raw = await getTicketRaw(db, id)
-      res.json(raw ? normalizeTicketDetail(raw) : {})
+      const found = await getTicketWithRefs(db, id)
+      res.json(found ? rowToTicketDetail(found.row, found.refs) : {})
     } catch (err) {
       res.status(502).json({ error: String(err) })
     }

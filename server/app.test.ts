@@ -2,16 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './db/migrate'
-import { upsertTicket } from './db/repo'
-import { ticketRowFromZoho } from './db/mappers'
+import { upsertTicket, upsertAccount } from './db/repo'
+import { ticketRowFromZoho, accountRowFromZoho } from './db/mappers'
 import { createApp } from './app'
 import type { AppConfig } from './config'
-
-function zTicket(id: string, statusType = 'Open') {
-  return { id, ticketNumber: id, subject: 'Test', status: 'Ingresado', statusType,
-    createdTime: '2026-01-25T20:44:00.000Z', commentCount: '2',
-    contact: { accountName: 'AGQ' }, assignee: { firstName: 'David', lastName: 'León' } }
-}
 
 let db: Queryable
 beforeEach(async () => {
@@ -29,8 +23,9 @@ function appWith(overrides: Partial<{ enableWrites: boolean }> = {}) {
 }
 
 describe('GET /api/tickets', () => {
-  it('devuelve tickets normalizados desde Postgres', async () => {
-    await upsertTicket(db, ticketRowFromZoho(zTicket('864') as any))
+  it('devuelve tickets activos normalizados desde Postgres', async () => {
+    await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'AGQ' } as any))
+    await upsertTicket(db, { ...ticketRowFromZoho({ id: '1', ticketNumber: '864', subject: 'Test', status: 'Ingresado', statusType: 'Open', customFields: {} } as any), account_id: 'a1' })
     const { app } = appWith()
     const res = await request(app).get('/api/tickets')
     expect(res.status).toBe(200)
