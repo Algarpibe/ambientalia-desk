@@ -36,4 +36,12 @@ describe('loadConfig', () => {
     expect(c.adminEmail).toBe('a@x.co')
     expect(c.adminPassword).toBe('secreta12')
   })
+
+  it('lee ZOHO_BOOKS_* (refresh token vacío por defecto)', () => {
+    expect(loadConfig(base).booksRefreshToken).toBe('')
+    const c = loadConfig({ ...base, ZOHO_BOOKS_REFRESH_TOKEN: 'rt', ZOHO_BOOKS_ORG_ID: '714421387' })
+    expect(c.booksRefreshToken).toBe('rt')
+    expect(c.booksOrgId).toBe('714421387')
+    expect(c.booksApiDomain).toBe('www.zohoapis.com')
+  })
 })

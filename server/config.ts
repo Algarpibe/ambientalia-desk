@@ -13,6 +13,12 @@ export interface AppConfig {
   adminToken: string   // protege endpoints /api/admin/* (vacío = deshabilitados)
   adminEmail: string     // bootstrap del primer admin (vacío = no se siembra)
   adminPassword: string
+  booksClientId: string
+  booksClientSecret: string
+  booksRefreshToken: string   // vacío = sync de Books deshabilitado
+  booksOrgId: string
+  booksApiDomain: string
+  booksAccountsDomain: string
 }
 
 type Env = Record<string, string | undefined>
@@ -39,5 +45,11 @@ export function loadConfig(env: Env = process.env): AppConfig {
     adminToken: env.ADMIN_TOKEN || '',
     adminEmail: env.ADMIN_EMAIL || '',
     adminPassword: env.ADMIN_PASSWORD || '',
+    booksClientId: env.ZOHO_BOOKS_CLIENT_ID || env.ZOHO_CLIENT_ID || '',
+    booksClientSecret: env.ZOHO_BOOKS_CLIENT_SECRET || env.ZOHO_CLIENT_SECRET || '',
+    booksRefreshToken: env.ZOHO_BOOKS_REFRESH_TOKEN || '',
+    booksOrgId: env.ZOHO_BOOKS_ORG_ID || '',
+    booksApiDomain: env.ZOHO_BOOKS_API_DOMAIN || 'www.zohoapis.com',
+    booksAccountsDomain: env.ZOHO_BOOKS_ACCOUNTS_DOMAIN || env.ZOHO_ACCOUNTS_DOMAIN || 'accounts.zoho.com',
   }
 }
