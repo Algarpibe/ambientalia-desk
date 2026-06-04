@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { Queryable } from './migrate'
 import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'
 
@@ -144,5 +145,54 @@ export async function insertTransition(db: Queryable, t: TransitionRecord): Prom
     `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [t.ticketId, t.transitionId, t.transitionName, t.fromStatus, t.toStatus, t.area, t.performedBy, J(t.values), t.commentId],
+  )
+}
+
+export interface TransitionApply {
+  status: string
+  statusType: string
+  columns: Record<string, unknown>
+  customFields: Record<string, string | null>
+  priority?: string
+  comment?: string
+}
+
+export async function applyTransition(
+  db: Queryable,
+  ticketId: string,
+  fromStatus: string,
+  transition: { id: string; name: string; area: string },
+  plan: TransitionApply,
+  actor: string,
+  values: unknown,
+): Promise<void> {
+  // 1) Comentario (si lo hay) → conversations
+  let commentId: string | null = null
+  if (plan.comment) {
+    commentId = `app-${randomUUID()}`
+    await db.query(
+      `INSERT INTO conversations (id,ticket_id,kind,author_name,author_type,is_public,content,content_type,commented_time,source)
+       VALUES ($1,$2,'comment',$3,'agent',false,$4,'plainText',now(),'app')`,
+      [commentId, ticketId, actor, plan.comment],
+    )
+  }
+
+  // 2) Update del ticket: estado + columnas tipadas + custom_fields + managed_by_app. Los nombres de
+  //    columna provienen de PROMOTED_COLUMNS (confiables, no input de usuario) → no hay inyección.
+  const sets = ['status=$2', 'status_type=$3', 'managed_by_app=true', "source='app'", 'modified_time=now()', 'updated_at=now()']
+  const params: unknown[] = [ticketId, plan.status, plan.statusType]
+  if (plan.priority) { params.push(plan.priority); sets.push(`priority=$${params.length}`) }
+  for (const [col, val] of Object.entries(plan.columns)) { params.push(val); sets.push(`${col}=$${params.length}`) }
+  if (Object.keys(plan.customFields).length) {
+    params.push(JSON.stringify(plan.customFields))
+    sets.push(`custom_fields = custom_fields || $${params.length}::jsonb`)
+  }
+  await db.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params)
+
+  // 3) Historial
+  await db.query(
+    `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [ticketId, transition.id, transition.name, fromStatus, plan.status, transition.area, actor, JSON.stringify(values), commentId],
   )
 }

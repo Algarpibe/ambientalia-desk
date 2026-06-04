@@ -3,6 +3,7 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { upsertAccount, upsertTicket, getTicketRow, countTickets } from './repo'
 import { getActiveTickets, nextTicketNumber, insertTransition } from './repo'
+import { applyTransition } from './repo'
 import { reseedTicketNumber } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
 
@@ -62,5 +63,27 @@ describe('repo queries', () => {
     await insertTransition(db, { ticketId: '1', transitionId: 'aprobacion', transitionName: 'Aprobación', fromStatus: 'Notificación cliente', toStatus: 'En Proceso', area: 'Comercial', performedBy: 'app', values: { comment: 'ok' }, commentId: null })
     const r = await db.query('SELECT to_status FROM ticket_transitions WHERE ticket_id=$1', ['1'])
     expect(r.rows[0].to_status).toBe('En Proceso')
+  })
+})
+
+describe('applyTransition', () => {
+  it('actualiza ticket (managed), inserta comentario e historial', async () => {
+    await upsertTicket(db, ticketRowFromZoho({ id: '1', ticketNumber: '5', status: 'OV asignada', statusType: 'Open', customFields: {} } as any))
+    await applyTransition(
+      db, '1', 'OV asignada',
+      { id: 'habilitar_servicio', name: 'Habilitar Servicio', area: 'Comercial' },
+      { status: 'Ingresado', statusType: 'Open', columns: { orden_venta: 'OV-1', fecha_cotizacion: '2026-05-19' }, customFields: {}, comment: 'ok' },
+      'Equipo Técnico', { comment: 'ok' },
+    )
+    const r = await getTicketRow(db, '1')
+    expect(r!.status).toBe('Ingresado')
+    expect(r!.managed_by_app).toBe(true)
+    expect(r!.orden_venta).toBe('OV-1')
+    const conv = await db.query('SELECT count(*)::int AS n FROM conversations WHERE ticket_id=$1', ['1'])
+    expect(conv.rows[0].n).toBe(1)
+    const hist = await db.query('SELECT to_status, from_status, performed_by FROM ticket_transitions WHERE ticket_id=$1', ['1'])
+    expect(hist.rows[0].to_status).toBe('Ingresado')
+    expect(hist.rows[0].from_status).toBe('OV asignada')
+    expect(hist.rows[0].performed_by).toBe('Equipo Técnico')
   })
 })
