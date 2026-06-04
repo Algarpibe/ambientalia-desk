@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
-import { upsertAccount, upsertContact, upsertAgent, upsertTicket, getTicketRow, countTickets } from './repo'
-import { getActiveTickets, getConversations, nextTicketNumber, insertTransition } from './repo'
+import { upsertAccount, upsertTicket, getTicketRow, countTickets } from './repo'
+import { getActiveTickets, nextTicketNumber, insertTransition } from './repo'
 import { reseedTicketNumber } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
 
