@@ -6,7 +6,9 @@ import { createSession, deleteSession, deleteUserSessions } from './sessions'
 import { requireAuth, requireAdmin } from './middleware'
 
 const COOKIE = 'sid'
-const COOKIE_OPTS = { httpOnly: true, sameSite: 'lax' as const, maxAge: 30 * 24 * 60 * 60 * 1000 }
+const SECURE = process.env.NODE_ENV === 'production' // cookie solo por HTTPS en producción
+const COOKIE_OPTS = { httpOnly: true, sameSite: 'lax' as const, secure: SECURE, maxAge: 30 * 24 * 60 * 60 * 1000 }
+const CLEAR_OPTS = { httpOnly: true, sameSite: 'lax' as const, secure: SECURE } // mismas opciones para que clearCookie funcione
 
 export function registerAuthRoutes(app: Express, db: Queryable): void {
   const auth = requireAuth(db)
@@ -26,7 +28,7 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
   app.post('/api/auth/logout', auth, async (req, res) => {
     const token = req.cookies?.sid
     if (token) await deleteSession(db, String(token))
-    res.clearCookie(COOKIE)
+    res.clearCookie(COOKIE, CLEAR_OPTS)
     res.json({ ok: true })
   })
 

@@ -20,6 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refresh().finally(() => setLoading(false)) }, [])
 
+  // Si una petición de datos recibe 401 (sesión expirada), volver al login.
+  useEffect(() => {
+    const onUnauthorized = () => setUser(null)
+    window.addEventListener('auth:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', onUnauthorized)
+  }, [])
+
   async function login(email: string, password: string) { setUser(await authLogin(email, password)) }
   async function logout() { await authLogout(); setUser(null) }
 

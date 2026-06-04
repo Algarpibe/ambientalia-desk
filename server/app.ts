@@ -104,7 +104,8 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   })
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
-  app.get('/api/attachment', async (req, res) => {
+  // Requiere sesión: son documentos de clientes (facturas, fotos, etc.).
+  app.get('/api/attachment', requireAuth(db), async (req, res) => {
     const path = String(req.query.path ?? '')
     // Solo rutas de adjuntos de tickets (evita SSRF a rutas arbitrarias de la API).
     if (!/^\/tickets\/\d+\/(comments|threads)\/\d+\/attachments\/\d+\/content$/.test(path)) {

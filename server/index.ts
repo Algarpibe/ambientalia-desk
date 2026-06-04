@@ -25,7 +25,9 @@ async function main() {
 
   // Bootstrap: si no hay usuarios y hay credenciales en env, crea el admin inicial.
   if (config.adminEmail && config.adminPassword && (await countUsers(pool)) === 0) {
-    if (!(await getUserByEmail(pool, config.adminEmail))) {
+    if (config.adminPassword.length < 8) {
+      console.error('ADMIN_PASSWORD debe tener al menos 8 caracteres; no se sembró el admin inicial.')
+    } else if (!(await getUserByEmail(pool, config.adminEmail))) {
       await createUser(pool, {
         email: config.adminEmail, name: 'Administrador',
         passwordHash: await hashPassword(config.adminPassword), isAdmin: true,

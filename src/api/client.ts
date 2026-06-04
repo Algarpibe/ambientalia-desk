@@ -1,7 +1,13 @@
 import type { Ticket, TicketDetail, Message, UserPublic } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
+  if (!res.ok) {
+    // Sesión expirada/invalidada en una petición de datos → avisar para volver al login.
+    if (res.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth:unauthorized'))
+    }
+    throw new Error(`HTTP ${res.status}: ${await res.text()}`)
+  }
   return res.json() as Promise<T>
 }
 

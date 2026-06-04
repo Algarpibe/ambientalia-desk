@@ -78,6 +78,17 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
   Decisión de producto: si "obligatorio" = "debe quedar marcado", añadir en la rama checkbox de
   `buildTransitionPlan` un error cuando `required && asBool(raw) !== true`.
 
+## 3c. Hallazgos de la revisión del Subsistema H1 (menores)
+
+- **Enumeración de usuarios por timing en login (M-3):** `POST /api/auth/login` corre bcrypt solo si el
+  correo existe; un correo inexistente responde más rápido → revela si un correo está registrado. Bajo
+  riesgo (equipo pequeño y conocido). Si se quiere endurecer: correr siempre un `bcrypt.compare` contra un
+  hash dummy cuando el usuario no existe/está inactivo, para igualar tiempos.
+- **`@types/bcryptjs` redundante:** bcryptjs 3.x trae sus propios tipos; `@types/bcryptjs` (devDep) ya no
+  hace falta. Se puede quitar en una limpieza futura (inofensivo).
+- *(Resueltos en la revisión)*: cookie `Secure` en producción, `/api/attachment` ahora requiere sesión,
+  401 en peticiones de datos devuelve al login, y el bootstrap exige `ADMIN_PASSWORD` ≥ 8.
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
