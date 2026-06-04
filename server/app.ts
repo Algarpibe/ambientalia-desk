@@ -12,6 +12,7 @@ import { buildTransitionPlan } from './transitionExec'
 import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
+import { requireAuth } from './auth/middleware'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -53,6 +54,8 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     }
     next()
   }
+
+  app.use('/api/tickets', requireAuth(db)) // login obligatorio para tickets/transiciones/reply
 
   app.get('/api/tickets', async (_req, res) => {
     try {
@@ -163,7 +166,8 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       const values = (req.body.values ?? {}) as Record<string, unknown>
       const plan = buildTransitionPlan(t, values)
       if (plan.errors.length) { res.status(422).json({ errors: plan.errors }); return }
-      await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, TRANSITION_ACTOR, values)
+      const actor = req.user?.name ?? TRANSITION_ACTOR
+      await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)
       const updated = await getTicketWithRefs(db, id)
       res.json(updated ? rowToTicketDetail(updated.row, updated.refs) : {})
     } catch (err) {
