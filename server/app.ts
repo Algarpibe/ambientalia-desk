@@ -6,7 +6,6 @@ import { getActiveTickets, getTicketWithRefs, getConversations, applyTransition 
 import { rowToTicket, rowToTicketDetail, rowToMessage } from './db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
-import { migrate, reseedTicketNumber } from './db/migrate'
 import { transitionById } from '../shared/transitions'
 import { buildTransitionPlan } from './transitionExec'
 import { TRANSITION_ACTOR } from './transitionActor'
@@ -81,29 +80,6 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
       res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
     } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-
-  // MIGRACIÓN one-time (Subsistema A): elimina el esquema viejo, crea el híbrido y re-puebla.
-  // DESTRUCTIVO. Protegido por ADMIN_TOKEN + confirm=yes. Seguro mientras no haya tickets
-  // gestionados por la app (managed_by_app); tras el Subsistema B NO usar (perdería cambios locales).
-  app.get('/api/admin/recreate-schema', async (req, res) => {
-    if (!requireAdmin(req, res)) return
-    if (req.query.confirm !== 'yes') {
-      res.status(400).json({ error: 'Falta confirm=yes (operación destructiva)' })
-      return
-    }
-    try {
-      await db.query('DROP TABLE IF EXISTS tickets, conversations, attachments, accounts, contacts, agents, ticket_transitions CASCADE')
-      await db.query('DROP SEQUENCE IF EXISTS ticket_number_seq')
-      await migrate(db)
-      await reseedTicketNumber(db)
-      res.json({ status: 'esquema recreado; backfill iniciado en segundo plano' })
-      sync.backfillTickets()
-        .then(async (n) => { console.log(`Recreate backfill: ${n} tickets`); await reseedTicketNumber(db) })
-        .catch((e) => console.error('Recreate backfill falló:', e))
-    } catch (err) {
-      res.status(500).json({ error: String(err) })
-    }
   })
 
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.

@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthCtx.Provider value={{ user, loading, login, logout, refresh }}>{children}</AuthCtx.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthState {
   const ctx = useContext(AuthCtx)
   if (!ctx) throw new Error('useAuth debe usarse dentro de <AuthProvider>')
