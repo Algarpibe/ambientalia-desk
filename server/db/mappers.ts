@@ -2,7 +2,12 @@ import { PROMOTED_COLUMNS, type TicketRow, type AccountRow, type ContactRow, typ
 
 function toBool(v: unknown): boolean | null {
   if (v === undefined || v === null || v === '') return null
-  return v === true || v === 'true' || v === 'Sí' || v === 'si'
+  if (typeof v === 'boolean') return v
+  // Zoho mezcla "true"/"false" y "Sí"/"No" (a veces sin tilde). Normalizamos.
+  const s = String(v).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  if (['true', 'si', 'yes', 'y', '1'].includes(s)) return true
+  if (['false', 'no', 'n', '0'].includes(s)) return false
+  return null
 }
 function toInt(v: unknown): number | null {
   if (v === undefined || v === null || v === '') return null

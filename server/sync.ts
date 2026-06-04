@@ -18,7 +18,9 @@ const PAGE_SIZE = 100
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
 
 export function createSync({ zohoFetch, db, config }: Deps): Sync {
+  // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
   const accountSeen = new Set<string>()
+  const contactSeen = new Set<string>()
 
   async function ensureAccount(accountId: string | null | undefined): Promise<void> {
     if (!accountId || accountSeen.has(accountId)) return
@@ -29,7 +31,8 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     } catch { /* sin empresa si falla */ }
   }
   async function ensureContact(contactId: string | null | undefined): Promise<void> {
-    if (!contactId) return
+    if (!contactId || contactSeen.has(contactId)) return
+    contactSeen.add(contactId)
     try {
       const res = await zohoFetch(`/contacts/${contactId}`)
       if (res.ok) {

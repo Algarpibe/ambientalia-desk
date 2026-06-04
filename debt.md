@@ -55,7 +55,19 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
 
 ---
 
-## 3. Otros pendientes conocidos (menores)
+## 3. Hallazgos de la revisión del Subsistema A (para el Subsistema B)
+
+- **Guarda `managed_by_app` atómica (I-1):** `upsertTicket` (`server/db/repo.ts`) protege los tickets
+  gestionados por la app con un `SELECT managed_by_app` + early-return (no atómico, TOCTOU). Hoy es
+  **latente** (nada pone `managed_by_app=true` aún). Cuando el **Subsistema B** empiece a marcar
+  tickets como gestionados, hacer la escritura **atómica**: usar `... ON CONFLICT (id) DO UPDATE SET
+  ... WHERE tickets.managed_by_app = false` (Postgres real lo soporta; sólo pg-mem no — gatear el test).
+- **Backfill sin backoff de 429 (I-3 residual):** el backfill principal (`server/sync.ts`) recorre
+  ~900 tickets + sus contactos/cuentas (ya con dedup) de forma secuencial **sin manejo de 429**. Si
+  Zoho limita, esos tickets quedan con empresa/contacto null hasta re-sync. Añadir backoff/espera ante
+  429 en `zohoFetch` o entre páginas (el endpoint admin `backfill-details` ya tiene reintento).
+
+## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras:** `ENABLE_WRITES=true` en Environment para habilitar responder /
   cambiar estado desde la app (con diálogo de confirmación). Probar primero con un ticket de
