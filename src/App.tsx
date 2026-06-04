@@ -9,10 +9,12 @@ import { useAsync } from './hooks/useAsync';
 import { fetchTickets } from './api/client';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
+import { UsersAdmin } from './components/UsersAdmin'
 
 function App() {
   const { user, loading: authLoading } = useAuth();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [showUsers, setShowUsers] = useState(false)
   const { data: tickets, loading, error, reload } = useAsync(fetchTickets, [user?.id]);
   const groups = groupTicketsByColumn(tickets ?? []);
 
@@ -21,7 +23,7 @@ function App() {
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header />
+      <Header onOpenUsers={() => setShowUsers(true)} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
@@ -76,6 +78,8 @@ function App() {
       {selectedTicketId && (
         <TicketDetailView ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} onChanged={reload} />
       )}
+
+      {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
     </div>
   );
 }

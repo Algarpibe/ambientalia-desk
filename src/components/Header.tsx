@@ -10,7 +10,7 @@ const NAV_TABS = [
     { label: 'Base de Conocimientos' }
 ];
 
-export const Header: React.FC = () => {
+export const Header: React.FC<{ onOpenUsers: () => void }> = ({ onOpenUsers }) => {
     return (
         <header className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0 z-30">
             <div className="flex items-center h-full">
@@ -60,22 +60,27 @@ export const Header: React.FC = () => {
                     <button className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">settings</span>
                     </button>
-                    <UserMenu />
+                    <UserMenu onOpenUsers={onOpenUsers} />
                 </div>
             </div>
         </header>
     );
 };
 
-function UserMenu() {
-    const { user, logout } = useAuth()
-    if (!user) return null
-    return (
-        <div className="flex items-center gap-3 ml-1">
-            <span className="text-[12px] font-medium hidden md:block">{user.name}{user.isAdmin ? ' · Admin' : ''}</span>
-            <button onClick={() => logout()} title="Cerrar sesión" className="p-1.5 text-white/60 hover:text-white">
-                <span className="material-symbols-outlined text-[20px]">logout</span>
-            </button>
-        </div>
-    )
+function UserMenu({ onOpenUsers }: { onOpenUsers: () => void }) {
+  const { user, logout } = useAuth()
+  if (!user) return null
+  return (
+    <div className="flex items-center gap-3 ml-1">
+      {user.isAdmin && (
+        <button onClick={onOpenUsers} title="Usuarios" className="p-1.5 text-white/60 hover:text-white">
+          <span className="material-symbols-outlined text-[20px]">group</span>
+        </button>
+      )}
+      <span className="text-[12px] font-medium hidden md:block">{user.name}{user.isAdmin ? ' · Admin' : ''}</span>
+      <button onClick={() => logout()} title="Cerrar sesión" className="p-1.5 text-white/60 hover:text-white">
+        <span className="material-symbols-outlined text-[20px]">logout</span>
+      </button>
+    </div>
+  )
 }
