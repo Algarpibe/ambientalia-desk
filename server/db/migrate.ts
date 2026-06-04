@@ -24,7 +24,9 @@ export async function migrate(db: Queryable): Promise<void> {
   }
 }
 
-/** Re-siembra la secuencia de numeración al máximo `number` existente. */
+/** Re-siembra la secuencia de numeración al máximo `number` existente (mínimo 1: setval no acepta 0). */
 export async function reseedTicketNumber(db: Queryable): Promise<void> {
-  await db.query("SELECT setval('ticket_number_seq', (SELECT COALESCE(MAX(number),0) FROM tickets))")
+  const r = await db.query('SELECT COALESCE(MAX(number),0) AS m FROM tickets')
+  const next = Math.max(Number(r.rows[0].m), 1)
+  await db.query(`SELECT setval('ticket_number_seq', $1)`, [next])
 }
