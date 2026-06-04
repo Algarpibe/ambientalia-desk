@@ -101,6 +101,36 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
 - **`users.role_id` sin FK; no hay DELETE de rol (solo desactivar):** es seguro (un rol borrado/inactivo →
   LEFT JOIN da áreas `[]`, fail-closed). Si algún día se añade borrado de roles, usar FK `ON DELETE SET NULL`.
 
+## 3e. IDEA FUTURA — Subsistema "Remisiones" (integrar el flujo n8n en la plataforma)
+
+Existe un flujo de **n8n** (`Remisiones_ST_3.13`) que gestiona remisiones de **entrada** y **salida** de
+Servicio Técnico. Se evaluó traerlo a la plataforma. **Diferido** por ser grande; retomar tras C/D.
+
+**Qué hace el n8n hoy:** formulario (credencial empleado, tipo entrada/salida, fecha, nº de serie) →
+busca empleado por credencial, equipo por serial (marca/modelo/cliente) y cliente → formularios por marca
+(Grimm EDM180/280, Horiba, Environics, Kunak, Otro) con checklist "Incluye" → genera PDF/GDoc (plantilla
+F-ST-010), etiqueta DYMO, correo (Gmail), avisos Telegram, y registra en Google Sheets + Drive. La salida
+hace match con la entrada por serial y captura "Estado" + faltantes.
+
+**Lo que la plataforma simplifica:** el "número de credencial" desaparece (el técnico = usuario logueado,
+H1); los clientes ya están en `accounts`; los campos de equipo ya existen en tickets.
+
+**Dos flujos pedidos (compatibles con un `remisiones.ticket_id` nullable):**
+1. **Crear ticket desde una remisión de entrada** (= subsistema C disparado por la remisión; asunto
+   estandarizado `MT_serial_modelo_AAMMDD` + campos del equipo).
+2. **Remisión de entrada independiente** que luego se asocia a un ticket.
+
+**Bloques a construir:** registro de `equipos` (serial→marca/modelo/cliente) + alta si no existe; catálogos
+"Incluye" por marca/modelo (config); formularios entrada/salida; vínculo con tickets (reusa C); generación
+PDF; **almacenamiento de archivos** (fotos/PDF — *primera vez que la plataforma guarda archivos reales*);
+notificaciones (correo→D / Telegram); DYMO (opcional).
+
+**Decisiones clave para el diseño:** (a) dónde se guardan archivos (Google Drive vs disco VPS vs S3/MinIO);
+(b) cómo se genera el PDF (HTML→PDF en backend vs seguir con Google Docs API); (c) correo: Gmail/SMTP ahora
+o esperar al Subsistema D; (d) Postgres como fuente de verdad (mover de Sheets/Drive) ¿con o sin espejo a
+Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PDF+archivos, 3) salida,
+4) notificaciones/DYMO. *(El JSON del flujo lo tiene el usuario; pedirlo al retomar.)*
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
