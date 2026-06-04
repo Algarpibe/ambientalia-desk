@@ -1,19 +1,16 @@
 import { useState } from 'react'
 import { getHideEmptyColumns, setHideEmptyColumns } from '../boardSettings'
 
-type Item = { label: string; desc?: string; onClick?: () => void; soon?: boolean }
+type Item = { label: string; onClick?: () => void; soon?: boolean }
 type Category = { title: string; items: Item[] }
 
-function TopBar({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <div className="bg-[#2C2E3E] text-white h-[48px] flex items-center px-4 gap-3 shrink-0">
-      <button onClick={onBack} className="hover:bg-white/10 p-1 rounded" title="Volver">
-        <span className="material-symbols-outlined">arrow_back</span>
-      </button>
-      <h1 className="text-[15px] font-bold">{title}</h1>
-    </div>
-  )
-}
+// Novedades del producto (panel derecho, estilo "Actualizaciones de producto" de Zoho Desk).
+const NOVEDADES = [
+  { title: 'Creación de tickets en la app', body: 'Crea tickets desde una Orden de Venta de Zoho Books, atados a un equipo registrado. Asunto y código estandarizados automáticamente.' },
+  { title: 'Registro de equipos', body: 'Catálogo de equipos vendidos (serie → marca / modelo / tipo / cliente). No se puede abrir un ticket sin un equipo registrado.' },
+  { title: 'Sincronización con Zoho Books', body: 'Clientes (con NIT) y órdenes de venta sincronizados a la plataforma para los buscadores del alta de tickets.' },
+  { title: 'Tablero configurable', body: 'Oculta las columnas vacías del tablero desde esta misma página de Configuración.' },
+]
 
 export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
   onClose: () => void
@@ -34,11 +31,16 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
   if (section === 'tablero') {
     return (
       <div className="fixed inset-0 z-[70] bg-white flex flex-col">
-        <TopBar title="Configuración · Tablero" onBack={() => setSection('home')} />
-        <div className="flex-1 overflow-auto p-6">
-          <section className="max-w-[640px]">
-            <h2 className="text-[13px] font-bold text-slate-700 uppercase tracking-wider mb-3">Columnas y visualización</h2>
-            <label className="flex items-start gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+        <div className="bg-white border-b border-slate-200 h-[46px] flex items-center px-4 gap-3 shrink-0">
+          <button onClick={() => setSection('home')} className="p-1 text-slate-500 hover:text-slate-800 rounded" title="Volver">
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          </button>
+          <span className="text-[14px] font-semibold text-slate-700">Personalización · Tablero</span>
+        </div>
+        <div className="flex-1 overflow-auto p-6 bg-[#f4f5f7]">
+          <section className="max-w-[640px] bg-white border border-slate-200 rounded-md p-5">
+            <h2 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2 mb-3">Columnas y visualización</h2>
+            <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" className="mt-0.5" checked={hideEmpty} onChange={(e) => toggleHideEmpty(e.target.checked)} />
               <span>
                 <span className="block text-[14px] font-medium text-slate-800">Ocultar columnas vacías</span>
@@ -54,36 +56,27 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
     )
   }
 
-  // ---- Home: rejilla de categorías (estilo Zoho Desk) ----
+  // ---- Home: rejilla de categorías (réplica del hub de Zoho Desk) ----
   const categories: Category[] = [
     {
-      title: 'Tablero',
-      items: [{ label: 'Columnas y visualización', desc: 'Ocultar columnas vacías', onClick: () => setSection('tablero') }],
+      title: 'Organización',
+      items: [
+        { label: 'Empresa', soon: true },
+        { label: 'Horario laboral', soon: true },
+        { label: 'Departamentos / Áreas', soon: true },
+        { label: 'Reportería e indicadores', soon: true },
+      ],
     },
     ...(isAdmin
       ? [{
           title: 'Administración de usuarios',
           items: [
-            { label: 'Usuarios', desc: 'Crear y gestionar usuarios', onClick: onOpenUsers },
-            { label: 'Roles', desc: 'Roles y áreas (permisos)', onClick: onOpenRoles },
+            { label: 'Usuarios', onClick: onOpenUsers },
+            { label: 'Roles', onClick: onOpenRoles },
+            { label: 'Perfiles', soon: true },
           ],
         } as Category]
       : []),
-    {
-      title: 'Datos',
-      items: [
-        { label: 'Clientes (Zoho Books)', soon: true },
-        { label: 'Órdenes de venta (Zoho Books)', soon: true },
-        { label: 'Registro de equipos', soon: true },
-      ],
-    },
-    {
-      title: 'Flujo de trabajo',
-      items: [
-        { label: 'Blueprint (estados y transiciones)', soon: true },
-        { label: 'Áreas y permisos', soon: true },
-      ],
-    },
     {
       title: 'Canales',
       items: [
@@ -92,10 +85,60 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
       ],
     },
     {
-      title: 'Organización',
+      title: 'Autoservicio',
+      items: [{ label: 'Base de conocimientos', soon: true }],
+    },
+    {
+      title: 'Personalización',
       items: [
-        { label: 'Empresa', soon: true },
-        { label: 'Reportería e indicadores', soon: true },
+        { label: 'Tablero (columnas)', onClick: () => setSection('tablero') },
+        { label: 'Diseños y campos', soon: true },
+        { label: 'Plantillas de tickets', soon: true },
+      ],
+    },
+    {
+      title: 'Automatización',
+      items: [
+        { label: 'Blueprint (estados y transiciones)', soon: true },
+        { label: 'Reglas de asignación', soon: true },
+        { label: 'Flujos de trabajo', soon: true },
+      ],
+    },
+    {
+      title: 'Administración de datos',
+      items: [
+        { label: 'Clientes (Zoho Books)', soon: true },
+        { label: 'Órdenes de venta (Zoho Books)', soon: true },
+        { label: 'Registro de equipos', soon: true },
+        { label: 'Importar / Exportar', soon: true },
+      ],
+    },
+    {
+      title: 'Integraciones',
+      items: [
+        { label: 'Zoho Books', soon: true },
+        { label: 'Zoho Desk', soon: true },
+      ],
+    },
+    {
+      title: 'Espacio del desarrollador',
+      items: [
+        { label: 'API', soon: true },
+        { label: 'Webhooks', soon: true },
+      ],
+    },
+    {
+      title: 'Privacidad y seguridad',
+      items: [
+        { label: 'Registro de auditoría', soon: true },
+        { label: 'Sesiones', soon: true },
+      ],
+    },
+    {
+      title: 'Mi cuenta',
+      items: [
+        { label: 'Mi perfil', soon: true },
+        { label: 'Cambiar contraseña', soon: true },
       ],
     },
   ]
@@ -108,46 +151,71 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
     : categories
 
   return (
-    <div className="fixed inset-0 z-[70] bg-[#f6f7f9] flex flex-col">
-      <TopBar title="Configuración" onBack={onClose} />
-
-      <div className="bg-white border-b border-slate-200 py-3 px-4 flex justify-center shrink-0">
-        <div className="relative w-full max-w-[520px]">
-          <span className="material-symbols-outlined absolute left-2.5 top-1.5 text-[18px] text-slate-400">search</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar en la configuración…"
-            className="w-full border border-slate-200 rounded-full pl-9 pr-3 py-1.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-100"
-          />
+    <div className="fixed inset-0 z-[70] bg-white flex flex-col">
+      {/* Barra superior clara con buscador centrado + cerrar */}
+      <div className="bg-white border-b border-slate-200 h-[46px] flex items-center px-4 gap-4 shrink-0">
+        <span className="text-[14px] font-semibold text-slate-700 whitespace-nowrap">Configuración</span>
+        <div className="flex-1 flex justify-center">
+          <div className="relative w-full max-w-[480px]">
+            <span className="material-symbols-outlined absolute left-2.5 top-1.5 text-[18px] text-slate-400">search</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Configuración de la búsqueda"
+              className="w-full border border-slate-200 rounded-md pl-9 pr-3 py-1.5 text-[13px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white"
+            />
+          </div>
         </div>
+        <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700" title="Cerrar">
+          <span className="material-symbols-outlined text-[20px]">close</span>
+        </button>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-7">
-          {filtered.map((cat) => (
-            <div key={cat.title}>
-              <h3 className="text-[12px] font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2 mb-2">{cat.title}</h3>
-              <ul className="flex flex-col">
-                {cat.items.map((it) => (
-                  <li key={it.label}>
-                    {it.soon ? (
-                      <div className="py-1.5 flex items-center gap-2" title="Próximamente">
-                        <span className="text-[13px] text-slate-400">{it.label}</span>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 bg-slate-100 rounded px-1.5 py-0.5">Pronto</span>
-                      </div>
-                    ) : (
-                      <button onClick={it.onClick} className="w-full text-left py-1.5 group">
-                        <span className="text-[13px] text-slate-700 group-hover:text-blue-600">{it.label}</span>
-                        {it.desc && <span className="block text-[11px] text-slate-400">{it.desc}</span>}
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+      {/* Área principal: rejilla de categorías + panel de novedades, sobre fondo con textura */}
+      <div
+        className="flex-1 overflow-auto"
+        style={{ backgroundColor: '#f4f5f7', backgroundImage: 'radial-gradient(#e4e7ea 1px, transparent 1px)', backgroundSize: '22px 22px' }}
+      >
+        <div className="flex gap-6 p-6 max-w-[1400px] mx-auto">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 content-start">
+            {filtered.map((cat) => (
+              <div key={cat.title} className="bg-white border border-slate-200 rounded-md px-4 py-3">
+                <h3 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2 mb-1">{cat.title}</h3>
+                <ul className="flex flex-col">
+                  {cat.items.map((it) => (
+                    <li key={it.label}>
+                      {it.soon ? (
+                        <div className="py-[5px] flex items-center gap-2" title="Próximamente">
+                          <span className="text-[13px] text-slate-400">{it.label}</span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400 bg-slate-100 rounded px-1.5 py-0.5">Pronto</span>
+                        </div>
+                      ) : (
+                        <button onClick={it.onClick} className="block w-full text-left py-[5px] text-[13px] text-slate-600 hover:text-blue-600">
+                          {it.label}
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            {filtered.length === 0 && <p className="text-[13px] text-slate-400 col-span-full">Sin resultados para “{query}”.</p>}
+          </div>
+
+          {/* Panel derecho: Actualizaciones de producto */}
+          <aside className="w-[300px] shrink-0 hidden xl:block">
+            <h2 className="text-[14px] font-semibold text-slate-700 mb-3 flex items-center gap-1">
+              Actualizaciones de producto <span className="material-symbols-outlined text-[16px] text-amber-500">auto_awesome</span>
+            </h2>
+            <div className="flex flex-col gap-3">
+              {NOVEDADES.map((n) => (
+                <div key={n.title} className="bg-white border border-slate-200 rounded-md p-3">
+                  <div className="text-[13px] font-semibold text-slate-800 mb-1">{n.title}</div>
+                  <p className="text-[12px] text-slate-500 leading-snug">{n.body}</p>
+                </div>
+              ))}
             </div>
-          ))}
-          {filtered.length === 0 && <p className="text-[13px] text-slate-400">Sin resultados para “{query}”.</p>}
+          </aside>
         </div>
       </div>
     </div>
