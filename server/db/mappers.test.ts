@@ -80,3 +80,64 @@ describe('conversation/attachment mappers', () => {
     expect(rows[0]).toMatchObject({ id: 'at1', ticket_id: 't1', conversation_id: 'k1', name: 'r.pdf', size: 718521 })
   })
 })
+
+import { rowToTicket, rowToTicketDetail, rowToMessage } from './mappers'
+import type { TicketRow, ConversationRow } from './rows'
+
+function baseTicketRow(): TicketRow {
+  return {
+    id: '1', number: 941, subject: 'Servicio X', status: 'Notificación cliente', status_type: 'On Hold',
+    priority: 'High', classification: 'Equipo Para Servicio', channel: 'Email', description: null,
+    contact_id: 'c1', account_id: 'a1', assignee_id: 'g1',
+    created_time: '2026-05-07T19:39:36.000Z', modified_time: null, closed_time: null,
+    onhold_time: '2026-05-28T20:40:59.000Z', due_date: null,
+    codigo_servicio: 'MT_X', tipo_servicio: 'calibración', equipo: 'Monitor', marca: 'GRIMM',
+    modelo: 'EDM180C', serial: '18A22053', codigo_interno: 'MP-1', encargado: 'Miguel',
+    correo_encargado: 't@a.co', nit: '900082143', ciudad: 'Barranquilla', direccion: 'Cra 55',
+    telefono: '330300', orden_venta: 'OV-1', conformidad: 'Conforme', dias_entrega: 20,
+    cumple_condiciones_comerciales: true,
+    fecha_creacion_ticket: '2026-05-21', fecha_remision_entrada: null, fecha_revision_informe: null,
+    fecha_cotizacion: '2026-05-19', fecha_orden_compra: null, fecha_orden_venta: null,
+    fecha_recepcion_repuestos: null, fecha_finalizacion_st: null, fecha_factura: null,
+    fecha_remision_salida: null, fecha_salida_servicio_externo: null, fecha_entrada_servicio_externo: null,
+    fecha_notificacion_garantia: null, fecha_solicitud_sku: null, fecha_orden_compra_final: null,
+    fecha_orden_venta_final: null,
+    equipo_partes_listas: null, archivo_trazabilidad_actualizado: null, doc_almacenada_drive: null,
+    hv_actualizada: null, liberacion_sin_facturar: null, servicio_in_situ: false,
+    custom_fields: { 'Otro Campo': 'v' }, managed_by_app: false, source: 'zoho', raw: {},
+  }
+}
+
+describe('rowToTicket / rowToTicketDetail', () => {
+  it('rowToTicket arma la tarjeta', () => {
+    const t = rowToTicket(baseTicketRow(), { accountName: 'Gecelca S.A. E.S.P.', agentName: 'Equipo Técnico' })
+    expect(t.number).toBe('#941')
+    expect(t.title).toBe('Servicio X')
+    expect(t.company).toBe('Gecelca S.A. E.S.P.')
+    expect(t.status).toBe('Notificación cliente')
+    expect(t.assignee?.name).toBe('Equipo Técnico')
+  })
+
+  it('rowToTicketDetail reconstruye customFields desde columnas + jsonb', () => {
+    const d = rowToTicketDetail(baseTicketRow(), { accountName: 'Gecelca', agentName: 'ET', contactName: 'Sebastián Laguna', contactPhone: '301', email: 's@g.co' })
+    expect(d.contactName).toBe('Sebastián Laguna')
+    expect(d.customFields['Serial']).toBe('18A22053')
+    expect(d.customFields['Fecha de Cotización']).toBe('2026-05-19')
+    expect(d.customFields['Cumple condiciones comerciales']).toBe('true')
+    expect(d.customFields['Otro Campo']).toBe('v')
+  })
+})
+
+describe('rowToMessage', () => {
+  it('arma el mensaje de UI', () => {
+    const row: ConversationRow = {
+      id: 'k1', ticket_id: 't1', kind: 'comment', author_name: 'Equipo Técnico', author_type: 'agent',
+      is_public: false, content: '<div>x</div>', content_type: 'html', commented_time: '2026-05-28T20:40:59.000Z',
+      source: 'zoho', raw: {},
+    }
+    const m = rowToMessage(row, [])
+    expect(m.author).toBe('Equipo Técnico')
+    expect(m.type).toBe('Privado')
+    expect(m.isHtml).toBe(true)
+  })
+})

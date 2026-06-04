@@ -83,3 +83,74 @@ export function attachmentRowsFrom(conv: any, ticketId: string): AttachmentRow[]
     zoho_href: attachmentPath(a.href), storage_path: null, raw: a,
   }))
 }
+
+import type { Ticket, TicketDetail, Message, Attachment } from '../../shared/types'
+
+function initialsOf(name: string): string {
+  const p = name.split(/\s+/).filter(Boolean)
+  if (p.length === 0) return '?'
+  if (p.length === 1) return p[0].slice(0, 2).toUpperCase()
+  return (p[0][0] + p[p.length - 1][0]).toUpperCase()
+}
+function fmtTime(iso?: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(d)
+}
+function fmtSize(n?: number | null): string {
+  if (!n) return ''
+  if (n < 1024) return `${n} B`
+  if (n < 1048576) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / 1048576).toFixed(1)} MB`
+}
+
+export interface TicketRefs { accountName?: string | null; agentName?: string | null }
+export interface DetailRefs extends TicketRefs { contactName?: string | null; contactPhone?: string | null; email?: string | null }
+
+export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
+  const assigneeName = refs.agentName || 'Sin asignar'
+  return {
+    id: row.id, number: `#${row.number}`, title: row.subject ?? '', company: refs.accountName ?? '',
+    time: fmtTime(row.created_time), status: row.status,
+    assignee: { name: assigneeName, initials: initialsOf(assigneeName) },
+    urgent: row.priority === 'High' || row.priority === 'Urgent',
+  }
+}
+
+/** Reconstruye el objeto customFields (etiqueta→valor) que la UI espera, desde columnas + jsonb. */
+function customFieldsFromRow(row: TicketRow): Record<string, string | null> {
+  const out: Record<string, string | null> = { ...(row.custom_fields ?? {}) }
+  for (const { col, label } of PROMOTED_COLUMNS) {
+    const v = (row as any)[col]
+    out[label] = v === null || v === undefined ? null : String(v)
+  }
+  return out
+}
+
+export function rowToTicketDetail(row: TicketRow, refs: DetailRefs = {}): TicketDetail {
+  return {
+    ...rowToTicket(row, refs),
+    contactName: refs.contactName ?? undefined,
+    email: refs.email ?? undefined,
+    phone: refs.contactPhone ?? undefined,
+    ownerName: refs.agentName ?? undefined,
+    onholdSince: row.onhold_time ? fmtTime(row.onhold_time) : undefined,
+    classification: row.classification ?? undefined,
+    priority: row.priority ?? undefined,
+    channel: row.channel ?? undefined,
+    customFields: customFieldsFromRow(row),
+  }
+}
+
+export function rowToMessage(row: ConversationRow, attachments: AttachmentRow[]): Message {
+  const atts: Attachment[] = attachments
+    .filter((a) => a.zoho_href)
+    .map((a) => ({ name: a.name ?? 'adjunto', size: fmtSize(a.size), path: a.zoho_href! }))
+  return {
+    id: row.id, author: row.author_name ?? 'Desconocido',
+    type: row.is_public ? 'Público' : 'Privado', time: fmtTime(row.commented_time),
+    content: row.content ?? '', isHtml: row.content_type === 'html' || row.content_type === 'text/html',
+    attachments: atts.length ? atts : undefined,
+  }
+}
