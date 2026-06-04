@@ -68,3 +68,36 @@ describe('auth routes', () => {
     expect(dup.status).toBe(409)
   })
 })
+
+describe('roles + asignación', () => {
+  it('admin crea rol, lo asigna a un usuario y el login devuelve sus áreas', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const role = await request(a).post('/api/roles').set('Cookie', cookie).send({ name: 'Comercial', areas: ['Comercial'] })
+    expect(role.status).toBe(201)
+    expect(role.body.areas).toEqual(['Comercial'])
+    const u = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'op@x.co', name: 'Op', password: 'password123', roleId: role.body.id })
+    expect(u.status).toBe(201)
+    expect(u.body.areas).toEqual(['Comercial'])
+    const opLogin = await request(a).post('/api/auth/login').send({ email: 'op@x.co', password: 'password123' })
+    expect(opLogin.body.areas).toEqual(['Comercial'])
+  })
+
+  it('no-admin no puede listar roles (403)', async () => {
+    await seedAdmin()
+    const a = app()
+    const adminCookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    await request(a).post('/api/users').set('Cookie', adminCookie).send({ email: 'op@x.co', name: 'Op', password: 'password123' })
+    const opCookie = (await request(a).post('/api/auth/login').send({ email: 'op@x.co', password: 'password123' })).headers['set-cookie']
+    expect((await request(a).get('/api/roles').set('Cookie', opCookie)).status).toBe(403)
+  })
+
+  it('rol con nombre duplicado → 409', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    await request(a).post('/api/roles').set('Cookie', cookie).send({ name: 'Comercial', areas: [] })
+    expect((await request(a).post('/api/roles').set('Cookie', cookie).send({ name: 'comercial', areas: [] })).status).toBe(409)
+  })
+})
