@@ -18,7 +18,8 @@ const sync = createSync({ zohoFetch, db: pool, config })
 
 async function main() {
   await migrate(pool)
-  await reseedTicketNumber(pool)
+  // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
+  try { await reseedTicketNumber(pool) } catch (e) { console.error('reseed inicial omitido:', e) }
 
   const app = createApp({ db: pool, zohoFetch, sync, config })
 
