@@ -20,7 +20,8 @@ async function readData(res: Response): Promise<any> { const t = await res.text(
 export function createSync({ zohoFetch, db, config }: Deps): Sync {
   // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
   const accountSeen = new Set<string>()
-  const contactSeen = new Set<string>()
+  // contactId → accountId del contacto (el endpoint de LISTA de tickets no trae accountId).
+  const contactAccount = new Map<string, string | null>()
 
   async function ensureAccount(accountId: string | null | undefined): Promise<void> {
     if (!accountId || accountSeen.has(accountId)) return
@@ -30,24 +31,32 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
       if (res.ok) await upsertAccount(db, accountRowFromZoho(await readData(res)))
     } catch { /* sin empresa si falla */ }
   }
-  async function ensureContact(contactId: string | null | undefined): Promise<void> {
-    if (!contactId || contactSeen.has(contactId)) return
-    contactSeen.add(contactId)
+  /** Asegura el contacto y devuelve su accountId (para propagarlo al ticket). */
+  async function ensureContact(contactId: string | null | undefined): Promise<string | null> {
+    if (!contactId) return null
+    if (contactAccount.has(contactId)) return contactAccount.get(contactId)!
+    let accountId: string | null = null
     try {
       const res = await zohoFetch(`/contacts/${contactId}`)
       if (res.ok) {
         const c = await readData(res)
-        await ensureAccount(c.accountId)
+        accountId = c.accountId ?? null
+        await ensureAccount(accountId)
         await upsertContact(db, contactRowFromZoho(c))
       }
     } catch { /* */ }
+    contactAccount.set(contactId, accountId)
+    return accountId
   }
 
   async function persistTicket(t: any): Promise<void> {
     await ensureAccount(t.accountId)
-    await ensureContact(t.contactId)
+    const contactAccountId = await ensureContact(t.contactId)
     if (t.assignee) await upsertAgent(db, agentRowFromZoho(t.assignee))
-    await upsertTicket(db, ticketRowFromZoho(t))
+    const row = ticketRowFromZoho(t)
+    // El endpoint de LISTA omite accountId; recuperarlo del contacto para que el JOIN dé la empresa.
+    if (!row.account_id) row.account_id = contactAccountId
+    await upsertTicket(db, row)
   }
 
   async function fetchTicketPage(from: number, sortBy = 'createdTime'): Promise<any[]> {
