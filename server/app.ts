@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from 'express'
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import type { Sync } from './sync'
-import { getActiveTickets, getTicketWithRefs, getConversations, applyTransition } from './db/repo'
+import { getActiveTickets, getTicketWithRefs, getConversations, applyTransition, createTicket } from './db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from './db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
@@ -13,7 +13,8 @@ import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth } from './auth/middleware'
-import { searchClients, searchSalesOrders } from './books/repo'
+import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
+import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -62,6 +63,51 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     try {
       const list = await getActiveTickets(db)
       res.json(list.map(({ row, refs }) => rowToTicket(row, refs)))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  // Crea un ticket gestionado por la app en "OV asignada" (Subsistema C). Pivota opcionalmente en una OV de Books.
+  app.post('/api/tickets', async (req, res) => {
+    try {
+      const b = (req.body ?? {}) as Record<string, unknown>
+      let clientId: string | null = b.clientId ? String(b.clientId) : null
+      let ordenVenta: string | null = b.ordenVenta ? String(b.ordenVenta) : null
+      let salesorderId: string | null = null
+      if (b.salesOrderId) {
+        const ov = await getSalesOrder(db, String(b.salesOrderId))
+        if (!ov) { res.status(422).json({ error: 'Orden de venta no encontrada' }); return }
+        salesorderId = ov.id
+        clientId = clientId ?? ov.clientId ?? null
+        ordenVenta = ordenVenta ?? ov.number ?? null
+      }
+      const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
+      const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''
+      const tipoEquipo = b.tipoEquipo ? String(b.tipoEquipo) : ''
+      const marca = b.marca ? String(b.marca) : ''
+      const modelo = b.modelo ? String(b.modelo) : ''
+      const serie = b.serie ? String(b.serie) : ''
+      const prefijo = b.prefijo ? String(b.prefijo) : ''
+      const missing: string[] = []
+      if (!clientId) missing.push('cliente')
+      if (!tipoServicio) missing.push('tipo de servicio')
+      if (!clasificaciones) missing.push('clasificaciones')
+      if (!tipoEquipo) missing.push('tipo de equipo')
+      if (!marca) missing.push('marca')
+      if (!modelo) missing.push('modelo')
+      if (!serie) missing.push('número de serie')
+      if (!prefijo || !(PREFIJOS as readonly string[]).includes(prefijo)) missing.push('prefijo')
+      if (missing.length) { res.status(422).json({ error: `Faltan campos obligatorios: ${missing.join(', ')}` }); return }
+      const cliente = await getClient(db, clientId!)
+      if (!cliente) { res.status(422).json({ error: 'Cliente no encontrado' }); return }
+      const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie, modelo, fecha: new Date() })
+      const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo, codigo: codigoServicio })
+      const id = await createTicket(db, {
+        subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: tipoEquipo,
+        marca, modelo, serial: serie, ordenVenta, priority: b.prioridad ? String(b.prioridad) : null,
+        clientId: clientId!, salesorderId, actor: req.user?.name ?? 'App',
+      })
+      const created = await getTicketWithRefs(db, id)
+      res.status(201).json(created ? rowToTicketDetail(created.row, created.refs) : {})
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 

@@ -149,3 +149,47 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
     expect(res.body.status).toBe('En Proceso')
   })
 })
+
+describe('POST /api/tickets (crear)', () => {
+  it('crea desde una OV: deriva cliente + orden de venta, estado OV asignada', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cli1', contact_name: 'Gecelca S.A. E.S.P.', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    await upsertSalesOrder(db, salesOrderFromBooks({ salesorder_id: 'so1', salesorder_number: 'OV-2026-200', customer_id: 'cli1', last_modified_time: '2026-06-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      salesOrderId: 'so1', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo para servicio de mantenimiento',
+      tipoEquipo: 'Monitor de partículas', marca: 'Grimm', modelo: 'EDM180C', serie: '18A20070', prefijo: 'MT',
+    })
+    expect(res.status).toBe(201)
+    expect(res.body.status).toBe('OV asignada')
+    expect(res.body.company).toBe('Gecelca S.A. E.S.P.')
+    const t = (await db.query("SELECT orden_venta, client_id, salesorder_id, managed_by_app, source FROM tickets WHERE salesorder_id='so1'")).rows[0]
+    expect(t).toMatchObject({ orden_venta: 'OV-2026-200', client_id: 'cli1', salesorder_id: 'so1', managed_by_app: true, source: 'app' })
+  })
+
+  it('crea sin OV con cliente manual', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cli2', contact_name: 'Camposol', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      clientId: 'cli2', tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo',
+      tipoEquipo: 'Sensor', marca: 'Horiba', modelo: 'APDA', serie: 'SN1', prefijo: 'CG', ordenVenta: 'manual-1',
+    })
+    expect(res.status).toBe(201)
+    expect(res.body.status).toBe('OV asignada')
+    expect(res.body.company).toBe('Camposol')
+  })
+
+  it('422 si faltan obligatorios', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({ tipoServicio: 'Mantenimiento' })
+    expect(res.status).toBe(422)
+  })
+
+  it('401 sin sesión', async () => {
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets').send({ clientId: 'x' })
+    expect(res.status).toBe(401)
+  })
+})
