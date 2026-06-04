@@ -150,6 +150,25 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
   `ZOHO_BOOKS_*` se omite el sync y la app arranca; llamadas Books envueltas en `.catch`), token de Books
   separado del de Desk (caché + refresh 401, sin filtrar secretos).
 
+## 3g. Hallazgos de la revisión del Subsistema C (menores / por diseño)
+
+- **Gap de número en rollback (M-6, por diseño):** `createTicket` consume `nextTicketNumber` (auto-commit)
+  antes del `BEGIN`. Si la transacción del INSERT hace rollback, ese número se "quema" → puede haber huecos
+  en `tickets.number`. Es el trade-off estándar de las secuencias de Postgres (garantiza no-duplicados y
+  no-doble-consumo bajo concurrencia, a costa de posibles huecos). La atomicidad que importa (ticket +
+  transición todo-o-nada) está intacta.
+- **`prioridad`/`tipoServicio`/`clasificaciones` no en lista blanca server-side (M-7):** solo `prefijo` se
+  valida contra `PREFIJOS`. Los demás se exigen presentes pero no se restringen a un set (un caller directo
+  de la API podría guardar texto libre). Sin riesgo de integridad (columnas `text` sin CHECK); fiel al spec.
+  Si se quiere, añadir validación contra `TIPOS_SERVICIO`/`CLASIFICACIONES`/`['High','Medium','Low']`.
+- **`buildCodigoServicio` usa fecha local (M-8):** el `AAMMDD` se calcula con getters locales; en un VPS sin
+  TZ America/Bogota podría rodar de día cerca de medianoche. Cosmético (el código es editable en la vista
+  previa). Si molesta, fijar `TZ=America/Bogota` en el contenedor o calcular en esa zona.
+- *(Verificado en la revisión)*: sin inyección SQL (parámetros ligados, identificadores literales),
+  `POST /api/tickets` exige sesión (401), validación server-side (422) de obligatorios + cliente/OV
+  existentes + prefijo, atomicidad ticket+transición (BEGIN/COMMIT/ROLLBACK), estado inicial "OV asignada"
+  correcto, **solo lectura en Books**, y limpieza de efectos en el frontend (sin setState tras desmontar).
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
