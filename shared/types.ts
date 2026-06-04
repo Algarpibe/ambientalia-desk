@@ -141,4 +141,7 @@ export interface UserPublic {
   name: string
   isAdmin: boolean
   active: boolean
+  roleId?: string | null
+  roleName?: string | null
+  areas: string[]
 }

@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import type { Queryable } from '../db/migrate'
 import type { UserPublic } from '../../shared/types'
+import { rowToPublicUser } from './users'
 
 const SESSION_DAYS = 30
 
@@ -13,13 +14,14 @@ export async function createSession(db: Queryable, userId: string): Promise<stri
 
 export async function getSessionUser(db: Queryable, token: string): Promise<UserPublic | null> {
   const r = await db.query(
-    `SELECT u.id, u.email, u.name, u.is_admin, u.active
+    `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,
+            ro.name AS role_name, ro.areas AS role_areas, ro.active AS role_active
      FROM sessions s JOIN users u ON s.user_id = u.id
+     LEFT JOIN roles ro ON u.role_id = ro.id
      WHERE s.token = $1 AND s.expires_at > now() AND u.active = true`,
     [token],
   )
-  const row = r.rows[0]
-  return row ? { id: row.id, email: row.email, name: row.name, isAdmin: row.is_admin, active: row.active } : null
+  return r.rows[0] ? rowToPublicUser(r.rows[0]) : null
 }
 
 export async function deleteSession(db: Queryable, token: string): Promise<void> {

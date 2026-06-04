@@ -1,53 +1,73 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '../db/migrate'
 import type { UserPublic } from '../../shared/types'
+import { AREAS } from '../../shared/transitions'
 
-export interface UserWithHash extends UserPublic { passwordHash: string }
-
-function rowToPublic(r: any): UserPublic {
-  return { id: r.id, email: r.email, name: r.name, isAdmin: r.is_admin, active: r.active }
+/** Tipo interno para verificar credenciales (incluye el hash); NO se devuelve al cliente. */
+export interface UserWithHash {
+  id: string; email: string; name: string; isAdmin: boolean; active: boolean; passwordHash: string
 }
+
 const normalize = (email: string) => email.trim().toLowerCase()
+
+// SELECT con LEFT JOIN al rol para resolver áreas.
+const USER_SELECT = `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,
+  r.name AS role_name, r.areas AS role_areas, r.active AS role_active
+  FROM users u LEFT JOIN roles r ON u.role_id = r.id`
+
+/** Convierte una fila (con columnas role_*) en UserPublic resolviendo las áreas efectivas. */
+export function rowToPublicUser(row: any): UserPublic {
+  const isAdmin = row.is_admin === true
+  const roleActive = row.role_active === true
+  const roleAreas = Array.isArray(row.role_areas) ? row.role_areas : []
+  return {
+    id: row.id, email: row.email, name: row.name, isAdmin, active: row.active,
+    roleId: row.role_id ?? null,
+    roleName: roleActive ? row.role_name : null,
+    areas: isAdmin ? [...AREAS] : (roleActive ? roleAreas : []),
+  }
+}
 
 export async function createUser(
   db: Queryable,
-  input: { email: string; name: string; passwordHash: string; isAdmin?: boolean },
+  input: { email: string; name: string; passwordHash: string; isAdmin?: boolean; roleId?: string | null },
 ): Promise<UserPublic> {
-  const r = await db.query(
-    `INSERT INTO users (id,email,name,password_hash,is_admin,active,updated_at)
-     VALUES ($1,$2,$3,$4,$5,true,now())
-     RETURNING id,email,name,is_admin,active`,
-    [randomUUID(), normalize(input.email), input.name, input.passwordHash, input.isAdmin ?? false],
+  const id = randomUUID()
+  await db.query(
+    `INSERT INTO users (id,email,name,password_hash,is_admin,active,role_id,updated_at)
+     VALUES ($1,$2,$3,$4,$5,true,$6,now())`,
+    [id, normalize(input.email), input.name, input.passwordHash, input.isAdmin ?? false, input.roleId ?? null],
   )
-  return rowToPublic(r.rows[0])
+  return (await getUserById(db, id))!
 }
 
 export async function getUserByEmail(db: Queryable, email: string): Promise<UserWithHash | null> {
   const r = await db.query('SELECT id,email,name,password_hash,is_admin,active FROM users WHERE email=$1', [normalize(email)])
   const row = r.rows[0]
-  return row ? { ...rowToPublic(row), passwordHash: row.password_hash } : null
+  return row ? { id: row.id, email: row.email, name: row.name, isAdmin: row.is_admin, active: row.active, passwordHash: row.password_hash } : null
 }
 
 export async function getUserById(db: Queryable, id: string): Promise<UserPublic | null> {
-  const r = await db.query('SELECT id,email,name,is_admin,active FROM users WHERE id=$1', [id])
-  return r.rows[0] ? rowToPublic(r.rows[0]) : null
+  const r = await db.query(`${USER_SELECT} WHERE u.id=$1`, [id])
+  return r.rows[0] ? rowToPublicUser(r.rows[0]) : null
 }
 
 export async function listUsers(db: Queryable): Promise<UserPublic[]> {
-  const r = await db.query('SELECT id,email,name,is_admin,active FROM users ORDER BY created_at')
-  return r.rows.map(rowToPublic)
+  const r = await db.query(`${USER_SELECT} ORDER BY u.created_at`)
+  return r.rows.map(rowToPublicUser)
 }
 
 export async function updateUser(
   db: Queryable,
   id: string,
-  patch: { name?: string; isAdmin?: boolean; active?: boolean },
+  patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null },
 ): Promise<void> {
   const sets: string[] = ['updated_at=now()']
   const params: unknown[] = [id]
   if (patch.name !== undefined) { params.push(patch.name); sets.push(`name=$${params.length}`) }
   if (patch.isAdmin !== undefined) { params.push(patch.isAdmin); sets.push(`is_admin=$${params.length}`) }
   if (patch.active !== undefined) { params.push(patch.active); sets.push(`active=$${params.length}`) }
+  if (patch.roleId !== undefined) { params.push(patch.roleId); sets.push(`role_id=$${params.length}`) }
   await db.query(`UPDATE users SET ${sets.join(',')} WHERE id=$1`, params)
 }
 

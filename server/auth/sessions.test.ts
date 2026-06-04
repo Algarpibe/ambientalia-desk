@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '../db/migrate'
 import { createUser, updateUser } from './users'
+import { createRole } from './roles'
 import { createSession, getSessionUser, deleteSession, deleteUserSessions } from './sessions'
 
 let db: Queryable
@@ -42,5 +43,13 @@ describe('sessions', () => {
     expect(await getSessionUser(db, t2)).not.toBeNull()
     await deleteUserSessions(db, u.id)
     expect(await getSessionUser(db, t2)).toBeNull()
+  })
+
+  it('getSessionUser resuelve áreas del rol', async () => {
+    const role = await createRole(db, { name: 'Téc', areas: ['Servicio Técnico'] })
+    const u = await createUser(db, { email: 'sr@b.co', name: 'A', passwordHash: 'h', roleId: role.id })
+    const token = await createSession(db, u.id)
+    const got = await getSessionUser(db, token)
+    expect(got!.areas).toEqual(['Servicio Técnico'])
   })
 })
