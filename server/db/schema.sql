@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash text NOT NULL,
   is_admin boolean NOT NULL DEFAULT false,
   active boolean NOT NULL DEFAULT true,
+  role_id text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz
 );
@@ -91,3 +92,14 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
+
+CREATE TABLE IF NOT EXISTS roles (
+  id text PRIMARY KEY,
+  name text UNIQUE NOT NULL,
+  areas jsonb NOT NULL DEFAULT '[]'::jsonb,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;

@@ -16,7 +16,7 @@ describe('migrate', () => {
       "SELECT table_name FROM information_schema.tables WHERE table_schema='public'",
     )
     const names = res.rows.map((r: { table_name: string }) => r.table_name)
-    for (const t of ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments', 'ticket_transitions', 'users', 'sessions']) {
+    for (const t of ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments', 'ticket_transitions', 'users', 'sessions', 'roles']) {
       expect(names).toContain(t)
     }
   })
