@@ -169,6 +169,20 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
   existentes + prefijo, atomicidad ticket+transición (BEGIN/COMMIT/ROLLBACK), estado inicial "OV asignada"
   correcto, **solo lectura en Books**, y limpieza de efectos en el frontend (sin setState tras desmontar).
 
+## 3h. Hallazgos de la revisión del Subsistema E (menores / latentes, fuera de alcance)
+
+- **`getEquipo` no filtra `active` (M-9):** el gate de creación (`POST /api/tickets`) usa `getEquipo`, que
+  NO exige `active = true` (sí lo hace `searchEquipos`). Hoy nada pone `active=false`, así que es inofensivo;
+  cuando llegue la **gestión de equipos** (baja lógica), añadir `AND active = true` a `getEquipo` para que un
+  equipo dado de baja no pueda usarse pasando su id directo.
+- **Dedup del parser colapsa por `serial|cliente|modelo` (M-10):** dos filas idénticas salvo el `tipo`
+  colapsarían a la primera. Verificado: el `equipos.seed.csv` actual tiene **0** llaves duplicadas → sin
+  pérdida real. Edge latente si el listado futuro añade mismo serial+modelo con tipo distinto.
+- *(Verificado en la revisión)*: sin inyección SQL (parámetros ligados), el **gate** no confía en el
+  frontend (marca/modelo/serie/tipo salen del equipo registrado, 422 si falta/no existe), endpoints con
+  sesión (401), semilla idempotente y tolerante al arranque (no tumba el boot), `equipos.seed.csv` íntegro
+  (353 líneas, 5 columnas, seriales WS600-UMB corregidos, sin filas de prueba).
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
