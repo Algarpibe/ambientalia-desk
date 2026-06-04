@@ -1,7 +1,12 @@
 # Diseño — Tablero Ambientalia conectado a Zoho Desk (vía Postgres autoalojado)
 
+> ⚠️ **SUPERADO (2026-06-04).** Este diseño corresponde a la Fase 0 (tablero leyendo de Postgres,
+> réplica de Zoho). El proyecto giró a **reemplazar Zoho Desk por completo** (Postgres = fuente de
+> verdad; la app escribe en Postgres, no en Zoho). Ver `docs/migracion-zoho-roadmap.md` y los specs
+> de los subsistemas A–G. Se conserva como referencia histórica.
+
 **Fecha:** 2026-06-02
-**Estado:** Aprobado para planificación · **Revisado** (pivote a Postgres, ver abajo)
+**Estado:** SUPERADO · (originalmente: Aprobado para planificación · Revisado — pivote a Postgres)
 **Autor:** Claude + comercial@ambientalia.com.co
 
 ---

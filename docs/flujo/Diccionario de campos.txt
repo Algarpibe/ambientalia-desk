@@ -1,0 +1,141 @@
+Incluye el diccionario de campos:
+
+Columna 1 = ID: (Codificación del sistema) Omitir esta información // Confirmo
+Columna 2 = Nombre del Contact: (Codificación del sistema) Omitir esta información // confirmo
+Columna 3 = Correo electrónico: Email del cliente
+Columna 4 = Contact Name: Nombre del cliente
+Columna 5 = Asunto: Nombre que se le ha dado de forma manual al ticket de servicio de mantenimiento, se constituye de: 
+
+Tipo de Servicio (por ejemplo Servicio Técnico o Equipo Nuevo) + Nombre de Cliente (Por Ejemplo: Servicios Geológicos Integrados S.A.S. - SGI S.A.S.) + Tipo de equipo (por ejemplo Monitor de partículas) + Prefijo_NumeroSerie_Modelo_aammdd (por ejemplo: MT_18A20070_EDM180C_260130), // los prefijos que tenemos son: MT = equipo para servicio puede ser Mtto, reparación, diagnóstico; CG = Equipo para calibración generalmente de Grimm, HV = Equipo nuevo de cualquier marca; SR = Soporte remoto a cualquier marca; PRO = Prefijo utilizado en los protocolos de servicio de Grimm y Horiba.
+
+Columna 6 = Estado: Estatus (banderas) en el que se encuentra el Ticket, según diagrama de flujo de servicio:
+
+---Tabla---
+
+Columna 7 = Hora de modificación: //Esta fecha y hora se actualiza cada vez que se interviene el ticket es decir cuando se cambia de un estado a otro  o se agrega comentarios esta fecha se actualiza.
+
+Columna 8 = ID de la solicitud: Número consecutivo que codifica el número de ticket
+Columna 9 = Prioridad: Prioridad que asigna Servicio Técnico al ticket, por ahora no es de mucho interés este valor. La prioridad puede ser:
+
+Hight: Tickets con prioridad alta, clientes con un buen resultado de análisis o cuentan con contratos de servicio prioritario
+Low: Tickets con prioridad baja, clientes con un mal resultado de análisis
+Medium: Tickets con prioridad estándar
+
+
+---Esto lo podemos conectar con la app de calificación de clientes--- // de acuerdo, sea asignada desde la creación del ticket por el área comercial.
+
+Columna 10 = Tiempo de respuesta del cliente: // fecha y hora en que los clientes responden a través de los tickets (Los tickets están pensados para ver una cadena de correos donde interactuar el cliente con el personal que realiza el servicio), como no tenemos interacción con ellos a través de la plataforma es posible suprimir esta columna.
+
+Columna 11 = Clasificaciones: Equipos para servicio de mantenimiento, equipo nuevo o soporte remoto // este campo es el que activa los diferentes flujos de trabajo creados en el zoho desk.
+
+Columna 12 = Hora de actualización del estado:// Fecha y hora en la que se actualizo el estado (cambio de un estado a otro, durante el ciclo del ticket se va actualizando) por ultima vez, en los tickets cerrados registra el dato del momento que paso a finalizado.
+ 
+Columna 13 = Hora de reapertura de la solicitud:// Esta fecha se puede asociar al ultimo cambio de estado con categoria EN ESPERA a categoria ABIERTO, se revisaron varios tickets y la fecha coincide con los comentarios de etapas de comercial "estan todas asociadas a un estado de espera" aun estado de ejecucion en servicio que son abiertos.
+ 
+Columna 14 = Hora de asignación: // este dato se asosia con el usuario a cargo del ticket, debido a que solo se cuenta con un usuario para toda el area se puede suprimir esta colummna.
+
+Columna 15 = Modificado por: (Codificación del sistema) Omitir esta información // Confirmo.
+
+Columna 16 = Número de comentarios: Comentarios de Servicio Técnico realizados sobre un ticket, puede indicar la cantidad de interacciones o desgaste en la atención de un ticket // los comentarios cuantificados son de cualquier usuario que interactúe con el ticket (comercial y ST).
+Columna 17 = Tiempo de resolución en horario laboral: Omitir esta información // No es relevante.
+
+Columna 18 = Ticket Age in Days: Omitir esta información://Es la duración del ticket, no es relevante.
+Columna 19 = Status Group: Completed (ticket completado, tarea terminada), In Progress (Ticket en proceso)
+
+Columna 20 = Completion Age Tier: Omitir esta información
+
+Columna 21 = Ticket handling Mode: Omitir esta información
+
+Columna 22 = Descripción: Comentario realizado por Servicio Técnico // campo por defecto del sistema, al crear el ticket. 
+
+Columna 23 = Nombre de Empresa: (Codificación del sistema) Omitir esta información.
+
+Columna 24 = Tiempo en espera de Ticket: //Omitir esta información.
+
+Columna 25 = Modelo de equipo: Modelo de analizador
+
+Columna 26 = Serial: Número de Serie (código alfanumérico único dado por la fábrica que identifica a un analizador)
+
+Columna 27 = Tipo de Servicio: Tipo de servicio solicitado por el cliente o identificado por Servicio Técnico al diagnosticar el analizador, esta columna puede contener los siguientes estados:
+
+Calibración: El analizador ingresa para realizar una calibración rutinaria
+Diagnóstico: El analizador ingresa para realizar un diagnóstico debido a que el cliente ha manifestado que el equipo presenta una falla
+Garantía :El analizador (nuevo) ingresa para realizar una reparación o mantenimiento que se encuentra cubierta por la garantía del equipo
+Mantenimiento: El analizador ingresa para realizar un mantenimiento rutinario
+No Aplica: Para otros casos
+Otro: Para otros casos
+
+Columna 28 = Ciudad: Ciudad donde se encuentra ubicado el cliente
+
+Columna 28 = Encargado:  // Nombre del personal de Ambientalia encargado del ticket y/o servicio (por flujo de actividades en ocaciones la persona que termina el servicio es diferente a la que lo inicia). es posible omitir esta información.
+
+Columna 30 = Equipo: Tipo de equipo, por ejemplo Monitor de partículas, Analizador de NOX, Analizador de CO, etc, //Nombre del equipo en servicio.
+
+Columna 31 = Marca: Marca del equipo, por ejemplo Horiba Ltd., GRIMM Aerosol Technik Ainring, etc
+
+Columna 32 = Código Servicio: Se compone de la siguiente información:
+
+Tiposervicio_NumeroSerie_Modelo_aammdd (por ejemplo: MT_18A20070_EDM180C_260130)
+
+Donde:
+
+MT = Mantenimiento
+CG = Calibración de Grimm
+HV = Revisión de equipo nuevo y creación de Hoja de Vida
+
+Columna 33 = Código Interno: Código que le asigna el cliente al equipo (equivalente a número de serie), no es un dato importante // dato se requiere para incluirlo en los entregables del equipo a solicitud del cliente.
+
+Columna 34 = NIT.: Identificador único tributario del cliente.
+
+Columna 35 = Correo Encargado: Email de Persona encargada del servicio al cliente 
+// esta conectado directamente con la columna Encargado.
+
+Columna 36 = Hora de creación:// fecha y hora de creación del ticket.
+
+Columna 37 = Fecha de vencimiento:// Campo por defecto del sistema modificable por el usuario, omitir esta información.
+
+Columna 38 = Fecha creación ticket: Fecha en la que se crea el ticket
+
+Columna 39 = Fecha Remisión Entrada: Fecha en la que el equipo ingresa a las instalaciones de Servicio Técnico
+
+Columna 40 = Fecha Revisión Informe: Fecha en la que el informe de mantenimiento ha sido revisado y el departamento comercial puede enviar al cliente junto con la cotización del servicio
+
+Columna 41 = Fecha de Cotización: Fecha en la que el departamento comercial envía al cliente el informe de diagnóstico y/o la cotización del servicio
+
+Columna 42 = Fecha Orden de Compra: Fecha en la que el cliente nos envía la orden de compra aprobando la cotización.
+
+Columna 43 = Fecha Orden De Venta: Fecha en la que se crea la Orden de Venta (documento interno nuestro equivalente a la Orden de Compra del cliente) que informa hacia el interior de la organización que ese ticket se ha activado y puede continuar su proceso (transición de estado) de mantenimiento, calibración o diagnóstico, según sea la solicitud.
+
+Columna 44 = Fecha Recepción de repuestos: En caso de que se requieran repuestos de fábrica, el equipo queda en ese standby mientras se traen los repuestos de fábrica. Esta fecha refleja cuándo llegaron dichos repuestos. //se diligencia cuando el ticket queda en estado de espera de repuestos y se transiciona a el estado En proceso.
+
+Columna 45 = Fecha Finalización ST: Fecha en la que Servicio Técnico da por terminado un servicio (ticket).
+
+Columna 46 = Fecha De Factura: Fecha en la que se factura el servicio al cliente
+
+Columna 47 = Tiempo permanecia: // Tiempo que permanece el equipo en Abientalia, se calcula 
+con las fechas de remisión de entrada y remisión de salida.
+
+Columna 48 = Tiempo inicio servicio // llegada equipo: // tiempo en días que se tarda en iniciar el servicio técnico después de la llegada del equipo en el 2025 se calcula con la fecha de creación del ticket - la fecha de remisión de ingreso, esta pendiente para el 2026 organizar la forma de calcularlo divido a que comercial crea los tickets mucho antes de que el equipo arribe a  AMB ST.
+
+Columna 49 = Tiempo de diagnóstico:// tiempo que se demora servicio técnico en emitir el informe o reporte de diagnóstico, se calcula con la fecha de revisión del informe - fecha de creación del ticket, pendiente revisar el cálculo para el 2026.
+
+Columna 50 = Tiempo de servicio:// tiempo que se tarde ST en ejecutar el servicio técnico se calcula de la siguiente manera: (if(isnull("Fecha Finalización ST"),0,if(isnull("Fecha Recepción de repuestos"),if(business_days(  "Fecha Orden De Venta","Fecha Finalización ST")<0,0,business_days(  "Fecha Orden De Venta","Fecha Finalización ST")),if(business_days( "Fecha Recepción de repuestos","Fecha Finalización ST")<0,0,business_days( "Fecha Recepción de repuestos","Fecha Finalización ST")))))
+
+
+Columna 51 = Tiempo recogida del equipo://Tiempo transcurrido desde que el equipo esta listo hasta que el cliente pasa a recogerlo o el equipo esta habilitado para ser  entregado y recogido . se calcula así: (date_diff("Hora de actualización del estado","Fecha Finalización ST")).
+
+Columna 52 = Días de entrega:// días hábiles que ST se demora en ejecutar el servicio, es un campo del ticket "Tiempo promesa".
+
+Columna 53 = Tiempo total servicio:// Es el mismo Tiempo de servicio columna usada para mostrar de forma cuantitativa y calcular la siguiente que es el cumplimiento del tiempo promesa.
+
+Columna 54 = Cumplimiento del tiempo promesa: Si el tiempo de servicio comunicado al cliente en la cotización es igual o inferior al tiempo desde la aprobación del mantenimiento / reparación hasta la Fecha Finalización// se expresa de forma cualitativa es decir Cumple o No cumple.
+
+Columna 55 = Calificación de satisfacción:// Muestra la calificación que el cliente le da al ticket de servicio, a travez del correo de finalización que le llega al contacto, información solo para reporte trimestral.
+ 
+Columna 56 = Tiempo bodegaje de Ingreso: (Tiempo de bodegaje fin?)// Tiempo que el equipo permanece en bodega desde la llegada hasta que se inicia el servicio para el 2025. se cacula : (date_diff( "Fecha creación ticket","Fecha Remisión Entrada")), 2026 omitir esta información.
+
+Columna 57 = Tiempo de cotización://Teimpo que tarde en enviarse la cotización al cliente en el 2025, se calcula  (days_between( "Fecha Revisión Informe","Fecha de Cotización")), dato para el dashboard comercial.
+
+Columna 58 = Tiempo de orden de compra: // tiempo que tarda el cliente en enviar la orden, se calcula (date_diff( "Fecha Orden de Compra","Fecha de Cotización")), dato para el dashboard comercial.
+
+Columna 59 = Tiempo de orden de Venta: //tiempo que tarda en generarse la OV, dato para el dashboard comercial.

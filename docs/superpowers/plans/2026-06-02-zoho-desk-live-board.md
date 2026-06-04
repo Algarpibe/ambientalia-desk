@@ -1,5 +1,9 @@
 # Tablero Ambientalia con Postgres autoalojado (Zoho Desk) — Implementation Plan
 
+> ⚠️ **SUPERADO (2026-06-04).** Plan de la Fase 0 (tablero + réplica de Postgres), ya implementado y
+> desplegado. El proyecto giró a reemplazar Zoho por completo; ver `docs/migracion-zoho-roadmap.md`
+> y los specs de los subsistemas A–G. Se conserva como referencia histórica.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** El tablero Kanban y el detalle de tickets leen de una base de datos **Postgres autoalojada** que replica Zoho Desk. Un job de sincronización dentro del backend Express trae Zoho→Postgres (backfill + incremental). Las acciones de escritura (responder, cambiar estado) van a Zoho y luego re-sincronizan.

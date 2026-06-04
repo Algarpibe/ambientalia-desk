@@ -109,28 +109,6 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     res.json(detailBackfiller.state())
   })
 
-  // DIAGNÓSTICO read-only de Blueprint (no escribe nada). Por defecto consulta los blueprints
-  // aplicados al ticket; admite ?path= (lista blanca) para probar otras rutas GET de blueprint.
-  app.get('/api/admin/blueprint', async (req, res) => {
-    if (!requireAdmin(req, res)) return
-    const id = String(req.query.id ?? '')
-    const path = req.query.path
-      ? String(req.query.path)
-      : /^\d+$/.test(id) ? `/tickets/${id}/appliedblueprints` : ''
-    // Solo GET de rutas relacionadas con Blueprint (evita SSRF a rutas arbitrarias).
-    if (!/^\/(tickets\/\d+\/(appliedblueprints|blueprints|transitions)|blueprints\/\d+|departments\/\d+\/blueprints)([/?].*)?$/.test(path)) {
-      res.status(400).json({ error: 'Ruta no permitida o id inválido', path })
-      return
-    }
-    try {
-      const zres = await zohoFetch(path)
-      const text = await zres.text()
-      res.status(zres.status).type('application/json').send(text || '{}')
-    } catch (err) {
-      res.status(502).json({ error: String(err) })
-    }
-  })
-
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
   app.get('/api/attachment', async (req, res) => {
     const path = String(req.query.path ?? '')
@@ -150,23 +128,6 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       const cd = zres.headers.get('content-disposition')
       if (cd) res.setHeader('Content-Disposition', cd)
       res.send(Buffer.from(await zres.arrayBuffer()))
-    } catch (err) {
-      res.status(502).json({ error: String(err) })
-    }
-  })
-
-  app.patch('/api/tickets/:id/status', guardWrites, async (req, res) => {
-    try {
-      const id = String(req.params.id)
-      const zres = await zohoFetch(`/tickets/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: req.body.status }),
-      })
-      if (!zres.ok) return res.status(zres.status).json({ error: await zres.text() })
-      await sync.syncTicket(id)
-      const raw = await getTicketRaw(db, id)
-      res.json(raw ? normalizeTicket(raw) : {})
     } catch (err) {
       res.status(502).json({ error: String(err) })
     }

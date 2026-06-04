@@ -39,19 +39,11 @@ describe('GET /api/tickets', () => {
 })
 
 describe('escrituras', () => {
-  it('PATCH status → 403 si enableWrites=false', async () => {
+  it('POST reply → 403 si enableWrites=false', async () => {
     const { app, zohoFetch } = appWith({ enableWrites: false })
-    const res = await request(app).patch('/api/tickets/1/status').send({ status: 'En Proceso' })
+    const res = await request(app).post('/api/tickets/1/reply').send({ content: 'hola' })
     expect(res.status).toBe(403)
     expect(zohoFetch).not.toHaveBeenCalled()
-  })
-
-  it('PATCH status → llama Zoho y re-sincroniza si enableWrites=true', async () => {
-    const { app, zohoFetch, sync } = appWith({ enableWrites: true })
-    const res = await request(app).patch('/api/tickets/1/status').send({ status: 'En Proceso' })
-    expect(res.status).toBe(200)
-    expect(zohoFetch).toHaveBeenCalledWith('/tickets/1', expect.objectContaining({ method: 'PATCH' }))
-    expect(sync.syncTicket).toHaveBeenCalledWith('1')
   })
 })
 

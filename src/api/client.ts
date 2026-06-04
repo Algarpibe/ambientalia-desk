@@ -17,14 +17,6 @@ export function fetchConversations(id: string): Promise<Message[]> {
   return fetch(`/api/tickets/${id}/conversations`).then((r) => json<Message[]>(r))
 }
 
-export function updateTicketStatus(id: string, status: string): Promise<Ticket> {
-  return fetch(`/api/tickets/${id}/status`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  }).then((r) => json<Ticket>(r))
-}
-
 export function replyTicket(id: string, content: string, to?: string): Promise<unknown> {
   return fetch(`/api/tickets/${id}/reply`, {
     method: 'POST',
