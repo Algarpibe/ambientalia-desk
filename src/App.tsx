@@ -83,7 +83,13 @@ function App() {
       </div>
 
       {selectedTicketId && (
-        <TicketDetailView ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} onChanged={reload} />
+        <TicketDetailView
+          ticketId={selectedTicketId}
+          onClose={() => setSelectedTicketId(null)}
+          onChanged={reload}
+          tickets={all}
+          onSelect={setSelectedTicketId}
+        />
       )}
 
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}

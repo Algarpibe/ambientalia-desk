@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
-import type { TicketDetail, Message } from '../../shared/types';
+import type { TicketDetail, Message, Ticket } from '../../shared/types';
 import { useAsync } from '../hooks/useAsync';
 import { fetchTicket, fetchConversations, replyTicket } from '../api/client';
 import { TicketProperties } from './TicketProperties';
@@ -11,10 +11,16 @@ interface TicketDetailViewProps {
     onClose: () => void;
     /** Se llama cuando el ticket cambia (p.ej. tras una transición) para refrescar el tablero. */
     onChanged?: () => void;
+    /** Lista de tickets cargada en el tablero, para la barra lateral de tickets del mismo estado. */
+    tickets?: Ticket[];
+    /** Abrir otro ticket desde la barra lateral. */
+    onSelect?: (id: string) => void;
 }
 
-export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged }) => {
+export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged, tickets, onSelect }) => {
     const { data: ticket, loading, reload: reloadTicket } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
+    // Solo los tickets en el MISMO estado que el ticket abierto (incluye el actual, resaltado).
+    const siblings = (tickets ?? []).filter((t) => ticket != null && t.status === ticket.status);
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
@@ -65,36 +71,38 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* Left Sidebar List (Recent/Related Tickets) */}
+                {/* Left Sidebar List — tickets en el mismo estado que el abierto */}
                 <div className="w-[300px] border-r border-slate-200 bg-[#F8F9FA] flex flex-col shrink-0">
                     <div className="p-2 border-b border-slate-200 flex items-center justify-between bg-white">
-                        <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px] text-slate-400">chevron_left</span>
-                            <span className="text-[14px] font-bold">18a20021</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <button onClick={onClose} title="Volver al tablero" className="text-slate-400 hover:text-slate-700 flex items-center">
+                                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                            </button>
+                            <span className="text-[13px] font-bold text-slate-700 truncate">{ticket?.status ?? 'Tickets'}</span>
                         </div>
-                        <span className="material-symbols-outlined text-[18px] text-slate-400">push_pin</span>
+                        <span className="text-[11px] text-slate-400 font-bold shrink-0">{siblings.length}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                            <div key={i} className={`p-4 border-b border-slate-200 cursor-pointer hover:bg-white transition-colors ${i === 3 ? 'bg-white border-l-4 border-blue-500' : ''}`}>
-                                <div className="flex justify-between mb-1">
-                                    <h4 className="text-[12px] font-bold text-slate-800 leading-tight truncate w-[200px]">Servicio Técnico COROLA Monitor de particulas...</h4>
-                                    <span className="material-symbols-outlined text-slate-400 text-[18px]">person</span>
-                                </div>
-                                <div className="text-[11px] text-slate-500 mb-2">#303 • Nestor Armando Martinez Patiño • Corola Ambiental S.A.S.</div>
+                        {siblings.map((t) => (
+                            <button
+                                key={t.id}
+                                onClick={() => onSelect?.(t.id)}
+                                className={`w-full text-left p-3 border-b border-slate-200 hover:bg-white transition-colors ${t.id === ticketId ? 'bg-white border-l-4 border-l-blue-500' : ''}`}
+                            >
+                                <h4 className="text-[12px] font-bold text-slate-800 leading-tight truncate mb-1">{t.title}</h4>
+                                <div className="text-[11px] text-slate-500 mb-2 truncate">{t.number} • {t.assignee?.name} • {t.company}</div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1.5">
                                         <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
-                                        <span className="text-[11px] text-slate-400 font-medium">25 Ago 2022</span>
+                                        <span className="text-[11px] text-slate-400 font-medium">{t.time}</span>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-[10px] font-bold text-green-600 px-1.5 py-0.5 bg-green-50 border border-green-100 rounded">Finalizado</span>
-                                        <span className="material-symbols-outlined text-[16px] text-slate-400">mail</span>
-                                        <span className="material-symbols-outlined text-[16px] text-slate-400">notes</span>
-                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-600 px-1.5 py-0.5 bg-slate-50 border border-slate-200 rounded">{t.status}</span>
                                 </div>
-                            </div>
+                            </button>
                         ))}
+                        {siblings.length === 0 && (
+                            <div className="p-4 text-[12px] text-slate-400">{ticket ? 'Sin otros tickets en este estado.' : 'Cargando…'}</div>
+                        )}
                     </div>
                 </div>
 
