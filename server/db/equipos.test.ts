@@ -1,0 +1,32 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { newDb } from 'pg-mem'
+import { migrate, type Queryable } from './migrate'
+import { parseEquiposCsv } from './seedEquipos'
+import { upsertEquipo, searchEquipos, getEquipo, countEquipos } from './equipos'
+
+const rows = parseEquiposCsv([
+  'Nombre cliente;Marca;Modelo;Numero serie;Tipo',
+  'Corola Ambiental S.A.S.;Horiba;APMA-370;85HHP0N0;Analizador de Monóxido de Carbono (CO)',
+  'Gecelca S.A. E.S.P.;Grimm;EDM180C;18A22052;Monitor de Material Particulado PM10/PM2.5',
+].join('\n'))
+
+let db: Queryable
+beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
+
+describe('equipos repo', () => {
+  it('upsert + búsqueda por serie/cliente/tipo + count', async () => {
+    for (const r of rows) await upsertEquipo(db, r)
+    expect(await countEquipos(db)).toBe(2)
+    expect((await searchEquipos(db, '85HHP')).map((e) => e.serial)).toEqual(['85HHP0N0'])
+    expect((await searchEquipos(db, 'gecelca')).map((e) => e.marca)).toEqual(['Grimm'])
+    expect((await searchEquipos(db, 'monóxido')).length).toBe(1)
+    const e = await getEquipo(db, rows[0].id)
+    expect(e).toMatchObject({ serial: '85HHP0N0', tipo: 'Analizador de Monóxido de Carbono (CO)', clienteNombre: 'Corola Ambiental S.A.S.' })
+  })
+
+  it('upsert es idempotente (mismo id no duplica)', async () => {
+    await upsertEquipo(db, rows[0])
+    await upsertEquipo(db, rows[0])
+    expect(await countEquipos(db)).toBe(1)
+  })
+})
