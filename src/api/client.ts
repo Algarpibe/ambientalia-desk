@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, CreateTicketPayload } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, CreateTicketPayload } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -143,6 +143,10 @@ export function searchClients(q: string): Promise<ClientLite[]> {
 
 export function searchSalesOrders(q: string): Promise<SalesOrderLite[]> {
   return fetch(`/api/sales-orders?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<SalesOrderLite[]>(r))
+}
+
+export function searchEquipos(q: string): Promise<EquipoLite[]> {
+  return fetch(`/api/equipos?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<EquipoLite[]>(r))
 }
 
 export async function createTicket(payload: CreateTicketPayload): Promise<TicketDetail> {

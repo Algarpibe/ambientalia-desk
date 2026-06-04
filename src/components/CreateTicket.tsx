@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ClientLite, SalesOrderLite } from '../../shared/types'
+import type { ClientLite, SalesOrderLite, EquipoLite } from '../../shared/types'
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential } from '../../shared/ticketCreate'
-import { searchClients, searchSalesOrders, createTicket } from '../api/client'
+import { searchClients, searchSalesOrders, searchEquipos, createTicket } from '../api/client'
 
 export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [ovQuery, setOvQuery] = useState('')
@@ -13,12 +13,12 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [clientId, setClientId] = useState<string | null>(null)
   const [clientName, setClientName] = useState('')
 
+  const [equipoQuery, setEquipoQuery] = useState('')
+  const [equipoResults, setEquipoResults] = useState<EquipoLite[]>([])
+  const [equipo, setEquipo] = useState<EquipoLite | null>(null)
+
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState('')
-  const [tipoEquipo, setTipoEquipo] = useState('')
-  const [marca, setMarca] = useState('')
-  const [modelo, setModelo] = useState('')
-  const [serie, setSerie] = useState('')
   const [prefijo, setPrefijo] = useState('MT')
   const [ordenVenta, setOrdenVenta] = useState('')
   const [prioridad, setPrioridad] = useState('')
@@ -40,11 +40,17 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     searchClients(clientQuery).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
     return () => { alive = false }
   }, [clientQuery])
+  useEffect(() => {
+    if (equipoQuery.trim().length < 2) { setEquipoResults([]); return }
+    let alive = true
+    searchEquipos(equipoQuery).then((r) => { if (alive) setEquipoResults(r) }).catch(() => {})
+    return () => { alive = false }
+  }, [equipoQuery])
 
-  const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie, modelo, fecha: new Date() })
+  const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie: equipo?.serial ?? '', modelo: equipo?.modelo ?? '', fecha: new Date() })
   const subject = useMemo(
-    () => subjectOverride ?? buildSubject({ cliente: clientName, tipoEquipo, codigo }),
-    [subjectOverride, clientName, tipoEquipo, codigo],
+    () => subjectOverride ?? buildSubject({ cliente: clientName, tipoEquipo: equipo?.tipo ?? '', codigo }),
+    [subjectOverride, clientName, equipo, codigo],
   )
 
   function pickOv(ov: SalesOrderLite) {
@@ -55,23 +61,24 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     if (ov.customerName) { setClientName(ov.customerName); setClientQuery(ov.customerName) }
     setOrdenVenta(ov.number)
     const parsed = parseCodigoFromPotential(ov.potentialName)
-    if (parsed) { setPrefijo(parsed.prefijo); setSerie(parsed.serie); setModelo(parsed.modelo) }
+    if (parsed) setPrefijo(parsed.prefijo)
   }
-
   function pickClient(c: ClientLite) {
-    setClientId(c.id)
-    setClientName(c.name)
-    setClientQuery(c.name)
-    setClientResults([])
+    setClientId(c.id); setClientName(c.name); setClientQuery(c.name); setClientResults([])
+  }
+  function pickEquipo(e: EquipoLite) {
+    setEquipo(e); setEquipoQuery(`${e.serial} · ${e.marca ?? ''} ${e.modelo ?? ''}`.trim()); setEquipoResults([])
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
     try {
+      if (!equipo) { setError('Selecciona un equipo registrado'); setBusy(false); return }
       await createTicket({
         salesOrderId: salesOrderId ?? undefined,
         clientId: clientId ?? undefined,
-        tipoServicio, clasificaciones, tipoEquipo, marca, modelo, serie, prefijo,
+        equipoId: equipo.id,
+        tipoServicio, clasificaciones, prefijo,
         ordenVenta: ordenVenta || undefined,
         prioridad: prioridad || undefined,
         subject, codigoServicio: codigo,
@@ -118,6 +125,27 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
           )}
         </div>
 
+        <div className="relative">
+          <label className="text-[11px] font-bold text-slate-500 uppercase">Equipo * (por serie / cliente / modelo)</label>
+          <input className={`${field} w-full`} placeholder="Buscar equipo registrado…" value={equipoQuery}
+            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null) }} required={!equipo} />
+          {equipoResults.length > 0 && (
+            <ul className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+              {equipoResults.map((e) => (
+                <li key={e.id}><button type="button" onClick={() => pickEquipo(e)} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
+                  <b>{e.serial}</b> — {e.marca ?? ''} {e.modelo ?? ''} · {e.tipo ?? ''} <span className="text-slate-400">· {e.clienteNombre ?? ''}</span>
+                </button></li>
+              ))}
+            </ul>
+          )}
+          {equipo && (
+            <div className="mt-1 text-[12px] text-slate-600 bg-slate-50 border border-slate-200 rounded p-2">
+              <b>{equipo.marca} {equipo.modelo}</b> · {equipo.tipo} · serie {equipo.serial}
+              <span className="text-slate-400"> · dueño: {equipo.clienteNombre}</span>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
           <select className={field} value={tipoServicio} onChange={(e) => setTipoServicio(e.target.value)} required>
             <option value="">Tipo de Servicio *</option>
@@ -127,10 +155,6 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
             <option value="">Clasificaciones *</option>
             {CLASIFICACIONES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
-          <input className={field} placeholder="Tipo de equipo *" value={tipoEquipo} onChange={(e) => setTipoEquipo(e.target.value)} required />
-          <input className={field} placeholder="Marca *" value={marca} onChange={(e) => setMarca(e.target.value)} required />
-          <input className={field} placeholder="Modelo *" value={modelo} onChange={(e) => setModelo(e.target.value)} required />
-          <input className={field} placeholder="Número de serie *" value={serie} onChange={(e) => setSerie(e.target.value)} required />
           <select className={field} value={prefijo} onChange={(e) => setPrefijo(e.target.value)}>
             {PREFIJOS.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
