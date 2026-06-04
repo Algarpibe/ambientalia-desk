@@ -99,8 +99,9 @@ export interface TicketWithRefs { row: TicketRow; refs: TicketRefs }
 
 export async function getActiveTickets(db: Queryable): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, a.name AS account_name, g.name AS agent_name
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
+     LEFT JOIN clients cl ON t.client_id=cl.id
      WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
   )
   return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name } }))
@@ -108,10 +109,11 @@ export async function getActiveTickets(db: Queryable): Promise<TicketWithRefs[]>
 
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {
   const r = await db.query(
-    `SELECT t.*, a.name AS account_name, g.name AS agent_name,
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name,
             c.first_name AS c_first, c.last_name AS c_last, c.phone AS c_phone, c.email AS c_email
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
-     LEFT JOIN contacts c ON t.contact_id=c.id WHERE t.id=$1`,
+     LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN clients cl ON t.client_id=cl.id WHERE t.id=$1`,
     [id],
   )
   const row = r.rows[0]
@@ -229,4 +231,52 @@ export async function applyTransition(
   } finally {
     client.release()
   }
+}
+
+export interface CreateTicketInput {
+  subject: string
+  codigoServicio: string | null
+  classification: string | null
+  tipoServicio: string | null
+  equipo: string | null
+  marca: string | null
+  modelo: string | null
+  serial: string | null
+  ordenVenta: string | null
+  priority: string | null
+  clientId: string
+  salesorderId: string | null
+  actor: string
+}
+
+/** Crea un ticket gestionado por la app en "OV asignada" + su transición #1, de forma atómica. */
+export async function createTicket(db: Queryable, input: CreateTicketInput): Promise<string> {
+  const id = `app-${randomUUID()}`
+  const number = await nextTicketNumber(db)
+  const run = async (q: Queryable): Promise<void> => {
+    await q.query(
+      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,client_id,salesorder_id,managed_by_app,source,created_time,modified_time,updated_at)
+       VALUES ($1,$2,$3,'OV asignada','Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,'app',now(),now(),now())`,
+      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId],
+    )
+    await q.query(
+      `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
+       VALUES ($1,'enviar','Enviar','(creación)','OV asignada','Comercial',$2,$3,null)`,
+      [id, input.actor, JSON.stringify({ orden_venta: input.ordenVenta })],
+    )
+  }
+  const pool = db as PoolLike
+  if (typeof pool.connect !== 'function') { await run(db); return id }
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await run(client)
+    await client.query('COMMIT')
+  } catch (e) {
+    try { await client.query('ROLLBACK') } catch { /* ignora fallo de rollback */ }
+    throw e
+  } finally {
+    client.release()
+  }
+  return id
 }

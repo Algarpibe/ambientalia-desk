@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { upsertAccount, upsertTicket, getTicketRow, countTickets } from './repo'
-import { getActiveTickets, nextTicketNumber, insertTransition } from './repo'
-import { applyTransition } from './repo'
+import { getActiveTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
+import { applyTransition, createTicket } from './repo'
+import { upsertClient } from '../books/repo'
+import { clientFromBooks } from '../books/mappers'
 import { reseedTicketNumber } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
 
@@ -85,5 +87,33 @@ describe('applyTransition', () => {
     expect(hist.rows[0].to_status).toBe('Ingresado')
     expect(hist.rows[0].from_status).toBe('OV asignada')
     expect(hist.rows[0].performed_by).toBe('Equipo Técnico')
+  })
+})
+
+describe('createTicket (Subsistema C)', () => {
+  it('crea un ticket gestionado en "OV asignada" con número de secuencia + transición #1', async () => {
+    await upsertClient(db, clientFromBooks({ contact_id: 'cli1', contact_name: 'Gecelca S.A. E.S.P.', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const id = await createTicket(db, {
+      subject: 'Servicio Técnico Gecelca S.A. E.S.P. Monitor MT_18A20070_EDM180C_260604',
+      codigoServicio: 'MT_18A20070_EDM180C_260604', classification: 'Equipo para servicio de mantenimiento',
+      tipoServicio: 'Mantenimiento', equipo: 'Monitor de partículas', marca: 'Grimm', modelo: 'EDM180C',
+      serial: '18A20070', ordenVenta: 'OV-2026-200', priority: null, clientId: 'cli1', salesorderId: 'so1', actor: 'Admin',
+    })
+    expect(id).toMatch(/^app-/)
+    const row = (await db.query('SELECT number, status, status_type, managed_by_app, source, client_id, salesorder_id, orden_venta FROM tickets WHERE id=$1', [id])).rows[0]
+    expect(row.status).toBe('OV asignada')
+    expect(row.status_type).toBe('Open')
+    expect(row.managed_by_app).toBe(true)
+    expect(row.source).toBe('app')
+    expect(row.client_id).toBe('cli1')
+    expect(row.salesorder_id).toBe('so1')
+    expect(row.orden_venta).toBe('OV-2026-200')
+    expect(Number(row.number)).toBeGreaterThan(0)
+    const tr = (await db.query('SELECT to_status, transition_name, area, performed_by FROM ticket_transitions WHERE ticket_id=$1', [id])).rows[0]
+    expect(tr).toMatchObject({ to_status: 'OV asignada', transition_name: 'Enviar', area: 'Comercial', performed_by: 'Admin' })
+    const active = await getActiveTickets(db)
+    expect(active.find((t) => t.row.id === id)?.refs.accountName).toBe('Gecelca S.A. E.S.P.')
+    const detail = await getTicketWithRefs(db, id)
+    expect(detail?.refs.accountName).toBe('Gecelca S.A. E.S.P.')
   })
 })
