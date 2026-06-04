@@ -165,3 +165,19 @@ export interface SalesOrderLite {
   ticketNumber?: string
   potentialName?: string
 }
+
+export interface CreateTicketPayload {
+  salesOrderId?: string
+  clientId?: string
+  tipoServicio: string
+  clasificaciones: string
+  tipoEquipo: string
+  marca: string
+  modelo: string
+  serie: string
+  prefijo: string
+  ordenVenta?: string
+  prioridad?: string
+  subject?: string
+  codigoServicio?: string
+}

@@ -11,12 +11,14 @@ import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
 import { UsersAdmin } from './components/UsersAdmin'
 import { RolesAdmin } from './components/RolesAdmin'
+import { CreateTicket } from './components/CreateTicket'
 
 function App() {
   const { user, loading: authLoading } = useAuth();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [showUsers, setShowUsers] = useState(false)
   const [showRoles, setShowRoles] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
   const { data: tickets, loading, error, reload } = useAsync(fetchTickets, [user?.id]);
   const groups = groupTicketsByColumn(tickets ?? []);
 
@@ -39,6 +41,7 @@ function App() {
                 <span className="material-symbols-outlined text-[18px] text-slate-400">refresh</span>
               </button>
             </div>
+            <button onClick={() => setShowCreate(true)} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold">Nuevo ticket</button>
           </div>
 
           {error && (
@@ -83,6 +86,7 @@ function App() {
 
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
       {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
+      {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
     </div>
   );
 }

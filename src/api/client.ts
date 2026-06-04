@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, CreateTicketPayload } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -135,4 +135,25 @@ export function updateRole(id: string, patch: Partial<{ name: string; areas: str
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   }).then((r) => json<Role>(r))
+}
+
+export function searchClients(q: string): Promise<ClientLite[]> {
+  return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
+}
+
+export function searchSalesOrders(q: string): Promise<SalesOrderLite[]> {
+  return fetch(`/api/sales-orders?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<SalesOrderLite[]>(r))
+}
+
+export async function createTicket(payload: CreateTicketPayload): Promise<TicketDetail> {
+  const res = await fetch('/api/tickets', {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error || `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<TicketDetail>
 }
