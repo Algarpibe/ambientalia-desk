@@ -13,6 +13,7 @@ import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth } from './auth/middleware'
+import { searchClients, searchSalesOrders } from './books/repo'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -102,6 +103,20 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       detailBackfiller.start()
     }
     res.json(detailBackfiller.state())
+  })
+
+  // Búsqueda de clientes/órdenes de venta (Books) para los selectores de creación de tickets.
+  // Requieren sesión: son datos de negocio. Cada uno con su propio requireAuth (no van bajo /api/tickets).
+  app.get('/api/clients', requireAuth(db), async (req, res) => {
+    try {
+      res.json(await searchClients(db, String(req.query.search ?? '')))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/sales-orders', requireAuth(db), async (req, res) => {
+    try {
+      res.json(await searchSalesOrders(db, String(req.query.search ?? '')))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).

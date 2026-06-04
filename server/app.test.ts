@@ -4,6 +4,8 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './db/migrate'
 import { upsertTicket, upsertAccount, getTicketRow } from './db/repo'
 import { ticketRowFromZoho, accountRowFromZoho } from './db/mappers'
+import { upsertClient, upsertSalesOrder } from './books/repo'
+import { clientFromBooks, salesOrderFromBooks } from './books/mappers'
 import { createApp } from './app'
 import type { AppConfig } from './config'
 import { createUser } from './auth/users'
@@ -61,6 +63,32 @@ describe('escrituras', () => {
     const res = await request(app).post('/api/tickets/1/reply').set('Cookie', cookie).send({ content: 'hola' })
     expect(res.status).toBe(403)
     expect(zohoFetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /api/clients y /api/sales-orders (Books)', () => {
+  it('busca clientes (con sesión)', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'c1', contact_name: 'Camposol Colombia S.A.S.', cf_nit: '901116362', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const res = await request(app).get('/api/clients?search=campo').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ id: 'c1', nit: '901116362' })
+  })
+
+  it('busca órdenes de venta (con sesión)', async () => {
+    const cookie = await adminCookie()
+    await upsertSalesOrder(db, salesOrderFromBooks({ salesorder_id: 's1', salesorder_number: 'OV-2026-117', customer_name: 'Corola', date: '2026-06-01', status: 'open', last_modified_time: '2026-06-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const res = await request(app).get('/api/sales-orders?search=OV-2026').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ id: 's1', number: 'OV-2026-117' })
+  })
+
+  it('GET /api/clients sin sesión → 401', async () => {
+    const { app } = appWith()
+    const res = await request(app).get('/api/clients?search=x')
+    expect(res.status).toBe(401)
   })
 })
 
