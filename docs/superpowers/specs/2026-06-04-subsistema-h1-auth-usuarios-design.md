@@ -17,7 +17,7 @@ dejando **toda la app detrás del login**. Es la base sobre la que H2 montará r
 | Decisión | Elección |
 |---|---|
 | Mecanismo de login | Correo + contraseña (cuentas locales en Postgres) |
-| Sesión | Cookie **httpOnly** `sid` + tabla `sessions` en servidor (revocable), expira a 7 días |
+| Sesión | Cookie **httpOnly** `sid` + tabla `sessions` en servidor (revocable), expira a 30 días |
 | Hash de contraseñas | **bcryptjs** (puro JS, sin compilación nativa) |
 | Alta de usuarios | Un **admin crea** cada usuario (sin auto-registro ni aprobación) |
 | Distinción de permisos en H1 | Flag booleano **`is_admin`** (los roles ricos llegan en H2) |
@@ -53,7 +53,7 @@ Se añaden al `schema.sql` existente (idempotente, `CREATE ... IF NOT EXISTS`); 
 ### Hashing y sesiones (unidad `server/auth/`)
 - `server/auth/passwords.ts` — `hashPassword(plain): Promise<string>`, `verifyPassword(plain, hash): Promise<boolean>` (bcryptjs, cost 10).
 - `server/auth/sessions.ts` — sobre `Queryable`:
-  - `createSession(db, userId): Promise<string>` (genera token de 32 bytes hex, expira a 7 días, inserta).
+  - `createSession(db, userId): Promise<string>` (genera token de 32 bytes hex, expira a 30 días, inserta).
   - `getSessionUser(db, token): Promise<User | null>` (join sessions→users; null si expirada/inexistente/usuario inactivo).
   - `deleteSession(db, token)`, `deleteUserSessions(db, userId)` (al desactivar o cambiar contraseña).
 - `server/auth/users.ts` (repo de usuarios sobre `Queryable`): `createUser`, `getUserByEmail`, `getUserById`, `listUsers`, `updateUser` (name/is_admin/active), `setPassword`, `countUsers`. El email se normaliza a minúsculas. Devuelve un tipo `User` **sin** `password_hash` para respuestas (un `UserPublic`).
@@ -64,7 +64,7 @@ Se añaden al `schema.sql` existente (idempotente, `CREATE ... IF NOT EXISTS`); 
 
 ### Endpoints
 Auth:
-- `POST /api/auth/login` `{ email, password }` → verifica (credenciales + `active`); crea sesión; `Set-Cookie: sid=…; HttpOnly; SameSite=Lax; Max-Age=7d`; devuelve `UserPublic`. Credenciales inválidas o usuario inactivo → `401` con **mensaje genérico** ("Correo o contraseña incorrectos").
+- `POST /api/auth/login` `{ email, password }` → verifica (credenciales + `active`); crea sesión; `Set-Cookie: sid=…; HttpOnly; SameSite=Lax; Max-Age=30d`; devuelve `UserPublic`. Credenciales inválidas o usuario inactivo → `401` con **mensaje genérico** ("Correo o contraseña incorrectos").
 - `POST /api/auth/logout` → borra la sesión y limpia la cookie.
 - `GET /api/auth/me` → `UserPublic` del usuario actual, o `401` si no hay sesión.
 - `POST /api/auth/change-password` `{ currentPassword, newPassword }` (requiere auth) → verifica la actual, guarda la nueva (hash), **invalida las demás sesiones** del usuario (mantiene la actual). `newPassword` mínimo 8 caracteres.
