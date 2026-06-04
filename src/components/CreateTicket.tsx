@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite } from '../../shared/types'
-import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential } from '../../shared/ticketCreate'
+import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '../../shared/ticketCreate'
 import { searchClients, searchSalesOrders, searchEquipos, createTicket } from '../api/client'
 
 export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
@@ -29,11 +29,11 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (ovQuery.trim().length < 2) { setOvResults([]); return }
+    if (!clientId && ovQuery.trim().length < 2) { setOvResults([]); return }
     let alive = true
-    searchSalesOrders(ovQuery).then((r) => { if (alive) setOvResults(r) }).catch(() => {})
+    searchSalesOrders(ovQuery, clientId ?? undefined).then((r) => { if (alive) setOvResults(r) }).catch(() => {})
     return () => { alive = false }
-  }, [ovQuery])
+  }, [ovQuery, clientId])
   useEffect(() => {
     if (clientQuery.trim().length < 2) { setClientResults([]); return }
     let alive = true
@@ -68,6 +68,16 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   }
   function pickEquipo(e: EquipoLite) {
     setEquipo(e); setEquipoQuery(`${e.serial} · ${e.marca ?? ''} ${e.modelo ?? ''}`.trim()); setEquipoResults([])
+    // Autocompletar el cliente con el dueño del equipo (buscando su cliente de Books).
+    if (e.clienteNombre && !clientId) {
+      setClientName(e.clienteNombre)
+      setClientQuery(e.clienteNombre)
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+      searchClients(e.clienteNombre).then((res) => {
+        const match = res.find((c) => norm(c.name) === norm(e.clienteNombre!)) ?? (res.length === 1 ? res[0] : null)
+        if (match) { setClientId(match.id); setClientName(match.name); setClientQuery(match.name); setClientResults([]) }
+      }).catch(() => {})
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -147,7 +157,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <select className={field} value={tipoServicio} onChange={(e) => setTipoServicio(e.target.value)} required>
+          <select className={field} value={tipoServicio} onChange={(e) => { setTipoServicio(e.target.value); setPrefijo(defaultPrefijoFor(e.target.value)); setCodigoOverride(null) }} required>
             <option value="">Tipo de Servicio *</option>
             {TIPOS_SERVICIO.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>

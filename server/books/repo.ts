@@ -55,13 +55,17 @@ export async function getClient(db: Queryable, id: string): Promise<ClientLite |
   return r.rows[0] ? clientToLite(r.rows[0]) : null
 }
 
-export async function searchSalesOrders(db: Queryable, q: string, limit = 20): Promise<SalesOrderLite[]> {
+export async function searchSalesOrders(db: Queryable, q: string, clientId?: string | null, limit = 20): Promise<SalesOrderLite[]> {
   const like = `%${q.toLowerCase()}%`
+  const params: unknown[] = [like]
+  let clientFilter = ''
+  if (clientId) { params.push(clientId); clientFilter = `AND client_id = $${params.length}` }
+  params.push(limit)
   const r = await db.query(
     `SELECT id,number,client_id,customer_name,date,total,status,ticket_number,potential_name FROM sales_orders
-     WHERE LOWER(number) LIKE $1 OR LOWER(COALESCE(customer_name,'')) LIKE $1
-     ORDER BY date DESC NULLS LAST LIMIT $2`,
-    [like, limit],
+     WHERE (LOWER(number) LIKE $1 OR LOWER(COALESCE(customer_name,'')) LIKE $1) ${clientFilter}
+     ORDER BY date DESC NULLS LAST LIMIT $${params.length}`,
+    params,
   )
   return r.rows.map(salesOrderToLite)
 }

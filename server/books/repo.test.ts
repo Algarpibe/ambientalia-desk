@@ -28,6 +28,14 @@ describe('books repo', () => {
     expect((await searchSalesOrders(db, 'corola')).map((s) => s.id)).toEqual(['s1'])
   })
 
+  it('searchSalesOrders filtra por cliente cuando se da clientId', async () => {
+    await upsertSalesOrder(db, salesOrderFromBooks({ salesorder_id: 's1', salesorder_number: 'OV-1', customer_id: 'cliA', customer_name: 'A', date: '2026-06-01', last_modified_time: '2026-06-01T00:00:00Z' } as any))
+    await upsertSalesOrder(db, salesOrderFromBooks({ salesorder_id: 's2', salesorder_number: 'OV-2', customer_id: 'cliB', customer_name: 'B', date: '2026-06-02', last_modified_time: '2026-06-02T00:00:00Z' } as any))
+    expect((await searchSalesOrders(db, 'OV')).map((s) => s.id).sort()).toEqual(['s1', 's2'])
+    expect((await searchSalesOrders(db, 'OV', 'cliA')).map((s) => s.id)).toEqual(['s1'])
+    expect((await searchSalesOrders(db, '', 'cliB')).map((s) => s.id)).toEqual(['s2'])
+  })
+
   it('maxLastModified devuelve la marca de agua', async () => {
     await upsertClient(db, clientFromBooks({ contact_id: 'c1', contact_name: 'A', last_modified_time: '2024-01-01T00:00:00Z' } as any))
     await upsertClient(db, clientFromBooks({ contact_id: 'c2', contact_name: 'B', last_modified_time: '2024-03-01T00:00:00Z' } as any))

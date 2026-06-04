@@ -141,8 +141,10 @@ export function searchClients(q: string): Promise<ClientLite[]> {
   return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
 }
 
-export function searchSalesOrders(q: string): Promise<SalesOrderLite[]> {
-  return fetch(`/api/sales-orders?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<SalesOrderLite[]>(r))
+export function searchSalesOrders(q: string, clientId?: string): Promise<SalesOrderLite[]> {
+  const p = new URLSearchParams({ search: q })
+  if (clientId) p.set('clientId', clientId)
+  return fetch(`/api/sales-orders?${p.toString()}`, { credentials: 'include' }).then((r) => json<SalesOrderLite[]>(r))
 }
 
 export function searchEquipos(q: string): Promise<EquipoLite[]> {

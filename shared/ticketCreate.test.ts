@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { buildCodigoServicio, buildSubject, parseCodigoFromPotential } from './ticketCreate'
+import { buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from './ticketCreate'
+
+describe('defaultPrefijoFor', () => {
+  it('Calibración → CG; Diagnóstico/Mantenimiento/otros → MT', () => {
+    expect(defaultPrefijoFor('Calibración')).toBe('CG')
+    expect(defaultPrefijoFor('Diagnóstico')).toBe('MT')
+    expect(defaultPrefijoFor('Mantenimiento')).toBe('MT')
+    expect(defaultPrefijoFor('Garantía')).toBe('MT')
+  })
+})
 
 describe('buildCodigoServicio', () => {
   it('arma PREFIJO_serie_modelo_AAMMDD', () => {

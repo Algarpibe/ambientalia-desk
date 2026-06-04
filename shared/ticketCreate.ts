@@ -20,3 +20,8 @@ export function parseCodigoFromPotential(potentialName: string | null | undefine
   const m = potentialName.match(/\b(MT|CG|HV|SR|PRO)_([^_\s]+)_([^_\s]+)_(\d{6})\b/)
   return m ? { prefijo: m[1], serie: m[2], modelo: m[3] } : null
 }
+
+/** El prefijo del Código Servicio se deriva del Tipo de Servicio (editable). Calibración → CG; el resto → MT. */
+export function defaultPrefijoFor(tipoServicio: string): string {
+  return tipoServicio === 'Calibración' ? 'CG' : 'MT'
+}

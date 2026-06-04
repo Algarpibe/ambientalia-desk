@@ -160,7 +160,8 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.get('/api/sales-orders', requireAuth(db), async (req, res) => {
     try {
-      res.json(await searchSalesOrders(db, String(req.query.search ?? '')))
+      const clientId = req.query.clientId ? String(req.query.clientId) : undefined
+      res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
