@@ -7,6 +7,7 @@ import { rowToTicket, rowToTicketDetail, rowToMessage } from './db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
 import { transitionById } from '../shared/transitions'
+import { canExecuteTransition } from '../shared/permissions'
 import { buildTransitionPlan } from './transitionExec'
 import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
@@ -138,6 +139,10 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       if (!current) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
       if (!t.from.includes(current.row.status)) {
         res.status(409).json({ error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
+        return
+      }
+      if (!canExecuteTransition(req.user!.areas, req.user!.isAdmin, t.area)) {
+        res.status(403).json({ error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
         return
       }
       const values = (req.body.values ?? {}) as Record<string, unknown>
