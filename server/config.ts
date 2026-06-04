@@ -11,6 +11,8 @@ export interface AppConfig {
   databaseUrl: string
   syncIntervalMs: number
   adminToken: string   // protege endpoints /api/admin/* (vacío = deshabilitados)
+  adminEmail: string     // bootstrap del primer admin (vacío = no se siembra)
+  adminPassword: string
 }
 
 type Env = Record<string, string | undefined>
@@ -35,5 +37,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     databaseUrl: required(env, 'DATABASE_URL'),
     syncIntervalMs: env.SYNC_INTERVAL_MS ? Number(env.SYNC_INTERVAL_MS) : 180000,
     adminToken: env.ADMIN_TOKEN || '',
+    adminEmail: env.ADMIN_EMAIL || '',
+    adminPassword: env.ADMIN_PASSWORD || '',
   }
 }

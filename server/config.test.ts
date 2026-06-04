@@ -28,4 +28,12 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...base, ZOHO_CLIENT_ID: undefined })).toThrow(/ZOHO_CLIENT_ID/)
     expect(() => loadConfig({ ...base, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/)
   })
+
+  it('lee ADMIN_EMAIL/ADMIN_PASSWORD (vacíos por defecto)', () => {
+    // usa el env base del archivo (las variables Zoho requeridas)
+    expect(loadConfig(base).adminEmail).toBe('')
+    const c = loadConfig({ ...base, ADMIN_EMAIL: 'a@x.co', ADMIN_PASSWORD: 'secreta12' })
+    expect(c.adminEmail).toBe('a@x.co')
+    expect(c.adminPassword).toBe('secreta12')
+  })
 })

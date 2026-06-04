@@ -9,6 +9,8 @@ import { migrate, reseedTicketNumber } from './db/migrate'
 import { createSync } from './sync'
 import { createApp } from './app'
 import { countTickets } from './db/repo'
+import { countUsers, createUser, getUserByEmail } from './auth/users'
+import { hashPassword } from './auth/passwords'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -20,6 +22,17 @@ async function main() {
   await migrate(pool)
   // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
   try { await reseedTicketNumber(pool) } catch (e) { console.error('reseed inicial omitido:', e) }
+
+  // Bootstrap: si no hay usuarios y hay credenciales en env, crea el admin inicial.
+  if (config.adminEmail && config.adminPassword && (await countUsers(pool)) === 0) {
+    if (!(await getUserByEmail(pool, config.adminEmail))) {
+      await createUser(pool, {
+        email: config.adminEmail, name: 'Administrador',
+        passwordHash: await hashPassword(config.adminPassword), isAdmin: true,
+      })
+      console.log(`Admin inicial creado: ${config.adminEmail}`)
+    }
+  }
 
   const app = createApp({ db: pool, zohoFetch, sync, config })
 
