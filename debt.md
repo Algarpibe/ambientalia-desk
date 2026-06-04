@@ -89,6 +89,18 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
 - *(Resueltos en la revisión)*: cookie `Secure` en producción, `/api/attachment` ahora requiere sesión,
   401 en peticiones de datos devuelve al login, y el bootstrap exige `ADMIN_PASSWORD` ≥ 8.
 
+## 3d. Hallazgos de la revisión del Subsistema H2 (menores / por diseño)
+
+- **`/api/tickets/:id/reply` no está gateado por área/rol:** cualquier usuario autenticado (con
+  ENABLE_WRITES) puede responder correos al cliente. Diferido en el spec (el correo se rehace en D). Cuando
+  se aborde, gatearlo por rol/área o una capacidad "puede responder".
+- **Orden 409 antes de 403 en la transición:** un usuario sin permiso puede distinguir "no aplica desde el
+  estado" (409) de "aplica pero no tienes el área" (403), revelando qué transiciones son válidas para un
+  estado. Bajo riesgo (el Blueprint completo ya viaja al cliente en `shared/transitions.ts`). Si se quiere
+  ocultar, mover el check de área (403) antes del check de `from` (409).
+- **`users.role_id` sin FK; no hay DELETE de rol (solo desactivar):** es seguro (un rol borrado/inactivo →
+  LEFT JOIN da áreas `[]`, fail-closed). Si algún día se añade borrado de roles, usar FK `ON DELETE SET NULL`.
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
