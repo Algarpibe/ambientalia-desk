@@ -134,3 +134,11 @@ export interface Agent {
   name: string
   email?: string | null
 }
+
+export interface UserPublic {
+  id: string
+  email: string
+  name: string
+  isAdmin: boolean
+  active: boolean
+}
