@@ -6,6 +6,8 @@ import { upsertTicket, upsertAccount, getTicketRow } from './db/repo'
 import { ticketRowFromZoho, accountRowFromZoho } from './db/mappers'
 import { upsertClient, upsertSalesOrder } from './books/repo'
 import { clientFromBooks, salesOrderFromBooks } from './books/mappers'
+import { upsertEquipo } from './db/equipos'
+import { parseEquiposCsv } from './db/seedEquipos'
 import { createApp } from './app'
 import type { AppConfig } from './config'
 import { createUser } from './auth/users'
@@ -88,6 +90,24 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
   it('GET /api/clients sin sesión → 401', async () => {
     const { app } = appWith()
     const res = await request(app).get('/api/clients?search=x')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('GET /api/equipos', () => {
+  it('busca equipos (con sesión)', async () => {
+    const cookie = await adminCookie()
+    const [eq] = parseEquiposCsv('Nombre cliente;Marca;Modelo;Numero serie;Tipo\nGecelca S.A. E.S.P.;Grimm;EDM180C;18A22052;Monitor PM10/PM2.5')
+    await upsertEquipo(db, eq)
+    const { app } = appWith()
+    const res = await request(app).get('/api/equipos?search=18A22052').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ serial: '18A22052', marca: 'Grimm', tipo: 'Monitor PM10/PM2.5' })
+  })
+
+  it('GET /api/equipos sin sesión → 401', async () => {
+    const { app } = appWith()
+    const res = await request(app).get('/api/equipos?search=x')
     expect(res.status).toBe(401)
   })
 })

@@ -14,6 +14,7 @@ import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth } from './auth/middleware'
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
+import { searchEquipos } from './db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 
 function humanBytes(n: number): string {
@@ -162,6 +163,12 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   app.get('/api/sales-orders', requireAuth(db), async (req, res) => {
     try {
       res.json(await searchSalesOrders(db, String(req.query.search ?? '')))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/equipos', requireAuth(db), async (req, res) => {
+    try {
+      res.json(await searchEquipos(db, String(req.query.search ?? '')))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
