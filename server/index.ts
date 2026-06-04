@@ -5,7 +5,7 @@ import { loadConfig } from './config'
 import { createTokenManager } from './tokenManager'
 import { createZohoClient } from './zohoClient'
 import { createPool } from './db/pool'
-import { migrate } from './db/migrate'
+import { migrate, reseedTicketNumber } from './db/migrate'
 import { createSync } from './sync'
 import { createApp } from './app'
 import { countTickets } from './db/repo'
@@ -18,6 +18,7 @@ const sync = createSync({ zohoFetch, db: pool, config })
 
 async function main() {
   await migrate(pool)
+  await reseedTicketNumber(pool)
 
   const app = createApp({ db: pool, zohoFetch, sync, config })
 
@@ -37,6 +38,7 @@ async function main() {
         console.log('DB vacía: iniciando backfill de tickets…')
         const total = await sync.backfillTickets()
         console.log(`Backfill completado: ${total} tickets`)
+        await reseedTicketNumber(pool)
       }
     })
     .catch((e) => console.error('Backfill falló:', e))
