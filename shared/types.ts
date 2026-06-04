@@ -110,3 +110,27 @@ export interface ZohoConversationRaw {
   commentedTime?: string | null
   createdTime?: string | null
 }
+
+export interface Account {
+  id: string
+  name: string
+  nit?: string | null
+  email?: string | null
+  phone?: string | null
+  city?: string | null
+}
+
+export interface Contact {
+  id: string
+  firstName?: string | null
+  lastName?: string | null
+  email?: string | null
+  phone?: string | null
+  accountId?: string | null
+}
+
+export interface Agent {
+  id: string
+  name: string
+  email?: string | null
+}
