@@ -151,3 +151,22 @@ CREATE INDEX IF NOT EXISTS idx_clients_name ON clients (name);
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS client_id text;
 -- → sales_orders.id (Books)
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS salesorder_id text;
+
+CREATE TABLE IF NOT EXISTS equipos (
+  id text PRIMARY KEY,
+  serial text NOT NULL,
+  marca text,
+  modelo text,
+  tipo text,
+  cliente_nombre text,
+  source text NOT NULL DEFAULT 'seed',
+  active boolean NOT NULL DEFAULT true,
+  raw jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_equipos_serial ON equipos (serial);
+CREATE INDEX IF NOT EXISTS idx_equipos_cliente ON equipos (cliente_nombre);
+CREATE INDEX IF NOT EXISTS idx_equipos_tipo ON equipos (tipo);
+
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS equipo_id text;
