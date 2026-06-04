@@ -145,3 +145,23 @@ export interface UserPublic {
   roleName?: string | null
   areas: string[]
 }
+
+export interface ClientLite {
+  id: string
+  name: string
+  nit?: string
+  email?: string
+  companyName?: string
+}
+
+export interface SalesOrderLite {
+  id: string
+  number: string
+  clientId?: string
+  customerName?: string
+  date?: string
+  total?: number
+  status?: string
+  ticketNumber?: string
+  potentialName?: string
+}
