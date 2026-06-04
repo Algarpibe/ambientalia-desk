@@ -67,11 +67,22 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
   Zoho limita, esos tickets quedan con empresa/contacto null hasta re-sync. Añadir backoff/espera ante
   429 en `zohoFetch` o entre páginas (el endpoint admin `backfill-details` ya tiene reintento).
 
+## 3b. Hallazgos de la revisión del Subsistema B (menores)
+
+- **`status_type` fino (M-1):** `buildTransitionPlan` solo marca `Closed` para `'Finalizado'`; el resto →
+  `'Open'`. Estados casi-terminales ('Liberación Comercial', 'Por Entregar'…) siguen en el tablero activo
+  (tienen transiciones salientes, así que es correcto), pero el `status_type` deja de reflejar el "On Hold"
+  de Zoho. Refinar con un mapa estado→tipo en **reportería (Subsistema G)**.
+- **Checkbox obligatorio (M-2):** un campo `checkbox` con `required=true` (p.ej. 'Cumple condiciones
+  comerciales') escribe `false` sin error si el usuario no lo marca (no se puede exigir "marcado=true").
+  Decisión de producto: si "obligatorio" = "debe quedar marcado", añadir en la rama checkbox de
+  `buildTransitionPlan` un error cuando `required && asBool(raw) !== true`.
+
 ## 4. Otros pendientes conocidos (menores)
 
-- **Activar escrituras:** `ENABLE_WRITES=true` en Environment para habilitar responder /
-  cambiar estado desde la app (con diálogo de confirmación). Probar primero con un ticket de
-  prueba.
+- **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
+  Zoho, transitorio). Las **transiciones ya NO** necesitan este flag (escriben en Postgres). Probar primero
+  con un ticket de prueba.
 - **Rotar el Zoho Client Secret** 🔐 — apareció en capturas durante el desarrollo; regenerarlo
   en api-console.zoho.com y actualizar `ZOHO_CLIENT_SECRET`.
 - **Imágenes en línea de emails:** las `inlineattachments` requieren auth de Zoho y no cargan

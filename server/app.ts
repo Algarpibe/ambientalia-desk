@@ -152,6 +152,10 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       if (!t) { res.status(400).json({ error: 'Transición desconocida' }); return }
       const current = await getTicketWithRefs(db, id)
       if (!current) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+      if (!t.from.includes(current.row.status)) {
+        res.status(409).json({ error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
+        return
+      }
       const values = (req.body.values ?? {}) as Record<string, unknown>
       const plan = buildTransitionPlan(t, values)
       if (plan.errors.length) { res.status(422).json({ errors: plan.errors }); return }

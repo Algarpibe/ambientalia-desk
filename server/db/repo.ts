@@ -157,11 +157,17 @@ export interface TransitionApply {
   comment?: string
 }
 
-export async function applyTransition(
-  db: Queryable,
+type Transitionish = { id: string; name: string; area: string }
+interface PoolLike extends Queryable {
+  connect?: () => Promise<{ query: Queryable['query']; release: () => void }>
+}
+
+// Las 3 escrituras de una transición sobre el mismo `q` (pool o cliente de transacción).
+async function writeTransition(
+  q: Queryable,
   ticketId: string,
   fromStatus: string,
-  transition: { id: string; name: string; area: string },
+  transition: Transitionish,
   plan: TransitionApply,
   actor: string,
   values: unknown,
@@ -170,7 +176,7 @@ export async function applyTransition(
   let commentId: string | null = null
   if (plan.comment) {
     commentId = `app-${randomUUID()}`
-    await db.query(
+    await q.query(
       `INSERT INTO conversations (id,ticket_id,kind,author_name,author_type,is_public,content,content_type,commented_time,source)
        VALUES ($1,$2,'comment',$3,'agent',false,$4,'plainText',now(),'app')`,
       [commentId, ticketId, actor, plan.comment],
@@ -187,12 +193,40 @@ export async function applyTransition(
     params.push(JSON.stringify(plan.customFields))
     sets.push(`custom_fields = custom_fields || $${params.length}::jsonb`)
   }
-  await db.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params)
+  await q.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params)
 
   // 3) Historial
-  await db.query(
+  await q.query(
     `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [ticketId, transition.id, transition.name, fromStatus, plan.status, transition.area, actor, JSON.stringify(values), commentId],
   )
+}
+
+/** Aplica una transición (comentario + update + historial) de forma atómica (transacción si el pool lo permite). */
+export async function applyTransition(
+  db: Queryable,
+  ticketId: string,
+  fromStatus: string,
+  transition: Transitionish,
+  plan: TransitionApply,
+  actor: string,
+  values: unknown,
+): Promise<void> {
+  const pool = db as PoolLike
+  if (typeof pool.connect !== 'function') {
+    await writeTransition(db, ticketId, fromStatus, transition, plan, actor, values)
+    return
+  }
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await writeTransition(client, ticketId, fromStatus, transition, plan, actor, values)
+    await client.query('COMMIT')
+  } catch (e) {
+    try { await client.query('ROLLBACK') } catch { /* ignora fallo de rollback */ }
+    throw e
+  } finally {
+    client.release()
+  }
 }

@@ -50,6 +50,14 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
     expect(res.status).toBe(400)
   })
 
+  it('409 si la transición no aplica desde el estado actual', async () => {
+    await upsertTicket(db, ticketRowFromZoho({ id: '1', ticketNumber: '5', status: 'Ingresado', statusType: 'Open', customFields: {} } as any))
+    const { app } = appWith()
+    // 'aprobacion' exige estar en 'Notificación cliente', no en 'Ingresado'.
+    const res = await request(app).post('/api/tickets/1/transition').send({ transitionId: 'aprobacion', values: { comment: 'x' } })
+    expect(res.status).toBe(409)
+  })
+
   it('422 si faltan campos obligatorios', async () => {
     await upsertTicket(db, ticketRowFromZoho({ id: '1', ticketNumber: '5', status: 'Ingresado', statusType: 'Open', customFields: {} } as any))
     const { app } = appWith()
