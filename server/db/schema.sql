@@ -103,3 +103,46 @@ CREATE TABLE IF NOT EXISTS roles (
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;
+
+CREATE TABLE IF NOT EXISTS clients (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  company_name text,
+  nit text,
+  email text,
+  phone text,
+  mobile text,
+  contact_person text,
+  customer_sub_type text,
+  status text,
+  source text NOT NULL DEFAULT 'books',
+  raw jsonb,
+  last_modified_time timestamptz,
+  synced_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS sales_orders (
+  id text PRIMARY KEY,
+  number text NOT NULL,
+  client_id text,
+  customer_name text,
+  date date,
+  total numeric,
+  currency_code text,
+  status text,
+  ticket_number text,
+  potential_name text,
+  salesperson_name text,
+  source text NOT NULL DEFAULT 'books',
+  raw jsonb,
+  last_modified_time timestamptz,
+  synced_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS idx_sales_orders_client ON sales_orders (client_id);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_number ON sales_orders (number);
+CREATE INDEX IF NOT EXISTS idx_clients_name ON clients (name);
