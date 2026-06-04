@@ -181,3 +181,12 @@ export interface CreateTicketPayload {
   subject?: string
   codigoServicio?: string
 }
+
+export interface EquipoLite {
+  id: string
+  serial: string
+  marca?: string
+  modelo?: string
+  tipo?: string
+  clienteNombre?: string
+}
