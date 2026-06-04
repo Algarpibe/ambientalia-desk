@@ -10,7 +10,7 @@ const NAV_TABS = [
     { label: 'Base de Conocimientos' }
 ];
 
-export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void }> = ({ onOpenUsers, onOpenRoles }) => {
+export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig }) => {
     return (
         <header className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0 z-30">
             <div className="flex items-center h-full">
@@ -57,7 +57,7 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
                     <button className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">apps</span>
                     </button>
-                    <button className="p-1.5 text-white/60 hover:text-white">
+                    <button onClick={onOpenConfig} title="Configuración" className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">settings</span>
                     </button>
                     <UserMenu onOpenUsers={onOpenUsers} onOpenRoles={onOpenRoles} />

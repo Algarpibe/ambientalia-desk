@@ -4,7 +4,8 @@ import { Header } from './components/Header';
 import { TicketCard } from './components/TicketCard';
 import { TicketDetailView } from './components/TicketDetailView';
 import { COLUMNS } from '../shared/columns';
-import { groupTicketsByColumn } from './board';
+import { groupTicketsByColumn, visibleColumns } from './board';
+import { useHideEmptyColumns } from './boardSettings';
 import { useAsync } from './hooks/useAsync';
 import { fetchTickets } from './api/client';
 import { useAuth } from './auth/AuthContext';
@@ -12,6 +13,7 @@ import { Login } from './components/Login';
 import { UsersAdmin } from './components/UsersAdmin'
 import { RolesAdmin } from './components/RolesAdmin'
 import { CreateTicket } from './components/CreateTicket'
+import { BoardConfig } from './components/BoardConfig'
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -19,15 +21,18 @@ function App() {
   const [showUsers, setShowUsers] = useState(false)
   const [showRoles, setShowRoles] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [showConfig, setShowConfig] = useState(false)
+  const hideEmpty = useHideEmptyColumns()
   const { data: tickets, loading, error, reload } = useAsync(fetchTickets, [user?.id]);
   const groups = groupTicketsByColumn(tickets ?? []);
+  const counts = Object.fromEntries(COLUMNS.map((c) => [c.id, groups[c.id]?.length ?? 0]));
 
   if (authLoading) return <div className="h-screen flex items-center justify-center text-slate-400">Cargando…</div>
   if (!user) return <Login />
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} />
+      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
@@ -52,7 +57,7 @@ function App() {
           )}
 
           <main className="flex-1 flex overflow-x-auto p-3 gap-2 bg-[#E9EDF2] dark:bg-slate-950">
-            {COLUMNS.filter((c) => c.id !== 'otros' || (groups[c.id]?.length ?? 0) > 0).map((column) => {
+            {visibleColumns(COLUMNS, counts, hideEmpty).map((column) => {
               const colTickets = groups[column.id] ?? [];
               return (
                 <section key={column.id} className="w-[280px] min-w-[280px] flex flex-col">
@@ -87,6 +92,7 @@ function App() {
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
       {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
       {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
+      {showConfig && <BoardConfig onClose={() => setShowConfig(false)} />}
     </div>
   );
 }

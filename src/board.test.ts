@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupTicketsByColumn } from './board'
+import { groupTicketsByColumn, visibleColumns } from './board'
 import type { Ticket } from '../shared/types'
 
 const t = (id: string, status: string): Ticket => ({
@@ -19,5 +19,16 @@ describe('groupTicketsByColumn', () => {
   it('estados sin columna propia caen en "otros"', () => {
     const groups = groupTicketsByColumn([t('9', 'Estado Inesperado')])
     expect(groups.otros.map((x) => x.id)).toEqual(['9'])
+  })
+})
+
+describe('visibleColumns', () => {
+  const cols = [{ id: 'a' }, { id: 'b' }, { id: 'otros' }]
+  it('hideEmpty: oculta columnas en 0 (y otros vacía)', () => {
+    expect(visibleColumns(cols, { a: 2, b: 0, otros: 0 }, true).map((c) => c.id)).toEqual(['a'])
+  })
+  it('sin hideEmpty: muestra todas menos otros vacía', () => {
+    expect(visibleColumns(cols, { a: 2, b: 0, otros: 0 }, false).map((c) => c.id)).toEqual(['a', 'b'])
+    expect(visibleColumns(cols, { a: 2, b: 0, otros: 1 }, false).map((c) => c.id)).toEqual(['a', 'b', 'otros'])
   })
 })
