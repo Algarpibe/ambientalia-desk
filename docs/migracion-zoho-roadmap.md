@@ -46,6 +46,14 @@ Vamos por fases, validando lo más riesgoso (correo) pronto.
 - **Sync actual:** `syncRecent` sobrescribiría cambios locales. Al pasar a fuente de verdad propia,
   hay que apagar/ajustar el sync (que no pise lo que gestiona la app).
 
+## Modelo de corte (cutover) — confirmado
+- **Durante la construcción:** el sync **sigue alimentando** Postgres desde Zoho (datos reales).
+- **Al completar la app:** se **desconecta Zoho definitivamente**; Postgres = única fuente de verdad.
+- **Convivencia sin conflicto:** marca por ticket `gestionado_por_app`. Cuando la app modifica un
+  ticket (transición/edición/creación), ese ticket queda "propiedad de la app" y el **sync deja de
+  sobrescribirlo** (sigue trayendo de Zoho solo los nuevos/no tocados). En el corte, se apaga el
+  sync y todos los tickets quedan gestionados por la app. Esto es parte del diseño del subsistema A.
+
 ## Estado
 - Fase 0 (réplica de lectura + tablero/detalle) ✅ en producción.
-- Próximo: **diseñar el subsistema A** (modelo de datos propio).
+- Próximo: **diseñar el subsistema A** (modelo de datos propio), incluyendo la marca `gestionado_por_app`.
