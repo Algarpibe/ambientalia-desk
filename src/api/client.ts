@@ -102,10 +102,37 @@ export async function createUser(input: NewUser): Promise<UserPublic> {
   return res.json() as Promise<UserPublic>
 }
 
-export function updateUser(id: string, patch: Partial<{ name: string; isAdmin: boolean; active: boolean; password: string }>): Promise<UserPublic> {
+export function updateUser(id: string, patch: Partial<{ name: string; isAdmin: boolean; active: boolean; password: string; roleId: string | null }>): Promise<UserPublic> {
   return fetch(`/api/users/${id}`, {
     method: 'PATCH', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   }).then((r) => json<UserPublic>(r))
+}
+
+export interface Role { id: string; name: string; areas: string[]; active: boolean }
+
+export function listRoles(): Promise<Role[]> {
+  return fetch('/api/roles', { credentials: 'include' }).then((r) => json<Role[]>(r))
+}
+
+export async function createRole(input: { name: string; areas: string[] }): Promise<Role> {
+  const res = await fetch('/api/roles', {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error || `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<Role>
+}
+
+export function updateRole(id: string, patch: Partial<{ name: string; areas: string[]; active: boolean }>): Promise<Role> {
+  return fetch(`/api/roles/${id}`, {
+    method: 'PATCH', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  }).then((r) => json<Role>(r))
 }

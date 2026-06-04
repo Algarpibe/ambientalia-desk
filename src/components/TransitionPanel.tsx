@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import { transitionsForStatus, type Transition, type TransitionField } from '../../shared/transitions';
 import { executeTransition } from '../api/client';
+import { useAuth } from '../auth/AuthContext'
+import { canExecuteTransition } from '../../shared/permissions'
 
 /** Renderiza los botones de transición válidos para el estado actual y su formulario. */
 export function TransitionPanel({ ticketId, status, onDone }: { ticketId: string; status: string; onDone: () => void }) {
-  const transitions = transitionsForStatus(status);
+  const { user } = useAuth()
+  const transitions = transitionsForStatus(status).filter(
+    (t) => !!user && canExecuteTransition(user.areas, user.isAdmin, t.area),
+  )
   const [active, setActive] = useState<Transition | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (transitions.length === 0) {
-    return <div className="text-[11px] text-slate-400">Sin transiciones disponibles para el estado «{status}».</div>;
+    return <div className="text-[11px] text-slate-400">Sin transiciones disponibles para tu rol en el estado «{status}».</div>;
   }
 
   function open(t: Transition) {
