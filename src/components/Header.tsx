@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../auth/AuthContext';
 
 const NAV_TABS = [
     { label: 'Tickets', active: true },
@@ -59,15 +60,22 @@ export const Header: React.FC = () => {
                     <button className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">settings</span>
                     </button>
-                    <div className="w-8 h-8 rounded-full border border-white/20 overflow-hidden shrink-0 ml-1">
-                        <img
-                            alt="User profile"
-                            className="w-full h-full object-cover"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDb1Z8QaQ0vAqypu2DT6aKkL5AwtX-XxPjZ9ZkCCV7tA63ibiO7RLf7SBItFwsMzn3hOv3zyqiuLI-U4H8RZtJWZraijGzsRhF0tORHiBIQg3zE7NpN2dKNS-bj8CRwV5dnn2wgydcJxi8NPcOAZnb3ge5THsFAyg-7rjnIMllaGlV4PXvbbpDA7WymWAHGuNAPBioDw2s6YpYhUGpMbd8XZQpiHx2WuVZbguU-j_wvdZQBBO_6pRmGrAX9W0zlQixzw1IUGDExM1J_"
-                        />
-                    </div>
+                    <UserMenu />
                 </div>
             </div>
         </header>
     );
 };
+
+function UserMenu() {
+    const { user, logout } = useAuth()
+    if (!user) return null
+    return (
+        <div className="flex items-center gap-3 ml-1">
+            <span className="text-[12px] font-medium hidden md:block">{user.name}{user.isAdmin ? ' · Admin' : ''}</span>
+            <button onClick={() => logout()} title="Cerrar sesión" className="p-1.5 text-white/60 hover:text-white">
+                <span className="material-symbols-outlined text-[20px]">logout</span>
+            </button>
+        </div>
+    )
+}

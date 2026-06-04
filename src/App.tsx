@@ -7,11 +7,17 @@ import { COLUMNS } from '../shared/columns';
 import { groupTicketsByColumn } from './board';
 import { useAsync } from './hooks/useAsync';
 import { fetchTickets } from './api/client';
+import { useAuth } from './auth/AuthContext';
+import { Login } from './components/Login';
 
 function App() {
+  const { user, loading: authLoading } = useAuth();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const { data: tickets, loading, error, reload } = useAsync(fetchTickets, []);
+  const { data: tickets, loading, error, reload } = useAsync(fetchTickets, [user?.id]);
   const groups = groupTicketsByColumn(tickets ?? []);
+
+  if (authLoading) return <div className="h-screen flex items-center justify-center text-slate-400">Cargando…</div>
+  if (!user) return <Login />
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
