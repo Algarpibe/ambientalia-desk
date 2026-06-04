@@ -91,3 +91,58 @@ export async function countTickets(db: Queryable): Promise<number> {
   const res = await db.query('SELECT COUNT(*)::int AS n FROM tickets')
   return res.rows[0].n as number
 }
+
+import type { TicketRefs, DetailRefs } from './mappers'
+
+export interface TicketWithRefs { row: TicketRow; refs: TicketRefs }
+
+export async function getActiveTickets(db: Queryable): Promise<TicketWithRefs[]> {
+  const r = await db.query(
+    `SELECT t.*, a.name AS account_name, g.name AS agent_name
+     FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
+     WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
+  )
+  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name } }))
+}
+
+export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {
+  const r = await db.query(
+    `SELECT t.*, a.name AS account_name, g.name AS agent_name,
+            c.first_name AS c_first, c.last_name AS c_last, c.phone AS c_phone, c.email AS c_email
+     FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
+     LEFT JOIN contacts c ON t.contact_id=c.id WHERE t.id=$1`,
+    [id],
+  )
+  const row = r.rows[0]
+  if (!row) return null
+  const contactName = [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null
+  return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName, contactPhone: row.c_phone, email: row.c_email ?? ((row.raw as any)?.email ?? null) } }
+}
+
+export async function getConversations(db: Queryable, ticketId: string): Promise<{ row: ConversationRow; attachments: AttachmentRow[] }[]> {
+  const conv = await db.query('SELECT * FROM conversations WHERE ticket_id=$1 ORDER BY commented_time DESC NULLS LAST', [ticketId])
+  const att = await db.query('SELECT * FROM attachments WHERE ticket_id=$1', [ticketId])
+  const byConv = new Map<string, AttachmentRow[]>()
+  for (const a of att.rows as AttachmentRow[]) {
+    const k = a.conversation_id ?? ''
+    byConv.set(k, [...(byConv.get(k) ?? []), a])
+  }
+  return (conv.rows as ConversationRow[]).map((row) => ({ row, attachments: byConv.get(row.id) ?? [] }))
+}
+
+export async function nextTicketNumber(db: Queryable): Promise<number> {
+  const r = await db.query("SELECT nextval('ticket_number_seq') AS n")
+  return Number(r.rows[0].n)
+}
+
+export interface TransitionRecord {
+  ticketId: string; transitionId: string; transitionName: string; fromStatus: string; toStatus: string
+  area: string; performedBy: string; values: unknown; commentId: string | null
+}
+export async function insertTransition(db: Queryable, t: TransitionRecord): Promise<void> {
+  await db.query(
+    `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [t.ticketId, t.transitionId, t.transitionName, t.fromStatus, t.toStatus, t.area, t.performedBy, J(t.values), t.commentId],
+  )
+}
