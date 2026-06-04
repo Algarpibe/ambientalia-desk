@@ -128,6 +128,21 @@ describe('rowToTicket / rowToTicketDetail', () => {
   })
 })
 
+describe('rowToTicket (campos enriquecidos)', () => {
+  it('expone priority/statusType/dueDate/createdAt/channel/diasEntrega', () => {
+    const row = {
+      id: 't1', number: 5, subject: 'S', status: 'Ingresado', status_type: 'Open',
+      priority: 'High', due_date: '2026-06-10', created_time: '2026-06-01T10:00:00Z',
+      channel: 'Email', dias_entrega: '5',
+    } as any
+    const t = rowToTicket(row, { accountName: 'ACME', agentName: 'Ana' })
+    expect(t).toMatchObject({
+      priority: 'High', statusType: 'Open', dueDate: '2026-06-10',
+      createdAt: '2026-06-01T10:00:00Z', channel: 'Email', diasEntrega: '5',
+    })
+  })
+})
+
 describe('rowToMessage', () => {
   it('arma el mensaje de UI', () => {
     const row: ConversationRow = {

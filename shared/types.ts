@@ -15,6 +15,12 @@ export interface Ticket {
   urgent?: boolean
   messages?: number
   description?: string
+  priority?: string | null
+  statusType?: string | null
+  dueDate?: string | null
+  createdAt?: string | null
+  channel?: string | null
+  diasEntrega?: string | null
 }
 
 /** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */

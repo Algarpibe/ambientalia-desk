@@ -120,6 +120,12 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
     time: fmtTime(row.created_time), status: row.status,
     assignee: { name: assigneeName, initials: initialsOf(assigneeName) },
     urgent: row.priority === 'High' || row.priority === 'Urgent',
+    priority: row.priority ?? null,
+    statusType: row.status_type ?? null,
+    dueDate: row.due_date ?? null,
+    createdAt: row.created_time ?? null,
+    channel: row.channel ?? null,
+    diasEntrega: row.dias_entrega ?? null,
   }
 }
 
