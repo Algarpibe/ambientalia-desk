@@ -2,13 +2,14 @@ import express, { type Express, type Request, type Response } from 'express'
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import type { Sync } from './sync'
-import { getActiveTickets, getTicketWithRefs, getConversations } from './db/repo'
+import { getActiveTickets, getTicketWithRefs, getConversations, applyTransition } from './db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from './db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
 import { migrate, reseedTicketNumber } from './db/migrate'
 import { transitionById } from '../shared/transitions'
-import { buildTransitionUpdate } from './transitionExec'
+import { buildTransitionPlan } from './transitionExec'
+import { TRANSITION_ACTOR } from './transitionActor'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -143,42 +144,22 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     }
   })
 
-  // Ejecuta una transición del Blueprint (Plan B): updateTicket (status + cf + prioridad) +
-  // comentario, y re-sincroniza. Valida los campos obligatorios antes de escribir.
-  app.post('/api/tickets/:id/transition', guardWrites, async (req, res) => {
+  // Ejecuta una transición del Blueprint escribiendo en Postgres (Subsistema B).
+  app.post('/api/tickets/:id/transition', async (req, res) => {
     try {
       const id = String(req.params.id)
       const t = transitionById(String(req.body.transitionId))
       if (!t) { res.status(400).json({ error: 'Transición desconocida' }); return }
-      const built = buildTransitionUpdate(t, (req.body.values ?? {}) as Record<string, unknown>)
-      if (built.errors.length) { res.status(422).json({ errors: built.errors }); return }
-
-      const body: Record<string, unknown> = { status: built.status }
-      if (Object.keys(built.cf).length) body.cf = built.cf
-      if (built.priority) body.priority = built.priority
-      if (built.classification) body.classification = built.classification
-
-      const zres = await zohoFetch(`/tickets/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!zres.ok) { res.status(zres.status).json({ error: await zres.text() }); return }
-
-      if (built.comment) {
-        await zohoFetch(`/tickets/${id}/comments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: built.comment, isPublic: false, contentType: 'plainText' }),
-        })
-      }
-
-      await sync.syncTicket(id)
-      await sync.syncConversations(id)
-      const found = await getTicketWithRefs(db, id)
-      res.json(found ? rowToTicketDetail(found.row, found.refs) : {})
+      const current = await getTicketWithRefs(db, id)
+      if (!current) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+      const values = (req.body.values ?? {}) as Record<string, unknown>
+      const plan = buildTransitionPlan(t, values)
+      if (plan.errors.length) { res.status(422).json({ errors: plan.errors }); return }
+      await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, TRANSITION_ACTOR, values)
+      const updated = await getTicketWithRefs(db, id)
+      res.json(updated ? rowToTicketDetail(updated.row, updated.refs) : {})
     } catch (err) {
-      res.status(502).json({ error: String(err) })
+      res.status(500).json({ error: String(err) })
     }
   })
 
