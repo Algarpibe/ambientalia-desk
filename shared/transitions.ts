@@ -124,3 +124,11 @@ export function transitionsForStatus(status: string): Transition[] {
 export function transitionById(id: string): Transition | undefined {
   return TRANSITIONS.find((t) => t.id === id)
 }
+
+/** Áreas base de permiso (las del Blueprint, descompuestas). */
+export const AREAS = ['Comercial', 'Servicio Técnico', 'Compras'] as const
+
+/** Descompone el `area` de una transición en áreas base (las compuestas usan ' / '). */
+export function areasForTransition(area: string): string[] {
+  return area.split(' / ').map((s) => s.trim()).filter(Boolean)
+}
