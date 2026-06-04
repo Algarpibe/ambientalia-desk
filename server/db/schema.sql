@@ -146,3 +146,8 @@ CREATE TABLE IF NOT EXISTS sales_orders (
 CREATE INDEX IF NOT EXISTS idx_sales_orders_client ON sales_orders (client_id);
 CREATE INDEX IF NOT EXISTS idx_sales_orders_number ON sales_orders (number);
 CREATE INDEX IF NOT EXISTS idx_clients_name ON clients (name);
+
+-- → clients.id (Books), tickets creados en la app
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS client_id text;
+-- → sales_orders.id (Books)
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS salesorder_id text;

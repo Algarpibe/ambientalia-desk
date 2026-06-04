@@ -30,4 +30,12 @@ describe('migrate', () => {
     const res = await db.query("SELECT nextval('ticket_number_seq') AS n")
     expect(Number(res.rows[0].n)).toBe(954)
   })
+
+  it('tickets tiene columnas client_id y salesorder_id (Subsistema C)', async () => {
+    const pg = newDb().adapters.createPg()
+    const db = new pg.Pool()
+    await migrate(db)
+    const r = await db.query('SELECT client_id, salesorder_id FROM tickets')
+    expect(r.rows).toEqual([])
+  })
 })
