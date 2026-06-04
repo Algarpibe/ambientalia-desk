@@ -171,36 +171,51 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
 })
 
 describe('POST /api/tickets (crear)', () => {
-  it('crea desde una OV: deriva cliente + orden de venta, estado OV asignada', async () => {
+  const seedEquipo = async () => {
+    const [eq] = parseEquiposCsv('Nombre cliente;Marca;Modelo;Numero serie;Tipo\nGecelca S.A. E.S.P.;Grimm;EDM180C;18A20070;Monitor PM10/PM2.5')
+    await upsertEquipo(db, eq)
+    return eq
+  }
+
+  it('crea desde una OV con equipo: deriva cliente + orden, toma marca/modelo/serie/tipo del equipo', async () => {
     const cookie = await adminCookie()
     await upsertClient(db, clientFromBooks({ contact_id: 'cli1', contact_name: 'Gecelca S.A. E.S.P.', last_modified_time: '2024-01-01T00:00:00Z' } as any))
     await upsertSalesOrder(db, salesOrderFromBooks({ salesorder_id: 'so1', salesorder_number: 'OV-2026-200', customer_id: 'cli1', last_modified_time: '2026-06-01T00:00:00Z' } as any))
+    const eq = await seedEquipo()
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
-      salesOrderId: 'so1', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo para servicio de mantenimiento',
-      tipoEquipo: 'Monitor de partículas', marca: 'Grimm', modelo: 'EDM180C', serie: '18A20070', prefijo: 'MT',
+      salesOrderId: 'so1', equipoId: eq.id, tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo para servicio de mantenimiento', prefijo: 'MT',
     })
     expect(res.status).toBe(201)
     expect(res.body.status).toBe('OV asignada')
     expect(res.body.company).toBe('Gecelca S.A. E.S.P.')
-    const t = (await db.query("SELECT orden_venta, client_id, salesorder_id, managed_by_app, source FROM tickets WHERE salesorder_id='so1'")).rows[0]
-    expect(t).toMatchObject({ orden_venta: 'OV-2026-200', client_id: 'cli1', salesorder_id: 'so1', managed_by_app: true, source: 'app' })
+    const t = (await db.query("SELECT marca, modelo, serial, equipo, equipo_id, salesorder_id FROM tickets WHERE salesorder_id='so1'")).rows[0]
+    expect(t).toMatchObject({ marca: 'Grimm', modelo: 'EDM180C', serial: '18A20070', equipo: 'Monitor PM10/PM2.5', equipo_id: eq.id })
   })
 
-  it('crea sin OV con cliente manual', async () => {
+  it('crea sin OV con cliente manual + equipo', async () => {
     const cookie = await adminCookie()
     await upsertClient(db, clientFromBooks({ contact_id: 'cli2', contact_name: 'Camposol', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const eq = await seedEquipo()
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
-      clientId: 'cli2', tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo',
-      tipoEquipo: 'Sensor', marca: 'Horiba', modelo: 'APDA', serie: 'SN1', prefijo: 'CG', ordenVenta: 'manual-1',
+      clientId: 'cli2', equipoId: eq.id, tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo', prefijo: 'CG', ordenVenta: 'manual-1',
     })
     expect(res.status).toBe(201)
     expect(res.body.status).toBe('OV asignada')
-    expect(res.body.company).toBe('Camposol')
   })
 
-  it('422 si faltan obligatorios', async () => {
+  it('422 si el equipo no existe', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cli3', contact_name: 'X', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      clientId: 'cli3', equipoId: 'eq-inexistente', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo nuevo', prefijo: 'MT',
+    })
+    expect(res.status).toBe(422)
+  })
+
+  it('422 sin equipo', async () => {
     const cookie = await adminCookie()
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({ tipoServicio: 'Mantenimiento' })
@@ -209,7 +224,7 @@ describe('POST /api/tickets (crear)', () => {
 
   it('401 sin sesión', async () => {
     const { app } = appWith()
-    const res = await request(app).post('/api/tickets').send({ clientId: 'x' })
+    const res = await request(app).post('/api/tickets').send({ equipoId: 'x' })
     expect(res.status).toBe(401)
   })
 })

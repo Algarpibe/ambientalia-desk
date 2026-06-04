@@ -14,7 +14,7 @@ import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth } from './auth/middleware'
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
-import { searchEquipos } from './db/equipos'
+import { searchEquipos, getEquipo } from './db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 
 function humanBytes(n: number): string {
@@ -71,6 +71,11 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   app.post('/api/tickets', async (req, res) => {
     try {
       const b = (req.body ?? {}) as Record<string, unknown>
+      const equipoId = b.equipoId ? String(b.equipoId) : ''
+      if (!equipoId) { res.status(422).json({ error: 'Falta el equipo' }); return }
+      const equipo = await getEquipo(db, equipoId)
+      if (!equipo) { res.status(422).json({ error: 'Equipo no registrado' }); return }
+
       let clientId: string | null = b.clientId ? String(b.clientId) : null
       let ordenVenta: string | null = b.ordenVenta ? String(b.ordenVenta) : null
       let salesorderId: string | null = null
@@ -83,29 +88,22 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       }
       const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
       const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''
-      const tipoEquipo = b.tipoEquipo ? String(b.tipoEquipo) : ''
-      const marca = b.marca ? String(b.marca) : ''
-      const modelo = b.modelo ? String(b.modelo) : ''
-      const serie = b.serie ? String(b.serie) : ''
       const prefijo = b.prefijo ? String(b.prefijo) : ''
       const missing: string[] = []
       if (!clientId) missing.push('cliente')
       if (!tipoServicio) missing.push('tipo de servicio')
       if (!clasificaciones) missing.push('clasificaciones')
-      if (!tipoEquipo) missing.push('tipo de equipo')
-      if (!marca) missing.push('marca')
-      if (!modelo) missing.push('modelo')
-      if (!serie) missing.push('número de serie')
       if (!prefijo || !(PREFIJOS as readonly string[]).includes(prefijo)) missing.push('prefijo')
       if (missing.length) { res.status(422).json({ error: `Faltan campos obligatorios: ${missing.join(', ')}` }); return }
       const cliente = await getClient(db, clientId!)
       if (!cliente) { res.status(422).json({ error: 'Cliente no encontrado' }); return }
-      const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie, modelo, fecha: new Date() })
-      const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo, codigo: codigoServicio })
+      const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie: equipo.serial, modelo: equipo.modelo ?? '', fecha: new Date() })
+      const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo: equipo.tipo ?? '', codigo: codigoServicio })
       const id = await createTicket(db, {
-        subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: tipoEquipo,
-        marca, modelo, serial: serie, ordenVenta, priority: b.prioridad ? String(b.prioridad) : null,
-        clientId: clientId!, salesorderId, actor: req.user?.name ?? 'App',
+        subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
+        marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
+        ordenVenta, priority: b.prioridad ? String(b.prioridad) : null,
+        clientId: clientId!, salesorderId, equipoId: equipo.id, actor: req.user?.name ?? 'App',
       })
       const created = await getTicketWithRefs(db, id)
       res.status(201).json(created ? rowToTicketDetail(created.row, created.refs) : {})

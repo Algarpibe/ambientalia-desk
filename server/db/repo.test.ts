@@ -97,16 +97,17 @@ describe('createTicket (Subsistema C)', () => {
       subject: 'Servicio Técnico Gecelca S.A. E.S.P. Monitor MT_18A20070_EDM180C_260604',
       codigoServicio: 'MT_18A20070_EDM180C_260604', classification: 'Equipo para servicio de mantenimiento',
       tipoServicio: 'Mantenimiento', equipo: 'Monitor de partículas', marca: 'Grimm', modelo: 'EDM180C',
-      serial: '18A20070', ordenVenta: 'OV-2026-200', priority: null, clientId: 'cli1', salesorderId: 'so1', actor: 'Admin',
+      serial: '18A20070', ordenVenta: 'OV-2026-200', priority: null, clientId: 'cli1', salesorderId: 'so1', equipoId: 'eq-test', actor: 'Admin',
     })
     expect(id).toMatch(/^app-/)
-    const row = (await db.query('SELECT number, status, status_type, managed_by_app, source, client_id, salesorder_id, orden_venta FROM tickets WHERE id=$1', [id])).rows[0]
+    const row = (await db.query('SELECT number, status, status_type, managed_by_app, source, client_id, salesorder_id, equipo_id, orden_venta FROM tickets WHERE id=$1', [id])).rows[0]
     expect(row.status).toBe('OV asignada')
     expect(row.status_type).toBe('Open')
     expect(row.managed_by_app).toBe(true)
     expect(row.source).toBe('app')
     expect(row.client_id).toBe('cli1')
     expect(row.salesorder_id).toBe('so1')
+    expect(row.equipo_id).toBe('eq-test')
     expect(row.orden_venta).toBe('OV-2026-200')
     expect(Number(row.number)).toBeGreaterThan(0)
     const tr = (await db.query('SELECT to_status, transition_name, area, performed_by FROM ticket_transitions WHERE ticket_id=$1', [id])).rows[0]

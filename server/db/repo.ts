@@ -246,6 +246,7 @@ export interface CreateTicketInput {
   priority: string | null
   clientId: string
   salesorderId: string | null
+  equipoId: string | null
   actor: string
 }
 
@@ -255,9 +256,9 @@ export async function createTicket(db: Queryable, input: CreateTicketInput): Pro
   const number = await nextTicketNumber(db)
   const run = async (q: Queryable): Promise<void> => {
     await q.query(
-      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,client_id,salesorder_id,managed_by_app,source,created_time,modified_time,updated_at)
-       VALUES ($1,$2,$3,'OV asignada','Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true,'app',now(),now(),now())`,
-      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId],
+      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at)
+       VALUES ($1,$2,$3,'OV asignada','Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,'app',now(),now(),now())`,
+      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId],
     )
     await q.query(
       `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
