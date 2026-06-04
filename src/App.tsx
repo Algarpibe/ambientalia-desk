@@ -13,7 +13,7 @@ import { Login } from './components/Login';
 import { UsersAdmin } from './components/UsersAdmin'
 import { RolesAdmin } from './components/RolesAdmin'
 import { CreateTicket } from './components/CreateTicket'
-import { BoardConfig } from './components/BoardConfig'
+import { Configuracion } from './components/Configuracion'
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -92,7 +92,14 @@ function App() {
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
       {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
       {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
-      {showConfig && <BoardConfig onClose={() => setShowConfig(false)} />}
+      {showConfig && (
+        <Configuracion
+          onClose={() => setShowConfig(false)}
+          onOpenUsers={() => { setShowConfig(false); setShowUsers(true) }}
+          onOpenRoles={() => { setShowConfig(false); setShowRoles(true) }}
+          isAdmin={!!user.isAdmin}
+        />
+      )}
     </div>
   );
 }
