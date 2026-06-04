@@ -183,6 +183,21 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
   sesión (401), semilla idempotente y tolerante al arranque (no tumba el boot), `equipos.seed.csv` íntegro
   (353 líneas, 5 columnas, seriales WS600-UMB corregidos, sin filas de prueba).
 
+## 3i. Hallazgos de la revisión del Subsistema Vistas (menores / por diseño)
+
+- **"Vence hoy" excluye lo de hoy ya vencido (M-11):** en `groupByDueDate` (`src/board.ts`), `d < now → vencidos`
+  antes de `d < fin de hoy → hoy`. Un ticket con vencimiento hoy pero a una hora ya pasada cae en **Vencidos**,
+  no en "Vence hoy". Es fiel al spec (`dueDate < now`), solo que la etiqueta "Vence hoy" lo sobrevende. Sin bug.
+- **Acople de zona horaria en `due_date` solo-fecha (M-12):** `new Date('2026-06-10')` se parsea como medianoche
+  **UTC**, mientras los cortes (`startToday`/`endToday`) se construyen en hora **local**. En UTC-5 (Colombia) un
+  vencimiento "de hoy" solo-fecha resuelve a hoy 00:00 UTC = ayer 19:00 local → puede caer en `vencidos` unas horas
+  "antes" cerca de medianoche. Impacto bajo (un solo offset fijo en prod). Si molesta: normalizar ambos a la misma zona.
+- **Cobertura de ramas (M-13):** los tests no ejercen `dueDate` inválido-no-nulo (→ `sinfecha`) ni una prioridad
+  desconocida-no-nula (→ `otra`); ambos correctos por inspección. Añadir casos si se quiere blindar.
+- *(Verificado)*: sin inyección SQL (`getAllTickets` literal sin filtro), endpoint con sesión en ambos scopes,
+  regla "solo Modo de estado = activos" correcta (`statusType !== 'Closed'` ≡ el WHERE viejo, null incluido),
+  carga única + derivación cliente (sin refetch), `visibleColumns` no oculta mal las columnas de prioridad/vencimiento.
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
