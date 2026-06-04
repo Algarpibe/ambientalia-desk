@@ -79,3 +79,9 @@ export async function countUsers(db: Queryable): Promise<number> {
   const r = await db.query('SELECT COUNT(*)::int AS n FROM users')
   return r.rows[0].n as number
 }
+
+/** Cuántos administradores activos hay (para no dejar el sistema sin admin). */
+export async function countActiveAdmins(db: Queryable): Promise<number> {
+  const r = await db.query('SELECT COUNT(*)::int AS n FROM users WHERE is_admin = true AND active = true')
+  return r.rows[0].n as number
+}

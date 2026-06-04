@@ -101,3 +101,27 @@ describe('roles + asignación', () => {
     expect((await request(a).post('/api/roles').set('Cookie', cookie).send({ name: 'comercial', areas: [] })).status).toBe(409)
   })
 })
+
+describe('protección de administradores', () => {
+  it('no permite quitar el último administrador activo (409)', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const users = (await request(a).get('/api/users').set('Cookie', cookie)).body
+    const admin = users.find((u: { email: string }) => u.email === 'admin@x.co')
+    const res = await request(a).patch(`/api/users/${admin.id}`).set('Cookie', cookie).send({ isAdmin: false })
+    expect(res.status).toBe(409)
+  })
+
+  it('sí permite quitar admin si queda otro (200)', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'a2@x.co', name: 'A2', password: 'password123', isAdmin: true })
+    const users = (await request(a).get('/api/users').set('Cookie', cookie)).body
+    const second = users.find((u: { email: string }) => u.email === 'a2@x.co')
+    const res = await request(a).patch(`/api/users/${second.id}`).set('Cookie', cookie).send({ isAdmin: false })
+    expect(res.status).toBe(200)
+    expect(res.body.isAdmin).toBe(false)
+  })
+})

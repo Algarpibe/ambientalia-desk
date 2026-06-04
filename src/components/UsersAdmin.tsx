@@ -15,7 +15,12 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
   useEffect(() => { reload() }, [])
 
   async function toggleActive(u: UserPublic) {
-    await updateUser(u.id, { active: !u.active }); reload()
+    try { await updateUser(u.id, { active: !u.active }); reload() }
+    catch (e) { alert('Error: ' + String(e instanceof Error ? e.message : e)) }
+  }
+  async function toggleAdmin(u: UserPublic) {
+    try { await updateUser(u.id, { isAdmin: !u.isAdmin }); reload() }
+    catch (e) { alert('Error: ' + String(e instanceof Error ? e.message : e)) }
   }
   async function changeRole(u: UserPublic, roleId: string) {
     await updateUser(u.id, { roleId: roleId || null }); reload()
@@ -48,12 +53,17 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
                 <td>{u.isAdmin ? 'Sí' : 'No'}</td>
                 <td>{u.active ? 'Sí' : 'No'}</td>
                 <td>
-                  <select value={u.roleId ?? ''} onChange={(e) => changeRole(u, e.target.value)} className="border border-slate-200 rounded p-1 text-[12px]">
-                    <option value="">— Sin rol —</option>
-                    {roles.filter((r) => r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                  </select>
+                  {u.isAdmin ? (
+                    <span className="text-[12px] text-slate-400 italic">Acceso total (Admin)</span>
+                  ) : (
+                    <select value={u.roleId ?? ''} onChange={(e) => changeRole(u, e.target.value)} className="border border-slate-200 rounded p-1 text-[12px]">
+                      <option value="">— Sin rol —</option>
+                      {roles.filter((r) => r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
+                  )}
                 </td>
-                <td className="text-right">
+                <td className="text-right whitespace-nowrap">
+                  <button onClick={() => toggleAdmin(u)} className="text-[12px] text-blue-600 mr-3">{u.isAdmin ? 'Quitar admin' : 'Hacer admin'}</button>
                   <button onClick={() => toggleActive(u)} className="text-[12px] text-blue-600 mr-3">{u.active ? 'Desactivar' : 'Activar'}</button>
                   <button onClick={() => resetPassword(u)} className="text-[12px] text-blue-600">Resetear contraseña</button>
                 </td>

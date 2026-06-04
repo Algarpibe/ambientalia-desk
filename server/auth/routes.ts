@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '../db/migrate'
 import { hashPassword, verifyPassword } from './passwords'
-import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword } from './users'
+import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countActiveAdmins } from './users'
 import { createRole, listRoles, getRole, updateRole } from './roles'
 import { createSession, deleteSession, deleteUserSessions } from './sessions'
 import { requireAuth, requireAdmin } from './middleware'
@@ -78,6 +78,13 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
       const roleId = req.body.roleId === null ? null : String(req.body.roleId)
       if (roleId !== null && !(await getRole(db, roleId))) { res.status(422).json({ error: 'Rol no encontrado' }); return }
       patch.roleId = roleId
+    }
+    // Protección: no dejar el sistema sin administradores activos.
+    if (patch.isAdmin === false || patch.active === false) {
+      const target = await getUserById(db, id)
+      if (target?.isAdmin && target.active && (await countActiveAdmins(db)) <= 1) {
+        res.status(409).json({ error: 'No puedes quitar el último administrador activo' }); return
+      }
     }
     await updateUser(db, id, patch)
     if (req.body.password !== undefined) {
