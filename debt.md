@@ -131,6 +131,25 @@ o esperar al Subsistema D; (d) Postgres como fuente de verdad (mover de Sheets/D
 Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PDF+archivos, 3) salida,
 4) notificaciones/DYMO. *(El JSON del flujo lo tiene el usuario; pedirlo al retomar.)*
 
+## 3f. Hallazgos de la revisión del Subsistema I (menores / por diseño)
+
+- **Marca de agua `<=` en `syncRecent` (M-4):** `server/books/sync.ts` corta al primer registro con
+  `last_modified_time <= watermark` sobre un feed DESC. Si dos registros comparten el timestamp máximo y
+  solo el segundo cambia entre ciclos, podría saltarse hasta el próximo backfill/cambio (auto-sanable por
+  upsert idempotente). Es **fiel al spec**. Mejora opcional: usar `<` (re-escribe 1 fila, inofensivo) o
+  añadir un comentario aclaratorio.
+- **Comodines de búsqueda no escapados (M-5):** en `searchClients`/`searchSalesOrders`, `%` y `_` dentro
+  del término actúan como comodines LIKE (p.ej. `search=%` lista todo, tope 20). **No es inyección** (va
+  como parámetro `$1`); solo calidad de búsqueda en un endpoint con sesión y límite 20. Escapar `%`/`_`
+  si se quiere afinar.
+- **`String(err)` en respuestas 500** (`/api/clients`, `/api/sales-orders`): devuelve el error crudo
+  (mensajes de Postgres, no secretos). Consistente con el resto del código; considerar mensaje genérico
+  + log servidor a futuro.
+- *(Verificado en la revisión)*: sin inyección SQL (parámetros ligados), ambos endpoints exigen sesión
+  (401 sin cookie), **solo lectura** (no se escribe en Books), arranque resiliente (si faltan
+  `ZOHO_BOOKS_*` se omite el sync y la app arranca; llamadas Books envueltas en `.catch`), token de Books
+  separado del de Desk (caché + refresh 401, sin filtrar secretos).
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
