@@ -2,19 +2,21 @@ import { describe, it, expect } from 'vitest'
 import { COLUMNS, columnForStatus } from './columns'
 
 describe('columns', () => {
-  it('define las 12 columnas reales en el orden de Zoho', () => {
+  it('define las columnas del Blueprint en orden de flujo + Otros al final', () => {
     expect(COLUMNS.map((c) => c.id)).toEqual([
-      'ingresado', 'pendiente', 'revision', 'proceso', 'espera_repuestos', 'notificado',
-      'notif_cliente', 'notif_comercial', 'comercial', 'por_facturar', 'entregar_sin_facturar', 'por_entregar',
+      'ov_asignada', 'ingresado', 'revision', 'notificado', 'proceso', 'solicitado',
+      'espera_repuestos', 'espera_sku', 'notif_compras', 'continuacion', 'servicio_externo',
+      'pendiente', 'notif_cliente', 'notif_comercial', 'comercial', 'por_facturar',
+      'entregar_sin_facturar', 'por_entregar', 'otros',
     ])
   })
 
-  it('mapea estados reales de Zoho a su columna', () => {
+  it('mapea estados del Blueprint a su columna', () => {
     expect(columnForStatus('Ingresado')).toBe('ingresado')
     expect(columnForStatus('Rev./Diagnostico')).toBe('revision')
+    expect(columnForStatus('Solicitado')).toBe('solicitado')
+    expect(columnForStatus('Servicio externo')).toBe('servicio_externo')
     expect(columnForStatus('Notificación cliente')).toBe('notif_cliente')
-    expect(columnForStatus('Notificación Comercial')).toBe('notif_comercial')
-    expect(columnForStatus('Liberación Comercial')).toBe('comercial')
     expect(columnForStatus('En Espera de Repuestos')).toBe('espera_repuestos')
   })
 
@@ -22,8 +24,8 @@ describe('columns', () => {
     expect(columnForStatus('Notificación Comercial')).not.toBe(columnForStatus('Liberación Comercial'))
   })
 
-  it('devuelve null para estados de cierre o desconocidos', () => {
-    expect(columnForStatus('Finalizado')).toBeNull()
-    expect(columnForStatus('Cualquier Cosa')).toBeNull()
+  it('lleva estados sin columna propia (cierre/desconocidos) a "otros"', () => {
+    expect(columnForStatus('Finalizado')).toBe('otros')
+    expect(columnForStatus('Cualquier Cosa')).toBe('otros')
   })
 })

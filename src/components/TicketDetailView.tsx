@@ -9,9 +9,11 @@ import { TransitionPanel } from './TransitionPanel';
 interface TicketDetailViewProps {
     ticketId: string;
     onClose: () => void;
+    /** Se llama cuando el ticket cambia (p.ej. tras una transición) para refrescar el tablero. */
+    onChanged?: () => void;
 }
 
-export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose }) => {
+export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged }) => {
     const { data: ticket, loading, reload: reloadTicket } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const [replyText, setReplyText] = useState('');
@@ -219,7 +221,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             <TransitionPanel
                               ticketId={ticketId}
                               status={ticket.status}
-                              onDone={() => { reloadTicket(); reloadMessages(); }}
+                              onDone={() => { reloadTicket(); reloadMessages(); onChanged?.(); }}
                             />
                           )}
                           <textarea

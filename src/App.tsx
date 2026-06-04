@@ -39,7 +39,7 @@ function App() {
           )}
 
           <main className="flex-1 flex overflow-x-auto p-3 gap-2 bg-[#E9EDF2] dark:bg-slate-950">
-            {COLUMNS.map((column) => {
+            {COLUMNS.filter((c) => c.id !== 'otros' || (groups[c.id]?.length ?? 0) > 0).map((column) => {
               const colTickets = groups[column.id] ?? [];
               return (
                 <section key={column.id} className="w-[280px] min-w-[280px] flex flex-col">
@@ -68,7 +68,7 @@ function App() {
       </div>
 
       {selectedTicketId && (
-        <TicketDetailView ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} />
+        <TicketDetailView ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} onChanged={reload} />
       )}
     </div>
   );
