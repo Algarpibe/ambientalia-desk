@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, CreateTicketPayload } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -193,4 +193,8 @@ export function setEquipoActive(id: string, active: boolean): Promise<EquipoFull
 export async function deleteEquipo(id: string): Promise<void> {
   const res = await fetch(`/api/equipos/${id}`, { method: 'DELETE', credentials: 'include' })
   if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+}
+
+export function fetchEquipoHistorial(id: string): Promise<EquipoHistorial> {
+  return fetch(`/api/equipos/${id}/historial`, { credentials: 'include' }).then((r) => json<EquipoHistorial>(r))
 }

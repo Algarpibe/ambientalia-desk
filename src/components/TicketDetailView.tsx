@@ -5,6 +5,7 @@ import { useAsync } from '../hooks/useAsync';
 import { fetchTicket, fetchConversations, replyTicket } from '../api/client';
 import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
+import { HojaDeVida } from './HojaDeVida';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -24,6 +25,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
+    const [showHistorial, setShowHistorial] = useState(false);
 
     async function doReply() {
         try {
@@ -144,6 +146,11 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                             <span className="material-symbols-outlined text-[16px] text-slate-400">schedule</span>
                                             <span className="text-[12px] font-medium text-slate-400">{ticket?.time}</span>
                                         </div>
+                                        {ticket?.equipoId && (
+                                          <button onClick={() => setShowHistorial(true)} className="text-[11px] text-blue-600 font-bold border border-blue-200 rounded px-2 py-0.5 hover:bg-blue-50 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px]">history</span> Hoja de vida del equipo
+                                          </button>
+                                        )}
                                         <span className="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 font-bold flex items-center gap-1">
                                             <span className="material-symbols-outlined text-[16px]">psychology</span> Resumen
                                         </span>
@@ -283,6 +290,8 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                 </div>
               </div>
             )}
+
+            {showHistorial && ticket?.equipoId && <HojaDeVida equipoId={ticket.equipoId} onClose={() => setShowHistorial(false)} />}
 
             {/* Help Button */}
             <button className="fixed bottom-4 right-4 bg-[#2C7BE5] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[13px] font-bold">

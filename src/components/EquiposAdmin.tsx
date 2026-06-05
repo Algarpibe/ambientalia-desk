@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { EquipoFull, ClientLite } from '../../shared/types'
 import { listEquiposManage, equipoFacets, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients, type EquipoFacets } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { HojaDeVida } from './HojaDeVida'
 
 const PAGE_SIZE = 50
 
@@ -12,6 +13,7 @@ export function EquiposAdmin({ onClose }: { onClose: () => void }) {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<EquipoFull | null>(null)
   const [creating, setCreating] = useState(false)
+  const [historial, setHistorial] = useState<EquipoFull | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function reload() {
@@ -52,6 +54,7 @@ export function EquiposAdmin({ onClose }: { onClose: () => void }) {
                 <td>{e.marca}</td><td>{e.modelo}</td><td>{e.tipo}</td><td>{e.clienteNombre}</td>
                 <td>{e.active ? 'Activo' : 'Inactivo'}</td>
                 <td className="text-right whitespace-nowrap">
+                  <button onClick={() => setHistorial(e)} className="text-[12px] text-blue-600 mr-3">Hoja de vida</button>
                   <button onClick={() => setEditing(e)} className="text-[12px] text-blue-600 mr-3">Editar</button>
                   <button onClick={() => toggleActive(e)} className="text-[12px] text-blue-600">{e.active ? 'Desactivar' : 'Activar'}</button>
                   {user?.isAdmin && <button onClick={() => remove(e)} className="text-[12px] text-red-600 ml-3">Eliminar</button>}
@@ -72,6 +75,7 @@ export function EquiposAdmin({ onClose }: { onClose: () => void }) {
       {(creating || editing) && (
         <EquipoForm equipo={editing} onClose={() => { setCreating(false); setEditing(null) }} onSaved={() => { setCreating(false); setEditing(null); reload() }} />
       )}
+      {historial && <HojaDeVida equipoId={historial.id} onClose={() => setHistorial(null)} />}
     </div>
   )
 }
