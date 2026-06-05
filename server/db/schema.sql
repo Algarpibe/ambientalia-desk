@@ -218,3 +218,5 @@ CREATE TABLE IF NOT EXISTS ticket_history (
   synced_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket ON ticket_history (ticket_id);
+
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS modified_time timestamptz;

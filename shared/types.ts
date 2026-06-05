@@ -267,3 +267,6 @@ export interface Resolution { html: string | null; updatedAt: string | null; upd
 
 export interface HistoryDetail { label: string; value: string; html?: boolean }
 export interface HistoryEvent { eventName: string; time: string | null; actor: string; title: string; details: HistoryDetail[] }
+
+export interface ContactLite { id: string; name: string; company: string | null; email: string | null; phone: string | null }
+export interface AccountLite { id: string; name: string; nit: string | null; email: string | null; phone: string | null; city: string | null }
