@@ -46,6 +46,19 @@ describe('ticketRowFromZoho', () => {
   })
 })
 
+describe('ticketRowFromZoho (serial/codigo desde el asunto)', () => {
+  it('rellena serial/codigo_servicio del asunto cuando Zoho viene vacío', () => {
+    const row = ticketRowFromZoho({ id: 't1', ticketNumber: '190', subject: 'Servicio Técnico CHEMILAB MT_18A19042_EDM180C_260305', status: 'Finalizado', customFields: {} } as any)
+    expect(row.serial).toBe('18A19042')
+    expect(row.codigo_servicio).toBe('MT_18A19042_EDM180C_260305')
+  })
+  it('no sobreescribe lo que Zoho sí trae', () => {
+    const row = ticketRowFromZoho({ id: 't2', ticketNumber: '191', subject: 'X MT_AAA_BBB_260101', status: 'X', customFields: { Serial: 'ZHO-SER', 'Código Servicio': 'ZHO-COD' } } as any)
+    expect(row.serial).toBe('ZHO-SER')
+    expect(row.codigo_servicio).toBe('ZHO-COD')
+  })
+})
+
 import { accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, conversationRowFromZoho, attachmentRowsFrom } from './mappers'
 
 describe('account/contact/agent mappers', () => {

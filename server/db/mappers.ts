@@ -1,4 +1,5 @@
 import { PROMOTED_COLUMNS, type TicketRow, type AccountRow, type ContactRow, type AgentRow, type ConversationRow, type AttachmentRow } from './rows'
+import { extractServiceCode } from '../../shared/ticketCreate'
 
 function toBool(v: unknown): boolean | null {
   if (v === undefined || v === null || v === '') return null
@@ -39,6 +40,12 @@ export function ticketRowFromZoho(raw: any): TicketRow {
     delete cf[label] // no duplicar en custom_fields
   }
   row.custom_fields = cf
+  // Históricos de Zoho: si el serial/código no vienen en customFields, extraerlos del asunto.
+  const ext = extractServiceCode(row.subject)
+  if (ext) {
+    if (!row.serial) row.serial = ext.serial
+    if (!row.codigo_servicio) row.codigo_servicio = ext.codigo
+  }
   return row as TicketRow
 }
 
