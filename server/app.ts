@@ -16,6 +16,8 @@ import { requireAuth, requireAdmin as requireSuperAdmin } from './auth/middlewar
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
 import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo, getEquipoHistorial } from './db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
+import { getAnalisisRows, rangeToFromTo } from './analisis'
+import { computeAnalisis } from '../shared/analisis'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -236,6 +238,14 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       if (!(await getEquipoFull(db, id))) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
       await deleteEquipo(db, id)
       res.json({ ok: true })
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/analisis', requireAuth(db), requireSuperAdmin, async (req, res) => {
+    try {
+      const { from, to } = rangeToFromTo(String(req.query.range ?? 'todo'), new Date())
+      const rows = await getAnalisisRows(db)
+      res.json(computeAnalisis(rows, from, to))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 

@@ -308,3 +308,18 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect((await request(app).get(`/api/equipos/${eqId}/historial`)).status).toBe(401)
   })
 })
+
+describe('GET /api/analisis (admin)', () => {
+  it('admin obtiene métricas; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('a1',1,'A','Ingresado','Open',now())")
+    const { app } = appWith()
+    const res = await request(app).get('/api/analisis?range=todo').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(typeof res.body.activos).toBe('number')
+    expect(Array.isArray(res.body.porEstado)).toBe(true)
+    const op = await userCookie([])
+    expect((await request(app).get('/api/analisis').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).get('/api/analisis')).status).toBe(401)
+  })
+})
