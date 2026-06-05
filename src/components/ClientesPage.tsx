@@ -63,9 +63,9 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
                 </button>
               ))}
             </div>
-            <div className="w-6 flex flex-col items-center justify-center text-[10px] select-none shrink-0">
+            <div className="w-6 flex flex-col items-center justify-between py-2 text-[10px] select-none shrink-0">
               {LETRAS.map((l) => (
-                <button key={l} onClick={() => jump(l)} disabled={!lettersPresent.has(l)} className={`leading-tight ${lettersPresent.has(l) ? 'text-blue-500 hover:font-bold' : 'text-slate-300 cursor-default'}`}>{l}</button>
+                <button key={l} onClick={() => jump(l)} disabled={!lettersPresent.has(l)} className={`leading-none ${lettersPresent.has(l) ? 'text-blue-500 hover:font-bold' : 'text-slate-300 cursor-default'}`}>{l}</button>
               ))}
             </div>
           </div>
