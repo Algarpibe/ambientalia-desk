@@ -1,7 +1,8 @@
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import { upsertTicket, upsertConversation, upsertAttachment, upsertAccount, upsertContact, upsertAgent } from './db/repo'
-import { ticketRowFromZoho, conversationRowFromZoho, attachmentRowsFrom, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho } from './db/mappers'
+import { upsertActivity } from './db/activities'
+import { ticketRowFromZoho, conversationRowFromZoho, attachmentRowsFrom, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'
 
 interface Deps {
   zohoFetch: (path: string, init?: RequestInit) => Promise<Response>
@@ -13,6 +14,7 @@ export interface Sync {
   syncRecent(): Promise<number>
   syncTicket(id: string): Promise<void>
   syncConversations(id: string): Promise<void>
+  syncActivities(): Promise<number>
 }
 const PAGE_SIZE = 100
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
@@ -97,6 +99,28 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         await upsertConversation(db, conversationRowFromZoho(c, id))
         for (const a of attachmentRowsFrom(c, id)) await upsertAttachment(db, a)
       }
+    },
+    async syncActivities(): Promise<number> {
+      const wmRow = (await db.query('SELECT max(modified_time) AS m FROM activities')).rows[0]
+      const watermark = wmRow?.m ? new Date(wmRow.m).getTime() : 0
+      let from = 1, total = 0
+      for (;;) {
+        const params = new URLSearchParams({ departmentId: config.departmentId, from: String(from), limit: String(PAGE_SIZE), include: 'tickets,assignee', sortBy: '-modifiedTime' })
+        const res = await zohoFetch(`/tasks?${params.toString()}`)
+        if (!res.ok) throw new Error(`Zoho /tasks ${res.status}`)
+        const items = ((await readData(res)).data ?? []) as any[]
+        if (items.length === 0) break
+        let reachedOld = false
+        for (const t of items) {
+          await upsertActivity(db, activityRowFromZoho(t))
+          total++
+          const mt = t.modifiedTime ? new Date(t.modifiedTime).getTime() : 0
+          if (watermark && mt <= watermark) reachedOld = true
+        }
+        if (reachedOld || items.length < PAGE_SIZE) break
+        from += PAGE_SIZE
+      }
+      return total
     },
   }
 }

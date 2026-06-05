@@ -24,7 +24,7 @@ beforeEach(async () => {
 
 function appWith(overrides: Partial<{ enableWrites: boolean }> = {}) {
   const config = { enableWrites: false, ...overrides } as AppConfig
-  const sync = { backfillTickets: vi.fn(), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn() }
+  const sync = { backfillTickets: vi.fn(), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db, zohoFetch, sync, config })
   return { app, sync, zohoFetch }
