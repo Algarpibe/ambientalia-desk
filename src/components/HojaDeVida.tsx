@@ -44,8 +44,11 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose: (
                       {t.transitions.map((x, i) => (
                         <li key={i} className="text-[12px] text-slate-600 relative">
                           <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-blue-400" />
-                          <b>{x.transitionName ?? 'Transición'}</b> · {x.fromStatus} → {x.toStatus}
-                          <span className="text-slate-400"> · {x.area ?? ''} · {x.performedBy ?? ''} · {fmtFecha(x.performedAt)}</span>
+                          <b>{x.transitionName ?? 'Transición'}</b>
+                          {(x.fromStatus || x.toStatus) && <span> · {x.fromStatus ?? '—'} → {x.toStatus ?? '—'}</span>}
+                          {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).length > 0 && (
+                            <span className="text-slate-400"> · {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).join(' · ')}</span>
+                          )}
                         </li>
                       ))}
                     </ol>
