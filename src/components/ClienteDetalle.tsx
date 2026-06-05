@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react'
 import type { ContactDetail, AccountDetail, TicketLite } from '../../shared/types'
 import { useAsync } from '../hooks/useAsync'
+import { useResizable } from '../hooks/useResizable'
 import { fetchContactDetail, fetchAccountDetail } from '../api/client'
+
+/** Manija de arrastre entre columnas (reemplaza el borde). */
+function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
+  return <div onMouseDown={onMouseDown} className="w-1 shrink-0 cursor-col-resize bg-slate-200 hover:bg-blue-400 transition-colors" />
+}
 
 function iniciales(name: string): string { return name.split(/\s+/).map((p) => p[0] ?? '').slice(0, 2).join('').toUpperCase() }
 function fmtFecha(s: string | null): string { if (!s) return ''; const d = new Date(s); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) }
@@ -83,6 +89,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
   const { data, loading } = useAsync<ContactDetail | AccountDetail>(() => (kind === 'contacto' ? fetchContactDetail(id) : fetchAccountDetail(id)), [kind, id])
   const [tab, setTab] = useState('INFORMACIÓN GENERAL')
   const [sub, setSub] = useState<'todo' | 'abierto' | 'espera'>('todo')
+  const props = useResizable('clientes:propsW', 290, 220, 480)
 
   const tickets = useMemo(() => data?.tickets ?? [], [data])
   const abiertos = useMemo(() => tickets.filter(esAbierto), [tickets])
@@ -111,7 +118,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
 
   return (
     <div className="flex-1 flex overflow-hidden min-w-[760px]">
-      <div className="w-[290px] border-r border-slate-200 overflow-y-auto p-4 shrink-0">
+      <div style={{ width: props.w }} className="overflow-y-auto p-4 shrink-0">
         <div className="text-[13px] font-bold text-slate-700 mb-4">Propiedades de {kind === 'empresa' ? 'Empresa' : 'Contacto'}</div>
         <Prop label={`Propietario de ${kind === 'empresa' ? 'Empresa' : 'Contacto'}`} value={data.owner} />
         <Prop label="Correo electrónico" value={data.email} />
@@ -123,6 +130,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
         <Prop label={`Hora de creación de ${kind === 'empresa' ? 'Empresa' : 'Contact'}`} value={fmtFechaHora(data.createdAt)} />
         <Prop label="Diseño" value="Ambientalia Soporte y Servicio Técnico" />
       </div>
+      <ResizeHandle onMouseDown={props.start} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="px-6 py-3 border-b border-slate-200 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[13px] font-bold shrink-0">{iniciales(data.name)}</div>

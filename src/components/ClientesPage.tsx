@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ContactLite, AccountLite } from '../../shared/types'
 import { useAsync } from '../hooks/useAsync'
+import { useResizable } from '../hooks/useResizable'
 import { fetchContacts, fetchAccounts } from '../api/client'
 import { ClienteDetalle } from './ClienteDetalle'
 
@@ -8,8 +9,15 @@ const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 function inicial(s: string): string { const c = (s.trim()[0] || '#').toUpperCase(); return /[A-Z]/.test(c) ? c : '#' }
 function iniciales(name: string): string { return name.split(/\s+/).map((p) => p[0] ?? '').slice(0, 2).join('').toUpperCase() }
 
+/** Manija de arrastre entre columnas (reemplaza el borde). */
+function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
+  return <div onMouseDown={onMouseDown} className="w-1 shrink-0 cursor-col-resize bg-slate-200 hover:bg-blue-400 transition-colors" />
+}
+
 export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onClose: () => void; onSelectTicket: (id: string) => void; onAgregarTicket: () => void }) {
   const [tab, setTab] = useState<'contactos' | 'empresas'>('contactos')
+  const sidebar = useResizable('clientes:sidebarW', 200, 160, 360)
+  const list = useResizable('clientes:listW', 320, 240, 560)
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(null)
   const { data: contactos } = useAsync<ContactLite[]>(() => fetchContacts(), [])
@@ -39,7 +47,7 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
         <h1 className="text-[15px] font-bold">Clientes</h1>
       </div>
       <div className="flex flex-1 overflow-x-auto overflow-y-hidden">
-        <div className="w-[200px] border-r border-slate-200 bg-white flex flex-col shrink-0">
+        <div style={{ width: sidebar.w }} className="bg-white flex flex-col shrink-0">
           <div className="px-4 pt-3 text-[11px] font-bold text-slate-400">VISTAS CON ESTRELLAS</div>
           <div className="px-4 py-2 text-[13px] bg-blue-50 text-blue-600 font-medium">{tab === 'contactos' ? 'Todos los Contactos' : 'Todas las Empresas'}</div>
           <div className="px-4 pt-4 text-[11px] font-bold text-slate-400">TODAS LAS VISTAS</div>
@@ -48,7 +56,8 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
             <button onClick={() => { setTab('empresas'); setSelected(null) }} className={`flex-1 py-2 text-[12px] ${tab === 'empresas' ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>Empresas</button>
           </div>
         </div>
-        <div className="w-[320px] border-r border-slate-200 flex flex-col shrink-0 min-w-0">
+        <ResizeHandle onMouseDown={sidebar.start} />
+        <div style={{ width: list.w }} className="flex flex-col shrink-0 min-w-0">
           <div className="border-b border-slate-200 px-3 py-2 flex items-center gap-2">
             <span className="text-[13px] font-semibold text-slate-700">{rows.length}</span>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" className="ml-auto border border-slate-200 rounded px-2 py-1 text-[12px] w-[170px]" />
@@ -70,6 +79,7 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
             </div>
           </div>
         </div>
+        <ResizeHandle onMouseDown={list.start} />
         {selected
           ? <ClienteDetalle key={`${selected.kind}-${selected.id}`} kind={selected.kind} id={selected.id} onSelectTicket={onSelectTicket} onSelectContacto={(cid) => setSelected({ kind: 'contacto', id: cid })} onAgregarTicket={onAgregarTicket} />
           : <div className="flex-1 flex items-center justify-center text-slate-400 text-[13px]">Selecciona un contacto o empresa.</div>}
