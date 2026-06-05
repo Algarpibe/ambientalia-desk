@@ -10,7 +10,7 @@ const NAV_TABS = [
     { label: 'Base de Conocimientos' }
 ];
 
-export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig }) => {
+export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos }) => {
     return (
         <header className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0 z-30">
             <div className="flex items-center h-full">
@@ -60,18 +60,21 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
                     <button onClick={onOpenConfig} title="Configuración" className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">settings</span>
                     </button>
-                    <UserMenu onOpenUsers={onOpenUsers} onOpenRoles={onOpenRoles} />
+                    <UserMenu onOpenUsers={onOpenUsers} onOpenRoles={onOpenRoles} onOpenEquipos={onOpenEquipos} />
                 </div>
             </div>
         </header>
     );
 };
 
-function UserMenu({ onOpenUsers, onOpenRoles }: { onOpenUsers: () => void; onOpenRoles: () => void }) {
+function UserMenu({ onOpenUsers, onOpenRoles, onOpenEquipos }: { onOpenUsers: () => void; onOpenRoles: () => void; onOpenEquipos: () => void }) {
   const { user, logout } = useAuth()
   if (!user) return null
   return (
     <div className="flex items-center gap-3 ml-1">
+      <button onClick={onOpenEquipos} title="Equipos" className="p-1.5 text-white/60 hover:text-white">
+        <span className="material-symbols-outlined text-[20px]">precision_manufacturing</span>
+      </button>
       {user.isAdmin && (
         <>
           <button onClick={onOpenUsers} title="Usuarios" className="p-1.5 text-white/60 hover:text-white">

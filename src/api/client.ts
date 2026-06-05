@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, CreateTicketPayload } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, CreateTicketPayload } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -163,4 +163,28 @@ export async function createTicket(payload: CreateTicketPayload): Promise<Ticket
     throw new Error(body.error || `HTTP ${res.status}`)
   }
   return res.json() as Promise<TicketDetail>
+}
+
+export interface EquipoInput { serial: string; marca: string | null; modelo: string | null; tipo: string | null; clientId?: string }
+
+export function listEquiposManage(search: string, page = 1): Promise<{ items: EquipoFull[]; page: number }> {
+  return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))
+}
+
+export function equipoFacets(): Promise<{ marcas: string[]; tipos: string[] }> {
+  return fetch('/api/equipos/facets', { credentials: 'include' }).then((r) => json<{ marcas: string[]; tipos: string[] }>(r))
+}
+
+export async function createEquipo(input: EquipoInput): Promise<EquipoFull> {
+  const res = await fetch('/api/equipos', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+  return res.json() as Promise<EquipoFull>
+}
+
+export function updateEquipo(id: string, patch: Partial<EquipoInput> & { active?: boolean }): Promise<EquipoFull> {
+  return fetch(`/api/equipos/${id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }).then((r) => json<EquipoFull>(r))
+}
+
+export function setEquipoActive(id: string, active: boolean): Promise<EquipoFull> {
+  return updateEquipo(id, { active })
 }
