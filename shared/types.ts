@@ -96,6 +96,7 @@ export interface TicketDetail extends Ticket {
   classification?: string
   priority?: string
   channel?: string
+  equipoId?: string | null
   customFields: Record<string, string | null>
 }
 
@@ -197,4 +198,29 @@ export interface EquipoLite {
 export interface EquipoFull extends EquipoLite {
   active: boolean
   clientId?: string
+}
+
+export interface HistorialTransition {
+  transitionName: string | null
+  fromStatus: string | null
+  toStatus: string | null
+  area: string | null
+  performedBy: string | null
+  performedAt: string | null
+}
+export interface HistorialTicket {
+  id: string
+  number: string
+  subject: string
+  status: string
+  statusType?: string | null
+  createdAt?: string | null
+  tecnico?: string | null
+  codigoServicio?: string | null
+  tipoServicio?: string | null
+  transitions: HistorialTransition[]
+}
+export interface EquipoHistorial {
+  equipo: EquipoFull
+  tickets: HistorialTicket[]
 }
