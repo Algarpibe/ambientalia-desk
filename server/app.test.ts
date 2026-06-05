@@ -6,7 +6,7 @@ import { upsertTicket, upsertAccount, getTicketRow } from './db/repo'
 import { ticketRowFromZoho, accountRowFromZoho } from './db/mappers'
 import { upsertClient, upsertSalesOrder } from './books/repo'
 import { clientFromBooks, salesOrderFromBooks } from './books/mappers'
-import { upsertEquipo } from './db/equipos'
+import { upsertEquipo, listEquiposManage } from './db/equipos'
 import { parseEquiposCsv } from './db/seedEquipos'
 import { createApp } from './app'
 import type { AppConfig } from './config'
@@ -240,5 +240,45 @@ describe('POST /api/tickets (crear)', () => {
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').send({ equipoId: 'x' })
     expect(res.status).toBe(401)
+  })
+})
+
+describe('Gestión de equipos (Subsistema F)', () => {
+  it('crea un equipo (cliente de Books) y lo desactiva', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cliF', contact_name: 'Cliente F', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({
+      serial: 'SN-F1', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10', clientId: 'cliF',
+    })
+    expect(create.status).toBe(201)
+    expect(create.body).toMatchObject({ serial: 'SN-F1', marca: 'Grimm', active: true, clientId: 'cliF', clienteNombre: 'Cliente F' })
+    const id = create.body.id
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie).send({ active: false, tipo: 'Analizador CO' })
+    expect(patch.status).toBe(200)
+    expect(patch.body).toMatchObject({ active: false, tipo: 'Analizador CO' })
+    expect((await listEquiposManage(db, 'SN-F1')).length).toBe(1)
+  })
+
+  it('422 sin serial o sin cliente; 422 si el cliente no existe', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    expect((await request(app).post('/api/equipos').set('Cookie', cookie).send({ clientId: 'x' })).status).toBe(422)
+    expect((await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'S' })).status).toBe(422)
+    expect((await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'S', clientId: 'no-existe' })).status).toBe(422)
+  })
+
+  it('facets devuelve marcas/tipos; manage lista; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cliG', contact_name: 'G', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-G', marca: 'Horiba', tipo: 'O3', clientId: 'cliG' })
+    const f = await request(app).get('/api/equipos/facets').set('Cookie', cookie)
+    expect(f.status).toBe(200)
+    expect(f.body.marcas).toContain('Horiba')
+    const m = await request(app).get('/api/equipos/manage?search=SN-G').set('Cookie', cookie)
+    expect(m.status).toBe(200)
+    expect(m.body.items[0]).toMatchObject({ serial: 'SN-G' })
+    expect((await request(app).get('/api/equipos/manage')).status).toBe(401)
   })
 })
