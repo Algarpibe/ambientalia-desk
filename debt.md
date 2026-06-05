@@ -101,6 +101,36 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
 - **`users.role_id` sin FK; no hay DELETE de rol (solo desactivar):** es seguro (un rol borrado/inactivo →
   LEFT JOIN da áreas `[]`, fail-closed). Si algún día se añade borrado de roles, usar FK `ON DELETE SET NULL`.
 
+## 3g. SUBSISTEMA D — Correo propio (DIFERIDO, alcance definido 2026-06-05)
+
+El **último cordón con Zoho**: que la app reciba y responda correos de clientes por sí misma. HOY Zoho Desk
+recibe el correo → crea tickets → la app sincroniza (solo lectura); responder va por Zoho
+(`POST /api/tickets/:id/reply` → `sendReply`, requiere `ENABLE_WRITES`).
+
+**Transporte recomendado: Gmail API** sobre el buzón de **Google Workspace** (`servicio@ambientalia.com.co`,
+confirmar dirección exacta). Volumen bajo (<20/día). Por qué Gmail API (vs IMAP/SMTP o un ESP): Google firma
+DKIM y envía por su infra (gran entregabilidad, **sin tocar DNS** si el Workspace ya está bien), sync
+incremental por `historyId` (sin polling pesado), **hilos nativos** (`threadId`), adjuntos por API, y OAuth
+con refresh token (mismo patrón que Zoho → `GMAIL_REFRESH_TOKEN` + Google Cloud project/consent, scopes
+`gmail.modify`+`gmail.send`).
+
+**Descomposición (cada uno spec→plan→build):**
+- **D0 — Infraestructura/decisiones:** cuenta, scopes/OAuth, sync por `historyId`, etiqueta "procesado",
+  threading (`threadId` + `[Ticket #N]` de respaldo), identidad/firma, verificación DNS (DKIM/SPF/DMARC),
+  **almacenamiento de adjuntos** (cierra ese debt), anti-bucle (autoresponders/bounces), e **investigar cómo
+  llega hoy el correo a Zoho** (reenvío/MX/IMAP — el usuario no estaba seguro) para diseñar el corte.
+- **D1 — Recepción (inbound → tickets):** leer mensajes nuevos (`history.list`), parsear
+  (de/asunto/cuerpo/adjuntos/`Message-ID`/`References`), dedupe, **emparejar por `threadId`/References a un
+  ticket o crear uno nuevo** (managed_by_app, cliente por email→contacto/cuenta), insertar conversación +
+  adjuntos, re-apertura si estaba cerrado, marcar "procesado".
+- **D2 — Envío (responder):** reemplaza `/api/tickets/:id/reply` → componer MIME + `messages.send` con
+  `threadId` + cabeceras de threading; registrar conversación enviada; adjuntos salientes; **gating por rol**
+  (cierra el debt del reply sin gate, §4).
+- **D3 — Corte (cutover):** desconectar Zoho del buzón / cambiar reenvío, coexistencia (etiqueta/shadow),
+  pruebas end-to-end, fallback a Zoho.
+
+Orden: D0 → D1 → D2 → D3. *(Decisión de diferirlo: 2026-06-05, priorizar depuración de UI antes.)*
+
 ## 3e. IDEA FUTURA — Subsistema "Remisiones" (integrar el flujo n8n en la plataforma)
 
 Existe un flujo de **n8n** (`Remisiones_ST_3.13`) que gestiona remisiones de **entrada** y **salida** de

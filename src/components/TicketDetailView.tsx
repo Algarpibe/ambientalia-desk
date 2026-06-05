@@ -23,6 +23,8 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     // Solo los tickets en el MISMO estado que el ticket abierto (incluye el actual, resaltado).
     const siblings = (tickets ?? []).filter((t) => ticket != null && t.status === ticket.status);
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
+    const convCount = (messages ?? []).length;
+    const adjuntosCount = (messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0);
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
@@ -170,7 +172,15 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             </div>
 
                             <nav className="flex gap-8 border-b-0">
-                                {['14 CONVERSACIONES', 'RESOLUCIÓN', 'ENTRADA DE TIEMPO', '1 ADJUNTO', '8 ACTIVIDADES', 'APROBACIÓN', 'HISTORIA'].map((item, idx) => (
+                                {[
+                                    `${convCount} ${convCount === 1 ? 'CONVERSACIÓN' : 'CONVERSACIONES'}`,
+                                    'RESOLUCIÓN',
+                                    'ENTRADA DE TIEMPO',
+                                    `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`,
+                                    'ACTIVIDADES',
+                                    'APROBACIÓN',
+                                    'HISTORIA',
+                                ].map((item, idx) => (
                                     <button key={idx} className={`text-[11px] font-bold py-2 transition-colors ${idx === 0 ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>
                                         {item}
                                     </button>
