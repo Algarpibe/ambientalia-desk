@@ -1,4 +1,4 @@
-import { PROMOTED_COLUMNS, type TicketRow, type AccountRow, type ContactRow, type AgentRow, type ConversationRow, type AttachmentRow } from './rows'
+import { PROMOTED_COLUMNS, type TicketRow, type AccountRow, type ContactRow, type AgentRow, type ConversationRow, type AttachmentRow, type ActivityRow } from './rows'
 import { extractServiceCode } from '../../shared/ticketCreate'
 
 function toBool(v: unknown): boolean | null {
@@ -96,7 +96,28 @@ export function attachmentRowsFrom(conv: any, ticketId: string): AttachmentRow[]
   }))
 }
 
-import type { Ticket, TicketDetail, Message, Attachment } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, Attachment, Activity } from '../../shared/types'
+
+export function activityRowFromZoho(raw: any): ActivityRow {
+  const owner = raw.assignee ?? raw.owner ?? null
+  const ownerName = owner ? ([owner.firstName, owner.lastName].filter(Boolean).join(' ').trim() || null) : null
+  return {
+    id: raw.id, ticket_id: raw.ticketId ?? raw.ticket?.id ?? null,
+    subject: raw.subject ?? null, status: raw.status ?? null, status_type: raw.statusType ?? null,
+    priority: raw.priority ?? null, due_date: raw.dueDate ?? null, created_time: raw.createdTime ?? null,
+    modified_time: raw.modifiedTime ?? null, completed_time: raw.completedTime ?? null,
+    owner_id: raw.ownerId ?? null, owner_name: ownerName, raw,
+  }
+}
+
+export function rowToActivity(row: any): Activity {
+  return {
+    id: row.id, ticketId: row.ticket_id ?? null, subject: row.subject ?? '',
+    status: row.status ?? '', statusType: row.status_type ?? null, priority: row.priority ?? null,
+    dueDate: row.due_date ?? null, createdAt: row.created_time ?? null, completedAt: row.completed_time ?? null,
+    owner: row.owner_name ?? row.agent_name ?? null,
+  }
+}
 
 function initialsOf(name: string): string {
   const p = name.split(/\s+/).filter(Boolean)

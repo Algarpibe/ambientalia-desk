@@ -94,7 +94,7 @@ describe('conversation/attachment mappers', () => {
   })
 })
 
-import { rowToTicket, rowToTicketDetail, rowToMessage } from './mappers'
+import { rowToTicket, rowToTicketDetail, rowToMessage, activityRowFromZoho, rowToActivity } from './mappers'
 import type { TicketRow, ConversationRow } from './rows'
 
 function baseTicketRow(): TicketRow {
@@ -160,6 +160,17 @@ describe('rowToTicketDetail (equipoId)', () => {
   it('expone equipoId desde la columna equipo_id', () => {
     const row = { id: 't1', number: 5, subject: 'S', status: 'Ingresado', equipo_id: 'eq-9' } as any
     expect(rowToTicketDetail(row, {}).equipoId).toBe('eq-9')
+  })
+})
+
+describe('activityRowFromZoho / rowToActivity', () => {
+  it('mapea una tarea de Zoho a ActivityRow (ticket_id, owner_name)', () => {
+    const row = activityRowFromZoho({ id: 'a1', ticketId: 't1', subject: 'Informe', priority: 'High', status: 'In Progress', statusType: 'Open', dueDate: '2026-03-24T00:00:00Z', createdTime: '2026-03-20T00:00:00Z', modifiedTime: '2026-03-21T00:00:00Z', ownerId: 'g1', assignee: { firstName: 'Ana', lastName: 'P' } } as any)
+    expect(row).toMatchObject({ id: 'a1', ticket_id: 't1', subject: 'Informe', priority: 'High', status: 'In Progress', owner_id: 'g1', owner_name: 'Ana P' })
+  })
+  it('rowToActivity normaliza al tipo compartido (owner por owner_name o agent_name)', () => {
+    expect(rowToActivity({ id: 'a1', ticket_id: 't1', subject: 'X', status: 'Completed', status_type: 'Closed', priority: 'Normal', due_date: null, created_time: null, completed_time: null, owner_name: null, agent_name: 'Beto' }))
+      .toMatchObject({ id: 'a1', ticketId: 't1', subject: 'X', statusType: 'Closed', owner: 'Beto' })
   })
 })
 
