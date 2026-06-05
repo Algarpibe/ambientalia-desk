@@ -21,6 +21,13 @@ export function parseCodigoFromPotential(potentialName: string | null | undefine
   return m ? { prefijo: m[1], serie: m[2], modelo: m[3] } : null
 }
 
+/** Extrae el código de servicio y su serial de un texto (p.ej. el asunto del ticket). Fecha opcional. */
+export function extractServiceCode(text: string | null | undefined): { serial: string; codigo: string } | null {
+  if (!text) return null
+  const m = text.match(/\b(MT|CG|HV|SR|PRO)_([^_\s]+)_([^_\s]+)(?:_(\d{6}))?\b/)
+  return m ? { serial: m[2], codigo: m[0] } : null
+}
+
 /** El prefijo del Código Servicio se deriva del Tipo de Servicio (editable). Calibración → CG; el resto → MT. */
 export function defaultPrefijoFor(tipoServicio: string): string {
   return tipoServicio === 'Calibración' ? 'CG' : 'MT'
