@@ -79,6 +79,10 @@ async function main() {
     .then((n) => console.log(`Actividades: sync inicial (${n})`))
     .catch((e) => console.error('Sync actividades falló:', e))
 
+  sync.syncContacts()
+    .then((n) => console.log(`Contactos: sync inicial (${n})`))
+    .catch((e) => console.error('Sync contactos falló:', e))
+
   let syncing = false
   setInterval(() => {
     if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
@@ -86,6 +90,7 @@ async function main() {
     sync
       .syncRecent()
       .then(() => sync.syncActivities())
+      .then(() => sync.syncContacts())
       .catch((e) => console.error('Sync incremental falló:', e))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)

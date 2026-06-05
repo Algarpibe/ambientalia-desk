@@ -15,7 +15,7 @@ beforeEach(async () => {
 })
 
 function app() {
-  const sync = { backfillTickets: vi.fn(), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn(), syncTicketHistory: vi.fn() }
+  const sync = { backfillTickets: vi.fn(), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn(), syncTicketHistory: vi.fn(), syncContacts: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   return createApp({ db, zohoFetch, sync, config: { enableWrites: false } as AppConfig })
 }

@@ -17,6 +17,7 @@ export interface Sync {
   syncConversations(id: string): Promise<void>
   syncTicketHistory(id: string): Promise<void>
   syncActivities(): Promise<number>
+  syncContacts(): Promise<number>
 }
 const PAGE_SIZE = 100
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
@@ -129,6 +130,29 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
           await upsertActivity(db, activityRowFromZoho(t))
           total++
           const mt = t.modifiedTime ? new Date(t.modifiedTime).getTime() : 0
+          if (watermark && mt <= watermark) reachedOld = true
+        }
+        if (reachedOld || items.length < PAGE_SIZE) break
+        from += PAGE_SIZE
+      }
+      return total
+    },
+    async syncContacts(): Promise<number> {
+      const wmRow = (await db.query('SELECT max(modified_time) AS m FROM contacts')).rows[0]
+      const watermark = wmRow?.m ? new Date(wmRow.m).getTime() : 0
+      let from = 1, total = 0
+      for (;;) {
+        const params = new URLSearchParams({ from: String(from), limit: String(PAGE_SIZE), sortBy: '-modifiedTime' })
+        const res = await zohoFetch(`/contacts?${params.toString()}`)
+        if (!res.ok) throw new Error(`Zoho /contacts ${res.status}`)
+        const items = ((await readData(res)).data ?? []) as any[]
+        if (items.length === 0) break
+        let reachedOld = false
+        for (const c of items) {
+          await ensureAccount(c.accountId)
+          await upsertContact(db, contactRowFromZoho(c))
+          total++
+          const mt = c.modifiedTime ? new Date(c.modifiedTime).getTime() : 0
           if (watermark && mt <= watermark) reachedOld = true
         }
         if (reachedOld || items.length < PAGE_SIZE) break
