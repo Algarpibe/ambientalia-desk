@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -238,4 +238,11 @@ export function fetchContacts(): Promise<ContactLite[]> {
 }
 export function fetchAccounts(): Promise<AccountLite[]> {
   return fetch('/api/accounts', { credentials: 'include' }).then((r) => json<AccountLite[]>(r))
+}
+
+export function fetchContactDetail(id: string): Promise<ContactDetail> {
+  return fetch(`/api/contacts/${id}`, { credentials: 'include' }).then((r) => json<ContactDetail>(r))
+}
+export function fetchAccountDetail(id: string): Promise<AccountDetail> {
+  return fetch(`/api/accounts/${id}`, { credentials: 'include' }).then((r) => json<AccountDetail>(r))
 }
