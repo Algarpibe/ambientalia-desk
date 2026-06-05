@@ -23,6 +23,7 @@ describe('detail backfiller', () => {
       syncTicket: vi.fn(async () => {}),
       syncConversations: vi.fn(async () => {}),
       syncActivities: vi.fn(),
+      syncTicketHistory: vi.fn(),
     }
 
     const b = createDetailBackfiller({ zohoFetch, sync, config, delayMs: 0 })
@@ -51,6 +52,7 @@ describe('detail backfiller', () => {
       syncTicket: vi.fn(async (id: string) => { if (id === '1') throw new Error('boom') }),
       syncConversations: vi.fn(async () => {}),
       syncActivities: vi.fn(),
+      syncTicketHistory: vi.fn(),
     }
 
     const b = createDetailBackfiller({ zohoFetch, sync, config, delayMs: 0 })

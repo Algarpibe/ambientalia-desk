@@ -2,6 +2,7 @@ import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import { upsertTicket, upsertConversation, upsertAttachment, upsertAccount, upsertContact, upsertAgent } from './db/repo'
 import { upsertActivity } from './db/activities'
+import { upsertHistoryEvent } from './db/history'
 import { ticketRowFromZoho, conversationRowFromZoho, attachmentRowsFrom, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'
 
 interface Deps {
@@ -14,6 +15,7 @@ export interface Sync {
   syncRecent(): Promise<number>
   syncTicket(id: string): Promise<void>
   syncConversations(id: string): Promise<void>
+  syncTicketHistory(id: string): Promise<void>
   syncActivities(): Promise<number>
 }
 const PAGE_SIZE = 100
@@ -98,6 +100,18 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
       for (const c of items) {
         await upsertConversation(db, conversationRowFromZoho(c, id))
         for (const a of attachmentRowsFrom(c, id)) await upsertAttachment(db, a)
+      }
+    },
+    async syncTicketHistory(id: string): Promise<void> {
+      let from = 1
+      for (;;) {
+        const res = await zohoFetch(`/tickets/${id}/History?from=${from}&limit=${PAGE_SIZE}`)
+        if (!res.ok) throw new Error(`Zoho /tickets/${id}/History ${res.status}`)
+        const items = ((await readData(res)).data ?? []) as any[]
+        if (items.length === 0) break
+        for (const e of items) await upsertHistoryEvent(db, id, e)
+        if (items.length < PAGE_SIZE) break
+        from += PAGE_SIZE
       }
     },
     async syncActivities(): Promise<number> {
