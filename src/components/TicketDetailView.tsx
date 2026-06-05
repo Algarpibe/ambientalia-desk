@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
 import type { TicketDetail, Message, Ticket, Activity } from '../../shared/types';
 import { useAsync } from '../hooks/useAsync';
 import { fetchTicket, fetchConversations, replyTicket, fetchActivities } from '../api/client';
@@ -224,7 +225,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                   {msg.isHtml ? (
                                     <div
                                       className="text-[13px] text-slate-700 leading-relaxed max-w-[800px] overflow-x-auto [&_img]:max-w-full [&_a]:text-blue-600 [&_a]:underline"
-                                      dangerouslySetInnerHTML={{ __html: msg.content }}
+                                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.content) }}
                                     />
                                   ) : (
                                     <div className="text-[13px] text-slate-700 leading-relaxed max-w-[800px] whitespace-pre-line">{msg.content}</div>
