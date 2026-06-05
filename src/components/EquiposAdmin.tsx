@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { EquipoFull, ClientLite } from '../../shared/types'
-import { listEquiposManage, equipoFacets, createEquipo, updateEquipo, setEquipoActive, searchClients, type EquipoFacets } from '../api/client'
+import { listEquiposManage, equipoFacets, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients, type EquipoFacets } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 
 const PAGE_SIZE = 50
 
 export function EquiposAdmin({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth()
   const [items, setItems] = useState<EquipoFull[]>([])
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -20,6 +22,12 @@ export function EquiposAdmin({ onClose }: { onClose: () => void }) {
 
   async function toggleActive(e: EquipoFull) {
     try { await setEquipoActive(e.id, !e.active); reload() }
+    catch (err) { alert('Error: ' + String(err instanceof Error ? err.message : err)) }
+  }
+
+  async function remove(e: EquipoFull) {
+    if (!confirm(`¿Eliminar definitivamente el equipo ${e.serial}? Esta acción no se puede deshacer.`)) return
+    try { await deleteEquipo(e.id); reload() }
     catch (err) { alert('Error: ' + String(err instanceof Error ? err.message : err)) }
   }
 
@@ -46,6 +54,7 @@ export function EquiposAdmin({ onClose }: { onClose: () => void }) {
                 <td className="text-right whitespace-nowrap">
                   <button onClick={() => setEditing(e)} className="text-[12px] text-blue-600 mr-3">Editar</button>
                   <button onClick={() => toggleActive(e)} className="text-[12px] text-blue-600">{e.active ? 'Desactivar' : 'Activar'}</button>
+                  {user?.isAdmin && <button onClick={() => remove(e)} className="text-[12px] text-red-600 ml-3">Eliminar</button>}
                 </td>
               </tr>
             ))}
@@ -79,6 +88,9 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   const [facets, setFacets] = useState<EquipoFacets>({ marcas: [], byMarca: {} })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [marcaOtro, setMarcaOtro] = useState(false)
+  const [modeloOtro, setModeloOtro] = useState(false)
+  const [tipoOtro, setTipoOtro] = useState(false)
 
   useEffect(() => { equipoFacets().then(setFacets).catch(() => {}) }, [])
   useEffect(() => {
@@ -100,6 +112,7 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   }
 
   const field = 'border border-slate-200 rounded p-2 text-[13px]'
+  const OTRO = '__otro__'
   // Listas en cascada: modelos/tipos según la marca elegida (incluye el valor actual al editar).
   const withCurrent = (list: string[], current: string) => (!current || list.includes(current) ? list : [current, ...list])
   const marcas = withCurrent(facets.marcas, marca)
@@ -113,19 +126,41 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
         <h3 className="text-[15px] font-bold text-slate-800">{equipo ? 'Editar equipo' : 'Nuevo equipo'}</h3>
         <input className={field} placeholder="Número de serie *" value={serial} onChange={(e) => setSerial(e.target.value)} required />
         <div className="grid grid-cols-2 gap-2">
-          <select className={field} value={marca} onChange={(e) => { setMarca(e.target.value); setModelo(''); setTipo('') }}>
-            <option value="">Marca…</option>
-            {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-          <select className={field} value={modelo} onChange={(e) => setModelo(e.target.value)} disabled={!marca}>
-            <option value="">{marca ? 'Modelo…' : 'Elige marca primero'}</option>
-            {modelos.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
+          <div className="flex flex-col gap-1">
+            <select className={field} value={marcaOtro ? OTRO : marca} onChange={(e) => {
+              const v = e.target.value
+              if (v === OTRO) { setMarcaOtro(true); setMarca('') } else { setMarcaOtro(false); setMarca(v) }
+              setModelo(''); setModeloOtro(false); setTipo(''); setTipoOtro(false)
+            }}>
+              <option value="">Marca…</option>
+              {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
+              <option value={OTRO}>Otro…</option>
+            </select>
+            {marcaOtro && <input className={field} autoFocus placeholder="Nueva marca" value={marca} onChange={(e) => setMarca(e.target.value)} />}
+          </div>
+          <div className="flex flex-col gap-1">
+            <select className={field} value={modeloOtro ? OTRO : modelo} disabled={!marca} onChange={(e) => {
+              const v = e.target.value
+              if (v === OTRO) { setModeloOtro(true); setModelo('') } else { setModeloOtro(false); setModelo(v) }
+            }}>
+              <option value="">{marca ? 'Modelo…' : 'Elige marca primero'}</option>
+              {modelos.map((m) => <option key={m} value={m}>{m}</option>)}
+              {marca && <option value={OTRO}>Otro…</option>}
+            </select>
+            {modeloOtro && <input className={field} placeholder="Nuevo modelo" value={modelo} onChange={(e) => setModelo(e.target.value)} />}
+          </div>
         </div>
-        <select className={field} value={tipo} onChange={(e) => setTipo(e.target.value)} disabled={!marca}>
-          <option value="">{marca ? 'Tipo de equipo…' : 'Elige marca primero'}</option>
-          {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <div className="flex flex-col gap-1">
+          <select className={field} value={tipoOtro ? OTRO : tipo} disabled={!marca} onChange={(e) => {
+            const v = e.target.value
+            if (v === OTRO) { setTipoOtro(true); setTipo('') } else { setTipoOtro(false); setTipo(v) }
+          }}>
+            <option value="">{marca ? 'Tipo de equipo…' : 'Elige marca primero'}</option>
+            {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
+            {marca && <option value={OTRO}>Otro…</option>}
+          </select>
+          {tipoOtro && <input className={field} placeholder="Nuevo tipo de equipo" value={tipo} onChange={(e) => setTipo(e.target.value)} />}
+        </div>
         <div className="relative">
           <input className={`${field} w-full`} placeholder="Cliente (Books) *" value={clientQuery}
             onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value) }} required={!equipo && !clientId} />

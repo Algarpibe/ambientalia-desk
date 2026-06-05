@@ -85,6 +85,11 @@ export async function setEquipoActive(db: Queryable, id: string, active: boolean
   await db.query('UPDATE equipos SET active=$2, updated_at=now() WHERE id=$1', [id, active])
 }
 
+/** Borrado físico (solo super administrador). Los tickets conservan sus datos de equipo denormalizados. */
+export async function deleteEquipo(db: Queryable, id: string): Promise<void> {
+  await db.query('DELETE FROM equipos WHERE id=$1', [id])
+}
+
 export async function getEquipoFull(db: Queryable, id: string): Promise<EquipoFull | null> {
   const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active FROM equipos WHERE id=$1', [id])
   return r.rows[0] ? toFull(r.rows[0]) : null

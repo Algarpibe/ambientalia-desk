@@ -281,4 +281,16 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect(m.body.items[0]).toMatchObject({ serial: 'SN-G' })
     expect((await request(app).get('/api/equipos/manage')).status).toBe(401)
   })
+
+  it('DELETE solo super admin: no-admin 403, sin sesión 401, admin 200', async () => {
+    const admin = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cliD', contact_name: 'D', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const id = (await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: 'SN-DEL', clientId: 'cliD' })).body.id
+    const op = await userCookie([])
+    expect((await request(app).delete(`/api/equipos/${id}`).set('Cookie', op)).status).toBe(403)
+    expect((await request(app).delete(`/api/equipos/${id}`)).status).toBe(401)
+    expect((await request(app).delete(`/api/equipos/${id}`).set('Cookie', admin)).status).toBe(200)
+    expect((await listEquiposManage(db, 'SN-DEL')).length).toBe(0)
+  })
 })

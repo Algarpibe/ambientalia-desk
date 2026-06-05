@@ -189,3 +189,8 @@ export function updateEquipo(id: string, patch: Partial<EquipoInput> & { active?
 export function setEquipoActive(id: string, active: boolean): Promise<EquipoFull> {
   return updateEquipo(id, { active })
 }
+
+export async function deleteEquipo(id: string): Promise<void> {
+  const res = await fetch(`/api/equipos/${id}`, { method: 'DELETE', credentials: 'include' })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+}

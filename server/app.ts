@@ -12,9 +12,9 @@ import { buildTransitionPlan } from './transitionExec'
 import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
-import { requireAuth } from './auth/middleware'
+import { requireAuth, requireAdmin as requireSuperAdmin } from './auth/middleware'
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
-import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './db/equipos'
+import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo } from './db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 
 function humanBytes(n: number): string {
@@ -218,6 +218,16 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       if (Object.keys(patch).length) await updateEquipo(db, id, patch)
       if (b.active !== undefined) await setEquipoActive(db, id, Boolean(b.active))
       res.json(await getEquipoFull(db, id))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  // Borrado físico de un equipo: SOLO super administrador.
+  app.delete('/api/equipos/:id', requireAuth(db), requireSuperAdmin, async (req, res) => {
+    try {
+      const id = String(req.params.id)
+      if (!(await getEquipoFull(db, id))) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
+      await deleteEquipo(db, id)
+      res.json({ ok: true })
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 

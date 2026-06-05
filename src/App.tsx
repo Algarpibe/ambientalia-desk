@@ -103,6 +103,7 @@ function App() {
           onClose={() => setShowConfig(false)}
           onOpenUsers={() => { setShowConfig(false); setShowUsers(true) }}
           onOpenRoles={() => { setShowConfig(false); setShowRoles(true) }}
+          onOpenEquipos={() => { setShowConfig(false); setShowEquipos(true) }}
           isAdmin={!!user.isAdmin}
         />
       )}

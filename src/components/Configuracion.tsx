@@ -5,17 +5,21 @@ type Item = { label: string; onClick?: () => void; soon?: boolean }
 type Category = { title: string; items: Item[] }
 
 // Novedades del producto (panel derecho, estilo "Actualizaciones de producto" de Zoho Desk).
+// Más recientes primero.
 const NOVEDADES = [
+  { title: 'Gestión de equipos', body: 'Da de alta, edita y desactiva equipos desde la app (Configuración → Registro de equipos). Marca → Modelo/Tipo en cascada con opción "Otro…", y cliente desde Zoho Books. Eliminar definitivo solo para super administrador.' },
+  { title: 'Vistas de tickets', body: 'Cambia entre Vista clásica, compacta y de tabla, y modos Kanban por estado, prioridad o cuenta regresiva. Tu preferencia se recuerda en este navegador.' },
   { title: 'Creación de tickets en la app', body: 'Crea tickets desde una Orden de Venta de Zoho Books, atados a un equipo registrado. Asunto y código estandarizados automáticamente.' },
   { title: 'Registro de equipos', body: 'Catálogo de equipos vendidos (serie → marca / modelo / tipo / cliente). No se puede abrir un ticket sin un equipo registrado.' },
   { title: 'Sincronización con Zoho Books', body: 'Clientes (con NIT) y órdenes de venta sincronizados a la plataforma para los buscadores del alta de tickets.' },
   { title: 'Tablero configurable', body: 'Oculta las columnas vacías del tablero desde esta misma página de Configuración.' },
 ]
 
-export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
+export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos, isAdmin }: {
   onClose: () => void
   onOpenUsers: () => void
   onOpenRoles: () => void
+  onOpenEquipos: () => void
   isAdmin: boolean
 }) {
   const [section, setSection] = useState<'home' | 'tablero'>('home')
@@ -109,7 +113,7 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, isAdmin }: {
       items: [
         { label: 'Clientes (Zoho Books)', soon: true },
         { label: 'Órdenes de venta (Zoho Books)', soon: true },
-        { label: 'Registro de equipos', soon: true },
+        { label: 'Registro de equipos', onClick: onOpenEquipos },
         { label: 'Importar / Exportar', soon: true },
       ],
     },
