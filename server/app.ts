@@ -23,6 +23,8 @@ import { getActivities } from './db/activities'
 import multer from 'multer'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment } from './db/resolutions'
 
+const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
+
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
   const units = ['KB', 'MB', 'GB', 'TB']
@@ -83,7 +85,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     try {
       const f = req.file
       if (!f) { res.status(400).json({ error: 'Falta el archivo' }); return }
-      if (!/^image\//.test(f.mimetype)) { res.status(415).json({ error: 'Solo imágenes' }); return }
+      if (!ALLOWED_IMAGE_TYPES.has(f.mimetype)) { res.status(415).json({ error: 'Tipo de imagen no permitido' }); return }
       const meta = await addResolutionAttachment(db, { ticketId: String(req.params.id), filename: f.originalname, contentType: f.mimetype, contentB64: f.buffer.toString('base64'), size: f.size, by: req.user?.name ?? null })
       res.status(201).json(meta)
     } catch (err) { res.status(500).json({ error: String(err) }) }
@@ -93,6 +95,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       const c = await getResolutionAttachmentContent(db, String(req.params.id), String(req.params.attId))
       if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
       res.set('Content-Type', c.contentType)
+      res.set('X-Content-Type-Options', 'nosniff')
       res.send(Buffer.from(c.contentB64, 'base64'))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })

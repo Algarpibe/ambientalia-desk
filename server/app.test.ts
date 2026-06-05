@@ -374,3 +374,22 @@ describe('Resolución del ticket', () => {
     expect((await request(app).get('/api/tickets/t1/resolution')).status).toBe(401)
   })
 })
+
+describe('Resolución — seguridad', () => {
+  it('rechaza SVG (415) y sanea el HTML guardado', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t9',9,'A','Ingresado')")
+    const { app } = appWith()
+    // SVG rechazado
+    const svg = await request(app).post('/api/tickets/t9/resolution/attachments').set('Cookie', cookie)
+      .attach('file', Buffer.from('<svg/>'), { filename: 'x.svg', contentType: 'image/svg+xml' })
+    expect(svg.status).toBe(415)
+    // HTML saneado al guardar
+    await request(app).put('/api/tickets/t9/resolution').set('Cookie', cookie)
+      .send({ html: '<p>ok</p><script>alert(1)</script><img src=x onerror=alert(1)>' })
+    const g = await request(app).get('/api/tickets/t9/resolution').set('Cookie', cookie)
+    expect(g.body.html).not.toContain('<script')
+    expect(g.body.html).not.toContain('onerror')
+    expect(g.body.html).toContain('<p>ok</p>')
+  })
+})

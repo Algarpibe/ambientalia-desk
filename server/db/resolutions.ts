@@ -1,9 +1,15 @@
 import { randomUUID } from 'node:crypto'
+import sanitizeHtml from 'sanitize-html'
 import type { Queryable } from './migrate'
 import type { Resolution, ResolutionAttachment } from '../../shared/types'
 
 export async function saveResolution(db: Queryable, ticketId: string, html: string, by: string | null): Promise<void> {
-  await db.query('UPDATE tickets SET resolution_html=$1, resolution_at=now(), resolution_by=$2 WHERE id=$3', [html, by, ticketId])
+  const clean = sanitizeHtml(html, {
+    allowedTags: ['p', 'br', 'div', 'span', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'blockquote'],
+    allowedAttributes: { a: ['href', 'target', 'rel'] },
+    allowedSchemes: ['http', 'https', 'mailto'],
+  })
+  await db.query('UPDATE tickets SET resolution_html=$1, resolution_at=now(), resolution_by=$2 WHERE id=$3', [clean, by, ticketId])
 }
 
 export async function listResolutionAttachments(db: Queryable, ticketId: string): Promise<ResolutionAttachment[]> {

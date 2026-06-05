@@ -14,7 +14,7 @@ export function ResolucionPanel({ ticketId }: { ticketId: string }) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setAtts(data?.attachments ?? []) }, [data])
-  useEffect(() => { if (editing && editorRef.current) editorRef.current.innerHTML = data?.html ?? '' }, [editing, data])
+  useEffect(() => { if (editing && editorRef.current) editorRef.current.innerHTML = DOMPurify.sanitize(data?.html ?? '') }, [editing, data])
 
   const attUrl = (a: ResolutionAttachment) => `/api/tickets/${ticketId}/resolution/attachments/${a.id}`
   const exec = (cmd: string, val?: string) => document.execCommand(cmd, false, val)
