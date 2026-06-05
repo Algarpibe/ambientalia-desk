@@ -56,8 +56,10 @@ describe('equipos CRUD (Subsistema F)', () => {
   it('facets devuelve marcas y tipos distintos', async () => {
     await createEquipo(db, { serial: 'A', marca: 'Grimm', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null })
     await createEquipo(db, { serial: 'B', marca: 'Horiba', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null })
+    await createEquipo(db, { serial: 'C', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null })
     const f = await equipoFacets(db)
     expect(f.marcas).toEqual(expect.arrayContaining(['Grimm', 'Horiba']))
-    expect(f.tipos).toContain('Monitor')
+    expect(f.byMarca['Grimm'].tipos).toContain('Monitor')
+    expect(f.byMarca['Grimm'].modelos).toContain('EDM180C')
   })
 })

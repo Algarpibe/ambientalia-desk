@@ -102,8 +102,18 @@ export async function listEquiposManage(db: Queryable, q: string, limit = 50, of
   return r.rows.map(toFull)
 }
 
-export async function equipoFacets(db: Queryable): Promise<{ marcas: string[]; tipos: string[] }> {
-  const m = await db.query("SELECT DISTINCT marca FROM equipos WHERE COALESCE(marca,'') <> '' ORDER BY marca")
-  const t = await db.query("SELECT DISTINCT tipo FROM equipos WHERE COALESCE(tipo,'') <> '' ORDER BY tipo")
-  return { marcas: m.rows.map((x: any) => x.marca), tipos: t.rows.map((x: any) => x.tipo) }
+/** Facetas para los desplegables en cascada: por cada marca, sus modelos y tipos distintos. */
+export async function equipoFacets(db: Queryable): Promise<{ marcas: string[]; byMarca: Record<string, { modelos: string[]; tipos: string[] }> }> {
+  const r = await db.query("SELECT DISTINCT marca, modelo, tipo FROM equipos WHERE COALESCE(marca,'') <> '' ORDER BY marca")
+  const acc: Record<string, { modelos: Set<string>; tipos: Set<string> }> = {}
+  for (const row of r.rows as any[]) {
+    const marca = row.marca as string
+    if (!acc[marca]) acc[marca] = { modelos: new Set(), tipos: new Set() }
+    if (row.modelo) acc[marca].modelos.add(row.modelo)
+    if (row.tipo) acc[marca].tipos.add(row.tipo)
+  }
+  const marcas = Object.keys(acc).sort()
+  const byMarca: Record<string, { modelos: string[]; tipos: string[] }> = {}
+  for (const m of marcas) byMarca[m] = { modelos: [...acc[m].modelos].sort(), tipos: [...acc[m].tipos].sort() }
+  return { marcas, byMarca }
 }

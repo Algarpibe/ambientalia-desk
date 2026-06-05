@@ -171,8 +171,9 @@ export function listEquiposManage(search: string, page = 1): Promise<{ items: Eq
   return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))
 }
 
-export function equipoFacets(): Promise<{ marcas: string[]; tipos: string[] }> {
-  return fetch('/api/equipos/facets', { credentials: 'include' }).then((r) => json<{ marcas: string[]; tipos: string[] }>(r))
+export interface EquipoFacets { marcas: string[]; byMarca: Record<string, { modelos: string[]; tipos: string[] }> }
+export function equipoFacets(): Promise<EquipoFacets> {
+  return fetch('/api/equipos/facets', { credentials: 'include' }).then((r) => json<EquipoFacets>(r))
 }
 
 export async function createEquipo(input: EquipoInput): Promise<EquipoFull> {
