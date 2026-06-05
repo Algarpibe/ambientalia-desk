@@ -323,3 +323,17 @@ describe('GET /api/analisis (admin)', () => {
     expect((await request(app).get('/api/analisis')).status).toBe(401)
   })
 })
+
+describe('POST /api/admin/backfill-serial (admin)', () => {
+  it('admin → {updated}; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app) VALUES ('b1',1,'Servicio MT_18A19042_EDM180C_260305','Finalizado',false)")
+    const { app } = appWith()
+    const res = await request(app).post('/api/admin/backfill-serial').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(res.body.updated).toBe(1)
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/backfill-serial').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/backfill-serial')).status).toBe(401)
+  })
+})

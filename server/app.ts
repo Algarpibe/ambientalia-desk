@@ -18,6 +18,7 @@ import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, 
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 import { getAnalisisRows, rangeToFromTo } from './analisis'
 import { computeAnalisis } from '../shared/analisis'
+import { backfillSerialFromSubject } from './backfillSerial'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -246,6 +247,14 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       const { from, to } = rangeToFromTo(String(req.query.range ?? 'todo'), new Date())
       const rows = await getAnalisisRows(db)
       res.json(computeAnalisis(rows, from, to))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  // Backfill puntual: rellena serial/código de servicio (columnas vacías) extrayéndolos del asunto.
+  // Solo tickets NO gestionados por la app; idempotente. SOLO super administrador.
+  app.post('/api/admin/backfill-serial', requireAuth(db), requireSuperAdmin, async (_req, res) => {
+    try {
+      res.json(await backfillSerialFromSubject(db))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
