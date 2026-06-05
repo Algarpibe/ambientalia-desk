@@ -88,6 +88,16 @@ describe('getEquipoHistorial', () => {
     expect(app1.transitions.map((x) => x.transitionName)).toEqual(['Habilitar Servicio'])
   })
 
+  it('empareja históricos por el serial dentro del asunto (token), sin falsos positivos', async () => {
+    const eqId = await createEquipo(db, { serial: '18A19042', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'CHEMILAB', clientId: 'c1' })
+    // histórico de Zoho: serial/codigo_servicio NULL; el serial vive en el asunto.
+    await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('h1',190,'Servicio Técnico CHEMILAB GRIMM EDM 180C MT_18A19042_EDM180C_260305','Finalizado','Closed',now())`)
+    // falso positivo: el serial es subcadena de uno más largo (18A190420) → NO debe entrar.
+    await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('h2',191,'Servicio MT_18A190420_EDM180C_260305','Ingresado','Open',now())`)
+    const h = await getEquipoHistorial(db, eqId)
+    expect(h!.tickets.map((t) => t.id)).toEqual(['h1'])
+  })
+
   it('devuelve null si el equipo no existe', async () => {
     expect(await getEquipoHistorial(db, 'eq-nope')).toBeNull()
   })

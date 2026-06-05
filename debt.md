@@ -215,6 +215,13 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
 
 ## 4. Otros pendientes conocidos (menores)
 
+- **`serial`/`codigo_servicio` vacíos en tickets históricos de Zoho:** confirmado en producción — solo 1
+  ticket tiene `serial` poblado (el creado en la app); los históricos tienen `serial` Y `codigo_servicio`
+  en NULL (el número de serie vive solo en el **`subject`**, p.ej. `…MT_18A19042_EDM180C_260305`). La
+  **hoja de vida** ya lo resuelve emparejando por el serial-token dentro del asunto (`getEquipoHistorial`).
+  **Mejora futura:** un backfill que extraiga `serial` (y código) del asunto a las columnas, para que también
+  se beneficien el gate de creación, la búsqueda y reportería. (El mapeo promueve `serial` desde un
+  customField "Serial" de Zoho que los tickets no diligencian.)
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
   Zoho, transitorio). Las **transiciones ya NO** necesitan este flag (escriben en Postgres). Probar primero
   con un ticket de prueba.

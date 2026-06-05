@@ -124,17 +124,33 @@ export async function equipoFacets(db: Queryable): Promise<{ marcas: string[]; b
   return { marcas, byMarca }
 }
 
+/** El serial como token delimitado por caracteres no alfanuméricos (evita falsos positivos por subcadena). */
+function serialBoundaryRegex(serial: string): RegExp {
+  const esc = serial.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`)
+}
+
 export async function getEquipoHistorial(db: Queryable, id: string): Promise<EquipoHistorial | null> {
   const equipo = await getEquipoFull(db, id)
   if (!equipo) return null
+  const serial = equipo.serial
+  // Históricos de Zoho: el serial vive solo en el asunto (no en serial/codigo_servicio).
+  // Filtramos ampliamente en SQL y refinamos en JS con guarda de token.
   const tk = await db.query(
-    `SELECT t.id, t.number, t.subject, t.status, t.status_type, t.created_time, t.codigo_servicio, t.tipo_servicio, g.name AS agent_name
+    `SELECT t.id, t.number, t.subject, t.status, t.status_type, t.created_time, t.codigo_servicio, t.tipo_servicio,
+            t.serial AS t_serial, t.equipo_id AS t_equipo_id, g.name AS agent_name
      FROM tickets t LEFT JOIN agents g ON t.assignee_id=g.id
-     WHERE t.equipo_id=$1 OR (COALESCE(t.serial,'') <> '' AND t.serial=$2)
+     WHERE t.equipo_id=$1
+        OR (COALESCE(t.serial,'') <> '' AND t.serial=$2)
+        OR (COALESCE(t.subject,'') <> '' AND LOWER(t.subject) LIKE LOWER($3))
      ORDER BY t.created_time DESC NULLS LAST`,
-    [id, equipo.serial],
+    [id, serial, `%${serial}%`],
   )
-  const ids = (tk.rows as any[]).map((r) => r.id)
+  const re = serialBoundaryRegex(serial)
+  const rows = (tk.rows as any[]).filter(
+    (r) => r.t_equipo_id === id || (r.t_serial && r.t_serial === serial) || re.test(r.subject ?? ''),
+  )
+  const ids = rows.map((r) => r.id)
   const byTicket = new Map<string, HistorialTransition[]>()
   if (ids.length) {
     const ph = ids.map((_, i) => `$${i + 1}`).join(',')
@@ -152,7 +168,7 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
       byTicket.set(r.ticket_id, list)
     }
   }
-  const tickets: HistorialTicket[] = (tk.rows as any[]).map((r) => ({
+  const tickets: HistorialTicket[] = rows.map((r) => ({
     id: r.id, number: `#${r.number}`, subject: r.subject ?? '', status: r.status, statusType: r.status_type ?? null,
     createdAt: r.created_time ?? null, tecnico: r.agent_name ?? null, codigoServicio: r.codigo_servicio ?? null,
     tipoServicio: r.tipo_servicio ?? null, transitions: byTicket.get(r.id) ?? [],
