@@ -8,6 +8,7 @@ import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { ActividadesPanel } from './ActividadesPanel';
 import { ResolucionPanel } from './ResolucionPanel';
+import { HistoriaPanel } from './HistoriaPanel';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -37,7 +38,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
         { id: 'adj', label: `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`, view: 'otros' },
         { id: 'act', label: `${actCount} ACTIVIDADES`, view: 'actividades' },
         { id: 'apr', label: 'APROBACIÓN', view: 'otros' },
-        { id: 'his', label: 'HISTORIA', view: 'otros' },
+        { id: 'his', label: 'HISTORIA', view: 'historia' },
     ];
     const activeView = TABS.find((t) => t.id === activeTabId)?.view ?? 'conversaciones';
     const [replyText, setReplyText] = useState('');
@@ -261,6 +262,11 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         {activeView === 'resolucion' && (
                             <div className="flex-1 overflow-y-auto bg-white">
                                 <ResolucionPanel ticketId={ticketId} />
+                            </div>
+                        )}
+                        {activeView === 'historia' && (
+                            <div className="flex-1 overflow-y-auto bg-white">
+                                <HistoriaPanel ticketId={ticketId} />
                             </div>
                         )}
                         {activeView === 'otros' && (

@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -227,4 +227,8 @@ export async function deleteResolutionImage(id: string, attId: string): Promise<
 export async function deleteResolution(id: string): Promise<void> {
   const res = await fetch(`/api/tickets/${id}/resolution`, { method: 'DELETE', credentials: 'include' })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
+}
+
+export function fetchHistory(id: string): Promise<HistoryEvent[]> {
+  return fetch(`/api/tickets/${id}/history`, { credentials: 'include' }).then((r) => json<HistoryEvent[]>(r))
 }
