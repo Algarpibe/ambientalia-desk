@@ -293,4 +293,18 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect((await request(app).delete(`/api/equipos/${id}`).set('Cookie', admin)).status).toBe(200)
     expect((await listEquiposManage(db, 'SN-DEL')).length).toBe(0)
   })
+
+  it('GET /api/equipos/:id/historial → equipo + tickets; 404; 401', async () => {
+    const cookie = await adminCookie()
+    await upsertClient(db, clientFromBooks({ contact_id: 'cH', contact_name: 'H', last_modified_time: '2024-01-01T00:00:00Z' } as any))
+    const { app } = appWith()
+    const eqId = (await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-H', marca: 'Grimm', clientId: 'cH' })).body.id
+    await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,serial,equipo_id,created_time) VALUES ('h1',777,'T','Ingresado','Open','SN-H',$1,now())`, [eqId])
+    const res = await request(app).get(`/api/equipos/${eqId}/historial`).set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.equipo.serial).toBe('SN-H')
+    expect(res.body.tickets[0]).toMatchObject({ id: 'h1', number: '#777' })
+    expect((await request(app).get('/api/equipos/eq-nope/historial').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).get(`/api/equipos/${eqId}/historial`)).status).toBe(401)
+  })
 })

@@ -14,7 +14,7 @@ import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth, requireAdmin as requireSuperAdmin } from './auth/middleware'
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
-import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo } from './db/equipos'
+import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo, getEquipoHistorial } from './db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 
 function humanBytes(n: number): string {
@@ -181,6 +181,14 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.get('/api/equipos/facets', requireAuth(db), async (_req, res) => {
     try { res.json(await equipoFacets(db)) } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/equipos/:id/historial', requireAuth(db), async (req, res) => {
+    try {
+      const h = await getEquipoHistorial(db, String(req.params.id))
+      if (!h) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
+      res.json(h)
+    } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
   app.post('/api/equipos', requireAuth(db), async (req, res) => {
