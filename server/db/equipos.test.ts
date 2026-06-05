@@ -4,6 +4,7 @@ import { migrate, type Queryable } from './migrate'
 import { parseEquiposCsv } from './seedEquipos'
 import { upsertEquipo, searchEquipos, getEquipo, countEquipos } from './equipos'
 import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './equipos'
+import { getEquipoHistorial } from './equipos'
 
 const rows = parseEquiposCsv([
   'Nombre cliente;Marca;Modelo;Numero serie;Tipo',
@@ -61,5 +62,33 @@ describe('equipos CRUD (Subsistema F)', () => {
     expect(f.marcas).toEqual(expect.arrayContaining(['Grimm', 'Horiba']))
     expect(f.byMarca['Grimm'].tipos).toContain('Monitor')
     expect(f.byMarca['Grimm'].modelos).toContain('EDM180C')
+  })
+})
+
+async function insTicket(id: string, number: number, serial: string | null, equipoId: string | null, status: string) {
+  await db.query(
+    `INSERT INTO tickets (id,number,subject,status,status_type,serial,equipo_id,created_time) VALUES ($1,$2,$3,$4,'Open',$5,$6,now())`,
+    [id, number, `Ticket ${number}`, status, serial, equipoId],
+  )
+}
+
+describe('getEquipoHistorial', () => {
+  it('empareja por equipo_id y por serial, agrupa transiciones', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-1', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    await insTicket('app-1', 901, 'SN-1', eqId, 'Ingresado')
+    await insTicket('zoho-1', 303, 'SN-1', null, 'Finalizado')
+    await insTicket('otro-1', 500, 'SN-X', null, 'Ingresado')
+    await db.query(`INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at) VALUES ('app-1','Habilitar Servicio','OV asignada','Ingresado','Comercial','Admin',now())`)
+    const h = await getEquipoHistorial(db, eqId)
+    expect(h).not.toBeNull()
+    expect(h!.equipo.serial).toBe('SN-1')
+    expect(h!.tickets.map((t) => t.id).sort()).toEqual(['app-1', 'zoho-1'])
+    const app1 = h!.tickets.find((t) => t.id === 'app-1')!
+    expect(app1.number).toBe('#901')
+    expect(app1.transitions.map((x) => x.transitionName)).toEqual(['Habilitar Servicio'])
+  })
+
+  it('devuelve null si el equipo no existe', async () => {
+    expect(await getEquipoHistorial(db, 'eq-nope')).toBeNull()
   })
 })

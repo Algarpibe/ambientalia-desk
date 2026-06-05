@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Queryable } from './migrate'
 import type { EquipoRow } from './seedEquipos'
 import type { EquipoLite, EquipoFull } from '../../shared/types'
+import type { EquipoHistorial, HistorialTicket, HistorialTransition } from '../../shared/types'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -121,4 +122,40 @@ export async function equipoFacets(db: Queryable): Promise<{ marcas: string[]; b
   const byMarca: Record<string, { modelos: string[]; tipos: string[] }> = {}
   for (const m of marcas) byMarca[m] = { modelos: [...acc[m].modelos].sort(), tipos: [...acc[m].tipos].sort() }
   return { marcas, byMarca }
+}
+
+export async function getEquipoHistorial(db: Queryable, id: string): Promise<EquipoHistorial | null> {
+  const equipo = await getEquipoFull(db, id)
+  if (!equipo) return null
+  const tk = await db.query(
+    `SELECT t.id, t.number, t.subject, t.status, t.status_type, t.created_time, t.codigo_servicio, t.tipo_servicio, g.name AS agent_name
+     FROM tickets t LEFT JOIN agents g ON t.assignee_id=g.id
+     WHERE t.equipo_id=$1 OR (COALESCE(t.serial,'') <> '' AND t.serial=$2)
+     ORDER BY t.created_time DESC NULLS LAST`,
+    [id, equipo.serial],
+  )
+  const ids = (tk.rows as any[]).map((r) => r.id)
+  const byTicket = new Map<string, HistorialTransition[]>()
+  if (ids.length) {
+    const ph = ids.map((_, i) => `$${i + 1}`).join(',')
+    const tr = await db.query(
+      `SELECT ticket_id, transition_name, from_status, to_status, area, performed_by, performed_at
+       FROM ticket_transitions WHERE ticket_id IN (${ph}) ORDER BY performed_at`,
+      ids,
+    )
+    for (const r of tr.rows as any[]) {
+      const list = byTicket.get(r.ticket_id) ?? []
+      list.push({
+        transitionName: r.transition_name ?? null, fromStatus: r.from_status ?? null, toStatus: r.to_status ?? null,
+        area: r.area ?? null, performedBy: r.performed_by ?? null, performedAt: r.performed_at ?? null,
+      })
+      byTicket.set(r.ticket_id, list)
+    }
+  }
+  const tickets: HistorialTicket[] = (tk.rows as any[]).map((r) => ({
+    id: r.id, number: `#${r.number}`, subject: r.subject ?? '', status: r.status, statusType: r.status_type ?? null,
+    createdAt: r.created_time ?? null, tecnico: r.agent_name ?? null, codigoServicio: r.codigo_servicio ?? null,
+    tipoServicio: r.tipo_servicio ?? null, transitions: byTicket.get(r.id) ?? [],
+  }))
+  return { equipo, tickets }
 }
