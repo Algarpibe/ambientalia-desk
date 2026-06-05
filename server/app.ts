@@ -334,6 +334,14 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
+  // Backfill de tickets archivados en segundo plano (fire-and-forget). SOLO super administrador.
+  app.post('/api/admin/backfill-archived', requireAuth(db), requireSuperAdmin, (_req, res) => {
+    sync.backfillArchivedTickets()
+      .then((n) => console.log(`Backfill archivados: ${n} tickets`))
+      .catch((e) => console.error('Backfill archivados falló:', e))
+    res.json({ started: true })
+  })
+
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
   // Requiere sesión: son documentos de clientes (facturas, fotos, etc.).
   app.get('/api/attachment', requireAuth(db), async (req, res) => {

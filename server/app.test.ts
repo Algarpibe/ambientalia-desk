@@ -397,6 +397,20 @@ describe('POST /api/admin/backfill-serial (admin)', () => {
   })
 })
 
+describe('POST /api/admin/backfill-archived (admin)', () => {
+  it('admin arranca; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    const { app, sync } = appWith()
+    const res = await request(app).post('/api/admin/backfill-archived').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ started: true })
+    expect(sync.backfillArchivedTickets).toHaveBeenCalled()
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/backfill-archived').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/backfill-archived')).status).toBe(401)
+  })
+})
+
 describe('Resolución del ticket', () => {
   it('PUT guarda; GET devuelve; POST imagen 201; GET content sirve; 415 no-imagen; DELETE; 401 sin sesión', async () => {
     const cookie = await adminCookie()
