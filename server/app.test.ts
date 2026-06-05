@@ -72,6 +72,24 @@ describe('GET /api/tickets?scope=all', () => {
   })
 })
 
+describe('GET /api/tickets/:id/history', () => {
+  it('mapea el historial; fallback a transiciones; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
+    await db.query("INSERT INTO ticket_history (id,ticket_id,event_name,event_time,actor_name,raw) VALUES ('h1','t1','CommentAdded',now(),'Ana',$1)",
+      [JSON.stringify({ eventName: 'CommentAdded', actor: { name: 'Ana' }, eventInfo: [{ propertyName: 'CommentType', propertyValue: 'Private' }] })])
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets/t1/history').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ title: 'Ana ha publicado un comentario' })
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t2',2,'B','Ingresado')")
+    await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('t2','Habilitar','OV asignada','Ingresado','Admin',now())")
+    const f = await request(app).get('/api/tickets/t2/history').set('Cookie', cookie)
+    expect(f.body[0]).toMatchObject({ title: 'Transición: Habilitar' })
+    expect((await request(app).get('/api/tickets/t1/history')).status).toBe(401)
+  })
+})
+
 describe('escrituras', () => {
   it('POST reply → 403 si enableWrites=false', async () => {
     const cookie = await adminCookie()

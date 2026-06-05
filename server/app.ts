@@ -22,6 +22,7 @@ import { backfillSerialFromSubject } from './backfillSerial'
 import { getActivities } from './db/activities'
 import multer from 'multer'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from './db/resolutions'
+import { getTicketHistory } from './db/history'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
 
@@ -174,6 +175,14 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       let convs = await getConversations(db, id)
       if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
       res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/tickets/:id/history', async (req, res) => {
+    try {
+      const id = String(req.params.id)
+      try { await sync.syncTicketHistory(id) } catch (e) { console.error(`syncTicketHistory(${id}) falló:`, e) }
+      res.json(await getTicketHistory(db, id))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
