@@ -101,7 +101,7 @@ function App() {
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
       {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} />}
       {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
-      {showClientes && <ClientesPage onClose={() => setShowClientes(false)} />}
+      {showClientes && <ClientesPage onClose={() => setShowClientes(false)} onSelectTicket={(id) => { setShowClientes(false); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
       {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
       {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
       {showConfig && (
