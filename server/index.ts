@@ -75,12 +75,17 @@ async function main() {
     })
     .catch((e) => console.error('Backfill falló:', e))
 
+  sync.syncActivities()
+    .then((n) => console.log(`Actividades: sync inicial (${n})`))
+    .catch((e) => console.error('Sync actividades falló:', e))
+
   let syncing = false
   setInterval(() => {
     if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
     syncing = true
     sync
       .syncRecent()
+      .then(() => sync.syncActivities())
       .catch((e) => console.error('Sync incremental falló:', e))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)

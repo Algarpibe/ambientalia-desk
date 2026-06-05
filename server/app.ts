@@ -19,6 +19,7 @@ import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCre
 import { getAnalisisRows, rangeToFromTo } from './analisis'
 import { computeAnalisis } from '../shared/analisis'
 import { backfillSerialFromSubject } from './backfillSerial'
+import { getActivities } from './db/activities'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -129,6 +130,12 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       let convs = await getConversations(db, id)
       if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
       res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/tickets/:id/activities', async (req, res) => {
+    try {
+      res.json(await getActivities(db, String(req.params.id)))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 

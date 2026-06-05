@@ -324,6 +324,19 @@ describe('GET /api/analisis (admin)', () => {
   })
 })
 
+describe('GET /api/tickets/:id/activities', () => {
+  it('devuelve las actividades del ticket; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
+    await db.query("INSERT INTO activities (id,ticket_id,subject,status,due_date) VALUES ('a1','t1','Informe','In Progress','2026-03-24T00:00:00Z')")
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets/t1/activities').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ id: 'a1', subject: 'Informe', status: 'In Progress' })
+    expect((await request(app).get('/api/tickets/t1/activities')).status).toBe(401)
+  })
+})
+
 describe('POST /api/admin/backfill-serial (admin)', () => {
   it('admin → {updated}; 403 no-admin; 401 sin sesión', async () => {
     const admin = await adminCookie()
