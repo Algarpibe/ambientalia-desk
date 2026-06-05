@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
-import { upsertAccount, upsertTicket, getTicketRow, countTickets } from './repo'
+import { upsertAccount, upsertContact, upsertTicket, getTicketRow, countTickets } from './repo'
 import { getActiveTickets, getAllTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
 import { applyTransition, createTicket } from './repo'
 import { upsertClient } from '../books/repo'
@@ -41,6 +41,15 @@ describe('repo upserts', () => {
     await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'Gecelca' } as any))
     const r = await db.query('SELECT name FROM accounts WHERE id=$1', ['a1'])
     expect(r.rows[0].name).toBe('Gecelca')
+  })
+})
+
+describe('upsertContact (modified_time + guarda managed_by_app)', () => {
+  it('inserta con modified_time y no pisa los managed_by_app', async () => {
+    await upsertContact(db, { id: 'c1', first_name: 'Ana', last_name: 'P', email: 'a@b.co', phone: '1', mobile: null, account_id: null, modified_time: '2026-05-01T00:00:00Z', source: 'zoho', managed_by_app: false, raw: {} })
+    const row = (await db.query("SELECT first_name, modified_time FROM contacts WHERE id='c1'")).rows[0]
+    expect(row.first_name).toBe('Ana')
+    expect(row.modified_time).not.toBeNull()
   })
 })
 

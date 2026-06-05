@@ -10,7 +10,7 @@ export interface AccountRow {
 export interface ContactRow {
   id: string; first_name: string | null; last_name: string | null
   email: string | null; phone: string | null; mobile: string | null
-  account_id: string | null; source: string; managed_by_app: boolean; raw: unknown
+  account_id: string | null; modified_time: string | null; source: string; managed_by_app: boolean; raw: unknown
 }
 
 export interface AgentRow {

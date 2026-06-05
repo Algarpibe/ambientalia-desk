@@ -62,7 +62,7 @@ export function contactRowFromZoho(raw: any): ContactRow {
   return {
     id: raw.id, first_name: raw.firstName ?? null, last_name: raw.lastName ?? null,
     email: raw.email ?? null, phone: raw.phone ?? null, mobile: raw.mobile ?? null,
-    account_id: raw.accountId ?? null, source: 'zoho', managed_by_app: false, raw,
+    account_id: raw.accountId ?? null, modified_time: raw.modifiedTime ?? null, source: 'zoho', managed_by_app: false, raw,
   }
 }
 

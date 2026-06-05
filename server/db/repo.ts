@@ -16,13 +16,15 @@ export async function upsertAccount(db: Queryable, r: AccountRow): Promise<void>
 }
 
 export async function upsertContact(db: Queryable, r: ContactRow): Promise<void> {
+  const existing = await db.query('SELECT managed_by_app FROM contacts WHERE id=$1', [r.id])
+  if (existing.rows[0]?.managed_by_app === true) return
   await db.query(
-    `INSERT INTO contacts (id,first_name,last_name,email,phone,mobile,account_id,source,managed_by_app,raw,synced_at,updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())
+    `INSERT INTO contacts (id,first_name,last_name,email,phone,mobile,account_id,modified_time,source,managed_by_app,raw,synced_at,updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
      ON CONFLICT (id) DO UPDATE SET first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,email=EXCLUDED.email,
-       phone=EXCLUDED.phone,mobile=EXCLUDED.mobile,account_id=EXCLUDED.account_id,raw=EXCLUDED.raw,synced_at=now(),updated_at=now()
-       WHERE contacts.managed_by_app = false`,
-    [r.id, r.first_name, r.last_name, r.email, r.phone, r.mobile, r.account_id, r.source, r.managed_by_app, J(r.raw)],
+       phone=EXCLUDED.phone,mobile=EXCLUDED.mobile,account_id=EXCLUDED.account_id,modified_time=EXCLUDED.modified_time,
+       raw=EXCLUDED.raw,synced_at=now(),updated_at=now()`,
+    [r.id, r.first_name, r.last_name, r.email, r.phone, r.mobile, r.account_id, r.modified_time, r.source, r.managed_by_app, J(r.raw)],
   )
 }
 
