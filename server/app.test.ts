@@ -350,3 +350,27 @@ describe('POST /api/admin/backfill-serial (admin)', () => {
     expect((await request(app).post('/api/admin/backfill-serial')).status).toBe(401)
   })
 })
+
+describe('Resolución del ticket', () => {
+  it('PUT guarda; GET devuelve; POST imagen 201; GET content sirve; 415 no-imagen; DELETE; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
+    const { app } = appWith()
+    expect((await request(app).put('/api/tickets/t1/resolution').set('Cookie', cookie).send({ html: '<p>ok</p>' })).status).toBe(200)
+    const g = await request(app).get('/api/tickets/t1/resolution').set('Cookie', cookie)
+    expect(g.body).toMatchObject({ html: '<p>ok</p>' })
+    const png = Buffer.from('89504e470d0a1a0a', 'hex')
+    const up = await request(app).post('/api/tickets/t1/resolution/attachments').set('Cookie', cookie).attach('file', png, { filename: 'a.png', contentType: 'image/png' })
+    expect(up.status).toBe(201)
+    const attId = up.body.id
+    const g2 = await request(app).get('/api/tickets/t1/resolution').set('Cookie', cookie)
+    expect(g2.body.attachments).toHaveLength(1)
+    const c = await request(app).get(`/api/tickets/t1/resolution/attachments/${attId}`).set('Cookie', cookie)
+    expect(c.status).toBe(200)
+    expect(c.headers['content-type']).toContain('image/png')
+    const txt = await request(app).post('/api/tickets/t1/resolution/attachments').set('Cookie', cookie).attach('file', Buffer.from('hola'), { filename: 'a.txt', contentType: 'text/plain' })
+    expect(txt.status).toBe(415)
+    expect((await request(app).delete(`/api/tickets/t1/resolution/attachments/${attId}`).set('Cookie', cookie)).status).toBe(204)
+    expect((await request(app).get('/api/tickets/t1/resolution')).status).toBe(401)
+  })
+})

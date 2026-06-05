@@ -20,6 +20,8 @@ import { getAnalisisRows, rangeToFromTo } from './analisis'
 import { computeAnalisis } from '../shared/analisis'
 import { backfillSerialFromSubject } from './backfillSerial'
 import { getActivities } from './db/activities'
+import multer from 'multer'
+import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment } from './db/resolutions'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -63,6 +65,41 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   }
 
   app.use('/api/tickets', requireAuth(db)) // login obligatorio para tickets/transiciones/reply
+
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+
+  app.get('/api/tickets/:id/resolution', async (req, res) => {
+    try { res.json(await getResolution(db, String(req.params.id))) }
+    catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+  app.put('/api/tickets/:id/resolution', async (req, res) => {
+    try {
+      const html = typeof req.body?.html === 'string' ? req.body.html : ''
+      await saveResolution(db, String(req.params.id), html, req.user?.name ?? null)
+      res.json({ ok: true })
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+  app.post('/api/tickets/:id/resolution/attachments', upload.single('file'), async (req, res) => {
+    try {
+      const f = req.file
+      if (!f) { res.status(400).json({ error: 'Falta el archivo' }); return }
+      if (!/^image\//.test(f.mimetype)) { res.status(415).json({ error: 'Solo imágenes' }); return }
+      const meta = await addResolutionAttachment(db, { ticketId: String(req.params.id), filename: f.originalname, contentType: f.mimetype, contentB64: f.buffer.toString('base64'), size: f.size, by: req.user?.name ?? null })
+      res.status(201).json(meta)
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+  app.get('/api/tickets/:id/resolution/attachments/:attId', async (req, res) => {
+    try {
+      const c = await getResolutionAttachmentContent(db, String(req.params.id), String(req.params.attId))
+      if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
+      res.set('Content-Type', c.contentType)
+      res.send(Buffer.from(c.contentB64, 'base64'))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+  app.delete('/api/tickets/:id/resolution/attachments/:attId', async (req, res) => {
+    try { await deleteResolutionAttachment(db, String(req.params.id), String(req.params.attId)); res.status(204).end() }
+    catch (err) { res.status(500).json({ error: String(err) }) }
+  })
 
   app.get('/api/tickets', async (req, res) => {
     try {
