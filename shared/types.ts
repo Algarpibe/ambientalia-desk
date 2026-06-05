@@ -248,3 +248,16 @@ export interface AnalisisRow {
   cliente: string | null
   tecnico: string | null
 }
+
+export interface Activity {
+  id: string
+  ticketId: string | null
+  subject: string
+  status: string
+  statusType: string | null
+  priority: string | null
+  dueDate: string | null
+  createdAt: string | null
+  completedAt: string | null
+  owner: string | null
+}

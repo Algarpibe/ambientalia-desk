@@ -172,3 +172,21 @@ CREATE INDEX IF NOT EXISTS idx_equipos_tipo ON equipos (tipo);
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS equipo_id text;
 
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS client_id text;
+
+CREATE TABLE IF NOT EXISTS activities (
+  id text PRIMARY KEY,
+  ticket_id text,
+  subject text,
+  status text,
+  status_type text,
+  priority text,
+  due_date timestamptz,
+  created_time timestamptz,
+  modified_time timestamptz,
+  completed_time timestamptz,
+  owner_id text,
+  owner_name text,
+  raw jsonb,
+  synced_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_activities_ticket ON activities (ticket_id);

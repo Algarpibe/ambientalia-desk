@@ -56,6 +56,22 @@ export interface AttachmentRow {
   zoho_href: string | null; storage_path: string | null; raw: unknown
 }
 
+export interface ActivityRow {
+  id: string
+  ticket_id: string | null
+  subject: string | null
+  status: string | null
+  status_type: string | null
+  priority: string | null
+  due_date: string | null
+  created_time: string | null
+  modified_time: string | null
+  completed_time: string | null
+  owner_id: string | null
+  owner_name: string | null
+  raw: unknown
+}
+
 /** Columna tipada ↔ etiqueta de customField de Zoho (para parseo y para reconstruir la UI). */
 export const PROMOTED_COLUMNS: Array<{ col: keyof TicketRow; label: string; kind: 'text' | 'date' | 'bool' | 'int' }> = [
   { col: 'codigo_servicio', label: 'Código Servicio', kind: 'text' },
