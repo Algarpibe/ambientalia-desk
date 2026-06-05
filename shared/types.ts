@@ -224,3 +224,27 @@ export interface EquipoHistorial {
   equipo: EquipoFull
   tickets: HistorialTicket[]
 }
+export interface AnalisisPunto { label: string; value: number }
+export interface AnalisisMes { mes: string; creados: number; finalizados: number }
+export interface Analisis {
+  activos: number
+  creados: number
+  finalizados: number
+  tiempoPromedioDias: number | null
+  cumplimientoPct: number | null
+  porEstado: AnalisisPunto[]
+  porTecnico: AnalisisPunto[]
+  porCliente: AnalisisPunto[]
+  porMarca: AnalisisPunto[]
+  tendencia: AnalisisMes[]
+}
+export interface AnalisisRow {
+  status: string
+  statusType: string | null
+  createdAt: string | null
+  finalizadoAt: string | null
+  diasEntrega: number | null
+  marca: string | null
+  cliente: string | null
+  tecnico: string | null
+}
