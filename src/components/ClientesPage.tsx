@@ -38,7 +38,7 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
         <button onClick={onClose} className="hover:bg-white/10 p-1 rounded"><span className="material-symbols-outlined">arrow_back</span></button>
         <h1 className="text-[15px] font-bold">Clientes</h1>
       </div>
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-x-auto overflow-y-hidden">
         <div className="w-[200px] border-r border-slate-200 bg-white flex flex-col shrink-0">
           <div className="px-4 pt-3 text-[11px] font-bold text-slate-400">VISTAS CON ESTRELLAS</div>
           <div className="px-4 py-2 text-[13px] bg-blue-50 text-blue-600 font-medium">{tab === 'contactos' ? 'Todos los Contactos' : 'Todas las Empresas'}</div>

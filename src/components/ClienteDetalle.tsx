@@ -110,7 +110,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
   const tabs = kind === 'empresa' ? TABS_EMPRESA : TABS_CONTACTO
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex overflow-hidden min-w-[760px]">
       <div className="w-[290px] border-r border-slate-200 overflow-y-auto p-4 shrink-0">
         <div className="text-[13px] font-bold text-slate-700 mb-4">Propiedades de {kind === 'empresa' ? 'Empresa' : 'Contacto'}</div>
         <Prop label={`Propietario de ${kind === 'empresa' ? 'Empresa' : 'Contacto'}`} value={data.owner} />
