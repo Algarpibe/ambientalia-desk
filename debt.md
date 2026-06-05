@@ -198,6 +198,21 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
   regla "solo Modo de estado = activos" correcta (`statusType !== 'Closed'` ≡ el WHERE viejo, null incluido),
   carga única + derivación cliente (sin refetch), `visibleColumns` no oculta mal las columnas de prioridad/vencimiento.
 
+## 3h. Hallazgos de la revisión del Subsistema F (gestión de equipos) — menores
+
+- **PATCH no re-valida `serial` vacío (M-14):** `POST /api/equipos` exige `serial` no vacío, pero
+  `PATCH /api/equipos/:id` con `{ serial: '' }` lo deja vacío sin 422 (solo `trim`). Bajo impacto (con
+  sesión, `serial` no es llave). Añadir el mismo guard que en create si se quiere simetría.
+- **`listEquiposManage` ordena por `serial`** (el spec sugería `updated_at`/`serial`): los recién editados no
+  flotan arriba. Cosmético.
+- **Lista de gestión sin paginación UI (M-15):** trae solo la primera página de 50; los equipos más allá de 50
+  en una búsqueda dada no son alcanzables (la búsqueda acota). Añadir "siguiente página" si hace falta.
+- *(Verificado)*: SQL parametrizado con **allow-list** de columnas en `updateEquipo`, los 4 endpoints bajo
+  `requireAuth` (401 sin sesión), `cliente_nombre` derivado en servidor de `getClient`, `searchEquipos`
+  sigue filtrando `active=true` (intacto) → un equipo desactivado no sirve para crear tickets nuevos pero los
+  tickets existentes conservan su `equipo_id`; sin borrado físico; `createEquipo` usa `eq-<uuid>` (sin colisión
+  con los ids hash de la semilla).
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **Activar escrituras (reply):** `ENABLE_WRITES=true` habilita **responder por correo** (sigue yendo a
