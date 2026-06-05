@@ -199,7 +199,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             </nav>
 
                             <div className="flex justify-end mt-[-35px]">
-                                <span className="text-[11px] bg-green-500 text-white px-3 py-1 rounded font-black tracking-widest">CERRADO</span>
+                                {ticket && (
+                                    <span className={`text-[11px] text-white px-3 py-1 rounded font-black tracking-widest ${ticket.statusType === 'Closed' ? 'bg-green-500' : /espera|hold/i.test(ticket.status) ? 'bg-amber-500' : 'bg-blue-500'}`}>{ticket.status.toUpperCase()}</span>
+                                )}
                             </div>
                         </div>
 
