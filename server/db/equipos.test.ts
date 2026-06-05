@@ -3,6 +3,7 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { parseEquiposCsv } from './seedEquipos'
 import { upsertEquipo, searchEquipos, getEquipo, countEquipos } from './equipos'
+import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './equipos'
 
 const rows = parseEquiposCsv([
   'Nombre cliente;Marca;Modelo;Numero serie;Tipo',
@@ -28,5 +29,35 @@ describe('equipos repo', () => {
     await upsertEquipo(db, rows[0])
     await upsertEquipo(db, rows[0])
     expect(await countEquipos(db)).toBe(1)
+  })
+})
+
+describe('equipos CRUD (Subsistema F)', () => {
+  it('create (id propio + client_id), getFull, y aparece en searchEquipos', async () => {
+    const id = await createEquipo(db, { serial: 'NEW1', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'cli1' })
+    expect(id).toMatch(/^eq-/)
+    expect(await getEquipoFull(db, id)).toMatchObject({ serial: 'NEW1', marca: 'Grimm', active: true, clientId: 'cli1', clienteNombre: 'ACME' })
+    expect((await searchEquipos(db, 'NEW1')).length).toBe(1)
+  })
+
+  it('desactivar lo saca de searchEquipos pero sigue en listEquiposManage', async () => {
+    const id = await createEquipo(db, { serial: 'NEW2', marca: 'Horiba', modelo: 'APMA', tipo: 'CO', clienteNombre: 'X', clientId: 'cli1' })
+    await setEquipoActive(db, id, false)
+    expect((await searchEquipos(db, 'NEW2')).length).toBe(0)
+    expect((await listEquiposManage(db, 'NEW2')).map((e) => e.active)).toEqual([false])
+  })
+
+  it('update cambia campos y reconcilia cliente', async () => {
+    const id = await createEquipo(db, { serial: 'NEW3', marca: 'Grimm', modelo: 'm', tipo: 'Monitor', clienteNombre: 'Viejo', clientId: null })
+    await updateEquipo(db, id, { tipo: 'Analizador CO', clientId: 'cli9', clienteNombre: 'Nuevo' })
+    expect(await getEquipoFull(db, id)).toMatchObject({ tipo: 'Analizador CO', clientId: 'cli9', clienteNombre: 'Nuevo' })
+  })
+
+  it('facets devuelve marcas y tipos distintos', async () => {
+    await createEquipo(db, { serial: 'A', marca: 'Grimm', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null })
+    await createEquipo(db, { serial: 'B', marca: 'Horiba', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null })
+    const f = await equipoFacets(db)
+    expect(f.marcas).toEqual(expect.arrayContaining(['Grimm', 'Horiba']))
+    expect(f.tipos).toContain('Monitor')
   })
 })

@@ -193,3 +193,8 @@ export interface EquipoLite {
   tipo?: string
   clienteNombre?: string
 }
+
+export interface EquipoFull extends EquipoLite {
+  active: boolean
+  clientId?: string
+}
