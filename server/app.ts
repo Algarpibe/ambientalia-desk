@@ -14,6 +14,7 @@ import cookieParser from 'cookie-parser'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth, requireAdmin as requireSuperAdmin } from './auth/middleware'
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from './books/repo'
+import { getContacts, getAccounts } from './db/directory'
 import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo, getEquipoHistorial } from './db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCreate'
 import { getAnalisisRows, rangeToFromTo } from './analisis'
@@ -226,6 +227,13 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       const clientId = req.query.clientId ? String(req.query.clientId) : undefined
       res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId))
     } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/contacts', requireAuth(db), async (_req, res) => {
+    try { res.json(await getContacts(db)) } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+  app.get('/api/accounts', requireAuth(db), async (_req, res) => {
+    try { res.json(await getAccounts(db)) } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
   app.get('/api/equipos', requireAuth(db), async (req, res) => {

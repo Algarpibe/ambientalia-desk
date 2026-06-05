@@ -126,6 +126,21 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
   })
 })
 
+describe('GET /api/contacts y /api/accounts', () => {
+  it('listan contactos y empresas (con sesión); 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO accounts (id,name) VALUES ('a1','ACME')")
+    await db.query("INSERT INTO contacts (id,first_name,last_name,email,account_id) VALUES ('c1','Ana','P','a@b.co','a1')")
+    const { app } = appWith()
+    const c = await request(app).get('/api/contacts').set('Cookie', cookie)
+    expect(c.status).toBe(200)
+    expect(c.body[0]).toMatchObject({ name: 'Ana P', company: 'ACME' })
+    const e = await request(app).get('/api/accounts').set('Cookie', cookie)
+    expect(e.body[0]).toMatchObject({ name: 'ACME' })
+    expect((await request(app).get('/api/contacts')).status).toBe(401)
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()
