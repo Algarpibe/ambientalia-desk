@@ -23,8 +23,28 @@ const TABS_EMPRESA = ['INFORMACIÓN GENERAL', 'HISTORIA', 'ACTIVIDADES', 'INTERA
 function Prop({ label, value }: { label: string; value: string | null }) {
   return <div className="mb-4"><div className="text-[11px] text-slate-400">{label}</div><div className="text-[13px] text-slate-700 break-words">{value || '—'}</div></div>
 }
-function Kpi({ label, value, red }: { label: string; value: string; red?: boolean }) {
-  return <div className="bg-white border border-slate-200 rounded-md p-4"><div className="text-[12px] text-slate-500">{label}</div><div className={`text-[24px] font-bold ${red ? 'text-red-500' : 'text-slate-800'}`}>{value}</div></div>
+function Kpi({ label, value, red, onClick }: { label: string; value: string; red?: boolean; onClick?: () => void }) {
+  const inner = (
+    <>
+      <div className="text-[12px] text-slate-500">{label}</div>
+      <div className={`text-[24px] font-bold ${onClick ? 'text-blue-600' : red ? 'text-red-500' : 'text-slate-800'}`}>{value}</div>
+    </>
+  )
+  return onClick
+    ? <button onClick={onClick} className="bg-white border border-slate-200 rounded-md p-4 text-left w-full hover:border-blue-300 cursor-pointer">{inner}</button>
+    : <div className="bg-white border border-slate-200 rounded-md p-4">{inner}</div>
+}
+function TicketRow({ t, company, onClick }: { t: TicketLite; company: string | null; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full text-left flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-slate-50">
+      <span className="material-symbols-outlined text-slate-300 text-[18px]">mail</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] text-slate-700 truncate">{t.subject}</div>
+        <div className="text-[11px] text-slate-400 truncate">{[t.number, company, fmtFecha(t.createdAt)].filter(Boolean).join(' · ')}</div>
+      </div>
+      <span className={`text-[11px] px-2 py-0.5 rounded border shrink-0 ${badgeClass(t)}`}>{t.status}</span>
+    </button>
+  )
 }
 function Tiempo({ label, value }: { label: string; value: string }) {
   return <div className="mb-3"><div className="flex justify-between text-[12px] text-slate-600"><span>{label}</span><span className="font-bold">{value}</span></div><div className="h-1 bg-slate-100 rounded mt-1"><div className="h-1 bg-blue-400 rounded" style={{ width: value === '00:00' ? '0%' : '60%' }} /></div></div>
@@ -86,6 +106,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
 
   const acc = kind === 'empresa' ? (data as AccountDetail) : null
   const con = kind === 'contacto' ? (data as ContactDetail) : null
+  const companyLabel = con?.company ?? acc?.name ?? null
   const tabs = kind === 'empresa' ? TABS_EMPRESA : TABS_CONTACTO
 
   return (
@@ -120,7 +141,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
           {tab === 'INFORMACIÓN GENERAL' && (
             <div className="flex flex-col gap-6 max-w-[1100px]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Kpi label="Todas las Tickets" value={String(tickets.length)} />
+                <Kpi label="Todas las Tickets" value={String(tickets.length)} onClick={() => setTab('TICKETS')} />
                 <Kpi label="Tickets abierto" value={String(abiertos.length)} />
                 <Kpi label="Tickets atrasados" value={String(atrasados.length)} red />
                 <Kpi label="Calificación de satisfacción" value="0 %" />
@@ -133,16 +154,7 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
                   <button onClick={() => setSub('espera')} className={`py-2 ${sub === 'espera' ? 'text-blue-600 font-bold border-b-2 border-blue-600' : 'text-slate-500'}`}>EN ESPERA ({espera.length})</button>
                 </div>
                 {visibles.length === 0 && <div className="p-6 text-center text-[13px] text-slate-400">No hay ningún Tickets disponible</div>}
-                {visibles.map((t) => (
-                  <button key={t.id} onClick={() => onSelectTicket(t.id)} className="w-full text-left flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-slate-50">
-                    <span className="material-symbols-outlined text-slate-300 text-[18px]">mail</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] text-slate-700 truncate">{t.subject}</div>
-                      <div className="text-[11px] text-slate-400 truncate">{t.number} · {fmtFecha(t.createdAt)}</div>
-                    </div>
-                    <span className={`text-[11px] px-2 py-0.5 rounded border shrink-0 ${badgeClass(t)}`}>{t.status}</span>
-                  </button>
-                ))}
+                {visibles.map((t) => <TicketRow key={t.id} t={t} company={companyLabel} onClick={() => onSelectTicket(t.id)} />)}
               </section>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <section className="bg-white border border-slate-200 rounded-md p-4">
@@ -169,7 +181,14 @@ export function ClienteDetalle({ kind, id, onSelectTicket, onSelectContacto, onA
               ))}
             </div>
           )}
-          {tab !== 'INFORMACIÓN GENERAL' && tab !== 'CONTACTOS' && <div className="text-center text-[13px] text-slate-400 py-10">Pronto.</div>}
+          {tab === 'TICKETS' && (
+            <div className="max-w-[1100px] bg-white border border-slate-200 rounded-md">
+              <div className="px-4 py-3 text-[13px] font-bold text-slate-700">Todas Las Tickets ({tickets.length})</div>
+              {tickets.length === 0 && <div className="p-6 text-center text-[13px] text-slate-400">No hay ningún Tickets disponible</div>}
+              {tickets.map((t) => <TicketRow key={t.id} t={t} company={companyLabel} onClick={() => onSelectTicket(t.id)} />)}
+            </div>
+          )}
+          {tab !== 'INFORMACIÓN GENERAL' && tab !== 'CONTACTOS' && tab !== 'TICKETS' && <div className="text-center text-[13px] text-slate-400 py-10">Pronto.</div>}
         </div>
       </div>
     </div>
