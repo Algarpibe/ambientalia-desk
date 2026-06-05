@@ -190,3 +190,19 @@ CREATE TABLE IF NOT EXISTS activities (
   synced_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_activities_ticket ON activities (ticket_id);
+
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_html text;
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_at timestamptz;
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_by text;
+
+CREATE TABLE IF NOT EXISTS resolution_attachments (
+  id text PRIMARY KEY,
+  ticket_id text NOT NULL,
+  filename text,
+  content_type text,
+  content_b64 text NOT NULL,
+  size integer,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by text
+);
+CREATE INDEX IF NOT EXISTS idx_resolution_att_ticket ON resolution_attachments (ticket_id);

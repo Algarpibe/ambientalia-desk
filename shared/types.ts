@@ -261,3 +261,6 @@ export interface Activity {
   completedAt: string | null
   owner: string | null
 }
+
+export interface ResolutionAttachment { id: string; filename: string; contentType: string; size: number }
+export interface Resolution { html: string | null; updatedAt: string | null; updatedBy: string | null; attachments: ResolutionAttachment[] }
