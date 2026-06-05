@@ -170,3 +170,5 @@ CREATE INDEX IF NOT EXISTS idx_equipos_cliente ON equipos (cliente_nombre);
 CREATE INDEX IF NOT EXISTS idx_equipos_tipo ON equipos (tipo);
 
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS equipo_id text;
+
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS client_id text;

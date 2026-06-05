@@ -46,4 +46,11 @@ describe('migrate', () => {
     expect((await db.query('SELECT id, serial, marca, modelo, tipo, cliente_nombre, active FROM equipos')).rows).toEqual([])
     expect((await db.query('SELECT equipo_id FROM tickets')).rows).toEqual([])
   })
+
+  it('equipos tiene client_id (Subsistema F)', async () => {
+    const pg = newDb().adapters.createPg()
+    const db = new pg.Pool()
+    await migrate(db)
+    expect((await db.query('SELECT client_id FROM equipos')).rows).toEqual([])
+  })
 })
