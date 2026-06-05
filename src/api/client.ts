@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment } from '../../shared/types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -205,4 +205,22 @@ export function fetchAnalisis(range: string): Promise<Analisis> {
 
 export function fetchActivities(ticketId: string): Promise<Activity[]> {
   return fetch(`/api/tickets/${ticketId}/activities`, { credentials: 'include' }).then((r) => json<Activity[]>(r))
+}
+
+export function fetchResolution(id: string): Promise<Resolution> {
+  return fetch(`/api/tickets/${id}/resolution`, { credentials: 'include' }).then((r) => json<Resolution>(r))
+}
+export async function saveResolution(id: string, html: string): Promise<void> {
+  const res = await fetch(`/api/tickets/${id}/resolution`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }) })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+}
+export async function uploadResolutionImage(id: string, file: File): Promise<ResolutionAttachment> {
+  const fd = new FormData(); fd.append('file', file)
+  const res = await fetch(`/api/tickets/${id}/resolution/attachments`, { method: 'POST', credentials: 'include', body: fd })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+  return res.json() as Promise<ResolutionAttachment>
+}
+export async function deleteResolutionImage(id: string, attId: string): Promise<void> {
+  const res = await fetch(`/api/tickets/${id}/resolution/attachments/${attId}`, { method: 'DELETE', credentials: 'include' })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
 }

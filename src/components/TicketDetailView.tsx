@@ -7,6 +7,7 @@ import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { ActividadesPanel } from './ActividadesPanel';
+import { ResolucionPanel } from './ResolucionPanel';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -31,7 +32,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const [activeTabId, setActiveTabId] = useState<string>('conv');
     const TABS = [
         { id: 'conv', label: `${convCount} ${convCount === 1 ? 'CONVERSACIÓN' : 'CONVERSACIONES'}`, view: 'conversaciones' },
-        { id: 'res', label: 'RESOLUCIÓN', view: 'otros' },
+        { id: 'res', label: 'RESOLUCIÓN', view: 'resolucion' },
         { id: 'tiempo', label: 'ENTRADA DE TIEMPO', view: 'otros' },
         { id: 'adj', label: `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`, view: 'otros' },
         { id: 'act', label: `${actCount} ACTIVIDADES`, view: 'actividades' },
@@ -253,6 +254,11 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         {activeView === 'actividades' && (
                             <div className="flex-1 overflow-y-auto p-4 bg-white">
                                 <ActividadesPanel items={actividades ?? []} />
+                            </div>
+                        )}
+                        {activeView === 'resolucion' && (
+                            <div className="flex-1 overflow-y-auto bg-white">
+                                <ResolucionPanel ticketId={ticketId} />
                             </div>
                         )}
                         {activeView === 'otros' && (
