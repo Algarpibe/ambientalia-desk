@@ -373,6 +373,18 @@ describe('Resolución del ticket', () => {
     expect((await request(app).delete(`/api/tickets/t1/resolution/attachments/${attId}`).set('Cookie', cookie)).status).toBe(204)
     expect((await request(app).get('/api/tickets/t1/resolution')).status).toBe(401)
   })
+
+  it('DELETE /resolution borra el texto y todas las imágenes', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t2',2,'B','Ingresado')")
+    const { app } = appWith()
+    await request(app).put('/api/tickets/t2/resolution').set('Cookie', cookie).send({ html: '<p>algo</p>' })
+    await request(app).post('/api/tickets/t2/resolution/attachments').set('Cookie', cookie).attach('file', Buffer.from('89504e470d0a1a0a', 'hex'), { filename: 'a.png', contentType: 'image/png' })
+    expect((await request(app).delete('/api/tickets/t2/resolution').set('Cookie', cookie)).status).toBe(204)
+    const g = await request(app).get('/api/tickets/t2/resolution').set('Cookie', cookie)
+    expect(g.body.html).toBeNull()
+    expect(g.body.attachments).toHaveLength(0)
+  })
 })
 
 describe('Resolución — seguridad', () => {

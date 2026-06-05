@@ -224,3 +224,7 @@ export async function deleteResolutionImage(id: string, attId: string): Promise<
   const res = await fetch(`/api/tickets/${id}/resolution/attachments/${attId}`, { method: 'DELETE', credentials: 'include' })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
 }
+export async function deleteResolution(id: string): Promise<void> {
+  const res = await fetch(`/api/tickets/${id}/resolution`, { method: 'DELETE', credentials: 'include' })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+}

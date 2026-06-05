@@ -46,3 +46,9 @@ export async function getResolutionAttachmentContent(db: Queryable, ticketId: st
 export async function deleteResolutionAttachment(db: Queryable, ticketId: string, attId: string): Promise<void> {
   await db.query('DELETE FROM resolution_attachments WHERE id=$1 AND ticket_id=$2', [attId, ticketId])
 }
+
+/** Borra la resolución completa del ticket: el texto y todas sus imágenes. */
+export async function deleteResolution(db: Queryable, ticketId: string): Promise<void> {
+  await db.query('DELETE FROM resolution_attachments WHERE ticket_id=$1', [ticketId])
+  await db.query('UPDATE tickets SET resolution_html=NULL, resolution_at=NULL, resolution_by=NULL WHERE id=$1', [ticketId])
+}

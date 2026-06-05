@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import type { Resolution, ResolutionAttachment } from '../../shared/types'
 import { useAsync } from '../hooks/useAsync'
-import { fetchResolution, saveResolution, uploadResolutionImage, deleteResolutionImage } from '../api/client'
+import { fetchResolution, saveResolution, uploadResolutionImage, deleteResolutionImage, deleteResolution } from '../api/client'
 
 export function ResolucionPanel({ ticketId }: { ticketId: string }) {
   const { data, loading, reload } = useAsync<Resolution>(() => fetchResolution(ticketId), [ticketId])
@@ -32,6 +32,10 @@ export function ResolucionPanel({ ticketId }: { ticketId: string }) {
   async function onDelete(a: ResolutionAttachment) {
     try { await deleteResolutionImage(ticketId, a.id); setAtts((p) => p.filter((x) => x.id !== a.id)) } catch (err) { setError(String(err)) }
   }
+  async function onDeleteResolution() {
+    if (!window.confirm('¿Eliminar la resolución y todas sus imágenes?')) return
+    try { await deleteResolution(ticketId); reload() } catch (e) { setError(String(e)) }
+  }
 
   if (loading && !data) return <div className="p-4 text-[13px] text-slate-400">Cargando…</div>
 
@@ -52,7 +56,12 @@ export function ResolucionPanel({ ticketId }: { ticketId: string }) {
           </div>
         )}
         {data?.updatedBy && <div className="text-[11px] text-slate-400 mt-3">Actualizado por {data.updatedBy}</div>}
-        <button onClick={() => setEditing(true)} className="mt-4 bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold">{data?.html ? 'Editar' : 'Agregar resolución'}</button>
+        <div className="flex items-center gap-2 mt-4">
+          <button onClick={() => setEditing(true)} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold">{data?.html ? 'Editar' : 'Agregar resolución'}</button>
+          {(data?.html || atts.length > 0) && (
+            <button onClick={onDeleteResolution} className="border border-red-300 text-red-600 px-3 py-1.5 rounded text-[13px] hover:bg-red-50">Eliminar</button>
+          )}
+        </div>
       </div>
     )
   }

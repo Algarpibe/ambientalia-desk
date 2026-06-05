@@ -21,7 +21,7 @@ import { computeAnalisis } from '../shared/analisis'
 import { backfillSerialFromSubject } from './backfillSerial'
 import { getActivities } from './db/activities'
 import multer from 'multer'
-import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment } from './db/resolutions'
+import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from './db/resolutions'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
 
@@ -101,6 +101,10 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   })
   app.delete('/api/tickets/:id/resolution/attachments/:attId', async (req, res) => {
     try { await deleteResolutionAttachment(db, String(req.params.id), String(req.params.attId)); res.status(204).end() }
+    catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+  app.delete('/api/tickets/:id/resolution', async (req, res) => {
+    try { await deleteResolution(db, String(req.params.id)); res.status(204).end() }
     catch (err) { res.status(500).json({ error: String(err) }) }
   })
 
