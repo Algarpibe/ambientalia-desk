@@ -1,11 +1,12 @@
 import React from 'react';
 import { useState } from 'react';
-import type { TicketDetail, Message, Ticket } from '../../shared/types';
+import type { TicketDetail, Message, Ticket, Activity } from '../../shared/types';
 import { useAsync } from '../hooks/useAsync';
-import { fetchTicket, fetchConversations, replyTicket } from '../api/client';
+import { fetchTicket, fetchConversations, replyTicket, fetchActivities } from '../api/client';
 import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
+import { ActividadesPanel } from './ActividadesPanel';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -25,6 +26,19 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
     const convCount = (messages ?? []).length;
     const adjuntosCount = (messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0);
+    const { data: actividades } = useAsync<Activity[]>(() => fetchActivities(ticketId), [ticketId]);
+    const actCount = (actividades ?? []).length;
+    const [activeTabId, setActiveTabId] = useState<string>('conv');
+    const TABS = [
+        { id: 'conv', label: `${convCount} ${convCount === 1 ? 'CONVERSACIÓN' : 'CONVERSACIONES'}`, view: 'conversaciones' },
+        { id: 'res', label: 'RESOLUCIÓN', view: 'otros' },
+        { id: 'tiempo', label: 'ENTRADA DE TIEMPO', view: 'otros' },
+        { id: 'adj', label: `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`, view: 'otros' },
+        { id: 'act', label: `${actCount} ACTIVIDADES`, view: 'actividades' },
+        { id: 'apr', label: 'APROBACIÓN', view: 'otros' },
+        { id: 'his', label: 'HISTORIA', view: 'otros' },
+    ];
+    const activeView = TABS.find((t) => t.id === activeTabId)?.view ?? 'conversaciones';
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
@@ -172,17 +186,13 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             </div>
 
                             <nav className="flex gap-8 border-b-0">
-                                {[
-                                    `${convCount} ${convCount === 1 ? 'CONVERSACIÓN' : 'CONVERSACIONES'}`,
-                                    'RESOLUCIÓN',
-                                    'ENTRADA DE TIEMPO',
-                                    `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`,
-                                    'ACTIVIDADES',
-                                    'APROBACIÓN',
-                                    'HISTORIA',
-                                ].map((item, idx) => (
-                                    <button key={idx} className={`text-[11px] font-bold py-2 transition-colors ${idx === 0 ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>
-                                        {item}
+                                {TABS.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTabId(tab.id)}
+                                        className={`text-[11px] font-bold py-2 transition-colors ${activeTabId === tab.id ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
+                                    >
+                                        {tab.label}
                                     </button>
                                 ))}
                             </nav>
@@ -192,7 +202,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-white relative">
+                        <div className={`flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-white relative ${activeView === 'conversaciones' ? '' : 'hidden'}`}>
                             {/* Vertical connection line */}
                             <div className="absolute left-[38px] top-0 bottom-0 w-[2px] bg-slate-100"></div>
 
@@ -239,6 +249,15 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               </div>
                             ))}
                         </div>
+
+                        {activeView === 'actividades' && (
+                            <div className="flex-1 overflow-y-auto p-4 bg-white">
+                                <ActividadesPanel items={actividades ?? []} />
+                            </div>
+                        )}
+                        {activeView === 'otros' && (
+                            <div className="flex-1 overflow-y-auto p-8 bg-white text-center text-[13px] text-slate-400">Pronto.</div>
+                        )}
 
                         {/* Caja de respuesta + transiciones — al pie del hilo, en el flujo (sin solapar) */}
                         <div className="border-t border-slate-200 bg-white p-3 flex flex-col gap-2 shrink-0">
