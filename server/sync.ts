@@ -12,6 +12,7 @@ interface Deps {
 }
 export interface Sync {
   backfillTickets(): Promise<number>
+  backfillArchivedTickets(): Promise<number>
   syncRecent(): Promise<number>
   syncTicket(id: string): Promise<void>
   syncConversations(id: string): Promise<void>
@@ -80,6 +81,21 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         for (const t of pageItems) await persistTicket(t)
         total += pageItems.length
         if (pageItems.length < PAGE_SIZE) break
+        from += PAGE_SIZE
+      }
+      return total
+    },
+    async backfillArchivedTickets(): Promise<number> {
+      let from = 1, total = 0
+      for (;;) {
+        const params = new URLSearchParams({ departmentId: config.departmentId, from: String(from), limit: String(PAGE_SIZE), include: 'contacts,assignee' })
+        const res = await zohoFetch(`/tickets/archivedTickets?${params.toString()}`)
+        if (!res.ok) throw new Error(`Zoho /tickets/archivedTickets ${res.status}`)
+        const items = ((await readData(res)).data ?? []) as any[]
+        if (items.length === 0) break
+        for (const t of items) await persistTicket(t)
+        total += items.length
+        if (items.length < PAGE_SIZE) break
         from += PAGE_SIZE
       }
       return total
