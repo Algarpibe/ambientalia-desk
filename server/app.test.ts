@@ -141,6 +141,19 @@ describe('GET /api/contacts y /api/accounts', () => {
   })
 })
 
+describe('GET /api/contacts/:id y /api/accounts/:id', () => {
+  it('detalle (con sesión); 404 inexistente; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO accounts (id,name) VALUES ('a1','ACME')")
+    await db.query("INSERT INTO contacts (id,first_name,last_name,account_id) VALUES ('c1','Ana','P','a1')")
+    const { app } = appWith()
+    expect((await request(app).get('/api/contacts/c1').set('Cookie', cookie)).body).toMatchObject({ name: 'Ana P' })
+    expect((await request(app).get('/api/accounts/a1').set('Cookie', cookie)).body).toMatchObject({ name: 'ACME' })
+    expect((await request(app).get('/api/contacts/nope').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).get('/api/contacts/c1')).status).toBe(401)
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()
