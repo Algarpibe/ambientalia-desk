@@ -150,6 +150,7 @@ export function rowToTicketDetail(row: TicketRow, refs: DetailRefs = {}): Ticket
     classification: row.classification ?? undefined,
     priority: row.priority ?? undefined,
     channel: row.channel ?? undefined,
+    equipoId: (row as any).equipo_id ?? undefined,
     customFields: customFieldsFromRow(row),
   }
 }

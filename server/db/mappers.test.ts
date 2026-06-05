@@ -143,6 +143,13 @@ describe('rowToTicket (campos enriquecidos)', () => {
   })
 })
 
+describe('rowToTicketDetail (equipoId)', () => {
+  it('expone equipoId desde la columna equipo_id', () => {
+    const row = { id: 't1', number: 5, subject: 'S', status: 'Ingresado', equipo_id: 'eq-9' } as any
+    expect(rowToTicketDetail(row, {}).equipoId).toBe('eq-9')
+  })
+})
+
 describe('rowToMessage', () => {
   it('arma el mensaje de UI', () => {
     const row: ConversationRow = {
