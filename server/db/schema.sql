@@ -206,3 +206,15 @@ CREATE TABLE IF NOT EXISTS resolution_attachments (
   created_by text
 );
 CREATE INDEX IF NOT EXISTS idx_resolution_att_ticket ON resolution_attachments (ticket_id);
+
+CREATE TABLE IF NOT EXISTS ticket_history (
+  id text PRIMARY KEY,
+  ticket_id text NOT NULL,
+  event_name text,
+  event_time timestamptz,
+  actor_name text,
+  actor_type text,
+  raw jsonb,
+  synced_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket ON ticket_history (ticket_id);

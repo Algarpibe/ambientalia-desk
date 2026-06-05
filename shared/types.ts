@@ -264,3 +264,6 @@ export interface Activity {
 
 export interface ResolutionAttachment { id: string; filename: string; contentType: string; size: number }
 export interface Resolution { html: string | null; updatedAt: string | null; updatedBy: string | null; attachments: ResolutionAttachment[] }
+
+export interface HistoryDetail { label: string; value: string; html?: boolean }
+export interface HistoryEvent { eventName: string; time: string | null; actor: string; title: string; details: HistoryDetail[] }
