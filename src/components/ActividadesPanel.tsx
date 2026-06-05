@@ -3,7 +3,31 @@ import type { Activity } from '../../shared/types'
 function fmtDate(s: string | null): string {
   if (!s) return ''
   const d = new Date(s)
-  return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+  return isNaN(d.getTime()) ? '' : d.toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+const ESTADOS: Record<string, string> = {
+  'not started': 'No iniciada',
+  'in progress': 'En proceso',
+  'waiting on someone else': 'En espera',
+  'waiting': 'En espera',
+  'deferred': 'Aplazada',
+  'completed': 'Completada',
+}
+function traducirEstado(s: string | null): string {
+  if (!s) return '—'
+  return ESTADOS[s.trim().toLowerCase()] ?? s
+}
+
+const PRIORIDADES: Record<string, string> = {
+  highest: 'Muy alta',
+  high: 'Alta',
+  normal: 'Normal',
+  low: 'Baja',
+  lowest: 'Muy baja',
+}
+function traducirPrioridad(p: string): string {
+  return PRIORIDADES[p.trim().toLowerCase()] ?? p
 }
 
 function statusClass(a: Activity): string {
@@ -24,11 +48,11 @@ export function ActividadesPanel({ items }: { items: Activity[] }) {
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-slate-800 truncate">{a.subject || '—'}</div>
             <div className="text-[11px] text-slate-400 flex items-center gap-3 mt-0.5">
-              {a.priority && <span>{a.priority}</span>}
+              {a.priority && <span>{traducirPrioridad(a.priority)}</span>}
               {a.dueDate && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[13px]">flag</span>{fmtDate(a.dueDate)}</span>}
             </div>
           </div>
-          <span className={`text-[11px] px-2 py-0.5 rounded border font-medium shrink-0 ${statusClass(a)}`}>{a.status || '—'}</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded border font-medium shrink-0 ${statusClass(a)}`}>{traducirEstado(a.status)}</span>
           {a.owner && <span className="text-[11px] text-slate-500 w-[120px] truncate text-right shrink-0">{a.owner}</span>}
         </div>
       ))}
