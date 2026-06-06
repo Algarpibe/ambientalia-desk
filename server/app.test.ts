@@ -134,7 +134,7 @@ describe('GET /api/contacts y /api/accounts', () => {
     const { app } = appWith()
     const c = await request(app).get('/api/contacts').set('Cookie', cookie)
     expect(c.status).toBe(200)
-    expect(c.body[0]).toMatchObject({ name: 'Ana P', company: 'ACME' })
+    expect(c.body[0]).toMatchObject({ name: 'Ana P', company: 'ACME', companyId: 'a1' })
     const e = await request(app).get('/api/accounts').set('Cookie', cookie)
     expect(e.body[0]).toMatchObject({ name: 'ACME' })
     expect((await request(app).get('/api/contacts')).status).toBe(401)

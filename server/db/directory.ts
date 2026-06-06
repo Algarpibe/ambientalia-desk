@@ -3,13 +3,13 @@ import type { ContactLite, AccountLite, ContactDetail, AccountDetail, TicketLite
 
 export async function getContacts(db: Queryable): Promise<ContactLite[]> {
   const r = await db.query(
-    `SELECT c.id, c.first_name, c.last_name, c.email, c.phone, c.mobile, a.name AS company
+    `SELECT c.id, c.first_name, c.last_name, c.email, c.phone, c.mobile, c.account_id, a.name AS company
      FROM contacts c LEFT JOIN accounts a ON c.account_id=a.id
      ORDER BY lower(c.first_name) NULLS LAST, lower(c.last_name) NULLS LAST`,
   )
   return (r.rows as any[]).map((x) => {
     const name = `${x.first_name ?? ''} ${x.last_name ?? ''}`.trim() || x.email || '—'
-    return { id: x.id, name, company: x.company ?? null, email: x.email ?? null, phone: x.phone || x.mobile || null }
+    return { id: x.id, name, company: x.company ?? null, companyId: x.account_id ?? null, email: x.email ?? null, phone: x.phone || x.mobile || null }
   })
 }
 
@@ -53,7 +53,7 @@ export async function getAccountDetail(db: Queryable, id: string): Promise<Accou
   const cr = await db.query('SELECT id, first_name, last_name, email, phone, mobile FROM contacts WHERE account_id=$1 ORDER BY lower(first_name) NULLS LAST', [id])
   const contacts = (cr.rows as any[]).map((x) => ({
     id: x.id, name: `${x.first_name ?? ''} ${x.last_name ?? ''}`.trim() || x.email || '—',
-    company: row.name ?? null, email: x.email ?? null, phone: x.phone || x.mobile || null,
+    company: row.name ?? null, companyId: id, email: x.email ?? null, phone: x.phone || x.mobile || null,
   }))
   return {
     id: row.id, name: row.name ?? '', nit: row.nit ?? null, email: row.email ?? null, phone: row.phone ?? null,

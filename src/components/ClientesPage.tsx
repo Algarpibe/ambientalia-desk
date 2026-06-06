@@ -28,11 +28,11 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
     if (tab === 'contactos') {
       return (contactos ?? [])
         .filter((c) => !ql || c.name.toLowerCase().includes(ql) || (c.company ?? '').toLowerCase().includes(ql) || (c.email ?? '').toLowerCase().includes(ql))
-        .map((c) => ({ id: c.id, name: c.name, letter: inicial(c.name), lines: [c.company, c.email, c.phone].filter(Boolean).join('  ·  ') }))
+        .map((c) => ({ id: c.id, name: c.name, letter: inicial(c.name), company: c.company, companyId: c.companyId, lines: [c.email, c.phone].filter(Boolean).join('  ·  ') }))
     }
     return (empresas ?? [])
       .filter((e) => !ql || e.name.toLowerCase().includes(ql) || (e.nit ?? '').includes(ql))
-      .map((e) => ({ id: e.id, name: e.name, letter: inicial(e.name), lines: [e.nit ? `NIT ${e.nit}` : null, e.email, e.phone, e.city].filter(Boolean).join('  ·  ') }))
+      .map((e) => ({ id: e.id, name: e.name, letter: inicial(e.name), company: null as string | null, companyId: null as string | null, lines: [e.nit ? `NIT ${e.nit}` : null, e.email, e.phone, e.city].filter(Boolean).join('  ·  ') }))
   }, [tab, q, contactos, empresas])
 
   const lettersPresent = useMemo(() => new Set(rows.map((r) => r.letter)), [rows])
@@ -65,12 +65,26 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onC
           <div className="flex flex-1 overflow-hidden">
             <div className="flex-1 overflow-y-auto">
               {rows.length === 0 && <div className="p-4 text-[13px] text-slate-400">Sin resultados.</div>}
-              {rows.map((r) => (
+              {rows.map((r) => {
+                const cid = r.companyId
+                return (
                 <button key={r.id} id={`row-${r.id}`} onClick={() => setSelected({ kind, id: r.id })} className={`w-full text-left flex items-center gap-2 px-3 py-2.5 border-b border-slate-100 hover:bg-slate-50 ${selected?.id === r.id ? 'bg-blue-50' : ''}`}>
                   <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[11px] font-bold shrink-0">{iniciales(r.name)}</div>
-                  <div className="min-w-0"><div className="text-[13px] font-bold text-slate-800 truncate">{r.name}</div>{r.lines && <div className="text-[11px] text-slate-500 truncate">{r.lines}</div>}</div>
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-bold text-slate-800 truncate">{r.name}</div>
+                    {(r.company || r.lines) && (
+                      <div className="text-[11px] text-slate-500 truncate">
+                        {r.company && (cid
+                          ? <span role="link" tabIndex={0} onClick={(e) => { e.stopPropagation(); setTab('empresas'); setSelected({ kind: 'empresa', id: cid }) }} className="text-blue-600 hover:underline cursor-pointer">{r.company}</span>
+                          : <span>{r.company}</span>)}
+                        {r.company && r.lines ? '  ·  ' : ''}
+                        {r.lines}
+                      </div>
+                    )}
+                  </div>
                 </button>
-              ))}
+                )
+              })}
             </div>
             <div className="w-6 flex flex-col items-center justify-between py-2 text-[10px] select-none shrink-0">
               {LETRAS.map((l) => (
