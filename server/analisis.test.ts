@@ -9,10 +9,10 @@ beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Poo
 describe('getAnalisisRows', () => {
   it('finalizadoAt = fecha_finalizacion_st ?? closed_time; diasEntrega numérico; técnico por join', async () => {
     await db.query("INSERT INTO agents (id,name,source) VALUES ('g1','Ana','zoho')")
-    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time,fecha_finalizacion_st,dias_entrega,marca,assignee_id) VALUES ('t1',1,'A','Finalizado','Closed','2026-05-01T00:00:00Z','2026-05-06',5,'Grimm','g1')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time,fecha_finalizacion_st,dias_entrega,marca,assignee_id,tipo_servicio,classification) VALUES ('t1',1,'A','Finalizado','Closed','2026-05-01T00:00:00Z','2026-05-06',5,'Grimm','g1','Mantenimiento','Equipo para servicio')")
     const rows = await getAnalisisRows(db)
     expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({ status: 'Finalizado', statusType: 'Closed', diasEntrega: 5, marca: 'Grimm', tecnico: 'Ana' })
+    expect(rows[0]).toMatchObject({ status: 'Finalizado', statusType: 'Closed', diasEntrega: 5, marca: 'Grimm', tecnico: 'Ana', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo para servicio' })
     expect(rows[0].finalizadoAt?.slice(0, 10)).toBe('2026-05-06')
     expect(rows[0].createdAt?.slice(0, 10)).toBe('2026-05-01')
   })

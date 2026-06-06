@@ -9,7 +9,7 @@ function toIso(v: unknown): string | null {
 
 export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
   const r = await db.query(
-    `SELECT t.status, t.status_type, t.created_time, t.closed_time, t.fecha_finalizacion_st, t.dias_entrega, t.marca,
+    `SELECT t.status, t.status_type, t.created_time, t.closed_time, t.fecha_finalizacion_st, t.dias_entrega, t.marca, t.tipo_servicio, t.classification,
             COALESCE(a.name, cl.name) AS cliente, g.name AS tecnico
      FROM tickets t
      LEFT JOIN accounts a ON t.account_id=a.id
@@ -21,7 +21,9 @@ export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
     createdAt: toIso(x.created_time),
     finalizadoAt: toIso(x.fecha_finalizacion_st ?? x.closed_time),
     diasEntrega: x.dias_entrega != null && x.dias_entrega !== '' ? Number(x.dias_entrega) : null,
-    marca: x.marca ?? null, cliente: x.cliente ?? null, tecnico: x.tecnico ?? null,
+    marca: x.marca ?? null,
+    tipoServicio: x.tipo_servicio ?? null, clasificaciones: x.classification ?? null,
+    cliente: x.cliente ?? null, tecnico: x.tecnico ?? null,
   }))
 }
 
