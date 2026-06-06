@@ -101,22 +101,24 @@ export interface TicketWithRefs { row: TicketRow; refs: TicketRefs }
 
 export async function getActiveTickets(db: Queryable): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN clients cl ON t.client_id=cl.id
+     LEFT JOIN contacts c ON t.contact_id=c.id
      WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
   )
-  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name } }))
+  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null } }))
 }
 
 export async function getAllTickets(db: Queryable): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN clients cl ON t.client_id=cl.id
+     LEFT JOIN contacts c ON t.contact_id=c.id
      ORDER BY t.created_time DESC NULLS LAST`,
   )
-  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name } }))
+  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null } }))
 }
 
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {

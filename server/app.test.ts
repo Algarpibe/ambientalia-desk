@@ -43,12 +43,13 @@ async function userCookie(areas: string[]): Promise<string> {
 describe('GET /api/tickets', () => {
   it('devuelve tickets activos normalizados desde Postgres', async () => {
     await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'AGQ' } as any))
-    await upsertTicket(db, { ...ticketRowFromZoho({ id: '1', ticketNumber: '864', subject: 'Test', status: 'Ingresado', statusType: 'Open', customFields: {} } as any), account_id: 'a1' })
+    await db.query("INSERT INTO contacts (id,first_name,last_name) VALUES ('c1','Sebastián','Laguna')")
+    await upsertTicket(db, { ...ticketRowFromZoho({ id: '1', ticketNumber: '864', subject: 'Test', status: 'Ingresado', statusType: 'Open', customFields: {} } as any), account_id: 'a1', contact_id: 'c1' })
     const cookie = await adminCookie()
     const { app } = appWith()
     const res = await request(app).get('/api/tickets').set('Cookie', cookie)
     expect(res.status).toBe(200)
-    expect(res.body[0]).toMatchObject({ number: '#864', company: 'AGQ', status: 'Ingresado' })
+    expect(res.body[0]).toMatchObject({ number: '#864', company: 'AGQ', status: 'Ingresado', contactName: 'Sebastián Laguna', contactId: 'c1', accountId: 'a1' })
   })
 
   it('GET /api/tickets sin sesión → 401', async () => {
