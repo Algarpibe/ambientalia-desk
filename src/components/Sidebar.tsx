@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { FUNCTIONAL_BY_LABEL } from '../lib/boardView';
 
 // Estructura del menú lateral (réplica de Zoho Desk). Por ahora decorativo — el filtrado por vista llega después.
 const TODAS_LAS_VISTAS = [
@@ -42,7 +43,14 @@ function SectionHeader({ label }: { label: string }) {
     );
 }
 
-function ViewItem({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
+function ViewItem({ label, active, onClick, disabled }: { label: string; active?: boolean; onClick?: () => void; disabled?: boolean }) {
+    if (disabled) {
+        return (
+            <div className="w-full text-left px-3 py-1.5 pl-6 text-[12px] font-medium truncate text-white/30 cursor-default" title={label}>
+                {label}
+            </div>
+        );
+    }
     return (
         <button
             onClick={onClick}
@@ -63,8 +71,7 @@ function BottomItem({ icon, label }: { icon: string; label: string }) {
     );
 }
 
-export const Sidebar: React.FC = () => {
-    const [active, setActive] = useState('Todos los Tickets');
+export const Sidebar: React.FC<{ activeView: string; onSelectView: (key: string) => void }> = ({ activeView, onSelectView }) => {
     return (
         <aside className="w-[200px] bg-[#2C2E3E] text-white flex flex-col shrink-0 overflow-y-auto hide-scrollbar border-r border-white/5" id="sidebar">
             <div className="flex flex-col py-2 flex-1">
@@ -99,16 +106,19 @@ export const Sidebar: React.FC = () => {
                 </div>
 
                 <SectionHeader label="Todas las vistas" />
-                {TODAS_LAS_VISTAS.map((v) => (
-                    <ViewItem key={v} label={v} active={active === v} onClick={() => setActive(v)} />
-                ))}
+                {TODAS_LAS_VISTAS.map((v) => {
+                    const key = FUNCTIONAL_BY_LABEL[v];
+                    return key
+                        ? <ViewItem key={v} label={v} active={activeView === key} onClick={() => onSelectView(key)} />
+                        : <ViewItem key={v} label={v} disabled />;
+                })}
 
                 <SectionHeader label="Views created by me" />
                 <SectionHeader label="Views shared to me" />
 
                 <SectionHeader label="Vistas de Blueprint" />
                 {VISTAS_BLUEPRINT.map((v) => (
-                    <ViewItem key={v} label={v} active={active === v} onClick={() => setActive(v)} />
+                    <ViewItem key={v} label={v} disabled />
                 ))}
 
                 <SectionHeader label="Archivado" />
