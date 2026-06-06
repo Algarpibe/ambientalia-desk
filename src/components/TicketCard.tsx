@@ -1,9 +1,11 @@
 import React from 'react';
 import type { Ticket } from '../data/mockData';
+import { ClienteLink, type ClienteKind } from './ClienteLink'
 
 interface TicketCardProps {
     ticket: Ticket;
     onClick?: () => void;
+    onOpenCliente?: (kind: ClienteKind, id: string) => void;
 }
 
 const statusColorMap: Record<string, { bg: string, text: string, label: string }> = {
@@ -17,7 +19,7 @@ const statusColorMap: Record<string, { bg: string, text: string, label: string }
     'ESPERA_REPUESTOS': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'En Espera de Repues...' }
 };
 
-export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick }) => {
+export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenCliente }) => {
     const statusStyle = statusColorMap[ticket.status] || { bg: 'bg-slate-100', text: 'text-slate-600', label: ticket.status };
 
     return (
@@ -41,7 +43,9 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick }) => {
                             </span>
                         </div>
                         <div className="text-[10px] text-slate-400 font-medium truncate">
-                            {ticket.company}
+                            <ClienteLink label={ticket.contactName} kind="contacto" id={ticket.contactId} onOpen={onOpenCliente} />
+                            {ticket.contactName && ticket.company ? ' · ' : ''}
+                            <ClienteLink label={ticket.company} kind="empresa" id={ticket.accountId} onOpen={onOpenCliente} />
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
                             <span className="material-symbols-outlined text-[14px] text-red-500">schedule</span>

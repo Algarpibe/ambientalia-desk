@@ -2,12 +2,13 @@ import type { Ticket } from '../../shared/types'
 import { TicketCard } from './TicketCard'
 import { visibleColumns } from '../board'
 
-export function KanbanBoard({ columns, groups, hideEmpty, loading, onSelect }: {
+export function KanbanBoard({ columns, groups, hideEmpty, loading, onSelect, onOpenCliente }: {
   columns: readonly { id: string; label: string }[]
   groups: Record<string, Ticket[]>
   hideEmpty: boolean
   loading: boolean
   onSelect: (id: string) => void
+  onOpenCliente?: (kind: import('./ClienteLink').ClienteKind, id: string) => void
 }) {
   const counts = Object.fromEntries(columns.map((c) => [c.id, groups[c.id]?.length ?? 0]))
   return (
@@ -22,7 +23,7 @@ export function KanbanBoard({ columns, groups, hideEmpty, loading, onSelect }: {
             <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 hide-scrollbar">
               {loading && <div className="h-20 rounded-lg bg-slate-200/60 animate-pulse" />}
               {!loading && colTickets.map((ticket) => (
-                <TicketCard key={ticket.id} ticket={ticket} onClick={() => onSelect(ticket.id)} />
+                <TicketCard key={ticket.id} ticket={ticket} onClick={() => onSelect(ticket.id)} onOpenCliente={onOpenCliente} />
               ))}
               {!loading && colTickets.length === 0 && (
                 <div className="h-20 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center opacity-40">

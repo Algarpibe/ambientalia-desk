@@ -1,10 +1,11 @@
 import type { Ticket } from '../../shared/types'
+import { ClienteLink, type ClienteKind } from './ClienteLink'
 
 function StatusBadge({ status }: { status: string }) {
   return <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{status}</span>
 }
 
-export function TicketList({ tickets, dense, onSelect }: { tickets: Ticket[]; dense?: boolean; onSelect: (id: string) => void }) {
+export function TicketList({ tickets, dense, onSelect, onOpenCliente }: { tickets: Ticket[]; dense?: boolean; onSelect: (id: string) => void; onOpenCliente?: (kind: ClienteKind, id: string) => void }) {
   return (
     <div className="flex-1 overflow-auto bg-white">
       <ul className="divide-y divide-slate-100">
@@ -16,7 +17,7 @@ export function TicketList({ tickets, dense, onSelect }: { tickets: Ticket[]; de
                 <div className={`font-semibold text-slate-800 truncate ${dense ? 'text-[12px]' : 'text-[13px]'}`}>{t.title}</div>
                 {!dense && (
                   <div className="text-[11px] text-slate-500 truncate">
-                    <span className="font-bold text-slate-400">{t.number}</span> · {t.assignee?.name} · {t.company} · {t.time}
+                    <span className="font-bold text-slate-400">{t.number}</span> · {t.assignee?.name} · <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} />{t.contactName && t.company ? ' · ' : ''}<ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /> · {t.time}
                   </div>
                 )}
               </div>
