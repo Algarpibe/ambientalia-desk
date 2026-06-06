@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { TicketDetailView } from './components/TicketDetailView';
 import { COLUMNS } from '../shared/columns';
 import { groupTicketsByColumn, groupByPriority, groupByDueDate, PRIORITY_COLUMNS, DUEDATE_COLUMNS } from './board';
+import { applyBoardView, viewLabel } from './lib/boardView';
 import { useHideEmptyColumns } from './boardSettings';
 import { useViewMode } from './viewSettings';
 import { KanbanBoard } from './components/KanbanBoard';
@@ -38,7 +39,8 @@ function App() {
   const [mode, setMode] = useViewMode()
   const { data: tickets, loading, error, reload } = useAsync(() => fetchTickets('all'), [user?.id]);
   const all = tickets ?? [];
-  const activos = all.filter((t) => t.statusType !== 'Closed');
+  const [view, setView] = useState('todos');
+  const base = applyBoardView(all, view, new Date());
 
   if (authLoading) return <div className="h-screen flex items-center justify-center text-slate-400">Cargando…</div>
   if (!user) return <Login />
@@ -48,13 +50,13 @@ function App() {
       <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} onOpenAnalisis={() => setShowAnalisis(true)} onOpenClientes={() => setShowClientes(true)} onOpenActividades={() => setShowActividades(true)} />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar activeView={view} onSelectView={setView} />
 
         <div className="flex-1 flex flex-col min-w-0">
           <div className="bg-white dark:bg-slate-900 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-[18px] text-slate-400">star</span>
-              <h1 className="text-[14px] font-semibold text-slate-700">Todos los Tickets</h1>
+              <h1 className="text-[14px] font-semibold text-slate-700">{viewLabel(view)}</h1>
               <button onClick={reload} className="p-1 hover:bg-slate-100 rounded">
                 <span className="material-symbols-outlined text-[18px] text-slate-400">refresh</span>
               </button>
@@ -73,19 +75,19 @@ function App() {
           )}
 
           {mode === 'estado' && (
-            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(activos)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
           )}
           {mode === 'prioridad' && (
-            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(all)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
           )}
           {mode === 'cuenta-regresiva' && (
-            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(all, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(base, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
           )}
           {(mode === 'clasica' || mode === 'compacta') && (
-            <TicketList tickets={all} dense={mode === 'compacta'} onSelect={setSelectedTicketId} />
+            <TicketList tickets={base} dense={mode === 'compacta'} onSelect={setSelectedTicketId} />
           )}
           {mode === 'tabla' && (
-            <TicketTable tickets={all} onSelect={setSelectedTicketId} />
+            <TicketTable tickets={base} onSelect={setSelectedTicketId} />
           )}
         </div>
       </div>
