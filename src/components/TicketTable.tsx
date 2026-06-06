@@ -23,8 +23,8 @@ export function TicketTable({ tickets, onSelect, onOpenCliente }: { tickets: Tic
             <tr key={t.id} onClick={() => onSelect(t.id)} className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer">
               <td className="px-3 py-2 font-bold text-slate-400 whitespace-nowrap">{t.number}</td>
               <td className="px-3 py-2 text-slate-800 max-w-[360px] truncate">{t.title}</td>
-              <td className="px-3 py-2 text-slate-600 whitespace-nowrap"><ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /></td>
-              <td className="px-3 py-2 text-slate-600 whitespace-nowrap"><ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} /></td>
+              <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.company ? <ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /> : '—'}</td>
+              <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.contactName ? <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} /> : '—'}</td>
               <td className="px-3 py-2 whitespace-nowrap"><span className="text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{t.status}</span></td>
               <td className="px-3 py-2 text-slate-600">{t.priority ?? '—'}</td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.assignee?.name ?? '—'}</td>
