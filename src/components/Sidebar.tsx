@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FUNCTIONAL_BY_LABEL } from '../lib/boardView';
 
 // Estructura del menú lateral (réplica de Zoho Desk). Por ahora decorativo — el filtrado por vista llega después.
@@ -34,12 +34,20 @@ const VISTAS_BLUEPRINT = [
     'Transiciones no asignadas',
 ];
 
-function SectionHeader({ label }: { label: string }) {
+// Sección colplegable: la cabecera (con chevron) pliega/despliega sus ítems.
+function Section({ label, defaultOpen = true, children }: { label: string; defaultOpen?: boolean; children?: React.ReactNode }) {
+    const [open, setOpen] = useState(defaultOpen);
     return (
-        <button className="w-full flex items-center justify-between px-3 pt-3 pb-1 text-white/40 hover:text-white/70 transition-colors">
-            <span className="text-[10px] font-bold tracking-wider uppercase">{label}</span>
-            <span className="material-symbols-outlined text-[16px]">expand_more</span>
-        </button>
+        <>
+            <button
+                onClick={() => setOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-3 pt-3 pb-1 text-white/40 hover:text-white/70 transition-colors"
+            >
+                <span className="text-[10px] font-bold tracking-wider uppercase">{label}</span>
+                <span className={`material-symbols-outlined text-[16px] transition-transform ${open ? '' : '-rotate-90'}`}>expand_more</span>
+            </button>
+            {open && children}
+        </>
     );
 }
 
@@ -105,23 +113,25 @@ export const Sidebar: React.FC<{ activeView: string; onSelectView: (key: string)
                     </button>
                 </div>
 
-                <SectionHeader label="Todas las vistas" />
-                {TODAS_LAS_VISTAS.map((v) => {
-                    const key = FUNCTIONAL_BY_LABEL[v];
-                    return key
-                        ? <ViewItem key={v} label={v} active={activeView === key} onClick={() => onSelectView(key)} />
-                        : <ViewItem key={v} label={v} disabled />;
-                })}
+                <Section label="Todas las vistas">
+                    {TODAS_LAS_VISTAS.map((v) => {
+                        const key = FUNCTIONAL_BY_LABEL[v];
+                        return key
+                            ? <ViewItem key={v} label={v} active={activeView === key} onClick={() => onSelectView(key)} />
+                            : <ViewItem key={v} label={v} disabled />;
+                    })}
+                </Section>
 
-                <SectionHeader label="Views created by me" />
-                <SectionHeader label="Views shared to me" />
+                <Section label="Views created by me" defaultOpen={false} />
+                <Section label="Views shared to me" defaultOpen={false} />
 
-                <SectionHeader label="Vistas de Blueprint" />
-                {VISTAS_BLUEPRINT.map((v) => (
-                    <ViewItem key={v} label={v} disabled />
-                ))}
+                <Section label="Vistas de Blueprint" defaultOpen={false}>
+                    {VISTAS_BLUEPRINT.map((v) => (
+                        <ViewItem key={v} label={v} disabled />
+                    ))}
+                </Section>
 
-                <SectionHeader label="Archivado" />
+                <Section label="Archivado" defaultOpen={false} />
 
                 <div className="border-t border-white/10 mt-3 pt-2">
                     <BottomItem icon="person_check" label="Cola De Agentes" />
