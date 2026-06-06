@@ -20,7 +20,7 @@ import { buildSubject, buildCodigoServicio, PREFIJOS } from '../shared/ticketCre
 import { getAnalisisRows, rangeToFromTo } from './analisis'
 import { computeAnalisis } from '../shared/analisis'
 import { backfillSerialFromSubject } from './backfillSerial'
-import { getActivities } from './db/activities'
+import { getActivities, getAllActivities } from './db/activities'
 import multer from 'multer'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from './db/resolutions'
 import { getTicketHistory } from './db/history'
@@ -226,6 +226,15 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     try {
       const clientId = req.query.clientId ? String(req.query.clientId) : undefined
       res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.get('/api/activities', requireAuth(db), async (req, res) => {
+    try {
+      const filter = String(req.query.filter ?? 'todas')
+      const search = String(req.query.search ?? '')
+      const limit = Math.min(1000, Math.max(1, Number(req.query.limit) || 300))
+      res.json(await getAllActivities(db, { filter, search, limit }))
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 

@@ -465,3 +465,16 @@ describe('Resolución — seguridad', () => {
     expect(g.body.html).toContain('<p>ok</p>')
   })
 })
+
+describe('GET /api/activities (global)', () => {
+  it('lista (con sesión); 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',55,'T','Ingresado')")
+    await db.query("INSERT INTO activities (id,ticket_id,subject,status,status_type,created_time) VALUES ('a1','t1','Informe','In Progress','Open',now())")
+    const { app } = appWith()
+    const res = await request(app).get('/api/activities').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ subject: 'Informe', ticketNumber: '#55' })
+    expect((await request(app).get('/api/activities')).status).toBe(401)
+  })
+})
