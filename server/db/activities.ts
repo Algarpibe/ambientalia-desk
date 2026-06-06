@@ -1,6 +1,6 @@
 import type { Queryable } from './migrate'
 import type { ActivityRow } from './rows'
-import type { Activity } from '../../shared/types'
+import type { Activity, ActivityListItem } from '../../shared/types'
 import { rowToActivity } from './mappers'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
@@ -25,4 +25,29 @@ export async function getActivities(db: Queryable, ticketId: string): Promise<Ac
     [ticketId],
   )
   return (res.rows as any[]).map(rowToActivity)
+}
+
+export async function getAllActivities(db: Queryable, opts: { filter: string; search: string; limit: number }): Promise<ActivityListItem[]> {
+  const where: string[] = []
+  const params: unknown[] = []
+  if (opts.filter === 'abiertas') where.push("a.status_type <> 'Closed'")
+  else if (opts.filter === 'vencidas') where.push("a.status_type <> 'Closed' AND a.due_date < now()")
+  if (opts.search) { params.push(`%${opts.search}%`); where.push(`LOWER(a.subject) LIKE LOWER($${params.length})`) }
+  params.push(opts.limit)
+  const sql =
+    `SELECT a.id, a.subject, a.status, a.status_type, a.priority, a.due_date, a.owner_name, a.ticket_id,
+            t.number AS ticket_number, g.name AS agent_name
+     FROM activities a
+     LEFT JOIN tickets t ON a.ticket_id=t.id
+     LEFT JOIN agents g ON a.owner_id=g.id
+     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+     ORDER BY COALESCE(a.due_date, a.created_time) DESC NULLS LAST
+     LIMIT $${params.length}`
+  const r = await db.query(sql, params)
+  return (r.rows as any[]).map((x) => ({
+    id: x.id, subject: x.subject ?? '', status: x.status ?? '', statusType: x.status_type ?? null,
+    priority: x.priority ?? null, dueDate: x.due_date ?? null,
+    owner: x.owner_name ?? x.agent_name ?? null,
+    ticketId: x.ticket_id ?? null, ticketNumber: x.ticket_number != null ? `#${x.ticket_number}` : null,
+  }))
 }

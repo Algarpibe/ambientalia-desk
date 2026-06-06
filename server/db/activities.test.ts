@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
-import { upsertActivity, getActivities } from './activities'
+import { upsertActivity, getActivities, getAllActivities } from './activities'
 import { activityRowFromZoho } from './mappers'
 
 let db: Queryable
@@ -17,5 +17,21 @@ describe('activities repo', () => {
     expect(acts.map((a) => a.id)).toEqual(['a2', 'a1'])
     expect(acts[1].owner).toBe('Ana P')   // a1: owner_name null → resuelto por agents
     expect(acts[0].owner).toBe('Beto')     // a2: owner_name del assignee
+  })
+})
+
+describe('getAllActivities', () => {
+  it('lista con ticketNumber + owner; filtros abiertas/vencidas; search', async () => {
+    await db.query("INSERT INTO agents (id,name,source) VALUES ('g1','Ana','zoho')")
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',55,'T','Ingresado')")
+    await db.query("INSERT INTO activities (id,ticket_id,subject,status,status_type,priority,due_date,created_time,owner_id) VALUES ('a1','t1','Informe','In Progress','Open','High','2026-12-31T00:00:00Z','2026-01-01T00:00:00Z','g1')")
+    await db.query("INSERT INTO activities (id,ticket_id,subject,status,status_type,due_date,created_time) VALUES ('a2','t1','Cerrada','Completed','Closed','2020-01-01T00:00:00Z','2020-01-01T00:00:00Z')")
+    await db.query("INSERT INTO activities (id,ticket_id,subject,status,status_type,due_date,created_time) VALUES ('a3','t1','Vieja abierta','Not Started','Open','2020-01-01T00:00:00Z','2019-01-01T00:00:00Z')")
+    const all = await getAllActivities(db, { filter: 'todas', search: '', limit: 100 })
+    expect(all).toHaveLength(3)
+    expect(all.find((x) => x.id === 'a1')).toMatchObject({ subject: 'Informe', owner: 'Ana', ticketNumber: '#55', priority: 'High' })
+    expect((await getAllActivities(db, { filter: 'abiertas', search: '', limit: 100 })).map((x) => x.id).sort()).toEqual(['a1', 'a3'])
+    expect((await getAllActivities(db, { filter: 'vencidas', search: '', limit: 100 })).map((x) => x.id)).toEqual(['a3'])
+    expect((await getAllActivities(db, { filter: 'todas', search: 'informe', limit: 100 })).map((x) => x.id)).toEqual(['a1'])
   })
 })
