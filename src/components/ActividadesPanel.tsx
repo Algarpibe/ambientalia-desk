@@ -1,41 +1,10 @@
 import type { Activity } from '../../shared/types'
+import { traducirEstado, traducirPrioridad, estadoBadgeClass } from '../lib/actividades'
 
 function fmtDate(s: string | null): string {
   if (!s) return ''
   const d = new Date(s)
   return isNaN(d.getTime()) ? '' : d.toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
-}
-
-const ESTADOS: Record<string, string> = {
-  'not started': 'No iniciada',
-  'in progress': 'En proceso',
-  'waiting on someone else': 'En espera',
-  'waiting': 'En espera',
-  'deferred': 'Aplazada',
-  'completed': 'Completada',
-}
-function traducirEstado(s: string | null): string {
-  if (!s) return '—'
-  return ESTADOS[s.trim().toLowerCase()] ?? s
-}
-
-const PRIORIDADES: Record<string, string> = {
-  highest: 'Muy alta',
-  high: 'Alta',
-  normal: 'Normal',
-  low: 'Baja',
-  lowest: 'Muy baja',
-}
-function traducirPrioridad(p: string): string {
-  return PRIORIDADES[p.trim().toLowerCase()] ?? p
-}
-
-function statusClass(a: Activity): string {
-  const t = (a.status ?? '').toLowerCase()
-  if (a.statusType === 'Closed' || t.includes('complet')) return 'bg-green-50 text-green-600 border-green-200'
-  if (t.includes('progress') || t.includes('proceso')) return 'bg-blue-50 text-blue-600 border-blue-200'
-  if (t.includes('wait') || t.includes('espera')) return 'bg-amber-50 text-amber-600 border-amber-200'
-  return 'bg-slate-50 text-slate-500 border-slate-200'
 }
 
 export function ActividadesPanel({ items }: { items: Activity[] }) {
@@ -52,7 +21,7 @@ export function ActividadesPanel({ items }: { items: Activity[] }) {
               {a.dueDate && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[13px]">flag</span>{fmtDate(a.dueDate)}</span>}
             </div>
           </div>
-          <span className={`text-[11px] px-2 py-0.5 rounded border font-medium shrink-0 ${statusClass(a)}`}>{traducirEstado(a.status)}</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded border font-medium shrink-0 ${estadoBadgeClass(a.status, a.statusType)}`}>{traducirEstado(a.status)}</span>
           {a.owner && <span className="text-[11px] text-slate-500 w-[120px] truncate text-right shrink-0">{a.owner}</span>}
         </div>
       ))}
