@@ -14,12 +14,12 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   return <div onMouseDown={onMouseDown} className="w-1 shrink-0 cursor-col-resize bg-slate-200 hover:bg-blue-400 transition-colors" />
 }
 
-export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket }: { onClose: () => void; onSelectTicket: (id: string) => void; onAgregarTicket: () => void }) {
-  const [tab, setTab] = useState<'contactos' | 'empresas'>('contactos')
+export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket, initial }: { onClose: () => void; onSelectTicket: (id: string) => void; onAgregarTicket: () => void; initial?: { kind: 'contacto' | 'empresa'; id: string } | null }) {
+  const [tab, setTab] = useState<'contactos' | 'empresas'>(initial?.kind === 'empresa' ? 'empresas' : 'contactos')
   const sidebar = useResizable('clientes:sidebarW', 200, 160, 360)
   const list = useResizable('clientes:listW', 320, 240, 560)
   const [q, setQ] = useState('')
-  const [selected, setSelected] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(null)
+  const [selected, setSelected] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(initial ? { kind: initial.kind, id: initial.id } : null)
   const { data: contactos } = useAsync<ContactLite[]>(() => fetchContacts(), [])
   const { data: empresas } = useAsync<AccountLite[]>(() => fetchAccounts(), [])
 

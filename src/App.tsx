@@ -34,6 +34,8 @@ function App() {
   const [showEquipos, setShowEquipos] = useState(false)
   const [showAnalisis, setShowAnalisis] = useState(false)
   const [showClientes, setShowClientes] = useState(false)
+  const [clientesInitial, setClientesInitial] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(null)
+  const abrirCliente = (kind: 'contacto' | 'empresa', id: string) => { setClientesInitial({ kind, id }); setShowClientes(true) }
   const [showActividades, setShowActividades] = useState(false)
   const hideEmpty = useHideEmptyColumns()
   const [mode, setMode] = useViewMode()
@@ -47,7 +49,7 @@ function App() {
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} onOpenAnalisis={() => setShowAnalisis(true)} onOpenClientes={() => setShowClientes(true)} onOpenActividades={() => setShowActividades(true)} />
+      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} onOpenAnalisis={() => setShowAnalisis(true)} onOpenClientes={() => { setClientesInitial(null); setShowClientes(true) }} onOpenActividades={() => setShowActividades(true)} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeView={view} onSelectView={setView} />
@@ -75,19 +77,19 @@ function App() {
           )}
 
           {mode === 'estado' && (
-            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
           )}
           {mode === 'prioridad' && (
-            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
           )}
           {mode === 'cuenta-regresiva' && (
-            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(base, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} />
+            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(base, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
           )}
           {(mode === 'clasica' || mode === 'compacta') && (
-            <TicketList tickets={base} dense={mode === 'compacta'} onSelect={setSelectedTicketId} />
+            <TicketList tickets={base} dense={mode === 'compacta'} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
           )}
           {mode === 'tabla' && (
-            <TicketTable tickets={base} onSelect={setSelectedTicketId} />
+            <TicketTable tickets={base} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
           )}
         </div>
       </div>
@@ -105,7 +107,7 @@ function App() {
       {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
       {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} />}
       {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
-      {showClientes && <ClientesPage onClose={() => setShowClientes(false)} onSelectTicket={(id) => { setShowClientes(false); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
+      {showClientes && <ClientesPage initial={clientesInitial} onClose={() => { setShowClientes(false); setClientesInitial(null) }} onSelectTicket={(id) => { setShowClientes(false); setClientesInitial(null); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
       {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
       {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
       {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
