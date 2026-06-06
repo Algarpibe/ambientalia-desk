@@ -87,9 +87,9 @@ const PROCESS_FIELDS: Array<[string, string]> = [
   ['Generar Remisión de Salida', 'Generar Remisión de Salida'],
 ];
 
-export function TicketProperties({ detail }: { detail: TicketDetail }) {
+export function TicketProperties({ detail, width = 300 }: { detail: TicketDetail; width?: number }) {
   return (
-    <div className="w-[300px] border-r border-slate-200 overflow-y-auto bg-white p-4 shrink-0">
+    <div style={{ width }} className="border-r border-slate-200 overflow-y-auto bg-white p-4 shrink-0">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[14px] font-bold text-slate-800">Propiedades de Ticket</h3>
         <span className="material-symbols-outlined text-slate-400 text-[18px]">mode_edit</span>

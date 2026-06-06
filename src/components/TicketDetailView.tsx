@@ -3,11 +3,17 @@ import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import type { TicketDetail, Message, Ticket, Activity } from '../../shared/types';
 import { useAsync } from '../hooks/useAsync';
+import { useResizable } from '../hooks/useResizable';
 import { fetchTicket, fetchConversations, replyTicket, fetchActivities } from '../api/client';
 import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { ActividadesPanel } from './ActividadesPanel';
+
+/** Manija de arrastre entre columnas (reemplaza el borde). */
+function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
+  return <div onMouseDown={onMouseDown} className="w-1 shrink-0 cursor-col-resize bg-slate-200 hover:bg-blue-400 transition-colors" />
+}
 import { ResolucionPanel } from './ResolucionPanel';
 import { HistoriaPanel } from './HistoriaPanel';
 
@@ -24,6 +30,8 @@ interface TicketDetailViewProps {
 
 export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged, tickets, onSelect }) => {
     const { data: ticket, loading, reload: reloadTicket } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
+    const listCol = useResizable('ticket:listW', 300, 220, 520);
+    const propsCol = useResizable('ticket:propsW', 300, 240, 520);
     // Solo los tickets en el MISMO estado que el ticket abierto (incluye el actual, resaltado).
     const siblings = (tickets ?? []).filter((t) => ticket != null && t.status === ticket.status);
     const { data: messages, reload: reloadMessages } = useAsync<Message[]>(() => fetchConversations(ticketId), [ticketId]);
@@ -93,7 +101,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Left Sidebar List — tickets en el mismo estado que el abierto */}
-                <div className="w-[300px] border-r border-slate-200 bg-[#F8F9FA] flex flex-col shrink-0">
+                <div style={{ width: listCol.w }} className="bg-[#F8F9FA] flex flex-col shrink-0">
                     <div className="p-2 border-b border-slate-200 flex items-center justify-between bg-white">
                         <div className="flex items-center gap-2 min-w-0">
                             <button onClick={onClose} title="Volver al tablero" className="text-slate-400 hover:text-slate-700 flex items-center">
@@ -127,6 +135,8 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                     </div>
                 </div>
 
+                <ResizeHandle onMouseDown={listCol.start} />
+
                 {/* Vertical Icon Bar (Narrow) */}
                 <div className="w-[45px] border-r border-slate-200 bg-white flex flex-col items-center py-4 gap-6 shrink-0">
                     {['content_paste', 'group', 'lightbulb', 'schedule', 'attach_money', 'link', 'psychology', 'chat'].map((icon, idx) => (
@@ -138,15 +148,16 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                 <div className="flex-1 flex overflow-hidden">
                     {/* Properties Panel — datos reales del ticket */}
                     {ticket ? (
-                        <TicketProperties detail={ticket} />
+                        <TicketProperties detail={ticket} width={propsCol.w} />
                     ) : (
-                        <div className="w-[300px] border-r border-slate-200 bg-white p-4 shrink-0">
+                        <div style={{ width: propsCol.w }} className="border-r border-slate-200 bg-white p-4 shrink-0">
                             <div className="h-5 w-40 bg-slate-200/70 rounded animate-pulse mb-4" />
                             {Array.from({ length: 8 }).map((_, i) => (
                                 <div key={i} className="h-10 bg-slate-100 rounded animate-pulse mb-3" />
                             ))}
                         </div>
                     )}
+                    <ResizeHandle onMouseDown={propsCol.start} />
 
                     {/* Chat/Thread Content (Right side) */}
                     <div className="flex-1 flex flex-col bg-[#F3F5F7] overflow-hidden">
