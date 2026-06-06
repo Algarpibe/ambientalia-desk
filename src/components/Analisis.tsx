@@ -19,7 +19,7 @@ function Kpi({ label, value, suffix }: { label: string; value: number | null; su
   )
 }
 
-function BarList({ title, data }: { title: string; data: AnalisisPunto[] }) {
+function BarList({ title, data, unit }: { title: string; data: AnalisisPunto[]; unit?: string }) {
   const max = Math.max(1, ...data.map((d) => d.value))
   return (
     <section className="bg-white border border-slate-200 rounded-md p-4">
@@ -30,7 +30,7 @@ function BarList({ title, data }: { title: string; data: AnalisisPunto[] }) {
           <div key={d.label} className="flex items-center gap-2 text-[12px]">
             <span className="w-[170px] truncate text-slate-600" title={d.label}>{d.label}</span>
             <div className="flex-1 bg-slate-100 rounded h-3 overflow-hidden"><div className="bg-blue-400 h-3" style={{ width: `${(d.value / max) * 100}%` }} /></div>
-            <span className="w-8 text-right font-bold text-slate-700">{d.value}</span>
+            <span className="w-12 text-right font-bold text-slate-700">{d.value}{unit ? ` ${unit}` : ''}</span>
           </div>
         ))}
       </div>
@@ -99,7 +99,10 @@ export function Analisis({ onClose }: { onClose: () => void }) {
               <BarList title="Por técnico (periodo)" data={data.porTecnico} />
               <BarList title="Por cliente (periodo)" data={data.porCliente} />
               <BarList title="Por marca (periodo)" data={data.porMarca} />
+              <BarList title="Por tipo de servicio (periodo)" data={data.porTipoServicio} />
+              <BarList title="Por clasificación (periodo)" data={data.porClasificacion} />
             </div>
+            <BarList title="Tiempo de gestión por estado (días, activos)" data={data.gestionPorEstado} unit="d" />
           </div>
         )}
       </div>
