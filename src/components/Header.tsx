@@ -10,7 +10,7 @@ const NAV_TABS = [
     { label: 'Base de Conocimientos' }
 ];
 
-export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void; onOpenAnalisis: () => void; onOpenClientes: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos, onOpenAnalisis, onOpenClientes }) => {
+export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void; onOpenAnalisis: () => void; onOpenClientes: () => void; onOpenActividades: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos, onOpenAnalisis, onOpenClientes, onOpenActividades }) => {
     const { user } = useAuth()
     return (
         <header className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0 z-30">
@@ -30,9 +30,10 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
                             onClick={
                                 tab.label === 'Análisis' && user?.isAdmin ? onOpenAnalisis
                                 : tab.label === 'Clientes' ? onOpenClientes
+                                : tab.label === 'Actividades' ? onOpenActividades
                                 : undefined
                             }
-                            className={`px-4 h-full text-[13px] font-medium transition-colors border-b-2 ${tab.active ? 'text-white border-blue-500 bg-white/5' : 'text-white/60 border-transparent hover:text-white hover:bg-white/5'} ${(tab.label === 'Análisis' && user?.isAdmin) || tab.label === 'Clientes' ? 'cursor-pointer' : ''}`}
+                            className={`px-4 h-full text-[13px] font-medium transition-colors border-b-2 ${tab.active ? 'text-white border-blue-500 bg-white/5' : 'text-white/60 border-transparent hover:text-white hover:bg-white/5'} ${(tab.label === 'Análisis' && user?.isAdmin) || tab.label === 'Clientes' || tab.label === 'Actividades' ? 'cursor-pointer' : ''}`}
                         >
                             {tab.label}
                         </button>

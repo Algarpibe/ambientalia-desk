@@ -21,6 +21,7 @@ import { CreateTicket } from './components/CreateTicket'
 import { Configuracion } from './components/Configuracion'
 import { Analisis } from './components/Analisis'
 import { ClientesPage } from './components/ClientesPage'
+import { ActividadesPage } from './components/ActividadesPage'
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -32,6 +33,7 @@ function App() {
   const [showEquipos, setShowEquipos] = useState(false)
   const [showAnalisis, setShowAnalisis] = useState(false)
   const [showClientes, setShowClientes] = useState(false)
+  const [showActividades, setShowActividades] = useState(false)
   const hideEmpty = useHideEmptyColumns()
   const [mode, setMode] = useViewMode()
   const { data: tickets, loading, error, reload } = useAsync(() => fetchTickets('all'), [user?.id]);
@@ -43,7 +45,7 @@ function App() {
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} onOpenAnalisis={() => setShowAnalisis(true)} onOpenClientes={() => setShowClientes(true)} />
+      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} onOpenAnalisis={() => setShowAnalisis(true)} onOpenClientes={() => setShowClientes(true)} onOpenActividades={() => setShowActividades(true)} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
@@ -102,6 +104,7 @@ function App() {
       {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} />}
       {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
       {showClientes && <ClientesPage onClose={() => setShowClientes(false)} onSelectTicket={(id) => { setShowClientes(false); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
+      {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
       {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
       {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
       {showConfig && (
