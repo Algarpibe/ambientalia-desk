@@ -1,11 +1,74 @@
-import React from 'react';
-import { VIEWS } from '../data/mockData';
+import React, { useState } from 'react';
+
+// Estructura del menú lateral (réplica de Zoho Desk). Por ahora decorativo — el filtrado por vista llega después.
+const TODAS_LAS_VISTAS = [
+    'Todos los Tickets',
+    'Tickets cerrados',
+    'Tickets respondidos por mí',
+    'Chats pendientes',
+    'Mis Tickets',
+    'Mis Tickets en espera',
+    'Mis Tickets abierto',
+    'Mis Tickets vencidos',
+    'Mis Tickets con respuesta',
+    'Apertura de Mi equipo Tickets',
+    'Tickets en espera',
+    'Tickets abiertos',
+    'Tickets vencidos',
+    'Tickets para revisión',
+    'Tickets con respuesta del técnico',
+    'Compartido Tickets',
+    'Tickets compartidos por mí',
+    'Tickets con información solicitada',
+    'Tickets con información',
+    'Tickets Calificados',
+    'Tickets abiertos y no asignados',
+];
+
+const VISTAS_BLUEPRINT = [
+    'Actuar blueprint Tickets',
+    'Todas las transiciones',
+    'Mis transiciones de equipo',
+    'Mis transiciones',
+    'Transiciones no asignadas',
+];
+
+function SectionHeader({ label }: { label: string }) {
+    return (
+        <button className="w-full flex items-center justify-between px-3 pt-3 pb-1 text-white/40 hover:text-white/70 transition-colors">
+            <span className="text-[10px] font-bold tracking-wider uppercase">{label}</span>
+            <span className="material-symbols-outlined text-[16px]">expand_more</span>
+        </button>
+    );
+}
+
+function ViewItem({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            className={`w-full text-left px-3 py-1.5 pl-6 transition-colors text-[12px] font-medium truncate ${active ? 'bg-blue-600/20 text-blue-300 border-l-2 border-blue-500' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+            title={label}
+        >
+            {label}
+        </button>
+    );
+}
+
+function BottomItem({ icon, label }: { icon: string; label: string }) {
+    return (
+        <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
+            <span className="material-symbols-outlined text-[20px]">{icon}</span>
+            <span className="text-[13px] font-medium truncate">{label}</span>
+        </button>
+    );
+}
 
 export const Sidebar: React.FC = () => {
+    const [active, setActive] = useState('Todos los Tickets');
     return (
         <aside className="w-[200px] bg-[#2C2E3E] text-white flex flex-col shrink-0 overflow-y-auto hide-scrollbar border-r border-white/5" id="sidebar">
-            <div className="flex flex-col py-2">
-                <div className="px-2 mb-4">
+            <div className="flex flex-col py-2 flex-1">
+                <div className="px-2 mb-3">
                     <img
                         alt="Ambientalia logo"
                         className="h-8 w-auto brightness-200 px-2"
@@ -13,65 +76,52 @@ export const Sidebar: React.FC = () => {
                     />
                 </div>
 
-                <div className="space-y-1">
-                    <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">grid_view</span>
-                        <span className="text-[13px] font-medium">Oficina Principal</span>
-                    </button>
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
+                    <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                    <span className="text-[13px] font-medium">Oficina Principal</span>
+                </button>
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
+                    <span className="material-symbols-outlined text-[20px]">chat</span>
+                    <span className="text-[13px] font-medium">Comentarios Del Equipo</span>
+                </button>
 
-                    <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">chat</span>
-                        <span className="text-[13px] font-medium">Comentarios Del Equipo</span>
-                    </button>
-
-                    <div className="mt-4">
-                        <button className="w-full flex items-center justify-between px-3 py-2 text-white/90 hover:bg-white/5 transition-colors group">
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-[20px]">folder</span>
-                                <span className="text-[13px] font-medium">Vistas</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[16px] text-white/40">search</span>
-                                <span className="material-symbols-outlined text-[16px] text-white/40">add</span>
-                            </div>
-                        </button>
-
-                        <div className="mt-1">
-                            {VIEWS.map(view => (
-                                <button
-                                    key={view.id}
-                                    className={`w-full text-left px-3 py-1.5 pl-6 transition-colors text-[12px] font-medium ${view.active ? 'bg-blue-600/20 text-blue-300 border-l-2 border-blue-500' : 'text-white/60 hover:text-white hover:bg-white/5'
-                                        }`}
-                                >
-                                    {view.label}
-                                </button>
-                            ))}
+                <div className="mt-2">
+                    <button className="w-full flex items-center justify-between px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-[20px]">folder</span>
+                            <span className="text-[13px] font-medium">Vistas</span>
                         </div>
-                    </div>
-
-                    <button className="w-full flex items-center gap-3 px-3 py-4 text-white/90 hover:bg-white/5 transition-colors mt-2">
-                        <span className="material-symbols-outlined text-[20px]">person_check</span>
-                        <span className="text-[13px] font-medium">Cola De Agentes</span>
+                        <div className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[16px] text-white/40">search</span>
+                            <span className="material-symbols-outlined text-[16px] text-white/40">add</span>
+                        </div>
                     </button>
+                </div>
 
-                    <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">groups</span>
-                        <span className="text-[13px] font-medium">Cola De Equipo</span>
-                    </button>
+                <SectionHeader label="Todas las vistas" />
+                {TODAS_LAS_VISTAS.map((v) => (
+                    <ViewItem key={v} label={v} active={active === v} onClick={() => setActive(v)} />
+                ))}
 
-                    <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors mt-2">
-                        <span className="material-symbols-outlined text-[20px]">label</span>
-                        <span className="text-[13px] font-medium">Etiquetas</span>
-                    </button>
+                <SectionHeader label="Views created by me" />
+                <SectionHeader label="Views shared to me" />
 
-                    <button className="w-full flex items-center gap-3 px-3 py-2 text-white/90 hover:bg-white/5 transition-colors mt-2">
-                        <span className="material-symbols-outlined text-[20px]">history</span>
-                        <span className="text-[13px] font-medium">Respuestas Programada...</span>
-                    </button>
+                <SectionHeader label="Vistas de Blueprint" />
+                {VISTAS_BLUEPRINT.map((v) => (
+                    <ViewItem key={v} label={v} active={active === v} onClick={() => setActive(v)} />
+                ))}
+
+                <SectionHeader label="Archivado" />
+
+                <div className="border-t border-white/10 mt-3 pt-2">
+                    <BottomItem icon="person_check" label="Cola De Agentes" />
+                    <BottomItem icon="groups" label="Cola De Equipo" />
+                    <BottomItem icon="label" label="Etiquetas" />
+                    <BottomItem icon="history" label="Respuestas Programadas" />
                 </div>
             </div>
 
-            <div className="mt-auto p-4 flex justify-end">
+            <div className="p-3 flex justify-end shrink-0">
                 <button className="text-white/40 hover:text-white">
                     <span className="material-symbols-outlined">first_page</span>
                 </button>
