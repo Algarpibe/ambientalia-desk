@@ -22,6 +22,9 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
   const porTecnico = new Map<string, number>()
   const porCliente = new Map<string, number>()
   const porMarca = new Map<string, number>()
+  const porTipoServicio = new Map<string, number>()
+  const porClasificacion = new Map<string, number>()
+  const gestion = new Map<string, { sum: number; n: number }>()
   const tend = new Map<string, { creados: number; finalizados: number }>()
   const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
   const bumpMes = (k: string, f: 'creados' | 'finalizados') => {
@@ -32,14 +35,25 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
 
   for (const r of rows) {
     const cerrado = r.statusType === 'Closed'
-    if (!cerrado) { activos++; bump(porEstado, r.status || '—') }
     const created = parseDate(r.createdAt)
+    if (!cerrado) {
+      activos++; bump(porEstado, r.status || '—')
+      if (created) {
+        const edadDias = (to.getTime() - created.getTime()) / 86400000
+        if (edadDias >= 0) {
+          const g = gestion.get(r.status || '—') ?? { sum: 0, n: 0 }
+          g.sum += edadDias; g.n++; gestion.set(r.status || '—', g)
+        }
+      }
+    }
     const fin = parseDate(r.finalizadoAt)
     if (inRange(created, from, to)) {
       creados++
       bump(porTecnico, r.tecnico || 'Sin asignar')
       bump(porCliente, r.cliente || '—')
       bump(porMarca, r.marca || '—')
+      bump(porTipoServicio, r.tipoServicio || '—')
+      bump(porClasificacion, r.clasificaciones || '—')
       bumpMes(monthKey(created!), 'creados')
     }
     if (cerrado && inRange(fin, from, to)) {
@@ -71,6 +85,11 @@ export function computeAnalisis(rows: AnalisisRow[], from: Date | null, to: Date
     porTecnico: puntos(porTecnico, 10),
     porCliente: puntos(porCliente, 10),
     porMarca: puntos(porMarca, 10),
+    porTipoServicio: puntos(porTipoServicio, 10),
+    porClasificacion: puntos(porClasificacion, 10),
+    gestionPorEstado: [...gestion.entries()]
+      .map(([label, { sum, n }]) => ({ label, value: Math.round((sum / n) * 10) / 10 }))
+      .sort((a, b) => b.value - a.value),
     tendencia,
   }
 }

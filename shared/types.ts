@@ -236,6 +236,9 @@ export interface Analisis {
   porTecnico: AnalisisPunto[]
   porCliente: AnalisisPunto[]
   porMarca: AnalisisPunto[]
+  porTipoServicio: AnalisisPunto[]
+  porClasificacion: AnalisisPunto[]
+  gestionPorEstado: AnalisisPunto[]
   tendencia: AnalisisMes[]
 }
 export interface AnalisisRow {
@@ -247,6 +250,8 @@ export interface AnalisisRow {
   marca: string | null
   cliente: string | null
   tecnico: string | null
+  tipoServicio: string | null
+  clasificaciones: string | null
 }
 
 export interface Activity {
