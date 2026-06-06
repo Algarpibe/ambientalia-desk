@@ -21,6 +21,9 @@ export interface Ticket {
   createdAt?: string | null
   channel?: string | null
   diasEntrega?: string | null
+  contactName?: string | null
+  contactId?: string | null
+  accountId?: string | null
 }
 
 /** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */

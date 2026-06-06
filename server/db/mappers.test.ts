@@ -123,12 +123,15 @@ function baseTicketRow(): TicketRow {
 
 describe('rowToTicket / rowToTicketDetail', () => {
   it('rowToTicket arma la tarjeta', () => {
-    const t = rowToTicket(baseTicketRow(), { accountName: 'Gecelca S.A. E.S.P.', agentName: 'Equipo Técnico' })
+    const t = rowToTicket(baseTicketRow(), { accountName: 'Gecelca S.A. E.S.P.', agentName: 'Equipo Técnico', contactName: 'Sebastián Laguna' })
     expect(t.number).toBe('#941')
     expect(t.title).toBe('Servicio X')
     expect(t.company).toBe('Gecelca S.A. E.S.P.')
     expect(t.status).toBe('Notificación cliente')
     expect(t.assignee?.name).toBe('Equipo Técnico')
+    expect(t.contactName).toBe('Sebastián Laguna')
+    expect(t.contactId).toBe('c1')
+    expect(t.accountId).toBe('a1')
   })
 
   it('rowToTicketDetail reconstruye customFields desde columnas + jsonb', () => {

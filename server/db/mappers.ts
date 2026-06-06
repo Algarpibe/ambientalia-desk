@@ -138,8 +138,8 @@ function fmtSize(n?: number | null): string {
   return `${(n / 1048576).toFixed(1)} MB`
 }
 
-export interface TicketRefs { accountName?: string | null; agentName?: string | null }
-export interface DetailRefs extends TicketRefs { contactName?: string | null; contactPhone?: string | null; email?: string | null }
+export interface TicketRefs { accountName?: string | null; agentName?: string | null; contactName?: string | null }
+export interface DetailRefs extends TicketRefs { contactPhone?: string | null; email?: string | null }
 
 export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
   const assigneeName = refs.agentName || 'Sin asignar'
@@ -154,6 +154,9 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
     createdAt: row.created_time ?? null,
     channel: row.channel ?? null,
     diasEntrega: row.dias_entrega == null ? null : String(row.dias_entrega),
+    contactName: refs.contactName ?? null,
+    contactId: row.contact_id ?? null,
+    accountId: row.account_id ?? null,
   }
 }
 
