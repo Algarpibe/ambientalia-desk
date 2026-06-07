@@ -3,7 +3,7 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { upsertAccount, upsertContact, upsertTicket, getTicketRow, countTickets } from './repo'
 import { getActiveTickets, getAllTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
-import { applyTransition, createTicket } from './repo'
+import { applyTransition, createTicket, setTicketRead } from './repo'
 import { upsertClient } from '../books/repo'
 import { clientFromBooks } from '../books/mappers'
 import { reseedTicketNumber } from './migrate'
@@ -105,6 +105,22 @@ describe('applyTransition', () => {
     expect(hist.rows[0].to_status).toBe('Ingresado')
     expect(hist.rows[0].from_status).toBe('OV asignada')
     expect(hist.rows[0].performed_by).toBe('Equipo Técnico')
+  })
+})
+
+describe('ticket_reads (leído/no leído)', () => {
+  it('setTicketRead marca leído/no leído por usuario; reactiva si se modifica tras leer', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time,modified_time) VALUES ('t1',1,'A','Ingresado','Open',now(),'2026-01-01T00:00:00Z')")
+    const readFor = async (u: string) => (await getActiveTickets(db, u))[0].refs.read
+    expect(await readFor('u1')).toBe(false)
+    await setTicketRead(db, 'u1', 't1', true)
+    expect(await readFor('u1')).toBe(true)
+    expect(await readFor('u2')).toBe(false)
+    await setTicketRead(db, 'u1', 't1', false)
+    expect(await readFor('u1')).toBe(false)
+    await setTicketRead(db, 'u1', 't1', true)
+    await db.query("UPDATE tickets SET modified_time='2999-01-01T00:00:00Z' WHERE id='t1'")
+    expect(await readFor('u1')).toBe(false)
   })
 })
 

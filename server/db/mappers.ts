@@ -138,7 +138,7 @@ function fmtSize(n?: number | null): string {
   return `${(n / 1048576).toFixed(1)} MB`
 }
 
-export interface TicketRefs { accountName?: string | null; agentName?: string | null; contactName?: string | null }
+export interface TicketRefs { accountName?: string | null; agentName?: string | null; contactName?: string | null; read?: boolean }
 export interface DetailRefs extends TicketRefs { contactPhone?: string | null; email?: string | null }
 
 export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
@@ -157,6 +157,7 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
     contactName: refs.contactName ?? null,
     contactId: row.contact_id ?? null,
     accountId: row.account_id ?? null,
+    read: refs.read ?? false,
   }
 }
 

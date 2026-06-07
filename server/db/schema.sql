@@ -60,6 +60,13 @@ CREATE TABLE IF NOT EXISTS ticket_transitions (
   comment_id text, performed_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS ticket_reads (
+  user_id text NOT NULL,
+  ticket_id text NOT NULL,
+  read_at timestamptz NOT NULL,
+  PRIMARY KEY (user_id, ticket_id)
+);
+
 CREATE SEQUENCE IF NOT EXISTS ticket_number_seq;
 
 CREATE INDEX IF NOT EXISTS idx_tickets_status_type ON tickets (status_type);

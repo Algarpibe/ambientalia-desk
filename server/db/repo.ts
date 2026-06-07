@@ -99,26 +99,35 @@ import type { TicketRefs, DetailRefs } from './mappers'
 
 export interface TicketWithRefs { row: TicketRow; refs: TicketRefs }
 
-export async function getActiveTickets(db: Queryable): Promise<TicketWithRefs[]> {
-  const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last
-     FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
-     LEFT JOIN clients cl ON t.client_id=cl.id
-     LEFT JOIN contacts c ON t.contact_id=c.id
-     WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
-  )
-  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null } }))
+export async function setTicketRead(db: Queryable, userId: string, ticketId: string, read: boolean): Promise<void> {
+  await db.query('DELETE FROM ticket_reads WHERE user_id=$1 AND ticket_id=$2', [userId, ticketId])
+  if (read) await db.query('INSERT INTO ticket_reads (user_id, ticket_id, read_at) VALUES ($1,$2,now())', [userId, ticketId])
 }
 
-export async function getAllTickets(db: Queryable): Promise<TicketWithRefs[]> {
+export async function getActiveTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN clients cl ON t.client_id=cl.id
      LEFT JOIN contacts c ON t.contact_id=c.id
-     ORDER BY t.created_time DESC NULLS LAST`,
+     LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
+     WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
+    [userId],
   )
-  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null } }))
+  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)) } }))
+}
+
+export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
+  const r = await db.query(
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
+     FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
+     LEFT JOIN clients cl ON t.client_id=cl.id
+     LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
+     ORDER BY t.created_time DESC NULLS LAST`,
+    [userId],
+  )
+  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)) } }))
 }
 
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {
