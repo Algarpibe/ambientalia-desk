@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from 'express'
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
 import type { Sync } from './sync'
-import { getActiveTickets, getAllTickets, getTicketWithRefs, getConversations, applyTransition, createTicket } from './db/repo'
+import { getActiveTickets, getAllTickets, getTicketWithRefs, getConversations, applyTransition, createTicket, setTicketRead } from './db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from './db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
@@ -112,8 +112,15 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.get('/api/tickets', async (req, res) => {
     try {
-      const list = req.query.scope === 'all' ? await getAllTickets(db) : await getActiveTickets(db)
+      const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id) : await getActiveTickets(db, req.user!.id)
       res.json(list.map(({ row, refs }) => rowToTicket(row, refs)))
+    } catch (err) { res.status(500).json({ error: String(err) }) }
+  })
+
+  app.post('/api/tickets/:id/read', async (req, res) => {
+    try {
+      await setTicketRead(db, req.user!.id, String(req.params.id), !!req.body?.read)
+      res.json({ ok: true })
     } catch (err) { res.status(500).json({ error: String(err) }) }
   })
 

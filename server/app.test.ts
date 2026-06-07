@@ -57,6 +57,19 @@ describe('GET /api/tickets', () => {
     const res = await request(app).get('/api/tickets')
     expect(res.status).toBe(401)
   })
+
+  it('marca leído por usuario (POST /:id/read) y GET lo refleja; 401 sin sesión', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time,modified_time) VALUES ('t9',9,'Z','Ingresado','Open',now(),'2026-01-01T00:00:00Z')")
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const before = await request(app).get('/api/tickets').set('Cookie', cookie)
+    expect(before.body.find((t: any) => t.number === '#9').read).toBe(false)
+    const m = await request(app).post('/api/tickets/t9/read').set('Cookie', cookie).send({ read: true })
+    expect(m.status).toBe(200)
+    const after = await request(app).get('/api/tickets').set('Cookie', cookie)
+    expect(after.body.find((t: any) => t.number === '#9').read).toBe(true)
+    expect((await request(app).post('/api/tickets/t9/read').send({ read: true })).status).toBe(401)
+  })
 })
 
 describe('GET /api/tickets?scope=all', () => {
