@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { TicketDetailView } from './components/TicketDetailView';
@@ -44,6 +44,9 @@ function App() {
   const [view, setView] = useState('todos');
   const base = applyBoardView(all, view, new Date());
   const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>({})
+  // Al llegar datos frescos del servidor, descarta los overrides optimistas (deja mandar al servidor,
+  // p.ej. para que la reactivación "no leído" por actividad nueva se refleje tras recargar).
+  useEffect(() => { setReadOverrides({}) }, [tickets])
   const baseRead = base.map((t) => (t.id in readOverrides ? { ...t, read: readOverrides[t.id] } : t))
   const marcarLeido = (id: string, read: boolean) => { setReadOverrides((o) => ({ ...o, [id]: read })); setTicketRead(id, read).catch(() => {}) }
   const abrirTicket = (id: string) => { setSelectedTicketId(id); marcarLeido(id, true) }
