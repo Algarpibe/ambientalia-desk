@@ -251,3 +251,11 @@ export function fetchAllActivities(filter: string, search: string): Promise<Acti
   const p = new URLSearchParams({ filter, search })
   return fetch(`/api/activities?${p.toString()}`, { credentials: 'include' }).then((r) => json<ActivityListItem[]>(r))
 }
+
+export function setTicketRead(id: string, read: boolean): Promise<void> {
+  return fetch(`/api/tickets/${id}/read`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ read }),
+  }).then(() => undefined)
+}

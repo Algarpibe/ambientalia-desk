@@ -12,7 +12,7 @@ import { TicketList } from './components/TicketList';
 import { TicketTable } from './components/TicketTable';
 import { ViewModeMenu } from './components/ViewModeMenu';
 import { useAsync } from './hooks/useAsync';
-import { fetchTickets } from './api/client';
+import { fetchTickets, setTicketRead } from './api/client';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
 import { UsersAdmin } from './components/UsersAdmin'
@@ -43,6 +43,10 @@ function App() {
   const all = tickets ?? [];
   const [view, setView] = useState('todos');
   const base = applyBoardView(all, view, new Date());
+  const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>({})
+  const baseRead = base.map((t) => (t.id in readOverrides ? { ...t, read: readOverrides[t.id] } : t))
+  const marcarLeido = (id: string, read: boolean) => { setReadOverrides((o) => ({ ...o, [id]: read })); setTicketRead(id, read).catch(() => {}) }
+  const abrirTicket = (id: string) => { setSelectedTicketId(id); marcarLeido(id, true) }
 
   if (authLoading) return <div className="h-screen flex items-center justify-center text-slate-400">Cargando…</div>
   if (!user) return <Login />
@@ -77,19 +81,19 @@ function App() {
           )}
 
           {mode === 'estado' && (
-            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
+            <KanbanBoard columns={COLUMNS} groups={groupTicketsByColumn(baseRead)} hideEmpty={hideEmpty} loading={loading} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
           )}
           {mode === 'prioridad' && (
-            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(base)} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
+            <KanbanBoard columns={PRIORITY_COLUMNS} groups={groupByPriority(baseRead)} hideEmpty={hideEmpty} loading={loading} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
           )}
           {mode === 'cuenta-regresiva' && (
-            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(base, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
+            <KanbanBoard columns={DUEDATE_COLUMNS} groups={groupByDueDate(baseRead, new Date())} hideEmpty={hideEmpty} loading={loading} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
           )}
           {(mode === 'clasica' || mode === 'compacta') && (
-            <TicketList tickets={base} dense={mode === 'compacta'} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
+            <TicketList tickets={baseRead} dense={mode === 'compacta'} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
           )}
           {mode === 'tabla' && (
-            <TicketTable tickets={base} onSelect={setSelectedTicketId} onOpenCliente={abrirCliente} />
+            <TicketTable tickets={baseRead} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
           )}
         </div>
       </div>
