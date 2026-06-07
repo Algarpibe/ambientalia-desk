@@ -1,11 +1,13 @@
 import React from 'react';
 import type { Ticket } from '../data/mockData';
 import { ClienteLink, type ClienteKind } from './ClienteLink'
+import { ReadToggle } from './ReadToggle'
 
 interface TicketCardProps {
     ticket: Ticket;
     onClick?: () => void;
     onOpenCliente?: (kind: ClienteKind, id: string) => void;
+    onToggleRead?: (id: string, read: boolean) => void;
 }
 
 const statusColorMap: Record<string, { bg: string, text: string, label: string }> = {
@@ -19,7 +21,7 @@ const statusColorMap: Record<string, { bg: string, text: string, label: string }
     'ESPERA_REPUESTOS': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'En Espera de Repues...' }
 };
 
-export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenCliente }) => {
+export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenCliente, onToggleRead }) => {
     const statusStyle = statusColorMap[ticket.status] || { bg: 'bg-slate-100', text: 'text-slate-600', label: ticket.status };
 
     return (
@@ -29,7 +31,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0 pr-8">
-                    <h4 className="text-[12px] font-bold text-slate-800 dark:text-slate-100 leading-tight mb-1">
+                    <h4 className={`text-[12px] leading-tight mb-1 dark:text-slate-100 ${ticket.read ? 'font-normal text-slate-600' : 'font-bold text-slate-800'}`}>
                         {ticket.title}
                     </h4>
                     <div className="flex flex-col gap-1">
@@ -73,6 +75,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <ReadToggle read={ticket.read} onToggle={(r) => onToggleRead?.(ticket.id, r)} className="text-[16px]" />
                     <button className="text-slate-400 hover:text-slate-600">
                         <span className="material-symbols-outlined text-[16px]">mail</span>
                     </button>

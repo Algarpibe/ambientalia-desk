@@ -1,5 +1,6 @@
 import type { Ticket } from '../../shared/types'
 import { ClienteLink, type ClienteKind } from './ClienteLink'
+import { ReadToggle } from './ReadToggle'
 
 function fmtDate(iso?: string | null): string {
   if (!iso) return '—'
@@ -9,7 +10,7 @@ function fmtDate(iso?: string | null): string {
 
 const COLS = ['#', 'Asunto', 'Cliente', 'Contacto', 'Estado', 'Prioridad', 'Propietario', 'Creado', 'Vencimiento', 'Días entrega', 'Canal']
 
-export function TicketTable({ tickets, onSelect, onOpenCliente }: { tickets: Ticket[]; onSelect: (id: string) => void; onOpenCliente?: (kind: ClienteKind, id: string) => void }) {
+export function TicketTable({ tickets, onSelect, onOpenCliente, onToggleRead }: { tickets: Ticket[]; onSelect: (id: string) => void; onOpenCliente?: (kind: ClienteKind, id: string) => void; onToggleRead?: (id: string, read: boolean) => void }) {
   return (
     <div className="flex-1 overflow-auto bg-white">
       <table className="w-full text-[12px]">
@@ -22,7 +23,10 @@ export function TicketTable({ tickets, onSelect, onOpenCliente }: { tickets: Tic
           {tickets.map((t) => (
             <tr key={t.id} onClick={() => onSelect(t.id)} className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer">
               <td className="px-3 py-2 font-bold text-slate-400 whitespace-nowrap">{t.number}</td>
-              <td className="px-3 py-2 text-slate-800 max-w-[360px] truncate">{t.title}</td>
+              <td className="px-3 py-2 max-w-[360px] truncate">
+                <ReadToggle read={t.read} onToggle={(r) => onToggleRead?.(t.id, r)} className="text-[15px] align-middle mr-1" />
+                <span className={t.read ? 'text-slate-600' : 'font-bold text-slate-800'}>{t.title}</span>
+              </td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.company ? <ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /> : '—'}</td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.contactName ? <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} /> : '—'}</td>
               <td className="px-3 py-2 whitespace-nowrap"><span className="text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{t.status}</span></td>
