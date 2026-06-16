@@ -144,3 +144,15 @@ DROP TABLE rep_test_accounts, rep_test_tickets;
 Con esos resultados decidimos **go/no-go** y abrimos el **brainstorming → spec → plan** de las fases de código
 (sync único en el hub, esquema `zoho` replicado en `desk-db`, vistas-contrato, write-back CQRS, matviews de
 Análisis). Ver decisión en memoria `zoho-hub-arquitectura`.
+
+---
+
+## Resultado del spike (2026-06-16) — GO ✅
+- Postgres **v17.10** en ambos servicios (EasyPanel).
+- `wal_level` → `logical` vía `ALTER SYSTEM SET wal_level=logical` + **Reiniciar** el servicio del hub (no hizo falta tocar la imagen/args).
+- Suscripción desde `desk` al `zoho-hub` por la red interna del proyecto: **OK** (host `ambientalia_project_zoho-hub-db`).
+- Copia inicial **2/2**; streaming en vivo con **`replay_lag` ≈ 0**.
+- **Carga 50k:** `replay_lag` vacío, `desk` llegó a **50.002** casi sin demora.
+- **DDL drift:** añadir columna solo en el hub **atascó** el apply (`apply_error_count` = 9) y **se recuperó solo** al aplicar la columna en el suscriptor → **regla: DDL aditivo primero en suscriptores, luego en el hub**.
+- Notas EasyPanel: "Postgres Client" abre psql en la base `postgres` → `\c <base>` antes de operar; `DROP SUBSCRIPTION` limpia el slot del publisher si hay conexión.
+- Objetos de prueba eliminados. **Veredicto: viable y estable → se procede con la Opción D.**
