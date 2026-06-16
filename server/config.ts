@@ -10,6 +10,9 @@ export interface AppConfig {
   port: number
   databaseUrl: string
   syncIntervalMs: number
+  syncContacts: boolean
+  syncActivities: boolean
+  syncBooks: boolean
   adminToken: string   // protege endpoints /api/admin/* (vacío = deshabilitados)
   adminEmail: string     // bootstrap del primer admin (vacío = no se siembra)
   adminPassword: string
@@ -42,6 +45,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
     port: env.PORT ? Number(env.PORT) : 3001,
     databaseUrl: required(env, 'DATABASE_URL'),
     syncIntervalMs: env.SYNC_INTERVAL_MS ? Number(env.SYNC_INTERVAL_MS) : 180000,
+    syncContacts: env.SYNC_CONTACTS !== 'false',
+    syncActivities: env.SYNC_ACTIVITIES !== 'false',
+    syncBooks: env.SYNC_BOOKS !== 'false',
     adminToken: env.ADMIN_TOKEN || '',
     adminEmail: env.ADMIN_EMAIL || '',
     adminPassword: env.ADMIN_PASSWORD || '',

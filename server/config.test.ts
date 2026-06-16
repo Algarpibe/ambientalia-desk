@@ -44,4 +44,15 @@ describe('loadConfig', () => {
     expect(c.booksOrgId).toBe('714421387')
     expect(c.booksApiDomain).toBe('www.zohoapis.com')
   })
+
+  it('flags de sync local: default true; se desactivan con "false"', () => {
+    const def = loadConfig(base)
+    expect(def.syncContacts).toBe(true)
+    expect(def.syncActivities).toBe(true)
+    expect(def.syncBooks).toBe(true)
+    const off = loadConfig({ ...base, SYNC_CONTACTS: 'false', SYNC_ACTIVITIES: 'false', SYNC_BOOKS: 'false' })
+    expect(off.syncContacts).toBe(false)
+    expect(off.syncActivities).toBe(false)
+    expect(off.syncBooks).toBe(false)
+  })
 })
