@@ -1,7 +1,14 @@
 # Diseño — SP2 (incremental): réplica de datos de referencia hub → desk
 
+> **CORRECCIÓN (2026-06-16, durante el cutover):** el alcance real es de **3 tablas**: `activities`, `clients`,
+> `sales_orders`. **`contacts` se EXCLUYÓ** porque `syncRecent` la escribe vía `persistTicket → ensureContact →
+> upsertContact` (sync.ts:51) — no era "solo lectura desde el app" como suponía este spec. Replicar `contacts`
+> chocaría con esas escrituras (divergencia / PK duplicada al aparecer un contacto nuevo). `contacts` se mantiene
+> en **sync local** (flag `SYNC_CONTACTS` vuelve a `true`). Para replicarla en el futuro habría que **gatear
+> `ensureContact`** (no escribir `contacts` localmente cuando esté replicada) — anotado como mejora futura.
+
 **Fecha:** 2026-06-06
-**Estado:** Aprobado para planificación
+**Estado:** Implementado (cutover 2026-06-16, alcance corregido a 3 tablas)
 **Contexto:** Segundo sub-proyecto de la migración a la Opción D. El hub (`zoho-hub-db`) ya está poblado y
 autoactualizado por `zoho-hub-sync` (SP1). Ahora la **Desk app** deja de sincronizar localmente las tablas de
 **solo-lectura** que tienen sync separable y pasa a **leerlas de una réplica** del hub.
