@@ -18,5 +18,7 @@ COPY server ./server
 COPY shared ./shared
 COPY --from=build /app/dist ./dist
 EXPOSE 3001
-# El server lee env vars de EasyPanel (DATABASE_URL, ZOHO_*, ENABLE_WRITES, PORT)
-CMD ["npx", "tsx", "server/index.ts"]
+# El server lee env vars de EasyPanel (DATABASE_URL, ZOHO_*, ENABLE_WRITES, PORT).
+# El entrypoint se elige por APP_ENTRYPOINT (default index.ts = la app web/API).
+# El worker zoho-hub-sync usa el MISMO repo/imagen con APP_ENTRYPOINT=hub-sync.ts.
+CMD ["sh", "-c", "npx tsx \"server/${APP_ENTRYPOINT:-index.ts}\""]
