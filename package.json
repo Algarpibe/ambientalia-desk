@@ -9,6 +9,7 @@
     "dev:api": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
     "start": "cross-env NODE_ENV=production tsx server/index.ts",
+    "start:hub-sync": "cross-env NODE_ENV=production tsx server/hub-sync.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
