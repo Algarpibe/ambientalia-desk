@@ -75,27 +75,30 @@ async function main() {
     })
     .catch((e) => console.error('Backfill falló:', e))
 
-  sync.syncActivities()
-    .then((n) => console.log(`Actividades: sync inicial (${n})`))
-    .catch((e) => console.error('Sync actividades falló:', e))
+  if (config.syncActivities) {
+    sync.syncActivities()
+      .then((n) => console.log(`Actividades: sync inicial (${n})`))
+      .catch((e) => console.error('Sync actividades falló:', e))
+  }
 
-  sync.syncContacts()
-    .then((n) => console.log(`Contactos: sync inicial (${n})`))
-    .catch((e) => console.error('Sync contactos falló:', e))
+  if (config.syncContacts) {
+    sync.syncContacts()
+      .then((n) => console.log(`Contactos: sync inicial (${n})`))
+      .catch((e) => console.error('Sync contactos falló:', e))
+  }
 
   let syncing = false
   setInterval(() => {
     if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
     syncing = true
-    sync
-      .syncRecent()
-      .then(() => sync.syncActivities())
-      .then(() => sync.syncContacts())
-      .catch((e) => console.error('Sync incremental falló:', e))
+    let p: Promise<unknown> = sync.syncRecent()
+    if (config.syncActivities) p = p.then(() => sync.syncActivities())
+    if (config.syncContacts) p = p.then(() => sync.syncContacts())
+    p.catch((e) => console.error('Sync incremental falló:', e))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)
 
-  if (config.booksRefreshToken && config.booksOrgId) {
+  if (config.booksRefreshToken && config.booksOrgId && config.syncBooks) {
     const { booksFetch } = createBooksClient({ config })
     const booksSync = createBooksSync({ booksFetch, db: pool, config })
     maxLastModified(pool, 'clients')
