@@ -264,3 +264,11 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
   re-sincronizar. Opción futura: re-sync de conversaciones en cada apertura o por webhook.
 - **Webhooks de Zoho Desk:** para casi-tiempo-real (disparar `syncTicket` en cambios) en vez
   del polling cada 3 min (`syncRecent`).
+- **Independizar `zoho-hub-sync` a su propio proyecto (repo/carpeta):** hoy el worker `zoho-hub-sync` se
+  despliega desde el **mismo repo** que la Desk app (`Algarpibe/ambientalia-desk`) usando `APP_ENTRYPOINT=hub-sync.ts`;
+  comparte todo el código de sync (`server/sync.ts`, `server/hubSync.ts`, `server/books/*`, `zohoClient`,
+  `tokenManager`, mappers, `schema.sql`). **Objetivo futuro:** separarlo a nivel de archivos/carpetas en su
+  **propio proyecto/repo** (o monorepo con paquete compartido), desacoplando los dos despliegues. Implica extraer
+  el **motor de sync Zoho** (mappers + cliente Zoho/Books + tokenManager + esquema de las tablas Zoho + lógica de
+  sync) a un **paquete compartido** que ambos importen, o duplicarlo en el nuevo repo. Hacerlo cuando el hub madure
+  (p.ej. al sumar CRM o más consumidores). Relacionado con la arquitectura zoho-hub (Opción D).
