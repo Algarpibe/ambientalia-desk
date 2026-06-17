@@ -10,7 +10,7 @@
     "dev:api": "tsx watch apps/desk/server/index.ts",
     "build": "npm --workspace @ambientalia/desk run build",
     "start": "cross-env NODE_ENV=production tsx apps/desk/server/index.ts",
-    "start:hub-sync": "cross-env NODE_ENV=production tsx apps/desk/server/hub-sync.ts",
+    "start:hub-sync": "cross-env NODE_ENV=production tsx apps/hub-sync/src/hub-sync.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
