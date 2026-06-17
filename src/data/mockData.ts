@@ -1,4 +1,4 @@
-import type { Ticket } from '../../shared/types'
+import type { Ticket } from '@ambientalia/shared'
 export type { Ticket }
 
 export const TICKETS: Ticket[] = [

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { TicketDetail } from '../../shared/types';
+import type { TicketDetail } from '@ambientalia/shared';
 
 /** Formatea "2026-05-19" o ISO a "19 May 2026" (es-CO). Vacío → null. */
 function fmtDate(v?: string | null): string | null {

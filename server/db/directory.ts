@@ -1,5 +1,5 @@
 import type { Queryable } from './migrate'
-import type { ContactLite, AccountLite, ContactDetail, AccountDetail, TicketLite } from '../../shared/types'
+import type { ContactLite, AccountLite, ContactDetail, AccountDetail, TicketLite } from '@ambientalia/shared'
 
 export async function getContacts(db: Queryable): Promise<ContactLite[]> {
   const r = await db.query(

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { ContactDetail, AccountDetail, TicketLite } from '../../shared/types'
+import type { ContactDetail, AccountDetail, TicketLite } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { useResizable } from '../hooks/useResizable'
 import { fetchContactDetail, fetchAccountDetail } from '../api/client'

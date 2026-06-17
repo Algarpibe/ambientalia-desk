@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { Queryable } from './migrate'
-import type { HistoryEvent } from '../../shared/types'
-import { mapHistoryEvent } from '../../shared/historyMap'
+import type { HistoryEvent } from '@ambientalia/shared'
+import { mapHistoryEvent } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 

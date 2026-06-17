@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { groupTicketsByColumn, visibleColumns, groupByPriority, groupByDueDate } from './board'
-import type { Ticket } from '../shared/types'
+import type { Ticket } from '@ambientalia/shared'
 
 const t = (id: string, status: string): Ticket => ({
   id, number: `#${id}`, title: 't', company: 'c', time: '', status,

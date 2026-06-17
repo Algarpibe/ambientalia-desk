@@ -1,4 +1,4 @@
-import type { Activity } from '../../shared/types'
+import type { Activity } from '@ambientalia/shared'
 import { traducirEstado, traducirPrioridad, estadoBadgeClass } from '../lib/actividades'
 
 function fmtDate(s: string | null): string {

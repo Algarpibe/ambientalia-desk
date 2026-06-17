@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import DOMPurify from 'dompurify';
-import type { TicketDetail, Message, Ticket, Activity } from '../../shared/types';
+import type { TicketDetail, Message, Ticket, Activity } from '@ambientalia/shared';
 import { useAsync } from '../hooks/useAsync';
 import { useResizable } from '../hooks/useResizable';
 import { fetchTicket, fetchConversations, replyTicket, fetchActivities } from '../api/client';

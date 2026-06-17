@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AREAS } from '../../shared/transitions'
+import { AREAS } from '@ambientalia/shared'
 import { listRoles, createRole, updateRole, type Role } from '../api/client'
 
 export function RolesAdmin({ onClose }: { onClose: () => void }) {

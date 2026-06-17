@@ -1,5 +1,5 @@
 import { PROMOTED_COLUMNS, type TicketRow, type AccountRow, type ContactRow, type AgentRow, type ConversationRow, type AttachmentRow, type ActivityRow } from './rows'
-import { extractServiceCode } from '../../shared/ticketCreate'
+import { extractServiceCode } from '@ambientalia/shared'
 
 function toBool(v: unknown): boolean | null {
   if (v === undefined || v === null || v === '') return null
@@ -96,7 +96,7 @@ export function attachmentRowsFrom(conv: any, ticketId: string): AttachmentRow[]
   }))
 }
 
-import type { Ticket, TicketDetail, Message, Attachment, Activity } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, Attachment, Activity } from '@ambientalia/shared'
 
 export function activityRowFromZoho(raw: any): ActivityRow {
   const owner = raw.assignee ?? raw.owner ?? null

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
-import type { Resolution, ResolutionAttachment } from '../../shared/types'
+import type { Resolution, ResolutionAttachment } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchResolution, saveResolution, uploadResolutionImage, deleteResolutionImage, deleteResolution } from '../api/client'
 

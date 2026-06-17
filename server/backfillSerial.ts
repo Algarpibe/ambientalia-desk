@@ -1,5 +1,5 @@
 import type { Queryable } from './db/migrate'
-import { extractServiceCode } from '../shared/ticketCreate'
+import { extractServiceCode } from '@ambientalia/shared'
 
 export async function backfillSerialFromSubject(db: Queryable): Promise<{ updated: number }> {
   const r = await db.query(

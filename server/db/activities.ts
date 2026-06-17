@@ -1,6 +1,6 @@
 import type { Queryable } from './migrate'
 import type { ActivityRow } from './rows'
-import type { Activity, ActivityListItem } from '../../shared/types'
+import type { Activity, ActivityListItem } from '@ambientalia/shared'
 import { rowToActivity } from './mappers'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)

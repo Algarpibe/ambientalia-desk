@@ -1,4 +1,4 @@
-import type { Ticket } from '../../shared/types'
+import type { Ticket } from '@ambientalia/shared'
 
 export interface BoardViewDef { key: string; label: string }
 

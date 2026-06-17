@@ -1,5 +1,5 @@
-import type { Ticket } from '../shared/types'
-import { COLUMNS, columnForStatus } from '../shared/columns'
+import type { Ticket } from '@ambientalia/shared'
+import { COLUMNS, columnForStatus } from '@ambientalia/shared'
 
 export type ColumnGroups = Record<string, Ticket[]>
 

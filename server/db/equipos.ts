@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from './migrate'
 import type { EquipoRow } from './seedEquipos'
-import type { EquipoLite, EquipoFull } from '../../shared/types'
-import type { EquipoHistorial, HistorialTicket, HistorialTransition } from '../../shared/types'
+import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
+import type { EquipoHistorial, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 

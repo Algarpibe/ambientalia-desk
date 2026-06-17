@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem } from '../../shared/types'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {

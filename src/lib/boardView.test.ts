@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { Ticket } from '../../shared/types'
+import type { Ticket } from '@ambientalia/shared'
 import { applyBoardView, viewLabel, FUNCTIONAL_BY_LABEL } from './boardView'
 
 const BASE = { id: 'x', number: '#1', subject: 's', status: 'Ingresado', statusType: 'Open', dueDate: null }

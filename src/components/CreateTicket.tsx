@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ClientLite, SalesOrderLite, EquipoLite } from '../../shared/types'
-import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '../../shared/ticketCreate'
+import type { ClientLite, SalesOrderLite, EquipoLite } from '@ambientalia/shared'
+import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
 import { searchClients, searchSalesOrders, searchEquipos, createTicket } from '../api/client'
 
 export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {

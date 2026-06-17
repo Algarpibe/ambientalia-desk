@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { TicketDetailView } from './components/TicketDetailView';
-import { COLUMNS } from '../shared/columns';
+import { COLUMNS } from '@ambientalia/shared';
 import { groupTicketsByColumn, groupByPriority, groupByDueDate, PRIORITY_COLUMNS, DUEDATE_COLUMNS } from './board';
 import { applyBoardView, viewLabel } from './lib/boardView';
 import { useHideEmptyColumns } from './boardSettings';

@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify'
-import type { HistoryEvent } from '../../shared/types'
+import type { HistoryEvent } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchHistory } from '../api/client'
 

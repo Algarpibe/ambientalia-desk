@@ -1,4 +1,4 @@
-import type { EquipoHistorial } from '../../shared/types'
+import type { EquipoHistorial } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchEquipoHistorial } from '../api/client'
 

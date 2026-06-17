@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '../db/migrate'
-import type { UserPublic } from '../../shared/types'
-import { AREAS } from '../../shared/transitions'
+import type { UserPublic } from '@ambientalia/shared'
+import { AREAS } from '@ambientalia/shared'
 
 /** Tipo interno para verificar credenciales (incluye el hash); NO se devuelve al cliente. */
 export interface UserWithHash {

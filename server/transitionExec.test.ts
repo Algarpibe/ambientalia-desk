@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildTransitionPlan } from './transitionExec'
-import { transitionById } from '../shared/transitions'
+import { transitionById } from '@ambientalia/shared'
 
 describe('buildTransitionPlan', () => {
   it('mapea a columnas tipadas + comentario para "Habilitar Servicio"', () => {

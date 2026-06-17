@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ActivityListItem } from '../../shared/types'
+import type { ActivityListItem } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchAllActivities } from '../api/client'
 import { traducirEstado, traducirPrioridad, estadoBadgeClass } from '../lib/actividades'

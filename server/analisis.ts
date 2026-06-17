@@ -1,5 +1,5 @@
 import type { Queryable } from './db/migrate'
-import type { AnalisisRow } from '../shared/types'
+import type { AnalisisRow } from '@ambientalia/shared'
 
 function toIso(v: unknown): string | null {
   if (v == null) return null

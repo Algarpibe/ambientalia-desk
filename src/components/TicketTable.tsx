@@ -1,4 +1,4 @@
-import type { Ticket } from '../../shared/types'
+import type { Ticket } from '@ambientalia/shared'
 import { ClienteLink, type ClienteKind } from './ClienteLink'
 import { ReadToggle } from './ReadToggle'
 

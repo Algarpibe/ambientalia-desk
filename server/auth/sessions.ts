@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { Queryable } from '../db/migrate'
-import type { UserPublic } from '../../shared/types'
+import type { UserPublic } from '@ambientalia/shared'
 import { rowToPublicUser } from './users'
 
 const SESSION_DAYS = 30

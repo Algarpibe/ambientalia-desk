@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { transitionsForStatus, type Transition, type TransitionField } from '../../shared/transitions';
+import { transitionsForStatus, type Transition, type TransitionField } from '@ambientalia/shared';
 import { executeTransition } from '../api/client';
 import { useAuth } from '../auth/AuthContext'
-import { canExecuteTransition } from '../../shared/permissions'
+import { canExecuteTransition } from '@ambientalia/shared'
 
 /** Renderiza los botones de transición válidos para el estado actual y su formulario. */
 export function TransitionPanel({ ticketId, status, onDone }: { ticketId: string; status: string; onDone: () => void }) {

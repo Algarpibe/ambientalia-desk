@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { EquipoFull, ClientLite } from '../../shared/types'
+import type { EquipoFull, ClientLite } from '@ambientalia/shared'
 import { listEquiposManage, equipoFacets, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients, type EquipoFacets } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { HojaDeVida } from './HojaDeVida'

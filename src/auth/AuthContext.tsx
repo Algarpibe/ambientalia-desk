@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { UserPublic } from '../../shared/types'
+import type { UserPublic } from '@ambientalia/shared'
 import { authMe, authLogin, authLogout } from '../api/client'
 
 interface AuthState {

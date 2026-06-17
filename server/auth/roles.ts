@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '../db/migrate'
-import { AREAS } from '../../shared/transitions'
+import { AREAS } from '@ambientalia/shared'
 
 export interface Role { id: string; name: string; areas: string[]; active: boolean }
 

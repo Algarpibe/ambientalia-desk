@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Analisis as AnalisisData, AnalisisPunto, AnalisisMes } from '../../shared/types'
+import type { Analisis as AnalisisData, AnalisisPunto, AnalisisMes } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchAnalisis } from '../api/client'
 

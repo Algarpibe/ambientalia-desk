@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { UserPublic } from '../../shared/types'
+import type { UserPublic } from '@ambientalia/shared'
 import { listUsers, createUser, updateUser, listRoles, type Role } from '../api/client'
 
 export function UsersAdmin({ onClose }: { onClose: () => void }) {

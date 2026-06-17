@@ -1,6 +1,6 @@
 import type { Queryable } from '../db/migrate'
 import type { ClientRow, SalesOrderRow } from './mappers'
-import type { ClientLite, SalesOrderLite } from '../../shared/types'
+import type { ClientLite, SalesOrderLite } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
