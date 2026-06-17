@@ -6,8 +6,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@ambientalia/shared': fileURLToPath(new URL('./packages/shared/src/index.ts', import.meta.url)),
+      '@ambientalia/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
     },
+  },
+  build: {
+    outDir: fileURLToPath(new URL('../../dist', import.meta.url)),
+    emptyOutDir: true,
   },
   server: {
     proxy: {

@@ -10,8 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: [
-      'server/**/*.test.ts',
-      'src/**/*.test.ts',
+      'apps/**/*.test.ts',
       'packages/**/*.test.ts',
     ],
   },
