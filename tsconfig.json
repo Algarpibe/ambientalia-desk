@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./apps/desk/tsconfig.app.json" },
-    { "path": "./apps/desk/tsconfig.node.json" }
+    { "path": "./apps/desk/tsconfig.node.json" },
+    { "path": "./apps/hub-sync" }
   ]
 }
