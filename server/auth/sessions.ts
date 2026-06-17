@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import type { Queryable } from '../db/migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { UserPublic } from '@ambientalia/shared'
 import { rowToPublicUser } from './users'
 

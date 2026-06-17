@@ -1,4 +1,4 @@
-import type { Queryable } from './migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { ContactLite, AccountLite, ContactDetail, AccountDetail, TicketLite } from '@ambientalia/shared'
 
 export async function getContacts(db: Queryable): Promise<ContactLite[]> {

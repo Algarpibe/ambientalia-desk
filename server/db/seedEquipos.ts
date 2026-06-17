@@ -39,7 +39,7 @@ export function parseEquiposCsv(text: string): EquipoRow[] {
   return out
 }
 
-import type { Queryable } from './migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { upsertEquipo } from './equipos'
 
 export async function seedEquipos(db: Queryable, csvText: string): Promise<number> {

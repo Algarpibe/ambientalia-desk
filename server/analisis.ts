@@ -1,4 +1,4 @@
-import type { Queryable } from './db/migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AnalisisRow } from '@ambientalia/shared'
 
 function toIso(v: unknown): string | null {

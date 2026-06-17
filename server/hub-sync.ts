@@ -1,11 +1,11 @@
 import 'dotenv/config'
-import { loadConfig } from './config'
-import { createTokenManager } from './tokenManager'
-import { createZohoClient } from './zohoClient'
-import { createPool } from './db/pool'
-import { createSync } from './sync'
-import { createBooksClient } from './books/booksClient'
-import { createBooksSync, type BooksSync } from './books/sync'
+import { loadConfig } from '@ambientalia/zoho-sync/config'
+import { createTokenManager } from '@ambientalia/zoho-sync/tokenManager'
+import { createZohoClient } from '@ambientalia/zoho-sync/zohoClient'
+import { createPool } from '@ambientalia/zoho-sync/db/pool'
+import { createSync } from '@ambientalia/zoho-sync/sync'
+import { createBooksClient } from '@ambientalia/zoho-sync/books/booksClient'
+import { createBooksSync, type BooksSync } from '@ambientalia/zoho-sync/books/sync'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
 
 const config = loadConfig()

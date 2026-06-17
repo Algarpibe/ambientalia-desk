@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import type { Queryable } from '../db/migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { UserPublic } from '@ambientalia/shared'
 import { getSessionUser } from './sessions'
 

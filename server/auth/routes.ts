@@ -1,5 +1,5 @@
 import type { Express } from 'express'
-import type { Queryable } from '../db/migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { hashPassword, verifyPassword } from './passwords'
 import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countActiveAdmins } from './users'
 import { createRole, listRoles, getRole, updateRole } from './roles'

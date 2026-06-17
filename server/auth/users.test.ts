@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from '../db/migrate'
+import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countUsers } from './users'
 import { createRole } from './roles'
 

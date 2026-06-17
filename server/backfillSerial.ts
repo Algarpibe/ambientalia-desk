@@ -1,4 +1,4 @@
-import type { Queryable } from './db/migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { extractServiceCode } from '@ambientalia/shared'
 
 export async function backfillSerialFromSubject(db: Queryable): Promise<{ updated: number }> {

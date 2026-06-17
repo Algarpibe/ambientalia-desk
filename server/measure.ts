@@ -1,4 +1,4 @@
-import type { AppConfig } from './config'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'
 
 interface Deps {
   zohoFetch: (path: string, init?: RequestInit) => Promise<Response>

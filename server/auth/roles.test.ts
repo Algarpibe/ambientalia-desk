@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from '../db/migrate'
+import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createRole, listRoles, getRole, updateRole } from './roles'
 
 let db: Queryable

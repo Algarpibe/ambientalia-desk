@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Queryable } from './migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { EquipoRow } from './seedEquipos'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EquipoHistorial, HistorialTicket, HistorialTransition } from '@ambientalia/shared'

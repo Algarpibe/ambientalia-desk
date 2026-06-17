@@ -1,5 +1,5 @@
 import type { Transition } from '@ambientalia/shared'
-import { PROMOTED_COLUMNS } from './db/rows'
+import { PROMOTED_COLUMNS } from '@ambientalia/zoho-sync/db/rows'
 
 const LABEL_TO_COL = new Map(PROMOTED_COLUMNS.map((p) => [p.label, p]))
 const CLOSED_STATUSES = new Set(['Finalizado'])

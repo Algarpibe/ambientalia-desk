@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from '../db/migrate'
+import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createApp } from '../app'
 import { createUser } from './users'
 import { hashPassword } from './passwords'
-import type { AppConfig } from '../config'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'
 
 let db: Queryable
 beforeEach(async () => {

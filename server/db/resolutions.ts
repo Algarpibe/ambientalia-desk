@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import sanitizeHtml from 'sanitize-html'
-import type { Queryable } from './migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Resolution, ResolutionAttachment } from '@ambientalia/shared'
 
 export async function saveResolution(db: Queryable, ticketId: string, html: string, by: string | null): Promise<void> {

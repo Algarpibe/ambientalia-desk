@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from './db/migrate'
+import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
-import type { Sync } from './sync'
-import type { BooksSync } from './books/sync'
+import type { Sync } from '@ambientalia/zoho-sync/sync'
+import type { BooksSync } from '@ambientalia/zoho-sync/books/sync'
 
 let db: Queryable
 beforeEach(() => { const pg = newDb().adapters.createPg(); db = new pg.Pool() })

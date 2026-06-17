@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseEquiposCsv } from './seedEquipos'
 import { newDb } from 'pg-mem'
-import { migrate } from './migrate'
+import { migrate } from '@ambientalia/zoho-sync/db/migrate'
 import { seedEquipos } from './seedEquipos'
 import { countEquipos } from './equipos'
 

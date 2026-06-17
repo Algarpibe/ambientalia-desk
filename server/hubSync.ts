@@ -1,8 +1,8 @@
-import { migrate, reseedTicketNumber, type Queryable } from './db/migrate'
-import { countTickets } from './db/repo'
-import { maxLastModified } from './books/repo'
-import type { Sync } from './sync'
-import type { BooksSync } from './books/sync'
+import { migrate, reseedTicketNumber, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { countTickets } from '@ambientalia/zoho-sync/db/repo'
+import { maxLastModified } from '@ambientalia/zoho-sync/books/repo'
+import type { Sync } from '@ambientalia/zoho-sync/sync'
+import type { BooksSync } from '@ambientalia/zoho-sync/books/sync'
 
 /** Migra el hub y hace el backfill inicial solo si está vacío. Idempotente entre reinicios. */
 export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksSync: BooksSync | null }): Promise<void> {

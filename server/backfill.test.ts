@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createDetailBackfiller } from './backfill'
-import type { AppConfig } from './config'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'
 
 const config = { departmentId: 'DEP' } as AppConfig
 

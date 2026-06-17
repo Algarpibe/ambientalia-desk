@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from './migrate'
+import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { parseEquiposCsv } from './seedEquipos'
 import { upsertEquipo, searchEquipos, getEquipo, countEquipos } from './equipos'
 import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './equipos'
