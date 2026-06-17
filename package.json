@@ -1,6 +1,7 @@
 {
   "name": "desk-ambientalia",
   "private": true,
+  "workspaces": ["packages/*", "apps/*"],
   "version": "0.1.0",
   "type": "module",
   "scripts": {
