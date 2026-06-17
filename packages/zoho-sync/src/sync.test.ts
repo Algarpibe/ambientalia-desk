@@ -26,4 +26,15 @@ describe('sync (tipado)', () => {
     expect(r!.serial).toBe('SR1')
     expect(r!.number).toBe(1)
   })
+
+  it('syncRecent aísla un ticket que colisiona y persiste el resto', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('pre',5,'p','Ingresado')")
+    const zohoFetch = vi.fn()
+      .mockResolvedValueOnce(page([z('A', 5), z('B', 6)])) // A choca (number 5 ya existe), B ok
+      .mockResolvedValue(page([]))
+    const sync = createSync({ zohoFetch, db, config })
+    await expect(sync.syncRecent()).resolves.toBeDefined() // NO lanza
+    expect(await getTicketRow(db, 'B')).not.toBeNull()     // el otro persistió
+    expect(await getTicketRow(db, 'A')).toBeNull()         // el que colisiona, no
+  })
 })

@@ -65,6 +65,16 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     await upsertTicket(db, row)
   }
 
+  /** Persiste cada item aislando fallos: uno malo no aborta el lote. Devuelve cuántos persistieron OK. */
+  async function persistEach(items: any[]): Promise<number> {
+    let ok = 0
+    for (const t of items) {
+      try { await persistTicket(t); ok++ }
+      catch (e: any) { console.error(`persistTicket(${t?.id ?? '?'}) falló:`, String(e?.detail ?? e?.message ?? e)) }
+    }
+    return ok
+  }
+
   async function fetchTicketPage(from: number, sortBy = 'createdTime'): Promise<any[]> {
     const params = new URLSearchParams({ departmentId: config.departmentId, from: String(from), limit: String(PAGE_SIZE), sortBy, include: 'contacts,assignee' })
     const res = await zohoFetch(`/tickets?${params.toString()}`)
@@ -78,7 +88,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
       for (;;) {
         const pageItems = await fetchTicketPage(from)
         if (pageItems.length === 0) break
-        for (const t of pageItems) await persistTicket(t)
+        await persistEach(pageItems)
         total += pageItems.length
         if (pageItems.length < PAGE_SIZE) break
         from += PAGE_SIZE
@@ -93,7 +103,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         if (!res.ok) throw new Error(`Zoho /tickets/archivedTickets ${res.status}`)
         const items = ((await readData(res)).data ?? []) as any[]
         if (items.length === 0) break
-        for (const t of items) await persistTicket(t)
+        await persistEach(items)
         total += items.length
         if (items.length < PAGE_SIZE) break
         from += PAGE_SIZE
@@ -102,7 +112,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     },
     async syncRecent(): Promise<number> {
       const pageItems = await fetchTicketPage(1, '-recentThread')
-      for (const t of pageItems) await persistTicket(t)
+      await persistEach(pageItems)
       return pageItems.length
     },
     async syncTicket(id: string): Promise<void> {
