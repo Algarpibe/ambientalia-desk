@@ -1,7 +1,10 @@
 {
   "name": "desk-ambientalia",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -14,7 +17,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
