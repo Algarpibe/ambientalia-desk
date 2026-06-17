@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, reseedTicketNumber, type Queryable } from './migrate'
+import { migrate, reseedTicketNumber, APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
+import { nextTicketNumber } from './repo'
 
 async function freshDb(): Promise<Queryable> {
   const pg = newDb().adapters.createPg()
@@ -21,14 +22,16 @@ describe('migrate', () => {
     }
   })
 
-  it('reseedTicketNumber deja la secuencia en el máximo number', async () => {
+  it('reseedTicketNumber numera la app desde la base alta e ignora números de Zoho', async () => {
     const db = await freshDb()
-    await db.query(
-      "INSERT INTO tickets (id, number, status) VALUES ('a', 953, 'Ingresado')",
-    )
+    // un ticket de Zoho con número alto NO debe arrastrar la secuencia de la app
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('z', 958, 'Ingresado', false)")
     await reseedTicketNumber(db)
-    const res = await db.query("SELECT nextval('ticket_number_seq') AS n")
-    expect(Number(res.rows[0].n)).toBe(954)
+    expect(await nextTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE) // 1.000.000, no 959
+    // con un ticket de app existente, continúa desde su número
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('app1', 1000005, 'Ingresado', true)")
+    await reseedTicketNumber(db)
+    expect(await nextTicketNumber(db)).toBe(1000006)
   })
 
   it('tickets tiene columnas client_id y salesorder_id (Subsistema C)', async () => {

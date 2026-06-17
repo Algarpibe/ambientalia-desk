@@ -24,9 +24,12 @@ export async function migrate(db: Queryable): Promise<void> {
   }
 }
 
-/** Re-siembra la secuencia de numeración al máximo `number` existente (mínimo 1: setval no acepta 0). */
+/** Base del espacio de numeración de tickets creados por la app (separado del de Zoho). */
+export const APP_TICKET_NUMBER_BASE = 1_000_000
+
+/** Re-siembra la secuencia de la app: solo mira tickets de la app, con piso en la base (nunca arrastra a Zoho). */
 export async function reseedTicketNumber(db: Queryable): Promise<void> {
-  const r = await db.query('SELECT COALESCE(MAX(number),0) AS m FROM tickets')
-  const next = Math.max(Number(r.rows[0].m), 1)
+  const r = await db.query('SELECT COALESCE(MAX(number),0) AS m FROM tickets WHERE managed_by_app = true')
+  const next = Math.max(Number(r.rows[0].m), APP_TICKET_NUMBER_BASE - 1) // setval = "último usado"; siguiente nextval = +1
   await db.query(`SELECT setval('ticket_number_seq', $1)`, [next])
 }

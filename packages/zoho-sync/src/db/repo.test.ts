@@ -6,7 +6,7 @@ import { getActiveTickets, getAllTickets, getTicketWithRefs, nextTicketNumber, i
 import { applyTransition, createTicket, setTicketRead } from './repo'
 import { upsertClient } from '../books/repo'
 import { clientFromBooks } from '../books/mappers'
-import { reseedTicketNumber } from './migrate'
+import { reseedTicketNumber, APP_TICKET_NUMBER_BASE } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
 
 let db: Queryable
@@ -63,10 +63,15 @@ describe('repo queries', () => {
     expect(list[0].refs.accountName).toBe('Gecelca')
   })
 
-  it('nextTicketNumber continúa desde el máximo', async () => {
+  it('nextTicketNumber continúa desde el máximo de la app e ignora números de Zoho', async () => {
+    // un ticket de Zoho (managed_by_app=false) NO arrastra la secuencia de la app
     await upsertTicket(db, zTicket('1', 953))
     await reseedTicketNumber(db)
-    expect(await nextTicketNumber(db)).toBe(954)
+    expect(await nextTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE)
+    // con un ticket de app existente, continúa desde su número
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('app1', 1000010, 'Ingresado', true)")
+    await reseedTicketNumber(db)
+    expect(await nextTicketNumber(db)).toBe(1000011)
   })
 
   it('insertTransition registra el historial', async () => {
