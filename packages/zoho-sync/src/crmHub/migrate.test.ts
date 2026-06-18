@@ -10,7 +10,7 @@ async function freshDb(): Promise<Queryable> {
 describe('migrateCrm', () => {
   it('crea las 8 tablas del esquema crm', async () => {
     const db = await freshDb()
-    for (const t of ['leads', 'deals', 'tasks', 'events', 'calls', 'products', 'quotes', 'campaigns']) {
+    for (const t of ['leads', 'deals', 'tasks', 'events', 'calls', 'products', 'quotes', 'campaigns', 'visits', 'quote_line_items']) {
       expect((await db.query(`SELECT count(*)::int AS n FROM crm.${t}`)).rows[0].n).toBe(0)
     }
   })
