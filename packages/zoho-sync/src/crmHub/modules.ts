@@ -4,6 +4,7 @@ const bool = (v: unknown): boolean | null => (typeof v === 'boolean' ? v : v == 
 const ts = (v: unknown): string | null => (v ? String(v) : null)
 const lkId = (v: any): string | null => (v && typeof v === 'object' ? v.id ?? null : null)
 const lkName = (v: any): string | null => (v && typeof v === 'object' ? v.name ?? null : null)
+const lkModule = (v: any): string | null => (v && typeof v === 'object' ? (v.module?.api_name ?? (typeof v.module === 'string' ? v.module : null)) : null)
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
 export interface CrmModule {
@@ -11,6 +12,7 @@ export interface CrmModule {
   apiName: string
   fields: string  // csv de api_names para el param ?fields=
   toRow: (raw: any) => Record<string, unknown>
+  hasLines?: boolean
 }
 
 export const MODULES: CrmModule[] = [
@@ -45,7 +47,7 @@ export const MODULES: CrmModule[] = [
     toRow: (r) => ({ id: String(r.id), product_name: str(r.Product_Name), product_code: str(r.Product_Code), unit_price: num(r.Unit_Price), product_active: bool(r.Product_Active), manufacturer: str(r.Manufacturer), categoria: str(r.Categor_a), posicion: num(r.Posici_n), vendor_id: lkId(r.Vendor_Name), vendor_name: lkName(r.Vendor_Name), owner_id: lkId(r.Owner), owner_name: lkName(r.Owner), description: str(r.Description), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
   },
   {
-    table: 'quotes', apiName: 'Quotes',
+    table: 'quotes', apiName: 'Quotes', hasLines: true,
     fields: 'Quote_Number,No_Cotizaci_n,Subject,Quote_Stage,Valid_Till,Fecha_de_Cotizaci_n,Sub_Total,Tax,Discount,Grand_Total,Deal_Name,Account_Name,Contact_Name,Owner,Created_Time,Modified_Time',
     toRow: (r) => ({ id: String(r.id), quote_number: str(r.Quote_Number), no_cotizacion: str(r.No_Cotizaci_n), subject: str(r.Subject), quote_stage: str(r.Quote_Stage), valid_till: r.Valid_Till || null, fecha_cotizacion: r.Fecha_de_Cotizaci_n || null, sub_total: num(r.Sub_Total), tax: num(r.Tax), discount: num(r.Discount), grand_total: num(r.Grand_Total), deal_id: lkId(r.Deal_Name), deal_name: lkName(r.Deal_Name), account_id: lkId(r.Account_Name), account_name: lkName(r.Account_Name), contact_id: lkId(r.Contact_Name), contact_name: lkName(r.Contact_Name), owner_id: lkId(r.Owner), owner_name: lkName(r.Owner), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
   },
@@ -54,7 +56,17 @@ export const MODULES: CrmModule[] = [
     fields: 'Campaign_Name,Type,Status,Start_Date,End_Date,Expected_Revenue,Budgeted_Cost,Actual_Cost,Expected_Response,Num_sent,Parent_Campaign,Owner,Description,Created_Time,Modified_Time',
     toRow: (r) => ({ id: String(r.id), campaign_name: str(r.Campaign_Name), type: str(r.Type), status: str(r.Status), start_date: r.Start_Date || null, end_date: r.End_Date || null, expected_revenue: num(r.Expected_Revenue), budgeted_cost: num(r.Budgeted_Cost), actual_cost: num(r.Actual_Cost), expected_response: num(r.Expected_Response), num_sent: num(r.Num_sent), parent_campaign_id: lkId(r.Parent_Campaign), parent_campaign_name: lkName(r.Parent_Campaign), owner_id: lkId(r.Owner), owner_name: lkName(r.Owner), description: str(r.Description), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
   },
+  {
+    table: 'visits', apiName: 'Visits',
+    fields: 'Visited_By,Visited_Time,Visited_Page,Visited_Page_URL,Referrer,Visit_Source,Visitor_Type,Time_Spent,No_of_Pages,Revenue,Search_Keyword,Search_Engine,Attended_By,Last_Activity_Time,Created_Time,Modified_Time',
+    toRow: (r) => ({ id: String(r.id), visited_by_id: lkId(r.Visited_By), visited_by_name: lkName(r.Visited_By), visited_by_module: lkModule(r.Visited_By), visited_time: ts(r.Visited_Time), visited_page: str(r.Visited_Page), visited_page_url: str(r.Visited_Page_URL), referrer: str(r.Referrer), visit_source: str(r.Visit_Source), visitor_type: str(r.Visitor_Type), time_spent: num(r.Time_Spent), no_of_pages: num(r.No_of_Pages), revenue: num(r.Revenue), search_keyword: str(r.Search_Keyword), search_engine: str(r.Search_Engine), attended_by: str(r.Attended_By), last_activity_time: ts(r.Last_Activity_Time), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
+  },
 ]
+
+/** Mapea una línea del subform Quoted_Items → fila de crm.quote_line_items. */
+export function quoteLineRow(quoteId: string, r: any): Record<string, unknown> {
+  return { id: String(r.id), quote_id: quoteId, product_id: lkId(r.Product_Name), product_name: lkName(r.Product_Name), description: str(r.Description), quantity: num(r.Quantity), list_price: num(r.List_Price), total: num(r.Total), discount: num(r.Discount), total_after_discount: num(r.Total_After_Discount), tax: num(r.Tax), net_total: num(r.Net_Total), sequence_number: num(r.Sequence_Number), price_book_id: lkId(r.Price_Book_Name), price_book_name: lkName(r.Price_Book_Name), line_tax: J(r.Line_Tax), raw: J(r) }
+}
 
 export function byTable(table: string): CrmModule {
   const m = MODULES.find((x) => x.table === table)
