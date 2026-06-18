@@ -9,6 +9,8 @@ import { deriveSalesRecords } from '@ambientalia/zoho-sync/booksHub/salesRecords
 import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'
 import { createBooksClient } from '@ambientalia/zoho-sync/books/booksClient'
 import { createBooksHubSync, type BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
+import { createCrmClient } from '@ambientalia/zoho-sync/crmHub/crmClient'
+import { createCrmSync, type CrmSync } from '@ambientalia/zoho-sync/crmHub/sync'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
 
 const config = loadConfig()
@@ -24,10 +26,17 @@ if (config.booksRefreshToken && config.booksOrgId && config.syncBooksRich) {
   console.log('Sync Books rico (books.*) habilitado')
 }
 
+let crmSync: CrmSync | null = null
+if (config.crmRefreshToken && config.syncCrm) {
+  const { crmFetch } = createCrmClient({ config })
+  crmSync = createCrmSync({ crmFetch, db: pool, config })
+  console.log('Sync CRM (crm.*) habilitado')
+}
+
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
-  await hubBootstrap({ db: pool, sync, booksHubSync })
-  scheduleHubSync({ sync, booksHubSync, intervalMs: config.syncIntervalMs })
+  await hubBootstrap({ db: pool, sync, booksHubSync, crmSync })
+  scheduleHubSync({ sync, booksHubSync, crmSync, intervalMs: config.syncIntervalMs })
   console.log(`zoho-hub-sync en marcha (intervalo ${config.syncIntervalMs} ms)`)
 
   if (config.deriveSalesRecords && config.salesTrackerDatabaseUrl) {
