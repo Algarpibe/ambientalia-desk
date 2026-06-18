@@ -125,10 +125,7 @@ CREATE TABLE IF NOT EXISTS books.sales_orders (
   raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Nota: la conversión one-time de las TABLAS lite (public.clients/sales_orders) a vistas se hace en el
--- runbook de cutover (DROP TABLE tras sacarlas de la replicación). Aquí NO se hace DROP TABLE para evitar
--- ruido de error en cada arranque (DROP TABLE sobre una vista existente lanza error). CREATE OR REPLACE
--- VIEW es idempotente: en BD fresca/tests crea la vista; en estado permanente la reemplaza sin ruido.
+-- (El DROP de las TABLAS lite public.clients/sales_orders es one-time en el runbook de cutover, no aquí.)
 CREATE OR REPLACE VIEW public.clients AS
   SELECT contact_id AS id, contact_name AS name, company_name, nit, email
   FROM books.contacts;
