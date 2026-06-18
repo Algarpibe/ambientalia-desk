@@ -61,4 +61,16 @@ describe('loadConfig', () => {
     expect(loadConfig(base as any).syncBooksRich).toBe(true)
     expect(loadConfig({ ...base, SYNC_BOOKS_RICH: 'false' } as any).syncBooksRich).toBe(false)
   })
+
+  it('deriveSalesRecords/url/hora con defaults y overrides', () => {
+    const base = { ZOHO_CLIENT_ID: 'a', ZOHO_CLIENT_SECRET: 'b', ZOHO_REFRESH_TOKEN: 'c', ZOHO_ORG_ID: 'd', ZOHO_DEPARTMENT_ID: 'e', DATABASE_URL: 'u' }
+    const def = loadConfig(base as any)
+    expect(def.deriveSalesRecords).toBe(true)
+    expect(def.salesTrackerDatabaseUrl).toBe('')
+    expect(def.salesRecordsHour).toBe(5)
+    const ov = loadConfig({ ...base, DERIVE_SALES_RECORDS: 'false', SALES_TRACKER_DATABASE_URL: 'postgres://x', SALES_RECORDS_HOUR: '7' } as any)
+    expect(ov.deriveSalesRecords).toBe(false)
+    expect(ov.salesTrackerDatabaseUrl).toBe('postgres://x')
+    expect(ov.salesRecordsHour).toBe(7)
+  })
 })
