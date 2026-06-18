@@ -243,6 +243,22 @@ Drive durante la transición). Fases sugeridas: 1) equipos+entrada+ticket, 2) PD
   tickets existentes conservan su `equipo_id`; sin borrado físico; `createEquipo` usa `eq-<uuid>` (sin colisión
   con los ids hash de la semilla).
 
+## 3j. Reorg de esquemas — alternativa R2 (calificar queries) + dedup Fase 2
+
+**Contexto:** estamos reorganizando las tablas por producto Zoho (`desk.*`/`books.*`/`crm.*`). La **Fase 1** (Zoho Desk →
+`desk.*`) se hace vía **R1: `search_path`** (toggle `DB_SCHEMA=desk` en prod; queries siguen "peladas"; ver
+`docs/superpowers/specs/2026-06-18-reorg-esquemas-fase1-design.md`).
+
+**R2 — alternativa descartada AHORA, anotada para el futuro:** calificar las **~230 queries** del server a `desk.*`
+(`FROM desk.tickets`). **Ventaja:** 100% testeable en pg-mem (las tablas calificadas sí funcionan; pg-mem **no** soporta
+`search_path` ni `ALTER … SET SCHEMA`, verificado). **Costo:** churn enorme + disciplina permanente (toda query nueva debe
+calificar desk/public). **Cuándo reconsiderar:** si se quiere cobertura automática total del layout por esquema, o si
+pg-mem deja de ser el harness de tests. Hasta entonces, R1 + validación en prod (como SP2/Books).
+
+**Fase 2 pendiente — dedup Books-lite:** reemplazar `public.clients`/`public.sales_orders` por **vistas** sobre `books.*`
+(proyección lite; `ticket_number` etc. desde `raw`), replicar `books.contacts`/`books.sales_orders` a desk-db, apagar el
+`createBooksSync` lite. Spec propio cuando cierre la Fase 1.
+
 ## 4. Otros pendientes conocidos (menores)
 
 - **`serial`/`codigo_servicio` vacíos en tickets históricos de Zoho:** confirmado en producción — solo 1
