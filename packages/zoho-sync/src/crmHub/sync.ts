@@ -1,11 +1,11 @@
 import type { AppConfig } from '../config'
 import type { Queryable } from '../db/migrate'
-import { MODULES, type CrmModule } from './modules'
-import { upsertRow, maxModifiedTime } from './repo'
+import { MODULES, quoteLineRow, type CrmModule } from './modules'
+import { upsertRow, maxModifiedTime, replaceQuoteLines } from './repo'
 
 interface Deps { crmFetch: (path: string, init?: RequestInit) => Promise<Response>; db: Queryable; config: AppConfig }
 export type CrmCounts = Record<string, number>
-export interface CrmSync { backfillAll(): Promise<CrmCounts>; syncRecent(): Promise<CrmCounts> }
+export interface CrmSync { backfillAll(): Promise<CrmCounts>; syncRecent(): Promise<CrmCounts>; backfillIfEmpty(): Promise<CrmCounts> }
 const PER_PAGE = 200
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
 
@@ -17,10 +17,19 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     const d = await readData(res)
     return { data: d.data ?? [], info: d.info ?? {} }
   }
+  /** Para módulos con hasLines (Quotes): trae el detalle (el subform NO viene en bulk) y reemplaza las líneas. */
+  async function persistLines(record: any): Promise<void> {
+    const res = await crmFetch(`/Quotes/${record.id}`)
+    if (!res.ok) throw new Error(`CRM /Quotes/${record.id} ${res.status}`)
+    const d = await readData(res)
+    const rec = d.data?.[0] ?? {}
+    const lines = (rec.Quoted_Items ?? []).map((l: any) => quoteLineRow(String(record.id), l))
+    await replaceQuoteLines(db, String(record.id), lines)
+  }
   async function forEachSafe(items: any[], m: CrmModule): Promise<number> {
     let ok = 0
     for (const r of items) {
-      try { await upsertRow(db, m.table, m.toRow(r)); ok++ }
+      try { await upsertRow(db, m.table, m.toRow(r)); if (m.hasLines) await persistLines(r); ok++ }
       catch (e: any) { console.error(`crm ${m.table}(${r?.id ?? '?'}) falló:`, String(e?.message ?? e)) }
     }
     return ok
@@ -70,5 +79,13 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     }
     return counts
   }
-  return { backfillAll: () => runAll(backfillModule), syncRecent: () => runAll(incrementalModule) }
+  async function backfillIfEmpty(): Promise<CrmCounts> {
+    const counts: CrmCounts = {}
+    for (const m of MODULES) {
+      try { counts[m.table] = (await maxModifiedTime(db, m.table)) == null ? await backfillModule(m) : 0 }
+      catch (e) { console.error(`crm backfillIfEmpty ${m.table} falló:`, String(e)); counts[m.table] = 0 }
+    }
+    return counts
+  }
+  return { backfillAll: () => runAll(backfillModule), syncRecent: () => runAll(incrementalModule), backfillIfEmpty }
 }
