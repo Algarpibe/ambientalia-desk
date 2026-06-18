@@ -17,3 +17,16 @@ export async function maxModifiedTime(db: Queryable, table: string): Promise<str
   const r = await db.query(`SELECT MAX(modified_time) AS m FROM crm.${table}`)
   return r.rows[0]?.m ?? null
 }
+
+/** Reemplaza TODAS las líneas de un quote (DELETE por quote_id + insert de cada fila). Cada `row` = {col: valor}. */
+export async function replaceQuoteLines(db: Queryable, quoteId: string, rows: Record<string, unknown>[]): Promise<void> {
+  await db.query('DELETE FROM crm.quote_line_items WHERE quote_id=$1', [quoteId])
+  for (const row of rows) {
+    const cols = Object.keys(row)
+    const placeholders = cols.map((_, i) => `$${i + 1}`)
+    await db.query(
+      `INSERT INTO crm.quote_line_items (${cols.join(',')},synced_at) VALUES (${placeholders.join(',')},now())`,
+      cols.map((c) => row[c]),
+    )
+  }
+}
