@@ -73,4 +73,10 @@ describe('loadConfig', () => {
     expect(ov.salesTrackerDatabaseUrl).toBe('postgres://x')
     expect(ov.salesRecordsHour).toBe(7)
   })
+
+  it('dbSchema default public; desk con DB_SCHEMA=desk', () => {
+    const base = { ZOHO_CLIENT_ID: 'a', ZOHO_CLIENT_SECRET: 'b', ZOHO_REFRESH_TOKEN: 'c', ZOHO_ORG_ID: 'd', ZOHO_DEPARTMENT_ID: 'e', DATABASE_URL: 'u' }
+    expect(loadConfig(base as any).dbSchema).toBe('public')
+    expect(loadConfig({ ...base, DB_SCHEMA: 'desk' } as any).dbSchema).toBe('desk')
+  })
 })

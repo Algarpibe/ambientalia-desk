@@ -9,6 +9,7 @@ export interface AppConfig {
   enableWrites: boolean
   port: number
   databaseUrl: string
+  dbSchema: string
   syncIntervalMs: number
   syncContacts: boolean
   syncActivities: boolean
@@ -48,6 +49,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     enableWrites: env.ENABLE_WRITES === 'true',
     port: env.PORT ? Number(env.PORT) : 3001,
     databaseUrl: required(env, 'DATABASE_URL'),
+    dbSchema: env.DB_SCHEMA || 'public',
     syncIntervalMs: env.SYNC_INTERVAL_MS ? Number(env.SYNC_INTERVAL_MS) : 180000,
     syncContacts: env.SYNC_CONTACTS !== 'false',
     syncActivities: env.SYNC_ACTIVITIES !== 'false',
