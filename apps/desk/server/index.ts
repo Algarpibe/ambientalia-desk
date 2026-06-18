@@ -5,7 +5,7 @@ import { loadConfig } from '@ambientalia/zoho-sync/config'
 import { createTokenManager } from '@ambientalia/zoho-sync/tokenManager'
 import { createZohoClient } from '@ambientalia/zoho-sync/zohoClient'
 import { createPool } from '@ambientalia/zoho-sync/db/pool'
-import { migrate, reseedTicketNumber } from '@ambientalia/zoho-sync/db/migrate'
+import { migrate, reorgToDesk, reseedTicketNumber } from '@ambientalia/zoho-sync/db/migrate'
 import { createSync } from '@ambientalia/zoho-sync/sync'
 import { createApp } from './app'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
@@ -25,6 +25,7 @@ const { zohoFetch } = createZohoClient({ config, tokenManager })
 const sync = createSync({ zohoFetch, db: pool, config })
 
 async function main() {
+  if (config.dbSchema === 'desk') await reorgToDesk(pool)
   await migrate(pool)
   // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
   try { await reseedTicketNumber(pool) } catch (e) { console.error('reseed inicial omitido:', e) }

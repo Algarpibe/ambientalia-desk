@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, reseedTicketNumber, APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
+import { migrate, reseedTicketNumber, reorgToDeskStatements, APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import { nextTicketNumber } from './repo'
 
 async function freshDb(): Promise<Queryable> {
@@ -55,5 +55,20 @@ describe('migrate', () => {
     const db = new pg.Pool()
     await migrate(db)
     expect((await db.query('SELECT client_id FROM equipos')).rows).toEqual([])
+  })
+})
+
+describe('reorgToDeskStatements', () => {
+  it('genera CREATE SCHEMA + SET SCHEMA de las 10 tablas Desk + la secuencia', () => {
+    const sql = reorgToDeskStatements()
+    expect(sql[0]).toBe('CREATE SCHEMA IF NOT EXISTS desk')
+    for (const t of ['accounts','contacts','agents','tickets','conversations','attachments','ticket_transitions','ticket_history','activities','equipos']) {
+      expect(sql).toContain(`ALTER TABLE IF EXISTS public.${t} SET SCHEMA desk`)
+    }
+    expect(sql).toContain('ALTER SEQUENCE IF EXISTS public.ticket_number_seq SET SCHEMA desk')
+    // NO mueve app-native ni lite
+    for (const t of ['users','sessions','roles','ticket_reads','resolution_attachments','clients','sales_orders']) {
+      expect(sql.some((s) => s.includes(`public.${t} SET SCHEMA`))).toBe(false)
+    }
   })
 })

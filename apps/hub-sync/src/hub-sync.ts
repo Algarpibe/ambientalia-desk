@@ -3,6 +3,7 @@ import { loadConfig } from '@ambientalia/zoho-sync/config'
 import { createTokenManager } from '@ambientalia/zoho-sync/tokenManager'
 import { createZohoClient } from '@ambientalia/zoho-sync/zohoClient'
 import { createPool, createPoolFromUrl } from '@ambientalia/zoho-sync/db/pool'
+import { reorgToDesk } from '@ambientalia/zoho-sync/db/migrate'
 import { createSync } from '@ambientalia/zoho-sync/sync'
 import { deriveSalesRecords } from '@ambientalia/zoho-sync/booksHub/salesRecords'
 import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'
@@ -34,6 +35,7 @@ if (config.booksRefreshToken && config.booksOrgId && config.syncBooksRich) {
 }
 
 async function main() {
+  if (config.dbSchema === 'desk') await reorgToDesk(pool)
   await hubBootstrap({ db: pool, sync, booksSync, booksHubSync })
   scheduleHubSync({ sync, booksSync, booksHubSync, intervalMs: config.syncIntervalMs })
   console.log(`zoho-hub-sync en marcha (intervalo ${config.syncIntervalMs} ms)`)

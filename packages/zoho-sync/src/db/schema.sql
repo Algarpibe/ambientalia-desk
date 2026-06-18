@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS ticket_transitions (
   comment_id text, performed_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS ticket_reads (
+CREATE TABLE IF NOT EXISTS public.ticket_reads (
   user_id text NOT NULL,
   ticket_id text NOT NULL,
   read_at timestamptz NOT NULL,
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_transitions_ticket ON ticket_transitions (ticket_
 CREATE INDEX IF NOT EXISTS idx_contacts_account ON contacts (account_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_ticket ON attachments (ticket_id);
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS public.users (
   id text PRIMARY KEY,
   email text UNIQUE NOT NULL,
   name text NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at timestamptz
 );
 
-CREATE TABLE IF NOT EXISTS sessions (
+CREATE TABLE IF NOT EXISTS public.sessions (
   token text PRIMARY KEY,
   user_id text NOT NULL,
   expires_at timestamptz NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
 
-CREATE TABLE IF NOT EXISTS roles (
+CREATE TABLE IF NOT EXISTS public.roles (
   id text PRIMARY KEY,
   name text UNIQUE NOT NULL,
   areas jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS roles (
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;
 
-CREATE TABLE IF NOT EXISTS clients (
+CREATE TABLE IF NOT EXISTS public.clients (
   id text PRIMARY KEY,
   name text NOT NULL,
   company_name text,
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS clients (
   updated_at timestamptz
 );
 
-CREATE TABLE IF NOT EXISTS sales_orders (
+CREATE TABLE IF NOT EXISTS public.sales_orders (
   id text PRIMARY KEY,
   number text NOT NULL,
   client_id text,
@@ -150,9 +150,9 @@ CREATE TABLE IF NOT EXISTS sales_orders (
   updated_at timestamptz
 );
 
-CREATE INDEX IF NOT EXISTS idx_sales_orders_client ON sales_orders (client_id);
-CREATE INDEX IF NOT EXISTS idx_sales_orders_number ON sales_orders (number);
-CREATE INDEX IF NOT EXISTS idx_clients_name ON clients (name);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_client ON public.sales_orders (client_id);
+CREATE INDEX IF NOT EXISTS idx_sales_orders_number ON public.sales_orders (number);
+CREATE INDEX IF NOT EXISTS idx_clients_name ON public.clients (name);
 
 -- → clients.id (Books), tickets creados en la app
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS client_id text;
@@ -202,7 +202,7 @@ ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_html text;
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_at timestamptz;
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_by text;
 
-CREATE TABLE IF NOT EXISTS resolution_attachments (
+CREATE TABLE IF NOT EXISTS public.resolution_attachments (
   id text PRIMARY KEY,
   ticket_id text NOT NULL,
   filename text,

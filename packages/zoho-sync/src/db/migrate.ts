@@ -33,3 +33,27 @@ export async function reseedTicketNumber(db: Queryable): Promise<void> {
   const next = Math.max(Number(r.rows[0].m), APP_TICKET_NUMBER_BASE - 1) // setval = "último usado"; siguiente nextval = +1
   await db.query(`SELECT setval('ticket_number_seq', $1)`, [next])
 }
+
+/** Tablas del dominio Zoho Desk que se mueven a desk.* (Fase 1). App-native y Books-lite NO se mueven. */
+const DESK_TABLES = ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments',
+  'ticket_transitions', 'ticket_history', 'activities', 'equipos']
+
+/** Sentencias del reorg public→desk (puras, para test). El ALTER SET SCHEMA mueve datos+índices+secuencias propias. */
+export function reorgToDeskStatements(): string[] {
+  return [
+    'CREATE SCHEMA IF NOT EXISTS desk',
+    ...DESK_TABLES.map((t) => `ALTER TABLE IF EXISTS public.${t} SET SCHEMA desk`),
+    'ALTER SEQUENCE IF EXISTS public.ticket_number_seq SET SCHEMA desk',
+  ]
+}
+
+/**
+ * Mueve las tablas Zoho Desk de public→desk (idempotente, tolerante por sentencia). PROD-ONLY: se llama solo cuando
+ * config.dbSchema==='desk'. pg-mem no soporta SET SCHEMA, por eso nunca se invoca en tests.
+ */
+export async function reorgToDesk(db: Queryable): Promise<void> {
+  for (const stmt of reorgToDeskStatements()) {
+    try { await db.query(stmt) }
+    catch (e) { console.error('reorgToDesk: sentencia omitida:', stmt.slice(0, 50), '→', String(e)) }
+  }
+}
