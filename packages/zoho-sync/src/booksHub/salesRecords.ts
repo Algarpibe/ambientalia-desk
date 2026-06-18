@@ -71,7 +71,7 @@ export async function deriveSalesRecords(deps: {
     }
     await salesTracker.query('COMMIT')
   } catch (e) {
-    await salesTracker.query('ROLLBACK')
+    await salesTracker.query('ROLLBACK').catch(() => {}) // no enmascarar el error original si el ROLLBACK falla
     throw e
   }
   return { rows: rows.length }
