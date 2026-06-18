@@ -3,7 +3,6 @@ import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { migrateBooks } from '@ambientalia/zoho-sync/booksHub/migrate'
 import { maxZohoLastModified } from '@ambientalia/zoho-sync/booksHub/repo'
 import { migrateCrm } from '@ambientalia/zoho-sync/crmHub/migrate'
-import { maxModifiedTime } from '@ambientalia/zoho-sync/crmHub/repo'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 import type { CrmSync } from '@ambientalia/zoho-sync/crmHub/sync'
@@ -33,10 +32,7 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
   }
   if (crmSync) {
     await migrateCrm(db)
-    if ((await maxModifiedTime(db, 'deals')) == null) {
-      console.log('CRM vacío: backfill…')
-      await crmSync.backfillAll()
-    }
+    await crmSync.backfillIfEmpty()
   }
 }
 

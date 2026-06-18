@@ -58,11 +58,10 @@ describe('hubBootstrap', () => {
   })
 
   it('migra crm.* y backfillea si está vacío', async () => {
-    let backfilled = false
-    const crmSync = { backfillAll: async () => { backfilled = true; return {} }, syncRecent: async () => ({}) }
+    const crmSync = { backfillAll: async () => ({}), syncRecent: async () => ({}), backfillIfEmpty: vi.fn(async () => ({})) }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync: null, crmSync })
     expect((await db.query('SELECT count(*)::int AS n FROM crm.deals')).rows[0].n).toBe(0) // crm.* creado
-    expect(backfilled).toBe(true)
+    expect(crmSync.backfillIfEmpty).toHaveBeenCalledTimes(1)
   })
 })
 
