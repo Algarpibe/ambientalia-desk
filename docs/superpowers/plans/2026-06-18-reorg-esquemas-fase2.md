@@ -74,7 +74,7 @@ describe('books repo (lectores)', () => {
 
 - [ ] **Step 8: `apps/hub-sync/src/hubSync.test.ts`** — quitar el helper `mockBooks()` y el `booksSync` de las llamadas a `hubBootstrap`/`scheduleHubSync` y sus asserts (`booksSync.backfill*`, `booksSync.syncRecent`). Conservar los tests de `booksHubSync` y de tickets.
 
-- [ ] **Step 9: Run** `npm test` — PASS. (Lectores leen las tablas lite que aún existen; el motor lite ya no existe.)
+- [ ] **Step 8b: Migrar siembras de otros tests que usaban el motor lite.** `apps/desk/server/app.test.ts` y `packages/zoho-sync/src/db/repo.test.ts` importan `upsertClient`/`upsertSalesOrder`/`clientFromBooks`/`salesOrderFromBooks` para sembrar `clients`/`sales_orders`. Quitar esos imports y reemplazar cada siembra por `INSERT` SQL crudo en las tablas lite (que aún existen tras esta tarea), p. ej. `await db.query("INSERT INTO clients (id,name,company_name,nit,email) VALUES (...)")` y `INSERT INTO sales_orders (id,number,client_id,customer_name,date,total,status,ticket_number) VALUES (...)`. Mantener los asserts/intención de cada test. (En Task 2 estas siembras se cambiarán a `books.*`.)
 
 - [ ] **Step 10:** `npx tsc -b && npx tsc -p apps/desk/tsconfig.server.json --noEmit && npx eslint .` — sin errores (correr `npm install` si hace falta).
 
@@ -153,6 +153,8 @@ describe('books repo (vistas sobre books.*)', () => {
   })
 })
 ```
+
+- [ ] **Step 3b: Migrar a `books.*` las siembras de `app.test.ts` y `repo.test.ts`.** Como `clients`/`sales_orders` pasan a ser **vistas** (no se puede `INSERT` en una vista), cambiar los `INSERT INTO clients/sales_orders` que Task 1 dejó en `apps/desk/server/app.test.ts` y `packages/zoho-sync/src/db/repo.test.ts` por `INSERT INTO books.contacts (contact_id,contact_name,company_name,nit,email) …` y `INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date,total,status,raw) …` (ticket_number vía `raw` jsonb, p. ej. `'{"cf_n_ticket":"954"}'`). Mantener los asserts.
 
 - [ ] **Step 4: Run** `npx vitest run packages/zoho-sync/src/books/repo.test.ts` — PASS. Luego `npm test` completo — PASS. (Confirmar que `booksHub/*` tests siguen verdes: ahora `books.contacts`/`books.sales_orders` los crea el `schema.sql` base; `migrateBooks` crea las otras 4. Los tests de booksHub llaman `migrate` + `migrateBooks` → las 6 existen.)
 

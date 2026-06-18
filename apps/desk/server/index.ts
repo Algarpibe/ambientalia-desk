@@ -11,9 +11,6 @@ import { createApp } from './app'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { createBooksClient } from '@ambientalia/zoho-sync/books/booksClient'
-import { createBooksSync } from '@ambientalia/zoho-sync/books/sync'
-import { maxLastModified } from '@ambientalia/zoho-sync/books/repo'
 import { readFileSync } from 'node:fs'
 import { seedEquipos } from './db/seedEquipos'
 import { countEquipos } from './db/equipos'
@@ -98,27 +95,6 @@ async function main() {
     p.catch((e) => console.error('Sync incremental falló:', e))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)
-
-  if (config.booksRefreshToken && config.booksOrgId && config.syncBooks) {
-    const { booksFetch } = createBooksClient({ config })
-    const booksSync = createBooksSync({ booksFetch, db: pool, config })
-    maxLastModified(pool, 'clients')
-      .then(async (wm) => {
-        if (!wm) {
-          console.log('Books vacío: backfill de clientes y órdenes de venta…')
-          const c = await booksSync.backfillClients()
-          const s = await booksSync.backfillSalesOrders()
-          console.log(`Books backfill: ${c} clientes, ${s} órdenes de venta`)
-        }
-      })
-      .catch((e) => console.error('Books backfill falló:', e))
-    setInterval(() => {
-      booksSync.syncRecent().catch((e) => console.error('Books syncRecent falló:', e))
-    }, config.syncIntervalMs)
-    console.log('Sync Zoho Books habilitado')
-  } else {
-    console.log('Sync Zoho Books deshabilitado (faltan ZOHO_BOOKS_REFRESH_TOKEN / ZOHO_BOOKS_ORG_ID)')
-  }
 }
 
 main().catch((e) => {

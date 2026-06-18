@@ -1,15 +1,13 @@
 import { migrate, reseedTicketNumber, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
-import { maxLastModified } from '@ambientalia/zoho-sync/books/repo'
 import { migrateBooks } from '@ambientalia/zoho-sync/booksHub/migrate'
 import { maxZohoLastModified } from '@ambientalia/zoho-sync/booksHub/repo'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
-import type { BooksSync } from '@ambientalia/zoho-sync/books/sync'
 import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 
 /** Migra el hub y hace el backfill inicial solo si está vacío. Idempotente entre reinicios. */
-export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksSync: BooksSync | null; booksHubSync?: BooksHubSync | null }): Promise<void> {
-  const { db, sync, booksSync, booksHubSync = null } = deps
+export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSync?: BooksHubSync | null }): Promise<void> {
+  const { db, sync, booksHubSync = null } = deps
   await migrate(db)
   try { await reseedTicketNumber(db) } catch (e) { console.error('reseed inicial omitido:', e) }
   if ((await countTickets(db)) === 0) {
@@ -20,11 +18,6 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksSync:
   }
   await sync.syncActivities().catch((e) => console.error('Sync actividades inicial falló:', e))
   await sync.syncContacts().catch((e) => console.error('Sync contactos inicial falló:', e))
-  if (booksSync && (await maxLastModified(db, 'clients')) == null) {
-    console.log('Books vacío: backfill…')
-    await booksSync.backfillClients()
-    await booksSync.backfillSalesOrders()
-  }
   if (booksHubSync) {
     await migrateBooks(db)
     if ((await maxZohoLastModified(db, 'items')) == null) {
@@ -38,8 +31,8 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksSync:
 }
 
 /** Programa los ciclos incrementales. Devuelve un stop() que limpia los timers. */
-export function scheduleHubSync(deps: { sync: Sync; booksSync: BooksSync | null; booksHubSync?: BooksHubSync | null; intervalMs: number }): () => void {
-  const { sync, booksSync, booksHubSync = null, intervalMs } = deps
+export function scheduleHubSync(deps: { sync: Sync; booksHubSync?: BooksHubSync | null; intervalMs: number }): () => void {
+  const { sync, booksHubSync = null, intervalMs } = deps
   let syncing = false
   const timers: ReturnType<typeof setInterval>[] = []
   timers.push(setInterval(() => {
@@ -49,11 +42,6 @@ export function scheduleHubSync(deps: { sync: Sync; booksSync: BooksSync | null;
       .catch((e) => console.error('Sync incremental falló:', e))
       .finally(() => { syncing = false })
   }, intervalMs))
-  if (booksSync) {
-    timers.push(setInterval(() => {
-      booksSync.syncRecent().catch((e) => console.error('Books syncRecent falló:', e))
-    }, intervalMs))
-  }
   if (booksHubSync) {
     timers.push(setInterval(() => {
       booksHubSync.syncRecent().catch((e) => console.error('Books rico syncRecent falló:', e))

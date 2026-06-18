@@ -8,7 +8,6 @@ import { createSync } from '@ambientalia/zoho-sync/sync'
 import { deriveSalesRecords } from '@ambientalia/zoho-sync/booksHub/salesRecords'
 import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'
 import { createBooksClient } from '@ambientalia/zoho-sync/books/booksClient'
-import { createBooksSync, type BooksSync } from '@ambientalia/zoho-sync/books/sync'
 import { createBooksHubSync, type BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
 
@@ -17,15 +16,6 @@ const pool = createPool(config)
 const tokenManager = createTokenManager({ config })
 const { zohoFetch } = createZohoClient({ config, tokenManager })
 const sync = createSync({ zohoFetch, db: pool, config })
-
-let booksSync: BooksSync | null = null
-if (config.booksRefreshToken && config.booksOrgId) {
-  const { booksFetch } = createBooksClient({ config })
-  booksSync = createBooksSync({ booksFetch, db: pool, config })
-  console.log('Sync Zoho Books habilitado (hub)')
-} else {
-  console.log('Sync Zoho Books deshabilitado (hub): faltan ZOHO_BOOKS_REFRESH_TOKEN / ZOHO_BOOKS_ORG_ID')
-}
 
 let booksHubSync: BooksHubSync | null = null
 if (config.booksRefreshToken && config.booksOrgId && config.syncBooksRich) {
@@ -36,8 +26,8 @@ if (config.booksRefreshToken && config.booksOrgId && config.syncBooksRich) {
 
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
-  await hubBootstrap({ db: pool, sync, booksSync, booksHubSync })
-  scheduleHubSync({ sync, booksSync, booksHubSync, intervalMs: config.syncIntervalMs })
+  await hubBootstrap({ db: pool, sync, booksHubSync })
+  scheduleHubSync({ sync, booksHubSync, intervalMs: config.syncIntervalMs })
   console.log(`zoho-hub-sync en marcha (intervalo ${config.syncIntervalMs} ms)`)
 
   if (config.deriveSalesRecords && config.salesTrackerDatabaseUrl) {
