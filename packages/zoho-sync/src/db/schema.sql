@@ -111,48 +111,33 @@ CREATE TABLE IF NOT EXISTS public.roles (
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;
 
-CREATE TABLE IF NOT EXISTS public.clients (
-  id text PRIMARY KEY,
-  name text NOT NULL,
-  company_name text,
-  nit text,
-  email text,
-  phone text,
-  mobile text,
-  contact_person text,
-  customer_sub_type text,
-  status text,
-  source text NOT NULL DEFAULT 'books',
-  raw jsonb,
-  last_modified_time timestamptz,
-  synced_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz
+CREATE SCHEMA IF NOT EXISTS books;
+
+CREATE TABLE IF NOT EXISTS books.contacts (
+  contact_id text PRIMARY KEY, contact_name text, company_name text, email text, nit text,
+  raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS public.sales_orders (
-  id text PRIMARY KEY,
-  number text NOT NULL,
-  client_id text,
-  customer_name text,
-  date date,
-  total numeric,
-  currency_code text,
-  status text,
-  ticket_number text,
-  potential_name text,
-  salesperson_name text,
-  source text NOT NULL DEFAULT 'books',
-  raw jsonb,
-  last_modified_time timestamptz,
-  synced_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz
+CREATE TABLE IF NOT EXISTS books.sales_orders (
+  salesorder_id text PRIMARY KEY, salesorder_number text, reference_number text, date date,
+  customer_id text, customer_name text, status text, currency_code text, exchange_rate numeric,
+  sub_total numeric, total numeric, bcy_sub_total numeric, bcy_tax_total numeric, bcy_total numeric,
+  raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_sales_orders_client ON public.sales_orders (client_id);
-CREATE INDEX IF NOT EXISTS idx_sales_orders_number ON public.sales_orders (number);
-CREATE INDEX IF NOT EXISTS idx_clients_name ON public.clients (name);
+DROP TABLE IF EXISTS public.clients;
+DROP TABLE IF EXISTS public.sales_orders;
+
+CREATE OR REPLACE VIEW public.clients AS
+  SELECT contact_id AS id, contact_name AS name, company_name, nit, email
+  FROM books.contacts;
+
+CREATE OR REPLACE VIEW public.sales_orders AS
+  SELECT salesorder_id AS id, salesorder_number AS number, customer_id AS client_id,
+         customer_name, date, total, status,
+         COALESCE(raw->>'cf_n_ticket', raw->'custom_field_hash'->>'cf_n_ticket') AS ticket_number,
+         raw->>'zcrm_potential_name' AS potential_name
+  FROM books.sales_orders;
 
 -- → clients.id (Books), tickets creados en la app
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS client_id text;

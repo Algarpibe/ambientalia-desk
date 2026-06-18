@@ -115,7 +115,7 @@ describe('escrituras', () => {
 describe('GET /api/clients y /api/sales-orders (Books)', () => {
   it('busca clientes (con sesión)', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name,nit) VALUES ('c1','Camposol Colombia S.A.S.','901116362')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name,nit) VALUES ('c1','Camposol Colombia S.A.S.','901116362')")
     const { app } = appWith()
     const res = await request(app).get('/api/clients?search=campo').set('Cookie', cookie)
     expect(res.status).toBe(200)
@@ -124,7 +124,7 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
 
   it('busca órdenes de venta (con sesión)', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO sales_orders (id,number,customer_name,date,status) VALUES ('s1','OV-2026-117','Corola','2026-06-01','open')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_name,date,status) VALUES ('s1','OV-2026-117','Corola','2026-06-01','open')")
     const { app } = appWith()
     const res = await request(app).get('/api/sales-orders?search=OV-2026').set('Cookie', cookie)
     expect(res.status).toBe(200)
@@ -251,8 +251,8 @@ describe('POST /api/tickets (crear)', () => {
 
   it('crea desde una OV con equipo: deriva cliente + orden, toma marca/modelo/serie/tipo del equipo', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
-    await db.query("INSERT INTO sales_orders (id,number,client_id) VALUES ('so1','OV-2026-200','cli1')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id) VALUES ('so1','OV-2026-200','cli1')")
     const eq = await seedEquipo()
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
@@ -267,7 +267,7 @@ describe('POST /api/tickets (crear)', () => {
 
   it('crea sin OV con cliente manual + equipo', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cli2','Camposol')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli2','Camposol')")
     const eq = await seedEquipo()
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
@@ -279,7 +279,7 @@ describe('POST /api/tickets (crear)', () => {
 
   it('422 si el equipo no existe', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cli3','X')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli3','X')")
     const { app } = appWith()
     const res = await request(app).post('/api/tickets').set('Cookie', cookie).send({
       clientId: 'cli3', equipoId: 'eq-inexistente', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo nuevo', prefijo: 'MT',
@@ -304,7 +304,7 @@ describe('POST /api/tickets (crear)', () => {
 describe('Gestión de equipos (Subsistema F)', () => {
   it('crea un equipo (cliente de Books) y lo desactiva', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cliF','Cliente F')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cliF','Cliente F')")
     const { app } = appWith()
     const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({
       serial: 'SN-F1', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10', clientId: 'cliF',
@@ -328,7 +328,7 @@ describe('Gestión de equipos (Subsistema F)', () => {
 
   it('facets devuelve marcas/tipos; manage lista; 401 sin sesión', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cliG','G')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cliG','G')")
     const { app } = appWith()
     await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-G', marca: 'Horiba', tipo: 'O3', clientId: 'cliG' })
     const f = await request(app).get('/api/equipos/facets').set('Cookie', cookie)
@@ -342,7 +342,7 @@ describe('Gestión de equipos (Subsistema F)', () => {
 
   it('DELETE solo super admin: no-admin 403, sin sesión 401, admin 200', async () => {
     const admin = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cliD','D')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cliD','D')")
     const { app } = appWith()
     const id = (await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: 'SN-DEL', clientId: 'cliD' })).body.id
     const op = await userCookie([])
@@ -354,7 +354,7 @@ describe('Gestión de equipos (Subsistema F)', () => {
 
   it('GET /api/equipos/:id/historial → equipo + tickets; 404; 401', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO clients (id,name) VALUES ('cH','H')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cH','H')")
     const { app } = appWith()
     const eqId = (await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-H', marca: 'Grimm', clientId: 'cH' })).body.id
     await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,serial,equipo_id,created_time) VALUES ('h1',777,'T','Ingresado','Open','SN-H',$1,now())`, [eqId])

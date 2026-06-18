@@ -17,9 +17,12 @@ describe('migrate', () => {
       "SELECT table_name FROM information_schema.tables WHERE table_schema='public'",
     )
     const names = res.rows.map((r: { table_name: string }) => r.table_name)
-    for (const t of ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments', 'ticket_transitions', 'users', 'sessions', 'roles', 'clients', 'sales_orders']) {
+    for (const t of ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments', 'ticket_transitions', 'users', 'sessions', 'roles']) {
       expect(names).toContain(t)
     }
+    // clients/sales_orders ahora son VISTAS sobre books.* (no tablas base): consultables.
+    expect((await db.query('SELECT id, name, nit FROM clients')).rows).toEqual([])
+    expect((await db.query('SELECT id, number, ticket_number FROM sales_orders')).rows).toEqual([])
   })
 
   it('reseedTicketNumber numera la app desde la base alta e ignora números de Zoho', async () => {

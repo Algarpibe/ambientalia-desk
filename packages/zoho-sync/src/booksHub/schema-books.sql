@@ -1,20 +1,8 @@
 CREATE SCHEMA IF NOT EXISTS books;
 
-CREATE TABLE IF NOT EXISTS books.contacts (
-  contact_id text PRIMARY KEY, contact_name text, company_name text, email text, nit text,
-  raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS books.items (
   item_id text PRIMARY KEY, name text, category_id text, category_name text, status text,
   rate numeric, purchase_rate numeric, sku text,
-  raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS books.sales_orders (
-  salesorder_id text PRIMARY KEY, salesorder_number text, reference_number text, date date,
-  customer_id text, customer_name text, status text, currency_code text, exchange_rate numeric,
-  sub_total numeric, total numeric, bcy_sub_total numeric, bcy_tax_total numeric, bcy_total numeric,
   raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
 );
 

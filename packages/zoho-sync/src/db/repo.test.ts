@@ -129,7 +129,7 @@ describe('ticket_reads (leído/no leído)', () => {
 
 describe('createTicket (Subsistema C)', () => {
   it('crea un ticket gestionado en "OV asignada" con número de secuencia + transición #1', async () => {
-    await db.query("INSERT INTO clients (id,name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
     const id = await createTicket(db, {
       subject: 'Servicio Técnico Gecelca S.A. E.S.P. Monitor MT_18A20070_EDM180C_260604',
       codigoServicio: 'MT_18A20070_EDM180C_260604', classification: 'Equipo para servicio de mantenimiento',
