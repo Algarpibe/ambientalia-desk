@@ -13,6 +13,7 @@ export interface AppConfig {
   syncContacts: boolean
   syncActivities: boolean
   syncBooks: boolean
+  syncBooksRich: boolean
   adminToken: string   // protege endpoints /api/admin/* (vacío = deshabilitados)
   adminEmail: string     // bootstrap del primer admin (vacío = no se siembra)
   adminPassword: string
@@ -48,6 +49,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     syncContacts: env.SYNC_CONTACTS !== 'false',
     syncActivities: env.SYNC_ACTIVITIES !== 'false',
     syncBooks: env.SYNC_BOOKS !== 'false',
+    syncBooksRich: env.SYNC_BOOKS_RICH !== 'false',
     adminToken: env.ADMIN_TOKEN || '',
     adminEmail: env.ADMIN_EMAIL || '',
     adminPassword: env.ADMIN_PASSWORD || '',

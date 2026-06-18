@@ -4,6 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { BooksSync } from '@ambientalia/zoho-sync/books/sync'
+import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 
 let db: Queryable
 beforeEach(() => { const pg = newDb().adapters.createPg(); db = new pg.Pool() })
@@ -54,6 +55,22 @@ describe('hubBootstrap', () => {
   it('sin booksSync no falla', async () => {
     const sync = mockSync()
     await expect(hubBootstrap({ db, sync, booksSync: null })).resolves.toBeUndefined()
+  })
+
+  it('migra books.* y backfillea si está vacío', async () => {
+    const calls: string[] = []
+    const booksHubSync: BooksHubSync = {
+      backfillContacts: async () => { calls.push('c'); return 0 },
+      backfillItems: async () => { calls.push('i'); return 0 },
+      backfillSalesOrders: async () => { calls.push('so'); return 0 },
+      backfillInvoices: async () => { calls.push('inv'); return 0 },
+      syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0 }),
+    }
+    await hubBootstrap({ db, sync: mockSync(), booksSync: null, booksHubSync })
+    // pg-mem no soporta information_schema.schemata: una consulta calificada exitosa
+    // prueba que el esquema books + la tabla existen (lanza si no).
+    expect((await db.query('SELECT count(*)::int AS n FROM books.contacts')).rows[0].n).toBe(0)
+    expect(calls).toEqual(['c', 'i', 'so', 'inv'])
   })
 })
 

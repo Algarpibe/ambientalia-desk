@@ -55,4 +55,10 @@ describe('loadConfig', () => {
     expect(off.syncActivities).toBe(false)
     expect(off.syncBooks).toBe(false)
   })
+
+  it('syncBooksRich default true; false con SYNC_BOOKS_RICH=false', () => {
+    const base = { ZOHO_CLIENT_ID: 'a', ZOHO_CLIENT_SECRET: 'b', ZOHO_REFRESH_TOKEN: 'c', ZOHO_ORG_ID: 'd', ZOHO_DEPARTMENT_ID: 'e', DATABASE_URL: 'u' }
+    expect(loadConfig(base as any).syncBooksRich).toBe(true)
+    expect(loadConfig({ ...base, SYNC_BOOKS_RICH: 'false' } as any).syncBooksRich).toBe(false)
+  })
 })
