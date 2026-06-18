@@ -74,6 +74,17 @@ describe('loadConfig', () => {
     expect(ov.salesRecordsHour).toBe(7)
   })
 
+  it('CRM: token/flag/domain con defaults y overrides', () => {
+    const base = { ZOHO_CLIENT_ID: 'a', ZOHO_CLIENT_SECRET: 'b', ZOHO_REFRESH_TOKEN: 'c', ZOHO_ORG_ID: 'd', ZOHO_DEPARTMENT_ID: 'e', DATABASE_URL: 'u' }
+    const d = loadConfig(base as any)
+    expect(d.syncCrm).toBe(true)
+    expect(d.crmRefreshToken).toBe('')
+    expect(d.crmApiDomain).toBe('www.zohoapis.com')
+    expect(d.crmClientId).toBe('a') // fallback a ZOHO_CLIENT_ID
+    const o = loadConfig({ ...base, ZOHO_CRM_REFRESH_TOKEN: 'r', ZOHO_CRM_CLIENT_ID: 'cc', SYNC_CRM: 'false' } as any)
+    expect(o.crmRefreshToken).toBe('r'); expect(o.crmClientId).toBe('cc'); expect(o.syncCrm).toBe(false)
+  })
+
   it('dbSchema default public; desk con DB_SCHEMA=desk', () => {
     const base = { ZOHO_CLIENT_ID: 'a', ZOHO_CLIENT_SECRET: 'b', ZOHO_REFRESH_TOKEN: 'c', ZOHO_ORG_ID: 'd', ZOHO_DEPARTMENT_ID: 'e', DATABASE_URL: 'u' }
     expect(loadConfig(base as any).dbSchema).toBe('public')

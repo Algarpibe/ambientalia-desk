@@ -27,6 +27,12 @@ export interface AppConfig {
   booksOrgId: string
   booksApiDomain: string
   booksAccountsDomain: string
+  crmClientId: string
+  crmClientSecret: string
+  crmRefreshToken: string
+  crmApiDomain: string
+  crmAccountsDomain: string
+  syncCrm: boolean
 }
 
 type Env = Record<string, string | undefined>
@@ -67,5 +73,11 @@ export function loadConfig(env: Env = process.env): AppConfig {
     booksOrgId: env.ZOHO_BOOKS_ORG_ID || '',
     booksApiDomain: env.ZOHO_BOOKS_API_DOMAIN || 'www.zohoapis.com',
     booksAccountsDomain: env.ZOHO_BOOKS_ACCOUNTS_DOMAIN || env.ZOHO_ACCOUNTS_DOMAIN || 'accounts.zoho.com',
+    crmClientId: env.ZOHO_CRM_CLIENT_ID || env.ZOHO_CLIENT_ID || '',
+    crmClientSecret: env.ZOHO_CRM_CLIENT_SECRET || env.ZOHO_CLIENT_SECRET || '',
+    crmRefreshToken: env.ZOHO_CRM_REFRESH_TOKEN || '',
+    crmApiDomain: env.ZOHO_CRM_API_DOMAIN || 'www.zohoapis.com',
+    crmAccountsDomain: env.ZOHO_CRM_ACCOUNTS_DOMAIN || env.ZOHO_ACCOUNTS_DOMAIN || 'accounts.zoho.com',
+    syncCrm: env.SYNC_CRM !== 'false',
   }
 }
