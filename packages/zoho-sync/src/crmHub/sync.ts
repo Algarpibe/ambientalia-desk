@@ -37,7 +37,11 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     }
     return total
   }
-  /** Incremental: descendente por Modified_Time hasta la marca de agua. */
+  /**
+   * Incremental: descendente por Modified_Time hasta la marca de agua.
+   * Nota: usa paginación page-based (tope ~2000 registros en CRM v8). Suficiente para deltas recientes;
+   * si cambiaran >2000 desde el último ciclo, el exceso lo recupera el backfill (no es exhaustivo aquí).
+   */
   async function incrementalModule(m: CrmModule): Promise<number> {
     const wmRaw = await maxModifiedTime(db, m.table)
     const wm = wmRaw ? new Date(wmRaw).getTime() : 0
