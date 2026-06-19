@@ -116,6 +116,52 @@ describe('GET /api/tickets?scope=all', () => {
   })
 })
 
+describe('GET /api/tickets?scope=closed (paginado)', () => {
+  const seedMixed = async () => {
+    // 1 activo + 3 cerrados (created_time creciente)
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('a',10,'A','Ingresado','Open','2026-06-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c1',1,'C1','Finalizado','Closed','2026-01-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c2',2,'C2','Finalizado','Closed','2026-02-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c3',3,'C3','Finalizado','Closed','2026-03-01T00:00:00Z')")
+  }
+
+  it('GET /api/tickets (default) → array solo de activos (ningún Closed)', async () => {
+    const cookie = await adminCookie()
+    await seedMixed()
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.every((t: any) => t.statusType !== 'Closed')).toBe(true)
+    expect(res.body.map((t: any) => t.number)).toEqual(['#10'])
+  })
+
+  it('?scope=closed&page=1 → {items,total,page,pageSize} solo cerrados', async () => {
+    const cookie = await adminCookie()
+    await seedMixed()
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets?scope=closed&page=1').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.total).toBe(3)
+    expect(res.body.page).toBe(1)
+    expect(res.body.pageSize).toBe(50)
+    expect(Array.isArray(res.body.items)).toBe(true)
+    expect(res.body.items.length).toBeLessThanOrEqual(res.body.pageSize)
+    expect(res.body.items.every((t: any) => t.statusType === 'Closed')).toBe(true)
+  })
+
+  it('?scope=closed&page=99 → items vacío, total correcto', async () => {
+    const cookie = await adminCookie()
+    await seedMixed()
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets?scope=closed&page=99').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.items).toEqual([])
+    expect(res.body.total).toBe(3)
+    expect(res.body.page).toBe(99)
+  })
+})
+
 describe('GET /api/tickets/:id/history', () => {
   it('mapea el historial; fallback a transiciones; 401 sin sesión', async () => {
     const cookie = await adminCookie()

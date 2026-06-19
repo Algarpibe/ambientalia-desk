@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { upsertAccount, upsertContact, upsertTicket, getTicketRow, countTickets } from './repo'
-import { getActiveTickets, getAllTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
+import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
 import { applyTransition, createTicket, setTicketRead } from './repo'
 import { reseedTicketNumber, APP_TICKET_NUMBER_BASE } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
@@ -86,6 +86,31 @@ describe('getAllTickets', () => {
     await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('b',2,'B','Finalizado','Closed',now())")
     expect((await getActiveTickets(db)).length).toBe(1)
     expect((await getAllTickets(db)).length).toBe(2)
+  })
+})
+
+describe('getClosedTickets / countClosedTickets (paginación)', () => {
+  beforeEach(async () => {
+    // 3 cerrados (c1..c3, created_time creciente) + 2 activos (a1,a2) que NO deben aparecer.
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c1',1,'C1','Finalizado','Closed','2026-01-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c2',2,'C2','Finalizado','Closed','2026-02-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c3',3,'C3','Finalizado','Closed','2026-03-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('a1',4,'A1','Ingresado','Open','2026-04-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('a2',5,'A2','Ingresado',NULL,'2026-05-01T00:00:00Z')")
+  })
+
+  it('getClosedTickets devuelve solo cerrados, respeta LIMIT y orden created_time desc', async () => {
+    const page1 = await getClosedTickets(db, '', 2, 0)
+    expect(page1.map((x) => x.row.id)).toEqual(['c3', 'c2'])
+  })
+
+  it('getClosedTickets respeta OFFSET (página siguiente)', async () => {
+    const page2 = await getClosedTickets(db, '', 2, 2)
+    expect(page2.map((x) => x.row.id)).toEqual(['c1'])
+  })
+
+  it('countClosedTickets cuenta solo cerrados (ignora activos)', async () => {
+    expect(await countClosedTickets(db)).toBe(3)
   })
 })
 

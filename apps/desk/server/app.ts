@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
-import { getActiveTickets, getAllTickets, getTicketWithRefs, getConversations, applyTransition, createTicket, setTicketRead } from '@ambientalia/zoho-sync/db/repo'
+import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, applyTransition, createTicket, setTicketRead } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
@@ -106,6 +106,15 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   }))
 
   app.get('/api/tickets', asyncHandler(async (req, res) => {
+    if (req.query.scope === 'closed') {
+      const pageSize = 50
+      const page = Math.max(1, Number(req.query.page) || 1)
+      const items = await getClosedTickets(db, req.user!.id, pageSize, (page - 1) * pageSize)
+      const total = await countClosedTickets(db)
+      res.json({ items: items.map(({ row, refs }) => rowToTicket(row, refs)), total, page, pageSize })
+      return
+    }
+    // scope=all (compat, sin uso en el front) o default (active)
     const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id) : await getActiveTickets(db, req.user!.id)
     res.json(list.map(({ row, refs }) => rowToTicket(row, refs)))
   }))

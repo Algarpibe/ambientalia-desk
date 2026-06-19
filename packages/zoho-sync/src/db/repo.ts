@@ -121,6 +121,24 @@ export async function getActiveTickets(db: Queryable, userId = ''): Promise<Tick
   return r.rows.map(mapTicketRowWithRefs)
 }
 
+export async function getClosedTickets(db: Queryable, userId = '', limit = 50, offset = 0): Promise<TicketWithRefs[]> {
+  const r = await db.query(
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
+     FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
+     LEFT JOIN clients cl ON t.client_id=cl.id
+     LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
+     WHERE t.status_type = 'Closed' ORDER BY t.created_time DESC NULLS LAST LIMIT $2 OFFSET $3`,
+    [userId, limit, offset],
+  )
+  return r.rows.map(mapTicketRowWithRefs)
+}
+
+export async function countClosedTickets(db: Queryable): Promise<number> {
+  const r = await db.query(`SELECT count(*)::int AS n FROM tickets WHERE status_type = 'Closed'`)
+  return r.rows[0]?.n ?? 0
+}
+
 export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
   const r = await db.query(
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
