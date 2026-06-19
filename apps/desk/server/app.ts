@@ -158,9 +158,14 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   app.get('/api/tickets/:id', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    try { await sync.syncTicket(id) } catch (e) { console.error(`syncTicket(${id}) falló:`, e) }
-    const found = await getTicketWithRefs(db, id)
-    if (!found) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+    let found = await getTicketWithRefs(db, id)
+    if (!found) { // primera vez sin datos locales → poblar (lazy)
+      try { await sync.syncTicket(id) } catch (e) { console.error(`syncTicket(${id}) falló:`, e) }
+      found = await getTicketWithRefs(db, id)
+      if (!found) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+    } else {
+      void sync.syncTicket(id).catch((e) => console.error(`syncTicket bg(${id}) falló:`, e)) // refresco en background
+    }
     res.json(rowToTicketDetail(found.row, found.refs))
   }))
 
@@ -168,13 +173,20 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     const id = String(req.params.id)
     let convs = await getConversations(db, id)
     if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
+    else { void sync.syncConversations(id).catch((e) => console.error(`syncConversations bg(${id}) falló:`, e)) }
     res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
   }))
 
   app.get('/api/tickets/:id/history', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    try { await sync.syncTicketHistory(id) } catch (e) { console.error(`syncTicketHistory(${id}) falló:`, e) }
-    res.json(await getTicketHistory(db, id))
+    let hist = await getTicketHistory(db, id)
+    if (hist.length === 0) {
+      try { await sync.syncTicketHistory(id) } catch (e) { console.error(`syncTicketHistory(${id}) falló:`, e) }
+      hist = await getTicketHistory(db, id)
+    } else {
+      void sync.syncTicketHistory(id).catch((e) => console.error(`syncTicketHistory bg(${id}) falló:`, e))
+    }
+    res.json(hist)
   }))
 
   app.get('/api/tickets/:id/activities', asyncHandler(async (req, res) => {
