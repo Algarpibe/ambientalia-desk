@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { TicketDetailView } from './components/TicketDetailView';
@@ -15,14 +15,15 @@ import { useAsync } from './hooks/useAsync';
 import { fetchTickets, setTicketRead } from './api/client';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
-import { UsersAdmin } from './components/UsersAdmin'
-import { EquiposAdmin } from './components/EquiposAdmin'
-import { RolesAdmin } from './components/RolesAdmin'
-import { CreateTicket } from './components/CreateTicket'
-import { Configuracion } from './components/Configuracion'
-import { Analisis } from './components/Analisis'
-import { ClientesPage } from './components/ClientesPage'
-import { ActividadesPage } from './components/ActividadesPage'
+
+const UsersAdmin = lazy(() => import('./components/UsersAdmin').then(m => ({ default: m.UsersAdmin })))
+const EquiposAdmin = lazy(() => import('./components/EquiposAdmin').then(m => ({ default: m.EquiposAdmin })))
+const RolesAdmin = lazy(() => import('./components/RolesAdmin').then(m => ({ default: m.RolesAdmin })))
+const CreateTicket = lazy(() => import('./components/CreateTicket').then(m => ({ default: m.CreateTicket })))
+const Configuracion = lazy(() => import('./components/Configuracion').then(m => ({ default: m.Configuracion })))
+const Analisis = lazy(() => import('./components/Analisis').then(m => ({ default: m.Analisis })))
+const ClientesPage = lazy(() => import('./components/ClientesPage').then(m => ({ default: m.ClientesPage })))
+const ActividadesPage = lazy(() => import('./components/ActividadesPage').then(m => ({ default: m.ActividadesPage })))
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -111,22 +112,24 @@ function App() {
         />
       )}
 
-      {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
-      {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} />}
-      {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
-      {showClientes && <ClientesPage initial={clientesInitial} onClose={() => { setShowClientes(false); setClientesInitial(null) }} onSelectTicket={(id) => { setShowClientes(false); setClientesInitial(null); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
-      {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
-      {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
-      {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
-      {showConfig && (
-        <Configuracion
-          onClose={() => setShowConfig(false)}
-          onOpenUsers={() => { setShowConfig(false); setShowUsers(true) }}
-          onOpenRoles={() => { setShowConfig(false); setShowRoles(true) }}
-          onOpenEquipos={() => { setShowConfig(false); setShowEquipos(true) }}
-          isAdmin={!!user.isAdmin}
-        />
-      )}
+      <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 text-sm text-slate-600">Cargando…</div>}>
+        {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
+        {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} />}
+        {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
+        {showClientes && <ClientesPage initial={clientesInitial} onClose={() => { setShowClientes(false); setClientesInitial(null) }} onSelectTicket={(id) => { setShowClientes(false); setClientesInitial(null); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
+        {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
+        {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
+        {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
+        {showConfig && (
+          <Configuracion
+            onClose={() => setShowConfig(false)}
+            onOpenUsers={() => { setShowConfig(false); setShowUsers(true) }}
+            onOpenRoles={() => { setShowConfig(false); setShowRoles(true) }}
+            onOpenEquipos={() => { setShowConfig(false); setShowEquipos(true) }}
+            isAdmin={!!user.isAdmin}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
