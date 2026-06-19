@@ -11,6 +11,8 @@ import { canExecuteTransition } from '@ambientalia/shared'
 import { buildTransitionPlan } from './transitionExec'
 import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth, requireAdmin as requireSuperAdmin } from './auth/middleware'
 import { searchClients, searchSalesOrders, getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
@@ -45,8 +47,16 @@ interface Deps {
 
 export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   const app = express()
+  app.set('trust proxy', 1) // detrás del proxy de EasyPanel → IP real para el rate-limit
+  app.use(helmet({ contentSecurityPolicy: false })) // CSP afinada = deuda (no romper el SPA)
   app.use(express.json())
   app.use(cookieParser())
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false,
+    skipSuccessfulRequests: true, message: { error: 'Demasiados intentos, intenta más tarde' },
+  })
+  app.use('/api/auth/login', loginLimiter)
+  app.use('/api/auth/change-password', loginLimiter)
   registerAuthRoutes(app, db)
 
   const measurer = createMeasurer({ zohoFetch, config })

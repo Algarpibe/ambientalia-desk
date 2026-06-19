@@ -38,6 +38,20 @@ async function userCookie(areas: string[]): Promise<string> {
   return `sid=${await createSession(db, u.id)}`
 }
 
+describe('Seguridad: helmet + rate-limit', () => {
+  it('helmet añade cabeceras de seguridad', async () => {
+    const { app } = appWith()
+    const res = await request(app).get('/api/auth/login').send()
+    expect(res.headers['x-content-type-options']).toBe('nosniff')
+  })
+  it('rate-limit: bloquea login tras demasiados intentos', async () => {
+    const { app } = appWith()
+    let last: any
+    for (let i = 0; i < 11; i++) last = await request(app).post('/api/auth/login').send({ email: 'no@x.co', password: 'mal' })
+    expect(last.status).toBe(429)
+  })
+})
+
 describe('GET /api/tickets', () => {
   it('devuelve tickets activos normalizados desde Postgres', async () => {
     await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'AGQ' } as any))
