@@ -8,6 +8,7 @@ import { createPool } from '@ambientalia/zoho-sync/db/pool'
 import { migrate, reorgToDesk, reseedTicketNumber } from '@ambientalia/zoho-sync/db/migrate'
 import { createSync } from '@ambientalia/zoho-sync/sync'
 import { createApp } from './app'
+import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
@@ -25,28 +26,28 @@ async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
   await migrate(pool)
   // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
-  try { await reseedTicketNumber(pool) } catch (e) { console.error('reseed inicial omitido:', e) }
+  try { await reseedTicketNumber(pool) } catch (err) { logger.error({ err }, 'reseed inicial omitido') }
 
   try {
     if ((await countEquipos(pool)) === 0) {
       const csv = readFileSync(new URL('./db/equipos.seed.csv', import.meta.url), 'utf8')
       const n = await seedEquipos(pool, csv)
-      console.log(`Equipos: semilla cargada (${n})`)
+      logger.info(`Equipos: semilla cargada (${n})`)
     } else {
-      console.log('Equipos: ya hay datos, no se siembra')
+      logger.info('Equipos: ya hay datos, no se siembra')
     }
-  } catch (e) { console.error('Seed de equipos falló:', e) }
+  } catch (err) { logger.error({ err }, 'Seed de equipos falló') }
 
   // Bootstrap: si no hay usuarios y hay credenciales en env, crea el admin inicial.
   if (config.adminEmail && config.adminPassword && (await countUsers(pool)) === 0) {
     if (config.adminPassword.length < 8) {
-      console.error('ADMIN_PASSWORD debe tener al menos 8 caracteres; no se sembró el admin inicial.')
+      logger.error('ADMIN_PASSWORD debe tener al menos 8 caracteres; no se sembró el admin inicial.')
     } else if (!(await getUserByEmail(pool, config.adminEmail))) {
       await createUser(pool, {
         email: config.adminEmail, name: 'Administrador',
         passwordHash: await hashPassword(config.adminPassword), isAdmin: true,
       })
-      console.log(`Admin inicial creado: ${config.adminEmail}`)
+      logger.info(`Admin inicial creado: ${config.adminEmail}`)
     }
   }
 
@@ -59,30 +60,30 @@ async function main() {
   }
 
   app.listen(config.port, () => {
-    console.log(`API en http://localhost:${config.port} (writes=${config.enableWrites})`)
+    logger.info(`API en http://localhost:${config.port} (writes=${config.enableWrites})`)
   })
 
   countTickets(pool)
     .then(async (n) => {
       if (n === 0) {
-        console.log('DB vacía: iniciando backfill de tickets…')
+        logger.info('DB vacía: iniciando backfill de tickets…')
         const total = await sync.backfillTickets()
-        console.log(`Backfill completado: ${total} tickets`)
+        logger.info(`Backfill completado: ${total} tickets`)
         await reseedTicketNumber(pool)
       }
     })
-    .catch((e) => console.error('Backfill falló:', e))
+    .catch((err) => logger.error({ err }, 'Backfill falló'))
 
   if (config.syncActivities) {
     sync.syncActivities()
-      .then((n) => console.log(`Actividades: sync inicial (${n})`))
-      .catch((e) => console.error('Sync actividades falló:', e))
+      .then((n) => logger.info(`Actividades: sync inicial (${n})`))
+      .catch((err) => logger.error({ err }, 'Sync actividades falló'))
   }
 
   if (config.syncContacts) {
     sync.syncContacts()
-      .then((n) => console.log(`Contactos: sync inicial (${n})`))
-      .catch((e) => console.error('Sync contactos falló:', e))
+      .then((n) => logger.info(`Contactos: sync inicial (${n})`))
+      .catch((err) => logger.error({ err }, 'Sync contactos falló'))
   }
 
   let syncing = false
@@ -92,12 +93,12 @@ async function main() {
     let p: Promise<unknown> = sync.syncRecent()
     if (config.syncActivities) p = p.then(() => sync.syncActivities())
     if (config.syncContacts) p = p.then(() => sync.syncContacts())
-    p.catch((e) => console.error('Sync incremental falló:', e))
+    p.catch((err) => logger.error({ err }, 'Sync incremental falló'))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)
 }
 
-main().catch((e) => {
-  console.error('Fallo al arrancar el servidor:', e)
+main().catch((err) => {
+  logger.error({ err }, 'Fallo al arrancar el servidor')
   process.exit(1)
 })

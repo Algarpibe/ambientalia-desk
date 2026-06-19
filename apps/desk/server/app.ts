@@ -1,4 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from 'express'
+import pinoHttp from 'pino-http'
+import { randomUUID } from 'node:crypto'
+import { logger } from './util/logger'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
@@ -29,6 +32,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   app.use(helmet({ contentSecurityPolicy: false })) // CSP afinada = deuda (no romper el SPA)
   app.use(express.json())
   app.use(cookieParser())
+  app.use(pinoHttp({ logger, genReqId: (req) => (req.headers['x-request-id'] as string) || randomUUID() }))
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false,
     skipSuccessfulRequests: true, message: { error: 'Demasiados intentos, intenta más tarde' },
@@ -52,7 +56,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) { res.status(err.status).json(err.body); return }
-    console.error('Error no manejado:', err)
+    logger.error({ err }, 'Error no manejado')
     if (res.headersSent) return
     res.status(500).json({ error: 'Error interno' })
   })

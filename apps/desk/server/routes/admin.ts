@@ -6,6 +6,7 @@ import type { createDetailBackfiller } from '../backfill'
 import { backfillSerialFromSubject } from '../backfillSerial'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { logger } from '../util/logger'
 
 function humanBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -55,8 +56,8 @@ export function registerAdminRoutes(
   // Backfill de tickets archivados en segundo plano (fire-and-forget). SOLO super administrador.
   app.post('/api/admin/backfill-archived', requireAuth(db), requireSuperAdmin, (_req, res) => {
     sync.backfillArchivedTickets()
-      .then((n) => console.log(`Backfill archivados: ${n} tickets`))
-      .catch((e) => console.error('Backfill archivados falló:', e))
+      .then((n) => logger.info(`Backfill archivados: ${n} tickets`))
+      .catch((err) => logger.error({ err }, 'Backfill archivados falló'))
     res.json({ started: true })
   })
 }

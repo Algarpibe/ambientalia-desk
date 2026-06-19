@@ -89,11 +89,11 @@ export function registerTicketRoutes(
     const id = String(req.params.id)
     let found = await getTicketWithRefs(db, id)
     if (!found) { // primera vez sin datos locales → poblar (lazy)
-      try { await sync.syncTicket(id) } catch (e) { console.error(`syncTicket(${id}) falló:`, e) }
+      try { await sync.syncTicket(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncTicket (lazy) falló') }
       found = await getTicketWithRefs(db, id)
       if (!found) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
     } else {
-      void sync.syncTicket(id).catch((e) => console.error(`syncTicket bg(${id}) falló:`, e)) // refresco en background
+      void sync.syncTicket(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncTicket bg falló')) // refresco en background
     }
     res.json(rowToTicketDetail(found.row, found.refs))
   }))
@@ -102,7 +102,7 @@ export function registerTicketRoutes(
     const id = String(req.params.id)
     let convs = await getConversations(db, id)
     if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
-    else { void sync.syncConversations(id).catch((e) => console.error(`syncConversations bg(${id}) falló:`, e)) }
+    else { void sync.syncConversations(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncConversations bg falló')) }
     res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
   }))
 
@@ -110,10 +110,10 @@ export function registerTicketRoutes(
     const id = String(req.params.id)
     let hist = await getTicketHistory(db, id)
     if (hist.length === 0) {
-      try { await sync.syncTicketHistory(id) } catch (e) { console.error(`syncTicketHistory(${id}) falló:`, e) }
+      try { await sync.syncTicketHistory(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncTicketHistory (lazy) falló') }
       hist = await getTicketHistory(db, id)
     } else {
-      void sync.syncTicketHistory(id).catch((e) => console.error(`syncTicketHistory bg(${id}) falló:`, e))
+      void sync.syncTicketHistory(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncTicketHistory bg falló'))
     }
     res.json(hist)
   }))
