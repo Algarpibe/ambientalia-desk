@@ -436,6 +436,7 @@ La connection string de las apps consumidoras usa `hub_reader` (nunca el usuario
 ---
 
 ## Notas de cierre / riesgos
+- **GOTCHA ESM (corregido en ejecución, commit `007ddc2`):** con `"type":"module"` + `tsc moduleResolution:"Bundler"`, los imports relativos DEBEN llevar extensión `.js` (`./pool.js`, `./types.js`, `./reads.js`) en `index.ts`/`reads.ts` — Node NO los reescribe en el emit y el paquete publicado fallaría con `ERR_MODULE_NOT_FOUND`. Los `*.test.ts` no lo necesitan (vitest usa resolución bundler y no se publican).
 - **Anti-drift:** los tipos/DDL-de-test duplican el esquema del monorepo (fuente de verdad = `packages/zoho-sync/src/**/schema*.sql`). Cuando el motor cambie una de las 4 tablas tipadas, actualizar `types.ts` + el fixture de `reads.test.ts`. (Documentado; v1 no automatiza la sincronización cross-repo.)
 - **numeric→number:** `pool.ts` registra el parser para que los tipos `number` sean veraces con node-pg (pg-mem ya devuelve number).
 - **Esquema `desk`:** en prod los tickets están en `desk.tickets` (search_path); los helpers usan el nombre calificado.
