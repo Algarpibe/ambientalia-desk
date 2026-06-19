@@ -22,7 +22,7 @@ beforeEach(async () => {
 
 function appWith(overrides: Partial<{ enableWrites: boolean }> = {}) {
   const config = { enableWrites: false, ...overrides } as AppConfig
-  const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn(), syncTicketHistory: vi.fn(), syncContacts: vi.fn() }
+  const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), syncContacts: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db, zohoFetch, sync, config })
   return { app, sync, zohoFetch }
@@ -131,6 +131,58 @@ describe('GET /api/tickets/:id/history', () => {
     const f = await request(app).get('/api/tickets/t2/history').set('Cookie', cookie)
     expect(f.body[0]).toMatchObject({ title: 'Transición: Habilitar' })
     expect((await request(app).get('/api/tickets/t1/history')).status).toBe(401)
+  })
+})
+
+describe('F3-02 lectura asíncrona (lazy + background)', () => {
+  it('detalle: con ticket local sirve 200 sin bloquear y dispara syncTicket en background (un rechazo no rompe)', async () => {
+    const cookie = await adminCookie()
+    await upsertTicket(db, ticketRowFromZoho({ id: 'tx1', ticketNumber: '500', subject: 'Local', status: 'Ingresado', statusType: 'Open', customFields: {} } as any))
+    const { app, sync } = appWith()
+    sync.syncTicket.mockRejectedValue(new Error('zoho down'))
+    const res = await request(app).get('/api/tickets/tx1').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.number).toBe('#500')
+    expect(sync.syncTicket).toHaveBeenCalledWith('tx1')
+  })
+
+  it('historial vacío → lazy (await): puebla y devuelve lo poblado; syncTicketHistory llamado', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('tx2',2,'B','Ingresado')")
+    const { app, sync } = appWith()
+    sync.syncTicketHistory.mockImplementation(async () => {
+      await db.query("INSERT INTO ticket_history (id,ticket_id,event_name,event_time,actor_name,raw) VALUES ('hx1','tx2','CommentAdded',now(),'Ana',$1)",
+        [JSON.stringify({ eventName: 'CommentAdded', actor: { name: 'Ana' }, eventInfo: [{ propertyName: 'CommentType', propertyValue: 'Private' }] })])
+    })
+    const res = await request(app).get('/api/tickets/tx2/history').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.length).toBe(1)
+    expect(sync.syncTicketHistory).toHaveBeenCalledWith('tx2')
+  })
+
+  it('historial con datos → background: sirve local 200 y dispara syncTicketHistory (rechazo no rompe)', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('tx3',3,'C','Ingresado')")
+    await db.query("INSERT INTO ticket_history (id,ticket_id,event_name,event_time,actor_name,raw) VALUES ('hx3','tx3','CommentAdded',now(),'Ana',$1)",
+      [JSON.stringify({ eventName: 'CommentAdded', actor: { name: 'Ana' }, eventInfo: [{ propertyName: 'CommentType', propertyValue: 'Private' }] })])
+    const { app, sync } = appWith()
+    sync.syncTicketHistory.mockRejectedValue(new Error('zoho down'))
+    const res = await request(app).get('/api/tickets/tx3/history').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.length).toBe(1)
+    expect(sync.syncTicketHistory).toHaveBeenCalledWith('tx3')
+  })
+
+  it('conversaciones con datos → background refresh: sirve local 200 y dispara syncConversations (rechazo no rompe)', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('tx4',4,'D','Ingresado')")
+    await db.query("INSERT INTO conversations (id,ticket_id,kind,author_name,content,commented_time) VALUES ('cv4','tx4','thread','Ana','hola',now())")
+    const { app, sync } = appWith()
+    sync.syncConversations.mockRejectedValue(new Error('zoho down'))
+    const res = await request(app).get('/api/tickets/tx4/conversations').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.length).toBe(1)
+    expect(sync.syncConversations).toHaveBeenCalledWith('tx4')
   })
 })
 
