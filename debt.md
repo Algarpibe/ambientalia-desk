@@ -5,6 +5,54 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 
 ---
 
+## 🗓️ ESTADO ACTUAL (actualizado 2026-06-19)
+
+> Esta sección es la **fuente de verdad**. Las secciones numeradas más abajo son referencia histórica;
+> varias quedaron **resueltas** esta sesión (marcadas aquí). Auditoría de seguridad completa cerrada
+> (Fases A–D); specs/planes en `docs/superpowers/{specs,plans}/2026-06-19-*`.
+
+### ✅ RESUELTO esta sesión (el detalle de abajo quedó obsoleto)
+- **Reply sin gate por área** (§3d, §4) → `requireArea` en `/api/tickets/:id/reply` (F2-06).
+- **`String(err)` crudo en respuestas 500** (§3f, §3i) → error-handler central que NO filtra detalles + `asyncHandler` (F4-01).
+- **`/api/admin/*` con `?token=ADMIN_TOKEN`** (§1, §2) → ahora sesión + rol superadmin (F2-02). `config.adminToken` quedó huérfano (limpieza menor).
+- **Re-sync de conversaciones/detalle al abrir** (§4) → lectura desde réplica local + refresco en background lazy (F3-02).
+- **Dedup Books-lite (clients/sales_orders) a vistas sobre `books.*`** (§3j Fase 2) → hecho (reorg esquemas Fase 2).
+- **`any` en la capa de mapeo de Desk** (mappers.ts/sync.ts) → reducido (F4-03; warnings repo 157→134). El `any` de booksHub/crmHub sigue (patrón helper deliberado).
+- **Independizar `zoho-hub-sync`** (§4) → PARCIAL: monorepo (Etapa 1) + paquete de lectura publicado `@algarpibe/zoho-sync` (repo propio, GitHub Packages) + usuario `hub_reader`. Falta (si se quiere) la separación total de despliegues (Etapa 2 / A-full).
+- **Estructura/calidad (auditoría):** rate-limit login + helmet (Fase B), CI con typecheck/lint/test/build + branch protection (Fase C), paginación de tickets (F3-01), partir `app.ts` en routers+servicio (F4-02), logging pino+request-id (F4-05), caché Análisis (F3-04), test integración path `desk` contra Postgres real (F5-02), modelo de authz documentado (F2-07, `docs/modelo-autorizacion.md`).
+
+### 🔴 VIGENTE — prioridad alta (fuera de la auditoría; el usuario decidió diferirla)
+- **Rotación de secretos** (engloba el "rotar Zoho Client Secret" de §4): passwords de las 3 BD (desk/hub/sales-tracker),
+  `ZOHO_CLIENT_SECRET` + refresh tokens (Desk/Books/CRM), **2 PATs de GitHub** expuestos, `ADMIN_PASSWORD`, API key de n8n,
+  password de `hub_reader`. Todos comprometidos (aparecieron en el chat). Rotar + guardar solo como secretos/env.
+
+### 🟡 DIFERIDO con criterio (auditoría Fase D — BAJA)
+- **F3-03 — adjuntos fuera de la BD** (= §1): diferido hasta **medir volumen** (`/api/admin/measure-attachments`, ahora con sesión admin) y elegir destino (volumen VPS / MinIO-S3). No urge a la escala actual.
+- **F2-05 — token CSRF**: SALTADO. Ya mitigado por `sameSite=lax` + API JSON; añadir tokens no aporta valor real en un SPA same-origin.
+- **R2 — calificar queries vs `search_path`** (§3j): solo si pg-mem deja de ser el harness de tests. (El path `desk`/`search_path` ya tiene test de integración contra Postgres real en CI — F5-02.)
+
+### 🟢 ROADMAP / proyectos futuros (no urgentes)
+**Plataforma Desk:**
+- **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
+- **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
+- **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
+- **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
+- **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
+
+**Zoho-hub / arquitectura:**
+- **zoho-hub:** Opción A (cutover total + write-back), SP3 (write-back CQRS), SP4 (matviews); replicar `contacts` a desk-db (requiere gatear `ensureContact`).
+- **Separación total de despliegues** (Etapa 2 / A-full) si el hub gana más consumidores/equipos.
+- **CRM Fase 3** (Accounts/Contacts, módulos custom). **Books:** pagos/estimates.
+- **Ampliar** tipos/helpers del paquete `@algarpibe/zoho-sync` cuando aparezca la 1ª app consumidora. Decidir **borrar/mantener `hub-test-app`**.
+
+### ⚪ LATENTES / menores (por diseño; abordar si tocan ese código) — ver detalle abajo
+managed_by_app atómica (I-1), backoff 429 en backfill (I-3), `status_type` fino (M-1), checkbox required (M-2),
+enumeración por timing en login (M-3), `getEquipo` sin filtro `active` (M-9), dedup parser semilla (M-10),
+PATCH `serial` vacío (M-14), escapar comodines de búsqueda (M-5), TZ en `due_date` (M-12), `@types/bcryptjs` redundante,
+`config.syncBooks` sin uso, guard anti-drift `DESK_TABLES`↔`schema.sql`.
+
+---
+
 ## 1. Descargar y almacenar archivos adjuntos (imágenes, PDFs)
 
 **Qué:** Guardar los archivos de los adjuntos (no solo su metadata) para tenerlos
