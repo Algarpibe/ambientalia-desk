@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { TicketDetailView } from './components/TicketDetailView';
 import { COLUMNS } from '@ambientalia/shared';
+import type { Ticket } from '@ambientalia/shared';
 import { groupTicketsByColumn, groupByPriority, groupByDueDate, PRIORITY_COLUMNS, DUEDATE_COLUMNS } from './board';
 import { applyBoardView, viewLabel } from './lib/boardView';
 import { useHideEmptyColumns } from './boardSettings';
@@ -12,7 +13,8 @@ import { TicketList } from './components/TicketList';
 import { TicketTable } from './components/TicketTable';
 import { ViewModeMenu } from './components/ViewModeMenu';
 import { useAsync } from './hooks/useAsync';
-import { fetchTickets, setTicketRead } from './api/client';
+import { fetchActiveTickets, fetchClosedTickets, setTicketRead, type ClosedPage } from './api/client';
+import { Pagination } from './components/Pagination';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
 
@@ -40,14 +42,22 @@ function App() {
   const [showActividades, setShowActividades] = useState(false)
   const hideEmpty = useHideEmptyColumns()
   const [mode, setMode] = useViewMode()
-  const { data: tickets, loading, error, reload } = useAsync(() => fetchTickets('all'), [user?.id]);
-  const all = tickets ?? [];
   const [view, setView] = useState('todos');
+  const [closedPage, setClosedPage] = useState(1)
+  useEffect(() => { setClosedPage(1) }, [view])
+  const isClosed = view === 'cerrados'
+  const { data: resp, loading, error, reload } = useAsync<Ticket[] | ClosedPage>(
+    () => (isClosed ? fetchClosedTickets(closedPage) : fetchActiveTickets()),
+    [user?.id, view, closedPage],
+  );
+  const tickets: Ticket[] = isClosed ? ((resp as ClosedPage | null)?.items ?? []) : ((resp as Ticket[] | null) ?? []);
+  const closedMeta = isClosed ? (resp as ClosedPage | null) : null;
+  const all = tickets;
   const base = applyBoardView(all, view, new Date());
   const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>({})
   // Al llegar datos frescos del servidor, descarta los overrides optimistas (deja mandar al servidor,
   // p.ej. para que la reactivación "no leído" por actividad nueva se refleje tras recargar).
-  useEffect(() => { setReadOverrides({}) }, [tickets])
+  useEffect(() => { setReadOverrides({}) }, [resp])
   const baseRead = base.map((t) => (t.id in readOverrides ? { ...t, read: readOverrides[t.id] } : t))
   const marcarLeido = (id: string, read: boolean) => { setReadOverrides((o) => ({ ...o, [id]: read })); setTicketRead(id, read).catch(() => {}) }
   const abrirTicket = (id: string) => { setSelectedTicketId(id); marcarLeido(id, true) }
@@ -98,6 +108,15 @@ function App() {
           )}
           {mode === 'tabla' && (
             <TicketTable tickets={baseRead} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
+          )}
+          {isClosed && closedMeta && (
+            <Pagination
+              page={closedPage}
+              pageSize={closedMeta.pageSize}
+              total={closedMeta.total}
+              onPrev={() => setClosedPage((p) => Math.max(1, p - 1))}
+              onNext={() => setClosedPage((p) => Math.min(Math.max(1, Math.ceil(closedMeta.total / closedMeta.pageSize)), p + 1))}
+            />
           )}
         </div>
       </div>

@@ -16,6 +16,16 @@ export function fetchTickets(scope?: 'all'): Promise<Ticket[]> {
   return fetch(`/api/tickets${qs}`, { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
 
+export function fetchActiveTickets(): Promise<Ticket[]> {
+  return fetch('/api/tickets', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
+}
+
+export interface ClosedPage { items: Ticket[]; total: number; page: number; pageSize: number }
+
+export function fetchClosedTickets(page: number): Promise<ClosedPage> {
+  return fetch(`/api/tickets?scope=closed&page=${page}`, { credentials: 'include' }).then((r) => json<ClosedPage>(r))
+}
+
 export function fetchTicket(id: string): Promise<TicketDetail> {
   return fetch(`/api/tickets/${id}`, { credentials: 'include' }).then((r) => json<TicketDetail>(r))
 }
