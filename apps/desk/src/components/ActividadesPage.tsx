@@ -12,7 +12,7 @@ const VISTAS: { key: string; label: string }[] = [
   { key: 'vencidas', label: 'Vencidas' },
 ]
 
-export function ActividadesPage({ onClose, onSelectTicket }: { onClose: () => void; onSelectTicket: (id: string) => void }) {
+export function ActividadesPage({ onSelectTicket }: { onClose: () => void; onSelectTicket: (id: string) => void }) {
   const [filter, setFilter] = useState('todas')
   const [q, setQ] = useState('')
   const { data, loading } = useAsync<ActivityListItem[]>(() => fetchAllActivities(filter, q), [filter, q])
@@ -20,11 +20,7 @@ export function ActividadesPage({ onClose, onSelectTicket }: { onClose: () => vo
   const vista = VISTAS.find((v) => v.key === filter)?.label ?? 'Actividades'
 
   return (
-    <div className="fixed inset-0 z-[70] bg-white flex flex-col">
-      <div className="bg-[#2C2E3E] text-white h-[48px] flex items-center px-4 gap-3 shrink-0">
-        <button onClick={onClose} className="hover:bg-white/10 p-1 rounded"><span className="material-symbols-outlined">arrow_back</span></button>
-        <h1 className="text-[15px] font-bold">Actividades</h1>
-      </div>
+    <div className="fixed inset-x-0 bottom-0 top-[48px] z-20 bg-white flex flex-col">
       <div className="flex flex-1 overflow-hidden">
         <div className="w-[220px] border-r border-slate-200 bg-white flex flex-col shrink-0">
           <div className="px-4 pt-3 text-[11px] font-bold text-slate-400">VISTAS CON ESTRELLAS</div>

@@ -66,15 +66,16 @@ function Tendencia({ data }: { data: AnalisisMes[] }) {
   )
 }
 
-export function Analisis({ onClose }: { onClose: () => void }) {
+// onClose se mantiene en la firma por compatibilidad; el nav (Header) gestiona el cierre.
+export function Analisis(props: { onClose: () => void }) {
+  void props
+
   const [range, setRange] = useState('trimestre')
   const { data, loading, error } = useAsync<AnalisisData>(() => fetchAnalisis(range), [range])
 
   return (
-    <div className="fixed inset-0 z-[70] bg-[#f4f5f7] flex flex-col">
+    <div className="fixed inset-x-0 bottom-0 top-[48px] z-20 bg-[#f4f5f7] flex flex-col">
       <div className="bg-[#2C2E3E] text-white h-[48px] flex items-center px-4 gap-3 shrink-0">
-        <button onClick={onClose} className="hover:bg-white/10 p-1 rounded"><span className="material-symbols-outlined">arrow_back</span></button>
-        <h1 className="text-[15px] font-bold">Análisis</h1>
         <div className="ml-auto flex gap-1">
           {RANGOS.map((r) => (
             <button key={r.key} onClick={() => setRange(r.key)} className={`px-3 py-1 rounded text-[12px] ${range === r.key ? 'bg-white text-slate-800 font-bold' : 'bg-white/10 text-white/80 hover:bg-white/20'}`}>{r.label}</button>

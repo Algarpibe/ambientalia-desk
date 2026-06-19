@@ -1,16 +1,18 @@
 import React from 'react';
 import { useAuth } from '../auth/AuthContext';
 
-const NAV_TABS = [
-    { label: 'Tickets', active: true },
-    { label: 'Análisis' },
-    { label: 'Actividades' },
+type SectionKey = 'tickets' | 'analisis' | 'clientes' | 'actividades'
+
+const NAV_TABS: { label: string; key?: SectionKey }[] = [
+    { label: 'Tickets', key: 'tickets' },
+    { label: 'Análisis', key: 'analisis' },
+    { label: 'Actividades', key: 'actividades' },
     { label: 'Mensajería Instantánea' },
-    { label: 'Clientes' },
+    { label: 'Clientes', key: 'clientes' },
     { label: 'Base de Conocimientos' }
 ];
 
-export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void; onOpenAnalisis: () => void; onOpenClientes: () => void; onOpenActividades: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos, onOpenAnalisis, onOpenClientes, onOpenActividades }) => {
+export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void; activeSection: SectionKey; onOpenTickets: () => void; onOpenAnalisis: () => void; onOpenClientes: () => void; onOpenActividades: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos, activeSection, onOpenTickets, onOpenAnalisis, onOpenClientes, onOpenActividades }) => {
     const { user } = useAuth()
     return (
         <header className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0 z-30">
@@ -24,20 +26,24 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
                 </div>
 
                 <nav className="flex h-full items-center">
-                    {NAV_TABS.map((tab, idx) => (
+                    {NAV_TABS.map((tab, idx) => {
+                        const handler =
+                            tab.key === 'tickets' ? onOpenTickets
+                            : tab.key === 'analisis' && user?.isAdmin ? onOpenAnalisis
+                            : tab.key === 'clientes' ? onOpenClientes
+                            : tab.key === 'actividades' ? onOpenActividades
+                            : undefined
+                        const isActive = tab.key === activeSection
+                        return (
                         <button
                             key={idx}
-                            onClick={
-                                tab.label === 'Análisis' && user?.isAdmin ? onOpenAnalisis
-                                : tab.label === 'Clientes' ? onOpenClientes
-                                : tab.label === 'Actividades' ? onOpenActividades
-                                : undefined
-                            }
-                            className={`px-4 h-full text-[13px] font-medium transition-colors border-b-2 ${tab.active ? 'text-white border-blue-500 bg-white/5' : 'text-white/60 border-transparent hover:text-white hover:bg-white/5'} ${(tab.label === 'Análisis' && user?.isAdmin) || tab.label === 'Clientes' || tab.label === 'Actividades' ? 'cursor-pointer' : ''}`}
+                            onClick={handler}
+                            className={`px-4 h-full text-[13px] font-medium transition-colors border-b-2 ${isActive ? 'text-white border-blue-500 bg-white/5' : 'text-white/60 border-transparent hover:text-white hover:bg-white/5'} ${handler ? 'cursor-pointer' : ''}`}
                         >
                             {tab.label}
                         </button>
-                    ))}
+                        )
+                    })}
                     <button className="px-2 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-lg">menu</span>
                     </button>

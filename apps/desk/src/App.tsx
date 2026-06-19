@@ -38,8 +38,13 @@ function App() {
   const [showAnalisis, setShowAnalisis] = useState(false)
   const [showClientes, setShowClientes] = useState(false)
   const [clientesInitial, setClientesInitial] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(null)
-  const abrirCliente = (kind: 'contacto' | 'empresa', id: string) => { setClientesInitial({ kind, id }); setShowClientes(true) }
   const [showActividades, setShowActividades] = useState(false)
+  const activeSection: 'analisis' | 'clientes' | 'actividades' | 'tickets' = showAnalisis ? 'analisis' : showClientes ? 'clientes' : showActividades ? 'actividades' : 'tickets'
+  const abrirSeccion = (s: 'analisis' | 'clientes' | 'actividades' | 'tickets') => {
+    setShowAnalisis(s === 'analisis'); setShowClientes(s === 'clientes'); setShowActividades(s === 'actividades')
+    if (s !== 'clientes') setClientesInitial(null)
+  }
+  const abrirCliente = (kind: 'contacto' | 'empresa', id: string) => { setClientesInitial({ kind, id }); setShowAnalisis(false); setShowActividades(false); setShowClientes(true) }
   const hideEmpty = useHideEmptyColumns()
   const [mode, setMode] = useViewMode()
   const [view, setView] = useState('todos');
@@ -67,7 +72,7 @@ function App() {
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} onOpenAnalisis={() => setShowAnalisis(true)} onOpenClientes={() => { setClientesInitial(null); setShowClientes(true) }} onOpenActividades={() => setShowActividades(true)} />
+      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} activeSection={activeSection} onOpenTickets={() => abrirSeccion('tickets')} onOpenAnalisis={() => abrirSeccion('analisis')} onOpenClientes={() => abrirSeccion('clientes')} onOpenActividades={() => abrirSeccion('actividades')} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeView={view} onSelectView={setView} />

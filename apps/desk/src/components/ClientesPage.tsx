@@ -14,7 +14,7 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   return <div onMouseDown={onMouseDown} className="w-1 shrink-0 cursor-col-resize bg-slate-200 hover:bg-blue-400 transition-colors" />
 }
 
-export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket, initial }: { onClose: () => void; onSelectTicket: (id: string) => void; onAgregarTicket: () => void; initial?: { kind: 'contacto' | 'empresa'; id: string } | null }) {
+export function ClientesPage({ onSelectTicket, onAgregarTicket, initial }: { onClose: () => void; onSelectTicket: (id: string) => void; onAgregarTicket: () => void; initial?: { kind: 'contacto' | 'empresa'; id: string } | null }) {
   const [tab, setTab] = useState<'contactos' | 'empresas'>(initial?.kind === 'empresa' ? 'empresas' : 'contactos')
   const sidebar = useResizable('clientes:sidebarW', 200, 160, 360)
   const list = useResizable('clientes:listW', 320, 240, 560)
@@ -41,11 +41,7 @@ export function ClientesPage({ onClose, onSelectTicket, onAgregarTicket, initial
   const kind: 'contacto' | 'empresa' = tab === 'contactos' ? 'contacto' : 'empresa'
 
   return (
-    <div className="fixed inset-0 z-[70] bg-white flex flex-col">
-      <div className="bg-[#2C2E3E] text-white h-[48px] flex items-center px-4 gap-3 shrink-0">
-        <button onClick={onClose} className="hover:bg-white/10 p-1 rounded"><span className="material-symbols-outlined">arrow_back</span></button>
-        <h1 className="text-[15px] font-bold">Clientes</h1>
-      </div>
+    <div className="fixed inset-x-0 bottom-0 top-[48px] z-20 bg-white flex flex-col">
       <div className="flex flex-1 overflow-x-auto overflow-y-hidden">
         <div style={{ width: sidebar.w }} className="bg-white flex flex-col shrink-0">
           <div className="px-4 pt-3 text-[11px] font-bold text-slate-400">VISTAS CON ESTRELLAS</div>
