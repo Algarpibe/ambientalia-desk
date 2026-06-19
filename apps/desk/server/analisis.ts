@@ -27,6 +27,18 @@ export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
   }))
 }
 
+let cache: { rows: AnalisisRow[]; at: number } | null = null
+const ANALISIS_TTL_MS = 5 * 60 * 1000
+/** getAnalisisRows con caché en memoria (TTL 5 min). `now` inyectable para tests. */
+export async function getAnalisisRowsCached(db: Queryable, now: number = Date.now()): Promise<AnalisisRow[]> {
+  if (cache && now - cache.at < ANALISIS_TTL_MS) return cache.rows
+  const rows = await getAnalisisRows(db)
+  cache = { rows, at: now }
+  return rows
+}
+/** Resetea la caché (para tests). */
+export function clearAnalisisCache(): void { cache = null }
+
 export function rangeToFromTo(range: string, now: Date): { from: Date | null; to: Date } {
   const day = 86400000
   if (range === 'mes') return { from: new Date(now.getTime() - 30 * day), to: now }

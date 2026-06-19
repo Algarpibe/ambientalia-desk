@@ -7,6 +7,7 @@ import { ticketRowFromZoho, accountRowFromZoho } from '@ambientalia/zoho-sync/db
 import { upsertEquipo, listEquiposManage } from './db/equipos'
 import { parseEquiposCsv } from './db/seedEquipos'
 import { createApp } from './app'
+import { clearAnalisisCache } from './analisis'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -518,6 +519,7 @@ describe('Gestión de equipos (Subsistema F)', () => {
 describe('GET /api/analisis (admin)', () => {
   it('admin obtiene métricas; 403 no-admin; 401 sin sesión', async () => {
     const admin = await adminCookie()
+    clearAnalisisCache() // caché a nivel de módulo: aislar de filas cacheadas por otros tests
     await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('a1',1,'A','Ingresado','Open',now())")
     const { app } = appWith()
     const res = await request(app).get('/api/analisis?range=todo').set('Cookie', admin)
