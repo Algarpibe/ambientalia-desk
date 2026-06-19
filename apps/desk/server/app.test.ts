@@ -535,6 +535,16 @@ describe('Resolución — seguridad', () => {
   })
 })
 
+describe('GET /api/attachment (SSRF guard)', () => {
+  it('SSRF: ruta de adjunto arbitraria → 400 (con sesión)', async () => {
+    const { app, zohoFetch } = appWith()
+    const op = await userCookie([])
+    const res = await request(app).get('/api/attachment?path=/evil/arbitrary').set('Cookie', op)
+    expect(res.status).toBe(400)
+    expect(zohoFetch).not.toHaveBeenCalled()
+  })
+})
+
 describe('GET /api/activities (global)', () => {
   it('lista (con sesión); 401 sin sesión', async () => {
     const cookie = await adminCookie()
