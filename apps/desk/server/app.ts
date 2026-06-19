@@ -26,6 +26,8 @@ import { getActivities, getAllActivities } from '@ambientalia/zoho-sync/db/activ
 import multer from 'multer'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from './db/resolutions'
 import { getTicketHistory } from '@ambientalia/zoho-sync/db/history'
+import { asyncHandler } from './util/asyncHandler'
+import { HttpError } from './util/httpError'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
 
@@ -37,8 +39,6 @@ function humanBytes(n: number): string {
   while (v >= 1024 && i < units.length - 1) { v /= 1024; i++ }
   return `${v.toFixed(2)} ${units[i]}`
 }
-
-const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) => { fn(req, res, next).catch(next) }
 
 interface Deps {
   db: Queryable
@@ -403,6 +403,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   // (Express identifica los error-handlers por su aridad de 4 args; `_next` debe existir.)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if (err instanceof HttpError) { res.status(err.status).json(err.body); return }
     console.error('Error no manejado:', err)
     if (res.headersSent) return
     res.status(500).json({ error: 'Error interno' })
