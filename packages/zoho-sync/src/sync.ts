@@ -21,7 +21,12 @@ export interface Sync {
   syncContacts(): Promise<number>
 }
 const PAGE_SIZE = 100
-async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
+type ZohoRecord = Record<string, unknown>
+async function readData(res: Response): Promise<ZohoRecord> { const t = await res.text(); return t ? JSON.parse(t) : {} }
+/** Extrae el array `data` de una respuesta de lista de Zoho, narrowing a registros. */
+function dataArray(payload: ZohoRecord): ZohoRecord[] {
+  return Array.isArray(payload.data) ? (payload.data as ZohoRecord[]) : []
+}
 
 export function createSync({ zohoFetch, db, config }: Deps): Sync {
   // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
@@ -46,7 +51,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
       const res = await zohoFetch(`/contacts/${contactId}`)
       if (res.ok) {
         const c = await readData(res)
-        accountId = c.accountId ?? null
+        accountId = (c.accountId as string) ?? null
         await ensureAccount(accountId)
         await upsertContact(db, contactRowFromZoho(c))
       }
@@ -55,10 +60,10 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     return accountId
   }
 
-  async function persistTicket(t: any): Promise<void> {
-    await ensureAccount(t.accountId)
-    const contactAccountId = await ensureContact(t.contactId)
-    if (t.assignee) await upsertAgent(db, agentRowFromZoho(t.assignee))
+  async function persistTicket(t: ZohoRecord): Promise<void> {
+    await ensureAccount(t.accountId as string | null | undefined)
+    const contactAccountId = await ensureContact(t.contactId as string | null | undefined)
+    if (t.assignee) await upsertAgent(db, agentRowFromZoho(t.assignee as ZohoRecord))
     const row = ticketRowFromZoho(t)
     // El endpoint de LISTA omite accountId; recuperarlo del contacto para que el JOIN dé la empresa.
     if (!row.account_id) row.account_id = contactAccountId
@@ -66,20 +71,23 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
   }
 
   /** Persiste cada item aislando fallos: uno malo no aborta el lote. Devuelve cuántos persistieron OK. */
-  async function persistEach(items: any[]): Promise<number> {
+  async function persistEach(items: ZohoRecord[]): Promise<number> {
     let ok = 0
     for (const t of items) {
       try { await persistTicket(t); ok++ }
-      catch (e: any) { console.error(`persistTicket(${t?.id ?? '?'}) falló:`, String(e?.detail ?? e?.message ?? e)) }
+      catch (e) {
+        const err = e as { detail?: unknown; message?: unknown }
+        console.error(`persistTicket(${t?.id ?? '?'}) falló:`, String(err?.detail ?? err?.message ?? e))
+      }
     }
     return ok
   }
 
-  async function fetchTicketPage(from: number, sortBy = 'createdTime'): Promise<any[]> {
+  async function fetchTicketPage(from: number, sortBy = 'createdTime'): Promise<ZohoRecord[]> {
     const params = new URLSearchParams({ departmentId: config.departmentId, from: String(from), limit: String(PAGE_SIZE), sortBy, include: 'contacts,assignee' })
     const res = await zohoFetch(`/tickets?${params.toString()}`)
     if (!res.ok) throw new Error(`Zoho /tickets ${res.status}`)
-    return ((await readData(res)).data ?? [])
+    return dataArray(await readData(res))
   }
 
   return {
@@ -101,7 +109,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         const params = new URLSearchParams({ departmentId: config.departmentId, from: String(from), limit: String(PAGE_SIZE), include: 'contacts,assignee' })
         const res = await zohoFetch(`/tickets/archivedTickets?${params.toString()}`)
         if (!res.ok) throw new Error(`Zoho /tickets/archivedTickets ${res.status}`)
-        const items = ((await readData(res)).data ?? []) as any[]
+        const items = dataArray(await readData(res))
         if (items.length === 0) break
         await persistEach(items)
         total += items.length
@@ -123,7 +131,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     async syncConversations(id: string): Promise<void> {
       const res = await zohoFetch(`/tickets/${id}/conversations`)
       if (!res.ok) throw new Error(`Zoho /tickets/${id}/conversations ${res.status}`)
-      const items = ((await readData(res)).data ?? []) as any[]
+      const items = dataArray(await readData(res))
       for (const c of items) {
         await upsertConversation(db, conversationRowFromZoho(c, id))
         for (const a of attachmentRowsFrom(c, id)) await upsertAttachment(db, a)
@@ -134,7 +142,7 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
       for (;;) {
         const res = await zohoFetch(`/tickets/${id}/History?from=${from}&limit=${PAGE_SIZE}`)
         if (!res.ok) throw new Error(`Zoho /tickets/${id}/History ${res.status}`)
-        const items = ((await readData(res)).data ?? []) as any[]
+        const items = dataArray(await readData(res))
         if (items.length === 0) break
         for (const e of items) await upsertHistoryEvent(db, id, e)
         if (items.length < PAGE_SIZE) break
@@ -149,13 +157,13 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         const params = new URLSearchParams({ departmentId: config.departmentId, from: String(from), limit: String(PAGE_SIZE), include: 'tickets,assignee', sortBy: '-modifiedTime' })
         const res = await zohoFetch(`/tasks?${params.toString()}`)
         if (!res.ok) throw new Error(`Zoho /tasks ${res.status}`)
-        const items = ((await readData(res)).data ?? []) as any[]
+        const items = dataArray(await readData(res))
         if (items.length === 0) break
         let reachedOld = false
         for (const t of items) {
           await upsertActivity(db, activityRowFromZoho(t))
           total++
-          const mt = t.modifiedTime ? new Date(t.modifiedTime).getTime() : 0
+          const mt = t.modifiedTime ? new Date(t.modifiedTime as string).getTime() : 0
           if (watermark && mt <= watermark) reachedOld = true
         }
         if (reachedOld || items.length < PAGE_SIZE) break
@@ -171,14 +179,14 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         const params = new URLSearchParams({ from: String(from), limit: String(PAGE_SIZE), sortBy: '-modifiedTime' })
         const res = await zohoFetch(`/contacts?${params.toString()}`)
         if (!res.ok) throw new Error(`Zoho /contacts ${res.status}`)
-        const items = ((await readData(res)).data ?? []) as any[]
+        const items = dataArray(await readData(res))
         if (items.length === 0) break
         let reachedOld = false
         for (const c of items) {
-          await ensureAccount(c.accountId)
+          await ensureAccount(c.accountId as string | null | undefined)
           await upsertContact(db, contactRowFromZoho(c))
           total++
-          const mt = c.modifiedTime ? new Date(c.modifiedTime).getTime() : 0
+          const mt = c.modifiedTime ? new Date(c.modifiedTime as string).getTime() : 0
           if (watermark && mt <= watermark) reachedOld = true
         }
         if (reachedOld || items.length < PAGE_SIZE) break

@@ -22,21 +22,22 @@ function str(v: unknown): string | null {
   return v === undefined || v === null ? null : String(v)
 }
 
-export function ticketRowFromZoho(raw: any): TicketRow {
-  const cf: Record<string, string | null> = { ...(raw.customFields ?? {}) }
+export function ticketRowFromZoho(raw: Record<string, unknown>): TicketRow {
+  const customFields = (raw.customFields ?? {}) as Record<string, unknown>
+  const cf: Record<string, string | null> = { ...(customFields as Record<string, string | null>) }
   const row: Partial<TicketRow> = {
-    id: raw.id, number: Number(raw.ticketNumber), subject: raw.subject ?? null,
-    status: raw.status, status_type: raw.statusType ?? null, priority: raw.priority ?? null,
-    classification: raw.classification ?? null, channel: raw.channel ?? null,
-    description: raw.description ?? null,
-    contact_id: raw.contactId ?? null, account_id: raw.accountId ?? null, assignee_id: raw.assigneeId ?? null,
-    created_time: raw.createdTime ?? null, modified_time: raw.modifiedTime ?? null,
-    closed_time: raw.closedTime ?? null, onhold_time: raw.onholdTime ?? null, due_date: raw.dueDate ?? null,
+    id: raw.id as string, number: Number(raw.ticketNumber), subject: (raw.subject as string) ?? null,
+    status: raw.status as string, status_type: (raw.statusType as string) ?? null, priority: (raw.priority as string) ?? null,
+    classification: (raw.classification as string) ?? null, channel: (raw.channel as string) ?? null,
+    description: (raw.description as string) ?? null,
+    contact_id: (raw.contactId as string) ?? null, account_id: (raw.accountId as string) ?? null, assignee_id: (raw.assigneeId as string) ?? null,
+    created_time: (raw.createdTime as string) ?? null, modified_time: (raw.modifiedTime as string) ?? null,
+    closed_time: (raw.closedTime as string) ?? null, onhold_time: (raw.onholdTime as string) ?? null, due_date: (raw.dueDate as string) ?? null,
     custom_fields: {}, managed_by_app: false, source: 'zoho', raw,
   }
   for (const { col, label, kind } of PROMOTED_COLUMNS) {
-    const v = (raw.customFields ?? {})[label]
-    ;(row as any)[col] = kind === 'bool' ? toBool(v) : kind === 'int' ? toInt(v) : kind === 'date' ? dateOnly(v) : str(v)
+    const v = customFields[label]
+    ;(row as Record<string, unknown>)[col] = kind === 'bool' ? toBool(v) : kind === 'int' ? toInt(v) : kind === 'date' ? dateOnly(v) : str(v)
     delete cf[label] // no duplicar en custom_fields
   }
   row.custom_fields = cf
@@ -49,36 +50,40 @@ export function ticketRowFromZoho(raw: any): TicketRow {
   return row as TicketRow
 }
 
-export function accountRowFromZoho(raw: any): AccountRow {
+export function accountRowFromZoho(raw: Record<string, unknown>): AccountRow {
+  const cfNested = raw.cf as Record<string, unknown> | undefined
+  const customFields = raw.customFields as Record<string, unknown> | undefined
   return {
-    id: raw.id, name: raw.accountName ?? '', nit: raw.cf?.cf_nit ?? raw.customFields?.NIT ?? null,
-    email: raw.email ?? null, phone: raw.phone ?? null, website: raw.website ?? null,
-    city: raw.city ?? null, address: raw.street ?? null, industry: raw.industry ?? null,
+    id: raw.id as string, name: (raw.accountName as string) ?? '', nit: (cfNested?.cf_nit as string) ?? (customFields?.NIT as string) ?? null,
+    email: (raw.email as string) ?? null, phone: (raw.phone as string) ?? null, website: (raw.website as string) ?? null,
+    city: (raw.city as string) ?? null, address: (raw.street as string) ?? null, industry: (raw.industry as string) ?? null,
     source: 'zoho', managed_by_app: false, raw,
   }
 }
 
-export function contactRowFromZoho(raw: any): ContactRow {
+export function contactRowFromZoho(raw: Record<string, unknown>): ContactRow {
   return {
-    id: raw.id, first_name: raw.firstName ?? null, last_name: raw.lastName ?? null,
-    email: raw.email ?? null, phone: raw.phone ?? null, mobile: raw.mobile ?? null,
-    account_id: raw.accountId ?? null, modified_time: raw.modifiedTime ?? null, source: 'zoho', managed_by_app: false, raw,
+    id: raw.id as string, first_name: (raw.firstName as string) ?? null, last_name: (raw.lastName as string) ?? null,
+    email: (raw.email as string) ?? null, phone: (raw.phone as string) ?? null, mobile: (raw.mobile as string) ?? null,
+    account_id: (raw.accountId as string) ?? null, modified_time: (raw.modifiedTime as string) ?? null, source: 'zoho', managed_by_app: false, raw,
   }
 }
 
-export function agentRowFromZoho(raw: any): AgentRow {
-  const name = [raw.firstName, raw.lastName].filter(Boolean).join(' ').trim() || (raw.name ?? null)
-  return { id: raw.id, name, email: raw.email ?? null, role: raw.roleName ?? null, source: 'zoho', raw }
+export function agentRowFromZoho(raw: Record<string, unknown>): AgentRow {
+  const name = [raw.firstName, raw.lastName].filter(Boolean).join(' ').trim() || ((raw.name as string) ?? null)
+  return { id: raw.id as string, name, email: (raw.email as string) ?? null, role: (raw.roleName as string) ?? null, source: 'zoho', raw }
 }
 
-export function conversationRowFromZoho(raw: any, ticketId: string): ConversationRow {
-  const authorName = raw.commenter?.name ?? raw.author?.name ?? null
-  const authorType = (raw.commenter?.type ?? raw.author?.type) === 'AGENT' ? 'agent' : raw.commenter || raw.author ? 'end_user' : null
+export function conversationRowFromZoho(raw: Record<string, unknown>, ticketId: string): ConversationRow {
+  const commenter = raw.commenter as Record<string, unknown> | undefined
+  const author = raw.author as Record<string, unknown> | undefined
+  const authorName = (commenter?.name as string) ?? (author?.name as string) ?? null
+  const authorType = (commenter?.type ?? author?.type) === 'AGENT' ? 'agent' : commenter || author ? 'end_user' : null
   const isPublic = raw.visibility === 'public' || raw.isPublic === true || raw.isPublic === 'true'
   return {
-    id: raw.id, ticket_id: ticketId, kind: raw.type ?? 'comment', author_name: authorName,
-    author_type: authorType, is_public: isPublic, content: (raw.content ?? raw.summary ?? null),
-    content_type: raw.contentType ?? null, commented_time: raw.commentedTime ?? raw.createdTime ?? null,
+    id: raw.id as string, ticket_id: ticketId, kind: (raw.type as string) ?? 'comment', author_name: authorName,
+    author_type: authorType, is_public: isPublic, content: ((raw.content as string) ?? (raw.summary as string) ?? null),
+    content_type: (raw.contentType as string) ?? null, commented_time: (raw.commentedTime as string) ?? (raw.createdTime as string) ?? null,
     source: 'zoho', raw,
   }
 }
@@ -88,29 +93,37 @@ function attachmentPath(href?: string | null): string | null {
   try { return new URL(href).pathname.replace(/^\/api\/v1/, '') } catch { return null }
 }
 
-export function attachmentRowsFrom(conv: any, ticketId: string): AttachmentRow[] {
-  return (conv.attachments ?? []).filter((a: any) => a?.id).map((a: any) => ({
-    id: a.id, conversation_id: conv.id ?? null, ticket_id: ticketId, name: a.name ?? null,
-    size: a.size ? Number(a.size) : null, content_type: a.contentType ?? null,
-    zoho_href: attachmentPath(a.href), storage_path: null, raw: a,
+export function attachmentRowsFrom(conv: Record<string, unknown>, ticketId: string): AttachmentRow[] {
+  const atts = Array.isArray(conv.attachments) ? (conv.attachments as Record<string, unknown>[]) : []
+  return atts.filter((a) => a?.id).map((a) => ({
+    id: a.id as string, conversation_id: (conv.id as string) ?? null, ticket_id: ticketId, name: (a.name as string) ?? null,
+    size: a.size ? Number(a.size) : null, content_type: (a.contentType as string) ?? null,
+    zoho_href: attachmentPath(a.href as string | null | undefined), storage_path: null, raw: a,
   }))
 }
 
 import type { Ticket, TicketDetail, Message, Attachment, Activity } from '@ambientalia/shared'
 
-export function activityRowFromZoho(raw: any): ActivityRow {
-  const owner = raw.assignee ?? raw.owner ?? null
+export function activityRowFromZoho(raw: Record<string, unknown>): ActivityRow {
+  const owner = (raw.assignee ?? raw.owner ?? null) as Record<string, unknown> | null
   const ownerName = owner ? ([owner.firstName, owner.lastName].filter(Boolean).join(' ').trim() || null) : null
+  const ticket = raw.ticket as Record<string, unknown> | undefined
   return {
-    id: raw.id, ticket_id: raw.ticketId ?? raw.ticket?.id ?? null,
-    subject: raw.subject ?? null, status: raw.status ?? null, status_type: raw.statusType ?? null,
-    priority: raw.priority ?? null, due_date: raw.dueDate ?? null, created_time: raw.createdTime ?? null,
-    modified_time: raw.modifiedTime ?? null, completed_time: raw.completedTime ?? null,
-    owner_id: raw.ownerId ?? null, owner_name: ownerName, raw,
+    id: raw.id as string, ticket_id: (raw.ticketId as string) ?? (ticket?.id as string) ?? null,
+    subject: (raw.subject as string) ?? null, status: (raw.status as string) ?? null, status_type: (raw.statusType as string) ?? null,
+    priority: (raw.priority as string) ?? null, due_date: (raw.dueDate as string) ?? null, created_time: (raw.createdTime as string) ?? null,
+    modified_time: (raw.modifiedTime as string) ?? null, completed_time: (raw.completedTime as string) ?? null,
+    owner_id: (raw.ownerId as string) ?? null, owner_name: ownerName, raw,
   }
 }
 
-export function rowToActivity(row: any): Activity {
+/** Fila de actividad tal como la devuelve el JOIN de Postgres (puede traer agent_name). */
+type ActivityQueryRow = Pick<
+  ActivityRow,
+  'id' | 'ticket_id' | 'subject' | 'status' | 'status_type' | 'priority' | 'due_date' | 'created_time' | 'completed_time' | 'owner_name'
+> & { agent_name?: string | null }
+
+export function rowToActivity(row: ActivityQueryRow): Activity {
   return {
     id: row.id, ticketId: row.ticket_id ?? null, subject: row.subject ?? '',
     status: row.status ?? '', statusType: row.status_type ?? null, priority: row.priority ?? null,
@@ -165,7 +178,7 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
 function customFieldsFromRow(row: TicketRow): Record<string, string | null> {
   const out: Record<string, string | null> = { ...(row.custom_fields ?? {}) }
   for (const { col, label } of PROMOTED_COLUMNS) {
-    const v = (row as any)[col]
+    const v = (row as unknown as Record<string, unknown>)[col]
     out[label] = v === null || v === undefined ? null : String(v)
   }
   return out
@@ -182,7 +195,7 @@ export function rowToTicketDetail(row: TicketRow, refs: DetailRefs = {}): Ticket
     classification: row.classification ?? undefined,
     priority: row.priority ?? undefined,
     channel: row.channel ?? undefined,
-    equipoId: (row as any).equipo_id ?? undefined,
+    equipoId: ((row as unknown as Record<string, unknown>).equipo_id as string | undefined) ?? undefined,
     customFields: customFieldsFromRow(row),
   }
 }
