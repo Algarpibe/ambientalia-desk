@@ -2,23 +2,18 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
-import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, applyTransition, createTicket, setTicketRead } from '@ambientalia/zoho-sync/db/repo'
+import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, setTicketRead } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import { createMeasurer } from './measure'
 import { createDetailBackfiller } from './backfill'
-import { transitionById } from '@ambientalia/shared'
-import { canExecuteTransition } from '@ambientalia/shared'
-import { buildTransitionPlan } from './transitionExec'
-import { TRANSITION_ACTOR } from './transitionActor'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import { registerAuthRoutes } from './auth/routes'
 import { requireAuth, requireAdmin as requireSuperAdmin } from './auth/middleware'
-import { searchClients, searchSalesOrders, getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
+import { searchClients, searchSalesOrders, getClient } from '@ambientalia/zoho-sync/books/repo'
 import { getContacts, getAccounts, getContactDetail, getAccountDetail } from './db/directory'
-import { searchEquipos, getEquipo, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo, getEquipoHistorial } from './db/equipos'
-import { buildSubject, buildCodigoServicio, PREFIJOS } from '@ambientalia/shared'
+import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo, getEquipoHistorial } from './db/equipos'
 import { getAnalisisRows, rangeToFromTo } from './analisis'
 import { computeAnalisis } from '@ambientalia/shared'
 import { backfillSerialFromSubject } from './backfillSerial'
@@ -28,6 +23,7 @@ import { getResolution, saveResolution, addResolutionAttachment, getResolutionAt
 import { getTicketHistory } from '@ambientalia/zoho-sync/db/history'
 import { asyncHandler } from './util/asyncHandler'
 import { HttpError } from './util/httpError'
+import { createManagedTicket, executeTransition } from './services/ticketService'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
 
@@ -126,43 +122,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   // Crea un ticket gestionado por la app en "OV asignada" (Subsistema C). Pivota opcionalmente en una OV de Books.
   app.post('/api/tickets', asyncHandler(async (req, res) => {
-      const b = (req.body ?? {}) as Record<string, unknown>
-      const equipoId = b.equipoId ? String(b.equipoId) : ''
-      if (!equipoId) { res.status(422).json({ error: 'Falta el equipo' }); return }
-      const equipo = await getEquipo(db, equipoId)
-      if (!equipo) { res.status(422).json({ error: 'Equipo no registrado' }); return }
-
-      let clientId: string | null = b.clientId ? String(b.clientId) : null
-      let ordenVenta: string | null = b.ordenVenta ? String(b.ordenVenta) : null
-      let salesorderId: string | null = null
-      if (b.salesOrderId) {
-        const ov = await getSalesOrder(db, String(b.salesOrderId))
-        if (!ov) { res.status(422).json({ error: 'Orden de venta no encontrada' }); return }
-        salesorderId = ov.id
-        clientId = clientId ?? ov.clientId ?? null
-        ordenVenta = ordenVenta ?? ov.number ?? null
-      }
-      const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
-      const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''
-      const prefijo = b.prefijo ? String(b.prefijo) : ''
-      const missing: string[] = []
-      if (!clientId) missing.push('cliente')
-      if (!tipoServicio) missing.push('tipo de servicio')
-      if (!clasificaciones) missing.push('clasificaciones')
-      if (!prefijo || !(PREFIJOS as readonly string[]).includes(prefijo)) missing.push('prefijo')
-      if (missing.length) { res.status(422).json({ error: `Faltan campos obligatorios: ${missing.join(', ')}` }); return }
-      const cliente = await getClient(db, clientId!)
-      if (!cliente) { res.status(422).json({ error: 'Cliente no encontrado' }); return }
-      const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie: equipo.serial, modelo: equipo.modelo ?? '', fecha: new Date() })
-      const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo: equipo.tipo ?? '', codigo: codigoServicio })
-      const id = await createTicket(db, {
-        subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
-        marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
-        ordenVenta, priority: b.prioridad ? String(b.prioridad) : null,
-        clientId: clientId!, salesorderId, equipoId: equipo.id, actor: req.user?.name ?? 'App',
-      })
-      const created = await getTicketWithRefs(db, id)
-      res.status(201).json(created ? rowToTicketDetail(created.row, created.refs) : {})
+    res.status(201).json(await createManagedTicket(db, req.body, req.user?.name ?? 'App'))
   }))
 
   app.get('/api/tickets/:id', asyncHandler(async (req, res) => {
@@ -357,26 +317,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   // Ejecuta una transición del Blueprint escribiendo en Postgres (Subsistema B).
   app.post('/api/tickets/:id/transition', asyncHandler(async (req, res) => {
-      const id = String(req.params.id)
-      const t = transitionById(String(req.body.transitionId))
-      if (!t) { res.status(400).json({ error: 'Transición desconocida' }); return }
-      const current = await getTicketWithRefs(db, id)
-      if (!current) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
-      if (!t.from.includes(current.row.status)) {
-        res.status(409).json({ error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
-        return
-      }
-      if (!canExecuteTransition(req.user!.areas, req.user!.isAdmin, t.area)) {
-        res.status(403).json({ error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-        return
-      }
-      const values = (req.body.values ?? {}) as Record<string, unknown>
-      const plan = buildTransitionPlan(t, values)
-      if (plan.errors.length) { res.status(422).json({ errors: plan.errors }); return }
-      const actor = req.user?.name ?? TRANSITION_ACTOR
-      await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)
-      const updated = await getTicketWithRefs(db, id)
-      res.json(updated ? rowToTicketDetail(updated.row, updated.refs) : {})
+    res.json(await executeTransition(db, String(req.params.id), req.body, req.user!))
   }))
 
   app.post('/api/tickets/:id/reply', guardWrites, asyncHandler(async (req, res) => {
