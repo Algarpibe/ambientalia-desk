@@ -240,6 +240,24 @@ describe('escrituras', () => {
     expect(res.status).toBe(403)
     expect(zohoFetch).not.toHaveBeenCalled()
   })
+
+  it('POST reply → 403 si el usuario no tiene área asignada (writes habilitados)', async () => {
+    const cookie = await userCookie([]) // operador sin área, no admin
+    const { app, zohoFetch } = appWith({ enableWrites: true })
+    const res = await request(app).post('/api/tickets/1/reply').set('Cookie', cookie).send({ content: 'hola', to: 'x@y.co' })
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Tu rol no tiene un área asignada para responder')
+    expect(zohoFetch).not.toHaveBeenCalled()
+  })
+
+  it('POST reply → no 403 si el usuario tiene un área (writes habilitados)', async () => {
+    const cookie = await userCookie(['Comercial'])
+    const { app } = appWith({ enableWrites: true })
+    const res = await request(app).post('/api/tickets/1/reply').set('Cookie', cookie).send({ content: 'hola', to: 'x@y.co' })
+    expect(res.status).not.toBe(403)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ ok: true })
+  })
 })
 
 describe('GET /api/clients y /api/sales-orders (Books)', () => {

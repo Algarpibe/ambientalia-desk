@@ -27,3 +27,9 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   if (!req.user?.isAdmin) { res.status(403).json({ error: 'Requiere permisos de administrador' }); return }
   next()
 }
+
+/** Exige que `req.user` tenga al menos un área asignada (o sea admin). Usar tras requireAuth. */
+export function requireArea(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.isAdmin || (req.user?.areas?.length ?? 0) > 0) { next(); return }
+  res.status(403).json({ error: 'Tu rol no tiene un área asignada para responder' })
+}

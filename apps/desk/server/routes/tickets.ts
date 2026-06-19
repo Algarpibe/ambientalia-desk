@@ -7,7 +7,7 @@ import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, 
 import { rowToTicket, rowToTicketDetail, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import { getTicketHistory } from '@ambientalia/zoho-sync/db/history'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
-import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
+import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { createManagedTicket, executeTransition } from '../services/ticketService'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from '../db/resolutions'
@@ -127,7 +127,7 @@ export function registerTicketRoutes(
     res.json(await executeTransition(db, String(req.params.id), req.body, req.user!))
   }))
 
-  app.post('/api/tickets/:id/reply', guardWrites, asyncHandler(async (req, res) => {
+  app.post('/api/tickets/:id/reply', guardWrites, requireArea, asyncHandler(async (req, res) => {
       const id = String(req.params.id)
       // Direcciones de remitente válidas del departamento (Zoho: GET /mailReplyAddress).
       const addrRes = await zohoFetch(`/mailReplyAddress?departmentId=${config.departmentId}&isActive=true`)
