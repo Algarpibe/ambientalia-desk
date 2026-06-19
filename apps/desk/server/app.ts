@@ -181,7 +181,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     res.json(await getActivities(db, String(req.params.id)))
   }))
 
-  // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.
+  // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Solo superadmin (sesión).
   // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
   app.get('/api/admin/measure-attachments', requireAuth(db), requireSuperAdmin, (req, res) => {
     if (req.query.restart === '1' || (!measurer.state().running && !measurer.state().done)) {
