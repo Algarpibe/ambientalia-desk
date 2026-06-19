@@ -455,6 +455,31 @@ describe('POST /api/admin/backfill-archived (admin)', () => {
   })
 })
 
+describe('AuthZ admin con sesión+rol (F2-02)', () => {
+  it('admin endpoint exige sesión admin (no query-token)', async () => {
+    const { app } = appWith()
+    expect((await request(app).get('/api/admin/measure-attachments')).status).toBe(401) // sin sesión
+    const op = await userCookie([]) // operador no admin (helper existente)
+    expect((await request(app).get('/api/admin/measure-attachments').set('Cookie', op)).status).toBe(403)
+  })
+  it('backfill-details exige sesión admin', async () => {
+    const { app } = appWith()
+    expect((await request(app).get('/api/admin/backfill-details')).status).toBe(401)
+    const op = await userCookie([])
+    expect((await request(app).get('/api/admin/backfill-details').set('Cookie', op)).status).toBe(403)
+  })
+})
+
+describe('Borrado de resolución solo superadmin (F2-03)', () => {
+  it('borrar resolución exige superadmin', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
+    const { app } = appWith()
+    const op = await userCookie([])
+    expect((await request(app).delete('/api/tickets/t1/resolution').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).delete('/api/tickets/t1/resolution/attachments/x').set('Cookie', op)).status).toBe(403)
+  })
+})
+
 describe('Resolución del ticket', () => {
   it('PUT guarda; GET devuelve; POST imagen 201; GET content sirve; 415 no-imagen; DELETE; 401 sin sesión', async () => {
     const cookie = await adminCookie()

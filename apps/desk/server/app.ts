@@ -64,14 +64,6 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   const measurer = createMeasurer({ zohoFetch, config })
   const detailBackfiller = createDetailBackfiller({ zohoFetch, sync, config })
 
-  const requireAdmin = (req: Request, res: Response): boolean => {
-    if (!config.adminToken || req.query.token !== config.adminToken) {
-      res.status(403).json({ error: 'No autorizado' })
-      return false
-    }
-    return true
-  }
-
   const guardWrites = (_req: Request, res: Response, next: () => void) => {
     if (!config.enableWrites) {
       res.status(403).json({ error: 'Escrituras deshabilitadas (ENABLE_WRITES=false)' })
@@ -106,10 +98,10 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
     res.set('X-Content-Type-Options', 'nosniff')
     res.send(Buffer.from(c.contentB64, 'base64'))
   }))
-  app.delete('/api/tickets/:id/resolution/attachments/:attId', asyncHandler(async (req, res) => {
+  app.delete('/api/tickets/:id/resolution/attachments/:attId', requireSuperAdmin, asyncHandler(async (req, res) => {
     await deleteResolutionAttachment(db, String(req.params.id), String(req.params.attId)); res.status(204).end()
   }))
-  app.delete('/api/tickets/:id/resolution', asyncHandler(async (req, res) => {
+  app.delete('/api/tickets/:id/resolution', requireSuperAdmin, asyncHandler(async (req, res) => {
     await deleteResolution(db, String(req.params.id)); res.status(204).end()
   }))
 
@@ -191,8 +183,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.
   // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
-  app.get('/api/admin/measure-attachments', (req, res) => {
-    if (!requireAdmin(req, res)) return
+  app.get('/api/admin/measure-attachments', requireAuth(db), requireSuperAdmin, (req, res) => {
     if (req.query.restart === '1' || (!measurer.state().running && !measurer.state().done)) {
       measurer.start()
     }
@@ -202,8 +193,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   // Pre-puebla detalle (customFields) + conversaciones de TODOS los tickets en la BD.
   // Token-protegido, segundo plano, throttled. ?restart=1 reinicia.
-  app.get('/api/admin/backfill-details', (req, res) => {
-    if (!requireAdmin(req, res)) return
+  app.get('/api/admin/backfill-details', requireAuth(db), requireSuperAdmin, (req, res) => {
     if (req.query.restart === '1' || (!detailBackfiller.state().running && !detailBackfiller.state().done)) {
       detailBackfiller.start()
     }
