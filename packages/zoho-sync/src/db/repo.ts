@@ -104,6 +104,10 @@ export async function setTicketRead(db: Queryable, userId: string, ticketId: str
   if (read) await db.query('INSERT INTO ticket_reads (user_id, ticket_id, read_at) VALUES ($1,$2,now())', [userId, ticketId])
 }
 
+function mapTicketRowWithRefs(row: any): TicketWithRefs {
+  return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)) } }
+}
+
 export async function getActiveTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
   const r = await db.query(
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
@@ -114,7 +118,7 @@ export async function getActiveTickets(db: Queryable, userId = ''): Promise<Tick
      WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
     [userId],
   )
-  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)) } }))
+  return r.rows.map(mapTicketRowWithRefs)
 }
 
 export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
@@ -127,7 +131,7 @@ export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketW
      ORDER BY t.created_time DESC NULLS LAST`,
     [userId],
   )
-  return r.rows.map((row: any) => ({ row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)) } }))
+  return r.rows.map(mapTicketRowWithRefs)
 }
 
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {

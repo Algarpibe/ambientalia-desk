@@ -52,6 +52,24 @@ describe('Seguridad: helmet + rate-limit', () => {
   })
 })
 
+describe('Error-handler central', () => {
+  it('error no manejado → 500 genérico (sin filtrar el mensaje)', async () => {
+    const config = { enableWrites: false } as AppConfig
+    const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn(), syncTicketHistory: vi.fn(), syncContacts: vi.fn() } as any
+    const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    const cookie = await adminCookie() // sesión válida en la BD real (requireAuth la valida antes de getContacts)
+    const boomDb = { query: (sql: string, params?: unknown[]) => {
+      if (/FROM sessions|FROM users/i.test(sql)) return db.query(sql, params) // deja pasar la autenticación
+      throw new Error('detalle-interno-secreto')
+    } } as unknown as Queryable
+    const app = createApp({ db: boomDb, zohoFetch, sync, config })
+    const res = await request(app).get('/api/contacts').set('Cookie', cookie)
+    expect(res.status).toBe(500)
+    expect(res.body.error).toBe('Error interno')
+    expect(JSON.stringify(res.body)).not.toContain('detalle-interno-secreto')
+  })
+})
+
 describe('GET /api/tickets', () => {
   it('devuelve tickets activos normalizados desde Postgres', async () => {
     await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'AGQ' } as any))

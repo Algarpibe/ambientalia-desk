@@ -1,4 +1,4 @@
-import express, { type Express, type Request, type Response } from 'express'
+import express, { type Express, type Request, type Response, type NextFunction } from 'express'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
@@ -37,6 +37,8 @@ function humanBytes(n: number): string {
   while (v >= 1024 && i < units.length - 1) { v /= 1024; i++ }
   return `${v.toFixed(2)} ${units[i]}`
 }
+
+const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) => { fn(req, res, next).catch(next) }
 
 interface Deps {
   db: Queryable
@@ -82,61 +84,47 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
 
-  app.get('/api/tickets/:id/resolution', async (req, res) => {
-    try { res.json(await getResolution(db, String(req.params.id))) }
-    catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.put('/api/tickets/:id/resolution', async (req, res) => {
-    try {
-      const html = typeof req.body?.html === 'string' ? req.body.html : ''
-      await saveResolution(db, String(req.params.id), html, req.user?.name ?? null)
-      res.json({ ok: true })
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.post('/api/tickets/:id/resolution/attachments', upload.single('file'), async (req, res) => {
-    try {
-      const f = req.file
-      if (!f) { res.status(400).json({ error: 'Falta el archivo' }); return }
-      if (!ALLOWED_IMAGE_TYPES.has(f.mimetype)) { res.status(415).json({ error: 'Tipo de imagen no permitido' }); return }
-      const meta = await addResolutionAttachment(db, { ticketId: String(req.params.id), filename: f.originalname, contentType: f.mimetype, contentB64: f.buffer.toString('base64'), size: f.size, by: req.user?.name ?? null })
-      res.status(201).json(meta)
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.get('/api/tickets/:id/resolution/attachments/:attId', async (req, res) => {
-    try {
-      const c = await getResolutionAttachmentContent(db, String(req.params.id), String(req.params.attId))
-      if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
-      res.set('Content-Type', c.contentType)
-      res.set('X-Content-Type-Options', 'nosniff')
-      res.send(Buffer.from(c.contentB64, 'base64'))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.delete('/api/tickets/:id/resolution/attachments/:attId', async (req, res) => {
-    try { await deleteResolutionAttachment(db, String(req.params.id), String(req.params.attId)); res.status(204).end() }
-    catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.delete('/api/tickets/:id/resolution', async (req, res) => {
-    try { await deleteResolution(db, String(req.params.id)); res.status(204).end() }
-    catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/tickets/:id/resolution', asyncHandler(async (req, res) => {
+    res.json(await getResolution(db, String(req.params.id)))
+  }))
+  app.put('/api/tickets/:id/resolution', asyncHandler(async (req, res) => {
+    const html = typeof req.body?.html === 'string' ? req.body.html : ''
+    await saveResolution(db, String(req.params.id), html, req.user?.name ?? null)
+    res.json({ ok: true })
+  }))
+  app.post('/api/tickets/:id/resolution/attachments', upload.single('file'), asyncHandler(async (req, res) => {
+    const f = req.file
+    if (!f) { res.status(400).json({ error: 'Falta el archivo' }); return }
+    if (!ALLOWED_IMAGE_TYPES.has(f.mimetype)) { res.status(415).json({ error: 'Tipo de imagen no permitido' }); return }
+    const meta = await addResolutionAttachment(db, { ticketId: String(req.params.id), filename: f.originalname, contentType: f.mimetype, contentB64: f.buffer.toString('base64'), size: f.size, by: req.user?.name ?? null })
+    res.status(201).json(meta)
+  }))
+  app.get('/api/tickets/:id/resolution/attachments/:attId', asyncHandler(async (req, res) => {
+    const c = await getResolutionAttachmentContent(db, String(req.params.id), String(req.params.attId))
+    if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
+    res.set('Content-Type', c.contentType)
+    res.set('X-Content-Type-Options', 'nosniff')
+    res.send(Buffer.from(c.contentB64, 'base64'))
+  }))
+  app.delete('/api/tickets/:id/resolution/attachments/:attId', asyncHandler(async (req, res) => {
+    await deleteResolutionAttachment(db, String(req.params.id), String(req.params.attId)); res.status(204).end()
+  }))
+  app.delete('/api/tickets/:id/resolution', asyncHandler(async (req, res) => {
+    await deleteResolution(db, String(req.params.id)); res.status(204).end()
+  }))
 
-  app.get('/api/tickets', async (req, res) => {
-    try {
-      const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id) : await getActiveTickets(db, req.user!.id)
-      res.json(list.map(({ row, refs }) => rowToTicket(row, refs)))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/tickets', asyncHandler(async (req, res) => {
+    const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id) : await getActiveTickets(db, req.user!.id)
+    res.json(list.map(({ row, refs }) => rowToTicket(row, refs)))
+  }))
 
-  app.post('/api/tickets/:id/read', async (req, res) => {
-    try {
-      await setTicketRead(db, req.user!.id, String(req.params.id), !!req.body?.read)
-      res.json({ ok: true })
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.post('/api/tickets/:id/read', asyncHandler(async (req, res) => {
+    await setTicketRead(db, req.user!.id, String(req.params.id), !!req.body?.read)
+    res.json({ ok: true })
+  }))
 
   // Crea un ticket gestionado por la app en "OV asignada" (Subsistema C). Pivota opcionalmente en una OV de Books.
-  app.post('/api/tickets', async (req, res) => {
-    try {
+  app.post('/api/tickets', asyncHandler(async (req, res) => {
       const b = (req.body ?? {}) as Record<string, unknown>
       const equipoId = b.equipoId ? String(b.equipoId) : ''
       if (!equipoId) { res.status(422).json({ error: 'Falta el equipo' }); return }
@@ -174,41 +162,32 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       })
       const created = await getTicketWithRefs(db, id)
       res.status(201).json(created ? rowToTicketDetail(created.row, created.refs) : {})
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  }))
 
-  app.get('/api/tickets/:id', async (req, res) => {
-    try {
-      const id = String(req.params.id)
-      try { await sync.syncTicket(id) } catch (e) { console.error(`syncTicket(${id}) falló:`, e) }
-      const found = await getTicketWithRefs(db, id)
-      if (!found) return res.status(404).json({ error: 'Ticket no encontrado' })
-      res.json(rowToTicketDetail(found.row, found.refs))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/tickets/:id', asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    try { await sync.syncTicket(id) } catch (e) { console.error(`syncTicket(${id}) falló:`, e) }
+    const found = await getTicketWithRefs(db, id)
+    if (!found) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+    res.json(rowToTicketDetail(found.row, found.refs))
+  }))
 
-  app.get('/api/tickets/:id/conversations', async (req, res) => {
-    try {
-      const id = String(req.params.id)
-      let convs = await getConversations(db, id)
-      if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
-      res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/tickets/:id/conversations', asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    let convs = await getConversations(db, id)
+    if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
+    res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
+  }))
 
-  app.get('/api/tickets/:id/history', async (req, res) => {
-    try {
-      const id = String(req.params.id)
-      try { await sync.syncTicketHistory(id) } catch (e) { console.error(`syncTicketHistory(${id}) falló:`, e) }
-      res.json(await getTicketHistory(db, id))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/tickets/:id/history', asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    try { await sync.syncTicketHistory(id) } catch (e) { console.error(`syncTicketHistory(${id}) falló:`, e) }
+    res.json(await getTicketHistory(db, id))
+  }))
 
-  app.get('/api/tickets/:id/activities', async (req, res) => {
-    try {
-      res.json(await getActivities(db, String(req.params.id)))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/tickets/:id/activities', asyncHandler(async (req, res) => {
+    res.json(await getActivities(db, String(req.params.id)))
+  }))
 
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Protegido por ADMIN_TOKEN.
   // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
@@ -233,71 +212,56 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   // Búsqueda de clientes/órdenes de venta (Books) para los selectores de creación de tickets.
   // Requieren sesión: son datos de negocio. Cada uno con su propio requireAuth (no van bajo /api/tickets).
-  app.get('/api/clients', requireAuth(db), async (req, res) => {
-    try {
-      res.json(await searchClients(db, String(req.query.search ?? '')))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/clients', requireAuth(db), asyncHandler(async (req, res) => {
+    res.json(await searchClients(db, String(req.query.search ?? '')))
+  }))
 
-  app.get('/api/sales-orders', requireAuth(db), async (req, res) => {
-    try {
-      const clientId = req.query.clientId ? String(req.query.clientId) : undefined
-      res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/sales-orders', requireAuth(db), asyncHandler(async (req, res) => {
+    const clientId = req.query.clientId ? String(req.query.clientId) : undefined
+    res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId))
+  }))
 
-  app.get('/api/activities', requireAuth(db), async (req, res) => {
-    try {
-      const filter = String(req.query.filter ?? 'todas')
-      const search = String(req.query.search ?? '')
-      const limit = Math.min(1000, Math.max(1, Number(req.query.limit) || 300))
-      res.json(await getAllActivities(db, { filter, search, limit }))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/activities', requireAuth(db), asyncHandler(async (req, res) => {
+    const filter = String(req.query.filter ?? 'todas')
+    const search = String(req.query.search ?? '')
+    const limit = Math.min(1000, Math.max(1, Number(req.query.limit) || 300))
+    res.json(await getAllActivities(db, { filter, search, limit }))
+  }))
 
-  app.get('/api/contacts', requireAuth(db), async (_req, res) => {
-    try { res.json(await getContacts(db)) } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.get('/api/accounts', requireAuth(db), async (_req, res) => {
-    try { res.json(await getAccounts(db)) } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.get('/api/contacts/:id', requireAuth(db), async (req, res) => {
-    try { const d = await getContactDetail(db, String(req.params.id)); if (!d) { res.status(404).json({ error: 'No encontrado' }); return } res.json(d) }
-    catch (err) { res.status(500).json({ error: String(err) }) }
-  })
-  app.get('/api/accounts/:id', requireAuth(db), async (req, res) => {
-    try { const d = await getAccountDetail(db, String(req.params.id)); if (!d) { res.status(404).json({ error: 'No encontrado' }); return } res.json(d) }
-    catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/contacts', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await getContacts(db))
+  }))
+  app.get('/api/accounts', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await getAccounts(db))
+  }))
+  app.get('/api/contacts/:id', requireAuth(db), asyncHandler(async (req, res) => {
+    const d = await getContactDetail(db, String(req.params.id)); if (!d) { res.status(404).json({ error: 'No encontrado' }); return } res.json(d)
+  }))
+  app.get('/api/accounts/:id', requireAuth(db), asyncHandler(async (req, res) => {
+    const d = await getAccountDetail(db, String(req.params.id)); if (!d) { res.status(404).json({ error: 'No encontrado' }); return } res.json(d)
+  }))
 
-  app.get('/api/equipos', requireAuth(db), async (req, res) => {
-    try {
-      res.json(await searchEquipos(db, String(req.query.search ?? '')))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/equipos', requireAuth(db), asyncHandler(async (req, res) => {
+    res.json(await searchEquipos(db, String(req.query.search ?? '')))
+  }))
 
-  app.get('/api/equipos/manage', requireAuth(db), async (req, res) => {
-    try {
-      const page = Math.max(1, Number(req.query.page ?? 1))
-      const items = await listEquiposManage(db, String(req.query.search ?? ''), 50, (page - 1) * 50)
-      res.json({ items, page })
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/equipos/manage', requireAuth(db), asyncHandler(async (req, res) => {
+    const page = Math.max(1, Number(req.query.page ?? 1))
+    const items = await listEquiposManage(db, String(req.query.search ?? ''), 50, (page - 1) * 50)
+    res.json({ items, page })
+  }))
 
-  app.get('/api/equipos/facets', requireAuth(db), async (_req, res) => {
-    try { res.json(await equipoFacets(db)) } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/equipos/facets', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await equipoFacets(db))
+  }))
 
-  app.get('/api/equipos/:id/historial', requireAuth(db), async (req, res) => {
-    try {
-      const h = await getEquipoHistorial(db, String(req.params.id))
-      if (!h) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
-      res.json(h)
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  app.get('/api/equipos/:id/historial', requireAuth(db), asyncHandler(async (req, res) => {
+    const h = await getEquipoHistorial(db, String(req.params.id))
+    if (!h) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
+    res.json(h)
+  }))
 
-  app.post('/api/equipos', requireAuth(db), async (req, res) => {
-    try {
+  app.post('/api/equipos', requireAuth(db), asyncHandler(async (req, res) => {
       const b = (req.body ?? {}) as Record<string, unknown>
       const serial = b.serial ? String(b.serial).trim() : ''
       const clientId = b.clientId ? String(b.clientId) : ''
@@ -310,11 +274,9 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
         tipo: b.tipo ? String(b.tipo) : null, clienteNombre: cliente.name, clientId,
       })
       res.status(201).json(await getEquipoFull(db, id))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  }))
 
-  app.patch('/api/equipos/:id', requireAuth(db), async (req, res) => {
-    try {
+  app.patch('/api/equipos/:id', requireAuth(db), asyncHandler(async (req, res) => {
       const id = String(req.params.id)
       if (!(await getEquipoFull(db, id))) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
       const b = (req.body ?? {}) as Record<string, unknown>
@@ -331,34 +293,27 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       if (Object.keys(patch).length) await updateEquipo(db, id, patch)
       if (b.active !== undefined) await setEquipoActive(db, id, Boolean(b.active))
       res.json(await getEquipoFull(db, id))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  }))
 
   // Borrado físico de un equipo: SOLO super administrador.
-  app.delete('/api/equipos/:id', requireAuth(db), requireSuperAdmin, async (req, res) => {
-    try {
+  app.delete('/api/equipos/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
       const id = String(req.params.id)
       if (!(await getEquipoFull(db, id))) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
       await deleteEquipo(db, id)
       res.json({ ok: true })
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  }))
 
-  app.get('/api/analisis', requireAuth(db), requireSuperAdmin, async (req, res) => {
-    try {
+  app.get('/api/analisis', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
       const { from, to } = rangeToFromTo(String(req.query.range ?? 'todo'), new Date())
       const rows = await getAnalisisRows(db)
       res.json(computeAnalisis(rows, from, to))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  }))
 
   // Backfill puntual: rellena serial/código de servicio (columnas vacías) extrayéndolos del asunto.
   // Solo tickets NO gestionados por la app; idempotente. SOLO super administrador.
-  app.post('/api/admin/backfill-serial', requireAuth(db), requireSuperAdmin, async (_req, res) => {
-    try {
+  app.post('/api/admin/backfill-serial', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
       res.json(await backfillSerialFromSubject(db))
-    } catch (err) { res.status(500).json({ error: String(err) }) }
-  })
+  }))
 
   // Backfill de tickets archivados en segundo plano (fire-and-forget). SOLO super administrador.
   app.post('/api/admin/backfill-archived', requireAuth(db), requireSuperAdmin, (_req, res) => {
@@ -370,32 +325,27 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   // Proxy autenticado para descargar adjuntos de Zoho (el href real requiere OAuth + orgId).
   // Requiere sesión: son documentos de clientes (facturas, fotos, etc.).
-  app.get('/api/attachment', requireAuth(db), async (req, res) => {
+  app.get('/api/attachment', requireAuth(db), asyncHandler(async (req, res) => {
     const path = String(req.query.path ?? '')
     // Solo rutas de adjuntos de tickets (evita SSRF a rutas arbitrarias de la API).
     if (!/^\/tickets\/\d+\/(comments|threads)\/\d+\/attachments\/\d+\/content$/.test(path)) {
       res.status(400).json({ error: 'Ruta de adjunto inválida' })
       return
     }
-    try {
-      const zres = await zohoFetch(path)
-      if (!zres.ok) {
-        res.status(zres.status).json({ error: await zres.text() })
-        return
-      }
-      const ct = zres.headers.get('content-type')
-      if (ct) res.setHeader('Content-Type', ct)
-      const cd = zres.headers.get('content-disposition')
-      if (cd) res.setHeader('Content-Disposition', cd)
-      res.send(Buffer.from(await zres.arrayBuffer()))
-    } catch (err) {
-      res.status(502).json({ error: String(err) })
+    const zres = await zohoFetch(path)
+    if (!zres.ok) {
+      res.status(zres.status).json({ error: await zres.text() })
+      return
     }
-  })
+    const ct = zres.headers.get('content-type')
+    if (ct) res.setHeader('Content-Type', ct)
+    const cd = zres.headers.get('content-disposition')
+    if (cd) res.setHeader('Content-Disposition', cd)
+    res.send(Buffer.from(await zres.arrayBuffer()))
+  }))
 
   // Ejecuta una transición del Blueprint escribiendo en Postgres (Subsistema B).
-  app.post('/api/tickets/:id/transition', async (req, res) => {
-    try {
+  app.post('/api/tickets/:id/transition', asyncHandler(async (req, res) => {
       const id = String(req.params.id)
       const t = transitionById(String(req.body.transitionId))
       if (!t) { res.status(400).json({ error: 'Transición desconocida' }); return }
@@ -416,13 +366,9 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
       await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)
       const updated = await getTicketWithRefs(db, id)
       res.json(updated ? rowToTicketDetail(updated.row, updated.refs) : {})
-    } catch (err) {
-      res.status(500).json({ error: String(err) })
-    }
-  })
+  }))
 
-  app.post('/api/tickets/:id/reply', guardWrites, async (req, res) => {
-    try {
+  app.post('/api/tickets/:id/reply', guardWrites, asyncHandler(async (req, res) => {
       const id = String(req.params.id)
       // Direcciones de remitente válidas del departamento (Zoho: GET /mailReplyAddress).
       const addrRes = await zohoFetch(`/mailReplyAddress?departmentId=${config.departmentId}&isActive=true`)
@@ -437,12 +383,18 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
           content: req.body.content, fromEmailAddress, to: req.body.to,
         }),
       })
-      if (!zres.ok) return res.status(zres.status).json({ error: await zres.text() })
+      if (!zres.ok) { res.status(zres.status).json({ error: await zres.text() }); return }
       await sync.syncConversations(id)
       res.json({ ok: true })
-    } catch (err) {
-      res.status(502).json({ error: String(err) })
-    }
+  }))
+
+  // Manejador central de errores: registra el error real pero NO lo filtra al cliente.
+  // (Express identifica los error-handlers por su aridad de 4 args; `_next` debe existir.)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('Error no manejado:', err)
+    if (res.headersSent) return
+    res.status(500).json({ error: 'Error interno' })
   })
 
   return app
