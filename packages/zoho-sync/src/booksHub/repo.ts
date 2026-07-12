@@ -1,5 +1,5 @@
 import type { Queryable } from '../db/migrate'
-import type { ContactRow, ItemRow, SalesOrderRow, InvoiceRow, SoLineRow, InvoiceLineRow, CustomerPaymentRow, PaymentInvoiceRow } from './mappers'
+import type { ContactRow, ItemRow, SalesOrderRow, InvoiceRow, SoLineRow, InvoiceLineRow, CustomerPaymentRow, PaymentInvoiceRow, PurchaseOrderRow, PoLineRow } from './mappers'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -108,8 +108,38 @@ export async function replacePaymentInvoices(db: Queryable, paymentId: string, l
   for (const l of lines) await insertPaymentInvoice(db, l)
 }
 
+export async function upsertPurchaseOrder(db: Queryable, r: PurchaseOrderRow): Promise<void> {
+  await db.query(
+    `INSERT INTO books.purchase_orders (purchaseorder_id,purchaseorder_number,reference_number,vendor_id,vendor_name,date,delivery_date,status,order_status,received_status,billed_status,currency_code,exchange_rate,total,raw,zoho_last_modified,synced_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,now())
+     ON CONFLICT (purchaseorder_id) DO UPDATE SET purchaseorder_number=EXCLUDED.purchaseorder_number,reference_number=EXCLUDED.reference_number,
+       vendor_id=EXCLUDED.vendor_id,vendor_name=EXCLUDED.vendor_name,date=EXCLUDED.date,delivery_date=EXCLUDED.delivery_date,
+       status=EXCLUDED.status,order_status=EXCLUDED.order_status,received_status=EXCLUDED.received_status,billed_status=EXCLUDED.billed_status,
+       currency_code=EXCLUDED.currency_code,exchange_rate=EXCLUDED.exchange_rate,total=EXCLUDED.total,
+       raw=EXCLUDED.raw,zoho_last_modified=EXCLUDED.zoho_last_modified,synced_at=now()`,
+    [r.purchaseorder_id, r.purchaseorder_number, r.reference_number, r.vendor_id, r.vendor_name, r.date, r.delivery_date, r.status, r.order_status, r.received_status, r.billed_status, r.currency_code, r.exchange_rate, r.total, J(r.raw), r.zoho_last_modified],
+  )
+}
+
+async function insertPoLine(db: Queryable, r: PoLineRow): Promise<void> {
+  await db.query(
+    `INSERT INTO books.purchase_order_line_items (line_item_id,purchaseorder_id,item_id,sku,name,quantity,quantity_received,quantity_cancelled,quantity_billed,rate,bcy_rate,item_total,raw,synced_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now())
+     ON CONFLICT (line_item_id) DO UPDATE SET purchaseorder_id=EXCLUDED.purchaseorder_id,item_id=EXCLUDED.item_id,sku=EXCLUDED.sku,name=EXCLUDED.name,
+       quantity=EXCLUDED.quantity,quantity_received=EXCLUDED.quantity_received,quantity_cancelled=EXCLUDED.quantity_cancelled,quantity_billed=EXCLUDED.quantity_billed,
+       rate=EXCLUDED.rate,bcy_rate=EXCLUDED.bcy_rate,item_total=EXCLUDED.item_total,raw=EXCLUDED.raw,synced_at=now()`,
+    [r.line_item_id, r.purchaseorder_id, r.item_id, r.sku, r.name, r.quantity, r.quantity_received, r.quantity_cancelled, r.quantity_billed, r.rate, r.bcy_rate, r.item_total, J(r.raw)],
+  )
+}
+
+/** Reemplaza TODAS las líneas de una OC (borra previas + inserta), evitando huérfanas. */
+export async function replacePoLines(db: Queryable, purchaseorderId: string, lines: PoLineRow[]): Promise<void> {
+  await db.query('DELETE FROM books.purchase_order_line_items WHERE purchaseorder_id=$1', [purchaseorderId])
+  for (const l of lines) await insertPoLine(db, l)
+}
+
 /** Marca de agua: máximo zoho_last_modified de una de las tablas-cabecera. */
-export async function maxZohoLastModified(db: Queryable, table: 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments'): Promise<string | null> {
+export async function maxZohoLastModified(db: Queryable, table: 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments' | 'purchase_orders'): Promise<string | null> {
   const r = await db.query(`SELECT MAX(zoho_last_modified) AS m FROM books.${table}`)
   return r.rows[0]?.m ?? null
 }

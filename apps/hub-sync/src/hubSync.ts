@@ -41,6 +41,16 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
         console.error('Backfill de pagos falló (se reintentará en el incremental):', e)
       }
     }
+    // Guard aparte: las órdenes de compra pueden faltar aunque el resto ya esté cargado.
+    if ((await maxZohoLastModified(db, 'purchase_orders')) == null) {
+      console.log('Books órdenes de compra vacío: backfill…')
+      try {
+        const n = await booksHubSync.backfillPurchaseOrders()
+        console.log(`Backfill de OC: ${n} órdenes`)
+      } catch (e) {
+        console.error('Backfill de OC falló (se reintentará en el incremental):', e)
+      }
+    }
   }
   if (crmSync) {
     await migrateCrm(db)

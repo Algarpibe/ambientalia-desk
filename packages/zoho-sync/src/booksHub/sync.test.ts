@@ -51,6 +51,20 @@ describe('booksHub sync', () => {
     expect((await db.query("SELECT invoice_number FROM books.customer_payment_invoices WHERE invoice_payment_id='ip1'")).rows[0].invoice_number).toBe('AM1')
   })
 
+  it('backfillPurchaseOrders trae cabecera por lista y líneas por detalle', async () => {
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      if (path.startsWith('/purchaseorders?')) return Promise.resolve(page('purchaseorders', [{ purchaseorder_id: 'po1', purchaseorder_number: 'OC-1', last_modified_time: '2026-05-19T00:00:00Z' }]))
+      if (path.startsWith('/purchaseorders/po1')) return Promise.resolve(detail('purchaseorder', { purchaseorder_id: 'po1', purchaseorder_number: 'OC-1', status: 'open', total: 100, last_modified_time: '2026-05-19T00:00:00Z', line_items: [{ line_item_id: 'pol1', item_id: 'i1', sku: 'J049', quantity: 40, quantity_received: 0, quantity_cancelled: 0 }] }))
+      return Promise.resolve(page('purchaseorders', []))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    expect(await sync.backfillPurchaseOrders()).toBe(1)
+    expect((await db.query("SELECT status FROM books.purchase_orders WHERE purchaseorder_id='po1'")).rows[0].status).toBe('open')
+    const line = (await db.query("SELECT quantity, quantity_received FROM books.purchase_order_line_items WHERE line_item_id='pol1'")).rows[0]
+    expect(Number(line.quantity)).toBe(40)
+    expect(Number(line.quantity_received)).toBe(0)
+  })
+
   it('syncRecent (incremental) solo trae items más nuevos que la marca de agua', async () => {
     await db.query("INSERT INTO books.items (item_id, zoho_last_modified) VALUES ('old','2024-01-01T00:00:00Z')")
     const booksFetch = vi.fn().mockImplementation((path: string) => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow } from './mappers'
+import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow, purchaseOrderRow, poLineRow } from './mappers'
 
 describe('booksHub mappers', () => {
   it('contactRow mapea campos y guarda raw completo', () => {
@@ -60,6 +60,31 @@ describe('booksHub mappers', () => {
     expect(r.bcy_amount).toBe(300)
     expect(r.bcy_unused_amount).toBe(0)
     expect(r.zoho_last_modified).toBe('2026-07-01T00:00:00Z')
+  })
+
+  it('purchaseOrderRow mapea cabecera de OC y guarda raw', () => {
+    const r = purchaseOrderRow({
+      purchaseorder_id: 'po1', purchaseorder_number: 'OC-2026-031', vendor_name: 'Iteco S.A.',
+      date: '2026-05-14', delivery_date: '2026-07-30', status: 'open', received_status: 'to_be_received',
+      currency_code: 'COP', total: '3554958', last_modified_time: '2026-05-19T00:00:00Z',
+    })
+    expect(r.purchaseorder_id).toBe('po1')
+    expect(r.purchaseorder_number).toBe('OC-2026-031')
+    expect(r.total).toBe(3554958)
+    expect(r.received_status).toBe('to_be_received')
+    expect(r.zoho_last_modified).toBe('2026-05-19T00:00:00Z')
+  })
+
+  it('poLineRow liga la línea a su OC con cantidades', () => {
+    const r = poLineRow('po1', {
+      line_item_id: 'pol1', item_id: 'i1', sku: 'J049', name: 'Filtro',
+      quantity: '40', quantity_received: '0', quantity_cancelled: '0', bcy_rate: '19.64',
+    })
+    expect(r.line_item_id).toBe('pol1')
+    expect(r.purchaseorder_id).toBe('po1')
+    expect(r.sku).toBe('J049')
+    expect(r.quantity).toBe(40)
+    expect(r.quantity_received).toBe(0)
   })
 
   it('paymentInvoiceRow liga la aplicación a su pago', () => {

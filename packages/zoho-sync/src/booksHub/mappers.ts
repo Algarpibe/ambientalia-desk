@@ -10,6 +10,8 @@ export interface InvoiceLineRow extends LineRow { invoice_id: string }
 export interface InvoiceRow { invoice_id: string; invoice_number: string | null; reference_number: string | null; date: string | null; due_date: string | null; customer_id: string | null; customer_name: string | null; status: string | null; currency_code: string | null; exchange_rate: number | null; sub_total: number | null; total: number | null; bcy_sub_total: number | null; bcy_tax_total: number | null; bcy_total: number | null; salesorder_id: string | null; raw: unknown; zoho_last_modified: string | null }
 export interface CustomerPaymentRow { payment_id: string; payment_number: string | null; customer_id: string | null; customer_name: string | null; date: string | null; payment_mode: string | null; reference_number: string | null; currency_code: string | null; exchange_rate: number | null; amount: number | null; bcy_amount: number | null; unused_amount: number | null; bcy_unused_amount: number | null; tax_amount_withheld: number | null; payment_status: string | null; raw: unknown; zoho_last_modified: string | null }
 export interface PaymentInvoiceRow { invoice_payment_id: string; payment_id: string; invoice_id: string | null; invoice_number: string | null; amount_applied: number | null; tax_amount_withheld: number | null; total: number | null; balance: number | null; due_date: string | null; apply_date: string | null; raw: unknown }
+export interface PurchaseOrderRow { purchaseorder_id: string; purchaseorder_number: string | null; reference_number: string | null; vendor_id: string | null; vendor_name: string | null; date: string | null; delivery_date: string | null; status: string | null; order_status: string | null; received_status: string | null; billed_status: string | null; currency_code: string | null; exchange_rate: number | null; total: number | null; raw: unknown; zoho_last_modified: string | null }
+export interface PoLineRow { line_item_id: string; purchaseorder_id: string; item_id: string | null; sku: string | null; name: string | null; quantity: number | null; quantity_received: number | null; quantity_cancelled: number | null; quantity_billed: number | null; rate: number | null; bcy_rate: number | null; item_total: number | null; raw: unknown }
 
 export function contactRow(raw: any): ContactRow {
   return {
@@ -73,5 +75,25 @@ export function paymentInvoiceRow(paymentId: string, raw: any): PaymentInvoiceRo
     amount_applied: num(raw.amount_applied), tax_amount_withheld: num(raw.tax_amount_withheld),
     total: num(raw.total), balance: num(raw.balance),
     due_date: raw.due_date || null, apply_date: raw.apply_date || null, raw,
+  }
+}
+export function purchaseOrderRow(raw: any): PurchaseOrderRow {
+  return {
+    purchaseorder_id: raw.purchaseorder_id, purchaseorder_number: str(raw.purchaseorder_number),
+    reference_number: str(raw.reference_number), vendor_id: str(raw.vendor_id), vendor_name: str(raw.vendor_name),
+    date: raw.date || null, delivery_date: raw.delivery_date || null,
+    status: str(raw.status), order_status: str(raw.order_status),
+    received_status: str(raw.received_status), billed_status: str(raw.billed_status),
+    currency_code: str(raw.currency_code), exchange_rate: num(raw.exchange_rate), total: num(raw.total),
+    raw, zoho_last_modified: raw.last_modified_time ?? null,
+  }
+}
+export function poLineRow(purchaseorderId: string, raw: any): PoLineRow {
+  return {
+    line_item_id: raw.line_item_id, purchaseorder_id: purchaseorderId,
+    item_id: str(raw.item_id), sku: str(raw.sku), name: str(raw.name),
+    quantity: num(raw.quantity), quantity_received: num(raw.quantity_received),
+    quantity_cancelled: num(raw.quantity_cancelled), quantity_billed: num(raw.quantity_billed),
+    rate: num(raw.rate), bcy_rate: num(raw.bcy_rate), item_total: num(raw.item_total), raw,
   }
 }
