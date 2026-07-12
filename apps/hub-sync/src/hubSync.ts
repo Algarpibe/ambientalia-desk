@@ -30,9 +30,16 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
       await booksHubSync.backfillInvoices()
     }
     // Guard aparte: los pagos pueden faltar aunque el resto de Books ya esté cargado.
+    // Aislado en try/catch para que un fallo del backfill de pagos NUNCA tumbe el
+    // worker (que también ingiere desk/sales/invoices). El incremental reintenta.
     if ((await maxZohoLastModified(db, 'customer_payments')) == null) {
       console.log('Books pagos vacío: backfill…')
-      await booksHubSync.backfillPayments()
+      try {
+        const n = await booksHubSync.backfillPayments()
+        console.log(`Backfill de pagos: ${n} pagos`)
+      } catch (e) {
+        console.error('Backfill de pagos falló (se reintentará en el incremental):', e)
+      }
     }
   }
   if (crmSync) {
