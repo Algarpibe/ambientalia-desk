@@ -1,5 +1,5 @@
 import type { Queryable } from '../db/migrate'
-import type { ContactRow, ItemRow, SalesOrderRow, InvoiceRow, SoLineRow, InvoiceLineRow } from './mappers'
+import type { ContactRow, ItemRow, SalesOrderRow, InvoiceRow, SoLineRow, InvoiceLineRow, CustomerPaymentRow, PaymentInvoiceRow } from './mappers'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -79,8 +79,37 @@ export async function replaceInvoiceLines(db: Queryable, invoiceId: string, line
   for (const l of lines) await insertInvoiceLine(db, l)
 }
 
-/** Marca de agua: máximo zoho_last_modified de una de las 4 tablas-cabecera. */
-export async function maxZohoLastModified(db: Queryable, table: 'contacts' | 'items' | 'sales_orders' | 'invoices'): Promise<string | null> {
+export async function upsertCustomerPayment(db: Queryable, r: CustomerPaymentRow): Promise<void> {
+  await db.query(
+    `INSERT INTO books.customer_payments (payment_id,payment_number,customer_id,customer_name,date,payment_mode,reference_number,currency_code,exchange_rate,amount,bcy_amount,unused_amount,bcy_unused_amount,tax_amount_withheld,payment_status,raw,zoho_last_modified,synced_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,now())
+     ON CONFLICT (payment_id) DO UPDATE SET payment_number=EXCLUDED.payment_number,customer_id=EXCLUDED.customer_id,customer_name=EXCLUDED.customer_name,
+       date=EXCLUDED.date,payment_mode=EXCLUDED.payment_mode,reference_number=EXCLUDED.reference_number,currency_code=EXCLUDED.currency_code,exchange_rate=EXCLUDED.exchange_rate,
+       amount=EXCLUDED.amount,bcy_amount=EXCLUDED.bcy_amount,unused_amount=EXCLUDED.unused_amount,bcy_unused_amount=EXCLUDED.bcy_unused_amount,
+       tax_amount_withheld=EXCLUDED.tax_amount_withheld,payment_status=EXCLUDED.payment_status,raw=EXCLUDED.raw,zoho_last_modified=EXCLUDED.zoho_last_modified,synced_at=now()`,
+    [r.payment_id, r.payment_number, r.customer_id, r.customer_name, r.date, r.payment_mode, r.reference_number, r.currency_code, r.exchange_rate, r.amount, r.bcy_amount, r.unused_amount, r.bcy_unused_amount, r.tax_amount_withheld, r.payment_status, J(r.raw), r.zoho_last_modified],
+  )
+}
+
+async function insertPaymentInvoice(db: Queryable, r: PaymentInvoiceRow): Promise<void> {
+  await db.query(
+    `INSERT INTO books.customer_payment_invoices (invoice_payment_id,payment_id,invoice_id,invoice_number,amount_applied,tax_amount_withheld,total,balance,due_date,apply_date,raw,synced_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())
+     ON CONFLICT (invoice_payment_id) DO UPDATE SET payment_id=EXCLUDED.payment_id,invoice_id=EXCLUDED.invoice_id,invoice_number=EXCLUDED.invoice_number,
+       amount_applied=EXCLUDED.amount_applied,tax_amount_withheld=EXCLUDED.tax_amount_withheld,total=EXCLUDED.total,balance=EXCLUDED.balance,
+       due_date=EXCLUDED.due_date,apply_date=EXCLUDED.apply_date,raw=EXCLUDED.raw,synced_at=now()`,
+    [r.invoice_payment_id, r.payment_id, r.invoice_id, r.invoice_number, r.amount_applied, r.tax_amount_withheld, r.total, r.balance, r.due_date, r.apply_date, J(r.raw)],
+  )
+}
+
+/** Reemplaza TODAS las facturas aplicadas de un pago (borra previas + inserta), evitando huérfanas. */
+export async function replacePaymentInvoices(db: Queryable, paymentId: string, lines: PaymentInvoiceRow[]): Promise<void> {
+  await db.query('DELETE FROM books.customer_payment_invoices WHERE payment_id=$1', [paymentId])
+  for (const l of lines) await insertPaymentInvoice(db, l)
+}
+
+/** Marca de agua: máximo zoho_last_modified de una de las tablas-cabecera. */
+export async function maxZohoLastModified(db: Queryable, table: 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments'): Promise<string | null> {
   const r = await db.query(`SELECT MAX(zoho_last_modified) AS m FROM books.${table}`)
   return r.rows[0]?.m ?? null
 }

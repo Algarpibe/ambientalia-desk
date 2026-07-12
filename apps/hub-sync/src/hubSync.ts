@@ -29,6 +29,11 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
       await booksHubSync.backfillSalesOrders()
       await booksHubSync.backfillInvoices()
     }
+    // Guard aparte: los pagos pueden faltar aunque el resto de Books ya esté cargado.
+    if ((await maxZohoLastModified(db, 'customer_payments')) == null) {
+      console.log('Books pagos vacío: backfill…')
+      await booksHubSync.backfillPayments()
+    }
   }
   if (crmSync) {
     await migrateCrm(db)

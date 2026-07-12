@@ -8,6 +8,8 @@ export interface LineRow { line_item_id: string; item_id: string | null; name: s
 export interface SoLineRow extends LineRow { salesorder_id: string }
 export interface InvoiceLineRow extends LineRow { invoice_id: string }
 export interface InvoiceRow { invoice_id: string; invoice_number: string | null; reference_number: string | null; date: string | null; due_date: string | null; customer_id: string | null; customer_name: string | null; status: string | null; currency_code: string | null; exchange_rate: number | null; sub_total: number | null; total: number | null; bcy_sub_total: number | null; bcy_tax_total: number | null; bcy_total: number | null; salesorder_id: string | null; raw: unknown; zoho_last_modified: string | null }
+export interface CustomerPaymentRow { payment_id: string; payment_number: string | null; customer_id: string | null; customer_name: string | null; date: string | null; payment_mode: string | null; reference_number: string | null; currency_code: string | null; exchange_rate: number | null; amount: number | null; bcy_amount: number | null; unused_amount: number | null; bcy_unused_amount: number | null; tax_amount_withheld: number | null; payment_status: string | null; raw: unknown; zoho_last_modified: string | null }
+export interface PaymentInvoiceRow { invoice_payment_id: string; payment_id: string; invoice_id: string | null; invoice_number: string | null; amount_applied: number | null; tax_amount_withheld: number | null; total: number | null; balance: number | null; due_date: string | null; apply_date: string | null; raw: unknown }
 
 export function contactRow(raw: any): ContactRow {
   return {
@@ -47,5 +49,29 @@ export function invoiceRow(raw: any): InvoiceRow {
     status: str(raw.status), currency_code: str(raw.currency_code), exchange_rate: num(raw.exchange_rate), sub_total: num(raw.sub_total),
     total: num(raw.total), bcy_sub_total: num(raw.bcy_sub_total), bcy_tax_total: num(raw.bcy_tax_total), bcy_total: num(raw.bcy_total),
     salesorder_id: str(raw.salesorder_id), raw, zoho_last_modified: raw.last_modified_time ?? null,
+  }
+}
+export function customerPaymentRow(raw: any): CustomerPaymentRow {
+  const amount = num(raw.amount)
+  const exch = num(raw.exchange_rate)
+  const unused = num(raw.unused_amount)
+  const toBcy = (v: number | null) => (v != null && exch != null ? v * exch : null)
+  return {
+    payment_id: raw.payment_id, payment_number: str(raw.payment_number),
+    customer_id: str(raw.customer_id), customer_name: str(raw.customer_name),
+    date: raw.date || null, payment_mode: str(raw.payment_mode), reference_number: str(raw.reference_number),
+    currency_code: str(raw.currency_code), exchange_rate: exch,
+    amount, bcy_amount: toBcy(amount), unused_amount: unused, bcy_unused_amount: toBcy(unused),
+    tax_amount_withheld: num(raw.tax_amount_withheld), payment_status: str(raw.payment_status),
+    raw, zoho_last_modified: raw.last_modified_time ?? raw.updated_time ?? null,
+  }
+}
+export function paymentInvoiceRow(paymentId: string, raw: any): PaymentInvoiceRow {
+  return {
+    invoice_payment_id: raw.invoice_payment_id, payment_id: paymentId,
+    invoice_id: str(raw.invoice_id), invoice_number: str(raw.invoice_number),
+    amount_applied: num(raw.amount_applied), tax_amount_withheld: num(raw.tax_amount_withheld),
+    total: num(raw.total), balance: num(raw.balance),
+    due_date: raw.due_date || null, apply_date: raw.apply_date || null, raw,
   }
 }

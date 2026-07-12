@@ -38,6 +38,19 @@ describe('booksHub sync', () => {
     expect((await db.query("SELECT 1 FROM books.sales_orders WHERE salesorder_id='bad'")).rows.length).toBe(0)
   })
 
+  it('backfillPayments trae cabecera por lista y facturas aplicadas por detalle', async () => {
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      if (path.startsWith('/customerpayments?')) return Promise.resolve(page('customerpayments', [{ payment_id: 'p1', payment_number: 'PC-1', last_modified_time: '2026-07-01T00:00:00Z' }]))
+      if (path.startsWith('/customerpayments/p1')) return Promise.resolve(detail('payment', { payment_id: 'p1', payment_number: 'PC-1', amount: 600, exchange_rate: 0.5, currency_code: 'COP', updated_time: '2026-07-01T00:00:00Z', invoices: [{ invoice_payment_id: 'ip1', invoice_id: 'i1', invoice_number: 'AM1', amount_applied: 600, balance: 0 }] }))
+      return Promise.resolve(page('customerpayments', []))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    expect(await sync.backfillPayments()).toBe(1)
+    expect((await db.query("SELECT bcy_amount FROM books.customer_payments WHERE payment_id='p1'")).rows[0].bcy_amount).toBe(300)
+    expect((await db.query("SELECT count(*)::int n FROM books.customer_payment_invoices WHERE payment_id='p1'")).rows[0].n).toBe(1)
+    expect((await db.query("SELECT invoice_number FROM books.customer_payment_invoices WHERE invoice_payment_id='ip1'")).rows[0].invoice_number).toBe('AM1')
+  })
+
   it('syncRecent (incremental) solo trae items más nuevos que la marca de agua', async () => {
     await db.query("INSERT INTO books.items (item_id, zoho_last_modified) VALUES ('old','2024-01-01T00:00:00Z')")
     const booksFetch = vi.fn().mockImplementation((path: string) => {

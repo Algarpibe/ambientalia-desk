@@ -1,7 +1,7 @@
 import type { AppConfig } from '../config'
 import type { Queryable } from '../db/migrate'
-import { upsertContact, upsertItem, upsertSalesOrder, upsertInvoice, replaceSoLines, replaceInvoiceLines, maxZohoLastModified } from './repo'
-import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow } from './mappers'
+import { upsertContact, upsertItem, upsertSalesOrder, upsertInvoice, replaceSoLines, replaceInvoiceLines, upsertCustomerPayment, replacePaymentInvoices, maxZohoLastModified } from './repo'
+import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow } from './mappers'
 
 interface Deps { booksFetch: (path: string, init?: RequestInit) => Promise<Response>; db: Queryable; config: AppConfig }
 export interface BooksHubSync {
@@ -9,7 +9,8 @@ export interface BooksHubSync {
   backfillItems(): Promise<number>
   backfillSalesOrders(): Promise<number>
   backfillInvoices(): Promise<number>
-  syncRecent(): Promise<{ contacts: number; items: number; salesOrders: number; invoices: number }>
+  backfillPayments(): Promise<number>
+  syncRecent(): Promise<{ contacts: number; items: number; salesOrders: number; invoices: number; payments: number }>
 }
 const PAGE_SIZE = 200
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
@@ -52,6 +53,12 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     await upsertInvoice(db, invoiceRow(d))
     await replaceInvoiceLines(db, d.invoice_id, (d.line_items ?? []).map((l: any) => invoiceLineRow(d.invoice_id, l)))
   }
+  async function persistPayment(header: any): Promise<void> {
+    // La lista de pagos trae applied_invoices vacío → el detalle da el desglose por factura.
+    const d = await fetchDetail('customerpayments', 'payment', header.payment_id)
+    await upsertCustomerPayment(db, customerPaymentRow(d))
+    await replacePaymentInvoices(db, d.payment_id, (d.invoices ?? []).map((inv: any) => paymentInvoiceRow(d.payment_id, inv)))
+  }
 
   // ── Backfill (todas las páginas) ──
   async function backfillSimple(resource: string, key: string, extra: Record<string, string>, persist: (raw: any) => Promise<void>): Promise<number> {
@@ -67,7 +74,7 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
   }
 
   // ── Incremental (corta al alcanzar la marca de agua) ──
-  async function incremental(resource: string, key: string, table: 'contacts' | 'items' | 'sales_orders' | 'invoices', extra: Record<string, string>, persist: (raw: any) => Promise<void>): Promise<number> {
+  async function incremental(resource: string, key: string, table: 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments', extra: Record<string, string>, persist: (raw: any) => Promise<void>): Promise<number> {
     const watermark = await maxZohoLastModified(db, table)
     const wm = watermark ? new Date(watermark).getTime() : 0
     let page = 1, count = 0
@@ -96,12 +103,14 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     backfillItems: () => backfillSimple('items', 'items', {}, persistItem),
     backfillSalesOrders: () => backfillSimple('salesorders', 'salesorders', {}, persistSalesOrder),
     backfillInvoices: () => backfillSimple('invoices', 'invoices', {}, persistInvoice),
+    backfillPayments: () => backfillSimple('customerpayments', 'customerpayments', {}, persistPayment),
     async syncRecent() {
       return {
         contacts: await incremental('contacts', 'contacts', 'contacts', { contact_type: 'customer' }, persistContact),
         items: await incremental('items', 'items', 'items', {}, persistItem),
         salesOrders: await incremental('salesorders', 'salesorders', 'sales_orders', {}, persistSalesOrder),
         invoices: await incremental('invoices', 'invoices', 'invoices', {}, persistInvoice),
+        payments: await incremental('customerpayments', 'customerpayments', 'customer_payments', {}, persistPayment),
       }
     },
   }

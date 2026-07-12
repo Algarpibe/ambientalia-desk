@@ -48,13 +48,14 @@ describe('hubBootstrap', () => {
       backfillItems: async () => { calls.push('i'); return 0 },
       backfillSalesOrders: async () => { calls.push('so'); return 0 },
       backfillInvoices: async () => { calls.push('inv'); return 0 },
-      syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0 }),
+      backfillPayments: async () => { calls.push('pay'); return 0 },
+      syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0 }),
     }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync })
     // pg-mem no soporta information_schema.schemata: una consulta calificada exitosa
     // prueba que el esquema books + la tabla existen (lanza si no).
     expect((await db.query('SELECT count(*)::int AS n FROM books.contacts')).rows[0].n).toBe(0)
-    expect(calls).toEqual(['c', 'i', 'so', 'inv'])
+    expect(calls).toEqual(['c', 'i', 'so', 'inv', 'pay'])
   })
 
   it('migra crm.* y backfillea si está vacío', async () => {

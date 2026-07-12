@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow } from './mappers'
+import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow } from './mappers'
 
 describe('booksHub mappers', () => {
   it('contactRow mapea campos y guarda raw completo', () => {
@@ -47,5 +47,30 @@ describe('booksHub mappers', () => {
     const r = invoiceLineRow('f1', { line_item_id: 'l9', item_id: 'i1', quantity: '3', bcy_rate: '5' })
     expect(r.invoice_id).toBe('f1')
     expect(r.bcy_rate).toBe(5)
+  })
+
+  it('customerPaymentRow calcula BCY = amount × exchange_rate y toma last-modified', () => {
+    const r = customerPaymentRow({
+      payment_id: 'p1', payment_number: 'PC-2026-1', customer_name: 'CORPAMAG', date: '2026-07-01',
+      currency_code: 'COP', exchange_rate: '0.5', amount: '600', unused_amount: '0',
+      tax_amount_withheld: '5000', payment_status: 'paid', updated_time: '2026-07-01T00:00:00Z',
+    })
+    expect(r.payment_id).toBe('p1')
+    expect(r.amount).toBe(600)
+    expect(r.bcy_amount).toBe(300)
+    expect(r.bcy_unused_amount).toBe(0)
+    expect(r.zoho_last_modified).toBe('2026-07-01T00:00:00Z')
+  })
+
+  it('paymentInvoiceRow liga la aplicación a su pago', () => {
+    const r = paymentInvoiceRow('p1', {
+      invoice_payment_id: 'ip1', invoice_id: 'i1', invoice_number: 'AM1439',
+      amount_applied: '1000000', total: '1200000', balance: '0', due_date: '2026-07-07', apply_date: '2026-07-01',
+    })
+    expect(r.invoice_payment_id).toBe('ip1')
+    expect(r.payment_id).toBe('p1')
+    expect(r.invoice_number).toBe('AM1439')
+    expect(r.amount_applied).toBe(1000000)
+    expect(r.balance).toBe(0)
   })
 })
