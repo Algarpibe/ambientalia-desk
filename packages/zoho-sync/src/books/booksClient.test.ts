@@ -27,4 +27,26 @@ describe('booksClient', () => {
     expect(res.status).toBe(200)
     expect(fetchImpl).toHaveBeenCalledTimes(4)
   })
+
+  it('reintenta tras 429 respetando Retry-After (evita perder artículos en el backfill)', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(tokenRes())
+      .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'Retry-After': '2' } }))
+      .mockResolvedValueOnce(new Response('{"ok":1}', { status: 200 }))
+    const sleep = vi.fn().mockResolvedValue(undefined)
+    const { booksFetch } = createBooksClient({ config, fetchImpl: fetchImpl as unknown as typeof fetch, sleep })
+    const res = await booksFetch('/items/i1')
+    expect(res.status).toBe(200)
+    expect(sleep).toHaveBeenCalledWith(2000) // Retry-After: 2s → 2000ms
+  })
+
+  it('se rinde tras varios 429 seguidos en vez de colgarse', async () => {
+    const fetchImpl = vi.fn().mockImplementation((url: string) =>
+      String(url).includes('/oauth/') ? tokenRes() : new Response('', { status: 429 })
+    )
+    const sleep = vi.fn().mockResolvedValue(undefined)
+    const { booksFetch } = createBooksClient({ config, fetchImpl: fetchImpl as unknown as typeof fetch, sleep })
+    const res = await booksFetch('/items/i1')
+    expect(res.status).toBe(429) // devuelve el 429 tras agotar los reintentos, no un bucle infinito
+  })
 })

@@ -8,9 +8,15 @@ interface Deps {
   config: AppConfig
   fetchImpl?: typeof fetch
   now?: () => number
+  sleep?: (ms: number) => Promise<void>
 }
 
-export function createBooksClient({ config, fetchImpl = fetch, now = () => Date.now() }: Deps): BooksClient {
+export function createBooksClient({
+  config,
+  fetchImpl = fetch,
+  now = () => Date.now(),
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+}: Deps): BooksClient {
   const base = `https://${config.booksApiDomain}/books/v3`
   let token: string | null = null
   let expiresAt = 0
@@ -47,6 +53,16 @@ export function createBooksClient({ config, fetchImpl = fetch, now = () => Date.
       let t = await getToken()
       let res = await call(path, init, t)
       if (res.status === 401) { t = await getToken(true); res = await call(path, init, t) }
+      // 429: Zoho limita ~100 req/min. Un backfill (~1000 artículos, 1 detalle cada uno)
+      // lo topa. Se respeta Retry-After (segundos); si no viene, backoff exponencial.
+      // Sin esto el 429 se propaga y forEachSafe descarta el artículo en silencio — su
+      // centro de costos se quedaría vacío pese a existir en Zoho.
+      for (let intento = 0; res.status === 429 && intento < 5; intento++) {
+        const retryAfter = Number(res.headers.get('Retry-After'))
+        const ms = (Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 2 ** intento) * 1000
+        await sleep(ms)
+        res = await call(path, init, await getToken())
+      }
       return res
     },
   }
