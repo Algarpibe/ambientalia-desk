@@ -102,8 +102,16 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     return count
   }
 
+  async function persistItem(header: any): Promise<void> {
+    // El listado de artículos NO trae custom_fields; solo el detalle. Sin esto,
+    // books.items.raw no tiene cf_centro_de_costos y la app WO-sales no puede
+    // llenar las columnas de centro de costos del archivo de World Office.
+    // Mismo patrón que persistSalesOrder/persistInvoice/persistPurchaseOrder.
+    const d = await fetchDetail('items', 'item', header.item_id)
+    await upsertItem(db, itemRow(d))
+  }
+
   const persistContact = (raw: any) => upsertContact(db, contactRow(raw))
-  const persistItem = (raw: any) => upsertItem(db, itemRow(raw))
 
   return {
     backfillContacts: () => backfillSimple('contacts', 'contacts', { contact_type: 'customer' }, persistContact),

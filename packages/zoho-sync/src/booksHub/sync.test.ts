@@ -65,13 +65,32 @@ describe('booksHub sync', () => {
     expect(Number(line.quantity_received)).toBe(0)
   })
 
+  it('backfillItems trae los custom_fields, que solo vienen en el detalle', async () => {
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      // El listado NO trae custom_fields: es exactamente lo que hace la API de Zoho.
+      if (path.startsWith('/items?')) return Promise.resolve(page('items', [{ item_id: 'i1', sku: 'S1', last_modified_time: '2026-07-01T00:00:00Z' }]))
+      if (path.startsWith('/items/i1')) return Promise.resolve(detail('item', {
+        item_id: 'i1', sku: 'S1', name: 'Calibración Enviro', last_modified_time: '2026-07-01T00:00:00Z',
+        custom_field_hash: { cf_centro_de_costos: '330801 CALIBRACION ENVIRO' },
+      }))
+      return Promise.resolve(page('items', []))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    expect(await sync.backfillItems()).toBe(1)
+    const { rows } = await db.query("SELECT raw -> 'custom_field_hash' ->> 'cf_centro_de_costos' AS cc FROM books.items WHERE item_id = 'i1'")
+    expect(rows[0].cc).toBe('330801 CALIBRACION ENVIRO')
+  })
+
   it('syncRecent (incremental) solo trae items más nuevos que la marca de agua', async () => {
     await db.query("INSERT INTO books.items (item_id, zoho_last_modified) VALUES ('old','2024-01-01T00:00:00Z')")
     const booksFetch = vi.fn().mockImplementation((path: string) => {
-      if (path.startsWith('/items')) return Promise.resolve(page('items', [
+      if (path.startsWith('/items?')) return Promise.resolve(page('items', [
         { item_id: 'new', name: 'N', last_modified_time: '2024-06-01T00:00:00Z' },
         { item_id: 'old', name: 'O', last_modified_time: '2024-01-01T00:00:00Z' },
       ]))
+      // Los artículos se persisten desde el detalle (es donde vienen los custom_fields).
+      if (path.startsWith('/items/new')) return Promise.resolve(detail('item', { item_id: 'new', name: 'N', last_modified_time: '2024-06-01T00:00:00Z' }))
+      if (path.startsWith('/items/old')) return Promise.resolve(detail('item', { item_id: 'old', name: 'O', last_modified_time: '2024-01-01T00:00:00Z' }))
       return Promise.resolve(page(path.startsWith('/contacts') ? 'contacts' : path.startsWith('/salesorders') ? 'salesorders' : 'invoices', []))
     })
     const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
