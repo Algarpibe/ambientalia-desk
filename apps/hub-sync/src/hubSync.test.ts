@@ -51,6 +51,7 @@ describe('hubBootstrap', () => {
       backfillPayments: async () => { calls.push('pay'); return 0 },
       backfillPurchaseOrders: async () => { calls.push('po'); return 0 },
       syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0 }),
+      sweep: async () => [],
     }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync })
     // pg-mem no soporta information_schema.schemata: una consulta calificada exitosa
@@ -60,7 +61,7 @@ describe('hubBootstrap', () => {
   })
 
   it('migra crm.* y backfillea si está vacío', async () => {
-    const crmSync = { backfillAll: async () => ({}), syncRecent: async () => ({}), backfillIfEmpty: vi.fn(async () => ({})) }
+    const crmSync = { backfillAll: async () => ({}), syncRecent: async () => ({}), backfillIfEmpty: vi.fn(async () => ({})), sweep: async () => [] }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync: null, crmSync })
     expect((await db.query('SELECT count(*)::int AS n FROM crm.deals')).rows[0].n).toBe(0) // crm.* creado
     expect(crmSync.backfillIfEmpty).toHaveBeenCalledTimes(1)
