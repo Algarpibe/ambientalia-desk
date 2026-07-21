@@ -49,6 +49,7 @@ describe('hubBootstrap', () => {
       backfillSalesOrders: async () => { calls.push('so'); return 0 },
       backfillInvoices: async () => { calls.push('inv'); return 0 },
       syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0 }),
+      sweep: async () => [],
     }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync })
     // pg-mem no soporta information_schema.schemata: una consulta calificada exitosa
