@@ -33,6 +33,11 @@ export interface AppConfig {
   crmApiDomain: string
   crmAccountsDomain: string
   syncCrm: boolean
+  sweepEnabled: boolean
+  sweepDryRun: boolean
+  sweepHour: number
+  sweepMaxRows: number
+  sweepMaxPct: number
 }
 
 type Env = Record<string, string | undefined>
@@ -79,5 +84,10 @@ export function loadConfig(env: Env = process.env): AppConfig {
     crmApiDomain: env.ZOHO_CRM_API_DOMAIN || 'www.zohoapis.com',
     crmAccountsDomain: env.ZOHO_CRM_ACCOUNTS_DOMAIN || env.ZOHO_ACCOUNTS_DOMAIN || 'accounts.zoho.com',
     syncCrm: env.SYNC_CRM !== 'false',
+    sweepEnabled: env.SWEEP_ENABLED === 'true',        // default OFF
+    sweepDryRun: env.SWEEP_DRY_RUN !== 'false',         // default ON
+    sweepHour: env.SWEEP_HOUR ? Number(env.SWEEP_HOUR) : 4,
+    sweepMaxRows: env.SWEEP_MAX_ROWS ? Number(env.SWEEP_MAX_ROWS) : 200,
+    sweepMaxPct: env.SWEEP_MAX_PCT ? Number(env.SWEEP_MAX_PCT) : 0.1,
   }
 }
