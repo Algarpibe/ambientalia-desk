@@ -48,12 +48,17 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     return ids
   }
 
-  /** Re-verifica por id en Books: true si Zoho ya NO lo tiene (404); false si existe (200); lanza si es indeterminado. */
+  /** Re-verifica por id en Books usando el `code` del body: Zoho Books señala "no existe" con
+   *  code 1002 (no por el status HTTP). true = ausente (borrar); false = existe (code 0); lanza si
+   *  es indeterminado (→ no se borra). Verificado contra ids borrados reales (2026-07-19). */
   async function verifyDeleted(resource: string, id: string): Promise<boolean> {
     const res = await booksFetch(`/${resource}/${id}?organization_id=${org}`)
-    if (res.status === 404) return true
-    if (res.ok) return false
-    throw new Error(`Books verify /${resource}/${id} ${res.status}`)
+    const body = await res.text()
+    let code: number | undefined
+    try { code = JSON.parse(body).code } catch { /* body no-JSON */ }
+    if (code === 1002) return true                                  // "El recurso no existe" → ausente
+    if (res.ok && (code === 0 || code === undefined)) return false  // existe
+    throw new Error(`Books verify /${resource}/${id} status=${res.status} code=${code}`)
   }
 
   /** Aplica fn a cada item aislando fallos por-documento (un malo no aborta el lote). Devuelve OK count. */

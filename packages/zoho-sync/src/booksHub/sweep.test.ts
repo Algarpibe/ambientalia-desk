@@ -30,11 +30,11 @@ const emptyOthers = (path: string): Response | null => {
 }
 
 describe('booksHub sweep', () => {
-  it('borra el huérfano confirmado ausente (404) y sus líneas; deja los vivos', async () => {
+  it('borra el huérfano confirmado ausente (code 1002) y sus líneas; deja los vivos', async () => {
     const booksFetch = vi.fn().mockImplementation((path: string) => {
       const other = emptyOthers(path)
       if (other) return Promise.resolve(other)
-      if (path.startsWith('/invoices/C')) return Promise.resolve(new Response('', { status: 404 })) // verify: ausente
+      if (path.startsWith('/invoices/C')) return Promise.resolve(new Response(JSON.stringify({ code: 1002, message: 'El recurso no existe.' }), { status: 404 })) // verify: ausente (señal real de Books)
       if (path.startsWith('/invoices')) return Promise.resolve(new Response(JSON.stringify({ invoices: [{ invoice_id: 'A' }, { invoice_id: 'B' }] }), { status: 200 })) // list: C ausente
       return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
     })
@@ -50,7 +50,7 @@ describe('booksHub sweep', () => {
     const booksFetch = vi.fn().mockImplementation((path: string) => {
       const other = emptyOthers(path)
       if (other) return Promise.resolve(other)
-      if (path.startsWith('/invoices/C')) return Promise.resolve(new Response(JSON.stringify({ invoice: { invoice_id: 'C' } }), { status: 200 })) // verify: sigue vivo
+      if (path.startsWith('/invoices/C')) return Promise.resolve(new Response(JSON.stringify({ code: 0, invoice: { invoice_id: 'C' } }), { status: 200 })) // verify: sigue vivo (code 0)
       if (path.startsWith('/invoices')) return Promise.resolve(new Response(JSON.stringify({ invoices: [{ invoice_id: 'A' }, { invoice_id: 'B' }] }), { status: 200 }))
       return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
     })
