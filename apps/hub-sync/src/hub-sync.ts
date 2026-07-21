@@ -11,6 +11,7 @@ import { createBooksClient } from '@ambientalia/zoho-sync/books/booksClient'
 import { createBooksHubSync, type BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 import { createCrmClient } from '@ambientalia/zoho-sync/crmHub/crmClient'
 import { createCrmSync, type CrmSync } from '@ambientalia/zoho-sync/crmHub/sync'
+import type { SweepReport } from '@ambientalia/zoho-sync/sweep/sweep'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
 
 const config = loadConfig()
@@ -33,6 +34,15 @@ if (config.crmRefreshToken && config.syncCrm) {
   console.log('Sync CRM (crm.*) habilitado')
 }
 
+function logSweep(dominio: string, reports: SweepReport[]): void {
+  for (const r of reports) {
+    if (r.skipped) { console.warn(`sweep ${dominio} ${r.table}: SKIP (${r.skipped}) — huerfanos=${r.orphans}`); continue }
+    const accion = r.dryRun ? `DRY-RUN (borraria ${r.confirmed})` : `borrados ${r.deleted}`
+    const extra = (r.liveGaps || r.uncertain) ? ` [vivos=${r.liveGaps} inciertos=${r.uncertain}]` : ''
+    console.log(`sweep ${dominio} ${r.table}: vivos=${r.live} replica=${r.replica} huerfanos=${r.orphans} confirmados=${r.confirmed}${extra} → ${accion}`)
+  }
+}
+
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
   await hubBootstrap({ db: pool, sync, booksHubSync, crmSync })
@@ -53,6 +63,18 @@ async function main() {
     console.log(`Derivación sales_records habilitada (diaria ${config.salesRecordsHour}:00)`)
   } else {
     console.log('Derivación sales_records deshabilitada (falta SALES_TRACKER_DATABASE_URL o DERIVE_SALES_RECORDS=false)')
+  }
+
+  if (config.sweepEnabled && (booksHubSync || crmSync)) {
+    const opts = { dryRun: config.sweepDryRun, guard: { maxRows: config.sweepMaxRows, maxPct: config.sweepMaxPct } }
+    const runSweep = async () => {
+      if (booksHubSync) logSweep('books', await booksHubSync.sweep(opts))
+      if (crmSync) logSweep('crm', await crmSync.sweep(opts))
+    }
+    scheduleDailyAt(config.sweepHour, runSweep)
+    console.log(`Mark-and-sweep habilitado (diario ${config.sweepHour}:00, dryRun=${config.sweepDryRun})`)
+  } else {
+    console.log('Mark-and-sweep deshabilitado (SWEEP_ENABLED=false o sin Books/CRM)')
   }
 }
 
