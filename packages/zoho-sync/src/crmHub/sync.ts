@@ -2,10 +2,11 @@ import type { AppConfig } from '../config'
 import type { Queryable } from '../db/migrate'
 import { MODULES, quoteLineRow, type CrmModule } from './modules'
 import { upsertRow, maxModifiedTime, replaceQuoteLines } from './repo'
+import { sweepEntity, type SweepOpts, type SweepReport, type SweepEntity } from '../sweep/sweep'
 
 interface Deps { crmFetch: (path: string, init?: RequestInit) => Promise<Response>; db: Queryable; config: AppConfig }
 export type CrmCounts = Record<string, number>
-export interface CrmSync { backfillAll(): Promise<CrmCounts>; syncRecent(): Promise<CrmCounts>; backfillIfEmpty(): Promise<CrmCounts> }
+export interface CrmSync { backfillAll(): Promise<CrmCounts>; syncRecent(): Promise<CrmCounts>; backfillIfEmpty(): Promise<CrmCounts>; sweep(opts: SweepOpts): Promise<SweepReport[]> }
 const PER_PAGE = 200
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
 
@@ -17,6 +18,29 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     const d = await readData(res)
     return { data: d.data ?? [], info: d.info ?? {} }
   }
+  /** Todos los IDs vivos de un módulo CRM (paginación profunda por next_page_token). Lanza si una página falla. */
+  async function collectLiveIds(m: CrmModule): Promise<Set<string>> {
+    const ids = new Set<string>()
+    let token: string | null = null
+    for (;;) {
+      const extra = token ? `page_token=${token}` : `page=1`
+      const { data, info } = await fetchPage(m, extra)
+      for (const r of data) { if (r?.id != null) ids.add(String(r.id)) }
+      if (!info.more_records || !info.next_page_token) break
+      token = info.next_page_token
+    }
+    return ids
+  }
+
+  /** Re-verifica por id en CRM: true si Zoho ya NO lo tiene; false si existe; lanza si es indeterminado.
+   *  CRM v8 GET /{Module}/{id}: 200 con data[] = existe; 204/404 = no existe. */
+  async function verifyDeleted(m: CrmModule, id: string): Promise<boolean> {
+    const res = await crmFetch(`/${m.apiName}/${id}`)
+    if (res.status === 204 || res.status === 404) return true
+    if (res.ok) { const d = await readData(res); return !(Array.isArray(d.data) && d.data.length > 0) }
+    throw new Error(`CRM verify /${m.apiName}/${id} ${res.status}`)
+  }
+
   /** Para módulos con hasLines (Quotes): trae el detalle (el subform NO viene en bulk) y reemplaza las líneas. */
   async function persistLines(record: any): Promise<void> {
     const res = await crmFetch(`/Quotes/${record.id}`)
@@ -87,5 +111,20 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     }
     return counts
   }
-  return { backfillAll: () => runAll(backfillModule), syncRecent: () => runAll(incrementalModule), backfillIfEmpty }
+  async function sweep(opts: SweepOpts): Promise<SweepReport[]> {
+    const reports: SweepReport[] = []
+    for (const m of MODULES) {
+      const e: SweepEntity = {
+        schema: 'crm', table: m.table, pk: 'id',
+        childTable: m.hasLines ? 'quote_line_items' : undefined,
+        childFk: m.hasLines ? 'quote_id' : undefined,
+        collectLive: () => collectLiveIds(m),
+        confirmDeleted: (id) => verifyDeleted(m, id),
+      }
+      try { reports.push(await sweepEntity(db, e, opts)) }
+      catch (err: any) { reports.push({ table: `crm.${m.table}`, live: 0, replica: 0, orphans: 0, confirmed: 0, liveGaps: 0, uncertain: 0, deleted: 0, dryRun: opts.dryRun, skipped: `abortado: ${String(err?.message ?? err)}` }) }
+    }
+    return reports
+  }
+  return { backfillAll: () => runAll(backfillModule), syncRecent: () => runAll(incrementalModule), backfillIfEmpty, sweep }
 }
