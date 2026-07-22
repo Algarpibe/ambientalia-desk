@@ -163,7 +163,11 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
       const entities: SweepEntity[] = [
         { schema: 'books', table: 'invoices', pk: 'invoice_id', childTable: 'invoice_line_items', childFk: 'invoice_id', collectLive: () => collectLiveIds('invoices', 'invoices', 'invoice_id'), confirmDeleted: (id) => verifyDeleted('invoices', id) },
         { schema: 'books', table: 'sales_orders', pk: 'salesorder_id', childTable: 'salesorder_line_items', childFk: 'salesorder_id', collectLive: () => collectLiveIds('salesorders', 'salesorders', 'salesorder_id'), confirmDeleted: (id) => verifyDeleted('salesorders', id) },
-        { schema: 'books', table: 'contacts', pk: 'contact_id', collectLive: () => collectLiveIds('contacts', 'contacts', 'contact_id', { contact_type: 'customer' }), confirmDeleted: (id) => verifyDeleted('contacts', id) },
+        // NOTA: el live-set de contactos NO filtra por contact_type (a diferencia del sync, que solo
+        // trae customers). Si filtrara por 'customer', un contacto reclasificado en Zoho (que sigue
+        // existiendo pero ya no es customer) saldría como huérfano FALSO. Enumerar TODOS los tipos
+        // hace que solo se marquen los realmente borrados.
+        { schema: 'books', table: 'contacts', pk: 'contact_id', collectLive: () => collectLiveIds('contacts', 'contacts', 'contact_id'), confirmDeleted: (id) => verifyDeleted('contacts', id) },
         { schema: 'books', table: 'items', pk: 'item_id', collectLive: () => collectLiveIds('items', 'items', 'item_id'), confirmDeleted: (id) => verifyDeleted('items', id) },
       ]
       const reports: SweepReport[] = []
