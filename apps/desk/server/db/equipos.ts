@@ -1,11 +1,27 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { EquipoRow } from './seedEquipos'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EquipoHistorial, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
+/** Fila cruda de `equipos` con id propio (no lo genera la BD). */
+export interface EquipoRow {
+  id: string
+  serial: string
+  marca: string | null
+  modelo: string | null
+  tipo: string | null
+  cliente_nombre: string | null
+  source: string
+  raw: unknown
+}
+
+/**
+ * Upsert por id, sin tocar `client_id` ni `active`.
+ * Sin uso en producción desde que se retiró la siembra por CSV; lo mantiene la reconciliación
+ * pendiente de `cliente_nombre` → `client_id` (ver debt.md), que escribirá por esta vía.
+ */
 export async function upsertEquipo(db: Queryable, r: EquipoRow): Promise<void> {
   await db.query(
     `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,source,active,raw,updated_at)

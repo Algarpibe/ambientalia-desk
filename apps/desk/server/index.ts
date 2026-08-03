@@ -12,9 +12,6 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { readFileSync } from 'node:fs'
-import { seedEquipos } from './db/seedEquipos'
-import { countEquipos } from './db/equipos'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -28,15 +25,10 @@ async function main() {
   // Best-effort: no debe tumbar el arranque (p.ej. si aún existe el esquema viejo antes de recrear).
   try { await reseedTicketNumber(pool) } catch (err) { logger.error({ err }, 'reseed inicial omitido') }
 
-  try {
-    if ((await countEquipos(pool)) === 0) {
-      const csv = readFileSync(new URL('./db/equipos.seed.csv', import.meta.url), 'utf8')
-      const n = await seedEquipos(pool, csv)
-      logger.info(`Equipos: semilla cargada (${n})`)
-    } else {
-      logger.info('Equipos: ya hay datos, no se siembra')
-    }
-  } catch (err) { logger.error({ err }, 'Seed de equipos falló') }
+  // `desk.equipos` es la ÚNICA fuente de equipos: se gestiona desde la página Equipos y nada la
+  // repuebla al arrancar. La siembra por CSV se retiró a propósito — con la tabla ya cargada era
+  // código muerto, y ante una pérdida de datos habría repoblado 352 equipos obsoletos (sin los
+  // creados en la app ni sus client_id), aparentando normalidad y tapando el incidente.
 
   // Bootstrap: si no hay usuarios y hay credenciales en env, crea el admin inicial.
   if (config.adminEmail && config.adminPassword && (await countUsers(pool)) === 0) {

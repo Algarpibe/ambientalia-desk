@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { parseEquiposCsv } from './seedEquipos'
-import { upsertEquipo, searchEquipos, getEquipo, countEquipos } from './equipos'
+import { upsertEquipo, searchEquipos, getEquipo, countEquipos, type EquipoRow } from './equipos'
 import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './equipos'
 import { getEquipoHistorial } from './equipos'
 
-const rows = parseEquiposCsv([
-  'Nombre cliente;Marca;Modelo;Numero serie;Tipo',
-  'Corola Ambiental S.A.S.;Horiba;APMA-370;85HHP0N0;Analizador de Monóxido de Carbono (CO)',
-  'Gecelca S.A. E.S.P.;Grimm;EDM180C;18A22052;Monitor de Material Particulado PM10/PM2.5',
-].join('\n'))
+// Filas al estilo de las que dejó la carga inicial: `client_id` NULL y el cliente solo como texto.
+// Siguen siendo la mayoría en producción, así que los tests deben seguir cubriéndolas.
+const rows: EquipoRow[] = [
+  { id: 'eq-corola', serial: '85HHP0N0', marca: 'Horiba', modelo: 'APMA-370', tipo: 'Analizador de Monóxido de Carbono (CO)', cliente_nombre: 'Corola Ambiental S.A.S.', source: 'seed', raw: null },
+  { id: 'eq-gecelca', serial: '18A22052', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor de Material Particulado PM10/PM2.5', cliente_nombre: 'Gecelca S.A. E.S.P.', source: 'seed', raw: null },
+]
 
 let db: Queryable
 beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })

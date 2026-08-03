@@ -38,6 +38,14 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
+- **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** (2026-08-03). La carga inicial de ~352 equipos
+  (hecha una vez desde un CSV que ya se retiró del código; recuperable en el historial de git, último commit que
+  lo contiene: `b67310a`) dejó `client_id` en NULL y el cliente como **texto libre**, con grafías que no casan con
+  Books (`AMBIENTALIA` vs `Ambientalia S.A.S.`, la errata `Sololucione ambientales - SOLAM`, dobles espacios).
+  Mientras tanto `searchEquipos` acota por cliente cruzando `client_id` **y** contención de nombre en ambos
+  sentidos, con "Ver todos" como salida. **Arreglo de fondo:** endpoint admin idempotente que empareje por nombre
+  normalizado, escriba `client_id` donde no haya ambigüedad y devuelva los ~4-5 que no casen para corregirlos a
+  mano en la página Equipos. Hecho eso, el filtro puede pasar a ser solo por `client_id`.
 
 **Zoho-hub / arquitectura:**
 - **zoho-hub:** Opción A (cutover total + write-back), SP3 (write-back CQRS), SP4 (matviews); replicar `contacts` a desk-db (requiere gatear `ensureContact`).

@@ -5,7 +5,11 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { upsertTicket, upsertAccount, getTicketRow } from '@ambientalia/zoho-sync/db/repo'
 import { ticketRowFromZoho, accountRowFromZoho } from '@ambientalia/zoho-sync/db/mappers'
 import { upsertEquipo, listEquiposManage } from './db/equipos'
-import { parseEquiposCsv } from './db/seedEquipos'
+import type { EquipoRow } from './db/equipos'
+
+/** Equipo al estilo de la carga inicial: `client_id` NULL y cliente solo como texto libre. */
+const equipoRow = (id: string, serial: string, cliente = 'Gecelca S.A. E.S.P.'): EquipoRow =>
+  ({ id, serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10/PM2.5', cliente_nombre: cliente, source: 'seed', raw: null })
 import { createApp } from './app'
 import { clearAnalisisCache } from './analisis'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -321,8 +325,7 @@ describe('GET /api/contacts/:id y /api/accounts/:id', () => {
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()
-    const [eq] = parseEquiposCsv('Nombre cliente;Marca;Modelo;Numero serie;Tipo\nGecelca S.A. E.S.P.;Grimm;EDM180C;18A22052;Monitor PM10/PM2.5')
-    await upsertEquipo(db, eq)
+    await upsertEquipo(db, equipoRow('eq-t1', '18A22052'))
     const { app } = appWith()
     const res = await request(app).get('/api/equipos?search=18A22052').set('Cookie', cookie)
     expect(res.status).toBe(200)
@@ -396,7 +399,7 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
 
 describe('POST /api/tickets (crear)', () => {
   const seedEquipo = async () => {
-    const [eq] = parseEquiposCsv('Nombre cliente;Marca;Modelo;Numero serie;Tipo\nGecelca S.A. E.S.P.;Grimm;EDM180C;18A20070;Monitor PM10/PM2.5')
+    const eq = equipoRow('eq-t2', '18A20070')
     await upsertEquipo(db, eq)
     return eq
   }
