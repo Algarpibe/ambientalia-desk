@@ -17,6 +17,10 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [equipoResults, setEquipoResults] = useState<EquipoLite[]>([])
   const [equipo, setEquipo] = useState<EquipoLite | null>(null)
   const [buscandoEquipo, setBuscandoEquipo] = useState(false)
+  // Con cliente elegido, el buscador se acota a SUS equipos. `verTodosEquipos` es la salida de
+  // emergencia: el vínculo equipo↔cliente depende en parte del nombre libre del CSV de la semilla,
+  // así que si no cuadra hay que poder buscar en todos sin abandonar el formulario.
+  const [verTodosEquipos, setVerTodosEquipos] = useState(false)
 
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState('')
@@ -67,12 +71,12 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     if (equipoQuery.trim().length < 2) { setEquipoResults([]); return }
     let alive = true
     setBuscandoEquipo(true)
-    searchEquipos(equipoQuery)
+    searchEquipos(equipoQuery, verTodosEquipos ? null : clientId)
       .then((r) => { if (alive) setEquipoResults(r) })
       .catch(() => {})
       .finally(() => { if (alive) setBuscandoEquipo(false) })
     return () => { alive = false }
-  }, [equipoQuery, equipo])
+  }, [equipoQuery, equipo, clientId, verTodosEquipos])
 
   const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie: equipo?.serial ?? '', modelo: equipo?.modelo ?? '', fecha: new Date() })
   const subject = useMemo(
@@ -185,10 +189,25 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
               <span className="text-slate-400"> · dueño: {equipo.clienteNombre}</span>
             </div>
           )}
+          {!equipo && clientId && (
+            <div className="mt-1 text-[11px] text-slate-400">
+              {verTodosEquipos ? (
+                <>Buscando en <b>todos los clientes</b>. <button type="button" onClick={() => setVerTodosEquipos(false)} className="text-blue-600 underline">Acotar a {clientName}</button></>
+              ) : (
+                <>Solo equipos de <b>{clientName}</b>. <button type="button" onClick={() => setVerTodosEquipos(true)} className="text-blue-600 underline">Ver todos</button></>
+              )}
+            </div>
+          )}
           {!equipo && !buscandoEquipo && equipoQuery.trim().length >= 2 && equipoResults.length === 0 && (
             <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
-              No hay ningún equipo registrado que coincida con <b>«{equipoQuery.trim()}»</b>.
-              Regístralo primero en <b>Equipos</b> (icono de la barra superior) y vuelve a crear el ticket.
+              {clientId && !verTodosEquipos ? (
+                <>Ningún equipo de <b>{clientName}</b> coincide con <b>«{equipoQuery.trim()}»</b>. Puede estar registrado
+                  a otro nombre: prueba a <button type="button" onClick={() => setVerTodosEquipos(true)} className="text-blue-700 underline font-bold">buscar en todos los clientes</button>,
+                  o regístralo en <b>Equipos</b>.</>
+              ) : (
+                <>No hay ningún equipo registrado que coincida con <b>«{equipoQuery.trim()}»</b>.
+                  Regístralo primero en <b>Equipos</b> (icono de la barra superior) y vuelve a crear el ticket.</>
+              )}
             </div>
           )}
           {!equipo && equipoQuery.trim().length === 1 && (

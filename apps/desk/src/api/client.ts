@@ -158,8 +158,11 @@ export function searchSalesOrders(q: string, clientId?: string): Promise<SalesOr
   return fetch(`/api/sales-orders?${p.toString()}`, { credentials: 'include' }).then((r) => json<SalesOrderLite[]>(r))
 }
 
-export function searchEquipos(q: string): Promise<EquipoLite[]> {
-  return fetch(`/api/equipos?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<EquipoLite[]>(r))
+/** `clientId` acota la búsqueda a los equipos de ese cliente; omitirlo busca en todos. */
+export function searchEquipos(q: string, clientId?: string | null): Promise<EquipoLite[]> {
+  const p = new URLSearchParams({ search: q })
+  if (clientId) p.set('clientId', clientId)
+  return fetch(`/api/equipos?${p.toString()}`, { credentials: 'include' }).then((r) => json<EquipoLite[]>(r))
 }
 
 export async function createTicket(payload: CreateTicketPayload): Promise<TicketDetail> {

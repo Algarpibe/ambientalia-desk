@@ -31,6 +31,26 @@ describe('equipos repo', () => {
     await upsertEquipo(db, rows[0])
     expect(await countEquipos(db)).toBe(1)
   })
+
+  // El selector de equipo del formulario de ticket debe acotarse al cliente elegido. El vínculo
+  // no puede apoyarse solo en `client_id`: la semilla (~352 equipos) lo deja NULL y solo guarda
+  // `cliente_nombre` como texto libre del CSV, con otra grafía que en Books ("AMBIENTALIA" vs
+  // "Ambientalia S.A.S."). Por eso se cruzan las dos señales.
+  it('searchEquipos acota al cliente cruzando client_id y nombre; sin cliente devuelve todos', async () => {
+    const seed = (id: string, serial: string, cliente: string) =>
+      upsertEquipo(db, { id, serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', cliente_nombre: cliente, source: 'seed', raw: null })
+    await seed('e-corto', '18A0001', 'AMBIENTALIA')            // semilla, nombre abreviado
+    await seed('e-exacto', '18A0002', 'Ambientalia S.A.S.')    // semilla, nombre igual al de Books
+    await seed('e-otro', '18A0003', 'AGQ Colombia S.A.S.')     // otro cliente → fuera
+    const idApp = await createEquipo(db, { serial: '18A0004', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Ambientalia S.A.S.', clientId: 'cli-amb' })
+
+    const cliente = { id: 'cli-amb', name: 'Ambientalia S.A.S.' }
+    expect((await searchEquipos(db, '18A', cliente)).map((e) => e.id).sort())
+      .toEqual(['e-corto', 'e-exacto', idApp].sort())
+
+    // Sin cliente → todos (es la salida de emergencia del formulario si el vínculo falla).
+    expect((await searchEquipos(db, '18A')).length).toBe(4)
+  })
 })
 
 describe('equipos CRUD (Subsistema F)', () => {

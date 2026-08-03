@@ -20,14 +20,45 @@ function toLite(r: any): EquipoLite {
   return { id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined, clienteNombre: r.cliente_nombre ?? undefined }
 }
 
-export async function searchEquipos(db: Queryable, q: string, limit = 20): Promise<EquipoLite[]> {
+/** Cliente por el que acotar la búsqueda de equipos. Ambas señales son opcionales. */
+export interface EquipoClienteFilter { id?: string | null; name?: string | null }
+
+/**
+ * Busca equipos activos, opcionalmente acotados a un cliente.
+ *
+ * El vínculo equipo↔cliente NO puede apoyarse solo en `client_id`: la semilla (~352 equipos) lo
+ * deja NULL y solo guarda `cliente_nombre`, texto libre del CSV cuya grafía difiere de la de Books
+ * ("AMBIENTALIA" vs "Ambientalia S.A.S."). Por eso se aceptan tres coincidencias: por `client_id`
+ * (equipos dados de alta en la app), por nombre contenido, y por nombre contenido a la inversa —
+ * esta última cubre el caso del CSV abreviado, con un mínimo de 4 caracteres para no disparar
+ * falsos positivos con nombres muy cortos.
+ *
+ * Sin cliente devuelve todos: es la salida de emergencia del formulario cuando el vínculo falla.
+ */
+export async function searchEquipos(db: Queryable, q: string, cliente?: EquipoClienteFilter | null, limit = 20): Promise<EquipoLite[]> {
   const like = `%${q.toLowerCase()}%`
+  const params: unknown[] = [like]
+  const cid = cliente?.id ?? ''
+  const cname = (cliente?.name ?? '').toLowerCase().trim()
+  const ors: string[] = []
+  if (cid) { params.push(cid); ors.push(`client_id = $${params.length}`) }
+  if (cname) {
+    params.push(`%${cname}%`)
+    ors.push(`LOWER(COALESCE(cliente_nombre,'')) LIKE $${params.length}`)
+    params.push(cname)
+    // `LIKE '____%'` = al menos 4 caracteres. Se usa en vez de length() porque pg-mem no la
+    // implementa, y el patrón es equivalente y portable.
+    ors.push(`(COALESCE(cliente_nombre,'') LIKE '____%' AND $${params.length} LIKE '%' || LOWER(cliente_nombre) || '%')`)
+  }
+  const clienteFilter = ors.length ? `AND (${ors.join(' OR ')})` : ''
+  params.push(limit)
   const r = await db.query(
     `SELECT id,serial,marca,modelo,tipo,cliente_nombre FROM equipos
      WHERE active = true AND (LOWER(serial) LIKE $1 OR LOWER(COALESCE(cliente_nombre,'')) LIKE $1
        OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1)
-     ORDER BY serial LIMIT $2`,
-    [like, limit],
+     ${clienteFilter}
+     ORDER BY serial LIMIT $${params.length}`,
+    params,
   )
   return r.rows.map(toLite)
 }
