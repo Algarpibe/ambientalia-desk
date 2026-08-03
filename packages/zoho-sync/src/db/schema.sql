@@ -214,3 +214,14 @@ CREATE TABLE IF NOT EXISTS ticket_history (
 CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket ON ticket_history (ticket_id);
 
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS modified_time timestamptz;
+
+-- Checklist Incluye de las remisiones de entrada. El perfil sale de perfilChecklist(marca, modelo). Se siembra UNA vez desde el endpoint admin y nada la reescribe al arrancar. OJO, sin punto y coma en este comentario, que migrate parte el fichero por ese caracter
+CREATE TABLE IF NOT EXISTS public.remision_checklist (
+  id bigserial PRIMARY KEY,
+  perfil text NOT NULL,
+  item text NOT NULL,
+  orden integer NOT NULL DEFAULT 0,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_remision_checklist_perfil ON remision_checklist (perfil);

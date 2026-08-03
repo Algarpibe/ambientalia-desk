@@ -4,6 +4,8 @@ import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { createMeasurer } from '../measure'
 import type { createDetailBackfiller } from '../backfill'
 import { backfillSerialFromSubject } from '../backfillSerial'
+import { seedChecklist } from '../db/remisionChecklist'
+import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { logger } from '../util/logger'
@@ -51,6 +53,16 @@ export function registerAdminRoutes(
   // Solo tickets NO gestionados por la app; idempotente. SOLO super administrador.
   app.post('/api/admin/backfill-serial', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
       res.json(await backfillSerialFromSubject(db))
+  }))
+
+  // Siembra el catálogo inicial del checklist de remisiones. SOLO super administrador.
+  // Se dispara a mano UNA vez: a partir de ahí manda la tabla y nada la reescribe al arrancar (a
+  // diferencia de la vieja semilla CSV de equipos, que revertía las ediciones en cada despliegue).
+  // Es idempotente y no destructiva: re-ejecutarla solo añade lo que falte.
+  app.post('/api/admin/seed-remision-checklist', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
+    const r = await seedChecklist(db, CHECKLIST_SEED)
+    logger.info(`Checklist de remisiones sembrado: ${r.insertados} nuevos, ${r.existentes} ya existían`)
+    res.json(r)
   }))
 
   // Backfill de tickets archivados en segundo plano (fire-and-forget). SOLO super administrador.
