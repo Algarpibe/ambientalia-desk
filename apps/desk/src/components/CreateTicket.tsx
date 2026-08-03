@@ -16,6 +16,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [equipoQuery, setEquipoQuery] = useState('')
   const [equipoResults, setEquipoResults] = useState<EquipoLite[]>([])
   const [equipo, setEquipo] = useState<EquipoLite | null>(null)
+  const [buscandoEquipo, setBuscandoEquipo] = useState(false)
 
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState('')
@@ -60,11 +61,16 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     searchClients(clientQuery).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
     return () => { alive = false }
   }, [clientQuery, clientId])
+  // `buscandoEquipo` evita anunciar "no hay coincidencias" mientras la búsqueda está en vuelo.
   useEffect(() => {
     if (equipo) { setEquipoResults([]); return }
     if (equipoQuery.trim().length < 2) { setEquipoResults([]); return }
     let alive = true
-    searchEquipos(equipoQuery).then((r) => { if (alive) setEquipoResults(r) }).catch(() => {})
+    setBuscandoEquipo(true)
+    searchEquipos(equipoQuery)
+      .then((r) => { if (alive) setEquipoResults(r) })
+      .catch(() => {})
+      .finally(() => { if (alive) setBuscandoEquipo(false) })
     return () => { alive = false }
   }, [equipoQuery, equipo])
 
@@ -159,7 +165,9 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
 
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Equipo * (por serie / cliente / modelo)</label>
-          <input className={`${field} w-full`} placeholder="Buscar equipo registrado…" value={equipoQuery}
+          {/* Ámbar mientras hay texto sin equipo elegido: escribir un serial NO basta, hay que
+              seleccionar uno del listado (el servidor exige `equipoId` y responde 422 si no). */}
+          <input className={`${field} w-full ${equipoQuery.trim() && !equipo ? 'border-amber-400' : ''}`} placeholder="Buscar equipo registrado…" value={equipoQuery}
             {...comboProps('equipo')}
             onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null); setOpenCombo('equipo') }} required={!equipo} />
           {openCombo === 'equipo' && equipoResults.length > 0 && (
@@ -176,6 +184,15 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
               <b>{equipo.marca} {equipo.modelo}</b> · {equipo.tipo} · serie {equipo.serial}
               <span className="text-slate-400"> · dueño: {equipo.clienteNombre}</span>
             </div>
+          )}
+          {!equipo && !buscandoEquipo && equipoQuery.trim().length >= 2 && equipoResults.length === 0 && (
+            <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+              No hay ningún equipo registrado que coincida con <b>«{equipoQuery.trim()}»</b>.
+              Regístralo primero en <b>Equipos</b> (icono de la barra superior) y vuelve a crear el ticket.
+            </div>
+          )}
+          {!equipo && equipoQuery.trim().length === 1 && (
+            <div className="mt-1 text-[12px] text-slate-400">Escribe al menos 2 caracteres para buscar.</div>
           )}
         </div>
 
