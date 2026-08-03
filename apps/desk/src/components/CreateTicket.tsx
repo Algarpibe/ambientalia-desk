@@ -28,6 +28,21 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // Qué desplegable está abierto: solo el del campo con foco, y como mucho uno a la vez.
+  // Con esto el clic fuera lo cierra (vía blur) sin listeners en document, y una lista nunca
+  // aparece sobre un campo que el usuario no está usando (p.ej. las OVs del cliente que
+  // `pickEquipo` autocompleta: antes se abrían solas y no había forma de cerrarlas).
+  type Combo = 'ov' | 'cliente' | 'equipo'
+  const [openCombo, setOpenCombo] = useState<Combo | null>(null)
+  const comboProps = (key: Combo) => ({
+    onFocus: () => setOpenCombo(key),
+    onBlur: () => setOpenCombo(null),
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Escape') setOpenCombo(null) },
+  })
+  // El blur del input se dispara ANTES del click en la opción: sin esto, la lista se
+  // desmontaría antes de registrar la selección. También permite arrastrar su scrollbar.
+  const keepFocus = { onMouseDown: (e: React.MouseEvent) => e.preventDefault() }
+
   // Los tres buscadores comparten una regla: si YA hay algo elegido, no se busca ni se reabre el
   // desplegable. Sin esto, elegir una opción reescribe el texto del input (y `pickOv` además el del
   // cliente) → el efecto se re-dispara y repuebla la lista, que queda abierta encima del campo
@@ -115,9 +130,10 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Orden de Venta (opcional)</label>
           <input className={`${field} w-full`} placeholder="Buscar OV (número o cliente)…" value={ovQuery}
-            onChange={(e) => { setOvQuery(e.target.value); setSalesOrderId(null) }} />
-          {ovResults.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+            {...comboProps('ov')}
+            onChange={(e) => { setOvQuery(e.target.value); setSalesOrderId(null); setOpenCombo('ov') }} />
+          {openCombo === 'ov' && ovResults.length > 0 && (
+            <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {ovResults.map((ov) => (
                 <li key={ov.id}><button type="button" onClick={() => pickOv(ov)} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
                   <b>{ov.number}</b> — {ov.customerName ?? ''} {ov.ticketNumber ? `· ticket ${ov.ticketNumber}` : ''}
@@ -130,9 +146,10 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Cliente *</label>
           <input className={`${field} w-full`} placeholder="Buscar cliente…" value={clientQuery}
-            onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value) }} required={!clientId} />
-          {clientResults.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+            {...comboProps('cliente')}
+            onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value); setOpenCombo('cliente') }} required={!clientId} />
+          {openCombo === 'cliente' && clientResults.length > 0 && (
+            <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {clientResults.map((c) => (
                 <li key={c.id}><button type="button" onClick={() => pickClient(c)} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
                   {c.name} {c.nit ? `· NIT ${c.nit}` : ''}
@@ -145,9 +162,10 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Equipo * (por serie / cliente / modelo)</label>
           <input className={`${field} w-full`} placeholder="Buscar equipo registrado…" value={equipoQuery}
-            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null) }} required={!equipo} />
-          {equipoResults.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+            {...comboProps('equipo')}
+            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null); setOpenCombo('equipo') }} required={!equipo} />
+          {openCombo === 'equipo' && equipoResults.length > 0 && (
+            <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {equipoResults.map((e) => (
                 <li key={e.id}><button type="button" onClick={() => pickEquipo(e)} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
                   <b>{e.serial}</b> — {e.marca ?? ''} {e.modelo ?? ''} · {e.tipo ?? ''} <span className="text-slate-400">· {e.clienteNombre ?? ''}</span>
@@ -179,7 +197,12 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
             <option value="">Prioridad (opcional)</option>
             <option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
           </select>
-          <input className={`${field} col-span-2`} placeholder="Orden de Venta (texto)" value={ordenVenta} onChange={(e) => setOrdenVenta(e.target.value)} />
+          {/* Solo si NO se eligió una OV arriba. Al elegirla, `pickOv` ya puso su número en
+              `ordenVenta` y este campo se veía como un duplicado. Se mantiene para el caso
+              contrario: registrar el número de una OV que todavía no existe en Books. */}
+          {!salesOrderId && (
+            <input className={`${field} col-span-2`} placeholder="Orden de Venta (si aún no está en Books)" value={ordenVenta} onChange={(e) => setOrdenVenta(e.target.value)} />
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
