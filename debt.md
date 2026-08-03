@@ -36,6 +36,21 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
 - **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
   **EN CURSO desde 2026-08-03: solo la rama de ENTRADA** (la que dispara el botón "Crear remisión" del ticket).
+- **Remisiones — gestión de accesorios por marca/modelo (DIFERIDA, 2026-08-03).** *Qué pide el usuario:* una
+  tabla de accesorios **por marca-modelo** y una **página en la app** para añadir / editar / eliminar, sin SQL.
+  *Qué hay ya:* la tabla `public.remision_checklist(perfil, item, orden, activo)` con 109 ítems, sembrada bajo
+  demanda con `POST /api/admin/seed-remision-checklist` (idempotente y **no destructiva**, precisamente para que
+  una futura pantalla de edición no se vea revertida), y lectura por `getChecklist` / `listChecklist` (esta
+  última ya devuelve también los desactivados, pensando en esa pantalla). *Qué falta:* (a) el CRUD y su UI;
+  (b) decidir la **granularidad**.
+  **La decisión de fondo es (b).** Hoy se indexa por `perfil` — 6 grupos: grimm_edm280, grimm_edm180, horiba_ap,
+  environics, kunak, otro — porque así los agrupaba el flujo de n8n: todos los `EDM180*` comparten lista y `otro`
+  es un cajón para Durag/TCA/Ambientalia y cualquier marca desconocida. Pasar a marca-modelo (hay ~34 modelos en
+  el desplegable de Equipos) multiplica las listas y obliga a responder: **¿qué checklist se usa cuando un modelo
+  no tiene lista propia?** ¿Se cae a la marca, al perfil, a "otro"? Sin esa regla, dar de alta un equipo nuevo
+  dejaría su remisión sin accesorios — que es exactamente el fallo que se corrigió en `aa15d0c`.
+  Camino sugerido: mantener `perfil` como capa de agrupación y añadir un **override por marca+modelo** que gane
+  cuando exista, en vez de sustituir un esquema por otro. Así el alta de un modelo nuevo hereda algo por defecto.
 - **Remisiones — rama de SALIDA (DIFERIDA, 2026-08-03).** *Qué es:* la remisión que se emite cuando el equipo se
   **devuelve** al cliente, para verificar que sale con todo lo que entró. *Por qué se difiere:* **no se puede
   diseñar hasta que la de entrada esté cerrada.** Hallazgos de leer el flujo (`Remisiones_ST_3.13_Desk`, export
