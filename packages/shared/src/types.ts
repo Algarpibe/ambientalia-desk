@@ -288,6 +288,30 @@ export interface AccountDetail { id: string; name: string; nit: string | null; e
 
 export interface ActivityListItem { id: string; subject: string; status: string; statusType: string | null; priority: string | null; dueDate: string | null; owner: string | null; ticketId: string | null; ticketNumber: string | null }
 
+export interface RemisionFoto { id: string; filename: string; contentType: string; size: number }
+
+/**
+ * Remisión de entrada registrada en la app. `estado` refleja el desenlace del flujo n8n:
+ * `pendiente` mientras no ha contestado, y `ok_con_avisos` cuando la remisión se generó pero falló
+ * algún aviso (correo o Telegram) — eso cuenta como creada, no como fallo.
+ */
+export interface Remision {
+  id: string
+  ticketId: string
+  tipo: string
+  fecha: string
+  tipoServicio: string | null
+  perfil: string | null
+  equipoId: string | null
+  serial: string | null
+  incluye: string[]
+  observaciones: string | null
+  creadoPor: string | null
+  estado: 'pendiente' | 'ok' | 'ok_con_avisos' | 'error'
+  resultado: Record<string, unknown> | null
+  createdAt: string
+}
+
 /** Datos con los que el formulario de remisión de entrada llega prellenado desde el ticket. */
 export interface RemisionNueva {
   ticketId: string

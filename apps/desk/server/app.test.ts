@@ -388,6 +388,70 @@ describe('GET /api/remisiones/nueva', () => {
   })
 })
 
+describe('POST /api/remisiones', () => {
+  const preparar = async () => {
+    await upsertEquipo(db, equipoRow('eq-p1', '18A20070'))  // Grimm / EDM180C → grimm_edm180
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO remision_checklist (perfil,item,orden) VALUES ('grimm_edm180','Manuales',0),('grimm_edm180','Datalogger',1)")
+    await db.query(`INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+                    VALUES ('t1', 10000, 'OV asignada', true, 'cli1', 'Mantenimiento', 'eq-p1', 'Grimm', 'EDM180C', '18A1')`)
+  }
+
+  it('crea la remisión en estado pendiente y la lista en el ticket', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: ['Manuales'], observaciones: 'Llega con golpe' })
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({
+      ticketId: 't1', estado: 'pendiente', perfil: 'grimm_edm180',
+      serial: '18A20070', incluye: ['Manuales'], creadoPor: 'Admin', tipoServicio: 'Mantenimiento',
+    })
+    const lista = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
+    expect(lista.body).toHaveLength(1)
+    expect(lista.body[0].fotos).toEqual([])
+  })
+
+  // El perfil decide qué checklist aplica, así que no puede venir del navegador: se recalcula aquí.
+  it('rechaza ítems que no estén en el checklist del perfil', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: ['Manuales', 'Cabezal TSP'] })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('Cabezal TSP')
+  })
+
+  it('valida ticket y fecha', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    expect((await request(app).post('/api/remisiones').set('Cookie', cookie).send({ fecha: '2026-08-03' })).status).toBe(422)
+    expect((await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 'nope', fecha: '2026-08-03' })).status).toBe(422)
+    expect((await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 't1', fecha: '03/08/2026' })).status).toBe(422)
+    expect((await request(app).post('/api/remisiones').send({ ticketId: 't1', fecha: '2026-08-03' })).status).toBe(401)
+  })
+
+  it('sube fotos, las lista sin el base64 y las sirve con nosniff', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+    const png = Buffer.from('89504e470d0a1a0a', 'hex')
+    const up = await request(app).post(`/api/remisiones/${id}/fotos`).set('Cookie', cookie).attach('file', png, { filename: 'equipo.png', contentType: 'image/png' })
+    expect(up.status).toBe(201)
+    expect(up.body).toMatchObject({ filename: 'equipo.png', contentType: 'image/png' })
+    expect(up.body.contentB64).toBeUndefined() // el listado nunca devuelve el contenido
+
+    const bajada = await request(app).get(`/api/remisiones/${id}/fotos/${up.body.id}`).set('Cookie', cookie)
+    expect(bajada.status).toBe(200)
+    expect(bajada.headers['x-content-type-options']).toBe('nosniff')
+
+    const svg = Buffer.from('<svg/>')
+    const malo = await request(app).post(`/api/remisiones/${id}/fotos`).set('Cookie', cookie).attach('file', svg, { filename: 'x.svg', contentType: 'image/svg+xml' })
+    expect(malo.status).toBe(415) // SVG fuera: puede llevar script embebido
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()

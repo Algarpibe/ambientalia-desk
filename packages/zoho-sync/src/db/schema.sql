@@ -225,3 +225,36 @@ CREATE TABLE IF NOT EXISTS public.remision_checklist (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_remision_checklist_perfil ON remision_checklist (perfil);
+
+-- Remisiones de servicio tecnico. `estado` refleja el resultado del flujo n8n, que llega por callback
+-- pendiente al crearse, luego ok, ok_con_avisos (se genero pero fallo un aviso) o error
+CREATE TABLE IF NOT EXISTS public.remisiones (
+  id text PRIMARY KEY,
+  ticket_id text NOT NULL,
+  tipo text NOT NULL DEFAULT 'entrada',
+  fecha date NOT NULL,
+  tipo_servicio text,
+  perfil text,
+  equipo_id text,
+  serial text,
+  incluye jsonb NOT NULL DEFAULT '[]'::jsonb,
+  observaciones text,
+  creado_por text,
+  estado text NOT NULL DEFAULT 'pendiente',
+  resultado jsonb,
+  resuelto_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_remisiones_ticket ON remisiones (ticket_id);
+
+-- Fotos de la remision, en base64 sobre text igual que resolution_attachments
+CREATE TABLE IF NOT EXISTS public.remision_fotos (
+  id text PRIMARY KEY,
+  remision_id text NOT NULL,
+  filename text,
+  content_type text,
+  content_b64 text NOT NULL,
+  size integer,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_remision_fotos_remision ON remision_fotos (remision_id);
