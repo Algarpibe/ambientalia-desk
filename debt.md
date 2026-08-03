@@ -43,14 +43,18 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   una futura pantalla de edición no se vea revertida), y lectura por `getChecklist` / `listChecklist` (esta
   última ya devuelve también los desactivados, pensando en esa pantalla). *Qué falta:* (a) el CRUD y su UI;
   (b) decidir la **granularidad**.
-  **La decisión de fondo es (b).** Hoy se indexa por `perfil` — 6 grupos: grimm_edm280, grimm_edm180, horiba_ap,
-  environics, kunak, otro — porque así los agrupaba el flujo de n8n: todos los `EDM180*` comparten lista y `otro`
-  es un cajón para Durag/TCA/Ambientalia y cualquier marca desconocida. Pasar a marca-modelo (hay ~34 modelos en
-  el desplegable de Equipos) multiplica las listas y obliga a responder: **¿qué checklist se usa cuando un modelo
-  no tiene lista propia?** ¿Se cae a la marca, al perfil, a "otro"? Sin esa regla, dar de alta un equipo nuevo
-  dejaría su remisión sin accesorios — que es exactamente el fallo que se corrigió en `aa15d0c`.
-  Camino sugerido: mantener `perfil` como capa de agrupación y añadir un **override por marca+modelo** que gane
-  cuando exista, en vez de sustituir un esquema por otro. Así el alta de un modelo nuevo hereda algo por defecto.
+  **Granularidad — DECIDIDA por el usuario (2026-08-03): por marca-modelo, y SIN herencia.** Un modelo sin lista
+  propia no hereda del perfil ni de la marca: se queda **sin accesorios** hasta que alguien se los dé de alta en
+  la página de gestión. Queda descartada la propuesta de override-con-fallback sobre `perfil`. (Contexto: hoy se
+  indexa por `perfil` — grimm_edm280, grimm_edm180, horiba_ap, environics, kunak, otro — porque así los agrupaba
+  n8n; hay ~34 modelos en el desplegable de Equipos.)
+  ⚠️ **Consecuencia a resolver en el diseño, no al final:** con esa regla, "modelo cuya lista aún no se ha
+  definido" y "modelo que legítimamente no lleva accesorios" (el caso Kunak) son **indistinguibles**: ambos son
+  cero filas. Es el mismo tipo de fallo que se corrigió en `aa15d0c`, un nivel más abajo. Hace falta una marca
+  explícita —una fila centinela, o un `sin_accesorios boolean` por marca-modelo— para que el formulario pueda
+  mostrar **tres** estados distintos: catálogo sin sembrar · lista del modelo aún sin definir (accionable: "dala
+  de alta en Gestión de accesorios") · modelo sin accesorios por naturaleza. Sin eso, un modelo recién dado de
+  alta produciría remisiones vacías en silencio, y de ese `incluye` bebe la verificación de la rama de salida.
 - **Remisiones — rama de SALIDA (DIFERIDA, 2026-08-03).** *Qué es:* la remisión que se emite cuando el equipo se
   **devuelve** al cliente, para verificar que sale con todo lo que entró. *Por qué se difiere:* **no se puede
   diseñar hasta que la de entrada esté cerrada.** Hallazgos de leer el flujo (`Remisiones_ST_3.13_Desk`, export
