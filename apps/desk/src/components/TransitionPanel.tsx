@@ -4,8 +4,14 @@ import { executeTransition } from '../api/client';
 import { useAuth } from '../auth/AuthContext'
 import { canExecuteTransition } from '@ambientalia/shared'
 
-/** Renderiza los botones de transición válidos para el estado actual y su formulario. */
-export function TransitionPanel({ ticketId, status, onDone }: { ticketId: string; status: string; onDone: () => void }) {
+/**
+ * Renderiza los botones de transición válidos para el estado actual y su formulario.
+ *
+ * Junto a ellos va "Crear remisión", que NO es una transición: no cambia el estado del ticket ni
+ * pasa por `POST /api/tickets/:id/transition`, por eso no está en `TRANSITIONS` (si lo estuviera,
+ * pulsarla movería el ticket de columna). Es una acción propia, pendiente de conectar.
+ */
+export function TransitionPanel({ ticketId, status, onDone, onCrearRemision }: { ticketId: string; status: string; onDone: () => void; onCrearRemision?: () => void }) {
   const { user } = useAuth()
   const transitions = transitionsForStatus(status).filter(
     (t) => !!user && canExecuteTransition(user.areas, user.isAdmin, t.area),
@@ -14,10 +20,6 @@ export function TransitionPanel({ ticketId, status, onDone }: { ticketId: string
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (transitions.length === 0) {
-    return <div className="text-[11px] text-slate-400">Sin transiciones disponibles para tu rol en el estado «{status}».</div>;
-  }
 
   function open(t: Transition) {
     setActive(t);
@@ -45,15 +47,26 @@ export function TransitionPanel({ ticketId, status, onDone }: { ticketId: string
     <>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Transiciones</span>
-        {transitions.map((t) => (
+        {transitions.length === 0 ? (
+          <span className="text-[11px] text-slate-400">Sin transiciones disponibles para tu rol en el estado «{status}».</span>
+        ) : transitions.map((t) => (
           <button
             key={t.id}
+            type="button"
             onClick={() => open(t)}
             className="text-[12px] font-bold text-[#2C7BE5] border border-[#2C7BE5] px-3 py-1 rounded hover:bg-blue-50"
           >
             {t.name} → {t.to}
           </button>
         ))}
+        {/* Acción, no transición: en gris para que no se lea como un cambio de estado. */}
+        <button
+          type="button"
+          onClick={onCrearRemision}
+          className="text-[12px] font-bold text-slate-600 border border-slate-300 px-3 py-1 rounded hover:bg-slate-50"
+        >
+          Crear remisión
+        </button>
       </div>
 
       {active && (
