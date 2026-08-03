@@ -35,6 +35,23 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 **Plataforma Desk:**
 - **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
 - **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
+  **EN CURSO desde 2026-08-03: solo la rama de ENTRADA** (la que dispara el botón "Crear remisión" del ticket).
+- **Remisiones — rama de SALIDA (DIFERIDA, 2026-08-03).** *Qué es:* la remisión que se emite cuando el equipo se
+  **devuelve** al cliente, para verificar que sale con todo lo que entró. *Por qué se difiere:* **no se puede
+  diseñar hasta que la de entrada esté cerrada.** Hallazgos de leer el flujo (`Remisiones_ST_3.13_Desk`, export
+  del 2026-08-03) que quien la retome no debería redescubrir:
+  - Entrada y salida **no son simétricas**. Los 6 formularios de entrada llevan un checklist "Incluye" **fijo por
+    marca** (Otro 27 ítems · Grimm EDM280 26 · Grimm EDM180 25 · Environics 16 · Horiba 15 · **Kunak ninguno**).
+    Los 6 de salida tienen **cero campos fijos**: usan `defineForm: "json"` y se construyen en ejecución.
+  - El "Incluye" de salida **no es un catálogo**: sale de lo que entró, vía
+    `($json["incluye_entrada"] || []).map(x => ({ option: String(x) }))`. Por eso la tabla de checklists por marca
+    que se crea para entrada **no le sirve** a salida.
+  - Salida añade un campo que entrada no tiene: `Estado` (Operativo / No Operativo / Diagnosticado / Calibrado /
+    En óptimas condiciones), y muestra en rojo las observaciones de la entrada como advertencia.
+  - Depende de localizar la remisión de entrada por número de serie (hoy `Buscar remisiones entrada (SN)` sobre la
+    hoja `remisiones_entrada` de Google Sheets).
+  - **Decisión bloqueante antes de abordarla:** dónde quedan guardadas las remisiones de entrada — ¿siguen en
+    Google Sheets, o pasan a Postgres? Salida tiene que leer de donde entrada escriba.
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
