@@ -122,6 +122,16 @@ function baseTicketRow(): TicketRow {
 }
 
 describe('rowToTicket / rowToTicketDetail', () => {
+  // Los tiempos se formatean en el SERVIDOR, que corre en UTC. Sin fijar la zona salían 5 horas
+  // adelantados (un ticket creado a las 14:11 de Colombia se mostraba como 07:11 p. m.).
+  it('las horas salen en la zona de Colombia, no en la del servidor', () => {
+    const row = { ...baseTicketRow(), created_time: '2026-08-03T19:11:00.000Z' } // = 14:11 en Bogotá
+    const t = rowToTicket(row, { accountName: null, agentName: null, contactName: null })
+    expect(t.time).toMatch(/02:11/)      // 2:11 p. m.
+    expect(t.time).not.toMatch(/07:11/)  // lo que salía con el servidor en UTC
+    expect(t.time).toMatch(/ago/)        // sigue siendo el 3 de agosto en Bogotá
+  })
+
   it('rowToTicket arma la tarjeta', () => {
     const t = rowToTicket(baseTicketRow(), { accountName: 'Gecelca S.A. E.S.P.', agentName: 'Equipo Técnico', contactName: 'Sebastián Laguna' })
     expect(t.number).toBe('#941')

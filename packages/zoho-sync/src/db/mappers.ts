@@ -138,11 +138,22 @@ function initialsOf(name: string): string {
   if (p.length === 1) return p[0].slice(0, 2).toUpperCase()
   return (p[0][0] + p[p.length - 1][0]).toUpperCase()
 }
+/**
+ * Zona horaria en la que se muestran las fechas. Se fija de forma explícita porque este formateo
+ * ocurre en el SERVIDOR, y el contenedor corre en UTC: sin ella, un ticket creado a las 14:11 de
+ * Colombia se mostraba como las 07:11 p. m. (El resto de fechas se formatean en el navegador, que
+ * ya usa la zona del usuario.)
+ */
+const TZ_VISUALIZACION = 'America/Bogota'
+
 function fmtTime(iso?: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
-  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(d)
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: TZ_VISUALIZACION,
+  }).format(d)
 }
 function fmtSize(n?: number | null): string {
   if (!n) return ''
