@@ -1,5 +1,7 @@
 export const PREFIJOS = ['MT', 'CG', 'HV', 'SR', 'PRO'] as const
-export const TIPOS_SERVICIO = ['Calibración', 'Diagnóstico', 'Garantía', 'Mantenimiento', 'No aplica', 'Otro'] as const
+// 'Reparación' viene del formulario de remisiones: al heredar la remisión el tipo de servicio del
+// ticket, ambas listas se unifican aquí. Va tras 'Mantenimiento' para dejar los comodines al final.
+export const TIPOS_SERVICIO = ['Calibración', 'Diagnóstico', 'Garantía', 'Mantenimiento', 'Reparación', 'No aplica', 'Otro'] as const
 export const CLASIFICACIONES = ['Equipo para servicio de mantenimiento', 'Equipo nuevo', 'Soporte remoto'] as const
 
 function yymmdd(d: Date): string {

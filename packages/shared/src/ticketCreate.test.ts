@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor, extractServiceCode } from './ticketCreate'
+import { buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor, extractServiceCode, TIPOS_SERVICIO } from './ticketCreate'
 
 describe('defaultPrefijoFor', () => {
   it('Calibración → CG; Diagnóstico/Mantenimiento/otros → MT', () => {
@@ -7,6 +7,15 @@ describe('defaultPrefijoFor', () => {
     expect(defaultPrefijoFor('Diagnóstico')).toBe('MT')
     expect(defaultPrefijoFor('Mantenimiento')).toBe('MT')
     expect(defaultPrefijoFor('Garantía')).toBe('MT')
+    expect(defaultPrefijoFor('Reparación')).toBe('MT')
+  })
+})
+
+describe('TIPOS_SERVICIO', () => {
+  // Lista unificada con la del formulario de remisiones, que aporta 'Reparación'.
+  it('incluye Reparación y deja los comodines al final', () => {
+    expect(TIPOS_SERVICIO).toContain('Reparación')
+    expect(TIPOS_SERVICIO.slice(-2)).toEqual(['No aplica', 'Otro'])
   })
 })
 
