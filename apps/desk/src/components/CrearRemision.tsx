@@ -81,7 +81,14 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
             <div>
               <label className="text-[11px] font-bold text-slate-500 uppercase">Incluye</label>
-              {data.incluye.length === 0 ? (
+              {!data.catalogoCargado ? (
+                // El catálogo sin sembrar deja `incluye` vacío igual que Kunak. Decir aquí "este equipo
+                // no tiene lista" sería falso y llevaría a remisionar sin accesorios sin saberlo.
+                <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+                  El catálogo de accesorios aún no se ha cargado, así que no se puede marcar nada.
+                  Pídele a un administrador que ejecute la carga inicial antes de crear remisiones.
+                </div>
+              ) : data.incluye.length === 0 ? (
                 // Kunak no tiene checklist en el flujo original: es un caso legítimo, no un fallo.
                 <div className="text-[12px] text-slate-400 mt-1">Este tipo de equipo no tiene lista de elementos.</div>
               ) : (

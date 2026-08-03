@@ -3,6 +3,16 @@ import type { PerfilChecklist } from '@ambientalia/shared'
 
 export interface ChecklistRow { id: string; perfil: string; item: string; orden: number; activo: boolean }
 
+/**
+ * ¿Hay algún ítem en la tabla? Permite distinguir dos casos que de otro modo son indistinguibles:
+ * un perfil legítimamente sin checklist (Kunak) y el catálogo aún sin sembrar. Ambos devuelven
+ * `[]`, y contarlos como lo mismo hace que la app afirme algo falso.
+ */
+export async function hayChecklist(db: Queryable): Promise<boolean> {
+  const r = await db.query('SELECT 1 FROM remision_checklist LIMIT 1')
+  return r.rows.length > 0
+}
+
 /** Ítems activos de un perfil, en el orden del catálogo. Un perfil sin ítems devuelve `[]` (Kunak). */
 export async function getChecklist(db: Queryable, perfil: string): Promise<string[]> {
   const r = await db.query(

@@ -323,4 +323,10 @@ export interface RemisionNueva {
   perfil: PerfilChecklist
   /** Ítems del checklist "Incluye" del perfil. Vacío es legítimo (Kunak no tiene). */
   incluye: string[]
+  /**
+   * Si el catálogo de checklists llegó a sembrarse. Sin esto no se puede distinguir un perfil que
+   * de verdad no tiene lista (Kunak) de la tabla aún vacía: ambos dejan `incluye` vacío, y la app
+   * acabaría afirmando que el equipo no lleva accesorios cuando en realidad falta cargar el catálogo.
+   */
+  catalogoCargado: boolean
 }

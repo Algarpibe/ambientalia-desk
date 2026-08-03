@@ -5,7 +5,7 @@ import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
-import { getChecklist } from '../db/remisionChecklist'
+import { getChecklist, hayChecklist } from '../db/remisionChecklist'
 import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent } from '../db/remisiones'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -54,6 +54,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable }): v
       tipoServicio: row.tipo_servicio ?? null,
       perfil,
       incluye: await getChecklist(db, perfil),
+      catalogoCargado: await hayChecklist(db),
     }
     res.json(payload)
   }))

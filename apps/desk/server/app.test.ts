@@ -369,14 +369,20 @@ describe('GET /api/remisiones/nueva', () => {
     expect(res.body.equipo).toMatchObject({ serial: '18A1', marca: 'Grimm', modelo: 'EDM180C' })
   })
 
-  it('un perfil sin checklist devuelve incluye vacío, no error', async () => {
+  // Kunak sin ítems y catálogo sin sembrar dejan ambos `incluye` vacío. `catalogoCargado` es lo único
+  // que los separa: sin él la app diría "este equipo no lleva accesorios" con el catálogo a medio cargar.
+  it('distingue un perfil sin checklist del catálogo aún sin sembrar', async () => {
     const cookie = await adminCookie()
     await upsertEquipo(db, { ...equipoRow('eq-r3', 'K1'), marca: 'Kunak', modelo: 'AIR' })
     await conTicket('eq-r3')
     const { app } = appWith()
-    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
-    expect(res.status).toBe(200)
-    expect(res.body).toMatchObject({ perfil: 'kunak', incluye: [] })
+
+    const sinSembrar = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(sinSembrar.body).toMatchObject({ perfil: 'kunak', incluye: [], catalogoCargado: false })
+
+    await db.query("INSERT INTO remision_checklist (perfil,item,orden) VALUES ('grimm_edm180','Manuales',0)")
+    const sembrado = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(sembrado.body).toMatchObject({ perfil: 'kunak', incluye: [], catalogoCargado: true })
   })
 
   it('404 si el ticket no existe, 400 sin ticketId, 401 sin sesión', async () => {
