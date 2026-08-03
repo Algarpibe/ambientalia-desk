@@ -83,8 +83,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   // nombre de otra empresa. Se bloquea SOLO si hay un cliente real resuelto (`clientId`): si el
   // equipo trae un dueño que no casa con ningún cliente de Books, el campo sigue editable y se
   // avisa — bloquearlo ahí dejaría el formulario en un callejón sin salida (el alta exige clientId).
-  const clienteDerivadoDe: 'ov' | 'equipo' | null = salesOrderId ? 'ov' : equipo ? 'equipo' : null
-  const clienteBloqueado = !!clientId && clienteDerivadoDe !== null
+  const clienteBloqueado = !!clientId && (!!salesOrderId || !!equipo)
 
   const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie: equipo?.serial ?? '', modelo: equipo?.modelo ?? '', fecha: new Date() })
   const subject = useMemo(
@@ -165,12 +164,6 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
             placeholder="Buscar cliente…" value={clientQuery} readOnly={clienteBloqueado}
             {...(clienteBloqueado ? {} : comboProps('cliente'))}
             onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value); setOpenCombo('cliente') }} required={!clientId} />
-          {clienteBloqueado && (
-            <div className="mt-1 text-[11px] text-slate-400 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px]">lock</span>
-              Lo determina {clienteDerivadoDe === 'ov' ? 'la orden de venta' : 'el equipo'}. Para cambiarlo, edita ese campo.
-            </div>
-          )}
           {equipo && !clientId && (
             <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
               El equipo figura a nombre de <b>{equipo.clienteNombre}</b>, que no coincide con ningún cliente de Books.
