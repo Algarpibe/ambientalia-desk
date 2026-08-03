@@ -25,6 +25,14 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
   async function changeRole(u: UserPublic, roleId: string) {
     await updateUser(u.id, { roleId: roleId || null }); reload()
   }
+  /** Cargo y empresa se imprimen en el documento de remisión, de ahí que se editen aquí. */
+  async function editarCampo(u: UserPublic, campo: 'cargo' | 'empresa') {
+    const etiqueta = campo === 'cargo' ? 'Cargo' : 'Empresa'
+    const v = prompt(`${etiqueta} de ${u.name}:`, (campo === 'cargo' ? u.cargo : u.empresa) ?? '')
+    if (v === null) return // el usuario canceló; vacío sí es válido y borra el valor
+    try { await updateUser(u.id, { [campo]: v }); reload() }
+    catch (e) { alert('Error: ' + String(e instanceof Error ? e.message : e)) }
+  }
   async function resetPassword(u: UserPublic) {
     const pw = prompt(`Nueva contraseña para ${u.email} (mínimo 8 caracteres):`)
     if (!pw) return
@@ -43,13 +51,23 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-auto p-4">
         <table className="w-full text-[13px]">
           <thead><tr className="text-left text-slate-500 border-b">
-            <th className="py-2">Correo</th><th>Nombre</th><th>Admin</th><th>Activo</th><th>Rol</th><th></th>
+            <th className="py-2">Correo</th><th>Nombre</th><th>Cargo</th><th>Empresa</th><th>Admin</th><th>Activo</th><th>Rol</th><th></th>
           </tr></thead>
           <tbody>
             {users.map((u) => (
               <tr key={u.id} className="border-b">
                 <td className="py-2">{u.email}</td>
                 <td>{u.name}</td>
+                <td>
+                  <button onClick={() => editarCampo(u, 'cargo')} className={`text-[12px] hover:underline ${u.cargo ? 'text-slate-700' : 'text-slate-400 italic'}`}>
+                    {u.cargo || 'Sin definir'}
+                  </button>
+                </td>
+                <td>
+                  <button onClick={() => editarCampo(u, 'empresa')} className={`text-[12px] hover:underline ${u.empresa ? 'text-slate-700' : 'text-slate-400 italic'}`}>
+                    {u.empresa || 'Sin definir'}
+                  </button>
+                </td>
                 <td>{u.isAdmin ? 'Sí' : 'No'}</td>
                 <td>{u.active ? 'Sí' : 'No'}</td>
                 <td>

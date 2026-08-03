@@ -12,6 +12,23 @@ beforeEach(async () => {
 })
 
 describe('users repo', () => {
+  // El documento de remisión imprime cargo y empresa del técnico; antes salían de una hoja de Google.
+  it('cargo y empresa se guardan, se devuelven y se vacían a NULL', async () => {
+    const u = await createUser(db, { email: 'tec@x.co', name: 'Gustavo Novoa', passwordHash: 'h' })
+    expect(u.cargo).toBeNull()
+    expect(u.empresa).toBeNull()
+
+    await updateUser(db, u.id, { cargo: 'Director Técnico', empresa: 'Ambientalia S.A.S.' })
+    expect(await getUserById(db, u.id)).toMatchObject({ cargo: 'Director Técnico', empresa: 'Ambientalia S.A.S.' })
+
+    // Un patch que no menciona esas claves no debe borrarlas.
+    await updateUser(db, u.id, { name: 'Gustavo N.' })
+    expect(await getUserById(db, u.id)).toMatchObject({ cargo: 'Director Técnico', empresa: 'Ambientalia S.A.S.' })
+
+    await updateUser(db, u.id, { cargo: null })
+    expect((await getUserById(db, u.id))!.cargo).toBeNull()
+  })
+
   it('crea (email normalizado), busca por email/id y lista', async () => {
     const u = await createUser(db, { email: '  Admin@X.CO ', name: 'Admin', passwordHash: 'h', isAdmin: true })
     expect(u.email).toBe('admin@x.co')

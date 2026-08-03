@@ -157,6 +157,9 @@ export interface UserPublic {
   roleId?: string | null
   roleName?: string | null
   areas: string[]
+  /** Cargo y empresa del técnico: los imprime el documento de remisión. */
+  cargo?: string | null
+  empresa?: string | null
 }
 
 export interface ClientLite {

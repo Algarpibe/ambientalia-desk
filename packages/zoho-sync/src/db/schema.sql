@@ -111,6 +111,10 @@ CREATE TABLE IF NOT EXISTS public.roles (
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;
 
+-- Cargo y empresa del tecnico. Los pide el documento de remision, que hoy los saca de una hoja de Google
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cargo text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS empresa text;
+
 CREATE SCHEMA IF NOT EXISTS books;
 
 CREATE TABLE IF NOT EXISTS books.contacts (

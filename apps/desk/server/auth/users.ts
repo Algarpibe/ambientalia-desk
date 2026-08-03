@@ -11,7 +11,7 @@ export interface UserWithHash {
 const normalize = (email: string) => email.trim().toLowerCase()
 
 // SELECT con LEFT JOIN al rol para resolver áreas.
-const USER_SELECT = `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,
+const USER_SELECT = `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,u.cargo,u.empresa,
   r.name AS role_name, r.areas AS role_areas, r.active AS role_active
   FROM users u LEFT JOIN roles r ON u.role_id = r.id`
 
@@ -25,6 +25,9 @@ export function rowToPublicUser(row: any): UserPublic {
     roleId: row.role_id ?? null,
     roleName: roleActive ? row.role_name : null,
     areas: isAdmin ? [...AREAS] : (roleActive ? roleAreas : []),
+    // Datos del técnico que imprime el documento de remisión (antes salían de la hoja `credenciales`).
+    cargo: row.cargo ?? null,
+    empresa: row.empresa ?? null,
   }
 }
 
@@ -60,7 +63,7 @@ export async function listUsers(db: Queryable): Promise<UserPublic[]> {
 export async function updateUser(
   db: Queryable,
   id: string,
-  patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null },
+  patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null },
 ): Promise<void> {
   const sets: string[] = ['updated_at=now()']
   const params: unknown[] = [id]
@@ -68,6 +71,8 @@ export async function updateUser(
   if (patch.isAdmin !== undefined) { params.push(patch.isAdmin); sets.push(`is_admin=$${params.length}`) }
   if (patch.active !== undefined) { params.push(patch.active); sets.push(`active=$${params.length}`) }
   if (patch.roleId !== undefined) { params.push(patch.roleId); sets.push(`role_id=$${params.length}`) }
+  if (patch.cargo !== undefined) { params.push(patch.cargo); sets.push(`cargo=$${params.length}`) }
+  if (patch.empresa !== undefined) { params.push(patch.empresa); sets.push(`empresa=$${params.length}`) }
   await db.query(`UPDATE users SET ${sets.join(',')} WHERE id=$1`, params)
 }
 

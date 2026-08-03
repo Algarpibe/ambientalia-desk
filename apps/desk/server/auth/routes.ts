@@ -70,10 +70,13 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
 
   app.patch('/api/users/:id', auth, requireAdmin, async (req, res) => {
     const id = String(req.params.id)
-    const patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null } = {}
+    const patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null } = {}
     if (req.body.name !== undefined) patch.name = String(req.body.name)
     if (req.body.isAdmin !== undefined) patch.isAdmin = Boolean(req.body.isAdmin)
     if (req.body.active !== undefined) patch.active = Boolean(req.body.active)
+    // Vacío se guarda como NULL, para que el documento de remisión no imprima una cadena en blanco.
+    if (req.body.cargo !== undefined) patch.cargo = String(req.body.cargo).trim() || null
+    if (req.body.empresa !== undefined) patch.empresa = String(req.body.empresa).trim() || null
     if (req.body.roleId !== undefined) {
       const roleId = req.body.roleId === null ? null : String(req.body.roleId)
       if (roleId !== null && !(await getRole(db, roleId))) { res.status(422).json({ error: 'Rol no encontrado' }); return }
