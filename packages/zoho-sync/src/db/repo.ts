@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Queryable } from './migrate'
+import { APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
@@ -181,6 +181,21 @@ export async function getConversations(db: Queryable, ticketId: string): Promise
 export async function nextTicketNumber(db: Queryable): Promise<number> {
   const r = await db.query("SELECT nextval('ticket_number_seq') AS n")
   return Number(r.rows[0].n)
+}
+
+/**
+ * Número que se asignaría al próximo ticket de la app, SIN consumir la secuencia (para mostrarlo
+ * en el formulario antes de crear).
+ *
+ * Replica el cálculo de `reseedTicketNumber` en vez de leer la secuencia porque pg-mem no permite
+ * `SELECT ... FROM <secuencia>` (verificado), y así el camino queda cubierto por tests. Es una
+ * PREVISIÓN, no una reserva: el número real lo asigna `nextval` de forma atómica al crear, así que
+ * puede diferir si otro usuario crea un ticket entremedias o si algún número se quemó en un
+ * rollback (ver M-6 en debt.md).
+ */
+export async function previewTicketNumber(db: Queryable): Promise<number> {
+  const r = await db.query('SELECT COALESCE(MAX(number),0) AS m FROM tickets WHERE managed_by_app = true')
+  return Math.max(Number(r.rows[0].m), APP_TICKET_NUMBER_BASE - 1) + 1
 }
 
 export interface TransitionRecord {

@@ -24,8 +24,12 @@ export async function migrate(db: Queryable): Promise<void> {
   }
 }
 
-/** Base del espacio de numeración de tickets creados por la app (separado del de Zoho). */
-export const APP_TICKET_NUMBER_BASE = 1_000_000
+/**
+ * Base del espacio de numeración de tickets creados por la app, separado del de Zoho (bug #954:
+ * compartir espacio hacía que Zoho alcanzara la numeración de la app y chocara con UNIQUE(number)).
+ * Zoho va por ~#1.000, así que quedan ~9.000 tickets de margen antes de que vuelvan a tocarse.
+ */
+export const APP_TICKET_NUMBER_BASE = 10_000
 
 /** Re-siembra la secuencia de la app: solo mira tickets de la app, con piso en la base (nunca arrastra a Zoho). */
 export async function reseedTicketNumber(db: Queryable): Promise<void> {

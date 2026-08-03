@@ -26,6 +26,11 @@ export function fetchClosedTickets(page: number): Promise<ClosedPage> {
   return fetch(`/api/tickets?scope=closed&page=${page}`, { credentials: 'include' }).then((r) => json<ClosedPage>(r))
 }
 
+/** Previsión del número del próximo ticket (no lo reserva). */
+export function fetchNextTicketNumber(): Promise<{ number: number }> {
+  return fetch('/api/tickets/next-number', { credentials: 'include' }).then((r) => json<{ number: number }>(r))
+}
+
 export function fetchTicket(id: string): Promise<TicketDetail> {
   return fetch(`/api/tickets/${id}`, { credentials: 'include' }).then((r) => json<TicketDetail>(r))
 }

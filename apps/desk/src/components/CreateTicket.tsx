@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite } from '@ambientalia/shared'
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
-import { searchClients, searchSalesOrders, searchEquipos, createTicket } from '../api/client'
+import { searchClients, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber } from '../api/client'
 
 export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [ovQuery, setOvQuery] = useState('')
@@ -32,6 +32,13 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [codigoOverride, setCodigoOverride] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // Previsión, no reserva: el número definitivo lo asigna la secuencia al crear.
+  const [numeroPrevisto, setNumeroPrevisto] = useState<number | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetchNextTicketNumber().then((r) => { if (alive) setNumeroPrevisto(r.number) }).catch(() => {})
+    return () => { alive = false }
+  }, [])
 
   // Qué desplegable está abierto: solo el del campo con foco, y como mucho uno a la vez.
   // Con esto el clic fuera lo cierra (vía blur) sin listeners en document, y una lista nunca
@@ -141,6 +148,12 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
       <form onSubmit={submit} className="bg-white rounded-lg p-5 w-[560px] max-h-[90vh] overflow-auto flex flex-col gap-3">
         <h3 className="text-[15px] font-bold text-slate-800">Nuevo ticket</h3>
+
+        <div>
+          <label className="text-[11px] font-bold text-slate-500 uppercase">Número de ticket</label>
+          <input className={`${field} w-full bg-slate-50 text-slate-600 cursor-default`} readOnly
+            value={numeroPrevisto == null ? '…' : `#${numeroPrevisto}`} />
+        </div>
 
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Orden de Venta (opcional)</label>

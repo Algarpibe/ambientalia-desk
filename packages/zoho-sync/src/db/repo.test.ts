@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { upsertAccount, upsertContact, upsertTicket, getTicketRow, countTickets } from './repo'
-import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, nextTicketNumber, insertTransition } from './repo'
+import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, nextTicketNumber, previewTicketNumber, insertTransition } from './repo'
 import { applyTransition, createTicket, setTicketRead } from './repo'
 import { reseedTicketNumber, APP_TICKET_NUMBER_BASE } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
@@ -70,6 +70,20 @@ describe('repo queries', () => {
     await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('app1', 1000010, 'Ingresado', true)")
     await reseedTicketNumber(db)
     expect(await nextTicketNumber(db)).toBe(1000011)
+  })
+
+  it('previewTicketNumber anticipa el número sin consumir la secuencia', async () => {
+    expect(APP_TICKET_NUMBER_BASE).toBe(10_000) // los tickets creados en la app empiezan aquí
+    await reseedTicketNumber(db)
+    // Consultarlo no mueve nada: dos lecturas dan lo mismo y la secuencia sigue intacta.
+    expect(await previewTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE)
+    expect(await previewTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE)
+    expect(await nextTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE)
+    // Un ticket de Zoho no lo desplaza; uno de la app sí.
+    await upsertTicket(db, zTicket('z1', 953))
+    expect(await previewTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE)
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('app1', $1, 'Ingresado', true)", [APP_TICKET_NUMBER_BASE])
+    expect(await previewTicketNumber(db)).toBe(APP_TICKET_NUMBER_BASE + 1)
   })
 
   it('insertTransition registra el historial', async () => {

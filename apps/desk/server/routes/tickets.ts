@@ -3,7 +3,7 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import multer from 'multer'
-import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, setTicketRead } from '@ambientalia/zoho-sync/db/repo'
+import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import { getTicketHistory } from '@ambientalia/zoho-sync/db/history'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
@@ -29,6 +29,12 @@ export function registerTicketRoutes(
   }
 
   app.use('/api/tickets', requireAuth(db)) // login obligatorio para tickets/transiciones/reply
+
+  // Previsión del número del próximo ticket, para mostrarlo en el formulario de creación.
+  // DEBE registrarse antes que `GET /api/tickets/:id`, que si no capturaría "next-number".
+  app.get('/api/tickets/next-number', asyncHandler(async (_req, res) => {
+    res.json({ number: await previewTicketNumber(db) })
+  }))
 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
 
