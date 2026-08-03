@@ -48,13 +48,13 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   la página de gestión. Queda descartada la propuesta de override-con-fallback sobre `perfil`. (Contexto: hoy se
   indexa por `perfil` — grimm_edm280, grimm_edm180, horiba_ap, environics, kunak, otro — porque así los agrupaba
   n8n; hay ~34 modelos en el desplegable de Equipos.)
-  ⚠️ **Consecuencia a resolver en el diseño, no al final:** con esa regla, "modelo cuya lista aún no se ha
-  definido" y "modelo que legítimamente no lleva accesorios" (el caso Kunak) son **indistinguibles**: ambos son
-  cero filas. Es el mismo tipo de fallo que se corrigió en `aa15d0c`, un nivel más abajo. Hace falta una marca
-  explícita —una fila centinela, o un `sin_accesorios boolean` por marca-modelo— para que el formulario pueda
-  mostrar **tres** estados distintos: catálogo sin sembrar · lista del modelo aún sin definir (accionable: "dala
-  de alta en Gestión de accesorios") · modelo sin accesorios por naturaleza. Sin eso, un modelo recién dado de
-  alta produciría remisiones vacías en silencio, y de ese `incluye` bebe la verificación de la rama de salida.
+  **Estado de "cero filas" — DECIDIDO (2026-08-03): siempre significa "modelo sin lista definida todavía".** No
+  existe el estado "este modelo no lleva accesorios por naturaleza", así que **no hace falta ninguna marca
+  centinela** (se descarta el `sin_accesorios boolean` que se había planteado). El formulario mostrará solo dos
+  situaciones: **catálogo sin sembrar** y **lista del modelo aún sin definir**, esta última accionable ("dala de
+  alta en Gestión de accesorios"). Nota: Kunak, que en el flujo de n8n nunca tuvo checklist, cae en el segundo
+  caso — se le definirá su lista como a cualquier otro modelo. Lo importante es que el mensaje **empuja a
+  completarlo** en vez de afirmar que el equipo no lleva accesorios, que es lo que fallaba en `aa15d0c`.
 - **Remisiones — rama de SALIDA (DIFERIDA, 2026-08-03).** *Qué es:* la remisión que se emite cuando el equipo se
   **devuelve** al cliente, para verificar que sale con todo lo que entró. *Por qué se difiere:* **no se puede
   diseñar hasta que la de entrada esté cerrada.** Hallazgos de leer el flujo (`Remisiones_ST_3.13_Desk`, export
