@@ -20,7 +20,6 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState('')
   const [prefijo, setPrefijo] = useState('MT')
-  const [ordenVenta, setOrdenVenta] = useState('')
   const [prioridad, setPrioridad] = useState('')
 
   const [subjectOverride, setSubjectOverride] = useState<string | null>(null)
@@ -81,7 +80,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     setOvResults([])
     if (ov.clientId) setClientId(ov.clientId)
     if (ov.customerName) { setClientName(ov.customerName); setClientQuery(ov.customerName) }
-    setOrdenVenta(ov.number)
+    // El número de OV no se manda: el servidor lo deriva de `salesOrderId` (ticketService).
     const parsed = parseCodigoFromPotential(ov.potentialName)
     if (parsed) setPrefijo(parsed.prefijo)
   }
@@ -111,7 +110,6 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         clientId: clientId ?? undefined,
         equipoId: equipo.id,
         tipoServicio, clasificaciones, prefijo,
-        ordenVenta: ordenVenta || undefined,
         prioridad: prioridad || undefined,
         subject, codigoServicio: codigo,
       })
@@ -197,12 +195,6 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
             <option value="">Prioridad (opcional)</option>
             <option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
           </select>
-          {/* Solo si NO se eligió una OV arriba. Al elegirla, `pickOv` ya puso su número en
-              `ordenVenta` y este campo se veía como un duplicado. Se mantiene para el caso
-              contrario: registrar el número de una OV que todavía no existe en Books. */}
-          {!salesOrderId && (
-            <input className={`${field} col-span-2`} placeholder="Orden de Venta (si aún no está en Books)" value={ordenVenta} onChange={(e) => setOrdenVenta(e.target.value)} />
-          )}
         </div>
 
         <div className="flex flex-col gap-1">
