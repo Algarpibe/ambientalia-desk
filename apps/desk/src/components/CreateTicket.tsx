@@ -78,6 +78,13 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     return () => { alive = false }
   }, [equipoQuery, equipo, clientId, verTodosEquipos])
 
+  // El cliente lo determina la OV o el equipo; dejarlo editable permitiría que el ticket acabara a
+  // nombre de otra empresa. Se bloquea SOLO si hay un cliente real resuelto (`clientId`): si el
+  // equipo trae un dueño que no casa con ningún cliente de Books, el campo sigue editable y se
+  // avisa — bloquearlo ahí dejaría el formulario en un callejón sin salida (el alta exige clientId).
+  const clienteDerivadoDe: 'ov' | 'equipo' | null = salesOrderId ? 'ov' : equipo ? 'equipo' : null
+  const clienteBloqueado = !!clientId && clienteDerivadoDe !== null
+
   const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie: equipo?.serial ?? '', modelo: equipo?.modelo ?? '', fecha: new Date() })
   const subject = useMemo(
     () => subjectOverride ?? buildSubject({ cliente: clientName, tipoEquipo: equipo?.tipo ?? '', codigo }),
@@ -153,9 +160,22 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
 
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Cliente *</label>
-          <input className={`${field} w-full`} placeholder="Buscar cliente…" value={clientQuery}
-            {...comboProps('cliente')}
+          <input className={`${field} w-full ${clienteBloqueado ? 'bg-slate-50 text-slate-600 cursor-default' : ''}`}
+            placeholder="Buscar cliente…" value={clientQuery} readOnly={clienteBloqueado}
+            {...(clienteBloqueado ? {} : comboProps('cliente'))}
             onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value); setOpenCombo('cliente') }} required={!clientId} />
+          {clienteBloqueado && (
+            <div className="mt-1 text-[11px] text-slate-400 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[13px]">lock</span>
+              Lo determina {clienteDerivadoDe === 'ov' ? 'la orden de venta' : 'el equipo'}. Para cambiarlo, edita ese campo.
+            </div>
+          )}
+          {equipo && !clientId && (
+            <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+              El equipo figura a nombre de <b>{equipo.clienteNombre}</b>, que no coincide con ningún cliente de Books.
+              Elige tú el cliente para poder crear el ticket.
+            </div>
+          )}
           {openCombo === 'cliente' && clientResults.length > 0 && (
             <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {clientResults.map((c) => (
