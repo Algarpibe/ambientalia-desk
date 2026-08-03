@@ -48,6 +48,23 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   la página de gestión. Queda descartada la propuesta de override-con-fallback sobre `perfil`. (Contexto: hoy se
   indexa por `perfil` — grimm_edm280, grimm_edm180, horiba_ap, environics, kunak, otro — porque así los agrupaba
   n8n; hay ~34 modelos en el desplegable de Equipos.)
+  **Listar los artículos del catálogo (petición del usuario, 2026-08-03):** la página debe mostrar los artículos
+  de esa marca/modelo que ya están en la BD, con **SKU, Nombre y Categoría**. Esa fuente es **`books.items`**
+  (sincronizada desde Zoho Books), que tiene justo esas columnas: `sku`, `name`, `category_name`. Tres cosas a
+  resolver antes de construirlo:
+  1. ⚠️ **`books.items` NO existe en `desk-db`.** Solo la crea `migrateBooks`, que únicamente llama el worker
+     `apps/hub-sync` contra el hub; el `schema.sql` de la app solo crea `books.contacts` y `books.sales_orders`.
+     Hay que decidir cómo llega: añadirla a la publicación `zoho_ref_pub` (como se hizo con contacts/sales_orders),
+     leerla del hub, o consumirla con el paquete `@algarpibe/zoho-sync`.
+  2. ⚠️ **`books.items` no tiene marca ni modelo.** La marca vive dentro de `raw` (`raw->>'brand'` /
+     `raw->>'manufacturer'`, p.ej. "Horiba Ltd.") y **no hay campo de modelo en absoluto**. Así que se puede
+     prefiltrar por marca y categoría, pero **la asociación artículo↔modelo es precisamente lo que crea esta
+     página**: no se puede deducir del catálogo.
+  3. ⚠️ **Buena parte de los 109 ítems actuales no son artículos vendibles**: "Manuales", "Caja de transporte",
+     "Repuestos reemplazados", "Pletinas (par)"… no tienen SKU en Books. El modelo de datos probablemente necesite
+     **las dos cosas**: ítems de texto libre e ítems enlazados a `books.items` por `item_id`/SKU. Enlazar todo al
+     catálogo obligaría a inventar artículos que no existen.
+
   **Estado de "cero filas" — DECIDIDO (2026-08-03): siempre significa "modelo sin lista definida todavía".** No
   existe el estado "este modelo no lleva accesorios por naturaleza", así que **no hace falta ninguna marca
   centinela** (se descarta el `sin_accesorios boolean` que se había planteado). El formulario mostrará solo dos
