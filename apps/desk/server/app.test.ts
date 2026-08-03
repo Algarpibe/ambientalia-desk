@@ -273,10 +273,13 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
 
   it('busca órdenes de venta (con sesión)', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_name,date,status) VALUES ('s1','OV-2026-117','Corola','2026-06-01','open')")
+    // `order_status: open` = "Confirmado" en Zoho; el buscador solo ofrece esas (ver books/repo).
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_name,date,status,raw) VALUES ('s1','OV-2026-117','Corola','2026-06-01','open','{\"order_status\":\"open\"}')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_name,date,status,raw) VALUES ('s2','OV-2026-118','Corola','2026-06-02','invoiced','{\"order_status\":\"closed\"}')")
     const { app } = appWith()
     const res = await request(app).get('/api/sales-orders?search=OV-2026').set('Cookie', cookie)
     expect(res.status).toBe(200)
+    expect(res.body.map((s: { id: string }) => s.id)).toEqual(['s1']) // la facturada no se ofrece
     expect(res.body[0]).toMatchObject({ id: 's1', number: 'OV-2026-117' })
   })
 

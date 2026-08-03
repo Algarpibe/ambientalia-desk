@@ -34,9 +34,14 @@ export async function searchSalesOrders(db: Queryable, q: string, clientId?: str
   let clientFilter = ''
   if (clientId) { params.push(clientId); clientFilter = `AND client_id = $${params.length}` }
   params.push(limit)
+  // Solo las OVs que en Zoho salen con "Estado de pedido" = Confirmado (`order_status = 'open'`):
+  // quedan fuera borradores, facturadas y anuladas. Las parcialmente facturadas siguen dentro
+  // (siguen confirmadas y con ítems pendientes). El lookup por id (getSalesOrder) NO filtra, para
+  // que una OV ya elegida se siga resolviendo aunque cambie de estado entre elegir y guardar.
   const r = await db.query(
     `SELECT id,number,client_id,customer_name,date,total,status,ticket_number,potential_name FROM sales_orders
-     WHERE (LOWER(number) LIKE $1 OR LOWER(COALESCE(customer_name,'')) LIKE $1) ${clientFilter}
+     WHERE order_status = 'open'
+       AND (LOWER(number) LIKE $1 OR LOWER(COALESCE(customer_name,'')) LIKE $1) ${clientFilter}
      ORDER BY date DESC NULLS LAST LIMIT $${params.length}`,
     params,
   )

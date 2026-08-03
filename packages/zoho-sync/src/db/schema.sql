@@ -130,11 +130,13 @@ CREATE OR REPLACE VIEW public.clients AS
   SELECT contact_id AS id, contact_name AS name, company_name, nit, email
   FROM books.contacts;
 
+-- order_status va AL FINAL: CREATE OR REPLACE VIEW solo admite añadir columnas al final de la lista.
 CREATE OR REPLACE VIEW public.sales_orders AS
   SELECT salesorder_id AS id, salesorder_number AS number, customer_id AS client_id,
          customer_name, date, total, status,
          COALESCE(raw->>'cf_n_ticket', raw->'custom_field_hash'->>'cf_n_ticket') AS ticket_number,
-         raw->>'zcrm_potential_name' AS potential_name
+         raw->>'zcrm_potential_name' AS potential_name,
+         raw->>'order_status' AS order_status
   FROM books.sales_orders;
 
 -- → clients.id (Books), tickets creados en la app
