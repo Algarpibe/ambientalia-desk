@@ -28,24 +28,31 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // Los tres buscadores comparten una regla: si YA hay algo elegido, no se busca ni se reabre el
+  // desplegable. Sin esto, elegir una opción reescribe el texto del input (y `pickOv` además el del
+  // cliente) → el efecto se re-dispara y repuebla la lista, que queda abierta encima del campo
+  // siguiente y aparenta un duplicado. Al escribir, el onChange limpia la selección y se vuelve a buscar.
   useEffect(() => {
+    if (salesOrderId) { setOvResults([]); return }
     if (!clientId && ovQuery.trim().length < 2) { setOvResults([]); return }
     let alive = true
     searchSalesOrders(ovQuery, clientId ?? undefined).then((r) => { if (alive) setOvResults(r) }).catch(() => {})
     return () => { alive = false }
-  }, [ovQuery, clientId])
+  }, [ovQuery, clientId, salesOrderId])
   useEffect(() => {
+    if (clientId) { setClientResults([]); return }
     if (clientQuery.trim().length < 2) { setClientResults([]); return }
     let alive = true
     searchClients(clientQuery).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
     return () => { alive = false }
-  }, [clientQuery])
+  }, [clientQuery, clientId])
   useEffect(() => {
+    if (equipo) { setEquipoResults([]); return }
     if (equipoQuery.trim().length < 2) { setEquipoResults([]); return }
     let alive = true
     searchEquipos(equipoQuery).then((r) => { if (alive) setEquipoResults(r) }).catch(() => {})
     return () => { alive = false }
-  }, [equipoQuery])
+  }, [equipoQuery, equipo])
 
   const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie: equipo?.serial ?? '', modelo: equipo?.modelo ?? '', fecha: new Date() })
   const subject = useMemo(
