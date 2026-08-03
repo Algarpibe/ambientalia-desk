@@ -95,14 +95,18 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   const [marcaOtro, setMarcaOtro] = useState(false)
   const [modeloOtro, setModeloOtro] = useState(false)
   const [tipoOtro, setTipoOtro] = useState(false)
+  // Mismo patrón que CreateTicket: la lista solo se abre con el foco en su campo, y no se
+  // reabre al elegir (elegir reescribe `clientQuery`, lo que re-disparaba la búsqueda).
+  const [clienteOpen, setClienteOpen] = useState(false)
 
   useEffect(() => { equipoFacets().then(setFacets).catch(() => {}) }, [])
   useEffect(() => {
+    if (clientId) { setClientResults([]); return }
     if (clientQuery.trim().length < 2) { setClientResults([]); return }
     let alive = true
     searchClients(clientQuery).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
     return () => { alive = false }
-  }, [clientQuery])
+  }, [clientQuery, clientId])
 
   async function submit(ev: React.FormEvent) {
     ev.preventDefault(); setBusy(true); setError(null)
@@ -167,9 +171,11 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
         </div>
         <div className="relative">
           <input className={`${field} w-full`} placeholder="Cliente (Books) *" value={clientQuery}
-            onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value) }} required={!equipo && !clientId} />
-          {clientResults.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+            onFocus={() => setClienteOpen(true)} onBlur={() => setClienteOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setClienteOpen(false) }}
+            onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value); setClienteOpen(true) }} required={!equipo && !clientId} />
+          {clienteOpen && clientResults.length > 0 && (
+            <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {clientResults.map((c) => (
                 <li key={c.id}><button type="button" onClick={() => { setClientId(c.id); setClientName(c.name); setClientQuery(c.name); setClientResults([]) }} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">{c.name} {c.nit ? `· NIT ${c.nit}` : ''}</button></li>
               ))}
