@@ -322,6 +322,72 @@ describe('GET /api/contacts/:id y /api/accounts/:id', () => {
   })
 })
 
+describe('GET /api/remisiones/nueva', () => {
+  /** Ticket 't1' de la app, con cliente de Books y una copia propia de marca/modelo/serie del equipo. */
+  const conTicket = async (equipoId: string | null) => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query(
+      `INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+       VALUES ('t1', 10000, 'OV asignada', true, 'cli1', 'Mantenimiento', $1, 'Grimm', 'EDM180C', '18A1')`,
+      [equipoId],
+    )
+  }
+
+  it('prellena desde el ticket y devuelve el checklist del perfil', async () => {
+    const cookie = await adminCookie()
+    await upsertEquipo(db, equipoRow('eq-r1', '18A20070'))              // Grimm / EDM180C
+    await db.query("INSERT INTO remision_checklist (perfil,item,orden) VALUES ('grimm_edm180','Manuales',0),('grimm_edm180','Datalogger',1)")
+    await conTicket('eq-r1')
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      ticketNumber: '10000', cliente: 'Gecelca S.A. E.S.P.', tipoServicio: 'Mantenimiento', perfil: 'grimm_edm180',
+      equipo: { serial: '18A20070', marca: 'Grimm', modelo: 'EDM180C' },
+    })
+    expect(res.body.incluye).toEqual(['Manuales', 'Datalogger']) // en el orden del catálogo, no alfabético
+  })
+
+  // Los datos del equipo mandan sobre la copia que el ticket guardó al crearse.
+  it('si el equipo se corrigió después, gana el registro del equipo', async () => {
+    const cookie = await adminCookie()
+    await upsertEquipo(db, { ...equipoRow('eq-r2', 'SERIE-NUEVA'), modelo: 'EDM 280' })
+    await conTicket('eq-r2')
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(res.body.equipo).toMatchObject({ serial: 'SERIE-NUEVA', modelo: 'EDM 280' })
+    expect(res.body.perfil).toBe('grimm_edm280') // el perfil se recalcula con el modelo corregido
+  })
+
+  // Los tickets históricos de Zoho no tienen equipo_id: se cae a las columnas del propio ticket.
+  it('sin equipo_id usa las columnas del ticket', async () => {
+    const cookie = await adminCookie()
+    await conTicket(null)
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.equipo).toMatchObject({ serial: '18A1', marca: 'Grimm', modelo: 'EDM180C' })
+  })
+
+  it('un perfil sin checklist devuelve incluye vacío, no error', async () => {
+    const cookie = await adminCookie()
+    await upsertEquipo(db, { ...equipoRow('eq-r3', 'K1'), marca: 'Kunak', modelo: 'AIR' })
+    await conTicket('eq-r3')
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ perfil: 'kunak', incluye: [] })
+  })
+
+  it('404 si el ticket no existe, 400 sin ticketId, 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    expect((await request(app).get('/api/remisiones/nueva?ticketId=nope').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).get('/api/remisiones/nueva').set('Cookie', cookie)).status).toBe(400)
+    expect((await request(app).get('/api/remisiones/nueva?ticketId=t1')).status).toBe(401)
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()

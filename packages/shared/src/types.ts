@@ -1,3 +1,5 @@
+import type { PerfilChecklist } from './remision'
+
 /** Shape consumido por el frontend (tarjeta y tablero). */
 export interface Ticket {
   id: string
@@ -285,3 +287,16 @@ export interface ContactDetail { id: string; name: string; email: string | null;
 export interface AccountDetail { id: string; name: string; nit: string | null; email: string | null; phone: string | null; city: string | null; address: string | null; website: string | null; owner: string | null; createdAt: string | null; tickets: TicketLite[]; contacts: ContactLite[] }
 
 export interface ActivityListItem { id: string; subject: string; status: string; statusType: string | null; priority: string | null; dueDate: string | null; owner: string | null; ticketId: string | null; ticketNumber: string | null }
+
+/** Datos con los que el formulario de remisión de entrada llega prellenado desde el ticket. */
+export interface RemisionNueva {
+  ticketId: string
+  ticketNumber: string
+  cliente: string | null
+  equipo: { id: string | null; serial: string | null; marca: string | null; modelo: string | null; tipo: string | null }
+  tipoServicio: string | null
+  /** Perfil resuelto con `perfilChecklist(marca, modelo)`; determina el checklist. */
+  perfil: PerfilChecklist
+  /** Ítems del checklist "Incluye" del perfil. Vacío es legítimo (Kunak no tiene). */
+  incluye: string[]
+}

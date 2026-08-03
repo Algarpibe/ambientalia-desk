@@ -42,6 +42,11 @@ export interface TicketRow {
   doc_almacenada_drive: boolean | null; hv_actualizada: boolean | null
   liberacion_sin_facturar: boolean | null; servicio_in_situ: boolean | null
   custom_fields: Record<string, string | null>; managed_by_app: boolean; source: string; raw: unknown
+  // Columnas añadidas después por ALTER (subsistemas C/E y resolución). Son OPCIONALES porque las
+  // escribe la app, no el sync: `ticketRowFromZoho` construye filas sin ellas, mientras que un
+  // `SELECT *` sí las trae.
+  client_id?: string | null; salesorder_id?: string | null; equipo_id?: string | null
+  resolution_html?: string | null; resolution_at?: string | null; resolution_by?: string | null
 }
 
 export interface ConversationRow {
