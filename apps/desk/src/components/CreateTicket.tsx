@@ -21,6 +21,10 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   // emergencia: el vínculo equipo↔cliente depende en parte del nombre libre del CSV de la semilla,
   // así que si no cuadra hay que poder buscar en todos sin abandonar el formulario.
   const [verTodosEquipos, setVerTodosEquipos] = useState(false)
+  /** Con cliente elegido la búsqueda va acotada a él, y entonces basta con abrir el campo: la
+   *  lista se llena sin escribir nada (mismo trato que el buscador de OV). Sin cliente que acote,
+   *  se siguen exigiendo 2 caracteres — listar los ~350 equipos de golpe no ayudaría. */
+  const equiposAcotados = !!clientId && !verTodosEquipos
 
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState('')
@@ -68,7 +72,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   // `buscandoEquipo` evita anunciar "no hay coincidencias" mientras la búsqueda está en vuelo.
   useEffect(() => {
     if (equipo) { setEquipoResults([]); return }
-    if (equipoQuery.trim().length < 2) { setEquipoResults([]); return }
+    if (!equiposAcotados && equipoQuery.trim().length < 2) { setEquipoResults([]); return }
     let alive = true
     setBuscandoEquipo(true)
     searchEquipos(equipoQuery, verTodosEquipos ? null : clientId)
@@ -76,7 +80,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
       .catch(() => {})
       .finally(() => { if (alive) setBuscandoEquipo(false) })
     return () => { alive = false }
-  }, [equipoQuery, equipo, clientId, verTodosEquipos])
+  }, [equipoQuery, equipo, clientId, verTodosEquipos, equiposAcotados])
 
   // El cliente lo determina la OV o el equipo; dejarlo editable permitiría que el ticket acabara a
   // nombre de otra empresa. Se bloquea SOLO si hay un cliente real resuelto (`clientId`): si el
@@ -218,9 +222,13 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
               )}
             </div>
           )}
-          {!equipo && !buscandoEquipo && equipoQuery.trim().length >= 2 && equipoResults.length === 0 && (
+          {!equipo && !buscandoEquipo && equipoResults.length === 0 && (equiposAcotados || equipoQuery.trim().length >= 2) && (
             <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
-              {clientId && !verTodosEquipos ? (
+              {equiposAcotados && !equipoQuery.trim() ? (
+                <><b>{clientName}</b> no tiene equipos registrados. Puede que los tenga a otro nombre: prueba
+                  a <button type="button" onClick={() => setVerTodosEquipos(true)} className="text-blue-700 underline font-bold">buscar en todos los clientes</button>,
+                  o regístralos en <b>Equipos</b>.</>
+              ) : equiposAcotados ? (
                 <>Ningún equipo de <b>{clientName}</b> coincide con <b>«{equipoQuery.trim()}»</b>. Puede estar registrado
                   a otro nombre: prueba a <button type="button" onClick={() => setVerTodosEquipos(true)} className="text-blue-700 underline font-bold">buscar en todos los clientes</button>,
                   o regístralo en <b>Equipos</b>.</>
@@ -230,7 +238,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
               )}
             </div>
           )}
-          {!equipo && equipoQuery.trim().length === 1 && (
+          {!equipo && !equiposAcotados && equipoQuery.trim().length === 1 && (
             <div className="mt-1 text-[12px] text-slate-400">Escribe al menos 2 caracteres para buscar.</div>
           )}
         </div>
