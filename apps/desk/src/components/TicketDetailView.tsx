@@ -9,6 +9,7 @@ import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { ActividadesPanel } from './ActividadesPanel';
+import { CrearRemision } from './CrearRemision';
 
 /** Manija de arrastre entre columnas (reemplaza el borde). */
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
@@ -53,6 +54,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
+    const [showRemision, setShowRemision] = useState(false);
 
     async function doReply() {
         try {
@@ -292,6 +294,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               ticketId={ticketId}
                               status={ticket.status}
                               onDone={() => { reloadTicket(); reloadMessages(); onChanged?.(); }}
+                              onCrearRemision={() => setShowRemision(true)}
                             />
                           )}
                           <textarea
@@ -347,6 +350,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
             )}
 
             {showHistorial && ticket?.equipoId && <HojaDeVida equipoId={ticket.equipoId} onClose={() => setShowHistorial(false)} />}
+            {showRemision && <CrearRemision ticketId={ticketId} onClose={() => setShowRemision(false)} onCreada={() => { setShowRemision(false); reloadTicket(); }} />}
 
             {/* Help Button */}
             <button className="fixed bottom-4 right-4 bg-[#2C7BE5] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[13px] font-bold">

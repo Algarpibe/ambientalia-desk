@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -268,6 +268,35 @@ export function fetchAccountDetail(id: string): Promise<AccountDetail> {
 export function fetchAllActivities(filter: string, search: string): Promise<ActivityListItem[]> {
   const p = new URLSearchParams({ filter, search })
   return fetch(`/api/activities?${p.toString()}`, { credentials: 'include' }).then((r) => json<ActivityListItem[]>(r))
+}
+
+export function fetchRemisionNueva(ticketId: string): Promise<RemisionNueva> {
+  return fetch(`/api/remisiones/nueva?ticketId=${encodeURIComponent(ticketId)}`, { credentials: 'include' }).then((r) => json<RemisionNueva>(r))
+}
+
+export type RemisionConFotos = Remision & { fotos: RemisionFoto[] }
+
+export function fetchRemisiones(ticketId: string): Promise<RemisionConFotos[]> {
+  return fetch(`/api/remisiones?ticketId=${encodeURIComponent(ticketId)}`, { credentials: 'include' }).then((r) => json<RemisionConFotos[]>(r))
+}
+
+export interface CrearRemisionPayload { ticketId: string; fecha: string; incluye: string[]; observaciones?: string }
+
+export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {
+  const res = await fetch('/api/remisiones', {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+  return res.json() as Promise<Remision>
+}
+
+export async function subirFotoRemision(id: string, file: File): Promise<RemisionFoto> {
+  const fd = new FormData(); fd.append('file', file)
+  const res = await fetch(`/api/remisiones/${id}/fotos`, { method: 'POST', credentials: 'include', body: fd })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+  return res.json() as Promise<RemisionFoto>
 }
 
 export function setTicketRead(id: string, read: boolean): Promise<void> {
