@@ -126,8 +126,10 @@ CREATE TABLE IF NOT EXISTS books.sales_orders (
 );
 
 -- (El DROP de las TABLAS lite public.clients/sales_orders es one-time en el runbook de cutover, no aquí.)
+-- contact_type va AL FINAL: CREATE OR REPLACE VIEW solo admite añadir columnas al final de la lista.
 CREATE OR REPLACE VIEW public.clients AS
-  SELECT contact_id AS id, contact_name AS name, company_name, nit, email
+  SELECT contact_id AS id, contact_name AS name, company_name, nit, email,
+         raw->>'contact_type' AS contact_type
   FROM books.contacts;
 
 -- order_status va AL FINAL: CREATE OR REPLACE VIEW solo admite añadir columnas al final de la lista.

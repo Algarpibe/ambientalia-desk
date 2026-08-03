@@ -15,6 +15,22 @@ describe('books repo (vistas sobre books.*)', () => {
     expect((await getClient(db, 'c1'))!.nit).toBe('901116362')
   })
 
+  // `books.contacts` arrastra proveedores de la era n8n (el sync de Node solo ingiere
+  // contact_type=customer, y el sweep no los borra porque SÍ existen en Zoho). El selector de
+  // cliente no debe ofrecerlos. Las filas heredadas sin `contact_type` se conservan: son de
+  // procedencia desconocida y descartarlas podría ocultar clientes reales.
+  it('searchClients descarta proveedores y conserva las filas sin contact_type', async () => {
+    const ins = (id: string, name: string, raw: string) =>
+      db.query("INSERT INTO books.contacts (contact_id,contact_name,nit,raw) VALUES ($1,$2,'900700933',$3)", [id, name, raw])
+    await ins('k-cli', 'Ambientalia S.A.S.', '{"contact_type":"customer"}')
+    await ins('k-ven', 'Ambientalia S.A.S.', '{"contact_type":"vendor"}')
+    await ins('k-old', 'Ambientalia Vieja', '{}')
+
+    expect((await searchClients(db, 'ambientalia')).map((c) => c.id).sort()).toEqual(['k-cli', 'k-old'])
+    // El lookup por id NO filtra: un ticket o equipo que ya apunte a esa fila debe seguir resolviéndola.
+    expect((await getClient(db, 'k-ven'))!.id).toBe('k-ven')
+  })
+
   it('searchSalesOrders / getSalesOrder leen books.sales_orders + ticket_number desde raw', async () => {
     await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date,total,status,raw) VALUES ('s1','OV-2026-117','cliA','Corola','2026-06-01',200,'open','{\"cf_n_ticket\":\"954\",\"order_status\":\"open\"}')")
     expect((await searchSalesOrders(db, 'OV-2026-117')).length).toBe(1)

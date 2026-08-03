@@ -12,11 +12,18 @@ function salesOrderToLite(r: any): SalesOrderLite {
   }
 }
 
+// `books.contacts` arrastra proveedores de la era n8n (el sync de Node solo ingiere
+// contact_type=customer; el sweep no los borra porque SÍ existen en Zoho). Aquí se descartan para
+// que el selector no muestre el mismo nombre repetido. Se excluye solo lo marcado explícitamente
+// como NO cliente: las filas heredadas sin `contact_type` se conservan, porque son de procedencia
+// desconocida y descartarlas podría ocultar clientes reales. `getClient` (por id) NO filtra, para
+// que un ticket o equipo que ya apunte a una de esas filas siga resolviendo su empresa.
 export async function searchClients(db: Queryable, q: string, limit = 20): Promise<ClientLite[]> {
   const like = `%${q.toLowerCase()}%`
   const r = await db.query(
     `SELECT id,name,company_name,nit,email FROM clients
-     WHERE LOWER(name) LIKE $1 OR LOWER(COALESCE(company_name,'')) LIKE $1 OR LOWER(COALESCE(nit,'')) LIKE $1
+     WHERE COALESCE(contact_type,'customer') = 'customer'
+       AND (LOWER(name) LIKE $1 OR LOWER(COALESCE(company_name,'')) LIKE $1 OR LOWER(COALESCE(nit,'')) LIKE $1)
      ORDER BY name LIMIT $2`,
     [like, limit],
   )
