@@ -47,13 +47,19 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
         const r = await fetchRemision(remisionId)
         if (!vivo) return
         setRem(r)
+        setNota(null) // una lectura buena borra el aviso que dejó la anterior
         if (r.estado !== 'pendiente') return // ya hay desenlace: se deja de sondear
-        if (Date.now() - desde.current >= ESPERA_DESENLACE_SEGUNDOS * 1000) { setAgotado(true); return }
       } catch (e) {
         if (!vivo) return
+        // Un fallo de red aquí es casi siempre pasajero —el técnico está en campo, con cobertura
+        // irregular— y no dice nada sobre cómo fue la remisión. Se avisa, pero se sigue sondeando:
+        // rendirse a la primera dejaría la pantalla diciendo "generando" para siempre, sin desenlace
+        // y sin botón de reintentar, que es la única salida que le queda al técnico.
         setNota(e instanceof Error ? e.message : String(e))
-        return
       }
+      // Fuera del try a propósito: el tiempo corre igual haya habido lectura buena o tropiezo, y es
+      // lo único que decide cuándo dejar de esperar.
+      if (Date.now() - desde.current >= ESPERA_DESENLACE_SEGUNDOS * 1000) { setAgotado(true); return }
       temporizador = setTimeout(mirar, INTERVALO_MS)
     }
     void mirar()
