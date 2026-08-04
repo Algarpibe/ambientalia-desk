@@ -6,6 +6,7 @@ import { upsertTicket, upsertAccount, getTicketRow } from '@ambientalia/zoho-syn
 import { ticketRowFromZoho, accountRowFromZoho } from '@ambientalia/zoho-sync/db/mappers'
 import { upsertEquipo, listEquiposManage } from './db/equipos'
 import type { EquipoRow } from './db/equipos'
+import { REMISIONES_HISTORICAS } from './db/remisionesHistoricasSeed'
 
 /** Equipo al estilo de la carga inicial: `client_id` NULL y cliente solo como texto libre. */
 const equipoRow = (id: string, serial: string, cliente = 'Gecelca S.A. E.S.P.'): EquipoRow =>
@@ -920,6 +921,20 @@ describe('POST /api/admin/backfill-archived (admin)', () => {
     const op = await userCookie([])
     expect((await request(app).post('/api/admin/backfill-archived').set('Cookie', op)).status).toBe(403)
     expect((await request(app).post('/api/admin/backfill-archived')).status).toBe(401)
+  })
+})
+
+describe('POST /api/admin/import-remisiones-historicas (admin)', () => {
+  it('admin con dryRun=true no escribe y devuelve el resumen; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).post('/api/admin/import-remisiones-historicas?dryRun=true').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(res.body.total).toBe(REMISIONES_HISTORICAS.length)
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM remisiones')).rows[0].n).toBe(0)
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/import-remisiones-historicas').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/import-remisiones-historicas')).status).toBe(401)
   })
 })
 

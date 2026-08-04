@@ -6,6 +6,7 @@ import type { createDetailBackfiller } from '../backfill'
 import { backfillSerialFromSubject } from '../backfillSerial'
 import { seedChecklist } from '../db/remisionChecklist'
 import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
+import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { logger } from '../util/logger'
@@ -62,6 +63,17 @@ export function registerAdminRoutes(
   app.post('/api/admin/seed-remision-checklist', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
     const r = await seedChecklist(db, CHECKLIST_SEED)
     logger.info(`Checklist de remisiones sembrado: ${r.insertados} nuevos, ${r.existentes} ya existían`)
+    res.json(r)
+  }))
+
+  // Paso 1 de la migración del histórico de remisiones (hoja de Google → Postgres). SOLO super
+  // administrador. `?dryRun=true` calcula el resumen sin escribir, para revisar las cifras antes de
+  // tocar producción: no se sabe de antemano cuántos tickets de Zoho que menciona la hoja siguen en
+  // la base. Es idempotente (ver importarRemisionesHistoricas): se puede disparar más de una vez.
+  app.post('/api/admin/import-remisiones-historicas', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const dryRun = req.query.dryRun === 'true'
+    const r = await importarRemisionesHistoricas(db, { dryRun })
+    logger.info(`Import remisiones históricas${dryRun ? ' (dry-run)' : ''}: ${r.insertadas} nuevas, ${r.yaExistian} ya existían, ${r.ticketNoEncontrado} sin ticket encontrado`)
     res.json(r)
   }))
 
