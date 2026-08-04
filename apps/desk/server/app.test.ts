@@ -495,6 +495,34 @@ describe('POST /api/remisiones', () => {
     } finally { vi.unstubAllGlobals() }
   })
 
+  // El documento que genera n8n debe reflejar lo que la remisión capturó AL CREARSE, no un getClient
+  // fresco en el momento de enviar: hay ventana de reenvío y botón de reintentar, así que si alguien
+  // corrige el cliente en Books entre medias, el documento no puede desdecir lo que la remisión dice.
+  it('enviar manda a n8n la empresa y personaContacto GUARDADOS en la remisión, no los del cliente actual', async () => {
+    const cookie = await adminCookie(); await preparar()
+    await db.query("UPDATE books.contacts SET company_name = 'Nombre original S.A.S.', persona_contacto = 'Persona original' WHERE contact_id = 'cli1'")
+    const llamadas: Array<{ url: string; body: string }> = []
+    const fakeFetch = vi.fn(async (url: string, init: RequestInit) => {
+      llamadas.push({ url, body: String(init.body) })
+      return new Response('{}', { status: 202 })
+    })
+    vi.stubGlobal('fetch', fakeFetch)
+    try {
+      const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+      const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+        .send({ ticketId: 't1', fecha: '2026-08-03', incluye: ['Manuales'] })
+      expect(rem.body).toMatchObject({ empresa: 'Nombre original S.A.S.', personaContacto: 'Persona original' })
+
+      // El cliente se corrige en Books DESPUÉS de crear la remisión.
+      await db.query("UPDATE books.contacts SET company_name = 'Nombre corregido S.A.S.', persona_contacto = 'Persona corregida' WHERE contact_id = 'cli1'")
+
+      const env = await request(app).post(`/api/remisiones/${rem.body.id}/enviar`).set('Cookie', cookie)
+      expect(env.status).toBe(200)
+      const enviado = JSON.parse(llamadas[0].body)
+      expect(enviado.cliente).toMatchObject({ empresa: 'Nombre original S.A.S.', personaContacto: 'Persona original' })
+    } finally { vi.unstubAllGlobals() }
+  })
+
   // Reenviar una remisión ya cerrada crearía un segundo documento y una segunda carpeta en Drive para
   // el mismo equipo. Solo se reenvía lo que no llegó a buen puerto.
   it('no reenvía una remisión ya cerrada; reenviar una fallida la devuelve a pendiente', async () => {

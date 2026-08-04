@@ -41,7 +41,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const adjuntosCount = (messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0);
     const { data: actividades } = useAsync<Activity[]>(() => fetchActivities(ticketId), [ticketId]);
     const actCount = (actividades ?? []).length;
-    const { data: remisiones } = useAsync<RemisionConFotos[]>(() => fetchRemisiones(ticketId), [ticketId]);
+    // Se pide aquí y no dentro de PanelRemisiones porque el contador de la pestaña ya necesita este
+    // mismo listado: pedirlo también dentro del panel duplicaría la petición.
+    const { data: remisiones, loading: remisionesLoading, error: remisionesError, reload: reloadRemisiones } = useAsync<RemisionConFotos[]>(() => fetchRemisiones(ticketId), [ticketId]);
     const remCount = (remisiones ?? []).length;
     const [activeTabId, setActiveTabId] = useState<string>('conv');
     const TABS = [
@@ -289,7 +291,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         )}
                         {activeView === 'remisiones' && (
                             <div className="flex-1 overflow-y-auto bg-white">
-                                <PanelRemisiones ticketId={ticketId} />
+                                <PanelRemisiones items={remisiones} loading={remisionesLoading} error={remisionesError} />
                             </div>
                         )}
                         {activeView === 'otros' && (
@@ -359,7 +361,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
             )}
 
             {showHistorial && ticket?.equipoId && <HojaDeVida equipoId={ticket.equipoId} onClose={() => setShowHistorial(false)} />}
-            {showRemision && <CrearRemision ticketId={ticketId} onClose={() => setShowRemision(false)} onCreada={() => { setShowRemision(false); reloadTicket(); }} />}
+            {showRemision && <CrearRemision ticketId={ticketId} onClose={() => setShowRemision(false)} onCreada={() => { setShowRemision(false); reloadTicket(); reloadRemisiones(); }} />}
 
             {/* Help Button */}
             <button className="fixed bottom-4 right-4 bg-[#2C7BE5] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[13px] font-bold">

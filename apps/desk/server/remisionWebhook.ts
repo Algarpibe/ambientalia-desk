@@ -46,7 +46,15 @@ export function buildRemisionPayload(input: {
     incluye: r.incluye,
     tecnico: { nombre: u.name, cargo: u.cargo ?? null, correo: u.email },
     cliente: {
-      nombre: c?.name ?? '', empresa: c?.companyName ?? null, personaContacto: c?.personaContacto ?? null,
+      nombre: c?.name ?? '',
+      // Empresa y persona de contacto: la remisión ya las capturó al crearse (ver POST /api/remisiones
+      // en routes/remision.ts), así que el documento debe usar ESO y no un `getClient` fresco. Hay
+      // ventana de reenvío y botón de reintentar, así que entre crear y enviar (o reenviar) alguien
+      // pudo corregir el cliente en Books — el documento no puede desdecir lo que la remisión dice que
+      // era. Solo se cae al cliente cuando la remisión no las tiene: históricas y remisiones creadas
+      // antes de este cambio, con esas columnas en NULL. `direccion`/`telefono`/`nit`/`email` SÍ siguen
+      // viniendo del cliente porque la remisión no los guarda.
+      empresa: r.empresa ?? c?.companyName ?? null, personaContacto: r.personaContacto ?? c?.personaContacto ?? null,
       direccion: c?.direccion ?? null, telefono: c?.telefono ?? null, nit: c?.nit ?? null, email: c?.email ?? null,
     },
     equipo: {
