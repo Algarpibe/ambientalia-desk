@@ -111,8 +111,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // Empresa y persona de contacto se guardan EN la remisión, no se derivan del ticket cada vez que
     // se muestra: la remisión es un documento, no una vista. Si el ticket cambia de cliente, o el
     // cliente se renombra en Books, la remisión debe seguir diciendo a qué empresa y a qué persona
-    // correspondió cuando se hizo. Mismo criterio que `buildRemisionPayload` en remisionWebhook.ts,
-    // que ya manda estos dos campos a n8n a partir del mismo `getClient`.
+    // correspondió cuando se hizo.
     const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
 
     const id = await createRemision(db, {
@@ -120,7 +119,14 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial: eq?.serial ?? found.row.serial ?? null,
       incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
       creadoPor: req.user?.name ?? null,
-      empresa: cliente?.companyName ?? null, personaContacto: cliente?.personaContacto ?? null,
+      // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
+      // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
+      // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos
+      // contactos de Books no traen `company_name`. Sin este respaldo, `empresa` quedaría NULL en casi
+      // toda remisión nueva mientras las históricas sí la traen: la columna significaría una cosa en
+      // unas filas y nada en otras. `personaContacto` no lleva respaldo porque es un campo propio de
+      // Books sin equivalente al que caer.
+      empresa: cliente?.companyName ?? cliente?.name ?? null, personaContacto: cliente?.personaContacto ?? null,
     })
     // NO se dispara el flujo aquí: las fotos se suben después, contra la remisión ya creada, así
     // que en este punto todavía no existen y el documento saldría sin ellas. El envío es un paso
