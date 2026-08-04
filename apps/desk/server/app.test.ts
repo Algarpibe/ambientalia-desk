@@ -512,6 +512,27 @@ describe('POST /api/remisiones', () => {
     const malo = await request(app).post(`/api/remisiones/${id}/fotos`).set('Cookie', cookie).attach('file', svg, { filename: 'x.svg', contentType: 'image/svg+xml' })
     expect(malo.status).toBe(415) // SVG fuera: puede llevar script embebido
   })
+
+  // El formulario sondea esta ruta tras enviar, esperando el desenlace que escribirá el callback.
+  it('GET /:id devuelve la remisión con sus fotos; 404 si no existe; 401 sin sesión', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: ['Manuales'] })
+    const id = rem.body.id
+    const png = Buffer.from('89504e470d0a1a0a', 'hex')
+    await request(app).post(`/api/remisiones/${id}/fotos`).set('Cookie', cookie)
+      .attach('file', png, { filename: 'equipo.png', contentType: 'image/png' })
+
+    const res = await request(app).get(`/api/remisiones/${id}`).set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ id, estado: 'pendiente', incluye: ['Manuales'] })
+    expect(res.body.fotos).toHaveLength(1)
+    expect(res.body.fotos[0].contentB64).toBeUndefined() // el listado nunca lleva el base64
+
+    expect((await request(app).get('/api/remisiones/rem-nope').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).get(`/api/remisiones/${id}`)).status).toBe(401)
+  })
 })
 
 describe('GET /api/equipos', () => {

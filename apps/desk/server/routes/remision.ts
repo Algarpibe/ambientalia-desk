@@ -71,6 +71,18 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
   }))
 
   /**
+   * Una remisión con sus fotos. La sondea el formulario mientras espera el desenlace de n8n, que
+   * llega por el callback y puede tardar decenas de segundos.
+   *
+   * Va DESPUÉS de `/api/remisiones/nueva`: registrada antes, `:id` se tragaría esa ruta.
+   */
+  app.get('/api/remisiones/:id', requireAuth(db), asyncHandler(async (req, res) => {
+    const r = await getRemision(db, String(req.params.id))
+    if (!r) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    res.json({ ...r, fotos: await listFotos(db, r.id) })
+  }))
+
+  /**
    * Registra la remisión. Queda en `pendiente`: el disparo al flujo de n8n llega después, y el
    * resultado lo escribirá el callback. Las fotos se suben aparte, contra la remisión ya creada.
    */
