@@ -1,28 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { RemisionPasoFallido } from '@ambientalia/shared'
 import { ESPERA_DESENLACE_SEGUNDOS } from '@ambientalia/shared'
 import { fetchRemision, enviarRemision, type RemisionConFotos } from '../api/client'
+import { pasos, urlSegura } from '../lib/remisionResultado'
 
 const INTERVALO_MS = 2000
-
-/**
- * `resultado` llega de n8n y se guarda tal cual, sin validar. Una remisión anterior al contrato
- * actual, o un flujo modificado, pueden traer cualquier cosa donde el tipo promete una lista, así
- * que se filtra aquí: un dato raro no puede tumbar la pantalla que le da el resultado al técnico.
- */
-function pasos(v: RemisionPasoFallido[] | undefined): RemisionPasoFallido[] {
-  return Array.isArray(v) ? v.filter((p) => typeof p?.paso === 'string') : []
-}
-
-/**
- * `carpetaUrl` también llega de n8n sin validar y aquí se pinta como `href`. El callback está detrás
- * de un secreto compartido, así que el riesgo es bajo, pero es la única entrada del componente que
- * acaba en un atributo peligroso: si el secreto se filtrara algún día, un `javascript:` colado ahí se
- * ejecutaría al clic. Exigir `https://` cierra esa puerta sin coste — mejor sin enlace que con uno malo.
- */
-function urlSegura(v: string | null | undefined): string | null {
-  return typeof v === 'string' && v.startsWith('https://') ? v : null
-}
 
 /**
  * Desenlace de una remisión recién enviada.

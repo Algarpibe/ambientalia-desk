@@ -4,12 +4,13 @@ import DOMPurify from 'dompurify';
 import type { TicketDetail, Message, Ticket, Activity } from '@ambientalia/shared';
 import { useAsync } from '../hooks/useAsync';
 import { useResizable } from '../hooks/useResizable';
-import { fetchTicket, fetchConversations, replyTicket, fetchActivities } from '../api/client';
+import { fetchTicket, fetchConversations, replyTicket, fetchActivities, fetchRemisiones, type RemisionConFotos } from '../api/client';
 import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { ActividadesPanel } from './ActividadesPanel';
 import { CrearRemision } from './CrearRemision';
+import { PanelRemisiones } from './PanelRemisiones';
 
 /** Manija de arrastre entre columnas (reemplaza el borde). */
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
@@ -40,6 +41,8 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const adjuntosCount = (messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0);
     const { data: actividades } = useAsync<Activity[]>(() => fetchActivities(ticketId), [ticketId]);
     const actCount = (actividades ?? []).length;
+    const { data: remisiones } = useAsync<RemisionConFotos[]>(() => fetchRemisiones(ticketId), [ticketId]);
+    const remCount = (remisiones ?? []).length;
     const [activeTabId, setActiveTabId] = useState<string>('conv');
     const TABS = [
         { id: 'conv', label: `${convCount} ${convCount === 1 ? 'CONVERSACIÓN' : 'CONVERSACIONES'}`, view: 'conversaciones' },
@@ -47,6 +50,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
         { id: 'tiempo', label: 'ENTRADA DE TIEMPO', view: 'otros' },
         { id: 'adj', label: `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`, view: 'otros' },
         { id: 'act', label: `${actCount} ACTIVIDADES`, view: 'actividades' },
+        { id: 'rem', label: `${remCount} ${remCount === 1 ? 'REMISIÓN' : 'REMISIONES'}`, view: 'remisiones' },
         { id: 'apr', label: 'APROBACIÓN', view: 'otros' },
         { id: 'his', label: 'HISTORIA', view: 'historia' },
     ];
@@ -281,6 +285,11 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         {activeView === 'historia' && (
                             <div className="flex-1 overflow-y-auto bg-white">
                                 <HistoriaPanel ticketId={ticketId} />
+                            </div>
+                        )}
+                        {activeView === 'remisiones' && (
+                            <div className="flex-1 overflow-y-auto bg-white">
+                                <PanelRemisiones ticketId={ticketId} />
                             </div>
                         )}
                         {activeView === 'otros' && (
