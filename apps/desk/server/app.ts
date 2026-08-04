@@ -51,7 +51,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   registerAnalisisRoutes(app, { db })
   registerAdminRoutes(app, { db, sync, measurer, detailBackfiller })
   registerAttachmentRoutes(app, { db, zohoFetch })
-  registerRemisionRoutes(app, { db })
+  registerRemisionRoutes(app, { db, config })
 
   // Manejador central de errores: registra el error real pero NO lo filtra al cliente.
   // (Express identifica los error-handlers por su aridad de 4 args; `_next` debe existir.)

@@ -2,7 +2,11 @@ import type { Queryable } from '../db/migrate'
 import type { ClientLite, SalesOrderLite } from '@ambientalia/shared'
 
 function clientToLite(r: any): ClientLite {
-  return { id: r.id, name: r.name, nit: r.nit ?? undefined, email: r.email ?? undefined, companyName: r.company_name ?? undefined }
+  return {
+    id: r.id, name: r.name, nit: r.nit ?? undefined, email: r.email ?? undefined, companyName: r.company_name ?? undefined,
+    direccion: r.direccion ?? undefined, ciudad: r.ciudad ?? undefined,
+    telefono: r.telefono ?? undefined, personaContacto: r.persona_contacto ?? undefined,
+  }
 }
 function salesOrderToLite(r: any): SalesOrderLite {
   return {
@@ -21,7 +25,7 @@ function salesOrderToLite(r: any): SalesOrderLite {
 export async function searchClients(db: Queryable, q: string, limit = 20): Promise<ClientLite[]> {
   const like = `%${q.toLowerCase()}%`
   const r = await db.query(
-    `SELECT id,name,company_name,nit,email FROM clients
+    `SELECT id,name,company_name,nit,email,direccion,ciudad,telefono,persona_contacto FROM clients
      WHERE COALESCE(contact_type,'customer') = 'customer'
        AND (LOWER(name) LIKE $1 OR LOWER(COALESCE(company_name,'')) LIKE $1 OR LOWER(COALESCE(nit,'')) LIKE $1)
      ORDER BY name LIMIT $2`,
@@ -31,7 +35,7 @@ export async function searchClients(db: Queryable, q: string, limit = 20): Promi
 }
 
 export async function getClient(db: Queryable, id: string): Promise<ClientLite | null> {
-  const r = await db.query('SELECT id,name,company_name,nit,email FROM clients WHERE id=$1', [id])
+  const r = await db.query('SELECT id,name,company_name,nit,email,direccion,ciudad,telefono,persona_contacto FROM clients WHERE id=$1', [id])
   return r.rows[0] ? clientToLite(r.rows[0]) : null
 }
 

@@ -25,8 +25,8 @@ beforeEach(async () => {
   await migrate(db)
 })
 
-function appWith(overrides: Partial<{ enableWrites: boolean }> = {}) {
-  const config = { enableWrites: false, ...overrides } as AppConfig
+function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string }> = {}) {
+  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', ...overrides } as AppConfig
   const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), syncContacts: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db, zohoFetch, sync, config })
@@ -435,6 +435,33 @@ describe('POST /api/remisiones', () => {
     expect((await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 'nope', fecha: '2026-08-03' })).status).toBe(422)
     expect((await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 't1', fecha: '03/08/2026' })).status).toBe(422)
     expect((await request(app).post('/api/remisiones').send({ ticketId: 't1', fecha: '2026-08-03' })).status).toBe(401)
+  })
+
+  // El callback es la única vía de sacar una remisión de `pendiente`, y n8n no tiene sesión.
+  it('el callback exige el secreto compartido y solo acepta estados conocidos', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith({ remisionCallbackToken: 'secreto-cb' })
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+
+    expect((await request(app).post(`/api/remisiones/${id}/callback`).send({ estado: 'ok' })).status).toBe(401)
+    expect((await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'otro').send({ estado: 'ok' })).status).toBe(401)
+    expect((await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'secreto-cb').send({ estado: 'raro' })).status).toBe(422)
+
+    const ok = await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'secreto-cb')
+      .send({ estado: 'ok_con_avisos', resultado: { pdfUrl: 'https://drive/x', aviso: 'Gmail caído' } })
+    expect(ok.status).toBe(200)
+    const lista = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
+    expect(lista.body[0]).toMatchObject({ estado: 'ok_con_avisos', resultado: { pdfUrl: 'https://drive/x' } })
+  })
+
+  // Sin secreto configurado la ruta NO puede quedar abierta: se cierra con 503.
+  it('sin REMISION_CALLBACK_TOKEN el callback responde 503, no 200', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const r = await request(app).post(`/api/remisiones/${rem.body.id}/callback`).set('X-Remision-Callback', '').send({ estado: 'ok' })
+    expect(r.status).toBe(503)
   })
 
   it('sube fotos, las lista sin el base64 y las sirve con nosniff', async () => {

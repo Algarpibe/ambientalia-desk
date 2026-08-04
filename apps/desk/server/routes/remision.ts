@@ -6,7 +6,10 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision } from '../db/remisiones'
+import { getClient } from '@ambientalia/zoho-sync/books/repo'
+import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 
@@ -19,8 +22,8 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
  * callback que n8n usará para avisar del resultado NO puede autenticarse con la cookie de sesión,
  * así que este grupo necesita su propio criterio de acceso por ruta.
  */
-export function registerRemisionRoutes(app: Express, deps: { db: Queryable }): void {
-  const { db } = deps
+export function registerRemisionRoutes(app: Express, deps: { db: Queryable; config: AppConfig }): void {
+  const { db, config } = deps
 
   /**
    * Datos con los que abrir el formulario de remisión de entrada ya prellenado.
@@ -99,7 +102,38 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable }): v
       incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
       creadoPor: req.user?.name ?? null,
     })
-    res.status(201).json(await getRemision(db, id))
+    const creada = (await getRemision(db, id))!
+
+    // Se dispara el flujo SIN esperar a que termine: n8n responde 202 en cuanto valida y el
+    // resultado real llega por el callback. Si la llamada falla, la remisión ya está guardada y
+    // queda en `pendiente` — se puede reintentar sin que el técnico repita el formulario.
+    const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
+    const payload = buildRemisionPayload({
+      remision: creada, ticketNumero: String(found.row.number), cliente, equipo: eq,
+      usuario: { name: req.user!.name, email: req.user!.email, cargo: req.user!.cargo ?? null },
+    })
+    void dispararRemision(config, payload)
+      .then((r) => { if (!r.disparado) req.log?.warn(`Remisión ${id} no disparada: ${r.motivo}`) })
+      .catch((e) => req.log?.error({ err: e }, `Fallo al disparar la remisión ${id}`))
+
+    res.status(201).json(creada)
+  }))
+
+  /**
+   * Callback de n8n con el desenlace. NO usa la cookie de sesión —n8n no la tiene— sino un secreto
+   * compartido en cabecera. Sin `REMISION_CALLBACK_TOKEN` configurado la ruta responde 503 en vez de
+   * quedar abierta: una remisión que nadie puede cerrar es mejor que un endpoint sin autenticar.
+   */
+  app.post('/api/remisiones/:id/callback', asyncHandler(async (req, res) => {
+    if (!config.remisionCallbackToken) { res.status(503).json({ error: 'Callback no configurado' }); return }
+    if (req.get('X-Remision-Callback') !== config.remisionCallbackToken) { res.status(401).json({ error: 'No autorizado' }); return }
+    const id = String(req.params.id)
+    if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    const b = (req.body ?? {}) as { estado?: string; resultado?: unknown }
+    const estado = b.estado === 'ok' || b.estado === 'ok_con_avisos' || b.estado === 'error' ? b.estado : null
+    if (!estado) { res.status(422).json({ error: 'Estado inválido' }); return }
+    await setResultadoRemision(db, id, estado, b.resultado ?? null)
+    res.json({ ok: true })
   }))
 
   app.post('/api/remisiones/:id/fotos', requireAuth(db), upload.single('file'), asyncHandler(async (req, res) => {

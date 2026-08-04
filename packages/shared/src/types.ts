@@ -168,6 +168,11 @@ export interface ClientLite {
   nit?: string
   email?: string
   companyName?: string
+  /** Datos de facturación; los imprime el documento de remisión. Vienen del detalle de Books. */
+  direccion?: string
+  ciudad?: string
+  telefono?: string
+  personaContacto?: string
 }
 
 export interface SalesOrderLite {

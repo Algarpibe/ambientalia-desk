@@ -33,6 +33,12 @@ export interface AppConfig {
   crmApiDomain: string
   crmAccountsDomain: string
   syncCrm: boolean
+  /** Webhook de n8n que genera la remisión. Vacío = no se dispara (la remisión queda en `pendiente`). */
+  remisionWebhookUrl: string
+  /** Valor de la cabecera `X-Remision-Token` que exige ese webhook. */
+  remisionWebhookToken: string
+  /** Secreto con el que n8n autentica su callback de vuelta. Vacío = callback deshabilitado. */
+  remisionCallbackToken: string
   sweepEnabled: boolean
   sweepDryRun: boolean
   sweepHour: number
@@ -84,6 +90,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
     crmApiDomain: env.ZOHO_CRM_API_DOMAIN || 'www.zohoapis.com',
     crmAccountsDomain: env.ZOHO_CRM_ACCOUNTS_DOMAIN || env.ZOHO_ACCOUNTS_DOMAIN || 'accounts.zoho.com',
     syncCrm: env.SYNC_CRM !== 'false',
+    remisionWebhookUrl: env.N8N_REMISION_WEBHOOK_URL || '',
+    remisionWebhookToken: env.N8N_REMISION_TOKEN || '',
+    remisionCallbackToken: env.REMISION_CALLBACK_TOKEN || '',
     sweepEnabled: env.SWEEP_ENABLED === 'true',        // default OFF
     sweepDryRun: env.SWEEP_DRY_RUN !== 'false',         // default ON
     sweepHour: env.SWEEP_HOUR ? Number(env.SWEEP_HOUR) : 4,
