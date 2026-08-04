@@ -438,6 +438,35 @@ describe('POST /api/remisiones', () => {
   })
 
   // El callback es la única vía de sacar una remisión de `pendiente`, y n8n no tiene sesión.
+  // El envío va separado de la creación porque las fotos se suben en medio: si se disparase al
+  // crear, el documento saldría sin registro fotográfico.
+  it('enviar manda las fotos en base64 dentro del payload', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const llamadas: Array<{ url: string; body: string }> = []
+    const fakeFetch = vi.fn(async (url: string, init: RequestInit) => {
+      llamadas.push({ url, body: String(init.body) })
+      return new Response('{}', { status: 202 })
+    })
+    vi.stubGlobal('fetch', fakeFetch)
+    try {
+      const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+      const rem = await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId: 't1', fecha: '2026-08-03', incluye: ['Manuales'] })
+      expect(llamadas).toHaveLength(0) // crear NO dispara
+
+      const png = Buffer.from('89504e470d0a1a0a', 'hex')
+      await request(app).post(`/api/remisiones/${rem.body.id}/fotos`).set('Cookie', cookie)
+        .attach('file', png, { filename: 'equipo.png', contentType: 'image/png' })
+
+      const env = await request(app).post(`/api/remisiones/${rem.body.id}/enviar`).set('Cookie', cookie)
+      expect(env.status).toBe(200)
+      expect(llamadas).toHaveLength(1)
+      const enviado = JSON.parse(llamadas[0].body)
+      expect(enviado.fotos).toHaveLength(1)
+      expect(enviado.fotos[0]).toMatchObject({ fileName: 'equipo.png', mimeType: 'image/png' })
+      expect(enviado.fotos[0].data).toBe(png.toString('base64'))
+    } finally { vi.unstubAllGlobals() }
+  })
+
   it('el callback exige el secreto compartido y solo acepta estados conocidos', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith({ remisionCallbackToken: 'secreto-cb' })

@@ -292,6 +292,12 @@ export async function crearRemision(payload: CrearRemisionPayload): Promise<Remi
   return res.json() as Promise<Remision>
 }
 
+/** Envía la remisión al flujo de n8n. Va después de subir las fotos, que viajan en el payload. */
+export async function enviarRemision(id: string): Promise<void> {
+  const res = await fetch(`/api/remisiones/${id}/enviar`, { method: 'POST', credentials: 'include' })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string; detalle?: string }; throw new Error(b.detalle || b.error || `HTTP ${res.status}`) }
+}
+
 export async function subirFotoRemision(id: string, file: File): Promise<RemisionFoto> {
   const fd = new FormData(); fd.append('file', file)
   const res = await fetch(`/api/remisiones/${id}/fotos`, { method: 'POST', credentials: 'include', body: fd })

@@ -6,7 +6,7 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision, listFotosConContenido } from '../db/remisiones'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -102,21 +102,39 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
       creadoPor: req.user?.name ?? null,
     })
-    const creada = (await getRemision(db, id))!
+    // NO se dispara el flujo aquí: las fotos se suben después, contra la remisión ya creada, así
+    // que en este punto todavía no existen y el documento saldría sin ellas. El envío es un paso
+    // explícito (`/enviar`) que el formulario invoca cuando ya ha subido todo.
+    res.status(201).json(await getRemision(db, id))
+  }))
 
-    // Se dispara el flujo SIN esperar a que termine: n8n responde 202 en cuanto valida y el
-    // resultado real llega por el callback. Si la llamada falla, la remisión ya está guardada y
-    // queda en `pendiente` — se puede reintentar sin que el técnico repita el formulario.
+  /**
+   * Envía la remisión al flujo de n8n. Paso separado de la creación porque las fotos se suben
+   * después: dispararlo al crear mandaba el documento sin registro fotográfico.
+   *
+   * No espera al trabajo — n8n responde 202 en cuanto valida — y si el disparo falla la remisión
+   * sigue guardada en `pendiente`, así que se puede reintentar sin rehacer el formulario.
+   */
+  app.post('/api/remisiones/:id/enviar', requireAuth(db), asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    const rem = await getRemision(db, id)
+    if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    const found = await getTicketWithRefs(db, rem.ticketId)
+    if (!found) { res.status(422).json({ error: 'Ticket no encontrado' }); return }
+
+    const eq = rem.equipoId ? await getEquipoFull(db, rem.equipoId) : null
     const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
     const payload = buildRemisionPayload({
-      remision: creada, ticketNumero: String(found.row.number), cliente, equipo: eq,
+      remision: rem, ticketNumero: String(found.row.number), cliente, equipo: eq,
       usuario: { name: req.user!.name, email: req.user!.email, cargo: req.user!.cargo ?? null },
+      fotos: await listFotosConContenido(db, id),
     })
-    void dispararRemision(config, payload)
-      .then((r) => { if (!r.disparado) req.log?.warn(`Remisión ${id} no disparada: ${r.motivo}`) })
-      .catch((e) => req.log?.error({ err: e }, `Fallo al disparar la remisión ${id}`))
-
-    res.status(201).json(creada)
+    const r = await dispararRemision(config, payload)
+    if (!r.disparado) {
+      req.log?.warn(`Remisión ${id} no disparada: ${r.motivo}`)
+      res.status(502).json({ error: 'No se pudo enviar a n8n', detalle: r.motivo }); return
+    }
+    res.json({ enviado: true })
   }))
 
   /**

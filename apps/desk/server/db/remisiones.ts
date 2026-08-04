@@ -91,6 +91,19 @@ export async function listFotos(db: Queryable, remisionId: string): Promise<Remi
   }))
 }
 
+/** Fotos CON su base64, para mandarlas a n8n. Se usa solo al enviar, no en los listados. */
+export async function listFotosConContenido(db: Queryable, remisionId: string): Promise<Array<{ fileName: string; mimeType: string; data: string }>> {
+  const r = await db.query(
+    'SELECT filename, content_type, content_b64 FROM remision_fotos WHERE remision_id = $1 ORDER BY created_at',
+    [remisionId],
+  )
+  return r.rows.map((x: Record<string, unknown>) => ({
+    fileName: (x.filename as string) ?? 'foto.jpg',
+    mimeType: (x.content_type as string) ?? 'image/jpeg',
+    data: (x.content_b64 as string) ?? '',
+  }))
+}
+
 export async function getFotoContent(db: Queryable, remisionId: string, fotoId: string): Promise<{ contentType: string; contentB64: string } | null> {
   const r = await db.query('SELECT content_type, content_b64 FROM remision_fotos WHERE id = $1 AND remision_id = $2', [fotoId, remisionId])
   const x = r.rows[0]

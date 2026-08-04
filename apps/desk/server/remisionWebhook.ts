@@ -15,6 +15,12 @@ export interface RemisionWebhookPayload {
     direccion: string | null; telefono: string | null; nit: string | null; email: string | null
   }
   equipo: { serial: string; marca: string | null; modelo: string | null; tipo: string | null }
+  /**
+   * Fotos en base64. El nodo `Code fotos Entrada` del flujo las busca por una clave cuyo nombre
+   * normalizado contenga "fotos" y acepta objetos `{data|base64|dataUrl, mimeType, fileName}`,
+   * así que este es el formato que ya entiende sin tocarlo — y ese nodo es el más delicado del flujo.
+   */
+  fotos: Array<{ fileName: string; mimeType: string; data: string }>
 }
 
 /**
@@ -28,6 +34,7 @@ export function buildRemisionPayload(input: {
   cliente: ClientLite | null
   equipo: EquipoFull | null
   usuario: Pick<UserPublic, 'name' | 'email' | 'cargo'>
+  fotos?: Array<{ fileName: string; mimeType: string; data: string }>
 }): RemisionWebhookPayload {
   const { remision: r, cliente: c, equipo: e, usuario: u } = input
   return {
@@ -46,6 +53,7 @@ export function buildRemisionPayload(input: {
       serial: e?.serial ?? r.serial ?? '',
       marca: e?.marca ?? null, modelo: e?.modelo ?? null, tipo: e?.tipo ?? null,
     },
+    fotos: input.fotos ?? [],
   }
 }
 

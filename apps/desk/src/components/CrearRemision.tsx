@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
-import { fetchRemisionNueva, crearRemision, subirFotoRemision } from '../api/client'
+import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
 
 /**
@@ -32,6 +32,9 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
         setBusy(`Subiendo foto ${i + 1} de ${fotos.length}…`)
         await subirFotoRemision(rem.id, await redimensionarImagen(f))
       }
+      // El envío va al final, no al crear: las fotos viajan dentro del payload y hasta aquí no existían.
+      setBusy('Enviando…')
+      await enviarRemision(rem.id)
       onCreada()
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2))
