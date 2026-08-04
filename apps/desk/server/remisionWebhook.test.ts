@@ -72,10 +72,17 @@ describe('dispararRemision', () => {
   // `fetch` no solo devuelve respuestas con código de error: rechaza la promesa cuando el host no
   // resuelve, la conexión falla o el TLS/timeout expira — el modo de fallo típico de "n8n está caído".
   // Sin atraparlo, la excepción subiría por la ruta sin soltar la reclamación del envío.
+  //
+  // El mock imita cómo rechaza el `fetch` nativo de verdad: mensaje genérico "fetch failed" con el
+  // detalle real (aquí, un DNS que no resuelve) en `error.cause`, que es donde vive lo que de verdad
+  // sirve para diagnosticar. Un mock con un mensaje artesanal habría dado confianza falsa: en
+  // producción el técnico nunca ve un mensaje tan descriptivo si no se mira `cause`.
   it('si n8n está caído (fetch rechaza), se reporta como no disparado en vez de lanzar', async () => {
-    const f = vi.fn().mockRejectedValue(new Error('fetch failed: ECONNREFUSED'))
+    const causaReal = new Error('getaddrinfo ENOTFOUND n8n.invalido.local')
+    const f = vi.fn().mockRejectedValue(new Error('fetch failed', { cause: causaReal }))
     const r = await dispararRemision(cfg({ remisionWebhookUrl: 'https://n8n/webhook/x' }), payload, f as unknown as typeof fetch)
     expect(r.disparado).toBe(false)
-    expect(r.motivo).toContain('ECONNREFUSED')
+    expect(r.motivo).toContain('fetch failed')
+    expect(r.motivo).toContain('ENOTFOUND') // el detalle útil vive en `cause`, no en el mensaje genérico
   })
 })

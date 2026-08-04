@@ -81,8 +81,20 @@ export async function dispararRemision(
     // `fetch` rechaza —y no devuelve respuesta— cuando n8n no resuelve, rechaza la conexión o expira.
     // Sin atraparlo, la ruta no llegaría a soltar la reclamación del envío y el técnico se quedaría
     // esperando la ventana entera para reintentar, sin saber siquiera que el problema era de red.
-    return { disparado: false, motivo: `no se pudo contactar con n8n: ${e instanceof Error ? e.message : String(e)}` }
+    //
+    // El `fetch` nativo de Node casi siempre rechaza con el genérico "fetch failed" y guarda el
+    // detalle real (DNS, TLS, conexión rechazada) en `error.cause`. Sin mirarlo, el técnico vería
+    // siempre el mismo mensaje inútil, sin distinguir un DNS caído de una conexión rechazada.
+    const mensaje = e instanceof Error ? e.message : String(e)
+    const causa = e instanceof Error && e.cause ? `: ${e.cause instanceof Error ? e.cause.message : String(e.cause)}` : ''
+    return { disparado: false, motivo: `no se pudo contactar con n8n: ${mensaje}${causa}` }
   }
-  if (!res.ok) return { disparado: false, motivo: `n8n respondió ${res.status}: ${(await res.text()).slice(0, 200)}` }
+  if (!res.ok) {
+    // La lectura del cuerpo es una promesa más, y puede rechazar igual que la petición (conexión
+    // cortada a mitad de leer, gzip corrupto). El dato que importa aquí es el código de estado: si
+    // el detalle no se puede leer, se informa igual con el motivo vacío en vez de tumbar la ruta.
+    const detalle = await res.text().catch(() => '')
+    return { disparado: false, motivo: `n8n respondió ${res.status}: ${detalle.slice(0, 200)}` }
+  }
   return { disparado: true }
 }

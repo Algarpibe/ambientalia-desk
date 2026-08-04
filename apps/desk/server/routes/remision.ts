@@ -154,8 +154,9 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     })
     const r = await dispararRemision(config, payload)
     if (!r.disparado) {
-      // Sin soltar la reclamación, un webhook mal configurado obligaría a esperar la ventana entera
-      // (60 s) para poder reintentar, aunque el disparo ni siquiera llegó a salir.
+      // Sin soltar la reclamación, un webhook mal configurado obligaría a esperar toda la ventana de
+      // reenvío (`VENTANA_REENVIO_SEGUNDOS`, ver db/remisiones.ts) para poder reintentar, aunque el
+      // disparo ni siquiera llegó a salir.
       await liberarEnvio(db, id)
       req.log?.warn(`Remisión ${id} no disparada: ${r.motivo}`)
       res.status(502).json({ error: 'No se pudo enviar a n8n', detalle: r.motivo }); return
