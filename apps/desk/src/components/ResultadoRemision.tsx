@@ -15,6 +15,16 @@ function pasos(v: RemisionPasoFallido[] | undefined): RemisionPasoFallido[] {
 }
 
 /**
+ * `carpetaUrl` también llega de n8n sin validar y aquí se pinta como `href`. El callback está detrás
+ * de un secreto compartido, así que el riesgo es bajo, pero es la única entrada del componente que
+ * acaba en un atributo peligroso: si el secreto se filtrara algún día, un `javascript:` colado ahí se
+ * ejecutaría al clic. Exigir `https://` cierra esa puerta sin coste — mejor sin enlace que con uno malo.
+ */
+function urlSegura(v: string | null | undefined): string | null {
+  return typeof v === 'string' && v.startsWith('https://') ? v : null
+}
+
+/**
  * Desenlace de una remisión recién enviada.
  *
  * El resultado real lo escribe n8n por el callback, decenas de segundos después de que el técnico
@@ -87,8 +97,9 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
   const esperando = !envioFallido && !agotado && (!rem || rem.estado === 'pendiente')
   const puedeReintentar = envioFallido || agotado || rem?.estado === 'error'
 
-  const carpeta = resultado?.carpetaUrl ? (
-    <a className="text-[#2C7BE5] underline" href={resultado.carpetaUrl} target="_blank" rel="noreferrer">
+  const urlCarpeta = urlSegura(resultado?.carpetaUrl)
+  const carpeta = urlCarpeta ? (
+    <a className="text-[#2C7BE5] underline" href={urlCarpeta} target="_blank" rel="noreferrer">
       Abrir la carpeta en Drive
     </a>
   ) : null
