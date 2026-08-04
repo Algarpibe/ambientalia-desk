@@ -60,6 +60,51 @@ describe('hubBootstrap', () => {
     expect(calls).toEqual(['c', 'i', 'so', 'inv', 'pay', 'po'])
   })
 
+  // BACKFILL_CONTACTS existe porque el guard normal mira `books.items`: sin él, repoblar contactos
+  // obligaría a vaciar los artículos y arrastrar órdenes y facturas. Es puntual y peligroso de dejar
+  // encendido (~615 GET a Books en cada arranque), así que su comportamiento se fija con test.
+  const mockBooks = (calls: string[]): BooksHubSync => ({
+    backfillContacts: async () => { calls.push('c'); return 0 },
+    backfillItems: async () => { calls.push('i'); return 0 },
+    backfillSalesOrders: async () => { calls.push('so'); return 0 },
+    backfillInvoices: async () => { calls.push('inv'); return 0 },
+    backfillPayments: async () => { calls.push('pay'); return 0 },
+    backfillPurchaseOrders: async () => { calls.push('po'); return 0 },
+    syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0 }),
+    sweep: async () => [],
+  })
+  /** Books ya cargado: `books.items` con datos desactiva el backfill inicial. */
+  const booksYaCargado = async () => {
+    await migrate(db)
+    await db.query("CREATE SCHEMA IF NOT EXISTS books")
+    await db.query("CREATE TABLE IF NOT EXISTS books.items (item_id text PRIMARY KEY, zoho_last_modified timestamptz)")
+    await db.query("INSERT INTO books.items (item_id, zoho_last_modified) VALUES ('i1', now())")
+  }
+
+  it('con BACKFILL_CONTACTS repuebla SOLO contactos, no artículos ni facturas', async () => {
+    await booksYaCargado()
+    const calls: string[] = []
+    await hubBootstrap({ db, sync: mockSync(), booksHubSync: mockBooks(calls), backfillContacts: true })
+    expect(calls).toContain('c')
+    expect(calls).not.toContain('i')
+    expect(calls).not.toContain('so')
+    expect(calls).not.toContain('inv')
+  })
+
+  it('sin el flag no repuebla contactos si Books ya tiene datos', async () => {
+    await booksYaCargado()
+    const calls: string[] = []
+    await hubBootstrap({ db, sync: mockSync(), booksHubSync: mockBooks(calls) })
+    expect(calls).not.toContain('c')
+  })
+
+  it('un fallo del backfill de contactos no tumba el arranque', async () => {
+    await booksYaCargado()
+    const calls: string[] = []
+    const books = { ...mockBooks(calls), backfillContacts: async () => { throw new Error('Zoho 429') } }
+    await expect(hubBootstrap({ db, sync: mockSync(), booksHubSync: books, backfillContacts: true })).resolves.toBeUndefined()
+  })
+
   it('migra crm.* y backfillea si está vacío', async () => {
     const crmSync = { backfillAll: async () => ({}), syncRecent: async () => ({}), backfillIfEmpty: vi.fn(async () => ({})), sweep: async () => [] }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync: null, crmSync })

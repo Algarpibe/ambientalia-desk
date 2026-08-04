@@ -33,6 +33,13 @@ export interface AppConfig {
   crmApiDomain: string
   crmAccountsDomain: string
   syncCrm: boolean
+  /**
+   * Fuerza el backfill de `books.contacts` en el arranque del worker, aunque ya haya datos.
+   * Puntual: se activa, se redespliega, corre una vez y se vuelve a apagar. Existe porque el guard
+   * normal mira `books.items`, así que no hay forma de repoblar solo contactos sin arrastrar
+   * artículos, órdenes y facturas. Cuesta ~615 GET de detalle contra Books.
+   */
+  backfillContacts: boolean
   /** Webhook de n8n que genera la remisión. Vacío = no se dispara (la remisión queda en `pendiente`). */
   remisionWebhookUrl: string
   /** Valor de la cabecera `X-Remision-Token` que exige ese webhook. */
@@ -90,6 +97,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     crmApiDomain: env.ZOHO_CRM_API_DOMAIN || 'www.zohoapis.com',
     crmAccountsDomain: env.ZOHO_CRM_ACCOUNTS_DOMAIN || env.ZOHO_ACCOUNTS_DOMAIN || 'accounts.zoho.com',
     syncCrm: env.SYNC_CRM !== 'false',
+    backfillContacts: env.BACKFILL_CONTACTS === 'true',   // default OFF
     remisionWebhookUrl: env.N8N_REMISION_WEBHOOK_URL || '',
     remisionWebhookToken: env.N8N_REMISION_TOKEN || '',
     remisionCallbackToken: env.REMISION_CALLBACK_TOKEN || '',

@@ -45,7 +45,7 @@ function logSweep(dominio: string, reports: SweepReport[]): void {
 
 async function main() {
   if (config.dbSchema === 'desk') await reorgToDesk(pool)
-  await hubBootstrap({ db: pool, sync, booksHubSync, crmSync })
+  await hubBootstrap({ db: pool, sync, booksHubSync, crmSync, backfillContacts: config.backfillContacts })
   scheduleHubSync({ sync, booksHubSync, crmSync, intervalMs: config.syncIntervalMs })
   console.log(`zoho-hub-sync en marcha (intervalo ${config.syncIntervalMs} ms)`)
 

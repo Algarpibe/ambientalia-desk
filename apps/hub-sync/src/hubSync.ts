@@ -8,8 +8,8 @@ import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 import type { CrmSync } from '@ambientalia/zoho-sync/crmHub/sync'
 
 /** Migra el hub y hace el backfill inicial solo si está vacío. Idempotente entre reinicios. */
-export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null }): Promise<void> {
-  const { db, sync, booksHubSync = null, crmSync = null } = deps
+export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null; backfillContacts?: boolean }): Promise<void> {
+  const { db, sync, booksHubSync = null, crmSync = null, backfillContacts = false } = deps
   await migrate(db)
   try { await reseedTicketNumber(db) } catch (e) { console.error('reseed inicial omitido:', e) }
   if ((await countTickets(db)) === 0) {
@@ -28,6 +28,19 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
       await booksHubSync.backfillItems()
       await booksHubSync.backfillSalesOrders()
       await booksHubSync.backfillInvoices()
+    } else if (backfillContacts) {
+      // Repoblar SOLO contactos: el guard de arriba mira `items`, así que sin esto haría falta
+      // vaciar los artículos y arrastrar de paso órdenes y facturas. Se usó al añadir dirección,
+      // teléfono y persona de contacto, que solo llegan por el detalle: los contactos ya
+      // sincronizados no los tenían y el incremental solo toca los que cambian en Zoho.
+      // Aislado en try/catch, como los otros backfills: no puede tumbar el worker.
+      console.log('BACKFILL_CONTACTS activo: repoblando books.contacts…')
+      try {
+        const n = await booksHubSync.backfillContacts()
+        console.log(`Backfill de contactos: ${n} contactos. Recuerda apagar BACKFILL_CONTACTS.`)
+      } catch (e) {
+        console.error('Backfill de contactos falló:', e)
+      }
     }
     // Guard aparte: los pagos pueden faltar aunque el resto de Books ya esté cargado.
     // Aislado en try/catch para que un fallo del backfill de pagos NUNCA tumbe el
