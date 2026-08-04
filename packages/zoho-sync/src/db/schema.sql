@@ -121,6 +121,12 @@ CREATE TABLE IF NOT EXISTS books.contacts (
   contact_id text PRIMARY KEY, contact_name text, company_name text, email text, nit text,
   raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
 );
+-- Direccion y telefono salen de billing_address, que solo viene en el DETALLE del contacto. Los imprime el documento de remision
+ALTER TABLE books.contacts ADD COLUMN IF NOT EXISTS direccion text;
+ALTER TABLE books.contacts ADD COLUMN IF NOT EXISTS ciudad text;
+ALTER TABLE books.contacts ADD COLUMN IF NOT EXISTS departamento text;
+ALTER TABLE books.contacts ADD COLUMN IF NOT EXISTS telefono text;
+ALTER TABLE books.contacts ADD COLUMN IF NOT EXISTS persona_contacto text;
 
 CREATE TABLE IF NOT EXISTS books.sales_orders (
   salesorder_id text PRIMARY KEY, salesorder_number text, reference_number text, date date,
@@ -133,7 +139,8 @@ CREATE TABLE IF NOT EXISTS books.sales_orders (
 -- contact_type va AL FINAL: CREATE OR REPLACE VIEW solo admite añadir columnas al final de la lista.
 CREATE OR REPLACE VIEW public.clients AS
   SELECT contact_id AS id, contact_name AS name, company_name, nit, email,
-         raw->>'contact_type' AS contact_type
+         raw->>'contact_type' AS contact_type,
+         direccion, ciudad, departamento, telefono, persona_contacto
   FROM books.contacts;
 
 -- order_status va AL FINAL: CREATE OR REPLACE VIEW solo admite añadir columnas al final de la lista.

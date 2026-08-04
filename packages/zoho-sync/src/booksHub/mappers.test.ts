@@ -13,6 +13,32 @@ describe('booksHub mappers', () => {
     expect((r.raw as any).extra).toBe(1)
   })
 
+  // Dirección y teléfono solo llegan en el DETALLE del contacto, dentro de billing_address.
+  // El documento de remisión los imprime, así que se promueven a columnas.
+  it('contactRow saca dirección, ciudad y teléfono de billing_address', () => {
+    const r = contactRow({
+      contact_id: 'c1', contact_name: 'Airlab', email: 'a@b.co', phone: '',
+      billing_address: { address: 'Km 19 Troncal de Occidente', city: 'Mosquera', state: 'Cundinamarca', phone: '(1) 8941075' },
+    })
+    expect(r.direccion).toBe('Km 19 Troncal de Occidente')
+    expect(r.ciudad).toBe('Mosquera')
+    expect(r.departamento).toBe('Cundinamarca')
+    // El phone de primer nivel viene vacío en Books; el bueno es el de la dirección.
+    expect(r.telefono).toBe('(1) 8941075')
+  })
+
+  it('contactRow prefiere el teléfono de primer nivel si existe', () => {
+    const r = contactRow({ contact_id: 'c1', phone: '3001234567', billing_address: { phone: '(1) 8941075' } })
+    expect(r.telefono).toBe('3001234567')
+  })
+
+  it('contactRow tolera un contacto sin billing_address (el del listado)', () => {
+    const r = contactRow({ contact_id: 'c1', contact_name: 'X' })
+    expect(r.direccion).toBeNull()
+    expect(r.ciudad).toBeNull()
+    expect(r.telefono).toBeNull()
+  })
+
   it('itemRow toma category_name y rate', () => {
     const r = itemRow({ item_id: 'i1', name: 'Filtro', category_name: 'Repuestos', rate: '50.5', last_modified_time: '2026-01-02T00:00:00Z' })
     expect(r.item_id).toBe('i1')

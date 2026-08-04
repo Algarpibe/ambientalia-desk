@@ -140,7 +140,13 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     await upsertItem(db, itemRow(d))
   }
 
-  const persistContact = (raw: any) => upsertContact(db, contactRow(raw))
+  async function persistContact(header: any): Promise<void> {
+    // El listado de contactos NO trae `billing_address`; solo el detalle. Sin esto, books.contacts
+    // se queda sin dirección ni teléfono, y ambos se imprimen en el documento de remisión.
+    // Mismo patrón que persistItem/persistSalesOrder.
+    const d = await fetchDetail('contacts', 'contact', header.contact_id)
+    await upsertContact(db, contactRow(d))
+  }
 
   return {
     backfillContacts: () => backfillSimple('contacts', 'contacts', { contact_type: 'customer' }, persistContact),

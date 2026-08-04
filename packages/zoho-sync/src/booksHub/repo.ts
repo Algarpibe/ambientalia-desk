@@ -5,11 +5,14 @@ const J = (v: unknown) => JSON.stringify(v ?? null)
 
 export async function upsertContact(db: Queryable, r: ContactRow): Promise<void> {
   await db.query(
-    `INSERT INTO books.contacts (contact_id,contact_name,company_name,email,nit,raw,zoho_last_modified,synced_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,now())
+    `INSERT INTO books.contacts (contact_id,contact_name,company_name,email,nit,direccion,ciudad,departamento,telefono,persona_contacto,raw,zoho_last_modified,synced_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,now())
      ON CONFLICT (contact_id) DO UPDATE SET contact_name=EXCLUDED.contact_name,company_name=EXCLUDED.company_name,
-       email=EXCLUDED.email,nit=EXCLUDED.nit,raw=EXCLUDED.raw,zoho_last_modified=EXCLUDED.zoho_last_modified,synced_at=now()`,
-    [r.contact_id, r.contact_name, r.company_name, r.email, r.nit, J(r.raw), r.zoho_last_modified],
+       email=EXCLUDED.email,nit=EXCLUDED.nit,direccion=EXCLUDED.direccion,ciudad=EXCLUDED.ciudad,
+       departamento=EXCLUDED.departamento,telefono=EXCLUDED.telefono,persona_contacto=EXCLUDED.persona_contacto,
+       raw=EXCLUDED.raw,zoho_last_modified=EXCLUDED.zoho_last_modified,synced_at=now()`,
+    [r.contact_id, r.contact_name, r.company_name, r.email, r.nit,
+      r.direccion, r.ciudad, r.departamento, r.telefono, r.persona_contacto, J(r.raw), r.zoho_last_modified],
   )
 }
 

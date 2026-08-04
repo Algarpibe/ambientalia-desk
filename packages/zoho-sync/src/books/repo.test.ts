@@ -19,6 +19,20 @@ describe('books repo (vistas sobre books.*)', () => {
   // contact_type=customer, y el sweep no los borra porque SÍ existen en Zoho). El selector de
   // cliente no debe ofrecerlos. Las filas heredadas sin `contact_type` se conservan: son de
   // procedencia desconocida y descartarlas podría ocultar clientes reales.
+  // Los cinco los imprime el documento de remisión. Si la vista deja de exponerlos, la remisión sale
+  // incompleta sin que falle nada — de ahí el test.
+  it('la vista clients expone dirección, ciudad, teléfono y persona de contacto', async () => {
+    await db.query(
+      `INSERT INTO books.contacts (contact_id,contact_name,nit,email,direccion,ciudad,departamento,telefono,persona_contacto,raw)
+       VALUES ('c1','Airlab Consulting S.A.S.','901229003','a@b.co','Km 19 Troncal de Occidente','Mosquera','Cundinamarca','(1) 8941075','José Luis López Parra','{"contact_type":"customer"}')`,
+    )
+    const r = await db.query('SELECT direccion, ciudad, departamento, telefono, persona_contacto FROM clients WHERE id=$1', ['c1'])
+    expect(r.rows[0]).toMatchObject({
+      direccion: 'Km 19 Troncal de Occidente', ciudad: 'Mosquera', departamento: 'Cundinamarca',
+      telefono: '(1) 8941075', persona_contacto: 'José Luis López Parra',
+    })
+  })
+
   it('searchClients descarta proveedores y conserva las filas sin contact_type', async () => {
     const ins = (id: string, name: string, raw: string) =>
       db.query("INSERT INTO books.contacts (contact_id,contact_name,nit,raw) VALUES ($1,$2,'900700933',$3)", [id, name, raw])

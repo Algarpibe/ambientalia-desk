@@ -1,7 +1,7 @@
 const num = (v: unknown): number | null => (v != null && v !== '' ? Number(v) : null)
 const str = (v: unknown): string | null => (v != null && v !== '' ? String(v) : null)
 
-export interface ContactRow { contact_id: string; contact_name: string | null; company_name: string | null; email: string | null; nit: string | null; raw: unknown; zoho_last_modified: string | null }
+export interface ContactRow { contact_id: string; contact_name: string | null; company_name: string | null; email: string | null; nit: string | null; direccion: string | null; ciudad: string | null; departamento: string | null; telefono: string | null; persona_contacto: string | null; raw: unknown; zoho_last_modified: string | null }
 export interface ItemRow { item_id: string; name: string | null; category_id: string | null; category_name: string | null; status: string | null; rate: number | null; purchase_rate: number | null; sku: string | null; raw: unknown; zoho_last_modified: string | null }
 export interface SalesOrderRow { salesorder_id: string; salesorder_number: string | null; reference_number: string | null; date: string | null; customer_id: string | null; customer_name: string | null; status: string | null; currency_code: string | null; exchange_rate: number | null; sub_total: number | null; total: number | null; bcy_sub_total: number | null; bcy_tax_total: number | null; bcy_total: number | null; raw: unknown; zoho_last_modified: string | null }
 export interface LineRow { line_item_id: string; item_id: string | null; name: string | null; quantity: number | null; rate: number | null; bcy_rate: number | null; item_total: number | null; tax_percentage: number | null; raw: unknown }
@@ -14,9 +14,19 @@ export interface PurchaseOrderRow { purchaseorder_id: string; purchaseorder_numb
 export interface PoLineRow { line_item_id: string; purchaseorder_id: string; item_id: string | null; sku: string | null; name: string | null; quantity: number | null; quantity_received: number | null; quantity_cancelled: number | null; quantity_billed: number | null; rate: number | null; bcy_rate: number | null; item_total: number | null; raw: unknown }
 
 export function contactRow(raw: any): ContactRow {
+  // Dirección y teléfono viven en `billing_address`, que SOLO viene en el detalle del contacto
+  // (GET /contacts/{id}), no en el listado. El documento de remisión los imprime, de ahí que se
+  // promuevan a columnas. El `phone` de primer nivel suele venir vacío y el bueno es el de la
+  // dirección, pero se prefiere el de primer nivel cuando está relleno.
+  const dir = raw.billing_address ?? {}
+  // La persona de contacto se compone aquí y no en la vista: pg-mem no implementa TRIM ni CONCAT_WS,
+  // y la sentencia entera del CREATE VIEW fallaría dejando la vista `clients` sin crear.
+  const persona = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim()
   return {
     contact_id: raw.contact_id, contact_name: str(raw.contact_name), company_name: str(raw.company_name),
     email: str(raw.email), nit: str(raw.cf_nit ?? raw.custom_field_hash?.cf_nit),
+    direccion: str(dir.address), ciudad: str(dir.city), departamento: str(dir.state),
+    telefono: str(raw.phone) ?? str(dir.phone), persona_contacto: str(persona),
     raw, zoho_last_modified: raw.last_modified_time ?? null,
   }
 }
