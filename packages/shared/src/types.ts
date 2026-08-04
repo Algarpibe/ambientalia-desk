@@ -321,10 +321,16 @@ export interface RemisionResultado {
  * Remisión de entrada registrada en la app. `estado` refleja el desenlace del flujo n8n:
  * `pendiente` mientras no ha contestado, y `ok_con_avisos` cuando la remisión se generó pero falló
  * algún aviso (correo o Telegram) — eso cuenta como creada, no como fallo.
+ *
+ * `ticketId` es NULL-able porque el histórico importado de la hoja de Google trae remisiones que no
+ * casan con ningún ticket de Zoho — un estado legítimo, no un dato que falta. `empresa` y
+ * `personaContacto` llegan como texto libre del histórico; `origen` distingue lo creado en la app
+ * (`app`) de lo importado de la hoja (`historico`), porque una remisión histórica no tiene fotos ni
+ * carpeta de Drive y la pantalla debe poder tratarla distinto.
  */
 export interface Remision {
   id: string
-  ticketId: string
+  ticketId: string | null
   tipo: string
   fecha: string
   tipoServicio: string | null
@@ -337,6 +343,9 @@ export interface Remision {
   estado: 'pendiente' | 'ok' | 'ok_con_avisos' | 'error'
   resultado: RemisionResultado | null
   createdAt: string
+  empresa: string | null
+  personaContacto: string | null
+  origen: string
 }
 
 /** Datos con los que el formulario de remisión de entrada llega prellenado desde el ticket. */

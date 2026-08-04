@@ -272,3 +272,13 @@ CREATE TABLE IF NOT EXISTS public.remision_fotos (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_remision_fotos_remision ON remision_fotos (remision_id);
+
+-- El historico importado de la hoja de Google trae remisiones que no calzan con ningun ticket de Zoho: NULL es un estado legitimo, no un dato que falta
+ALTER TABLE remisiones ALTER COLUMN ticket_id DROP NOT NULL;
+
+-- Empresa y persona de contacto como texto libre: las trae el historico importado, las remisiones de la app aun no las piden
+ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS empresa text;
+ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS persona_contacto text;
+
+-- Distingue lo que crea la app de lo importado de la hoja de Google (historico): una remision historica no tiene fotos ni carpeta de Drive, y la pantalla debe poder tratarla distinto
+ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS origen text NOT NULL DEFAULT 'app';

@@ -7,7 +7,7 @@ const J = (v: unknown) => JSON.stringify(v ?? null)
 
 function toRemision(r: Record<string, unknown>): Remision {
   return {
-    id: String(r.id), ticketId: String(r.ticket_id), tipo: String(r.tipo),
+    id: String(r.id), ticketId: (r.ticket_id as string) ?? null, tipo: String(r.tipo),
     fecha: r.fecha instanceof Date ? r.fecha.toISOString().slice(0, 10) : String(r.fecha ?? ''),
     tipoServicio: (r.tipo_servicio as string) ?? null, perfil: (r.perfil as string) ?? null,
     equipoId: (r.equipo_id as string) ?? null, serial: (r.serial as string) ?? null,
@@ -17,6 +17,8 @@ function toRemision(r: Record<string, unknown>): Remision {
     estado: String(r.estado) as Remision['estado'],
     resultado: typeof r.resultado === 'string' ? JSON.parse(r.resultado) : ((r.resultado as Remision['resultado']) ?? null),
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at ?? ''),
+    empresa: (r.empresa as string) ?? null, personaContacto: (r.persona_contacto as string) ?? null,
+    origen: String(r.origen ?? 'app'),
   }
 }
 
