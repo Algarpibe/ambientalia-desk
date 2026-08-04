@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Remision, RemisionFoto } from '@ambientalia/shared'
+import { VENTANA_REENVIO_SEGUNDOS } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -74,13 +75,15 @@ export async function setResultadoRemision(
  * primero, y cada una generaría su propio documento y su propia carpeta en Drive.
  *
  * Se puede reclamar si nunca se disparó, si el intento anterior ya terminó (`resuelto_at`), o si el
- * disparo anterior lleva más de la ventana sin contestar, en cuyo caso se da por perdido. La
- * ventana coincide con lo que la pantalla espera antes de ofrecer reintentar.
+ * disparo anterior lleva más de la ventana sin contestar, en cuyo caso se da por perdido. La ventana
+ * por defecto es `VENTANA_REENVIO_SEGUNDOS`, deliberadamente mayor que lo que espera la pantalla
+ * antes de ofrecer reintentar: así el botón "Reintentar" no dispara un segundo documento mientras
+ * el primer intento sigue en curso (ver el comentario de la constante).
  *
  * De paso deja el estado en `pendiente` y limpia el desenlace anterior: si quedara el `error` del
  * intento previo, el sondeo daría por fracasado un envío que acaba de empezar.
  */
-export async function reclamarEnvio(db: Queryable, id: string, ventanaSegundos = 60): Promise<boolean> {
+export async function reclamarEnvio(db: Queryable, id: string, ventanaSegundos = VENTANA_REENVIO_SEGUNDOS): Promise<boolean> {
   const corte = new Date(Date.now() - ventanaSegundos * 1000)
   const r = await db.query(
     `UPDATE remisiones

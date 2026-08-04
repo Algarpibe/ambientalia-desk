@@ -35,3 +35,19 @@ export function perfilChecklist(marca: string | null | undefined, modelo: string
   if (ma === 'kunak') return 'kunak'
   return 'otro'
 }
+
+/**
+ * Cuánto espera la pantalla el desenlace de n8n antes de decir que no ha contestado.
+ * Es cuándo se le ofrece al técnico reintentar, no cuándo se da por perdido el envío.
+ */
+export const ESPERA_DESENLACE_SEGUNDOS = 60
+
+/**
+ * Cuánto tarda un envío sin respuesta en darse por perdido y poder repetirse.
+ *
+ * Es DELIBERADAMENTE mayor que `ESPERA_DESENLACE_SEGUNDOS`: si fueran iguales, el reintento que
+ * ofrece la pantalla caería justo cuando la reclamación caduca, y un n8n simplemente lento —subir
+ * varias fotos a Drive pasa del minuto— acabaría generando un segundo documento mientras el primero
+ * sigue vivo. Con la ventana más larga, ese reintento recibe un 409 que dice la verdad: sigue en curso.
+ */
+export const VENTANA_REENVIO_SEGUNDOS = 120

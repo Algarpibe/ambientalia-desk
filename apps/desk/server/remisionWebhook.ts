@@ -70,11 +70,19 @@ export async function dispararRemision(
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ disparado: boolean; motivo?: string }> {
   if (!config.remisionWebhookUrl) return { disparado: false, motivo: 'N8N_REMISION_WEBHOOK_URL sin configurar' }
-  const res = await fetchImpl(config.remisionWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Remision-Token': config.remisionWebhookToken },
-    body: JSON.stringify(payload),
-  })
+  let res: Response
+  try {
+    res = await fetchImpl(config.remisionWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Remision-Token': config.remisionWebhookToken },
+      body: JSON.stringify(payload),
+    })
+  } catch (e) {
+    // `fetch` rechaza —y no devuelve respuesta— cuando n8n no resuelve, rechaza la conexión o expira.
+    // Sin atraparlo, la ruta no llegaría a soltar la reclamación del envío y el técnico se quedaría
+    // esperando la ventana entera para reintentar, sin saber siquiera que el problema era de red.
+    return { disparado: false, motivo: `no se pudo contactar con n8n: ${e instanceof Error ? e.message : String(e)}` }
+  }
   if (!res.ok) return { disparado: false, motivo: `n8n respondió ${res.status}: ${(await res.text()).slice(0, 200)}` }
   return { disparado: true }
 }
