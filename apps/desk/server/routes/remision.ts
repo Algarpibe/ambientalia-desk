@@ -142,8 +142,8 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (!(await reclamarEnvio(db, id))) {
       res.status(409).json({ error: 'Esta remisión se envió hace un momento; espera a que termine.' }); return
     }
-    // Solo las remisiones creadas desde la app llegan aquí en estado enviable: las históricas sin
-    // ticket ya entraron como 'ok' y nunca pasan por /enviar, pero el tipo ahora admite NULL.
+    // `ticketId` es NULL-able en el tipo (las remisiones históricas pueden no tener ticket), y esta
+    // rama necesita uno para poder buscar el ticket y armar el payload de n8n.
     if (!rem.ticketId) { res.status(422).json({ error: 'Remisión sin ticket asociado' }); return }
     const found = await getTicketWithRefs(db, rem.ticketId)
     if (!found) { res.status(422).json({ error: 'Ticket no encontrado' }); return }

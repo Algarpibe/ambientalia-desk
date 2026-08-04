@@ -14,6 +14,48 @@ export interface ImportarRemisionesResumen {
   ticketNoEncontrado: number
   conEquipo: number
   equipoNoEncontrado: number
+  equipoAmbiguo: number
+}
+
+/**
+ * Normaliza un serial para poder cruzarlo. Los seriales del histórico son texto tecleado a mano en
+ * una hoja de cálculo durante año y medio: sobra un espacio, cambia una mayúscula, y un cruce exacto
+ * no enlaza un equipo que sí existe.
+ *
+ * Se hace en JS y no en SQL (`WHERE UPPER(TRIM(serial)) = ...`) porque pg-mem —el motor de los
+ * tests de este repo— no soporta `TRIM` ni `length()`: esa cláusula sería SQL válido en Postgres real
+ * pero rompería los tests.
+ */
+function normalizarSerial(s: string | null | undefined): string {
+  return (s ?? '').trim().replace(/\s+/g, ' ').toUpperCase()
+}
+
+/**
+ * Todos los equipos, indexados por serial normalizado. Una única consulta en vez de una por fila:
+ * con 149 filas, dos idas y vueltas cada una habría sido lento, y el cruce por serial de todos modos
+ * necesita normalizar en memoria (ver `normalizarSerial`).
+ *
+ * Si dos equipos DISTINTOS normalizan al mismo serial (p.ej. dos erratas distintas del mismo número
+ * de serie), no hay forma de saber cuál es el correcto. Quedarse con el primero en silencio
+ * inventaría un enlace, así que la clave se deja en `null`: significa "ambiguo, no enlazar ninguno".
+ */
+async function mapaEquiposPorSerial(db: Queryable): Promise<Map<string, string | null>> {
+  const r = await db.query('SELECT id, serial FROM equipos')
+  const mapa = new Map<string, string | null>()
+  for (const row of r.rows as Array<{ id: string; serial: string | null }>) {
+    const clave = normalizarSerial(row.serial)
+    if (!clave) continue
+    mapa.set(clave, mapa.has(clave) ? null : String(row.id))
+  }
+  return mapa
+}
+
+/** Todos los tickets, indexados por número. `number` es UNIQUE NOT NULL, así que aquí no hay ambigüedad. */
+async function mapaTicketsPorNumero(db: Queryable): Promise<Map<number, string>> {
+  const r = await db.query('SELECT id, number FROM tickets')
+  const mapa = new Map<number, string>()
+  for (const row of r.rows as Array<{ id: string; number: number }>) mapa.set(Number(row.number), String(row.id))
+  return mapa
 }
 
 /**
@@ -27,6 +69,10 @@ export interface ImportarRemisionesResumen {
  * que reimportar no duplica. Se comprueba con un SELECT previo —igual que `seedChecklist`, por ser el
  * patrón seguro en pg-mem de este repo— y el INSERT lleva además `ON CONFLICT (id) DO NOTHING` como
  * cinturón de seguridad ante una re-ejecución concurrente.
+ *
+ * Precisamente por ser idempotente, el cruce por serial/ticket tiene que acertar a la primera: una
+ * fila que hoy entre con `equipo_id` NULL no se arregla reimportando mañana con un cruce mejor,
+ * porque `ON CONFLICT DO NOTHING` la salta por existir ya. De ahí la normalización del serial.
  *
  * **`dryRun`** no escribe nada, pero recorre exactamente las mismas resoluciones (ticket, equipo,
  * perfil) que la escritura real, así que el resumen que devuelve es el mismo: sirve para que el
@@ -43,20 +89,22 @@ export async function importarRemisionesHistoricas(
   const resumen: ImportarRemisionesResumen = {
     total: filas.length, insertadas: 0, yaExistian: 0,
     conTicket: 0, sinTicket: 0, ticketNoEncontrado: 0,
-    conEquipo: 0, equipoNoEncontrado: 0,
+    conEquipo: 0, equipoNoEncontrado: 0, equipoAmbiguo: 0,
   }
 
+  // Dos consultas para las 149 filas, no 298: el resto de la resolución es en memoria.
+  const ticketsPorNumero = await mapaTicketsPorNumero(db)
+  const equiposPorSerial = await mapaEquiposPorSerial(db)
+
   for (const fila of filas) {
-    // `ticketNumero` es el número de Zoho (texto), no el id: hay que resolverlo contra tickets.number,
-    // que es integer. Algunos números del histórico ya no existen en la base.
+    // `ticketNumero` es el número de Zoho (texto), no el id: hay que resolverlo contra tickets.number.
+    // Algunos números del histórico ya no existen en la base.
     let ticketId: string | null = null
     if (fila.ticketNumero) {
       resumen.conTicket++
       const numero = Number(fila.ticketNumero)
-      const t = Number.isFinite(numero)
-        ? await db.query('SELECT id FROM tickets WHERE number = $1', [numero])
-        : { rows: [] as Array<{ id: string }> }
-      if (t.rows[0]) ticketId = String(t.rows[0].id)
+      const id = Number.isFinite(numero) ? ticketsPorNumero.get(numero) : undefined
+      if (id) ticketId = id
       else resumen.ticketNoEncontrado++
     } else {
       resumen.sinTicket++
@@ -64,9 +112,10 @@ export async function importarRemisionesHistoricas(
 
     let equipoId: string | null = null
     if (fila.serial) {
-      const e = await db.query('SELECT id FROM equipos WHERE serial = $1 LIMIT 1', [fila.serial])
-      if (e.rows[0]) { equipoId = String(e.rows[0].id); resumen.conEquipo++ }
-      else resumen.equipoNoEncontrado++
+      const match = equiposPorSerial.get(normalizarSerial(fila.serial))
+      if (match === undefined) resumen.equipoNoEncontrado++
+      else if (match === null) resumen.equipoAmbiguo++
+      else { equipoId = match; resumen.conEquipo++ }
     }
 
     const perfil = perfilChecklist(fila.marca, fila.modelo)

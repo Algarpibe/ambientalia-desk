@@ -79,6 +79,37 @@ describe('importarRemisionesHistoricas', () => {
     expect(row.equipo_id).toBeNull()
   })
 
+  // El serial del histórico es texto tecleado a mano: minúsculas y un espacio de más no deberían
+  // impedir el enlace. Este es el test que demuestra que la normalización sirve.
+  it('normaliza el serial (mayúsculas/minúsculas y espacios) para cruzar equipo_id', async () => {
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,source) VALUES ('eq-1','18a20070 ','Grimm','EDM180C','seed')")
+    const filas = [fila({ id: 'rem-h-6b', serial: '18A20070' })]
+
+    const r = await importarRemisionesHistoricas(db, { filas })
+
+    expect(r.conEquipo).toBe(1)
+    expect(r.equipoNoEncontrado).toBe(0)
+    expect(r.equipoAmbiguo).toBe(0)
+    const row = (await db.query('SELECT equipo_id FROM remisiones WHERE id=$1', ['rem-h-6b'])).rows[0]
+    expect(row.equipo_id).toBe('eq-1')
+  })
+
+  // Si dos equipos DISTINTOS normalizan al mismo serial, quedarse con el primero en silencio
+  // inventaría un enlace. Lo correcto es no enlazar ninguno y contarlo aparte.
+  it('dos equipos distintos que normalizan al mismo serial no enlazan ninguno: se cuentan en equipoAmbiguo', async () => {
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,source) VALUES ('eq-a','SN-1','Grimm','EDM180C','seed')")
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,source) VALUES ('eq-b',' sn-1','Horiba','APMA-370','seed')")
+    const filas = [fila({ id: 'rem-h-6c', serial: 'sn-1' })]
+
+    const r = await importarRemisionesHistoricas(db, { filas })
+
+    expect(r.equipoAmbiguo).toBe(1)
+    expect(r.conEquipo).toBe(0)
+    expect(r.equipoNoEncontrado).toBe(0)
+    const row = (await db.query('SELECT equipo_id FROM remisiones WHERE id=$1', ['rem-h-6c'])).rows[0]
+    expect(row.equipo_id).toBeNull()
+  })
+
   it('guarda estado ok, origen historico, empresa, persona_contacto y creado_por desde tecnico', async () => {
     const filas = [fila({ id: 'rem-h-7', tecnico: 'Julián Maya', empresa: 'SGI S.A.S.', personaContacto: 'Maycol Vásquez' })]
 
