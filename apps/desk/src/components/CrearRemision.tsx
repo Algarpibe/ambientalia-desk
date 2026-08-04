@@ -3,6 +3,7 @@ import type { RemisionNueva } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
+import { ResultadoRemision } from './ResultadoRemision'
 
 /**
  * Formulario de remisión de ENTRADA. Sustituye al formulario de n8n: los datos que allí se volvían a
@@ -17,6 +18,9 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
   const [fotos, setFotos] = useState<File[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  // Una vez enviada, manda el panel de desenlace: `enviada` deja de dejar volver al formulario, que es
+  // lo que evita crear una segunda remisión cuando el disparo a n8n falla.
+  const [enviada, setEnviada] = useState<{ id: string; errorEnvio: string | null } | null>(null)
 
   const alternar = (item: string) => setMarcados((m) => ({ ...m, [item]: !m[item] }))
 
@@ -34,8 +38,11 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
       }
       // El envío va al final, no al crear: las fotos viajan dentro del payload y hasta aquí no existían.
       setBusy('Enviando…')
-      await enviarRemision(rem.id)
-      onCreada()
+      // Un fallo del disparo NO devuelve al formulario: la remisión ya está creada y reenviarla desde
+      // el panel es lo correcto; reintentar el formulario crearía una segunda.
+      let errorEnvio: string | null = null
+      try { await enviarRemision(rem.id) } catch (e3) { errorEnvio = e3 instanceof Error ? e3.message : String(e3) }
+      setEnviada({ id: rem.id, errorEnvio })
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2))
     } finally {
@@ -45,6 +52,11 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
   const campo = 'border border-slate-200 rounded p-2 text-[13px]'
   const fijo = `${campo} w-full bg-slate-50 text-slate-600 cursor-default`
+
+  // `onCreada` recarga el ticket y cierra: se invoca al cerrar el panel, no al enviar.
+  // El `key` ata el panel a esta remisión concreta, para que su temporizador de espera no se herede
+  // si alguna vez se abre otro sin desmontar el anterior.
+  if (enviada) return <ResultadoRemision key={enviada.id} remisionId={enviada.id} errorEnvio={enviada.errorEnvio} onCerrar={onCreada} />
 
   return (
     <div className="fixed inset-0 z-[85] bg-black/40 flex items-center justify-center p-4">
