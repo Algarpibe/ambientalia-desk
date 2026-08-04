@@ -5,15 +5,27 @@ import { REMISIONES_HISTORICAS } from './remisionesHistoricasSeed'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
+/**
+ * Recuento de la importación. Los nombres distinguen **traer un dato** de **haberlo resuelto**, que no
+ * es lo mismo: en la primera corrida real, 113 filas traían número de ticket pero solo 90 enlazaron
+ * (23 apuntaban a tickets de Zoho que ya no están en la base). Un `conTicket` a secas se lee como
+ * "enlazadas" y hace sacar la conclusión contraria.
+ */
 export interface ImportarRemisionesResumen {
   total: number
   insertadas: number
   yaExistian: number
-  conTicket: number
-  sinTicket: number
+  /** Filas que traían número de ticket, hayan enlazado o no. */
+  conNumeroDeTicket: number
+  /** De las anteriores, las que resolvieron a un ticket real. */
+  enlazadasATicket: number
+  /** Filas sin número de ticket en la hoja. Es legítimo, no un error. */
+  sinNumeroDeTicket: number
+  /** Traían número pero ese ticket ya no existe en la base. */
   ticketNoEncontrado: number
-  conEquipo: number
+  enlazadasAEquipo: number
   equipoNoEncontrado: number
+  /** Dos equipos distintos cuyo serial coincide al normalizar: no se enlaza ninguno. */
   equipoAmbiguo: number
 }
 
@@ -88,8 +100,8 @@ export async function importarRemisionesHistoricas(
 
   const resumen: ImportarRemisionesResumen = {
     total: filas.length, insertadas: 0, yaExistian: 0,
-    conTicket: 0, sinTicket: 0, ticketNoEncontrado: 0,
-    conEquipo: 0, equipoNoEncontrado: 0, equipoAmbiguo: 0,
+    conNumeroDeTicket: 0, enlazadasATicket: 0, sinNumeroDeTicket: 0, ticketNoEncontrado: 0,
+    enlazadasAEquipo: 0, equipoNoEncontrado: 0, equipoAmbiguo: 0,
   }
 
   // Dos consultas para las 149 filas, no 298: el resto de la resolución es en memoria.
@@ -101,13 +113,13 @@ export async function importarRemisionesHistoricas(
     // Algunos números del histórico ya no existen en la base.
     let ticketId: string | null = null
     if (fila.ticketNumero) {
-      resumen.conTicket++
+      resumen.conNumeroDeTicket++
       const numero = Number(fila.ticketNumero)
       const id = Number.isFinite(numero) ? ticketsPorNumero.get(numero) : undefined
-      if (id) ticketId = id
+      if (id) { ticketId = id; resumen.enlazadasATicket++ }
       else resumen.ticketNoEncontrado++
     } else {
-      resumen.sinTicket++
+      resumen.sinNumeroDeTicket++
     }
 
     let equipoId: string | null = null
@@ -115,7 +127,7 @@ export async function importarRemisionesHistoricas(
       const match = equiposPorSerial.get(normalizarSerial(fila.serial))
       if (match === undefined) resumen.equipoNoEncontrado++
       else if (match === null) resumen.equipoAmbiguo++
-      else { equipoId = match; resumen.conEquipo++ }
+      else { equipoId = match; resumen.enlazadasAEquipo++ }
     }
 
     const perfil = perfilChecklist(fila.marca, fila.modelo)

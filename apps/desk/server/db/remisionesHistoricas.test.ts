@@ -22,7 +22,7 @@ describe('importarRemisionesHistoricas', () => {
 
     const r = await importarRemisionesHistoricas(db, { filas })
 
-    expect(r).toMatchObject({ total: 1, insertadas: 1, yaExistian: 0, conTicket: 1, sinTicket: 0, ticketNoEncontrado: 0 })
+    expect(r).toMatchObject({ total: 1, insertadas: 1, yaExistian: 0, conNumeroDeTicket: 1, enlazadasATicket: 1, sinNumeroDeTicket: 0, ticketNoEncontrado: 0 })
     const row = (await db.query('SELECT ticket_id FROM remisiones WHERE id=$1', ['rem-h-1'])).rows[0]
     expect(row.ticket_id).toBe('t-100')
   })
@@ -32,7 +32,7 @@ describe('importarRemisionesHistoricas', () => {
 
     const r = await importarRemisionesHistoricas(db, { filas })
 
-    expect(r).toMatchObject({ total: 1, insertadas: 1, conTicket: 1, sinTicket: 0, ticketNoEncontrado: 1 })
+    expect(r).toMatchObject({ total: 1, insertadas: 1, conNumeroDeTicket: 1, enlazadasATicket: 0, sinNumeroDeTicket: 0, ticketNoEncontrado: 1 })
     const row = (await db.query('SELECT ticket_id FROM remisiones WHERE id=$1', ['rem-h-2'])).rows[0]
     expect(row.ticket_id).toBeNull()
   })
@@ -42,7 +42,7 @@ describe('importarRemisionesHistoricas', () => {
 
     const r = await importarRemisionesHistoricas(db, { filas })
 
-    expect(r).toMatchObject({ total: 1, insertadas: 1, conTicket: 0, sinTicket: 1, ticketNoEncontrado: 0 })
+    expect(r).toMatchObject({ total: 1, insertadas: 1, conNumeroDeTicket: 0, enlazadasATicket: 0, sinNumeroDeTicket: 1, ticketNoEncontrado: 0 })
     const row = (await db.query('SELECT ticket_id FROM remisiones WHERE id=$1', ['rem-h-3'])).rows[0]
     expect(row.ticket_id).toBeNull()
   })
@@ -56,13 +56,13 @@ describe('importarRemisionesHistoricas', () => {
     expect(row.perfil).toBe('grimm_edm180')
   })
 
-  it('resuelve equipo_id por serial cuando el equipo existe, y lo cuenta en conEquipo', async () => {
+  it('resuelve equipo_id por serial cuando el equipo existe, y lo cuenta en enlazadasAEquipo', async () => {
     await db.query("INSERT INTO equipos (id,serial,marca,modelo,source) VALUES ('eq-1','18A20070','Grimm','EDM180C','seed')")
     const filas = [fila({ id: 'rem-h-5', serial: '18A20070' })]
 
     const r = await importarRemisionesHistoricas(db, { filas })
 
-    expect(r.conEquipo).toBe(1)
+    expect(r.enlazadasAEquipo).toBe(1)
     expect(r.equipoNoEncontrado).toBe(0)
     const row = (await db.query('SELECT equipo_id FROM remisiones WHERE id=$1', ['rem-h-5'])).rows[0]
     expect(row.equipo_id).toBe('eq-1')
@@ -74,7 +74,7 @@ describe('importarRemisionesHistoricas', () => {
     const r = await importarRemisionesHistoricas(db, { filas })
 
     expect(r.equipoNoEncontrado).toBe(1)
-    expect(r.conEquipo).toBe(0)
+    expect(r.enlazadasAEquipo).toBe(0)
     const row = (await db.query('SELECT equipo_id FROM remisiones WHERE id=$1', ['rem-h-6'])).rows[0]
     expect(row.equipo_id).toBeNull()
   })
@@ -87,7 +87,7 @@ describe('importarRemisionesHistoricas', () => {
 
     const r = await importarRemisionesHistoricas(db, { filas })
 
-    expect(r.conEquipo).toBe(1)
+    expect(r.enlazadasAEquipo).toBe(1)
     expect(r.equipoNoEncontrado).toBe(0)
     expect(r.equipoAmbiguo).toBe(0)
     const row = (await db.query('SELECT equipo_id FROM remisiones WHERE id=$1', ['rem-h-6b'])).rows[0]
@@ -104,7 +104,7 @@ describe('importarRemisionesHistoricas', () => {
     const r = await importarRemisionesHistoricas(db, { filas })
 
     expect(r.equipoAmbiguo).toBe(1)
-    expect(r.conEquipo).toBe(0)
+    expect(r.enlazadasAEquipo).toBe(0)
     expect(r.equipoNoEncontrado).toBe(0)
     const row = (await db.query('SELECT equipo_id FROM remisiones WHERE id=$1', ['rem-h-6c'])).rows[0]
     expect(row.equipo_id).toBeNull()
