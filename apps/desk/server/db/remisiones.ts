@@ -67,6 +67,14 @@ export async function setResultadoRemision(
   await db.query('UPDATE remisiones SET estado = $2, resultado = $3, resuelto_at = now() WHERE id = $1', [id, estado, J(resultado)])
 }
 
+/**
+ * Devuelve la remisión a `pendiente` antes de un reenvío. El estado se escribe en literal y no como
+ * parámetro porque pg-mem no tipa bien los `$n` en `SET`, y estos tests corren sobre pg-mem.
+ */
+export async function reiniciarRemision(db: Queryable, id: string): Promise<void> {
+  await db.query("UPDATE remisiones SET estado = 'pendiente', resultado = NULL, resuelto_at = NULL WHERE id = $1", [id])
+}
+
 export async function addFoto(
   db: Queryable,
   input: { remisionId: string; filename: string; contentType: string; contentB64: string; size: number },

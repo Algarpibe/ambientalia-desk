@@ -467,6 +467,38 @@ describe('POST /api/remisiones', () => {
     } finally { vi.unstubAllGlobals() }
   })
 
+  // Reenviar una remisión ya cerrada crearía un segundo documento y una segunda carpeta en Drive para
+  // el mismo equipo. Solo se reenvía lo que no llegó a buen puerto.
+  it('no reenvía una remisión ya cerrada; reenviar una fallida la devuelve a pendiente', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const fakeFetch = vi.fn(async () => new Response('{}', { status: 202 }))
+    vi.stubGlobal('fetch', fakeFetch)
+    try {
+      const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada', remisionCallbackToken: 'secreto-cb' })
+      const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+        .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+      const id = rem.body.id
+      const callback = (body: unknown) => request(app).post(`/api/remisiones/${id}/callback`)
+        .set('X-Remision-Callback', 'secreto-cb').send(body)
+      const enviar = () => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+
+      await callback({ estado: 'ok' })
+      expect((await enviar()).status).toBe(409)
+
+      await callback({ estado: 'ok_con_avisos', resultado: { avisos: [{ paso: 'el correo al técnico' }] } })
+      expect((await enviar()).status).toBe(409) // con avisos también cuenta como cerrada
+      // El detalle que manda n8n se guarda entero: es lo que el panel enseña al técnico.
+      const conAvisos = await request(app).get(`/api/remisiones/${id}`).set('Cookie', cookie)
+      expect(conAvisos.body.resultado.avisos).toEqual([{ paso: 'el correo al técnico' }])
+
+      await callback({ estado: 'error', resultado: { fallos: [{ paso: 'el PDF de la remisión' }] } })
+      expect((await enviar()).status).toBe(200)
+      const tras = await request(app).get(`/api/remisiones/${id}`).set('Cookie', cookie)
+      expect(tras.body.estado).toBe('pendiente')
+      expect(tras.body.resultado).toBeNull() // el detalle del intento anterior no se queda pegado
+    } finally { vi.unstubAllGlobals() }
+  })
+
   it('el callback exige el secreto compartido y solo acepta estados conocidos', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith({ remisionCallbackToken: 'secreto-cb' })
@@ -478,10 +510,10 @@ describe('POST /api/remisiones', () => {
     expect((await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'secreto-cb').send({ estado: 'raro' })).status).toBe(422)
 
     const ok = await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'secreto-cb')
-      .send({ estado: 'ok_con_avisos', resultado: { pdfUrl: 'https://drive/x', aviso: 'Gmail caído' } })
+      .send({ estado: 'ok_con_avisos', resultado: { pdfId: 'drive-pdf-1', avisos: [{ paso: 'el correo al técnico' }] } })
     expect(ok.status).toBe(200)
     const lista = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
-    expect(lista.body[0]).toMatchObject({ estado: 'ok_con_avisos', resultado: { pdfUrl: 'https://drive/x' } })
+    expect(lista.body[0]).toMatchObject({ estado: 'ok_con_avisos', resultado: { pdfId: 'drive-pdf-1' } })
   })
 
   // Sin secreto configurado la ruta NO puede quedar abierta: se cierra con 503.

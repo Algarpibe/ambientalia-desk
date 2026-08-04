@@ -6,7 +6,7 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision, listFotosConContenido } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision, reiniciarRemision, listFotosConContenido } from '../db/remisiones'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -131,6 +131,14 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const id = String(req.params.id)
     const rem = await getRemision(db, id)
     if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    // Reenviar una remisión ya cerrada generaría un segundo documento y una segunda carpeta en Drive
+    // para el mismo equipo. Solo se reenvía lo que no llegó a buen puerto.
+    if (rem.estado === 'ok' || rem.estado === 'ok_con_avisos') {
+      res.status(409).json({ error: 'Esta remisión ya se envió' }); return
+    }
+    // El formulario sondea el estado: si quedara el `error` del intento anterior, daría por fracasado
+    // un envío que acaba de empezar.
+    if (rem.estado === 'error') await reiniciarRemision(db, id)
     const found = await getTicketWithRefs(db, rem.ticketId)
     if (!found) { res.status(422).json({ error: 'Ticket no encontrado' }); return }
 
