@@ -478,7 +478,7 @@ describe('POST /api/remisiones', () => {
       const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
         .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
       const id = rem.body.id
-      const callback = (body: unknown) => request(app).post(`/api/remisiones/${id}/callback`)
+      const callback = (body: object) => request(app).post(`/api/remisiones/${id}/callback`)
         .set('X-Remision-Callback', 'secreto-cb').send(body)
       const enviar = () => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
 
@@ -496,6 +496,63 @@ describe('POST /api/remisiones', () => {
       const tras = await request(app).get(`/api/remisiones/${id}`).set('Cookie', cookie)
       expect(tras.body.estado).toBe('pendiente')
       expect(tras.body.resultado).toBeNull() // el detalle del intento anterior no se queda pegado
+    } finally { vi.unstubAllGlobals() }
+  })
+
+  // Escenario real: técnico en campo con mala cobertura. El servidor dispara el webhook con éxito,
+  // el técnico pierde la red antes de recibir la respuesta, y la pantalla le ofrece reintentar. Leer
+  // el estado y luego decidir no basta —dos peticiones simultáneas pasarían las dos ese filtro—, así
+  // que la garantía tiene que estar en la propia reclamación atómica, no en la comprobación previa.
+  it('dos /enviar seguidos sobre una remisión pendiente: el segundo no duplica el disparo a n8n', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const fakeFetch = vi.fn(async () => new Response('{}', { status: 202 }))
+    vi.stubGlobal('fetch', fakeFetch)
+    try {
+      const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+      const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+        .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+      const id = rem.body.id
+      const enviar = () => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+
+      expect((await enviar()).status).toBe(200)
+      expect((await enviar()).status).toBe(409) // la ventana de 60s sigue abierta: no se reclama de nuevo
+      expect(fakeFetch).toHaveBeenCalledTimes(1) // la prueba de que no se generó un segundo documento
+    } finally { vi.unstubAllGlobals() }
+  })
+
+  // Si el disparo ni siquiera llegó a salir (webhook mal configurado, por ejemplo), obligar a esperar
+  // la ventana entera de 60s para reintentar sería absurdo: no se ganó nada guardando la reclamación.
+  it('si el disparo a n8n falla, la reclamación se suelta y se puede reintentar de inmediato', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith() // sin remisionWebhookUrl: dispararRemision falla con 502, sin llamar a fetch
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+    const enviar = () => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+
+    expect((await enviar()).status).toBe(502)
+    expect((await enviar()).status).toBe(502) // no 409: si no se hubiera soltado, esto sería 409
+  })
+
+  // `resuelto_at` es justo lo que distingue un intento que ya terminó de uno todavía en vuelo, así
+  // que un error reciente se puede reenviar aunque `enviado_at` esté dentro de la ventana de 60s.
+  it('tras un callback de error se puede reenviar de inmediato aunque enviado_at sea reciente', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const fakeFetch = vi.fn(async () => new Response('{}', { status: 202 }))
+    vi.stubGlobal('fetch', fakeFetch)
+    try {
+      const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada', remisionCallbackToken: 'secreto-cb' })
+      const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+        .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+      const id = rem.body.id
+      const enviar = () => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+
+      expect((await enviar()).status).toBe(200) // deja enviado_at reciente
+      await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'secreto-cb')
+        .send({ estado: 'error', resultado: { fallos: [{ paso: 'el PDF de la remisión' }] } })
+
+      expect((await enviar()).status).toBe(200) // no 409 pese a estar dentro de la ventana
+      expect(fakeFetch).toHaveBeenCalledTimes(2)
     } finally { vi.unstubAllGlobals() }
   })
 

@@ -258,6 +258,9 @@ CREATE TABLE IF NOT EXISTS public.remisiones (
 );
 CREATE INDEX IF NOT EXISTS idx_remisiones_ticket ON remisiones (ticket_id);
 
+-- Marca la reclamacion del envio (ver reclamarEnvio en db/remisiones.ts) para que un reintento tras perder cobertura no dispare un segundo documento
+ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS enviado_at timestamptz;
+
 -- Fotos de la remision, en base64 sobre text igual que resolution_attachments
 CREATE TABLE IF NOT EXISTS public.remision_fotos (
   id text PRIMARY KEY,

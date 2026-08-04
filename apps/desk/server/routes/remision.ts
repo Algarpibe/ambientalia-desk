@@ -6,7 +6,7 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision, reiniciarRemision, listFotosConContenido } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision, reclamarEnvio, liberarEnvio, listFotosConContenido } from '../db/remisiones'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -136,9 +136,12 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (rem.estado === 'ok' || rem.estado === 'ok_con_avisos') {
       res.status(409).json({ error: 'Esta remisión ya se envió' }); return
     }
-    // El formulario sondea el estado: si quedara el `error` del intento anterior, daría por fracasado
-    // un envío que acaba de empezar.
-    if (rem.estado === 'error') await reiniciarRemision(db, id)
+    // Reclamación atómica: cubre el reintento tras perder cobertura justo después de un disparo que
+    // sí salió bien, y el doble clic o las dos pestañas. Leer el estado y decidir no es suficiente,
+    // porque dos peticiones simultáneas pasarían las dos esa comprobación.
+    if (!(await reclamarEnvio(db, id))) {
+      res.status(409).json({ error: 'Esta remisión se envió hace un momento; espera a que termine.' }); return
+    }
     const found = await getTicketWithRefs(db, rem.ticketId)
     if (!found) { res.status(422).json({ error: 'Ticket no encontrado' }); return }
 
@@ -151,6 +154,9 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     })
     const r = await dispararRemision(config, payload)
     if (!r.disparado) {
+      // Sin soltar la reclamación, un webhook mal configurado obligaría a esperar la ventana entera
+      // (60 s) para poder reintentar, aunque el disparo ni siquiera llegó a salir.
+      await liberarEnvio(db, id)
       req.log?.warn(`Remisión ${id} no disparada: ${r.motivo}`)
       res.status(502).json({ error: 'No se pudo enviar a n8n', detalle: r.motivo }); return
     }

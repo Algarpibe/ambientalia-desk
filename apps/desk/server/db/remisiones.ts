@@ -68,11 +68,35 @@ export async function setResultadoRemision(
 }
 
 /**
- * Devuelve la remisión a `pendiente` antes de un reenvío. El estado se escribe en literal y no como
- * parámetro porque pg-mem no tipa bien los `$n` en `SET`, y estos tests corren sobre pg-mem.
+ * Reclama el envío de la remisión y dice si se puede seguir adelante. Es un ÚNICO `UPDATE`
+ * condicional y no un `SELECT` seguido de un `UPDATE`: dos peticiones simultáneas —doble clic, dos
+ * pestañas, o un reintento tras perder la cobertura— pasarían las dos el filtro si se leyera
+ * primero, y cada una generaría su propio documento y su propia carpeta en Drive.
+ *
+ * Se puede reclamar si nunca se disparó, si el intento anterior ya terminó (`resuelto_at`), o si el
+ * disparo anterior lleva más de la ventana sin contestar, en cuyo caso se da por perdido. La
+ * ventana coincide con lo que la pantalla espera antes de ofrecer reintentar.
+ *
+ * De paso deja el estado en `pendiente` y limpia el desenlace anterior: si quedara el `error` del
+ * intento previo, el sondeo daría por fracasado un envío que acaba de empezar.
  */
-export async function reiniciarRemision(db: Queryable, id: string): Promise<void> {
-  await db.query("UPDATE remisiones SET estado = 'pendiente', resultado = NULL, resuelto_at = NULL WHERE id = $1", [id])
+export async function reclamarEnvio(db: Queryable, id: string, ventanaSegundos = 60): Promise<boolean> {
+  const corte = new Date(Date.now() - ventanaSegundos * 1000)
+  const r = await db.query(
+    `UPDATE remisiones
+        SET enviado_at = now(), estado = $2, resultado = NULL, resuelto_at = NULL
+      WHERE id = $1
+        AND estado <> 'ok' AND estado <> 'ok_con_avisos'
+        AND (enviado_at IS NULL OR resuelto_at IS NOT NULL OR enviado_at < $3)
+      RETURNING id`,
+    [id, 'pendiente', corte],
+  )
+  return (r.rows?.length ?? 0) > 0
+}
+
+/** Suelta la reclamación cuando el disparo no llegó a salir, para no obligar a esperar la ventana entera. */
+export async function liberarEnvio(db: Queryable, id: string): Promise<void> {
+  await db.query('UPDATE remisiones SET enviado_at = NULL WHERE id = $1', [id])
 }
 
 export async function addFoto(
