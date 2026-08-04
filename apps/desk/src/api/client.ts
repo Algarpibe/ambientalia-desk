@@ -280,6 +280,11 @@ export function fetchRemisiones(ticketId: string): Promise<RemisionConFotos[]> {
   return fetch(`/api/remisiones?ticketId=${encodeURIComponent(ticketId)}`, { credentials: 'include' }).then((r) => json<RemisionConFotos[]>(r))
 }
 
+/** Una remisión concreta con sus fotos. La usa el sondeo que espera el desenlace de n8n tras enviar. */
+export function fetchRemision(id: string): Promise<RemisionConFotos> {
+  return fetch(`/api/remisiones/${encodeURIComponent(id)}`, { credentials: 'include' }).then((r) => json<RemisionConFotos>(r))
+}
+
 export interface CrearRemisionPayload { ticketId: string; fecha: string; incluye: string[]; observaciones?: string }
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {
