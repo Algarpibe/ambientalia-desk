@@ -131,7 +131,9 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
           <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 flex flex-col gap-1">
             <span className="font-bold">Remisión creada, con avisos</span>
             <ul className="list-disc ml-4">
-              {pasos(resultado?.avisos).map((a, i) => <li key={i}>No se pudo completar {a.paso}.</li>)}
+              {pasos(resultado?.avisos).map((a, i) => (
+                <li key={i}>No se pudo completar {a.paso}.{a.mensaje && <span className="opacity-70"> {a.mensaje}</span>}</li>
+              ))}
             </ul>
             <span>El documento sí se generó; solo falló el aviso.</span>
             {carpeta}
@@ -142,7 +144,12 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
           <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2 flex flex-col gap-1">
             <span className="font-bold">No se pudo generar la remisión</span>
             <ul className="list-disc ml-4">
-              {pasos(resultado?.fallos).map((f, i) => <li key={i}>Falló {f.paso}.</li>)}
+              {/* El mensaje viene de n8n y suele ser tecnico y en ingles. Se enseña igual, atenuado: sin el,
+                  "falló el registro fotográfico" no distingue que no subiera ninguna foto de que fallara
+                  una de tres, y esa diferencia es la que decide si hay que rehacer la remisión. */}
+              {pasos(resultado?.fallos).map((f, i) => (
+                <li key={i}>Falló {f.paso}.{f.mensaje && <span className="opacity-70"> {f.mensaje}</span>}</li>
+              ))}
             </ul>
           </div>
         )}
