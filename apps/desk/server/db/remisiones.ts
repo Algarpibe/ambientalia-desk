@@ -14,7 +14,7 @@ function toRemision(r: Record<string, unknown>): Remision {
     incluye: typeof r.incluye === 'string' ? JSON.parse(r.incluye) : ((r.incluye as string[]) ?? []),
     observaciones: (r.observaciones as string) ?? null, creadoPor: (r.creado_por as string) ?? null,
     estado: String(r.estado) as Remision['estado'],
-    resultado: typeof r.resultado === 'string' ? JSON.parse(r.resultado) : ((r.resultado as Record<string, unknown>) ?? null),
+    resultado: typeof r.resultado === 'string' ? JSON.parse(r.resultado) : ((r.resultado as Remision['resultado']) ?? null),
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at ?? ''),
   }
 }

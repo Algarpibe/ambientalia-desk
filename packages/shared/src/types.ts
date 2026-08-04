@@ -298,6 +298,25 @@ export interface ActivityListItem { id: string; subject: string; status: string;
 
 export interface RemisionFoto { id: string; filename: string; contentType: string; size: number }
 
+/** Un paso del flujo de n8n que no salió bien, ya redactado para enseñárselo al técnico. */
+export interface RemisionPasoFallido { paso: string; mensaje?: string }
+
+/**
+ * Detalle que `Code Resumen Entrada` del flujo n8n adjunta al callback. Todos los campos son
+ * opcionales a propósito: las remisiones anteriores a este cambio guardaron otra forma, y una
+ * remisión vieja no debe romper la pantalla que la muestra.
+ */
+export interface RemisionResultado {
+  carpetaId?: string | null
+  carpetaUrl?: string | null
+  docId?: string | null
+  pdfId?: string | null
+  fotos?: { recibidas: number; subidas: number }
+  avisos?: RemisionPasoFallido[]
+  fallos?: RemisionPasoFallido[]
+  ejecucionId?: string | null
+}
+
 /**
  * Remisión de entrada registrada en la app. `estado` refleja el desenlace del flujo n8n:
  * `pendiente` mientras no ha contestado, y `ok_con_avisos` cuando la remisión se generó pero falló
@@ -316,7 +335,7 @@ export interface Remision {
   observaciones: string | null
   creadoPor: string | null
   estado: 'pendiente' | 'ok' | 'ok_con_avisos' | 'error'
-  resultado: Record<string, unknown> | null
+  resultado: RemisionResultado | null
   createdAt: string
 }
 
