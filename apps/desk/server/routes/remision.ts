@@ -108,11 +108,19 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const desconocidos = pedidos.filter((i) => !validos.has(i))
     if (desconocidos.length) { res.status(422).json({ error: `Ítems fuera del checklist: ${desconocidos.join(', ')}` }); return }
 
+    // Empresa y persona de contacto se guardan EN la remisión, no se derivan del ticket cada vez que
+    // se muestra: la remisión es un documento, no una vista. Si el ticket cambia de cliente, o el
+    // cliente se renombra en Books, la remisión debe seguir diciendo a qué empresa y a qué persona
+    // correspondió cuando se hizo. Mismo criterio que `buildRemisionPayload` en remisionWebhook.ts,
+    // que ya manda estos dos campos a n8n a partir del mismo `getClient`.
+    const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
+
     const id = await createRemision(db, {
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial: eq?.serial ?? found.row.serial ?? null,
       incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
       creadoPor: req.user?.name ?? null,
+      empresa: cliente?.companyName ?? null, personaContacto: cliente?.personaContacto ?? null,
     })
     // NO se dispara el flujo aquí: las fotos se suben después, contra la remisión ya creada, así
     // que en este punto todavía no existen y el documento saldría sin ellas. El envío es un paso

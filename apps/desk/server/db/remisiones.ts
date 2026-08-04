@@ -32,16 +32,18 @@ export interface CreateRemisionInput {
   incluye: string[]
   observaciones: string | null
   creadoPor: string | null
+  empresa: string | null
+  personaContacto: string | null
 }
 
 /** Crea la remisión en estado `pendiente`: el flujo de n8n aún no ha respondido. */
 export async function createRemision(db: Queryable, input: CreateRemisionInput): Promise<string> {
   const id = `rem-${randomUUID()}`
   await db.query(
-    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado)
-     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente')`,
+    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto)
+     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12)`,
     [id, input.ticketId, input.fecha, input.tipoServicio, input.perfil, input.equipoId, input.serial,
-      J(input.incluye), input.observaciones, input.creadoPor],
+      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto],
   )
   return id
 }

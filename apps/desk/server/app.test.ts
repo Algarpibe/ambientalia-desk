@@ -419,6 +419,20 @@ describe('POST /api/remisiones', () => {
     expect(lista.body[0].fotos).toEqual([])
   })
 
+  // Autocontenida: la remisión guarda empresa y persona de contacto del cliente TAL COMO ERAN al
+  // crearla, tomados de Books vía el mismo criterio que usa buildRemisionPayload al enviar a n8n.
+  it('guarda empresa y personaContacto del cliente del ticket al crearla', async () => {
+    const cookie = await adminCookie(); await preparar()
+    await db.query("UPDATE books.contacts SET company_name = 'SERAMBIENTE S.A.S.', persona_contacto = 'Edgar Barrera' WHERE contact_id = 'cli1'")
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: ['Manuales'] })
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ empresa: 'SERAMBIENTE S.A.S.', personaContacto: 'Edgar Barrera' })
+    const lista = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
+    expect(lista.body[0]).toMatchObject({ empresa: 'SERAMBIENTE S.A.S.', personaContacto: 'Edgar Barrera' })
+  })
+
   // El perfil decide qué checklist aplica, así que no puede venir del navegador: se recalcula aquí.
   it('rechaza ítems que no estén en el checklist del perfil', async () => {
     const cookie = await adminCookie(); await preparar()
