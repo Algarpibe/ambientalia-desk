@@ -121,7 +121,11 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
           </div>
         )}
 
-        {nota && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{nota}</div>}
+        {/* Gris, no rojo: un tropiezo de red al sondear es lo menos concluyente que puede aparecer
+            aquí —ni siquiera dice que el envío vaya mal, solo que esta lectura no llegó— y estaba
+            gritando más fuerte que el ámbar de arriba. La escala de la pantalla queda así: gris el
+            tropiezo pasajero, ámbar lo que no se ha podido confirmar, rojo el veredicto de n8n. */}
+        {nota && <div className="text-[12px] text-slate-600 bg-slate-50 border border-slate-200 rounded p-2">{nota}</div>}
 
         {agotado && (
           <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
