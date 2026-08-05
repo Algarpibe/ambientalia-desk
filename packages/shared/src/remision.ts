@@ -51,3 +51,34 @@ export const ESPERA_DESENLACE_SEGUNDOS = 60
  * sigue vivo. Con la ventana más larga, ese reintento recibe un 409 que dice la verdad: sigue en curso.
  */
 export const VENTANA_REENVIO_SEGUNDOS = 120
+
+/**
+ * Etiquetas en español del `estado` de una remisión. Viven aquí y no en la capa de presentación
+ * porque las necesitan las dos orillas: las pantallas de remisiones y la historia del ticket, que se
+ * compone en el servidor. Solo el TEXTO — las clases de Tailwind se quedan en el cliente, que es el
+ * único que las entiende.
+ *
+ * Tipado como `Record<string, string>` y no `Record<Remision['estado'], string>` a propósito:
+ * `estado` sale de Postgres con un cast sin validar y la columna no tiene `CHECK`, así que el tipo
+ * promete uno de estos cuatro valores pero la base no lo garantiza. Indexarlo debe poder fallar sin
+ * lanzar — de ahí `ETIQUETA_ESTADO_REMISION_DESCONOCIDA`.
+ */
+export const ETIQUETA_ESTADO_REMISION: Record<string, string> = {
+  pendiente: 'Enviando…',
+  ok: 'Creada',
+  ok_con_avisos: 'Creada con avisos',
+  error: 'Falló',
+}
+export const ETIQUETA_ESTADO_REMISION_DESCONOCIDA = 'Estado desconocido'
+
+/**
+ * `carpetaUrl` llega de n8n por el callback, sin validar, y acaba en un `href`. El callback está tras
+ * un secreto compartido, así que el riesgo es bajo, pero es la única entrada de estos paneles que
+ * llega a un atributo peligroso: si el secreto se filtrara, un `javascript:` colado ahí se ejecutaría
+ * al clic. Exigir `https://` cierra esa puerta sin coste — mejor sin enlace que con uno malo.
+ *
+ * En shared porque ahora la usan el cliente (paneles de remisión) y el servidor (historia del ticket).
+ */
+export function urlSegura(v: string | null | undefined): string | null {
+  return typeof v === 'string' && v.startsWith('https://') ? v : null
+}
