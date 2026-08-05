@@ -44,6 +44,10 @@ const ESTADO_FILTROS: { value: string; label: string }[] = [
   { value: 'error', label: 'Falló' },
   { value: 'historico', label: 'Importada del histórico' },
 ]
+// Solo tiene sentido cuando "Ver anuladas" está activo: sin eso el servidor ni siquiera manda
+// anuladas, así que el filtro estaría siempre vacío. Aparte de la lista de arriba —no dentro de
+// ella— porque es la única opción condicionada al interruptor.
+const FILTRO_ANULADA = { value: 'anulada', label: 'Anuladas' }
 const ORIGEN_FILTROS: { value: string; label: string }[] = [
   { value: 'todos', label: 'Todos los orígenes' },
   { value: 'app', label: 'App' },
@@ -115,6 +119,16 @@ export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => voi
   const [accionandoId, setAccionandoId] = useState<string | null>(null)
   const [accionError, setAccionError] = useState<string | null>(null)
 
+  // "Anuladas" solo aparece como opción de filtro con el interruptor activo: es el caso de uso
+  // real (se activa "Ver anuladas" precisamente para buscarlas, no para verlas mezcladas), y sin
+  // el interruptor el filtro quedaría siempre vacío porque el servidor ni las manda.
+  const estadoFiltros = verAnuladas ? [...ESTADO_FILTROS, FILTRO_ANULADA] : ESTADO_FILTROS
+
+  function alternarVerAnuladas(v: boolean) {
+    setVerAnuladas(v)
+    if (!v && estadoFiltro === 'anulada') setEstadoFiltro('todos') // si no, el filtro queda inservible y nadie ve por qué la tabla está vacía
+  }
+
   const filas = useMemo(() => {
     const ql = q.trim().toLowerCase()
     return (data ?? []).filter((r) => {
@@ -158,14 +172,14 @@ export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => voi
           className="ml-3 border border-slate-200 rounded px-3 py-1.5 text-[13px] w-[320px]"
         />
         <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value)} className="border border-slate-200 rounded px-2 py-1.5 text-[13px] text-slate-600">
-          {ESTADO_FILTROS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+          {estadoFiltros.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
         <select value={origenFiltro} onChange={(e) => setOrigenFiltro(e.target.value)} className="border border-slate-200 rounded px-2 py-1.5 text-[13px] text-slate-600">
           {ORIGEN_FILTROS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
         {isAdmin && (
           <label className="flex items-center gap-1.5 text-[13px] text-slate-600 select-none">
-            <input type="checkbox" className="accent-blue-600" checked={verAnuladas} onChange={(e) => setVerAnuladas(e.target.checked)} />
+            <input type="checkbox" className="accent-blue-600" checked={verAnuladas} onChange={(e) => alternarVerAnuladas(e.target.checked)} />
             Ver anuladas
           </label>
         )}
