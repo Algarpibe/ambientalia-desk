@@ -11,6 +11,20 @@ function fmtFecha(v: string): string {
   return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
 }
 
+/**
+ * La hora que la columna Fecha no puede dar por sí sola: `fecha` es un `date` en la base, sin hora.
+ * La única que existe es `created_at`, y solo significa "cuándo se hizo la remisión" en las de la
+ * app. En una histórica es el instante en que se importó la hoja de Google —las 149 comparten
+ * minuto—, así que pintarla ahí sería presentar un dato de la migración como si fuera del servicio.
+ * Devuelve cadena vacía cuando no hay hora que enseñar.
+ */
+function horaVisible(r: RemisionListado): string {
+  if (r.origen !== 'app') return ''
+  const d = new Date(r.createdAt)
+  if (Number.isNaN(d.getTime())) return ''
+  return new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit' }).format(d)
+}
+
 type EstadoVisual = { key: string; label: string; className: string }
 
 /**
@@ -85,9 +99,21 @@ function csvCampo(v: string): string {
  * columnas que la tabla. El BOM UTF-8 al inicio es la parte que nadie nota hasta que falta: sin
  * él, Excel abre el archivo con la codificación local y "Diagnóstico" sale como "DiagnÃ³stico".
  */
+/**
+ * La fecha para el CSV. Lleva la hora cuando la hay —mismo criterio que la tabla— pero en 24h
+ * pegada al ISO (`2026-07-24 14:41`) y no en el formato de pantalla: así Excel lo sigue leyendo
+ * como fecha-hora y se puede ordenar por él, que es media razón para exportar.
+ */
+function fechaCSV(r: RemisionListado): string {
+  if (r.origen !== 'app') return r.fecha
+  const d = new Date(r.createdAt)
+  if (Number.isNaN(d.getTime())) return r.fecha
+  return `${r.fecha} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 function exportarCSV(filas: RemisionListado[]) {
   const cuerpo = filas.map((r) => [
-    r.tecnico ?? '', r.fecha, r.empresa ?? '', r.personaContacto ?? '', r.marca ?? '', r.modelo ?? '',
+    r.tecnico ?? '', fechaCSV(r), r.empresa ?? '', r.personaContacto ?? '', r.marca ?? '', r.modelo ?? '',
     r.serial ?? '', r.incluye.join(', '), r.tipoServicio ?? '', ticketNumeroPlano(r), r.observaciones ?? '',
     estadoVisual(r).label, origenLabel(r.origen),
   ])
@@ -116,6 +142,10 @@ export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => voi
   const [q, setQ] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState('todos')
   const [origenFiltro, setOrigenFiltro] = useState('todos')
+  // Rango de fechas, ambos extremos incluidos y ambos opcionales: solo "Desde" es "de ahí en
+  // adelante", solo "Hasta" es "hasta ese día". Vacío = sin límite por ese lado.
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
   const [accionandoId, setAccionandoId] = useState<string | null>(null)
   const [accionError, setAccionError] = useState<string | null>(null)
 
@@ -132,12 +162,18 @@ export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => voi
   const filas = useMemo(() => {
     const ql = q.trim().toLowerCase()
     return (data ?? []).filter((r) => {
+      // Se comparan las cadenas tal cual, sin `new Date`: `r.fecha` y lo que da un `input[type=date]`
+      // son los dos "AAAA-MM-DD", y en ese formato el orden alfabético ES el cronológico. Convertir
+      // a Date solo abriría la puerta al corrimiento de un día por zona horaria que `fmtFecha` ya
+      // esquiva.
+      if (desde && r.fecha < desde) return false
+      if (hasta && r.fecha > hasta) return false
       if (origenFiltro !== 'todos' && r.origen !== origenFiltro) return false
       if (estadoFiltro !== 'todos' && estadoVisual(r).key !== estadoFiltro) return false
       if (!ql) return true
       return [r.empresa, r.serial, r.tecnico, r.ticketNumero, r.observaciones].some((v) => (v ?? '').toLowerCase().includes(ql))
     })
-  }, [data, q, estadoFiltro, origenFiltro])
+  }, [data, q, estadoFiltro, origenFiltro, desde, hasta])
 
   // Confirmación previa porque a ojos de quien usa la app es destructiva —desaparece de la
   // pantalla—, aunque por dentro sea reversible; el aviso de Drive evita que alguien crea que
@@ -177,6 +213,31 @@ export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => voi
         <select value={origenFiltro} onChange={(e) => setOrigenFiltro(e.target.value)} className="border border-slate-200 rounded px-2 py-1.5 text-[13px] text-slate-600">
           {ORIGEN_FILTROS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
+        {/* `max`/`min` cruzados impiden componer un rango invertido, que solo sabría dar una tabla
+            vacía sin explicar por qué. */}
+        <label className="flex items-center gap-1.5 text-[13px] text-slate-600 whitespace-nowrap">
+          Desde
+          <input
+            type="date" value={desde} max={hasta || undefined}
+            onChange={(e) => setDesde(e.target.value)}
+            className="border border-slate-200 rounded px-2 py-1.5 text-[13px] text-slate-600"
+          />
+        </label>
+        <label className="flex items-center gap-1.5 text-[13px] text-slate-600 whitespace-nowrap">
+          Hasta
+          <input
+            type="date" value={hasta} min={desde || undefined}
+            onChange={(e) => setHasta(e.target.value)}
+            className="border border-slate-200 rounded px-2 py-1.5 text-[13px] text-slate-600"
+          />
+        </label>
+        {/* Solo cuando hay algo que limpiar: vaciar un `input[type=date]` a mano es incómodo, y un
+            rango olvidado se lee como "no hay remisiones" en vez de "las escondiste tú". */}
+        {(desde || hasta) && (
+          <button onClick={() => { setDesde(''); setHasta('') }} className="text-[12px] text-[#2C7BE5] hover:underline">
+            Limpiar fechas
+          </button>
+        )}
         {isAdmin && (
           <label className="flex items-center gap-1.5 text-[13px] text-slate-600 select-none">
             <input type="checkbox" className="accent-blue-600" checked={verAnuladas} onChange={(e) => alternarVerAnuladas(e.target.checked)} />
@@ -215,11 +276,15 @@ export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => voi
               {filas.map((r) => {
                 const badge = estadoVisual(r)
                 const incluye = r.incluye.join(', ')
+                const hora = horaVisible(r)
                 const anulando = accionandoId === r.id
                 return (
                   <tr key={r.id} className={`border-b border-slate-100 hover:bg-slate-50 ${r.anuladaAt ? 'opacity-60' : ''}`}>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.tecnico}</td>
-                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{fmtFecha(r.fecha)}</td>
+                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
+                      {fmtFecha(r.fecha)}
+                      {hora && <span className="text-slate-400"> · {hora}</span>}
+                    </td>
                     <td className="px-3 py-2 text-slate-600 max-w-[200px] truncate" title={r.empresa || undefined}>{r.empresa}</td>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.personaContacto}</td>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.marca}</td>

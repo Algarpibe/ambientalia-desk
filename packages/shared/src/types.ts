@@ -386,6 +386,12 @@ export interface RemisionNueva {
 export interface RemisionListado {
   id: string
   fecha: string
+  /**
+   * Cuándo se creó la fila. Es la ÚNICA hora que existe: `fecha` es un `date` sin hora. Solo
+   * significa "cuándo se hizo la remisión" en las de la app; en una histórica es el instante de la
+   * importación, así que la pantalla no la enseña ahí.
+   */
+  createdAt: string
   tecnico: string | null
   empresa: string | null
   personaContacto: string | null

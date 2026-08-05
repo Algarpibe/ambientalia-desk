@@ -77,7 +77,7 @@ export async function listRemisionesByTicket(db: Queryable, ticketId: string): P
 export async function listRemisionesListado(db: Queryable, incluirAnuladas = false): Promise<RemisionListado[]> {
   const filtro = incluirAnuladas ? '' : 'WHERE r.anulada_at IS NULL'
   const r = await db.query(
-    `SELECT r.id, r.fecha, r.creado_por, r.empresa, r.persona_contacto, r.serial, r.incluye,
+    `SELECT r.id, r.fecha, r.created_at, r.creado_por, r.empresa, r.persona_contacto, r.serial, r.incluye,
             r.tipo_servicio, r.observaciones, r.estado, r.origen, r.ticket_id, r.anulada_at, r.anulada_por,
             e.marca, e.modelo, t.number AS ticket_number
        FROM remisiones r
@@ -90,6 +90,8 @@ export async function listRemisionesListado(db: Queryable, incluirAnuladas = fal
   return r.rows.map((x: Record<string, unknown>) => ({
     id: String(x.id),
     fecha: x.fecha instanceof Date ? x.fecha.toISOString().slice(0, 10) : String(x.fecha ?? ''),
+    // La hora del servicio no está en `fecha` (es un `date`): esta es la única que hay.
+    createdAt: isoOrNull(x.created_at) ?? '',
     tecnico: (x.creado_por as string) ?? null,
     empresa: (x.empresa as string) ?? null,
     personaContacto: (x.persona_contacto as string) ?? null,

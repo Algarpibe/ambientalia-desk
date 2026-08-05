@@ -877,6 +877,21 @@ describe('GET /api/remisiones/listado', () => {
     expect(res.body.map((r: any) => r.id)).toEqual(['rem-l6', 'rem-l7', 'rem-l5'])
   })
 
+  // `fecha` es un `date`: no tiene hora. La única hora que existe es `created_at`, y la pantalla la
+  // muestra solo en las de la app (en una histórica sería la hora de la importación, no la del
+  // servicio). Por eso el listado tiene que traerla, aunque la tabla decida cuándo pintarla.
+  it('trae createdAt, que es donde vive la hora que `fecha` no tiene', async () => {
+    await db.query(
+      `INSERT INTO remisiones (id, tipo, fecha, creado_por, estado, origen, created_at)
+       VALUES ('rem-l9', 'entrada', '2026-07-24', 'Julián Maya', 'ok', 'app', '2026-07-24T19:41:00Z')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(res.body[0].id).toBe('rem-l9')
+    expect(new Date(res.body[0].createdAt).toISOString()).toBe('2026-07-24T19:41:00.000Z')
+  })
+
   it('401 sin sesión', async () => {
     const { app } = appWith()
     expect((await request(app).get('/api/remisiones/listado')).status).toBe(401)
