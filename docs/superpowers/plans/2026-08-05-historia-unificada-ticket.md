@@ -724,7 +724,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
 npx vitest run apps/desk/server/db/historial.test.ts
 ```
 
-Esperado: PASS, 9 tests.
+Esperado: PASS, 10 tests (los `it()` del bloque de arriba; cuéntalos si el número no cuadra).
 
 ---
 
@@ -773,7 +773,7 @@ Esperado: typecheck limpio (el error que la Tarea 3 dejó abierto se cierra aqu�
 build ok.
 
 Cuentas acumuladas desde la base de **376**: +3 (Tarea 1) +1 (Tarea 2) −1 (el test del fallback que
-la Tarea 3 borra) +9 (Tarea 4) = **388 pasando / 2 saltados**.
+la Tarea 3 borra) +10 (Tarea 4) = **389 pasando / 2 saltados**.
 
 - [ ] **Paso 4: commit**
 
@@ -840,7 +840,7 @@ falta.
 npm test
 ```
 
-Esperado: **388 pasando / 2 saltados** — el `describe` viejo tenía dos tests y ahora tiene uno.
+Esperado: **390 pasando / 2 saltados** — el `describe` viejo tenía un test y ahora tiene dos.
 
 Si el `describe` original tenía otro número de tests, ajusta la cuenta pero **no** borres cobertura:
 si alguno de los que sustituyes probaba algo que este no cubre, consérvalo aparte.
