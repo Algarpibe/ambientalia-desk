@@ -170,7 +170,7 @@ describe('GET /api/tickets?scope=closed (paginado)', () => {
 })
 
 describe('GET /api/tickets/:id/history', () => {
-  it('mapea el historial; fallback a transiciones; 401 sin sesión', async () => {
+  it('mapea el historial de Zoho; un ticket solo con transiciones devuelve las suyas; 401 sin sesión', async () => {
     const cookie = await adminCookie()
     await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
     await db.query("INSERT INTO ticket_history (id,ticket_id,event_name,event_time,actor_name,raw) VALUES ('h1','t1','CommentAdded',now(),'Ana',$1)",
@@ -179,10 +179,32 @@ describe('GET /api/tickets/:id/history', () => {
     const res = await request(app).get('/api/tickets/t1/history').set('Cookie', cookie)
     expect(res.status).toBe(200)
     expect(res.body[0]).toMatchObject({ title: 'Ana ha publicado un comentario' })
+    // Este segundo tramo se llamaba "fallback" y ya no lo es: la historia de Zoho y las transiciones
+    // salen JUNTAS, no una en lugar de la otra. Lo que sigue comprobando es que un ticket sin nada de
+    // Zoho no se queda mudo — que era el síntoma que el nombre viejo describía al revés.
     await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t2',2,'B','Ingresado')")
     await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('t2','Habilitar','OV asignada','Ingresado','Admin',now())")
     const f = await request(app).get('/api/tickets/t2/history').set('Cookie', cookie)
     expect(f.body[0]).toMatchObject({ title: 'Transición: Habilitar' })
+    expect((await request(app).get('/api/tickets/t1/history')).status).toBe(401)
+  })
+
+  it('compone Zoho + transiciones + remisiones en una sola línea de tiempo', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
+    await db.query("INSERT INTO ticket_history (id,ticket_id,event_name,event_time,actor_name,raw) VALUES ('h1','t1','CommentAdded','2026-08-01T10:00:00Z','Ana',$1)",
+      [JSON.stringify({ eventName: 'CommentAdded', actor: { name: 'Ana' }, eventInfo: [{ propertyName: 'CommentType', propertyValue: 'Private' }] })])
+    await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('t1','Habilitar','OV asignada','Ingresado','Admin','2026-08-02T10:00:00Z')")
+    await db.query("INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,created_at) VALUES ('rh1','t1','entrada','2026-08-03','Julián','pendiente','2026-08-03T10:00:00Z')")
+
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets/t1/history').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.map((e: { title: string }) => e.title)).toEqual([
+      'Remisión de entrada creada',
+      'Transición: Habilitar',
+      'Ana ha publicado un comentario',
+    ])
     expect((await request(app).get('/api/tickets/t1/history')).status).toBe(401)
   })
 })
