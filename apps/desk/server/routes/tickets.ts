@@ -5,7 +5,7 @@ import type { Sync } from '@ambientalia/zoho-sync/sync'
 import multer from 'multer'
 import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicket, rowToTicketDetail, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
-import { getTicketHistory } from '@ambientalia/zoho-sync/db/history'
+import { getHistorialTicket } from '../db/historial'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -114,14 +114,19 @@ export function registerTicketRoutes(
 
   app.get('/api/tickets/:id/history', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    let hist = await getTicketHistory(db, id)
-    if (hist.length === 0) {
+    const primero = await getHistorialTicket(db, id)
+    // Un ticket gestionado por la app no existe en Zoho: preguntarle por su historia sería un 404 en
+    // cada apertura. Antes bastaba con mirar si la historia venía vacía, pero con la unión eso ya no
+    // distingue nada —siempre trae al menos la transición de creación—.
+    if (primero.sincronizarConZoho === 'ahora') {
       try { await sync.syncTicketHistory(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncTicketHistory (lazy) falló') }
-      hist = await getTicketHistory(db, id)
-    } else {
+      res.json((await getHistorialTicket(db, id)).eventos)
+      return
+    }
+    if (primero.sincronizarConZoho === 'en-segundo-plano') {
       void sync.syncTicketHistory(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncTicketHistory bg falló'))
     }
-    res.json(hist)
+    res.json(primero.eventos)
   }))
 
   app.get('/api/tickets/:id/activities', asyncHandler(async (req, res) => {

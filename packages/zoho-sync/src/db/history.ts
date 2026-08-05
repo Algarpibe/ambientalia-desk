@@ -18,19 +18,15 @@ export async function upsertHistoryEvent(db: Queryable, ticketId: string, raw: a
   )
 }
 
-export async function getTicketHistory(db: Queryable, ticketId: string): Promise<HistoryEvent[]> {
+/**
+ * Solo los eventos que vinieron de Zoho. NO cae a `ticket_transitions`: componer la historia
+ * completa es trabajo de `apps/desk/server/db/historial.ts`, porque mezcla tablas de la app Desk
+ * —`remisiones`— que este paquete, que es el motor de sync de Zoho, no tiene por qué conocer.
+ *
+ * El `else` que había aquí ocultaba datos: un ticket que vino de Zoho y luego se movió en la app
+ * enseñaba las transiciones de Zoho y NINGUNA de la app.
+ */
+export async function getZohoHistoryEvents(db: Queryable, ticketId: string): Promise<HistoryEvent[]> {
   const r = await db.query('SELECT raw FROM ticket_history WHERE ticket_id=$1 ORDER BY event_time DESC NULLS LAST', [ticketId])
-  const rows = r.rows as any[]
-  if (rows.length > 0) return rows.map((x) => mapHistoryEvent(typeof x.raw === 'string' ? JSON.parse(x.raw) : x.raw))
-  const tr = await db.query('SELECT transition_name, from_status, to_status, area, performed_by, performed_at FROM ticket_transitions WHERE ticket_id=$1 ORDER BY performed_at DESC', [ticketId])
-  return (tr.rows as any[]).map((t) => ({
-    eventName: 'AppTransition',
-    time: t.performed_at ?? null,
-    actor: t.performed_by ?? 'App',
-    title: `Transición: ${t.transition_name ?? ''}`.trim(),
-    details: [
-      { label: 'Estado', value: `${t.from_status ?? '—'} → ${t.to_status ?? '—'}` },
-      ...(t.area ? [{ label: 'Área', value: String(t.area) }] : []),
-    ],
-  }))
+  return (r.rows as any[]).map((x) => mapHistoryEvent(typeof x.raw === 'string' ? JSON.parse(x.raw) : x.raw))
 }
