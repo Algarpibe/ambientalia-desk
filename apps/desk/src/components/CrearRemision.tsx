@@ -3,6 +3,7 @@ import type { RemisionNueva } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
+import { ejecutarEnvio, type EstadoEnvio, type ResultadoEnvio } from '../lib/envioRemision'
 import { ResultadoRemision } from './ResultadoRemision'
 
 /**
@@ -18,36 +19,56 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
   const [fotos, setFotos] = useState<File[]>([])
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  // Una vez enviada, manda el panel de desenlace: `enviada` deja de dejar volver al formulario, que es
-  // lo que evita crear una segunda remisión cuando el disparo a n8n falla.
-  const [enviada, setEnviada] = useState<{ id: string; errorEnvio: string | null } | null>(null)
+  // Lo que sobrevive a un fallo a mitad: sin esto, el id de la remisión ya creada se perdía al volver
+  // al formulario y el siguiente intento creaba una segunda.
+  const [envio, setEnvio] = useState<EstadoEnvio>({ remisionId: null, fotosSubidas: 0 })
+  const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
 
   const alternar = (item: string) => setMarcados((m) => ({ ...m, [item]: !m[item] }))
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
+  /**
+   * `estado` viaja como parámetro y no se lee de `envio` porque hay que poder invocarlo con un estado
+   * recién calculado, antes de que React haya aplicado el `setEnvio` correspondiente.
+   */
+  async function ejecutar(estado: EstadoEnvio, omitirFotosPendientes: boolean) {
     setErr(null)
-    setBusy('Guardando…')
     try {
-      const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
-      const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined })
-      // Las fotos van después, contra la remisión ya creada: si una falla, la remisión no se pierde.
-      for (const [i, f] of fotos.entries()) {
-        setBusy(`Subiendo foto ${i + 1} de ${fotos.length}…`)
-        await subirFotoRemision(rem.id, await redimensionarImagen(f))
-      }
-      // El envío va al final, no al crear: las fotos viajan dentro del payload y hasta aquí no existían.
-      setBusy('Enviando…')
-      // Un fallo del disparo NO devuelve al formulario: la remisión ya está creada y reenviarla desde
-      // el panel es lo correcto; reintentar el formulario crearía una segunda.
-      let errorEnvio: string | null = null
-      try { await enviarRemision(rem.id) } catch (e3) { errorEnvio = e3 instanceof Error ? e3.message : String(e3) }
-      setEnviada({ id: rem.id, errorEnvio })
-    } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : String(e2))
+      const r = await ejecutarEnvio(estado, fotos.length, {
+        crear: async () => {
+          const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
+          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined })
+          return rem.id
+        },
+        subirFoto: async (id, i) => { await subirFotoRemision(id, await redimensionarImagen(fotos[i])) },
+        enviar: (id) => enviarRemision(id),
+        onAvance: setEnvio,
+        onProgreso: setBusy,
+      }, { omitirFotosPendientes })
+      setResultado(r)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
     } finally {
       setBusy(null)
     }
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault()
+    void ejecutar(envio, false)
+  }
+
+  /**
+   * La remisión ya existe: los datos del formulario están guardados y no se pueden cambiar desde aquí,
+   * así que se congelan. Cambiarlos daría la impresión de editar algo que ya no se va a reescribir.
+   */
+  const creada = envio.remisionId !== null
+  const fotosPendientes = fotos.length - envio.fotosSubidas
+
+  // Salir dejando una remisión creada la deja en `pendiente` sin enviar. No se puede borrar desde aquí
+  // (anular es solo de administradores), así que al menos hay que decirlo.
+  function cancelar() {
+    if (creada && !confirm('La remisión ya se creó y quedaría sin enviar. Aparecerá en la pantalla de Remisiones y un administrador puede anularla. ¿Salir de todos modos?')) return
+    onClose()
   }
 
   const campo = 'border border-slate-200 rounded p-2 text-[13px]'
@@ -56,7 +77,7 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
   // `onCreada` recarga el ticket y cierra: se invoca al cerrar el panel, no al enviar.
   // El `key` ata el panel a esta remisión concreta, para que su temporizador de espera no se herede
   // si alguna vez se abre otro sin desmontar el anterior.
-  if (enviada) return <ResultadoRemision key={enviada.id} remisionId={enviada.id} errorEnvio={enviada.errorEnvio} onCerrar={onCreada} />
+  if (resultado) return <ResultadoRemision key={resultado.remisionId} remisionId={resultado.remisionId} errorEnvio={resultado.errorEnvio} onCerrar={onCreada} />
 
   return (
     <div className="fixed inset-0 z-[85] bg-black/40 flex items-center justify-center p-4">
@@ -75,7 +96,7 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 uppercase">Fecha</label>
-                <input type="date" className={`${campo} w-full`} value={fecha} onChange={(e) => setFecha(e.target.value)} required />
+                <input type="date" className={`${campo} w-full`} value={fecha} onChange={(e) => setFecha(e.target.value)} disabled={creada} required />
               </div>
             </div>
 
@@ -110,7 +131,7 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
                 <div className="mt-1 border border-slate-200 rounded p-2 max-h-52 overflow-auto grid grid-cols-2 gap-x-3 gap-y-1">
                   {data.incluye.map((item) => (
                     <label key={item} className="flex items-start gap-2 text-[12px] cursor-pointer">
-                      <input type="checkbox" className="accent-blue-600 mt-0.5" checked={!!marcados[item]} onChange={() => alternar(item)} />
+                      <input type="checkbox" className="accent-blue-600 mt-0.5" checked={!!marcados[item]} onChange={() => alternar(item)} disabled={creada} />
                       <span>{item}</span>
                     </label>
                   ))}
@@ -120,12 +141,14 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Observaciones</label>
-              <textarea className={`${campo} h-20 resize-none`} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} placeholder="Estado del equipo, golpes, faltantes…" />
+              <textarea className={`${campo} h-20 resize-none`} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} disabled={creada} placeholder="Estado del equipo, golpes, faltantes…" />
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico</label>
-              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px]"
+              {/* Congelado con la remisión creada porque `fotosSubidas` es un índice sobre esta misma
+                  lista: cambiar los ficheros la invalidaría y resubiría fotos ya subidas. */}
+              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px]" disabled={creada}
                 onChange={(e) => setFotos(Array.from(e.target.files ?? []))} />
               {fotos.length > 0 && (
                 <div className="text-[11px] text-slate-400">
@@ -136,12 +159,28 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
           </>
         )}
 
+        {creada && (
+          <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+            La remisión ya se creó y no se va a duplicar: al reintentar se continúa con ella.
+            {fotos.length > 0 && ` Fotos subidas: ${envio.fotosSubidas} de ${fotos.length}.`}
+          </div>
+        )}
         {err && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{err}</div>}
         <div className="flex justify-end items-center gap-2">
           {busy && <span className="text-[12px] text-slate-500 mr-auto">{busy}</span>}
-          <button type="button" onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
+          {/* Salida para una foto que no sube nunca (corrupta, o demasiado pesada): sin esto el técnico
+              se queda atrapado reintentando. Lo que ya subió sí viaja, y el flujo de n8n concilia
+              contra lo que se mandó, así que una remisión con menos fotos no cuenta como error. */}
+          {creada && fotosPendientes > 0 && !busy && (
+            <button type="button" onClick={() => void ejecutar(envio, true)} className="px-3 py-1.5 text-[13px] text-slate-600 underline">
+              Continuar sin las {fotosPendientes} fotos que faltan
+            </button>
+          )}
+          <button type="button" onClick={cancelar} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
+          {/* El progreso lo cuenta el `busy` de la izquierda; repetirlo aquí solo haría bailar el ancho
+              del botón a cada foto. */}
           <button type="submit" disabled={!data || !!busy} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50">
-            {busy ? 'Guardando…' : 'Crear remisión'}
+            {creada ? 'Reintentar' : 'Crear remisión'}
           </button>
         </div>
       </form>
