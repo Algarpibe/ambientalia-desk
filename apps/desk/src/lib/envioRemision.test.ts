@@ -44,6 +44,17 @@ describe('ejecutarEnvio', () => {
     expect(pasos.subirFoto).toHaveBeenNthCalledWith(2, 'rem-9', 3)
   })
 
+  // El tipo permite este estado y la Tarea 3 lo hará alcanzable de verdad (persistir `envio` en
+  // localStorage: una deserialización vieja o parcial lo devuelve tal cual). Ese contador vendría de
+  // OTRA remisión, así que arrastrarlo haría que la recién creada empezara por la mitad, saltándose
+  // fotos sin avisar. Este test es lo que sostiene esa guarda.
+  it('un estado incoherente no arrastra el contador de otra remisión', async () => {
+    const { pasos } = pasosFalsos()
+    await ejecutarEnvio({ remisionId: null, fotosSubidas: 2 }, 2, pasos)
+    expect(pasos.subirFoto).toHaveBeenNthCalledWith(1, 'rem-1', 0)
+    expect(pasos.subirFoto).toHaveBeenCalledTimes(2)
+  })
+
   // Sin esto el arreglo no sirve: el avance tiene que quedar registrado ANTES de propagar el fallo,
   // porque es lo único que permite que el reintento continúe en vez de empezar de cero.
   it('si una foto falla, propaga el error pero deja registrado lo ya subido', async () => {
