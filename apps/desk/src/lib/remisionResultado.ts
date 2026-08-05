@@ -1,4 +1,4 @@
-import type { RemisionPasoFallido } from '@ambientalia/shared'
+import type { RemisionPasoFallido, EstadoRemision } from '@ambientalia/shared'
 import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA } from '@ambientalia/shared'
 
 /**
@@ -46,21 +46,23 @@ export function pasos(v: RemisionPasoFallido[] | undefined): RemisionPasoFallido
   return Array.isArray(v) ? v.filter((p) => typeof p?.paso === 'string') : []
 }
 
-// Se mudó a `packages/shared` porque el servidor la necesita para la historia del ticket. Se
-// reexporta para que los paneles la sigan importando de donde siempre.
-export { urlSegura } from '@ambientalia/shared'
-
 /**
  * Clases de Tailwind por estado. El TEXTO vive en `packages/shared` porque lo necesita también el
  * servidor; aquí queda solo lo que es de cliente. Se componen para que las pantallas sigan
  * consumiendo un único objeto `{ label, className }` y no tengan que juntar dos mapas cada una.
+ *
+ * Anotación y `satisfies` conviven por el mismo motivo que en el mapa de etiquetas: `Record<string,
+ * string>` deja indexar con el `estado` que salga de la base, y `satisfies` impide que este mapa se
+ * quede corto respecto a aquél. Antes eran un solo literal y el compilador ya exigía la pareja
+ * completa; sin el `satisfies`, un estado con etiqueta pero sin clase daría un badge con
+ * `className=""` —texto sin fondo ni borde— sin que nadie se entere.
  */
 const CLASES_ESTADO_REMISION: Record<string, string> = {
   pendiente: 'bg-slate-100 text-slate-600 border-slate-200',
   ok: 'bg-green-50 text-green-700 border-green-200',
   ok_con_avisos: 'bg-amber-50 text-amber-700 border-amber-200',
   error: 'bg-red-50 text-red-600 border-red-100',
-}
+} satisfies Record<EstadoRemision, string>
 
 export const ESTADO_REMISION: Record<string, { label: string; className: string }> = Object.fromEntries(
   Object.entries(ETIQUETA_ESTADO_REMISION).map(([k, label]) => [k, { label, className: CLASES_ESTADO_REMISION[k] ?? '' }]),

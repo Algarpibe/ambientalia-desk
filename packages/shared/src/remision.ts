@@ -53,22 +53,34 @@ export const ESPERA_DESENLACE_SEGUNDOS = 60
 export const VENTANA_REENVIO_SEGUNDOS = 120
 
 /**
+ * Los cuatro estados que la app sabe producir. Existe para que los mapas que dependen del estado
+ * —la etiqueta de aquí y las clases de Tailwind del cliente— no puedan quedarse cojos: el `satisfies`
+ * de más abajo obliga a que cada uno los cubra todos.
+ */
+export const ESTADOS_REMISION = ['pendiente', 'ok', 'ok_con_avisos', 'error'] as const
+export type EstadoRemision = (typeof ESTADOS_REMISION)[number]
+
+/**
  * Etiquetas en español del `estado` de una remisión. Viven aquí y no en la capa de presentación
  * porque las necesitan las dos orillas: las pantallas de remisiones y la historia del ticket, que se
  * compone en el servidor. Solo el TEXTO — las clases de Tailwind se quedan en el cliente, que es el
  * único que las entiende.
  *
- * Tipado como `Record<string, string>` y no `Record<Remision['estado'], string>` a propósito:
- * `estado` sale de Postgres con un cast sin validar y la columna no tiene `CHECK`, así que el tipo
- * promete uno de estos cuatro valores pero la base no lo garantiza. Indexarlo debe poder fallar sin
- * lanzar — de ahí `ETIQUETA_ESTADO_REMISION_DESCONOCIDA`.
+ * La anotación y el `satisfies` conviven a propósito, y cada uno resuelve un problema distinto:
+ * - `Record<string, string>` permite INDEXAR con cualquier cadena. `estado` sale de Postgres con un
+ *   cast sin validar y la columna no tiene `CHECK`, así que el tipo promete uno de estos cuatro
+ *   valores pero la base no lo garantiza; indexarlo debe poder fallar sin lanzar — de ahí
+ *   `ETIQUETA_ESTADO_REMISION_DESCONOCIDA`. Con `Record<EstadoRemision, string>` a secas, el servidor
+ *   no podría ni consultar el mapa con lo que le llega de la base.
+ * - `satisfies` exige que estén los cuatro estados CONOCIDOS. Sin él, la anotación se traga un mapa
+ *   incompleto y el estado que falte se degrada en silencio.
  */
 export const ETIQUETA_ESTADO_REMISION: Record<string, string> = {
   pendiente: 'Enviando…',
   ok: 'Creada',
   ok_con_avisos: 'Creada con avisos',
   error: 'Falló',
-}
+} satisfies Record<EstadoRemision, string>
 export const ETIQUETA_ESTADO_REMISION_DESCONOCIDA = 'Estado desconocido'
 
 /**

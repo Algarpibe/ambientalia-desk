@@ -1,5 +1,6 @@
 import type { RemisionConFotos } from '../api/client'
-import { pasos, urlSegura, fmtFecha, ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
+import { urlSegura } from '@ambientalia/shared'
+import { pasos, fmtFecha, ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 
 // `ok` de una remisión histórica no pasó por el flujo de n8n —nunca hubo flujo que evaluar—, así que
 // no lleva el mismo distintivo que una remisión creada por la app. Por eso el histórico tiene su

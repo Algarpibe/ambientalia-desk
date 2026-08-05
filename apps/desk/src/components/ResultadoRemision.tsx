@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ESPERA_DESENLACE_SEGUNDOS } from '@ambientalia/shared'
+import { ESPERA_DESENLACE_SEGUNDOS, urlSegura } from '@ambientalia/shared'
 import { fetchRemision, enviarRemision, type RemisionConFotos } from '../api/client'
-import { pasos, urlSegura } from '../lib/remisionResultado'
+import { pasos } from '../lib/remisionResultado'
 
 const INTERVALO_MS = 2000
 
