@@ -207,21 +207,28 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                 </div>
                             </div>
 
-                            <nav className="flex gap-8 border-b-0">
-                                {TABS.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTabId(tab.id)}
-                                        className={`text-[11px] font-bold py-2 transition-colors ${activeTabId === tab.id ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </nav>
-
-                            <div className="flex justify-end mt-[-35px]">
+                            {/* La insignia de estado comparte fila con las pestañas en vez de flotar
+                                sobre ellas con un margen negativo: al ir después en el DOM y llevar
+                                fondo sólido, tapaba las de la derecha —REMISIONES entre ellas— y les
+                                robaba el clic. El `flex-wrap` cubre la otra mitad del problema: son
+                                ocho pestañas, y al ensanchar la columna de propiedades las últimas se
+                                salían de la caja y el `overflow-hidden` del padre las recortaba.
+                                Envolver deja siempre todas alcanzables; un scroll horizontal no,
+                                porque nadie descubre lo que no se ve. */}
+                            <div className="flex items-start justify-between gap-4">
+                                <nav className="flex flex-wrap gap-x-6 gap-y-1 min-w-0">
+                                    {TABS.map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTabId(tab.id)}
+                                            className={`text-[11px] font-bold py-2 whitespace-nowrap transition-colors ${activeTabId === tab.id ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </nav>
                                 {ticket && (
-                                    <span className={`text-[11px] text-white px-3 py-1 rounded font-black tracking-widest ${ticket.statusType === 'Closed' ? 'bg-green-500' : /espera|hold/i.test(ticket.status) ? 'bg-amber-500' : 'bg-blue-500'}`}>{ticket.status.toUpperCase()}</span>
+                                    <span className={`shrink-0 mt-2 text-[11px] text-white px-3 py-1 rounded font-black tracking-widest ${ticket.statusType === 'Closed' ? 'bg-green-500' : /espera|hold/i.test(ticket.status) ? 'bg-amber-500' : 'bg-blue-500'}`}>{ticket.status.toUpperCase()}</span>
                                 )}
                             </div>
                         </div>
