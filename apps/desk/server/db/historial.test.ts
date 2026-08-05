@@ -109,16 +109,23 @@ describe('getHistorialTicket', () => {
     expect(eventos[0].details.some((d) => d.label === 'Carpeta en Drive')).toBe(false)
   })
 
+  // Esta remisión es la única de los fixtures que NO es de entrada, a propósito: el título interpola
+  // `tipo` y hoy todo lo que se inserta es 'entrada', así que sin este caso volver a la cadena fija
+  // 'Remisión de entrada creada' dejaría la suite en verde. La rama de SALIDA está en el roadmap
+  // escrito (`debt.md`, «Remisiones — rama de SALIDA»): el día que llegue, este título tiene que
+  // seguir diciendo la verdad sin que nadie se acuerde de venir a mirarlo. Va en el test de orden
+  // porque aquí los títulos son solo etiquetas para comprobar la secuencia: nada más depende de que
+  // la remisión sea de entrada.
   it('ordena todo por fecha descendente', async () => {
     await insTicket('t8')
     await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('t8','Uno','A','B','X','2026-08-01T10:00:00Z')")
     await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('t8','Tres','B','C','X','2026-08-03T10:00:00Z')")
     await db.query(
-      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,created_at) VALUES ('r4','t8','entrada','2026-08-02','X','pendiente','2026-08-02T10:00:00Z')`,
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,created_at) VALUES ('r4','t8','salida','2026-08-02','X','pendiente','2026-08-02T10:00:00Z')`,
     )
     const { eventos } = await getHistorialTicket(db, 't8')
     expect(eventos.map((e) => e.title)).toEqual([
-      'Transición: Tres', 'Remisión de entrada creada', 'Transición: Uno',
+      'Transición: Tres', 'Remisión de salida creada', 'Transición: Uno',
     ])
   })
 
