@@ -43,11 +43,30 @@ const ORIGEN_FILTROS: { value: string; label: string }[] = [
   { value: 'historico', label: 'Histórico' },
 ]
 
-const COLS = ['Fecha', 'Técnico', 'Empresa', 'Persona Contacto', 'Marca', 'Modelo', 'Número de Serie', 'Incluye', 'Tipo de servicio', 'Ticket', 'Observaciones', 'Estado', 'Origen']
+// Mismo orden que la cabecera real de `Entrada.xlsx` (Técnico va antes que Fecha), para que quien
+// usaba la hoja no tenga que reaprender dónde está cada dato. Estado y Origen van al final: la
+// hoja no los tenía.
+const COLS = ['Técnico', 'Fecha', 'Empresa', 'Persona Contacto', 'Marca', 'Modelo', 'Número de Serie', 'Incluye', 'Tipo de servicio', 'Ticket', 'Observaciones', 'Estado', 'Origen']
 
-/** Envuelve entre comillas y escapa las internas cuando el campo trae coma, comilla o salto de línea. */
+/**
+ * El número de ticket sin el `#` que sí lleva en pantalla. La hoja original guardaba `804` como
+ * número, no como texto; si el CSV sale con `#804`, Excel lo abre como texto y se pierde poder
+ * ordenar y filtrar por número — justo lo que un export existe para preservar.
+ */
+function ticketNumeroPlano(r: RemisionListado): string {
+  return r.ticketNumero ? r.ticketNumero.replace(/^#/, '') : ''
+}
+
+/**
+ * Envuelve entre comillas y escapa las internas cuando el campo trae coma, comilla o salto de
+ * línea. Antes de eso, neutraliza la inyección de fórmulas: Excel (y Sheets) interpretan un valor
+ * que EMPIEZA por `=`, `+`, `-` o `@` como una fórmula, no como texto —una observación tan normal
+ * como "- Sin cable" saldría como error en la celda—. Anteponer una comilla simple es la marca
+ * estándar de "esto es texto"; Excel la usa para decidir y no la muestra.
+ */
 function csvCampo(v: string): string {
-  return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+  const seguro = /^[=+\-@]/.test(v) ? `'${v}` : v
+  return /[",\r\n]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro
 }
 
 /**
@@ -57,8 +76,8 @@ function csvCampo(v: string): string {
  */
 function exportarCSV(filas: RemisionListado[]) {
   const cuerpo = filas.map((r) => [
-    r.fecha, r.tecnico ?? '', r.empresa ?? '', r.personaContacto ?? '', r.marca ?? '', r.modelo ?? '',
-    r.serial ?? '', r.incluye.join(', '), r.tipoServicio ?? '', r.ticketNumero ?? '', r.observaciones ?? '',
+    r.tecnico ?? '', r.fecha, r.empresa ?? '', r.personaContacto ?? '', r.marca ?? '', r.modelo ?? '',
+    r.serial ?? '', r.incluye.join(', '), r.tipoServicio ?? '', ticketNumeroPlano(r), r.observaciones ?? '',
     estadoVisual(r).label, origenLabel(r.origen),
   ])
   const csv = [COLS, ...cuerpo].map((fila) => fila.map(csvCampo).join(',')).join('\r\n')
@@ -146,8 +165,8 @@ export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSele
                 const incluye = r.incluye.join(', ')
                 return (
                   <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{fmtFecha(r.fecha)}</td>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.tecnico}</td>
+                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{fmtFecha(r.fecha)}</td>
                     <td className="px-3 py-2 text-slate-600 max-w-[200px] truncate" title={r.empresa || undefined}>{r.empresa}</td>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.personaContacto}</td>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.marca}</td>
