@@ -320,10 +320,18 @@ export async function createTicket(db: Queryable, input: CreateTicketInput): Pro
        VALUES ($1,$2,$3,'OV asignada','Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,'app',now(),now(),now())`,
       [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId],
     )
+    // La foto de con qué nació el ticket. Las columnas de `tickets` son estado ACTUAL, así que la
+    // historia no puede apoyarse en ellas para contar la creación: aquí queda congelado. Los tickets
+    // anteriores a este cambio no la tienen y no hay forma de reconstruirla — la historia cae a la
+    // fila del ticket para esos.
     await q.query(
       `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
        VALUES ($1,'enviar','Enviar','(creación)','OV asignada','Comercial',$2,$3,null)`,
-      [id, input.actor, JSON.stringify({ orden_venta: input.ordenVenta })],
+      [id, input.actor, JSON.stringify({
+        orden_venta: input.ordenVenta, marca: input.marca, modelo: input.modelo, serial: input.serial,
+        equipo: input.equipo, tipo_servicio: input.tipoServicio, clasificacion: input.classification,
+        prioridad: input.priority, codigo_servicio: input.codigoServicio, client_id: input.clientId,
+      })],
     )
   }
   const pool = db as PoolLike

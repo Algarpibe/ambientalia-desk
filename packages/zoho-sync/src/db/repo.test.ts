@@ -193,4 +193,23 @@ describe('createTicket (Subsistema C)', () => {
     const detail = await getTicketWithRefs(db, id)
     expect(detail?.refs.accountName).toBe('Gecelca S.A. E.S.P.')
   })
+
+  // La transición de creación es el ÚNICO sitio donde puede quedar una foto de con qué nació el
+  // ticket: las columnas de `tickets` son estado actual y cualquier cosa podría reescribirlas. Antes
+  // solo se guardaba `orden_venta`, así que la historia tenía que leer la fila y mentir un poco.
+  it('createTicket guarda el payload completo en values de la transición', async () => {
+    const id = await createTicket(db, {
+      subject: 'MT_18A20070_EDM180C_260805', priority: 'Medium', classification: 'Garantía',
+      tipoServicio: 'Calibración', equipo: 'Monitor', marca: 'Grimm', modelo: 'EDM180C',
+      serial: '18A20070', codigoServicio: 'MT_260805', ordenVenta: 'OV-2026-141',
+      clientId: 'c1', salesorderId: 'so1', equipoId: 'eq1', actor: 'Luz Ángela',
+    })
+    const r = await db.query('SELECT values FROM ticket_transitions WHERE ticket_id = $1', [id])
+    const v = typeof r.rows[0].values === 'string' ? JSON.parse(r.rows[0].values) : r.rows[0].values
+    expect(v).toMatchObject({
+      orden_venta: 'OV-2026-141', marca: 'Grimm', modelo: 'EDM180C', serial: '18A20070',
+      tipo_servicio: 'Calibración', clasificacion: 'Garantía', prioridad: 'Medium',
+      codigo_servicio: 'MT_260805', client_id: 'c1',
+    })
+  })
 })
