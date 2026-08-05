@@ -88,11 +88,6 @@ function csvCampo(v: string): string {
 }
 
 /**
- * Exporta EXACTAMENTE lo que se está viendo —con los filtros ya aplicados— en el mismo orden de
- * columnas que la tabla. El BOM UTF-8 al inicio es la parte que nadie nota hasta que falta: sin
- * él, Excel abre el archivo con la codificación local y "Diagnóstico" sale como "DiagnÃ³stico".
- */
-/**
  * La fecha para el CSV. Lleva la hora cuando la hay —mismo criterio que la tabla— pero en 24h
  * pegada al ISO (`2026-07-24 14:41`) y no en el formato de pantalla: así Excel lo sigue leyendo
  * como fecha-hora y se puede ordenar por él, que es media razón para exportar.
@@ -104,6 +99,11 @@ function fechaCSV(r: RemisionListado): string {
   return `${r.fecha} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+/**
+ * Exporta EXACTAMENTE lo que se está viendo —con los filtros ya aplicados— en el mismo orden de
+ * columnas que la tabla. El BOM UTF-8 al inicio es la parte que nadie nota hasta que falta: sin
+ * él, Excel abre el archivo con la codificación local y "Diagnóstico" sale como "DiagnÃ³stico".
+ */
 function exportarCSV(filas: RemisionListado[]) {
   const cuerpo = filas.map((r) => [
     r.tecnico ?? '', fechaCSV(r), r.empresa ?? '', r.personaContacto ?? '', r.marca ?? '', r.modelo ?? '',
