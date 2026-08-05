@@ -840,7 +840,10 @@ falta.
 npm test
 ```
 
-Esperado: **390 pasando / 2 saltados** — el `describe` viejo tenía un test y ahora tiene dos.
+Esperado: **391 pasando / 2 saltados** — el `describe` viejo tenía un test y ahora tiene dos.
+
+(Sale de 390 y no de 389 porque la revisión de las Tareas 3-5 añadió un test de regresión: el ticket
+de Zoho que se movió en la app y no debe dejar de refrescar su historia.)
 
 Si el `describe` original tenía otro número de tests, ajusta la cuenta pero **no** borres cobertura:
 si alguno de los que sustituyes probaba algo que este no cubre, consérvalo aparte.
@@ -851,7 +854,10 @@ si alguno de los que sustituyes probaba algo que este no cubre, consérvalo apar
 npm run typecheck && npm run lint && npm run build
 ```
 
-Esperado: typecheck limpio; lint `0 errors, 160 warnings`; build `✓ built`.
+Esperado: typecheck limpio; lint `0 errors, 159 warnings`; build `✓ built`.
+
+(159 y no 160: el fallback que borra la Tarea 3 se llevó dos `any` y la función nueva reintrodujo
+uno.)
 
 - [ ] **Paso 4: commit**
 
