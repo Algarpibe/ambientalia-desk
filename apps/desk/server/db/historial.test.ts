@@ -126,8 +126,9 @@ describe('getHistorialTicket', () => {
   // un ticket de la app SIEMPRE tiene su transición de creación, así que preguntaría a Zoho por un
   // ticket que Zoho no conoce, en cada apertura.
   it('dice si hay que pedirle la historia a Zoho, y no la pide para un ticket de la app', async () => {
-    await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app) VALUES ('t9',9,'A','Ingresado',true)")
-    expect((await getHistorialTicket(db, 't9')).sincronizarConZoho).toBe('no')
+    // El id lo acuña `createTicket` con este prefijo: es lo que marca que el ticket nació aquí.
+    await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app) VALUES ('app-9',9,'A','Ingresado',true)")
+    expect((await getHistorialTicket(db, 'app-9')).sincronizarConZoho).toBe('no')
 
     await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app) VALUES ('t10',10,'A','Ingresado',false)")
     expect((await getHistorialTicket(db, 't10')).sincronizarConZoho).toBe('ahora')
@@ -137,5 +138,22 @@ describe('getHistorialTicket', () => {
       [JSON.stringify({ eventName: 'CommentAdded', actor: { name: 'Ana' }, eventInfo: [] })],
     )
     expect((await getHistorialTicket(db, 't10')).sincronizarConZoho).toBe('en-segundo-plano')
+  })
+
+  // El agujero: `writeTransition` pone `managed_by_app=true` y `source='app'` en TODA transición
+  // hecha desde Desk, también las de un ticket de Zoho. Discriminar por ellas dejaba a ese ticket sin
+  // refrescar su historia de Zoho desde la primera vez que alguien lo moviera aquí — para siempre,
+  // porque `syncTicketHistory` no se llama desde ningún otro sitio.
+  it('un ticket de Zoho movido en la app sigue refrescando su historia de Zoho', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app,source) VALUES ('98765',11,'A','Ingresado',true,'app')")
+    await db.query(
+      "INSERT INTO ticket_history (id,ticket_id,event_name,event_time,actor_name,raw) VALUES ('h11','98765','CommentAdded','2026-08-01T10:00:00Z','Ana',$1)",
+      [JSON.stringify({ eventName: 'CommentAdded', actor: { name: 'Ana' }, eventInfo: [] })],
+    )
+    await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('98765','Habilitar','OV asignada','Ingresado','Admin','2026-08-02T10:00:00Z')")
+    const { eventos, sincronizarConZoho } = await getHistorialTicket(db, '98765')
+    expect(sincronizarConZoho).toBe('en-segundo-plano')
+    // Y las dos fuentes salen juntas, que es el otro medio bug del mismo sitio.
+    expect(eventos.map((e) => e.title)).toEqual(['Transición: Habilitar', 'Ana ha publicado un comentario'])
   })
 })

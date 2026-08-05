@@ -54,6 +54,11 @@ function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, un
   // día caería a la columna y mostraría el estado ACTUAL — justo la mentira que la foto evita.
   const hayFoto = Object.keys(v).some((k) => k !== 'orden_venta')
   const de = (clave: string, columna: string): unknown => (hayFoto ? v[clave] : ticket[columna])
+  // `Cliente` se escapa de la regla de `hayFoto` a propósito: sale siempre del estado actual aunque
+  // la foto guarde `client_id`, porque el NOMBRE vive en otra tabla y resolverlo por la foto pediría
+  // una segunda consulta. Hoy da igual —la app no tiene ninguna forma de reasignar el cliente de un
+  // ticket, así que foto y fila siempre coinciden—. El día que la haya, este detalle tiene que pasar
+  // por `de()` como los demás.
   return {
     eventName: 'AppTicketCreado',
     time: iso(fila.performed_at),
@@ -103,7 +108,10 @@ function eventosRemision(fila: Record<string, unknown>): HistoryEvent[] {
     eventName: 'RemisionCreada',
     time: iso(fila.created_at),
     actor: tecnico,
-    title: 'Remisión de entrada creada',
+    // `tipo` en vez de "entrada" fija: hoy los dos caminos de inserción lo ponen a 'entrada' y el
+    // texto saldría igual, pero la remisión de salida está en el roadmap y entonces este título
+    // mentiría. La columna es NOT NULL DEFAULT 'entrada', así que siempre trae algo.
+    title: `Remisión de ${String(fila.tipo)} creada`,
     details: detalles([
       ['Técnico', tecnico],
       ['Fecha de servicio', fila.fecha instanceof Date ? fila.fecha.toISOString().slice(0, 10) : fila.fecha],
@@ -169,7 +177,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
   const zoho = await getZohoHistoryEvents(db, ticketId)
 
   const t = await db.query(
-    'SELECT marca, modelo, serial, tipo_servicio, classification, priority, orden_venta, codigo_servicio, client_id, managed_by_app FROM tickets WHERE id = $1',
+    'SELECT marca, modelo, serial, tipo_servicio, classification, priority, orden_venta, codigo_servicio, client_id FROM tickets WHERE id = $1',
     [ticketId],
   )
   const ticket = (t.rows[0] as Record<string, unknown>) ?? {}
@@ -191,8 +199,11 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
     f.from_status === '(creación)' ? eventoCreacion(f, ticket, cliente) : eventoTransicion(f),
   )
 
+  // Consulta propia y no `listRemisionesByTicket`: aquélla filtra `anulada_at IS NULL` porque el
+  // panel del ticket solo enseña lo vigente, y aquí hacen falta justo las anuladas — el historial
+  // registra lo que PASÓ, y una remisión anulada pasó (y su anulación también).
   const rem = await db.query(
-    `SELECT id, fecha, tipo_servicio, incluye, observaciones, creado_por, estado, resultado,
+    `SELECT id, tipo, fecha, tipo_servicio, incluye, observaciones, creado_por, estado, resultado,
             created_at, resuelto_at, anulada_at, anulada_por
        FROM remisiones WHERE ticket_id = $1`,
     [ticketId],
@@ -201,8 +212,16 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
 
   const eventos = [...zoho, ...transiciones, ...remisiones].sort(masRecientePrimero)
 
+  // Se discrimina por el PREFIJO DEL ID y no por `managed_by_app` ni `source`, que parecen decir
+  // "esto nació en la app" y no lo dicen: `writeTransition` pone las dos —`managed_by_app=true` y
+  // `source='app'`, en el mismo UPDATE— en CUALQUIER transición hecha desde Desk, también las de un
+  // ticket que vino de Zoho. Usarlas dejaba a ese ticket sin refrescar jamás su historia de Zoho
+  // desde la primera vez que alguien lo moviera aquí, y como `syncTicketHistory` solo se llama desde
+  // esta ruta, nadie más lo repararía. El id sí es inmutable: `createTicket` es el único sitio que
+  // acuña ids de ticket y siempre les pone este prefijo — los de Zoho son numéricos.
+  const nacidoEnLaApp = ticketId.startsWith('app-')
   const sincronizarConZoho: PlanSyncZoho =
-    ticket.managed_by_app ? 'no' : zoho.length === 0 ? 'ahora' : 'en-segundo-plano'
+    nacidoEnLaApp ? 'no' : zoho.length === 0 ? 'ahora' : 'en-segundo-plano'
 
   return { eventos, sincronizarConZoho }
 }

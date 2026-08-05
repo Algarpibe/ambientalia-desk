@@ -90,7 +90,13 @@ export const ETIQUETA_ESTADO_REMISION_DESCONOCIDA = 'Estado desconocido'
  * al clic. Exigir `https://` cierra esa puerta sin coste — mejor sin enlace que con uno malo.
  *
  * En shared porque ahora la usan el cliente (paneles de remisión) y el servidor (historia del ticket).
+ *
+ * También rechaza la comilla doble, y no la escapa quien construye el HTML, porque la historia del
+ * ticket interpola el resultado en `href="…"` y devuelve ese HTML por la API: una comilla se saldría
+ * del atributo (`https://x" onmouseover=…`) y dejaría la seguridad entera en manos de quien lo pinte
+ * —hoy DOMPurify en `HistoriaPanel`, mañana cualquier otro consumidor—. Filtrar aquí la cierra en un
+ * único sitio y no le quita ningún enlace legítimo a nadie: una URL real trae la comilla como `%22`.
  */
 export function urlSegura(v: string | null | undefined): string | null {
-  return typeof v === 'string' && v.startsWith('https://') ? v : null
+  return typeof v === 'string' && v.startsWith('https://') && !v.includes('"') ? v : null
 }

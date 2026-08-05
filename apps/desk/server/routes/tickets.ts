@@ -115,9 +115,12 @@ export function registerTicketRoutes(
   app.get('/api/tickets/:id/history', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
     const primero = await getHistorialTicket(db, id)
-    // Un ticket gestionado por la app no existe en Zoho: preguntarle por su historia sería un 404 en
-    // cada apertura. Antes bastaba con mirar si la historia venía vacía, pero con la unión eso ya no
-    // distingue nada —siempre trae al menos la transición de creación—.
+    // Un ticket NACIDO en la app no existe en Zoho: preguntarle por su historia sería un 404 en cada
+    // apertura. Ojo con el matiz, que ya se coló una vez: "nacido en la app" no es lo mismo que
+    // "gestionado por la app" —un ticket de Zoho movido aquí queda `managed_by_app=true` y sigue
+    // teniendo historia en Zoho que refrescar—; el compositor lo distingue por el id.
+    // Antes bastaba con mirar si la historia venía vacía, pero con la unión eso ya no distingue nada
+    // —siempre trae al menos la transición de creación—.
     if (primero.sincronizarConZoho === 'ahora') {
       try { await sync.syncTicketHistory(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncTicketHistory (lazy) falló') }
       res.json((await getHistorialTicket(db, id)).eventos)

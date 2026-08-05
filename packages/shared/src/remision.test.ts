@@ -68,5 +68,7 @@ describe('urlSegura', () => {
     expect(urlSegura('javascript:alert(1)')).toBeNull()
     expect(urlSegura(null)).toBeNull()
     expect(urlSegura(undefined)).toBeNull()
+    // Se interpola en `href="…"`: una comilla se saldría del atributo. La URL legítima la trae %22.
+    expect(urlSegura('https://drive.google.com/x" onmouseover="alert(1)')).toBeNull()
   })
 })
