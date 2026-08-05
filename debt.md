@@ -397,16 +397,28 @@ pg-mem deja de ser el harness de tests. Hasta entonces, R1 + validación en prod
   el **motor de sync Zoho** (mappers + cliente Zoho/Books + tokenManager + esquema de las tablas Zoho + lógica de
   sync) a un **paquete compartido** que ambos importen, o duplicarlo en el nuevo repo. Hacerlo cuando el hub madure
   (p.ej. al sumar CRM o más consumidores). Relacionado con la arquitectura zoho-hub (Opción D).
-- **Remisión huérfana si falla la subida de una foto:** en `CrearRemision.tsx` el bucle de fotos queda fuera
-  del `try` que protege el envío, así que si `subirFotoRemision` lanza —el fallo más probable de todo el flujo:
-  son los ficheros más pesados y el técnico está en planta con cobertura irregular— se vuelve al formulario. La
-  remisión **ya existe** en BD (la creó `crearRemision`) y se queda en `pendiente` para siempre, porque
-  `enviarRemision` nunca llegó a invocarse. Y como `POST /api/remisiones` no deduplica por ticket, si el técnico
-  vuelve a pulsar "Crear remisión" se crea una **segunda** remisión del mismo ticket.
-  Es el mismo problema que ya se cerró un paso más abajo para `enviarRemision` (ver el panel `ResultadoRemision`:
-  un disparo fallido no devuelve al formulario, ofrece reintentar sobre la remisión que ya existe).
-  **Opciones al retomarlo:** (a) pasar al panel igualmente con un aviso de cuántas fotos no subieron —ni huérfanas
-  ni duplicadas, pero permite mandar a Drive un registro fotográfico incompleto, que es la prueba del estado en que
-  llegó el equipo—; (b) quedarse en el formulario recordando la remisión ya creada, para que el reintento continúe
-  con ella en vez de crear otra, llevando la cuenta de qué fotos sí subieron. (b) es lo correcto y bastante más
-  trabajo. Aparcado a propósito el 2026-08-04 para no retrasar el cierre del subsistema de entrada.
+- ~~**Remisión huérfana si falla la subida de una foto**~~ — **RESUELTO 2026-08-05.** Plan en
+  `docs/superpowers/plans/2026-08-05-remision-huerfana-fotos.md`.
+  **El diagnóstico de esta entrada estaba mal descrito:** el bucle de fotos SÍ estaba dentro del `try`. Lo que se
+  perdía era el `rem.id`, una `const` local que el `catch` dejaba atrás al volver al formulario. El efecto era el
+  descrito, pero el arreglo no era mover el `try` sino sacar el id a estado.
+  Se hizo la opción (b): `apps/desk/src/lib/envioRemision.ts` orquesta crear → fotos → enviar de forma
+  **reanudable**, con las dependencias inyectadas para poder probarla sin harness de componentes. El avance
+  (`remisionId` + `fotosSubidas`) vive en estado, así que reintentar continúa con la remisión que ya existe.
+  Cuatro cosas que el análisis original no contemplaba y que salieron de la revisión:
+  1. **La opción (a) también hacía falta**, pero como salida y no por defecto: una foto corrupta o demasiado
+     pesada dejaba al técnico atrapado reintentando para siempre. "Continuar sin las N fotos que faltan" manda lo
+     que sí subió; n8n concilia contra lo mandado, así que no cuenta como error.
+  2. **`fotosSubidas` es un índice posicional** sobre la lista de ficheros del componente. Si esa lista cambia
+     entre intentos se suben fotos equivocadas **en silencio**. De ahí que los campos se congelen con
+     `creada || !!busy` y no solo con `creada`: entre el clic y la respuesta del servidor había una ventana.
+  3. **Recargar o cerrar el navegador** perdía el estado igual. Al abrir el formulario se busca una remisión del
+     ticket en `pendiente` y se ofrece enviarla; y crear una segunda con ese cartel a la vista pide confirmación.
+  4. **`ResultadoRemision` no sondeaba si traía `errorEnvio`**, así que un 409 del cerrojo de reenvío —que
+     significa "se está enviando bien ahora mismo"— se pintaba como fallo rojo, y ante un fallo rojo el técnico
+     crea otra remisión: realimentaba el propio bug. Ahora sondea siempre y la escala de color distingue **gris**
+     (tropiezo al sondear), **ámbar** (envío sin confirmar) y **rojo** (veredicto de n8n).
+  **Sigue abierto, por decisión:** `POST /api/remisiones` no deduplica. Las rutas desde la interfaz están
+  cerradas, pero un cliente directo de la API puede crear dos. La regla no puede ser "una por ticket" —un ticket
+  puede recibir dos equipos— sino "una `pendiente` por ticket", y eso merece su propia decisión. Tampoco hay
+  reenvío para una remisión en `estado: 'error'`: es capacidad nueva, no arreglo.
