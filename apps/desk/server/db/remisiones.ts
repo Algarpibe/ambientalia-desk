@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Remision, RemisionFoto } from '@ambientalia/shared'
+import type { Remision, RemisionFoto, RemisionListado } from '@ambientalia/shared'
 import { VENTANA_REENVIO_SEGUNDOS } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
@@ -57,6 +57,43 @@ export async function getRemision(db: Queryable, id: string): Promise<Remision |
 export async function listRemisionesByTicket(db: Queryable, ticketId: string): Promise<Remision[]> {
   const r = await db.query('SELECT * FROM remisiones WHERE ticket_id = $1 ORDER BY created_at DESC', [ticketId])
   return r.rows.map(toRemision)
+}
+
+/**
+ * Vuelca la tabla completa para la sección "Remisiones" de la cabecera: la vista que tenía la hoja
+ * de Google, histórico y app juntos. Sin paginar —el filtrado va en el cliente, sobre todo lo
+ * cargado— pero con un `LIMIT` de seguridad: hoy son ~170 filas creciendo ~100/año, así que faltan
+ * décadas para tocarlo. El día que se alcance, hay que paginar en servidor (como
+ * `GET /api/tickets?scope=closed`) en vez de subir el número.
+ */
+export async function listRemisionesListado(db: Queryable): Promise<RemisionListado[]> {
+  const r = await db.query(
+    `SELECT r.id, r.fecha, r.creado_por, r.empresa, r.persona_contacto, r.serial, r.incluye,
+            r.tipo_servicio, r.observaciones, r.estado, r.origen, r.ticket_id,
+            e.marca, e.modelo, t.number AS ticket_number
+       FROM remisiones r
+       LEFT JOIN equipos e ON r.equipo_id = e.id
+       LEFT JOIN tickets t ON r.ticket_id = t.id
+      ORDER BY r.fecha DESC, r.created_at DESC
+      LIMIT 2000`,
+  )
+  return r.rows.map((x: Record<string, unknown>) => ({
+    id: String(x.id),
+    fecha: x.fecha instanceof Date ? x.fecha.toISOString().slice(0, 10) : String(x.fecha ?? ''),
+    tecnico: (x.creado_por as string) ?? null,
+    empresa: (x.empresa as string) ?? null,
+    personaContacto: (x.persona_contacto as string) ?? null,
+    marca: (x.marca as string) ?? null,
+    modelo: (x.modelo as string) ?? null,
+    serial: (x.serial as string) ?? null,
+    incluye: typeof x.incluye === 'string' ? JSON.parse(x.incluye) : ((x.incluye as string[]) ?? []),
+    tipoServicio: (x.tipo_servicio as string) ?? null,
+    observaciones: (x.observaciones as string) ?? null,
+    ticketId: (x.ticket_id as string) ?? null,
+    ticketNumero: x.ticket_number != null ? `#${x.ticket_number}` : null,
+    estado: String(x.estado) as RemisionListado['estado'],
+    origen: String(x.origen ?? 'app'),
+  }))
 }
 
 /**

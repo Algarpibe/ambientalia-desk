@@ -366,3 +366,29 @@ export interface RemisionNueva {
    */
   catalogoCargado: boolean
 }
+
+/**
+ * Fila de la vista tabular de remisiones (sección "Remisiones" de la cabecera): la que tenía la
+ * hoja de Google, ahora con históricas y de la app juntas. `marca`/`modelo` no viven en
+ * `remisiones` —el importador solo los usó para calcular `perfil`— así que salen de un `LEFT JOIN`
+ * a `equipos`; `ticketNumero` de un `LEFT JOIN` a `tickets`. Ambos son NULL-able: una remisión
+ * puede no tener equipo enlazado, y 59 históricas no tienen ticket.
+ */
+export interface RemisionListado {
+  id: string
+  fecha: string
+  tecnico: string | null
+  empresa: string | null
+  personaContacto: string | null
+  marca: string | null
+  modelo: string | null
+  serial: string | null
+  incluye: string[]
+  tipoServicio: string | null
+  observaciones: string | null
+  ticketId: string | null
+  /** Con el `#` ya puesto, igual que `ActivityListItem.ticketNumber`. */
+  ticketNumero: string | null
+  estado: 'pendiente' | 'ok' | 'ok_con_avisos' | 'error'
+  origen: string
+}

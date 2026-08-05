@@ -6,7 +6,7 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, addFoto, listFotos, getFotoContent, setResultadoRemision, reclamarEnvio, liberarEnvio, listFotosConContenido } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, reclamarEnvio, liberarEnvio, listFotosConContenido } from '../db/remisiones'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -60,6 +60,15 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       catalogoCargado: await hayChecklist(db),
     }
     res.json(payload)
+  }))
+
+  /**
+   * Vista tabular de TODAS las remisiones (históricas + app), para la sección propia de la
+   * cabecera. Va ANTES de `/api/remisiones/:id` por el mismo motivo que `/nueva` arriba:
+   * registrada después, `:id` se comería el literal `listado`.
+   */
+  app.get('/api/remisiones/listado', requireAuth(db), asyncHandler(async (req, res) => {
+    res.json(await listRemisionesListado(db))
   }))
 
   /** Remisiones ya registradas de un ticket, con sus fotos. Alimenta el panel del detalle. */

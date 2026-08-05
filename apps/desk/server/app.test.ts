@@ -722,6 +722,110 @@ describe('POST /api/remisiones', () => {
   })
 })
 
+// Alimenta la sección "Remisiones" de la cabecera: la vista tabular que tenía la hoja de Google,
+// ahora con históricas y de la app juntas.
+describe('GET /api/remisiones/listado', () => {
+  it('remisión con equipo enlazado trae marca y modelo del equipo (no del ticket)', async () => {
+    await upsertEquipo(db, equipoRow('eq-l1', '18A20070'))
+    await db.query(
+      `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, origen)
+       VALUES ('rem-l1', NULL, 'entrada', '2026-08-01', 'Mantenimiento', 'grimm_edm180', 'eq-l1', '18A20070', '["Manuales"]'::jsonb, 'Sin novedad', 'Julián Maya', 'ok', 'ACME', 'Juan Gómez', 'app')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0]).toMatchObject({
+      id: 'rem-l1', fecha: '2026-08-01', tecnico: 'Julián Maya', empresa: 'ACME',
+      personaContacto: 'Juan Gómez', marca: 'Grimm', modelo: 'EDM180C', serial: '18A20070',
+      incluye: ['Manuales'], tipoServicio: 'Mantenimiento', observaciones: 'Sin novedad',
+      estado: 'ok', origen: 'app', ticketId: null, ticketNumero: null,
+    })
+  })
+
+  it('sin equipo enlazado, marca y modelo salen NULL sin reventar', async () => {
+    await db.query(
+      `INSERT INTO remisiones (id, tipo, fecha, creado_por, estado, origen)
+       VALUES ('rem-l2', 'entrada', '2026-07-01', 'Ana Pérez', 'ok', 'historico')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body[0]).toMatchObject({ id: 'rem-l2', marca: null, modelo: null })
+  })
+
+  it('sin ticket, ticketId y ticketNumero salen NULL', async () => {
+    await db.query(
+      `INSERT INTO remisiones (id, tipo, fecha, creado_por, estado, origen)
+       VALUES ('rem-l3', 'entrada', '2026-06-01', 'Ana Pérez', 'ok', 'historico')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(res.body[0]).toMatchObject({ id: 'rem-l3', ticketId: null, ticketNumero: null })
+  })
+
+  it('con ticket, trae el número correcto', async () => {
+    await db.query("INSERT INTO tickets (id,number,status) VALUES ('t-l4', 4200, 'Finalizado')")
+    await db.query(
+      `INSERT INTO remisiones (id, ticket_id, tipo, fecha, creado_por, estado, origen)
+       VALUES ('rem-l4', 't-l4', 'entrada', '2026-05-01', 'Ana Pérez', 'ok', 'app')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(res.body[0]).toMatchObject({ id: 'rem-l4', ticketId: 't-l4', ticketNumero: '#4200' })
+  })
+
+  it('ordena por fecha descendente', async () => {
+    await db.query(
+      `INSERT INTO remisiones (id, tipo, fecha, creado_por, estado, origen) VALUES
+        ('rem-l5', 'entrada', '2026-01-01', 'A', 'ok', 'historico'),
+        ('rem-l6', 'entrada', '2026-03-01', 'B', 'ok', 'historico'),
+        ('rem-l7', 'entrada', '2026-02-01', 'C', 'ok', 'historico')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(res.body.map((r: any) => r.id)).toEqual(['rem-l6', 'rem-l7', 'rem-l5'])
+  })
+
+  it('401 sin sesión', async () => {
+    const { app } = appWith()
+    expect((await request(app).get('/api/remisiones/listado')).status).toBe(401)
+  })
+
+  // El riesgo de registrar /listado junto a /nueva: si quedara DESPUÉS de /:id, Express lo trataría
+  // como si 'listado' fuera un id. Este test lo cubre desde los dos lados: la ruta nueva no se come
+  // /nueva ni /:id, y tampoco al revés.
+  it('no rompe /nueva ni /:id, y /listado no cae en /:id (regresión del orden de rutas)', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query(
+      `INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, serial)
+       VALUES ('t-l8', 4300, 'OV asignada', true, 'cli1', 'Mantenimiento', '18A1')`,
+    )
+    await db.query(
+      `INSERT INTO remisiones (id, ticket_id, tipo, fecha, creado_por, estado, origen)
+       VALUES ('rem-l8', 't-l8', 'entrada', '2026-08-03', 'Ana Pérez', 'pendiente', 'app')`,
+    )
+    const cookie = await adminCookie()
+    const { app } = appWith()
+
+    const listado = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(listado.status).toBe(200)
+    expect(Array.isArray(listado.body)).toBe(true)
+
+    const nueva = await request(app).get('/api/remisiones/nueva?ticketId=t-l8').set('Cookie', cookie)
+    expect(nueva.status).toBe(200)
+
+    const porId = await request(app).get('/api/remisiones/rem-l8').set('Cookie', cookie)
+    expect(porId.status).toBe(200)
+    expect(porId.body.id).toBe('rem-l8')
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()
