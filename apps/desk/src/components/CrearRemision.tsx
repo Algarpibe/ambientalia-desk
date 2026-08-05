@@ -4,14 +4,8 @@ import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, type RemisionConFotos } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
 import { ejecutarEnvio, type EstadoEnvio, type ResultadoEnvio } from '../lib/envioRemision'
+import { fmtFechaHora } from '../lib/remisionResultado'
 import { ResultadoRemision } from './ResultadoRemision'
-
-/** Formatea "2026-05-19" a "19 may 2026" (es-CO), evitando el corrimiento de un día por zona horaria. */
-function fmtFecha(v: string): string {
-  const d = new Date(v.length === 10 ? `${v}T00:00:00` : v)
-  if (Number.isNaN(d.getTime())) return v
-  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
-}
 
 /**
  * Formulario de remisión de ENTRADA. Sustituye al formulario de n8n: los datos que allí se volvían a
@@ -20,10 +14,24 @@ function fmtFecha(v: string): string {
  */
 export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: string; onClose: () => void; onCreada: () => void }) {
   const { data, loading, error } = useAsync<RemisionNueva>(() => fetchRemisionNueva(ticketId), [ticketId])
-  // Una remisión de este ticket que quedó creada pero sin enviar, de un intento anterior que se cortó.
-  // Ofrecerla evita el duplicado: sin esto, "Crear remisión" arrancaría una segunda desde cero.
+  /**
+   * Una remisión de este ticket que quedó creada y sin desenlace, de un intento anterior que se
+   * cortó. Ofrecerla evita el duplicado: sin esto, "Crear remisión" arrancaría una segunda desde cero.
+   *
+   * Se vuelve a pedir aquí aunque `TicketDetailView` ya sostenga esta misma lista: la suya se cargó al
+   * abrir el ticket y este formulario se abre después, así que reusarla sería decidir con una foto
+   * vieja — y el caso que importa es justo el de la remisión que otra sesión acaba de dejar.
+   *
+   * `loading` y `error` se descartan a propósito: esto es una ayuda, no un requisito, y el formulario
+   * tiene que seguir sirviendo aunque la consulta no conteste. El precio es que si falla no hay cartel
+   * ni aviso y el duplicado vuelve a ser posible en silencio; es la grieta que queda abierta.
+   */
   const { data: previas } = useAsync<RemisionConFotos[]>(() => fetchRemisiones(ticketId), [ticketId])
+  // La más reciente: el servidor las devuelve por `created_at DESC` y ya deja fuera las anuladas.
   const pendiente = (previas ?? []).find((r) => r.estado === 'pendiente') ?? null
+  // `createdAt` y no `fecha`: la fecha es la del SERVICIO, la teclea el técnico y por defecto es hoy,
+  // así que casi nunca distingue un intento de otro. La hora del intento sí responde a "¿esa cuál es?".
+  const cuandoPendiente = pendiente ? fmtFechaHora(pendiente.createdAt) : ''
   const [fecha, setFecha] = useState(hoyISO())
   const [marcados, setMarcados] = useState<Record<string, boolean>>({})
   const [observaciones, setObservaciones] = useState('')
@@ -34,6 +42,9 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
   // al formulario y el siguiente intento creaba una segunda.
   const [envio, setEnvio] = useState<EstadoEnvio>({ remisionId: null, fotosSubidas: 0 })
   const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
+  // Qué es lo que está en vuelo, porque `busy` no lo distingue: crear una remisión nueva y reenviar la
+  // que quedó pendiente lo encienden igual, y los avisos de salida dicen cosas distintas en cada caso.
+  const [enviandoPrevia, setEnviandoPrevia] = useState(false)
 
   const alternar = (item: string) => setMarcados((m) => ({ ...m, [item]: !m[item] }))
 
@@ -66,6 +77,13 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
+    // El cartel de abajo es solo un consejo, y sin esta pregunta ignorarlo cuesta un clic: se crearía
+    // una SEGUNDA remisión pendiente, y la primera quedaría fuera de alcance para siempre (al crear,
+    // `creada` esconde el cartel, y aunque se recargara solo se ofrece la más reciente). No se bloquea
+    // porque dos remisiones en un ticket son legítimas —un ticket puede recibir dos equipos—, pero
+    // tiene que ser una decisión, no un descuido: `cancelar()` ya pregunta por bastante menos.
+    if (pendiente && !creada && !confirm('Este ticket ya tiene una remisión sin desenlace. Si creas otra quedarán dos, y quitar la anterior solo puede hacerlo un administrador. ¿Crear una segunda de todos modos?')) return
+    setEnviandoPrevia(false) // lo que salga de aquí sí es una remisión de esta sesión
     void ejecutar(envio, false)
   }
 
@@ -93,7 +111,13 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
    * `crearRemision` que ya salió y el servidor la crea igual.
    */
   function cancelar() {
-    if (congelado && !confirm('La remisión ya se creó —o se está creando ahora mismo— y quedaría sin enviar. Aparecerá en la pantalla de Remisiones y un administrador puede anularla. ¿Salir de todos modos?')) return
+    // Reenviar la remisión de otra sesión también enciende `congelado` (por `busy`), pero ahí no se
+    // está creando nada ni queda nada a medias: el envío ya salió y su desenlace se guarda en la base
+    // lo mires o no. Decirle lo de siempre sería alarmarlo por algo que no está pasando.
+    const aviso = enviandoPrevia
+      ? 'El envío ya salió. Si sales ahora no verás cómo terminó, pero el resultado queda guardado y lo puedes mirar en la pestaña de Remisiones del ticket. ¿Salir de todos modos?'
+      : 'La remisión ya se creó —o se está creando ahora mismo— y quedaría sin enviar. Aparecerá en la pantalla de Remisiones y un administrador puede anularla. ¿Salir de todos modos?'
+    if (congelado && !confirm(aviso)) return
     // Salir por `onCreada` y no por `onClose` porque solo aquella recarga el ticket: si no se recarga,
     // la pestaña sigue diciendo "0 REMISIONES", el técnico no ve la que acaba de dejar y crea otra.
     // Con la petición aún en vuelo la recarga puede adelantarse al servidor, pero nunca es peor que
@@ -197,19 +221,34 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
           </div>
         )}
         {/* Solo mientras no se haya creado nada en esta sesión: si ya hay una `creada`, el aviso de
-            arriba manda y este sobraría. */}
+            arriba manda y este sobraría.
+
+            El texto no afirma que no se enviara, aunque ese sea el caso que motiva el cartel: desde el
+            navegador `pendiente` no distingue tres situaciones —nunca se disparó, se disparó y sigue en
+            vuelo, o se disparó y n8n aún no ha contestado— y el panel del mismo ticket etiqueta ese
+            estado como "Enviando…" (`ESTADO_REMISION`). Prometer aquí lo contrario, a un clic de
+            distancia, sería contradecirse. Pulsar es seguro en las tres: si el envío sigue vivo el
+            servidor responde 409 y el panel de desenlace acaba enseñando cómo terminó de verdad. */}
         {!creada && pendiente && (
           <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 flex items-center gap-2">
             <span className="flex-1">
-              Hay una remisión de este ticket del {fmtFecha(pendiente.fecha)} que se creó pero nunca llegó
-              a enviarse. Se envía con lo que se guardó entonces; lo que haya ahora en el formulario no entra.
+              Este ticket ya tiene una remisión sin desenlace{cuandoPendiente && ` (creada el ${cuandoPendiente})`}:
+              puede que no llegara a enviarse, o que n8n aún no haya contestado.
+              Se envía con lo que se guardó entonces; lo que haya ahora en el formulario no entra.
             </span>
-            {/* `busy` ya está encendido durante el disparo: sin el guardia, un segundo clic manda otro
-                envío que el servidor rechaza con 409 y deja el panel de desenlace contando un fallo
-                que no lo es. */}
+            {/* No pasa por `setEnvio` a propósito, aunque encendería `creada` y cuadraría el aviso de
+                arriba: `envio.fotosSubidas` es un índice sobre las fotos de ESTA sesión, así que meter
+                ahí una remisión ajena haría que el aviso contara "Fotos subidas: 0 de N" sobre fotos
+                que ni le pertenecen ni se van a subir. A cambio, esta ruta depende de un invariante de
+                `envioRemision.ts`: con `remisionId` puesto y `omitirFotosPendientes`, ni `crear` ni
+                `subirFoto` llegan a llamarse, y `enviar` no lanza — así que siempre acaba en
+                `setResultado` y nunca vuelve al formulario con el id perdido.
+
+                `busy` ya está encendido durante el disparo: sin el guardia, un segundo clic manda otro
+                envío que el servidor rechaza con 409. */}
             <button
               type="button"
-              onClick={() => void ejecutar({ remisionId: pendiente.id, fotosSubidas: 0 }, true)}
+              onClick={() => { setEnviandoPrevia(true); void ejecutar({ remisionId: pendiente.id, fotosSubidas: 0 }, true) }}
               disabled={!!busy}
               className="shrink-0 font-bold underline disabled:opacity-50"
             >

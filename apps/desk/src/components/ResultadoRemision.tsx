@@ -13,8 +13,10 @@ const INTERVALO_MS = 2000
  * del envío. El estado ya está guardado en Postgres: cerrar el panel no pierde nada, y por eso el
  * sondeo se corta al desmontar.
  *
- * `errorEnvio` es el fallo del disparo inicial, si lo hubo. En ese caso no se sondea nada —el
- * desenlace no va a llegar— y se ofrece reintentar de inmediato en vez de esperar el minuto.
+ * `errorEnvio` es lo que dijo el disparo inicial si no salió. Adelanta el botón de reintentar, pero
+ * NO corta el sondeo: el motivo más común es el 409 del cerrojo de reenvío, que significa justo lo
+ * contrario —hay un envío vivo y su desenlace va a llegar—. Darlo por muerto pintaba de rojo un envío
+ * que iba bien, y la reacción natural del técnico ante ese rojo es crear otra remisión.
  */
 export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
   remisionId: string
@@ -22,15 +24,18 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
   onCerrar: () => void
 }) {
   const [rem, setRem] = useState<RemisionConFotos | null>(null)
-  const [nota, setNota] = useState<string | null>(errorEnvio ?? null)
-  const [envioFallido, setEnvioFallido] = useState(!!errorEnvio)
+  // Aviso pasajero del sondeo (un tropiezo de red al leer, o lo que contestó un reenvío). Se borra en
+  // cuanto una lectura sale bien: no dice nada sobre cómo fue la remisión.
+  const [nota, setNota] = useState<string | null>(null)
+  // Lo que contestó el disparo cuando no confirmó. Separado de `nota` porque no es pasajero: mientras
+  // no haya desenlace sigue siendo la única explicación de por qué esto no avanza.
+  const [falloDisparo, setFalloDisparo] = useState<string | null>(errorEnvio ?? null)
   const [agotado, setAgotado] = useState(false)
   const [reintentando, setReintentando] = useState(false)
   const [intento, setIntento] = useState(0)
   const desde = useRef(Date.now())
 
   useEffect(() => {
-    if (envioFallido) return
     let vivo = true
     let temporizador: ReturnType<typeof setTimeout> | undefined
     async function mirar() {
@@ -39,7 +44,13 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
         if (!vivo) return
         setRem(r)
         setNota(null) // una lectura buena borra el aviso que dejó la anterior
-        if (r.estado !== 'pendiente') return // ya hay desenlace: se deja de sondear
+        if (r.estado !== 'pendiente') {
+          // Hay desenlace: se deja de sondear. Y sea cual sea, manda sobre lo que dijo el disparo —si
+          // el flujo llegó a arrancar, aquel mensaje describía como fallo algo que sí salió—, así que
+          // se retira para no enseñar dos veredictos a la vez.
+          setFalloDisparo(null)
+          return
+        }
       } catch (e) {
         if (!vivo) return
         // Un fallo de red aquí es casi siempre pasajero —el técnico está en campo, con cobertura
@@ -55,28 +66,30 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
     }
     void mirar()
     return () => { vivo = false; if (temporizador) clearTimeout(temporizador) }
-  }, [remisionId, intento, envioFallido])
+  }, [remisionId, intento])
 
   async function reintentar() {
-    setReintentando(true); setNota(null); setAgotado(false)
+    // Lo que dijo el disparo anterior queda superado por este intento; si este tampoco confirma, el
+    // motivo nuevo lo pone el `catch`.
+    setReintentando(true); setNota(null); setAgotado(false); setFalloDisparo(null)
     try {
       await enviarRemision(remisionId)
     } catch (e) {
       // Que el reenvío falle no significa que no haya nada en marcha: el servidor responde 409
-      // cuando el envío anterior sigue vivo. Se enseña el motivo, pero se vuelve a sondear igual
-      // porque el desenlace puede llegar de todos modos.
-      setNota(e instanceof Error ? e.message : String(e))
+      // cuando el envío anterior sigue vivo. Va a `falloDisparo` y no a `nota` por eso mismo —es la
+      // misma situación que un `errorEnvio` de entrada, y aquí `nota` la borraría la primera lectura
+      // buena, dos segundos después—, y se vuelve a sondear igual: el desenlace puede llegar.
+      setFalloDisparo(e instanceof Error ? e.message : String(e))
     } finally {
       setReintentando(false)
       desde.current = Date.now()
-      setEnvioFallido(false)
       setIntento((n) => n + 1) // relanza el efecto y con él el sondeo
     }
   }
 
   const resultado = rem?.resultado ?? null
-  const esperando = !envioFallido && !agotado && (!rem || rem.estado === 'pendiente')
-  const puedeReintentar = envioFallido || agotado || rem?.estado === 'error'
+  const esperando = !agotado && (!rem || rem.estado === 'pendiente')
+  const puedeReintentar = !!falloDisparo || agotado || rem?.estado === 'error'
 
   const urlCarpeta = urlSegura(resultado?.carpetaUrl)
   const carpeta = urlCarpeta ? (
@@ -90,7 +103,23 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
       <div className="bg-white rounded-lg p-5 w-[560px] max-h-[90vh] overflow-auto flex flex-col gap-3">
         <h3 className="text-[15px] font-bold text-slate-800">Remisión de entrada</h3>
 
-        {esperando && <div className="text-[13px] text-slate-500">Generando la remisión…</div>}
+        {esperando && (
+          <div className="text-[13px] text-slate-500">
+            {/* Con el disparo sin confirmar no se puede prometer que se esté generando nada: puede que
+                sí (409 del cerrojo) o que no (n8n caído). Decir qué se está haciendo es lo único
+                cierto, y explica por qué la pantalla sigue mirando pese al aviso de abajo. */}
+            {falloDisparo ? 'Comprobando si la remisión llegó a generarse…' : 'Generando la remisión…'}
+          </div>
+        )}
+
+        {/* Ámbar y no rojo: que el disparo no confirmara no es un veredicto sobre la remisión. El rojo
+            queda para el `error` que informa n8n, que sí lo es. */}
+        {falloDisparo && (
+          <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 flex flex-col gap-1">
+            <span>No se pudo confirmar el envío: {falloDisparo}</span>
+            <span>La remisión está guardada y se sigue comprobando por si el envío sí llegó a salir. También puedes reintentar ahora.</span>
+          </div>
+        )}
 
         {nota && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{nota}</div>}
 

@@ -1,6 +1,38 @@
 import type { RemisionPasoFallido } from '@ambientalia/shared'
 
 /**
+ * Formatea la `fecha` de una remisión ("2026-05-19") al formato largo de es-CO ("19 de may de 2026").
+ *
+ * Existe SOLO por el corrimiento de un día: `fecha` es un `date` de Postgres que llega como
+ * "YYYY-MM-DD", y `new Date("2026-05-19")` se interpreta como medianoche UTC, que en Bogotá (UTC-5)
+ * se pinta como el 18. Añadirle la hora la ancla a medianoche LOCAL, que es lo que el técnico tecleó.
+ * De ahí que esté probada: es una función de tres líneas cuyo único motivo de ser es un caso límite.
+ *
+ * Vive aquí —presentación compartida de las pantallas de remisiones, junto a `ESTADO_REMISION`—
+ * porque la usan las tres: `PanelRemisiones`, `RemisionesPage` y `CrearRemision`. Ojo: NO es la misma
+ * función que las `fmtFecha` de `ActividadesPage`, `ClienteDetalle` y `HojaDeVida`, que aceptan `null`
+ * y devuelven cadena vacía; unificar las seis no es un cambio de forma sino de contrato.
+ */
+export function fmtFecha(v: string): string {
+  const d = new Date(v.length === 10 ? `${v}T00:00:00` : v)
+  if (Number.isNaN(d.getTime())) return v
+  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
+}
+
+/**
+ * Igual que `fmtFecha` pero para un instante completo (`createdAt`), con hora. No comparte cuerpo con
+ * ella a propósito: aquí el ISO trae zona horaria propia y anclarlo a medianoche local lo estropearía.
+ *
+ * Es lo que hay que enseñar cuando la pregunta es "¿cuándo se hizo ESTE intento?": `fecha` es la del
+ * servicio, la teclea el técnico y por defecto es hoy, así que no distingue un intento de otro.
+ */
+export function fmtFechaHora(v: string): string {
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return v
+  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d)
+}
+
+/**
  * `resultado` llega de n8n y se guarda tal cual, sin validar. Una remisión anterior al contrato
  * actual, o un flujo modificado, pueden traer cualquier cosa donde el tipo promete una lista, así
  * que se filtra aquí: un dato raro no puede tumbar la pantalla que le da el resultado al técnico.

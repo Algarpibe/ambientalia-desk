@@ -2,14 +2,7 @@ import { useMemo, useState } from 'react'
 import type { RemisionListado } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionesListado, anularRemision, restaurarRemision } from '../api/client'
-import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
-
-/** Formatea "2026-05-19" a "19 may 2026" (es-CO), evitando el corrimiento de un día por zona horaria. */
-function fmtFecha(v: string): string {
-  const d = new Date(v.length === 10 ? `${v}T00:00:00` : v)
-  if (Number.isNaN(d.getTime())) return v
-  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
-}
+import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA, fmtFecha } from '../lib/remisionResultado'
 
 /**
  * La hora que la columna Fecha no puede dar por sí sola: `fecha` es un `date` en la base, sin hora.

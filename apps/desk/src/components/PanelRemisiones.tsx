@@ -1,12 +1,5 @@
 import type { RemisionConFotos } from '../api/client'
-import { pasos, urlSegura, ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
-
-/** Formatea "2026-05-19" a "19 may 2026" (es-CO), evitando el corrimiento de un día por zona horaria. */
-function fmtFecha(v: string): string {
-  const d = new Date(v.length === 10 ? `${v}T00:00:00` : v)
-  if (Number.isNaN(d.getTime())) return v
-  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
-}
+import { pasos, urlSegura, fmtFecha, ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 
 // `ok` de una remisión histórica no pasó por el flujo de n8n —nunca hubo flujo que evaluar—, así que
 // no lleva el mismo distintivo que una remisión creada por la app. Por eso el histórico tiene su
