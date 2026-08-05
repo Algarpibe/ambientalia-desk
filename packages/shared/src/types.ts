@@ -327,6 +327,10 @@ export interface RemisionResultado {
  * `personaContacto` llegan como texto libre del histórico; `origen` distingue lo creado en la app
  * (`app`) de lo importado de la hoja (`historico`), porque una remisión histórica no tiene fotos ni
  * carpeta de Drive y la pantalla debe poder tratarla distinto.
+ *
+ * `anuladaAt` es NULL mientras la remisión está vigente. Anular es reversible A PROPÓSITO: el
+ * documento y el PDF pueden ya existir en Drive y haberse mandado a un cliente, así que se marca en
+ * vez de borrarse, y `anuladaPor` deja constancia de quién lo hizo.
  */
 export interface Remision {
   id: string
@@ -346,6 +350,8 @@ export interface Remision {
   empresa: string | null
   personaContacto: string | null
   origen: string
+  anuladaAt: string | null
+  anuladaPor: string | null
 }
 
 /** Datos con los que el formulario de remisión de entrada llega prellenado desde el ticket. */
@@ -373,6 +379,9 @@ export interface RemisionNueva {
  * `remisiones` —el importador solo los usó para calcular `perfil`— así que salen de un `LEFT JOIN`
  * a `equipos`; `ticketNumero` de un `LEFT JOIN` a `tickets`. Ambos son NULL-able: una remisión
  * puede no tener equipo enlazado, y 59 históricas no tienen ticket.
+ *
+ * `anuladaAt`/`anuladaPor` solo llegan pobladas cuando el listado se pidió con las anuladas
+ * incluidas (por defecto se quedan fuera, ver `listRemisionesListado`).
  */
 export interface RemisionListado {
   id: string
@@ -391,4 +400,6 @@ export interface RemisionListado {
   ticketNumero: string | null
   estado: 'pendiente' | 'ok' | 'ok_con_avisos' | 'error'
   origen: string
+  anuladaAt: string | null
+  anuladaPor: string | null
 }

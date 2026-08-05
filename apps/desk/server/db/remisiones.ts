@@ -5,6 +5,9 @@ import { VENTANA_REENVIO_SEGUNDOS } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
+/** `timestamptz` NULL-able: pg-mem y pg lo entregan como `Date`, pero puede no haber llegado a marcarse. */
+const isoOrNull = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : v ? String(v) : null)
+
 function toRemision(r: Record<string, unknown>): Remision {
   return {
     id: String(r.id), ticketId: (r.ticket_id as string) ?? null, tipo: String(r.tipo),
@@ -19,6 +22,7 @@ function toRemision(r: Record<string, unknown>): Remision {
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at ?? ''),
     empresa: (r.empresa as string) ?? null, personaContacto: (r.persona_contacto as string) ?? null,
     origen: String(r.origen ?? 'app'),
+    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null,
   }
 }
 
@@ -53,9 +57,9 @@ export async function getRemision(db: Queryable, id: string): Promise<Remision |
   return r.rows[0] ? toRemision(r.rows[0]) : null
 }
 
-/** Remisiones de un ticket, la más reciente primero. */
+/** Remisiones VIGENTES de un ticket, la más reciente primero. Una anulada no debe aparecer en el panel del ticket. */
 export async function listRemisionesByTicket(db: Queryable, ticketId: string): Promise<Remision[]> {
-  const r = await db.query('SELECT * FROM remisiones WHERE ticket_id = $1 ORDER BY created_at DESC', [ticketId])
+  const r = await db.query('SELECT * FROM remisiones WHERE ticket_id = $1 AND anulada_at IS NULL ORDER BY created_at DESC', [ticketId])
   return r.rows.map(toRemision)
 }
 
@@ -65,15 +69,21 @@ export async function listRemisionesByTicket(db: Queryable, ticketId: string): P
  * cargado— pero con un `LIMIT` de seguridad: hoy son ~170 filas creciendo ~100/año, así que faltan
  * décadas para tocarlo. El día que se alcance, hay que paginar en servidor (como
  * `GET /api/tickets?scope=closed`) en vez de subir el número.
+ *
+ * `incluirAnuladas` por defecto NO: una remisión anulada es la que un administrador quitó de en
+ * medio (a menudo una prueba), y esta es la vista que exporta CSV, así que debe quedar fuera salvo
+ * que se pida explícitamente (el interruptor "Ver anuladas" de la pantalla).
  */
-export async function listRemisionesListado(db: Queryable): Promise<RemisionListado[]> {
+export async function listRemisionesListado(db: Queryable, incluirAnuladas = false): Promise<RemisionListado[]> {
+  const filtro = incluirAnuladas ? '' : 'WHERE r.anulada_at IS NULL'
   const r = await db.query(
     `SELECT r.id, r.fecha, r.creado_por, r.empresa, r.persona_contacto, r.serial, r.incluye,
-            r.tipo_servicio, r.observaciones, r.estado, r.origen, r.ticket_id,
+            r.tipo_servicio, r.observaciones, r.estado, r.origen, r.ticket_id, r.anulada_at, r.anulada_por,
             e.marca, e.modelo, t.number AS ticket_number
        FROM remisiones r
        LEFT JOIN equipos e ON r.equipo_id = e.id
        LEFT JOIN tickets t ON r.ticket_id = t.id
+       ${filtro}
       ORDER BY r.fecha DESC, r.created_at DESC
       LIMIT 2000`,
   )
@@ -93,6 +103,8 @@ export async function listRemisionesListado(db: Queryable): Promise<RemisionList
     ticketNumero: x.ticket_number != null ? `#${x.ticket_number}` : null,
     estado: String(x.estado) as RemisionListado['estado'],
     origen: String(x.origen ?? 'app'),
+    anuladaAt: isoOrNull(x.anulada_at),
+    anuladaPor: (x.anulada_por as string) ?? null,
   }))
 }
 
@@ -107,6 +119,20 @@ export async function setResultadoRemision(
   resultado: unknown,
 ): Promise<void> {
   await db.query('UPDATE remisiones SET estado = $2, resultado = $3, resuelto_at = now() WHERE id = $1', [id, estado, J(resultado)])
+}
+
+/**
+ * Anula la remisión: se marca, no se borra. El documento y el PDF pueden ya existir en Drive y
+ * haberse mandado a un cliente, así que borrar la fila dejaría ese documento sin nada que lo
+ * explique; marcar además es lo que permite deshacer un clic equivocado con `restaurarRemision`.
+ */
+export async function anularRemision(db: Queryable, id: string, quien: string | null): Promise<void> {
+  await db.query('UPDATE remisiones SET anulada_at = now(), anulada_por = $2 WHERE id = $1', [id, quien])
+}
+
+/** Deshace una anulación: la remisión vuelve a listarse en el panel del ticket y en el listado. */
+export async function restaurarRemision(db: Queryable, id: string): Promise<void> {
+  await db.query('UPDATE remisiones SET anulada_at = NULL, anulada_por = NULL WHERE id = $1', [id])
 }
 
 /**

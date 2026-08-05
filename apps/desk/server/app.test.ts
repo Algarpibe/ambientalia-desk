@@ -720,6 +720,90 @@ describe('POST /api/remisiones', () => {
     expect((await request(app).get('/api/remisiones/rem-nope').set('Cookie', cookie)).status).toBe(404)
     expect((await request(app).get(`/api/remisiones/${id}`)).status).toBe(401)
   })
+
+  // Anular es reversible A PROPÓSITO: la remisión es un documento que puede haberse mandado ya a un
+  // cliente y su PDF sigue en Drive, así que la fila se marca y no se borra. Por eso desaparece de los
+  // dos sitios donde se lista (panel del ticket y listado) y restaurar la devuelve a los dos.
+  it('anular saca la remisión del listado y del panel del ticket; restaurar la devuelve a los dos', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+
+    expect((await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', cookie)).status).toBe(200)
+
+    const panelTrasAnular = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
+    expect(panelTrasAnular.body).toHaveLength(0)
+    const listadoTrasAnular = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(listadoTrasAnular.body.find((r: any) => r.id === id)).toBeUndefined()
+
+    expect((await request(app).post(`/api/remisiones/${id}/restaurar`).set('Cookie', cookie)).status).toBe(200)
+
+    const panelTrasRestaurar = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
+    expect(panelTrasRestaurar.body).toHaveLength(1)
+    const listadoTrasRestaurar = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(listadoTrasRestaurar.body.find((r: any) => r.id === id)).toBeDefined()
+  })
+
+  it('anuladaPor guarda quién anuló; el listado solo la trae con el flag de incluir anuladas', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+    await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', cookie)
+
+    const sinFlag = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
+    expect(sinFlag.body.find((r: any) => r.id === id)).toBeUndefined()
+
+    const conFlag = await request(app).get('/api/remisiones/listado?incluirAnuladas=1').set('Cookie', cookie)
+    const fila = conFlag.body.find((r: any) => r.id === id)
+    expect(fila).toBeDefined()
+    expect(fila.anuladaPor).toBe('Admin')
+    expect(fila.anuladaAt).toBeTruthy()
+  })
+
+  // Mismo criterio que borrar un equipo o una resolución: solo administradores. requireAdmin va
+  // DESPUÉS de requireAuth, así que sin sesión el corte es 401 y con sesión no-admin es 403.
+  it('anular y restaurar exigen admin: 403 sin serlo, 401 sin sesión', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const opCookie = await userCookie(['soporte'])
+    const { app } = appWith()
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+
+    expect((await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', opCookie)).status).toBe(403)
+    expect((await request(app).post(`/api/remisiones/${id}/anular`)).status).toBe(401)
+
+    expect((await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', cookie)).status).toBe(200)
+
+    expect((await request(app).post(`/api/remisiones/${id}/restaurar`).set('Cookie', opCookie)).status).toBe(403)
+    expect((await request(app).post(`/api/remisiones/${id}/restaurar`)).status).toBe(401)
+  })
+
+  it('anular y restaurar responden 404 si la remisión no existe', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    expect((await request(app).post('/api/remisiones/rem-nope/anular').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).post('/api/remisiones/rem-nope/restaurar').set('Cookie', cookie)).status).toBe(404)
+  })
+
+  // Enviar una remisión que se acaba de anular generaría un documento en Drive de algo que ya no
+  // debería existir como tal: absurdo, y por eso se corta con 409 antes de llegar a n8n.
+  it('una remisión anulada no se puede enviar', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    const id = rem.body.id
+    await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', cookie)
+
+    const env = await request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+    expect(env.status).toBe(409)
+    expect(env.body.error).toMatch(/anulad/i)
+  })
 })
 
 // Alimenta la sección "Remisiones" de la cabecera: la vista tabular que tenía la hoja de Google,

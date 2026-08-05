@@ -282,3 +282,7 @@ ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS persona_contacto text;
 
 -- Distingue lo que crea la app de lo importado de la hoja de Google (historico): una remision historica no tiene fotos ni carpeta de Drive, y la pantalla debe poder tratarla distinto
 ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS origen text NOT NULL DEFAULT 'app';
+
+-- Anular en vez de borrar: el documento y el PDF pueden ya existir en Drive y haberse mandado a un cliente, asi que borrar la fila dejaria ese documento sin nada que lo explique, y anular es lo unico que se puede deshacer de un clic equivocado. NULL en anulada_at es una remision vigente
+ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS anulada_at timestamptz;
+ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS anulada_por text;

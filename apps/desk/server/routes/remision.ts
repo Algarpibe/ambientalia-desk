@@ -6,11 +6,11 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, reclamarEnvio, liberarEnvio, listFotosConContenido } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
-import { requireAuth } from '../auth/middleware'
+import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 
 // Mismo criterio que los adjuntos de resolución: solo imágenes, y SVG fuera (permite script embebido).
@@ -66,9 +66,13 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
    * Vista tabular de TODAS las remisiones (históricas + app), para la sección propia de la
    * cabecera. Va ANTES de `/api/remisiones/:id` por el mismo motivo que `/nueva` arriba:
    * registrada después, `:id` se comería el literal `listado`.
+   *
+   * `?incluirAnuladas=1` es lo que usa el interruptor "Ver anuladas" (solo administradores en la
+   * UI); sin él, una remisión anulada no aparece aquí ni en el CSV que se exporta de esta vista.
    */
   app.get('/api/remisiones/listado', requireAuth(db), asyncHandler(async (req, res) => {
-    res.json(await listRemisionesListado(db))
+    const incluirAnuladas = req.query.incluirAnuladas === '1' || req.query.incluirAnuladas === 'true'
+    res.json(await listRemisionesListado(db, incluirAnuladas))
   }))
 
   /** Remisiones ya registradas de un ticket, con sus fotos. Alimenta el panel del detalle. */
@@ -154,6 +158,11 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const id = String(req.params.id)
     const rem = await getRemision(db, id)
     if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    // Generar un documento en Drive de algo que se acaba de anular sería absurdo: la anulación
+    // corta el envío antes de mirar siquiera el estado del flujo n8n.
+    if (rem.anuladaAt) {
+      res.status(409).json({ error: 'Esta remisión fue anulada y no se puede enviar' }); return
+    }
     // Reenviar una remisión ya cerrada generaría un segundo documento y una segunda carpeta en Drive
     // para el mismo equipo. Solo se reenvía lo que no llegó a buen puerto.
     if (rem.estado === 'ok' || rem.estado === 'ok_con_avisos') {
@@ -188,6 +197,25 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       res.status(502).json({ error: 'No se pudo enviar a n8n', detalle: r.motivo }); return
     }
     res.json({ enviado: true })
+  }))
+
+  /**
+   * Anula la remisión: no la borra, la marca (ver el comentario de `anularRemision`). Solo
+   * administradores, mismo criterio que borrar un equipo o una resolución.
+   */
+  app.post('/api/remisiones/:id/anular', requireAuth(db), requireAdmin, asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    await anularRemision(db, id, req.user?.name ?? null)
+    res.json(await getRemision(db, id))
+  }))
+
+  /** Deshace una anulación. Solo administradores, mismo criterio que anular. */
+  app.post('/api/remisiones/:id/restaurar', requireAuth(db), requireAdmin, asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    await restaurarRemision(db, id)
+    res.json(await getRemision(db, id))
   }))
 
   /**
