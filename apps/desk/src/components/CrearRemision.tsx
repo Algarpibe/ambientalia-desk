@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
-import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision } from '../api/client'
+import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, type RemisionConFotos } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
 import { ejecutarEnvio, type EstadoEnvio, type ResultadoEnvio } from '../lib/envioRemision'
 import { ResultadoRemision } from './ResultadoRemision'
+
+/** Formatea "2026-05-19" a "19 may 2026" (es-CO), evitando el corrimiento de un día por zona horaria. */
+function fmtFecha(v: string): string {
+  const d = new Date(v.length === 10 ? `${v}T00:00:00` : v)
+  if (Number.isNaN(d.getTime())) return v
+  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
+}
 
 /**
  * Formulario de remisión de ENTRADA. Sustituye al formulario de n8n: los datos que allí se volvían a
@@ -13,6 +20,10 @@ import { ResultadoRemision } from './ResultadoRemision'
  */
 export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: string; onClose: () => void; onCreada: () => void }) {
   const { data, loading, error } = useAsync<RemisionNueva>(() => fetchRemisionNueva(ticketId), [ticketId])
+  // Una remisión de este ticket que quedó creada pero sin enviar, de un intento anterior que se cortó.
+  // Ofrecerla evita el duplicado: sin esto, "Crear remisión" arrancaría una segunda desde cero.
+  const { data: previas } = useAsync<RemisionConFotos[]>(() => fetchRemisiones(ticketId), [ticketId])
+  const pendiente = (previas ?? []).find((r) => r.estado === 'pendiente') ?? null
   const [fecha, setFecha] = useState(hoyISO())
   const [marcados, setMarcados] = useState<Record<string, boolean>>({})
   const [observaciones, setObservaciones] = useState('')
@@ -183,6 +194,27 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
           <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
             La remisión ya se creó y no se va a duplicar: al reintentar se continúa con ella.
             {fotos.length > 0 && ` Fotos subidas: ${envio.fotosSubidas} de ${fotos.length}.`}
+          </div>
+        )}
+        {/* Solo mientras no se haya creado nada en esta sesión: si ya hay una `creada`, el aviso de
+            arriba manda y este sobraría. */}
+        {!creada && pendiente && (
+          <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 flex items-center gap-2">
+            <span className="flex-1">
+              Hay una remisión de este ticket del {fmtFecha(pendiente.fecha)} que se creó pero nunca llegó
+              a enviarse. Se envía con lo que se guardó entonces; lo que haya ahora en el formulario no entra.
+            </span>
+            {/* `busy` ya está encendido durante el disparo: sin el guardia, un segundo clic manda otro
+                envío que el servidor rechaza con 409 y deja el panel de desenlace contando un fallo
+                que no lo es. */}
+            <button
+              type="button"
+              onClick={() => void ejecutar({ remisionId: pendiente.id, fotosSubidas: 0 }, true)}
+              disabled={!!busy}
+              className="shrink-0 font-bold underline disabled:opacity-50"
+            >
+              Enviar esa
+            </button>
           </div>
         )}
         {err && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{err}</div>}
