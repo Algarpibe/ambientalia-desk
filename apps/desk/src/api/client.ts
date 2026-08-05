@@ -285,9 +285,29 @@ export function fetchRemision(id: string): Promise<RemisionConFotos> {
   return fetch(`/api/remisiones/${encodeURIComponent(id)}`, { credentials: 'include' }).then((r) => json<RemisionConFotos>(r))
 }
 
-/** Todas las remisiones (históricas + app), para la sección "Remisiones" de la cabecera. */
-export function fetchRemisionesListado(): Promise<RemisionListado[]> {
-  return fetch('/api/remisiones/listado', { credentials: 'include' }).then((r) => json<RemisionListado[]>(r))
+/**
+ * Todas las remisiones (históricas + app), para la sección "Remisiones" de la cabecera.
+ * `incluirAnuladas` es lo que activa el interruptor "Ver anuladas" (solo administradores); por
+ * defecto se quedan fuera, igual que en el servidor.
+ */
+export function fetchRemisionesListado(incluirAnuladas = false): Promise<RemisionListado[]> {
+  const qs = incluirAnuladas ? '?incluirAnuladas=1' : ''
+  return fetch(`/api/remisiones/listado${qs}`, { credentials: 'include' }).then((r) => json<RemisionListado[]>(r))
+}
+
+/**
+ * Anula la remisión: no se borra, se marca (ver el comentario en `db/remisiones.ts`). Reversible con
+ * `restaurarRemision`. Solo administradores — el servidor responde 403 si no lo es.
+ */
+export async function anularRemision(id: string): Promise<void> {
+  const res = await fetch(`/api/remisiones/${id}/anular`, { method: 'POST', credentials: 'include' })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+}
+
+/** Deshace una anulación: la remisión vuelve a aparecer en el listado y en el panel del ticket. */
+export async function restaurarRemision(id: string): Promise<void> {
+  const res = await fetch(`/api/remisiones/${id}/restaurar`, { method: 'POST', credentials: 'include' })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
 }
 
 export interface CrearRemisionPayload { ticketId: string; fecha: string; incluye: string[]; observaciones?: string }

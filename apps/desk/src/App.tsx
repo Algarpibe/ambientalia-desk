@@ -144,7 +144,7 @@ function App() {
         {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
         {showClientes && <ClientesPage initial={clientesInitial} onClose={() => { setShowClientes(false); setClientesInitial(null) }} onSelectTicket={(id) => { setShowClientes(false); setClientesInitial(null); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
         {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
-        {showRemisiones && <RemisionesPage onClose={() => setShowRemisiones(false)} onSelectTicket={(id) => { setShowRemisiones(false); setSelectedTicketId(id) }} />}
+        {showRemisiones && <RemisionesPage onClose={() => setShowRemisiones(false)} onSelectTicket={(id) => { setShowRemisiones(false); setSelectedTicketId(id) }} isAdmin={!!user.isAdmin} />}
         {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
         {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
         {showConfig && (

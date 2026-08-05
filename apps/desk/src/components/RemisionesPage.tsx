@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { RemisionListado } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
-import { fetchRemisionesListado } from '../api/client'
+import { fetchRemisionesListado, anularRemision, restaurarRemision } from '../api/client'
 import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 
 /** Formatea "2026-05-19" a "19 may 2026" (es-CO), evitando el corrimiento de un día por zona horaria. */
@@ -18,8 +18,15 @@ type EstadoVisual = { key: string; label: string; className: string }
  * que no puede llevar la misma etiqueta que un `ok` de la app o se leería como que el flujo
  * funcionó. Mismo criterio que `PanelRemisiones` (detalle del ticket), con el mapa de estados
  * compartido en `lib/remisionResultado` para no mantener dos copias.
+ *
+ * Anulada gana sobre cualquier otro estado —incluido histórico—: es la única marca que dice "esto
+ * ya no cuenta", y por venir de `estadoVisual` la recibe también el CSV (mismo criterio: exporta
+ * exactamente lo que se ve).
  */
 function estadoVisual(r: RemisionListado): EstadoVisual {
+  if (r.anuladaAt) {
+    return { key: 'anulada', label: 'Anulada', className: 'bg-slate-100 text-slate-500 border-slate-300' }
+  }
   if (r.origen === 'historico') {
     return { key: 'historico', label: 'Importada del histórico', className: 'bg-slate-50 text-slate-500 border-slate-200' }
   }
@@ -95,13 +102,18 @@ function exportarCSV(filas: RemisionListado[]) {
  * Recupera la vista tabular que tenía `Entrada.xlsx` (149 filas históricas, migradas y
  * desconectadas), ahora sobre `remisiones` y con las de la app juntas. Todo se carga una sola vez
  * —hoy son ~170 filas, creciendo despacio— y el filtrado va en el cliente: por eso `useAsync` no
- * lleva `q`/`estadoFiltro`/`origenFiltro` en las dependencias.
+ * lleva `q`/`estadoFiltro`/`origenFiltro` en las dependencias. `verAnuladas` es la excepción: ese
+ * filtro SÍ va en el servidor (es el que decide si las anuladas ni siquiera viajan), así que necesita
+ * volver a pedir los datos cuando cambia.
  */
-export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSelectTicket: (id: string) => void }) {
-  const { data, loading, error } = useAsync<RemisionListado[]>(() => fetchRemisionesListado(), [])
+export function RemisionesPage({ onSelectTicket, isAdmin }: { onClose: () => void; onSelectTicket: (id: string) => void; isAdmin: boolean }) {
+  const [verAnuladas, setVerAnuladas] = useState(false)
+  const { data, loading, error, reload } = useAsync<RemisionListado[]>(() => fetchRemisionesListado(verAnuladas), [verAnuladas])
   const [q, setQ] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState('todos')
   const [origenFiltro, setOrigenFiltro] = useState('todos')
+  const [accionandoId, setAccionandoId] = useState<string | null>(null)
+  const [accionError, setAccionError] = useState<string | null>(null)
 
   const filas = useMemo(() => {
     const ql = q.trim().toLowerCase()
@@ -112,6 +124,24 @@ export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSele
       return [r.empresa, r.serial, r.tecnico, r.ticketNumero, r.observaciones].some((v) => (v ?? '').toLowerCase().includes(ql))
     })
   }, [data, q, estadoFiltro, origenFiltro])
+
+  // Confirmación previa porque a ojos de quien usa la app es destructiva —desaparece de la
+  // pantalla—, aunque por dentro sea reversible; el aviso de Drive evita que alguien crea que
+  // también se limpia el documento allá.
+  async function anular(r: RemisionListado) {
+    if (!confirm('¿Anular esta remisión? Se ocultará del listado y podrás restaurarla con "Ver anuladas". El documento y el PDF seguirán existiendo en Drive: eso no se puede deshacer desde aquí.')) return
+    setAccionandoId(r.id); setAccionError(null)
+    try { await anularRemision(r.id); reload() }
+    catch (e) { setAccionError(e instanceof Error ? e.message : String(e)) }
+    finally { setAccionandoId(null) }
+  }
+
+  async function restaurar(r: RemisionListado) {
+    setAccionandoId(r.id); setAccionError(null)
+    try { await restaurarRemision(r.id); reload() }
+    catch (e) { setAccionError(e instanceof Error ? e.message : String(e)) }
+    finally { setAccionandoId(null) }
+  }
 
   const hayDatos = !!data && data.length > 0
   const sinResultadosTrasFiltrar = hayDatos && filas.length === 0
@@ -133,6 +163,12 @@ export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSele
         <select value={origenFiltro} onChange={(e) => setOrigenFiltro(e.target.value)} className="border border-slate-200 rounded px-2 py-1.5 text-[13px] text-slate-600">
           {ORIGEN_FILTROS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
+        {isAdmin && (
+          <label className="flex items-center gap-1.5 text-[13px] text-slate-600 select-none">
+            <input type="checkbox" className="accent-blue-600" checked={verAnuladas} onChange={(e) => setVerAnuladas(e.target.checked)} />
+            Ver anuladas
+          </label>
+        )}
         <button
           onClick={() => exportarCSV(filas)}
           disabled={filas.length === 0}
@@ -144,6 +180,7 @@ export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSele
 
       {loading && !data && <div className="p-4 text-[13px] text-slate-400">Cargando…</div>}
       {error && <div className="p-4 text-[13px] text-red-600">No se pudieron cargar las remisiones: {error}</div>}
+      {accionError && <div className="p-2 px-4 text-[12px] text-red-600 bg-red-50 border-b border-red-100">{accionError}</div>}
       {!loading && !error && data && data.length === 0 && (
         <div className="p-4 text-[13px] text-slate-400">No hay remisiones registradas.</div>
       )}
@@ -157,14 +194,16 @@ export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSele
             <thead className="sticky top-0 bg-slate-50 text-slate-500 uppercase text-[11px]">
               <tr className="text-left border-b border-slate-200">
                 {COLS.map((c) => <th key={c} className="px-3 py-2 font-semibold whitespace-nowrap">{c}</th>)}
+                {isAdmin && <th className="px-3 py-2 font-semibold whitespace-nowrap">Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {filas.map((r) => {
                 const badge = estadoVisual(r)
                 const incluye = r.incluye.join(', ')
+                const anulando = accionandoId === r.id
                 return (
-                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <tr key={r.id} className={`border-b border-slate-100 hover:bg-slate-50 ${r.anuladaAt ? 'opacity-60' : ''}`}>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{r.tecnico}</td>
                     <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{fmtFecha(r.fecha)}</td>
                     <td className="px-3 py-2 text-slate-600 max-w-[200px] truncate" title={r.empresa || undefined}>{r.empresa}</td>
@@ -187,12 +226,32 @@ export function RemisionesPage({ onSelectTicket }: { onClose: () => void; onSele
                     <td className="px-3 py-2 text-slate-600 max-w-[280px] truncate" title={r.observaciones || undefined}>{r.observaciones}</td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`text-[11px] px-2 py-0.5 rounded border font-bold ${badge.className}`}>{badge.label}</span>
+                      {/* Quién y cuándo, solo cuando está anulada: es lo que hace la reversibilidad
+                          algo más que teórico —sin saber quién, nadie se atreve a restaurar. */}
+                      {r.anuladaAt && (
+                        <div className="text-[10px] text-slate-400 whitespace-nowrap mt-0.5">
+                          {r.anuladaPor ? `${r.anuladaPor} · ` : ''}{fmtFecha(r.anuladaAt)}
+                        </div>
+                      )}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`text-[11px] px-2 py-0.5 rounded border font-bold ${r.origen === 'historico' ? 'bg-slate-50 text-slate-500 border-slate-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
                         {origenLabel(r.origen)}
                       </span>
                     </td>
+                    {isAdmin && (
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        {r.anuladaAt ? (
+                          <button onClick={() => restaurar(r)} disabled={anulando} className="text-[12px] text-[#2C7BE5] hover:underline disabled:opacity-40">
+                            {anulando ? 'Restaurando…' : 'Restaurar'}
+                          </button>
+                        ) : (
+                          <button onClick={() => anular(r)} disabled={anulando} className="text-[12px] text-red-600 hover:underline disabled:opacity-40">
+                            {anulando ? 'Anulando…' : 'Anular'}
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 )
               })}
