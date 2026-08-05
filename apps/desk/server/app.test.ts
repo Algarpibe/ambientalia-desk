@@ -14,6 +14,7 @@ const equipoRow = (id: string, serial: string, cliente = 'Gecelca S.A. E.S.P.'):
 import { createApp } from './app'
 import { clearAnalisisCache } from './analisis'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
+import type { RemisionListado } from '@ambientalia/shared'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
@@ -736,14 +737,14 @@ describe('POST /api/remisiones', () => {
     const panelTrasAnular = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
     expect(panelTrasAnular.body).toHaveLength(0)
     const listadoTrasAnular = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
-    expect(listadoTrasAnular.body.find((r: any) => r.id === id)).toBeUndefined()
+    expect(listadoTrasAnular.body.find((r: RemisionListado) => r.id === id)).toBeUndefined()
 
     expect((await request(app).post(`/api/remisiones/${id}/restaurar`).set('Cookie', cookie)).status).toBe(200)
 
     const panelTrasRestaurar = await request(app).get('/api/remisiones?ticketId=t1').set('Cookie', cookie)
     expect(panelTrasRestaurar.body).toHaveLength(1)
     const listadoTrasRestaurar = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
-    expect(listadoTrasRestaurar.body.find((r: any) => r.id === id)).toBeDefined()
+    expect(listadoTrasRestaurar.body.find((r: RemisionListado) => r.id === id)).toBeDefined()
   })
 
   it('anuladaPor guarda quién anuló; el listado solo la trae con el flag de incluir anuladas', async () => {
@@ -755,10 +756,10 @@ describe('POST /api/remisiones', () => {
     await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', cookie)
 
     const sinFlag = await request(app).get('/api/remisiones/listado').set('Cookie', cookie)
-    expect(sinFlag.body.find((r: any) => r.id === id)).toBeUndefined()
+    expect(sinFlag.body.find((r: RemisionListado) => r.id === id)).toBeUndefined()
 
     const conFlag = await request(app).get('/api/remisiones/listado?incluirAnuladas=1').set('Cookie', cookie)
-    const fila = conFlag.body.find((r: any) => r.id === id)
+    const fila = conFlag.body.find((r: RemisionListado) => r.id === id)
     expect(fila).toBeDefined()
     expect(fila.anuladaPor).toBe('Admin')
     expect(fila.anuladaAt).toBeTruthy()
@@ -879,6 +880,29 @@ describe('GET /api/remisiones/listado', () => {
   it('401 sin sesión', async () => {
     const { app } = appWith()
     expect((await request(app).get('/api/remisiones/listado')).status).toBe(401)
+  })
+
+  // Ocultar el interruptor "Ver anuladas" en la UI no protege nada: sin este corte, cualquier
+  // usuario con sesión podía pedir esta URL a mano (barra de direcciones, curl) y ver quién anuló
+  // qué y cuándo. El listado normal (sin el flag) sigue abierto a cualquier usuario autenticado.
+  it('incluirAnuladas exige admin: 403 sin serlo; el listado normal sigue abierto a cualquier sesión', async () => {
+    await db.query(
+      `INSERT INTO remisiones (id, tipo, fecha, creado_por, estado, origen, anulada_at, anulada_por)
+       VALUES ('rem-l9', 'entrada', '2026-08-01', 'Ana Pérez', 'ok', 'app', now(), 'Admin')`,
+    )
+    const opCookie = await userCookie(['soporte'])
+    const { app } = appWith()
+
+    expect((await request(app).get('/api/remisiones/listado?incluirAnuladas=1').set('Cookie', opCookie)).status).toBe(403)
+
+    const normal = await request(app).get('/api/remisiones/listado').set('Cookie', opCookie)
+    expect(normal.status).toBe(200)
+    expect(normal.body.find((r: RemisionListado) => r.id === 'rem-l9')).toBeUndefined()
+
+    const cookie = await adminCookie()
+    const conFlag = await request(app).get('/api/remisiones/listado?incluirAnuladas=1').set('Cookie', cookie)
+    expect(conFlag.status).toBe(200)
+    expect(conFlag.body.find((r: RemisionListado) => r.id === 'rem-l9')).toBeDefined()
   })
 
   // El riesgo de registrar /listado junto a /nueva: si quedara DESPUÉS de /:id, Express lo trataría

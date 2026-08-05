@@ -69,9 +69,17 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
    *
    * `?incluirAnuladas=1` es lo que usa el interruptor "Ver anuladas" (solo administradores en la
    * UI); sin él, una remisión anulada no aparece aquí ni en el CSV que se exporta de esta vista.
+   *
+   * Ocultar el interruptor en la UI no basta: sin esta comprobación, cualquier usuario con sesión
+   * podría pedir esta URL a mano y ver quién anuló qué y cuándo. `requireAdmin` no puede ir en la
+   * ruta entera —un no-admin sigue pudiendo ver el listado normal—, así que el corte va dentro del
+   * handler y solo cuando de verdad se pidieron las anuladas.
    */
   app.get('/api/remisiones/listado', requireAuth(db), asyncHandler(async (req, res) => {
     const incluirAnuladas = req.query.incluirAnuladas === '1' || req.query.incluirAnuladas === 'true'
+    if (incluirAnuladas && !req.user?.isAdmin) {
+      res.status(403).json({ error: 'Requiere permisos de administrador' }); return
+    }
     res.json(await listRemisionesListado(db, incluirAnuladas))
   }))
 
