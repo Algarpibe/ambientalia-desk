@@ -557,9 +557,13 @@ function textoEquipo(marca: unknown, modelo: unknown, serial: unknown): string {
 
 function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, unknown>, cliente: string | null): HistoryEvent {
   const v = json(fila.values)
-  // La foto de `values` manda; si el ticket es anterior a que se guardara, se cae a la fila, que es
-  // estado ACTUAL y no lo que se tecleó. No se distingue en pantalla: sería ruido para el técnico.
-  const de = (clave: string, columna: string): unknown => v[clave] ?? ticket[columna]
+  // Hay foto o no la hay: se decide UNA vez, no campo a campo. Los tickets anteriores a que se
+  // guardara el payload completo dejaron en `values` solo `orden_venta`, así que la presencia de
+  // cualquier otra clave es el discriminador. Mezclar con `v[c] ?? ticket[col]` sería un error
+  // sutil: la foto guarda los `null` explícitos, de modo que un campo que el técnico dejó vacío ese
+  // día caería a la columna y mostraría el estado ACTUAL — justo la mentira que la foto evita.
+  const hayFoto = Object.keys(v).some((k) => k !== 'orden_venta')
+  const de = (clave: string, columna: string): unknown => (hayFoto ? v[clave] : ticket[columna])
   return {
     eventName: 'AppTicketCreado',
     time: iso(fila.performed_at),
