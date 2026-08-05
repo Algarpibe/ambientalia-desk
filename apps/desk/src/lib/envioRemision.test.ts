@@ -55,10 +55,24 @@ describe('ejecutarEnvio', () => {
     expect(pasos.enviar).not.toHaveBeenCalled()
   })
 
+  // La rama en la que se apoya el formulario para NO ofrecer "Reintentar": si crear falla no hay
+  // remisión, así que el estado tiene que quedar intacto y el botón seguir diciendo "Crear remisión".
+  it('si crear falla, propaga y no deja avance ni sigue con los demás pasos', async () => {
+    const { pasos, avances } = pasosFalsos({
+      crear: vi.fn(async () => { throw new Error('sin conexión') }),
+    })
+    await expect(ejecutarEnvio(NUEVO, 2, pasos)).rejects.toThrow('sin conexión')
+    expect(avances).toEqual([])
+    expect(pasos.subirFoto).not.toHaveBeenCalled()
+    expect(pasos.enviar).not.toHaveBeenCalled()
+  })
+
   it('omitirFotosPendientes salta las fotos que faltan y envía igual', async () => {
-    const { pasos } = pasosFalsos()
+    const { pasos, avances } = pasosFalsos()
     const r = await ejecutarEnvio({ remisionId: 'rem-9', fotosSubidas: 1 }, 3, pasos, { omitirFotosPendientes: true })
     expect(pasos.subirFoto).not.toHaveBeenCalled()
+    // No solo evita subir: no toca el estado en absoluto, así que el contador no se falsea.
+    expect(avances).toEqual([])
     expect(pasos.enviar).toHaveBeenCalledWith('rem-9')
     expect(r.errorEnvio).toBeNull()
   })

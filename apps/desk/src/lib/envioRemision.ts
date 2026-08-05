@@ -17,6 +17,13 @@ export interface EstadoEnvio {
 export interface PasosEnvio {
   /** Crea la remisión y devuelve su id. Solo se llama si el estado no trae una. */
   crear: () => Promise<string>
+  /**
+   * `indice` es POSICIONAL sobre la lista de fotos del llamante, que este módulo no posee: solo
+   * cuenta cuántas van. De ahí la única obligación del contrato: esa lista no puede cambiar entre
+   * intentos. Si el usuario añade o quita fotos antes de reintentar, `fotosSubidas` pasa a apuntar a
+   * otra lista y se suben fotos distintas de las contadas —o se saltan— sin lanzar ningún error.
+   * Es el único incumplimiento del contrato que pierde datos en silencio, por eso queda escrito aquí.
+   */
   subirFoto: (remisionId: string, indice: number) => Promise<void>
   enviar: (remisionId: string) => Promise<void>
   /**
@@ -55,6 +62,9 @@ export async function ejecutarEnvio(
   if (!remisionId) {
     pasos.onProgreso?.('Guardando…')
     remisionId = await pasos.crear()
+    // Normalización defensiva de un estado incoherente que el tipo permite construir
+    // (`remisionId: null` con `fotosSubidas > 0`): ese contador vendría de OTRA remisión, y usarlo
+    // aquí haría que la recién creada empezara por la mitad, saltándose fotos sin avisar.
     fotosSubidas = 0
     pasos.onAvance({ remisionId, fotosSubidas })
   }
