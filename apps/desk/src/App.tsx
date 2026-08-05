@@ -26,6 +26,7 @@ const Configuracion = lazy(() => import('./components/Configuracion').then(m => 
 const Analisis = lazy(() => import('./components/Analisis').then(m => ({ default: m.Analisis })))
 const ClientesPage = lazy(() => import('./components/ClientesPage').then(m => ({ default: m.ClientesPage })))
 const ActividadesPage = lazy(() => import('./components/ActividadesPage').then(m => ({ default: m.ActividadesPage })))
+const RemisionesPage = lazy(() => import('./components/RemisionesPage').then(m => ({ default: m.RemisionesPage })))
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -39,9 +40,10 @@ function App() {
   const [showClientes, setShowClientes] = useState(false)
   const [clientesInitial, setClientesInitial] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(null)
   const [showActividades, setShowActividades] = useState(false)
-  const activeSection: 'analisis' | 'clientes' | 'actividades' | 'tickets' = showAnalisis ? 'analisis' : showClientes ? 'clientes' : showActividades ? 'actividades' : 'tickets'
-  const abrirSeccion = (s: 'analisis' | 'clientes' | 'actividades' | 'tickets') => {
-    setShowAnalisis(s === 'analisis'); setShowClientes(s === 'clientes'); setShowActividades(s === 'actividades')
+  const [showRemisiones, setShowRemisiones] = useState(false)
+  const activeSection: 'analisis' | 'clientes' | 'actividades' | 'remisiones' | 'tickets' = showAnalisis ? 'analisis' : showClientes ? 'clientes' : showActividades ? 'actividades' : showRemisiones ? 'remisiones' : 'tickets'
+  const abrirSeccion = (s: 'analisis' | 'clientes' | 'actividades' | 'remisiones' | 'tickets') => {
+    setShowAnalisis(s === 'analisis'); setShowClientes(s === 'clientes'); setShowActividades(s === 'actividades'); setShowRemisiones(s === 'remisiones')
     if (s !== 'clientes') setClientesInitial(null)
   }
   const abrirCliente = (kind: 'contacto' | 'empresa', id: string) => { setClientesInitial({ kind, id }); setShowAnalisis(false); setShowActividades(false); setShowClientes(true) }
@@ -72,7 +74,7 @@ function App() {
 
   return (
     <div className="bg-[#E9EDF2] dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
-      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} activeSection={activeSection} onOpenTickets={() => abrirSeccion('tickets')} onOpenAnalisis={() => abrirSeccion('analisis')} onOpenClientes={() => abrirSeccion('clientes')} onOpenActividades={() => abrirSeccion('actividades')} />
+      <Header onOpenUsers={() => setShowUsers(true)} onOpenRoles={() => setShowRoles(true)} onOpenConfig={() => setShowConfig(true)} onOpenEquipos={() => setShowEquipos(true)} activeSection={activeSection} onOpenTickets={() => abrirSeccion('tickets')} onOpenAnalisis={() => abrirSeccion('analisis')} onOpenClientes={() => abrirSeccion('clientes')} onOpenActividades={() => abrirSeccion('actividades')} onOpenRemisiones={() => abrirSeccion('remisiones')} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeView={view} onSelectView={setView} />
@@ -142,6 +144,7 @@ function App() {
         {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
         {showClientes && <ClientesPage initial={clientesInitial} onClose={() => { setShowClientes(false); setClientesInitial(null) }} onSelectTicket={(id) => { setShowClientes(false); setClientesInitial(null); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
         {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
+        {showRemisiones && <RemisionesPage onClose={() => setShowRemisiones(false)} onSelectTicket={(id) => { setShowRemisiones(false); setSelectedTicketId(id) }} />}
         {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
         {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
         {showConfig && (

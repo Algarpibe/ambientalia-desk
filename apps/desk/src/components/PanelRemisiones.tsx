@@ -1,5 +1,5 @@
 import type { RemisionConFotos } from '../api/client'
-import { pasos, urlSegura } from '../lib/remisionResultado'
+import { pasos, urlSegura, ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 
 /** Formatea "2026-05-19" a "19 may 2026" (es-CO), evitando el corrimiento de un día por zona horaria. */
 function fmtFecha(v: string): string {
@@ -8,25 +8,10 @@ function fmtFecha(v: string): string {
   return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
 }
 
-/**
- * `ok` de una remisión histórica no pasó por el flujo de n8n —nunca hubo flujo que evaluar—, así que
- * no lleva el mismo distintivo que una remisión creada por la app. Por eso el histórico tiene su
- * propia marca ("Importada del histórico") y no entra en este mapa.
- *
- * Tipado como `Record<string, …>` y no `Record<Remision['estado'], …>` a propósito: `estado` sale de
- * Postgres con un cast sin validar (`toRemision` en server/db/remisiones.ts) y la columna no tiene
- * `CHECK`, así que el tipo promete uno de estos cuatro valores pero la base no lo garantiza. Indexar
- * este mapa debe poder fallar sin lanzar — de ahí `ESTADO_DESCONOCIDA` más abajo.
- */
-const ESTADO: Record<string, { label: string; className: string }> = {
-  pendiente: { label: 'Enviando…', className: 'bg-slate-100 text-slate-600 border-slate-200' },
-  ok: { label: 'Creada', className: 'bg-green-50 text-green-700 border-green-200' },
-  ok_con_avisos: { label: 'Creada con avisos', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  error: { label: 'Falló', className: 'bg-red-50 text-red-600 border-red-100' },
-}
-// Sin este valor por defecto, un estado fuera de los cuatro conocidos tumbaría el render de TODA la
-// vista del ticket —no solo esta fila—: no hay ErrorBoundary en el árbol que lo contenga.
-const ESTADO_DESCONOCIDA = { label: 'Estado desconocido', className: 'bg-slate-100 text-slate-500 border-slate-200' }
+// `ok` de una remisión histórica no pasó por el flujo de n8n —nunca hubo flujo que evaluar—, así que
+// no lleva el mismo distintivo que una remisión creada por la app. Por eso el histórico tiene su
+// propia marca ("Importada del histórico") y no entra en `ESTADO_REMISION` (compartido con
+// `RemisionesPage`, ver `lib/remisionResultado.ts`).
 
 function Tarjeta({ r }: { r: RemisionConFotos }) {
   const historica = r.origen === 'historico'
@@ -35,7 +20,7 @@ function Tarjeta({ r }: { r: RemisionConFotos }) {
   const avisos = pasos(r.resultado?.avisos)
   const fallos = pasos(r.resultado?.fallos)
   const urlCarpeta = urlSegura(r.resultado?.carpetaUrl)
-  const badge = ESTADO[r.estado] ?? ESTADO_DESCONOCIDA
+  const badge = ESTADO_REMISION[r.estado] ?? ESTADO_REMISION_DESCONOCIDA
 
   return (
     <div className="border border-slate-200 rounded-lg p-4 flex flex-col gap-2">

@@ -1,18 +1,19 @@
 import React from 'react';
 import { useAuth } from '../auth/AuthContext';
 
-type SectionKey = 'tickets' | 'analisis' | 'clientes' | 'actividades'
+type SectionKey = 'tickets' | 'analisis' | 'clientes' | 'actividades' | 'remisiones'
 
 const NAV_TABS: { label: string; key?: SectionKey }[] = [
     { label: 'Tickets', key: 'tickets' },
     { label: 'Análisis', key: 'analisis' },
     { label: 'Actividades', key: 'actividades' },
+    { label: 'Remisiones', key: 'remisiones' },
     { label: 'Mensajería Instantánea' },
     { label: 'Clientes', key: 'clientes' },
     { label: 'Base de Conocimientos' }
 ];
 
-export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void; activeSection: SectionKey; onOpenTickets: () => void; onOpenAnalisis: () => void; onOpenClientes: () => void; onOpenActividades: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos, activeSection, onOpenTickets, onOpenAnalisis, onOpenClientes, onOpenActividades }) => {
+export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void; onOpenConfig: () => void; onOpenEquipos: () => void; activeSection: SectionKey; onOpenTickets: () => void; onOpenAnalisis: () => void; onOpenClientes: () => void; onOpenActividades: () => void; onOpenRemisiones: () => void }> = ({ onOpenUsers, onOpenRoles, onOpenConfig, onOpenEquipos, activeSection, onOpenTickets, onOpenAnalisis, onOpenClientes, onOpenActividades, onOpenRemisiones }) => {
     const { user } = useAuth()
     return (
         <header className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0 z-30">
@@ -32,6 +33,7 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
                             : tab.key === 'analisis' && user?.isAdmin ? onOpenAnalisis
                             : tab.key === 'clientes' ? onOpenClientes
                             : tab.key === 'actividades' ? onOpenActividades
+                            : tab.key === 'remisiones' ? onOpenRemisiones
                             : undefined
                         const isActive = tab.key === activeSection
                         return (

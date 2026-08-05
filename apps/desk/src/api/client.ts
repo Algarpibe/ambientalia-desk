@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -283,6 +283,11 @@ export function fetchRemisiones(ticketId: string): Promise<RemisionConFotos[]> {
 /** Una remisión concreta con sus fotos. La usa el sondeo que espera el desenlace de n8n tras enviar. */
 export function fetchRemision(id: string): Promise<RemisionConFotos> {
   return fetch(`/api/remisiones/${encodeURIComponent(id)}`, { credentials: 'include' }).then((r) => json<RemisionConFotos>(r))
+}
+
+/** Todas las remisiones (históricas + app), para la sección "Remisiones" de la cabecera. */
+export function fetchRemisionesListado(): Promise<RemisionListado[]> {
+  return fetch('/api/remisiones/listado', { credentials: 'include' }).then((r) => json<RemisionListado[]>(r))
 }
 
 export interface CrearRemisionPayload { ticketId: string; fecha: string; incluye: string[]; observaciones?: string }
