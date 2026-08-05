@@ -74,39 +74,13 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     }
 
     return (
-        <div className="fixed inset-0 z-[60] bg-white flex flex-col overflow-hidden animate-in fade-in duration-200">
-            {/* Top Bar with Navigation Tabs */}
-            <div className="bg-[#2C2E3E] text-white h-[48px] flex items-center justify-between px-3 shrink-0">
-                <div className="flex items-center h-full">
-                    <button onClick={onClose} className="mr-4 hover:bg-white/10 p-1 rounded transition-colors">
-                        <span className="material-symbols-outlined text-white">arrow_back</span>
-                    </button>
-                    <div className="flex items-center gap-2 mr-6 shrink-0">
-                        <img
-                            alt="Ambientalia logo"
-                            className="h-6 w-auto brightness-200"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQUDuAX5d0l2fLAWAMNVwrv8DB5wyqIffalv4MddS6zecsX-Irjz4ZM9FWeFySP_DFDlyyIB6-0RgX2EQEO2XuoS5gZQe4Lid-NNuMbzC5kEMsFaX6Sx4VnCg-k_zYMZJyExkUu-0ulMVkmq3bph-9kSaKczmUOTRT752wpMKCYTVCvj2J0E1-kednWAcAAKh4zlq9vnBsfFpe9tsyra-qVYOmrQwauQxDyFyqoKcQQBdepbYi0aTtn83V0ZOlyJM5ftDkxB-EVefh"
-                        />
-                    </div>
-                    <nav className="flex h-full items-center overflow-x-auto hide-scrollbar whitespace-nowrap">
-                        {['Tickets', 'Análisis', 'Actividades', 'Mensajería Instantánea', 'Clientes', 'Base de Conocimientos', 'Custom Dashboards', 'Bookmarks'].map((tab, idx) => (
-                            <button
-                                key={idx}
-                                className={`px-4 h-full text-[13px] font-medium transition-colors border-b-2 flex items-center ${idx === 0 ? 'text-white border-blue-500 bg-white/5' : 'text-white/60 border-transparent hover:text-white'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </nav>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="text-right mr-2 hidden md:block">
-                        <div className="text-[12px] font-medium">Ambientalia Soporte y Servicio Técnico</div>
-                    </div>
-                </div>
-            </div>
-
+        // Arranca bajo los 48px de la cabecera real, igual que RemisionesPage, ClientesPage y las
+        // demás secciones. Antes era `inset-0` y tapaba la cabecera, así que pintaba encima su
+        // propia barra de navegación —una copia del maquetado original de Zoho, con botones sin
+        // `onClick`— y desde el detalle de un ticket no se podía llegar a ninguna sección: ni a
+        // Remisiones, que en aquella copia ni siquiera figuraba. Cerrar sigue estando en el
+        // "Volver al tablero" de la columna de la izquierda.
+        <div className="fixed inset-x-0 bottom-0 top-[48px] z-[60] bg-white flex flex-col overflow-hidden animate-in fade-in duration-200">
             <div className="flex flex-1 overflow-hidden">
                 {/* Left Sidebar List — tickets en el mismo estado que el abierto */}
                 <div style={{ width: listCol.w }} className="bg-[#F8F9FA] flex flex-col shrink-0">

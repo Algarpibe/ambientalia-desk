@@ -45,6 +45,9 @@ function App() {
   const abrirSeccion = (s: 'analisis' | 'clientes' | 'actividades' | 'remisiones' | 'tickets') => {
     setShowAnalisis(s === 'analisis'); setShowClientes(s === 'clientes'); setShowActividades(s === 'actividades'); setShowRemisiones(s === 'remisiones')
     if (s !== 'clientes') setClientesInitial(null)
+    // El detalle del ticket vive en una capa por encima de las secciones: si se queda abierto, la
+    // sección recién elegida se carga debajo y no se ve. Ir a una sección es salir del ticket.
+    setSelectedTicketId(null)
   }
   const abrirCliente = (kind: 'contacto' | 'empresa', id: string) => { setClientesInitial({ kind, id }); setShowAnalisis(false); setShowActividades(false); setShowClientes(true) }
   const hideEmpty = useHideEmptyColumns()
