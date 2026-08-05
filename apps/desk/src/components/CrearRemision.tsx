@@ -27,8 +27,9 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
   const alternar = (item: string) => setMarcados((m) => ({ ...m, [item]: !m[item] }))
 
   /**
-   * `estado` viaja como parámetro y no se lee de `envio` porque hay que poder invocarlo con un estado
-   * recién calculado, antes de que React haya aplicado el `setEnvio` correspondiente.
+   * `estado` entra por parámetro en vez de leerse de `envio` para que cada intento declare de dónde
+   * parte: el punto de partida es una decisión de quien llama, no un implícito del render. Habrá
+   * llamantes que arranquen de un estado que todavía no está en `envio`.
    */
   async function ejecutar(estado: EstadoEnvio, omitirFotosPendientes: boolean) {
     setErr(null)
@@ -57,21 +58,42 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
     void ejecutar(envio, false)
   }
 
-  /**
-   * La remisión ya existe: los datos del formulario están guardados y no se pueden cambiar desde aquí,
-   * así que se congelan. Cambiarlos daría la impresión de editar algo que ya no se va a reescribir.
-   */
   const creada = envio.remisionId !== null
   const fotosPendientes = fotos.length - envio.fotosSubidas
 
-  // Salir dejando una remisión creada la deja en `pendiente` sin enviar. No se puede borrar desde aquí
-  // (anular es solo de administradores), así que al menos hay que decirlo.
+  /**
+   * Marca la ventana en la que ya puede existir una remisión en la base: `creada` no se enciende hasta
+   * que `setEnvio` aterriza, y para entonces `crearRemision` lleva un rato en vuelo. De ahí que mire
+   * también a `busy` — durante ese hueco la remisión puede existir sin que el formulario lo sepa aún.
+   *
+   * Congela los campos porque a partir de ahí ya no mandan: con la remisión creada sus datos están
+   * guardados y no se reescriben desde aquí, y en vuelo `crear()` los lee del closure fijado al
+   * pulsar, así que teclear en ellos no cambia lo que se persiste — solo deja en pantalla un texto
+   * que nunca llegó a la base. En las fotos es peor que una mentira en pantalla: `fotosSubidas` es un
+   * índice posicional sobre esa misma lista, y cambiarla resubiría unas y se saltaría otras sin
+   * lanzar ningún error.
+   */
+  const congelado = creada || !!busy
+
+  /**
+   * Salir dejando una remisión creada la deja en `pendiente` sin enviar. No se puede borrar desde aquí
+   * (anular es solo de administradores), así que al menos hay que decirlo. `congelado` es justo la
+   * ventana a cubrir: no hay `AbortController`, así que cerrar el formulario no cancela el
+   * `crearRemision` que ya salió y el servidor la crea igual.
+   */
   function cancelar() {
-    if (creada && !confirm('La remisión ya se creó y quedaría sin enviar. Aparecerá en la pantalla de Remisiones y un administrador puede anularla. ¿Salir de todos modos?')) return
-    onClose()
+    if (congelado && !confirm('La remisión ya se creó —o se está creando ahora mismo— y quedaría sin enviar. Aparecerá en la pantalla de Remisiones y un administrador puede anularla. ¿Salir de todos modos?')) return
+    // Salir por `onCreada` y no por `onClose` porque solo aquella recarga el ticket: si no se recarga,
+    // la pestaña sigue diciendo "0 REMISIONES", el técnico no ve la que acaba de dejar y crea otra.
+    // Con la petición aún en vuelo la recarga puede adelantarse al servidor, pero nunca es peor que
+    // no recargar.
+    if (congelado) onCreada()
+    else onClose()
   }
 
-  const campo = 'border border-slate-200 rounded p-2 text-[13px]'
+  // Un campo congelado se pinta como los de solo lectura (`fijo`): el gris nativo del navegador sobre
+  // un borde `slate-200` propio casi no se nota, y el técnico tiene que ver que ya no manda.
+  const campo = 'border border-slate-200 rounded p-2 text-[13px] disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-default'
   const fijo = `${campo} w-full bg-slate-50 text-slate-600 cursor-default`
 
   // `onCreada` recarga el ticket y cierra: se invoca al cerrar el panel, no al enviar.
@@ -96,7 +118,7 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 uppercase">Fecha</label>
-                <input type="date" className={`${campo} w-full`} value={fecha} onChange={(e) => setFecha(e.target.value)} disabled={creada} required />
+                <input type="date" className={`${campo} w-full`} value={fecha} onChange={(e) => setFecha(e.target.value)} disabled={congelado} required />
               </div>
             </div>
 
@@ -130,8 +152,8 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
               ) : (
                 <div className="mt-1 border border-slate-200 rounded p-2 max-h-52 overflow-auto grid grid-cols-2 gap-x-3 gap-y-1">
                   {data.incluye.map((item) => (
-                    <label key={item} className="flex items-start gap-2 text-[12px] cursor-pointer">
-                      <input type="checkbox" className="accent-blue-600 mt-0.5" checked={!!marcados[item]} onChange={() => alternar(item)} disabled={creada} />
+                    <label key={item} className={`flex items-start gap-2 text-[12px] ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
+                      <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={!!marcados[item]} onChange={() => alternar(item)} disabled={congelado} />
                       <span>{item}</span>
                     </label>
                   ))}
@@ -141,14 +163,12 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Observaciones</label>
-              <textarea className={`${campo} h-20 resize-none`} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} disabled={creada} placeholder="Estado del equipo, golpes, faltantes…" />
+              <textarea className={`${campo} h-20 resize-none`} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} disabled={congelado} placeholder="Estado del equipo, golpes, faltantes…" />
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico</label>
-              {/* Congelado con la remisión creada porque `fotosSubidas` es un índice sobre esta misma
-                  lista: cambiar los ficheros la invalidaría y resubiría fotos ya subidas. */}
-              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px]" disabled={creada}
+              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px] disabled:opacity-50 disabled:cursor-default" disabled={congelado}
                 onChange={(e) => setFotos(Array.from(e.target.files ?? []))} />
               {fotos.length > 0 && (
                 <div className="text-[11px] text-slate-400">
@@ -173,7 +193,7 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
               contra lo que se mandó, así que una remisión con menos fotos no cuenta como error. */}
           {creada && fotosPendientes > 0 && !busy && (
             <button type="button" onClick={() => void ejecutar(envio, true)} className="px-3 py-1.5 text-[13px] text-slate-600 underline">
-              Continuar sin las {fotosPendientes} fotos que faltan
+              Continuar sin {fotosPendientes === 1 ? 'la foto que falta' : `las ${fotosPendientes} fotos que faltan`}
             </button>
           )}
           <button type="button" onClick={cancelar} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
