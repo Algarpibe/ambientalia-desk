@@ -703,8 +703,12 @@ describe('GET /api/tickets/:id/conversations (hilo compuesto)', () => {
 npm run typecheck && npm run lint && npm run build && npm test
 ```
 
-Esperado: typecheck limpio; lint `0 errors, 159 warnings`; build ok; y la suite **sube en 10** respecto
-a 391 → **401 pasando / 2 saltados** (9 de la Tarea 4 + 1 de esta).
+Esperado: typecheck limpio; lint `0 errors, 159 warnings`; build ok. La suite acabó en **405 pasando / 2
+a 391 → **405 pasando / 2 saltados**.
+
+(La previsión inicial era 401. La Tarea 4 acabó añadiendo cuatro tests más de los planeados: el
+importador anclando `created_at`, el backfill de `schema.sql`, la remisión de salida, y en esta tarea
+el que fija que un Zoho caído degrada a 200 en vez de 500.)
 
 Si el número no cuadra, **no lo ajustes al que salga**: averigua qué sobra o falta.
 
