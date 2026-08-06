@@ -342,7 +342,17 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
             )}
 
             {showHistorial && ticket?.equipoId && <HojaDeVida equipoId={ticket.equipoId} onClose={() => setShowHistorial(false)} />}
-            {showRemision && <CrearRemision ticketId={ticketId} onClose={() => setShowRemision(false)} onCreada={() => { setShowRemision(false); reloadTicket(); reloadRemisiones(); }} />}
+            {/* Al cerrar hay que refrescar las CUATRO cosas que la remisión acaba de mover, y no solo
+                el ticket: el hilo gana su entrada, la pestaña su contador, la cabecera el estado nuevo
+                —desde que el desenlace confirmado lleva el ticket a "Remisión creada"— y el tablero de
+                detrás, que si no se queda con el ticket en la columna anterior. */}
+            {showRemision && (
+              <CrearRemision
+                ticketId={ticketId}
+                onClose={() => setShowRemision(false)}
+                onCreada={() => { setShowRemision(false); reloadTicket(); reloadRemisiones(); reloadMessages(); onChanged?.(); }}
+              />
+            )}
 
             {/* Help Button */}
             <button className="fixed bottom-4 right-4 bg-[#2C7BE5] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-[13px] font-bold">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { transitionsForStatus, type Transition, type TransitionField } from '@ambientalia/shared';
+import { transitionsForStatus, STATUS_REMISION_CREADA, type Transition, type TransitionField } from '@ambientalia/shared';
 import { executeTransition } from '../api/client';
 import { useAuth } from '../auth/AuthContext'
 import { canExecuteTransition } from '@ambientalia/shared'
@@ -7,9 +7,14 @@ import { canExecuteTransition } from '@ambientalia/shared'
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
  *
- * Junto a ellos va "Crear remisión", que NO es una transición: no cambia el estado del ticket ni
- * pasa por `POST /api/tickets/:id/transition`, por eso no está en `TRANSITIONS` (si lo estuviera,
- * pulsarla movería el ticket de columna). Es una acción propia, pendiente de conectar.
+ * Junto a ellos va "Crear remisión", que no está en `TRANSITIONS` porque ahí solo va lo que se
+ * ejecuta por `POST /api/tickets/:id/transition`: ésta abre un formulario. El ticket SÍ acaba
+ * moviéndose, pero más tarde y por otra vía — cuando n8n confirma el documento, el servidor lo lleva
+ * a `Remisión creada` (ver `server/db/estadoPorRemision.ts`).
+ *
+ * Y por eso el botón desaparece justo en ese estado: la etapa ya está hecha. Desaparece SOLO ahí, no
+ * para siempre, porque un ticket puede recibir dos equipos y necesitar una segunda remisión más
+ * adelante en el flujo.
  */
 export function TransitionPanel({ ticketId, status, onDone, onCrearRemision }: { ticketId: string; status: string; onDone: () => void; onCrearRemision?: () => void }) {
   const { user } = useAuth()
@@ -60,13 +65,15 @@ export function TransitionPanel({ ticketId, status, onDone, onCrearRemision }: {
           </button>
         ))}
         {/* Acción, no transición: en gris para que no se lea como un cambio de estado. */}
-        <button
-          type="button"
-          onClick={onCrearRemision}
-          className="text-[12px] font-bold text-slate-600 border border-slate-300 px-3 py-1 rounded hover:bg-slate-50"
-        >
-          Crear remisión
-        </button>
+        {status !== STATUS_REMISION_CREADA && (
+          <button
+            type="button"
+            onClick={onCrearRemision}
+            className="text-[12px] font-bold text-slate-600 border border-slate-300 px-3 py-1 rounded hover:bg-slate-50"
+          >
+            Crear remisión
+          </button>
+        )}
       </div>
 
       {active && (
