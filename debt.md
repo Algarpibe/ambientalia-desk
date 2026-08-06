@@ -441,9 +441,16 @@ pg-mem deja de ser el harness de tests. Hasta entonces, R1 + validación en prod
      significa "se está enviando bien ahora mismo"— se pintaba como fallo rojo, y ante un fallo rojo el técnico
      crea otra remisión: realimentaba el propio bug. Ahora sondea siempre y la escala de color distingue **gris**
      (tropiezo al sondear), **ámbar** (envío sin confirmar) y **rojo** (veredicto de n8n).
-  **Sigue abierto, por decisión:** `POST /api/remisiones` no deduplica. Las rutas desde la interfaz están
-  cerradas, pero un cliente directo de la API puede crear dos. La regla no puede ser "una por ticket" —un ticket
-  puede recibir dos equipos— sino "una `pendiente` por ticket", y eso merece su propia decisión.
+  ~~**`POST /api/remisiones` no deduplica**~~ — **RESUELTO 2026-08-06.** Regla: una `pendiente` por ticket. 409
+  por defecto, con el id de la que ya existe; `permitirSegunda: true` en el cuerpo la deja pasar, y es el
+  formulario diciendo que el humano pasó por el `confirm`. **No se bloqueó del todo a propósito:** si n8n se cae
+  y la primera se queda en `pendiente` para siempre, un bloqueo duro dejaría al técnico sin poder crear otra sin
+  un administrador que anule — un callejón sin salida nuevo, y este subsistema ya tuvo esa trampa dos veces.
+  ⚠️ **La premisa que traía esta entrada era falsa:** decía que no se podía bloquear porque "un ticket puede
+  recibir dos equipos", y **hoy eso no es expresable**. El equipo y el serial de la remisión se derivan del
+  ticket y no se aceptan del navegador (deciden qué checklist aplica), así que dos remisiones de un ticket son
+  siempre del MISMO equipo. Volverá a ser cierto con la rama de salida o si el formulario deja elegir equipo;
+  hasta entonces, dos pendientes son un duplicado.
   ~~Tampoco hay reenvío para una remisión en `estado: 'error'`~~ — **RESUELTO 2026-08-06.** Y **esta entrada
   estaba mal**: decía "es capacidad nueva, no arreglo", y no lo era. El servidor ya lo permitía —`/enviar` solo
   cierra el paso a las anuladas y a las que terminaron bien— y `ResultadoRemision` ya sabía reenviar y sondear
