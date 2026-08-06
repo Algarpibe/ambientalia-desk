@@ -227,12 +227,39 @@ export interface EquipoLite {
   modelo?: string
   tipo?: string
   clienteNombre?: string
+  /** FK al catálogo maestro (`catalogo_modelos`); ausente en equipos que la siembra no pudo casar. */
+  modeloId?: string
 }
 
 export interface EquipoFull extends EquipoLite {
   active: boolean
   clientId?: string
 }
+
+export interface CatalogoTipo { id: string; nombre: string; activo: boolean }
+export interface CatalogoMarca { id: string; nombre: string; activo: boolean }
+export interface CatalogoModelo {
+  id: string
+  marcaId: string
+  nombre: string
+  tipoId: string | null
+  /** Denormalizado para que la pantalla no tenga que cruzar listas. */
+  tipoNombre: string | null
+  /** La siembra lo enciende cuando el inventario daba más de un tipo para este modelo. */
+  revisar: boolean
+  activo: boolean
+}
+export interface Catalogo { tipos: CatalogoTipo[]; marcas: CatalogoMarca[]; modelos: CatalogoModelo[] }
+
+/** Un modelo que el inventario declara con más de un tipo, con el reparto real que lo demuestra. */
+export interface ConflictoModelo {
+  modeloId: string
+  marca: string
+  modelo: string
+  tipoActual: string | null
+  reparto: Array<{ tipo: string; equipos: number }>
+}
+export interface Conflictos { modelos: ConflictoModelo[]; equiposSinModelo: number }
 
 export interface HistorialTransition {
   transitionName: string | null
