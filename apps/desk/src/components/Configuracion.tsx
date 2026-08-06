@@ -5,8 +5,14 @@ type Item = { label: string; onClick?: () => void; soon?: boolean }
 type Category = { title: string; items: Item[] }
 
 // Novedades del producto (panel derecho, estilo "Actualizaciones de producto" de Zoho Desk).
-// Más recientes primero.
+// Más recientes primero. Se cuenta lo que el usuario puede HACER, no cómo está construido.
 const NOVEDADES = [
+  { title: 'Reintentar una remisión fallida', body: 'Si el envío de una remisión no sale bien, la pestaña Remisiones del ticket ofrece reintentarlo. Antes no había vuelta atrás y tocaba crear otra.' },
+  { title: 'Fases nuevas del ticket', body: 'Un ticket abierto en la app nace en "Ticket creado" y pasa a "Remisión creada" en cuanto su remisión se genera. Antes las dos etapas compartían el nombre "OV asignada", heredado de Zoho.' },
+  { title: 'Hoja de vida del equipo', body: 'Pestaña propia dentro del ticket, y también desde Registro de equipos. Reúne en una sola línea de tiempo todo lo que le ha pasado a ese número de serie: sus tickets y sus remisiones, incluidas las que nunca llegaron a tener ticket.' },
+  { title: 'Conversaciones e historia del ticket', body: 'CONVERSACIONES cuenta el ticket como un relato —creación, remisiones y transiciones, firmadas por quien las hizo y con sus documentos y fotos a mano—. HISTORIA lo deja como registro, una línea por suceso, para auditar.' },
+  { title: 'Remisiones de entrada', body: 'Crea la remisión desde el propio ticket: el documento, el PDF y la etiqueta se generan y se guardan en Drive, y el cliente recibe su aviso. Con registro fotográfico del equipo.' },
+  { title: 'Pantalla de Remisiones', body: 'Todas las remisiones en un sitio, incluidas las importadas del histórico, con filtro por rango de fechas y exportación. Anular una es cosa de administradores.' },
   { title: 'Gestión de equipos', body: 'Da de alta, edita y desactiva equipos desde la app (Configuración → Registro de equipos). Marca → Modelo/Tipo en cascada con opción "Otro…", y cliente desde Zoho Books. Eliminar definitivo solo para super administrador.' },
   { title: 'Vistas de tickets', body: 'Cambia entre Vista clásica, compacta y de tabla, y modos Kanban por estado, prioridad o cuenta regresiva. Tu preferencia se recuerda en este navegador.' },
   { title: 'Creación de tickets en la app', body: 'Crea tickets desde una Orden de Venta de Zoho Books, atados a un equipo registrado. Asunto y código estandarizados automáticamente.' },
