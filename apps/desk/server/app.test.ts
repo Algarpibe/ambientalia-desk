@@ -251,6 +251,22 @@ describe('GET /api/tickets/:id/conversations (hilo compuesto)', () => {
     expect(sync.syncConversations).not.toHaveBeenCalled()
     expect((await request(app).get(`/api/tickets/${id}/conversations`)).status).toBe(401)
   })
+
+  // Un ticket de Zoho sin conversaciones locales sí entra por el sync perezoso, y ahí el `await` pasó
+  // a ir dentro de un `try`: es el único cambio de comportamiento deliberado de esta tanda —antes un
+  // Zoho caído tumbaba la petición con un 500— y sin test alguien lo "arregla" de vuelta sin enterarse.
+  it('sync perezoso con Zoho caído: degrada a 200 con el hilo compuesto, no a 500', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('90210',702,'E','Ingresado')")
+    await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('90210','Habilitar','OV asignada','Ingresado','Admin','2026-08-03T10:00:00Z')")
+    const { app, sync } = appWith()
+    sync.syncConversations.mockRejectedValue(new Error('zoho down'))
+    const res = await request(app).get('/api/tickets/90210/conversations').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(sync.syncConversations).toHaveBeenCalledWith('90210')
+    // Lo que hace útil la degradación: se sirve lo que la app sí sabe del ticket, no una lista vacía.
+    expect(res.body.map((m: { content: string }) => m.content)).toEqual(['Habilitar: OV asignada → Ingresado'])
+  })
 })
 
 describe('F3-02 lectura asíncrona (lazy + background)', () => {
