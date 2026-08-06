@@ -9,6 +9,7 @@ import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { Adjuntos } from './Adjuntos';
+import { valoresConocidos } from '../lib/valoresTransicion';
 import { ActividadesPanel } from './ActividadesPanel';
 import { CrearRemision } from './CrearRemision';
 import { PanelRemisiones } from './PanelRemisiones';
@@ -294,8 +295,11 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             <TransitionPanel
                               ticketId={ticketId}
                               status={ticket.status}
-                              // Lo que el ticket ya sabe: el panel lo usa para no volver a pedirlo.
-                              delTicket={ticket.customFields}
+                              // Lo que ya se sabe, para no volver a pedirlo. No basta con
+                              // `customFields` —que son las columnas del ticket— porque las fechas de
+                              // "Ingreso a Servicio" las escribe esa misma transición: se derivan de
+                              // su fuente real (la creación del ticket y la remisión de entrada).
+                              delTicket={valoresConocidos(ticket, remisiones)}
                               clientId={ticket.clientId}
                               onDone={() => { reloadTicket(); reloadMessages(); onChanged?.(); }}
                               onCrearRemision={() => setShowRemision(true)}
