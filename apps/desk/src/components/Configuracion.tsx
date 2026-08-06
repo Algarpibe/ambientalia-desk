@@ -91,7 +91,11 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos
       title: 'Canales',
       items: [
         { label: 'Correo electrónico', soon: true },
-        { label: 'Remisiones', soon: true },
+        // "Gestión de…" y no "Remisiones" a secas: las remisiones YA funcionan, y esta entrada es su
+        // página de configuración, que es lo que falta. Con el nombre corto se leía como que la
+        // función entera estaba por llegar.
+        { label: 'Gestión de remisiones', soon: true },
+        { label: 'Gestión de accesorios', soon: true },
       ],
     },
     {
