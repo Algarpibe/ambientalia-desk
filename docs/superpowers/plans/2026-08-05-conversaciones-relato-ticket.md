@@ -467,7 +467,10 @@ import type { Attachment, Message } from '@ambientalia/shared'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { urlSegura } from '@ambientalia/shared'
 import { fmtTime } from '@ambientalia/zoho-sync/db/mappers'
-import { iso, json, lectorCreacion, planSyncZoho, textoEquipo, type PlanSyncZoho } from './ticketFuentes'
+import {
+  datosTicket, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho, porFechaDesc,
+  textoEquipo, type PlanSyncZoho,
+} from './ticketFuentes'
 // … más `getConversations` y `rowToMessage`, con las rutas que usa `routes/tickets.ts`.
 
 export interface ConversacionTicket {
@@ -538,14 +541,9 @@ function entradaCreacion(fila: Record<string, unknown>, ticket: Record<string, u
 function entradaTransicion(fila: Record<string, unknown>): Entrada {
   const v = json(fila.values)
   const at = iso(fila.performed_at)
-  // Las claves de `values` son nombres técnicos (`requiere_repuestos`). No se traducen con un
-  // diccionario: el conjunto lo decide el Blueprint y un diccionario quedaría obsoleto en silencio.
   const campos = Object.entries(v)
     .filter(([, val]) => val != null && String(val).trim() !== '')
-    .map(([k, val]) => {
-      const t = k.replace(/_/g, ' ')
-      return `${t.charAt(0).toUpperCase()}${t.slice(1)}: ${String(val)}`
-    })
+    .map(([k, val]) => `${etiquetaCampo(k)}: ${String(val)}`)
   return {
     at,
     msg: {
@@ -563,8 +561,7 @@ function entradaTransicion(fila: Record<string, unknown>): Entrada {
 }
 
 function entradaRemision(fila: Record<string, unknown>): Entrada {
-  const incluyeRaw = typeof fila.incluye === 'string' ? JSON.parse(fila.incluye) : fila.incluye
-  const incluye = Array.isArray(incluyeRaw) ? incluyeRaw.join(', ') : ''
+  const incluye = listaIncluye(fila.incluye)
   const resultado = json(fila.resultado)
   const fotos = resultado.fotos as { subidas?: number } | undefined
   const at = iso(fila.created_at)
@@ -590,14 +587,7 @@ function entradaRemision(fila: Record<string, unknown>): Entrada {
 }
 
 /** Más reciente primero, con los que no tienen fecha al final: es el orden que el panel ya usa. */
-function masRecientePrimero(a: Entrada, b: Entrada): number {
-  const ta = a.at ? Date.parse(a.at) : NaN
-  const tb = b.at ? Date.parse(b.at) : NaN
-  if (Number.isNaN(ta) && Number.isNaN(tb)) return 0
-  if (Number.isNaN(ta)) return 1
-  if (Number.isNaN(tb)) return -1
-  return tb - ta
-}
+const masRecientePrimero = porFechaDesc<Entrada>((e) => e.at)
 
 /**
  * El hilo del ticket: las conversaciones de Zoho más una entrada por etapa ocurrida en la app. Se
@@ -611,20 +601,7 @@ export async function getConversacionTicket(db: Queryable, ticketId: string): Pr
     msg: rowToMessage(row, attachments),
   }))
 
-  const t = await db.query(
-    'SELECT marca, modelo, serial, tipo_servicio, classification, priority, orden_venta, codigo_servicio, client_id FROM tickets WHERE id = $1',
-    [ticketId],
-  )
-  const ticket = (t.rows[0] as Record<string, unknown>) ?? {}
-
-  // Consulta aparte y no un JOIN: `clients` es una vista sobre `books.contacts` y pg-mem —el motor de
-  // los tests— tropieza con los joins contra vistas de otro esquema.
-  let cliente: string | null = null
-  if (ticket.client_id) {
-    const c = await db.query('SELECT name, company_name FROM clients WHERE id = $1', [ticket.client_id])
-    const fila = c.rows[0] as Record<string, unknown> | undefined
-    cliente = (fila?.company_name as string) || (fila?.name as string) || null
-  }
+  const { ticket, cliente } = await datosTicket(db, ticketId)
 
   const tr = await db.query(
     'SELECT ticket_id, transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
