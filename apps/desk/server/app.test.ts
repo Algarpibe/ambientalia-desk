@@ -385,6 +385,18 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
     expect(res.body[0]).toMatchObject({ id: 's1', number: 'OV-2026-117' })
   })
 
+  // `sales_orders.date` es una columna `date`: pg la entrega como Date y al serializar sale un ISO
+  // completo. El `<input type="date">` que la recibe en el formulario de transición exige
+  // `YYYY-MM-DD` EXACTO y ante cualquier otra cosa se queda en blanco, sin avisar de nada — que es
+  // como se vio: orden de venta elegida y fecha vacía.
+  it('la fecha de la orden de venta sale como YYYY-MM-DD, no como instante', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_name,date,status,raw) VALUES ('sf','OV-FECHA','Corola','2026-07-15','open','{\"order_status\":\"open\"}')")
+    const { app } = appWith()
+    const res = await request(app).get('/api/sales-orders?search=OV-FECHA').set('Cookie', cookie)
+    expect(res.body[0].date).toBe('2026-07-15')
+  })
+
   // Una OV ya usada por otro ticket no está libre. Se mira por las DOS vías porque no siempre hay
   // `salesorder_id`: los tickets de Zoho y los creados tecleando el número solo dejan `orden_venta`.
   it('soloLibres deja fuera las órdenes que ya usa otro ticket, por id o por número', async () => {

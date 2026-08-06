@@ -8,10 +8,32 @@ function clientToLite(r: any): ClientLite {
     telefono: r.telefono ?? undefined, personaContacto: r.persona_contacto ?? undefined,
   }
 }
+/**
+ * Una columna `date` (sin hora) como `YYYY-MM-DD`.
+ *
+ * Hace falta porque pg entrega un `date` como objeto `Date`, y al serializar a JSON sale el instante
+ * completo (`2026-07-15T00:00:00.000Z`). El `<input type="date">` que recibe esta fecha en el
+ * formulario de transición exige `YYYY-MM-DD` EXACTO: ante cualquier otra cosa se queda en blanco y
+ * no avisa de nada.
+ *
+ * Con getters LOCALES y NO con `toISOString()`: pg construye ese `Date` como medianoche local, así
+ * que al oeste de Greenwich —Colombia es UTC-5— el ISO cae al día ANTERIOR y la fecha rodaría un día.
+ * Ese fallo no se manifiesta bajo `TZ=UTC`, que es lo que fuerza vitest, de modo que ningún test lo
+ * cazaría: por eso queda escrito aquí.
+ */
+function fechaSolo(v: unknown): string | undefined {
+  if (!v) return undefined
+  if (v instanceof Date) {
+    const dosCifras = (n: number) => String(n).padStart(2, '0')
+    return `${v.getFullYear()}-${dosCifras(v.getMonth() + 1)}-${dosCifras(v.getDate())}`
+  }
+  return String(v).slice(0, 10)
+}
+
 function salesOrderToLite(r: any): SalesOrderLite {
   return {
     id: r.id, number: r.number, clientId: r.client_id ?? undefined, customerName: r.customer_name ?? undefined,
-    date: r.date ?? undefined, total: r.total != null ? Number(r.total) : undefined, status: r.status ?? undefined,
+    date: fechaSolo(r.date), total: r.total != null ? Number(r.total) : undefined, status: r.status ?? undefined,
     ticketNumber: r.ticket_number ?? undefined, potentialName: r.potential_name ?? undefined,
   }
 }
