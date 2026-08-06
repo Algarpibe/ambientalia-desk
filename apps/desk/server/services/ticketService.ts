@@ -9,7 +9,7 @@ import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
 
-// Crea un ticket gestionado por la app en "OV asignada" (Subsistema C). Pivota opcionalmente en una OV de Books.
+// Crea un ticket gestionado por la app en "Ticket creado" (Subsistema C). Pivota opcionalmente en una OV de Books.
 export async function createManagedTicket(db: Queryable, body: unknown, actorName: string): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const equipoId = b.equipoId ? String(b.equipoId) : ''
