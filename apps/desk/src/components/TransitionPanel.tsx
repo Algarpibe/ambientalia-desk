@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { transitionsForStatus, STATUS_REMISION_CREADA, type Transition, type TransitionField } from '@ambientalia/shared';
+import { transitionsForStatus, puedeCrearRemisionDeEntrada, type Transition, type TransitionField } from '@ambientalia/shared';
 import { executeTransition } from '../api/client';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
@@ -13,9 +13,9 @@ import { canExecuteTransition } from '@ambientalia/shared'
  * moviéndose, pero más tarde y por otra vía — cuando n8n confirma el documento, el servidor lo lleva
  * a `Remisión creada` (ver `server/db/estadoPorRemision.ts`).
  *
- * Y por eso el botón desaparece justo en ese estado: la etapa ya está hecha. Desaparece SOLO ahí, no
- * para siempre, porque un ticket puede recibir dos equipos y necesitar una segunda remisión más
- * adelante en el flujo.
+ * Y el botón solo se ofrece mientras el ticket sigue en la fase inicial (`puedeCrearRemisionDeEntrada`):
+ * la remisión de entrada documenta que el equipo ENTRA, así que a partir de `Ingresado` crear una
+ * sería fabricar un documento fuera de sitio.
  */
 /**
  * Un dato que el ticket YA trae no se vuelve a pedir: se enseña bloqueado.
@@ -106,7 +106,7 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, onDone,
           </button>
         ))}
         {/* Acción, no transición: en gris para que no se lea como un cambio de estado. */}
-        {status !== STATUS_REMISION_CREADA && (
+        {puedeCrearRemisionDeEntrada(status) && (
           <button
             type="button"
             onClick={onCrearRemision}

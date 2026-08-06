@@ -97,6 +97,20 @@ export const STATUS_REMISION_CREADA = 'Remisión creada'
 export const TRANSICION_REMISION_CONFIRMADA = { id: 'remision_confirmada', name: 'Remisión creada', area: 'Servicio Técnico' }
 export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Remisión anulada', area: 'Servicio Técnico' }
 
+/**
+ * Si en este estado todavía tiene sentido ofrecer "Crear remisión".
+ *
+ * La remisión de entrada documenta que el equipo ENTRA, así que solo cabe mientras el ticket sigue en
+ * la fase inicial. En `Remisión creada` la etapa ya está hecha, y de `Ingresado` en adelante el
+ * equipo lleva tiempo dentro: ahí el botón solo servía para crear un documento fuera de sitio.
+ *
+ * Es una lista de lo PERMITIDO y no de lo prohibido: con la lista negra, cada estado nuevo del
+ * Blueprint —hay 20— aparecería con el botón por omisión, y nadie se enteraría.
+ */
+export function puedeCrearRemisionDeEntrada(status: string): boolean {
+  return status === STATUS_OV_ASIGNADA || status === STATUS_TICKET_CREADO
+}
+
 // Transiciones 2–35 del Blueprint (la 1 es creación de ticket, se maneja aparte).
 // Nota: campos de tipo "Adjuntar archivos" se omiten en v1 (subida de archivos = deuda).
 export const TRANSITIONS: Transition[] = [
