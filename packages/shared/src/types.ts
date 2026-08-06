@@ -45,6 +45,13 @@ export interface Attachment {
    * enlaza directo; si no, sigue pasando por `/api/attachment`.
    */
   url?: string
+  /**
+   * El panel pinta una miniatura en vez de la ficha de fichero. Lo marca quien compone el adjunto y
+   * NO se deduce del nombre: de los enlaces de Drive no se sabe qué hay al otro lado, y adivinarlo
+   * por la extensión pondría un `<img>` roto en cuanto alguien suba un `.pdf` llamado `foto.jpg`.
+   * Solo lo ponen las fotos de la remisión, que la app sirve ella misma y sabe que son imágenes.
+   */
+  isImage?: boolean
 }
 
 /** Un mensaje del hilo de conversación en el detalle. */

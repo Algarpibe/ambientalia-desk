@@ -65,6 +65,31 @@ describe('getConversacionTicket', () => {
     ])
   })
 
+  // La foto se veía en la pestaña REMISIONES y no en el hilo porque `adjuntosRemision` solo miraba
+  // `resultado`, es decir los cuatro enlaces que devuelve n8n. El registro fotográfico lo subió el
+  // técnico y vive en `remision_fotos`, que es otra fuente: sin esta consulta no aparece nunca.
+  it('las fotos de la remisión van como adjunto propio, marcadas como imagen', async () => {
+    await insTicket('app-3b', 12)
+    await db.query(
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,resultado,created_at)
+       VALUES ('r2b','app-3b','entrada','2026-08-04','Julián','ok',$1,'2026-08-04T14:00:00Z')`,
+      [JSON.stringify({ pdfId: 'PDF' })],
+    )
+    // Dos fotos, para fijar el orden por `created_at` y que una sola no dé el test por bueno de casualidad.
+    await db.query(
+      `INSERT INTO remision_fotos (id,remision_id,filename,content_type,content_b64,size,created_at)
+       VALUES ('rf-1','r2b','entrada-1.jpg','image/jpeg','Zm90bw==',2048,'2026-08-04T14:01:00Z'),
+              ('rf-2','r2b','entrada-2.jpg','image/jpeg','Zm90bw==',4096,'2026-08-04T14:02:00Z')`,
+    )
+    const { mensajes } = await getConversacionTicket(db, 'app-3b')
+    // El enlace es relativo a propósito: lo sirve la propia app con la cookie de sesión, no Drive.
+    expect(mensajes[0].attachments).toEqual([
+      { name: 'Remisión de entrada', size: 'PDF', path: 'https://drive.google.com/file/d/PDF/view', url: 'https://drive.google.com/file/d/PDF/view' },
+      { name: 'entrada-1.jpg', size: 'Foto', path: '/api/remisiones/r2b/fotos/rf-1', url: '/api/remisiones/r2b/fotos/rf-1', isImage: true },
+      { name: 'entrada-2.jpg', size: 'Foto', path: '/api/remisiones/r2b/fotos/rf-2', url: '/api/remisiones/r2b/fotos/rf-2', isImage: true },
+    ])
+  })
+
   // Las 149 remisiones migradas de la hoja de Google nunca pasaron por n8n: `resultado` es NULL.
   it('una remisión sin resultado no lleva adjuntos y no revienta', async () => {
     await insTicket('app-4', 4)
@@ -86,14 +111,23 @@ describe('getConversacionTicket', () => {
     expect(mensajes[0].attachments).toBeUndefined()
   })
 
-  // El hilo registra lo que pasó, y una remisión anulada pasó.
-  it('una remisión anulada aparece igual', async () => {
+  // Aquí es donde los dos paneles dejan de coincidir a propósito: `historial.ts` SÍ conserva la
+  // anulada y su anulación —es el log, y eso hay que poder auditarlo— mientras que el hilo es el
+  // relato de lo que le pasó al equipo, y una anulada es un documento que un administrador retiró de
+  // en medio, a menudo una prueba. Las vigentes salen TODAS y no solo la última: un ticket puede
+  // recibir dos equipos, y quedarse con la más reciente escondería el ingreso del otro.
+  it('deja fuera la remisión anulada y conserva todas las vigentes', async () => {
     await insTicket('app-6', 6)
-    await db.query(
-      "INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,created_at,anulada_at,anulada_por) VALUES ('r5','app-6','entrada','2026-08-04','Julián','ok','2026-08-04T14:00:00Z','2026-08-05T09:00:00Z','Admin')",
+    const rem = (id: string, hora: string, anulada = false) => db.query(
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,created_at,anulada_at,anulada_por)
+       VALUES ($1,'app-6','entrada','2026-08-04','Julián','ok',$2,${anulada ? "'2026-08-05T09:00:00Z','Admin'" : 'NULL,NULL'})`,
+      [id, hora],
     )
+    await rem('r5', '2026-08-04T14:00:00Z', true)
+    await rem('r5b', '2026-08-04T15:00:00Z')
+    await rem('r5c', '2026-08-04T16:00:00Z')
     const { mensajes } = await getConversacionTicket(db, 'app-6')
-    expect(mensajes).toHaveLength(1)
+    expect(mensajes.map((m) => m.id)).toEqual(['rem-r5c', 'rem-r5b'])
   })
 
   // La rama de SALIDA está en el roadmap escrito y hoy todo lo que se inserta es 'entrada', así que

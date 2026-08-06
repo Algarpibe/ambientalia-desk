@@ -232,25 +232,41 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                   )}
                                   {msg.attachments && msg.attachments.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-3">
-                                      {msg.attachments.map((att) => (
-                                        <a
-                                          // `url` antes que `path` para la key: los adjuntos del hilo generado son
-                                          // enlaces externos y varios comparten entrada, así que la unicidad tiene
-                                          // que venir del enlace y no obligar a `path` a llevar una URL de Drive.
-                                          key={att.url ?? att.path}
-                                          href={att.url ?? `/api/attachment?path=${encodeURIComponent(att.path)}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded w-[200px] hover:bg-slate-100"
-                                        >
-                                          <span className="material-symbols-outlined text-slate-400">description</span>
-                                          <div className="flex-1 overflow-hidden">
-                                            <div className="text-[11px] font-bold text-slate-700 truncate">{att.name}</div>
-                                            <div className="text-[10px] text-slate-400 uppercase">{att.size}</div>
-                                          </div>
-                                          <span className="material-symbols-outlined text-slate-400 text-[18px]">download</span>
-                                        </a>
-                                      ))}
+                                      {msg.attachments.map((att) => {
+                                        // `url` antes que `path` para la key y el enlace: los adjuntos del hilo
+                                        // generado son enlaces externos y varios comparten entrada, así que la
+                                        // unicidad tiene que venir del enlace y no obligar a `path` a llevar una
+                                        // URL de Drive.
+                                        const key = att.url ?? att.path;
+                                        const href = att.url ?? `/api/attachment?path=${encodeURIComponent(att.path)}`;
+                                        // Las fotos de la remisión se ENSEÑAN, no se anuncian: una ficha que diga
+                                        // "entrada-1.jpg" obliga a abrirla para saber qué hay dentro, que es justo
+                                        // lo que ya resolvía la pestaña REMISIONES. Mismo tamaño que allí.
+                                        return att.isImage ? (
+                                          <a key={key} href={href} target="_blank" rel="noreferrer" title={att.name}>
+                                            <img
+                                              src={href}
+                                              alt={att.name}
+                                              className="h-16 w-16 object-cover rounded border border-slate-200 hover:border-blue-400"
+                                            />
+                                          </a>
+                                        ) : (
+                                          <a
+                                            key={key}
+                                            href={href}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded w-[200px] hover:bg-slate-100"
+                                          >
+                                            <span className="material-symbols-outlined text-slate-400">description</span>
+                                            <div className="flex-1 overflow-hidden">
+                                              <div className="text-[11px] font-bold text-slate-700 truncate">{att.name}</div>
+                                              <div className="text-[10px] text-slate-400 uppercase">{att.size}</div>
+                                            </div>
+                                            <span className="material-symbols-outlined text-slate-400 text-[18px]">download</span>
+                                          </a>
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>

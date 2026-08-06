@@ -36,12 +36,26 @@ const enlaceDrive = (id: unknown): string | null =>
 const enlaceDoc = (id: unknown): string | null =>
   id ? urlSegura(`https://docs.google.com/document/d/${String(id)}/edit`) : null
 
+/** Lo que el hilo necesita de una foto: el resto (el base64, el peso) no se usa para enlazarla. */
+interface FotoRemision { id: string; filename: string }
+
 /**
- * Los adjuntos son ENLACES, no ficheros: la app no tiene credenciales de Google y no puede servirlos
- * por el proxy. `size` lleva el tipo en vez del tamaño porque de un fichero de Drive no lo sabemos y
- * la segunda línea de la tarjeta tiene que decir algo.
+ * Los adjuntos de Drive son ENLACES, no ficheros: la app no tiene credenciales de Google y no puede
+ * servirlos por el proxy. `size` lleva el tipo en vez del tamaño porque de un fichero de Drive no lo
+ * sabemos y la segunda línea de la tarjeta tiene que decir algo.
+ *
+ * Las fotos son el otro caso: las subió el técnico, viven en `remision_fotos` y las sirve la propia
+ * app. Por eso son las únicas que van con `isImage` —el panel las pinta como miniatura— y las únicas
+ * cuyo enlace es relativo: mismo origen, así que el `<img>` viaja con la cookie de sesión sin tocar
+ * el proxy de adjuntos. Su `size` sigue el convenio de las de Drive y lleva el tipo: en la miniatura
+ * esa línea ni se muestra.
  */
-function adjuntosRemision(resultado: Record<string, unknown>, tipo: string): Attachment[] {
+function adjuntosRemision(
+  resultado: Record<string, unknown>,
+  tipo: string,
+  remisionId: string,
+  fotos: FotoRemision[],
+): Attachment[] {
   const posibles: Array<[string, string, string | null]> = [
     [`Remisión de ${tipo}`, 'PDF', enlaceDrive(resultado.pdfId)],
     ['Documento editable', 'Documento', enlaceDoc(resultado.docId)],
@@ -51,9 +65,35 @@ function adjuntosRemision(resultado: Record<string, unknown>, tipo: string): Att
   // La URL va también en `path` —y no `path: ''`— porque `path` es el respaldo del `href` para
   // cualquier consumidor que aún no mire `url`. La `key` de React ya no depende de esto: el panel
   // usa `att.url ?? att.path`.
-  return posibles
+  const deDrive: Attachment[] = posibles
     .filter(([, , url]) => url !== null)
     .map(([name, size, url]) => ({ name, size, path: url as string, url: url as string }))
+
+  const deFotos: Attachment[] = fotos.map((f) => {
+    const url = `/api/remisiones/${remisionId}/fotos/${f.id}`
+    return { name: f.filename, size: 'Foto', path: url, url, isImage: true }
+  })
+
+  return [...deDrive, ...deFotos]
+}
+
+/**
+ * Las fotos de TODAS las remisiones del hilo en una sola consulta, y no `listFotos` por remisión:
+ * así el número de consultas no depende de cuántas remisiones tenga el ticket.
+ */
+async function fotosPorRemision(db: Queryable, remisionIds: string[]): Promise<Map<string, FotoRemision[]>> {
+  const por = new Map<string, FotoRemision[]>()
+  if (!remisionIds.length) return por
+  const ph = remisionIds.map((_, i) => `$${i + 1}`).join(',')
+  const r = await db.query(
+    `SELECT id, remision_id, filename FROM remision_fotos WHERE remision_id IN (${ph}) ORDER BY created_at`,
+    remisionIds,
+  )
+  for (const f of r.rows as Record<string, unknown>[]) {
+    const k = String(f.remision_id)
+    por.set(k, [...(por.get(k) ?? []), { id: String(f.id), filename: (f.filename as string) || 'Foto' }])
+  }
+  return por
 }
 
 function entradaCreacion(fila: Record<string, unknown>, ticket: Record<string, unknown>, cliente: string | null): Entrada {
@@ -111,10 +151,10 @@ function entradaTransicion(fila: Record<string, unknown>): Entrada {
   }
 }
 
-function entradaRemision(fila: Record<string, unknown>): Entrada {
+function entradaRemision(fila: Record<string, unknown>, fotos: FotoRemision[]): Entrada {
   const incluye = listaIncluye(fila.incluye)
   const resultado = json(fila.resultado)
-  const fotos = resultado.fotos as { subidas?: number } | undefined
+  const subidas = resultado.fotos as { subidas?: number } | undefined
   const at = iso(fila.created_at)
   // `tipo` y no "entrada" fija, ni en el texto ni en el nombre del adjunto: hoy los dos caminos de
   // inserción lo ponen a 'entrada' y saldría igual, pero la remisión de SALIDA está en el roadmap y
@@ -122,7 +162,7 @@ function entradaRemision(fila: Record<string, unknown>): Entrada {
   // regla que `historial.ts` dejó escrita en el título de su evento; el test de la salida existe
   // para que volver a la cadena fija no pase en verde. La columna es NOT NULL DEFAULT 'entrada'.
   const tipo = String(fila.tipo ?? 'entrada')
-  const adjuntos = adjuntosRemision(resultado, tipo)
+  const adjuntos = adjuntosRemision(resultado, tipo, String(fila.id), fotos)
   const servicio = fila.tipo_servicio ? String(fila.tipo_servicio) : 'servicio técnico'
   const apertura = tipo === 'salida' ? `El equipo sale tras ${servicio}` : `El equipo ingresa para ${servicio}`
   return {
@@ -138,8 +178,10 @@ function entradaRemision(fila: Record<string, unknown>): Entrada {
         // del hilo, lo que hacía legible el comentario privado que el equipo mantenía a mano.
         fila.observaciones as string | null,
         incluye ? `Incluye: ${incluye}` : null,
-        fotos?.subidas ? `Registro fotográfico: ${fotos.subidas} ${fotos.subidas === 1 ? 'foto' : 'fotos'}` : null,
-        fila.anulada_at ? frase(`Remisión anulada por ${String(fila.anulada_por ?? 'un administrador')}`) : null,
+        // Las que n8n dice haber subido a Drive, que no siempre son las que la app guardó: el técnico
+        // puede haber salido por "Continuar sin las N fotos que faltan". Por eso la cifra sigue aquí
+        // aunque las fotos vayan ya como adjuntos —cuentan cosas distintas—.
+        subidas?.subidas ? `Registro fotográfico: ${subidas.subidas} ${subidas.subidas === 1 ? 'foto' : 'fotos'}` : null,
       ]),
       attachments: adjuntos.length ? adjuntos : undefined,
     },
@@ -179,14 +221,22 @@ export async function getConversacionTicket(db: Queryable, ticketId: string): Pr
     esCreacion(f) ? entradaCreacion(f, ticket, cliente) : entradaTransicion(f),
   )
 
-  // No se reutiliza `listRemisionesByTicket` porque filtra `anulada_at IS NULL`, y aquí hacen falta:
-  // el hilo registra lo que pasó, y una remisión anulada pasó.
+  // Solo las VIGENTES, y aquí es donde los dos paneles dejan de coincidir a propósito: `historial.ts`
+  // sí trae las anuladas —es el log, y una anulación es un suceso que hay que poder auditar— mientras
+  // que el hilo es el relato de lo que le pasó al equipo, y una remisión anulada es un documento que
+  // un administrador retiró de en medio, a menudo una prueba. Todas las vigentes y no solo la última:
+  // un ticket puede recibir dos equipos, y quedarse con la más reciente escondería el ingreso del otro.
+  //
+  // Sigue sin reutilizar `listRemisionesByTicket` —que filtra igual— porque aquélla hace `SELECT *` y
+  // devuelve `Remision` ya mapeadas, y estas entradas se componen desde la fila cruda.
   const rem = await db.query(
-    `SELECT id, tipo, tipo_servicio, incluye, observaciones, creado_por, resultado, created_at, anulada_at, anulada_por
-       FROM remisiones WHERE ticket_id = $1`,
+    `SELECT id, tipo, tipo_servicio, incluye, observaciones, creado_por, resultado, created_at
+       FROM remisiones WHERE ticket_id = $1 AND anulada_at IS NULL`,
     [ticketId],
   )
-  const deRemisiones = (rem.rows as Record<string, unknown>[]).map(entradaRemision)
+  const filasRem = rem.rows as Record<string, unknown>[]
+  const fotos = await fotosPorRemision(db, filasRem.map((f) => String(f.id)))
+  const deRemisiones = filasRem.map((f) => entradaRemision(f, fotos.get(String(f.id)) ?? []))
 
   const mensajes = [...deZoho, ...deTransiciones, ...deRemisiones].sort(masRecientePrimero).map((e) => e.msg)
   return { mensajes, sincronizarConZoho: planSyncZoho(ticketId, zoho.length > 0) }
