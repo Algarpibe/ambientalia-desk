@@ -39,6 +39,18 @@ describe('leerCatalogo', () => {
     expect(c.marcas.map((m) => m.id)).toContain('m-hor')
   })
 
+  // A diferencia del test de arriba, aquí la marca desactivada NO se pide por `incluirModeloId`:
+  // se cuela porque uno de sus modelos sigue activo. Un modelo elegible sin su marca en el
+  // desplegable sería un modelo inalcanzable, así que la marca tiene que salir igual — y este test
+  // es el que distingue esa regla general de la más estrecha (solo la marca del incluido), porque
+  // el test anterior mezcla las dos: su marca es a la vez la del modelo activo y la del incluido.
+  it('una marca desactivada con un modelo activo aparece aunque no se pida incluirModeloId', async () => {
+    await db.query("INSERT INTO catalogo_marcas (id,nombre,activo) VALUES ('m-y','Y',false)")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('mo-y','m-y','ACTIVO')")
+    const c = await leerCatalogo(db)
+    expect(c.marcas.map((m) => m.id)).toContain('m-y')
+  })
+
   it('un modelo sin tipo sale con tipoNombre nulo, no revienta', async () => {
     await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('m-x','X')")
     await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,revisar) VALUES ('mo-x','m-x','SIN-TIPO',true)")

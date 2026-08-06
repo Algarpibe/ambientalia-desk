@@ -15,9 +15,9 @@ const filaModelo = (r: Fila): CatalogoModelo => ({
 /**
  * El catálogo tal como lo consumen los formularios: solo lo activo.
  *
- * `incluirModeloId` añade un modelo desactivado —y su marca, esté activa o no— para que editar un
- * equipo cuyo modelo se retiró no deje el campo en blanco y obligue a cambiárselo. Es el mismo
- * apaño que hacía `withCurrent` en la pantalla, resuelto aquí porque es el servidor quien sabe.
+ * `incluirModeloId` añade un modelo desactivado para que editar un equipo cuyo modelo se retiró no
+ * deje el campo en blanco y obligue a cambiárselo. Es el mismo apaño que hacía `withCurrent` en la
+ * pantalla, resuelto aquí porque es el servidor quien sabe.
  */
 export async function leerCatalogo(db: Queryable, incluirModeloId?: string | null): Promise<Catalogo> {
   const extra = incluirModeloId ?? ''
@@ -29,8 +29,11 @@ export async function leerCatalogo(db: Queryable, incluirModeloId?: string | nul
       ORDER BY mo.nombre`,
     [extra],
   )
-  // Las marcas se piden DESPUÉS de los modelos porque la marca del modelo incluido tiene que entrar
-  // aunque esté desactivada: sin ella, el desplegable de marca no podría enseñar la suya.
+  // Invariante real (no solo la del modelo de `incluirModeloId`): NINGUNA marca con un modelo
+  // visible se queda fuera, esté esa marca activa o no. Un modelo elegible sin su marca en el
+  // desplegable es un modelo inalcanzable — y eso vale igual para el modelo activo de una marca
+  // desactivada (dato heredado del inventario, nadie lo pidió así) que para el que se pide por
+  // `incluirModeloId`. Por eso se calcula sobre TODAS las filas de `modelos`, no solo la incluida.
   const marcasNecesarias = (modelos.rows as Fila[]).map((r) => r.marca_id)
   const marcas = await db.query('SELECT id,nombre,activo FROM catalogo_marcas ORDER BY nombre')
   const visibles = (marcas.rows as Fila[]).filter((r) => r.activo === true || marcasNecesarias.includes(r.id))
@@ -41,8 +44,11 @@ export async function leerCatalogo(db: Queryable, incluirModeloId?: string | nul
   }
 }
 
+/** Un modelo con su marca y su tipo ya resueltos a texto, la forma que consume el alta de equipos. */
+export interface ModeloResuelto { id: string; nombre: string; marca: string; tipo: string | null }
+
 /** Un modelo por id, con su marca y su tipo ya resueltos a texto. Lo usa el alta de equipos. */
-export async function getModelo(db: Queryable, id: string): Promise<{ id: string; nombre: string; marca: string; tipo: string | null } | null> {
+export async function getModelo(db: Queryable, id: string): Promise<ModeloResuelto | null> {
   const r = await db.query(
     `SELECT mo.id, mo.nombre, ma.nombre AS marca, ti.nombre AS tipo
        FROM catalogo_modelos mo
