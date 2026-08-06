@@ -562,6 +562,52 @@ describe('POST /api/remisiones', () => {
     expect((await request(app).post('/api/remisiones').send({ ticketId: 't1', fecha: '2026-08-03' })).status).toBe(401)
   })
 
+  // La orden de venta se puede capturar aquí para no tener que hacerlo en Habilitar Servicio. NO es
+  // obligatoria: cuando el equipo entra, la OV puede no existir todavía.
+  it('captura la orden de venta en el ticket, resolviéndola de Books y sin pisar la que ya hubiera', async () => {
+    const cookie = await adminCookie(); await preparar()
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date,raw) VALUES ('ov1','OV-2026-300','cli1','2026-07-15','{\"order_status\":\"open\"}')")
+    const { app } = appWith()
+
+    // Sin orden de venta: se crea igual. Es el caso normal cuando el equipo llega antes que la venta.
+    expect((await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })).status).toBe(201)
+
+    const conOV = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [], salesOrderId: 'ov1', permitirSegunda: true })
+    expect(conOV.status).toBe(201)
+    // El NÚMERO y la FECHA salen de Books, no del navegador: es un dato de otro sistema.
+    const t = (await db.query("SELECT orden_venta, fecha_orden_venta, salesorder_id FROM tickets WHERE id='t1'")).rows[0]
+    expect(t.orden_venta).toBe('OV-2026-300')
+    // `date` vuelve como Date, no como texto. La suite corre en UTC (vitest.config), así que el ISO
+    // no corre de día.
+    expect((t.fecha_orden_venta as Date).toISOString().slice(0, 10)).toBe('2026-07-15')
+    expect(t.salesorder_id).toBe('ov1')
+
+    // Ya la tiene: una remisión posterior no puede cambiarla. En el formulario sale en gris.
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date,raw) VALUES ('ov2','OV-OTRA','cli1','2026-07-20','{\"order_status\":\"open\"}')")
+    await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [], salesOrderId: 'ov2', permitirSegunda: true })
+    expect((await db.query("SELECT orden_venta FROM tickets WHERE id='t1'")).rows[0].orden_venta).toBe('OV-2026-300')
+  })
+
+  it('una orden de venta que no existe en Books no crea la remisión', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [], salesOrderId: 'no-existe' })
+    expect(res.status).toBe(422)
+    expect((await db.query("SELECT COUNT(*)::int AS n FROM remisiones WHERE ticket_id='t1'")).rows[0].n).toBe(0)
+  })
+
+  it('el formulario recibe la orden de venta que el ticket ya tiene', async () => {
+    const cookie = await adminCookie(); await preparar()
+    await db.query("UPDATE tickets SET orden_venta='OV-YA' WHERE id='t1'")
+    const { app } = appWith()
+    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(res.body.ordenVenta).toBe('OV-YA')
+  })
+
   // El cartel del formulario era un consejo, no una barrera: si la consulta que lo alimenta falla, no
   // aparece y el duplicado vuelve a ser posible en silencio. Y un cliente directo de la API nunca lo
   // ve. Dos `pendiente` a la vez en un ticket son hoy dos entradas DEL MISMO equipo —el equipo se

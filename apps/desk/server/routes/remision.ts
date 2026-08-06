@@ -7,7 +7,7 @@ import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
 import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
-import { getClient } from '@ambientalia/zoho-sync/books/repo'
+import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth, requireAdmin } from '../auth/middleware'
@@ -55,8 +55,10 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       ticketId: row.id,
       ticketNumber: String(row.number),
       cliente: refs.accountName ?? null,
+      clientId: row.client_id ?? null,
       equipo,
       tipoServicio: row.tipo_servicio ?? null,
+      ordenVenta: row.orden_venta ?? null,
       perfil,
       incluye: await getChecklist(db, perfil),
       catalogoCargado: await hayChecklist(db),
@@ -162,6 +164,29 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // cliente se renombra en Books, la remisión debe seguir diciendo a qué empresa y a qué persona
     // correspondió cuando se hizo.
     const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
+
+    /*
+     * La orden de venta se puede capturar aquí para no tener que hacerlo en Habilitar Servicio. Es
+     * OPCIONAL: cuando el equipo entra, la venta puede no existir todavía, y exigirla dejaría al
+     * técnico sin poder remisionar.
+     *
+     * Llega el ID y se resuelven aquí el número y la fecha contra Books —mismo criterio que el
+     * equipo y el perfil unas líneas más arriba—: son datos de otro sistema y aceptarlos del
+     * navegador es la vía corta a una OV que no casa con ninguna.
+     *
+     * El `UPDATE` es condicional en el propio SQL y no con un `if` previo: la que ya está no se pisa
+     * —por eso el formulario la enseña en gris— y así dos remisiones simultáneas no pueden colar
+     * cada una la suya.
+     */
+    if (b.salesOrderId) {
+      const ov = await getSalesOrder(db, String(b.salesOrderId))
+      if (!ov) { res.status(422).json({ error: 'Orden de venta no encontrada' }); return }
+      await db.query(
+        `UPDATE tickets SET orden_venta = $2, fecha_orden_venta = $3, salesorder_id = $4, updated_at = now()
+          WHERE id = $1 AND COALESCE(orden_venta, '') = ''`,
+        [ticketId, ov.number, ov.date ?? null, ov.id],
+      )
+    }
 
     const id = await createRemision(db, {
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,

@@ -419,8 +419,15 @@ export interface RemisionNueva {
   ticketId: string
   ticketNumber: string
   cliente: string | null
+  /** El cliente de Books, para acotar el buscador de órdenes de venta al del ticket. */
+  clientId: string | null
   equipo: { id: string | null; serial: string | null; marca: string | null; modelo: string | null; tipo: string | null }
   tipoServicio: string | null
+  /**
+   * La orden de venta que el ticket ya tiene, o null. Si la trae, el formulario la enseña en gris; si
+   * no, ofrece buscarla —opcional, porque cuando el equipo entra la venta puede no existir todavía—.
+   */
+  ordenVenta: string | null
   /** Perfil resuelto con `perfilChecklist(marca, modelo)`; determina el checklist. */
   perfil: PerfilChecklist
   /** Ítems del checklist "Incluye" del perfil. Vacío es legítimo (Kunak no tiene). */

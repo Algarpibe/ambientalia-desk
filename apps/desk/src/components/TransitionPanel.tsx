@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { transitionsForStatus, STATUS_REMISION_CREADA, type Transition, type TransitionField, type SalesOrderLite } from '@ambientalia/shared';
-import { executeTransition, searchSalesOrders } from '../api/client';
+import { transitionsForStatus, STATUS_REMISION_CREADA, type Transition, type TransitionField } from '@ambientalia/shared';
+import { executeTransition } from '../api/client';
+import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
 import { canExecuteTransition } from '@ambientalia/shared'
 
@@ -181,7 +182,11 @@ function Field({ f, value, onChange, bloqueado, clientId, onElegirOrdenVenta }: 
     return (
       <div className="flex flex-col gap-1">
         {label}
-        <BuscadorOrdenVenta clientId={clientId} valor={(value as string) ?? ''} onElegir={onElegirOrdenVenta} />
+        <BuscadorOrdenVenta
+          clientId={clientId}
+          elegida={value ? { number: String(value) } : null}
+          onElegir={(ov) => onElegirOrdenVenta(ov?.number ?? '', ov?.date)}
+        />
       </div>
     );
   }
@@ -204,86 +209,4 @@ function Field({ f, value, onChange, bloqueado, clientId, onElegirOrdenVenta }: 
       )}
     </div>
   );
-}
-
-/**
- * Buscador de órdenes de venta de Books, acotado al cliente del ticket.
- *
- * Se busca en vez de teclear porque el número de una OV vive en otro sistema: escrito a mano es la
- * vía más corta a un dato que no casa con nada. El servidor ya devuelve solo las CONFIRMADAS, así
- * que las anuladas y las facturadas no aparecen.
- *
- * Lo que NO se puede hacer, aunque la especificación lo pedía: filtrar por número de serie. Books no
- * lo tiene —una línea de OV apunta a un artículo de catálogo, no a una unidad serializada— y sus
- * líneas ni siquiera se replican a esta base. Lo que sí hay es `ticketNumber`, que sale del campo
- * `cf_n_ticket` de la OV, y por eso cada resultado dice a qué ticket se refiere: es la señal buena
- * para reconocer la OV que corresponde.
- */
-function BuscadorOrdenVenta({ clientId, valor, onElegir }: {
-  clientId?: string | null
-  valor: string
-  onElegir: (numero: string, fecha?: string) => void
-}) {
-  const [q, setQ] = useState('')
-  const [opciones, setOpciones] = useState<SalesOrderLite[] | null>(null)
-  const [buscando, setBuscando] = useState(false)
-
-  async function buscar(texto: string) {
-    setQ(texto)
-    setBuscando(true)
-    try {
-      setOpciones(await searchSalesOrders(texto, clientId ?? undefined))
-    } catch {
-      // Un fallo al buscar no puede dejar el campo inservible: se avisa con la lista vacía y el
-      // usuario puede reintentar tecleando otra vez.
-      setOpciones([])
-    } finally {
-      setBuscando(false)
-    }
-  }
-
-  if (valor) {
-    return (
-      <div className="flex items-center gap-2">
-        <input value={valor} disabled className="flex-1 border border-slate-200 rounded p-2 text-[13px] bg-slate-50 text-slate-600" />
-        <button type="button" onClick={() => { onElegir('', undefined); setOpciones(null); setQ('') }} className="text-[12px] text-slate-500 underline">
-          Cambiar
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <input
-        value={q}
-        onChange={(e) => void buscar(e.target.value)}
-        placeholder={clientId ? 'Buscar orden de venta del cliente…' : 'Buscar orden de venta…'}
-        className="border border-slate-200 rounded p-2 text-[13px]"
-      />
-      {buscando && <span className="text-[11px] text-slate-400">Buscando…</span>}
-      {opciones && opciones.length === 0 && !buscando && (
-        <span className="text-[11px] text-slate-400">Sin órdenes de venta confirmadas para esa búsqueda.</span>
-      )}
-      {opciones && opciones.length > 0 && (
-        <ul className="border border-slate-200 rounded max-h-[180px] overflow-auto">
-          {opciones.map((o) => (
-            <li key={o.id}>
-              <button
-                type="button"
-                onClick={() => onElegir(o.number, o.date)}
-                className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-blue-50 flex flex-col"
-              >
-                <span className="font-bold text-slate-700">
-                  {o.number}
-                  {o.ticketNumber && <span className="ml-2 text-[10px] font-bold text-blue-600">Ticket #{o.ticketNumber}</span>}
-                </span>
-                <span className="text-slate-400">{[o.customerName, o.date].filter(Boolean).join(' · ')}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
 }

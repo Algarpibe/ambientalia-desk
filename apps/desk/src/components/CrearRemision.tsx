@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import type { RemisionNueva } from '@ambientalia/shared'
+import type { RemisionNueva, SalesOrderLite } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, type RemisionConFotos } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
 import { ejecutarEnvio, type EstadoEnvio, type ResultadoEnvio } from '../lib/envioRemision'
 import { fmtFechaHora } from '../lib/remisionResultado'
 import { ResultadoRemision } from './ResultadoRemision'
+import { BuscadorOrdenVenta } from './BuscadorOrdenVenta'
 
 /**
  * Formulario de remisión de ENTRADA. Sustituye al formulario de n8n: los datos que allí se volvían a
@@ -33,6 +34,9 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
   // así que casi nunca distingue un intento de otro. La hora del intento sí responde a "¿esa cuál es?".
   const cuandoPendiente = pendiente ? fmtFechaHora(pendiente.createdAt) : ''
   const [fecha, setFecha] = useState(hoyISO())
+  // La OV que el técnico elija aquí, cuando el ticket no la traiga. Se manda el ID: el número y la
+  // fecha los resuelve el servidor contra Books, que es donde vive el dato.
+  const [ordenVenta, setOrdenVenta] = useState<SalesOrderLite | null>(null)
   const [marcados, setMarcados] = useState<Record<string, boolean>>({})
   const [observaciones, setObservaciones] = useState('')
   const [fotos, setFotos] = useState<File[]>([])
@@ -59,7 +63,7 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
       const r = await ejecutarEnvio(estado, fotos.length, {
         crear: async () => {
           const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
-          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined, permitirSegunda })
+          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined, permitirSegunda, salesOrderId: ordenVenta?.id })
           return rem.id
         },
         subirFoto: async (id, i) => { await subirFotoRemision(id, await redimensionarImagen(fotos[i])) },
@@ -173,6 +177,27 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
             <div>
               <label className="text-[11px] font-bold text-slate-500 uppercase">Tipo de Servicio</label>
               <input className={fijo} readOnly value={data.tipoServicio ?? '—'} />
+            </div>
+
+            {/* La orden de venta del TICKET, no de la remisión: por eso si ya está no se toca —como
+                el cliente o el equipo— y si no está se puede capturar aquí, y así no hay que hacerlo
+                en Habilitar Servicio. Sin asterisco a propósito: cuando el equipo entra, la venta
+                puede no existir todavía, y exigirla dejaría al técnico sin poder remisionar. */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Orden de Venta</label>
+              {data.ordenVenta ? (
+                <input className={fijo} readOnly value={data.ordenVenta} />
+              ) : (
+                <div className="mt-1">
+                  <BuscadorOrdenVenta
+                    clientId={data.clientId}
+                    elegida={ordenVenta}
+                    onElegir={setOrdenVenta}
+                    placeholder="Opcional · buscar si ya existe…"
+                    disabled={congelado}
+                  />
+                </div>
+              )}
             </div>
 
             <div>

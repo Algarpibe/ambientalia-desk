@@ -321,6 +321,11 @@ export interface CrearRemisionPayload {
    * distinguir por su cuenta un reintento de red de una decisión deliberada.
    */
   permitirSegunda?: boolean
+  /**
+   * Orden de venta que el técnico eligió en el formulario, cuando el ticket no la traía. Viaja el ID
+   * y no el número: el servidor resuelve número y fecha contra Books, que es donde vive el dato.
+   */
+  salesOrderId?: string
 }
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {
