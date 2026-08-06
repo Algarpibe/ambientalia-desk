@@ -85,6 +85,31 @@ describe('equipos CRUD (Subsistema F)', () => {
     expect(f.byMarca['Grimm'].tipos).toContain('Monitor')
     expect(f.byMarca['Grimm'].modelos).toContain('EDM180C')
   })
+
+  /**
+   * El tipo de equipo lo dice el modelo, así que no hay que preguntarlo: el inventario ya sabe que un
+   * APSA-370 es un analizador de SO2. La consulta leía las tres columnas juntas y tiraba el
+   * emparejamiento, que es lo que dejaba a una marca como Horiba ofreciendo sus ~20 tipos para
+   * cualquier modelo.
+   *
+   * Se guarda la LISTA de tipos de cada modelo y no el primero que llegue: un modelo con dos tipos en
+   * el inventario es un dato ambiguo, y quedarse con uno escondería el conflicto en vez de dejar
+   * elegir sobre las únicas dos opciones posibles.
+   */
+  it('facets empareja cada modelo con sus tipos, y conserva todos los de un modelo ambiguo', async () => {
+    const eq = (serial: string, modelo: string, tipo: string) =>
+      createEquipo(db, { serial, marca: 'Horiba', modelo, tipo, clienteNombre: null, clientId: null })
+    await eq('H1', 'APSA-370', 'Analizador de Dióxido de Azufre (SO2)')
+    await eq('H2', 'APSA-370', 'Analizador de Dióxido de Azufre (SO2)') // repetido: no duplica
+    await eq('H3', 'APOA-370', 'Analizador de Ozono (O3)')
+    await eq('H4', 'MIXTO', 'Analizador de Ozono (O3)')
+    await eq('H5', 'MIXTO', 'Calibrador Multigas')
+    const porModelo = (await equipoFacets(db)).byMarca['Horiba'].tiposPorModelo
+
+    expect(porModelo['APSA-370']).toEqual(['Analizador de Dióxido de Azufre (SO2)'])
+    expect(porModelo['APOA-370']).toEqual(['Analizador de Ozono (O3)'])
+    expect(porModelo['MIXTO']).toEqual(['Analizador de Ozono (O3)', 'Calibrador Multigas'])
+  })
 })
 
 async function insTicket(id: string, number: number, serial: string | null, equipoId: string | null, status: string, creado = 'now()') {

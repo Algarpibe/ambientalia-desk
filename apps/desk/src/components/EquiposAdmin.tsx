@@ -95,6 +95,9 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   const [marcaOtro, setMarcaOtro] = useState(false)
   const [modeloOtro, setModeloOtro] = useState(false)
   const [tipoOtro, setTipoOtro] = useState(false)
+  /** El tipo lo puso el modelo, no la persona. Arranca en false también al editar: el tipo guardado
+   *  de un equipo ya registrado es un dato suyo, no una deducción, y rotularlo así sería mentir. */
+  const [tipoAuto, setTipoAuto] = useState(false)
   // Mismo patrón que CreateTicket: la lista solo se abre con el foco en su campo, y no se
   // reabre al elegir (elegir reescribe `clientQuery`, lo que re-disparaba la búsqueda).
   const [clienteOpen, setClienteOpen] = useState(false)
@@ -126,7 +129,11 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   const marcas = withCurrent(facets.marcas, marca)
   const mb = facets.byMarca[marca]
   const modelos = withCurrent(mb?.modelos ?? [], modelo)
-  const tipos = withCurrent(mb?.tipos ?? [], tipo)
+  // El tipo es una consecuencia del modelo, no una pregunta: el inventario ya sabe qué es un
+  // APSA-370. Con el modelo elegido la lista se acota a los tipos de ESE modelo; sin modelo —o si es
+  // uno nuevo, que nadie ha registrado aún— se cae a los de la marca, que es lo que había antes.
+  const tiposDelModelo = mb?.tiposPorModelo?.[modelo] ?? []
+  const tipos = withCurrent(tiposDelModelo.length ? tiposDelModelo : (mb?.tipos ?? []), tipo)
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
@@ -138,7 +145,7 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
             <select className={field} value={marcaOtro ? OTRO : marca} onChange={(e) => {
               const v = e.target.value
               if (v === OTRO) { setMarcaOtro(true); setMarca('') } else { setMarcaOtro(false); setMarca(v) }
-              setModelo(''); setModeloOtro(false); setTipo(''); setTipoOtro(false)
+              setModelo(''); setModeloOtro(false); setTipo(''); setTipoOtro(false); setTipoAuto(false)
             }}>
               <option value="">Marca…</option>
               {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -149,7 +156,15 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
           <div className="flex flex-col gap-1">
             <select className={field} value={modeloOtro ? OTRO : modelo} disabled={!marca} onChange={(e) => {
               const v = e.target.value
-              if (v === OTRO) { setModeloOtro(true); setModelo('') } else { setModeloOtro(false); setModelo(v) }
+              setTipoOtro(false)
+              if (v === OTRO) { setModeloOtro(true); setModelo(''); setTipo(''); setTipoAuto(false); return }
+              setModeloOtro(false); setModelo(v)
+              // Si el inventario solo conoce un tipo para ese modelo, se rellena y no se pregunta.
+              // Con dos o más se deja en blanco a propósito: elegir por el usuario sobre un dato
+              // ambiguo es peor que pedirle que decida entre las dos únicas opciones posibles.
+              const inferidos = facets.byMarca[marca]?.tiposPorModelo?.[v] ?? []
+              setTipo(inferidos.length === 1 ? inferidos[0] : '')
+              setTipoAuto(inferidos.length === 1)
             }}>
               <option value="">{marca ? 'Modelo…' : 'Elige marca primero'}</option>
               {modelos.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -161,6 +176,7 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
         <div className="flex flex-col gap-1">
           <select className={field} value={tipoOtro ? OTRO : tipo} disabled={!marca} onChange={(e) => {
             const v = e.target.value
+            setTipoAuto(false) // lo elige la persona: deja de ser una deducción
             if (v === OTRO) { setTipoOtro(true); setTipo('') } else { setTipoOtro(false); setTipo(v) }
           }}>
             <option value="">{marca ? 'Tipo de equipo…' : 'Elige marca primero'}</option>
@@ -168,6 +184,12 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
             {marca && <option value={OTRO}>Otro…</option>}
           </select>
           {tipoOtro && <input className={field} placeholder="Nuevo tipo de equipo" value={tipo} onChange={(e) => setTipo(e.target.value)} />}
+          {/* Se dice de dónde sale y se deja cambiar: un modelo puede estrenar tipo, y bloquearlo
+              obligaría a registrar el equipo mal para corregirlo después. */}
+          {tipoAuto && tipo && <div className="text-[11px] text-slate-400">Deducido de {marca} {modelo}. Cámbialo si este equipo es otra cosa.</div>}
+          {!tipo && tiposDelModelo.length > 1 && (
+            <div className="text-[11px] text-amber-700">En el inventario, {marca} {modelo} figura con {tiposDelModelo.length} tipos distintos. Elige cuál es este.</div>
+          )}
         </div>
         <div className="relative">
           <input className={`${field} w-full`} placeholder="Cliente (Books) *" value={clientQuery}

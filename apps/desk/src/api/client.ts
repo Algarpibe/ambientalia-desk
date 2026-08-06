@@ -191,7 +191,8 @@ export function listEquiposManage(search: string, page = 1): Promise<{ items: Eq
   return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))
 }
 
-export interface EquipoFacets { marcas: string[]; byMarca: Record<string, { modelos: string[]; tipos: string[] }> }
+/** `tiposPorModelo`: los tipos que el inventario ha visto para cada modelo. Uno solo ⇒ se deduce. */
+export interface EquipoFacets { marcas: string[]; byMarca: Record<string, { modelos: string[]; tipos: string[]; tiposPorModelo: Record<string, string[]> }> }
 export function equipoFacets(): Promise<EquipoFacets> {
   return fetch('/api/equipos/facets', { credentials: 'include' }).then((r) => json<EquipoFacets>(r))
 }
