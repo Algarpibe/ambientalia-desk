@@ -209,6 +209,50 @@ describe('GET /api/tickets/:id/history', () => {
   })
 })
 
+describe('GET /api/tickets/:id/conversations (hilo compuesto)', () => {
+  // El ticket se crea POR LA API a propósito, en vez de insertar la fila `(creación)` a mano: es el
+  // único sitio donde se comprueba que lo que ESCRIBE `createTicket` es lo que RECONOCEN los
+  // compositores. Con la inserción a mano, cambiar el `from_status` que marca la creación —o las
+  // claves de la foto— dejaría los dos paneles contando la creación como una transición genérica sin
+  // que fallara ningún test.
+  it('mezcla la creación —creada por la API— con la remisión, y no le pide nada a Zoho', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name,company_name) VALUES ('cli-c1','Gecelca','Gecelca S.A. E.S.P.')")
+    await upsertEquipo(db, equipoRow('eq-c1', '18A20070'))
+    const { app, sync } = appWith()
+
+    const creado = await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      clientId: 'cli-c1', equipoId: 'eq-c1', tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo',
+      prefijo: 'CG', ordenVenta: 'OV-2026-141', prioridad: 'Media',
+    })
+    expect(creado.status).toBe(201)
+    const id: string = creado.body.id
+
+    // `createTicket` data la creación con `now()`, así que la remisión se data una hora después para
+    // que el orden esperado no dependa del reloj de quien corre los tests.
+    await db.query(
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,tipo_servicio,observaciones,creado_por,estado,created_at)
+       VALUES ('rc1',$1,'entrada','2026-08-02','Calibración','El equipo ingresa sin sensor.','Julián','ok',now() + interval '1 hour')`,
+      [id],
+    )
+
+    const res = await request(app).get(`/api/tickets/${id}/conversations`).set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.map((m: { author: string }) => m.author)).toEqual(['Julián', 'Admin'])
+    expect(res.body[0].content).toBe('El equipo ingresa para Calibración.\nEl equipo ingresa sin sensor.')
+    expect(res.body[1].content).toBe([
+      'Ticket creado para Gecelca S.A. E.S.P.', // la razón social ya trae su punto: no se le añade otro
+      'Equipo: Grimm EDM180C · serie 18A20070',
+      'Tipo de servicio: Calibración',
+      'Orden de venta: OV-2026-141',
+      'Clasificación: Equipo nuevo · Prioridad: Media',
+    ].join('\n'))
+    // Lo que arregla esta ruta: un ticket nacido en la app no existe en Zoho y no se le pregunta por él.
+    expect(sync.syncConversations).not.toHaveBeenCalled()
+    expect((await request(app).get(`/api/tickets/${id}/conversations`)).status).toBe(401)
+  })
+})
+
 describe('F3-02 lectura asíncrona (lazy + background)', () => {
   it('detalle: con ticket local sirve 200 sin bloquear y dispara syncTicket en background (un rechazo no rompe)', async () => {
     const cookie = await adminCookie()

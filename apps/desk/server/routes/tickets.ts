@@ -3,9 +3,10 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import multer from 'multer'
-import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, getConversations, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'
-import { rowToTicket, rowToTicketDetail, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
+import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'
+import { rowToTicket, rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getHistorialTicket } from '../db/historial'
+import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -106,10 +107,22 @@ export function registerTicketRoutes(
 
   app.get('/api/tickets/:id/conversations', asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    let convs = await getConversations(db, id)
-    if (convs.length === 0) { await sync.syncConversations(id); convs = await getConversations(db, id) }
-    else { void sync.syncConversations(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncConversations bg falló')) }
-    res.json(convs.map(({ row, attachments }) => rowToMessage(row, attachments)))
+    const primero = await getConversacionTicket(db, id)
+    // Antes se decidía el sync perezoso con `convs.length === 0`, y un ticket NACIDO en la app nunca
+    // tiene conversaciones de Zoho: la condición se cumplía SIEMPRE y la ruta esperaba a una llamada a
+    // Zoho en cada apertura, por un ticket que Zoho ni siquiera conoce. El compositor lo distingue por
+    // el prefijo del id, igual que ya hace la ruta de historia.
+    if (primero.sincronizarConZoho === 'ahora') {
+      // El `await` va dentro de un `try` —antes no lo estaba— para que un Zoho caído degrade a servir
+      // lo que haya en local en vez de tumbar la petición con un 500.
+      try { await sync.syncConversations(id) } catch (err) { req.log.warn({ err, ticketId: id }, 'syncConversations (lazy) falló') }
+      res.json((await getConversacionTicket(db, id)).mensajes)
+      return
+    }
+    if (primero.sincronizarConZoho === 'en-segundo-plano') {
+      void sync.syncConversations(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncConversations bg falló'))
+    }
+    res.json(primero.mensajes)
   }))
 
   app.get('/api/tickets/:id/history', asyncHandler(async (req, res) => {
