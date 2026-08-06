@@ -146,7 +146,9 @@ function initialsOf(name: string): string {
  */
 const TZ_VISUALIZACION = 'America/Bogota'
 
-function fmtTime(iso?: string | null): string {
+/** Hora de un mensaje, en la zona de visualización. Exportada porque el hilo generado tiene que
+ *  formatear igual que las conversaciones de Zoho, o se notaría cuál es cuál. */
+export function fmtTime(iso?: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''

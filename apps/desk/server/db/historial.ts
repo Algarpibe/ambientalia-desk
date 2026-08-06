@@ -2,24 +2,15 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
 import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
+import { iso, json, lectorCreacion, planSyncZoho, textoEquipo, type PlanSyncZoho } from './ticketFuentes'
 
-/**
- * Qué hacer con Zoho antes de responder. Sustituye al viejo "¿está vacío el historial?", que con la
- * unión ya no distingue nada: un ticket de la app siempre tiene al menos su transición de creación.
- */
-export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
+// Reexportado para no romper a quien importe el tipo de aquí: `getHistorialTicket` lo devuelve.
+export type { PlanSyncZoho }
 
 export interface HistorialTicket {
   eventos: HistoryEvent[]
   sincronizarConZoho: PlanSyncZoho
 }
-
-/** `timestamptz`: pg y pg-mem lo entregan como `Date`; el histórico puede traer texto. */
-const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : v ? String(v) : null)
-
-/** `jsonb`: pg lo entrega parseado, pg-mem como texto. */
-const json = (v: unknown): Record<string, unknown> =>
-  typeof v === 'string' ? (JSON.parse(v) as Record<string, unknown>) : ((v as Record<string, unknown>) ?? {})
 
 /** Descarta los detalles vacíos: una lista de seis "—" no informa de nada. */
 function detalles(pares: Array<[string, unknown]>): HistoryDetail[] {
@@ -38,22 +29,8 @@ function etiquetaCampo(clave: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
-/** "Grimm EDM180C · serie 18A20070", saltándose lo que falte. */
-function textoEquipo(marca: unknown, modelo: unknown, serial: unknown): string {
-  const nombre = [marca, modelo].filter((x) => x != null && String(x).trim() !== '').join(' ')
-  const s = serial != null && String(serial).trim() !== '' ? `serie ${serial}` : ''
-  return [nombre, s].filter(Boolean).join(' · ')
-}
-
 function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, unknown>, cliente: string | null): HistoryEvent {
-  const v = json(fila.values)
-  // Hay foto o no la hay: se decide UNA vez, no campo a campo. Los tickets anteriores a que se
-  // guardara el payload completo dejaron en `values` solo `orden_venta`, así que la presencia de
-  // cualquier otra clave es el discriminador. Mezclar con `v[c] ?? ticket[col]` sería un error
-  // sutil: la foto guarda los `null` explícitos, de modo que un campo que el técnico dejó vacío ese
-  // día caería a la columna y mostraría el estado ACTUAL — justo la mentira que la foto evita.
-  const hayFoto = Object.keys(v).some((k) => k !== 'orden_venta')
-  const de = (clave: string, columna: string): unknown => (hayFoto ? v[clave] : ticket[columna])
+  const de = lectorCreacion(fila.values, ticket)
   // `Cliente` se escapa de la regla de `hayFoto` a propósito: sale siempre del estado actual aunque
   // la foto guarde `client_id`, porque el NOMBRE vive en otra tabla y resolverlo por la foto pediría
   // una segunda consulta. Hoy da igual —la app no tiene ninguna forma de reasignar el cliente de un
@@ -212,16 +189,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
 
   const eventos = [...zoho, ...transiciones, ...remisiones].sort(masRecientePrimero)
 
-  // Se discrimina por el PREFIJO DEL ID y no por `managed_by_app` ni `source`, que parecen decir
-  // "esto nació en la app" y no lo dicen: `writeTransition` pone las dos —`managed_by_app=true` y
-  // `source='app'`, en el mismo UPDATE— en CUALQUIER transición hecha desde Desk, también las de un
-  // ticket que vino de Zoho. Usarlas dejaba a ese ticket sin refrescar jamás su historia de Zoho
-  // desde la primera vez que alguien lo moviera aquí, y como `syncTicketHistory` solo se llama desde
-  // esta ruta, nadie más lo repararía. El id sí es inmutable: `createTicket` es el único sitio que
-  // acuña ids de ticket y siempre les pone este prefijo — los de Zoho son numéricos.
-  const nacidoEnLaApp = ticketId.startsWith('app-')
-  const sincronizarConZoho: PlanSyncZoho =
-    nacidoEnLaApp ? 'no' : zoho.length === 0 ? 'ahora' : 'en-segundo-plano'
+  const sincronizarConZoho = planSyncZoho(ticketId, zoho.length > 0)
 
   return { eventos, sincronizarConZoho }
 }
