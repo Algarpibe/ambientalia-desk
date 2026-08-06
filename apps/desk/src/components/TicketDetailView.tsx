@@ -65,6 +65,15 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const [showHistorial, setShowHistorial] = useState(false);
     const [showRemision, setShowRemision] = useState(false);
 
+    /**
+     * Lo que hay que refrescar cuando una remisión se mueve, sea al crearla o al reenviar una que
+     * falló. Son las CUATRO cosas que toca, y no solo el ticket: el hilo gana su entrada, la pestaña
+     * su contador, la cabecera el estado nuevo —desde que el desenlace confirmado lleva el ticket a
+     * "Remisión creada"— y el tablero de detrás, que si no se queda con el ticket en la columna
+     * anterior. Está aquí y no repetido en cada sitio porque olvidar una es un fallo silencioso.
+     */
+    const refrescarTrasRemision = () => { reloadTicket(); reloadRemisiones(); reloadMessages(); onChanged?.(); };
+
     async function doReply() {
         try {
             await replyTicket(ticketId, replyText);
@@ -256,7 +265,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         )}
                         {activeView === 'remisiones' && (
                             <div className="flex-1 overflow-y-auto bg-white">
-                                <PanelRemisiones items={remisiones} loading={remisionesLoading} error={remisionesError} />
+                                <PanelRemisiones items={remisiones} loading={remisionesLoading} error={remisionesError} onCambio={refrescarTrasRemision} />
                             </div>
                         )}
                         {activeView === 'hojadevida' && (
@@ -342,15 +351,11 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
             )}
 
             {showHistorial && ticket?.equipoId && <HojaDeVida equipoId={ticket.equipoId} onClose={() => setShowHistorial(false)} />}
-            {/* Al cerrar hay que refrescar las CUATRO cosas que la remisión acaba de mover, y no solo
-                el ticket: el hilo gana su entrada, la pestaña su contador, la cabecera el estado nuevo
-                —desde que el desenlace confirmado lleva el ticket a "Remisión creada"— y el tablero de
-                detrás, que si no se queda con el ticket en la columna anterior. */}
             {showRemision && (
               <CrearRemision
                 ticketId={ticketId}
                 onClose={() => setShowRemision(false)}
-                onCreada={() => { setShowRemision(false); reloadTicket(); reloadRemisiones(); reloadMessages(); onChanged?.(); }}
+                onCreada={() => { setShowRemision(false); refrescarTrasRemision(); }}
               />
             )}
 

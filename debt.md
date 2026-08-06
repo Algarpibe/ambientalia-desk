@@ -443,5 +443,19 @@ pg-mem deja de ser el harness de tests. Hasta entonces, R1 + validación en prod
      (tropiezo al sondear), **ámbar** (envío sin confirmar) y **rojo** (veredicto de n8n).
   **Sigue abierto, por decisión:** `POST /api/remisiones` no deduplica. Las rutas desde la interfaz están
   cerradas, pero un cliente directo de la API puede crear dos. La regla no puede ser "una por ticket" —un ticket
-  puede recibir dos equipos— sino "una `pendiente` por ticket", y eso merece su propia decisión. Tampoco hay
-  reenvío para una remisión en `estado: 'error'`: es capacidad nueva, no arreglo.
+  puede recibir dos equipos— sino "una `pendiente` por ticket", y eso merece su propia decisión.
+  ~~Tampoco hay reenvío para una remisión en `estado: 'error'`~~ — **RESUELTO 2026-08-06.** Y **esta entrada
+  estaba mal**: decía "es capacidad nueva, no arreglo", y no lo era. El servidor ya lo permitía —`/enviar` solo
+  cierra el paso a las anuladas y a las que terminaron bien— y `ResultadoRemision` ya sabía reenviar y sondear
+  (`puedeReintentar` incluye `estado === 'error'`). La capacidad estaba entera y solo era **inalcanzable**: no
+  había desde dónde llegar. Se cableó un botón en `PanelRemisiones`, fuera del bloque que lista los fallos —ése
+  solo aparece si n8n los detalló, así que un error sin detalle dejaba la tarjeta en rojo y sin nada que hacer—.
+  No se ofrece para una remisión del histórico: ésa nunca pasó por n8n, y "reenviarla" generaría en Drive un
+  documento nuevo para un servicio de hace años.
+
+- ~~**`POST /api/tickets/:id/reply` devolvía 500 tras haber enviado el correo**~~ — **RESUELTO 2026-08-06.**
+  El `await sync.syncConversations(id)` iba fuera de todo `try`, después del `sendReply`. Con Zoho caído el
+  usuario leía "falló" sobre un correo que sí había salido, y el reintento natural mandaba un segundo correo al
+  cliente. Ahora degrada a un `warn` en el log, como ya hacía la ruta hermana de historia: pasado el `sendReply`
+  nada puede devolver error, porque el efecto irreversible ya ocurrió. El refresco es una comodidad — el hilo se
+  recompone solo al abrir el ticket.
