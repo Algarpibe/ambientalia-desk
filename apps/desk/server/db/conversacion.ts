@@ -1,0 +1,177 @@
+import type { Attachment, Message } from '@ambientalia/shared'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { urlSegura } from '@ambientalia/shared'
+import { getConversations } from '@ambientalia/zoho-sync/db/repo'
+import { fmtTime, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
+import {
+  datosTicket, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho, porFechaDesc,
+  textoEquipo, type PlanSyncZoho,
+} from './ticketFuentes'
+
+export interface ConversacionTicket {
+  mensajes: Message[]
+  sincronizarConZoho: PlanSyncZoho
+}
+
+/** Un mensaje con su instante real al lado: `Message.time` viene ya formateado y ordenar por él sería ordenar alfabéticamente. */
+interface Entrada { at: string | null; msg: Message }
+
+/** Une las líneas que tienen contenido. Una línea vacía en medio de la prosa se lee como un descuido. */
+function texto(lineas: Array<string | null | undefined>): string {
+  return lineas.filter((l) => l != null && String(l).trim() !== '').join('\n')
+}
+
+/**
+ * Cierra la frase con punto, salvo que ya termine en uno. Interpolar un nombre y añadirle `.` a
+ * secas no vale aquí: casi todas las empresas del sector se llaman "… S.A.S.", así que el hilo
+ * diría "Ticket creado para Airlab Consulting S.A.S.." en prácticamente todos los tickets.
+ */
+function frase(t: string): string {
+  const s = t.trim()
+  return /[.!?…]$/.test(s) ? s : `${s}.`
+}
+
+const enlaceDrive = (id: unknown): string | null =>
+  id ? urlSegura(`https://drive.google.com/file/d/${String(id)}/view`) : null
+const enlaceDoc = (id: unknown): string | null =>
+  id ? urlSegura(`https://docs.google.com/document/d/${String(id)}/edit`) : null
+
+/**
+ * Los adjuntos son ENLACES, no ficheros: la app no tiene credenciales de Google y no puede servirlos
+ * por el proxy. `size` lleva el tipo en vez del tamaño porque de un fichero de Drive no lo sabemos y
+ * la segunda línea de la tarjeta tiene que decir algo.
+ */
+function adjuntosRemision(resultado: Record<string, unknown>): Attachment[] {
+  const posibles: Array<[string, string, string | null]> = [
+    ['Remisión de entrada', 'PDF', enlaceDrive(resultado.pdfId)],
+    ['Documento editable', 'Documento', enlaceDoc(resultado.docId)],
+    ['Etiqueta .dymo', 'Etiqueta', enlaceDrive(resultado.dymoId)],
+    ['Carpeta en Drive', 'Carpeta', urlSegura(resultado.carpetaUrl as string | null | undefined)],
+  ]
+  // La URL va también en `path` —y no `path: ''`— porque es la `key` de React de la tarjeta de
+  // adjunto: con la cadena vacía, los cuatro adjuntos de una misma entrada compartirían key.
+  return posibles
+    .filter(([, , url]) => url !== null)
+    .map(([name, size, url]) => ({ name, size, path: url as string, url: url as string }))
+}
+
+function entradaCreacion(fila: Record<string, unknown>, ticket: Record<string, unknown>, cliente: string | null): Entrada {
+  const de = lectorCreacion(fila.values, ticket)
+  const equipo = textoEquipo(de('marca', 'marca'), de('modelo', 'modelo'), de('serial', 'serial'))
+  const clas = de('clasificacion', 'classification')
+  const prio = de('prioridad', 'priority')
+  const at = iso(fila.performed_at)
+  // Clasificación y prioridad comparten línea separadas por `·`, no una línea cada una: son dos
+  // etiquetas cortas y darles renglón propio alarga la entrada sin aportar nada.
+  const clasPrio = [
+    clas ? `Clasificación: ${String(clas)}` : null,
+    prio ? `Prioridad: ${String(prio)}` : null,
+  ].filter(Boolean).join(' · ')
+  return {
+    at,
+    msg: {
+      id: `crea-${String(fila.ticket_id)}`,
+      author: (fila.performed_by as string) ?? 'App',
+      type: 'Privado',
+      time: fmtTime(at),
+      content: texto([
+        cliente ? frase(`Ticket creado para ${cliente}`) : 'Ticket creado.',
+        equipo ? `Equipo: ${equipo}` : null,
+        de('tipo_servicio', 'tipo_servicio') ? `Tipo de servicio: ${String(de('tipo_servicio', 'tipo_servicio'))}` : null,
+        de('orden_venta', 'orden_venta') ? `Orden de venta: ${String(de('orden_venta', 'orden_venta'))}` : null,
+        clasPrio || null,
+      ]),
+    },
+  }
+}
+
+function entradaTransicion(fila: Record<string, unknown>): Entrada {
+  const v = json(fila.values)
+  const at = iso(fila.performed_at)
+  const campos = Object.entries(v)
+    .filter(([, val]) => val != null && String(val).trim() !== '')
+    .map(([k, val]) => `${etiquetaCampo(k)}: ${String(val)}`)
+  return {
+    at,
+    msg: {
+      // La `key` de React del mensaje. `ticket_transitions` tiene `id` propio, pero no se
+      // selecciona: el compositor hermano tampoco lo pide y la terna instante+transición ya es
+      // única — dos transiciones del mismo ticket no comparten `performed_at`.
+      id: `tr-${String(fila.ticket_id)}-${String(fila.performed_at)}-${String(fila.transition_name)}`,
+      author: (fila.performed_by as string) ?? 'App',
+      type: 'Privado',
+      time: fmtTime(at),
+      content: texto([
+        `${String(fila.transition_name ?? 'Transición')}: ${String(fila.from_status ?? '—')} → ${String(fila.to_status ?? '—')}`,
+        fila.area ? `Área: ${String(fila.area)}` : null,
+        ...campos,
+      ]),
+    },
+  }
+}
+
+function entradaRemision(fila: Record<string, unknown>): Entrada {
+  const incluye = listaIncluye(fila.incluye)
+  const resultado = json(fila.resultado)
+  const fotos = resultado.fotos as { subidas?: number } | undefined
+  const at = iso(fila.created_at)
+  const adjuntos = adjuntosRemision(resultado)
+  const servicio = fila.tipo_servicio ? String(fila.tipo_servicio) : 'servicio técnico'
+  return {
+    at,
+    msg: {
+      id: `rem-${String(fila.id)}`,
+      author: (fila.creado_por as string) ?? 'App',
+      type: 'Privado',
+      time: fmtTime(at),
+      content: texto([
+        frase(`El equipo ingresa para ${servicio}`),
+        // Las observaciones que escribió el técnico, TAL CUAL y sin etiqueta delante: son la prosa
+        // del hilo, lo que hacía legible el comentario privado que el equipo mantenía a mano.
+        fila.observaciones as string | null,
+        incluye ? `Incluye: ${incluye}` : null,
+        fotos?.subidas ? `Registro fotográfico: ${fotos.subidas} ${fotos.subidas === 1 ? 'foto' : 'fotos'}` : null,
+        fila.anulada_at ? frase(`Remisión anulada por ${String(fila.anulada_por ?? 'un administrador')}`) : null,
+      ]),
+      attachments: adjuntos.length ? adjuntos : undefined,
+    },
+  }
+}
+
+/** Más reciente primero, con los que no tienen fecha al final: es el orden que el panel ya usa. */
+const masRecientePrimero = porFechaDesc<Entrada>((e) => e.at)
+
+/**
+ * El hilo del ticket: las conversaciones de Zoho más una entrada por etapa ocurrida en la app. Se
+ * DERIVA al leer y no se registran mensajes nuevos, que es lo que hace que aparezca solo lo que ya
+ * existe —las 149 remisiones migradas incluidas—.
+ */
+export async function getConversacionTicket(db: Queryable, ticketId: string): Promise<ConversacionTicket> {
+  const zoho = await getConversations(db, ticketId)
+  const deZoho: Entrada[] = zoho.map(({ row, attachments }) => ({
+    at: iso((row as unknown as Record<string, unknown>).commented_time),
+    msg: rowToMessage(row, attachments),
+  }))
+
+  const { ticket, cliente } = await datosTicket(db, ticketId)
+
+  const tr = await db.query(
+    'SELECT ticket_id, transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
+    [ticketId],
+  )
+  const deTransiciones = (tr.rows as Record<string, unknown>[]).map((f) =>
+    f.from_status === '(creación)' ? entradaCreacion(f, ticket, cliente) : entradaTransicion(f),
+  )
+
+  // No se reutiliza `listRemisionesByTicket` porque filtra `anulada_at IS NULL`, y aquí hacen falta:
+  // el hilo registra lo que pasó, y una remisión anulada pasó.
+  const rem = await db.query(
+    `SELECT id, tipo, tipo_servicio, incluye, observaciones, creado_por, resultado, created_at, anulada_at, anulada_por
+       FROM remisiones WHERE ticket_id = $1`,
+    [ticketId],
+  )
+  const deRemisiones = (rem.rows as Record<string, unknown>[]).map(entradaRemision)
+
+  const mensajes = [...deZoho, ...deTransiciones, ...deRemisiones].sort(masRecientePrimero).map((e) => e.msg)
+  return { mensajes, sincronizarConZoho: planSyncZoho(ticketId, zoho.length > 0) }
+}
