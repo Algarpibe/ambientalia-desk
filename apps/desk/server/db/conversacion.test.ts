@@ -145,11 +145,15 @@ describe('getConversacionTicket', () => {
     expect(mensajes[0].attachments?.[0].name).toBe('Remisión de salida')
   })
 
-  it('una transición lista sus campos diligenciados', async () => {
+  // El `comment` va en `values` como un campo más, pero `writeTransition` YA lo guarda como
+  // conversación propia. Sin excluirlo, el hilo lo enseñaba DOS veces —una como mensaje y otra como
+  // campo— y encima rotulado "Comment": su clave está en inglés y la etiqueta solo pone la inicial en
+  // mayúscula, así que era la única palabra en inglés de toda la interfaz.
+  it('una transición lista sus campos diligenciados, sin repetir el comentario', async () => {
     await insTicket('app-7', 7)
     await db.query(
       "INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at,values) VALUES ('app-7','Diagnosticar','Ingresado','En Proceso','Taller','Juan','2026-08-03T10:00:00Z',$1)",
-      [JSON.stringify({ diagnostico: 'Sensor averiado' })],
+      [JSON.stringify({ comment: 'El ticket prosigue', diagnostico: 'Sensor averiado' })],
     )
     const { mensajes } = await getConversacionTicket(db, 'app-7')
     expect(mensajes[0].content).toBe([
@@ -157,6 +161,7 @@ describe('getConversacionTicket', () => {
       'Área: Taller',
       'Diagnostico: Sensor averiado',
     ].join('\n'))
+    expect(mensajes[0].content).not.toContain('Comment')
   })
 
   it('mezcla las conversaciones de Zoho con lo generado, más reciente primero', async () => {

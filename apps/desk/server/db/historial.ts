@@ -3,7 +3,7 @@ import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientali
 import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
-  datosTicket, esCreacion, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
+  camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
   porFechaDesc, textoEquipo, type PlanSyncZoho,
 } from './ticketFuentes'
 
@@ -47,7 +47,6 @@ function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, un
 }
 
 function eventoTransicion(fila: Record<string, unknown>): HistoryEvent {
-  const v = json(fila.values)
   return {
     eventName: 'AppTransition',
     time: iso(fila.performed_at),
@@ -58,9 +57,7 @@ function eventoTransicion(fila: Record<string, unknown>): HistoryEvent {
         ['Estado', `${fila.from_status ?? '—'} → ${fila.to_status ?? '—'}`],
         ['Área', fila.area],
       ]),
-      // La anotación de tupla es necesaria: sin ella `map` infiere `unknown[][]` y no encaja con
-      // `Array<[string, unknown]>`.
-      ...detalles(Object.entries(v).map(([k, val]): [string, unknown] => [etiquetaCampo(k), val])),
+      ...detalles(camposDiligenciados(fila.values)),
     ],
   }
 }

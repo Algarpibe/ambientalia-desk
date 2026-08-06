@@ -3,7 +3,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getConversations } from '@ambientalia/zoho-sync/db/repo'
 import { fmtTime, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import {
-  datosTicket, esCreacion, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
+  camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
   porFechaDesc, textoEquipo, type DatosTicket, type PlanSyncZoho,
 } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision, type FotoRemision } from './remisionAdjuntos'
@@ -62,11 +62,8 @@ function entradaCreacion(fila: Record<string, unknown>, ticket: Record<string, u
 }
 
 function entradaTransicion(fila: Record<string, unknown>): Entrada {
-  const v = json(fila.values)
   const at = iso(fila.performed_at)
-  const campos = Object.entries(v)
-    .filter(([, val]) => val != null && String(val).trim() !== '')
-    .map(([k, val]) => `${etiquetaCampo(k)}: ${String(val)}`)
+  const campos = camposDiligenciados(fila.values).map(([etiqueta, valor]) => `${etiqueta}: ${valor}`)
   return {
     at,
     msg: {

@@ -84,6 +84,20 @@ export function etiquetaCampo(clave: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
+/**
+ * Los campos que una transición diligenció, listos para enseñar: sin los vacíos y sin el comentario.
+ *
+ * El comentario se saca porque `writeTransition` YA lo guarda como conversación propia, así que
+ * dejarlo aquí lo enseñaba dos veces —una como mensaje y otra como campo— y encima etiquetado
+ * "Comment": su clave es `comment`, en inglés, y `etiquetaCampo` solo pone la inicial en mayúscula.
+ * Era la única palabra en inglés de la interfaz.
+ */
+export function camposDiligenciados(values: unknown): Array<[string, string]> {
+  return Object.entries(json(values))
+    .filter(([k, v]) => k !== 'comment' && v != null && String(v).trim() !== '')
+    .map(([k, v]) => [etiquetaCampo(k), String(v)])
+}
+
 /** `incluye` es un `jsonb` con un array: pg lo entrega parseado, pg-mem como texto. */
 export function listaIncluye(v: unknown): string {
   const arr = typeof v === 'string' ? JSON.parse(v) : v
