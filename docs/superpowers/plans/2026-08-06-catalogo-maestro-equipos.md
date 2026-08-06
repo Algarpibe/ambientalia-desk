@@ -112,15 +112,24 @@ CREATE TABLE IF NOT EXISTS public.catalogo_modelos (
   tipo_id text,
   revisar boolean NOT NULL DEFAULT false,
   activo boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (marca_id, nombre)
 );
 CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_marca ON catalogo_modelos (marca_id);
+CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_tipo ON catalogo_modelos (tipo_id);
 
 -- El equipo apunta a su modelo del catalogo. Las columnas de texto marca/modelo/tipo se conservan porque las leen la busqueda, la creacion de tickets, la hoja de vida y perfilChecklist: lo que cambia es que ahora las escribe el catalogo y nadie mas
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS modelo_id text;
+CREATE INDEX IF NOT EXISTS idx_equipos_modelo ON equipos (modelo_id);
 ```
 
-Sin `UNIQUE (marca_id, nombre)` compuesto: la unicidad la comprueba el repo con un `SELECT` previo (Task 3), que es el patrón que ya usa `seedChecklist` y devuelve un 409 entendible en vez de un error del driver.
+La unicidad va **declarada y además comprobada en el repo** (Task 4). No son alternativas: la comprobación previa existe para dar un 409 entendible en vez de un error del driver, y la restricción es la red de seguridad para cuando esa comprobación falle o dos administradores den de alta lo mismo a la vez. `catalogo_modelos` es precisamente la tabla que existe para acabar con los duplicados, así que dejarla sin respaldo sería el sitio más caro donde ahorrárselo.
+
+El modelo es único **dentro de su marca**, no globalmente: un `6103` de Environics y otro de Horiba son equipos distintos y los dos tienen que poder existir.
+
+`idx_equipos_modelo` no es opcional: `modelo_id` va a ser la clave de unión del catálogo —comprobar si un modelo está en uso, contar conflictos— y sería la única columna con forma de clave foránea de `equipos` sin índice, teniéndolo `serial`, `cliente_nombre` y `tipo`.
+
+Las tres tablas se quedan en `public` a propósito. `DESK_TABLES` mueve a `desk` solo las tablas heredadas de Zoho, y su propio comentario dice que las nativas de la app no se mueven: el catálogo nace aquí, así que `public` es su sitio. Que `equipos` sí viva en `desk` no rompe nada — el `search_path` de producción es `desk,public`.
 
 - [ ] **Step 4: Ejecutar el test y ver que pasa**
 
@@ -403,6 +412,9 @@ export class NombreRepetido extends Error {
  * La unicidad se comprueba con un SELECT previo y no con `ON CONFLICT`, por lo mismo que en
  * `seedChecklist`: es el patrón seguro en pg-mem, que no infiere el tipo de un `INSERT … SELECT $n`,
  * y deja el conflicto como un error nuestro con su mensaje en vez de como uno del driver.
+ *
+ * No sustituye a la restricción de la tabla, que sigue ahí: esto da el mensaje, aquella da la
+ * garantía cuando dos administradores dan de alta lo mismo a la vez.
  */
 export async function crearTipo(db: Queryable, nombre: string): Promise<string> {
   const n = nombre.trim()

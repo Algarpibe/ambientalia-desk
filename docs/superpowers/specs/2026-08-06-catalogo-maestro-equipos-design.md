@@ -52,9 +52,16 @@ CREATE TABLE IF NOT EXISTS catalogo_modelos (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (marca_id, nombre)
 );
+CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_marca ON catalogo_modelos (marca_id);
+CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_tipo ON catalogo_modelos (tipo_id);
 
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS modelo_id text;
+CREATE INDEX IF NOT EXISTS idx_equipos_modelo ON equipos (modelo_id);
 ```
+
+Los índices no son adorno: `equipos.modelo_id` es la clave de unión con la que se comprueba si un modelo está en uso y se cuentan los conflictos, y sería la única columna con forma de clave foránea de `equipos` sin índice, teniéndolo `serial`, `cliente_nombre` y `tipo`. `catalogo_modelos.tipo_id` lo necesita el borrado de un tipo, que cuenta cuántos modelos lo usan.
+
+Las tres tablas viven en `public`, no en `desk`. `DESK_TABLES` mueve al esquema `desk` solo lo heredado de Zoho —y su propio comentario dice que las tablas nativas de la app no se mueven—, así que el catálogo, que nace aquí, se queda donde están `remisiones` y `remision_checklist`.
 
 Ids con prefijo, como el resto del proyecto (`eq-`, `app-`): `ctip-`, `cmar-`, `cmod-` + `randomUUID()`.
 
