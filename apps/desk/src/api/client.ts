@@ -157,9 +157,11 @@ export function searchClients(q: string): Promise<ClientLite[]> {
   return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
 }
 
-export function searchSalesOrders(q: string, clientId?: string): Promise<SalesOrderLite[]> {
+/** `soloLibres`: deja fuera las órdenes que ya usa otro ticket de Desk. */
+export function searchSalesOrders(q: string, clientId?: string, soloLibres = false): Promise<SalesOrderLite[]> {
   const p = new URLSearchParams({ search: q })
   if (clientId) p.set('clientId', clientId)
+  if (soloLibres) p.set('soloLibres', '1')
   return fetch(`/api/sales-orders?${p.toString()}`, { credentials: 'include' }).then((r) => json<SalesOrderLite[]>(r))
 }
 

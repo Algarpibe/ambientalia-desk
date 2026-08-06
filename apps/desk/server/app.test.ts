@@ -385,6 +385,26 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
     expect(res.body[0]).toMatchObject({ id: 's1', number: 'OV-2026-117' })
   })
 
+  // Una OV ya usada por otro ticket no está libre. Se mira por las DOS vías porque no siempre hay
+  // `salesorder_id`: los tickets de Zoho y los creados tecleando el número solo dejan `orden_venta`.
+  it('soloLibres deja fuera las órdenes que ya usa otro ticket, por id o por número', async () => {
+    const cookie = await adminCookie()
+    const ov = (id: string, num: string) =>
+      db.query('INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_name,date,status,raw) VALUES ($1,$2,\'Corola\',\'2026-06-01\',\'open\',\'{"order_status":"open"}\')', [id, num])
+    await ov('libre', 'OV-LIBRE')
+    await ov('porId', 'OV-POR-ID')
+    await ov('porNumero', 'OV-POR-NUMERO')
+    await db.query("INSERT INTO tickets (id,number,subject,status,salesorder_id) VALUES ('t-a',1,'A','Ingresado','porId')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,orden_venta) VALUES ('t-b',2,'B','Ingresado','OV-POR-NUMERO')")
+
+    const { app } = appWith()
+    const todas = await request(app).get('/api/sales-orders?search=OV-').set('Cookie', cookie)
+    expect(todas.body.map((s: { id: string }) => s.id).sort()).toEqual(['libre', 'porId', 'porNumero'])
+
+    const libres = await request(app).get('/api/sales-orders?search=OV-&soloLibres=1').set('Cookie', cookie)
+    expect(libres.body.map((s: { id: string }) => s.id)).toEqual(['libre'])
+  })
+
   it('GET /api/clients sin sesión → 401', async () => {
     const { app } = appWith()
     const res = await request(app).get('/api/clients?search=x')

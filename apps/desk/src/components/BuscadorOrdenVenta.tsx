@@ -35,7 +35,9 @@ export function BuscadorOrdenVenta({ clientId, elegida, onElegir, placeholder, d
     setQ(texto)
     setBuscando(true)
     try {
-      setOpciones(await searchSalesOrders(texto, clientId ?? undefined))
+      // Solo las libres: una OV que ya usa otro ticket no es una opción, es una equivocación
+      // esperando a que alguien la elija.
+      setOpciones(await searchSalesOrders(texto, clientId ?? undefined, true))
     } catch {
       // Un fallo al buscar no puede dejar el campo inservible: se avisa con la lista vacía y el
       // usuario puede reintentar tecleando otra vez.
@@ -63,13 +65,19 @@ export function BuscadorOrdenVenta({ clientId, elegida, onElegir, placeholder, d
       <input
         value={q}
         onChange={(e) => void buscar(e.target.value)}
+        // Al hacer clic ya se ven las del cliente, sin teclear: quien abre este campo casi nunca se
+        // sabe el número de memoria, y una lista vacía hasta que aciertas una letra no ayuda.
+        // Solo la primera vez: después manda lo que el usuario haya escrito.
+        onFocus={() => { if (!opciones && !buscando) void buscar('') }}
         disabled={disabled}
         placeholder={placeholder ?? (clientId ? 'Buscar orden de venta del cliente…' : 'Buscar orden de venta…')}
         className="border border-slate-200 rounded p-2 text-[13px] w-full disabled:bg-slate-50 disabled:cursor-default"
       />
       {buscando && <span className="text-[11px] text-slate-400">Buscando…</span>}
       {opciones && opciones.length === 0 && !buscando && (
-        <span className="text-[11px] text-slate-400">Sin órdenes de venta confirmadas para esa búsqueda.</span>
+        <span className="text-[11px] text-slate-400">
+          {q ? 'Sin órdenes de venta libres para esa búsqueda.' : 'Este cliente no tiene órdenes de venta libres.'}
+        </span>
       )}
       {opciones && opciones.length > 0 && (
         <ul className="border border-slate-200 rounded max-h-[180px] overflow-auto">

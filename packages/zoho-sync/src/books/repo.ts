@@ -39,21 +39,46 @@ export async function getClient(db: Queryable, id: string): Promise<ClientLite |
   return r.rows[0] ? clientToLite(r.rows[0]) : null
 }
 
-export async function searchSalesOrders(db: Queryable, q: string, clientId?: string | null, limit = 20): Promise<SalesOrderLite[]> {
+/**
+ * `soloLibres` deja fuera las órdenes que ya usa algún ticket de Desk: al elegir una para un ticket
+ * nuevo, las cogidas solo son ruido con el que equivocarse.
+ *
+ * Mira las DOS vías porque no siempre hay `salesorder_id`: solo lo deja quien eligió la OV en un
+ * buscador. Los tickets venidos de Zoho y los creados tecleando el número a mano únicamente tienen
+ * `orden_venta`, y sin esa segunda condición sus órdenes seguirían apareciendo como libres.
+ *
+ * Es opcional y por defecto NO se aplica: esta función vive en el paquete que también consume el
+ * worker del hub, donde la tabla `tickets` puede no existir.
+ */
+export async function searchSalesOrders(db: Queryable, q: string, clientId?: string | null, limit = 20, soloLibres = false): Promise<SalesOrderLite[]> {
   const like = `%${q.toLowerCase()}%`
   const params: unknown[] = [like]
   let clientFilter = ''
-  if (clientId) { params.push(clientId); clientFilter = `AND client_id = $${params.length}` }
+  if (clientId) { params.push(clientId); clientFilter = `AND so.client_id = $${params.length}` }
+  /*
+   * Dos `NOT IN` y no un `NOT EXISTS` correlacionado, que sería lo natural: pg-mem —el motor de los
+   * tests— no resuelve la correlación (`column "so.id" does not exist`, comprobado), así que ese
+   * camino quedaba sin cobertura. `NOT IN` y `LEFT JOIN` sí los soporta.
+   *
+   * El `IS NOT NULL` / `<> ''` de cada subconsulta NO es adorno: `NOT IN` con un solo NULL dentro
+   * devuelve NULL para TODAS las filas, y el buscador saldría vacío en cuanto un ticket tuviera la
+   * columna sin rellenar — que es el caso de casi todos.
+   */
+  const libresFilter = soloLibres
+    ? `AND so.id NOT IN (SELECT salesorder_id FROM tickets WHERE salesorder_id IS NOT NULL)
+       AND so.number NOT IN (SELECT orden_venta FROM tickets WHERE COALESCE(orden_venta,'') <> '')`
+    : ''
   params.push(limit)
   // Solo las OVs que en Zoho salen con "Estado de pedido" = Confirmado (`order_status = 'open'`):
   // quedan fuera borradores, facturadas y anuladas. Las parcialmente facturadas siguen dentro
   // (siguen confirmadas y con ítems pendientes). El lookup por id (getSalesOrder) NO filtra, para
   // que una OV ya elegida se siga resolviendo aunque cambie de estado entre elegir y guardar.
   const r = await db.query(
-    `SELECT id,number,client_id,customer_name,date,total,status,ticket_number,potential_name FROM sales_orders
-     WHERE order_status = 'open'
-       AND (LOWER(number) LIKE $1 OR LOWER(COALESCE(customer_name,'')) LIKE $1) ${clientFilter}
-     ORDER BY date DESC NULLS LAST LIMIT $${params.length}`,
+    `SELECT so.id,so.number,so.client_id,so.customer_name,so.date,so.total,so.status,so.ticket_number,so.potential_name
+       FROM sales_orders so
+      WHERE so.order_status = 'open'
+        AND (LOWER(so.number) LIKE $1 OR LOWER(COALESCE(so.customer_name,'')) LIKE $1) ${clientFilter} ${libresFilter}
+      ORDER BY so.date DESC NULLS LAST LIMIT $${params.length}`,
     params,
   )
   return r.rows.map(salesOrderToLite)

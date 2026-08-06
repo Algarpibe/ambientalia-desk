@@ -17,7 +17,10 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
 
   app.get('/api/sales-orders', requireAuth(db), asyncHandler(async (req, res) => {
     const clientId = req.query.clientId ? String(req.query.clientId) : undefined
-    res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId))
+    // `soloLibres` lo piden los buscadores que eligen una OV para un ticket (remisión y transición).
+    // La creación de tickets NO lo pide todavía: cambiarlo ahí es otra decisión.
+    const soloLibres = req.query.soloLibres === '1' || req.query.soloLibres === 'true'
+    res.json(await searchSalesOrders(db, String(req.query.search ?? ''), clientId, 20, soloLibres))
   }))
 
   app.get('/api/activities', requireAuth(db), asyncHandler(async (req, res) => {
