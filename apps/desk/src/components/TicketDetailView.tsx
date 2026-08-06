@@ -294,6 +294,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                             <TransitionPanel
                               ticketId={ticketId}
                               status={ticket.status}
+                              // Lo que el ticket ya sabe: el panel lo usa para no volver a pedirlo.
+                              delTicket={ticket.customFields}
+                              clientId={ticket.clientId}
                               onDone={() => { reloadTicket(); reloadMessages(); onChanged?.(); }}
                               onCrearRemision={() => setShowRemision(true)}
                             />

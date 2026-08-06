@@ -121,6 +121,8 @@ export interface TicketDetail extends Ticket {
   priority?: string
   channel?: string
   equipoId?: string | null
+  /** El cliente de Books, para acotar los buscadores del detalle (las órdenes de venta, hoy). */
+  clientId?: string | null
   customFields: Record<string, string | null>
 }
 

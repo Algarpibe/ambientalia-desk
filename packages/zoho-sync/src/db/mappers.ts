@@ -209,6 +209,7 @@ export function rowToTicketDetail(row: TicketRow, refs: DetailRefs = {}): Ticket
     priority: row.priority ?? undefined,
     channel: row.channel ?? undefined,
     equipoId: row.equipo_id ?? undefined,
+    clientId: row.client_id ?? undefined,
     customFields: customFieldsFromRow(row),
   }
 }

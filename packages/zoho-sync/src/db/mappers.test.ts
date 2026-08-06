@@ -174,6 +174,17 @@ describe('rowToTicketDetail (equipoId)', () => {
     const row = { id: 't1', number: 5, subject: 'S', status: 'Ingresado', equipo_id: 'eq-9' } as any
     expect(rowToTicketDetail(row, {}).equipoId).toBe('eq-9')
   })
+
+  // Sin `clientId` el buscador de órdenes de venta del formulario de transición no puede acotar al
+  // cliente del ticket, y ofrecería TODAS las OV confirmadas de la empresa.
+  it('expone clientId, y las columnas promovidas por su etiqueta en customFields', () => {
+    const row = { id: 't1', number: 5, subject: 'S', status: 'Ingresado', client_id: 'cli-9', serial: '18A20070', orden_venta: null } as unknown as TicketRow
+    const d = rowToTicketDetail(row, {})
+    expect(d.clientId).toBe('cli-9')
+    // La MISMA clave que usa el campo de la transición: es lo que permite prellenar y bloquear.
+    expect(d.customFields['Serial']).toBe('18A20070')
+    expect(d.customFields['Orden de Venta']).toBeNull()
+  })
 })
 
 describe('activityRowFromZoho / rowToActivity', () => {

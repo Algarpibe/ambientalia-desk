@@ -5,7 +5,13 @@
 // IMPORTANTE: los strings de `from`/`to` deben ser los ESTADOS REALES de Zoho (confirmados en
 // vivo), p.ej. "Rev./Diagnostico" (sin tilde) y "Liberación Comercial".
 
-export type FieldKind = 'comment' | 'text' | 'date' | 'number' | 'checkbox' | 'select'
+/**
+ * `ordenVenta` se comporta como un `text` para el motor —acaba en la columna `orden_venta`— pero la
+ * pantalla lo pinta como buscador contra las órdenes de venta de Books en vez de como campo libre:
+ * teclear a mano el número de una OV que existe en otro sistema es la vía más corta a un dato que no
+ * casa con nada.
+ */
+export type FieldKind = 'comment' | 'text' | 'date' | 'number' | 'checkbox' | 'select' | 'ordenVenta'
 
 /** Dónde se escribe el valor del campo al ejecutar la transición. */
 export type FieldTarget = 'comment' | 'status' | 'priority' | 'classification' | 'customField'
@@ -18,6 +24,12 @@ export interface TransitionField {
   required: boolean
   target: FieldTarget
   options?: string[]
+  /**
+   * Solo para `ordenVenta`: la etiqueta del campo de fecha que se rellena con la fecha de la OV
+   * elegida, y que por eso no se teclea. Se declara aquí y no se cablea en la pantalla para que la
+   * pareja viva junto a los campos y no escondida en el componente.
+   */
+  campoFecha?: string
 }
 
 export interface Transition {
@@ -42,6 +54,9 @@ const cfCheck = (label: string, required = false): TransitionField =>
   ({ key: label, label, kind: 'checkbox', required, target: 'customField' })
 const priority = (): TransitionField =>
   ({ key: 'priority', label: 'Prioridad', kind: 'select', required: true, target: 'priority', options: ['High', 'Medium', 'Low'] })
+/** Buscador de órdenes de venta. `campoFecha` es la fecha que se rellena sola con la de la OV elegida. */
+const cfOrdenVenta = (label: string, campoFecha: string, required = true): TransitionField =>
+  ({ key: label, label, kind: 'ordenVenta', required, target: 'customField', campoFecha })
 
 /**
  * `from_status` de la fila que `createTicket` escribe al nacer el ticket. No es un estado de Zoho
@@ -87,8 +102,12 @@ export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Re
 export const TRANSITIONS: Transition[] = [
   // Sale de las tres: las dos formas de nombrar la fase inicial —Zoho y la app— y la fase de la
   // remisión, que si no dejaría al ticket en un callejón sin salida en cuanto se le creara una.
+  // Es la etapa donde se completa lo que la creación no capturó, así que pide también el `Serial`:
+  // un ticket nacido en la app siempre lo trae —la creación exige equipo— pero uno venido de Zoho
+  // llega sin él, y es el dato que ata el ticket a su equipo. Los campos que el ticket ya tenga se
+  // enseñan bloqueados, no se vuelven a pedir.
   { id: 'habilitar_servicio', name: 'Habilitar Servicio', from: [STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA], to: 'Ingresado', area: 'Comercial',
-    fields: [comment(), cfText('Orden de Venta'), cfDate('Fecha Orden De Venta'), cfDate('Fecha de Cotización'), cfDate('Fecha Orden de Compra'), cfCheck('Cumple condiciones comerciales', true)] },
+    fields: [comment(), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta'), cfDate('Fecha de Cotización'), cfDate('Fecha Orden de Compra'), cfCheck('Cumple condiciones comerciales', true)] },
   { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
     fields: [comment(), cfText('Código Servicio'), cfDate('Fecha creación ticket'), cfDate('Fecha Remisión Entrada')] },
   { id: 'escalado_a_revision', name: 'Escalado a Revisión', from: ['Rev./Diagnostico'], to: 'Notificado', area: 'Servicio Técnico',
