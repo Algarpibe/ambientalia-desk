@@ -140,11 +140,21 @@ export async function importarRemisionesHistoricas(
     // `estado: 'ok'`: nunca pasaron por el flujo de n8n, pero el equipo se generó y existe — no es un
     // 'pendiente' a medias. `resultado`, `resuelto_at` y `enviado_at` quedan NULL a propósito: no hay
     // desenlace de n8n que registrar.
+    //
+    // `created_at` explícito y no el `now()` por defecto: los dos paneles del ticket ORDENAN por esa
+    // columna, así que dejarla en el instante de la importación ponía una remisión de 2025 arriba
+    // del todo, como si fuera lo último que le pasó al ticket. La fecha de servicio es la buena —es
+    // lo que ya hacía `listRemisionesListado`, que ordena por `fecha` antes que por `created_at`—.
+    //
+    // Se ancla a las 12:00 y no a medianoche: la columna es `timestamptz` y el panel formatea en
+    // America/Bogotá, así que un `date` convertido a pelo se pinta como el día ANTERIOR a las 19:00.
+    // La expresión es la misma que la del backfill en `schema.sql`, a propósito.
     await db.query(
       `INSERT INTO remisiones
          (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye,
-          observaciones, creado_por, estado, empresa, persona_contacto, origen)
-       VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'ok',$11,$12,'historico')
+          observaciones, creado_por, estado, empresa, persona_contacto, origen, created_at)
+       VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'ok',$11,$12,'historico',
+               $3::timestamp + interval '12 hours')
        ON CONFLICT (id) DO NOTHING`,
       [fila.id, ticketId, fila.fecha, fila.tipoServicio, perfil, equipoId, fila.serial,
         J(fila.incluye), fila.observaciones, fila.tecnico, fila.empresa, fila.personaContacto],

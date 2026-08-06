@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { migrate, schemaStatements, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionHistorica } from './remisionesHistoricasSeed'
 import { importarRemisionesHistoricas } from './remisionesHistoricas'
 
@@ -125,6 +125,24 @@ describe('importarRemisionesHistoricas', () => {
     expect(row.enviado_at).toBeNull()
   })
 
+  // `created_at` por defecto sería el instante de la importación, y los dos paneles del ticket
+  // ordenan por esa columna: una remisión de 2025 aparecía arriba del todo, por delante de las
+  // transiciones que sí llevan su fecha buena. Al mediodía y no a medianoche porque la columna es
+  // `timestamptz` y el panel formatea en America/Bogotá (UTC-5): a las 00:00 se pintaría el día
+  // anterior a las 19:00, que es justo el error que se está arreglando.
+  it('created_at sale de la fecha de servicio, anclado al mediodía y no al instante de la importación', async () => {
+    const filas = [fila({ id: 'rem-h-12', fecha: '2025-10-14' })]
+
+    await importarRemisionesHistoricas(db, { filas })
+
+    const row = (await db.query('SELECT created_at FROM remisiones WHERE id=$1', ['rem-h-12'])).rows[0]
+    const at = new Date(row.created_at)
+    expect(at.toISOString().slice(0, 10)).toBe('2025-10-14')
+    expect(at.getUTCHours()).toBe(12)
+    // Y en la zona de visualización sigue cayendo el mismo día, que es lo que se estaba rompiendo.
+    expect(at.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })).toBe('2025-10-14')
+  })
+
   it('reimportar las mismas filas no duplica: la segunda vez las cuenta en yaExistian', async () => {
     const filas = [fila({ id: 'rem-h-8' }), fila({ id: 'rem-h-9', ticketNumero: '5' })]
 
@@ -153,5 +171,48 @@ describe('importarRemisionesHistoricas', () => {
   it('sin filas explícitas usa REMISIONES_HISTORICAS por defecto', async () => {
     const r = await importarRemisionesHistoricas(db, { dryRun: true })
     expect(r.total).toBe(149)
+  })
+})
+
+/**
+ * Las 149 que ya se importaron en producción entraron antes de que el INSERT pusiera `created_at`,
+ * así que se quedaron con el `now()` de aquel día. El arreglo va en `schema.sql`, no en los
+ * lectores.
+ *
+ * Este test existe porque `migrate()` es TOLERANTE por sentencia: si la expresión dejara de ser
+ * válida, se registraría un `console.error` y el arranque seguiría — el backfill no se aplicaría
+ * nunca y nadie se enteraría.
+ */
+describe('backfill de created_at de las remisiones históricas (schema.sql)', () => {
+  /** La sentencia real del esquema, no una copia: una copia probaría la copia. */
+  const sentenciaBackfill = (): string => {
+    const encontradas = schemaStatements().filter((s) => /UPDATE remisiones\s+SET created_at/.test(s))
+    expect(encontradas).toHaveLength(1)
+    return encontradas[0]
+  }
+
+  /** `Queryable` solo promete `rows`, pero el backfill se juzga por cuántas filas tocó. */
+  const correrBackfill = async (): Promise<number> =>
+    ((await db.query(sentenciaBackfill())) as unknown as { rowCount: number }).rowCount
+
+  it('lleva las históricas a su fecha de servicio al mediodía, no toca las de la app y es idempotente', async () => {
+    await db.query(
+      "INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,origen,created_at) VALUES ('vieja',null,'entrada','2025-10-14','Julián','ok','historico','2026-08-04T22:10:00Z')",
+    )
+    await db.query(
+      "INSERT INTO remisiones (id,ticket_id,tipo,fecha,creado_por,estado,origen,created_at) VALUES ('deApp',null,'entrada','2026-08-04','Julián','ok','app','2026-08-04T14:24:00Z')",
+    )
+
+    const leer = async (id: string) =>
+      new Date((await db.query('SELECT created_at FROM remisiones WHERE id=$1', [id])).rows[0].created_at).toISOString()
+
+    expect(await correrBackfill()).toBe(1)
+    expect(await leer('vieja')).toBe('2025-10-14T12:00:00.000Z')
+    // La de la app conserva su hora real: ahí `created_at` es el registro fiel del momento.
+    expect(await leer('deApp')).toBe('2026-08-04T14:24:00.000Z')
+
+    // Idempotente de verdad: la segunda pasada no reescribe ninguna fila, no solo deja el mismo valor.
+    expect(await correrBackfill()).toBe(0)
+    expect(await leer('vieja')).toBe('2025-10-14T12:00:00.000Z')
   })
 })

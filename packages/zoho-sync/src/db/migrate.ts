@@ -8,10 +8,21 @@ export interface Queryable {
 
 const schemaPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'schema.sql')
 
-/** Aplica el esquema (idempotente). Divide por `;` para compatibilidad con pg-mem. */
+/**
+ * Sentencias del esquema, en orden. Divide por `;` para compatibilidad con pg-mem.
+ *
+ * Expuesta para poder ejercitar UNA sentencia en un test sin reaplicar el fichero entero: `migrate`
+ * es tolerante por sentencia, así que un backfill que dejara de ser válido se saltaría con un
+ * `console.error` y nadie se enteraría; y volver a llamar a `migrate` no sirve de comprobación
+ * porque pg-mem no soporta re-crear una tabla que ya existe, ni con `IF NOT EXISTS`.
+ */
+export function schemaStatements(): string[] {
+  return readFileSync(schemaPath, 'utf8').split(';').map((s) => s.trim()).filter(Boolean)
+}
+
+/** Aplica el esquema (idempotente). */
 export async function migrate(db: Queryable): Promise<void> {
-  const sql = readFileSync(schemaPath, 'utf8')
-  const statements = sql.split(';').map((s) => s.trim()).filter(Boolean)
+  const statements = schemaStatements()
   // Tolerante por sentencia: el esquema es idempotente (CREATE IF NOT EXISTS). Si una sentencia
   // falla (p.ej. un índice sobre una columna que aún no existe en un esquema viejo, antes del
   // recreate one-time), se loguea y se continúa en vez de tumbar el arranque.
