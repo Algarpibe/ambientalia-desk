@@ -7,6 +7,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   const [ovQuery, setOvQuery] = useState('')
   const [ovResults, setOvResults] = useState<SalesOrderLite[]>([])
   const [salesOrderId, setSalesOrderId] = useState<string | null>(null)
+  const [buscandoOv, setBuscandoOv] = useState(false)
 
   const [clientQuery, setClientQuery] = useState('')
   const [clientResults, setClientResults] = useState<ClientLite[]>([])
@@ -59,11 +60,18 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
   // desplegable. Sin esto, elegir una opción reescribe el texto del input (y `pickOv` además el del
   // cliente) → el efecto se re-dispara y repuebla la lista, que queda abierta encima del campo
   // siguiente y aparenta un duplicado. Al escribir, el onChange limpia la selección y se vuelve a buscar.
+  // `soloLibres`: una orden de venta pertenece a UN servicio, así que las que ya están en otro ticket
+  // no se ofrecen — el servidor las rechaza igualmente (409), y enseñarlas solo era ofrecer el error.
+  // `buscandoOv` evita anunciar "ninguna libre coincide" mientras la búsqueda está en vuelo.
   useEffect(() => {
     if (salesOrderId) { setOvResults([]); return }
     if (!clientId && ovQuery.trim().length < 2) { setOvResults([]); return }
     let alive = true
-    searchSalesOrders(ovQuery, clientId ?? undefined).then((r) => { if (alive) setOvResults(r) }).catch(() => {})
+    setBuscandoOv(true)
+    searchSalesOrders(ovQuery, clientId ?? undefined, true)
+      .then((r) => { if (alive) setOvResults(r) })
+      .catch(() => {})
+      .finally(() => { if (alive) setBuscandoOv(false) })
     return () => { alive = false }
   }, [ovQuery, clientId, salesOrderId])
   useEffect(() => {
@@ -168,6 +176,14 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
                 </button></li>
               ))}
             </ul>
+          )}
+          {/* Sin este aviso, filtrar las cogidas se ve como un buscador roto: se teclea el número de
+              una OV que existe y no aparece nada, sin explicación. */}
+          {!salesOrderId && !buscandoOv && ovResults.length === 0 && ovQuery.trim().length > 0 && (!!clientId || ovQuery.trim().length >= 2) && (
+            <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+              Ninguna orden de venta libre coincide con <b>«{ovQuery.trim()}»</b>. Las que ya están en otro
+              ticket no se ofrecen: una orden de venta pertenece a un solo servicio.
+            </div>
           )}
         </div>
 

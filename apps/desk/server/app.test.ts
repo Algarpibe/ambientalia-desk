@@ -1234,6 +1234,31 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
     expect(res.status).toBe(200)
     expect(res.body.status).toBe('En Proceso')
   })
+
+  // La transición es la SEGUNDA puerta por la que una orden de venta entra en un ticket, y la regla
+  // es la misma que en la creación: una OV, un ticket. El buscador de Habilitar Servicio ya solo
+  // ofrece las libres, pero una lista no es una frontera.
+  it('409 si Habilitar Servicio asigna una orden de venta que ya está en otro ticket', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status,orden_venta) VALUES ('t-dueno',900,'Ya','Ingresado','OV-YA')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type) VALUES ('2',906,'Sin OV','OV asignada','Open')")
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets/2/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-YA', Serial: '18A1' } })
+    expect(res.status).toBe(409)
+    expect(res.body.error).toContain('900')
+  })
+
+  // Un ticket no choca consigo mismo: reconfirmar la OV que ya tiene no es duplicarla. Sin excluirse,
+  // Habilitar Servicio quedaría bloqueada justo para los tickets que llegan de Zoho con su OV puesta.
+  it('Habilitar Servicio no bloquea la orden de venta que el propio ticket ya tiene', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,orden_venta) VALUES ('3',907,'Con su OV','OV asignada','Open','OV-MIA')")
+    const { app } = appWith()
+    const res = await request(app).post('/api/tickets/3/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-MIA', Serial: '18A1' } })
+    expect(res.status).toBe(200)
+  })
 })
 
 describe('POST /api/tickets (crear)', () => {
@@ -1269,6 +1294,29 @@ describe('POST /api/tickets (crear)', () => {
     })
     expect(res.status).toBe(201)
     expect(res.body.status).toBe('Ticket creado')
+  })
+
+  // Una orden de venta es de un solo servicio: si ya está en un ticket, no puede entrar en otro. Se
+  // cierra en el endpoint y no solo en el buscador —esconder la opción no impide mandar el id— y se
+  // miran las DOS vías, porque los tickets de Zoho y los creados tecleando el número solo dejan
+  // `orden_venta`, sin `salesorder_id`.
+  it('409 si la orden de venta ya está en otro ticket, por id o por número', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cliX','Gecelca')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id) VALUES ('soX','OV-2026-300','cliX')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,salesorder_id) VALUES ('t-dueno',900,'Ya','Ingresado','soX')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,orden_venta) VALUES ('t-num',901,'Ya','Ingresado','OV-TECLEADA')")
+    const eq = await seedEquipo()
+    const { app } = appWith()
+    const base = { equipoId: eq.id, tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo nuevo', prefijo: 'MT' }
+
+    const porId = await request(app).post('/api/tickets').set('Cookie', cookie).send({ ...base, salesOrderId: 'soX' })
+    expect(porId.status).toBe(409)
+    expect(porId.body.error).toContain('900')
+
+    const porNumero = await request(app).post('/api/tickets').set('Cookie', cookie).send({ ...base, clientId: 'cliX', ordenVenta: 'OV-TECLEADA' })
+    expect(porNumero.status).toBe(409)
+    expect(porNumero.body.error).toContain('901')
   })
 
   it('422 si el equipo no existe', async () => {

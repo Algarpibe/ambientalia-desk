@@ -294,6 +294,38 @@ export async function applyTransition(
   }
 }
 
+/**
+ * El ticket que YA usa esa orden de venta, o null si está libre. Una OV pertenece a un solo
+ * servicio: la misma orden en dos tickets deja el trabajo facturado dos veces contra el mismo
+ * pedido, y nadie sabe cuál de los dos es el bueno.
+ *
+ * Mira las DOS vías por lo mismo que `searchSalesOrders(soloLibres)`: no siempre hay
+ * `salesorder_id` —solo lo deja quien eligió la OV en un buscador—, y los tickets venidos de Zoho o
+ * creados tecleando el número únicamente tienen `orden_venta`.
+ *
+ * `excluirTicketId` deja fuera al propio ticket: reconfirmar la OV que uno ya tiene no es
+ * duplicarla, y sin esta salvedad Habilitar Servicio se bloquearía justo para los tickets que
+ * llegan de Zoho con su orden ya puesta.
+ */
+export async function ticketConOrdenVenta(
+  db: Queryable,
+  ov: { salesorderId?: string | null; numero?: string | null },
+  excluirTicketId?: string | null,
+): Promise<{ id: string; number: number } | null> {
+  const params: unknown[] = []
+  const vias: string[] = []
+  if (ov.salesorderId) { params.push(ov.salesorderId); vias.push(`salesorder_id = $${params.length}`) }
+  if (ov.numero) { params.push(ov.numero); vias.push(`(COALESCE(orden_venta,'') <> '' AND orden_venta = $${params.length})`) }
+  if (!vias.length) return null
+  let exclusion = ''
+  if (excluirTicketId) { params.push(excluirTicketId); exclusion = `AND id <> $${params.length}` }
+  const r = await db.query(
+    `SELECT id, number FROM tickets WHERE (${vias.join(' OR ')}) ${exclusion} ORDER BY number LIMIT 1`,
+    params,
+  )
+  return r.rows[0] ? { id: String(r.rows[0].id), number: Number(r.rows[0].number) } : null
+}
+
 export interface CreateTicketInput {
   subject: string
   codigoServicio: string | null

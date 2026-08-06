@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { getTicketWithRefs, createTicket, applyTransition } from '@ambientalia/zoho-sync/db/repo'
+import { getTicketWithRefs, createTicket, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'
@@ -26,6 +26,13 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     salesorderId = ov.id
     clientId = clientId ?? ov.clientId ?? null
     ordenVenta = ordenVenta ?? ov.number ?? null
+  }
+  // Una OV, un ticket. El buscador ya solo ofrece las libres, pero una lista no es una frontera: sin
+  // esto basta con mandar el id a mano —o llegar con la lista cacheada— para duplicar la orden.
+  const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
+  if (enUso) {
+    const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
+    throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${enUso.number}` })
   }
   const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
   const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''
@@ -71,6 +78,14 @@ export async function executeTransition(
   const values = (b.values ?? {}) as Record<string, unknown>
   const plan = buildTransitionPlan(t, values)
   if (plan.errors.length) throw new HttpError(422, { errors: plan.errors })
+  // La segunda puerta por la que una OV entra en un ticket (Habilitar Servicio). Misma regla que en
+  // la creación: una orden, un servicio. Se excluye el propio ticket, porque reconfirmar la OV que ya
+  // tiene no es duplicarla.
+  const nuevaOrdenVenta = plan.columns.orden_venta
+  if (typeof nuevaOrdenVenta === 'string' && nuevaOrdenVenta) {
+    const enUso = await ticketConOrdenVenta(db, { numero: nuevaOrdenVenta }, id)
+    if (enUso) throw new HttpError(409, { error: `La orden de venta ${nuevaOrdenVenta} ya está asociada al ticket #${enUso.number}` })
+  }
   const actor = user.name ?? TRANSITION_ACTOR
   await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)
   const updated = await getTicketWithRefs(db, id)
