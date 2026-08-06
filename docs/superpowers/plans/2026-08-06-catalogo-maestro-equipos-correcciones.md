@@ -1,0 +1,92 @@
+# Correcciones al plan del catálogo maestro de equipos
+
+Nacidas de las revisiones de las tareas 1 a 4 al ejecutar el plan. **Tienen prioridad sobre el texto de `2026-08-06-catalogo-maestro-equipos.md`.**
+
+## C1 — Task 1: la unicidad se declara además de comprobarse (YA APLICADA, commit `4a655fc`)
+
+`catalogo_modelos` lleva `UNIQUE (marca_id, nombre)`, y existen los índices `idx_equipos_modelo` e `idx_catalogo_modelos_tipo`.
+
+La comprobación con `SELECT` previo del repo **no sustituye** a la restricción: aquella da el mensaje entendible (409), esta da la garantía cuando dos administradores dan de alta lo mismo a la vez. Quedó demostrado al revisar la Task 4: al romper a propósito el `LOWER` del repo, el error que sale es el crudo de la restricción de la tabla.
+
+⚠️ **Al desplegar:** `CREATE TABLE IF NOT EXISTS` no añade el `UNIQUE` a una tabla que ya exista. Esto solo funciona porque nada de esto se ha desplegado todavía. Si en producción llegaran a existir las tablas sin la restricción, habría que añadirla con un `ALTER TABLE ... ADD CONSTRAINT`.
+
+## C2 — Task 5: extraer `altaSimple` y añadir `existeEnCatalogo` ANTES de escribir los cambios
+
+`crearTipo` y `crearMarca` son idénticas salvo por el nombre de la tabla y el prefijo del id. `actualizarTipo` y `actualizarMarca` repetirían esa forma una tercera y cuarta vez, así que el momento de extraerlo es antes de escribirlas, no después.
+
+```ts
+async function altaSimple(db: Queryable, tabla: 'catalogo_tipos' | 'catalogo_marcas', prefijo: string, nombre: string): Promise<string> {
+  const n = nombre.trim()
+  const ya = await db.query(`SELECT 1 FROM ${tabla} WHERE LOWER(nombre) = $1`, [n.toLowerCase()])
+  if (ya.rows.length) throw new NombreRepetido(n)
+  const id = `${prefijo}-${randomUUID()}`
+  await db.query(`INSERT INTO ${tabla} (id,nombre) VALUES ($1,$2)`, [id, n])
+  return id
+}
+
+export const crearTipo = (db: Queryable, nombre: string): Promise<string> => altaSimple(db, 'catalogo_tipos', 'ctip', nombre)
+export const crearMarca = (db: Queryable, nombre: string): Promise<string> => altaSimple(db, 'catalogo_marcas', 'cmar', nombre)
+```
+
+`crearModelo` se queda fuera **a propósito**: su unicidad es compuesta y su `INSERT` lleva columnas propias, así que meterla dentro convertiría el ayudante en un constructor de consultas.
+
+El nombre de tabla se interpola, pero **nunca viene del usuario**: el tipo del parámetro solo admite esos dos literales.
+
+Los tests de la Task 4 tienen que seguir pasando **sin tocarlos**: son la red que prueba que el refactor no cambió el comportamiento.
+
+Y el ayudante que necesita la Task 8, porque este esquema no declara claves foráneas:
+
+```ts
+/**
+ * Si una entrada del catálogo existe. Sin claves foráneas declaradas, un `marcaId` inventado
+ * crearía un modelo colgando de nada que ningún desplegable enseñaría jamás. La frontera es la
+ * ruta, igual que el alta de equipos comprueba su cliente con `getClient`.
+ */
+export async function existeEnCatalogo(db: Queryable, que: 'tipos' | 'marcas' | 'modelos', id: string): Promise<boolean> {
+  const r = await db.query(`SELECT 1 FROM ${USOS[que].tabla} WHERE id = $1`, [id])
+  return r.rows.length > 0
+}
+```
+
+## C3 — Task 6: el separador de claves va como ESCAPE, nunca como carácter literal
+
+El código de la Task 6 usa un NUL como separador de las claves compuestas `(marca, modelo)`. En el texto del plan quedó escrito como **carácter literal invisible**, y eso es un error del plan: un carácter de control en el fuente se pierde en cualquier copia y deja dos claves distintas pegadas sin que nadie lo vea. De hecho convirtió el fichero del plan en «binario» para `grep`.
+
+Escríbelo siempre como la secuencia de seis caracteres ASCII — barra invertida, `u`, `0`, `0`, `0`, `0` — y dale nombre:
+
+```ts
+/**
+ * Separador de las claves compuestas. El NUL no puede aparecer en un nombre de marca ni de modelo,
+ * así que dos pares distintos nunca colisionan. Va escrito como escape y no como carácter literal:
+ * un carácter de control en el fuente es invisible y se pierde al copiarlo.
+ */
+const SEPARADOR = '\u0000'
+const claveDe = (a: string, b: string): string => a + SEPARADOR + b
+```
+
+Y úsalo en los cuatro sitios donde el plan pone el carácter suelto: el índice `idModelo`, la clave del conteo, el `split` que la deshace, y `claveModelo`.
+
+## C4 — Task 6: prohibido `r: any` al mapear filas
+
+El bloque de código de la Task 6 usa `(r: any)` en cuatro sitios. **Sube el lint por encima de la línea base de 159 y hay que rehacerlo**, igual que ya tuvieron que hacer las tareas 3 y 4. El patrón de la casa, tomado de `remisionesDelEquipo` en `apps/desk/server/db/equipos.ts`:
+
+```ts
+/** Las filas de pg como las trata este repo: `any` sube el lint por encima de la línea base. */
+const filas = (rows: unknown[]): Array<Record<string, unknown>> => rows as Array<Record<string, unknown>>
+```
+
+⚠️ Ojo con el nombre: el plan tiene una variable local `filas` con el resultado de la consulta de equipos. **Renómbrala a `equipos`** para que no choque con el ayudante.
+
+## C5 — Task 8: validar que la marca y el tipo existen
+
+`POST /api/catalogo/modelos` debe rechazar con **422** un `marcaId` que no exista, y un `tipoId` que no exista cuando venga. `PATCH /api/catalogo/modelos/:id` debe hacer lo mismo con `tipoId`.
+
+Sin claves foráneas en el esquema, la ruta es la única red: un `marcaId` inventado crearía un modelo que ningún desplegable enseñaría jamás. Es la misma frontera que ya aplica el alta de equipos con `getClient` (422 «Cliente no encontrado»).
+
+Los dos casos necesitan su test: `422` con marca inexistente y `422` con tipo inexistente.
+
+## C6 — Regla de proceso para los revisores
+
+Ningún revisor debe ejecutar `git checkout <sha> -- .`, `git reset --hard`, `git stash` ni `git clean`. Para comprobar que un test muerde: editar el fichero concreto, ejecutar, y restaurar **ese** fichero con `git checkout -- ruta/concreta.ts`, confirmando después con `git status --short` que el árbol quedó como estaba.
+
+Un revisor de la Task 3 ejecutó `git checkout 161bc94 -- .`. Resultó inofensivo porque ese commit era HEAD y el árbol estaba limpio, pero pudo haber destruido trabajo sin recuperación.
