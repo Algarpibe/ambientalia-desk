@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { FROM_STATUS_CREACION } from '@ambientalia/shared'
 import { APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'
 
@@ -326,8 +327,8 @@ export async function createTicket(db: Queryable, input: CreateTicketInput): Pro
     // fila del ticket para esos.
     await q.query(
       `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
-       VALUES ($1,'enviar','Enviar','(creación)','OV asignada','Comercial',$2,$3,null)`,
-      [id, input.actor, JSON.stringify({
+       VALUES ($1,'enviar','Enviar',$2,'OV asignada','Comercial',$3,$4,null)`,
+      [id, FROM_STATUS_CREACION, input.actor, JSON.stringify({
         orden_venta: input.ordenVenta, marca: input.marca, modelo: input.modelo, serial: input.serial,
         equipo: input.equipo, tipo_servicio: input.tipoServicio, clasificacion: input.classification,
         prioridad: input.priority, codigo_servicio: input.codigoServicio, client_id: input.clientId,

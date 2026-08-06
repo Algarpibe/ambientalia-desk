@@ -43,6 +43,18 @@ const cfCheck = (label: string, required = false): TransitionField =>
 const priority = (): TransitionField =>
   ({ key: 'priority', label: 'Prioridad', kind: 'select', required: true, target: 'priority', options: ['High', 'Medium', 'Low'] })
 
+/**
+ * `from_status` de la fila que `createTicket` escribe al nacer el ticket. No es un estado de Zoho
+ * —de ahí los paréntesis—: es la marca de que esa fila de `ticket_transitions` no es una transición
+ * sino la foto de la creación.
+ *
+ * Vive en shared porque la escribe `zoho-sync/db/repo` y la leen los dos compositores del ticket
+ * (`historial.ts` y `conversacion.ts`). Con el literal repetido, cambiarlo en el escritor dejaba a
+ * los dos paneles degradando la entrada de creación a transición genérica EN SILENCIO, y con los
+ * tests en verde porque codificaban el mismo literal por su cuenta.
+ */
+export const FROM_STATUS_CREACION = '(creación)'
+
 // Transiciones 2–35 del Blueprint (la 1 es creación de ticket, se maneja aparte).
 // Nota: campos de tipo "Adjuntar archivos" se omiten en v1 (subida de archivos = deuda).
 export const TRANSITIONS: Transition[] = [

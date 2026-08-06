@@ -234,7 +234,10 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                     <div className="flex flex-wrap gap-2 mt-3">
                                       {msg.attachments.map((att) => (
                                         <a
-                                          key={att.path}
+                                          // `url` antes que `path` para la key: los adjuntos del hilo generado son
+                                          // enlaces externos y varios comparten entrada, así que la unicidad tiene
+                                          // que venir del enlace y no obligar a `path` a llevar una URL de Drive.
+                                          key={att.url ?? att.path}
                                           href={att.url ?? `/api/attachment?path=${encodeURIComponent(att.path)}`}
                                           target="_blank"
                                           rel="noreferrer"

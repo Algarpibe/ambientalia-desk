@@ -32,7 +32,12 @@ export interface Ticket {
 /** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */
 export interface Attachment {
   name: string
-  size: string   // ya formateado, p.ej. "701.7 KB"
+  /**
+   * Segunda línea de la tarjeta, ya formateada. De un adjunto de Zoho es el tamaño ("701.7 KB");
+   * de uno del hilo generado es el TIPO ("PDF", "Carpeta"), porque de un fichero de Drive no
+   * sabemos el tamaño y la línea tiene que decir algo.
+   */
+  size: string
   path: string
   /**
    * Enlace externo, cuando el adjunto no vive en Zoho. Los del hilo generado apuntan a Google Drive,

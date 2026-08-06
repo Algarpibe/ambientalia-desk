@@ -7,9 +7,21 @@
  * a propósito —uno hace un log, el otro un relato— y unificar la redacción los ataría mal.
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { FROM_STATUS_CREACION } from '@ambientalia/shared'
 
 /** Qué hacer con Zoho antes de responder. */
 export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
+
+/**
+ * Si esta fila de `ticket_transitions` es la foto de la creación y no una transición.
+ *
+ * El literal vive en shared —lo escribe `createTicket`— y aquí solo se compara, para que el
+ * escritor y los dos lectores no puedan divergir: si divergieran, los dos paneles contarían la
+ * creación como una transición genérica sin que fallara ningún test.
+ */
+export function esCreacion(fila: Record<string, unknown>): boolean {
+  return fila.from_status === FROM_STATUS_CREACION
+}
 
 /**
  * Si el ticket nació en la app, Zoho no lo conoce y preguntarle por él es un 404 en cada apertura.

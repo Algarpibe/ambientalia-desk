@@ -4,8 +4,8 @@ import { urlSegura } from '@ambientalia/shared'
 import { getConversations } from '@ambientalia/zoho-sync/db/repo'
 import { fmtTime, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import {
-  datosTicket, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho, porFechaDesc,
-  textoEquipo, type PlanSyncZoho,
+  datosTicket, esCreacion, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
+  porFechaDesc, textoEquipo, type DatosTicket, type PlanSyncZoho,
 } from './ticketFuentes'
 
 export interface ConversacionTicket {
@@ -41,15 +41,16 @@ const enlaceDoc = (id: unknown): string | null =>
  * por el proxy. `size` lleva el tipo en vez del tamaño porque de un fichero de Drive no lo sabemos y
  * la segunda línea de la tarjeta tiene que decir algo.
  */
-function adjuntosRemision(resultado: Record<string, unknown>): Attachment[] {
+function adjuntosRemision(resultado: Record<string, unknown>, tipo: string): Attachment[] {
   const posibles: Array<[string, string, string | null]> = [
-    ['Remisión de entrada', 'PDF', enlaceDrive(resultado.pdfId)],
+    [`Remisión de ${tipo}`, 'PDF', enlaceDrive(resultado.pdfId)],
     ['Documento editable', 'Documento', enlaceDoc(resultado.docId)],
     ['Etiqueta .dymo', 'Etiqueta', enlaceDrive(resultado.dymoId)],
     ['Carpeta en Drive', 'Carpeta', urlSegura(resultado.carpetaUrl as string | null | undefined)],
   ]
-  // La URL va también en `path` —y no `path: ''`— porque es la `key` de React de la tarjeta de
-  // adjunto: con la cadena vacía, los cuatro adjuntos de una misma entrada compartirían key.
+  // La URL va también en `path` —y no `path: ''`— porque `path` es el respaldo del `href` para
+  // cualquier consumidor que aún no mire `url`. La `key` de React ya no depende de esto: el panel
+  // usa `att.url ?? att.path`.
   return posibles
     .filter(([, , url]) => url !== null)
     .map(([name, size, url]) => ({ name, size, path: url as string, url: url as string }))
@@ -115,8 +116,15 @@ function entradaRemision(fila: Record<string, unknown>): Entrada {
   const resultado = json(fila.resultado)
   const fotos = resultado.fotos as { subidas?: number } | undefined
   const at = iso(fila.created_at)
-  const adjuntos = adjuntosRemision(resultado)
+  // `tipo` y no "entrada" fija, ni en el texto ni en el nombre del adjunto: hoy los dos caminos de
+  // inserción lo ponen a 'entrada' y saldría igual, pero la remisión de SALIDA está en el roadmap y
+  // entonces el hilo diría que el equipo ingresa el día que lo estamos devolviendo. Es la misma
+  // regla que `historial.ts` dejó escrita en el título de su evento; el test de la salida existe
+  // para que volver a la cadena fija no pase en verde. La columna es NOT NULL DEFAULT 'entrada'.
+  const tipo = String(fila.tipo ?? 'entrada')
+  const adjuntos = adjuntosRemision(resultado, tipo)
   const servicio = fila.tipo_servicio ? String(fila.tipo_servicio) : 'servicio técnico'
+  const apertura = tipo === 'salida' ? `El equipo sale tras ${servicio}` : `El equipo ingresa para ${servicio}`
   return {
     at,
     msg: {
@@ -125,7 +133,7 @@ function entradaRemision(fila: Record<string, unknown>): Entrada {
       type: 'Privado',
       time: fmtTime(at),
       content: texto([
-        frase(`El equipo ingresa para ${servicio}`),
+        frase(apertura),
         // Las observaciones que escribió el técnico, TAL CUAL y sin etiqueta delante: son la prosa
         // del hilo, lo que hacía legible el comentario privado que el equipo mantenía a mano.
         fila.observaciones as string | null,
@@ -153,14 +161,22 @@ export async function getConversacionTicket(db: Queryable, ticketId: string): Pr
     msg: rowToMessage(row, attachments),
   }))
 
-  const { ticket, cliente } = await datosTicket(db, ticketId)
-
   const tr = await db.query(
     'SELECT ticket_id, transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
     [ticketId],
   )
-  const deTransiciones = (tr.rows as Record<string, unknown>[]).map((f) =>
-    f.from_status === '(creación)' ? entradaCreacion(f, ticket, cliente) : entradaTransicion(f),
+  const filasTr = tr.rows as Record<string, unknown>[]
+
+  // `datosTicket` son una o dos consultas más y solo las usa la entrada de creación. La mayoría de
+  // los tickets vienen de Zoho y NO tienen fila de creación, así que pedirlas siempre era gastarlas
+  // para nada en cada apertura del panel.
+  const hayCreacion = filasTr.some(esCreacion)
+  const { ticket, cliente }: DatosTicket = hayCreacion
+    ? await datosTicket(db, ticketId)
+    : { ticket: {}, cliente: null }
+
+  const deTransiciones = filasTr.map((f) =>
+    esCreacion(f) ? entradaCreacion(f, ticket, cliente) : entradaTransicion(f),
   )
 
   // No se reutiliza `listRemisionesByTicket` porque filtra `anulada_at IS NULL`, y aquí hacen falta:

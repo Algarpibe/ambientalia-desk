@@ -3,8 +3,8 @@ import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientali
 import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
-  datosTicket, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho, porFechaDesc,
-  textoEquipo, type PlanSyncZoho,
+  datosTicket, esCreacion, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
+  porFechaDesc, textoEquipo, type PlanSyncZoho,
 } from './ticketFuentes'
 
 // Reexportado para no romper a quien importe el tipo de aquí: `getHistorialTicket` lo devuelve.
@@ -140,7 +140,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
     [ticketId],
   )
   const transiciones = (tr.rows as Record<string, unknown>[]).map((f) =>
-    f.from_status === '(creación)' ? eventoCreacion(f, ticket, cliente) : eventoTransicion(f),
+    esCreacion(f) ? eventoCreacion(f, ticket, cliente) : eventoTransicion(f),
   )
 
   // Consulta propia y no `listRemisionesByTicket`: aquélla filtra `anulada_at IS NULL` porque el

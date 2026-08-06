@@ -96,6 +96,21 @@ describe('getConversacionTicket', () => {
     expect(mensajes).toHaveLength(1)
   })
 
+  // La rama de SALIDA está en el roadmap escrito y hoy todo lo que se inserta es 'entrada', así que
+  // sin este caso volver a "El equipo ingresa" y a "Remisión de entrada" fijos dejaría la suite en
+  // verde — y el hilo diría que el equipo ingresa el día que se le devuelve al cliente.
+  it('una remisión de salida no dice que el equipo ingresa', async () => {
+    await insTicket('app-6b', 11)
+    await db.query(
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,tipo_servicio,creado_por,estado,resultado,created_at)
+       VALUES ('r6','app-6b','salida','2026-08-04','Calibración','Julián','ok',$1,'2026-08-04T14:00:00Z')`,
+      [JSON.stringify({ pdfId: 'PDF' })],
+    )
+    const { mensajes } = await getConversacionTicket(db, 'app-6b')
+    expect(mensajes[0].content).toBe('El equipo sale tras Calibración.')
+    expect(mensajes[0].attachments?.[0].name).toBe('Remisión de salida')
+  })
+
   it('una transición lista sus campos diligenciados', async () => {
     await insTicket('app-7', 7)
     await db.query(
