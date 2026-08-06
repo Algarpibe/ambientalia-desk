@@ -88,12 +88,25 @@ no sueltos en cada sitio.
 > "Fechas/cols" referencia números del diccionario de campos.
 
 > Las filas 1 y 2 divergen de Zoho desde 2026-08-06 (ver §3.1), y 1b no existe allí.
+>
+> **La fila 2 pide menos que el Blueprint original, a propósito (2026-08-06).** Es la etapa donde se
+> completa lo que la creación no capturó, no donde se rellena todo por adelantado:
+> - **Entra `Serial`**, que es el dato que ata el ticket a su equipo. Un ticket nacido en la app
+>   siempre lo trae (la creación exige equipo); uno venido de Zoho llega sin él.
+> - **La Orden de Venta se BUSCA** contra Books, acotada al cliente y descartando las que ya usa otro
+>   ticket. **`Fecha Orden De Venta` deja de teclearse**: la trae la OV elegida.
+> - **Salen `Fecha de Cotización` y `Fecha Orden de Compra`.** En esta etapa la cotización y la
+>   compra pueden no existir todavía, igual que la orden de venta. No se pierde el dato: la
+>   cotización se captura en las transiciones 13 y 14 (Notificación cliente) y la orden de compra en
+>   la 7 (Aprobación y S. Repuestos) — ver §5.
+> - **Un campo que el ticket YA trae se enseña bloqueado y no se vuelve a pedir.** Vale para las 35
+>   transiciones, no solo para ésta.
 
 | # | Origen | Transición | Destino | Área | Tipo | Campos obligatorios | Fechas/cols |
 |---|---|---|---|---|---|---|---|
 | 1 | (Agregar Ticket) | Enviar | **Ticket creado** (en Zoho: OV asignada) | Comercial | Operativo manual | Orden de Venta | — |
 | 1b | Ticket creado | **Remisión creada** (automática: callback de n8n `ok`/`ok_con_avisos`; la inversa al anular) | Remisión creada | Servicio Técnico | **Automática** — no hay botón | — | — |
-| 2 | **OV asignada · Ticket creado · Remisión creada** | Habilitar Servicio | Ingresado | Comercial | Operativo manual | Comentario, Orden de Venta, Fecha OV, Fecha Cotización, Fecha Orden de Compra, Cumple condiciones comerciales (Sí/No) | 41,42,43 |
+| 2 | **OV asignada · Ticket creado · Remisión creada** | Habilitar Servicio | Ingresado | Comercial | Operativo manual | Comentario, Orden de Venta, **Serial**, Fecha OV (la trae la OV), Cumple condiciones comerciales (Sí/No) | 43 |
 | 3 | Ingresado | Ingreso a Servicio | Rev./Diagnóstico | Servicio Técnico | Operativo manual | Código Servicio (valid.), Comentario, Fecha creación ticket (valid.), Fecha Remisión Entrada (oblig.) | 32,38,39 |
 | 4 | Rev./Diagnóstico | Escalado a Revisión | Notificado | Servicio Técnico | Operativo manual | Prioridad, Comentario, Días de entrega | 9,52 |
 | 5 | Notificado | Devolución a corrección | Rev./Diagnóstico | Servicio Técnico | Decisional | Comentario, Prioridad | 9 |

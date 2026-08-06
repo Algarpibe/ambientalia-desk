@@ -107,7 +107,11 @@ export const TRANSITIONS: Transition[] = [
   // llega sin él, y es el dato que ata el ticket a su equipo. Los campos que el ticket ya tenga se
   // enseñan bloqueados, no se vuelven a pedir.
   { id: 'habilitar_servicio', name: 'Habilitar Servicio', from: [STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA], to: 'Ingresado', area: 'Comercial',
-    fields: [comment(), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta'), cfDate('Fecha de Cotización'), cfDate('Fecha Orden de Compra'), cfCheck('Cumple condiciones comerciales', true)] },
+    // Sin `Fecha de Cotización` ni `Fecha Orden de Compra`: en esta etapa no aportan —la cotización y
+    // la compra pueden no existir todavía, igual que la orden de venta— y las dos tienen su propia
+    // etapa más adelante, así que no se pierde el dato: la cotización se captura en las dos
+    // transiciones de Notificación cliente, y la orden de compra en Aprobación y S. Repuestos.
+    fields: [comment(), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta'), cfCheck('Cumple condiciones comerciales', true)] },
   { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
     fields: [comment(), cfText('Código Servicio'), cfDate('Fecha creación ticket'), cfDate('Fecha Remisión Entrada')] },
   { id: 'escalado_a_revision', name: 'Escalado a Revisión', from: ['Rev./Diagnostico'], to: 'Notificado', area: 'Servicio Técnico',

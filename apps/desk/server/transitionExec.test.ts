@@ -9,11 +9,15 @@ describe('buildTransitionPlan', () => {
       comment: 'condiciones ok',
       'Orden de Venta': 'OV-2026-081',
       'Fecha Orden De Venta': '2026-05-19',
-      'Fecha de Cotización': '2026-05-19',
-      'Fecha Orden de Compra': '2026-05-19',
       Serial: '18A20070',
       'Cumple condiciones comerciales': true,
     })
+    // La etapa pide EXACTAMENTE esto. Se fija la lista para que sumar o quitar un campo sea una
+    // decisión y no un descuido: la cotización y la orden de compra se quitaron de aquí a propósito
+    // —pueden no existir todavía— y cada una tiene su propia etapa más adelante.
+    expect(t.fields.map((f) => f.key)).toEqual([
+      'comment', 'Orden de Venta', 'Serial', 'Fecha Orden De Venta', 'Cumple condiciones comerciales',
+    ])
     expect(plan.errors).toEqual([])
     expect(plan.status).toBe('Ingresado')
     expect(plan.statusType).toBe('Open')
