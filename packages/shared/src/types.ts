@@ -252,9 +252,44 @@ export interface HistorialTicket {
   tipoServicio?: string | null
   transitions: HistorialTransition[]
 }
+/** Una remisión tal como la cuenta la hoja de vida del equipo. */
+export interface HistorialRemision {
+  id: string
+  /**
+   * El día del SERVICIO, que es el que le importa al técnico. NO es el instante de registro: por eso
+   * la cronología se ORDENA por otro campo —`created_at`, que el histórico ya trae corregido a su
+   * día de servicio— y esto solo se muestra.
+   */
+  fecha: string | null
+  /** 'entrada' | 'salida'. La rama de salida está en el roadmap, así que no se da por supuesto. */
+  tipo: string
+  tipoServicio: string | null
+  tecnico: string | null
+  observaciones: string | null
+  incluye: string[]
+  empresa: string | null
+  /** 'app' | 'historico'. Una histórica no pasó por n8n: no tiene enlaces ni fotos. */
+  origen: string
+  estado: string
+  ticketId: string | null
+  /** Ya con almohadilla ("#1000042"), o null: 56 de las históricas no casaron con ningún ticket. */
+  ticketNumero: string | null
+  adjuntos: Attachment[]
+}
+
+/**
+ * Una parada de la cronología del equipo. Es una unión y no dos listas porque la hoja de vida es UNA
+ * línea de tiempo: el técnico que recibe un equipo quiere leer en orden lo que le ha pasado, no
+ * cruzar dos inventarios por fecha.
+ */
+export type EntradaHojaDeVida =
+  | { clase: 'ticket'; ticket: HistorialTicket }
+  | { clase: 'remision'; remision: HistorialRemision }
+
 export interface EquipoHistorial {
   equipo: EquipoFull
-  tickets: HistorialTicket[]
+  /** Más reciente primero, ya mezclada y ordenada en el servidor. */
+  cronologia: EntradaHojaDeVida[]
 }
 export interface AnalisisPunto { label: string; value: number }
 export interface AnalisisMes { mes: string; creados: number; finalizados: number }

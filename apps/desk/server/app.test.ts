@@ -1216,16 +1216,23 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect((await listEquiposManage(db, 'SN-DEL')).length).toBe(0)
   })
 
-  it('GET /api/equipos/:id/historial → equipo + tickets; 404; 401', async () => {
+  it('GET /api/equipos/:id/historial → equipo + cronología de tickets y remisiones; 404; 401', async () => {
     const cookie = await adminCookie()
     await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cH','H')")
     const { app } = appWith()
     const eqId = (await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-H', marca: 'Grimm', clientId: 'cH' })).body.id
-    await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,serial,equipo_id,created_time) VALUES ('h1',777,'T','Ingresado','Open','SN-H',$1,now())`, [eqId])
+    await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,serial,equipo_id,created_time) VALUES ('h1',777,'T','Ingresado','Open','SN-H',$1,'2026-08-05T10:00:00Z')`, [eqId])
+    await db.query(
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,tipo_servicio,equipo_id,creado_por,estado,created_at)
+       VALUES ('rem-h','h1','entrada','2026-08-05','Calibración',$1,'Julián','ok','2026-08-05T11:00:00Z')`,
+      [eqId],
+    )
     const res = await request(app).get(`/api/equipos/${eqId}/historial`).set('Cookie', cookie)
     expect(res.status).toBe(200)
     expect(res.body.equipo.serial).toBe('SN-H')
-    expect(res.body.tickets[0]).toMatchObject({ id: 'h1', number: '#777' })
+    // La remisión es posterior al ticket, así que encabeza la cronología: las dos fuentes van mezcladas.
+    expect(res.body.cronologia[0]).toMatchObject({ clase: 'remision', remision: { id: 'rem-h', ticketNumero: '#777' } })
+    expect(res.body.cronologia[1]).toMatchObject({ clase: 'ticket', ticket: { id: 'h1', number: '#777' } })
     expect((await request(app).get('/api/equipos/eq-nope/historial').set('Cookie', cookie)).status).toBe(404)
     expect((await request(app).get(`/api/equipos/${eqId}/historial`)).status).toBe(401)
   })

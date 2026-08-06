@@ -5,6 +5,9 @@
  *
  * Lo que NO vive aquí: el texto de cada evento o entrada. Los dos compositores dicen cosas distintas
  * a propósito —uno hace un log, el otro un relato— y unificar la redacción los ataría mal.
+ *
+ * `iso`, `json` y `porFechaDesc` no son del ticket, son utilidades: las usa también la hoja de vida
+ * del equipo (`equipos.ts`), que compone su cronología con las mismas reglas de orden y de jsonb.
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { FROM_STATUS_CREACION } from '@ambientalia/shared'

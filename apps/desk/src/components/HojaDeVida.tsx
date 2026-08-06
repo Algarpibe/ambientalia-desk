@@ -1,6 +1,8 @@
-import type { EquipoHistorial } from '@ambientalia/shared'
+import type { EquipoHistorial, HistorialRemision, HistorialTicket } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchEquipoHistorial } from '../api/client'
+import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
+import { Adjuntos } from './Adjuntos'
 
 function fmtFecha(s: string | null): string {
   if (!s) return ''
@@ -8,9 +10,88 @@ function fmtFecha(s: string | null): string {
   return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+/** Une lo que tenga contenido con el separador de siempre, saltándose los huecos. */
+const meta = (partes: Array<string | null | undefined>) => partes.filter(Boolean).join(' · ')
+
+function TarjetaRemision({ r }: { r: HistorialRemision }) {
+  const historica = r.origen === 'historico'
+  // Mismo criterio que el panel del ticket: una remisión histórica no pasó por el flujo de n8n, así
+  // que su `ok` no significa lo mismo y lleva su propia marca en vez del distintivo de estado.
+  const badge = ESTADO_REMISION[r.estado] ?? ESTADO_REMISION_DESCONOCIDA
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-md p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[13px] font-bold text-[#2C7BE5] uppercase tracking-wide">
+            Remisión de {r.tipo}
+          </div>
+          <div className="text-[12px] text-slate-500 mt-0.5">
+            {meta([fmtFecha(r.fecha), r.tipoServicio, r.tecnico])}
+          </div>
+        </div>
+        <span className={`text-[11px] px-2 py-0.5 rounded border font-bold shrink-0 ${historica ? 'bg-slate-50 text-slate-500 border-slate-200' : badge.className}`}>
+          {historica ? 'Del histórico' : badge.label}
+        </span>
+      </div>
+
+      {/* Las observaciones del técnico, tal cual y sin etiqueta: son la prosa de la entrada. */}
+      {r.observaciones && <div className="text-[13px] text-slate-700 mt-2 whitespace-pre-line">{r.observaciones}</div>}
+
+      {r.incluye.length > 0 && (
+        <div className="text-[12px] text-slate-500 mt-1">Incluye: {r.incluye.join(', ')}</div>
+      )}
+
+      <div className="text-[12px] text-slate-400 mt-1">
+        {r.ticketNumero
+          ? `Ticket ${r.ticketNumero}`
+          : /* De las 149 históricas, 56 no casaron con ningún ticket. Decirlo evita que se lea como
+               un dato que falta por cargar: es un estado legítimo. */
+            'Sin ticket asociado'}
+        {/* Sin ticket, la empresa es lo único que dice de quién era el equipo ese día — y el equipo
+            puede haber cambiado de manos desde entonces, así que no vale el cliente de la cabecera. */}
+        {!r.ticketNumero && r.empresa && ` · ${r.empresa}`}
+      </div>
+
+      <Adjuntos items={r.adjuntos} />
+    </div>
+  )
+}
+
+function TarjetaTicket({ t }: { t: HistorialTicket }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-md p-4">
+      <div className="text-[13px] font-bold text-slate-500 uppercase tracking-wide">
+        Ticket {t.number}
+      </div>
+      <div className="text-[14px] font-bold text-slate-800 mt-0.5">{t.subject}</div>
+      <div className="text-[12px] text-slate-500 mt-0.5">
+        {meta([t.status, t.tecnico ?? 'Sin asignar', t.codigoServicio, fmtFecha(t.createdAt ?? null)])}
+      </div>
+      {t.transitions.length > 0 && (
+        <ol className="mt-3 border-l-2 border-slate-100 pl-4 flex flex-col gap-2">
+          {t.transitions.map((x, i) => (
+            <li key={i} className="text-[12px] text-slate-600 relative">
+              <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-blue-400" />
+              <b>{x.transitionName ?? 'Transición'}</b>
+              {(x.fromStatus || x.toStatus) && <span> · {x.fromStatus ?? '—'} → {x.toStatus ?? '—'}</span>}
+              {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).length > 0 && (
+                <span className="text-slate-400"> · {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).join(' · ')}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  )
+}
+
 export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose: () => void }) {
   const { data, loading, error } = useAsync<EquipoHistorial>(() => fetchEquipoHistorial(equipoId), [equipoId])
   const eq = data?.equipo
+  const cronologia = data?.cronologia ?? []
+  const nTickets = cronologia.filter((e) => e.clase === 'ticket').length
+  const nRemisiones = cronologia.length - nTickets
 
   return (
     <div className="fixed inset-0 z-[75] bg-white flex flex-col">
@@ -27,32 +108,27 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose: (
             <section className="bg-white border border-slate-200 rounded-md p-4 mb-4">
               <h2 className="text-[16px] font-bold text-slate-800">{eq.marca} {eq.modelo} <span className="text-slate-400 font-normal">· {eq.tipo}</span></h2>
               <div className="text-[13px] text-slate-500 mt-1">Serie <b className="text-slate-700">{eq.serial}</b> · Cliente {eq.clienteNombre ?? '—'} · {eq.active ? 'Activo' : 'Inactivo'}</div>
-              <div className="text-[12px] text-slate-400 mt-1">{data.tickets.length} ticket(s) en el historial</div>
+              <div className="text-[12px] text-slate-400 mt-1">
+                {nTickets} {nTickets === 1 ? 'ticket' : 'tickets'} · {nRemisiones} {nRemisiones === 1 ? 'remisión' : 'remisiones'}
+              </div>
             </section>
 
-            {data.tickets.length === 0 && <div className="text-[13px] text-slate-400">Este equipo aún no tiene tickets.</div>}
+            {cronologia.length === 0 && (
+              <div className="text-[13px] text-slate-400">Este equipo aún no tiene tickets ni remisiones.</div>
+            )}
 
-            <div className="flex flex-col gap-3">
-              {data.tickets.map((t) => (
-                <div key={t.id} className="bg-white border border-slate-200 rounded-md p-4">
-                  <div className="text-[14px] font-bold text-slate-800">{t.subject}</div>
-                  <div className="text-[12px] text-slate-500 mt-0.5">
-                    {t.number} · {t.status} · {t.tecnico ?? 'Sin asignar'}{t.codigoServicio ? ` · ${t.codigoServicio}` : ''}{t.createdAt ? ` · ${fmtFecha(t.createdAt)}` : ''}
-                  </div>
-                  {t.transitions.length > 0 && (
-                    <ol className="mt-3 border-l-2 border-slate-100 pl-4 flex flex-col gap-2">
-                      {t.transitions.map((x, i) => (
-                        <li key={i} className="text-[12px] text-slate-600 relative">
-                          <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-blue-400" />
-                          <b>{x.transitionName ?? 'Transición'}</b>
-                          {(x.fromStatus || x.toStatus) && <span> · {x.fromStatus ?? '—'} → {x.toStatus ?? '—'}</span>}
-                          {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).length > 0 && (
-                            <span className="text-slate-400"> · {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).join(' · ')}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ol>
-                  )}
+            {/* Una sola línea de tiempo, no dos inventarios: lo que se quiere leer de un equipo es
+                qué le ha pasado y en qué orden. El punto distingue de un vistazo qué clase de
+                parada es cada una, que es lo que el color tiene que resolver aquí. */}
+            <div className="relative border-l-2 border-slate-200 pl-6 flex flex-col gap-4">
+              {cronologia.map((e) => (
+                <div key={e.clase === 'ticket' ? `t-${e.ticket.id}` : `r-${e.remision.id}`} className="relative">
+                  <span
+                    className={`absolute -left-[31px] top-4 w-3 h-3 rounded-full border-2 border-[#f4f5f7] ${
+                      e.clase === 'remision' ? 'bg-[#2C7BE5]' : 'bg-slate-400'
+                    }`}
+                  />
+                  {e.clase === 'remision' ? <TarjetaRemision r={e.remision} /> : <TarjetaTicket t={e.ticket} />}
                 </div>
               ))}
             </div>

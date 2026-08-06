@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
-import type { EquipoHistorial, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
+import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
+import { iso, json, porFechaDesc } from './ticketFuentes'
+import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -177,6 +179,62 @@ function serialBoundaryRegex(serial: string): RegExp {
   return new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`)
 }
 
+/**
+ * Las remisiones del equipo, vigentes y ordenadas como el resto de la cronología.
+ *
+ * Empareja por `equipo_id` O por `serial`, la misma simetría que los tickets: la importación del
+ * histórico resolvió `equipo_id` cruzando por serial, pero las filas que no casaron con ningún
+ * equipo lo tienen NULL y el serial es su única vía. No hace falta la guarda de token del asunto —
+ * eso es un apaño para los tickets de Zoho, que no traen el serial en su columna.
+ *
+ * Deja fuera las anuladas por la misma razón que el hilo del ticket: la hoja de vida es el relato de
+ * lo que le pasó al equipo, y una anulada es un documento que un administrador retiró de en medio.
+ * Donde eso consta es en HISTORIA, que es el log.
+ */
+async function remisionesDelEquipo(db: Queryable, id: string, serial: string): Promise<Array<{ at: string | null; remision: HistorialRemision }>> {
+  const r = await db.query(
+    `SELECT r.id, r.fecha, r.tipo, r.tipo_servicio, r.creado_por, r.observaciones, r.incluye, r.empresa,
+            r.origen, r.estado, r.resultado, r.created_at, r.ticket_id, t.number AS ticket_number
+       FROM remisiones r LEFT JOIN tickets t ON r.ticket_id = t.id
+      WHERE r.anulada_at IS NULL
+        AND (r.equipo_id = $1 OR (COALESCE(r.serial,'') <> '' AND r.serial = $2))`,
+    [id, serial],
+  )
+  const filas = r.rows as Record<string, unknown>[]
+  const fotos = await fotosPorRemision(db, filas.map((f) => String(f.id)))
+  return filas.map((f) => {
+    const idRem = String(f.id)
+    const tipo = String(f.tipo ?? 'entrada')
+    return {
+      at: iso(f.created_at),
+      remision: {
+        id: idRem,
+        fecha: f.fecha instanceof Date ? f.fecha.toISOString().slice(0, 10) : (f.fecha as string) ?? null,
+        tipo,
+        tipoServicio: (f.tipo_servicio as string) ?? null,
+        tecnico: (f.creado_por as string) ?? null,
+        observaciones: (f.observaciones as string) ?? null,
+        // `incluye` es un jsonb: pg lo entrega parseado, pg-mem como texto.
+        incluye: typeof f.incluye === 'string' ? JSON.parse(f.incluye) : ((f.incluye as string[]) ?? []),
+        empresa: (f.empresa as string) ?? null,
+        origen: String(f.origen ?? 'app'),
+        estado: String(f.estado),
+        ticketId: (f.ticket_id as string) ?? null,
+        ticketNumero: f.ticket_number != null ? `#${f.ticket_number}` : null,
+        adjuntos: adjuntosRemision(json(f.resultado), tipo, idRem, fotos.get(idRem) ?? []),
+      },
+    }
+  })
+}
+
+/**
+ * La hoja de vida del equipo: sus tickets y sus remisiones en UNA sola cronología.
+ *
+ * Se ordena por el instante de registro y no por la fecha que se muestra: la remisión enseña su día
+ * de SERVICIO —un `date` sin hora— y ordenar por él dejaría el orden de dos remisiones del mismo día
+ * al azar. `created_at` sirve para las dos procedencias porque el histórico ya lo trae corregido a su
+ * día de servicio en la propia columna (ver el backfill de `schema.sql`).
+ */
 export async function getEquipoHistorial(db: Queryable, id: string): Promise<EquipoHistorial | null> {
   const equipo = await getEquipoFull(db, id)
   if (!equipo) return null
@@ -215,10 +273,20 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
       byTicket.set(r.ticket_id, list)
     }
   }
-  const tickets: HistorialTicket[] = rows.map((r) => ({
-    id: r.id, number: `#${r.number}`, subject: r.subject ?? '', status: r.status, statusType: r.status_type ?? null,
-    createdAt: r.created_time ?? null, tecnico: r.agent_name ?? null, codigoServicio: r.codigo_servicio ?? null,
-    tipoServicio: r.tipo_servicio ?? null, transitions: byTicket.get(r.id) ?? [],
+  const deTickets = rows.map((r) => ({
+    at: iso(r.created_time),
+    ticket: {
+      id: r.id, number: `#${r.number}`, subject: r.subject ?? '', status: r.status, statusType: r.status_type ?? null,
+      createdAt: iso(r.created_time), tecnico: r.agent_name ?? null, codigoServicio: r.codigo_servicio ?? null,
+      tipoServicio: r.tipo_servicio ?? null, transitions: byTicket.get(r.id) ?? [],
+    } as HistorialTicket,
   }))
-  return { equipo, tickets }
+  const deRemisiones = await remisionesDelEquipo(db, id, serial)
+
+  const paradas: Array<{ at: string | null; entrada: EntradaHojaDeVida }> = [
+    ...deTickets.map((t) => ({ at: t.at, entrada: { clase: 'ticket' as const, ticket: t.ticket } })),
+    ...deRemisiones.map((r) => ({ at: r.at, entrada: { clase: 'remision' as const, remision: r.remision } })),
+  ]
+  const cronologia = paradas.sort(porFechaDesc((p) => p.at)).map((p) => p.entrada)
+  return { equipo, cronologia }
 }
