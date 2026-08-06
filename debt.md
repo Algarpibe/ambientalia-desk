@@ -88,6 +88,29 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
     hoja `remisiones_entrada` de Google Sheets).
   - **Decisión bloqueante antes de abordarla:** dónde quedan guardadas las remisiones de entrada — ¿siguen en
     Google Sheets, o pasan a Postgres? Salida tiene que leer de donde entrada escriba.
+- **CONVERSACIONES — papelera del administrador (APLAZADA, 2026-08-06).** *Qué pide el usuario:* un botón de
+  papelera en la esquina superior derecha de una entrada del hilo, para que **el administrador y solo él** pueda
+  eliminarla. *Por qué se aplaza:* el usuario prefirió cerrar antes lo de las fotos. Lo que ya se investigó, para
+  que quien lo retome no lo redescubra:
+  - **El hilo no guarda nada: se DERIVA al leer** (`getConversacionTicket`). Cada entrada viene de una de tres
+    fuentes y "eliminar" significa una cosa distinta en cada una, así que primero hay que decidir **sobre cuáles**
+    aplica el botón:
+    | Entrada | Fuente | Qué significaría borrarla |
+    |---|---|---|
+    | Correo o comentario de Zoho | `conversations` (réplica) | Se deshace solo — ver abajo |
+    | Creación y transiciones | `ticket_transitions` | Reescribir el rastro de auditoría que enseña HISTORIA |
+    | Remisión | `remisiones` | Ya existe: **anular**, y ya es solo de admin |
+  - ⚠️ **Un `DELETE` sobre `conversations` NO funciona.** Es una réplica: `upsertConversation` escribe con
+    `ON CONFLICT (id) DO UPDATE`, y `planSyncZoho` vuelve a sincronizar en segundo plano **cada vez que alguien
+    abre un ticket nacido en Zoho**. La fila borrada reaparece en la siguiente apertura.
+  - **Dos caminos viables.** (a) **Lápida local** — tabla propia de conversaciones ocultas que el compositor
+    filtra al leer: sobrevive al sync, es reversible de un clic (como `restaurarRemision`) y no mete un concepto
+    de Desk dentro de la réplica de Zoho. **Recomendado.** (b) **Borrar también en Zoho** — `deleteTicketComment`
+    existe, pero **solo para comentarios**: un hilo de correo no se borra por esa vía. Irreversible y dependiente
+    de que Zoho esté en pie.
+  - **Autorización:** `requireAdmin` ya existe y comprueba `req.user.isAdmin`. **Hay un solo nivel de
+    administrador**: el `requireSuperAdmin` de `routes/equipos.ts` es esa misma función renombrada en el `import`.
+    El botón se esconde por comodidad; quien protege el dato es el endpoint.
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
