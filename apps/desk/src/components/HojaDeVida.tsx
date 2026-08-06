@@ -86,12 +86,63 @@ function TarjetaTicket({ t }: { t: HistorialTicket }) {
   )
 }
 
-export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose: () => void }) {
+/**
+ * La hoja de vida del equipo, en dos montajes y con una sola petición.
+ *
+ * CON `onClose` se monta como capa a pantalla completa —la abren el botón de la cabecera del ticket
+ * y la pantalla de Equipos—, y sin él se monta en línea, que es como la usa la pestaña HOJA DE VIDA
+ * del ticket. La diferencia es solo el cromo: el cuerpo es el mismo y por eso vive en un único sitio.
+ *
+ * En línea NO trae su propio contenedor con scroll: el de la pestaña ya lo pone, y anidar dos deja
+ * una barra de desplazamiento dentro de otra.
+ */
+export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: () => void }) {
   const { data, loading, error } = useAsync<EquipoHistorial>(() => fetchEquipoHistorial(equipoId), [equipoId])
   const eq = data?.equipo
   const cronologia = data?.cronologia ?? []
   const nTickets = cronologia.filter((e) => e.clase === 'ticket').length
   const nRemisiones = cronologia.length - nTickets
+
+  const aviso = error ? <div className="bg-red-50 text-red-700 text-[12px] px-4 py-2">{error}</div> : null
+
+  const cuerpo = (
+    <div className="bg-[#f4f5f7] p-6 min-h-full">
+      {loading && !eq && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}
+      {eq && data && (
+        <div className="max-w-[900px] mx-auto">
+          <section className="bg-white border border-slate-200 rounded-md p-4 mb-4">
+            <h2 className="text-[16px] font-bold text-slate-800">{eq.marca} {eq.modelo} <span className="text-slate-400 font-normal">· {eq.tipo}</span></h2>
+            <div className="text-[13px] text-slate-500 mt-1">Serie <b className="text-slate-700">{eq.serial}</b> · Cliente {eq.clienteNombre ?? '—'} · {eq.active ? 'Activo' : 'Inactivo'}</div>
+            <div className="text-[12px] text-slate-400 mt-1">
+              {nTickets} {nTickets === 1 ? 'ticket' : 'tickets'} · {nRemisiones} {nRemisiones === 1 ? 'remisión' : 'remisiones'}
+            </div>
+          </section>
+
+          {cronologia.length === 0 && (
+            <div className="text-[13px] text-slate-400">Este equipo aún no tiene tickets ni remisiones.</div>
+          )}
+
+          {/* Una sola línea de tiempo, no dos inventarios: lo que se quiere leer de un equipo es
+              qué le ha pasado y en qué orden. El punto distingue de un vistazo qué clase de
+              parada es cada una, que es lo que el color tiene que resolver aquí. */}
+          <div className="relative border-l-2 border-slate-200 pl-6 flex flex-col gap-4">
+            {cronologia.map((e) => (
+              <div key={e.clase === 'ticket' ? `t-${e.ticket.id}` : `r-${e.remision.id}`} className="relative">
+                <span
+                  className={`absolute -left-[31px] top-4 w-3 h-3 rounded-full border-2 border-[#f4f5f7] ${
+                    e.clase === 'remision' ? 'bg-[#2C7BE5]' : 'bg-slate-400'
+                  }`}
+                />
+                {e.clase === 'remision' ? <TarjetaRemision r={e.remision} /> : <TarjetaTicket t={e.ticket} />}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  if (!onClose) return <>{aviso}{cuerpo}</>
 
   return (
     <div className="fixed inset-0 z-[75] bg-white flex flex-col">
@@ -100,41 +151,8 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose: (
         <h1 className="text-[15px] font-bold">Hoja de vida</h1>
         {eq && <span className="text-[13px] text-white/70 truncate">· {eq.serial} · {eq.marca} {eq.modelo}</span>}
       </div>
-      {error && <div className="bg-red-50 text-red-700 text-[12px] px-4 py-2">{error}</div>}
-      <div className="flex-1 overflow-auto bg-[#f4f5f7] p-6">
-        {loading && !eq && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}
-        {eq && data && (
-          <div className="max-w-[900px] mx-auto">
-            <section className="bg-white border border-slate-200 rounded-md p-4 mb-4">
-              <h2 className="text-[16px] font-bold text-slate-800">{eq.marca} {eq.modelo} <span className="text-slate-400 font-normal">· {eq.tipo}</span></h2>
-              <div className="text-[13px] text-slate-500 mt-1">Serie <b className="text-slate-700">{eq.serial}</b> · Cliente {eq.clienteNombre ?? '—'} · {eq.active ? 'Activo' : 'Inactivo'}</div>
-              <div className="text-[12px] text-slate-400 mt-1">
-                {nTickets} {nTickets === 1 ? 'ticket' : 'tickets'} · {nRemisiones} {nRemisiones === 1 ? 'remisión' : 'remisiones'}
-              </div>
-            </section>
-
-            {cronologia.length === 0 && (
-              <div className="text-[13px] text-slate-400">Este equipo aún no tiene tickets ni remisiones.</div>
-            )}
-
-            {/* Una sola línea de tiempo, no dos inventarios: lo que se quiere leer de un equipo es
-                qué le ha pasado y en qué orden. El punto distingue de un vistazo qué clase de
-                parada es cada una, que es lo que el color tiene que resolver aquí. */}
-            <div className="relative border-l-2 border-slate-200 pl-6 flex flex-col gap-4">
-              {cronologia.map((e) => (
-                <div key={e.clase === 'ticket' ? `t-${e.ticket.id}` : `r-${e.remision.id}`} className="relative">
-                  <span
-                    className={`absolute -left-[31px] top-4 w-3 h-3 rounded-full border-2 border-[#f4f5f7] ${
-                      e.clase === 'remision' ? 'bg-[#2C7BE5]' : 'bg-slate-400'
-                    }`}
-                  />
-                  {e.clase === 'remision' ? <TarjetaRemision r={e.remision} /> : <TarjetaTicket t={e.ticket} />}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {aviso}
+      <div className="flex-1 overflow-auto">{cuerpo}</div>
     </div>
   )
 }

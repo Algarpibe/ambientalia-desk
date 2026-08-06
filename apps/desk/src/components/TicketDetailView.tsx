@@ -54,6 +54,8 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
         { id: 'adj', label: `${adjuntosCount} ${adjuntosCount === 1 ? 'ADJUNTO' : 'ADJUNTOS'}`, view: 'otros' },
         { id: 'act', label: `${actCount} ACTIVIDADES`, view: 'actividades' },
         { id: 'rem', label: `${remCount} ${remCount === 1 ? 'REMISIÓN' : 'REMISIONES'}`, view: 'remisiones' },
+        // Junto a REMISIONES y no al final: son las dos pestañas que hablan del equipo y no del ticket.
+        { id: 'hdv', label: 'HOJA DE VIDA', view: 'hojadevida' },
         { id: 'apr', label: 'APROBACIÓN', view: 'otros' },
         { id: 'his', label: 'HISTORIA', view: 'historia' },
     ];
@@ -255,6 +257,22 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         {activeView === 'remisiones' && (
                             <div className="flex-1 overflow-y-auto bg-white">
                                 <PanelRemisiones items={remisiones} loading={remisionesLoading} error={remisionesError} />
+                            </div>
+                        )}
+                        {activeView === 'hojadevida' && (
+                            <div className="flex-1 overflow-y-auto bg-white">
+                                {ticket?.equipoId ? (
+                                    /* Sin `onClose` se monta en línea: el scroll lo pone este contenedor. */
+                                    <HojaDeVida equipoId={ticket.equipoId} />
+                                ) : (
+                                    /* El caso mayoritario en el histórico: los tickets que vinieron de Zoho no
+                                       traen el equipo en su ficha —el número de serie vive solo en el asunto—,
+                                       así que no hay a qué equipo mirarle la hoja de vida. Decirlo evita que se
+                                       lea como un fallo de carga. */
+                                    <div className="p-8 text-center text-[13px] text-slate-400">
+                                        Este ticket no tiene un equipo registrado, así que no hay hoja de vida que enseñar.
+                                    </div>
+                                )}
                             </div>
                         )}
                         {activeView === 'otros' && (
