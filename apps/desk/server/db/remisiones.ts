@@ -57,6 +57,21 @@ export async function getRemision(db: Queryable, id: string): Promise<Remision |
   return r.rows[0] ? toRemision(r.rows[0]) : null
 }
 
+/**
+ * La remisión de este ticket que está creada y todavía sin desenlace, si la hay.
+ *
+ * Es la que impide crear otra por accidente. Se exige `anulada_at IS NULL` porque una anulada ya está
+ * fuera de en medio y no debe bloquear nada, y solo cuenta `pendiente` porque una con desenlace —haya
+ * ido bien o mal— ya es un documento cerrado: la siguiente no la duplica.
+ */
+export async function remisionPendienteDe(db: Queryable, ticketId: string): Promise<string | null> {
+  const r = await db.query(
+    "SELECT id FROM remisiones WHERE ticket_id = $1 AND estado = 'pendiente' AND anulada_at IS NULL ORDER BY created_at DESC LIMIT 1",
+    [ticketId],
+  )
+  return r.rows[0] ? String(r.rows[0].id) : null
+}
+
 /** Remisiones VIGENTES de un ticket, la más reciente primero. Una anulada no debe aparecer en el panel del ticket. */
 export async function listRemisionesByTicket(db: Queryable, ticketId: string): Promise<Remision[]> {
   const r = await db.query('SELECT * FROM remisiones WHERE ticket_id = $1 AND anulada_at IS NULL ORDER BY created_at DESC', [ticketId])

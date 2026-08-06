@@ -6,7 +6,7 @@ import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { getChecklist, hayChecklist } from '../db/remisionChecklist'
-import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -117,6 +117,32 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (!found) { res.status(422).json({ error: 'Ticket no encontrado' }); return }
     const fecha = b.fecha ? String(b.fecha).slice(0, 10) : ''
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { res.status(422).json({ error: 'Fecha inválida' }); return }
+
+    /*
+     * Una sola remisión sin desenlace por ticket. Hasta ahora esto lo "defendía" un cartel del
+     * formulario, que es un consejo y no una barrera: si la consulta que lo alimenta falla no
+     * aparece, y un cliente directo de la API no lo ve nunca. Dos `pendiente` a la vez son hoy dos
+     * entradas DEL MISMO equipo —el equipo se deriva del ticket, no se acepta del navegador—, así
+     * que son un duplicado y no dos equipos.
+     *
+     * Se rechaza por defecto pero NO del todo: bloquear sin salida dejaría al técnico sin poder
+     * crear otra si n8n se cae y la primera se queda en `pendiente` para siempre, que es justo la
+     * clase de callejón que este subsistema ya ha tenido dos veces. `permitirSegunda` es el
+     * formulario diciendo que el humano lo confirmó; el servidor no puede distinguirlo por su cuenta.
+     *
+     * El 409 devuelve el id de la que ya existe: sin él, lo único que puede hacer quien lo recibe es
+     * volver a intentarlo a ciegas.
+     */
+    if (b.permitirSegunda !== true) {
+      const pendiente = await remisionPendienteDe(db, ticketId)
+      if (pendiente) {
+        res.status(409).json({
+          error: 'Este ticket ya tiene una remisión sin desenlace. Vuelve a abrir el formulario para enviarla, o crear otra a propósito.',
+          remisionId: pendiente,
+        })
+        return
+      }
+    }
 
     // El equipo y el perfil se recalculan aquí, no se aceptan del navegador: son los que deciden
     // qué checklist aplica, y confiar en el cliente permitiría remisionar con la lista equivocada.

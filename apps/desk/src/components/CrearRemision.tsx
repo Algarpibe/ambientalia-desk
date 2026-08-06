@@ -53,13 +53,13 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
    * parte: el punto de partida es una decisión de quien llama, no un implícito del render. Habrá
    * llamantes que arranquen de un estado que todavía no está en `envio`.
    */
-  async function ejecutar(estado: EstadoEnvio, omitirFotosPendientes: boolean) {
+  async function ejecutar(estado: EstadoEnvio, omitirFotosPendientes: boolean, permitirSegunda = false) {
     setErr(null)
     try {
       const r = await ejecutarEnvio(estado, fotos.length, {
         crear: async () => {
           const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
-          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined })
+          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined, permitirSegunda })
           return rem.id
         },
         subirFoto: async (id, i) => { await subirFotoRemision(id, await redimensionarImagen(fotos[i])) },
@@ -84,7 +84,10 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
     // tiene que ser una decisión, no un descuido: `cancelar()` ya pregunta por bastante menos.
     if (pendiente && !creada && !confirm('Este ticket ya tiene una remisión sin desenlace. Si creas otra quedarán dos, y quitar la anterior solo puede hacerlo un administrador. ¿Crear una segunda de todos modos?')) return
     setEnviandoPrevia(false) // lo que salga de aquí sí es una remisión de esta sesión
-    void ejecutar(envio, false)
+    // Haber pasado por el `confirm` es lo único que autoriza la segunda: el servidor rechaza con 409
+    // si no se le dice. Y cuando `pendiente` es null porque la consulta que lo alimenta falló, aquí
+    // va `false` y el 409 salta — que es justo la grieta que este cartel no podía cubrir solo.
+    void ejecutar(envio, false, !!pendiente)
   }
 
   const creada = envio.remisionId !== null

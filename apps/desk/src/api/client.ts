@@ -310,7 +310,18 @@ export async function restaurarRemision(id: string): Promise<void> {
   if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
 }
 
-export interface CrearRemisionPayload { ticketId: string; fecha: string; incluye: string[]; observaciones?: string }
+export interface CrearRemisionPayload {
+  ticketId: string
+  fecha: string
+  incluye: string[]
+  observaciones?: string
+  /**
+   * Que el humano confirmó crear una segunda remisión sin desenlace en este ticket. Sin esto el
+   * servidor responde 409, que es lo que cierra el duplicado accidental: el servidor no puede
+   * distinguir por su cuenta un reintento de red de una decisión deliberada.
+   */
+  permitirSegunda?: boolean
+}
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {
   const res = await fetch('/api/remisiones', {

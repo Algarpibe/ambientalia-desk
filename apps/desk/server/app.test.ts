@@ -562,6 +562,44 @@ describe('POST /api/remisiones', () => {
     expect((await request(app).post('/api/remisiones').send({ ticketId: 't1', fecha: '2026-08-03' })).status).toBe(401)
   })
 
+  // El cartel del formulario era un consejo, no una barrera: si la consulta que lo alimenta falla, no
+  // aparece y el duplicado vuelve a ser posible en silencio. Y un cliente directo de la API nunca lo
+  // ve. Dos `pendiente` a la vez en un ticket son hoy dos entradas DEL MISMO equipo —el equipo se
+  // deriva del ticket, no se acepta del navegador—, o sea un duplicado.
+  it('no deja una segunda remisión pendiente en el ticket, salvo que se pida a propósito', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const crear = (extra: object = {}) => request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [], ...extra })
+
+    const primera = await crear()
+    expect(primera.status).toBe(201)
+
+    const segunda = await crear()
+    expect(segunda.status).toBe(409)
+    // Con el id de la que ya existe el cliente puede enviarla; sin él solo puede reintentar a ciegas.
+    expect(segunda.body.remisionId).toBe(primera.body.id)
+
+    // La salida deliberada sigue abierta: bloquear del todo dejaría al técnico sin poder crear otra
+    // si n8n se cae y la primera se queda en `pendiente` para siempre.
+    expect((await crear({ permitirSegunda: true })).status).toBe(201)
+  })
+
+  it('solo bloquea una PENDIENTE vigente: con desenlace, o anulada, deja crear la siguiente', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const crear = () => request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+
+    const conDesenlace = await crear()
+    await db.query("UPDATE remisiones SET estado='ok' WHERE id=$1", [conDesenlace.body.id])
+    const segunda = await crear()
+    expect(segunda.status).toBe(201) // la cerrada no estorba
+
+    await db.query('UPDATE remisiones SET anulada_at=now() WHERE id=$1', [segunda.body.id])
+    expect((await crear()).status).toBe(201) // la anulada tampoco
+  })
+
   // El callback es la única vía de sacar una remisión de `pendiente`, y n8n no tiene sesión.
   // El envío va separado de la creación porque las fotos se suben en medio: si se disparase al
   // crear, el documento saldría sin registro fotográfico.
