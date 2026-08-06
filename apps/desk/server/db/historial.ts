@@ -2,7 +2,10 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
 import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
-import { iso, json, lectorCreacion, planSyncZoho, textoEquipo, type PlanSyncZoho } from './ticketFuentes'
+import {
+  datosTicket, etiquetaCampo, iso, json, lectorCreacion, listaIncluye, planSyncZoho, porFechaDesc,
+  textoEquipo, type PlanSyncZoho,
+} from './ticketFuentes'
 
 // Reexportado para no romper a quien importe el tipo de aquí: `getHistorialTicket` lo devuelve.
 export type { PlanSyncZoho }
@@ -17,16 +20,6 @@ function detalles(pares: Array<[string, unknown]>): HistoryDetail[] {
   return pares
     .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '')
     .map(([label, v]) => ({ label, value: String(v) }))
-}
-
-/**
- * `values` guarda las claves con el nombre técnico del campo (`requiere_repuestos`). No se traducen
- * con un diccionario a propósito: el conjunto de campos lo decide el Blueprint y un diccionario
- * quedaría desactualizado en silencio el día que alguien añada uno.
- */
-function etiquetaCampo(clave: string): string {
-  const t = clave.replace(/_/g, ' ')
-  return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
 function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, unknown>, cliente: string | null): HistoryEvent {
@@ -70,12 +63,6 @@ function eventoTransicion(fila: Record<string, unknown>): HistoryEvent {
       ...detalles(Object.entries(v).map(([k, val]): [string, unknown] => [etiquetaCampo(k), val])),
     ],
   }
-}
-
-/** `incluye` es un `jsonb` con un array: pg lo entrega parseado, pg-mem como texto. */
-function listaIncluye(v: unknown): string {
-  const arr = typeof v === 'string' ? JSON.parse(v) : v
-  return Array.isArray(arr) ? arr.join(', ') : ''
 }
 
 function eventosRemision(fila: Record<string, unknown>): HistoryEvent[] {
@@ -135,15 +122,8 @@ function eventosRemision(fila: Record<string, unknown>): HistoryEvent[] {
   return out
 }
 
-/** Descendente por tiempo, con los que no lo tienen al final: es el orden que `HistoriaPanel` espera. */
-function masRecientePrimero(a: HistoryEvent, b: HistoryEvent): number {
-  const ta = a.time ? Date.parse(a.time) : NaN
-  const tb = b.time ? Date.parse(b.time) : NaN
-  if (Number.isNaN(ta) && Number.isNaN(tb)) return 0
-  if (Number.isNaN(ta)) return 1
-  if (Number.isNaN(tb)) return -1
-  return tb - ta
-}
+/** El orden que `HistoriaPanel` espera: lo más reciente arriba. */
+const masRecientePrimero = porFechaDesc<HistoryEvent>((e) => e.time)
 
 /**
  * Toda la historia del ticket en una sola línea de tiempo: lo que vino de Zoho, las transiciones de
@@ -153,20 +133,7 @@ function masRecientePrimero(a: HistoryEvent, b: HistoryEvent): number {
 export async function getHistorialTicket(db: Queryable, ticketId: string): Promise<HistorialTicket> {
   const zoho = await getZohoHistoryEvents(db, ticketId)
 
-  const t = await db.query(
-    'SELECT marca, modelo, serial, tipo_servicio, classification, priority, orden_venta, codigo_servicio, client_id FROM tickets WHERE id = $1',
-    [ticketId],
-  )
-  const ticket = (t.rows[0] as Record<string, unknown>) ?? {}
-
-  // Consulta aparte y no un JOIN: `clients` es una vista sobre `books.contacts` y pg-mem —el motor
-  // de los tests— tropieza con los joins contra vistas de otro esquema.
-  let cliente: string | null = null
-  if (ticket.client_id) {
-    const c = await db.query('SELECT name, company_name FROM clients WHERE id = $1', [ticket.client_id])
-    const fila = c.rows[0] as Record<string, unknown> | undefined
-    cliente = (fila?.company_name as string) || (fila?.name as string) || null
-  }
+  const { ticket, cliente } = await datosTicket(db, ticketId)
 
   const tr = await db.query(
     'SELECT transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',

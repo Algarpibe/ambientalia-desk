@@ -2,7 +2,11 @@
  * Lo que comparten los dos compositores del ticket: `historial.ts` (el log) y `conversacion.ts` (el
  * relato). Vive aquí y no duplicado en cada uno porque la regla de la foto de creación es sutil —ya
  * se implementó mal una vez— y dos copias divergen en cuanto alguien toca una.
+ *
+ * Lo que NO vive aquí: el texto de cada evento o entrada. Los dos compositores dicen cosas distintas
+ * a propósito —uno hace un log, el otro un relato— y unificar la redacción los ataría mal.
  */
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 
 /** Qué hacer con Zoho antes de responder. */
 export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
@@ -10,9 +14,13 @@ export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
 /**
  * Si el ticket nació en la app, Zoho no lo conoce y preguntarle por él es un 404 en cada apertura.
  *
- * Se mira el PREFIJO del id y no `managed_by_app` ni `source`: `writeTransition` pone las dos
- * columnas a "app" en CUALQUIER transición hecha aquí, incluidas las de un ticket que vino de Zoho,
- * así que ambas mienten. El id lo acuña `createTicket` como `app-<uuid>` y ningún UPDATE lo toca.
+ * Se mira el PREFIJO del id y no `managed_by_app` ni `source`, que parecen decir "esto nació en la
+ * app" y no lo dicen: `writeTransition` pone las dos —`managed_by_app=true` y `source='app'`, en el
+ * mismo UPDATE— en CUALQUIER transición hecha desde Desk, también las de un ticket que vino de Zoho.
+ * Usarlas dejaba a ese ticket sin refrescar jamás su historia de Zoho desde la primera vez que
+ * alguien lo moviera aquí, y como `syncTicketHistory` solo se llama desde esa ruta, nadie más lo
+ * repararía. El id sí es inmutable: `createTicket` es el único sitio que acuña ids de ticket y
+ * siempre les pone el prefijo `app-` — los de Zoho son numéricos — y ningún UPDATE lo toca.
  */
 export function nacidoEnLaApp(ticketId: string): boolean {
   return ticketId.startsWith('app-')
@@ -49,4 +57,67 @@ export function lectorCreacion(values: unknown, ticket: Record<string, unknown>)
   const v = json(values)
   const hayFoto = Object.keys(v).some((k) => k !== 'orden_venta')
   return (clave: string, columna: string): unknown => (hayFoto ? v[clave] : ticket[columna])
+}
+
+/**
+ * `values` guarda las claves con el nombre técnico del campo (`requiere_repuestos`). No se traducen
+ * con un diccionario a propósito: el conjunto de campos lo decide el Blueprint y un diccionario
+ * quedaría desactualizado en silencio el día que alguien añada uno.
+ */
+export function etiquetaCampo(clave: string): string {
+  const t = clave.replace(/_/g, ' ')
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+/** `incluye` es un `jsonb` con un array: pg lo entrega parseado, pg-mem como texto. */
+export function listaIncluye(v: unknown): string {
+  const arr = typeof v === 'string' ? JSON.parse(v) : v
+  return Array.isArray(arr) ? arr.join(', ') : ''
+}
+
+/**
+ * Comparador descendente por tiempo, con los que no lo tienen al final: es el orden que esperan los
+ * dos paneles. Es una fábrica y no un comparador fijo porque cada compositor ordena elementos de
+ * tipo distinto —`HistoryEvent` lleva el instante en `time`, el relato lo lleva aparte porque su
+ * `time` ya viene formateado y ordenar por él sería ordenar alfabéticamente—.
+ */
+export function porFechaDesc<T>(instanteDe: (x: T) => string | null): (a: T, b: T) => number {
+  return (a, b) => {
+    const ta = instanteDe(a) ? Date.parse(instanteDe(a)!) : NaN
+    const tb = instanteDe(b) ? Date.parse(instanteDe(b)!) : NaN
+    if (Number.isNaN(ta) && Number.isNaN(tb)) return 0
+    if (Number.isNaN(ta)) return 1
+    if (Number.isNaN(tb)) return -1
+    return tb - ta
+  }
+}
+
+/** La fila del ticket con los campos de creación, más el nombre del cliente ya resuelto. */
+export interface DatosTicket {
+  ticket: Record<string, unknown>
+  cliente: string | null
+}
+
+/**
+ * Los datos del ticket que los dos compositores necesitan para la entrada de creación.
+ *
+ * El cliente se pide en una consulta APARTE y no con un JOIN: `clients` es una vista sobre
+ * `books.contacts` y pg-mem —el motor de los tests— tropieza con los joins contra vistas de otro
+ * esquema.
+ */
+export async function datosTicket(db: Queryable, ticketId: string): Promise<DatosTicket> {
+  const t = await db.query(
+    'SELECT marca, modelo, serial, tipo_servicio, classification, priority, orden_venta, codigo_servicio, client_id FROM tickets WHERE id = $1',
+    [ticketId],
+  )
+  const ticket = (t.rows[0] as Record<string, unknown>) ?? {}
+
+  let cliente: string | null = null
+  if (ticket.client_id) {
+    const c = await db.query('SELECT name, company_name FROM clients WHERE id = $1', [ticket.client_id])
+    const fila = c.rows[0] as Record<string, unknown> | undefined
+    cliente = (fila?.company_name as string) || (fila?.name as string) || null
+  }
+
+  return { ticket, cliente }
 }
