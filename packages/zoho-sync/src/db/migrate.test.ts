@@ -71,6 +71,23 @@ describe('migrate', () => {
     const e = await db.query('SELECT modelo_id FROM equipos')
     expect(e.rows).toEqual([])
   })
+
+  it('catalogo_modelos rechaza el mismo modelo repetido en una marca, pero admite el mismo nombre en otra', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba'), ('cmar-2','Environics')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','6103')")
+    // el mismo (marca_id, nombre) dos veces choca con el UNIQUE de la base, no solo con la comprobación del repo
+    await expect(
+      db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-2','cmar-1','6103')"),
+    ).rejects.toThrow()
+    // un 6103 de Environics y otro de Horiba son equipos distintos: el mismo nombre en OTRA marca sí debe poder existir
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-3','cmar-2','6103')")
+    const r = await db.query('SELECT id, marca_id, nombre FROM catalogo_modelos ORDER BY id')
+    expect(r.rows).toEqual([
+      { id: 'cmod-1', marca_id: 'cmar-1', nombre: '6103' },
+      { id: 'cmod-3', marca_id: 'cmar-2', nombre: '6103' },
+    ])
+  })
 })
 
 describe('reorgToDeskStatements', () => {

@@ -306,6 +306,7 @@ CREATE TABLE IF NOT EXISTS public.catalogo_marcas (
 );
 
 -- tipo_id admite NULL a proposito: un modelo cuyos equipos no declaran tipo entra sin el y marcado para revisar, que es un dato honesto en vez de una invencion
+-- El UNIQUE (marca_id, nombre) es la red de seguridad de la base: el repo comprueba duplicados antes de insertar para dar un 409 entendible, pero esta tabla es la que existe para acabar con los duplicados y no puede depender solo de esa comprobacion previa
 CREATE TABLE IF NOT EXISTS public.catalogo_modelos (
   id text PRIMARY KEY,
   marca_id text NOT NULL,
@@ -313,9 +314,14 @@ CREATE TABLE IF NOT EXISTS public.catalogo_modelos (
   tipo_id text,
   revisar boolean NOT NULL DEFAULT false,
   activo boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (marca_id, nombre)
 );
 CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_marca ON catalogo_modelos (marca_id);
+-- Borrar un tipo exige contar cuantos modelos lo usan, igual que marca_id
+CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_tipo ON catalogo_modelos (tipo_id);
 
 -- El equipo apunta a su modelo del catalogo. Las columnas de texto marca/modelo/tipo se conservan porque las leen la busqueda, la creacion de tickets, la hoja de vida y perfilChecklist: lo que cambia es que ahora las escribe el catalogo y nadie mas
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS modelo_id text;
+-- Es la clave de union del catalogo: comprobar si un modelo esta en uso, contar conflictos
+CREATE INDEX IF NOT EXISTS idx_equipos_modelo ON equipos (modelo_id);
