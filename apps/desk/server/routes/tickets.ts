@@ -170,7 +170,15 @@ export function registerTicketRoutes(
         }),
       })
       if (!zres.ok) { res.status(zres.status).json({ error: await zres.text() }); return }
-      await sync.syncConversations(id)
+      // A partir de aquí el correo YA SALIÓ, así que nada puede devolver un error: un 500 hacía que
+      // el usuario leyera "falló" sobre algo que sí se envió, y el reintento natural mandaba un
+      // segundo correo al cliente. El refresco es una comodidad —el hilo se recompone al abrir el
+      // ticket— y degrada a un aviso en el log, como ya hacía la ruta de historia.
+      try {
+        await sync.syncConversations(id)
+      } catch (err) {
+        req.log.warn({ err, ticketId: id }, 'syncConversations tras el reply falló (el correo sí salió)')
+      }
       res.json({ ok: true })
   }))
 }

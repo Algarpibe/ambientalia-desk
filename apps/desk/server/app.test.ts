@@ -347,6 +347,20 @@ describe('escrituras', () => {
     expect(res.status).toBe(200)
     expect(res.body).toMatchObject({ ok: true })
   })
+
+  // El correo YA salió cuando se refrescan las conversaciones. Si ese refresco tumbaba la petición
+  // con un 500, el usuario leía "falló" sobre algo que sí se había enviado, y el reintento natural
+  // mandaba un segundo correo al cliente. La ruta hermana de historia ya degradaba así; ésta no.
+  it('POST reply → 200 aunque el refresco de conversaciones falle: el correo ya salió', async () => {
+    const cookie = await userCookie(['Comercial'])
+    const { app, sync, zohoFetch } = appWith({ enableWrites: true })
+    sync.syncConversations.mockRejectedValue(new Error('zoho down'))
+    const res = await request(app).post('/api/tickets/1/reply').set('Cookie', cookie).send({ content: 'hola', to: 'x@y.co' })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ ok: true })
+    // Y el envío se intentó UNA vez: lo que se degrada es el refresco, no el correo.
+    expect(zohoFetch.mock.calls.filter(([p]) => String(p).includes('sendReply'))).toHaveLength(1)
+  })
 })
 
 describe('GET /api/clients y /api/sales-orders (Books)', () => {
