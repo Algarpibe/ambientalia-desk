@@ -311,6 +311,11 @@ export interface RemisionResultado {
   carpetaUrl?: string | null
   docId?: string | null
   pdfId?: string | null
+  /**
+   * Id en Drive de la etiqueta `.dymo`. El callback lo manda desde el 2026-08-05: las remisiones
+   * anteriores no lo tienen, y las 149 históricas no tienen `resultado` en absoluto.
+   */
+  dymoId?: string | null
   fotos?: { recibidas: number; subidas: number }
   avisos?: RemisionPasoFallido[]
   fallos?: RemisionPasoFallido[]
