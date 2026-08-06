@@ -59,6 +59,18 @@ describe('migrate', () => {
     await migrate(db)
     expect((await db.query('SELECT client_id FROM equipos')).rows).toEqual([])
   })
+
+  it('crea las tablas del catálogo maestro y equipos.modelo_id', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO catalogo_tipos (id,nombre) VALUES ('ctip-1','Calibrador Multigas')")
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,tipo_id) VALUES ('cmod-1','cmar-1','APSA-370','ctip-1')")
+    const m = await db.query('SELECT id, marca_id, nombre, tipo_id, revisar, activo FROM catalogo_modelos')
+    expect(m.rows[0]).toMatchObject({ id: 'cmod-1', marca_id: 'cmar-1', nombre: 'APSA-370', tipo_id: 'ctip-1', revisar: false, activo: true })
+    // La columna que ata el equipo a su modelo del catálogo.
+    const e = await db.query('SELECT modelo_id FROM equipos')
+    expect(e.rows).toEqual([])
+  })
 })
 
 describe('reorgToDeskStatements', () => {

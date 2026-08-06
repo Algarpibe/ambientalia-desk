@@ -289,3 +289,33 @@ ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS anulada_por text;
 
 -- Backfill de las historicas ya importadas: entraron sin created_at, asi que se quedaron con el now() del dia de la importacion. Los dos paneles del ticket (historia y conversaciones) ordenan por esa columna, y como las transiciones si llevan su fecha buena, una remision de 2025 aterrizaba arriba del todo: un ticket cerrado hace meses abria diciendo "El equipo ingresa para Calibracion" como si fuera lo ultimo que paso. La fecha de servicio es la buena, que es lo que ya hacia listRemisionesListado ordenando por fecha antes que por created_at. Se ancla a las 12:00 y no a medianoche porque la columna es timestamptz y el panel formatea en America/Bogota: un date convertido a pelo se pinta como el dia ANTERIOR a las 19:00. Solo toca origen='historico' - en las de la app created_at lleva hora y es el registro fiel - y la condicion del WHERE lo deja en no-op a partir de la segunda pasada, en vez de reescribir 149 filas en cada arranque
 UPDATE remisiones SET created_at = fecha::timestamp + interval '12 hours' WHERE origen = 'historico' AND created_at <> (fecha::timestamp + interval '12 hours')::timestamptz;
+
+-- Catalogo maestro de equipos. Antes las listas de marca/modelo/tipo se derivaban de la propia tabla equipos con un SELECT DISTINCT, de modo que un equipo mal registrado se convertia en una opcion oficial para todos los siguientes y la suciedad se realimentaba
+CREATE TABLE IF NOT EXISTS public.catalogo_tipos (
+  id text PRIMARY KEY,
+  nombre text NOT NULL UNIQUE,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.catalogo_marcas (
+  id text PRIMARY KEY,
+  nombre text NOT NULL UNIQUE,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- tipo_id admite NULL a proposito: un modelo cuyos equipos no declaran tipo entra sin el y marcado para revisar, que es un dato honesto en vez de una invencion
+CREATE TABLE IF NOT EXISTS public.catalogo_modelos (
+  id text PRIMARY KEY,
+  marca_id text NOT NULL,
+  nombre text NOT NULL,
+  tipo_id text,
+  revisar boolean NOT NULL DEFAULT false,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_marca ON catalogo_modelos (marca_id);
+
+-- El equipo apunta a su modelo del catalogo. Las columnas de texto marca/modelo/tipo se conservan porque las leen la busqueda, la creacion de tickets, la hoja de vida y perfilChecklist: lo que cambia es que ahora las escribe el catalogo y nadie mas
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS modelo_id text;
