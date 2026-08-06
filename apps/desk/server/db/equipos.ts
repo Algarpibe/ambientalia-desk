@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
-import { iso, json, porFechaDesc } from './ticketFuentes'
+import { esCreacion, iso, json, porFechaDesc } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
@@ -266,8 +266,15 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
     )
     for (const r of tr.rows as any[]) {
       const list = byTicket.get(r.ticket_id) ?? []
+      // La foto de la creación NO es una transición, y sin este caso la hoja de vida enseñaba el
+      // centinela tal cual: "Enviar · (creación) → OV asignada". Se reconoce con `esCreacion` —el
+      // mismo que usan los otros dos lectores— y se anulan los dos estados: el de partida no existe,
+      // y el de llegada ya lo dice la propia tarjeta del ticket.
+      const creacion = esCreacion(r)
       list.push({
-        transitionName: r.transition_name ?? null, fromStatus: r.from_status ?? null, toStatus: r.to_status ?? null,
+        transitionName: creacion ? 'Ticket creado' : (r.transition_name ?? null),
+        fromStatus: creacion ? null : (r.from_status ?? null),
+        toStatus: creacion ? null : (r.to_status ?? null),
         area: r.area ?? null, performedBy: r.performed_by ?? null, performedAt: r.performed_at ?? null,
       })
       byTicket.set(r.ticket_id, list)

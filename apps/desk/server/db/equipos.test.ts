@@ -5,6 +5,7 @@ import { upsertEquipo, searchEquipos, getEquipo, countEquipos, type EquipoRow } 
 import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './equipos'
 import { getEquipoHistorial } from './equipos'
 import type { EntradaHojaDeVida } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION } from '@ambientalia/shared'
 
 // Filas al estilo de las que dejó la carga inicial: `client_id` NULL y el cliente solo como texto.
 // Siguen siendo la mayoría en producción, así que los tests deben seguir cubriéndolas.
@@ -121,6 +122,26 @@ describe('getEquipoHistorial', () => {
     await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('h2',191,'Servicio MT_18A190420_EDM180C_260305','Ingresado','Open',now())`)
     const h = await getEquipoHistorial(db, eqId)
     expect(soloTickets(h!).map((t) => t.id)).toEqual(['h1'])
+  })
+
+  // `(creación)` es el centinela que marca la foto de creación, no un estado. Los otros dos lectores
+  // lo reconocen con `esCreacion` y lo cuentan aparte; sin esto, la hoja de vida enseñaba al usuario
+  // "Enviar · (creación) → OV asignada", que es un literal interno asomando por la interfaz.
+  it('la fila de creación se cuenta como creación, no como una transición genérica', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-C', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    await insTicket('app-c', 1000001, 'SN-C', eqId, 'OV asignada')
+    await db.query(
+      `INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at)
+       VALUES ('app-c','Enviar',$1,'OV asignada','Comercial','Administrador','2026-08-03T10:00:00Z'),
+              ('app-c','Habilitar','OV asignada','Ingresado','Comercial','Administrador','2026-08-04T10:00:00Z')`,
+      [FROM_STATUS_CREACION],
+    )
+    const h = await getEquipoHistorial(db, eqId)
+    const t = soloTickets(h!)[0]
+    expect(t.transitions.map((x) => [x.transitionName, x.fromStatus, x.toStatus])).toEqual([
+      ['Ticket creado', null, null],
+      ['Habilitar', 'OV asignada', 'Ingresado'],
+    ])
   })
 
   it('devuelve null si el equipo no existe', async () => {
