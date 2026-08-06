@@ -235,7 +235,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                       {msg.attachments.map((att) => (
                                         <a
                                           key={att.path}
-                                          href={`/api/attachment?path=${encodeURIComponent(att.path)}`}
+                                          href={att.url ?? `/api/attachment?path=${encodeURIComponent(att.path)}`}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded w-[200px] hover:bg-slate-100"

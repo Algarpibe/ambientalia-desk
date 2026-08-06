@@ -34,6 +34,12 @@ export interface Attachment {
   name: string
   size: string   // ya formateado, p.ej. "701.7 KB"
   path: string
+  /**
+   * Enlace externo, cuando el adjunto no vive en Zoho. Los del hilo generado apuntan a Google Drive,
+   * que la app no puede servir por el proxy porque no tiene credenciales de Google. Si está, el panel
+   * enlaza directo; si no, sigue pasando por `/api/attachment`.
+   */
+  url?: string
 }
 
 /** Un mensaje del hilo de conversación en el detalle. */
