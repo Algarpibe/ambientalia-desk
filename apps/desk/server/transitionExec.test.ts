@@ -18,6 +18,9 @@ describe('buildTransitionPlan', () => {
     expect(t.fields.map((f) => f.key)).toEqual([
       'comment', 'Orden de Venta', 'Serial', 'Fecha Orden De Venta', 'Cumple condiciones comerciales',
     ])
+    // Lo que la etapa EXIGE. El comentario y la casilla no: el asterisco de la casilla además mentía,
+    // porque un checkbox obligatorio se guarda como `false` sin error si nadie lo marca (M-2).
+    expect(t.fields.filter((f) => f.required).map((f) => f.key)).toEqual(['Orden de Venta', 'Serial'])
     expect(plan.errors).toEqual([])
     expect(plan.status).toBe('Ingresado')
     expect(plan.statusType).toBe('Open')

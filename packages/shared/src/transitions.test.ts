@@ -30,11 +30,12 @@ describe('transitions', () => {
     }
   })
 
-  it('transitionById resuelve y trae sus campos obligatorios', () => {
+  // Habilitar Servicio exige lo que la etapa tiene que dejar atado —el vínculo con la venta y con el
+  // equipo— y nada más. La casilla dejó de ser obligatoria porque exigirla era una promesa
+  // incumplible: un `checkbox` obligatorio se guarda como `false` sin error si nadie lo marca (M-2).
+  it('transitionById resuelve, y solo la orden de venta y el serial son obligatorios', () => {
     const t = transitionById('habilitar_servicio')!
     expect(t.to).toBe('Ingresado')
-    const required = t.fields.filter((f) => f.required).map((f) => f.key)
-    expect(required).toContain('Orden de Venta')
-    expect(required).toContain('Cumple condiciones comerciales')
+    expect(t.fields.filter((f) => f.required).map((f) => f.key)).toEqual(['Orden de Venta', 'Serial'])
   })
 })

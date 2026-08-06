@@ -101,12 +101,18 @@ no sueltos en cada sitio.
 >   la 7 (Aprobación y S. Repuestos) — ver §5.
 > - **Un campo que el ticket YA trae se enseña bloqueado y no se vuelve a pedir.** Vale para las 35
 >   transiciones, no solo para ésta.
+> - **Solo `Orden de Venta` y `Serial` son obligatorios.** El comentario y la casilla dejaron de
+>   serlo: lo que la etapa tiene que dejar atado es el vínculo con la venta y con el equipo. Además,
+>   exigir la casilla era una promesa incumplible — un `checkbox` obligatorio se guarda como `false`
+>   sin error si nadie lo marca (M-2 en `debt.md`), así que el asterisco solo mentía. `Fecha Orden De
+>   Venta` tampoco lo es: va bloqueada porque la rellena la OV, y una OV de Books puede no traer
+>   fecha; exigiéndola, quien cayera en ese caso no podría ni avanzar ni corregirlo.
 
 | # | Origen | Transición | Destino | Área | Tipo | Campos obligatorios | Fechas/cols |
 |---|---|---|---|---|---|---|---|
 | 1 | (Agregar Ticket) | Enviar | **Ticket creado** (en Zoho: OV asignada) | Comercial | Operativo manual | Orden de Venta | — |
 | 1b | Ticket creado | **Remisión creada** (automática: callback de n8n `ok`/`ok_con_avisos`; la inversa al anular) | Remisión creada | Servicio Técnico | **Automática** — no hay botón | — | — |
-| 2 | **OV asignada · Ticket creado · Remisión creada** | Habilitar Servicio | Ingresado | Comercial | Operativo manual | Comentario, Orden de Venta, **Serial**, Fecha OV (la trae la OV), Cumple condiciones comerciales (Sí/No) | 43 |
+| 2 | **OV asignada · Ticket creado · Remisión creada** | Habilitar Servicio | Ingresado | Comercial | Operativo manual | **Solo Orden de Venta y Serial.** Opcionales: Comentario, Fecha OV (la trae la OV), Cumple condiciones comerciales | 43 |
 | 3 | Ingresado | Ingreso a Servicio | Rev./Diagnóstico | Servicio Técnico | Operativo manual | Código Servicio (valid.), Comentario, Fecha creación ticket (valid.), Fecha Remisión Entrada (oblig.) | 32,38,39 |
 | 4 | Rev./Diagnóstico | Escalado a Revisión | Notificado | Servicio Técnico | Operativo manual | Prioridad, Comentario, Días de entrega | 9,52 |
 | 5 | Notificado | Devolución a corrección | Rev./Diagnóstico | Servicio Técnico | Decisional | Comentario, Prioridad | 9 |

@@ -111,7 +111,14 @@ export const TRANSITIONS: Transition[] = [
     // la compra pueden no existir todavía, igual que la orden de venta— y las dos tienen su propia
     // etapa más adelante, así que no se pierde el dato: la cotización se captura en las dos
     // transiciones de Notificación cliente, y la orden de compra en Aprobación y S. Repuestos.
-    fields: [comment(), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta'), cfCheck('Cumple condiciones comerciales', true)] },
+    // Comentario y la casilla NO son obligatorios aquí: lo que esta etapa tiene que dejar atado es la
+    // orden de venta y el serial. Además, exigir la casilla era una promesa que no se cumplía —un
+    // `checkbox` obligatorio se guarda como `false` sin error si nadie lo marca (M-2 en debt.md)—, así
+    // que el asterisco solo mentía.
+    // `Fecha Orden De Venta` tampoco es obligatoria, y aquí no es una preferencia sino una trampa
+    // que se cierra: el campo va BLOQUEADO porque lo rellena la OV elegida, y una OV de Books puede
+    // no traer fecha. Exigiéndola, quien cayera en ese caso no podría ni avanzar ni corregirlo.
+    fields: [comment(false), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta', false), cfCheck('Cumple condiciones comerciales')] },
   { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
     fields: [comment(), cfText('Código Servicio'), cfDate('Fecha creación ticket'), cfDate('Fecha Remisión Entrada')] },
   { id: 'escalado_a_revision', name: 'Escalado a Revisión', from: ['Rev./Diagnostico'], to: 'Notificado', area: 'Servicio Técnico',
