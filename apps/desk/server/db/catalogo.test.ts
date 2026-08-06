@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { leerCatalogo, getModelo } from './catalogo'
+import { leerCatalogo, getModelo, crearTipo, crearMarca, crearModelo, NombreRepetido } from './catalogo'
 
 let db: Queryable
 beforeEach(async () => {
@@ -76,5 +76,45 @@ describe('getModelo', () => {
   it('un id que no existe devuelve null', async () => {
     const m = await getModelo(db, 'no-existe')
     expect(m).toBeNull()
+  })
+})
+
+describe('altas del catálogo', () => {
+  it('crea tipo, marca y modelo con ids prefijados', async () => {
+    const tipo = await crearTipo(db, 'Analizador de SO2')
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: tipo })
+    expect(tipo).toMatch(/^ctip-/)
+    expect(marca).toMatch(/^cmar-/)
+    expect(modelo).toMatch(/^cmod-/)
+    const c = await leerCatalogo(db)
+    expect(c.modelos[0]).toMatchObject({ nombre: 'APSA-370', tipoNombre: 'Analizador de SO2' })
+  })
+
+  // El nombre repetido es el caso corriente: dos administradores dando de alta lo mismo. Se avisa
+  // con un error propio para que la ruta lo traduzca a 409 y no a un 500 del driver.
+  it('rechaza un nombre repetido de tipo o de marca', async () => {
+    await crearTipo(db, 'Analizador de SO2')
+    await expect(crearTipo(db, 'Analizador de SO2')).rejects.toBeInstanceOf(NombreRepetido)
+    await crearMarca(db, 'Horiba')
+    await expect(crearMarca(db, 'Horiba')).rejects.toBeInstanceOf(NombreRepetido)
+  })
+
+  // El modelo es único DENTRO de su marca: un "6103" de Environics y otro de Horiba son equipos
+  // distintos y los dos tienen que poder existir.
+  it('rechaza un modelo repetido en la misma marca, pero lo admite en otra', async () => {
+    const horiba = await crearMarca(db, 'Horiba')
+    const environics = await crearMarca(db, 'Environics')
+    await crearModelo(db, { marcaId: horiba, nombre: '6103', tipoId: null })
+    await expect(crearModelo(db, { marcaId: horiba, nombre: '6103', tipoId: null })).rejects.toBeInstanceOf(NombreRepetido)
+    await expect(crearModelo(db, { marcaId: environics, nombre: '6103', tipoId: null })).resolves.toMatch(/^cmod-/)
+  })
+
+  // La comprobación de nombre repetido es insensible a mayúsculas y recorta espacios: son la misma
+  // marca aunque cambie la caja o traiga espacios de un copia-pega, y por eso no puede haber dos.
+  it('rechaza un nombre repetido por mayúsculas o por espacios de más', async () => {
+    await crearMarca(db, 'Horiba')
+    await expect(crearMarca(db, 'horiba')).rejects.toBeInstanceOf(NombreRepetido)
+    await expect(crearMarca(db, '  Horiba  ')).rejects.toBeInstanceOf(NombreRepetido)
   })
 })
