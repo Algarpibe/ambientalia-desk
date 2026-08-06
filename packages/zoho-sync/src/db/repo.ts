@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { FROM_STATUS_CREACION } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, STATUS_TICKET_CREADO } from '@ambientalia/shared'
 import { APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'
 
@@ -311,15 +311,21 @@ export interface CreateTicketInput {
   actor: string
 }
 
-/** Crea un ticket gestionado por la app en "OV asignada" + su transición #1, de forma atómica. */
+/**
+ * Crea un ticket gestionado por la app en "Ticket creado" + su transición #1, de forma atómica.
+ *
+ * El estado NO es el 'OV asignada' de Zoho: esa es la misma fase con el nombre que le da el Blueprint
+ * de allí, y se conserva para lo que sigue llegando por el sync (ver `STATUS_OV_ASIGNADA`). Lo que
+ * nace aquí usa el nombre que la fase tiene de verdad para el servicio técnico.
+ */
 export async function createTicket(db: Queryable, input: CreateTicketInput): Promise<string> {
   const id = `app-${randomUUID()}`
   const number = await nextTicketNumber(db)
   const run = async (q: Queryable): Promise<void> => {
     await q.query(
       `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at)
-       VALUES ($1,$2,$3,'OV asignada','Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,'app',now(),now(),now())`,
-      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId],
+       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,'app',now(),now(),now())`,
+      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, STATUS_TICKET_CREADO],
     )
     // La foto de con qué nació el ticket. Las columnas de `tickets` son estado ACTUAL, así que la
     // historia no puede apoyarse en ellas para contar la creación: aquí queda congelado. Los tickets
@@ -327,12 +333,12 @@ export async function createTicket(db: Queryable, input: CreateTicketInput): Pro
     // fila del ticket para esos.
     await q.query(
       `INSERT INTO ticket_transitions (ticket_id,transition_id,transition_name,from_status,to_status,area,performed_by,values,comment_id)
-       VALUES ($1,'enviar','Enviar',$2,'OV asignada','Comercial',$3,$4,null)`,
+       VALUES ($1,'enviar','Enviar',$2,$5,'Comercial',$3,$4,null)`,
       [id, FROM_STATUS_CREACION, input.actor, JSON.stringify({
         orden_venta: input.ordenVenta, marca: input.marca, modelo: input.modelo, serial: input.serial,
         equipo: input.equipo, tipo_servicio: input.tipoServicio, clasificacion: input.classification,
         prioridad: input.priority, codigo_servicio: input.codigoServicio, client_id: input.clientId,
-      })],
+      }), STATUS_TICKET_CREADO],
     )
   }
   const pool = db as PoolLike

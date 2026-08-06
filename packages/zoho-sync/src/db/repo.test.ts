@@ -167,7 +167,9 @@ describe('ticket_reads (leído/no leído)', () => {
 })
 
 describe('createTicket (Subsistema C)', () => {
-  it('crea un ticket gestionado en "OV asignada" con número de secuencia + transición #1', async () => {
+  // Nace en "Ticket creado" y NO en el "OV asignada" de Zoho: es la misma fase, pero ese nombre se
+  // reserva para lo que llega por el sync (ver STATUS_OV_ASIGNADA), que sigue teniendo su columna.
+  it('crea un ticket gestionado en "Ticket creado" con número de secuencia + transición #1', async () => {
     await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
     const id = await createTicket(db, {
       subject: 'Servicio Técnico Gecelca S.A. E.S.P. Monitor MT_18A20070_EDM180C_260604',
@@ -177,7 +179,7 @@ describe('createTicket (Subsistema C)', () => {
     })
     expect(id).toMatch(/^app-/)
     const row = (await db.query('SELECT number, status, status_type, managed_by_app, source, client_id, salesorder_id, equipo_id, orden_venta FROM tickets WHERE id=$1', [id])).rows[0]
-    expect(row.status).toBe('OV asignada')
+    expect(row.status).toBe('Ticket creado')
     expect(row.status_type).toBe('Open')
     expect(row.managed_by_app).toBe(true)
     expect(row.source).toBe('app')
@@ -187,7 +189,7 @@ describe('createTicket (Subsistema C)', () => {
     expect(row.orden_venta).toBe('OV-2026-200')
     expect(Number(row.number)).toBeGreaterThan(0)
     const tr = (await db.query('SELECT to_status, transition_name, area, performed_by FROM ticket_transitions WHERE ticket_id=$1', [id])).rows[0]
-    expect(tr).toMatchObject({ to_status: 'OV asignada', transition_name: 'Enviar', area: 'Comercial', performed_by: 'Admin' })
+    expect(tr).toMatchObject({ to_status: 'Ticket creado', transition_name: 'Enviar', area: 'Comercial', performed_by: 'Admin' })
     const active = await getActiveTickets(db)
     expect(active.find((t) => t.row.id === id)?.refs.accountName).toBe('Gecelca S.A. E.S.P.')
     const detail = await getTicketWithRefs(db, id)

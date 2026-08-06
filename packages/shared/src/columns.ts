@@ -1,4 +1,5 @@
 import type { Column } from './types'
+import { STATUS_OV_ASIGNADA, STATUS_REMISION_CREADA, STATUS_TICKET_CREADO } from './transitions'
 
 // Columnas del tablero = estados del Blueprint de Servicio Técnico, en orden de flujo.
 // Cada estado del Blueprint tiene su columna, para que un ticket caiga exactamente en su estado.
@@ -6,7 +7,12 @@ import type { Column } from './types'
 // La última columna 'Otros' es una red de seguridad: recoge cualquier estado sin columna propia
 // para que ningún ticket desaparezca del tablero. El tablero la oculta si está vacía.
 export const COLUMNS: Column[] = [
-  { id: 'ov_asignada', label: 'OV asignada', statuses: ['OV asignada'] },
+  // Las dos primeras son la MISMA fase con dos nombres: 'OV asignada' es como la llama Zoho y llega
+  // así en todo lo que sincroniza; 'Ticket creado' es como nacen los tickets de la app. Conviven a
+  // propósito y no se fusionan en una columna para que se vea de dónde viene cada ticket.
+  { id: 'ov_asignada', label: 'OV asignada', statuses: [STATUS_OV_ASIGNADA] },
+  { id: 'ticket_creado', label: 'Ticket creado', statuses: [STATUS_TICKET_CREADO] },
+  { id: 'remision_creada', label: 'Remisión creada', statuses: [STATUS_REMISION_CREADA] },
   { id: 'ingresado', label: 'Ingresado', statuses: ['Ingresado'] },
   { id: 'revision', label: 'Rev./Diagnóstico', statuses: ['Rev./Diagnostico'] },
   { id: 'notificado', label: 'Notificado', statuses: ['Notificado'] },

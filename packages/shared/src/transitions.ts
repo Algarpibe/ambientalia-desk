@@ -55,10 +55,39 @@ const priority = (): TransitionField =>
  */
 export const FROM_STATUS_CREACION = '(creación)'
 
+/**
+ * Las dos fases tempranas del flujo, con nombre propio de la app.
+ *
+ * `OV asignada` es como llama Zoho a la fase en la que queda un ticket recién creado, y se conserva:
+ * los tickets siguen llegando de Zoho con ese estado y renombrarlo en la base los dejaría sin
+ * columna en el tablero y sin transición aplicable. Los que nacen aquí usan `Ticket creado`, que es
+ * lo que la fase significa de verdad para el servicio técnico. Las dos son la MISMA fase y por eso
+ * `habilitar_servicio` sale de las dos.
+ *
+ * `Remisión creada` es fase nueva: antes, un ticket con remisión y otro sin ella estaban en el mismo
+ * sitio de la máquina de estados. Se llega a ella sola, cuando n8n confirma el documento — no hay
+ * botón, así que no está en `TRANSITIONS`.
+ *
+ * Son constantes y no literales sueltos por lo mismo que `FROM_STATUS_CREACION`: los escribe
+ * `zoho-sync/db/repo` y los leen el tablero, el motor de transiciones y el enganche de la remisión.
+ */
+export const STATUS_OV_ASIGNADA = 'OV asignada'
+export const STATUS_TICKET_CREADO = 'Ticket creado'
+export const STATUS_REMISION_CREADA = 'Remisión creada'
+
+/**
+ * La transición que dispara el desenlace de n8n, y su inversa al anular. NO están en `TRANSITIONS`
+ * porque ahí solo va lo que la interfaz ofrece como botón: éstas las aplica el servidor solo.
+ */
+export const TRANSICION_REMISION_CONFIRMADA = { id: 'remision_confirmada', name: 'Remisión creada', area: 'Servicio Técnico' }
+export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Remisión anulada', area: 'Servicio Técnico' }
+
 // Transiciones 2–35 del Blueprint (la 1 es creación de ticket, se maneja aparte).
 // Nota: campos de tipo "Adjuntar archivos" se omiten en v1 (subida de archivos = deuda).
 export const TRANSITIONS: Transition[] = [
-  { id: 'habilitar_servicio', name: 'Habilitar Servicio', from: ['OV asignada'], to: 'Ingresado', area: 'Comercial',
+  // Sale de las tres: las dos formas de nombrar la fase inicial —Zoho y la app— y la fase de la
+  // remisión, que si no dejaría al ticket en un callejón sin salida en cuanto se le creara una.
+  { id: 'habilitar_servicio', name: 'Habilitar Servicio', from: [STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA], to: 'Ingresado', area: 'Comercial',
     fields: [comment(), cfText('Orden de Venta'), cfDate('Fecha Orden De Venta'), cfDate('Fecha de Cotización'), cfDate('Fecha Orden de Compra'), cfCheck('Cumple condiciones comerciales', true)] },
   { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
     fields: [comment(), cfText('Código Servicio'), cfDate('Fecha creación ticket'), cfDate('Fecha Remisión Entrada')] },

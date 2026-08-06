@@ -1123,7 +1123,7 @@ describe('POST /api/tickets (crear)', () => {
       salesOrderId: 'so1', equipoId: eq.id, tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo para servicio de mantenimiento', prefijo: 'MT',
     })
     expect(res.status).toBe(201)
-    expect(res.body.status).toBe('OV asignada')
+    expect(res.body.status).toBe('Ticket creado')
     expect(res.body.company).toBe('Gecelca S.A. E.S.P.')
     const t = (await db.query("SELECT marca, modelo, serial, equipo, equipo_id, salesorder_id FROM tickets WHERE salesorder_id='so1'")).rows[0]
     expect(t).toMatchObject({ marca: 'Grimm', modelo: 'EDM180C', serial: '18A20070', equipo: 'Monitor PM10/PM2.5', equipo_id: eq.id })
@@ -1138,7 +1138,7 @@ describe('POST /api/tickets (crear)', () => {
       clientId: 'cli2', equipoId: eq.id, tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo', prefijo: 'CG', ordenVenta: 'manual-1',
     })
     expect(res.status).toBe(201)
-    expect(res.body.status).toBe('OV asignada')
+    expect(res.body.status).toBe('Ticket creado')
   })
 
   it('422 si el equipo no existe', async () => {
@@ -1409,5 +1409,83 @@ describe('GET /api/activities (global)', () => {
     expect(res.status).toBe(200)
     expect(res.body[0]).toMatchObject({ subject: 'Informe', ticketNumber: '#55' })
     expect((await request(app).get('/api/activities')).status).toBe(401)
+  })
+})
+
+/**
+ * Las dos fases tempranas del Blueprint que la app dejó de compartir con Zoho. Un ticket nacido
+ * aquí nace en "Ticket creado" y avanza a "Remisión creada" cuando n8n confirma el documento; los
+ * que vienen de Zoho conservan "OV asignada", que es su nombre para la misma fase.
+ */
+describe('Estados tempranos: Ticket creado → Remisión creada', () => {
+  const preparar = async () => {
+    await upsertEquipo(db, equipoRow('eq-e1', '18A20070'))
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-e','Gecelca S.A. E.S.P.')")
+  }
+  /** Un ticket nacido de verdad por la API: el estado inicial lo pone `createTicket`, no el test. */
+  const crearTicket = async (app: ReturnType<typeof appWith>['app'], cookie: string) => {
+    const r = await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      clientId: 'cli-e', equipoId: 'eq-e1', tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo',
+      prefijo: 'CG', ordenVenta: 'OV-1', prioridad: 'Media',
+    })
+    expect(r.status).toBe(201)
+    return r.body.id as string
+  }
+  const estadoDe = async (id: string) =>
+    (await db.query('SELECT status FROM tickets WHERE id=$1', [id])).rows[0].status
+
+  it('el ticket nace en "Ticket creado", no en "OV asignada"', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    expect(await estadoDe(await crearTicket(app, cookie))).toBe('Ticket creado')
+  })
+
+  // El ticket avanza cuando el documento EXISTE, no cuando se registró la intención: un envío que
+  // falla dejaría al ticket diciendo "Remisión creada" sin PDF ni carpeta detrás.
+  it('el desenlace confirmado lo mueve a "Remisión creada"; uno en error lo deja donde estaba', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith({ remisionCallbackToken: 'cb' })
+    const ticketId = await crearTicket(app, cookie)
+    const remId = async () => (await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId, fecha: '2026-08-03', incluye: [] })).body.id
+    const callback = (id: string, estado: string) => request(app).post(`/api/remisiones/${id}/callback`)
+      .set('X-Remision-Callback', 'cb').send({ estado })
+
+    const fallida = await remId()
+    await callback(fallida, 'error')
+    expect(await estadoDe(ticketId)).toBe('Ticket creado')
+
+    const buena = await remId()
+    await callback(buena, 'ok')
+    expect(await estadoDe(ticketId)).toBe('Remisión creada')
+  })
+
+  it('anular la única remisión confirmada lo devuelve, y restaurarla lo vuelve a adelantar', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith({ remisionCallbackToken: 'cb' })
+    const ticketId = await crearTicket(app, cookie)
+    const id = (await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId, fecha: '2026-08-03', incluye: [] })).body.id
+    await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'cb').send({ estado: 'ok' })
+    expect(await estadoDe(ticketId)).toBe('Remisión creada')
+
+    await request(app).post(`/api/remisiones/${id}/anular`).set('Cookie', cookie).send()
+    expect(await estadoDe(ticketId)).toBe('Ticket creado')
+
+    await request(app).post(`/api/remisiones/${id}/restaurar`).set('Cookie', cookie).send()
+    expect(await estadoDe(ticketId)).toBe('Remisión creada')
+  })
+
+  // La decisión del usuario: los estados nuevos son de los tickets de la app. Un ticket de Zoho
+  // conserva el suyo, porque moverlo lo marcaría `managed_by_app` y lo sacaría del sync sin pedirlo.
+  it('un ticket venido de Zoho conserva "OV asignada" aunque su remisión se confirme', async () => {
+    const cookie = await adminCookie(); await preparar()
+    await db.query(`INSERT INTO tickets (id, number, status, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+                    VALUES ('90210', 700, 'OV asignada', 'cli-e', 'Calibración', 'eq-e1', 'Grimm', 'EDM180C', '18A20070')`)
+    const { app } = appWith({ remisionCallbackToken: 'cb' })
+    const id = (await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: '90210', fecha: '2026-08-03', incluye: [] })).body.id
+    await request(app).post(`/api/remisiones/${id}/callback`).set('X-Remision-Callback', 'cb').send({ estado: 'ok' })
+    expect(await estadoDe('90210')).toBe('OV asignada')
   })
 })

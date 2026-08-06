@@ -12,6 +12,8 @@ import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { sincronizarEstadoPorRemision } from '../db/estadoPorRemision'
+import { TRANSITION_ACTOR } from '../transitionActor'
 
 // Mismo criterio que los adjuntos de resolución: solo imágenes, y SVG fuera (permite script embebido).
 const TIPOS_FOTO = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp'])
@@ -214,7 +216,11 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
   app.post('/api/remisiones/:id/anular', requireAuth(db), requireAdmin, asyncHandler(async (req, res) => {
     const id = String(req.params.id)
     if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    const rem = await getRemision(db, id)
     await anularRemision(db, id, req.user?.name ?? null)
+    // Si era la última confirmada, el ticket vuelve a "Ticket creado": dejarlo en "Remisión creada"
+    // sin ninguna detrás es justo la mentira que el estado tiene que evitar.
+    await sincronizarEstadoPorRemision(db, rem!.ticketId, req.user?.name ?? TRANSITION_ACTOR)
     res.json(await getRemision(db, id))
   }))
 
@@ -223,7 +229,9 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const id = String(req.params.id)
     if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
     await restaurarRemision(db, id)
-    res.json(await getRemision(db, id))
+    const rem = await getRemision(db, id)
+    await sincronizarEstadoPorRemision(db, rem!.ticketId, req.user?.name ?? TRANSITION_ACTOR)
+    res.json(rem)
   }))
 
   /**
@@ -235,11 +243,16 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (!config.remisionCallbackToken) { res.status(503).json({ error: 'Callback no configurado' }); return }
     if (req.get('X-Remision-Callback') !== config.remisionCallbackToken) { res.status(401).json({ error: 'No autorizado' }); return }
     const id = String(req.params.id)
-    if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    const rem = await getRemision(db, id)
+    if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
     const b = (req.body ?? {}) as { estado?: string; resultado?: unknown }
     const estado = b.estado === 'ok' || b.estado === 'ok_con_avisos' || b.estado === 'error' ? b.estado : null
     if (!estado) { res.status(422).json({ error: 'Estado inválido' }); return }
     await setResultadoRemision(db, id, estado, b.resultado ?? null)
+    // Aquí es donde el ticket avanza a "Remisión creada", y no al crear la remisión: es este
+    // callback el que dice que el documento existe de verdad en Drive. Un desenlace en `error` no
+    // mueve nada, porque el recuento de confirmadas no lo suma.
+    await sincronizarEstadoPorRemision(db, rem.ticketId, TRANSITION_ACTOR)
     res.json({ ok: true })
   }))
 

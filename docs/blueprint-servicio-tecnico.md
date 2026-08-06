@@ -38,14 +38,62 @@ no presentes hoy como columnas — a tener en cuenta:
 Categorías Zoho: cada estado pertenece a **ABIERTO** o **EN ESPERA** (afecta col 13
 "Hora de reapertura": se actualiza al pasar de EN ESPERA → ABIERTO).
 
+### 3.1 La fase temprana, donde la app ya no sigue a Zoho (2026-08-06)
+
+Las tres primeras fases dejaron de coincidir con el Blueprint de Zoho. Los literales viven en
+`shared/transitions.ts` (`STATUS_OV_ASIGNADA`, `STATUS_TICKET_CREADO`, `STATUS_REMISION_CREADA`),
+no sueltos en cada sitio.
+
+```
+   ticket creado en Zoho            ticket creado en Desk
+            │                                │
+            ▼                                ▼
+     ┌──────────────┐                 ┌──────────────┐
+     │ OV asignada  │                 │Ticket creado │      ← la MISMA fase, dos nombres
+     └──────┬───────┘                 └──────┬───────┘
+            │                                │
+            │                    n8n confirma la remisión
+            │                                ▼
+            │                         ┌──────────────┐
+            │                         │Remisión creada│
+            │                         └──────┬───────┘
+            │        Habilitar Servicio      │        (aplica desde las tres)
+            └────────────────┬───────────────┘
+                             ▼
+                       ┌───────────┐
+                       │ Ingresado │
+                       └───────────┘
+```
+
+- **`OV asignada`** — el nombre de Zoho. Se conserva porque los tickets siguen llegando por el sync
+  con ese estado: renombrarlo en la base los dejaría sin columna en el tablero (caerían en "Otros")
+  y sin transición aplicable. **No se migra nada.**
+- **`Ticket creado`** — el nombre propio de la app. Lo pone `createTicket`, y solo lo tienen los
+  tickets nacidos en Desk (id con prefijo `app-`).
+- **`Remisión creada`** — **fase nueva**, no existe en Zoho. Antes, un ticket con remisión y otro sin
+  ella estaban en el mismo sitio de la máquina de estados.
+
+**A `Remisión creada` NO se llega por un botón.** La escribe el servidor solo, desde
+`sincronizarEstadoPorRemision` (`server/db/estadoPorRemision.ts`), y por eso no está en `TRANSITIONS`:
+- **Avanza** cuando el callback de n8n trae `ok` u `ok_con_avisos`, es decir cuando el documento
+  existe de verdad en Drive. Un desenlace en `error` no mueve nada.
+- **Retrocede** al anular la última remisión vigente confirmada, y vuelve a avanzar al restaurarla.
+- **No toca** un ticket que ya pasó de esta fase: si alguien lo habilitó a `Ingresado`, anular una
+  remisión no puede tirar de él hacia atrás.
+- **No toca** un ticket de Zoho, que se queda en `OV asignada`. Moverlo lo marcaría `managed_by_app`
+  —lo hace `writeTransition`— y lo sacaría del sync sin que nadie lo haya pedido.
+
 ## 4. Transiciones (35) — origen → [transición] → destino · área · tipo · obligatorios · fechas
 
 > "Fechas/cols" referencia números del diccionario de campos.
 
+> Las filas 1 y 2 divergen de Zoho desde 2026-08-06 (ver §3.1), y 1b no existe allí.
+
 | # | Origen | Transición | Destino | Área | Tipo | Campos obligatorios | Fechas/cols |
 |---|---|---|---|---|---|---|---|
-| 1 | (Agregar Ticket) | Enviar | OV asignada | Comercial | Operativo manual | Orden de Venta | — |
-| 2 | OV asignada | Habilitar Servicio | Ingresado | Comercial | Operativo manual | Comentario, Orden de Venta, Fecha OV, Fecha Cotización, Fecha Orden de Compra, Cumple condiciones comerciales (Sí/No) | 41,42,43 |
+| 1 | (Agregar Ticket) | Enviar | **Ticket creado** (en Zoho: OV asignada) | Comercial | Operativo manual | Orden de Venta | — |
+| 1b | Ticket creado | **Remisión creada** (automática: callback de n8n `ok`/`ok_con_avisos`; la inversa al anular) | Remisión creada | Servicio Técnico | **Automática** — no hay botón | — | — |
+| 2 | **OV asignada · Ticket creado · Remisión creada** | Habilitar Servicio | Ingresado | Comercial | Operativo manual | Comentario, Orden de Venta, Fecha OV, Fecha Cotización, Fecha Orden de Compra, Cumple condiciones comerciales (Sí/No) | 41,42,43 |
 | 3 | Ingresado | Ingreso a Servicio | Rev./Diagnóstico | Servicio Técnico | Operativo manual | Código Servicio (valid.), Comentario, Fecha creación ticket (valid.), Fecha Remisión Entrada (oblig.) | 32,38,39 |
 | 4 | Rev./Diagnóstico | Escalado a Revisión | Notificado | Servicio Técnico | Operativo manual | Prioridad, Comentario, Días de entrega | 9,52 |
 | 5 | Notificado | Devolución a corrección | Rev./Diagnóstico | Servicio Técnico | Decisional | Comentario, Prioridad | 9 |
