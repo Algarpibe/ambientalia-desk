@@ -116,4 +116,67 @@ describe('sembrarCatalogo', () => {
     expect(eqEnv.rows[0].modelo_id).toBe(idPorMarca.get('Environics'))
     expect(eqHor.rows[0].modelo_id).toBe(idPorMarca.get('Horiba'))
   })
+
+  // Lo importante no es que "HORIBA" y "Horiba" se fundan en una marca (eso ya lo hacía altaSimple):
+  // es que el paso 5 tiene que encontrar el modelo aunque la grafía del equipo no coincida letra a
+  // letra con la que ganó en catalogo_marcas/catalogo_modelos. Si el paso 5 comparase texto literal
+  // en vez de la clave en minúsculas, la mitad de estos dos equipos se quedaría sin enlazar.
+  it('una marca escrita en dos grafías es una sola marca, y los dos equipos quedan enlazados', async () => {
+    await eq('HORIBA', 'APSA-370', 'Analizador de SO2')
+    await eq('Horiba', 'APSA-370', 'Analizador de SO2')
+
+    const r = await sembrarCatalogo(db)
+    expect(r.marcas).toBe(1)
+    expect(r.modelos).toBe(1)
+
+    const c = await leerCatalogo(db)
+    expect(c.marcas).toHaveLength(1)
+    expect(c.modelos).toHaveLength(1)
+
+    // La aserción que de verdad importa: ninguno de los dos se queda huérfano.
+    const sinEnlazar = await db.query('SELECT COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NULL')
+    expect(sinEnlazar.rows[0].n).toBe(0)
+  })
+
+  // El desempate de grafía usa `ORDER BY id` a propósito (ver catalogoSeed.ts, paso de agregación):
+  // sin ese ORDER BY, pg-mem (y Postgres en general) no garantiza en qué orden llegan las filas de un
+  // SELECT sin ordenar, así que dos ejecuciones sobre los mismos datos podrían "recordar" una grafía
+  // distinta cada vez. Para probar que el resultado depende del `id` y no del orden en que se
+  // insertaron las filas, aquí se inserta PRIMERO el equipo que tiene que PERDER (le damos a mano un
+  // id alfabéticamente mayor) y DESPUÉS el que tiene que ganar (id menor). Si alguien quitara el
+  // `ORDER BY id` por parecer decorativo, este test empezaría a fallar porque pg-mem suele devolver
+  // las filas en el orden en que se insertaron, y entonces ganaría la grafía insertada primero
+  // ('Horiba'), no la del id menor ('HORIBA').
+  it('la grafía que sobrevive la decide el id, no el orden de inserción', async () => {
+    await db.query(
+      "INSERT INTO equipos (id,serial,marca,modelo,tipo) VALUES ('eq-z-pierde','SN-Z','Horiba','APSA-370','Analizador de SO2')",
+    )
+    await db.query(
+      "INSERT INTO equipos (id,serial,marca,modelo,tipo) VALUES ('eq-a-gana','SN-A','HORIBA','APSA-370','Analizador de SO2')",
+    )
+
+    await sembrarCatalogo(db)
+    const c = await leerCatalogo(db)
+    expect(c.marcas).toHaveLength(1)
+    expect(c.marcas[0].nombre).toBe('HORIBA') // 'eq-a-gana' < 'eq-z-pierde': gana pese a haberse insertado después
+  })
+
+  // Dos grafías del mismo tipo ('Monitor PM10' y 'monitor pm10') no son dos tipos: son el mismo dato
+  // escrito distinto, y sus votos se suman al decidir el tipo más frecuente del modelo.
+  it('dos grafías del mismo tipo se suman como un solo tipo al contar votos', async () => {
+    await eq('Grimm', 'EDM180C', 'Monitor PM10')
+    await eq('Grimm', 'EDM180C', 'monitor pm10') // misma grafía en minúsculas: es el mismo voto que la anterior
+    await eq('Grimm', 'EDM180C', 'Requiere Calibración') // tipo distinto: queda en minoría, 1 voto frente a 2
+
+    const r = await sembrarCatalogo(db)
+    expect(r.tipos).toBe(2) // 'Monitor PM10'/'monitor pm10' cuentan como un solo tipo; el otro es el segundo
+
+    const m = (await leerCatalogo(db)).modelos[0]
+    // Gana con 2 votos frente a 1, y con el texto de su PRIMERA aparición, no con el de la mayoría
+    // de las grafías textuales (que aquí también sería 'Monitor PM10', pero por razones distintas).
+    expect(m.tipoNombre).toBe('Monitor PM10')
+    // Sigue habiendo más de un tipo DISTINTO en el conjunto (dos), así que se marca para revisar
+    // aunque uno domine en votos: elegir en silencio por el usuario sería esconder la ambigüedad real.
+    expect(m.revisar).toBe(true)
+  })
 })
