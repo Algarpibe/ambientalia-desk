@@ -7,12 +7,21 @@ const limpio = (v: unknown): string => String(v ?? '').trim()
 /** Las filas de pg como las trata este repo: `any` sube el lint por encima de la línea base. */
 const filas = (rows: unknown[]): Array<Record<string, unknown>> => rows as Array<Record<string, unknown>>
 
+/**
+ * Los cuatro primeros campos son DELTAS: lo creado/enlazado en ESTA ejecución, no el total en la
+ * tabla — por eso llevan el nombre en participio (`tiposCreados`, no `tipos`). Una segunda ejecución
+ * sobre un catálogo ya sembrado devuelve legítimamente `0` en los cuatro sin que eso signifique que
+ * el catálogo está vacío. `modelosPorRevisar` es la excepción a propósito: es el TOTAL de modelos
+ * marcados `revisar=true` que hay en la tabla ahora mismo, para que "no creé nada nuevo" no se lea
+ * nunca como "no queda nada pendiente".
+ */
 export interface ResumenSiembra {
-  tipos: number
-  marcas: number
-  modelos: number
+  tiposCreados: number
+  marcasCreadas: number
+  modelosCreados: number
   equiposEnlazados: number
-  conflictos: number
+  conflictosNuevos: number
+  modelosPorRevisar: number
 }
 
 /** Lo que un modelo acumula mientras se recorre el inventario: su casing de fábrica (la primera vez
@@ -42,6 +51,11 @@ interface AgregadoModelo {
  *
  * No reescribe ningún equipo salvo para rellenarle `modelo_id`: la evidencia del reparto de tipos
  * sigue viva en `equipos.tipo` para que la bandeja de conflictos (Task 7) pueda recalcularla.
+ *
+ * Es recuperable por la misma razón que es idempotente: si algo falla a mitad de la siembra (por
+ * ejemplo, la base cae entre la creación de una marca y la de sus modelos), lo escrito hasta ese
+ * punto se queda tal cual y una nueva llamada retoma justo donde se quedó, sin repetir ni perder
+ * nada de lo ya hecho.
  */
 export async function sembrarCatalogo(db: Queryable): Promise<ResumenSiembra> {
   // --- Lo que ya existe, indexado por nombre en minúsculas. ---
@@ -115,7 +129,7 @@ export async function sembrarCatalogo(db: Queryable): Promise<ResumenSiembra> {
 
   // --- Alta de modelos que faltan, con el tipo más frecuente entre sus equipos (regla 4). ---
   let modelosCreados = 0
-  let conflictos = 0
+  let conflictosNuevos = 0
   for (const [marcaKey, porMarca] of modelosVistos) {
     const marcaId = marcaIdPorNombre.get(marcaKey)! // ya se creó o ya existía en el paso anterior
     let modelosDeLaMarca = modeloIdPorMarca.get(marcaId)
@@ -138,7 +152,7 @@ export async function sembrarCatalogo(db: Queryable): Promise<ResumenSiembra> {
       const modeloId = await crearModelo(db, { marcaId, nombre: agregado.modeloOriginal, tipoId, revisar })
       modelosDeLaMarca.set(modeloKey, modeloId)
       modelosCreados++
-      if (revisar) conflictos++
+      if (revisar) conflictosNuevos++
     }
   }
 
@@ -157,5 +171,13 @@ export async function sembrarCatalogo(db: Queryable): Promise<ResumenSiembra> {
     equiposEnlazados++
   }
 
-  return { tipos: tiposCreados, marcas: marcasCreadas, modelos: modelosCreados, equiposEnlazados, conflictos }
+  // Total en la tabla, no delta de esta ejecución: es el dato que de verdad quiere quien acaba de
+  // sembrar. "No creé nada nuevo, pero quedan 23 modelos por revisar" es útil; un `conflictosNuevos`
+  // en 0 leído como "no queda nada pendiente" sería engañoso.
+  const pendientes = await db.query('SELECT COUNT(*)::int AS n FROM catalogo_modelos WHERE revisar = true')
+  const modelosPorRevisar = Number((pendientes.rows[0] as Record<string, unknown>).n)
+
+  return {
+    tiposCreados, marcasCreadas, modelosCreados, equiposEnlazados, conflictosNuevos, modelosPorRevisar,
+  }
 }

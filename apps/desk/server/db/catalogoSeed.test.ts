@@ -22,7 +22,7 @@ describe('sembrarCatalogo', () => {
     await eq('Grimm', 'EDM180C', 'Monitor PM10')
 
     const r = await sembrarCatalogo(db)
-    expect(r).toMatchObject({ marcas: 2, tipos: 3, modelos: 3, equiposEnlazados: 3, conflictos: 0 })
+    expect(r).toMatchObject({ marcasCreadas: 2, tiposCreados: 3, modelosCreados: 3, equiposEnlazados: 3, conflictosNuevos: 0 })
 
     const c = await leerCatalogo(db)
     expect(c.marcas.map((m) => m.nombre)).toEqual(['Grimm', 'Horiba'])
@@ -39,7 +39,7 @@ describe('sembrarCatalogo', () => {
     await eq('Horiba', 'APSA-370', 'Calibrador Multigas')
 
     const r = await sembrarCatalogo(db)
-    expect(r.conflictos).toBe(1)
+    expect(r.conflictosNuevos).toBe(1)
     const m = (await leerCatalogo(db)).modelos[0]
     expect(m).toMatchObject({ tipoNombre: 'Analizador de SO2', revisar: true })
   })
@@ -57,7 +57,7 @@ describe('sembrarCatalogo', () => {
   it('un modelo cuyos equipos no declaran tipo entra sin tipo y marcado', async () => {
     await eq('Horiba', 'APSA-370', null)
     const r = await sembrarCatalogo(db)
-    expect(r.conflictos).toBe(1)
+    expect(r.conflictosNuevos).toBe(1)
     expect((await leerCatalogo(db)).modelos[0]).toMatchObject({ tipoId: null, tipoNombre: null, revisar: true })
   })
 
@@ -67,7 +67,7 @@ describe('sembrarCatalogo', () => {
     await eq('Horiba', '  ', 'Monitor') // en blanco cuenta como ausente
 
     const r = await sembrarCatalogo(db)
-    expect(r.modelos).toBe(0)
+    expect(r.modelosCreados).toBe(0)
     expect(r.equiposEnlazados).toBe(0)
     const sinEnlazar = await db.query('SELECT COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NULL')
     expect(sinEnlazar.rows[0].n).toBe(3)
@@ -84,7 +84,7 @@ describe('sembrarCatalogo', () => {
     await db.query('UPDATE catalogo_modelos SET tipo_id=$1, revisar=false', [cal.id])
 
     const r2 = await sembrarCatalogo(db)
-    expect(r2).toMatchObject({ marcas: 0, tipos: 0, modelos: 0 })
+    expect(r2).toMatchObject({ marcasCreadas: 0, tiposCreados: 0, modelosCreados: 0 })
     const m = (await leerCatalogo(db)).modelos[0]
     expect(m).toMatchObject({ tipoNombre: 'Calibrador Multigas', revisar: false })
     expect((await leerCatalogo(db)).modelos.length).toBe(1)
@@ -99,7 +99,7 @@ describe('sembrarCatalogo', () => {
     await eq('Horiba', '6103', 'Analizador de SO2')
 
     const r = await sembrarCatalogo(db)
-    expect(r).toMatchObject({ marcas: 2, tipos: 2, modelos: 2, equiposEnlazados: 2, conflictos: 0 })
+    expect(r).toMatchObject({ marcasCreadas: 2, tiposCreados: 2, modelosCreados: 2, equiposEnlazados: 2, conflictosNuevos: 0 })
 
     const c = await leerCatalogo(db)
     const modelos6103 = c.modelos.filter((m) => m.nombre === '6103')
@@ -126,8 +126,8 @@ describe('sembrarCatalogo', () => {
     await eq('Horiba', 'APSA-370', 'Analizador de SO2')
 
     const r = await sembrarCatalogo(db)
-    expect(r.marcas).toBe(1)
-    expect(r.modelos).toBe(1)
+    expect(r.marcasCreadas).toBe(1)
+    expect(r.modelosCreados).toBe(1)
 
     const c = await leerCatalogo(db)
     expect(c.marcas).toHaveLength(1)
@@ -169,7 +169,7 @@ describe('sembrarCatalogo', () => {
     await eq('Grimm', 'EDM180C', 'Requiere Calibración') // tipo distinto: queda en minoría, 1 voto frente a 2
 
     const r = await sembrarCatalogo(db)
-    expect(r.tipos).toBe(2) // 'Monitor PM10'/'monitor pm10' cuentan como un solo tipo; el otro es el segundo
+    expect(r.tiposCreados).toBe(2) // 'Monitor PM10'/'monitor pm10' cuentan como un solo tipo; el otro es el segundo
 
     const m = (await leerCatalogo(db)).modelos[0]
     // Gana con 2 votos frente a 1, y con el texto de su PRIMERA aparición, no con el de la mayoría
@@ -178,5 +178,23 @@ describe('sembrarCatalogo', () => {
     // Sigue habiendo más de un tipo DISTINTO en el conjunto (dos), así que se marca para revisar
     // aunque uno domine en votos: elegir en silencio por el usuario sería esconder la ambigüedad real.
     expect(m.revisar).toBe(true)
+  })
+
+  // `conflictosNuevos` es un delta que se agota en cuanto no hay nada nuevo que crear; `modelosPorRevisar`
+  // es el total pendiente en la tabla y no se agota solo. Tras una segunda ejecución sin equipos
+  // nuevos, el delta vuelve a 0 —nada que crear—, pero el modelo ambiguo de la primera pasada sigue
+  // sin resolver y `modelosPorRevisar` tiene que seguir contándolo: leer ese 0 como "no queda nada
+  // por revisar" es justo el malentendido que separar los dos campos existe para evitar.
+  it('conflictosNuevos es un delta que se agota; modelosPorRevisar sigue contando lo pendiente', async () => {
+    await eq('Horiba', 'APSA-370', 'Analizador de SO2')
+    await eq('Horiba', 'APSA-370', 'Calibrador Multigas') // modelo ambiguo: queda revisar=true
+
+    const r1 = await sembrarCatalogo(db)
+    expect(r1.conflictosNuevos).toBe(1)
+    expect(r1.modelosPorRevisar).toBe(1)
+
+    const r2 = await sembrarCatalogo(db) // sin equipos nuevos: no hay nada que crear
+    expect(r2.conflictosNuevos).toBe(0) // nada NUEVO se marcó en esta ejecución
+    expect(r2.modelosPorRevisar).toBe(1) // pero el de la primera pasada sigue sin resolver
   })
 })
