@@ -106,3 +106,18 @@ expect(c.marcas).toEqual([])            // ← MAL
 El error de fondo era mezclar dos cosas: lo que `actualizarMarca` garantiza (que desactivar una marca **no** cae en cascada sobre sus modelos) y lo que `leerCatalogo` decide enseñar. El test corregido comprueba las filas crudas de `catalogo_marcas` y `catalogo_modelos`, que es justo lo primero, y deja lo segundo a su test.
 
 **Lección para las tareas que quedan:** no des por hecho que desactivar algo lo hace desaparecer de `leerCatalogo`. Si un test necesita comprobar lo que una función de escritura hace, míralo en la tabla, no a través de la capa de lectura.
+
+## C8 — Task 6: la siembra es insensible a mayúsculas, también al enlazar (mejor que lo escrito)
+
+La especificación decía que el paso 5 rellena `equipos.modelo_id` «cruzando por coincidencia **exacta** de (marca, modelo)». La implementación (`fa1f90c`) no lo hace así, y **hace bien**.
+
+El inventario real trae la misma marca escrita de varias formas (`Horiba` y `HORIBA`, `Grimm` y `GRIMM`). Con coincidencia exacta, el catálogo se habría quedado con una sola grafía y **todos los equipos escritos de la otra forma habrían quedado huérfanos**, sin `modelo_id`, que es justo el problema que esta fase viene a cerrar.
+
+Lo que hace en su lugar:
+
+- Agrega e indexa por `toLowerCase()`, así que las dos grafías son la misma marca y el mismo modelo.
+- **La grafía que sobrevive en el catálogo es determinista**: la del equipo con el `id` alfabéticamente menor, gracias a un `ORDER BY id` en la consulta de equipos. Ese `ORDER BY` no es decorativo — sin él, dos ejecuciones sobre los mismos datos podrían guardar grafías distintas.
+- El paso 5 busca también por `toLowerCase()`, así que enlaza los equipos de las dos grafías al mismo modelo. **Ningún equipo queda huérfano por una diferencia de mayúsculas.**
+- Los tipos se suman igual: `Monitor PM10` y `monitor pm10` cuentan como un solo tipo, y se guarda la primera grafía vista. Si además hay otro tipo distinto, `revisar` sigue encendiéndose, que es lo correcto.
+
+**Por qué importa dejarlo escrito:** que funcione depende de que el `toLowerCase()` esté también en las claves de búsqueda del enlace, no solo en las de agregación. No es evidente leyendo el código por encima, y «simplificarlo» a una comparación literal rompería el enlace de cientos de equipos. Por eso lleva tests propios que lo fijan.
