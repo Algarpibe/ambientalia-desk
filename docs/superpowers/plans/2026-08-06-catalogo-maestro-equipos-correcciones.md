@@ -121,3 +121,28 @@ Lo que hace en su lugar:
 - Los tipos se suman igual: `Monitor PM10` y `monitor pm10` cuentan como un solo tipo, y se guarda la primera grafía vista. Si además hay otro tipo distinto, `revisar` sigue encendiéndose, que es lo correcto.
 
 **Por qué importa dejarlo escrito:** que funcione depende de que el `toLowerCase()` esté también en las claves de búsqueda del enlace, no solo en las de agregación. No es evidente leyendo el código por encima, y «simplificarlo» a una comparación literal rompería el enlace de cientos de equipos. Por eso lleva tests propios que lo fijan.
+
+## C9 — `ResumenSiembra` cambia de forma: los contadores dicen que son deltas
+
+Los cinco contadores cuentan lo creado en **esa** ejecución, no el total. El tipo no lo decía y los nombres tampoco, así que una segunda siembra sobre un catálogo ya poblado devolvía `{ tipos: 0, marcas: 0, modelos: 0, conflictos: 0 }` — que se lee como «no hay nada» cuando significa «no había nada nuevo que crear».
+
+`conflictos` era el caso grave: devolvía `0` aunque quedaran decenas de modelos marcados para revisar de la primera pasada. Justo el número que necesita quien acaba de sembrar, y le dábamos el contrario.
+
+La forma nueva:
+
+```ts
+export interface ResumenSiembra {
+  tiposCreados: number
+  marcasCreadas: number
+  modelosCreados: number
+  equiposEnlazados: number
+  conflictosNuevos: number
+  /** TOTAL de modelos con `revisar = true` en la tabla, no el delta. Es lo que el administrador
+   *  necesita ver: «no creé nada nuevo, pero quedan 23 por revisar». */
+  modelosPorRevisar: number
+}
+```
+
+Sigue el precedente de `seedChecklist`, que ya distinguía `insertados` de `existentes` por esta misma razón.
+
+⚠️ **La Task 9 tiene que usar los nombres nuevos.** El test que el plan propone para el endpoint de siembra comprueba `{ marcas: 1, tipos: 1, modelos: 1, equiposEnlazados: 1 }`; con la forma nueva son `{ marcasCreadas: 1, tiposCreados: 1, modelosCreados: 1, equiposEnlazados: 1 }`. Y el mensaje de `logger.info` de esa ruta debe reflejar los nombres nuevos e incluir `modelosPorRevisar`.
