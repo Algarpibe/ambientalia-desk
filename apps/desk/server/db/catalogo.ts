@@ -114,3 +114,90 @@ export async function crearModelo(
   )
   return id
 }
+
+/** Entrada del catálogo que alguien está usando. Se traduce a 409 con el conteo delante. */
+export class EntradaEnUso extends Error {
+  constructor(public readonly usos: number) {
+    super(`En uso por ${usos}`)
+    this.name = 'EntradaEnUso'
+  }
+}
+
+/** Dónde se mira si una entrada está en uso antes de dejar borrarla. */
+const USOS: Record<'tipos' | 'marcas' | 'modelos', { tabla: string; consulta: string }> = {
+  tipos: { tabla: 'catalogo_tipos', consulta: 'SELECT COUNT(*)::int AS n FROM catalogo_modelos WHERE tipo_id = $1' },
+  marcas: { tabla: 'catalogo_marcas', consulta: 'SELECT COUNT(*)::int AS n FROM catalogo_modelos WHERE marca_id = $1' },
+  modelos: { tabla: 'catalogo_modelos', consulta: 'SELECT COUNT(*)::int AS n FROM equipos WHERE modelo_id = $1' },
+}
+
+/**
+ * Si una entrada del catálogo existe. Sin claves foráneas declaradas, un `marcaId` inventado crearía
+ * un modelo colgando de nada que ningún desplegable enseñaría jamás. La frontera es la ruta, igual
+ * que el alta de equipos comprueba su cliente con `getClient`.
+ */
+export async function existeEnCatalogo(db: Queryable, que: 'tipos' | 'marcas' | 'modelos', id: string): Promise<boolean> {
+  const r = await db.query(`SELECT 1 FROM ${USOS[que].tabla} WHERE id = $1`, [id])
+  return r.rows.length > 0
+}
+
+export async function actualizarTipo(db: Queryable, id: string, patch: { nombre?: string; activo?: boolean }): Promise<void> {
+  if (patch.nombre !== undefined) await db.query('UPDATE catalogo_tipos SET nombre=$2 WHERE id=$1', [id, patch.nombre.trim()])
+  if (patch.activo !== undefined) await db.query('UPDATE catalogo_tipos SET activo=$2 WHERE id=$1', [id, patch.activo])
+}
+
+/**
+ * La marca NO se renombra, solo se activa o desactiva. `perfilChecklist` decide el checklist
+ * "Incluye" de una remisión leyendo el TEXTO de la marca (`marca === 'horiba'`), así que un
+ * renombrado cambiaría en silencio qué accesorios pide la remisión de todos sus equipos. Renombrar
+ * y fusionar necesitan su propio diseño, con ese aviso delante.
+ */
+export async function actualizarMarca(db: Queryable, id: string, patch: { activo?: boolean }): Promise<void> {
+  if (patch.activo !== undefined) await db.query('UPDATE catalogo_marcas SET activo=$2 WHERE id=$1', [id, patch.activo])
+}
+
+/**
+ * Cambia el tipo de un modelo y/o lo activa. Tampoco renombra, por la misma razón que la marca:
+ * `perfilChecklist` mira el modelo por subcadena (`modelo.includes('edm180')`).
+ *
+ * Fijar `tipoId` apaga `revisar`: un administrador que elige el tipo a conciencia es exactamente lo
+ * que resuelve la duda que la siembra dejó abierta.
+ *
+ * Devuelve siempre cuántos equipos declaran otro tipo, se hayan corregido o no, para que el número
+ * quede a la vista sin tener que ir a buscarlo.
+ */
+export async function actualizarModelo(
+  db: Queryable,
+  id: string,
+  patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean },
+): Promise<{ discrepan: number }> {
+  if (patch.activo !== undefined) await db.query('UPDATE catalogo_modelos SET activo=$2 WHERE id=$1', [id, patch.activo])
+  if (patch.tipoId === undefined) return { discrepan: 0 }
+
+  await db.query('UPDATE catalogo_modelos SET tipo_id=$2, revisar=false WHERE id=$1', [id, patch.tipoId])
+  const modelo = await getModelo(db, id)
+  const tipo = modelo?.tipo ?? null
+  if (!tipo) return { discrepan: 0 }
+
+  const r = await db.query(
+    "SELECT COUNT(*)::int AS n FROM equipos WHERE modelo_id = $1 AND COALESCE(tipo,'') <> $2",
+    [id, tipo],
+  )
+  const discrepan = Number((r.rows[0] as Record<string, unknown>).n)
+  if (patch.corregirEquipos === true && discrepan > 0) {
+    await db.query("UPDATE equipos SET tipo=$2, updated_at=now() WHERE modelo_id = $1 AND COALESCE(tipo,'') <> $2", [id, tipo])
+  }
+  return { discrepan }
+}
+
+/**
+ * Borrado físico, y solo si nadie la usa: borrar una entrada usada dejaría equipos apuntando a la
+ * nada. Cuando está en uso se niega con el conteo, que es el dato con el que se decide si lo que
+ * tocaba era desactivarla.
+ */
+export async function borrarEntrada(db: Queryable, que: 'tipos' | 'marcas' | 'modelos', id: string): Promise<void> {
+  const { tabla, consulta } = USOS[que]
+  const r = await db.query(consulta, [id])
+  const usos = Number((r.rows[0] as Record<string, unknown>).n)
+  if (usos > 0) throw new EntradaEnUso(usos)
+  await db.query(`DELETE FROM ${tabla} WHERE id = $1`, [id])
+}

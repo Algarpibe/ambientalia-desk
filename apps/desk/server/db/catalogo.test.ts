@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { leerCatalogo, getModelo, crearTipo, crearMarca, crearModelo, NombreRepetido } from './catalogo'
+import {
+  leerCatalogo, getModelo, crearTipo, crearMarca, crearModelo, NombreRepetido,
+  actualizarTipo, actualizarMarca, actualizarModelo, borrarEntrada, existeEnCatalogo, EntradaEnUso,
+} from './catalogo'
 
 let db: Queryable
 beforeEach(async () => {
@@ -116,5 +119,89 @@ describe('altas del catálogo', () => {
     await crearMarca(db, 'Horiba')
     await expect(crearMarca(db, 'horiba')).rejects.toBeInstanceOf(NombreRepetido)
     await expect(crearMarca(db, '  Horiba  ')).rejects.toBeInstanceOf(NombreRepetido)
+  })
+})
+
+describe('cambios del catálogo', () => {
+  it('renombra y desactiva un tipo', async () => {
+    const t = await crearTipo(db, 'Analizador SO2')
+    await actualizarTipo(db, t, { nombre: 'Analizador de Dióxido de Azufre (SO2)' })
+    expect((await leerCatalogo(db)).tipos[0].nombre).toBe('Analizador de Dióxido de Azufre (SO2)')
+    await actualizarTipo(db, t, { activo: false })
+    expect((await leerCatalogo(db)).tipos).toEqual([])
+  })
+
+  // Fijar el tipo a conciencia ES resolver la duda, así que apaga `revisar` sin que haya que pedirlo
+  // aparte. Por eso no hay endpoint "resolver": sería el mismo camino con otro nombre.
+  it('fijar el tipo de un modelo apaga revisar y cuenta los equipos que discrepan', async () => {
+    const so2 = await crearTipo(db, 'Analizador de SO2')
+    const cal = await crearTipo(db, 'Calibrador Multigas')
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: cal, revisar: true })
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-1','A','Horiba','APSA-370','Calibrador Multigas',$1)", [modelo])
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-2','B','Horiba','APSA-370','Analizador de SO2',$1)", [modelo])
+
+    const r = await actualizarModelo(db, modelo, { tipoId: so2, corregirEquipos: false })
+    expect(r.discrepan).toBe(1) // eq-1 sigue diciendo Calibrador
+    const m = (await leerCatalogo(db)).modelos[0]
+    expect(m).toMatchObject({ tipoNombre: 'Analizador de SO2', revisar: false })
+    const eq1 = await db.query("SELECT tipo FROM equipos WHERE id='eq-1'")
+    expect(eq1.rows[0].tipo).toBe('Calibrador Multigas') // sin corregir, no se toca
+  })
+
+  it('corregirEquipos reescribe el tipo de los que discrepan', async () => {
+    const so2 = await crearTipo(db, 'Analizador de SO2')
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: null, revisar: true })
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-1','A','Horiba','APSA-370','Calibrador Multigas',$1)", [modelo])
+
+    const r = await actualizarModelo(db, modelo, { tipoId: so2, corregirEquipos: true })
+    expect(r.discrepan).toBe(1)
+    const eq1 = await db.query("SELECT tipo FROM equipos WHERE id='eq-1'")
+    expect(eq1.rows[0].tipo).toBe('Analizador de SO2')
+  })
+
+  // Se comprueba la tabla cruda y no leerCatalogo: con un modelo activo colgando, la marca seguiría
+  // apareciendo en leerCatalogo por la invariante ya fijada en ba7974b (ningún modelo visible se
+  // queda sin su marca en el desplegable) — eso es un asunto de esa función, no de esta. Lo que
+  // actualizarMarca tiene que demostrar es que NO desactiva en cascada el modelo ni toca el equipo.
+  it('desactivar una marca no toca sus modelos ni sus equipos', async () => {
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: null })
+    await actualizarMarca(db, marca, { activo: false })
+    const m = await db.query('SELECT activo FROM catalogo_marcas WHERE id=$1', [marca])
+    expect(m.rows[0].activo).toBe(false)
+    const mo = await db.query('SELECT activo FROM catalogo_modelos WHERE id=$1', [modelo])
+    expect(mo.rows[0].activo).toBe(true) // el modelo sigue vivo: desactivar la marca no es borrarla
+  })
+
+  // Borrar lo que alguien está usando dejaría equipos apuntando a la nada. Se niega con el conteo
+  // delante, que es lo que permite decidir si desactivarlo en vez de borrarlo.
+  it('no borra un modelo en uso, y sí uno libre', async () => {
+    const marca = await crearMarca(db, 'Horiba')
+    const usado = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: null })
+    const libre = await crearModelo(db, { marcaId: marca, nombre: 'APOA-370', tipoId: null })
+    await db.query("INSERT INTO equipos (id,serial,modelo_id) VALUES ('eq-1','A',$1)", [usado])
+
+    await expect(borrarEntrada(db, 'modelos', usado)).rejects.toBeInstanceOf(EntradaEnUso)
+    await expect(borrarEntrada(db, 'modelos', libre)).resolves.toBeUndefined()
+    expect((await leerCatalogo(db)).modelos.map((m) => m.id)).toEqual([usado])
+  })
+
+  it('no borra una marca con modelos colgando ni un tipo asignado a un modelo', async () => {
+    const tipo = await crearTipo(db, 'Analizador de SO2')
+    const marca = await crearMarca(db, 'Horiba')
+    await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: tipo })
+    await expect(borrarEntrada(db, 'marcas', marca)).rejects.toBeInstanceOf(EntradaEnUso)
+    await expect(borrarEntrada(db, 'tipos', tipo)).rejects.toBeInstanceOf(EntradaEnUso)
+  })
+
+  // Sin claves foráneas declaradas en este esquema, la ruta necesita poder preguntar si algo existe
+  // antes de crear un modelo colgando de una marca inventada.
+  it('existeEnCatalogo distingue lo que hay de lo que no', async () => {
+    const marca = await crearMarca(db, 'Horiba')
+    expect(await existeEnCatalogo(db, 'marcas', marca)).toBe(true)
+    expect(await existeEnCatalogo(db, 'marcas', 'cmar-inventada')).toBe(false)
+    expect(await existeEnCatalogo(db, 'tipos', 'ctip-inventado')).toBe(false)
   })
 })
