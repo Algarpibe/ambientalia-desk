@@ -90,3 +90,19 @@ Los dos casos necesitan su test: `422` con marca inexistente y `422` con tipo in
 Ningún revisor debe ejecutar `git checkout <sha> -- .`, `git reset --hard`, `git stash` ni `git clean`. Para comprobar que un test muerde: editar el fichero concreto, ejecutar, y restaurar **ese** fichero con `git checkout -- ruta/concreta.ts`, confirmando después con `git status --short` que el árbol quedó como estaba.
 
 Un revisor de la Task 3 ejecutó `git checkout 161bc94 -- .`. Resultó inofensivo porque ese commit era HEAD y el árbol estaba limpio, pero pudo haber destruido trabajo sin recuperación.
+
+## C7 — Task 5: el test de «desactivar una marca» del plan estaba mal (YA CORREGIDO, commit `366863d`)
+
+El plan proponía este test:
+
+```ts
+await actualizarMarca(db, marca, { activo: false })
+const c = await leerCatalogo(db)
+expect(c.marcas).toEqual([])            // ← MAL
+```
+
+**Contradice la invariante fijada en `ba7974b`**: una marca desactivada que conserva un modelo activo SÍ debe seguir apareciendo en `leerCatalogo`, porque si no el modelo quedaría sin marca en el desplegable y sería inalcanzable. Esa invariante tiene su propio test dedicado.
+
+El error de fondo era mezclar dos cosas: lo que `actualizarMarca` garantiza (que desactivar una marca **no** cae en cascada sobre sus modelos) y lo que `leerCatalogo` decide enseñar. El test corregido comprueba las filas crudas de `catalogo_marcas` y `catalogo_modelos`, que es justo lo primero, y deja lo segundo a su test.
+
+**Lección para las tareas que quedan:** no des por hecho que desactivar algo lo hace desaparecer de `leerCatalogo`. Si un test necesita comprobar lo que una función de escritura hace, míralo en la tabla, no a través de la capa de lectura.
