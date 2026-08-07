@@ -1667,3 +1667,114 @@ describe('Estados tempranos: Ticket creado → Remisión creada', () => {
     expect(await estadoDe('90210')).toBe('OV asignada')
   })
 })
+
+describe('Catálogo maestro de equipos', () => {
+  /** Alta por la API, que es el camino que se quiere probar. */
+  async function altaBasica(app: ReturnType<typeof appWith>['app'], cookie: string) {
+    const tipoId = (await request(app).post('/api/catalogo/tipos').set('Cookie', cookie).send({ nombre: 'Analizador de SO2' })).body.id
+    const marcaId = (await request(app).post('/api/catalogo/marcas').set('Cookie', cookie).send({ nombre: 'Horiba' })).body.id
+    const modeloId = (await request(app).post('/api/catalogo/modelos').set('Cookie', cookie).send({ marcaId, nombre: 'APSA-370', tipoId })).body.id
+    return { tipoId, marcaId, modeloId }
+  }
+
+  it('alta de tipo, marca y modelo; GET los devuelve con el tipo resuelto', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const { modeloId } = await altaBasica(app, cookie)
+    expect(modeloId).toMatch(/^cmod-/)
+    const c = await request(app).get('/api/catalogo').set('Cookie', cookie)
+    expect(c.status).toBe(200)
+    expect(c.body.modelos[0]).toMatchObject({ nombre: 'APSA-370', tipoNombre: 'Analizador de SO2' })
+  })
+
+  it('409 al repetir el nombre de un tipo', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    await request(app).post('/api/catalogo/tipos').set('Cookie', cookie).send({ nombre: 'Analizador de SO2' })
+    const dup = await request(app).post('/api/catalogo/tipos').set('Cookie', cookie).send({ nombre: 'Analizador de SO2' })
+    expect(dup.status).toBe(409)
+  })
+
+  // Sin claves foráneas en el esquema, la ruta es la única red contra un modelo colgando de nada.
+  it('422 si la marca o el tipo del modelo no existen', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const { marcaId } = await altaBasica(app, cookie)
+    const sinMarca = await request(app).post('/api/catalogo/modelos').set('Cookie', cookie).send({ marcaId: 'cmar-inventada', nombre: 'X' })
+    expect(sinMarca.status).toBe(422)
+    const sinTipo = await request(app).post('/api/catalogo/modelos').set('Cookie', cookie).send({ marcaId, nombre: 'Y', tipoId: 'ctip-inventado' })
+    expect(sinTipo.status).toBe(422)
+  })
+
+  it('409 al borrar un modelo en uso, con el conteo en el mensaje', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const { modeloId } = await altaBasica(app, cookie)
+    await db.query("INSERT INTO equipos (id,serial,modelo_id) VALUES ('eq-u','A',$1)", [modeloId])
+    const res = await request(app).delete(`/api/catalogo/modelos/${modeloId}`).set('Cookie', cookie)
+    expect(res.status).toBe(409)
+    expect(res.body.error).toContain('1')
+  })
+
+  it('PATCH del modelo fija el tipo y devuelve cuántos equipos discrepan', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const { modeloId } = await altaBasica(app, cookie)
+    const otro = (await request(app).post('/api/catalogo/tipos').set('Cookie', cookie).send({ nombre: 'Calibrador Multigas' })).body.id
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-d','A','Horiba','APSA-370','Analizador de SO2',$1)", [modeloId])
+    const res = await request(app).patch(`/api/catalogo/modelos/${modeloId}`).set('Cookie', cookie).send({ tipoId: otro, corregirEquipos: true })
+    expect(res.status).toBe(200)
+    expect(res.body.discrepan).toBe(1)
+    const eq = await db.query("SELECT tipo FROM equipos WHERE id='eq-d'")
+    expect(eq.rows[0].tipo).toBe('Calibrador Multigas')
+  })
+
+  // `?incluir=` es lo que evita que editar un equipo con un modelo ya desactivado deje el campo en
+  // blanco: sin el modelo en la lista, el desplegable no tendría cómo mostrar el valor actual.
+  it('?incluir= trae un modelo desactivado que de otro modo no saldría en el listado', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const { modeloId } = await altaBasica(app, cookie)
+    await request(app).patch(`/api/catalogo/modelos/${modeloId}`).set('Cookie', cookie).send({ activo: false })
+
+    const sinIncluir = await request(app).get('/api/catalogo').set('Cookie', cookie)
+    expect(sinIncluir.body.modelos.find((m: { id: string }) => m.id === modeloId)).toBeUndefined()
+
+    const conIncluir = await request(app).get(`/api/catalogo?incluir=${modeloId}`).set('Cookie', cookie)
+    expect(conIncluir.body.modelos.find((m: { id: string }) => m.id === modeloId)).toBeDefined()
+  })
+
+  // Esconder el botón no protege el dato: la frontera es el endpoint. Se comprueba en TODAS las
+  // rutas de escritura, no en una de muestra.
+  it('escribir exige super administrador; leer solo exige sesión', async () => {
+    const admin = await adminCookie()
+    const { app } = appWith()
+    const { marcaId, modeloId, tipoId } = await altaBasica(app, admin)
+    const op = await userCookie(['Servicio Técnico'])
+
+    // El método se resuelve con una cadena de ternarios (no un índice dinámico `obj[metodo]`) para no
+    // necesitar `as any`: cada rama llama al método de supertest ya tipado.
+    const escrituras: Array<['post' | 'patch' | 'delete', string, object]> = [
+      ['post', '/api/catalogo/tipos', { nombre: 'X' }],
+      ['post', '/api/catalogo/marcas', { nombre: 'Y' }],
+      ['post', '/api/catalogo/modelos', { marcaId, nombre: 'Z', tipoId }],
+      ['patch', `/api/catalogo/tipos/${tipoId}`, { nombre: 'W' }],
+      ['patch', `/api/catalogo/marcas/${marcaId}`, { activo: false }],
+      ['patch', `/api/catalogo/modelos/${modeloId}`, { activo: false }],
+      ['delete', `/api/catalogo/modelos/${modeloId}`, {}],
+    ]
+    const pedir = (metodo: 'post' | 'patch' | 'delete', ruta: string, cuerpo: object, cookie?: string) => {
+      const req = metodo === 'post' ? request(app).post(ruta) : metodo === 'patch' ? request(app).patch(ruta) : request(app).delete(ruta)
+      return cookie ? req.set('Cookie', cookie).send(cuerpo) : req.send(cuerpo)
+    }
+    for (const [metodo, ruta, cuerpo] of escrituras) {
+      const sinRol = await pedir(metodo, ruta, cuerpo, op)
+      expect([metodo, ruta, sinRol.status]).toEqual([metodo, ruta, 403])
+      const sinSesion = await pedir(metodo, ruta, cuerpo)
+      expect([metodo, ruta, sinSesion.status]).toEqual([metodo, ruta, 401])
+    }
+    expect((await request(app).get('/api/catalogo').set('Cookie', op)).status).toBe(200)
+    expect((await request(app).get('/api/catalogo')).status).toBe(401)
+    expect((await request(app).get('/api/catalogo/conflictos').set('Cookie', op)).status).toBe(403)
+  })
+})

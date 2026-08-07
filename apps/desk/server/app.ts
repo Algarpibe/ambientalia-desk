@@ -13,6 +13,7 @@ import rateLimit from 'express-rate-limit'
 import { registerAuthRoutes } from './auth/routes'
 import { registerTicketRoutes } from './routes/tickets'
 import { registerDirectoryRoutes } from './routes/directory'
+import { registerCatalogoRoutes } from './routes/catalogo'
 import { registerEquipoRoutes } from './routes/equipos'
 import { registerAnalisisRoutes } from './routes/analisis'
 import { registerAdminRoutes } from './routes/admin'
@@ -47,6 +48,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
 
   registerTicketRoutes(app, { db, sync, zohoFetch, config })
   registerDirectoryRoutes(app, { db })
+  registerCatalogoRoutes(app, { db })
   registerEquipoRoutes(app, { db })
   registerAnalisisRoutes(app, { db })
   registerAdminRoutes(app, { db, sync, measurer, detailBackfiller })
