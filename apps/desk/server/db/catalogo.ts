@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Catalogo, CatalogoMarca, CatalogoModelo, CatalogoTipo } from '@ambientalia/shared'
+import type { Catalogo, CatalogoMarca, CatalogoModelo, CatalogoTipo, Conflictos, ConflictoModelo } from '@ambientalia/shared'
 
 /** Fila cruda de cualquiera de las tablas del catálogo, sin comprometerse a sus columnas exactas. */
 type Fila = Record<string, unknown>
@@ -43,6 +43,61 @@ export async function leerCatalogo(db: Queryable, incluirModeloId?: string | nul
     marcas: visibles.map(filaMarca),
     modelos: (modelos.rows as Fila[]).map(filaModelo),
   }
+}
+
+/**
+ * Los modelos que la siembra dejó marcados, con el reparto de tipos que lo demuestra.
+ *
+ * No hay tabla de conflictos: como la siembra no reescribe `equipos` (salvo para rellenar
+ * `modelo_id`), la evidencia sigue viva en los datos y el reparto se puede recalcular agrupando
+ * sobre `equipos` en vez de guardarlo aparte. Así la bandeja nunca miente — si alguien corrige
+ * equipos por otra vía (a mano, por otra ruta), la cuenta lo refleja sola en la siguiente lectura.
+ */
+export async function leerConflictos(db: Queryable): Promise<Conflictos> {
+  // LEFT JOIN a catalogo_tipos: un modelo marcado puede no tener tipo asignado (la siembra también
+  // marca `revisar` cuando el inventario no declaraba ninguno), y con un JOIN normal ese modelo
+  // desaparecería de la bandeja en vez de mostrarse con tipoActual nulo.
+  const marcados = await db.query(
+    `SELECT mo.id, mo.nombre, ma.nombre AS marca, ti.nombre AS tipo_actual
+       FROM catalogo_modelos mo
+       JOIN catalogo_marcas ma ON ma.id = mo.marca_id
+       LEFT JOIN catalogo_tipos ti ON ti.id = mo.tipo_id
+      WHERE mo.revisar = true
+      ORDER BY ma.nombre, mo.nombre`,
+  )
+  // Decisión sobre los equipos que no declaran tipo (equipos.tipo NULL): en vez de desaparecer del
+  // reparto (que se leería en pantalla como "sin conflicto"), cuentan aparte bajo la etiqueta
+  // '(sin tipo)'. Es evidencia tan real como cualquier tipo declarado — el administrador necesita
+  // verla para decidir, no que se la escondan.
+  const repartos = await db.query(
+    "SELECT modelo_id, COALESCE(tipo,'(sin tipo)') AS tipo, COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NOT NULL GROUP BY modelo_id, tipo",
+  )
+  const sinModelo = await db.query('SELECT COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NULL')
+
+  // Agrupa el reparto en JavaScript, por modelo_id: GROUP BY no promete ningún orden de filas, así
+  // que el agrupado y el desempate se hacen aquí y no se delegan a la base.
+  const repartoPorModelo = new Map<string, Array<{ tipo: string; equipos: number }>>()
+  for (const r of repartos.rows as Fila[]) {
+    const modeloId = r.modelo_id as string
+    const lista = repartoPorModelo.get(modeloId) ?? []
+    lista.push({ tipo: r.tipo as string, equipos: Number(r.n) })
+    repartoPorModelo.set(modeloId, lista)
+  }
+  // De más a menos, que es como se lee para decidir cuál es el tipo bueno; empatados, alfabético para
+  // que el orden sea determinista y la bandeja no se reordene sola entre recargas.
+  for (const lista of repartoPorModelo.values()) {
+    lista.sort((a, b) => (b.equipos - a.equipos) || a.tipo.localeCompare(b.tipo))
+  }
+
+  const modelos: ConflictoModelo[] = (marcados.rows as Fila[]).map((r) => ({
+    modeloId: r.id as string,
+    marca: r.marca as string,
+    modelo: r.nombre as string,
+    tipoActual: (r.tipo_actual as string) ?? null,
+    reparto: repartoPorModelo.get(r.id as string) ?? [],
+  }))
+
+  return { modelos, equiposSinModelo: Number((sinModelo.rows[0] as Fila).n) }
 }
 
 /** Un modelo con su marca y su tipo ya resueltos a texto, la forma que consume el alta de equipos. */

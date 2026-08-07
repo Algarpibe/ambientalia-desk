@@ -4,6 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   leerCatalogo, getModelo, crearTipo, crearMarca, crearModelo, NombreRepetido,
   actualizarTipo, actualizarMarca, actualizarModelo, borrarEntrada, existeEnCatalogo, EntradaEnUso,
+  leerConflictos,
 } from './catalogo'
 
 let db: Queryable
@@ -241,5 +242,74 @@ describe('cambios del catálogo', () => {
     expect(m).toMatchObject({ tipoId: null, tipoNombre: null, revisar: false })
     const eq1 = await db.query("SELECT tipo FROM equipos WHERE id='eq-1'")
     expect(eq1.rows[0].tipo).toBe('Calibrador Multigas') // no se toca ningún equipo
+  })
+})
+
+describe('leerConflictos', () => {
+  it('devuelve los modelos marcados con su reparto real y cuenta los equipos sin modelo', async () => {
+    const so2 = await crearTipo(db, 'Analizador de SO2')
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: so2, revisar: true })
+    await crearModelo(db, { marcaId: marca, nombre: 'LIMPIO', tipoId: so2 })
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-1','A','Horiba','APSA-370','Analizador de SO2',$1)", [modelo])
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-2','B','Horiba','APSA-370','Analizador de SO2',$1)", [modelo])
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-3','C','Horiba','APSA-370','Calibrador Multigas',$1)", [modelo])
+    await db.query("INSERT INTO equipos (id,serial) VALUES ('eq-4','D')") // sin modelo
+
+    const c = await leerConflictos(db)
+    expect(c.modelos.length).toBe(1) // el limpio no aparece
+    expect(c.modelos[0]).toMatchObject({ modeloId: modelo, marca: 'Horiba', modelo: 'APSA-370', tipoActual: 'Analizador de SO2' })
+    // Ordenado de más a menos, que es como se lee para decidir.
+    expect(c.modelos[0].reparto).toEqual([
+      { tipo: 'Analizador de SO2', equipos: 2 },
+      { tipo: 'Calibrador Multigas', equipos: 1 },
+    ])
+    expect(c.equiposSinModelo).toBe(1)
+  })
+
+  // Caso real de producción: la siembra marca `revisar` también cuando el inventario NO declaraba
+  // ningún tipo (candidatos.length !== 1 incluye el cero). El modelo tiene que seguir saliendo en la
+  // bandeja —si el LEFT JOIN a catalogo_tipos se cambiara por un JOIN, este modelo desaparecería en
+  // vez de mostrarse con tipoActual nulo, que es lo que de verdad hay que enseñarle al administrador.
+  it('un modelo marcado sin tipo asignado sale en la bandeja con tipoActual nulo', async () => {
+    const marca = await crearMarca(db, 'Environics')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'S9000', tipoId: null, revisar: true })
+
+    const c = await leerConflictos(db)
+    expect(c.modelos).toHaveLength(1)
+    expect(c.modelos[0]).toMatchObject({ modeloId: modelo, marca: 'Environics', modelo: 'S9000', tipoActual: null })
+    expect(c.modelos[0].reparto).toEqual([]) // ningún equipo enlazado todavía: no hay nada que repartir
+  })
+
+  // Decisión: los equipos que no declaran tipo (equipos.tipo NULL) SÍ entran en el reparto, con la
+  // etiqueta '(sin tipo)', en vez de desaparecer. Ocultarlos disfrazaría de "sin conflicto" —o de
+  // reparto vacío, que en la pantalla se leería igual de mal— un modelo cuyos equipos en realidad no
+  // dicen nada: es evidencia tan real como cualquier tipo declarado, y el administrador necesita verla
+  // para decidir.
+  it('los equipos que no declaran tipo cuentan en el reparto como "(sin tipo)"', async () => {
+    const marca = await crearMarca(db, 'Casella')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'CEL-712', tipoId: null, revisar: true })
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,modelo_id) VALUES ('eq-5','E','Casella','CEL-712',$1)", [modelo])
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,modelo_id) VALUES ('eq-6','F','Casella','CEL-712',$1)", [modelo])
+
+    const c = await leerConflictos(db)
+    expect(c.modelos[0].reparto).toEqual([{ tipo: '(sin tipo)', equipos: 2 }])
+  })
+
+  // Sin desempate fijo, GROUP BY podría devolver el empate en el orden de inserción (aquí, Calibrador
+  // antes que Analizador) y la bandeja se reordenaría sola entre recargas sin que nadie tocara nada.
+  it('un empate en el reparto se desempata alfabéticamente, no por el orden de la base', async () => {
+    // equipos.tipo es texto libre, no una FK a catalogo_tipos: no hace falta crear los tipos para
+    // que el reparto los cuente, así que esta prueba se queda deliberadamente sin crearTipo.
+    const marca = await crearMarca(db, 'Teledyne')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'T400', tipoId: null, revisar: true })
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-7','G','Teledyne','T400','Calibrador Multigas',$1)", [modelo])
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-8','H','Teledyne','T400','Analizador de SO2',$1)", [modelo])
+
+    const c = await leerConflictos(db)
+    expect(c.modelos[0].reparto).toEqual([
+      { tipo: 'Analizador de SO2', equipos: 1 },
+      { tipo: 'Calibrador Multigas', equipos: 1 },
+    ])
   })
 })
