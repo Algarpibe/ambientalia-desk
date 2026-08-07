@@ -196,6 +196,18 @@ describe('cambios del catálogo', () => {
     await expect(borrarEntrada(db, 'tipos', tipo)).rejects.toBeInstanceOf(EntradaEnUso)
   })
 
+  // El test anterior solo ejercita la rama de rechazo por uso. Sin este, el DELETE FROM real de
+  // 'tipos' y de 'marcas' —la interpolación del nombre de tabla que sale de USOS— nunca corre, y un
+  // nombre de tabla equivocado en esa constante pasaría inadvertido hasta producción.
+  it('borra de verdad un tipo libre y una marca libre', async () => {
+    const tipo = await crearTipo(db, 'Analizador de SO2')
+    const marca = await crearMarca(db, 'Horiba')
+    await borrarEntrada(db, 'tipos', tipo)
+    await borrarEntrada(db, 'marcas', marca)
+    expect((await db.query('SELECT 1 FROM catalogo_tipos WHERE id=$1', [tipo])).rows).toEqual([])
+    expect((await db.query('SELECT 1 FROM catalogo_marcas WHERE id=$1', [marca])).rows).toEqual([])
+  })
+
   // Sin claves foráneas declaradas en este esquema, la ruta necesita poder preguntar si algo existe
   // antes de crear un modelo colgando de una marca inventada.
   it('existeEnCatalogo distingue lo que hay de lo que no', async () => {
@@ -203,5 +215,31 @@ describe('cambios del catálogo', () => {
     expect(await existeEnCatalogo(db, 'marcas', marca)).toBe(true)
     expect(await existeEnCatalogo(db, 'marcas', 'cmar-inventada')).toBe(false)
     expect(await existeEnCatalogo(db, 'tipos', 'ctip-inventado')).toBe(false)
+  })
+
+  // 'modelos' es la tercera entrada de la tabla de despacho USOS y ninguno de los tests de arriba la
+  // ejercita a través de existeEnCatalogo: sin este, un error ahí pasaría igual de inadvertido.
+  it('existeEnCatalogo también distingue un modelo real de uno inventado', async () => {
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: null })
+    expect(await existeEnCatalogo(db, 'modelos', modelo)).toBe(true)
+    expect(await existeEnCatalogo(db, 'modelos', 'cmod-inventado')).toBe(false)
+  })
+
+  // La rama en la que el modelo se queda SIN tipo: el UPDATE pone tipo_id=NULL y apaga revisar igual
+  // que cuando se fija uno concreto, pero al no haber tipo con qué comparar la función sale antes de
+  // contar. Sin este test esa salida temprana no la ejercitaba nadie.
+  it('fijar tipoId a null deja el modelo sin tipo, apaga revisar y no cuenta discrepancias', async () => {
+    const cal = await crearTipo(db, 'Calibrador Multigas')
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: cal, revisar: true })
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id) VALUES ('eq-1','A','Horiba','APSA-370','Calibrador Multigas',$1)", [modelo])
+
+    const r = await actualizarModelo(db, modelo, { tipoId: null })
+    expect(r.discrepan).toBe(0) // sin tipo no hay con qué comparar: no es una cuenta real, es el valor fijo de la salida temprana
+    const m = (await leerCatalogo(db)).modelos[0]
+    expect(m).toMatchObject({ tipoId: null, tipoNombre: null, revisar: false })
+    const eq1 = await db.query("SELECT tipo FROM equipos WHERE id='eq-1'")
+    expect(eq1.rows[0].tipo).toBe('Calibrador Multigas') // no se toca ningún equipo
   })
 })

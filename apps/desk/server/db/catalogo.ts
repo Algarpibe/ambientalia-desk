@@ -162,8 +162,10 @@ export async function actualizarMarca(db: Queryable, id: string, patch: { activo
  * Fijar `tipoId` apaga `revisar`: un administrador que elige el tipo a conciencia es exactamente lo
  * que resuelve la duda que la siembra dejó abierta.
  *
- * Devuelve siempre cuántos equipos declaran otro tipo, se hayan corregido o no, para que el número
- * quede a la vista sin tener que ir a buscarlo.
+ * Devuelve cuántos equipos declaran otro tipo, se hayan corregido o no, para que el número quede a
+ * la vista sin tener que ir a buscarlo. OJO: eso solo es una cuenta real cuando `tipoId` se fija a
+ * un tipo concreto. Si `tipoId` no viene en el patch, o se fija a `null` (el modelo se queda sin
+ * tipo), la función sale antes de contar y el `0` que devuelve es un valor fijo, no una cuenta.
  */
 export async function actualizarModelo(
   db: Queryable,
