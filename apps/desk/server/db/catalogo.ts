@@ -77,24 +77,24 @@ export class NombreRepetido extends Error {
  *
  * No sustituye a la restricción de la tabla, que sigue ahí: esto da el mensaje, aquella da la
  * garantía cuando dos administradores dan de alta lo mismo a la vez.
+ *
+ * `crearTipo` y `crearMarca` son idénticas salvo la tabla y el prefijo del id, así que comparten
+ * este ayudante. `crearModelo` se queda fuera a propósito: su unicidad es compuesta (marca+nombre) y
+ * su `INSERT` lleva columnas propias, así que meterla aquí convertiría el ayudante en un
+ * constructor de consultas. El nombre de tabla se interpola pero nunca viene del usuario: el tipo
+ * del parámetro solo admite los dos literales de abajo.
  */
-export async function crearTipo(db: Queryable, nombre: string): Promise<string> {
+async function altaSimple(db: Queryable, tabla: 'catalogo_tipos' | 'catalogo_marcas', prefijo: string, nombre: string): Promise<string> {
   const n = nombre.trim()
-  const ya = await db.query('SELECT 1 FROM catalogo_tipos WHERE LOWER(nombre) = $1', [n.toLowerCase()])
+  const ya = await db.query(`SELECT 1 FROM ${tabla} WHERE LOWER(nombre) = $1`, [n.toLowerCase()])
   if (ya.rows.length) throw new NombreRepetido(n)
-  const id = 'ctip-' + randomUUID()
-  await db.query('INSERT INTO catalogo_tipos (id,nombre) VALUES ($1,$2)', [id, n])
+  const id = `${prefijo}-${randomUUID()}`
+  await db.query(`INSERT INTO ${tabla} (id,nombre) VALUES ($1,$2)`, [id, n])
   return id
 }
 
-export async function crearMarca(db: Queryable, nombre: string): Promise<string> {
-  const n = nombre.trim()
-  const ya = await db.query('SELECT 1 FROM catalogo_marcas WHERE LOWER(nombre) = $1', [n.toLowerCase()])
-  if (ya.rows.length) throw new NombreRepetido(n)
-  const id = 'cmar-' + randomUUID()
-  await db.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [id, n])
-  return id
-}
+export const crearTipo = (db: Queryable, nombre: string): Promise<string> => altaSimple(db, 'catalogo_tipos', 'ctip', nombre)
+export const crearMarca = (db: Queryable, nombre: string): Promise<string> => altaSimple(db, 'catalogo_marcas', 'cmar', nombre)
 
 /** El modelo es único dentro de su marca: un "6103" de Environics y otro de Horiba coexisten. */
 export async function crearModelo(
