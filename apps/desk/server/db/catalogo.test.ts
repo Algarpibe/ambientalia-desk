@@ -4,7 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   leerCatalogo, getModelo, crearTipo, crearMarca, crearModelo, NombreRepetido,
   actualizarTipo, actualizarMarca, actualizarModelo, borrarEntrada, existeEnCatalogo, EntradaEnUso,
-  leerConflictos,
+  leerConflictos, SIN_TIPO,
 } from './catalogo'
 
 let db: Queryable
@@ -282,18 +282,18 @@ describe('leerConflictos', () => {
   })
 
   // Decisión: los equipos que no declaran tipo (equipos.tipo NULL) SÍ entran en el reparto, con la
-  // etiqueta '(sin tipo)', en vez de desaparecer. Ocultarlos disfrazaría de "sin conflicto" —o de
+  // etiqueta SIN_TIPO, en vez de desaparecer. Ocultarlos disfrazaría de "sin conflicto" —o de
   // reparto vacío, que en la pantalla se leería igual de mal— un modelo cuyos equipos en realidad no
   // dicen nada: es evidencia tan real como cualquier tipo declarado, y el administrador necesita verla
   // para decidir.
-  it('los equipos que no declaran tipo cuentan en el reparto como "(sin tipo)"', async () => {
+  it('los equipos que no declaran tipo cuentan en el reparto como SIN_TIPO', async () => {
     const marca = await crearMarca(db, 'Casella')
     const modelo = await crearModelo(db, { marcaId: marca, nombre: 'CEL-712', tipoId: null, revisar: true })
     await db.query("INSERT INTO equipos (id,serial,marca,modelo,modelo_id) VALUES ('eq-5','E','Casella','CEL-712',$1)", [modelo])
     await db.query("INSERT INTO equipos (id,serial,marca,modelo,modelo_id) VALUES ('eq-6','F','Casella','CEL-712',$1)", [modelo])
 
     const c = await leerConflictos(db)
-    expect(c.modelos[0].reparto).toEqual([{ tipo: '(sin tipo)', equipos: 2 }])
+    expect(c.modelos[0].reparto).toEqual([{ tipo: SIN_TIPO, equipos: 2 }])
   })
 
   // Sin desempate fijo, GROUP BY podría devolver el empate en el orden de inserción (aquí, Calibrador
@@ -311,5 +311,41 @@ describe('leerConflictos', () => {
       { tipo: 'Analizador de SO2', equipos: 1 },
       { tipo: 'Calibrador Multigas', equipos: 1 },
     ])
+  })
+
+  // El único test de arriba con dos modelos (APSA-370 y LIMPIO) descarta el segundo por no estar
+  // marcado, así que el ORDER BY ma.nombre, mo.nombre de la consulta principal nunca se ejercitaba
+  // con más de una fila de salida. Los nombres se eligen para que el orden alfabético de marca
+  // contradiga el orden de creación (Zeta se crea primero pero sale última) y para que, dentro de
+  // Alfa, el orden de alta de sus dos modelos (M-B antes que M-A) también contradiga el alfabético:
+  // si alguien rompe el ORDER BY al fusionar otra cosa, este test lo nota.
+  it('con varios modelos marcados, el orden es por marca y luego por modelo', async () => {
+    const so2 = await crearTipo(db, 'Analizador de SO2')
+    const zeta = await crearMarca(db, 'Zeta')
+    const alfa = await crearMarca(db, 'Alfa')
+    const modeloZeta = await crearModelo(db, { marcaId: zeta, nombre: 'M-1', tipoId: so2, revisar: true })
+    const modeloAlfaB = await crearModelo(db, { marcaId: alfa, nombre: 'M-B', tipoId: so2, revisar: true })
+    const modeloAlfaA = await crearModelo(db, { marcaId: alfa, nombre: 'M-A', tipoId: so2, revisar: true })
+
+    const c = await leerConflictos(db)
+    expect(c.modelos.map((m) => m.modeloId)).toEqual([modeloAlfaA, modeloAlfaB, modeloZeta])
+  })
+
+  // El revisor confirmó que contar también los equipos dados de baja es la decisión correcta:
+  // `active=false` es un borrado lógico, no un estado operativo, y la pregunta que responde la
+  // bandeja ("¿qué tipo es este modelo?") es una propiedad del modelo, no un censo de lo que está en
+  // servicio hoy. Sin este test, alguien podría añadir `AND active = true` pensando que "arregla" el
+  // reparto y nadie se enteraría de que rompió la intención.
+  it('el reparto cuenta también los equipos dados de baja (active=false)', async () => {
+    const so2 = await crearTipo(db, 'Analizador de SO2')
+    const marca = await crearMarca(db, 'Horiba')
+    const modelo = await crearModelo(db, { marcaId: marca, nombre: 'APSA-370', tipoId: so2, revisar: true })
+    await db.query(
+      "INSERT INTO equipos (id,serial,marca,modelo,tipo,modelo_id,active) VALUES ('eq-9','I','Horiba','APSA-370','Analizador de SO2',$1,false)",
+      [modelo],
+    )
+
+    const c = await leerConflictos(db)
+    expect(c.modelos[0].reparto).toEqual([{ tipo: 'Analizador de SO2', equipos: 1 }])
   })
 })

@@ -46,6 +46,15 @@ export async function leerCatalogo(db: Queryable, incluirModeloId?: string | nul
 }
 
 /**
+ * La etiqueta que ve el administrador en el reparto cuando los equipos de un modelo marcado no
+ * declaran tipo (equipos.tipo NULL). No es un tipo real del catálogo — no tiene fila en
+ * catalogo_tipos ni id propio —, así que se exporta como constante: en cuanto la pantalla (Task 13)
+ * necesite reconocer esta fila (para resaltarla, excluirla de un conteo, cambiarle la redacción),
+ * lo hace comparando contra esto y no contra un literal repetido a mano en el cliente.
+ */
+export const SIN_TIPO = '(sin tipo)'
+
+/**
  * Los modelos que la siembra dejó marcados, con el reparto de tipos que lo demuestra.
  *
  * No hay tabla de conflictos: como la siembra no reescribe `equipos` (salvo para rellenar
@@ -67,10 +76,16 @@ export async function leerConflictos(db: Queryable): Promise<Conflictos> {
   )
   // Decisión sobre los equipos que no declaran tipo (equipos.tipo NULL): en vez de desaparecer del
   // reparto (que se leería en pantalla como "sin conflicto"), cuentan aparte bajo la etiqueta
-  // '(sin tipo)'. Es evidencia tan real como cualquier tipo declarado — el administrador necesita
-  // verla para decidir, no que se la escondan.
+  // SIN_TIPO. Es evidencia tan real como cualquier tipo declarado — el administrador necesita verla
+  // para decidir, no que se la escondan.
+  //
+  // Ninguna de las dos consultas de abajo filtra por `equipos.active`: adrede, porque `active` es un
+  // borrado lógico (el equipo se dio de baja), no un estado operativo, y lo que la bandeja responde
+  // es "¿qué tipo es este modelo?" — una propiedad del modelo, no un censo de lo que está en
+  // servicio hoy. Un equipo archivado sigue siendo evidencia de cómo se tipificó en su día, y
+  // excluirlo del reparto podría voltear el tipo ganador sin ninguna razón de negocio detrás.
   const repartos = await db.query(
-    "SELECT modelo_id, COALESCE(tipo,'(sin tipo)') AS tipo, COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NOT NULL GROUP BY modelo_id, tipo",
+    `SELECT modelo_id, COALESCE(tipo,'${SIN_TIPO}') AS tipo, COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NOT NULL GROUP BY modelo_id, tipo`,
   )
   const sinModelo = await db.query('SELECT COUNT(*)::int AS n FROM equipos WHERE modelo_id IS NULL')
 
