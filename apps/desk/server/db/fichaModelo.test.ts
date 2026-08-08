@@ -92,6 +92,33 @@ describe('crearFichero', () => {
   })
 })
 
+// El agujero real: la unicidad de la foto vivía solo en `crearFichero`. Un enlace con tipo='foto'
+// pasaba de largo y dejaba una segunda fila `tipo='foto'` que ni `foto` ni `documentos` enseñan —
+// por eso aquí se cuenta con un SELECT crudo, y no a través de `leerFicha`, que es justo lo que
+// esconde el problema.
+describe('la foto es única sea cual sea la vía de alta', () => {
+  const filasFoto = async (): Promise<Array<Record<string, unknown>>> => {
+    const r = await db.query("SELECT id, nombre FROM catalogo_documentos WHERE modelo_id = 'mo1' AND tipo = 'foto'")
+    return r.rows as Array<Record<string, unknown>>
+  }
+
+  it('fichero y luego enlace: solo queda una fila, la del enlace', async () => {
+    await crearFichero(db, 'mo1', { tipo: 'foto', nombre: 'V', contentB64: 'AAA', contentType: 'image/png', size: 3, creadoPor: 'A' })
+    const nuevo = await crearEnlace(db, 'mo1', { tipo: 'foto', nombre: 'N', url: 'https://x/n.png', creadoPor: 'A' })
+    const filas = await filasFoto()
+    expect(filas).toHaveLength(1)
+    expect(filas[0].id).toBe(nuevo)
+  })
+
+  it('enlace y luego fichero: solo queda una fila, la del fichero', async () => {
+    await crearEnlace(db, 'mo1', { tipo: 'foto', nombre: 'V', url: 'https://x/v.png', creadoPor: 'A' })
+    const nuevo = await crearFichero(db, 'mo1', { tipo: 'foto', nombre: 'N', contentB64: 'BBB', contentType: 'image/png', size: 3, creadoPor: 'A' })
+    const filas = await filasFoto()
+    expect(filas).toHaveLength(1)
+    expect(filas[0].id).toBe(nuevo)
+  })
+})
+
 describe('contenidoDocumento', () => {
   // Un enlace no tiene fichero que servir. Devolver la url por esta vía confundiría dos cosas
   // distintas: la ruta la traduce a 404, que es lo que de verdad ocurre.

@@ -2005,4 +2005,17 @@ describe('Catálogo maestro de equipos', () => {
     expect((await request(app).delete(baja)).status).toBe(401)
     expect((await request(app).delete(baja).set('Cookie', admin)).status).toBe(200)
   })
+
+  // El código ya los maneja bien (leerFicha, existeEnCatalogo y borrarDocumento devuelven todos un
+  // "no" limpio), pero solo estaba probado a nivel de repo — nunca por HTTP.
+  it('404 sobre un modelo o un documento que no existen', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    expect((await request(app).get('/api/catalogo/modelos/cmod-inventado/ficha').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).post('/api/catalogo/modelos/cmod-inventado/documentos').set('Cookie', cookie)
+      .send({ tipo: 'manual', nombre: 'M', url: 'https://x' })).status).toBe(404)
+
+    const modeloId = await modeloParaFicha(app, cookie)
+    expect((await request(app).delete(`/api/catalogo/modelos/${modeloId}/documentos/cdoc-inventado`).set('Cookie', cookie)).status).toBe(404)
+  })
 })

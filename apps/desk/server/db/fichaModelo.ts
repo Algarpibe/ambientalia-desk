@@ -16,6 +16,17 @@ export class DocumentoInvalido extends Error {
 /** Sin `content_b64` NUNCA: el fichero se pide por el proxy, no viaja en la ficha. */
 const SELECT_DOC = 'id, tipo, nombre, url, content_type, size'
 
+/**
+ * La foto de referencia es UNA por modelo. Vale igual suba un fichero o pegue un enlace: si la regla
+ * viviera solo en una de las dos vías, la otra dejaría filas `tipo='foto'` huérfanas — invisibles,
+ * porque `leerFicha` devuelve una sola en `foto` y el filtro de `documentos` excluye el resto. Por
+ * eso las dos altas llaman aquí en vez de cada una llevar su propio `DELETE`.
+ */
+async function sustituirFotoAnterior(db: Queryable, modeloId: string, tipo: TipoDocumento): Promise<void> {
+  if (tipo !== 'foto') return
+  await db.query("DELETE FROM catalogo_documentos WHERE modelo_id = $1 AND tipo = 'foto'", [modeloId])
+}
+
 const aDocumento = (r: Record<string, unknown>): DocumentoModelo => ({
   id: String(r.id),
   tipo: String(r.tipo) as TipoDocumento,
@@ -60,6 +71,7 @@ export async function crearEnlace(
   const url = input.url.trim()
   if (!nombre) throw new DocumentoInvalido('El nombre es obligatorio')
   if (!url) throw new DocumentoInvalido('El enlace es obligatorio')
+  await sustituirFotoAnterior(db, modeloId, input.tipo)
   const id = 'cdoc-' + randomUUID()
   await db.query(
     'INSERT INTO catalogo_documentos (id,modelo_id,tipo,nombre,url,created_by) VALUES ($1,$2,$3,$4,$5,$6)',
@@ -72,9 +84,8 @@ export async function crearEnlace(
  * Alta de un documento que es un FICHERO subido: sin url. Lo sirve después el proxy autenticado de
  * la aplicación, igual que las fotos de remisión — nada sale de la sesión.
  *
- * Si el tipo es `foto`, **sustituye la anterior del modelo** en vez de acumularse: la foto de
- * referencia es una por modelo, y sin esto la ficha acabaría con cinco sin que nadie supiera cuál es
- * la buena. El resto de tipos sí se acumulan: un modelo puede tener varios manuales.
+ * La foto sustituye a la anterior vía `sustituirFotoAnterior` (ver arriba): el resto de tipos sí se
+ * acumulan, un modelo puede tener varios manuales.
  */
 export async function crearFichero(
   db: Queryable,
@@ -83,9 +94,7 @@ export async function crearFichero(
 ): Promise<string> {
   const nombre = input.nombre.trim()
   if (!nombre) throw new DocumentoInvalido('El nombre es obligatorio')
-  if (input.tipo === 'foto') {
-    await db.query("DELETE FROM catalogo_documentos WHERE modelo_id = $1 AND tipo = 'foto'", [modeloId])
-  }
+  await sustituirFotoAnterior(db, modeloId, input.tipo)
   const id = 'cdoc-' + randomUUID()
   await db.query(
     'INSERT INTO catalogo_documentos (id,modelo_id,tipo,nombre,content_b64,content_type,size,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
