@@ -237,8 +237,9 @@ export const actualizarTipoCatalogo = (id: string, patch: { nombre?: string; act
 /** La marca no se renombra: `perfilChecklist` decide el checklist de la remisión leyendo su TEXTO. */
 export const actualizarMarcaCatalogo = (id: string, patch: { activo: boolean }) =>
   escribirCatalogo<{ ok: true }>(`/api/catalogo/marcas/${id}`, 'PATCH', patch)
-/** Devuelve cuántos equipos declaran otro tipo, se hayan corregido o no. */
-export const actualizarModeloCatalogo = (id: string, patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean }) =>
+/** Devuelve cuántos equipos declaran otro tipo, se hayan corregido o no. `sku` es el de la ficha
+ *  técnica: el servidor ya lo acepta en este mismo PATCH, no hace falta una ruta aparte. */
+export const actualizarModeloCatalogo = (id: string, patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean; sku?: string | null }) =>
   escribirCatalogo<{ discrepan: number }>(`/api/catalogo/modelos/${id}`, 'PATCH', patch)
 
 export const borrarEntradaCatalogo = (entidad: 'tipos' | 'marcas' | 'modelos', id: string) =>

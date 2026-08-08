@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo } from '@ambientalia/shared'
+import type { Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
+import { TIPOS_DOCUMENTO } from '@ambientalia/shared'
 import {
   getCatalogo, getConflictosCatalogo,
   crearTipoCatalogo, crearMarcaCatalogo, crearModeloCatalogo,
   actualizarTipoCatalogo, actualizarMarcaCatalogo, actualizarModeloCatalogo,
   borrarEntradaCatalogo,
+  getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -22,6 +24,7 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [creando, setCreando] = useState(false)
+  const [fichaModelo, setFichaModelo] = useState<CatalogoModelo | null>(null)
 
   async function reload() {
     try {
@@ -250,6 +253,7 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
                           </td>
                           <td>{mo.activo ? 'Activo' : 'Inactivo'}</td>
                           <td className="text-right whitespace-nowrap">
+                            <button onClick={() => setFichaModelo(mo)} className="text-[12px] text-blue-600 mr-3">Ficha</button>
                             <button onClick={() => toggleModelo(mo)} className="text-[12px] text-blue-600 mr-3">{mo.activo ? 'Desactivar' : 'Activar'}</button>
                             <button onClick={() => eliminarModelo(mo)} className="text-[12px] text-red-600">Eliminar</button>
                           </td>
@@ -322,6 +326,14 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
       {creando && catalogo && (
         <NuevaEntradaModal seccion={seccion} catalogo={catalogo} onClose={() => setCreando(false)} onCreated={() => { setCreando(false); reload() }} />
       )}
+
+      {fichaModelo && (
+        <FichaModeloModal
+          modelo={fichaModelo}
+          etiqueta={`${marcaPorId.get(fichaModelo.marcaId)?.nombre ?? '?'} ${fichaModelo.nombre}`}
+          onClose={() => setFichaModelo(null)}
+        />
+      )}
     </div>
   )
 }
@@ -382,5 +394,197 @@ function NuevaEntradaModal({ seccion, catalogo, onClose, onCreated }: {
         </div>
       </form>
     </div>
+  )
+}
+
+/**
+ * La ficha técnica del modelo, en edición. Vive aparte del listado de Modelos porque no es una fila
+ * más: SKU, foto y documentos cuelgan del modelo (35), no del equipo (354), y esta es la única
+ * pantalla que los administra — `FichaTecnica` (hoja de vida y ticket) es de solo lectura.
+ */
+function FichaModeloModal({ modelo, etiqueta, onClose }: {
+  modelo: CatalogoModelo
+  etiqueta: string
+  onClose: () => void
+}) {
+  const [ficha, setFicha] = useState<FichaModelo | null>(null)
+  const [sku, setSku] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function recargar() {
+    const f = await getFichaModelo(modelo.id)
+    setFicha(f)
+    setSku(f.sku ?? '')
+  }
+  useEffect(() => {
+    getFichaModelo(modelo.id)
+      .then((f) => { setFicha(f); setSku(f.sku ?? '') })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+  }, [modelo.id])
+
+  /** Igual que `ejecutar` en el componente padre: el error del servidor se enseña tal cual, sin `alert()`. */
+  async function ejecutar(accion: () => Promise<void>) {
+    setError(null); setBusy(true)
+    try { await accion() }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)) }
+    finally { setBusy(false) }
+  }
+
+  async function guardarSku() {
+    await ejecutar(async () => {
+      await actualizarModeloCatalogo(modelo.id, { sku: sku.trim() || null })
+      await recargar()
+    })
+  }
+
+  async function subirFoto(archivo: File) {
+    await ejecutar(async () => {
+      await subirDocumento(modelo.id, 'foto', archivo.name, archivo)
+      await recargar()
+    })
+  }
+
+  async function eliminarDocumento(docId: string) {
+    if (!confirm('¿Eliminar este documento de la ficha?')) return
+    await ejecutar(async () => {
+      await borrarDocumentoModelo(modelo.id, docId)
+      await recargar()
+    })
+  }
+
+  const field = 'border border-slate-200 rounded p-2 text-[13px]'
+
+  return (
+    <div className="fixed inset-0 z-[85] bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg p-5 w-[600px] max-h-[90vh] overflow-y-auto flex flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[15px] font-bold text-slate-800">Ficha técnica · {etiqueta}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><span className="material-symbols-outlined">close</span></button>
+        </div>
+
+        {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
+
+        {!ficha ? (
+          <div className="text-center text-slate-400 text-[13px] py-6">Cargando…</div>
+        ) : (
+          <>
+            <section>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">SKU</h4>
+              <div className="flex gap-2">
+                <input className={`${field} flex-1`} placeholder="Referencia de Zoho Books" value={sku} onChange={(e) => setSku(e.target.value)} />
+                <button onClick={guardarSku} disabled={busy} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Guardar</button>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                No se valida contra Zoho Books: hoy es solo una cadena que se teclea a mano. Cuando llegue la sincronización con Books, habrá que reconciliar lo escrito aquí.
+              </p>
+            </section>
+
+            <section>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Foto</h4>
+              {ficha.foto ? (
+                <img
+                  src={ficha.foto.url ?? urlDocumento(modelo.id, ficha.foto.id)}
+                  alt={ficha.foto.nombre}
+                  className="w-[120px] h-[120px] object-contain rounded border border-slate-200 mb-2"
+                />
+              ) : (
+                <p className="text-[12px] text-slate-400 mb-2">Todavía sin foto.</p>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={busy}
+                onChange={(e) => { const archivo = e.target.files?.[0]; e.target.value = ''; if (archivo) subirFoto(archivo) }}
+                className="text-[12px]"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Subir una nueva sustituye la anterior: no se acumulan.</p>
+            </section>
+
+            <section>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Documentos</h4>
+              {ficha.documentos.length === 0 ? (
+                <p className="text-[12px] text-slate-400 mb-2">Todavía sin documentos.</p>
+              ) : (
+                <ul className="flex flex-col gap-1 mb-3">
+                  {ficha.documentos.map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-2 text-[13px] border-b border-slate-100 pb-1">
+                      <a href={d.url ?? urlDocumento(modelo.id, d.id)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                        {d.nombre}
+                      </a>
+                      <span className="text-[11px] text-slate-400 shrink-0">{d.tipo}</span>
+                      <button onClick={() => eliminarDocumento(d.id)} className="text-[12px] text-red-600 shrink-0">Eliminar</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <NuevoDocumento modeloId={modelo.id} busyExterno={busy} onError={setError} onAdded={recargar} />
+            </section>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * El alta de un documento admite dos caminos a propósito: un manual de 30 MB se ENLAZA (nadie quiere
+ * guardar ese peso aquí), un instructivo propio de Ambientalia se SUBE. Nunca los dos a la vez.
+ */
+function NuevoDocumento({ modeloId, busyExterno, onError, onAdded }: {
+  modeloId: string
+  busyExterno: boolean
+  onError: (e: string | null) => void
+  onAdded: () => Promise<void>
+}) {
+  const tiposAlta = TIPOS_DOCUMENTO.filter((t) => t !== 'foto') // la foto tiene su propio bloque, arriba
+  const [tipo, setTipo] = useState<TipoDocumento>('manual')
+  const [nombre, setNombre] = useState('')
+  const [modo, setModo] = useState<'enlace' | 'archivo'>('enlace')
+  const [url, setUrl] = useState('')
+  const [archivo, setArchivo] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const field = 'border border-slate-200 rounded p-2 text-[13px]'
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nombre.trim() || (modo === 'enlace' ? !url.trim() : !archivo)) return
+    setBusy(true); onError(null)
+    try {
+      if (modo === 'enlace') await crearEnlaceDocumento(modeloId, { tipo, nombre: nombre.trim(), url: url.trim() })
+      else await subirDocumento(modeloId, tipo, nombre.trim(), archivo as File)
+      setNombre(''); setUrl(''); setArchivo(null)
+      await onAdded()
+    } catch (err) { onError(err instanceof Error ? err.message : String(err)) }
+    finally { setBusy(false) }
+  }
+
+  const bloqueado = busy || busyExterno
+
+  return (
+    <form onSubmit={submit} className="border border-slate-200 rounded p-3 flex flex-col gap-2">
+      <div className="flex gap-2">
+        <select className={field} value={tipo} onChange={(e) => setTipo(e.target.value as TipoDocumento)}>
+          {tiposAlta.map((t) => <option key={t} value={t}>{t === 'manual' ? 'Manual' : t === 'instructivo' ? 'Instructivo' : 'Guía'}</option>)}
+        </select>
+        <input className={`${field} flex-1`} placeholder="Nombre del documento" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+      </div>
+      <div className="flex gap-4 text-[12px] text-slate-600">
+        <label className="flex items-center gap-1.5"><input type="radio" checked={modo === 'enlace'} onChange={() => setModo('enlace')} /> Enlace</label>
+        <label className="flex items-center gap-1.5"><input type="radio" checked={modo === 'archivo'} onChange={() => setModo('archivo')} /> Archivo</label>
+      </div>
+      {modo === 'enlace' ? (
+        <input className={field} placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+      ) : (
+        <input type="file" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} className="text-[12px]" />
+      )}
+      <p className="text-[11px] text-slate-400">Un manual pesado se enlaza; un instructivo propio de Ambientalia se sube.</p>
+      <div className="flex justify-end">
+        <button type="submit" disabled={bloqueado} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">
+          {busy ? 'Añadiendo…' : 'Añadir documento'}
+        </button>
+      </div>
+    </form>
   )
 }
