@@ -1777,4 +1777,37 @@ describe('Catálogo maestro de equipos', () => {
     expect((await request(app).get('/api/catalogo')).status).toBe(401)
     expect((await request(app).get('/api/catalogo/conflictos').set('Cookie', op)).status).toBe(403)
   })
+
+  // La siembra se dispara a mano UNA vez tras desplegar. Hasta que corre, el catálogo está vacío y
+  // no se puede dar de alta ningún equipo, así que es el primer botón que toca alguien en producción.
+  it('la siembra puebla el catálogo desde los equipos; 403 no-admin; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo) VALUES ('eq-s1','A','Horiba','APSA-370','Analizador de SO2')")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/admin/seed-catalogo').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ marcasCreadas: 1, tiposCreados: 1, modelosCreados: 1, equiposEnlazados: 1, modelosPorRevisar: 0 })
+    expect((await request(app).get('/api/catalogo').set('Cookie', cookie)).body.modelos[0].nombre).toBe('APSA-370')
+
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/seed-catalogo').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/seed-catalogo')).status).toBe(401)
+  })
+
+  // Reejecutarla es el caso real: alguien la dispara dos veces por si acaso. Los deltas se agotan,
+  // pero `modelosPorRevisar` tiene que seguir diciendo cuánto queda pendiente — si devolviera 0 se
+  // leería como "no hay nada que revisar" justo cuando sí lo hay.
+  it('reejecutar la siembra agota los deltas pero sigue contando lo que queda por revisar', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo) VALUES ('eq-a','A','Horiba','APSA-370','Analizador de SO2')")
+    await db.query("INSERT INTO equipos (id,serial,marca,modelo,tipo) VALUES ('eq-b','B','Horiba','APSA-370','Calibrador Multigas')")
+    const { app } = appWith()
+
+    const primera = await request(app).post('/api/admin/seed-catalogo').set('Cookie', cookie)
+    expect(primera.body).toMatchObject({ modelosCreados: 1, conflictosNuevos: 1, modelosPorRevisar: 1 })
+
+    const segunda = await request(app).post('/api/admin/seed-catalogo').set('Cookie', cookie)
+    expect(segunda.body).toMatchObject({ modelosCreados: 0, conflictosNuevos: 0, modelosPorRevisar: 1 })
+  })
 })

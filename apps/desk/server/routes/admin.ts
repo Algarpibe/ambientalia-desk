@@ -6,6 +6,7 @@ import type { createDetailBackfiller } from '../backfill'
 import { backfillSerialFromSubject } from '../backfillSerial'
 import { seedChecklist } from '../db/remisionChecklist'
 import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
+import { sembrarCatalogo } from '../db/catalogoSeed'
 import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -63,6 +64,22 @@ export function registerAdminRoutes(
   app.post('/api/admin/seed-remision-checklist', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
     const r = await seedChecklist(db, CHECKLIST_SEED)
     logger.info(`Checklist de remisiones sembrado: ${r.insertados} nuevos, ${r.existentes} ya existían`)
+    res.json(r)
+  }))
+
+  // Puebla el catálogo maestro de equipos desde el inventario que ya existe. SOLO super administrador.
+  // Hay que dispararla A MANO una vez tras desplegar: hasta que corre, el catálogo está vacío y no se
+  // puede dar de alta ningún equipo, porque el modelo pasó a ser obligatorio.
+  // No vive en `migrate()` a propósito — `migrate()` es tolerante por sentencia y se salta en silencio
+  // la que falle, así que un backfill escondido ahí podría no correr nunca sin que nadie se entere.
+  app.post('/api/admin/seed-catalogo', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
+    const r = await sembrarCatalogo(db)
+    // Los cuatro primeros son deltas de esta ejecución; `modelosPorRevisar` es el total pendiente,
+    // que es el número por el que preguntará quien acabe de sembrar.
+    logger.info(
+      `Catálogo sembrado: ${r.marcasCreadas} marcas, ${r.tiposCreados} tipos, ${r.modelosCreados} modelos, ` +
+      `${r.equiposEnlazados} equipos enlazados, ${r.conflictosNuevos} conflictos nuevos, ${r.modelosPorRevisar} por revisar en total`,
+    )
     res.json(r)
   }))
 
