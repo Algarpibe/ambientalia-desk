@@ -33,6 +33,24 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 
 ### 🟢 ROADMAP / proyectos futuros (no urgentes)
 **Plataforma Desk:**
+- **Catálogo de equipos — renombrar y fusionar (PENDIENTE, 2026-08-07).** La fase 1 dejó el catálogo maestro
+  administrable, pero **sin renombrar marcas ni modelos**, y por tanto sin poder fusionar `EDM180C` con
+  `EDM 180 C`: solo se puede **desactivar** la variante mala, lo que la retira de las altas futuras sin tocar
+  los equipos ya registrados. El motivo es `perfilChecklist` (`packages/shared/src/remision.ts`), que decide el
+  checklist "Incluye" de una remisión leyendo el **TEXTO** de marca y modelo por subcadena
+  (`modelo.includes('edm180')`, `marca === 'horiba'`, `modelo.startsWith('ap')`): renombrar cambiaría en
+  silencio qué accesorios pide la remisión de esos equipos. Necesita su propio diseño, probablemente con una
+  previsualización del efecto sobre los perfiles antes de confirmar. Los **tipos sí se renombran** — no los mira.
+- **Catálogo de equipos — fases siguientes (2026-08-07).** Ficha técnica del equipo (SKU, fotos, manuales),
+  sincronización con Zoho Books y gestión de accesorios. Las tres dependen de lo ya anotado sobre `books.items`
+  (no existe en `desk-db` y no trae modelo). Y los binarios no tienen sitio decidido: el precedente de la app es
+  `resolution_attachments`, base64 sobre `text`, que vale para una foto y no para manuales en PDF de decenas de
+  megas. Diseño de la fase 1: `docs/superpowers/specs/2026-08-06-catalogo-maestro-equipos-design.md`;
+  correcciones halladas al ejecutarlo: `docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos-correcciones.md`.
+- **Catálogo de equipos — equipos sin enlazar.** Tras la siembra, los equipos que no tenían marca o modelo se
+  quedan con `modelo_id` NULL. La bandeja de conflictos los cuenta, pero arreglarlos es manual: editar cada uno
+  en Registro de equipos y asignarle modelo. Si salen muchos, merece una pantalla propia o un enlace desde la
+  bandeja a la lista filtrada.
 - **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
 - **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
   **EN CURSO desde 2026-08-03: solo la rama de ENTRADA** (la que dispara el botón "Crear remisión" del ticket).
