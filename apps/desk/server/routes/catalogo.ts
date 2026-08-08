@@ -16,7 +16,20 @@ const esEntidad = (v: string): v is Entidad => (ENTIDADES as readonly string[]).
 // Lo que cuenta `borrarEntrada` cambia según la entidad: un tipo o una marca en uso los cuenta por
 // MODELOS (ver USOS en db/catalogo.ts), un modelo en uso los cuenta por EQUIPOS. El mensaje tiene
 // que nombrar lo que de verdad se contó, no adivinar.
-const SUSTANTIVO_USO: Record<Entidad, string> = { tipos: 'modelo(s)', marcas: 'modelo(s)', modelos: 'equipo(s)' }
+const SUSTANTIVO_USO: Record<Entidad, { uno: string; varios: string }> = {
+  tipos: { uno: 'modelo', varios: 'modelos' },
+  marcas: { uno: 'modelo', varios: 'modelos' },
+  modelos: { uno: 'equipo', varios: 'equipos' },
+}
+
+// La sugerencia concuerda en género con la entidad. Va como frase entera y no ensamblada por trozos
+// porque el género arrastra hasta el final («desactívala … borrarla»), y armarla a cachos es
+// justo como se cuelan los textos que suenan a máquina.
+const SUGERENCIA: Record<Entidad, string> = {
+  tipos: 'Desactívalo en lugar de borrarlo.',
+  marcas: 'Desactívala en lugar de borrarla.',
+  modelos: 'Desactívalo en lugar de borrarlo.',
+}
 
 export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): void {
   const { db } = deps
@@ -123,7 +136,8 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
       res.json({ ok: true })
     } catch (err) {
       if (err instanceof EntradaEnUso) {
-        res.status(409).json({ error: `En uso por ${err.usos} ${SUSTANTIVO_USO[entidad]}. Desactívala en su lugar de borrarla.` })
+        const sustantivo = err.usos === 1 ? SUSTANTIVO_USO[entidad].uno : SUSTANTIVO_USO[entidad].varios
+        res.status(409).json({ error: `En uso por ${err.usos} ${sustantivo}. ${SUGERENCIA[entidad]}` })
         return
       }
       throw err
