@@ -44,7 +44,7 @@ describe('equipos repo', () => {
     await seed('e-corto', '18A0001', 'AMBIENTALIA')            // semilla, nombre abreviado
     await seed('e-exacto', '18A0002', 'Ambientalia S.A.S.')    // semilla, nombre igual al de Books
     await seed('e-otro', '18A0003', 'AGQ Colombia S.A.S.')     // otro cliente → fuera
-    const idApp = await createEquipo(db, { serial: '18A0004', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Ambientalia S.A.S.', clientId: 'cli-amb' })
+    const idApp = await createEquipo(db, { serial: '18A0004', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Ambientalia S.A.S.', clientId: 'cli-amb', modeloId: null })
 
     const cliente = { id: 'cli-amb', name: 'Ambientalia S.A.S.' }
     expect((await searchEquipos(db, '18A', cliente)).map((e) => e.id).sort())
@@ -57,29 +57,29 @@ describe('equipos repo', () => {
 
 describe('equipos CRUD (Subsistema F)', () => {
   it('create (id propio + client_id), getFull, y aparece en searchEquipos', async () => {
-    const id = await createEquipo(db, { serial: 'NEW1', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'cli1' })
+    const id = await createEquipo(db, { serial: 'NEW1', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'cli1', modeloId: null })
     expect(id).toMatch(/^eq-/)
     expect(await getEquipoFull(db, id)).toMatchObject({ serial: 'NEW1', marca: 'Grimm', active: true, clientId: 'cli1', clienteNombre: 'ACME' })
     expect((await searchEquipos(db, 'NEW1')).length).toBe(1)
   })
 
   it('desactivar lo saca de searchEquipos pero sigue en listEquiposManage', async () => {
-    const id = await createEquipo(db, { serial: 'NEW2', marca: 'Horiba', modelo: 'APMA', tipo: 'CO', clienteNombre: 'X', clientId: 'cli1' })
+    const id = await createEquipo(db, { serial: 'NEW2', marca: 'Horiba', modelo: 'APMA', tipo: 'CO', clienteNombre: 'X', clientId: 'cli1', modeloId: null })
     await setEquipoActive(db, id, false)
     expect((await searchEquipos(db, 'NEW2')).length).toBe(0)
     expect((await listEquiposManage(db, 'NEW2')).map((e) => e.active)).toEqual([false])
   })
 
   it('update cambia campos y reconcilia cliente', async () => {
-    const id = await createEquipo(db, { serial: 'NEW3', marca: 'Grimm', modelo: 'm', tipo: 'Monitor', clienteNombre: 'Viejo', clientId: null })
+    const id = await createEquipo(db, { serial: 'NEW3', marca: 'Grimm', modelo: 'm', tipo: 'Monitor', clienteNombre: 'Viejo', clientId: null, modeloId: null })
     await updateEquipo(db, id, { tipo: 'Analizador CO', clientId: 'cli9', clienteNombre: 'Nuevo' })
     expect(await getEquipoFull(db, id)).toMatchObject({ tipo: 'Analizador CO', clientId: 'cli9', clienteNombre: 'Nuevo' })
   })
 
   it('facets devuelve marcas y tipos distintos', async () => {
-    await createEquipo(db, { serial: 'A', marca: 'Grimm', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null })
-    await createEquipo(db, { serial: 'B', marca: 'Horiba', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null })
-    await createEquipo(db, { serial: 'C', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null })
+    await createEquipo(db, { serial: 'A', marca: 'Grimm', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
+    await createEquipo(db, { serial: 'B', marca: 'Horiba', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
+    await createEquipo(db, { serial: 'C', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
     const f = await equipoFacets(db)
     expect(f.marcas).toEqual(expect.arrayContaining(['Grimm', 'Horiba']))
     expect(f.byMarca['Grimm'].tipos).toContain('Monitor')
@@ -98,7 +98,7 @@ describe('equipos CRUD (Subsistema F)', () => {
    */
   it('facets empareja cada modelo con sus tipos, y conserva todos los de un modelo ambiguo', async () => {
     const eq = (serial: string, modelo: string, tipo: string) =>
-      createEquipo(db, { serial, marca: 'Horiba', modelo, tipo, clienteNombre: null, clientId: null })
+      createEquipo(db, { serial, marca: 'Horiba', modelo, tipo, clienteNombre: null, clientId: null, modeloId: null })
     await eq('H1', 'APSA-370', 'Analizador de Dióxido de Azufre (SO2)')
     await eq('H2', 'APSA-370', 'Analizador de Dióxido de Azufre (SO2)') // repetido: no duplica
     await eq('H3', 'APOA-370', 'Analizador de Ozono (O3)')
@@ -125,7 +125,7 @@ const soloTickets = (h: { cronologia: EntradaHojaDeVida[] }) =>
 
 describe('getEquipoHistorial', () => {
   it('empareja por equipo_id y por serial, agrupa transiciones', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-1', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-1', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insTicket('app-1', 901, 'SN-1', eqId, 'Ingresado')
     await insTicket('zoho-1', 303, 'SN-1', null, 'Finalizado')
     await insTicket('otro-1', 500, 'SN-X', null, 'Ingresado')
@@ -140,7 +140,7 @@ describe('getEquipoHistorial', () => {
   })
 
   it('empareja históricos por el serial dentro del asunto (token), sin falsos positivos', async () => {
-    const eqId = await createEquipo(db, { serial: '18A19042', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'CHEMILAB', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: '18A19042', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'CHEMILAB', clientId: 'c1', modeloId: null })
     // histórico de Zoho: serial/codigo_servicio NULL; el serial vive en el asunto.
     await db.query(`INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('h1',190,'Servicio Técnico CHEMILAB GRIMM EDM 180C MT_18A19042_EDM180C_260305','Finalizado','Closed',now())`)
     // falso positivo: el serial es subcadena de uno más largo (18A190420) → NO debe entrar.
@@ -153,7 +153,7 @@ describe('getEquipoHistorial', () => {
   // lo reconocen con `esCreacion` y lo cuentan aparte; sin esto, la hoja de vida enseñaba al usuario
   // "Enviar · (creación) → OV asignada", que es un literal interno asomando por la interfaz.
   it('la fila de creación se cuenta como creación, no como una transición genérica', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-C', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-C', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insTicket('app-c', 1000001, 'SN-C', eqId, 'OV asignada')
     await db.query(
       `INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at)
@@ -193,7 +193,7 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
   // El argumento para hacer esto: el técnico que recibe un Grimm quiere ver todo lo que entró con ese
   // número de serie, en orden. Por eso es UNA cronología y no dos inventarios.
   it('mezcla remisiones y tickets en una sola línea, más reciente primero', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-M', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Gecelca', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-M', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Gecelca', clientId: 'c1', modeloId: null })
     await insTicket('t-viejo', 94112, 'SN-M', eqId, 'Finalizado', "'2024-10-03T09:00:00Z'")
     await insRemision({ id: 'rem-vieja', equipoId: eqId, ticketId: 't-viejo', creada: '2024-10-03T08:00:00Z' })
     await insTicket('t-nuevo', 100042, 'SN-M', eqId, 'Ingresado', "'2026-08-06T10:00:00Z'")
@@ -208,7 +208,7 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
   // por serial, pero las 3 filas que no casaron con ningún equipo lo tienen NULL: para ésas el serial
   // es la única vía.
   it('empareja las remisiones por equipo_id y también por serial', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-S', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-S', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insRemision({ id: 'por-id', equipoId: eqId, creada: '2026-08-01T10:00:00Z' })
     await insRemision({ id: 'por-serial', serial: 'SN-S', creada: '2026-08-02T10:00:00Z' })
     await insRemision({ id: 'de-otro', serial: 'SN-OTRO', creada: '2026-08-03T10:00:00Z' })
@@ -220,7 +220,7 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
   // Éste es el caso que hizo descartar el anidarlas bajo su ticket: de las 149 históricas, 146 tienen
   // equipo y solo 90 tienen ticket. Las otras ~56 solo son alcanzables por aquí.
   it('la remisión sin ticket entra igual, y la que sí lo tiene trae su número', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-H', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-H', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insTicket('t-1', 777, 'SN-H', eqId, 'Ingresado', "'2026-08-05T10:00:00Z'")
     await insRemision({ id: 'con-ticket', equipoId: eqId, ticketId: 't-1', creada: '2026-08-05T11:00:00Z' })
     await insRemision({ id: 'sin-ticket', equipoId: eqId, creada: '2025-03-12T12:00:00Z', origen: 'historico' })
@@ -240,7 +240,7 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
   // Misma regla que en CONVERSACIONES: la hoja de vida es el relato del equipo, y una anulada es un
   // documento que un administrador retiró de en medio. HISTORIA sigue siendo el sitio donde consta.
   it('deja fuera las remisiones anuladas', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-A', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-A', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insRemision({ id: 'vigente', equipoId: eqId, creada: '2026-08-01T10:00:00Z' })
     await insRemision({ id: 'anulada', equipoId: eqId, creada: '2026-08-02T10:00:00Z', anulada: true })
 
@@ -249,7 +249,7 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
   })
 
   it('la remisión trae sus enlaces de Drive y sus fotos como adjuntos', async () => {
-    const eqId = await createEquipo(db, { serial: 'SN-F', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1' })
+    const eqId = await createEquipo(db, { serial: 'SN-F', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insRemision({ id: 'con-fotos', equipoId: eqId, creada: '2026-08-01T10:00:00Z', resultado: { pdfId: 'PDF', carpetaUrl: 'https://drive.google.com/drive/folders/CAR' } })
     await db.query(
       `INSERT INTO remision_fotos (id,remision_id,filename,content_type,content_b64,size,created_at)

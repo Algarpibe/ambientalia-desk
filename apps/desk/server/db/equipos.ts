@@ -35,7 +35,10 @@ export async function upsertEquipo(db: Queryable, r: EquipoRow): Promise<void> {
 }
 
 function toLite(r: any): EquipoLite {
-  return { id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined, clienteNombre: r.cliente_nombre ?? undefined }
+  return {
+    id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined,
+    clienteNombre: r.cliente_nombre ?? undefined, modeloId: r.modelo_id ?? undefined,
+  }
 }
 
 /** Cliente por el que acotar la búsqueda de equipos. Ambas señales son opcionales. */
@@ -82,7 +85,7 @@ export async function searchEquipos(db: Queryable, q: string, cliente?: EquipoCl
 }
 
 export async function getEquipo(db: Queryable, id: string): Promise<EquipoLite | null> {
-  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre FROM equipos WHERE id=$1', [id])
+  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,modelo_id FROM equipos WHERE id=$1', [id])
   return r.rows[0] ? toLite(r.rows[0]) : null
 }
 
@@ -98,22 +101,24 @@ export interface EquipoInput {
   tipo: string | null
   clienteNombre: string | null
   clientId: string | null
+  /** FK al catálogo maestro. Marca/modelo/tipo se derivan de él; ver `registerEquipoRoutes`. */
+  modeloId: string | null
 }
 
 function toFull(r: any): EquipoFull {
   return {
     id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined,
     tipo: r.tipo ?? undefined, clienteNombre: r.cliente_nombre ?? undefined,
-    active: r.active === true, clientId: r.client_id ?? undefined,
+    active: r.active === true, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined,
   }
 }
 
 export async function createEquipo(db: Queryable, input: EquipoInput): Promise<string> {
   const id = 'eq-' + randomUUID()
   await db.query(
-    `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,client_id,source,active,updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,'app',true,now())`,
-    [id, input.serial, input.marca, input.modelo, input.tipo, input.clienteNombre, input.clientId],
+    `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,source,active,updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'app',true,now())`,
+    [id, input.serial, input.marca, input.modelo, input.tipo, input.clienteNombre, input.clientId, input.modeloId],
   )
   return id
 }
@@ -128,6 +133,7 @@ export async function updateEquipo(db: Queryable, id: string, patch: Partial<Equ
   if (patch.tipo !== undefined) add('tipo', patch.tipo)
   if (patch.clienteNombre !== undefined) add('cliente_nombre', patch.clienteNombre)
   if (patch.clientId !== undefined) add('client_id', patch.clientId)
+  if (patch.modeloId !== undefined) add('modelo_id', patch.modeloId)
   await db.query(`UPDATE equipos SET ${sets.join(',')} WHERE id=$1`, params)
 }
 
@@ -141,14 +147,14 @@ export async function deleteEquipo(db: Queryable, id: string): Promise<void> {
 }
 
 export async function getEquipoFull(db: Queryable, id: string): Promise<EquipoFull | null> {
-  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active FROM equipos WHERE id=$1', [id])
+  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active,modelo_id FROM equipos WHERE id=$1', [id])
   return r.rows[0] ? toFull(r.rows[0]) : null
 }
 
 export async function listEquiposManage(db: Queryable, q: string, limit = 50, offset = 0): Promise<EquipoFull[]> {
   const like = `%${q.toLowerCase()}%`
   const r = await db.query(
-    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active FROM equipos
+    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active,modelo_id FROM equipos
      WHERE LOWER(serial) LIKE $1 OR LOWER(COALESCE(cliente_nombre,'')) LIKE $1
        OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1
      ORDER BY serial LIMIT $2 OFFSET $3`,
