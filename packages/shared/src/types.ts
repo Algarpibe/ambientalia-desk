@@ -251,6 +251,36 @@ export interface CatalogoModelo {
 }
 export interface Catalogo { tipos: CatalogoTipo[]; marcas: CatalogoMarca[]; modelos: CatalogoModelo[] }
 
+/** Los tipos de documento que admite la ficha. Lista blanca en el código y no un CHECK del esquema:
+ *  añadir uno nuevo no debería exigir una migración. */
+export const TIPOS_DOCUMENTO = ['foto', 'manual', 'instructivo', 'guia'] as const
+export type TipoDocumento = (typeof TIPOS_DOCUMENTO)[number]
+
+/**
+ * Un documento de la ficha. **Nunca lleva el `content_b64`**: el fichero se pide aparte por el proxy
+ * (`/api/catalogo/modelos/:id/documentos/:docId/contenido`), así una ficha con diez documentos no
+ * arrastra diez ficheros cada vez que alguien la abre.
+ *
+ * `url` con valor ⇒ es un enlace. `url` nulo ⇒ es un fichero subido. Nunca las dos cosas.
+ */
+export interface DocumentoModelo {
+  id: string
+  tipo: TipoDocumento
+  nombre: string
+  url: string | null
+  contentType: string | null
+  size: number | null
+}
+
+/** La foto va SEPARADA de `documentos` aunque en la tabla sea una fila más con `tipo='foto'`: la
+ *  pantalla la trata distinto, y separarla aquí ahorra que cada consumidor la filtre por su cuenta. */
+export interface FichaModelo {
+  modeloId: string
+  sku: string | null
+  foto: DocumentoModelo | null
+  documentos: DocumentoModelo[]
+}
+
 /** Un modelo que el inventario declara con más de un tipo, con el reparto real que lo demuestra. */
 export interface ConflictoModelo {
   modeloId: string
