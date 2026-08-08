@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -243,6 +243,38 @@ export const actualizarModeloCatalogo = (id: string, patch: { tipoId?: string | 
 
 export const borrarEntradaCatalogo = (entidad: 'tipos' | 'marcas' | 'modelos', id: string) =>
   escribirCatalogo<{ ok: true }>(`/api/catalogo/${entidad}/${id}`, 'DELETE')
+
+// ---- Ficha técnica del modelo ----
+
+export function getFichaModelo(modeloId: string): Promise<FichaModelo> {
+  return fetch(`/api/catalogo/modelos/${modeloId}/ficha`, { credentials: 'include' }).then((r) => json<FichaModelo>(r))
+}
+
+/** La URL con la que se pinta un fichero (`<img src>`) o se descarga. Los enlaces usan su `url`. */
+export const urlDocumento = (modeloId: string, docId: string): string =>
+  `/api/catalogo/modelos/${modeloId}/documentos/${docId}/contenido`
+
+export const crearEnlaceDocumento = (modeloId: string, input: { tipo: TipoDocumento; nombre: string; url: string }) =>
+  escribirCatalogo<{ id: string }>(`/api/catalogo/modelos/${modeloId}/documentos`, 'POST', input)
+
+/** Subida multipart: NO pasa por `escribirCatalogo`, que manda JSON. */
+export async function subirDocumento(modeloId: string, tipo: TipoDocumento, nombre: string, archivo: File): Promise<{ id: string }> {
+  const fd = new FormData()
+  fd.append('tipo', tipo)
+  fd.append('nombre', nombre)
+  fd.append('archivo', archivo)
+  // Sin cabecera Content-Type a propósito: el navegador la genera con el boundary del multipart.
+  // Ponerla a mano rompe la subida en silencio.
+  const res = await fetch(`/api/catalogo/modelos/${modeloId}/documentos`, { method: 'POST', credentials: 'include', body: fd })
+  if (!res.ok) {
+    const b = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(b.error || `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<{ id: string }>
+}
+
+export const borrarDocumentoModelo = (modeloId: string, docId: string) =>
+  escribirCatalogo<{ ok: true }>(`/api/catalogo/modelos/${modeloId}/documentos/${docId}`, 'DELETE')
 
 export async function createEquipo(input: EquipoInput): Promise<EquipoFull> {
   const res = await fetch('/api/equipos', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) })
