@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import type { TicketDetail } from '@ambientalia/shared';
+import { useAsync } from '../hooks/useAsync';
+import { fetchEquipo } from '../api/client';
+import { FichaTecnica } from './FichaTecnica';
 
 /** Formatea "2026-05-19" o ISO a "19 May 2026" (es-CO). Vacío → null. */
 function fmtDate(v?: string | null): string | null {
@@ -88,6 +91,12 @@ const PROCESS_FIELDS: Array<[string, string]> = [
 ];
 
 export function TicketProperties({ detail, width = 300 }: { detail: TicketDetail; width?: number }) {
+  // El detalle del ticket trae `equipoId` pero no `modeloId`: hace falta el equipo completo para
+  // resolverlo y pintar la ficha técnica. Sin `equipoId` no se pide nada.
+  const equipoId = detail.equipoId ?? null;
+  const { data: equipo } = useAsync(() => (equipoId ? fetchEquipo(equipoId) : Promise.resolve(null)), [equipoId]);
+  const modeloId = equipo?.modeloId ?? null;
+
   return (
     <div style={{ width }} className="border-r border-slate-200 overflow-y-auto bg-white p-4 shrink-0">
       <div className="flex items-center justify-between mb-2">
@@ -166,6 +175,10 @@ export function TicketProperties({ detail, width = 300 }: { detail: TicketDetail
         <Field label="Aprobó Test Report?" value={cf(detail, 'Aprobó Test Report?')} />
         <Field label="Equipo y/o partes listas para entrega al cliente?" value={cf(detail, 'Equipo y/o partes listas para entrega al cliente?')} />
       </Section>
+
+      {/* Al final del panel, compacta: el detalle del ticket ya tiene bastantes pestañas, así que
+          esto no es una más, sino un bloque más dentro de Propiedades. */}
+      {modeloId && <FichaTecnica modeloId={modeloId} compacto />}
     </div>
   );
 }

@@ -1490,6 +1490,31 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect(res.status).toBe(200)
     expect(res.body).toMatchObject({ active: false, marca: 'Grimm', modelo: 'EDM180C' })
   })
+
+  it('GET /api/equipos/:id devuelve el equipo con su modeloId; 404 si no existe; 401 sin sesión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cliQ','Q')")
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('m-q','Horiba')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('mo-q','m-q','APSA-370')")
+    const { app } = appWith()
+    const id = (await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-Q', clientId: 'cliQ', modeloId: 'mo-q' })).body.id
+
+    const res = await request(app).get(`/api/equipos/${id}`).set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ serial: 'SN-Q', modeloId: 'mo-q' })
+    expect((await request(app).get('/api/equipos/no-existe').set('Cookie', cookie)).status).toBe(404)
+    expect((await request(app).get(`/api/equipos/${id}`)).status).toBe(401)
+  })
+
+  // `manage` es una ruta literal: si `/api/equipos/:id` se registrara antes, la capturaría como si
+  // `manage` fuese el id de un equipo y el listado dejaría de funcionar.
+  it('la ruta literal /api/equipos/manage no la captura /api/equipos/:id', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/equipos/manage').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body.items)).toBe(true)
+  })
 })
 
 describe('GET /api/analisis (admin)', () => {

@@ -24,6 +24,16 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
     res.json({ items, page })
   }))
 
+  // Un equipo por id. La necesita el panel del ticket para resolver su modelo y pintar la ficha
+  // técnica: el detalle del ticket trae `equipoId` pero no `modeloId`, y meter un JOIN a `equipos`
+  // en esa consulta —que corre al abrir cada ticket y ya arrastra cinco uniones— sale más caro que
+  // una petición ligera y perezosa desde el panel.
+  app.get('/api/equipos/:id', requireAuth(db), asyncHandler(async (req, res) => {
+    const e = await getEquipoFull(db, String(req.params.id))
+    if (!e) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
+    res.json(e)
+  }))
+
   app.get('/api/equipos/:id/historial', requireAuth(db), asyncHandler(async (req, res) => {
     const h = await getEquipoHistorial(db, String(req.params.id))
     if (!h) { res.status(404).json({ error: 'Equipo no encontrado' }); return }

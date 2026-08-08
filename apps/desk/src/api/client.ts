@@ -296,6 +296,11 @@ export async function deleteEquipo(id: string): Promise<void> {
   if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
 }
 
+/** El equipo con su `modeloId`, para resolver la ficha técnica del modelo desde el panel del ticket. */
+export function fetchEquipo(id: string): Promise<EquipoFull> {
+  return fetch(`/api/equipos/${id}`, { credentials: 'include' }).then((r) => json<EquipoFull>(r))
+}
+
 export function fetchEquipoHistorial(id: string): Promise<EquipoHistorial> {
   return fetch(`/api/equipos/${id}/historial`, { credentials: 'include' }).then((r) => json<EquipoHistorial>(r))
 }

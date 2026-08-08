@@ -3,6 +3,7 @@ import { useAsync } from '../hooks/useAsync'
 import { fetchEquipoHistorial } from '../api/client'
 import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 import { Adjuntos } from './Adjuntos'
+import { FichaTecnica } from './FichaTecnica'
 
 function fmtFecha(s: string | null): string {
   if (!s) return ''
@@ -117,6 +118,14 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: 
               {nTickets} {nTickets === 1 ? 'ticket' : 'tickets'} · {nRemisiones} {nRemisiones === 1 ? 'remisión' : 'remisiones'}
             </div>
           </section>
+
+          {/* Arriba, antes de la cronología: con esto, la hoja de vida pasa a ser el sitio único del
+              equipo — qué es (ficha técnica), qué le ha pasado (cronología) y cómo se repara. */}
+          {eq.modeloId && (
+            <div className="mb-4">
+              <FichaTecnica modeloId={eq.modeloId} />
+            </div>
+          )}
 
           {cronologia.length === 0 && (
             <div className="text-[13px] text-slate-400">Este equipo aún no tiene tickets ni remisiones.</div>
