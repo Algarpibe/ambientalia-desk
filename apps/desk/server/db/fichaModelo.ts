@@ -67,3 +67,59 @@ export async function crearEnlace(
   )
   return id
 }
+
+/**
+ * Alta de un documento que es un FICHERO subido: sin url. Lo sirve después el proxy autenticado de
+ * la aplicación, igual que las fotos de remisión — nada sale de la sesión.
+ *
+ * Si el tipo es `foto`, **sustituye la anterior del modelo** en vez de acumularse: la foto de
+ * referencia es una por modelo, y sin esto la ficha acabaría con cinco sin que nadie supiera cuál es
+ * la buena. El resto de tipos sí se acumulan: un modelo puede tener varios manuales.
+ */
+export async function crearFichero(
+  db: Queryable,
+  modeloId: string,
+  input: { tipo: TipoDocumento; nombre: string; contentB64: string; contentType: string; size: number; creadoPor: string },
+): Promise<string> {
+  const nombre = input.nombre.trim()
+  if (!nombre) throw new DocumentoInvalido('El nombre es obligatorio')
+  if (input.tipo === 'foto') {
+    await db.query("DELETE FROM catalogo_documentos WHERE modelo_id = $1 AND tipo = 'foto'", [modeloId])
+  }
+  const id = 'cdoc-' + randomUUID()
+  await db.query(
+    'INSERT INTO catalogo_documentos (id,modelo_id,tipo,nombre,content_b64,content_type,size,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [id, modeloId, input.tipo, nombre, input.contentB64, input.contentType, input.size, input.creadoPor],
+  )
+  return id
+}
+
+/**
+ * El fichero de un documento, para servirlo por el proxy. `null` si no existe, si es de otro modelo
+ * o si es un enlace — un enlace no tiene fichero que servir, y devolver su url por esta vía
+ * confundiría dos cosas distintas.
+ *
+ * El `modelo_id` va en la consulta y no solo en la ruta: sin esa condición, saber un id bastaría
+ * para leer el fichero de cualquier otro modelo.
+ */
+export async function contenidoDocumento(
+  db: Queryable,
+  modeloId: string,
+  docId: string,
+): Promise<{ contentType: string; contentB64: string } | null> {
+  const r = await db.query(
+    'SELECT content_type, content_b64 FROM catalogo_documentos WHERE id = $1 AND modelo_id = $2',
+    [docId, modeloId],
+  )
+  const f = filas(r.rows)[0]
+  if (!f || f.content_b64 == null) return null
+  return { contentType: (f.content_type as string) ?? 'application/octet-stream', contentB64: String(f.content_b64) }
+}
+
+/** Baja. Devuelve si borró algo, para que la ruta distinga un 404 de un borrado real. */
+export async function borrarDocumento(db: Queryable, modeloId: string, docId: string): Promise<boolean> {
+  const antes = await db.query('SELECT 1 FROM catalogo_documentos WHERE id = $1 AND modelo_id = $2', [docId, modeloId])
+  if (!antes.rows.length) return false
+  await db.query('DELETE FROM catalogo_documentos WHERE id = $1 AND modelo_id = $2', [docId, modeloId])
+  return true
+}

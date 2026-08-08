@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { leerFicha, crearEnlace, DocumentoInvalido } from './fichaModelo'
+import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from './fichaModelo'
 
 let db: Queryable
 beforeEach(async () => {
@@ -56,5 +56,68 @@ describe('crearEnlace', () => {
   it('rechaza nombre o url vacíos', async () => {
     await expect(crearEnlace(db, 'mo1', { tipo: 'manual', nombre: '  ', url: 'https://x', creadoPor: 'A' })).rejects.toBeInstanceOf(DocumentoInvalido)
     await expect(crearEnlace(db, 'mo1', { tipo: 'manual', nombre: 'M', url: '   ', creadoPor: 'A' })).rejects.toBeInstanceOf(DocumentoInvalido)
+  })
+})
+
+describe('crearFichero', () => {
+  it('da de alta un documento con contenido y sin url', async () => {
+    const id = await crearFichero(db, 'mo1', {
+      tipo: 'manual', nombre: 'Manual', contentB64: 'QUJD', contentType: 'application/pdf', size: 3, creadoPor: 'Admin',
+    })
+    const c = await contenidoDocumento(db, 'mo1', id)
+    expect(c).toEqual({ contentType: 'application/pdf', contentB64: 'QUJD' })
+    const f = await leerFicha(db, 'mo1')
+    expect(f!.documentos[0]).toMatchObject({ nombre: 'Manual', url: null, size: 3 })
+  })
+
+  /**
+   * La foto de referencia es UNA por modelo: subir otra sustituye la anterior en vez de acumularlas.
+   * Sin esto la ficha acabaría con cinco fotos y nadie sabría cuál es «la» del modelo — y `leerFicha`
+   * devolvería una cualquiera, la que el ORDER BY dejara primero.
+   */
+  it('subir una foto nueva sustituye la anterior; un manual nuevo NO sustituye nada', async () => {
+    const vieja = await crearFichero(db, 'mo1', { tipo: 'foto', nombre: 'V', contentB64: 'AAA', contentType: 'image/png', size: 3, creadoPor: 'A' })
+    const nueva = await crearFichero(db, 'mo1', { tipo: 'foto', nombre: 'N', contentB64: 'BBB', contentType: 'image/png', size: 3, creadoPor: 'A' })
+    expect(await contenidoDocumento(db, 'mo1', vieja)).toBeNull()
+    expect((await leerFicha(db, 'mo1'))!.foto).toMatchObject({ id: nueva, nombre: 'N' })
+
+    await crearFichero(db, 'mo1', { tipo: 'manual', nombre: 'M1', contentB64: 'CCC', contentType: 'application/pdf', size: 3, creadoPor: 'A' })
+    await crearFichero(db, 'mo1', { tipo: 'manual', nombre: 'M2', contentB64: 'DDD', contentType: 'application/pdf', size: 3, creadoPor: 'A' })
+    expect((await leerFicha(db, 'mo1'))!.documentos.length).toBe(2)
+  })
+
+  it('rechaza el nombre vacío', async () => {
+    await expect(crearFichero(db, 'mo1', { tipo: 'manual', nombre: ' ', contentB64: 'A', contentType: 'application/pdf', size: 1, creadoPor: 'A' }))
+      .rejects.toBeInstanceOf(DocumentoInvalido)
+  })
+})
+
+describe('contenidoDocumento', () => {
+  // Un enlace no tiene fichero que servir. Devolver la url por esta vía confundiría dos cosas
+  // distintas: la ruta la traduce a 404, que es lo que de verdad ocurre.
+  it('devuelve null para un documento que es un enlace', async () => {
+    const id = await crearEnlace(db, 'mo1', { tipo: 'manual', nombre: 'M', url: 'https://x', creadoPor: 'A' })
+    expect(await contenidoDocumento(db, 'mo1', id)).toBeNull()
+  })
+
+  // El modelo va en la consulta y no solo en la ruta: sin esa condición, saber un id bastaría para
+  // leer el fichero de cualquier otro modelo.
+  it('devuelve null si el documento es de otro modelo', async () => {
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('mo2','m1','APOA-370')")
+    const id = await crearFichero(db, 'mo2', { tipo: 'manual', nombre: 'M', contentB64: 'AAA', contentType: 'application/pdf', size: 3, creadoPor: 'A' })
+    expect(await contenidoDocumento(db, 'mo1', id)).toBeNull()
+  })
+})
+
+describe('borrarDocumento', () => {
+  it('borra el suyo y no el de otro modelo', async () => {
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('mo2','m1','APOA-370')")
+    const mio = await crearEnlace(db, 'mo1', { tipo: 'guia', nombre: 'G', url: 'https://x', creadoPor: 'A' })
+    const ajeno = await crearEnlace(db, 'mo2', { tipo: 'guia', nombre: 'G', url: 'https://x', creadoPor: 'A' })
+
+    expect(await borrarDocumento(db, 'mo1', ajeno)).toBe(false) // no es suyo: no lo toca
+    expect(await borrarDocumento(db, 'mo1', mio)).toBe(true)
+    expect((await leerFicha(db, 'mo1'))!.documentos).toEqual([])
+    expect((await leerFicha(db, 'mo2'))!.documentos.length).toBe(1)
   })
 })
