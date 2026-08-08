@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -191,11 +191,63 @@ export function listEquiposManage(search: string, page = 1): Promise<{ items: Eq
   return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))
 }
 
-/** `tiposPorModelo`: los tipos que el inventario ha visto para cada modelo. Uno solo ⇒ se deduce. */
+/** @deprecated Lo sustituye `getCatalogo`. Se retira cuando el formulario deje de usarlo. */
 export interface EquipoFacets { marcas: string[]; byMarca: Record<string, { modelos: string[]; tipos: string[]; tiposPorModelo: Record<string, string[]> }> }
+/** @deprecated Derivaba las listas de la propia tabla `equipos`; ahora manda el catálogo maestro. */
 export function equipoFacets(): Promise<EquipoFacets> {
   return fetch('/api/equipos/facets', { credentials: 'include' }).then((r) => json<EquipoFacets>(r))
 }
+
+// ---- Catálogo maestro de equipos ----
+
+/** `incluir` trae además ese modelo aunque esté desactivado: sin él, editar un equipo cuyo modelo se
+ *  retiró dejaría el campo en blanco y obligaría a cambiárselo para poder guardar. */
+export function getCatalogo(incluir?: string | null): Promise<Catalogo> {
+  const p = new URLSearchParams()
+  if (incluir) p.set('incluir', incluir)
+  const qs = p.toString()
+  return fetch(`/api/catalogo${qs ? `?${qs}` : ''}`, { credentials: 'include' }).then((r) => json<Catalogo>(r))
+}
+
+export function getConflictosCatalogo(): Promise<Conflictos> {
+  return fetch('/api/catalogo/conflictos', { credentials: 'include' }).then((r) => json<Conflictos>(r))
+}
+
+/**
+ * Toda escritura del catálogo pasa por aquí. Lanza `Error` con el mensaje EXACTO del servidor: es
+ * como el 409 de nombre repetido y el de entrada en uso —que ya vienen redactados en español y con
+ * el conteo— llegan a la pantalla sin que esta tenga que reescribirlos ni adivinar la causa.
+ */
+async function escribirCatalogo<T>(url: string, method: string, body?: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const b = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(b.error || `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<T>
+}
+
+export const crearTipoCatalogo = (nombre: string) => escribirCatalogo<{ id: string }>('/api/catalogo/tipos', 'POST', { nombre })
+export const crearMarcaCatalogo = (nombre: string) => escribirCatalogo<{ id: string }>('/api/catalogo/marcas', 'POST', { nombre })
+export const crearModeloCatalogo = (input: { marcaId: string; nombre: string; tipoId: string | null }) =>
+  escribirCatalogo<{ id: string }>('/api/catalogo/modelos', 'POST', input)
+
+export const actualizarTipoCatalogo = (id: string, patch: { nombre?: string; activo?: boolean }) =>
+  escribirCatalogo<{ ok: true }>(`/api/catalogo/tipos/${id}`, 'PATCH', patch)
+/** La marca no se renombra: `perfilChecklist` decide el checklist de la remisión leyendo su TEXTO. */
+export const actualizarMarcaCatalogo = (id: string, patch: { activo: boolean }) =>
+  escribirCatalogo<{ ok: true }>(`/api/catalogo/marcas/${id}`, 'PATCH', patch)
+/** Devuelve cuántos equipos declaran otro tipo, se hayan corregido o no. */
+export const actualizarModeloCatalogo = (id: string, patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean }) =>
+  escribirCatalogo<{ discrepan: number }>(`/api/catalogo/modelos/${id}`, 'PATCH', patch)
+
+export const borrarEntradaCatalogo = (entidad: 'tipos' | 'marcas' | 'modelos', id: string) =>
+  escribirCatalogo<{ ok: true }>(`/api/catalogo/${entidad}/${id}`, 'DELETE')
 
 export async function createEquipo(input: EquipoInput): Promise<EquipoFull> {
   const res = await fetch('/api/equipos', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) })
