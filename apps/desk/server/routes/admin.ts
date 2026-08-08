@@ -4,6 +4,7 @@ import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { createMeasurer } from '../measure'
 import type { createDetailBackfiller } from '../backfill'
 import { backfillSerialFromSubject } from '../backfillSerial'
+import { enlazarTicketsConEquipos } from '../backfillEquipoId'
 import { seedChecklist } from '../db/remisionChecklist'
 import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
 import { sembrarCatalogo } from '../db/catalogoSeed'
@@ -55,6 +56,20 @@ export function registerAdminRoutes(
   // Solo tickets NO gestionados por la app; idempotente. SOLO super administrador.
   app.post('/api/admin/backfill-serial', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
       res.json(await backfillSerialFromSubject(db))
+  }))
+
+  // Segundo paso del par: convierte el `serial` que dejó el backfill anterior en el enlace real al
+  // equipo. Sin él, la pestaña HOJA DE VIDA del ticket no se pinta — exige `equipo_id`, y el serial
+  // suelto no le basta. SOLO super administrador; idempotente y no destructivo.
+  app.post('/api/admin/backfill-equipo-id', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
+    const r = await enlazarTicketsConEquipos(db)
+    // Los tres que NO se enlazaron van en el log con su motivo: son la diferencia entre "no había
+    // nada que hacer" y "no se pudo", que es justo lo que hay que saber para decidir si insistir.
+    logger.info(
+      `Enlace ticket→equipo: ${r.enlazados} enlazados, ${r.ambiguos} con serial duplicado en el inventario, ` +
+      `${r.sinEquipo} sin equipo con ese serial, ${r.sinSerial} sin serial`,
+    )
+    res.json(r)
   }))
 
   // Siembra el catálogo inicial del checklist de remisiones. SOLO super administrador.

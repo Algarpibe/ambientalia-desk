@@ -1535,6 +1535,27 @@ describe('POST /api/admin/backfill-serial (admin)', () => {
   })
 })
 
+// El paso que de verdad enciende la pestaña HOJA DE VIDA del histórico: el serial suelto no basta,
+// hace falta el `equipo_id`. Los dos backfills se disparan en orden desde la misma consola.
+describe('POST /api/admin/backfill-equipo-id (admin)', () => {
+  it('enlaza lo inequívoco y reparte el resto por motivo; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    await db.query("INSERT INTO equipos (id,serial,marca) VALUES ('eq-x','18A19042','Grimm')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app,serial) VALUES ('e1',1,'S','Finalizado',false,'18A19042')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app,serial) VALUES ('e2',2,'S','Finalizado',false,'NO-EXISTE')")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/admin/backfill-equipo-id').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ enlazados: 1, sinEquipo: 1 })
+    expect((await db.query("SELECT equipo_id FROM tickets WHERE id='e1'")).rows[0].equipo_id).toBe('eq-x')
+
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/backfill-equipo-id').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/backfill-equipo-id')).status).toBe(401)
+  })
+})
+
 describe('POST /api/admin/backfill-archived (admin)', () => {
   it('admin arranca; 403 no-admin; 401 sin sesión', async () => {
     const admin = await adminCookie()
