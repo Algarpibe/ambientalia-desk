@@ -48,7 +48,18 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   qué perfil cambia antes de confirmar, nunca hacerlo en silencio. Los **tipos sí se renombran** — no los mira.
   Mientras tanto, una variante mala se **desactiva**: la retira de las altas futuras sin tocar los equipos ya
   registrados.
-- **Catálogo de equipos — fases siguientes (2026-08-07).** Ficha técnica del equipo (SKU, fotos, manuales),
+- **Ficha técnica — el SKU no se valida (2026-08-07).** `catalogo_modelos.sku` es una cadena que alguien
+  teclea: sin `books.items` en `desk-db` no hay contra qué contrastarla, y la pantalla lo advierte al
+  rellenarla. Cuando llegue la sincronización con Books habrá que **reconciliar los SKU escritos a mano** con
+  los artículos reales, y decidir si el campo pasa a ser una referencia en vez de texto libre.
+- **Ficha técnica — sin versionado.** Sustituir la foto o un documento pisa el anterior. Nadie ha pedido
+  conservar históricos y hacerlo multiplicaría el almacenamiento sin beneficio conocido.
+- **Ficha técnica — el límite de subida responde 500.** Un fichero de más de 10 MB cae en el manejador central
+  y devuelve `{"error":"Error interno"}` en vez de decir cuál es el límite. Es deuda **preexistente**, igual en
+  remisiones y resoluciones, que comparten el mismo `multer` con el mismo límite: arreglarlo es un manejador de
+  `MulterError` en un sitio, no tres parches.
+- **Catálogo de equipos — fases siguientes (2026-08-07).** Sincronización con Books y gestión de accesorios;
+  la ficha técnica del modelo ya está hecha. Antiguo alcance: ficha técnica del equipo (SKU, fotos, manuales),
   sincronización con Zoho Books y gestión de accesorios. Las tres dependen de lo ya anotado sobre `books.items`
   (no existe en `desk-db` y no trae modelo). Y los binarios no tienen sitio decidido: el precedente de la app es
   `resolution_attachments`, base64 sobre `text`, que vale para una foto y no para manuales en PDF de decenas de
