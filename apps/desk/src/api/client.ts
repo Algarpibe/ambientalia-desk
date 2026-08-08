@@ -193,13 +193,6 @@ export function listEquiposManage(search: string, page = 1): Promise<{ items: Eq
   return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))
 }
 
-/** @deprecated Lo sustituye `getCatalogo`. Se retira cuando el formulario deje de usarlo. */
-export interface EquipoFacets { marcas: string[]; byMarca: Record<string, { modelos: string[]; tipos: string[]; tiposPorModelo: Record<string, string[]> }> }
-/** @deprecated Derivaba las listas de la propia tabla `equipos`; ahora manda el catálogo maestro. */
-export function equipoFacets(): Promise<EquipoFacets> {
-  return fetch('/api/equipos/facets', { credentials: 'include' }).then((r) => json<EquipoFacets>(r))
-}
-
 // ---- Catálogo maestro de equipos ----
 
 /** `incluir` trae además ese modelo aunque esté desactivado: sin él, editar un equipo cuyo modelo se

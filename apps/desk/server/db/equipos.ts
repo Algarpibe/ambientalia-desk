@@ -163,44 +163,6 @@ export async function listEquiposManage(db: Queryable, q: string, limit = 50, of
   return r.rows.map(toFull)
 }
 
-export interface FacetasMarca {
-  modelos: string[]
-  tipos: string[]
-  /** Los tipos que el inventario ha visto para cada modelo de la marca. Uno solo ⇒ el tipo se deduce. */
-  tiposPorModelo: Record<string, string[]>
-}
-
-/**
- * Facetas para los desplegables en cascada: por cada marca, sus modelos y tipos distintos.
- *
- * `tiposPorModelo` es el catálogo que evita preguntar el tipo de equipo: no hace falta una tabla
- * nueva porque el cruce ya está en el propio inventario —cada equipo registrado lleva marca, modelo
- * y tipo—, y esta consulta ya leía las tres columnas juntas; solo tiraba el emparejamiento.
- *
- * Guarda la LISTA de tipos de cada modelo, no el primero que llegue. Un modelo con dos tipos es un
- * dato ambiguo del inventario, y elegir por él escondería el conflicto; con la lista, la pantalla
- * puede rellenar cuando hay uno solo y acotar la elección a esos dos cuando no.
- */
-export async function equipoFacets(db: Queryable): Promise<{ marcas: string[]; byMarca: Record<string, FacetasMarca> }> {
-  const r = await db.query("SELECT DISTINCT marca, modelo, tipo FROM equipos WHERE COALESCE(marca,'') <> '' ORDER BY marca")
-  const acc: Record<string, { modelos: Set<string>; tipos: Set<string>; porModelo: Record<string, Set<string>> }> = {}
-  for (const row of r.rows as any[]) {
-    const marca = row.marca as string
-    if (!acc[marca]) acc[marca] = { modelos: new Set(), tipos: new Set(), porModelo: {} }
-    if (row.modelo) acc[marca].modelos.add(row.modelo)
-    if (row.tipo) acc[marca].tipos.add(row.tipo)
-    if (row.modelo && row.tipo) (acc[marca].porModelo[row.modelo] ??= new Set()).add(row.tipo)
-  }
-  const marcas = Object.keys(acc).sort()
-  const byMarca: Record<string, FacetasMarca> = {}
-  for (const m of marcas) {
-    const tiposPorModelo: Record<string, string[]> = {}
-    for (const [modelo, tipos] of Object.entries(acc[m].porModelo)) tiposPorModelo[modelo] = [...tipos].sort()
-    byMarca[m] = { modelos: [...acc[m].modelos].sort(), tipos: [...acc[m].tipos].sort(), tiposPorModelo }
-  }
-  return { marcas, byMarca }
-}
-
 /** El serial como token delimitado por caracteres no alfanuméricos (evita falsos positivos por subcadena). */
 function serialBoundaryRegex(serial: string): RegExp {
   const esc = serial.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

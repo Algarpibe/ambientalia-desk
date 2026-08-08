@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
-import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull, deleteEquipo, getEquipoHistorial } from '../db/equipos'
+import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull, deleteEquipo, getEquipoHistorial } from '../db/equipos'
 import { getModelo } from '../db/catalogo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -22,10 +22,6 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
     const page = Math.max(1, Number(req.query.page ?? 1))
     const items = await listEquiposManage(db, String(req.query.search ?? ''), 50, (page - 1) * 50)
     res.json({ items, page })
-  }))
-
-  app.get('/api/equipos/facets', requireAuth(db), asyncHandler(async (_req, res) => {
-    res.json(await equipoFacets(db))
   }))
 
   app.get('/api/equipos/:id/historial', requireAuth(db), asyncHandler(async (req, res) => {

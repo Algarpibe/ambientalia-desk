@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { upsertEquipo, searchEquipos, getEquipo, countEquipos, type EquipoRow } from './equipos'
-import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, equipoFacets, getEquipoFull } from './equipos'
+import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull } from './equipos'
 import { getEquipoHistorial } from './equipos'
 import type { EntradaHojaDeVida } from '@ambientalia/shared'
 import { FROM_STATUS_CREACION } from '@ambientalia/shared'
@@ -74,41 +74,6 @@ describe('equipos CRUD (Subsistema F)', () => {
     const id = await createEquipo(db, { serial: 'NEW3', marca: 'Grimm', modelo: 'm', tipo: 'Monitor', clienteNombre: 'Viejo', clientId: null, modeloId: null })
     await updateEquipo(db, id, { tipo: 'Analizador CO', clientId: 'cli9', clienteNombre: 'Nuevo' })
     expect(await getEquipoFull(db, id)).toMatchObject({ tipo: 'Analizador CO', clientId: 'cli9', clienteNombre: 'Nuevo' })
-  })
-
-  it('facets devuelve marcas y tipos distintos', async () => {
-    await createEquipo(db, { serial: 'A', marca: 'Grimm', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
-    await createEquipo(db, { serial: 'B', marca: 'Horiba', modelo: null, tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
-    await createEquipo(db, { serial: 'C', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
-    const f = await equipoFacets(db)
-    expect(f.marcas).toEqual(expect.arrayContaining(['Grimm', 'Horiba']))
-    expect(f.byMarca['Grimm'].tipos).toContain('Monitor')
-    expect(f.byMarca['Grimm'].modelos).toContain('EDM180C')
-  })
-
-  /**
-   * El tipo de equipo lo dice el modelo, así que no hay que preguntarlo: el inventario ya sabe que un
-   * APSA-370 es un analizador de SO2. La consulta leía las tres columnas juntas y tiraba el
-   * emparejamiento, que es lo que dejaba a una marca como Horiba ofreciendo sus ~20 tipos para
-   * cualquier modelo.
-   *
-   * Se guarda la LISTA de tipos de cada modelo y no el primero que llegue: un modelo con dos tipos en
-   * el inventario es un dato ambiguo, y quedarse con uno escondería el conflicto en vez de dejar
-   * elegir sobre las únicas dos opciones posibles.
-   */
-  it('facets empareja cada modelo con sus tipos, y conserva todos los de un modelo ambiguo', async () => {
-    const eq = (serial: string, modelo: string, tipo: string) =>
-      createEquipo(db, { serial, marca: 'Horiba', modelo, tipo, clienteNombre: null, clientId: null, modeloId: null })
-    await eq('H1', 'APSA-370', 'Analizador de Dióxido de Azufre (SO2)')
-    await eq('H2', 'APSA-370', 'Analizador de Dióxido de Azufre (SO2)') // repetido: no duplica
-    await eq('H3', 'APOA-370', 'Analizador de Ozono (O3)')
-    await eq('H4', 'MIXTO', 'Analizador de Ozono (O3)')
-    await eq('H5', 'MIXTO', 'Calibrador Multigas')
-    const porModelo = (await equipoFacets(db)).byMarca['Horiba'].tiposPorModelo
-
-    expect(porModelo['APSA-370']).toEqual(['Analizador de Dióxido de Azufre (SO2)'])
-    expect(porModelo['APOA-370']).toEqual(['Analizador de Ozono (O3)'])
-    expect(porModelo['MIXTO']).toEqual(['Analizador de Ozono (O3)', 'Calibrador Multigas'])
   })
 })
 

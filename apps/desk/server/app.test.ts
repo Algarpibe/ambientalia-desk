@@ -1376,7 +1376,9 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect((await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'S', clientId: 'no-existe' })).status).toBe(422)
   })
 
-  it('facets devuelve marcas/tipos; manage lista; 401 sin sesión', async () => {
+  // `/api/equipos/facets` se retiró: derivaba las listas del propio inventario y lo sustituye
+  // `/api/catalogo`. Su 404 queda fijado abajo para que nadie la resucite por costumbre.
+  it('manage lista; 401 sin sesión', async () => {
     const cookie = await adminCookie()
     await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cliG','G')")
     await db.query("INSERT INTO catalogo_tipos (id,nombre) VALUES ('t-g','O3')")
@@ -1384,13 +1386,18 @@ describe('Gestión de equipos (Subsistema F)', () => {
     await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,tipo_id) VALUES ('mo-g','m-g','APOA-370','t-g')")
     const { app } = appWith()
     await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-G', modeloId: 'mo-g', clientId: 'cliG' })
-    const f = await request(app).get('/api/equipos/facets').set('Cookie', cookie)
-    expect(f.status).toBe(200)
-    expect(f.body.marcas).toContain('Horiba')
     const m = await request(app).get('/api/equipos/manage?search=SN-G').set('Cookie', cookie)
     expect(m.status).toBe(200)
     expect(m.body.items[0]).toMatchObject({ serial: 'SN-G' })
     expect((await request(app).get('/api/equipos/manage')).status).toBe(401)
+  })
+
+  // La ruta vieja ya no existe. Sin este test, retirarla y que algo siguiera llamándola solo se
+  // notaría en producción, porque `/api/equipos/:id/historial` NO la captura (rutas distintas).
+  it('la ruta retirada /api/equipos/facets responde 404', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    expect((await request(app).get('/api/equipos/facets').set('Cookie', cookie)).status).toBe(404)
   })
 
   it('DELETE solo super admin: no-admin 403, sin sesión 401, admin 200', async () => {
