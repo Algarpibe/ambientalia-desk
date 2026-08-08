@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react'
-import type { EquipoFull, ClientLite } from '@ambientalia/shared'
-import { listEquiposManage, equipoFacets, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients, type EquipoFacets } from '../api/client'
+import type { EquipoFull, ClientLite, Catalogo } from '@ambientalia/shared'
+import { listEquiposManage, getCatalogo, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { HojaDeVida } from './HojaDeVida'
 
 const PAGE_SIZE = 50
 
-export function EquiposAdmin({ onClose }: { onClose: () => void }) {
+/**
+ * `onAbrirCatalogo` es opcional a propósito: quien la cablea a la pantalla `CatalogoEquipos` es una
+ * tarea posterior (montarla en App.tsx). Sin ella, el atajo del administrador se degrada a pedirle a
+ * alguien que lo haga desde Configuración, en vez de romper la compilación de quien todavía no la pasa.
+ */
+export function EquiposAdmin({ onClose, onAbrirCatalogo }: { onClose: () => void; onAbrirCatalogo?: () => void }) {
   const { user } = useAuth()
   const [items, setItems] = useState<EquipoFull[]>([])
   const [search, setSearch] = useState('')
@@ -73,36 +78,54 @@ export function EquiposAdmin({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       {(creating || editing) && (
-        <EquipoForm equipo={editing} onClose={() => { setCreating(false); setEditing(null) }} onSaved={() => { setCreating(false); setEditing(null); reload() }} />
+        <EquipoForm
+          equipo={editing}
+          isAdmin={!!user?.isAdmin}
+          onAbrirCatalogo={onAbrirCatalogo}
+          onClose={() => { setCreating(false); setEditing(null) }}
+          onSaved={() => { setCreating(false); setEditing(null); reload() }}
+        />
       )}
       {historial && <HojaDeVida equipoId={historial.id} onClose={() => setHistorial(null)} />}
     </div>
   )
 }
 
-function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; onClose: () => void; onSaved: () => void }) {
+function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
+  equipo: EquipoFull | null
+  isAdmin: boolean
+  onAbrirCatalogo?: () => void
+  onClose: () => void
+  onSaved: () => void
+}) {
   const [serial, setSerial] = useState(equipo?.serial ?? '')
-  const [marca, setMarca] = useState(equipo?.marca ?? '')
-  const [modelo, setModelo] = useState(equipo?.modelo ?? '')
-  const [tipo, setTipo] = useState(equipo?.tipo ?? '')
+  const [marcaId, setMarcaId] = useState('')
+  const [modeloId, setModeloId] = useState(equipo?.modeloId ?? '')
   const [clientId, setClientId] = useState<string | null>(equipo?.clientId ?? null)
   const [clientName, setClientName] = useState(equipo?.clienteNombre ?? '')
   const [clientQuery, setClientQuery] = useState(equipo?.clienteNombre ?? '')
   const [clientResults, setClientResults] = useState<ClientLite[]>([])
-  const [facets, setFacets] = useState<EquipoFacets>({ marcas: [], byMarca: {} })
+  const [catalogo, setCatalogo] = useState<Catalogo>({ tipos: [], marcas: [], modelos: [] })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [marcaOtro, setMarcaOtro] = useState(false)
-  const [modeloOtro, setModeloOtro] = useState(false)
-  const [tipoOtro, setTipoOtro] = useState(false)
-  /** El tipo lo puso el modelo, no la persona. Arranca en false también al editar: el tipo guardado
-   *  de un equipo ya registrado es un dato suyo, no una deducción, y rotularlo así sería mentir. */
-  const [tipoAuto, setTipoAuto] = useState(false)
   // Mismo patrón que CreateTicket: la lista solo se abre con el foco en su campo, y no se
   // reabre al elegir (elegir reescribe `clientQuery`, lo que re-disparaba la búsqueda).
   const [clienteOpen, setClienteOpen] = useState(false)
 
-  useEffect(() => { equipoFacets().then(setFacets).catch(() => {}) }, [])
+  useEffect(() => {
+    // `incluir` trae el modelo del equipo aunque esté desactivado (junto con su marca): sin eso,
+    // editar un equipo cuyo modelo se retiró del catálogo dejaría el campo en blanco y obligaría a
+    // cambiárselo solo para poder guardar.
+    getCatalogo(equipo?.modeloId ?? null).then((c) => {
+      setCatalogo(c)
+      // Precarga la marca a partir del modelo del equipo: sin esto el desplegable de modelo saldría
+      // vacío (está acotado por marca) aunque el de modelo ya traiga el valor correcto.
+      if (equipo?.modeloId) {
+        const m = c.modelos.find((mo) => mo.id === equipo.modeloId)
+        if (m) setMarcaId(m.marcaId)
+      }
+    }).catch(() => {})
+  }, [equipo])
   useEffect(() => {
     if (clientId) { setClientResults([]); return }
     if (clientQuery.trim().length < 2) { setClientResults([]); return }
@@ -114,7 +137,7 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   async function submit(ev: React.FormEvent) {
     ev.preventDefault(); setBusy(true); setError(null)
     try {
-      const payload = { serial, marca: marca || null, modelo: modelo || null, tipo: tipo || null, clientId: clientId ?? undefined }
+      const payload = { serial, modeloId, clientId: clientId ?? undefined }
       if (equipo) await updateEquipo(equipo.id, payload)
       else await createEquipo(payload)
       onSaved()
@@ -123,17 +146,20 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
   }
 
   const field = 'border border-slate-200 rounded p-2 text-[13px]'
-  const OTRO = '__otro__'
-  // Listas en cascada: modelos/tipos según la marca elegida (incluye el valor actual al editar).
-  const withCurrent = (list: string[], current: string) => (!current || list.includes(current) ? list : [current, ...list])
-  const marcas = withCurrent(facets.marcas, marca)
-  const mb = facets.byMarca[marca]
-  const modelos = withCurrent(mb?.modelos ?? [], modelo)
-  // El tipo es una consecuencia del modelo, no una pregunta: el inventario ya sabe qué es un
-  // APSA-370. Con el modelo elegido la lista se acota a los tipos de ESE modelo; sin modelo —o si es
-  // uno nuevo, que nadie ha registrado aún— se cae a los de la marca, que es lo que había antes.
-  const tiposDelModelo = mb?.tiposPorModelo?.[modelo] ?? []
-  const tipos = withCurrent(tiposDelModelo.length ? tiposDelModelo : (mb?.tipos ?? []), tipo)
+  // Catálogo CERRADO: los modelos se acotan a los de la marca elegida, sin «Otro…». El servidor ya
+  // devuelve solo marcas/modelos activos (más el del equipo en edición, aunque esté desactivado), así
+  // que no hace falta filtrar nada más aquí.
+  const modelosDeMarca = catalogo.modelos.filter((m) => m.marcaId === marcaId)
+  const modeloSeleccionado = modeloId ? catalogo.modelos.find((m) => m.id === modeloId) : undefined
+  const tipoTexto = !modeloId ? '' : (modeloSeleccionado?.tipoNombre ?? 'Este modelo no tiene tipo asignado en el catálogo.')
+
+  // El atajo del administrador: la marca elegida no tiene modelos, o el catálogo no tiene marcas en
+  // absoluto. En ambos casos no hay nada que elegir, así que se dice y se ofrece salida en vez de
+  // dejar el desplegable de modelo vacío sin explicación.
+  const marcaSinModelos = !!marcaId && modelosDeMarca.length === 0
+  const catalogoSinMarcas = catalogo.marcas.length === 0
+  const mostrarAtajo = catalogoSinMarcas || marcaSinModelos
+  const marcaElegidaNombre = catalogo.marcas.find((m) => m.id === marcaId)?.nombre ?? ''
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
@@ -141,56 +167,31 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
         <h3 className="text-[15px] font-bold text-slate-800">{equipo ? 'Editar equipo' : 'Nuevo equipo'}</h3>
         <input className={field} placeholder="Número de serie *" value={serial} onChange={(e) => setSerial(e.target.value)} required />
         <div className="grid grid-cols-2 gap-2">
-          <div className="flex flex-col gap-1">
-            <select className={field} value={marcaOtro ? OTRO : marca} onChange={(e) => {
-              const v = e.target.value
-              if (v === OTRO) { setMarcaOtro(true); setMarca('') } else { setMarcaOtro(false); setMarca(v) }
-              setModelo(''); setModeloOtro(false); setTipo(''); setTipoOtro(false); setTipoAuto(false)
-            }}>
-              <option value="">Marca…</option>
-              {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
-              <option value={OTRO}>Otro…</option>
-            </select>
-            {marcaOtro && <input className={field} autoFocus placeholder="Nueva marca" value={marca} onChange={(e) => setMarca(e.target.value)} />}
-          </div>
-          <div className="flex flex-col gap-1">
-            <select className={field} value={modeloOtro ? OTRO : modelo} disabled={!marca} onChange={(e) => {
-              const v = e.target.value
-              setTipoOtro(false)
-              if (v === OTRO) { setModeloOtro(true); setModelo(''); setTipo(''); setTipoAuto(false); return }
-              setModeloOtro(false); setModelo(v)
-              // Si el inventario solo conoce un tipo para ese modelo, se rellena y no se pregunta.
-              // Con dos o más se deja en blanco a propósito: elegir por el usuario sobre un dato
-              // ambiguo es peor que pedirle que decida entre las dos únicas opciones posibles.
-              const inferidos = facets.byMarca[marca]?.tiposPorModelo?.[v] ?? []
-              setTipo(inferidos.length === 1 ? inferidos[0] : '')
-              setTipoAuto(inferidos.length === 1)
-            }}>
-              <option value="">{marca ? 'Modelo…' : 'Elige marca primero'}</option>
-              {modelos.map((m) => <option key={m} value={m}>{m}</option>)}
-              {marca && <option value={OTRO}>Otro…</option>}
-            </select>
-            {modeloOtro && <input className={field} placeholder="Nuevo modelo" value={modelo} onChange={(e) => setModelo(e.target.value)} />}
-          </div>
-        </div>
-        <div className="flex flex-col gap-1">
-          <select className={field} value={tipoOtro ? OTRO : tipo} disabled={!marca} onChange={(e) => {
-            const v = e.target.value
-            setTipoAuto(false) // lo elige la persona: deja de ser una deducción
-            if (v === OTRO) { setTipoOtro(true); setTipo('') } else { setTipoOtro(false); setTipo(v) }
-          }}>
-            <option value="">{marca ? 'Tipo de equipo…' : 'Elige marca primero'}</option>
-            {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
-            {marca && <option value={OTRO}>Otro…</option>}
+          <select className={field} value={marcaId} onChange={(e) => { setMarcaId(e.target.value); setModeloId('') }}>
+            <option value="">Marca…</option>
+            {catalogo.marcas.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
           </select>
-          {tipoOtro && <input className={field} placeholder="Nuevo tipo de equipo" value={tipo} onChange={(e) => setTipo(e.target.value)} />}
-          {/* Se dice de dónde sale y se deja cambiar: un modelo puede estrenar tipo, y bloquearlo
-              obligaría a registrar el equipo mal para corregirlo después. */}
-          {tipoAuto && tipo && <div className="text-[11px] text-slate-400">Deducido de {marca} {modelo}. Cámbialo si este equipo es otra cosa.</div>}
-          {!tipo && tiposDelModelo.length > 1 && (
-            <div className="text-[11px] text-amber-700">En el inventario, {marca} {modelo} figura con {tiposDelModelo.length} tipos distintos. Elige cuál es este.</div>
-          )}
+          <select className={field} value={modeloId} disabled={!marcaId} onChange={(e) => setModeloId(e.target.value)}>
+            <option value="">{marcaId ? 'Modelo…' : 'Elige marca primero'}</option>
+            {modelosDeMarca.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+          </select>
         </div>
+        {/* Solo lectura: el tipo lo determina el modelo elegido, se enseña para confirmar que es el
+            equipo correcto, no para tocarlo. */}
+        <input className={`${field} bg-slate-50 text-slate-500`} placeholder="Tipo (según el modelo elegido)" value={tipoTexto} disabled readOnly />
+        {mostrarAtajo && (
+          <div className="text-[12px] text-amber-700 bg-amber-50 border border-amber-100 rounded p-2">
+            {catalogoSinMarcas
+              ? 'El catálogo de equipos todavía no tiene marcas dadas de alta.'
+              : `La marca "${marcaElegidaNombre}" no tiene ningún modelo dado de alta en el catálogo.`}
+            {' '}
+            {isAdmin && onAbrirCatalogo ? (
+              <button type="button" onClick={onAbrirCatalogo} className="text-blue-600 underline">Ir al catálogo de equipos</button>
+            ) : (
+              'Pídeselo a un administrador desde Configuración → Catálogo de equipos.'
+            )}
+          </div>
+        )}
         <div className="relative">
           <input className={`${field} w-full`} placeholder="Cliente (Books) *" value={clientQuery}
             onFocus={() => setClienteOpen(true)} onBlur={() => setClienteOpen(false)}
@@ -208,7 +209,7 @@ function EquipoForm({ equipo, onClose, onSaved }: { equipo: EquipoFull | null; o
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
-          <button type="submit" disabled={busy} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar'}</button>
+          <button type="submit" disabled={busy || !modeloId} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar'}</button>
         </div>
       </form>
     </div>

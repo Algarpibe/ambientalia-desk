@@ -185,7 +185,9 @@ export async function createTicket(payload: CreateTicketPayload): Promise<Ticket
   return res.json() as Promise<TicketDetail>
 }
 
-export interface EquipoInput { serial: string; marca: string | null; modelo: string | null; tipo: string | null; clientId?: string }
+/** `modeloId` apunta al catálogo maestro, que es quien escribe marca/modelo/tipo en el servidor: por
+ *  eso esos tres textos ya no viajan desde aquí (el endpoint los ignoraría de todos modos). */
+export interface EquipoInput { serial: string; modeloId: string; clientId?: string }
 
 export function listEquiposManage(search: string, page = 1): Promise<{ items: EquipoFull[]; page: number }> {
   return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))
