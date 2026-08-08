@@ -33,14 +33,21 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 
 ### 🟢 ROADMAP / proyectos futuros (no urgentes)
 **Plataforma Desk:**
-- **Catálogo de equipos — renombrar y fusionar (PENDIENTE, 2026-08-07).** La fase 1 dejó el catálogo maestro
-  administrable, pero **sin renombrar marcas ni modelos**, y por tanto sin poder fusionar `EDM180C` con
-  `EDM 180 C`: solo se puede **desactivar** la variante mala, lo que la retira de las altas futuras sin tocar
-  los equipos ya registrados. El motivo es `perfilChecklist` (`packages/shared/src/remision.ts`), que decide el
-  checklist "Incluye" de una remisión leyendo el **TEXTO** de marca y modelo por subcadena
-  (`modelo.includes('edm180')`, `marca === 'horiba'`, `modelo.startsWith('ap')`): renombrar cambiaría en
-  silencio qué accesorios pide la remisión de esos equipos. Necesita su propio diseño, probablemente con una
-  previsualización del efecto sobre los perfiles antes de confirmar. Los **tipos sí se renombran** — no los mira.
+- **Catálogo de equipos — renombrar y fusionar (NO HACE FALTA HOY, comprobado 2026-08-07).** La fase 1 dejó el
+  catálogo **sin renombrar marcas ni modelos**, y por tanto sin poder fusionar variantes de escritura del mismo
+  modelo. **Se comprobó en producción y no hay ninguna**: agrupando por nombre normalizado (sin espacios, guiones
+  ni mayúsculas) dan 0 filas tanto los 35 modelos del catálogo como los 354 equipos. El caso `EDM180C` /
+  `EDM 180 C` era un ejemplo de la fase de diseño, no un dato real.
+  **Y no puede reaparecer**: el catálogo quedó cerrado y el formulario de equipos ya no ofrece «Otro…», así que
+  nadie puede inventar una variante escribiéndola a mano.
+  Si algún día hiciera falta, esto es lo que hay que saber: `perfilChecklist` (`packages/shared/src/remision.ts`)
+  decide el checklist "Incluye" de una remisión leyendo el **TEXTO** de marca y modelo por subcadena
+  (`modelo.includes('edm180')`, `marca === 'horiba'`, `modelo.startsWith('ap')`). Fusionar no sería cosmético:
+  pasar un equipo de `EDM 180 C` a `EDM180C` lo movería del perfil `otro` (27 accesorios genéricos) a
+  `grimm_edm180` (25 propios). En esa dirección es una **corrección**, pero la herramienta tendría que enseñar
+  qué perfil cambia antes de confirmar, nunca hacerlo en silencio. Los **tipos sí se renombran** — no los mira.
+  Mientras tanto, una variante mala se **desactiva**: la retira de las altas futuras sin tocar los equipos ya
+  registrados.
 - **Catálogo de equipos — fases siguientes (2026-08-07).** Ficha técnica del equipo (SKU, fotos, manuales),
   sincronización con Zoho Books y gestión de accesorios. Las tres dependen de lo ya anotado sobre `books.items`
   (no existe en `desk-db` y no trae modelo). Y los binarios no tienen sitio decidido: el precedente de la app es
