@@ -1357,11 +1357,14 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect(create.status).toBe(201)
     expect(create.body).toMatchObject({ serial: 'SN-F1', marca: 'Grimm', active: true, clientId: 'cliF', clienteNombre: 'Cliente F' })
     const id = create.body.id
-    // El PATCH ya no acepta `tipo` suelto: fuera de `modeloId`, ningún otro camino toca marca/modelo/
-    // tipo (ver el 422 obligatorio del alta). Aquí solo queda comprobar la desactivación.
-    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie).send({ active: false })
+    // El PATCH ya no acepta marca/modelo/tipo sueltos: los escribe el catálogo (vía `modeloId`) y
+    // ningún otro camino los toca. Se manda a propósito junto con `active` para comprobar que se
+    // ignoran en vez de limitarnos a no mandarlos — si alguien reintroduce su lectura del cuerpo
+    // (de buena fe, porque un formulario "quiere" editar el tipo), este test debe reventar.
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie)
+      .send({ active: false, tipo: 'Analizador CO', marca: 'FALSA', modelo: 'FALSO' })
     expect(patch.status).toBe(200)
-    expect(patch.body).toMatchObject({ active: false })
+    expect(patch.body).toMatchObject({ active: false, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10' })
     expect((await listEquiposManage(db, 'SN-F1')).length).toBe(1)
   })
 
