@@ -7,6 +7,7 @@ type Category = { title: string; items: Item[] }
 // Novedades del producto (panel derecho, estilo "Actualizaciones de producto" de Zoho Desk).
 // Más recientes primero. Se cuenta lo que el usuario puede HACER, no cómo está construido.
 const NOVEDADES = [
+  { title: 'Catálogo de equipos', body: 'Marcas, modelos y tipos se administran en un solo sitio (Configuración → Administración de datos). El tipo de equipo lo determina el modelo, así que el alta ya no lo pregunta, y marcas y modelos dejan de inventarse sobre la marcha: se elige de lo que existe.' },
   { title: 'Reintentar una remisión fallida', body: 'Si el envío de una remisión no sale bien, la pestaña Remisiones del ticket ofrece reintentarlo. Antes no había vuelta atrás y tocaba crear otra.' },
   { title: 'Fases nuevas del ticket', body: 'Un ticket abierto en la app nace en "Ticket creado" y pasa a "Remisión creada" en cuanto su remisión se genera. Antes las dos etapas compartían el nombre "OV asignada", heredado de Zoho.' },
   { title: 'Hoja de vida del equipo', body: 'Pestaña propia dentro del ticket, y también desde Registro de equipos. Reúne en una sola línea de tiempo todo lo que le ha pasado a ese número de serie: sus tickets y sus remisiones, incluidas las que nunca llegaron a tener ticket.' },
@@ -21,11 +22,12 @@ const NOVEDADES = [
   { title: 'Tablero configurable', body: 'Oculta las columnas vacías del tablero desde esta misma página de Configuración.' },
 ]
 
-export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos, isAdmin }: {
+export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos, onOpenCatalogo, isAdmin }: {
   onClose: () => void
   onOpenUsers: () => void
   onOpenRoles: () => void
   onOpenEquipos: () => void
+  onOpenCatalogo: () => void
   isAdmin: boolean
 }) {
   const [section, setSection] = useState<'home' | 'tablero'>('home')
@@ -123,6 +125,9 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos
       items: [
         { label: 'Clientes (Zoho Books)', soon: true },
         { label: 'Órdenes de venta (Zoho Books)', soon: true },
+        // Solo para administradores: las rutas de escritura del catálogo exigen super administrador,
+        // así que enseñar la entrada a quien no puede usarla solo llevaría a una pantalla de errores.
+        ...(isAdmin ? [{ label: 'Catálogo de equipos', onClick: onOpenCatalogo }] : []),
         { label: 'Registro de equipos', onClick: onOpenEquipos },
         { label: 'Importar / Exportar', soon: true },
       ],

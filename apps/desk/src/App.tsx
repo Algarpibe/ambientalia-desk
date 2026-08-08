@@ -23,6 +23,7 @@ const EquiposAdmin = lazy(() => import('./components/EquiposAdmin').then(m => ({
 const RolesAdmin = lazy(() => import('./components/RolesAdmin').then(m => ({ default: m.RolesAdmin })))
 const CreateTicket = lazy(() => import('./components/CreateTicket').then(m => ({ default: m.CreateTicket })))
 const Configuracion = lazy(() => import('./components/Configuracion').then(m => ({ default: m.Configuracion })))
+const CatalogoEquipos = lazy(() => import('./components/CatalogoEquipos').then(m => ({ default: m.CatalogoEquipos })))
 const Analisis = lazy(() => import('./components/Analisis').then(m => ({ default: m.Analisis })))
 const ClientesPage = lazy(() => import('./components/ClientesPage').then(m => ({ default: m.ClientesPage })))
 const ActividadesPage = lazy(() => import('./components/ActividadesPage').then(m => ({ default: m.ActividadesPage })))
@@ -36,6 +37,7 @@ function App() {
   const [showCreate, setShowCreate] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
   const [showEquipos, setShowEquipos] = useState(false)
+  const [showCatalogo, setShowCatalogo] = useState(false)
   const [showAnalisis, setShowAnalisis] = useState(false)
   const [showClientes, setShowClientes] = useState(false)
   const [clientesInitial, setClientesInitial] = useState<{ kind: 'contacto' | 'empresa'; id: string } | null>(null)
@@ -143,7 +145,8 @@ function App() {
 
       <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 text-sm text-slate-600">Cargando…</div>}>
         {showUsers && <UsersAdmin onClose={() => setShowUsers(false)} />}
-        {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} />}
+        {showEquipos && <EquiposAdmin onClose={() => setShowEquipos(false)} onAbrirCatalogo={() => { setShowEquipos(false); setShowCatalogo(true) }} />}
+        {showCatalogo && <CatalogoEquipos onClose={() => setShowCatalogo(false)} />}
         {showAnalisis && <Analisis onClose={() => setShowAnalisis(false)} />}
         {showClientes && <ClientesPage initial={clientesInitial} onClose={() => { setShowClientes(false); setClientesInitial(null) }} onSelectTicket={(id) => { setShowClientes(false); setClientesInitial(null); setSelectedTicketId(id) }} onAgregarTicket={() => setShowCreate(true)} />}
         {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
@@ -156,6 +159,7 @@ function App() {
             onOpenUsers={() => { setShowConfig(false); setShowUsers(true) }}
             onOpenRoles={() => { setShowConfig(false); setShowRoles(true) }}
             onOpenEquipos={() => { setShowConfig(false); setShowEquipos(true) }}
+            onOpenCatalogo={() => { setShowConfig(false); setShowCatalogo(true) }}
             isAdmin={!!user.isAdmin}
           />
         )}
