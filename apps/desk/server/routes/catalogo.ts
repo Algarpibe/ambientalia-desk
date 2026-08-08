@@ -1,12 +1,20 @@
 import type { Express } from 'express'
+import multer from 'multer'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { TIPOS_DOCUMENTO, type TipoDocumento } from '@ambientalia/shared'
 import {
   leerCatalogo, leerConflictos, crearTipo, crearMarca, crearModelo,
   actualizarTipo, actualizarMarca, actualizarModelo, borrarEntrada, existeEnCatalogo,
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
+import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+
+// Mismo límite que resoluciones y remisiones. Un manual más grande se ENLAZA en vez de subirse, que
+// es justo el caso que motivó admitir los dos caminos.
+const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+const esTipoDocumento = (v: string): v is TipoDocumento => (TIPOS_DOCUMENTO as readonly string[]).includes(v)
 
 /** Las tres entidades que admite el borrado, como lista blanca. Nada de la URL llega a una tabla. */
 const ENTIDADES = ['tipos', 'marcas', 'modelos'] as const
@@ -114,7 +122,7 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
   app.patch('/api/catalogo/modelos/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
     const id = String(req.params.id)
     const b = (req.body ?? {}) as Record<string, unknown>
-    const patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean } = {}
+    const patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean; sku?: string | null } = {}
     if (b.tipoId !== undefined) {
       const tipoId = b.tipoId ? String(b.tipoId) : null
       if (tipoId && !(await existeEnCatalogo(db, 'tipos', tipoId))) { res.status(422).json({ error: 'El tipo no existe' }); return }
@@ -122,7 +130,58 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
     }
     if (b.activo !== undefined) patch.activo = Boolean(b.activo)
     if (b.corregirEquipos !== undefined) patch.corregirEquipos = Boolean(b.corregirEquipos)
+    if (b.sku !== undefined) patch.sku = b.sku ? String(b.sku).trim() : null
     res.json(await actualizarModelo(db, id, patch))
+  }))
+
+  // Leer la ficha: cualquiera con sesión. El técnico que repara tiene que poder abrir el manual;
+  // decidir qué documentos existen es administrar. Nunca devuelve `content_b64` (ver leerFicha).
+  app.get('/api/catalogo/modelos/:id/ficha', requireAuth(db), asyncHandler(async (req, res) => {
+    const f = await leerFicha(db, String(req.params.id))
+    if (!f) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    res.json(f)
+  }))
+
+  // El fichero, por el proxy autenticado de la aplicación: nada sale de la sesión. 404 si el
+  // documento es un enlace — no hay fichero que servir.
+  app.get('/api/catalogo/modelos/:id/documentos/:docId/contenido', requireAuth(db), asyncHandler(async (req, res) => {
+    const c = await contenidoDocumento(db, String(req.params.id), String(req.params.docId))
+    if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
+    res.set('Content-Type', c.contentType)
+    res.set('X-Content-Type-Options', 'nosniff')
+    res.send(Buffer.from(c.contentB64, 'base64'))
+  }))
+
+  // Alta. Admite las dos formas: JSON con `url` (enlace) o multipart con el campo `archivo`.
+  app.post('/api/catalogo/modelos/:id/documentos', requireAuth(db), requireSuperAdmin, subida.single('archivo'), asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await existeEnCatalogo(db, 'modelos', modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    const b = (req.body ?? {}) as Record<string, unknown>
+    const tipo = String(b.tipo ?? '')
+    if (!esTipoDocumento(tipo)) { res.status(422).json({ error: 'Tipo de documento no válido' }); return }
+    const nombre = String(b.nombre ?? '')
+    const creadoPor = req.user?.name ?? 'App'
+    try {
+      if (req.file) {
+        const id = await crearFichero(db, modeloId, {
+          tipo, nombre, contentB64: req.file.buffer.toString('base64'),
+          contentType: req.file.mimetype, size: req.file.size, creadoPor,
+        })
+        res.status(201).json({ id }); return
+      }
+      const url = String(b.url ?? '')
+      if (!url.trim()) { res.status(422).json({ error: 'Hace falta un enlace o un archivo' }); return }
+      res.status(201).json({ id: await crearEnlace(db, modeloId, { tipo, nombre, url, creadoPor }) })
+    } catch (err) {
+      if (err instanceof DocumentoInvalido) { res.status(422).json({ error: err.message }); return }
+      throw err
+    }
+  }))
+
+  app.delete('/api/catalogo/modelos/:id/documentos/:docId', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const ok = await borrarDocumento(db, String(req.params.id), String(req.params.docId))
+    if (!ok) { res.status(404).json({ error: 'No encontrado' }); return }
+    res.json({ ok: true })
   }))
 
   // Lista blanca: `req.params.entidad` nunca llega a interpolarse en un nombre de tabla si no está

@@ -1907,4 +1907,102 @@ describe('Catálogo maestro de equipos', () => {
     const segunda = await request(app).post('/api/admin/seed-catalogo').set('Cookie', cookie)
     expect(segunda.body).toMatchObject({ modelosCreados: 0, conflictosNuevos: 0, modelosPorRevisar: 1 })
   })
+
+  /** Modelo listo para colgarle ficha. Devuelve su id. */
+  async function modeloParaFicha(app: ReturnType<typeof appWith>['app'], cookie: string): Promise<string> {
+    const marcaId = (await request(app).post('/api/catalogo/marcas').set('Cookie', cookie).send({ nombre: 'Horiba' })).body.id
+    return (await request(app).post('/api/catalogo/modelos').set('Cookie', cookie).send({ marcaId, nombre: 'APSA-370' })).body.id
+  }
+
+  it('alta de enlace y de fichero; la ficha los devuelve y el proxy sirve el fichero', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const modeloId = await modeloParaFicha(app, cookie)
+
+    const enlace = await request(app).post(`/api/catalogo/modelos/${modeloId}/documentos`).set('Cookie', cookie)
+      .send({ tipo: 'manual', nombre: 'Manual de usuario', url: 'https://ejemplo/m.pdf' })
+    expect(enlace.status).toBe(201)
+
+    const subida = await request(app).post(`/api/catalogo/modelos/${modeloId}/documentos`).set('Cookie', cookie)
+      .field('tipo', 'foto').field('nombre', 'Vista frontal')
+      .attach('archivo', Buffer.from('imagen'), { filename: 'f.png', contentType: 'image/png' })
+    expect(subida.status).toBe(201)
+
+    const ficha = await request(app).get(`/api/catalogo/modelos/${modeloId}/ficha`).set('Cookie', cookie)
+    expect(ficha.status).toBe(200)
+    expect(ficha.body.foto).toMatchObject({ nombre: 'Vista frontal', url: null })
+    expect(ficha.body.documentos.map((d: { nombre: string }) => d.nombre)).toEqual(['Manual de usuario'])
+
+    const contenido = await request(app).get(`/api/catalogo/modelos/${modeloId}/documentos/${ficha.body.foto.id}/contenido`).set('Cookie', cookie)
+    expect(contenido.status).toBe(200)
+    expect(contenido.headers['content-type']).toContain('image/png')
+    // `image/png` lo parsea supertest como binario: llega en `.body` (Buffer), no en `.text`
+    // (que se queda `undefined` para cualquier tipo que superagent trate como binario).
+    expect(contenido.body).toEqual(Buffer.from('imagen'))
+  })
+
+  // Un enlace no tiene fichero que servir.
+  it('404 al pedir el contenido de un documento que es un enlace', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const modeloId = await modeloParaFicha(app, cookie)
+    const id = (await request(app).post(`/api/catalogo/modelos/${modeloId}/documentos`).set('Cookie', cookie)
+      .send({ tipo: 'manual', nombre: 'M', url: 'https://x' })).body.id
+    expect((await request(app).get(`/api/catalogo/modelos/${modeloId}/documentos/${id}/contenido`).set('Cookie', cookie)).status).toBe(404)
+  })
+
+  it('422 sin nombre, sin url ni fichero, o con un tipo que no existe', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const modeloId = await modeloParaFicha(app, cookie)
+    const post = (body: object) => request(app).post(`/api/catalogo/modelos/${modeloId}/documentos`).set('Cookie', cookie).send(body)
+    expect((await post({ tipo: 'manual', nombre: '', url: 'https://x' })).status).toBe(422)
+    expect((await post({ tipo: 'manual', nombre: 'M' })).status).toBe(422)
+    expect((await post({ tipo: 'inventado', nombre: 'M', url: 'https://x' })).status).toBe(422)
+  })
+
+  it('el sku se guarda por el PATCH del modelo y sale en la ficha', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const modeloId = await modeloParaFicha(app, cookie)
+    expect((await request(app).patch(`/api/catalogo/modelos/${modeloId}`).set('Cookie', cookie).send({ sku: 'SKU-9' })).status).toBe(200)
+    expect((await request(app).get(`/api/catalogo/modelos/${modeloId}/ficha`).set('Cookie', cookie)).body.sku).toBe('SKU-9')
+  })
+
+  // Es la regresión más fácil de introducir y la más difícil de notar: todo seguiría funcionando,
+  // solo más lento cada día que pasara.
+  it('GET /api/catalogo sigue sin devolver documentos ni base64', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const modeloId = await modeloParaFicha(app, cookie)
+    await request(app).post(`/api/catalogo/modelos/${modeloId}/documentos`).set('Cookie', cookie)
+      .field('tipo', 'foto').field('nombre', 'F')
+      .attach('archivo', Buffer.from('IMAGENSECRETA'), { filename: 'f.png', contentType: 'image/png' })
+
+    const c = await request(app).get('/api/catalogo').set('Cookie', cookie)
+    expect(JSON.stringify(c.body)).not.toContain('IMAGENSECRETA')
+    expect(JSON.stringify(c.body)).not.toContain('documentos')
+  })
+
+  it('leer la ficha exige sesión; escribir exige super administrador', async () => {
+    const admin = await adminCookie()
+    const { app } = appWith()
+    const modeloId = await modeloParaFicha(app, admin)
+    const docId = (await request(app).post(`/api/catalogo/modelos/${modeloId}/documentos`).set('Cookie', admin)
+      .send({ tipo: 'manual', nombre: 'M', url: 'https://x' })).body.id
+    const op = await userCookie(['Servicio Técnico'])
+
+    // Leer: cualquiera con sesión. El técnico tiene que poder abrir el manual.
+    expect((await request(app).get(`/api/catalogo/modelos/${modeloId}/ficha`).set('Cookie', op)).status).toBe(200)
+    expect((await request(app).get(`/api/catalogo/modelos/${modeloId}/ficha`)).status).toBe(401)
+
+    // Escribir: solo super administrador.
+    const alta = `/api/catalogo/modelos/${modeloId}/documentos`
+    expect((await request(app).post(alta).set('Cookie', op).send({ tipo: 'manual', nombre: 'X', url: 'https://y' })).status).toBe(403)
+    expect((await request(app).post(alta).send({ tipo: 'manual', nombre: 'X', url: 'https://y' })).status).toBe(401)
+    const baja = `/api/catalogo/modelos/${modeloId}/documentos/${docId}`
+    expect((await request(app).delete(baja).set('Cookie', op)).status).toBe(403)
+    expect((await request(app).delete(baja)).status).toBe(401)
+    expect((await request(app).delete(baja).set('Cookie', admin)).status).toBe(200)
+  })
 })

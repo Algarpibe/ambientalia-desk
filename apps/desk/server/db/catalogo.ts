@@ -240,9 +240,10 @@ export async function actualizarMarca(db: Queryable, id: string, patch: { activo
 export async function actualizarModelo(
   db: Queryable,
   id: string,
-  patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean },
+  patch: { tipoId?: string | null; activo?: boolean; corregirEquipos?: boolean; sku?: string | null },
 ): Promise<{ discrepan: number }> {
   if (patch.activo !== undefined) await db.query('UPDATE catalogo_modelos SET activo=$2 WHERE id=$1', [id, patch.activo])
+  if (patch.sku !== undefined) await db.query('UPDATE catalogo_modelos SET sku=$2 WHERE id=$1', [id, patch.sku])
   if (patch.tipoId === undefined) return { discrepan: 0 }
 
   await db.query('UPDATE catalogo_modelos SET tipo_id=$2, revisar=false WHERE id=$1', [id, patch.tipoId])
