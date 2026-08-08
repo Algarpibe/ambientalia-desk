@@ -829,13 +829,16 @@ export function FichaTecnica({ modeloId, compacto = false }: { modeloId: string;
   const vacia = !ficha.foto && ficha.documentos.length === 0 && !ficha.sku
   if (vacia) return null
 
+  // Un documento —la foto incluida— es un enlace o un fichero. Si tiene `url` se abre esa; si no, se
+  // pide por el proxy autenticado. La foto usa la misma regla: también puede haberse dado de alta
+  // como enlace, y asumir siempre el proxy la dejaría rota.
   const enlaceDe = (d: FichaModelo['documentos'][number]) => d.url ?? urlDocumento(modeloId, d.id)
 
   return (
     <section className={compacto ? 'flex flex-col gap-2' : 'border border-slate-200 rounded p-3 flex gap-4'}>
       {ficha.foto && (
         <img
-          src={urlDocumento(modeloId, ficha.foto.id)}
+          src={ficha.foto.url ?? urlDocumento(modeloId, ficha.foto.id)}
           alt={ficha.foto.nombre}
           className={compacto ? 'w-full max-h-[120px] object-contain rounded border border-slate-200' : 'w-[140px] h-[140px] object-contain rounded border border-slate-200 shrink-0'}
         />
