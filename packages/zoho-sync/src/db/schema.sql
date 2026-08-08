@@ -325,3 +325,21 @@ CREATE INDEX IF NOT EXISTS idx_catalogo_modelos_tipo ON catalogo_modelos (tipo_i
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS modelo_id text;
 -- Es la clave de union del catalogo: comprobar si un modelo esta en uso, contar conflictos
 CREATE INDEX IF NOT EXISTS idx_equipos_modelo ON equipos (modelo_id);
+
+-- Documentos de un modelo del catalogo: su foto de referencia, manuales, instructivos y guias. Cada fila es O un enlace -url- O un fichero subido -content_b64-, nunca las dos cosas ni ninguna: lo comprueba el repo y no el esquema, porque pg-mem trata los CHECK de forma desigual y una restriccion que solo existe en produccion da falsa seguridad en los tests
+CREATE TABLE IF NOT EXISTS public.catalogo_documentos (
+  id text PRIMARY KEY,
+  modelo_id text NOT NULL,
+  tipo text NOT NULL,
+  nombre text NOT NULL,
+  url text,
+  content_b64 text,
+  content_type text,
+  size integer,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by text
+);
+CREATE INDEX IF NOT EXISTS idx_catalogo_documentos_modelo ON catalogo_documentos (modelo_id);
+
+-- El SKU es del MODELO y no del equipo. Sin books.items en desk-db no se valida contra nada: es una cadena que alguien teclea, y habra que reconciliarla cuando llegue la sincronizacion con Books
+ALTER TABLE catalogo_modelos ADD COLUMN IF NOT EXISTS sku text;
