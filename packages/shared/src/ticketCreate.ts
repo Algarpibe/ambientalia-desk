@@ -23,11 +23,24 @@ export function parseCodigoFromPotential(potentialName: string | null | undefine
   return m ? { prefijo: m[1], serie: m[2], modelo: m[3] } : null
 }
 
-/** Extrae el código de servicio y su serial de un texto (p.ej. el asunto del ticket). Fecha opcional. */
+/**
+ * Extrae el código de servicio y su serial de un texto (p.ej. el asunto del ticket). Fecha opcional.
+ *
+ * Tolera **espacios pegados a los guiones bajos** (`HV_ S2X9CPH3_APNA-370`, `CG_18A18102 _EDM180C`).
+ * No es una concesión teórica: un lote entero del histórico de Zoho viene así, y el patrón anterior
+ * —que usaba `[^_\s]+` a secas— los rechazaba en silencio. Esos tickets se quedaban sin serial y por
+ * tanto sin poder enlazarse nunca con su equipo, sin que nada lo delatara.
+ *
+ * El código se **reconstruye desde los grupos** en vez de devolver la coincidencia entera (`m[0]`):
+ * si no, arrastraría los espacios del asunto y `MT_ 18A19042 _EDM180C` quedaría guardado como un
+ * dato distinto de `MT_18A19042_EDM180C`, que es el mismo código escrito de otra forma.
+ */
 export function extractServiceCode(text: string | null | undefined): { serial: string; codigo: string } | null {
   if (!text) return null
-  const m = text.match(/\b(MT|CG|HV|SR|PRO)_([^_\s]+)_([^_\s]+)(?:_(\d{6}))?\b/)
-  return m ? { serial: m[2], codigo: m[0] } : null
+  const m = text.match(/\b(MT|CG|HV|SR|PRO)_\s*([^_\s]+)\s*_\s*([^_\s]+)(?:\s*_\s*(\d{6})\b)?/)
+  if (!m) return null
+  const partes = [m[1], m[2], m[3], m[4]].filter((p): p is string => p != null && p !== '')
+  return { serial: m[2], codigo: partes.join('_') }
 }
 
 /** El prefijo del Código Servicio se deriva del Tipo de Servicio (editable). Calibración → CG; el resto → MT. */
