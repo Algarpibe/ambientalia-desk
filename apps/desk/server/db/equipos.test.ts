@@ -55,12 +55,16 @@ describe('equipos repo', () => {
     // Sin `client_id`: lo que dejó la carga inicial. Ya NO aparece al acotar por cliente — es el
     // precio de la simplificación, y por eso hubo que rellenar `client_id` antes de hacerla.
     await upsertEquipo(db, { id: 'e-sin-id', serial: '18A0004', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', cliente_nombre: 'Ambientalia S.A.S.', source: 'seed', raw: null })
+    // El id buscado es PREFIJO de este otro. Fija que la acotación compara identidad y no texto: con
+    // un LIKE en vez de `=` este equipo se colaría, y los ids de Books son numéricos largos y
+    // parecidos entre sí (`2251824000016870091` / `2251824000017370011`), justo donde eso pasaría.
+    await conId('18A0005', 'Ambientalia Dos S.A.S.', 'cli-amb-2')
 
     expect((await searchEquipos(db, '18A', 'cli-amb')).map((e) => e.id)).toEqual([suyo])
 
     // Sin cliente → todos (la salida de emergencia del formulario sigue intacta, y es lo que hace
     // alcanzables los equipos a los que aún les falte el `client_id`).
-    expect((await searchEquipos(db, '18A')).length).toBe(4)
+    expect((await searchEquipos(db, '18A')).length).toBe(5)
   })
 })
 
