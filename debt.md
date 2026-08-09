@@ -111,10 +111,24 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   de esa marca/modelo que ya están en la BD, con **SKU, Nombre y Categoría**. Esa fuente es **`books.items`**
   (sincronizada desde Zoho Books), que tiene justo esas columnas: `sku`, `name`, `category_name`. Tres cosas a
   resolver antes de construirlo:
-  1. ⚠️ **`books.items` NO existe en `desk-db`.** Solo la crea `migrateBooks`, que únicamente llama el worker
-     `apps/hub-sync` contra el hub; el `schema.sql` de la app solo crea `books.contacts` y `books.sales_orders`.
-     Hay que decidir cómo llega: añadirla a la publicación `zoho_ref_pub` (como se hizo con contacts/sales_orders),
-     leerla del hub, o consumirla con el paquete `@algarpibe/zoho-sync`.
+  1. ⚠️ **`books.items` NO existe en `desk-db`** — este es el único bloqueo que queda. Solo la crea
+     `migrateBooks`, que únicamente llama el worker `apps/hub-sync` contra el hub; el `schema.sql` de la app
+     solo crea `books.contacts` y `books.sales_orders`. Tres vías: añadirla a la publicación `zoho_ref_pub`
+     (como se hizo con contacts/sales_orders), leerla del hub por conexión aparte, o consumirla con el paquete
+     `@algarpibe/zoho-sync`.
+     **RECOMENDADA: `zoho_ref_pub`**, y con una comprobación ya hecha que lo respalda. La lección de la
+     replicación de `contacts` fue que hay que **verificar TODOS los escritores de una tabla antes de
+     replicarla** (`contacts` se quedó fuera porque `syncRecent → ensureContact` la escribía en desk, y
+     replicarla habría chocado). **Verificado el 2026-08-09 para `books.items`: la escribe solo `persistItem`
+     (`packages/zoho-sync/src/booksHub/sync.ts`), cableado únicamente en `apps/hub-sync` contra el hub, y su
+     DDL solo la aplica `migrateBooks`. Nada en `apps/desk` la escribe** → es de solo lectura para desk-db y
+     no tiene el problema que tuvo `contacts`.
+     ⚠️ Recordar la regla operativa del spike: **DDL aditivo primero en los suscriptores y después en el hub**,
+     o el apply del suscriptor se atasca.
+     **Confirmado por el usuario (2026-08-09): la información ya está en la base del hub**, que él identifica
+     como el servicio **`postgres-hostinger-easypanel`** en EasyPanel. ⚠️ La memoria de arquitectura tiene
+     apuntado el host interno como `ambientalia_project_zoho-hub-db:5432` / base `zoho-hub`: **confirmar la
+     cadena de conexión exacta antes de tocar la publicación**, no darla por sabida.
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
      `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
