@@ -58,10 +58,22 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   los artículos reales, y decidir si el campo pasa a ser una referencia en vez de texto libre.
 - **Ficha técnica — sin versionado.** Sustituir la foto o un documento pisa el anterior. Nadie ha pedido
   conservar históricos y hacerlo multiplicaría el almacenamiento sin beneficio conocido.
-- **Ficha técnica — el límite de subida responde 500.** Un fichero de más de 10 MB cae en el manejador central
-  y devuelve `{"error":"Error interno"}` en vez de decir cuál es el límite. Es deuda **preexistente**, igual en
-  remisiones y resoluciones, que comparten el mismo `multer` con el mismo límite: arreglarlo es un manejador de
-  `MulterError` en un sitio, no tres parches.
+- ~~**Ficha técnica — el límite de subida responde 500.**~~ — **RESUELTO 2026-08-09.** Una rama de
+  `MulterError` en el manejador central de `app.ts`: `LIMIT_FILE_SIZE` → **413** nombrando el límite, el resto
+  → **400**. Cubre las tres puertas (ficha técnica, fotos de remisión, adjuntos de resolución) de una vez, y no
+  hubo que tocar el frontend: las tres funciones de `client.ts` ya leían `error` del cuerpo. Tres cosas que
+  salieron al hacerlo y que conviene no redescubrir:
+  1. **El límite se extrajo a `server/util/subida.ts`** (`LIMITE_SUBIDA_BYTES` + `crearSubida()`). No es
+     cosmética: el manejador tiene que **nombrar** el número al rechazar, y con un literal por ruta el mensaje
+     y el límite se desincronizan en cuanto alguien cambie uno solo.
+  2. ⚠️ **No hacer un `switch` exhaustivo sobre `err.code`:** `@types/multer` declara 7 códigos y el runtime
+     (2.2.0) emite **9** — añade `MISSING_FIELD_NAME` y `LIMIT_FIELD_NESTING`. Un mapeo que TypeScript cree
+     completo dejaría dos cayendo por un hueco invisible. De ahí el `if` para `LIMIT_FILE_SIZE` y un 400 por
+     defecto para todo lo demás.
+  3. **`LIMIT_UNEXPECTED_FILE` también daba 500** y ahora da 400. Se dispara al equivocar el nombre del campo,
+     que no es el mismo en las tres rutas (`archivo` en el catálogo, `file` en las otras dos).
+  El riesgo clásico de probar esto (responder antes de consumir el multipart → `EPIPE`/`ECONNRESET` en
+  supertest) **no aplica**: multer 2.x drena el request y espera al `end` antes de llamar a `next(err)`.
 - **Catálogo de equipos — fases siguientes (2026-08-07).** Sincronización con Books y gestión de accesorios;
   la ficha técnica del modelo ya está hecha. Antiguo alcance: ficha técnica del equipo (SKU, fotos, manuales),
   sincronización con Zoho Books y gestión de accesorios. Las tres dependen de lo ya anotado sobre `books.items`

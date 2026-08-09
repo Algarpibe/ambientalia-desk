@@ -2,7 +2,6 @@ import type { Express, Request, Response } from 'express'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
-import multer from 'multer'
 import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicket, rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getHistorialTicket } from '../db/historial'
@@ -10,6 +9,7 @@ import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { crearSubida } from '../util/subida'
 import { createManagedTicket, executeTransition } from '../services/ticketService'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from '../db/resolutions'
 
@@ -37,7 +37,7 @@ export function registerTicketRoutes(
     res.json({ number: await previewTicketNumber(db) })
   }))
 
-  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+  const upload = crearSubida()
 
   app.get('/api/tickets/:id/resolution', asyncHandler(async (req, res) => {
     res.json(await getResolution(db, String(req.params.id)))

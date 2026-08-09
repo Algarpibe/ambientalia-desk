@@ -1,5 +1,4 @@
 import type { Express } from 'express'
-import multer from 'multer'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist } from '@ambientalia/shared'
@@ -12,12 +11,13 @@ import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { crearSubida } from '../util/subida'
 import { sincronizarEstadoPorRemision } from '../db/estadoPorRemision'
 import { TRANSITION_ACTOR } from '../transitionActor'
 
 // Mismo criterio que los adjuntos de resolución: solo imágenes, y SVG fuera (permite script embebido).
 const TIPOS_FOTO = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp'])
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+const upload = crearSubida()
 
 /**
  * Rutas de remisiones. Van bajo `/api/remisiones` y no bajo `/api/tickets/:id/…` a propósito: el

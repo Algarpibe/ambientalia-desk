@@ -1,5 +1,4 @@
 import type { Express } from 'express'
-import multer from 'multer'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { TIPOS_DOCUMENTO, type TipoDocumento } from '@ambientalia/shared'
 import {
@@ -10,10 +9,11 @@ import {
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { crearSubida } from '../util/subida'
 
-// Mismo límite que resoluciones y remisiones. Un manual más grande se ENLAZA en vez de subirse, que
-// es justo el caso que motivó admitir los dos caminos.
-const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+// Un manual por encima del límite se ENLAZA en vez de subirse, que es justo el caso que motivó
+// admitir los dos caminos.
+const subida = crearSubida()
 const esTipoDocumento = (v: string): v is TipoDocumento => (TIPOS_DOCUMENTO as readonly string[]).includes(v)
 
 /** Las tres entidades que admite el borrado, como lista blanca. Nada de la URL llega a una tabla. */

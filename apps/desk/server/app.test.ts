@@ -77,6 +77,52 @@ describe('Error-handler central', () => {
   })
 })
 
+describe('Límite de subida', () => {
+  // A propósito NO se deriva de la constante del servidor: si el test leyera el mismo número que el
+  // código, cambiarlo nunca rompería nada. Aquí "11 MB" es el dato de entrada, y "10 MB" el contrato.
+  const demasiadoGrande = () => Buffer.alloc(11 * 1024 * 1024)
+
+  it('ficha técnica: por encima del límite responde 413 diciendo cuál es el límite', async () => {
+    const { app } = appWith()
+    const cookie = await adminCookie()
+    const res = await request(app).post('/api/catalogo/modelos/m1/documentos').set('Cookie', cookie)
+      .field('tipo', 'manual').field('nombre', 'Manual')
+      .attach('archivo', demasiadoGrande(), { filename: 'manual.pdf', contentType: 'application/pdf' })
+    expect(res.status).toBe(413)
+    expect(res.body.error).toContain('10 MB')
+  })
+
+  // Las otras dos puertas comparten el mismo multer y el mismo manejador: si el arreglo fuera un parche
+  // por ruta, estas dos seguirían en 500. Por eso se prueban las tres y no solo la que motivó el cambio.
+  it('fotos de remisión: por encima del límite responde 413', async () => {
+    const { app } = appWith()
+    const cookie = await adminCookie()
+    const res = await request(app).post('/api/remisiones/r1/fotos').set('Cookie', cookie)
+      .attach('file', demasiadoGrande(), { filename: 'equipo.png', contentType: 'image/png' })
+    expect(res.status).toBe(413)
+    expect(res.body.error).toContain('10 MB')
+  })
+
+  it('adjuntos de resolución: por encima del límite responde 413', async () => {
+    const { app } = appWith()
+    const cookie = await adminCookie()
+    const res = await request(app).post('/api/tickets/t1/resolution/attachments').set('Cookie', cookie)
+      .attach('file', demasiadoGrande(), { filename: 'a.png', contentType: 'image/png' })
+    expect(res.status).toBe(413)
+    expect(res.body.error).toContain('10 MB')
+  })
+
+  // El nombre del campo no es el mismo en las tres rutas ('archivo' en el catálogo, 'file' en las otras),
+  // así que equivocarlo es un error real y frecuente. Es culpa del cliente: 400, no el 500 de antes.
+  it('un campo de fichero inesperado responde 400, no 500', async () => {
+    const { app } = appWith()
+    const cookie = await adminCookie()
+    const res = await request(app).post('/api/tickets/t1/resolution/attachments').set('Cookie', cookie)
+      .attach('campo-que-no-espera', Buffer.from('hola'), { filename: 'a.png', contentType: 'image/png' })
+    expect(res.status).toBe(400)
+  })
+})
+
 describe('GET /api/tickets', () => {
   it('devuelve tickets activos normalizados desde Postgres', async () => {
     await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'AGQ' } as any))

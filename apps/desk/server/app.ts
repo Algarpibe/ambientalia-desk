@@ -20,6 +20,8 @@ import { registerAdminRoutes } from './routes/admin'
 import { registerAttachmentRoutes } from './routes/attachment'
 import { registerRemisionRoutes } from './routes/remision'
 import { HttpError } from './util/httpError'
+import multer from 'multer'
+import { LIMITE_SUBIDA_MB } from './util/subida'
 
 interface Deps {
   db: Queryable
@@ -60,6 +62,16 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) { res.status(err.status).json(err.body); return }
+    // Un fichero rechazado por multer es culpa de quien sube, no del servidor: sin esta rama caía en el
+    // 500 genérico de abajo, que ni dice el límite ni distingue el fallo real de Postgres en el log.
+    // No se hace un `switch` exhaustivo sobre `err.code` a propósito: @types/multer declara 7 códigos y
+    // el runtime emite 9, así que un mapeo "completo" dejaría dos cayendo por un hueco invisible.
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        res.status(413).json({ error: `El archivo supera el límite de ${LIMITE_SUBIDA_MB} MB` }); return
+      }
+      res.status(400).json({ error: 'No se pudo procesar el archivo enviado' }); return
+    }
     logger.error({ err }, 'Error no manejado')
     if (res.headersSent) return
     res.status(500).json({ error: 'Error interno' })
