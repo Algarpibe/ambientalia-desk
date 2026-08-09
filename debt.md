@@ -219,6 +219,10 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   Solo enlaza lo inequívoco; el resto sale en `pendientes` y en el log. Es idempotente: re-ejecutarlo tras
   corregir los datos recoge lo que se haya arreglado.
 
+  **Corregidos a mano por el usuario el 2026-08-09: Camposol, la Universidad, Serambiente y SOLAM.
+  Queda SOLO `Sensus S.A.S.`** (serial `AE3BAG9W`), que no existe en Books: hay que darlo de alta allí —o
+  averiguar con qué nombre está— antes de poder vincularlo.
+
   **Los 12 pendientes, diagnosticados contra Books el 2026-08-09** (ids reales, para no volver a buscarlos):
   | Qué dice el equipo | Equipos | Qué pasa | Id en Books |
   |---|---|---|---|
@@ -243,6 +247,16 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   ⚠️ **Consecuencia viva mientras queden equipos sin `client_id`:** esos equipos **no salen** al acotar por
   cliente. Siguen siendo alcanzables sin filtro de cliente o buscando por serial, que es la salida de
   emergencia del formulario, pero conviene cerrar los pendientes de arriba para que la vía normal funcione.
+
+  ✅ **El formulario de equipos ya avisa (2026-08-09, `75a4bb7`).** Al corregir estos equipos se vio que el
+  campo «Cliente» parece de texto libre pero es un buscador: teclear un nombre sin elegirlo de la lista
+  guardaba «bien» **sin cambiar nada**, porque el nombre no viaja en el payload y el servidor lo deriva del
+  cliente de Books. Ahora hay una pista en ámbar bajo el campo y el envío se frena. La regla vive en
+  `src/lib/clienteEquipo.ts` (función pura, con test) porque no hay harness de componentes React.
+  ⚠️ **Solo frena si el texto CAMBIÓ**, nunca por el mero hecho de que falte el vínculo: un equipo cuyo
+  cliente no está en Books —hoy Sensus— no puede elegirse de una lista donde no aparece, y bloquearlo lo
+  dejaría imposible de editar para cualquier otra cosa. Ese callejón sin salida ya se pagó dos veces en
+  remisiones.
 
   Hallazgo suelto de la misma pasada: dos equipos distintos comparten el serial `GK2E0021`
   (`eq-6ec57890ca8158d9` y `eq-0bcf0f25cbdd239f`), ambos de Camposol — puede ser legítimo o un duplicado del
