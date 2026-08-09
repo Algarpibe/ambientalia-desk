@@ -115,10 +115,10 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      `apps/hub-sync` contra el hub; el `schema.sql` de la app solo crea `books.contacts` y `books.sales_orders`.
      Hay que decidir cómo llega: añadirla a la publicación `zoho_ref_pub` (como se hizo con contacts/sales_orders),
      leerla del hub, o consumirla con el paquete `@algarpibe/zoho-sync`.
-  2. ⚠️ **`books.items` no tiene marca ni modelo.** La marca vive dentro de `raw` (`raw->>'brand'` /
-     `raw->>'manufacturer'`, p.ej. "Horiba Ltd.") y **no hay campo de modelo en absoluto**. Así que se puede
-     prefiltrar por marca y categoría, pero **la asociación artículo↔modelo es precisamente lo que crea esta
-     página**: no se puede deducir del catálogo.
+  2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
+     `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
+     justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
+     teclearla entera. La marca sigue viviendo dentro de `raw` (`raw->>'brand'`, p.ej. "Horiba Ltd.").
   3. ⚠️ **Buena parte de los 109 ítems actuales no son artículos vendibles**: "Manuales", "Caja de transporte",
      "Repuestos reemplazados", "Pletinas (par)"… no tienen SKU en Books. El modelo de datos probablemente necesite
      **las dos cosas**: ítems de texto libre e ítems enlazados a `books.items` por `item_id`/SKU. Enlazar todo al
@@ -142,10 +142,31 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   su estructura. Tres tablas y tres pantallas gemelas se desincronizarían solas: la corrección que se aplique a
   una se olvidará en las otras dos. **Es un solo mecanismo con un discriminador de clase.**
 
-  **A comprobar antes de diseñarlo:** `books.items.category_name` puede que ya distinga las tres cosas. Si
-  Ambientalia categoriza sus artículos en Books de forma útil, la clase podría deducirse en vez de asignarse a
-  mano — y entonces el trabajo se reduce a filtrar por categoría. Mirar los `category_name` reales antes de
-  inventar una taxonomía propia.
+  **COMPROBADO 2026-08-09 — `category_name` ya distingue la clase Y nombra el modelo.** Se leyeron 1000
+  artículos reales de Books vía API (org `714421387`; **hay más páginas**, así que las cifras son de la muestra,
+  no del censo). El patrón es sistemático y no hay que inventar taxonomía propia:
+  | Prefijo de `category_name` | Qué es | Artículos en la muestra |
+  |---|---|---|
+  | `C&R <modelo>` | consumibles **y** repuestos | 255 |
+  | `Opcional <modelo>` | accesorios opcionales | 128 |
+  | sin prefijo (`Electrodos LAQUA`, `Alquileres`, `Meteorología`…) | el equipo en sí y catálogo general | 599 |
+  | vacío | sin clasificar | 18 |
+
+  El **sufijo es el modelo**: `C&R EDM 180`, `Opcional AP Series`, `C&R APMA-370`, `Opcional WQ-300`… Salen
+  **36 modelos distintos**, que es prácticamente el mismo orden que los 35 del catálogo de equipos de Desk.
+
+  Tres consecuencias para el diseño:
+  1. **La página deja de ser "asociar 1000 artículos a mano".** Puede **proponer** la asociación
+     artículo↔modelo desde `category_name` y pedirle al humano que confirme o corrija. Eso cambia el tamaño
+     del trabajo, no solo su comodidad.
+  2. ⚠️ **Books NO separa consumible de repuesto**: `C&R` los junta en una sola clase. El usuario pidió las
+     dos por separado, así que **esa distinción hay que aportarla**; deducirla de Books no es posible hoy.
+     El discriminador de clase sigue haciendo falta: Books da dos clases, no tres.
+  3. ⚠️ **En Books SÍ hay variantes de escritura del mismo modelo**, justo lo que el catálogo cerrado impide
+     dentro de Desk: `C&R EDM 180` y `C&R EDM180` conviven (única colisión al normalizar, pero es la del
+     modelo con más artículos de todo el catálogo: 57 + 13). El emparejamiento contra `catalogo_modelos`
+     tiene que normalizar, y donde no case, decirlo en vez de callar. **Y no se arregla renombrando en Books
+     desde Desk**: son artículos de contabilidad, no nuestros.
 
   **Mismo bloqueo que los accesorios:** `books.items` no existe en `desk-db` y no trae modelo. Ver los tres
   puntos de la entrada anterior — se resuelven una vez y sirven para las tres listas.
