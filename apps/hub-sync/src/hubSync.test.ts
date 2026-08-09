@@ -73,11 +73,16 @@ describe('hubBootstrap', () => {
     syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0 }),
     sweep: async () => [],
   })
-  /** Books ya cargado: `books.items` con datos desactiva el backfill inicial. */
+  /**
+   * Books ya cargado: `books.items` con datos desactiva el backfill inicial.
+   *
+   * La tabla NO se crea aquí: la crea `migrate` desde que desk-db la necesita para recibirla replicada
+   * del hub. Volver a declararla a mano rompería, y no por redundante — ⚠️ **pg-mem revienta con un
+   * `CREATE TABLE IF NOT EXISTS` que lleve `PRIMARY KEY` cuando la tabla YA existe** («AST parts have
+   * not been read»), mientras que Postgres real lo ignora en silencio.
+   */
   const booksYaCargado = async () => {
     await migrate(db)
-    await db.query("CREATE SCHEMA IF NOT EXISTS books")
-    await db.query("CREATE TABLE IF NOT EXISTS books.items (item_id text PRIMARY KEY, zoho_last_modified timestamptz)")
     await db.query("INSERT INTO books.items (item_id, zoho_last_modified) VALUES ('i1', now())")
   }
 

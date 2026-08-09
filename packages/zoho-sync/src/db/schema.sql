@@ -341,5 +341,15 @@ CREATE TABLE IF NOT EXISTS public.catalogo_documentos (
 );
 CREATE INDEX IF NOT EXISTS idx_catalogo_documentos_modelo ON catalogo_documentos (modelo_id);
 
--- El SKU es del MODELO y no del equipo. Sin books.items en desk-db no se valida contra nada: es una cadena que alguien teclea, y habra que reconciliarla cuando llegue la sincronizacion con Books
+-- El SKU es del MODELO y no del equipo. Es una cadena que alguien teclea: con books.items ya en desk-db se puede reconciliar contra los articulos reales, pendiente de hacer
 ALTER TABLE catalogo_modelos ADD COLUMN IF NOT EXISTS sku text;
+
+-- books.items llega REPLICADA desde el hub por zoho_ref_pub, igual que books.contacts y books.sales_orders. La replicacion logica NO crea la tabla en el suscriptor: solo copia filas a una que ya exista, emparejando por nombre de columna
+-- Por eso esta definicion debe ser IDENTICA a la de booksHub/schema-books.sql. Una columna que falte aqui es una columna que dejara de llegar en silencio
+-- Y el orden de despliegue importa: este DDL va primero en los suscriptores y despues en el hub. Al reves, el apply del suscriptor se atasca (comprobado en el spike de replicacion)
+-- Nadie en apps/desk escribe esta tabla: la puebla solo el worker contra el hub. Por eso es replicable sin el choque que dejo a books.contacts fuera en su momento
+CREATE TABLE IF NOT EXISTS books.items (
+  item_id text PRIMARY KEY, name text, category_id text, category_name text, status text,
+  rate numeric, purchase_rate numeric, sku text,
+  raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
+);

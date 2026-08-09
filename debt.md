@@ -125,10 +125,24 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      no tiene el problema que tuvo `contacts`.
      ⚠️ Recordar la regla operativa del spike: **DDL aditivo primero en los suscriptores y después en el hub**,
      o el apply del suscriptor se atasca.
-     **Confirmado por el usuario (2026-08-09): la información ya está en la base del hub**, que él identifica
-     como el servicio **`postgres-hostinger-easypanel`** en EasyPanel. ⚠️ La memoria de arquitectura tiene
-     apuntado el host interno como `ambientalia_project_zoho-hub-db:5432` / base `zoho-hub`: **confirmar la
-     cadena de conexión exacta antes de tocar la publicación**, no darla por sabida.
+     **Confirmado por el usuario (2026-08-09): la información ya está en el hub, y el host es
+     `ambientalia_project_zoho-hub-db`** (base `zoho-hub`) — el nombre `postgres-hostinger-easypanel` que
+     apareció antes es cómo se ve el servicio en EasyPanel, no otra base.
+
+     ✅ **PASO 1 HECHO (2026-08-09):** `books.items` ya se crea en **desk-db** desde `schema.sql`, con la
+     definición **byte-idéntica** a la de `booksHub/schema-books.sql` (verificado con `diff`). Es el DDL
+     aditivo que exige la regla del spike: **primero en los suscriptores, después en el hub**; al revés, el
+     apply del suscriptor se atasca. La tabla queda vacía y sin uso hasta que se suscriba: no cambia nada
+     en la app.
+     ⚠️ **Trampa nueva de pg-mem descubierta aquí:** un `CREATE TABLE IF NOT EXISTS` **con `PRIMARY KEY`
+     sobre una tabla que YA existe** hace reventar a pg-mem («AST parts have not been read»), mientras que
+     Postgres real lo ignora en silencio. Rompió 3 tests del worker que declaraban `books.items` a mano
+     además de llamar a `migrate`. Regla: no redeclarar en un test una tabla que ya crea `migrate`.
+
+     **PASO 2 — pendiente del usuario, en EasyPanel.** Tras desplegar (para que `schema.sql` cree la tabla
+     en desk-db), en el **hub** `ALTER PUBLICATION zoho_ref_pub ADD TABLE books.items;` y en **desk-db**
+     `ALTER SUBSCRIPTION zoho_ref_sub REFRESH PUBLICATION;`. Comprobar después que
+     `SELECT count(*) FROM books.items` en desk-db cuadra con el hub (>1000).
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
      `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de

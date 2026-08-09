@@ -89,6 +89,25 @@ describe('migrate', () => {
     ])
   })
 
+  /**
+   * `books.items` tiene que existir en desk-db ANTES de suscribirla: la replicación lógica NO crea la
+   * tabla en el suscriptor, solo copia filas a una que ya esté. Y el orden importa — el spike dejó
+   * comprobado que el DDL primero en el hub atasca el apply del suscriptor.
+   *
+   * Las columnas se listan una a una a propósito: la replicación empareja por nombre, así que una que
+   * falte aquí es una columna que dejará de llegar **en silencio**.
+   */
+  it('crea books.items con las mismas columnas que el hub, lista para replicar', async () => {
+    const db = await freshDb()
+    await db.query(
+      `INSERT INTO books.items (item_id,name,category_id,category_name,status,rate,purchase_rate,sku,raw,zoho_last_modified)
+       VALUES ('i1','Filtro PM10','cat-1','C&R EDM 180','active',150.5,100,'F-001','{"brand":"Grimm"}','2026-08-09T00:00:00Z')`,
+    )
+    const r = await db.query('SELECT item_id,name,category_id,category_name,status,rate,purchase_rate,sku,raw,zoho_last_modified,synced_at FROM books.items')
+    expect(r.rows[0]).toMatchObject({ item_id: 'i1', name: 'Filtro PM10', category_name: 'C&R EDM 180', sku: 'F-001', status: 'active' })
+    expect(r.rows[0].synced_at).toBeTruthy() // el default lo pone la BD, igual que en el hub
+  })
+
   it('crea catalogo_documentos y catalogo_modelos.sku', async () => {
     const db = await freshDb()
     await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")
