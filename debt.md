@@ -212,7 +212,14 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
-- **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** (2026-08-03). La carga inicial de ~352 equipos
+- **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** — **CÓDIGO LISTO 2026-08-09, FALTA
+  DISPARARLO.** `POST /api/admin/backfill-client-id` (super administrador; `?dryRun=true` para ver las cifras
+  sin escribir). Empareja por nombre normalizado —sin mayúsculas, acentos, puntuación ni forma societaria—
+  contra el nombre de contacto **y** el de empresa. Solo enlaza lo inequívoco: lo ambiguo y lo que no casa
+  salen en `pendientes` (con los candidatos, en los ambiguos) para corregirlo a mano en Equipos, y también al
+  log. **Hay que llamarlo a mano tras desplegar**, como los otros backfills. Cuando quede poco pendiente,
+  `searchEquipos` puede pasar a filtrar solo por `client_id`. Contexto original abajo.
+  <br>La carga inicial de ~352 equipos
   (hecha una vez desde un CSV que ya se retiró del código; recuperable en el historial de git, último commit que
   lo contiene: `b67310a`) dejó `client_id` en NULL y el cliente como **texto libre**, con grafías que no casan con
   Books (`AMBIENTALIA` vs `Ambientalia S.A.S.`, la errata `Sololucione ambientales - SOLAM`, dobles espacios).
