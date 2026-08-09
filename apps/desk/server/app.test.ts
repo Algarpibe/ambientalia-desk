@@ -1627,6 +1627,35 @@ describe('POST /api/admin/backfill-equipo-id (admin)', () => {
   })
 })
 
+// Cierra el otro hueco de la carga inicial: los equipos traían el cliente como texto libre y sin
+// `client_id`. `?dryRun=true` existe para mirar las cifras antes de tocar ~352 filas de producción.
+describe('POST /api/admin/backfill-client-id (admin)', () => {
+  it('enlaza lo inequívoco y devuelve los pendientes; dryRun no escribe; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO equipos (id,serial,marca,cliente_nombre) VALUES ('eq-1','S1','Grimm','GECELCA')")
+    await db.query("INSERT INTO equipos (id,serial,marca,cliente_nombre) VALUES ('eq-2','S2','Grimm','Cliente Fantasma')")
+    const { app } = appWith()
+
+    const seco = await request(app).post('/api/admin/backfill-client-id?dryRun=true').set('Cookie', admin)
+    expect(seco.status).toBe(200)
+    expect(seco.body).toMatchObject({ enlazados: 1, sinCliente: 1 })
+    expect((await db.query("SELECT client_id FROM equipos WHERE id='eq-1'")).rows[0].client_id).toBeNull()
+
+    const res = await request(app).post('/api/admin/backfill-client-id').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ enlazados: 1, sinCliente: 1 })
+    expect(res.body.pendientes).toEqual([
+      { id: 'eq-2', serial: 'S2', clienteNombre: 'Cliente Fantasma', motivo: 'sin-cliente' },
+    ])
+    expect((await db.query("SELECT client_id FROM equipos WHERE id='eq-1'")).rows[0].client_id).toBe('cli1')
+
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/backfill-client-id').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/backfill-client-id')).status).toBe(401)
+  })
+})
+
 describe('POST /api/admin/backfill-archived (admin)', () => {
   it('admin arranca; 403 no-admin; 401 sin sesión', async () => {
     const admin = await adminCookie()

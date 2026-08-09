@@ -5,6 +5,7 @@ import type { createMeasurer } from '../measure'
 import type { createDetailBackfiller } from '../backfill'
 import { backfillSerialFromSubject } from '../backfillSerial'
 import { enlazarTicketsConEquipos } from '../backfillEquipoId'
+import { reconciliarClientesDeEquipos } from '../backfillClientId'
 import { seedChecklist } from '../db/remisionChecklist'
 import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
 import { sembrarCatalogo } from '../db/catalogoSeed'
@@ -69,6 +70,22 @@ export function registerAdminRoutes(
       `Enlace ticket→equipo: ${r.enlazados} enlazados, ${r.ambiguos} con serial duplicado en el inventario, ` +
       `${r.sinEquipo} sin equipo con ese serial, ${r.sinSerial} sin serial`,
     )
+    res.json(r)
+  }))
+
+  // Cierra el otro hueco que dejó la carga inicial de equipos: el cliente entró como texto libre y
+  // `client_id` quedó NULL. `?dryRun=true` calcula el resumen sin escribir, para revisar las cifras
+  // antes de tocar ~352 filas de producción. Idempotente y no destructivo.
+  app.post('/api/admin/backfill-client-id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const dryRun = req.query.dryRun === 'true'
+    const r = await reconciliarClientesDeEquipos(db, { dryRun })
+    // Los pendientes van al log además de a la respuesta: son la lista de trabajo manual que queda, y
+    // quien dispara esto desde una consola no siempre conserva el cuerpo de la respuesta.
+    logger.info(
+      `Reconciliación cliente→client_id${dryRun ? ' (dry-run)' : ''}: ${r.enlazados} enlazados, ` +
+      `${r.ambiguos} ambiguos, ${r.sinCliente} sin cliente en Books, ${r.sinNombre} sin nombre`,
+    )
+    for (const p of r.pendientes) logger.info(`  pendiente ${p.serial} (${p.motivo}): "${p.clienteNombre}"`)
     res.json(r)
   }))
 
