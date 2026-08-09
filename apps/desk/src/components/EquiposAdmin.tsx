@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { EquipoFull, ClientLite, Catalogo } from '@ambientalia/shared'
 import { listEquiposManage, getCatalogo, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { avisoClienteSinVincular } from '../lib/clienteEquipo'
 import { HojaDeVida } from './HojaDeVida'
 
 const PAGE_SIZE = 50
@@ -134,9 +135,16 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
     return () => { alive = false }
   }, [clientQuery, clientId])
 
+  // La misma regla alimenta la pista bajo el campo y el freno al enviar: si se separaran, una diría
+  // que hay problema y la otra dejaría guardar.
+  const avisoCliente = avisoClienteSinVincular({ textoActual: clientQuery, textoOriginal: equipo?.clienteNombre ?? '', clientId })
+
   async function submit(ev: React.FormEvent) {
     ev.preventDefault(); setBusy(true); setError(null)
     try {
+      // El nombre del cliente no viaja en el payload ni el servidor lo aceptaría —lo deriva del
+      // cliente de Books—, así que teclearlo sin elegir de la lista guardaba «bien» sin cambiar nada.
+      if (avisoCliente) { setError(avisoCliente); return }
       const payload = { serial, modeloId, clientId: clientId ?? undefined }
       if (equipo) await updateEquipo(equipo.id, payload)
       else await createEquipo(payload)
@@ -204,7 +212,9 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
               ))}
             </ul>
           )}
-          {clientId && <div className="text-[11px] text-slate-400 mt-1">Cliente vinculado: {clientName}</div>}
+          {clientId
+            ? <div className="text-[11px] text-slate-400 mt-1">Cliente vinculado: {clientName}</div>
+            : avisoCliente && <div className="text-[11px] text-amber-600 mt-1">{avisoCliente}</div>}
         </div>
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
         <div className="flex justify-end gap-2">
