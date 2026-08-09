@@ -5,11 +5,15 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 
 ---
 
-## 🗓️ ESTADO ACTUAL (actualizado 2026-06-19)
+## 🗓️ ESTADO ACTUAL (auditoría 2026-06-19 · roadmap actualizado 2026-08-07)
 
 > Esta sección es la **fuente de verdad**. Las secciones numeradas más abajo son referencia histórica;
-> varias quedaron **resueltas** esta sesión (marcadas aquí). Auditoría de seguridad completa cerrada
-> (Fases A–D); specs/planes en `docs/superpowers/{specs,plans}/2026-06-19-*`.
+> varias quedaron **resueltas** en la sesión de la auditoría (marcadas aquí). Auditoría de seguridad completa
+> cerrada (Fases A–D); specs/planes en `docs/superpowers/{specs,plans}/2026-06-19-*`.
+>
+> ⚠️ Las dos fechas son distintas a propósito: lo de la auditoría se cerró en junio y no se ha vuelto a tocar,
+> pero el **roadmap** de abajo sí se mantiene al día. Al leerlo, mira la fecha de cada entrada y no la de la
+> cabecera.
 
 ### ✅ RESUELTO esta sesión (el detalle de abajo quedó obsoleto)
 - **Reply sin gate por área** (§3d, §4) → `requireArea` en `/api/tickets/:id/reply` (F2-06).
@@ -84,6 +88,13 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   la página de gestión. Queda descartada la propuesta de override-con-fallback sobre `perfil`. (Contexto: hoy se
   indexa por `perfil` — grimm_edm280, grimm_edm180, horiba_ap, environics, kunak, otro — porque así los agrupaba
   n8n; hay ~34 modelos en el desplegable de Equipos.)
+  **Los ítems se ELIGEN de Books, no se escriben a mano (DECISIÓN del usuario, 2026-08-07).** La página no es un
+  campo de texto libre: cada accesorio se **selecciona** del catálogo real de artículos, que vive en
+  **`books.items` dentro de `zoho-hub-db`** (⚠️ el hub, no `desk-db` — ver el punto 1 de abajo, que es justo el
+  bloqueo). Escribirlos a mano reproduciría el mismo círculo vicioso que el catálogo de equipos vino a romper:
+  el nombre de un artículo tecleado dos veces con dos grafías deja de ser un error para convertirse en dos
+  artículos distintos, y nadie sabe cuál es el bueno.
+
   **Listar los artículos del catálogo (petición del usuario, 2026-08-03):** la página debe mostrar los artículos
   de esa marca/modelo que ya están en la BD, con **SKU, Nombre y Categoría**. Esa fuente es **`books.items`**
   (sincronizada desde Zoho Books), que tiene justo esas columnas: `sku`, `name`, `category_name`. Tres cosas a
@@ -108,6 +119,24 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   alta en Gestión de accesorios"). Nota: Kunak, que en el flujo de n8n nunca tuvo checklist, cae en el segundo
   caso — se le definirá su lista como a cualquier otro modelo. Lo importante es que el mensaje **empuja a
   completarlo** en vez de afirmar que el equipo no lleva accesorios, que es lo que fallaba en `aa15d0c`.
+- **Consumibles y repuestos por marca-modelo (PEDIDO por el usuario, 2026-08-07).** *Qué pide:* lo mismo que la
+  gestión de accesorios pero para **consumibles** (filtros, membranas, gases de calibración…) y **repuestos**
+  (bombas, sensores, tarjetas): saber qué lleva cada marca-modelo y poder administrarlo desde la app sin SQL.
+  **Igual que los accesorios, se ELIGEN de `books.items` en `zoho-hub-db`**, no se escriben a mano.
+
+  ⚠️ **No lo construyas como una tercera página.** Accesorios, consumibles y repuestos son **la misma forma**:
+  una lista de artículos de Books colgando de un par (marca, modelo). Lo que cambia es para qué sirve cada lista
+  —el accesorio se verifica al recibir y devolver el equipo, el consumible se repone, el repuesto se cambia—, no
+  su estructura. Tres tablas y tres pantallas gemelas se desincronizarían solas: la corrección que se aplique a
+  una se olvidará en las otras dos. **Es un solo mecanismo con un discriminador de clase.**
+
+  **A comprobar antes de diseñarlo:** `books.items.category_name` puede que ya distinga las tres cosas. Si
+  Ambientalia categoriza sus artículos en Books de forma útil, la clase podría deducirse en vez de asignarse a
+  mano — y entonces el trabajo se reduce a filtrar por categoría. Mirar los `category_name` reales antes de
+  inventar una taxonomía propia.
+
+  **Mismo bloqueo que los accesorios:** `books.items` no existe en `desk-db` y no trae modelo. Ver los tres
+  puntos de la entrada anterior — se resuelven una vez y sirven para las tres listas.
 - **Remisiones — rama de SALIDA (DIFERIDA, 2026-08-03).** *Qué es:* la remisión que se emite cuando el equipo se
   **devuelve** al cliente, para verificar que sale con todo lo que entró. *Por qué se difiere:* **no se puede
   diseñar hasta que la de entrada esté cerrada.** Hallazgos de leer el flujo (`Remisiones_ST_3.13_Desk`, export
