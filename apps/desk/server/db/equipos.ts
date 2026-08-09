@@ -41,37 +41,24 @@ function toLite(r: any): EquipoLite {
   }
 }
 
-/** Cliente por el que acotar la búsqueda de equipos. Ambas señales son opcionales. */
-export interface EquipoClienteFilter { id?: string | null; name?: string | null }
-
 /**
  * Busca equipos activos, opcionalmente acotados a un cliente.
  *
- * El vínculo equipo↔cliente NO puede apoyarse solo en `client_id`: la semilla (~352 equipos) lo
- * deja NULL y solo guarda `cliente_nombre`, texto libre del CSV cuya grafía difiere de la de Books
- * ("AMBIENTALIA" vs "Ambientalia S.A.S."). Por eso se aceptan tres coincidencias: por `client_id`
- * (equipos dados de alta en la app), por nombre contenido, y por nombre contenido a la inversa —
- * esta última cubre el caso del CSV abreviado, con un mínimo de 4 caracteres para no disparar
- * falsos positivos con nombres muy cortos.
+ * **La acotación es por `client_id` y nada más.** Hasta 2026-08-09 cruzaba además el nombre por
+ * contención en los dos sentidos, porque la carga inicial dejó ~352 equipos con `client_id` NULL y el
+ * cliente como texto libre del CSV ("AMBIENTALIA" vs "Ambientalia S.A.S."). Ese apaño dejó de hacer
+ * falta cuando `backfill-client-id` enlazó el 96,6 %, y cobraba un precio: bastaba que dos clientes
+ * compartieran un fragmento del nombre para que salieran los equipos del otro. Colar el equipo de un
+ * cliente ajeno en el formulario es peor que no encontrar el propio, que tiene salida.
  *
- * Sin cliente devuelve todos: es la salida de emergencia del formulario cuando el vínculo falla.
+ * Sin cliente devuelve todos: es esa salida, y también lo que mantiene alcanzables los pocos equipos
+ * a los que aún les falte el `client_id`.
  */
-export async function searchEquipos(db: Queryable, q: string, cliente?: EquipoClienteFilter | null, limit = 20): Promise<EquipoLite[]> {
+export async function searchEquipos(db: Queryable, q: string, clientId?: string | null, limit = 20): Promise<EquipoLite[]> {
   const like = `%${q.toLowerCase()}%`
   const params: unknown[] = [like]
-  const cid = cliente?.id ?? ''
-  const cname = (cliente?.name ?? '').toLowerCase().trim()
-  const ors: string[] = []
-  if (cid) { params.push(cid); ors.push(`client_id = $${params.length}`) }
-  if (cname) {
-    params.push(`%${cname}%`)
-    ors.push(`LOWER(COALESCE(cliente_nombre,'')) LIKE $${params.length}`)
-    params.push(cname)
-    // `LIKE '____%'` = al menos 4 caracteres. Se usa en vez de length() porque pg-mem no la
-    // implementa, y el patrón es equivalente y portable.
-    ors.push(`(COALESCE(cliente_nombre,'') LIKE '____%' AND $${params.length} LIKE '%' || LOWER(cliente_nombre) || '%')`)
-  }
-  const clienteFilter = ors.length ? `AND (${ors.join(' OR ')})` : ''
+  let clienteFilter = ''
+  if (clientId) { params.push(clientId); clienteFilter = `AND client_id = $${params.length}` }
   params.push(limit)
   const r = await db.query(
     `SELECT id,serial,marca,modelo,tipo,cliente_nombre FROM equipos

@@ -34,23 +34,32 @@ describe('equipos repo', () => {
     expect(await countEquipos(db)).toBe(1)
   })
 
-  // El selector de equipo del formulario de ticket debe acotarse al cliente elegido. El vínculo
-  // no puede apoyarse solo en `client_id`: la semilla (~352 equipos) lo deja NULL y solo guarda
-  // `cliente_nombre` como texto libre del CSV, con otra grafía que en Books ("AMBIENTALIA" vs
-  // "Ambientalia S.A.S."). Por eso se cruzan las dos señales.
-  it('searchEquipos acota al cliente cruzando client_id y nombre; sin cliente devuelve todos', async () => {
-    const seed = (id: string, serial: string, cliente: string) =>
-      upsertEquipo(db, { id, serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', cliente_nombre: cliente, source: 'seed', raw: null })
-    await seed('e-corto', '18A0001', 'AMBIENTALIA')            // semilla, nombre abreviado
-    await seed('e-exacto', '18A0002', 'Ambientalia S.A.S.')    // semilla, nombre igual al de Books
-    await seed('e-otro', '18A0003', 'AGQ Colombia S.A.S.')     // otro cliente → fuera
-    const idApp = await createEquipo(db, { serial: '18A0004', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Ambientalia S.A.S.', clientId: 'cli-amb', modeloId: null })
+  /**
+   * El selector de equipo del formulario de ticket se acota al cliente elegido, y desde la
+   * reconciliación de `client_id` (2026-08-09) esa acotación es **solo el id**.
+   *
+   * Antes se cruzaba además por contención del nombre en los dos sentidos, porque la carga inicial
+   * dejó ~352 equipos con `client_id` NULL y el cliente como texto libre. Ese apaño ya no hace falta
+   * —el backfill enlazó el 96,6 %— y tenía un coste que este test fija: la contención por texto metía
+   * equipos de OTRO cliente en cuanto los nombres compartían un fragmento.
+   */
+  it('searchEquipos acota al cliente SOLO por client_id; sin cliente devuelve todos', async () => {
+    const conId = (serial: string, cliente: string, clientId: string) =>
+      createEquipo(db, { serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: cliente, clientId, modeloId: null })
 
-    const cliente = { id: 'cli-amb', name: 'Ambientalia S.A.S.' }
-    expect((await searchEquipos(db, '18A', cliente)).map((e) => e.id).sort())
-      .toEqual(['e-corto', 'e-exacto', idApp].sort())
+    const suyo = await conId('18A0001', 'Ambientalia S.A.S.', 'cli-amb')
+    await conId('18A0002', 'AGQ Colombia S.A.S.', 'cli-agq')
+    // Comparte fragmento de nombre con el cliente buscado pero es de otro: el cruce por texto lo
+    // colaba, y colar el equipo de un cliente ajeno es peor que no encontrar el propio.
+    await conId('18A0003', 'Ambientalia del Caribe S.A.S.', 'cli-caribe')
+    // Sin `client_id`: lo que dejó la carga inicial. Ya NO aparece al acotar por cliente — es el
+    // precio de la simplificación, y por eso hubo que rellenar `client_id` antes de hacerla.
+    await upsertEquipo(db, { id: 'e-sin-id', serial: '18A0004', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', cliente_nombre: 'Ambientalia S.A.S.', source: 'seed', raw: null })
 
-    // Sin cliente → todos (es la salida de emergencia del formulario si el vínculo falla).
+    expect((await searchEquipos(db, '18A', 'cli-amb')).map((e) => e.id)).toEqual([suyo])
+
+    // Sin cliente → todos (la salida de emergencia del formulario sigue intacta, y es lo que hace
+    // alcanzables los equipos a los que aún les falte el `client_id`).
     expect((await searchEquipos(db, '18A')).length).toBe(4)
   })
 })

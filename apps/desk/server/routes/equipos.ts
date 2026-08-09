@@ -9,13 +9,13 @@ import { asyncHandler } from '../util/asyncHandler'
 export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): void {
   const { db } = deps
 
-  // `clientId` acota la búsqueda a los equipos de ese cliente. El nombre se resuelve en el
-  // servidor (no se acepta del cliente) porque el cruce con `equipos.cliente_nombre` depende de él.
-  // Si el id no resuelve, se devuelve sin acotar en vez de vaciar la lista.
+  // `clientId` acota la búsqueda a los equipos de ese cliente. Ya no hace falta resolver el cliente
+  // en Books antes de buscar: desde que la acotación es solo por `client_id`, el nombre no participa,
+  // así que la búsqueda se ahorra esa consulta. Sin `clientId` devuelve todos, que es la salida del
+  // formulario cuando el equipo buscado aún no está enlazado a su cliente.
   app.get('/api/equipos', requireAuth(db), asyncHandler(async (req, res) => {
     const clientId = req.query.clientId ? String(req.query.clientId) : ''
-    const cliente = clientId ? await getClient(db, clientId) : null
-    res.json(await searchEquipos(db, String(req.query.search ?? ''), cliente && { id: cliente.id, name: cliente.name }))
+    res.json(await searchEquipos(db, String(req.query.search ?? ''), clientId))
   }))
 
   app.get('/api/equipos/manage', requireAuth(db), asyncHandler(async (req, res) => {
