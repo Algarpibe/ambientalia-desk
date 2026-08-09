@@ -237,9 +237,12 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   silencioso que este diseño evita a propósito. Doce correcciones a mano son minutos; un falso positivo no lo
   detecta nadie.
 
-  ⚠️ **`searchEquipos` NO se puede simplificar todavía.** Pasarlo a filtrar solo por `client_id` dejaría a
-  esos 12 equipos fuera del filtro por cliente: hoy los cubre justamente la contención por nombre. Primero
-  hay que resolverlos; después, la simplificación.
+  ✅ **`searchEquipos` YA está simplificado (2026-08-09, `7d3e99b`):** acota por `client_id` y nada más. Se
+  retiró la contención por nombre en los dos sentidos, que además metía equipos de OTRO cliente en cuanto los
+  nombres compartían un fragmento. La ruta se ahorra de paso una consulta a Books por búsqueda.
+  ⚠️ **Consecuencia viva mientras queden equipos sin `client_id`:** esos equipos **no salen** al acotar por
+  cliente. Siguen siendo alcanzables sin filtro de cliente o buscando por serial, que es la salida de
+  emergencia del formulario, pero conviene cerrar los pendientes de arriba para que la vía normal funcione.
 
   Hallazgo suelto de la misma pasada: dos equipos distintos comparten el serial `GK2E0021`
   (`eq-6ec57890ca8158d9` y `eq-0bcf0f25cbdd239f`), ambos de Camposol — puede ser legítimo o un duplicado del
