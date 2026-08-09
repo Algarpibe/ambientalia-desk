@@ -212,14 +212,40 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
-- **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** — **CÓDIGO LISTO 2026-08-09, FALTA
-  DISPARARLO.** `POST /api/admin/backfill-client-id` (super administrador; `?dryRun=true` para ver las cifras
-  sin escribir). Empareja por nombre normalizado —sin mayúsculas, acentos, puntuación ni forma societaria—
-  contra el nombre de contacto **y** el de empresa. Solo enlaza lo inequívoco: lo ambiguo y lo que no casa
-  salen en `pendientes` (con los candidatos, en los ambiguos) para corregirlo a mano en Equipos, y también al
-  log. **Hay que llamarlo a mano tras desplegar**, como los otros backfills. Cuando quede poco pendiente,
-  `searchEquipos` puede pasar a filtrar solo por `client_id`. Contexto original abajo.
-  <br>La carga inicial de ~352 equipos
+- **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** — **EJECUTADO EN PRODUCCIÓN 2026-08-09:
+  339 de 351 enlazados (96,6 %). Quedan 12, y son datos, no código.** `POST /api/admin/backfill-client-id`
+  (super administrador; `?dryRun=true` para ver las cifras sin escribir). Empareja por nombre normalizado
+  —sin mayúsculas, acentos, puntuación ni forma societaria— contra el nombre de contacto **y** el de empresa.
+  Solo enlaza lo inequívoco; el resto sale en `pendientes` y en el log. Es idempotente: re-ejecutarlo tras
+  corregir los datos recoge lo que se haya arreglado.
+
+  **Los 12 pendientes, diagnosticados contra Books el 2026-08-09** (ids reales, para no volver a buscarlos):
+  | Qué dice el equipo | Equipos | Qué pasa | Id en Books |
+  |---|---|---|---|
+  | `Camposol Colombia S.A.S.` | 6 | ⚠️ **duplicado en Books**: dos contactos con el mismo NIT `901116362`, misma persona y mismo correo | `2251824000016870091` (de CRM, USD, tocado ene-2026) vs `2251824000017370011` (creado a mano, COP, sin tocar desde nov-2023) |
+  | `Universidad Federico Santa María` | 3 | en Books lleva **«Técnica»** en medio | `2251824000000917795` |
+  | `Serambiente` | 1 | el CSV guardó solo la sigla; en Books es `Servicios de Ingeniería y Ambiente S.A.S. - SERAMBIENTE S.A.S.` | `2251824000000914711` |
+  | `Sololucione ambientales - SOLAM` | 1 | errata **y** nombre distinto: `Soluciones Ambientales - Ingeniería S.A.S. – SOLAM LABORATORIO AMBIENTAL` | `2251824000000917279` |
+  | `Sensus S.A.S.` | 1 | ⚠️ **no existe en Books** (buscado por nombre, empresa y correo) | — |
+
+  **Camposol se arregla en Books, no en Desk**: fusionando o desactivando el duplicado y re-ejecutando el
+  endpoint, los 6 caen solos.
+
+  ⚠️ **NO hacer la heurística más agresiva.** Books usa `Nombre largo - SIGLA` y el CSV guardó la sigla, así
+  que parece fácil partir por guiones para cazar Serambiente y SOLAM. No compensa: se ganarían dos o tres
+  emparejamientos a cambio de riesgo permanente de atar el equipo de un cliente a **otro**, que es el fallo
+  silencioso que este diseño evita a propósito. Doce correcciones a mano son minutos; un falso positivo no lo
+  detecta nadie.
+
+  ⚠️ **`searchEquipos` NO se puede simplificar todavía.** Pasarlo a filtrar solo por `client_id` dejaría a
+  esos 12 equipos fuera del filtro por cliente: hoy los cubre justamente la contención por nombre. Primero
+  hay que resolverlos; después, la simplificación.
+
+  Hallazgo suelto de la misma pasada: dos equipos distintos comparten el serial `GK2E0021`
+  (`eq-6ec57890ca8158d9` y `eq-0bcf0f25cbdd239f`), ambos de Camposol — puede ser legítimo o un duplicado del
+  inventario.
+
+  Contexto original: la carga inicial de ~352 equipos
   (hecha una vez desde un CSV que ya se retiró del código; recuperable en el historial de git, último commit que
   lo contiene: `b67310a`) dejó `client_id` en NULL y el cliente como **texto libre**, con grafías que no casan con
   Books (`AMBIENTALIA` vs `Ambientalia S.A.S.`, la errata `Sololucione ambientales - SOLAM`, dobles espacios).
