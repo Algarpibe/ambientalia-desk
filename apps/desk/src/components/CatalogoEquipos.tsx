@@ -583,41 +583,59 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
   useEffect(() => { getCategoriasDisponibles().then(setDisponibles).catch(() => {}) }, [])
 
   const anadirCat = (clase: ClaseArticulo, categoria: string) =>
-    ejecutar(async () => { await asignarCategoriaModelo(modelo.id, clase, categoria); await recargarArticulos() })
+    ejecutarConAviso(
+      async () => { await asignarCategoriaModelo(modelo.id, clase, categoria); await recargarArticulos() },
+      `Categoría «${categoria}» añadida.`,
+    )
 
   // Quitar la categoría retira de golpe todos sus artículos, así que se confirma con el número delante.
   const quitarCat = (c: CategoriaModelo) => {
     if (!confirm(`¿Quitar «${c.categoria}»? Dejarán de aparecer sus ${c.articulos} artículo(s) en este modelo.`)) return
-    return ejecutar(async () => { await quitarCategoriaModelo(c.id); await recargarArticulos() })
+    return ejecutarConAviso(
+      async () => { await quitarCategoriaModelo(c.id); await recargarArticulos() },
+      `Categoría «${c.categoria}» quitada.`,
+    )
   }
 
   async function anadirLibre() {
-    await ejecutar(async () => {
-      await crearArticuloModelo(modelo.id, { clase: claseLibre, nombre: libre.trim() })
+    // El nombre se captura ANTES: la acción vacía el campo, así que leerlo después daría un aviso mudo.
+    const nombre = libre.trim()
+    await ejecutarConAviso(async () => {
+      await crearArticuloModelo(modelo.id, { clase: claseLibre, nombre })
       setLibre('')
       await recargarArticulos()
-    })
+    }, `Artículo «${nombre}» añadido.`)
   }
 
   // Sin selector de clase por fila: la clase la fija la categoría desde la que se deriva el artículo, y
   // los añadidos a mano la eligen al crearse. Cambiarla suelta invitaría a «arreglar» algo que se
   // recalcula al recargar.
   /** Un derivado no se borra: se marca como «no aplica a este modelo», y el mismo botón lo devuelve. */
-  const alternarOculto = (a: ArticuloModelo) =>
-    ejecutar(async () => {
-      if (!a.itemId) return
-      if (a.activo) await ocultarArticuloModelo(modelo.id, a.itemId)
-      else await mostrarArticuloModelo(modelo.id, a.itemId)
+  const alternarOculto = (a: ArticuloModelo) => {
+    // La guarda va FUERA de la acción: dentro, salir por las buenas contaría como éxito y el aviso
+    // diría «desactivado» sin haber desactivado nada.
+    if (!a.itemId) return
+    const itemId = a.itemId
+    return ejecutarConAviso(async () => {
+      if (a.activo) await ocultarArticuloModelo(modelo.id, itemId)
+      else await mostrarArticuloModelo(modelo.id, itemId)
       await recargarArticulos()
-    })
+    }, `«${a.nombre}» ${a.activo ? 'desactivado' : 'activado'} para este modelo.`)
+  }
 
   const alternarActivo = (a: ArticuloModelo) =>
-    ejecutar(async () => { await actualizarArticuloModelo(a.id, { activo: !a.activo }); await recargarArticulos() })
+    ejecutarConAviso(
+      async () => { await actualizarArticuloModelo(a.id, { activo: !a.activo }); await recargarArticulos() },
+      `«${a.nombre}» ${a.activo ? 'desactivado' : 'activado'}.`,
+    )
 
   // Desactivar es la vía normal; eliminar borra de verdad, así que se confirma.
   const quitarArticulo = (a: ArticuloModelo) => {
     if (!confirm(`¿Eliminar «${a.nombre}» de la lista? Para retirarlo sin perder el registro, desactívalo.`)) return
-    return ejecutar(async () => { await borrarArticuloModelo(a.id); await recargarArticulos() })
+    return ejecutarConAviso(
+      async () => { await borrarArticuloModelo(a.id); await recargarArticulos() },
+      `«${a.nombre}» eliminado de la lista.`,
+    )
   }
 
   async function recargar() {
@@ -640,6 +658,22 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
     try { await accion(); return true }
     catch (e) { setError(e instanceof Error ? e.message : String(e)); return false }
     finally { setBusy(false) }
+  }
+
+  /**
+   * Como `ejecutar`, pero además confirma en pantalla lo que se acaba de guardar.
+   *
+   * Lo usan las acciones de las listas —categorías, artículos, documentos—, que se aplican en el acto
+   * y NO pasan por «Guardar». Ese es justo el punto: desde que el botón está arriba y cubre la ficha
+   * entera, verlo en gris después de desactivar un artículo se lee como «no se ha guardado», que es lo
+   * contrario de lo que pasó. El aviso es lo que cierra ese hueco.
+   *
+   * Solo sale si la acción salió adelante: cantarlo antes de saberlo diría «desactivado» sobre un 403.
+   */
+  async function ejecutarConAviso(accion: () => Promise<void>, aviso: string): Promise<boolean> {
+    const ok = await ejecutar(accion)
+    if (ok) setMensaje(aviso)
+    return ok
   }
 
   const pendientes = cambiosFicha(
@@ -683,12 +717,12 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
     setMensaje('Ficha técnica guardada correctamente')
   }
 
-  async function eliminarDocumento(docId: string) {
+  async function eliminarDocumento(docId: string, nombre: string) {
     if (!confirm('¿Eliminar este documento de la ficha?')) return
-    await ejecutar(async () => {
+    await ejecutarConAviso(async () => {
       await borrarDocumentoModelo(modelo.id, docId)
       await recargar()
-    })
+    }, `Documento «${nombre}» eliminado.`)
   }
 
   const field = 'border border-slate-200 rounded p-2 text-[13px]'
@@ -807,6 +841,11 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
                 categoría aparecerá aquí solo. Un modelo de una serie lleva la categoría de la serie y, si la
                 tiene, la suya propia.
               </p>
+              {/* Sin este aviso, el botón «Guardar» en gris después de desactivar un artículo se lee como
+                  «no se ha guardado». Dice qué NO pasa por el botón, que es la duda real. */}
+              <p className="text-[11px] text-slate-500 mb-2">
+                Lo de aquí abajo se guarda solo, al pulsarlo: no espera al botón «Guardar».
+              </p>
 
               {CLASES_ARTICULO.map((clase) => {
                 const cats = categorias.filter((c) => c.clase === clase)
@@ -878,6 +917,9 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
 
             <section>
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Documentos</h4>
+              <p className="text-[11px] text-slate-500 mb-2">
+                Los documentos también se guardan solos: no esperan al botón «Guardar».
+              </p>
               {ficha.documentos.length === 0 ? (
                 <p className="text-[12px] text-slate-400 mb-2">Todavía sin documentos.</p>
               ) : (
@@ -888,12 +930,17 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
                         {d.nombre}
                       </a>
                       <span className="text-[11px] text-slate-400 shrink-0">{d.tipo}</span>
-                      <button onClick={() => eliminarDocumento(d.id)} className="text-[12px] text-red-600 shrink-0">Eliminar</button>
+                      <button onClick={() => eliminarDocumento(d.id, d.nombre)} className="text-[12px] text-red-600 shrink-0">Eliminar</button>
                     </li>
                   ))}
                 </ul>
               )}
-              <NuevoDocumento modeloId={modelo.id} busyExterno={busy} onError={setError} onAdded={recargar} />
+              <NuevoDocumento
+                modeloId={modelo.id}
+                busyExterno={busy}
+                onError={setError}
+                onAdded={async () => { await recargar(); setMensaje('Documento añadido.') }}
+              />
             </section>
           </>
         )}
