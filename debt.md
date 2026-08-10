@@ -171,14 +171,26 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      **Conclusión para el diseño: `category_name` vale como FILTRO y sugerencia del buscador, NO como
      asociación automática.** El humano elige de una lista acotada; la máquina no decide por él.
 
-     Pista suelta a verificar con el usuario: el catálogo dice `IAQUAtwin-*` y Books `LAQUAtwin` — el
-     producto real de Horiba es **LAQUA**twin, así que parece una errata de transcripción (I por L) en los 6
-     modelos. ⚠️ Antes de tocarlos, recordar que renombrar modelos está vetado porque `perfilChecklist` lee
-     el TEXTO por subcadena; comprobar primero si el cambio movería de perfil.
+     **DECISIONES DEL USUARIO (2026-08-09), ya firmes:**
+     1. **`category_name` = filtro y sugerencia del buscador, NUNCA asociación automática.** El humano elige.
+     2. **La clase se elige al añadir el artículo a un modelo**, con un valor propuesto según el prefijo:
+        `Opcional` → **accesorio**; `C&R` → **consumible**, cambiable a **repuesto** de un clic. Deducir la
+        clase del nombre del artículo queda descartado: es la misma adivinanza que descartó el punto 1.
+     3. Sigue en pie lo ya anotado: **un solo mecanismo con discriminador de clase**, no tres pantallas
+        gemelas, y modelo de datos **mixto** (ítems enlazados a `books.items` + ítems de texto libre, porque
+        «Manuales» o «Pletinas (par)» no tienen SKU).
 
-     Queda además la decisión que Books no resuelve: **separar consumibles de repuestos**, que él junta bajo
-     `C&R`. Ver los avisos de la entrada siguiente (un solo mecanismo con discriminador de clase, y modelo de
-     datos mixto para los ítems sin SKU).
+     **ERRATA `IAQUAtwin` → `LAQUAtwin` — CONFIRMADA por el usuario contra Books (2026-08-09).** En Books el
+     fabricante es Horiba Ltd. y tanto los nombres como la categoría son **`LAQUAtwin`**; la «I» está en el
+     catálogo de Desk, en 6 modelos. ✅ **Renombrar es SEGURO aquí**, comprobado leyendo `perfilChecklist`
+     (`packages/shared/src/remision.ts`): con marca Horiba, `iaquatwin-ca-11` no es `edm 280`, no contiene
+     `edm180` y no empieza por `ap` → `otro`; `laquatwin-ca-11` recorre lo mismo → `otro`. **Mismo perfil, así
+     que ningún checklist de remisión se mueve.** (El veto general a renombrar sigue vigente: vale para ESTE
+     caso porque se comprobó, no en general.)
+     ⚠️ **No basta con `UPDATE catalogo_modelos`:** `equipos.modelo` guarda el texto denormalizado y es el que
+     lee `perfilChecklist`, así que hay que actualizar también los equipos de esos modelos o quedarán
+     divergentes. La app **no** sabe renombrar (`actualizarModelo` acepta tipoId/activo/sku, no `nombre`), de
+     modo que o se hace por SQL puntual o se añade esa capacidad con su aviso de perfil.
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
      `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
