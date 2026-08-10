@@ -139,10 +139,18 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      Postgres real lo ignora en silencio. Rompió 3 tests del worker que declaraban `books.items` a mano
      además de llamar a `migrate`. Regla: no redeclarar en un test una tabla que ya crea `migrate`.
 
-     **PASO 2 — pendiente del usuario, en EasyPanel.** Tras desplegar (para que `schema.sql` cree la tabla
-     en desk-db), en el **hub** `ALTER PUBLICATION zoho_ref_pub ADD TABLE books.items;` y en **desk-db**
-     `ALTER SUBSCRIPTION zoho_ref_sub REFRESH PUBLICATION;`. Comprobar después que
-     `SELECT count(*) FROM books.items` en desk-db cuadra con el hub (>1000).
+     ✅ **PASO 2 HECHO — REPLICACIÓN EN PRODUCCIÓN (2026-08-09).** `ALTER PUBLICATION zoho_ref_pub ADD TABLE
+     books.items` en el hub + `ALTER SUBSCRIPTION zoho_ref_sub REFRESH PUBLICATION` en desk-db. **1428
+     artículos replicados, conteos idénticos en ambos lados**, y `pg_subscription_rel` con las 4 tablas en
+     estado `r`: `desk.activities`, `books.contacts`, `books.sales_orders`, `books.items`. Sin cutover ni
+     incidencias. **`books.items` ya se puede consultar desde la app y cruzar con `catalogo_modelos` en la
+     misma query** — que era el motivo de replicar en vez de leer del hub en vivo.
+     Nota: el censo real son **1428** artículos; el análisis previo de la API se hizo sobre una muestra de
+     1000, así que las cifras por clase de más arriba son del 70 % y conviene rehacerlas contra la tabla.
+
+     **PASO 3 — la funcionalidad.** Queda la decisión de diseño que Books no resuelve: **separar consumibles
+     de repuestos**, que él junta bajo `C&R`. Ver los avisos de la entrada siguiente (un solo mecanismo con
+     discriminador de clase, y modelo de datos mixto para los ítems sin SKU).
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
      `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
