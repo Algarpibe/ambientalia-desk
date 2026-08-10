@@ -296,8 +296,11 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   se registró, y 3 con serial compartido legítimamente.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
-- **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** — **EJECUTADO EN PRODUCCIÓN 2026-08-09:
-  339 de 351 enlazados (96,6 %). Quedan 12, y son datos, no código.** `POST /api/admin/backfill-client-id`
+- ~~**Reconciliar `equipos.cliente_nombre` → `equipos.client_id`**~~ — ✅ **RESUELTO AL 100 % EN PRODUCCIÓN
+  (2026-08-09).** El endpoint devuelve `{enlazados: 0, ambiguos: 0, sinCliente: 0, sinNombre: 0,
+  pendientes: []}`: **no queda ni un equipo con `client_id` NULL**. Camino: 339 automáticos (96,6 %) + los 12
+  restantes a mano por el usuario. Lo de abajo se conserva como registro de cómo se hizo y de los casos raros
+  que aparecieron. `POST /api/admin/backfill-client-id`
   (super administrador; `?dryRun=true` para ver las cifras sin escribir). Empareja por nombre normalizado
   —sin mayúsculas, acentos, puntuación ni forma societaria— contra el nombre de contacto **y** el de empresa.
   Solo enlaza lo inequívoco; el resto sale en `pendientes` y en el log. Es idempotente: re-ejecutarlo tras
@@ -342,9 +345,10 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   ✅ **`searchEquipos` YA está simplificado (2026-08-09, `7d3e99b`):** acota por `client_id` y nada más. Se
   retiró la contención por nombre en los dos sentidos, que además metía equipos de OTRO cliente en cuanto los
   nombres compartían un fragmento. La ruta se ahorra de paso una consulta a Books por búsqueda.
-  ⚠️ **Consecuencia viva mientras queden equipos sin `client_id`:** esos equipos **no salen** al acotar por
-  cliente. Siguen siendo alcanzables sin filtro de cliente o buscando por serial, que es la salida de
-  emergencia del formulario, pero conviene cerrar los pendientes de arriba para que la vía normal funcione.
+  ✅ **La consecuencia que tenía anotada ya NO aplica:** decía que los equipos sin `client_id` quedarían fuera
+  del filtro por cliente, y desde que la reconciliación cerró al 100 % **no queda ninguno**. El filtro por
+  cliente alcanza hoy a todo el inventario. (Si en el futuro se dan de alta equipos sin cliente, volvería a
+  aplicar — pero el alta lo exige, así que solo podría pasar escribiendo en la BD a mano.)
 
   ✅ **El formulario de equipos ya avisa (2026-08-09, `75a4bb7`).** Al corregir estos equipos se vio que el
   campo «Cliente» parece de texto libre pero es un buscador: teclear un nombre sin elegirlo de la lista
