@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -160,6 +160,29 @@ export function searchClients(q: string): Promise<ClientLite[]> {
 /** Artículos de Zoho Books por SKU o nombre. Solo activos y solo los que tienen SKU. */
 export function buscarArticulos(q: string): Promise<ArticuloLite[]> {
   return fetch(`/api/articulos?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ArticuloLite[]>(r))
+}
+
+/** Accesorios, consumibles y repuestos de un modelo, incluidos los desactivados (es la gestión). */
+export function getArticulosModelo(modeloId: string): Promise<ArticuloModelo[]> {
+  return fetch(`/api/catalogo/modelos/${modeloId}/articulos`, { credentials: 'include' }).then((r) => json<ArticuloModelo[]>(r))
+}
+
+/** Con `itemId` el servidor toma sku y nombre de Books; sin él, es un ítem de texto libre. */
+export function crearArticuloModelo(modeloId: string, body: { clase: ClaseArticulo; itemId?: string; nombre?: string }): Promise<{ id: string }> {
+  return fetch(`/api/catalogo/modelos/${modeloId}/articulos`, {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  }).then((r) => json<{ id: string }>(r))
+}
+
+export function actualizarArticuloModelo(id: string, patch: { clase?: ClaseArticulo; activo?: boolean; orden?: number }): Promise<{ ok: true }> {
+  return fetch(`/api/catalogo/articulos/${id}`, {
+    method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+  }).then((r) => json<{ ok: true }>(r))
+}
+
+export async function borrarArticuloModelo(id: string): Promise<void> {
+  const r = await fetch(`/api/catalogo/articulos/${id}`, { method: 'DELETE', credentials: 'include' })
+  if (!r.ok) await json(r)
 }
 
 /** `soloLibres`: deja fuera las órdenes que ya usa otro ticket de Desk. */

@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ArticuloLite, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
-import { TIPOS_DOCUMENTO } from '@ambientalia/shared'
+import type { ArticuloLite, ArticuloModelo, ClaseArticulo, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
+import { TIPOS_DOCUMENTO, CLASES_ARTICULO, clasePropuesta } from '@ambientalia/shared'
+
+/** En singular para los selectores, en plural para los encabezados de cada lista. */
+const ETIQUETA_CLASE: Record<ClaseArticulo, string> = {
+  accesorio: 'Accesorio', consumible: 'Consumible', repuesto: 'Repuesto',
+}
+const ETIQUETA_CLASE_PLURAL: Record<ClaseArticulo, string> = {
+  accesorio: 'Accesorios', consumible: 'Consumibles', repuesto: 'Repuestos',
+}
 import {
   getCatalogo, getConflictosCatalogo,
   crearTipoCatalogo, crearMarcaCatalogo, crearModeloCatalogo,
   actualizarTipoCatalogo, actualizarMarcaCatalogo, actualizarModeloCatalogo,
   borrarEntradaCatalogo,
   getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
-  buscarArticulos,
+  buscarArticulos, getArticulosModelo, crearArticuloModelo, actualizarArticuloModelo, borrarArticuloModelo,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -412,6 +420,12 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
   const [sku, setSku] = useState('')
   const [articulos, setArticulos] = useState<ArticuloLite[]>([])
   const [articulosOpen, setArticulosOpen] = useState(false)
+  const [listaArticulos, setListaArticulos] = useState<ArticuloModelo[]>([])
+  const [busqArt, setBusqArt] = useState('')
+  const [candidatos, setCandidatos] = useState<ArticuloLite[]>([])
+  const [artOpen, setArtOpen] = useState(false)
+  const [libre, setLibre] = useState('')
+  const [claseLibre, setClaseLibre] = useState<ClaseArticulo>('accesorio')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -423,6 +437,48 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
     buscarArticulos(sku).then((r) => { if (alive) setArticulos(r) }).catch(() => {})
     return () => { alive = false }
   }, [sku])
+
+  // El mismo buscador, para añadir artículos a las listas del modelo. Va aparte del del SKU porque son
+  // dos campos distintos que pueden estar en uso a la vez.
+  useEffect(() => {
+    if (busqArt.trim().length < 2) { setCandidatos([]); return }
+    let alive = true
+    buscarArticulos(busqArt).then((r) => { if (alive) setCandidatos(r) }).catch(() => {})
+    return () => { alive = false }
+  }, [busqArt])
+
+  async function recargarArticulos() {
+    setListaArticulos(await getArticulosModelo(modelo.id))
+  }
+  useEffect(() => { getArticulosModelo(modelo.id).then(setListaArticulos).catch(() => {}) }, [modelo.id])
+
+  async function anadirDeBooks(a: ArticuloLite) {
+    setBusqArt(''); setCandidatos([]); setArtOpen(false)
+    await ejecutar(async () => {
+      await crearArticuloModelo(modelo.id, { clase: clasePropuesta(a.categoria), itemId: a.id })
+      await recargarArticulos()
+    })
+  }
+
+  async function anadirLibre() {
+    await ejecutar(async () => {
+      await crearArticuloModelo(modelo.id, { clase: claseLibre, nombre: libre.trim() })
+      setLibre('')
+      await recargarArticulos()
+    })
+  }
+
+  const cambiarClase = (id: string, clase: ClaseArticulo) =>
+    ejecutar(async () => { await actualizarArticuloModelo(id, { clase }); await recargarArticulos() })
+
+  const alternarActivo = (a: ArticuloModelo) =>
+    ejecutar(async () => { await actualizarArticuloModelo(a.id, { activo: !a.activo }); await recargarArticulos() })
+
+  // Desactivar es la vía normal; eliminar borra de verdad, así que se confirma.
+  const quitarArticulo = (a: ArticuloModelo) => {
+    if (!confirm(`¿Eliminar «${a.nombre}» de la lista? Para retirarlo sin perder el registro, desactívalo.`)) return
+    return ejecutar(async () => { await borrarArticuloModelo(a.id); await recargarArticulos() })
+  }
 
   async function recargar() {
     const f = await getFichaModelo(modelo.id)
@@ -521,6 +577,70 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
               ) : (
                 <p className="text-[11px] text-slate-400 mt-1">Elige el artículo de la lista para que quede contrastado con Zoho Books.</p>
               )}
+            </section>
+
+            <section>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Accesorios, consumibles y repuestos</h4>
+              <div className="relative mb-2">
+                <input className={`${field} w-full`} placeholder="Añadir artículo de Books (código o nombre)" value={busqArt}
+                  onFocus={() => setArtOpen(true)} onBlur={() => setArtOpen(false)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setArtOpen(false) }}
+                  onChange={(e) => { setBusqArt(e.target.value); setArtOpen(true) }} />
+                {artOpen && candidatos.length > 0 && (
+                  <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+                    {candidatos.map((a) => (
+                      <li key={a.id}>
+                        {/* La clase se PROPONE desde la categoría de Books y se cambia luego con el
+                            selector de cada fila: Books no separa consumible de repuesto. */}
+                        <button type="button" onClick={() => anadirDeBooks(a)}
+                          className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
+                          <span className="font-bold">{a.sku}</span> · {a.nombre}
+                          {a.categoria ? <span className="text-slate-400"> · {a.categoria} → {clasePropuesta(a.categoria)}</span> : null}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="flex gap-2 mb-3">
+                <input className={`${field} flex-1`} placeholder="…o un ítem sin artículo en Books (p. ej. «Manuales»)" value={libre}
+                  onChange={(e) => setLibre(e.target.value)} />
+                <select className={field} value={claseLibre} onChange={(e) => setClaseLibre(e.target.value as ClaseArticulo)}>
+                  {CLASES_ARTICULO.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
+                </select>
+                <button onClick={anadirLibre} disabled={busy || !libre.trim()} className="border border-slate-200 px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Añadir</button>
+              </div>
+
+              {CLASES_ARTICULO.map((clase) => {
+                const items = listaArticulos.filter((a) => a.clase === clase)
+                return (
+                  <div key={clase} className="mb-2">
+                    <div className="text-[11px] font-bold text-slate-400 uppercase mb-1">{ETIQUETA_CLASE_PLURAL[clase]} ({items.length})</div>
+                    {items.length === 0 ? (
+                      // «Cero filas» siempre significa «sin definir todavía», nunca «no lleva»: el mensaje
+                      // empuja a completarlo en vez de afirmar algo que nadie ha comprobado.
+                      <div className="text-[12px] text-slate-400">Sin definir todavía.</div>
+                    ) : (
+                      <ul className="text-[13px]">
+                        {items.map((a) => (
+                          <li key={a.id} className={`flex items-center gap-2 py-0.5 ${a.activo ? '' : 'opacity-50'}`}>
+                            <span className="flex-1">
+                              {a.sku ? <span className="font-bold">{a.sku} · </span> : null}{a.nombre}
+                              {!a.itemId ? <span className="text-slate-400 text-[11px]"> · sin artículo en Books</span> : null}
+                            </span>
+                            <select className="text-[11px] border border-slate-200 rounded px-1 py-0.5" value={a.clase}
+                              onChange={(e) => cambiarClase(a.id, e.target.value as ClaseArticulo)}>
+                              {CLASES_ARTICULO.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
+                            </select>
+                            <button onClick={() => alternarActivo(a)} className="text-[11px] text-blue-600">{a.activo ? 'Desactivar' : 'Activar'}</button>
+                            <button onClick={() => quitarArticulo(a)} className="text-[11px] text-red-600">Eliminar</button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })}
             </section>
 
             <section>
