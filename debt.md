@@ -286,6 +286,14 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
     administrador**: el `requireSuperAdmin` de `routes/equipos.ts` es esa misma función renombrada en el `import`.
     El botón se esconde por comodidad; quien protege el dato es el endpoint.
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
+- **Enlace ticket→equipo (`backfill-equipo-id`) — re-ejecutado 2026-08-09 tras corregir datos: `{enlazados: 2,
+  ambiguos: 3, sinEquipo: 58, sinSerial: 21}`.** Sube el histórico enlazado de 653 a **655 de 737 (88,9 %)**.
+  Los 2 recuperados son exactamente el efecto de las dos correcciones del usuario: al borrar el `191TE0NC`
+  duplicado de Ser As y al arreglar el serial del `LAQUAtwin-PH-11` (→ `GA3A0084`), un ticket dejó de ser
+  ambiguo (4→3) y otro dejó de estar sin equipo (59→58). **Demuestra que corregir el inventario recupera
+  historial**: el backfill es idempotente, así que conviene relanzarlo después de cada tanda de correcciones.
+  Los 82 que quedan **no son deuda**: 21 sin serial extraíble del asunto, 58 «Equipo Nuevo» cuyo equipo nunca
+  se registró, y 3 con serial compartido legítimamente.
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
 - **Reconciliar `equipos.cliente_nombre` → `equipos.client_id`** — **EJECUTADO EN PRODUCCIÓN 2026-08-09:
