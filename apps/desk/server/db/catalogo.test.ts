@@ -383,3 +383,23 @@ describe('leerCatalogo — artículo de Books del modelo', () => {
     expect(skuMalo).toMatchObject({ sku: 'NO-EXISTE', articuloNombre: null, articuloCategoria: null })
   })
 })
+
+/**
+ * La miniatura de la tabla del catálogo. Se reutiliza la foto de referencia que ya guarda la ficha del
+ * modelo (`catalogo_documentos` con `tipo='foto'`, única por modelo): traerla de Zoho Books exigiría
+ * descargar y almacenar imágenes, y esta ya está aquí.
+ */
+describe('leerCatalogo — foto del modelo', () => {
+  it('devuelve el id del documento de la foto, y null si el modelo no tiene', async () => {
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('con-foto','cmar-1','EDM180C')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('sin-foto','cmar-1','EDM180D')")
+    await db.query("INSERT INTO catalogo_documentos (id,modelo_id,tipo,nombre,content_b64,content_type) VALUES ('doc-foto','con-foto','foto','Frontal','AAA','image/png')")
+    // Un documento que NO es foto no debe colarse como miniatura.
+    await db.query("INSERT INTO catalogo_documentos (id,modelo_id,tipo,nombre,url) VALUES ('doc-man','sin-foto','manual','Manual','https://x/m.pdf')")
+
+    const c = await leerCatalogo(db)
+    expect(c.modelos.find((m) => m.id === 'con-foto')?.fotoId).toBe('doc-foto')
+    expect(c.modelos.find((m) => m.id === 'sin-foto')?.fotoId).toBeNull()
+  })
+})

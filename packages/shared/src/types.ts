@@ -319,6 +319,12 @@ export interface CatalogoModelo {
    */
   articuloNombre: string | null
   articuloCategoria: string | null
+  /**
+   * Id del documento `tipo='foto'` de la ficha, para pintar la miniatura. `null` si el modelo no tiene
+   * foto. Se reutiliza la foto de referencia que ya guarda la ficha en vez de traer la imagen de Books,
+   * que exigiría descargar y almacenar ficheros de Zoho.
+   */
+  fotoId: string | null
 }
 export interface Catalogo { tipos: CatalogoTipo[]; marcas: CatalogoMarca[]; modelos: CatalogoModelo[] }
 

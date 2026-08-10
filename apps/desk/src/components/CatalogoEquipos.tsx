@@ -325,6 +325,9 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
 
                     <table className="w-full text-[13px]">
                       <thead><tr className="text-left text-slate-500 border-b bg-slate-50">
+                        {/* La miniatura va fuera del sistema de columnas: no es un dato que se oculte ni
+                            se reordene, es la identidad visual de la fila — como en el listado de Books. */}
+                        <th className="py-2 px-2 w-12"></th>
                         {visibles.map((c) => (
                           // Arrastrar la cabecera reordena. `onDragOver` con preventDefault es lo que
                           // marca la celda como destino válido: sin él, el navegador rechaza el soltar.
@@ -342,6 +345,20 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
                       <tbody>
                         {modelosOrdenados.map((mo) => (
                           <tr key={mo.id} className={`border-b hover:bg-slate-50 ${!mo.activo ? 'opacity-50' : ''} ${mo.revisar ? 'bg-amber-50' : ''}`}>
+                            <td className="py-2 px-2">
+                              <button onClick={() => setFichaModelo(mo)} className="block" title="Abrir la ficha del modelo">
+                                {mo.fotoId ? (
+                                  <img src={urlDocumento(mo.id, mo.fotoId)} alt=""
+                                    className="w-10 h-10 object-contain rounded border border-slate-200 bg-white" />
+                                ) : (
+                                  // Marcador de posición cuando el modelo aún no tiene foto, para que la
+                                  // columna no baile de altura entre filas con y sin imagen.
+                                  <span className="w-10 h-10 rounded border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-300 text-[16px]">
+                                    ▢
+                                  </span>
+                                )}
+                              </button>
+                            </td>
                             {visibles.map((c) => <td key={c} className="py-2.5 px-2 align-middle">{celdaModelo(mo, c)}</td>)}
                             <td className="text-right whitespace-nowrap px-2">
                               <button onClick={() => setFichaModelo(mo)} className="text-[12px] text-blue-600 mr-3">Ficha</button>
