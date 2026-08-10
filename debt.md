@@ -102,6 +102,18 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
 - **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
   **EN CURSO desde 2026-08-03: solo la rama de ENTRADA** (la que dispara el botón "Crear remisión" del ticket).
+- **Artículos por modelo — FASE 1 HECHA (2026-08-10), sin desplegar.** Accesorios, consumibles y repuestos
+  administrables desde la ficha del modelo. Tabla `catalogo_articulos` (una sola, con `clase` como
+  discriminador), API bajo `/api/catalogo/modelos/:id/articulos`, buscador contra `books.items` y siembra
+  `POST /api/admin/seed-articulos`. Diseño: `docs/superpowers/specs/2026-08-10-articulos-por-modelo-design.md`.
+  ⚠️ **NO toca la remisión todavía**: el checklist «Incluye» sigue leyendo de `remision_checklist` por perfil.
+  **Pasos del usuario tras desplegar:** (1) `POST /api/admin/seed-articulos` — copia el checklist de cada
+  perfil a la lista de accesorios de sus modelos, idempotente; (2) revisar y completar en Configuración →
+  Catálogo → ficha del modelo.
+  **FASE 2 pendiente:** conmutar el checklist de la remisión a `catalogo_articulos` (clase `accesorio`,
+  `soloActivos`). No hacerlo antes de que las listas estén pobladas: dejaría a TODAS las remisiones sin nada
+  que verificar. Cuando se haga, el mensaje de lista vacía ya está decidido — «modelo sin lista definida
+  todavía», accionable, nunca «no lleva accesorios».
 - **Remisiones — gestión de accesorios por marca/modelo (DIFERIDA, 2026-08-03).** *Qué pide el usuario:* una
   tabla de accesorios **por marca-modelo** y una **página en la app** para añadir / editar / eliminar, sin SQL.
   *Qué hay ya:* la tabla `public.remision_checklist(perfil, item, orden, activo)` con 109 ítems, sembrada bajo
