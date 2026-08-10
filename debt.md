@@ -115,8 +115,9 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   estrellaba con `relation "public.catalogo_articulos" does not exist`.
   ⚠️ **La suite NO puede cazar esto**: pg-mem no soporta `search_path` y allí todo cae en `public`. Es la
   misma razón por la que el reorg de esquemas se validó en prod y no en los tests.
-  **Arreglo:** `schema.sql` ya la califica; en producción hubo que mover la tabla existente con
-  `ALTER TABLE desk.catalogo_articulos SET SCHEMA public;`. **Orden obligatorio: mover ANTES de desplegar** —
+  ✅ **ARREGLADO EN PRODUCCIÓN 2026-08-10:** `schema.sql` ya la califica y la tabla se movió con
+  `ALTER TABLE desk.catalogo_articulos SET SCHEMA public;`. El despliegue siguiente es un no-op para esto.
+  **Orden obligatorio si vuelve a pasar: mover ANTES de desplegar** —
   al revés, el arranque crearía una `public.catalogo_articulos` vacía, la app seguiría usando la de `desk`
   (primera en el `search_path`) con los datos dentro, y el `SET SCHEMA` fallaría después por nombre ocupado.
   **Regla para el futuro: toda tabla nueva que no sea de Zoho Desk se declara `public.` explícitamente.**
