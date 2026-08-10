@@ -95,10 +95,11 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   `resolution_attachments`, base64 sobre `text`, que vale para una foto y no para manuales en PDF de decenas de
   megas. Diseño de la fase 1: `docs/superpowers/specs/2026-08-06-catalogo-maestro-equipos-design.md`;
   correcciones halladas al ejecutarlo: `docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos-correcciones.md`.
-- **Catálogo de equipos — equipos sin enlazar.** Tras la siembra, los equipos que no tenían marca o modelo se
-  quedan con `modelo_id` NULL. La bandeja de conflictos los cuenta, pero arreglarlos es manual: editar cada uno
-  en Registro de equipos y asignarle modelo. Si salen muchos, merece una pantalla propia o un enlace desde la
-  bandeja a la lista filtrada.
+- ~~**Catálogo de equipos — equipos sin enlazar.**~~ — ✅ **CERRADO 2026-08-10, comprobado en producción:**
+  `SELECT count(*) FROM desk.equipos WHERE modelo_id IS NULL` devuelve **0**. Los 354 equipos tienen modelo.
+  Se temía que la siembra dejara equipos sin enlazar y que hiciera falta una pantalla propia para
+  arreglarlos; no hizo falta ninguna de las dos cosas. Volvería a aplicar solo si alguien insertara equipos
+  saltándose el alta, que exige modelo.
 - **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
 - **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
   **EN CURSO desde 2026-08-03: solo la rama de ENTRADA** (la que dispara el botón "Crear remisión" del ticket).
