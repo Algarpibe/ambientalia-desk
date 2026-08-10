@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -182,6 +182,28 @@ export function actualizarArticuloModelo(id: string, patch: { clase?: ClaseArtic
 
 export async function borrarArticuloModelo(id: string): Promise<void> {
   const r = await fetch(`/api/catalogo/articulos/${id}`, { method: 'DELETE', credentials: 'include' })
+  if (!r.ok) await json(r)
+}
+
+/** Todas las categorías de Books con artículos activos: lo que se puede asignar a un modelo. */
+export function getCategoriasDisponibles(): Promise<Array<{ categoria: string; articulos: number }>> {
+  return fetch('/api/articulos/categorias', { credentials: 'include' })
+    .then((r) => json<Array<{ categoria: string; articulos: number }>>(r))
+}
+
+export function getCategoriasModelo(modeloId: string): Promise<CategoriaModelo[]> {
+  return fetch(`/api/catalogo/modelos/${modeloId}/categorias`, { credentials: 'include' }).then((r) => json<CategoriaModelo[]>(r))
+}
+
+export function asignarCategoriaModelo(modeloId: string, clase: ClaseArticulo, categoria: string): Promise<{ id: string }> {
+  return fetch(`/api/catalogo/modelos/${modeloId}/categorias`, {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clase, categoria }),
+  }).then((r) => json<{ id: string }>(r))
+}
+
+export async function quitarCategoriaModelo(id: string): Promise<void> {
+  const r = await fetch(`/api/catalogo/categorias/${id}`, { method: 'DELETE', credentials: 'include' })
   if (!r.ok) await json(r)
 }
 

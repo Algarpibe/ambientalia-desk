@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ArticuloLite, ArticuloModelo, ClaseArticulo, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
-import { TIPOS_DOCUMENTO, CLASES_ARTICULO, clasePropuesta } from '@ambientalia/shared'
+import type { ArticuloLite, ArticuloModelo, CategoriaModelo, ClaseArticulo, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
+import { TIPOS_DOCUMENTO, CLASES_ARTICULO } from '@ambientalia/shared'
 
 /** En singular para los selectores, en plural para los encabezados de cada lista. */
 const ETIQUETA_CLASE: Record<ClaseArticulo, string> = {
@@ -16,6 +16,7 @@ import {
   borrarEntradaCatalogo,
   getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
   buscarArticulos, getArticulosModelo, crearArticuloModelo, actualizarArticuloModelo, borrarArticuloModelo,
+  getCategoriasDisponibles, getCategoriasModelo, asignarCategoriaModelo, quitarCategoriaModelo,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -421,9 +422,8 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
   const [articulos, setArticulos] = useState<ArticuloLite[]>([])
   const [articulosOpen, setArticulosOpen] = useState(false)
   const [listaArticulos, setListaArticulos] = useState<ArticuloModelo[]>([])
-  const [busqArt, setBusqArt] = useState('')
-  const [candidatos, setCandidatos] = useState<ArticuloLite[]>([])
-  const [artOpen, setArtOpen] = useState(false)
+  const [categorias, setCategorias] = useState<CategoriaModelo[]>([])
+  const [disponibles, setDisponibles] = useState<Array<{ categoria: string; articulos: number }>>([])
   const [libre, setLibre] = useState('')
   const [claseLibre, setClaseLibre] = useState<ClaseArticulo>('accesorio')
   const [error, setError] = useState<string | null>(null)
@@ -438,26 +438,28 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
     return () => { alive = false }
   }, [sku])
 
-  // El mismo buscador, para añadir artículos a las listas del modelo. Va aparte del del SKU porque son
-  // dos campos distintos que pueden estar en uso a la vez.
-  useEffect(() => {
-    if (busqArt.trim().length < 2) { setCandidatos([]); return }
-    let alive = true
-    buscarArticulos(busqArt).then((r) => { if (alive) setCandidatos(r) }).catch(() => {})
-    return () => { alive = false }
-  }, [busqArt])
-
   async function recargarArticulos() {
-    setListaArticulos(await getArticulosModelo(modelo.id))
+    const [arts, cats] = await Promise.all([getArticulosModelo(modelo.id), getCategoriasModelo(modelo.id)])
+    setListaArticulos(arts)
+    setCategorias(cats)
   }
-  useEffect(() => { getArticulosModelo(modelo.id).then(setListaArticulos).catch(() => {}) }, [modelo.id])
+  // La carga inicial va inline y no llamando a `recargarArticulos`: esa función se redefine en cada
+  // render, así que como dependencia dispararía el efecto sin parar, y omitirla deja un aviso del linter.
+  useEffect(() => {
+    Promise.all([getArticulosModelo(modelo.id), getCategoriasModelo(modelo.id)])
+      .then(([arts, cats]) => { setListaArticulos(arts); setCategorias(cats) })
+      .catch(() => {})
+  }, [modelo.id])
+  // Las categorías disponibles son las mismas para todos los modelos, así que se piden una vez.
+  useEffect(() => { getCategoriasDisponibles().then(setDisponibles).catch(() => {}) }, [])
 
-  async function anadirDeBooks(a: ArticuloLite) {
-    setBusqArt(''); setCandidatos([]); setArtOpen(false)
-    await ejecutar(async () => {
-      await crearArticuloModelo(modelo.id, { clase: clasePropuesta(a.categoria), itemId: a.id })
-      await recargarArticulos()
-    })
+  const anadirCat = (clase: ClaseArticulo, categoria: string) =>
+    ejecutar(async () => { await asignarCategoriaModelo(modelo.id, clase, categoria); await recargarArticulos() })
+
+  // Quitar la categoría retira de golpe todos sus artículos, así que se confirma con el número delante.
+  const quitarCat = (c: CategoriaModelo) => {
+    if (!confirm(`¿Quitar «${c.categoria}»? Dejarán de aparecer sus ${c.articulos} artículo(s) en este modelo.`)) return
+    return ejecutar(async () => { await quitarCategoriaModelo(c.id); await recargarArticulos() })
   }
 
   async function anadirLibre() {
@@ -468,9 +470,9 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
     })
   }
 
-  const cambiarClase = (id: string, clase: ClaseArticulo) =>
-    ejecutar(async () => { await actualizarArticuloModelo(id, { clase }); await recargarArticulos() })
-
+  // Sin selector de clase por fila: la clase la fija la categoría desde la que se deriva el artículo, y
+  // los añadidos a mano la eligen al crearse. Cambiarla suelta invitaría a «arreglar» algo que se
+  // recalcula al recargar.
   const alternarActivo = (a: ArticuloModelo) =>
     ejecutar(async () => { await actualizarArticuloModelo(a.id, { activo: !a.activo }); await recargarArticulos() })
 
@@ -581,41 +583,35 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
 
             <section>
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Accesorios, consumibles y repuestos</h4>
-              <div className="relative mb-2">
-                <input className={`${field} w-full`} placeholder="Añadir artículo de Books (código o nombre)" value={busqArt}
-                  onFocus={() => setArtOpen(true)} onBlur={() => setArtOpen(false)}
-                  onKeyDown={(e) => { if (e.key === 'Escape') setArtOpen(false) }}
-                  onChange={(e) => { setBusqArt(e.target.value); setArtOpen(true) }} />
-                {artOpen && candidatos.length > 0 && (
-                  <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
-                    {candidatos.map((a) => (
-                      <li key={a.id}>
-                        {/* La clase se PROPONE desde la categoría de Books y se cambia luego con el
-                            selector de cada fila: Books no separa consumible de repuesto. */}
-                        <button type="button" onClick={() => anadirDeBooks(a)}
-                          className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
-                          <span className="font-bold">{a.sku}</span> · {a.nombre}
-                          {a.categoria ? <span className="text-slate-400"> · {a.categoria} → {clasePropuesta(a.categoria)}</span> : null}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="flex gap-2 mb-3">
-                <input className={`${field} flex-1`} placeholder="…o un ítem sin artículo en Books (p. ej. «Manuales»)" value={libre}
-                  onChange={(e) => setLibre(e.target.value)} />
-                <select className={field} value={claseLibre} onChange={(e) => setClaseLibre(e.target.value as ClaseArticulo)}>
-                  {CLASES_ARTICULO.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
-                </select>
-                <button onClick={anadirLibre} disabled={busy || !libre.trim()} className="border border-slate-200 px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Añadir</button>
-              </div>
+              <p className="text-[11px] text-slate-400 mb-2">
+                La lista se calcula desde las categorías de Zoho Books que asignes: lo que se añada allí a una
+                categoría aparecerá aquí solo. Un modelo de una serie lleva la categoría de la serie y, si la
+                tiene, la suya propia.
+              </p>
 
               {CLASES_ARTICULO.map((clase) => {
+                const cats = categorias.filter((c) => c.clase === clase)
                 const items = listaArticulos.filter((a) => a.clase === clase)
                 return (
-                  <div key={clase} className="mb-2">
-                    <div className="text-[11px] font-bold text-slate-400 uppercase mb-1">{ETIQUETA_CLASE_PLURAL[clase]} ({items.length})</div>
+                  <div key={clase} className="mb-3 border border-slate-100 rounded p-2">
+                    <div className="text-[11px] font-bold text-slate-500 uppercase mb-1">{ETIQUETA_CLASE_PLURAL[clase]}</div>
+
+                    <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                      {cats.map((c) => (
+                        <span key={c.id} className="inline-flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 text-[11px]">
+                          {c.categoria} <span className="text-slate-400">({c.articulos})</span>
+                          <button onClick={() => quitarCat(c)} className="text-red-600 font-bold" title="Quitar esta categoría">×</button>
+                        </span>
+                      ))}
+                      <select className="text-[11px] border border-slate-200 rounded px-1 py-0.5" value=""
+                        onChange={(e) => { if (e.target.value) anadirCat(clase, e.target.value) }}>
+                        <option value="">+ categoría de Books…</option>
+                        {disponibles
+                          .filter((d) => !cats.some((c) => c.categoria === d.categoria))
+                          .map((d) => <option key={d.categoria} value={d.categoria}>{d.categoria} ({d.articulos})</option>)}
+                      </select>
+                    </div>
+
                     {items.length === 0 ? (
                       // «Cero filas» siempre significa «sin definir todavía», nunca «no lleva»: el mensaje
                       // empuja a completarlo en vez de afirmar algo que nadie ha comprobado.
@@ -626,14 +622,18 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
                           <li key={a.id} className={`flex items-center gap-2 py-0.5 ${a.activo ? '' : 'opacity-50'}`}>
                             <span className="flex-1">
                               {a.sku ? <span className="font-bold">{a.sku} · </span> : null}{a.nombre}
-                              {!a.itemId ? <span className="text-slate-400 text-[11px]"> · sin artículo en Books</span> : null}
+                              {a.origen === 'categoria'
+                                ? <span className="text-slate-400 text-[11px]"> · {a.categoria}</span>
+                                : <span className="text-amber-600 text-[11px]"> · añadido a mano</span>}
                             </span>
-                            <select className="text-[11px] border border-slate-200 rounded px-1 py-0.5" value={a.clase}
-                              onChange={(e) => cambiarClase(a.id, e.target.value as ClaseArticulo)}>
-                              {CLASES_ARTICULO.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
-                            </select>
-                            <button onClick={() => alternarActivo(a)} className="text-[11px] text-blue-600">{a.activo ? 'Desactivar' : 'Activar'}</button>
-                            <button onClick={() => quitarArticulo(a)} className="text-[11px] text-red-600">Eliminar</button>
+                            {/* Los derivados no se tocan uno a uno: se quitan retirando su categoría. Dar
+                                botones por fila invitaría a «arreglar» algo que se recalcula al recargar. */}
+                            {a.origen === 'manual' && (
+                              <>
+                                <button onClick={() => alternarActivo(a)} className="text-[11px] text-blue-600">{a.activo ? 'Desactivar' : 'Activar'}</button>
+                                <button onClick={() => quitarArticulo(a)} className="text-[11px] text-red-600">Eliminar</button>
+                              </>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -641,6 +641,15 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
                   </div>
                 )
               })}
+
+              <div className="flex gap-2">
+                <input className={`${field} flex-1`} placeholder="Añadir a mano lo que no exista en Books (p. ej. «Repuestos reemplazados»)" value={libre}
+                  onChange={(e) => setLibre(e.target.value)} />
+                <select className={field} value={claseLibre} onChange={(e) => setClaseLibre(e.target.value as ClaseArticulo)}>
+                  {CLASES_ARTICULO.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
+                </select>
+                <button onClick={anadirLibre} disabled={busy || !libre.trim()} className="border border-slate-200 px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Añadir</button>
+              </div>
             </section>
 
             <section>
