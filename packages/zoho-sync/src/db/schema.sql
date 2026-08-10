@@ -358,7 +358,9 @@ CREATE TABLE IF NOT EXISTS books.items (
 -- `nombre` va denormalizado y obligatorio para que la lista se lea sin join contra books.items y sobreviva a que un articulo se retire de Books o a que la replicacion se caiga
 -- `item_id` NULL es lo que distingue un item de TEXTO LIBRE (Manuales, Pletinas) de uno enlazado a un articulo real: no hace falta ninguna bandera aparte
 -- Sin CHECK sobre `clase`: la lista blanca vive en shared y la valida el servidor, como TIPOS_DOCUMENTO. Un CHECK obligaria a migrar la BD para anadir una clase
-CREATE TABLE IF NOT EXISTS catalogo_articulos (
+-- Calificada `public.` como TODAS las tablas del catalogo (tipos/marcas/modelos/documentos) y las de remisiones. NO es cosmetico: en produccion la app conecta con search_path=desk,public, asi que un CREATE sin calificar aterriza en `desk` y la tabla queda descolgada de sus hermanas. Paso una vez y hubo que moverla a mano con ALTER TABLE SET SCHEMA
+-- pg-mem no soporta search_path, asi que este fallo NO lo caza la suite: solo se ve en produccion
+CREATE TABLE IF NOT EXISTS public.catalogo_articulos (
   id text PRIMARY KEY,
   modelo_id text NOT NULL,
   clase text NOT NULL,
@@ -370,5 +372,5 @@ CREATE TABLE IF NOT EXISTS catalogo_articulos (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 -- El unico va sobre (modelo_id, clase, nombre) y NO sobre item_id: en los de texto libre item_id es NULL, y dos NULL no colisionan en SQL, asi que no impediria repetir Manuales diez veces
-CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogo_articulos_unico ON catalogo_articulos (modelo_id, clase, nombre);
-CREATE INDEX IF NOT EXISTS idx_catalogo_articulos_modelo ON catalogo_articulos (modelo_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogo_articulos_unico ON public.catalogo_articulos (modelo_id, clase, nombre);
+CREATE INDEX IF NOT EXISTS idx_catalogo_articulos_modelo ON public.catalogo_articulos (modelo_id);

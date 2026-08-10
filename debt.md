@@ -107,15 +107,33 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   discriminador), API bajo `/api/catalogo/modelos/:id/articulos`, buscador contra `books.items` y siembra
   `POST /api/admin/seed-articulos`. Diseño: `docs/superpowers/specs/2026-08-10-articulos-por-modelo-design.md`.
   ⚠️ **NO toca la remisión todavía**: el checklist «Incluye» sigue leyendo de `remision_checklist` por perfil.
+  ⚠️ **FALLO Y ARREGLO — `catalogo_articulos` nació en el esquema equivocado (2026-08-10).** Se declaró en
+  `schema.sql` **sin calificar**, mientras que TODAS sus hermanas (`catalogo_tipos/marcas/modelos/documentos`,
+  `remision_checklist`, `remisiones`) llevan `public.`. En producción la app conecta con
+  `search_path=desk,public`, así que aterrizó en **`desk`** y quedó descolgada del resto del catálogo. La app
+  funcionaba igual —el `search_path` la encontraba—, pero cualquiera que consultara a mano desde psql se
+  estrellaba con `relation "public.catalogo_articulos" does not exist`.
+  ⚠️ **La suite NO puede cazar esto**: pg-mem no soporta `search_path` y allí todo cae en `public`. Es la
+  misma razón por la que el reorg de esquemas se validó en prod y no en los tests.
+  **Arreglo:** `schema.sql` ya la califica; en producción hubo que mover la tabla existente con
+  `ALTER TABLE desk.catalogo_articulos SET SCHEMA public;`. **Orden obligatorio: mover ANTES de desplegar** —
+  al revés, el arranque crearía una `public.catalogo_articulos` vacía, la app seguiría usando la de `desk`
+  (primera en el `search_path`) con los datos dentro, y el `SET SCHEMA` fallaría después por nombre ocupado.
+  **Regla para el futuro: toda tabla nueva que no sea de Zoho Desk se declara `public.` explícitamente.**
+
   ✅ **SEMBRADO EN PRODUCCIÓN 2026-08-10: `{modelos: 35, insertados: 795, existentes: 0}`.**
   ⚠️ **795 ≈ 22,7 ítems por modelo, y eso NO significa que cada modelo lleve 23 accesorios.** La mayoría de
   los modelos cae en el perfil `otro` —`perfilChecklist` solo reconoce `edm 280`, `edm180*`, Horiba con
   modelo `ap*`, `environics` y `kunak`; todo lo demás es `otro`, que es el perfil con MÁS ítems (27
   genéricos)—. Así que muchos modelos han heredado una lista genérica que probablemente no les corresponde.
   **No es peor que antes** (esa misma lista genérica es la que la remisión venía usando para ellos), pero
-  ahora es visible y editable, que era justo el objetivo. **La revisión es trabajo real, no un trámite.**
-  Conviene **priorizar por número de equipos**, no por orden alfabético: revisar primero los modelos que más
-  se usan.
+  ahora es visible y editable, que era justo el objetivo.
+  ✅ **Medido contra los equipos reales, la siembra acertó donde importa.** Los 6 modelos con más parque
+  —EDM180C (96 equipos, 25 ítems), APNA-370 (68/15), APMA-370 (44/15), APSA-370 (38/15), APOA-370 (29/15),
+  EDM180D (19/25)— suman **294 de los 354 equipos** y todos recibieron su lista **específica**, no la
+  genérica. Los que heredaron los 27 de `otro` son modelos de **1 a 3 equipos** (CU2, VA-5001, OCMA-500/550,
+  U-51, los LAQUAtwin, D-R 290…): ~57 equipos en total. `Kunak AIR Pro` salió con **0**, que es correcto —
+  su formulario nunca tuvo checklist. Así que la revisión pendiente es acotada y de bajo impacto.
   **FASE 2 pendiente:** conmutar el checklist de la remisión a `catalogo_articulos` (clase `accesorio`,
   `soloActivos`). No hacerlo antes de que las listas estén pobladas: dejaría a TODAS las remisiones sin nada
   que verificar. Cuando se haga, el mensaje de lista vacía ya está decidido — «modelo sin lista definida
