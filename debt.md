@@ -107,9 +107,15 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   discriminador), API bajo `/api/catalogo/modelos/:id/articulos`, buscador contra `books.items` y siembra
   `POST /api/admin/seed-articulos`. Diseño: `docs/superpowers/specs/2026-08-10-articulos-por-modelo-design.md`.
   ⚠️ **NO toca la remisión todavía**: el checklist «Incluye» sigue leyendo de `remision_checklist` por perfil.
-  **Pasos del usuario tras desplegar:** (1) `POST /api/admin/seed-articulos` — copia el checklist de cada
-  perfil a la lista de accesorios de sus modelos, idempotente; (2) revisar y completar en Configuración →
-  Catálogo → ficha del modelo.
+  ✅ **SEMBRADO EN PRODUCCIÓN 2026-08-10: `{modelos: 35, insertados: 795, existentes: 0}`.**
+  ⚠️ **795 ≈ 22,7 ítems por modelo, y eso NO significa que cada modelo lleve 23 accesorios.** La mayoría de
+  los modelos cae en el perfil `otro` —`perfilChecklist` solo reconoce `edm 280`, `edm180*`, Horiba con
+  modelo `ap*`, `environics` y `kunak`; todo lo demás es `otro`, que es el perfil con MÁS ítems (27
+  genéricos)—. Así que muchos modelos han heredado una lista genérica que probablemente no les corresponde.
+  **No es peor que antes** (esa misma lista genérica es la que la remisión venía usando para ellos), pero
+  ahora es visible y editable, que era justo el objetivo. **La revisión es trabajo real, no un trámite.**
+  Conviene **priorizar por número de equipos**, no por orden alfabético: revisar primero los modelos que más
+  se usan.
   **FASE 2 pendiente:** conmutar el checklist de la remisión a `catalogo_articulos` (clase `accesorio`,
   `soloActivos`). No hacerlo antes de que las listas estén pobladas: dejaría a TODAS las remisiones sin nada
   que verificar. Cuando se haga, el mensaje de lista vacía ya está decidido — «modelo sin lista definida
