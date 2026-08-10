@@ -145,16 +145,9 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
           {mo.revisar && <span className="ml-2 text-[9px] uppercase font-bold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">Pendiente</span>}
         </>
       )
-      case 'tipo': return (
-        <select
-          value={mo.tipoId ?? ''}
-          onChange={(e) => fijarTipoModelo(mo, e.target.value || null, null)}
-          className="border border-slate-200 rounded px-1.5 py-1 text-[12px] bg-white"
-        >
-          <option value="">Sin tipo</option>
-          {catalogo?.tipos.filter((t) => t.activo || t.id === mo.tipoId).map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-        </select>
-      )
+      // Texto, no un desplegable por fila: treinta y cinco selectores abiertos a la vez son ruido y
+      // además invitan a cambiar el tipo sin querer. Se edita dentro de la ficha del modelo.
+      case 'tipo': return mo.tipoNombre ?? <span className="text-slate-300">Sin tipo</span>
       // El guion en gris distingue «no hay dato» de «está vacío»: sin SKU no hay artículo que enseñar,
       // y con un SKU que no casa tampoco — pero eso último sí se ve, porque el SKU aparece y el nombre no.
       case 'articuloNombre': return mo.articuloNombre ?? <span className="text-slate-300">—</span>
@@ -440,6 +433,8 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
         <FichaModeloModal
           modelo={fichaModelo}
           etiqueta={`${marcaPorId.get(fichaModelo.marcaId)?.nombre ?? '?'} ${fichaModelo.nombre}`}
+          tipos={catalogo?.tipos ?? []}
+          onFijarTipo={(tipoId) => fijarTipoModelo(fichaModelo, tipoId, null)}
           onClose={() => setFichaModelo(null)}
         />
       )}
@@ -511,12 +506,18 @@ function NuevaEntradaModal({ seccion, catalogo, onClose, onCreated }: {
  * más: SKU, foto y documentos cuelgan del modelo (35), no del equipo (354), y esta es la única
  * pantalla que los administra — `FichaTecnica` (hoja de vida y ticket) es de solo lectura.
  */
-function FichaModeloModal({ modelo, etiqueta, onClose }: {
+function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
   modelo: CatalogoModelo
   etiqueta: string
+  tipos: CatalogoTipo[]
+  /** Delegado al padre: arrastra la confirmación de corregir los equipos que declaren otro tipo. */
+  onFijarTipo: (tipoId: string | null) => Promise<void>
   onClose: () => void
 }) {
   const [ficha, setFicha] = useState<FichaModelo | null>(null)
+  // El tipo se guarda en estado local: tras fijarlo, el padre recarga el catálogo pero el `modelo` que
+  // este modal recibió sigue siendo el objeto viejo, así que sin esto el selector volvería atrás.
+  const [tipoId, setTipoId] = useState(modelo.tipoId ?? '')
   const [sku, setSku] = useState('')
   const [articulos, setArticulos] = useState<ArticuloLite[]>([])
   const [articulosOpen, setArticulosOpen] = useState(false)
@@ -638,6 +639,17 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
           <div className="text-center text-slate-400 text-[13px] py-6">Cargando…</div>
         ) : (
           <>
+            <section>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tipo</h4>
+              {/* El tipo se edita aquí y no en la tabla: allí eran 35 desplegables abiertos a la vez, y
+                  cambiar el tipo de un modelo puede arrastrar la corrección de sus equipos. */}
+              <select className={`${field} w-full`} value={tipoId}
+                onChange={async (e) => { const v = e.target.value; setTipoId(v); await onFijarTipo(v || null) }}>
+                <option value="">Sin tipo</option>
+                {tipos.filter((t) => t.activo || t.id === modelo.tipoId).map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+              </select>
+            </section>
+
             <section>
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">SKU</h4>
               <div className="flex gap-2">
