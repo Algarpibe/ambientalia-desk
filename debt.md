@@ -180,17 +180,17 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
         gemelas, y modelo de datos **mixto** (ítems enlazados a `books.items` + ítems de texto libre, porque
         «Manuales» o «Pletinas (par)» no tienen SKU).
 
-     **ERRATA `IAQUAtwin` → `LAQUAtwin` — CONFIRMADA por el usuario contra Books (2026-08-09).** En Books el
-     fabricante es Horiba Ltd. y tanto los nombres como la categoría son **`LAQUAtwin`**; la «I» está en el
-     catálogo de Desk, en 6 modelos. ✅ **Renombrar es SEGURO aquí**, comprobado leyendo `perfilChecklist`
-     (`packages/shared/src/remision.ts`): con marca Horiba, `iaquatwin-ca-11` no es `edm 280`, no contiene
-     `edm180` y no empieza por `ap` → `otro`; `laquatwin-ca-11` recorre lo mismo → `otro`. **Mismo perfil, así
-     que ningún checklist de remisión se mueve.** (El veto general a renombrar sigue vigente: vale para ESTE
-     caso porque se comprobó, no en general.)
-     ⚠️ **No basta con `UPDATE catalogo_modelos`:** `equipos.modelo` guarda el texto denormalizado y es el que
-     lee `perfilChecklist`, así que hay que actualizar también los equipos de esos modelos o quedarán
-     divergentes. La app **no** sabe renombrar (`actualizarModelo` acepta tipoId/activo/sku, no `nombre`), de
-     modo que o se hace por SQL puntual o se añade esa capacidad con su aviso de perfil.
+     **NO hay ninguna errata `IAQUAtwin` (descartado 2026-08-09).** Se llegó a anotar que el catálogo tenía 6
+     modelos escritos con «I» en vez de «L»; era un **error de lectura** de la salida del cruce.
+     `SELECT ... WHERE nombre LIKE 'IAQUAtwin%'` en producción devuelve **0 filas**: los modelos ya se llaman
+     `LAQUAtwin-*`, igual que en Books. **No hay nada que renombrar y no se tocó nada.**
+     Lo que sí ilustra el caso es el hallazgo de granularidad de arriba, y es su ejemplo más claro: el
+     catálogo tiene **6 modelos** (`LAQUAtwin-Ca-11`, `-Ec-11`, `-K-11`, `-Na-11`, `-NO3-11C`, `-PH-11`) y
+     Books **una sola categoría** `LAQUAtwin` para todos. Por eso el cruce por nombre completo les da cero:
+     no es grafía, es que comparan niveles distintos.
+     Dato útil que quedó de la comprobación: la app **no sabe renombrar modelos** — `actualizarModelo` acepta
+     `tipoId`/`activo`/`sku`, no `nombre` —, y si algún día se añade, hay que actualizar también
+     `equipos.modelo` (el texto denormalizado que `perfilChecklist` lee de verdad), no solo el catálogo.
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
      `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
