@@ -295,9 +295,23 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   Solo enlaza lo inequívoco; el resto sale en `pendientes` y en el log. Es idempotente: re-ejecutarlo tras
   corregir los datos recoge lo que se haya arreglado.
 
-  **Corregidos a mano por el usuario el 2026-08-09: Camposol, la Universidad, Serambiente y SOLAM.
-  Queda SOLO `Sensus S.A.S.`** (serial `AE3BAG9W`), que no existe en Books: hay que darlo de alta allí —o
-  averiguar con qué nombre está— antes de poder vincularlo.
+  **Corregidos a mano por el usuario el 2026-08-09: Camposol, la Universidad, Serambiente y SOLAM.**
+  **`Sensus S.A.S.` ya está creado en Books (2026-08-09)** → basta **re-ejecutar el endpoint**, que es
+  idempotente, para que enlace su equipo `AE3BAG9W` sin tocarlo a mano.
+
+  **Decisiones de datos del usuario (2026-08-09):**
+  - **Camposol duplicado: el bueno es el de moneda COP** (`2251824000017370011`); el de USD
+    (`2251824000016870091`) se ignora. **Books no deja borrarlo** («asociados a documentos o transacciones»),
+    así que el duplicado seguirá ahí y cualquier emparejamiento por nombre lo volverá a ver ambiguo. Sin
+    consecuencias hoy: los 6 equipos ya tienen su `client_id` puesto a mano.
+  - **`191TE0NC` es de SGS**; el registro de Ser As se elimina. ⚠️ `deleteEquipo` es **borrado físico sin
+    comprobar tickets** y no hay FK: si ese equipo tuviera tickets con su `equipo_id`, quedarían apuntando a
+    un id inexistente y su hoja de vida dejaría de resolver. **Comprobar antes**; si tiene tickets,
+    desactivar en vez de eliminar.
+  - **El `LAQUAtwin-PH-11` de Camposol tiene mal el serial: el real es `GA3A0084`.** Esto explica el serial
+    repetido `GK2E0021` que se detectó en la reconciliación. ⚠️ Al corregirlo **deja de haber ambigüedad de
+    serial**, así que conviene **re-ejecutar `backfill-equipo-id`**: los tickets que no se enlazaron por
+    duplicidad podrán hacerlo.
 
   **Los 12 pendientes, diagnosticados contra Books el 2026-08-09** (ids reales, para no volver a buscarlos):
   | Qué dice el equipo | Equipos | Qué pasa | Id en Books |
