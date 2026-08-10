@@ -131,6 +131,19 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   El usuario guardó la copia del `dryRun` antes de ejecutar. **Y además es recuperable por otra vía:**
   lo borrado eran copias de `remision_checklist`, que sigue intacta, así que `POST /api/admin/seed-articulos`
   las regenera.
+  **DECIDIDO (2026-08-10): el MODELO sigue siendo la referencia; el nombre del artículo de Books es solo
+  presentación.** Se planteó sustituir la columna «Modelo» por «Nombre» y se descartó: `equipos.modelo_id`
+  cuelga de él (354 equipos), `perfilChecklist` lee su TEXTO por subcadena para decidir el checklist de la
+  remisión, y **no todos los modelos tienen artículo en Books** —los que no, se quedarían sin identidad—.
+  De fondo, el modelo es una entidad **técnica** (lo que el equipo ES) y el artículo una **comercial** (lo
+  que se vende), y no son 1:1. Quien prefiera ver el nombre comercial ya puede: la tabla deja ocultar
+  «Modelo» y poner «Nombre» primero.
+
+  ✅ **Los derivados se pueden DESACTIVAR por modelo (2026-08-10, `277568e`).** Tabla
+  `catalogo_articulos_ocultos`: una categoría de serie aporta decenas de artículos y no todos aplican a
+  cada variante. Es una lápida por modelo —el artículo sigue en Books y otro modelo con la misma categoría
+  lo sigue viendo—, reversible con el mismo botón. Los derivados NO tienen «Eliminar»: no son nuestros.
+
   **Los 63 ítems únicos del checklist NO hay que crearlos en Books**: se comprobó que buena parte ya
   existen con nombre más preciso y su SKU (`157-L`, `1142.A4` para la PCMCIA, `APOPC-008` para Slides,
   `1200675` para el cable 158-EE…). Lo que falte se verá al asignar categorías, y será mucho menos.
