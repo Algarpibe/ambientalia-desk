@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ArticuloLite, ArticuloModelo, CategoriaModelo, ClaseArticulo, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
 import { TIPOS_DOCUMENTO, CLASES_ARTICULO } from '@ambientalia/shared'
+import {
+  ETIQUETA_COLUMNA, PREF_POR_DEFECTO, normalizarPref, moverColumna, columnasVisibles,
+  type ColumnaCatalogo, type PrefColumnas,
+} from '../lib/columnasCatalogo'
+
+/** Dónde se guarda la preferencia de columnas. Mismo patrón que el resto de ajustes de vista. */
+const CLAVE_COLUMNAS = 'catalogo:columnas'
 
 /** En singular para los selectores, en plural para los encabezados de cada lista. */
 const ETIQUETA_CLASE: Record<ClaseArticulo, string> = {
@@ -35,6 +42,27 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
   const [aviso, setAviso] = useState<string | null>(null)
   const [creando, setCreando] = useState(false)
   const [fichaModelo, setFichaModelo] = useState<CatalogoModelo | null>(null)
+
+  // Preferencia de columnas: qué se ve y en qué orden. Se lee saneada — ver `normalizarPref`, que cubre
+  // el caso de un guardado de una versión con otras columnas.
+  const [pref, setPref] = useState<PrefColumnas>(() => {
+    try { return normalizarPref(JSON.parse(localStorage.getItem(CLAVE_COLUMNAS) ?? 'null')) }
+    catch { return PREF_POR_DEFECTO }
+  })
+  const [colsOpen, setColsOpen] = useState(false)
+  const [arrastrando, setArrastrando] = useState<ColumnaCatalogo | null>(null)
+  const visibles = useMemo(() => columnasVisibles(pref), [pref])
+
+  function guardarPref(p: PrefColumnas) {
+    setPref(p)
+    try { localStorage.setItem(CLAVE_COLUMNAS, JSON.stringify(p)) } catch { /* modo privado: la sesión sigue */ }
+  }
+  const alternarColumna = (c: ColumnaCatalogo) =>
+    guardarPref({ ...pref, ocultas: pref.ocultas.includes(c) ? pref.ocultas.filter((x) => x !== c) : [...pref.ocultas, c] })
+  function soltarColumna(destino: ColumnaCatalogo) {
+    if (arrastrando) guardarPref({ ...pref, orden: moverColumna(pref.orden, arrastrando, destino) })
+    setArrastrando(null)
+  }
 
   async function reload() {
     try {
@@ -99,6 +127,41 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
       )
       reload()
     })
+  }
+
+  /**
+   * El contenido de una celda según su columna. Vive aquí y no en el JSX de la fila porque el orden de
+   * las columnas es variable: pintarlas en un orden fijo dejaría de ser posible.
+   *
+   * `tipo` no es texto sino el selector que ya existía: fijar el tipo de un modelo es la acción más
+   * frecuente de esta pantalla y perderla al rediseñar sería un retroceso.
+   */
+  function celdaModelo(mo: CatalogoModelo, c: ColumnaCatalogo) {
+    switch (c) {
+      case 'marca': return marcaPorId.get(mo.marcaId)?.nombre ?? '—'
+      case 'modelo': return (
+        <>
+          {mo.nombre}
+          {mo.revisar && <span className="ml-2 text-[9px] uppercase font-bold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">Pendiente</span>}
+        </>
+      )
+      case 'tipo': return (
+        <select
+          value={mo.tipoId ?? ''}
+          onChange={(e) => fijarTipoModelo(mo, e.target.value || null, null)}
+          className="border border-slate-200 rounded px-1.5 py-1 text-[12px] bg-white"
+        >
+          <option value="">Sin tipo</option>
+          {catalogo?.tipos.filter((t) => t.activo || t.id === mo.tipoId).map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+        </select>
+      )
+      // El guion en gris distingue «no hay dato» de «está vacío»: sin SKU no hay artículo que enseñar,
+      // y con un SKU que no casa tampoco — pero eso último sí se ve, porque el SKU aparece y el nombre no.
+      case 'articuloNombre': return mo.articuloNombre ?? <span className="text-slate-300">—</span>
+      case 'articuloCategoria': return mo.articuloCategoria ?? <span className="text-slate-300">—</span>
+      case 'sku': return mo.sku ? <span className="font-mono text-[12px]">{mo.sku}</span> : <span className="text-slate-300">—</span>
+      case 'estado': return mo.activo ? 'Activo' : 'Inactivo'
+    }
   }
 
   /** El reparto de la bandeja ya da, sin preguntarle al servidor, cuántos equipos NO son del tipo elegido. */
@@ -239,38 +302,57 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
                     </p>
                   </div>
                 ) : (
-                  <table className="w-full text-[13px]">
-                    <thead><tr className="text-left text-slate-500 border-b">
-                      <th className="py-2">Marca</th><th>Modelo</th><th>Tipo</th><th>Estado</th><th></th>
-                    </tr></thead>
-                    <tbody>
-                      {modelosOrdenados.map((mo) => (
-                        <tr key={mo.id} className={`border-b ${!mo.activo ? 'opacity-50' : ''} ${mo.revisar ? 'bg-amber-50' : ''}`}>
-                          <td className="py-2">{marcaPorId.get(mo.marcaId)?.nombre ?? '—'}</td>
-                          <td>
-                            {mo.nombre}
-                            {mo.revisar && <span className="ml-2 text-[9px] uppercase font-bold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">Pendiente</span>}
-                          </td>
-                          <td>
-                            <select
-                              value={mo.tipoId ?? ''}
-                              onChange={(e) => fijarTipoModelo(mo, e.target.value || null, null)}
-                              className="border border-slate-200 rounded px-1.5 py-1 text-[12px] bg-white"
-                            >
-                              <option value="">Sin tipo</option>
-                              {catalogo.tipos.filter((t) => t.activo || t.id === mo.tipoId).map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                            </select>
-                          </td>
-                          <td>{mo.activo ? 'Activo' : 'Inactivo'}</td>
-                          <td className="text-right whitespace-nowrap">
-                            <button onClick={() => setFichaModelo(mo)} className="text-[12px] text-blue-600 mr-3">Ficha</button>
-                            <button onClick={() => toggleModelo(mo)} className="text-[12px] text-blue-600 mr-3">{mo.activo ? 'Desactivar' : 'Activar'}</button>
-                            <button onClick={() => eliminarModelo(mo)} className="text-[12px] text-red-600">Eliminar</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <>
+                    {/* Selector de columnas. Se abre y se cierra; el estado va a localStorage, como el
+                        resto de preferencias de vista de la app. */}
+                    <div className="flex justify-end mb-2 relative">
+                      <button onClick={() => setColsOpen((v) => !v)}
+                        className="text-[12px] border border-slate-200 rounded px-2 py-1 bg-white hover:bg-slate-50">
+                        Columnas ▾
+                      </button>
+                      {colsOpen && (
+                        <div className="absolute right-0 top-8 z-20 bg-white border border-slate-200 rounded shadow p-2 w-56">
+                          <p className="text-[11px] text-slate-400 mb-1.5">Arrastra las cabeceras para reordenarlas.</p>
+                          {pref.orden.map((c) => (
+                            <label key={c} className="flex items-center gap-2 text-[12px] py-0.5 cursor-pointer">
+                              <input type="checkbox" checked={!pref.ocultas.includes(c)} onChange={() => alternarColumna(c)} />
+                              {ETIQUETA_COLUMNA[c]}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <table className="w-full text-[13px]">
+                      <thead><tr className="text-left text-slate-500 border-b bg-slate-50">
+                        {visibles.map((c) => (
+                          // Arrastrar la cabecera reordena. `onDragOver` con preventDefault es lo que
+                          // marca la celda como destino válido: sin él, el navegador rechaza el soltar.
+                          <th key={c} draggable
+                            onDragStart={() => setArrastrando(c)}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => soltarColumna(c)}
+                            className={`py-2 px-2 font-bold uppercase text-[11px] tracking-wide cursor-move select-none ${arrastrando === c ? 'opacity-40' : ''}`}
+                          >
+                            {ETIQUETA_COLUMNA[c]}
+                          </th>
+                        ))}
+                        <th className="py-2"></th>
+                      </tr></thead>
+                      <tbody>
+                        {modelosOrdenados.map((mo) => (
+                          <tr key={mo.id} className={`border-b hover:bg-slate-50 ${!mo.activo ? 'opacity-50' : ''} ${mo.revisar ? 'bg-amber-50' : ''}`}>
+                            {visibles.map((c) => <td key={c} className="py-2.5 px-2 align-middle">{celdaModelo(mo, c)}</td>)}
+                            <td className="text-right whitespace-nowrap px-2">
+                              <button onClick={() => setFichaModelo(mo)} className="text-[12px] text-blue-600 mr-3">Ficha</button>
+                              <button onClick={() => toggleModelo(mo)} className="text-[12px] text-blue-600 mr-3">{mo.activo ? 'Desactivar' : 'Activar'}</button>
+                              <button onClick={() => eliminarModelo(mo)} className="text-[12px] text-red-600">Eliminar</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
                 )
               )}
 

@@ -349,3 +349,37 @@ describe('leerConflictos', () => {
     expect(c.modelos[0].reparto).toEqual([{ tipo: 'Analizador de SO2', equipos: 1 }])
   })
 })
+
+/**
+ * La vista del catálogo enseña, junto a cada modelo, la ficha comercial del artículo de Books al que
+ * apunta su SKU. Se resuelve al leer y no se guarda: el nombre y la categoría son de Books, y
+ * duplicarlos aquí abriría una divergencia sin dueño.
+ */
+describe('leerCatalogo — artículo de Books del modelo', () => {
+  it('trae sku, nombre y categoría del artículo, sin distinguir mayúsculas en el SKU', async () => {
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,sku) VALUES ('cmod-1','cmar-1','APMA-370','apma-370-eu')")
+    await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i1','Analizador de CO APMA-370','APMA-370-EU','AP Series','active')")
+
+    const mo = (await leerCatalogo(db)).modelos.find((m) => m.id === 'cmod-1')
+    expect(mo).toMatchObject({
+      sku: 'apma-370-eu',
+      articuloNombre: 'Analizador de CO APMA-370',
+      articuloCategoria: 'AP Series',
+    })
+  })
+
+  // Un modelo sin SKU, o con uno que no casa, no es un error: la columna sale vacía y la pantalla lo
+  // enseña como tal. Bloquear aquí dejaría el catálogo ilegible por un dato que falta.
+  it('deja el artículo vacío si el modelo no tiene SKU o el SKU no casa con ninguno', async () => {
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('sin-sku','cmar-1','Sin SKU')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,sku) VALUES ('sku-malo','cmar-1','SKU inventado','NO-EXISTE')")
+
+    const c = await leerCatalogo(db)
+    const sinSku = c.modelos.find((m) => m.id === 'sin-sku')
+    const skuMalo = c.modelos.find((m) => m.id === 'sku-malo')
+    expect(sinSku).toMatchObject({ sku: null, articuloNombre: null, articuloCategoria: null })
+    expect(skuMalo).toMatchObject({ sku: 'NO-EXISTE', articuloNombre: null, articuloCategoria: null })
+  })
+})

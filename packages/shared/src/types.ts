@@ -310,6 +310,15 @@ export interface CatalogoModelo {
   /** La siembra lo enciende cuando el inventario daba más de un tipo para este modelo. */
   revisar: boolean
   activo: boolean
+  /** Referencia al artículo de Zoho Books que ES este equipo. Puede no estar puesto. */
+  sku: string | null
+  /**
+   * Nombre y categoría del artículo de Books con ese SKU. Se resuelven AL LEER y no se guardan: son
+   * de Books, y duplicarlos aquí abriría una divergencia sin dueño. `null` si no hay SKU o si no casa
+   * con ningún artículo — que no es un error, solo un dato que falta.
+   */
+  articuloNombre: string | null
+  articuloCategoria: string | null
 }
 export interface Catalogo { tipos: CatalogoTipo[]; marcas: CatalogoMarca[]; modelos: CatalogoModelo[] }
 

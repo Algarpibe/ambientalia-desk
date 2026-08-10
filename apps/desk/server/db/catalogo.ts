@@ -11,6 +11,9 @@ const filaModelo = (r: Fila): CatalogoModelo => ({
   id: r.id as string, marcaId: r.marca_id as string, nombre: r.nombre as string,
   tipoId: (r.tipo_id as string) ?? null, tipoNombre: (r.tipo_nombre as string) ?? null,
   revisar: r.revisar === true, activo: r.activo === true,
+  sku: (r.sku as string) ?? null,
+  articuloNombre: (r.articulo_nombre as string) ?? null,
+  articuloCategoria: (r.articulo_categoria as string) ?? null,
 })
 
 /**
@@ -24,8 +27,14 @@ export async function leerCatalogo(db: Queryable, incluirModeloId?: string | nul
   const extra = incluirModeloId ?? ''
   const tipos = await db.query('SELECT id,nombre,activo FROM catalogo_tipos WHERE activo = true ORDER BY nombre')
   const modelos = await db.query(
-    `SELECT mo.id, mo.marca_id, mo.nombre, mo.tipo_id, mo.revisar, mo.activo, ti.nombre AS tipo_nombre
-       FROM catalogo_modelos mo LEFT JOIN catalogo_tipos ti ON ti.id = mo.tipo_id
+    // El artículo de Books se resuelve con un LEFT JOIN por SKU sin distinguir mayúsculas: el SKU se
+    // teclea a mano en la ficha y Books lo guarda con su propia caja. Es LEFT porque un modelo sin SKU
+    // —o con uno que no casa— es un dato que falta, no un error que deba esconder el modelo.
+    `SELECT mo.id, mo.marca_id, mo.nombre, mo.tipo_id, mo.revisar, mo.activo, mo.sku, ti.nombre AS tipo_nombre,
+            it.name AS articulo_nombre, it.category_name AS articulo_categoria
+       FROM catalogo_modelos mo
+       LEFT JOIN catalogo_tipos ti ON ti.id = mo.tipo_id
+       LEFT JOIN books.items it ON LOWER(it.sku) = LOWER(mo.sku)
       WHERE mo.activo = true OR mo.id = $1
       ORDER BY mo.nombre`,
     [extra],
