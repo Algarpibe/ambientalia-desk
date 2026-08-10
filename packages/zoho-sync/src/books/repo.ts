@@ -1,5 +1,48 @@
 import type { Queryable } from '../db/migrate'
-import type { ClientLite, SalesOrderLite } from '@ambientalia/shared'
+import type { ArticuloLite, ClientLite, SalesOrderLite } from '@ambientalia/shared'
+
+// Sin `any` a propósito, aunque los dos mapeadores de abajo lo usen: cada uno nuevo sube el lint por
+// encima de la línea base del repo. El patrón es `Record<string, unknown>` con casteo campo a campo.
+function articuloToLite(r: Record<string, unknown>): ArticuloLite {
+  return {
+    id: String(r.item_id),
+    sku: (r.sku as string | null) ?? '',
+    nombre: (r.name as string | null) ?? '',
+    categoria: (r.category_name as string | null) ?? undefined,
+  }
+}
+
+/**
+ * Busca artículos de Books por SKU o por nombre.
+ *
+ * **Solo activos**: un artículo retirado en Books no debe ofrecerse para elegir, porque sería proponer
+ * algo que ya no se vende. `getArticuloPorSku` en cambio NO filtra, con el mismo criterio que
+ * `getClient`: un SKU ya guardado tiene que seguir resolviendo aunque el artículo se haya retirado
+ * después, o la ficha de un modelo diría de pronto que su SKU no existe.
+ *
+ * Se descartan los artículos sin SKU: el campo que esto alimenta ES un SKU, así que ofrecer uno vacío
+ * solo sirve para guardar una cadena en blanco.
+ */
+export async function searchArticulos(db: Queryable, q: string, limit = 20): Promise<ArticuloLite[]> {
+  const like = `%${q.toLowerCase()}%`
+  const r = await db.query(
+    `SELECT item_id, name, sku, category_name FROM books.items
+     WHERE COALESCE(status,'active') = 'active' AND COALESCE(sku,'') <> ''
+       AND (LOWER(sku) LIKE $1 OR LOWER(COALESCE(name,'')) LIKE $1)
+     ORDER BY name LIMIT $2`,
+    [like, limit],
+  )
+  return r.rows.map(articuloToLite)
+}
+
+/** El artículo con ese SKU exacto, sin distinguir mayúsculas. `null` si ninguno lo lleva. */
+export async function getArticuloPorSku(db: Queryable, sku: string): Promise<ArticuloLite | null> {
+  const r = await db.query(
+    'SELECT item_id, name, sku, category_name FROM books.items WHERE LOWER(sku) = $1',
+    [sku.trim().toLowerCase()],
+  )
+  return r.rows[0] ? articuloToLite(r.rows[0]) : null
+}
 
 function clientToLite(r: any): ClientLite {
   return {

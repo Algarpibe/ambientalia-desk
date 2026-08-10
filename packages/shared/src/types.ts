@@ -182,6 +182,20 @@ export interface UserPublic {
   empresa?: string | null
 }
 
+/**
+ * Un artículo del catálogo de Zoho Books, reducido a lo que la app enseña al elegirlo.
+ *
+ * Vive en `books.items`, replicada del hub. La `categoria` viaja porque es la que dice a qué familia
+ * de equipos pertenece el artículo (`C&R EDM 180`, `Opcional AP Series`…) y con eso se filtra la lista.
+ */
+export interface ArticuloLite {
+  /** `item_id` de Books. */
+  id: string
+  sku: string
+  nombre: string
+  categoria?: string
+}
+
 export interface ClientLite {
   id: string
   name: string
@@ -277,6 +291,12 @@ export interface DocumentoModelo {
 export interface FichaModelo {
   modeloId: string
   sku: string | null
+  /**
+   * El artículo de Books que lleva ese SKU, o `null` si ninguno lo lleva (y también cuando no hay SKU).
+   * Lo resuelve el servidor para que la comparación exacta viva en un solo sitio; la pantalla solo
+   * decide si lo enseña o avisa de que el código no corresponde a ningún artículo.
+   */
+  skuArticulo: ArticuloLite | null
   foto: DocumentoModelo | null
   documentos: DocumentoModelo[]
 }

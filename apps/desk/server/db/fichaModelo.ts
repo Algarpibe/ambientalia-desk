@@ -43,7 +43,10 @@ const aDocumento = (r: Record<string, unknown>): DocumentoModelo => ({
  * La foto sale **aparte** de `documentos` aunque en la tabla sea una fila más con `tipo='foto'`: la
  * pantalla la trata distinto, y separarla aquí ahorra que cada consumidor la filtre por su cuenta.
  */
-export async function leerFicha(db: Queryable, modeloId: string): Promise<FichaModelo | null> {
+// Devuelve la ficha SIN `skuArticulo`: resolver a qué artículo de Books corresponde el SKU es cosa de
+// la ruta, no de esta capa, que solo habla con las tablas del catálogo propio. El `Omit` lo deja escrito
+// en el tipo, así que quien componga la respuesta está obligado a añadirlo.
+export async function leerFicha(db: Queryable, modeloId: string): Promise<Omit<FichaModelo, 'skuArticulo'> | null> {
   const mo = await db.query('SELECT id, sku FROM catalogo_modelos WHERE id = $1', [modeloId])
   const fila = filas(mo.rows)[0]
   if (!fila) return null

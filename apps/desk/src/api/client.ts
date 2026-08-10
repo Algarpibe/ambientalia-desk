@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -155,6 +155,11 @@ export function updateRole(id: string, patch: Partial<{ name: string; areas: str
 
 export function searchClients(q: string): Promise<ClientLite[]> {
   return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
+}
+
+/** Artículos de Zoho Books por SKU o nombre. Solo activos y solo los que tienen SKU. */
+export function buscarArticulos(q: string): Promise<ArticuloLite[]> {
+  return fetch(`/api/articulos?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ArticuloLite[]>(r))
 }
 
 /** `soloLibres`: deja fuera las órdenes que ya usa otro ticket de Desk. */

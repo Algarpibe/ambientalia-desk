@@ -7,6 +7,7 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
+import { getArticuloPorSku } from '@ambientalia/zoho-sync/books/repo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
@@ -139,7 +140,9 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
   app.get('/api/catalogo/modelos/:id/ficha', requireAuth(db), asyncHandler(async (req, res) => {
     const f = await leerFicha(db, String(req.params.id))
     if (!f) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
-    res.json(f)
+    // El artículo se resuelve AQUÍ y no dentro de `leerFicha` para no atar la ficha —que es del
+    // catálogo propio— a la réplica de Books. Si algún día Books deja de estar, la ficha sigue leyéndose.
+    res.json({ ...f, skuArticulo: f.sku ? await getArticuloPorSku(db, f.sku) : null })
   }))
 
   // El fichero, por el proxy autenticado de la aplicación: nada sale de la sesión. 404 si el

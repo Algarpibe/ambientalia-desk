@@ -1,6 +1,6 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { searchClients, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
+import { searchArticulos, searchClients, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
 import { getContacts, getAccounts, getContactDetail, getAccountDetail } from '../db/directory'
 import { getAllActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth } from '../auth/middleware'
@@ -13,6 +13,12 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
   // Requieren sesión: son datos de negocio. Cada uno con su propio requireAuth (no van bajo /api/tickets).
   app.get('/api/clients', requireAuth(db), asyncHandler(async (req, res) => {
     res.json(await searchClients(db, String(req.query.search ?? '')))
+  }))
+
+  // Artículos de Books (`books.items`, replicada del hub). Alimenta el SKU de la ficha del modelo, y
+  // será la misma fuente de la futura gestión de accesorios/consumibles/repuestos por modelo.
+  app.get('/api/articulos', requireAuth(db), asyncHandler(async (req, res) => {
+    res.json(await searchArticulos(db, String(req.query.search ?? '')))
   }))
 
   app.get('/api/sales-orders', requireAuth(db), asyncHandler(async (req, res) => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
+import type { ArticuloLite, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
 import { TIPOS_DOCUMENTO } from '@ambientalia/shared'
 import {
   getCatalogo, getConflictosCatalogo,
@@ -7,6 +7,7 @@ import {
   actualizarTipoCatalogo, actualizarMarcaCatalogo, actualizarModeloCatalogo,
   borrarEntradaCatalogo,
   getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
+  buscarArticulos,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -409,8 +410,19 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
 }) {
   const [ficha, setFicha] = useState<FichaModelo | null>(null)
   const [sku, setSku] = useState('')
+  const [articulos, setArticulos] = useState<ArticuloLite[]>([])
+  const [articulosOpen, setArticulosOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  // Busca artículos mientras se teclea. Desde 2 caracteres, como el buscador de clientes: con menos, la
+  // lista es ruido. El `alive` evita que una respuesta lenta pise a otra más reciente.
+  useEffect(() => {
+    if (sku.trim().length < 2) { setArticulos([]); return }
+    let alive = true
+    buscarArticulos(sku).then((r) => { if (alive) setArticulos(r) }).catch(() => {})
+    return () => { alive = false }
+  }, [sku])
 
   async function recargar() {
     const f = await getFichaModelo(modelo.id)
@@ -472,12 +484,43 @@ function FichaModeloModal({ modelo, etiqueta, onClose }: {
             <section>
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">SKU</h4>
               <div className="flex gap-2">
-                <input className={`${field} flex-1`} placeholder="Referencia de Zoho Books" value={sku} onChange={(e) => setSku(e.target.value)} />
+                <div className="relative flex-1">
+                  <input className={`${field} w-full`} placeholder="Busca por código o nombre del artículo" value={sku}
+                    onFocus={() => setArticulosOpen(true)} onBlur={() => setArticulosOpen(false)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setArticulosOpen(false) }}
+                    onChange={(e) => { setSku(e.target.value); setArticulosOpen(true) }} />
+                  {articulosOpen && articulos.length > 0 && (
+                    // `onMouseDown` con preventDefault: sin él, el blur del input cierra la lista antes
+                    // de que el clic llegue al botón. Mismo patrón que el buscador de clientes.
+                    <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+                      {articulos.map((a) => (
+                        <li key={a.id}>
+                          <button type="button" onClick={() => { setSku(a.sku); setArticulos([]); setArticulosOpen(false) }}
+                            className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
+                            <span className="font-bold">{a.sku}</span> · {a.nombre}
+                            {a.categoria ? <span className="text-slate-400"> · {a.categoria}</span> : null}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <button onClick={guardarSku} disabled={busy} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Guardar</button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                No se valida contra Zoho Books: hoy es solo una cadena que se teclea a mano. Cuando llegue la sincronización con Books, habrá que reconciliar lo escrito aquí.
-              </p>
+              {/* El estado se lee de `ficha`, o sea de lo GUARDADO, no de lo que hay tecleado: mientras
+                  escribes no tiene sentido decir que el código no existe. */}
+              {ficha.skuArticulo ? (
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Artículo en Books: <span className="text-slate-700">{ficha.skuArticulo.nombre}</span>
+                  {ficha.skuArticulo.categoria ? ` · ${ficha.skuArticulo.categoria}` : ''}
+                </p>
+              ) : ficha.sku ? (
+                <p className="text-[11px] text-amber-600 mt-1">
+                  Ningún artículo activo de Zoho Books lleva este código. Puede ser un artículo retirado, o una errata.
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-400 mt-1">Elige el artículo de la lista para que quede contrastado con Zoho Books.</p>
+              )}
             </section>
 
             <section>

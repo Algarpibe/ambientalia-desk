@@ -1207,6 +1207,66 @@ describe('GET /api/remisiones/listado', () => {
   })
 })
 
+// Los artículos salen de `books.items`, replicada del hub. Alimenta la validación del SKU de la ficha
+// técnica y, más adelante, la elección de accesorios/consumibles/repuestos por modelo.
+describe('GET /api/articulos (Books)', () => {
+  const articulo = (id: string, nombre: string, sku: string, categoria: string, status = 'active') =>
+    db.query('INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ($1,$2,$3,$4,$5)', [id, nombre, sku, categoria, status])
+
+  it('busca por SKU y por nombre, y devuelve la categoría', async () => {
+    const cookie = await adminCookie()
+    await articulo('i1', 'Filtro PM10', 'F-001', 'C&R EDM 180')
+    await articulo('i2', 'Bomba de vacío', 'B-002', 'C&R AP Series')
+    const { app } = appWith()
+
+    const porSku = await request(app).get('/api/articulos?search=F-001').set('Cookie', cookie)
+    expect(porSku.status).toBe(200)
+    expect(porSku.body).toEqual([{ id: 'i1', sku: 'F-001', nombre: 'Filtro PM10', categoria: 'C&R EDM 180' }])
+
+    const porNombre = await request(app).get('/api/articulos?search=bomba').set('Cookie', cookie)
+    expect(porNombre.body.map((a: { sku: string }) => a.sku)).toEqual(['B-002'])
+  })
+
+  // Un artículo retirado en Books no debe ofrecerse para elegir: sería proponer algo que ya no se vende.
+  it('no ofrece artículos inactivos', async () => {
+    const cookie = await adminCookie()
+    await articulo('i-viejo', 'Filtro descatalogado', 'F-OLD', 'C&R EDM 180', 'inactive')
+    const { app } = appWith()
+
+    expect((await request(app).get('/api/articulos?search=F-OLD').set('Cookie', cookie)).body).toEqual([])
+  })
+
+  it('GET /api/articulos sin sesión → 401', async () => {
+    const { app } = appWith()
+    expect((await request(app).get('/api/articulos?search=x')).status).toBe(401)
+  })
+
+  /**
+   * El SKU de la ficha era una cadena que alguien tecleaba y no se contrastaba con nada. Ahora la ficha
+   * dice **a qué artículo corresponde**, y la pantalla puede enseñarlo o avisar de que no existe.
+   *
+   * Se resuelve en el servidor y no en el navegador para que la comparación exacta —incluido el no
+   * distinguir mayúsculas— viva en un solo sitio.
+   */
+  it('la ficha del modelo resuelve el artículo de su SKU, o null si ninguno lo lleva', async () => {
+    const cookie = await adminCookie()
+    await articulo('i1', 'Filtro PM10', 'F-001', 'C&R EDM 180')
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,sku) VALUES ('cmod-1','cmar-1','EDM180C','f-001')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre,sku) VALUES ('cmod-2','cmar-1','EDM180D','NO-EXISTE')")
+    const { app } = appWith()
+
+    // El SKU se guardó en minúsculas y el artículo lo tiene en mayúsculas: debe casar igual.
+    const casa = await request(app).get('/api/catalogo/modelos/cmod-1/ficha').set('Cookie', cookie)
+    expect(casa.status).toBe(200)
+    expect(casa.body.skuArticulo).toEqual({ id: 'i1', sku: 'F-001', nombre: 'Filtro PM10', categoria: 'C&R EDM 180' })
+
+    const noCasa = await request(app).get('/api/catalogo/modelos/cmod-2/ficha').set('Cookie', cookie)
+    expect(noCasa.body.sku).toBe('NO-EXISTE')
+    expect(noCasa.body.skuArticulo).toBeNull()
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()
