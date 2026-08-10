@@ -52,7 +52,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   qué perfil cambia antes de confirmar, nunca hacerlo en silencio. Los **tipos sí se renombran** — no los mira.
   Mientras tanto, una variante mala se **desactiva**: la retira de las altas futuras sin tocar los equipos ya
   registrados.
-- ~~**Ficha técnica — el SKU no se valida (2026-08-07).**~~ — ✅ **RESUELTO 2026-08-09 (`0c7f3af`),
+- ~~**Ficha técnica — el SKU no se valida (2026-08-07).**~~ — ✅ **RESUELTO 2026-08-10 (`0c7f3af`),
   desbloqueado por la replicación de `books.items`.** El campo pasó a ser un **buscador** por código o nombre
   (`GET /api/articulos` → `searchArticulos`), y la ficha devuelve `skuArticulo`: a qué artículo de Books
   corresponde el SKU guardado, o `null`. La pantalla enseña el nombre del artículo, o avisa en ámbar si el
@@ -72,7 +72,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   aparte — la propia ficha lo señala al abrirla.
 - **Ficha técnica — sin versionado.** Sustituir la foto o un documento pisa el anterior. Nadie ha pedido
   conservar históricos y hacerlo multiplicaría el almacenamiento sin beneficio conocido.
-- ~~**Ficha técnica — el límite de subida responde 500.**~~ — **RESUELTO 2026-08-09.** Una rama de
+- ~~**Ficha técnica — el límite de subida responde 500.**~~ — **RESUELTO 2026-08-10.** Una rama de
   `MulterError` en el manejador central de `app.ts`: `LIMIT_FILE_SIZE` → **413** nombrando el límite, el resto
   → **400**. Cubre las tres puertas (ficha técnica, fotos de remisión, adjuntos de resolución) de una vez, y no
   hubo que tocar el frontend: las tres funciones de `client.ts` ya leían `error` del cuerpo. Tres cosas que
@@ -133,17 +133,17 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      **RECOMENDADA: `zoho_ref_pub`**, y con una comprobación ya hecha que lo respalda. La lección de la
      replicación de `contacts` fue que hay que **verificar TODOS los escritores de una tabla antes de
      replicarla** (`contacts` se quedó fuera porque `syncRecent → ensureContact` la escribía en desk, y
-     replicarla habría chocado). **Verificado el 2026-08-09 para `books.items`: la escribe solo `persistItem`
+     replicarla habría chocado). **Verificado el 2026-08-10 para `books.items`: la escribe solo `persistItem`
      (`packages/zoho-sync/src/booksHub/sync.ts`), cableado únicamente en `apps/hub-sync` contra el hub, y su
      DDL solo la aplica `migrateBooks`. Nada en `apps/desk` la escribe** → es de solo lectura para desk-db y
      no tiene el problema que tuvo `contacts`.
      ⚠️ Recordar la regla operativa del spike: **DDL aditivo primero en los suscriptores y después en el hub**,
      o el apply del suscriptor se atasca.
-     **Confirmado por el usuario (2026-08-09): la información ya está en el hub, y el host es
+     **Confirmado por el usuario (2026-08-10): la información ya está en el hub, y el host es
      `ambientalia_project_zoho-hub-db`** (base `zoho-hub`) — el nombre `postgres-hostinger-easypanel` que
      apareció antes es cómo se ve el servicio en EasyPanel, no otra base.
 
-     ✅ **PASO 1 HECHO (2026-08-09):** `books.items` ya se crea en **desk-db** desde `schema.sql`, con la
+     ✅ **PASO 1 HECHO (2026-08-10):** `books.items` ya se crea en **desk-db** desde `schema.sql`, con la
      definición **byte-idéntica** a la de `booksHub/schema-books.sql` (verificado con `diff`). Es el DDL
      aditivo que exige la regla del spike: **primero en los suscriptores, después en el hub**; al revés, el
      apply del suscriptor se atasca. La tabla queda vacía y sin uso hasta que se suscriba: no cambia nada
@@ -153,7 +153,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      Postgres real lo ignora en silencio. Rompió 3 tests del worker que declaraban `books.items` a mano
      además de llamar a `migrate`. Regla: no redeclarar en un test una tabla que ya crea `migrate`.
 
-     ✅ **PASO 2 HECHO — REPLICACIÓN EN PRODUCCIÓN (2026-08-09).** `ALTER PUBLICATION zoho_ref_pub ADD TABLE
+     ✅ **PASO 2 HECHO — REPLICACIÓN EN PRODUCCIÓN (2026-08-10).** `ALTER PUBLICATION zoho_ref_pub ADD TABLE
      books.items` en el hub + `ALTER SUBSCRIPTION zoho_ref_sub REFRESH PUBLICATION` en desk-db. **1428
      artículos replicados, conteos idénticos en ambos lados**, y `pg_subscription_rel` con las 4 tablas en
      estado `r`: `desk.activities`, `books.contacts`, `books.sales_orders`, `books.items`. Sin cutover ni
@@ -166,7 +166,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      `otras` 727 · `C&R` 447 · `Opcional` 229 · sin categoría 25. O sea **676 artículos asignables** a un
      modelo (C&R + Opcional); el resto son los equipos en sí, alquileres y demás.
 
-     ⚠️⚠️ **HALLAZGO QUE TUMBA LA IDEA DE EMPAREJAR SOLO (2026-08-09).** Cruzando `catalogo_modelos` con las
+     ⚠️⚠️ **HALLAZGO QUE TUMBA LA IDEA DE EMPAREJAR SOLO (2026-08-10).** Cruzando `catalogo_modelos` con las
      categorías de Books por nombre normalizado, **solo casan 9 de los 35 modelos** (D-R 290, APNA-370,
      APMC-370, APSA-370, OCMA-500, APOA-370, EDM 280, APMA-370, ZNV-7 → 149 artículos de los 676). Los otros
      26 dan **cero**. La causa no es la grafía: **Books categoriza por FAMILIA o SERIE y el catálogo de Desk
@@ -185,7 +185,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      **Conclusión para el diseño: `category_name` vale como FILTRO y sugerencia del buscador, NO como
      asociación automática.** El humano elige de una lista acotada; la máquina no decide por él.
 
-     **DECISIONES DEL USUARIO (2026-08-09), ya firmes:**
+     **DECISIONES DEL USUARIO (2026-08-10), ya firmes:**
      1. **`category_name` = filtro y sugerencia del buscador, NUNCA asociación automática.** El humano elige.
      2. **La clase se elige al añadir el artículo a un modelo**, con un valor propuesto según el prefijo:
         `Opcional` → **accesorio**; `C&R` → **consumible**, cambiable a **repuesto** de un clic. Deducir la
@@ -194,7 +194,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
         gemelas, y modelo de datos **mixto** (ítems enlazados a `books.items` + ítems de texto libre, porque
         «Manuales» o «Pletinas (par)» no tienen SKU).
 
-     **NO hay ninguna errata `IAQUAtwin` (descartado 2026-08-09).** Se llegó a anotar que el catálogo tenía 6
+     **NO hay ninguna errata `IAQUAtwin` (descartado 2026-08-10).** Se llegó a anotar que el catálogo tenía 6
      modelos escritos con «I» en vez de «L»; era un **error de lectura** de la salida del cruce.
      `SELECT ... WHERE nombre LIKE 'IAQUAtwin%'` en producción devuelve **0 filas**: los modelos ya se llaman
      `LAQUAtwin-*`, igual que en Books. **No hay nada que renombrar y no se tocó nada.**
@@ -206,7 +206,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      `tipoId`/`activo`/`sku`, no `nombre` —, y si algún día se añade, hay que actualizar también
      `equipos.modelo` (el texto denormalizado que `perfilChecklist` lee de verdad), no solo el catálogo.
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
-     `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
+     `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-10
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
      teclearla entera. La marca sigue viviendo dentro de `raw` (`raw->>'brand'`, p.ej. "Horiba Ltd.").
   3. ⚠️ **Buena parte de los 109 ítems actuales no son artículos vendibles**: "Manuales", "Caja de transporte",
@@ -232,7 +232,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   su estructura. Tres tablas y tres pantallas gemelas se desincronizarían solas: la corrección que se aplique a
   una se olvidará en las otras dos. **Es un solo mecanismo con un discriminador de clase.**
 
-  **COMPROBADO 2026-08-09 — `category_name` ya distingue la clase Y nombra el modelo.** Se leyeron 1000
+  **COMPROBADO 2026-08-10 — `category_name` ya distingue la clase Y nombra el modelo.** Se leyeron 1000
   artículos reales de Books vía API (org `714421387`; **hay más páginas**, así que las cifras son de la muestra,
   no del censo). El patrón es sistemático y no hay que inventar taxonomía propia:
   | Prefijo de `category_name` | Qué es | Artículos en la muestra |
@@ -300,7 +300,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
     administrador**: el `requireSuperAdmin` de `routes/equipos.ts` es esa misma función renombrada en el `import`.
     El botón se esconde por comodidad; quien protege el dato es el endpoint.
 - **Backfill** de detalle+conversaciones de todo el histórico (§2) y de `serial`/`código` desde el `subject` (§4) — bajo demanda.
-- **Enlace ticket→equipo (`backfill-equipo-id`) — re-ejecutado 2026-08-09 tras corregir datos: `{enlazados: 2,
+- **Enlace ticket→equipo (`backfill-equipo-id`) — re-ejecutado 2026-08-10 tras corregir datos: `{enlazados: 2,
   ambiguos: 3, sinEquipo: 58, sinSerial: 21}`.** Sube el histórico enlazado de 653 a **655 de 737 (88,9 %)**.
   Los 2 recuperados son exactamente el efecto de las dos correcciones del usuario: al borrar el `191TE0NC`
   duplicado de Ser As y al arreglar el serial del `LAQUAtwin-PH-11` (→ `GA3A0084`), un ticket dejó de ser
@@ -311,7 +311,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Webhooks de Zoho Desk** — casi-tiempo-real (disparar `syncTicket` en cambios) en vez del polling cada 3 min (§4).
 - **Imágenes inline de emails** — proxyar como los adjuntos (hoy salen como imagen rota) (§4).
 - ~~**Reconciliar `equipos.cliente_nombre` → `equipos.client_id`**~~ — ✅ **RESUELTO AL 100 % EN PRODUCCIÓN
-  (2026-08-09).** El endpoint devuelve `{enlazados: 0, ambiguos: 0, sinCliente: 0, sinNombre: 0,
+  (2026-08-10).** El endpoint devuelve `{enlazados: 0, ambiguos: 0, sinCliente: 0, sinNombre: 0,
   pendientes: []}`: **no queda ni un equipo con `client_id` NULL**. Camino: 339 automáticos (96,6 %) + los 12
   restantes a mano por el usuario. Lo de abajo se conserva como registro de cómo se hizo y de los casos raros
   que aparecieron. `POST /api/admin/backfill-client-id`
@@ -320,11 +320,11 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   Solo enlaza lo inequívoco; el resto sale en `pendientes` y en el log. Es idempotente: re-ejecutarlo tras
   corregir los datos recoge lo que se haya arreglado.
 
-  **Corregidos a mano por el usuario el 2026-08-09: Camposol, la Universidad, Serambiente y SOLAM.**
-  **`Sensus S.A.S.` ya está creado en Books (2026-08-09)** → basta **re-ejecutar el endpoint**, que es
+  **Corregidos a mano por el usuario el 2026-08-10: Camposol, la Universidad, Serambiente y SOLAM.**
+  **`Sensus S.A.S.` ya está creado en Books (2026-08-10)** → basta **re-ejecutar el endpoint**, que es
   idempotente, para que enlace su equipo `AE3BAG9W` sin tocarlo a mano.
 
-  **Decisiones de datos del usuario (2026-08-09):**
+  **Decisiones de datos del usuario (2026-08-10):**
   - **Camposol duplicado: el bueno es el de moneda COP** (`2251824000017370011`); el de USD
     (`2251824000016870091`) se ignora. **Books no deja borrarlo** («asociados a documentos o transacciones»),
     así que el duplicado seguirá ahí y cualquier emparejamiento por nombre lo volverá a ver ambiguo. Sin
@@ -338,7 +338,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
     serial**, así que conviene **re-ejecutar `backfill-equipo-id`**: los tickets que no se enlazaron por
     duplicidad podrán hacerlo.
 
-  **Los 12 pendientes, diagnosticados contra Books el 2026-08-09** (ids reales, para no volver a buscarlos):
+  **Los 12 pendientes, diagnosticados contra Books el 2026-08-10** (ids reales, para no volver a buscarlos):
   | Qué dice el equipo | Equipos | Qué pasa | Id en Books |
   |---|---|---|---|
   | `Camposol Colombia S.A.S.` | 6 | ⚠️ **duplicado en Books**: dos contactos con el mismo NIT `901116362`, misma persona y mismo correo | `2251824000016870091` (de CRM, USD, tocado ene-2026) vs `2251824000017370011` (creado a mano, COP, sin tocar desde nov-2023) |
@@ -356,7 +356,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   silencioso que este diseño evita a propósito. Doce correcciones a mano son minutos; un falso positivo no lo
   detecta nadie.
 
-  ✅ **`searchEquipos` YA está simplificado (2026-08-09, `7d3e99b`):** acota por `client_id` y nada más. Se
+  ✅ **`searchEquipos` YA está simplificado (2026-08-10, `7d3e99b`):** acota por `client_id` y nada más. Se
   retiró la contención por nombre en los dos sentidos, que además metía equipos de OTRO cliente en cuanto los
   nombres compartían un fragmento. La ruta se ahorra de paso una consulta a Books por búsqueda.
   ✅ **La consecuencia que tenía anotada ya NO aplica:** decía que los equipos sin `client_id` quedarían fuera
@@ -364,7 +364,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   cliente alcanza hoy a todo el inventario. (Si en el futuro se dan de alta equipos sin cliente, volvería a
   aplicar — pero el alta lo exige, así que solo podría pasar escribiendo en la BD a mano.)
 
-  ✅ **El formulario de equipos ya avisa (2026-08-09, `75a4bb7`).** Al corregir estos equipos se vio que el
+  ✅ **El formulario de equipos ya avisa (2026-08-10, `75a4bb7`).** Al corregir estos equipos se vio que el
   campo «Cliente» parece de texto libre pero es un buscador: teclear un nombre sin elegirlo de la lista
   guardaba «bien» **sin cambiar nada**, porque el nombre no viaja en el payload y el servidor lo deriva del
   cliente de Books. Ahora hay una pista en ámbar bajo el campo y el envío se frena. La regla vive en
