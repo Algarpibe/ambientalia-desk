@@ -10,6 +10,7 @@ import { seedChecklist } from '../db/remisionChecklist'
 import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
 import { sembrarCatalogo } from '../db/catalogoSeed'
 import { sembrarArticulosDesdeChecklist } from '../db/articulosSeed'
+import { limpiarArticulosSembrados } from '../db/limpiarSembrados'
 import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -97,6 +98,17 @@ export function registerAdminRoutes(
   app.post('/api/admin/seed-articulos', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
     const r = await sembrarArticulosDesdeChecklist(db)
     logger.info(`Siembra de artículos por modelo: ${r.modelos} modelos, ${r.insertados} nuevos, ${r.existentes} ya existían`)
+    res.json(r)
+  }))
+
+  // Retira las copias de texto libre que dejó `seed-articulos`, obsoletas desde que la lista de un
+  // modelo se deriva de sus categorías de Books. SOLO super administrador.
+  // ⚠️ Es DESTRUCTIVO y sin vuelta atrás: `?dryRun=true` devuelve el detalle completo por modelo, que
+  // es lo que hay que guardar como copia antes de ejecutarlo de verdad.
+  app.post('/api/admin/limpiar-articulos-sembrados', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const dryRun = req.query.dryRun === 'true'
+    const r = await limpiarArticulosSembrados(db, { dryRun })
+    logger.info(`Limpieza de artículos sembrados${dryRun ? ' (dry-run)' : ''}: ${r.borrados} borrados, ${r.conservados} conservados`)
     res.json(r)
   }))
 

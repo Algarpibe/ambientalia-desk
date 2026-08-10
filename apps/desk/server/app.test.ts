@@ -1874,6 +1874,31 @@ describe('POST /api/admin/seed-articulos (admin)', () => {
   })
 })
 
+// Retira las copias de texto libre que dejó la siembra, obsoletas desde que la lista se deriva de las
+// categorías de Books. `?dryRun=true` devuelve el detalle completo, que es la copia de seguridad.
+describe('POST /api/admin/limpiar-articulos-sembrados (admin)', () => {
+  it('dryRun lista sin borrar; sin él borra; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','EDM180C')")
+    await db.query("INSERT INTO remision_checklist (perfil,item,orden) VALUES ('grimm_edm180','Datalogger',0)")
+    await db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,nombre) VALUES ('a1','cmod-1','accesorio','Datalogger')")
+    const { app } = appWith()
+
+    const seco = await request(app).post('/api/admin/limpiar-articulos-sembrados?dryRun=true').set('Cookie', admin)
+    expect(seco.status).toBe(200)
+    expect(seco.body).toMatchObject({ borrados: 1, detalle: [{ modelo: 'Grimm EDM180C', articulos: ['Datalogger'] }] })
+    expect((await db.query('SELECT count(*)::int AS n FROM catalogo_articulos')).rows[0].n).toBe(1)
+
+    expect((await request(app).post('/api/admin/limpiar-articulos-sembrados').set('Cookie', admin)).body).toMatchObject({ borrados: 1 })
+    expect((await db.query('SELECT count(*)::int AS n FROM catalogo_articulos')).rows[0].n).toBe(0)
+
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/limpiar-articulos-sembrados').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/limpiar-articulos-sembrados')).status).toBe(401)
+  })
+})
+
 describe('POST /api/admin/backfill-archived (admin)', () => {
   it('admin arranca; 403 no-admin; 401 sin sesión', async () => {
     const admin = await adminCookie()
