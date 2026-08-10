@@ -18,7 +18,6 @@ export interface AppConfig {
   salesTrackerDatabaseUrl: string
   deriveSalesRecords: boolean
   salesRecordsHour: number
-  adminToken: string   // protege endpoints /api/admin/* (vacío = deshabilitados)
   adminEmail: string     // bootstrap del primer admin (vacío = no se siembra)
   adminPassword: string
   booksClientId: string
@@ -82,7 +81,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     salesTrackerDatabaseUrl: env.SALES_TRACKER_DATABASE_URL || '',
     deriveSalesRecords: env.DERIVE_SALES_RECORDS !== 'false',
     salesRecordsHour: env.SALES_RECORDS_HOUR ? Number(env.SALES_RECORDS_HOUR) : 5,
-    adminToken: env.ADMIN_TOKEN || '',
     adminEmail: env.ADMIN_EMAIL || '',
     adminPassword: env.ADMIN_PASSWORD || '',
     booksClientId: env.ZOHO_BOOKS_CLIENT_ID || env.ZOHO_CLIENT_ID || '',

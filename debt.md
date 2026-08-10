@@ -18,7 +18,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 ### ✅ RESUELTO esta sesión (el detalle de abajo quedó obsoleto)
 - **Reply sin gate por área** (§3d, §4) → `requireArea` en `/api/tickets/:id/reply` (F2-06).
 - **`String(err)` crudo en respuestas 500** (§3f, §3i) → error-handler central que NO filtra detalles + `asyncHandler` (F4-01).
-- **`/api/admin/*` con `?token=ADMIN_TOKEN`** (§1, §2) → ahora sesión + rol superadmin (F2-02). `config.adminToken` quedó huérfano (limpieza menor).
+- **`/api/admin/*` con `?token=ADMIN_TOKEN`** (§1, §2) → ahora sesión + rol superadmin (F2-02). `config.adminToken` y la env `ADMIN_TOKEN` **retirados del todo el 2026-08-10** (config.ts + .env.example); las instrucciones de §1/§2 quedaron actualizadas al método real.
 - **Re-sync de conversaciones/detalle al abrir** (§4) → lectura desde réplica local + refresco en background lazy (F3-02).
 - **Dedup Books-lite (clients/sales_orders) a vistas sobre `books.*`** (§3j Fase 2) → hecho (reorg esquemas Fase 2).
 - **`any` en la capa de mapeo de Desk** (mappers.ts/sync.ts) → reducido (F4-03; warnings repo 157→134). El `any` de booksHub/crmHub sigue (patrón helper deliberado).
@@ -433,8 +433,9 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 ### ⚪ LATENTES / menores (por diseño; abordar si tocan ese código) — ver detalle abajo
 managed_by_app atómica (I-1), backoff 429 en backfill (I-3), `status_type` fino (M-1), checkbox required (M-2),
 enumeración por timing en login (M-3), `getEquipo` sin filtro `active` (M-9), dedup parser semilla (M-10),
-PATCH `serial` vacío (M-14), escapar comodines de búsqueda (M-5), TZ en `due_date` (M-12), `@types/bcryptjs` redundante,
+PATCH `serial` vacío (M-14), escapar comodines de búsqueda (M-5), TZ en `due_date` (M-12),
 `config.syncBooks` sin uso, guard anti-drift `DESK_TABLES`↔`schema.sql`.
+*(Limpiados el 2026-08-10: `config.adminToken` huérfano y `@types/bcryptjs` redundante.)*
 
 ---
 
@@ -449,13 +450,15 @@ volumen real** antes de comprometer espacio, y elegir bien el destino.
 **Estado del código:**
 - ✅ Descarga **en vivo** ya funciona: proxy autenticado `GET /api/attachment?path=...`
   (sirve el archivo desde Zoho en el momento; no lo guarda).
-- ✅ Endpoint de **medición** listo: `GET /api/admin/measure-attachments?token=ADMIN_TOKEN`
+- ✅ Endpoint de **medición** listo: `GET /api/admin/measure-attachments`
   (recorre todos los tickets y totaliza cantidad + GB de adjuntos, sin descargar nada).
 - ❌ Falta: persistir los archivos en un destino y servirlos desde ahí.
 
 **Cómo retomar:**
-1. Definir `ADMIN_TOKEN` en Environment y llamar a `/api/admin/measure-attachments` para
-   obtener el tamaño total real (`totalHuman` cuando `done: true`).
+1. Llamarlo **logueado como super administrador** (ya NO hay `?token=`: los endpoints admin pasaron a
+   sesión + rol en F2-02, y `ADMIN_TOKEN` se retiró del todo el 2026-08-10):
+   `await (await fetch('/api/admin/measure-attachments', {credentials:'include'})).json()` → el tamaño
+   total real es `totalHuman` cuando `done: true`.
 2. Con ese dato, elegir destino:
    - **Volumen en disco** (EasyPanel persistent volume) — recomendado si son pocos GB. La BD
      guarda la ruta; el proxy sirve desde local y cae a Zoho si falta.
@@ -476,12 +479,12 @@ histórico**, **respaldo total** o **resiliencia a caídas de Zoho**. Para el us
 tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carga perezosa).
 
 **Estado del código:**
-- ✅ Endpoint listo: `GET /api/admin/backfill-details?token=ADMIN_TOKEN`
+- ✅ Endpoint listo: `GET /api/admin/backfill-details`
   (recorre todos los tickets, `syncTicket` + `syncConversations` por cada uno; segundo plano,
   throttled 150 ms, reintento ante 429, tolerante a errores; `?restart=1` reinicia).
 
-**Cómo retomar:** definir `ADMIN_TOKEN`, redeploy, llamar al endpoint y sondear hasta
-`done: true` (~8-12 min). Idempotente; re-ejecutable para refrescar el histórico.
+**Cómo retomar:** llamarlo **logueado como super administrador** (ya NO hay `?token=`; ver la nota de §1)
+y sondear hasta `done: true` (~8-12 min). Idempotente; re-ejecutable para refrescar el histórico.
 
 **Si más adelante se quiere reportería seria:** considerar materializar campos clave de
 `customFields` (jsonb) en **columnas estructuradas** o vistas, para consultas más cómodas.
@@ -517,8 +520,8 @@ tablero NO hace falta: cada ticket ya carga su detalle completo al abrirlo (carg
   correo existe; un correo inexistente responde más rápido → revela si un correo está registrado. Bajo
   riesgo (equipo pequeño y conocido). Si se quiere endurecer: correr siempre un `bcrypt.compare` contra un
   hash dummy cuando el usuario no existe/está inactivo, para igualar tiempos.
-- **`@types/bcryptjs` redundante:** bcryptjs 3.x trae sus propios tipos; `@types/bcryptjs` (devDep) ya no
-  hace falta. Se puede quitar en una limpieza futura (inofensivo).
+- ~~**`@types/bcryptjs` redundante**~~ — **QUITADO 2026-08-10.** bcryptjs 3.x trae sus propios tipos; el
+  typecheck sigue limpio sin él, que es la prueba de que sobraba.
 - *(Resueltos en la revisión)*: cookie `Secure` en producción, `/api/attachment` ahora requiere sesión,
   401 en peticiones de datos devuelve al login, y el bootstrap exige `ADMIN_PASSWORD` ≥ 8.
 
