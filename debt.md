@@ -128,9 +128,9 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   (`POST /api/admin/limpiar-articulos-sembrados`, `fe65377`). 716 + 79 = 795, los sembrados completos.
   Los 79 conservados son `Manuales` y `Repuestos reemplazados` (en los 5 perfiles → 34 modelos cada uno)
   más `Documentación de calibración` (en 3 perfiles → 11 modelos): 34+34+11.
-  **Recuperable si hiciera falta:** lo borrado eran copias de `remision_checklist`, que sigue intacta,
-  así que `POST /api/admin/seed-articulos` las regenera. Por eso ejecutarlo sin la copia previa no tuvo
-  consecuencias.
+  El usuario guardó la copia del `dryRun` antes de ejecutar. **Y además es recuperable por otra vía:**
+  lo borrado eran copias de `remision_checklist`, que sigue intacta, así que `POST /api/admin/seed-articulos`
+  las regenera.
   **Los 63 ítems únicos del checklist NO hay que crearlos en Books**: se comprobó que buena parte ya
   existen con nombre más preciso y su SKU (`157-L`, `1142.A4` para la PCMCIA, `APOPC-008` para Slides,
   `1200675` para el cable 158-EE…). Lo que falte se verá al asignar categorías, y será mucho menos.
