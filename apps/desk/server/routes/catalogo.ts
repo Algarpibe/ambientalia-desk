@@ -7,7 +7,7 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida } from '../db/catalogoArticulos'
+import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
 import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
