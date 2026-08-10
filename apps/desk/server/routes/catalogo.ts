@@ -3,11 +3,13 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { TIPOS_DOCUMENTO, type TipoDocumento } from '@ambientalia/shared'
 import {
   leerCatalogo, leerConflictos, crearTipo, crearMarca, crearModelo,
-  actualizarTipo, actualizarMarca, actualizarModelo, borrarEntrada, existeEnCatalogo,
+  actualizarTipo, actualizarMarca, actualizarModelo, borrarEntrada, existeEnCatalogo, getModelo,
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { getArticuloPorSku } from '@ambientalia/zoho-sync/books/repo'
+import { listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido } from '../db/catalogoArticulos'
+import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
+import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
@@ -16,6 +18,7 @@ import { crearSubida } from '../util/subida'
 // admitir los dos caminos.
 const subida = crearSubida()
 const esTipoDocumento = (v: string): v is TipoDocumento => (TIPOS_DOCUMENTO as readonly string[]).includes(v)
+const esClaseArticulo = (v: string): v is ClaseArticulo => (CLASES_ARTICULO as readonly string[]).includes(v)
 
 /** Las tres entidades que admite el borrado, como lista blanca. Nada de la URL llega a una tabla. */
 const ENTIDADES = ['tipos', 'marcas', 'modelos'] as const
@@ -133,6 +136,66 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
     if (b.corregirEquipos !== undefined) patch.corregirEquipos = Boolean(b.corregirEquipos)
     if (b.sku !== undefined) patch.sku = b.sku ? String(b.sku).trim() : null
     res.json(await actualizarModelo(db, id, patch))
+  }))
+
+  // ── Artículos del modelo: accesorios, consumibles y repuestos ──────────────────────────────────
+  // Leer: cualquier sesión (el técnico que prepara una remisión tiene que ver qué lleva el equipo).
+  // Escribir: solo super administrador, como el resto del catálogo maestro.
+  app.get('/api/catalogo/modelos/:id/articulos', requireAuth(db), asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    res.json(await listarArticulos(db, modeloId))
+  }))
+
+  app.post('/api/catalogo/modelos/:id/articulos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    const b = (req.body ?? {}) as Record<string, unknown>
+
+    const clase = String(b.clase ?? '')
+    if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
+
+    // Con `itemId`, el artículo manda: sku y nombre los escribe el SERVIDOR leyéndolos de Books. Es la
+    // misma regla que el alta de equipos desde el catálogo — si el nombre viniera del navegador, el
+    // mismo artículo acabaría con dos grafías y volvería el problema que Books viene a resolver.
+    let datos: { itemId: string | null; sku: string | null; nombre: string }
+    if (b.itemId) {
+      const art = await getArticuloPorId(db, String(b.itemId))
+      if (!art) { res.status(422).json({ error: 'Artículo no encontrado en Zoho Books' }); return }
+      datos = { itemId: art.id, sku: art.sku || null, nombre: art.nombre }
+    } else {
+      const nombre = String(b.nombre ?? '').trim()
+      if (!nombre) { res.status(422).json({ error: 'El nombre es obligatorio' }); return }
+      datos = { itemId: null, sku: null, nombre }
+    }
+
+    try {
+      res.status(201).json({ id: await crearArticulo(db, modeloId, { clase, ...datos }) })
+    } catch (e) {
+      if (e instanceof ArticuloRepetido) { res.status(409).json({ error: e.message }); return }
+      throw e
+    }
+  }))
+
+  app.patch('/api/catalogo/articulos/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const b = (req.body ?? {}) as Record<string, unknown>
+    const patch: { clase?: ClaseArticulo; orden?: number; activo?: boolean } = {}
+    if (b.clase !== undefined) {
+      const clase = String(b.clase)
+      if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
+      patch.clase = clase
+    }
+    if (b.orden !== undefined) patch.orden = Number(b.orden)
+    if (b.activo !== undefined) patch.activo = b.activo === true
+    await actualizarArticulo(db, String(req.params.id), patch)
+    res.json({ ok: true })
+  }))
+
+  // Borrado físico. La vía normal para retirar un artículo es DESACTIVARLO: eso lo saca de las listas
+  // futuras sin tocar las remisiones ya emitidas.
+  app.delete('/api/catalogo/articulos/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    await borrarArticulo(db, String(req.params.id))
+    res.status(204).end()
   }))
 
   // Leer la ficha: cualquiera con sesión. El técnico que repara tiene que poder abrir el manual;

@@ -183,6 +183,29 @@ export interface UserPublic {
 }
 
 /**
+ * Para qué sirve un artículo dentro de un modelo. Es un discriminador, no tres listas distintas: los
+ * tres tienen la misma forma y solo cambia su uso — el accesorio se verifica al recibir y devolver el
+ * equipo, el consumible se repone, el repuesto se cambia.
+ *
+ * Zoho Books **no** separa consumible de repuesto (los junta bajo la categoría `C&R …`), así que esa
+ * distinción la aporta quien da de alta el artículo; de Books solo se propone un valor de partida.
+ */
+export const CLASES_ARTICULO = ['accesorio', 'consumible', 'repuesto'] as const
+export type ClaseArticulo = (typeof CLASES_ARTICULO)[number]
+
+/** Un artículo que lleva un modelo. Sin `itemId` es un ítem de texto libre, no vendible en Books. */
+export interface ArticuloModelo {
+  id: string
+  clase: ClaseArticulo
+  /** `books.items.item_id`. Ausente en los ítems de texto libre («Manuales», «Pletinas (par)»). */
+  itemId?: string
+  sku?: string
+  nombre: string
+  orden: number
+  activo: boolean
+}
+
+/**
  * Un artículo del catálogo de Zoho Books, reducido a lo que la app enseña al elegirlo.
  *
  * Vive en `books.items`, replicada del hub. La `categoria` viaja porque es la que dice a qué familia

@@ -353,3 +353,22 @@ CREATE TABLE IF NOT EXISTS books.items (
   rate numeric, purchase_rate numeric, sku text,
   raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Los articulos que lleva cada MODELO: accesorios, consumibles y repuestos en UNA tabla con `clase` como discriminador. Tres tablas gemelas se desincronizarian solas
+-- `nombre` va denormalizado y obligatorio para que la lista se lea sin join contra books.items y sobreviva a que un articulo se retire de Books o a que la replicacion se caiga
+-- `item_id` NULL es lo que distingue un item de TEXTO LIBRE (Manuales, Pletinas) de uno enlazado a un articulo real: no hace falta ninguna bandera aparte
+-- Sin CHECK sobre `clase`: la lista blanca vive en shared y la valida el servidor, como TIPOS_DOCUMENTO. Un CHECK obligaria a migrar la BD para anadir una clase
+CREATE TABLE IF NOT EXISTS catalogo_articulos (
+  id text PRIMARY KEY,
+  modelo_id text NOT NULL,
+  clase text NOT NULL,
+  item_id text,
+  sku text,
+  nombre text NOT NULL,
+  orden integer NOT NULL DEFAULT 0,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+-- El unico va sobre (modelo_id, clase, nombre) y NO sobre item_id: en los de texto libre item_id es NULL, y dos NULL no colisionan en SQL, asi que no impediria repetir Manuales diez veces
+CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogo_articulos_unico ON catalogo_articulos (modelo_id, clase, nombre);
+CREATE INDEX IF NOT EXISTS idx_catalogo_articulos_modelo ON catalogo_articulos (modelo_id);

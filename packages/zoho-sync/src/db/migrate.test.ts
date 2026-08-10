@@ -108,6 +108,42 @@ describe('migrate', () => {
     expect(r.rows[0].synced_at).toBeTruthy() // el default lo pone la BD, igual que en el hub
   })
 
+  /**
+   * Los artículos de un modelo: accesorios, consumibles y repuestos en UNA tabla con `clase` como
+   * discriminador. `item_id` NULL es lo que distingue un ítem de texto libre («Manuales») de uno
+   * enlazado a `books.items` — no hace falta bandera aparte.
+   */
+  it('crea catalogo_articulos, con ítems enlazados y de texto libre', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','EDM180C')")
+    // Enlazado a un artículo real de Books.
+    await db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,item_id,sku,nombre,orden) VALUES ('art-1','cmod-1','consumible','i1','F-001','Filtro PM10',0)")
+    // De texto libre: sin item_id ni sku, porque «Manuales» no es un artículo vendible.
+    await db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,nombre,orden) VALUES ('art-2','cmod-1','accesorio','Manuales',1)")
+
+    const r = await db.query('SELECT id, modelo_id, clase, item_id, sku, nombre, orden, activo FROM catalogo_articulos ORDER BY id')
+    expect(r.rows[0]).toMatchObject({ id: 'art-1', clase: 'consumible', item_id: 'i1', sku: 'F-001', nombre: 'Filtro PM10', activo: true })
+    expect(r.rows[1]).toMatchObject({ id: 'art-2', clase: 'accesorio', item_id: null, sku: null, nombre: 'Manuales' })
+  })
+
+  // El único va sobre (modelo_id, clase, nombre) y NO sobre item_id: en los de texto libre item_id es
+  // NULL, y en SQL dos NULL no colisionan, así que no impediría repetir «Manuales» diez veces.
+  it('catalogo_articulos rechaza el mismo nombre repetido en la misma clase, pero lo admite en otra', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','EDM180C')")
+    await db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,nombre) VALUES ('a1','cmod-1','accesorio','Manuales')")
+
+    await expect(
+      db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,nombre) VALUES ('a2','cmod-1','accesorio','Manuales')"),
+    ).rejects.toThrow()
+
+    // El mismo artículo puede ser consumible en un modelo y accesorio en otro: eso SÍ debe poder existir.
+    await db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,nombre) VALUES ('a3','cmod-1','consumible','Manuales')")
+    expect((await db.query('SELECT count(*)::int AS n FROM catalogo_articulos')).rows[0].n).toBe(2)
+  })
+
   it('crea catalogo_documentos y catalogo_modelos.sku', async () => {
     const db = await freshDb()
     await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")

@@ -35,6 +35,15 @@ export async function searchArticulos(db: Queryable, q: string, limit = 20): Pro
   return r.rows.map(articuloToLite)
 }
 
+/**
+ * El artículo por su `item_id` de Books. NO filtra por estado, igual que `getArticuloPorSku`: quien
+ * pasa un id lo eligió antes de una lista, y que el artículo se retire después no debe romper el alta.
+ */
+export async function getArticuloPorId(db: Queryable, itemId: string): Promise<ArticuloLite | null> {
+  const r = await db.query('SELECT item_id, name, sku, category_name FROM books.items WHERE item_id = $1', [itemId])
+  return r.rows[0] ? articuloToLite(r.rows[0]) : null
+}
+
 /** El artículo con ese SKU exacto, sin distinguir mayúsculas. `null` si ninguno lo lleva. */
 export async function getArticuloPorSku(db: Queryable, sku: string): Promise<ArticuloLite | null> {
   const r = await db.query(

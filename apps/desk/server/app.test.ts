@@ -1267,6 +1267,92 @@ describe('GET /api/articulos (Books)', () => {
   })
 })
 
+describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
+  const prepararModelo = async () => {
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','EDM180C')")
+    await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i1','Filtro PM10','F-001','C&R EDM 180','active')")
+  }
+
+  /**
+   * Misma regla que el alta de equipos desde el catálogo: lo que identifica al artículo lo escribe el
+   * SERVIDOR leyéndolo de Books, no el navegador. Si el nombre viajara desde el cliente, el mismo
+   * artículo acabaría con dos grafías y volveríamos al problema que Books viene a resolver.
+   */
+  it('el alta desde Books toma sku y nombre del artículo, ignorando lo que mande el navegador', async () => {
+    const cookie = await adminCookie()
+    await prepararModelo()
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+      .send({ clase: 'consumible', itemId: 'i1', sku: 'INVENTADO', nombre: 'Nombre inventado' })
+    expect(res.status).toBe(201)
+
+    const lista = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+    expect(lista.body).toEqual([
+      { id: expect.any(String), clase: 'consumible', itemId: 'i1', sku: 'F-001', nombre: 'Filtro PM10', orden: 0, activo: true },
+    ])
+  })
+
+  it('acepta ítems de texto libre, que son los que no tienen artículo en Books', async () => {
+    const cookie = await adminCookie()
+    await prepararModelo()
+    const { app } = appWith()
+
+    expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+      .send({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(201)
+
+    const lista = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+    expect(lista.body[0]).toMatchObject({ clase: 'accesorio', nombre: 'Manuales' })
+    expect(lista.body[0].itemId).toBeUndefined()
+  })
+
+  it('rechaza clase desconocida, nombre vacío, artículo inexistente y repetido', async () => {
+    const cookie = await adminCookie()
+    await prepararModelo()
+    const { app } = appWith()
+    const alta = (body: Record<string, unknown>) =>
+      request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie).send(body)
+
+    expect((await alta({ clase: 'inventada', nombre: 'X' })).status).toBe(422)
+    expect((await alta({ clase: 'accesorio', nombre: '   ' })).status).toBe(422)
+    expect((await alta({ clase: 'consumible', itemId: 'no-existe' })).status).toBe(422)
+    expect((await alta({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(201)
+    expect((await alta({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(409)
+  })
+
+  it('mueve de clase, desactiva y borra; 404 si el modelo no existe', async () => {
+    const cookie = await adminCookie()
+    await prepararModelo()
+    const { app } = appWith()
+    const creado = await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+      .send({ clase: 'consumible', itemId: 'i1' })
+    const id = creado.body.id
+
+    expect((await request(app).patch(`/api/catalogo/articulos/${id}`).set('Cookie', cookie).send({ clase: 'repuesto', activo: false })).status).toBe(200)
+    const tras = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+    expect(tras.body[0]).toMatchObject({ clase: 'repuesto', activo: false })
+
+    expect((await request(app).delete(`/api/catalogo/articulos/${id}`).set('Cookie', cookie)).status).toBe(204)
+    expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)).body).toEqual([])
+
+    expect((await request(app).get('/api/catalogo/modelos/no-existe/articulos').set('Cookie', cookie)).status).toBe(404)
+  })
+
+  // Leer lo necesita el técnico que prepara una remisión; administrar la lista es otra cosa.
+  it('leer exige sesión; escribir exige super administrador', async () => {
+    const admin = await adminCookie()
+    await prepararModelo()
+    const op = await userCookie([])
+    const { app } = appWith()
+
+    expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos')).status).toBe(401)
+    expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', op)).status).toBe(200)
+    expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', op).send({ clase: 'accesorio', nombre: 'X' })).status).toBe(403)
+    expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', admin).send({ clase: 'accesorio', nombre: 'X' })).status).toBe(201)
+  })
+})
+
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
     const cookie = await adminCookie()
