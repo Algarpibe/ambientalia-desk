@@ -148,9 +148,37 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
      Nota: el censo real son **1428** artículos; el análisis previo de la API se hizo sobre una muestra de
      1000, así que las cifras por clase de más arriba son del 70 % y conviene rehacerlas contra la tabla.
 
-     **PASO 3 — la funcionalidad.** Queda la decisión de diseño que Books no resuelve: **separar consumibles
-     de repuestos**, que él junta bajo `C&R`. Ver los avisos de la entrada siguiente (un solo mecanismo con
-     discriminador de clase, y modelo de datos mixto para los ítems sin SKU).
+     **PASO 3 — la funcionalidad.** Censo real medido contra la tabla ya replicada (1428 artículos):
+     `otras` 727 · `C&R` 447 · `Opcional` 229 · sin categoría 25. O sea **676 artículos asignables** a un
+     modelo (C&R + Opcional); el resto son los equipos en sí, alquileres y demás.
+
+     ⚠️⚠️ **HALLAZGO QUE TUMBA LA IDEA DE EMPAREJAR SOLO (2026-08-09).** Cruzando `catalogo_modelos` con las
+     categorías de Books por nombre normalizado, **solo casan 9 de los 35 modelos** (D-R 290, APNA-370,
+     APMC-370, APSA-370, OCMA-500, APOA-370, EDM 280, APMA-370, ZNV-7 → 149 artículos de los 676). Los otros
+     26 dan **cero**. La causa no es la grafía: **Books categoriza por FAMILIA o SERIE y el catálogo de Desk
+     por MODELO concreto.** No son el mismo nivel:
+     | Catálogo de Desk | Categoría en Books |
+     |---|---|
+     | `EDM180C`, `EDM180D` | `EDM 180` (una sola, para las dos variantes) |
+     | `6103`, `7000` | `Series 6103`, `Series 7000` |
+     | `AP 370 TRS`, `PG-350Z` | `AP Series`, `PG Series` |
+     | `U-51` | `U-50 Series` |
+     | `CU2`, `CTS 01S` | `CU-2`, `TCA CTS-01S` |
+     | `IAQUAtwin-*` (6 modelos) | `LAQUAtwin` |
+     La relación es **N:1** y es semánticamente correcta: los consumibles de la familia EDM180 sirven a las
+     variantes C y D. Pero significa que **una propuesta automática cubriría 9 de 35 modelos**, y forzar el
+     resto con heurísticas de familia sería adivinar sobre qué repuesto entra en qué equipo.
+     **Conclusión para el diseño: `category_name` vale como FILTRO y sugerencia del buscador, NO como
+     asociación automática.** El humano elige de una lista acotada; la máquina no decide por él.
+
+     Pista suelta a verificar con el usuario: el catálogo dice `IAQUAtwin-*` y Books `LAQUAtwin` — el
+     producto real de Horiba es **LAQUA**twin, así que parece una errata de transcripción (I por L) en los 6
+     modelos. ⚠️ Antes de tocarlos, recordar que renombrar modelos está vetado porque `perfilChecklist` lee
+     el TEXTO por subcadena; comprobar primero si el cambio movería de perfil.
+
+     Queda además la decisión que Books no resuelve: **separar consumibles de repuestos**, que él junta bajo
+     `C&R`. Ver los avisos de la entrada siguiente (un solo mecanismo con discriminador de clase, y modelo de
+     datos mixto para los ítems sin SKU).
   2. ⚠️ **`books.items` no tiene columna de marca ni de modelo** — pero el modelo **sí está codificado** en
      `category_name`, que **ya es columna** (`ItemRow`, `booksHub/mappers.ts`). Ver el hallazgo de 2026-08-09
      justo debajo: la asociación artículo↔modelo se puede **proponer** para buena parte del catálogo en vez de
