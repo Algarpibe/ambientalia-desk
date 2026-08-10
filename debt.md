@@ -103,7 +103,36 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Subsistema D — correo propio (Gmail API)** D0→D3 (§3g). El "último cordón con Zoho": que la app reciba/responda correos por sí misma (hoy entra/sale por Zoho).
 - **Subsistema Remisiones** — integrar el flujo n8n `Remisiones_ST_3.13` a la plataforma (§3e). Grande.
   **EN CURSO desde 2026-08-03: solo la rama de ENTRADA** (la que dispara el botón "Crear remisión" del ticket).
-- **Artículos por modelo — FASE 1 HECHA (2026-08-10), sin desplegar.** Accesorios, consumibles y repuestos
+- **Artículos por modelo — REDISEÑADO 2026-08-10 (`af692b6`, `392dcb8`), sin desplegar.**
+  ⚠️ **El modelo guarda las CATEGORÍAS de Books que le aplican, y la lista se DERIVA de `books.items`
+  en vivo** — no una copia de artículos. Tabla `catalogo_modelo_categorias`; `catalogo_articulos` queda
+  solo para los añadidos a mano.
+  **La regla real del negocio** (dicha por el usuario, 2026-08-10): los accesorios de un modelo salen de
+  la categoría `Opcional <serie>`; los consumibles y repuestos, de `C&R <serie>` **más** `C&R <modelo>`.
+  Un APMA-370 lleva `Opcional AP Series` + `C&R AP Series` + `C&R APMA-370`.
+  **Consumible y repuesto se fundieron en UNA clase** (`consumible_repuesto`): Books tampoco los separa.
+  ⚠️ **Corrige una conclusión errónea mía** que está más arriba en esta entrada: medí que solo 9 de 35
+  modelos casaban con una categoría y deduje que no se podía automatizar. El error fue comparar
+  modelo↔categoría cuando la relación es **modelo → serie + modelo**. Con la regla correcta sí se
+  sistematiza — pero la asignación serie↔modelo **no se deduce del nombre** (`C&R AP-370 TRS` con guion
+  vs modelo `AP 370 TRS`; `Opcional EDM180` sin espacio vs `C&R EDM 180` con espacio; categorías sin
+  modelo y modelos sin categoría), así que se asigna **a mano una vez por modelo**.
+  ⚠️ **El selector ofrece TODAS las categorías, no solo las de prefijo `C&R`/`Opcional`**: hay artículos
+  relevantes en `Accesorios`, `Meteorología`, `Kunak Air Series`, `D-R 290`… Filtrar por prefijo dejaba
+  al Kunak AIR Pro sin poder configurarse.
+  **Asignaciones ya decididas por el usuario:** `APSA-H370`→`C&R APSA-370`; `APNA-H370`→`C&R APNA-370`;
+  `VA-3114`/`VA-5001`→`Opcional VA Series`; `U-51`→`U-50 Series`; `OCMA-550`→`C&R OCMA-500` +
+  `Opcional OCMA-500`; `CU2`→`C&R CU-2`; `CTS 01S`→`C&R TCA CTS-01S`. Sin lista por ahora: `1.109`,
+  `17E`, `SR-305`, `WS600-UMB`, `AIR Pro`.
+  ⚠️ **La siembra de 795 artículos quedó OBSOLETA**: eran copias de texto libre del checklist de n8n.
+  Al asignar categorías, la lista real saldrá de Books; esos 795 sobran salvo los que no existan como
+  artículo (`Repuestos reemplazados`, `Documentación de calibración`, quizá `Manuales`). **Hay que
+  limpiarlos**, y esa limpieza aún no está hecha ni decidida.
+  **Los 63 ítems únicos del checklist NO hay que crearlos en Books**: se comprobó que buena parte ya
+  existen con nombre más preciso y su SKU (`157-L`, `1142.A4` para la PCMCIA, `APOPC-008` para Slides,
+  `1200675` para el cable 158-EE…). Lo que falte se verá al asignar categorías, y será mucho menos.
+
+- **Artículos por modelo — FASE 1 (2026-08-10), superada por el rediseño de arriba.** Accesorios, consumibles y repuestos
   administrables desde la ficha del modelo. Tabla `catalogo_articulos` (una sola, con `clase` como
   discriminador), API bajo `/api/catalogo/modelos/:id/articulos`, buscador contra `books.items` y siembra
   `POST /api/admin/seed-articulos`. Diseño: `docs/superpowers/specs/2026-08-10-articulos-por-modelo-design.md`.
