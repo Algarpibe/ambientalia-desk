@@ -496,3 +496,19 @@ export function setTicketRead(id: string, read: boolean): Promise<void> {
     body: JSON.stringify({ read }),
   }).then(() => undefined)
 }
+
+/** Excluye un artículo derivado de ESTE modelo, sin renunciar a su categoría. */
+export async function ocultarArticuloModelo(modeloId: string, itemId: string): Promise<void> {
+  const r = await fetch(`/api/catalogo/modelos/${modeloId}/articulos-ocultos`, {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemId }),
+  })
+  if (!r.ok) await json(r)
+}
+
+export async function mostrarArticuloModelo(modeloId: string, itemId: string): Promise<void> {
+  const r = await fetch(`/api/catalogo/modelos/${modeloId}/articulos-ocultos/${itemId}`, {
+    method: 'DELETE', credentials: 'include',
+  })
+  if (!r.ok) await json(r)
+}

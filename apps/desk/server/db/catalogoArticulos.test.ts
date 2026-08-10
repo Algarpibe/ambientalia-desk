@@ -4,6 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido,
   asignarCategoria, listarCategorias, quitarCategoria, listarArticulosDeModelo, CategoriaRepetida,
+  ocultarArticulo, mostrarArticulo,
 } from './catalogoArticulos'
 
 let db: Queryable
@@ -154,6 +155,57 @@ describe('categorías por modelo', () => {
     await asignarCategoria(db, 'cmod-1', 'accesorio', 'Accesorios')
     await expect(asignarCategoria(db, 'cmod-1', 'accesorio', 'Accesorios')).rejects.toThrow(CategoriaRepetida)
     await expect(asignarCategoria(db, 'cmod-1', 'consumible_repuesto', 'Accesorios')).resolves.toBeTruthy()
+  })
+
+  /**
+   * Una categoría de serie trae decenas de artículos y no todos valen para todas sus variantes. Sin
+   * esto, la única forma de quitar uno sería renunciar a la categoría entera y perder los otros 43.
+   */
+  it('un artículo oculto sale marcado en la gestión y desaparece de la lista real', async () => {
+    await item('i1', 'Vale', 'V-1', 'C&R AP Series')
+    await item('i2', 'No aplica', 'N-1', 'C&R AP Series')
+    await asignarCategoria(db, 'cmod-1', 'consumible_repuesto', 'C&R AP Series')
+
+    await ocultarArticulo(db, 'cmod-1', 'i2')
+
+    // La gestión los ve todos, con el oculto marcado, para poder devolverlo. El orden es alfabético por
+    // nombre («No aplica» antes que «Vale»), no el de inserción.
+    const gestion = await listarArticulosDeModelo(db, 'cmod-1', { incluirInactivos: true })
+    expect(gestion.map((a) => [a.sku, a.activo])).toEqual([['N-1', false], ['V-1', true]])
+    // La lista real —la que acabará en la remisión— no lo incluye.
+    expect((await listarArticulosDeModelo(db, 'cmod-1')).map((a) => a.sku)).toEqual(['V-1'])
+  })
+
+  // Es una lápida reversible: mostrarlo de nuevo lo devuelve tal cual, porque el artículo nunca dejó
+  // de estar en Books ni en la categoría.
+  it('mostrar de nuevo un artículo oculto lo devuelve a la lista', async () => {
+    await item('i1', 'Uno', 'U-1', 'C&R AP Series')
+    await asignarCategoria(db, 'cmod-1', 'consumible_repuesto', 'C&R AP Series')
+    await ocultarArticulo(db, 'cmod-1', 'i1')
+    expect(await listarArticulosDeModelo(db, 'cmod-1')).toEqual([])
+
+    await mostrarArticulo(db, 'cmod-1', 'i1')
+    expect((await listarArticulosDeModelo(db, 'cmod-1')).map((a) => a.sku)).toEqual(['U-1'])
+  })
+
+  // Ocultar es POR MODELO: el mismo artículo puede no aplicar a un APMA-370 y sí a un APNA-370.
+  it('ocultar en un modelo no afecta a los demás', async () => {
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-2','cmar-1','APNA-370')")
+    await item('i1', 'Compartido', 'C-1', 'C&R AP Series')
+    await asignarCategoria(db, 'cmod-1', 'consumible_repuesto', 'C&R AP Series')
+    await asignarCategoria(db, 'cmod-2', 'consumible_repuesto', 'C&R AP Series')
+
+    await ocultarArticulo(db, 'cmod-1', 'i1')
+    expect(await listarArticulosDeModelo(db, 'cmod-1')).toEqual([])
+    expect(await listarArticulosDeModelo(db, 'cmod-2')).toHaveLength(1)
+  })
+
+  // Ocultarlo dos veces no debe fallar: el botón se puede pulsar dos veces, o llegar dos peticiones.
+  it('ocultar un artículo ya oculto es inocuo', async () => {
+    await item('i1', 'Uno', 'U-1', 'C&R AP Series')
+    await asignarCategoria(db, 'cmod-1', 'consumible_repuesto', 'C&R AP Series')
+    await ocultarArticulo(db, 'cmod-1', 'i1')
+    await expect(ocultarArticulo(db, 'cmod-1', 'i1')).resolves.toBeUndefined()
   })
 
   it('quitar una categoría retira sus artículos de la lista', async () => {

@@ -24,6 +24,7 @@ import {
   getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
   buscarArticulos, getArticulosModelo, crearArticuloModelo, actualizarArticuloModelo, borrarArticuloModelo,
   getCategoriasDisponibles, getCategoriasModelo, asignarCategoriaModelo, quitarCategoriaModelo,
+  ocultarArticuloModelo, mostrarArticuloModelo,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -573,6 +574,15 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
   // Sin selector de clase por fila: la clase la fija la categoría desde la que se deriva el artículo, y
   // los añadidos a mano la eligen al crearse. Cambiarla suelta invitaría a «arreglar» algo que se
   // recalcula al recargar.
+  /** Un derivado no se borra: se marca como «no aplica a este modelo», y el mismo botón lo devuelve. */
+  const alternarOculto = (a: ArticuloModelo) =>
+    ejecutar(async () => {
+      if (!a.itemId) return
+      if (a.activo) await ocultarArticuloModelo(modelo.id, a.itemId)
+      else await mostrarArticuloModelo(modelo.id, a.itemId)
+      await recargarArticulos()
+    })
+
   const alternarActivo = (a: ArticuloModelo) =>
     ejecutar(async () => { await actualizarArticuloModelo(a.id, { activo: !a.activo }); await recargarArticulos() })
 
@@ -737,9 +747,14 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
                                 ? <span className="text-slate-400 text-[11px]"> · {a.categoria}</span>
                                 : <span className="text-amber-600 text-[11px]"> · añadido a mano</span>}
                             </span>
-                            {/* Los derivados no se tocan uno a uno: se quitan retirando su categoría. Dar
-                                botones por fila invitaría a «arreglar» algo que se recalcula al recargar. */}
-                            {a.origen === 'manual' && (
+                            {/* Un derivado se desactiva pero NO se elimina: no es nuestro, es de Books. La
+                                exclusión es por modelo, así que otro modelo con la misma categoría lo
+                                sigue viendo, y se revierte con el mismo botón. */}
+                            {a.origen === 'categoria' ? (
+                              <button onClick={() => alternarOculto(a)} className="text-[11px] text-blue-600">
+                                {a.activo ? 'Desactivar' : 'Activar'}
+                              </button>
+                            ) : (
                               <>
                                 <button onClick={() => alternarActivo(a)} className="text-[11px] text-blue-600">{a.activo ? 'Desactivar' : 'Activar'}</button>
                                 <button onClick={() => quitarArticulo(a)} className="text-[11px] text-red-600">Eliminar</button>

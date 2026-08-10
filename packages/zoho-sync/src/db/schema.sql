@@ -388,3 +388,13 @@ CREATE TABLE IF NOT EXISTS public.catalogo_modelo_categorias (
 -- La misma categoria dos veces en la misma clase no aporta nada y duplicaria cada uno de sus articulos
 CREATE UNIQUE INDEX IF NOT EXISTS idx_modelo_categorias_unico ON public.catalogo_modelo_categorias (modelo_id, clase, categoria);
 CREATE INDEX IF NOT EXISTS idx_modelo_categorias_modelo ON public.catalogo_modelo_categorias (modelo_id);
+
+-- Articulos de una categoria asignada que NO aplican a ese modelo concreto. Una categoria de serie trae decenas de articulos y no todos valen para todas sus variantes, asi que hace falta excluir de uno en uno sin renunciar a la categoria entera
+-- Es una LAPIDA, no un borrado: la fila dice "este articulo no va en este modelo". Quitarla lo devuelve a la lista, y el articulo sigue viviendo en Books como siempre
+CREATE TABLE IF NOT EXISTS public.catalogo_articulos_ocultos (
+  id text PRIMARY KEY,
+  modelo_id text NOT NULL,
+  item_id text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_articulos_ocultos_unico ON public.catalogo_articulos_ocultos (modelo_id, item_id);

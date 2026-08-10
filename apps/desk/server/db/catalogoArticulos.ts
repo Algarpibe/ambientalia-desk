@@ -178,6 +178,34 @@ export async function listarCategorias(db: Queryable, modeloId: string): Promise
 }
 
 /**
+ * Marca un artículo derivado como «no aplica a este modelo».
+ *
+ * Hace falta porque una categoría de serie trae decenas de artículos y no todos valen para todas sus
+ * variantes: sin esto, quitar uno obligaría a renunciar a la categoría entera y perder los demás.
+ *
+ * Es una **lápida por modelo**, no un borrado: el artículo sigue en Books y en su categoría, y otro
+ * modelo que comparta esa categoría lo sigue viendo. `mostrarArticulo` lo devuelve.
+ *
+ * Es idempotente: el botón se puede pulsar dos veces, o llegar dos peticiones a la vez.
+ */
+export async function ocultarArticulo(db: Queryable, modeloId: string, itemId: string): Promise<void> {
+  const ya = await db.query(
+    'SELECT 1 FROM catalogo_articulos_ocultos WHERE modelo_id=$1 AND item_id=$2',
+    [modeloId, itemId],
+  )
+  if (ya.rows.length) return
+  await db.query(
+    'INSERT INTO catalogo_articulos_ocultos (id,modelo_id,item_id) VALUES ($1,$2,$3)',
+    ['aoc-' + randomUUID(), modeloId, itemId],
+  )
+}
+
+/** Levanta la lápida: el artículo vuelve a la lista de ese modelo. */
+export async function mostrarArticulo(db: Queryable, modeloId: string, itemId: string): Promise<void> {
+  await db.query('DELETE FROM catalogo_articulos_ocultos WHERE modelo_id=$1 AND item_id=$2', [modeloId, itemId])
+}
+
+/**
  * La lista completa de artículos de un modelo: los **derivados** de sus categorías más los **manuales**.
  *
  * Los derivados salen de `books.items` en vivo, así que reflejan Books sin intervención: un artículo
@@ -200,11 +228,17 @@ export async function listarArticulosDeModelo(
     [modeloId],
   )
 
+  const ocultosQ = await db.query('SELECT item_id FROM catalogo_articulos_ocultos WHERE modelo_id=$1', [modeloId])
+  const ocultos = new Set(filas(ocultosQ.rows).map((r) => String(r.item_id)))
+
   const out: ArticuloModelo[] = []
   const vistos = new Set<string>()
   for (const f of filas(derivados.rows)) {
     const clase = String(f.clase) as ClaseArticulo
     const sku = (f.sku as string | null) ?? ''
+    const oculto = ocultos.has(String(f.item_id))
+    // Los ocultos solo aparecen en la gestión, y marcados: es la única forma de volver a activarlos.
+    if (oculto && !opts.incluirInactivos) continue
     // La llave de dedup es clase+SKU y no el item_id: el MISMO artículo puede estar en Books como dos
     // filas (una por categoría) con item_id distinto, que es justo el caso de las series.
     const llave = `${clase}|${sku || String(f.item_id)}`
@@ -219,7 +253,7 @@ export async function listarArticulosDeModelo(
       nombre: String(f.name ?? ''),
       categoria: String(f.categoria),
       orden: 0,
-      activo: true,
+      activo: !oculto,
     })
   }
 

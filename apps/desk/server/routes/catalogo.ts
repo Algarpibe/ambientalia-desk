@@ -7,7 +7,7 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida } from '../db/catalogoArticulos'
+import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
 import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
@@ -169,6 +169,22 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
       if (e instanceof CategoriaRepetida) { res.status(409).json({ error: e.message }); return }
       throw e
     }
+  }))
+
+  // Excluir un artículo derivado de ESTE modelo. Una categoría de serie trae decenas y no todos valen
+  // para todas sus variantes; sin esto habría que renunciar a la categoría entera.
+  app.post('/api/catalogo/modelos/:id/articulos-ocultos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    const itemId = String((req.body as Record<string, unknown> | undefined)?.itemId ?? '')
+    if (!itemId) { res.status(422).json({ error: 'Falta el artículo' }); return }
+    await ocultarArticulo(db, modeloId, itemId)
+    res.json({ ok: true })
+  }))
+
+  app.delete('/api/catalogo/modelos/:id/articulos-ocultos/:itemId', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    await mostrarArticulo(db, String(req.params.id), String(req.params.itemId))
+    res.status(204).end()
   }))
 
   // Quitar la categoría retira de golpe todos los artículos que aportaba: es la contrapartida de que la
