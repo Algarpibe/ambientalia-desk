@@ -52,10 +52,24 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   qué perfil cambia antes de confirmar, nunca hacerlo en silencio. Los **tipos sí se renombran** — no los mira.
   Mientras tanto, una variante mala se **desactiva**: la retira de las altas futuras sin tocar los equipos ya
   registrados.
-- **Ficha técnica — el SKU no se valida (2026-08-07).** `catalogo_modelos.sku` es una cadena que alguien
-  teclea: sin `books.items` en `desk-db` no hay contra qué contrastarla, y la pantalla lo advierte al
-  rellenarla. Cuando llegue la sincronización con Books habrá que **reconciliar los SKU escritos a mano** con
-  los artículos reales, y decidir si el campo pasa a ser una referencia en vez de texto libre.
+- ~~**Ficha técnica — el SKU no se valida (2026-08-07).**~~ — ✅ **RESUELTO 2026-08-09 (`0c7f3af`),
+  desbloqueado por la replicación de `books.items`.** El campo pasó a ser un **buscador** por código o nombre
+  (`GET /api/articulos` → `searchArticulos`), y la ficha devuelve `skuArticulo`: a qué artículo de Books
+  corresponde el SKU guardado, o `null`. La pantalla enseña el nombre del artículo, o avisa en ámbar si el
+  código no corresponde a ninguno.
+  Decisiones que conviene no revertir sin pensarlo:
+  1. **Avisa, no bloquea.** Un artículo retirado en Books tiene un SKU legítimo; impedir guardar dejaría esa
+     ficha sin poder editarse — el callejón sin salida que ya se pagó dos veces en remisiones.
+  2. **`searchArticulos` solo ofrece activos y con SKU; `getArticuloPorSku` NO filtra.** Mismo criterio que
+     `searchClients`/`getClient`: un código ya guardado tiene que seguir resolviendo aunque el artículo se
+     retire después, o la ficha diría de pronto que su SKU no existe.
+  3. **El artículo se resuelve en la RUTA, no dentro de `leerFicha`**, para no atar la ficha del catálogo
+     propio a la réplica de Books. El `Omit<FichaModelo,'skuArticulo'>` del tipo de retorno deja esa frontera
+     escrita y obliga a componerla.
+  4. **El aviso se lee de lo GUARDADO, no de lo tecleado**: mientras se escribe no tiene sentido decir que el
+     código no existe.
+  Queda pendiente (menor): **reconciliar los SKU escritos a mano** que no casen. Ya no hace falta un informe
+  aparte — la propia ficha lo señala al abrirla.
 - **Ficha técnica — sin versionado.** Sustituir la foto o un documento pisa el anterior. Nadie ha pedido
   conservar históricos y hacerlo multiplicaría el almacenamiento sin beneficio conocido.
 - ~~**Ficha técnica — el límite de subida responde 500.**~~ — **RESUELTO 2026-08-09.** Una rama de
