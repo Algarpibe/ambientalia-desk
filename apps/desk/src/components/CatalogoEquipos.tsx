@@ -5,6 +5,7 @@ import {
   ETIQUETA_COLUMNA, PREF_POR_DEFECTO, normalizarPref, moverColumna, columnasVisibles,
   type ColumnaCatalogo, type PrefColumnas,
 } from '../lib/columnasCatalogo'
+import { cambiosFicha, hayCambios } from '../lib/fichaModelo'
 
 /** Dónde se guarda la preferencia de columnas. Mismo patrón que el resto de ajustes de vista. */
 const CLAVE_COLUMNAS = 'catalogo:columnas'
@@ -80,11 +81,14 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
    * conteo exacto ("En uso por 3 equipos. Desactívalo en lugar de borrarlo."): esta pantalla los
    * enseña TAL CUAL en la franja de arriba, así que ninguna acción usa `alert()` para su error — eso
    * los escondería detrás de un cuadro nativo en vez de dejarlos leíbles y quietos en pantalla.
+   *
+   * Devuelve si la acción salió adelante. Quien solo escribe puede ignorarlo; lo necesita quien tenga
+   * que decidir DESPUÉS —la ficha, para no cantar «guardada correctamente» sobre un error.
    */
-  async function ejecutar(accion: () => Promise<void>) {
+  async function ejecutar(accion: () => Promise<void>): Promise<boolean> {
     setError(null)
-    try { await accion() }
-    catch (e) { setError(e instanceof Error ? e.message : String(e)) }
+    try { await accion(); return true }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); return false }
   }
 
   /**
@@ -99,25 +103,24 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
    * mano, así que la pregunta es genérica y el número real —el que de verdad cambió— se enseña
    * después, en el aviso, con el que devuelve el servidor.
    */
-  async function fijarTipoModelo(modelo: CatalogoModelo, tipoId: string | null, discrepanEstimado: number | null) {
+  async function fijarTipoModelo(modelo: CatalogoModelo, tipoId: string | null, discrepanEstimado: number | null): Promise<boolean> {
     const etiqueta = `${marcaPorId.get(modelo.marcaId)?.nombre ?? '?'} ${modelo.nombre}`
     if (tipoId === null) {
       // Sin tipo elegido no hay nada que "corregir" en los equipos (el servidor ni lo intenta), así
       // que aquí solo se confirma la propia acción de vaciarlo.
-      if (!confirm(`${etiqueta}: ¿dejar el modelo sin tipo?`)) return
-      await ejecutar(async () => {
+      if (!confirm(`${etiqueta}: ¿dejar el modelo sin tipo?`)) return false
+      return ejecutar(async () => {
         await actualizarModeloCatalogo(modelo.id, { tipoId: null })
         setAviso(`${etiqueta}: se quitó el tipo.`)
         reload()
       })
-      return
     }
     const tipoNombre = catalogo?.tipos.find((t) => t.id === tipoId)?.nombre ?? ''
     const pregunta = discrepanEstimado
       ? `${etiqueta}: ${discrepanEstimado} equipo(s) ya registrados declaran otro tipo. ¿Corregirlos también a "${tipoNombre}"? Cancelar deja el tipo del modelo fijado, pero esos equipos sin tocar.`
       : `${etiqueta}: fijar el tipo a "${tipoNombre}". Si algún equipo ya registrado declara otro tipo, ¿quieres corregirlo también?`
     const corregir = confirm(pregunta)
-    await ejecutar(async () => {
+    return ejecutar(async () => {
       const { discrepan } = await actualizarModeloCatalogo(modelo.id, { tipoId, corregirEquipos: corregir })
       setAviso(
         corregir
@@ -436,6 +439,7 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
           etiqueta={`${marcaPorId.get(fichaModelo.marcaId)?.nombre ?? '?'} ${fichaModelo.nombre}`}
           tipos={catalogo?.tipos ?? []}
           onFijarTipo={(tipoId) => fijarTipoModelo(fichaModelo, tipoId, null)}
+          onGuardado={reload}
           onClose={() => setFichaModelo(null)}
         />
       )}
@@ -507,19 +511,33 @@ function NuevaEntradaModal({ seccion, catalogo, onClose, onCreated }: {
  * más: SKU, foto y documentos cuelgan del modelo (35), no del equipo (354), y esta es la única
  * pantalla que los administra — `FichaTecnica` (hoja de vida y ticket) es de solo lectura.
  */
-function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
+function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, onClose }: {
   modelo: CatalogoModelo
   etiqueta: string
   tipos: CatalogoTipo[]
-  /** Delegado al padre: arrastra la confirmación de corregir los equipos que declaren otro tipo. */
-  onFijarTipo: (tipoId: string | null) => Promise<void>
+  /**
+   * Delegado al padre: arrastra la confirmación de corregir los equipos que declaren otro tipo.
+   * Devuelve si llegó a aplicarse — la pregunta de «¿dejar el modelo sin tipo?» se puede cancelar.
+   */
+  onFijarTipo: (tipoId: string | null) => Promise<boolean>
+  /** Recarga el catálogo de detrás, para que la tabla enseñe el tipo, el SKU y la foto recién guardados. */
+  onGuardado: () => void
   onClose: () => void
 }) {
   const [ficha, setFicha] = useState<FichaModelo | null>(null)
   // El tipo se guarda en estado local: tras fijarlo, el padre recarga el catálogo pero el `modelo` que
   // este modal recibió sigue siendo el objeto viejo, así que sin esto el selector volvería atrás.
   const [tipoId, setTipoId] = useState(modelo.tipoId ?? '')
+  // Y aparte, el tipo tal como está GUARDADO. Desde que el tipo se aplica al pulsar Guardar y no al
+  // elegirlo, el desplegable ya no es la verdad: hace falta contra qué comparar para saber si cambió.
+  const [tipoGuardado, setTipoGuardado] = useState<string | null>(modelo.tipoId ?? null)
   const [sku, setSku] = useState('')
+  // La foto ya no se sube al elegirla: espera aquí hasta Guardar, como el tipo y el SKU.
+  const [fotoPendiente, setFotoPendiente] = useState<File | null>(null)
+  // Un `<input type="file">` no se puede vaciar por props. Cambiar su `key` lo remonta, y es lo que
+  // hace que tras guardar deje de enseñar el nombre de un archivo que ya está subido.
+  const [fotoInput, setFotoInput] = useState(0)
+  const [mensaje, setMensaje] = useState<string | null>(null)
   const [articulos, setArticulos] = useState<ArticuloLite[]>([])
   const [articulosOpen, setArticulosOpen] = useState(false)
   const [listaArticulos, setListaArticulos] = useState<ArticuloModelo[]>([])
@@ -538,6 +556,16 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
     buscarArticulos(sku).then((r) => { if (alive) setArticulos(r) }).catch(() => {})
     return () => { alive = false }
   }, [sku])
+
+  // Vista previa de la foto elegida pero aún sin subir. El `revoke` no es opcional: sin él, cada foto
+  // que se prueba deja su blob retenido mientras la pestaña siga abierta.
+  const [vistaPrevia, setVistaPrevia] = useState<string | null>(null)
+  useEffect(() => {
+    if (!fotoPendiente) { setVistaPrevia(null); return }
+    const url = URL.createObjectURL(fotoPendiente)
+    setVistaPrevia(url)
+    return () => URL.revokeObjectURL(url)
+  }, [fotoPendiente])
 
   async function recargarArticulos() {
     const [arts, cats] = await Promise.all([getArticulosModelo(modelo.id), getCategoriasModelo(modelo.id)])
@@ -603,26 +631,56 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
   }, [modelo.id])
 
-  /** Igual que `ejecutar` en el componente padre: el error del servidor se enseña tal cual, sin `alert()`. */
-  async function ejecutar(accion: () => Promise<void>) {
+  /**
+   * Igual que `ejecutar` en el componente padre: el error del servidor se enseña tal cual, sin
+   * `alert()`, y devuelve si la acción salió adelante.
+   */
+  async function ejecutar(accion: () => Promise<void>): Promise<boolean> {
     setError(null); setBusy(true)
-    try { await accion() }
-    catch (e) { setError(e instanceof Error ? e.message : String(e)) }
+    try { await accion(); return true }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); return false }
     finally { setBusy(false) }
   }
 
-  async function guardarSku() {
-    await ejecutar(async () => {
-      await actualizarModeloCatalogo(modelo.id, { sku: sku.trim() || null })
-      await recargar()
-    })
-  }
+  const pendientes = cambiosFicha(
+    { tipoId: tipoGuardado, sku: ficha?.sku ?? null },
+    { tipoId, sku, fotoPendiente: fotoPendiente !== null },
+  )
 
-  async function subirFoto(archivo: File) {
-    await ejecutar(async () => {
-      await subirDocumento(modelo.id, 'foto', archivo.name, archivo)
+  /**
+   * Guarda de una vez los tres campos de la ficha: tipo, foto y SKU.
+   *
+   * Antes cada uno se aplicaba por su cuenta —el tipo al elegirlo, la foto al soltarla, el SKU con su
+   * propio botón—, y el único «Guardar» de la pantalla solo servía para el SKU. Un botón que guarda un
+   * campo de tres es una trampa: parece que guarda la ficha.
+   *
+   * Solo se manda lo que de verdad cambió (`cambiosFicha`), así que abrir la ficha, tocar la foto y
+   * guardar no reescribe el SKU ni vuelve a preguntar por los equipos del tipo.
+   */
+  async function guardarFicha() {
+    if (!hayCambios(pendientes)) return
+    setMensaje(null)
+    // El tipo va aparte y primero: lo aplica el PADRE, que es quien arrastra la pregunta de corregir
+    // los equipos que declaren otro tipo. Y se puede cancelar, así que el desplegable vuelve atrás.
+    if ('tipoId' in pendientes) {
+      const aplicado = await onFijarTipo(pendientes.tipoId ?? null)
+      if (!aplicado) { setTipoId(tipoGuardado ?? ''); return }
+      setTipoGuardado(pendientes.tipoId ?? null)
+    }
+    const ok = await ejecutar(async () => {
+      if ('sku' in pendientes) await actualizarModeloCatalogo(modelo.id, { sku: pendientes.sku ?? null })
+      // La foto se sube la última: es lo más lento y lo único que puede reventar por tamaño, y así un
+      // 413 no deja el tipo y el SKU sin aplicar.
+      if (pendientes.foto && fotoPendiente) await subirDocumento(modelo.id, 'foto', fotoPendiente.name, fotoPendiente)
+      setFotoPendiente(null)
+      setFotoInput((n) => n + 1)
       await recargar()
     })
+    if (!ok) return
+    // La tabla de detrás enseña tipo, SKU, nombre y categoría del artículo, y la miniatura: sin esto
+    // habría que cerrar la ficha y volver a entrar para ver lo que se acaba de guardar.
+    onGuardado()
+    setMensaje('Ficha técnica guardada correctamente')
   }
 
   async function eliminarDocumento(docId: string) {
@@ -638,12 +696,21 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
   return (
     <div className="fixed inset-0 z-[85] bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-5 w-[600px] max-h-[90vh] overflow-y-auto flex flex-col gap-5">
-        <div className="flex items-center justify-between">
+        {/* El botón vive aquí arriba, junto al título, y no dentro de un campo: guarda la ficha entera,
+            así que colgarlo del SKU volvería a sugerir que solo guarda ese. */}
+        <div className="flex items-center justify-between gap-3">
           <h3 className="text-[15px] font-bold text-slate-800">Ficha técnica · {etiqueta}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><span className="material-symbols-outlined">close</span></button>
+          <div className="flex items-center gap-2">
+            <button onClick={guardarFicha} disabled={busy || !hayCambios(pendientes)}
+              className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">
+              {busy ? 'Guardando…' : 'Guardar'}
+            </button>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><span className="material-symbols-outlined">close</span></button>
+          </div>
         </div>
 
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
+        {mensaje && <div className="text-[12px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded p-2">{mensaje}</div>}
 
         {!ficha ? (
           <div className="text-center text-slate-400 text-[13px] py-6">Cargando…</div>
@@ -652,12 +719,44 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
             <section>
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tipo</h4>
               {/* El tipo se edita aquí y no en la tabla: allí eran 35 desplegables abiertos a la vez, y
-                  cambiar el tipo de un modelo puede arrastrar la corrección de sus equipos. */}
+                  cambiar el tipo de un modelo puede arrastrar la corrección de sus equipos. Elegirlo ya
+                  no lo aplica: espera a Guardar, con la foto y el SKU. */}
               <select className={`${field} w-full`} value={tipoId}
-                onChange={async (e) => { const v = e.target.value; setTipoId(v); await onFijarTipo(v || null) }}>
+                onChange={(e) => { setTipoId(e.target.value); setMensaje(null) }}>
                 <option value="">Sin tipo</option>
                 {tipos.filter((t) => t.activo || t.id === modelo.tipoId).map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
               </select>
+            </section>
+
+            {/* La foto va con el tipo y el SKU, y no al final entre los documentos: los tres son los
+                campos que cubre «Guardar», y tenerlos juntos es lo que hace evidente qué guarda. */}
+            <section>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Foto</h4>
+              {vistaPrevia ? (
+                <img src={vistaPrevia} alt="Foto elegida, sin guardar"
+                  className="w-[120px] h-[120px] object-contain rounded border border-amber-300 mb-2" />
+              ) : ficha.foto ? (
+                <img
+                  src={ficha.foto.url ?? urlDocumento(modelo.id, ficha.foto.id)}
+                  alt={ficha.foto.nombre}
+                  className="w-[120px] h-[120px] object-contain rounded border border-slate-200 mb-2"
+                />
+              ) : (
+                <p className="text-[12px] text-slate-400 mb-2">Todavía sin foto.</p>
+              )}
+              <input
+                key={fotoInput}
+                type="file"
+                accept="image/*"
+                disabled={busy}
+                onChange={(e) => { setFotoPendiente(e.target.files?.[0] ?? null); setMensaje(null) }}
+                className="text-[12px]"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                {fotoPendiente
+                  ? 'Elegida, sin guardar todavía: se sube al pulsar Guardar.'
+                  : 'Subir una nueva sustituye la anterior: no se acumulan.'}
+              </p>
             </section>
 
             <section>
@@ -667,14 +766,14 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
                   <input className={`${field} w-full`} placeholder="Busca por código o nombre del artículo" value={sku}
                     onFocus={() => setArticulosOpen(true)} onBlur={() => setArticulosOpen(false)}
                     onKeyDown={(e) => { if (e.key === 'Escape') setArticulosOpen(false) }}
-                    onChange={(e) => { setSku(e.target.value); setArticulosOpen(true) }} />
+                    onChange={(e) => { setSku(e.target.value); setArticulosOpen(true); setMensaje(null) }} />
                   {articulosOpen && articulos.length > 0 && (
                     // `onMouseDown` con preventDefault: sin él, el blur del input cierra la lista antes
                     // de que el clic llegue al botón. Mismo patrón que el buscador de clientes.
                     <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
                       {articulos.map((a) => (
                         <li key={a.id}>
-                          <button type="button" onClick={() => { setSku(a.sku); setArticulos([]); setArticulosOpen(false) }}
+                          <button type="button" onClick={() => { setSku(a.sku); setArticulos([]); setArticulosOpen(false); setMensaje(null) }}
                             className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
                             <span className="font-bold">{a.sku}</span> · {a.nombre}
                             {a.categoria ? <span className="text-slate-400"> · {a.categoria}</span> : null}
@@ -684,7 +783,6 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
                     </ul>
                   )}
                 </div>
-                <button onClick={guardarSku} disabled={busy} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Guardar</button>
               </div>
               {/* El estado se lee de `ficha`, o sea de lo GUARDADO, no de lo que hay tecleado: mientras
                   escribes no tiene sentido decir que el código no existe. */}
@@ -776,27 +874,6 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onClose }: {
                 </select>
                 <button onClick={anadirLibre} disabled={busy || !libre.trim()} className="border border-slate-200 px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Añadir</button>
               </div>
-            </section>
-
-            <section>
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Foto</h4>
-              {ficha.foto ? (
-                <img
-                  src={ficha.foto.url ?? urlDocumento(modelo.id, ficha.foto.id)}
-                  alt={ficha.foto.nombre}
-                  className="w-[120px] h-[120px] object-contain rounded border border-slate-200 mb-2"
-                />
-              ) : (
-                <p className="text-[12px] text-slate-400 mb-2">Todavía sin foto.</p>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                disabled={busy}
-                onChange={(e) => { const archivo = e.target.files?.[0]; e.target.value = ''; if (archivo) subirFoto(archivo) }}
-                className="text-[12px]"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">Subir una nueva sustituye la anterior: no se acumulan.</p>
             </section>
 
             <section>
