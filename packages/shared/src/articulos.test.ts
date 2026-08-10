@@ -6,7 +6,7 @@ describe('clasePropuesta', () => {
   // dos». Se propone consumible por ser el caso frecuente, y el humano lo cambia de un clic.
   it('propone accesorio para las categorías «Opcional …» y consumible para las «C&R …»', () => {
     expect(clasePropuesta('Opcional AP Series')).toBe('accesorio')
-    expect(clasePropuesta('C&R EDM 180')).toBe('consumible')
+    expect(clasePropuesta('C&R EDM 180')).toBe('consumible_repuesto')
   })
 
   // Las categorías sin prefijo son el equipo en sí, alquileres o catálogo general: no dicen nada sobre
@@ -21,7 +21,7 @@ describe('clasePropuesta', () => {
   // El prefijo se compara sin distinguir mayúsculas ni espacios sobrantes: son categorías tecleadas por
   // personas en Books, no un enumerado.
   it('reconoce el prefijo aunque cambie la caja o sobren espacios', () => {
-    expect(clasePropuesta('  c&r ocma-500')).toBe('consumible')
+    expect(clasePropuesta('  c&r ocma-500')).toBe('consumible_repuesto')
     expect(clasePropuesta('OPCIONAL NANO')).toBe('accesorio')
   })
 

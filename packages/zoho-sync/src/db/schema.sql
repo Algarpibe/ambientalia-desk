@@ -374,3 +374,17 @@ CREATE TABLE IF NOT EXISTS public.catalogo_articulos (
 -- El unico va sobre (modelo_id, clase, nombre) y NO sobre item_id: en los de texto libre item_id es NULL, y dos NULL no colisionan en SQL, asi que no impediria repetir Manuales diez veces
 CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogo_articulos_unico ON public.catalogo_articulos (modelo_id, clase, nombre);
 CREATE INDEX IF NOT EXISTS idx_catalogo_articulos_modelo ON public.catalogo_articulos (modelo_id);
+
+-- Las categorias de Books asignadas a un modelo. Es la REGLA de la que se DERIVA su lista de articulos, en vez de copiarlos: un modelo AP lleva "Opcional AP Series" de accesorios y "C&R AP Series" + "C&R APMA-370" de consumibles/repuestos
+-- Guardar la regla y no la copia es lo que hace que la lista se mantenga sola: un articulo nuevo en esa categoria de Books aparece en todos los modelos que la tengan asignada, sin que nadie toque Desk
+-- Varias categorias por clase es el caso NORMAL (la de la serie mas la del modelo), no un borde
+CREATE TABLE IF NOT EXISTS public.catalogo_modelo_categorias (
+  id text PRIMARY KEY,
+  modelo_id text NOT NULL,
+  clase text NOT NULL,
+  categoria text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+-- La misma categoria dos veces en la misma clase no aporta nada y duplicaria cada uno de sus articulos
+CREATE UNIQUE INDEX IF NOT EXISTS idx_modelo_categorias_unico ON public.catalogo_modelo_categorias (modelo_id, clase, categoria);
+CREATE INDEX IF NOT EXISTS idx_modelo_categorias_modelo ON public.catalogo_modelo_categorias (modelo_id);

@@ -7,7 +7,7 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido } from '../db/catalogoArticulos'
+import { listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
 import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
@@ -141,10 +141,41 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
   // ── Artículos del modelo: accesorios, consumibles y repuestos ──────────────────────────────────
   // Leer: cualquier sesión (el técnico que prepara una remisión tiene que ver qué lleva el equipo).
   // Escribir: solo super administrador, como el resto del catálogo maestro.
+  // La lista REAL del modelo: lo que derivan sus categorías de Books más los añadidos a mano. No es la
+  // tabla `catalogo_articulos` en crudo — esa solo guarda los manuales.
   app.get('/api/catalogo/modelos/:id/articulos', requireAuth(db), asyncHandler(async (req, res) => {
     const modeloId = String(req.params.id)
     if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
-    res.json(await listarArticulos(db, modeloId))
+    res.json(await listarArticulosDeModelo(db, modeloId, { incluirInactivos: true }))
+  }))
+
+  app.get('/api/catalogo/modelos/:id/categorias', requireAuth(db), asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    res.json(await listarCategorias(db, modeloId))
+  }))
+
+  app.post('/api/catalogo/modelos/:id/categorias', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    const b = (req.body ?? {}) as Record<string, unknown>
+    const clase = String(b.clase ?? '')
+    if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
+    const categoria = String(b.categoria ?? '').trim()
+    if (!categoria) { res.status(422).json({ error: 'La categoría es obligatoria' }); return }
+    try {
+      res.status(201).json({ id: await asignarCategoria(db, modeloId, clase, categoria) })
+    } catch (e) {
+      if (e instanceof CategoriaRepetida) { res.status(409).json({ error: e.message }); return }
+      throw e
+    }
+  }))
+
+  // Quitar la categoría retira de golpe todos los artículos que aportaba: es la contrapartida de que la
+  // lista se derive en vez de copiarse.
+  app.delete('/api/catalogo/categorias/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    await quitarCategoria(db, String(req.params.id))
+    res.status(204).end()
   }))
 
   app.post('/api/catalogo/modelos/:id/articulos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {

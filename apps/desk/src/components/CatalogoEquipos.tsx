@@ -4,10 +4,10 @@ import { TIPOS_DOCUMENTO, CLASES_ARTICULO, clasePropuesta } from '@ambientalia/s
 
 /** En singular para los selectores, en plural para los encabezados de cada lista. */
 const ETIQUETA_CLASE: Record<ClaseArticulo, string> = {
-  accesorio: 'Accesorio', consumible: 'Consumible', repuesto: 'Repuesto',
+  accesorio: 'Accesorio', consumible_repuesto: 'Consumible o repuesto',
 }
 const ETIQUETA_CLASE_PLURAL: Record<ClaseArticulo, string> = {
-  accesorio: 'Accesorios', consumible: 'Consumibles', repuesto: 'Repuestos',
+  accesorio: 'Accesorios', consumible_repuesto: 'Consumibles y repuestos',
 }
 import {
   getCatalogo, getConflictosCatalogo,

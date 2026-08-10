@@ -144,6 +144,30 @@ describe('migrate', () => {
     expect((await db.query('SELECT count(*)::int AS n FROM catalogo_articulos')).rows[0].n).toBe(2)
   })
 
+  /**
+   * Las categorías de Books asignadas a un modelo. Son la REGLA de la que se deriva su lista de
+   * artículos: un modelo AP lleva `Opcional AP Series` como accesorios y `C&R AP Series` + `C&R
+   * APMA-370` como consumibles/repuestos. Guardar la regla en vez de copiar los artículos es lo que
+   * hace que la lista se mantenga sola cuando Books cambia.
+   */
+  it('crea catalogo_modelo_categorias y admite varias categorías por clase', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','APMA-370')")
+    await db.query("INSERT INTO catalogo_modelo_categorias (id,modelo_id,clase,categoria) VALUES ('cat-1','cmod-1','accesorio','Opcional AP Series')")
+    // Dos de la misma clase: la de la serie y la del modelo concreto. Es el caso normal, no un borde.
+    await db.query("INSERT INTO catalogo_modelo_categorias (id,modelo_id,clase,categoria) VALUES ('cat-2','cmod-1','consumible_repuesto','C&R AP Series')")
+    await db.query("INSERT INTO catalogo_modelo_categorias (id,modelo_id,clase,categoria) VALUES ('cat-3','cmod-1','consumible_repuesto','C&R APMA-370')")
+
+    const r = await db.query('SELECT clase, categoria FROM catalogo_modelo_categorias WHERE modelo_id=$1 ORDER BY id', ['cmod-1'])
+    expect(r.rows.map((x: { categoria: string }) => x.categoria)).toEqual(['Opcional AP Series', 'C&R AP Series', 'C&R APMA-370'])
+
+    // La misma categoría dos veces en la misma clase no aporta nada y duplicaría cada artículo.
+    await expect(
+      db.query("INSERT INTO catalogo_modelo_categorias (id,modelo_id,clase,categoria) VALUES ('cat-4','cmod-1','consumible_repuesto','C&R AP Series')"),
+    ).rejects.toThrow()
+  })
+
   it('crea catalogo_documentos y catalogo_modelos.sku', async () => {
     const db = await freshDb()
     await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Horiba')")

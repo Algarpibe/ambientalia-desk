@@ -36,6 +36,24 @@ export async function searchArticulos(db: Queryable, q: string, limit = 20): Pro
 }
 
 /**
+ * Las categorías de Books que tienen algún artículo activo, con su conteo.
+ *
+ * Se devuelven **todas**, no solo las de prefijo `C&R` y `Opcional`: hay artículos relevantes en
+ * `Accesorios`, `Meteorología` o `Kunak Air Series`, y limitar la lista a los dos prefijos dejaría
+ * modelos sin poder configurarse — el Kunak AIR Pro, por ejemplo.
+ */
+export async function categoriasDisponibles(db: Queryable): Promise<Array<{ categoria: string; articulos: number }>> {
+  const r = await db.query(
+    `SELECT category_name AS categoria, COUNT(*)::int AS articulos FROM books.items
+      WHERE COALESCE(status,'active') = 'active' AND COALESCE(category_name,'') <> ''
+      GROUP BY category_name ORDER BY category_name`,
+  )
+  return (r.rows as Array<Record<string, unknown>>).map((x) => ({
+    categoria: String(x.categoria), articulos: Number(x.articulos),
+  }))
+}
+
+/**
  * El artículo por su `item_id` de Books. NO filtra por estado, igual que `getArticuloPorSku`: quien
  * pasa un id lo eligió antes de una lista, y que el artículo se retire después no debe romper el alta.
  */

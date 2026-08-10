@@ -183,26 +183,51 @@ export interface UserPublic {
 }
 
 /**
- * Para qué sirve un artículo dentro de un modelo. Es un discriminador, no tres listas distintas: los
- * tres tienen la misma forma y solo cambia su uso — el accesorio se verifica al recibir y devolver el
- * equipo, el consumible se repone, el repuesto se cambia.
+ * Para qué sirve un artículo dentro de un modelo.
  *
- * Zoho Books **no** separa consumible de repuesto (los junta bajo la categoría `C&R …`), así que esa
- * distinción la aporta quien da de alta el artículo; de Books solo se propone un valor de partida.
+ * Son **dos** y no tres: consumible y repuesto van juntos, por decisión del usuario (2026-08-10) y
+ * porque Zoho Books tampoco los separa — los agrupa bajo la categoría `C&R …`. Separarlos obligaba a
+ * clasificar a mano una distinción que ni el catálogo de origen hace.
+ *
+ * El accesorio se verifica al recibir y devolver el equipo (es el checklist «Incluye» de la remisión);
+ * el consumible/repuesto se repone o se cambia durante el servicio.
  */
-export const CLASES_ARTICULO = ['accesorio', 'consumible', 'repuesto'] as const
+export const CLASES_ARTICULO = ['accesorio', 'consumible_repuesto'] as const
 export type ClaseArticulo = (typeof CLASES_ARTICULO)[number]
 
-/** Un artículo que lleva un modelo. Sin `itemId` es un ítem de texto libre, no vendible en Books. */
+/** De dónde sale un artículo de la lista de un modelo. */
+export type OrigenArticulo = 'categoria' | 'manual'
+
+/**
+ * Un artículo que lleva un modelo.
+ *
+ * La mayoría se **derivan** de las categorías de Books asignadas al modelo (`origen: 'categoria'`), y
+ * por eso se actualizan solos: un artículo nuevo en `C&R AP Series` aparece en todos los AP sin que
+ * nadie toque Desk. Los `manual` son los añadidos a mano — típicamente lo que no existe en Books, como
+ * «Repuestos reemplazados», que es una casilla de verificación y no algo que se venda.
+ */
 export interface ArticuloModelo {
+  /** Id en `catalogo_articulos` si es manual; el `item_id` de Books si viene de una categoría. */
   id: string
   clase: ClaseArticulo
-  /** `books.items.item_id`. Ausente en los ítems de texto libre («Manuales», «Pletinas (par)»). */
+  origen: OrigenArticulo
+  /** `books.items.item_id`. Ausente solo en los manuales de texto libre. */
   itemId?: string
   sku?: string
   nombre: string
+  /** La categoría de Books de la que salió. Solo en los derivados. */
+  categoria?: string
   orden: number
   activo: boolean
+}
+
+/** Una categoría de Books asignada a un modelo: la regla que deriva su lista de artículos. */
+export interface CategoriaModelo {
+  id: string
+  clase: ClaseArticulo
+  categoria: string
+  /** Cuántos artículos activos de Books tiene hoy esa categoría. */
+  articulos: number
 }
 
 /**

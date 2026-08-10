@@ -16,7 +16,7 @@ import type { ClaseArticulo } from './types'
  */
 export function clasePropuesta(categoria: string | null | undefined): ClaseArticulo {
   const c = (categoria ?? '').trim().toLowerCase()
-  if (c.startsWith('c&r ')) return 'consumible'
+  if (c.startsWith('c&r ')) return 'consumible_repuesto'
   if (c.startsWith('opcional ')) return 'accesorio'
   return 'accesorio'
 }

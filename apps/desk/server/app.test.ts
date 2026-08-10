@@ -1285,12 +1285,64 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
     const { app } = appWith()
 
     const res = await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
-      .send({ clase: 'consumible', itemId: 'i1', sku: 'INVENTADO', nombre: 'Nombre inventado' })
+      .send({ clase: 'consumible_repuesto', itemId: 'i1', sku: 'INVENTADO', nombre: 'Nombre inventado' })
     expect(res.status).toBe(201)
 
     const lista = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
     expect(lista.body).toEqual([
-      { id: expect.any(String), clase: 'consumible', itemId: 'i1', sku: 'F-001', nombre: 'Filtro PM10', orden: 0, activo: true },
+      { id: expect.any(String), clase: 'consumible_repuesto', origen: 'manual', itemId: 'i1', sku: 'F-001', nombre: 'Filtro PM10', orden: 0, activo: true },
+    ])
+  })
+
+  /**
+   * El corazón del rediseño: el modelo guarda las CATEGORÍAS que le aplican y la lista se deriva de
+   * Books. Un APMA-370 lleva `Opcional AP Series` de accesorios y `C&R AP Series` + `C&R APMA-370` de
+   * consumibles/repuestos — la de la serie y la del modelo, sumadas.
+   */
+  it('asigna categorías al modelo y deriva de ellas la lista de artículos', async () => {
+    const cookie = await adminCookie()
+    await prepararModelo()
+    await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i2','Maletín','M-1','Opcional AP Series','active')")
+    await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i3','Filtro de serie','S-1','C&R AP Series','active')")
+    const { app } = appWith()
+    const asignar = (clase: string, categoria: string) =>
+      request(app).post('/api/catalogo/modelos/cmod-1/categorias').set('Cookie', cookie).send({ clase, categoria })
+
+    expect((await asignar('accesorio', 'Opcional AP Series')).status).toBe(201)
+    expect((await asignar('consumible_repuesto', 'C&R AP Series')).status).toBe(201)
+    expect((await asignar('consumible_repuesto', 'C&R AP Series')).status).toBe(409) // repetida
+
+    const cats = await request(app).get('/api/catalogo/modelos/cmod-1/categorias').set('Cookie', cookie)
+    expect(cats.body).toEqual([
+      { id: expect.any(String), clase: 'accesorio', categoria: 'Opcional AP Series', articulos: 1 },
+      { id: expect.any(String), clase: 'consumible_repuesto', categoria: 'C&R AP Series', articulos: 1 },
+    ])
+
+    const lista = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
+    expect(lista.body.map((a: { sku: string; origen: string }) => [a.sku, a.origen]).sort())
+      .toEqual([['M-1', 'categoria'], ['S-1', 'categoria']])
+
+    // Quitar la categoría retira sus artículos: no hay que borrarlos uno a uno.
+    const idCat = cats.body.find((c: { clase: string }) => c.clase === 'accesorio').id
+    expect((await request(app).delete(`/api/catalogo/categorias/${idCat}`).set('Cookie', cookie)).status).toBe(204)
+    expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)).body.map((a: { sku: string }) => a.sku)).toEqual(['S-1'])
+  })
+
+  // El selector necesita saber qué categorías existen. Se ofrecen TODAS, no solo las de prefijo `C&R`
+  // y `Opcional`: hay artículos relevantes en `Accesorios`, `Meteorología` o `Kunak Air Series`.
+  it('lista las categorías disponibles de Books con su conteo', async () => {
+    const cookie = await adminCookie()
+    await prepararModelo()
+    await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i2','Tubo','T-1','Accesorios','active')")
+    await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i3','Viejo','V-1','Accesorios','inactive')")
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/articulos/categorias').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    // Solo cuenta los activos, que son los que la lista derivada acabará mostrando.
+    expect(res.body).toEqual([
+      { categoria: 'Accesorios', articulos: 1 },
+      { categoria: 'C&R EDM 180', articulos: 1 },
     ])
   })
 
@@ -1316,7 +1368,7 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
 
     expect((await alta({ clase: 'inventada', nombre: 'X' })).status).toBe(422)
     expect((await alta({ clase: 'accesorio', nombre: '   ' })).status).toBe(422)
-    expect((await alta({ clase: 'consumible', itemId: 'no-existe' })).status).toBe(422)
+    expect((await alta({ clase: 'consumible_repuesto', itemId: 'no-existe' })).status).toBe(422)
     expect((await alta({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(201)
     expect((await alta({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(409)
   })
@@ -1326,12 +1378,12 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
     await prepararModelo()
     const { app } = appWith()
     const creado = await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
-      .send({ clase: 'consumible', itemId: 'i1' })
+      .send({ clase: 'consumible_repuesto', itemId: 'i1' })
     const id = creado.body.id
 
-    expect((await request(app).patch(`/api/catalogo/articulos/${id}`).set('Cookie', cookie).send({ clase: 'repuesto', activo: false })).status).toBe(200)
+    expect((await request(app).patch(`/api/catalogo/articulos/${id}`).set('Cookie', cookie).send({ clase: 'accesorio', activo: false })).status).toBe(200)
     const tras = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
-    expect(tras.body[0]).toMatchObject({ clase: 'repuesto', activo: false })
+    expect(tras.body[0]).toMatchObject({ clase: 'accesorio', activo: false })
 
     expect((await request(app).delete(`/api/catalogo/articulos/${id}`).set('Cookie', cookie)).status).toBe(204)
     expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)).body).toEqual([])

@@ -1,6 +1,6 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { searchArticulos, searchClients, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
+import { searchArticulos, categoriasDisponibles, searchClients, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
 import { getContacts, getAccounts, getContactDetail, getAccountDetail } from '../db/directory'
 import { getAllActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth } from '../auth/middleware'
@@ -19,6 +19,13 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
   // será la misma fuente de la futura gestión de accesorios/consumibles/repuestos por modelo.
   app.get('/api/articulos', requireAuth(db), asyncHandler(async (req, res) => {
     res.json(await searchArticulos(db, String(req.query.search ?? '')))
+  }))
+
+  // Las categorías con las que se configuran los artículos de un modelo. Se ofrecen TODAS y no solo las
+  // de prefijo `C&R`/`Opcional`: hay artículos relevantes en `Accesorios`, `Meteorología` o
+  // `Kunak Air Series`, y filtrar por prefijo dejaría modelos sin poder configurarse.
+  app.get('/api/articulos/categorias', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await categoriasDisponibles(db))
   }))
 
   app.get('/api/sales-orders', requireAuth(db), asyncHandler(async (req, res) => {
