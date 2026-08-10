@@ -1802,6 +1802,26 @@ describe('POST /api/admin/backfill-client-id (admin)', () => {
   })
 })
 
+// Convierte ~700 filas de tecleo en revisión: copia a cada modelo el checklist del perfil que hoy le
+// aplica. Se dispara a mano una vez, como el resto de siembras.
+describe('POST /api/admin/seed-articulos (admin)', () => {
+  it('siembra los accesorios por modelo; 403 no-admin; 401 sin sesión', async () => {
+    const admin = await adminCookie()
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','EDM180C')")
+    await db.query("INSERT INTO remision_checklist (perfil,item,orden) VALUES ('grimm_edm180','Manuales',0)")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/admin/seed-articulos').set('Cookie', admin)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ modelos: 1, insertados: 1, existentes: 0 })
+
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/seed-articulos').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/seed-articulos')).status).toBe(401)
+  })
+})
+
 describe('POST /api/admin/backfill-archived (admin)', () => {
   it('admin arranca; 403 no-admin; 401 sin sesión', async () => {
     const admin = await adminCookie()

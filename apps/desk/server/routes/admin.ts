@@ -9,6 +9,7 @@ import { reconciliarClientesDeEquipos } from '../backfillClientId'
 import { seedChecklist } from '../db/remisionChecklist'
 import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
 import { sembrarCatalogo } from '../db/catalogoSeed'
+import { sembrarArticulosDesdeChecklist } from '../db/articulosSeed'
 import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -86,6 +87,16 @@ export function registerAdminRoutes(
       `${r.ambiguos} ambiguos, ${r.sinCliente} sin cliente en Books, ${r.sinNombre} sin nombre`,
     )
     for (const p of r.pendientes) logger.info(`  pendiente ${p.serial} (${p.motivo}): "${p.clienteNombre}"`)
+    res.json(r)
+  }))
+
+  // Punto de partida de las listas de artículos por modelo: copia el checklist «Incluye» que hoy usa la
+  // remisión, indexado por perfil, a la lista de ACCESORIOS de cada modelo. SOLO super administrador.
+  // Sembrar no es heredar: copia una vez y después cada modelo va por su cuenta. Idempotente y no
+  // destructiva — re-ejecutarla no duplica ni reactiva lo que se haya desactivado.
+  app.post('/api/admin/seed-articulos', requireAuth(db), requireSuperAdmin, asyncHandler(async (_req, res) => {
+    const r = await sembrarArticulosDesdeChecklist(db)
+    logger.info(`Siembra de artículos por modelo: ${r.modelos} modelos, ${r.insertados} nuevos, ${r.existentes} ya existían`)
     res.json(r)
   }))
 
