@@ -45,6 +45,49 @@ async function userCookie(areas: string[]): Promise<string> {
   return `sid=${await createSession(db, u.id)}`
 }
 
+/**
+ * La lista de personas a las que se puede derivar un ticket. Vive aparte de `/api/users` a propósito:
+ * derivar lo hace CUALQUIERA que ejecute una transición, no solo un administrador, y `/api/users`
+ * publica correo, rol y áreas —el modelo de autorización entero— además de los usuarios dados de baja.
+ */
+describe('GET /api/personas', () => {
+  it('sin sesión responde 401', async () => {
+    const { app } = appWith()
+    expect((await request(app).get('/api/personas')).status).toBe(401)
+  })
+
+  it('un usuario NO administrador puede pedirla', async () => {
+    const cookie = await userCookie(['Servicio Técnico'])
+    const { app } = appWith()
+    const res = await request(app).get('/api/personas').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([{ id: expect.any(String), nombre: 'Op', cargo: null }])
+  })
+
+  // Derivar a alguien que ya no trabaja aquí es una vía muerta: el ticket queda con un responsable
+  // que nunca lo va a abrir.
+  it('no ofrece a los usuarios dados de baja', async () => {
+    const cookie = await adminCookie()
+    const baja = await createUser(db, { email: 'baja@x.co', name: 'Baja', passwordHash: await hashPassword('password123') })
+    await db.query('UPDATE users SET active = false WHERE id = $1', [baja.id])
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/personas').set('Cookie', cookie)
+    expect(res.body.map((p: { nombre: string }) => p.nombre)).toEqual(['Admin'])
+  })
+
+  /**
+   * La aserción que impide el atajo de reutilizar `listUsers`: sería una línea, funcionaría, y
+   * publicaría a todo el mundo quién es administrador y qué áreas tiene cada rol.
+   */
+  it('no publica correo, áreas ni si es administrador', async () => {
+    const cookie = await userCookie(['Comercial'])
+    const { app } = appWith()
+    const res = await request(app).get('/api/personas').set('Cookie', cookie)
+    expect(Object.keys(res.body[0]).sort()).toEqual(['cargo', 'id', 'nombre'])
+  })
+})
+
 describe('Seguridad: helmet + rate-limit', () => {
   it('helmet añade cabeceras de seguridad', async () => {
     const { app } = appWith()

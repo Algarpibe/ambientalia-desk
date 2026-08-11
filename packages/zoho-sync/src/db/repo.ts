@@ -38,6 +38,9 @@ export async function upsertAgent(db: Queryable, r: AgentRow): Promise<void> {
   )
 }
 
+// ⚠️ `derivado_a` NO está aquí a propósito, y no es un olvido: es un concepto de la app que Zoho no
+// conoce y nunca manda. Incluirla haría que cada pasada del sync la reescribiera a NULL y el ticket
+// perdiera a su responsable solo. Hay un test que lo fija («el sync de Zoho NO pisa la derivación»).
 const TICKET_COLS = [
   'id','number','subject','status','status_type','priority','classification','channel','description',
   'contact_id','account_id','assignee_id','created_time','modified_time','closed_time','onhold_time','due_date',

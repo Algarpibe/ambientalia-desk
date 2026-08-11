@@ -4,6 +4,7 @@ import { searchArticulos, categoriasDisponibles, searchClients, searchSalesOrder
 import { getContacts, getAccounts, getContactDetail, getAccountDetail } from '../db/directory'
 import { getAllActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth } from '../auth/middleware'
+import { listPersonas } from '../auth/users'
 import { asyncHandler } from '../util/asyncHandler'
 
 export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): void {
@@ -26,6 +27,15 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
   // `Kunak Air Series`, y filtrar por prefijo dejaría modelos sin poder configurarse.
   app.get('/api/articulos/categorias', requireAuth(db), asyncHandler(async (_req, res) => {
     res.json(await categoriasDisponibles(db))
+  }))
+
+  /**
+   * Las personas a las que se puede derivar un ticket. Vive aquí y no en `auth/routes.ts` porque no es
+   * administración: derivar lo hace cualquiera que ejecute una transición, igual que buscar un cliente
+   * o un artículo. `/api/users` sigue siendo de administradores y no se toca.
+   */
+  app.get('/api/personas', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await listPersonas(db))
   }))
 
   app.get('/api/sales-orders', requireAuth(db), asyncHandler(async (req, res) => {

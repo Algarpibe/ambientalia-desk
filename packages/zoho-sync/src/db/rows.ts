@@ -47,6 +47,8 @@ export interface TicketRow {
   // `SELECT *` sí las trae.
   client_id?: string | null; salesorder_id?: string | null; equipo_id?: string | null
   resolution_html?: string | null; resolution_at?: string | null; resolution_by?: string | null
+  /** Usuario de la APP al que se derivó el trabajo. Nada que ver con `assignee_id`, que es de Zoho. */
+  derivado_a?: string | null
 }
 
 export interface ConversationRow {

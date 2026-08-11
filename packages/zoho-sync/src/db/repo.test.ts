@@ -35,6 +35,23 @@ describe('repo upserts', () => {
     expect(r!.managed_by_app).toBe(true)
   })
 
+  /**
+   * La derivación es un concepto de la app: Zoho no tiene ese campo y nunca lo manda. Si `derivado_a`
+   * entrara en `TICKET_COLS`, cada pasada del sync la reescribiría a NULL y el ticket perdería a su
+   * responsable solo, sin que nadie tocara nada y sin dejar rastro. Hoy se salva porque la columna se
+   * añade por ALTER y esa lista no la incluye; este test es lo que impide que alguien «complete» la
+   * lista sin saber lo que rompe.
+   */
+  it('el sync de Zoho NO pisa la derivación del ticket', async () => {
+    await upsertTicket(db, zTicket('1', 941))
+    await db.query("UPDATE tickets SET derivado_a = 'u-1' WHERE id = '1'")
+
+    await upsertTicket(db, { ...zTicket('1', 941, 'En Proceso') })
+
+    const r = await db.query('SELECT derivado_a FROM tickets WHERE id = $1', ['1'])
+    expect((r.rows[0] as { derivado_a: string | null }).derivado_a).toBe('u-1')
+  })
+
   it('upsertAccount inserta', async () => {
     await upsertAccount(db, accountRowFromZoho({ id: 'a1', accountName: 'Gecelca' } as any))
     const r = await db.query('SELECT name FROM accounts WHERE id=$1', ['a1'])

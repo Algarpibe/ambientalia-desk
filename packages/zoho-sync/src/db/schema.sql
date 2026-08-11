@@ -115,6 +115,14 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS cargo text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS empresa text;
 
+-- A quien se derivo el ticket: el usuario de la APP al que le toca el trabajo ahora mismo.
+-- No confundir con assignee_id, que es el propietario en Zoho y viene del sync (NULL en todo ticket
+-- nacido aqui). Esta la escriben las transiciones y no la toca Zoho: por eso va por ALTER y NO entra
+-- en TICKET_COLS, la lista del upsert del sync. Es informativa, nunca un permiso ni un filtro de
+-- visibilidad (docs/modelo-autorizacion.md).
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS derivado_a text;
+CREATE INDEX IF NOT EXISTS idx_tickets_derivado ON tickets (derivado_a);
+
 CREATE SCHEMA IF NOT EXISTS books;
 
 CREATE TABLE IF NOT EXISTS books.contacts (

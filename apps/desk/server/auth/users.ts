@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { UserPublic } from '@ambientalia/shared'
+import type { UserPublic, PersonaLite } from '@ambientalia/shared'
 import { AREAS } from '@ambientalia/shared'
 
 /** Tipo interno para verificar credenciales (incluye el hash); NO se devuelve al cliente. */
@@ -58,6 +58,26 @@ export async function getUserById(db: Queryable, id: string): Promise<UserPublic
 export async function listUsers(db: Queryable): Promise<UserPublic[]> {
   const r = await db.query(`${USER_SELECT} ORDER BY u.created_at`)
   return r.rows.map(rowToPublicUser)
+}
+
+/**
+ * Las personas a las que se le puede derivar un ticket.
+ *
+ * Es una consulta APARTE de `listUsers` y no un filtro sobre ella, porque son dos cosas distintas:
+ * `listUsers` alimenta la consola de administración —trae correo, rol, áreas y los dados de baja— y
+ * esto lo pide cualquiera que ejecute una transición. Reutilizarla publicaría el modelo de
+ * autorización entero a todo el mundo por comodidad.
+ *
+ * Solo los ACTIVOS: derivar a quien ya no trabaja aquí deja el ticket con un responsable que nunca lo
+ * va a abrir.
+ */
+export async function listPersonas(db: Queryable): Promise<PersonaLite[]> {
+  const r = await db.query('SELECT id, name, cargo FROM users WHERE active = true ORDER BY name')
+  return (r.rows as Array<Record<string, unknown>>).map((x) => ({
+    id: String(x.id),
+    nombre: String(x.name),
+    cargo: (x.cargo as string | null) ?? null,
+  }))
 }
 
 export async function updateUser(
