@@ -202,7 +202,15 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
             <div>
               <label className="text-[11px] font-bold text-slate-500 uppercase">Incluye</label>
-              {!data.catalogoCargado ? (
+              {data.origenChecklist === 'modelo' && data.incluye.length === 0 ? (
+                // «Cero» NUNCA significa «este equipo no lleva accesorios»: eso nadie lo ha comprobado.
+                // Significa que a ese modelo todavía no se le ha definido la lista, y el mensaje empuja
+                // a completarla en vez de dejar remisionar sin nada creyendo que está bien.
+                <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+                  Este modelo aún no tiene definida su lista de accesorios, así que no hay nada que
+                  verificar. Se da de alta en Catálogo de equipos → ficha del modelo → Accesorios.
+                </div>
+              ) : data.origenChecklist === 'perfil' && !data.catalogoCargado ? (
                 // El catálogo sin sembrar deja `incluye` vacío igual que Kunak. Decir aquí "este equipo
                 // no tiene lista" sería falso y llevaría a remisionar sin accesorios sin saberlo.
                 <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">

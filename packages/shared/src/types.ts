@@ -568,14 +568,25 @@ export interface RemisionNueva {
    * no, ofrece buscarla —opcional, porque cuando el equipo entra la venta puede no existir todavía—.
    */
   ordenVenta: string | null
-  /** Perfil resuelto con `perfilChecklist(marca, modelo)`; determina el checklist. */
+  /**
+   * Perfil resuelto con `perfilChecklist(marca, modelo)`. Desde la fase 2 solo decide el checklist
+   * cuando el ticket NO tiene equipo enlazado; con equipo manda la lista del modelo. Sigue viajando
+   * porque la remisión lo guarda como parte del documento.
+   */
   perfil: PerfilChecklist
-  /** Ítems del checklist "Incluye" del perfil. Vacío es legítimo (Kunak no tiene). */
+  /** Ítems del checklist "Incluye". Vacío es legítimo, pero significa cosas distintas según `origenChecklist`. */
   incluye: string[]
   /**
-   * Si el catálogo de checklists llegó a sembrarse. Sin esto no se puede distinguir un perfil que
-   * de verdad no tiene lista (Kunak) de la tabla aún vacía: ambos dejan `incluye` vacío, y la app
-   * acabaría afirmando que el equipo no lleva accesorios cuando en realidad falta cargar el catálogo.
+   * De dónde salió `incluye`: de la lista de accesorios del **modelo** del equipo, o del **perfil** de
+   * siempre cuando el ticket no tiene equipo enlazado. La pantalla lo necesita para redactar el vacío:
+   * «este modelo aún no tiene lista» empuja a completarla, «no lleva accesorios» afirma algo que nadie
+   * ha comprobado.
+   */
+  origenChecklist: 'modelo' | 'perfil'
+  /**
+   * Si el catálogo de checklists llegó a sembrarse. Solo tiene sentido con `origenChecklist: 'perfil'`:
+   * ahí distingue un perfil que de verdad no tiene lista (Kunak) de la tabla aún vacía, que dejan
+   * `incluye` vacío por igual.
    */
   catalogoCargado: boolean
 }

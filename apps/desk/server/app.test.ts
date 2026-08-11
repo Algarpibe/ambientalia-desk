@@ -524,6 +524,43 @@ describe('GET /api/remisiones/nueva', () => {
     expect(res.body.incluye).toEqual(['Manuales', 'Datalogger']) // en el orden del catálogo, no alfabético
   })
 
+  /**
+   * FASE 2, de punta a punta: con el equipo enlazado a un modelo del catálogo, el checklist sale de la
+   * lista de ACCESORIOS de ese modelo y ya no del perfil. Es lo que separa a un APMA de un APSA, que
+   * compartían perfil y por tanto lista.
+   *
+   * El perfil se siembra a propósito con un ítem distinto: si apareciera en la respuesta, la
+   * conmutación no habría ocurrido y el resto de tests no lo notaría —los suyos no enlazan modelo—.
+   */
+  it('con el equipo enlazado a un modelo, el checklist sale de sus accesorios y no del perfil', async () => {
+    const cookie = await adminCookie()
+    await upsertEquipo(db, equipoRow('eq-r1', '18A20070'))
+    await db.query("INSERT INTO remision_checklist (perfil,item,orden) VALUES ('grimm_edm180','Del perfil viejo',0)")
+    await db.query("INSERT INTO catalogo_marcas (id,nombre) VALUES ('cmar-1','Grimm')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-1','cmar-1','EDM180C')")
+    await db.query(`INSERT INTO catalogo_articulos (id,modelo_id,clase,nombre,orden) VALUES
+      ('art-1','cmod-1','accesorio','Sensor 157-L',0),
+      ('art-2','cmod-1','accesorio','Cable RJ45',1),
+      ('art-3','cmod-1','consumible_repuesto','Filtro PM10',0)`)
+    await db.query("UPDATE equipos SET modelo_id='cmod-1' WHERE id='eq-r1'")
+    await conTicket('eq-r1')
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/remisiones/nueva?ticketId=t1').set('Cookie', cookie)
+    expect(res.body.origenChecklist).toBe('modelo')
+    // En el orden de la ficha, y sin el consumible: «Incluye» es lo que ACOMPAÑA al equipo.
+    expect(res.body.incluye).toEqual(['Sensor 157-L', 'Cable RJ45'])
+
+    // Y la puerta de creación valida contra la MISMA fuente. Si leyeran de sitios distintos, lo que el
+    // técnico ve marcable dejaría de ser lo que el servidor acepta.
+    const viejo = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-11', incluye: ['Del perfil viejo'] })
+    expect(viejo.status).toBe(422)
+    const nuevo = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-11', incluye: ['Cable RJ45'] })
+    expect(nuevo.status).toBe(201)
+  })
+
   // Los datos del equipo mandan sobre la copia que el ticket guardó al crearse.
   it('si el equipo se corrigió después, gana el registro del equipo', async () => {
     const cookie = await adminCookie()

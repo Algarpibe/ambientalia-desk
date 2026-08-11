@@ -4,7 +4,8 @@ import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist } from '@ambientalia/shared'
 import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
-import { getChecklist, hayChecklist } from '../db/remisionChecklist'
+import { hayChecklist } from '../db/remisionChecklist'
+import { checklistDeRemision } from '../db/checklistRemision'
 import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
@@ -51,6 +52,10 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       tipo: eq?.tipo ?? row.equipo ?? null,
     }
     const perfil = perfilChecklist(equipo.marca, equipo.modelo)
+    // FASE 2: el checklist sale de la lista de accesorios del MODELO del equipo. Al perfil solo se cae
+    // cuando el ticket no tiene equipo enlazado, que es la única forma de no dejar sin lista a los
+    // históricos que nunca se pudieron enlazar.
+    const checklist = await checklistDeRemision(db, { modeloId: eq?.modeloId ?? null, perfil })
     const payload: RemisionNueva = {
       ticketId: row.id,
       ticketNumber: String(row.number),
@@ -60,7 +65,8 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       tipoServicio: row.tipo_servicio ?? null,
       ordenVenta: row.orden_venta ?? null,
       perfil,
-      incluye: await getChecklist(db, perfil),
+      incluye: checklist.items,
+      origenChecklist: checklist.origen,
       catalogoCargado: await hayChecklist(db),
     }
     res.json(payload)
@@ -153,8 +159,10 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const modelo = eq?.modelo ?? found.row.modelo ?? null
     const perfil = perfilChecklist(marca, modelo)
 
-    // Solo se aceptan ítems que estén de verdad en el checklist del perfil.
-    const validos = new Set(await getChecklist(db, perfil))
+    // Solo se aceptan ítems que estén de verdad en el checklist. Se resuelve por la MISMA vía que al
+    // abrir el formulario: si las dos puertas no leyeran de la misma fuente, lo que el técnico ve
+    // marcable dejaría de ser lo que el servidor acepta.
+    const validos = new Set((await checklistDeRemision(db, { modeloId: eq?.modeloId ?? null, perfil })).items)
     const pedidos = Array.isArray(b.incluye) ? b.incluye.map(String) : []
     const desconocidos = pedidos.filter((i) => !validos.has(i))
     if (desconocidos.length) { res.status(422).json({ error: `Ítems fuera del checklist: ${desconocidos.join(', ')}` }); return }

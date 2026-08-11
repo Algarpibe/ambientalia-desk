@@ -215,10 +215,35 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   genérica. Los que heredaron los 27 de `otro` son modelos de **1 a 3 equipos** (CU2, VA-5001, OCMA-500/550,
   U-51, los LAQUAtwin, D-R 290…): ~57 equipos en total. `Kunak AIR Pro` salió con **0**, que es correcto —
   su formulario nunca tuvo checklist. Así que la revisión pendiente es acotada y de bajo impacto.
-  **FASE 2 pendiente:** conmutar el checklist de la remisión a `catalogo_articulos` (clase `accesorio`,
-  `soloActivos`). No hacerlo antes de que las listas estén pobladas: dejaría a TODAS las remisiones sin nada
-  que verificar. Cuando se haga, el mensaje de lista vacía ya está decidido — «modelo sin lista definida
-  todavía», accionable, nunca «no lleva accesorios».
+  ~~**FASE 2 pendiente:** conmutar el checklist de la remisión a `catalogo_articulos`.~~
+  ✅ **FASE 2 HECHA (2026-08-11).** El checklist «Incluye» sale de la lista de **accesorios del modelo del
+  equipo** (`checklistDeRemision`), no de `remision_checklist` por perfil. Las dos puertas leen de la MISMA
+  vía —`GET /api/remisiones/nueva` y la validación del POST—: si leyeran de sitios distintos, lo que el
+  técnico ve marcable dejaría de ser lo que el servidor acepta.
+  **Decisión del usuario al conmutar:** se sabía que 26 de los 35 modelos seguían sin accesorios y aun así
+  se procedió — se irán completando conforme lleguen las remisiones, y el mensaje de vacío es accionable.
+  ⚠️ **`remision_checklist` SIGUE VIVA como red, y no es deuda:** un ticket sin `equipo_id` no tiene modelo
+  del que colgar la lista (los ~79 históricos que nunca se enlazaron), así que se cae al perfil de siempre.
+  Quitarla les dejaría sin checklist. El payload lleva `origenChecklist: 'modelo' | 'perfil'` para que la
+  pantalla sepa cuál de los dos vacíos está enseñando.
+  **El mensaje de vacío, como estaba decidido:** con origen `modelo` dice «Este modelo aún no tiene definida
+  su lista de accesorios… Se da de alta en Catálogo de equipos → ficha del modelo → Accesorios», en ámbar y
+  accionable. Nunca «este equipo no lleva accesorios», que afirma algo que nadie ha comprobado.
+  ⚠️ **Trampa al probarlo:** los 150 tests de la API pasaron SIN TOCARLOS tras la conmutación, porque sus
+  equipos no tienen `modelo_id` y caían todos al perfil. La fase 2 estaba sin cubrir y nada lo señalaba.
+  El test nuevo enlaza modelo y siembra el perfil con un ítem DISTINTO, para que salga si la conmutación no
+  ocurrió; mutar cada puerta a `modeloId: null` lo tumba.
+
+  ⚠️ **PENDIENTE: los 26 modelos sin accesorios.** Mientras estén vacíos, sus remisiones no tienen nada que
+  verificar y la pantalla lo dice. Se completan desde la ficha con el buscador de artículos sueltos y el
+  botón «Copiar a otros modelos…».
+
+  ✅ **La lista de un modelo se puede COPIAR a otros (2026-08-11, `aabb79f`) y REORDENAR arrastrando
+  (`7b5e5a0`).** Copiar, porque las variantes de una serie llevan los mismos accesorios y los consumibles ya
+  se compartían por la categoría de la serie. Es una COPIA y no un vínculo a propósito: un vínculo vivo
+  sería la categoría de bloque otra vez. Reordenar, porque **ese orden es el que ve el técnico al hacer los
+  checks**, y salía del orden de alta: primero lo sembrado, luego lo migrado (alfabético por nombre de
+  Books) y al final lo añadido a mano.
 - **Remisiones — gestión de accesorios por marca/modelo (DIFERIDA, 2026-08-03).** *Qué pide el usuario:* una
   tabla de accesorios **por marca-modelo** y una **página en la app** para añadir / editar / eliminar, sin SQL.
   *Qué hay ya:* la tabla `public.remision_checklist(perfil, item, orden, activo)` con 109 ítems, sembrada bajo
