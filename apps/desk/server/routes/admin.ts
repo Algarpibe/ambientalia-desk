@@ -11,6 +11,7 @@ import { CHECKLIST_SEED } from '../db/remisionChecklistSeed'
 import { sembrarCatalogo } from '../db/catalogoSeed'
 import { sembrarArticulosDesdeChecklist } from '../db/articulosSeed'
 import { limpiarArticulosSembrados } from '../db/limpiarSembrados'
+import { materializarAccesorios } from '../db/materializarAccesorios'
 import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -109,6 +110,17 @@ export function registerAdminRoutes(
     const dryRun = req.query.dryRun === 'true'
     const r = await limpiarArticulosSembrados(db, { dryRun })
     logger.info(`Limpieza de artículos sembrados${dryRun ? ' (dry-run)' : ''}: ${r.borrados} borrados, ${r.conservados} conservados`)
+    res.json(r)
+  }))
+
+  // Pasa los accesorios DERIVADOS de cada modelo a artículos sueltos y retira las categorías de
+  // accesorios. SOLO super administrador. Consumibles y repuestos no se tocan.
+  // ⚠️ Es DESTRUCTIVO y sin vuelta atrás —los derivados no están guardados en ninguna parte—, así que
+  // `?dryRun=true` devuelve el detalle completo, que es lo que hay que guardar como copia antes.
+  app.post('/api/admin/materializar-accesorios', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const dryRun = req.query.dryRun === 'true'
+    const r = await materializarAccesorios(db, { dryRun })
+    logger.info(`Materialización de accesorios${dryRun ? ' (dry-run)' : ''}: ${r.copiados} copiados, ${r.omitidos} omitidos, ${r.categorias} categorías retiradas`)
     res.json(r)
   }))
 

@@ -850,10 +850,11 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
             <section>
               <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Accesorios, consumibles y repuestos</h4>
               <p className="text-[11px] text-slate-400 mb-2">
-                La lista se calcula desde las categorías de Zoho Books que asignes: lo que se añada allí a una
-                categoría aparecerá aquí solo. Un modelo de una serie lleva la categoría de la serie y, si la
-                tiene, la suya propia. Y aparte puedes añadir artículos sueltos de Books, para lo que viva en
-                una categoría que no le toca a este modelo.
+                Los <strong>accesorios</strong> se eligen artículo a artículo. Los <strong>consumibles y
+                repuestos</strong> se derivan además de las categorías de Zoho Books que asignes: lo que se
+                añada allí a una categoría aparecerá aquí solo, y un modelo de una serie lleva la categoría de
+                la serie y, si la tiene, la suya propia. En las dos listas puedes añadir artículos sueltos de
+                Books, para lo que viva en una categoría que no le toca a este modelo.
               </p>
               {/* Sin este aviso, el botón «Guardar» en gris después de desactivar un artículo se lee como
                   «no se ha guardado». Dice qué NO pasa por el botón, que es la duda real. */}
@@ -868,21 +869,27 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
                   <div key={clase} className="mb-3 border border-slate-100 rounded p-2">
                     <div className="text-[11px] font-bold text-slate-500 uppercase mb-1">{ETIQUETA_CLASE_PLURAL[clase]}</div>
 
-                    <div className="flex flex-wrap items-center gap-1 mb-1.5">
-                      {cats.map((c) => (
-                        <span key={c.id} className="inline-flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 text-[11px]">
-                          {c.categoria} <span className="text-slate-400">({c.articulos})</span>
-                          <button onClick={() => quitarCat(c)} className="text-red-600 font-bold" title="Quitar esta categoría">×</button>
-                        </span>
-                      ))}
-                      <select className="text-[11px] border border-slate-200 rounded px-1 py-0.5" value=""
-                        onChange={(e) => { if (e.target.value) anadirCat(clase, e.target.value) }}>
-                        <option value="">+ categoría de Books…</option>
-                        {disponibles
-                          .filter((d) => !cats.some((c) => c.categoria === d.categoria))
-                          .map((d) => <option key={d.categoria} value={d.categoria}>{d.categoria} ({d.articulos})</option>)}
-                      </select>
-                    </div>
+                    {/* Los accesorios NO se asignan por categoría: una categoría de serie trae decenas
+                        de artículos y la mayoría no aplica a la variante concreta, así que se acababa
+                        desactivando uno a uno. Se eligen pieza a pieza con el buscador de abajo. El
+                        servidor rechaza esa clase igualmente — esto no es la única defensa. */}
+                    {clase !== 'accesorio' && (
+                      <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                        {cats.map((c) => (
+                          <span key={c.id} className="inline-flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 text-[11px]">
+                            {c.categoria} <span className="text-slate-400">({c.articulos})</span>
+                            <button onClick={() => quitarCat(c)} className="text-red-600 font-bold" title="Quitar esta categoría">×</button>
+                          </span>
+                        ))}
+                        <select className="text-[11px] border border-slate-200 rounded px-1 py-0.5" value=""
+                          onChange={(e) => { if (e.target.value) anadirCat(clase, e.target.value) }}>
+                          <option value="">+ categoría de Books…</option>
+                          {disponibles
+                            .filter((d) => !cats.some((c) => c.categoria === d.categoria))
+                            .map((d) => <option key={d.categoria} value={d.categoria}>{d.categoria} ({d.articulos})</option>)}
+                        </select>
+                      </div>
+                    )}
 
                     {/* La otra vía de alta, y la que pidió el usuario: un artículo SUELTO de Books, para
                         lo que vive en una categoría que no le toca a este modelo. La categoría trae

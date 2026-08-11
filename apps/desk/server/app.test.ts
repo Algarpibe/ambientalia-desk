@@ -1299,7 +1299,7 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
    * Books. Un APMA-370 lleva `Opcional AP Series` de accesorios y `C&R AP Series` + `C&R APMA-370` de
    * consumibles/repuestos — la de la serie y la del modelo, sumadas.
    */
-  it('asigna categorías al modelo y deriva de ellas la lista de artículos', async () => {
+  it('asigna categorías de consumibles y repuestos, y deriva de ellas la lista', async () => {
     const cookie = await adminCookie()
     await prepararModelo()
     await db.query("INSERT INTO books.items (item_id,name,sku,category_name,status) VALUES ('i2','Maletín','M-1','Opcional AP Series','active')")
@@ -1308,24 +1308,24 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
     const asignar = (clase: string, categoria: string) =>
       request(app).post('/api/catalogo/modelos/cmod-1/categorias').set('Cookie', cookie).send({ clase, categoria })
 
-    expect((await asignar('accesorio', 'Opcional AP Series')).status).toBe(201)
+    // La vía de bloque queda solo para consumibles y repuestos: los accesorios se eligen artículo a
+    // artículo, y la puerta se cierra en el SERVIDOR, no solo escondiendo el desplegable.
+    expect((await asignar('accesorio', 'Opcional AP Series')).status).toBe(422)
     expect((await asignar('consumible_repuesto', 'C&R AP Series')).status).toBe(201)
     expect((await asignar('consumible_repuesto', 'C&R AP Series')).status).toBe(409) // repetida
 
     const cats = await request(app).get('/api/catalogo/modelos/cmod-1/categorias').set('Cookie', cookie)
     expect(cats.body).toEqual([
-      { id: expect.any(String), clase: 'accesorio', categoria: 'Opcional AP Series', articulos: 1 },
       { id: expect.any(String), clase: 'consumible_repuesto', categoria: 'C&R AP Series', articulos: 1 },
     ])
 
+    // El maletín NO entra: su categoría no llegó a asignarse, así que no lo deriva nadie.
     const lista = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
-    expect(lista.body.map((a: { sku: string; origen: string }) => [a.sku, a.origen]).sort())
-      .toEqual([['M-1', 'categoria'], ['S-1', 'categoria']])
+    expect(lista.body.map((a: { sku: string; origen: string }) => [a.sku, a.origen])).toEqual([['S-1', 'categoria']])
 
     // Quitar la categoría retira sus artículos: no hay que borrarlos uno a uno.
-    const idCat = cats.body.find((c: { clase: string }) => c.clase === 'accesorio').id
-    expect((await request(app).delete(`/api/catalogo/categorias/${idCat}`).set('Cookie', cookie)).status).toBe(204)
-    expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)).body.map((a: { sku: string }) => a.sku)).toEqual(['S-1'])
+    expect((await request(app).delete(`/api/catalogo/categorias/${cats.body[0].id}`).set('Cookie', cookie)).status).toBe(204)
+    expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)).body).toEqual([])
   })
 
   // El selector necesita saber qué categorías existen. Se ofrecen TODAS, no solo las de prefijo `C&R`

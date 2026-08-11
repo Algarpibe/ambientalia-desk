@@ -161,6 +161,15 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
     const b = (req.body ?? {}) as Record<string, unknown>
     const clase = String(b.clase ?? '')
     if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
+    // Los accesorios se eligen pieza a pieza, no por bloque: una categoría de serie trae decenas de
+    // artículos y la mayoría no aplica a la variante concreta, así que se acababa desactivando uno a
+    // uno. La puerta se cierra AQUÍ y no solo en la pantalla: esconder el desplegable dejaría la vía
+    // abierta a cualquiera que llamase a la API a mano, y volvería a haber modelos con categorías de
+    // accesorios que la interfaz ya no sabe gestionar.
+    if (clase === 'accesorio') {
+      res.status(422).json({ error: 'Los accesorios se añaden artículo a artículo, no por categoría.' })
+      return
+    }
     const categoria = String(b.categoria ?? '').trim()
     if (!categoria) { res.status(422).json({ error: 'La categoría es obligatoria' }); return }
     try {
