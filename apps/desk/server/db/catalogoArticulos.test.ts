@@ -141,6 +141,34 @@ describe('categorías por modelo', () => {
     expect((await listarArticulosDeModelo(db, 'cmod-1')).filter((a) => a.sku === 'C-1')).toHaveLength(1)
   })
 
+  /**
+   * El caso que abre poder añadir artículos SUELTOS de Books: uno metido a mano puede acabar también
+   * dentro de una categoría asignada. Y no solo por descuido — puede entrar después, el día que alguien
+   * asigne esa categoría. Enseñarlo dos veces le haría contar al técnico dos piezas donde hay una,
+   * exactamente el mismo error que ya se evita entre dos categorías.
+   */
+  it('no repite un artículo añadido a mano que además deriva de una categoría asignada', async () => {
+    await item('i1', 'Slides', 'APOPC-008', 'Opcional AP Series')
+    await asignarCategoria(db, 'cmod-1', 'accesorio', 'Opcional AP Series')
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', itemId: 'i1', sku: 'APOPC-008', nombre: 'Slides' })
+
+    const l = await listarArticulosDeModelo(db, 'cmod-1')
+    expect(l.filter((a) => a.sku === 'APOPC-008')).toHaveLength(1)
+    // Gana el DERIVADO, y esa dirección importa: el día que se quite la categoría, el añadido a mano
+    // reaparece solo. Al revés, quitar la categoría lo dejaría fuera de las dos vías.
+    expect(l[0].origen).toBe('categoria')
+  })
+
+  // La otra mitad de la regla: la deduplicación es POR CLASE. El mismo artículo puede ser accesorio por
+  // categoría y repuesto a mano, y ahí son dos cosas distintas que sí deben verse las dos.
+  it('el añadido a mano se queda si la categoría que lo deriva es de otra clase', async () => {
+    await item('i1', 'Slides', 'APOPC-008', 'Opcional AP Series')
+    await asignarCategoria(db, 'cmod-1', 'accesorio', 'Opcional AP Series')
+    await crearArticulo(db, 'cmod-1', { clase: 'consumible_repuesto', itemId: 'i1', sku: 'APOPC-008', nombre: 'Slides' })
+
+    expect((await listarArticulosDeModelo(db, 'cmod-1')).filter((a) => a.sku === 'APOPC-008')).toHaveLength(2)
+  })
+
   it('lista las categorías del modelo con cuántos artículos aporta cada una', async () => {
     await item('i1', 'Uno', 'U-1', 'C&R AP Series')
     await item('i2', 'Dos', 'U-2', 'C&R AP Series')

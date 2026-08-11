@@ -212,7 +212,12 @@ export async function mostrarArticulo(db: Queryable, modeloId: string, itemId: s
  * retirado allí desaparece de aquí, y uno nuevo en la categoría aparece.
  *
  * **Se deduplica por SKU dentro de cada clase.** Dos categorías de la misma clase pueden compartir un
- * artículo, y enseñarlo dos veces le haría contar al técnico dos piezas donde hay una.
+ * artículo, y enseñarlo dos veces le haría contar al técnico dos piezas donde hay una. La regla vale
+ * también entre un **añadido a mano** y un derivado: un artículo suelto de Books puede caer después
+ * dentro de una categoría que alguien asigne más tarde, y ahí nadie se daría cuenta.
+ *
+ * En ese empate gana el **derivado**, y la dirección importa: quitar la categoría devuelve el añadido a
+ * mano a la lista. Al revés, quitarla lo dejaría fuera por las dos vías.
  */
 export async function listarArticulosDeModelo(
   db: Queryable,
@@ -261,6 +266,12 @@ export async function listarArticulosDeModelo(
   // el consumo real —el checklist de una remisión— no debe verlos. Los derivados no tienen este caso:
   // un artículo se retira desactivándolo en Books, y entonces deja de derivarse solo.
   for (const m of await listarArticulos(db, modeloId, { soloActivos: !opts.incluirInactivos })) {
+    // Misma llave que arriba, para que el empate con un derivado se resuelva igual que entre dos
+    // categorías. Los de texto libre («Manuales») no tienen SKU y caen por su id, que es único: nunca
+    // chocan con nada.
+    const llave = `${m.clase}|${m.sku || m.itemId || m.id}`
+    if (vistos.has(llave)) continue
+    vistos.add(llave)
     out.push(m)
   }
   return out

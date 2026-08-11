@@ -597,6 +597,19 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
     )
   }
 
+  /**
+   * Alta de un artículo SUELTO de Books, la contrapartida de asignar una categoría entera.
+   *
+   * Solo viaja el `itemId`: el sku y el nombre los escribe el servidor leyéndolos de Books. Mandarlos
+   * desde aquí dejaría que el mismo artículo acabase con dos grafías, que es justo lo que elegir de
+   * Books viene a evitar.
+   */
+  const anadirDeBooks = (clase: ClaseArticulo, a: ArticuloLite) =>
+    ejecutarConAviso(
+      async () => { await crearArticuloModelo(modelo.id, { clase, itemId: a.id }); await recargarArticulos() },
+      `«${a.nombre}» añadido a ${ETIQUETA_CLASE_PLURAL[clase].toLowerCase()}.`,
+    )
+
   async function anadirLibre() {
     // El nombre se captura ANTES: la acción vacía el campo, así que leerlo después daría un aviso mudo.
     const nombre = libre.trim()
@@ -839,7 +852,8 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
               <p className="text-[11px] text-slate-400 mb-2">
                 La lista se calcula desde las categorías de Zoho Books que asignes: lo que se añada allí a una
                 categoría aparecerá aquí solo. Un modelo de una serie lleva la categoría de la serie y, si la
-                tiene, la suya propia.
+                tiene, la suya propia. Y aparte puedes añadir artículos sueltos de Books, para lo que viva en
+                una categoría que no le toca a este modelo.
               </p>
               {/* Sin este aviso, el botón «Guardar» en gris después de desactivar un artículo se lee como
                   «no se ha guardado». Dice qué NO pasa por el botón, que es la duda real. */}
@@ -869,6 +883,16 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
                           .map((d) => <option key={d.categoria} value={d.categoria}>{d.categoria} ({d.articulos})</option>)}
                       </select>
                     </div>
+
+                    {/* La otra vía de alta, y la que pidió el usuario: un artículo SUELTO de Books, para
+                        lo que vive en una categoría que no le toca a este modelo. La categoría trae
+                        bloques; esto trae piezas. */}
+                    <BuscadorArticuloBooks
+                      clase={clase}
+                      yaEnLista={new Set(items.map((a) => a.sku || a.itemId || ''))}
+                      bloqueado={busy}
+                      onElegir={(a) => anadirDeBooks(clase, a)}
+                    />
 
                     {items.length === 0 ? (
                       // «Cero filas» siempre significa «sin definir todavía», nunca «no lleva»: el mensaje
@@ -945,6 +969,76 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Buscador de un artículo suelto de Zoho Books para añadirlo a una clase del modelo.
+ *
+ * Convive con el selector de categorías y no lo sustituye: la categoría trae **bloques** y se mantiene
+ * sola cuando Books cambia; esto trae **piezas** de categorías que a este modelo no le tocan, que es lo
+ * que faltaba para armar sus repuestos.
+ *
+ * Lo que ya está en la lista **se enseña marcado, no se esconde**: quien busca «Slides» y no lo ve
+ * asume que Books no lo tiene y va a darlo de alta allí; verlo en gris con «ya está» contesta la
+ * pregunta que traía.
+ */
+function BuscadorArticuloBooks({ clase, yaEnLista, bloqueado, onElegir }: {
+  clase: ClaseArticulo
+  /** SKU —o `itemId` si no tiene— de lo que ya está en ESTA clase. */
+  yaEnLista: Set<string>
+  bloqueado: boolean
+  onElegir: (a: ArticuloLite) => void
+}) {
+  const [q, setQ] = useState('')
+  const [resultados, setResultados] = useState<ArticuloLite[]>([])
+  const [abierto, setAbierto] = useState(false)
+
+  // Mismo criterio que el buscador del SKU: desde 2 caracteres, y `alive` para que una respuesta lenta
+  // no pise a otra más reciente.
+  useEffect(() => {
+    if (q.trim().length < 2) { setResultados([]); return }
+    let alive = true
+    buscarArticulos(q).then((r) => { if (alive) setResultados(r) }).catch(() => {})
+    return () => { alive = false }
+  }, [q])
+
+  return (
+    <div className="relative mb-1.5">
+      <input
+        className="border border-slate-200 rounded px-2 py-1 text-[12px] w-full"
+        placeholder={`+ artículo suelto de Books en ${ETIQUETA_CLASE_PLURAL[clase].toLowerCase()}: código o nombre`}
+        value={q}
+        disabled={bloqueado}
+        onFocus={() => setAbierto(true)}
+        onBlur={() => setAbierto(false)}
+        onKeyDown={(e) => { if (e.key === 'Escape') setAbierto(false) }}
+        onChange={(e) => { setQ(e.target.value); setAbierto(true) }}
+      />
+      {abierto && resultados.length > 0 && (
+        // `onMouseDown` con preventDefault: sin él, el blur del input cierra la lista antes de que el
+        // clic llegue al botón. Mismo patrón que el buscador de clientes y el del SKU.
+        <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+          {resultados.map((a) => {
+            const ya = yaEnLista.has(a.sku || a.id)
+            return (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  disabled={ya}
+                  onClick={() => { onElegir(a); setQ(''); setResultados([]); setAbierto(false) }}
+                  className={`w-full text-left px-2 py-1.5 text-[12px] ${ya ? 'text-slate-400 cursor-default' : 'hover:bg-slate-100'}`}
+                >
+                  <span className="font-bold">{a.sku}</span> · {a.nombre}
+                  {a.categoria ? <span className="text-slate-400"> · {a.categoria}</span> : null}
+                  {ya ? <span className="text-slate-400"> · ya está en la lista</span> : null}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
