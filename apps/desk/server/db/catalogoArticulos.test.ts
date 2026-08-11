@@ -4,7 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido,
   asignarCategoria, listarCategorias, quitarCategoria, listarArticulosDeModelo, CategoriaRepetida,
-  ocultarArticulo, mostrarArticulo,
+  ocultarArticulo, mostrarArticulo, copiarArticulos,
 } from './catalogoArticulos'
 
 let db: Queryable
@@ -77,6 +77,76 @@ describe('catalogoArticulos', () => {
     await borrarArticulo(db, id)
     expect(await listarArticulos(db, 'cmod-1')).toEqual([])
     expect(await listarArticulos(db, 'cmod-2')).toHaveLength(1)
+  })
+})
+
+/**
+ * Los consumibles se comparten entre variantes por la categoría de la serie, pero los accesorios
+ * pasaron a elegirse pieza a pieza y perdieron esa vía. Copiar la lista de un modelo a sus hermanos la
+ * devuelve sin recrear el bloque: es una COPIA, no un vínculo, así que cada modelo diverge después.
+ */
+describe('copiarArticulos', () => {
+  beforeEach(async () => {
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-2','cmar-1','APNA-370')")
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-3','cmar-1','APOA-370')")
+  })
+
+  it('copia los artículos de una clase a varios destinos, conservando itemId y SKU', async () => {
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', itemId: 'i1', sku: 'APOPC-008', nombre: 'Slides' })
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Manuales' })
+
+    const r = await copiarArticulos(db, 'cmod-1', ['cmod-2', 'cmod-3'], 'accesorio')
+
+    expect(r).toMatchObject({ copiados: 4, omitidos: 0 })
+    for (const destino of ['cmod-2', 'cmod-3']) {
+      const l = await listarArticulos(db, destino)
+      expect(l.map((a) => a.nombre).sort()).toEqual(['Manuales', 'Slides'])
+      // El enlace a Books viaja con la copia: si no, el destino tendría texto libre y perdería el SKU.
+      expect(l.find((a) => a.nombre === 'Slides')).toMatchObject({ itemId: 'i1', sku: 'APOPC-008' })
+    }
+  })
+
+  // Desactivar es cómo se dice «este no aplica». Copiarlo lo reviviría en el destino sin que nadie lo pida.
+  it('no copia los desactivados del origen', async () => {
+    const id = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'No aplica' })
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Sí aplica' })
+    await actualizarArticulo(db, id, { activo: false })
+
+    expect((await copiarArticulos(db, 'cmod-1', ['cmod-2'], 'accesorio')).copiados).toBe(1)
+    expect((await listarArticulos(db, 'cmod-2')).map((a) => a.nombre)).toEqual(['Sí aplica'])
+  })
+
+  // El destino puede tener ya media lista: copiar dos veces no puede duplicar ni reventar a la mitad.
+  it('omite lo que el destino ya tenía con ese nombre, y es idempotente', async () => {
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Manuales' })
+    await crearArticulo(db, 'cmod-2', { clase: 'accesorio', nombre: 'MANUALES' })
+
+    expect(await copiarArticulos(db, 'cmod-1', ['cmod-2'], 'accesorio')).toMatchObject({ copiados: 0, omitidos: 1 })
+    expect((await listarArticulos(db, 'cmod-2'))).toHaveLength(1)
+  })
+
+  it('copia solo la clase pedida', async () => {
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Accesorio' })
+    await crearArticulo(db, 'cmod-1', { clase: 'consumible_repuesto', nombre: 'Repuesto' })
+
+    await copiarArticulos(db, 'cmod-1', ['cmod-2'], 'accesorio')
+    expect((await listarArticulos(db, 'cmod-2')).map((a) => a.nombre)).toEqual(['Accesorio'])
+  })
+
+  /**
+   * Elegir el propio origen como destino es fácil de hacer en un selector.
+   *
+   * ⚠️ `omitidos: 0` es la aserción que de verdad muerde, y no salió a la primera: sin la guarda, el
+   * alta sobre el propio origen falla por nombre repetido y se cuenta como omitido, así que la lista
+   * queda igual y el conteo de copiados también. Lo único que delata la diferencia es que el resumen
+   * diría «1 ya estaba» sobre un modelo que el operador ni pretendía tocar.
+   */
+  it('ignora el propio origen si viene entre los destinos, sin contarlo como omitido', async () => {
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Manuales' })
+
+    expect(await copiarArticulos(db, 'cmod-1', ['cmod-1', 'cmod-2'], 'accesorio'))
+      .toMatchObject({ copiados: 1, omitidos: 0, porModelo: [{ modeloId: 'cmod-2', copiados: 1 }] })
+    expect(await listarArticulos(db, 'cmod-1')).toHaveLength(1)
   })
 })
 

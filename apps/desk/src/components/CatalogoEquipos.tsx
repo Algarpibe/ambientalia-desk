@@ -25,7 +25,7 @@ import {
   getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
   buscarArticulos, getArticulosModelo, crearArticuloModelo, actualizarArticuloModelo, borrarArticuloModelo,
   getCategoriasDisponibles, getCategoriasModelo, asignarCategoriaModelo, quitarCategoriaModelo,
-  ocultarArticuloModelo, mostrarArticuloModelo,
+  ocultarArticuloModelo, mostrarArticuloModelo, copiarArticulosModelo,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -438,6 +438,12 @@ export function CatalogoEquipos({ onClose }: { onClose: () => void }) {
           modelo={fichaModelo}
           etiqueta={`${marcaPorId.get(fichaModelo.marcaId)?.nombre ?? '?'} ${fichaModelo.nombre}`}
           tipos={catalogo?.tipos ?? []}
+          // Se etiquetan aquí porque el mapa de marcas vive aquí. Ordenados por etiqueta: en un diálogo
+          // de destinos, lo que se busca es «los otros AP», y así salen juntos.
+          otrosModelos={(catalogo?.modelos ?? [])
+            .filter((m) => m.id !== fichaModelo.id && m.activo)
+            .map((m) => ({ id: m.id, etiqueta: `${marcaPorId.get(m.marcaId)?.nombre ?? '?'} ${m.nombre}` }))
+            .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es'))}
           onFijarTipo={(tipoId) => fijarTipoModelo(fichaModelo, tipoId, null)}
           onGuardado={reload}
           onClose={() => setFichaModelo(null)}
@@ -511,10 +517,12 @@ function NuevaEntradaModal({ seccion, catalogo, onClose, onCreated }: {
  * más: SKU, foto y documentos cuelgan del modelo (35), no del equipo (354), y esta es la única
  * pantalla que los administra — `FichaTecnica` (hoja de vida y ticket) es de solo lectura.
  */
-function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, onClose }: {
+function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, onGuardado, onClose }: {
   modelo: CatalogoModelo
   etiqueta: string
   tipos: CatalogoTipo[]
+  /** Los demás modelos activos, ya etiquetados con su marca, como destinos del copiado. */
+  otrosModelos: Array<{ id: string; etiqueta: string }>
   /**
    * Delegado al padre: arrastra la confirmación de corregir los equipos que declaren otro tipo.
    * Devuelve si llegó a aplicarse — la pregunta de «¿dejar el modelo sin tipo?» se puede cancelar.
@@ -532,6 +540,8 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
   // elegirlo, el desplegable ya no es la verdad: hace falta contra qué comparar para saber si cambió.
   const [tipoGuardado, setTipoGuardado] = useState<string | null>(modelo.tipoId ?? null)
   const [sku, setSku] = useState('')
+  /** La clase cuya lista se está copiando a otros modelos, o `null` si el diálogo está cerrado. */
+  const [copiando, setCopiando] = useState<ClaseArticulo | null>(null)
   // La foto ya no se sube al elegirla: espera aquí hasta Guardar, como el tipo y el SKU.
   const [fotoPendiente, setFotoPendiente] = useState<File | null>(null)
   // Un `<input type="file">` no se puede vaciar por props. Cambiar su `key` lo remonta, y es lo que
@@ -609,6 +619,21 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
       async () => { await crearArticuloModelo(modelo.id, { clase, itemId: a.id }); await recargarArticulos() },
       `«${a.nombre}» añadido a ${ETIQUETA_CLASE_PLURAL[clase].toLowerCase()}.`,
     )
+
+  /**
+   * Copia la lista de una clase a los modelos elegidos.
+   *
+   * No recarga la lista de ESTE modelo porque no cambia: lo que cambia es la de los destinos. El aviso
+   * dice el reparto real, no «hecho», porque lo que ya estuviera en un destino se omite y el operador
+   * necesita ver que el número no es el que esperaba.
+   */
+  const copiarA = (clase: ClaseArticulo, destinos: string[]) =>
+    ejecutar(async () => {
+      const r = await copiarArticulosModelo(modelo.id, { clase, destinos })
+      setCopiando(null)
+      const omitidos = r.omitidos ? `, ${r.omitidos} ya estaban` : ''
+      setMensaje(`${r.copiados} artículo(s) copiado(s) a ${destinos.length} modelo(s)${omitidos}.`)
+    })
 
   async function anadirLibre() {
     // El nombre se captura ANTES: la acción vacía el campo, así que leerlo después daría un aviso mudo.
@@ -867,7 +892,17 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
                 const items = listaArticulos.filter((a) => a.clase === clase)
                 return (
                   <div key={clase} className="mb-3 border border-slate-100 rounded p-2">
-                    <div className="text-[11px] font-bold text-slate-500 uppercase mb-1">{ETIQUETA_CLASE_PLURAL[clase]}</div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="text-[11px] font-bold text-slate-500 uppercase">{ETIQUETA_CLASE_PLURAL[clase]}</div>
+                      {/* Las variantes de una serie llevan los mismos accesorios. Los consumibles ya se
+                          comparten por la categoría de la serie; esta lista, desde que se elige pieza a
+                          pieza, no tenía cómo hacerlo sin rehacerla entera en cada modelo. */}
+                      {items.some((a) => a.activo) && otrosModelos.length > 0 && (
+                        <button onClick={() => setCopiando(clase)} className="text-[11px] text-blue-600">
+                          Copiar a otros modelos…
+                        </button>
+                      )}
+                    </div>
 
                     {/* Los accesorios NO se asignan por categoría: una categoría de serie trae decenas
                         de artículos y la mayoría no aplica a la variante concreta, así que se acababa
@@ -975,6 +1010,89 @@ function FichaModeloModal({ modelo, etiqueta, tipos, onFijarTipo, onGuardado, on
             </section>
           </>
         )}
+      </div>
+
+      {copiando && (
+        <CopiarAModelos
+          clase={copiando}
+          origen={etiqueta}
+          modelos={otrosModelos}
+          bloqueado={busy}
+          onCopiar={(destinos) => copiarA(copiando, destinos)}
+          onClose={() => setCopiando(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Elige a qué modelos copiar la lista de una clase.
+ *
+ * Deja claro que es una COPIA y no un vínculo, porque es lo único que el operador no puede deducir de
+ * la pantalla: lo que se copie hoy no se moverá cuando el origen cambie mañana.
+ */
+function CopiarAModelos({ clase, origen, modelos, bloqueado, onCopiar, onClose }: {
+  clase: ClaseArticulo
+  origen: string
+  modelos: Array<{ id: string; etiqueta: string }>
+  bloqueado: boolean
+  onCopiar: (destinos: string[]) => void
+  onClose: () => void
+}) {
+  const [elegidos, setElegidos] = useState<string[]>([])
+  const [filtro, setFiltro] = useState('')
+
+  const visibles = modelos.filter((m) => m.etiqueta.toLowerCase().includes(filtro.trim().toLowerCase()))
+  const alternar = (id: string) =>
+    setElegidos((e) => (e.includes(id) ? e.filter((x) => x !== id) : [...e, id]))
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg p-5 w-[460px] max-h-[80vh] flex flex-col gap-3">
+        <h3 className="text-[15px] font-bold text-slate-800">
+          Copiar {ETIQUETA_CLASE_PLURAL[clase].toLowerCase()} de {origen}
+        </h3>
+        <p className="text-[11px] text-slate-500">
+          Se copia la lista tal como está ahora, sin los desactivados. Es una <strong>copia</strong>, no un
+          vínculo: lo que cambies después aquí no se moverá en los destinos. Lo que un destino ya tenga con
+          ese nombre se respeta y no se duplica.
+        </p>
+
+        <input
+          className="border border-slate-200 rounded p-2 text-[13px]"
+          placeholder="Filtrar modelos… (p. ej. «AP»)"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          autoFocus
+        />
+
+        <ul className="flex-1 overflow-auto border border-slate-100 rounded">
+          {visibles.length === 0 ? (
+            <li className="text-[12px] text-slate-400 p-2">Ningún modelo casa con ese filtro.</li>
+          ) : visibles.map((m) => (
+            <li key={m.id}>
+              <label className="flex items-center gap-2 px-2 py-1 text-[13px] hover:bg-slate-50 cursor-pointer">
+                <input type="checkbox" checked={elegidos.includes(m.id)} onChange={() => alternar(m.id)} />
+                {m.etiqueta}
+              </label>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[12px] text-slate-500">{elegidos.length} elegido(s)</span>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
+            <button
+              onClick={() => onCopiar(elegidos)}
+              disabled={bloqueado || elegidos.length === 0}
+              className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50"
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

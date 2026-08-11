@@ -110,6 +110,55 @@ export async function borrarArticulo(db: Queryable, id: string): Promise<void> {
   await db.query('DELETE FROM catalogo_articulos WHERE id=$1', [id])
 }
 
+/**
+ * Copia los artículos ACTIVOS de una clase de un modelo a otros modelos.
+ *
+ * **Por qué hace falta.** Los consumibles se comparten entre variantes de una serie por la categoría
+ * (`C&R AP Series` vale para todas), pero los accesorios pasaron a elegirse pieza a pieza y perdieron
+ * esa vía. Un APSA-370 y un APNA-370 llevan los mismos accesorios, y rehacer la lista a mano por cada
+ * variante es el trabajo que esto ahorra.
+ *
+ * **Es una COPIA, no un vínculo, y a propósito.** Un vínculo vivo devolvería el problema que hizo
+ * retirar las categorías de accesorios: cambiar el origen movería a todos, incluidas las variantes a
+ * las que ese artículo no aplica. Copiado, cada modelo diverge después sin arrastrar a nadie.
+ *
+ * Los desactivados del origen NO viajan: desactivar es cómo se dice «este no aplica», y copiarlo lo
+ * reviviría en el destino sin que nadie lo pida. El enlace a Books (`item_id`, `sku`) sí viaja, o el
+ * destino acabaría con texto libre y sin SKU.
+ */
+export async function copiarArticulos(
+  db: Queryable,
+  origenId: string,
+  destinos: string[],
+  clase: ClaseArticulo,
+): Promise<{ copiados: number; omitidos: number; porModelo: Array<{ modeloId: string; copiados: number }> }> {
+  const fuente = (await listarArticulos(db, origenId, { soloActivos: true })).filter((a) => a.clase === clase)
+
+  let copiados = 0
+  let omitidos = 0
+  const porModelo: Array<{ modeloId: string; copiados: number }> = []
+
+  for (const destino of destinos) {
+    // El propio origen entre los destinos es fácil de marcar en un selector, y duplicaría su lista
+    // entera (`crearArticulo` la rechazaría por nombre repetido, pero contarlo como «omitido» mentiría).
+    if (destino === origenId) continue
+    let aqui = 0
+    for (const a of fuente) {
+      try {
+        await crearArticulo(db, destino, { clase, itemId: a.itemId ?? null, sku: a.sku ?? null, nombre: a.nombre })
+        copiados++
+        aqui++
+      } catch (e) {
+        // El destino puede tener ya media lista. Un choque de nombre no puede tumbar la copia entera.
+        if (e instanceof ArticuloRepetido) { omitidos++; continue }
+        throw e
+      }
+    }
+    porModelo.push({ modeloId: destino, copiados: aqui })
+  }
+  return { copiados, omitidos, porModelo }
+}
+
 // ── Categorías de Books asignadas al modelo ────────────────────────────────────────────────────────
 
 /** Esa categoría ya está en esa clase del modelo. Clase propia para que la ruta responda 409. */

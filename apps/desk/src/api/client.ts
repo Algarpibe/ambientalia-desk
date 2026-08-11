@@ -497,6 +497,19 @@ export function setTicketRead(id: string, read: boolean): Promise<void> {
   }).then(() => undefined)
 }
 
+/**
+ * Copia los artículos de una clase de este modelo a otros. Es una COPIA, no un vínculo: cada modelo
+ * diverge después. Pensado para los accesorios comunes a las variantes de una serie.
+ */
+export function copiarArticulosModelo(
+  modeloId: string,
+  body: { clase: ClaseArticulo; destinos: string[] },
+): Promise<{ copiados: number; omitidos: number; porModelo: Array<{ modeloId: string; copiados: number }> }> {
+  return fetch(`/api/catalogo/modelos/${modeloId}/copiar-articulos`, {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  }).then((r) => json(r))
+}
+
 /** Excluye un artículo derivado de ESTE modelo, sin renunciar a su categoría. */
 export async function ocultarArticuloModelo(modeloId: string, itemId: string): Promise<void> {
   const r = await fetch(`/api/catalogo/modelos/${modeloId}/articulos-ocultos`, {

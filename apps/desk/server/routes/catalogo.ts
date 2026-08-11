@@ -7,7 +7,7 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo } from '../db/catalogoArticulos'
+import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo, copiarArticulos } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
 import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
@@ -231,6 +231,31 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
       if (e instanceof ArticuloRepetido) { res.status(409).json({ error: e.message }); return }
       throw e
     }
+  }))
+
+  /**
+   * Copia los artículos de una clase de este modelo a otros. Pensado para los ACCESORIOS, que desde que
+   * se eligen pieza a pieza perdieron la vía de compartirse entre variantes de una serie que los
+   * consumibles siguen teniendo por categoría.
+   *
+   * Los destinos se comprueban uno a uno ANTES de escribir nada: a medio copiar, el operador no sabría
+   * cuáles llegaron y cuáles no, y repetir la operación es justo lo que no debe dar miedo.
+   */
+  app.post('/api/catalogo/modelos/:id/copiar-articulos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const origenId = String(req.params.id)
+    if (!(await getModelo(db, origenId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    const b = (req.body ?? {}) as Record<string, unknown>
+
+    const clase = String(b.clase ?? '')
+    if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
+
+    const destinos = Array.isArray(b.destinos) ? b.destinos.map(String) : []
+    if (!destinos.length) { res.status(422).json({ error: 'Elige al menos un modelo de destino' }); return }
+    for (const d of destinos) {
+      if (!(await getModelo(db, d))) { res.status(422).json({ error: `Modelo de destino desconocido: ${d}` }); return }
+    }
+
+    res.json(await copiarArticulos(db, origenId, destinos, clase))
   }))
 
   app.patch('/api/catalogo/articulos/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
