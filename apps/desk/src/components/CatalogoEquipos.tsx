@@ -6,6 +6,7 @@ import {
   type ColumnaCatalogo, type PrefColumnas,
 } from '../lib/columnasCatalogo'
 import { cambiosFicha, hayCambios } from '../lib/fichaModelo'
+import { moverEnLista } from '../lib/mover'
 
 /** Dónde se guarda la preferencia de columnas. Mismo patrón que el resto de ajustes de vista. */
 const CLAVE_COLUMNAS = 'catalogo:columnas'
@@ -25,7 +26,7 @@ import {
   getFichaModelo, urlDocumento, crearEnlaceDocumento, subirDocumento, borrarDocumentoModelo,
   buscarArticulos, getArticulosModelo, crearArticuloModelo, actualizarArticuloModelo, borrarArticuloModelo,
   getCategoriasDisponibles, getCategoriasModelo, asignarCategoriaModelo, quitarCategoriaModelo,
-  ocultarArticuloModelo, mostrarArticuloModelo, copiarArticulosModelo,
+  ocultarArticuloModelo, mostrarArticuloModelo, copiarArticulosModelo, reordenarArticulosModelo,
 } from '../api/client'
 
 type Seccion = 'modelos' | 'marcas' | 'tipos'
@@ -542,6 +543,8 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
   const [sku, setSku] = useState('')
   /** La clase cuya lista se está copiando a otros modelos, o `null` si el diálogo está cerrado. */
   const [copiando, setCopiando] = useState<ClaseArticulo | null>(null)
+  /** El artículo que se está arrastrando para reordenar la lista. */
+  const [arrastrandoArt, setArrastrandoArt] = useState<string | null>(null)
   // La foto ya no se sube al elegirla: espera aquí hasta Guardar, como el tipo y el SKU.
   const [fotoPendiente, setFotoPendiente] = useState<File | null>(null)
   // Un `<input type="file">` no se puede vaciar por props. Cambiar su `key` lo remonta, y es lo que
@@ -634,6 +637,25 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
       const omitidos = r.omitidos ? `, ${r.omitidos} ya estaban` : ''
       setMensaje(`${r.copiados} artículo(s) copiado(s) a ${destinos.length} modelo(s)${omitidos}.`)
     })
+
+  /**
+   * Suelta el artículo arrastrado sobre otro y guarda el orden nuevo.
+   *
+   * Solo se reordenan los AÑADIDOS A MANO: los derivados salen de Books por nombre y su orden no es
+   * nuestro. En accesorios ya no hay derivados, así que ahí se reordena la lista entera.
+   */
+  const soltarArticulo = (clase: ClaseArticulo, destino: string) => {
+    const origen = arrastrandoArt
+    setArrastrandoArt(null)
+    if (!origen || origen === destino) return
+    const manuales = listaArticulos.filter((a) => a.clase === clase && a.origen === 'manual').map((a) => a.id)
+    if (!manuales.includes(origen) || !manuales.includes(destino)) return
+    const ids = moverEnLista(manuales, origen, destino)
+    return ejecutarConAviso(
+      async () => { await reordenarArticulosModelo(modelo.id, { clase, ids }); await recargarArticulos() },
+      'Orden guardado.',
+    )
+  }
 
   async function anadirLibre() {
     // El nombre se captura ANTES: la acción vacía el campo, así que leerlo después daría un aviso mudo.
@@ -884,7 +906,9 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
               {/* Sin este aviso, el botón «Guardar» en gris después de desactivar un artículo se lee como
                   «no se ha guardado». Dice qué NO pasa por el botón, que es la duda real. */}
               <p className="text-[11px] text-slate-500 mb-2">
-                Lo de aquí abajo se guarda solo, al pulsarlo: no espera al botón «Guardar».
+                Lo de aquí abajo se guarda solo, al pulsarlo: no espera al botón «Guardar». Y el orden de
+                cada lista es el que verá el técnico al verificar la remisión de entrada: arrastra por el
+                asa para cambiarlo.
               </p>
 
               {CLASES_ARTICULO.map((clase) => {
@@ -943,7 +967,20 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
                     ) : (
                       <ul className="text-[13px]">
                         {items.map((a) => (
-                          <li key={a.id} className={`flex items-center gap-2 py-0.5 ${a.activo ? '' : 'opacity-50'}`}>
+                          // Arrastrable solo si es AÑADIDO A MANO: el orden de los derivados lo pone
+                          // Books por nombre y no es nuestro para cambiarlo.
+                          <li
+                            key={a.id}
+                            draggable={a.origen === 'manual'}
+                            onDragStart={() => setArrastrandoArt(a.id)}
+                            onDragEnd={() => setArrastrandoArt(null)}
+                            onDragOver={(e) => { if (arrastrandoArt && a.origen === 'manual') e.preventDefault() }}
+                            onDrop={() => soltarArticulo(clase, a.id)}
+                            className={`flex items-center gap-2 py-0.5 ${a.activo ? '' : 'opacity-50'} ${arrastrandoArt === a.id ? 'opacity-40' : ''}`}
+                          >
+                            {a.origen === 'manual' && (
+                              <span className="material-symbols-outlined text-slate-300 text-[16px] cursor-move" title="Arrastra para cambiar el orden">drag_indicator</span>
+                            )}
                             <span className="flex-1">
                               {a.sku ? <span className="font-bold">{a.sku} · </span> : null}{a.nombre}
                               {a.origen === 'categoria'

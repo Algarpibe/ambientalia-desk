@@ -5,6 +5,8 @@
  * harness de componentes React en el proyecto, así que la lógica que puede romperse en silencio
  * —sanear lo que viene de `localStorage`, mover una columna— se aísla aquí con sus tests.
  */
+import { moverEnLista } from './mover'
+
 export const COLUMNAS_CATALOGO = ['marca', 'modelo', 'tipo', 'articuloNombre', 'articuloCategoria', 'sku', 'estado'] as const
 export type ColumnaCatalogo = (typeof COLUMNAS_CATALOGO)[number]
 
@@ -59,15 +61,9 @@ export function normalizarPref(guardado: unknown): PrefColumnas {
 export function moverColumna(
   orden: ColumnaCatalogo[], desde: ColumnaCatalogo, hasta: ColumnaCatalogo,
 ): ColumnaCatalogo[] {
-  if (desde === hasta) return orden
-  const destino = orden.indexOf(hasta)
-  if (destino < 0 || orden.indexOf(desde) < 0) return orden
-  // El índice se toma de la lista ORIGINAL y se inserta en la lista ya sin `desde`. Ese desfase de uno
-  // es justo lo que hace que arrastrar a la derecha deje la columna DESPUÉS del destino y a la
-  // izquierda ANTES, que es lo que espera quien arrastra. Buscar el índice en la lista recortada la
-  // dejaba siempre delante.
-  const sinLa = orden.filter((c) => c !== desde)
-  return [...sinLa.slice(0, destino), desde, ...sinLa.slice(destino)]
+  // El cómo vive en `moverEnLista`: arrastrar los artículos de un modelo es el mismo gesto sobre otra
+  // lista, y dos copias del mismo desfase de índices se habrían desincronizado a la primera corrección.
+  return moverEnLista(orden, desde, hasta)
 }
 
 /** Las columnas que se pintan, en orden. */

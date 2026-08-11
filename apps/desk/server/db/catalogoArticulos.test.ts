@@ -4,7 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
   listarArticulos, crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido,
   asignarCategoria, listarCategorias, quitarCategoria, listarArticulosDeModelo, CategoriaRepetida,
-  ocultarArticulo, mostrarArticulo, copiarArticulos,
+  ocultarArticulo, mostrarArticulo, copiarArticulos, reordenarArticulos,
 } from './catalogoArticulos'
 
 let db: Queryable
@@ -77,6 +77,78 @@ describe('catalogoArticulos', () => {
     await borrarArticulo(db, id)
     expect(await listarArticulos(db, 'cmod-1')).toEqual([])
     expect(await listarArticulos(db, 'cmod-2')).toHaveLength(1)
+  })
+})
+
+/**
+ * El orden de los accesorios es el orden en que el técnico los verá al hacer los checks de la remisión
+ * de entrada, así que tiene que poder decidirse y no salir del orden en que alguien los fue añadiendo.
+ */
+describe('reordenarArticulos', () => {
+  it('reescribe el orden de la clase según la lista de ids recibida', async () => {
+    const a = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Primero' })
+    const b = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Segundo' })
+    const c = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Tercero' })
+
+    await reordenarArticulos(db, 'cmod-1', 'accesorio', [c, a, b])
+
+    expect((await listarArticulos(db, 'cmod-1')).map((x) => x.nombre)).toEqual(['Tercero', 'Primero', 'Segundo'])
+  })
+
+  // El orden es DENTRO de su clase. Reordenar los accesorios no puede empujar a los repuestos, que
+  // empiezan a contar de cero por su cuenta.
+  it('no toca el orden de las otras clases', async () => {
+    const a = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Accesorio A' })
+    const b = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Accesorio B' })
+    await crearArticulo(db, 'cmod-1', { clase: 'consumible_repuesto', nombre: 'Repuesto 1' })
+    await crearArticulo(db, 'cmod-1', { clase: 'consumible_repuesto', nombre: 'Repuesto 2' })
+
+    await reordenarArticulos(db, 'cmod-1', 'accesorio', [b, a])
+
+    const l = await listarArticulos(db, 'cmod-1')
+    expect(l.filter((x) => x.clase === 'accesorio').map((x) => x.nombre)).toEqual(['Accesorio B', 'Accesorio A'])
+    expect(l.filter((x) => x.clase === 'consumible_repuesto').map((x) => x.nombre)).toEqual(['Repuesto 1', 'Repuesto 2'])
+  })
+
+  /**
+   * La lista que manda el navegador puede venir incompleta o sucia: otra pestaña borró un artículo, o
+   * alguien la construyó a mano. Colar un id de OTRO modelo reordenaría una lista ajena en silencio,
+   * así que solo se aceptan los que son de este modelo y esta clase.
+   */
+  it('ignora los ids que no son de esta clase o de este modelo', async () => {
+    await db.query("INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ('cmod-9','cmar-1','Otro')")
+    // ⚠️ El ajeno tiene que ir en SEGUNDA posición, y no salió a la primera: con `orden` 0 el escape
+    // era invisible —reescribirlo a 0 lo dejaba igual— y el test pasaba con la comprobación quitada.
+    // Con `orden` 1, colarlo el primero de la lista lo bajaría a 0 y se ve.
+    await crearArticulo(db, 'cmod-9', { clase: 'accesorio', nombre: 'Ajeno primero' })
+    const ajeno = await crearArticulo(db, 'cmod-9', { clase: 'accesorio', nombre: 'Ajeno segundo' })
+    const a = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Primero' })
+    const b = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Segundo' })
+
+    await reordenarArticulos(db, 'cmod-1', 'accesorio', [ajeno, b, a])
+
+    expect((await listarArticulos(db, 'cmod-1')).map((x) => x.nombre)).toEqual(['Segundo', 'Primero'])
+    expect((await listarArticulos(db, 'cmod-9')).map((x) => [x.nombre, x.orden]))
+      .toEqual([['Ajeno primero', 0], ['Ajeno segundo', 1]])
+  })
+
+  /**
+   * Los que la lista no mencione se van al final, no se quedan con el orden que tenían.
+   *
+   * ⚠️ El caso tiene que MOVER a los no mencionados para que se note, y no salió a la primera: con dos
+   * artículos y el olvidado ya en la posición 1, dejarlo sin tocar daba el mismo resultado que
+   * recolocarlo. Aquí se asciende el ÚLTIMO, así que los otros dos tienen que bajar: sin renumerarlos
+   * quedarían dos con `orden` 0 y la lista se pintaría en un orden que nadie eligió.
+   */
+  it('renumera al final los que la lista no menciona, sin dejar órdenes repetidos', async () => {
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Primero' })
+    await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Segundo' })
+    const c = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Tercero' })
+
+    await reordenarArticulos(db, 'cmod-1', 'accesorio', [c])
+
+    expect((await listarArticulos(db, 'cmod-1')).map((x) => [x.nombre, x.orden]))
+      .toEqual([['Tercero', 0], ['Primero', 1], ['Segundo', 2]])
   })
 })
 

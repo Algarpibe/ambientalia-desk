@@ -111,6 +111,37 @@ export async function borrarArticulo(db: Queryable, id: string): Promise<void> {
 }
 
 /**
+ * Reescribe el orden de una clase con la lista de ids recibida.
+ *
+ * **Por qué importa el orden.** Es el que verá el técnico al hacer los checks de la remisión de
+ * entrada. Salido del orden en que alguien los fue añadiendo, la lista mezcla lo sembrado, lo migrado
+ * (alfabético por nombre de Books) y lo añadido después: nadie la recorre en el orden en que se
+ * verifica un equipo de verdad.
+ *
+ * **Solo se aceptan ids de ESTE modelo y ESTA clase.** La lista viene del navegador y puede llegar
+ * sucia —otra pestaña borró algo, o alguien la construyó a mano—; colar un id ajeno reordenaría la
+ * lista de otro modelo en silencio. Lo que la lista no mencione se va al final en vez de quedarse con
+ * un orden que choque: un artículo dado de alta en otra pestaña no puede desaparecer por no venir aquí.
+ */
+export async function reordenarArticulos(
+  db: Queryable,
+  modeloId: string,
+  clase: ClaseArticulo,
+  ids: string[],
+): Promise<void> {
+  const actuales = (await listarArticulos(db, modeloId)).filter((a) => a.clase === clase)
+  const validos = new Set(actuales.map((a) => a.id))
+
+  const pedidos = ids.filter((id) => validos.has(id))
+  const resto = actuales.map((a) => a.id).filter((id) => !pedidos.includes(id))
+
+  // De uno en uno y no con un CASE: pg-mem no tipa los arrays enlazados, y son unas decenas de filas.
+  for (const [i, id] of [...pedidos, ...resto].entries()) {
+    await db.query('UPDATE catalogo_articulos SET orden=$2 WHERE id=$1', [id, i])
+  }
+}
+
+/**
  * Copia los artículos ACTIVOS de una clase de un modelo a otros modelos.
  *
  * **Por qué hace falta.** Los consumibles se comparten entre variantes de una serie por la categoría

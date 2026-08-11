@@ -7,7 +7,7 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo, copiarArticulos } from '../db/catalogoArticulos'
+import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo, copiarArticulos, reordenarArticulos } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
 import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
@@ -256,6 +256,26 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
     }
 
     res.json(await copiarArticulos(db, origenId, destinos, clase))
+  }))
+
+  /**
+   * Fija el orden de una clase de golpe. Es el orden con el que el técnico verá los accesorios al
+   * hacer los checks de la remisión de entrada.
+   *
+   * Va en una sola petición y no un PATCH por fila: a media reordenación quedarían dos artículos con
+   * el mismo `orden` y la lista se pintaría en un orden que nadie eligió.
+   */
+  app.put('/api/catalogo/modelos/:id/articulos/orden', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const modeloId = String(req.params.id)
+    if (!(await getModelo(db, modeloId))) { res.status(404).json({ error: 'Modelo no encontrado' }); return }
+    const b = (req.body ?? {}) as Record<string, unknown>
+
+    const clase = String(b.clase ?? '')
+    if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
+    if (!Array.isArray(b.ids)) { res.status(422).json({ error: 'Falta el orden' }); return }
+
+    await reordenarArticulos(db, modeloId, clase, b.ids.map(String))
+    res.status(204).end()
   }))
 
   app.patch('/api/catalogo/articulos/:id', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {

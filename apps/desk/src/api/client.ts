@@ -498,6 +498,20 @@ export function setTicketRead(id: string, read: boolean): Promise<void> {
 }
 
 /**
+ * Fija el orden de una clase de golpe. Es el orden con el que el técnico verá los accesorios al hacer
+ * los checks de la remisión de entrada.
+ */
+export async function reordenarArticulosModelo(
+  modeloId: string,
+  body: { clase: ClaseArticulo; ids: string[] },
+): Promise<void> {
+  const r = await fetch(`/api/catalogo/modelos/${modeloId}/articulos/orden`, {
+    method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+  if (!r.ok) await json(r)
+}
+
+/**
  * Copia los artículos de una clase de este modelo a otros. Es una COPIA, no un vínculo: cada modelo
  * diverge después. Pensado para los accesorios comunes a las variantes de una serie.
  */
