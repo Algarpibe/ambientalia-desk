@@ -148,6 +148,40 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
   existen con nombre más preciso y su SKU (`157-L`, `1142.A4` para la PCMCIA, `APOPC-008` para Slides,
   `1200675` para el cable 158-EE…). Lo que falte se verá al asignar categorías, y será mucho menos.
 
+  ✅ **Se pueden añadir artículos SUELTOS de Books, no solo categorías (2026-08-11, `13ef4f1`).** La
+  categoría trae bloques y se mantiene sola cuando Books cambia; el artículo suelto trae piezas de
+  categorías que a ese modelo no le tocan, que es lo que faltaba para armar los repuestos. El servidor ya
+  lo aceptaba (`itemId` en el POST, con sku y nombre escritos desde Books): faltaba solo la interfaz.
+  Lo ya presente se enseña MARCADO en el buscador, no escondido — quien no lo ve concluye que Books no lo
+  tiene y va a darlo de alta allí por segunda vez.
+  ⚠️ Se deduplica **manual contra derivado**, por clase: un artículo suelto puede caer dentro de una
+  categoría que alguien asigne DESPUÉS. Gana el derivado, y esa dirección importa: quitar la categoría
+  devuelve el añadido a mano; al revés lo dejaría fuera por las dos vías.
+
+  ⚠️ **LOS ACCESORIOS YA NO SE ASIGNAN POR CATEGORÍA (2026-08-11, `deaf95d`).** Decisión del usuario tras
+  usarlo: una categoría de serie trae decenas de artículos y la mayoría no aplica a la variante concreta,
+  así que se acababa desactivando uno a uno. Se eligen pieza a pieza. **Consumibles y repuestos siguen
+  igual** — ahí el bloque acierta. La puerta se cierra en el SERVIDOR (422), no solo escondiendo el
+  desplegable: si no, cualquiera llamando a la API a mano recrearía categorías de accesorios que la
+  pantalla ya no sabe gestionar.
+  ✅ **MIGRACIÓN HECHA EN PRODUCCIÓN 2026-08-11: `{copiados: 94, omitidos: 0, categorias: 9}`**
+  (`POST /api/admin/materializar-accesorios`). Simulacro y ejecución dieron los mismos números; el usuario
+  guardó el `dryRun` como copia. Hizo falta porque **los derivados no están guardados en ninguna parte**
+  —se calculan en vivo desde `books.items`—, así que retirar la categoría sin copiarlos antes los habría
+  borrado sin dejar rastro. Se copian CON `item_id` y SKU: siguen siendo el mismo artículo de Books, no
+  texto libre. No se copió lo oculto para ese modelo ni lo inactivo en Books.
+
+  ⚠️⚠️ **EL CENSO QUE SALIÓ DE ESA MIGRACIÓN ES LO QUE BLOQUEA LA FASE 2.** Las 9 categorías de accesorios
+  estaban en **9 modelos de los 35**: Environics 7000 (1 artículo), EDM180C (15), EDM180D (15),
+  APMA-370 (13), OCMA-500 (1), OCMA-550 (1), PG-350Z (40), VA-3114 (4), VA-5001 (4). O sea que **26
+  modelos se quedan solo con lo que tuvieran a mano** (típicamente Manuales, Repuestos reemplazados y
+  Documentación de calibración). Conmutar el checklist hoy los dejaría con 3 ítems donde hoy tienen 15-27.
+  **Poblar los accesorios de esos 26 es el trabajo que separa a la fase 2 de poder hacerse**, y ahora se
+  hace con el buscador de artículos sueltos.
+  ⚠️ **Y la lista del PG-350Z hay que podarla**: sus 40 artículos son en buena parte opciones de VENTA
+  (líneas calefactadas, unidades PSS-5C, enfriadores PS-300, maletines, «Consumable Parts Kit (1 Año)»),
+  no cosas que un técnico verifique al recibir el equipo. Revisar con quien recibe los PG.
+
 - **Artículos por modelo — FASE 1 (2026-08-10), superada por el rediseño de arriba.** Accesorios, consumibles y repuestos
   administrables desde la ficha del modelo. Tabla `catalogo_articulos` (una sola, con `clase` como
   discriminador), API bajo `/api/catalogo/modelos/:id/articulos`, buscador contra `books.items` y siembra
