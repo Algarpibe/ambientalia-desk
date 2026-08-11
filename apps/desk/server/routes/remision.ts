@@ -311,7 +311,13 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // Aquí es donde el ticket avanza a "Remisión creada", y no al crear la remisión: es este
     // callback el que dice que el documento existe de verdad en Drive. Un desenlace en `error` no
     // mueve nada, porque el recuento de confirmadas no lo suma.
-    await sincronizarEstadoPorRemision(db, rem.ticketId, TRANSITION_ACTOR)
+    //
+    // Firma quien CREÓ la remisión, no el marcador. Esta petición no tiene sesión —n8n no manda la
+    // cookie—, así que aquí no hay `req.user`; pero el autor no se ha perdido, está guardado en la
+    // propia remisión. Sin esto, el hilo de un ticket llevado por una sola persona enseñaba un
+    // «Equipo Técnico» que parece un usuario y que nunca intervino. El marcador queda solo como
+    // último recurso, para las remisiones históricas que no traen autor.
+    await sincronizarEstadoPorRemision(db, rem.ticketId, rem.creadoPor ?? TRANSITION_ACTOR)
     res.json({ ok: true })
   }))
 

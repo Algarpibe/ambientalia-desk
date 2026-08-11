@@ -819,6 +819,32 @@ describe('POST /api/remisiones', () => {
     } finally { vi.unstubAllGlobals() }
   })
 
+  /**
+   * La transición a «Remisión creada» la escribe el CALLBACK de n8n, que no tiene sesión —n8n no manda
+   * la cookie—. Firmarla con el marcador `TRANSITION_ACTOR` ponía «Equipo Técnico» en el hilo de un
+   * ticket que había llevado una sola persona de principio a fin, y esa firma parece un usuario que
+   * nunca intervino. El autor correcto ya está guardado en la propia remisión.
+   */
+  it('la transición del callback la firma quien creó la remisión, no el marcador', async () => {
+    const cookie = await adminCookie(); await preparar()
+    // `preparar()` deja el ticket en «OV asignada», el nombre de Zoho, y esa fase no entra nunca en la
+    // sincronización: moverla marcaría el ticket como gestionado por la app. Solo avanzan los nacidos
+    // aquí, que es el caso que este test reproduce.
+    await db.query("UPDATE tickets SET status='Ticket creado' WHERE id='t1'")
+    const { app } = appWith({ remisionCallbackToken: 'secreto-cb' })
+    const rem = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+
+    await request(app).post(`/api/remisiones/${rem.body.id}/callback`)
+      .set('X-Remision-Callback', 'secreto-cb').send({ estado: 'ok' })
+
+    const tr = await db.query(
+      "SELECT performed_by FROM ticket_transitions WHERE ticket_id='t1' AND to_status='Remisión creada'",
+    )
+    expect(tr.rows).toHaveLength(1)
+    expect((tr.rows[0] as { performed_by: string }).performed_by).toBe('Admin')
+  })
+
   // Reenviar una remisión ya cerrada crearía un segundo documento y una segunda carpeta en Drive para
   // el mismo equipo. Solo se reenvía lo que no llegó a buen puerto.
   it('no reenvía una remisión ya cerrada; reenviar una fallida la devuelve a pendiente', async () => {
