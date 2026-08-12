@@ -9,6 +9,9 @@ export const FUNCTIONAL_VIEWS: BoardViewDef[] = [
   { key: 'cerrados', label: 'Tickets cerrados' },
   { key: 'espera', label: 'Tickets en espera' },
   { key: 'vencidos', label: 'Tickets vencidos' },
+  // Reutiliza la etiqueta que el Sidebar ya tenía como ítem decorativo: no aparece nada nuevo en el
+  // menú, se enciende lo que ya estaba.
+  { key: 'mios', label: 'Mis Tickets' },
 ]
 
 // label -> key, para que el Sidebar sepa qué ítems son funcionales.
@@ -19,10 +22,24 @@ export function viewLabel(key: string): string {
   return FUNCTIONAL_VIEWS.find((v) => v.key === key)?.label ?? 'Todos los Tickets'
 }
 
-export function applyBoardView(tickets: Ticket[], key: string, now: Date): Ticket[] {
+/**
+ * El filtro de la vista elegida. `userId` solo lo usa «Mis Tickets» y por eso es opcional: las demás
+ * llamadas siguen igual.
+ *
+ * ⚠️ Esto es un filtro de VISTA y vive en el cliente a propósito. El servidor devuelve todos los
+ * tickets a todo el mundo, y así tiene que seguir: `docs/modelo-autorizacion.md` decidió que no hay
+ * propiedad por ticket ni segmentación de visibilidad —el equipo se cubre entre sí—. La derivación
+ * dice de quién es el trabajo, no quién puede verlo.
+ */
+export function applyBoardView(tickets: Ticket[], key: string, now: Date, userId?: string): Ticket[] {
   const enEspera = (t: Ticket) => /espera/i.test(t.status ?? '')
   switch (key) {
     case 'cerrados': return tickets.filter((t) => t.statusType === 'Closed')
+    // Sin usuario devuelve VACÍO, no todo: enseñar el tablero entero bajo el rótulo «Mis Tickets»
+    // haría creer que todo eso es suyo, que es la peor de las dos mentiras posibles.
+    case 'mios': return userId
+      ? tickets.filter((t) => t.statusType !== 'Closed' && t.derivado?.id === userId)
+      : []
     case 'abiertos': return tickets.filter((t) => t.statusType !== 'Closed' && !enEspera(t))
     case 'espera': return tickets.filter((t) => t.statusType !== 'Closed' && enEspera(t))
     case 'vencidos': return tickets.filter((t) => {

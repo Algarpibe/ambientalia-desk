@@ -23,6 +23,33 @@ describe('applyBoardView', () => {
   it('key desconocida → como todos', () => { expect(ids('zzz')).toEqual(['a', 'b', 'd']) })
 })
 
+/**
+ * «Mis Tickets» filtra por DERIVACIÓN, y solo en la vista.
+ *
+ * ⚠️ Nunca en el servidor: `docs/modelo-autorizacion.md` decidió que no hay propiedad por ticket ni
+ * segmentación de visibilidad. Esto es una comodidad para barrer lo propio, no un permiso.
+ */
+describe('applyBoardView · mis tickets', () => {
+  const mios = [
+    T({ id: 'm1', derivado: { id: 'yo', nombre: 'Yo', cargo: null, initials: 'YO' } }),
+    T({ id: 'm2', statusType: 'Closed', derivado: { id: 'yo', nombre: 'Yo', cargo: null, initials: 'YO' } }),
+    T({ id: 'otro', derivado: { id: 'tu', nombre: 'Tú', cargo: null, initials: 'TU' } }),
+    T({ id: 'nadie', derivado: null }),
+  ]
+
+  it('trae solo los derivados a mí, y excluye los cerrados', () => {
+    expect(applyBoardView(mios, 'mios', now, 'yo').map((t) => t.id)).toEqual(['m1'])
+  })
+
+  /**
+   * Sin usuario NO se devuelve todo. Enseñar el tablero entero bajo el rótulo «Mis Tickets» es la
+   * mentira peor de las dos posibles: quien lo lea creerá que todo eso es suyo.
+   */
+  it('sin usuario devuelve vacío, nunca el tablero entero', () => {
+    expect(applyBoardView(mios, 'mios', now)).toEqual([])
+  })
+})
+
 describe('viewLabel / FUNCTIONAL_BY_LABEL', () => {
   it('viewLabel mapea key→etiqueta con fallback', () => {
     expect(viewLabel('cerrados')).toBe('Tickets cerrados')
@@ -30,6 +57,8 @@ describe('viewLabel / FUNCTIONAL_BY_LABEL', () => {
   })
   it('FUNCTIONAL_BY_LABEL mapea etiqueta→key', () => {
     expect(FUNCTIONAL_BY_LABEL['Tickets en espera']).toBe('espera')
-    expect(FUNCTIONAL_BY_LABEL['Mis Tickets']).toBeUndefined()
+    // Era `toBeUndefined()`: «Mis Tickets» estaba en el Sidebar como ítem decorativo. Ahora es una
+    // vista de verdad y se reutiliza esa misma etiqueta, que ya estaba puesta.
+    expect(FUNCTIONAL_BY_LABEL['Mis Tickets']).toBe('mios')
   })
 })

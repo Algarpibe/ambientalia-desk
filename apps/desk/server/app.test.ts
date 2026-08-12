@@ -162,6 +162,29 @@ describe('derivación en las transiciones', () => {
     expect(res.body[0].derivado).toBeNull()
   })
 
+  /**
+   * ⚠️ BARRERA DE ARQUITECTURA, no una comprobación de rutina.
+   *
+   * `docs/modelo-autorizacion.md` decidió expresamente que NO hay propiedad por ticket ni
+   * segmentación de visibilidad: el equipo se cubre entre sí y necesita ver el panorama completo. La
+   * derivación dice de quién es el TRABAJO, nunca quién puede VER el ticket.
+   *
+   * Es una «mejora» facilísima de colar —un `AND derivado_a = $usuario` en `getActiveTickets` parece
+   * lo obvio— y rompería el modelo sin que nada fallara. Este test existe para que falle.
+   */
+  it('la derivación NO oculta el ticket a los demás', async () => {
+    const otro = await createUser(db, { email: 'otro@x.co', name: 'Otro', passwordHash: await hashPassword('password123') })
+    const cookie = await userCookie(['Servicio Técnico'])
+    await ticketEnFaseInicial()
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [otro.id, 't1'])
+    const { app } = appWith()
+
+    // Lo ve en la lista aunque esté derivado a otra persona…
+    expect((await request(app).get('/api/tickets').set('Cookie', cookie)).body).toHaveLength(1)
+    // …y puede abrirlo.
+    expect((await request(app).get('/api/tickets/t1').set('Cookie', cookie)).status).toBe(200)
+  })
+
   it('la etapa se ejecuta igual sin derivar a nadie', async () => {
     const cookie = await adminCookie()
     await ticketEnFaseInicial()

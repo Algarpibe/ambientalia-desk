@@ -65,7 +65,9 @@ function App() {
   const tickets: Ticket[] = isClosed ? ((resp as ClosedPage | null)?.items ?? []) : ((resp as Ticket[] | null) ?? []);
   const closedMeta = isClosed ? (resp as ClosedPage | null) : null;
   const all = tickets;
-  const base = applyBoardView(all, view, new Date());
+  // `user.id` solo lo usa la vista «Mis Tickets». El servidor sigue devolviendo TODOS los tickets:
+  // esto filtra lo que se enseña, nunca lo que se puede ver.
+  const base = applyBoardView(all, view, new Date(), user?.id);
   const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>({})
   // Al llegar datos frescos del servidor, descarta los overrides optimistas (deja mandar al servidor,
   // p.ej. para que la reactivación "no leído" por actividad nueva se refleje tras recargar).
