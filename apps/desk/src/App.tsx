@@ -32,8 +32,6 @@ const RemisionesPage = lazy(() => import('./components/RemisionesPage').then(m =
 function App() {
   const { user, loading: authLoading } = useAuth();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  /** Abrir la ficha del ticket YA con el formulario de remisión encima (viene del alta encadenada). */
-  const [abrirRemisionAlEntrar, setAbrirRemisionAlEntrar] = useState(false);
   const [showUsers, setShowUsers] = useState(false)
   const [showRoles, setShowRoles] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -140,13 +138,10 @@ function App() {
       {selectedTicketId && (
         <TicketDetailView
           ticketId={selectedTicketId}
-          abrirRemision={abrirRemisionAlEntrar}
-          onClose={() => { setSelectedTicketId(null); setAbrirRemisionAlEntrar(false) }}
+          onClose={() => setSelectedTicketId(null)}
           onChanged={reload}
           tickets={all}
-          // Se limpia al saltar a otro ticket: la petición era para el recién creado, no para el
-          // siguiente que a alguien le dé por abrir desde la lista lateral.
-          onSelect={(id) => { setAbrirRemisionAlEntrar(false); setSelectedTicketId(id) }}
+          onSelect={setSelectedTicketId}
         />
       )}
 
@@ -159,18 +154,9 @@ function App() {
         {showActividades && <ActividadesPage onClose={() => setShowActividades(false)} onSelectTicket={(id) => { setShowActividades(false); setSelectedTicketId(id) }} />}
         {showRemisiones && <RemisionesPage onClose={() => setShowRemisiones(false)} onSelectTicket={(id) => { setShowRemisiones(false); setSelectedTicketId(id) }} isAdmin={!!user.isAdmin} />}
         {showRoles && <RolesAdmin onClose={() => setShowRoles(false)} />}
-        {showCreate && (
-          <CreateTicket
-            onClose={() => setShowCreate(false)}
-            // Con la casilla marcada se abre el ticket recién creado Y su formulario de remisión, para
-            // no obligar a buscarlo justo cuando el equipo está delante.
-            onCreated={(ticketId, conRemision) => {
-              setShowCreate(false)
-              reload()
-              if (conRemision) { setAbrirRemisionAlEntrar(true); setSelectedTicketId(ticketId) }
-            }}
-          />
-        )}
+        {/* El alta se cierra sola cuando termina, con remisión o sin ella: los dos pasos viven dentro
+            de `CreateTicket`, así que aquí el tablero se recarga UNA vez y no a mitad del trámite. */}
+        {showCreate && <CreateTicket onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); reload() }} />}
         {showConfig && (
           <Configuracion
             onClose={() => setShowConfig(false)}

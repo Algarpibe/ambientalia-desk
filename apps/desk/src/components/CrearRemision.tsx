@@ -13,7 +13,16 @@ import { BuscadorOrdenVenta } from './BuscadorOrdenVenta'
  * teclear (ticket, cliente, equipo, tipo de servicio) llegan ya resueltos del ticket y no se pueden
  * alterar aquí — el servidor los recalcula de todos modos al guardar.
  */
-export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: string; onClose: () => void; onCreada: () => void }) {
+export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
+  ticketId: string
+  onClose: () => void
+  onCreada: () => void
+  /**
+   * Llega como PASO 2 del alta de un ticket. Sin decirlo, quien cancela aquí se queda sin saber que
+   * el ticket sí quedó creado — y el número que ve arriba parecería el de un ticket que no existe.
+   */
+  recienCreado?: boolean
+}) {
   const { data, loading, error } = useAsync<RemisionNueva>(() => fetchRemisionNueva(ticketId), [ticketId])
   /**
    * Una remisión de este ticket que quedó creada y sin desenlace, de un intento anterior que se
@@ -153,6 +162,12 @@ export function CrearRemision({ ticketId, onClose, onCreada }: { ticketId: strin
 
         {data && (
           <>
+            {recienCreado && (
+              <div className="text-[12px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded p-2">
+                Ticket <strong>#{data.ticketNumber}</strong> creado. Ahora su remisión de entrada — si la
+                cancelas, el ticket se queda igualmente y podrás remisionarlo después.
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] font-bold text-slate-500 uppercase">Ticket</label>

@@ -2,19 +2,25 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite } from '@ambientalia/shared'
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
 import { searchClients, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber } from '../api/client'
+import { CrearRemision } from './CrearRemision'
 
 export function CreateTicket({ onClose, onCreated }: {
   onClose: () => void
-  /**
-   * `conRemision` pide encadenar el formulario de remisión de entrada al ticket recién creado. El
-   * equipo operativo suele recibir el equipo en el mismo acto de abrir el ticket, y obligarles a
-   * buscarlo después para remisionarlo era un paso de más en el momento de más prisa.
-   */
-  onCreated: (ticketId: string, conRemision: boolean) => void
+  /** Se llama al terminar del todo: con el ticket creado y, si se pidió, su remisión ya resuelta. */
+  onCreated: (ticketId: string) => void
 }) {
   // Sin marcar por defecto: no todo ticket nace con el equipo delante, y una remisión de más es un
   // documento en Drive que alguien tiene que ir a anular.
   const [conRemision, setConRemision] = useState(false)
+  /**
+   * El ticket ya creado, cuando el alta encadena con la remisión. Mientras vale algo, esta misma
+   * ventana enseña el PASO 2 en vez del formulario de alta.
+   *
+   * Se queda aquí y no se delega al padre a propósito: antes, crear el ticket cerraba esta ventana,
+   * recargaba el tablero y abría la ficha entera con el formulario de remisión encima. Tres saltos
+   * para lo que el técnico vive como un solo trámite. Ahora el tablero se recarga UNA vez, al final.
+   */
+  const [creado, setCreado] = useState<string | null>(null)
   const [ovQuery, setOvQuery] = useState('')
   const [ovResults, setOvResults] = useState<SalesOrderLite[]>([])
   const [salesOrderId, setSalesOrderId] = useState<string | null>(null)
@@ -156,12 +162,33 @@ export function CreateTicket({ onClose, onCreated }: {
         prioridad: prioridad || undefined,
         subject, codigoServicio: codigo,
       })
-      onCreated(creado.id, conRemision)
+      // Con remisión, la ventana NO se cierra: pasa al paso 2. Sin ella, termina aquí.
+      if (conRemision) setCreado(creado.id)
+      else onCreated(creado.id)
     } catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
 
   const field = 'border border-slate-200 rounded p-2 text-[13px]'
+
+  /*
+   * PASO 2. El ticket ya existe, así que el formulario de remisión se reutiliza tal cual —trae el
+   * checklist del modelo, el envío a n8n y la reanudación si se cae a media subida—.
+   *
+   * Si el envío falla, el ticket se queda creado y avisado: es lo correcto con un técnico en campo y
+   * mala cobertura, y deshacerlo exigiría un borrado de ticket que la app no tiene (son nueve tablas
+   * sin claves foráneas). Cerrar aquí, con remisión o sin ella, cierra el trámite entero.
+   */
+  if (creado) {
+    return (
+      <CrearRemision
+        ticketId={creado}
+        recienCreado
+        onClose={() => onCreated(creado)}
+        onCreada={() => onCreated(creado)}
+      />
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
