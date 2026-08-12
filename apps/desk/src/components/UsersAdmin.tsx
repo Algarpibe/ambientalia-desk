@@ -5,6 +5,7 @@ import { listUsers, createUser, updateUser, listRoles, type Role } from '../api/
 export function UsersAdmin({ onClose }: { onClose: () => void }) {
   const [users, setUsers] = useState<UserPublic[]>([])
   const [creating, setCreating] = useState(false)
+  const [editando, setEditando] = useState<UserPublic | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [roles, setRoles] = useState<Role[]>([])
   useEffect(() => { listRoles().then(setRoles).catch(() => {}) }, [])
@@ -24,14 +25,6 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
   }
   async function changeRole(u: UserPublic, roleId: string) {
     await updateUser(u.id, { roleId: roleId || null }); reload()
-  }
-  /** Cargo y empresa se imprimen en el documento de remisión, de ahí que se editen aquí. */
-  async function editarCampo(u: UserPublic, campo: 'cargo' | 'empresa') {
-    const etiqueta = campo === 'cargo' ? 'Cargo' : 'Empresa'
-    const v = prompt(`${etiqueta} de ${u.name}:`, (campo === 'cargo' ? u.cargo : u.empresa) ?? '')
-    if (v === null) return // el usuario canceló; vacío sí es válido y borra el valor
-    try { await updateUser(u.id, { [campo]: v }); reload() }
-    catch (e) { alert('Error: ' + String(e instanceof Error ? e.message : e)) }
   }
   async function resetPassword(u: UserPublic) {
     const pw = prompt(`Nueva contraseña para ${u.email} (mínimo 8 caracteres):`)
@@ -58,16 +51,8 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
               <tr key={u.id} className="border-b">
                 <td className="py-2">{u.email}</td>
                 <td>{u.name}</td>
-                <td>
-                  <button onClick={() => editarCampo(u, 'cargo')} className={`text-[12px] hover:underline ${u.cargo ? 'text-slate-700' : 'text-slate-400 italic'}`}>
-                    {u.cargo || 'Sin definir'}
-                  </button>
-                </td>
-                <td>
-                  <button onClick={() => editarCampo(u, 'empresa')} className={`text-[12px] hover:underline ${u.empresa ? 'text-slate-700' : 'text-slate-400 italic'}`}>
-                    {u.empresa || 'Sin definir'}
-                  </button>
-                </td>
+                <td className={`text-[12px] ${u.cargo ? 'text-slate-700' : 'text-slate-400 italic'}`}>{u.cargo || 'Sin definir'}</td>
+                <td className={`text-[12px] ${u.empresa ? 'text-slate-700' : 'text-slate-400 italic'}`}>{u.empresa || 'Sin definir'}</td>
                 <td>{u.isAdmin ? 'Sí' : 'No'}</td>
                 <td>{u.active ? 'Sí' : 'No'}</td>
                 <td>
@@ -81,6 +66,7 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
                   )}
                 </td>
                 <td className="text-right whitespace-nowrap">
+                  <button onClick={() => setEditando(u)} className="text-[12px] text-blue-600 mr-3">Editar</button>
                   <button onClick={() => toggleAdmin(u)} className="text-[12px] text-blue-600 mr-3">{u.isAdmin ? 'Quitar admin' : 'Hacer admin'}</button>
                   <button onClick={() => toggleActive(u)} className="text-[12px] text-blue-600 mr-3">{u.active ? 'Desactivar' : 'Activar'}</button>
                   <button onClick={() => resetPassword(u)} className="text-[12px] text-blue-600">Resetear contraseña</button>
@@ -91,6 +77,7 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
         </table>
       </div>
       {creating && <CreateUser roles={roles} onClose={() => setCreating(false)} onCreated={() => { setCreating(false); reload() }} />}
+      {editando && <EditarUsuario usuario={editando} onClose={() => setEditando(null)} onGuardado={() => { setEditando(null); reload() }} />}
     </div>
   )
 }
@@ -139,6 +126,47 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
           <button type="submit" disabled={busy} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50">{busy ? 'Creando…' : 'Crear'}</button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+/**
+ * Edita QUIÉN es la persona: correo, nombre, cargo y empresa.
+ *
+ * No toca Admin, Activo ni Rol a propósito: esos tres ya tienen su control en la fila, y repetirlos
+ * aquí serían dos formas de hacer lo mismo con el riesgo de que una pisara a la otra.
+ */
+function EditarUsuario({ usuario, onClose, onGuardado }: { usuario: UserPublic; onClose: () => void; onGuardado: () => void }) {
+  const [email, setEmail] = useState(usuario.email)
+  const [name, setName] = useState(usuario.name)
+  const [cargo, setCargo] = useState(usuario.cargo ?? '')
+  const [empresa, setEmpresa] = useState(usuario.empresa ?? '')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setError(null)
+    try { await updateUser(usuario.id, { email, name, cargo, empresa }); onGuardado() }
+    catch (err) { setError(err instanceof Error ? err.message : String(err)) }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
+      <form onSubmit={submit} className="bg-white rounded-lg p-5 w-[400px] flex flex-col gap-3">
+        <h3 className="text-[15px] font-bold text-slate-800">Editar usuario</h3>
+        <input type="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
+        <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
+        <input type="text" placeholder="Cargo (opcional)" value={cargo} onChange={(e) => setCargo(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
+        <input type="text" placeholder="Empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
+        {/* Cambiar el correo no cierra su sesión —van por id— pero a partir de ahora entra con el nuevo. */}
+        <p className="text-[11px] text-slate-400">Si cambias el correo, avísale: es con el que iniciará sesión.</p>
+        {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
+          <button type="submit" disabled={busy} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar'}</button>
         </div>
       </form>
     </div>

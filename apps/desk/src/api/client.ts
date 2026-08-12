@@ -118,7 +118,7 @@ export async function createUser(input: NewUser): Promise<UserPublic> {
   return res.json() as Promise<UserPublic>
 }
 
-export function updateUser(id: string, patch: Partial<{ name: string; isAdmin: boolean; active: boolean; password: string; roleId: string | null; cargo: string | null; empresa: string | null }>): Promise<UserPublic> {
+export function updateUser(id: string, patch: Partial<{ name: string; email: string; isAdmin: boolean; active: boolean; password: string; roleId: string | null; cargo: string | null; empresa: string | null }>): Promise<UserPublic> {
   return fetch(`/api/users/${id}`, {
     method: 'PATCH', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
