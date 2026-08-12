@@ -3,7 +3,18 @@ import type { ClientLite, SalesOrderLite, EquipoLite } from '@ambientalia/shared
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
 import { searchClients, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber } from '../api/client'
 
-export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+export function CreateTicket({ onClose, onCreated }: {
+  onClose: () => void
+  /**
+   * `conRemision` pide encadenar el formulario de remisión de entrada al ticket recién creado. El
+   * equipo operativo suele recibir el equipo en el mismo acto de abrir el ticket, y obligarles a
+   * buscarlo después para remisionarlo era un paso de más en el momento de más prisa.
+   */
+  onCreated: (ticketId: string, conRemision: boolean) => void
+}) {
+  // Sin marcar por defecto: no todo ticket nace con el equipo delante, y una remisión de más es un
+  // documento en Drive que alguien tiene que ir a anular.
+  const [conRemision, setConRemision] = useState(false)
   const [ovQuery, setOvQuery] = useState('')
   const [ovResults, setOvResults] = useState<SalesOrderLite[]>([])
   const [salesOrderId, setSalesOrderId] = useState<string | null>(null)
@@ -137,7 +148,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
     e.preventDefault(); setBusy(true); setError(null)
     try {
       if (!equipo) { setError('Selecciona un equipo registrado'); setBusy(false); return }
-      await createTicket({
+      const creado = await createTicket({
         salesOrderId: salesOrderId ?? undefined,
         clientId: clientId ?? undefined,
         equipoId: equipo.id,
@@ -145,7 +156,7 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         prioridad: prioridad || undefined,
         subject, codigoServicio: codigo,
       })
-      onCreated()
+      onCreated(creado.id, conRemision)
     } catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
@@ -277,6 +288,14 @@ export function CreateTicket({ onClose, onCreated }: { onClose: () => void; onCr
         </div>
 
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
+
+        {/* El equipo suele llegar en el mismo acto de abrir el ticket. Sin esto había que crear el
+            ticket, buscarlo y entrar en él para remisionar, justo en el momento de más prisa. */}
+        <label className="flex items-center gap-2 text-[13px] text-slate-700 cursor-pointer border-t border-slate-100 pt-3">
+          <input type="checkbox" checked={conRemision} onChange={(e) => setConRemision(e.target.checked)} className="accent-blue-600" />
+          Crear también la remisión de entrada
+        </label>
+
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>
           <button type="submit" disabled={busy} className="px-4 py-1.5 bg-[#2C7BE5] text-white rounded text-[13px] font-bold disabled:opacity-50">{busy ? 'Creando…' : 'Crear ticket'}</button>

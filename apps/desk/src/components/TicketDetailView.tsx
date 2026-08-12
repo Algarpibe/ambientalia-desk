@@ -30,9 +30,11 @@ interface TicketDetailViewProps {
     tickets?: Ticket[];
     /** Abrir otro ticket desde la barra lateral. */
     onSelect?: (id: string) => void;
+    /** Entrar con el formulario de remisión ya abierto. Lo pide el alta encadenada desde el ticket nuevo. */
+    abrirRemision?: boolean;
 }
 
-export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged, tickets, onSelect }) => {
+export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged, tickets, onSelect, abrirRemision }) => {
     const { data: ticket, loading, reload: reloadTicket } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
     const listCol = useResizable('ticket:listW', 300, 220, 520);
     const propsCol = useResizable('ticket:propsW', 300, 240, 520);
@@ -64,7 +66,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
-    const [showRemision, setShowRemision] = useState(false);
+    // Arranca abierto si el alta lo pidió. Es estado inicial y no un efecto: con un efecto, cerrar el
+    // formulario y quedarse en el ticket lo volvería a abrir en el siguiente render.
+    const [showRemision, setShowRemision] = useState(!!abrirRemision);
 
     /**
      * Lo que hay que refrescar cuando una remisión se mueve, sea al crearla o al reenviar una que
@@ -304,6 +308,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               // Para que el desplegable conserve al derivado actual aunque ya no esté
                               // activo: si desapareciera, confirmar la etapa lo borraría en silencio.
                               derivadoActual={ticket.derivado ?? null}
+                              remisiones={remisiones}
                               onDone={() => { reloadTicket(); reloadMessages(); onChanged?.(); }}
                               onCrearRemision={() => setShowRemision(true)}
                             />

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { transitionsForStatus, puedeCrearRemisionDeEntrada, type Transition, type TransitionField, type PersonaLite } from '@ambientalia/shared';
+import { transitionsForStatus, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
 import { executeTransition, getPersonas } from '../api/client';
 import { opcionesPersona, type OpcionPersona } from '../lib/personas';
+import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
 import { canExecuteTransition } from '@ambientalia/shared'
@@ -34,7 +35,7 @@ function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string |
   return v != null && String(v).trim() !== ''
 }
 
-export function TransitionPanel({ ticketId, status, delTicket, clientId, derivadoActual, onDone, onCrearRemision }: {
+export function TransitionPanel({ ticketId, status, delTicket, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
   ticketId: string
   status: string
   /** `customFields` del ticket: lo que ya se sabe, para prellenar y bloquear. */
@@ -43,9 +44,12 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, derivad
   clientId?: string | null
   /** A quién está derivado el ticket ahora, para conservarlo en el desplegable aunque esté de baja. */
   derivadoActual?: PersonaLite | null
+  /** Las remisiones vigentes del ticket: deciden si el botón ofrece crear una o abrir la que ya hay. */
+  remisiones?: Remision[] | null
   onDone: () => void
   onCrearRemision?: () => void
 }) {
+  const boton = botonRemision(status, remisiones ?? null)
   const { user } = useAuth()
   const transitions = transitionsForStatus(status).filter(
     (t) => !!user && canExecuteTransition(user.areas, user.isAdmin, t.area),
@@ -119,14 +123,17 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, derivad
             {t.name} → {t.to}
           </button>
         ))}
-        {/* Acción, no transición: en gris para que no se lea como un cambio de estado. */}
-        {puedeCrearRemisionDeEntrada(status) && (
+        {/* Acción, no transición: en gris para que no se lea como un cambio de estado. Con una
+            remisión ya creada y sin enviar, cambia de texto y lleva a ÉSA — el ticket no se mueve
+            hasta que n8n confirma, así que sin esto seguía diciendo «Crear remisión» sobre un ticket
+            que ya tenía una. */}
+        {boton.visible && (
           <button
             type="button"
             onClick={onCrearRemision}
             className="text-[12px] font-bold text-slate-600 border border-slate-300 px-3 py-1 rounded hover:bg-slate-50"
           >
-            Crear remisión
+            {boton.texto}
           </button>
         )}
       </div>
