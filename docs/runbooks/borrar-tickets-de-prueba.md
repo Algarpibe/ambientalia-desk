@@ -1,5 +1,10 @@
 # Runbook — borrar tickets de prueba a mano
 
+> ✅ **Desde 2026-08-12 esto se hace desde la aplicación**: detalle del ticket → menú «…» → «Eliminar
+> ticket», con vista previa de lo que se va y de los enlaces de Drive. Solo administradores, y solo
+> tickets nacidos en Desk. **Este runbook queda como vía de rescate** si la aplicación no arranca, o
+> para casos que el botón no cubre.
+
 **Por qué existe:** el esquema **no tiene claves foráneas**. `DELETE FROM tickets` siempre funciona y
 deja las filas hijas huérfanas en silencio. Ya ha mordido dos veces (`debt.md:421`). Este barrido son
 **nueve tablas** y el sistema no avisa si te dejas una.
@@ -31,8 +36,15 @@ SELECT id, number, status, subject, managed_by_app, created_at
  ORDER BY number;
 ```
 
-**Comprueba antes de seguir** que salen los que esperas y que los tres tienen `managed_by_app = true`.
-Si alguno saliera con `false` es un ticket venido de Zoho: **para y pregunta**, no es de prueba.
+**Comprueba antes de seguir** que salen los que esperas y que **los tres identificadores empiezan por
+`app-`**.
+
+⚠️ **No te fíes de `managed_by_app`**, aunque lo parezca: `writeTransition` la pone en `true` en
+*cualquier* transición hecha desde Desk, también sobre un ticket venido de Zoho (ver
+`apps/desk/server/db/ticketFuentes.ts:32-38`). Un ticket de Zoho que alguien movió una vez desde Desk
+la tiene en `true`, y borrarlo aquí solo haría que volviera en la siguiente sincronización —o antes,
+porque abrir su ficha lo resucita. **El prefijo `app-` del identificador sí es inmutable**: lo acuña
+`createTicket` y ningún UPDATE lo toca.
 
 ## Paso 1 — Guardar los enlaces de Google Drive ANTES de borrar
 
@@ -62,7 +74,7 @@ BEGIN;
 CREATE TEMP TABLE _borrar ON COMMIT DROP AS
   SELECT id FROM desk.tickets
    WHERE number IN (10000, 10001, 10002)
-     AND managed_by_app = true;   -- salvaguarda: nunca un ticket de Zoho
+     AND id LIKE 'app-%';   -- salvaguarda REAL: el prefijo es inmutable, managed_by_app no lo es
 
 SELECT count(*) AS tickets_a_borrar FROM _borrar;   -- debe ser 3
 

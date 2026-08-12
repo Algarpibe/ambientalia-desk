@@ -20,6 +20,8 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
 }
 import { ResolucionPanel } from './ResolucionPanel';
 import { HistoriaPanel } from './HistoriaPanel';
+import { useAuth } from '../auth/AuthContext';
+import { EliminarTicket } from './EliminarTicket';
 
 interface TicketDetailViewProps {
     ticketId: string;
@@ -33,6 +35,9 @@ interface TicketDetailViewProps {
 }
 
 export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, onClose, onChanged, tickets, onSelect }) => {
+    const { user } = useAuth();
+    const [menuAbierto, setMenuAbierto] = useState(false);
+    const [eliminando, setEliminando] = useState(false);
     const { data: ticket, loading, reload: reloadTicket } = useAsync<TicketDetail>(() => fetchTicket(ticketId), [ticketId]);
     const listCol = useResizable('ticket:listW', 300, 220, 520);
     const propsCol = useResizable('ticket:propsW', 300, 240, 520);
@@ -190,7 +195,29 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                         <button className="p-2 hover:bg-slate-50 text-blue-500"><span className="material-symbols-outlined text-[18px]">chat</span></button>
                                         <button className="p-2 border-l border-slate-200 hover:bg-slate-50 text-green-500"><span className="material-symbols-outlined text-[18px]">call</span></button>
                                     </div>
-                                    <button className="p-2 border border-slate-200 rounded hover:bg-slate-50"><span className="material-symbols-outlined text-slate-400 text-[18px]">more_horiz</span></button>
+                                    {/* z-[70]/z-[71]: el detalle entero vive en z-[60], así que el patrón de
+                            ViewModeMenu (z-[60]/z-[61]) dejaría el menú por debajo. */}
+                        <div className="relative">
+                            <button onClick={() => setMenuAbierto((v) => !v)} className="p-2 border border-slate-200 rounded hover:bg-slate-50">
+                                <span className="material-symbols-outlined text-slate-400 text-[18px]">more_horiz</span>
+                            </button>
+                            {menuAbierto && (
+                                <>
+                                    <div className="fixed inset-0 z-[70]" onClick={() => setMenuAbierto(false)} />
+                                    <div className="absolute right-0 mt-1 z-[71] bg-white border border-slate-200 rounded shadow-lg py-1 w-[200px]">
+                                        {user?.isAdmin ? (
+                                            <button
+                                                onClick={() => { setMenuAbierto(false); setEliminando(true) }}
+                                                className="w-full text-left px-3 py-1.5 text-[13px] text-red-600 hover:bg-slate-50">
+                                                Eliminar ticket
+                                            </button>
+                                        ) : (
+                                            <div className="px-3 py-1.5 text-[12px] text-slate-400 italic">Sin acciones disponibles</div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                                 </div>
                             </div>
 
@@ -349,6 +376,15 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                     </div>
                 </div>
             </div>
+            {eliminando && (
+              <EliminarTicket
+                ticketId={ticketId}
+                onCancelar={() => setEliminando(false)}
+                // Cerrar ANTES de recargar: si el tablero recargara con el detalle aún montado,
+                // `fetchTicket` pediría un ticket que ya no existe y la vista quedaría en error.
+                onBorrado={() => { setEliminando(false); onClose(); onChanged?.() }}
+              />
+            )}
             {confirmingReply && (
               <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center">
                 <div className="bg-white rounded-lg p-6 w-[360px] flex flex-col gap-4">

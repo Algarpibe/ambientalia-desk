@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -125,6 +125,27 @@ export function updateUser(id: string, patch: Partial<{ name: string; email: str
     body: JSON.stringify(patch),
   }).then((r) => json<UserPublic>(r))
 }
+
+/*
+ * El borrado de un ticket, en dos funciones con nombre sobre la MISMA ruta.
+ *
+ * Son dos y no una con un booleano a propósito: el parámetro que separa «enséñame qué se iría» de
+ * «bórralo» es una cadena en una query, y nadie debería estar en posición de olvidarla. Quien lee
+ * `eliminarTicket(id)` en un componente sabe exactamente lo que va a pasar.
+ */
+async function pedirBorrado(id: string, dryRun: boolean): Promise<ResumenEliminacion> {
+  const res = await fetch(`/api/tickets/${id}${dryRun ? '?dryRun=true' : ''}`, { method: 'DELETE', credentials: 'include' })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error || `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<ResumenEliminacion>
+}
+
+/** Qué se borraría. No escribe nada. */
+export const previsualizarEliminarTicket = (id: string): Promise<ResumenEliminacion> => pedirBorrado(id, true)
+/** Lo borra. Sin vuelta atrás; devuelve el recibo de lo que se fue. */
+export const eliminarTicket = (id: string): Promise<ResumenEliminacion> => pedirBorrado(id, false)
 
 export async function deleteUser(id: string): Promise<void> {
   const res = await fetch(`/api/users/${id}`, { method: 'DELETE', credentials: 'include' })
