@@ -68,6 +68,51 @@ describe('auth routes', () => {
     expect(dup.status).toBe(409)
   })
 
+  it('elimina al usuario sin historial; con historial da 409 con la salida escrita', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const creado = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'op@x.co', name: 'Op', password: 'password123' })
+    const id = creado.body.id
+
+    // Con historial no se borra, y el mensaje trae el conteo y la salida (desactivar).
+    await db.query("INSERT INTO tickets (id, number, status) VALUES ('t1', 1, 'Ingresado')")
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [id, 't1'])
+    const enUso = await request(a).delete(`/api/users/${id}`).set('Cookie', cookie)
+    expect(enUso.status).toBe(409)
+    expect(enUso.body.error).toMatch(/Desactívalo/)
+
+    // Sin historial, sí.
+    await db.query('UPDATE tickets SET derivado_a = NULL WHERE id = $1', ['t1'])
+    expect((await request(a).delete(`/api/users/${id}`).set('Cookie', cookie)).status).toBe(204)
+    expect((await request(a).get('/api/users').set('Cookie', cookie)).body).toHaveLength(1)
+
+    expect((await request(a).delete(`/api/users/${id}`).set('Cookie', cookie)).status).toBe(404)
+  })
+
+  /**
+   * Esta puerta es además la que hace imposible quedarse sin administradores: para borrar al último
+   * que queda tendrías que ser tú mismo, y por aquí no pasas. Por eso el DELETE no lleva la
+   * comprobación de `countActiveAdmins` que sí tiene el PATCH — ahí sería inalcanzable.
+   */
+  it('no puedes borrarte a ti mismo, ni siendo el único administrador ni habiendo otro', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const yo = (await request(a).get('/api/auth/me').set('Cookie', cookie)).body
+
+    // Siendo el único administrador: es el caso que deja el sistema sin nadie que administre.
+    const solo = await request(a).delete(`/api/users/${yo.id}`).set('Cookie', cookie)
+    expect(solo.status).toBe(409)
+    expect(solo.body.error).toMatch(/ti mismo/)
+
+    // Y con un segundo administrador tampoco, porque la razón no es el conteo sino que eres tú.
+    await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'a2@x.co', name: 'A2', password: 'password123', isAdmin: true })
+    const conOtro = await request(a).delete(`/api/users/${yo.id}`).set('Cookie', cookie)
+    expect(conOtro.status).toBe(409)
+    expect(conOtro.body.error).toMatch(/ti mismo/)
+  })
+
   it('el PATCH cambia el correo, y el duplicado da 409 sin bloquear al propio usuario', async () => {
     await seedAdmin()
     const a = app()

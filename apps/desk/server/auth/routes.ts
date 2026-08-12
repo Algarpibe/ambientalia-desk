@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { hashPassword, verifyPassword } from './passwords'
-import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countActiveAdmins } from './users'
+import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countActiveAdmins, borrarUsuario, UsuarioEnUso } from './users'
 import { createRole, listRoles, getRole, updateRole } from './roles'
 import { createSession, deleteSession, deleteUserSessions } from './sessions'
 import { requireAuth, requireAdmin } from './middleware'
@@ -111,6 +111,40 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
     const updated = await getUserById(db, id)
     if (!updated) { res.status(404).json({ error: 'Usuario no encontrado' }); return }
     res.json(updated)
+  })
+
+  /**
+   * Borrado físico, y solo de quien no tiene historial.
+   *
+   * El esquema no tiene claves foráneas: lo que no barra `borrarUsuario` queda huérfano en silencio,
+   * y las dos puertas de 409 evitan destrozos irreversibles distintos.
+   *
+   * NO lleva la comprobación del último administrador que sí tiene el PATCH, y no es un olvido: aquí
+   * es **inalcanzable**. Quien borra es siempre un administrador ACTIVO (lo exigen `requireAdmin` y
+   * la propia sesión), así que si el objetivo es otro administrador activo hay dos como mínimo y el
+   * conteo nunca baja de dos; y si el objetivo es él mismo, lo para la puerta de arriba. Se escribió,
+   * se probó mutando —el test seguía verde sin ella— y se quitó: una red que no puede desplegarse
+   * miente sobre lo que protege.
+   */
+  app.delete('/api/users/:id', auth, requireAdmin, async (req, res) => {
+    const id = String(req.params.id)
+    const target = await getUserById(db, id)
+    if (!target) { res.status(404).json({ error: 'Usuario no encontrado' }); return }
+    // Te dejaría con la sesión muerta y sin forma de deshacerlo desde la propia aplicación. Es además
+    // lo que hace imposible quedarse sin ningún administrador: para borrar al único que queda tendrías
+    // que ser tú, y por aquí no pasas.
+    if (id === req.user!.id) { res.status(409).json({ error: 'No puedes borrarte a ti mismo' }); return }
+    try {
+      await borrarUsuario(db, id)
+      res.status(204).end()
+    } catch (e) {
+      if (e instanceof UsuarioEnUso) {
+        const tickets = e.usos === 1 ? 'ticket' : 'tickets'
+        res.status(409).json({ error: `Tiene historial en ${e.usos} ${tickets}. Desactívalo en lugar de borrarlo.` })
+        return
+      }
+      throw e
+    }
   })
 
   app.get('/api/roles', auth, requireAdmin, async (_req, res) => {
