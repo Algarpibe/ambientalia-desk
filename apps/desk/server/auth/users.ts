@@ -83,11 +83,14 @@ export async function listPersonas(db: Queryable): Promise<PersonaLite[]> {
 export async function updateUser(
   db: Queryable,
   id: string,
-  patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null },
+  patch: { name?: string; email?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null },
 ): Promise<void> {
   const sets: string[] = ['updated_at=now()']
   const params: unknown[] = [id]
   if (patch.name !== undefined) { params.push(patch.name); sets.push(`name=$${params.length}`) }
+  // Normalizado aquí igual que en el alta: el correo es la identidad de acceso y dos grafías del
+  // mismo buzón serían dos usuarios distintos para `getUserByEmail`.
+  if (patch.email !== undefined) { params.push(normalize(patch.email)); sets.push(`email=$${params.length}`) }
   if (patch.isAdmin !== undefined) { params.push(patch.isAdmin); sets.push(`is_admin=$${params.length}`) }
   if (patch.active !== undefined) { params.push(patch.active); sets.push(`active=$${params.length}`) }
   if (patch.roleId !== undefined) { params.push(patch.roleId); sets.push(`role_id=$${params.length}`) }

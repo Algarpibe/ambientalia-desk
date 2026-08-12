@@ -46,6 +46,14 @@ describe('users repo', () => {
     expect(await countUsers(db)).toBe(1)
   })
 
+  it('updateUser cambia el correo, normalizado', async () => {
+    const u = await createUser(db, { email: 'viejo@x.co', name: 'V', passwordHash: 'h' })
+    await updateUser(db, u.id, { email: 'NUEVO@X.CO' })
+    expect((await getUserById(db, u.id))!.email).toBe('nuevo@x.co')
+    // Y se puede encontrar por el nuevo, que es lo que hace falta para iniciar sesión.
+    expect(await getUserByEmail(db, 'nuevo@x.co')).not.toBeNull()
+  })
+
   it('update (active/isAdmin/name) y setPassword', async () => {
     const u = await createUser(db, { email: 'a@b.co', name: 'A', passwordHash: 'h1' })
     await updateUser(db, u.id, { name: 'Nuevo', active: false, isAdmin: true })
