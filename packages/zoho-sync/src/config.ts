@@ -45,6 +45,12 @@ export interface AppConfig {
   remisionWebhookToken: string
   /** Secreto con el que n8n autentica su callback de vuelta. Vacío = callback deshabilitado. */
   remisionCallbackToken: string
+  /** Webhook de n8n que manda los avisos por correo. Vacío = no se manda nada (la campana sigue igual). */
+  avisosWebhookUrl: string
+  /** Valor de la cabecera `X-Avisos-Token` que exige ese webhook. */
+  avisosWebhookToken: string
+  /** URL pública de la aplicación, para que el correo pueda enlazarla. Vacío = el correo no lleva enlace. */
+  appBaseUrl: string
   sweepEnabled: boolean
   sweepDryRun: boolean
   sweepHour: number
@@ -99,6 +105,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
     remisionWebhookUrl: env.N8N_REMISION_WEBHOOK_URL || '',
     remisionWebhookToken: env.N8N_REMISION_TOKEN || '',
     remisionCallbackToken: env.REMISION_CALLBACK_TOKEN || '',
+    avisosWebhookUrl: env.N8N_AVISOS_WEBHOOK_URL || '',
+    avisosWebhookToken: env.N8N_AVISOS_TOKEN || '',
+    appBaseUrl: env.APP_BASE_URL || '',
     sweepEnabled: env.SWEEP_ENABLED === 'true',        // default OFF
     sweepDryRun: env.SWEEP_DRY_RUN !== 'false',         // default ON
     sweepHour: env.SWEEP_HOUR ? Number(env.SWEEP_HOUR) : 4,
