@@ -14,8 +14,25 @@ function toInt(v: unknown): number | null {
   if (v === undefined || v === null || v === '') return null
   const n = Number(v); return Number.isNaN(n) ? null : n
 }
+/**
+ * Un día en `YYYY-MM-DD`, venga de donde venga.
+ *
+ * Las dos fuentes dan cosas distintas y solo una es texto: Zoho manda ISO, pero node-postgres
+ * materializa las columnas `date` como objetos `Date`, y `String(new Date(…))` da «Wed Aug 06 2026
+ * 00:00:00 GMT-0500». Ese valor viajaba tal cual a la pantalla: un `<input type="date">` con eso se
+ * pinta VACÍO, mientras el código que decide qué bloquear ve una cadena no vacía y lo bloquea. Vacío
+ * y bloqueado a la vez — el dato estaba guardado y no había forma ni de verlo ni de corregirlo.
+ *
+ * Con getters LOCALES y no `toISOString()`: pg entrega una columna `date` como medianoche local, así
+ * que en una zona al este de Greenwich el ISO retrocedería un día. Es la misma trampa que ya está
+ * documentada en `valoresTransicion.ts` y en `books/repo.ts`.
+ */
 function dateOnly(v: unknown): string | null {
   if (!v) return null
+  if (v instanceof Date) {
+    const dosCifras = (n: number) => String(n).padStart(2, '0')
+    return `${v.getFullYear()}-${dosCifras(v.getMonth() + 1)}-${dosCifras(v.getDate())}`
+  }
   return String(v).slice(0, 10) // "2026-05-19" o ISO → YYYY-MM-DD
 }
 function str(v: unknown): string | null {
@@ -204,9 +221,12 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
 /** Reconstruye el objeto customFields (etiqueta→valor) que la UI espera, desde columnas + jsonb. */
 function customFieldsFromRow(row: TicketRow): Record<string, string | null> {
   const out: Record<string, string | null> = { ...(row.custom_fields ?? {}) }
-  for (const { col, label } of PROMOTED_COLUMNS) {
+  for (const { col, label, kind } of PROMOTED_COLUMNS) {
     const v = (row as unknown as Record<string, unknown>)[col]
-    out[label] = v === null || v === undefined ? null : String(v)
+    // Las `date` pasan por `dateOnly` y no por `String`: pg las entrega como `Date`, y su `toString`
+    // da «Wed Aug 06 2026 …», que el formulario no sabe leer. Se usa `kind` y no una comprobación de
+    // tipo para que el formato lo decida el ESQUEMA, igual que en la dirección de entrada.
+    out[label] = v === null || v === undefined ? null : kind === 'date' ? dateOnly(v) : String(v)
   }
   return out
 }

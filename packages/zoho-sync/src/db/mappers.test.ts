@@ -185,6 +185,30 @@ describe('rowToTicketDetail (equipoId)', () => {
     expect(d.customFields['Serial']).toBe('18A20070')
     expect(d.customFields['Orden de Venta']).toBeNull()
   })
+
+  /**
+   * Las columnas `date` llegan de node-postgres como objetos `Date`, NO como texto.
+   *
+   * El fixture usa un `Date` a propósito, y no la cadena que devuelve pg-mem: con la cadena este test
+   * pasa haga lo que haga el mapeo, y el fallo solo aparece en producción. `String(new Date(...))` da
+   * «Wed Aug 06 2026 00:00:00 GMT-0500», y un `<input type="date">` con eso se pinta VACÍO — pero
+   * `yaLoTraeElTicket` ve una cadena no vacía y BLOQUEA el campo. Vacío y bloqueado a la vez: el dato
+   * estaba guardado y no había forma ni de verlo ni de escribirlo.
+   */
+  it('las fechas salen como YYYY-MM-DD aunque pg las entregue como Date', () => {
+    const row = {
+      id: 't1', number: 5, subject: 'S', status: 'Ingresado',
+      // Medianoche LOCAL, que es como node-postgres materializa una columna `date`.
+      fecha_orden_venta: new Date(2026, 7, 6),
+    } as unknown as TicketRow
+    expect(rowToTicketDetail(row, {}).customFields['Fecha Orden De Venta']).toBe('2026-08-06')
+  })
+
+  // La otra mitad: lo que ya viene como texto no se estropea al pasar por el mismo camino.
+  it('una fecha que ya viene como texto se conserva', () => {
+    const row = { id: 't1', number: 5, subject: 'S', status: 'Ingresado', fecha_orden_venta: '2026-08-06' } as unknown as TicketRow
+    expect(rowToTicketDetail(row, {}).customFields['Fecha Orden De Venta']).toBe('2026-08-06')
+  })
 })
 
 describe('activityRowFromZoho / rowToActivity', () => {
