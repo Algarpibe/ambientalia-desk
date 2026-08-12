@@ -18,7 +18,8 @@ import type { RemisionListado } from '@ambientalia/shared'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
-import { createRole } from './auth/roles'
+import { createRole, actualizarRecibeAvisos } from './auth/roles'
+import { listarAvisos } from './db/avisos'
 
 let db: Queryable
 beforeEach(async () => {
@@ -2643,5 +2644,52 @@ describe('Catálogo maestro de equipos', () => {
 
     const modeloId = await modeloParaFicha(app, cookie)
     expect((await request(app).delete(`/api/catalogo/modelos/${modeloId}/documentos/cdoc-inventado`).set('Cookie', cookie)).status).toBe(404)
+  })
+})
+
+/**
+ * El segundo disparador de avisos: el ticket entra en una fase que le toca a OTRA área. No es la
+ * derivación —ahí se nombra a una persona—; aquí el testigo pasa a un cargo.
+ */
+describe('avisos por cambio de área', () => {
+  it('avisa al rol receptor del área que recibe el testigo, no a quien ejecutó', async () => {
+    // Quien recibe el testigo: el coordinador comercial, con la casilla marcada.
+    const coord = await createRole(db, { name: 'Coordinador Comercial', areas: ['Comercial'] })
+    await actualizarRecibeAvisos(db, coord.id, true)
+    const ana = await createUser(db, { email: 'ana@x.co', name: 'Ana', passwordHash: 'h', roleId: coord.id })
+    // Un comercial SIN la casilla: no debe recibir nada, para que el test distinga rol de área.
+    const otro = await createRole(db, { name: 'Asistente Comercial', areas: ['Comercial'] })
+    const beto = await createUser(db, { email: 'beto@x.co', name: 'Beto', passwordHash: 'h', roleId: otro.id })
+
+    // Quien ejecuta: Servicio Técnico. `userCookie` le crea su propio rol.
+    const cookie = await userCookie(['Servicio Técnico'])
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'En Proceso', true)")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'finalizacion_servicio', values: { comment: 'listo', 'Fecha Finalización ST': '2026-08-12' } })
+    expect(res.status).toBe(200)
+
+    const deAna = await listarAvisos(db, ana.id)
+    expect(deAna).toHaveLength(1)
+    expect(deAna[0].texto).toMatch(/Por Facturar/)
+    expect(await listarAvisos(db, beto.id)).toEqual([])
+  })
+
+  // «Facturado» deja el ticket en «Liberación Comercial», cuya transición siguiente TAMBIÉN es de
+  // Comercial: avisar ahí sería decirle a Comercial que le toca a Comercial.
+  it('no avisa cuando la fase siguiente sigue siendo del área que actuó', async () => {
+    const coord = await createRole(db, { name: 'Coordinador Comercial', areas: ['Comercial'] })
+    await actualizarRecibeAvisos(db, coord.id, true)
+    const ana = await createUser(db, { email: 'ana@x.co', name: 'Ana', passwordHash: 'h', roleId: coord.id })
+
+    const cookie = await userCookie(['Comercial'])
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10001, 'Por Facturar', true)")
+    const { app } = appWith()
+
+    await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'facturado', values: { comment: 'ok', 'Fecha De Factura': '2026-08-12' } })
+
+    expect(await listarAvisos(db, ana.id)).toEqual([])
   })
 })

@@ -7,7 +7,8 @@ import { buildSubject, buildCodigoServicio, PREFIJOS } from '@ambientalia/shared
 import { transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambientalia/shared'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
-import { crearAviso } from '../db/avisos'
+import { areasAAvisar, textoAvisoArea } from './avisoArea'
+import { crearAviso, destinatariosDeArea } from '../db/avisos'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
@@ -119,6 +120,27 @@ export async function executeTransition(
       transicion: t.name,
     })
     if (aviso) await crearAviso(db, { userId: aviso.userId, ticketId: id, texto: aviso.texto })
+  }
+
+  /*
+   * El segundo aviso: el ticket entró en una fase que le toca a otra área. Va aquí, junto al de
+   * derivación y por la misma razón —fuera de la transacción, porque `avisos` es de la app y
+   * `applyTransition` vive en el paquete de sincronización—, y con la misma tolerancia al fallo: lo
+   * que importa es la transición, que ya está escrita.
+   *
+   * Se deduplica por persona ANTES de escribir: quien sea destinataria por dos áreas a la vez
+   * (Comercial y Compras salen juntas de varias fases) recibiría el mismo aviso dos veces.
+   */
+  const areasAvisar = areasAAvisar(t.to, user.areas)
+  if (areasAvisar.length) {
+    const porPersona = new Map<string, { id: string }>()
+    for (const area of areasAvisar) {
+      for (const d of await destinatariosDeArea(db, area, user.id ?? '')) porPersona.set(d.id, d)
+    }
+    const texto = textoAvisoArea({ ticketNumero: Number(current.row.number), estado: t.to, actorNombre: actor })
+    for (const d of porPersona.values()) {
+      await crearAviso(db, { userId: d.id, ticketId: id, texto })
+    }
   }
 
   const updated = await getTicketWithRefs(db, id)
