@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countUsers } from './users'
+import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countUsers, usosDeUsuario, borrarUsuario, UsuarioEnUso } from './users'
 import { createRole } from './roles'
 
 let db: Queryable
@@ -86,5 +86,53 @@ describe('users repo', () => {
     expect((await getUserById(db, u.id))!.areas).toEqual(['Comercial'])
     await updateUser(db, u.id, { roleId: null })
     expect((await getUserById(db, u.id))!.areas).toEqual([])
+  })
+})
+
+describe('borrado de usuarios', () => {
+  it('cuenta como uso el ticket derivado y la transición que lo derivó', async () => {
+    const u = await createUser(db, { email: 'u@x.co', name: 'U', passwordHash: 'h' })
+    expect(await usosDeUsuario(db, u.id)).toBe(0)
+
+    await db.query("INSERT INTO tickets (id, number, status) VALUES ('t1', 1, 'Ingresado')")
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [u.id, 't1'])
+    expect(await usosDeUsuario(db, u.id)).toBe(1)
+
+    // La referencia ESCONDIDA: el id vive dentro del jsonb de la transición, que es el rastro de
+    // auditoría. Sin contarla, se podría borrar a alguien y dejar UUIDs crudos en el historial.
+    await db.query(
+      `INSERT INTO ticket_transitions (ticket_id, transition_name, from_status, to_status, performed_by, values)
+       VALUES ('t1','Habilitar','Ticket creado','Ingresado','Admin',$1)`,
+      [JSON.stringify({ derivado_a: u.id })],
+    )
+    expect(await usosDeUsuario(db, u.id)).toBe(2)
+  })
+
+  it('borra al usuario sin historial y se lleva sesiones, avisos y lecturas', async () => {
+    const u = await createUser(db, { email: 'u@x.co', name: 'U', passwordHash: 'h' })
+    const otro = await createUser(db, { email: 'o@x.co', name: 'O', passwordHash: 'h' })
+    await db.query('INSERT INTO sessions (token, user_id, expires_at) VALUES ($1,$2,now())', ['tok', u.id])
+    await db.query('INSERT INTO avisos (id, user_id, ticket_id, texto) VALUES ($1,$2,null,$3)', ['avi-1', u.id, 'x'])
+    await db.query('INSERT INTO ticket_reads (ticket_id, user_id, read_at) VALUES ($1,$2,now())', ['t1', u.id])
+    // Lo del OTRO usuario no se toca.
+    await db.query('INSERT INTO avisos (id, user_id, ticket_id, texto) VALUES ($1,$2,null,$3)', ['avi-2', otro.id, 'y'])
+
+    await borrarUsuario(db, u.id)
+
+    expect(await getUserById(db, u.id)).toBeNull()
+    expect((await db.query('SELECT 1 FROM sessions WHERE user_id=$1', [u.id])).rows).toEqual([])
+    expect((await db.query('SELECT 1 FROM avisos WHERE user_id=$1', [u.id])).rows).toEqual([])
+    expect((await db.query('SELECT 1 FROM ticket_reads WHERE user_id=$1', [u.id])).rows).toEqual([])
+    expect((await db.query('SELECT 1 FROM avisos WHERE user_id=$1', [otro.id])).rows).toHaveLength(1)
+    expect(await getUserById(db, otro.id)).not.toBeNull()
+  })
+
+  it('se niega a borrar a quien tiene historial, y no borra nada', async () => {
+    const u = await createUser(db, { email: 'u@x.co', name: 'U', passwordHash: 'h' })
+    await db.query("INSERT INTO tickets (id, number, status) VALUES ('t1', 1, 'Ingresado')")
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [u.id, 't1'])
+
+    await expect(borrarUsuario(db, u.id)).rejects.toThrow(UsuarioEnUso)
+    expect(await getUserById(db, u.id)).not.toBeNull()
   })
 })

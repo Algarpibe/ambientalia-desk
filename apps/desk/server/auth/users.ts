@@ -113,3 +113,46 @@ export async function countActiveAdmins(db: Queryable): Promise<number> {
   const r = await db.query('SELECT COUNT(*)::int AS n FROM users WHERE is_admin = true AND active = true')
   return r.rows[0].n as number
 }
+
+/** Usuario con historial. Se traduce a 409 con el conteo delante, como `EntradaEnUso`. */
+export class UsuarioEnUso extends Error {
+  constructor(public readonly usos: number) {
+    super(`En uso por ${usos}`)
+    this.name = 'UsuarioEnUso'
+  }
+}
+
+/**
+ * Cuántas referencias POR ID tiene esta persona, que son las que romperían al borrarla.
+ *
+ * Dos, y la segunda es la que importa: el id de la derivación viaja dentro del `values` de cada
+ * transición, que es el rastro de auditoría que enseña el panel de Historia. Borrar a alguien
+ * derivado alguna vez deja ese panel mostrando un UUID crudo para siempre, y reescribir el `values`
+ * para evitarlo sería falsificar la auditoría.
+ *
+ * Lo que guarda el NOMBRE (quién ejecutó la transición, quién firmó la remisión) no se cuenta: es
+ * texto y sobrevive al borrado sin romperse.
+ */
+export async function usosDeUsuario(db: Queryable, id: string): Promise<number> {
+  const t = await db.query('SELECT COUNT(*)::int AS n FROM tickets WHERE derivado_a = $1', [id])
+  const tr = await db.query("SELECT COUNT(*)::int AS n FROM ticket_transitions WHERE values->>'derivado_a' = $1", [id])
+  return Number((t.rows[0] as Record<string, unknown>).n) + Number((tr.rows[0] as Record<string, unknown>).n)
+}
+
+/**
+ * Borrado físico, y solo si no tiene historial.
+ *
+ * El esquema no tiene claves foráneas: lo que no se barra aquí queda huérfano en silencio. Se llevan
+ * sesiones, avisos y lecturas —estado personal, sin valor de auditoría— y la fila se borra LA ÚLTIMA:
+ * sin transacción que pg-mem pueda probar, un fallo a medias deja a la persona existiendo con menos
+ * estado personal, que es molesto pero nunca corrupto. Al revés dejaría justo los huérfanos que esto
+ * viene a evitar.
+ */
+export async function borrarUsuario(db: Queryable, id: string): Promise<void> {
+  const usos = await usosDeUsuario(db, id)
+  if (usos > 0) throw new UsuarioEnUso(usos)
+  await db.query('DELETE FROM sessions WHERE user_id = $1', [id])
+  await db.query('DELETE FROM avisos WHERE user_id = $1', [id])
+  await db.query('DELETE FROM ticket_reads WHERE user_id = $1', [id])
+  await db.query('DELETE FROM users WHERE id = $1', [id])
+}
