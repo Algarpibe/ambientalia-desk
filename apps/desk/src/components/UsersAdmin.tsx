@@ -90,22 +90,24 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
           </tbody>
         </table>
       </div>
-      {creating && <CreateUser onClose={() => setCreating(false)} onCreated={() => { setCreating(false); reload() }} />}
+      {creating && <CreateUser roles={roles} onClose={() => setCreating(false)} onCreated={() => { setCreating(false); reload() }} />}
     </div>
   )
 }
 
-function CreateUser({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () => void; onCreated: () => void }) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [roleId, setRoleId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
-    try { await createUser({ email, name, password, isAdmin }); onCreated() }
+    // Un admin nunca lleva rol (lo cortocircuita): se descarta aunque se hubiera elegido antes de marcar la casilla.
+    try { await createUser({ email, name, password, isAdmin, roleId: isAdmin ? null : roleId || null }); onCreated() }
     catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
@@ -117,6 +119,16 @@ function CreateUser({ onClose, onCreated }: { onClose: () => void; onCreated: ()
         <input type="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="password" placeholder="Contraseña inicial (mín. 8)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="border border-slate-200 rounded p-2 text-[13px]" />
+        {isAdmin ? (
+          <select disabled className="border border-slate-200 rounded p-2 text-[13px] bg-slate-50 text-slate-400">
+            <option>Acceso total (Admin)</option>
+          </select>
+        ) : (
+          <select value={roleId} onChange={(e) => setRoleId(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]">
+            <option value="">— Sin rol —</option>
+            {roles.filter((r) => r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        )}
         <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} /> Administrador</label>
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
         <div className="flex justify-end gap-2">

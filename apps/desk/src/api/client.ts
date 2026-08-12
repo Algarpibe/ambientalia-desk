@@ -104,7 +104,7 @@ export function listUsers(): Promise<UserPublic[]> {
   return fetch('/api/users', { credentials: 'include' }).then((r) => json<UserPublic[]>(r))
 }
 
-export interface NewUser { email: string; name: string; password: string; isAdmin: boolean }
+export interface NewUser { email: string; name: string; password: string; isAdmin: boolean; roleId: string | null }
 export async function createUser(input: NewUser): Promise<UserPublic> {
   const res = await fetch('/api/users', {
     method: 'POST', credentials: 'include',
