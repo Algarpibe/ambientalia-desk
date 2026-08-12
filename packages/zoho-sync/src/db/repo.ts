@@ -356,6 +356,13 @@ export interface CreateTicketInput {
   modelo: string | null
   serial: string | null
   ordenVenta: string | null
+  /**
+   * La fecha de esa orden, tal como la trae Books. Va junto al número y no se deduce después:
+   * «Habilitar Servicio» enseña el campo de la orden BLOQUEADO cuando el ticket ya la trae, y con él
+   * bloqueado no se pinta el buscador de órdenes, que es lo único que rellena esta fecha. Sin
+   * guardarla aquí, el campo se queda vacío y sin forma de llenarlo.
+   */
+  fechaOrdenVenta?: string | null
   priority: string | null
   clientId: string
   salesorderId: string | null
@@ -375,9 +382,9 @@ export async function createTicket(db: Queryable, input: CreateTicketInput): Pro
   const number = await nextTicketNumber(db)
   const run = async (q: Queryable): Promise<void> => {
     await q.query(
-      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at)
-       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,true,'app',now(),now(),now())`,
-      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, STATUS_TICKET_CREADO],
+      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,fecha_orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at)
+       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$17,$13,$14,$15,true,'app',now(),now(),now())`,
+      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, STATUS_TICKET_CREADO, input.fechaOrdenVenta ?? null],
     )
     // La foto de con qué nació el ticket. Las columnas de `tickets` son estado ACTUAL, así que la
     // historia no puede apoyarse en ellas para contar la creación: aquí queda congelado. Los tickets

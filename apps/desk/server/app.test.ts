@@ -1812,6 +1812,44 @@ describe('POST /api/tickets (crear)', () => {
     expect(t).toMatchObject({ marca: 'Grimm', modelo: 'EDM180C', serial: '18A20070', equipo: 'Monitor PM10/PM2.5', equipo_id: eq.id })
   })
 
+  /**
+   * La FECHA de la orden, no solo su número.
+   *
+   * Sin ella, «Habilitar Servicio» es un callejón: el campo de la orden llega bloqueado —el ticket ya
+   * la trae— así que el buscador de órdenes no se pinta, y ese buscador es lo ÚNICO que rellena la
+   * fecha. El de remisiones ya la capturaba (`routes/remision.ts:193`); el alta era la vía que no.
+   */
+  it('captura también la fecha de la orden de venta, para que Habilitar Servicio no la pida', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date) VALUES ('so1','OV-2026-200','cli1','2026-07-15')")
+    const eq = await seedEquipo()
+    const { app } = appWith()
+
+    await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      salesOrderId: 'so1', equipoId: eq.id, tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo para servicio de mantenimiento', prefijo: 'MT',
+    })
+
+    const t = (await db.query("SELECT fecha_orden_venta FROM tickets WHERE salesorder_id='so1'")).rows[0]
+    // `date` vuelve como Date; la suite corre en UTC, así que el ISO no corre de día.
+    expect((t.fecha_orden_venta as Date).toISOString().slice(0, 10)).toBe('2026-07-15')
+  })
+
+  // Una orden tecleada a mano no viene de Books y no tiene fecha que traer: no se inventa ninguna.
+  it('sin orden de Books no inventa fecha', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli2','Camposol')")
+    const eq = await seedEquipo()
+    const { app } = appWith()
+
+    await request(app).post('/api/tickets').set('Cookie', cookie).send({
+      clientId: 'cli2', equipoId: eq.id, tipoServicio: 'Calibración', clasificaciones: 'Equipo nuevo', prefijo: 'CG', ordenVenta: 'manual-1',
+    })
+
+    const t = (await db.query("SELECT fecha_orden_venta FROM tickets WHERE orden_venta='manual-1'")).rows[0]
+    expect(t.fecha_orden_venta).toBeNull()
+  })
+
   it('crea sin OV con cliente manual + equipo', async () => {
     const cookie = await adminCookie()
     await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli2','Camposol')")

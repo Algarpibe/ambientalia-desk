@@ -153,7 +153,13 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, derivad
                 onChange={(v) => setValues((s) => ({ ...s, [f.key]: v }))}
                 // Bloqueado por dos motivos distintos que se ven igual: o el ticket ya lo trae, o lo
                 // rellena la OV elegida (su fecha, que sale de Books y no se teclea aquí).
-                bloqueado={yaLoTraeElTicket(f, delTicket) || fechasDeOV(active).has(f.key)}
+                //
+                // Lo segundo solo mientras HAYA valor. Vacía se puede teclear, y esa condición no es
+                // un capricho: cuando el ticket ya trae la orden, su campo llega bloqueado y entonces
+                // no se pinta el buscador que arrastra la fecha, así que bloquearla también la dejaba
+                // imposible de rellenar para siempre. Pasa con los tickets creados antes de que el
+                // alta guardara la fecha, y con las órdenes de Books que no traen ninguna.
+                bloqueado={yaLoTraeElTicket(f, delTicket) || (fechasDeOV(active).has(f.key) && !!values[f.key])}
                 clientId={clientId}
                 opciones={opciones}
                 onElegirOrdenVenta={(n, fecha) => elegirOrdenVenta(f, n, fecha)}

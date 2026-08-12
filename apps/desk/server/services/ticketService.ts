@@ -27,12 +27,18 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   let clientId: string | null = b.clientId ? String(b.clientId) : null
   let ordenVenta: string | null = b.ordenVenta ? String(b.ordenVenta) : null
   let salesorderId: string | null = null
+  // La FECHA de la orden viaja con su número. Es el mismo gesto que ya hace el alta de remisión
+  // (`routes/remision.ts:193`), y omitirlo dejaba «Habilitar Servicio» pidiendo una fecha que nadie
+  // podía rellenar: allí el campo de la orden llega bloqueado, y con él bloqueado no se pinta el
+  // buscador que la arrastra.
+  let fechaOrdenVenta: string | null = null
   if (b.salesOrderId) {
     const ov = await getSalesOrder(db, String(b.salesOrderId))
     if (!ov) throw new HttpError(422, { error: 'Orden de venta no encontrada' })
     salesorderId = ov.id
     clientId = clientId ?? ov.clientId ?? null
     ordenVenta = ordenVenta ?? ov.number ?? null
+    fechaOrdenVenta = ov.date ?? null
   }
   // Una OV, un ticket. El buscador ya solo ofrece las libres, pero una lista no es una frontera: sin
   // esto basta con mandar el id a mano —o llegar con la lista cacheada— para duplicar la orden.
@@ -57,7 +63,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   const id = await createTicket(db, {
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
-    ordenVenta, priority: b.prioridad ? String(b.prioridad) : null,
+    ordenVenta, fechaOrdenVenta, priority: b.prioridad ? String(b.prioridad) : null,
     clientId: clientId!, salesorderId, equipoId: equipo.id, actor: actorName,
   })
   const created = await getTicketWithRefs(db, id)

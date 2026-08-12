@@ -13,6 +13,7 @@ import { sembrarArticulosDesdeChecklist } from '../db/articulosSeed'
 import { limpiarArticulosSembrados } from '../db/limpiarSembrados'
 import { materializarAccesorios } from '../db/materializarAccesorios'
 import { importarRemisionesHistoricas } from '../db/remisionesHistoricas'
+import { backfillFechaOrdenVenta } from '../db/backfillFechaOrdenVenta'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { logger } from '../util/logger'
@@ -89,6 +90,24 @@ export function registerAdminRoutes(
       `${r.ambiguos} ambiguos, ${r.sinCliente} sin cliente en Books, ${r.sinNombre} sin nombre`,
     )
     for (const p of r.pendientes) logger.info(`  pendiente ${p.serial} (${p.motivo}): "${p.clienteNombre}"`)
+    res.json(r)
+  }))
+
+  /**
+   * Trae desde Books la fecha de la orden de venta a los tickets creados sin ella.
+   *
+   * El alta guardaba el número y el id de la orden, pero no su fecha, y esos tickets se quedaban sin
+   * poder rellenarla: en «Habilitar Servicio» el campo de la orden llega bloqueado —el ticket ya la
+   * trae— y con él bloqueado no se pinta el buscador que arrastra la fecha. Corregido en el alta; esto
+   * es para los que ya existían. NO es destructiva: solo rellena lo que está vacío.
+   */
+  app.post('/api/admin/backfill-fecha-orden-venta', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const dryRun = req.query.dryRun === 'true'
+    const r = await backfillFechaOrdenVenta(db, { dryRun })
+    logger.info(
+      `Fecha de orden de venta${dryRun ? ' (dry-run)' : ''}: ${r.actualizados} rellenados, ` +
+      `${r.sinFechaEnBooks} sin fecha en Books`,
+    )
     res.json(r)
   }))
 
