@@ -8,12 +8,20 @@ export interface Ticket {
   company: string
   time: string          // texto ya formateado para mostrar
   status: string        // status crudo de Zoho, p.ej. "Notificación cliente"
+  /** El propietario en ZOHO. Viene del sync y está vacío en todo ticket nacido en la app. */
   assignee?: {
     name: string
     avatar?: string
     initials?: string
     type?: string
   }
+  /**
+   * La persona de la APP a la que se derivó el trabajo, o `null` si no se ha derivado.
+   *
+   * Es informativa: dice de quién es el trabajo, pero NUNCA da ni quita permisos ni oculta el ticket
+   * a nadie (`docs/modelo-autorizacion.md`).
+   */
+  derivado?: { id: string; nombre: string; cargo: string | null; initials: string } | null
   urgent?: boolean
   messages?: number
   description?: string

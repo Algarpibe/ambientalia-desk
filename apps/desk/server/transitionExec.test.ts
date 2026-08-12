@@ -17,6 +17,9 @@ describe('buildTransitionPlan', () => {
     // —pueden no existir todavía— y cada una tiene su propia etapa más adelante.
     expect(t.fields.map((f) => f.key)).toEqual([
       'comment', 'Orden de Venta', 'Serial', 'Fecha Orden De Venta', 'Cumple condiciones comerciales',
+      // La derivación va la última en todas las etapas, y es opcional: no aparece en el filtro de
+      // obligatorios de abajo.
+      'derivado_a',
     ])
     // Lo que la etapa EXIGE. El comentario y la casilla no: el asterisco de la casilla además mentía,
     // porque un checkbox obligatorio se guarda como `false` sin error si nadie lo marca (M-2).
@@ -46,6 +49,34 @@ describe('buildTransitionPlan', () => {
     const plan = buildTransitionPlan(t, { comment: 'x', 'Orden de Venta': 'OV-9', Serial: 'S1', 'Cumple condiciones comerciales': true })
     expect(plan.columns.orden_venta).toBe('OV-9')
     expect(plan.customFields).toEqual({})
+  })
+
+  /**
+   * La derivación tiene que aterrizar en su COLUMNA. Con `target: 'customField'` acabaría en el jsonb
+   * `custom_fields` —porque su clave no está en `PROMOTED_COLUMNS`— y dejaría de verse en el tablero,
+   * la tabla y el filtro, sin fallar nada. Es el mismo fallo silencioso que ya vigila el test del
+   * campo de orden de venta.
+   */
+  it('la derivación va a su columna, nunca a custom_fields', () => {
+    const t = transitionById('habilitar_servicio')!
+    const plan = buildTransitionPlan(t, { comment: 'x', 'Orden de Venta': 'OV-9', Serial: 'S1', derivado_a: 'u-1' })
+    expect(plan.columns.derivado_a).toBe('u-1')
+    expect(plan.customFields).toEqual({})
+  })
+
+  /**
+   * Los dos silencios que hay que distinguir, y que ningún otro campo necesita distinguir.
+   *
+   * La casilla NO llega (una transición ejecutada desde una pantalla que no la ofrece) ⇒ no se toca
+   * lo que hubiera. La casilla llega VACIADA a propósito ⇒ se borra la derivación. Sin la diferencia,
+   * o no se puede des-derivar un ticket, o cada transición lo des-deriva sin querer.
+   */
+  it('la clave ausente no toca la derivación; la clave vacía la borra', () => {
+    const t = transitionById('habilitar_servicio')!
+    const base = { comment: 'x', 'Orden de Venta': 'OV-9', Serial: 'S1' }
+
+    expect('derivado_a' in buildTransitionPlan(t, base).columns).toBe(false)
+    expect(buildTransitionPlan(t, { ...base, derivado_a: '' }).columns.derivado_a).toBeNull()
   })
 
   it('reporta obligatorios faltantes', () => {

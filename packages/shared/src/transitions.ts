@@ -11,10 +11,10 @@
  * teclear a mano el número de una OV que existe en otro sistema es la vía más corta a un dato que no
  * casa con nada.
  */
-export type FieldKind = 'comment' | 'text' | 'date' | 'number' | 'checkbox' | 'select' | 'ordenVenta'
+export type FieldKind = 'comment' | 'text' | 'date' | 'number' | 'checkbox' | 'select' | 'ordenVenta' | 'usuario'
 
 /** Dónde se escribe el valor del campo al ejecutar la transición. */
-export type FieldTarget = 'comment' | 'status' | 'priority' | 'classification' | 'customField'
+export type FieldTarget = 'comment' | 'status' | 'priority' | 'classification' | 'customField' | 'derivacion'
 
 export interface TransitionField {
   /** Para customField: la ETIQUETA exacta de Zoho (se mapea a su api-name en el backend). */
@@ -57,6 +57,17 @@ const priority = (): TransitionField =>
 /** Buscador de órdenes de venta. `campoFecha` es la fecha que se rellena sola con la de la OV elegida. */
 const cfOrdenVenta = (label: string, campoFecha: string, required = true): TransitionField =>
   ({ key: label, label, kind: 'ordenVenta', required, target: 'customField', campoFecha })
+
+/**
+ * La clave de la derivación. Es a la vez la clave en `values` y el NOMBRE DE LA COLUMNA, por eso va en
+ * snake_case como `comment` o `priority` y no como una etiqueta de Zoho: no es un campo de Zoho, es
+ * nuestro.
+ */
+export const CLAVE_DERIVACION = 'derivado_a'
+
+/** A quién le toca el trabajo tras esta etapa. Nunca obligatoria: derivar no puede frenar un ticket. */
+const derivacion = (): TransitionField =>
+  ({ key: CLAVE_DERIVACION, label: 'Derivado a', kind: 'usuario', required: false, target: 'derivacion' })
 
 /**
  * `from_status` de la fila que `createTicket` escribe al nacer el ticket. No es un estado de Zoho
@@ -113,7 +124,9 @@ export function puedeCrearRemisionDeEntrada(status: string): boolean {
 
 // Transiciones 2–35 del Blueprint (la 1 es creación de ticket, se maneja aparte).
 // Nota: campos de tipo "Adjuntar archivos" se omiten en v1 (subida de archivos = deuda).
-export const TRANSITIONS: Transition[] = [
+// ⚠️ Esta lista NO es la que consume la app: la de verdad es `TRANSITIONS`, al final del fichero, que
+// le añade la casilla de derivación a todas. Declarar los campos propios de cada etapa aquí.
+const TRANSICIONES_BASE: Transition[] = [
   // Sale de las tres: las dos formas de nombrar la fase inicial —Zoho y la app— y la fase de la
   // remisión, que si no dejaría al ticket en un callejón sin salida en cuanto se le creara una.
   // Es la etapa donde se completa lo que la creación no capturó, así que pide también el `Serial`:
@@ -200,6 +213,19 @@ export const TRANSITIONS: Transition[] = [
   { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial',
     fields: [comment()] },
 ]
+
+/**
+ * El catálogo real: cada etapa con sus campos MÁS la casilla de «Derivado a».
+ *
+ * Se añade aquí y no una a una porque el usuario la quiere en todas: si en «Habilitar Servicio» se
+ * deja vacía, tiene que poder rellenarse más adelante, y «Revisión diagnóstico» ni siquiera es una
+ * transición —es un estado al que se llega por `ingreso_a_servicio`—. Repetirla en las 34 entradas
+ * garantizaría olvidarla en la 35.ª.
+ *
+ * Va la ÚLTIMA para no colarse entre los campos de negocio del formulario. Si algún día una etapa no
+ * debe ofrecerla, la salida es un `Set` de excepciones aquí, nunca volver a las 34 copias.
+ */
+export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({ ...t, fields: [...t.fields, derivacion()] }))
 
 /** Transiciones disponibles para un ticket según su estado actual. */
 export function transitionsForStatus(status: string): Transition[] {

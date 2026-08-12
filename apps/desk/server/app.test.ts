@@ -88,6 +88,89 @@ describe('GET /api/personas', () => {
   })
 })
 
+/**
+ * Derivar el ticket a una persona en cualquier etapa. Es opcional, así que la etapa tiene que poder
+ * ejecutarse sin ella; y es una FK de hecho contra `users`, así que el servidor la valida.
+ */
+describe('derivación en las transiciones', () => {
+  async function ticketEnFaseInicial() {
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+  }
+
+  it('guarda la derivación en su columna y en el histórico de la transición', async () => {
+    const cookie = await adminCookie()
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: await hashPassword('password123') })
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+    expect(res.status).toBe(200)
+
+    const t = await db.query('SELECT derivado_a FROM tickets WHERE id = $1', ['t1'])
+    expect((t.rows[0] as { derivado_a: string }).derivado_a).toBe(dest.id)
+    // La cadena de derivaciones no necesita tabla propia: `values` ya la guarda etapa a etapa.
+    const tr = await db.query("SELECT values FROM ticket_transitions WHERE ticket_id='t1'")
+    expect((tr.rows[0] as { values: Record<string, unknown> }).values.derivado_a).toBe(dest.id)
+  })
+
+  /**
+   * La ida y vuelta completa: sin que el ticket DEVUELVA su derivación, la etapa siguiente abriría la
+   * casilla en blanco y confirmarla borraría al responsable. Es lo que hace que «se puede cambiar en
+   * cada etapa» funcione de verdad y no solo sobre el papel.
+   */
+  it('el ticket devuelve a quién está derivado, con su cargo', async () => {
+    const cookie = await adminCookie()
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Johny Luna', passwordHash: await hashPassword('password123') })
+    await db.query("UPDATE users SET cargo = 'Director Técnico' WHERE id = $1", [dest.id])
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+
+    await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+
+    const res = await request(app).get('/api/tickets/t1').set('Cookie', cookie)
+    // Las iniciales las calcula el servidor con el mismo `initialsOf` del propietario de Zoho, para
+    // que los dos avatares se vean igual.
+    expect(res.body.derivado).toEqual({ id: dest.id, nombre: 'Johny Luna', cargo: 'Director Técnico', initials: 'JL' })
+    // Y no se confunde con el propietario de Zoho, que en un ticket de la app no existe.
+    expect(res.body.ownerName).toBeUndefined()
+  })
+
+  it('la etapa se ejecuta igual sin derivar a nadie', async () => {
+    const cookie = await adminCookie()
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1' } })
+    expect(res.status).toBe(200)
+    const t = await db.query('SELECT derivado_a FROM tickets WHERE id = $1', ['t1'])
+    expect((t.rows[0] as { derivado_a: string | null }).derivado_a).toBeNull()
+  })
+
+  /**
+   * El navegador manda un id, y un id no comprobado es una FK rota: el ticket quedaría apuntando a
+   * alguien que no existe y la ficha no sabría a quién enseñar. Un usuario dado de baja se rechaza por
+   * lo mismo que no sale en el desplegable — nunca va a abrir ese ticket.
+   */
+  it('rechaza derivar a alguien que no existe o que está dado de baja', async () => {
+    const cookie = await adminCookie()
+    const baja = await createUser(db, { email: 'baja@x.co', name: 'Baja', passwordHash: await hashPassword('password123') })
+    await db.query('UPDATE users SET active = false WHERE id = $1', [baja.id])
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+    const enviar = (derivado_a: string) => request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a } })
+
+    expect((await enviar('no-existe')).status).toBe(422)
+    expect((await enviar(baja.id)).status).toBe(422)
+    // Y el ticket no se movió: la transición entera se rechaza, no a medias.
+    const t = await db.query('SELECT status FROM tickets WHERE id = $1', ['t1'])
+    expect((t.rows[0] as { status: string }).status).toBe('Ticket creado')
+  })
+})
+
 describe('Seguridad: helmet + rate-limit', () => {
   it('helmet añade cabeceras de seguridad', async () => {
     const { app } = appWith()

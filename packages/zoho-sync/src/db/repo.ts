@@ -158,17 +158,28 @@ export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketW
 
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {
   const r = await db.query(
+    // `du` es la persona DERIVADA (usuario de la app); `g` es el propietario en Zoho. Son dos
+    // conceptos distintos que conviven, y por eso hacen falta los dos joins.
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name,
-            c.first_name AS c_first, c.last_name AS c_last, c.phone AS c_phone, c.email AS c_email
+            c.first_name AS c_first, c.last_name AS c_last, c.phone AS c_phone, c.email AS c_email,
+            du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN clients cl ON t.client_id=cl.id WHERE t.id=$1`,
     [id],
   )
   const row = r.rows[0]
   if (!row) return null
   const contactName = [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null
-  return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName, contactPhone: row.c_phone, email: row.c_email ?? ((row.raw as any)?.email ?? null) } }
+  return {
+    row: row as TicketRow,
+    refs: {
+      accountName: row.account_name, agentName: row.agent_name, contactName,
+      contactPhone: row.c_phone, email: row.c_email ?? ((row.raw as any)?.email ?? null),
+      derivadoNombre: row.derivado_nombre, derivadoCargo: row.derivado_cargo,
+    },
+  }
 }
 
 export async function getConversations(db: Queryable, ticketId: string): Promise<{ row: ConversationRow; attachments: AttachmentRow[] }[]> {

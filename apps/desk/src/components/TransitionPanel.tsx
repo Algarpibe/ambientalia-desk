@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { transitionsForStatus, puedeCrearRemisionDeEntrada, type Transition, type TransitionField } from '@ambientalia/shared';
-import { executeTransition } from '../api/client';
+import { useEffect, useMemo, useState } from 'react';
+import { transitionsForStatus, puedeCrearRemisionDeEntrada, type Transition, type TransitionField, type PersonaLite } from '@ambientalia/shared';
+import { executeTransition, getPersonas } from '../api/client';
+import { opcionesPersona, type OpcionPersona } from '../lib/personas';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
 import { canExecuteTransition } from '@ambientalia/shared'
@@ -33,13 +34,15 @@ function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string |
   return v != null && String(v).trim() !== ''
 }
 
-export function TransitionPanel({ ticketId, status, delTicket, clientId, onDone, onCrearRemision }: {
+export function TransitionPanel({ ticketId, status, delTicket, clientId, derivadoActual, onDone, onCrearRemision }: {
   ticketId: string
   status: string
   /** `customFields` del ticket: lo que ya se sabe, para prellenar y bloquear. */
   delTicket: Record<string, string | null>
   /** Acota el buscador de órdenes de venta al cliente del ticket. */
   clientId?: string | null
+  /** A quién está derivado el ticket ahora, para conservarlo en el desplegable aunque esté de baja. */
+  derivadoActual?: PersonaLite | null
   onDone: () => void
   onCrearRemision?: () => void
 }) {
@@ -56,12 +59,23 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, onDone,
   const fechasDeOV = (t: Transition) =>
     new Set(t.fields.map((f) => f.campoFecha).filter((x): x is string => !!x))
 
+  // Las personas activas se piden UNA vez al montar: son pocas y no cambian mientras dura el panel.
+  const [personas, setPersonas] = useState<PersonaLite[]>([])
+  useEffect(() => { getPersonas().then(setPersonas).catch(() => {}) }, [])
+  // Al derivado actual se le conserva su opción aunque ya no esté activo: si no, el desplegable se
+  // pintaría en blanco y confirmar la etapa borraría la derivación sin que nadie lo pidiera.
+  const opciones = useMemo(() => opcionesPersona(personas, derivadoActual ?? null), [personas, derivadoActual])
+
   function open(t: Transition) {
     // Lo que el ticket ya trae entra como valor inicial y se manda igual al confirmar: el servidor
     // exige los obligatorios, y omitirlos por estar bloqueados los daría por faltantes.
     const previos: Record<string, unknown> = {}
     for (const f of t.fields) {
       if (yaLoTraeElTicket(f, delTicket)) previos[f.key] = delTicket[f.key]
+      // La derivación es el primer campo que llega PRELLENADO pero NO bloqueado, y hasta ahora las dos
+      // cosas eran la misma. Sin esta segunda vía, la casilla abriría vacía en cada etapa y el técnico
+      // se encontraría con que confirmar la etapa le borra el responsable que ya tenía.
+      else if (f.target === 'derivacion' && delTicket[f.key]) previos[f.key] = delTicket[f.key]
     }
     setActive(t);
     setValues(previos);
@@ -134,6 +148,7 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, onDone,
                 // rellena la OV elegida (su fecha, que sale de Books y no se teclea aquí).
                 bloqueado={yaLoTraeElTicket(f, delTicket) || fechasDeOV(active).has(f.key)}
                 clientId={clientId}
+                opciones={opciones}
                 onElegirOrdenVenta={(n, fecha) => elegirOrdenVenta(f, n, fecha)}
               />
             ))}
@@ -151,12 +166,14 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, onDone,
   );
 }
 
-function Field({ f, value, onChange, bloqueado, clientId, onElegirOrdenVenta }: {
+function Field({ f, value, onChange, bloqueado, clientId, opciones, onElegirOrdenVenta }: {
   f: TransitionField
   value: unknown
   onChange: (v: unknown) => void
   bloqueado: boolean
   clientId?: string | null
+  /** Personas a las que se puede derivar, ya etiquetadas. Solo la usa `kind: 'usuario'`. */
+  opciones: OpcionPersona[]
   onElegirOrdenVenta: (numero: string, fecha?: string) => void
 }) {
   const label = (
@@ -177,6 +194,19 @@ function Field({ f, value, onChange, bloqueado, clientId, onElegirOrdenVenta }: 
         {label}
       </label>
     );
+  }
+  // Las personas no son `options` del catálogo —cambian, y hay que enseñar «Nombre · Cargo» pero
+  // mandar el id—, así que el desplegable se alimenta de la lista que trae el panel.
+  if (f.kind === 'usuario') {
+    return (
+      <div className="flex flex-col gap-1">
+        {label}
+        <select value={(value as string) ?? ''} onChange={(e) => onChange(e.target.value)} className={cls}>
+          {opciones.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
+        </select>
+        <span className="text-[11px] text-slate-400">Opcional. Se puede cambiar en cada etapa.</span>
+      </div>
+    )
   }
   if (f.kind === 'ordenVenta' && !bloqueado) {
     return (

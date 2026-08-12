@@ -4,7 +4,8 @@ import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '@ambientalia/shared'
-import { transitionById, canExecuteTransition } from '@ambientalia/shared'
+import { transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambientalia/shared'
+import { getUserById } from '../auth/users'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
@@ -85,6 +86,14 @@ export async function executeTransition(
   if (typeof nuevaOrdenVenta === 'string' && nuevaOrdenVenta) {
     const enUso = await ticketConOrdenVenta(db, { numero: nuevaOrdenVenta }, id)
     if (enUso) throw new HttpError(409, { error: `La orden de venta ${nuevaOrdenVenta} ya está asociada al ticket #${enUso.number}` })
+  }
+  // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
+  // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
+  // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.
+  const derivadoA = plan.columns[CLAVE_DERIVACION]
+  if (typeof derivadoA === 'string' && derivadoA) {
+    const persona = await getUserById(db, derivadoA)
+    if (!persona?.active) throw new HttpError(422, { errors: ['La persona a la que se deriva no existe o está dada de baja'] })
   }
   const actor = user.name ?? TRANSITION_ACTOR
   await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)

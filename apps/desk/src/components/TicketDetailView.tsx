@@ -301,6 +301,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               // su fuente real (la creación del ticket y la remisión de entrada).
                               delTicket={valoresConocidos(ticket, remisiones)}
                               clientId={ticket.clientId}
+                              // Para que el desplegable conserve al derivado actual aunque ya no esté
+                              // activo: si desapareciera, confirmar la etapa lo borraría en silencio.
+                              derivadoActual={ticket.derivado ?? null}
                               onDone={() => { reloadTicket(); reloadMessages(); onChanged?.(); }}
                               onCrearRemision={() => setShowRemision(true)}
                             />

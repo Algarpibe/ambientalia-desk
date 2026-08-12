@@ -164,7 +164,16 @@ function fmtSize(n?: number | null): string {
   return `${(n / 1048576).toFixed(1)} MB`
 }
 
-export interface TicketRefs { accountName?: string | null; agentName?: string | null; contactName?: string | null; read?: boolean }
+export interface TicketRefs {
+  accountName?: string | null
+  /** El propietario en ZOHO (`assignee_id → agents`). Nada que ver con el derivado, que es de la app. */
+  agentName?: string | null
+  contactName?: string | null
+  read?: boolean
+  /** La persona de la APP a la que se derivó el ticket (`derivado_a → users`). */
+  derivadoNombre?: string | null
+  derivadoCargo?: string | null
+}
 export interface DetailRefs extends TicketRefs { contactPhone?: string | null; email?: string | null }
 
 export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
@@ -173,6 +182,11 @@ export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
     id: row.id, number: `#${row.number}`, title: row.subject ?? '', company: refs.accountName ?? '',
     time: fmtTime(row.created_time), status: row.status,
     assignee: { name: assigneeName, initials: initialsOf(assigneeName) },
+    // A quién le toca el trabajo, si se derivó. `null` significa «sin derivar», y NO se rellena con
+    // el propietario de Zoho: quien decide cuál de los dos enseñar es la vista, no el mapeador.
+    derivado: row.derivado_a && refs.derivadoNombre
+      ? { id: row.derivado_a, nombre: refs.derivadoNombre, cargo: refs.derivadoCargo ?? null, initials: initialsOf(refs.derivadoNombre) }
+      : null,
     urgent: row.priority === 'High' || row.priority === 'Urgent',
     priority: row.priority ?? null,
     statusType: row.status_type ?? null,

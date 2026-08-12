@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transitionById } from '@ambientalia/shared'
+import { transitionById, CLAVE_DERIVACION } from '@ambientalia/shared'
 import { valoresConocidos } from './valoresTransicion'
 
 const sinNada = { customFields: {} as Record<string, string | null> }
@@ -46,6 +46,23 @@ describe('valoresConocidos', () => {
     expect(valoresConocidos({ ...sinNada, createdAt: '2026-08-06T16:14:00.000Z' }, null)['Fecha Remisión Entrada']).toBeNull()
     // Una remisión de SALIDA tampoco vale para el campo de ENTRADA.
     expect(valoresConocidos({ ...sinNada, createdAt: null }, [{ tipo: 'salida', fecha: '2026-08-09' }])['Fecha Remisión Entrada']).toBeNull()
+  })
+
+  /**
+   * La derivación llega prellenada para que la etapa siguiente no empiece en blanco y borre sin
+   * querer al responsable. La clave se toma del propio catálogo y no de un literal: renombrarla allí
+   * tiene que romper aquí.
+   */
+  it('la derivación vigente llega prellenada, con la clave del catálogo', () => {
+    const clave = transitionById('habilitar_servicio')!.fields.at(-1)!.key
+    const v = valoresConocidos({ ...sinNada, derivado: { id: 'u-7' } }, [])
+    expect(v[clave]).toBe('u-7')
+  })
+
+  // Un ticket sin derivar deja la casilla vacía: prellenarla con cualquiera sería inventar un
+  // responsable, y el servidor lo guardaría como si alguien lo hubiera elegido.
+  it('un ticket sin derivar deja la casilla vacía', () => {
+    expect(valoresConocidos(sinNada, [])[CLAVE_DERIVACION]).toBeNull()
   })
 
   it('conserva el resto de columnas del ticket sin tocarlas', () => {

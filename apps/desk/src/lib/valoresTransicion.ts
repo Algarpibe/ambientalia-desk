@@ -1,3 +1,5 @@
+import { CLAVE_DERIVACION } from '@ambientalia/shared'
+
 /**
  * Lo que una transición ya puede dar por sabido, para enseñarlo bloqueado en vez de pedirlo.
  *
@@ -34,7 +36,12 @@ function diaLocal(iso: string | null | undefined): string | null {
 }
 
 /** Lo mínimo que hace falta de cada fuente, para que el test no tenga que construir fixtures enteras. */
-interface TicketConocido { customFields: Record<string, string | null>; createdAt?: string | null }
+interface TicketConocido {
+  customFields: Record<string, string | null>
+  createdAt?: string | null
+  /** A quién está derivado hoy. Llega prellenado a la etapa siguiente, pero EDITABLE (ver abajo). */
+  derivado?: { id: string } | null
+}
 interface RemisionConocida { tipo: string; fecha: string }
 
 export function valoresConocidos(
@@ -56,5 +63,9 @@ export function valoresConocidos(
     'Fecha Remisión Entrada': yaEsta(cf['Fecha Remisión Entrada'])
       ? cf['Fecha Remisión Entrada']
       : (entrada?.fecha ?? null),
+    // A diferencia del resto, esto llega prellenado pero NO bloqueado: cada etapa puede pasarle el
+    // trabajo a otra persona. Quien lo bloquea es `yaLoTraeElTicket`, y su primera línea ya deja
+    // fuera todo lo que no sea `customField`.
+    [CLAVE_DERIVACION]: ticket.derivado?.id ?? null,
   }
 }
