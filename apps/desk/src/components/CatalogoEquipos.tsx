@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ArticuloLite, ArticuloModelo, CategoriaModelo, ClaseArticulo, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
-import { TIPOS_DOCUMENTO, CLASES_ARTICULO } from '@ambientalia/shared'
+import { TIPOS_DOCUMENTO, CLASES_ARTICULO, admiteCategorias } from '@ambientalia/shared'
 import {
   ETIQUETA_COLUMNA, PREF_POR_DEFECTO, normalizarPref, moverColumna, columnasVisibles,
   type ColumnaCatalogo, type PrefColumnas,
@@ -13,10 +13,11 @@ const CLAVE_COLUMNAS = 'catalogo:columnas'
 
 /** En singular para los selectores, en plural para los encabezados de cada lista. */
 const ETIQUETA_CLASE: Record<ClaseArticulo, string> = {
-  accesorio: 'Accesorio', consumible_repuesto: 'Consumible o repuesto',
+  accesorio: 'Accesorio', consumible_repuesto: 'Consumible o repuesto', mano_obra: 'Mano de obra',
 }
+// «Mano de obra» no tiene plural distinto: no es un contable como «accesorios».
 const ETIQUETA_CLASE_PLURAL: Record<ClaseArticulo, string> = {
-  accesorio: 'Accesorios', consumible_repuesto: 'Consumibles y repuestos',
+  accesorio: 'Accesorios', consumible_repuesto: 'Consumibles y repuestos', mano_obra: 'Mano de obra',
 }
 import {
   getCatalogo, getConflictosCatalogo,
@@ -895,13 +896,15 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
             </section>
 
             <section>
-              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Accesorios, consumibles y repuestos</h4>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Artículos del modelo</h4>
               <p className="text-[11px] text-slate-400 mb-2">
-                Los <strong>accesorios</strong> se eligen artículo a artículo. Los <strong>consumibles y
-                repuestos</strong> se derivan además de las categorías de Zoho Books que asignes: lo que se
-                añada allí a una categoría aparecerá aquí solo, y un modelo de una serie lleva la categoría de
-                la serie y, si la tiene, la suya propia. En las dos listas puedes añadir artículos sueltos de
-                Books, para lo que viva en una categoría que no le toca a este modelo.
+                Los <strong>accesorios</strong> y la <strong>mano de obra</strong> se eligen artículo a
+                artículo. Los <strong>consumibles y repuestos</strong> se derivan además de las categorías de
+                Zoho Books que asignes: lo que se añada allí a una categoría aparecerá aquí solo, y un modelo
+                de una serie lleva la categoría de la serie y, si la tiene, la suya propia. En las tres listas
+                puedes añadir artículos sueltos de Books, para lo que viva en una categoría que no le toca a
+                este modelo. La <strong>mano de obra</strong> es el trabajo que se le hace al equipo, no algo
+                que venga con él: no sale en el checklist «Incluye» de la remisión.
               </p>
               {/* Sin este aviso, el botón «Guardar» en gris después de desactivar un artículo se lee como
                   «no se ha guardado». Dice qué NO pasa por el botón, que es la duda real. */}
@@ -928,11 +931,11 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
                       )}
                     </div>
 
-                    {/* Los accesorios NO se asignan por categoría: una categoría de serie trae decenas
-                        de artículos y la mayoría no aplica a la variante concreta, así que se acababa
-                        desactivando uno a uno. Se eligen pieza a pieza con el buscador de abajo. El
-                        servidor rechaza esa clase igualmente — esto no es la única defensa. */}
-                    {clase !== 'accesorio' && (
+                    {/* Accesorios y mano de obra NO se asignan por categoría: una categoría de serie
+                        trae decenas de artículos y la mayoría no aplica a la variante concreta, así que
+                        se acababa desactivando uno a uno. Se eligen pieza a pieza con el buscador de
+                        abajo. El servidor rechaza esas clases igualmente — esto no es la única defensa. */}
+                    {admiteCategorias(clase) && (
                       <div className="flex flex-wrap items-center gap-1 mb-1.5">
                         {cats.map((c) => (
                           <span key={c.id} className="inline-flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 text-[11px]">
