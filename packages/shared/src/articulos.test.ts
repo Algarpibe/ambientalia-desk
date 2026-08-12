@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clasePropuesta } from './articulos'
+import { clasePropuesta, admiteCategorias } from './articulos'
 
 describe('clasePropuesta', () => {
   // Books agrupa consumibles y repuestos bajo `C&R`, así que de ahí solo se puede sacar «uno de los
@@ -29,5 +29,20 @@ describe('clasePropuesta', () => {
   // otra categoría no es lo mismo que pertenecer a la de consumibles y repuestos de un modelo.
   it('exige que el prefijo esté al principio', () => {
     expect(clasePropuesta('Accesorios C&R varios')).toBe('accesorio')
+  })
+})
+
+describe('admiteCategorias', () => {
+  // La categoría trae BLOQUES: decenas de artículos de una serie entera. Sirve para consumibles y
+  // repuestos, donde la lista es la misma para toda la serie.
+  it('los consumibles y repuestos se derivan de categorías', () => {
+    expect(admiteCategorias('consumible_repuesto')).toBe(true)
+  })
+
+  // Accesorios y mano de obra se eligen PIEZA a pieza: de una categoría de serie la mayoría no aplica
+  // a la variante concreta, y acababa desactivándose uno a uno.
+  it('los accesorios y la mano de obra se eligen artículo a artículo', () => {
+    expect(admiteCategorias('accesorio')).toBe(false)
+    expect(admiteCategorias('mano_obra')).toBe(false)
   })
 })

@@ -20,3 +20,19 @@ export function clasePropuesta(categoria: string | null | undefined): ClaseArtic
   if (c.startsWith('opcional ')) return 'accesorio'
   return 'accesorio'
 }
+
+/**
+ * ¿Esta clase se asigna por categorías de Zoho Books, o artículo a artículo?
+ *
+ * La categoría trae **bloques**: una de serie arrastra decenas de artículos, y eso solo compensa en
+ * consumibles y repuestos, donde la lista es la misma para toda la serie. En accesorios se probó y se
+ * retiró —la mayoría no aplicaba a la variante concreta y acababa desactivándose uno a uno—, y la mano
+ * de obra nace ya con esa lección aprendida.
+ *
+ * Vive aquí, y no como un literal en cada sitio, porque la consultan DOS capas: la pantalla, para
+ * mostrar el desplegable, y el servidor, para rechazar con 422 lo que llegue por la API a mano. Cuando
+ * eran dos literales negados, cada clase nueva heredaba el desplegable sin que nadie lo decidiera.
+ */
+export function admiteCategorias(clase: ClaseArticulo): boolean {
+  return clase === 'consumible_repuesto'
+}
