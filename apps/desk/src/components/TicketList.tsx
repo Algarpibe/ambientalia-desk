@@ -1,6 +1,7 @@
 import type { Ticket } from '@ambientalia/shared'
 import { ClienteLink, type ClienteKind } from './ClienteLink'
 import { ReadToggle } from './ReadToggle'
+import { responsableVisible } from '../lib/responsable'
 
 function StatusBadge({ status }: { status: string }) {
   return <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{status}</span>
@@ -18,7 +19,8 @@ export function TicketList({ tickets, dense, onSelect, onOpenCliente, onToggleRe
                 <div className={`truncate ${dense ? 'text-[12px]' : 'text-[13px]'} ${t.read ? 'font-normal text-slate-600' : 'font-bold text-slate-800'}`}>{t.title}</div>
                 {!dense && (
                   <div className="text-[11px] text-slate-500 truncate">
-                    <span className="font-bold text-slate-400">{t.number}</span> · {t.assignee?.name} · <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} />{t.contactName && t.company ? ' · ' : ''}<ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /> · {t.time}
+                    {/* El derivado gana al propietario de Zoho: es a quien le toca el trabajo ahora. */}
+                    <span className="font-bold text-slate-400">{t.number}</span> · {responsableVisible(t).nombre ?? 'Sin asignar'} · <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} />{t.contactName && t.company ? ' · ' : ''}<ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /> · {t.time}
                   </div>
                 )}
               </div>

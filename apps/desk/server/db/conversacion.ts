@@ -4,7 +4,7 @@ import { getConversations } from '@ambientalia/zoho-sync/db/repo'
 import { fmtTime, rowToMessage } from '@ambientalia/zoho-sync/db/mappers'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
-  porFechaDesc, textoEquipo, type DatosTicket, type PlanSyncZoho,
+  porFechaDesc, textoEquipo, nombresDerivados, type DatosTicket, type PlanSyncZoho,
 } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision, type FotoRemision } from './remisionAdjuntos'
 
@@ -61,9 +61,10 @@ function entradaCreacion(fila: Record<string, unknown>, ticket: Record<string, u
   }
 }
 
-function entradaTransicion(fila: Record<string, unknown>): Entrada {
+function entradaTransicion(fila: Record<string, unknown>, nombres: Map<string, string>): Entrada {
   const at = iso(fila.performed_at)
-  const campos = camposDiligenciados(fila.values).map(([etiqueta, valor]) => `${etiqueta}: ${valor}`)
+  // `nombres` traduce el id de la persona derivada: el hilo lo lee un técnico, y un UUID no dice nada.
+  const campos = camposDiligenciados(fila.values, nombres).map(([etiqueta, valor]) => `${etiqueta}: ${valor}`)
   return {
     at,
     msg: {
@@ -149,8 +150,9 @@ export async function getConversacionTicket(db: Queryable, ticketId: string): Pr
     ? await datosTicket(db, ticketId)
     : { ticket: {}, cliente: null }
 
+  const nombres = await nombresDerivados(db, filasTr)
   const deTransiciones = filasTr.map((f) =>
-    esCreacion(f) ? entradaCreacion(f, ticket, cliente) : entradaTransicion(f),
+    esCreacion(f) ? entradaCreacion(f, ticket, cliente) : entradaTransicion(f, nombres),
   )
 
   // Solo las VIGENTES, y aquí es donde los dos paneles dejan de coincidir a propósito: `historial.ts`

@@ -109,15 +109,17 @@ export async function setTicketRead(db: Queryable, userId: string, ticketId: str
 }
 
 function mapTicketRowWithRefs(row: any): TicketWithRefs {
-  return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)) } }
+  return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)), derivadoNombre: row.derivado_nombre, derivadoCargo: row.derivado_cargo } }
 }
 
 export async function getActiveTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at,
+            du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN clients cl ON t.client_id=cl.id
      LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
      WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
     [userId],
@@ -127,10 +129,12 @@ export async function getActiveTickets(db: Queryable, userId = ''): Promise<Tick
 
 export async function getClosedTickets(db: Queryable, userId = '', limit = 50, offset = 0): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at,
+            du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN clients cl ON t.client_id=cl.id
      LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
      WHERE t.status_type = 'Closed' ORDER BY t.created_time DESC NULLS LAST LIMIT $2 OFFSET $3`,
     [userId, limit, offset],
@@ -145,10 +149,12 @@ export async function countClosedTickets(db: Queryable): Promise<number> {
 
 export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
   const r = await db.query(
-    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at
+    `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at,
+            du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
      LEFT JOIN clients cl ON t.client_id=cl.id
      LEFT JOIN contacts c ON t.contact_id=c.id
+     LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
      ORDER BY t.created_time DESC NULLS LAST`,
     [userId],

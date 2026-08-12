@@ -2,6 +2,7 @@ import React from 'react';
 import type { Ticket } from '../data/mockData';
 import { ClienteLink, type ClienteKind } from './ClienteLink'
 import { ReadToggle } from './ReadToggle'
+import { responsableVisible } from '../lib/responsable'
 
 interface TicketCardProps {
     ticket: Ticket;
@@ -23,6 +24,7 @@ const statusColorMap: Record<string, { bg: string, text: string, label: string }
 
 export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenCliente, onToggleRead }) => {
     const statusStyle = statusColorMap[ticket.status] || { bg: 'bg-slate-100', text: 'text-slate-600', label: ticket.status };
+    const responsable = responsableVisible(ticket);
 
     return (
         <div
@@ -40,8 +42,10 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
                                 {ticket.number}
                             </span>
                             <span className="text-[10px] text-slate-500">•</span>
+                            {/* Una línea de 10 px no admite dos nombres, así que gana el derivado:
+                                es lo accionable. Sin derivación cae al propietario de Zoho. */}
                             <span className="text-[10px] text-slate-500 font-medium truncate">
-                                {ticket.assignee?.name}
+                                {responsable.nombre ?? 'Sin asignar'}
                             </span>
                         </div>
                         <div className="text-[10px] text-slate-400 font-medium truncate">
@@ -57,13 +61,18 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
                 </div>
 
                 <div className="absolute top-3 right-3 shrink-0">
-                    {ticket.assignee?.avatar ? (
+                    {/* El avatar solo lleva foto cuando el responsable es el de Zoho: la derivación es
+                        de la app y `users` no guarda ninguna. */}
+                    {responsable.origen === 'zoho' && ticket.assignee?.avatar ? (
                         <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shadow-sm">
                             <img alt="Avatar" className="w-full h-full object-cover" src={ticket.assignee.avatar} />
                         </div>
                     ) : (
-                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-500 border border-slate-200">
-                            {ticket.assignee?.initials || ticket.assignee?.name.substring(0, 2).toUpperCase()}
+                        <div
+                            className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-500 border border-slate-200"
+                            title={responsable.origen === 'derivacion' ? `Derivado a ${responsable.nombre}` : undefined}
+                        >
+                            {responsable.iniciales ?? '—'}
                         </div>
                     )}
                 </div>

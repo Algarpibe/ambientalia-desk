@@ -137,6 +137,31 @@ describe('derivación en las transiciones', () => {
     expect(res.body.ownerName).toBeUndefined()
   })
 
+  // El tablero y la tabla necesitan el dato en la LISTA, no solo en el detalle: son consultas
+  // distintas y es fácil añadir el join en una y olvidarlo en las otras tres.
+  it('la lista de tickets también trae la derivación', async () => {
+    const cookie = await adminCookie()
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Johny Luna', passwordHash: await hashPassword('password123') })
+    await ticketEnFaseInicial()
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [dest.id, 't1'])
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/tickets').set('Cookie', cookie)
+    expect(res.body[0].derivado).toMatchObject({ nombre: 'Johny Luna', initials: 'JL' })
+  })
+
+  // Sin `LEFT JOIN`, un `INNER JOIN` haría desaparecer del tablero todos los tickets sin derivar,
+  // que hoy son casi todos.
+  it('un ticket sin derivar sigue apareciendo en la lista', async () => {
+    const cookie = await adminCookie()
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/tickets').set('Cookie', cookie)
+    expect(res.body).toHaveLength(1)
+    expect(res.body[0].derivado).toBeNull()
+  })
+
   it('la etapa se ejecuta igual sin derivar a nadie', async () => {
     const cookie = await adminCookie()
     await ticketEnFaseInicial()

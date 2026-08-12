@@ -112,7 +112,23 @@ export function TicketProperties({ detail, width = 300 }: { detail: TicketDetail
       </Section>
 
       <Section title="Información clave">
-        <Field label="Propietario de Ticket" value={detail.ownerName} />
+        {/* «Derivado a» va primero porque es lo accionable: dice a quién le toca el trabajo AHORA y lo
+            decide esta plataforma. «Propietario en Zoho» viene del sync, está vacío en todo ticket
+            nacido aquí, y por eso solo se pinta cuando de verdad dice algo — si no, cada ficha
+            enseñaría un «—» que compite con el dato bueno. La etiqueta declara de dónde sale para que
+            los dos nombres no se confundan. */}
+        <div>
+          <div className="text-[11px] text-slate-400 mb-0.5">Derivado a</div>
+          {detail.derivado ? (
+            <div className="text-[13px] text-slate-800">
+              {detail.derivado.nombre}
+              {detail.derivado.cargo && <span className="text-[11px] text-slate-500"> · {detail.derivado.cargo}</span>}
+            </div>
+          ) : (
+            <div className="text-[12px] text-slate-400">Sin derivar</div>
+          )}
+        </div>
+        {detail.ownerName && <Field label="Propietario en Zoho" value={detail.ownerName} />}
         <div>
           <div className="text-[11px] text-slate-400 mb-0.5">Estado</div>
           <span className="text-[11px] text-orange-600 px-2 py-0.5 bg-orange-50 border border-orange-100 rounded font-bold">{detail.status}</span>

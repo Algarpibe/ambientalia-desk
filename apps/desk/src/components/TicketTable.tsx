@@ -8,7 +8,9 @@ function fmtDate(iso?: string | null): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const COLS = ['#', 'Asunto', 'Cliente', 'Contacto', 'Estado', 'Prioridad', 'Propietario', 'Creado', 'Vencimiento', 'Días entrega', 'Canal']
+// La tabla es el ÚNICO sitio donde ver los dos responsables a la vez es legítimo: hay ancho, y aquí
+// se barre. En la tarjeta y la lista solo cabe uno, y allí gana el derivado.
+const COLS = ['#', 'Asunto', 'Cliente', 'Contacto', 'Estado', 'Prioridad', 'Derivado a', 'Propietario (Zoho)', 'Creado', 'Vencimiento', 'Días entrega', 'Canal']
 
 export function TicketTable({ tickets, onSelect, onOpenCliente, onToggleRead }: { tickets: Ticket[]; onSelect: (id: string) => void; onOpenCliente?: (kind: ClienteKind, id: string) => void; onToggleRead?: (id: string, read: boolean) => void }) {
   return (
@@ -31,6 +33,9 @@ export function TicketTable({ tickets, onSelect, onOpenCliente, onToggleRead }: 
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.contactName ? <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} /> : '—'}</td>
               <td className="px-3 py-2 whitespace-nowrap"><span className="text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{t.status}</span></td>
               <td className="px-3 py-2 text-slate-600">{t.priority ?? '—'}</td>
+              <td className="px-3 py-2 text-slate-600 whitespace-nowrap" title={t.derivado?.cargo ?? undefined}>{t.derivado?.nombre ?? '—'}</td>
+              {/* El de Zoho tal cual, incluido su «Sin asignar»: aquí la columna declara su origen, así
+                  que no confunde. */}
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.assignee?.name ?? '—'}</td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{fmtDate(t.createdAt)}</td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{fmtDate(t.dueDate)}</td>

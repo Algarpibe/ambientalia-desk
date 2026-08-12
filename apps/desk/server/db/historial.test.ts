@@ -150,6 +150,31 @@ describe('getHistorialTicket', () => {
   // El agujero: `writeTransition` pone `managed_by_app=true` y `source='app'` en TODA transición
   // hecha desde Desk, también las de un ticket de Zoho. Discriminar por ellas dejaba a ese ticket sin
   // refrescar su historia de Zoho desde la primera vez que alguien lo moviera aquí — para siempre,
+  /**
+   * `values` guarda el ID de la persona derivada, no su nombre —es lo correcto: un nombre copiado se
+   * queda viejo si alguien se casa o se corrige una errata—. Pero el historial lo lee una persona, y
+   * un UUID ahí no dice nada.
+   *
+   * Y se guardan las DOS entradas: la cadena de derivaciones es el valor de tener esto en el
+   * historial. Quedarse con la última contaría la mitad de la historia.
+   */
+  it('el historial enseña el NOMBRE de la persona derivada, y conserva la cadena', async () => {
+    await insTicket('t9')
+    await db.query("INSERT INTO users (id,email,name,password_hash) VALUES ('u-1','a@x.co','Johny Luna','h'),('u-2','b@x.co','Julián Maya','h')")
+    const derivar = (a: string, quien: string, cuando: string) =>
+      db.query(
+        `INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at,values)
+         VALUES ('t9',$1,'Ticket creado','Ingresado','Admin',$2,$3)`,
+        [a, cuando, JSON.stringify({ derivado_a: quien })],
+      )
+    await derivar('Habilitar Servicio', 'u-1', '2026-08-02T10:00:00Z')
+    await derivar('Ingreso a Servicio', 'u-2', '2026-08-03T10:00:00Z')
+
+    const { eventos } = await getHistorialTicket(db, 't9')
+    const detalles = eventos.flatMap((e) => e.details ?? []).filter((d) => d.label === 'Derivado a')
+    expect(detalles.map((d) => d.value)).toEqual(['Julián Maya', 'Johny Luna'])
+  })
+
   // porque `syncTicketHistory` no se llama desde ningún otro sitio.
   it('un ticket de Zoho movido en la app sigue refrescando su historia de Zoho', async () => {
     await db.query("INSERT INTO tickets (id,number,subject,status,managed_by_app,source) VALUES ('98765',11,'A','Ingresado',true,'app')")

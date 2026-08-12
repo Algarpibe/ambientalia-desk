@@ -10,7 +10,7 @@
  * del equipo (`equipos.ts`), que compone su cronología con las mismas reglas de orden y de jsonb.
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { FROM_STATUS_CREACION } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, CLAVE_DERIVACION } from '@ambientalia/shared'
 
 /** Qué hacer con Zoho antes de responder. */
 export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
@@ -92,10 +92,36 @@ export function etiquetaCampo(clave: string): string {
  * "Comment": su clave es `comment`, en inglés, y `etiquetaCampo` solo pone la inicial en mayúscula.
  * Era la única palabra en inglés de la interfaz.
  */
-export function camposDiligenciados(values: unknown): Array<[string, string]> {
+export function camposDiligenciados(
+  values: unknown,
+  nombres: Map<string, string> = new Map(),
+): Array<[string, string]> {
   return Object.entries(json(values))
     .filter(([k, v]) => k !== 'comment' && v != null && String(v).trim() !== '')
-    .map(([k, v]) => [etiquetaCampo(k), String(v)])
+    // La derivación se guarda por ID —un nombre copiado se quedaría viejo en cuanto se corrigiera una
+    // errata—, pero esto lo lee una persona y un UUID no le dice nada. Si el id no está en el mapa se
+    // deja crudo a propósito: no debería pasar (los usuarios se desactivan, no se borran), y verlo es
+    // lo único que permitiría diagnosticarlo. Sustituirlo por «desconocido» escondería el problema.
+    .map(([k, v]) => [etiquetaCampo(k), k === CLAVE_DERIVACION ? (nombres.get(String(v)) ?? String(v)) : String(v)])
+}
+
+/**
+ * Los nombres de las personas derivadas que aparecen en unas transiciones, por id.
+ *
+ * Se resuelve de una vez para todas las filas y solo si alguna deriva: son dos o tres ids en el caso
+ * normal, y no hay motivo para pedirle a la base la tabla entera cada vez que alguien abre un ticket
+ * que nunca se derivó.
+ */
+export async function nombresDerivados(
+  db: Queryable,
+  filas: Array<Record<string, unknown>>,
+): Promise<Map<string, string>> {
+  const hayAlguna = filas.some((f) => json(f.values)[CLAVE_DERIVACION])
+  if (!hayAlguna) return new Map()
+  // Sin `WHERE id = ANY($1)`: pg-mem no tipa los arrays enlazados, y la plantilla de usuarios de una
+  // herramienta interna cabe de sobra en memoria.
+  const r = await db.query('SELECT id, name FROM users')
+  return new Map((r.rows as Array<Record<string, unknown>>).map((x) => [String(x.id), String(x.name)]))
 }
 
 /** `incluye` es un `jsonb` con un array: pg lo entrega parseado, pg-mem como texto. */

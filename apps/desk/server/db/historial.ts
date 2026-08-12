@@ -4,7 +4,7 @@ import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegu
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
-  porFechaDesc, textoEquipo, type PlanSyncZoho,
+  porFechaDesc, textoEquipo, nombresDerivados, type PlanSyncZoho,
 } from './ticketFuentes'
 
 // Reexportado para no romper a quien importe el tipo de aquí: `getHistorialTicket` lo devuelve.
@@ -46,7 +46,7 @@ function eventoCreacion(fila: Record<string, unknown>, ticket: Record<string, un
   }
 }
 
-function eventoTransicion(fila: Record<string, unknown>): HistoryEvent {
+function eventoTransicion(fila: Record<string, unknown>, nombres: Map<string, string>): HistoryEvent {
   return {
     eventName: 'AppTransition',
     time: iso(fila.performed_at),
@@ -57,7 +57,8 @@ function eventoTransicion(fila: Record<string, unknown>): HistoryEvent {
         ['Estado', `${fila.from_status ?? '—'} → ${fila.to_status ?? '—'}`],
         ['Área', fila.area],
       ]),
-      ...detalles(camposDiligenciados(fila.values)),
+      // `nombres` traduce el id de la persona derivada. El resto de campos pasa tal cual.
+      ...detalles(camposDiligenciados(fila.values, nombres)),
     ],
   }
 }
@@ -136,8 +137,10 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
     'SELECT transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
     [ticketId],
   )
-  const transiciones = (tr.rows as Record<string, unknown>[]).map((f) =>
-    esCreacion(f) ? eventoCreacion(f, ticket, cliente) : eventoTransicion(f),
+  const filasTr = tr.rows as Record<string, unknown>[]
+  const nombres = await nombresDerivados(db, filasTr)
+  const transiciones = filasTr.map((f) =>
+    esCreacion(f) ? eventoCreacion(f, ticket, cliente) : eventoTransicion(f, nombres),
   )
 
   // Consulta propia y no `listRemisionesByTicket`: aquélla filtra `anulada_at IS NULL` porque el
