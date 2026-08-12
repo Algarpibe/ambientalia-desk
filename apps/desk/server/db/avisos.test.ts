@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { crearAviso, listarAvisos, marcarLeidos, destinatariosDeArea } from './avisos'
+import { crearAviso, listarAvisos, marcarLeidos, marcarEnviados, destinatariosDeArea } from './avisos'
 import { createRole, updateRole, actualizarRecibeAvisos } from '../auth/roles'
 import { createUser, updateUser } from '../auth/users'
 
@@ -45,6 +45,20 @@ describe('avisos', () => {
     await marcarLeidos(db, 'u-1', [ajeno])
 
     expect((await listarAvisos(db, 'u-2'))[0].leido).toBe(false)
+  })
+
+  // `enviado_at` es lo que convierte esta tabla en la cola que su propio comentario dice que es: lo
+  // que sigue en NULL es lo que no salió, y mañana es la lista de reintento.
+  it('marca los avisos como enviados sin tocar los demás', async () => {
+    const a = await crearAviso(db, { userId: 'u-1', ticketId: 't1', texto: 'A' })
+    const b = await crearAviso(db, { userId: 'u-1', ticketId: 't1', texto: 'B' })
+
+    await marcarEnviados(db, [a])
+
+    const enviados = await db.query('SELECT id FROM avisos WHERE enviado_at IS NOT NULL')
+    expect((enviados.rows as Array<{ id: string }>).map((r) => r.id)).toEqual([a])
+    const pendientes = await db.query('SELECT id FROM avisos WHERE enviado_at IS NULL')
+    expect((pendientes.rows as Array<{ id: string }>).map((r) => r.id)).toEqual([b])
   })
 })
 

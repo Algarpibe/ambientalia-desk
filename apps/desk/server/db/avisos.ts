@@ -53,6 +53,14 @@ export async function marcarLeidos(db: Queryable, userId: string, ids: string[])
   }
 }
 
+/** Sella el despacho del correo. Lo que se queda en NULL es la cola de reintento del día de mañana. */
+export async function marcarEnviados(db: Queryable, ids: string[]): Promise<void> {
+  // De uno en uno y no con `ANY($1)`, por lo mismo que `marcarLeidos`: pg-mem no tipa los arrays.
+  for (const id of ids) {
+    await db.query('UPDATE avisos SET enviado_at = now() WHERE id = $1', [id])
+  }
+}
+
 /**
  * Quién debe enterarse de que un ticket entró en una fase de `area`.
  *
