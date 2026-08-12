@@ -17,6 +17,7 @@ export function RolesAdmin({ onClose }: { onClose: () => void }) {
     const areas = r.areas.includes(area) ? r.areas.filter((a) => a !== area) : [...r.areas, area]
     await updateRole(r.id, { areas }); reload()
   }
+  async function toggleAvisos(r: Role) { await updateRole(r.id, { recibeAvisos: !r.recibeAvisos }); reload() }
 
   return (
     <div className="fixed inset-0 z-[70] bg-white flex flex-col">
@@ -29,7 +30,7 @@ export function RolesAdmin({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-auto p-4">
         <table className="w-full text-[13px]">
           <thead><tr className="text-left text-slate-500 border-b">
-            <th className="py-2">Rol</th>{AREAS.map((a) => <th key={a} className="px-2">{a}</th>)}<th>Activo</th><th></th>
+            <th className="py-2">Rol</th>{AREAS.map((a) => <th key={a} className="px-2">{a}</th>)}<th className="px-2">Avisos</th><th>Activo</th><th></th>
           </tr></thead>
           <tbody>
             {roles.map((r) => (
@@ -40,6 +41,9 @@ export function RolesAdmin({ onClose }: { onClose: () => void }) {
                     <input type="checkbox" checked={r.areas.includes(a)} onChange={() => toggleArea(r, a)} className="accent-blue-600" />
                   </td>
                 ))}
+                <td className="px-2 text-center">
+                  <input type="checkbox" checked={r.recibeAvisos} onChange={() => toggleAvisos(r)} className="accent-blue-600" />
+                </td>
                 <td>{r.active ? 'Sí' : 'No'}</td>
                 <td className="text-right">
                   <button onClick={() => toggleActive(r)} className="text-[12px] text-blue-600">{r.active ? 'Desactivar' : 'Activar'}</button>
@@ -48,7 +52,12 @@ export function RolesAdmin({ onClose }: { onClose: () => void }) {
             ))}
           </tbody>
         </table>
-        <p className="text-[11px] text-slate-400 mt-3">Cada rol puede ejecutar las transiciones de las áreas marcadas. Un rol con las 3 áreas equivale a "Gerencia/Director".</p>
+        <p className="text-[11px] text-slate-400 mt-3">
+          Cada rol puede ejecutar las transiciones de las áreas marcadas. Un rol con las 3 áreas equivale
+          a «Gerencia/Director». La casilla <strong>Avisos</strong> marca quién se entera cuando un ticket
+          entra en una fase de sus áreas: márcala en el rol que coordina cada área, no en todos. Los
+          administradores reciben esos avisos siempre.
+        </p>
       </div>
       {creating && <CreateRole onClose={() => setCreating(false)} onCreated={() => { setCreating(false); reload() }} />}
     </div>

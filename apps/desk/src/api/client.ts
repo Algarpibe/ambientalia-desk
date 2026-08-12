@@ -126,7 +126,7 @@ export function updateUser(id: string, patch: Partial<{ name: string; isAdmin: b
   }).then((r) => json<UserPublic>(r))
 }
 
-export interface Role { id: string; name: string; areas: string[]; active: boolean }
+export interface Role { id: string; name: string; areas: string[]; active: boolean; recibeAvisos: boolean }
 
 export function listRoles(): Promise<Role[]> {
   return fetch('/api/roles', { credentials: 'include' }).then((r) => json<Role[]>(r))
@@ -145,7 +145,7 @@ export async function createRole(input: { name: string; areas: string[] }): Prom
   return res.json() as Promise<Role>
 }
 
-export function updateRole(id: string, patch: Partial<{ name: string; areas: string[]; active: boolean }>): Promise<Role> {
+export function updateRole(id: string, patch: Partial<{ name: string; areas: string[]; active: boolean; recibeAvisos: boolean }>): Promise<Role> {
   return fetch(`/api/roles/${id}`, {
     method: 'PATCH', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

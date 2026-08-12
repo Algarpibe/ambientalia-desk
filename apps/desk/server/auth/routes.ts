@@ -120,10 +120,11 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
 
   app.patch('/api/roles/:id', auth, requireAdmin, async (req, res) => {
     const id = String(req.params.id)
-    const patch: { name?: string; areas?: string[]; active?: boolean } = {}
+    const patch: { name?: string; areas?: string[]; active?: boolean; recibeAvisos?: boolean } = {}
     if (req.body.name !== undefined) patch.name = String(req.body.name)
     if (req.body.areas !== undefined) patch.areas = Array.isArray(req.body.areas) ? req.body.areas : []
     if (req.body.active !== undefined) patch.active = Boolean(req.body.active)
+    if (req.body.recibeAvisos !== undefined) patch.recibeAvisos = Boolean(req.body.recibeAvisos)
     await updateRole(db, id, patch)
     const updated = await getRole(db, id)
     if (!updated) { res.status(404).json({ error: 'Rol no encontrado' }); return }
