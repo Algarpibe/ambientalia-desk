@@ -28,8 +28,10 @@ beforeEach(async () => {
   await migrate(db)
 })
 
-function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string }> = {}) {
-  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', ...overrides } as AppConfig
+function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string }> = {}) {
+  // Los vacíos son los que devuelve `loadConfig` cuando la variable no está: dejar alguno `undefined`
+  // probaría un config que en producción no existe.
+  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', ...overrides } as AppConfig
   const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), syncContacts: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db, zohoFetch, sync, config })
@@ -2792,6 +2794,34 @@ describe('avisos por correo', () => {
     const t = await db.query('SELECT status FROM tickets WHERE id = $1', ['t1'])
     expect((t.rows[0] as { status: string }).status).toBe('Ingresado')
     expect((await db.query('SELECT id FROM avisos WHERE enviado_at IS NULL')).rows).toHaveLength(1)
+  })
+
+  /**
+   * La copia de verificación de la fase de pruebas, de punta a punta: es lo único que comprueba que el
+   * aviso de DERIVACIÓN sale marcado desde el servicio. Sin este test, quitar `conCopia` en
+   * `ticketService` no rompería nada y la copia dejaría de salir en silencio.
+   */
+  it('con dirección de copia configurada, la derivación sale también para el administrador', async () => {
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+
+    const fake = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fake)
+    try {
+      const { app } = appWith({ avisosWebhookUrl: 'https://n8n/webhook/avisos', avisosCopiaEmail: 'copia@x.co' })
+      const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+        .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+      expect(res.status).toBe(200)
+
+      const body = JSON.parse(fake.mock.calls[0][1].body as string)
+      expect(body.avisos.map((a: { email: string }) => a.email)).toEqual(['dest@x.co', 'copia@x.co'])
+    } finally {
+      vi.unstubAllGlobals()
+    }
+
+    // La copia NO es una fila de `avisos`: solo se sella el aviso de verdad.
+    expect((await db.query('SELECT id FROM avisos')).rows).toHaveLength(1)
   })
 })
 

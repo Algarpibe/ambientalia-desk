@@ -54,6 +54,32 @@ describe('transitions', () => {
     }
   })
 
+  /**
+   * Escalar a comercial es, literalmente, pasarle el trabajo a Comercial. La casilla heredaría al
+   * técnico que traía el ticket, que es justo a quien deja de tocarle, así que la etapa declara a qué
+   * CARGO le corresponde y la pantalla lo resuelve a persona.
+   *
+   * Se declara el cargo y no un id: un id concreto ataría el Blueprint a que Ángela siga en la
+   * empresa, y el día que la coordinación cambie de manos el ticket se derivaría a quien ya no está.
+   */
+  it('«Escalado a comercial» propone al Coordinador Comercial', () => {
+    const d = transitionById('escalado_a_comercial')!.fields.find((f) => f.key === CLAVE_DERIVACION)!
+    expect(d.cargoPorDefecto).toBe('Coordinador Comercial')
+  })
+
+  /**
+   * El resto NO propone nada, y se comprueba sobre el catálogo entero: proponer un cargo pisa lo que
+   * el ticket ya traía, así que colarlo de más en una etapa cualquiera le quitaría el responsable a
+   * alguien sin que nadie lo pidiera.
+   */
+  it('las demás etapas no proponen cargo: la derivación se hereda', () => {
+    for (const t of TRANSITIONS) {
+      if (t.id === 'escalado_a_comercial') continue
+      const ultima = t.fields[t.fields.length - 1]
+      expect(ultima.cargoPorDefecto, `${t.id} propone un cargo`).toBeUndefined()
+    }
+  })
+
   // "Crear remisión" solo cabe mientras el equipo todavía no ha entrado. Se comprueba la lista de
   // estados y no solo un par: es una lista BLANCA a propósito, porque con una negra cada estado nuevo
   // del Blueprint aparecería con el botón por omisión.

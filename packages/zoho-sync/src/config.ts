@@ -51,6 +51,12 @@ export interface AppConfig {
   avisosWebhookToken: string
   /** URL pública de la aplicación, para que el correo pueda enlazarla. Vacío = el correo no lleva enlace. */
   appBaseUrl: string
+  /**
+   * Dirección que recibe copia de los avisos de DERIVACIÓN dirigidos a otras personas. Muleta de la
+   * fase de pruebas: existe para poder verificar que el canal de correo sale de verdad. Vacío —lo
+   * normal— = no se copia nada, y se apaga borrando la variable, sin tocar código.
+   */
+  avisosCopiaEmail: string
   sweepEnabled: boolean
   sweepDryRun: boolean
   sweepHour: number
@@ -108,6 +114,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     avisosWebhookUrl: env.N8N_AVISOS_WEBHOOK_URL || '',
     avisosWebhookToken: env.N8N_AVISOS_TOKEN || '',
     appBaseUrl: env.APP_BASE_URL || '',
+    avisosCopiaEmail: env.AVISOS_COPIA_EMAIL || '',   // default OFF: es una muleta de pruebas
     sweepEnabled: env.SWEEP_ENABLED === 'true',        // default OFF
     sweepDryRun: env.SWEEP_DRY_RUN !== 'false',         // default ON
     sweepHour: env.SWEEP_HOUR ? Number(env.SWEEP_HOUR) : 4,

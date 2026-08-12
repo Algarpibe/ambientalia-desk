@@ -7,6 +7,34 @@ export interface AvisoParaEnviar {
   nombre: string
   texto: string
   ticketNumero: number
+  /**
+   * Si además hay que mandarle una copia a `avisosCopiaEmail`. Se marca aviso por aviso y no se copia
+   * todo: los avisos de ÁREA ya le llegan al administrador como destinatario de pleno derecho
+   * (`destinatariosDeArea` mete a todos los administradores activos), así que copiarlos también le
+   * mandaría el mismo texto tantas veces como personas tuviera el área.
+   */
+  conCopia?: boolean
+}
+
+/**
+ * La copia de verificación de un aviso: el mismo correo, dirigido al administrador.
+ *
+ * NO hereda el `id` del aviso original, y eso importa: quien llama sella con `marcarEnviados` los ids
+ * que mandó, así que un id compartido dejaría marcado como enviado un aviso cuyo destinatario real
+ * pudo no recibirlo. La copia no es una fila de `avisos`, es un correo de más.
+ *
+ * El texto dice a quién iba dirigido el original, porque si no es indistinguible de un aviso propio y
+ * no sirve para verificar nada.
+ */
+function copiaDe(a: AvisoParaEnviar, email: string, url: string) {
+  return {
+    id: `${a.id}-copia`,
+    email,
+    nombre: 'Administrador',
+    asunto: `[Copia] Ticket #${a.ticketNumero} · Desk Ambientalia`,
+    texto: `Copia de verificación · dirigido a ${a.nombre} <${a.email}>: ${a.texto}`,
+    url,
+  }
 }
 
 /**
@@ -29,16 +57,24 @@ export async function dispararAvisos(
 ): Promise<{ disparado: boolean; motivo?: string }> {
   if (!config.avisosWebhookUrl) return { disparado: false, motivo: 'N8N_AVISOS_WEBHOOK_URL sin configurar' }
   if (avisos.length === 0) return { disparado: false, motivo: 'sin avisos que mandar' }
-  const payload = {
-    avisos: avisos.map((a) => ({
-      id: a.id,
-      email: a.email,
-      nombre: a.nombre,
-      asunto: `Ticket #${a.ticketNumero} · Desk Ambientalia`,
-      texto: a.texto,
-      url: config.appBaseUrl,
-    })),
+  const items = avisos.map((a) => ({
+    id: a.id,
+    email: a.email,
+    nombre: a.nombre,
+    asunto: `Ticket #${a.ticketNumero} · Desk Ambientalia`,
+    texto: a.texto,
+    url: config.appBaseUrl,
+  }))
+  // Las copias van DETRÁS y como items normales: para n8n son correos más, así que el flujo no se
+  // entera de que existen. Se salta al propio destinatario —el mismo correo dos veces no verifica
+  // nada— comparando en minúsculas, que es como se guarda el correo en el alta.
+  const copia = config.avisosCopiaEmail.trim().toLowerCase()
+  if (copia) {
+    for (const a of avisos) {
+      if (a.conCopia && a.email.trim().toLowerCase() !== copia) items.push(copiaDe(a, copia, config.appBaseUrl))
+    }
   }
+  const payload = { avisos: items }
   let res: Response
   try {
     res = await fetchImpl(config.avisosWebhookUrl, {

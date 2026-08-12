@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { transitionsForStatus, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
 import { executeTransition, getPersonas } from '../api/client';
-import { opcionesPersona, type OpcionPersona } from '../lib/personas';
+import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/personas';
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
@@ -79,7 +79,13 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, derivad
       // La derivación es el primer campo que llega PRELLENADO pero NO bloqueado, y hasta ahora las dos
       // cosas eran la misma. Sin esta segunda vía, la casilla abriría vacía en cada etapa y el técnico
       // se encontraría con que confirmar la etapa le borra el responsable que ya tenía.
-      else if (f.target === 'derivacion' && delTicket[f.key]) previos[f.key] = delTicket[f.key]
+      //
+      // Y una etapa puede proponer el cargo al que le pasa el trabajo, que pisa lo heredado: quién
+      // gana lo decide `derivacionInicial`, que es donde se puede probar.
+      else if (f.target === 'derivacion') {
+        const inicial = derivacionInicial(f.cargoPorDefecto, personas, delTicket[f.key] ?? null)
+        if (inicial) previos[f.key] = inicial
+      }
     }
     setActive(t);
     setValues(previos);

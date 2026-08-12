@@ -136,7 +136,9 @@ export async function executeTransition(
     if (aviso) {
       const avisoId = await crearAviso(db, { userId: aviso.userId, ticketId: id, texto: aviso.texto })
       const dest = await getUserById(db, aviso.userId)
-      if (dest) porCorreo.push({ id: avisoId, email: dest.email, nombre: dest.name, texto: aviso.texto, ticketNumero: Number(current.row.number) })
+      // `conCopia` solo aquí: el aviso de ÁREA de más abajo ya le llega al administrador como
+      // destinatario de pleno derecho, y copiárselo además sería mandárselo dos veces.
+      if (dest) porCorreo.push({ id: avisoId, email: dest.email, nombre: dest.name, texto: aviso.texto, ticketNumero: Number(current.row.number), conCopia: true })
     }
   }
 

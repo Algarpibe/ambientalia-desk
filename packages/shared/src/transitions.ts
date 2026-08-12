@@ -30,6 +30,14 @@ export interface TransitionField {
    * pareja viva junto a los campos y no escondida en el componente.
    */
   campoFecha?: string
+  /**
+   * Solo para `derivacion`: el CARGO al que la etapa le pasa el trabajo. La pantalla lo resuelve a
+   * persona y lo propone en la casilla, por encima de lo que el ticket trajera.
+   *
+   * Es un cargo y no un id de usuario a propósito: un id ataría el Blueprint a que esa persona siga
+   * en la empresa, y el día que el puesto cambie de manos la etapa derivaría a quien ya no está.
+   */
+  cargoPorDefecto?: string
 }
 
 export interface Transition {
@@ -66,8 +74,8 @@ const cfOrdenVenta = (label: string, campoFecha: string, required = true): Trans
 export const CLAVE_DERIVACION = 'derivado_a'
 
 /** A quién le toca el trabajo tras esta etapa. Nunca obligatoria: derivar no puede frenar un ticket. */
-const derivacion = (): TransitionField =>
-  ({ key: CLAVE_DERIVACION, label: 'Derivado a', kind: 'usuario', required: false, target: 'derivacion' })
+const derivacion = (cargoPorDefecto?: string): TransitionField =>
+  ({ key: CLAVE_DERIVACION, label: 'Derivado a', kind: 'usuario', required: false, target: 'derivacion', cargoPorDefecto })
 
 /**
  * `from_status` de la fila que `createTicket` escribe al nacer el ticket. No es un estado de Zoho
@@ -215,6 +223,20 @@ const TRANSICIONES_BASE: Transition[] = [
 ]
 
 /**
+ * Etapas que ya saben a qué CARGO le pasan el trabajo, para proponerlo en la casilla de derivación.
+ *
+ * Solo cabe aquí la etapa que cambia el trabajo de manos de forma fija. «Escalado a comercial» lo es
+ * por definición: sale de Servicio Técnico y deja el ticket en «Notificación Comercial», así que
+ * heredar al técnico —lo que hacen las otras 34— lo derivaría justo a quien deja de tocarle.
+ *
+ * Es un mapa y no un campo suelto en cada entrada porque proponer cargo es la EXCEPCIÓN: en una lista
+ * de una línea se ve de un vistazo cuáles pisan lo heredado, y en 35 declaraciones no.
+ */
+const CARGO_POR_DEFECTO: Record<string, string> = {
+  escalado_a_comercial: 'Coordinador Comercial',
+}
+
+/**
  * El catálogo real: cada etapa con sus campos MÁS la casilla de «Derivado a».
  *
  * Se añade aquí y no una a una porque el usuario la quiere en todas: si en «Habilitar Servicio» se
@@ -225,7 +247,10 @@ const TRANSICIONES_BASE: Transition[] = [
  * Va la ÚLTIMA para no colarse entre los campos de negocio del formulario. Si algún día una etapa no
  * debe ofrecerla, la salida es un `Set` de excepciones aquí, nunca volver a las 34 copias.
  */
-export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({ ...t, fields: [...t.fields, derivacion()] }))
+export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({
+  ...t,
+  fields: [...t.fields, derivacion(CARGO_POR_DEFECTO[t.id])],
+}))
 
 /** Transiciones disponibles para un ticket según su estado actual. */
 export function transitionsForStatus(status: string): Transition[] {
