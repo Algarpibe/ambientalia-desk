@@ -2756,3 +2756,65 @@ describe('avisos por correo', () => {
     expect((await db.query('SELECT id FROM avisos WHERE enviado_at IS NULL')).rows).toHaveLength(1)
   })
 })
+
+/**
+ * El borrado de un ticket desde la aplicación. Sustituye al runbook manual de nueve tablas.
+ * `?dryRun=true` es la vista previa: mismos números, sin escribir.
+ */
+describe('DELETE /api/tickets/:id (admin)', () => {
+  const sembrar = async (id: string, numero: number) => {
+    await db.query('INSERT INTO tickets (id, number, status, managed_by_app) VALUES ($1,$2,$3,true)', [id, numero, 'Ingresado'])
+    await db.query('INSERT INTO ticket_transitions (ticket_id, transition_name, from_status, to_status, performed_by) VALUES ($1,$2,$3,$4,$5)',
+      [id, 'Habilitar', 'Ticket creado', 'Ingresado', 'Admin'])
+  }
+  const existe = async (id: string) =>
+    Number(((await db.query('SELECT COUNT(*)::int AS n FROM tickets WHERE id=$1', [id])).rows[0] as { n: number }).n) === 1
+
+  it('dryRun enseña lo que se iría sin borrarlo; sin él borra de verdad', async () => {
+    const cookie = await adminCookie()
+    await sembrar('app-1', 10000)
+    const { app } = appWith()
+
+    const seco = await request(app).delete('/api/tickets/app-1?dryRun=true').set('Cookie', cookie)
+    expect(seco.status).toBe(200)
+    expect(seco.body.dryRun).toBe(true)
+    expect(seco.body.ticket).toMatchObject({ numero: 10000 })
+    expect(seco.body.filas).toHaveLength(10)
+    expect(await existe('app-1')).toBe(true)
+
+    const real = await request(app).delete('/api/tickets/app-1').set('Cookie', cookie)
+    expect(real.status).toBe(200)
+    expect(real.body).toEqual({ ...seco.body, dryRun: false })
+    expect(await existe('app-1')).toBe(false)
+  })
+
+  // El caso que justifica el 409: borrarlo aquí solo lo haría volver en la siguiente sincronización.
+  it('un ticket de Zoho da 409 y sigue vivo, sin pedirlo a Zoho', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('12345', 987, 'Ingresado', true)")
+    const { app, sync } = appWith()
+
+    const res = await request(app).delete('/api/tickets/12345').set('Cookie', cookie)
+    expect(res.status).toBe(409)
+    expect(res.body.error).toMatch(/sincronizaci/i)
+    expect(await existe('12345')).toBe(true)
+    expect(sync.syncTicket).not.toHaveBeenCalled()
+  })
+
+  it('404 si no existe, y no lo pide a Zoho para poder borrarlo', async () => {
+    const cookie = await adminCookie()
+    const { app, sync } = appWith()
+    expect((await request(app).delete('/api/tickets/app-inventado').set('Cookie', cookie)).status).toBe(404)
+    expect(sync.syncTicket).not.toHaveBeenCalled()
+  })
+
+  it('403 al no administrador (y el ticket sigue vivo); 401 sin sesión', async () => {
+    await sembrar('app-1', 10000)
+    const op = await userCookie(['Servicio Técnico'])
+    const { app } = appWith()
+
+    expect((await request(app).delete('/api/tickets/app-1').set('Cookie', op)).status).toBe(403)
+    expect(await existe('app-1')).toBe(true)
+    expect((await request(app).delete('/api/tickets/app-1')).status).toBe(401)
+  })
+})

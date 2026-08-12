@@ -12,6 +12,7 @@ import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
 import { createManagedTicket, executeTransition } from '../services/ticketService'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from '../db/resolutions'
+import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from '../db/eliminarTicket'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
 
@@ -66,6 +67,36 @@ export function registerTicketRoutes(
   }))
   app.delete('/api/tickets/:id/resolution', requireSuperAdmin, asyncHandler(async (req, res) => {
     await deleteResolution(db, String(req.params.id)); res.status(204).end()
+  }))
+
+  /**
+   * Borra el ticket con todo lo que cuelga de él. `?dryRun=true` es la vista previa.
+   *
+   * Una sola ruta para las dos cosas, y no una de previsualización aparte, porque así el simulacro y
+   * el borrado son EL MISMO recorrido de código: los mismos SELECT producen los números que se enseñan
+   * y los predicados que borran. Con dos rutas habría dos juegos de consultas que alguien tendría que
+   * mantener alineados, y desalinearlos no lo notaría nadie —no queda lápida— hasta que la vista previa
+   * dijera «3 remisiones» y el borrado se llevara cuatro.
+   *
+   * Responde 200 con el resumen y no 204: sin papelera ni deshacer, ese cuerpo es el único recibo de lo
+   * que se fue, y lleva los enlaces de Drive que hay que rescatar a mano.
+   *
+   * No lleva `guardWrites`: `ENABLE_WRITES` protege las escrituras hacia ZOHO, y esto es local.
+   */
+  app.delete('/api/tickets/:id', requireSuperAdmin, asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    try {
+      const resumen = await eliminarTicket(db, id, { dryRun: req.query.dryRun === 'true' })
+      if (!resumen.dryRun) req.log.warn({ resumen, actor: req.user?.name }, 'Ticket eliminado')
+      res.json(resumen)
+    } catch (e) {
+      if (e instanceof TicketNoEncontrado) { res.status(404).json({ error: 'Ticket no encontrado' }); return }
+      if (e instanceof TicketNoBorrable) {
+        res.status(409).json({ error: 'Este ticket vive en Zoho: borrarlo aquí solo lo haría volver en la siguiente sincronización.' })
+        return
+      }
+      throw e
+    }
   }))
 
   app.get('/api/tickets', asyncHandler(async (req, res) => {
