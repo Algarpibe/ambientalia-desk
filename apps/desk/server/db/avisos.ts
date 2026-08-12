@@ -52,3 +52,34 @@ export async function marcarLeidos(db: Queryable, userId: string, ids: string[])
     await db.query('UPDATE avisos SET leido_at = now() WHERE id = $1 AND user_id = $2', [id, userId])
   }
 }
+
+/**
+ * Quién debe enterarse de que un ticket entró en una fase de `area`.
+ *
+ * Dos grupos, sin repetidos: quien tenga un rol **marcado como receptor** cuyas áreas cubran esa área,
+ * y **todos los administradores activos**, que reciben copia de los cambios de área por decisión del
+ * usuario. El actor nunca se avisa a sí mismo: acaba de hacerlo.
+ *
+ * El cruce de áreas se hace en JS y no con `@>` en SQL porque `roles.areas` es `jsonb` y pg-mem no
+ * resuelve la contención; el filtro barato (`recibe_avisos`, activos) sí va en SQL.
+ */
+export async function destinatariosDeArea(
+  db: Queryable,
+  area: string,
+  actorId: string,
+): Promise<Array<{ id: string; email: string; name: string }>> {
+  const r = await db.query(
+    `SELECT u.id, u.email, u.name, u.is_admin, r.areas AS role_areas
+       FROM users u LEFT JOIN roles r ON u.role_id = r.id AND r.active = true AND r.recibe_avisos = true
+      WHERE u.active = true`,
+  )
+  const porId = new Map<string, { id: string; email: string; name: string }>()
+  for (const x of filas(r.rows)) {
+    const id = String(x.id)
+    if (id === actorId) continue
+    const areas = Array.isArray(x.role_areas) ? (x.role_areas as string[]) : []
+    if (x.is_admin !== true && !areas.includes(area)) continue
+    porId.set(id, { id, email: String(x.email), name: String(x.name) })
+  }
+  return [...porId.values()]
+}

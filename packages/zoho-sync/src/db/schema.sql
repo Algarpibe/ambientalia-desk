@@ -138,6 +138,12 @@ CREATE TABLE IF NOT EXISTS public.avisos (
 );
 CREATE INDEX IF NOT EXISTS idx_avisos_user ON avisos (user_id);
 
+-- Que rol recibe los avisos de sus areas cuando un ticket entra en una fase que le toca. Es una
+-- casilla del ROL y no del usuario: el destinatario es el cargo, y asi sobrevive al cambio de persona
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS recibe_avisos boolean NOT NULL DEFAULT false;
+-- Cuando salio el correo de este aviso. NULL = pendiente, y esa es la cola de reintento
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS enviado_at timestamptz;
+
 CREATE SCHEMA IF NOT EXISTS books;
 
 CREATE TABLE IF NOT EXISTS books.contacts (
