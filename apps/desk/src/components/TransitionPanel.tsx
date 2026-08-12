@@ -35,11 +35,16 @@ function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string |
   return v != null && String(v).trim() !== ''
 }
 
-export function TransitionPanel({ ticketId, status, delTicket, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
+export function TransitionPanel({ ticketId, status, delTicket, propuestos, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
   ticketId: string
   status: string
   /** `customFields` del ticket: lo que ya se sabe, para prellenar y bloquear. */
   delTicket: Record<string, string | null>
+  /**
+   * Lo que se propone SIN bloquear: fechas derivadas del historial, que hay que poder corregir. Lo
+   * que el ticket ya trae manda sobre esto, porque ya está decidido.
+   */
+  propuestos?: Record<string, string | null>
   /** Acota el buscador de órdenes de venta al cliente del ticket. */
   clientId?: string | null
   /** A quién está derivado el ticket ahora, para conservarlo en el desplegable aunque esté de baja. */
@@ -86,6 +91,9 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, derivad
         const inicial = derivacionInicial(f.cargoPorDefecto, personas, delTicket[f.key] ?? null)
         if (inicial) previos[f.key] = inicial
       }
+      // Lo propuesto va el último: solo llena lo que nadie ha llenado antes. Prellena pero NO bloquea
+      // —el `bloqueado` de abajo mira `delTicket`, no esto—, así que se puede corregir.
+      else if (propuestos?.[f.key]) previos[f.key] = propuestos[f.key]
     }
     setActive(t);
     setValues(previos);

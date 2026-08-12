@@ -9,7 +9,7 @@ import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
 import { HojaDeVida } from './HojaDeVida';
 import { Adjuntos } from './Adjuntos';
-import { valoresConocidos } from '../lib/valoresTransicion';
+import { valoresConocidos, valoresPropuestos } from '../lib/valoresTransicion';
 import { ActividadesPanel } from './ActividadesPanel';
 import { CrearRemision } from './CrearRemision';
 import { PanelRemisiones } from './PanelRemisiones';
@@ -327,6 +327,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               // "Ingreso a Servicio" las escribe esa misma transición: se derivan de
                               // su fuente real (la creación del ticket y la remisión de entrada).
                               delTicket={valoresConocidos(ticket, remisiones)}
+                              // Y lo que se propone sin bloquear: la fecha de revisión del informe,
+                              // que sale del escalado a revisión y hay que poder corregir.
+                              propuestos={valoresPropuestos(ticket)}
                               clientId={ticket.clientId}
                               // Para que el desplegable conserve al derivado actual aunque ya no esté
                               // activo: si desapareciera, confirmar la etapa lo borraría en silencio.

@@ -232,14 +232,15 @@ const TRANSICIONES_BASE: Transition[] = [
 /**
  * Etapas que ya saben a qué CARGO le pasan el trabajo, para proponerlo en la casilla de derivación.
  *
- * Solo cabe aquí la etapa que cambia el trabajo de manos de forma fija. «Escalado a comercial» lo es
- * por definición: sale de Servicio Técnico y deja el ticket en «Notificación Comercial», así que
- * heredar al técnico —lo que hacen las otras 34— lo derivaría justo a quien deja de tocarle.
+ * Solo caben aquí las etapas que cambian el trabajo de manos de forma fija: las dos que escalan.
+ * Heredar al técnico —lo que hacen las otras 33— lo derivaría justo a quien deja de tocarle.
  *
  * Es un mapa y no un campo suelto en cada entrada porque proponer cargo es la EXCEPCIÓN: en una lista
  * de una línea se ve de un vistazo cuáles pisan lo heredado, y en 35 declaraciones no.
  */
 const CARGO_POR_DEFECTO: Record<string, string> = {
+  // Rev./Diagnostico → Notificado: escalar una revisión es subirla al inmediato superior.
+  escalado_a_revision: 'Director Técnico',
   escalado_a_comercial: 'Coordinador Comercial',
 }
 

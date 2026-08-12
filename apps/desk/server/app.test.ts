@@ -140,6 +140,39 @@ describe('derivación en las transiciones', () => {
     expect(res.body.ownerName).toBeUndefined()
   })
 
+  /**
+   * El ticket lleva encima cuándo se escaló a revisión, que es lo que la pantalla propone como «Fecha
+   * Revisión Informe» dos etapas más adelante. Va en el detalle y no se calcula en el navegador porque
+   * el dato vive en `ticket_transitions`, y pedir el historial entero para sacar una fecha sería
+   * traerse el relato completo del ticket en cada apertura del formulario.
+   */
+  it('el detalle lleva la fecha del último escalado a revisión', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Notificado')")
+    for (const [tid, cuando] of [
+      ['escalado_a_revision', '2026-08-01T15:00:00.000Z'],
+      ['escalado_a_revision', '2026-08-09T15:00:00.000Z'],
+    ]) {
+      await db.query('INSERT INTO ticket_transitions (ticket_id, transition_id, performed_at) VALUES ($1,$2,$3)',
+        ['t1', tid, new Date(cuando)])
+    }
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/tickets/t1').set('Cookie', cookie)
+    // La ÚLTIMA: si volvió a corrección y se re-escaló, la revisión que vale es la de después.
+    expect(res.body.escaladoARevisionAt).toBe('2026-08-09T15:00:00.000Z')
+  })
+
+  // Un ticket que nunca pasó por revisión no puede inventarse la fecha: se deja vacía y se teclea.
+  it('sin escalado a revisión, el detalle no trae fecha', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Ingresado')")
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/tickets/t1').set('Cookie', cookie)
+    expect(res.body.escaladoARevisionAt).toBeNull()
+  })
+
   // El tablero y la tabla necesitan el dato en la LISTA, no solo en el detalle: son consultas
   // distintas y es fácil añadir el join en una y olvidarlo en las otras tres.
   it('la lista de tickets también trae la derivación', async () => {

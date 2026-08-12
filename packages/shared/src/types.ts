@@ -131,6 +131,15 @@ export interface TicketDetail extends Ticket {
   equipoId?: string | null
   /** El cliente de Books, para acotar los buscadores del detalle (las órdenes de venta, hoy). */
   clientId?: string | null
+  /**
+   * Instante ISO del ÚLTIMO «Escalado a Revisión», o `null` si no consta.
+   *
+   * Viaja con el detalle porque es lo que la pantalla propone como «Fecha Revisión Informe» dos etapas
+   * más adelante, y sale de `ticket_transitions`: pedir el historial entero para sacar una fecha sería
+   * traerse el relato completo del ticket cada vez que alguien abre el formulario. Instante y no día
+   * porque el día hay que calcularlo en la zona de quien mira.
+   */
+  escaladoARevisionAt?: string | null
   customFields: Record<string, string | null>
 }
 

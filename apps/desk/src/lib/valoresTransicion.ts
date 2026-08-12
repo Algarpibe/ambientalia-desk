@@ -69,3 +69,24 @@ export function valoresConocidos(
     [CLAVE_DERIVACION]: ticket.derivado?.id ?? null,
   }
 }
+
+/**
+ * Lo que la pantalla PROPONE, que es otra cosa que lo que da por sabido.
+ *
+ * Va aparte de `valoresConocidos` porque `TransitionPanel` bloquea todo lo que salga de allí —es un
+ * dato que el ticket ya guarda, no hay nada que decidir— y esto tiene que quedar editable: es una
+ * fecha derivada del historial, y quien la mira puede saber que el informe se revisó otro día.
+ *
+ * Hoy solo hay una: «Fecha Revisión Informe», que se pregunta al salir de «Notificado» —en «Escalado
+ * a comercial» y en «Reporte por garantía»— y que es, por definición, el día en que el ticket entró
+ * ahí: el escalado a revisión. Se pedía a mano un dato que el sistema ya tenía anotado.
+ *
+ * Si el ticket ya trae la columna rellena, esto no llega a usarse: `valoresConocidos` la enseña
+ * bloqueada, como cualquier otro dato ya decidido.
+ */
+export function valoresPropuestos(ticket: { escaladoARevisionAt?: string | null }): Record<string, string | null> {
+  return {
+    // `diaLocal` y no `slice(0, 10)`: el instante viene en UTC y el día es el de quien mira.
+    'Fecha Revisión Informe': diaLocal(ticket.escaladoARevisionAt),
+  }
+}
