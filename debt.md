@@ -418,6 +418,31 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
     hoja `remisiones_entrada` de Google Sheets).
   - **Decisión bloqueante antes de abordarla:** dónde quedan guardadas las remisiones de entrada — ¿siguen en
     Google Sheets, o pasan a Postgres? Salida tiene que leer de donde entrada escriba.
+- ⚠️ **BORRAR UN TICKET A MANO — el barrido son NUEVE tablas, y el sistema no avisa si te dejas una.**
+  En el esquema, `ticket_id` es `text` **sin `REFERENCES`**: no hay claves foráneas ni `CASCADE`, así que
+  `DELETE FROM tickets` **siempre funciona** y las filas hijas se quedan huérfanas en silencio. Ya ha
+  mordido dos veces.
+  ✅ **HECHO EN PRODUCCIÓN 2026-08-12: borrados los tickets de prueba #10000–#10003** (los cuatro
+  `managed_by_app`, que es donde empieza `APP_TICKET_NUMBER_BASE = 10_000`). Se fueron con ellos 4 fotos
+  de remisión, 4 remisiones, 1 aviso, 4 lecturas, 2 conversaciones y 11 transiciones, en una transacción.
+  ✅ **Y salió una huérfana de JUNIO**: la fila de creación (`from_status = '(creación)'`) del ticket
+  `app-13ba40fd-…`, el que se borró al arreglar el bug de numeración #954. Aquel runbook
+  (`docs/superpowers/plans/2026-06-17-fix-numeracion-tickets.md:133`) solo barría `ticket_reads` y
+  `tickets`, así que su transición llevaba dos meses colgando sin que nada lo dijera.
+  **El orden correcto** (hijas de la remisión primero, porque la foto cuelga de la remisión y no del
+  ticket): `public.remision_fotos` → `public.remisiones` → `public.avisos` → `public.ticket_reads` →
+  `public.resolution_attachments` → `desk.attachments` → `desk.conversations` →
+  `desk.ticket_transitions` → `desk.ticket_history` → `desk.tickets`.
+  ⚠️ **`desk.activities` NO se toca**: está replicada desde el hub por `zoho_ref_pub` y borrar filas a
+  mano diverge la réplica.
+  ⚠️ **Antes de borrar la remisión, guardar `resultado ->> 'carpetaUrl'`**: los documentos (PDF, editable,
+  etiqueta `.dymo`) viven en Google Drive y NO se borran con la fila. Al perder la fila se pierde el
+  único puntero. En este borrado se perdieron: las cuatro carpetas quedaron en Drive y hubo que
+  localizarlas por fecha (2026-08-06, 2026-08-11 y dos del 2026-08-12).
+  **Comprobación final**, que es lo único que demuestra que no quedó nada — sin FK, no hay otra:
+  contar en las 8 tablas hijas las filas cuyo `ticket_id NOT IN (SELECT id FROM desk.tickets)`.
+  **Si vuelve a hacer falta**, lo pedido y no construido es `POST /api/admin/borrar-ticket` con `dryRun`,
+  que haga el barrido en una transacción y devuelva los enlaces de Drive ANTES de borrar la fila.
 - **CONVERSACIONES — papelera del administrador (APLAZADA, 2026-08-06).** *Qué pide el usuario:* un botón de
   papelera en la esquina superior derecha de una entrada del hilo, para que **el administrador y solo él** pueda
   eliminarla. *Por qué se aplaza:* el usuario prefirió cerrar antes lo de las fotos. Lo que ya se investigó, para
