@@ -66,8 +66,11 @@ Esto es lógica, no cableado: va con TDD y test propio en shared.
 El mensaje de hoy nombra los accesorios (`'Los accesorios se añaden artículo a artículo, no por
 categoría.'`). Pasa a redactarse desde la clase, para que sirva a las dos que no admiten categorías.
 
-**Cobertura que se gana:** hoy **no existe ningún test del 422 de «accesorio por categoría»** — el
-mapa del subsistema lo señaló como hueco. El plan añade el test para las dos clases.
+**Corrección (2026-08-12, al escribir el plan):** una versión anterior de este spec decía que no
+existía ningún test de este 422. Es **falso**: está cubierto en `app.test.ts:1595`, dentro del test
+«asigna categorías de consumibles y repuestos…», no como `it` propio — por eso no apareció en la
+búsqueda inicial. El plan añade una aserción a ese test para la clase nueva, en vez de duplicar el
+montaje con un test aparte.
 
 ### 4. Textos de la ficha
 
