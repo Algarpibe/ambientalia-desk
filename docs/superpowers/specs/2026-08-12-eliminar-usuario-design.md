@@ -73,14 +73,24 @@ resuelve el objetivo práctico**. El mensaje del 409 lo dice explícitamente.
    medias deja a la persona existiendo con menos estado personal. Molesto, nunca corrupto. Al revés
    —borrar primero la fila— dejaría exactamente los huérfanos que este diseño evita.
 
-4. **`DELETE /api/users/:id`**, `requireAuth` + `requireAdmin`, con cuatro respuestas:
+4. **`DELETE /api/users/:id`**, `requireAuth` + `requireAdmin`, con estas respuestas:
    - **404** si no existe.
    - **409** si te borras a ti mismo: te dejaría con la sesión muerta y sin poder deshacerlo.
-   - **409** si es el último administrador activo. ⚠️ **Hoy esa protección solo vive en el PATCH**
-     (`routes.ts:97-103`); ningún camino de borrado la tiene porque no había borrado.
    - **409** `UsuarioEnUso`, con el conteo y «Desactívalo en lugar de borrarlo», el mismo mensaje que
      ya usa el catálogo.
    - **204** al borrar.
+
+   ⚠️ **Corrección (2026-08-12, al implementar):** una versión anterior de este spec pedía una tercera
+   puerta de 409 para el último administrador activo, replicando la del PATCH. Se escribió y **se
+   quitó: es inalcanzable**. Quien borra es siempre un administrador activo (lo exigen `requireAdmin`
+   y la propia sesión), así que si el objetivo es otro administrador activo hay dos como mínimo y el
+   conteo nunca baja de dos; y si el objetivo es él mismo, lo para la puerta anterior. Lo delató
+   mutar: el test seguía verde sin ella, porque estaba pasando por la puerta de «a ti mismo».
+
+   **La protección real la da esa puerta**: para borrar al último administrador tendrías que ser tú, y
+   por ahí no se pasa. Verificado mutándola: sin ella el test da 204 donde espera 409, es decir, el
+   único administrador se borraría a sí mismo. Una red que no puede desplegarse miente sobre lo que
+   protege, así que en su lugar queda el razonamiento escrito en el código.
 
 ### Interfaz (cableado)
 
@@ -96,5 +106,5 @@ secuencia. Prueba manual del usuario al desplegar:
 1. Crear un usuario de prueba y eliminarlo → desaparece de la lista.
 2. Intentar eliminar a alguien con tickets derivados → 409 con el conteo y la sugerencia de
    desactivarlo.
-3. Intentar eliminarte a ti mismo → 409.
-4. Intentar eliminar al único administrador activo → 409.
+3. Intentar eliminarte a ti mismo → 409. (Es también la prueba de que no se puede dejar el sistema sin
+   administradores: el único que queda solo podría borrarse a sí mismo.)

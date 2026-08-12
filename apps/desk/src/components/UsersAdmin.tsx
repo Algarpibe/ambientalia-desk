@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { UserPublic } from '@ambientalia/shared'
-import { listUsers, createUser, updateUser, listRoles, type Role } from '../api/client'
+import { listUsers, createUser, updateUser, deleteUser as eliminarUsuarioApi, listRoles, type Role } from '../api/client'
 
 export function UsersAdmin({ onClose }: { onClose: () => void }) {
   const [users, setUsers] = useState<UserPublic[]>([])
@@ -25,6 +25,13 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
   }
   async function changeRole(u: UserPublic, roleId: string) {
     await updateUser(u.id, { roleId: roleId || null }); reload()
+  }
+  async function eliminar(u: UserPublic) {
+    if (!confirm(`¿Eliminar a ${u.name}? No se puede deshacer.`)) return
+    // El 409 del servidor viene redactado para leerse —trae el conteo y la salida—, así que se enseña
+    // tal cual en vez de traducirlo aquí.
+    try { await eliminarUsuarioApi(u.id); reload() }
+    catch (e) { alert(String(e instanceof Error ? e.message : e)) }
   }
   async function resetPassword(u: UserPublic) {
     const pw = prompt(`Nueva contraseña para ${u.email} (mínimo 8 caracteres):`)
@@ -70,6 +77,7 @@ export function UsersAdmin({ onClose }: { onClose: () => void }) {
                   <button onClick={() => toggleAdmin(u)} className="text-[12px] text-blue-600 mr-3">{u.isAdmin ? 'Quitar admin' : 'Hacer admin'}</button>
                   <button onClick={() => toggleActive(u)} className="text-[12px] text-blue-600 mr-3">{u.active ? 'Desactivar' : 'Activar'}</button>
                   <button onClick={() => resetPassword(u)} className="text-[12px] text-blue-600">Resetear contraseña</button>
+                  <button onClick={() => eliminar(u)} className="text-[12px] text-red-600 ml-3">Eliminar</button>
                 </td>
               </tr>
             ))}

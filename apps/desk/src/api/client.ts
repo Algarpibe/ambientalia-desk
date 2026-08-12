@@ -126,6 +126,14 @@ export function updateUser(id: string, patch: Partial<{ name: string; email: str
   }).then((r) => json<UserPublic>(r))
 }
 
+export async function deleteUser(id: string): Promise<void> {
+  const res = await fetch(`/api/users/${id}`, { method: 'DELETE', credentials: 'include' })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error || `HTTP ${res.status}`)
+  }
+}
+
 export interface Role { id: string; name: string; areas: string[]; active: boolean; recibeAvisos: boolean }
 
 export function listRoles(): Promise<Role[]> {
