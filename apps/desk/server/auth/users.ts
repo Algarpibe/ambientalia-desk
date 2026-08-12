@@ -33,13 +33,13 @@ export function rowToPublicUser(row: any): UserPublic {
 
 export async function createUser(
   db: Queryable,
-  input: { email: string; name: string; passwordHash: string; isAdmin?: boolean; roleId?: string | null },
+  input: { email: string; name: string; passwordHash: string; isAdmin?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null },
 ): Promise<UserPublic> {
   const id = randomUUID()
   await db.query(
-    `INSERT INTO users (id,email,name,password_hash,is_admin,active,role_id,updated_at)
-     VALUES ($1,$2,$3,$4,$5,true,$6,now())`,
-    [id, normalize(input.email), input.name, input.passwordHash, input.isAdmin ?? false, input.roleId ?? null],
+    `INSERT INTO users (id,email,name,password_hash,is_admin,active,role_id,cargo,empresa,updated_at)
+     VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,now())`,
+    [id, normalize(input.email), input.name, input.passwordHash, input.isAdmin ?? false, input.roleId ?? null, input.cargo ?? null, input.empresa ?? null],
   )
   return (await getUserById(db, id))!
 }

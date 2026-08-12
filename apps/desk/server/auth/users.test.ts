@@ -29,6 +29,12 @@ describe('users repo', () => {
     expect((await getUserById(db, u.id))!.cargo).toBeNull()
   })
 
+  it('createUser acepta cargo y empresa desde el alta', async () => {
+    const u = await createUser(db, { email: 'alta@x.co', name: 'Alta', passwordHash: 'h', cargo: 'Técnico de campo', empresa: 'Ambientalia S.A.S.' })
+    expect(u.cargo).toBe('Técnico de campo')
+    expect(u.empresa).toBe('Ambientalia S.A.S.')
+  })
+
   it('crea (email normalizado), busca por email/id y lista', async () => {
     const u = await createUser(db, { email: '  Admin@X.CO ', name: 'Admin', passwordHash: 'h', isAdmin: true })
     expect(u.email).toBe('admin@x.co')
