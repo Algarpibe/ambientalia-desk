@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { canExecuteTransition } from './permissions'
-import { areasForTransition } from './transitions'
+import { areasForTransition, areasSiguientes } from './transitions'
 
 describe('areasForTransition', () => {
   it('descompone compuestas y deja simples', () => {
@@ -23,5 +23,28 @@ describe('canExecuteTransition', () => {
   })
   it('sin áreas no puede', () => {
     expect(canExecuteTransition([], false, 'Comercial')).toBe(false)
+  })
+})
+
+describe('areasSiguientes', () => {
+  // El caso que motivó la funcionalidad: Servicio Técnico termina y el ticket queda a la espera de
+  // que Comercial facture. Las tres transiciones que salen de «Por Facturar» son de Comercial.
+  it('desde «Por Facturar» le toca a Comercial', () => {
+    expect(areasSiguientes('Por Facturar')).toEqual(['Comercial'])
+  })
+
+  // Las compuestas se descomponen, y cada área aparece UNA vez aunque la ofrezcan varias transiciones.
+  it('descompone las áreas compuestas y no las repite', () => {
+    expect(areasSiguientes('Notificación Comercial').sort()).toEqual(['Comercial', 'Compras', 'Servicio Técnico'])
+  })
+
+  // Un estado terminal no le toca a nadie: no hay transición que salga de él.
+  it('un estado final no le toca a nadie', () => {
+    expect(areasSiguientes('Finalizado')).toEqual([])
+  })
+
+  // Un estado que no existe tampoco: no se inventa nada ni revienta.
+  it('un estado desconocido devuelve lista vacía', () => {
+    expect(areasSiguientes('Estado que no existe')).toEqual([])
   })
 })

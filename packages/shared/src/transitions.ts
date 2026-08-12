@@ -243,3 +243,22 @@ export const AREAS = ['Comercial', 'Servicio Técnico', 'Compras'] as const
 export function areasForTransition(area: string): string[] {
   return area.split(' / ').map((s) => s.trim()).filter(Boolean)
 }
+
+/**
+ * Qué áreas pueden actuar sobre un ticket que está en `estado`.
+ *
+ * Es lo contrario de mirar el `area` de la transición que se acaba de ejecutar: ese `area` dice quién
+ * la EJECUTA, no a quién le toca después. `escalado_a_comercial` es de Servicio Técnico y deja el
+ * ticket en «Notificación Comercial», donde quien tiene que actuar es Comercial — avisar por el área
+ * de la transición ejecutada mandaría el aviso justo a quien acaba de hacer el trabajo.
+ *
+ * Un estado terminal («Finalizado») devuelve lista vacía: no hay a quién pasarle el testigo.
+ */
+export function areasSiguientes(estado: string): string[] {
+  const areas = new Set<string>()
+  for (const t of TRANSITIONS) {
+    if (!t.from.includes(estado)) continue
+    for (const a of areasForTransition(t.area)) areas.add(a)
+  }
+  return [...areas]
+}
