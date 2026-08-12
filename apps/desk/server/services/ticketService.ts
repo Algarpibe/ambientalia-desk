@@ -8,7 +8,10 @@ import { transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambient
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
 import { areasAAvisar, textoAvisoArea } from './avisoArea'
-import { crearAviso, destinatariosDeArea } from '../db/avisos'
+import { crearAviso, destinatariosDeArea, marcarEnviados } from '../db/avisos'
+import { dispararAvisos, type AvisoParaEnviar } from '../avisosWebhook'
+import { logger } from '../util/logger'
+import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
@@ -67,6 +70,7 @@ export async function executeTransition(
   id: string,
   body: unknown,
   user: { areas: string[]; isAdmin: boolean; name?: string; id?: string },
+  config?: AppConfig,
 ): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const t = transitionById(String(b.transitionId))
@@ -110,6 +114,10 @@ export async function executeTransition(
    * caída justo entre las dos escrituras pierde el aviso; se acepta porque lo que importa —la
    * derivación— sí queda en el ticket y en el historial, y el destinatario la ve igual en su vista.
    */
+  // Se acumulan aquí para mandarlos en UNA sola llamada a n8n: una transición puede generar el aviso
+  // de derivación y varios de área, y un webhook por cabeza sería ruido de red por nada.
+  const porCorreo: AvisoParaEnviar[] = []
+
   if (typeof derivadoA === 'string' || derivadoA === null) {
     const aviso = avisoDerivacion({
       anterior: derivadoAntes,
@@ -119,7 +127,11 @@ export async function executeTransition(
       ticketNumero: Number(current.row.number),
       transicion: t.name,
     })
-    if (aviso) await crearAviso(db, { userId: aviso.userId, ticketId: id, texto: aviso.texto })
+    if (aviso) {
+      const avisoId = await crearAviso(db, { userId: aviso.userId, ticketId: id, texto: aviso.texto })
+      const dest = await getUserById(db, aviso.userId)
+      if (dest) porCorreo.push({ id: avisoId, email: dest.email, nombre: dest.name, texto: aviso.texto, ticketNumero: Number(current.row.number) })
+    }
   }
 
   /*
@@ -133,14 +145,27 @@ export async function executeTransition(
    */
   const areasAvisar = areasAAvisar(t.to, user.areas)
   if (areasAvisar.length) {
-    const porPersona = new Map<string, { id: string }>()
+    const porPersona = new Map<string, { id: string; email: string; name: string }>()
     for (const area of areasAvisar) {
       for (const d of await destinatariosDeArea(db, area, user.id ?? '')) porPersona.set(d.id, d)
     }
     const texto = textoAvisoArea({ ticketNumero: Number(current.row.number), estado: t.to, actorNombre: actor })
     for (const d of porPersona.values()) {
-      await crearAviso(db, { userId: d.id, ticketId: id, texto })
+      const avisoId = await crearAviso(db, { userId: d.id, ticketId: id, texto })
+      porCorreo.push({ id: avisoId, email: d.email, nombre: d.name, texto, ticketNumero: Number(current.row.number) })
     }
+  }
+
+  /*
+   * El correo va al final y NUNCA puede tumbar la transición, que a estas alturas lleva rato escrita.
+   * Se espera al resultado —en vez de soltarlo— porque `enviado_at` solo tiene sentido si se conoce, y
+   * `dispararAvisos` ya acota la espera con su propio timeout. Lo que no se selle queda en NULL, que es
+   * la cola de reintento.
+   */
+  if (config && porCorreo.length) {
+    const r = await dispararAvisos(config, porCorreo)
+    if (r.disparado) await marcarEnviados(db, porCorreo.map((a) => a.id))
+    else logger.warn({ motivo: r.motivo, ticketId: id, avisos: porCorreo.length }, 'no se pudieron mandar los avisos por correo')
   }
 
   const updated = await getTicketWithRefs(db, id)

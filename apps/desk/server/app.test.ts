@@ -28,8 +28,8 @@ beforeEach(async () => {
   await migrate(db)
 })
 
-function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string }> = {}) {
-  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', ...overrides } as AppConfig
+function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string }> = {}) {
+  const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', ...overrides } as AppConfig
   const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), syncContacts: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db, zohoFetch, sync, config })
@@ -2691,5 +2691,68 @@ describe('avisos por cambio de área', () => {
       .send({ transitionId: 'facturado', values: { comment: 'ok', 'Fecha De Factura': '2026-08-12' } })
 
     expect(await listarAvisos(db, ana.id)).toEqual([])
+  })
+})
+
+describe('avisos por correo', () => {
+  it('la derivación manda el correo al derivado y sella enviado_at', async () => {
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+
+    const fake = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fake)
+    try {
+      const { app } = appWith({ avisosWebhookUrl: 'https://n8n/webhook/avisos', appBaseUrl: 'https://desk.example' })
+      const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+        .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+      expect(res.status).toBe(200)
+
+      const body = JSON.parse(fake.mock.calls[0][1].body as string)
+      expect(body.avisos).toHaveLength(1)
+      expect(body.avisos[0]).toMatchObject({ email: 'dest@x.co', nombre: 'Destino', url: 'https://desk.example' })
+      expect(body.avisos[0].texto).toMatch(/te derivó/)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+
+    const sellados = await db.query('SELECT id FROM avisos WHERE enviado_at IS NOT NULL')
+    expect(sellados.rows).toHaveLength(1)
+  })
+
+  // El canal apagado no puede romper nada: es el estado por defecto y el de cualquier despliegue que
+  // aún no tenga el flujo montado.
+  it('sin webhook configurado la transición funciona igual y el aviso queda sin sellar', async () => {
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+    expect(res.status).toBe(200)
+
+    expect((await db.query('SELECT id FROM avisos WHERE enviado_at IS NULL')).rows).toHaveLength(1)
+  })
+
+  // Un n8n caído NO puede tumbar una transición ya escrita: es el invariante de todo este canal.
+  it('un n8n caído no rompe la transición', async () => {
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fetch failed')))
+    try {
+      const { app } = appWith({ avisosWebhookUrl: 'https://n8n/webhook/avisos' })
+      const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+        .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+      expect(res.status).toBe(200)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+
+    const t = await db.query('SELECT status FROM tickets WHERE id = $1', ['t1'])
+    expect((t.rows[0] as { status: string }).status).toBe('Ingresado')
+    expect((await db.query('SELECT id FROM avisos WHERE enviado_at IS NULL')).rows).toHaveLength(1)
   })
 })

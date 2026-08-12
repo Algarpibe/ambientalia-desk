@@ -151,7 +151,7 @@ export function registerTicketRoutes(
 
   // Ejecuta una transición del Blueprint escribiendo en Postgres (Subsistema B).
   app.post('/api/tickets/:id/transition', asyncHandler(async (req, res) => {
-    res.json(await executeTransition(db, String(req.params.id), req.body, req.user!))
+    res.json(await executeTransition(db, String(req.params.id), req.body, req.user!, config))
   }))
 
   app.post('/api/tickets/:id/reply', guardWrites, requireArea, asyncHandler(async (req, res) => {
