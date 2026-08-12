@@ -789,7 +789,7 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
 
   return (
     <div className="fixed inset-0 z-[85] bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg p-5 w-[600px] max-h-[90vh] overflow-y-auto flex flex-col gap-5">
+      <div className="bg-white rounded-lg p-5 w-[1200px] max-w-[95vw] max-h-[90vh] overflow-y-auto flex flex-col gap-5">
         {/* El botón vive aquí arriba, junto al título, y no dentro de un campo: guarda la ficha entera,
             así que colgarlo del SKU volvería a sugerir que solo guarda ese. */}
         <div className="flex items-center justify-between gap-3">
