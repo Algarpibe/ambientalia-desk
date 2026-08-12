@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -155,6 +155,18 @@ export function updateRole(id: string, patch: Partial<{ name: string; areas: str
 
 export function searchClients(q: string): Promise<ClientLite[]> {
   return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
+}
+
+/** Los avisos de quien tiene la sesión abierta. El destinatario lo pone el servidor, no se manda. */
+export function getAvisos(): Promise<Aviso[]> {
+  return fetch('/api/avisos', { credentials: 'include' }).then((r) => json<Aviso[]>(r))
+}
+
+export async function marcarAvisosLeidos(ids: string[]): Promise<void> {
+  const r = await fetch('/api/avisos/leidos', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+  })
+  if (!r.ok) await json(r)
 }
 
 /**

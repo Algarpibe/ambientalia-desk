@@ -19,6 +19,7 @@ import { registerAnalisisRoutes } from './routes/analisis'
 import { registerAdminRoutes } from './routes/admin'
 import { registerAttachmentRoutes } from './routes/attachment'
 import { registerRemisionRoutes } from './routes/remision'
+import { registerAvisosRoutes } from './routes/avisos'
 import { HttpError } from './util/httpError'
 import multer from 'multer'
 import { LIMITE_SUBIDA_MB } from './util/subida'
@@ -56,6 +57,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   registerAdminRoutes(app, { db, sync, measurer, detailBackfiller })
   registerAttachmentRoutes(app, { db, zohoFetch })
   registerRemisionRoutes(app, { db, config })
+  registerAvisosRoutes(app, { db })
 
   // Manejador central de errores: registra el error real pero NO lo filtra al cliente.
   // (Express identifica los error-handlers por su aridad de 4 args; `_next` debe existir.)

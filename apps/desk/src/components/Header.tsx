@@ -1,7 +1,64 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import type { Aviso } from '@ambientalia/shared';
 import { useAuth } from '../auth/AuthContext';
+import { getAvisos, marcarAvisosLeidos } from '../api/client';
 
 type SectionKey = 'tickets' | 'analisis' | 'clientes' | 'actividades' | 'remisiones'
+
+/**
+ * La campana de avisos. Hasta ahora enseñaba un «44» escrito a mano en el HTML.
+ *
+ * Se refresca al montar y cada minuto: sin websockets, y con ese intervalo un aviso tarda como mucho
+ * un minuto en aparecer, que para una derivación de trabajo es de sobra. Abrirla marca todo como
+ * leído — quien la abre ya los ha visto, y dejar la cuenta encendida la vuelve ruido.
+ */
+function Campana() {
+    const [avisos, setAvisos] = useState<Aviso[]>([])
+    const [abierta, setAbierta] = useState(false)
+
+    useEffect(() => {
+        const cargar = () => { getAvisos().then(setAvisos).catch(() => {}) }
+        cargar()
+        const t = setInterval(cargar, 60_000)
+        return () => clearInterval(t)
+    }, [])
+
+    const sinLeer = avisos.filter((a) => !a.leido)
+
+    async function alternar() {
+        const abriendo = !abierta
+        setAbierta(abriendo)
+        if (!abriendo || sinLeer.length === 0) return
+        setAvisos((s) => s.map((a) => ({ ...a, leido: true })))
+        await marcarAvisosLeidos(sinLeer.map((a) => a.id)).catch(() => {})
+    }
+
+    return (
+        <div className="relative">
+            <button onClick={alternar} onBlur={() => setTimeout(() => setAbierta(false), 150)} className="p-1.5 text-white/60 hover:text-white relative">
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                {sinLeer.length > 0 && (
+                    <span className="absolute top-1 right-1 bg-red-500 text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-[#2C2E3E]">
+                        {sinLeer.length > 9 ? '9+' : sinLeer.length}
+                    </span>
+                )}
+            </button>
+            {abierta && (
+                <div className="absolute right-0 top-full mt-1 w-[320px] max-h-[360px] overflow-auto bg-white text-slate-700 rounded shadow-lg border border-slate-200 z-40">
+                    {avisos.length === 0 ? (
+                        <div className="px-3 py-4 text-[12px] text-slate-400">Sin avisos.</div>
+                    ) : (
+                        <ul className="divide-y divide-slate-100">
+                            {avisos.map((a) => (
+                                <li key={a.id} className="px-3 py-2 text-[12px]">{a.texto}</li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
 
 const NAV_TABS: { label: string; key?: SectionKey }[] = [
     { label: 'Tickets', key: 'tickets' },
@@ -64,10 +121,7 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
                     <button className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">search</span>
                     </button>
-                    <button className="p-1.5 text-white/60 hover:text-white relative">
-                        <span className="material-symbols-outlined text-[20px]">notifications</span>
-                        <span className="absolute top-1 right-1 bg-red-500 text-[9px] text-white font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-[#2C2E3E]">44</span>
-                    </button>
+                    <Campana />
                     <button className="p-1.5 text-white/60 hover:text-white">
                         <span className="material-symbols-outlined text-[20px]">apps</span>
                     </button>

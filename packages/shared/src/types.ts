@@ -176,6 +176,21 @@ export interface Agent {
   email?: string | null
 }
 
+/**
+ * Un aviso dentro de la app. Hoy solo los genera derivar un ticket.
+ *
+ * No es un correo: no existe canal interno todavía —lo único que sale es `sendReply` de Zoho, que
+ * escribe al CLIENTE—. La tabla que los guarda es además la cola de ese correo para cuando llegue.
+ */
+export interface Aviso {
+  id: string
+  /** El ticket al que lleva el aviso, si lo hay. */
+  ticketId: string | null
+  texto: string
+  leido: boolean
+  createdAt: string | null
+}
+
 export interface UserPublic {
   id: string
   email: string

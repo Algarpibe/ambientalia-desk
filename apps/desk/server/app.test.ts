@@ -185,6 +185,51 @@ describe('derivación en las transiciones', () => {
     expect((await request(app).get('/api/tickets/t1').set('Cookie', cookie)).status).toBe(200)
   })
 
+  /**
+   * El aviso de punta a punta. Lo que hay que ver es que llega a SU destinatario y a nadie más: la
+   * campana es lo único de la app que enseña algo distinto a cada persona.
+   */
+  it('derivar avisa al destinatario, y solo a él', async () => {
+    const cookieAdmin = await adminCookie()
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Johny Luna', passwordHash: await hashPassword('password123') })
+    const cookieDest = `sid=${await createSession(db, dest.id)}`
+    const cookieTercero = await userCookie(['Comercial'])
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+
+    await request(app).post('/api/tickets/t1/transition').set('Cookie', cookieAdmin)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+
+    const suyos = await request(app).get('/api/avisos').set('Cookie', cookieDest)
+    expect(suyos.body).toHaveLength(1)
+    expect(suyos.body[0]).toMatchObject({ ticketId: 't1', leido: false })
+    expect(suyos.body[0].texto).toBe('Admin te derivó el ticket #10000 en «Habilitar Servicio»')
+
+    expect((await request(app).get('/api/avisos').set('Cookie', cookieTercero)).body).toEqual([])
+
+    // Y se puede marcar leído, que es lo que apaga la campana.
+    expect((await request(app).post('/api/avisos/leidos').set('Cookie', cookieDest).send({ ids: [suyos.body[0].id] })).status).toBe(204)
+    expect((await request(app).get('/api/avisos').set('Cookie', cookieDest)).body[0].leido).toBe(true)
+  })
+
+  // La casilla llega prellenada en cada etapa: sin la regla del cambio, confirmar varias transiciones
+  // seguidas le mandaría el mismo aviso a la misma persona una y otra vez.
+  it('repetir la derivación en la etapa siguiente no vuelve a avisar', async () => {
+    const cookieAdmin = await adminCookie()
+    const dest = await createUser(db, { email: 'dest@x.co', name: 'Johny Luna', passwordHash: await hashPassword('password123') })
+    const cookieDest = `sid=${await createSession(db, dest.id)}`
+    await ticketEnFaseInicial()
+    const { app } = appWith()
+
+    await request(app).post('/api/tickets/t1/transition').set('Cookie', cookieAdmin)
+      .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a: dest.id } })
+    // Siguiente etapa, misma persona: es lo que hace el formulario al llegar prellenado.
+    await request(app).post('/api/tickets/t1/transition').set('Cookie', cookieAdmin)
+      .send({ transitionId: 'ingreso_a_servicio', values: { comment: 'x', 'Código Servicio': 'CG_1', 'Fecha creación ticket': '2026-08-01', 'Fecha Remisión Entrada': '2026-08-02', derivado_a: dest.id } })
+
+    expect((await request(app).get('/api/avisos').set('Cookie', cookieDest)).body).toHaveLength(1)
+  })
+
   it('la etapa se ejecuta igual sin derivar a nadie', async () => {
     const cookie = await adminCookie()
     await ticketEnFaseInicial()

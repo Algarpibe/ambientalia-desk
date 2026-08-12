@@ -6,6 +6,8 @@ import { getEquipo } from '../db/equipos'
 import { buildSubject, buildCodigoServicio, PREFIJOS } from '@ambientalia/shared'
 import { transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambientalia/shared'
 import { getUserById } from '../auth/users'
+import { avisoDerivacion } from './avisoDerivacion'
+import { crearAviso } from '../db/avisos'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
@@ -63,7 +65,7 @@ export async function executeTransition(
   db: Queryable,
   id: string,
   body: unknown,
-  user: { areas: string[]; isAdmin: boolean; name?: string },
+  user: { areas: string[]; isAdmin: boolean; name?: string; id?: string },
 ): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const t = transitionById(String(b.transitionId))
@@ -96,7 +98,29 @@ export async function executeTransition(
     if (!persona?.active) throw new HttpError(422, { errors: ['La persona a la que se deriva no existe o está dada de baja'] })
   }
   const actor = user.name ?? TRANSITION_ACTOR
+  const derivadoAntes = current.row.derivado_a ?? null
   await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)
+
+  /*
+   * El aviso va DESPUÉS de la transición y fuera de su transacción, a propósito.
+   *
+   * `applyTransition` vive en `packages/zoho-sync` y `avisos` es una tabla de la app: meterla dentro
+   * ataría el paquete de sincronización a un concepto que no es suyo. La contrapartida es que una
+   * caída justo entre las dos escrituras pierde el aviso; se acepta porque lo que importa —la
+   * derivación— sí queda en el ticket y en el historial, y el destinatario la ve igual en su vista.
+   */
+  if (typeof derivadoA === 'string' || derivadoA === null) {
+    const aviso = avisoDerivacion({
+      anterior: derivadoAntes,
+      nuevo: typeof derivadoA === 'string' ? derivadoA : null,
+      actorId: user.id ?? '',
+      actorNombre: actor,
+      ticketNumero: Number(current.row.number),
+      transicion: t.name,
+    })
+    if (aviso) await crearAviso(db, { userId: aviso.userId, ticketId: id, texto: aviso.texto })
+  }
+
   const updated = await getTicketWithRefs(db, id)
   return updated ? rowToTicketDetail(updated.row, updated.refs) : {}
 }

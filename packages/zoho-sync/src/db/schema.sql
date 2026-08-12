@@ -123,6 +123,21 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS empresa text;
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS derivado_a text;
 CREATE INDEX IF NOT EXISTS idx_tickets_derivado ON tickets (derivado_a);
 
+-- Avisos para una persona dentro de la app (hoy solo derivaciones de ticket). `public.` explicito:
+-- no es una tabla de Zoho Desk, y sin calificar aterrizaria en el esquema `desk` por el search_path.
+-- Es ademas la COLA del correo: cuando exista el canal propio (Gmail API) se anade `enviado_at` y un
+-- worker lee de aqui. Hoy no hay canal interno -- lo unico que sale es sendReply, que escribe AL
+-- CLIENTE en el hilo del ticket.
+CREATE TABLE IF NOT EXISTS public.avisos (
+  id text PRIMARY KEY,
+  user_id text NOT NULL,
+  ticket_id text,
+  texto text NOT NULL,
+  leido_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_avisos_user ON avisos (user_id);
+
 CREATE SCHEMA IF NOT EXISTS books;
 
 CREATE TABLE IF NOT EXISTS books.contacts (
