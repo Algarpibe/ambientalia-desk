@@ -68,6 +68,31 @@ describe('auth routes', () => {
     expect(dup.status).toBe(409)
   })
 
+  it('el PATCH cambia el correo, y el duplicado da 409 sin bloquear al propio usuario', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const creado = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'op@x.co', name: 'Op', password: 'password123' })
+    const id = creado.body.id
+
+    const ok = await request(a).patch(`/api/users/${id}`).set('Cookie', cookie).send({ email: '  NUEVO@X.CO ' })
+    expect(ok.status).toBe(200)
+    expect(ok.body.email).toBe('nuevo@x.co')
+
+    // LA TRAMPA: guardar la ficha sin haber tocado el correo no puede rechazarse a sí misma. Sin
+    // excluir al propio usuario de la comprobación, este PATCH da 409 y no se puede editar nada más.
+    const mismo = await request(a).patch(`/api/users/${id}`).set('Cookie', cookie).send({ email: 'nuevo@x.co', name: 'Op 2' })
+    expect(mismo.status).toBe(200)
+    expect(mismo.body.name).toBe('Op 2')
+
+    // El de OTRO usuario sí se rechaza.
+    const chocado = await request(a).patch(`/api/users/${id}`).set('Cookie', cookie).send({ email: 'admin@x.co' })
+    expect(chocado.status).toBe(409)
+
+    const vacio = await request(a).patch(`/api/users/${id}`).set('Cookie', cookie).send({ email: '   ' })
+    expect(vacio.status).toBe(422)
+  })
+
   it('el alta acepta cargo y empresa; vacíos o espacios quedan NULL', async () => {
     await seedAdmin()
     const a = app()

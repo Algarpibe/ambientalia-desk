@@ -73,8 +73,17 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
 
   app.patch('/api/users/:id', auth, requireAdmin, async (req, res) => {
     const id = String(req.params.id)
-    const patch: { name?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null } = {}
+    const patch: { name?: string; email?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null } = {}
     if (req.body.name !== undefined) patch.name = String(req.body.name)
+    if (req.body.email !== undefined) {
+      const email = String(req.body.email).trim().toLowerCase()
+      if (!email) { res.status(422).json({ error: 'El correo es obligatorio' }); return }
+      // El `!== id` es la clave: sin él, guardar la ficha sin tocar el correo se choca consigo misma
+      // y devuelve 409, dejando al usuario sin poder editar ni el nombre.
+      const otro = await getUserByEmail(db, email)
+      if (otro && otro.id !== id) { res.status(409).json({ error: 'Ya existe un usuario con ese correo' }); return }
+      patch.email = email
+    }
     if (req.body.isAdmin !== undefined) patch.isAdmin = Boolean(req.body.isAdmin)
     if (req.body.active !== undefined) patch.active = Boolean(req.body.active)
     // Vacío se guarda como NULL, para que el documento de remisión no imprima una cadena en blanco.
