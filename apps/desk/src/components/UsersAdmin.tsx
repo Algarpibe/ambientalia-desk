@@ -99,6 +99,9 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
+  // Empresa prellenada: casi todos los usuarios son personal de Ambientalia; quien no, la sobreescribe.
+  const [cargo, setCargo] = useState('')
+  const [empresa, setEmpresa] = useState('Ambientalia S.A.S.')
   const [isAdmin, setIsAdmin] = useState(false)
   const [roleId, setRoleId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -107,7 +110,7 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
     // Un admin nunca lleva rol (lo cortocircuita): se descarta aunque se hubiera elegido antes de marcar la casilla.
-    try { await createUser({ email, name, password, isAdmin, roleId: isAdmin ? null : roleId || null }); onCreated() }
+    try { await createUser({ email, name, password, isAdmin, roleId: isAdmin ? null : roleId || null, cargo, empresa }); onCreated() }
     catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
@@ -118,6 +121,8 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
         <h3 className="text-[15px] font-bold text-slate-800">Nuevo usuario</h3>
         <input type="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
+        <input type="text" placeholder="Cargo (opcional)" value={cargo} onChange={(e) => setCargo(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
+        <input type="text" placeholder="Empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="password" placeholder="Contraseña inicial (mín. 8)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="border border-slate-200 rounded p-2 text-[13px]" />
         {isAdmin ? (
           <select disabled className="border border-slate-200 rounded p-2 text-[13px] bg-slate-50 text-slate-400">
