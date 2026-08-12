@@ -10,10 +10,19 @@ import type { Attachment } from '@ambientalia/shared'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { urlSegura } from '@ambientalia/shared'
 
-const enlaceDrive = (id: unknown): string | null =>
+/*
+ * Se exportan porque el borrado de tickets tiene que enseñar estos MISMOS enlaces antes de destruir la
+ * fila (la app no puede borrar en Drive; la lista es lo único que rescata los documentos). Que salgan
+ * de aquí garantiza que el administrador vea carácter a carácter lo que ya le enseña el panel de
+ * adjuntos, que es contra lo que va a comparar.
+ */
+export const enlaceDrive = (id: unknown): string | null =>
   id ? urlSegura(`https://drive.google.com/file/d/${String(id)}/view`) : null
-const enlaceDoc = (id: unknown): string | null =>
+export const enlaceDoc = (id: unknown): string | null =>
   id ? urlSegura(`https://docs.google.com/document/d/${String(id)}/edit`) : null
+/** La carpeta se enlaza por `carpetaUrl` cuando la hay; esto la reconstruye desde `carpetaId`. */
+export const enlaceCarpeta = (id: unknown): string | null =>
+  id ? urlSegura(`https://drive.google.com/drive/folders/${String(id)}`) : null
 
 /** Lo que hace falta de una foto: el resto (el base64, el peso) no se usa para enlazarla. */
 export interface FotoRemision { id: string; filename: string }

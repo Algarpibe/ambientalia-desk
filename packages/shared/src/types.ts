@@ -545,6 +545,56 @@ export interface RemisionResultado {
 }
 
 /**
+ * Una tabla del barrido que borra un ticket.
+ *
+ * Salen SIEMPRE las diez, con `borradas: 0` incluidas: el cero es la prueba de que se miró esa tabla.
+ * Sin claves foráneas, lo que no se barre queda huérfano en silencio, así que la cobertura es el dato.
+ * `tabla` es la clave estable (tests y registro); `etiqueta` es lo que lee la persona.
+ */
+export interface FilaBorrada { tabla: string; etiqueta: string; borradas: number }
+
+/**
+ * Los punteros a Google Drive de UNA remisión que va a desaparecer.
+ *
+ * La app **no puede borrar en Drive** —no tiene credenciales de Google— así que estos documentos
+ * sobreviven al ticket y esta lista es lo único que permite encontrarlos después. Ya se perdieron
+ * cuatro carpetas por no guardarla (`debt.md:438`).
+ */
+export interface RastroDrive {
+  remisionId: string
+  /** «Remisión de entrada del 2026-03-04»: legible sin cruzar nada con la base. */
+  etiqueta: string
+  carpetaUrl: string | null
+  documentoUrl: string | null
+  pdfUrl: string | null
+  dymoUrl: string | null
+}
+
+/**
+ * Lo que se va al borrar un ticket. Es la vista previa Y el recibo: la misma estructura, con los
+ * mismos números, la devuelve el simulacro y la ejecución real — lo único que cambia es si escribe.
+ */
+export interface ResumenEliminacion {
+  ticket: { id: string; numero: number; asunto: string | null; estado: string }
+  /** Las diez tablas en ORDEN DE BORRADO, `tickets` la última. */
+  filas: FilaBorrada[]
+  /** Suma de `filas`, el propio ticket incluido. */
+  total: number
+  /** Remisiones con al menos un puntero a Drive. Vacío = no hay nada que rescatar. */
+  drive: RastroDrive[]
+  /** Remisiones sin ningún puntero (las históricas, con `resultado` NULL). */
+  remisionesSinRastro: number
+  /**
+   * Filas de `activities` que quedarían apuntando al ticket muerto. No se borran nunca: están
+   * replicadas del hub y tocarlas diverge la réplica. Con el guardia del prefijo `app-` esto es 0
+   * siempre —las actividades solo existen para tickets de Zoho—, y verlo en pantalla lo convierte en
+   * un hecho comprobable en vez de una suposición.
+   */
+  actividadesQueQuedan: number
+  dryRun: boolean
+}
+
+/**
  * Remisión de entrada registrada en la app. `estado` refleja el desenlace del flujo n8n:
  * `pendiente` mientras no ha contestado, y `ok_con_avisos` cuando la remisión se generó pero falló
  * algún aviso (correo o Telegram) — eso cuenta como creada, no como fallo.
