@@ -82,8 +82,28 @@ describe('buildTransitionPlan', () => {
   it('reporta obligatorios faltantes', () => {
     const t = transitionById('ingreso_a_servicio')!
     const plan = buildTransitionPlan(t, { comment: '' })
-    expect(plan.errors.length).toBeGreaterThan(0)
-    expect(plan.errors).toContain('Falta el comentario')
+    expect(plan.errors).toContain('Falta el campo obligatorio: Código Servicio')
+  })
+
+  /**
+   * El comentario NO frena la transición, en ninguna etapa. Se comprueba desde el motor y no solo
+   * desde el catálogo porque son dos formas distintas de romperlo: el catálogo puede dejar de exigirlo
+   * y el servidor seguir rechazándolo por su cuenta, que es lo que hacía la guarda aparte que había
+   * aquí —el comentario se salta el chequeo genérico de obligatorios, así que tenía la suya.
+   */
+  it('un comentario vacío no es un error, ni siquiera con todo lo demás relleno', () => {
+    const t = transitionById('ingreso_a_servicio')!
+    const relleno = {
+      comment: '',
+      'Código Servicio': 'CG_A123_260812',
+      'Fecha creación ticket': '2026-08-12',
+      'Fecha Remisión Entrada': '2026-08-12',
+    }
+    expect(buildTransitionPlan(t, relleno).errors).toEqual([])
+    // Y la clave puede no llegar siquiera: la pantalla no manda lo que está vacío.
+    const sinClave: Record<string, unknown> = { ...relleno }
+    delete sinClave.comment
+    expect(buildTransitionPlan(t, sinClave).errors).toEqual([])
   })
 
   it('prioridad va a su campo y número a columna int', () => {

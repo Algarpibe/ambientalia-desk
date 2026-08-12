@@ -77,7 +77,8 @@ export function buildTransitionPlan(t: Transition, values: Record<string, unknow
     else plan.customFields[f.key] = String(raw)
   }
 
-  const commentField = t.fields.find((f) => f.target === 'comment')
-  if (commentField?.required && !plan.comment) plan.errors.push('Falta el comentario')
+  // Sin guarda para el comentario: el campo se salta el chequeo genérico de obligatorios —se procesa
+  // arriba con su propio `continue`—, así que tenía la suya aparte. Ya no puede declararse obligatorio
+  // (`comment()` no admite parámetro), y una guarda que nunca salta es una que nadie mantiene.
   return plan
 }

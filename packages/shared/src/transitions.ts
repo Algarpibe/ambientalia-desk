@@ -50,8 +50,16 @@ export interface Transition {
 }
 
 // Helpers para declarar campos de forma compacta.
-const comment = (required = true): TransitionField =>
-  ({ key: 'comment', label: 'Comentario', kind: 'comment', required, target: 'comment' })
+/**
+ * El comentario de la etapa. NUNCA obligatorio, y por eso no admite parámetro: contar lo que se hizo
+ * es lo que da valor al historial, pero exigirlo en las 35 etapas lo convierte en un peaje que se paga
+ * escribiendo «ok» —y entonces el historial dice menos que si estuviera vacío—.
+ *
+ * Sin parámetro a propósito: mientras no se pueda declarar obligatorio, el asterisco de la pantalla no
+ * puede mentir y el motor no necesita una guarda aparte que lo compruebe.
+ */
+const comment = (): TransitionField =>
+  ({ key: 'comment', label: 'Comentario', kind: 'comment', required: false, target: 'comment' })
 const cfDate = (label: string, required = true): TransitionField =>
   ({ key: label, label, kind: 'date', required, target: 'customField' })
 const cfText = (label: string, required = true): TransitionField =>
@@ -146,14 +154,13 @@ const TRANSICIONES_BASE: Transition[] = [
     // la compra pueden no existir todavía, igual que la orden de venta— y las dos tienen su propia
     // etapa más adelante, así que no se pierde el dato: la cotización se captura en las dos
     // transiciones de Notificación cliente, y la orden de compra en Aprobación y S. Repuestos.
-    // Comentario y la casilla NO son obligatorios aquí: lo que esta etapa tiene que dejar atado es la
-    // orden de venta y el serial. Además, exigir la casilla era una promesa que no se cumplía —un
-    // `checkbox` obligatorio se guarda como `false` sin error si nadie lo marca (M-2 en debt.md)—, así
-    // que el asterisco solo mentía.
+    // La casilla NO es obligatoria: lo que esta etapa tiene que dejar atado es la orden de venta y el
+    // serial. Además, exigirla era una promesa que no se cumplía —un `checkbox` obligatorio se guarda
+    // como `false` sin error si nadie lo marca (M-2 en debt.md)—, así que el asterisco solo mentía.
     // `Fecha Orden De Venta` tampoco es obligatoria, y aquí no es una preferencia sino una trampa
     // que se cierra: el campo va BLOQUEADO porque lo rellena la OV elegida, y una OV de Books puede
     // no traer fecha. Exigiéndola, quien cayera en ese caso no podría ni avanzar ni corregirlo.
-    fields: [comment(false), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta', false), cfCheck('Cumple condiciones comerciales')] },
+    fields: [comment(), cfOrdenVenta('Orden de Venta', 'Fecha Orden De Venta'), cfText('Serial'), cfDate('Fecha Orden De Venta', false), cfCheck('Cumple condiciones comerciales')] },
   { id: 'ingreso_a_servicio', name: 'Ingreso a Servicio', from: ['Ingresado'], to: 'Rev./Diagnostico', area: 'Servicio Técnico',
     fields: [comment(), cfText('Código Servicio'), cfDate('Fecha creación ticket'), cfDate('Fecha Remisión Entrada')] },
   { id: 'escalado_a_revision', name: 'Escalado a Revisión', from: ['Rev./Diagnostico'], to: 'Notificado', area: 'Servicio Técnico',

@@ -34,6 +34,21 @@ describe('transitions', () => {
   })
 
   /**
+   * NINGUNA etapa exige comentario. Se ofrece siempre —contar lo que se hizo es lo que hace útil el
+   * historial— pero no puede frenar un ticket: obligarlo en las 35 etapas convierte el campo en un
+   * peaje que se paga escribiendo «ok», y entonces el historial dice menos que si estuviera vacío.
+   *
+   * Se comprueba sobre el catálogo entero y no sobre una etapa: el punto es que no se cuele en
+   * ninguna, y con `comment()` sin parámetro la única forma de colarlo es a mano.
+   */
+  it('ninguna etapa exige comentario', () => {
+    for (const t of TRANSITIONS) {
+      const c = t.fields.find((f) => f.target === 'comment')!
+      expect(c.required, `${t.id} exige comentario`).toBe(false)
+    }
+  })
+
+  /**
    * La casilla «Derivado a» va en TODAS las transiciones, y eso es lo que hace que se pueda rellenar
    * más adelante si en «Habilitar Servicio» se dejó vacía. Se comprueba sobre el catálogo entero y no
    * sobre dos transiciones concretas porque el punto es justamente que no falte en ninguna: añadirla
