@@ -208,14 +208,18 @@ export interface UserPublic {
 /**
  * Para qué sirve un artículo dentro de un modelo.
  *
- * Son **dos** y no tres: consumible y repuesto van juntos, por decisión del usuario (2026-08-10) y
- * porque Zoho Books tampoco los separa — los agrupa bajo la categoría `C&R …`. Separarlos obligaba a
- * clasificar a mano una distinción que ni el catálogo de origen hace.
+ * Consumible y repuesto van juntos, por decisión del usuario (2026-08-10) y porque Zoho Books tampoco
+ * los separa — los agrupa bajo la categoría `C&R …`. Separarlos obligaba a clasificar a mano una
+ * distinción que ni el catálogo de origen hace.
  *
  * El accesorio se verifica al recibir y devolver el equipo (es el checklist «Incluye» de la remisión);
- * el consumible/repuesto se repone o se cambia durante el servicio.
+ * el consumible/repuesto se repone o se cambia durante el servicio; la **mano de obra** no es una cosa
+ * que viaje con el equipo sino el trabajo que se le hace, y por eso queda fuera de ese checklist
+ * (`checklistRemision.ts` filtra accesorios).
+ *
+ * El orden de este array es el de las secciones en la ficha técnica.
  */
-export const CLASES_ARTICULO = ['accesorio', 'consumible_repuesto'] as const
+export const CLASES_ARTICULO = ['accesorio', 'consumible_repuesto', 'mano_obra'] as const
 export type ClaseArticulo = (typeof CLASES_ARTICULO)[number]
 
 /** De dónde sale un artículo de la lista de un modelo. */

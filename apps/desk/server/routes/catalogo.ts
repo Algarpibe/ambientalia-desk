@@ -9,7 +9,7 @@ import {
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
 import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo, copiarArticulos, reordenarArticulos } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
-import { CLASES_ARTICULO, type ClaseArticulo } from '@ambientalia/shared'
+import { CLASES_ARTICULO, admiteCategorias, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
@@ -19,6 +19,13 @@ import { crearSubida } from '../util/subida'
 const subida = crearSubida()
 const esTipoDocumento = (v: string): v is TipoDocumento => (TIPOS_DOCUMENTO as readonly string[]).includes(v)
 const esClaseArticulo = (v: string): v is ClaseArticulo => (CLASES_ARTICULO as readonly string[]).includes(v)
+
+/** Cómo se nombra cada clase en los mensajes de error. La pantalla tiene sus propias etiquetas. */
+const ETIQUETA_CLASE_PLURAL_SERVIDOR: Record<ClaseArticulo, string> = {
+  accesorio: 'Los accesorios',
+  consumible_repuesto: 'Los consumibles y repuestos',
+  mano_obra: 'Los códigos de mano de obra',
+}
 
 /** Las tres entidades que admite el borrado, como lista blanca. Nada de la URL llega a una tabla. */
 const ENTIDADES = ['tipos', 'marcas', 'modelos'] as const
@@ -161,13 +168,13 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
     const b = (req.body ?? {}) as Record<string, unknown>
     const clase = String(b.clase ?? '')
     if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
-    // Los accesorios se eligen pieza a pieza, no por bloque: una categoría de serie trae decenas de
-    // artículos y la mayoría no aplica a la variante concreta, así que se acababa desactivando uno a
-    // uno. La puerta se cierra AQUÍ y no solo en la pantalla: esconder el desplegable dejaría la vía
-    // abierta a cualquiera que llamase a la API a mano, y volvería a haber modelos con categorías de
-    // accesorios que la interfaz ya no sabe gestionar.
-    if (clase === 'accesorio') {
-      res.status(422).json({ error: 'Los accesorios se añaden artículo a artículo, no por categoría.' })
+    // Hay clases que se eligen pieza a pieza: una categoría de serie trae decenas de artículos y la
+    // mayoría no aplica a la variante concreta, así que se acababa desactivando uno a uno. La puerta
+    // se cierra AQUÍ y no solo en la pantalla: esconder el desplegable dejaría la vía abierta a
+    // cualquiera que llamase a la API a mano, y volvería a haber modelos con categorías que la
+    // interfaz ya no sabe gestionar.
+    if (!admiteCategorias(clase)) {
+      res.status(422).json({ error: `${ETIQUETA_CLASE_PLURAL_SERVIDOR[clase]} se añaden artículo a artículo, no por categoría.` })
       return
     }
     const categoria = String(b.categoria ?? '').trim()

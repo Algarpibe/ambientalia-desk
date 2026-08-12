@@ -1590,9 +1590,10 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
     const asignar = (clase: string, categoria: string) =>
       request(app).post('/api/catalogo/modelos/cmod-1/categorias').set('Cookie', cookie).send({ clase, categoria })
 
-    // La vía de bloque queda solo para consumibles y repuestos: los accesorios se eligen artículo a
-    // artículo, y la puerta se cierra en el SERVIDOR, no solo escondiendo el desplegable.
+    // La vía de bloque queda solo para consumibles y repuestos: accesorios y mano de obra se eligen
+    // artículo a artículo, y la puerta se cierra en el SERVIDOR, no solo escondiendo el desplegable.
     expect((await asignar('accesorio', 'Opcional AP Series')).status).toBe(422)
+    expect((await asignar('mano_obra', 'Opcional AP Series')).status).toBe(422)
     expect((await asignar('consumible_repuesto', 'C&R AP Series')).status).toBe(201)
     expect((await asignar('consumible_repuesto', 'C&R AP Series')).status).toBe(409) // repetida
 
