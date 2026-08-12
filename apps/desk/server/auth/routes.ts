@@ -64,7 +64,10 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
       roleId = String(req.body.roleId)
       if (!(await getRole(db, roleId))) { res.status(422).json({ error: 'Rol no encontrado' }); return }
     }
-    const created = await createUser(db, { email, name, passwordHash: await hashPassword(password), isAdmin: Boolean(req.body.isAdmin), roleId })
+    // Cargo y empresa firman el documento de remisión: vacío se guarda como NULL, no como cadena en blanco.
+    const cargo = String(req.body.cargo ?? '').trim() || null
+    const empresa = String(req.body.empresa ?? '').trim() || null
+    const created = await createUser(db, { email, name, passwordHash: await hashPassword(password), isAdmin: Boolean(req.body.isAdmin), roleId, cargo, empresa })
     res.status(201).json(created)
   })
 

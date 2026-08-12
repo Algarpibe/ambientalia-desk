@@ -67,6 +67,20 @@ describe('auth routes', () => {
     const dup = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'admin@x.co', name: 'X', password: 'password123' })
     expect(dup.status).toBe(409)
   })
+
+  it('el alta acepta cargo y empresa; vacíos o espacios quedan NULL', async () => {
+    await seedAdmin()
+    const a = app()
+    const cookie = (await request(a).post('/api/auth/login').send({ email: 'admin@x.co', password: 'password123' })).headers['set-cookie']
+    const con = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 'c@x.co', name: 'C', password: 'password123', cargo: 'Técnico', empresa: 'Ambientalia S.A.S.' })
+    expect(con.status).toBe(201)
+    expect(con.body).toMatchObject({ cargo: 'Técnico', empresa: 'Ambientalia S.A.S.' })
+    // El documento de remisión imprime estos campos: una cadena en blanco debe guardarse como NULL.
+    const sin = await request(a).post('/api/users').set('Cookie', cookie).send({ email: 's@x.co', name: 'S', password: 'password123', cargo: '   ', empresa: '' })
+    expect(sin.status).toBe(201)
+    expect(sin.body.cargo).toBeNull()
+    expect(sin.body.empresa).toBeNull()
+  })
 })
 
 describe('roles + asignación', () => {
