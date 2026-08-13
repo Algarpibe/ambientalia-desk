@@ -30,15 +30,27 @@ export interface TransitionField {
    * pareja viva junto a los campos y no escondida en el componente.
    */
   campoFecha?: string
-  /**
-   * Solo para `derivacion`: el CARGO al que la etapa le pasa el trabajo. La pantalla lo resuelve a
-   * persona y lo propone en la casilla, por encima de lo que el ticket trajera.
-   *
-   * Es un cargo y no un id de usuario a propósito: un id ataría el Blueprint a que esa persona siga
-   * en la empresa, y el día que el puesto cambie de manos la etapa derivaría a quien ya no está.
-   */
-  cargoPorDefecto?: string
+  /** Solo para `derivacion`: a quién propone la etapa. Ausente = se hereda el derivado vigente. */
+  porDefecto?: DerivacionPorDefecto
 }
+
+/**
+ * A quién propone una etapa en la casilla «Derivado a», por encima de lo que el ticket trajera.
+ *
+ * Es una unión y no dos campos sueltos para que «las dos cosas a la vez» ni siquiera se pueda
+ * escribir: serían dos propuestas compitiendo por la misma casilla y habría que inventar un orden
+ * entre ellas, que es justo la clase de regla que nadie recuerda al añadir la tercera etapa.
+ *
+ * - `cargo`: el PUESTO al que le toca después. Se declara el cargo y no un id de usuario a propósito:
+ *   un id ataría el Blueprint a que esa persona siga en la empresa, y el día que el puesto cambie de
+ *   manos la etapa derivaría a quien ya no está.
+ * - `primerDerivado`: la persona que tomó el ticket primero. Para las etapas que devuelven el trabajo
+ *   a donde estaba —«Aprobación» lo saca de Comercial y lo manda de vuelta a quien lo diagnosticó—,
+ *   donde el destinatario no es un puesto fijo sino alguien de la historia de ESE ticket.
+ */
+export type DerivacionPorDefecto =
+  | { tipo: 'cargo'; cargo: string }
+  | { tipo: 'primerDerivado' }
 
 export interface Transition {
   id: string
@@ -82,8 +94,8 @@ const cfOrdenVenta = (label: string, campoFecha: string, required = true): Trans
 export const CLAVE_DERIVACION = 'derivado_a'
 
 /** A quién le toca el trabajo tras esta etapa. Nunca obligatoria: derivar no puede frenar un ticket. */
-const derivacion = (cargoPorDefecto?: string): TransitionField =>
-  ({ key: CLAVE_DERIVACION, label: 'Derivado a', kind: 'usuario', required: false, target: 'derivacion', cargoPorDefecto })
+const derivacion = (porDefecto?: DerivacionPorDefecto): TransitionField =>
+  ({ key: CLAVE_DERIVACION, label: 'Derivado a', kind: 'usuario', required: false, target: 'derivacion', porDefecto })
 
 /**
  * `from_status` de la fila que `createTicket` escribe al nacer el ticket. No es un estado de Zoho
@@ -230,18 +242,22 @@ const TRANSICIONES_BASE: Transition[] = [
 ]
 
 /**
- * Etapas que ya saben a qué CARGO le pasan el trabajo, para proponerlo en la casilla de derivación.
+ * Etapas que ya saben a quién le pasan el trabajo, para proponerlo en la casilla de derivación.
  *
- * Solo caben aquí las etapas que cambian el trabajo de manos de forma fija: las dos que escalan.
- * Heredar al técnico —lo que hacen las otras 33— lo derivaría justo a quien deja de tocarle.
+ * Solo caben aquí las que cambian el trabajo de manos de forma predecible. Heredar al derivado
+ * anterior —lo que hacen las otras 32— lo dejaría justo en manos de quien deja de tocarle.
  *
- * Es un mapa y no un campo suelto en cada entrada porque proponer cargo es la EXCEPCIÓN: en una lista
- * de una línea se ve de un vistazo cuáles pisan lo heredado, y en 35 declaraciones no.
+ * Es un mapa y no un campo suelto en cada entrada porque proponer es la EXCEPCIÓN: en una lista de
+ * tres líneas se ve de un vistazo cuáles pisan lo heredado, y en 35 declaraciones no.
  */
-const CARGO_POR_DEFECTO: Record<string, string> = {
+const DERIVACION_POR_DEFECTO: Record<string, DerivacionPorDefecto> = {
   // Rev./Diagnostico → Notificado: escalar una revisión es subirla al inmediato superior.
-  escalado_a_revision: 'Director Técnico',
-  escalado_a_comercial: 'Coordinador Comercial',
+  escalado_a_revision: { tipo: 'cargo', cargo: 'Director Técnico' },
+  // Notificado → Notificación Comercial: sale de Servicio Técnico y pasa a Comercial.
+  escalado_a_comercial: { tipo: 'cargo', cargo: 'Coordinador Comercial' },
+  // Notificación cliente → En Proceso: el cliente aprobó y el trabajo VUELVE al taller. No hay un
+  // puesto fijo al que mandarlo — hay que devolvérselo a quien tomó ese ticket.
+  aprobacion: { tipo: 'primerDerivado' },
 }
 
 /**
@@ -257,7 +273,7 @@ const CARGO_POR_DEFECTO: Record<string, string> = {
  */
 export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({
   ...t,
-  fields: [...t.fields, derivacion(CARGO_POR_DEFECTO[t.id])],
+  fields: [...t.fields, derivacion(DERIVACION_POR_DEFECTO[t.id])],
 }))
 
 /** Transiciones disponibles para un ticket según su estado actual. */

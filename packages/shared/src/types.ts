@@ -140,6 +140,14 @@ export interface TicketDetail extends Ticket {
    * porque el día hay que calcularlo en la zona de quien mira.
    */
   escaladoARevisionAt?: string | null
+  /**
+   * A quién se derivó el ticket la PRIMERA vez, o `null` si nunca se derivó.
+   *
+   * Viaja por lo mismo que `escaladoARevisionAt`: es lo que «Aprobación» propone en la casilla, y sale
+   * de recorrer `ticket_transitions` — un trabajo que no puede rehacerse en el navegador sin traerse
+   * la historia entera del ticket cada vez que alguien abre el formulario.
+   */
+  primerDerivado?: string | null
   customFields: Record<string, string | null>
 }
 

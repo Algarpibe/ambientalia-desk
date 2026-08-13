@@ -6,6 +6,7 @@ import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, 
 import { rowToTicket, rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getHistorialTicket } from '../db/historial'
 import { instanteUltimaTransicion } from '../db/fechasTicket'
+import { primerDerivado } from '../db/primerDerivado'
 import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
@@ -134,12 +135,13 @@ export function registerTicketRoutes(
     } else {
       void sync.syncTicket(id).catch((err) => req.log.warn({ err, ticketId: id }, 'syncTicket bg falló')) // refresco en background
     }
-    // La fecha del escalado a revisión se añade AQUÍ y no en `rowToTicketDetail`: el mapeador vive en
-    // el paquete de sincronización y traduce una fila de `tickets`, mientras que esto sale de
-    // `ticket_transitions` y es una regla del Blueprint, que es de la app. Consulta aparte y no un
-    // JOIN porque pg-mem —el motor de los tests— no resuelve subconsultas correlacionadas.
+    // Estos dos se añaden AQUÍ y no en `rowToTicketDetail`: el mapeador vive en el paquete de
+    // sincronización y traduce una fila de `tickets`, mientras que esto sale de `ticket_transitions` y
+    // son reglas del Blueprint, que es de la app. Consultas aparte y no un JOIN porque pg-mem —el
+    // motor de los tests— no resuelve subconsultas correlacionadas.
     const escaladoARevisionAt = await instanteUltimaTransicion(db, id, 'escalado_a_revision')
-    res.json({ ...rowToTicketDetail(found.row, found.refs), escaladoARevisionAt })
+    const derivadoPrimero = await primerDerivado(db, id)
+    res.json({ ...rowToTicketDetail(found.row, found.refs), escaladoARevisionAt, primerDerivado: derivadoPrimero })
   }))
 
   app.get('/api/tickets/:id/conversations', asyncHandler(async (req, res) => {

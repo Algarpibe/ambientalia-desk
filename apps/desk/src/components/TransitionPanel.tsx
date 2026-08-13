@@ -35,11 +35,13 @@ function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string |
   return v != null && String(v).trim() !== ''
 }
 
-export function TransitionPanel({ ticketId, status, delTicket, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
+export function TransitionPanel({ ticketId, status, delTicket, primerDerivado, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
   ticketId: string
   status: string
   /** `customFields` del ticket: lo que ya se sabe, para prellenar y bloquear. */
   delTicket: Record<string, string | null>
+  /** Quien tomó el ticket. Lo propone «Aprobación», que devuelve el trabajo al taller. */
+  primerDerivado?: string | null
   /** Acota el buscador de órdenes de venta al cliente del ticket. */
   clientId?: string | null
   /** A quién está derivado el ticket ahora, para conservarlo en el desplegable aunque esté de baja. */
@@ -80,10 +82,14 @@ export function TransitionPanel({ ticketId, status, delTicket, clientId, derivad
       // cosas eran la misma. Sin esta segunda vía, la casilla abriría vacía en cada etapa y el técnico
       // se encontraría con que confirmar la etapa le borra el responsable que ya tenía.
       //
-      // Y una etapa puede proponer el cargo al que le pasa el trabajo, que pisa lo heredado: quién
-      // gana lo decide `derivacionInicial`, que es donde se puede probar.
+      // Y una etapa puede proponer a quién le pasa el trabajo, que pisa lo heredado: quién gana lo
+      // decide `derivacionInicial`, que es donde se puede probar.
       else if (f.target === 'derivacion') {
-        const inicial = derivacionInicial(f.cargoPorDefecto, personas, delTicket[f.key] ?? null)
+        const inicial = derivacionInicial(f.porDefecto, {
+          activas: personas,
+          primerDerivado: primerDerivado ?? null,
+          heredado: delTicket[f.key] ?? null,
+        })
         if (inicial) previos[f.key] = inicial
       }
     }

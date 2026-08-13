@@ -70,26 +70,25 @@ describe('transitions', () => {
   })
 
   /**
-   * Las DOS etapas que escalan, y solo ellas, proponen a quién le toca después.
+   * Las TRES etapas que cambian el trabajo de manos, y solo ellas, proponen a quién le toca después.
    *
-   * Se fija el mapa entero y no cada una por su lado: proponer un cargo PISA lo que el ticket ya
-   * traía, así que colarlo de más en una etapa cualquiera le quitaría el responsable a alguien sin
-   * que nadie lo pidiera. Aquí eso se ve; comprobándolas de una en una, no.
-   *
-   * Se declara el cargo y no un id: un id ataría el Blueprint a que esa persona siga en la empresa, y
-   * el día que el puesto cambie de manos el ticket se derivaría a quien ya no está.
+   * Se fija el mapa entero y no cada una por su lado: proponer PISA lo que el ticket ya traía, así que
+   * colarlo de más en una etapa cualquiera le quitaría el responsable a alguien sin que nadie lo
+   * pidiera. Aquí eso se ve; comprobándolas de una en una, no.
    */
-  it('solo las dos etapas de escalado proponen cargo, y estos', () => {
-    const propuestos: Record<string, string> = {}
+  it('solo tres etapas proponen derivación, y estas', () => {
+    const propuestos: Record<string, unknown> = {}
     for (const t of TRANSITIONS) {
-      const cargo = t.fields.find((f) => f.key === CLAVE_DERIVACION)!.cargoPorDefecto
-      if (cargo) propuestos[t.id] = cargo
+      const p = t.fields.find((f) => f.key === CLAVE_DERIVACION)!.porDefecto
+      if (p) propuestos[t.id] = p
     }
     expect(propuestos).toEqual({
       // Rev./Diagnostico → Notificado: sube al inmediato superior.
-      escalado_a_revision: 'Director Técnico',
+      escalado_a_revision: { tipo: 'cargo', cargo: 'Director Técnico' },
       // Notificado → Notificación Comercial: sale de Servicio Técnico y pasa a Comercial.
-      escalado_a_comercial: 'Coordinador Comercial',
+      escalado_a_comercial: { tipo: 'cargo', cargo: 'Coordinador Comercial' },
+      // Notificación cliente → En Proceso: el trabajo vuelve al taller, a quien tomó el ticket.
+      aprobacion: { tipo: 'primerDerivado' },
     })
   })
 

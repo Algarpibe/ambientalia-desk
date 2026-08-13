@@ -1,4 +1,4 @@
-import type { PersonaLite } from '@ambientalia/shared'
+import type { PersonaLite, DerivacionPorDefecto } from '@ambientalia/shared'
 import { etiquetaPersona } from '@ambientalia/shared'
 
 export interface OpcionPersona { valor: string; etiqueta: string }
@@ -41,9 +41,14 @@ const normalizar = (s: string): string =>
  * Con quién abre la casilla «Derivado a» al desplegar el formulario de una etapa.
  *
  * Por omisión se HEREDA a quien ya lo tenía, que es lo que evita que confirmar una etapa le borre el
- * responsable al ticket. Pero una etapa puede declarar el cargo al que le pasa el trabajo
- * (`cargoPorDefecto`), y entonces ESE gana: «Escalado a comercial» saca el ticket de Servicio Técnico,
- * así que dejar heredado al técnico lo derivaría justo a quien deja de tocarle.
+ * responsable al ticket. Pero una etapa puede declarar a quién le pasa el trabajo (`porDefecto`), y
+ * entonces ESO gana: «Escalado a comercial» saca el ticket de Servicio Técnico, así que dejar heredado
+ * al técnico lo derivaría justo a quien deja de tocarle.
+ *
+ * Sea cual sea la vía, la propuesta tiene que estar entre las ACTIVAS. Proponer a alguien de baja
+ * dejaría el desplegable sin ese valor y por tanto en blanco, y confirmar la etapa borraría la
+ * derivación sin que nadie lo pidiera — el mismo agujero que tapa `opcionesPersona`, que solo conserva
+ * al derivado vigente.
  *
  * Sigue siendo una propuesta, no una imposición: la casilla se puede cambiar antes de confirmar.
  *
@@ -51,16 +56,27 @@ const normalizar = (s: string): string =>
  * negocio —a quién le toca— que se rompe sin fallar nada.
  */
 export function derivacionInicial(
-  cargoPorDefecto: string | undefined,
-  activas: PersonaLite[],
-  heredado: string | null,
+  porDefecto: DerivacionPorDefecto | undefined,
+  ctx: {
+    activas: PersonaLite[]
+    /** A quién se derivó el ticket la primera vez, o `null` si nunca se derivó. */
+    primerDerivado: string | null
+    /** A quién lo trae derivado ahora. */
+    heredado: string | null
+  },
 ): string | null {
-  if (!cargoPorDefecto) return heredado
-  const buscado = normalizar(cargoPorDefecto)
-  // La primera de la lista, que llega ordenada por nombre desde `listPersonas`: con dos personas del
-  // mismo cargo la propuesta tiene que ser siempre la misma, no la que toque ese día.
-  const persona = activas.find((p) => p.cargo != null && normalizar(p.cargo) === buscado)
-  // Cero coincidencias es «ese cargo no está definido todavía», no «esta etapa no deriva»: se cae a
-  // lo heredado, que es el comportamiento de las otras 34 etapas.
-  return persona?.id ?? heredado
+  const activa = (id: string | null): string | null =>
+    (id && ctx.activas.some((p) => p.id === id) ? id : null)
+
+  // Cero coincidencias es «eso no está definido todavía», no «esta etapa no deriva»: se cae a lo
+  // heredado, que es el comportamiento de las otras 32 etapas.
+  if (porDefecto?.tipo === 'primerDerivado') return activa(ctx.primerDerivado) ?? ctx.heredado
+  if (porDefecto?.tipo === 'cargo') {
+    const buscado = normalizar(porDefecto.cargo)
+    // La primera de la lista, que llega ordenada por nombre desde `listPersonas`: con dos personas del
+    // mismo cargo la propuesta tiene que ser siempre la misma, no la que toque ese día.
+    const persona = ctx.activas.find((p) => p.cargo != null && normalizar(p.cargo) === buscado)
+    return persona?.id ?? ctx.heredado
+  }
+  return ctx.heredado
 }

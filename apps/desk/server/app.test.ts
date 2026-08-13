@@ -173,6 +173,28 @@ describe('derivación en las transiciones', () => {
     expect(res.body.escaladoARevisionAt).toBeNull()
   })
 
+  /**
+   * El detalle también lleva a quién se derivó PRIMERO, que es a quien «Aprobación» devuelve el
+   * trabajo: para entonces el ticket viene derivado a Comercial —quien acaba de aprobar— y sin esto se
+   * quedaría en la mesa equivocada.
+   */
+  it('el detalle lleva al primer derivado del ticket', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t1',1,'A','Notificación cliente')")
+    for (const [cuando, values] of [
+      ['2026-08-01T15:00:00.000Z', { orden_venta: 'OV-1' }],
+      ['2026-08-03T15:00:00.000Z', { derivado_a: 'u-tecnico' }],
+      ['2026-08-07T15:00:00.000Z', { derivado_a: 'u-comercial' }],
+    ] as Array<[string, Record<string, unknown>]>) {
+      await db.query('INSERT INTO ticket_transitions (ticket_id, values, performed_at) VALUES ($1,$2,$3)',
+        ['t1', JSON.stringify(values), new Date(cuando)])
+    }
+    const { app } = appWith()
+
+    const res = await request(app).get('/api/tickets/t1').set('Cookie', cookie)
+    expect(res.body.primerDerivado).toBe('u-tecnico')
+  })
+
   // El tablero y la tabla necesitan el dato en la LISTA, no solo en el detalle: son consultas
   // distintas y es fácil añadir el join en una y olvidarlo en las otras tres.
   it('la lista de tickets también trae la derivación', async () => {
