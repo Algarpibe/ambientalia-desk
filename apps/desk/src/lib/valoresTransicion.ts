@@ -39,6 +39,8 @@ function diaLocal(iso: string | null | undefined): string | null {
 interface TicketConocido {
   customFields: Record<string, string | null>
   createdAt?: string | null
+  /** Instante del último «Escalado a Revisión»: de ahí sale la fecha de revisión del informe. */
+  escaladoARevisionAt?: string | null
   /** A quién está derivado hoy. Llega prellenado a la etapa siguiente, pero EDITABLE (ver abajo). */
   derivado?: { id: string } | null
 }
@@ -63,30 +65,16 @@ export function valoresConocidos(
     'Fecha Remisión Entrada': yaEsta(cf['Fecha Remisión Entrada'])
       ? cf['Fecha Remisión Entrada']
       : (entrada?.fecha ?? null),
+    // La tercera derivada. Se pregunta al salir de «Notificado» —en «Escalado a comercial» y en
+    // «Reporte por garantía»— y es, por definición, el día en que el ticket ENTRÓ ahí: el escalado a
+    // revisión. Va por este canal, y no prellenada aparte, porque entrar aquí es lo que la enseña
+    // bloqueada: es un dato anotado, no una opinión que se pueda contradecir a mano.
+    'Fecha Revisión Informe': yaEsta(cf['Fecha Revisión Informe'])
+      ? cf['Fecha Revisión Informe']
+      : diaLocal(ticket.escaladoARevisionAt),
     // A diferencia del resto, esto llega prellenado pero NO bloqueado: cada etapa puede pasarle el
     // trabajo a otra persona. Quien lo bloquea es `yaLoTraeElTicket`, y su primera línea ya deja
     // fuera todo lo que no sea `customField`.
     [CLAVE_DERIVACION]: ticket.derivado?.id ?? null,
-  }
-}
-
-/**
- * Lo que la pantalla PROPONE, que es otra cosa que lo que da por sabido.
- *
- * Va aparte de `valoresConocidos` porque `TransitionPanel` bloquea todo lo que salga de allí —es un
- * dato que el ticket ya guarda, no hay nada que decidir— y esto tiene que quedar editable: es una
- * fecha derivada del historial, y quien la mira puede saber que el informe se revisó otro día.
- *
- * Hoy solo hay una: «Fecha Revisión Informe», que se pregunta al salir de «Notificado» —en «Escalado
- * a comercial» y en «Reporte por garantía»— y que es, por definición, el día en que el ticket entró
- * ahí: el escalado a revisión. Se pedía a mano un dato que el sistema ya tenía anotado.
- *
- * Si el ticket ya trae la columna rellena, esto no llega a usarse: `valoresConocidos` la enseña
- * bloqueada, como cualquier otro dato ya decidido.
- */
-export function valoresPropuestos(ticket: { escaladoARevisionAt?: string | null }): Record<string, string | null> {
-  return {
-    // `diaLocal` y no `slice(0, 10)`: el instante viene en UTC y el día es el de quien mira.
-    'Fecha Revisión Informe': diaLocal(ticket.escaladoARevisionAt),
   }
 }

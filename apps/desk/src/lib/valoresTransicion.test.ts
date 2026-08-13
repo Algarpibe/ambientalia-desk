@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { transitionById, CLAVE_DERIVACION } from '@ambientalia/shared'
-import { valoresConocidos, valoresPropuestos } from './valoresTransicion'
+import { valoresConocidos } from './valoresTransicion'
 
 const sinNada = { customFields: {} as Record<string, string | null> }
 
@@ -74,19 +74,18 @@ describe('valoresConocidos', () => {
 })
 
 /**
- * Lo PROPUESTO va aparte de lo conocido, y la diferencia es de fondo: `TransitionPanel` bloquea todo
- * lo que salga de `valoresConocidos`, porque es un dato que el ticket ya guarda y no hay nada que
- * decidir. Esto no — es una fecha derivada del historial, y quien la mira tiene que poder corregirla.
+ * La tercera fecha derivada, y va por el MISMO canal que las dos de arriba: entrar en
+ * `valoresConocidos` es lo que hace que el panel la enseñe bloqueada. No es una preferencia de
+ * maquetado — es un dato que el sistema tiene anotado y que nadie debería poder contradecir a mano.
  */
-describe('valoresPropuestos', () => {
+describe('valoresConocidos · Fecha Revisión Informe', () => {
   /**
-   * «Fecha Revisión Informe» se pregunta al salir de «Notificado», y el ticket entró ahí por el
-   * escalado a revisión: esa ES la fecha en que se revisó el informe. Se pedía a mano un dato que el
-   * sistema ya tenía anotado.
+   * Se pregunta al salir de «Notificado», y el ticket entró ahí por el escalado a revisión: esa ES la
+   * fecha en que se revisó el informe. Se pedía a mano un dato que el sistema ya tenía anotado.
    */
-  it('propone la fecha del escalado a revisión', () => {
-    expect(valoresPropuestos({ escaladoARevisionAt: '2026-08-10T15:00:00.000Z' })['Fecha Revisión Informe'])
-      .toBe('2026-08-10')
+  it('la deriva del escalado a revisión', () => {
+    const v = valoresConocidos({ ...sinNada, escaladoARevisionAt: '2026-08-10T15:00:00.000Z' }, [])
+    expect(v['Fecha Revisión Informe']).toBe('2026-08-10')
   })
 
   /**
@@ -100,15 +99,27 @@ describe('valoresPropuestos', () => {
    */
   it('el día es el local, no el recorte del instante en UTC', () => {
     const casiMedianoche = new Date(2026, 7, 10, 23, 30).toISOString()
-    expect(valoresPropuestos({ escaladoARevisionAt: casiMedianoche })['Fecha Revisión Informe'])
-      .toBe('2026-08-10')
+    const v = valoresConocidos({ ...sinNada, escaladoARevisionAt: casiMedianoche }, [])
+    expect(v['Fecha Revisión Informe']).toBe('2026-08-10')
   })
 
-  // Un ticket que nunca pasó por revisión —o que la pasó en Zoho, antes de Desk— no tiene nada que
-  // proponer. Se deja vacío para que se teclee: inventar una fecha sería peor que no poner ninguna.
-  it('sin escalado a revisión no propone nada', () => {
-    expect(valoresPropuestos({ escaladoARevisionAt: null })['Fecha Revisión Informe']).toBeNull()
-    expect(valoresPropuestos({})['Fecha Revisión Informe']).toBeNull()
+  /**
+   * Un ticket que nunca pasó por revisión —o que la pasó en Zoho, antes de Desk— deja el campo VACÍO,
+   * y con eso EDITABLE, que es justo lo que hace falta: bloquear una casilla vacía la dejaría
+   * imposible de rellenar para siempre. Inventar una fecha sería peor que no poner ninguna.
+   */
+  it('sin escalado a revisión queda vacía, y por tanto editable', () => {
+    expect(valoresConocidos({ ...sinNada, escaladoARevisionAt: null }, [])['Fecha Revisión Informe']).toBeNull()
+    expect(valoresConocidos(sinNada, [])['Fecha Revisión Informe']).toBeNull()
+  })
+
+  // Si la etapa ya se ejecutó una vez, manda lo que quedó guardado: la misma regla que las otras dos.
+  it('lo que el ticket ya guarda gana sobre lo derivado', () => {
+    const v = valoresConocidos(
+      { customFields: { 'Fecha Revisión Informe': '2026-01-01' }, escaladoARevisionAt: '2026-08-10T15:00:00.000Z' },
+      [],
+    )
+    expect(v['Fecha Revisión Informe']).toBe('2026-01-01')
   })
 
   // La clave sale del Blueprint y no de una constante propia: si alguien renombra el campo allí, esto
