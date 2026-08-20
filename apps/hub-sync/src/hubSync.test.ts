@@ -12,6 +12,7 @@ function mockSync(): Sync {
   return {
     backfillTickets: vi.fn().mockResolvedValue(0),
     backfillArchivedTickets: vi.fn().mockResolvedValue(0),
+    backfillTicketHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0, restantes: 0 }),
     syncRecent: vi.fn().mockResolvedValue(0),
     syncTicket: vi.fn().mockResolvedValue(undefined),
     syncConversations: vi.fn().mockResolvedValue(undefined),

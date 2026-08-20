@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { FROM_STATUS_CREACION, STATUS_TICKET_CREADO } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, STATUS_TICKET_CREADO, PREFIJO_TICKET_APP } from '@ambientalia/shared'
 import { APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'
 
@@ -378,7 +378,7 @@ export interface CreateTicketInput {
  * nace aquí usa el nombre que la fase tiene de verdad para el servicio técnico.
  */
 export async function createTicket(db: Queryable, input: CreateTicketInput): Promise<string> {
-  const id = `app-${randomUUID()}`
+  const id = `${PREFIJO_TICKET_APP}${randomUUID()}`
   const number = await nextTicketNumber(db)
   const run = async (q: Queryable): Promise<void> => {
     await q.query(

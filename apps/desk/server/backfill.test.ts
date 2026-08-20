@@ -20,6 +20,7 @@ describe('detail backfiller', () => {
     const sync = {
       backfillTickets: vi.fn(),
       backfillArchivedTickets: vi.fn(),
+      backfillTicketHistory: vi.fn(),
       syncRecent: vi.fn(),
       syncTicket: vi.fn(async () => {}),
       syncConversations: vi.fn(async () => {}),
@@ -51,6 +52,7 @@ describe('detail backfiller', () => {
     const sync = {
       backfillTickets: vi.fn(),
       backfillArchivedTickets: vi.fn(),
+      backfillTicketHistory: vi.fn(),
       syncRecent: vi.fn(),
       syncTicket: vi.fn(async (id: string) => { if (id === '1') throw new Error('boom') }),
       syncConversations: vi.fn(async () => {}),

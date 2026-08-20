@@ -3,6 +3,7 @@ import type { Queryable } from './db/migrate'
 import { upsertTicket, upsertConversation, upsertAttachment, upsertAccount, upsertContact, upsertAgent } from './db/repo'
 import { upsertActivity } from './db/activities'
 import { upsertHistoryEvent } from './db/history'
+import { PREFIJO_TICKET_APP } from '@ambientalia/shared'
 import { ticketRowFromZoho, conversationRowFromZoho, attachmentRowsFrom, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'
 
 interface Deps {
@@ -17,10 +18,25 @@ export interface Sync {
   syncTicket(id: string): Promise<void>
   syncConversations(id: string): Promise<void>
   syncTicketHistory(id: string): Promise<void>
+  backfillTicketHistory(opts?: BackfillHistoriaOpts): Promise<ResultadoBackfillHistoria>
   syncActivities(): Promise<number>
   syncContacts(): Promise<number>
 }
 const PAGE_SIZE = 100
+
+export interface BackfillHistoriaOpts {
+  /** Cuántos tickets como mucho en esta pasada. Sin él, todos los que falten. */
+  limite?: number
+  /** Espera entre tickets. `zohoFetch` no reintenta ante un 429, así que la cautela va aquí. */
+  pausaMs?: number
+}
+export interface ResultadoBackfillHistoria {
+  intentados: number
+  poblados: number
+  fallidos: number
+  /** Cuántos siguen sin historia después de esta pasada. Con `limite`, lo que queda por delante. */
+  restantes: number
+}
 type ZohoRecord = Record<string, unknown>
 async function readData(res: Response): Promise<ZohoRecord> { const t = await res.text(); return t ? JSON.parse(t) : {} }
 /** Extrae el array `data` de una respuesta de lista de Zoho, narrowing a registros. */
@@ -33,6 +49,24 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
   const accountSeen = new Set<string>()
   // contactId → accountId del contacto (el endpoint de LISTA de tickets no trae accountId).
   const contactAccount = new Map<string, string | null>()
+
+  /**
+   * La historia de UN ticket, paginada. Es función suelta y no solo un método porque la llaman dos: la
+   * ruta del historial (a través de `syncTicketHistory`) y el barrido de tickets antiguos. Llamarla
+   * como método desde el barrido obligaría a un `this` que este objeto literal no tiene.
+   */
+  async function traerHistoria(id: string): Promise<void> {
+    let from = 1
+    for (;;) {
+      const res = await zohoFetch(`/tickets/${id}/History?from=${from}&limit=${PAGE_SIZE}`)
+      if (!res.ok) throw new Error(`Zoho /tickets/${id}/History ${res.status}`)
+      const items = dataArray(await readData(res))
+      if (items.length === 0) break
+      for (const e of items) await upsertHistoryEvent(db, id, e)
+      if (items.length < PAGE_SIZE) break
+      from += PAGE_SIZE
+    }
+  }
 
   async function ensureAccount(accountId: string | null | undefined): Promise<void> {
     if (!accountId || accountSeen.has(accountId)) return
@@ -137,17 +171,54 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
         for (const a of attachmentRowsFrom(c, id)) await upsertAttachment(db, a)
       }
     },
-    async syncTicketHistory(id: string): Promise<void> {
-      let from = 1
-      for (;;) {
-        const res = await zohoFetch(`/tickets/${id}/History?from=${from}&limit=${PAGE_SIZE}`)
-        if (!res.ok) throw new Error(`Zoho /tickets/${id}/History ${res.status}`)
-        const items = dataArray(await readData(res))
-        if (items.length === 0) break
-        for (const e of items) await upsertHistoryEvent(db, id, e)
-        if (items.length < PAGE_SIZE) break
-        from += PAGE_SIZE
+    syncTicketHistory: traerHistoria,
+    /**
+     * Trae de Zoho la historia de los tickets ANTIGUOS, los que nadie ha abierto todavía en Desk.
+     *
+     * La historia por ticket ya se poblaba sola al abrirlo (`syncTicketHistory` desde la ruta del
+     * historial). Esto es lo mismo pero sin esperar a que alguien entre: con ~800 tickets heredados de
+     * Zoho, el relato completo solo existía para los pocos que se hubieran mirado.
+     *
+     * Tres decisiones que lo hacen soportable contra un Zoho con cuota:
+     *
+     * - **Reanudable**: la lista de pendientes es «tickets sin ninguna fila en `ticket_history`». Si la
+     *   pasada se corta —por cuota, por un redespliegue— volver a lanzarlo sigue por donde iba. No hay
+     *   cursor que guardar ni que se pueda quedar desfasado.
+     * - **Tolerante**: un ticket que falla NO corta el barrido. Sin esto, un solo 404 dejaría sin
+     *   historia a los cientos que vienen detrás, y el resultado sería indistinguible de «Zoho no
+     *   tiene esos datos».
+     * - **Con pausa**: `zohoFetch` no reintenta ante un 429 (solo refresca el token en un 401), así
+     *   que el freno lo pone el barrido. `limite` permite además una primera pasada corta de tanteo.
+     *
+     * Los nacidos en la app quedan fuera: Zoho no los conoce y preguntarle sería un 404 por cabeza. Su
+     * historia ya la cuenta `ticket_transitions`, que es lo que el compositor une con la de Zoho.
+     */
+    async backfillTicketHistory(opts: BackfillHistoriaOpts = {}): Promise<ResultadoBackfillHistoria> {
+      const { limite, pausaMs = 500 } = opts
+      // Dos consultas sueltas y ningún `NOT EXISTS`: pg-mem —el motor de los tests— no resuelve
+      // subconsultas correlacionadas. Son dos listas de ids, caben de sobra en memoria.
+      const todos = await db.query('SELECT id FROM tickets ORDER BY created_time DESC NULLS LAST')
+      const conHistoria = await db.query('SELECT DISTINCT ticket_id FROM ticket_history')
+      const yaTienen = new Set((conHistoria.rows as ZohoRecord[]).map((r) => String(r.ticket_id)))
+
+      const pendientes = (todos.rows as ZohoRecord[])
+        .map((r) => String(r.id))
+        .filter((id) => !id.startsWith(PREFIJO_TICKET_APP) && !yaTienen.has(id))
+
+      const tanda = limite != null ? pendientes.slice(0, limite) : pendientes
+      let poblados = 0, fallidos = 0
+      for (const id of tanda) {
+        try {
+          await traerHistoria(id)
+          poblados++
+        } catch {
+          // Se cuenta y se sigue: lo que importa es que la pasada llegue al final. Los fallidos vuelven
+          // a salir como pendientes en la siguiente, sin hacer nada.
+          fallidos++
+        }
+        if (pausaMs > 0) await new Promise((r) => setTimeout(r, pausaMs))
       }
+      return { intentados: tanda.length, poblados, fallidos, restantes: pendientes.length - poblados }
     },
     async syncActivities(): Promise<number> {
       const wmRow = (await db.query('SELECT max(modified_time) AS m FROM activities')).rows[0]

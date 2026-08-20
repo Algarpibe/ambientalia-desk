@@ -110,6 +110,20 @@ const derivacion = (porDefecto?: DerivacionPorDefecto): TransitionField =>
 export const FROM_STATUS_CREACION = '(creación)'
 
 /**
+ * El prefijo del id de un ticket nacido en la app. Los de Zoho son numéricos.
+ *
+ * Vive en shared por lo mismo que `FROM_STATUS_CREACION`: lo ACUÑA `zoho-sync/db/repo.createTicket` y
+ * lo leen varios sitios para decidir si a Zoho se le puede preguntar por ese ticket. Con el literal
+ * repetido, cambiarlo en el acuñador dejaría a los lectores dando por venido de Zoho lo que nació
+ * aquí, y ningún test fallaría porque cada uno codifica el mismo literal por su cuenta.
+ *
+ * Es el ÚNICO guardia fiable de «nació en la app»: `managed_by_app` y `source` NO lo son —
+ * `writeTransition` las pone en true en cualquier transición hecha desde Desk, también sobre un
+ * ticket que vino de Zoho—, mientras que el id es inmutable y ningún UPDATE lo toca.
+ */
+export const PREFIJO_TICKET_APP = 'app-'
+
+/**
  * Las dos fases tempranas del flujo, con nombre propio de la app.
  *
  * `OV asignada` es como llama Zoho a la fase en la que queda un ticket recién creado, y se conserva:

@@ -10,7 +10,7 @@
  * del equipo (`equipos.ts`), que compone su cronología con las mismas reglas de orden y de jsonb.
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { FROM_STATUS_CREACION, CLAVE_DERIVACION } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, CLAVE_DERIVACION, PREFIJO_TICKET_APP } from '@ambientalia/shared'
 
 /** Qué hacer con Zoho antes de responder. */
 export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
@@ -38,7 +38,7 @@ export function esCreacion(fila: Record<string, unknown>): boolean {
  * siempre les pone el prefijo `app-` — los de Zoho son numéricos — y ningún UPDATE lo toca.
  */
 export function nacidoEnLaApp(ticketId: string): boolean {
-  return ticketId.startsWith('app-')
+  return ticketId.startsWith(PREFIJO_TICKET_APP)
 }
 
 export function planSyncZoho(ticketId: string, hayDatosDeZoho: boolean): PlanSyncZoho {

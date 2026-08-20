@@ -32,7 +32,7 @@ function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackTok
   // Los vacíos son los que devuelve `loadConfig` cuando la variable no está: dejar alguno `undefined`
   // probaría un config que en producción no existe.
   const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', ...overrides } as AppConfig
-  const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), syncContacts: vi.fn() }
+  const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), backfillTicketHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0, restantes: 0 }), syncContacts: vi.fn() }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
   const app = createApp({ db, zohoFetch, sync, config })
   return { app, sync, zohoFetch }
@@ -339,7 +339,7 @@ describe('Seguridad: helmet + rate-limit', () => {
 describe('Error-handler central', () => {
   it('error no manejado → 500 genérico (sin filtrar el mensaje)', async () => {
     const config = { enableWrites: false } as AppConfig
-    const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn(), syncTicketHistory: vi.fn(), syncContacts: vi.fn() } as any
+    const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn(), syncConversations: vi.fn(), syncActivities: vi.fn(), syncTicketHistory: vi.fn(), backfillTicketHistory: vi.fn(), syncContacts: vi.fn() } as any
     const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
     const cookie = await adminCookie() // sesión válida en la BD real (requireAuth la valida antes de getContacts)
     const boomDb = { query: (sql: string, params?: unknown[]) => {
@@ -2939,5 +2939,44 @@ describe('DELETE /api/tickets/:id (admin)', () => {
     expect((await request(app).delete('/api/tickets/app-1').set('Cookie', op)).status).toBe(403)
     expect(await existe('app-1')).toBe(true)
     expect((await request(app).delete('/api/tickets/app-1')).status).toBe(401)
+  })
+})
+
+/**
+ * El barrido que trae de Zoho la historia de los tickets antiguos. Lo que se comprueba aquí es la
+ * FORMA de la ruta, no el barrido —ése tiene sus tests en `sync.historyBackfill.test.ts`—: que el
+ * conteo responde esperando y el barrido no, que es la diferencia que evita una petición colgada
+ * varios minutos.
+ */
+describe('POST /api/admin/backfill-history (admin)', () => {
+  it('con límite 0 responde el conteo esperando', async () => {
+    const admin = await adminCookie()
+    const { app, sync } = appWith()
+    sync.backfillTicketHistory.mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0, restantes: 42 })
+
+    const res = await request(app).post('/api/admin/backfill-history?limite=0').set('Cookie', admin)
+
+    expect(res.status).toBe(200)
+    expect(res.body.restantes).toBe(42)
+    expect(sync.backfillTicketHistory).toHaveBeenCalledWith({ limite: 0 })
+  })
+
+  // Sin límite el barrido dura minutos: se lanza al fondo y la petición vuelve enseguida. Esperarlo
+  // dejaría la petición colgada hasta que el proxy la cortara, y el trabajo a medias sin avisar.
+  it('sin límite lo lanza en segundo plano y devuelve enseguida', async () => {
+    const admin = await adminCookie()
+    const { app, sync } = appWith()
+
+    const res = await request(app).post('/api/admin/backfill-history?pausaMs=800').set('Cookie', admin)
+
+    expect(res.body).toEqual({ started: true })
+    expect(sync.backfillTicketHistory).toHaveBeenCalledWith({ limite: undefined, pausaMs: 800 })
+  })
+
+  it('403 no-admin; 401 sin sesión', async () => {
+    const { app } = appWith()
+    const op = await userCookie([])
+    expect((await request(app).post('/api/admin/backfill-history').set('Cookie', op)).status).toBe(403)
+    expect((await request(app).post('/api/admin/backfill-history')).status).toBe(401)
   })
 })

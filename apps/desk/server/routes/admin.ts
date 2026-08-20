@@ -180,6 +180,29 @@ export function registerAdminRoutes(
     res.json(r)
   }))
 
+  /**
+   * Trae de Zoho la historia de los tickets antiguos, los que nadie ha abierto todavía en Desk.
+   *
+   * `?limite=0` es el CONTEO: no llama a Zoho ni una vez —la tanda sale vacía— y devuelve en
+   * `restantes` cuántos tickets quedan por poblar. Por eso es la única forma que responde esperando;
+   * cualquier otra se lanza en segundo plano, porque un barrido de cientos de tickets dura minutos y
+   * ninguna petición HTTP debería quedarse ahí colgada.
+   *
+   * `?limite=N` acota la pasada y `?pausaMs=N` afloja o aprieta el freno. Existen porque `zohoFetch`
+   * no reintenta ante un 429: conviene una pasada corta de tanteo antes de soltar el barrido entero.
+   *
+   * Reanudable por construcción: relanzarlo sigue por donde iba. SOLO super administrador.
+   */
+  app.post('/api/admin/backfill-history', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const limite = req.query.limite != null ? Number(req.query.limite) : undefined
+    const pausaMs = req.query.pausaMs != null ? Number(req.query.pausaMs) : undefined
+    if (limite === 0) { res.json(await sync.backfillTicketHistory({ limite: 0 })); return }
+    sync.backfillTicketHistory({ limite, pausaMs })
+      .then((r) => logger.info(`Backfill historia: ${r.poblados} poblados, ${r.fallidos} fallidos, ${r.restantes} pendientes`))
+      .catch((err) => logger.error({ err }, 'Backfill historia falló'))
+    res.json({ started: true })
+  }))
+
   // Backfill de tickets archivados en segundo plano (fire-and-forget). SOLO super administrador.
   app.post('/api/admin/backfill-archived', requireAuth(db), requireSuperAdmin, (_req, res) => {
     sync.backfillArchivedTickets()
