@@ -23,6 +23,12 @@ export interface Sync {
   syncContacts(): Promise<number>
 }
 const PAGE_SIZE = 100
+/**
+ * La historia va aparte: su endpoint acota `limit` a 1-50 y con 100 responde 422 «exceeds the range
+ * of 1-50». No es una preferencia, es el contrato del endpoint — y saltárselo no fallaba de forma
+ * visible, porque quien llama a `syncTicketHistory` se traga el error y enseña lo que tenga.
+ */
+const PAGE_SIZE_HISTORIA = 50
 
 export interface BackfillHistoriaOpts {
   /** Cuántos tickets como mucho en esta pasada. Sin él, todos los que falten. */
@@ -36,6 +42,15 @@ export interface ResultadoBackfillHistoria {
   fallidos: number
   /** Cuántos siguen sin historia después de esta pasada. Con `limite`, lo que queda por delante. */
   restantes: number
+  /**
+   * Por qué falló el PRIMERO que falló. Ausente si no falló ninguno.
+   *
+   * Contar los fallos no basta: «747 fallidos» no se distingue de «Zoho no tiene esos datos», y esa
+   * ambigüedad ya costó una tarde — el endpoint devolvía 422 por un `limit` fuera de rango y el número
+   * a secas no lo decía. Solo el primero: si falla el barrido entero, falla por lo mismo, y 747 líneas
+   * iguales en el log no informan más que una.
+   */
+  motivoPrimerFallo?: string
 }
 type ZohoRecord = Record<string, unknown>
 async function readData(res: Response): Promise<ZohoRecord> { const t = await res.text(); return t ? JSON.parse(t) : {} }
@@ -58,13 +73,13 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
   async function traerHistoria(id: string): Promise<void> {
     let from = 1
     for (;;) {
-      const res = await zohoFetch(`/tickets/${id}/History?from=${from}&limit=${PAGE_SIZE}`)
+      const res = await zohoFetch(`/tickets/${id}/History?from=${from}&limit=${PAGE_SIZE_HISTORIA}`)
       if (!res.ok) throw new Error(`Zoho /tickets/${id}/History ${res.status}`)
       const items = dataArray(await readData(res))
       if (items.length === 0) break
       for (const e of items) await upsertHistoryEvent(db, id, e)
-      if (items.length < PAGE_SIZE) break
-      from += PAGE_SIZE
+      if (items.length < PAGE_SIZE_HISTORIA) break
+      from += PAGE_SIZE_HISTORIA
     }
   }
 
@@ -207,18 +222,21 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
 
       const tanda = limite != null ? pendientes.slice(0, limite) : pendientes
       let poblados = 0, fallidos = 0
+      let motivoPrimerFallo: string | undefined
       for (const id of tanda) {
         try {
           await traerHistoria(id)
           poblados++
-        } catch {
+        } catch (e) {
           // Se cuenta y se sigue: lo que importa es que la pasada llegue al final. Los fallidos vuelven
-          // a salir como pendientes en la siguiente, sin hacer nada.
+          // a salir como pendientes en la siguiente, sin hacer nada. Pero el motivo del primero se
+          // guarda: sin él, un barrido que falla entero es indistinguible de uno sin datos que traer.
           fallidos++
+          motivoPrimerFallo ??= e instanceof Error ? e.message : String(e)
         }
         if (pausaMs > 0) await new Promise((r) => setTimeout(r, pausaMs))
       }
-      return { intentados: tanda.length, poblados, fallidos, restantes: pendientes.length - poblados }
+      return { intentados: tanda.length, poblados, fallidos, restantes: pendientes.length - poblados, motivoPrimerFallo }
     },
     async syncActivities(): Promise<number> {
       const wmRow = (await db.query('SELECT max(modified_time) AS m FROM activities')).rows[0]

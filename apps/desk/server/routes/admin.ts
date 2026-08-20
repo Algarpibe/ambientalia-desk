@@ -198,7 +198,7 @@ export function registerAdminRoutes(
     const pausaMs = req.query.pausaMs != null ? Number(req.query.pausaMs) : undefined
     if (limite === 0) { res.json(await sync.backfillTicketHistory({ limite: 0 })); return }
     sync.backfillTicketHistory({ limite, pausaMs })
-      .then((r) => logger.info(`Backfill historia: ${r.poblados} poblados, ${r.fallidos} fallidos, ${r.restantes} pendientes`))
+      .then((r) => logger.info(`Backfill historia: ${r.poblados} poblados, ${r.fallidos} fallidos, ${r.restantes} pendientes${r.motivoPrimerFallo ? ` — primer fallo: ${r.motivoPrimerFallo}` : ''}`))
       .catch((err) => logger.error({ err }, 'Backfill historia falló'))
     res.json({ started: true })
   }))

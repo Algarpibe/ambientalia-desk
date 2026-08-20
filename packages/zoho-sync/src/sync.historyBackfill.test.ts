@@ -137,3 +137,29 @@ describe('backfillTicketHistory · conteo', () => {
     expect(zohoFetch).not.toHaveBeenCalled()
   })
 })
+
+/**
+ * Contar los fallos no basta: «747 fallidos» no se distingue de «Zoho no tiene esos datos», y esa
+ * ambigüedad ya costó una tarde —el endpoint devolvía 422 por un `limit` fuera de rango y el número
+ * no lo decía—. El motivo del PRIMERO llega hasta el log, que es donde se mira.
+ */
+describe('backfillTicketHistory · por qué falló', () => {
+  it('devuelve el motivo del primer fallo, no solo cuántos', async () => {
+    await ticket('100', '2024-01-04T16:00:00Z')
+    const zohoFetch = vi.fn().mockResolvedValue(new Response('nope', { status: 422 }))
+    const sync = createSync({ zohoFetch, db, config: { departmentId: 'D1' } as AppConfig })
+
+    const r = await sync.backfillTicketHistory(sinPausa)
+
+    expect(r.fallidos).toBe(1)
+    expect(r.motivoPrimerFallo).toContain('422')
+  })
+
+  // Sin fallos no hay motivo que dar: un campo con texto siempre sería ruido en el log del caso bueno.
+  it('sin fallos no hay motivo', async () => {
+    await ticket('100', '2024-01-04T16:00:00Z')
+    const sync = createSync({ zohoFetch: unaPagina(), db, config: { departmentId: 'D1' } as AppConfig })
+
+    expect((await sync.backfillTicketHistory(sinPausa)).motivoPrimerFallo).toBeUndefined()
+  })
+})
