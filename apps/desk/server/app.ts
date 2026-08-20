@@ -59,6 +59,18 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   registerRemisionRoutes(app, { db, config })
   registerAvisosRoutes(app, { db })
 
+  /*
+   * Una ruta de `/api` que no existe se dice en JSON, y va AQUÍ —después de registrarlas todas— para
+   * que solo salte cuando ninguna casó.
+   *
+   * Sin esto se la tragaba el comodín que sirve `index.html` en producción (`index.ts`), que existe
+   * para que funcionen las rutas del navegador y no distingue `/api` del resto: un endpoint mal
+   * escrito —o uno que existe en el código pero todavía no en el servidor desplegado— devolvía la
+   * página entera con un 200, y quien llamaba se encontraba con «Unexpected token '<'». El síntoma no
+   * se parecía en nada a la causa, que es la peor forma de perder una tarde.
+   */
+  app.use('/api', (_req, res) => { res.status(404).json({ error: 'Ruta de API no encontrada' }) })
+
   // Manejador central de errores: registra el error real pero NO lo filtra al cliente.
   // (Express identifica los error-handlers por su aridad de 4 args; `_next` debe existir.)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

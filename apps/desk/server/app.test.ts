@@ -2980,3 +2980,27 @@ describe('POST /api/admin/backfill-history (admin)', () => {
     expect((await request(app).post('/api/admin/backfill-history')).status).toBe(401)
   })
 })
+
+/**
+ * Una ruta de API que no existe tiene que decirlo en JSON.
+ *
+ * En producción, detrás de `createApp`, hay un `app.use` que sirve `index.html` para que funcionen las
+ * rutas del navegador. Sin este 404, ese comodín se tragaba también las de `/api`: pedir un endpoint
+ * mal escrito —o uno que existe en el código pero todavía no en el servidor desplegado— devolvía la
+ * página entera con un 200, y quien llamaba se encontraba con «Unexpected token '<'» en vez de con un
+ * 404. El síntoma no se parecía en nada a la causa.
+ */
+describe('rutas de API inexistentes', () => {
+  it('404 en JSON, sin tragárselo el comodín del SPA', async () => {
+    const { app } = appWith()
+    const res = await request(app).post('/api/admin/no-existe')
+    expect(res.status).toBe(404)
+    expect(res.body).toEqual({ error: 'Ruta de API no encontrada' })
+  })
+
+  // Lo que NO cuelga de /api sigue de largo: es lo que deja pasar las rutas del navegador al SPA.
+  it('no toca las rutas que no son de API', async () => {
+    const { app } = appWith()
+    expect((await request(app).get('/tickets/123')).body).toEqual({})
+  })
+})
