@@ -246,3 +246,93 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
     expect(rems[1].adjuntos).toEqual([])
   })
 })
+
+/**
+ * La hoja de vida de un equipo con años de servicio en Zoho: hasta el barrido de historia, sus
+ * tickets salían aquí como tarjetas sin una sola etapa debajo, porque `ticket_transitions` solo
+ * guarda lo que se hizo desde Desk. Los datos estaban en `ticket_history`, en otra forma.
+ */
+describe('getEquipoHistorial · etapas venidas de Zoho', () => {
+  const evento = (ticketId: string, e: Record<string, unknown>, cuando: string) =>
+    db.query('INSERT INTO ticket_history (id,ticket_id,event_name,event_time,raw) VALUES ($1,$2,$3,$4,$5)',
+      [`h-${ticketId}-${cuando}-${String(e.eventName)}`, ticketId, String(e.eventName), new Date(cuando), JSON.stringify(e)])
+
+  const CAMBIO = (de: string, a: string, cuando: string) => ({
+    eventName: 'TicketUpdated', eventTime: cuando,
+    actor: { name: ' Blueprint estado del Servicio', type: 'Blueprint' },
+    eventInfo: [{ propertyName: 'Status', propertyValue: { previousValue: de, updatedValue: a } }],
+    actorInfo: [{ propertyName: 'Transition', propertyValue: { id: 'tr-1', name: 'ingreso' } }],
+  })
+  const COMENTARIO = (cuando: string) => ({
+    eventName: 'CommentAdded', eventTime: cuando,
+    actor: { name: 'Equipo  Técnico ', type: 'Agent' },
+    eventInfo: [
+      { propertyName: 'Content', propertyValue: '<div>Equipo ingresa sin accesorios.</div>' },
+      { propertyName: 'AttachmentNames', propertyValue: ['231228 - SGI.pdf'] },
+    ],
+    actorInfo: [{ propertyName: 'Transition', propertyValue: { id: 'tr-1', name: 'ingreso' } }],
+  })
+  const EJECUCION = (cuando: string) => ({
+    eventName: 'BlueprintTransitionPerformed', eventTime: cuando,
+    actor: { name: 'Equipo  Técnico ', type: 'Agent' },
+    eventInfo: [{ propertyName: 'Transition', propertyValue: { id: 'tr-1', name: 'ingreso' } }],
+    actorInfo: [],
+  })
+
+  it('un ticket de Zoho enseña sus etapas, con quién y con el comentario', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-9', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'SGI', clientId: 'c1', modeloId: null })
+    await insTicket('zoho-9', 543, 'SN-9', null, 'Finalizado')
+    const t = '2024-01-04T16:02:25.000Z'
+    await evento('zoho-9', CAMBIO('Ingresado', 'En Proceso', t), t)
+    await evento('zoho-9', EJECUCION(t), t)
+    await evento('zoho-9', COMENTARIO(t), t)
+
+    const h = await getEquipoHistorial(db, eqId)
+    const [etapa] = soloTickets(h!).find((x) => x.id === 'zoho-9')!.transitions
+
+    expect(etapa).toMatchObject({
+      transitionName: 'ingreso',
+      fromStatus: 'Ingresado',
+      toStatus: 'En Proceso',
+      performedBy: 'Equipo  Técnico',
+      comentario: 'Equipo ingresa sin accesorios.',
+      adjuntos: ['231228 - SGI.pdf'],
+    })
+  })
+
+  /**
+   * Un ticket que empezó en Zoho y siguió en Desk tiene etapas de las DOS épocas. Quedarse con una
+   * sola perdería media historia, y es justo el caso de los tickets que estaban vivos el día del
+   * cambio de herramienta.
+   */
+  it('junta las etapas de Zoho con las de Desk, en orden', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-8', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'SGI', clientId: 'c1', modeloId: null })
+    await insTicket('zoho-8', 544, 'SN-8', null, 'Ingresado')
+    const viejo = '2024-01-04T16:02:25.000Z'
+    await evento('zoho-8', CAMBIO('Ingresado', 'En Proceso', viejo), viejo)
+    await db.query(
+      `INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at)
+       VALUES ('zoho-8','Aprobación','Notificación cliente','En Proceso','Comercial','Ángela',$1)`,
+      [new Date('2026-08-20T10:00:00.000Z')],
+    )
+
+    const h = await getEquipoHistorial(db, eqId)
+    const etapas = soloTickets(h!).find((x) => x.id === 'zoho-8')!.transitions
+
+    expect(etapas.map((e) => e.transitionName)).toEqual(['ingreso', 'Aprobación'])
+  })
+
+  // Un ticket nacido en Desk no tiene historia en Zoho: sus etapas siguen saliendo tal cual, sin que
+  // la unión le añada ni le quite nada.
+  it('no toca los tickets que nacieron en Desk', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-7', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'SGI', clientId: 'c1', modeloId: null })
+    await insTicket('app-7', 545, 'SN-7', eqId, 'Ingresado')
+    await db.query(`INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at) VALUES ('app-7','Habilitar Servicio','OV asignada','Ingresado','Comercial','Admin',now())`)
+
+    const h = await getEquipoHistorial(db, eqId)
+    const etapas = soloTickets(h!).find((x) => x.id === 'app-7')!.transitions
+
+    expect(etapas.map((e) => e.transitionName)).toEqual(['Habilitar Servicio'])
+    expect(etapas[0].comentario).toBeUndefined()
+  })
+})

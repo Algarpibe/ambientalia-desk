@@ -79,6 +79,19 @@ function TarjetaTicket({ t }: { t: HistorialTicket }) {
               {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).length > 0 && (
                 <span className="text-slate-400"> · {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).join(' · ')}</span>
               )}
+              {/* Lo que se hizo, que es lo que de verdad busca quien abre una hoja de vida. Llega en
+                  TEXTO plano desde el servidor y se pinta como texto: React lo escapa, así que no
+                  hace falta DOMPurify como en los paneles que sí reciben HTML. */}
+              {x.comentario && (
+                <div className="mt-0.5 text-slate-500 italic">«{x.comentario}»</div>
+              )}
+              {x.adjuntos && x.adjuntos.length > 0 && (
+                <div className="mt-0.5 text-slate-400">
+                  {/* Solo los nombres: los ficheros viven en Zoho y esta pantalla no los descarga.
+                      Verlos nombrados ya dice qué informe se emitió y permite buscarlo en el Drive. */}
+                  {x.adjuntos.join(' · ')}
+                </div>
+              )}
             </li>
           ))}
         </ol>

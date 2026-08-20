@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
+import { etapasDesdeHistoria } from '@ambientalia/shared'
 import { esCreacion, iso, json, porFechaDesc } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
@@ -255,6 +256,39 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
         area: r.area ?? null, performedBy: r.performed_by ?? null, performedAt: r.performed_at ?? null,
       })
       byTicket.set(r.ticket_id, list)
+    }
+
+    /*
+     * Y las etapas que NO pasaron por Desk, reconstruidas desde la historia de Zoho.
+     *
+     * Sin esto, los cientos de tickets heredados salían aquí como tarjetas sin una sola etapa debajo:
+     * `ticket_transitions` solo guarda lo que se hizo desde la app, así que la hoja de vida de un
+     * equipo con años de servicio en Zoho no contaba nada de esos años.
+     *
+     * Las dos listas se JUNTAN en vez de elegir una: un ticket que empezó en Zoho y siguió en Desk
+     * tiene etapas de las dos épocas, y quedarse con una perdería media historia. No se duplican
+     * porque Desk no escribe sus transiciones en Zoho — lo que hay en `ticket_history` es siempre de
+     * la otra época.
+     */
+    const hist = await db.query(
+      `SELECT ticket_id, raw FROM ticket_history WHERE ticket_id IN (${ph}) ORDER BY event_time`,
+      ids,
+    )
+    const crudosPorTicket = new Map<string, unknown[]>()
+    for (const r of hist.rows as Array<Record<string, unknown>>) {
+      const ticketId = String(r.ticket_id)
+      const list = crudosPorTicket.get(ticketId) ?? []
+      list.push(json(r.raw))
+      crudosPorTicket.set(ticketId, list)
+    }
+    for (const [ticketId, crudos] of crudosPorTicket) {
+      const deZoho = etapasDesdeHistoria(crudos)
+      if (!deZoho.length) continue
+      const juntas = [...(byTicket.get(ticketId) ?? []), ...deZoho]
+      // De la más vieja a la más nueva, como ya venían las de Desk: sin reordenar, la mezcla saldría
+      // con la época de Zoho detrás de la de Desk aunque sea anterior.
+      juntas.sort((a, b) => Date.parse(a.performedAt ?? '') - Date.parse(b.performedAt ?? ''))
+      byTicket.set(ticketId, juntas)
     }
   }
   const deTickets = rows.map((r) => ({

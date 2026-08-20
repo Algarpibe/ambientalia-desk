@@ -425,6 +425,16 @@ export interface HistorialTransition {
   area: string | null
   performedBy: string | null
   performedAt: string | null
+  /**
+   * Lo que se escribió al ejecutar la etapa, en TEXTO plano y recortado.
+   *
+   * Solo lo traen las etapas reconstruidas desde la historia de Zoho: las de Desk guardan el
+   * comentario aparte, como conversación propia del ticket. Texto y no HTML a propósito — la tarjeta
+   * lo pinta como texto y React lo escapa, así que no hay nada que sanear.
+   */
+  comentario?: string
+  /** Nombres de los ficheros que acompañaban a ese comentario (informes, protocolos). */
+  adjuntos?: string[]
 }
 export interface HistorialTicket {
   id: string
