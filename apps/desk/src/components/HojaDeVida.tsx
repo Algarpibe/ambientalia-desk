@@ -125,12 +125,6 @@ function PasoRemision({ r }: { r: HistorialRemision }) {
         <span className="text-slate-400"> · {[r.tipoServicio, r.tecnico, fmtFecha(r.fecha)].filter(Boolean).join(' · ')}</span>
       )}
       {r.origen === 'historico' && <span className="text-slate-400"> · Del histórico</span>}
-      {/* Se dice en pantalla que el ticket es una suposición, no se disimula: si el equipo tuvo dos
-          servicios seguidos, la remisión puede haber caído bajo el ticket equivocado, y quien lo lea
-          tiene que poder dudar. */}
-      {r.asociadaPorFecha && (
-        <div className="mt-0.5 text-amber-600">Sin ticket propio · asociada por cercanía de fecha</div>
-      )}
       {r.observaciones && <div className="mt-0.5 text-slate-500 italic">«{r.observaciones}»</div>}
       {r.incluye.length > 0 && <div className="mt-0.5 text-slate-400">Incluye: {r.incluye.join(', ')}</div>}
       <Adjuntos items={r.adjuntos} />

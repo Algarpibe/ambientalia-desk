@@ -9,10 +9,10 @@
  * número de ticket de Zoho ya no existe en la base —se enlazaron al equipo por el serial y nada más—,
  * y a esas se les adivina el ticket por cercanía de fecha.
  *
- * Adivinar aquí es aceptable porque el error es visible y reversible: la remisión sigue enseñando su
- * fecha y su contenido, y va MARCADA como suposición. Lo que no sería aceptable es adivinar callando,
- * porque un equipo con dos servicios seguidos puede recibir la remisión bajo el ticket equivocado y
- * nadie tendría motivo para dudar.
+ * Adivinar aquí es reversible: la remisión sigue enseñando su fecha y su contenido, así que un
+ * emparejamiento malo se ve leyendo. Aun así el resultado dice si fue supuesto (`porFecha`), y eso se
+ * conserva aunque la pantalla ya no lo pinte — un equipo con dos servicios seguidos puede recibir la
+ * remisión bajo el ticket equivocado, y ese dato es lo único que permitiría encontrarlo después.
  */
 export function ticketDeRemision(
   rem: { ticketId: string | null; cuando: string | null },

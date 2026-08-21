@@ -486,8 +486,12 @@ export interface HistorialRemision {
    * Que la remisión se colgó de un ticket ADIVINANDO por fecha, porque no consta de cuál es.
    *
    * Pasa con las históricas cuyo número de ticket de Zoho ya no existe en la base: se enlazaron al
-   * equipo por el serial y nada más. Se marca en pantalla en vez de disimularlo — si el equipo tuvo
-   * dos servicios seguidos, la suposición puede ser la equivocada, y quien lo lea debe poder dudar.
+   * equipo por el serial y nada más. Si el equipo tuvo dos servicios seguidos, la suposición puede ser
+   * la equivocada.
+   *
+   * Hoy NO se pinta —el usuario pidió quitar el aviso de la hoja de vida—, pero se sigue calculando y
+   * viaja con la remisión: es lo único que distingue una asociación cierta de una supuesta, y
+   * recalcularla más tarde exigiría rehacer el emparejamiento entero.
    */
   asociadaPorFecha?: boolean
   adjuntos: Attachment[]

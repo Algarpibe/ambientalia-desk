@@ -307,7 +307,8 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
    * Para quien lee una hoja de vida, recibir el equipo es un paso del servicio igual que
    * diagnosticarlo; en tarjetas aparte parecían otra cosa de otro rango. A qué ticket va cada una lo
    * decide `ticketDeRemision`, que es donde se puede probar: casi todas lo llevan escrito, y las
-   * históricas huérfanas se cuelgan de la más cercana en fecha, marcadas como suposición.
+   * históricas huérfanas se cuelgan de la más cercana en fecha, con `asociadaPorFecha` para dejar
+   * constancia de que fue una suposición (el dato viaja aunque la pantalla ya no lo pinte).
    *
    * La que no encuentra ticket se queda suelta en la cronología: un equipo puede tener remisiones sin
    * un solo ticket en la base, y esconderlas sería peor que enseñarlas fuera de sitio.
