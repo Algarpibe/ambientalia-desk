@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
-import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
-import { etapasDesdeHistoria } from '@ambientalia/shared'
+import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition, PasoHojaDeVida } from '@ambientalia/shared'
+import { etapasDesdeHistoria, ticketDeRemision } from '@ambientalia/shared'
 import { esCreacion, iso, json, porFechaDesc } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
@@ -296,14 +296,50 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
     ticket: {
       id: r.id, number: `#${r.number}`, subject: r.subject ?? '', status: r.status, statusType: r.status_type ?? null,
       createdAt: iso(r.created_time), tecnico: r.agent_name ?? null, codigoServicio: r.codigo_servicio ?? null,
-      tipoServicio: r.tipo_servicio ?? null, transitions: byTicket.get(r.id) ?? [],
+      tipoServicio: r.tipo_servicio ?? null, pasos: [],
     } as HistorialTicket,
   }))
   const deRemisiones = await remisionesDelEquipo(db, id, serial)
 
+  /*
+   * Cada remisión se mete DENTRO de la tarjeta de su ticket, al mismo nivel que las etapas.
+   *
+   * Para quien lee una hoja de vida, recibir el equipo es un paso del servicio igual que
+   * diagnosticarlo; en tarjetas aparte parecían otra cosa de otro rango. A qué ticket va cada una lo
+   * decide `ticketDeRemision`, que es donde se puede probar: casi todas lo llevan escrito, y las
+   * históricas huérfanas se cuelgan de la más cercana en fecha, marcadas como suposición.
+   *
+   * La que no encuentra ticket se queda suelta en la cronología: un equipo puede tener remisiones sin
+   * un solo ticket en la base, y esconderlas sería peor que enseñarlas fuera de sitio.
+   */
+  const candidatos = deTickets.map((t) => ({ id: t.ticket.id, createdAt: t.ticket.createdAt ?? null }))
+  const porTicket = new Map<string, HistorialRemision[]>()
+  const sueltas: Array<{ at: string | null; remision: HistorialRemision }> = []
+  for (const r of deRemisiones) {
+    // Se empareja por la FECHA de la remisión —el día del servicio— y no por `created_at`, que en las
+    // históricas es el día en que se importaron y no dice nada del equipo.
+    const destino = ticketDeRemision({ ticketId: r.remision.ticketId, cuando: r.remision.fecha ?? r.at }, candidatos)
+    if (!destino) { sueltas.push(r); continue }
+    const lista = porTicket.get(destino.ticketId) ?? []
+    lista.push(destino.porFecha ? { ...r.remision, asociadaPorFecha: true } : r.remision)
+    porTicket.set(destino.ticketId, lista)
+  }
+
+  for (const t of deTickets) {
+    const conFecha: Array<{ at: string | null; paso: PasoHojaDeVida }> = [
+      ...(byTicket.get(t.ticket.id) ?? []).map((etapa) => ({ at: etapa.performedAt, paso: { clase: 'etapa' as const, etapa } })),
+      ...(porTicket.get(t.ticket.id) ?? []).map((remision) => ({ at: remision.fecha, paso: { clase: 'remision' as const, remision } })),
+    ]
+    // De la más vieja a la más nueva, que es como se lee un historial de servicio. Las etapas ya
+    // venían así; sin reordenar, las remisiones se irían todas al final.
+    t.ticket.pasos = conFecha
+      .sort((a, b) => Date.parse(a.at ?? '') - Date.parse(b.at ?? ''))
+      .map((x) => x.paso)
+  }
+
   const paradas: Array<{ at: string | null; entrada: EntradaHojaDeVida }> = [
     ...deTickets.map((t) => ({ at: t.at, entrada: { clase: 'ticket' as const, ticket: t.ticket } })),
-    ...deRemisiones.map((r) => ({ at: r.at, entrada: { clase: 'remision' as const, remision: r.remision } })),
+    ...sueltas.map((r) => ({ at: r.at, entrada: { clase: 'remision' as const, remision: r.remision } })),
   ]
   const cronologia = paradas.sort(porFechaDesc((p) => p.at)).map((p) => p.entrada)
   return { equipo, cronologia }

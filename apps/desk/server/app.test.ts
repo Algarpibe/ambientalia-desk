@@ -2053,9 +2053,13 @@ describe('Gestión de equipos (Subsistema F)', () => {
     const res = await request(app).get(`/api/equipos/${eqId}/historial`).set('Cookie', cookie)
     expect(res.status).toBe(200)
     expect(res.body.equipo.serial).toBe('SN-H')
-    // La remisión es posterior al ticket, así que encabeza la cronología: las dos fuentes van mezcladas.
-    expect(res.body.cronologia[0]).toMatchObject({ clase: 'remision', remision: { id: 'rem-h', ticketNumero: '#777' } })
-    expect(res.body.cronologia[1]).toMatchObject({ clase: 'ticket', ticket: { id: 'h1', number: '#777' } })
+    // La cronología es de TICKETS, y la remisión va dentro del suyo: recibir el equipo es un paso del
+    // servicio, no un suceso de otro rango que merezca su propia tarjeta al mismo nivel.
+    expect(res.body.cronologia).toHaveLength(1)
+    expect(res.body.cronologia[0]).toMatchObject({ clase: 'ticket', ticket: { id: 'h1', number: '#777' } })
+    expect(res.body.cronologia[0].ticket.pasos).toEqual([
+      { clase: 'remision', remision: expect.objectContaining({ id: 'rem-h', ticketNumero: '#777' }) },
+    ])
     expect((await request(app).get('/api/equipos/eq-nope/historial').set('Cookie', cookie)).status).toBe(404)
     expect((await request(app).get(`/api/equipos/${eqId}/historial`)).status).toBe(401)
   })

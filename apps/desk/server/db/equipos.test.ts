@@ -4,7 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { upsertEquipo, searchEquipos, getEquipo, countEquipos, type EquipoRow } from './equipos'
 import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull } from './equipos'
 import { getEquipoHistorial } from './equipos'
-import type { EntradaHojaDeVida } from '@ambientalia/shared'
+import type { EntradaHojaDeVida, HistorialTicket } from '@ambientalia/shared'
 import { FROM_STATUS_CREACION } from '@ambientalia/shared'
 
 // Filas al estilo de las que dejó la carga inicial: `client_id` NULL y el cliente solo como texto.
@@ -98,6 +98,8 @@ async function insTicket(id: string, number: number, serial: string | null, equi
 }
 
 /** Los tickets de la cronología, en orden. Casi todas las aserciones miran justo esto. */
+const etapasDe = (t: HistorialTicket) => t.pasos.flatMap((p) => (p.clase === 'etapa' ? [p.etapa] : []))
+const remisionesDe = (t: HistorialTicket) => t.pasos.flatMap((p) => (p.clase === 'remision' ? [p.remision] : []))
 const soloTickets = (h: { cronologia: EntradaHojaDeVida[] }) =>
   h.cronologia.flatMap((e) => (e.clase === 'ticket' ? [e.ticket] : []))
 
@@ -114,7 +116,7 @@ describe('getEquipoHistorial', () => {
     expect(soloTickets(h!).map((t) => t.id).sort()).toEqual(['app-1', 'zoho-1'])
     const app1 = soloTickets(h!).find((t) => t.id === 'app-1')!
     expect(app1.number).toBe('#901')
-    expect(app1.transitions.map((x) => x.transitionName)).toEqual(['Habilitar Servicio'])
+    expect(etapasDe(app1).map((x) => x.transitionName)).toEqual(['Habilitar Servicio'])
   })
 
   it('empareja históricos por el serial dentro del asunto (token), sin falsos positivos', async () => {
@@ -141,7 +143,7 @@ describe('getEquipoHistorial', () => {
     )
     const h = await getEquipoHistorial(db, eqId)
     const t = soloTickets(h!)[0]
-    expect(t.transitions.map((x) => [x.transitionName, x.fromStatus, x.toStatus])).toEqual([
+    expect(etapasDe(t).map((x) => [x.transitionName, x.fromStatus, x.toStatus])).toEqual([
       ['Ticket creado', null, null],
       ['Habilitar', 'OV asignada', 'Ingresado'],
     ])
@@ -168,9 +170,12 @@ function insRemision(o: {
 }
 
 describe('getEquipoHistorial · las remisiones en la cronología', () => {
-  // El argumento para hacer esto: el técnico que recibe un Grimm quiere ver todo lo que entró con ese
-  // número de serie, en orden. Por eso es UNA cronología y no dos inventarios.
-  it('mezcla remisiones y tickets en una sola línea, más reciente primero', async () => {
+  /**
+   * El técnico que recibe un Grimm quiere ver todo lo que pasó con ese número de serie, en orden. La
+   * cronología ordena los TICKETS de más reciente a más antiguo, y cada remisión va dentro del suyo:
+   * recibir el equipo es un paso del servicio, no un suceso de otro rango.
+   */
+  it('cada remisión va dentro de su ticket, y los tickets de más reciente a más antiguo', async () => {
     const eqId = await createEquipo(db, { serial: 'SN-M', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Gecelca', clientId: 'c1', modeloId: null })
     await insTicket('t-viejo', 94112, 'SN-M', eqId, 'Finalizado', "'2024-10-03T09:00:00Z'")
     await insRemision({ id: 'rem-vieja', equipoId: eqId, ticketId: 't-viejo', creada: '2024-10-03T08:00:00Z' })
@@ -178,8 +183,11 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
     await insRemision({ id: 'rem-nueva', equipoId: eqId, ticketId: 't-nuevo', creada: '2026-08-06T11:00:00Z' })
 
     const h = await getEquipoHistorial(db, eqId)
+
     expect(h!.cronologia.map((e) => (e.clase === 'ticket' ? e.ticket.id : e.remision.id)))
-      .toEqual(['rem-nueva', 't-nuevo', 't-viejo', 'rem-vieja'])
+      .toEqual(['t-nuevo', 't-viejo'])
+    expect(remisionesDe(soloTickets(h!)[0]).map((r) => r.id)).toEqual(['rem-nueva'])
+    expect(remisionesDe(soloTickets(h!)[1]).map((r) => r.id)).toEqual(['rem-vieja'])
   })
 
   // La misma simetría que ya tienen los tickets. El histórico importado resolvió `equipo_id` cruzando
@@ -195,24 +203,31 @@ describe('getEquipoHistorial · las remisiones en la cronología', () => {
     expect(h!.cronologia.map((e) => e.clase === 'remision' && e.remision.id)).toEqual(['por-serial', 'por-id'])
   })
 
-  // Éste es el caso que hizo descartar el anidarlas bajo su ticket: de las 149 históricas, 146 tienen
-  // equipo y solo 90 tienen ticket. Las otras ~56 solo son alcanzables por aquí.
-  it('la remisión sin ticket entra igual, y la que sí lo tiene trae su número', async () => {
+  /**
+   * De las 149 históricas, 146 tienen equipo y solo 90 tienen ticket. Esas ~56 huérfanas fueron el
+   * motivo de enseñarlas antes en tarjetas sueltas; ahora se cuelgan del ticket más cercano en fecha
+   * y van MARCADAS, que es la diferencia entre suponer y suponer a escondidas.
+   */
+  it('la que tiene ticket va a ese; la huérfana se cuelga por fecha y queda marcada', async () => {
     const eqId = await createEquipo(db, { serial: 'SN-H', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'ACME', clientId: 'c1', modeloId: null })
     await insTicket('t-1', 777, 'SN-H', eqId, 'Ingresado', "'2026-08-05T10:00:00Z'")
     await insRemision({ id: 'con-ticket', equipoId: eqId, ticketId: 't-1', creada: '2026-08-05T11:00:00Z' })
     await insRemision({ id: 'sin-ticket', equipoId: eqId, creada: '2025-03-12T12:00:00Z', origen: 'historico' })
 
     const h = await getEquipoHistorial(db, eqId)
-    const rems = h!.cronologia.flatMap((e) => (e.clase === 'remision' ? [e.remision] : []))
-    expect(rems.map((r) => [r.id, r.ticketNumero, r.origen])).toEqual([
-      ['con-ticket', '#777', 'app'],
-      ['sin-ticket', null, 'historico'],
+    const rems = remisionesDe(soloTickets(h!).find((t) => t.id === 't-1')!)
+
+    // Las dos comparten el mismo día de servicio, así que empatan al ordenar y mandan en el orden en
+    // que llegan. Lo que fija el test no es ese orden, sino que las dos acaban dentro del ticket.
+    expect(rems.map((r) => [r.id, r.ticketNumero, r.origen, r.asociadaPorFecha])).toEqual([
+      ['con-ticket', '#777', 'app', undefined],
+      ['sin-ticket', null, 'historico', true],
     ])
     // La fecha que se enseña es la del SERVICIO, no el instante en que se registró.
-    expect(rems[0].fecha).toBe('2026-08-04')
-    expect(rems[0].tecnico).toBe('Julián Maya')
-    expect(rems[0].incluye).toEqual(['cabezal', 'tubo'])
+    const conTicket = rems.find((r) => r.id === 'con-ticket')!
+    expect(conTicket.fecha).toBe('2026-08-04')
+    expect(conTicket.tecnico).toBe('Julián Maya')
+    expect(conTicket.incluye).toEqual(['cabezal', 'tubo'])
   })
 
   // Misma regla que en CONVERSACIONES: la hoja de vida es el relato del equipo, y una anulada es un
@@ -288,7 +303,7 @@ describe('getEquipoHistorial · etapas venidas de Zoho', () => {
     await evento('zoho-9', COMENTARIO(t), t)
 
     const h = await getEquipoHistorial(db, eqId)
-    const [etapa] = soloTickets(h!).find((x) => x.id === 'zoho-9')!.transitions
+    const [etapa] = etapasDe(soloTickets(h!).find((x) => x.id === 'zoho-9')!)
 
     expect(etapa).toMatchObject({
       transitionName: 'ingreso',
@@ -317,7 +332,7 @@ describe('getEquipoHistorial · etapas venidas de Zoho', () => {
     )
 
     const h = await getEquipoHistorial(db, eqId)
-    const etapas = soloTickets(h!).find((x) => x.id === 'zoho-8')!.transitions
+    const etapas = etapasDe(soloTickets(h!).find((x) => x.id === 'zoho-8')!)
 
     expect(etapas.map((e) => e.transitionName)).toEqual(['ingreso', 'Aprobación'])
   })
@@ -330,9 +345,94 @@ describe('getEquipoHistorial · etapas venidas de Zoho', () => {
     await db.query(`INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at) VALUES ('app-7','Habilitar Servicio','OV asignada','Ingresado','Comercial','Admin',now())`)
 
     const h = await getEquipoHistorial(db, eqId)
-    const etapas = soloTickets(h!).find((x) => x.id === 'app-7')!.transitions
+    const etapas = etapasDe(soloTickets(h!).find((x) => x.id === 'app-7')!)
 
     expect(etapas.map((e) => e.transitionName)).toEqual(['Habilitar Servicio'])
     expect(etapas[0].comentario).toBeUndefined()
+  })
+})
+
+/**
+ * Las remisiones van DENTRO de la tarjeta de su ticket, al mismo nivel que las etapas.
+ *
+ * Antes salían en tarjetas sueltas al nivel del ticket, y eso las hacía parecer otra cosa de otro
+ * rango: para quien lee una hoja de vida, recibir el equipo es un paso del servicio igual que
+ * diagnosticarlo.
+ */
+describe('getEquipoHistorial · remisiones dentro del ticket', () => {
+  const insRemision = (id: string, ticketId: string, equipoId: string | null, fecha: string, origen = 'app') =>
+    db.query(
+      `INSERT INTO remisiones (id,ticket_id,tipo,fecha,tipo_servicio,equipo_id,serial,incluye,creado_por,estado,origen,created_at)
+       VALUES ($1,$2,'entrada',$3,'Diagnóstico',$4,'SN-R','[]','Julián','ok',$5,$3)`,
+      [id, ticketId, new Date(fecha), equipoId, origen],
+    )
+
+  it('la remisión de un ticket sale dentro de su tarjeta, no fuera', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-R', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'AGQ', clientId: 'c1', modeloId: null })
+    await insTicket('app-r1', 970, 'SN-R', eqId, 'Por Facturar')
+    await insRemision('rem-1', 'app-r1', eqId, '2026-07-15T10:00:00.000Z')
+
+    const h = await getEquipoHistorial(db, eqId)
+
+    // Ya no queda ninguna tarjeta de remisión al nivel del ticket.
+    expect(h!.cronologia.filter((e) => e.clase === 'remision')).toEqual([])
+    const ticket = soloTickets(h!).find((t) => t.id === 'app-r1')!
+    expect(remisionesDe(ticket).map((r) => r.id)).toEqual(['rem-1'])
+    expect(remisionesDe(ticket)[0].asociadaPorFecha).toBeUndefined()
+  })
+
+  /**
+   * Las etapas y las remisiones se mezclan por fecha en una sola línea de tiempo: la remisión de
+   * entrada es anterior al diagnóstico, y enseñarla detrás contaría el servicio al revés.
+   */
+  it('se ordenan mezcladas con las etapas, por fecha', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-R', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'AGQ', clientId: 'c1', modeloId: null })
+    await insTicket('app-r2', 971, 'SN-R', eqId, 'Por Facturar')
+    await insRemision('rem-2', 'app-r2', eqId, '2026-07-15T10:00:00.000Z')
+    await db.query(
+      `INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at)
+       VALUES ('app-r2','Habilitar Servicio','OV asignada','Ingresado','Comercial','Ángela',$1)`,
+      [new Date('2026-07-24T10:00:00.000Z')],
+    )
+
+    const h = await getEquipoHistorial(db, eqId)
+    const pasos = soloTickets(h!).find((t) => t.id === 'app-r2')!.pasos
+
+    expect(pasos.map((p) => p.clase)).toEqual(['remision', 'etapa'])
+  })
+
+  /**
+   * El caso del #970: una remisión histórica cuyo número de ticket de Zoho ya no existe en la base.
+   * Se enlazó al equipo por el serial y a ningún ticket, así que se cuelga de la más cercana en fecha
+   * — y va MARCADA, porque si el equipo tuvo dos servicios seguidos la suposición puede ser la mala.
+   */
+  it('una remisión huérfana se cuelga del ticket más cercano y lo dice', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-R', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'AGQ', clientId: 'c1', modeloId: null })
+    await insTicket('app-viejo', 900, 'SN-R', eqId, 'Finalizado', "'2026-01-10'")
+    await insTicket('app-cerca', 970, 'SN-R', eqId, 'Por Facturar', "'2026-07-24'")
+    // `ticket_id` apunta a un ticket que no existe: es lo que deja la importación cuando el número de
+    // Zoho no casa con nada.
+    await insRemision('rem-h', 'no-existe', eqId, '2026-07-15T10:00:00.000Z', 'historico')
+
+    const h = await getEquipoHistorial(db, eqId)
+
+    expect(h!.cronologia.filter((e) => e.clase === 'remision')).toEqual([])
+    const cerca = soloTickets(h!).find((t) => t.id === 'app-cerca')!
+    expect(remisionesDe(cerca).map((r) => r.id)).toEqual(['rem-h'])
+    expect(remisionesDe(cerca)[0].asociadaPorFecha).toBe(true)
+    expect(remisionesDe(soloTickets(h!).find((t) => t.id === 'app-viejo')!)).toEqual([])
+  })
+
+  /**
+   * Un equipo con remisiones y sin un solo ticket en la base: no hay dónde colgarlas, así que se
+   * quedan sueltas. Esconderlas sería peor que enseñarlas fuera de sitio — son lo único que consta.
+   */
+  it('sin tickets donde colgarla, la remisión se queda suelta', async () => {
+    const eqId = await createEquipo(db, { serial: 'SN-R', marca: 'Grimm', modelo: 'EDM', tipo: 'Monitor', clienteNombre: 'AGQ', clientId: 'c1', modeloId: null })
+    await insRemision('rem-sola', 'no-existe', eqId, '2026-07-15T10:00:00.000Z', 'historico')
+
+    const h = await getEquipoHistorial(db, eqId)
+
+    expect(h!.cronologia.filter((e) => e.clase === 'remision')).toHaveLength(1)
   })
 })

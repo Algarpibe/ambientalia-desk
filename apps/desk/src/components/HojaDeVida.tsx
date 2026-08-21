@@ -1,4 +1,4 @@
-import type { EquipoHistorial, HistorialRemision, HistorialTicket } from '@ambientalia/shared'
+import type { EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchEquipoHistorial } from '../api/client'
 import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
@@ -69,34 +69,72 @@ function TarjetaTicket({ t }: { t: HistorialTicket }) {
       <div className="text-[12px] text-slate-500 mt-0.5">
         {meta([t.status, t.tecnico ?? 'Sin asignar', t.codigoServicio, fmtFecha(t.createdAt ?? null)])}
       </div>
-      {t.transitions.length > 0 && (
+      {t.pasos.length > 0 && (
         <ol className="mt-3 border-l-2 border-slate-100 pl-4 flex flex-col gap-2">
-          {t.transitions.map((x, i) => (
-            <li key={i} className="text-[12px] text-slate-600 relative">
-              <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-blue-400" />
-              <b>{x.transitionName ?? 'Transición'}</b>
-              {(x.fromStatus || x.toStatus) && <span> · {x.fromStatus ?? '—'} → {x.toStatus ?? '—'}</span>}
-              {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).length > 0 && (
-                <span className="text-slate-400"> · {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).join(' · ')}</span>
-              )}
-              {/* Lo que se hizo, que es lo que de verdad busca quien abre una hoja de vida. Llega en
-                  TEXTO plano desde el servidor y se pinta como texto: React lo escapa, así que no
-                  hace falta DOMPurify como en los paneles que sí reciben HTML. */}
-              {x.comentario && (
-                <div className="mt-0.5 text-slate-500 italic">«{x.comentario}»</div>
-              )}
-              {x.adjuntos && x.adjuntos.length > 0 && (
-                <div className="mt-0.5 text-slate-400">
-                  {/* Solo los nombres: los ficheros viven en Zoho y esta pantalla no los descarga.
-                      Verlos nombrados ya dice qué informe se emitió y permite buscarlo en el Drive. */}
-                  {x.adjuntos.join(' · ')}
-                </div>
-              )}
-            </li>
+          {t.pasos.map((p, i) => p.clase === 'remision' ? (
+            <PasoRemision key={i} r={p.remision} />
+          ) : (
+            <PasoEtapa key={i} x={p.etapa} />
           ))}
         </ol>
       )}
     </div>
+  )
+}
+
+/** Una etapa del flujo, dentro de la línea de tiempo del ticket. */
+function PasoEtapa({ x }: { x: HistorialTransition }) {
+  return (
+    <li className="text-[12px] text-slate-600 relative">
+      <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-blue-400" />
+      <b>{x.transitionName ?? 'Transición'}</b>
+      {(x.fromStatus || x.toStatus) && <span> · {x.fromStatus ?? '—'} → {x.toStatus ?? '—'}</span>}
+      {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).length > 0 && (
+        <span className="text-slate-400"> · {[x.area, x.performedBy, fmtFecha(x.performedAt)].filter(Boolean).join(' · ')}</span>
+      )}
+      {/* Lo que se hizo, que es lo que de verdad busca quien abre una hoja de vida. Llega en
+          TEXTO plano desde el servidor y se pinta como texto: React lo escapa, así que no
+          hace falta DOMPurify como en los paneles que sí reciben HTML. */}
+      {x.comentario && (
+        <div className="mt-0.5 text-slate-500 italic">«{x.comentario}»</div>
+      )}
+      {x.adjuntos && x.adjuntos.length > 0 && (
+        <div className="mt-0.5 text-slate-400">
+          {/* Solo los nombres: los ficheros viven en Zoho y esta pantalla no los descarga.
+              Verlos nombrados ya dice qué informe se emitió y permite buscarlo en el Drive. */}
+          {x.adjuntos.join(' · ')}
+        </div>
+      )}
+    </li>
+  )
+}
+
+/**
+ * Una remisión, dentro de la línea de tiempo del ticket y al mismo nivel que las etapas.
+ *
+ * Antes iba en una tarjeta suelta al nivel del ticket, y eso la hacía parecer otra cosa de otro rango:
+ * para quien lee una hoja de vida, recibir el equipo es un paso del servicio igual que diagnosticarlo.
+ * Conserva su punto en azul más fuerte para que siga distinguiéndose de una etapa del flujo.
+ */
+function PasoRemision({ r }: { r: HistorialRemision }) {
+  return (
+    <li className="text-[12px] text-slate-600 relative">
+      <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-[#2C7BE5]" />
+      <b className="text-[#2C7BE5]">Remisión de {r.tipo}</b>
+      {[r.tipoServicio, r.tecnico, fmtFecha(r.fecha)].filter(Boolean).length > 0 && (
+        <span className="text-slate-400"> · {[r.tipoServicio, r.tecnico, fmtFecha(r.fecha)].filter(Boolean).join(' · ')}</span>
+      )}
+      {r.origen === 'historico' && <span className="text-slate-400"> · Del histórico</span>}
+      {/* Se dice en pantalla que el ticket es una suposición, no se disimula: si el equipo tuvo dos
+          servicios seguidos, la remisión puede haber caído bajo el ticket equivocado, y quien lo lea
+          tiene que poder dudar. */}
+      {r.asociadaPorFecha && (
+        <div className="mt-0.5 text-amber-600">Sin ticket propio · asociada por cercanía de fecha</div>
+      )}
+      {r.observaciones && <div className="mt-0.5 text-slate-500 italic">«{r.observaciones}»</div>}
+      {r.incluye.length > 0 && <div className="mt-0.5 text-slate-400">Incluye: {r.incluye.join(', ')}</div>}
+      <Adjuntos items={r.adjuntos} />
+    </li>
   )
 }
 

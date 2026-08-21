@@ -446,8 +446,20 @@ export interface HistorialTicket {
   tecnico?: string | null
   codigoServicio?: string | null
   tipoServicio?: string | null
-  transitions: HistorialTransition[]
+  /**
+   * Todo lo que le pasó al ticket, en una sola línea de tiempo y por orden.
+   *
+   * Etapas y remisiones van MEZCLADAS y al mismo nivel a propósito: para quien lee una hoja de vida,
+   * recibir el equipo es un paso del servicio igual que diagnosticarlo. Enseñar las remisiones en
+   * tarjetas aparte las hacía parecer otra cosa, de otro rango.
+   */
+  pasos: PasoHojaDeVida[]
 }
+
+/** Un paso de la vida de un ticket: una etapa del flujo o una remisión. */
+export type PasoHojaDeVida =
+  | { clase: 'etapa'; etapa: HistorialTransition }
+  | { clase: 'remision'; remision: HistorialRemision }
 /** Una remisión tal como la cuenta la hoja de vida del equipo. */
 export interface HistorialRemision {
   id: string
@@ -470,6 +482,14 @@ export interface HistorialRemision {
   ticketId: string | null
   /** Ya con almohadilla ("#1000042"), o null: 56 de las históricas no casaron con ningún ticket. */
   ticketNumero: string | null
+  /**
+   * Que la remisión se colgó de un ticket ADIVINANDO por fecha, porque no consta de cuál es.
+   *
+   * Pasa con las históricas cuyo número de ticket de Zoho ya no existe en la base: se enlazaron al
+   * equipo por el serial y nada más. Se marca en pantalla en vez de disimularlo — si el equipo tuvo
+   * dos servicios seguidos, la suposición puede ser la equivocada, y quien lo lea debe poder dudar.
+   */
+  asociadaPorFecha?: boolean
   adjuntos: Attachment[]
 }
 
