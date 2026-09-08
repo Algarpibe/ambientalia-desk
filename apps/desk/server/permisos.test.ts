@@ -2,12 +2,15 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
-import { AREAS, TRANSITIONS, canExecuteTransition, type Transition } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, canExecuteTransition } from '@ambientalia/shared'
 import { requireAuth, requireAdmin, requireArea } from './auth/middleware'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
-import { db, instalarArnes, appWith, userCookie } from './testing/appHarness'
+// `valoresValidos` vive en el arnés: esta matriz y la de ejecución (`transicionesEjecucion.test.ts`)
+// barren las mismas 34 transiciones, y dos copias del derivador de valores habrían divergido en la
+// primera etapa con un `kind` nuevo.
+import { db, instalarArnes, appWith, userCookie, valoresValidos } from './testing/appHarness'
 
 instalarArnes()
 
@@ -105,29 +108,6 @@ describe('matriz área × transición, contra el servidor', () => {
     expect(observado).toEqual(esperado)
   }, 60_000)
 })
-
-/**
- * Los valores mínimos que dejan pasar el chequeo de obligatorios de `buildTransitionPlan`.
- *
- * Se derivan del `kind` de cada campo, no de una tabla por transición: la matriz tiene que seguir
- * funcionando cuando F1B-06 añada etapas con campos nuevos. Sin esto, las transiciones permitidas
- * contestarían 422 —que llega DESPUÉS del 403— y la matriz parecería correcta enseñando el color
- * equivocado en la mitad de las casillas.
- */
-function valoresValidos(t: Transition, n: number): Record<string, unknown> {
-  const values: Record<string, unknown> = { comment: 'matriz de permisos' }
-  for (const f of t.fields) {
-    if (!f.required) continue
-    if (f.kind === 'date') values[f.key] = '2026-01-15'
-    else if (f.kind === 'number') values[f.key] = 3
-    else if (f.kind === 'checkbox') values[f.key] = true
-    else if (f.kind === 'select') values[f.key] = f.options?.[0] ?? ''
-    // La orden de venta es única por ticket —una OV, un ticket—, así que cada caso lleva la suya.
-    else if (f.kind === 'ordenVenta') values[f.key] = `OV-MTX-${n}`
-    else values[f.key] = `MTX-${n}`
-  }
-  return values
-}
 
 /**
  * LAS TRES GUARDAS DE `auth/middleware.ts`, PROBADAS DIRECTAMENTE.
