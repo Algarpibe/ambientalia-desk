@@ -1,0 +1,12 @@
+# docs/artefactos/blueprintserviciotecnico.html es un artefacto GENERADO, no fuente
+# escrita a mano. Tiene líneas de hasta 324.772 caracteres: 59 de sus 4.432 líneas
+# superan los 10.000.
+#
+# -diff  : sin esto, cada revisión del fichero ensucia el diff con 4.432 líneas
+#          ilegibles. Nadie las lee y tapan el resto del cambio.
+# -merge : sin esto, un conflicto sobre una línea de ~300 KB tendría que resolverse
+#          a mano, cosa impracticable. Y hay DOS SESIONES trabajando sobre este
+#          repositorio a la vez, así que el conflicto no es hipotético.
+#
+# Ver docs/artefactos/NOTA.md.
+docs/artefactos/*.html -diff -merge

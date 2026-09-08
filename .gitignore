@@ -31,3 +31,10 @@ dist-ssr
 # Worktrees locales (huérfanos de superpowers) y datos no versionados
 .claude/worktrees/
 data/
+
+# Índices locales de herramienta. Son CACHÉ, no fuente: se regeneran enteros desde
+# el código y desde las skills instaladas, dependen de la ruta de este checkout y
+# quedan obsoletos en cuanto alguien edita un fichero. Versionarlos daría conflictos
+# en cada commit y, peor, ofrecería a quien clone un índice que no describe su árbol.
+.codegraph/
+.atl/
