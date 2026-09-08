@@ -33,7 +33,10 @@ jobs:
       # Si esto rompe: arregla el aviso nuevo, o baja el techo si arreglaste otros. Subirlo exige
       # una línea de justificación en el mensaje del commit.
       - run: npm run lint -- --max-warnings 158
-      - run: npm test
+      # Corre la suite UNA vez y además exige el umbral de cobertura. El umbral y, sobre todo, la
+      # nota de qué NO puede ver ese número viven en `vitest.config.ts`; léela antes de sacar
+      # conclusiones del porcentaje.
+      - run: npm run test:coverage
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
       - run: npm run build
