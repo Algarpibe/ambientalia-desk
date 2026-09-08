@@ -10,10 +10,14 @@
 
 | Dato | Valor |
 |---|---|
-| Tanda | F0-01 |
-| Base | commit `a3a8f03` |
-| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) |
+| Tanda | F0-01, ampliado por **F0-02** |
+| Base | commit `a3a8f03` (F0-01) · commit `ad1875b` (las cinco de F0-02, entradas 8–12) |
+| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) |
 | Fecha | 2026-09-08 |
+
+> **Por qué las de F0-02 viven en el fichero de F0-01 y no en uno propio.** El canal hacia el maestro
+> es **uno**, y partirlo por tanda obligaría a Gerencia a abrir dos ficheros para pegar en el mismo
+> anexo. El nombre conserva la tanda que lo creó; la procedencia de cada entrada va en su título.
 
 ---
 
@@ -113,10 +117,11 @@ WHERE status = 'Por Entregar / Sin facturar' OR id IN (
 
 ---
 
-## Anexo I — siete correcciones trazables
+## Anexo I — doce correcciones trazables
 
-Las siete proceden de **F0-00**. Van en el registro del Anexo I con su disposición, y el cambio se
-aplica en el sitio que indica la columna «Dónde».
+Las **siete primeras** proceden de **F0-00**. Las **cinco últimas (8–12)** proceden de **F0-02**, al
+destilar la spec as-built de `transitions-st` contra el código. Van en el registro del Anexo I con su
+disposición, y el cambio se aplica en el sitio que indica la columna «Dónde».
 
 | # | Corrección | Dónde |
 |---|---|---|
@@ -127,6 +132,11 @@ aplica en el sitio que indica la columna «Dónde».
 | 5 | §3.e.3 y §8 del baseline: `vitest.config.ts:14,16-19` → **`:16`** (environment) y **`:17-20`** (include) | Baseline |
 | 6 | G.5 col. 42: `habilitar_servicio` **no** escribe `Fecha Orden de Compra` (`transitions.ts:179-180`, divergencia documentada y razonada); col. 43 incompleta —también la escribe `aprobacion_y_repuestos` | Anexo G |
 | 7 | §6.5 y §8 del baseline: las cuatro capacidades «sin diseño» sí tienen fuentes | Baseline |
+| 8 | M1.9.2, fila `Aprobación`: el «**+ Director Técnico**» **no está implementado**. Retirarlo, o decidirlo y llevarlo al código | Maestro (`:1665`) |
+| 9 | M1.3.8: la aritmética de alcanzabilidad mezcla dos convenciones de recuento, y el 20 **necesita el paso sin botón** | Maestro (`:1413`) |
+| 10 | M1.9.2 «treinta y una» es **correcta**: **no tocar el maestro**. Lo que está mal son **dos** cuentas del docblock del código (`transitions.ts:262` y `:265`) | **Ninguno del maestro** — deuda de código, destino F1B-06 |
+| 11 | M1.3.3: los dos pasos sin botón **sí** están declarados en el archivo de transiciones; lo que no está ahí es su `from`/`to` | Maestro (`:1151`) |
+| 12 | M1.10: el pendiente «falta por confirmar que registre siempre el usuario» **está cerrado**. Y el Anexo H debe reflejarlo | Maestro (`:1677`) · Anexo H |
 
 ### 1 · M1.9 — diez → ocho transiciones compartidas
 
@@ -359,6 +369,195 @@ niveles de criterio de falla, N1/N2/N3, encadenamiento, captura tipada, foto por
 > **Advertencia de trazabilidad.** `docs/analisis-tickets/` **no está en el repositorio**:
 > `git ls-files docs/analisis-tickets/` devuelve vacío. Quien clone el repositorio no puede verificar
 > esta corrección hasta que se versione `docs/`, que es una decisión abierta de Gerencia.
+
+---
+
+## Las cinco de F0-02 (8–12)
+
+> Proceden de destilar `openspec/specs/transitions-st/spec.md` contra el código, sobre el commit
+> `ad1875b`. Cada una lleva la cita del maestro y la evidencia de primera mano en el código, en la
+> misma forma que las siete anteriores. La numeración `M-n` con la que aparecen en la spec se indica
+> para poder cruzarlas.
+
+### 8 · M1.9.2, fila `Aprobación` — el «+ Director Técnico» no existe en el código *(M-2 en la spec)*
+
+**Texto actual, `.md` líneas 1663-1665** (tabla de las tres etapas que proponen destinatario, dentro
+de M1.9.2, cuyo encabezado está en la línea 1651). La celda «Por qué» de la fila `Aprobación`:
+
+> «El cliente aprobó y el trabajo vuelve al taller. Ahí no hay puesto fijo al que mandarlo: hay que
+> devolvérselo a quien diagnosticó ese ticket. **+ Director Técnico**»
+
+**Texto propuesto:** retirar el «+ Director Técnico», dejando
+
+> «El cliente aprobó y el trabajo vuelve al taller. Ahí no hay puesto fijo al que mandarlo: hay que
+> devolvérselo a quien diagnosticó ese ticket.»
+
+**Evidencia de primera mano en el código.** `packages/shared/src/transitions.ts:267-275` declara el
+mapa completo de propuestas de derivación. Son tres entradas, y la de `aprobacion` es:
+
+```ts
+aprobacion: { tipo: 'primerDerivado' },   // transitions.ts:274
+```
+
+`DerivacionPorDefecto` (`transitions.ts:51-53`) es una **unión de dos variantes** —`{ tipo: 'cargo';
+cargo: string }` o `{ tipo: 'primerDerivado' }`—, y el propio fichero explica por qué es unión y no
+dos campos sueltos: «para que "las dos cosas a la vez" ni siquiera se pueda escribir: serían dos
+propuestas compitiendo por la misma casilla y habría que inventar un orden entre ellas»
+(`transitions.ts:40-42`). O sea que el «+ Director Técnico» **no es que falte por implementar: hoy es
+inexpresable** en el tipo.
+
+**Qué hay que decidir, no sólo corregir.** Por su posición —al final de una celda de tabla, después
+del punto— parece resto de edición del `.docx`. Pero si es una decisión real de Gerencia, entonces:
+
+- no es una corrección de texto sino **alcance nuevo** para F1C-05, y
+- obliga a cambiar `DerivacionPorDefecto` para admitir dos destinatarios, con el orden entre ellos
+  decidido explícitamente, que es exactamente lo que el diseño del tipo quiso evitar.
+
+Las dos primeras filas de esa misma tabla (`escalado_a_revision` → `Director Técnico`,
+`escalado_a_comercial` → `Coordinador Comercial`) **sí** coinciden con el código
+(`transitions.ts:269`, `:271`).
+
+### 9 · M1.3.8 — la aritmética de alcanzabilidad mezcla dos convenciones *(M-3 en la spec)*
+
+**Texto actual, `.md` línea 1413** (apartado M1.3.8, encabezado en la línea 1412):
+
+> «Los 21 estados son alcanzables desde alguna de las dos entradas: **18 desde OV asignada, y desde
+> Ticket creado los otros 20 —todos menos OV asignada—**. No hay estados huérfanos.»
+
+**Texto propuesto:** sustituir por
+
+> «Los 21 estados son alcanzables desde alguna de las dos entradas. Contando **sólo transiciones con
+> botón**, cada entrada alcanza **18 estados además de sí misma**: desde `OV asignada` quedan fuera
+> `Ticket creado` y `Remisión creada`; desde `Ticket creado`, `OV asignada` y `Remisión creada`.
+> **`Remisión creada` no es alcanzable por ningún botón**: su única entrada es el paso sin botón de
+> M1.3.3, y sumándolo `Ticket creado` alcanza los 20 restantes. No hay estados huérfanos ni
+> callejones sin salida más allá de `Finalizado`.»
+
+**Evidencia de primera mano en el código.** Cierre transitivo sobre las 34 transiciones de
+`packages/shared/src/transitions.ts:171-256`:
+
+| Desde | Alcanzados, contando el origen | No alcanzados |
+|---|---|---|
+| `OV asignada` | 19 | `Ticket creado`, `Remisión creada` |
+| `Ticket creado`, sólo botones | 19 | `OV asignada`, `Remisión creada` |
+| `Ticket creado` + el paso sin botón | 20 | `OV asignada` |
+
+**Qué está mal, exactamente.** Las dos cifras del maestro son defendibles por separado y
+**contradictorias juntas**: el 18 excluye el estado de origen y el 20 lo incluye. Y el 20 sólo se
+alcanza contando el paso sin botón de `estadoPorRemision.ts:52-60`, que no es una transición del
+grafo. En la misma base que la primera cifra —botones, sin contar el origen— son **18 y 18**.
+
+La conclusión del maestro se sostiene: no hay huérfanos. Lo que no se sostiene es el recuento, y una
+cifra que no se puede reproducir es la clase de dato que la R05 ya vio envejecer en silencio.
+
+*(Dato que el maestro no dice y conviene que diga: `Finalizado` es el único estado sin salida —
+`invariantesGrafo.test.ts:62-66`—, lo que ya afirma M1.3.8 en la línea 1414 y aquí queda respaldado
+por prueba.)*
+
+### 10 · M1.9.2 «treinta y una» es correcta — **NO TOCAR el maestro** *(M-5 en la spec)*
+
+Esta entrada va en el registro **para cerrar la duda, no para cambiar el maestro**. Es el caso
+inverso a las demás: el maestro tiene razón y el código no.
+
+**Texto actual, `.md` línea 1653** (apartado M1.9.2):
+
+> «Las 34 transiciones terminan en una casilla «Derivado a», y ninguna la exige. La razón es
+> deliberada: derivar no puede frenar un ticket. **Treinta y una** heredan al responsable que el
+> ticket ya traía; tres proponen a otro»
+
+**Texto propuesto: ninguno.** 34 − 3 = **31**, y la cifra del maestro es exacta.
+
+**Lo que sí está mal está en el código**, y son **dos** cuentas en el mismo docblock de
+`DERIVACION_POR_DEFECTO` (`packages/shared/src/transitions.ts:258-266`):
+
+| Línea | Dice | Es |
+|---|---|---|
+| `transitions.ts:262` | «Heredar al derivado anterior —lo que hacen **las otras 32**—» | **31** |
+| `transitions.ts:265` | «en una lista de tres líneas se ve de un vistazo cuáles pisan lo heredado, y **en 35 declaraciones** no» | **34** |
+
+Es defecto de **comentario, no de comportamiento**: el mapa tiene tres entradas y `TRANSITIONS` tiene
+34, y las dos cosas están probadas (`invariantesGrafo.test.ts:50-54`). El docblock también dice «las
+35 etapas» en `transitions.ts:68` y «las 34 entradas … la 35.ª» en `:283`, que son las mismas dos
+convenciones —34 transiciones o 35 filas del Blueprint de Zoho contando la creación— usadas sin
+avisar en el mismo fichero.
+
+**Destino: F1B-06**, la tanda que toca `transitions.ts`. Queda registrado como comportamiento actual
+en `openspec/specs/transitions-st/spec.md` §3.9. **F0-02 no lo corrige: es código.**
+
+### 11 · M1.3.3 — los dos pasos sin botón sí están declarados en el archivo de transiciones *(M-4 en la spec)*
+
+**Texto actual, `.md` línea 1151** (apartado M1.3.3, encabezado en la línea 1150):
+
+> «Dos de los 38 pasos del mapa no son transiciones con botón: los escribe el servidor cuando ocurre
+> algo con la remisión, sin que nadie pulse nada. **Viven en apps/desk/server/db/estadoPorRemision.ts,
+> no en el archivo de transiciones.**»
+
+**Texto propuesto:** sustituir la última frase por
+
+> «Su **declaración** vive en el archivo de transiciones —`packages/shared/src/transitions.ts`, junto
+> a las 34—, y **quien los aplica** es `apps/desk/server/db/estadoPorRemision.ts`. Lo que no tienen
+> es `from` ni `to`: no son grafo, y por eso quedan fuera de la lista que la pantalla ofrece como
+> botones.»
+
+**Evidencia de primera mano en el código.**
+
+- Las dos constantes, con `id`, `name` y `area`, están en `transitions.ts:150-151`:
+  `TRANSICION_REMISION_CONFIRMADA` y `TRANSICION_REMISION_RETIRADA`. El comentario de `:146-149`
+  dice por qué no están en `TRANSITIONS`: «ahí solo va lo que la interfaz ofrece como botón».
+- `estadoPorRemision.ts:9-12` las **importa** de `@ambientalia/shared`; no las declara.
+- Que no tienen `from` ni `to`, y que no se cuelan en `TRANSITIONS`, está probado:
+  `invariantesGrafo.test.ts:120-127`.
+
+**Por qué importa y no es cosmético.** Quien lea la frase actual buscará las dos pseudo-transiciones
+en `estadoPorRemision.ts` y encontrará dos importaciones. Y, al revés, quien cuente `area:` en
+`transitions.ts` encontrará **36** declaraciones y no 34 — que es la trampa que la entrada 1 de este
+fichero ya tuvo que desactivar con una nota al pie.
+
+### 12 · M1.10 — el pendiente sobre el «quién» de cada transición está cerrado *(M-6 en la spec)*
+
+**Texto actual, `.md` línea 1677** (apartado M1.10, encabezado en la línea 1675). Última frase:
+
+> «Conviene notar que el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por
+> confirmar es que registre siempre el usuario que la ejecutó.**»
+
+**Texto propuesto:** sustituir la última frase por
+
+> «El as-built escribe la marca de tiempo **y el usuario** de cada transición: `performed_by` se
+> escribe en la misma sentencia que el resto de la fila del historial, y está comprobado en las 34
+> transiciones. **Confirmado en F0-04**; queda por decidir el caso de la constante de respaldo, que
+> sólo actúa si la sesión no trae nombre.»
+
+**Evidencia de primera mano en el código.**
+
+- `packages/zoho-sync/src/db/repo.ts:282-286` inserta en `ticket_transitions` las nueve columnas de
+  la fila, `performed_by` incluida, en la misma sentencia que `from_status`, `to_status` y `area`. No
+  hay camino que escriba la fila sin el actor.
+- El actor es el usuario de la sesión: `apps/desk/server/services/ticketService.ts:111`
+  (`const actor = user.name ?? TRANSITION_ACTOR`).
+- Comprobado en **las 34 transiciones**, ejercitando **todos** los `from` de cada una —36 ejecuciones,
+  porque `habilitar_servicio` tiene tres—: `apps/desk/server/transicionesEjecucion.test.ts:312-325`
+  lee `transition_id`, `from_status`, `to_status`, `area` y `performed_by` de la fila resultante.
+
+**El matiz que la corrección debe conservar, no esconder.** `TRANSITION_ACTOR`
+(`apps/desk/server/transitionActor.ts:3`) sigue existiendo como respaldo, con el valor
+`'Equipo Técnico'` y configurable por entorno. Hay **un** camino por el que puede llegar a escribirse
+en el historial, y no es el endpoint de transición: el **callback de n8n** de la remisión
+(`apps/desk/server/routes/remision.ts:320`), que aplica el paso sin botón de M1.3.3. Esa petición **no
+tiene sesión** —n8n no manda la cookie—, así que firma quien creó la remisión y cae al marcador sólo
+si la remisión no trae autor, que es el caso de las históricas (`routes/remision.ts:315-319`).
+
+Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:282` y `:292`— van
+detrás de `requireAuth` y `requireAdmin` (`:275` y `:287`), así que ahí `req.user.name` está siempre
+presente y el `?? TRANSITION_ACTOR` es defensivo, no alcanzable. En el endpoint de transición tampoco
+se alcanza: el middleware exige sesión (`apps/desk/server/routes/tickets.ts:35`).
+
+Decir «confirmado» a secas dejaría el maestro afirmando algo más fuerte de lo que el código sostiene:
+lo confirmado es que **ninguna fila del historial se escribe sin actor**, no que el actor sea siempre
+una persona identificada.
+
+**Y el Anexo H.** La fila de servicio técnico de H.2 (`.md:4493-4496`) y la tabla de correcciones de
+H.3 deberían reflejar que la red de pruebas del motor existe desde F0-04: 110 ficheros y 931 pruebas
+sobre el commit `ad1875b`, frente a los 96 y 830 del baseline.
 
 ---
 
