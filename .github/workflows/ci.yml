@@ -25,7 +25,14 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run lint
+      # Trinquete de avisos: 158 es el total de hoy, no un objetivo. No es control de calidad
+      # —es un total global, así que arreglar diez e introducir diez lo deja igual—: es un tope
+      # de crecimiento, y no lleva holgura a propósito, porque la holgura convierte un trinquete
+      # en un adorno. F0-04 añadió cientos de líneas de prueba sin moverlo.
+      #
+      # Si esto rompe: arregla el aviso nuevo, o baja el techo si arreglaste otros. Subirlo exige
+      # una línea de justificación en el mensaje del commit.
+      - run: npm run lint -- --max-warnings 158
       - run: npm test
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
