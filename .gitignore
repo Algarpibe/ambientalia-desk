@@ -13,6 +13,10 @@ dist-ssr
 *.local
 *.tsbuildinfo
 
+# Informe de cobertura: salida de `npm run test:coverage`. Es el directorio por defecto de vitest
+# —no hay `reportsDirectory` en vitest.config.ts— y se regenera entero en cada corrida.
+coverage/
+
 # Env files
 .env
 .env.local
