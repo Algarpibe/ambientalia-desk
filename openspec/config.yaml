@@ -1,0 +1,404 @@
+# openspec/config.yaml
+# Generado por sdd-init (fase de inicialización). Guía por prompt, no validada por código.
+schema: spec-driven
+
+project: ambientalia-desk
+engram_project: ambientalia-desk
+
+context: |
+  Monorepo TypeScript (workspaces packages/*, apps/*), paquete raíz desk-ambientalia.
+  apps/desk: React 19 + Vite 6 + Tailwind 3.4 (cliente) y API Express 5 (servidor).
+  apps/hub-sync: worker de sincronización con el hub Zoho (Books/CRM).
+  packages/shared: núcleo de dominio compartido (transiciones, permisos, tipos).
+  packages/zoho-sync: sincronización Zoho Desk <-> PostgreSQL.
+  PostgreSQL con DOS ESQUEMAS: `desk` (tickets, ticket_transitions, activities,
+  contacts, accounts, agents, conversations, attachments, ticket_history, equipos)
+  y `public` (catalogo_*, remisiones*, avisos, users, roles, sessions). Un CREATE
+  sin calificar ya aterrizó una tabla en el esquema equivocado en producción.
+  Baseline verificado: commit a3a8f03 (F0-00, 2026-09-07/08).
+
+strict_tdd: true
+
+# Preflight de sesión SDD fijado por el orquestador. Corrige cualquier valor
+# distinto que aparezca en un prompt de arranque (p. ej. "engram" o "auto-chain"
+# heredados de la sesión F0-00): estos son los vigentes.
+session_preflight:
+  execution_mode: interactive
+  artifact_store: hybrid
+  delivery_strategy: ask-on-risk
+  review_budget_lines: 800
+  strict_tdd: true
+
+testing:
+  strict_tdd: true
+  test_runner:
+    command: "npm test"
+    underlying: "vitest run"
+    framework: "vitest ^3.2.6"
+  test_layers:
+    unit: true
+    integration: true
+    e2e: false
+  integration_tools:
+    - "pg-mem ^3.0.14 (sustituto de PostgreSQL en memoria para la mayoría de pruebas de acceso a datos)"
+    - "supertest ^7.2.2 (pruebas HTTP contra la API Express)"
+  ui_tests:
+    status: "excluido_por_decision"
+    note: >
+      vitest.config.ts:16 fija environment: 'node' y vitest.config.ts:17-20
+      incluye solo apps/**/*.test.ts y packages/**/*.test.ts. Los 39 ficheros
+      .tsx (6.329 líneas) de apps/desk/src quedan fuera de la red de pruebas
+      POR DECISIÓN EXPLÍCITA DE GERENCIA (F0-00, 2026-09-08), no por omisión.
+      NO proponer instalar jsdom ni @testing-library/react, ni registrar esto
+      como carencia o riesgo en fases posteriores.
+  coverage:
+    available: false
+    note: "@vitest/coverage-v8 no está instalado; vitest.config.ts no declara sección coverage."
+  quality_tools:
+    linter: "eslint . (eslint ^9.15.0) — 0 errores, 158 avisos (157 no-explicit-any, 1 react-hooks/exhaustive-deps); sin --max-warnings"
+    type_checker: "tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit (typescript ~5.6.2)"
+    formatter: "—"
+  ci: ".github/workflows/ci.yml — Node 22, servicio postgres:17 adjunto, npm ci -> typecheck -> lint -> test -> build"
+  volume:
+    ts_tsx_incluyendo_pruebas: 30677
+    ts_tsx_excluyendo_pruebas: 19292
+    referencia: ts_tsx_incluyendo_pruebas
+    note: >
+      La cifra de referencia del proyecto es 30.677 líneas .ts/.tsx INCLUYENDO
+      pruebas: es la que citan el plan R01.1 y el baseline. 19.292 es el código
+      sin pruebas. Toda spec, forecast o presupuesto de revisión que hable de
+      "líneas del proyecto" debe decir cuál de las dos usa; la diferencia es
+      del 37 % y cambia cualquier estimación que se apoye en ella.
+  estado_al_baseline:
+    commit: a3a8f03
+    typecheck: "0 (verde)"
+    lint: "0 (verde con 158 avisos, 0 errores)"
+    test: "0 (verde) — 96 ficheros, 830 tests: 828 pasan / 2 saltados, 40,45 s"
+    build: "0 (verde)"
+
+# Capacidades declaradas en la Fase 0 (plan R01.1 §2.3, corregido con hallazgos
+# de F0-00). El orden es el de la lista de partida; sdd-explore y la exploración
+# del código pueden afinarla.
+capabilities:
+  - name: tickets-core
+    covers: "Ciclo de vida del ticket, identificación por serial, campos del diccionario (Anexo G), Clasificaciones como disparador de rama"
+    status_at_start: "as-built parcial"
+
+  - name: transitions-st
+    covers: "Las 34 transiciones y 21 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
+    status_at_start: "as-built completo"
+
+  - name: transitions-equipo-nuevo
+    covers: "Flujo as-is de M1.4"
+    status_at_start: "solo mapeo"
+    design_source: "docs/analisis-tickets/DF-equipo-nuevo-030226.xlsx"
+    correction: >
+      El baseline de partida decía que esta capacidad no tenía diseño y que su
+      spec "se escribe, no se destila". Verificado como FALSO: existe diseño
+      en la ruta indicada. docs/flujo/ fue renombrado a docs/analisis-tickets/
+      (renombrado sin escenificar en git a la fecha de esta inicialización).
+
+  - name: transitions-soporte-remoto
+    covers: "Flujo as-is de M1.5"
+    status_at_start: "solo mapeo"
+    design_source: "docs/analisis-tickets/DF-soporte-remoto-030226.xlsx"
+    correction: "Misma corrección que transitions-equipo-nuevo: sí hay diseño de partida."
+
+  - name: remisiones
+    covers: "Remisión de entrada/salida, pasos sin botón (estadoPorRemision.ts), accesorios"
+    status_at_start: "as-built parcial"
+
+  - name: permissions
+    covers: "Permisos por área (permissions.ts); después por cargo y propietario (C10)"
+    status_at_start: "as-built por área"
+
+  - name: zoho-sync
+    covers: "Lectura de tickets, OV y contactos desde Zoho a PostgreSQL; regla de no cruzar las dos entradas"
+    status_at_start: "as-built (cron cada 3 min)"
+
+  - name: derivacion-avisos
+    covers: "Derivación, cargos propuestos, correos por cambio de área"
+    status_at_start: "as-built"
+
+  - name: trazas
+    covers: "Fecha, hora y persona en toda transición; historial"
+    status_at_start: "as-built parcial (decidido R08 sin excepciones)"
+
+  - name: hojas-vida
+    covers: "Equipo, cliente, serial, modelo, cuatro campos comerciales, código interno, enlace a Drive (fase 0 de migración)"
+    status_at_start: "nuevo"
+
+  - name: catalogo-equipos
+    covers: "Tipos, marcas, modelos, equipos, artículos por modelo, mano de obra por modelo"
+    status_at_start: >
+      nuevo (sembrado el 2026-08-07: 26 tipos, 6 marcas, 35 modelos, 354
+      equipos, 0 conflictos — cifra NO reverificada en esta sesión de init)
+    note: >
+      Capacidad propia (#15 de la lista), separada de diagnostico-checklist
+      por decisión de Gerencia registrada en Engram (obs. #236, F0-00
+      2026-09-08). El "catálogo" de diagnostico-checklist se renombró a
+      "árbol de inspección" para no confundirse con este.
+
+  - name: diagnostico-checklist
+    covers: >
+      Árbol de inspección (N1 macro -> N2 subnivel -> N3 ítem), captura por
+      visita, validación por macro, encadenamiento No OK, criterio de falla,
+      evidencia, repuesto asociado, formulario de falla nueva
+    status_at_start: "nuevo"
+    design_source: "docs/inspecciones/Grimm/ y docs/inspecciones/Horiba/"
+    correction: >
+      El baseline decía que esta capacidad no tenía diseño. Verificado como
+      FALSO: existen catálogos versionados (GRIMM EDM180 v1.8, HORIBA AP370
+      v1.4) en las rutas indicadas, con carpeta Anteriores/ de versiones previas.
+    depends_on: ["catalogo-equipos"]
+    dependency_reason: >
+      El árbol de inspección se parametriza por marca-modelo, que es la
+      entidad "modelo" del catálogo de catalogo-equipos.
+
+  - name: informes
+    covers: "Informe de diagnóstico y de salida derivados del checklist; validación por dos personas; PDF por plantilla"
+    status_at_start: "nuevo"
+    design_source: "docs/inspecciones/Grimm/ y docs/inspecciones/Horiba/"
+    correction: "Misma corrección que diagnostico-checklist: sí hay diseño de partida."
+
+  - name: inventario-lectura
+    covers: "Artículos y repuestos de Zoho Books filtrados por etapa del diagnóstico"
+    status_at_start: "nuevo (solo lectura)"
+
+  - name: kpis
+    covers: "Timestamps, tres bodegajes, OTD; excluye Anulado"
+    status_at_start: "fase 2"
+
+# Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
+# registro del movimiento, no como tarea pendiente: los dos ficheros están en su
+# destino y docs/sdd/changes/ ya no existe.
+pending_migration:
+  estado: hecho
+  fecha: "2026-09-08"
+  ejecutado_por: "F0-01"
+  metodo: "mv"
+  discrepancia_con_el_proposal: >
+    El proposal F0-01 (cabecera y §8) prescribía `git mv`. NO ERA APLICABLE:
+    ninguno de los dos ficheros estaba versionado —`git ls-files
+    docs/sdd/changes/` devolvía vacío—, y `git mv` sobre una ruta no rastreada
+    falla. Se movieron con `mv` normal. Consecuencia: git no ve un renombrado,
+    ve dos ficheros nuevos sin versionar en openspec/changes/, y su versionado
+    depende de la decisión abierta sobre docs/ y openspec/.
+  movimientos:
+    - from: "docs/sdd/changes/F0-01/proposal.md"
+      to: "openspec/changes/F0-01/proposal.md"
+    - from: "docs/sdd/changes/F0-04/proposal.md"
+      to: "openspec/changes/F0-04/proposal.md"
+
+# Estado del árbol de trabajo observado durante esta inicialización (2026-09-08).
+# No son tareas de sdd-init: las resuelve F0-01 al versionar docs/.
+repo_state:
+  openspec_preexistente:
+    hallazgo: >
+      openspec/ YA EXISTÍA antes de esta inicialización: cuatro directorios
+      (openspec/, openspec/changes, openspec/changes/archive, openspec/specs)
+      y CERO ficheros. Invisible a `git status` porque git no versiona
+      directorios vacíos, y por eso no apareció en ningún estado previo.
+    contradice: >
+      Observación Engram #216, que fijaba "no se crea openspec/ hasta F0-01".
+      No había contenido en riesgo, así que esta inicialización escribió
+      dentro del esqueleto sin destruir nada. Queda registrado para que nadie
+      lea el #216 como si openspec/ hubiera nacido aquí.
+  renombrado_sin_escenificar:
+    de: "docs/flujo/"
+    a: "docs/analisis-tickets/"
+    estado: >
+      Renombrado SIN ESCENIFICAR: 18 borrados sin commitear en las rutas
+      viejas, y el directorio nuevo entero sin versionar
+      (`git ls-files docs/analisis-tickets/` devuelve vacío).
+    consecuencia: >
+      El baseline commiteado en 0e8f581 cita `docs/analisis-tickets/*` como
+      evidencia en al menos tres puntos (§b.2 sobre los 11 indicadores del
+      Anexo G.6, la fila H.4 · M7 de la tabla de desvíos, y el apartado de
+      transitions-equipo-nuevo / transitions-soporte-remoto), y NINGUNO de
+      esos ficheros está en el repositorio. La cadena de evidencia de la
+      auditoría apunta hoy a rutas que git no tiene.
+    resuelve: >
+      F0-01, al versionar docs/ (git add del directorio nuevo y git rm de las
+      rutas viejas, o git mv para que el renombrado quede como tal).
+
+# Desvíos conocidos del código respecto de las reglas invariables. Se REGISTRAN,
+# no se corrigen: cada uno lleva la tanda que lo resuelve. Verificados ruta:línea
+# contra el árbol en F0-01 (2026-09-08, base a3a8f03). La misma lista, en prosa,
+# está en CLAUDE.md para que la lean los sub-agentes.
+incumplimientos_vivos:
+  - id: IV-1
+    regla: 1
+    ubicacion: "apps/desk/src/lib/boardView.ts:35"
+    verificado: true
+    descripcion: >
+      `const enEspera = (t) => /espera/i.test(t.status ?? '')` clasifica las
+      esperas por expresión regular sobre el NOMBRE del estado, y por tanto
+      diverge del grafo de transiciones: un estado de espera que no lleve
+      "espera" en el nombre no se cuenta, y uno que la lleve sin serlo sí.
+      Se usa en :43 y :44.
+    destino: "F1A, consumiendo el registro de estados de F0-04"
+
+  - id: IV-2
+    regla: 1
+    ubicacion: "apps/desk/src/lib/valoresTransicion.ts"
+    verificado: parcial
+    descripcion: >
+      Regla de dominio que vive SÓLO en el cliente: qué fecha corresponde a qué
+      campo de transición. El propio fichero lo declara en su bloque de
+      cabecera (:3-17, "esto es una regla de negocio ... no maquetado") y lo
+      implementa en `valoresConocidos` (:49-79).
+    matiz_de_verificacion: >
+      El proposal cita `valoresTransicion.ts:3-17`. Esas líneas son el
+      COMENTARIO de cabecera, no el código: la regla ejecutable está en :49-79.
+      La cita no es falsa —ahí se declara el incumplimiento— pero apunta a la
+      documentación, no a la implementación.
+    destino: "F1A o F1C, decisión de alcance"
+
+  - id: IV-3
+    regla: 13
+    ubicacion: "apps/desk/src/components/TransitionPanel.tsx:56-57"
+    verificado: true
+    descripcion: >
+      `transitionsForStatus(status).filter((t) => !!user &&
+      canExecuteTransition(user.areas, user.isAdmin, t.area))` — espejo en el
+      cliente de la comprobación de permisos. Hoy es un espejo SIN COMPROBAR:
+      no hay prueba de que el servidor imponga la misma matriz.
+    destino: >
+      F0-04 lo habilita. Se queda en cuanto F0-04 pruebe la matriz
+      área × transición; hasta entonces incumple el punto 3 de la regla 13.
+
+  - id: IV-4
+    regla: "—"
+    ubicacion: "apps/desk/server/routes/remision.ts:189-197"
+    verificado: true
+    descripcion: >
+      El bloque `if (b.salesOrderId)` escribe `salesorder_id` (y `orden_venta`,
+      `fecha_orden_venta`) con un UPDATE condicional en el SQL, SIN llamar a
+      `ticketConOrdenVenta`. La regla "una OV, un ticket" tiene TRES puertas y
+      sólo DOS la comprueban: `ticketService.ts:45` y `ticketService.ts:100`
+      (`ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:330`).
+      Esta tercera confía en `WHERE COALESCE(orden_venta,'') = ''`, que impide
+      pisar la OV del propio ticket pero NO que dos tickets distintos acaben
+      con la misma.
+    matiz_de_verificacion: >
+      El proposal cita :188-196. El rango real es :189-197 (la 188 es el cierre
+      `*/` del comentario). El UPDATE está en :192-196.
+    destino: "F1A"
+
+  - id: IV-5
+    regla: "—"
+    ubicacion: "apps/desk/src/components/TicketCard.tsx:14-23"
+    verificado: true
+    descripcion: >
+      `statusColorMap` con claves en MAYÚSCULAS (INGRESADO, COMERCIAL, PROCESO,
+      NOTIFICACION_CLIENTE, POR_FACTURAR, POR_ENTREGAR_SIN_FACTURAR,
+      POR_ENTREGAR, ESPERA_REPUESTOS). Son los valores de
+      `apps/desk/src/data/mockData.ts`, no los estados reales del dominio
+      ("Ingresado", "En Proceso", "Notificación cliente"...), así que con datos
+      reales el lookup de :26 siempre cae en el respaldo `bg-slate-100`.
+      Mapa muerto.
+    destino: "F1A, cosmético"
+
+# Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
+# de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
+# mal declarado. Cada entrada dice qué decía la premisa, qué se verificó y qué
+# tandas cambian de contenido. Precedente: F0-04 §1 ya corrigió una premisa falsa
+# del plan por esta misma vía ("F0-04 no crea la red de pruebas: la mide y la
+# completa donde falta", openspec/changes/F0-04/proposal.md:18).
+premisas_falsas_corregidas:
+  - id: PF-1
+    corregida_en: "F0-01"
+    fecha: "2026-09-08"
+    afecta_a: ["F1A-05", "F1B-09"]
+    premisa_del_baseline: >
+      El plan R01.1 declara que `docs/artefactos/blueprintserviciotecnico.html`
+      "se regenera en cada tanda audit-*"
+      (docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388), y de ahí
+      cuelgan las dos tandas de auditoría de blueprint: F1A-05 / audit-F1A (:142,
+      :412) y F1B-09 / audit-F1B (:158, :421). El baseline repite la premisa en
+      docs/sdd/F0-00_Baseline_as-built.md:564 ("para que ... no se regenere sobre
+      una cifra incorrecta").
+    verificacion: >
+      FALSA. NO EXISTE GENERADOR EN EL REPOSITORIO. Verificado el 2026-09-08 sobre
+      el commit a3a8f03: CERO referencias a `blueprintserviciotecnico` en `apps/`,
+      `packages/`, `scripts/` y `package.json`
+      (`grep -rn "blueprintserviciotecnico" apps packages scripts package.json`
+      devuelve 0 resultados). Las coincidencias de la palabra suelta "blueprint" en
+      el código son el blueprint de Zoho Desk como concepto de dominio
+      (historyMap.ts, Sidebar.tsx), no este fichero. El artefacto lo produjo una
+      conversación de agente en agosto de 2026 y hoy no hay forma de reproducirlo.
+    correccion: >
+      F1A-05 y F1B-09 deben CONSTRUIR el generador de
+      docs/artefactos/blueprintserviciotecnico.html, NO invocarlo. Es trabajo de
+      construcción, no de ejecución, y cambia la talla declarada de ambas tandas
+      (hoy S en :412 y :421). Ninguna tanda anterior a la que construya el
+      generador puede prometer "regenerar" ese fichero.
+    consecuencia_de_versionado: >
+      Sin generador, "ignorarlo y regenerarlo" equivalía a borrarlo, y es el único
+      mapa visual del flujo que existe. Por eso el fichero se versiona pese a sus
+      3.370.299 bytes, y .gitattributes lo marca `-diff -merge`. Detalle en
+      docs/artefactos/NOTA.md.
+
+# Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
+# aquí para que el porcentaje no sea una opinión con decimales.
+unidad_de_avance:
+  unidad: "Las tandas del §5 del plan R01.1, ponderadas por talla (XS/S/M/L)"
+  por_que: >
+    Una capacidad se acumula y un módulo como M1 atraviesa el proyecto entero:
+    ninguna de las dos se cierra nunca. Una tanda sí. Y el §5 ya trae Tamaño y
+    Semana, luego el porcentaje sale ponderado y contra calendario, no sólo
+    contra alcance. Sus columnas Capacidad y Fuente dan además las vistas por
+    capacidad y por módulo del maestro sin mantener nada aparte.
+  reglas_de_lectura:
+    - id: a
+      regla: "El denominador se mueve, y se fecha en cada corte."
+      detalle: >
+        Se registra así: "38 tandas al corte de S37, 41 al corte de S40". El
+        crecimiento del alcance se ve, no se esconde.
+    - id: b
+      regla: "Se publican SIEMPRE dos cifras, nunca una."
+      detalle: >
+        Tandas cerradas y porcentaje de esfuerzo estimado. Dos números que
+        discrepan informan; uno solo es una afirmación.
+    - id: c
+      regla: "El §5 sólo cubre Fase 0 y Fase 1: el denominador es «hasta F1F»."
+      detalle: >
+        No es "el proyecto completo". Lo que el maestro tiene como P2/P3 no
+        tiene tandas y no entra en el denominador.
+  trazabilidad: >
+    Cada spec as-built lleva ESCRITOS los IDs de tanda que la tocan, para que el
+    avance se derive del repositorio y no de la memoria. Es la regla del propio
+    Anexo H —"el as-built no se recuerda: se verifica"— aplicada al seguimiento
+    y no sólo al contenido.
+  donde_se_publica: >
+    Las tres reglas van escritas JUNTO al número, en el mismo sitio donde se
+    publique la cifra. No en un anexo aparte.
+
+rules:
+  proposal:
+    - Cada propuesta cita el apartado del documento maestro R08.1 del que sale (p. ej. M1.3.4, C3, P31).
+    - Incluir plan de rollback para cambios de riesgo.
+  specs:
+    - Usar Given/When/Then para escenarios.
+    - Usar palabras clave RFC 2119 (MUST, SHALL, SHOULD, MAY).
+    - Toda spec de diagnostico-checklist o informes referencia el árbol GRIMM/HORIBA de docs/inspecciones/ como fuente.
+  design:
+    - Documentar decisiones de arquitectura con su razón, en especial las que tocan el esquema desk/public.
+    - Toda sentencia SQL de creación de tabla debe calificar el esquema explícitamente (desk. o public.); un CREATE sin calificar ya falló en producción.
+  tasks:
+    - Agrupar por fase, numeración jerárquica.
+    - Tareas completables en una sesión.
+  apply:
+    guidelines:
+      - Seguir los patrones de código existentes; packages/shared es la fuente única de reglas de dominio (el cliente la consume, nunca la reescribe).
+      - No instalar jsdom ni @testing-library, ni ampliar vitest.config.ts a *.test.tsx, sin una decisión explícita de Gerencia que reabra §9.3.
+    tdd: true
+    test_command: "npm test"
+  verify:
+    test_command: "npm test"
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Avisar antes de fusionar deltas destructivos.
+    - Actualizar el Anexo H del documento maestro (as-built frente a plan) al archivar.
