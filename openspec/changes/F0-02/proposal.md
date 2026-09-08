@@ -68,7 +68,7 @@ No es el orden de la lista del plan. Es el orden de las dependencias de referenc
 
 ## 2 · Formato, fijado por la primera spec
 
-Rige `config.yaml:381-384`. Lo que la primera spec añade y las seis siguientes heredan:
+Rige `config.yaml`, `rules.specs`. Lo que la primera spec añade y las seis siguientes heredan:
 
 | Elemento | Regla |
 |---|---|
@@ -93,13 +93,13 @@ la vía de la cita de segunda mano.
 
 F0-02 **no arregla nada**. Los desvíos van a la spec como comportamiento actual, con su destino:
 
-- Los cinco `incumplimientos_vivos` de `config.yaml:229` y de la tabla de `CLAUDE.md`.
+- Los `incumplimientos_vivos` de `config.yaml` y de la tabla de `CLAUDE.md` — **cuatro** vivos, más IV-3 cerrado por F0-04.
 - Las doce correcciones C1–C12 del Anexo H.3 (`R08.1.md:4513`) que toquen la capacidad.
 - Los puntos abiertos del Anexo D que la capacidad nombre.
 - Los que aparezcan nuevos al destilar. Se anotan, no se corrigen, y se dice de quién son.
 
 **Y no repite lo que el baseline dijo mal.** Las correcciones vivas están en los campos `correction:`
-de las capacidades de `config.yaml` y en `premisas_falsas_corregidas` (`:309`). Toda spec que toque
+de las capacidades de `config.yaml` y en `premisas_falsas_corregidas`. Toda spec que toque
 un punto ahí registrado lo cita desde el código, nunca desde el baseline.
 
 ---
@@ -115,7 +115,7 @@ un punto ahí registrado lo cita desde el código, nunca desde el baseline.
    su tanda destino.
 5. Cada spec tiene sección de discrepancias **diseño↔código** y **maestro↔código**, con las dos
    citas enfrentadas. Una spec sin discrepancias lo dice explícitamente, no lo deja en blanco.
-6. Cada spec lleva escritos los IDs de tanda que la tocan (`config.yaml:369`, `unidad_de_avance`).
+6. Cada spec lleva escritos los IDs de tanda que la tocan (`config.yaml`, `unidad_de_avance.trazabilidad`).
 7. Las siete usan el mismo formato del §2, y `transitions-st` es la que lo fija.
 8. `npm test`, `npm run typecheck`, `npm run lint` y `npm run build` siguen igual que antes de la
    tanda: F0-02 no toca código, así que cualquier cambio en esas cuatro cifras es un defecto de la
@@ -127,7 +127,7 @@ un punto ahí registrado lo cita desde el código, nunca desde el baseline.
 
 - **No toca código.** Ni el motor, ni el cliente, ni las pruebas. `strict_tdd: true` sigue activo y
   aquí no hay nada que probar: lo que sustituye a la prueba es la cita con ruta y línea.
-- No instala nada. No amplía `vitest.config.ts` a `*.test.tsx` (`config.yaml:395`).
+- No instala nada. No amplía `vitest.config.ts` a `*.test.tsx` (`config.yaml`, `rules.apply.guidelines`).
 - No corrige C1, ni la tercera puerta de la OV, ni `boardView.ts:35`, ni ningún otro desvío vivo.
 - No edita el `.docx` del maestro. Las correcciones que el maestro necesite se entregan como texto en
   `docs/sdd/F0-01_Correcciones_para_el_maestro.md`, que es el canal que el propio `CLAUDE.md` fija.

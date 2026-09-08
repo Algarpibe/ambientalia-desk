@@ -226,6 +226,16 @@ repo_state:
 # no se corrigen: cada uno lleva la tanda que lo resuelve. Verificados ruta:línea
 # contra el árbol en F0-01 (2026-09-08, base a3a8f03). La misma lista, en prosa,
 # está en CLAUDE.md para que la lean los sub-agentes.
+#
+# ⚠️ REVISADO EN F0-02 (2026-09-08, base ad1875b). Dos cambios, y ninguno es una
+# corrección de código: son correcciones del REGISTRO, que estaba caduco.
+#   · IV-3 está CERRADO por F0-04 y ya no es un incumplimiento vivo. Se conserva
+#     la entrada como histórico. Los vivos son CUATRO: IV-1, IV-2, IV-4 e IV-5.
+#   · IV-1 queda cuantificado: 2 de 8 aciertos, 0 falsos positivos. Es un defecto
+#     por defecto, no por exceso.
+# La lección de método, que vale más que las dos entradas: este fichero PUEDE
+# ESTAR CADUCO. Antes de citarlo como autoridad sobre el estado del código, hay
+# que comprobarlo contra el código.
 incumplimientos_vivos:
   - id: IV-1
     regla: 1
@@ -234,10 +244,25 @@ incumplimientos_vivos:
     descripcion: >
       `const enEspera = (t) => /espera/i.test(t.status ?? '')` clasifica las
       esperas por expresión regular sobre el NOMBRE del estado, y por tanto
-      diverge del grafo de transiciones: un estado de espera que no lleve
-      "espera" en el nombre no se cuenta, y uno que la lleve sin serlo sí.
+      diverge del registro de estados de `packages/shared/src/estados.ts`.
       Se usa en :43 y :44.
-    destino: "F1A, consumiendo el registro de estados de F0-04"
+    cuantificado_en: "F0-02, 2026-09-08, base ad1875b"
+    alcance_exacto: >
+      La regex casa con EXACTAMENTE 2 de los 8 estados `en_espera` que declara
+      `estados.ts:59-114`: `En Espera de Repuestos` y
+      `En espera de SKU inventario`. Y tiene CERO falsos positivos entre los 13
+      estados restantes de los 21. Es decir: es un defecto POR DEFECTO, no por
+      exceso, y eso cambia cómo se arregla — no hay que estrechar el criterio,
+      hay que sustituirlo por la lista.
+    se_escapan: >
+      Los seis que la vista NO enseña bajo «En espera» y debería:
+      `Servicio externo`, `Notificación cliente`, `Notificación a Compras`,
+      `Notificación Comercial`, `Solicitado`, `Liberación Comercial`.
+    matiz_de_la_descripcion_anterior: >
+      La redacción de F0-01 decía "y uno que la lleve sin serlo sí", dando por
+      posible el falso positivo. Verificado en F0-02: hoy NO existe ninguno.
+      La frase describía el riesgo del criterio, no un caso vivo.
+    destino: "F1A, consumiendo el registro de estados de F0-04 (`ESTADOS_EN_ESPERA`)"
 
   - id: IV-2
     regla: 1
@@ -257,16 +282,34 @@ incumplimientos_vivos:
 
   - id: IV-3
     regla: 13
-    ubicacion: "apps/desk/src/components/TransitionPanel.tsx:56-57"
-    verificado: true
+    ubicacion: "apps/desk/src/components/TransitionPanel.tsx:56-58"
+    estado: CERRADO
+    cerrado_por: "F0-04"
+    cerrado_verificado_en: "F0-02, 2026-09-08, base ad1875b"
     descripcion: >
       `transitionsForStatus(status).filter((t) => !!user &&
       canExecuteTransition(user.areas, user.isAdmin, t.area))` — espejo en el
-      cliente de la comprobación de permisos. Hoy es un espejo SIN COMPROBAR:
-      no hay prueba de que el servidor imponga la misma matriz.
-    destino: >
-      F0-04 lo habilita. Se queda en cuanto F0-04 pruebe la matriz
-      área × transición; hasta entonces incumple el punto 3 de la regla 13.
+      cliente de la comprobación de permisos. F0-01 lo registró como espejo SIN
+      COMPROBAR, porque entonces no había prueba de que el servidor impusiera la
+      misma matriz.
+    por_que_esta_cerrado: >
+      La prueba existe: `apps/desk/server/permisos.test.ts:41-110` barre las 34
+      transiciones × 3 áreas CONTRA EL SERVIDOR, con el total escrito a mano en
+      :77-82 (102 casos, 60 prohibidos, 42 permitidos) y el administrador en
+      :89-109. El 403 lo lanza `ticketService.ts:89`. La propia prueba declara el
+      efecto de segundo orden en :35-39: con la matriz probada, el filtro del
+      navegador «deja de ser un espejo sin comprobar y pasa a ser COMODIDAD
+      LEGÍTIMA bajo la regla invariable 13».
+      Cumple el punto 3 de la regla 13: la imposición del servidor está probada.
+    se_conserva_el_registro: >
+      No se borra la entrada. Queda como histórico de que el desvío existió y de
+      qué lo cerró, para que nadie lo vuelva a anotar como vivo. Los
+      incumplimientos vivos son los OTROS cuatro.
+    cita_corta_pendiente: >
+      El filtro cierra en :58, no en :57. La cita corta `:56-57` estaba en tres
+      sitios: este registro y la tabla de CLAUDE.md, los dos corregidos aquí, y
+      `apps/desk/server/permisos.test.ts:36`, que es CÓDIGO y por tanto F0-02 no
+      lo toca. Destino de ese tercero: F1C-05, la tanda que toca los permisos.
 
   - id: IV-4
     regla: "—"

@@ -114,17 +114,28 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-Cinco desvíos conocidos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Cuatro** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
 | Regla | Incumplimiento | Destino |
 |---|---|---|
-| 1 | `apps/desk/src/lib/boardView.ts:35` clasifica esperas por regex sobre el nombre del estado (`/espera/i`) y diverge del grafo | F1A, consumiendo el registro de estados de F0-04 |
+| 1 | `apps/desk/src/lib/boardView.ts:35` clasifica esperas por regex sobre el nombre del estado (`/espera/i`) y diverge del registro de `estados.ts`. **Cuantificado en F0-02: acierta 2 de los 8 estados `en_espera` y no tiene ningún falso positivo.** Se le escapan `Servicio externo`, `Notificación cliente`, `Notificación a Compras`, `Notificación Comercial`, `Solicitado` y `Liberación Comercial`. Es defecto **por defecto**, no por exceso: no hay que estrechar el criterio, hay que sustituirlo por `ESTADOS_EN_ESPERA` | F1A, consumiendo el registro de estados de F0-04 |
 | 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | F1A o F1C, decisión de alcance |
-| 13 | `apps/desk/src/components/TransitionPanel.tsx:56-57` — espejo de `canExecuteTransition`; se queda en cuanto F0-04 pruebe la matriz área × transición | F0-04 lo habilita |
 | — | `apps/desk/server/routes/remision.ts:189-197` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | F1A |
 | — | `apps/desk/src/components/TicketCard.tsx:14-23` — mapa de colores muerto: claves en mayúsculas (`INGRESADO`, `PROCESO`…) que sólo casan con `mockData.ts`, nunca con los estados reales | F1A, cosmético |
+
+**IV-3 está CERRADO y ya no cuenta.** Era el espejo de `canExecuteTransition` en
+`apps/desk/src/components/TransitionPanel.tsx:56-58`. F0-04 lo cerró:
+`apps/desk/server/permisos.test.ts:41-110` barre las 34 transiciones × 3 áreas contra el servidor, y
+`:35-39` declara el efecto —el filtro del navegador pasa a ser **comodidad legítima** bajo la regla
+invariable 13, porque la imposición del servidor está probada—. Se deja escrito aquí para que nadie lo
+vuelva a anotar como vivo.
+
+> **La lección de método, que vale más que las dos entradas.** Este fichero y `openspec/config.yaml`
+> **pueden estar caducos**: los dos daban IV-3 por vivo cuando F0-04 llevaba días habiéndolo cerrado.
+> Antes de citar cualquiera de los dos como autoridad sobre el estado del código, **compruébalo contra
+> el código**. Es la regla de método aplicada a los propios registros del proyecto.
 
 ---
 

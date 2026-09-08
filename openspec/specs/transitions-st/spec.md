@@ -397,7 +397,7 @@ que se puede (`reentrancia.ts:32`).
 
 ### 3.4 · La tercera puerta de la orden de venta · **destino F1A**
 
-**Comportamiento actual, a corregir en F1A** (`config.yaml:229`, IV-4). La regla «una OV, un ticket»
+**Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-4). La regla «una OV, un ticket»
 tiene **tres** puertas y sólo **dos** la comprueban:
 
 | Puerta | Comprueba | Precedencia del `409` frente al `422` de obligatorios | Evidencia |
@@ -424,16 +424,24 @@ calculable.
 
 ### 3.6 · IV-1 — la vista clasifica las esperas por el nombre del estado · **destino F1A**
 
-**Comportamiento actual, a corregir en F1A** (`config.yaml:229`, IV-1). `boardView.ts:35` clasifica
+**Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-1). `boardView.ts:35` clasifica
 las esperas con `/espera/i` sobre el nombre del estado, y se usa en `:43` y `:44`. Diverge del
 registro de `estados.ts`:
 
 - El registro declara **ocho** estados en espera —tres `externa` y cinco `interna`—
   (`estados.ts:59-114`).
-- La regex casa con **dos** de esos ocho: `En Espera de Repuestos` y
+- La regex casa con **exactamente dos** de esos ocho: `En Espera de Repuestos` y
   `En espera de SKU inventario`. Los otros seis —`Servicio externo`, `Notificación cliente`,
   `Notificación a Compras`, `Notificación Comercial`, `Solicitado`, `Liberación Comercial`— no llevan
   la palabra en el nombre y **no** se cuentan.
+- Y tiene **cero falsos positivos**: ninguno de los 13 estados restantes de los 21 lleva «espera» en
+  el nombre.
+
+**Es un defecto POR DEFECTO, no por exceso, y eso cambia cómo se arregla.** No hay que estrechar el
+criterio para que deje de coger lo que no debe: hay que **sustituirlo por la lista**
+(`ESTADOS_EN_ESPERA`, `estados.ts:111-114`). La redacción de F0-01 —«y uno que la lleve sin serlo
+sí»— describía el riesgo del criterio, no un caso vivo; verificado en esta tanda que hoy no existe
+ninguno.
 
 F0-04 dejó el registro que lo cierra; consumirlo es F1A.
 
@@ -554,8 +562,9 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 
 | Registro | Dice | Estado real | Lectura |
 |---|---|---|---|
-| IV-3 (`config.yaml:258-270`) | «Hoy es un espejo **SIN COMPROBAR**: no hay prueba de que el servidor imponga la misma matriz» | La hay: `permisos.test.ts:41-110` prueba las 34 × 3 contra el servidor, y `:35-39` declara explícitamente el efecto | **F0-04 cerró IV-3.** El espejo de `TransitionPanel.tsx:56-58` pasó a comodidad legítima. `config.yaml:229` y la tabla de `CLAUDE.md` están **desactualizados**: los dos siguen listando IV-3 como incumplimiento vivo |
-| IV-3, ubicación | `TransitionPanel.tsx:56-57` | El filtro se cierra en `:58` | Cita corta por una línea |
+| IV-3 (`config.yaml`, `incumplimientos_vivos`) | «Hoy es un espejo **SIN COMPROBAR**: no hay prueba de que el servidor imponga la misma matriz» | La hay: `permisos.test.ts:41-110` prueba las 34 × 3 contra el servidor, y `:35-39` declara explícitamente el efecto | **F0-04 cerró IV-3.** El espejo de `TransitionPanel.tsx:56-58` pasó a comodidad legítima. `config.yaml` y la tabla de `CLAUDE.md` lo daban por vivo; **corregidos en esta tanda**, en commit aparte, porque un registro caduco sí es una corrección. Los vivos son **cuatro** |
+| IV-3, ubicación | `TransitionPanel.tsx:56-57` | El filtro se cierra en `:58` | Cita corta por una línea, en **tres** sitios: `config.yaml` y `CLAUDE.md`, corregidos aquí, y **`permisos.test.ts:36`**, que es código y por tanto queda pendiente — destino **F1C-05** |
+| IV-1 (`config.yaml`, `incumplimientos_vivos`) | «un estado de espera que no lleve "espera" en el nombre no se cuenta, **y uno que la lleve sin serlo sí**» | La segunda mitad no tiene ningún caso vivo: cero falsos positivos entre los 21 estados | Describía el riesgo del criterio, no un hecho. **Cuantificado en esta tanda**: 2 aciertos de 8, 0 falsos positivos. Ver §3.6 |
 | `estado_al_baseline` (`config.yaml:72-77`) | 96 ficheros, 830 pruebas: 828 pasan / 2 saltadas (base `a3a8f03`) | 110 ficheros, 931 pruebas: 929 pasan / 2 saltadas (base `ad1875b`) | F0-04 añadió la red. Cifra de baseline, no error |
 
 ---

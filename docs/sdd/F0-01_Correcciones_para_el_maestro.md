@@ -565,6 +565,6 @@ sobre el commit `ad1875b`, frente a los 96 y 830 del baseline.
 
 - No aplica ningún cambio al `.docx`. Es texto propuesto, no un parche.
 - No modifica los proposals de `openspec/changes/`.
-- Los **cinco incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
+- Los **cuatro incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
   `openspec/config.yaml` (`incumplimientos_vivos`), porque son deuda de código, no correcciones del
   maestro.
