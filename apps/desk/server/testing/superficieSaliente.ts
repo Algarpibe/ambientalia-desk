@@ -31,17 +31,38 @@ export interface SuperficieHttp {
 /** La raíz del repositorio, desde este fichero: `<raíz>/apps/desk/server/testing/`. */
 const RAIZ = fileURLToPath(new URL('../../../../', import.meta.url))
 
+/**
+ * CÓDIGO DE SERVIDOR: lo único que puede abrir una puerta hacia un tercero.
+ *
+ * El navegador no alcanza Zoho sin pasar por nuestro servidor, así que `apps/desk/src` NO pertenece
+ * a este barrido: lo suyo es otra pregunta —a dónde apunta cada `fetch`— y la contesta
+ * `escanearFetchDelNavegador`, más abajo.
+ *
+ * `apps/hub-sync` entra aunque hoy no tenga ni una llamada con verbo literal —compone clientes de
+ * `packages/zoho-sync` en vez de llamar por su cuenta—. Es código de servidor, y dejarlo fuera con
+ * una nota sería la misma forma que la excepción nominal que este módulo retiró: un hueco conocido
+ * que nadie cierra. Cuesta cero hallazgos hoy y cierra la clase por construcción.
+ */
+const RAICES_DE_SERVIDOR = ['apps/desk/server', 'apps/hub-sync', 'packages']
+
+/** El código del navegador, para la otra pregunta. */
+const RAIZ_DEL_NAVEGADOR = 'apps/desk/src'
+
 /** Sólo se mira código propio. Fuera: dependencias, compilados y el andamio de las pruebas. */
-const DIRECTORIOS = ['apps', 'packages']
 const IGNORAR = new Set(['node_modules', 'dist', 'build', 'coverage', '.git', '.codegraph', '.atl', 'testing'])
 
 /** El verbo escrito como literal dentro del objeto de opciones. Cubre TODOS los verbos, no sólo POST. */
 const VERBO_LITERAL = /\bmethod\s*:\s*(['"`])([A-Za-z]+)\1/g
 /** El verbo pasado como variable —`{ method, ... }`—: el barrido no puede leerlo. */
 const VERBO_DINAMICO = /[{,]\s*method\s*,/
+/**
+ * La invocación de `fetch`. El `\b` deja fuera `prefetch(`, y exigir el paréntesis pegado deja fuera
+ * `fetchImpl(`, que es un transporte y no una puerta —el destino lo pone quien lo llama—.
+ */
+const LLAMADA_FETCH = /\bfetch\s*\(/g
 
 /**
- * Recorre `apps/` y `packages/` y clasifica cada escritura HTTP.
+ * Recorre el CÓDIGO DE SERVIDOR y clasifica cada escritura HTTP.
  *
  * LÍMITES CONOCIDOS, escritos para que nadie los descubra confiando de más:
  * - Sólo ve el verbo cuando está escrito como literal en el objeto de opciones. El caso dinámico se
@@ -57,9 +78,9 @@ export function escanearSuperficieHttp(): SuperficieHttp {
   const mismoOrigen: LlamadaHttp[] = []
   const verboDinamico: string[] = []
 
-  for (const dir of DIRECTORIOS) {
+  for (const dir of RAICES_DE_SERVIDOR) {
     for (const ruta of ficherosDeCodigo(join(RAIZ, dir))) {
-      const archivo = relative(RAIZ, ruta).split('\\').join('/')
+      const archivo = rutaRelativa(ruta)
       const texto = readFileSync(ruta, 'utf8')
       if (VERBO_DINAMICO.test(texto)) verboDinamico.push(archivo)
 
@@ -83,6 +104,44 @@ export function escanearSuperficieHttp(): SuperficieHttp {
     mismoOrigen: mismoOrigen.sort(porFichero),
     verboDinamico: [...new Set(verboDinamico)].sort(),
   }
+}
+
+/** Una llamada a `fetch` del navegador, con el destino tal cual está escrito. */
+export interface LlamadaFetch {
+  /** Ruta relativa a la raíz del repositorio, siempre con `/`, también en Windows. */
+  archivo: string
+  linea: number
+  /** El primer argumento tal cual, recortado. Es lo único que dice si la pantalla sale de la casa. */
+  destino: string
+}
+
+/**
+ * Todas las llamadas a `fetch(` del código del navegador, con SU PRIMER ARGUMENTO.
+ *
+ * Devuelve el argumento y no un veredicto a propósito: quien decide qué es una URL absoluta es la
+ * prueba, y así el barrido no tiene que saber de esquemas ni de `//` sin esquema.
+ *
+ * SE MIRA EL ARGUMENTO, NO EL FICHERO. En `apps/desk/src` hay ocho ocurrencias de `https://` que no
+ * son destinos de `fetch` —avatares de `<img>`, un texto de relleno y fixturas de prueba—, así que un
+ * barrido de fichero entero daría rojo por cosas que no son llamadas.
+ *
+ * LÍMITE CONOCIDO: cuando el destino llega en una variable —`escribirCatalogo` pasa su `url`— aquí se
+ * ve el nombre de la variable, no su valor. No es un agujero de esta pregunta: lo que la variable
+ * pueda valer se escribe en los llamadores, que sí aparecen en esta lista con su literal.
+ */
+export function escanearFetchDelNavegador(): LlamadaFetch[] {
+  const llamadas: LlamadaFetch[] = []
+  for (const ruta of ficherosDeCodigo(join(RAIZ, RAIZ_DEL_NAVEGADOR))) {
+    const archivo = rutaRelativa(ruta)
+    const texto = readFileSync(ruta, 'utf8')
+    LLAMADA_FETCH.lastIndex = 0
+    let m: RegExpExecArray | null
+    while ((m = LLAMADA_FETCH.exec(texto)) !== null) {
+      const linea = texto.slice(0, m.index).split('\n').length
+      llamadas.push({ archivo, linea, destino: primerArgumento(texto, m.index + m[0].length) })
+    }
+  }
+  return llamadas.sort((a, b) => a.archivo.localeCompare(b.archivo) || a.linea - b.linea)
 }
 
 /**
@@ -130,6 +189,11 @@ function primerArgumento(texto: string, desde: number): string {
     else if (c === ',' && profundidad === 0) return texto.slice(desde, i).trim()
   }
   return texto.slice(desde, desde + 200).trim()
+}
+
+/** La ruta desde la raíz del repositorio, siempre con `/`, también en Windows. */
+function rutaRelativa(ruta: string): string {
+  return relative(RAIZ, ruta).split('\\').join('/')
 }
 
 /** Los `.ts`/`.tsx` propios: sin dependencias, sin compilados, sin pruebas y sin andamio. */
