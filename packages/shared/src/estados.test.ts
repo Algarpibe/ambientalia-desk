@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
-  CLASIFICACION_EN_ESPERA, ESTADOS, ESTADOS_EN_ESPERA, enEsperaDe, type EnEspera,
+  CLASIFICACION_EN_ESPERA, ESTADOS, ESTADOS_EN_ESPERA, ESTADOS_SIN_SALIDA, enEsperaDe, type EnEspera,
 } from './estados'
-import { STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA } from './transitions'
+import {
+  TRANSITIONS, STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
+} from './transitions'
 
 /**
  * El registro de estados. La prueba de coherencia contra el grafo —la condición innegociable de
@@ -118,6 +120,79 @@ describe('registro de estados', () => {
     expect(coladas).toEqual([])
   })
 })
+
+/**
+ * `sin_salida` — LA SEGUNDA CLASIFICACIÓN DE NEGOCIO, y se declara como dato igual que `en_espera`.
+ *
+ * Gerencia cerró el criterio de M1.3.4, así que los cuatro se DECLARAN. Lo que estas pruebas fijan
+ * es la lista y el porqué; lo que NO hacen —a propósito— es derivarla del grafo.
+ */
+describe('estados sin salida (M1.3.4)', () => {
+  /**
+   * LA PRUEBA DE COHERENCIA, y todo lo que comprueba: que los cuatro son estados DECLARADOS.
+   *
+   * No los deduce. Una prueba que los dedujera de «salida única» daría CINCO —ver más abajo— y
+   * estaría mal, así que el único acoplamiento admisible con el registro es la pertenencia: un
+   * `sin_salida` que no sea un estado es un error de datos, y el tipo `Estado` ya no deja escribirlo.
+   */
+  it('los cuatro son estados declarados del registro', () => {
+    for (const e of ESTADOS_SIN_SALIDA) {
+      expect(ESTADOS.includes(e), `«${e}» no está en el registro de estados`).toBe(true)
+    }
+  })
+
+  it('sin_salida son exactamente estos cuatro, y son los de M1.3.4', () => {
+    expect(ESTADOS_SIN_SALIDA).toEqual([
+      'En Espera de Repuestos',
+      'Solicitado',
+      'Servicio externo',
+      'En espera de SKU inventario',
+    ])
+  })
+
+  /**
+   * LA LECCIÓN DE MÉTODO, en prueba: «salida única» NO es proxy de nada.
+   *
+   * Doce estados tienen una sola transición de salida. Entre ellos `Ingresado` y `Ticket creado`, que
+   * son fases de trabajo corriente y no esperas de nadie. Quien intente derivar `sin_salida` contando
+   * salidas se lleva estos doce, y no cuatro.
+   */
+  it('doce estados tienen una sola salida, así que contar salidas no clasifica nada', () => {
+    expect(conUnaSolaSalida()).toHaveLength(12)
+    expect(conUnaSolaSalida()).toContain('Ingresado')
+    expect(conUnaSolaSalida()).toContain('Ticket creado')
+  })
+
+  /**
+   * `Liberación Comercial` ES EL CASO QUE DISTINGUE EL CRITERIO, y por eso se escribe aparte.
+   *
+   * Cruzar las dos propiedades derivables —estar en espera y tener salida única— da CINCO, no cuatro.
+   * La quinta es `Liberación Comercial`, y queda fuera porque su única salida
+   * —`habilitado_para_entrega`, área Comercial— es UN ACTO QUE SE EJECUTA EN LA APLICACIÓN: alguien
+   * pulsa el botón. En los otros cuatro el suceso del que depende la salida ocurre FUERA.
+   *
+   * Ésta es la prueba que da rojo si alguien sustituye la lista declarada por una derivación.
+   */
+  it('la derivación da cinco, y la quinta es Liberación Comercial: por eso no se deriva', () => {
+    const derivadaMal = ESTADOS_EN_ESPERA.filter((e) => conUnaSolaSalida().includes(e))
+    expect(derivadaMal).toHaveLength(5)
+    expect(derivadaMal.filter((e) => !(ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([
+      'Liberación Comercial',
+    ])
+    // Y la salida que la deja fuera es un acto de la aplicación, no un suceso del mundo.
+    const salidas = TRANSITIONS.filter((t) => t.from.includes('Liberación Comercial'))
+    expect(salidas.map((t) => `${t.id} · ${t.area}`)).toEqual(['habilitado_para_entrega · Comercial'])
+  })
+})
+
+/** Los estados de los que sale UNA sola transición. Se calcula aquí, y no se exporta a propósito. */
+function conUnaSolaSalida(): string[] {
+  const salidas = new Map<string, number>()
+  for (const t of TRANSITIONS) {
+    for (const f of t.from) salidas.set(f, (salidas.get(f) ?? 0) + 1)
+  }
+  return [...salidas].filter(([, n]) => n === 1).map(([e]) => e)
+}
 
 /** Los estados de una clase, en el orden en que están declarados en el registro. */
 function estadosCon(clase: EnEspera): string[] {

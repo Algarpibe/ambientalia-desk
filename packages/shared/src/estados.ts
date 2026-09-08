@@ -32,9 +32,10 @@
  * transcurrir sin que el ticket pase por ningún estado de esta lista. Este módulo NO declara los
  * bodegajes: no son estados, y meterlos aquí sería justo el error que la tabla evita.
  *
- * `sin_salida` tampoco se declara aquí. Es un subconjunto de `en_espera` con un criterio más
- * estrecho —el de M1.3.4— y su dueño es F1C-03, que es quien tiene que decidir qué escape ofrecerle
- * a cada uno. Declararlo ahora sería inventar la respuesta.
+ * `sin_salida` SÍ se declara aquí, más abajo, y como dato: es la otra clasificación de negocio de
+ * este módulo. Es un subconjunto de `en_espera` con el criterio más estrecho de M1.3.4, y quién
+ * tiene que ofrecerle un escape a cada uno sigue siendo F1C-03 — pero la lista ya no está en
+ * discusión, así que dejarla sin declarar era esconder un dato cerrado.
  */
 export type EnEspera = 'externa' | 'interna' | 'ninguna' | 'sin_clasificar'
 
@@ -111,6 +112,41 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
   const clase: EnEspera = CLASIFICACION_EN_ESPERA[e]
   return clase === 'externa' || clase === 'interna'
 })
+
+/**
+ * LOS CUATRO `sin_salida` DE M1.3.4. Se DECLARAN, igual que `en_espera`, y por la misma razón: es
+ * una clasificación de negocio, no una propiedad que el grafo pueda contestar.
+ *
+ * EL DISCRIMINADOR, literal, para que el próximo estado se clasifique solo:
+ *
+ *   **El suceso del que depende la única salida ocurre FUERA de la aplicación —una entrega física,
+ *   un retorno de laboratorio, un alta en otro sistema—, frente a un acto que alguien realiza DENTRO
+ *   de la aplicación.**
+ *
+ * POR QUÉ `Liberación Comercial` NO ENTRA, aunque tenga salida única. Es el caso que distingue el
+ * criterio, y por eso va escrito y no sobreentendido: su única salida es `habilitado_para_entrega`,
+ * área Comercial, y ES UN ACTO QUE SE EJECUTA EN LA APLICACIÓN — alguien pulsa el botón. No hay
+ * ningún suceso del mundo que esperar: hay una persona que todavía no ha entrado. Los cuatro de
+ * abajo esperan un camión, un laboratorio o un alta en otro sistema.
+ *
+ * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DOCE
+ * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
+ * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
+ * tampoco: da CINCO, con `Liberación Comercial` dentro. Por eso la prueba de coherencia de
+ * `estados.test.ts` sólo comprueba que los cuatro son estados DECLARADOS, y no intenta derivarlos.
+ *
+ * Fuente: M1.3.4 del maestro. Criterio cerrado por Gerencia.
+ */
+export const ESTADOS_SIN_SALIDA: Estado[] = [
+  // Esperamos al proveedor: los repuestos llegan o no llegan, y no depende de nosotros.
+  'En Espera de Repuestos',
+  // Esperamos el alta del SKU en el otro sistema, que es un hecho que ocurre fuera de esta app.
+  'Solicitado',
+  // Esperamos el retorno del laboratorio externo con el equipo o el sensor.
+  'Servicio externo',
+  // Esperamos a que el inventario del otro sistema tenga el SKU disponible.
+  'En espera de SKU inventario',
+]
 
 /**
  * La clase de espera de un estado, o `undefined` si el estado no está en el registro.
