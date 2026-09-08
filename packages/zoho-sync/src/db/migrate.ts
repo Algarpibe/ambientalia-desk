@@ -49,9 +49,35 @@ export async function reseedTicketNumber(db: Queryable): Promise<void> {
   await db.query(`SELECT setval('ticket_number_seq', $1)`, [next])
 }
 
+/**
+ * TODA tabla de `schema.sql` está en UNA de estas tres listas, y el guardián de `migrate.test.ts` lo
+ * comprueba en esa dirección: una tabla nueva rompe el test hasta que alguien la clasifique. Al
+ * revés —«las declaradas existen»— sería trivialmente verde y no cazaría nada, que es justo lo que
+ * faltó cuando `catalogo_articulos` aterrizó en el esquema equivocado por un `CREATE` sin calificar.
+ *
+ * Lo que separa las tres es DÓNDE aterriza cada tabla, y no es cosmético: en producción la app
+ * conecta con `search_path=desk,public`, así que un `CREATE` sin calificar cae en `desk`.
+ */
+
 /** Tablas del dominio Zoho Desk que se mueven a desk.* (Fase 1). App-native y Books-lite NO se mueven. */
-const DESK_TABLES = ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments',
+export const DESK_TABLES = ['accounts', 'contacts', 'agents', 'tickets', 'conversations', 'attachments',
   'ticket_transitions', 'ticket_history', 'activities', 'equipos']
+
+/**
+ * Tablas propias de la app y del catálogo: se quedan en `public` y por eso van CALIFICADAS en el
+ * esquema. No son de Zoho Desk, así que `reorgToDesk` no las toca.
+ */
+export const PUBLIC_TABLES = ['ticket_reads', 'users', 'sessions', 'roles', 'avisos',
+  'resolution_attachments', 'remision_checklist', 'remisiones', 'remision_fotos',
+  'catalogo_tipos', 'catalogo_marcas', 'catalogo_modelos', 'catalogo_documentos',
+  'catalogo_articulos', 'catalogo_modelo_categorias', 'catalogo_articulos_ocultos']
+
+/**
+ * Tablas del esquema `books`: llegan REPLICADAS desde el hub y nadie en `apps/desk` las escribe. Van
+ * aparte de `PUBLIC_TABLES` porque no están en `public`, y meterlas ahí sería escribir en el
+ * guardián la misma clase de error de esquema que el guardián existe para cazar.
+ */
+export const BOOKS_TABLES = ['contacts', 'sales_orders', 'items']
 
 /** Sentencias del reorg public→desk (puras, para test). El ALTER SET SCHEMA mueve datos+índices+secuencias propias. */
 export function reorgToDeskStatements(): string[] {

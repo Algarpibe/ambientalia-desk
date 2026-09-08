@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, reseedTicketNumber, reorgToDeskStatements, APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
+import { migrate, reseedTicketNumber, reorgToDeskStatements, schemaStatements, DESK_TABLES, PUBLIC_TABLES, BOOKS_TABLES, APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import { nextTicketNumber } from './repo'
 
 async function freshDb(): Promise<Queryable> {
@@ -196,5 +196,93 @@ describe('reorgToDeskStatements', () => {
     for (const t of ['users','sessions','roles','ticket_reads','resolution_attachments','clients','sales_orders']) {
       expect(sql.some((s) => s.includes(`public.${t} SET SCHEMA`))).toBe(false)
     }
+  })
+})
+
+/**
+ * EL GUARDIÁN ANTI-DRIFT: TODA TABLA DE `schema.sql` ESTÁ CLASIFICADA (§9 del proposal F0-04).
+ *
+ * ⚠️ LA DIRECCIÓN IMPORTA, Y ES LA CONTRARIA A LA INTUITIVA. Comprobar «las 10 de `DESK_TABLES`
+ * existen en `schema.sql`» es trivialmente verde y no caza nada: una tabla NUEVA no aparece en
+ * `DESK_TABLES`, así que ese guardián la ignoraría justo el día en que hay algo que decidir. El que
+ * sirve va al revés —TODA tabla del esquema tiene que estar en UNA de las listas—, y así una tabla
+ * nueva rompe el test HASTA QUE ALGUIEN LA CLASIFIQUE.
+ *
+ * ES EL INCIDENTE REAL QUE FALTÓ. `catalogo_articulos` aterrizó en el esquema equivocado por un
+ * `CREATE` sin calificar y hubo que moverla a mano con `ALTER TABLE … SET SCHEMA`; el comentario de
+ * `schema.sql:390-391` lo deja escrito, y también por qué la suite no lo cazó: pg-mem no soporta
+ * `search_path`, así que en los tests todo aterriza en `public` pase lo que pase. Este guardián lee
+ * el TEXTO del fichero y no la base levantada, que es la única forma de verlo desde aquí.
+ *
+ * ⚠️ POR QUÉ TRES LISTAS Y NO DOS. El proposal habla de «`DESK_TABLES` (10) + `PUBLIC_TABLES` (19)»,
+ * pero de esas 19 hay TRES que no están en `public`: `books.contacts`, `books.sales_orders` y
+ * `books.items` viven en el esquema `books` y llegan REPLICADAS desde el hub (`schema.sql:377-386`).
+ * Meterlas en una lista llamada `PUBLIC_TABLES` sería escribir en el guardián la misma clase de
+ * error de esquema que el guardián existe para cazar — y además `contacts` existe en los DOS
+ * esquemas, así que sin calificar las dos serían el mismo nombre. Son 10 + 16 + 3 = 29, y
+ * 16 + 3 = 19: el número del proposal se conserva, partido por donde de verdad se parte.
+ */
+describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
+  /**
+   * Las tablas que CREA `schema.sql`, cada una por su IDENTIDAD CALIFICADA: el esquema con el que
+   * está escrita más su nombre.
+   *
+   * Sin prefijo se deja el nombre a secas, que es lo que la sentencia dice. En producción la app
+   * conecta con `search_path=desk,public`, así que una tabla sin calificar aterriza en `desk` — que
+   * es exactamente lo que se quiere de las de Zoho Desk y exactamente lo que NO se quiere del resto.
+   *
+   * Se lee de `schemaStatements()` y no del fichero por mi cuenta por lo mismo que la migración: si
+   * algún día cambia cómo se trocea el esquema, el guardián se entera en vez de quedarse mirando un
+   * fichero que ya nadie aplica igual.
+   */
+  function tablasDelEsquema(): string[] {
+    const tablas: string[] = []
+    for (const stmt of schemaStatements()) {
+      // Las líneas de comentario que preceden a la sentencia viajan DENTRO de ella —`schemaStatements`
+      // trocea por `;` y no por sentencia lógica—, así que hay que quitarlas antes de anclar en
+      // `^CREATE TABLE`. Sin esto se colaban 11 tablas: todas las que llevan comentario encima.
+      const sql = stmt.replace(/^(?:\s*--[^\n]*\n)+/, '').trim()
+      const m = /^CREATE TABLE(?:\s+IF NOT EXISTS)?\s+(?:([a-z_][a-z0-9_]*)\.)?([a-z_][a-z0-9_]*)/i.exec(sql)
+      if (m) tablas.push(m[1] ? `${m[1]}.${m[2]}` : m[2])
+    }
+    return tablas
+  }
+
+  /** Las tres listas, expandidas a la misma identidad calificada con la que se leen del esquema. */
+  function clasificadas(): string[] {
+    return [
+      ...DESK_TABLES,                              // sin calificar: se van a `desk` por el search_path
+      ...PUBLIC_TABLES.map((t) => `public.${t}`),
+      ...BOOKS_TABLES.map((t) => `books.${t}`),
+    ]
+  }
+
+  /**
+   * EL GUARDIÁN. Se compara la identidad CALIFICADA, no el nombre a secas, y por eso esta única
+   * prueba caza los tres fallos: la tabla nueva sin clasificar, el nombre clasificado que ya no
+   * existe, y —el incidente— la tabla que se crea en un esquema distinto del que su lista declara,
+   * que aparece a la vez como huérfana con un prefijo y como fantasma con el otro.
+   */
+  it('toda tabla del esquema está clasificada, y en el esquema que su lista declara', () => {
+    const enElEsquema = tablasDelEsquema()
+    const declaradas = clasificadas()
+
+    const sinClasificar = enElEsquema.filter((t) => !declaradas.includes(t))
+    expect(sinClasificar, 'tablas de schema.sql que no están en DESK_TABLES, PUBLIC_TABLES ni BOOKS_TABLES (o que se crean en otro esquema)').toEqual([])
+
+    const fantasmas = declaradas.filter((t) => !enElEsquema.includes(t))
+    expect(fantasmas, 'nombres clasificados que ya no existen en schema.sql con ese esquema').toEqual([])
+  })
+
+  /**
+   * EL RECUENTO, aparte. Los dos conjuntos de arriba se comparan por pertenencia, así que un nombre
+   * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
+   * que nadie lo notase. Aquí es donde se ve.
+   */
+  it('son 29 tablas: 10 de Desk, 16 de la app en public y 3 replicadas de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 16, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(29)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(29)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(29)
   })
 })
