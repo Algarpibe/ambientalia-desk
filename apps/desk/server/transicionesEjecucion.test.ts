@@ -33,38 +33,74 @@ instalarArnes()
  * `apps/desk/server/` + `packages/shared/` no se movió ninguna otra, así que este par es hoy toda la
  * red que hay debajo de C1.
  *
- * ══ QUÉ TIENE QUE HACER F1A-01 CON ESTAS DOS, EN ESTE ORDEN ══════════════════════════════════════
- *   1. Quitar el `.fails` de la segunda y verla ROJA — comprobando que falla por el 200 que devuelve
- *      hoy, no por otra cosa.
- *   2. Arreglar `transitionExec.ts`: el chequeo de obligatorio de `:70` tiene que correr TAMBIÉN para
- *      los checkbox. El movimiento es mover el bloque `if (f.kind === 'checkbox')` a ENTRE `:70` y
- *      `:71`, no detrás de `:71`: detrás del `if (empty) continue` un checkbox OPCIONAL ausente
- *      dejaría de escribirse como `false`, que es un cambio de comportamiento distinto y no pedido.
- *   3. Ver la segunda VERDE.
- *   4. INVERTIR la primera: pasa a comprobar 422, y su nombre y su comentario dejan de hablar de
- *      «comportamiento actual, defecto C1».
+ * ⚠️ POR QUÉ SON CUATRO Y NO DOS. El defecto tiene DOS VÍAS, y una pareja que sólo cubriera la
+ * primera dejaría pasar un arreglo falso:
+ *
+ *   `transitionExec.ts:44` → `const empty = raw === undefined || raw === null || raw === ''`
+ *
+ *   · campo AUSENTE           → `raw` es `undefined` → `empty` es `true`  → `:70` lo cazaría ✓
+ *   · campo presente en FALSE → `raw` es `false`     → `empty` es `FALSE` → `:70` LO DEJA PASAR ✗
+ *
+ * Y la segunda vía es el camino NORMAL, no el raro: un formulario con la casilla desmarcada envía
+ * `false`, no `undefined`. Para «Liberación del ticket sin facturar» la semántica sólo puede ser
+ * DEBE ESTAR MARCADO —es la confirmación de un acto—, y un obligatorio que acepta `false` no es una
+ * guarda. Por eso hay dos parejas: una por vía.
+ *
+ * ══ QUÉ TIENE QUE HACER F1A-01 CON ESTAS CUATRO, EN ESTE ORDEN ═══════════════════════════════════
+ *   1. Quitar el `.fails` de las dos negativas y verlas ROJAS — comprobando que fallan por el 200
+ *      que devuelven hoy, no por otra cosa.
+ *   2. Arreglar `transitionExec.ts`. SON DOS PIEZAS, no una:
+ *      (a) mover el bloque `if (f.kind === 'checkbox')` a ENTRE `:70` y `:71` — no detrás de `:71`:
+ *          detrás del `if (empty) continue` un checkbox OPCIONAL ausente dejaría de escribirse como
+ *          `false`, que es un cambio de comportamiento distinto y no pedido; y
+ *      (b) que el chequeo de obligatorio para `kind === 'checkbox'` sea `asBool(raw) !== true`, NO
+ *          `empty`. Sólo con (a), la vía del `false` sigue viva y sus dos pruebas siguen pasando:
+ *          el arreglo parecería completo y no lo estaría.
+ *   3. Ver las dos negativas VERDES.
+ *   4. INVERTIR las dos positivas: pasan a comprobar 422, y sus nombres y comentarios dejan de
+ *      hablar de «comportamiento actual, defecto C1».
  * ════════════════════════════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠️ CONSECUENCIA QUE EL ARREGLO NO REPARA. `liberacion_sin_facturar` es columna promovida
+ * (`rows.ts:121`, `schema.sql:39`), luego HOY HAY FILAS EN PRODUCCIÓN con `false` en esa columna y
+ * el ticket avanzado igualmente. El arreglo detiene la sangría; no repara el histórico. Quien
+ * audite liberaciones sin factura sobre esos datos estará auditando un dato falso. Va al Anexo D
+ * como punto nuevo, en la misma entrada que C1.
  */
 describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
   async function ticketPorFacturar() {
     await db.query("INSERT INTO tickets (id, number, subject, status) VALUES ('t1', 4100, 'C1', 'Por Facturar')")
   }
 
-  it('hoy una transición con checkbox obligatorio vacío se ejecuta igual — comportamiento actual, defecto C1', async () => {
+  const CASILLA = 'Liberación del ticket sin facturar'
+
+  /** Ejecuta la liberación con los `values` dados, sobre un ticket recién puesto en «Por Facturar». */
+  async function liberar(values: Record<string, unknown>) {
     const cookie = await adminCookie()
     await ticketPorFacturar()
     const { app } = appWith()
+    return request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
+      .send({ transitionId: 'liberacion_sin_factura', values })
+  }
 
-    const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
-      .send({ transitionId: 'liberacion_sin_factura', values: { comment: 'sin marcar la casilla' } })
+  /** El estado y la casilla como quedaron en la base. */
+  async function filaTicket() {
+    const t = await db.query('SELECT status, liberacion_sin_facturar FROM tickets WHERE id = $1', ['t1'])
+    return t.rows[0] as { status: string; liberacion_sin_facturar: boolean | null }
+  }
+
+  // ── VÍA 1 · el campo llega AUSENTE ───────────────────────────────────────────────────────────
+  // `raw` es `undefined`, luego `empty` es `true`: esta vía la cazaría la pieza (a) del arreglo.
+
+  it('hoy, con el checkbox obligatorio AUSENTE, la transición se ejecuta igual — comportamiento actual, defecto C1', async () => {
+    const res = await liberar({ comment: 'sin mandar la casilla' })
 
     // El modo de fallo EXACTO, fijado en positivo: 200 y sin lista de errores.
     expect(res.status).toBe(200)
     expect(res.body.errors).toBeUndefined()
 
     // Y la transición se EJECUTA: el ticket acaba en el estado destino.
-    const t = await db.query('SELECT status, liberacion_sin_facturar FROM tickets WHERE id = $1', ['t1'])
-    const fila = t.rows[0] as { status: string; liberacion_sin_facturar: boolean | null }
+    const fila = await filaTicket()
     expect(fila.status).toBe('Por Entregar / Sin facturar')
     // La guinda del defecto: la casilla se guarda como `false` —es columna promovida
     // (`rows.ts:121`)—, así que la base afirma que el ticket NO se liberó sin facturar mientras el
@@ -72,19 +108,37 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
     expect(fila.liberacion_sin_facturar).toBe(false)
   })
 
-  it.fails('el checkbox obligatorio debería dar 422 — verde cuando F1A-01 cierre C1', async () => {
-    const cookie = await adminCookie()
-    await ticketPorFacturar()
-    const { app } = appWith()
-
-    const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
-      .send({ transitionId: 'liberacion_sin_factura', values: { comment: 'sin marcar la casilla' } })
+  it.fails('el checkbox obligatorio AUSENTE debería dar 422 — verde cuando F1A-01 cierre C1', async () => {
+    const res = await liberar({ comment: 'sin mandar la casilla' })
 
     expect(res.status).toBe(422)
-    expect(res.body.errors).toContain('Falta el campo obligatorio: Liberación del ticket sin facturar')
+    expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
     // Y el ticket no se mueve: un 422 que ya hubiera transicionado no sería una validación.
-    const t = await db.query('SELECT status FROM tickets WHERE id = $1', ['t1'])
-    expect((t.rows[0] as { status: string }).status).toBe('Por Facturar')
+    expect((await filaTicket()).status).toBe('Por Facturar')
+  })
+
+  // ── VÍA 2 · el campo llega presente y en FALSE ───────────────────────────────────────────────
+  // `raw` es `false`, luego `empty` es FALSE y `:70` lo dejaría pasar. Es el camino NORMAL: un
+  // formulario con la casilla desmarcada manda `false`, no `undefined`. La pieza (a) del arreglo NO
+  // cubre esta vía; hace falta la (b). Sin estas dos pruebas, F1A-01 se cerraría con el defecto vivo.
+
+  it('hoy, con el checkbox obligatorio en FALSE, la transición se ejecuta igual — comportamiento actual, defecto C1', async () => {
+    const res = await liberar({ comment: 'casilla desmarcada', [CASILLA]: false })
+
+    expect(res.status).toBe(200)
+    expect(res.body.errors).toBeUndefined()
+
+    const fila = await filaTicket()
+    expect(fila.status).toBe('Por Entregar / Sin facturar')
+    expect(fila.liberacion_sin_facturar).toBe(false)
+  })
+
+  it.fails('el checkbox obligatorio en FALSE debería dar 422 — verde cuando F1A-01 cierre C1', async () => {
+    const res = await liberar({ comment: 'casilla desmarcada', [CASILLA]: false })
+
+    expect(res.status).toBe(422)
+    expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
+    expect((await filaTicket()).status).toBe('Por Facturar')
   })
 })
 
