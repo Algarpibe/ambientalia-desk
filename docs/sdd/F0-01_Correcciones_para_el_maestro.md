@@ -17,7 +17,7 @@
 
 ---
 
-## Anexo D — tres puntos nuevos
+## Anexo D — cuatro puntos nuevos
 
 ### D-nuevo 1 · La doble escritura Sheets / Postgres
 
@@ -83,6 +83,33 @@ rotación se parte en dos:
 
 Y la regla que evita repetirlo, ya incorporada a `CLAUDE.md` como **regla de secretos**: un secreto
 que aparece en un chat, una captura o un prompt **está quemado**; se rota, no se reutiliza.
+
+### D-nuevo 4 · El histórico que C1 deja sucio, y que su arreglo no repara
+
+**Va en la misma entrada que C1**, porque es su consecuencia y se pierde si se anota aparte.
+
+`liberacion_sin_facturar` es **columna promovida** (`rows.ts:121`, `schema.sql:39`), no un campo suelto en `custom_fields`. Y el defecto C1 no sólo deja pasar la transición: **escribe**. Como el checkbox nunca se valida, la casilla sin marcar se guarda como `false` (`transitionExec.ts:65`) mientras el ticket sí avanza a «Por Entregar / Sin facturar».
+
+Consecuencia: **hoy hay filas en producción que afirman que el ticket NO se liberó sin facturar, estando exactamente en el estado de liberado sin facturar.** El arreglo de F1A-01 detiene la sangría; **no repara el histórico**. Quien audite liberaciones sin factura sobre esos datos estará auditando un dato falso.
+
+Lo que hay que decidir, y no es de código:
+
+1. Si se recalcula el histórico. El dato correcto **sí existe**: `ticket_transitions.values` guarda todos los valores de cada transición (`schema.sql:57-61`), así que las filas de `liberacion_sin_factura` permiten reconstruir qué se envió realmente. Es el mismo mecanismo que salva los diez campos de fecha reentrantes (D-nuevo 2).
+2. Si en su lugar la columna se marca como no fiable antes de una fecha, y los informes la ignoran hasta ahí.
+
+Medición previa, para dimensionarlo:
+
+```sql
+SELECT COUNT(*) AS liberados_sin_factura,
+       COUNT(*) FILTER (WHERE liberacion_sin_facturar IS NOT TRUE) AS con_la_casilla_en_falso
+FROM desk.tickets
+WHERE status = 'Por Entregar / Sin facturar' OR id IN (
+  SELECT ticket_id FROM desk.ticket_transitions WHERE transition_id = 'liberacion_sin_factura');
+```
+
+**Y el defecto tiene dos vías, no una** — el detalle que decide si el arreglo de F1A-01 es real:
+
+`transitionExec.ts:44` define `empty` como `undefined`, `null` o cadena vacía. Para un checkbox eso significa que el campo **ausente** sí se caza, pero el campo **presente en `false`** no: `false` no es `empty`. Y la segunda es la vía normal, porque un formulario con la casilla desmarcada manda `false`. El arreglo son **dos piezas**: mover el bloque del checkbox entre `:70` y `:71`, **y** que el chequeo de obligatorio para `kind === 'checkbox'` sea `asBool(raw) !== true` en vez de `empty`. Está demostrado por mutación en `apps/desk/server/transicionesEjecucion.test.ts`: con sólo la primera pieza, las dos pruebas de la vía del `false` siguen verdes.
 
 ---
 
