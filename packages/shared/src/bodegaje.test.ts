@@ -352,3 +352,58 @@ describe('C9 · el hito de los indicadores 48 y 49', () => {
     expect(marcaIngresoAServicio([paso('habilitar_servicio', '2026-01-05T09:00:00Z')])).toBeNull()
   })
 })
+
+/**
+ * F1A-05 · LO QUE LA AUDITORÍA DE BLUEPRINT ENCONTRÓ SOBRE EL MÓDULO QUE ACABA DE ENTRAR.
+ *
+ * El bodegaje de proceso se cierra con «Fecha Orden de Compra» (`bodegaje.ts:69`), y esa etiqueta
+ * la escribe UNA SOLA transición: `aprobacion_y_repuestos` (`transitions.ts:199`). La otra rama de
+ * aprobación —`aprobacion`, la que NO pide repuestos— escribe «Fecha Orden de Compra **Final**», y
+ * además opcional (`transitions.ts:202-203`).
+ *
+ * Consecuencia, y es el hallazgo: para un ticket aprobado SIN repuestos el bodegaje de proceso no
+ * sale cero, NO SALE. La regla 3 del recorrido (`bodegaje.ts:162-164`) no cierra un periodo abierto
+ * con la fecha de consulta, así que el periodo se queda corriendo y no entra en la lista.
+ *
+ * ⚠️ ESTO NO LO ARREGLA LEER EL HISTORIAL. La reentrancia sí la arregla —el valor está en alguna
+ * fila de `ticket_transitions` aunque la columna lo haya pisado (prueba nº 6)—; esto no, porque el
+ * valor NUNCA se escribió bajo esa etiqueta, en ninguna fila. Por eso `INDICADORES_G6` sigue dando
+ * `alcance: null` a la columna 58 (`reentrancia.ts:82`) después de F1A-04: su otra mitad tiene
+ * dueño y es **F1C-02** (`reentrancia.test.ts:126`, `plan:167`).
+ *
+ * Se escribe como prueba y no como nota porque las doce pruebas de arriba usan todas la rama CON
+ * repuestos: la rama que no funciona no tenía ni una línea que lo dijera.
+ */
+describe('F1A-05 · auditoría: la rama de aprobación sin repuestos no cierra el bodegaje de proceso', () => {
+  const paso = (transitionId: string, performedAt: string, values: Record<string, unknown> = {}): PasoDelHistorial =>
+    ({ transitionId, performedAt, values })
+
+  it('19 · aprobada sin repuestos, el bodegaje de proceso no vale cero: no existe', () => {
+    const sinRepuestos = [
+      paso('notif_cliente_comercial', '2026-03-02T09:00:00Z', { 'Fecha de Cotización': '2026-03-02' }),
+      paso('aprobacion', '2026-03-20T09:00:00Z', { 'Fecha Orden de Compra Final': '2026-03-20' }),
+    ]
+    expect(periodosDeBodegaje(sinRepuestos).filter((p) => p.clase === 'proceso')).toEqual([])
+    expect(diasDeBodegaje(sinRepuestos, 'proceso')).toBe(0)
+
+    // Y el contraste, con la MISMA espera de 18 días por la otra rama, que sí la mide.
+    const conRepuestos = [
+      paso('notif_cliente_comercial', '2026-03-02T09:00:00Z', { 'Fecha de Cotización': '2026-03-02' }),
+      paso('aprobacion_y_repuestos', '2026-03-20T09:00:00Z', { 'Fecha Orden de Compra': '2026-03-20' }),
+    ]
+    expect(diasDeBodegaje(conRepuestos, 'proceso')).toBe(18)
+  })
+
+  /**
+   * La otra mitad del hallazgo: que la etiqueta que sí cierra tenga UN solo escritor no es una
+   * suposición sobre el grafo, es un hecho comprobable — y el día que F1C-02 le dé un segundo, esta
+   * prueba se pone roja al lado del arreglo y no a tres ficheros de distancia.
+   */
+  it('20 · «Fecha Orden de Compra» la escribe una sola transición, y no es la rama sin repuestos', () => {
+    const escriben = TRANSITIONS
+      .filter((t) => t.fields.some((f) => f.kind === 'date' && f.label === 'Fecha Orden de Compra'))
+      .map((t) => t.id)
+    expect(escriben).toEqual(['aprobacion_y_repuestos'])
+    expect(escriben).not.toContain('aprobacion')
+  })
+})

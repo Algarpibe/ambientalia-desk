@@ -265,22 +265,35 @@ La contrapartida: una caída justo entre las dos escrituras **pierde el aviso**
 El maestro pide tratarlo en sesión de trabajo específica antes de decidir (`:1669`). Detalle completo
 en `derivacion-avisos`.
 
-### 3.4 · C9 — el bodegaje de entrada mide contra un hito que cambió de significado · **destino F1A-04 → F1C**
+### 3.4 · C9 — el bodegaje de entrada mide contra un hito que cambió de significado · **F1A-04 lo construyó; queda F1C-06**
 
-**Comportamiento actual, a corregir en C9** (maestro M1.10, `:1678-1684`, punto abierto nº 41). La
-fórmula del diccionario es `date_diff("Fecha creación ticket", "Fecha Remisión Entrada")`
+> **⚠️ ACTUALIZADO EN F1A-05 (2026-09-09).** Este apartado se escribió antes de F1A-04 y describía la
+> vía preferida como «leer el historial tomando la marca de `Ingreso a Servicio`». **F1A-04 lo
+> construyó, y NO así.** La R08 (`R08.1.md:1694`) sustituyó esa prescripción de la R05 (`:1684`) por
+> un par de VALORES de campo: `Fecha Orden De Venta − Fecha Remisión Entrada`
+> (`packages/shared/src/bodegaje.ts:60-66`). La marca de `Ingreso a Servicio` quedó como ancla de los
+> **indicadores 48 y 49** —tiempo de inicio de servicio y tiempo de diagnóstico (`:2330`)—, y por eso
+> el módulo la expone aparte (`bodegaje.ts:225`, `marcaIngresoAServicio`). Son dos averías distintas
+> con dos arreglos distintos, y el párrafo de abajo las mezclaba.
+>
+> **Lo que sigue siendo cierto:** «lo que falta no es la traza, es el indicador que la lea». El módulo
+> de dominio existe y está probado (21 pruebas), pero **nadie lo consume**: sin endpoint, sin pantalla
+> y sin KPI. Destino: capacidad `kpis`, F1C-06 (`plan:171`). Ver
+> `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md` §3.
+
+**Comportamiento de partida, el que C9 corrigió** (maestro M1.10, `:1678-1684`, punto abierto nº 41).
+La fórmula del diccionario es `date_diff("Fecha creación ticket", "Fecha Remisión Entrada")`
 (`R08.1.md:1679`), y el propio diccionario añade «2026 omitir esta información» porque Comercial crea
 los tickets antes de que llegue el equipo (`:1680`).
 
-La vía que el maestro prefiere es leer el historial, tomando la marca de `Ingreso a Servicio`
-(`:1684`). **El dato existe ya**: `instanteUltimaTransicion(db, ticketId, 'ingreso_a_servicio')`
-(`fechasTicket.ts:22-34`) devuelve exactamente esa marca, y `ingreso_a_servicio` es la transición que
-exige `Fecha Remisión Entrada` (`transitions.ts:190-191`). Lo que falta no es la traza: es el
-indicador que la lea.
+Sobre la traza, el dato para los indicadores 48 y 49 **existe ya**:
+`instanteUltimaTransicion(db, ticketId, 'ingreso_a_servicio')` (`fechasTicket.ts:22-34`) devuelve esa
+marca, y `ingreso_a_servicio` es la transición que exige `Fecha Remisión Entrada`
+(`transitions.ts:190-191`).
 
-Con el matiz de M1.3.2 que el maestro nombra (`:1684`): el hito de referencia **MUST** ser la
-transición, **nunca** el estado inicial, porque el ticket nace en dos estados distintos según su
-origen.
+Con el matiz de M1.3.2 que el maestro nombra (`:1684`): para esos dos indicadores el hito de
+referencia **MUST** ser la transición, **nunca** el estado inicial, porque el ticket nace en dos
+estados distintos según su origen.
 
 ### 3.5 · La historia depende de un `syncTicketHistory` que sólo se llama desde una ruta
 

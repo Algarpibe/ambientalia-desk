@@ -52,13 +52,35 @@ testing:
       NO proponer instalar jsdom ni @testing-library/react, ni registrar esto
       como carencia o riesgo en fases posteriores.
   coverage:
-    available: false
-    note: "@vitest/coverage-v8 no está instalado; vitest.config.ts no declara sección coverage."
+    available: true
+    note: >
+      CORREGIDO EN F1A-05 (2026-09-09). La entrada anterior decía «no está
+      instalado; vitest.config.ts no declara sección coverage», y era cierta al
+      baseline a3a8f03 (2026-08-20) y falsa desde edbce13 (2026-09-08). Hoy el
+      proveedor está instalado (package.json:55), hay script test:coverage
+      (package.json:22) y vitest.config.ts:49-64 declara umbrales:
+      lines/statements 92, functions 96, branches 78. El CI lo ejecuta
+      (.github/workflows/ci.yml:39). Medido a F1A-05: 94,31 lines, 81,97
+      branches, 98,28 functions — verde. El denominador excluye los .tsx a
+      propósito (vitest.config.ts:45-48): ver ui_tests.
   quality_tools:
-    linter: "eslint . (eslint ^9.15.0) — 0 errores, 158 avisos (157 no-explicit-any, 1 react-hooks/exhaustive-deps); sin --max-warnings"
+    linter: >
+      eslint . (eslint ^9.15.0) — 0 errores, 158 avisos (157 no-explicit-any,
+      1 react-hooks/exhaustive-deps). La cifra NO se ha movido desde el baseline
+      a3a8f03: las tandas F1A no añadieron ni un aviso.
+      CORREGIDO EN F1A-05 el «sin --max-warnings»: desde edbce13 (2026-09-08) el
+      CI corre `npm run lint -- --max-warnings 158` (.github/workflows/ci.yml:35),
+      que es un TRINQUETE sin holgura, no un objetivo.
+      ⚠️ OJO AL MEDIRLO EN LOCAL: `eslint .` da 161 en cuanto existe el
+      directorio `coverage/`, porque eslint.config.js:9 ignora dist, .agent,
+      tmp-app y docs pero NO coverage/, y el informe generado aporta 3 avisos de
+      «Unused eslint-disable directive». En el CI no salta sólo porque lint
+      (ci.yml:35) corre ANTES que test:coverage (ci.yml:39); invertir esos dos
+      pasos rompe el trinquete. La cifra comparable es
+      `npx eslint . --ignore-pattern "coverage/**"`.
     type_checker: "tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit (typescript ~5.6.2)"
     formatter: "—"
-  ci: ".github/workflows/ci.yml — Node 22, servicio postgres:17 adjunto, npm ci -> typecheck -> lint -> test -> build"
+  ci: ".github/workflows/ci.yml — Node 22, servicio postgres:17 adjunto, npm ci -> typecheck -> lint (--max-warnings 158) -> test:coverage (umbrales de vitest.config.ts:58-63) -> build"
   volume:
     ts_tsx_incluyendo_pruebas: 30677
     ts_tsx_excluyendo_pruebas: 19292
