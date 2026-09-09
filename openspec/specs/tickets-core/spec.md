@@ -6,7 +6,7 @@
 | Estado | **as-built parcial** (`status_at_start` de `config.yaml`), contrastado contra el código |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |
-| Contenido | **12** requisitos (`RQ-TC-01`…`RQ-TC-12`, §§1–3) · **5** entradas de comportamiento actual (§4.1–§4.5) · **7** discrepancias diseño↔código (D-1…D-7) y **6** maestro↔código (M-1…M-6), más un riesgo de esquema (§5.3) |
+| Contenido | **12** requisitos (`RQ-TC-01`…`RQ-TC-12`, §§1–3) · **5** entradas de comportamiento actual (§4.1–§4.5) · **7** discrepancias diseño↔código (D-1…D-7) y **6** maestro↔código (M-1…M-6), más el hallazgo de esquema que esta tanda anota como **IV-6** (§5.3) |
 | Diseños de procedencia | `docs/superpowers/specs/2026-06-04-subsistema-c-creacion-tickets-design.md` (142 líneas) · `…-2026-06-04-subsistema-a-modelo-datos-design.md` (174 líneas). Los dos «Aprobados para planificación», **histórico congelado** (plan R01.1:382) |
 | Apartados del maestro | M1.1 (`R08.1.md:1042-1068`) · M1.2 (`:1069-1096`) · M1.3.2 (`:1145-1149`) · **Anexo G** (`:4289-4476`), con G.1 (`:4292`), G.2 (`:4314`), G.7 (`:4470-4472`) y G.8 (`:4473-4476`) |
 | Tandas que la tocan | **F1A-04 → F1C (C9)** · **F1B** (paridad de alta) · **F1D** (hojas de vida y catálogo, que reclaman el serial como llave) |
@@ -310,26 +310,73 @@ constante—; lo que miente es el comentario. Es la misma clase de defecto que M
 | M-5 | M1.1 `[DECIDIDO — R03]` (`:1049`): identificación física por **QR**, subida a MVP | **No existe.** Cero referencias en el árbol | Registrado en §4.4. **No tiene tanda en el §5 del plan**, así que hoy no está previsto que se construya. Punto a decidir |
 | M-6 | M1.3.8 (`:1415`) y M1.1 (`:1046`): «las 27 etiquetas de campo mapean a columnas reales; ninguna cae al cajón `custom_fields`» | **Verificado cierto**: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS` (de 39) | Sin discrepancia. Se anota porque es una de las afirmaciones as-built del maestro que sí resiste, y porque conviene que su verificación quede reproducible |
 
-### 5.3 · Un riesgo de esquema que ningún registro recoge
+### 5.3 · Las `ALTER TABLE` sin calificar: 23 sentencias fuera de la red del guardián
 
 **No es discrepancia con nadie: es un hallazgo nuevo de esta tanda.** `CLAUDE.md` fija como regla dura
 que «toda sentencia de creación de tabla califica el esquema explícitamente», porque un `CREATE` sin
-calificar ya aterrizó una tabla en el esquema equivocado en producción.
+calificar ya aterrizó `catalogo_articulos` en el esquema equivocado en producción
+(`packages/zoho-sync/src/db/migrate.ts:55-56`).
 
-Las `CREATE TABLE` de `packages/zoho-sync/src/db/schema.sql` **sí** califican (`public.users`
-`:82`, `public.sessions` `:94`, `public.roles` `:103`). Pero **28 sentencias `ALTER TABLE` no**
-—`ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text` (`:112`), `cargo` y `empresa` (`:115-116`),
-`tickets ... derivado_a` (`:123`), `roles ... recibe_avisos` (`:143`), entre otras—, ni lo hace
-`CREATE INDEX ... ON sessions` (`:101`).
+El recuento sobre `packages/zoho-sync/src/db/schema.sql` **sale de comandos, no de la lectura**, y
+parte el fichero en dos mitades que **no tienen el mismo estatus**:
 
-Hoy funcionan porque en producción la app conecta con `search_path=desk,public`
-(`migrate.ts:58-59`), así que un nombre sin calificar resuelve por ese orden. **Es el mismo modo de
-fallo que la regla dura viene a evitar, con la misma tabla y una sentencia distinta.**
+| Sentencia | Total | Calificadas | Sin calificar | Comando |
+|---|---|---|---|---|
+| `CREATE TABLE` | **29** | **19** | **10** | `grep -cE '^CREATE TABLE' schema.sql` · `grep -cE '^CREATE TABLE (IF NOT EXISTS )?[a-z_]+\.' schema.sql` |
+| `ALTER TABLE` | **28** | **5** (`:154-158`, las cinco de `books.contacts`) | **23** | `grep -cE '^ALTER TABLE' schema.sql` · `grep -nE '^ALTER TABLE [a-z_]+\.' schema.sql` |
 
-*Destino: sin tanda asignada.* No se corrige aquí —es código— y no está en `incumplimientos_vivos`.
-Se propone anotarlo ahí.
+#### Las 10 `CREATE` sin calificar son deliberadas — **no se anotan como desvío**
 
----
+Son **exactamente** las diez de `DESK_TABLES` (`migrate.ts:63-64`): `accounts`, `contacts`, `agents`,
+`tickets`, `conversations`, `attachments`, `ticket_transitions`, `ticket_history`, `activities`,
+`equipos`. Verificado por diferencia de conjuntos entre la lista extraída del `.sql` y la constante:
+**idénticas, sin sobrantes por ningún lado**.
+
+Están sin calificar **a propósito**, y el motivo está escrito: en producción la app conecta con
+`search_path=desk,public`, así que un `CREATE` sin calificar cae en `desk`, «que es exactamente lo que
+se quiere de las de Zoho Desk y exactamente lo que NO se quiere del resto»
+(`packages/zoho-sync/src/db/migrate.test.ts:229-232`; el comentario hermano en `migrate.ts:58-59`).
+
+Y están **probadas**: el guardián que F0-04 dejó escrito compara la identidad **calificada** de cada
+tabla del esquema contra las tres listas (`migrate.test.ts:266`), y una segunda prueba fija el reparto
+10 + 16 + 3 = 29 (`:282`). Si una de las diez cambiara de esquema, el guardián se pone rojo. Es
+**condición conocida, documentada y probada**, no incumplimiento.
+
+*Corrección de una cita de la propia spec:* el `search_path` no se configura en `migrate.ts:58-59`
+—ahí sólo se documenta—; se configura en `packages/zoho-sync/src/db/pool.ts:5`, y sólo cuando
+`config.dbSchema === 'desk'` (fijado en `pool.test.ts:17`).
+
+#### Las 23 `ALTER` sin calificar sí son hueco — **y el motivo es el arreglo**
+
+El guardián **no las ve**, y no por olvido de alcance sino por su implementación: su extractor ancla en
+`^CREATE TABLE` (`migrate.test.ts:245`), así que **ninguna** `ALTER TABLE` entra en su red. Las 23
+tocan **ocho** tablas distintas:
+
+| Esquema donde vive la tabla | Tablas | `ALTER` | Líneas |
+|---|---|---|---|
+| `public` (`PUBLIC_TABLES`, `migrate.ts:70-74`) | `remisiones` (7) · `users` (3) · `roles` (1) · `avisos` (1) · `catalogo_modelos` (1) | **13** | `:291`, `:306`, `:309-310`, `:313`, `:316-317` · `:112`, `:115-116` · `:143` · `:145` · `:374` |
+| `desk` (`DESK_TABLES`, `migrate.ts:63-64`) | `tickets` (7) · `equipos` (2) · `contacts` (1) | **10** | `:123`, `:185`, `:187`, `:206`, `:228-230` · `:208`, `:354` · `:256` |
+
+Las **13 de `public`** son el hueco de verdad. Hoy resuelven bien porque el nombre no existe en `desk`
+y el `search_path` cae a `public`. **Basta una homónima en `desk` para que cambien de destino en
+silencio** —`ALTER TABLE users ADD COLUMN role_id` (`:112`) dejaría de tocar `public.users`— y ése es
+exactamente el modo de fallo de `catalogo_articulos`, con la misma mecánica y una sentencia de otra
+clase.
+
+La más afilada es `ALTER TABLE contacts ADD COLUMN IF NOT EXISTS modified_time` (`:256`): `contacts`
+existe **en los dos esquemas** —`desk.contacts` por `DESK_TABLES` y `books.contacts` por
+`BOOKS_TABLES` (`migrate.ts:80`)—, y el propio guardián declara esa colisión como el motivo de tener
+tres listas y no dos (`migrate.test.ts:220-222`). Resuelve a `desk.contacts` porque `books` no está en
+el `search_path`, que es lo que se quiere; pero lo que lo decide es una omisión, no una declaración.
+
+**Matiz de alcance, para no acusar de más:** la regla dura de `CLAUDE.md` habla de «sentencia de
+creación de tabla», y una `ALTER` no lo es. Lo que este hallazgo dice no es que las 23 violen la letra
+de la regla, sino que **heredan su modo de fallo y quedan fuera de su única red de contención**.
+
+*Destino: se anota como **IV-6** en `openspec/config.yaml` (`incumplimientos_vivos`) y en la tabla de
+`CLAUDE.md`, con alcance **23** —nunca 28, nunca las 10 `CREATE`—.* F0-02 no lo corrige: es código. El
+arreglo que la entrada propone **no es reescribir 23 sentencias a mano**, sino extender el extractor
+del guardián a `^ALTER TABLE`, para que las 23 dejen de poder volver.
 
 ## 6 · Fuera de alcance de esta spec
 
