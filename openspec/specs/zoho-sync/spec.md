@@ -6,7 +6,7 @@
 | Estado | **as-built.** `config.yaml:117` lo declara «as-built (cron cada 3 min)»: la cifra es correcta y **el mecanismo no es un cron**. Ver M-1 |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas. El código de `ad1875b` es idéntico al de `b6fb6d4`: `git diff --name-only ad1875b..HEAD` no devuelve ningún fichero fuera de `docs/`, `openspec/` y `CLAUDE.md` |
 | Tanda que la escribe | F0-02 |
-| Contenido | **12** requisitos (`RQ-ZS-01`…`RQ-ZS-12`, §§1–4) · **4** entradas de comportamiento actual (§5.1–§5.4) · **5** discrepancias diseño↔código (D-1…D-5) y **4** maestro↔código (M-1…M-4) |
+| Contenido | **12** requisitos (`RQ-ZS-01`…`RQ-ZS-12`, §§1–4) · **5** entradas de comportamiento actual (§5.1–§5.5) · **5** discrepancias diseño↔código (D-1…D-5) y **4** maestro↔código (M-1…M-4) |
 | Diseños de procedencia | `docs/superpowers/specs/2026-06-06-zoho-hub-sp1-sync-service-design.md` (147 líneas) · `…-sp2-replica-referencia-design.md` (97 líneas, **«Implementado», con una corrección de alcance escrita en su propia cabecera**) · `2026-06-18-paquete-lectura-hub-design.md` (100 líneas). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | **M11.1** (`R08.1.md:2648-2654`) · M11.3 (`:2686-2693`) · M11.5 (`:2701-2707`) · M1.3.2 (`:1145-1149`) |
 | Tandas que la tocan | **F1B-01** (serial único y autocompletado, plan `:413`; y el destino de **IV-6**) · **F1B-08** (paridad de lectura y política de escritura, punto abierto **P44**) · **F1F-01** (migración de los tickets abiertos y fecha de corte) |
@@ -98,6 +98,10 @@ ruta protegida, `POST /api/tickets/:id/reply` (`routes/tickets.ts:196`). El borr
 lleva el guardián, y el fichero explica por qué: «`ENABLE_WRITES` protege las escrituras hacia ZOHO, y
 esto es local» (`:86`).
 
+**Su alcance es esa ruta y sólo esa.** `apps/hub-sync` no lee la variable en ninguna línea, así que la
+ingesta del worker escribe con el interruptor apagado. Es correcto —la ingesta escribe en PostgreSQL,
+no en Zoho— pero el nombre no lo dice y nada más lo dice tampoco: §5.3.
+
 ---
 
 ## 2 · La cadencia y quién la ejecuta
@@ -141,7 +145,7 @@ bajo la regla de secretos: el interruptor que enciende un borrador nace cerrado.
 
 La derivación **SHALL** escribir en una **tercera** base, la del *sales tracker*
 (`hub-sync.ts:53-58`, con `SALES_TRACKER_DATABASE_URL` en `config.ts:93`). `DEPLOY.md` la nombra en
-`:143` pero su §0 sigue titulando «**dos** bases de datos» (`:22`). Ver §5.4.
+`:143` pero su §0 sigue titulando «**dos** bases de datos» (`:22`). Ver §5.5.
 
 ---
 
@@ -246,33 +250,62 @@ barrido entero, falla por lo mismo, y 747 líneas iguales en el log no informan 
 *(La numeración de esta sección va aparte de la de requisitos: aquí se registra lo que hay, no lo que
 debe haber.)*
 
-### 5.1 · Cuatro interruptores de escritor nacen encendidos y sin documentar · **destino F1B-01**
+### 5.1 · Seis interruptores de escritor nacen abiertos · **destino: una decisión que nadie ha tomado por escrito**
 
-**Comportamiento actual, a corregir en F1B-01.** La regla de secretos de `CLAUDE.md` es literal: «un
-interruptor que enciende un escritor **nace cerrado** (`=== 'true'`), y va en `.env.example` y
-`DEPLOY.md` con dos frases: qué enciende y qué se rompe si se pone mal. Un flag no documentado se
-trata como defecto, no como configuración».
+**Comportamiento actual. No se anota como incumplimiento**, y el motivo de no hacerlo es parte del
+hallazgo: aquí hay una tensión real, no un descuido.
 
-**Recuento por comando.** `grep -nE "env\.[A-Z_]+ !== 'false'" config.ts` da **siete** interruptores
-que nacen encendidos, y `grep -nE "env\.[A-Z_]+ === 'true'"` da **tres** que nacen cerrados:
+La regla dura de `CLAUDE.md` es literal: «un interruptor que enciende un escritor **nace cerrado**
+(`=== 'true'`)». **Recuento por comando** sobre `packages/zoho-sync/src/config.ts`:
+`grep -nE "env\.[A-Z_]+ !== 'false'"` da **siete** que nacen abiertos y
+`grep -nE "env\.[A-Z_]+ === 'true'"` da **tres** que nacen cerrados.
 
-| Interruptor | Nace | Enciende un escritor | ¿Documentado en `DEPLOY.md`? |
+| Interruptor | Nace | ¿Enciende un escritor? | Qué escribe |
 |---|---|---|---|
-| `SYNC_CONTACTS` (`config.ts:89`) | encendido | Sí, `desk.contacts` | **Sí**, con sección propia y las dos frases (`DEPLOY.md:112-118`) |
-| `SYNC_ACTIVITIES` (`:90`) | encendido | Sí, `desk.activities` | **Sí** (`DEPLOY.md:102-110`) |
-| `SYNC_BOOKS` (`:91`) | encendido | **No: nadie lo consume** | No |
-| `SYNC_BOOKS_RICH` (`:92`) | encendido | Sí, `books.*` en el hub (`hub-sync.ts:24`) | No |
-| `DERIVE_SALES_RECORDS` (`:94`) | encendido | Sí, en una **tercera** base (`hub-sync.ts:52-58`) | No, aunque §7 la menciona de pasada (`DEPLOY.md:143`) |
-| `SYNC_CRM` (`:109`) | encendido | Sí, `crm.*` en el hub (`hub-sync.ts:31`) | No |
-| `SWEEP_DRY_RUN` (`:119`) | encendido | **Al revés**: encendido significa *no borrar* | Sí (`DEPLOY.md:144`) |
+| `SYNC_CONTACTS` (`:89`) | **abierto** | Sí | `desk.contacts` (`db/repo.ts:20-28`) |
+| `SYNC_ACTIVITIES` (`:90`) | **abierto** | Sí | `desk.activities` (`db/activities.ts:12`) |
+| `SYNC_BOOKS` (`:91`) | **abierto** | **No: nadie lo consume** | nada — ver §5.2 |
+| `SYNC_BOOKS_RICH` (`:92`) | **abierto** | Sí | `books.*` en el hub (`hub-sync.ts:24`) |
+| `DERIVE_SALES_RECORDS` (`:94`) | **abierto** | Sí | una **tercera** base (`hub-sync.ts:52-58`) |
+| `SYNC_CRM` (`:109`) | **abierto** | Sí | `crm.*` en el hub (`hub-sync.ts:31`) |
+| `ENABLE_WRITES` (`:84`) | cerrado | Sí, **hacia Zoho** | `POST /tickets/:id/sendReply` (`routes/tickets.ts:203-208`) |
+| `BACKFILL_CONTACTS` (`:110`) | cerrado | Sí, ~615 GET contra Books | `books.contacts` (`hubSync.ts:38-43`) |
+| `SWEEP_ENABLED` (`:118`) | cerrado | Sí, **borra** | `books.*` y `crm.*` (`hub-sync.ts:68-75`) |
+| `SWEEP_DRY_RUN` (`:119`) | abierto | **Al revés**: abierto significa *no borrar* | — |
 
-Los dos primeros **no son el defecto**: `DEPLOY.md` los documenta y explica por qué se dejan
-encendidos —«no están fijados aquí a propósito: cambiar su valor depende del diagnóstico de la
-replicación» (`:96-99`)—, que es exactamente lo que la regla pide. `SWEEP_DRY_RUN` tampoco: nacer
-encendido es su posición segura.
+Seis encienden escritores y nacen abiertos. `SWEEP_DRY_RUN` también nace abierto, pero abierto **es**
+su lado seguro, así que no cuenta.
 
-**Los cuatro que sí lo son:** `SYNC_BOOKS_RICH`, `DERIVE_SALES_RECORDS` y `SYNC_CRM` encienden
-escritores, nacen abiertos y no están documentados. Y `SYNC_BOOKS` es un caso aparte: ver §5.2.
+**Por qué esto no se anota como incumplimiento.** La regla existe para que un interruptor mal puesto
+falle del lado seguro, y **cuál es el lado seguro no es el mismo para las dos clases de escritor**:
+
+- Con `ENABLE_WRITES` mal puesto en abierto, sale un **correo a un cliente**
+  (`apps/desk/server/routes/tickets.ts:196`, con el comentario que lo dice: «a partir de aquí el correo
+  YA SALIÓ», `:211`). Irreversible.
+- Con `SWEEP_ENABLED` mal puesto en abierto, se **borran filas**. Por eso nace cerrado y además en
+  simulacro, con guardas de volumen (`config.ts:118-122`).
+- Con `SYNC_CRM` mal puesto en **cerrado**, la réplica deja de refrescarse y **nadie se entera**: no
+  hay error, no hay log de fallo, el tablero simplemente enseña datos viejos. Un worker de ingesta
+  cuyo interruptor nace cerrado no sincroniza nada al desplegar, y el fallo es silencioso.
+
+Es decir: para el escritor saliente, cerrado es el lado seguro; para el escritor de réplica, **cerrado
+puede ser el lado peligroso**. Y de esa distinción no hay una sola línea escrita en el repositorio.
+`DEPLOY.md` roza el asunto con dos de los seis —«no están fijados aquí a propósito: cambiar su valor
+depende del diagnóstico de la replicación» (`:96-99`)— y eso es lo más cerca que hay de una razón,
+para dos de seis.
+
+**La pregunta que hay que responder, y que esta spec no responde:**
+
+> ¿La regla de `CLAUDE.md` cubre **cualquier** escritor, o sólo el que sale del sistema y no se puede
+> deshacer? Si cubre cualquiera, los seis tienen que invertirse y el despliegue necesita un paso
+> explícito de encendido —con lo que un despliegue nuevo arranca sin sincronizar hasta que alguien lo
+> pulse—. Si sólo cubre el saliente, la regla necesita decirlo, porque hoy no lo dice, y entonces
+> estos seis dejan de estar en tensión con ella.
+
+No es una pregunta de código: es de Gerencia, igual que lo fue la de las pruebas de interfaz. **Se
+propone anotarla como punto abierto nuevo del Anexo D.** Lo que sí es de código, decida lo que decida,
+es que la razón quede escrita junto a cada interruptor: hoy sólo la tienen `BACKFILL_CONTACTS`
+(`config.ts:36-38`), `AVISOS_COPIA_EMAIL` (`:54-58`) y los dos del *sweep* (`:118-119`).
 
 ### 5.2 · `SYNC_BOOKS` es un interruptor muerto · **destino F1B-01**
 
@@ -285,9 +318,61 @@ Es peor que un flag no documentado: es un flag que **parece** apagar el sync de 
 Quien lo ponga a `false` creyendo que detiene una ingesta seguirá ingiriendo, y su prueba estará en
 verde. El que sí manda es `SYNC_BOOKS_RICH` (`hub-sync.ts:24`).
 
-*Destino F1B-01*, junto con IV-6 y §5.1: es la tanda que abre este paquete.
+Y tiene un efecto de segundo orden sobre §5.1: `SYNC_BOOKS` figura entre los siete que nacen abiertos,
+pero **no enciende ningún escritor**, así que su posición de nacimiento no significa nada. Cuando se
+responda la pregunta de §5.1, éste no entra: son **cinco** escritores vivos y un flag muerto.
 
-### 5.3 · 27 de las 42 variables de entorno no están en `DEPLOY.md` · **destino F1B-01**
+*Destino F1B-01*, junto con IV-6 y §5.4: es la tanda que abre este paquete.
+
+### 5.3 · `ENABLE_WRITES` es global de nombre y local de efecto · **destino F1B-08**
+
+**Comportamiento actual. Tampoco es automáticamente defecto**, y por la misma razón que §5.1: lo que
+falla no es el comportamiento, es que el nombre promete un alcance que no tiene y nada lo dice por
+escrito.
+
+`enableWrites` vive en la configuración **compartida** por los dos procesos
+(`packages/zoho-sync/src/config.ts:9` y `:84`). **Verificado por comando** —`grep -rn
+"enableWrites\|ENABLE_WRITES" apps packages --include=*.ts --include=*.tsx | grep -v "\.test\.ts"`—
+son ocho apariciones fuera de pruebas, y **una sola** es una guarda:
+
+| Aparición | Qué hace |
+|---|---|
+| `packages/zoho-sync/src/config.ts:9`, `:84` | Lo declara y lo lee |
+| **`apps/desk/server/routes/tickets.ts:28`** | **Lo honra**: `guardWrites` responde `403` |
+| `apps/desk/server/index.ts:55` | Sólo lo **imprime** en el log de arranque |
+| `apps/desk/server/routes/tickets.ts:86` | Un comentario que explica por qué el borrado no lo lleva |
+| `apps/desk/server/testing/appHarness.ts:46`, `:49` | Andamiaje de pruebas |
+
+Y el dato que cierra el punto: **`grep -rn "enableWrites\|ENABLE_WRITES\|guardWrites" apps/hub-sync/`
+no devuelve ninguna coincidencia.** El worker ingiere —y por tanto escribe en el hub— con el
+interruptor apagado, todos los días.
+
+**Por qué esto tampoco se anota como incumplimiento sin más.** Las dos escrituras no son de la misma
+clase, y el propio código lo declara en el único sitio donde alguien se hizo la pregunta:
+«`ENABLE_WRITES` protege las escrituras **hacia ZOHO**, y esto es local» (`routes/tickets.ts:86`). La
+ingesta es mantenimiento de réplica: escribe en PostgreSQL, no en Zoho, y lo que produce se puede
+volver a producir. **Verificado por comando:** los únicos `POST` salientes del paquete de sync son los
+tres refrescos de token OAuth (`tokenManager.ts:25`, `books/booksClient.ts:32`,
+`crmHub/crmClient.ts:13`); la única escritura de **datos** hacia Zoho de todo el repositorio es
+`sendReply` (`routes/tickets.ts:203-208`), y está detrás de la guarda.
+
+Así que el comportamiento es correcto. Lo que no lo es:
+
+1. **El nombre.** `ENABLE_WRITES`, sin adjetivo, en una configuración compartida por dos procesos.
+   Quien lo lea en la pestaña Environment del worker concluirá que allí también manda, y no manda.
+2. **El silencio.** La distinción entre las dos clases de escritura vive en **un comentario de una
+   ruta** (`routes/tickets.ts:86`): no está en el nombre, ni en el tipo (`config.ts:9`), ni en
+   `DEPLOY.md`, cuyo §6 se titula «Activar escrituras» sin decir cuáles (`:125-127`).
+3. **La consecuencia práctica**, que es la que le da destino: **F1B-08** es la tanda de la política de
+   escritura, con el punto abierto **P44** delante (plan `:157`). La decisión que P44 tiene que tomar
+   no es «¿construimos la escritura?» sino «¿encendemos la que ya está, y qué alcance le damos al
+   interruptor que la enciende?». Con el nombre actual, esa conversación empieza con un malentendido.
+
+*Se propone*, sin corregir nada aquí: renombrarlo a algo que diga su alcance —`ZOHO_WRITES_ENABLED` o
+equivalente— y documentar en `DEPLOY.md` que la ingesta del worker no depende de él. Es cambio de
+código y de despliegue: no es de F0-02.
+
+### 5.4 · 27 de las 42 variables de entorno no están en `DEPLOY.md` · **destino F1B-01**
 
 **Comportamiento actual, a corregir en F1B-01.** **Recuento por comando:** `grep -oE
 "env\.[A-Z][A-Z0-9_]*" packages/zoho-sync/src/config.ts | sort -u` da **42** variables; comprobando
@@ -312,7 +397,7 @@ Las ausentes incluyen las que más consecuencia tienen:
 *No verificado en esta tanda:* la otra mitad de la regla, `.env.example`. El fichero queda fuera del
 alcance de lectura de esta sesión, así que **no se afirma nada sobre él**.
 
-### 5.4 · `DEPLOY.md` §0 dice «dos bases de datos» y hay tres · **destino F1B-01**
+### 5.5 · `DEPLOY.md` §0 dice «dos bases de datos» y hay tres · **destino F1B-01**
 
 **Comportamiento actual, a corregir cuando alguien toque el despliegue.** El §0 se titula «Topología:
 **dos** bases de datos y dos servicios de este repo» (`DEPLOY.md:22`) y su tabla lista `desk-db` y
@@ -370,7 +455,7 @@ escribe todos los días a las 5:00.
   `openspec/config.yaml` y en `CLAUDE.md`, analizadas en `tickets-core` §5.3. El fichero es de esta
   capacidad y el guardián también (RQ-ZS-10), pero el desvío se anota una sola vez y allí.
 - **Los indicadores derivados de `sales_records`** → `kpis` (no es de F0-02). Aquí sólo está que la
-  derivación existe, cuándo corre y contra qué base escribe (RQ-ZS-05, §5.4).
+  derivación existe, cuándo corre y contra qué base escribe (RQ-ZS-05, §5.5).
 - **Las pruebas de interfaz.** Los 39 ficheros `.tsx` de `apps/desk/src` quedan fuera de la red de
   pruebas por decisión de Gerencia (F0-00, 2026-09-08; `vitest.config.ts:16-20`). Esta capacidad no
   tiene componentes: todo lo que describe está cubierto por pruebas de nodo, salvo lo que vive en la
