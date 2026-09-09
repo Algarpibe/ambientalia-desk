@@ -333,13 +333,22 @@ export interface EquipoLite {
   modelo?: string
   tipo?: string
   clienteNombre?: string
+  /**
+   * FK al cliente de Books. Ausente —no vacía— en los equipos que el backfill no pudo casar: el
+   * formulario necesita distinguir «no se sabe de quién es» de «es del cliente X» para avisar.
+   *
+   * Subió de `EquipoFull` a `EquipoLite` en F1B-01. Sin esto, resolver el cliente desde el serial
+   * sólo podía hacerse POR NOMBRE, que es el apaño que el servidor abandonó el 2026-08-09
+   * (`apps/desk/server/db/equipos.ts:45-53`). Es además lo que deja al serial abrir las órdenes de
+   * venta activas del cliente, la mitad de `R08.1.md:1048` que faltaba.
+   */
+  clientId?: string
   /** FK al catálogo maestro (`catalogo_modelos`); ausente en equipos que la siembra no pudo casar. */
   modeloId?: string
 }
 
 export interface EquipoFull extends EquipoLite {
   active: boolean
-  clientId?: string
 }
 
 export interface CatalogoTipo { id: string; nombre: string; activo: boolean }

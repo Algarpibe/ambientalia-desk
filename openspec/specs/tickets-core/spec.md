@@ -307,11 +307,11 @@ constante—; lo que miente es el comentario. Es la misma clase de defecto que M
 | M-1 | Anexo G col. 27 (`:4337-4338`): «Tipo de Servicio: Calibración · Diagnóstico · Garantía · Mantenimiento · No aplica · Otro» — **seis** | **Siete**: añade `Reparación` (`ticketCreate.ts:4`) | El código lo declara y lo razona: `Reparación` viene del formulario de remisiones, y al heredar la remisión el tipo de servicio del ticket las dos listas se unificaron (`ticketCreate.ts:2-3`). **Corrección para el maestro**: el Anexo G va con seis valores y la lista real tiene siete |
 | M-2 | Anexo G col. 11 (`:4325-4326`): «Mantenimiento · equipo nuevo · soporte remoto» | `Equipo para servicio de mantenimiento` · `Equipo nuevo` · `Soporte remoto` (`ticketCreate.ts:5`) | Mismos tres valores; la etiqueta del primero es más larga en el código. Discrepancia de etiqueta, no de dominio. **Corrección menor para el maestro**, para que un `WHERE classification = 'Mantenimiento'` no se escriba con la etiqueta corta |
 | M-3 | M1.1 `[DECIDIDO]` (`:1043`): «Se elimina la nomenclatura CG (calibración) / MT (mantenimiento)» | Los cinco prefijos siguen (`ticketCreate.ts:1`), y `defaultPrefijoFor` **deriva** CG para Calibración y MT para el resto (`:47-49`) | **El código implementa el cierre de la R08, no el `[DECIDIDO]` original.** R08 resolvió el punto nº 37: el prefijo es formalidad, «puede derivarse automáticamente de la clasificación y del tipo de servicio en lugar de teclearse» (`:1067`). Eso es exactamente `defaultPrefijoFor`. Sin discrepancia real, pero el `[DECIDIDO]` de `:1043` sigue en el maestro contradiciendo su propio cierre — **conviene marcarlo como superado ahí mismo** |
-| M-4 | M1.1 `[DECIDIDO 21/08]` (`:1048`): «Autocompletado por serial: al introducir el número de serie, el sistema trae automáticamente la información de cliente y modelo, **y asocia el ticket a las órdenes de venta activas**» | La primera mitad sí: `searchEquipos` busca por serial y el equipo trae marca, modelo, tipo y cliente (`equipos.ts:58-69`, `:75-79`). La segunda **no**: la orden de venta se elige en un buscador aparte (`ticketService.ts:35-42`) y no se deriva del serial | **Implementado a medias.** Lo que falta no es cosmético: es el paso que la decisión del 21/08 describe como el que convierte el serial en «la llave de entrada de todo el registro». **Punto a decidir**: si se implementa o si la decisión se reformula |
+| M-4 | M1.1 `[DECIDIDO 21/08]` (`:1048`): «Autocompletado por serial: al introducir el número de serie, el sistema trae automáticamente la información de cliente y modelo, **y asocia el ticket a las órdenes de venta activas**» | **CERRADO en F1B-01.** `EquipoLite` lleva `clientId` (`packages/shared/src/types.ts:329-348`, servido por `db/equipos.ts:41`, `:65`, `:76`); `pickEquipo` resuelve el cliente **por identidad** (`CreateTicket.tsx:139-174`), y con el cliente puesto el efecto de las órdenes de venta (`CreateTicket.tsx:83-93`) ofrece las **activas y libres** de ese cliente (`books/repo.ts:145`, `routes/directory.ts:41-47`) | **Ya no está a medias — y la mitad que faltaba no necesitaba un endpoint, sino un campo.** El diagnóstico anterior («la orden de venta se elige en un buscador aparte») era cierto pero no daba con la causa: sin `client_id` en el equipo, el formulario resolvía el cliente **por NOMBRE**, que es exactamente el apaño que el servidor había abandonado el 2026-08-09 (`db/equipos.ts:45-53`). Probado de punta a punta en `db/equipos.test.ts`, «del serial al client_id, y del client_id a las órdenes de venta activas y libres». La vía por nombre sobrevive **sólo** como respaldo para el ~3,4 % de equipos que el backfill no enlazó |
 | M-5 | M1.1 `[DECIDIDO — R03]` (`:1049`): identificación física por **QR**, subida a MVP | **No existe.** Cero referencias en el árbol | Registrado en §4.4. **No tiene tanda en el §5 del plan**, así que hoy no está previsto que se construya. Punto a decidir |
 | M-6 | M1.3.8 (`:1415`) y M1.1 (`:1046`): «las 27 etiquetas de campo mapean a columnas reales; ninguna cae al cajón `custom_fields`» | **Verificado cierto**: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS` (de 39). **F1A-04: ahora 28 de 40** — el campo de aviso de C9. La afirmación resiste | Sin discrepancia. Se anota porque es una de las afirmaciones as-built del maestro que sí resiste, y porque conviene que su verificación quede reproducible |
 
-### 5.3 · Las `ALTER TABLE` sin calificar: 23 sentencias fuera de la red del guardián
+### 5.3 · Las `ALTER TABLE` sin calificar: el hueco del guardián · **CERRADO en F1B-01 (IV-6)**
 
 **No es discrepancia con nadie: es un hallazgo nuevo de esta tanda.** `CLAUDE.md` fija como regla dura
 que «toda sentencia de creación de tabla califica el esquema explícitamente», porque un `CREATE` sin
@@ -347,7 +347,15 @@ tabla del esquema contra las tres listas (`migrate.test.ts:266`), y una segunda 
 —ahí sólo se documenta—; se configura en `packages/zoho-sync/src/db/pool.ts:5`, y sólo cuando
 `config.dbSchema === 'desk'` (fijado en `pool.test.ts:17`).
 
-#### Las 23 `ALTER` sin calificar sí son hueco — **y el motivo es el arreglo**
+#### Las `ALTER` sin calificar sí eran hueco — **y el arreglo fue el guardián, más 13 sentencias**
+
+> **✅ CERRADO EN F1B-01 (2026-09-09).** Lo que sigue describe el hallazgo tal como se registró; el
+> cierre está al final del apartado. **Y las cifras de arriba quedaron caducas antes de cerrarse**:
+> eran 28 / 5 / 23 al escribirlas y eran **29 / 5 / 24** tres días después. La que entró es
+> `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_aviso_cliente` (`schema.sql:448`), de F1A-04
+> (`e8c5e90`). Está **bien** sin calificar —`tickets` es de `DESK_TABLES`—; el hallazgo es que **nadie
+> lo comprobó**, que es precisamente lo que el hueco permitía.
+
 
 El guardián **no las ve**, y no por olvido de alcance sino por su implementación: su extractor ancla en
 `^CREATE TABLE` (`migrate.test.ts:245`), así que **ninguna** `ALTER TABLE` entra en su red. Las 23
@@ -378,6 +386,35 @@ de la regla, sino que **heredan su modo de fallo y quedan fuera de su única red
 `CLAUDE.md`, con alcance **23** —nunca 28, nunca las 10 `CREATE`—.* F0-02 no lo corrige: es código. El
 arreglo que la entrada propone **no es reescribir 23 sentencias a mano**, sino extender el extractor
 del guardián a `^ALTER TABLE`, para que las 23 dejen de poder volver.
+
+#### Cómo se cerró · **F1B-01**
+
+**El guardián se extendió, y esa parte de la entrada era exacta.** `migrate.test.ts` añade
+`altersDelEsquema()` —el mismo troceo, el mismo saneado de comentarios y las **mismas tres listas**
+que el de `CREATE`, a propósito: si los dos guardianes no leyeran de la misma fuente podrían discrepar
+sobre dónde vive una tabla, que es justo el error a cazar— y tres pruebas:
+
+| Prueba | Qué fija |
+|---|---|
+| «toda ALTER TABLE apunta a una tabla clasificada…» | La identidad calificada de cada `ALTER` está en `DESK_TABLES`, `public.*` o `books.*` |
+| «las ALTER sin calificar son exactamente las de DESK_TABLES…» | Una `ALTER` sin calificar sobre una tabla que **no** es de Desk se pone roja |
+| «son 29 ALTER: 18 calificadas… y 11 sin calificar» | El recuento, que es lo que delata el crecimiento silencioso |
+
+**Y además hubo que calificar 13 sentencias, no 23 — y la diferencia es la entrada del hallazgo.**
+Extender el guardián sin tocar el `.sql` lo habría dejado rojo para siempre. Se calificaron **las 13
+de `public`** —`users` (3), `roles` (1), `avisos` (1), `remisiones` (7), `catalogo_modelos` (1)—, que
+son el hueco de verdad; las **11 de `DESK_TABLES`** siguen sin calificar, que es lo correcto y lo que
+la segunda prueba fija en positivo. **Calificar las 23 habría roto la migración**: el esquema `desk`
+sólo existe tras `reorgToDesk`, que no corre en los tests, y `migrate` es tolerante por sentencia, así
+que las diez habrían fallado en silencio.
+
+Que las 13 de `public` se puedan calificar sin riesgo **no era una suposición**: `public` sí existe en
+pg-mem —`schema.sql:271` ya crea `public.remisiones` así— y la suite entera pasó sin un solo cambio
+tras hacerlo.
+
+*Mutaciones ejercitadas y muertas:* quitarle el `public.` a una `ALTER` de `remisiones`; ponerle
+`desk.` a una de `tickets`; y añadir una `ALTER` nueva sin calificar sobre `public.users`, que es
+literalmente el caso que dejó pasar `e8c5e90`.
 
 ## 6 · Fuera de alcance de esta spec
 

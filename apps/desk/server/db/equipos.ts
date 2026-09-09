@@ -38,7 +38,7 @@ export async function upsertEquipo(db: Queryable, r: EquipoRow): Promise<void> {
 function toLite(r: any): EquipoLite {
   return {
     id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined,
-    clienteNombre: r.cliente_nombre ?? undefined, modeloId: r.modelo_id ?? undefined,
+    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined,
   }
 }
 
@@ -62,7 +62,7 @@ export async function searchEquipos(db: Queryable, q: string, clientId?: string 
   if (clientId) { params.push(clientId); clienteFilter = `AND client_id = $${params.length}` }
   params.push(limit)
   const r = await db.query(
-    `SELECT id,serial,marca,modelo,tipo,cliente_nombre FROM equipos
+    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id FROM equipos
      WHERE active = true AND (LOWER(serial) LIKE $1 OR LOWER(COALESCE(cliente_nombre,'')) LIKE $1
        OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1)
      ${clienteFilter}
@@ -73,7 +73,7 @@ export async function searchEquipos(db: Queryable, q: string, clientId?: string 
 }
 
 export async function getEquipo(db: Queryable, id: string): Promise<EquipoLite | null> {
-  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,modelo_id FROM equipos WHERE id=$1', [id])
+  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id FROM equipos WHERE id=$1', [id])
   return r.rows[0] ? toLite(r.rows[0]) : null
 }
 

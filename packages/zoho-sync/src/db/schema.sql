@@ -109,11 +109,11 @@ CREATE TABLE IF NOT EXISTS public.roles (
   updated_at timestamptz
 );
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id text;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role_id text;
 
 -- Cargo y empresa del tecnico. Los pide el documento de remision, que hoy los saca de una hoja de Google
-ALTER TABLE users ADD COLUMN IF NOT EXISTS cargo text;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS empresa text;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS cargo text;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS empresa text;
 
 -- A quien se derivo el ticket: el usuario de la APP al que le toca el trabajo ahora mismo.
 -- No confundir con assignee_id, que es el propietario en Zoho y viene del sync (NULL en todo ticket
@@ -140,9 +140,9 @@ CREATE INDEX IF NOT EXISTS idx_avisos_user ON avisos (user_id);
 
 -- Que rol recibe los avisos de sus areas cuando un ticket entra en una fase que le toca. Es una
 -- casilla del ROL y no del usuario: el destinatario es el cargo, y asi sobrevive al cambio de persona
-ALTER TABLE roles ADD COLUMN IF NOT EXISTS recibe_avisos boolean NOT NULL DEFAULT false;
+ALTER TABLE public.roles ADD COLUMN IF NOT EXISTS recibe_avisos boolean NOT NULL DEFAULT false;
 -- Cuando salio el correo de este aviso. NULL = pendiente, y esa es la cola de reintento
-ALTER TABLE avisos ADD COLUMN IF NOT EXISTS enviado_at timestamptz;
+ALTER TABLE public.avisos ADD COLUMN IF NOT EXISTS enviado_at timestamptz;
 
 CREATE SCHEMA IF NOT EXISTS books;
 
@@ -288,7 +288,7 @@ CREATE TABLE IF NOT EXISTS public.remisiones (
 CREATE INDEX IF NOT EXISTS idx_remisiones_ticket ON remisiones (ticket_id);
 
 -- Marca la reclamacion del envio (ver reclamarEnvio en db/remisiones.ts) para que un reintento tras perder cobertura no dispare un segundo documento
-ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS enviado_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS enviado_at timestamptz;
 
 -- Fotos de la remision, en base64 sobre text igual que resolution_attachments
 CREATE TABLE IF NOT EXISTS public.remision_fotos (
@@ -303,18 +303,18 @@ CREATE TABLE IF NOT EXISTS public.remision_fotos (
 CREATE INDEX IF NOT EXISTS idx_remision_fotos_remision ON remision_fotos (remision_id);
 
 -- El historico importado de la hoja de Google trae remisiones que no calzan con ningun ticket de Zoho: NULL es un estado legitimo, no un dato que falta
-ALTER TABLE remisiones ALTER COLUMN ticket_id DROP NOT NULL;
+ALTER TABLE public.remisiones ALTER COLUMN ticket_id DROP NOT NULL;
 
 -- Empresa y persona de contacto como texto libre: las trae el historico importado, las remisiones de la app aun no las piden
-ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS empresa text;
-ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS persona_contacto text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS empresa text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS persona_contacto text;
 
 -- Distingue lo que crea la app de lo importado de la hoja de Google (historico): una remision historica no tiene fotos ni carpeta de Drive, y la pantalla debe poder tratarla distinto
-ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS origen text NOT NULL DEFAULT 'app';
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS origen text NOT NULL DEFAULT 'app';
 
 -- Anular en vez de borrar: el documento y el PDF pueden ya existir en Drive y haberse mandado a un cliente, asi que borrar la fila dejaria ese documento sin nada que lo explique, y anular es lo unico que se puede deshacer de un clic equivocado. NULL en anulada_at es una remision vigente
-ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS anulada_at timestamptz;
-ALTER TABLE remisiones ADD COLUMN IF NOT EXISTS anulada_por text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulada_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulada_por text;
 
 -- Backfill de las historicas ya importadas: entraron sin created_at, asi que se quedaron con el now() del dia de la importacion. Los dos paneles del ticket (historia y conversaciones) ordenan por esa columna, y como las transiciones si llevan su fecha buena, una remision de 2025 aterrizaba arriba del todo: un ticket cerrado hace meses abria diciendo "El equipo ingresa para Calibracion" como si fuera lo ultimo que paso. La fecha de servicio es la buena, que es lo que ya hacia listRemisionesListado ordenando por fecha antes que por created_at. Se ancla a las 12:00 y no a medianoche porque la columna es timestamptz y el panel formatea en America/Bogota: un date convertido a pelo se pinta como el dia ANTERIOR a las 19:00. Solo toca origen='historico' - en las de la app created_at lleva hora y es el registro fiel - y la condicion del WHERE lo deja en no-op a partir de la segunda pasada, en vez de reescribir 149 filas en cada arranque
 UPDATE remisiones SET created_at = fecha::timestamp + interval '12 hours' WHERE origen = 'historico' AND created_at <> (fecha::timestamp + interval '12 hours')::timestamptz;
@@ -371,7 +371,7 @@ CREATE TABLE IF NOT EXISTS public.catalogo_documentos (
 CREATE INDEX IF NOT EXISTS idx_catalogo_documentos_modelo ON catalogo_documentos (modelo_id);
 
 -- El SKU es del MODELO y no del equipo. Es una cadena que alguien teclea: con books.items ya en desk-db se puede reconciliar contra los articulos reales, pendiente de hacer
-ALTER TABLE catalogo_modelos ADD COLUMN IF NOT EXISTS sku text;
+ALTER TABLE public.catalogo_modelos ADD COLUMN IF NOT EXISTS sku text;
 
 -- books.items llega REPLICADA desde el hub por zoho_ref_pub, igual que books.contacts y books.sales_orders. La replicacion logica NO crea la tabla en el suscriptor: solo copia filas a una que ya exista, emparejando por nombre de columna
 -- Por eso esta definicion debe ser IDENTICA a la de booksHub/schema-books.sql. Una columna que falte aqui es una columna que dejara de llegar en silencio

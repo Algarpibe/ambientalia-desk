@@ -187,6 +187,18 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
             <div>
               <label className="text-[11px] font-bold text-slate-500 uppercase">Equipo</label>
               <input className={fijo} readOnly value={[data.equipo.marca, data.equipo.modelo].filter(Boolean).join(' ') + (data.equipo.serial ? ` · serie ${data.equipo.serial}` : '')} />
+              {/* F1B-01 · el serial es obligatorio al crear la remisión (`R08.1.md:1045`), y lo impone
+                  el servidor (`routes/remision.ts`, 422). Esto es COMODIDAD, no guarda: dice antes de
+                  pulsar lo que el servidor diría después, y sobre todo dice QUÉ HACER. Pasa sólo en
+                  tickets venidos de Zoho que aún no han pasado por «Habilitar Servicio», que es donde
+                  se captura el serial (`transitions.ts:189`). */}
+              {!data.equipo.serial && (
+                <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+                  Este ticket no tiene número de serie, y la remisión no puede emitirse sin él: es lo que
+                  identifica al equipo que entra. Captúralo en <b>Habilitar Servicio</b>, o enlaza el equipo
+                  desde el catálogo, y vuelve a abrir este formulario.
+                </div>
+              )}
             </div>
 
             <div>

@@ -127,6 +127,36 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) { res.status(422).json({ error: 'Fecha inválida' }); return }
 
     /*
+     * F1B-01 · EL SERIAL ES OBLIGATORIO. `R08.1.md:1045` — «[DECIDIDO] El campo número de serie es
+     * obligatorio al crear la remisión.»
+     *
+     * Se resuelve por la MISMA precedencia que se guarda abajo —el equipo del catálogo manda sobre la
+     * copia propia del ticket— y no sobre `found.row.serial` a secas: una guarda que mirase sólo la
+     * copia rechazaría tickets que SÍ tienen equipo, que es lo contrario de lo que se pide.
+     *
+     * A QUIÉN AFECTA DE VERDAD. Un ticket nacido en la app siempre lo trae: el alta exige `equipoId`
+     * del catálogo (`ticketService.ts:22-25`) y el equipo trae serial. Lo que esto cierra es la otra
+     * entrada —la que M1.3.2 llama la que «nunca se cruza» con aquélla—: un ticket sincronizado desde
+     * Zoho llega SIN serial, y por eso `habilitar_servicio` lo exige (`transitions.ts:189`). Hasta
+     * hoy nada impedía remisionarlo antes de pasar por ahí, y la remisión salía sin identificar el
+     * equipo que acompaña.
+     *
+     * VA CON LOS OTROS 422 Y ANTES DEL 409, a propósito y no por descuido: este manejador ya valida
+     * ticket y fecha como 422 antes del conflicto de estado, así que el serial entra en su misma
+     * clase en vez de inaugurar un tercer orden. (La inversión 409/422 del ALTA sigue abierta y es
+     * otra cosa: `tickets-core` §4.1 con `transitions-st` §3.8.)
+     *
+     * Por eso el equipo se resuelve aquí arriba y no más abajo: la guarda tiene que ir antes de
+     * cualquier escritura, y el bloque de la orden de venta ya escribe en `tickets`.
+     */
+    const eq = found.row.equipo_id ? await getEquipoFull(db, found.row.equipo_id) : null
+    const serial = (eq?.serial ?? found.row.serial ?? '').trim()
+    if (!serial) {
+      res.status(422).json({ error: 'Falta el serial del equipo: el ticket no tiene equipo del catálogo ni serial propio' })
+      return
+    }
+
+    /*
      * Una sola remisión sin desenlace por ticket. Hasta ahora esto lo "defendía" un cartel del
      * formulario, que es un consejo y no una barrera: si la consulta que lo alimenta falla no
      * aparece, y un cliente directo de la API no lo ve nunca. Dos `pendiente` a la vez son hoy dos
@@ -151,10 +181,9 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
         return
       }
     }
-
-    // El equipo y el perfil se recalculan aquí, no se aceptan del navegador: son los que deciden
-    // qué checklist aplica, y confiar en el cliente permitiría remisionar con la lista equivocada.
-    const eq = found.row.equipo_id ? await getEquipoFull(db, found.row.equipo_id) : null
+    // El perfil se recalcula aquí, no se acepta del navegador: es el que decide qué checklist aplica,
+    // y confiar en el cliente permitiría remisionar con la lista equivocada. El equipo ya se resolvió
+    // arriba, con la guarda del serial.
     const marca = eq?.marca ?? found.row.marca ?? null
     const modelo = eq?.modelo ?? found.row.modelo ?? null
     const perfil = perfilChecklist(marca, modelo)
@@ -198,7 +227,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
 
     const id = await createRemision(db, {
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
-      equipoId: eq?.id ?? found.row.equipo_id ?? null, serial: eq?.serial ?? found.row.serial ?? null,
+      equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
       incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
       creadoPor: req.user?.name ?? null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja

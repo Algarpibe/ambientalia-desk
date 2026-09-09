@@ -860,3 +860,126 @@ describe('Estados tempranos: Ticket creado → Remisión creada', () => {
     expect(await estadoDe('90210')).toBe('OV asignada')
   })
 })
+
+/**
+ * F1B-01 · EL SERIAL ES OBLIGATORIO AL CREAR LA REMISIÓN.
+ *
+ * `R08.1.md:1045` — «[DECIDIDO] El campo número de serie es obligatorio al crear la remisión.» Es una
+ * de las tres decisiones de M1.1 y la única de las tres que no estaba construida: `schema.sql:279`
+ * declara `serial text` (admite NULL), y `routes/remision.ts` sólo validaba ticket y fecha.
+ *
+ * ⚠️ EL CASO NO ES TEÓRICO, Y ESE ES EL PUNTO. El serial se DERIVA —del equipo si el ticket lo tiene,
+ * y si no de la copia propia del ticket—, así que un ticket del alta de la app siempre lo trae: el
+ * alta exige `equipoId` del catálogo (`ticketService.ts:22-25`) y el equipo trae serial. Lo que
+ * queda descubierto es la otra entrada, la que M1.3.2 llama la que «nunca se cruza» con aquélla:
+ * **un ticket sincronizado desde Zoho llega SIN serial** —por eso `habilitar_servicio` lo exige
+ * (`transitions.ts:189`, `R08.1.md:1046`)— y nada impide remisionarlo antes de pasar por ahí.
+ *
+ * El daño no es la columna vacía: es que la remisión es el documento que ACOMPAÑA AL EQUIPO. Sin
+ * serial no identifica qué equipo entró, y el enlace ticket ↔ equipo del historial se hace por
+ * serial (`db/equipos.ts:220-223`), no por el código de servicio.
+ */
+describe('F1B-01 · POST /api/remisiones exige el serial', () => {
+  /** Un ticket como los que llegan del sync de Zoho: sin equipo del catálogo y sin serial propio. */
+  const ticketDeZohoSinSerial = async () => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query(`INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+                    VALUES ('tz', 1234, 'Ticket creado', false, 'cli1', 'Mantenimiento', NULL, 'Grimm', 'EDM180C', NULL)`)
+  }
+
+  it('un ticket de Zoho sin serial NO puede remisionarse: 422, no una remisión sin equipo identificado', async () => {
+    const cookie = await adminCookie(); await ticketDeZohoSinSerial()
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 'tz', fecha: '2026-08-03', incluye: [] })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatch(/serial/i)
+    const lista = await request(app).get('/api/remisiones?ticketId=tz').set('Cookie', cookie)
+    expect(lista.body, 'no se creó ninguna remisión a medias').toHaveLength(0)
+  })
+
+  /**
+   * La cadena vacía cuenta como ausente. Es el mismo criterio que el resto del servidor
+   * (`ticketService.ts:53-58` trata `''` como falta) y no un detalle: la copia propia del ticket es
+   * texto libre y el sync escribe `''` tan fácilmente como `NULL`.
+   */
+  it('el serial en blanco es tan ausente como el NULL', async () => {
+    const cookie = await adminCookie(); await ticketDeZohoSinSerial()
+    await db.query("UPDATE tickets SET serial = '   ' WHERE id = 'tz'")
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 'tz', fecha: '2026-08-03', incluye: [] })
+    expect(res.status).toBe(422)
+  })
+
+  /**
+   * Y LA OTRA MITAD, que es la que impide que la guarda sea un muro. El serial del ticket basta: no
+   * hace falta equipo del catálogo. Un ticket de Zoho que YA pasó por `habilitar_servicio` tiene su
+   * serial y puede remisionarse igual que siempre.
+   */
+  it('con serial propio y sin equipo del catálogo, la remisión se crea y lo guarda', async () => {
+    const cookie = await adminCookie(); await ticketDeZohoSinSerial()
+    await db.query("UPDATE tickets SET serial = '18A19042' WHERE id = 'tz'")
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 'tz', fecha: '2026-08-03', incluye: [] })
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ ticketId: 'tz', serial: '18A19042' })
+  })
+
+  /**
+   * MUTACIÓN M5 · el serial del EQUIPO gana al del ticket, y la guarda no altera esa precedencia.
+   *
+   * `routes/remision.ts` resuelve `eq?.serial ?? found.row.serial`: si el ticket tiene equipo del
+   * catálogo, manda el equipo. Se fija aquí porque una guarda escrita sobre `found.row.serial` en vez
+   * de sobre el valor resuelto pasaría todas las pruebas de arriba y rompería ésta — y peor: dejaría
+   * de remisionarse un ticket que SÍ tiene equipo sólo porque su copia propia esté vacía.
+   */
+  it('M5 · con equipo del catálogo, manda el serial del equipo aunque el del ticket esté vacío', async () => {
+    const cookie = await adminCookie()
+    await upsertEquipo(db, equipoRow('eq-z1', '18A20070'))
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query(`INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+                    VALUES ('tz2', 1235, 'Ticket creado', false, 'cli1', 'Mantenimiento', 'eq-z1', 'Grimm', 'EDM180C', NULL)`)
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 'tz2', fecha: '2026-08-03', incluye: [] })
+    expect(res.status).toBe(201)
+    expect(res.body.serial, 'el equipo del catálogo es la fuente, no la copia del ticket').toBe('18A20070')
+  })
+})
+
+/**
+ * F1B-01 · MUTACIÓN M5 SUPERVIVIENTE, Y LA PRUEBA QUE LA MATA.
+ *
+ * Mover la guarda del serial DESPUÉS del bloque de la orden de venta no cambia el código de respuesta
+ * —sigue siendo 422— ni el cuerpo. Cambia **qué queda escrito** cuando se rechaza: el bloque de la OV
+ * hace un `UPDATE tickets SET orden_venta, fecha_orden_venta, salesorder_id` (`remision.ts`) ANTES de
+ * llegar a la guarda. La petición se rechaza, quien la hizo entiende que no pasó nada, y el ticket se
+ * ha quedado con una orden de venta encima.
+ *
+ * ⚠️ Y AQUÍ NO ES UN DAÑO CUALQUIERA: esa escritura es la **tercera puerta** de «una OV, un ticket»,
+ * la que pone `salesorder_id` sin llamar a `ticketConOrdenVenta` —IV-4, `tickets-core` §4.2, con su
+ * `it.fails` en `ordenVentaUnTicket.test.ts:161`—. Un rechazo que igualmente quema la OV en un ticket
+ * es exactamente el modo de fallo que esa puerta ya tiene, disparado ahora desde una petición que
+ * ni siquiera prosperó.
+ *
+ * La prueba no comprueba el 422 —eso ya está arriba—: comprueba que **el ticket no cambió**.
+ */
+describe('F1B-01 · el rechazo por serial no deja escrito nada en el ticket', () => {
+  it('M5 · con orden de venta y sin serial: 422 y el ticket sigue sin OV', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query(`INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date,raw)
+                    VALUES ('so-9','SO-009','cli1','Gecelca S.A. E.S.P.','2026-08-01','{"order_status":"open"}')`)
+    await db.query(`INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+                    VALUES ('tz9', 1239, 'Ticket creado', false, 'cli1', 'Mantenimiento', NULL, 'Grimm', 'EDM180C', NULL)`)
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 'tz9', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-9' })
+    expect(res.status).toBe(422)
+    const t = await db.query("SELECT orden_venta, salesorder_id, fecha_orden_venta FROM tickets WHERE id='tz9'")
+    expect(t.rows[0], 'la petición se rechazó, así que el ticket no puede haber quedado con la OV encima')
+      .toMatchObject({ orden_venta: null, salesorder_id: null, fecha_orden_venta: null })
+  })
+})

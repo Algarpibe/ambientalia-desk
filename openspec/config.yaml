@@ -441,6 +441,24 @@ incumplimientos_vivos:
       F1D-02 (:183-184), que son las tandas que AÑADEN tablas y columnas al
       esquema. Un guardián extendido después de que lleguen es un guardián que
       llegó tarde a lo único que tenía que cazar.
+    estado: >
+      CERRADO en F1B-01 (2026-09-09, commit de la tanda). El guardián se extendió
+      con altersDelEsquema() y tres pruebas en migrate.test.ts, reutilizando las
+      MISMAS tres listas que el de CREATE. Y hubo que calificar 13 sentencias,
+      no 23: extender el guardián sin tocar el .sql lo habría dejado rojo para
+      siempre. Se calificaron las 13 de `public` (users 3, roles 1, avisos 1,
+      remisiones 7, catalogo_modelos 1); las 11 de DESK_TABLES siguen SIN
+      calificar, que es lo correcto y lo que la segunda prueba fija en positivo.
+      Calificar las 23 habría ROTO la migración: el esquema `desk` sólo existe
+      tras reorgToDesk, que no corre en tests.
+      OJO A LAS CIFRAS DE ESTA ENTRADA: decían 28 totales / 23 sin calificar / 10
+      sobre Desk y eran 29 / 24 / 11 al llegar F1B-01. La que entró es
+      `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_aviso_cliente`
+      (schema.sql:448), de F1A-04 (e8c5e90) — bien sin calificar, porque tickets
+      es de Desk, pero NADIE lo comprobó. Que la cifra se moviera sola en tres
+      días es la mejor prueba de que el hueco existía.
+      Hoy: 29 ALTER, 18 calificadas (13 public + 5 books.contacts), 11 sin
+      calificar, todas sobre DESK_TABLES.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance

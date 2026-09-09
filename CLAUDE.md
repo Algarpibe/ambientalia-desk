@@ -114,7 +114,7 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-**Cinco** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Cuatro** desvíos vivos (eran cinco: IV-6 lo cerró F1B-01, y se deja tachado abajo con lo que costó de verdad). Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
@@ -124,7 +124,7 @@ está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 | 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | F1A o F1C, decisión de alcance |
 | — | `apps/desk/server/routes/remision.ts:189-197` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | F1A |
 | — | `apps/desk/src/components/TicketCard.tsx:14-23` — mapa de colores muerto: claves en mayúsculas (`INGRESADO`, `PROCESO`…) que sólo casan con `mockData.ts`, nunca con los estados reales | F1A, cosmético |
-| — | `packages/zoho-sync/src/db/schema.sql` — **23** sentencias `ALTER TABLE` sin calificar el esquema (28 totales − 5 calificadas, `:154-158`). El guardián de F0-04 no las ve porque su extractor ancla en `^CREATE TABLE` (`migrate.test.ts:245`). Trece tocan cinco tablas de `public` —`remisiones`, `users`, `roles`, `avisos`, `catalogo_modelos`— y basta una homónima en `desk` para que cambien de destino en silencio. **Las 10 `CREATE` sin calificar NO son desvío**: son exactamente las de `DESK_TABLES` (`migrate.ts:63-64`), deliberadas y probadas (`migrate.test.ts:266`, `:282`). El arreglo es extender el guardián a `^ALTER TABLE`, no reescribir 23 sentencias | F1B-01, antes de que F1D añada tablas |
+| — | ~~`packages/zoho-sync/src/db/schema.sql` — sentencias `ALTER TABLE` sin calificar el esquema~~ **CERRADO en F1B-01.** El guardián se extendió a `^ALTER TABLE` (`migrate.test.ts`, `altersDelEsquema()` + tres pruebas, con las MISMAS tres listas que el de `CREATE`). Y hubo que calificar **13** sentencias, no 23: las de `public` —`users` 3, `roles` 1, `avisos` 1, `remisiones` 7, `catalogo_modelos` 1—, porque extender el guardián sin tocar el `.sql` lo dejaba rojo para siempre. Las **11** de `DESK_TABLES` siguen sin calificar, que es lo correcto: calificarlas rompe la migración, y la segunda prueba lo fija en positivo. **Ojo a la cifra vieja de esta fila (23):** eran 24 al llegar F1B-01 — `e8c5e90` metió una más (`schema.sql:448`) sin que nada la mirase, que es exactamente lo que el hueco permitía | ✅ F1B-01 |
 
 **IV-3 está CERRADO y ya no cuenta.** Era el espejo de `canExecuteTransition` en
 `apps/desk/src/components/TransitionPanel.tsx:56-58`. F0-04 lo cerró:

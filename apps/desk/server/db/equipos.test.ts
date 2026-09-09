@@ -6,6 +6,7 @@ import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEqui
 import { getEquipoHistorial } from './equipos'
 import type { EntradaHojaDeVida, HistorialTicket } from '@ambientalia/shared'
 import { FROM_STATUS_CREACION } from '@ambientalia/shared'
+import { searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
 
 // Filas al estilo de las que dejó la carga inicial: `client_id` NULL y el cliente solo como texto.
 // Siguen siendo la mayoría en producción, así que los tests deben seguir cubriéndolas.
@@ -434,5 +435,73 @@ describe('getEquipoHistorial · remisiones dentro del ticket', () => {
     const h = await getEquipoHistorial(db, eqId)
 
     expect(h!.cronologia.filter((e) => e.clase === 'remision')).toHaveLength(1)
+  })
+})
+
+/**
+ * F1B-01 · EL SERIAL COMO LLAVE: el equipo tiene que llevar el `client_id` consigo.
+ *
+ * `R08.1.md:1048` — «[DECIDIDO 21/08] Autocompletado por serial: al introducir el número de serie, el
+ * sistema trae automáticamente la información de cliente y modelo, **y asocia el ticket a las
+ * órdenes de venta activas**. El serial deja de ser sólo un identificador y pasa a ser la llave de
+ * entrada de todo el registro.»
+ *
+ * La segunda mitad estaba sin construir (`tickets-core` §5.2, M-4), y la razón resultó ser la
+ * primera: `EquipoLite` no llevaba `client_id`, así que el formulario resolvía el cliente **por
+ * NOMBRE** (`CreateTicket.tsx:141-149`, con `searchClients(e.clienteNombre)` y comparación
+ * normalizada). Es EXACTAMENTE el apaño que este repositorio abandonó en el servidor el 2026-08-09
+ * —ver el comentario de `searchEquipos` (`equipos.ts:45-53`) y la prueba de arriba—, y por la misma
+ * razón: basta que dos clientes compartan un fragmento de nombre para acabar en el equivocado.
+ *
+ * Con `clientId` en la respuesta, las dos mitades se cierran de una vez: el cliente se resuelve por
+ * identidad, y el buscador de órdenes de venta —que ya filtra por cliente y por `soloLibres`
+ * (`books/repo.ts:145`, expuesto en `routes/directory.ts:41-47`)— se puebla solo en cuanto hay
+ * cliente. No hace falta un endpoint nuevo: hacía falta un campo.
+ */
+describe('F1B-01 · el equipo lleva su client_id, para que el serial resuelva cliente y OV', () => {
+  const conCliente = (serial: string, cliente: string, clientId: string | null) =>
+    createEquipo(db, { serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: cliente, clientId, modeloId: null })
+
+  it('searchEquipos devuelve el clientId de cada equipo', async () => {
+    await conCliente('18B0001', 'Ambientalia S.A.S.', 'cli-amb')
+    const [eq] = await searchEquipos(db, '18B0001')
+    expect(eq.clientId, 'sin esto el formulario sólo puede resolver el cliente por su nombre').toBe('cli-amb')
+  })
+
+  it('getEquipo también lo devuelve: es la vía del servidor al crear el ticket', async () => {
+    const id = await conCliente('18B0002', 'Gecelca S.A. E.S.P.', 'cli-gec')
+    expect((await getEquipo(db, id))?.clientId).toBe('cli-gec')
+  })
+
+  /**
+   * MUTACIÓN M5 · el equipo SIN `client_id` sigue siendo alcanzable, y lo dice.
+   *
+   * La carga inicial dejó ~352 equipos con `client_id` NULL, y el backfill enlazó el 96,6 %: el resto
+   * sigue ahí. Devolver `undefined` —y no una cadena vacía, ni el nombre como sucedáneo— es lo que
+   * permite al formulario distinguir «este equipo no sabe de quién es» de «es del cliente X», que es
+   * justo la distinción que el aviso ámbar de `CreateTicket.tsx:234-239` necesita para existir.
+   */
+  it('M5 · un equipo sin client_id lo devuelve ausente, no vacío ni sustituido por el nombre', async () => {
+    await upsertEquipo(db, { id: 'eq-huerfano', serial: '18B0003', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', cliente_nombre: 'Ambientalia S.A.S.', source: 'seed', raw: null })
+    const [eq] = await searchEquipos(db, '18B0003')
+    expect(eq.clientId).toBeUndefined()
+    expect(eq.clienteNombre, 'el nombre sigue estando: es lo único que se sabe de su dueño').toBe('Ambientalia S.A.S.')
+  })
+
+  /**
+   * Y la razón de que esto cierre la mitad que faltaba, comprobada de punta a punta sobre el dato:
+   * del serial sale el `client_id`, y con ese `client_id` el buscador de órdenes de venta devuelve
+   * las ACTIVAS y LIBRES de ese cliente. Es la cadena que `R08.1.md:1048` describe.
+   */
+  it('del serial al client_id, y del client_id a las órdenes de venta activas y libres', async () => {
+    await conCliente('18B0004', 'Gecelca S.A. E.S.P.', 'cli-gec')
+    // `order_status` no es columna: la vista `public.sales_orders` lo saca de `raw` (`schema.sql:176-182`).
+    await db.query(`INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date,raw)
+                    VALUES ('so-1','SO-001','cli-gec','Gecelca S.A. E.S.P.','2026-08-01','{"order_status":"open"}'),
+                           ('so-2','SO-002','cli-otro','Otro S.A.S.','2026-08-01','{"order_status":"open"}'),
+                           ('so-3','SO-003','cli-gec','Gecelca S.A. E.S.P.','2026-08-01','{"order_status":"draft"}')`)
+    const [eq] = await searchEquipos(db, '18B0004')
+    const ovs = await searchSalesOrders(db, '', eq.clientId, 20, true)
+    expect(ovs.map((o) => o.number), 'sólo las del cliente del equipo, y sólo las confirmadas').toEqual(['SO-001'])
   })
 })

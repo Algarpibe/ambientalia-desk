@@ -138,8 +138,33 @@ export function CreateTicket({ onClose, onCreated }: {
   }
   function pickEquipo(e: EquipoLite) {
     setEquipo(e); setEquipoQuery(`${e.serial} · ${e.marca ?? ''} ${e.modelo ?? ''}`.trim()); setEquipoResults([])
-    // Autocompletar el cliente con el dueño del equipo (buscando su cliente de Books).
-    if (e.clienteNombre && !clientId) {
+    if (clientId) return
+    /*
+     * F1B-01 · EL SERIAL COMO LLAVE (`R08.1.md:1048`). Elegido el equipo, el cliente se resuelve POR
+     * IDENTIDAD si el equipo la trae. Y con el cliente puesto, el efecto de las órdenes de venta
+     * (`:83-93`) se dispara solo y ofrece las ACTIVAS y LIBRES de ese cliente: ésa es la mitad de la
+     * decisión del 21/08 que faltaba, y no necesitaba endpoint nuevo sino este campo.
+     */
+    if (e.clientId) {
+      setClientId(e.clientId)
+      if (e.clienteNombre) { setClientName(e.clienteNombre); setClientQuery(e.clienteNombre) }
+      setClientResults([])
+      // El nombre mostrado se refina con el de Books si difiere del texto libre del equipo, pero el
+      // id ya está fijado: si esta búsqueda falla, el formulario sigue teniendo cliente.
+      searchClients(e.clienteNombre ?? '').then((res) => {
+        const c = res.find((x) => x.id === e.clientId)
+        if (c) { setClientName(c.name); setClientQuery(c.name) }
+      }).catch(() => {})
+      return
+    }
+    /*
+     * SIN `client_id`: la vía por nombre, que ahora es SÓLO el respaldo. La carga inicial dejó ~352
+     * equipos sin enlazar y el backfill llegó al 96,6 %; el resto sigue aquí. Resolver por nombre es
+     * el apaño que el servidor abandonó el 2026-08-09 —dos clientes con un fragmento común acaban
+     * cruzados (`apps/desk/server/db/equipos.ts:45-53`)—, así que se conserva sólo donde no hay
+     * alternativa, y si no casa queda el aviso ámbar de abajo y el cliente lo elige la persona.
+     */
+    if (e.clienteNombre) {
       setClientName(e.clienteNombre)
       setClientQuery(e.clienteNombre)
       const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()

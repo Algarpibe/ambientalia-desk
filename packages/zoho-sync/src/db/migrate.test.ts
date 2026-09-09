@@ -285,4 +285,85 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
     expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(29)
     expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(29)
   })
+
+  /**
+   * IV-6 · LA MITAD DEL ESQUEMA QUE EL GUARDIÁN NO VEÍA.
+   *
+   * El extractor de arriba ancla en `^CREATE TABLE` (`:245`), así que NINGUNA `ALTER TABLE` entraba
+   * en su red. No es un olvido de alcance: es que la regla dura de `CLAUDE.md` habla de «sentencia
+   * de creación de tabla», y una `ALTER` no lo es. Pero **hereda su modo de fallo**: `ALTER TABLE
+   * users ADD COLUMN role_id` resuelve hoy a `public.users` porque el nombre no existe en `desk`, y
+   * basta una homónima en `desk` para que cambie de destino en silencio. Es exactamente la mecánica
+   * de `catalogo_articulos`, con una sentencia de otra clase.
+   *
+   * ⚠️ Y NO ES TEÓRICO: el hueco dejó entrar una hace tres días. `schema.sql:448`
+   * —`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_aviso_cliente`, de F1A-04 (`e8c5e90`)—
+   * pasó sin que nada la mirase. Está BIEN sin calificar, porque `tickets` es de `DESK_TABLES`; el
+   * problema es que nadie lo comprobó.
+   *
+   * LA REGLA TIENE DOS MITADES Y NO SE PUEDEN TRATAR IGUAL:
+   *
+   * - Sobre una tabla de `DESK_TABLES`, la `ALTER` va **SIN calificar**, igual que su `CREATE`, y
+   *   calificarla la ROMPE: `migrate` es tolerante por sentencia y el esquema `desk` sólo existe
+   *   tras `reorgToDesk`, que no corre en los tests.
+   * - Sobre cualquier otra, va **CALIFICADA**, por la misma razón que su `CREATE`.
+   *
+   * Se reutiliza `clasificadas()` a propósito: si el guardián de `CREATE` y el de `ALTER` no leyeran
+   * de la MISMA lista, podrían discrepar sobre dónde vive una tabla, que es justo el error a cazar.
+   */
+  function altersDelEsquema(): { identidad: string; calificada: boolean; tabla: string }[] {
+    const alters: { identidad: string; calificada: boolean; tabla: string }[] = []
+    for (const stmt of schemaStatements()) {
+      const sql = stmt.replace(/^(?:\s*--[^\n]*\n)+/, '').trim()
+      const m = /^ALTER TABLE(?:\s+IF EXISTS)?\s+(?:([a-z_][a-z0-9_]*)\.)?([a-z_][a-z0-9_]*)/i.exec(sql)
+      if (m) alters.push({ identidad: m[1] ? `${m[1]}.${m[2]}` : m[2], calificada: !!m[1], tabla: m[2] })
+    }
+    return alters
+  }
+
+  it('toda ALTER TABLE apunta a una tabla clasificada, y con el esquema que su lista declara', () => {
+    const declaradas = clasificadas()
+    const huerfanas = altersDelEsquema().filter((a) => !declaradas.includes(a.identidad))
+    expect(
+      huerfanas.map((a) => a.identidad),
+      'ALTER TABLE cuya identidad calificada no está en DESK_TABLES, public.* ni books.*',
+    ).toEqual([])
+  })
+
+  /**
+   * La mitad que va SIN calificar, y por qué es correcta. Se afirma en positivo —«éstas y no otras»—
+   * para que añadir una `ALTER` sin calificar sobre una tabla que NO es de Desk se ponga roja aquí.
+   */
+  it('las ALTER sin calificar son exactamente las de DESK_TABLES, y calificarlas las rompería', () => {
+    const sinCalificar = altersDelEsquema().filter((a) => !a.calificada)
+    const fuera = sinCalificar.filter((a) => !(DESK_TABLES as readonly string[]).includes(a.tabla))
+    expect(
+      fuera.map((a) => a.tabla),
+      'ALTER TABLE sin calificar sobre una tabla que no es de Desk: resuelve por search_path, no por declaración',
+    ).toEqual([])
+  })
+  /**
+   * EL RECUENTO, que es lo que delata el crecimiento silencioso.
+   *
+   * Las cifras de la spec `tickets-core` §5.3 —28 totales, 5 calificadas, 23 sin calificar, 10 de
+   * ellas sobre Desk— quedaron CADUCAS con `e8c5e90`: al llegar aquí eran 29, 5 y 24, con 11 sobre
+   * Desk. **Que se pudieran mover sin que nada lo notase es el hallazgo, no la cifra.**
+   *
+   * Tras F1B-01: las 13 sobre tablas de `public` van calificadas —eran el hueco de verdad— y las 11
+   * de `DESK_TABLES` siguen sin calificar, que es lo correcto. Las cinco de `books.contacts` ya lo
+   * estaban.
+   */
+  it('son 29 ALTER: 18 calificadas (13 de public + 5 de books) y 11 sin calificar, todas de Desk', () => {
+    const alters = altersDelEsquema()
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(29)
+    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(18)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(11)
+    // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
+    // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
+    // dos de arriba.
+    expect(new Set(alters.filter((a) => !a.calificada).map((a) => a.tabla)), 'tablas con ALTER sin calificar')
+      .toEqual(new Set(['tickets', 'equipos', 'contacts']))
+    expect(new Set(alters.filter((a) => a.calificada).map((a) => a.identidad)), 'identidades calificadas')
+      .toEqual(new Set(['books.contacts', 'public.users', 'public.roles', 'public.avisos', 'public.remisiones', 'public.catalogo_modelos']))
+  })
 })
