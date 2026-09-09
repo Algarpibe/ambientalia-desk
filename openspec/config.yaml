@@ -343,6 +343,69 @@ incumplimientos_vivos:
       Mapa muerto.
     destino: "F1A, cosmético"
 
+  - id: IV-6
+    regla: "— (extiende el modo de fallo de la regla dura de esquema de CLAUDE.md)"
+    ubicacion: "packages/zoho-sync/src/db/schema.sql — 23 sentencias ALTER TABLE"
+    verificado: true
+    encontrado_en: "F0-02, 2026-09-09, base ad1875b (idéntico a b6fb6d4 en código: `git diff --name-only ad1875b..HEAD` no devuelve ningún fichero fuera de docs/ y openspec/)"
+    alcance_exacto: >
+      SON 23, y ninguna otra cifra. `grep -cE '^ALTER TABLE' schema.sql` da 28
+      totales; `grep -nE '^ALTER TABLE [a-z_]+\.' schema.sql` da las 5
+      calificadas (:154-158, las cinco de `books.contacts`). 28 − 5 = 23.
+      NO son 28, y NO incluyen las 10 `CREATE TABLE` sin calificar.
+    lo_que_NO_es_incumplimiento: >
+      Las 10 `CREATE TABLE` sin calificar de `schema.sql` son EXACTAMENTE las 10
+      de `DESK_TABLES` (`packages/zoho-sync/src/db/migrate.ts:63-64`) —
+      verificado por diferencia de conjuntos: idénticas, sin sobrantes por
+      ningún lado. Están sin calificar A PROPÓSITO, para que el
+      `search_path=desk,public` las aterrice en `desk`
+      (`migrate.test.ts:229-232`), y están PROBADAS: el guardián compara la
+      identidad calificada de toda tabla del esquema contra las tres listas
+      (`migrate.test.ts:266`) y una segunda prueba fija el reparto 10+16+3=29
+      (`:282`). Si una cambiara de esquema, el guardián se pone rojo. Es
+      condición conocida, documentada y probada. NO anotarla como desvío.
+    descripcion: >
+      23 sentencias `ALTER TABLE` sin calificar el esquema. El guardián de
+      F0-04 NO las ve, y no por olvido de alcance sino por su implementación:
+      su extractor ancla en `^CREATE TABLE`
+      (`packages/zoho-sync/src/db/migrate.test.ts:245`), así que ninguna
+      `ALTER` entra en su red. 13 de las 23 tocan CINCO tablas que viven en
+      `public` — `remisiones` (7: :291, :306, :309-310, :313, :316-317),
+      `users` (3: :112, :115-116), `roles` (1: :143), `avisos` (1: :145) y
+      `catalogo_modelos` (1: :374) —. Hoy resuelven bien porque el nombre no
+      existe en `desk`; basta una homónima en `desk` para que cambien de
+      destino en silencio. Es el modo de fallo de `catalogo_articulos`
+      (`migrate.ts:55-56`) con una sentencia de otra clase.
+      Las 10 restantes tocan tablas que sí viven en `desk`: `tickets` (7),
+      `equipos` (2) y `contacts` (1). La de `contacts` (:256) es la más
+      afilada, porque `contacts` existe en LOS DOS esquemas —`desk.contacts` y
+      `books.contacts` (`migrate.ts:80`)— y el propio guardián declara esa
+      colisión como el motivo de tener tres listas y no dos
+      (`migrate.test.ts:220-222`).
+    matiz_de_alcance: >
+      La regla dura de `CLAUDE.md` habla de «sentencia de creación de tabla», y
+      una `ALTER` no lo es. Esta entrada NO acusa a las 23 de violar la letra de
+      la regla: dice que HEREDAN SU MODO DE FALLO y quedan fuera de su única red
+      de contención.
+    arreglo_propuesto: >
+      NO reescribir 23 sentencias a mano. Extender el extractor del guardián
+      (`migrate.test.ts:245`) a `^ALTER TABLE`, resolviendo cada nombre sin
+      calificar contra las tres listas igual que hace hoy con los `CREATE`. Un
+      cambio de una expresión regular hace que las 23 dejen de poder volver;
+      calificarlas a mano arregla las de hoy y no impide la 24.
+    destino: "F1B-01"
+    por_que_ese_destino: >
+      Tres razones, y ninguna es la talla. (1) F1B-01 es la PRIMERA tanda de la
+      Fase 1 que declara la capacidad `zoho-sync` en la trazabilidad del plan
+      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:413`), así que
+      es la primera que abre este paquete con un motivo propio; las cinco de
+      F1A no lo tocan (:408-412). (2) El arreglo es una prueba, no un cambio de
+      esquema, así que no compite por alcance con el trabajo funcional de la
+      tanda. (3) Y es la razón de peso: tiene que aterrizar ANTES de F1D-01 y
+      F1D-02 (:183-184), que son las tandas que AÑADEN tablas y columnas al
+      esquema. Un guardián extendido después de que lleguen es un guardián que
+      llegó tarde a lo único que tenía que cazar.
+
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
 # mal declarado. Cada entrada dice qué decía la premisa, qué se verificó y qué

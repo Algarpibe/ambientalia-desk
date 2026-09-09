@@ -114,7 +114,7 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-**Cuatro** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Cinco** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
@@ -124,6 +124,7 @@ está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 | 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | F1A o F1C, decisión de alcance |
 | — | `apps/desk/server/routes/remision.ts:189-197` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | F1A |
 | — | `apps/desk/src/components/TicketCard.tsx:14-23` — mapa de colores muerto: claves en mayúsculas (`INGRESADO`, `PROCESO`…) que sólo casan con `mockData.ts`, nunca con los estados reales | F1A, cosmético |
+| — | `packages/zoho-sync/src/db/schema.sql` — **23** sentencias `ALTER TABLE` sin calificar el esquema (28 totales − 5 calificadas, `:154-158`). El guardián de F0-04 no las ve porque su extractor ancla en `^CREATE TABLE` (`migrate.test.ts:245`). Trece tocan cinco tablas de `public` —`remisiones`, `users`, `roles`, `avisos`, `catalogo_modelos`— y basta una homónima en `desk` para que cambien de destino en silencio. **Las 10 `CREATE` sin calificar NO son desvío**: son exactamente las de `DESK_TABLES` (`migrate.ts:63-64`), deliberadas y probadas (`migrate.test.ts:266`, `:282`). El arreglo es extender el guardián a `^ALTER TABLE`, no reescribir 23 sentencias | F1B-01, antes de que F1D añada tablas |
 
 **IV-3 está CERRADO y ya no cuenta.** Era el espejo de `canExecuteTransition` en
 `apps/desk/src/components/TransitionPanel.tsx:56-58`. F0-04 lo cerró:
