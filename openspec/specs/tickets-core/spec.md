@@ -185,7 +185,8 @@ Un campo **SHALL** ir a **columna tipada** si su etiqueta está en `PROMOTED_COL
 no (`apps/desk/server/transitionExec.ts:90-92`).
 
 **Verificado en esta tanda:** las **27** etiquetas de campo que declaran las 34 transiciones están
-todas en `PROMOTED_COLUMNS`; **ninguna** cae al cajón. Confirma el maestro M1.3.8 (`:1415`) y M1.1
+todas en `PROMOTED_COLUMNS`; **ninguna** cae al cajón. *(F1A-04 movió la cifra a **28** al añadir «Fecha
+de aviso al cliente» a `habilitado_para_entrega`; la afirmación sigue siendo cierta.)* Confirma el maestro M1.3.8 (`:1415`) y M1.1
 (`:1046`).
 
 La cola larga **SHALL** fusionarse, no reemplazarse: `custom_fields = custom_fields || $n::jsonb`
@@ -308,7 +309,7 @@ constante—; lo que miente es el comentario. Es la misma clase de defecto que M
 | M-3 | M1.1 `[DECIDIDO]` (`:1043`): «Se elimina la nomenclatura CG (calibración) / MT (mantenimiento)» | Los cinco prefijos siguen (`ticketCreate.ts:1`), y `defaultPrefijoFor` **deriva** CG para Calibración y MT para el resto (`:47-49`) | **El código implementa el cierre de la R08, no el `[DECIDIDO]` original.** R08 resolvió el punto nº 37: el prefijo es formalidad, «puede derivarse automáticamente de la clasificación y del tipo de servicio en lugar de teclearse» (`:1067`). Eso es exactamente `defaultPrefijoFor`. Sin discrepancia real, pero el `[DECIDIDO]` de `:1043` sigue en el maestro contradiciendo su propio cierre — **conviene marcarlo como superado ahí mismo** |
 | M-4 | M1.1 `[DECIDIDO 21/08]` (`:1048`): «Autocompletado por serial: al introducir el número de serie, el sistema trae automáticamente la información de cliente y modelo, **y asocia el ticket a las órdenes de venta activas**» | La primera mitad sí: `searchEquipos` busca por serial y el equipo trae marca, modelo, tipo y cliente (`equipos.ts:58-69`, `:75-79`). La segunda **no**: la orden de venta se elige en un buscador aparte (`ticketService.ts:35-42`) y no se deriva del serial | **Implementado a medias.** Lo que falta no es cosmético: es el paso que la decisión del 21/08 describe como el que convierte el serial en «la llave de entrada de todo el registro». **Punto a decidir**: si se implementa o si la decisión se reformula |
 | M-5 | M1.1 `[DECIDIDO — R03]` (`:1049`): identificación física por **QR**, subida a MVP | **No existe.** Cero referencias en el árbol | Registrado en §4.4. **No tiene tanda en el §5 del plan**, así que hoy no está previsto que se construya. Punto a decidir |
-| M-6 | M1.3.8 (`:1415`) y M1.1 (`:1046`): «las 27 etiquetas de campo mapean a columnas reales; ninguna cae al cajón `custom_fields`» | **Verificado cierto**: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS` (de 39) | Sin discrepancia. Se anota porque es una de las afirmaciones as-built del maestro que sí resiste, y porque conviene que su verificación quede reproducible |
+| M-6 | M1.3.8 (`:1415`) y M1.1 (`:1046`): «las 27 etiquetas de campo mapean a columnas reales; ninguna cae al cajón `custom_fields`» | **Verificado cierto**: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS` (de 39). **F1A-04: ahora 28 de 40** — el campo de aviso de C9. La afirmación resiste | Sin discrepancia. Se anota porque es una de las afirmaciones as-built del maestro que sí resiste, y porque conviene que su verificación quede reproducible |
 
 ### 5.3 · Las `ALTER TABLE` sin calificar: 23 sentencias fuera de la red del guardián
 

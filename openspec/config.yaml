@@ -168,6 +168,20 @@ capabilities:
   - name: kpis
     covers: "Timestamps, tres bodegajes, OTD; excluye Anulado"
     status_at_start: "fase 2"
+    avance: >
+      F1A-04 (2026-09-09) adelantó de esta capacidad la PIEZA DE DOMINIO de C9, y
+      sólo ésa: packages/shared/src/bodegaje.ts declara los tres bodegajes de
+      M1.10 (:1685-1702) y los calcula sobre ticket_transitions —no sobre
+      tickets.*, por la regla de reentrancia.ts:24—, y expone el hito de los
+      indicadores 48 y 49. Se añadió el campo «Fecha de aviso al cliente», que
+      faltaba (:1704), a habilitado_para_entrega.
+      LO QUE SIGUE EN FASE 2: los indicadores en sí. No hay módulo de KPIs ni
+      pantalla, y el 48 y el 49 tienen su ancla pero no están calculados. La
+      capacidad NO tiene spec y sigue debiéndose.
+      OJO al citar el plan: plan:141 manda anclar el bodegaje de entrada «contra
+      la marca de tiempo de Ingreso a Servicio», que es la prescripción de la R05
+      (:1684) y la R08 la sustituyó por un par de campos de fecha (:1694).
+      Corregido como entrada 3 de docs/sdd/F0-01_Correcciones_para_el_plan.md.
 
 # Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
 # registro del movimiento, no como tarea pendiente: los dos ficheros están en su

@@ -6,6 +6,8 @@ import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, 
 import { applyTransition, createTicket, setTicketRead } from './repo'
 import { reseedTicketNumber, APP_TICKET_NUMBER_BASE } from './migrate'
 import { ticketRowFromZoho, accountRowFromZoho } from './mappers'
+import { TICKET_COLS } from './repo'
+import { PROMOTED_COLUMNS } from './rows'
 
 let db: Queryable
 beforeEach(async () => {
@@ -230,5 +232,30 @@ describe('createTicket (Subsistema C)', () => {
       tipo_servicio: 'Calibración', clasificacion: 'Garantía', prioridad: 'Medium',
       codigo_servicio: 'MT_260805', client_id: 'c1',
     })
+  })
+})
+
+/**
+ * C9 · LA COLUMNA DE LA FECHA DE AVISO NO ENTRA EN `TICKET_COLS`, Y ESO ES LO QUE LA SALVA.
+ *
+ * `TICKET_COLS` es la lista que el upsert del sync sobrescribe con lo que traiga Zoho
+ * (`repo.ts:62`). `fecha_aviso_cliente` NO viene de Zoho —la crea C9 y la escribe
+ * `habilitado_para_entrega`—, así que meterla ahí la pondría a `null` en cada pasada del sync, cada
+ * 3 minutos, sin error y sin traza. Es la misma razón por la que `derivado_a` tampoco está
+ * (`schema.sql:118-123`).
+ *
+ * La prueba es la pareja de la de `transitionExec.test.ts`: aquélla comprueba que el valor ENTRA por
+ * la columna; ésta, que el sync no la BORRA.
+ */
+describe('C9 · la columna de la fecha de aviso sobrevive al sync', () => {
+  it('fecha_aviso_cliente no está en TICKET_COLS, igual que derivado_a', () => {
+    expect(TICKET_COLS as readonly string[]).not.toContain('fecha_aviso_cliente')
+    expect(TICKET_COLS as readonly string[]).not.toContain('derivado_a')
+  })
+
+  it('pero sí está en PROMOTED_COLUMNS, que es lo que la manda a columna y no al jsonb', () => {
+    expect(PROMOTED_COLUMNS.map((p) => p.col)).toContain('fecha_aviso_cliente')
+    const entrada = PROMOTED_COLUMNS.find((p) => p.col === 'fecha_aviso_cliente')!
+    expect([entrada.label, entrada.kind]).toEqual(['Fecha de aviso al cliente', 'date'])
   })
 })

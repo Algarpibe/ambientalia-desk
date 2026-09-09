@@ -13,7 +13,8 @@
 |---|---|
 | Documento corregido | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` |
 | Tanda que abre el fichero | **F1A-02** (entrada 1) |
-| Base | commit `6ea3ca8`, rama `main` |
+| Entradas posteriores | **F1A-03** (entrada 2) · **F1A-04** (entrada 3) |
+| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3. Rama `main` |
 | Fuentes del contraste | `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md` (480 líneas) · maestro `R08.1.md` |
 | Fecha | 2026-09-09 |
 
@@ -72,6 +73,91 @@ Y hay una consecuencia que sí cambió el trabajo: **`:1575` es la línea que re
 al citar el acta en vez del maestro se llega al tema por el camino que no la contiene. La primera
 lectura de F1A-02 dio por bloqueado el escalado «porque no hay jerarquía»; la línea siguiente a la
 que se citó dice que no hace falta ninguna. Anotado en `openspec/specs/transitions-st/spec.md` §3.10.
+
+---
+
+## La de F1A-03 (2)
+
+### 2 · El plan da a F1A-03 un gate que no tiene: la decisión de C12 está abierta y es de Calidad *(F1A-03)*
+
+**Texto actual**, `plan:140`:
+
+> `| F1A-03 | **C12** Salidas aprobada/rechazada de `Verificación` en el flujo de equipo nuevo |`
+> `M1.4 · P38 | **Ninguno**; se hace antes de F1B-06 |`
+
+**El problema no es dónde va la tanda, es que no tiene dueño.** F1A-03 se paró sin escribir código, y
+la primera explicación que se dio —«C12 pertenece a F1B-06»— era **falsa**: `plan:155` dice que
+F1B-06 «**hereda** C12», o sea que implementa lo que C12 define, y `maestro:1470` dice que C12 es
+«definir las dos salidas […] **antes de implementar esta rama**». **C12 precede a F1B-06, no es
+suya.** Lo que le falta a C12 no es un sitio: es la decisión.
+
+**El defecto se sigue por tres documentos, y en cada salto pierde un dato.**
+
+| # | Documento | Qué dice | Qué se pierde |
+|---|---|---|---|
+| 1 | `acta:136` + `:139` | C12 aparece bajo el encabezado «**Cierran sin discusión — las ejecuta desarrollo**», con la casilla **sin marcar** | Que no es de desarrollo |
+| 2 | `maestro:4002-4005` | Anexo D nº 38: «Definir las dos salidas de Verificación en equipo nuevo —aprobada y rechazada— antes de implementar la rama. M1.4 · C12. **Gustavo / Calidad**» | Nada: aquí el dato está bien. Es el que los otros dos no recogen |
+| 3 | `plan:140` | Copia la lectura del acta: «Gate: **Ninguno**» | El dueño y el estado del punto |
+
+Y hay una cuarta línea que lo contradice todo desde el propio maestro, `:1468`:
+
+> «**Pendiente de validar con Servicio Técnico** cuál es el comportamiento real de esta etapa **antes
+> de definir sus salidas**: puede ser que el retorno exista en la práctica y no esté modelado, o que
+> la etapa se use como registro y no como paso del flujo. Punto abierto nº 38.»
+
+Es la misma clase de fallo que la entrada 1, y por eso van en el mismo fichero: **una casilla del
+orden del día no es una decisión, ni siquiera marcada.** Allí una convocatoria se citó como acta;
+aquí un encabezado de convocatoria («las ejecuta desarrollo») se convirtió en un gate vacío.
+
+**Texto propuesto para `plan:140`:** sustituir la columna Gate por
+
+> `Gustavo / Calidad · Anexo D nº 38 (ABIERTO). Se hace antes de F1B-06, que la hereda`
+
+**Y una consecuencia que el plan tampoco dice: la decisión está sin cerrar en su contenido, no sólo
+sin firmar.** `maestro:1470` propone que «aprobada» «devuelve a `En Proceso` **o** pasa a
+`Finalizado`» — dos destinos, sin elegir. Ver el punto de agenda en
+`docs/sdd/F1A-03_Agenda_P38_Verificacion.md`.
+
+---
+
+## La de F1A-04 (3)
+
+### 3 · El plan manda anclar el bodegaje de entrada en un hito que la R08 sustituyó *(F1A-04)*
+
+**Texto actual**, `plan:141`:
+
+> `| F1A-04 | **C9** (parte técnica) Recalcular bodegaje de entrada, inicio de servicio y diagnóstico`
+> `**contra la marca de tiempo de `Ingreso a Servicio`**; añadir el campo «fecha de aviso al cliente» |`
+
+**El problema.** Esa frase mete **dos tríos distintos en una sola instrucción**, y para uno de los
+tres es la prescripción caducada:
+
+| Trío | Qué es | Hito correcto |
+|---|---|---|
+| **Los tres bodegajes** (entrada, proceso, salida) | M1.10, `:1685-1702`, `[DEFINIDO — R08]` | **Pares de campos de fecha.** El de entrada es `Fecha Orden De Venta − Fecha Remisión Entrada` (`:1694`) |
+| **Los tres indicadores rotos** (56 bodegaje, 48 inicio de servicio, 49 diagnóstico) | `:2330` | La marca de tiempo de la transición correspondiente |
+
+«Contra la marca de tiempo de `Ingreso a Servicio`» es la vía que el maestro proponía en `:1684`
+—texto de la **R05**—. La **R08** la sustituyó para el bodegaje: `:1692` dice que el periodo lo abre
+«el equipo llega a las instalaciones», y eso es la **fecha de la remisión de entrada**, no el
+instante en que alguien pulsó el botón. Los dos datos los escribe la MISMA transición
+(`transitions.ts:190-191`), así que están a un carácter de distancia, y `:1705` explica por qué el
+valor y no el clic: el indicador tiene que anclar «en dos hechos físicos y comerciales —el equipo
+llegó, la OV se generó— que siguen significando lo mismo aunque cambie cuándo se abre el registro».
+
+Para los indicadores **48 y 49** la instrucción del plan **sí es correcta**, y F1A-04 los ha dejado
+atendidos exponiendo el hito (`bodegaje.ts`, `marcaIngresoAServicio`). No se han construido los
+indicadores porque no existe módulo de KPIs: eso es F1C-06 y la spec `kpis`.
+
+**Texto propuesto para `plan:141`:** sustituir la columna Contenido por
+
+> `**C9** (parte técnica) Los tres bodegajes de M1.10 (:1685-1702) calculados sobre`
+> `ticket_transitions; reanclar los indicadores 48 y 49 en la marca de «Ingreso a Servicio»;`
+> `añadir el campo «fecha de aviso al cliente»`
+
+**Por qué importa.** Implementada al pie de la letra, la frase del plan habría vuelto a romper el
+bodegaje de entrada: mediría cuándo se registró la llegada en la app, que desde el alta anticipada de
+Comercial no es cuándo llegó el equipo. Es exactamente la avería que C9 existe para arreglar.
 
 ---
 

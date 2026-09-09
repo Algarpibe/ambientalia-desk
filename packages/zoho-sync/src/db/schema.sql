@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   fecha_recepcion_repuestos date, fecha_finalizacion_st date, fecha_factura date,
   fecha_remision_salida date, fecha_salida_servicio_externo date, fecha_entrada_servicio_externo date,
   fecha_notificacion_garantia date, fecha_solicitud_sku date, fecha_orden_compra_final date,
-  fecha_orden_venta_final date,
+  fecha_orden_venta_final date, fecha_aviso_cliente date,
   equipo_partes_listas boolean, archivo_trazabilidad_actualizado boolean, doc_almacenada_drive boolean,
   hv_actualizada boolean, liberacion_sin_facturar boolean, servicio_in_situ boolean,
   custom_fields jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -427,3 +427,22 @@ CREATE TABLE IF NOT EXISTS public.catalogo_articulos_ocultos (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_articulos_ocultos_unico ON public.catalogo_articulos_ocultos (modelo_id, item_id);
+
+-- C9 (F1A-04): el hito que ABRE el bodegaje de salida de M1.10 (R08.1.md:1700-1702). No existia: la
+-- columna 51 lo aproximaba con la hora del ultimo cambio de estado, lo que atribuye al cliente la
+-- demora de Ambientalia en avisarle (:1704). La escribe la transicion habilitado_para_entrega
+--
+-- SIN CALIFICAR A PROPOSITO, y NO es el desvio de las 23 ALTER de CLAUDE.md. tickets es DESK_TABLE
+-- (migrate.ts:63), asi que este ALTER es el MISMO caso deliberado que los 10 CREATE sin calificar:
+-- en produccion el search_path=desk,public lo lleva a desk, igual que los otros cinco ALTER sobre
+-- tickets (:123, :185, :187, :206, :228). El desvio de CLAUDE.md son las 13 ALTER sobre tablas de
+-- public, y esta no es una de ellas
+--
+-- CALIFICARLA CON desk. SERIA PEOR, y esta medido: el esquema desk lo crea reorgToDesk
+-- (migrate.ts:85), que es PROD-ONLY y no corre nunca en tests (migrate.ts:92). Con "desk." delante,
+-- migrate omite la sentencia y la columna no se crea en pg-mem, en silencio y con la suite en verde
+--
+-- TRAMPA DE ESTE FICHERO, para el que venga detras: schemaStatements (migrate.ts:20) trocea por el
+-- caracter de punto y coma a ciegas, comentarios incluidos. Uno dentro de un comentario parte la
+-- sentencia en dos y las dos mitades fallan. Por eso este bloque no contiene ninguno
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_aviso_cliente date;

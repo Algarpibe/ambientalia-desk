@@ -231,7 +231,9 @@ El destino de cada valor **SHALL** derivarse de su `target` (`transitions.ts:17`
 
 **Verificado en esta tanda:** las **27** etiquetas de campo distintas que declaran las 34 transiciones
 —contando el `campoFecha` que arrastra el buscador de órdenes de venta— están **todas** en
-`PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts`), de las 39 que ese mapa declara. **Ninguna
+`PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts`), de las 39 que ese mapa declara.
+*(**F1A-04**: 28 de 40. El campo nuevo, «Fecha de aviso al cliente», es además el ÚNICO de
+`PROMOTED_COLUMNS` que no viene de Zoho — ver `rows.ts` y la guarda de `repo.test.ts`.)* **Ninguna
 cae al cajón `custom_fields`.** Confirma M1.3.8 del maestro (`:1415`).
 
 El campo `ordenVenta` **SHALL** comportarse como texto para el motor pero **SHALL** pintarse como
@@ -685,7 +687,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 | M-5 | M1.9.2 (`:1653`): «Treinta y una heredan al responsable que el ticket ya traía» | 34 − 3 = **31** ✓. El docblock del código tiene **dos** cuentas mal, y van juntas: `transitions.ts:262` dice «las otras **32**» (son 31) y `:265` dice «en **35** declaraciones» (son 34) | **El maestro tiene razón y el comentario del código no, dos veces.** Defecto de comentario, no de comportamiento. Registrado como comportamiento actual en §3.9, destino F1B-06. F0-02 no lo corrige: es código |
 | M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:282-286`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:272-285`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
 | M-7 | M1.9.1 (`:1615`) `[DECIDIDO]`: «Cada usuario ve **solo los estados y transiciones** de su rol» | Las **transiciones** sí se filtran (`TransitionPanel.tsx:56-58`). Los **tickets** no: el servidor los devuelve todos a todo el mundo, por decisión escrita en `docs/modelo-autorizacion.md` (`boardView.ts:29-32`) | Las dos mitades de la decisión tienen destinos distintos. La de visibilidad se decidió en contra a propósito. **Punto a aclarar** |
-| M-8 | M1.3.8 (`:1415`): «Las 27 etiquetas de campo mapean a columnas reales. Ninguna cae al cajón `custom_fields`» | **Verificado cierto** en esta tanda: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS` | Sin discrepancia. Se anota porque es una de las afirmaciones as-built que sí resiste |
+| M-8 | M1.3.8 (`:1415`): «Las 27 etiquetas de campo mapean a columnas reales. Ninguna cae al cajón `custom_fields`» | **Verificado cierto** en esta tanda: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS`. **F1A-04: 28 de 40** | Sin discrepancia. Se anota porque es una de las afirmaciones as-built que sí resiste |
 | M-9 | Anexo H.2 (`:1495`): servicio técnico «construido y verificado … coincide con el código en las 38 filas del mapa» | 34 transiciones + 2 pasos sin botón + las 2 salidas extra de `habilitar_servicio` = 38 (`transitions.ts:178`; maestro `:388` explica el recuento) | Sin discrepancia, pero el 38 **no** es un número de transiciones: son filas de mapa. Conviene no citarlo como tal |
 
 ### 4.3 · Lo que `config.yaml` dice y ya no es cierto

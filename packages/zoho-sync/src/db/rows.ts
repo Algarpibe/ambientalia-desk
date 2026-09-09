@@ -38,6 +38,8 @@ export interface TicketRow {
   fecha_salida_servicio_externo: string | null; fecha_entrada_servicio_externo: string | null
   fecha_notificacion_garantia: string | null; fecha_solicitud_sku: string | null
   fecha_orden_compra_final: string | null; fecha_orden_venta_final: string | null
+  /** C9 · abre el bodegaje de salida (M1.10). No viene de Zoho: la escribe `habilitado_para_entrega`. */
+  fecha_aviso_cliente: string | null
   equipo_partes_listas: boolean | null; archivo_trazabilidad_actualizado: boolean | null
   doc_almacenada_drive: boolean | null; hv_actualizada: boolean | null
   liberacion_sin_facturar: boolean | null; servicio_in_situ: boolean | null
@@ -114,6 +116,13 @@ export const PROMOTED_COLUMNS: Array<{ col: keyof TicketRow; label: string; kind
   { col: 'fecha_solicitud_sku', label: 'Fecha solicitud SKU', kind: 'date' },
   { col: 'fecha_orden_compra_final', label: 'Fecha Orden de Compra Final', kind: 'date' },
   { col: 'fecha_orden_venta_final', label: 'Fecha Orden de Venta Final', kind: 'date' },
+  // C9 · el ÚNICO de esta lista que NO viene de Zoho: lo crea la corrección C9 y lo escribe
+  // `habilitado_para_entrega`. Está aquí porque `transitionExec.ts:89-91` usa esta lista para decidir
+  // columna o `custom_fields`, y el jsonb NO SIRVE: `repo.ts:62` hace `custom_fields=EXCLUDED.custom_fields`
+  // en cada upsert, así que el sync —cada 3 min— borraría la fecha de aviso de todo ticket que no sea
+  // `managed_by_app`. En columna propia sobrevive, porque `TICKET_COLS` no la incluye y el sync no la toca.
+  // Ver la guarda en `repo.test.ts` y el enrutado en `transitionExec.test.ts`.
+  { col: 'fecha_aviso_cliente', label: 'Fecha de aviso al cliente', kind: 'date' },
   { col: 'equipo_partes_listas', label: 'Equipo y/o partes listas para entrega al cliente?', kind: 'bool' },
   { col: 'archivo_trazabilidad_actualizado', label: 'Archivo de trazabilidad Actualizado?', kind: 'bool' },
   { col: 'doc_almacenada_drive', label: 'Documentacion Almacenada en el Drive?', kind: 'bool' },

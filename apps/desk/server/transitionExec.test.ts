@@ -147,3 +147,30 @@ describe('buildTransitionPlan', () => {
     expect(plan.columns.fecha_factura).toBe('2026-06-01')
   })
 })
+
+/**
+ * C9 · LA FECHA DE AVISO ATERRIZA EN SU COLUMNA, Y NO ES UNA PREFERENCIA.
+ *
+ * Es el mismo fallo silencioso que ya vigilan los dos tests de arriba, pero con una vuelta de tuerca:
+ * aquí el jsonb no es sólo «menos visible», es DESTRUCTIVO. `repo.ts:62` hace
+ * `custom_fields=EXCLUDED.custom_fields` en cada upsert, y el sync corre cada 3 minutos, así que un
+ * ticket venido de Zoho —cualquiera que no sea `managed_by_app`— perdería la fecha de aviso antes de
+ * que nadie la mirase, y con ella el bodegaje de salida de M1.10.
+ *
+ * Lo que lo evita es que «Fecha de aviso al cliente» esté en `PROMOTED_COLUMNS` (`rows.ts:117-123`)
+ * pese a no ser un campo de Zoho, que es la única excepción de esa lista y va explicada allí.
+ */
+describe('C9 · Fecha de aviso al cliente', () => {
+  it('va a su columna, nunca a custom_fields: el jsonb lo pisa el sync cada 3 min', () => {
+    const t = transitionById('habilitado_para_entrega')!
+    const plan = buildTransitionPlan(t, { comment: 'avisado por teléfono', 'Fecha de aviso al cliente': '2026-05-02' })
+    expect(plan.columns.fecha_aviso_cliente).toBe('2026-05-02')
+    expect(plan.customFields, 'si cae aquí, el próximo sync la borra').toEqual({})
+  })
+
+  it('y es obligatoria: sin ella el bodegaje de salida no vale cero, es incalculable', () => {
+    const t = transitionById('habilitado_para_entrega')!
+    const plan = buildTransitionPlan(t, { comment: 'sin avisar' })
+    expect(plan.errors.length, 'debe frenar la transición, no dejarla pasar en blanco').toBeGreaterThan(0)
+  })
+})

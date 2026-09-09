@@ -249,8 +249,15 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
   { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
+  // La fecha del aviso es el hito que ABRE el bodegaje de salida (M1.10, `R08.1.md:1700`), y hasta C9
+  // no existía: la columna 51 lo aproximaba con la hora del último cambio de estado, que atribuye al
+  // cliente la demora en avisarle (`:1704`). Va aquí porque ésta es «la propia transición que habilita
+  // la entrega» de esa misma línea.
+  // OBLIGATORIA, y ése es el precio que paga Comercial: opcional, el bodegaje de salida no valdría
+  // cero —sería INCALCULABLE para siempre, porque nadie vuelve a pasar por esta etapa—, que es la
+  // avería de la columna 42 documentada en `reentrancia.test.ts:118-140`.
   { id: 'habilitado_para_entrega', name: 'Habilitado para entrega', from: ['Liberación Comercial'], to: 'Por Entregar', area: 'Comercial',
-    fields: [comment()] },
+    fields: [comment(), cfDate('Fecha de aviso al cliente')] },
   { id: 'notif_recotizacion', name: 'Notificación re cotización', from: ['Continuación del proceso'], to: 'Notificación Comercial', area: 'Comercial',
     fields: [comment()] },
 ]
