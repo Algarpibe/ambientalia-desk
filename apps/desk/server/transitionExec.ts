@@ -60,6 +60,22 @@ export function buildTransitionPlan(t: Transition, values: Record<string, unknow
       continue
     }
 
+    /*
+     * C1 — el obligatorio de un checkbox NO es `empty`. Cerrado en F1A-01, y son dos piezas:
+     *
+     * (a) este chequeo va ANTES del bloque del checkbox de abajo. Antes iba después, y el `continue`
+     *     de ese bloque se saltaba la validación: un checkbox `required` no se comprobaba nunca.
+     * (b) y para un checkbox la condición es `asBool(raw) !== true`, no `empty` (`:44`), porque
+     *     `empty` no captura `false` — y `false` es justo lo que manda el navegador cuando la casilla
+     *     existe y está sin marcar. Con sólo (a), la vía normal del formulario seguía pasando.
+     *
+     * La semántica de un checkbox obligatorio sólo puede ser DEBE ESTAR MARCADO: es la confirmación
+     * de un acto —«Liberación del ticket sin facturar» (`transitions.ts:247`) es el único que hay—, y
+     * un obligatorio que acepta `false` no es una guarda.
+     */
+    const faltaObligatorio = f.kind === 'checkbox' ? asBool(raw) !== true : empty
+    if (f.required && faltaObligatorio) { plan.errors.push(`Falta el campo obligatorio: ${f.label}`); continue }
+
     if (f.kind === 'checkbox') {
       const col = LABEL_TO_COL.get(f.key)
       if (col) plan.columns[col.col as string] = asBool(raw)
@@ -67,7 +83,6 @@ export function buildTransitionPlan(t: Transition, values: Record<string, unknow
       continue
     }
 
-    if (f.required && empty) { plan.errors.push(`Falta el campo obligatorio: ${f.label}`); continue }
     if (empty) continue
 
     if (f.target === 'priority') { plan.priority = String(raw); continue }

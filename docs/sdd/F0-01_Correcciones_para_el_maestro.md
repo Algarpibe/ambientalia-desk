@@ -10,9 +10,9 @@
 
 | Dato | Valor |
 |---|---|
-| Tanda | F0-01, ampliado por **F0-02** (entradas 8–12) y **F0-03** (entrada 13) |
-| Base | commit `a3a8f03` (F0-01) · commit `ad1875b` (las cinco de F0-02, entradas 8–12) · commit `da084e9` (la de F0-03, entrada 13) |
-| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) |
+| Tanda | F0-01, ampliado por **F0-02** (entradas 8–12), **F0-03** (entrada 13) y **F1A-01** (entrada 14) |
+| Base | commit `a3a8f03` (F0-01) · `ad1875b` (las cinco de F0-02, 8–12) · `da084e9` (la de F0-03, 13) · `3aaa0f1` (la de F1A-01, 14) |
+| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) |
 | Fecha | 2026-09-08, ampliado el 2026-09-09 |
 
 > **Por qué las de F0-02 viven en el fichero de F0-01 y no en uno propio.** El canal hacia el maestro
@@ -698,6 +698,78 @@ Ese punto tiene ahora una consecuencia concreta que antes era hipotética: F0-02
 specs as-built** en `openspec/specs/`. Si la sesión decidiera retirar la capa as-built del `.docx`,
 esas siete specs pasan a ser **la única copia** de ese contenido, no una duplicada — que es
 exactamente lo que el proposal de F0-02 anticipó en su §6.
+
+---
+## La de F1A-01 (14)
+
+> Procede de **arreglar** C1, no de leerlo. Es la primera entrada de este fichero que sale de tocar
+> código: las trece anteriores contrastaban documentos contra el repositorio; ésta contrasta una
+> **estimación** contra lo que costó de verdad.
+
+### 14 · C1 son DOS piezas, no «una línea» — y el histórico que el arreglo no repara *(F1A-01)*
+
+**Texto actual.** El maestro estima C1 en **una línea** en cinco sitios, y la convocatoria del 03/09
+lo repite en su tabla de las doce correcciones:
+
+| Línea | Qué dice |
+|---|---|
+| `R08.1.md:1556` | «Está registrado como M-2 en debt.md (M11.7) y **el arreglo es una línea**. Corrección C1, punto abierto nº 33» |
+| `R08.1.md:2719` | «En `buildTransitionPlan`, **la rama del checkbox sale antes de la comprobación de campo obligatorio**» |
+| `R08.1.md:2723` | «**Una línea**: dar error cuando el campo es obligatorio y el valor no llega marcado» |
+| `R08.1.md:3025` · `:3029` | «Cerrar la puerta del checkbox obligatorio (debt.md M-2): dar error cuando el campo es obligatorio y el valor no llega marcado» · Esfuerzo: «**Una línea**» |
+| `R08.1.md:4520` · `:4522` | Anexo H: «Checkbox obligatorio que el motor deja saltar» · Esfuerzo: «**Una línea**» |
+| `acta:253` | «C1 · Checkbox obligatorio que el motor deja saltar · Pendiente. Confirmada · **Una línea**» |
+
+**Texto propuesto:** en los cinco sitios del maestro, sustituir «Una línea» por
+
+> «**Dos piezas.** (a) mover el chequeo de obligatorio por delante del bloque del checkbox, cuyo
+> `continue` se lo saltaba; y (b) que la condición para un checkbox sea «no llega marcado»
+> (`asBool(raw) !== true`) y no «llega vacío»: un formulario con la casilla desmarcada manda `false`,
+> no vacío, así que con sólo (a) el defecto sobrevive por el camino normal. **Cerrado en F1A-01 el
+> 09/09/2026.**»
+
+**Y aquí está lo que hay que mirar de frente, porque no es que el maestro se quedara corto: es que
+tenía las dos piezas y las facturó como una.** `:2719` describe la causa —el orden— que es
+exactamente la pieza (a). `:2723` y `:3025` describen el arreglo —«cuando el valor no llega
+marcado»— que es exactamente la pieza (b). Son **dos ediciones distintas del mismo bucle**, escritas
+en dos frases distintas del mismo documento, y sumadas como «una línea». La estimación no falló por
+mirar poco: falló por no juntar lo que ya tenía delante.
+
+**Una segunda imprecisión, en la tabla de M11 sobre el dato que miente.** `R08.1.md:544` dice «el
+motor dejó pasar la casilla **vacía**». Vacía es la vía rara. La normal es la casilla **presente y en
+`false`**, que es lo que envía un formulario con la casilla desmarcada, y es justamente la que la
+pieza (a) no cerraba. Texto propuesto: «el motor dejó pasar la casilla **sin marcar**».
+
+**Evidencia de primera mano, por mutación.** No es una lectura: se aplicó la pieza (a) sola y se
+ejecutó la suite.
+
+| Estado del código | Vía AUSENTE | Vía FALSE |
+|---|---|---|
+| Antes de F1A-01 | `200`, el ticket avanza | `200`, el ticket avanza |
+| **Sólo la pieza (a)** | `422` ✓ | **`200` — «expected 200 to be 422»** |
+| Las dos piezas | `422` ✓ | `422` ✓ |
+
+La fila del medio es la entrada: un arreglo de «una línea» habría cerrado C1 en el papel y lo habría
+dejado vivo por el camino que usa el navegador.
+
+**Punto nuevo para el Anexo D: el histórico que el arreglo no repara.** Texto propuesto:
+
+> «`liberacion_sin_facturar` es columna promovida (`packages/zoho-sync/src/db/rows.ts:121`), así que
+> las filas escritas **antes** del 09/09/2026 pueden afirmar `false` en tickets que están exactamente
+> en «Por Entregar / Sin facturar». F1A-01 detiene la sangría; no repara lo ya escrito. Quien audite
+> liberaciones sin factura sobre esos datos estará auditando un dato falso. **Pendiente:** contar
+> esas filas contra la base de producción y decidir si se corrigen, se marcan o se excluyen del
+> indicador. *Hipótesis mientras no se cuente:* existen; no se ha verificado.»
+
+**Y el punto abierto nº 33 se cierra**, que es el que el maestro asocia a C1 (`R08.1.md:1556`,
+`:374-375`). Texto propuesto: «Cerrado en F1A-01 el 09/09/2026. La guarda bloquea: un checkbox
+obligatorio sin marcar devuelve 422 y el ticket no se mueve.»
+
+**Dónde queda escrito en el repositorio.** `openspec/specs/transitions-st/spec.md` §3.1 pasa de
+«comportamiento actual, a corregir» a **cerrada**, con el requisito en RQ-TS-08 y el histórico como
+lo único que sigue vivo. Y `debt.md` M-2 pasa de latente a **resuelto**, con una corrección propia:
+su ejemplo —'Cumple condiciones comerciales'— **no** es un checkbox obligatorio (`transitions.ts:189`);
+el único que existe es 'Liberación del ticket sin facturar' (`:247`).
 
 ---
 ## Qué NO contiene este fichero

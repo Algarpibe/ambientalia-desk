@@ -21,8 +21,9 @@ describe('buildTransitionPlan', () => {
       // obligatorios de abajo.
       'derivado_a',
     ])
-    // Lo que la etapa EXIGE. El comentario y la casilla no: el asterisco de la casilla además mentía,
-    // porque un checkbox obligatorio se guarda como `false` sin error si nadie lo marca (M-2).
+    // Lo que la etapa EXIGE. El comentario y la casilla no. Antes había además un asterisco que
+    // mentía —un checkbox obligatorio se guardaba como `false` sin error si nadie lo marcaba—: eso
+    // era C1, y lo cerró F1A-01 (spec `transitions-st` §3.1). Hoy sin marcar es un obligatorio que falta.
     expect(t.fields.filter((f) => f.required).map((f) => f.key)).toEqual(['Orden de Venta', 'Serial'])
     expect(plan.errors).toEqual([])
     expect(plan.status).toBe('Ingresado')
@@ -83,6 +84,30 @@ describe('buildTransitionPlan', () => {
     const t = transitionById('ingreso_a_servicio')!
     const plan = buildTransitionPlan(t, { comment: '' })
     expect(plan.errors).toContain('Falta el campo obligatorio: Código Servicio')
+  })
+
+  /**
+   * C1 · LO QUE EL ARREGLO NO DEBÍA CAMBIAR, y que es lo que fija DÓNDE va el chequeo de obligatorio.
+   *
+   * F1A-01 movió ese chequeo a ANTES del bloque del checkbox. Tenía que quedar ahí y no detrás del
+   * `if (empty) continue`: detrás, un checkbox OPCIONAL ausente dejaría de escribirse, y su columna
+   * pasaría de ponerse en `false` a no tocarse — un cambio de comportamiento distinto, no pedido y
+   * silencioso, porque la columna se quedaría con lo que hubiera de antes.
+   *
+   * `Cumple condiciones comerciales` (`transitions.ts:189`) es el checkbox opcional que lo prueba, y
+   * es columna promovida, así que el efecto se ve en `plan.columns`. Los otros cuatro opcionales
+   * están en `finalizacion_servicio` (`:223`).
+   */
+  it('un checkbox OPCIONAL ausente se sigue escribiendo como false', () => {
+    const t = transitionById('habilitar_servicio')!
+    const casilla = t.fields.find((f) => f.key === 'Cumple condiciones comerciales')!
+    // Si mañana se declarara obligatoria, esta prueba dejaría de decir lo que dice.
+    expect(casilla.kind).toBe('checkbox')
+    expect(casilla.required).toBe(false)
+
+    const plan = buildTransitionPlan(t, { comment: 'x', 'Orden de Venta': 'OV-9', Serial: 'S1' })
+    expect(plan.errors).toEqual([])
+    expect(plan.columns.cumple_condiciones_comerciales).toBe(false)
   })
 
   /**

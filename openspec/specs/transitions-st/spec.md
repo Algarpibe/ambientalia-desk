@@ -3,13 +3,13 @@
 | Dato | Valor |
 |---|---|
 | Capacidad | `transitions-st` (`openspec/config.yaml:87-89`) |
-| Estado | **as-built completo**, contrastado contra el código |
-| Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s |
+| Estado | **as-built completo**, contrastado contra el código. **§3.1 (C1) cerrada por F1A-01 el 2026-09-09**; el resto del §3 sigue abierto |
+| Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s. **Re-verificada en F1A-01** sobre `3aaa0f1` con el arreglo de C1: las mismas 931 pruebas, 929 en verde |
 | Tanda que la escribe | F0-02 |
-| Contenido | **14** requisitos (`RQ-TS-01`…`RQ-TS-14`) · **9** entradas de comportamiento actual (§3.1–§3.9) · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
+| Contenido | **14** requisitos (`RQ-TS-01`…`RQ-TS-14`) · **9** entradas de comportamiento actual (§3.1–§3.9), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
 | Diseño de procedencia | `docs/superpowers/specs/2026-06-04-subsistema-b-transiciones-postgres-design.md` (124 líneas, «Aprobado para planificación»). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | M1.3 (`R08.1.md:1106-1443`) · M1.9.1 (`:1614-1650`) · M1.9.2 (`:1651-1666`) · M1.9.3 (`:1667-1674`) · M1.10 (`:1675-1677`) · Anexo H.2 (`:4488-4496`) |
-| Tandas que la tocan | **F1A-01** (C1) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:20-26` |
+| Tandas que la tocan | **F1A-01** (C1 — **hecha**, 2026-09-09) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:20-26` |
 | Depende de | `permissions` (la función pura), `trazas` (el historial), `tickets-core` (la fila del ticket) |
 
 ---
@@ -199,19 +199,23 @@ lo que iba a ser rechazado: cumple el punto 3 de la regla invariable 13
 
 ### RQ-TS-08 · Campos y validación de obligatorios
 
-`buildTransitionPlan(transition, values)` (`apps/desk/server/transitionExec.ts:37-83`) **SHALL** ser
+`buildTransitionPlan(transition, values)` (`apps/desk/server/transitionExec.ts:37-99`) **SHALL** ser
 la única validación de campos, **SHALL** ser puro y **SHALL** devolver la lista de errores en
 `plan.errors` en lugar de lanzar.
 
 - Un campo `required` que llega vacío **SHALL** producir
-  `Falta el campo obligatorio: <label>` (`transitionExec.ts:70`), y el llamador **SHALL** traducirlo a
+  `Falta el campo obligatorio: <label>` (`transitionExec.ts:77`), y el llamador **SHALL** traducirlo a
   `422` (`ticketService.ts:93-94`).
 - El **comentario NUNCA MAY declararse obligatorio**: el ayudante `comment()` no admite parámetro
   (`transitions.ts:65-74`), y por eso el motor se quedó sin la guarda aparte que lo comprobaba
-  (`transitionExec.ts:80-83`). Es el principio de diseño nº 4 del maestro cumplido en el código
+  (`transitionExec.ts:95-99`). Es el principio de diseño nº 4 del maestro cumplido en el código
   (`:1416`).
-- Los campos de tipo `checkbox` **SHALL** saltarse el chequeo genérico de obligatorios
-  (`transitionExec.ts:63-68` va antes de `:70`). Ése es el defecto **C1** — ver §3.1.
+- Un `checkbox` **required SHALL** exigir que llegue **marcado**: la condición es `asBool(raw) !== true`,
+  no `empty` (`transitionExec.ts:76`). Ausente y presente-en-`false` **SHALL** producir el mismo
+  `Falta el campo obligatorio: <label>`. Era el defecto **C1**, cerrado en **F1A-01** — ver §3.1.
+- Un `checkbox` **opcional** ausente **SHALL** seguir escribiéndose como `false`: el chequeo de
+  obligatorio va antes del bloque del checkbox, y éste antes del `if (empty) continue`
+  (`transitionExec.ts:76-86`, fijado en `transitionExec.test.ts:89-111`).
 - Las etiquetas de campo son las **etiquetas exactas de Zoho** (`transitions.ts:20-21`).
 
 ### RQ-TS-09 · Mapeo de campos a columnas
@@ -221,9 +225,9 @@ El destino de cada valor **SHALL** derivarse de su `target` (`transitions.ts:17`
 | `target` | Destino | Evidencia |
 |---|---|---|
 | `comment` | El comentario de la transición | `transitionExec.ts:46` |
-| `priority` | La columna `priority` | `transitionExec.ts:73` |
+| `priority` | La columna `priority` | `transitionExec.ts:88` |
 | `derivacion` | La columna `derivado_a` | `transitionExec.ts:13`, `:58-61` |
-| `customField` | Columna promovida si la etiqueta está en `PROMOTED_COLUMNS`; si no, a `custom_fields` | `transitionExec.ts:4`, `:75-77` |
+| `customField` | Columna promovida si la etiqueta está en `PROMOTED_COLUMNS`; si no, a `custom_fields` | `transitionExec.ts:4`, `:90-92` |
 
 **Verificado en esta tanda:** las **27** etiquetas de campo distintas que declaran las 34 transiciones
 —contando el `campoFecha` que arrastra el buscador de órdenes de venta— están **todas** en
@@ -262,7 +266,7 @@ excepciones» (`:1677`).
   sólo si la sesión no trae nombre (`ticketService.ts:111`, `transitionActor.ts:3`).
 - La cobertura **SHALL** ser de las 34: el barrido ejercita **todos** los `from` de cada transición
   —`habilitar_servicio` tiene tres—, o sea **36 ejecuciones**, y comprueba en cada una el estado
-  destino y la fila del historial (`transicionesEjecucion.test.ts:145-157`, `:312-325`).
+  destino y la fila del historial (`transicionesEjecucion.test.ts:105-117`, `:272-285`).
 - La fila de la creación del ticket **SHALL** llevar `from_status = '(creación)'`
   (`transitions.ts:100-110`), que no es un estado de Zoho sino la marca de que esa fila es la foto del
   nacimiento (maestro M1.3.8, `:1417`).
@@ -325,33 +329,39 @@ regla completa pertenecen a las specs `tickets-core` y `remisiones`.
 
 ## 3 · Comportamiento actual, a corregir
 
-Todo lo de esta sección es **as-built**. F0-02 lo escribe y **no lo corrige**.
+Todo lo de esta sección es **as-built**. F0-02 la escribió y **no corrigió nada**; las tandas de la
+Fase 1 sí, y cuando una entrada se cierra **se reescribe aquí en vez de borrarse**, porque lo que
+queda abierto casi nunca es todo el punto: de C1 (§3.1, cerrada) sigue vivo el histórico ya escrito.
 
-### 3.1 · C1 — el checkbox obligatorio que no frena nada · **destino F1A-01**
+### 3.1 · C1 — el checkbox obligatorio que no frenaba nada · **CERRADO en F1A-01**
 
-**Comportamiento actual, a corregir en C1.** Un campo `checkbox` declarado `required` **no detiene** la
-transición, por dos vías distintas (`transicionesEjecucion.test.ts:70-143`):
+**Esta entrada ya no describe el comportamiento actual.** El requisito vive en **RQ-TS-08**; lo que
+queda aquí es lo que el arreglo **no** repara, que sigue abierto.
 
-| Vía | Qué llega | Qué hace hoy |
-|---|---|---|
-| Ausente | `undefined` | `200`, sin errores, el ticket avanza y la casilla se guarda `false` (`:95-109`) |
-| Presente en `false` | `false` | `200`, igual. Es el camino **normal**: un formulario con la casilla desmarcada manda `false`, no `undefined` (`:125-134`) |
+**Qué era.** Un campo `checkbox` declarado `required` no detenía la transición, por dos vías: ausente
+(`undefined`) y presente en `false` — la segunda es el camino **normal**, porque un formulario con la
+casilla desmarcada manda `false`. La causa: la rama del `checkbox` iba **antes** del chequeo genérico
+de obligatorios y hacía `continue`. El único caso vivo era `liberacion_sin_factura` →
+`cfCheck('Liberación del ticket sin facturar', true)` (`transitions.ts:246-247`).
 
-La causa está en `transitionExec.ts:63-68`: la rama del `checkbox` va **antes** del chequeo genérico
-de obligatorios de `:70` y hace `continue`. El único caso vivo es
-`liberacion_sin_factura` → `cfCheck('Liberación del ticket sin facturar', true)`
-(`transitions.ts:246-247`).
+**Cómo se cerró, y por qué la estimación de «una línea» era corta.** Dos piezas, no una
+(`transitionExec.ts:63-86`): (a) el chequeo de obligatorio pasa a ir **antes** del bloque del
+checkbox, y (b) para un `checkbox` la condición es `asBool(raw) !== true`, no `empty`. **Verificado
+por mutación:** con sólo (a) aplicada, la prueba de la vía `false` seguía roja con «expected 200 to
+be 422». La corrección de la estimación va como entrada **14** de
+`docs/sdd/F0-01_Correcciones_para_el_maestro.md`.
 
-El arreglo **SHALL** tener dos piezas, y una sola no basta: mover el chequeo por delante deja viva la
-vía del `false` con sus dos pruebas en verde, y el arreglo parecería completo sin serlo
-(`transicionesEjecucion.test.ts:55-58`). Hay dos `it.fails` esperando en verde el día que se cierre
-(`:111-118`, `:136-142`).
+Cubierto por `transicionesEjecucion.test.ts:41-103` —las dos vías rechazadas con `422` y la casilla
+marcada aceptada con `200`— y por `transitionExec.test.ts:89-111`, que fija que un `checkbox`
+**opcional** ausente se siga escribiendo como `false`: es lo que impide corregir el defecto moviendo
+el bloque demasiado abajo.
 
-**Consecuencia que el arreglo no repara.** `liberacion_sin_facturar` es columna promovida
-(`packages/zoho-sync/src/db/rows.ts:121`), así que la base afirma `false` en tickets que están
-exactamente en `Por Entregar / Sin facturar`. El arreglo detiene la sangría; no repara el histórico
-(`transicionesEjecucion.test.ts:64-68`). *Hipótesis:* hay filas así en producción; no se ha
-verificado contra la base de producción en esta tanda.
+**LO QUE SIGUE ABIERTO: el histórico.** `liberacion_sin_facturar` es columna promovida
+(`packages/zoho-sync/src/db/rows.ts:121`), así que las filas escritas **antes** de F1A-01 pueden
+afirmar `false` en tickets que están exactamente en `Por Entregar / Sin facturar`. El arreglo detiene
+la sangría; no repara lo ya escrito, y quien audite liberaciones sin factura sobre esos datos estará
+auditando un dato falso. *Hipótesis:* hay filas así en producción; **no se ha verificado contra la
+base de producción**, ni en F0-02 ni en F1A-01. Va al Anexo D como punto nuevo, en la entrada 14.
 
 ### 3.2 · C3 — cuatro estados de espera sin salida de emergencia · **destino F1C-03**
 
@@ -553,7 +563,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 | M-3 | M1.3.8 (`:1413`): «18 desde `OV asignada`, y desde `Ticket creado` los otros 20» | 19 y 19 contando el origen; 20 desde `Ticket creado` sólo sumando el paso sin botón (RQ-TS-05) | Las cifras mezclan dos convenciones de recuento. La conclusión —sin huérfanos— se sostiene. **Corrección menor para el maestro** |
 | M-4 | M1.3.3 (`:1151`): los dos pasos sin botón «viven en `estadoPorRemision.ts`, **no en el archivo de transiciones**» | Sus constantes están en `transitions.ts:150-151`; `estadoPorRemision.ts:9-12` las importa | Exacto para la aplicación, falso para la declaración. **Corrección menor para el maestro** |
 | M-5 | M1.9.2 (`:1653`): «Treinta y una heredan al responsable que el ticket ya traía» | 34 − 3 = **31** ✓. El docblock del código tiene **dos** cuentas mal, y van juntas: `transitions.ts:262` dice «las otras **32**» (son 31) y `:265` dice «en **35** declaraciones» (son 34) | **El maestro tiene razón y el comentario del código no, dos veces.** Defecto de comentario, no de comportamiento. Registrado como comportamiento actual en §3.9, destino F1B-06. F0-02 no lo corrige: es código |
-| M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:282-286`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:312-325`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
+| M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:282-286`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:272-285`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
 | M-7 | M1.9.1 (`:1615`) `[DECIDIDO]`: «Cada usuario ve **solo los estados y transiciones** de su rol» | Las **transiciones** sí se filtran (`TransitionPanel.tsx:56-58`). Los **tickets** no: el servidor los devuelve todos a todo el mundo, por decisión escrita en `docs/modelo-autorizacion.md` (`boardView.ts:29-32`) | Las dos mitades de la decisión tienen destinos distintos. La de visibilidad se decidió en contra a propósito. **Punto a aclarar** |
 | M-8 | M1.3.8 (`:1415`): «Las 27 etiquetas de campo mapean a columnas reales. Ninguna cae al cajón `custom_fields`» | **Verificado cierto** en esta tanda: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS` | Sin discrepancia. Se anota porque es una de las afirmaciones as-built que sí resiste |
 | M-9 | Anexo H.2 (`:1495`): servicio técnico «construido y verificado … coincide con el código en las 38 filas del mapa» | 34 transiciones + 2 pasos sin botón + las 2 salidas extra de `habilitar_servicio` = 38 (`transitions.ts:178`; maestro `:388` explica el recuento) | Sin discrepancia, pero el 38 **no** es un número de transiciones: son filas de mapa. Conviene no citarlo como tal |

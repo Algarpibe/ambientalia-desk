@@ -27,7 +27,7 @@ escribe (§5).
 |---|---|---|---|
 | Cómo se combinan las dos historias | «**Fallback** a `ticket_transitions` cuando no hay historial de Zoho» (`design historia:16`, `:68`) | — | **Unificadas**, no fallback: `[...zoho, ...transiciones, ...remisiones]` ordenado (`apps/desk/server/db/historial.ts:157`) |
 | Cómo se construye | «**Derivada al leer**» (`design unificada:32`) | — | Derivada al leer (`historial.ts:126-131`) |
-| El «quién» de cada transición | Actor = constante temporal `'Equipo Técnico'` (`design B:20`) | M1.10 `[DECIDIDO — R08]`: fecha, hora y persona, «**no admite excepciones**»; «lo que falta por confirmar es que registre siempre el usuario» (`:1677`) | **Confirmado**: `performed_by` en la misma sentencia que el resto de la fila (`packages/zoho-sync/src/db/repo.ts:282-286`), comprobado en las 34 (`transicionesEjecucion.test.ts:312-325`) |
+| El «quién» de cada transición | Actor = constante temporal `'Equipo Técnico'` (`design B:20`) | M1.10 `[DECIDIDO — R08]`: fecha, hora y persona, «**no admite excepciones**»; «lo que falta por confirmar es que registre siempre el usuario» (`:1677`) | **Confirmado**: `performed_by` en la misma sentencia que el resto de la fila (`packages/zoho-sync/src/db/repo.ts:282-286`), comprobado en las 34 (`transicionesEjecucion.test.ts:272-285`) |
 | Qué guarda la creación | `values = { orden_venta }` (`design C:78`) | — | **Payload completo**, diez claves (`repo.ts:396-400`) |
 | Dónde vive el tracking | «**HISTORIA**, unificada; CONVERSACIONES se queda para el correo real» (`design unificada:31`) | — | Dos composiciones **hermanas** sobre las mismas fuentes: `historial.ts` y `conversacion.ts` |
 
@@ -50,7 +50,7 @@ tabla pone por defecto.
   `apps/desk/server/transitionActor.ts:3`). El único camino que alcanza el respaldo hoy está en §4.1.
 - La cobertura **SHALL** ser de las 34 transiciones, ejercitando **todos** los `from` de cada una
   —36 ejecuciones, porque `habilitar_servicio` tiene tres— y comprobando en cada una el estado destino
-  **y** la fila del historial (`apps/desk/server/transicionesEjecucion.test.ts:145-157`, `:312-325`).
+  **y** la fila del historial (`apps/desk/server/transicionesEjecucion.test.ts:105-117`, `:272-285`).
 - La escritura **SHALL** ser atómica con el resto de la transición: transacción cuando el pool lo
   permita, con `ROLLBACK` (`repo.ts:290-315`).
 
@@ -317,7 +317,7 @@ de aquí.
 
 | # | Dice el maestro | Dice el código | Lectura |
 |---|---|---|---|
-| M-1 | M1.10 `[DECIDIDO — R08]` (`:1677`): «el as-built ya escribe la marca de tiempo…; **lo que falta por confirmar es que registre siempre el usuario** que la ejecutó» | **Confirmado**: `performed_by` va en la misma sentencia que el resto de la fila (`repo.ts:282-286`) y está comprobado en las 34 transiciones, 36 ejecuciones (`transicionesEjecucion.test.ts:312-325`) | **El pendiente está cerrado**, con el matiz de §3.1: ninguna fila se escribe sin actor, pero el actor no siempre es una persona identificada. **Actualización para el maestro** (entrada 12 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`) |
+| M-1 | M1.10 `[DECIDIDO — R08]` (`:1677`): «el as-built ya escribe la marca de tiempo…; **lo que falta por confirmar es que registre siempre el usuario** que la ejecutó» | **Confirmado**: `performed_by` va en la misma sentencia que el resto de la fila (`repo.ts:282-286`) y está comprobado en las 34 transiciones, 36 ejecuciones (`transicionesEjecucion.test.ts:272-285`) | **El pendiente está cerrado**, con el matiz de §3.1: ninguna fila se escribe sin actor, pero el actor no siempre es una persona identificada. **Actualización para el maestro** (entrada 12 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`) |
 | M-2 | Anexo G col. 12 (`:4328-4329`): «Hora de actualización del estado — marca de tiempo de cada transición» | `ticket_transitions.performed_at`, con `DEFAULT now()` (`design A:98`) | Sin discrepancia. La columna del diccionario tiene su equivalente, y con mejor granularidad: el diccionario guarda **una** marca por ticket y la tabla guarda **una por transición** |
 | M-3 | Anexo G col. 7 (`:4322-4323`): «Hora de modificación — se actualiza automáticamente en cada cambio de estado **y en cada comentario nuevo**» | `modified_time=now()` se escribe en cada transición (`repo.ts:271`). Un comentario **suelto** no pasa por ahí | **Verificado en esta tanda: hoy la diferencia no se manifiesta.** Sólo hay dos sentencias `INSERT INTO conversations` en producción — el `upsert` del sync (`repo.ts:70-76`) y `writeTransition` (`repo.ts:262-266`)—, así que **la app no tiene ningún camino para comentar sin transicionar**. La diferencia aparecerá el día que lo tenga, y entonces `modified_time` dejará de cumplir lo que el diccionario dice. **Punto a tener delante en F1B**, que es donde llega la paridad de comentarios |
 | M-4 | Anexo G.8 (`:4476`): «las columnas 48, 49 y 56 son las que la **C9** tiene que redefinir» | El dato para redefinirlas existe en el historial: `instanteUltimaTransicion` (`fechasTicket.ts:22-34`) y el `values` completo (`repo.ts:285`) | Sin discrepancia; se anota porque fija qué parte de C9 es de esta capacidad —la traza— y qué parte es de `kpis` —el cálculo—. Las columnas 48, 49 y 56 están rotas por **creación anticipada del ticket**, no por reentrancia, y su dueño es C9 (`packages/shared/src/reentrancia.ts:74-76`) |

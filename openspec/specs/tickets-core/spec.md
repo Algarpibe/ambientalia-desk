@@ -182,7 +182,7 @@ La segunda puerta es de `transitions-st` RQ-TS-14; la tercera está abierta y es
 
 Un campo **SHALL** ir a **columna tipada** si su etiqueta está en `PROMOTED_COLUMNS`
 (`packages/zoho-sync/src/db/rows.ts`, **39** etiquetas) y **SHALL** caer a `custom_fields jsonb` si
-no (`apps/desk/server/transitionExec.ts:75-77`).
+no (`apps/desk/server/transitionExec.ts:90-92`).
 
 **Verificado en esta tanda:** las **27** etiquetas de campo que declaran las 34 transiciones están
 todas en `PROMOTED_COLUMNS`; **ninguna** cae al cajón. Confirma el maestro M1.3.8 (`:1415`) y M1.1

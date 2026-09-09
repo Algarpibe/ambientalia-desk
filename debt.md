@@ -561,7 +561,7 @@ Lista de trabajo aplazado a propósito, para avanzar ligeros. Cada ítem indica 
 - **Ampliar** tipos/helpers del paquete `@algarpibe/zoho-sync` cuando aparezca la 1ª app consumidora. Decidir **borrar/mantener `hub-test-app`**.
 
 ### ⚪ LATENTES / menores (por diseño; abordar si tocan ese código) — ver detalle abajo
-managed_by_app atómica (I-1), backoff 429 en backfill (I-3), `status_type` fino (M-1), checkbox required (M-2),
+managed_by_app atómica (I-1), backoff 429 en backfill (I-3), `status_type` fino (M-1),
 enumeración por timing en login (M-3), `getEquipo` sin filtro `active` (M-9), dedup parser semilla (M-10),
 PATCH `serial` vacío (M-14), escapar comodines de búsqueda (M-5), TZ en `due_date` (M-12),
 `config.syncBooks` sin uso, guard anti-drift `DESK_TABLES`↔`schema.sql`.
@@ -639,10 +639,19 @@ y sondear hasta `done: true` (~8-12 min). Idempotente; re-ejecutable para refres
   `'Open'`. Estados casi-terminales ('Liberación Comercial', 'Por Entregar'…) siguen en el tablero activo
   (tienen transiciones salientes, así que es correcto), pero el `status_type` deja de reflejar el "On Hold"
   de Zoho. Refinar con un mapa estado→tipo en **reportería (Subsistema G)**.
-- **Checkbox obligatorio (M-2):** un campo `checkbox` con `required=true` (p.ej. 'Cumple condiciones
-  comerciales') escribe `false` sin error si el usuario no lo marca (no se puede exigir "marcado=true").
-  Decisión de producto: si "obligatorio" = "debe quedar marcado", añadir en la rama checkbox de
-  `buildTransitionPlan` un error cuando `required && asBool(raw) !== true`.
+- **Checkbox obligatorio (M-2) — RESUELTO en F1A-01 (2026-09-09).** Un campo `checkbox` con
+  `required=true` escribía `false` sin error si el usuario no lo marcaba. La decisión de producto que
+  esta entrada dejaba abierta está tomada: «obligatorio» = **debe quedar marcado**. El arreglo fueron
+  **dos** piezas en `buildTransitionPlan`, no una: (a) el chequeo de obligatorio pasa a ir **antes**
+  del bloque del checkbox —su `continue` se lo saltaba— y (b) la condición para un checkbox es
+  `asBool(raw) !== true`, no `empty`. Con sólo (a), la vía normal del formulario —casilla desmarcada,
+  que manda `false`— seguía pasando. `apps/desk/server/transitionExec.ts:63-86`, cubierto en
+  `transicionesEjecucion.test.ts:41-103` y `transitionExec.test.ts:89-111`.
+  **Corrección de esta misma entrada:** el ejemplo que traía —'Cumple condiciones comerciales'— no es
+  obligatorio (`transitions.ts:189`, `cfCheck` sin segundo parámetro). El único `required` de las 34
+  etapas es 'Liberación del ticket sin facturar' (`transitions.ts:247`).
+  **Lo que NO repara:** las filas escritas antes de esa fecha. `liberacion_sin_facturar` es columna
+  promovida, así que puede haber tickets en `Por Entregar / Sin facturar` con `false` en esa columna.
 
 ## 3c. Hallazgos de la revisión del Subsistema H1 (menores)
 

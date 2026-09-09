@@ -6,66 +6,37 @@ import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testi
 instalarArnes()
 
 /**
- * C1 — EL CHECKBOX OBLIGATORIO QUE NO FRENA NADA (§5.3 del proposal F0-04).
+ * C1 — EL CHECKBOX OBLIGATORIO QUE AHORA SÍ FRENA. Cerrado en F1A-01.
  *
- * EL DEFECTO, verificado: `transitionExec.ts:63-68` procesa la rama del `checkbox` y hace `continue`
- * en `:67`, ANTES del chequeo genérico de obligatorio de `:70` (`if (f.required && empty)`). Un
- * checkbox marcado `required` nunca llega a ese chequeo, así que nunca se valida: sin marcar se
- * guarda como `false` y la transición sigue adelante.
+ * QUÉ ERA. `transitionExec.ts` procesaba la rama del `checkbox` y hacía `continue` ANTES del chequeo
+ * genérico de obligatorio, así que un checkbox `required` no se validaba nunca: sin marcar se
+ * guardaba como `false` y la transición seguía adelante. El único que existe es `transitions.ts:247`
+ * —`cfCheck('Liberación del ticket sin facturar', true)` en `liberacion_sin_factura`, área
+ * Comercial—, y era la única guarda de esa liberación.
  *
- * El único que existe es `transitions.ts:247` — `cfCheck('Liberación del ticket sin facturar', true)`
- * en `liberacion_sin_factura` (`Por Facturar` → `Por Entregar / Sin facturar`, área Comercial). La
- * prueba de obligatorios que había (`transitionExec.test.ts:82-86`) usa un campo de TEXTO, y por eso
- * nunca tocó este camino.
+ * QUÉ SE ARREGLÓ, Y POR QUÉ SON DOS PIEZAS. La estimación del acta —«Una línea» (`acta:258`)— sale
+ * de mirar sólo la primera:
  *
- * ⚠️ ESTA TANDA NO LO ARREGLA. F0-04 no cambia comportamiento (§12): las pruebas documentan el
- * as-built y el arreglo es F1A-01.
+ *   (a) el chequeo de obligatorio pasa a ir ANTES del bloque del checkbox. Va ahí y no detrás del
+ *       `if (empty) continue`: detrás, un checkbox OPCIONAL ausente dejaría de escribirse como
+ *       `false`, que es otro cambio de comportamiento y no estaba pedido. Lo fija
+ *       `transitionExec.test.ts`, «un checkbox opcional ausente se sigue escribiendo como false».
+ *   (b) y para un checkbox la condición es `asBool(raw) !== true`, NO `empty`. Porque `empty` no
+ *       captura `false`, y `false` es lo que manda el navegador cuando la casilla existe y está sin
+ *       marcar. VERIFICADO POR MUTACIÓN al cerrar C1: con sólo (a) aplicada, la prueba de la vía
+ *       FALSE seguía ROJA con «expected 200 to be 422». El arreglo de una sola pieza dejaba el
+ *       defecto vivo por el camino normal del formulario.
  *
- * ⚠️ POR QUÉ SON DOS Y NO UNA. Un `it.fails` solo tiene un agujero: pasa cuando el test falla POR
- * CUALQUIER MOTIVO —un import roto, un 500 en vez del 422, una ruta renombrada— y es justo la prueba
- * que existe para fijar un defecto concreto. La primera afirma en POSITIVO lo que hoy ocurre, así
- * que si mañana rompe otra cosa se pone roja por el motivo correcto en vez de esconderse detrás del
- * `.fails` de su pareja.
- *
- * VERIFICADO POR MUTACIÓN al escribirlas: con el bloque del checkbox movido detrás del chequeo de
- * obligatorio —el arreglo de F1A-01— se ponen ROJAS LAS DOS, la primera por «expected 422 to be 200»
- * y la segunda por «Expect test to fail». Y son las ÚNICAS: de las 611 pruebas de
- * `apps/desk/server/` + `packages/shared/` no se movió ninguna otra, así que este par es hoy toda la
- * red que hay debajo de C1.
- *
- * ⚠️ POR QUÉ SON CUATRO Y NO DOS. El defecto tiene DOS VÍAS, y una pareja que sólo cubriera la
- * primera dejaría pasar un arreglo falso:
- *
- *   `transitionExec.ts:44` → `const empty = raw === undefined || raw === null || raw === ''`
- *
- *   · campo AUSENTE           → `raw` es `undefined` → `empty` es `true`  → `:70` lo cazaría ✓
- *   · campo presente en FALSE → `raw` es `false`     → `empty` es `FALSE` → `:70` LO DEJA PASAR ✗
- *
- * Y la segunda vía es el camino NORMAL, no el raro: un formulario con la casilla desmarcada envía
- * `false`, no `undefined`. Para «Liberación del ticket sin facturar» la semántica sólo puede ser
- * DEBE ESTAR MARCADO —es la confirmación de un acto—, y un obligatorio que acepta `false` no es una
- * guarda. Por eso hay dos parejas: una por vía.
- *
- * ══ QUÉ TIENE QUE HACER F1A-01 CON ESTAS CUATRO, EN ESTE ORDEN ═══════════════════════════════════
- *   1. Quitar el `.fails` de las dos negativas y verlas ROJAS — comprobando que fallan por el 200
- *      que devuelven hoy, no por otra cosa.
- *   2. Arreglar `transitionExec.ts`. SON DOS PIEZAS, no una:
- *      (a) mover el bloque `if (f.kind === 'checkbox')` a ENTRE `:70` y `:71` — no detrás de `:71`:
- *          detrás del `if (empty) continue` un checkbox OPCIONAL ausente dejaría de escribirse como
- *          `false`, que es un cambio de comportamiento distinto y no pedido; y
- *      (b) que el chequeo de obligatorio para `kind === 'checkbox'` sea `asBool(raw) !== true`, NO
- *          `empty`. Sólo con (a), la vía del `false` sigue viva y sus dos pruebas siguen pasando:
- *          el arreglo parecería completo y no lo estaría.
- *   3. Ver las dos negativas VERDES.
- *   4. INVERTIR las dos positivas: pasan a comprobar 422, y sus nombres y comentarios dejan de
- *      hablar de «comportamiento actual, defecto C1».
- * ════════════════════════════════════════════════════════════════════════════════════════════════
+ * POR QUÉ TRES PRUEBAS Y NO UNA. Las dos vías de entrada del defecto fallan por motivos distintos
+ * —`undefined` la caza la pieza (a), `false` sólo la (b)—, así que cada una necesita la suya. Y la
+ * tercera es la que impide el arreglo por exceso: una guarda que rechazara también la casilla
+ * MARCADA frenaría la transición entera y las dos primeras seguirían verdes.
  *
  * ⚠️ CONSECUENCIA QUE EL ARREGLO NO REPARA. `liberacion_sin_facturar` es columna promovida
- * (`rows.ts:121`, `schema.sql:39`), luego HOY HAY FILAS EN PRODUCCIÓN con `false` en esa columna y
- * el ticket avanzado igualmente. El arreglo detiene la sangría; no repara el histórico. Quien
- * audite liberaciones sin factura sobre esos datos estará auditando un dato falso. Va al Anexo D
- * como punto nuevo, en la misma entrada que C1.
+ * (`rows.ts:121`, `schema.sql:39`), luego HAY FILAS EN PRODUCCIÓN con `false` en esa columna y el
+ * ticket avanzado igualmente. El arreglo detiene la sangría; no repara el histórico. Quien audite
+ * liberaciones sin factura sobre esos datos estará auditando un dato falso. Va al Anexo D como punto
+ * nuevo, en la misma entrada que C1.
  */
 describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
   async function ticketPorFacturar() {
@@ -90,55 +61,44 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
   }
 
   // ── VÍA 1 · el campo llega AUSENTE ───────────────────────────────────────────────────────────
-  // `raw` es `undefined`, luego `empty` es `true`: esta vía la cazaría la pieza (a) del arreglo.
+  // `raw` es `undefined`, luego `empty` es `true`: la vía que cierra la pieza (a).
 
-  it('hoy, con el checkbox obligatorio AUSENTE, la transición se ejecuta igual — comportamiento actual, defecto C1', async () => {
-    const res = await liberar({ comment: 'sin mandar la casilla' })
-
-    // El modo de fallo EXACTO, fijado en positivo: 200 y sin lista de errores.
-    expect(res.status).toBe(200)
-    expect(res.body.errors).toBeUndefined()
-
-    // Y la transición se EJECUTA: el ticket acaba en el estado destino.
-    const fila = await filaTicket()
-    expect(fila.status).toBe('Por Entregar / Sin facturar')
-    // La guinda del defecto: la casilla se guarda como `false` —es columna promovida
-    // (`rows.ts:121`)—, así que la base afirma que el ticket NO se liberó sin facturar mientras el
-    // ticket está exactamente en «Por Entregar / Sin facturar».
-    expect(fila.liberacion_sin_facturar).toBe(false)
-  })
-
-  it.fails('el checkbox obligatorio AUSENTE debería dar 422 — verde cuando F1A-01 cierre C1', async () => {
+  it('con el checkbox obligatorio AUSENTE, la liberación se rechaza con 422', async () => {
     const res = await liberar({ comment: 'sin mandar la casilla' })
 
     expect(res.status).toBe(422)
     expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
-    // Y el ticket no se mueve: un 422 que ya hubiera transicionado no sería una validación.
+    // Y el ticket NO se mueve: un 422 que ya hubiera transicionado no sería una validación.
     expect((await filaTicket()).status).toBe('Por Facturar')
   })
 
   // ── VÍA 2 · el campo llega presente y en FALSE ───────────────────────────────────────────────
-  // `raw` es `false`, luego `empty` es FALSE y `:70` lo dejaría pasar. Es el camino NORMAL: un
-  // formulario con la casilla desmarcada manda `false`, no `undefined`. La pieza (a) del arreglo NO
-  // cubre esta vía; hace falta la (b). Sin estas dos pruebas, F1A-01 se cerraría con el defecto vivo.
+  // `raw` es `false`, luego `empty` es FALSE. Es el camino NORMAL —un formulario con la casilla
+  // desmarcada manda `false`, no `undefined`— y sólo lo cierra la pieza (b).
 
-  it('hoy, con el checkbox obligatorio en FALSE, la transición se ejecuta igual — comportamiento actual, defecto C1', async () => {
+  it('con el checkbox obligatorio en FALSE, la liberación se rechaza con 422', async () => {
     const res = await liberar({ comment: 'casilla desmarcada', [CASILLA]: false })
+
+    expect(res.status).toBe(422)
+    expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
+    expect((await filaTicket()).status).toBe('Por Facturar')
+  })
+
+  // ── LO QUE LA GUARDA TIENE QUE DEJAR PASAR ───────────────────────────────────────────────────
+  // Sin esta prueba, un arreglo que rechazara SIEMPRE la liberación dejaría verdes las dos de
+  // arriba. Es la mitad del requisito que las dos negativas no pueden afirmar.
+
+  it('con el checkbox MARCADO, la liberación se ejecuta y la casilla queda en true', async () => {
+    const res = await liberar({ comment: 'liberado sin factura', [CASILLA]: true })
 
     expect(res.status).toBe(200)
     expect(res.body.errors).toBeUndefined()
 
     const fila = await filaTicket()
     expect(fila.status).toBe('Por Entregar / Sin facturar')
-    expect(fila.liberacion_sin_facturar).toBe(false)
-  })
-
-  it.fails('el checkbox obligatorio en FALSE debería dar 422 — verde cuando F1A-01 cierre C1', async () => {
-    const res = await liberar({ comment: 'casilla desmarcada', [CASILLA]: false })
-
-    expect(res.status).toBe(422)
-    expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
-    expect((await filaTicket()).status).toBe('Por Facturar')
+    // La columna promovida guarda `true`: a partir de aquí, quien audite liberaciones sin factura
+    // lee un dato que se corresponde con el estado del ticket.
+    expect(fila.liberacion_sin_facturar).toBe(true)
   })
 })
 
