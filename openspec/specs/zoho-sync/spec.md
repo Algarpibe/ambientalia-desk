@@ -30,7 +30,7 @@ sostiene. Toda cifra de aquí la produjo un comando, y el comando queda escrito 
 Los tres diseños de procedencia son de junio. Lo que describen ya corre:
 
 - El worker `hub-sync` existe, es un servicio aparte del mismo repositorio y su `DATABASE_URL` apunta
-  al hub (`apps/hub-sync/src/hub-sync.ts`; `DEPLOY.md:129-135`).
+  al hub (`apps/hub-sync/src/hub-sync.ts`; `DEPLOY.md:183-189`).
 - La replicación lógica hub → desk lleva **cuatro** tablas, verificadas en producción el 2026-08-10
   con `pg_subscription_rel` en estado `r`: `desk.activities`, `books.contacts`,
   `books.sales_orders` y `books.items` (`DEPLOY.md:38-42`, que cita `debt.md:298-301`).
@@ -125,9 +125,9 @@ El intervalo **SHALL** salir de `syncIntervalMs`, con **180 000 ms** por omisió
   (`hub-sync.ts:49`).
 
 *Hipótesis:* en producción el temporizador de la App y el del worker corren contra bases distintas
-—`desk` y `zoho-hub` (`DEPLOY.md:28-29`, `:135`)—, así que no se pisan. No se ha inspeccionado la
+—`desk` y `zoho-hub` (`DEPLOY.md:28-29`, `:189`)—, así que no se pisan. No se ha inspeccionado la
 consola de EasyPanel para confirmarlo, y el propio `DEPLOY.md` declara ese punto sin verificar
-(`:54-56`, `:146-148`).
+(`:54-56`, `:200-202`).
 
 ### RQ-ZS-05 · Dos tareas diarias, y las dos nacen en el lado seguro
 

@@ -3,13 +3,13 @@
 | Dato | Valor |
 |---|---|
 | Capacidad | `derivacion-avisos` (`openspec/config.yaml:118-120`) |
-| Estado | **as-built** (`status_at_start` de `config.yaml`), contrastado contra el código |
+| Estado | **as-built** (`status_at_start` de `config.yaml`), contrastado contra el código. **§4.3 cerrada a medias por F1A-02**: `DEPLOY.md` §4.2 documenta las cuatro variables de correo; `.env.example` sigue fuera del alcance de lectura |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas. El código de `ad1875b` es idéntico al de `b6fb6d4`: `git diff --name-only ad1875b..HEAD` no devuelve ningún fichero fuera de `docs/`, `openspec/` y `CLAUDE.md` |
 | Tanda que la escribe | F0-02 |
 | Contenido | **12** requisitos (`RQ-AV-01`…`RQ-AV-12`, §§1–3) · **3** entradas de comportamiento actual (§4.1–§4.3) · **5** discrepancias diseño↔código (D-1…D-5) y **3** maestro↔código (M-1…M-3) |
 | Diseño de procedencia | `docs/superpowers/specs/2026-08-12-avisos-por-correo-design.md` (165 líneas, «aprobado por el usuario, pendiente de plan de implementación»). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | **M1.9.2** (`R08.1.md:1651-1666`) · **M1.9.3** (`:1667-1674`), con el punto abierto nº 36 (Anexo D, `:4106-4109`) · M1.9.1 (`:1614`) · M11.1 (`:2653`) |
-| Tandas que la tocan | **F1A-02** (C11: SLA de un día sobre `Notificado`, con correo redundante al cambiar de área y escalado al superior) · **F1B-05** (roles y traspaso formal) · **F1C-05** (C10: permisos por cargo, que cambia quién es destinatario) |
+| Tandas que la tocan | **F1A-02** (C11 — **hecha en su parte de esta capacidad**: las cuatro variables de correo documentadas en `DEPLOY.md` §4.2. Y una corrección: el «correo redundante al cambiar de área» que el maestro pedía como ampliación de C11 **ya estaba construido** —RQ-AV-04 y RQ-AV-09—, cosa que el propio maestro reconoce nueve líneas más abajo en `R08.1.md:1582`. El escalado al superior sigue abierto: no hay jerarquía de cargos, ver `transitions-st` §3.10) · **F1B-05** (roles y traspaso formal) · **F1C-05** (C10: permisos por cargo, que cambia quién es destinatario) |
 | Depende de | `transitions-st` (`areasSiguientes` sale del grafo) · `permissions` (roles, áreas y `recibe_avisos`) · `trazas` (la derivación queda en `values`) |
 
 ---
@@ -293,26 +293,24 @@ y §4.5 de `tickets-core`: **una cuenta escrita a mano que envejeció**. F0-02 n
 Destino F1C-05, que es la tanda que toca la matriz de cargos por transición y por tanto abrirá este
 fichero con un motivo propio.
 
-### 4.3 · Las tres variables de correo no están en `DEPLOY.md` · **destino F1A-02**
+### 4.3 · Las tres variables de correo no están en `DEPLOY.md` · **CERRADO A MEDIAS en F1A-02**
 
-**Comportamiento actual, a corregir cuando alguien toque el despliegue.** La regla de secretos de
-`CLAUDE.md` exige que un interruptor vaya «en `.env.example` y `DEPLOY.md` con dos frases: qué
-enciende y qué se rompe si se pone mal», y trata «un flag no documentado como defecto, no como
-configuración».
+**La mitad de `DEPLOY.md` está cerrada.** Las **cuatro** variables —`N8N_AVISOS_WEBHOOK_URL`,
+`N8N_AVISOS_TOKEN`, `APP_BASE_URL` y `AVISOS_COPIA_EMAIL`— tienen sección propia en `DEPLOY.md` §4.2,
+cada una con las dos frases que la regla de secretos pide: qué enciende y qué se rompe si se pone mal.
+Se cerró en F1A-02 porque es la tanda que estrena el reloj de C11 y, con él, el primer motivo real
+para encender correo en producción.
 
-`config.ts` lee cuatro variables de esta capacidad —`N8N_AVISOS_WEBHOOK_URL`, `N8N_AVISOS_TOKEN`,
-`APP_BASE_URL` y `AVISOS_COPIA_EMAIL` (`packages/zoho-sync/src/config.ts:114-117`)—, las cuatro con su
-comentario de qué apagan (`:48-59`). **Verificado por comando:** `grep -n "REMISION\|N8N\|AVISOS"
-DEPLOY.md` no devuelve **ninguna** línea. El documento sabe hacerlo cuando quiere: `SYNC_ACTIVITIES` y
-`SYNC_CONTACTS` tienen sección propia con exactamente las dos frases que la regla pide
-(`DEPLOY.md:94-118`). Ese contraste es lo que lo convierte en defecto y no en olvido de formato.
+**La otra mitad sigue sin verificar, y no por olvido.** La regla pide `.env.example` **y**
+`DEPLOY.md`. `.env.example` **queda fuera del alcance de lectura de esta sesión** —le pasó lo mismo a
+F0-02 al escribir esta entrada—, así que sigue sin afirmarse nada sobre él: no se sabe si las cuatro
+variables están. Es lo único que queda de §4.3, y quien pueda leer ese fichero lo cierra en un minuto.
 
-Destino **F1A-02**, que es la tanda del C11 —SLA sobre `Notificado` con correo redundante y escalado
-(plan `:139`, `:409`)—: es la primera que enciende correo en producción, y encenderlo sin la variable
-documentada es exactamente el fallo que la regla previene.
-
-*No verificado en esta tanda:* la otra mitad de la regla, `.env.example`. El fichero queda fuera del
-alcance de lectura de esta sesión, así que **no se afirma nada sobre él**.
+**Lo que la entrada original decía y era inexacto:** hablaba de «las tres variables», pero `config.ts`
+lee **cuatro** (`packages/zoho-sync/src/config.ts:114-117`). El «tres» venía del diseño, que declaraba
+tres; `AVISOS_COPIA_EMAIL` se añadió después y es justamente la que más falta hacía documentar —la
+única que manda correo a alguien que no es el destinatario—. Está en D-1 de §5.1, y el título de esta
+entrada arrastraba la cifra vieja.
 
 ---
 

@@ -3,13 +3,13 @@
 | Dato | Valor |
 |---|---|
 | Capacidad | `transitions-st` (`openspec/config.yaml:87-89`) |
-| Estado | **as-built completo**, contrastado contra el código. **§3.1 (C1) cerrada por F1A-01 el 2026-09-09**; el resto del §3 sigue abierto |
-| Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s. **Re-verificada en F1A-01** sobre `3aaa0f1` con el arreglo de C1: las mismas 931 pruebas, 929 en verde |
+| Estado | **as-built completo**, contrastado contra el código. **§3.1 (C1) cerrada por F1A-01** y **C11 cerrada en su regla por F1A-02** (RQ-TS-15), las dos el 2026-09-09; el resto del §3 sigue abierto, y §3.10 dice qué falta de C11 |
+| Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s. **Re-verificada en F1A-01** sobre `3aaa0f1`: las mismas cifras. **Ampliada en F1A-02** sobre `ec0ed1f`: 112 ficheros / 945 pruebas, 943 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |
-| Contenido | **14** requisitos (`RQ-TS-01`…`RQ-TS-14`) · **9** entradas de comportamiento actual (§3.1–§3.9), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
+| Contenido | **15** requisitos (`RQ-TS-01`…`RQ-TS-15`) · **10** entradas de comportamiento actual (§3.1–§3.10), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
 | Diseño de procedencia | `docs/superpowers/specs/2026-06-04-subsistema-b-transiciones-postgres-design.md` (124 líneas, «Aprobado para planificación»). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | M1.3 (`R08.1.md:1106-1443`) · M1.9.1 (`:1614-1650`) · M1.9.2 (`:1651-1666`) · M1.9.3 (`:1667-1674`) · M1.10 (`:1675-1677`) · Anexo H.2 (`:4488-4496`) |
-| Tandas que la tocan | **F1A-01** (C1 — **hecha**, 2026-09-09) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:20-26` |
+| Tandas que la tocan | **F1A-01** (C1 — **hecha**, 2026-09-09) · **F1A-02** (C11: la regla, **hecha**; el disparo y el escalado, §3.10) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:20-26` |
 | Depende de | `permissions` (la función pura), `trazas` (el historial), `tickets-core` (la fila del ticket) |
 
 ---
@@ -327,6 +327,36 @@ regla completa pertenecen a las specs `tickets-core` y `remisiones`.
 
 ---
 
+
+### RQ-TS-15 · El reloj del SLA — corrección C11, cerrada en F1A-02
+
+El SLA **SHALL** declararse como **dato**, no derivarse del grafo
+(`packages/shared/src/sla.ts`, `SLA_HORAS_POR_ESTADO`). De las 34 transiciones no se deduce que
+`Notificado` merezca un día y `Pendiente` no: es una decisión de negocio, igual que
+`ESTADOS_SIN_SALIDA`.
+
+- Hoy **SHALL** haber exactamente **uno**: `Notificado`, 24 h. Es el único que el maestro decidió
+  (M1.7, `R08.1.md:1570`; punto abierto nº 40), y venía del blueprint de Zoho, que sí lo tiene.
+- La unidad **SHALL** ser la **hora**, no el día: el maestro deja abierto en «24/48 h» el plazo de la
+  otra regla por tiempo que tiene pensada (`:1586`), y declarar días obligaría a cambiar la unidad el
+  día que Gerencia elija 48.
+- En el instante **exacto** del vencimiento el SLA **MUST NOT** estar vencido: un plazo de «un día»
+  que saltara a las 23:59:59.999 no sería un día. La comparación es estricta
+  (`sla.ts`, `slaVencido`; probado en `packages/shared/src/sla.test.ts`).
+- El origen del plazo **SHALL** ser la **ÚLTIMA** entrada del ticket a su estado actual, leída de
+  `ticket_transitions` (`apps/desk/server/db/sla.ts`). No la primera: `Notificado` está en un ciclo
+  con `Rev./Diagnostico` —componente C3 de la tabla de reentrancia— y con la primera, un ticket que
+  acaba de volver saldría vencido por una espera que ya terminó.
+- Un ticket **sin ninguna fila** en `ticket_transitions` **MUST NOT** reportarse como vencido: no se
+  sabe cuándo entró en su estado, y un SLA sobre una fecha desconocida no es un SLA.
+  `tickets.created_time` dice cuándo nació el ticket, que es otra cosa. **Esto acota la regla a los
+  tickets que la aplicación ha movido**, y en producción los replicados de Zoho no lo están.
+- El reloj **MUST NOT** leer `ESTADOS_EN_ESPERA`. Es la regla que §3.7 dejaba escrita sin un caso que
+  la demostrara, y ya lo hay: el único estado con SLA está clasificado `ninguna` (`estados.ts:79`),
+  así que no es ninguno de los ocho de la vista ni de los cuatro sin salida. Probado.
+
+**Lo que este requisito NO incluye, y sigue abierto — ver §3.10.** Nada de esto **dispara**: no hay
+planificador. Y no hay escalado: la jerarquía de cargos que pide la R08 no existe en el modelo.
 ## 3 · Comportamiento actual, a corregir
 
 Todo lo de esta sección es **as-built**. F0-02 la escribió y **no corrigió nada**; las tandas de la
@@ -472,6 +502,13 @@ El reloj para en los tres bodegajes, que son periodos entre fechas. Un estado **
 `en_espera` sin parar ningún reloj, y un bodegaje **MAY** transcurrir sin pasar por ningún estado de
 la lista.
 
+**Y desde F1A-02 esa regla tiene un caso que la demuestra, no sólo una advertencia.** El único
+estado con SLA declarado es `Notificado`, y está clasificado `ninguna` (`estados.ts:79`): no es
+ninguno de los ocho de la vista ni de los cuatro sin salida. La primera regla por tiempo que el
+código tiene lee una lista **distinta** de la que enseña el tablero, exactamente como §3.7 anticipaba
+cuando todavía era hipótesis. Probado en `packages/shared/src/sla.test.ts` — si alguien «arreglara»
+el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
+
 `Pendiente` **SHALL** quedar como `sin_clasificar`, que es valor válido y no un hueco: obligar a
 clasificar forzaría a inventar la respuesta (`estados.ts:53-54`, `:92-96`). Lo decide Servicio
 Técnico.
@@ -534,6 +571,48 @@ razón y el código no: M1.9.2 (`R08.1.md:1653`) dice «treinta y una», que es 
 M-5 en §4.2.
 
 F0-02 **MUST NOT** corregirlo: es código, y esta tanda no toca código.
+
+---
+
+### 3.10 · C11 — la mitad del reloj que no se puede construir todavía · **destino: sesión de trabajo**
+
+**Cerrado en F1A-02: la regla.** `RQ-TS-15` la declara y está probada. **Abierto: lo que la haría
+actuar.** Son dos cosas distintas y ninguna se puede inventar desde el código.
+
+**① No hay planificador. Nada consulta el reloj.** El maestro lo dice de sí mismo y sigue siendo
+cierto después de esta tanda: «`[ABIERTO — AS-BUILT]` No existe hoy ninguna transición por tiempo en
+el blueprint implementado. Ni escalado automático, ni caducidad de las cuatro esperas. Todo
+movimiento requiere que alguien pulse un botón o que el servidor reaccione a una remisión»
+(`R08.1.md:1588`). **Verificado por comando** en F1A-02: `grep -rn "setInterval\|cron\|scheduler"`
+sobre `apps/desk/server/` y `packages/` no devuelve ninguna llamada. `ticketsConSlaVencido` es
+exactamente la consulta que un planificador llamaría; hoy no la llama nadie.
+
+**② No hay jerarquía. No se puede escalar «al inmediato superior».** La R08 amplía C11 con dos
+piezas (`R08.1.md:1572-1575`), y la segunda es «si el estado se excede, el aviso se repite al
+inmediato superior». El maestro sugiere apoyarla en la derivación de M1.9.2, «que ya sabe a qué cargo
+corresponde cada etapa» (`:1575`) — pero eso es media relación: `DERIVACION_POR_DEFECTO`
+(`transitions.ts:267-276`) dice **qué cargo atiende una etapa**, no **quién está por encima de
+quién**. La relación superior→subordinado no existe en `roles`, ni en `users`, ni en el grafo.
+Declararla es una decisión de organización, no de código, y F1A-02 **MUST NOT** inventarla.
+
+**③ Y la primera de las dos piezas de la R08 YA ESTABA CONSTRUIDA.** «Aviso redundante por correo
+cuando una transición cambia de área» (`:1573`) es lo que el motor hace desde antes de esta tanda:
+calcula las áreas destinatarias desde el estado de llegada, escribe el aviso en la aplicación y lo
+manda por correo en la misma llamada (`ticketService.ts:154-177`; spec `derivacion-avisos` RQ-AV-04 y
+RQ-AV-09). **El propio maestro lo dice nueve líneas más abajo de pedirlo**: «`[AS-BUILT]` Al
+ejecutarse cualquier transición, el sistema calcula el área destinataria del aviso a partir del
+estado de llegada y notifica en la aplicación **y por correo**» (`:1582`). Lo que faltaba de verdad
+en ese canal no era el correo: era poder encenderlo sin romper la regla de secretos, y eso es lo que
+F1A-02 cierra en `DEPLOY.md` §4.2 (spec `derivacion-avisos` §4.3).
+
+**Qué hace falta para cerrar el resto**, en el orden en que se puede:
+
+| Pieza | Qué falta | Quién lo decide |
+|---|---|---|
+| El disparo | Un planificador —o un barrido en el arranque, o una llamada desde el tablero— que consulte `ticketsConSlaVencido` | Diseño, no negocio |
+| El destinatario del escalado | La relación cargo→superior, declarada como dato | **Gerencia** |
+| El alcance del reloj | Si el SLA se extiende a otros estados de espera de decisión (`R08.1.md:4011` lo pregunta) | **Gerencia** |
+| Los tickets replicados | Qué hacer con los que no tienen traza y no se pueden medir (RQ-TS-15) | Diseño + Gerencia |
 
 ---
 

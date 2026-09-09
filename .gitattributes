@@ -10,3 +10,27 @@
 #
 # Ver docs/artefactos/NOTA.md.
 docs/artefactos/*.html -diff -merge
+
+# ── Fin de línea ─────────────────────────────────────────────────────────────────────────────────
+#
+# Hasta F1A-02 esto no estaba declarado en ninguna parte: la consistencia dependía de que cada
+# máquina tuviera `core.autocrlf=true` en su configuración local. Con TRES escritores sobre este
+# repositorio y un CI, esa dependencia es una avería esperando fecha — basta una máquina sin ese
+# ajuste para que un fichero entre con CRLF en el índice y el siguiente diff sea de 4.000 líneas.
+#
+# `* text=auto` es una DECLARACIÓN, no una migración: el índice ya está en su forma canónica
+# —537 ficheros `i/lf`, 69 binarios y 2 vacíos; CERO `i/crlf` y CERO `i/mixed`, medido con
+# `git ls-files --eol`— así que esta línea no reescribe nada. Lo que hace es dejar de depender de la
+# configuración de cada equipo. En Windows el árbol de trabajo sigue viéndose con CRLF, porque el
+# fin de línea del ÁRBOL lo sigue decidiendo `core.autocrlf`; lo que se fija aquí es el del ÍNDICE.
+#
+# NO se pone `eol=lf` a propósito: eso sí cambiaría el árbol de trabajo de 190 ficheros en el
+# siguiente checkout, y eso es una migración y otra tanda.
+* text=auto
+
+# Los scripts son la excepción, y no por gusto: un `.sh` con CRLF no se ejecuta —`bash` se come el
+# `\r` como parte del intérprete y falla con «bad interpreter»—. `scripts/docx2md.sh` es el que
+# regenera la copia citable del maestro, así que romperlo deja al proyecto sin poder citar por línea.
+# Hoy hay cuatro `.sh` con CRLF en el árbol (todos en `.agent/skills/`), que se corregirán solos en
+# el próximo checkout.
+*.sh text eol=lf

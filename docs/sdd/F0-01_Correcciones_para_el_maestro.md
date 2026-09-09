@@ -714,8 +714,9 @@ lo repite en su tabla de las doce correcciones:
 | Línea | Qué dice |
 |---|---|
 | `R08.1.md:1556` | «Está registrado como M-2 en debt.md (M11.7) y **el arreglo es una línea**. Corrección C1, punto abierto nº 33» |
-| `R08.1.md:2719` | «En `buildTransitionPlan`, **la rama del checkbox sale antes de la comprobación de campo obligatorio**» |
-| `R08.1.md:2723` | «**Una línea**: dar error cuando el campo es obligatorio y el valor no llega marcado» |
+| `R08.1.md:2721` | *(celda «Descripción» de la ficha M-2)* «En `buildTransitionPlan`, **la rama del checkbox sale antes de la comprobación de campo obligatorio**» |
+| `R08.1.md:2722` | *(celda «Efecto»)* «**Una casilla obligatoria sin marcar guarda `false` y la transición se ejecuta.** Afecta a "Liberación del ticket sin facturar"» |
+| `R08.1.md:2723` | *(celda «Arreglo»)* «**Una línea**: dar error cuando el campo es obligatorio y el valor no llega marcado» |
 | `R08.1.md:3025` · `:3029` | «Cerrar la puerta del checkbox obligatorio (debt.md M-2): dar error cuando el campo es obligatorio y el valor no llega marcado» · Esfuerzo: «**Una línea**» |
 | `R08.1.md:4520` · `:4522` | Anexo H: «Checkbox obligatorio que el motor deja saltar» · Esfuerzo: «**Una línea**» |
 | `acta:253` | «C1 · Checkbox obligatorio que el motor deja saltar · Pendiente. Confirmada · **Una línea**» |
@@ -728,18 +729,30 @@ lo repite en su tabla de las doce correcciones:
 > no vacío, así que con sólo (a) el defecto sobrevive por el camino normal. **Cerrado en F1A-01 el
 > 09/09/2026.**»
 
-**Y aquí está lo que hay que mirar de frente, porque no es que el maestro se quedara corto: es que
-tenía las dos piezas y las facturó como una.** `:2719` describe la causa —el orden— que es
-exactamente la pieza (a). `:2723` y `:3025` describen el arreglo —«cuando el valor no llega
-marcado»— que es exactamente la pieza (b). Son **dos ediciones distintas del mismo bucle**, escritas
-en dos frases distintas del mismo documento, y sumadas como «una línea». La estimación no falló por
-mirar poco: falló por no juntar lo que ya tenía delante.
+**Y aquí está lo que hay que mirar de frente. No es que el maestro se quedara corto, ni que tuviera
+las dos piezas dispersas por el documento: las tenía EN LA MISMA FICHA, en tres celdas consecutivas,
+y la evidencia de la segunda estaba en la línea INMEDIATAMENTE ANTERIOR a la estimación.**
+
+La ficha M-2 de M11.7 es una tabla de cuatro celdas —`Ref.` · `Descripción` · `Efecto` · `Arreglo`,
+cabecera en `:2716-2719`— y el reparto real es éste:
+
+| Celda | Línea | Qué aporta al arreglo |
+|---|---|---|
+| Descripción | `:2721` | «la rama del checkbox sale **antes** de la comprobación de campo obligatorio» → **es la pieza (a), nombrada** |
+| **Efecto** | `:2722` | «Una casilla obligatoria sin marcar guarda **`false`** y la transición se ejecuta» → **es la pieza (b), nombrada: el caso `false` con todas sus letras** |
+| Arreglo | `:2723` | «**Una línea**: dar error cuando el campo es obligatorio y el valor no llega marcado» |
+
+`:2722` y `:2723` son **líneas consecutivas**. La columna de efecto dice `false`, y la de arreglo, un
+renglón más abajo, dice «una línea». **No falló por mirar poco: falló por no leer su propia columna
+de efecto.** Un dato que el documento ya tenía escrito, en la celda de al lado, y que nadie cruzó con
+la estimación que iba a firmar. Es exactamente el fallo que la regla de método del proyecto persigue,
+sólo que cometido dentro de un mismo párrafo.
 
 **Una segunda imprecisión, en la tabla de M11 sobre el dato que miente.** `R08.1.md:544` dice «el
 motor dejó pasar la casilla **vacía**». Vacía es la vía rara. La normal es la casilla **presente y en
 `false`**, que es lo que envía un formulario con la casilla desmarcada, y es justamente la que la
-pieza (a) no cerraba. Texto propuesto: «el motor dejó pasar la casilla **sin marcar**».
-
+pieza (a) no cerraba. Y es lo que `:2722` ya decía bien: **el maestro se contradice a sí mismo entre
+`:544` y `:2722`**. Texto propuesto para `:544`: «el motor dejó pasar la casilla **sin marcar**».
 **Evidencia de primera mano, por mutación.** No es una lectura: se aplicó la pieza (a) sola y se
 ejecutó la suite.
 

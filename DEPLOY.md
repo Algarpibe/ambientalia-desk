@@ -117,6 +117,60 @@ replicación, no de este documento.
   no pisa los contactos creados desde la aplicación. Apagarlo sólo deja de refrescar `desk.contacts`
   desde Zoho.
 
+### 4.2 El canal de correo de los avisos: cuatro variables
+
+Las cuatro **nacen apagadas** —`config.ts:114-117` las lee con `|| ''`— y **el sistema funciona sin
+ninguna**: la campana de la aplicación es la fuente de verdad y el correo va encima
+(spec `derivacion-avisos`, RQ-AV-09). Apagadas, la campana sigue avisando exactamente igual; lo único
+que no sale es el correo.
+
+Se documentan aquí porque **F1A-02 es la primera tanda que las va a encender en producción**, y la
+regla de secretos de `CLAUDE.md` trata un interruptor no documentado como defecto, no como
+configuración.
+
+**`N8N_AVISOS_WEBHOOK_URL`**
+
+- *Qué enciende:* el disparo del correo. Es el webhook de n8n que recibe los avisos ya redactados
+  —asunto y enlace se arman en el servidor, no en n8n (`avisosWebhook.ts:60-67`)— y los envía.
+- *Qué rompe si se pone mal:* **una URL equivocada no rompe nada visible, y ése es el problema.**
+  `dispararAvisos` nunca lanza (`avisosWebhook.ts:53-96`) y la transición ya está escrita cuando se
+  llama, así que un fallo sólo deja un `logger.warn` y la columna `avisos.enviado_at` en `NULL`
+  —que es la cola de reintento (`schema.sql:145`)—. Nadie recibe correo y nadie se entera. Si se
+  apunta a un webhook ajeno, se le mandan a un tercero los asuntos, los números de ticket y los
+  nombres de los destinatarios.
+
+**`N8N_AVISOS_TOKEN`**
+
+- *Qué enciende:* el valor de la cabecera `X-Avisos-Token` con la que el webhook autentica la
+  llamada.
+- *Qué rompe si se pone mal:* n8n rechaza los envíos y se cae en el mismo silencio del punto
+  anterior: `enviado_at` en `NULL` y un aviso en el log. Es **secreto**: va en el gestor de secretos
+  del despliegue, nunca en un chat ni en una captura. Si aparece en uno, está quemado y se rota.
+
+**`APP_BASE_URL`**
+
+- *Qué enciende:* el enlace del correo hacia el ticket.
+- *Qué rompe si se pone mal:* vacía, el correo sale **sin enlace** y quien lo recibe tiene que buscar
+  el ticket a mano. Mal puesta —el dominio de pruebas en producción, por ejemplo— es peor que vacía:
+  el enlace lleva a otro sitio y parece que funciona.
+
+**`AVISOS_COPIA_EMAIL`** — *muleta de pruebas, y la que más cuidado pide*
+
+- *Qué enciende:* una dirección que recibe **copia de los avisos de derivación dirigidos a otras
+  personas** (`ticketService.ts:141`, `avisosWebhook.ts:11-27`). Existe para poder verificar que el
+  canal de correo sale de verdad. **Vacía —lo normal— no copia nada**, y se apaga borrando la
+  variable, sin tocar código.
+- *Qué rompe si se pone mal:* es la única de las cuatro que **manda correo a alguien que no es el
+  destinatario**. Dejarla puesta después de las pruebas convierte una dirección en receptora
+  permanente de las derivaciones de todo el mundo. No se copia a sí misma si el destinatario ya es
+  esa dirección (`avisosWebhook.ts:71-75`), y su texto dice a quién iba dirigido el original, pero
+  ninguna de las dos cosas la apaga: eso se hace borrándola.
+
+> **Lo que este apartado NO cubre.** La regla de secretos pide `.env.example` **y** `DEPLOY.md`.
+> `.env.example` queda fuera del alcance de lectura de esta sesión —lo mismo le ocurrió a F0-02 al
+> escribir la spec `derivacion-avisos` §4.3—, así que **no se afirma nada sobre él**: no se ha
+> comprobado si las cuatro variables están, y esa mitad de la regla sigue sin verificar.
+
 ## 5. Desplegar
 - Pulsa **Deploy**. En el primer arranque el server corre `migrate` (crea las tablas) y,
   si la BD está vacía, lanza el **backfill** desde Zoho (verás los logs "iniciando backfill…").
