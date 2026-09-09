@@ -3,7 +3,7 @@
 | Dato | Valor |
 |---|---|
 | Fase | Fase 0 — Cimientos SDD |
-| Estado | **Propuesta — pendiente de visto bueno.** El bloqueo del acta del 03/09 quedó resuelto el 2026-09-09: ya hay copia citable (§2.2) |
+| Estado | **Aprobada y ejecutada el 2026-09-09.** Visto bueno de Gerencia a las tres clases (a), (b) y (c); la carga en Engram se hizo sobre `f51846f` |
 | Base | commit `da084e9`, rama `main` |
 | Definición en el plan | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:125`, con su fila de trazabilidad en `:406` |
 | Apartados de las fuentes | Maestro **§1.8** (`R08.1.md:734-870`) y Anexo C.10 (`:3815-3816`, **caduco**: §2.2) · **Acta del 03/09**, parte III (`Desk2.0_Acta_Sesion_2026-09-03.md:268-480`) |
@@ -70,9 +70,10 @@ exactamente el hueco que el plan quería cerrar: «de modo que una tanda posteri
    decisión, cada una con su fecha, su implicación y **su línea del `.md` exportado**: **43** del §1.8
    del maestro y **12** de la sesión del 03/09, **55** en total. La lista completa y revisable está en
    `openspec/changes/F0-03/decisiones-para-carga.md`.
-3. **Carga los dos temas que se llevaron a la sesión y no salieron con decisión** como
-   `punto-abierto/*`, para que el hueco sea visible desde dentro de la memoria (§2.2).
-4. **Retitula las siete observaciones sin título** y les pone `topic_key`, sin reescribir su
+3. **Carga los tres temas que la sesión no cerró** como `punto-abierto/*`, para que el hueco sea
+   visible desde dentro de la memoria (§2.2). Eran dos cuando se escribió este proposal; la
+   revisión de la lista encontró el tercero —el tema 4—, que sale tratado y sin decisión.
+4. **Retitula las observaciones sin título** y les pone `topic_key`, sin reescribir su
    contenido.
 5. **Evalúa Git Sync** y entrega una recomendación con su porqué, no una instalación.
 6. **No borra nada.** Si una observación quedó superada, se marca en su contenido; el registro se
@@ -89,8 +90,10 @@ como el propio plan declara en su cabecera (`plan:4`).
 03/09/2026 a las 14:00 por Google Meet, con los tres convocados presentes (`acta:280-288`). Lo que
 está caduco es el **Anexo C.10 del maestro** (`R08.1.md:3815-3816`), que sigue diciendo «aún no
 celebrada» y «el apartado de notas está vacío en el origen»: la R08.1 se cerró antes de la sesión y no
-se volvió a tocar. **Va como entrada 13 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`**, con las
-otras tres líneas del maestro que arrastran la misma frase (`:17`, `:161`, `:217`).
+se volvió a tocar. **Va como entrada 13 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`**, y no
+va sola: el maestro arrastra la misma frase en **diez** líneas, de las que dos —`:1820` (M2.1) y
+`:1911` (M2.5)— no son índice ni anexo, sino apartados sustantivos que se declaran incompletos
+cuando ya no lo están.
 
 Es, además, la segunda ocurrencia del punto abierto **nº 61** del propio maestro —«Mecanismo de
 incorporación de actas … la del 27/08 estuvo cinco revisiones sin entrar en el documento»
@@ -152,7 +155,7 @@ que **siete filas nombran el 11/09** —`grep` sobre `:348-365` buscando `11/09`
 | `decision/c2-anulado` | F1C-01 (11/09 o 18/09) |
 | `decision/p14-remisiones-entrada` | F1E-01 |
 
-Y el acta pone **seis tareas con fecha límite 11/09** en su plan de acción (`acta:465-480`, filas 3,
+Y el acta pone **siete tareas con fecha límite 11/09** en su plan de acción (`acta:465-480`, filas 3,
 4, 5, 6, 8, 11 y 12).
 
 **Las 19 claves del plan no chocan con las 55 de esta carga.** Verificado con `comm -12`: intersección
@@ -166,7 +169,7 @@ tipo que estas 55.
 - **No recarga el baseline de F0-00**, que ya está (§1). Sólo verifica que las ocho claves
   `baseline/*` siguen resolviendo.
 - **No carga como decisión ninguna casilla de la convocatoria.** Sólo lo que la parte III registra en
-  un bloque `Decisiones tomadas:` (§2.2). P10 y P62 van como `punto-abierto/*`, no como `decision/*`.
+  un bloque `Decisiones tomadas:` (§2.2). P10, P62 y el tema 4 van como `punto-abierto/*`, no como `decision/*`.
 - **No decide sobre P62 ni sobre la capa as-built.** La sesión no lo trató; esta tanda lo registra
   como abierto y nada más.
 - **No cambia el plan.** La fecha del 11/09 y los siete gates que dependen de ella se anotan, no se
@@ -187,7 +190,7 @@ inventa aquí, se **formaliza** en `openspec/config.yaml` alrededor de lo que ya
 | Espacio | Qué guarda | Quién lo escribe | Ejemplo real o propuesto |
 |---|---|---|---|
 | `decision/` | Una decisión **de negocio** cerrada, con fecha y fuente citable | F0-03 para las 55 pasadas; el plan §4.5 ya reservó 19 para las futuras | `decision/informes-en-fase-1` (acta `:402`) |
-| `punto-abierto/` | Un tema llevado a una sesión **sin decisión ni responsable**, que la regla de la sesión devuelve al Anexo D | la tanda que lo constata | `punto-abierto/p62-capa-as-built` |
+| `punto-abierto/` | Un tema que la sesión **no cerró con decisión**. Si además sale sin responsable, la regla de la sesión lo devuelve al Anexo D; si sale con tarea y fecha, no vuelve, pero sigue abierto | la tanda que lo constata | `punto-abierto/p62-capa-as-built` |
 | `baseline/` | El as-built verificado de F0-00, un frente por observación | F0-00 (**ya cargado**, ocho claves) | `baseline/motor-flujo` |
 | `tanda/` | El cierre de una tanda: qué se hizo, qué quedó abierto | cada tanda, al terminar | `tanda/f0-02` |
 | `iv/` | Un incumplimiento vivo, con su alcance y su destino | la tanda que lo encuentra | `iv/6-alter-sin-calificar` |
@@ -234,22 +237,34 @@ viernes, pasa a ser del mismo tipo que estas 55 sin pisar ninguna.
    - Del acta **no se excluye ninguna**: las 12 salen de bloques `Decisiones tomadas:`.
 3. Cada observación `decision/*` lleva en su cuerpo **la línea del `.md` exportado** de la que sale,
    su fecha y su implicación, tal como la fuente las escribe. Ninguna se carga sin esa cita.
-4. Los **dos** temas sin decisión —P10 (`acta:173`) y P62 (`acta:121`)— están cargados como
-   `punto-abierto/*`, **nunca** como `decision/*`, con la evidencia de que el acta no los respalda.
-5. Ninguna observación queda con el título vacío: las siete de §1.1 tienen título y `topic_key`.
+4. Los **tres** temas sin decisión están cargados como `punto-abierto/*`, **nunca** como
+   `decision/*`, con la evidencia de lo que el acta sí y no respalda: P10 (`acta:173`), P62
+   (`acta:121`) —los dos sin responsable, vuelven al Anexo D— y el **tema 4** (`acta:359-370`),
+   tratado y sin decisión pero con tarea y fecha (`acta:474`), que no vuelve y sigue abierto.
+5. Ninguna observación queda con el título vacío. El §1.1 decía siete; el barrido completo sobre
+   `engram export` dio **nueve** —las siete más #227 y #253—, y #225 tampoco tenía `topic_key`.
+   Las nueve quedan con título y la #225 con clave, sin tocar su contenido.
 6. Las ocho claves `baseline/*` de F0-00 siguen resolviendo con `mem_search`, y ninguna se ha
    reescrito.
 7. Existe una recomendación escrita sobre Git Sync, con su porqué y su riesgo bajo la regla de
    secretos, en este mismo directorio.
-8. La entrada **13** de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` recoge el Anexo C.10 caduco,
-   con las otras tres líneas que arrastran la misma frase y el texto propuesto para el punto 62.
-9. Las claves cargadas **no chocan** con las 19 que el plan §4.5 ya declara: `comm -12` sobre las dos
-   listas ordenadas da intersección vacía.
+8. La entrada **13** de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` recoge las **diez**
+   ubicaciones en las que el maestro arrastra la frase caduca, agrupadas por peso y separadas en
+   tres clases —apartado sustantivo, índice y tarea—, con texto propuesto para el Anexo C.10, para
+   M2.1 y M2.5 (`R08.1.md:1820`, `:1911`) y para el punto 62 del Anexo D.
+9. Las claves cargadas **no chocan** con las que el plan reserva: `comm -12` sobre las dos listas
+   ordenadas da intersección vacía, repetido **después** de cargar. Y son **20**, no 19: la tabla de
+   gates del §4.5 llega a `:367` —no a `:365`, como decía este proposal—, y hay una vigésima clave en
+   `:534`. La comprobación se hizo contra las 20.
 10. `npm test`, `npm run typecheck`, `npm run lint` y `npm run build` siguen igual que antes de la
     tanda: F0-03 no toca código, así que cualquier cambio en esas cuatro cifras es un defecto de la
     tanda. Cifras de partida, medidas sobre `749d205` y confirmadas sobre `da084e9`: **110 ficheros /
     931 pruebas** (929 en verde, 2 saltadas) · typecheck limpio · lint **0 errores / 161 avisos** ·
     build correcto.
+    **Medidas de nuevo al cerrar F0-03, sobre `f51846f` + los cambios de esta tanda: idénticas.**
+    110 ficheros / 931 pruebas (929 en verde, 2 saltadas, 10,09 s) · `tsc -b` con salida 0 ·
+    161 avisos y 0 errores de lint · build correcto en 1,98 s. `git ls-files dist` está vacío, así
+    que el build no ensucia el árbol.
 
 ---
 

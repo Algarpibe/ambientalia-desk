@@ -565,10 +565,11 @@ sobre el commit `ad1875b`, frente a los 96 y 830 del baseline.
 
 > Procede de contrastar el Anexo C.10 del maestro contra la copia citable del acta
 > `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md` (480 líneas, exportada de Notion en el commit
-> `da084e9`). No es un número mal contado como las cinco de F0-02: es **un apartado que describe un
-> estado que dejó de ser cierto**.
+> `da084e9`). No es un número mal contado como las cinco de F0-02: es **un estado que dejó de ser
+> cierto y que el documento arrastra en diez líneas**, repartidas en tres clases —apartado sustantivo,
+> índice y tarea— que no se corrigen igual.
 
-### 13 · Anexo C.10 — la sesión del 03/09 **sí se celebró** *(F0-03)*
+### 13 · La sesión del 03/09 **sí se celebró** — el Anexo C.10 y las otras nueve líneas *(F0-03)*
 
 **Texto actual, `.md` líneas 3815-3816** (Anexo C.10, encabezado en la 3815):
 
@@ -587,13 +588,57 @@ sobre el commit `ad1875b`, frente a los 96 y 830 del baseline.
 > decisiones**. La siguiente sesión queda fijada para el **viernes 11/09/2026**.»
 
 **Por qué el apartado quedó caduco, que es lo que hay que evitar la próxima vez.** La R08.1 se cerró
-**antes** del 03/09 y no se volvió a tocar después. El propio maestro anticipa el mecanismo del fallo
-en tres sitios más, que arrastran la misma frase y hay que corregir con ésta: `:17` («La sesión del
-03/09 aún no se ha celebrado», en el índice), `:161` (misma frase en el índice de anexos) y `:217`
-(cuerpo del §1.2). Y `:268` dice «queda por incorporar la reunión del 03/09/2026, "Checklist
-dinámico", **no disponible al cerrar esta revisión**»: esa reunión **es** la del acta, y su tema 3
-—la tabla de puntos de control de Grimm y Horiba— es justamente el «checklist dinámico» que se echaba
-en falta (`acta:337-357`).
+**antes** del 03/09 y no se volvió a tocar después. La huella no quedó en un sitio: quedó en **diez**,
+y eso es lo que convierte esto en un mecanismo y no en una errata.
+
+#### Las diez ubicaciones, agrupadas por peso
+
+La cifra la produce un comando, no una lectura:
+
+```
+grep -n "aún no celebrada\|no se ha celebrado\|Checklist dinámico" \
+  docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md
+→ :17 · :161 · :217 · :268 · :1820 · :1911 · :3815 · :3816 · :4249 · :4812
+```
+
+**No son diez veces lo mismo.** Se reparten en tres clases —**apartado sustantivo · índice · tarea**—
+y la corrección de cada una es distinta:
+
+| Peso | Clase | Líneas | Qué dice hoy | Qué hay que hacer |
+|---|---|---|---|---|
+| **1** | apartado sustantivo | `:1820` (M2.1 «Estructura del árbol de diagnóstico», `:1819`) · `:1911` (M2.5 «Informes de servicio», `:1908`) | «[R08] Pendiente de incorporar las conclusiones de la reunión del 03/09/2026, "Checklist dinámico"» | **Las dos que más pesan, y las dos que faltaban en la primera redacción de esta entrada.** No están en un índice ni en un anexo: **declaran incompleto un apartado sustantivo** que ya no lo está. Texto propuesto abajo, con una asimetría que no se puede copiar y pegar |
+| **2** | apartado sustantivo | `:3815`-`:3816` (Anexo C.10) · `:217` (§1.2, encabezado y párrafo) | «la sesión no se ha celebrado», en **presente** | Afirman un estado que dejó de ser cierto. `:3815-3816` es el texto sustituido arriba; `:217` es el mismo bloque en el cuerpo del §1.2 y se corrige con las mismas palabras |
+| **3** | apartado sustantivo | `:268` (relato de la R08) · `:4249` (Anexo F — Fuentes, `:4201`) | «no disponible al cerrar esta revisión» · «a la fecha de cierre la sesión no se ha celebrado» | **Las dos son ciertas como historia y no se borran:** la R08 y la R08.1 se cerraron antes del 03/09. Se les **añade el puntero** —«Incorporada como acta en la revisión siguiente: `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md`»—, no se les quita el hecho |
+| **4** | índice | `:17` · `:161` | La misma frase en la tabla de contenidos | Son **reflejo** de encabezados: `:17` refleja el de `:217`, `:161` el de `:3815`. Se corrigen solas al corregir el encabezado en el `.docx`, y por eso van las últimas |
+| **5** | tarea | `:4812` (Anexo I — Registro de comentarios, `:4699`) | Observación «Revisar conclusiones de diseño de reunión 03/09/2026 "Checklist dinámico"», respondida con «Registrada la reunión del 03/09 como insumo pendiente» | Era una tarea **no ejecutable** —el insumo no existía— y **hoy sí lo es**. La respuesta pasa a «Incorporadas las conclusiones del acta del 03/09: tema 3 cerrado con decisión; tema 4, sólo con tarea» |
+
+#### La asimetría de las dos del peso 1
+
+**M2.1 queda cerrada; M2.5 no.** Lo que el acta cierra es el **tema 3**: tabla única de puntos de
+control para Grimm y Horiba, y validación por nivel macro (`acta:350-351`). Eso es exactamente lo que
+M2.1 esperaba. Texto propuesto para `:1820`:
+
+> «[DECIDIDO] Se evoluciona de una lista lineal a un árbol de decisiones con ramas lógicas sí/no.
+> **[R09] Incorporadas las conclusiones de la sesión del 03/09/2026: una sola tabla de puntos de
+> control para Grimm y Horiba —se elimina la separación entre tabla de inspección y tabla interna— y
+> validación por nivel macro, desplegando subniveles e ítems únicamente cuando el nivel macro resulte
+> "no OK" (`Desk2.0_Acta_Sesion_2026-09-03.md:350-351`).**»
+
+**La de M2.5 no puede decir lo mismo, y decirlo sería el error de la corrección.** Su paso 3 habla de
+que «la aplicación **recorre el diagrama de flujo diagnóstico**», y eso no depende del tema 3 sino del
+**tema 4**, que es el único de los ocho que salió **sin decisión**. Gerencia lo describió con las
+mismas palabras que usa M2.5: la tabla «no indica qué ítem debe ejecutarse tras un "no OK"» y es «el
+punto más crítico por resolver, ya que de ello depende que la estructura funcione como **diagrama de
+flujo y no como simple listado**» (`acta:366`). Texto propuesto para `:1911`:
+
+> «3. La aplicación recorre el diagrama de flujo diagnóstico, con etapas, transiciones y puntos de
+> control obligatorios. **[R09] El 03/09 cerró la estructura de la tabla (tema 3), pero el
+> encadenamiento entre ítems —qué verificar tras un "no OK"— salió sólo con tarea y sin decisión
+> (`acta:366-370`). Mientras siga así, esto es un listado secuencial, no un diagrama de flujo.**»
+
+Y en el mismo M2.5, dos líneas más abajo, «[ABIERTO] Definir el proceso de validación de informes
+antes de su emisión» (`:1913`) sigue abierto por la misma razón: es **P10**, que se llevó marcado a la
+sesión y tampoco salió con decisión (tabla del final de esta entrada).
 
 Es exactamente el punto abierto **nº 61** del propio maestro, «Mecanismo de incorporación de actas»
 (`acta:122`, citándolo): «La del 27/08 estuvo cinco revisiones sin entrar en el documento. Quién
@@ -615,7 +660,7 @@ avisa, con qué cadencia y contra qué fuente se comprueba». La del 03/09 iba c
   El tema 4 —criterios de falla y encadenamiento— es el único de los ocho que **no** deja decisión:
   sólo tarea (`acta:368-370`). Conviene que el Anexo C.10 lo diga, porque Gerencia lo señaló como «el
   punto más crítico por resolver» (`acta:366`).
-- **Doce tareas con responsable:** el plan de acción consolidado de `acta:465-480`, seis de ellas con
+- **Doce tareas con responsable:** el plan de acción consolidado de `acta:465-480`, siete de ellas con
   fecha límite 11/09/2026.
 - **La siguiente sesión:** `acta:442` («Trasladar la siguiente sesión al viernes 11/09/2026») y
   `acta:462`.

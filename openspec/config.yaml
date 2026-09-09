@@ -481,6 +481,93 @@ unidad_de_avance:
     Las tres reglas van escritas JUNTO al número, en el mismo sitio donde se
     publique la cifra. No en un anexo aparte.
 
+# Convención de topic_key en Engram (proposal F0-03 §3). Se fija aquí porque la
+# memoria es del proyecto, no de la sesión: si la clave no es estable, la
+# observación se duplica en vez de actualizarse, y la memoria deja de
+# encontrarse por su nombre — que es exactamente el desorden que F0-03 arregló.
+memoria_engram:
+  proyecto: ambientalia-desk
+  deteccion: "Por el remoto git (mem_current_project devuelve project_source: git_remote)"
+  espacios:
+    - clave: "decision/"
+      guarda: "Una decisión de NEGOCIO cerrada, con fecha y fuente citable"
+      quien: >
+        F0-03 cargó las 55 pasadas (43 del §1.8 del maestro + 12 del acta del
+        03/09). El plan R01.1 reserva 20 claves para las futuras: 19 en su §4.5
+        (:343-367) y una más en :534.
+      ejemplo: "decision/informes-en-fase-1"
+    - clave: "punto-abierto/"
+      guarda: >
+        Un tema que una sesión NO cerró con decisión. Si además salió sin
+        responsable, la regla de la sesión lo devuelve al Anexo D y bloquea el
+        módulo al que pertenece; si salió con tarea y fecha, no vuelve, pero
+        sigue abierto y hay que poder verlo.
+      quien: "La tanda que lo constata"
+      ejemplo: "punto-abierto/p62-capa-as-built"
+    - clave: "baseline/"
+      guarda: "El as-built verificado de F0-00, un frente por observación"
+      quien: "F0-00 (ocho claves, ya cargadas)"
+      ejemplo: "baseline/motor-flujo"
+    - clave: "tanda/"
+      guarda: "El cierre de una tanda: qué se hizo y qué quedó abierto"
+      quien: "Cada tanda, al terminar"
+      ejemplo: "tanda/f0-02"
+    - clave: "iv/"
+      guarda: "Un incumplimiento vivo, con su alcance y su destino"
+      quien: "La tanda que lo encuentra"
+      ejemplo: "iv/6-alter-sin-calificar"
+    - clave: "sdd/<proyecto>/"
+      guarda: "Configuración de SDD del proyecto"
+      quien: "sdd-init (ya en uso)"
+      ejemplo: "sdd/ambientalia-desk/testing-capabilities"
+  reglas:
+    - id: 1
+      regla: "Minúsculas, kebab-case y ASCII."
+      por_que: >
+        Una clave que sólo difiere en mayúsculas es otra clave y el upsert deja
+        de funcionar. Sin tildes ni eñes por la misma razón: la clave cargada es
+        decision/as-is-antes-de-redisenar, no ...rediseñar.
+    - id: 2
+      regla: "Sin fecha en la clave. La fecha va en el cuerpo."
+      por_que: >
+        Una clave con fecha crea una observación nueva cada vez en lugar de
+        actualizar la que hay, que es lo contrario de para lo que sirve
+        topic_key.
+    - id: 3
+      regla: "Una clave = un hecho duradero."
+      por_que: >
+        Si el hecho se supera, se ACTUALIZA su observación y se escribe dentro
+        qué lo superó. No se crea decision/x-v2.
+    - id: 4
+      regla: "La clave nombra el hecho, no la tanda que lo encontró."
+      por_que: >
+        decision/serial-obligatorio-en-remision, no decision/f0-03-punto-3: el
+        hecho sobrevive a la tanda. Cuatro claves heredadas de F0-00 incumplen
+        esta regla (decision/f0-00-preflight-y-tooling, -respuestas-gerencia,
+        -respuestas-gerencia-parcial, -rotacion-secretos). Se dejan como están
+        para no romper referencias, y se anotan aquí para que no se imiten.
+    - id: 5
+      regla: "Toda observación con topic_key lleva título."
+      por_que: >
+        Sin título sólo se encuentra por búsqueda de texto completo. F0-03
+        retituló las NUEVE que estaban sin él. El proposal decía siete: esa
+        cifra salió de un mem_search con límite 20, no de un barrido completo.
+        Las nueve salieron de `engram export` + awk sobre el JSON.
+  cita_obligatoria: >
+    Una observación decision/* DEBE llevar en su cuerpo la cita de su fuente por
+    apartado y línea (R08.1.md:NNN o Desk2.0_Acta_Sesion_2026-09-03.md:NNN).
+    Sin ella no se carga. Es la regla de método aplicada a la memoria: sin la
+    cita, la observación es el resumen de segunda mano que ya costó cuatro
+    afirmaciones falsas en R01/R02.
+  git_sync: >
+    NO configurado, y F0-03 recomienda no configurarlo sin decisión expresa de
+    Gerencia. La memoria vive en un SQLite local de un solo equipo
+    (~/.engram/engram.db; no hay .git ni remoto, y `engram sync --status` da 0
+    chunks locales y 0 remotos). Compartirla mueve datos del proyecto entre
+    equipos, y eso cae bajo la regla de secretos. La evaluación escrita, con su
+    porqué y sus tres condiciones, está en
+    openspec/changes/F0-03/git-sync-recomendacion.md.
+
 rules:
   proposal:
     - Cada propuesta cita el apartado del documento maestro R08.1 del que sale (p. ej. M1.3.4, C3, P31).

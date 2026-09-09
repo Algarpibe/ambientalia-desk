@@ -1,6 +1,6 @@
 # F0-03 · Las decisiones que van a Engram, listadas antes de cargar nada
 
-**Estado: lista para revisión. No se ha cargado ninguna observación.**
+**Estado: CARGADA el 2026-09-09**, 58 observaciones sobre el commit `f51846f`. Los recuentos de verificación van al final.
 
 Fuente: `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md`, apartado **§1.8
 «Decisiones estructurales ya tomadas»**, líneas **734–870**.
@@ -59,7 +59,7 @@ sólo esa.
 | 24 | `:808` | 21/08/2026 | El agendamiento de citas se apoya en el cálculo de carga del taller, mostrando disponibilidad real al cliente. | `decision/citas-sobre-carga-del-taller` | ✅ |
 | 25 | `:811` | 17/02/2026 | Se simplifican los tipos de evento: los tres «operativos» se fusionan en Operativo. | `decision/tipos-de-evento-simplificados` | ✅ |
 | 26 | `:814` | 17/02/2026 | En «Habilitar servicio» se usa un checkbox «Cumple condiciones comerciales». | `decision/checkbox-condiciones-comerciales` | ✅ |
-| 27 | `:817` | 17/02 y 19/02 | El mapeo se documenta as-is antes de rediseñar rutas abreviadas. | `decision/as-is-antes-de-rediseñar` | ✅ |
+| 27 | `:817` | 17/02 y 19/02 | El mapeo se documenta as-is antes de rediseñar rutas abreviadas. | `decision/as-is-antes-de-redisenar` | ✅ |
 | 28 | `:820` | 19/02/2026 | Se usa la base de costos e historial de reparaciones como argumento comercial. | `decision/historial-como-argumento-comercial` | ✅ |
 | 29 | `:823` | 19/02/2026 | El listado de 78 puntos de control del diagnóstico Grimm evoluciona a árbol de decisiones. | `decision/checklist-a-arbol-de-decisiones` | ✅ |
 | 30 | `:826` | Código (R04) | La derivación no puede frenar un ticket: la casilla «Derivado a» existe en las 34 transiciones y ninguna la exige. | `decision/derivacion-nunca-obligatoria` | ✅ |
@@ -190,7 +190,7 @@ Al cargar la 54 se anotará ese cruce en el campo **Estado en el código**, con 
 
 ---
 
-# Clase (c) · Casillas de la convocatoria **SIN** respaldo en el acta — 2. **No se cargan**
+# Clase (c) · Los temas que la sesión **NO cerró** — 3. **Ninguno se carga como decisión**
 
 De las **3** casillas marcadas `[x]` en la convocatoria, sólo **una** tiene decisión en el acta. Las
 otras dos se listan aquí, y se listan **precisamente para no cargarlas**: una casilla marcada dice que
@@ -232,6 +232,35 @@ Sin ellas, quien consulte la memoria vería doce decisiones del 03/09 y no sabr�
 orden del día se cayeron. **El hueco tiene que ser visible desde dentro de la memoria**, que es la
 misma regla que se aplica en el §2.2 del proposal al acta que faltaba.
 
+## Y un tercero, que no viene de una casilla: el **tema 4**
+
+Los dos anteriores son casillas del orden del día. El tercero es de otra naturaleza: es un tema que la
+sesión **sí trató** —el cuarto de los ocho— y del que **no salió ninguna decisión**. Ocho temas
+tratados, siete bloques `Decisiones tomadas:`; el que falta es éste.
+
+- **Qué es.** «Criterios de falla y encadenamiento del diagnóstico» (`acta:359-370`). La tipología de
+  criterios —alerta, cobrable, bloqueante— se expuso (`:363`), pero el **encadenamiento** no se cerró:
+  «La tabla actual es secuencial y no indica qué ítem debe ejecutarse tras un "no OK"» (`:366`).
+- **Por qué pesa.** Gerencia lo calificó de «el punto más crítico por resolver, ya que de ello depende
+  que la estructura funcione como **diagrama de flujo y no como simple listado**» (`:366`). Es
+  literalmente lo que el maestro da por hecho en M2.5, paso 3 (`R08.1.md:1911`), y por eso la entrada
+  **13** de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` corrige M2.1 y M2.5 con textos
+  **distintos**: la primera queda cerrada por el tema 3, la segunda no.
+- **Por qué NO vuelve al Anexo D.** Aquí la regla de la sesión (`acta:114-116`) da el resultado
+  contrario que con P10 y P62: el tema 4 salió **con responsable y con fecha**. Es la fila 6 del plan
+  de acción consolidado —«Probar el encadenamiento de ítems "no OK" y generar un diagrama de flujo a
+  partir de las tablas», Alfonso García del Pino, **11/09/2026**— (`acta:474`, con la tarea en `:370`).
+  Cumple una de las dos salidas: **no vuelve y no bloquea**.
+
+Que no vuelva al Anexo D no lo vuelve irrelevante. **Que el punto más crítico de la sesión salga sólo
+con tarea es un dato del estado del proyecto**, y es exactamente el dato que se pierde si la memoria
+guarda sólo decisiones: quien consulte `decision/*` verá doce decisiones del 03/09 y ni rastro de que
+el tema que las sostiene a todas quedó sin cerrar.
+
+| `topic_key` | Qué dice |
+|---|---|
+| `punto-abierto/encadenamiento-diagnostico` | Tema 4 de la sesión del 03/09 (`acta:359-370`): **tratado y sin decisión**, el único de los ocho en esa situación. **No** vuelve al Anexo D —tiene responsable y fecha (`acta:474`, 11/09/2026)—, pero condiciona M2.5 del maestro (`R08.1.md:1911`) y el paso de listado secuencial a diagrama de flujo |
+
 **Las 42 casillas sin marcar no se listan una a una.** No hay nada que decidir sobre ellas: no se
 llevaron marcadas y el acta no las trata. Volverán al orden del día del **11/09** o quedarán en el
 Anexo D, y ésa es una tarea de Gerencia, no de esta carga.
@@ -244,11 +273,17 @@ Anexo D, y ésa es una tarea de Gerencia, no de esta carga.
 |---|---|---|---|
 | **(a)** | Decisiones del §1.8 del maestro | **44** halladas · **43** para cargar | Aritmética del triplete: `(870−739+1)/3 = 44`, resto 0. La excluida es la 17 (`:787`), única con marca de estado |
 | **(b)** | Decisiones de la sesión del 03/09 | **12** halladas · **12** para cargar | `awk` sobre los siete bloques `Decisiones tomadas:` de la parte III |
-| **(c)** | Casillas marcadas sin respaldo en el acta | **2** halladas · **0** para cargar | `grep -cE '^- \[x\]'` = 3, menos la única con decisión (`:402`) |
+| **(c)** | **Temas que la sesión no cerró** | **3** hallados · **0** para cargar como `decision/*` · **3** como `punto-abierto/*` | Dos casillas: `grep -cE '^- \[x\]'` = 3, menos la única con decisión (`:402`). Y el tema 4: `8 temas tratados − 7 bloques Decisiones tomadas: = 1` |
 | | **Total a cargar como `decision/*`** | **55** | 43 + 12 |
-| | **Total a cargar como `punto-abierto/*`** | **2** | las de la clase (c) |
+| | **Total a cargar como `punto-abierto/*`** | **3** | las dos casillas + el tema 4 |
 
-**57 observaciones en total**, y ninguna cargada todavía.
+**58 observaciones en total**, todas cargadas.
+
+> **La clase (c) pasó de 2 a 3, y conviene decir por qué.** No es un recuento nuevo: las dos casillas
+> se contaron con un `grep` y siguen siendo dos. Es que la revisión de esta lista encontró un tercer
+> tema sin decisión que **no** viene de una casilla del orden del día, sino de un bloque tratado en la
+> sesión —el tema 4—. La cifra cambia porque cambió lo que se sabe, no porque se haya vuelto a contar
+> lo mismo.
 
 ## Comprobación de colisión de claves
 
@@ -262,3 +297,84 @@ comm -12 <claves de esta lista> <claves del plan>  →  vacío
 Las dos familias conviven: el plan escribe la clave **antes** de que la decisión exista, esta lista la
 escribe **después**. Cuando una de las 19 se cierre el viernes, se guarda con su clave y pasa a ser
 del mismo tipo que estas 55.
+
+---
+
+# Verificación posterior a la carga (2026-09-09)
+
+Toda cifra de esta sección la produce un comando, y el comando está escrito junto a ella. Ninguna
+salió de contar a ojo.
+
+## El recuento por espacio
+
+La memoria es un SQLite y en estas máquinas **no hay `sqlite3`** (`command -v sqlite3` → vacío). El
+recuento se hace sobre el volcado que la propia herramienta produce:
+
+```
+engram export <tmp>/final.json      # → 331 observaciones de los 11 proyectos de la base
+
+awk '
+/^ *"id": [0-9]+,$/ { if(p&&k!="") print k; p=0; k="" }
+/"project": "ambientalia-desk"/ { p=1 }
+/"topic_key": "/ { k=$0; sub(/.*"topic_key": "/,"",k); sub(/".*/,"",k) }
+END { if(p&&k!="") print k }
+' <tmp>/engram-export.json | sort > claves-desk.txt
+```
+
+| Espacio | Comando | Cifra |
+|---|---|---|
+| `decision/*` | `grep -c '^decision/' claves-desk.txt` | **59** |
+| `punto-abierto/*` | `grep -c '^punto-abierto/' claves-desk.txt` | **3** |
+| `baseline/*` | `grep -c '^baseline/' claves-desk.txt` | **8** |
+| `tanda/*` | `grep -c '^tanda/' claves-desk.txt` | **1** (el cierre de esta tanda) |
+| Total con clave | `wc -l < claves-desk.txt` | **83** |
+| Claves repetidas | `uniq -d claves-desk.txt` | **ninguna** |
+
+**Las 59 no son un error de esta carga: son 55 + 4.** Las cuatro que sobran ya estaban y son
+decisiones **de proceso**, no de negocio: `decision/f0-00-preflight-y-tooling`,
+`decision/f0-00-respuestas-gerencia`, `decision/f0-00-respuestas-gerencia-parcial` y
+`decision/f0-00-rotacion-secretos`. El propio §1 del proposal las había contado. Incumplen la regla 4
+de la convención —la clave nombra el hecho, no la tanda—; se dejan como están para no romper
+referencias y queda anotado en `openspec/config.yaml` (`memoria_engram.reglas`, regla 4) para que no
+se imiten.
+
+## La comprobación de colisión, repetida DESPUÉS de cargar
+
+Lo que importa es el estado final, no la previsión:
+
+```
+grep -o 'decision/[a-z0-9-]\+' docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md | sort -u > plan.txt
+grep '^decision/' claves-desk.txt | sort -u > cargadas.txt
+comm -12 plan.txt cargadas.txt
+```
+
+- `wc -l plan.txt` → **20**
+- `wc -l cargadas.txt` → **59**
+- `comm -12` → **vacío. Sin colisión.**
+
+**Y el plan declara 20 claves, no 19.** El proposal dice 19 y acota el §4.5 a `:343-365`: la tabla de
+gates llega hasta `:367`, así que se dejaban fuera dos filas (`decision/p55-backup` y
+`decision/fecha-corte`). Las 19 del §4.5 son correctas con el rango `:343-367`; la vigésima es
+`decision/c1-checkbox-obligatorio`, que aparece en la lista de comprobación del plan (`:534`) y no en
+la tabla. La comprobación se hizo contra las **20**, que es lo estricto.
+
+## Búsqueda por clave, una de cada clase
+
+| Clase | Consulta | Resultado |
+|---|---|---|
+| §1.8 del maestro | `mem_search "PostgreSQL propia Zoho solo lectura" type=decision` | #272, con su cita `R08.1.md:739` |
+| Acta del 03/09 | `mem_search "tabla única de puntos de control Grimm Horiba" type=decision` | #317, con su cita `acta:350` |
+| Punto abierto | `mem_search "encadenamiento diagnóstico sin decisión tema 4"` | #329, tipo `context` |
+
+## Un hallazgo de la verificación: eran NUEVE sin título, no siete
+
+El §1.1 del proposal dice que siete observaciones llegan con el título vacío. Esa cifra salió de un
+`mem_search` con límite 20 —una muestra—. El barrido completo sobre el export da **nueve**: las siete
+(#226, #229, #232, #235, #237, #238 y #225) más **#227** y **#253**. Además, **#225 no tenía tampoco
+`topic_key`**.
+
+Las nueve quedan con título, y la #225 con clave (`discovery/campos-fecha-final-origen`). Ninguna
+cambió de contenido.
+
+Es la misma lección que F0-02 dejó escrita y que el §0 del proposal hereda: **las cifras que se
+cuentan a ojo son las que fallan**. Una muestra de 20 no es un barrido.
