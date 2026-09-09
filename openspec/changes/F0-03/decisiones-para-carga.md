@@ -1,4 +1,4 @@
-# F0-03 · Las decisiones del §1.8, listadas antes de cargar nada
+# F0-03 · Las decisiones que van a Engram, listadas antes de cargar nada
 
 **Estado: lista para revisión. No se ha cargado ninguna observación.**
 
@@ -113,12 +113,152 @@ verificar contra el código se carga **sin** ese campo antes que con una hipóte
 | 31 | Las etapas proponen un cargo | Exacta, y son **tres** (`transitions.ts:267-276`). `derivacion-avisos` RQ-AV-02 |
 | 44 | Las dos entradas no se cruzan | Exacta, en un solo sitio (`apps/desk/server/db/estadoPorRemision.ts:41`). `transitions-st` RQ-TS-02 |
 
-## ⛔ Las decisiones del acta del 03/09 no están en esta lista
+---
 
-Y no por olvido. El plan las encarga (`:125`) y las cita 14 veces, cuatro por número de tema. **No hay
-copia citable en el repositorio**, y el maestro dice que la sesión no se había celebrado al cerrar la
-R08.1 (Anexo C.10, `:3815-3816`: «convocatoria, no como acta … el apartado de notas está vacío en el
-origen»).
+# Clase (b) · Las decisiones de la sesión del 03/09 — 12
 
-El razonamiento completo está en `proposal.md` §2.2, con la pregunta que Gerencia tiene que responder.
-**Hasta entonces esta lista es la mitad del encargo, y lo dice.**
+Fuente: `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md`, **parte III** (`:268-480`), exportada de
+Notion en el commit `da084e9`.
+
+## La trampa del fichero, y por qué esta lista sólo mira la parte III
+
+El fichero tiene **dos partes que no son lo mismo**:
+
+| Parte | Líneas | Qué es |
+|---|---|---|
+| I y II | `:26-267` | **La convocatoria.** Orden del día con casillas, preparado **antes** de la sesión |
+| III | `:268-480` | **El acta.** Lo que ocurrió |
+
+Sólo la parte III registra decisiones. **Las 45 casillas de la convocatoria no son decisiones**, ni
+siquiera las marcadas: son temas que alguien quiso llevar a la mesa. Verificado por comando —
+`grep -cE '^- \[[ x]\]'` da **45**, de las que `^- \[x\]` son **3** y `^- \[ \]` son **42**—, y las 45
+están en las partes I y II: ninguna aparece a partir de `:268`.
+
+## De dónde sale el 12
+
+Siete bloques `**Decisiones tomadas:**` en la parte III, con sus viñetas:
+
+```
+awk '/^\*\*Decisiones tomadas:\*\*/{en=1;next} en&&/^- /{t++} en&&(/^\*\*/||/^## /){en=0} END{print t}' acta.md
+→ 12
+```
+
+| Bloque | Tema | Decisiones |
+|---|---|---|
+| `:311` | 1 · Informes de gestión y alcance del indicador | 1 |
+| `:329` | 2 · Fases del servicio y niveles macro | 1 |
+| `:348` | 3 · Tabla de puntos de control Grimm/Horiba | 2 |
+| `:380` | 5 · Base de conocimiento | 1 |
+| `:400` | 6 · Módulo de informes en la Fase 1 | 4 |
+| `:422` | 7 · Identificación en recepción (QR/NFC) | 1 |
+| `:439` | 8 · Método de trabajo y pendientes | 2 |
+| | **Total** | **12** |
+
+**El tema 4 no aparece en esa tabla, y no es un olvido.** «Criterios de falla y encadenamiento del
+diagnóstico» (`:359-370`) es el único de los ocho temas tratados que **no deja decisión**: sólo una
+tarea (`:368-370`). Y es el que Gerencia señaló como «el punto más crítico por resolver, ya que de
+ello depende que la estructura funcione como diagrama de flujo y no como simple listado» (`:366`).
+Ocho temas, siete bloques de decisión.
+
+## Las 12, con su línea y la clave propuesta
+
+| # | Línea | Tema | Decisión | `topic_key` propuesto | P |
+|---|---|---|---|---|---|
+| 45 | `:313` | 1 | Mantener el indicador `[ARPIN — verificar]` dentro del informe, pese a la discusión previa sobre su retiro. | `decision/indicador-arpin-se-mantiene` | ✅ |
+| 46 | `:331` | 2 | Adoptar una única estructura jerárquica: **fase → nivel macro → subnivel → ítem**, sin duplicar tablas. | `decision/jerarquia-fase-macro-subnivel-item` | ✅ |
+| 47 | `:350` | 3 | Consolidar en una sola tabla de puntos de control para Grimm y Horiba, eliminando la separación entre tabla de inspección y tabla interna. | `decision/tabla-unica-de-puntos-de-control` | ✅ |
+| 48 | `:351` | 3 | Validar por nivel macro y desplegar subniveles e ítems únicamente cuando el nivel macro resulte «no OK». | `decision/validacion-por-nivel-macro` | ✅ |
+| 49 | `:382` | 5 | El nuevo sistema alimentará la base de conocimiento y permitirá documentar fallas y soluciones no catalogadas mediante un formulario condicional dentro del flujo de servicio. | `decision/formulario-de-falla-nueva` | ✅ |
+| 50 | `:402` | 6 | **Incluir el módulo de informes en la Fase 1 del desarrollo.** | `decision/informes-en-fase-1` | ✅ |
+| 51 | `:403` | 6 | En Fase 1, alimentar el informe con comentarios escritos; los comentarios predefinidos se abordan en Fase 2, una vez acumulado volumen de datos. | `decision/informe-con-campos-abiertos` | ✅ |
+| 52 | `:404` | 6 | Aplazar el dictado por voz para no comprometer el avance del resto del desarrollo. | `decision/dictado-por-voz-aplazado` | ✅ |
+| 53 | `:405` | 6 | Resolver la traducción de la nomenclatura oficial de repuestos mediante el comentario predefinido, sin crear un diccionario independiente. | `decision/nomenclatura-por-comentario` | ✅ |
+| 54 | `:424` | 7 | Mantener el código QR en los certificados de calibración y explorar la etiqueta NFC para la identificación de equipos en recepción. | `decision/qr-en-certificados-nfc-en-recepcion` | ✅ |
+| 55 | `:441` | 8 | Priorizar la revisión y el comentario sobre material generado por IA frente a la redacción desde cero, reservando el criterio técnico para validar y señalar huecos. | `decision/revisar-ia-en-vez-de-redactar` | ✅ |
+| 56 | `:442` | 8 | Trasladar la siguiente sesión al **viernes 11/09/2026**. | `decision/siguiente-sesion-11-09` | ✅ |
+
+**Total clase (b): 12 filas · 12 para cargar · 0 excluidas.**
+
+## Dos de las 12 tocan lo que F0-02 ya escribió
+
+| # | Decisión | Contra qué choca o confirma |
+|---|---|---|
+| 50 | Informes en la Fase 1 | **Confirma** F1E completa (plan `:201-205`). El maestro la trataba como decisión de alcance pendiente; ya no lo es |
+| 54 | QR en certificados, NFC en recepción | **Matiza** la entrada §4.4 de `openspec/specs/tickets-core/spec.md`, que registra «la identificación física por QR no existe» con destino *sin tanda asignada* y cita M1.1 (`R08.1.md:1049`). El acta la **reorienta**: el QR se queda en los certificados y la identificación en recepción pasa a explorar **NFC**, con tarea asignada a Gustavo (`acta:428`, plan de acción nº 10 en `:478`). La entrada de la spec sigue siendo cierta —el QR no existe en el código— pero su destino ya no es «sin asignar» |
+
+Al cargar la 54 se anotará ese cruce en el campo **Estado en el código**, con la ruta de la spec.
+
+---
+
+# Clase (c) · Casillas de la convocatoria **SIN** respaldo en el acta — 2. **No se cargan**
+
+De las **3** casillas marcadas `[x]` en la convocatoria, sólo **una** tiene decisión en el acta. Las
+otras dos se listan aquí, y se listan **precisamente para no cargarlas**: una casilla marcada dice que
+alguien quiso tratar el tema, no que se decidiera. Cargarla como `decision/*` sería crear autoridad
+desde una casilla.
+
+| Línea | Casilla marcada `[x]` | ¿La respalda el acta? | Qué se hace |
+|---|---|---|---|
+| `:170` | **¿Entra el módulo de informes en la Fase 1?** | **Sí** — decisión en `:402` | Se carga como la **#50** de la clase (b) |
+| `:173` | **P10** — procedimiento de validación de informes antes de su emisión, con carga automática de la firma por etapa | **No.** Se *discutió*: `:397`, «se planteó la necesidad de una etapa de revisión con dos personas, lo que conecta directamente con la definición de roles del sistema». Pero está en **«Resumen de la discusión»**, no en ningún bloque `Decisiones tomadas:` | **No se carga.** Vuelve al Anexo D |
+| `:121` | **P62** — qué se hace con la capa as-built | **No, y ni siquiera se trató.** `awk` sobre la parte III entera buscando `P62`, `as-built`, `capa as` y `Anexo H` no devuelve **ninguna** línea | **No se carga.** Vuelve al Anexo D |
+
+## Lo que dice la regla de la sesión sobre estas dos
+
+No hace falta interpretar: la propia convocatoria lo escribe (`:114-116`).
+
+> «**Regla de la sesión.** Cada bloque sale con una de dos cosas: una decisión escrita, o un
+> responsable con una fecha. Lo que no salga con ninguna de las dos **vuelve al Anexo D y bloquea la
+> construcción del módulo al que pertenece**.»
+
+Ninguna de las dos salió con decisión ni con responsable. Las dos vuelven al Anexo D, y **bloquean**:
+
+- **P10** bloquea la validación del informe antes de emitir, que es **F1E-04** (plan `:204`). El plan
+  ya lo tenía como gate: `decision/roles-validacion-informe` (§4.5). Sigue abierto — y ahora se sabe
+  que se llevó a la sesión y no salió.
+- **P62** bloquea la decisión sobre la capa as-built del maestro, y con ella el destino de las **siete
+  specs** que F0-02 escribió. El riesgo está anotado en el §6 del proposal de F0-02 y **sigue vivo,
+  exactamente como estaba**.
+
+**Se propone cargar una observación por cada una**, pero de tipo `context` y con clave `punto-abierto/`,
+**no** `decision/`:
+
+| `topic_key` | Qué dice |
+|---|---|
+| `punto-abierto/p10-validacion-informe` | Llevado a la sesión del 03/09 marcado en la convocatoria (`acta:173`), discutido (`:397`) y **sin decisión**. Vuelve al Anexo D por la regla de la sesión (`:114-116`). Gate de F1E-04 |
+| `punto-abierto/p62-capa-as-built` | Llevado a la sesión (`acta:121`) y **no tratado**: cero apariciones en la parte III. Vuelve al Anexo D. Condiciona el destino de las siete specs de F0-02 |
+
+Sin ellas, quien consulte la memoria vería doce decisiones del 03/09 y no sabría que dos temas del
+orden del día se cayeron. **El hueco tiene que ser visible desde dentro de la memoria**, que es la
+misma regla que se aplica en el §2.2 del proposal al acta que faltaba.
+
+**Las 42 casillas sin marcar no se listan una a una.** No hay nada que decidir sobre ellas: no se
+llevaron marcadas y el acta no las trata. Volverán al orden del día del **11/09** o quedarán en el
+Anexo D, y ésa es una tarea de Gerencia, no de esta carga.
+
+---
+
+# Los tres totales, y el comando de cada uno
+
+| Clase | Qué es | Cifra | Comando que la produjo |
+|---|---|---|---|
+| **(a)** | Decisiones del §1.8 del maestro | **44** halladas · **43** para cargar | Aritmética del triplete: `(870−739+1)/3 = 44`, resto 0. La excluida es la 17 (`:787`), única con marca de estado |
+| **(b)** | Decisiones de la sesión del 03/09 | **12** halladas · **12** para cargar | `awk` sobre los siete bloques `Decisiones tomadas:` de la parte III |
+| **(c)** | Casillas marcadas sin respaldo en el acta | **2** halladas · **0** para cargar | `grep -cE '^- \[x\]'` = 3, menos la única con decisión (`:402`) |
+| | **Total a cargar como `decision/*`** | **55** | 43 + 12 |
+| | **Total a cargar como `punto-abierto/*`** | **2** | las de la clase (c) |
+
+**57 observaciones en total**, y ninguna cargada todavía.
+
+## Comprobación de colisión de claves
+
+El plan §4.5 (`:347-365`) ya declara **19** claves `decision/*` para decisiones **futuras**, las que
+abren tandas. Las 55 de esta lista son de decisiones **pasadas**. Verificado que no chocan:
+
+```
+comm -12 <claves de esta lista> <claves del plan>  →  vacío
+```
+
+Las dos familias conviven: el plan escribe la clave **antes** de que la decisión exista, esta lista la
+escribe **después**. Cuando una de las 19 se cierre el viernes, se guarda con su clave y pasa a ser
+del mismo tipo que estas 55.

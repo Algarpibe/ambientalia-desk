@@ -10,10 +10,10 @@
 
 | Dato | Valor |
 |---|---|
-| Tanda | F0-01, ampliado por **F0-02** |
-| Base | commit `a3a8f03` (F0-01) · commit `ad1875b` (las cinco de F0-02, entradas 8–12) |
-| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) |
-| Fecha | 2026-09-08 |
+| Tanda | F0-01, ampliado por **F0-02** (entradas 8–12) y **F0-03** (entrada 13) |
+| Base | commit `a3a8f03` (F0-01) · commit `ad1875b` (las cinco de F0-02, entradas 8–12) · commit `da084e9` (la de F0-03, entrada 13) |
+| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) |
+| Fecha | 2026-09-08, ampliado el 2026-09-09 |
 
 > **Por qué las de F0-02 viven en el fichero de F0-01 y no en uno propio.** El canal hacia el maestro
 > es **uno**, y partirlo por tanda obligaría a Gerencia a abrir dos ficheros para pegar en el mismo
@@ -561,10 +561,104 @@ sobre el commit `ad1875b`, frente a los 96 y 830 del baseline.
 
 ---
 
+## La de F0-03 (13)
+
+> Procede de contrastar el Anexo C.10 del maestro contra la copia citable del acta
+> `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md` (480 líneas, exportada de Notion en el commit
+> `da084e9`). No es un número mal contado como las cinco de F0-02: es **un apartado que describe un
+> estado que dejó de ser cierto**.
+
+### 13 · Anexo C.10 — la sesión del 03/09 **sí se celebró** *(F0-03)*
+
+**Texto actual, `.md` líneas 3815-3816** (Anexo C.10, encabezado en la 3815):
+
+> «**C.10 — 03/09/2026 · Sesión convocada (aún no celebrada)**
+> Incorporada en la R08.1 como convocatoria, no como acta. **A la fecha de cierre de esta revisión la
+> sesión no se ha celebrado y el apartado de notas está vacío en el origen.**»
+
+**Texto propuesto:** sustituir el encabezado y el primer párrafo por
+
+> «**C.10 — 03/09/2026 · Sesión celebrada**
+> La sesión se celebró el 03/09/2026 a las 14:00 por Google Meet, con Alfonso García del Pino
+> (Gerencia, moderador), Gustavo Novoa (Dirección Técnica) y Johny Luna (Servicio Técnico). Trató
+> ocho temas y dejó **doce decisiones escritas** y **doce tareas con responsable**. El acta completa
+> es la fuente citable del repositorio: `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md`. Su
+> parte III contiene el acta; sus partes I y II son la convocatoria previa y **no registran
+> decisiones**. La siguiente sesión queda fijada para el **viernes 11/09/2026**.»
+
+**Por qué el apartado quedó caduco, que es lo que hay que evitar la próxima vez.** La R08.1 se cerró
+**antes** del 03/09 y no se volvió a tocar después. El propio maestro anticipa el mecanismo del fallo
+en tres sitios más, que arrastran la misma frase y hay que corregir con ésta: `:17` («La sesión del
+03/09 aún no se ha celebrado», en el índice), `:161` (misma frase en el índice de anexos) y `:217`
+(cuerpo del §1.2). Y `:268` dice «queda por incorporar la reunión del 03/09/2026, "Checklist
+dinámico", **no disponible al cerrar esta revisión**»: esa reunión **es** la del acta, y su tema 3
+—la tabla de puntos de control de Grimm y Horiba— es justamente el «checklist dinámico» que se echaba
+en falta (`acta:337-357`).
+
+Es exactamente el punto abierto **nº 61** del propio maestro, «Mecanismo de incorporación de actas»
+(`acta:122`, citándolo): «La del 27/08 estuvo cinco revisiones sin entrar en el documento. Quién
+avisa, con qué cadencia y contra qué fuente se comprueba». La del 03/09 iba camino de repetirlo.
+
+**Evidencia de primera mano en el acta.**
+
+- **Se celebró:** `acta:280-283` — fecha 03/09/2026, hora 02:00 PM, Google Meet, moderador Alfonso
+  García del Pino Beneítez. `acta:286-288` lista los tres participantes.
+- **Ocho temas tratados:** `acta:292-299`, con su desarrollo en `acta:303-450`.
+- **Doce decisiones escritas.** Salen de **siete** bloques `**Decisiones tomadas:**` —`acta:311`,
+  `:329`, `:348`, `:380`, `:400`, `:422` y `:439`—, con 1 + 1 + 2 + 1 + 4 + 1 + 2 viñetas. **La cifra
+  la produjo un comando**, no una lectura:
+
+  ```
+  awk '/^\*\*Decisiones tomadas:\*\*/{en=1;next} en&&/^- /{t++} en&&(/^\*\*/||/^## /){en=0} END{print t}'
+  ```
+
+  El tema 4 —criterios de falla y encadenamiento— es el único de los ocho que **no** deja decisión:
+  sólo tarea (`acta:368-370`). Conviene que el Anexo C.10 lo diga, porque Gerencia lo señaló como «el
+  punto más crítico por resolver» (`acta:366`).
+- **Doce tareas con responsable:** el plan de acción consolidado de `acta:465-480`, seis de ellas con
+  fecha límite 11/09/2026.
+- **La siguiente sesión:** `acta:442` («Trasladar la siguiente sesión al viernes 11/09/2026») y
+  `acta:462`.
+
+**El matiz que la corrección debe conservar, y es el que más importa.** El fichero tiene **dos
+partes que no son lo mismo**: la convocatoria (partes I y II, `acta:26-267`) y el acta (parte III,
+`acta:268-480`). La convocatoria lleva **45 casillas**, de las que **tres** están marcadas `[x]`
+—`acta:121`, `:170`, `:173`— y las 42 restantes no. **Una casilla marcada no es una decisión**, y de
+las tres sólo una tiene respaldo en el acta:
+
+| Casilla marcada en la convocatoria | ¿La respalda el acta? |
+|---|---|
+| `:170` «¿Entra el módulo de informes en la Fase 1?» | **Sí.** Decisión en `acta:402`, tema 6 |
+| `:173` **P10** — validación de informes antes de emitir, con firma por etapa | **No.** Se *discutió* —`acta:397`, «se planteó la necesidad de una etapa de revisión con dos personas»— pero está en el **resumen de la discusión**, no en ningún bloque de decisiones |
+| `:121` **P62** — qué se hace con la capa as-built | **No, y ni siquiera se trató.** `grep` de `P62`, `as-built`, `capa as` y `Anexo H` sobre la parte III entera no devuelve **ninguna** línea |
+
+**Por eso el punto abierto nº 62 sigue vivo, y el Anexo C.10 debe decirlo.** El maestro lo describe
+en `:215`: el 27/08 se acordó retirar las referencias a lo construido, y la revisión posterior
+encargó el Anexo H; son criterios opuestos y «no me corresponde elegir». La convocatoria lo llevó
+marcado al orden del día (`acta:121`), la sesión no lo trató, y la **regla de la sesión** que la
+propia convocatoria fija (`acta:114-116`) dice qué pasa entonces:
+
+> «Cada bloque sale con una de dos cosas: una decisión escrita, o un responsable con una fecha. Lo que
+> no salga con ninguna de las dos **vuelve al Anexo D y bloquea la construcción del módulo al que
+> pertenece**.»
+
+**Texto propuesto para el punto 62 del Anexo D:** añadir al final
+
+> «Llevado al orden del día de la sesión del 03/09/2026 (bloque 0 de la convocatoria) y **no tratado
+> en ella**: el acta no registra decisión ni responsable. Por la regla de la sesión, vuelve al Anexo D.
+> Sigue abierto, y con él sigue abierta la contradicción entre retirar la capa as-built y mantener el
+> Anexo H.»
+
+Ese punto tiene ahora una consecuencia concreta que antes era hipotética: F0-02 escribió **siete
+specs as-built** en `openspec/specs/`. Si la sesión decidiera retirar la capa as-built del `.docx`,
+esas siete specs pasan a ser **la única copia** de ese contenido, no una duplicada — que es
+exactamente lo que el proposal de F0-02 anticipó en su §6.
+
+---
 ## Qué NO contiene este fichero
 
 - No aplica ningún cambio al `.docx`. Es texto propuesto, no un parche.
 - No modifica los proposals de `openspec/changes/`.
-- Los **cuatro incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
+- Los **cinco incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
   `openspec/config.yaml` (`incumplimientos_vivos`), porque son deuda de código, no correcciones del
   maestro.
