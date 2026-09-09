@@ -199,8 +199,10 @@ En el CI no salta hoy sólo por el **orden** de los pasos: `lint` (`ci.yml:35`) 
 rompe el CI**, y quien lo mida en local después de un `npm run test:coverage` verá 161 y creerá que
 introdujo tres avisos. La cifra comparable es `npx eslint . --ignore-pattern "coverage/**"`.
 
-*Arreglo de una línea, y no es de esta tanda:* añadir `coverage` a `globalIgnores` en
-`eslint.config.js:9`.
+> **✅ ARREGLADO en el commit siguiente (§8).** `coverage` entró en `globalIgnores`
+> (`eslint.config.js:9-16`). Desde ahí, `eslint .` da **158 con `coverage/` presente o ausente**, y
+> el orden de los pasos del CI deja de ser una dependencia. Las cuatro medidas están en §8.1.
+
 ### 5.2 · Qué invariantes tocó esta tanda
 
 **Ninguno.** Los seis invariantes del grafo (`packages/shared/src/invariantesGrafo.test.ts:29`,
@@ -245,5 +247,99 @@ F1A-05 **no toca código de producción**. Añade dos pruebas de caracterizació
 | A-1 | El bodegaje de proceso **no es calculable** para la rama de aprobación sin repuestos, y leer el historial no lo arregla porque el valor nunca se escribe bajo esa etiqueta | Defecto de dominio, ya con dueño | **F1C-02** |
 | A-2 | `bodegaje.ts` está **construido y no cableado**: exportado, probado, sin un solo consumidor | Deriva silenciosa | `kpis` (F1C-06) |
 | A-3 | «Habilitado para entrega» pasa a exigir una fecha nueva: **cambio operativo con impacto en Comercial** | Aviso previo al despliegue, no defecto | Gerencia / Comercial |
-| A-4 | El artefacto de blueprint describe un flujo **anterior** a C1, C11 y C9, y no hay forma de regenerarlo | Documentación caduca sin vía de arreglo | Construir el generador (talla por decidir) |
-| A-5 | `eslint.config.js:9` no ignora `coverage/`, así que la cifra de avisos sube de 158 a 161 en cualquier máquina que haya corrido `npm run test:coverage`. En el CI sólo se salva por el orden de los pasos, y el techo `--max-warnings 158` no lleva holgura | Cifra inestable + CI frágil | Arreglo de una línea; sin tanda asignada |
+| A-4 | El artefacto de blueprint describe un flujo **anterior** a C1, C11 y C9, y no hay forma de regenerarlo | Documentación caduca sin vía de arreglo | **§8.2** — aviso de caducidad puesto; corrección al plan como entrada 4; construir el generador queda sin dimensionar |
+| A-5 | `eslint.config.js` no ignoraba `coverage/`, así que la cifra de avisos subía de 158 a 161 en cualquier máquina que hubiera corrido `npm run test:coverage`. En el CI sólo se salvaba por el orden de los pasos, y el techo `--max-warnings 158` no lleva holgura | Cifra inestable + CI frágil | **§8.1 — ARREGLADO** |
+
+---
+
+## 8 · Cierre de los dos hallazgos que quedaron sin tanda
+
+### 8.1 · A-5 — arreglado, con las cuatro cifras medidas
+
+`eslint.config.js:16` — `globalIgnores(['dist', '.agent', 'tmp-app', 'docs', 'coverage'])`.
+
+| Medida | Cifra |
+|---|---|
+| `eslint .` **con** `coverage/` presente, antes del arreglo | **161** (158 + 3 × «Unused eslint-disable directive» de `block-navigation.js`, `prettify.js`, `sorter.js`) |
+| `eslint .` **sin** `coverage/` | **158** |
+| El trinquete del CI (`ci.yml:41`) | **158**, sin holgura |
+| `eslint .` **con** `coverage/` presente, después del arreglo | **158** ✅ |
+
+Medidas sobre el mismo árbol, con `coverage/` realmente en disco en la primera y la cuarta. Y
+`npm run lint -- --max-warnings 158` —el comando exacto del CI— pasa con salida **0** teniendo
+`coverage/` delante, cosa que antes fallaba.
+
+**Qué arregla:** que la cifra deje de depender de si esa máquina ha corrido `test:coverage` alguna
+vez. Nada más.
+
+**Qué NO arregla, dicho porque es justo lo que se pidió no dar por trivial:** no baja el techo del CI
+—sigue en 158— y **no le da holgura**. `ci.yml:28-31` declara que la holgura convierte un trinquete
+en un adorno, y eso no ha cambiado. Los 3 avisos que desaparecen nunca fueron deuda del proyecto: son
+de un informe generado que no debía estar en el denominador.
+
+**¿Hay que fijar por escrito el orden de `ci.yml:41` y `ci.yml:45`? No — y ésa es la parte que
+importa.** Antes del arreglo el orden **era** una dependencia real y no declarada: el CI pasaba
+únicamente porque `lint` corría antes de que `test:coverage` creara el directorio, e invertir los dos
+pasos habría roto la compilación sin que ningún fichero explicara por qué. Declarar ese orden lo
+habría dejado igual de frágil, sólo que con una nota.
+
+Lo correcto era **eliminar la dependencia**, y es lo que se hizo: con `coverage` en `globalIgnores`
+los dos pasos son conmutables. Verificado, no supuesto — la cuarta medida de la tabla se tomó con
+`coverage/` en disco, es decir, en el estado que produce `test:coverage`. Es además el patrón que el
+propio fichero ya seguía para `dist`, que genera `npm run build` y lleva ignorado desde siempre.
+
+Queda una línea de comentario en `ci.yml:33-37` para quien vaya a reordenar esos pasos: dice que la
+dependencia existió, que ya no existe, y por qué. **Un comentario que dice «esto ya no ata» es lo
+contrario de un orden declarado.**
+
+**La lección, que vale más que los tres avisos.** Se reportaron **161 contra un techo de 158** durante
+varios turnos sin que ninguna de las dos partes lo cuestionara. La cifra no cuadraba con el trinquete
+que el propio repositorio declara, y aun así pasó como dato. Un número que se copia sin cruzarlo con
+la puerta que tiene que atravesar no es una medida: es una costumbre.
+
+### 8.2 · A-4 — para qué sirve el artefacto, y qué se hizo mientras se decide
+
+**La pregunta correcta no era si A-4 es tanda nueva o alcance de F1B-09** —`plan:158` hereda la misma
+premisa, con el mismo gate «—» y la misma talla S (`plan:421`), así que la corrección es del plan y va
+antes que ninguna construcción—. La pregunta es para qué sirve el fichero, ahora que F1A-05 ha
+demostrado que la auditoría se hace sin él.
+
+**Respuesta: (a), y lo dice el maestro.** `R08.1.md:4272`, dentro del **Anexo F — Fuentes** (`:4201`):
+
+> «Artefacto de apoyo. El mapa visual del blueprint —diagrama completo, leyenda por área y fichas de
+> los hallazgos— vive como artefacto interactivo bajo el título «Blueprint de Servicio Técnico — mapa
+> de transiciones». **Es la fuente gráfica de §M1.3 y se actualiza con cada auditoría del código.**»
+
+El `<title>` del fichero es exactamente esa cadena, así que la identificación no es inferencia. **El
+maestro lo adoptó como fuente propia, con función declarada y cadencia declarada**: no es el andamio
+de una conversación de agosto. Descarta (b).
+
+**Lo que sí cambió** es que las dos funciones que `plan:388` trataba como una se han separado, y
+F1A-05 es la prueba:
+
+| Función | ¿Quién la cumple hoy? |
+|---|---|
+| **Auditar el flujo** | El documento de auditoría. **No necesita el artefacto** — éste se produjo leyendo el código |
+| **Ser la fuente gráfica de §M1.3 para personas** — diagrama, leyenda por área, fichas | **Nada más.** `docs/blueprint-servicio-tecnico.md` es texto, es anterior a la app y el maestro no lo cita |
+
+Por eso la talla **S** no es falsa del todo: es correcta para auditar —queda demostrado— y es falsa
+para regenerar. Son dos trabajos, y sólo el segundo necesita generador. Redactado como **entrada 4**
+de `docs/sdd/F0-01_Correcciones_para_el_plan.md`, con los tres cambios propuestos a `plan:388`,
+`plan:142`/`:158` y `plan:412`/`:421`.
+
+**Queda un residuo de (c), y es honesto decirlo:** el Anexo F dice para qué sirve, pero **nadie ha
+verificado quién lo abre ni con qué frecuencia**. Eso es lo que decide si construir el generador
+merece una tanda o si el artefacto se congela como histórico —el precedente es `docs/superpowers/`,
+que F0-00 §6 indexó en vez de borrar, y donde un diseño se autodeclara «SUPERADO» en su propia
+cabecera—. **Es agenda de Gerencia, no tanda.**
+
+**Y lo que sí era responsabilidad de esta tanda, hecho.** El fichero describía el flujo anterior a
+C1, C11 y C9 **sin ninguna marca que lo dijera**: cualquiera que lo abriera leía comportamiento que
+ya no existe. Lleva ahora un aviso de caducidad incrustado justo después de `<body>`, con
+`id="aviso-caducidad-f1a-05"`: fecha del artefacto, las tres correcciones que no refleja con sus
+commits, que no hay generador, y a dónde ir para leer el flujo vigente.
+
+El cambio es de **1.471 bytes en la línea 1**, verificado byte a byte —de 3.370.299 a 3.371.770, y
+todo desde la línea 2 idéntico—. Coste asumido y escrito en `docs/artefactos/NOTA.md` §7: el fichero
+es `-diff -merge` y añade un blob de ~898 KiB al historial. Se acepta porque la alternativa era dejar
+circulando un mapa que miente sin decirlo.

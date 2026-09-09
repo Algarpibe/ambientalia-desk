@@ -13,8 +13,8 @@
 |---|---|
 | Documento corregido | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` |
 | Tanda que abre el fichero | **F1A-02** (entrada 1) |
-| Entradas posteriores | **F1A-03** (entrada 2) · **F1A-04** (entrada 3) |
-| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3. Rama `main` |
+| Entradas posteriores | **F1A-03** (entrada 2) · **F1A-04** (entrada 3) · **F1A-05** (entrada 4) |
+| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3; `43821b8` para la entrada 4. Rama `main` |
 | Fuentes del contraste | `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md` (480 líneas) · maestro `R08.1.md` |
 | Fecha | 2026-09-09 |
 
@@ -158,6 +158,74 @@ indicadores porque no existe módulo de KPIs: eso es F1C-06 y la spec `kpis`.
 **Por qué importa.** Implementada al pie de la letra, la frase del plan habría vuelto a romper el
 bodegaje de entrada: mediría cuándo se registró la llegada en la app, que desde el alta anticipada de
 Comercial no es cuándo llegó el equipo. Es exactamente la avería que C9 existe para arreglar.
+
+---
+
+## La de F1A-05 (4)
+
+### 4 · Dos tandas de auditoría dimensionadas sobre un generador que no existe *(F1A-05)*
+
+**Texto actual**, cuatro filas y una tabla de artefactos:
+
+> `plan:142` — `| F1A-05 | Auditoría de blueprint tras las correcciones (audit-F1A) | M11.6 | — |`
+> `plan:158` — `| F1B-09 | — | Auditoría de blueprint de los tres flujos (audit-F1B); extensión a equipo nuevo y soporte remoto como pide M11.6 | — |`
+> `plan:412` — `| F1A-05 | audit-F1A | — | M11.6 | — | S | S38 |`
+> `plan:421` — `| F1B-09 | audit-F1B | — | M11.6 | — | S | S44 |`
+> `plan:388` — `| docs/artefactos/blueprintserviciotecnico.html | Mapa de transiciones generado con IA (auditoría R04) | Vigente | Se regenera en cada tanda audit-* |`
+
+**El problema, en dos mitades que el plan trata como una sola.** `plan:388` da por hecho que el
+artefacto «se regenera en cada tanda `audit-*`», y las tallas **S** de `:412` y `:421` se apoyan en
+esa premisa. **No hay generador en el repositorio**: verificado en `docs/artefactos/NOTA.md:33-46`
+sobre el commit `a3a8f03`, y de nuevo en F1A-05 sobre `43821b8` —`scripts/` contiene un solo fichero,
+`docx2md.sh`—. No se puede regenerar lo que no tiene generador.
+
+**Lo que F1A-05 añade, y que la nota de agosto no podía saber: la auditoría se hizo SIN el
+artefacto.** `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md` se produjo leyendo el código, y salió
+con cinco hallazgos nuevos. Eso separa dos funciones que `plan:388` mezclaba:
+
+| Función | ¿La cumple algo hoy? |
+|---|---|
+| **Auditar el flujo** — detectar defectos, medir el estado de los hallazgos previos | **Sí**, el documento de auditoría. No necesita el artefacto |
+| **Ser la fuente gráfica de §M1.3 para personas** — diagrama, leyenda por área, fichas | **No la cumple nada más.** `docs/blueprint-servicio-tecnico.md` es texto, es anterior a la app y el maestro no lo cita |
+
+**Y el maestro dice para qué sirve, así que no es punto abierto.** `R08.1.md:4272`, dentro del
+**Anexo F — Fuentes** (`:4201`):
+
+> «Artefacto de apoyo. El mapa visual del blueprint —diagrama completo, leyenda por área y fichas de
+> los hallazgos— vive como artefacto interactivo bajo el título «Blueprint de Servicio Técnico — mapa
+> de transiciones». **Es la fuente gráfica de §M1.3 y se actualiza con cada auditoría del código.**»
+
+El `<title>` del fichero es exactamente esa cadena, así que la identificación no es una inferencia.
+El maestro lo adoptó como **fuente propia** con una cadencia declarada: no es el andamio de una
+conversación de agosto, es un entregable con función y dueño documental.
+
+**Consecuencia para las tallas.** La talla **S** no es falsa para toda la tanda: es correcta para
+auditar —F1A-05 lo acaba de demostrar— y es falsa para regenerar. Lo que hay que separar en el plan
+son **dos trabajos distintos**:
+
+| Trabajo | Talla | Quién |
+|---|---|---|
+| La auditoría en sí (leer el código, medir hallazgos, registrar) | **S**, confirmada empíricamente por F1A-05 | `audit-F1A` / `audit-F1B` |
+| **Construir el generador** del mapa visual, que hoy no existe | **Sin dimensionar.** Es una tanda propia y nadie la ha estimado | Sin asignar |
+
+**Texto propuesto.** Tres cambios:
+
+1. `plan:388` — sustituir la columna Estado y la de Notas por
+   > `| docs/artefactos/blueprintserviciotecnico.html | Mapa de transiciones generado con IA (auditoría R04) | CADUCO — describe el flujo anterior a C1, C11 y C9 | NO tiene generador en el repositorio (docs/artefactos/NOTA.md §3): no se regenera. Construir el generador es una tanda propia, sin dimensionar |`
+
+2. `plan:142` y `plan:158` — dejar el contenido como está y añadir a la columna Gate, en lugar de la
+   raya:
+   > `Ninguno. NO regenera docs/artefactos/ (no hay generador); audita leyendo el código`
+
+3. `plan:412` y `plan:421` — la talla **S** se mantiene, ahora sobre la base correcta: es el coste de
+   auditar, no el de regenerar. Añadir una fila nueva a la tabla de tandas para el generador del mapa
+   visual, con talla **sin dimensionar** y sin semana asignada, hasta que Gerencia decida si sigue
+   queriendo el artefacto que el Anexo F declara.
+
+**Por qué importa.** Es la misma clase de premisa falsa que F0-04 ya corrigió una vez —«F0-04 no crea
+la red de pruebas: la mide y la completa donde falta» (`openspec/changes/F0-04/proposal.md:18`)—, y
+si no se corrige aquí, **F1B-09 la hereda entera** en la semana S44: misma fila sin gate, misma talla
+S, mismo generador inexistente, y además con la extensión a dos flujos más que M11.6 pide.
 
 ---
 

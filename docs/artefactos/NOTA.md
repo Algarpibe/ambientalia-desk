@@ -4,10 +4,10 @@
 |---|---|
 | Fichero | `docs/artefactos/blueprintserviciotecnico.html` |
 | Título interno | «Blueprint de Servicio Técnico — mapa de transiciones» |
-| Tamaño | 3.370.299 bytes |
+| Tamaño | 3.371.770 bytes (eran 3.370.299; +1.471 del aviso de caducidad, §7) |
 | Líneas | 4.432 (la última sin salto final) |
-| Generado el | 2026-08-21 |
-| Generador | **No existe en el repositorio** (ver §3) |
+| Generado el | 2026-08-21 (contenido). Aviso de caducidad añadido el 2026-09-09 por F1A-05, §7 |
+| Generador | **No existe en el repositorio** (ver §3). Reverificado en F1A-05 sobre `43821b8` |
 | Atributos git | `-diff -merge` (ver §5) |
 
 ---
@@ -45,20 +45,46 @@ a este fichero.)
 Lo produjo **una conversación de agente en agosto de 2026**. No quedó script, ni plantilla,
 ni entrada de `package.json`. **Hoy no existe forma de reproducirlo.**
 
-## 4 · Cambio de alcance: F1A-05 y F1B-09 CONSTRUYEN el generador, no lo invocan
+## 4 · Cambio de alcance: las tandas `audit-*` NO regeneran este fichero
 
 El plan `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388` dice que este fichero
 «se regenera en cada tanda `audit-*`», y sus filas `:142` (F1A-05, `audit-F1A`) y `:158`
-(F1B-09, `audit-F1B`) heredan esa premisa. `F0-00_Baseline_as-built.md:564` la repite:
-«para que … no se regenere sobre una cifra incorrecta».
+(F1B-09, `audit-F1B`) heredan esa premisa, con talla **S** en `:412` y `:421`.
+`F0-00_Baseline_as-built.md:564` la repite: «para que … no se regenere sobre una cifra incorrecta».
 
-**Es falso.** No se puede regenerar lo que no tiene generador. Las dos tandas tienen que
-**CONSTRUIR el generador**, no invocarlo; y eso es trabajo de otra talla y otro alcance.
+**Es falso.** No se puede regenerar lo que no tiene generador.
+
+> **⚠️ CORREGIDO POR F1A-05 (2026-09-09).** La versión anterior de este apartado concluía que «las
+> dos tandas tienen que CONSTRUIR el generador». **No es eso.** F1A-05 se ejecutó y produjo
+> `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md` —cinco hallazgos nuevos— **leyendo el código,
+> sin este fichero**. Lo que eso demuestra es que había **dos trabajos** metidos en una fila:
+>
+> - **auditar el flujo** — no necesita el artefacto, y su talla **S** es correcta;
+> - **construir el generador** del mapa visual — es una tanda propia, **sin dimensionar**, y no es
+>   requisito de ninguna auditoría.
+>
+> Corrección al plan redactada como **entrada 4** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
+
+**Y para qué sirve el fichero, ya que la auditoría se sabe hacer sin él.** Lo dice el maestro en su
+**Anexo F — Fuentes** (`R08.1.md:4201`), línea `:4272`:
+
+> «Artefacto de apoyo. El mapa visual del blueprint —diagrama completo, leyenda por área y fichas de
+> los hallazgos— vive como artefacto interactivo bajo el título «Blueprint de Servicio Técnico — mapa
+> de transiciones». **Es la fuente gráfica de §M1.3 y se actualiza con cada auditoría del código.**»
+
+El `<title>` de este fichero es exactamente esa cadena, así que la identificación no es inferencia.
+**Es un entregable para personas con función declarada y dueño documental**, no el andamio de una
+conversación de agosto: la parte que el documento de auditoría NO cubre es la visual —diagrama,
+leyenda por área, fichas—, y hoy no la cubre nada más. `docs/blueprint-servicio-tecnico.md` es texto,
+es anterior a la app y el maestro no lo cita.
+
+Lo que sigue abierto no es «para qué sirve» —el Anexo F lo dice— sino **quién lo abre y con qué
+frecuencia**, que es lo que decide si construir el generador merece una tanda o el artefacto se
+congela como histórico. Eso es agenda de Gerencia, no de una tanda.
 
 Es la misma clase de premisa falsa del baseline que ya se corrigió en **F0-04** («F0-04 no
 crea la red de pruebas: la mide y la completa donde falta» — `openspec/changes/F0-04/proposal.md:18`).
 La corrección queda registrada en `openspec/config.yaml`.
-
 ## 5 · Por qué se versiona pese al tamaño
 
 Porque no hay generador. «Ignorarlo y regenerarlo cuando haga falta» **equivalía a
@@ -77,6 +103,25 @@ El coste se acota con `.gitattributes` en la raíz, que lo marca **`-diff -merge
 
 ## 6 · Cómo actualizarlo hoy
 
-No hay procedimiento automático. Hasta que F1A-05 construya el generador, la única vía es
-producir un fichero nuevo y sustituir éste entero. Si eso ocurre, actualizar en esta nota:
-tamaño, número de líneas y fecha de generación.
+No hay procedimiento automático, y **F1A-05 no construyó el generador**: la única vía sigue siendo
+producir un fichero nuevo y sustituir éste entero. Si eso ocurre, actualizar en esta nota tamaño,
+número de líneas y fecha de generación, y **retirar el aviso de caducidad** (§7).
+
+## 7 · El aviso de caducidad que lleva incrustado
+
+Desde F1A-05 (2026-09-09), el fichero abre con un bloque rojo inmediatamente después de `<body>`, con
+`id="aviso-caducidad-f1a-05"`. Dice, en la propia página, que el mapa describe el flujo **anterior**
+a C1 (`ec0ed1f`), C11 (`6ea3ca8`, `5218d11`) y C9 (`e8c5e90`), que no hay generador, y a dónde ir
+para leer el flujo vigente.
+
+**Por qué va dentro del `.html` y no sólo aquí.** El riesgo no es que alguien lea esta nota y se
+confunda: es que alguien **abra el mapa** y lea comportamiento que ya no existe. Una advertencia que
+vive en otro fichero no protege de eso. El artefacto se abre solo; la nota, no.
+
+**Coste, dicho para que nadie lo descubra después.** El fichero es `-diff -merge` (§5) y pesa ~898 KiB
+comprimido, así que **este aviso añade un blob más de ese tamaño al historial**. Se acepta a
+sabiendas: el cambio es de **1.471 bytes en la línea 1** —verificado byte a byte: todo desde la
+línea 2 es idéntico— y la alternativa era dejar circulando un mapa que miente sin decirlo.
+
+**Al regenerar, el bloque se retira entero.** No se edita ni se actualiza: el fichero nuevo ya
+describirá el flujo vigente y el aviso dejaría de ser cierto.

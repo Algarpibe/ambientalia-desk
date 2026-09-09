@@ -69,15 +69,15 @@ testing:
       1 react-hooks/exhaustive-deps). La cifra NO se ha movido desde el baseline
       a3a8f03: las tandas F1A no añadieron ni un aviso.
       CORREGIDO EN F1A-05 el «sin --max-warnings»: desde edbce13 (2026-09-08) el
-      CI corre `npm run lint -- --max-warnings 158` (.github/workflows/ci.yml:35),
+      CI corre `npm run lint -- --max-warnings 158` (.github/workflows/ci.yml:41),
       que es un TRINQUETE sin holgura, no un objetivo.
-      ⚠️ OJO AL MEDIRLO EN LOCAL: `eslint .` da 161 en cuanto existe el
-      directorio `coverage/`, porque eslint.config.js:9 ignora dist, .agent,
-      tmp-app y docs pero NO coverage/, y el informe generado aporta 3 avisos de
-      «Unused eslint-disable directive». En el CI no salta sólo porque lint
-      (ci.yml:35) corre ANTES que test:coverage (ci.yml:39); invertir esos dos
-      pasos rompe el trinquete. La cifra comparable es
-      `npx eslint . --ignore-pattern "coverage/**"`.
+      ARREGLADO EN F1A-05 (hallazgo A-5): hasta este commit `eslint .` daba 161 en
+      cuanto existía el directorio `coverage/` —salida de test:coverage, ignorada
+      por git pero NO por eslint—, y el CI sólo pasaba porque lint corría antes
+      que test:coverage. `coverage` entró en globalIgnores
+      (eslint.config.js:9-16), así que la cifra ya no depende del estado local de
+      la máquina y el orden de los pasos del CI dejó de ser una dependencia. Se
+      arregló eliminando la dependencia, no documentándola.
     type_checker: "tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit (typescript ~5.6.2)"
     formatter: "—"
   ci: ".github/workflows/ci.yml — Node 22, servicio postgres:17 adjunto, npm ci -> typecheck -> lint (--max-warnings 158) -> test:coverage (umbrales de vitest.config.ts:58-63) -> build"

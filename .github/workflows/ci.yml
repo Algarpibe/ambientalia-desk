@@ -30,6 +30,12 @@ jobs:
       # de crecimiento, y no lleva holgura a propósito, porque la holgura convierte un trinquete
       # en un adorno. F0-04 añadió cientos de líneas de prueba sin moverlo.
       #
+      # F1A-05: el orden de este paso y el de `test:coverage` YA NO es una dependencia. Hasta
+      # entonces lo era en silencio —`eslint .` lintaba el informe de cobertura y daba 161 contra
+      # este techo de 158—, así que invertirlos habría roto el CI sin que nada lo dijera. El
+      # arreglo fue añadir `coverage` a `globalIgnores` (eslint.config.js:9-16), no declarar el
+      # orden: una dependencia eliminada es mejor que una dependencia documentada.
+      #
       # Si esto rompe: arregla el aviso nuevo, o baja el techo si arreglaste otros. Subirlo exige
       # una línea de justificación en el mensaje del commit.
       - run: npm run lint -- --max-warnings 158

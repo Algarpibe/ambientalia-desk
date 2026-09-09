@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '.agent', 'tmp-app', 'docs']),
+  // `coverage` se añadió en F1A-05. Es salida generada por `npm run test:coverage`, está en
+  // `.gitignore:18` —así que no se versiona— pero SÍ se lintaba: el informe de v8 trae tres
+  // `eslint-disable` que aquí no aplican, y `eslint .` pasaba de 158 avisos a 161 en cualquier
+  // máquina que hubiera corrido la cobertura alguna vez.
+  //
+  // Lo que arregla: que la cifra deje de depender del estado local de la máquina. Lo que NO
+  // arregla: el techo del CI sigue en 158 y sigue SIN HOLGURA a propósito (`ci.yml:28-41`).
+  globalIgnores(['dist', '.agent', 'tmp-app', 'docs', 'coverage']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
