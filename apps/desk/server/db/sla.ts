@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { SLA_HORAS_POR_ESTADO, slaVencido, type Estado } from '@ambientalia/shared'
+import { SLA_HORAS_POR_ESTADO, destinatarioDelEscalado, slaVencido, type DestinatarioEscalado, type Estado } from '@ambientalia/shared'
 
 export interface TicketConSlaVencido {
   id: string
@@ -7,6 +7,8 @@ export interface TicketConSlaVencido {
   estado: Estado
   /** El instante en que el ticket entró en ese estado por ÚLTIMA vez. */
   desde: Date
+  /** A quién se le sube el retraso. Sale de la tabla de derivación por cargo, no de una jerarquía aparte. */
+  escalarA: DestinatarioEscalado
 }
 
 /**
@@ -52,7 +54,9 @@ export async function ticketsConSlaVencido(db: Queryable, ahora: Date): Promise<
     const ultima = (t.rows[0] as { performed_at: Date } | undefined)?.performed_at
     if (!ultima) continue
     const desde = new Date(ultima)
-    if (slaVencido(estado, desde, ahora)) vencidos.push({ id: fila.id, number: Number(fila.number), estado, desde })
+    if (slaVencido(estado, desde, ahora)) {
+      vencidos.push({ id: fila.id, number: Number(fila.number), estado, desde, escalarA: destinatarioDelEscalado(estado) })
+    }
   }
   return vencidos
 }

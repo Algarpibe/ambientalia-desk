@@ -33,11 +33,20 @@ describe('C11 · los tickets con el SLA vencido', () => {
     expect(await ticketsConSlaVencido(db, AHORA)).toEqual([])
   })
 
-  it('un ticket que lleva dos días en Notificado está vencido, y dice desde cuándo', async () => {
+  /**
+   * Y dice A QUIÉN ESCALARLO. El destinatario no es un dato nuevo: sale de la tabla de derivación por
+   * cargo que ya existe (`R08.1.md:1575`), y para `Notificado` es el `Coordinador Comercial` por vía
+   * de `escalado_a_comercial`. Sin este campo, la consulta diría que hay un retraso y no a quién
+   * comunicárselo, que es justo lo que la R08 pedía arreglar.
+   */
+  it('un ticket que lleva dos días en Notificado está vencido, y dice desde cuándo y a quién escalarlo', async () => {
     await ticket('t1', 4200, 'Notificado')
     await entroEn('t1', 'Notificado', '2026-09-08T12:00:00.000Z')
     expect(await ticketsConSlaVencido(db, AHORA)).toEqual([
-      { id: 't1', number: 4200, estado: 'Notificado', desde: new Date('2026-09-08T12:00:00.000Z') },
+      {
+        id: 't1', number: 4200, estado: 'Notificado', desde: new Date('2026-09-08T12:00:00.000Z'),
+        escalarA: { hay: true, cargo: 'Coordinador Comercial', via: ['escalado_a_comercial'] },
+      },
     ])
   })
 

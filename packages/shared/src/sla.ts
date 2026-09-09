@@ -1,4 +1,5 @@
 import type { Estado } from './estados'
+import { CLAVE_DERIVACION, TRANSITIONS, type Transition } from './transitions'
 
 /**
  * EL RELOJ DEL SLA — corrección C11, punto abierto nº 40.
@@ -23,9 +24,10 @@ import type { Estado } from './estados'
  * por tiempo en el blueprint implementado»— y sigue siendo cierto después de F1A-02. Ver la spec
  * `transitions-st` §3.10.
  *
- * ⚠️ Y NO ESCALA. El escalado «al inmediato superior» que la R08 añade a C11 (`:1574`) necesita una
- * jerarquía de cargos que el modelo NO TIENE: `DERIVACION_POR_DEFECTO` sabe qué cargo corresponde a
- * una etapa, no quién está por encima de quién. Queda como punto abierto, no se inventa aquí.
+ * ⚠️ Y ESTE MÓDULO NO ESCALA POR SÍ SOLO, pero SÍ SABE A QUIÉN: `destinatarioDelEscalado`, más
+ * abajo, lo deriva de la tabla de derivación por cargo, que es lo que el maestro manda hacer en la
+ * línea siguiente a pedir el escalado (`:1575`). Lo que falta para que el escalado ocurra es el
+ * planificador, no el destinatario.
  */
 export const SLA_HORAS_POR_ESTADO: Partial<Record<Estado, number>> = {
   // El único que el maestro decidió. Un día = 24 h.
@@ -50,4 +52,58 @@ export function venceSlaEn(estado: Estado, desde: Date): Date | null {
 export function slaVencido(estado: Estado, desde: Date, ahora: Date): boolean {
   const vence = venceSlaEn(estado, desde)
   return vence !== null && ahora.getTime() > vence.getTime()
+}
+
+/**
+ * A QUIÉN SE ESCALA cuando el SLA de un estado se pasa — la segunda pieza de la ampliación R08 de
+ * C11 (`R08.1.md:1574`).
+ *
+ * **NO hace falta una jerarquía aparte, y el maestro lo dice en la línea siguiente a pedir el
+ * escalado:** «Encaja con la derivación de M1.9.2, que ya sabe a qué cargo corresponde cada etapa:
+ * el escalado puede apoyarse en esa misma tabla en lugar de mantener una jerarquía aparte»
+ * (`:1575`). Y esa tabla ya trae el concepto con las mismas palabras: la primera entrada de
+ * `DERIVACION_POR_DEFECTO` lleva escrito «escalar una revisión es **subirla al inmediato superior**»
+ * (`transitions.ts:268`).
+ *
+ * LA REGLA: el destinatario del escalado de un estado es **el cargo que proponen sus transiciones
+ * salientes**. Para `Notificado` —el único con SLA— es `escalado_a_comercial` → `Coordinador
+ * Comercial` (`transitions.ts:220`, `:271`).
+ *
+ * TRES CASOS, y ninguno se resuelve inventando:
+ *
+ * - **Ninguna saliente propone cargo** ⇒ no hay a quién escalar. Se dice, no se inventa. Es lo que
+ *   pasa en la mayoría de los 21 estados, y también en `Notificación cliente`, cuya única entrada en
+ *   la tabla es `primerDerivado` — que devuelve el trabajo a quien tomó el ticket, es decir, lo
+ *   contrario de escalar.
+ * - **Un cargo, por una o varias vías** ⇒ ése, y se dicen todas las vías. Dos caminos al mismo
+ *   puesto no son una ambigüedad: el destinatario es uno.
+ * - **Dos cargos distintos** ⇒ **ambiguo**, y tampoco se elige el primero: eso sería inventar un
+ *   orden entre dos puestos, la misma clase de regla que `DerivacionPorDefecto` evita al ser una
+ *   unión y no dos campos sueltos (`transitions.ts:38-43`). Hoy no ocurre en ningún estado, y hay
+ *   una prueba que lo vigila para cuando F1B-06 añada dos grafos enteros.
+ *
+ * `transiciones` se inyecta para poder probar los casos que el grafo real todavía no tiene. En
+ * producción es siempre `TRANSITIONS`.
+ */
+export type DestinatarioEscalado =
+  | { hay: true; cargo: string; via: string[] }
+  | { hay: false; motivo: 'ningun_cargo' | 'ambiguo' }
+
+export function destinatarioDelEscalado(
+  estado: Estado,
+  transiciones: Transition[] = TRANSITIONS,
+): DestinatarioEscalado {
+  const via: string[] = []
+  const cargos = new Set<string>()
+  for (const t of transiciones) {
+    if (!t.from.includes(estado)) continue
+    const propuesta = t.fields.find((f) => f.key === CLAVE_DERIVACION)?.porDefecto
+    // El `tipo` se comprueba a propósito: `primerDerivado` está en la misma tabla y NO es un cargo.
+    if (propuesta?.tipo !== 'cargo') continue
+    cargos.add(propuesta.cargo)
+    via.push(t.id)
+  }
+  if (cargos.size === 0) return { hay: false, motivo: 'ningun_cargo' }
+  if (cargos.size > 1) return { hay: false, motivo: 'ambiguo' }
+  return { hay: true, cargo: [...cargos][0]!, via }
 }

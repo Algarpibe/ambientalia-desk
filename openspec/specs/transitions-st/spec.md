@@ -3,13 +3,13 @@
 | Dato | Valor |
 |---|---|
 | Capacidad | `transitions-st` (`openspec/config.yaml:87-89`) |
-| Estado | **as-built completo**, contrastado contra el código. **§3.1 (C1) cerrada por F1A-01** y **C11 cerrada en su regla por F1A-02** (RQ-TS-15), las dos el 2026-09-09; el resto del §3 sigue abierto, y §3.10 dice qué falta de C11 |
-| Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s. **Re-verificada en F1A-01** sobre `3aaa0f1`: las mismas cifras. **Ampliada en F1A-02** sobre `ec0ed1f`: 112 ficheros / 945 pruebas, 943 en verde y 2 saltadas |
+| Estado | **as-built completo**, contrastado contra el código. **§3.1 (C1) cerrada por F1A-01** y **C11 cerrada en su regla y en su destinatario de escalado por F1A-02** (RQ-TS-15 y RQ-TS-16), las dos el 2026-09-09; el resto del §3 sigue abierto, y §3.10 dice qué falta de C11 |
+| Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s. **Re-verificada en F1A-01** sobre `3aaa0f1`: las mismas cifras. **Ampliada en F1A-02** sobre `ec0ed1f`: 112 ficheros / 953 pruebas, 951 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |
-| Contenido | **15** requisitos (`RQ-TS-01`…`RQ-TS-15`) · **10** entradas de comportamiento actual (§3.1–§3.10), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
+| Contenido | **16** requisitos (`RQ-TS-01`…`RQ-TS-16`) · **10** entradas de comportamiento actual (§3.1–§3.10), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
 | Diseño de procedencia | `docs/superpowers/specs/2026-06-04-subsistema-b-transiciones-postgres-design.md` (124 líneas, «Aprobado para planificación»). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | M1.3 (`R08.1.md:1106-1443`) · M1.9.1 (`:1614-1650`) · M1.9.2 (`:1651-1666`) · M1.9.3 (`:1667-1674`) · M1.10 (`:1675-1677`) · Anexo H.2 (`:4488-4496`) |
-| Tandas que la tocan | **F1A-01** (C1 — **hecha**, 2026-09-09) · **F1A-02** (C11: la regla, **hecha**; el disparo y el escalado, §3.10) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:20-26` |
+| Tandas que la tocan | **F1A-01** (C1 — **hecha**, 2026-09-09) · **F1A-02** (C11: la regla y el destinatario del escalado, **hechos**; el disparo, §3.10) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:20-26` |
 | Depende de | `permissions` (la función pura), `trazas` (el historial), `tickets-core` (la fila del ticket) |
 
 ---
@@ -356,7 +356,42 @@ El SLA **SHALL** declararse como **dato**, no derivarse del grafo
   así que no es ninguno de los ocho de la vista ni de los cuatro sin salida. Probado.
 
 **Lo que este requisito NO incluye, y sigue abierto — ver §3.10.** Nada de esto **dispara**: no hay
-planificador. Y no hay escalado: la jerarquía de cargos que pide la R08 no existe en el modelo.
+planificador. El destinatario del escalado sí está resuelto, y es `RQ-TS-16`.
+
+### RQ-TS-16 · A quién se escala — la segunda pieza de C11, cerrada en F1A-02
+
+El destinatario del escalado **SHALL** derivarse de la tabla de derivación por cargo que ya existe,
+**no** de una jerarquía aparte. Lo manda el maestro en la línea siguiente a pedir el escalado:
+«Encaja con la derivación de M1.9.2, que ya sabe a qué cargo corresponde cada etapa: el escalado
+puede apoyarse en esa misma tabla en lugar de mantener una jerarquía aparte» (`R08.1.md:1575`). Y esa
+tabla ya traía el concepto con las mismas palabras: `DERIVACION_POR_DEFECTO` abre con «escalar una
+revisión es **subirla al inmediato superior**» (`transitions.ts:268`).
+
+`destinatarioDelEscalado(estado)` (`packages/shared/src/sla.ts`) **SHALL** devolver **el cargo que
+proponen las transiciones salientes de ese estado**, con estos tres casos y ninguno resuelto
+inventando:
+
+| Caso | Devuelve | Por qué |
+|---|---|---|
+| Un cargo, por una o varias vías | `{ hay: true, cargo, via[] }` | Dos caminos al mismo puesto no son ambigüedad: el destinatario es uno, y se dicen las dos vías |
+| Ninguna saliente propone cargo | `{ hay: false, motivo: 'ningun_cargo' }` | La función **MUST NOT** mentir sobre los estados que no tienen a quién escalar |
+| Dos cargos distintos | `{ hay: false, motivo: 'ambiguo' }` | Elegir el primero sería inventar un orden entre dos puestos — la misma clase de regla que `DerivacionPorDefecto` evita al ser una unión (`transitions.ts:38-43`) |
+
+- `primerDerivado` **MUST NOT** contar como destinatario de escalado, aunque esté en la misma tabla:
+  devuelve el trabajo a quien tomó el ticket, que es lo **contrario** de escalar. Es lo que hace
+  `Notificación cliente` con `aprobacion`, y sin la comprobación del `tipo` colaría como cargo.
+- Hoy **SHALL** haber exactamente **dos** estados con destinatario: `Rev./Diagnostico` → Director
+  Técnico (`escalado_a_revision`) y `Notificado` → Coordinador Comercial (`escalado_a_comercial`,
+  `transitions.ts:220`, `:271`). Y **ninguno ambiguo**: hay una prueba que lo vigila para cuando
+  F1B-06 añada dos grafos enteros.
+- Todo estado con SLA declarado **SHALL** tener destinatario. Si mañana se declara un SLA sobre un
+  estado sin escalado saliente, el reloj mediría un retraso que no se le puede comunicar a nadie, y
+  la prueba lo dice antes.
+- `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts`) **SHALL** devolverlo junto al ticket y al
+  «desde»: un retraso sin destinatario no es accionable, y es justo lo que la R08 pedía arreglar.
+
+---
+
 ## 3 · Comportamiento actual, a corregir
 
 Todo lo de esta sección es **as-built**. F0-02 la escribió y **no corrigió nada**; las tandas de la
@@ -574,45 +609,51 @@ F0-02 **MUST NOT** corregirlo: es código, y esta tanda no toca código.
 
 ---
 
-### 3.10 · C11 — la mitad del reloj que no se puede construir todavía · **destino: sesión de trabajo**
+### 3.10 · C11 — lo único que falta es el planificador · **destino: sesión de trabajo**
 
-**Cerrado en F1A-02: la regla.** `RQ-TS-15` la declara y está probada. **Abierto: lo que la haría
-actuar.** Son dos cosas distintas y ninguna se puede inventar desde el código.
+**Cerrado en F1A-02: la regla Y el destinatario del escalado** (`RQ-TS-15`, `RQ-TS-16`). **Abierto:
+el disparo.** Es una cosa, no dos, y la lista se acortó al releer el maestro una línea más allá.
 
-**① No hay planificador. Nada consulta el reloj.** El maestro lo dice de sí mismo y sigue siendo
-cierto después de esta tanda: «`[ABIERTO — AS-BUILT]` No existe hoy ninguna transición por tiempo en
-el blueprint implementado. Ni escalado automático, ni caducidad de las cuatro esperas. Todo
-movimiento requiere que alguien pulse un botón o que el servidor reaccione a una remisión»
-(`R08.1.md:1588`). **Verificado por comando** en F1A-02: `grep -rn "setInterval\|cron\|scheduler"`
-sobre `apps/desk/server/` y `packages/` no devuelve ninguna llamada. `ticketsConSlaVencido` es
-exactamente la consulta que un planificador llamaría; hoy no la llama nadie.
+**No hay planificador. Nada consulta el reloj.** El maestro lo dice de sí mismo y sigue siendo cierto
+después de esta tanda: «`[ABIERTO — AS-BUILT]` No existe hoy ninguna transición por tiempo en el
+blueprint implementado. Ni escalado automático, ni caducidad de las cuatro esperas. Todo movimiento
+requiere que alguien pulse un botón o que el servidor reaccione a una remisión» (`R08.1.md:1588`).
+**Verificado por comando** en F1A-02: `grep -rn "setInterval\|cron\|scheduler"` sobre
+`apps/desk/server/` y `packages/` no devuelve ninguna llamada. `ticketsConSlaVencido` es exactamente
+la consulta que un planificador llamaría —y ya devuelve el ticket, desde cuándo y a quién escalarlo—;
+hoy no la llama nadie.
 
-**② No hay jerarquía. No se puede escalar «al inmediato superior».** La R08 amplía C11 con dos
-piezas (`R08.1.md:1572-1575`), y la segunda es «si el estado se excede, el aviso se repite al
-inmediato superior». El maestro sugiere apoyarla en la derivación de M1.9.2, «que ya sabe a qué cargo
-corresponde cada etapa» (`:1575`) — pero eso es media relación: `DERIVACION_POR_DEFECTO`
-(`transitions.ts:267-276`) dice **qué cargo atiende una etapa**, no **quién está por encima de
-quién**. La relación superior→subordinado no existe en `roles`, ni en `users`, ni en el grafo.
-Declararla es una decisión de organización, no de código, y F1A-02 **MUST NOT** inventarla.
+> **Corrección de esta misma entrada, y es una lección de método.** Su primera redacción decía que el
+> escalado estaba bloqueado por «una jerarquía de cargos que el modelo no tiene», y que declararla era
+> una decisión de organización. **Era falso, y el error fue pararse una línea antes.** `R08.1.md:1574`
+> pide el escalado «al inmediato superior»; `:1575` —la línea siguiente— dice de dónde sale:
+> «Encaja con la derivación de M1.9.2, que ya sabe a qué cargo corresponde cada etapa: **el escalado
+> puede apoyarse en esa misma tabla en lugar de mantener una jerarquía aparte**». Y la tabla ya traía
+> el concepto con las mismas palabras: `DERIVACION_POR_DEFECTO` abre con «escalar una revisión es
+> **subirla al inmediato superior**» (`transitions.ts:268`).
+>
+> Lo que sí sigue siendo cierto es que **no hay jerarquía general**: fuera de las etapas que declaran
+> cargo, nadie sabe quién está por encima de quién. Pero C11 no la necesitaba, porque su alcance es un
+> solo estado y ese estado sí declara el suyo.
 
-**③ Y la primera de las dos piezas de la R08 YA ESTABA CONSTRUIDA.** «Aviso redundante por correo
-cuando una transición cambia de área» (`:1573`) es lo que el motor hace desde antes de esta tanda:
-calcula las áreas destinatarias desde el estado de llegada, escribe el aviso en la aplicación y lo
-manda por correo en la misma llamada (`ticketService.ts:154-177`; spec `derivacion-avisos` RQ-AV-04 y
-RQ-AV-09). **El propio maestro lo dice nueve líneas más abajo de pedirlo**: «`[AS-BUILT]` Al
-ejecutarse cualquier transición, el sistema calcula el área destinataria del aviso a partir del
-estado de llegada y notifica en la aplicación **y por correo**» (`:1582`). Lo que faltaba de verdad
-en ese canal no era el correo: era poder encenderlo sin romper la regla de secretos, y eso es lo que
-F1A-02 cierra en `DEPLOY.md` §4.2 (spec `derivacion-avisos` §4.3).
+**La primera de las dos piezas de la ampliación YA ESTABA CONSTRUIDA.** «Aviso redundante por correo
+cuando una transición cambia de área» (`:1573`) es lo que el motor hace desde antes de esta tanda
+(`ticketService.ts:154-177`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
+dice nueve líneas más abajo de pedirlo**: «`[AS-BUILT]` Al ejecutarse cualquier transición, el sistema
+calcula el área destinataria del aviso a partir del estado de llegada y notifica en la aplicación **y
+por correo**» (`:1582`). Lo que faltaba en ese canal era poder encenderlo sin romper la regla de
+secretos: cerrado en `DEPLOY.md` §4.2.
 
-**Qué hace falta para cerrar el resto**, en el orden en que se puede:
+**Qué hace falta para cerrar C11 del todo:**
 
-| Pieza | Qué falta | Quién lo decide |
+| Pieza | Estado | Quién lo decide |
 |---|---|---|
-| El disparo | Un planificador —o un barrido en el arranque, o una llamada desde el tablero— que consulte `ticketsConSlaVencido` | Diseño, no negocio |
-| El destinatario del escalado | La relación cargo→superior, declarada como dato | **Gerencia** |
-| El alcance del reloj | Si el SLA se extiende a otros estados de espera de decisión (`R08.1.md:4011` lo pregunta) | **Gerencia** |
-| Los tickets replicados | Qué hacer con los que no tienen traza y no se pueden medir (RQ-TS-15) | Diseño + Gerencia |
+| La regla del reloj | **Hecha** (`RQ-TS-15`) | — |
+| El destinatario del escalado | **Hecho** (`RQ-TS-16`) | — |
+| El correo al cambiar de área | **Ya estaba**, y ahora documentado en `DEPLOY.md` §4.2 | — |
+| **El disparo** | **Falta.** Un planificador, un barrido al arrancar o una llamada desde el tablero | Diseño, no negocio |
+| Si el SLA se extiende a otros estados | Abierto (`R08.1.md:4011` lo pregunta) | **Gerencia** |
+| Qué hacer con los tickets replicados, que no tienen traza | Abierto (`RQ-TS-15`) | Diseño + Gerencia |
 
 ---
 
