@@ -243,3 +243,47 @@ de `public`, porque extender el guardián sin tocar el `.sql` lo dejaba rojo par
 - La unidad de avance son **las tandas del §5 del plan, ponderadas por talla**. Se publican siempre
   dos cifras —tandas cerradas y % de esfuerzo estimado— con el denominador fechado. Detalle en
   `openspec/config.yaml` (`unidad_de_avance`).
+
+### Las dos reglas del ciclo — las dos salieron de tropezar con él
+
+#### Regla del ciclo 1 — una tarea de una persona no es una unidad de trabajo
+
+> Un cambio cuyas tareas pendientes son decisiones o comprobaciones **de personas** SÍ se puede
+> archivar. Lo que no se puede es **contarlas como tareas**: `~/.claude/skills/_shared/sdd-status-contract.md:138`
+> y `:141` exigen que *todas* estén completas para que `verify` y `archive` pasen a `ready`, y una
+> casilla cuyo dueño está fuera del repositorio no la marca ninguna tanda. Se sacan del recuento y se
+> declaran aparte, en una sección con **dueño, destino y dónde queda escrito**, diciendo
+> explícitamente que **archivar no las da por hechas**.
+
+*Por qué existe:* el 2026-09-10 se dio por sentado lo contrario —«ese cambio no se cierra nunca por esa
+vía»— y era falso. `reasignar-desvios-huerfanos` pasó de `9/12 · verify: blocked` a
+`10/10 · verify: ready` **cambiando sólo la FORMA de su `tasks.md`**, mismo repositorio, mismo minuto,
+sin tocar una línea de código; y `mensaje-422-cliente-duplicado` pasó de `24/26` a `25/25` igual.
+El límite del ciclo es real, pero **muerde sólo si modelas una entrega como trabajo pendiente**. El
+aviso estaba a la vista las dos veces: el encabezado de la sección ya decía «de Gerencia, no de esta
+tanda».
+
+*Y el reverso, que es la parte que se puede hacer trampa:* antes de sacar una casilla del recuento,
+comprueba que **no describe trabajo que una tanda podría hacer en este repositorio**. Si lo describe,
+es una tarea de verdad y sacarla es maquillar el contador.
+
+#### Regla del ciclo 2 — una tanda SDD por árbol de trabajo, nunca dos a la vez
+
+> `gentle-ai sdd-attempt` mide `changed_lines` diffeando el **ÁRBOL ENTERO** entre el principio y el
+> final del intento, no el cambio. Dos tandas SDD corriendo a la vez sobre el mismo working tree se
+> imputan las líneas la una a la otra. Si hacen falta dos en paralelo, van en **worktrees aislados**,
+> uno por cambio.
+
+*Por qué existe:* el 2026-09-10 se lanzó el `sdd-archive` de `reasignar-desvios-huerfanos` y el
+`sdd-apply` de `mensaje-422-cliente-duplicado` al mismo tiempo sobre `C:\dev\Desk_2_R1.023`. El
+`settle` del segundo devolvió `blocked(maintainer_decision)` con **`changed_lines: 1718` contra un
+presupuesto de 800** — y las suyas eran **73** (`ticketService.ts` +9/-3, `ticketService.test.ts`
++56/-5: 65 inserciones y 8 borrados, `git diff --shortstat e09fb0d c4fc97d -- apps/desk/server/services/`).
+Las otras ~1.645 eran el `verify-report.md` (+206) y el `archive-report.md` (+125) de la
+primera y sus fusiones en `openspec/specs/`. El diff de los dos árboles del propio intento lo enseña
+en una línea.
+
+*Lo que cuesta, y por eso no es un detalle:* desbloquearlo exige `gentle-ai sdd-attempt reset`, que la
+herramienta **reserva a un mantenedor y nunca hace sola**. O sea que un descuido de paralelismo del
+agente **para la tanda y necesita a una persona** para arrancar otra vez. Ganar diez minutos de reloj
+cuesta un turno entero.

@@ -145,9 +145,28 @@ alta (§4.1, punto abierto); pruebas `.tsx` (decisión de Gerencia, F0-00, 2026-
 - [x] 7.3 `npm run lint`: 0 errores, 158 avisos — los 158 son preexistentes en `packages/zoho-sync`
       (`@typescript-eslint/no-explicit-any`); **0 avisos nuevos** en `ticketService.ts` ni
       `ticketService.test.ts` (confirmado con grep dirigido).
-- [ ] 7.4 Verificación en la app (`ambientalia-desk.ambientalia.cloud`): pendiente — requiere sesión
-      interactiva en el navegador contra producción, fuera del alcance de este entorno de ejecución.
-      Queda para quien despliegue el cambio, junto al criterio de aceptación §8 de la propuesta.
-- [ ] 7.5 Commit: el orquestador hace el commit, no `sdd-apply` (regla explícita de esta sesión:
-      «No commit. El orquestador hace el commit»). Árbol de trabajo dejado con los cambios sin
-      commitear.
+- [x] 7.4 Commit: hecho por el orquestador, no por `sdd-apply` (regla explícita de la sesión: «No
+      commit. El orquestador hace el commit»). **Commit `c4fc97d`**, sobre `e09fb0d`, empujado a
+      `origin/main`. Contiene `ticketService.ts` (+8/-2), `ticketService.test.ts` (+61/-4) y los
+      artefactos SDD del cambio. *(Era la 7.5; se renumera al salir la verificación en la app.)*
+
+## Fase 8 · Entregado a una persona — handoff, no tarea de este cambio
+
+**Por qué no es una casilla, y por qué se aprendió a base de tropezar.** El contrato del ciclo exige
+que *todas* las tareas estén completas para que `verify` y `archive` pasen a `ready`
+(`~/.claude/skills/_shared/sdd-status-contract.md:138` y `:141`). Una casilla cuyo dueño es una persona
+no la puede marcar ninguna tanda: mientras esté en la lista, el cambio **no se archiva nunca**. Es el
+mismo caso que `reasignar-desvios-huerfanos`, que pasó de `9/12 · verify: blocked` a
+`10/10 · verify: ready` **cambiando sólo la forma de su `tasks.md`**, sin tocar una línea de código.
+
+La conclusión, que corrige la que se sacó el primer día: **un cambio con tareas de personas SÍ se
+archiva.** Lo que no se puede es contarlas como unidades de trabajo. Se declaran aparte, con dueño y
+con destino, y se dice explícitamente que archivar no las da por hechas.
+
+| # | Qué falta | Quién | Dónde queda escrito |
+|---|---|---|---|
+| V1 | Verificación en la app sobre `ambientalia-desk.ambientalia.cloud`: tablero → «Nuevo ticket» (`apps/desk/src/App.tsx:100`) → elegir **primero el cliente y después un equipo de otro cliente** (el campo se bloquea al revés, `CreateTicket.tsx:118`). El mensaje sale en rojo bajo Asunto (`CreateTicket.tsx:344`) con los dos nombres y los dos ids | Quien despliegue | Criterio de aceptación §8 de `proposal.md`; ⚠️ el CI **no despliega** |
+
+Archivar este cambio **no da V1 por hecha**: la implementación está probada por `ticketService.test.ts`
+(T1-T4, 1003 pruebas en verde), y lo que V1 comprueba es otra cosa —que el mensaje llega entero a la
+pantalla de producción, sin recortes de maquetación.
