@@ -416,3 +416,189 @@ M1.10). **El bodegaje de entrada toma la fecha de la OV asociada en `Habilitar S
 - **IV-2** garantiza que la fecha que abre esa espera no llegue mal del navegador.
 
 **Cerrado P21 con esta salida, IV-2 deja de ser opcional.**
+
+---
+
+## 8 · nº 52 · Criterios de la subOV de lote — opción A, con cuatro compensaciones
+
+**Decidido.** Clave: `decision/subov-lote-convencion`. Evidencia: Zoho Books org. 714421387, 188 OV de 2026.
+
+**El lote se identifica por la convención de número de la OV.** Es la opción más barata y la que menos
+cambia hoy. **Se asume frágil y se compensa**, de modo que un número mal escrito **se detecte** en vez
+de descuadrar el saldo en silencio.
+
+### 8.1 · Formato canónico
+
+| Elemento | Formato | Ejemplo |
+|---|---|---|
+| **Lote** (prefijo, **no es documento**) | `OV-AAAA-NNN` | `OV-2026-170` |
+| **SubOV** (documento real en Books) | `OV-AAAA-NNN-SS` | `OV-2026-170-01`, `-02`… |
+
+`SS` siempre dos dígitos (01–99). Expresión que usa Desk: `^OV-(\d{4})-(\d{3,4})-(\d{2})$`.
+**El número base nunca existe como OV propia en Books** — sólo las subOV, para no contar dos veces el
+mismo ingreso ni la misma reserva de stock. El tamaño del lote es el número de subOV creadas, todas de
+golpe al recibir la OC del cliente.
+
+> **⚠️ ESTO CONTRADICE UN `[DECIDIDO 27/08]` DEL MAESTRO, EN CUATRO SITIOS.**
+> `R08.1.md:2065-2066` —el texto de la decisión—, `:199`, `:847` y `:3774` documentan el formato como
+> **`OV-XXX_1, _2, _3`**: guion bajo y un solo dígito. **El ejemplo que la nueva regla pone en
+> cuarentena, `OV-2026-104_1`, es exactamente el formato que el maestro decidió.**
+>
+> No es motivo para revertir —dos dígitos ordenan bien, y `_1` / `_10` se ordenan mal como texto— pero
+> **es un cambio a una decisión cerrada, no una precisión**: va al acta como «modifica el formato del
+> `[DECIDIDO 27/08]`» y al fichero de correcciones al maestro con las cuatro líneas.
+
+### 8.2 · Las cuatro medidas contra la fragilidad
+
+1. **Regla escrita para Comercial**, con ejemplo, en el procedimiento de creación de OV.
+2. **Validación en Desk al sincronizar, que falla a la vista.** Una OV con sufijo que no cumpla la
+   expresión queda en **cuarentena**: no sale en el desplegable, no suma ni resta en ningún saldo, y
+   aparece en una lista «OV con número no reconocido» visible para Comercial.
+3. **Validación en Books si es posible** — comprobar si admite regla o función personalizada.
+4. **Verificar la secuencia automática de Books.** La subOV exige sobrescribir a mano el número; si la
+   secuencia no avanza sola, Books podría emitir más adelante **el número base como OV normal**, y ese
+   número está reservado para el lote. Choque silencioso meses después.
+
+### 8.3 · Los tres criterios
+
+| Criterio | Implementación |
+|---|---|
+| Se retira del desplegable al consumirse | SubOV sin asociación vigente, no anuladas, no en borrador, no en cuarentena |
+| El saldo del lote es visible | Por lote: creadas / consumidas / libres. `% ejecutado = consumidas / creadas` — alimenta P53 y el informe trimestral |
+| Un contrato agotado no se consume | Sin subOV libres no hay nada que ofrecer, más una guarda de servidor |
+
+**Invariante que impone el servidor:** una subOV tiene **como máximo un ticket vigente** — índice único
+parcial sobre las asociaciones no liberadas. Coherente con `decision/n52-cardinalidad-ov`.
+
+### 8.4 · Anulación de un ticket con subOV asociadas
+
+**La asociación no se borra: se marca liberada**, con fecha, hora, persona y motivo (regla R08;
+«borrar tampoco es anular»). Por eso las asociaciones llevan historial y no son un campo. Sólo se
+libera lo no consumido: si hubo diagnóstico facturable, esa subOV queda consumida.
+
+**Depende de C2 (`Anulado`), que no existe todavía.** Mientras tanto habrá una acción manual «liberar
+subOV», con traza y restringida a Comercial. Sin ella, un ticket abandonado que sale por
+`Rechazo → Por Facturar → Finalizado` se queda su subOV y **el saldo del lote miente para siempre**.
+
+**Verificado: el estado de la OV sí se sincroniza** — `schema.sql:161` tiene `status text` en
+`books.sales_orders` y la vista lo expone en `:178`. Que lleguen los valores `void` / `draft` es dato,
+no esquema.
+
+### 8.5 · Pendientes
+
+- **Vigencia por fecha.** La opción A no tiene dónde guardar un fin de contrato. Si un paquete anual
+  vence con subOV libres, ¿se pueden seguir usando? **Primer motivo para pasar a B.**
+- Anular `OV-2026-1000-01` («OV prueba», abierta y vencida): tiene formato de subOV de un lote que no
+  existe y se colaría en el desplegable.
+- **Barrer si ya existe alguna subOV con el formato `_1`**, que entraría en cuarentena el día uno.
+
+### 8.6 · Alternativas registradas, y cuándo revisar
+
+| Opción | Qué es el lote | Cuándo pasar a ella |
+|---|---|---|
+| **B** · campo o registro padre en Desk | Un dato nuevo | La cuarentena recibe errores recurrentes · hace falta vigencia por fecha o cantidad pactada distinta del número de subOV |
+| **C** · el lote es la OV y Desk lleva el reparto por línea | Un dato que ya existe | Los lotes con repuestos obligan a repartir a mano cada línea · la secuencia de Books no admite bien la sobrescritura — **C es la única que no toca la numeración** |
+
+---
+
+## 9 · Entrada 4 · El mapa se mantiene, pero generado desde el código
+
+**Decidido.** Clave: `decision/mapa-blueprint-generado`.
+
+**Sí al mapa visual, sólo si se genera desde `transitions.ts`.** Un mapa hecho a mano —o regenerado
+con IA leyendo el código— no se mantiene.
+
+- `docs/artefactos/blueprintserviciotecnico.html` **se retira como histórico congelado en `a3a8f03`**,
+  precedente `docs/superpowers/`.
+- Se sustituye por un diagrama derivado de `transitions.ts` mediante script, **con una prueba que
+  impide que quede desfasado**.
+
+### 9.1 · Por qué un mapa hecho a mano no
+
+La lección de la R05 ya está en el maestro (§1.3): el mapeo de febrero estaba bien; lo que falló fue el
+**resumen** que entró al documento —veinte filas con cuatro correctas—. «El riesgo no estaba en
+levantar el proceso, estaba en resumirlo sin volver a la fuente.»
+
+Un mapa que alguien redibuja en cada auditoría es otro resumen: acierta el día que se hace y empieza a
+mentir con el siguiente commit. **«Se regenera en cada tanda `audit-*`» no era un mecanismo, era una
+promesa**, y F1A-05 demostró que nadie la cumplió.
+
+### 9.2 · Por qué sí uno generado
+
+1. **Tiene destinatario real** — Servicio Técnico revisa demos, no código. El Anexo F lo declara fuente
+   gráfica de §M1.3, y C8 (portal) necesitará la misma vista.
+2. **Los datos ya están declarados** — `transitions.ts` es el único sitio del grafo, `estados.ts` los
+   21 estados y los `sin_salida`, `permissions.ts` el área. El generador **no interpreta: recorre**.
+3. **El patrón de control ya existe en el repositorio** — es el del guardián anti-drift de `schema.sql`
+   (`migrate.test.ts`): una prueba regenera y compara; si alguien cambia `transitions.ts` sin
+   regenerar, el CI falla. **Cumple la promesa mejor que el plan: se actualiza con cada commit, y lo
+   vigila una prueba, no una persona.**
+4. **Cubre los flujos nuevos gratis** — si F1B-06 los declara con la misma convención, el generador los
+   dibuja sin trabajo extra, y la ampliación de M11.6 para F1B-09 deja de ser manual.
+
+### 9.3 · Qué entra y qué no
+
+| Contenido del HTML actual | Destino |
+|---|---|
+| Diagrama de estados y transiciones | Generado desde `transitions.ts` |
+| Leyenda por área | Generada desde `permissions.ts` |
+| Estados de espera / sin salida marcados | Generados desde `estados.ts` |
+| **Fichas de los hallazgos** | **No van al mapa** — son contenido de auditoría y viven en el documento de cada `audit-*` |
+
+**Formato: Mermaid (`stateDiagram-v2`) en un `.md`** dentro de `docs/artefactos/`. Se ve en GitHub, en
+VS Code y en el maestro exportado, sin herramientas nuevas. Con 21 estados el diagrama completo es
+denso: conviene generar además **una vista por fase**, las tres de M1.3.1.
+
+### 9.4 · Talla y sitio
+
+**La talla no se afirma:** la dimensiona una exploración corta. Debería salir pequeña —no hay decisión
+de negocio, los datos ya están declarados y el patrón de prueba existe—; **si diera más que S, se
+revisa la decisión antes de comprometer semana**.
+
+**Sitio: en F1A** —no necesita decisión de negocio— **y antes de F1B-06**, para que equipo nuevo y
+soporte remoto nazcan con su diagrama. F1B-09 hereda un generador que funciona, no una fila vacía.
+
+### 9.5 · Un hueco que el generador tiene que cerrar ANTES de su criterio de aceptación
+
+**El maestro dice que el mapa tiene 38 pasos** (`R08.1.md:1151`: «Dos de los 38 pasos del mapa no son
+transiciones con botón»). **El código tiene 34 con botón** —invariante 2 en verde— **más 2 sin botón =
+36**. Faltan dos, y nadie sabe cuáles.
+
+Puede que el mapa cuente *caminos* en vez de transiciones: `habilitar_servicio` tiene tres orígenes y
+dibujaría tres flechas. Pero sea lo que sea, **hay un hueco de dos entre el maestro y el código**.
+
+Es el mejor argumento a favor de esta decisión: **un mapa generado lo habría hecho visible el primer
+día.** El de agosto lleva desde entonces diciendo 38 sin que nadie lo cruzara con el código.
+
+### 9.6 · Cambio al maestro (R09), Anexo F
+
+Sustituir «…vive como artefacto interactivo […] y se actualiza con cada auditoría del código» por:
+
+> «El mapa visual del blueprint se genera desde `transitions.ts` (`docs/artefactos/blueprint-*.md`) y
+> una prueba impide que quede desfasado. Las fichas de hallazgos viven en los documentos de auditoría.»
+
+---
+
+## 10 · Las entradas 1, 2, 3 y 5 del plan — APROBADAS
+
+Gerencia aprueba las cuatro. **La 2 se aprueba en su versión corregida**, no la del fichero: la
+evidencia de los 181 tickets la dejó caduca el mismo día.
+
+| Entrada | Estado |
+|---|---|
+| **1** · la fuente de C11 es el maestro, no el acta | Aprobada tal cual |
+| **2** · el gate de F1A-03 | Aprobada **con el texto corregido** (ver abajo) |
+| **3** · el ancla del bodegaje | Aprobada tal cual |
+| **4** · el generador | Decidida — §9 de este documento |
+| **5** · la fila que falta y las dos decisiones | Aprobada tal cual |
+
+**Texto corregido de la entrada 2** para la columna Gate de `plan:140`:
+
+```
+Ninguno para la transición (as-is: Verificación —Liberación→ Finalizado, 71 usos
+observados). La GUARDA de obligatoriedad por familia espera a Gustavo/Calidad ·
+Anexo D nº 38. Se hace antes de F1B-06, que la hereda
+```
+
+**Y la tabla de decisiones del plan (`plan:348-359`) necesita ahora TRES filas nuevas**, no dos:
+`decision/n52-cardinalidad-ov`, `decision/vista-todos-tablero` y `decision/p21-ingreso-sin-ov`.
