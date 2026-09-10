@@ -272,6 +272,19 @@ repo_state:
 # La lección de método, que vale más que las dos entradas: este fichero PUEDE
 # ESTAR CADUCO. Antes de citarlo como autoridad sobre el estado del código, hay
 # que comprobarlo contra el código.
+#
+# ⚠️ REASIGNADO EL 2026-09-09, y la razón es una regla nueva del proyecto.
+# Al cerrar F1A, sus CUATRO desvíos vivos —IV-1, IV-2, IV-4, IV-5— seguían
+# apuntando a "F1A". Un destino que nombra una épica cerrada no es un destino:
+# el desvío queda sin dueño mientras el fichero sigue diciendo que lo tiene, y
+# eso se carga en cada sesión y en cada sub-agente como si fuera cierto.
+# LA REGLA: cuando una épica se cierra, hay que barrer los desvíos que la
+# nombraban. El cierre de la épica es quien lo caza, no el turno siguiente.
+# Estado tras el barrido: IV-1, IV-5 e IV-7 → F1B-08 (son el mismo tablero).
+# IV-2 e IV-4 → PUNTOS ABIERTOS: ninguna tanda los cubre y no son filas que
+# falten, porque antes hay que decidir algo que no es técnico. IV-6 → cerrado
+# por F1B-01. IV-7 es nuevo, encontrado el 2026-09-09 contra el Zoho Desk real.
+# Ninguna corrección de código en esta tanda: fue reasignación, no arreglo.
 incumplimientos_vivos:
   - id: IV-1
     regla: 1
@@ -298,7 +311,28 @@ incumplimientos_vivos:
       La redacción de F0-01 decía "y uno que la lleve sin serlo sí", dando por
       posible el falso positivo. Verificado en F0-02: hoy NO existe ninguno.
       La frase describía el riesgo del criterio, no un caso vivo.
-    destino: "F1A, consumiendo el registro de estados de F0-04 (`ESTADOS_EN_ESPERA`)"
+    destino: "F1B-08"
+    reasignado: >
+      2026-09-09. El destino anterior decía "F1A, consumiendo el registro de
+      estados de F0-04 (ESTADOS_EN_ESPERA)", y F1A cerró sin tocarlo: quedó sin
+      dueño mientras el fichero seguía diciendo que lo tenía.
+      DOS COSAS DISTINTAS EN ESA FRASE, y sólo una era destino. La dependencia
+      —el registro— ya está satisfecha: ESTADOS_EN_ESPERA existe desde F0-04
+      (packages/shared/src/estados.ts:111) y boardView.ts NO lo importa (su
+      única importación es el tipo Ticket, :1). O sea que el bloqueo que la
+      frase implicaba desapareció hace tandas; lo único que faltaba era la
+      épica.
+      POR QUÉ F1B-08 Y NO OTRA: plan:157 declara "vistas de listado y ficha
+      equivalentes a las de Zoho Desk", ítem 22 del maestro ("Interfaz que
+      replica la estructura de Zoho Desk"). La regex alimenta las vistas
+      `abiertos` (:43) y `espera` (:44): es exactamente una vista de listado que
+      no equivale a la de Zoho Desk. No se improvisa tanda: la fila existe y su
+      contenido lo cubre.
+      OJO AL GATE: F1B-08 lleva P44, que es la política de ESCRITURA contra
+      Zoho. No gatea esta parte —arreglar un filtro de vista es sólo lectura—,
+      pero la tanda entera sí espera a P44. Si eso resultara bloqueante, la
+      salida es sacar el filtro a una fila propia, no dejarlo otra vez sin
+      dueño.
 
   - id: IV-2
     regla: 1
@@ -314,7 +348,36 @@ incumplimientos_vivos:
       COMENTARIO de cabecera, no el código: la regla ejecutable está en :49-79.
       La cita no es falsa —ahí se declara el incumplimiento— pero apunta a la
       documentación, no a la implementación.
-    destino: "F1A o F1C, decisión de alcance"
+    destino: "PUNTO ABIERTO PARA GERENCIA — sin tanda, y a propósito"
+    reasignado: >
+      2026-09-09. El destino anterior era "F1A o F1C, decisión de alcance", y esa
+      disyuntiva ERA el aviso: nunca fue un destino, fue la constancia de que
+      nadie había decidido. F1A cerró y la disyuntiva sigue abierta.
+      NINGUNA TANDA LO CUBRE POR CONTENIDO. Se buscó: F1C-06 (plan:171) calcula
+      los bodegajes y el reloj del SLA, no decide dónde vive la derivación de
+      fechas; F1B-06 (plan:155) añade grafos, no mueve reglas al servidor. Cero
+      filas del plan hablan de trasladar derivaciones del cliente al servidor.
+      Y TAMPOCO ES UNA FILA QUE FALTE, que es la otra salida posible: antes de
+      escribir una tanda hay que decidir si esto necesita contrapartida, y esa
+      pregunta no es técnica.
+      LA PREGUNTA, PLANTEADA CON LO QUE SE SABE. valoresConocidos (:49-79) deriva
+      tres fechas —`Fecha creación ticket`, `Fecha Remisión Entrada` y
+      `Fecha Revisión Informe`— y TransitionPanel las pinta BLOQUEADAS. O sea que
+      el usuario no puede contradecirlas, pero la API sí: el servidor acepta el
+      valor que le manden. Bajo la regla invariable 13 eso no es un espejo, es la
+      guarda, y una guarda en el cliente no es una guarda.
+      LO QUE HACE QUE NO SEA COSMÉTICO, y es el dato que faltaba en la entrada
+      anterior: las tres son operandos de indicadores. `Fecha Remisión Entrada`
+      abre el bodegaje de entrada (bodegaje.ts:60-66) y `Fecha creación ticket`
+      es justo la que rompió los indicadores 48, 49 y 56 al separarse del ingreso
+      real. Un cliente que se salte la derivación no ensucia una pantalla:
+      ensucia los KPIs.
+      LAS DOS SALIDAS, PARA QUE GERENCIA ELIJA: (a) el servidor deriva estas tres
+      fechas y rechaza las que no cuadren, y el cliente pasa a ser comodidad
+      probada —lo mismo que F0-04 hizo con IV-3—; o (b) se declara que son un
+      prellenado de conveniencia y que su exactitud no se impone, y entonces los
+      KPIs que las usan tienen que decir que su fuente es opcional. Lo que no
+      cabe es dejarlo sin decidir y seguir citando esas fechas como dato firme.
 
   - id: IV-3
     regla: 13
@@ -363,7 +426,33 @@ incumplimientos_vivos:
     matiz_de_verificacion: >
       El proposal cita :188-196. El rango real es :189-197 (la 188 es el cierre
       `*/` del comentario). El UPDATE está en :192-196.
-    destino: "F1A"
+    destino: "PUNTO ABIERTO Nº 52 DEL MAESTRO — no es tanda, y cerrarlo a ciegas empeoraría"
+    reasignado: >
+      2026-09-09. El destino anterior era "F1A". F1A cerró sin tocarlo, y al
+      buscarle sitio apareció algo más grave que la orfandad.
+      CERO FILAS DEL PLAN mencionan la cardinalidad OV↔ticket, la tercera puerta
+      ni el orden 409/422 (verificado con grep sobre el plan entero). La tabla de
+      decisiones (plan:348-359) tiene `decision/p21-ingreso-sin-ov` para F1B-03,
+      pero P21 es OTRA pregunta: si la OV es obligatoria al inicio, no cuántos
+      tickets puede tener una OV.
+      Y LA REGLA QUE ESTA PUERTA IMPONDRÍA ESTÁ EN DUDA EN EL PROPIO MAESTRO.
+      `R08.1.md:2071-2079` lista TRES variantes reales y habituales —OV separadas
+      por mano de obra y repuestos, OV global por varios equipos, y varias OV
+      sobre un mismo ticket— y concluye: "Ninguna de las tres encaja en un modelo
+      de «una OV, un ticket», y las tres son habituales. Punto abierto nº 52."
+      CONSECUENCIA, Y ES LO QUE CAMBIA EL DESTINO: cerrar la tercera puerta no es
+      completar una regla probada, es endurecer una regla que el maestro dice que
+      no describe el negocio. Si nº 52 se resuelve a favor de las variantes, el
+      arreglo no es añadir la tercera puerta: es RETIRAR las dos que ya existen
+      (ticketService.ts:45 y :100). Hacerlo antes de decidir cuesta el doble.
+      LO QUE SÍ ESTÁ HECHO Y NO SE PIERDE: `ordenVentaUnTicket.test.ts:161` deja
+      un `it.fails` esperando, y `:150-158` fija en positivo el modo de fallo
+      exacto —201 sin queja, y la orden queda en los DOS tickets—. Sea cual sea
+      la decisión, el daño está medido y la prueba dirá cuándo cambia.
+      QUÉ HACE FALTA: que nº 52 entre en la tabla de decisiones del plan con su
+      clave Engram y su sesión. Hoy no está, y por eso ni siquiera llega a la
+      agenda del viernes. Redactado como entrada 5 de
+      docs/sdd/F0-01_Correcciones_para_el_plan.md.
 
   - id: IV-5
     regla: "—"
@@ -377,7 +466,17 @@ incumplimientos_vivos:
       ("Ingresado", "En Proceso", "Notificación cliente"...), así que con datos
       reales el lookup de :26 siempre cae en el respaldo `bg-slate-100`.
       Mapa muerto.
-    destino: "F1A, cosmético"
+    destino: "F1B-08, cosmético"
+    reasignado: >
+      2026-09-09. El destino anterior era "F1A, cosmético". F1A cerró; el
+      "cosmético" era correcto, la épica no.
+      POR QUÉ F1B-08: plan:157, "vistas de listado y ficha equivalentes a las de
+      Zoho Desk", ítem 22 del maestro. TicketCard es la tarjeta del listado, así
+      que su mapa de colores es parte de esa paridad. Misma fila que IV-1 e IV-7,
+      y no es casualidad: los tres son el tablero.
+      SIGUE SIENDO COSMÉTICO Y CONVIENE NO INFLARLO: el lookup cae siempre en el
+      respaldo `bg-slate-100`, así que hoy no pinta mal, pinta neutro. Nadie ve
+      un color equivocado; se ve un color de menos.
 
   - id: IV-6
     regla: "— (extiende el modo de fallo de la regla dura de esquema de CLAUDE.md)"
@@ -459,6 +558,48 @@ incumplimientos_vivos:
       días es la mejor prueba de que el hueco existía.
       Hoy: 29 ALTER, 18 calificadas (13 public + 5 books.contacts), 11 sin
       calificar, todas sobre DESK_TABLES.
+
+  - id: IV-7
+    regla: "—"
+    ubicacion: "apps/desk/src/lib/boardView.ts:49-50"
+    verificado: true
+    descripcion: >
+      La vista `todos` devuelve `tickets.filter((t) => t.statusType !== 'Closed')`,
+      es decir NO enseña todos: oculta los cerrados. Y comparte cuerpo con la
+      rama `default`, así que CUALQUIER clave de vista no reconocida también los
+      oculta, sin decirlo y sin fallar.
+    encontrado_en: >
+      2026-09-09, con el usuario, comparando contra la vista "Todos los tickets"
+      del Zoho Desk de producción. Medido allí: 726 tickets cerrados. Una vista
+      llamada "Todos" que oculta 726 registros no informa: desinforma.
+    se_cruza_con_iv_1: >
+      Los dos defectos son del MISMO fichero y se cruzan. `abiertos` (:43) y
+      `espera` (:44) se apoyan en la regex de :35, que acierta 2 de los 8 estados
+      `en_espera` (IV-1). Consecuencia medible: SEIS estados de espera
+      —`Servicio externo`, `Notificación cliente`, `Notificación a Compras`,
+      `Notificación Comercial`, `Solicitado`, `Liberación Comercial`— se listan
+      hoy como "abiertos". Sumado a IV-7, el tablero tiene una vista que miente
+      por omisión y otra que miente por clasificación, y ninguna lo dice.
+    dos_salidas_y_la_eleccion_no_es_tecnica: >
+      (a) RENOMBRAR la vista a "Abiertos", que es lo que de verdad devuelve.
+      Altera menos lo que el equipo ya tiene aprendido y no cambia ningún dato.
+      (b) CAMBIAR lo que devuelve para que sea de verdad todo. Cumple la
+      expectativa del usuario —es lo que "Todos" promete y lo que hace la vista
+      homónima de Zoho Desk—, y a cambio mete 726 cerrados en la lista por
+      omisión, con lo que eso pesa en pantalla.
+      Es decisión de GERENCIA, no técnica: las dos son correctas y difieren en a
+      quién se ajusta el tablero. La rama `default` sí es defecto en cualquiera
+      de los dos casos: una clave desconocida no debería filtrar en silencio.
+    destino: "F1B-08, tras la decisión de Gerencia entre (a) y (b)"
+    por_que_ese_destino: >
+      plan:157, "vistas de listado y ficha equivalentes a las de Zoho Desk",
+      ítem 22 del maestro ("Interfaz que replica la estructura de Zoho Desk").
+      Este defecto se encontró justamente comparando con esa interfaz, así que
+      cae dentro de la fila sin forzarla. Misma tanda que IV-1 e IV-5, que son el
+      mismo fichero y el mismo tablero.
+      La decisión (a)/(b) NO está en la tabla de decisiones del plan
+      (plan:348-359). Es el segundo hueco que esta reasignación destapa, y va con
+      el de nº 52 en la entrada 5 de docs/sdd/F0-01_Correcciones_para_el_plan.md.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance

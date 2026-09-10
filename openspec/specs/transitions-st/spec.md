@@ -550,7 +550,15 @@ el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
 clasificar forzaría a inventar la respuesta (`estados.ts:53-54`, `:92-96`). Lo decide Servicio
 Técnico.
 
-### 3.8 · Dos inversiones de precedencia entre guardas · **destino F1A**
+### 3.8 · Dos inversiones de precedencia entre guardas · **destino REASIGNADO: fila que falta en el plan**
+
+> **⚠️ REASIGNADO EL 2026-09-09.** Decía «destino F1A», y **F1A cerró sin tocar ninguna de las dos**.
+> Se buscó tanda que lo cubriera: `grep -niE "guarda|precedenc|409|422"` sobre el plan entero devuelve
+> **cero** filas sobre precedencia. No es que el destino estuviera mal escrito — **es que el plan no
+> tiene fila para esto**. Redactado como entrada **5.a** de
+> `docs/sdd/F0-01_Correcciones_para_el_plan.md`, con la talla cuantificada: de las **12** pruebas de
+> precedencia, `:176` y `:295` son directamente contradictorias —así que **una cambia sí o sí**— y
+> bajo el orden natural cambian **6 de 12**, tres de ellas alterando qué error ve el usuario.
 
 **Comportamiento actual, a corregir en F1A.** Son dos, y son hermanas: las dos consisten en que el
 orden en que se evalúan las guardas no es el orden que el contrato debería tener. Las fijó

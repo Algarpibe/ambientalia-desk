@@ -13,8 +13,8 @@
 |---|---|
 | Documento corregido | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` |
 | Tanda que abre el fichero | **F1A-02** (entrada 1) |
-| Entradas posteriores | **F1A-03** (entrada 2) · **F1A-04** (entrada 3) · **F1A-05** (entrada 4) |
-| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3; `43821b8` para la entrada 4. Rama `main` |
+| Entradas posteriores | **F1A-03** (entrada 2) · **F1A-04** (entrada 3) · **F1A-05** (entrada 4) · **barrido de desvíos** (entrada 5) |
+| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3; `43821b8` para la entrada 4; `607e26a` para la entrada 5. Rama `main` |
 | Fuentes del contraste | `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md` (480 líneas) · maestro `R08.1.md` |
 | Fecha | 2026-09-09 |
 
@@ -226,6 +226,103 @@ son **dos trabajos distintos**:
 la red de pruebas: la mide y la completa donde falta» (`openspec/changes/F0-04/proposal.md:18`)—, y
 si no se corrige aquí, **F1B-09 la hereda entera** en la semana S44: misma fila sin gate, misma talla
 S, mismo generador inexistente, y además con la extensión a dos flujos más que M11.6 pide.
+
+---
+
+## La del barrido de desvíos huérfanos (5)
+
+### 5 · El plan no tiene sitio para el contrato de errores ni para dos decisiones que sus tandas necesitan *(barrido de desvíos, 2026-09-09)*
+
+**Cómo salió.** Al cerrar F1A, sus **cuatro** desvíos vivos seguían apuntando a «F1A». Buscándoles
+destino real aparecieron **tres huecos del plan**, y son de dos clases distintas: uno es una **fila de
+tanda que falta**, y dos son **decisiones que no están en la tabla de los viernes**. Van juntos porque
+los destapó el mismo barrido, no porque se parezcan.
+
+---
+
+#### 5.a · Falta una fila: el contrato de errores del motor no tiene tanda
+
+**Qué falta.** `grep -niE "guarda|precedenc|409|422"` sobre el plan entero devuelve **cero** filas
+sobre precedencia de guardas. Las únicas coincidencias son C1 (`plan:138`, `plan:408`, cerrada en
+F1A-01) y la línea de tooling SDD (`plan:25`).
+
+**Qué queda huérfano.** `openspec/specs/transitions-st` §3.8 —**dos** inversiones, no una— y
+`openspec/specs/tickets-core` §4.1, las tres declaradas «destino F1A»:
+
+| Inversión | Qué pasa hoy | Evidencia |
+|---|---|---|
+| (a) Las dos puertas de la OV evalúan la misma regla en órdenes opuestos | En el alta gana el `409`; en `habilitar_servicio` gana el `422` | `ticketService.test.ts:295` vs `:176`; el contraste, en `:277-287` |
+| (b) El `409` de estado contesta antes que el `403` de área | A quien no tiene el área se le responde por el estado del ticket | `ticketService.ts:86-88` antes de `:89-91`; fijado en `:154` |
+
+Y §3.8 cierra con **«corregir una sin la otra deja el problema»**: son una sola tanda, no dos.
+
+**La talla, cuantificada antes de prometerla.** Hay **12 pruebas de precedencia** en dos bloques
+(`ticketService.test.ts:143` y `:289`). De ellas:
+
+- **`:176` y `:295` son directamente contradictorias** —misma pareja de guardas, ganador opuesto—, así
+  que **una de las dos cambia sí o sí**, se elija el orden que se elija. Ése es el suelo.
+- Si el orden unificado es «`422` de datos antes que `409` de conflicto» —el que `remision.ts` ya
+  sigue desde F1B-01 y el que §4.1 sugiere—, cambian además **`:154`, `:160`, `:166`, `:187` y
+  `:304`: **6 de 12**.
+- Y no es sólo recuento: `:154`, `:160` y `:166` cambian **qué error ve el usuario** en el panel de
+  transiciones, que se usa a diario.
+
+→ **No es una talla XS.** Es una tanda propia, con decisión de contrato dentro.
+
+**Texto propuesto:** añadir a la épica 1B, después de `plan:157`, una fila
+
+> `| F1B-10 | — | Orden único de precedencia entre guardas en las dos puertas del motor (createManagedTicket y executeTransition), y en la del alta de remisión; unifica transitions-st §3.8 (a) y (b) y tickets-core §4.1 | Ninguno técnico; el orden se declara en la spec |`
+
+y su fila en la tabla de trazabilidad (`plan:413` y siguientes) con talla **M**.
+
+---
+
+#### 5.b · Falta una decisión: la cardinalidad OV ↔ ticket (punto abierto nº 52)
+
+**Qué falta.** La tabla de decisiones (`plan:348-359`) tiene `decision/p21-ingreso-sin-ov` para
+F1B-03, pero **P21 es otra pregunta**: si la OV es obligatoria al inicio, no **cuántos tickets puede
+tener una OV**. El punto abierto **nº 52** del maestro no aparece en ninguna fila.
+
+**Por qué importa, y por qué no es sólo bookkeeping.** El maestro (`R08.1.md:2071-2079`) lista tres
+variantes reales y **habituales** —OV separadas por mano de obra y repuestos, OV global por varios
+equipos, varias OV sobre un mismo ticket— y concluye:
+
+> «Ninguna de las tres encaja en un modelo de «una OV, un ticket», y las tres son habituales. Punto
+> abierto nº 52.»
+
+Y el código **ya impone esa regla en dos puertas** (`ticketService.ts:45` y `:100`). El desvío
+registrado —la tercera puerta, en el alta de remisión— se venía tratando como «falta una puerta».
+**Puede ser exactamente lo contrario:** si nº 52 se resuelve a favor de las variantes, el arreglo es
+**retirar las dos que hay**. Construir la tercera antes de decidir cuesta el doble.
+
+**Texto propuesto:** añadir a la tabla de decisiones
+
+> `| decision/n52-cardinalidad-ov | Cuántos tickets puede tener una OV, y al revés: las tres variantes de R08.1.md:2071-2079 | Cierra IV-4 (tercera puerta) en una u otra dirección | Por fijar |`
+
+---
+
+#### 5.c · Falta una decisión: qué debe enseñar la vista «Todos» del tablero
+
+**Qué falta.** `apps/desk/src/lib/boardView.ts:49-50` — la vista `todos` devuelve
+`statusType !== 'Closed'`, o sea que **no enseña todos**. Medido en el Zoho Desk de producción:
+**726 tickets cerrados** ocultos bajo un rótulo que promete lo contrario.
+
+**Por qué es decisión y no arreglo.** Las dos salidas son correctas y difieren en a quién se ajusta el
+tablero: **(a)** renombrar la vista a «Abiertos» —altera menos lo que el equipo tiene aprendido—, o
+**(b)** cambiar lo que devuelve —cumple la expectativa del usuario y la vista homónima de Zoho Desk, a
+cambio de meter 726 cerrados por omisión—. La rama `default`, que comparte cuerpo y filtra en silencio
+cualquier clave desconocida, es defecto en los dos casos.
+
+**Texto propuesto:** añadir a la tabla de decisiones
+
+> `| decision/vista-todos-tablero | «Todos» se renombra a «Abiertos», o pasa a devolver también los cerrados | Desbloquea IV-7 dentro de F1B-08 | 11/09 |`
+
+---
+
+**Por qué las tres van en la misma entrada.** No es que se parezcan: es que **las destapó el mismo
+barrido**, y ése es el dato de método. Un destino escrito en la tabla de desvíos es una promesa, y una
+promesa que nombra una épica cerrada no la cumple nadie. La regla que sale de aquí queda escrita en
+`CLAUDE.md`: **al cerrar una épica, barrer los desvíos que la nombraban.**
 
 ---
 

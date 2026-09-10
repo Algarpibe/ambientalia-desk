@@ -235,7 +235,13 @@ la app (`design C:47`; el `INSERT` de `repo.ts:385-386` no lo escribe).
 *(La numeración de esta sección va aparte de la de requisitos: aquí se registra lo que hay, no lo que
 debe haber.)*
 
-### 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios · **destino F1A**
+### 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios · **destino REASIGNADO**
+
+> **⚠️ REASIGNADO EL 2026-09-09.** Decía «destino F1A» y F1A cerró sin tocarlo: `ticketService.ts:43-49`
+> sigue evaluando el `409` antes del `422`. **No hay tanda en el plan que lo cubra** — es una fila que
+> falta, redactada como entrada **5.a** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`. Va con
+> `transitions-st` §3.8, que además tiene una **segunda** inversión (el `409` de estado antes del `403`
+> de área): son **una sola tanda**, porque §3.8 declara que corregir una sin la otra deja el problema.
 
 **Comportamiento actual, a corregir en F1A.** En el alta, el `409` de la orden de venta gana al `422`
 de obligatorios (`ticketService.ts:43-49` antes de `:50-58`; fijado en
@@ -246,11 +252,25 @@ de obligatorios (`ticketService.ts:43-49` antes de `:50-58`; fijado en
 Detalle completo, con la segunda inversión hermana, en `transitions-st` §3.8. **Corregir una sin la
 otra deja el problema.**
 
-### 4.2 · La tercera puerta de la orden de venta sigue abierta · **destino F1A**
+### 4.2 · La tercera puerta de la orden de venta sigue abierta · **destino REASIGNADO: punto abierto nº 52**
+
+> **⚠️ REASIGNADO EL 2026-09-09, y no a otra tanda.** Decía «destino F1A» y F1A cerró sin tocarlo.
+> Al buscarle sitio apareció algo mayor: **la regla que esta puerta impondría está en duda en el propio
+> maestro.** `R08.1.md:2071-2079` lista tres variantes reales y habituales —OV separadas por mano de
+> obra y repuestos, OV global por varios equipos, varias OV sobre un mismo ticket— y concluye que
+> «ninguna de las tres encaja en un modelo de "una OV, un ticket"». Es el **punto abierto nº 52**.
+>
+> **Si nº 52 se resuelve a favor de las variantes, el arreglo es RETIRAR las dos puertas que ya
+> existen, no añadir la tercera.** Construirla antes de decidir cuesta el doble. Y nº 52 **no está en
+> la tabla de decisiones del plan** (`plan:348-359`), así que ni llega a la agenda del viernes:
+> redactado como entrada **5.b** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
+>
+> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:150-158` fija el modo de fallo exacto y `:161`
+> deja el `it.fails` esperando, sea cual sea la dirección de la decisión.
 
 **Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-4). El alta
 de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
-(`apps/desk/server/routes/remision.ts:189-197`). Hay un `it.fails` esperando
+(`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 subiera la guarda del serial). Hay un `it.fails` esperando
 (`apps/desk/server/ordenVentaUnTicket.test.ts:161`) y una prueba que fija el daño observable
 (`:156-158`). La regla completa es de `remisiones`.
 

@@ -114,17 +114,24 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-**Cuatro** desvíos vivos (eran cinco: IV-6 lo cerró F1B-01, y se deja tachado abajo con lo que costó de verdad). Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Cinco** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
+> **⚠️ REGLA: un destino es una promesa, y hay que barrerla al cerrar la épica.** Cuando una épica se
+> cierra, **compruébese si algún desvío la nombraba** y reasígnese en el mismo acto. Al cerrar F1A los
+> **cuatro** desvíos seguían apuntando a «F1A»: quedaron sin dueño mientras este fichero seguía
+> diciendo que lo tenían, y eso se carga en cada sesión y en cada sub-agente como si fuera cierto. Un
+> destino que nombra una épica cerrada no es un destino. **Que lo cace el cierre, no el turno
+> siguiente.** *(Barrido hecho el 2026-09-09.)*
+
 | Regla | Incumplimiento | Destino |
 |---|---|---|
-| 1 | `apps/desk/src/lib/boardView.ts:35` clasifica esperas por regex sobre el nombre del estado (`/espera/i`) y diverge del registro de `estados.ts`. **Cuantificado en F0-02: acierta 2 de los 8 estados `en_espera` y no tiene ningún falso positivo.** Se le escapan `Servicio externo`, `Notificación cliente`, `Notificación a Compras`, `Notificación Comercial`, `Solicitado` y `Liberación Comercial`. Es defecto **por defecto**, no por exceso: no hay que estrechar el criterio, hay que sustituirlo por `ESTADOS_EN_ESPERA` | F1A, consumiendo el registro de estados de F0-04 |
-| 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | F1A o F1C, decisión de alcance |
-| — | `apps/desk/server/routes/remision.ts:189-197` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | F1A |
-| — | `apps/desk/src/components/TicketCard.tsx:14-23` — mapa de colores muerto: claves en mayúsculas (`INGRESADO`, `PROCESO`…) que sólo casan con `mockData.ts`, nunca con los estados reales | F1A, cosmético |
-| — | ~~`packages/zoho-sync/src/db/schema.sql` — sentencias `ALTER TABLE` sin calificar el esquema~~ **CERRADO en F1B-01.** El guardián se extendió a `^ALTER TABLE` (`migrate.test.ts`, `altersDelEsquema()` + tres pruebas, con las MISMAS tres listas que el de `CREATE`). Y hubo que calificar **13** sentencias, no 23: las de `public` —`users` 3, `roles` 1, `avisos` 1, `remisiones` 7, `catalogo_modelos` 1—, porque extender el guardián sin tocar el `.sql` lo dejaba rojo para siempre. Las **11** de `DESK_TABLES` siguen sin calificar, que es lo correcto: calificarlas rompe la migración, y la segunda prueba lo fija en positivo. **Ojo a la cifra vieja de esta fila (23):** eran 24 al llegar F1B-01 — `e8c5e90` metió una más (`schema.sql:448`) sin que nada la mirase, que es exactamente lo que el hueco permitía | ✅ F1B-01 |
+| 1 | `apps/desk/src/lib/boardView.ts:35` clasifica esperas por regex sobre el nombre del estado (`/espera/i`) y diverge del registro de `estados.ts`. **Cuantificado en F0-02: acierta 2 de los 8 estados `en_espera` y no tiene ningún falso positivo.** Se le escapan `Servicio externo`, `Notificación cliente`, `Notificación a Compras`, `Notificación Comercial`, `Solicitado` y `Liberación Comercial`. Es defecto **por defecto**, no por exceso: no hay que estrechar el criterio, hay que sustituirlo por `ESTADOS_EN_ESPERA` | **F1B-08** (`plan:157`, ítem 22 «Interfaz que replica la estructura de Zoho Desk»): alimenta las vistas `abiertos` (`:43`) y `espera` (`:44`). **La dependencia que el destino viejo nombraba ya está satisfecha**: `ESTADOS_EN_ESPERA` existe (`estados.ts:111`) y `boardView.ts` no lo importa |
+| — | `apps/desk/src/lib/boardView.ts:49-50` — la vista **«todos» no enseña todos**: devuelve `statusType !== 'Closed'`. Y comparte cuerpo con la rama `default`, así que cualquier clave no reconocida también oculta los cerrados, sin decirlo. Medido en el Zoho Desk de producción: **726 tickets cerrados**. Se cruza con el de `:35`: como `abiertos` y `espera` usan esa regex, hoy **seis estados de espera se listan como «abiertos»** | **F1B-08, tras decisión de Gerencia.** Dos salidas y **la elección no es técnica**: (a) **renombrar** la vista a «Abiertos», que altera menos lo que el equipo tiene aprendido; (b) **cambiar lo que devuelve**, que cumple la expectativa del usuario y la vista homónima de Zoho Desk, a cambio de meter 726 cerrados por omisión. La rama `default` es defecto en los dos casos |
+| 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | **PUNTO ABIERTO PARA GERENCIA.** Ninguna tanda lo cubre, y **tampoco es una fila que falte**: el destino viejo («F1A o F1C, decisión de alcance») *era* el aviso de que nadie había decidido. Las tres fechas que deriva son **operandos de KPI** —`Fecha Remisión Entrada` abre el bodegaje de entrada (`bodegaje.ts:60-66`)—, así que no es cosmético. O el servidor las impone, o se declara que son prellenado y los KPIs dicen que su fuente es opcional |
+| — | `apps/desk/server/routes/remision.ts:218-226` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | **PUNTO ABIERTO Nº 52 DEL MAESTRO.** `R08.1.md:2071-2079` lista tres variantes reales y habituales y concluye que **«ninguna de las tres encaja en un modelo de "una OV, un ticket"»**. Cerrar la tercera puerta endurecería una regla que el maestro pone en duda: si nº 52 se resuelve a favor de las variantes, el arreglo es **retirar** las dos puertas existentes, no añadir la tercera. El daño ya está medido (`ordenVentaUnTicket.test.ts:150-158`) y hay un `it.fails` esperando (`:161`) |
+| — | `apps/desk/src/components/TicketCard.tsx:14-23` — mapa de colores muerto: claves en mayúsculas (`INGRESADO`, `PROCESO`…) que sólo casan con `mockData.ts`, nunca con los estados reales | **F1B-08**, cosmético. Misma fila que los dos de `boardView`: la tarjeta es del listado. Hoy no pinta mal, pinta neutro — cae siempre en el respaldo `bg-slate-100` |
 
 **IV-3 está CERRADO y ya no cuenta.** Era el espejo de `canExecuteTransition` en
 `apps/desk/src/components/TransitionPanel.tsx:56-58`. F0-04 lo cerró:
@@ -132,6 +139,13 @@ está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 `:35-39` declara el efecto —el filtro del navegador pasa a ser **comodidad legítima** bajo la regla
 invariable 13, porque la imposición del servidor está probada—. Se deja escrito aquí para que nadie lo
 vuelva a anotar como vivo.
+
+**IV-6 está CERRADO y tampoco cuenta.** Eran las `ALTER TABLE` sin calificar de
+`packages/zoho-sync/src/db/schema.sql`. F1B-01 lo cerró extendiendo el guardián a `^ALTER TABLE`
+(`migrate.test.ts`, `altersDelEsquema()` + tres pruebas) **y calificando 13 sentencias, no 23**: las
+de `public`, porque extender el guardián sin tocar el `.sql` lo dejaba rojo para siempre; las 11 de
+`DESK_TABLES` siguen sin calificar, que es lo correcto. Detalle en
+`docs/sdd/F1B-01_Serial_llave_de_entrada.md` §4.
 
 > **La lección de método, que vale más que las dos entradas.** Este fichero y `openspec/config.yaml`
 > **pueden estar caducos**: los dos daban IV-3 por vivo cuando F0-04 llevaba días habiéndolo cerrado.
