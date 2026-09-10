@@ -1,5 +1,10 @@
 # Puntos para Gerencia — sesión del viernes 11/09/2026
 
+> **⚠️ CUATRO DE LOS SEIS PUNTOS YA ESTÁN DECIDIDOS.** Gerencia los resolvió el 10/09, la víspera.
+> Las respuestas, con su evidencia y lo que desbloquea cada una, están en
+> **`docs/sdd/Decisiones_Gerencia_2026-09-10.md`**. Este documento conserva las PREGUNTAS tal como se
+> plantearon; para saber qué sigue abierto, ir al de decisiones.
+
 Un solo documento con lo que ya está escrito y espera decisión. **No propone respuestas técnicas
 disfrazadas de opciones**: cada punto expone las salidas que la documentación del proyecto ya deriva,
 con su coste, y dice quién decide.
