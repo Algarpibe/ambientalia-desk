@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Ticket } from '../data/mockData';
+import type { Ticket } from '@ambientalia/shared';
 import { ClienteLink, type ClienteKind } from './ClienteLink'
 import { ReadToggle } from './ReadToggle'
 import { responsableVisible } from '../lib/responsable'
@@ -11,19 +11,19 @@ interface TicketCardProps {
     onToggleRead?: (id: string, read: boolean) => void;
 }
 
-const statusColorMap: Record<string, { bg: string, text: string, label: string }> = {
-    'INGRESADO': { bg: 'bg-[#FFF5F5]', text: 'text-[#E53E3E]', label: 'Ingresado' },
-    'COMERCIAL': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'Notificación Comercial' },
-    'PROCESO': { bg: 'bg-[#EBF8FF]', text: 'text-[#3182CE]', label: 'En Proceso' },
-    'NOTIFICACION_CLIENTE': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'Notificación cliente' },
-    'POR_FACTURAR': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'Por Facturar' },
-    'POR_ENTREGAR_SIN_FACTURAR': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'Por Entregar / Sin facturar' },
-    'POR_ENTREGAR': { bg: 'bg-[#EBF8FF]', text: 'text-[#3182CE]', label: 'Por Entregar' },
-    'ESPERA_REPUESTOS': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]', label: 'En Espera de Repues...' }
+const statusColorMap: Record<string, { bg: string, text: string }> = {
+    'Ingresado': { bg: 'bg-[#FFF5F5]', text: 'text-[#E53E3E]' },
+    'Notificación Comercial': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
+    'En Proceso': { bg: 'bg-[#EBF8FF]', text: 'text-[#3182CE]' },
+    'Notificación cliente': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
+    'Por Facturar': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
+    'Por Entregar / Sin facturar': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
+    'Por Entregar': { bg: 'bg-[#EBF8FF]', text: 'text-[#3182CE]' },
+    'En Espera de Repuestos': { bg: 'bg-[#FFF9E6]', text: 'text-[#D97706]' },
 };
 
 export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenCliente, onToggleRead }) => {
-    const statusStyle = statusColorMap[ticket.status] || { bg: 'bg-slate-100', text: 'text-slate-600', label: ticket.status };
+    const statusStyle = statusColorMap[ticket.status] || { bg: 'bg-slate-100', text: 'text-slate-600' };
     const responsable = responsableVisible(ticket);
 
     return (
@@ -80,7 +80,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
 
             <div className="flex items-center justify-between mt-1">
                 <div className={`px-2 py-0.5 rounded text-[10px] font-bold border ${statusStyle.bg} ${statusStyle.text} border-current/20`}>
-                    {statusStyle.label}
+                    {ticket.status}
                 </div>
 
                 <div className="flex items-center gap-2">
