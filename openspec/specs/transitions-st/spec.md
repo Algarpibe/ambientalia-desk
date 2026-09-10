@@ -362,12 +362,23 @@ El SLA **SHALL** declararse como **dato**, no derivarse del grafo
   sabe cuándo entró en su estado, y un SLA sobre una fecha desconocida no es un SLA.
   `tickets.created_time` dice cuándo nació el ticket, que es otra cosa. **Esto acota la regla a los
   tickets que la aplicación ha movido**, y en producción los replicados de Zoho no lo están.
-- El reloj **MUST NOT** leer `ESTADOS_EN_ESPERA`. Es la regla que §3.7 dejaba escrita sin un caso que
-  la demostrara, y ya lo hay: el único estado con SLA está clasificado `ninguna` (`estados.ts:79`),
-  así que no es ninguno de los ocho de la vista ni de los cuatro sin salida. Probado.
+- El reloj **MUST NOT** leer `ESTADOS_EN_ESPERA`. El único estado con SLA está clasificado `ninguna`
+  (`estados.ts:83`), así que no es ninguno de los **nueve** de la vista ni de los cuatro sin salida.
+  Probado.
 
 **Lo que este requisito NO incluye, y sigue abierto — ver §3.10.** Nada de esto **dispara**: no hay
 planificador. El destinatario del escalado sí está resuelto, y es `RQ-TS-16`.
+
+*(Previously, hasta el archivado de `vista-todos-y-estados-en-espera` el 2026-09-10: la última viñeta
+decía «no es ninguno de los **ocho** de la vista». `ESTADOS_EN_ESPERA` pasa de 8 a 9 con
+`Remisión creada` reclasificada a `interna`; `Notificado` no cambia de clase, sigue fuera de las dos
+listas.)*
+
+#### Scenario: el estado con SLA sigue fuera de las dos clasificaciones tras el reparto a nueve
+- GIVEN que `ESTADOS_EN_ESPERA` pasa a tener nueve entradas (`Remisión creada` incluida)
+- WHEN se comprueba la clasificación de `Notificado`, el único estado con SLA declarado
+- THEN sigue siendo `'ninguna'` y no pertenece ni a las nueve de la vista ni a las cuatro de
+  `ESTADOS_SIN_SALIDA` — `packages/shared/src/sla.test.ts:50-54` sigue verde sin tocarse
 
 ### RQ-TS-16 · A quién se escala — la segunda pieza de C11, cerrada en F1A-02
 
@@ -442,7 +453,7 @@ base de producción**, ni en F0-02 ni en F1A-01. Va al Anexo D como punto nuevo,
 ### 3.2 · C3 — cuatro estados de espera sin salida de emergencia · **destino F1C-03**
 
 **Comportamiento actual, a corregir en C3** (maestro M1.3.4, `:1162-1189`, punto abierto nº 31). Los
-cuatro **SHALL** estar declarados como dato, no derivados (`estados.ts:140-149`):
+cuatro **SHALL** estar declarados como dato, no derivados (`estados.ts:145-154`):
 
 | Estado | Única salida | De qué depende |
 |---|---|---|
@@ -452,13 +463,26 @@ cuatro **SHALL** estar declarados como dato, no derivados (`estados.ts:140-149`)
 | `En espera de SKU inventario` | `notif_cliente_sku` | Que se cree el SKU en inventario |
 
 El discriminador **SHALL** ir escrito, no sobreentendido: «el suceso del que depende la única salida
-ocurre **fuera** de la aplicación» (`estados.ts:120-124`).
+ocurre **fuera** de la aplicación» (`estados.ts:123-127`).
 
 **La lección de método, que vale más que la lista:** «salida única» no es proxy de nada. Hay **doce**
 estados con una sola salida, entre ellos `Ingresado` y `Ticket creado`, que son trabajo corriente; y
-cruzarlo con `en_espera` da **cinco**, con `Liberación Comercial` dentro. Por eso los cuatro se
-declaran y no se derivan (`estados.ts:132-136`). `Liberación Comercial` queda fuera porque su única
-salida **es un acto que se ejecuta en la aplicación** (`estados.ts:126-130`).
+cruzarlo con `en_espera` da **seis**, con `Liberación Comercial` **y `Remisión creada`** dentro. Por
+eso los cuatro se declaran y no se derivan (`estados.ts:136-141`). Las dos quedan fuera porque su
+única salida **es un acto que se ejecuta en la aplicación**: `Liberación Comercial` por
+`habilitado_para_entrega`, área Comercial (`estados.ts:129-134`); `Remisión creada` por
+`habilitar_servicio`, área Comercial (`transitions.ts:178`) — la misma razón, un segundo caso que la
+confirma.
+
+*(Previously, hasta el archivado de `vista-todos-y-estados-en-espera` el 2026-09-10: «cruzarlo con
+`en_espera` da **cinco**, con `Liberación Comercial` dentro».)*
+
+#### Scenario: la derivación mal hecha da seis, no cuatro, y las dos que sobran comparten razón
+- GIVEN los doce estados con una sola transición de salida y los nueve estados `en_espera`
+- WHEN se cruzan las dos listas
+- THEN el resultado tiene seis elementos, y los dos que no son de `ESTADOS_SIN_SALIDA` son
+  `Liberación Comercial` y `Remisión creada` — fijado en
+  `packages/shared/src/estados.test.ts:157-169`
 
 ### 3.3 · C4 y la reentrancia — diez campos de fecha que una segunda pasada reescribe · **destino F1C-02, F1C-06, C9**
 
@@ -517,35 +541,40 @@ logística): el `interface Transition` sólo declara `id`, `name`, `from`, `to`,
 (`transitions.ts:55-62`). Sin ese atributo, el análisis de tiempos por tipo de evento de M7.3 no es
 calculable.
 
-### 3.6 · IV-1 — la vista clasifica las esperas por el nombre del estado · **destino REASIGNADO: F1B-08**
+### 3.6 · IV-1 — la vista consumía el nombre del estado por regex · **CERRADO en `vista-todos-y-estados-en-espera` (F1B-08)**
 
-> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`). Decía «destino F1A» y F1A cerró sin
-> tocarlo. Va a **F1B-08** (`plan:157`, ítem 22 del maestro «Interfaz que replica la estructura de
-> Zoho Desk»): la regex alimenta las vistas `abiertos` y `espera`, que son vistas de listado. **Y la
-> dependencia que la frase vieja nombraba ya está satisfecha**: `ESTADOS_EN_ESPERA` existe desde F0-04
-> (`packages/shared/src/estados.ts:111`) y `boardView.ts` no lo importa.
+**Esta entrada ya no describe el comportamiento actual.** El requisito vive ahora en la capacidad
+`vistas-tablero`, requisito RQ-VT-04; lo que queda aquí es el histórico del defecto y su cierre, con el
+mismo patrón que §3.1 (C1).
 
+**Qué era** (comportamiento a corregir, destino F1B-08 antes de esta tanda). `boardView.ts:35`
+clasificaba las esperas con `/espera/i` sobre el nombre del estado, usado en `:43` y `:44`. El registro
+declaraba ocho estados en espera (`estados.ts:59-114` en su momento); la regex casaba con exactamente
+**dos**: `En Espera de Repuestos` y `En espera de SKU inventario`. Cero falsos positivos entre los 13
+estados restantes. Defecto **por defecto**, no por exceso.
 
-**Comportamiento actual, a corregir en F1B-08** (`config.yaml`, `incumplimientos_vivos`, IV-1). `boardView.ts:35` clasifica
-las esperas con `/espera/i` sobre el nombre del estado, y se usa en `:43` y `:44`. Diverge del
-registro de `estados.ts`:
+**Cómo se cerró.** `boardView.ts:39` consume la lista `ESTADOS_EN_ESPERA`
+(`packages/shared/src/estados.ts:114`) directamente —no `enEsperaDe`—, en vez de la regex: D3 de
+`design.md` prefirió el `.includes()` porque `enEsperaDe` devuelve la CLASE (`externa`/`interna`) y
+obligaría al cliente a reescribir esa distinción, que es la misma regla movida un metro (ver
+`vistas-tablero` RQ-VT-04, que traía esta misma imprecisión y se corrigió en el mismo archivado).
+Cubierto por el tripwire real que importa `applyBoardView` y afirma sobre su salida (`vistas-tablero`
+RQ-VT-04), verificado por mutación contra el tripwire falso que reimplementaba la regex localmente
+(`estados.test.ts:113-121` en su momento, que se **retiró**: sus imports nunca incluían `boardView` y
+por tanto nunca podía ponerse rojo al arreglar el fichero que decía vigilar; ese tripwire ya no existe
+en el árbol).
 
-- El registro declara **ocho** estados en espera —tres `externa` y cinco `interna`—
-  (`estados.ts:59-114`).
-- La regex casa con **exactamente dos** de esos ocho: `En Espera de Repuestos` y
-  `En espera de SKU inventario`. Los otros seis —`Servicio externo`, `Notificación cliente`,
-  `Notificación a Compras`, `Notificación Comercial`, `Solicitado`, `Liberación Comercial`— no llevan
-  la palabra en el nombre y **no** se cuentan.
-- Y tiene **cero falsos positivos**: ninguno de los 13 estados restantes de los 21 lleva «espera» en
-  el nombre.
+F0-04 dejó el registro que lo cierra (`ESTADOS_EN_ESPERA`, `estados.ts:114`); consumirlo era F1A y se
+hizo en esta tanda.
 
-**Es un defecto POR DEFECTO, no por exceso, y eso cambia cómo se arregla.** No hay que estrechar el
-criterio para que deje de coger lo que no debe: hay que **sustituirlo por la lista**
-(`ESTADOS_EN_ESPERA`, `estados.ts:111-114`). La redacción de F0-01 —«y uno que la lleve sin serlo
-sí»— describía el riesgo del criterio, no un caso vivo; verificado en esta tanda que hoy no existe
-ninguno.
+*(Previously: «destino REASIGNADO: F1B-08», sección clasificada como comportamiento actual a
+corregir.)*
 
-F0-04 dejó el registro que lo cierra; consumirlo es F1A.
+#### Scenario: el registro reemplaza la regex, y el tripwire real lo demuestra
+- GIVEN el registro `ESTADOS_EN_ESPERA`, existente desde F0-04
+- WHEN `boardView.ts:39` consume `ESTADOS_EN_ESPERA` en vez de `/espera/i`
+- THEN el tripwire de `vistas-tablero` RQ-VT-04 se mantiene verde tras el cambio, y el tripwire falso
+  que antes vivía en `estados.test.ts:113-121` ya no existe
 
 ### 3.7 · La vista y el reloj no leen la misma lista
 
@@ -555,18 +584,18 @@ criterios distintos usan la palabra «espera» y **MUST** nombrarse distinto:
 | Nombre | Criterio | Fuente | Alcance |
 |---|---|---|---|
 | `sin_salida` | Su única salida depende de algo que la aplicación no controla | M1.3.4 (`:1162`) | **4 estados** |
-| `en_espera` | El ticket está parado esperando el acto de un tercero y el área dueña no puede hacer nada por su cuenta | Vista del tablero | **8 estados** |
+| `en_espera` | El ticket está parado esperando el acto de un tercero y el área dueña no puede hacer nada por su cuenta | Vista del tablero | **9 estados** |
 | `bodegaje` | El tiempo que un equipo pasa en Ambientalia esperando una respuesta del cliente | M1.10 `[DEFINIDO — R08]` (`:1686`) | **3 periodos entre fechas**, no estados |
 
-> **La vista muestra las ocho. El reloj del SLA NO lee esta clasificación** (`estados.ts:28`).
+> **La vista muestra las nueve. El reloj del SLA NO lee esta clasificación** (`estados.ts:28`).
 
 El reloj para en los tres bodegajes, que son periodos entre fechas. Un estado **MAY** estar
 `en_espera` sin parar ningún reloj, y un bodegaje **MAY** transcurrir sin pasar por ningún estado de
 la lista.
 
 **Y desde F1A-02 esa regla tiene un caso que la demuestra, no sólo una advertencia.** El único
-estado con SLA declarado es `Notificado`, y está clasificado `ninguna` (`estados.ts:79`): no es
-ninguno de los ocho de la vista ni de los cuatro sin salida. La primera regla por tiempo que el
+estado con SLA declarado es `Notificado`, y está clasificado `ninguna` (`estados.ts:83`): no es
+ninguno de los nueve de la vista ni de los cuatro sin salida. La primera regla por tiempo que el
 código tiene lee una lista **distinta** de la que enseña el tablero, exactamente como §3.7 anticipaba
 cuando todavía era hipótesis. Probado en `packages/shared/src/sla.test.ts` — si alguien «arreglara»
 el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
@@ -574,6 +603,23 @@ el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
 `Pendiente` **SHALL** quedar como `sin_clasificar`, que es valor válido y no un hueco: obligar a
 clasificar forzaría a inventar la respuesta (`estados.ts:53-54`, `:92-96`). Lo decide Servicio
 Técnico.
+
+*(Previously, hasta el archivado de `vista-todos-y-estados-en-espera` el 2026-09-10: la tabla
+declaraba `en_espera` con **8 estados**, y el texto decía «la vista muestra las ocho».)*
+
+⚠️ **Riesgo abierto, no resuelto por esta tanda (R-1 de `vista-todos-y-estados-en-espera`).**
+`packages/shared/src/sla.test.ts:50-54` afirma que ningún estado con SLA está en `ESTADOS_EN_ESPERA`
+— más fuerte que la regla escrita arriba, que sólo exige independencia, no exclusión mutua. Si una
+tanda futura declara SLA para `Remisión creada` (la otra mitad de P21,
+`Decisiones_Gerencia_2026-09-10.md:331-337`), esa prueba se pondrá roja sin que nada esté mal; se
+reformula entonces, no se toca preventivamente aquí. Detalle en
+`sdd/vista-todos-y-estados-en-espera/archive-report`.
+
+#### Scenario: Remisión creada entra en la vista sin mover el reloj
+- GIVEN que `Remisión creada` pasa a clase `interna` (P21) y por tanto entra en `ESTADOS_EN_ESPERA`
+- WHEN se consulta `sla.ts` para ese estado
+- THEN no tiene SLA declarado, y `packages/shared/src/sla.test.ts:50-54` sigue verde: la vista muestra
+  un noveno estado en espera sin que el reloj se entere
 
 ### 3.8 · Dos inversiones de precedencia entre guardas · **destino REASIGNADO: fila que falta en el plan**
 
