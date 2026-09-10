@@ -56,4 +56,4 @@ export function applyBoardView(tickets: Ticket[], key: VistaKey, now: Date, user
 }
 
 /** Si `tsc` se queja aquí, alguien añadió una vista a `FUNCTIONAL_VIEWS` y olvidó su `case`. */
-function vistaNoReconocida(_key: never): Ticket[] { return [] }
+function vistaNoReconocida(_key: never): Ticket[] { void _key; return [] }
