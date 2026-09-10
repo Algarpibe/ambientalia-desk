@@ -92,8 +92,8 @@ no penalice los artefactos generados?»** — ninguna de las tres la decide esta
 
 ## Phase 0 — Control de mutación previo (P2), antes de tocar nada
 
-- [ ] 0.1 En `apps/desk/src/lib/boardView.ts:44` (`case 'espera': return tickets.filter((t) => t.statusType !== 'Closed' && enEspera(t))`), quitar temporalmente `t.statusType !== 'Closed' &&` y correr `npm test`. **Resultado esperado: sigue verde** — el fixture actual no tiene ningún ticket `Closed` en estado de espera (`'c'` es `Closed` pero `'Finalizado'`, `boardView.test.ts:12`, que no está en `ESTADOS_EN_ESPERA`). Confirma el hueco de detector que RQ-VT-05 va a cerrar en la Fase 2.
-- [ ] 0.2 Revertir el cambio de 0.1 (`git checkout` o deshacer a mano). No se commitea nada de esta fase.
+- [x] 0.1 En `apps/desk/src/lib/boardView.ts:44` (`case 'espera': return tickets.filter((t) => t.statusType !== 'Closed' && enEspera(t))`), quitar temporalmente `t.statusType !== 'Closed' &&` y correr `npm test`. **Resultado esperado: sigue verde** — el fixture actual no tiene ningún ticket `Closed` en estado de espera (`'c'` es `Closed` pero `'Finalizado'`, `boardView.test.ts:12`, que no está en `ESTADOS_EN_ESPERA`). Confirma el hueco de detector que RQ-VT-05 va a cerrar en la Fase 2.
+- [x] 0.2 Revertir el cambio de 0.1 (`git checkout` o deshacer a mano). No se commitea nada de esta fase.
 
 ---
 
@@ -102,10 +102,10 @@ no penalice los artefactos generados?»** — ninguna de las tres la decide esta
 **RED (ya escrito, no se inventa).** Cuatro pruebas de `packages/shared/src/estados.test.ts` se ponen
 rojas solas al mover la entrada:
 
-- [ ] 1.1 Confirmar que hoy están verdes (línea base) y anotar su forma actual: `:33-41` (interna,
+- [x] 1.1 Confirmar que hoy están verdes (línea base) y anotar su forma actual: `:33-41` (interna,
       cinco), `:43-58` (ninguna, doce, con `STATUS_REMISION_CREADA` en `:56`), `:84-95`
       (`ESTADOS_EN_ESPERA`, ocho), `:176-185` (derivación, «la quinta es Liberación Comercial»).
-- [ ] 1.2 Editar las cuatro para el nuevo reparto:
+- [x] 1.2 Editar las cuatro para el nuevo reparto:
       - `:33-41` → añadir `'Remisión creada'` al final de la lista de `interna` (pasa a seis).
       - `:43-58` → quitar `STATUS_REMISION_CREADA` de la lista de `ninguna` (pasa a once).
       - `:84-95` → añadir `'Remisión creada'` al final de `ESTADOS_EN_ESPERA` (pasa a nueve).
@@ -113,16 +113,16 @@ rojas solas al mover la entrada:
         `'Remisión creada'`. **Añadir la aserción paralela de salidas** para `Remisión creada`
         (`TRANSITIONS.filter(t => t.from.includes('Remisión creada'))` → `['habilitar_servicio · Comercial']`,
         `transitions.ts:178`), igual que la ya existente para `Liberación Comercial` en `:183-184`.
-- [ ] 1.3 Ejecutar `npm test -- packages/shared/src/estados.test.ts` y confirmar que las cuatro están
+- [x] 1.3 Ejecutar `npm test -- packages/shared/src/estados.test.ts` y confirmar que las cuatro están
       **rojas** por la razón correcta (contenido de la lista/cifra), no por un error de sintaxis.
-- [ ] 1.4 **GREEN**: en `packages/shared/src/estados.ts`, mover `'Remisión creada': 'ninguna',`
+- [x] 1.4 **GREEN**: en `packages/shared/src/estados.ts`, mover `'Remisión creada': 'ninguna',`
       (línea 90) **al final del bloque `interna`**, tras `'Liberación Comercial': 'interna'` (línea 74),
       reclasificada como `'interna'`. Añadir un comentario de una línea con la derivación (mismo estilo
       que `:72-74`): entra por `facturado`/similar, sale por `habilitar_servicio`
       (`transitions.ts:178`, área Comercial) → Servicio Técnico no puede moverla → tercero es «otra área
       de la casa» → `interna`.
-- [ ] 1.5 `npm test -- packages/shared/src/estados.test.ts` en verde.
-- [ ] 1.6 **Control de mutación P4**: devolver temporalmente la entrada a `'ninguna'` y correr
+- [x] 1.5 `npm test -- packages/shared/src/estados.test.ts` en verde.
+- [x] 1.6 **Control de mutación P4**: devolver temporalmente la entrada a `'ninguna'` y correr
       `packages/shared/src/estados.test.ts:71-75` (`3+5+12+1=21`) en solitario. **Debe seguir verde** —
       confirma que la suma de longitudes no es el detector real; el detector real son las cuatro listas
       de 1.2. Revertir la mutación tras comprobarlo.
@@ -131,12 +131,12 @@ rojas solas al mover la entrada:
 
 ## Phase 2 — IV-1: `boardView` consume `ESTADOS_EN_ESPERA` (RQ-VT-04, RQ-VT-05)
 
-- [ ] 2.1 **RED que se auto-dispara**: corregir el fixture roto de `boardView.test.ts:11`, de
+- [x] 2.1 **RED que se auto-dispara**: corregir el fixture roto de `boardView.test.ts:11`, de
       `status: 'En espera de repuesto'` (no existe en el registro) a `status: 'En Espera de Repuestos'`
       (`estados.ts:61`, exacto). Correr `npm test -- apps/desk/src/lib/boardView.test.ts` **antes** de
       tocar `boardView.ts`: `:20` (`abiertos`) y `:21` (`espera`) siguen verdes por ahora porque la regex
       vieja también casaba con la cadena correcta.
-- [ ] 2.2 Añadir a `boardView.test.ts` un caso por cada uno de los **seis** estados que la regex vieja no
+- [x] 2.2 Añadir a `boardView.test.ts` un caso por cada uno de los **seis** estados que la regex vieja no
       reconocía (`Servicio externo`, `Notificación cliente`, `Notificación a Compras`,
       `Notificación Comercial`, `Solicitado`, `Liberación Comercial`) — un ticket abierto por estado,
       afirmando que cada uno cae en `espera` y en ninguno cae en `abiertos`. Cita: escenario de
@@ -144,41 +144,41 @@ rojas solas al mover la entrada:
       esboza un caso (`'Notificación cliente'`); el spec pide los seis explícitamente y es el contrato,
       así que esta tarea amplía la cobertura del esbozo de diseño a lo que el requisito promete, sin
       cambiar el mecanismo elegido.
-- [ ] 2.3 Añadir un caso **nuevo** (RQ-VT-05, cierra el hueco de la Fase 0): un ticket `statusType:
+- [x] 2.3 Añadir un caso **nuevo** (RQ-VT-05, cierra el hueco de la Fase 0): un ticket `statusType:
       'Closed'` con `status: 'Servicio externo'` (o cualquier estado de `ESTADOS_EN_ESPERA`) **NO**
       aparece en `ids('espera')`. Cita: `vistas-tablero/spec.md:139-145`.
-- [ ] 2.4 `npm test -- apps/desk/src/lib/boardView.test.ts` → confirmar rojo en `:20`/`:21` y en los
+- [x] 2.4 `npm test -- apps/desk/src/lib/boardView.test.ts` → confirmar rojo en `:20`/`:21` y en los
       casos nuevos de 2.2 (el 2.3 puede seguir verde: el filtro `statusType !== 'Closed'` de
       `boardView.ts:44` ya existe, sólo no estaba probado).
-- [ ] 2.5 **GREEN**: en `apps/desk/src/lib/boardView.ts`, importar `ESTADOS_EN_ESPERA` de
+- [x] 2.5 **GREEN**: en `apps/desk/src/lib/boardView.ts`, importar `ESTADOS_EN_ESPERA` de
       `@ambientalia/shared` (junto al `import type { Ticket }` de la línea 1) y sustituir la línea 35
       (`const enEspera = (t: Ticket) => /espera/i.test(t.status ?? '')`) por
       `const enEspera = (t: Ticket) => (ESTADOS_EN_ESPERA as readonly string[]).includes(t.status ?? '')`
       (D3: un cast ensancha el tipo, no reescribe la regla; precedente `estados.test.ts:179`).
-- [ ] 2.6 `npm test -- apps/desk/src/lib/boardView.test.ts` en verde completo.
-- [ ] 2.7 **Tripwire real de IV-1** (ya cubierto por 2.1-2.2: el fixture corregido y los seis casos
+- [x] 2.6 `npm test -- apps/desk/src/lib/boardView.test.ts` en verde completo.
+- [x] 2.7 **Tripwire real de IV-1** (ya cubierto por 2.1-2.2: el fixture corregido y los seis casos
       importan `applyBoardView` y afirman sobre su salida). Confirmarlo explícitamente en el PR: no se
       añade un test aparte con este único propósito, es el mismo bloque.
-- [ ] 2.8 **Control de mutación P3**: con el tripwire falso de `estados.test.ts` todavía presente,
+- [x] 2.8 **Control de mutación P3**: con el tripwire falso de `estados.test.ts` todavía presente,
       revertir temporalmente `boardView.ts:35` a `/espera/i`. Correr la suite completa:
       `boardView.test.ts` (tripwire real) debe ponerse **rojo**; `estados.test.ts:112-120` (tripwire
       falso, ver 2.9) debe seguir **verde**. Que discrepen es la prueba de que el viejo vigilaba una
       copia. Revertir la mutación.
-- [ ] 2.9 **Retirar el tripwire falso**: borrar de `packages/shared/src/estados.test.ts` el comentario
+- [x] 2.9 **Retirar el tripwire falso**: borrar de `packages/shared/src/estados.test.ts` el comentario
       de las líneas 101-111 y el `it('documenta el defecto...')` de las líneas 112-120 (verificado de
       disco en esta sesión — el rango exacto difiere en una línea del citado en `design.md`/`proposal.md`
       como «113-121»: el `it(` abre en 112, cierra en 120, y 121 cierra el `describe` exterior, que no
       se toca).
-- [ ] 2.10 `npm test -- packages/shared/src/estados.test.ts` en verde tras la retirada.
+- [x] 2.10 `npm test -- packages/shared/src/estados.test.ts` en verde tras la retirada.
 
 ---
 
 ## Phase 3 — `VistaKey` derivada + `default:` separado (RQ-VT-02, RQ-VT-03)
 
-- [ ] 3.1 **RED**: en `boardView.test.ts`, cambiar `:23` (`key desconocida → como todos`, hoy
+- [x] 3.1 **RED**: en `boardView.test.ts`, cambiar `:23` (`key desconocida → como todos`, hoy
       `toEqual(['a', 'b', 'd'])`) a `toEqual([])`, y `:56` (`viewLabel('zzz')`, hoy
       `toBe('Todos los Tickets')`) a `toBe('Vista no reconocida')`. Correr `npm test` y confirmar rojo.
-- [ ] 3.2 **GREEN, `boardView.ts`**:
+- [x] 3.2 **GREEN, `boardView.ts`**:
       - Convertir `FUNCTIONAL_VIEWS` (línea 6) a `as const satisfies readonly BoardViewDef[]` y exportar
         `type VistaKey = typeof FUNCTIONAL_VIEWS[number]['key']`.
       - Cambiar `FUNCTIONAL_BY_LABEL` (línea 18) a `Record<string, VistaKey>`.
@@ -189,15 +189,15 @@ rojas solas al mover la entrada:
         actual (`tickets.filter((t) => t.statusType !== 'Closed')`) — el cambio de comportamiento de
         «todos» es la Fase 4, no ésta.
       - Cambiar el respaldo de `viewLabel` (línea 22) de `'Todos los Tickets'` a `'Vista no reconocida'`.
-- [ ] 3.3 Propagar el tipo `VistaKey`:
+- [x] 3.3 Propagar el tipo `VistaKey`:
       - `apps/desk/src/App.tsx:57` → `useState<VistaKey>('todos')` (importar `VistaKey` de `./lib/boardView`).
       - `apps/desk/src/components/Sidebar.tsx:82` → `activeView: VistaKey; onSelectView: (key: VistaKey) => void`.
-- [ ] 3.4 `npm test` y `npm run typecheck` en verde.
-- [ ] 3.5 **Control de mutación D2**: añadir temporalmente una séptima entrada a `FUNCTIONAL_VIEWS` sin
+- [x] 3.4 `npm test` y `npm run typecheck` en verde.
+- [x] 3.5 **Control de mutación D2**: añadir temporalmente una séptima entrada a `FUNCTIONAL_VIEWS` sin
       su `case` correspondiente en `applyBoardView`. Correr `npm run typecheck` → **debe fallar**,
       señalando la llamada a `vistaNoReconocida` con un argumento no asignable a `never`. Revertir la
       mutación. Sin esta ejecución, el mecanismo (a) es una declaración de intención, no un detector.
-- [ ] 3.6 **RQ-VT-03, nota de verificación de esta fase**: `specs/vistas-tablero/spec.md:82-100`
+- [x] 3.6 **RQ-VT-03, nota de verificación de esta fase**: `specs/vistas-tablero/spec.md:82-100`
       (RQ-VT-03) describe un escenario de recorrido por las seis `key` con fixtures dedicados. La
       cobertura real de esa promesa la da la **combinación** de dos piezas ya existentes/añadidas, no un
       test nuevo: (a) las seis vistas ya tienen su propio `it()` en `boardView.test.ts` (`todos`,
@@ -209,13 +209,13 @@ rojas solas al mover la entrada:
 
 ## Phase 4 — «Todos» = activos + cerrados paginados (RQ-VT-01)
 
-- [ ] 4.1 **RED**: en `boardView.test.ts:18`, cambiar `todos = activos (excluye cerrados)` (nombre y
+- [x] 4.1 **RED**: en `boardView.test.ts:18`, cambiar `todos = activos (excluye cerrados)` (nombre y
       expectativa `['a', 'b', 'd']`) a un nombre que refleje la conducta nueva y `toEqual(['a', 'b', 'c', 'd'])`.
       Correr `npm test` y confirmar rojo.
-- [ ] 4.2 **GREEN, `boardView.ts`**: cambiar `case 'todos':` para que devuelva `tickets` sin filtrar
+- [x] 4.2 **GREEN, `boardView.ts`**: cambiar `case 'todos':` para que devuelva `tickets` sin filtrar
       (`case 'todos': return tickets`), separado ya de `default:` desde la Fase 3.
-- [ ] 4.3 `npm test -- apps/desk/src/lib/boardView.test.ts` en verde.
-- [ ] 4.4 **`App.tsx` — sin RED automático, `.tsx` fuera de `vitest.config.ts:17-20`.** Cambios
+- [x] 4.3 `npm test -- apps/desk/src/lib/boardView.test.ts` en verde.
+- [x] 4.4 **`App.tsx` — sin RED automático, `.tsx` fuera de `vitest.config.ts:17-20`.** Cambios
       concretos, en orden:
       - Sustituir el `useAsync<Ticket[] | ClosedPage>` de las líneas 61-64 (que ramifica por `isClosed`)
         por un único `useAsync` cuyo `fn` devuelve `{ activos: Ticket[]; cerrados: ClosedPage | null }`:
@@ -228,19 +228,19 @@ rojas solas al mover la entrada:
         reutilizable sin estado nuevo.
       - Cambiar la condición de `Pagination` (línea 126, hoy `isClosed && closedMeta`) a «hay bloque
         cerrado» (`(view === 'todos' || view === 'cerrados') && closedMeta`).
-- [ ] 4.5 **Hallazgo de esta fase, no de `design.md`**: el escenario «activos primero, cerrados después,
+- [x] 4.5 **Hallazgo de esta fase, no de `design.md`**: el escenario «activos primero, cerrados después,
       sin entrelazar» de RQ-VT-01 (`vistas-tablero/spec.md:35-40`) lo cumple la propia concatenación de
       4.4, que vive en `App.tsx` — un `.tsx` fuera de la red de `vitest`. `design.md` §7 declara sin
       detector automático a `App.tsx` en general, pero no nombra esta promesa de orden en particular.
       Se añade aquí, explícitamente, a la misma clase de excepción declarada que RQ-VT-06 (Fase 5): sin
       test automatizado bajo la decisión de Gerencia F0-00, verificado a mano.
-- [ ] 4.6 **`columns.ts`**: corregir el comentario de la línea 6 (hoy: «'Finalizado' (cierre) NO es
+- [x] 4.6 **`columns.ts`**: corregir el comentario de la línea 6 (hoy: «'Finalizado' (cierre) NO es
       columna: el ticket sale del tablero al cerrarse»). Con «Todos» trayendo cerrados, ya no es cierto
       que salgan del tablero: caen en `'otros'` (`columns.ts:33,44-45`), que `board.ts:26` enseña en
       cuanto deja de estar vacía. Nueva redacción: «'Finalizado' (cierre) no tiene columna propia: cae
       en la columna de seguridad 'Otros' cuando aparece (p. ej. en la vista 'Todos')».
-- [ ] 4.7 `npm run typecheck` y `npm run build` en verde (único detector automático que alcanza `App.tsx`).
-- [ ] 4.8 **Control de mutación P1**: revertir temporalmente `case 'todos':` a compartir cuerpo con
+- [x] 4.7 `npm run typecheck` y `npm run build` en verde (único detector automático que alcanza `App.tsx`).
+- [x] 4.8 **Control de mutación P1**: revertir temporalmente `case 'todos':` a compartir cuerpo con
       `default:` (fusionar ambos en `return tickets.filter((t) => t.statusType !== 'Closed')`). Correr
       `npm test -- apps/desk/src/lib/boardView.test.ts`. **Debe haber exactamente 2 fallos**, nombrados:
       el de 4.1 («todos incluye cerrados») y el de 3.1 («clave desconocida devuelve vacío»). Si falla 1
@@ -255,28 +255,28 @@ rojas solas al mover la entrada:
 excluye `**/*.tsx` del coverage — decisión explícita de Gerencia (F0-00, 2026-09-08). **Prohibido**
 instalar `jsdom`/`@testing-library`, ampliar el include a `*.test.tsx`, o fingir una prueba.
 
-- [ ] 5.1 En `TicketCard.tsx:2`, cambiar `import type { Ticket } from '../data/mockData'` a
+- [x] 5.1 En `TicketCard.tsx:2`, cambiar `import type { Ticket } from '../data/mockData'` a
       `import type { Ticket } from '@ambientalia/shared'` (higiene declarada, D5; `mockData.ts:1-2` ya
       reexporta el mismo tipo, así que esto no cambia comportamiento).
-- [ ] 5.2 En `TicketCard.tsx:14-23`, reclavar `statusColorMap` con los nombres reales del registro
+- [x] 5.2 En `TicketCard.tsx:14-23`, reclavar `statusColorMap` con los nombres reales del registro
       (`estados.ts`) en vez de las claves en mayúsculas de `mockData.ts`, y **borrar el campo `label`**
       (línea 26 pasa a pintar `ticket.status` verbatim). Las ocho entradas ya nombran estados reales;
       la de `'En Espera de Repues...'` (línea 22) se corrige al nombre completo `'En Espera de Repuestos'`.
-- [ ] 5.3 **Control de mutación P5**: contar ficheros y pruebas de `npm test` **antes** de 5.1/5.2 y
+- [x] 5.3 **Control de mutación P5**: contar ficheros y pruebas de `npm test` **antes** de 5.1/5.2 y
       **después**. Exigir cifra idéntica — prueba de disco de lo que `vitest.config.ts:17-20` declara:
       ningún test recoge este cambio, ni para bien ni para mal.
-- [ ] 5.4 `npm run typecheck`, `npm run lint`, `npm run build` en verde.
+- [x] 5.4 `npm run typecheck`, `npm run lint`, `npm run build` en verde.
 
 ---
 
 ## Phase 6 — Verificaciones transversales (antes de cerrar la tanda)
 
-- [ ] 6.1 **Regla de mutación 3 — casilla de la regla 13, verificar, no rehacer.** `design.md` §5 ya
+- [x] 6.1 **Regla de mutación 3 — casilla de la regla 13, verificar, no rehacer.** `design.md` §5 ya
       trae la tabla resuelta (7 decisiones, 3 con línea de servidor probada). Confirmar por escrito, en
       el PR o en el resumen de `sdd-apply`, que las 7 filas siguen siendo ciertas contra el código
       final (en particular la fila 7, nueva: `?scope=closed&page=N` en «Todos», impuesta por
       `tickets.ts:105,107` y probada en `tickets.test.ts:90-99`).
-- [ ] 6.2 **Control de mutación P1-bis** (validación, sin cambio de producto): en
+- [x] 6.2 **Control de mutación P1-bis** (validación, sin cambio de producto): en
       `apps/desk/server/routes/tickets.ts:106`, cambiar temporalmente `const pageSize = 50` a `5`.
       Con los 3 cerrados que siembra `apps/desk/server/tickets.test.ts:57-63` (función `seedMixed`),
       `items` sigue teniendo como máximo 3 elementos (≤ 5), así que **sólo** `:84`
@@ -284,9 +284,9 @@ instalar `jsdom`/`@testing-library`, ampliar el include a `*.test.tsx`, o fingir
       pone roja alguna más, la prueba está midiendo el contenido creyendo medir el sobre. Revertir el
       cambio — **`tickets.ts` no se modifica como parte del alcance de esta tanda**, esto es sólo una
       ejecución de control sobre un detector ya existente.
-- [ ] 6.3 Suite completa: `npm test`, `npm run typecheck`, `npm run lint` (sin superar los 158 avisos
+- [x] 6.3 Suite completa: `npm test`, `npm run typecheck`, `npm run lint` (sin superar los 158 avisos
       del trinquete, `ci.yml:41`) y `npm run build`, todos en verde.
-- [ ] 6.4 Confirmar que no queda ninguna `/espera/i` en `apps/desk/src/lib/boardView.ts` (`grep -n
+- [x] 6.4 Confirmar que no queda ninguna `/espera/i` en `apps/desk/src/lib/boardView.ts` (`grep -n
       "espera/i" apps/desk/src/lib/boardView.ts` → sin resultados; control positivo previo: el mismo
       `grep` sobre `estados.ts:104` con el patrón `/espera/i` en la cadena de comentario debe devolver
       ≥ 1, para confirmar que el propio `grep` no está roto — precedente de este repositorio, un barrido
