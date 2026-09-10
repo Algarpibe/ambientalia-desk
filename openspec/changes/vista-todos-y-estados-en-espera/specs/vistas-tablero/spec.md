@@ -72,7 +72,7 @@ sesión.)
 - (Rojo ya escrito: `apps/desk/src/lib/boardView.test.ts:56` afirma hoy `toBe('Todos los Tickets')` y
   se pone rojo solo al cambiar el respaldo. Es el escenario; no se añade una prueba nueva para esto)
 
-#### Scenario de mutación — control de la separación
+#### Scenario: mutación — control de la separación
 - GIVEN que se revierte la separación y `case 'todos':` vuelve a compartir cuerpo con `default:`
 - WHEN corre la suite de `boardView.test.ts`
 - THEN fallan **exactamente dos** pruebas: la de «todos incluye los cerrados» (RQ-VT-01) y la de
@@ -93,7 +93,7 @@ RQ-VT-02 corrige para una clave inventada por fuera, aplicado ahora al propio ca
 - THEN ninguna de las seis produce el resultado del respaldo (`[]` de `default:`), salvo que ése sea
   legítimamente su resultado declarado (p. ej. `mios` sin `userId`)
 
-#### Scenario de mutación — control del detector
+#### Scenario: mutación — control del detector
 - GIVEN que se quita del `switch` el `case` de una de las seis vistas (p. ej. `case 'cerrados':`)
 - WHEN corre esta prueba
 - THEN se pone **roja**, nombrando la clave que quedó sin `case`. Si sigue verde, la prueba no
@@ -116,7 +116,7 @@ reconocía 2 de los 8 estados que el registro declaraba en espera.)
 - WHEN se filtra por `espera` y por `abiertos`
 - THEN los seis aparecen en `espera` y ninguno aparece en `abiertos`
 
-#### Scenario de mutación — el fichero vigilado, no una copia
+#### Scenario: mutación — el fichero vigilado, no una copia
 - GIVEN que se revierte `boardView.ts:35` a `/espera/i`, con el registro de `estados.ts` ya existente
 - WHEN corren dos detectores: el tripwire nuevo (importa `applyBoardView` y afirma sobre su salida) y
   el viejo (`packages/shared/src/estados.test.ts:113-121`, que reimplementa la regex localmente)
@@ -158,7 +158,7 @@ reexporta el mismo tipo `Ticket` de `@ambientalia/shared`.
 decisión explícita de Gerencia (F0-00, 2026-09-08), fuera de alcance de esta tanda. **No** se propone
 `jsdom` ni `@testing-library`, ni ampliar el include a `*.test.tsx`.
 
-#### Scenario manual — verificación por una persona
+#### Scenario: manual — verificación por una persona
 - GIVEN el tablero en `ambientalia-desk.ambientalia.cloud`, modo «estado»
 - WHEN se inspecciona al menos un ticket en `En Proceso` y uno en `Notificación cliente`
 - THEN los dos pintan con su color propio y no con `bg-slate-100`
