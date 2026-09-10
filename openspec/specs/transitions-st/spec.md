@@ -159,7 +159,7 @@ anterior se come la respuesta de la siguiente:
 | 3 | El estado actual está en el `from` de la transición | `409` | `:86-88` |
 | 4 | El área del usuario cubre el área de la transición | `403` | `:89-91` |
 | 5 | Los campos obligatorios están presentes | `422` | `:93-94` |
-| 6 | La orden de venta no está ya asociada a otro ticket | `409` | `:98-102` |
+| 6 | La orden de venta no está ya asociada a otro ticket | `409` | `:134-135` |
 | 7 | La persona a la que se deriva existe y está activa | `422` | `:106-110` |
 
 El orden **MUST** tenerse en cuenta al probar: una matriz de permisos montada sobre un estado de
@@ -472,20 +472,24 @@ Cuatro indicadores de G.6 —columnas 50, 53, 57 y 58— quedan rotos y **sin du
 (`reentrancia.ts:71-83`). Elegir entre las dos soluciones de P34 es F1C-02; esta spec sólo registra
 que se puede (`reentrancia.ts:32`).
 
-### 3.4 · La tercera puerta de la orden de venta · **destino REASIGNADO: punto abierto nº 52**
+### 3.4 · La tercera puerta de la orden de venta · **DECIDIDA, y se construye**
 
-> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`). Es el mismo defecto que
-> `remisiones` §5.1 y `tickets-core` §4.2, visto desde la tercera spec. **Destino: punto abierto nº 52
-> del maestro** (`R08.1.md:2071-2079`), no una tanda — y el arreglo puede ser **retirar** las dos
-> puertas existentes, no añadir la tercera. Ver `remisiones` §5.1, que es donde vive el detalle.
+> **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** Es el mismo defecto que
+> `remisiones` §5.1 y `tickets-core` §4.2, visto desde la tercera spec. El punto abierto nº 52 quedó
+> cerrado como **`1 ticket : N OV`**: **se construye la tercera puerta y las dos existentes se
+> quedan.** Ver `remisiones` §5.1, que es donde vive el detalle.
+>
+> *(Previously, hasta el 2026-09-11: «**Destino: punto abierto nº 52 del maestro**, no una tanda — y
+> el arreglo **puede ser retirar** las dos puertas existentes, no añadir la tercera». Ese enmarcado lo
+> invirtió la decisión del 10/09.)*
 
-**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`config.yaml`, `incumplimientos_vivos`, IV-4). La regla «una OV, un ticket»
+**Comportamiento actual. IV-4 pasa de bloqueado a CONSTRUIBLE** (`config.yaml`, `incumplimientos_vivos`, IV-4). La regla «una OV, un ticket»
 tiene **tres** puertas y sólo **dos** la comprueban:
 
 | Puerta | Comprueba | Precedencia del `409` frente al `422` de obligatorios | Evidencia |
 |---|---|---|---|
 | Creación de ticket | Sí, `409` | El `409` de la OV **gana** | `ticketService.ts:45-49` |
-| Transición `habilitar_servicio` | Sí, `409` | El `422` de obligatorios **gana** | `ticketService.ts:98-102` |
+| Transición `habilitar_servicio` | Sí, `409` | El `422` de obligatorios **gana** | `ticketService.ts:134-135` |
 | **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-226` |
 
 **Las dos primeras no son equivalentes**: comprueban la misma regla en órdenes opuestos. Es una

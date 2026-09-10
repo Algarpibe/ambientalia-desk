@@ -352,25 +352,21 @@ habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le habí
 - WHEN el mismo error doble se manda por `habilitar_servicio`
 - THEN responde `422` (los obligatorios ganan) — el mismo par de errores, dos resultados
 
-### 4.2 · La tercera puerta de la orden de venta sigue abierta · **destino REASIGNADO: punto abierto nº 52**
+### 4.2 · La tercera puerta de la orden de venta: DECIDIDA, y se construye
 
-> **⚠️ REASIGNADO EL 2026-09-09, y no a otra tanda.** Decía «destino F1A» y F1A cerró sin tocarlo.
-> Al buscarle sitio apareció algo mayor: **la regla que esta puerta impondría está en duda en el
-> propio maestro.** `R08.1.md:2071-2079` lista tres variantes reales y habituales —OV separadas por
-> mano de obra y repuestos, OV global por varios equipos, varias OV sobre un mismo ticket— y concluye
-> que «ninguna de las tres encaja en un modelo de "una OV, un ticket"». Es el **punto abierto nº 52**.
+> **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** El punto abierto nº 52 está cerrado:
+> **`1 ticket : N OV`, sin tabla puente**, y está en la tabla de decisiones del plan (`plan:350`).
 >
-> **Esta entrada adopta el mismo enmarcado que `remisiones` §5.1: si nº 52 se resuelve a favor de las
-> variantes, el arreglo es RETIRAR las dos puertas que ya existen (`ticketService.ts:45-48` y
-> `:128-129`), no añadir la tercera.** Construirla antes de decidir cuesta el doble. Y nº 52 **no está
-> en la tabla de decisiones del plan** (`plan:348-359`), así que ni llega a la agenda del viernes: redactado como
-> entrada **5.b** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`. La regla completa, con la cita
-> íntegra del maestro y las dos alternativas, vive en `remisiones` §5.1.
+> **Se CONSTRUYE la tercera puerta; las dos que ya existen SE QUEDAN** — `ticketService.ts:45-48` en el
+> alta (RQ-TC-08) y `:134-135` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un
+> ticket, que es justo lo que comprueban. La variante que ponía la regla en duda, la OV global por
+> lote, **desaparece por proceso**: se sustituye por subórdenes `OV-AAAA-NNN-SS`, una por ticket
+> (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` §5.1.
 >
 > *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` fija el modo de fallo exacto y `:161`
-> deja el `it.fails` esperando, sea cual sea la dirección de la decisión.
+> deja el `it.fails` esperando — ahora con dirección: verde con un `409`.
 
-**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`config.yaml`,
+**Comportamiento actual. IV-4 pasa de bloqueado a CONSTRUIBLE** (`config.yaml`,
 `incumplimientos_vivos`, IV-4). El alta
 de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
 (`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 subiera la
@@ -379,15 +375,20 @@ una prueba que fija el daño observable (`:156-158`). La regla completa es de `r
 
 (Previously: no nombraba explícitamente el enmarcado «retirar, no añadir» de `remisiones` §5.1 como
 el mismo enmarcado adoptado aquí. Y encabezaba con «a corregir en F1A», épica cerrada, con la segunda
-puerta citada en `:100` cuando vive en `:128-129`.)
+puerta citada en `:100` cuando vivía en `:128-129`. **Y hasta el 2026-09-11 sostenía ese enmarcado en
+presente —«RETIRAR las dos puertas», «nº 52 no está en la tabla de decisiones»—, que
+`decision/n52-cardinalidad-ov` invirtió el 10/09.** La segunda puerta vive hoy en `:134-135`.)
 
-#### Scenario: La cardinalidad OV↔ticket depende de la misma decisión en las dos specs
+#### Scenario: La cardinalidad OV↔ticket, resuelta en la misma dirección en las dos specs
 
 - GIVEN que `tickets-core` impone la regla en dos puertas (alta y `habilitar_servicio`)
 - AND `remisiones` la deja abierta en la tercera (alta de remisión de entrada)
-- WHEN Gerencia resuelve el punto abierto nº 52 a favor de las variantes reales
-- THEN el arreglo consistente en las dos specs es retirar las dos puertas de `tickets-core`, no
-      construir la de `remisiones`
+- WHEN Gerencia resuelve el punto abierto nº 52 como `1 ticket : N OV` (10/09,
+      `decision/n52-cardinalidad-ov`)
+- THEN las dos puertas de `tickets-core` **se quedan** —una OV pertenece como mucho a un ticket— y la
+      tercera, la de `remisiones`, **se construye**
+- AND la variante que ponía la regla en duda, la OV global por lote, deja de existir: se sustituye por
+      subórdenes `OV-AAAA-NNN-SS`, una por ticket
 
 ### 4.3 · Dos ramas de `Clasificaciones` sin grafo · **destino F1B-06**
 

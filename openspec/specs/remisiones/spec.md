@@ -350,27 +350,37 @@ estado legítimo, no un dato que falta» (`schema.sql:305-306`).
 *(La numeración de esta sección va aparte de la de requisitos: aquí se registra lo que hay, no lo que
 debe haber.)*
 
-### 5.1 · La tercera puerta de la orden de venta sigue abierta · **destino REASIGNADO: punto abierto nº 52**
+### 5.1 · La tercera puerta de la orden de venta: DECIDIDA, y se construye
 
-> **⚠️ REASIGNADO EL 2026-09-09, y no a otra tanda.** Decía «destino F1A» y F1A cerró sin tocarlo.
-> **Destino nuevo: PUNTO ABIERTO Nº 52 DEL MAESTRO.** Al buscarle sitio apareció algo mayor que la
-> orfandad: la regla que esta puerta impondría está en duda en el propio maestro.
-> `R08.1.md:2071-2079` lista tres variantes reales y habituales —OV separadas por mano de obra y
-> repuestos · OV global por varios equipos · varias OV sobre un mismo ticket— y concluye: «Ninguna de
-> las tres encaja en un modelo de "una OV, un ticket", y las tres son habituales. Punto abierto nº 52.»
+> **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** El punto abierto nº 52 está cerrado:
+> **la relación es `1 ticket : N OV`, sin tabla puente.** Verificado contra Zoho Books (org. 714421387)
+> y registrado en `docs/sdd/Decisiones_Gerencia_2026-09-10.md:112-126` y en la tabla de decisiones del
+> plan (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:350`).
 >
-> **El enmarcado se invierte respecto de las tandas anteriores: el arreglo puede ser RETIRAR las dos
-> puertas que ya existen (`ticketService.ts:45-48` y `:128-129`), no añadir la tercera.** Construirla antes
-> de decidir cuesta el doble. Y nº 52 **no está** en la tabla de decisiones del plan
-> (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:348-359`), así que ni llega a la agenda
-> del viernes.
+> **La dirección: se CONSTRUYE la tercera puerta, y las dos que ya existen SE QUEDAN.** `1 ticket : N
+> OV` significa que una OV pertenece **como mucho a un ticket** — exactamente lo que comprueban las dos
+> puertas vivas (`ticketService.ts:45-48` en el alta y `:134-135` en `habilitar_servicio`). La variante
+> que ponía la regla en duda —la OV global por lote, `1 OV → N tickets`— **desaparece por proceso**: la
+> decisión la elimina sustituyéndola por subórdenes `OV-AAAA-NNN-SS`, una por ticket, generadas al
+> crear la OV (`decision/subov-lote-convencion`). Las otras dos variantes del maestro son `N OV → 1
+> ticket`, que es 1:N desde el ticket y no contradice nada.
+>
+> **IV-4 pasa de BLOQUEADO a CONSTRUIBLE.** El `it.fails` de
+> `apps/desk/server/ordenVentaUnTicket.test.ts:161` está esperando para ponerse verde con un `409`.
+>
+> *(Previously, y durante ocho tandas: «el arreglo **puede ser RETIRAR** las dos puertas que ya
+> existen, no añadir la tercera», porque `R08.1.md:2071-2079` listaba tres variantes reales y concluía
+> que «ninguna de las tres encaja en un modelo de "una OV, un ticket"». **Ese enmarcado queda
+> invertido por la decisión del 10/09**, y con él la frase de que nº 52 «no está en la tabla de
+> decisiones del plan»: hoy sí está.)*
 
 `POST /api/remisiones` **escribe** `orden_venta`, `fecha_orden_venta` y `salesorder_id` en el ticket
 con un `UPDATE` condicional, **sin llamar a `ticketConOrdenVenta`**
 (`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 bajara 29 líneas
 la guarda del serial; el `UPDATE`, en `:221-225`). Las otras dos puertas sí la llaman: el alta
 (`services/ticketService.ts:43-49`, RQ-TC-08) y `habilitar_servicio`
-(`services/ticketService.ts:128-129`, RQ-TS-14).
+(`services/ticketService.ts:134-135`, RQ-TS-14 — eran `:128-129` antes de que
+`mensaje-422-cliente-duplicado` bajara 6 líneas la guarda equipo↔cliente).
 
 **Lo que la condición sí impide y lo que no.** El `WHERE ... COALESCE(orden_venta,'') = ''`
 (`remision.ts:223`) impide pisar la OV que el propio ticket ya tenga —por eso el formulario la enseña
@@ -395,12 +405,15 @@ sin actualizar tras el corrimiento de F1B-01.)
 - THEN el alta responde `201` sin ningún error
 - AND la orden queda asociada a los dos tickets, por sus dos vías (`ordenVentaUnTicket.test.ts:158`)
 
-#### Scenario: El arreglo depende de una decisión de Gerencia, no de esta spec
+#### Scenario: Gerencia decidió, y el arreglo es completar la tercera puerta
 
-- GIVEN que el punto abierto nº 52 del maestro sigue sin resolver
-- WHEN Gerencia decide a favor de las tres variantes reales (`R08.1.md:2071-2079`)
-- THEN el arreglo correcto es retirar las dos puertas existentes, no completar la tercera
-- AND si decide en contra, el arreglo es el `409` que el `it.fails` ya deja esperando
+- GIVEN que el punto abierto nº 52 del maestro quedó resuelto el 2026-09-10 como `1 ticket : N OV`
+      (`decision/n52-cardinalidad-ov`)
+- WHEN el alta de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
+- THEN el arreglo correcto es **completar la tercera puerta** con el `409` que el `it.fails` de
+      `ordenVentaUnTicket.test.ts:161` ya deja esperando
+- AND las dos puertas existentes **no se tocan**: una OV pertenece como mucho a un ticket, que es lo
+      que comprueban
 
 ### 5.2 · La remisión de salida no existe · **destino F1C-02**
 

@@ -421,7 +421,7 @@ incumplimientos_vivos:
       El bloque `if (b.salesOrderId)` escribe `salesorder_id` (y `orden_venta`,
       `fecha_orden_venta`) con un UPDATE condicional en el SQL, SIN llamar a
       `ticketConOrdenVenta`. La regla "una OV, un ticket" tiene TRES puertas y
-      sólo DOS la comprueban: `ticketService.ts:45` y `ticketService.ts:100`
+      sólo DOS la comprueban: `ticketService.ts:45-48` y `ticketService.ts:134-135`
       (`ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:330`).
       Esta tercera confía en `WHERE COALESCE(orden_venta,'') = ''`, que impide
       pisar la OV del propio ticket pero NO que dos tickets distintos acaben
@@ -429,25 +429,31 @@ incumplimientos_vivos:
     matiz_de_verificacion: >
       El proposal cita :188-196. El rango real es :189-197 (la 188 es el cierre
       `*/` del comentario). El UPDATE está en :192-196. ACTUALIZADO EN reasignar-desvios-huerfanos: tras F1B-01 el bloque es :218-226 y el UPDATE :221-225 — la guarda del serial lo bajo 29 lineas.
-    destino: "PUNTO ABIERTO Nº 52 DEL MAESTRO — no es tanda, y cerrarlo a ciegas empeoraría"
+    destino: "CONSTRUIBLE — nº 52 decidido el 2026-09-10 (decision/n52-cardinalidad-ov, plan:350)"
+    decidido: >
+      2026-09-10. `decision/n52-cardinalidad-ov`: la relación es `1 ticket : N OV`,
+      sin tabla puente. Verificado contra Zoho Books (org. 714421387) y registrado
+      en docs/sdd/Decisiones_Gerencia_2026-09-10.md:112-126.
+      DIRECCIÓN: se CONSTRUYE la tercera puerta y las dos que ya existen SE QUEDAN
+      (ticketService.ts:45-48 en el alta y :134-135 en habilitar_servicio). `1
+      ticket : N OV` significa que una OV pertenece como mucho a UN ticket, que es
+      exactamente lo que esas dos comprueban.
+      LA VARIANTE QUE PONÍA LA REGLA EN DUDA DESAPARECE POR PROCESO: la OV global
+      por lote (1 OV → N tickets) se elimina sustituyéndola por subórdenes
+      OV-AAAA-NNN-SS, una por ticket, generadas al crear la OV
+      (decision/subov-lote-convencion). Las otras dos variantes del maestro son
+      N OV → 1 ticket, o sea 1:N desde el ticket, y no contradicen la regla.
+      EL `it.fails` de ordenVentaUnTicket.test.ts:161 se pone verde con un 409.
     reasignado: >
-      2026-09-09. El destino anterior era "F1A". F1A cerró sin tocarlo, y al
-      buscarle sitio apareció algo más grave que la orfandad.
-      CERO FILAS DEL PLAN mencionan la cardinalidad OV↔ticket, la tercera puerta
-      ni el orden 409/422 (verificado con grep sobre el plan entero). La tabla de
-      decisiones (plan:348-359) tiene `decision/p21-ingreso-sin-ov` para F1B-03,
-      pero P21 es OTRA pregunta: si la OV es obligatoria al inicio, no cuántos
-      tickets puede tener una OV.
-      Y LA REGLA QUE ESTA PUERTA IMPONDRÍA ESTÁ EN DUDA EN EL PROPIO MAESTRO.
-      `R08.1.md:2071-2079` lista TRES variantes reales y habituales —OV separadas
-      por mano de obra y repuestos, OV global por varios equipos, y varias OV
-      sobre un mismo ticket— y concluye: "Ninguna de las tres encaja en un modelo
-      de «una OV, un ticket», y las tres son habituales. Punto abierto nº 52."
-      CONSECUENCIA, Y ES LO QUE CAMBIA EL DESTINO: cerrar la tercera puerta no es
-      completar una regla probada, es endurecer una regla que el maestro dice que
-      no describe el negocio. Si nº 52 se resuelve a favor de las variantes, el
-      arreglo no es añadir la tercera puerta: es RETIRAR las dos que ya existen
-      (ticketService.ts:45 y :100). Hacerlo antes de decidir cuesta el doble.
+      2026-09-09, SUPERADO POR LA DECISIÓN DEL 10/09. Se conserva como registro.
+      El destino anterior era "F1A"; F1A cerró sin tocarlo. Al buscarle sitio se
+      concluyó que la regla estaba en duda en el propio maestro
+      (`R08.1.md:2071-2079`: "Ninguna de las tres encaja en un modelo de «una OV,
+      un ticket», y las tres son habituales. Punto abierto nº 52.") y que el
+      arreglo PODÍA SER RETIRAR las dos puertas existentes en vez de añadir la
+      tercera. ESE ENMARCADO QUEDÓ INVERTIDO: ver `decidido`.
+      También decía que CERO FILAS DEL PLAN mencionaban la cardinalidad OV↔ticket.
+      Hoy sí: plan:350, `decision/n52-cardinalidad-ov`.
       LO QUE SÍ ESTÁ HECHO Y NO SE PIERDE: `ordenVentaUnTicket.test.ts:161` deja
       un `it.fails` esperando, y `:150-158` fija en positivo el modo de fallo
       exacto —201 sin queja, y la orden queda en los DOS tickets—. Sea cual sea
@@ -600,9 +606,12 @@ incumplimientos_vivos:
       Este defecto se encontró justamente comparando con esa interfaz, así que
       cae dentro de la fila sin forzarla. Misma tanda que IV-1 e IV-5, que son el
       mismo fichero y el mismo tablero.
-      La decisión (a)/(b) NO está en la tabla de decisiones del plan
-      (plan:348-359). Es el segundo hueco que esta reasignación destapa, y va con
-      el de nº 52 en la entrada 5 de docs/sdd/F0-01_Correcciones_para_el_plan.md.
+      DECIDIDO EL 2026-09-10: `decision/vista-todos-tablero`, opción (b) — «Todos»
+      pasa a devolver también los cerrados; se descarta renombrarla. Ya está en la
+      tabla de decisiones del plan (plan:351). Separar `case 'todos'` de `default:`
+      NO es opcional y va en la misma tanda.
+      (Antes decía: «La decisión (a)/(b) NO está en la tabla de decisiones del
+      plan». Hoy sí está y está resuelta.)
 
   - id: IV-8
     regla: "—"
@@ -622,19 +631,29 @@ incumplimientos_vivos:
       `equipo.clientId`, no contra `ov.clientId`: esta pareja queda fuera de su
       alcance a propósito (proposal.md §3, "Qué NO hace").
     relacion_con_iv4: >
-      Misma familia que IV-4 (`routes/remision.ts:218-226`): «una OV, un
-      ticket» tiene puertas sin comprobar, y ésta es una más — cerrarla también
-      toca la cardinalidad OV↔ticket que el punto abierto nº 52 del maestro
-      (`R08.1.md:2071-2079`) deja sin resolver. Cerrar esta pareja antes de que
-      Gerencia decida nº 52 podría endurecer una regla que el maestro pone en
-      duda.
+      ACTUALIZADO EL 2026-09-11. Se emparejaba con IV-4 diciendo que cerrar esta
+      pareja «antes de que Gerencia decida nº 52 podría endurecer una regla que el
+      maestro pone en duda». ESA JUSTIFICACIÓN CADUCÓ: nº 52 está decidido
+      (`decision/n52-cardinalidad-ov`, 10/09) e IV-4 pasó a CONSTRUIBLE.
+      IV-8 NO se cierra con ella, y la razón es otra: nº 52 resolvió la
+      CARDINALIDAD, no la TITULARIDAD. La decisión NO dice que la OV y el equipo
+      puedan ser de clientes distintos
+      (docs/sdd/Decisiones_Gerencia_2026-09-10.md:178-181). Esa pregunta —la
+      titularidad— sigue SIN DECIDIR y SIN CLAVE en la tabla de decisiones del
+      plan, y es donde vive IV-8.
+      NO usar nº 52 para justificar tocar la guarda equipo↔cliente
+      (`ticketService.ts:65-83`).
     destino: "PUNTO ABIERTO, sin destino — a propósito (criterio nº 8)"
     por_que_sin_destino: >
-      Cerrarlo exige antes decidir la cardinalidad OV↔ticket (punto abierto
-      nº 52), que no es una decisión técnica de esta tanda ni de la que lo
-      encuentre. Inventar un destino sin esa decisión repetiría el error que
-      IV-2 e IV-4 ya tienen registrado: una tanda no resuelve lo que Gerencia
-      no ha decidido.
+      ACTUALIZADO EL 2026-09-11. Decía: «cerrarlo exige antes decidir la
+      cardinalidad OV↔ticket (punto abierto nº 52)». Eso ya está decidido; lo que
+      falta ahora es la TITULARIDAD, que va con nº 52 pero como punto SEPARADO y
+      sin clave asignada (Decisiones_Gerencia_2026-09-10.md:283-287: «Se resuelve
+      el día que se decida la titularidad […]. Queda anotado, con su porqué y sin
+      destino inventado»).
+      El principio no cambia: inventar un destino sin esa decisión repetiría el
+      error que IV-2 e IV-4 ya tienen registrado — una tanda no resuelve lo que
+      Gerencia no ha decidido.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
