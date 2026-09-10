@@ -294,3 +294,125 @@ Sigue sin respuesta. Texto listo para pegar en `docs/sdd/F0-01_Correcciones_para
 Las entradas **3** (el bodegaje anclado en un hito que la R08 sustituyó) y **4** (dos tandas de
 auditoría dimensionadas sobre un generador que no existe) son las que ahorran trabajo perdido; las
 otras tres son higiene.
+
+---
+
+## 7 · P21 — «OV obligatoria para trabajar, no para recibir»
+
+**Decidido**, y con esto **se cierra el punto abierto nº 21** (`R08.1.md:3943`). Clave en Engram:
+`decision/p21-ingreso-sin-ov`.
+
+**Se deja como está: OV opcional en «Nuevo ticket», obligatoria en `Habilitar Servicio`.**
+
+No contradice el acta del 21/08, que pedía OV previa por trazabilidad: esa intención se conserva donde
+importa, porque **nada entra a diagnóstico ni genera costo sin OV**. Lo que la R08 descartó fue
+bloquear la recepción física.
+
+**Verificado: el código ya hace exactamente eso.** Los obligatorios del alta son `cliente`,
+`tipo de servicio`, `clasificaciones` y `prefijo` (`ticketService.ts:88-91`, sin OV); y `cfOrdenVenta`
+es `required = true` por defecto (`transitions.ts:86`) en `habilitar_servicio`. La decisión **confirma
+lo construido**, no lo cambia.
+
+### 7.1 · El estado provisional ya existe: es `Remisión creada`
+
+| Estado sin OV | Qué significa | De quién depende |
+|---|---|---|
+| `Ticket creado` | El equipo no ha llegado — Comercial crea tickets por anticipado desde el 20/08 | Cliente / logística |
+| **`Remisión creada`** | **El equipo está en bodega esperando la OV** | Comercial |
+
+`Ticket creado` mezcla dos situaciones; `Remisión creada` significa una sola. **No hace falta estado
+nuevo.**
+
+**Pero `Remisión creada` NO está entre los 8 `en_espera`:** `estados.ts:90` la clasifica como
+`'ninguna'`. Los equipos parados en bodega **no aparecen como espera en ningún sitio**. Hay que
+añadirla con área **Comercial**, y hace falta **junto con** la corrección de `boardView.ts:35` —la
+regex que acierta 2 de 8— para que lleguen a verse. Las dos van en la misma tanda.
+
+### 7.2 · La alarma: N = 3 días
+
+Va al registro que C11 dejó montado, `SLA_HORAS_POR_ESTADO` (`sla.ts:34`), **que está en horas**:
+
+```ts
+'Remisión creada': 72,
+```
+
+**⚠️ Eso pondrá ROJA la guarda de C11**, y es correcto que lo haga. La prueba «estados con SLA y sin
+destinatario de escalado» exige conjunto vacío, y el escalatario se deriva del cargo de la transición
+saliente vía `DERIVACION_POR_DEFECTO` (`transitions.ts:269-275`). **`habilitar_servicio` no tiene
+entrada ahí**, así que `escalatarioDe` devolvería `{ hay: false, motivo: 'ningun_cargo' }`.
+
+Hay que **declarar qué cargo de Comercial recibe el escalado**: es una decisión, no código. El **aviso
+por área** sí funciona sin eso (`avisoArea.ts`); lo que falta es la segunda mitad de C11, el escalado
+al superior.
+
+### 7.3 · `Habilitar Servicio` sin remisión: nunca
+
+Hoy sale de tres orígenes y uno —`Ticket creado`— lleva a `Ingresado` **sin remisión de entrada**. La
+guarda exigirá remisión de entrada vigente (no anulada) para los tres.
+
+**Consecuencia verificada, y hay que asumirla a propósito.** `habilitar_servicio` es la **única
+transición con botón** que sale de `Ticket creado` (`transitions.ts:178`; la otra ocurrencia, `:164`,
+es una función auxiliar). Retirar ese origen deja al estado **sin salida con botón** y **rompe el
+invariante 3** («`Finalizado` es el único estado sin salida»), hoy en verde.
+
+Operativamente el estado sí tiene salida: el paso sin botón `Ticket creado → Remisión creada`, que
+aplica el servidor. Pero los siete invariantes se afirman sobre `TRANSITIONS`, que **excluye los dos
+pasos sin botón a propósito**. Así que hay que **relajar el invariante 3 conscientemente**, admitiendo
+estados cuya única salida la aplica el servidor. Ya estaba anticipado en `invariantesGrafo.test.ts:73`
+para F1B-06 — llega antes y por otra vía.
+
+- `OV asignada` (Zoho) → `Ingresado` tampoco pasa por `Remisión creada`. La guarda lo cubre porque
+  exige que la remisión **exista**, aunque no cambie de estado. Ese origen desaparece con la salida de
+  Zoho (31/12/2026).
+- **Servicio en sitio no se resuelve con este atajo**: va a su propia rama del blueprint, punto abierto
+  nº 43, que sigue abierto.
+- **Antes de cambiar:** contar cuántos tickets del demostrador llegaron a `Ingresado` sin remisión. Es
+  histórico que la guarda no repara, igual que el caso D-nuevo 4 de C1.
+- **⚠️ El recuento «38 → 37 pasos» NO está verificado.** Retirar un origen de un `from` quita un
+  camino, no necesariamente un paso. Medir antes de escribirlo.
+
+### 7.4 · Garantía → OVI, pero es un cambio de práctica
+
+Hoy un servicio en garantía no tiene OV, así que no podría pasar `Habilitar Servicio`. Se le asocia una
+**OVI** (orden de venta interna), que ya se usa para dar salida a artículos de stock.
+
+**Verificado en Zoho Books (org. 714421387):** las OVI existen con prefijo `OVI-`, total 0 y factura
+interna `AMI-` también en 0 — el ciclo de facturación puede seguir igual. **Pero las 22 OVI de 2026
+están a nombre de un contacto de Ambientalia** (21 de «Ambientalia S.A.S.», 1 de «Ambientalia /
+Gecelca»), no del cliente final; el cliente real y el serial aparecen sólo en texto libre.
+
+Creadas así, una OVI de garantía **no sale en un desplegable filtrado por cliente** y **choca con la
+guarda de titularidad**. Creadas a nombre del cliente real —lo que propone Gerencia— la guarda no
+necesita excepción. Es un **cambio de práctica**, no la práctica actual.
+
+- **Discriminador:** el prefijo `OVI-`. Los KPI de ingresos y de ticket promedio **deben excluirlas**.
+- **Pendiente: quién crea la OVI de garantía.** Hoy la crea Servicio Técnico, lo que sería una
+  excepción de autor a la precondición «Comercial crea la OV», y hay que escribirla.
+- **OVI sin ticket** (préstamos, complemento de stock) siguen existiendo sin asociación, sin conflicto.
+
+**Hallazgo lateral con valor de negocio:** las líneas de una OVI conservan el costo de referencia
+(`sales_rate`) aunque el precio sea 0 —25,98 · 33,98 · 14,76 USD—. Con cada OVI asociada a un ticket de
+garantía queda medible el **costo de garantía por equipo, marca y proveedor**: material para reclamar
+al fabricante y argumento de M4.5.
+
+### 7.5 · Segunda OV en `Aprobación`: añade, nunca sustituye
+
+`Aprobación` y `Aprobación y S. Repuestos` deben poder **añadir** OV al ticket, nunca sustituir la de
+entrada. Es el flujo normal —OV de diagnóstico al entrar, OV de reparación al aprobar—, no una
+excepción.
+
+**Y con el modelo `1 ticket : N OV` un defecto conocido desaparece por construcción.** `Fecha Orden de
+Compra` (col. 42) es uno de los diez campos de fecha reentrantes: se escribe en `Habilitar Servicio` y
+otra vez en `Aprobación`, y la segunda borra la primera. Con la fecha viviendo en **cada asociación**,
+no en el ticket, no hay nada que pisar.
+
+Campos de la asociación: `ticket_id`, transición que asoció, fecha y hora, persona (regla R08 de
+M1.10). **El bodegaje de entrada toma la fecha de la OV asociada en `Habilitar Servicio`.**
+
+### 7.6 · P21, C9 e IV-2 son el mismo asunto desde tres lados
+
+- **P21** decide que el equipo puede esperar la OV en bodega.
+- **C9** mide cuánto espera: el tiempo en `Remisión creada` es exactamente el bodegaje de entrada.
+- **IV-2** garantiza que la fecha que abre esa espera no llegue mal del navegador.
+
+**Cerrado P21 con esta salida, IV-2 deja de ser opcional.**
