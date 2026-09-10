@@ -136,10 +136,10 @@ Es el MVP. Se divide en cinco épicas que **no son estrictamente secuenciales**:
 | Tanda | Corrección | Fuente | Gate |
 |---|---|---|---|
 | F1A-01 | **C1** Cerrar la guarda del checkbox obligatorio (`buildTransitionPlan`, debt.md M-2) | M1.7 · M11.7 · P33 | Ninguno |
-| F1A-02 | **C11** SLA de un día sobre `Notificado`, con correo redundante al cambiar de área y escalado al superior | M1.7 · P40 · acta 03/09 (ampliada) | Ninguno |
-| F1A-03 | **C12** Salidas aprobada/rechazada de `Verificación` en el flujo de equipo nuevo | M1.4 · P38 | Ninguno; se hace antes de F1B-06 |
-| F1A-04 | **C9** (parte técnica) Recalcular bodegaje de entrada, inicio de servicio y diagnóstico contra la marca de tiempo de `Ingreso a Servicio`; añadir el campo «fecha de aviso al cliente» | M1.10 · P41 | La definición de los tres bodegajes ya está resuelta en la R08 |
-| F1A-05 | Auditoría de blueprint tras las correcciones (`audit-F1A`) | M11.6 | — |
+| F1A-02 | **C11** SLA de un día sobre `Notificado`, con correo redundante al cambiar de área y escalado al superior | M1.7 (R08.1.md:1570-1575) · P40 · Anexo H (:4561) | Ninguno |
+| F1A-03 | **C12** Salidas aprobada/rechazada de `Verificación` en el flujo de equipo nuevo | M1.4 · P38 | Ninguno para la transición (as-is: Verificación —Liberación→ Finalizado, 71 usos observados). La GUARDA de obligatoriedad por familia espera a Gustavo/Calidad · Anexo D nº 38. Se hace antes de F1B-06, que la hereda |
+| F1A-04 | **C9** (parte técnica) Los tres bodegajes de M1.10 (:1685-1702) calculados sobre ticket_transitions; reanclar los indicadores 48 y 49 en la marca de «Ingreso a Servicio»; añadir el campo «fecha de aviso al cliente» | M1.10 · P41 | La definición de los tres bodegajes ya está resuelta en la R08 |
+| F1A-05 | Auditoría de blueprint tras las correcciones (`audit-F1A`) | M11.6 | Ninguno. NO regenera `docs/artefactos/` (no hay generador todavía); audita leyendo el código |
 
 #### Épica 1B — Paridad funcional con el Desk 1.0 · S39–S44 (6 semanas)
 
@@ -155,7 +155,8 @@ Aquí se replica lo que el Desk 1.0 hace hoy, con la interfaz que replica la est
 | F1B-06 | — | Blueprints de **equipo nuevo** y **soporte remoto** (M1.4, M1.5) implementados en `transitions.ts` con la misma convención; hereda C12 | Alcance de los flujos **comercial** y **posible-cliente** (M1.11, M1.12) en Desk 2.0: se propone dejarlos en Zoho CRM durante 2026 y sincronizarlos en lectura. Confirmar |
 | F1B-07 | 8 | Prioridad automática por calificación del cliente y contrato activo (High/Low, as-is R05); «Mis tickets» autoordenado; edición manual bloqueada para el técnico | Si los **Top 5** entran en la regla automática (Bloque 6 de la convocatoria) |
 | F1B-08 | 17 · 22 | Cierre de la paridad: vistas de listado y ficha equivalentes a las de Zoho Desk; conexión Zoho en solo lectura verificada en las tres entidades; **política de escritura** (P44): ninguna, salvo precarga de borrador de cotización si se decide | **P44** |
-| F1B-09 | — | Auditoría de blueprint de los tres flujos (`audit-F1B`); extensión a equipo nuevo y soporte remoto como pide M11.6 | — |
+| F1B-10 | — | Orden único de precedencia entre guardas en las dos puertas del motor (createManagedTicket y executeTransition), y en la del alta de remisión; unifica transitions-st §3.8 (a) y (b) y tickets-core §4.1 | Ninguno técnico; el orden se declara en la spec |
+| F1B-09 | — | Auditoría de blueprint de los tres flujos (`audit-F1B`); extensión a equipo nuevo y soporte remoto como pide M11.6 | Ninguno. Hereda el generador de diagramas de `decision/mapa-blueprint-generado`, que se construye en F1A antes de F1B-06; la extensión de M11.6 deja de ser manual |
 
 #### Épica 1C — Correcciones que cambian el proceso · se intercalan a medida que llegan las decisiones (S40–S48)
 
@@ -346,7 +347,9 @@ Tabla para llevar a cada sesión de los viernes. Cuando una decisión se cierra,
 
 | Clave Engram | Decisión | Tanda(s) que abre | Sesión prevista |
 |---|---|---|---|
-| `decision/p21-ingreso-sin-ov` | OV obligatoria desde el inicio o estado provisional | F1B-03 (regla definitiva) | 11/09 |
+| `decision/n52-cardinalidad-ov` | **DECIDIDO 10/09.** La relación es `1 ticket : N OV`, sin tabla puente. La OV global por lote se elimina: Comercial subdivide en subórdenes (`OV-AAAA-NNN-SS`), una por ticket, al crear la OV | **IV-4 pasa de bloqueado a construible** (tercera puerta, `remision.ts:218-226`). ⚠️ La TITULARIDAD va aparte y sigue abierta: ahí queda IV-8 | 10/09 — cerrado |
+| `decision/vista-todos-tablero` | **DECIDIDO 10/09.** Opción (b): «Todos» pasa a devolver también los cerrados. Se descarta renombrarla a «Abiertos». Separar `case 'todos'` de `default:` no es opcional y va en la misma tanda | **F1B-08**, junto con IV-1 (`boardView.ts:35`), que no necesita decisión | 10/09 — cerrado |
+| `decision/p21-ingreso-sin-ov` | **DECIDIDO 10/09.** Se deja como está: OV **opcional** en «Nuevo ticket», **obligatoria** en `Habilitar Servicio`. «OV obligatoria para trabajar, no para recibir». Confirma lo construido, no lo cambia | F1B-03 (regla definitiva). Arrastra a **F1B-08** el trabajo de `Remisión creada` / `en_espera` (§7.1 de las decisiones). Y con esta salida **IV-2 deja de ser opcional** | 10/09 — cerrado |
 | `decision/p8-p54-drive` | Botón de enlace a Drive como fase 0; convivencia con Drive | F1B-02 | 11/09 |
 | `decision/p45-macro-fases` | Juego de macro-fases común a todas las marcas | F1D-03 | 11/09 (Johny) |
 | `decision/flujos-comercial-posible-cliente` | Alcance de M1.11 y M1.12 en Desk 2.0 | F1B-06 | 11/09 |
@@ -385,7 +388,8 @@ La documentación de soporte ya vive en `docs/` del repositorio `C:\dev\Desk_2_R
 | `docs/modelo-autorizacion.md` | Modelo de permisos | Vigente | Fuente para `permissions` y C10 |
 | `docs/migracion-zoho-roadmap.md` · `docs/zoho-hub/` | Hoja de ruta y spike de replicación lógica | Vigente | Fuente para `zoho-sync` y F1F-01 |
 | `docs/remisiones/` | Datos y correlación de códigos internos ↔ equipos Zoho | Vigente | Fuente para `remisiones` y para el código interno del cliente (F1B-02) |
-| `docs/artefactos/blueprintserviciotecnico.html` | Mapa de transiciones generado con IA (auditoría R04) | Vigente | Se regenera en cada tanda `audit-*` |
+| `docs/artefactos/blueprintserviciotecnico.html` | Mapa de transiciones generado con IA (auditoría R04) | **Histórico, congelado en `a3a8f03`** (`decision/mapa-blueprint-generado`, 10/09; precedente `docs/superpowers/`) | Ninguna tanda lo regenera ni lo cita: **no tiene generador en el repositorio**. Se sustituye por la fila siguiente |
+| `docs/artefactos/blueprint-*.md` | Mapa de transiciones **generado desde `transitions.ts`** por script: Mermaid `stateDiagram-v2`, el completo más una vista por cada una de las tres fases de M1.3.1 | **Por construir** — `decision/mapa-blueprint-generado` (10/09) | Lo construye una tanda de F1A, antes de F1B-06. Una prueba impide que quede desfasado; F1B-09 lo hereda funcionando |
 | `docs/runbooks/` · `DEPLOY.md` | Operación y despliegue | Vigente | F0-04 y F1F |
 | `debt.md` | Deuda técnica con auditoría interna del 19/06 y roadmap del 07/08 | Vigente | F0-00 la reclasifica; cada tanda que cierra un punto lo marca |
 | **`openspec/`** (nuevo) | `config.yaml` · `specs/<capacidad>/spec.md` · `changes/<tanda>/` | Se crea en F0-01 | La verdad actual y los cambios propuestos (§2.2) |
@@ -418,6 +422,7 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F1B-06 | Blueprints equipo nuevo y soporte remoto | transitions-equipo-nuevo, transitions-soporte-remoto | M1.4, M1.5 | flujos comerciales | L | S42 |
 | F1B-07 | Prioridad automática y Mis tickets | tickets-core | ítem 8 | top5 | S | S43 |
 | F1B-08 | Paridad de vistas y política Zoho | tickets-core, zoho-sync | ítems 17, 22, P44 | p44 | M | S44 |
+| F1B-10 | Orden único de precedencia entre guardas | transitions-st, tickets-core | transitions-st §3.8 (a) y (b), tickets-core §4.1; entrada 5.a de F0-01 | — (ninguno técnico; el orden se declara en la spec) | M | Por asignar |
 | F1B-09 | audit-F1B | — | M11.6 | — | S | S44 |
 | F1C-01…08 | C2, C4, C3, C5, C10, C7+C9, C6, rutas abreviadas | transitions-st, permissions, kpis | §3.2.1 | uno por tanda (§4.5) | S–M | S40–S48 |
 | F1D-01 | Modelo de datos del catálogo | diagnostico-checklist | M2.2, acta 03/09 | — | M | S42 |
