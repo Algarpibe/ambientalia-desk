@@ -8,7 +8,7 @@ const T = (over: Partial<Ticket>): Ticket => ({ ...BASE, ...over } as Ticket)
 const now = new Date('2026-06-06T00:00:00Z')
 const tickets: Ticket[] = [
   T({ id: 'a', status: 'Ingresado', statusType: 'Open', dueDate: '2026-01-01T00:00:00Z' }),   // activo, vencido
-  T({ id: 'b', status: 'En espera de repuesto', statusType: 'Open', dueDate: null }),          // en espera
+  T({ id: 'b', status: 'En Espera de Repuestos', statusType: 'Open', dueDate: null }),         // en espera
   T({ id: 'c', status: 'Finalizado', statusType: 'Closed', dueDate: '2026-01-01T00:00:00Z' }), // cerrado (no vencido)
   T({ id: 'd', status: 'Diagnóstico', statusType: 'Open', dueDate: '2026-12-31T00:00:00Z' }),  // activo, futuro
 ]
@@ -21,6 +21,40 @@ describe('applyBoardView', () => {
   it('espera = solo en espera', () => { expect(ids('espera')).toEqual(['b']) })
   it('vencidos = activo + fecha pasada (excluye sin fecha/futuro/cerrado)', () => { expect(ids('vencidos')).toEqual(['a']) })
   it('key desconocida → como todos', () => { expect(ids('zzz')).toEqual(['a', 'b', 'd']) })
+})
+
+/**
+ * RQ-VT-04 — los seis estados que la regex vieja (`/espera/i`) no reconocía, porque su nombre no
+ * lleva la palabra «espera»: `ESTADOS_EN_ESPERA` (`packages/shared/src/estados.ts`) sí los declara, y
+ * `applyBoardView` tiene que consumir ese registro, no un patrón sobre el texto del estado.
+ */
+describe('applyBoardView · RQ-VT-04, los seis estados que la regex vieja no reconocía', () => {
+  const casoEnEspera = (status: string) => {
+    const t = [T({ id: 'e', status, statusType: 'Open' })]
+    it(`${status}: cae en espera y no en abiertos`, () => {
+      expect(applyBoardView(t, 'espera', now).map((x) => x.id)).toEqual(['e'])
+      expect(applyBoardView(t, 'abiertos', now)).toEqual([])
+    })
+  }
+  casoEnEspera('Servicio externo')
+  casoEnEspera('Notificación cliente')
+  casoEnEspera('Notificación a Compras')
+  casoEnEspera('Notificación Comercial')
+  casoEnEspera('Solicitado')
+  casoEnEspera('Liberación Comercial')
+})
+
+/**
+ * RQ-VT-05 — un ticket CERRADO nunca aparece bajo «Espera», aunque su estado esté en
+ * `ESTADOS_EN_ESPERA`. Cierra el hueco de detector que la Fase 0 de `tasks.md` confirmó: con el
+ * fixture de arriba, quitar el filtro de cerrados de la rama `espera` (`boardView.ts:44`) no lo
+ * detectaba nadie.
+ */
+describe('applyBoardView · RQ-VT-05, un cerrado nunca aparece en espera', () => {
+  it('Closed en un estado de espera no aparece en la vista espera', () => {
+    const t = [T({ id: 'cerrado-en-espera', status: 'Solicitado', statusType: 'Closed' })]
+    expect(applyBoardView(t, 'espera', now)).toEqual([])
+  })
 })
 
 /**

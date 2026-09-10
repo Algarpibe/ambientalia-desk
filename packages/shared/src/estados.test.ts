@@ -98,28 +98,6 @@ describe('registro de estados', () => {
   it('enEsperaDe devuelve undefined para un estado que no existe', () => {
     expect(enEsperaDe('Estado inventado')).toBeUndefined()
   })
-
-  /**
-   * POR QUÉ EXISTE ESTE REGISTRO, en una sola prueba.
-   *
-   * La vista de «En espera» decide hoy con `/espera/i` sobre el nombre del estado
-   * (`apps/desk/src/lib/boardView.ts:35`). De las OCHO que Gerencia declaró en espera, esa regex
-   * reconoce DOS: las únicas que llevan la palabra dentro. Las otras seis —incluidas las tres
-   * externas, que son las que de verdad no dependen de nosotros— quedan fuera de la vista.
-   *
-   * F0-04 NO lo corrige: esto documenta el defecto tal como está. Que la vista consuma el registro
-   * es F1A. Si alguien arregla `boardView.ts` antes, esta prueba dará rojo y habrá que retirarla —
-   * que es exactamente lo que tiene que pasar.
-   */
-  it('documenta el defecto: la regex del tablero solo reconoce 2 de las 8 en espera', () => {
-    const comoDecideHoyElTablero = (estado: string) => /espera/i.test(estado)
-    const reconocidas = ESTADOS_EN_ESPERA.filter(comoDecideHoyElTablero)
-    expect(reconocidas).toEqual(['En Espera de Repuestos', 'En espera de SKU inventario'])
-    // Y al revés: no se le cuela ningún estado que NO esté en espera. El defecto es por defecto, no
-    // por exceso — la vista enseña de menos, no de más.
-    const coladas = ESTADOS.filter((e) => comoDecideHoyElTablero(e) && !ESTADOS_EN_ESPERA.includes(e))
-    expect(coladas).toEqual([])
-  })
 })
 
 /**
