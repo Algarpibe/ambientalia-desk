@@ -375,9 +375,10 @@ una prueba que fija el daño observable (`:156-158`). La regla completa es de `r
 
 (Previously: no nombraba explícitamente el enmarcado «retirar, no añadir» de `remisiones` §5.1 como
 el mismo enmarcado adoptado aquí. Y encabezaba con «a corregir en F1A», épica cerrada, con la segunda
-puerta citada en `:100` cuando vivía en `:128-129`. **Y hasta el 2026-09-11 sostenía ese enmarcado en
-presente —«RETIRAR las dos puertas», «nº 52 no está en la tabla de decisiones»—, que
-`decision/n52-cardinalidad-ov` invirtió el 10/09.** La segunda puerta vive hoy en `:134-135`.)
+puerta citada en `:100` cuando vivía en `:128-129`. **Y sostuvo ese enmarcado en presente —«RETIRAR
+las dos puertas», «nº 52 no está en la tabla de decisiones»— hasta que se barrió, el 2026-09-10, el
+mismo día en que `decision/n52-cardinalidad-ov` lo invirtió.** La segunda puerta vive hoy en
+`:134-135`.)
 
 #### Scenario: La cardinalidad OV↔ticket, resuelta en la misma dirección en las dos specs
 

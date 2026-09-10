@@ -631,7 +631,7 @@ incumplimientos_vivos:
       `equipo.clientId`, no contra `ov.clientId`: esta pareja queda fuera de su
       alcance a propósito (proposal.md §3, "Qué NO hace").
     relacion_con_iv4: >
-      ACTUALIZADO EL 2026-09-11. Se emparejaba con IV-4 diciendo que cerrar esta
+      ACTUALIZADO EL 2026-09-10. Se emparejaba con IV-4 diciendo que cerrar esta
       pareja «antes de que Gerencia decida nº 52 podría endurecer una regla que el
       maestro pone en duda». ESA JUSTIFICACIÓN CADUCÓ: nº 52 está decidido
       (`decision/n52-cardinalidad-ov`, 10/09) e IV-4 pasó a CONSTRUIBLE.
@@ -645,7 +645,7 @@ incumplimientos_vivos:
       (`ticketService.ts:65-83`).
     destino: "PUNTO ABIERTO, sin destino — a propósito (criterio nº 8)"
     por_que_sin_destino: >
-      ACTUALIZADO EL 2026-09-11. Decía: «cerrarlo exige antes decidir la
+      ACTUALIZADO EL 2026-09-10. Decía: «cerrarlo exige antes decidir la
       cardinalidad OV↔ticket (punto abierto nº 52)». Eso ya está decidido; lo que
       falta ahora es la TITULARIDAD, que va con nº 52 pero como punto SEPARADO y
       sin clave asignada (Decisiones_Gerencia_2026-09-10.md:283-287: «Se resuelve

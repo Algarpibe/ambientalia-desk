@@ -29,8 +29,8 @@ septiembre, manda el código y la discrepancia se escribe (§4).
 | Catálogo de transiciones | «`shared/transitions.ts` (34 transiciones + campos obligatorios)» (`design:27`) | «34 transiciones y 21 estados» (`:360`, `:889`) | 34 entradas en `TRANSICIONES_BASE` (`packages/shared/src/transitions.ts:171-256`), fijadas por prueba (`invariantesGrafo.test.ts:50-54`) |
 | Registro de estados | No existe en el diseño | «21 estados» (`:391`) | `estados.ts:59-103`. **No existía hasta F0-04**: se derivaban de los `from`/`to` (`estados.ts:3-4`) |
 | Destino de escritura | «**Postgres** (no Zoho)» (`design:19`) | — | `packages/zoho-sync/src/db/repo.ts:249-287`. Ninguna llamada a Zoho |
-| Actor | Constante `'Equipo Técnico'`, «el login/roles reales son el Subsistema H» (`design:20`) | M1.10: «toda etapa y toda transición deben registrar fecha, hora y persona» (`:1677`) | Usuario de la sesión, con la constante como respaldo (`ticketService.ts:111`, `transitionActor.ts:3`) |
-| Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:89-91`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110`) |
+| Actor | Constante `'Equipo Técnico'`, «el login/roles reales son el Subsistema H» (`design:20`) | M1.10: «toda etapa y toda transición deben registrar fecha, hora y persona» (`:1677`) | Usuario de la sesión, con la constante como respaldo (`ticketService.ts:145`, `transitionActor.ts:3`) |
+| Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:123-125`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110`) |
 | Endpoint | «Rewrite endpoint … en `server/app.ts`» (`design:88`) | — | `apps/desk/server/routes/tickets.ts:192-194` |
 
 ---
@@ -154,13 +154,22 @@ anterior se come la respuesta de la siguiente:
 
 | Orden | Guarda | Respuesta | Evidencia |
 |---|---|---|---|
-| 1 | La transición existe | `400` | `ticketService.ts:82-83` |
-| 2 | El ticket existe | `404` | `:84-85` |
-| 3 | El estado actual está en el `from` de la transición | `409` | `:86-88` |
-| 4 | El área del usuario cubre el área de la transición | `403` | `:89-91` |
-| 5 | Los campos obligatorios están presentes | `422` | `:93-94` |
-| 6 | La orden de venta no está ya asociada a otro ticket | `409` | `:134-135` |
-| 7 | La persona a la que se deriva existe y está activa | `422` | `:106-110` |
+| 1 | La transición existe | `400 'Transición desconocida'` | `ticketService.ts:116-117` |
+| 2 | El ticket existe | `404 'Ticket no encontrado'` | `:118-119` |
+| 3 | El estado actual está en el `from` de la transición | `409 '…no aplica desde el estado…'` | `:120-122` |
+| 4 | El área del usuario cubre el área de la transición | `403 '…no tiene permiso para esta transición…'` | `:123-125` |
+| 5 | Los campos obligatorios están presentes | `422 { errors: plan.errors }` | `:127-128` |
+| 6 | La orden de venta no está ya asociada a otro ticket | `409 '…ya está asociada al ticket #…'` | `:134-135` |
+| 7 | La persona a la que se deriva existe y está activa | `422 'La persona a la que se deriva no existe o está dada de baja'` | `:140-144` |
+
+> **⚠️ Las siete citas de esta tabla se reanclaron el 2026-09-10 y SEIS DE LAS SIETE estaban caducas.**
+> Decían `:82-83`, `:84-85`, `:86-88`, `:89-91`, `:93-94` y `:106-110`. Sólo la 6 se había corregido
+> antes, y ella sola ha derivado **tres veces**: `:100` → `:128-129` → `:134-135`.
+>
+> **Una tabla anclada por número de línea y sin detector volverá a derivar.** La columna Respuesta
+> lleva ahora el mensaje literal del `throw` precisamente por eso: es un ancla que no se mueve al
+> insertar código encima. Queda **sin decidir** si eso basta o si hace falta además una prueba que
+> fije la tabla — es alcance nuevo y se propone aparte, no se resuelve aquí.
 
 El orden **MUST** tenerse en cuenta al probar: una matriz de permisos montada sobre un estado de
 origen inválido comprueba el `409` de la guarda 3 y cree comprobar el `403` de la 4
@@ -205,7 +214,7 @@ la única validación de campos, **SHALL** ser puro y **SHALL** devolver la list
 
 - Un campo `required` que llega vacío **SHALL** producir
   `Falta el campo obligatorio: <label>` (`transitionExec.ts:77`), y el llamador **SHALL** traducirlo a
-  `422` (`ticketService.ts:93-94`).
+  `422` (`ticketService.ts:127-128`).
 - El **comentario NUNCA MAY declararse obligatorio**: el ayudante `comment()` no admite parámetro
   (`transitions.ts:65-74`), y por eso el motor se quedó sin la guarda aparte que lo comprobaba
   (`transitionExec.ts:95-99`). Es el principio de diseño nº 4 del maestro cumplido en el código
@@ -265,7 +274,7 @@ Toda transición **SHALL** dejar fila en `ticket_transitions` con su origen, su 
 excepciones» (`:1677`).
 
 - El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a la constante `TRANSITION_ACTOR`
-  sólo si la sesión no trae nombre (`ticketService.ts:111`, `transitionActor.ts:3`).
+  sólo si la sesión no trae nombre (`ticketService.ts:145`, `transitionActor.ts:3`).
 - La cobertura **SHALL** ser de las 34: el barrido ejercita **todos** los `from` de cada transición
   —`habilitar_servicio` tiene tres—, o sea **36 ejecuciones**, y comprueba en cada una el estado
   destino y la fila del historial (`transicionesEjecucion.test.ts:105-117`, `:272-285`).
@@ -294,7 +303,7 @@ derivar no puede frenar un ticket (`transitions.ts:96-98`, `:277-291`; maestro M
   (`transitionExec.ts:48-61`): la clave **ausente** no toca lo que hubiera; la clave **vacía** borra
   la derivación. Sin esa distinción, vaciar la casilla no haría nada.
 - Un id de persona recibido **MUST** comprobarse: inexistente o dada de baja produce `422`
-  (`ticketService.ts:106-110`).
+  (`ticketService.ts:140-144`).
 
 ### RQ-TS-13 · Avisos: se calculan desde el estado de llegada
 
@@ -479,7 +488,7 @@ que se puede (`reentrancia.ts:32`).
 > cerrado como **`1 ticket : N OV`**: **se construye la tercera puerta y las dos existentes se
 > quedan.** Ver `remisiones` §5.1, que es donde vive el detalle.
 >
-> *(Previously, hasta el 2026-09-11: «**Destino: punto abierto nº 52 del maestro**, no una tanda — y
+> *(Previously, hasta el barrido del 2026-09-10: «**Destino: punto abierto nº 52 del maestro**, no una tanda — y
 > el arreglo **puede ser retirar** las dos puertas existentes, no añadir la tercera». Ese enmarcado lo
 > invirtió la decisión del 10/09.)*
 
@@ -598,7 +607,7 @@ conocían en el primero** (`ticketService.test.ts:138-141`).
 #### b) El `409` de estado contesta antes que el `403` de área
 
 En `executeTransition`, la guarda 3 —el estado de origen— **SHALL** evaluarse antes que la guarda 4
-—el área— (`ticketService.ts:86-88` antes de `:89-91`; fijado en `ticketService.test.ts:154`). A
+—el área— (`ticketService.ts:120-122` antes de `:123-125`; fijado en `ticketService.test.ts:154`). A
 quien no tiene el área se le responde por el **estado del ticket**.
 
 **Alcance real, para no exagerarlo.** El middleware ya exige sesión antes de llegar aquí
@@ -691,7 +700,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 
 | # | Dice el diseño | Dice el código | Lectura |
 |---|---|---|---|
-| D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:89-91`), matriz de 102 casos probada (`permisos.test.ts:77-82`), y el actor es el usuario de la sesión (`ticketService.ts:111`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
+| D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:123-125`), matriz de 102 casos probada (`permisos.test.ts:77-82`), y el actor es el usuario de la sesión (`ticketService.ts:145`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
 | D-2 | «Rewrite endpoint `POST /api/tickets/:id/transition` en `server/app.ts`» (`design:88`) | Vive en `apps/desk/server/routes/tickets.ts:192-194` | Movido. Cualquier cita del diseño a `app.ts` apunta a un fichero que ya no lo contiene |
 | D-3 | `applyTransition(db, ticketId, fromStatus, transition, plan, actor)` — seis parámetros (`design:85`) | Siete: añade `values` al final (`repo.ts:290-298`) | El séptimo es lo que hace posible RQ-TS-11 y la salida de C4: sin `values` en el historial, `ticket_transitions` no guardaría «todos» los valores |
 | D-4 | «El mapeo usa el inverso de `PROMOTED_COLUMNS` (ya existe en `server/db/rows.ts`)» (`design:56`) | Vive en `packages/zoho-sync/src/db/rows.ts`, importado como `@ambientalia/zoho-sync/db/rows` (`transitionExec.ts:2`) | Movido al paquete al extraerse la sincronización |
