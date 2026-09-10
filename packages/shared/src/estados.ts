@@ -18,14 +18,14 @@
  * | Nombre        | Criterio                                                                   | Fuente          | Alcance                          |
  * |---------------|----------------------------------------------------------------------------|-----------------|----------------------------------|
  * | `sin_salida`  | Su única transición de salida depende de algo que la aplicación no controla | M1.3.4          | 4 estados                        |
- * | `en_espera`   | El ticket está parado esperando el acto de un tercero y el área dueña no    | Vista del       | 8 estados — LO QUE DECLARA ESTE  |
+ * | `en_espera`   | El ticket está parado esperando el acto de un tercero y el área dueña no    | Vista del       | 9 estados — LO QUE DECLARA ESTE  |
  * |               | puede hacer nada por su cuenta                                             | tablero         | módulo                           |
  * | `bodegaje`    | El tiempo que un equipo pasa en Ambientalia esperando una respuesta del     | M1.10           | 3 PERIODOS ENTRE FECHAS,         |
  * |               | cliente — tiempo que no depende de nosotros                                | `[DEFINIDO R08]`| no estados                       |
  *
  * DE AQUÍ SALE LA REGLA QUE SEPARA LA VISTA DEL RELOJ, y si no queda explícita F1C-06 la pierde:
  *
- *   **La vista muestra las ocho. El reloj del SLA NO lee esta clasificación.**
+ *   **La vista muestra las nueve. El reloj del SLA NO lee esta clasificación.**
  *
  * El reloj para en los tres bodegajes de M1.10, que son periodos delimitados por dos fechas y no
  * estados del grafo. Un estado puede estar `en_espera` y no parar ningún reloj, y un bodegaje puede
@@ -64,7 +64,7 @@ export const CLASIFICACION_EN_ESPERA = {
   // por eso está aquí y NO en los cuatro de `sin_salida`.
   'Notificación cliente': 'externa',
 
-  // ── interna (5) — esperamos a otra área de la casa ────────────────────────────────────────────
+  // ── interna (6) — esperamos a otra área de la casa ────────────────────────────────────────────
   'Notificación a Compras': 'interna',
   'Notificación Comercial': 'interna',
   'En espera de SKU inventario': 'interna',
@@ -72,8 +72,12 @@ export const CLASIFICACION_EN_ESPERA = {
   // Entra por `facturado` y sale por `habilitado_para_entrega`, las dos de Comercial: Servicio
   // Técnico no puede moverla. El Anexo B.1 del maestro también la lista bajo Comercial.
   'Liberación Comercial': 'interna',
+  // Entra por `facturado`/similar y su única salida es `habilitar_servicio` (`transitions.ts:178`),
+  // área Comercial: Servicio Técnico no puede moverla. Mismo criterio que `Liberación Comercial`, dos
+  // filas arriba — el tercero del que depende es otra área de la casa, no alguien de fuera.
+  'Remisión creada': 'interna',
 
-  // ── ninguna (12) — el trabajo está en manos de quien tiene el ticket ──────────────────────────
+  // ── ninguna (11) — el trabajo está en manos de quien tiene el ticket ──────────────────────────
   'Ingresado': 'ninguna',
   'Rev./Diagnostico': 'ninguna',
   'Notificado': 'ninguna',
@@ -83,11 +87,10 @@ export const CLASIFICACION_EN_ESPERA = {
   'Por Entregar': 'ninguna',
   'Por Entregar / Sin facturar': 'ninguna',
   'Finalizado': 'ninguna',
-  // Las dos formas de nombrar la fase inicial —Zoho y la app— y la fase de la remisión. Ver
-  // `STATUS_OV_ASIGNADA` y compañía en `transitions.ts:142-144`.
+  // Las dos formas de nombrar la fase inicial —Zoho y la app—. Ver `STATUS_OV_ASIGNADA` y compañía
+  // en `transitions.ts:142-144`.
   'OV asignada': 'ninguna',
   'Ticket creado': 'ninguna',
-  'Remisión creada': 'ninguna',
 
   // ── sin clasificar (1) ───────────────────────────────────────────────────────────────────────
   // Pendiente de Servicio Técnico (11/09). Sale por `servicio_externo_pendiente` y por
@@ -103,7 +106,7 @@ export type Estado = keyof typeof CLASIFICACION_EN_ESPERA
 export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[]
 
 /**
- * Las OCHO que la vista del tablero enseña bajo «En espera»: externa + interna.
+ * Las NUEVE que la vista del tablero enseña bajo «En espera»: externa + interna.
  *
  * ⚠️ Es la lista de la VISTA. El reloj del SLA no la lee — para en los tres bodegajes de M1.10, que
  * son periodos entre fechas. Ver la tabla de los tres criterios arriba.
@@ -123,17 +126,19 @@ export const ESTADOS_EN_ESPERA: Estado[] = ESTADOS.filter((e) => {
  *   un retorno de laboratorio, un alta en otro sistema—, frente a un acto que alguien realiza DENTRO
  *   de la aplicación.**
  *
- * POR QUÉ `Liberación Comercial` NO ENTRA, aunque tenga salida única. Es el caso que distingue el
- * criterio, y por eso va escrito y no sobreentendido: su única salida es `habilitado_para_entrega`,
- * área Comercial, y ES UN ACTO QUE SE EJECUTA EN LA APLICACIÓN — alguien pulsa el botón. No hay
- * ningún suceso del mundo que esperar: hay una persona que todavía no ha entrado. Los cuatro de
- * abajo esperan un camión, un laboratorio o un alta en otro sistema.
+ * POR QUÉ `Liberación Comercial` y `Remisión creada` NO ENTRAN, aunque tengan salida única. Son los
+ * dos casos que distinguen el criterio, y por eso van escritos y no sobreentendidos: sus únicas
+ * salidas son `habilitado_para_entrega` y `habilitar_servicio`, las dos área Comercial, y las DOS SON
+ * UN ACTO QUE SE EJECUTA EN LA APLICACIÓN — alguien pulsa el botón. No hay ningún suceso del mundo
+ * que esperar: hay una persona que todavía no ha entrado. Los cuatro de abajo esperan un camión, un
+ * laboratorio o un alta en otro sistema.
  *
  * ⚠️ LA LECCIÓN DE MÉTODO, que vale más que la lista: «SALIDA ÚNICA» NO ES PROXY DE NADA. Hay DOCE
  * estados con una sola transición de salida —entre ellos `Ingresado` y `Ticket creado`, que son
  * trabajo corriente y no esperan a nadie—. Y cruzarla con `en_espera`, que es el intento fino,
- * tampoco: da CINCO, con `Liberación Comercial` dentro. Por eso la prueba de coherencia de
- * `estados.test.ts` sólo comprueba que los cuatro son estados DECLARADOS, y no intenta derivarlos.
+ * tampoco: da SEIS, con `Liberación Comercial` y `Remisión creada` dentro. Por eso la prueba de
+ * coherencia de `estados.test.ts` sólo comprueba que los cuatro son estados DECLARADOS, y no intenta
+ * derivarlos.
  *
  * Fuente: M1.3.4 del maestro. Criterio cerrado por Gerencia.
  */

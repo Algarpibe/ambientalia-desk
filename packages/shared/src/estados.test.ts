@@ -30,17 +30,18 @@ describe('registro de estados', () => {
     ])
   })
 
-  it('interna son exactamente estos cinco: espera un acto de otra área de la casa', () => {
+  it('interna son exactamente estos seis: espera un acto de otra área de la casa', () => {
     expect(estadosCon('interna')).toEqual([
       'Notificación a Compras',
       'Notificación Comercial',
       'En espera de SKU inventario',
       'Solicitado',
       'Liberación Comercial',
+      STATUS_REMISION_CREADA,
     ])
   })
 
-  it('ninguna son exactamente estos doce: el ticket está en manos de quien lo tiene', () => {
+  it('ninguna son exactamente estos once: el ticket está en manos de quien lo tiene', () => {
     expect(estadosCon('ninguna')).toEqual([
       'Ingresado',
       'Rev./Diagnostico',
@@ -53,7 +54,6 @@ describe('registro de estados', () => {
       'Finalizado',
       STATUS_OV_ASIGNADA,
       STATUS_TICKET_CREADO,
-      STATUS_REMISION_CREADA,
     ])
   })
 
@@ -81,7 +81,7 @@ describe('registro de estados', () => {
    * ⚠️ El reloj del SLA NO lee esta lista. Para en los tres BODEGAJES de M1.10, que son periodos
    * entre fechas y no estados. Ver la tabla de los tres criterios en `estados.ts`.
    */
-  it('las ocho en espera de la vista son externa + interna', () => {
+  it('las nueve en espera de la vista son externa + interna', () => {
     expect(ESTADOS_EN_ESPERA).toEqual([
       'En Espera de Repuestos',
       'Servicio externo',
@@ -91,6 +91,7 @@ describe('registro de estados', () => {
       'En espera de SKU inventario',
       'Solicitado',
       'Liberación Comercial',
+      STATUS_REMISION_CREADA,
     ])
   })
 
@@ -164,24 +165,29 @@ describe('estados sin salida (M1.3.4)', () => {
   })
 
   /**
-   * `Liberación Comercial` ES EL CASO QUE DISTINGUE EL CRITERIO, y por eso se escribe aparte.
+   * `Liberación Comercial` y `Remisión creada` SON LOS DOS CASOS QUE DISTINGUEN EL CRITERIO, y por eso
+   * se escriben aparte.
    *
-   * Cruzar las dos propiedades derivables —estar en espera y tener salida única— da CINCO, no cuatro.
-   * La quinta es `Liberación Comercial`, y queda fuera porque su única salida
-   * —`habilitado_para_entrega`, área Comercial— es UN ACTO QUE SE EJECUTA EN LA APLICACIÓN: alguien
-   * pulsa el botón. En los otros cuatro el suceso del que depende la salida ocurre FUERA.
+   * Cruzar las dos propiedades derivables —estar en espera y tener salida única— da SEIS, no cuatro.
+   * Las dos que sobran son `Liberación Comercial` y `Remisión creada`, y quedan fuera porque su única
+   * salida —`habilitado_para_entrega` y `habilitar_servicio`, las dos área Comercial— es UN ACTO QUE SE
+   * EJECUTA EN LA APLICACIÓN: alguien pulsa el botón. En los otros cuatro el suceso del que depende la
+   * salida ocurre FUERA.
    *
    * Ésta es la prueba que da rojo si alguien sustituye la lista declarada por una derivación.
    */
-  it('la derivación da cinco, y la quinta es Liberación Comercial: por eso no se deriva', () => {
+  it('la derivación da seis, y las dos que sobran son Liberación Comercial y Remisión creada: por eso no se deriva', () => {
     const derivadaMal = ESTADOS_EN_ESPERA.filter((e) => conUnaSolaSalida().includes(e))
-    expect(derivadaMal).toHaveLength(5)
+    expect(derivadaMal).toHaveLength(6)
     expect(derivadaMal.filter((e) => !(ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([
       'Liberación Comercial',
+      STATUS_REMISION_CREADA,
     ])
-    // Y la salida que la deja fuera es un acto de la aplicación, no un suceso del mundo.
-    const salidas = TRANSITIONS.filter((t) => t.from.includes('Liberación Comercial'))
-    expect(salidas.map((t) => `${t.id} · ${t.area}`)).toEqual(['habilitado_para_entrega · Comercial'])
+    // Y las salidas que las dejan fuera son actos de la aplicación, no sucesos del mundo.
+    const salidasComercial = TRANSITIONS.filter((t) => t.from.includes('Liberación Comercial'))
+    expect(salidasComercial.map((t) => `${t.id} · ${t.area}`)).toEqual(['habilitado_para_entrega · Comercial'])
+    const salidasRemision = TRANSITIONS.filter((t) => t.from.includes(STATUS_REMISION_CREADA))
+    expect(salidasRemision.map((t) => `${t.id} · ${t.area}`)).toEqual(['habilitar_servicio · Comercial'])
   })
 })
 
