@@ -412,7 +412,7 @@ incumplimientos_vivos:
 
   - id: IV-4
     regla: "—"
-    ubicacion: "apps/desk/server/routes/remision.ts:189-197"
+    ubicacion: "apps/desk/server/routes/remision.ts:218-226"
     verificado: true
     descripcion: >
       El bloque `if (b.salesOrderId)` escribe `salesorder_id` (y `orden_venta`,
@@ -425,7 +425,7 @@ incumplimientos_vivos:
       con la misma.
     matiz_de_verificacion: >
       El proposal cita :188-196. El rango real es :189-197 (la 188 es el cierre
-      `*/` del comentario). El UPDATE está en :192-196.
+      `*/` del comentario). El UPDATE está en :192-196. ACTUALIZADO EN reasignar-desvios-huerfanos: tras F1B-01 el bloque es :218-226 y el UPDATE :221-225 — la guarda del serial lo bajo 29 lineas.
     destino: "PUNTO ABIERTO Nº 52 DEL MAESTRO — no es tanda, y cerrarlo a ciegas empeoraría"
     reasignado: >
       2026-09-09. El destino anterior era "F1A". F1A cerró sin tocarlo, y al

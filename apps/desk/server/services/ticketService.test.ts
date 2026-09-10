@@ -172,6 +172,24 @@ describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
   /**
    * `habilitar_servicio` es la única transición que lleva las dos cosas: campos obligatorios Y la
    * puerta de la orden de venta. Por eso los dos casos de abajo son suyos.
+   *
+   * ⚠️ ESTA PRUEBA Y LA DE `:319` DICEN LO CONTRARIO, Y LAS DOS ESTÁN EN VERDE. Compara los títulos:
+   *
+   *   aquí   → «los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409»
+   *   `:319` → «la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422»
+   *
+   * Son la MISMA pareja de guardas con el ganador invertido, según por qué puerta se entre. No es un
+   * descuido de nadie: `executeTransition` y `createManagedTicket` se escribieron por separado y cada
+   * una fijó el orden que le salió. Lo que sí es un problema es que, leída sola, cada una parece
+   * declarar que la precedencia está decidida — y no lo está.
+   *
+   * **La precedencia NO está decidida.** El defecto vive en `transitions-st` §3.8 (que son DOS
+   * inversiones, no una) y en `tickets-core` §4.1; las dos decían «destino F1A» y F1A cerró sin
+   * tocarlas. No hay ninguna fila del plan que lo cubra: es una fila que falta, redactada como
+   * entrada 5.a de `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
+   *
+   * Cuando se fije el orden único, **una de las dos cambia sí o sí**. No hace falta decidir cuál
+   * desde aquí; hace falta que quien lea una no crea que ya está resuelto.
    */
   it('los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409', async () => {
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
@@ -292,6 +310,12 @@ describe('createManagedTicket · el ORDEN en que se evalúan las guardas', () =>
     expect(r.body.error).toBe('Falta el equipo')
   })
 
+  /**
+   * ⚠️ ESTA PRUEBA Y LA DE `:194` DICEN LO CONTRARIO, Y LAS DOS ESTÁN EN VERDE. Ver el bloque de
+   * `:171-193` para el contraste completo: misma pareja de guardas, ganador invertido según la
+   * puerta. **La precedencia no está decidida** —`transitions-st` §3.8 y `tickets-core` §4.1, ambas
+   * huérfanas desde que cerró F1A—, y al fijarla una de las dos pruebas cambiará de expectativa.
+   */
   it('la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422', async () => {
     await equipo()
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })

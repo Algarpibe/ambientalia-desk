@@ -472,16 +472,21 @@ Cuatro indicadores de G.6 —columnas 50, 53, 57 y 58— quedan rotos y **sin du
 (`reentrancia.ts:71-83`). Elegir entre las dos soluciones de P34 es F1C-02; esta spec sólo registra
 que se puede (`reentrancia.ts:32`).
 
-### 3.4 · La tercera puerta de la orden de venta · **destino F1A**
+### 3.4 · La tercera puerta de la orden de venta · **destino REASIGNADO: punto abierto nº 52**
 
-**Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-4). La regla «una OV, un ticket»
+> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`). Es el mismo defecto que
+> `remisiones` §5.1 y `tickets-core` §4.2, visto desde la tercera spec. **Destino: punto abierto nº 52
+> del maestro** (`R08.1.md:2071-2079`), no una tanda — y el arreglo puede ser **retirar** las dos
+> puertas existentes, no añadir la tercera. Ver `remisiones` §5.1, que es donde vive el detalle.
+
+**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`config.yaml`, `incumplimientos_vivos`, IV-4). La regla «una OV, un ticket»
 tiene **tres** puertas y sólo **dos** la comprueban:
 
 | Puerta | Comprueba | Precedencia del `409` frente al `422` de obligatorios | Evidencia |
 |---|---|---|---|
 | Creación de ticket | Sí, `409` | El `409` de la OV **gana** | `ticketService.ts:45-49` |
 | Transición `habilitar_servicio` | Sí, `409` | El `422` de obligatorios **gana** | `ticketService.ts:98-102` |
-| **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:189-197` |
+| **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-226` |
 
 **Las dos primeras no son equivalentes**: comprueban la misma regla en órdenes opuestos. Es una
 inversión de precedencia, y va aparte en §3.8.
@@ -499,9 +504,16 @@ logística): el `interface Transition` sólo declara `id`, `name`, `from`, `to`,
 (`transitions.ts:55-62`). Sin ese atributo, el análisis de tiempos por tipo de evento de M7.3 no es
 calculable.
 
-### 3.6 · IV-1 — la vista clasifica las esperas por el nombre del estado · **destino F1A**
+### 3.6 · IV-1 — la vista clasifica las esperas por el nombre del estado · **destino REASIGNADO: F1B-08**
 
-**Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-1). `boardView.ts:35` clasifica
+> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`). Decía «destino F1A» y F1A cerró sin
+> tocarlo. Va a **F1B-08** (`plan:157`, ítem 22 del maestro «Interfaz que replica la estructura de
+> Zoho Desk»): la regex alimenta las vistas `abiertos` y `espera`, que son vistas de listado. **Y la
+> dependencia que la frase vieja nombraba ya está satisfecha**: `ESTADOS_EN_ESPERA` existe desde F0-04
+> (`packages/shared/src/estados.ts:111`) y `boardView.ts` no lo importa.
+
+
+**Comportamiento actual, a corregir en F1B-08** (`config.yaml`, `incumplimientos_vivos`, IV-1). `boardView.ts:35` clasifica
 las esperas con `/espera/i` sobre el nombre del estado, y se usa en `:43` y `:44`. Diverge del
 registro de `estados.ts`:
 
@@ -560,7 +572,7 @@ Técnico.
 > precedencia, `:176` y `:295` son directamente contradictorias —así que **una cambia sí o sí**— y
 > bajo el orden natural cambian **6 de 12**, tres de ellas alterando qué error ve el usuario.
 
-**Comportamiento actual, a corregir en F1A.** Son dos, y son hermanas: las dos consisten en que el
+**Comportamiento actual. Sin tanda: falta una fila en el plan (entrada 5.a del fichero de correcciones).** Son dos, y son hermanas: las dos consisten en que el
 orden en que se evalúan las guardas no es el orden que el contrato debería tener. Las fijó
 `d24466e` («test(server): precedencia entre guardas de ticketService»), que las descubrió al probar
 casos que rompen **dos** guardas a la vez — por HTTP el orden no se distingue

@@ -31,7 +31,7 @@ script salieron bien.
 | Qué cierra la remisión | «El colector decide»: un `Code` final clasifica y hace **una sola** llamada al callback (`design:21-23`) | M1.3.3 (`:1157`): el paso lo dispara «se crea una remisión para el ticket» | El ticket avanza **en el callback**, y sólo con desenlace confirmado (`apps/desk/server/routes/remision.ts:310-320`) |
 | Los estados | `ok · ok_con_avisos · error` en el contrato del callback (`design:143`) | — | **Cuatro**, con `pendiente` como estado de partida (`packages/shared/src/remision.ts:60`) |
 | El checklist «Incluye» | Sale del **perfil** por marca y modelo, replicando el `Switch Entrada - Marca` del flujo (`design:11`) | — | Sale de los **accesorios del modelo**; al perfil sólo se cae sin modelo enlazado (`apps/desk/server/db/checklistRemision.ts:31-42`) |
-| La orden de venta | No aparece en el diseño | M1.3.5 (`:1192`): la fecha de remisión de salida «debe registrarse una sola vez» | La remisión de **entrada** puede capturarla, y es la **tercera puerta** —abierta— de «una OV, un ticket» (`routes/remision.ts:189-197`) |
+| La orden de venta | No aparece en el diseño | M1.3.5 (`:1192`): la fecha de remisión de salida «debe registrarse una sola vez» | La remisión de **entrada** puede capturarla, y es la **tercera puerta** —abierta— de «una OV, un ticket» (`routes/remision.ts:218-226`) |
 | Alcance del cerrojo de envío | «Sólo se permite enviar cuando el estado es `pendiente` o `error`» (`design:165-166`) | — | Eso, **más** el corte por anulación y una reclamación atómica (`routes/remision.ts:232-245`) |
 | Remisión de salida | Fuera de alcance: «la rama de **salida** del flujo, intacta» (`design:261`) | M1.3.5 (`:1191`) la nombra como hito de las dos vías de cierre | `createRemision` escribe `'entrada'` **literal** (`apps/desk/server/db/remisiones.ts:48`). No hay forma de crear una de salida |
 
@@ -346,20 +346,39 @@ estado legítimo, no un dato que falta» (`schema.sql:305-306`).
 *(La numeración de esta sección va aparte de la de requisitos: aquí se registra lo que hay, no lo que
 debe haber.)*
 
-### 5.1 · La tercera puerta de la orden de venta sigue abierta · **destino F1A**
+### 5.1 · La tercera puerta de la orden de venta sigue abierta · **destino REASIGNADO: punto abierto nº 52**
 
-**Comportamiento actual, a corregir en F1A** (`openspec/config.yaml`, `incumplimientos_vivos`, IV-4).
+> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`), **y no a otra tanda.** Decía
+> «destino F1A» y F1A cerró sin tocarlo. Al buscarle sitio apareció algo mayor: **la regla que esta
+> puerta impondría está en duda en el propio maestro.** `R08.1.md:2071-2079` lista tres variantes
+> reales y **habituales** —OV separadas por mano de obra y repuestos · OV global por varios equipos ·
+> varias OV sobre un mismo ticket— y concluye: «Ninguna de las tres encaja en un modelo de «una OV, un
+> ticket», y las tres son habituales. **Punto abierto nº 52**.»
+>
+> **Consecuencia, y es el giro de esta reasignación:** el arreglo **puede ser RETIRAR las dos puertas
+> que ya existen** (`ticketService.ts:45` y `:100`), **no añadir la tercera**. Todo lo que este
+> apartado dice abajo —«lo que F1A debe poner en verde: `409`»— da por supuesta una dirección que
+> **nadie ha decidido**, y ese supuesto lleva ocho tandas en pie. Construir la tercera puerta antes de
+> resolver nº 52 cuesta el doble si la decisión va al revés.
+>
+> Nº 52 **no está** en la tabla de decisiones del plan (`plan:348-359`), así que ni llega a la agenda
+> del viernes: redactado como entrada **5.b** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
+>
+> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` fija el modo de fallo en positivo y
+> `:161` deja el `it.fails` esperando, sea cual sea la dirección.
+
+**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`openspec/config.yaml`, `incumplimientos_vivos`, IV-4).
 `tickets-core` §4.2 lo nombra y remite aquí; ésta es la spec donde vive el defecto.
 
 `POST /api/remisiones` **escribe** `orden_venta`, `fecha_orden_venta` y `salesorder_id` en el ticket
 con un `UPDATE` condicional, **sin llamar a `ticketConOrdenVenta`**
-(`apps/desk/server/routes/remision.ts:189-197`; el `UPDATE`, en `:192-196`). Las otras dos puertas sí
+(`apps/desk/server/routes/remision.ts:218-226`; el `UPDATE`, en `:221-225`). Las otras dos puertas sí
 la llaman: el alta (`services/ticketService.ts:43-49`, RQ-TC-08) y `habilitar_servicio`
 (`services/ticketService.ts:100`, RQ-TS-14).
 
 **Lo que la condición sí impide y lo que no.** El `WHERE ... COALESCE(orden_venta,'') = ''`
-(`remision.ts:194`) impide pisar la OV que el propio ticket ya tenga —por eso el formulario la enseña
-en gris (`:185-187`)— y **no** impide que **dos tickets distintos** acaben con la misma orden.
+(`remision.ts:223`) impide pisar la OV que el propio ticket ya tenga —por eso el formulario la enseña
+en gris (`:214-216`)— y **no** impide que **dos tickets distintos** acaben con la misma orden.
 
 El daño observable está fijado en positivo, no como conjetura:
 `apps/desk/server/ordenVentaUnTicket.test.ts:141-159` toma una OV ya asociada al ticket 7001 y la
@@ -386,7 +405,13 @@ quien lo produzca.
 prueba, no por una vía de producto. No se ha localizado ninguna que las cree, pero tampoco se ha
 inspeccionado la base de producción en busca de filas de salida importadas.
 
-### 5.3 · Las tres variables de entorno del subsistema no están en `DEPLOY.md` · **destino F1A**
+### 5.3 · Las tres variables de entorno del subsistema no están en `DEPLOY.md` · **destino REASIGNADO: sin tanda asignada**
+
+> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`). Decía «destino F1A» y F1A cerró sin
+> documentarlas: **verificado hoy, `grep -n "REMISION\|N8N_REMISION" DEPLOY.md` sigue devolviendo
+> cero**. F1A-02 (`6ea3ca8`) sí añadió 54 líneas a `DEPLOY.md`, pero las del canal de correo de C11,
+> no éstas. **Queda sin tanda asignada.** Bajo la regla de secretos de `CLAUDE.md` un flag no
+> documentado es defecto, no configuración, así que no puede quedarse apuntando a una épica cerrada.
 
 **Comportamiento actual, a corregir cuando alguien toque el despliegue.** La regla de secretos de
 `CLAUDE.md` dice que un interruptor «va en `.env.example` y `DEPLOY.md` con dos frases: qué enciende y
@@ -435,7 +460,7 @@ describe (`design:222-229`). No están en ninguna tanda del §5 del plan.
 | D-3 | «No hay migración de esquema: `remisiones.estado`, `remisiones.resultado` y `remisiones.resuelto_at` ya existen» (`design:173-175`) | Cierto para esas tres. Pero el subsistema **sí** ganó columnas después: `enviado_at` (`schema.sql:291`), `empresa` y `persona_contacto` (`:308-309`), `origen` (`:312`), `anulada_at` y `anulada_por` (`:316-317`), más el `DROP NOT NULL` de `ticket_id` (`:306`) | El diseño era exacto **el 04/08**. Se anota porque es la clase de afirmación que envejece: siete sentencias después, «no hay migración de esquema» ya no describe este subsistema. Seis de esas siete son de las 23 sin calificar de IV-6 |
 | D-4 | El resultado se sondea «cada 2 s hasta 60 s» desde `CrearRemision.tsx` (`design:181`) | La espera es constante compartida, `ESPERA_DESENLACE_SEGUNDOS = 60` (`packages/shared/src/remision.ts:43`), con una hermana que el diseño no tenía: `VENTANA_REENVIO_SEGUNDOS = 120` (`:53`) | **Ampliado, y la ampliación es la que cierra el agujero.** El diseño dejaba las dos esperas al mismo valor implícito; el código las separa a propósito y escribe por qué (`:45-52`) |
 | D-5 | Empresa y persona de contacto no aparecen: el documento las toma del cliente | La remisión las **captura al crearse** y el envío usa las guardadas (`routes/remision.ts:211`; `remisionWebhook.ts:57`) | **Añadido después del diseño.** El razonamiento está en el código (`remisionWebhook.ts:50-56`): entre crear y enviar alguien pudo corregir el cliente en Books, y «el documento no puede desdecir lo que la remisión dice que era» |
-| D-6 | La orden de venta no se menciona en ninguna parte del diseño | La remisión de entrada **puede capturarla** (`routes/remision.ts:189-197`), y ésa es la tercera puerta abierta de «una OV, un ticket» | **Añadido después, y con un defecto dentro.** El código explica el porqué del añadido —«se puede capturar aquí para no tener que hacerlo en Habilitar Servicio», opcional porque «cuando el equipo entra, la venta puede no existir todavía» (`:176-179`)—; lo que no explica es por qué esa vía no comprueba la regla. Ver §5.1 |
+| D-6 | La orden de venta no se menciona en ninguna parte del diseño | La remisión de entrada **puede capturarla** (`routes/remision.ts:218-226`), y ésa es la tercera puerta abierta de «una OV, un ticket» | **Añadido después, y con un defecto dentro.** El código explica el porqué del añadido —«se puede capturar aquí para no tener que hacerlo en Habilitar Servicio», opcional porque «cuando el equipo entra, la venta puede no existir todavía» (`:205-208`)—; lo que no explica es por qué esa vía no comprueba la regla. Ver §5.1 |
 | D-7 | «El panel de remisiones en `TicketDetailView` (sigue en pendientes)» queda **fuera de alcance** (`design:260`) | Existe: `GET /api/remisiones?ticketId=` lo alimenta (`routes/remision.ts:97-102`), y en el cliente están `PanelRemisiones.tsx`, `RemisionesPage.tsx` y `ResultadoRemision.tsx` | **Construido después.** Se anota para que nadie lea el «fuera de alcance» del diseño como estado actual |
 
 > **Nota sobre el propio diseño.** Cita `CrearRemision.tsx` diciendo que `submit()` llama a `onCreada()`

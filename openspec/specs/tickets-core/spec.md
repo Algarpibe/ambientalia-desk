@@ -243,7 +243,7 @@ debe haber.)*
 > `transitions-st` §3.8, que además tiene una **segunda** inversión (el `409` de estado antes del `403`
 > de área): son **una sola tanda**, porque §3.8 declara que corregir una sin la otra deja el problema.
 
-**Comportamiento actual, a corregir en F1A.** En el alta, el `409` de la orden de venta gana al `422`
+**Comportamiento actual. Sin tanda: falta una fila en el plan (entrada 5.a del fichero de correcciones).** En el alta, el `409` de la orden de venta gana al `422`
 de obligatorios (`ticketService.ts:43-49` antes de `:50-58`; fijado en
 `services/ticketService.test.ts:295`). En `habilitar_servicio` es al revés
 (`ticketService.test.ts:176`). **Las dos puertas de la misma regla evalúan en órdenes opuestos**
@@ -268,7 +268,7 @@ otra deja el problema.**
 > *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:150-158` fija el modo de fallo exacto y `:161`
 > deja el `it.fails` esperando, sea cual sea la dirección de la decisión.
 
-**Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-4). El alta
+**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`config.yaml`, `incumplimientos_vivos`, IV-4). El alta
 de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
 (`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 subiera la guarda del serial). Hay un `it.fails` esperando
 (`apps/desk/server/ordenVentaUnTicket.test.ts:161`) y una prueba que fija el daño observable
