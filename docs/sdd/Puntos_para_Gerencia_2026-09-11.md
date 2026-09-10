@@ -6,9 +6,10 @@ con su coste, y dice quién decide.
 
 | | |
 |---|---|
-| **Base** | rama `main`, commit `b3fc829`, 2026-09-10 |
+| **Base** | rama `main`, commit `015a06e`, 2026-09-10 |
 | **Fuentes primarias** | `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md`; `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md`; el código del repositorio |
 | **Qué NO hace** | no edita el plan, no reordena tandas, no cambia gates y no toca el `.docx` del maestro. Es texto para decidir y, donde procede, para pegar |
+| **Añadido el 10/09** | El punto **7**, y la **cuarta variante** de §2. Los dos salen de peticiones de Gerencia de ese día, y los dos se contrastaron contra el código antes de escribirse |
 
 **Nota de método.** Toda afirmación sobre el código lleva ruta y línea; toda afirmación sobre el
 maestro lleva línea del `.md` citable. Las citas del **acta del 03/09** que aparecen abajo llegan a
@@ -54,6 +55,14 @@ que entra por `Notificado`, que es donde ese bucle empieza.
 - **C6** (QA antes de la liberación) — `R08.1.md:1472`: «La corrección C6 […] puede modelarse sobre
   ella en lugar de diseñarla de cero, **siempre que se resuelva primero su falta de salida**.»
 
+**Y ahora hay un cuarto consumidor, que es una petición de Gerencia del 10/09.** Se pidió que elegir
+la clasificación **«Equipo nuevo»** en el alta **dispare el flujo de equipo nuevo**. Hoy no dispara
+nada: es un valor de texto de la lista `CLASIFICACIONES` (`packages/shared/src/ticketCreate.ts:5`) y
+**ninguna rama del código lo lee** — aparece sólo en esa constante, en pruebas y en la analítica. O
+sea que la petición **es F1B-06**, y por tanto llega con el mismo gate: sin las dos salidas de
+`Verificación`, lo que se construiría es un flujo del que un equipo enviado a verificación no puede
+volver.
+
 **Por qué ahora y no después.** La rama de equipo nuevo no está construida, así que hoy la corrección
 es escribir dos filas en una tabla. Después de F1B-06 sería cambiar una máquina de estados con tickets
 vivos dentro.
@@ -94,6 +103,37 @@ variantes reales que se dan hoy». Sigue una tabla de tres filas (`:2071-2078`) 
 
 > `R08.1.md:2079` — «Ninguna de las tres encaja en un modelo de «una OV, un ticket», y las tres son
 > habituales. Punto abierto nº 52.»
+
+**Y hay una cuarta variante, que el maestro no lista porque llega ahora.** Petición de Gerencia del
+10/09, sobre la transición **«Aprobación»** (`Notificación cliente → En Proceso`, área Comercial):
+
+> En esa etapa el cliente aprueba la reparación **con su orden de compra**, y Ambientalia **genera una
+> OV nueva**. Hoy eso se anota en el comentario; se pide un buscador de las OV abiertas de ese cliente
+> que rellene sola **«Fecha Orden de Venta Final»**.
+
+Es la más nítida de las cuatro, porque **no es un caso de borde**: es el curso normal de una
+reparación aprobada, y el ticket acaba con **dos** órdenes de venta — la del ingreso y la de la
+reparación.
+
+**Lo que enseña sobre el coste de nº 52.** El mecanismo pedido **ya está construido** y no se usa en
+esa etapa: el motor tiene un tipo de campo `ordenVenta` y una propiedad `campoFecha` —«la etiqueta del
+campo de fecha que se rellena con la fecha de la OV elegida, **y que por eso no se teclea**»,
+`packages/shared/src/transitions.ts:14,27-32`—, con su ayudante `cfOrdenVenta` (`:86-87`), usado hoy
+en una sola transición: «Habilitar Servicio» (`:189`). El buscador ya acota por cliente y devuelve
+sólo las **confirmadas** (`packages/zoho-sync/src/books/repo.ts:166-170`).
+
+**Lo que lo bloquea es exactamente nº 52, y se ve en el esquema.** `PROMOTED_COLUMNS` tiene **una
+sola** columna para el número de orden —`orden_venta`, `packages/zoho-sync/src/db/rows.ts:99`— y dos
+columnas de **fecha** «Final» (`:117-118`) **sin su columna de número**: no existe `orden_venta_final`.
+Alguien creó las fechas y no la orden que las justifica.
+
+| Si nº 52 sale… | Qué pasa con esta petición |
+|---|---|
+| **(a) a favor de las variantes** | Columna nueva `orden_venta_final`, y el campo se declara en una línea. La petición se cumple entera |
+| **(b) a favor de «una OV, un ticket»** | **No se puede cumplir como está**: el buscador tendría que escribir en `orden_venta` y **pisar la OV del ingreso** —que además volvería a figurar como libre en el buscador—. Habría que decidir qué hace esa etapa |
+
+**No se debe implementar antes de decidir nº 52.** En la dirección (b), lo construido habría que
+retirarlo — igual que las dos puertas del cuadro de arriba.
 
 **⚠️ La corrección que hay que llevar a la sesión: el maestro habla de CARDINALIDAD, no de
 TITULARIDAD.** Dice cuántos tickets puede tener una OV y al revés. **No dice** que la OV y el equipo
@@ -331,16 +371,56 @@ es un destino, y el registro sigue diciendo que sí lo tiene — en cada sesión
 
 ---
 
+## 7 · Alta de equipo desde el ticket, cuando el serial no existe
+
+**Decide: Gerencia.** Petición del 10/09. **Sí está en el plan**, pero con otra forma, y las
+diferencias son de alcance, no de detalle.
+
+**Lo pedido.** Al crear un ticket con clasificación «Equipo nuevo», poder escribir un **serial que no
+exista** y **completar ahí mismo la ficha del equipo** —serie, marca, modelo, tipo, cliente, estado y
+lo demás de la sección Equipos— para que quede registrado en el módulo Equipos.
+
+**Lo que el plan ya dice.** `plan:151` — **F1B-02**, ítem 9, talla M, semana **S39**: «Hoja de vida
+del equipo: **alta por Comercial al conocer el serial**». Y el Anexo B del propio plan ya escribió el
+escenario, `plan:512-516`:
+
+> «**serial desconocido** → el sistema ofrece dar de alta la hoja de vida (F1B-02) **sin abandonar la
+> remisión**, y **no crea el ticket hasta que la hoja de vida exista**.»
+
+**Las tres diferencias, y sólo una es decisión.**
+
+| # | El plan dice | La petición dice | Por qué importa |
+|---|---|---|---|
+| 1 | El alta cuelga de la **remisión de entrada** | El alta cuelga del **formulario de ticket** | Son **dos puertas distintas** y el plan sólo nombra una. Mismo molde que IV-4: una regla con tres puertas y dos comprobadas |
+| 2 | El ticket **no se crea** hasta que el equipo exista | «poder ingresar un serial que no exista» | Compatible, pero **no es lo mismo**. El plan no relaja la guarda: da la forma de satisfacerla sin salir de la ventana. El 422 de `apps/desk/server/services/ticketService.ts:22-25` se queda |
+| 3 | Campos: fecha de adquisición, fecha de factura, fin de garantía, código interno del cliente | Campos: serie, marca, modelo, tipo, cliente, **estado** | **No coinciden.** Hoy marca, modelo y tipo **no se escriben**: se derivan del modelo del catálogo (`apps/desk/server/routes/equipos.ts:59-60`), y «estado» es el booleano `active` (`:91`) |
+
+**La única que decide Gerencia es la fila 3**, y detrás hay una pregunta concreta: un equipo de un
+modelo que **nadie ha registrado todavía** obliga a decidir si este formulario puede **crear también
+tipo, marca y modelo** en `public.catalogo_modelos`, o si el catálogo se sigue cargando aparte y el
+alta sólo elige de lo que ya hay. Las filas 1 y 2 son de implementación y se resuelven solas en
+cuanto la 3 esté fijada.
+
+**Qué pasa si no se decide.** F1B-02 está en **S39**. Si se abre sin fijar la fila 3, la tanda arranca
+con dos listas de campos distintas y **elige una por su cuenta**.
+
+**Acto de registro.** El alta ya existe a medias: `POST /api/equipos`
+(`apps/desk/server/routes/equipos.ts:47-64`) crea el equipo con serial, cliente y modelo del catálogo.
+Lo que falta no es el endpoint: es el formulario, la puerta y la decisión de la fila 3.
+
+---
+
 ## Resumen: qué sale de la sesión
 
 | # | Punto | Quién decide | Si no se decide |
 |---|---|---|---|
 | 1 | nº 38 · las dos salidas de `Verificación` | Gustavo / Calidad, tras la respuesta de Servicio Técnico | F1A-03 sigue parada; F1B-06 construiría el flujo con el agujero dentro; C6 no se puede modelar |
-| 2 | nº 52 · cardinalidad OV ↔ ticket | Gerencia | IV-4 e IV-8 siguen abiertos, y cualquier trabajo sobre esas puertas puede ir en la dirección equivocada |
+| 2 | nº 52 · cardinalidad OV ↔ ticket — **ahora con una cuarta variante** (§2) | Gerencia | IV-4 e IV-8 siguen abiertos; y la OV que nace en «Aprobación» se sigue anotando en el comentario, sin sitio en el esquema donde guardarla |
 | 3 | La vista «Todos» del tablero | Gerencia | F1B-08 no puede cerrar IV-7 |
 | 4 | IV-2 · quién impone las tres fechas | Gerencia | La derivación sigue viviendo sólo en el navegador, y es operando de KPI |
 | 5 | IV-8 · `ticketService.ts:39` | — (se resuelve con nº 52) | Nada nuevo; queda anotado |
 | 6 | Las cinco entradas de `F0-01` | Gerencia (mantiene el plan) | El plan sigue mandando sobre fuentes que no dicen lo que se le atribuye |
+| 7 | Alta de equipo desde el ticket · **qué campos** lleva la ficha | Gerencia | F1B-02 (S39) arranca con dos listas de campos distintas y elige una por su cuenta |
 
 **Dos filas nuevas para la tabla de decisiones del plan** (`plan:348-359`, hoy doce filas, ninguna sobre
 estos dos puntos):
