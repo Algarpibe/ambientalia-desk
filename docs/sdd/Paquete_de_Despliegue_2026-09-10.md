@@ -40,8 +40,15 @@ perdido tickets.
    las dio por hechas**.
 
 **Lo que este paquete NO trae, y conviene saberlo antes de leer el resto:** el campo obligatorio
-«Fecha de aviso al cliente» **no entra con estos 35 commits**. Ver §7.1 — es la corrección más
-importante de este documento.
+«Fecha de aviso al cliente» **no entra con estos commits: ya está fuera**. Entró con `e8c5e90`, la
+propia base desplegada, y **Comercial confirmó por observación directa el 2026-09-10 que la app se lo
+pide hoy**. Ver §7.1. Como no viaja en esta publicación, **no es un riesgo de publicar**: los riesgos
+de publicar son los otros dos, los siete estados que se mudan de listado (§7.2) y el serial
+obligatorio de F1B-01 (V6).
+
+**Y trae un efecto de segundo orden que nadie había medido:** ese mismo campo es el que abre el
+**bodegaje de salida**, uno de los tres KPIs de M1.10, y los tickets anteriores al 2026-09-09 no lo
+tienen. Ver §7.5 — el indicador arranca con un corte y **la cuenta está sin medir**.
 
 ---
 
@@ -161,7 +168,7 @@ Sobre `https://ambientalia-desk.ambientalia.cloud/`, con sesión iniciada.
 | V6 | Ficha de un ticket **venido de Zoho sin serial** → «Crear remisión» | Sale el cartel ámbar «Este ticket no tiene número de serie…». Si se fuerza el envío, el servidor responde 422 con «Falta el serial del equipo…» |
 | V7 | **Nuevo ticket** → campo «Equipo» → elegir un equipo del catálogo | El cliente se rellena solo, y el buscador de órdenes de venta ofrece las de ese cliente sin escribir nada |
 | V8 | **Nuevo ticket** → equipo de un cliente + cliente distinto a mano → Guardar | Error 422 que nombra a **los dos** clientes con sus dos identificadores |
-| — | Campo obligatorio «Fecha de aviso al cliente» | **Ver §7.1 primero.** Abre un ticket en `Liberación Comercial` → transición **«Habilitado para entrega»**: comprueba si el campo aparece marcado como obligatorio. El resultado decide cómo se redacta una frase del aviso |
+| — | Campo obligatorio «Fecha de aviso al cliente» | ~~Comprobar si el campo ya aparece~~ — **HECHO el 2026-09-10: Comercial lo confirmó en la app, el campo se pide hoy.** No hay nada que verificar tras publicar: no viaja en esta publicación. Ver §7.1 |
 
 ### 5.2 · Las 5+1 comprobaciones manuales de QA — son éstas, no otras
 
@@ -238,11 +245,22 @@ Estado hoy en disco:
   plan.errors.push(...) }`. No es una guarda de navegador (regla invariable 13 satisfecha: la
   imposición del servidor existe y está en el servidor).
 
-**Consecuencia para quien publica.** Si `e8c5e90` está en producción —como afirma la premisa de este
-encargo—, **el campo ya es obligatorio hoy y Comercial ya se está topando con él**. El aviso no llega
-pronto: llega tarde. Antes de enviarlo, haz la comprobación de la última fila de §5.1 (abrir un
-ticket en `Liberación Comercial` y mirar la transición «Habilitado para entrega»); el aviso de §8
-está redactado para ser cierto en los dos casos.
+**ZANJADO POR OBSERVACIÓN DIRECTA, no por deducción.** El 2026-09-10, Comercial abrió la app y
+confirmó que **«Habilitado para entrega» pide hoy el campo**. Así que `e8c5e90` está desplegado y el
+campo está vivo en producción. La comprobación que la última fila de §5.1 dejaba pendiente **ya está
+hecha, y salió que sí**.
+
+**LA MAGNITUD, que es donde este documento estuvo a punto de mentir.** `e8c5e90` es del
+**2026-09-09** (`git log -1 --format=%ad --date=short e8c5e90`) y la punta de esta rama es del
+**2026-09-10**: la ventana entera sin desplegar es de **1,1 días**. El aviso a Comercial llega tarde
+**por un día**, no por semanas ni por meses. Un borrador anterior de esta corrección llegó a decir
+«lleva bloqueándoles todo este tiempo» sin haber mirado una sola fecha; en un documento técnico eso
+es un error, y en un correo a otra área es una alarma inventada. La cifra se cuenta, no se recuerda.
+
+**Consecuencia para quien publica: ninguna.** El campo no viaja en esta publicación, así que **sale
+de la lista de riesgos de publicar**. Lo que queda es una deuda de comunicación de un día, que el
+aviso de §8 salda tal cual está redactado — su frase «Ya está activo, así que si estos días os ha
+aparecido y no sabíais qué era, es esto» **es exactamente cierta** y no hay que tocarla.
 
 ### 7.2 · `Notificación  Comercial` con dos espacios: uno de los siete no se va a mover
 
@@ -300,6 +318,62 @@ registrado **sin destino**, a propósito.
 tanda de la alarma de 72 h»). Sus cambios en el rango son **comentarios y el nombre de un `it()`**
 (`git show 3b7d89c -- packages/shared/src/sla.test.ts`). **No hay nada que verificar ni que vigilar
 en producción.** Se anota sólo para que nadie lo confunda con una prueba rota.
+
+### 7.5 · El bodegaje de SALIDA arranca con un corte, y la cuenta está SIN MEDIR
+
+**Es el efecto de segundo orden del campo de §7.1, y no lo había visto nadie.** No cambia nada de lo
+que hay que publicar; cambia lo que se puede afirmar del indicador cuando alguien lo mire.
+
+**El mecanismo, verificado de disco:**
+
+- `packages/shared/src/bodegaje.ts:52` declara `CAMPO_AVISO_CLIENTE = 'Fecha de aviso al cliente'`.
+- `bodegaje.ts:74-79` lo usa como el **`abre:` del bodegaje de salida**, que cierra con
+  `'Fecha Remisión de Salida'`. Es uno de los tres bodegajes de M1.10 (corrección C9, punto abierto
+  nº 41).
+- `bodegaje.ts:8-10` fija la regla, citando `reentrancia.ts:24`: **«Los KPIs de G.6 se calculan sobre
+  `ticket_transitions.values`, no sobre `tickets.*`»**. Ese módulo no lee `tickets.*` a propósito.
+- Lo escribe `repo.ts:282-286`, un `INSERT` en `ticket_transitions` con `values` serializado; la
+  tabla está en `schema.sql:57-61` (`transition_id text`, `values jsonb`).
+
+**La consecuencia.** Todo ticket que pasó por `habilitado_para_entrega` **antes del 2026-09-09** no
+tiene esa clave en su `values`, porque el campo aún no existía. Su bodegaje de salida **nunca abre**.
+El indicador sólo se puede calcular **hacia delante**, con un corte en la fecha de `e8c5e90`.
+
+**LA CUENTA ESTÁ SIN MEDIR, Y SE DECLARA ASÍ A PROPÓSITO.** Hace falta consultar
+`desk.ticket_transitions` y en local no hay `psql` ni `DATABASE_URL`. **No se estima a ojo**: esta
+misma sesión acumuló varias cifras caducadas por citarlas de memoria, y una de ellas iba camino de un
+correo a otra área.
+
+**Cómo se mide cuando alguien tenga acceso.** Dos consultas, y **la unidad importa**:
+
+```sql
+-- Tickets afectados. DISTINCT es obligatorio: el grafo tiene reentrancia y un
+-- mismo ticket puede pasar por la transición más de una vez.
+SELECT count(DISTINCT ticket_id) FROM desk.ticket_transitions
+ WHERE transition_id = 'habilitado_para_entrega'
+   AND values->>'Fecha de aviso al cliente' IS NULL;
+
+-- Pasadas afectadas (denominador del indicador, no número de tickets).
+SELECT count(*) FROM desk.ticket_transitions
+ WHERE transition_id = 'habilitado_para_entrega'
+   AND values->>'Fecha de aviso al cliente' IS NULL;
+```
+
+Notas de la consulta, verificadas contra el esquema y contra código que ya corre:
+
+- `transition_id = 'habilitado_para_entrega'` es el id literal de `transitions.ts:259`.
+- `values` **sin comillas funciona** en un `WHERE`, pese a ser palabra reservada: lo prueba
+  `apps/desk/server/auth/users.ts:138`, que hace `WHERE values->>'derivado_a' = $1` en producción.
+- Se usa `->>' ... ' IS NULL` y no el operador `?` de existencia por dos razones: es la forma que este
+  repositorio ya tiene probada, y `?` colisiona con el marcador de parámetro en varios clientes. Si se
+  ejecuta en `psql` a mano, `NOT (values ? 'Fecha de aviso al cliente')` es equivalente y más preciso
+  —distingue clave ausente de valor `null`—, pero **no está probado en este repositorio**.
+- `desk.` va calificado a propósito: la tabla se crea sin calificar (`schema.sql:57`) y aterriza en
+  `desk` por el `search_path=desk,public` de `pool.ts:5`.
+
+**Destino: sin asignar.** Es un hallazgo, no una tanda. Quién lo arregla y cómo —backfill desde
+`tickets.fecha_aviso_cliente`, declarar el corte en la definición del KPI, o asumirlo— **lo decide
+quien vea el número**, y el número todavía no existe.
 
 ---
 
