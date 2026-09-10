@@ -352,44 +352,55 @@ debe haber.)*
 
 ### 5.1 · La tercera puerta de la orden de venta sigue abierta · **destino REASIGNADO: punto abierto nº 52**
 
-> **⚠️ REASIGNADO EL 2026-09-09** (`reasignar-desvios-huerfanos`), **y no a otra tanda.** Decía
-> «destino F1A» y F1A cerró sin tocarlo. Al buscarle sitio apareció algo mayor: **la regla que esta
-> puerta impondría está en duda en el propio maestro.** `R08.1.md:2071-2079` lista tres variantes
-> reales y **habituales** —OV separadas por mano de obra y repuestos · OV global por varios equipos ·
-> varias OV sobre un mismo ticket— y concluye: «Ninguna de las tres encaja en un modelo de «una OV, un
-> ticket», y las tres son habituales. **Punto abierto nº 52**.»
+> **⚠️ REASIGNADO EL 2026-09-09, y no a otra tanda.** Decía «destino F1A» y F1A cerró sin tocarlo.
+> **Destino nuevo: PUNTO ABIERTO Nº 52 DEL MAESTRO.** Al buscarle sitio apareció algo mayor que la
+> orfandad: la regla que esta puerta impondría está en duda en el propio maestro.
+> `R08.1.md:2071-2079` lista tres variantes reales y habituales —OV separadas por mano de obra y
+> repuestos · OV global por varios equipos · varias OV sobre un mismo ticket— y concluye: «Ninguna de
+> las tres encaja en un modelo de "una OV, un ticket", y las tres son habituales. Punto abierto nº 52.»
 >
-> **Consecuencia, y es el giro de esta reasignación:** el arreglo **puede ser RETIRAR las dos puertas
-> que ya existen** (`ticketService.ts:45` y `:100`), **no añadir la tercera**. Todo lo que este
-> apartado dice abajo —«lo que F1A debe poner en verde: `409`»— da por supuesta una dirección que
-> **nadie ha decidido**, y ese supuesto lleva ocho tandas en pie. Construir la tercera puerta antes de
-> resolver nº 52 cuesta el doble si la decisión va al revés.
->
-> Nº 52 **no está** en la tabla de decisiones del plan (`plan:348-359`), así que ni llega a la agenda
-> del viernes: redactado como entrada **5.b** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
->
-> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` fija el modo de fallo en positivo y
-> `:161` deja el `it.fails` esperando, sea cual sea la dirección.
-
-**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`openspec/config.yaml`, `incumplimientos_vivos`, IV-4).
-`tickets-core` §4.2 lo nombra y remite aquí; ésta es la spec donde vive el defecto.
+> **El enmarcado se invierte respecto de las tandas anteriores: el arreglo puede ser RETIRAR las dos
+> puertas que ya existen (`ticketService.ts:45-48` y `:128-129`), no añadir la tercera.** Construirla antes
+> de decidir cuesta el doble. Y nº 52 **no está** en la tabla de decisiones del plan
+> (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:348-359`), así que ni llega a la agenda
+> del viernes.
 
 `POST /api/remisiones` **escribe** `orden_venta`, `fecha_orden_venta` y `salesorder_id` en el ticket
 con un `UPDATE` condicional, **sin llamar a `ticketConOrdenVenta`**
-(`apps/desk/server/routes/remision.ts:218-226`; el `UPDATE`, en `:221-225`). Las otras dos puertas sí
-la llaman: el alta (`services/ticketService.ts:43-49`, RQ-TC-08) y `habilitar_servicio`
-(`services/ticketService.ts:100`, RQ-TS-14).
+(`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 bajara 29 líneas
+la guarda del serial; el `UPDATE`, en `:221-225`). Las otras dos puertas sí la llaman: el alta
+(`services/ticketService.ts:43-49`, RQ-TC-08) y `habilitar_servicio`
+(`services/ticketService.ts:128-129`, RQ-TS-14).
 
 **Lo que la condición sí impide y lo que no.** El `WHERE ... COALESCE(orden_venta,'') = ''`
 (`remision.ts:223`) impide pisar la OV que el propio ticket ya tenga —por eso el formulario la enseña
-en gris (`:214-216`)— y **no** impide que **dos tickets distintos** acaben con la misma orden.
+en gris (`:214-216`, la frase en `:215`)— y **no** impide que **dos tickets distintos** acaben con la
+misma orden.
 
 El daño observable está fijado en positivo, no como conjetura:
 `apps/desk/server/ordenVentaUnTicket.test.ts:141-159` toma una OV ya asociada al ticket 7001 y la
 manda a un ticket nuevo; la prueba **exige `201`, sin error de ningún tipo** (`:153-154`), y comprueba
 que la orden queda en los dos tickets por sus dos vías (`:158`). Al lado, el `it.fails` (`:161-176`)
-escribe lo que F1A debe poner en verde: `409`, mensaje que nombre el ticket 7001, y la columna **sin
-escribir** —«un 409 que ya hubiera escrito la columna no sería una guarda» (`:174`)—.
+deja escrito el modo de fallo que corregir esta puerta pondría en verde, **sea cual sea la dirección
+de la decisión de nº 52**: `409`, mensaje que nombre el ticket 7001, y la columna **sin escribir**
+(`:174`).
+
+(Previously: destino «F1A»; enmarcado único como «añadir la tercera puerta»; citas de `remision.ts`
+sin actualizar tras el corrimiento de F1B-01.)
+
+#### Scenario: Hoy, sin la tercera puerta, una OV puede duplicarse
+
+- GIVEN una orden de venta ya asociada al ticket 7001
+- WHEN se crea una remisión de entrada sobre otro ticket con esa misma orden de venta
+- THEN el alta responde `201` sin ningún error
+- AND la orden queda asociada a los dos tickets, por sus dos vías (`ordenVentaUnTicket.test.ts:158`)
+
+#### Scenario: El arreglo depende de una decisión de Gerencia, no de esta spec
+
+- GIVEN que el punto abierto nº 52 del maestro sigue sin resolver
+- WHEN Gerencia decide a favor de las tres variantes reales (`R08.1.md:2071-2079`)
+- THEN el arreglo correcto es retirar las dos puertas existentes, no completar la tercera
+- AND si decide en contra, el arreglo es el `409` que el `it.fails` ya deja esperando
 
 ### 5.2 · La remisión de salida no existe · **destino F1C-02**
 

@@ -4,6 +4,12 @@ Retrofit: la reasignación ya está commiteada (`56ff441`). §4.1 y §4.2 del sp
 nota de REASIGNADO; este delta consolida ambas con sus specs hermanas y añade la talla cuantificada
 que faltaba.
 
+**Saneado el 2026-09-10, antes del archivo.** Los dos requisitos encabezaban con «Comportamiento
+actual, a corregir en F1A» —destino muerto— y llevaban las citas de línea de antes de `9ed5635`.
+`sdd-archive` funde este delta sobre `openspec/specs/tickets-core/spec.md`, así que fundirlo tal cual
+habría revertido la corrección que `0a2c4ff` ya había hecho en la spec principal. Los encabezados y
+las diez citas quedan alineados con el código en `0a2c4ff`.
+
 ## MODIFIED Requirements
 
 ### Requirement: 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios
@@ -19,25 +25,27 @@ que faltaba.
 > el `409` de estado antes del `403` de área, sólo en `executeTransition`. Corregir una sin la otra
 > deja el problema (`transitions-st` §3.8).
 
-**Comportamiento actual, a corregir en F1A.** En el alta, el `409` de la orden de venta gana al `422`
-de obligatorios (`ticketService.ts:43-49` antes de `:50-58`; fijado en
-`services/ticketService.test.ts:295`). En `habilitar_servicio` es al revés
-(`ticketService.test.ts:176`). **Las dos puertas de la misma regla evalúan en órdenes opuestos**
-(`ticketService.test.ts:277-287`).
+**Comportamiento actual. Sin tanda: falta una fila en el plan (entrada 5.a del fichero de
+correcciones).** En el alta, el `409` de la orden de venta gana al `422` de obligatorios
+(`ticketService.ts:43-49` antes de `:81-86`; fijado en `services/ticketService.test.ts:327`). En
+`habilitar_servicio` es al revés (`ticketService.test.ts:194`). **Las dos puertas de la misma regla
+evalúan en órdenes opuestos** (`ticketService.test.ts:302-314`).
 
 **Talla cuantificada, no prometida.** Hay **12** pruebas de precedencia
-(`services/ticketService.test.ts:143` y `:289`, un `describe` por endpoint). `:176` («los obligatorios
-que faltan ganan a la orden de venta ya usada: 422, no 409») y `:295` («la orden de venta ya usada
+(`services/ticketService.test.ts:143` y `:315`, un `describe` por endpoint). `:194` («los obligatorios
+que faltan ganan a la orden de venta ya usada: 422, no 409») y `:327` («la orden de venta ya usada
 gana a los obligatorios que faltan: 409, no 422») son **títulos opuestos literales, las dos en
 verde**: una cambia sí o sí. Bajo el orden natural cambian **6 de 12**
-(`:154`, `:160`, `:166`, `:187`, `:295`, `:304`), y tres de ellas alteran **qué error ve el usuario**,
+(`:154`, `:160`, `:166`, `:205`, `:327`, `:336`), y tres de ellas alteran **qué error ve el usuario**,
 no sólo el código de estado.
 
 Detalle completo, con la segunda inversión hermana, en `transitions-st` §3.8. **Corregir una sin la
 otra deja el problema.**
 
 (Previously: citaba la segunda inversión sin declarar que eran dos, sin la talla cuantificada de las
-12 pruebas y sin el resultado del `grep` sobre el plan.)
+12 pruebas y sin el resultado del `grep` sobre el plan. Y encabezaba con «Comportamiento actual, a
+corregir en F1A» —épica cerrada— con las diez citas de línea de antes de `9ed5635`: fundir este delta
+habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le había quitado.)
 
 #### Scenario: El mismo error doble responde distinto según la puerta de entrada
 
@@ -56,7 +64,8 @@ otra deja el problema.**
 > que «ninguna de las tres encaja en un modelo de "una OV, un ticket"». Es el **punto abierto nº 52**.
 >
 > **Esta entrada adopta el mismo enmarcado que `remisiones` §5.1: si nº 52 se resuelve a favor de las
-> variantes, el arreglo es RETIRAR las dos puertas que ya existen (`ticketService.ts:45` y `:100`), no
+> variantes, el arreglo es RETIRAR las dos puertas que ya existen (`ticketService.ts:45-48` y
+> `:128-129`), no
 > añadir la tercera.** Construirla antes de decidir cuesta el doble. Y nº 52 **no está en la tabla de
 > decisiones del plan** (`plan:348-359`), así que ni llega a la agenda del viernes: redactado como
 > entrada **5.b** de `docs/sdd/F0-01_Correcciones_para_el_plan.md`. La regla completa, con la cita
@@ -65,14 +74,16 @@ otra deja el problema.**
 > *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` fija el modo de fallo exacto y `:161`
 > deja el `it.fails` esperando, sea cual sea la dirección de la decisión.
 
-**Comportamiento actual, a corregir en F1A** (`config.yaml`, `incumplimientos_vivos`, IV-4). El alta
+**Comportamiento actual. NO se corrige hasta que se decida el punto abierto nº 52** (`config.yaml`,
+`incumplimientos_vivos`, IV-4). El alta
 de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
 (`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 subiera la
 guarda del serial). Hay un `it.fails` esperando (`apps/desk/server/ordenVentaUnTicket.test.ts:161`) y
 una prueba que fija el daño observable (`:156-158`). La regla completa es de `remisiones`.
 
 (Previously: no nombraba explícitamente el enmarcado «retirar, no añadir» de `remisiones` §5.1 como
-el mismo enmarcado adoptado aquí.)
+el mismo enmarcado adoptado aquí. Y encabezaba con «a corregir en F1A», épica cerrada, con la segunda
+puerta citada en `:100` cuando vive en `:128-129`.)
 
 #### Scenario: La cardinalidad OV↔ticket depende de la misma decisión en las dos specs
 

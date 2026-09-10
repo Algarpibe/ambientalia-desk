@@ -5,6 +5,13 @@ formaliza en SDD lo que ese commit ya escribió en `openspec/config.yaml` y en
 `openspec/specs/tickets-core/spec.md` §4.2, y corrige las citas de código que quedaron caducas tras el
 corrimiento de 29 líneas de F1B-01.
 
+**Saneado el 2026-09-10, y la lección está en cómo se encontró.** Este delta seguía citando la segunda
+puerta de «una OV, un ticket» en `ticketService.ts:100` —hoy una línea en blanco— cuando vive en
+`:128-129`. Es **la misma cita, del mismo código**, que se había corregido esa mañana en el delta
+hermano de `tickets-core` §4.2: el saneamiento se hizo fichero a fichero en vez de por cita, y la
+hermana se quedó fuera. Lo cazó `sdd-verify`, no el saneamiento. Corregidas las dos apariciones
+(`:20` y `:30`), y de paso `:45` → `:45-48`, que es el bloque completo de la primera puerta.
+
 ## MODIFIED Requirements
 
 ### Requirement: 5.1 · La tercera puerta de la orden de venta sigue abierta
@@ -17,7 +24,7 @@ corrimiento de 29 líneas de F1B-01.
 > las tres encaja en un modelo de "una OV, un ticket", y las tres son habituales. Punto abierto nº 52.»
 >
 > **El enmarcado se invierte respecto de las tandas anteriores: el arreglo puede ser RETIRAR las dos
-> puertas que ya existen (`ticketService.ts:45` y `:100`), no añadir la tercera.** Construirla antes
+> puertas que ya existen (`ticketService.ts:45-48` y `:128-129`), no añadir la tercera.** Construirla antes
 > de decidir cuesta el doble. Y nº 52 **no está** en la tabla de decisiones del plan
 > (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:348-359`), así que ni llega a la agenda
 > del viernes.
@@ -27,7 +34,7 @@ con un `UPDATE` condicional, **sin llamar a `ticketConOrdenVenta`**
 (`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 bajara 29 líneas
 la guarda del serial; el `UPDATE`, en `:221-225`). Las otras dos puertas sí la llaman: el alta
 (`services/ticketService.ts:43-49`, RQ-TC-08) y `habilitar_servicio`
-(`services/ticketService.ts:100`, RQ-TS-14).
+(`services/ticketService.ts:128-129`, RQ-TS-14).
 
 **Lo que la condición sí impide y lo que no.** El `WHERE ... COALESCE(orden_venta,'') = ''`
 (`remision.ts:223`) impide pisar la OV que el propio ticket ya tenga —por eso el formulario la enseña

@@ -3,7 +3,7 @@
 ## Nota de retrofit
 
 La reasignación de destinos (los cuatro/cinco desvíos vivos, `CLAUDE.md` y `openspec/config.yaml`) ya
-está commiteada en `56ff441` (base `607e26a`, rama `main`) y verificada contra disco: `CLAUDE.md:130-134`
+está commiteada en `56ff441` (base `607e26a`, rama `main`) y verificada contra disco: `CLAUDE.md:188-208`
 y `openspec/config.yaml:413-433` (entrada IV-4) ya muestran los destinos nuevos y la cita corregida
 `remision.ts:218-226`. Este `design.md` cubre sólo los dos matices de contenido que **no** estaban
 resueltos: citas caducas en specs vivas, y un comentario cruzado entre dos pruebas.

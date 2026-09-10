@@ -231,6 +231,13 @@ de `public`, porque extender el guardián sin tocar el `.sql` lo dejaba rojo par
 ## Contexto SDD
 
 - Configuración: `openspec/config.yaml` (capacidades, preflight, reglas por fase, unidad de avance).
+- **El preflight de sesión está FIJADO en fichero y gana.** `openspec/config.yaml:22-30`:
+  `interactive · hybrid · ask-on-risk · 800 líneas · strict_tdd`. Su comentario lo dice por escrito —
+  «corrige cualquier valor distinto que aparezca en un prompt de arranque»—, y eso incluye lo que se
+  derive del resumen de Engram o del propio encargo de la sesión. **Léelo antes de declarar ningún
+  preflight.** El 2026-09-10 se declaró de memoria y salieron mal dos de los cuatro (`auto` por
+  `interactive`, 400 por 800): no cambió el resultado, pero se saltó la ronda de preguntas que
+  `interactive` exige antes de `sdd-propose`.
 - Propuestas: `openspec/changes/<ID>/proposal.md`.
 - Baseline as-built de partida: `docs/sdd/F0-00_Baseline_as-built.md`.
 - La unidad de avance son **las tandas del §5 del plan, ponderadas por talla**. Se publican siempre
