@@ -81,6 +81,79 @@ fallo que se produjo.
 
 ---
 
+## Las tres reglas de la mutación — qué mutar para no necesitar revisor
+
+Las de arriba dicen **qué** hay que cumplir. Estas dicen **dónde mirar** para enterarse de que no se
+cumple, sin que haga falta que otro lo lea. Salieron de la revisión adversaria de F1B-01
+(`git diff c45bcb1 607e26a`, 2026-09-09): de sus cinco hallazgos, **cuatro** los caza una mutación que
+la tanda podía haber hecho sola. Una prueba verde no dice que la guarda funcione; dice que la prueba
+no sabe distinguir. La mutación es la pregunta que lo averigua: **rómpelo a propósito y mira si
+alguien se queja.** Si nadie se queja, el detector no existe.
+
+### Regla de mutación 1 — muta la POSICIÓN de la guarda, no sólo su condición
+
+> Al añadir una guarda, no basta con comprobar que su condición se detecta. **Muévela**: ponla antes
+> o después de la guarda vecina y vuelve a correr la suite. Si sigue verde, el orden **no está
+> probado** — y si el código declara por comentario que ese orden es deliberado, esa declaración es
+> hoy la única prueba que hay, que es tanto como decir ninguna.
+
+*Por qué existe:* H3 de aquella revisión, **ya cerrado por `9ed5635`**. En `607e26a`,
+`apps/desk/server/routes/remision.ts:152-157` (el 422 del serial) corría antes de `:174-183` (el 409 de
+remisión pendiente) y `:144-147` **declaraba por escrito que era a propósito** —«VA CON LOS OTROS 422
+Y ANTES DEL 409»—, pero ninguna prueba lo fijaba: las del 409 usaban `preparar()`, que siempre da
+serial, y las del 422 nunca tenían remisión previa. **Cero solapamiento**, así que mover la guarda no
+rompía nada y el usuario pasaba de oír «falta el serial» a oír «ya tienes una remisión sin desenlace»
+—cierto, y no es su problema—. La prueba que faltaba activa las dos guardas a la vez y hoy está en
+`apps/desk/server/remisiones.test.ts:957`. Mutar la condición no lo habría enseñado; mutar la posición
+sí.
+
+### Regla de mutación 2 — si la guarda vigila un fichero de datos, muta el FICHERO VIGILADO
+
+> Un guardián que lee un fichero (un `.sql`, un `.env.example`, un catálogo, un JSON) se prueba
+> **ensuciando el fichero**, no retocando el guardián. Escribe en él exactamente la sentencia que
+> debería rechazar y comprueba que se pone rojo. Mutar el guardián sólo demuestra que el guardián se
+> ejecuta; mutar lo vigilado demuestra que **discrimina**.
+
+*Por qué existe:* H2 de aquella revisión, **ya cerrado por `9ed5635`**. El guardián de `ALTER TABLE`
+que F1B-01 añadió filtra por el **nombre pelado** de la tabla
+(`packages/zoho-sync/src/db/migrate.test.ts:319`, `a.tabla`), y `contacts` es la única colisión entre
+las tres listas de `packages/zoho-sync/src/db/migrate.ts:63-64,70-73,80`: está en `DESK_TABLES` y,
+calificada, en `BOOKS_TABLES`. Una `ALTER TABLE contacts …` escrita para Books pasaba el guardián como
+tabla de Desk. **No había bug vivo** —`packages/zoho-sync/src/db/pool.ts:5` fija
+`search_path=desk,public` y `books` nunca está ahí, así que una `ALTER` sin calificar aterriza en
+`desk.contacts`—: había un guardián diciendo que estaba bien lo que no lo estaba. Y sólo se ve
+escribiendo esa sentencia en el fichero vigilado, que es exactamente lo que hace hoy el fixture
+sintético de `migrate.test.ts:391-393`. Blindaje de intención, no corrección de un fallo.
+
+### Regla de mutación 3 — la regla 13 es una casilla que se marca, no un principio que se recuerda
+
+> Antes de cerrar cualquier tanda que toque `apps/desk/src`, **enumera** las decisiones que el cliente
+> toma —qué bloquea, qué rellena solo, qué avisa— y para cada una **nombra la línea del servidor** que
+> la impone. Sin línea, la decisión es la guarda, y la guarda vive donde no se puede confiar en ella.
+> La comparación se hace por escrito, decisión a decisión: la regla 13 recordada de memoria es
+> exactamente la que se salta.
+
+*Por qué existe:* H1 y H4 de aquella revisión, dos hallazgos del mismo molde. **Los dos están cerrados
+por `9ed5635`, así que lo de abajo se lee contra `607e26a`, no contra el árbol de hoy** — mirar hoy
+esas líneas enseña el arreglo, no el fallo. En H1, `apps/desk/src/components/CreateTicket.tsx:148-151`
+fijaba `clientId` desde el equipo y `:118`/`:257` bloqueaban el campo, mientras que en el servidor
+**no había ninguna comparación** entre `equipo.clientId` y el del cuerpo entre traer el equipo y
+escribir el `INSERT` (hoy la guarda existe, `ticketService.ts:50-78`). En H4,
+`apps/desk/src/components/CrearRemision.tsx:195` decidía con `!data.equipo.serial` —un serial de sólo
+espacios es *truthy* en JS— mientras el servidor sí recortaba antes de decidir
+(`routes/remision.ts:153`, `.trim()`); hoy el cliente recorta igual, en esa misma línea. Las dos
+tandas conocían la regla 13; las dos la escribieron en sus artefactos; ninguna de las dos hizo la
+comparación línea a línea.
+
+**Lo que estas tres NO cazan.** H5 —la divergencia entre `normalizarNombreCliente`
+(`apps/desk/server/backfillClientId.ts:47-68`, que pliega acentos y formas societarias) y el
+`LOWER(...) LIKE '%q%'` de `searchClients` (`packages/zoho-sync/src/books/repo.ts:117-127`, que no
+pliega nada)— es una divergencia **entre dos implementaciones de la misma noción**, ninguna de las
+dos rota por separado. Para eso hace falta un lector, o una prueba que las enfrente. Que estas reglas
+cubran cuatro de cinco no las convierte en el revisor.
+
+---
+
 ## Topología de dos esquemas
 
 PostgreSQL con **dos esquemas** en la base `desk`:
