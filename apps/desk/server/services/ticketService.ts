@@ -53,7 +53,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
    * Compara el `clientId` YA RESUELTO en este punto —del cuerpo o, en su defecto, de la orden de
    * venta (`:39`)— contra `equipo.clientId`. Va AQUÍ, después del 409 de la OV y antes de los
    * obligatorios, por dos razones: (a) la rama (i) de abajo tiene que rellenar el hueco ANTES de
-   * `:54` (`if (!clientId) missing.push('cliente')`), o un cuerpo sin `clientId` cuyo equipo sí lo
+   * `:88` (`if (!clientId) missing.push('cliente')`), o un cuerpo sin `clientId` cuyo equipo sí lo
    * trae moriría como «falta el cliente»; (b) meterla antes del 409 alteraría el tramo 409/422 que
    * `ticketService.test.ts` declara y deja explícitamente sin decidir (no es esta tanda).
    *
@@ -72,8 +72,14 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     // esta rama a propósito (iii): es el ~3,4 % de equipos que `backfillClientId.ts` no enlazó, y ahí
     // no hay nada que comparar — comparar sin ese guard rompería ese respaldo.
     logger.warn({ equipoId: equipo.id, equipoClientId: equipo.clientId, clientId }, 'alta de ticket: el cliente no corresponde al equipo')
-    const nombreEquipo = equipo.clienteNombre ?? equipo.clientId
-    throw new HttpError(422, { error: `El equipo ${equipo.serial} es de «${nombreEquipo}» y el ticket se está creando para otro cliente. Corrige el cliente o el equipo.` })
+    // La consulta va DENTRO de la rama y DESPUÉS del warn: sólo se paga en el camino de error, y si
+    // fallara, la señal ya está emitida. El ayudante vive aquí a propósito (design §2, §6).
+    const destino = await getClient(db, clientId)
+    const lado = (nombre: string | null | undefined, id: string, nota: string) =>
+      nombre ? `«${nombre}» (${id})` : `${id} (${nota})`
+    const deQuien = lado(equipo.clienteNombre, equipo.clientId, 'sin nombre en el equipo')
+    const paraQuien = lado(destino?.name, clientId, 'sin ficha en Books')
+    throw new HttpError(422, { error: `El equipo ${equipo.serial} es de ${deQuien} y el ticket se está creando para ${paraQuien}. Corrige el cliente o el equipo.` })
   }
   const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
   const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''

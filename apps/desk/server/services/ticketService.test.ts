@@ -173,10 +173,10 @@ describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
    * `habilitar_servicio` es la única transición que lleva las dos cosas: campos obligatorios Y la
    * puerta de la orden de venta. Por eso los dos casos de abajo son suyos.
    *
-   * ⚠️ ESTA PRUEBA Y LA DE `:319` DICEN LO CONTRARIO, Y LAS DOS ESTÁN EN VERDE. Compara los títulos:
+   * ⚠️ ESTA PRUEBA Y LA DE `:327` DICEN LO CONTRARIO, Y LAS DOS ESTÁN EN VERDE. Compara los títulos:
    *
    *   aquí   → «los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409»
-   *   `:319` → «la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422»
+   *   `:327` → «la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422»
    *
    * Son la MISMA pareja de guardas con el ganador invertido, según por qué puerta se entre. No es un
    * descuido de nadie: `executeTransition` y `createManagedTicket` se escribieron por separado y cada
@@ -247,7 +247,7 @@ async function cliente(id = 'cli-1'): Promise<void> {
   await db.query("INSERT INTO books.contacts (contact_id, contact_name) VALUES ($1,'Gecelca S.A. E.S.P.')", [id])
 }
 
-/** Los campos que dejan pasar el bloque de obligatorios de `ticketService.ts:53-58`. */
+/** Los campos que dejan pasar el bloque de obligatorios de `ticketService.ts:87-92`. */
 const CAMPOS_OK = { clientId: 'cli-1', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT' }
 
 describe('createManagedTicket · cada guarda por separado', () => {
@@ -300,7 +300,7 @@ describe('createManagedTicket · cada guarda por separado', () => {
 })
 
 /**
- * EL ORDEN, DECLARADO. `ticketService.ts:22-60`, de arriba abajo:
+ * EL ORDEN, DECLARADO. `ticketService.ts:22-94`, de arriba abajo:
  *
  *   422 equipo → 422 OV inexistente → **409 OV ya usada** → 422 obligatorios → 422 cliente
  *
@@ -355,7 +355,7 @@ describe('createManagedTicket · el ORDEN en que se evalúan las guardas', () =>
  * Compara el `clientId` YA RESUELTO (cuerpo o, en su defecto, la orden de venta —`:39`—) contra
  * `equipo.clientId`. Es integridad de datos, no autorización: `tickets.client_id` no filtra ni
  * autoriza nada, sólo resuelve el nombre a mostrar. Corre DESPUÉS del 409 de la OV (`:45-49`) y ANTES
- * de los obligatorios (`:54` exige `clientId`), porque la regla (i) de abajo tiene que rellenar el
+ * de los obligatorios (`:88` exige `clientId`), porque la regla (i) de abajo tiene que rellenar el
  * hueco antes de esa comprobación.
  */
 describe('createManagedTicket · la guarda equipo↔cliente', () => {
@@ -394,6 +394,57 @@ describe('createManagedTicket · la guarda equipo↔cliente', () => {
     await createManagedTicket(db, { equipoId: 'eq-1', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT' }, 'Admin')
     const t = (await db.query('SELECT client_id FROM tickets')).rows[0]
     expect(t.client_id).toBe('cli-A')
+  })
+
+  // mensaje-422-cliente-duplicado — design §1. Las cuatro pruebas afirman con `toBe` sobre la cadena
+  // completa del 422, no con `toContain`: el caso que motiva la tanda es que los dos nombres pueden
+  // ser IGUALES (`getClient` no filtra por `contact_type`, a propósito — `books/repo.ts:111-116`), así
+  // que sólo el id distingue a los dos clientes y el mensaje tiene que mostrar los dos.
+  it('T1 · nombres duplicados: el mensaje distingue a los dos clientes por id aunque compartan nombre', async () => {
+    await equipoConCliente('eq-1', 'cli-A', 'Gecelca S.A. E.S.P.')
+    await cliente('cli-B')
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', clientId: 'cli-B', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(
+      'El equipo 18A20070 es de «Gecelca S.A. E.S.P.» (cli-A) y el ticket se está creando para «Gecelca S.A. E.S.P.» (cli-B). Corrige el cliente o el equipo.',
+    )
+  })
+
+  it('T2 · nombres distintos: el mensaje nombra a los dos clientes', async () => {
+    await equipoConCliente('eq-1', 'cli-A', 'Ambientalia S.A.S.')
+    await cliente('cli-B')
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', clientId: 'cli-B', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(
+      'El equipo 18A20070 es de «Ambientalia S.A.S.» (cli-A) y el ticket se está creando para «Gecelca S.A. E.S.P.» (cli-B). Corrige el cliente o el equipo.',
+    )
+  })
+
+  it('T3 · el cliente solicitado no tiene ficha en Books: nota «sin ficha en Books», no «Cliente no encontrado»', async () => {
+    await equipoConCliente('eq-1', 'cli-A', 'Gecelca S.A. E.S.P.')
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', clientId: 'cli-B', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(
+      'El equipo 18A20070 es de «Gecelca S.A. E.S.P.» (cli-A) y el ticket se está creando para cli-B (sin ficha en Books). Corrige el cliente o el equipo.',
+    )
+  })
+
+  it('T4 · el equipo no tiene cliente_nombre: nota «sin nombre en el equipo»', async () => {
+    await equipoConCliente('eq-1', 'cli-A')
+    await cliente('cli-B')
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', clientId: 'cli-B', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(
+      'El equipo 18A20070 es de cli-A (sin nombre en el equipo) y el ticket se está creando para «Gecelca S.A. E.S.P.» (cli-B). Corrige el cliente o el equipo.',
+    )
   })
 })
 
