@@ -384,8 +384,10 @@ describe('nombresAmbiguos / altersAmbiguas — el guardián distingue intención
     expect(nombresAmbiguos()).toEqual(['contacts'])
   })
 
-  // RED · fixture sintético, independiente de schema.sql: una `ALTER TABLE contacts` con columnas que
-  // sólo tienen sentido en `books.contacts` (réplica del hub, ver `booksHub/schema-books.sql`).
+  // RED · fixture sintético, independiente de schema.sql. El clasificador señala por NOMBRE ambiguo,
+  // no por las columnas: `contacts` es el único que está a la vez en `DESK_TABLES` (`migrate.ts:63`) y
+  // en `BOOKS_TABLES` (`:80`). Las columnas no discriminan y no se miran — `schema.sql:11` muestra que
+  // la `contacts` de Desk ya declara `raw jsonb`, igual que la de Books (`:149-152`).
   it('una ALTER TABLE contacts sin calificar, con intención de Books, queda señalada', () => {
     const fixture = 'ALTER TABLE contacts ADD COLUMN IF NOT EXISTS raw jsonb'
     expect(altersAmbiguas([fixture])).toContain(fixture.trim())

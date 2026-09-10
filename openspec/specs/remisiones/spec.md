@@ -94,15 +94,11 @@ el orden de su ficha y sólo los activos (`apps/desk/server/db/checklistRemision
 
 ---
 
-### RQ-RE-15 · El serial es obligatorio al crear la remisión · **F1B-01**
-
-*(Va al final de §1 por su tema y lleva el número 15 por su fecha: renumerar la serie rompería las citas
-`RQ-RE-nn` que ya viven en otras specs y en el código.)*
+### RQ-RE-15 · El serial es obligatorio al crear la remisión
 
 El alta **SHALL** rechazar con `422` toda remisión cuyo serial resuelto esté vacío
 (`routes/remision.ts:152-157`). Es la decisión `[DECIDIDO]` de M1.1 (`R08.1.md:1045`) — «El campo
-número de serie es obligatorio al crear la remisión» —, la única de las tres de ese apartado que
-seguía sin construir hasta F1B-01.
+número de serie es obligatorio al crear la remisión» —.
 
 - El serial **SHALL** resolverse con la misma precedencia con la que se guarda: el equipo del catálogo
   manda sobre la copia propia del ticket (`remision.ts:153`). Una guarda sobre `found.row.serial` a
@@ -111,13 +107,14 @@ seguía sin construir hasta F1B-01.
 - La cadena en blanco **SHALL** contar como ausente, igual que en el alta de tickets
   (`ticketService.ts:53-58`): el sync escribe `''` tan fácilmente como `NULL`.
 - La guarda **SHALL** evaluarse **antes de cualquier escritura**, y en particular antes del bloque de
-  la orden de venta, que hace un `UPDATE tickets` (`remision.ts:214-222`). Un rechazo que igualmente
-  dejara la OV escrita sería la tercera puerta de «una OV, un ticket» disparándose desde una petición
-  que no prosperó (§5.1, IV-4). Fijado por la prueba «M5 · con orden de venta y sin serial: 422 y el
-  ticket sigue sin OV».
-- La guarda va con los otros `422` y **antes** del `409` de la remisión pendiente, que es el orden que
-  este manejador ya seguía para ticket y fecha. No hereda la inversión abierta del **alta de tickets**
-  (`tickets-core` §4.1), que es otra cosa y sigue sin corregir.
+  la orden de venta, que hace un `UPDATE tickets` (`remision.ts:214-222`). Fijado por la prueba
+  «M5 · con orden de venta y sin serial: 422 y el ticket sigue sin OV».
+- La guarda va con los otros `422` y **antes** del `409` de la remisión pendiente, y esa precedencia
+  **SHALL** quedar fijada por una prueba que active las dos condiciones a la vez: cuando un ticket
+  tiene simultáneamente una remisión `pendiente` vigente y el serial resuelto vacío, la respuesta
+  **SHALL** ser `422`, **MUST NOT** ser `409`, y **MUST NOT** crear ninguna remisión nueva. No hereda la
+  inversión abierta del **alta de tickets** (`tickets-core` §4.1), que es otra cosa y sigue sin
+  corregir.
 
 > **Given** un ticket sincronizado desde Zoho que aún no ha pasado por «Habilitar Servicio», y por
 > tanto no tiene serial ni equipo del catálogo
@@ -125,17 +122,24 @@ seguía sin construir hasta F1B-01.
 > **Then** responde `422` y no se crea ninguna remisión ni se escribe nada en el ticket.
 
 **A quién afecta de verdad.** Un ticket nacido en la app siempre trae serial: el alta exige `equipoId`
-del catálogo (`ticketService.ts:22-25`) y el equipo lo lleva. Lo que esto cierra es **la otra entrada**
-—la que M1.3.2 llama la que «nunca se cruza» con aquélla—, donde el ticket llega de Zoho sin serial y
-por eso `habilitar_servicio` lo exige (`transitions.ts:189`). El daño no era la columna vacía: la
-remisión es el documento que **acompaña al equipo**, y sin serial no dice cuál entró — y el enlace
-ticket ↔ equipo del historial se hace por serial (`db/equipos.ts:220-223`), no por el código de
-servicio.
+del catálogo (`ticketService.ts:22-25`) y el equipo lo lleva. Lo que esto cierra es la otra entrada
+—la que M1.3.2 llama la que «nunca se cruza» con aquélla—, donde el ticket llega de Zoho sin serial.
 
-**La columna sigue admitiendo `NULL`, a propósito** (`schema.sql:279`). La decisión dice «obligatorio
-**al crear**», y ahí está la guarda; la columna además guarda el histórico importado de la hoja de
-Google, cuyos seriales no controla esta aplicación. Un `NOT NULL` sería una migración que puede fallar
-contra datos existentes en producción para defender una puerta que ya está defendida.
+**La columna sigue admitiendo `NULL`, a propósito** (`schema.sql:279`): la decisión dice «obligatorio
+**al crear**», y ahí está la guarda; la columna guarda además el histórico importado que esta
+aplicación no controla.
+
+#### Scenario: Serial vacío y remisión pendiente a la vez
+- GIVEN un ticket con una remisión `pendiente` vigente y sin serial resuelto (ni equipo de catálogo ni
+  copia propia)
+- WHEN se intenta crear una segunda remisión para ese ticket
+- THEN responde `422` por falta de serial, no `409` por remisión pendiente
+- AND no se crea ninguna remisión nueva
+
+#### Scenario: Comportamiento sin cambios cuando sólo aplica una guarda
+- GIVEN un ticket con serial resuelto y una remisión `pendiente` vigente
+- WHEN se intenta crear una segunda remisión
+- THEN responde `409` con el `id` de la remisión pendiente, igual que hoy
 
 ---
 

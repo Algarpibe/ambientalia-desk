@@ -6,10 +6,10 @@
 | Estado | **as-built.** `config.yaml:117` lo declara «as-built (cron cada 3 min)»: la cifra es correcta y **el mecanismo no es un cron**. Ver M-1 |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas. El código de `ad1875b` es idéntico al de `b6fb6d4`: `git diff --name-only ad1875b..HEAD` no devuelve ningún fichero fuera de `docs/`, `openspec/` y `CLAUDE.md` |
 | Tanda que la escribe | F0-02 |
-| Contenido | **12** requisitos (`RQ-ZS-01`…`RQ-ZS-12`, §§1–4) · **5** entradas de comportamiento actual (§5.1–§5.5) · **5** discrepancias diseño↔código (D-1…D-5) y **4** maestro↔código (M-1…M-4) |
+| Contenido | **13** requisitos (`RQ-ZS-01`…`RQ-ZS-13`, §§1–4) · **5** entradas de comportamiento actual (§5.1–§5.5) · **5** discrepancias diseño↔código (D-1…D-5) y **4** maestro↔código (M-1…M-4) |
 | Diseños de procedencia | `docs/superpowers/specs/2026-06-06-zoho-hub-sp1-sync-service-design.md` (147 líneas) · `…-sp2-replica-referencia-design.md` (97 líneas, **«Implementado», con una corrección de alcance escrita en su propia cabecera**) · `2026-06-18-paquete-lectura-hub-design.md` (100 líneas). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | **M11.1** (`R08.1.md:2648-2654`) · M11.3 (`:2686-2693`) · M11.5 (`:2701-2707`) · M1.3.2 (`:1145-1149`) |
-| Tandas que la tocan | **F1B-01** (serial único y autocompletado, plan `:413`; y el destino de **IV-6**) · **F1B-08** (paridad de lectura y política de escritura, punto abierto **P44**) · **F1F-01** (migración de los tickets abiertos y fecha de corte) |
+| Tandas que la tocan | **F1B-01** (serial, equipo↔cliente, ALTER TABLE, plan `:413`) · **F1B-08** (paridad de lectura y política de escritura, punto abierto **P44**) · **F1F-01** (migración de los tickets abiertos y fecha de corte) |
 | Depende de | `tickets-core` (lo que se escribe encima de lo sincronizado) · `transitions-st` (`managed_by_app` lo pone `writeTransition`) |
 
 ---
@@ -242,6 +242,47 @@ crmHub/modules.ts | sort -u`.
 La razón es un caso real: «contar los fallos no basta: "747 fallidos" no se distingue de "Zoho no
 tiene esos datos", y esa ambigüedad ya costó una tarde» (`:46-49`). Y sólo el primero, «si falla el
 barrido entero, falla por lo mismo, y 747 líneas iguales en el log no informan más que una» (`:50-51`).
+
+### RQ-ZS-13 · El guardián de `ALTER TABLE` distingue intención por esquema, no sólo por nombre pelado
+
+`contacts` es la única tabla cuyo nombre pelado existe en más de una lista calificada
+(`DESK_TABLES` y `BOOKS_TABLES`, `db/migrate.ts:63-64`, `:80`). El sub-test que fija qué `ALTER TABLE`
+pueden ir sin calificar (`altersDelEsquema()`, `packages/zoho-sync/src/db/migrate.test.ts:337-343`)
+filtra hoy por el nombre pelado (`a.tabla`), así que una `ALTER TABLE contacts` sin calificar cuya
+intención sea `books.contacts` pasa como si fuera de `desk.contacts`.
+
+El guardián **MUST NOT** clasificar en silencio como tabla de Desk ninguna `ALTER TABLE` sin
+calificar cuyo nombre pelado colisione entre esquemas. **SHALL** señalarlas todas para que su esquema
+se decida a mano.
+
+**Se clasifica por NOMBRE ambiguo, no por contenido de columnas, y es deliberado.** Una redacción
+anterior de este requisito exigía distinguir por «las columnas que añade o modifica». Se descarta:
+las columnas no discriminan. `packages/zoho-sync/src/db/schema.sql:11` muestra que la tabla
+`contacts` de **Desk** ya declara `raw jsonb`, la misma columna que tiene `books.contacts`
+(`:149-152`), así que un clasificador por contenido daría falsos negativos sobre el caso más obvio.
+El nombre sí discrimina: `contacts` es el único que aparece en dos listas
+(`packages/zoho-sync/src/db/migrate.ts:63-64`, `:80`).
+
+Consecuencia aceptada: el censo señala **también** la `ALTER` legítima de Desk
+(`schema.sql:256`, `modified_time`). Eso no es un falso positivo, es el diseño: la cifra del censo es
+el disparador que obliga a decidir el esquema de cualquier `ALTER` ambigua nueva antes de dejarla
+pasar, en vez de subir un contador global sin pensar.
+
+**No hay bug vivo, y esta spec no lo declara como tal.** `packages/zoho-sync/src/db/pool.ts:5` fija
+`search_path=desk,public`, y `books` nunca entra en él: cualquier `ALTER` sin calificar aterriza
+siempre en `desk.contacts`, nunca en `books.contacts`. Esto es blindaje de intención sobre el
+guardián de pruebas, no la corrección de un defecto de producción.
+
+#### Scenario: Una `ALTER TABLE contacts` sin calificar con intención de Books queda detectada
+- GIVEN una `ALTER TABLE contacts` sin calificar en `schema.sql` cuyas columnas sólo existen en la
+  definición de `books.contacts` (`booksHub/schema-books.sql`), no en `desk.contacts`
+- WHEN corre el guardián de esquema
+- THEN la prueba falla, señalando que esa `ALTER` no puede clasificarse como tabla de Desk
+
+#### Scenario: Una `ALTER TABLE contacts` de Desk sigue pasando
+- GIVEN una `ALTER TABLE contacts` sin calificar cuyas columnas pertenecen a `desk.contacts`
+- WHEN corre el guardián de esquema
+- THEN la prueba sigue en verde, igual que hoy
 
 ---
 
