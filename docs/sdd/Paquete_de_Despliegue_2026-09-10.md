@@ -347,13 +347,13 @@ correo a otra área.
 **Cómo se mide cuando alguien tenga acceso.** Dos consultas, y **la unidad importa**:
 
 ```sql
--- Tickets afectados. DISTINCT es obligatorio: el grafo tiene reentrancia y un
--- mismo ticket puede pasar por la transición más de una vez.
+-- Tickets afectados.
 SELECT count(DISTINCT ticket_id) FROM desk.ticket_transitions
  WHERE transition_id = 'habilitado_para_entrega'
    AND values->>'Fecha de aviso al cliente' IS NULL;
 
--- Pasadas afectadas (denominador del indicador, no número de tickets).
+-- Pasadas afectadas. En el grafo declarado debe dar EXACTAMENTE lo mismo que la
+-- anterior; si difiere, ver la nota del detector más abajo.
 SELECT count(*) FROM desk.ticket_transitions
  WHERE transition_id = 'habilitado_para_entrega'
    AND values->>'Fecha de aviso al cliente' IS NULL;
@@ -364,12 +364,45 @@ Notas de la consulta, verificadas contra el esquema y contra código que ya corr
 - `transition_id = 'habilitado_para_entrega'` es el id literal de `transitions.ts:259`.
 - `values` **sin comillas funciona** en un `WHERE`, pese a ser palabra reservada: lo prueba
   `apps/desk/server/auth/users.ts:138`, que hace `WHERE values->>'derivado_a' = $1` en producción.
-- Se usa `->>' ... ' IS NULL` y no el operador `?` de existencia por dos razones: es la forma que este
-  repositorio ya tiene probada, y `?` colisiona con el marcador de parámetro en varios clientes. Si se
-  ejecuta en `psql` a mano, `NOT (values ? 'Fecha de aviso al cliente')` es equivalente y más preciso
-  —distingue clave ausente de valor `null`—, pero **no está probado en este repositorio**.
+- **`->>' ... ' IS NULL` no es un compromiso: es el operador que toca.** La pregunta no es «¿falta la
+  clave?» sino «¿abre el bodegaje?», y **una clave presente con valor `null` tampoco lo abre**. `->>`
+  devuelve `NULL` en los dos casos y por tanto los cuenta los dos. El operador de existencia `?` daría
+  **verdadero** para una clave con valor `null`, así que `NOT (values ? '...')` la dejaría fuera y
+  **contaría DE MENOS**. Un borrador anterior de esta nota lo presentaba al revés, como si `?` fuera
+  «más preciso»: es al contrario.
+- ⚠️ **ESTA CONSULTA NO SE PUEDE PROBAR CONTRA `pg-mem`.** `apps/desk/server/db/primerDerivado.ts:20-21`
+  lo deja escrito: «El filtro se hace en JS y no con `values->>'derivado_a' IS NOT NULL` en SQL porque
+  pg-mem —el motor de los tests— **no resuelve los operadores de jsonb**». Contra PostgreSQL real
+  funciona; en una prueba con `pg-mem` saldría roja **sin motivo**. Si alguien la lleva a la suite,
+  que sea a una prueba de integración contra Postgres, nunca al sustituto en memoria.
 - `desk.` va calificado a propósito: la tabla se crea sin calificar (`schema.sql:57`) y aterriza en
   `desk` por el `search_path=desk,public` de `pool.ts:5`.
+
+**POR QUÉ VAN LAS DOS CONSULTAS SI DEBEN DAR LO MISMO: LA DIFERENCIA ES UN DETECTOR GRATIS.**
+
+En el grafo declarado, `count(DISTINCT ticket_id)` y `count(*)` **tienen que coincidir**. Verificado
+sobre `transitions.ts`, con control de **34 cláusulas `from:`**:
+
+| Paso | Evidencia |
+|---|---|
+| `habilitado_para_entrega` deja el ticket en `Por Entregar` | `transitions.ts:259` |
+| `Por Entregar` tiene **una sola** salida, a `Finalizado` | `:250`, `entrega_al_cliente` |
+| `Finalizado` **no tiene ninguna** salida: es terminal | cero cláusulas `from:` que lo nombren |
+| A `Liberación Comercial` sólo se entra desde `Por Facturar` | `:240`, `facturado` |
+| Ninguna de las **siete** entradas a `Por Facturar` viene de `Por Entregar` | `:222, :230, :232, :234, :236, :238, :248` — la `:248` sale de `Por Entregar / Sin facturar`, que es **otro estado** |
+
+Así que un ticket **no puede volver a pasar** por `habilitado_para_entrega`. Las dos cifras son la
+misma.
+
+**Y precisamente por eso hay que correr las dos.** Si al ejecutarlas **difieren**, la lectura no es
+«la traza está mal»: es que **la base tiene caminos que el grafo no declara**, escritos por Zoho
+fuera del modelo de la aplicación. Eso sería un hallazgo por sí solo, más importante que el número
+que se venía a buscar. Quien las corra debe mirar esa igualdad **antes** que el valor.
+
+*(Un borrador anterior justificaba las dos consultas por «reentrancia del grafo». Es falso: en este
+tramo no hay reentrancia, y la comprobación de arriba lo demuestra. La conclusión —incluir las dos—
+era correcta con un motivo equivocado, que es la clase de error que se sostiene hasta que alguien la
+revisa por el motivo.)*
 
 **Destino: sin asignar.** Es un hallazgo, no una tanda. Quién lo arregla y cómo —backfill desde
 `tickets.fecha_aviso_cliente`, declarar el corte en la definición del KPI, o asumirlo— **lo decide
