@@ -267,11 +267,25 @@ al revés. **Punto a resolver por Gerencia**, no por una tanda.
 ### 4.4 · El filtro del tablero es de vista y vive en el cliente · **sin destino: es correcto**
 
 Se registra para que nadie lo anote como incumplimiento de la regla 1. `applyBoardView`
-(`boardView.ts:34-52`) filtra por vista en el navegador **a propósito**, y no es una guarda: no hay
+(`boardView.ts:38-56`) filtra por vista en el navegador **a propósito**, y no es una guarda: no hay
 nada que guardar, porque el servidor no segmenta la visibilidad (§4.3).
 
-Lo que sí es un desvío en ese mismo fichero es la clasificación de esperas por regex
-(`boardView.ts:35`), que es IV-1 y pertenece a `transitions-st` §3.6.
+**La clasificación de esperas por regex ya no está en este fichero, y eso no significa que el desvío
+haya desaparecido: se ha mudado.** IV-1 quedó **cerrado en `boardView.ts`** por F1B-08
+(`vista-todos-y-estados-en-espera`, base `484c952`): `:2` importa `ESTADOS_EN_ESPERA` de
+`@ambientalia/shared` y `:39` lo consume —`(ESTADOS_EN_ESPERA as readonly
+string[]).includes(t.status ?? '')`—, de modo que la vista del tablero ya lee el registro. Lo que esa
+tanda **no** tocó son las otras tres implementaciones del mismo predicado, que siguen sin leerlo:
+
+- `apps/desk/src/components/ClienteDetalle.tsx:18` — `const esEspera = (t: TicketLite) => /espera/i.test(t.status)`
+- `apps/desk/src/components/ClienteDetalle.tsx:22` — `if (/espera/i.test(t.status)) return 'bg-amber-50 …'`
+- `apps/desk/src/components/TicketDetailView.tsx:245` — `/espera|hold/i.test(ticket.status)`, **tercera
+  variante del predicado**: no es una copia de las otras dos, es otra noción de «está en espera».
+
+Cerrar IV-1 sin escribir esto habría perdido a los tres supervivientes, que es exactamente el modo de
+fallo que la regla de barrido de `CLAUDE.md` describe. El desvío tiene desde el 2026-09-10 **fila
+propia** en `openspec/config.yaml` (`incumplimientos_vivos`, **IV-9**), y ahí es donde vive ahora; la
+entrada histórica de IV-1 —cerrada— sigue en `transitions-st` §3.6 y en `config.yaml`.
 
 ---
 

@@ -75,7 +75,7 @@ describe('registro de estados', () => {
   })
 
   /**
-   * Las OCHO de la vista son externa + interna. Es lo único que `ESTADOS_EN_ESPERA` significa: son
+   * Las NUEVE de la vista son externa + interna. Es lo único que `ESTADOS_EN_ESPERA` significa: son
    * las que el tablero enseña bajo «En espera».
    *
    * ⚠️ El reloj del SLA NO lee esta lista. Para en los tres BODEGAJES de M1.10, que son periodos

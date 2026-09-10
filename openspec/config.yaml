@@ -293,11 +293,31 @@ incumplimientos_vivos:
     regla: 1
     ubicacion: "apps/desk/src/lib/boardView.ts:35"
     verificado: true
+    estado: CERRADO
+    cerrado_por: "F1B-08 · vista-todos-y-estados-en-espera"
+    cerrado_verificado_en: "2026-09-10, base 484c952"
     descripcion: >
       `const enEspera = (t) => /espera/i.test(t.status ?? '')` clasifica las
       esperas por expresión regular sobre el NOMBRE del estado, y por tanto
       diverge del registro de estados de `packages/shared/src/estados.ts`.
       Se usa en :43 y :44.
+    por_que_esta_cerrado: >
+      ⚠️ EL CIERRE ES DEL FICHERO, NO DEL DEFECTO. LÉASE ENTERO ANTES DE DAR EL
+      ASUNTO POR ZANJADO.
+      Lo que se cerró es la regex de `boardView.ts`: `:2` importa
+      ESTADOS_EN_ESPERA de `@ambientalia/shared` y `:39` lo consume —`const
+      enEspera = (t: Ticket) => (ESTADOS_EN_ESPERA as readonly
+      string[]).includes(t.status ?? '')`—, así que las vistas `abiertos` (:47) y
+      `espera` (:48) leen hoy el registro y no el nombre del estado. Control:
+      `grep -n "espera/i" apps/desk/src/lib/boardView.ts` no devuelve nada.
+      Cumple el punto 1 de la regla invariable 13: la regla vive en
+      `packages/shared` y el cliente la CONSUME.
+      EL DEFECTO SIGUE VIVO EN OTROS TRES PUNTOS y se traslada a IV-9, que es su
+      fila nueva: `ClienteDetalle.tsx:18`, `ClienteDetalle.tsx:22` y
+      `TicketDetailView.tsx:245`. Cerrar IV-1 sin abrir IV-9 habría perdido a los
+      tres supervivientes, que es el mismo modo de fallo que la regla de barrido
+      de CLAUDE.md describe para los destinos huérfanos. NO borrar esta entrada:
+      queda como histórico de qué era y de qué lo cerró.
     cuantificado_en: "F0-02, 2026-09-08, base ad1875b"
     alcance_exacto: >
       La regex casa con EXACTAMENTE 2 de los 8 estados `en_espera` que declara
@@ -467,6 +487,9 @@ incumplimientos_vivos:
     regla: "—"
     ubicacion: "apps/desk/src/components/TicketCard.tsx:14-23"
     verificado: true
+    estado: CERRADO
+    cerrado_por: "F1B-08 · vista-todos-y-estados-en-espera"
+    cerrado_verificado_en: "2026-09-10, base 484c952"
     descripcion: >
       `statusColorMap` con claves en MAYÚSCULAS (INGRESADO, COMERCIAL, PROCESO,
       NOTIFICACION_CLIENTE, POR_FACTURAR, POR_ENTREGAR_SIN_FACTURAR,
@@ -475,6 +498,19 @@ incumplimientos_vivos:
       ("Ingresado", "En Proceso", "Notificación cliente"...), así que con datos
       reales el lookup de :26 siempre cae en el respaldo `bg-slate-100`.
       Mapa muerto.
+    por_que_esta_cerrado: >
+      El mapa está reclavado a los NOMBRES REALES de los estados:
+      `TicketCard.tsx:14-23` tiene hoy las claves `'Ingresado'`,
+      `'Notificación Comercial'`, `'En Proceso'`, `'Notificación cliente'`,
+      `'Por Facturar'`, `'Por Entregar / Sin facturar'`, `'Por Entregar'` y
+      `'En Espera de Repuestos'`, todas ellas presentes en
+      CLASIFICACION_EN_ESPERA (`packages/shared/src/estados.ts:59-100`). El
+      lookup de :26 —`statusColorMap[ticket.status]`— ya casa con datos reales, y
+      el respaldo `bg-slate-100` pasa a ser lo que siempre debió ser: el caso por
+      omisión, no el único caso. La tanda retiró además el campo `label`, que era
+      la otra mitad del vestigio de `mockData.ts`.
+      Sigue siendo COSMÉTICO: cierra un color de menos, no un color equivocado.
+      NO borrar esta entrada: queda como histórico, igual que IV-3.
     destino: "F1B-08, cosmético"
     reasignado: >
       2026-09-09. El destino anterior era "F1A, cosmético". F1A cerró; el
@@ -572,11 +608,28 @@ incumplimientos_vivos:
     regla: "—"
     ubicacion: "apps/desk/src/lib/boardView.ts:49-50"
     verificado: true
+    estado: CERRADO
+    cerrado_por: "F1B-08 · vista-todos-y-estados-en-espera"
+    cerrado_verificado_en: "2026-09-10, base 484c952"
     descripcion: >
       La vista `todos` devuelve `tickets.filter((t) => t.statusType !== 'Closed')`,
       es decir NO enseña todos: oculta los cerrados. Y comparte cuerpo con la
       rama `default`, así que CUALQUIER clave de vista no reconocida también los
       oculta, sin decirlo y sin fallar.
+    por_que_esta_cerrado: >
+      Las DOS mitades están cerradas, y hacían falta las dos.
+      (1) `boardView.ts:53` es hoy `case 'todos': return tickets`, sin filtro: la
+      vista devuelve de verdad todos, incluidos los cerrados. Es la opción (b) de
+      `decision/vista-todos-tablero`, decidida por Gerencia el 2026-09-10 y
+      registrada en plan:351.
+      (2) La rama `default` dejó de compartir cuerpo con `todos`: `:54` es
+      `default: return vistaNoReconocida(key)` y la guarda vive en `:59` —
+      `function vistaNoReconocida(_key: never): Ticket[] { void _key; return [] }`.
+      El parámetro `never` convierte el descuido en error de compilación, y el
+      comentario de `:58` lo dice por escrito: «Si `tsc` se queja aquí, alguien
+      añadió una vista a `FUNCTIONAL_VIEWS` y olvidó su `case`». Una clave
+      desconocida ya no filtra en silencio.
+      NO borrar esta entrada: queda como histórico, igual que IV-3.
     encontrado_en: >
       2026-09-09, con el usuario, comparando contra la vista "Todos los tickets"
       del Zoho Desk de producción. Medido allí: 726 tickets cerrados. Una vista
@@ -654,6 +707,82 @@ incumplimientos_vivos:
       El principio no cambia: inventar un destino sin esa decisión repetiría el
       error que IV-2 e IV-4 ya tienen registrado — una tanda no resuelve lo que
       Gerencia no ha decidido.
+
+  # IV-9 nace del cierre de IV-1 (F1B-08, 2026-09-10). No es un desvío nuevo: es
+  # el MISMO desvío, en los tres puntos que la tanda no tocó. Se abre en el mismo
+  # acto en que se cierra IV-1, porque cerrar el fichero sin abrir esta fila
+  # habría perdido a los supervivientes.
+  - id: IV-9
+    regla: 1
+    ubicacion: >
+      apps/desk/src/components/ClienteDetalle.tsx:18 —
+      `const esEspera = (t: TicketLite) => /espera/i.test(t.status)`;
+      apps/desk/src/components/ClienteDetalle.tsx:22 —
+      `if (/espera/i.test(t.status)) return 'bg-amber-50 text-amber-600 border-amber-200'`;
+      apps/desk/src/components/TicketDetailView.tsx:245 —
+      `/espera|hold/i.test(ticket.status)`.
+    verificado: true
+    descripcion: >
+      TRES implementaciones independientes del predicado «está en espera», y
+      NINGUNA de las tres lee el registro `ESTADOS_EN_ESPERA`
+      (`packages/shared/src/estados.ts:114`). Es el molde exacto de IV-1 —una
+      regla que vive en `packages/shared` reescrita en el cliente— sólo que
+      repartido en tres sitios en vez de uno.
+      Y hay algo que lo hace PEOR que una copia: las tres no dicen lo mismo. Dos
+      son `/espera/i` y la tercera es `/espera|hold/i`, o sea VARIANTES DISTINTAS
+      de la misma noción. La app tiene hoy tres definiciones de «en espera» que
+      pueden discrepar entre sí sin que nada lo señale, mientras la definición
+      autorizada está declarada, probada y a un `import` de distancia.
+    cuantificado_en: "2026-09-10, base 484c952"
+    alcance_exacto: >
+      MEDIDO, no estimado, y contra la lista de HOY, que tiene NUEVE entradas y
+      no ocho —OJO: no vale copiar el «2 de 8» de IV-1, la cifra cambió—.
+      Contra los NUEVE estados `en_espera` que declara CLASIFICACION_EN_ESPERA
+      (`estados.ts:59-100`), los dos predicados casan con EXACTAMENTE 2:
+      `En Espera de Repuestos` y `En espera de SKU inventario`. Y tienen CERO
+      falsos positivos entre los 12 estados restantes de los 21 —ninguno de esos
+      12 contiene «espera» ni «hold»—.
+      Es un defecto POR DEFECTO, no por exceso, y eso cambia cómo se arregla: no
+      hay que estrechar el criterio, hay que SUSTITUIRLO POR LA LISTA, igual que
+      hizo `boardView.ts:39`.
+    se_escapan: >
+      Los SIETE que estas vistas NO tratan como espera y deberían:
+      `Servicio externo`, `Notificación cliente`, `Notificación a Compras`,
+      `Notificación Comercial`, `Solicitado`, `Liberación Comercial` y
+      `Remisión creada`.
+      EL SÉPTIMO LO AÑADIÓ ESTA MISMA TANDA: F1B-08 reclasificó
+      `Remisión creada` de `ninguna` a `interna` (`estados.ts:78`), con lo que
+      entró en ESTADOS_EN_ESPERA y el escape pasó de seis a siete. Es la razón de
+      que la cifra vieja de IV-1 («los seis») esté caduca.
+    fuera_de_la_red_de_pruebas: >
+      LOS TRES FICHEROS SON `.tsx`, Y ESO CONDICIONA CÓMO SE ARREGLA.
+      `vitest.config.ts:16` fija `environment: 'node'`; `:17-20` incluye sólo
+      `apps/**/*.test.ts` y `packages/**/*.test.ts`; y `:57` excluye `**/*.tsx`
+      también del coverage. Es DECISIÓN EXPLÍCITA DE GERENCIA (F0-00,
+      2026-09-08), no un olvido, y CLAUDE.md prohíbe proponer `jsdom`,
+      `@testing-library` o ampliar el `include` a `*.test.tsx` sin que Gerencia
+      reabra el punto.
+      CONSECUENCIA PRÁCTICA: estos tres puntos NO ADMITEN ROJO PREVIO bajo
+      `strict_tdd`. La tanda que los arregle tiene que decir por escrito con qué
+      sustituye la prueba —extraer el predicado a un módulo `.ts` cubierto, o
+      declarar la excepción— antes de tocarlos.
+    familia: >
+      Es el molde de H5, el hallazgo que CLAUDE.md nombra en «Lo que estas tres
+      NO cazan»: varias implementaciones de la misma noción, NINGUNA rota por
+      separado y ninguna leyendo el registro. Las tres reglas de mutación no lo
+      cazan —mutar la posición de una guarda, ensuciar un fichero vigilado o
+      enumerar decisiones del cliente no enfrenta dos implementaciones entre sí—.
+      Para esto hace falta un lector, o una prueba que las enfrente.
+    destino: "SIN DESTINO ASIGNADO — a propósito"
+    por_que_sin_destino: >
+      No se le pone épica, y la razón es un precedente propio: asignar un destino
+      DE MEMORIA es exactamente lo que dejó cuatro desvíos huérfanos al cerrar
+      F1A —seguían apuntando a «F1A» mientras este fichero y CLAUDE.md decían que
+      tenían dueño—. Un destino es una promesa, y esta tanda no está en
+      condiciones de hacerla: no le corresponde decidir el alcance.
+      Que lo asigne quien decida el alcance. Lo que sí queda fijado aquí es todo
+      lo que esa decisión necesita: las tres ubicaciones, la medición, los siete
+      escapados y el condicionante de la red de pruebas.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance

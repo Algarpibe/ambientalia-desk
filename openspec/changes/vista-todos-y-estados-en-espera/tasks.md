@@ -296,13 +296,29 @@ instalar `jsdom`/`@testing-library`, ampliar el include a `*.test.tsx`, o fingir
 
 ## Fuera de `sdd-apply` — destino `sdd-archive`
 
-- [ ] **Reanclar/reescribir `openspec/specs/permissions/spec.md`.** Verificado de disco:
+- [x] **Reanclar/reescribir `openspec/specs/permissions/spec.md`.** Verificado de disco:
       `:270` cita `boardView.ts:34-52` (reanclar al nuevo rango tras las Fases 2-4); `:273-274` afirma
       que la clasificación por regex de `boardView.ts:35` «es un desvío en ese mismo fichero... y
       pertenece a `transitions-st` §3.6» — con IV-1 cerrado, esto se **reescribe**, no se reancla, para
       dejar de afirmar que sigue vivo. Precedente en el propio repositorio: commit `4e0b542`.
-- [ ] Cerrar las filas IV-1 e IV-5 en `openspec/config.yaml` y en `CLAUDE.md` (tabla de incumplimientos
+      **HECHO (2026-09-10, base `484c952`).** `openspec/specs/permissions/spec.md` §4.4: `:270`
+      reanclado a `boardView.ts:38-56` (firma en `:38`, cierre en `:56`); `:273-274` reescrito. La
+      reescritura **no** dice «ya no hay desvío»: dice que IV-1 quedó cerrado *en ese fichero* (`:2`
+      importa `ESTADOS_EN_ESPERA`, `:39` lo consume) y que el desvío **se traslada** a
+      `ClienteDetalle.tsx:18`, `ClienteDetalle.tsx:22` y `TicketDetailView.tsx:245` —esta última, una
+      tercera variante del predicado (`/espera|hold/i`)—, con puntero a la fila nueva IV-9 de
+      `openspec/config.yaml`.
+- [x] Cerrar las filas IV-1 e IV-5 en `openspec/config.yaml` y en `CLAUDE.md` (tabla de incumplimientos
       vivos), con la misma disciplina de «barrer al cerrar» que ya aplicó el commit `4e0b542`.
+      **HECHO (2026-09-10, base `484c952`), y con IV-7 además, que la tanda también cerró.**
+      `openspec/config.yaml`: IV-1, IV-5 e IV-7 pasan a `estado: CERRADO` con `cerrado_por`,
+      `cerrado_verificado_en` y `por_que_esta_cerrado`, siguiendo el patrón que IV-3 ya tenía y
+      conservando sus claves históricas; se abre **IV-9** al final de `incumplimientos_vivos` con las
+      tres ubicaciones, la medición (2 de los NUEVE, cero falsos positivos entre los 12 restantes de
+      los 21), los siete escapados —el séptimo, `Remisión creada`, lo añadió esta tanda—, la clave
+      `fuera_de_la_red_de_pruebas` y **sin destino asignado**, a propósito. `CLAUDE.md`: retiradas las
+      tres filas de la tabla de vivos, añadida la de IV-9, recuento corregido de **«Seis» a «Cuatro»**
+      y escritos los tres párrafos de cierre con el patrón de IV-3 e IV-6.
 
 ---
 
