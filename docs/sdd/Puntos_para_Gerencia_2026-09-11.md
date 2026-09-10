@@ -1,9 +1,12 @@
 # Puntos para Gerencia — sesión del viernes 11/09/2026
 
-> **⚠️ CUATRO DE LOS SEIS PUNTOS YA ESTÁN DECIDIDOS.** Gerencia los resolvió el 10/09, la víspera.
+> **⚠️ SEIS DE LOS SIETE PUNTOS YA ESTÁN DECIDIDOS.** Gerencia los resolvió el 10/09, la víspera.
 > Las respuestas, con su evidencia y lo que desbloquea cada una, están en
 > **`docs/sdd/Decisiones_Gerencia_2026-09-10.md`**. Este documento conserva las PREGUNTAS tal como se
 > plantearon; para saber qué sigue abierto, ir al de decisiones.
+>
+> **El único que sigue abierto es el punto 7** — el alta de equipo desde el ticket. Los otros seis
+> tienen respuesta: 1 → §1, 2 → §2 y §8, 3 → §3, 4 → §4, 5 → §5, 6 → §10 (aprobadas).
 
 Un solo documento con lo que ya está escrito y espera decisión. **No propone respuestas técnicas
 disfrazadas de opciones**: cada punto expone las salidas que la documentación del proyecto ya deriva,
@@ -139,6 +142,18 @@ Alguien creó las fechas y no la orden que las justifica.
 
 **No se debe implementar antes de decidir nº 52.** En la dirección (b), lo construido habría que
 retirarlo — igual que las dos puertas del cuadro de arriba.
+
+> **⚠️ DECIDIDO EL 10/09, DESPUÉS DE ESCRIBIRSE ESTO — y la salida no fue ninguna de las dos de
+> arriba.** `Decisiones_Gerencia_2026-09-10.md` §2: la relación es **`1 ticket : N OV`, sin tabla
+> puente**, y §7.5 resuelve esta variante en concreto: «`Aprobación` y `Aprobación y S. Repuestos`
+> deben poder **añadir** OV al ticket, **nunca sustituir** la de entrada».
+>
+> **La columna `orden_venta_final` que este cuadro proponía NO es la forma correcta.** La asociación
+> vive en la ORDEN, no en el ticket, con `ticket_id`, la transición que asoció, fecha y hora y
+> persona (§7.5). Lo que se relaja es el campo singular `salesorder_id`, no el número «Final».
+> Y con la fecha viviendo en cada asociación desaparece de paso un defecto conocido: `Fecha Orden de
+> Compra` se escribía en `Habilitar Servicio` y otra vez en `Aprobación`, **y la segunda borraba la
+> primera**.
 
 **⚠️ La corrección que hay que llevar a la sesión: el maestro habla de CARDINALIDAD, no de
 TITULARIDAD.** Dice cuántos tickets puede tener una OV y al revés. **No dice** que la OV y el equipo
@@ -420,7 +435,7 @@ Lo que falta no es el endpoint: es el formulario, la puerta y la decisión de la
 | # | Punto | Quién decide | Si no se decide |
 |---|---|---|---|
 | 1 | nº 38 · las dos salidas de `Verificación` | Gustavo / Calidad, tras la respuesta de Servicio Técnico | F1A-03 sigue parada; F1B-06 construiría el flujo con el agujero dentro; C6 no se puede modelar |
-| 2 | nº 52 · cardinalidad OV ↔ ticket — **ahora con una cuarta variante** (§2) | Gerencia | IV-4 e IV-8 siguen abiertos; y la OV que nace en «Aprobación» se sigue anotando en el comentario, sin sitio en el esquema donde guardarla |
+| 2 | nº 52 · cardinalidad OV ↔ ticket, con su cuarta variante (§2) | **DECIDIDO 10/09** | `1 ticket : N OV` sin tabla puente (Decisiones §2); la OV de «Aprobación» **añade, nunca sustituye** (§7.5). Queda abierta la TITULARIDAD, que es otro punto |
 | 3 | La vista «Todos» del tablero | Gerencia | F1B-08 no puede cerrar IV-7 |
 | 4 | IV-2 · quién impone las tres fechas | Gerencia | La derivación sigue viviendo sólo en el navegador, y es operando de KPI |
 | 5 | IV-8 · `ticketService.ts:39` | — (se resuelve con nº 52) | Nada nuevo; queda anotado |
