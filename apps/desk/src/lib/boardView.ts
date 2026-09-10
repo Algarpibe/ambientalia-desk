@@ -50,7 +50,7 @@ export function applyBoardView(tickets: Ticket[], key: VistaKey, now: Date, user
       if (t.statusType === 'Closed' || !t.dueDate) return false
       const d = new Date(t.dueDate); return !isNaN(d.getTime()) && d.getTime() < now.getTime()
     })
-    case 'todos': return tickets.filter((t) => t.statusType !== 'Closed')
+    case 'todos': return tickets
     default: return vistaNoReconocida(key)
   }
 }

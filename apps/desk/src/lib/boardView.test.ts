@@ -15,7 +15,7 @@ const tickets: Ticket[] = [
 
 describe('applyBoardView', () => {
   const ids = (key: VistaKey) => applyBoardView(tickets, key, now).map((t) => t.id).sort()
-  it('todos = activos (excluye cerrados)', () => { expect(ids('todos')).toEqual(['a', 'b', 'd']) })
+  it('todos = activos y cerrados, sin filtrar', () => { expect(ids('todos')).toEqual(['a', 'b', 'c', 'd']) })
   it('cerrados = solo Closed', () => { expect(ids('cerrados')).toEqual(['c']) })
   it('abiertos = activos sin en espera', () => { expect(ids('abiertos')).toEqual(['a', 'd']) })
   it('espera = solo en espera', () => { expect(ids('espera')).toEqual(['b']) })

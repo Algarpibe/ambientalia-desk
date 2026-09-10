@@ -3,7 +3,8 @@ import { STATUS_OV_ASIGNADA, STATUS_REMISION_CREADA, STATUS_TICKET_CREADO } from
 
 // Columnas del tablero = estados del Blueprint de Servicio Técnico, en orden de flujo.
 // Cada estado del Blueprint tiene su columna, para que un ticket caiga exactamente en su estado.
-// 'Finalizado' (cierre) NO es columna: el ticket sale del tablero al cerrarse (status_type Closed).
+// 'Finalizado' (cierre) no tiene columna propia: cae en la columna de seguridad 'Otros' cuando
+// aparece (p. ej. en la vista 'Todos', que sí trae cerrados).
 // La última columna 'Otros' es una red de seguridad: recoge cualquier estado sin columna propia
 // para que ningún ticket desaparezca del tablero. El tablero la oculta si está vacía.
 export const COLUMNS: Column[] = [

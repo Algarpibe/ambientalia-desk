@@ -57,13 +57,21 @@ function App() {
   const [view, setView] = useState<VistaKey>('todos');
   const [closedPage, setClosedPage] = useState(1)
   useEffect(() => { setClosedPage(1) }, [view])
-  const isClosed = view === 'cerrados'
-  const { data: resp, loading, error, reload } = useAsync<Ticket[] | ClosedPage>(
-    () => (isClosed ? fetchClosedTickets(closedPage) : fetchActiveTickets()),
+  const { data: resp, loading, error, reload } = useAsync<{ activos: Ticket[]; cerrados: ClosedPage | null }>(
+    () => {
+      if (view === 'cerrados') {
+        return fetchClosedTickets(closedPage).then((cerrados) => ({ activos: [], cerrados }))
+      }
+      if (view === 'todos') {
+        return Promise.all([fetchActiveTickets(), fetchClosedTickets(closedPage)])
+          .then(([activos, cerrados]) => ({ activos, cerrados }))
+      }
+      return fetchActiveTickets().then((activos) => ({ activos, cerrados: null }))
+    },
     [user?.id, view, closedPage],
   );
-  const tickets: Ticket[] = isClosed ? ((resp as ClosedPage | null)?.items ?? []) : ((resp as Ticket[] | null) ?? []);
-  const closedMeta = isClosed ? (resp as ClosedPage | null) : null;
+  const closedMeta = resp?.cerrados ?? null;
+  const tickets: Ticket[] = [...(resp?.activos ?? []), ...(closedMeta?.items ?? [])];
   const all = tickets;
   // `user.id` solo lo usa la vista «Mis Tickets». El servidor sigue devolviendo TODOS los tickets:
   // esto filtra lo que se enseña, nunca lo que se puede ver.
@@ -123,7 +131,7 @@ function App() {
           {mode === 'tabla' && (
             <TicketTable tickets={baseRead} onSelect={abrirTicket} onToggleRead={marcarLeido} onOpenCliente={abrirCliente} />
           )}
-          {isClosed && closedMeta && (
+          {(view === 'todos' || view === 'cerrados') && closedMeta && (
             <Pagination
               page={closedPage}
               pageSize={closedMeta.pageSize}
