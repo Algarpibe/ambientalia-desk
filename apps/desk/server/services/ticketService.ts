@@ -47,6 +47,34 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
     throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${enUso.number}` })
   }
+  /*
+   * Hallazgo de la revisión adversaria de F1B-01 (P1) · la guarda equipo↔cliente.
+   *
+   * Compara el `clientId` YA RESUELTO en este punto —del cuerpo o, en su defecto, de la orden de
+   * venta (`:39`)— contra `equipo.clientId`. Va AQUÍ, después del 409 de la OV y antes de los
+   * obligatorios, por dos razones: (a) la rama (i) de abajo tiene que rellenar el hueco ANTES de
+   * `:54` (`if (!clientId) missing.push('cliente')`), o un cuerpo sin `clientId` cuyo equipo sí lo
+   * trae moriría como «falta el cliente»; (b) meterla antes del 409 alteraría el tramo 409/422 que
+   * `ticketService.test.ts` declara y deja explícitamente sin decidir (no es esta tanda).
+   *
+   * Es integridad de datos, NO autorización: `tickets.client_id` no filtra ni autoriza nada, sólo
+   * resuelve el nombre a mostrar. El desvío que esto cierra es el mismo patrón que `CLAUDE.md` ya
+   * registra en `routes/remision.ts:218-226` («una OV, un ticket» con una puerta sin comprobar):
+   * guardar sólo el `clientId` del cuerpo dejaría la puerta de la OV (`:39`) con el mismo hueco.
+   */
+  if (!clientId && equipo.clientId) {
+    // (i) — el equipo rellena el hueco cuando ni el cuerpo ni la OV trajeron cliente. Protege el
+    // efecto que M1.1 exige: sin `clientId` en el cuerpo, el equipo manda sobre la OV.
+    clientId = equipo.clientId
+  } else if (clientId && equipo.clientId && clientId !== equipo.clientId) {
+    // (ii) — los dos existen y difieren: 422 explícito, mismo criterio que el 409 de arriba (error
+    // que se puede corregir, no una imposición silenciosa). `equipo.clientId` NULL queda FUERA de
+    // esta rama a propósito (iii): es el ~3,4 % de equipos que `backfillClientId.ts` no enlazó, y ahí
+    // no hay nada que comparar — comparar sin ese guard rompería ese respaldo.
+    logger.warn({ equipoId: equipo.id, equipoClientId: equipo.clientId, clientId }, 'alta de ticket: el cliente no corresponde al equipo')
+    const nombreEquipo = equipo.clienteNombre ?? equipo.clientId
+    throw new HttpError(422, { error: `El equipo ${equipo.serial} es de «${nombreEquipo}» y el ticket se está creando para otro cliente. Corrige el cliente o el equipo.` })
+  }
   const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
   const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''
   const prefijo = b.prefijo ? String(b.prefijo) : ''

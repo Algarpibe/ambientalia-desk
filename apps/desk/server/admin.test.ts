@@ -191,6 +191,36 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
     const res = await request(app).get('/api/clients?search=x')
     expect(res.status).toBe(401)
   })
+
+  /**
+   * cerrar-hallazgos-revision-f1b-01 · P2 — resolución de cliente por identidad, calcada de
+   * `directory.ts:62-67`. La usará `CreateTicket.tsx` en vez de `searchClients(nombre).find(...)`:
+   * un lookup por id no arrastra el `LIKE` (`books/repo.ts:117-127`, que no pliega acentos ni
+   * puntuación) ni el `LIMIT 20` que podía dejar fuera al cliente correcto.
+   */
+  describe('GET /api/clients/:id', () => {
+    it('200 con el cliente por id', async () => {
+      const cookie = await adminCookie()
+      await db.query("INSERT INTO books.contacts (contact_id,contact_name,nit) VALUES ('c1','Camposol Colombia S.A.S.','901116362')")
+      const { app } = appWith()
+      const res = await request(app).get('/api/clients/c1').set('Cookie', cookie)
+      expect(res.status).toBe(200)
+      expect(res.body).toMatchObject({ id: 'c1', name: 'Camposol Colombia S.A.S.', nit: '901116362' })
+    })
+
+    it('404 sin fila', async () => {
+      const cookie = await adminCookie()
+      const { app } = appWith()
+      const res = await request(app).get('/api/clients/no-existe').set('Cookie', cookie)
+      expect(res.status).toBe(404)
+    })
+
+    it('401 sin sesión', async () => {
+      const { app } = appWith()
+      const res = await request(app).get('/api/clients/c1')
+      expect(res.status).toBe(401)
+    })
+  })
 })
 
 describe('GET /api/contacts y /api/accounts', () => {

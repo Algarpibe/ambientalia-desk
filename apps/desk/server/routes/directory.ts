@@ -1,6 +1,6 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { searchArticulos, categoriasDisponibles, searchClients, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
+import { searchArticulos, categoriasDisponibles, searchClients, getClient, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
 import { getContacts, getAccounts, getContactDetail, getAccountDetail } from '../db/directory'
 import { getAllActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth } from '../auth/middleware'
@@ -14,6 +14,18 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
   // Requieren sesión: son datos de negocio. Cada uno con su propio requireAuth (no van bajo /api/tickets).
   app.get('/api/clients', requireAuth(db), asyncHandler(async (req, res) => {
     res.json(await searchClients(db, String(req.query.search ?? '')))
+  }))
+
+  /**
+   * cerrar-hallazgos-revision-f1b-01 · P2 — resolución de cliente por identidad, calcada de `:62-67`
+   * (contactos/cuentas de Zoho). No amplía superficie: `getClient` (`books/repo.ts:129`) no filtra por
+   * `contact_type`, igual que la búsqueda por texto de arriba tampoco lo hace para quien ya conoce el
+   * id (`books/repo.ts:115-116` documenta ese filtro como deliberado sólo en la búsqueda por texto).
+   */
+  app.get('/api/clients/:id', requireAuth(db), asyncHandler(async (req, res) => {
+    const c = await getClient(db, String(req.params.id))
+    if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
+    res.json(c)
   }))
 
   // Artículos de Books (`books.items`, replicada del hub). Alimenta el SKU de la ficha del modelo, y

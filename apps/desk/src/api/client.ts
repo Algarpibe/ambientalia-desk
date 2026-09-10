@@ -186,6 +186,18 @@ export function searchClients(q: string): Promise<ClientLite[]> {
   return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
 }
 
+/**
+ * El cliente por su id, resuelto en el servidor (`routes/directory.ts`). Quien ya conoce el id —el
+ * equipo elegido, la orden de venta— no necesita el buscador por texto: evita el `LIKE` que no pliega
+ * acentos ni puntuación y el `LIMIT 20` que podía dejar fuera al cliente correcto.
+ */
+export function getClient(id: string): Promise<ClientLite | null> {
+  return fetch(`/api/clients/${encodeURIComponent(id)}`, { credentials: 'include' }).then((r) => {
+    if (r.status === 404) return null
+    return json<ClientLite>(r)
+  })
+}
+
 /** Los avisos de quien tiene la sesión abierta. El destinatario lo pone el servidor, no se manda. */
 export function getAvisos(): Promise<Aviso[]> {
   return fetch('/api/avisos', { credentials: 'include' }).then((r) => json<Aviso[]>(r))

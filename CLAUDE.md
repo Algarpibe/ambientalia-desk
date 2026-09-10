@@ -114,7 +114,7 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-**Cinco** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Seis** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
@@ -132,6 +132,7 @@ está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 | 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | **PUNTO ABIERTO PARA GERENCIA.** Ninguna tanda lo cubre, y **tampoco es una fila que falte**: el destino viejo («F1A o F1C, decisión de alcance») *era* el aviso de que nadie había decidido. Las tres fechas que deriva son **operandos de KPI** —`Fecha Remisión Entrada` abre el bodegaje de entrada (`bodegaje.ts:60-66`)—, así que no es cosmético. O el servidor las impone, o se declara que son prellenado y los KPIs dicen que su fuente es opcional |
 | — | `apps/desk/server/routes/remision.ts:218-226` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | **PUNTO ABIERTO Nº 52 DEL MAESTRO.** `R08.1.md:2071-2079` lista tres variantes reales y habituales y concluye que **«ninguna de las tres encaja en un modelo de "una OV, un ticket"»**. Cerrar la tercera puerta endurecería una regla que el maestro pone en duda: si nº 52 se resuelve a favor de las variantes, el arreglo es **retirar** las dos puertas existentes, no añadir la tercera. El daño ya está medido (`ordenVentaUnTicket.test.ts:150-158`) y hay un `it.fails` esperando (`:161`) |
 | — | `apps/desk/src/components/TicketCard.tsx:14-23` — mapa de colores muerto: claves en mayúsculas (`INGRESADO`, `PROCESO`…) que sólo casan con `mockData.ts`, nunca con los estados reales | **F1B-08**, cosmético. Misma fila que los dos de `boardView`: la tarjeta es del listado. Hoy no pinta mal, pinta neutro — cae siempre en el respaldo `bg-slate-100` |
+| — | `apps/desk/server/services/ticketService.ts:39` — al completar `clientId` desde la orden de venta (`clientId = clientId ?? ov.clientId ?? null`), si el cuerpo YA trae su propio `clientId`, el de la OV nunca se contrasta con nada: un ticket puede quedar con cliente y equipo de un lado y la orden de venta de otro, sin ningún aviso. La guarda equipo↔cliente de `cerrar-hallazgos-revision-f1b-01` (P1, `:65-77`) compara el `clientId` final contra `equipo.clientId`, no contra `ov.clientId`, así que esta pareja queda fuera de su alcance a propósito (`proposal.md` §3) | **PUNTO ABIERTO, sin destino** — a propósito, criterio de aceptación nº 8 de `cerrar-hallazgos-revision-f1b-01`. Misma familia que IV-4 (`routes/remision.ts:218-226`, «una OV, un ticket» con puertas sin comprobar) y toca el mismo punto abierto nº 52 del maestro (`R08.1.md:2071-2079`): cerrarlo antes de que Gerencia resuelva nº 52 podría endurecer una regla que el propio maestro pone en duda |
 
 **IV-3 está CERRADO y ya no cuenta.** Era el espejo de `canExecuteTransition` en
 `apps/desk/src/components/TransitionPanel.tsx:56-58`. F0-04 lo cerró:

@@ -234,6 +234,14 @@ async function equipo(id = 'eq-1'): Promise<void> {
   await db.query("INSERT INTO equipos (id, serial, marca, modelo, tipo) VALUES ($1,'18A20070','Grimm','EDM180C','Monitor')", [id])
 }
 
+/** Equipo con `client_id` (y opcionalmente `cliente_nombre`), para la guarda equipo↔cliente. */
+async function equipoConCliente(id: string, clientId: string, clienteNombre?: string): Promise<void> {
+  await db.query(
+    "INSERT INTO equipos (id, serial, marca, modelo, tipo, client_id, cliente_nombre) VALUES ($1,'18A20070','Grimm','EDM180C','Monitor',$2,$3)",
+    [id, clientId, clienteNombre ?? null],
+  )
+}
+
 /** Cliente de Books, que es de donde `getClient` lee (a través de la vista `clients`). */
 async function cliente(id = 'cli-1'): Promise<void> {
   await db.query("INSERT INTO books.contacts (contact_id, contact_name) VALUES ($1,'Gecelca S.A. E.S.P.')", [id])
@@ -336,5 +344,71 @@ describe('createManagedTicket · el ORDEN en que se evalúan las guardas', () =>
     await equipo()
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', clientId: 'no-existe' }, 'Admin'))
     expect(r.body.error).toBe('Faltan campos obligatorios: tipo de servicio, clasificaciones, prefijo')
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// createManagedTicket · la guarda equipo↔cliente (cerrar-hallazgos-revision-f1b-01, design §1)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Compara el `clientId` YA RESUELTO (cuerpo o, en su defecto, la orden de venta —`:39`—) contra
+ * `equipo.clientId`. Es integridad de datos, no autorización: `tickets.client_id` no filtra ni
+ * autoriza nada, sólo resuelve el nombre a mostrar. Corre DESPUÉS del 409 de la OV (`:45-49`) y ANTES
+ * de los obligatorios (`:54` exige `clientId`), porque la regla (i) de abajo tiene que rellenar el
+ * hueco antes de esa comprobación.
+ */
+describe('createManagedTicket · la guarda equipo↔cliente', () => {
+  it('discrepancia entre el cuerpo y el equipo: 422, y el mensaje nombra al cliente del equipo', async () => {
+    await equipoConCliente('eq-1', 'cli-A')
+    await cliente('cli-B')
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', clientId: 'cli-B', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain('cli-A')
+  })
+
+  // El cuerpo calla: `clientId` se resuelve de la OV (`:39`) y ES ESE valor —no el del cuerpo— el que
+  // se contrasta contra el equipo. Guardar sólo el cuerpo dejaría esta puerta abierta (design §1.1).
+  // `cliente('cli-B')` y los demás obligatorios están puestos para que, SIN la guarda, la llamada
+  // llegue de verdad a 201 (silencioso) y la prueba sea RED por la razón correcta, no por un 422
+  // accidental de «Cliente no encontrado» o de obligatorios.
+  it('la orden de venta manda sobre el equipo cuando el cuerpo calla el cliente: 422', async () => {
+    await equipoConCliente('eq-1', 'cli-A')
+    await cliente('cli-B')
+    await db.query(
+      "INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date,raw) VALUES ('ov1','OV-1','cli-B','2026-07-15','{\"order_status\":\"open\"}')",
+    )
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', salesOrderId: 'ov1', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+  })
+
+  // MUTACIÓN M5 (design §3, fila 2): sin cliente en el cuerpo ni en la OV, el equipo rellena el hueco
+  // (regla i) y el ticket nace con SU client_id — no con NULL.
+  it('M5 · el equipo manda cuando el cuerpo calla el cliente y no hay orden de venta: 201', async () => {
+    await equipoConCliente('eq-1', 'cli-A')
+    await cliente('cli-A')
+    await createManagedTicket(db, { equipoId: 'eq-1', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT' }, 'Admin')
+    const t = (await db.query('SELECT client_id FROM tickets')).rows[0]
+    expect(t.client_id).toBe('cli-A')
+  })
+})
+
+/**
+ * Regresión (design §3, fila 3): la guarda NO debe alterar lo que ya pasaba. El caso NULL
+ * (`equipo.clientId` sin enlazar, el ~3,4 % de `backfillClientId.ts`) ya lo cubre
+ * «con todo en regla nace en…» de arriba —equipo() nunca fija `client_id`—; aquí se fija el caso IGUAL,
+ * que es el otro que `tickets-core` (spec) declara en el mismo escenario.
+ */
+describe('createManagedTicket · la guarda equipo↔cliente no cambia lo que ya pasaba', () => {
+  it('el alta sin discrepancia no cambia: equipo con el mismo client_id que el cuerpo → 201', async () => {
+    await equipoConCliente('eq-1', 'cli-1')
+    await cliente('cli-1')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    const t = (await db.query('SELECT client_id FROM tickets')).rows[0]
+    expect(t.client_id).toBe('cli-1')
   })
 })

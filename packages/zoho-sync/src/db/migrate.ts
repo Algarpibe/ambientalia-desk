@@ -79,6 +79,37 @@ export const PUBLIC_TABLES = ['ticket_reads', 'users', 'sessions', 'roles', 'avi
  */
 export const BOOKS_TABLES = ['contacts', 'sales_orders', 'items']
 
+/**
+ * Blindaje de intención, hallazgo de la revisión adversaria de F1B-01 (P3): `contacts` es el ÚNICO
+ * nombre pelado que existe en más de una lista de arriba (`DESK_TABLES` y `BOOKS_TABLES`), así que una
+ * `ALTER TABLE contacts` sin calificar escrita para Books resuelve HOY, por `search_path`, contra
+ * `desk.contacts` — y ningún guardián estático puede leer la intención de sus columnas.
+ *
+ * No hay bug vivo (`pool.ts:5` nunca mete `books` en el `search_path`, así que esa `ALTER` no puede
+ * aterrizar de verdad en `books.contacts`); esto impide que una `ALTER TABLE contacts` NUEVA entre sin
+ * que nadie decida a qué esquema pertenece.
+ */
+export function nombresAmbiguos(): string[] {
+  const conteo = new Map<string, number>()
+  for (const t of [...DESK_TABLES, ...BOOKS_TABLES]) conteo.set(t, (conteo.get(t) ?? 0) + 1)
+  return [...conteo.entries()].filter(([, n]) => n > 1).map(([t]) => t)
+}
+
+/**
+ * Las `ALTER TABLE` SIN calificar cuyo nombre pelado es ambiguo (hoy sólo `contacts`), normalizadas
+ * (recortadas). Puro y sin llamador en tiempo de ejecución: sólo lo usan sus propias pruebas.
+ */
+export function altersAmbiguas(statements: string[]): string[] {
+  const ambiguos = new Set(nombresAmbiguos())
+  const resultado: string[] = []
+  for (const stmt of statements) {
+    const sql = stmt.replace(/^(?:\s*--[^\n]*\n)+/, '').trim()
+    const m = /^ALTER TABLE(?:\s+IF EXISTS)?\s+(?:([a-z_][a-z0-9_]*)\.)?([a-z_][a-z0-9_]*)/i.exec(sql)
+    if (m && !m[1] && ambiguos.has(m[2])) resultado.push(sql)
+  }
+  return resultado
+}
+
 /** Sentencias del reorg public→desk (puras, para test). El ALTER SET SCHEMA mueve datos+índices+secuencias propias. */
 export function reorgToDeskStatements(): string[] {
   return [

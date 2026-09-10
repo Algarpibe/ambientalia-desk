@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite } from '@ambientalia/shared'
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
-import { searchClients, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber } from '../api/client'
+import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber } from '../api/client'
 import { CrearRemision } from './CrearRemision'
 
 export function CreateTicket({ onClose, onCreated }: {
@@ -151,8 +151,10 @@ export function CreateTicket({ onClose, onCreated }: {
       setClientResults([])
       // El nombre mostrado se refina con el de Books si difiere del texto libre del equipo, pero el
       // id ya está fijado: si esta búsqueda falla, el formulario sigue teniendo cliente.
-      searchClients(e.clienteNombre ?? '').then((res) => {
-        const c = res.find((x) => x.id === e.clientId)
+      // cerrar-hallazgos-revision-f1b-01 · P2: resuelve por identidad (GET /api/clients/:id) en vez de
+      // buscar por nombre y filtrar el resultado — sin el LIKE que no pliega acentos ni puntuación ni
+      // el LIMIT 20 que podía dejar fuera al cliente correcto.
+      getClient(e.clientId).then((c) => {
         if (c) { setClientName(c.name); setClientQuery(c.name) }
       }).catch(() => {})
       return

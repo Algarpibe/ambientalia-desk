@@ -947,6 +947,27 @@ describe('F1B-01 · POST /api/remisiones exige el serial', () => {
     expect(res.status).toBe(201)
     expect(res.body.serial, 'el equipo del catálogo es la fuente, no la copia del ticket').toBe('18A20070')
   })
+
+  /**
+   * cerrar-hallazgos-revision-f1b-01 · P4 — la precedencia 422/409 declarada por `remision.ts:144-147`
+   * («VA CON LOS OTROS 422 Y ANTES DEL 409»), hasta ahora sin una prueba que active las dos guardas a
+   * la vez: las del 409 (más abajo, «no deja una segunda remisión…») siempre tienen serial, y las de
+   * este describe nunca tienen remisión previa.
+   */
+  it('serial vacío y remisión pendiente a la vez: 422 por el serial, no 409 por la pendiente', async () => {
+    const cookie = await adminCookie(); await ticketDeZohoSinSerial()
+    await db.query(
+      `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, origen)
+       VALUES ('rem-pend', 'tz', 'entrada', '2026-08-01', 'Mantenimiento', 'grimm_edm180', NULL, NULL, '[]'::jsonb, NULL, 'Admin', 'pendiente', 'Gecelca S.A. E.S.P.', NULL, 'app')`,
+    )
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 'tz', fecha: '2026-08-03', incluye: [] })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatch(/serial/i)
+    const lista = await request(app).get('/api/remisiones?ticketId=tz').set('Cookie', cookie)
+    expect(lista.body, 'no se creó ninguna remisión nueva; sigue sólo la pendiente que ya había').toHaveLength(1)
+  })
 })
 
 /**

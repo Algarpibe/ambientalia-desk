@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, reseedTicketNumber, reorgToDeskStatements, schemaStatements, DESK_TABLES, PUBLIC_TABLES, BOOKS_TABLES, APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
+import { migrate, reseedTicketNumber, reorgToDeskStatements, schemaStatements, DESK_TABLES, PUBLIC_TABLES, BOOKS_TABLES, APP_TICKET_NUMBER_BASE, nombresAmbiguos, altersAmbiguas, type Queryable } from './migrate'
 import { nextTicketNumber } from './repo'
 
 async function freshDb(): Promise<Queryable> {
@@ -365,5 +365,38 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
       .toEqual(new Set(['tickets', 'equipos', 'contacts']))
     expect(new Set(alters.filter((a) => a.calificada).map((a) => a.identidad)), 'identidades calificadas')
       .toEqual(new Set(['books.contacts', 'public.users', 'public.roles', 'public.avisos', 'public.remisiones', 'public.catalogo_modelos']))
+  })
+})
+
+/**
+ * cerrar-hallazgos-revision-f1b-01 · P3 — el guardián de arriba (`altersDelEsquema()`, local a este
+ * fichero) filtra por el nombre PELADO (`a.tabla`, `:319`), así que una `ALTER TABLE contacts` sin
+ * calificar cuya intención sea `books.contacts` pasa como si fuera de `desk.contacts` — `contacts` es
+ * el ÚNICO nombre que existe en las dos listas (`DESK_TABLES` y `BOOKS_TABLES`).
+ *
+ * Blindaje de intención, no corrección de un bug vivo: `pool.ts:5` nunca mete `books` en el
+ * `search_path`, así que una `ALTER` sin calificar no puede aterrizar de verdad en `books.contacts`.
+ * Lo que esto impide es que una `ALTER TABLE contacts` NUEVA entre en `schema.sql` sin que nadie decida
+ * a qué esquema pertenece de verdad.
+ */
+describe('nombresAmbiguos / altersAmbiguas — el guardián distingue intención cuando el nombre pelado colisiona', () => {
+  it('«contacts» es el único nombre ambiguo entre DESK_TABLES y BOOKS_TABLES', () => {
+    expect(nombresAmbiguos()).toEqual(['contacts'])
+  })
+
+  // RED · fixture sintético, independiente de schema.sql: una `ALTER TABLE contacts` con columnas que
+  // sólo tienen sentido en `books.contacts` (réplica del hub, ver `booksHub/schema-books.sql`).
+  it('una ALTER TABLE contacts sin calificar, con intención de Books, queda señalada', () => {
+    const fixture = 'ALTER TABLE contacts ADD COLUMN IF NOT EXISTS raw jsonb'
+    expect(altersAmbiguas([fixture])).toContain(fixture.trim())
+  })
+
+  // RED · censo real: hoy es EXACTAMENTE la de `schema.sql:256` (`modified_time`). Cualquier otra
+  // `ALTER TABLE contacts` sin calificar que entre después mueve esta cifra, y es la señal de que hay
+  // que decidir su esquema antes de dejarla pasar.
+  it('el censo real de schema.sql es exactamente una: la de modified_time', () => {
+    const ambiguas = altersAmbiguas(schemaStatements())
+    expect(ambiguas).toHaveLength(1)
+    expect(ambiguas[0]).toContain('modified_time')
   })
 })
