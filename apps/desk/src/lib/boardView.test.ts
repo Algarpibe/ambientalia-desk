@@ -47,7 +47,7 @@ describe('applyBoardView · RQ-VT-04, los seis estados que la regex vieja no rec
 /**
  * RQ-VT-05 — un ticket CERRADO nunca aparece bajo «Espera», aunque su estado esté en
  * `ESTADOS_EN_ESPERA`. Cierra el hueco de detector que la Fase 0 de `tasks.md` confirmó: con el
- * fixture de arriba, quitar el filtro de cerrados de la rama `espera` (`boardView.ts:44`) no lo
+ * fixture de arriba, quitar el filtro de cerrados de la rama `espera` (`boardView.ts:48`) no lo
  * detectaba nadie.
  */
 describe('applyBoardView · RQ-VT-05, un cerrado nunca aparece en espera', () => {
