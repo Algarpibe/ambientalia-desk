@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Ticket } from '@ambientalia/shared'
-import { applyBoardView, viewLabel, FUNCTIONAL_BY_LABEL } from './boardView'
+import { applyBoardView, viewLabel, FUNCTIONAL_BY_LABEL, type VistaKey } from './boardView'
 
 const BASE = { id: 'x', number: '#1', subject: 's', status: 'Ingresado', statusType: 'Open', dueDate: null }
 const T = (over: Partial<Ticket>): Ticket => ({ ...BASE, ...over } as Ticket)
@@ -14,13 +14,13 @@ const tickets: Ticket[] = [
 ]
 
 describe('applyBoardView', () => {
-  const ids = (key: string) => applyBoardView(tickets, key, now).map((t) => t.id).sort()
+  const ids = (key: VistaKey) => applyBoardView(tickets, key, now).map((t) => t.id).sort()
   it('todos = activos (excluye cerrados)', () => { expect(ids('todos')).toEqual(['a', 'b', 'd']) })
   it('cerrados = solo Closed', () => { expect(ids('cerrados')).toEqual(['c']) })
   it('abiertos = activos sin en espera', () => { expect(ids('abiertos')).toEqual(['a', 'd']) })
   it('espera = solo en espera', () => { expect(ids('espera')).toEqual(['b']) })
   it('vencidos = activo + fecha pasada (excluye sin fecha/futuro/cerrado)', () => { expect(ids('vencidos')).toEqual(['a']) })
-  it('key desconocida → como todos', () => { expect(ids('zzz')).toEqual(['a', 'b', 'd']) })
+  it('key desconocida → vacío, no hereda el cuerpo de todos', () => { expect(ids('zzz' as VistaKey)).toEqual([]) })
 })
 
 /**
@@ -87,7 +87,7 @@ describe('applyBoardView · mis tickets', () => {
 describe('viewLabel / FUNCTIONAL_BY_LABEL', () => {
   it('viewLabel mapea key→etiqueta con fallback', () => {
     expect(viewLabel('cerrados')).toBe('Tickets cerrados')
-    expect(viewLabel('zzz')).toBe('Todos los Tickets')
+    expect(viewLabel('zzz' as VistaKey)).toBe('Vista no reconocida')
   })
   it('FUNCTIONAL_BY_LABEL mapea etiqueta→key', () => {
     expect(FUNCTIONAL_BY_LABEL['Tickets en espera']).toBe('espera')

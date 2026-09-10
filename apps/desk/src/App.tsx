@@ -5,7 +5,7 @@ import { TicketDetailView } from './components/TicketDetailView';
 import { COLUMNS } from '@ambientalia/shared';
 import type { Ticket } from '@ambientalia/shared';
 import { groupTicketsByColumn, groupByPriority, groupByDueDate, PRIORITY_COLUMNS, DUEDATE_COLUMNS } from './board';
-import { applyBoardView, viewLabel } from './lib/boardView';
+import { applyBoardView, viewLabel, type VistaKey } from './lib/boardView';
 import { useHideEmptyColumns } from './boardSettings';
 import { useViewMode } from './viewSettings';
 import { KanbanBoard } from './components/KanbanBoard';
@@ -54,7 +54,7 @@ function App() {
   const abrirCliente = (kind: 'contacto' | 'empresa', id: string) => { setClientesInitial({ kind, id }); setShowAnalisis(false); setShowActividades(false); setShowClientes(true) }
   const hideEmpty = useHideEmptyColumns()
   const [mode, setMode] = useViewMode()
-  const [view, setView] = useState('todos');
+  const [view, setView] = useState<VistaKey>('todos');
   const [closedPage, setClosedPage] = useState(1)
   useEffect(() => { setClosedPage(1) }, [view])
   const isClosed = view === 'cerrados'

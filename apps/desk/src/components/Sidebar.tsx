@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FUNCTIONAL_BY_LABEL } from '../lib/boardView';
+import { FUNCTIONAL_BY_LABEL, type VistaKey } from '../lib/boardView';
 
 // Estructura del menú lateral (réplica de Zoho Desk). Por ahora decorativo — el filtrado por vista llega después.
 const TODAS_LAS_VISTAS = [
@@ -79,7 +79,7 @@ function BottomItem({ icon, label }: { icon: string; label: string }) {
     );
 }
 
-export const Sidebar: React.FC<{ activeView: string; onSelectView: (key: string) => void }> = ({ activeView, onSelectView }) => {
+export const Sidebar: React.FC<{ activeView: VistaKey; onSelectView: (key: VistaKey) => void }> = ({ activeView, onSelectView }) => {
     return (
         <aside className="w-[200px] bg-[#2C2E3E] text-white flex flex-col shrink-0 overflow-y-auto hide-scrollbar border-r border-white/5" id="sidebar">
             <div className="flex flex-col py-2 flex-1">
