@@ -364,17 +364,27 @@ Notas de la consulta, verificadas contra el esquema y contra código que ya corr
 - `transition_id = 'habilitado_para_entrega'` es el id literal de `transitions.ts:259`.
 - `values` **sin comillas funciona** en un `WHERE`, pese a ser palabra reservada: lo prueba
   `apps/desk/server/auth/users.ts:138`, que hace `WHERE values->>'derivado_a' = $1` en producción.
-- **`->>' ... ' IS NULL` no es un compromiso: es el operador que toca.** La pregunta no es «¿falta la
-  clave?» sino «¿abre el bodegaje?», y **una clave presente con valor `null` tampoco lo abre**. `->>`
-  devuelve `NULL` en los dos casos y por tanto los cuenta los dos. El operador de existencia `?` daría
-  **verdadero** para una clave con valor `null`, así que `NOT (values ? '...')` la dejaría fuera y
-  **contaría DE MENOS**. Un borrador anterior de esta nota lo presentaba al revés, como si `?` fuera
-  «más preciso»: es al contrario.
-- ⚠️ **ESTA CONSULTA NO SE PUEDE PROBAR CONTRA `pg-mem`.** `apps/desk/server/db/primerDerivado.ts:20-21`
-  lo deja escrito: «El filtro se hace en JS y no con `values->>'derivado_a' IS NOT NULL` en SQL porque
-  pg-mem —el motor de los tests— **no resuelve los operadores de jsonb**». Contra PostgreSQL real
-  funciona; en una prueba con `pg-mem` saldría roja **sin motivo**. Si alguien la lleva a la suite,
-  que sea a una prueba de integración contra Postgres, nunca al sustituto en memoria.
+- **`->>' ... ' IS NULL` no es un compromiso: es el operador que toca, por dos razones
+  independientes.**
+  1. *Semántica.* La pregunta no es «¿falta la clave?» sino «¿abre el bodegaje?», y **una clave
+     presente con valor `null` tampoco lo abre**. `->>` devuelve `NULL` en los dos casos y por tanto
+     los cuenta los dos. El operador de existencia `?` daría **verdadero** para una clave con valor
+     `null`, así que `NOT (values ? '...')` la dejaría fuera y **contaría DE MENOS**. Un borrador
+     anterior de esta nota lo presentaba al revés, como si `?` fuera «más preciso»: es al contrario.
+  2. *El motor.* **`?` no existe en `pg-mem`**: `NOT (values ? '...')` falla con
+     `operator does not exist: jsonb ? text`. Una consulta escrita con `?` ni siquiera se podría
+     probar en este repositorio. Esta razón no sale de un razonamiento: la da el motor.
+- **La consulta SÍ corre en `pg-mem` y puede ir a la suite.** Sonda del 2026-09-10 contra el `pg-mem`
+  del repositorio (3.0.14), con control `->> =` y datos sintéticos: `->> ... IS NULL` devuelve la
+  clave ausente **y** la clave con `null`, e `IS NOT NULL` y `count(DISTINCT ticket_id)` también
+  corren. La suite ya ejercita `->>` sobre `pg-mem`: `apps/desk/server/auth/users.test.ts:93`, contra
+  `users.ts:138`. **Lo único que cambia al llevarla a una prueba es el prefijo `desk.`**: en la suite,
+  `migrate()` deja las tablas en `public` —`reorgToDesk` no corre en tests porque `pg-mem` no soporta
+  `SET SCHEMA`, `packages/zoho-sync/src/db/migrate.ts:122-125`—, así que la consulta literal falla con
+  `schema not found: desk` y sin el prefijo da lo esperado. El operador va tal cual.
+  *(Un borrador anterior decía «no se puede probar contra `pg-mem`», con la razón tomada del
+  comentario de `apps/desk/server/db/primerDerivado.ts:20-21` en `bb94bb2`, sin ejecutar nada. Era
+  falso, y la razón de ese comentario también: se corrige aparte, sólo el comentario.)*
 - `desk.` va calificado a propósito: la tabla se crea sin calificar (`schema.sql:57`) y aterriza en
   `desk` por el `search_path=desk,public` de `pool.ts:5`.
 
