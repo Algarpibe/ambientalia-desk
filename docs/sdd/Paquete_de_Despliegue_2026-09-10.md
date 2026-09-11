@@ -19,6 +19,10 @@ despliegue; verificado de disco, `grep -n "deploy|Deploy|easypanel"` → 0 líne
 
 ## 1 · Resumen para quien publica
 
+> **✅ PUBLICADO el 2026-09-10.** Verificado sin sesión: el `index-BWdNBrL-.js` que sirve producción es byte a byte el build de `ae5aaf4` (mismo sha256); `Vista no reconocida` presente e `INGRESADO` ausente lo datan en ≥ `48d7545`, tras el cual bajo `apps/` y `packages/` sólo hay comentarios, y cliente y servidor salen de una sola imagen (`Dockerfile`) → **producción ≡ `ae5aaf4`**.
+>
+> **«Sin desplegar» se cuenta ahora desde `ae5aaf4`, no desde `e8c5e90`**: commits con efecto en ejecución en `git log ae5aaf4..HEAD -- apps/ packages/`, mirados uno a uno. La tabla de arriba queda como registro del rango publicado; la reversión sigue en §6.
+
 **Qué se publica.** Ocho cambios con efecto visible. El resto —seis commits de código— son pruebas y
 comentarios (§2.2), y veintiuno son documentación fuera de `apps/` y `packages/`.
 
