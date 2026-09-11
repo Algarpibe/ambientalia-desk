@@ -17,8 +17,9 @@ import { json } from './ticketFuentes'
  * Una cadena vacía es «se quitó la derivación», no una persona: contarla devolvería un id que el
  * desplegable no encuentra, y confirmar la etapa borraría la derivación sin que nadie lo pidiera.
  *
- * El filtro se hace en JS y no con `values->>'derivado_a' IS NOT NULL` en SQL porque pg-mem —el motor
- * de los tests— no resuelve los operadores de jsonb; un ticket tiene unas pocas transiciones.
+ * El filtro se hace en JS porque un ticket tiene unas pocas transiciones. NO es por pg-mem: la forma SQL
+ * `values->>'derivado_a' IS NOT NULL` corre en el motor de los tests (lo que pg-mem no resuelve es el
+ * operador `?`). Y en SQL no bastaría: `IS NOT NULL` deja pasar la cadena vacía, que el bucle salta.
  */
 export async function primerDerivado(db: Queryable, ticketId: string): Promise<string | null> {
   const r = await db.query(
