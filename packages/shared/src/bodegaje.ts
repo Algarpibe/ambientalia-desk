@@ -25,7 +25,7 @@ export type ClaseBodegaje = 'entrada' | 'proceso' | 'salida'
  * Una fila de la tabla de M1.10 (`R08.1.md:1687-1702`), como dato.
  *
  * Va DECLARADA y no derivada, igual que `SLA_HORAS_POR_ESTADO` (`sla.ts:32`) y `ESTADOS_SIN_SALIDA`
- * (`estados.ts:140`), y por la misma razón: de las 34 transiciones no se deduce que la espera del
+ * (`estados.ts:151`), y por la misma razón: de las 34 transiciones no se deduce que la espera del
  * cliente empiece en la remisión de entrada y no en la fecha de creación del ticket. Es una decisión
  * de negocio, la firma la R08, y derivarla sería inventarla.
  */

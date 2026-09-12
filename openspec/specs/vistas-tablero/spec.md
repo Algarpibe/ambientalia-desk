@@ -111,21 +111,34 @@ RQ-VT-02 corrige para una clave inventada por fuera, aplicado ahora al propio ca
 ### Requirement: RQ-VT-04 · «Espera» y «Abiertos» clasifican por el registro de dominio, no por el nombre del estado
 
 `applyBoardView` **SHALL** clasificar un ticket como «en espera» consultando el registro de dominio
-`ESTADOS_EN_ESPERA` (`packages/shared/src/estados.ts:114`) — hoy con
-`(ESTADOS_EN_ESPERA as readonly string[]).includes(t.status ?? '')` en `boardView.ts:39` —, y
+`ESTADOS_EN_ESPERA` (`packages/shared/src/estados.ts:120`) a través de un predicado compartido, en un
+módulo propio de `apps/desk/src/lib` (forma propuesta en `proposal.md §3`: `enEspera.ts`,
+`esEstadoEnEspera(status?: string | null): boolean`; la confirma `sdd-design`) — hoy inline en
+`boardView.ts:39` como `(ESTADOS_EN_ESPERA as readonly string[]).includes(t.status ?? '')` —, y
 **MUST NOT** usar ninguna expresión regular sobre `status`. Es la regla invariable 13, punto 1: la
 clasificación existe en `packages/shared` y el cliente la consume.
 
-**Corrección de trazabilidad, al fusionar (decisión D3 de `design.md`).** Este requisito describía el
-mecanismo como una llamada a `enEsperaDe(estado)` (`estados.ts:163-167`); no es lo que el código hace.
-`enEsperaDe` devuelve la CLASE (`externa` | `interna` | `ninguna` | `sin_clasificar`), no un booleano,
-y consumirla obligaría al cliente a reescribir el criterio «externa o interna» que `estados.ts` ya
-posee — el mismo defecto IV-1 movido un metro. `.includes()` sobre la lista es funcionalmente
-equivalente al propósito del requisito (consumir el registro, no una regex) y es la implementación
-real verificada en esta sesión de archivado.
+El predicado compartido **SHALL** tener EXACTAMENTE **dos** consumidores, los dos que CLASIFICAN:
+`boardView.ts:39` (vistas `espera` y `abiertos`, `:47-48`) y `ClienteDetalle.tsx:18` (sub-vista de
+espera de la ficha de cliente, consumida en `:96` y en la sub-vista de `:98`). El requisito
+**MUST NOT** extenderse a quien PINTA: `ClienteDetalle.tsx:22` (dentro de `badgeClass`) y
+`TicketDetailView.tsx:245` (`/espera|hold/i` en el `className`) deciden color, no clasificación, y
+**SHALL** conservar su propia expresión regular — decisión de Gerencia, Q1: `Por Entregar` no es un
+atasco (el equipo está listo, falta que el cliente venga) y el propio tablero ya lo pinta azul
+(`TicketCard.tsx:21`). `ClienteDetalle.tsx` **SHALL** llevar un comentario junto a `:18`/`:22` que
+declare deliberada la divergencia entre las dos líneas y su porqué: sin él, el siguiente lector las
+unifica y reintroduce el ámbar que Q1 rechazó.
 
-(Previamente: `const enEspera = (t) => /espera/i.test(t.status ?? '')` — `boardView.ts:35` —
-reconocía 2 de los 8 estados que el registro declaraba en espera.)
+**Se hereda la decisión D3 de `design.md`, no se reabre.** `enEsperaDe(estado)`
+(`packages/shared/src/estados.ts:169-173`) devuelve la CLASE (`externa | interna | ninguna |
+sin_clasificar`), no un booleano, y consumirla obligaría al cliente a reescribir el criterio «externa
+o interna» que `estados.ts` ya posee — el mismo defecto IV-1 movido un metro. Esta tanda sólo traslada
+el `.includes()` ya existente a un módulo propio y le añade el segundo consumidor que ya clasificaba
+con su propia regex; no cambia el criterio.
+
+(Previously: el predicado vivía inline en `boardView.ts:39`, con **un** consumidor. `ClienteDetalle.tsx:18`
+implementaba su propia copia con `/espera/i`, acertando 2 de los 9 estados vigentes antes de esta
+tanda.)
 
 #### Scenario: los seis estados que se escapaban aparecen bajo «espera» y no bajo «abiertos»
 - GIVEN tickets abiertos en cada uno de los seis estados que la regex vieja no reconocía
@@ -153,6 +166,33 @@ reconocía 2 de los 8 estados que el registro declaraba en espera.)
   casaba con la cadena inventada — quedan verdes contra el registro real, no contra la coincidencia
   accidental
 
+#### Scenario: los dos estados de entrega entran en «espera» y no en «abiertos»
+- GIVEN un ticket abierto en `Por Entregar` y otro en `Por Entregar / Sin facturar`, los dos con
+  `statusType` distinto de `'Closed'`
+- WHEN se filtra por `espera` y por `abiertos`
+- THEN los dos aparecen en `espera` y ninguno aparece en `abiertos`
+
+#### Scenario: la ficha de cliente cuenta un `Por Entregar` bajo «espera»
+- GIVEN un cliente con un ticket en `Por Entregar`
+- WHEN se consulta la sub-vista «espera» de `ClienteDetalle.tsx:96` (`tickets.filter(esEspera)`, tras
+  consumir el módulo compartido)
+- THEN ese ticket aparece en esa sub-vista
+
+#### Scenario: el límite se mantiene — el color no se mueve
+- GIVEN un ticket en `Por Entregar`
+- WHEN se evalúan `ClienteDetalle.tsx:22` (`badgeClass`) y `TicketDetailView.tsx:245`
+- THEN los dos siguen devolviendo su clase de color por omisión — azul (`bg-blue-50 text-blue-600
+  border-blue-200` y `bg-blue-500` respectivamente) — y no la de ámbar, porque ninguna de las dos
+  expresiones regulares (`/espera/i`, `/espera|hold/i`) casa con `'Por Entregar'`
+
+#### Scenario: el comentario que declara la divergencia deliberada existe
+- GIVEN `ClienteDetalle.tsx:18` (clasifica, consume el módulo compartido) y `:22` (pinta, conserva
+  `/espera/i`)
+- WHEN se inspecciona el fichero
+- THEN hay un comentario junto a esas líneas que declara la divergencia deliberada entre las dos y su
+  porqué — verificable por lectura o por `grep`, no por `vitest`: el fichero es `.tsx` y queda fuera de
+  la red de pruebas (`vitest.config.ts:16`, `:17-20`; F0-00, decisión que esta tanda no reabre)
+
 ### Requirement: RQ-VT-05 · Un ticket cerrado nunca aparece bajo «Espera»
 
 La vista `espera` **MUST NOT** devolver ningún ticket con `statusType === 'Closed'`, aunque su
@@ -165,6 +205,14 @@ La vista `espera` **MUST NOT** devolver ningún ticket con `statusType === 'Clos
 - (Antes de esta tanda, el fixture de `boardView.test.ts` no tenía ningún `Closed` en estado de
   espera, así que quitar el filtro de cerrados de la rama `espera` — `boardView.ts:48` — no lo
   detectaba nadie. Este escenario cierra ese hueco)
+
+#### Scenario: los dos estados de entrega, cerrados, tampoco aparecen en «espera»
+- GIVEN un ticket con `statusType: 'Closed'` y `status: 'Por Entregar'`, y otro con
+  `statusType: 'Closed'` y `status: 'Por Entregar / Sin facturar'`
+- WHEN se filtra por `espera`
+- THEN ninguno de los dos aparece: el filtro de cerrados (`boardView.ts:48`) sigue aplicándose ANTES
+  de comprobar la clasificación, también para los dos estados nuevos (regla de mutación 1 — M3 de
+  `proposal.md §6` exige que quitar ese orden ponga esto en rojo)
 
 ### Requirement: RQ-VT-06 · El color de la tarjeta refleja el estado real (verificación manual)
 

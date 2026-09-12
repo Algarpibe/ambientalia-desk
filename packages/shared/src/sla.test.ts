@@ -43,7 +43,7 @@ describe('C11 · el reloj del SLA', () => {
    *
    * `estados.ts:28` avisa: «La vista muestra las once. El reloj del SLA NO lee esta clasificación.»
    * Era una advertencia sin caso que la demostrase. Ya lo hay: el ÚNICO estado con SLA está
-   * clasificado `ninguna` (`estados.ts:83`), así que no es ninguno de los once de la vista ni de los
+   * clasificado `ninguna` (`estados.ts:91`), así que no es ninguno de los once de la vista ni de los
    * cuatro sin salida. Si alguien «arreglara» el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, esta
    * prueba se pone roja.
    */

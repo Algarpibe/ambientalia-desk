@@ -81,7 +81,7 @@ describe('registro de estados', () => {
    * ⚠️ El reloj del SLA NO lee esta lista. Para en los tres BODEGAJES de M1.10, que son periodos
    * entre fechas y no estados. Ver la tabla de los tres criterios en `estados.ts`.
    *
-   * El array se fija LEYENDO la salida real del filtro (`estados.ts:114`), no reordenando el
+   * El array se fija LEYENDO la salida real del filtro (`estados.ts:120`), no reordenando el
    * registro para que cuadre de memoria: `Por Entregar` y `Por Entregar / Sin facturar` caen EN
    * MEDIO —dentro del bloque `externa`—, no al final de las nueve que había antes.
    */
@@ -164,7 +164,7 @@ describe('estados sin salida (M1.3.4)', () => {
    *   (`entrega_al_cliente`, `entrega_sin_factura`) son área Servicio Técnico, y lo que las cierra es
    *   que el CLIENTE venga a recoger el equipo — un suceso fuera de la aplicación, no un botón interno.
    *   ⚠️ **Hallazgo 3, sin decidir aquí** (`design.md` §9 de `por-entregar-es-espera`): el discriminador
-   *   de `ESTADOS_SIN_SALIDA` (`estados.ts:125-127`) nombra literalmente «una entrega física» como
+   *   de `ESTADOS_SIN_SALIDA` (`estados.ts:131-133`) nombra literalmente «una entrega física» como
    *   ejemplo de suceso externo, así que las dos PARECEN candidatas a `sin_salida` con ese criterio.
    *   Esta prueba NO las declara `sin_salida` — `ESTADOS_SIN_SALIDA` es lista cerrada por Gerencia
    *   (M1.3.4) y esta tanda no la reabre — sólo constata que la derivación las deja fuera de esa

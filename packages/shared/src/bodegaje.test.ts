@@ -35,7 +35,7 @@ describe('C9 · los tres bodegajes de M1.10', () => {
    * 1 · LA TABLA DE M1.10, COMO DATO.
    *
    * Va declarada y no derivada por la misma razón que `SLA_HORAS_POR_ESTADO` (`sla.ts:32`) y
-   * `ESTADOS_SIN_SALIDA` (`estados.ts:140`): de las 34 transiciones no se deduce que la espera del
+   * `ESTADOS_SIN_SALIDA` (`estados.ts:151`): de las 34 transiciones no se deduce que la espera del
    * cliente empiece en la remisión de entrada y no en la fecha de creación. Es una decisión de
    * negocio, y la R08 es quien la firma.
    */
