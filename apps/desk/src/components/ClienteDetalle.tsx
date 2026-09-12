@@ -3,6 +3,7 @@ import type { ContactDetail, AccountDetail, TicketLite } from '@ambientalia/shar
 import { useAsync } from '../hooks/useAsync'
 import { useResizable } from '../hooks/useResizable'
 import { fetchContactDetail, fetchAccountDetail } from '../api/client'
+import { esEstadoEnEspera } from '../lib/enEspera'
 
 /** Manija de arrastre entre columnas (reemplaza el borde). */
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
@@ -15,10 +16,28 @@ function fmtFechaHora(s: string | null): string { if (!s) return '—'; const d 
 
 const CLOSED = 'Closed'
 const esAbierto = (t: TicketLite) => t.statusType !== CLOSED
-const esEspera = (t: TicketLite) => /espera/i.test(t.status)
+/**
+ * `por-entregar-es-espera` (2026-09-12) — CLASIFICA consumiendo el predicado compartido de
+ * `apps/desk/src/lib/enEspera.ts`, en vez de reimplementar el criterio con una expresión regular
+ * (regla invariable 13, punto 1: la clasificación vive en `packages/shared` y el cliente la importa).
+ *
+ * ⚠️ DIVERGENCIA DELIBERADA con `badgeClass`, dos líneas más abajo, que sigue pintando con su propia
+ * `/espera/i` y NO consume este predicado. No es un olvido:
+ * 1. Es deliberado: esta línea y `badgeClass` DIVERGEN a propósito desde esta tanda.
+ * 2. Por qué: color y clasificación son nociones distintas. `Por Entregar` no es un atasco —el equipo
+ *    está listo y lo que falta es que el cliente venga—, y el tablero ya lo pinta AZUL desde el mapa
+ *    explícito de `TicketCard.tsx:21`. Unificar pintaría de ámbar un estado que el tablero pinta de azul.
+ * 3. Autoridad: decisión de Gerencia Q1, 2026-09-12 (`proposal.md` §13 de `por-entregar-es-espera`).
+ * 4. El arreglo de verdad es que el color salga de una sola fuente —el mapa por estado de
+ *    `TicketCard.tsx:14`— y no de un booleano, que no sabe decir «azul para listo, ámbar para
+ *    atascado». Es otra tanda, con decisión de alcance propia (hallazgo 2, §8 de la propuesta).
+ *    NO UNIFICAR estas dos líneas mientras esa tanda no exista.
+ */
+const esEspera = (t: TicketLite) => esEstadoEnEspera(t.status)
 const esAtrasado = (t: TicketLite) => !!t.dueDate && new Date(t.dueDate).getTime() < Date.now() && esAbierto(t)
 function badgeClass(t: TicketLite): string {
   if (t.statusType === CLOSED || /finaliz/i.test(t.status)) return 'bg-green-50 text-green-600 border-green-200'
+  // Divergencia deliberada: ver la nota de `esEspera`, arriba. NO unificar.
   if (/espera/i.test(t.status)) return 'bg-amber-50 text-amber-600 border-amber-200'
   return 'bg-blue-50 text-blue-600 border-blue-200'
 }

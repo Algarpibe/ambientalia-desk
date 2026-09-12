@@ -41,13 +41,13 @@ describe('C11 · el reloj del SLA', () => {
   /**
    * LA COHERENCIA QUE §3.7 DE `transitions-st` PEDÍA, Y QUE HASTA HOY ERA HIPOTÉTICA.
    *
-   * `estados.ts:28` avisa: «La vista muestra las nueve. El reloj del SLA NO lee esta clasificación.»
+   * `estados.ts:28` avisa: «La vista muestra las once. El reloj del SLA NO lee esta clasificación.»
    * Era una advertencia sin caso que la demostrase. Ya lo hay: el ÚNICO estado con SLA está
-   * clasificado `ninguna` (`estados.ts:83`), así que no es ninguno de los nueve de la vista ni de los
+   * clasificado `ninguna` (`estados.ts:83`), así que no es ninguno de los once de la vista ni de los
    * cuatro sin salida. Si alguien «arreglara» el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, esta
    * prueba se pone roja.
    */
-  it('el reloj y la vista no leen la misma lista: el único estado con SLA no está en las nueve', () => {
+  it('el reloj y la vista no leen la misma lista: el único estado con SLA no está en las once', () => {
     const conSla = Object.keys(SLA_HORAS_POR_ESTADO)
     expect(conSla.filter((e) => (ESTADOS_EN_ESPERA as string[]).includes(e))).toEqual([])
     expect(conSla.filter((e) => (ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([])

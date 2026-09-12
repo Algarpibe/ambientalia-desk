@@ -1,5 +1,5 @@
 import type { Ticket } from '@ambientalia/shared'
-import { ESTADOS_EN_ESPERA } from '@ambientalia/shared'
+import { esEstadoEnEspera } from './enEspera'
 
 export interface BoardViewDef { key: string; label: string }
 
@@ -36,7 +36,7 @@ export function viewLabel(key: VistaKey): string {
  * dice de quién es el trabajo, no quién puede verlo.
  */
 export function applyBoardView(tickets: Ticket[], key: VistaKey, now: Date, userId?: string): Ticket[] {
-  const enEspera = (t: Ticket) => (ESTADOS_EN_ESPERA as readonly string[]).includes(t.status ?? '')
+  const enEspera = (t: Ticket) => esEstadoEnEspera(t.status)
   switch (key) {
     case 'cerrados': return tickets.filter((t) => t.statusType === 'Closed')
     // Sin usuario devuelve VACÍO, no todo: enseñar el tablero entero bajo el rótulo «Mis Tickets»

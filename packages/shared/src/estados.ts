@@ -18,14 +18,14 @@
  * | Nombre        | Criterio                                                                   | Fuente          | Alcance                          |
  * |---------------|----------------------------------------------------------------------------|-----------------|----------------------------------|
  * | `sin_salida`  | Su única transición de salida depende de algo que la aplicación no controla | M1.3.4          | 4 estados                        |
- * | `en_espera`   | El ticket está parado esperando el acto de un tercero y el área dueña no    | Vista del       | 9 estados — LO QUE DECLARA ESTE  |
+ * | `en_espera`   | El ticket está parado esperando el acto de un tercero y el área dueña no    | Vista del       | 11 estados — LO QUE DECLARA ESTE |
  * |               | puede hacer nada por su cuenta                                             | tablero         | módulo                           |
  * | `bodegaje`    | El tiempo que un equipo pasa en Ambientalia esperando una respuesta del     | M1.10           | 3 PERIODOS ENTRE FECHAS,         |
  * |               | cliente — tiempo que no depende de nosotros                                | `[DEFINIDO R08]`| no estados                       |
  *
  * DE AQUÍ SALE LA REGLA QUE SEPARA LA VISTA DEL RELOJ, y si no queda explícita F1C-06 la pierde:
  *
- *   **La vista muestra las nueve. El reloj del SLA NO lee esta clasificación.**
+ *   **La vista muestra las once. El reloj del SLA NO lee esta clasificación.**
  *
  * El reloj para en los tres bodegajes de M1.10, que son periodos delimitados por dos fechas y no
  * estados del grafo. Un estado puede estar `en_espera` y no parar ningún reloj, y un bodegaje puede
@@ -57,12 +57,20 @@ export type EnEspera = 'externa' | 'interna' | 'ninguna' | 'sin_clasificar'
  * clasificación, no para buscar un estado suelto.
  */
 export const CLASIFICACION_EN_ESPERA = {
-  // ── externa (3) — esperamos a alguien de fuera ────────────────────────────────────────────────
+  // ── externa (5) — esperamos a alguien de fuera ────────────────────────────────────────────────
   'En Espera de Repuestos': 'externa',
   'Servicio externo': 'externa',
   // El cliente tiene la cotización y no ha contestado. Tiene salida de escape (`rechazo_cliente`),
   // por eso está aquí y NO en los cuatro de `sin_salida`.
   'Notificación cliente': 'externa',
+  // El equipo ya fue avisado y espera a que el CLIENTE venga a recogerlo (M1.10, «Los tres
+  // bodegajes», bodegaje de salida). Decisión de Gerencia, `decision/por-entregar-es-espera`,
+  // 2026-09-12: hasta entonces clasificaba `'ninguna'`, y un ticket ya listo para el cliente se
+  // enseñaba como «abierto», no como «en espera». Las DOS entradas se MUEVEN aquí físicamente, no
+  // se reetiquetan en el sitio: la lista va agrupada por clase (`:56-57`), y dejarlas en el bloque
+  // `ninguna` contradiría esa convención en el mismo fichero.
+  'Por Entregar': 'externa',
+  'Por Entregar / Sin facturar': 'externa',
 
   // ── interna (6) — esperamos a otra área de la casa ────────────────────────────────────────────
   'Notificación a Compras': 'interna',
@@ -77,15 +85,13 @@ export const CLASIFICACION_EN_ESPERA = {
   // filas arriba — el tercero del que depende es otra área de la casa, no alguien de fuera.
   'Remisión creada': 'interna',
 
-  // ── ninguna (11) — el trabajo está en manos de quien tiene el ticket ──────────────────────────
+  // ── ninguna (9) — el trabajo está en manos de quien tiene el ticket ───────────────────────────
   'Ingresado': 'ninguna',
   'Rev./Diagnostico': 'ninguna',
   'Notificado': 'ninguna',
   'En Proceso': 'ninguna',
   'Continuación del proceso': 'ninguna',
   'Por Facturar': 'ninguna',
-  'Por Entregar': 'ninguna',
-  'Por Entregar / Sin facturar': 'ninguna',
   'Finalizado': 'ninguna',
   // Las dos formas de nombrar la fase inicial —Zoho y la app—. Ver `STATUS_OV_ASIGNADA` y compañía
   // en `transitions.ts:142-144`.
@@ -106,7 +112,7 @@ export type Estado = keyof typeof CLASIFICACION_EN_ESPERA
 export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[]
 
 /**
- * Las NUEVE que la vista del tablero enseña bajo «En espera»: externa + interna.
+ * Las ONCE que la vista del tablero enseña bajo «En espera»: externa + interna.
  *
  * ⚠️ Es la lista de la VISTA. El reloj del SLA no la lee — para en los tres bodegajes de M1.10, que
  * son periodos entre fechas. Ver la tabla de los tres criterios arriba.

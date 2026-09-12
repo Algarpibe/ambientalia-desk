@@ -19,14 +19,16 @@ describe('registro de estados', () => {
 
   /**
    * Se afirman los CONJUNTOS y no los números por lo mismo que en el invariante de las compartidas:
-   * mover `Solicitado` de interna a externa deja las cuentas 3/5/12/1 intactas y cambia lo que la
+   * mover `Solicitado` de interna a externa deja las cuentas 5/6/9/1 intactas y cambia lo que la
    * vista promete al usuario. Con la lista escrita, ese movimiento da rojo.
    */
-  it('externa son exactamente estos tres: el tercero es quien no somos nosotros', () => {
+  it('externa son exactamente estos cinco: el tercero es quien no somos nosotros', () => {
     expect(estadosCon('externa')).toEqual([
       'En Espera de Repuestos',
       'Servicio externo',
       'Notificación cliente',
+      'Por Entregar',
+      'Por Entregar / Sin facturar',
     ])
   })
 
@@ -41,7 +43,7 @@ describe('registro de estados', () => {
     ])
   })
 
-  it('ninguna son exactamente estos once: el ticket está en manos de quien lo tiene', () => {
+  it('ninguna son exactamente estos nueve: el ticket está en manos de quien lo tiene', () => {
     expect(estadosCon('ninguna')).toEqual([
       'Ingresado',
       'Rev./Diagnostico',
@@ -49,8 +51,6 @@ describe('registro de estados', () => {
       'En Proceso',
       'Continuación del proceso',
       'Por Facturar',
-      'Por Entregar',
-      'Por Entregar / Sin facturar',
       'Finalizado',
       STATUS_OV_ASIGNADA,
       STATUS_TICKET_CREADO,
@@ -68,24 +68,30 @@ describe('registro de estados', () => {
     expect(enEsperaDe('Pendiente')).toBe('sin_clasificar')
   })
 
-  it('3 + 5 + 12 + 1 = 21, y no hay ningún estado fuera de las cuatro clases', () => {
+  it('5 + 6 + 9 + 1 = 21, y no hay ningún estado fuera de las cuatro clases', () => {
     const total = estadosCon('externa').length + estadosCon('interna').length
       + estadosCon('ninguna').length + estadosCon('sin_clasificar').length
     expect(total).toBe(ESTADOS.length)
   })
 
   /**
-   * Las NUEVE de la vista son externa + interna. Es lo único que `ESTADOS_EN_ESPERA` significa: son
+   * Las ONCE de la vista son externa + interna. Es lo único que `ESTADOS_EN_ESPERA` significa: son
    * las que el tablero enseña bajo «En espera».
    *
    * ⚠️ El reloj del SLA NO lee esta lista. Para en los tres BODEGAJES de M1.10, que son periodos
    * entre fechas y no estados. Ver la tabla de los tres criterios en `estados.ts`.
+   *
+   * El array se fija LEYENDO la salida real del filtro (`estados.ts:114`), no reordenando el
+   * registro para que cuadre de memoria: `Por Entregar` y `Por Entregar / Sin facturar` caen EN
+   * MEDIO —dentro del bloque `externa`—, no al final de las nueve que había antes.
    */
-  it('las nueve en espera de la vista son externa + interna', () => {
+  it('las once en espera de la vista son externa + interna', () => {
     expect(ESTADOS_EN_ESPERA).toEqual([
       'En Espera de Repuestos',
       'Servicio externo',
       'Notificación cliente',
+      'Por Entregar',
+      'Por Entregar / Sin facturar',
       'Notificación a Compras',
       'Notificación Comercial',
       'En espera de SKU inventario',
@@ -143,29 +149,51 @@ describe('estados sin salida (M1.3.4)', () => {
   })
 
   /**
-   * `Liberación Comercial` y `Remisión creada` SON LOS DOS CASOS QUE DISTINGUEN EL CRITERIO, y por eso
-   * se escriben aparte.
+   * `Liberación Comercial` y `Remisión creada` eran, hasta `por-entregar-es-espera`, LOS DOS CASOS QUE
+   * DISTINGUEN EL CRITERIO. Desde esta tanda son CUATRO, y la derivación sirve AÚN MENOS que antes de
+   * decirlo: cruzar las dos propiedades derivables —estar en espera y tener salida única— daba SEIS y
+   * ahora da OCHO, porque `Por Entregar` y `Por Entregar / Sin facturar` son dos más de los doce
+   * estados con salida única (`entrega_al_cliente`, `entrega_sin_factura`) y ahora también están en
+   * `ESTADOS_EN_ESPERA`.
    *
-   * Cruzar las dos propiedades derivables —estar en espera y tener salida única— da SEIS, no cuatro.
-   * Las dos que sobran son `Liberación Comercial` y `Remisión creada`, y quedan fuera porque su única
-   * salida —`habilitado_para_entrega` y `habilitar_servicio`, las dos área Comercial— es UN ACTO QUE SE
-   * EJECUTA EN LA APLICACIÓN: alguien pulsa el botón. En los otros cuatro el suceso del que depende la
-   * salida ocurre FUERA.
+   * Las CUATRO que sobran se dividen en dos parejas, y NO comparten la misma razón:
+   * - `Liberación Comercial` y `Remisión creada` quedan fuera porque su única salida —
+   *   `habilitado_para_entrega` y `habilitar_servicio`, las dos área Comercial— es UN ACTO QUE SE
+   *   EJECUTA EN LA APLICACIÓN: alguien pulsa el botón.
+   * - `Por Entregar` y `Por Entregar / Sin facturar` NO comparten esa razón: sus únicas salidas
+   *   (`entrega_al_cliente`, `entrega_sin_factura`) son área Servicio Técnico, y lo que las cierra es
+   *   que el CLIENTE venga a recoger el equipo — un suceso fuera de la aplicación, no un botón interno.
+   *   ⚠️ **Hallazgo 3, sin decidir aquí** (`design.md` §9 de `por-entregar-es-espera`): el discriminador
+   *   de `ESTADOS_SIN_SALIDA` (`estados.ts:125-127`) nombra literalmente «una entrega física» como
+   *   ejemplo de suceso externo, así que las dos PARECEN candidatas a `sin_salida` con ese criterio.
+   *   Esta prueba NO las declara `sin_salida` — `ESTADOS_SIN_SALIDA` es lista cerrada por Gerencia
+   *   (M1.3.4) y esta tanda no la reabre — sólo constata que la derivación las deja fuera de esa
+   *   lista, igual que a las otras dos, y por una razón distinta. La pregunta queda para Gerencia, sin
+   *   destino asignado.
    *
    * Ésta es la prueba que da rojo si alguien sustituye la lista declarada por una derivación.
    */
-  it('la derivación da seis, y las dos que sobran son Liberación Comercial y Remisión creada: por eso no se deriva', () => {
+  it('la derivación da ocho, y las cuatro que sobran son Liberación Comercial, Remisión creada, Por Entregar y Por Entregar / Sin facturar: por eso no se deriva', () => {
     const derivadaMal = ESTADOS_EN_ESPERA.filter((e) => conUnaSolaSalida().includes(e))
-    expect(derivadaMal).toHaveLength(6)
+    expect(derivadaMal).toHaveLength(8)
     expect(derivadaMal.filter((e) => !(ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([
+      'Por Entregar',
+      'Por Entregar / Sin facturar',
       'Liberación Comercial',
       STATUS_REMISION_CREADA,
     ])
-    // Y las salidas que las dejan fuera son actos de la aplicación, no sucesos del mundo.
+    // Y las salidas que dejan fuera a Liberación Comercial/Remisión creada son actos de la
+    // aplicación, no sucesos del mundo.
     const salidasComercial = TRANSITIONS.filter((t) => t.from.includes('Liberación Comercial'))
     expect(salidasComercial.map((t) => `${t.id} · ${t.area}`)).toEqual(['habilitado_para_entrega · Comercial'])
     const salidasRemision = TRANSITIONS.filter((t) => t.from.includes(STATUS_REMISION_CREADA))
     expect(salidasRemision.map((t) => `${t.id} · ${t.area}`)).toEqual(['habilitar_servicio · Comercial'])
+    // Las de Por Entregar y su gemela sin factura son área Servicio Técnico, no Comercial: no
+    // comparten la razón de las dos de arriba. Ver el hallazgo 3 anotado encima.
+    const salidasPorEntregar = TRANSITIONS.filter((t) => t.from.includes('Por Entregar'))
+    expect(salidasPorEntregar.map((t) => `${t.id} · ${t.area}`)).toEqual(['entrega_al_cliente · Servicio Técnico'])
+    const salidasSinFacturar = TRANSITIONS.filter((t) => t.from.includes('Por Entregar / Sin facturar'))
+    expect(salidasSinFacturar.map((t) => `${t.id} · ${t.area}`)).toEqual(['entrega_sin_factura · Servicio Técnico'])
   })
 })
 

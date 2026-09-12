@@ -55,6 +55,43 @@ describe('applyBoardView · RQ-VT-05, un cerrado nunca aparece en espera', () =>
     const t = [T({ id: 'cerrado-en-espera', status: 'Solicitado', statusType: 'Closed' })]
     expect(applyBoardView(t, 'espera', now)).toEqual([])
   })
+
+  /**
+   * `por-entregar-es-espera` — el filtro de cerrados (`boardView.ts:48`) sigue aplicándose ANTES de
+   * comprobar la clasificación, también para los dos estados de entrega (regla de mutación 1: M3 de
+   * `tasks.md` exige que quitar ese orden ponga esto en rojo).
+   */
+  it('Closed en Por Entregar o en Por Entregar / Sin facturar tampoco aparece en espera', () => {
+    const t = [
+      T({ id: 'entrega-cerrada', status: 'Por Entregar', statusType: 'Closed' }),
+      T({ id: 'sin-facturar-cerrada', status: 'Por Entregar / Sin facturar', statusType: 'Closed' }),
+    ]
+    expect(applyBoardView(t, 'espera', now)).toEqual([])
+  })
+})
+
+/**
+ * `por-entregar-es-espera` — el rojo de la DECISIÓN (Fase 0 del diseño), escrito ANTES de tocar
+ * `estados.ts`. Reutiliza el molde `casoEnEspera` de `:32-38` (RQ-VT-04), pero es un `describe` NUEVO
+ * y no una ampliación de aquél: `:31` documenta F1B-08 y los seis estados que la regex vieja no
+ * reconocía, y estos dos NO vienen de esa regex — meterlos ahí volvería falso un título verdadero.
+ *
+ * HOY este bloque falla: `Por Entregar` y `Por Entregar / Sin facturar` están clasificados `'ninguna'`
+ * (`estados.ts:87-88`) y caen en `'abiertos'`, no en `'espera'`. Gerencia decidió lo contrario
+ * (decision/por-entregar-es-espera, 2026-09-12): el equipo ya fue avisado y espera a que el cliente lo
+ * recoja, así que debe contar como espera. Este describe se pone VERDE en la Fase 2 del diseño, al
+ * mover las dos entradas al bloque `externa` de `CLASIFICACION_EN_ESPERA`.
+ */
+describe('applyBoardView · Por Entregar y Por Entregar / Sin facturar pasan a espera (decisión Gerencia 2026-09-12)', () => {
+  const casoEnEspera = (status: string) => {
+    const t = [T({ id: 'e', status, statusType: 'Open' })]
+    it(`${status}: cae en espera y no en abiertos`, () => {
+      expect(applyBoardView(t, 'espera', now).map((x) => x.id)).toEqual(['e'])
+      expect(applyBoardView(t, 'abiertos', now)).toEqual([])
+    })
+  }
+  casoEnEspera('Por Entregar')
+  casoEnEspera('Por Entregar / Sin facturar')
 })
 
 /**

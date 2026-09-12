@@ -712,67 +712,78 @@ incumplimientos_vivos:
   # el MISMO desvío, en los tres puntos que la tanda no tocó. Se abre en el mismo
   # acto en que se cierra IV-1, porque cerrar el fichero sin abrir esta fila
   # habría perdido a los supervivientes.
+  # REDUCIDO por `por-entregar-es-espera` (2026-09-12): sobreviven DOS de los
+  # tres puntos, las dos de COLOR. Ver `descripcion`, `alcance_exacto` y
+  # `se_escapan` de más abajo. No cerrado: el arreglo de verdad (hallazgo 2,
+  # una sola fuente de color) sigue sin destino.
   - id: IV-9
     regla: 1
     ubicacion: >
-      apps/desk/src/components/ClienteDetalle.tsx:18 —
-      `const esEspera = (t: TicketLite) => /espera/i.test(t.status)`;
       apps/desk/src/components/ClienteDetalle.tsx:22 —
       `if (/espera/i.test(t.status)) return 'bg-amber-50 text-amber-600 border-amber-200'`;
       apps/desk/src/components/TicketDetailView.tsx:245 —
       `/espera|hold/i.test(ticket.status)`.
     verificado: true
     descripcion: >
-      TRES implementaciones independientes del predicado «está en espera», y
-      NINGUNA de las tres lee el registro `ESTADOS_EN_ESPERA`
-      (`packages/shared/src/estados.ts:114`). Es el molde exacto de IV-1 —una
-      regla que vive en `packages/shared` reescrita en el cliente— sólo que
-      repartido en tres sitios en vez de uno.
-      Y hay algo que lo hace PEOR que una copia: las tres no dicen lo mismo. Dos
-      son `/espera/i` y la tercera es `/espera|hold/i`, o sea VARIANTES DISTINTAS
-      de la misma noción. La app tiene hoy tres definiciones de «en espera» que
-      pueden discrepar entre sí sin que nada lo señale, mientras la definición
-      autorizada está declarada, probada y a un `import` de distancia.
-    cuantificado_en: "2026-09-10, base 484c952"
+      REDUCIDO por `por-entregar-es-espera` (2026-09-12). Hasta entonces eran
+      TRES implementaciones independientes del predicado «está en espera»; la
+      tercera —`ClienteDetalle.tsx:18`, la que CLASIFICABA, no pintaba— pasó a
+      consumir el predicado compartido `apps/desk/src/lib/enEspera.ts` y ya no
+      cuenta aquí.
+      Sobreviven DOS, y las DOS son para COLOR, por decisión de Gerencia (Q1,
+      `proposal.md` §13 de `por-entregar-es-espera`): `ClienteDetalle.tsx:22` y
+      `TicketDetailView.tsx:245` pintan un badge, no deciden en qué lista cae un
+      ticket. Ninguna de las dos lee el registro `ESTADOS_EN_ESPERA`
+      (`packages/shared/src/estados.ts:114`), y siguen sin decir lo mismo entre
+      sí: una es `/espera/i` y la otra `/espera|hold/i`, VARIANTES DISTINTAS de
+      la misma noción, aunque midan el mismo conjunto de estados (ver
+      `alcance_exacto`).
+    cuantificado_en: "2026-09-10, base 484c952 (color remedido el 2026-09-12, por-entregar-es-espera)"
     alcance_exacto: >
-      MEDIDO, no estimado, y contra la lista de HOY, que tiene NUEVE entradas y
-      no ocho —OJO: no vale copiar el «2 de 8» de IV-1, la cifra cambió—.
-      Contra los NUEVE estados `en_espera` que declara CLASIFICACION_EN_ESPERA
-      (`estados.ts:59-100`), los dos predicados casan con EXACTAMENTE 2:
-      `En Espera de Repuestos` y `En espera de SKU inventario`. Y tienen CERO
-      falsos positivos entre los 12 estados restantes de los 21 —ninguno de esos
-      12 contiene «espera» ni «hold»—.
-      Es un defecto POR DEFECTO, no por exceso, y eso cambia cómo se arregla: no
-      hay que estrechar el criterio, hay que SUSTITUIRLO POR LA LISTA, igual que
-      hizo `boardView.ts:39`.
+      REMEDIDO el 2026-09-12 contra la lista tras `por-entregar-es-espera`, que
+      tiene ONCE entradas `en_espera`, no nueve. Los dos predicados de color
+      siguen casando con EXACTAMENTE 2: `En Espera de Repuestos` y `En espera de
+      SKU inventario` —el numerador NO CAMBIA, porque ninguno de los dos estados
+      reclasificados (`Por Entregar`, `Por Entregar / Sin facturar`) contiene
+      «espera» ni «hold» en su nombre—. Y tienen CERO falsos positivos entre los
+      19 estados restantes de los 21.
+      Sigue siendo un defecto POR DEFECTO, no por exceso, pero el EFECTO ya no es
+      el de IV-1: estos dos predicados sólo deciden el color de un badge, no en
+      qué lista cae un ticket — esa mitad de clasificación la cerró
+      `por-entregar-es-espera` en `ClienteDetalle.tsx:18`.
     se_escapan: >
-      Los SIETE que estas vistas NO tratan como espera y deberían:
-      `Servicio externo`, `Notificación cliente`, `Notificación a Compras`,
-      `Notificación Comercial`, `Solicitado`, `Liberación Comercial` y
-      `Remisión creada`.
-      EL SÉPTIMO LO AÑADIÓ ESTA MISMA TANDA: F1B-08 reclasificó
-      `Remisión creada` de `ninguna` a `interna` (`estados.ts:78`), con lo que
-      entró en ESTADOS_EN_ESPERA y el escape pasó de seis a siete. Es la razón de
-      que la cifra vieja de IV-1 («los seis») esté caduca.
+      Los NUEVE que estos dos predicados de color NO tratarían como espera si
+      clasificaran —no clasifican, pintan—: `Servicio externo`, `Notificación
+      cliente`, `Notificación a Compras`, `Notificación Comercial`, `Solicitado`,
+      `Liberación Comercial`, `Remisión creada`, `Por Entregar` y
+      `Por Entregar / Sin facturar`.
+      LOS DOS ÚLTIMOS LOS AÑADIÓ `por-entregar-es-espera` (2026-09-12): la
+      reclasificación de `Por Entregar` y `Por Entregar / Sin facturar` a
+      `externa` (`estados.ts:59-100`) subió el escape de siete a nueve. Y es
+      DELIBERADO, no un defecto pendiente: Gerencia (Q1) decidió que estos dos
+      estados NO deben pintarse de ámbar — el equipo está listo, no atascado, y
+      el tablero ya los pinta azul (`TicketCard.tsx:20-21`).
     fuera_de_la_red_de_pruebas: >
-      LOS TRES FICHEROS SON `.tsx`, Y ESO CONDICIONA CÓMO SE ARREGLA.
+      LOS DOS FICHEROS SON `.tsx`, Y ESO CONDICIONA CÓMO SE ARREGLA.
       `vitest.config.ts:16` fija `environment: 'node'`; `:17-20` incluye sólo
       `apps/**/*.test.ts` y `packages/**/*.test.ts`; y `:57` excluye `**/*.tsx`
       también del coverage. Es DECISIÓN EXPLÍCITA DE GERENCIA (F0-00,
       2026-09-08), no un olvido, y CLAUDE.md prohíbe proponer `jsdom`,
       `@testing-library` o ampliar el `include` a `*.test.tsx` sin que Gerencia
       reabra el punto.
-      CONSECUENCIA PRÁCTICA: estos tres puntos NO ADMITEN ROJO PREVIO bajo
-      `strict_tdd`. La tanda que los arregle tiene que decir por escrito con qué
-      sustituye la prueba —extraer el predicado a un módulo `.ts` cubierto, o
-      declarar la excepción— antes de tocarlos.
+      CONSECUENCIA PRÁCTICA: estos dos puntos NO ADMITEN ROJO PREVIO bajo
+      `strict_tdd`. Y esta vez sustituir la regex por la lista SERÍA EL DEFECTO,
+      no el arreglo: es justo lo que Gerencia (Q1) rechazó. El arreglo de verdad
+      es otro — una sola fuente de color, `TicketCard.tsx:14` —, y va anotado
+      como hallazgo con destino pendiente (ver `familia`).
     familia: >
-      Es el molde de H5, el hallazgo que CLAUDE.md nombra en «Lo que estas tres
-      NO cazan»: varias implementaciones de la misma noción, NINGUNA rota por
-      separado y ninguna leyendo el registro. Las tres reglas de mutación no lo
-      cazan —mutar la posición de una guarda, ensuciar un fichero vigilado o
-      enumerar decisiones del cliente no enfrenta dos implementaciones entre sí—.
-      Para esto hace falta un lector, o una prueba que las enfrente.
+      Sigue siendo el molde de H5, el hallazgo que CLAUDE.md nombra en «Lo que
+      estas tres NO cazan»: dos implementaciones de la misma noción, NINGUNA
+      rota por separado y ninguna leyendo el registro. Las tres reglas de
+      mutación no lo cazan —mutar la posición de una guarda, ensuciar un fichero
+      vigilado o enumerar decisiones del cliente no enfrenta dos
+      implementaciones entre sí—. Para esto hace falta un lector, o una prueba
+      que las enfrente.
     destino: "SIN DESTINO ASIGNADO — a propósito"
     por_que_sin_destino: >
       No se le pone épica, y la razón es un precedente propio: asignar un destino
@@ -780,9 +791,11 @@ incumplimientos_vivos:
       F1A —seguían apuntando a «F1A» mientras este fichero y CLAUDE.md decían que
       tenían dueño—. Un destino es una promesa, y esta tanda no está en
       condiciones de hacerla: no le corresponde decidir el alcance.
-      Que lo asigne quien decida el alcance. Lo que sí queda fijado aquí es todo
-      lo que esa decisión necesita: las tres ubicaciones, la medición, los siete
-      escapados y el condicionante de la red de pruebas.
+      Que lo asigne quien decida el alcance — el arreglo de verdad es una sola
+      fuente de color (`TicketCard.tsx:14`), no sustituir la regex por el
+      registro. Lo que sí queda fijado aquí es todo lo que esa decisión
+      necesita: las dos ubicaciones, la medición y el condicionante de la red de
+      pruebas.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
