@@ -215,11 +215,13 @@ Una abreviada atribuida **SHALL** comprobarse como exige RQ-CV-08 y, si está ro
 en su **propia cifra**, con fichero, línea y motivo. Una abreviada —rota, huérfana o válida, anclada o
 no— **MUST NOT** bloquear y **MUST NOT** entrar en la línea base (decisión Q9 de la propuesta). **El
 referente de una abreviada lo decide quien lee el contexto, no la sintaxis**: con la atribución de este
-requisito, el árbol tiene 55 abreviadas rotas, y 54 si una completa sin resolver corta la atribución
-(medido el 2026-09-13 sobre `20a951d`, sin `docs/artefactos/`, nivel 2 de procedencia). De esas 54,
-clasificadas por un script y no leídas una a una, 19
+requisito, el árbol tiene 56 abreviadas rotas, y 55 si una completa sin resolver corta la atribución
+(medido el 2026-09-13 sobre `773ad75` por la ruta diseñada, con `git grep`, sin `docs/artefactos/` ni
+`*.csv`, nivel 2 de procedencia). La clasificación se hizo por un script, no leyendo una a una, y sobre
+las 54 del prototipo anterior: 19
 citaban el maestro nombrado en prosa y 16 cruzaban celdas de la misma tabla de
-`openspec/specs/tickets-core/spec.md`; y, cortando la atribución en esos
+`openspec/specs/tickets-core/spec.md`. La que suma la ruta diseñada viene del plan de catálogo de
+equipos con un byte NUL (RQ-CV-09), y no está clasificada. Y, cortando la atribución en esos
 casos, al menos tres de las que quedaban seguían siendo citas válidas a otro documento —en la línea 144
 de `docs/sdd/F0-01_Correcciones_para_el_plan.md`, en la 33 de `openspec/specs/transitions-st/spec.md` y
 en la 325 de `openspec/specs/trazas/spec.md`—. Un corte sintáctico siempre deja falsos positivos, y un
@@ -311,9 +313,15 @@ M26 y M27 pasan a la lista de abreviadas rotas.)*
 El detector **SHALL** limitarse a ficheros bajo control de versiones. **MUST** excluir del barrido
 `openspec/changes/archive/` (registro fechado), `.claude/skills/superpowers-main/` (de terceros,
 verificado), `.agent/skills/` (skills importadas: de terceros verificado sólo en `react-components`,
-hipótesis en las otras cinco, y hoy con 0 citas) y `docs/artefactos/` (el HTML exportado del blueprint:
-12 falsos positivos de JavaScript minificado, 1,2-1,3 s de cosecha y 3.510 saltadas, medido el
-2026-09-13 sobre `20a951d`, nivel 2 de procedencia; decisión Q9 de la propuesta). La exclusión es **del
+hipótesis en las otras cinco, y hoy con 0 citas) y `docs/artefactos/` (decisión Q9 de la propuesta).
+**Hoy la exclusión de `docs/artefactos/` no cambia ninguna cifra de bloqueo:** `.gitattributes:12` en `648432d` marca
+su HTML con `-diff`, así que git lo trata como binario y `git grep -I` no le encuentra ninguna línea;
+excluir la carpeta o no mueve sólo 5 citas completas de su nota y 1 saltada, con la base igual.
+**Protege contra una regresión:** si alguien quitara ese atributo, el HTML entraría con 12 falsos
+positivos en la base, 3.510 saltadas y unos 2,5 s de cosecha (medido con `git grep -a` sobre esa
+carpeta, 2.497-2.576 ms, el 2026-09-13 sobre `773ad75`, nivel 2 de procedencia). *(La versión anterior
+de este requisito presentaba esas tres cifras como efecto actual; salían de un prototipo que leía el
+HTML como texto.)* La exclusión es **del
 barrido** —de las citas que viven en esos directorios—, **no del índice de resolución**: sus ficheros
 siguen siendo candidatos al resolver una ruta, y la precedencia exacta de RQ-CV-02 decide igual.
 
@@ -374,9 +382,20 @@ citas presentes en ella. Si una entrada de la base **ya no está rota**, el hook
 que se quite de la base. Una cita rota que **no** está en la base **MUST** bloquear siempre: la base
 **MUST NOT** crecer desde el hook — añadir una entrada exige editar el fichero a mano.
 
-**Medición de R-14:** **47 entradas**, sólo completas y ancladas, sin `docs/artefactos/`, medido el
-2026-09-13 sobre `20a951d` con el prototipo que lee todo en un solo `git cat-file --batch` (nivel 2 de
-procedencia). La cifra definitiva la produce el detector de la tanda.
+**Medición de R-14:** **51 entradas**, sólo completas y ancladas, con 42 claves (fichero, cita)
+distintas. Por motivo: 36 en línea vacía, 8 fuera de rango, 4 ambiguas rotas en todas sus candidatas
+y 3 con fichero inexistente. Medido el 2026-09-13 sobre `773ad75` **por la ruta diseñada**: `git grep
+-nI` sobre el sha, sin `docs/artefactos/` ni `*.csv`, y un `git cat-file --batch` de lo citado (nivel 2
+de procedencia). La cifra definitiva la produce el detector de la tanda.
+
+⚠️ **La versión anterior decía 47, y era una cifra de prototipo con otro criterio de binario.** Aquel
+prototipo descartaba cualquier fichero con un byte NUL en cualquier punto. El plan
+`docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos.md` tiene uno en su línea 834, en el byte
+39.726, dentro de un fragmento de código. `git grep -I` sólo mira los primeros 8.000 bytes, trata el
+fichero como texto y cosecha sus cuatro citas rotas, las de sus líneas 1326, 1512, 1543 y 1976.
+
+**Método: toda cifra de la tanda sale de la RUTA DISEÑADA (`git grep`), nunca de un prototipo con otro
+criterio.**
 
 *(Mutaciones: M9, M10, M17)*
 
@@ -659,14 +678,17 @@ cosecha; y el nombre exacto de los ficheros del detector y el formato de la lín
 
 **La atribución de abreviadas es PRECISIÓN DEL INFORME, no tamaño de la base.** Como las abreviadas no
 bloquean ni entran en la base (RQ-CV-06), la elección de atribución **SHALL** decidirse con número y
-**sin umbral**. Medido el 2026-09-13 sobre `20a951d`, sin `docs/artefactos/`, sobre 1.151 abreviadas
-(nivel 2 de procedencia), abreviadas rotas informadas y huérfanas por opción: misma línea y fichero
-anterior por índice, 55 y 810; con una completa sin resolver cortando, 54 y 814; además sin cruzar una
-barra de celda, 33 y 843; además sin cruzar «maestro», `R08` ni un apartado `Mx.y`, 18 y 863, con al
-menos tres falsos positivos que ningún corte ve; misma línea o, si no, el fichero de detrás, 127 y
-699; o el último de la línea anterior, 164 y 584; o el último del párrafo, 195 y 453.
+**sin umbral**. Medido el 2026-09-13 sobre `773ad75` por la ruta diseñada (`git grep`, sin
+`docs/artefactos/` ni `*.csv`), sobre 1.154 abreviadas (nivel 2 de procedencia), abreviadas rotas
+informadas y huérfanas por opción: misma línea y fichero anterior por índice, 56 y 810; con una completa
+sin resolver cortando, 55 y 814; además sin cruzar una barra de celda, 34 y 843; además sin cruzar
+«maestro», `R08` ni un apartado `Mx.y`, 19 y 863, con al menos tres falsos positivos que ningún corte
+ve; misma línea o, si no, el fichero de detrás, 128 y 699. Las dos opciones que miran fuera de la línea
+**no se pueden medir por la ruta diseñada**, porque `git grep` no da la línea anterior ni el párrafo:
+sus cifras son de prototipo y la opción es incompatible con la cosecha (el último fichero de la línea
+anterior, 164 y 584; el último del párrafo, 195 y 453, sobre 1.151).
 
-**R-14 queda CERRADO para el diseño con la base de 47 entradas** de RQ-CV-09 (decisión Q9). El umbral
+**R-14 queda CERRADO para el diseño con la base de 51 entradas** de RQ-CV-09 (decisión Q9). El umbral
 de **100 entradas** —calculado contra `review_budget_lines: 800`
 (`openspec/config.yaml:29` en `648432d`), suponiendo una línea por entrada y dividiendo si el formato
 ocupa más— **se conserva sólo
@@ -677,8 +699,8 @@ se pregunta a Gerencia antes de commitearla. No es tarea del diseño.
 diseño: que el hueco quede escrito, no omitido.)*
 
 #### Scenario: el diseño elige la atribución como precisión del informe y declara el hueco
-- GIVEN la medición por opción de este requisito —de 55 rotas y 810 huérfanas a 195 rotas y 453
-  huérfanas sobre 1.151 abreviadas, con falsos positivos en todas las opciones—
+- GIVEN la medición por opción de este requisito —de 19 rotas y 863 huérfanas a 128 rotas y 699
+  huérfanas sobre 1.154 abreviadas por la ruta diseñada, con falsos positivos en todas las opciones—
 - WHEN `sdd-design` fija el criterio de atribución
 - THEN el documento de diseño declara qué queda sin atribuir, qué falsos positivos admite el informe y
   por qué, en vez de omitirlo

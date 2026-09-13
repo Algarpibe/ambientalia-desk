@@ -14,12 +14,17 @@ de `pre-push` versionado, para que el incumplimiento **pare el push** en vez de 
 >    `openspec/config.yaml`, `DEPLOY.md` y el maestro; y `git shortlog -sne --all`, que hoy da **767 de
 >    767** commits de una identidad (el `766` del §7 es de antes de `648432d`).
 > 2. **Medido en el terminal orquestador de esta sesión y registrado como tal**: el censo de 1.873
->    citas y su reparto, las 43 rotas del sondeo, la línea base de 47 entradas medida sobre `20a951d`
->    (Pieza 3), los 663 ficheros trackeados, la tabla de tres variantes de la guarda del `prepare`, los tiempos del §7 y
+>    citas y su reparto, las 43 rotas del sondeo, la línea base de 51 entradas medida sobre `773ad75`
+>    por la ruta diseñada (Pieza 3), los 663 ficheros trackeados, la tabla de tres variantes de la guarda del `prepare`, los tiempos del §7 y
 >    el reparto de abreviadas huérfanas del §3 Pieza 2. **No reverificado aquí**, y por la regla de
 >    método eso las hace de segunda mano: se usan para decidir, no como prueba. La cifra definitiva de
 >    citas rotas **la produce el detector de esta tanda** (§3, Pieza 3).
 > 3. Lo demás lleva la palabra **hipótesis** delante.
+>
+> **Método: toda cifra de la tanda sale de la RUTA DISEÑADA (`git grep`), nunca de un prototipo con
+> otro criterio.** La base se dio como 47 con un prototipo que descartaba como binario cualquier
+> fichero con un byte NUL en cualquier punto; `git grep -I` sólo mira los primeros 8.000 bytes, y por
+> la ruta diseñada la base es 51 (Pieza 3, punto 4).
 
 > ### ⚠️ Dos convenciones de cita que esta propuesta se aplica a SÍ MISMA
 >
@@ -107,8 +112,8 @@ comprobar las citas ancladas a revisión, y además pondría el build en rojo **
    se atribuye, se comprueba y se informa en su propia cifra, con fichero, línea y motivo, pero **no
    bloquea ni entra en la línea base** (§3, Pieza 2; decisión Q9).
 4. **La línea base de citas ya rotas que BLOQUEAN** —completas y ancladas, ninguna abreviada—,
-   versionada, **generada por el detector** y que **sólo puede encoger** (§3, Pieza 3). Medida en **47
-   entradas** sobre `20a951d` (R-14).
+   versionada, **generada por el detector** y que **sólo puede encoger** (§3, Pieza 3). Medida en **51
+   entradas** sobre `773ad75` por la ruta diseñada (R-14).
 5. **El aviso de la condición de escalada** en el propio hook: `git shortlog -sne --all`, y con más de
    una identidad un aviso visible **que no bloquea** (§3, Pieza 6), con prueba de los dos signos.
 6. **El hook**, en `.githooks/pre-push`, con `core.hooksPath` (§3, Pieza 5).
@@ -130,7 +135,7 @@ comprobar las citas ancladas a revisión, y además pondría el build en rojo **
   (§12). El detector no lo intenta y su mensaje lo dice.
 - **El job de CI con `fetch-depth: 0`.** Es la **condición de escalada**: el hook la vigila y avisa,
   pero no la construye.
-- **Reparar las 47 citas ya rotas que bloquean** (medidas sobre `20a951d`; el sondeo dio ~43). Van a la
+- **Reparar las 51 citas ya rotas que bloquean** (medidas sobre `773ad75`; el sondeo dio ~43). Van a la
   línea base. Repararlas no es renumerar: son los tres casos A/B/C de `CLAUDE.md:195-199` en `648432d`,
   y elegir entre ellos exige leer qué afirma cada frase.
 - **Bloquear por la forma abreviada** (decisión Q9). **El referente de una abreviada lo decide quien lee
@@ -138,11 +143,16 @@ comprobar las citas ancladas a revisión, y además pondría el build en rojo **
   incluyen citas **válidas a otro documento**: 19 citaban el maestro nombrado en prosa, 16 cruzaban
   celdas de la misma tabla de `tickets-core/spec.md`, y al menos 3 más no las ve ningún corte
   sintáctico (Pieza 2). Un hook que bloquea no puede cargar con eso: las abreviadas se **informan**.
-- **Barrer `docs/artefactos/`.** Medido el 2026-09-13 sobre `20a951d` (nivel 2 de procedencia): el HTML
-  exportado del blueprint aporta **12 falsos positivos** de JavaScript minificado —expresiones como una
-  letra, barra, número, dos puntos y cero—, **1,2-1,3 s** de cosecha y **3.510 saltadas**. Queda
-  **fuera del barrido**, declarado igual que el archive; **no del índice de resolución**: sus dos ficheros siguen siendo candidatos al resolver una
-  ruta.
+- **Barrer `docs/artefactos/`.** Queda **fuera del barrido**, declarado igual que el archive; **no del
+  índice de resolución**: sus dos ficheros siguen siendo candidatos al resolver una ruta. **Hoy la
+  exclusión no cambia ninguna cifra:** `.gitattributes:12` en `648432d` marca el HTML con `-diff`, git
+  lo trata como binario y `git grep -I` no le encuentra ninguna línea; excluir o no la carpeta mueve 5
+  citas completas de su nota y 1 saltada, con la base igual (medido el 2026-09-13 sobre `773ad75` por
+  la ruta diseñada, nivel 2). **Protege contra una regresión:** si alguien quitara ese atributo, el HTML
+  exportado del blueprint entraría con **12 falsos positivos** de JavaScript minificado —expresiones
+  como una letra, barra, número, dos puntos y cero—, **3.510 saltadas** y **~2,5 s** de cosecha
+  (medido con `git grep -a` sobre la carpeta, 2.497-2.576 ms). *(La versión anterior de este punto daba
+  esas cifras, con 1,2-1,3 s, como efecto actual: salían de un prototipo que leía el HTML como texto.)*
 - **Desambiguar las 145 citas ambiguas** (decisión Q1): es una migración con decisión de alcance.
 - **Barrer `openspec/changes/archive/`.** Es registro fechado. Medido: las **20** citas al fichero
   `CLAUDE.md` con número de línea que hay en el repositorio están **todas** dentro del archive, y una
@@ -277,8 +287,11 @@ inexistente sigue bloqueando (rojo d, M3).
 
 **Por qué, medido** (2026-09-13, sobre `20a951d`, sin `docs/artefactos/`, nivel 2 de procedencia): con
 la atribución de esta Pieza, la línea base salía en **102** entradas, y **55** eran abreviadas; **54**
-si una completa sin resolver corta la atribución. De esas 54, clasificadas **por un script** —no leídas
-una a una; Gerencia confirmó de disco los casos de muestra—,
+si una completa sin resolver corta la atribución. *(Esas cifras son del prototipo. Por la ruta
+diseñada —`git grep`, sobre `773ad75`, sin `docs/artefactos/` ni `*.csv`— son **56** y **55**: la que
+suma viene del plan de catálogo de equipos con un byte NUL, Pieza 3 punto 4, y no está clasificada.)*
+De las 54 del prototipo, clasificadas **por un script** —no leídas una a una; Gerencia confirmó de
+disco los casos de muestra—,
 **19 citaban el maestro nombrado en prosa** —«maestro M1.9.2» seguido de la abreviada, que la regla
 atribuía al fichero de código anterior— y **16 cruzaban celdas** de la misma tabla de
 `tickets-core/spec.md`, en sus filas 544 y 545. Cortar la atribución en esos dos casos —por la barra de
@@ -360,20 +373,24 @@ inventada de `superpowers-main` queda fuera del barrido (§2, «No entra»). Con
 >
 > **Con la decisión Q9, esa elección ya NO mueve la línea base**: las abreviadas no entran en ella. Es
 > una elección de **precisión del informe**, y se decide con número y **sin umbral**. Medido el
-> 2026-09-13 sobre `20a951d`, sin `docs/artefactos/`, sobre **1.151** abreviadas (nivel 2 de
-> procedencia), abreviadas rotas informadas y huérfanas por opción:
+> 2026-09-13 sobre `773ad75` **por la ruta diseñada** (`git grep`, sin `docs/artefactos/` ni `*.csv`),
+> sobre **1.154** abreviadas (nivel 2 de procedencia), abreviadas rotas informadas y huérfanas por
+> opción:
 >
 > | Atribución | Rotas informadas | Huérfanas |
 > |---|---|---|
-> | Misma línea, fichero anterior por índice (la regla de esta Pieza) | 55 | 810 |
-> | Lo anterior, y una completa que no resuelve corta la atribución | 54 | 814 |
-> | Lo anterior, y además no cruza una barra de celda | 33 | 843 |
-> | Lo anterior, y además no cruza «maestro», `R08` ni un apartado `Mx.y` | 18 | 863 |
-> | Misma línea; si no hay fichero antes, el de detrás | 127 | 699 |
-> | Misma línea; si no, el último fichero de la línea anterior | 164 | 584 |
-> | Misma línea; si no, el último fichero del párrafo | 195 | 453 |
+> | Misma línea, fichero anterior por índice (la regla de esta Pieza) | 56 | 810 |
+> | Lo anterior, y una completa que no resuelve corta la atribución | 55 | 814 |
+> | Lo anterior, y además no cruza una barra de celda | 34 | 843 |
+> | Lo anterior, y además no cruza «maestro», `R08` ni un apartado `Mx.y` | 19 | 863 |
+> | Misma línea; si no hay fichero antes, el de detrás | 128 | 699 |
+> | Misma línea; si no, el último fichero de la línea anterior | 164 | 584 *(prototipo, sobre 1.151: opción incompatible con la cosecha)* |
+> | Misma línea; si no, el último fichero del párrafo | 195 | 453 *(prototipo, sobre 1.151: opción incompatible con la cosecha)* |
 >
-> ⚠️ Ninguna fila está libre de falsos positivos: incluso la de 18 conserva al menos tres (el
+> Las dos últimas filas **no se pueden medir por la ruta diseñada**: `git grep` no da la línea anterior
+> ni el párrafo.
+>
+> ⚠️ Ninguna fila está libre de falsos positivos: incluso la de 19 conserva al menos tres (el
 > apartado de la abreviada que no bloquea, más arriba). Cuantas más atribuye una opción, más rotas
 > informa **y más falsos positivos mete en el informe**; cuantas menos, más huérfanas calla.
 >
@@ -410,10 +427,17 @@ inventada de `superpowers-main` queda fuera del barrido (§2, «No entra»). Con
 4. **Se GENERA con el detector definitivo.** El sondeo del terminal dio 43 rotas (13 en
    `docs/sdd/F0-00_Baseline_as-built.md`, 11 en `docs/superpowers/plans/`, 14 en `openspec/specs/`, 1
    en `packages/zoho-sync/src/db/rows.ts`, 4 en otros) **y 2 falsos positivos por no leer anclas**. Esa
-   cifra es histórica. **Medición de R-14: 47 entradas** —sólo completas y ancladas, sin
-   `docs/artefactos/`—, el 2026-09-13 sobre `20a951d`, con el prototipo que lee todo en un solo
-   `git cat-file --batch` (nivel 2 de procedencia). La definitiva sigue saliendo del detector de esta
-   tanda.
+   cifra es histórica. **Medición de R-14: 51 entradas** —sólo completas y ancladas, 42 claves
+   (fichero, cita) distintas; 36 en línea vacía, 8 fuera de rango, 4 ambiguas rotas en todas sus
+   candidatas y 3 con fichero inexistente—, el 2026-09-13 sobre `773ad75` **por la ruta diseñada**:
+   `git grep -nI` sobre el sha, sin `docs/artefactos/` ni `*.csv`, y un `git cat-file --batch` de lo
+   citado (nivel 2 de procedencia). La definitiva sigue saliendo del detector de esta tanda.
+   ⚠️ **La versión anterior de este punto decía 47, y era cifra de prototipo con otro criterio de
+   binario.** Aquel prototipo descartaba cualquier fichero con un byte NUL en cualquier punto. El plan
+   `docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos.md` tiene uno en su línea 834, en el
+   byte 39.726, dentro de un fragmento de código; `git grep -I` sólo mira los primeros 8.000 bytes,
+   trata el fichero como texto y cosecha sus cuatro citas rotas, las de sus líneas 1326, 1512, 1543 y
+   1976.
 5. Fila de incumplimiento vivo nueva —**IV-10**— en `CLAUDE.md` (donde `CLAUDE.md:249` en `648432d`
    dice «**Cuatro** desvíos vivos» y la tabla de `CLAUDE.md:262-265` en `648432d` tiene cuatro filas:
    pasan a **cinco**) y en `openspec/config.yaml`, tras el final de IV-9
@@ -736,7 +760,7 @@ objeción razonable a meterlo en el hook: 300 ms sobre un presupuesto de 5.000 n
 |---|---|
 | **Cómo se mide en la tanda** | Invocando el hook **directamente** con la misma entrada que git le pasa por stdin, **sobre el árbol completo**: con el barrido de Q8 el push típico y el más caro cuestan lo mismo. Se registra el número, no la impresión |
 | **Palanca** | La cosecha de citas se hace con **`git grep -nIE` sobre el sha que se empuja** —una pasada en C sobre el árbol— y no leyendo 663 ficheros desde Node |
-| **`docs/artefactos/`, decidido por el número (Q9)** | `docs/artefactos/blueprintserviciotecnico.html` pesa **3.370.299 bytes** (`openspec/config.yaml:837` en `648432d`) y `.gitattributes` lo marca `-diff -merge`. `-I` no lo salta, porque es texto. **Medido con y sin** el 2026-09-13 sobre `20a951d` (nivel 2): la cosecha pasa de 1,45-1,61 s a 0,27-0,33 s —**1,2-1,3 s** de diferencia—, y la carpeta aporta **12 falsos positivos** y **3.510 saltadas**. **Queda fuera del barrido**, declarada y justificada en el §2 junto a `openspec/changes/archive/` |
+| **`docs/artefactos/`, decidido por el número (Q9)** | `docs/artefactos/blueprintserviciotecnico.html` pesa **3.370.299 bytes** (`openspec/config.yaml:837` en `648432d`) y `.gitattributes:12` en `648432d` lo marca `-diff -merge`. **⚠️ La versión anterior de esta fila decía que `-I` no lo salta porque es texto. ERA FALSO:** con `-diff` git trata el HTML como binario, y `git grep -I` le encuentra 0 líneas, frente a 122 sin `-I` (verificado el 2026-09-13 sobre `773ad75`). Las cifras que daba —la cosecha de 1,45-1,61 s a 0,27-0,33 s, 12 falsos positivos y 3.510 saltadas— salían de un prototipo que leía el HTML como texto. **Por la ruta diseñada, hoy:** excluir la carpeta o no mueve 5 citas completas de su nota y 1 saltada, con la base igual y 0 falsos positivos del HTML. **Si alguien quitara `-diff`** (medido con `git grep -a`): 12 falsos positivos, 3.510 saltadas y ~2,5 s de cosecha (2.497-2.576 ms). **Queda fuera del barrido como protección** contra esa regresión, declarada en el §2 junto a `openspec/changes/archive/` |
 | **El coste del intérprete** | El detector es `.ts` y el servidor corre con `tsx` (`package.json:13` en `648432d`, `package.json:15` en `648432d`). El arranque de `tsx` entra en el presupuesto y se mide con él, no aparte |
 
 ---
@@ -774,7 +798,7 @@ cierta y luego dejó de serlo.
 | **R-11** | **La tanda se rompe a sí misma.** Sus artefactos citan los dos ficheros que modifica, y el detector **no caza las citas que quedan en contenido equivocado**, en rango y no vacías. En la ilustración de la Pieza 3 —+1 en `CLAUDE.md`, +20 en `openspec/config.yaml`— se desplazan **ocho** y caza **cuatro**; con +5 en `CLAUDE.md`, o de +25 a +40 en `openspec/config.yaml`, **no caza ninguna** | **Cierta sin anclaje — ya pasó una vez en esta propuesta** | Anclaje a `648432d` **cita por cita** en los cuatro ficheros que la tanda toca, la mutación M20, y la comprobación final del §8 sobre los artefactos commiteados |
 | **R-12** | **El 60 % de las abreviadas queda huérfano** con la atribución por línea física —**el 71 %** con los requisitos (a) a (d) de la Pieza 2—, y se salta en silencio. **Y las que se atribuyen pueden atribuirse mal**: el referente lo decide el contexto, no la sintaxis | Alta | **Las abreviadas no bloquean ni entran en la base** (Q9): se comprueban y se **informan** en su propia cifra, y su comprobación sigue siendo de lectura humana con el informe como ayuda. La atribución es **precisión del informe**: nota para `sdd-design` (Pieza 2) con la medición por opción, **sin umbral**, y el hueco que decida **se declara**. En esta propuesta las abreviadas a los cuatro ficheros de la tanda se reescribieron como citas completas |
 | **R-13** | **El extremo del RANGO es el modo de fallo dominante, no el número suelto.** Medido en esta sesión: **cinco** citas desfasadas, **las cinco** por un extremo del rango; una de ellas mal **por los dos** a la vez (inicio en línea en blanco, final cortando el párrafo). Un detector que comprobara sólo el inicio, o sólo la existencia de la línea, dejaría fuera la mitad medida | **Cierta — ya ocurrió cinco veces** | Rojo (c) del §4 y mutación **M4 en sus dos direcciones**: final fuera con inicio bueno, **e** inicio en línea en blanco con final bueno. Y el mensaje nombra **cuál** de los dos extremos falla, porque «el rango está roto» no dice dónde mirar |
-| **R-14** | **Presupuesto de la línea base.** **Cada entrada es una línea** contra las 800 de `review_budget_lines` (`openspec/config.yaml:29` en `648432d`). **Medido antes de `sdd-design`** (2026-09-13, sobre `20a951d`, nivel 2): con la atribución de la Pieza 2 y las abreviadas **bloqueando**, la base salía en **114** entradas, y en **102** sin `docs/artefactos/` —55 de ellas abreviadas—. Pasaba del umbral de 100, se paró y se preguntó a Gerencia | **CERRADO por Q9** | **Opción (d): las abreviadas no bloquean ni entran en la base, y `docs/artefactos/` sale del barrido. Base medida: 47 entradas**, sólo completas y ancladas. El extremo alto del §11 sin la base suma **619** líneas —617 antes de la segunda frase de la regla 4—; con las 47 son **666**, que dejan **134** de margen contra las 800. **La opción (a) se DESCARTÓ**: cortar la atribución por la barra de celda y por el vocabulario del maestro dejaba **65** entradas, pero ningún corte sintáctico decide el referente de una abreviada (Pieza 2). **⚠️ La versión anterior de esta medición, en el informe del orquestador, decía que las 18 abreviadas que quedaban con la opción (a) eran roturas reales revisadas una a una. ERA FALSO:** al menos tres son falsos positivos —la abreviada 1705 de la línea 144 de `docs/sdd/F0-01_Correcciones_para_el_plan.md`, que es del maestro; la 1636 de la línea 33 de `openspec/specs/transitions-st/spec.md`, que es M1.9.1 del maestro; y la 20 y la 380 de la línea 325 de `openspec/specs/trazas/spec.md`, del «design unificada» y de `repo.ts`—, y la «revisión» fue una **clasificación automática por vocabulario**, no una lectura de contexto. **El umbral de 100 se conserva sólo como guarda** para la base que genere el detector definitivo en la tanda: si pasara de 100, se para y se pregunta. No es tarea del diseño. Supone una línea por entrada: si el formato usa más, se divide por las líneas que ocupe cada una |
+| **R-14** | **Presupuesto de la línea base.** **Cada entrada es una línea** contra las 800 de `review_budget_lines` (`openspec/config.yaml:29` en `648432d`). **Medido antes de `sdd-design`** (2026-09-13, sobre `20a951d`, nivel 2): con la atribución de la Pieza 2 y las abreviadas **bloqueando**, la base salía en **114** entradas, y en **102** sin `docs/artefactos/` —55 de ellas abreviadas—. Pasaba del umbral de 100, se paró y se preguntó a Gerencia | **CERRADO por Q9** | **Opción (d): las abreviadas no bloquean ni entran en la base, y `docs/artefactos/` sale del barrido. Base medida: 51 entradas**, sólo completas y ancladas, el 2026-09-13 sobre `773ad75` por la ruta diseñada (`git grep`). **Toda cifra de la tanda sale de la RUTA DISEÑADA, nunca de un prototipo con otro criterio:** la versión anterior de esta fila decía 47, medido con un prototipo que descartaba como binario cualquier fichero con un byte NUL en cualquier punto, cuando `git grep -I` sólo mira los primeros 8.000 bytes (Pieza 3, punto 4). El extremo alto del §11 sin la base suma **619** líneas —617 antes de la segunda frase de la regla 4—; con las 51 son **670**, que dejan **130** de margen contra las 800. **La opción (a) se DESCARTÓ**: cortar la atribución por la barra de celda y por el vocabulario del maestro dejaba **65** entradas, pero ningún corte sintáctico decide el referente de una abreviada (Pieza 2). **⚠️ La versión anterior de esta medición, en el informe del orquestador, decía que las 18 abreviadas que quedaban con la opción (a) eran roturas reales revisadas una a una. ERA FALSO:** al menos tres son falsos positivos —la abreviada 1705 de la línea 144 de `docs/sdd/F0-01_Correcciones_para_el_plan.md`, que es del maestro; la 1636 de la línea 33 de `openspec/specs/transitions-st/spec.md`, que es M1.9.1 del maestro; y la 20 y la 380 de la línea 325 de `openspec/specs/trazas/spec.md`, del «design unificada» y de `repo.ts`—, y la «revisión» fue una **clasificación automática por vocabulario**, no una lectura de contexto. **El umbral de 100 se conserva sólo como guarda** para la base que genere el detector definitivo en la tanda: si pasara de 100, se para y se pregunta. No es tarea del diseño. Supone una línea por entrada: si el formato usa más, se divide por las líneas que ocupe cada una |
 
 ---
 
@@ -805,7 +829,7 @@ cierta y luego dejó de serlo.
 |---|---|---|---|
 | `apps/desk/server/citas/` (detector + CLI) | **Nuevo** | Cosecha, resolución, comprobación, salida. **Sin** el rango entre shas, `merge-base` ni `-M`; **con** la lectura de anclas en un `cat-file --batch` y el **índice remoto** con su caso de rama nueva | 125-195 *(130-200 antes de Q8)* |
 | `apps/desk/server/citas/*.test.ts` | **Nuevo** | Los ocho rojos vigentes del §4 y las mutaciones automatizables del §6: **sin** f ni M6; **con** M7 redefinida, M29 y el guardián estático de M16 | 160-260 *(igual que antes de Q8)* |
-| `apps/desk/server/citas/` (línea base) | **Nuevo** | **Generada**, no copiada. Una entrada por cita rota **que bloquea** —completas y ancladas, ninguna abreviada (Q9)— | 47 (medido sobre `20a951d`; la definitiva la da el detector) |
+| `apps/desk/server/citas/` (línea base) | **Nuevo** | **Generada**, no copiada. Una entrada por cita rota **que bloquea** —completas y ancladas, ninguna abreviada (Q9)— | 51 (medido sobre `773ad75` por la ruta diseñada; la definitiva la da el detector) |
 | `.githooks/pre-push` | **Nuevo** | Invoca al detector con `node_modules/.bin/tsx` y el stdin, sin lógica de shell, **+ el aviso de escalada** (`git shortlog`, ~10 líneas) | 15-25 |
 | `apps/desk/server/citas/` (prueba del aviso) | **Nuevo** | **Los dos signos** del aviso de escalada: una identidad / dos | 25-30 |
 | `scripts/instalar-hooks.mjs` | **Nuevo** | `spawnSync` + `git config core.hooksPath`, con el mensaje en voz alta | 20-35 |
@@ -813,14 +837,14 @@ cierta y luego dejó de serlo.
 | `DEPLOY.md` | Modificado | El comando manual para `--ignore-scripts` y el `--unset` de la reversión | 3-6 |
 | `CLAUDE.md` | Modificado | Fila **IV-10**, el recuento de `CLAUDE.md:249` en `648432d` («Cuatro» → «Cinco») **y las dos frases de la regla de mutación 4**, la de Q6 y la de Q9 | 13-26 *(12-24 con sólo la de Q6)* |
 | `openspec/config.yaml` | Modificado | IV-10 en `incumplimientos_vivos`, tras el final de IV-9 | 25-40 |
-| **Total código + pruebas + datos** | | | **~435-665** *(~430-660 con la base estimada en ~45 y una sola frase en la regla 4; ~440-660 antes de Q8)* |
+| **Total código + pruebas + datos** | | | **~440-670** *(~435-665 con la base de 47 del prototipo; ~430-660 con la base estimada en ~45 y una sola frase en la regla 4; ~440-660 antes de Q8)* |
 
 **Talla S, confirmada, con la reserva dicha.** No hay lógica de dominio nueva ni esquema ni escritura a
 Zoho: es un lector de texto con su hook. Lo que la engorda son las pruebas, y eso es lo correcto bajo
 `strict_tdd`. El aviso de escalada subió la estimación de 400-620 a ~440-660 (~10 líneas en el hook más
 25-30 de prueba de dos signos), y el barrido completo de Q8 la deja en **~430-660**: se va la lógica del
 rango con sus pruebas —f y M6— y entran la lectura en `cat-file --batch`, el índice remoto con M7
-redefinida, M29 y el guardián estático de M16. Q9 fija la base en las 47 medidas y añade la segunda
+redefinida, M29 y el guardián estático de M16. Q9 fija la base en las 51 medidas y añade la segunda
 frase de la regla 4; **M30 y la cifra de abreviadas rotas no mueven los rangos del detector ni de sus
 pruebas**, que ya son amplios. Todo es **estimación**, no medida.
 **Presupuesto `review_budget_lines: 800`** (`openspec/config.yaml:29` en `648432d`): cabe, pero sin la
@@ -848,7 +872,7 @@ holgura de una tanda S típica — depende de R-9 (planificación commiteada ant
 
 | Qué | Dueño y registro | Por qué no es de la tanda |
 |---|---|---|
-| **Leer lo semántico**: que cada línea citada **diga** lo que su frase afirma, en las entradas de la línea base (47 medidas sobre `20a951d`; ~43 en el sondeo) | Quien decida el alcance de la reparación. Se anota con dueño, resultado y fecha | La regla 4 lo exige y el detector **no puede**: son los tres casos A/B/C de `CLAUDE.md:195-199` en `648432d`, y elegir entre ellos es leer una afirmación, no contar líneas |
+| **Leer lo semántico**: que cada línea citada **diga** lo que su frase afirma, en las entradas de la línea base (51 medidas sobre `773ad75` por la ruta diseñada; ~43 en el sondeo) | Quien decida el alcance de la reparación. Se anota con dueño, resultado y fecha | La regla 4 lo exige y el detector **no puede**: son los tres casos A/B/C de `CLAUDE.md:195-199` en `648432d`, y elegir entre ellos es leer una afirmación, no contar líneas |
 | **Asignar destino a IV-10 y decir quién repara la base** | Gerencia | Asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Nace **sin destino decidido explícitamente** (Q4), y la fila lo dice: «la base no encoge hasta que Gerencia asigne quién la repara» |
 
 ⚠️ **Vigilar la condición de escalada SALIÓ de esta sección** (decisión Q5). Estaba modelada como tarea
@@ -877,7 +901,7 @@ medición de R-14 que exigía la propia propuesta pasó del umbral.
 | **Q6** | El ejemplo de cita rota del §2 tenía **forma de cita**, así que el detector lo trataría como rota | **ACEPTADA, opción (i)**: el ejemplo se reescribe **sin forma de cita**, y se añade a la tanda **una frase en la regla de mutación 4 de `CLAUDE.md`**: «un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como rota» | §2 «No entra» y «Entra» 9; convención 2 de la cabecera; M22; unidad de trabajo 2 |
 | **Q7** | **NUEVA, y verificada de disco por Gerencia.** «Insertar IV-10 no desfasa ninguna cita en alcance» se midió **antes de que la propuesta existiera**: era cierta entonces y es **FALSA ahora** | **Tres partes: (a)** anclar a `648432d` toda cita de los artefactos de la tanda a los cuatro ficheros que la tanda modifica; **(b)** rehacer la medición **incluyendo los artefactos de la propia tanda** y mover la comprobación **al final, sobre los artefactos commiteados**; **(c)** añadir la mutación del anclaje | Cabecera (convenciones 1 y 2); Pieza 3 (medición rehecha); §8 (segunda comprobación); M20; R-11; §15 |
 | **Q8** | **POSTERIOR a la ronda (2026-09-13), y reabre el alcance.** ¿Barrer «lo que el push pone en juego» o barrer todo? | **BARRIDO COMPLETO en cada push.** Con línea base, que una cita esté bien o rota depende sólo del fichero donde vive y del citado: el barrido completo da el mismo resultado, **caza lo que un push sin hook dejó roto en contenido** (no las citas peladas a un fichero que ese push renombró o borró: Pieza 6), es más simple y cabe en coste (~1 s). Todo se comprueba contra el sha local. **Corregida el mismo día:** el sha remoto se usa **sólo como índice de resolución** (`git ls-tree`), porque sin él las citas **peladas** a un fichero renombrado se saltaban | Pieza 1; Pieza 2 (fila del índice remoto); §2 «Entra» 2; Pieza 6 (hueco del segundo clon); §4 (f retirado, g con cita pelada); §6 (M6 retirada, M7 redefinida, M29 nueva); §7; §11; R-7; R-14; §15 |
-| **Q9** | **POSTERIOR a la ronda (2026-09-13), y la dispara R-14.** Medida antes de `sdd-design`, la línea base salía en **114** entradas, y en **102** sin `docs/artefactos/`, contra un umbral de 100. ¿Qué se hace con una base de 102-114? | **Opción (d): las abreviadas son INFORMATIVAS.** Se atribuyen con los requisitos (a) a (d), se comprueban y se informan en su propia cifra, con fichero, línea y motivo; **no bloquean ni entran en la base**. La base sólo lleva citas que bloquean —completas y ancladas—: **47 entradas**, medidas sobre `20a951d`. `docs/artefactos/` sale del barrido. **Se descartó la opción (a)** —cortes por barra de celda y por vocabulario del maestro, 65 entradas— porque **el referente de una abreviada lo decide quien lee el contexto, no la sintaxis**, y al menos tres de sus abreviadas «reales» eran falsos positivos | §2 «Entra» 3, 4 y 9 y «No entra»; Pieza 2 (la abreviada no bloquea, precisión sobre (a) y (b), tabla de requisitos, nota para `sdd-design`); Pieza 3 (puntos 1 y 4, y la simulación de Q7); Pieza 6 (cuatro cifras); §6 (M14, M24 a M27, M30 nueva); §7; R-5; R-12; R-14; §11; §12; §15 |
+| **Q9** | **POSTERIOR a la ronda (2026-09-13), y la dispara R-14.** Medida antes de `sdd-design`, la línea base salía en **114** entradas, y en **102** sin `docs/artefactos/`, contra un umbral de 100. ¿Qué se hace con una base de 102-114? | **Opción (d): las abreviadas son INFORMATIVAS.** Se atribuyen con los requisitos (a) a (d), se comprueban y se informan en su propia cifra, con fichero, línea y motivo; **no bloquean ni entran en la base**. La base sólo lleva citas que bloquean —completas y ancladas—: **51 entradas**, medidas sobre `773ad75` por la ruta diseñada (47 con el prototipo que descartaba ficheros con un NUL, Pieza 3 punto 4). `docs/artefactos/` sale del barrido, como protección (§7). **Se descartó la opción (a)** —cortes por barra de celda y por vocabulario del maestro, 65 entradas— porque **el referente de una abreviada lo decide quien lee el contexto, no la sintaxis**, y al menos tres de sus abreviadas «reales» eran falsos positivos | §2 «Entra» 3, 4 y 9 y «No entra»; Pieza 2 (la abreviada no bloquea, precisión sobre (a) y (b), tabla de requisitos, nota para `sdd-design`); Pieza 3 (puntos 1 y 4, y la simulación de Q7); Pieza 6 (cuatro cifras); §6 (M14, M24 a M27, M30 nueva); §7; R-5; R-12; R-14; §11; §12; §15 |
 
 **Lo que Q7 enseña, y por eso no es una corrección menor:** en la ilustración de la Pieza 3 —+1 en
 `CLAUDE.md`, +20 en `openspec/config.yaml`— la inserción de IV-10 desplaza **ocho** citas, y el detector
@@ -957,7 +981,7 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
       signos** (M21).
 - [ ] La línea base está **generada por el detector**, no copiada del sondeo, y su cifra va con **fecha
       de medición**. **Sólo contiene citas que bloquean** —completas y ancladas, ninguna abreviada—; la
-      medición previa dio **47** sobre `20a951d` (R-14), y si la generada pasa de 100 se para y se
+      medición previa dio **51** sobre `773ad75` por la ruta diseñada (R-14), y si la generada pasa de 100 se para y se
       pregunta.
 - [ ] La base **sólo encoge**: una entrada que ya no está rota **pone el hook rojo** (M9); y una cita
       rota que no está en la base **bloquea** aunque la base exista (M10).
@@ -987,7 +1011,8 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
 - [ ] **Ningún artefacto de la tanda cita sus propias líneas** ni las de otro artefacto de la tanda: no
       hay revisión a la que anclarlo y se rompe con la siguiente edición.
 - [ ] El coste está **medido y registrado** con la entrada real por stdin, dentro del objetivo de Q3
-      (≤ 5 s, tope 10 s), ya sin `docs/artefactos/` en el barrido (Q9, decidido por el número del §7).
+      (≤ 5 s, tope 10 s), ya sin `docs/artefactos/` en el barrido (Q9; exclusión de protección, con sus
+      números por la ruta diseñada en el §7).
 - [ ] **Las veintinueve mutaciones vigentes del §6 se ejecutaron** —de M1 a M30 sin M6, retirada por Q8
       con su número—, cada una con su control. Las que no se puedan
       automatizar van declaradas como tal, no omitidas. **M20 corre SIEMPRE sobre un repositorio
@@ -1033,7 +1058,7 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
 - **La decisión de Gerencia está cerrada**: Engram `decision/detector-citas-pre-push`, obs. 513,
   2026-09-13, opción 4 de cuatro; la ronda del §13 cerrada el mismo día con siete respuestas; Q8,
   posterior a esa ronda, que cambia el alcance a barrido completo; y Q9, que hace informativas las
-  abreviadas y fija la base en 47.
+  abreviadas y fija la base en 51.
 - **Acopla con el CI en un punto y no lo bloquea**: `ci.yml:26` (`npm ci`) disparará el `prepare` nuevo.
   El job de CI con `fetch-depth: 0` **no se construye aquí**: es la condición de escalada, y el hook la
   vigila.
