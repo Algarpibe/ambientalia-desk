@@ -43,6 +43,29 @@ exportar; el `.docx` sigue siendo el original editable.
 Las correcciones que el maestro necesita **no se aplican al `.docx`**: se entregan como texto en
 `docs/sdd/F0-01_Correcciones_para_el_maestro.md` para que Gerencia las pegue.
 
+**Un apartado del maestro está marcado `[EN REVISIÓN — R08]`, y citar un ítem suyo no es citar algo
+acordado.** Es el **§3.2 «MVP — P0 · *Control y ejecución*»** (`:2839-3015`). Su tabla ocupa
+`:2851-3012`: cabecera de columnas en `:2851`, última fila el ítem 28 en `:3008-3012`. Las
+`:3013-3015` son tres notas posteriores, no filas. En `:2841` el revisor marca **todo el backlog
+del MVP** como pendiente de revisar y discutir a fondo —no objeta un ítem concreto: la lista se
+construyó antes de conocerse el as-built—, y en `:2842` el maestro dice que **la tabla se mantiene
+como está, sin retocar, hasta esa sesión**, remitiendo al **Anexo H** como lo que sí refleja el
+estado real.
+
+*Qué hacer con eso:* un ítem de esa tabla vale como **procedencia** —de dónde salió una fila del
+plan— y NO como alcance acordado. Si una tanda nueva se apoya en uno para justificar su alcance, la
+justificación operativa tiene que ser el plan o una decisión de Gerencia, no el ítem.
+
+*Medido el 2026-09-13, y la conclusión fue que la marca NO se propaga:* de las **109** citas
+`R08.1.md:NNNN` del repositorio sólo **una** cae dentro del §3.2 —la de
+`openspec/specs/vistas-tablero/spec.md:9`, que ya la lleva escrita—. Hay además **tres** menciones
+SIN línea (`ítem 22 del maestro` en `openspec/config.yaml:349`, `:519` y `:658`), y las tres usan el
+ítem exactamente como procedencia de `plan:157` para justificar destinos **ya cerrados** (IV-1,
+IV-5, IV-7 → F1B-08): no hay nada que corregir en ellas. ⚠️ Esas tres **no las caza** ni
+`grep -rn "Fuente en el maestro" openspec/specs` ni un barrido de `R08.1.md:[0-9]+`, porque no
+llevan número de línea. Hicieron falta **tres** detectores, que es el mismo molde de siempre: un
+detector que no caza todo lo que la afirmación abarca.
+
 ---
 
 ## Las tres reglas
