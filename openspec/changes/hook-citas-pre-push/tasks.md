@@ -68,56 +68,56 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
 
 ## Fase 1 (Unidad 1a) — Núcleo puro + pruebas en memoria
 
-- [ ] 1.1 Setup: crear `apps/desk/server/testing/reposDePrueba.ts` — porción `Repo` en memoria +
+- [x] 1.1 Setup: crear `apps/desk/server/testing/reposDePrueba.ts` — porción `Repo` en memoria +
       constructores `cita()`, `abreviada()`, `anclada()` en tiempo de ejecución (D7).
-- [ ] 1.2 RED (RQ-CV-08, rojos a+b): `detector.test.ts` — cita rota en doc trackeado ≠0; misma cita
+- [x] 1.2 RED (RQ-CV-08, rojos a+b): `detector.test.ts` — cita rota en doc trackeado ≠0; misma cita
       válida →0.
-- [ ] 1.3 GREEN: `cosecha.ts` (tokeniza citas completas) + `detector.ts` (fichero+línea+vacía) mínimo
+- [x] 1.3 GREEN: `cosecha.ts` (tokeniza citas completas) + `detector.ts` (fichero+línea+vacía) mínimo
       para 1.2.
-- [ ] 1.4 RED (RQ-CV-08, rojo c, M4, dos direcciones): extremo final fuera con inicial OK ≠0 nombrando
+- [x] 1.4 RED (RQ-CV-08, rojo c, M4, dos direcciones): extremo final fuera con inicial OK ≠0 nombrando
       el extremo; e inicial en línea en blanco con final OK ≠0 nombrando el otro extremo.
-- [ ] 1.5 GREEN: comprobar los dos extremos del rango por separado en `detector.ts`, mensaje nombra cuál
+- [x] 1.5 GREEN: comprobar los dos extremos del rango por separado en `detector.ts`, mensaje nombra cuál
       falla.
-- [ ] 1.6 RED (RQ-CV-06, rojo d, M3): anclada a revisión real →0; anclada a revisión inventada ≠0
+- [x] 1.6 RED (RQ-CV-06, rojo d, M3): anclada a revisión real →0; anclada a revisión inventada ≠0
       (`Repo` en memoria simula revisiones).
-- [ ] 1.7 GREEN: patrón de cita anclada en `cosecha.ts`; `detector.ts` resuelve vía `leerLote` simulado.
-- [ ] 1.8 RED (M9, M10, M17): entrada de la base ya reparada sin quitarla → hook falla; quitándola → 0;
+- [x] 1.7 GREEN: patrón de cita anclada en `cosecha.ts`; `detector.ts` resuelve vía `leerLote` simulado.
+- [x] 1.8 RED (M9, M10, M17): entrada de la base ya reparada sin quitarla → hook falla; quitándola → 0;
       cita rota nueva con base presente → bloquea.
-- [ ] 1.9 GREEN: casar la base por (fichero, cita) con multiplicidad (D6); consultar la base ANTES de
+- [x] 1.9 GREEN: casar la base por (fichero, cita) con multiplicidad (D6); consultar la base ANTES de
       decidir el bloqueo.
-- [ ] 1.10 MUT (regla de mutación 1, M17): mover temporalmente la consulta de la base a DESPUÉS del
+- [x] 1.10 MUT (regla de mutación 1, M17): mover temporalmente la consulta de la base a DESPUÉS del
       bloqueo en `detector.ts`; confirmar que 1.8 se pone roja; revertir.
-- [ ] 1.11 RED (RQ-CV-09, M30): la base generada no contiene abreviadas; abreviada rota → aparece en el
+- [x] 1.11 RED (RQ-CV-09, M30): la base generada no contiene abreviadas; abreviada rota → aparece en el
       informe sin bloquear; abreviada válida → entre las comprobadas.
-- [ ] 1.12 GREEN: generación/lectura de la base excluye abreviadas; una abreviada rota nunca cambia el
+- [x] 1.12 GREEN: generación/lectura de la base excluye abreviadas; una abreviada rota nunca cambia el
       código de salida.
-- [ ] 1.13 RED (D11): un solo `leerLote` por árbol para sha local + anclas; la lectura de una anclada
+- [x] 1.13 RED (D11): un solo `leerLote` por árbol para sha local + anclas; la lectura de una anclada
       vuelve al índice de su propia revisión sólo si el fichero no está en el sha local.
-- [ ] 1.14 GREEN: `detector.ts` agrupa todas las lecturas en una única llamada a `Repo.leerLote`.
-- [ ] 1.15 RED (M22): ejemplo de cita rota CON forma de cita en doc trackeado → bloquea; el mismo ejemplo
+- [x] 1.14 GREEN: `detector.ts` agrupa todas las lecturas en una única llamada a `Repo.leerLote`.
+- [x] 1.15 RED (M22): ejemplo de cita rota CON forma de cita en doc trackeado → bloquea; el mismo ejemplo
       en prosa, sin forma de cita → pasa.
-- [ ] 1.16 GREEN: confirmar sin código nuevo — ya cubierto por 1.3/1.7 (`cosecha.ts` no distingue
+- [x] 1.16 GREEN: confirmar sin código nuevo — ya cubierto por 1.3/1.7 (`cosecha.ts` no distingue
       "ejemplos").
-- [ ] 1.17 RED (M24, M25): cita válida a `Dockerfile` (sin extensión) → comprobada y 0, fuera de rango →
+- [x] 1.17 RED (M24, M25): cita válida a `Dockerfile` (sin extensión) → comprobada y 0, fuera de rango →
       bloquea; cita válida a `.dockerignore` (punto inicial) → comprobada, fuera de rango → bloquea.
-- [ ] 1.18 GREEN: patrón de nombre en `cosecha.ts` sin lista de extensiones y que admite punto inicial.
-- [ ] 1.19 RED (M26): «fichero A, abreviada, fichero B», válida en A/vacía en B → comprobada, no en lista
+- [x] 1.18 GREEN: patrón de nombre en `cosecha.ts` sin lista de extensiones y que admite punto inicial.
+- [x] 1.19 RED (M26): «fichero A, abreviada, fichero B», válida en A/vacía en B → comprobada, no en lista
       de rotas; A/B intercambiados → en lista de rotas.
-- [ ] 1.20 RED (M27): mención pelada de un fichero que resuelve, seguida de varias abreviadas → todas
+- [x] 1.20 RED (M27): mención pelada de un fichero que resuelve, seguida de varias abreviadas → todas
       atribuidas y comprobadas; una fuera de rango → en lista de rotas; sin (d), o capturando cualquier
       token pelado, deja de figurar.
-- [ ] 1.21 GREEN: atribución Lbc en `cosecha.ts` — último fichero anterior por índice en la misma línea
+- [x] 1.21 GREEN: atribución Lbc en `cosecha.ts` — último fichero anterior por índice en la misma línea
       física; mención pelada cuenta si resuelve a fichero trackeado.
-- [ ] 1.22 RED (D1, los dos cortes de Lbc, dos signos cada uno): una cita completa que no resuelve, antes
+- [x] 1.22 RED (D1, los dos cortes de Lbc, dos signos cada uno): una cita completa que no resuelve, antes
       de una abreviada, corta la atribución; una abreviada tras la barra de una celda de tabla corta la
       atribución.
-- [ ] 1.23 GREEN: los dos cortes de Lbc en `cosecha.ts` (sin corte por vocabulario).
-- [ ] 1.24 RED (RQ-CV-16, D3): `host:puerto` dentro de una URL con esquema → ni comprobada ni saltada;
+- [x] 1.23 GREEN: los dos cortes de Lbc en `cosecha.ts` (sin corte por vocabulario).
+- [x] 1.24 RED (RQ-CV-16, D3): `host:puerto` dentro de una URL con esquema → ni comprobada ni saltada;
       cita real de dos puntos fuera de una URL → se cosecha.
-- [ ] 1.25 GREEN: `cosecha.ts` no trata como cita un `host:puerto` dentro de `<esquema>://…`.
-- [ ] 1.26 RED (M28, RQ-CV-04): token `~/x/y.md:3` → cifra "fuera del repositorio", no bloquea; ruta
+- [x] 1.25 GREEN: `cosecha.ts` no trata como cita un `host:puerto` dentro de `<esquema>://…`.
+- [x] 1.26 RED (M28, RQ-CV-04): token `~/x/y.md:3` → cifra "fuera del repositorio", no bloquea; ruta
       relativa que no existe → bloquea (control del otro signo).
-- [ ] 1.27 GREEN: categoría "fuera del repositorio" evaluada antes que cualquier regla de resolución.
+- [x] 1.27 GREEN: categoría "fuera del repositorio" evaluada antes que cualquier regla de resolución.
 - [ ] 1.28 RED (RQ-CV-05, pasos 6-8 de D4): token con `/` que no resuelve en el índice local → bloquea
       "fichero inexistente"; token SIN `/` que no resuelve → se salta e informa.
 - [ ] 1.29 GREEN: pasos 6-8 del orden D4 en `resolucion.ts` (el paso 5, índice remoto, se prueba en

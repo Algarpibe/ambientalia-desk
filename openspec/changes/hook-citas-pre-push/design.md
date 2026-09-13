@@ -567,6 +567,7 @@ de desarrollo.
 | 5 | RQ-CV-09 | La base casa por (fichero, cita) con multiplicidad; la línea es informativa | D6 |
 | 6 | Propuesta, §11 | El aviso de escalada va en TypeScript; `.gitattributes` entra en la unidad 3; la talla sube | D8, D10, §3 |
 | 7 | RQ-CV-12, M16 | La ejecución sin `node_modules` queda manual; el guardián estático se automatiza | §8 |
+| 8 | D11 y §5 (puerto `Repo`), corte 1a | Una cita anclada se lee por su ruta literal en el árbol de su revisión, sin consultar antes el índice del sha local ni resolver sufijo o ambigüedad dentro del ancla. El puerto `Repo` se declara en `detector.ts`, no en un fichero propio | En el corte 1a la única prueba en memoria de la vuelta del ancla pasa con la lectura directa, y el diseño no fija dónde vive el puerto. No se refactoriza, por decisión de Gerencia (2026-09-13): el coste se mide en el corte 1b, donde hay git de verdad |
 
 ---
 
