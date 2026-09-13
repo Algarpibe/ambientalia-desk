@@ -201,7 +201,7 @@ de aceptación correspondiente del §15.)*
 - WHEN corre el hook
 - THEN se salta e informa, sin bloquear
 
-### Requirement: RQ-CV-06 · La forma abreviada se atribuye al último fichero anterior por índice, y la anclada se verifica por revisión
+### Requirement: RQ-CV-06 · La forma abreviada se atribuye al último fichero anterior por índice, se comprueba y se INFORMA sin bloquear; la completa anclada se verifica por revisión
 
 La forma abreviada (`` `:N` ``) **SHALL** atribuirse al último nombre de fichero que aparece **antes**
 de ella, por índice, en su **misma línea física** — nunca al último nombre de la línea completa —, y
@@ -209,11 +209,30 @@ sólo cuando ese nombre cumple los cuatro requisitos de cosecha: **(a)** el patr
 NOT** ser una lista de extensiones; **(b)** **SHALL** admitir que el nombre empiece por punto; **(c)**
 la atribución **SHALL** ir al fichero anterior por índice, no al último de la línea; **(d)** una
 mención **pelada** (sin número de línea) que resuelva a un fichero trackeado **SHALL** contar como
-fichero al que atribuir. Sin fichero previo válido, la abreviada **SHALL** informarse como huérfana y
-**MUST NOT** bloquear. Una cita **anclada** (`<ruta>:<N>` en `` `<rev>` ``) **SHALL** verificarse contra el
-fichero en esa revisión, leído como exige RQ-CV-01; una revisión inexistente **MUST** bloquear.
+fichero al que atribuir. Sin fichero previo válido, la abreviada **SHALL** informarse como huérfana.
 
-*(Mutaciones: M3, M20, M24, M25, M26, M27 · Rojo: d)*
+Una abreviada atribuida **SHALL** comprobarse como exige RQ-CV-08 y, si está rota, **SHALL** informarse
+en su **propia cifra**, con fichero, línea y motivo. Una abreviada —rota, huérfana o válida, anclada o
+no— **MUST NOT** bloquear y **MUST NOT** entrar en la línea base (decisión Q9 de la propuesta). **El
+referente de una abreviada lo decide quien lee el contexto, no la sintaxis**: con la atribución de este
+requisito, el árbol tiene 55 abreviadas rotas, y 54 si una completa sin resolver corta la atribución
+(medido el 2026-09-13 sobre `20a951d`, sin `docs/artefactos/`, nivel 2 de procedencia). De esas 54,
+clasificadas por un script y no leídas una a una, 19
+citaban el maestro nombrado en prosa y 16 cruzaban celdas de la misma tabla de
+`openspec/specs/tickets-core/spec.md`; y, cortando la atribución en esos
+casos, al menos tres de las que quedaban seguían siendo citas válidas a otro documento —en la línea 144
+de `docs/sdd/F0-01_Correcciones_para_el_plan.md`, en la 33 de `openspec/specs/transitions-st/spec.md` y
+en la 325 de `openspec/specs/trazas/spec.md`—. Un corte sintáctico siempre deja falsos positivos, y un
+hook que bloquea no puede cargar con ellos.
+
+Una cita **completa anclada** (`<ruta>:<N>` en `` `<rev>` ``) **SHALL** verificarse contra el fichero en
+esa revisión, leído como exige RQ-CV-01; una revisión inexistente **MUST** bloquear.
+
+*(Mutaciones: M3, M20, M24, M25, M26, M27, M30 · Rojo: d. **Precisión sobre M24 y M25**, que corrige la
+lectura literal de Q9 —«M24 a M27 cambian bloquea por figura en la lista de abreviadas rotas»—: los
+requisitos (a) y (b) deciden también a qué nombre se atribuye una abreviada, pero sus controles de dos
+signos son citas **completas**, que siguen bloqueando; por eso M24 y M25 conservan «bloquea» y sólo
+M26 y M27 pasan a la lista de abreviadas rotas.)*
 
 #### Scenario: abreviadas válidas tras un nombre con punto inicial se cosechan y comprueban
 - GIVEN una línea con un nombre de fichero seguido de varias abreviadas válidas, incluyendo un
@@ -229,6 +248,8 @@ fichero en esa revisión, leído como exige RQ-CV-01; una revisión inexistente 
 - AND la misma cita con la línea fuera de rango bloquea
 - AND si el patrón del nombre pasa a ser una lista de extensiones (mutación), la cita rota deja de
   cosecharse y sale verde
+- AND (a) también decide a qué nombre se atribuye una abreviada, pero el control se hace con la cita
+  **completa**, porque es la que bloquea (RQ-CV-06)
 
 #### Scenario: (b) un nombre que empieza por punto se cosecha (M25)
 - GIVEN una cita válida a `.dockerignore` y otra a ese mismo fichero con la línea fuera de rango
@@ -236,14 +257,18 @@ fichero en esa revisión, leído como exige RQ-CV-01; una revisión inexistente 
 - THEN la válida figura entre las **comprobadas** y la rota bloquea
 - AND si el nombre tiene que empezar por letra o dígito (mutación), se cosecha el nombre sin el punto,
   que no resuelve ni lleva `/`: la rota pasa a **saltada** y sale verde
+- AND (b) también decide a qué nombre se atribuye una abreviada, pero el control se hace con la cita
+  **completa**, porque es la que bloquea (RQ-CV-06)
 
 #### Scenario: (c) la abreviada va al fichero anterior por índice, en los dos órdenes (M26)
 - GIVEN una línea «fichero A, abreviada, fichero B» con la línea citada válida en A y vacía en B
 - WHEN corre el hook
-- THEN sale 0
-- AND con A y B intercambiados —vacía en A, válida en B— bloquea
+- THEN la abreviada figura entre las **comprobadas** y no en la lista de abreviadas rotas
+- AND con A y B intercambiados —vacía en A, válida en B— **figura en la lista de abreviadas rotas**
+- AND en los dos órdenes el push sale 0, porque una abreviada no bloquea
 - AND si la abreviada se atribuye al último fichero de la línea (mutación), las dos salidas se
-  invierten: falso positivo en el primer orden y escape en el segundo
+  invierten: en el primer orden pasa a figurar en la lista de rotas sin estarlo, y en el segundo deja
+  de figurar en ella
 
 #### Scenario: (d) la mención pelada que resuelve captura; la que no resuelve no (M27)
 - GIVEN una línea que nombra `.dockerignore` sin número de línea, y detrás `.git` y `docs` —el primero
@@ -251,13 +276,24 @@ fichero en esa revisión, leído como exige RQ-CV-01; una revisión inexistente 
 - WHEN corre el hook
 - THEN las abreviadas se atribuyen a `.dockerignore` y figuran entre las **comprobadas**, ninguna entre
   las huérfanas
-- AND la misma línea con una abreviada fuera de rango bloquea
-- AND si se quita (d) (mutación), las abreviadas quedan huérfanas y la rota sale verde; y si captura
-  cualquier token pelado, resuelva o no (mutación), la abreviada va a `.git` o a `docs`, se salta y
-  la rota también sale verde
+- AND la misma línea con una abreviada fuera de rango **figura en la lista de abreviadas rotas**, y el
+  push sale 0
+- AND si se quita (d) (mutación), las abreviadas quedan huérfanas y la rota **deja de figurar en la
+  lista de abreviadas rotas**; y si captura cualquier token pelado, resuelva o no (mutación), la
+  abreviada va a `.git` o a `docs`, se salta y la rota tampoco figura en esa lista
 
-#### Scenario: revisión inventada en una cita anclada bloquea
-- GIVEN una cita anclada a una revisión que no existe en el repositorio
+#### Scenario: una abreviada rota se informa y no bloquea (M30)
+- GIVEN una abreviada atribuida a un fichero trackeado, con la línea citada fuera de rango
+- WHEN corre el hook
+- THEN el push sale 0
+- AND la abreviada aparece en el informe de abreviadas rotas, con fichero, línea y motivo
+- AND no entra en la línea base
+- AND la misma abreviada válida no aparece en la lista de rotas y figura entre las **comprobadas**
+- AND si se muta el detector para que una abreviada rota bloquee, el push sale ≠ 0 y la prueba se pone
+  roja
+
+#### Scenario: revisión inventada en una cita completa anclada bloquea
+- GIVEN una cita completa anclada a una revisión que no existe en el repositorio
 - WHEN corre el hook
 - THEN bloquea, porque la revisión no existe y el fichero no puede leerse en ella
 - AND la misma cita anclada a una revisión real pasa con 0
@@ -270,14 +306,16 @@ fichero en esa revisión, leído como exige RQ-CV-01; una revisión inexistente 
 - AND la misma cita, anclada a la revisión ANTERIOR a la inserción, pasa — es la única prueba de que
   el anclaje protege algo. Esta mutación nunca corre sobre las líneas reales de `CLAUDE.md`
 
-### Requirement: RQ-CV-07 · El barrido cubre sólo ficheros trackeados, y excluye el archive y las skills de terceros
+### Requirement: RQ-CV-07 · El barrido cubre sólo ficheros trackeados, y excluye el archive, las skills de terceros y `docs/artefactos/`
 
 El detector **SHALL** limitarse a ficheros bajo control de versiones. **MUST** excluir del barrido
 `openspec/changes/archive/` (registro fechado), `.claude/skills/superpowers-main/` (de terceros,
-verificado) y `.agent/skills/` (skills importadas: de terceros verificado sólo en `react-components`,
-hipótesis en las otras cinco, y hoy con 0 citas). La exclusión es **del barrido** —de las citas que
-viven en esos directorios—, **no del índice de resolución**: sus ficheros siguen siendo candidatos al
-resolver una ruta, y la precedencia exacta de RQ-CV-02 decide igual.
+verificado), `.agent/skills/` (skills importadas: de terceros verificado sólo en `react-components`,
+hipótesis en las otras cinco, y hoy con 0 citas) y `docs/artefactos/` (el HTML exportado del blueprint:
+12 falsos positivos de JavaScript minificado, 1,2-1,3 s de cosecha y 3.510 saltadas, medido el
+2026-09-13 sobre `20a951d`, nivel 2 de procedencia; decisión Q9 de la propuesta). La exclusión es **del
+barrido** —de las citas que viven en esos directorios—, **no del índice de resolución**: sus ficheros
+siguen siendo candidatos al resolver una ruta, y la precedencia exacta de RQ-CV-02 decide igual.
 
 *(Mutaciones: M5, M14 · Rojo: e)*
 
@@ -293,16 +331,18 @@ resolver una ruta, y la precedencia exacta de RQ-CV-02 decide igual.
 
 #### Scenario: cita rota dentro de un directorio excluido se ignora
 - GIVEN una cita rota dentro de `openspec/changes/archive/`, otra dentro de
-  `.claude/skills/superpowers-main/` y otra dentro de `.agent/skills/`
+  `.claude/skills/superpowers-main/`, otra dentro de `.agent/skills/` y otra dentro de `docs/artefactos/`
 - WHEN corre el hook
-- THEN las tres se ignoran, sale 0
-- AND la misma cita fuera de los tres directorios bloquea
+- THEN las cuatro se ignoran, sale 0
+- AND la misma cita fuera de los cuatro directorios bloquea
 
 ### Requirement: RQ-CV-08 · Comprobación mecánica: fichero, rango, línea vacía, y los DOS extremos por separado
 
 Para cada cita en alcance, el detector **MUST** verificar: que el fichero exista en la revisión
 empujada; que la línea citada esté **dentro de rango**; que la línea **no esté vacía**; y, para un
-rango, **ambos extremos por separado**, con el mensaje nombrando **cuál** de los dos falla.
+rango, **ambos extremos por separado**, con el mensaje nombrando **cuál** de los dos falla. En una
+abreviada atribuida la comprobación es la misma, pero su resultado **se informa y no bloquea**
+(RQ-CV-06).
 
 *(Mutaciones: M2, M4 · Rojos: a, b, c)*
 
@@ -328,10 +368,15 @@ rango, **ambos extremos por separado**, con el mensaje nombrando **cuál** de lo
 ### Requirement: RQ-CV-09 · La línea base sólo encoge, se genera por el detector, y no crece desde el hook
 
 La línea base (fichero, línea de la cita, cita literal) **SHALL** generarse por el detector, nunca
-copiarse a mano. El hook **SHALL** informar — no bloquear — de las citas presentes en ella. Si una
-entrada de la base **ya no está rota**, el hook **MUST** fallar hasta que se quite de la base. Una
-cita rota que **no** está en la base **MUST** bloquear siempre: la base **MUST NOT** crecer desde el
-hook — añadir una entrada exige editar el fichero a mano.
+copiarse a mano. **SHALL** contener sólo citas que **bloquean** —completas y ancladas— y **MUST NOT**
+contener abreviadas, que no bloquean (RQ-CV-06). El hook **SHALL** informar — no bloquear — de las
+citas presentes en ella. Si una entrada de la base **ya no está rota**, el hook **MUST** fallar hasta
+que se quite de la base. Una cita rota que **no** está en la base **MUST** bloquear siempre: la base
+**MUST NOT** crecer desde el hook — añadir una entrada exige editar el fichero a mano.
+
+**Medición de R-14:** **47 entradas**, sólo completas y ancladas, sin `docs/artefactos/`, medido el
+2026-09-13 sobre `20a951d` con el prototipo que lee todo en un solo `git cat-file --batch` (nivel 2 de
+procedencia). La cifra definitiva la produce el detector de la tanda.
 
 *(Mutaciones: M9, M10, M17)*
 
@@ -346,6 +391,12 @@ hook — añadir una entrada exige editar el fichero a mano.
 - WHEN corre el hook
 - THEN bloquea: la base no la absorbe automáticamente
 
+#### Scenario: la base no contiene abreviadas
+- GIVEN un árbol con citas completas rotas y abreviadas rotas
+- WHEN el detector genera la línea base
+- THEN la base contiene las completas rotas y ninguna abreviada
+- AND las abreviadas rotas figuran sólo en el informe de abreviadas rotas
+
 #### Scenario: mutación de posición — consultar la base después de decidir el bloqueo (M17)
 - GIVEN que la consulta a la línea base se mueve para correr **después** de decidir si bloquea
 - WHEN corre el hook con una cita rota que **sí está** en la base
@@ -353,21 +404,25 @@ hook — añadir una entrada exige editar el fichero a mano.
 - AND si la prueba siguiera verde con la consulta movida, el orden no estaría probado — un comentario
   que declare el orden deliberado no sustituye a esta prueba
 
-### Requirement: RQ-CV-10 · El mensaje declara las cifras, lo que no comprueba, y las dos salidas legítimas
+### Requirement: RQ-CV-10 · El mensaje declara cuatro cifras, lo que no comprueba, que las abreviadas no bloquean, y las dos salidas legítimas
 
-En cada ejecución, el mensaje del hook **MUST** imprimir las cifras de citas **comprobadas** y
-**saltadas**, con las de **fuera del repositorio** desglosadas aparte. **MUST** declarar explícitamente
-que **no comprueba lo semántico** (si la línea dice lo que la frase afirma). **MUST** nombrar las
-**dos** salidas legítimas de un bloqueo: reparar la cita, o añadirla a la línea base a mano.
-`--no-verify` **MUST NOT** presentarse como salida.
+En cada ejecución, el mensaje del hook **MUST** imprimir **cuatro cifras separadas**: citas
+**comprobadas**, **saltadas**, **fuera del repositorio** y **abreviadas rotas**, éstas con fichero,
+línea y motivo. **MUST** decir que las abreviadas rotas son **informativas y no bloquean**, y por qué:
+el referente de una abreviada lo decide quien lee el contexto, no la sintaxis (RQ-CV-06). **MUST**
+declarar explícitamente que **no comprueba lo semántico** (si la línea dice lo que la frase afirma).
+**MUST** nombrar las **dos** salidas legítimas de un bloqueo: reparar la cita, o añadirla a la línea
+base a mano. `--no-verify` **MUST NOT** presentarse como salida.
 
-*(No tiene mutación dedicada en el §6: lo exigen los criterios de aceptación del §15 sobre las dos
-cifras, la declaración de lo no comprobado y las dos salidas legítimas.)*
+*(No tiene mutación dedicada en el §6: lo exigen los criterios de aceptación del §15 sobre las cuatro
+cifras, la declaración de lo no comprobado, la de las abreviadas y las dos salidas legítimas.)*
 
-#### Scenario: mensaje completo en una ejecución con citas saltadas
-- GIVEN una ejecución con citas comprobadas, ambiguas saltadas y fuera del repositorio
+#### Scenario: mensaje completo en una ejecución con citas saltadas y abreviadas rotas
+- GIVEN una ejecución con citas comprobadas, ambiguas saltadas, citas fuera del repositorio y
+  abreviadas rotas
 - WHEN el hook termina
-- THEN imprime las tres cifras por separado y la frase que declara qué no comprueba
+- THEN imprime las cuatro cifras por separado, la lista de abreviadas rotas con fichero, línea y motivo,
+  la frase que declara qué no comprueba y la que dice que las abreviadas no bloquean y por qué
 
 #### Scenario: mensaje de bloqueo nombra las dos salidas
 - GIVEN una cita rota que bloquea el push
@@ -533,17 +588,19 @@ segunda.
 - THEN es esta segunda medición la que decide, porque la intermedia es exactamente el estado en el
   que una medición anterior de la propuesta salió cierta y luego dejó de serlo
 
-### Requirement: RQ-CV-15 · IV-10 se registra sin dueño asignado, y la regla de mutación 4 gana una frase
+### Requirement: RQ-CV-15 · IV-10 se registra sin dueño asignado, y la regla de mutación 4 gana dos frases
 
 Un nuevo incumplimiento vivo, **IV-10**, **SHALL** añadirse a `CLAUDE.md` y a `incumplimientos_vivos`
 de `openspec/config.yaml`, apuntando a la línea base generada, con cifra y fecha de medición, y
 **SIN** dueño asignado, declarando explícitamente: «la base no encoge hasta que Gerencia asigne quién
 la repara». El recuento de `CLAUDE.md:249` en `648432d` (que hoy dice **"Cuatro"** desvíos vivos)
 **SHALL** pasar a **"Cinco"**. La regla de mutación 4 de `CLAUDE.md` — `CLAUDE.md:171-205` en `648432d`
-— **SHALL** ganar la frase: «un ejemplo de cita rota se escribe sin forma de cita, o el detector lo
-tratará como rota».
+— **SHALL** ganar, en la unidad de trabajo 2, **dos** frases: la de Q6, «un ejemplo de cita rota se
+escribe sin forma de cita, o el detector lo tratará como rota»; y la de Q9, que el detector **no bloquea
+la forma abreviada**, así que su comprobación sigue siendo **de lectura humana**, con el informe del
+hook como ayuda.
 
-*(Mutaciones: M22; decisiones Q4 y Q6 de la ronda de preguntas de la propuesta)*
+*(Mutaciones: M22; decisiones Q4, Q6 y Q9 de la propuesta)*
 
 #### Scenario: IV-10 declarado sin dueño
 - GIVEN la fila IV-10 recién escrita en `CLAUDE.md` y en `openspec/config.yaml`
@@ -555,6 +612,13 @@ tratará como rota».
 - GIVEN el texto de `CLAUDE.md:249` en `648432d`, que hoy dice "Cuatro"
 - WHEN se añade IV-10
 - THEN el texto pasa a decir "Cinco", y la tabla gana la fila correspondiente
+
+#### Scenario: la regla de mutación 4 gana las dos frases
+- GIVEN la regla de mutación 4 de `CLAUDE.md` tras la unidad de trabajo 2
+- WHEN se lee
+- THEN contiene la frase de Q6 sobre los ejemplos sin forma de cita
+- AND contiene la frase de Q9: el detector no bloquea la forma abreviada, y su comprobación sigue
+  siendo de lectura humana, con el informe como ayuda
 
 #### Scenario: mutación — un ejemplo de cita rota CON forma de cita bloquea (M22)
 - GIVEN un ejemplo de cita rota escrito **con** forma de cita (nombre de fichero seguido de dos
@@ -588,33 +652,42 @@ con su control de dos signos ya medido allí.)*
 
 `sdd-design` **MUST** declarar por escrito, sin resolverlos en esta spec, los siguientes puntos: si la
 atribución de una abreviada mira también la línea anterior, el párrafo, o el fichero de detrás cuando
-no hay ninguno antes por índice; si la detección del ancla mira también la línea siguiente a la cita;
-si se descartan marcas de tiempo ISO y horas (`HH:MM`) de la cosecha; si `docs/artefactos/` se excluye
-del barrido, decidido por el coste medido con y sin esa carpeta; y el nombre exacto de los ficheros del
-detector y el formato de la línea base.
+no hay ninguno antes por índice, o si corta la atribución en algún caso; si la detección del ancla mira
+también la línea siguiente a la cita; si se descartan marcas de tiempo ISO y horas (`HH:MM`) de la
+cosecha; y el nombre exacto de los ficheros del detector y el formato de la línea base.
+(`docs/artefactos/` ya no es un hueco: queda fuera del barrido por RQ-CV-07.)
 
-**El umbral de la línea base NO es un hueco: lo fija el riesgo R-14 de la propuesta.** Antes de cerrar,
-`sdd-design` **MUST** medir el tamaño de la base con el prototipo y con la atribución de abreviadas que
-elija. El umbral es **100 entradas**, calculado contra `review_budget_lines: 800`
-(`openspec/config.yaml:29` en `648432d`) y suponiendo una línea por entrada; si el formato ocupa más,
-se divide por las líneas de cada entrada. Si la medición pasa del umbral, el diseño **MUST** parar y
-preguntar a Gerencia **antes** de que se genere la base.
+**La atribución de abreviadas es PRECISIÓN DEL INFORME, no tamaño de la base.** Como las abreviadas no
+bloquean ni entran en la base (RQ-CV-06), la elección de atribución **SHALL** decidirse con número y
+**sin umbral**. Medido el 2026-09-13 sobre `20a951d`, sin `docs/artefactos/`, sobre 1.151 abreviadas
+(nivel 2 de procedencia), abreviadas rotas informadas y huérfanas por opción: misma línea y fichero
+anterior por índice, 55 y 810; con una completa sin resolver cortando, 54 y 814; además sin cruzar una
+barra de celda, 33 y 843; además sin cruzar «maestro», `R08` ni un apartado `Mx.y`, 18 y 863, con al
+menos tres falsos positivos que ningún corte ve; misma línea o, si no, el fichero de detrás, 127 y
+699; o el último de la línea anterior, 164 y 584; o el último del párrafo, 195 y 453.
+
+**R-14 queda CERRADO para el diseño con la base de 47 entradas** de RQ-CV-09 (decisión Q9). El umbral
+de **100 entradas** —calculado contra `review_budget_lines: 800`
+(`openspec/config.yaml:29` en `648432d`), suponiendo una línea por entrada y dividiendo si el formato
+ocupa más— **se conserva sólo
+como guarda** para la base que genere el detector definitivo en la tanda: si pasara de 100, se para y
+se pregunta a Gerencia antes de commitearla. No es tarea del diseño.
 
 *(No es un requisito de comportamiento del detector, sino un requisito sobre el propio proceso de
-diseño: que el hueco quede escrito, no omitido, y que el umbral se mida antes de cerrar.)*
+diseño: que el hueco quede escrito, no omitido.)*
 
-#### Scenario: el diseño documenta el hueco, no lo resuelve en silencio
-- GIVEN que la atribución de abreviadas deja huérfano entre el 60 % y el 71 % de las abreviadas del
-  repositorio, según el patrón de cosecha elegido (medido el 2026-09-13 en la propuesta, nivel 2 de
-  procedencia, no reverificado en esta spec)
+#### Scenario: el diseño elige la atribución como precisión del informe y declara el hueco
+- GIVEN la medición por opción de este requisito —de 55 rotas y 810 huérfanas a 195 rotas y 453
+  huérfanas sobre 1.151 abreviadas, con falsos positivos en todas las opciones—
 - WHEN `sdd-design` fija el criterio de atribución
-- THEN el documento de diseño declara explícitamente qué queda sin atribuir y por qué, en vez de
-  omitirlo
+- THEN el documento de diseño declara qué queda sin atribuir, qué falsos positivos admite el informe y
+  por qué, en vez de omitirlo
+- AND la elección no se justifica por el tamaño de la línea base, que no depende de ella
 
-#### Scenario: la base medida supera el umbral de R-14
-- GIVEN que la medición con la atribución elegida da más de 100 entradas en la línea base
-- WHEN `sdd-design` va a cerrarse
-- THEN no se cierra ni se genera la base: se pregunta a Gerencia con la cifra medida
+#### Scenario: la base generada en la tanda supera la guarda de R-14
+- GIVEN que el detector definitivo genera una línea base de más de 100 entradas
+- WHEN se va a commitear la base
+- THEN no se commitea: se para y se pregunta a Gerencia con la cifra medida
 
 ### Requirement: RQ-CV-18 · El detector vive fuera de `testing/`, no lo importa nada de producción y viaja inerte
 
