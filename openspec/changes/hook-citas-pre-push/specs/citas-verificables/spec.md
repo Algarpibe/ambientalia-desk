@@ -56,9 +56,9 @@ remoto.)*
 - THEN bloquea, porque la cita quedó desfasada
 - AND el mismo push con la cita ya reparada pasa con 0
 
-#### Scenario: una rotura que llegó sin hook la caza el siguiente push con hook (M29)
-- GIVEN una cita rota por un commit **ya empujado sin hook**, y un push posterior que no toca ni el
-  fichero donde vive la cita ni el fichero citado
+#### Scenario: una rotura de contenido que llegó sin hook la caza el siguiente push con hook (M29)
+- GIVEN una cita rota por un commit **ya empujado sin hook** que **no renombra ni borra** el fichero
+  citado, y un push posterior que no toca ni el fichero donde vive la cita ni el fichero citado
 - WHEN corre el hook en ese push posterior
 - THEN bloquea
 - AND con esa misma cita en la línea base, informa y sale 0
@@ -394,15 +394,22 @@ imprimir aviso.
 - THEN imprime el aviso visible
 - AND el código de salida es el mismo que con una identidad: el aviso no se convierte en guarda
 
-#### Scenario: hueco declarado — un segundo clon con `--ignore-scripts` no genera aviso, pero lo que rompe no se pierde
+#### Scenario: hueco declarado — un segundo clon con `--ignore-scripts` no genera aviso, y un renombrado o borrado que empuje deja citas peladas saltadas para siempre
 - GIVEN la misma identidad de autor empujando desde un segundo clon instalado con `--ignore-scripts`
   (sin hook)
 - WHEN esa identidad empuja una cita rota
 - THEN `git shortlog` sigue viendo una sola identidad y no hay aviso
-- AND la cita rota la caza el **siguiente push con hook**, desde cualquier clon, por el barrido
+- AND si la rotura es de **contenido** —líneas movidas, insertadas o borradas en un fichero citado que
+  sigue existiendo—, la caza el **siguiente push con hook**, desde cualquier clon, por el barrido
   completo de RQ-CV-01 (M29)
-- AND el hueco que queda es de momento, no de detección: evitar que la rotura llegue al remoto lo cubre
-  sólo la línea manual de instalación de `DEPLOY.md`, no este requisito
+- AND **excepción, que no se detecta**: si ese push sin hook **renombra o borra** un fichero citado,
+  cuando llega el siguiente push con hook el remoto ya no tiene la ruta vieja, así que no está ni en su
+  sha local ni en el índice remoto de RQ-CV-01. Las citas **con** `/` a esa ruta siguen bloqueando como
+  fichero inexistente (RQ-CV-05); las citas **peladas** no resuelven en ningún índice, se saltan por
+  RQ-CV-05 y quedan **saltadas para siempre**, sin distinguirse de un token que nunca resolvió
+- AND esa pérdida **sólo la delata la cifra de saltadas** de RQ-CV-10; este requisito no la cierra
+- AND evitar que cualquiera de las dos roturas llegue al remoto lo cubre sólo la línea manual de
+  instalación de `DEPLOY.md`, no este requisito
 
 ### Requirement: RQ-CV-12 · La instalación vive en un `.mjs`, con guarda de dos signos y fallo visible
 
@@ -414,12 +421,15 @@ binario `git`, **SHALL** salir con 0 y **NO** instalar. **Con** `.git` presente,
 dependencias de runtime, **MUST** fallar con mensaje explícito, nunca salir con 0 en silencio.
 
 El hook **MUST** invocar el detector con `node_modules/.bin/tsx` o con `npx --no tsx`, y **MUST NOT**
-invocarlo con `npx tsx` a secas. La documentación de la instalación local (npm 11.17.0, `npm-exec.md`,
-línea 29) dice que, cuando el stdin no es un TTY, `npx` asume `--yes`; en `pre-push` el stdin es una
-tubería, así que sin `node_modules` `npx tsx` descargaría `tsx` y el hook seguiría, en vez de fallar.
-`--no-install` también lo evita, pero esa misma documentación lo da por obsoleto y lo convierte en
-`--no` (línea 298). La invocación **SHALL** vigilarla un **guardián estático** sobre `.githooks/pre-push`,
-nunca un control que ejecute `npx` y dependa de la red.
+invocarlo ni con `npx tsx` a secas ni con `npm exec tsx` (o su alias `npm x tsx`) sin `--no`. La
+documentación de la instalación local (npm 11.17.0, `npm-exec.md`, línea 29) dice que, cuando el stdin
+no es un TTY, se asume `--yes`; esa línea es de la descripción de `npm exec`, y `npx` usa `npm exec`
+por dentro (línea 290), así que vale para las dos formas, y el alias `x` lo declara la línea 15. En
+`pre-push` el stdin es una tubería, así que sin `node_modules` cualquiera de ellas descargaría `tsx` y
+el hook seguiría, en vez de fallar. `--no-install` también lo evita, pero esa misma documentación lo da
+por obsoleto y lo convierte en `--no` (línea 298). La invocación **SHALL** vigilarla un **guardián
+estático** sobre `.githooks/pre-push`, nunca un control que ejecute `npx` o `npm exec` y dependa de la
+red.
 
 (El servidor arranca hoy con `tsx`: `package.json:13` en `648432d` y `package.json:15` en `648432d`;
 `package.json:10-23` en `648432d` no declara `prepare` — es lo que esta capacidad añade.)
@@ -454,11 +464,15 @@ nunca un control que ejecute `npx` y dependa de la red.
 - THEN falla con mensaje explícito, nunca sale 0 en silencio
 
 #### Scenario: guardián estático de la invocación, sin red (control de M16)
-- GIVEN un guardián que lee `.githooks/pre-push` y falla si invoca `tsx` con `npx` sin `--no`
+- GIVEN un guardián que lee `.githooks/pre-push` y falla si invoca `tsx` con `npx`, con `npm exec` o
+  con `npm x` sin `--no`
 - WHEN el fichero vigilado invoca `node_modules/.bin/tsx` o `npx --no tsx`
 - THEN el guardián pasa
 - AND si se ensucia el fichero vigilado escribiendo `npx tsx` a secas (regla de mutación 2 del
-  proyecto), el guardián se pone rojo, sin ejecutar `npx` ni depender de la red
+  proyecto), el guardián se pone rojo
+- AND si se ensucia escribiendo `npm exec tsx` sin `--no`, el guardián se pone rojo
+- AND si se ensucia escribiendo `npm x tsx` sin `--no`, el guardián se pone rojo
+- AND ninguna de las tres mutaciones ejecuta `npx` ni `npm exec`, ni depende de la red
 
 ### Requirement: RQ-CV-13 · Coste: objetivo ≤ 5 s, tope duro 10 s
 

@@ -171,9 +171,9 @@ en juego»: las citas que viven en un fichero que el push cambia más las que ap
 decidió el **barrido completo** con un dato que la ronda no tenía: **con línea base, que una cita esté
 bien o rota depende sólo del fichero donde vive y del fichero al que apunta**. El barrido completo da
 por tanto el mismo resultado que el alcance por push **siempre que la cita resuelva igual antes y
-después del push** —para eso está el índice remoto de la precisión 1—, **y además caza lo que llegó
-roto de un push sin hook** —el hueco del segundo clon de la Pieza 6—. Es más simple y cabe en coste
-(§7). Cinco precisiones:
+después del push** —para eso está el índice remoto de la precisión 1—, **y además caza lo que un push
+sin hook dejó roto en contenido** —el hueco del segundo clon de la Pieza 6, con la excepción del
+renombrado o borrado que allí se declara—. Es más simple y cabe en coste (§7). Cinco precisiones:
 
 1. **Todo se comprueba contra el sha LOCAL; el sha remoto se usa SÓLO como índice de resolución.** Git
    pasa una línea por referencia (`<ref local> <sha local> <ref remota> <sha remoto>`). El detector
@@ -200,9 +200,10 @@ roto de un push sin hook** —el hueco del segundo clon de la Pieza 6—. Es má
    QUE BLOQUEAR.** Es el caso exacto de `30e698c`. Con el barrido completo sale por construcción, y **la
    mutación obligatoria se queda (M1)**: es lo que impide que alguien reintroduzca un alcance por fichero
    cambiado.
-5. **Una cita rota por un commit YA empujado sin hook la caza el siguiente push con hook**, aunque ese
-   push no toque ni el fichero donde vive la cita ni el citado (M29). Es justo lo que el alcance por push
-   no podía ver.
+5. **Una cita rota en contenido por un commit YA empujado sin hook la caza el siguiente push con hook**,
+   aunque ese push no toque ni el fichero donde vive la cita ni el citado (M29). Es justo lo que el
+   alcance por push no podía ver. **No** la caza si ese commit renombró o borró el fichero citado y la
+   cita es pelada: Pieza 6.
 
 **Borrados y renombrados, sin `-M` y sin perder detección.** ⚠️ **La versión anterior de este párrafo
 era FALSA.** Retiraba M7 diciendo que se perdía «precisión del mensaje, no detección», y confundía dos
@@ -475,13 +476,16 @@ En el CI **sí** hay `.git` —`checkout@v4` lo crea—, así que fijará `core.
 runner: inocuo, porque el CI no empuja. En la imagen no hay `.git` ni binario `git`: sale 0.
 
 **El hook no lleva lógica de shell.** Es una línea que invoca el detector con `node_modules/.bin/tsx`
-—o con `npx --no tsx`—, **nunca con `npx tsx` a secas**, y le pasa el stdin.
+—o con `npx --no tsx`—, **nunca con `npx tsx` a secas ni con `npm exec tsx` (o su alias `npm x
+tsx`) sin `--no`**, y le pasa el stdin.
 
-⚠️ **Por qué no `npx` a secas**, verificado en la documentación de la instalación local (npm 11.17.0,
-`npm-exec.md`, línea 29): «When standard input is not a TTY or a CI environment is detected, `--yes` is
-assumed». En `pre-push` el stdin es una tubería, así que sin `node_modules` **`npx` descarga `tsx` y el
-hook sigue**: la imposición de M16 desaparecería en silencio. `--no-install` también lo evitaría, pero
-esa misma documentación lo da por obsoleto y lo convierte en `--no` (línea 298).
+⚠️ **Por qué no `npx` ni `npm exec` a secas**, verificado en la documentación de la instalación local
+(npm 11.17.0, `npm-exec.md`, línea 29): «When standard input is not a TTY or a CI environment is
+detected, `--yes` is assumed». Esa línea es de la descripción de **`npm exec`**; `npx` usa `npm exec`
+por dentro (línea 290) y el alias `x` lo declara la línea 15, así que vale para las tres formas. En
+`pre-push` el stdin es una tubería, así que sin `node_modules` **cualquiera de ellas descarga `tsx` y
+el hook sigue**: la imposición de M16 desaparecería en silencio. `--no-install` también lo evitaría,
+pero esa misma documentación lo da por obsoleto y lo convierte en `--no` (línea 298).
 
 Así
 la pregunta de qué intérprete usa Git for Windows —**hipótesis**: su propio `sh`, no `cmd.exe`, que es
@@ -494,9 +498,10 @@ desaparece en silencio (M16).
 
 **Y la forma de invocar la vigila un guardián ESTÁTICO, no una prueba con red.** Un control que
 ejecutara `npx tsx` a secas para ver que descarga dependería de que haya red en el entorno de pruebas.
-El guardián lee `.githooks/pre-push` y **falla si invoca `tsx` con `npx` sin `--no`**. Se prueba por la
-regla de mutación 2 del proyecto: se **ensucia el fichero vigilado** escribiendo en él `npx tsx` a secas,
-y el guardián se pone rojo; con `node_modules/.bin/tsx` o `npx --no tsx`, verde.
+El guardián lee `.githooks/pre-push` y **falla si invoca `tsx` con `npx`, `npm exec` o `npm x` sin
+`--no`**. Se prueba por la regla de mutación 2 del proyecto, **con una mutación por forma** sobre el
+fichero vigilado: escribir `npx tsx` a secas → rojo; `npm exec tsx` → rojo; `npm x tsx` → rojo. Con
+`node_modules/.bin/tsx` o `npx --no tsx`, verde.
 
 ### Pieza 6 · El mensaje del hook: lo que NO comprueba, y el aviso de escalada
 
@@ -519,11 +524,16 @@ deja de bastar cuando escribe **más de una persona**.
 ⚠️ **Lo que el aviso NO ve, y se declara.** Contar identidades mide **personas, no clones**. La misma
 identidad empujando desde un **segundo clon instalado con `--ignore-scripts`** no tiene hook, y por
 tanto tampoco aviso: para `git shortlog` sigue habiendo una sola identidad y nada avisa de que ese clon
-empuja sin comprobar. **Pero lo que ese clon rompa ya no se pierde**: con el barrido completo (Q8), el
-siguiente push con hook desde cualquier clon lo caza, aunque no toque los ficheros implicados (Pieza 1,
-M29). El hueco que queda es de **momento**, no de **detección**: la rotura vive en el remoto hasta ese
-push. **Evitar que llegue** lo cubre sólo la línea de `DEPLOY.md` con el comando manual de instalación
-(Pieza 5, punto 3).
+empuja sin comprobar. **Lo que ese clon rompa en contenido** —líneas movidas en un fichero que sigue
+existiendo— **no se pierde**: con el barrido completo (Q8), el siguiente push con hook desde cualquier
+clon lo caza, aunque no toque los ficheros implicados (Pieza 1, M29). **Pero hay una excepción que sí
+es de detección:** si ese push sin hook **renombra o borra** un fichero citado, cuando llega el
+siguiente push con hook el remoto ya no tiene la ruta vieja, así que no está ni en el sha local ni en
+el índice remoto. Las citas con `/` siguen bloqueando como fichero inexistente; las **peladas** no
+resuelven en ningún índice, se saltan como el hueco de Q2 y quedan **saltadas para siempre**. **Sólo
+la delata la cifra de saltadas.** No se construye nada para cerrarlo: se declara. **Evitar que
+cualquiera de las dos roturas llegue** lo cubre sólo la línea de `DEPLOY.md` con el comando manual de
+instalación (Pieza 5, punto 3).
 
 **Por qué lo hace el hook y no una casilla de persona, que es lo que esta propuesta decía antes.** La
 regla del ciclo 1 (`CLAUDE.md:330-349` en `648432d`) permite sacar del recuento las casillas cuyo dueño
@@ -600,7 +610,7 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M13** (D4.2) | Hacer fallar el `git config` **con** repositorio presente | Mensaje visible en la salida y `npm ci` **sigue en verde** (exit 0) | Que el mensaje exista: un fallo silencioso aquí es el defecto que esta pieza evita |
 | **M14 · las tres exclusiones** | Cita rota **dentro** de `openspec/changes/archive/`, otra dentro de `.claude/skills/superpowers-main/` y otra dentro de `.agent/skills/` | Se ignoran: 0 | La misma cita fuera de los tres directorios → bloquea |
 | **M15 · las ambiguas** | Cita ambigua rota en **todas** las candidatas | ≠ 0 | Rota en **una sola** → se salta y el contador de saltadas sube en 1. Un detector que no contara las saltadas mentiría por omisión |
-| **M16 · el hook sin dependencias** | Borrar `node_modules` y empujar, con el hook invocando `node_modules/.bin/tsx` o `npx --no tsx` | **≠ 0**, con mensaje explícito | **Control sin red, estático** (regla de mutación 2): un guardián lee `.githooks/pre-push` y falla si invoca `tsx` con `npx` sin `--no`. Se **ensucia el fichero vigilado** escribiendo `npx tsx` a secas → el guardián se pone **rojo**; con `node_modules/.bin/tsx` o `npx --no tsx` → verde. Sustituye al control anterior, que ejecutaba `npx tsx` y dependía de la red. Un hook que saliera 0 aquí repite el fallo de la guarda en `sh` |
+| **M16 · el hook sin dependencias** | Borrar `node_modules` y empujar, con el hook invocando `node_modules/.bin/tsx` o `npx --no tsx` | **≠ 0**, con mensaje explícito | **Control sin red, estático** (regla de mutación 2): un guardián lee `.githooks/pre-push` y falla si invoca `tsx` con `npx`, `npm exec` o `npm x` sin `--no`. Se **ensucia el fichero vigilado**, una mutación por forma: `npx tsx` a secas → **rojo**; `npm exec tsx` → **rojo**; `npm x tsx` → **rojo**; con `node_modules/.bin/tsx` o `npx --no tsx` → verde. Sustituye al control anterior, que ejecutaba `npx tsx` y dependía de la red. Un hook que saliera 0 aquí repite el fallo de la guarda en `sh` |
 | **M17 · la posición** (regla de mutación 1) | Mover la consulta a la línea base **después** de decidir el bloqueo | Una entrada de la base debe empezar a bloquear → la prueba de la base se pone roja | Si sigue verde, **el orden no está probado** y un comentario que lo declare deliberado no es prueba |
 | **M18 · el orden de la tanda** | Instalar el hook **antes** de generar la línea base | El push de cierre se bloquea por citas que esta tanda no rompió | Es la precondición dura del §8, y por eso es criterio de aceptación con orden, no una recomendación |
 | **M19 · el coste** | — | Medir el hook con la entrada real por stdin | §7 |
@@ -613,7 +623,7 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M26 · (c) la atribución por índice** | Atribuir la abreviada al último fichero **de la línea** | Las dos salidas del control de (c) se invierten: **falso positivo** con A válido y B vacío, y **escape** con los dos intercambiados | Con la atribución por índice, las dos salidas vuelven a su signo. Probar un solo orden no distingue las dos reglas |
 | **M27 · (d) la mención pelada** | Dos mutaciones: **quitar** (d), y dejar que **cualquier** token pelado capture, resuelva o no | En las dos, la abreviada rota tras `.dockerignore` deja de bloquear: huérfana en la primera; atribuida a `.git` o a `docs` y saltada en la segunda | Las tres abreviadas válidas del párrafo de la Pieza 4 figuran entre las **comprobadas**, y ninguna entre las huérfanas |
 | **M28 · fuera del repositorio** | Quitar la categoría **fuera del repositorio** de la Pieza 2 | Una cita a `~/x/y.md` con la línea 3 pasa de **saltada en la cifra de fuera** a **bloquear** como fichero inexistente → la prueba se pone roja | **El otro signo:** una cita a `apps/no-existe.ts` con la línea 3 **bloquea** con la categoría puesta. Una categoría que se tragara también las rutas relativas cambiaría un falso positivo por un escape |
-| **M29 · el barrido completo** (Q8) | Limitar el barrido a los ficheros que cambia el push | Repositorio sintético: una cita rota por un commit **ya empujado sin hook**, y un push posterior que no toca ni el fichero donde vive ni el citado → con el barrido completo **bloquea**; con la mutación **sale 0** y la prueba se pone roja | **El otro signo:** la misma situación con la cita **en la línea base** → informa y sale 0. Sin él, la prueba no distinguiría «barre todo» de «bloquea siempre» |
+| **M29 · el barrido completo** (Q8) | Limitar el barrido a los ficheros que cambia el push | Repositorio sintético: una cita rota en contenido por un commit **ya empujado sin hook**, sin renombrar ni borrar el citado, y un push posterior que no toca ni el fichero donde vive ni el citado → con el barrido completo **bloquea**; con la mutación **sale 0** y la prueba se pone roja | **El otro signo:** la misma situación con la cita **en la línea base** → informa y sale 0. Sin él, la prueba no distinguiría «barre todo» de «bloquea siempre» |
 
 ---
 
@@ -782,7 +792,7 @@ cerrarla**, y reabre el alcance de la Pieza 1 con un dato que la ronda no tenía
 | **Q5** | ¿Quién vigila `git shortlog -sne --all`? | **RECHAZADA en su forma.** No es tarea de persona: por el reverso de la regla del ciclo 1 es trabajo que una tanda hace aquí, y sacarla del recuento sería maquillarlo. **Lo hace el hook**: aviso visible **sin bloquear** con más de una identidad, y prueba de los dos signos | Pieza 6; §1; §2 «Entra» 5; rojo (i); M21; §11 |
 | **Q6** | El ejemplo de cita rota del §2 tenía **forma de cita**, así que el detector lo trataría como rota | **ACEPTADA, opción (i)**: el ejemplo se reescribe **sin forma de cita**, y se añade a la tanda **una frase en la regla de mutación 4 de `CLAUDE.md`**: «un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como rota» | §2 «No entra» y «Entra» 9; convención 2 de la cabecera; M22; unidad de trabajo 2 |
 | **Q7** | **NUEVA, y verificada de disco por Gerencia.** «Insertar IV-10 no desfasa ninguna cita en alcance» se midió **antes de que la propuesta existiera**: era cierta entonces y es **FALSA ahora** | **Tres partes: (a)** anclar a `648432d` toda cita de los artefactos de la tanda a los cuatro ficheros que la tanda modifica; **(b)** rehacer la medición **incluyendo los artefactos de la propia tanda** y mover la comprobación **al final, sobre los artefactos commiteados**; **(c)** añadir la mutación del anclaje | Cabecera (convenciones 1 y 2); Pieza 3 (medición rehecha); §8 (segunda comprobación); M20; R-11; §15 |
-| **Q8** | **POSTERIOR a la ronda (2026-09-13), y reabre el alcance.** ¿Barrer «lo que el push pone en juego» o barrer todo? | **BARRIDO COMPLETO en cada push.** Con línea base, que una cita esté bien o rota depende sólo del fichero donde vive y del citado: el barrido completo da el mismo resultado, **caza lo que llegó roto de un push sin hook**, es más simple y cabe en coste (~1 s). Todo se comprueba contra el sha local. **Corregida el mismo día:** el sha remoto se usa **sólo como índice de resolución** (`git ls-tree`), porque sin él las citas **peladas** a un fichero renombrado se saltaban | Pieza 1; Pieza 2 (fila del índice remoto); §2 «Entra» 2; Pieza 6 (hueco del segundo clon); §4 (f retirado, g con cita pelada); §6 (M6 retirada, M7 redefinida, M29 nueva); §7; §11; R-7; R-14; §15 |
+| **Q8** | **POSTERIOR a la ronda (2026-09-13), y reabre el alcance.** ¿Barrer «lo que el push pone en juego» o barrer todo? | **BARRIDO COMPLETO en cada push.** Con línea base, que una cita esté bien o rota depende sólo del fichero donde vive y del citado: el barrido completo da el mismo resultado, **caza lo que un push sin hook dejó roto en contenido** (no las citas peladas a un fichero que ese push renombró o borró: Pieza 6), es más simple y cabe en coste (~1 s). Todo se comprueba contra el sha local. **Corregida el mismo día:** el sha remoto se usa **sólo como índice de resolución** (`git ls-tree`), porque sin él las citas **peladas** a un fichero renombrado se saltaban | Pieza 1; Pieza 2 (fila del índice remoto); §2 «Entra» 2; Pieza 6 (hueco del segundo clon); §4 (f retirado, g con cita pelada); §6 (M6 retirada, M7 redefinida, M29 nueva); §7; §11; R-7; R-14; §15 |
 
 **Lo que Q7 enseña, y por eso no es una corrección menor:** en la ilustración de la Pieza 3 —+1 en
 `CLAUDE.md`, +20 en `openspec/config.yaml`— la inserción de IV-10 desplaza **ocho** citas, y el detector
@@ -824,7 +834,7 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
 - [ ] **Barrido COMPLETO en cada push** (Q8): todo se comprueba contra el **sha local** —cada sha local
       distinto si hay varias referencias; el remoto sólo da el índice de resolución, criterio propio más abajo—, con `git grep` y lectura por
       revisión, **nunca contra el árbol de trabajo** (M8), y el borrado de rama sale con 0.
-- [ ] **Una cita rota por un commit ya empujado sin hook bloquea** en un push posterior que no toca ni
+- [ ] **Una cita rota en contenido por un commit ya empujado sin hook bloquea** en un push posterior que no toca ni
       el fichero donde vive ni el citado, y **con la cita en la línea base informa y sale 0** (M29, dos
       signos).
 - [ ] **Las anclas se leen agrupadas por (revisión, fichero) en UN solo proceso `git cat-file
@@ -835,9 +845,10 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
       nueva el índice sale de `origin/main`, y si no existe **el mensaje dice que la comprobación no se
       hizo**. Probado con M7 y el rojo g.
 - [ ] El hook invoca el detector con **`node_modules/.bin/tsx` o `npx --no tsx`, nunca con `npx tsx` a
-      secas**, y lo vigila un **guardián estático** sobre `.githooks/pre-push`, probado **ensuciando el
-      fichero vigilado** con `npx tsx` a secas (M16, regla de mutación 2). Ningún control depende de la
-      red.
+      secas ni con `npm exec tsx` o `npm x tsx` sin `--no`**, y lo vigila un **guardián estático** sobre
+      `.githooks/pre-push`, probado **ensuciando el fichero vigilado** una vez por forma —`npx tsx`,
+      `npm exec tsx`, `npm x tsx`, las tres rojas— (M16, regla de mutación 2). Ningún control depende
+      de la red.
 - [ ] La regla de resolución de la Pieza 2 está implementada tal cual (Q1 y Q2), con **sufijo de ruta
       con frontera de segmento** y **nunca** subcadena del basename.
 - [ ] **La coincidencia EXACTA tiene precedencia sobre el sufijo** (Pieza 2, M23): sin ella, las seis
