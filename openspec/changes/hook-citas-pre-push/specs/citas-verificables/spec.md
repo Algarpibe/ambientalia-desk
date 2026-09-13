@@ -27,20 +27,28 @@ semántico. Que la línea citada diga lo que su frase afirma sigue siendo trabaj
 
 En cada push, el detector **SHALL** barrer **todas** las citas en alcance del árbol —no sólo las de
 los ficheros que el push cambia—, porque con línea base que una cita esté bien o rota depende sólo del
-fichero donde vive y del fichero al que apunta (decisión Q8 de la propuesta). De la entrada por stdin
-del hook (`<ref local> <sha local> <ref remota> <sha remoto>`) **SHALL** leer sólo el **sha local**, y
-**SHALL** comprobarlo todo contra él: la cosecha con `git grep` sobre ese sha y la lectura de cada
-fichero citado por revisión sobre ese mismo sha, **nunca** contra el árbol de trabajo. Con varias
-referencias en la entrada, **SHALL** comprobar cada sha local distinto. Con **borrado de rama** (sha
-local en ceros) **SHALL** salir con 0 sin comprobar nada. **MUST NOT** depender del sha remoto, de un
-rango entre shas ni de `merge-base`.
+fichero donde vive y del fichero al que apunta (decisión Q8 de la propuesta), **siempre que la cita
+resuelva igual antes y después del push**. De la entrada por stdin del hook
+(`<ref local> <sha local> <ref remota> <sha remoto>`), el detector **SHALL** comprobarlo todo contra el
+**sha local**: la cosecha con `git grep` sobre ese sha y la lectura de cada fichero citado por revisión
+sobre ese mismo sha, **nunca** contra el árbol de trabajo. Con varias referencias en la entrada,
+**SHALL** comprobar cada sha local distinto. Con **borrado de rama** (sha local en ceros) **SHALL**
+salir con 0 sin comprobar nada.
+
+El **sha remoto** **SHALL** usarse **sólo como índice de resolución**, con
+`git ls-tree -r --name-only <sha remoto>`, y **MUST NOT** usarse para un rango entre shas ni para
+`merge-base`. Con **rama nueva** (sha remoto en ceros), el índice **SHALL** tomarse de `origin/main` si
+existe; si no existe —o si el objeto del sha remoto no está en el clon—, el mensaje **MUST** decir que
+la comprobación del índice remoto no se hizo, y **MUST NOT** omitirlo en silencio. La regla de bloqueo
+que usa ese índice está en RQ-CV-05.
 
 Las citas **ancladas** **MUST** leerse agrupadas por pares (revisión, fichero) en **un solo proceso
 `git cat-file --batch`**, y **MUST NOT** leerse con un `git show` por cita: es lo que sostiene el coste
 de RQ-CV-13.
 
-*(Mutaciones: M1, M8, M29 · Rojo: g. M6 y M7, y el rojo f, quedan retirados por Q8: con el barrido
-completo no hay rango que probar, y nombrar un renombrado exigiría leer el sha remoto.)*
+*(Mutaciones: M1, M7, M8, M29 · Rojo: g. M6 y el rojo f quedan retirados por Q8: con el barrido
+completo no hay rango que probar. M7 vuelve con su número, redefinida como la mutación del índice
+remoto.)*
 
 #### Scenario: un push que sólo mueve líneas en el fichero citado bloquea (M1, obligatoria)
 - GIVEN un push que inserta líneas en un fichero citado sin tocar ningún fichero que lo cite
@@ -57,11 +65,19 @@ completo no hay rango que probar, y nombrar un renombrado exigiría leer el sha 
 - AND si el barrido se limita a los ficheros que cambia el push (mutación), sale 0 sin la base y la
   prueba se pone roja
 
-#### Scenario: fichero citado renombrado (rojo g)
-- GIVEN un push que renombra un fichero al que apunta una cita con `/`
+#### Scenario: fichero citado renombrado, con cita completa y con cita pelada (rojo g, M7)
+- GIVEN un push que renombra un fichero al que apuntan una cita con `/` y una cita **pelada**, sin `/`
 - WHEN corre el hook
-- THEN bloquea como «fichero inexistente»
-- AND el mensaje no dice «renombrado»: saberlo exigiría el sha remoto, que este requisito no lee
+- THEN las dos bloquean como «fichero inexistente (existía en `<sha remoto>`)»
+- AND si se quita el índice remoto (mutación M7), la cita pelada pasa a **saltada**, sale 0 y la prueba
+  se pone roja
+- AND una cita pelada a un fichero que el push **no** renombra se comprueba y sale 0
+
+#### Scenario: rama nueva, con y sin `origin/main`
+- GIVEN un push de una rama nueva (sha remoto en ceros)
+- WHEN corre el hook con `origin/main` presente
+- THEN el índice remoto se toma de `origin/main`
+- AND sin `origin/main`, el mensaje dice que la comprobación del índice remoto no se hizo, y no lo calla
 
 #### Scenario: reparación sin commitear no cuenta (M8)
 - GIVEN una cita rota reparada sólo en el árbol de trabajo, con el commit empujado todavía roto
@@ -145,18 +161,33 @@ resolución. **MUST NOT** bloquear, **MUST NOT** entrar en la línea base, y **S
 - WHEN se comprueba la cita del primer escenario
 - THEN pasa de "saltada" a "bloqueante", como fichero inexistente
 
-### Requirement: RQ-CV-05 · Un token sin `/` que no resuelve se informa; uno con `/` bloquea; un directorio se salta
+### Requirement: RQ-CV-05 · Lo que resolvía en el remoto y ya no resuelve bloquea; si no, sin `/` se informa y con `/` bloquea; un directorio se salta
 
-Un token que **no resuelve** a ningún fichero trackeado y **contiene** `/` **SHALL** bloquear como
-"fichero inexistente". Un token que no resuelve y **no contiene** `/` **SHALL** saltarse e informarse,
-sin bloquear. Un token que resuelve a un **directorio** **SHALL** saltarse e informarse: una cita a un
+Un token que **resolvía** en el índice remoto de RQ-CV-01 y **no resuelve** en el sha local **MUST**
+bloquear como «fichero inexistente (existía en `<sha remoto>`)», **lleve `/` o no**: es el fichero que
+el push borra o renombra. Esta regla **SHALL** evaluarse después de la categoría «fuera del
+repositorio» de RQ-CV-04 y **antes** de las dos siguientes. Un token que **no resuelve** ni en el sha
+local ni en el índice remoto y **contiene** `/` **SHALL** bloquear como "fichero inexistente". Un token
+que no resuelve en ninguno de los dos y **no contiene** `/` **SHALL** saltarse e informarse, sin
+bloquear. Un token que resuelve a un **directorio** **SHALL** saltarse e informarse: una cita a un
 directorio con número de línea no es comprobable.
 
-*(No tiene mutación dedicada en el §6 de la propuesta: lo fija la decisión Q2 y lo exige el criterio
+Sin el índice remoto, el renombrado de un fichero dejaría saltadas todas sus citas peladas, y hoy
+**1.084 citas sin `/` resuelven a un único fichero** (medido el 2026-09-13 sobre `e6104af`, sin
+archive, `superpowers-main` ni `.agent/skills/`; 133 a `packages/shared/src/transitions.ts`).
+
+*(Mutaciones: M7 para la primera regla; las otras tres las fija la decisión Q2 y las exige el criterio
 de aceptación correspondiente del §15.)*
 
+#### Scenario: cita pelada a un fichero que el push renombra bloquea (M7)
+- GIVEN una cita pelada, sin `/`, a un fichero que resolvía en el índice remoto
+- WHEN un push renombra ese fichero y corre el hook
+- THEN bloquea como «fichero inexistente (existía en `<sha remoto>`)»
+- AND sin el índice remoto (mutación), la misma cita se salta y sale 0
+
 #### Scenario: token sin barra que no resuelve se informa
-- GIVEN una cita con número de línea cuyo nombre no lleva `/` y no resuelve a ningún fichero trackeado
+- GIVEN una cita con número de línea cuyo nombre no lleva `/` y no resuelve a ningún fichero trackeado,
+  ni en el sha local ni en el índice remoto
 - WHEN corre el hook
 - THEN se salta e informa, sin bloquear
 
@@ -242,8 +273,9 @@ fichero en esa revisión, leído como exige RQ-CV-01; una revisión inexistente 
 ### Requirement: RQ-CV-07 · El barrido cubre sólo ficheros trackeados, y excluye el archive y las skills de terceros
 
 El detector **SHALL** limitarse a ficheros bajo control de versiones. **MUST** excluir del barrido
-`openspec/changes/archive/` (registro fechado), `.claude/skills/superpowers-main/` y `.agent/skills/`
-(ficheros de terceros, no afirmaciones del proyecto). La exclusión es **del barrido** —de las citas que
+`openspec/changes/archive/` (registro fechado), `.claude/skills/superpowers-main/` (de terceros,
+verificado) y `.agent/skills/` (skills importadas: de terceros verificado sólo en `react-components`,
+hipótesis en las otras cinco, y hoy con 0 citas). La exclusión es **del barrido** —de las citas que
 viven en esos directorios—, **no del índice de resolución**: sus ficheros siguen siendo candidatos al
 resolver una ruta, y la precedencia exacta de RQ-CV-02 decide igual.
 
@@ -386,7 +418,8 @@ invocarlo con `npx tsx` a secas. La documentación de la instalación local (npm
 línea 29) dice que, cuando el stdin no es un TTY, `npx` asume `--yes`; en `pre-push` el stdin es una
 tubería, así que sin `node_modules` `npx tsx` descargaría `tsx` y el hook seguiría, en vez de fallar.
 `--no-install` también lo evita, pero esa misma documentación lo da por obsoleto y lo convierte en
-`--no` (línea 298).
+`--no` (línea 298). La invocación **SHALL** vigilarla un **guardián estático** sobre `.githooks/pre-push`,
+nunca un control que ejecute `npx` y dependa de la red.
 
 (El servidor arranca hoy con `tsx`: `package.json:13` en `648432d` y `package.json:15` en `648432d`;
 `package.json:10-23` en `648432d` no declara `prepare` — es lo que esta capacidad añade.)
@@ -419,9 +452,12 @@ tubería, así que sin `node_modules` `npx tsx` descargaría `tsx` y el hook seg
   `npx --no tsx`
 - WHEN corre el hook
 - THEN falla con mensaje explícito, nunca sale 0 en silencio
-- AND con el hook invocando `npx tsx` a secas (control), `npx` descarga `tsx`, el hook sigue y la
-  mutación sale verde: es la prueba de que la forma de invocar discrimina. Si el entorno de pruebas no
-  tiene red, este control no es automatizable y se declara así
+#### Scenario: guardián estático de la invocación, sin red (control de M16)
+- GIVEN un guardián que lee `.githooks/pre-push` y falla si invoca `tsx` con `npx` sin `--no`
+- WHEN el fichero vigilado invoca `node_modules/.bin/tsx` o `npx --no tsx`
+- THEN el guardián pasa
+- AND si se ensucia el fichero vigilado escribiendo `npx tsx` a secas (regla de mutación 2 del
+  proyecto), el guardián se pone rojo, sin ejecutar `npx` ni depender de la red
 
 ### Requirement: RQ-CV-13 · Coste: objetivo ≤ 5 s, tope duro 10 s
 
@@ -429,7 +465,7 @@ El tiempo total del hook, medido invocándolo directamente con la misma entrada 
 stdin y **sobre el árbol completo** —con el barrido de RQ-CV-01, el push típico y el más caro cuestan
 lo mismo—, **SHALL** ser **≤ 5 s** (objetivo) y **MUST NOT** superar **10 s** (tope duro). El tiempo
 **SHALL** incluir el arranque de `tsx`, la lectura de las anclas en un solo `git cat-file --batch`
-(RQ-CV-01) y el aviso de escalada.
+(RQ-CV-01), el índice remoto (RQ-CV-01) y el aviso de escalada.
 
 **Coste ya medido antes de construirlo, con su procedencia** (2026-09-13):
 
@@ -439,15 +475,16 @@ lo mismo—, **SHALL** ser **≤ 5 s** (objetivo) y **MUST NOT** superar **10 s*
 | Anclas: 53 citas, 8 pares (revisión, fichero), en un solo `git cat-file --batch` | 0,12 s | analista; reproducido por el orquestador en 31-49 ms |
 | La misma lectura con un `git show` por par, para comparar | 0,75 s | analista; reproducido en 280-299 ms |
 | `git shortlog -sne --all`, tres intentos | 267 / 281 / 314 ms | nivel 2 de la propuesta |
-| **Total: prototipo, anclas y shortlog** | **~1 s contra 5 s** | suma; **sin** el arranque de `tsx`, que se mide en la tanda |
+| Índice remoto: `git ls-tree -r --name-only` de un sha (665 rutas) y el índice de sufijos en Node, cinco intentos | 64 / 39 / 33 / 34 / 61 ms | orquestador; desde bash, sólo el `ls-tree` da 163-194 ms por el arranque de proceso de Git Bash |
+| **Total: prototipo, anclas, shortlog e índice remoto** | **~1 s contra 5 s** | suma; **sin** el arranque de `tsx`, que se mide en la tanda |
 
 *(Mutaciones: M19; decisiones Q3 y Q8 de la propuesta)*
 
 #### Scenario: medición dentro del objetivo
 - GIVEN el árbol completo, con sus citas ancladas
 - WHEN se invoca el hook directamente con la entrada real por stdin
-- THEN el tiempo total, con el arranque de `tsx`, las anclas y el aviso de escalada, queda dentro de
-  5 s, y el número se registra
+- THEN el tiempo total, con el arranque de `tsx`, las anclas, el índice remoto y el aviso de escalada,
+  queda dentro de 5 s, y el número se registra
 
 #### Scenario: control del tope duro
 - GIVEN la misma medición

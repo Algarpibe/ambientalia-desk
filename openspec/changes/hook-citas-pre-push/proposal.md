@@ -140,12 +140,16 @@ comprobar las citas ancladas a revisión, y además pondría el build en rojo **
   un `.dot` de `writing-skills`). Sus citas **no son afirmaciones del proyecto**, así que el directorio
   queda fuera del barrido igual que el archive, **declarado** y no escondido. Su ejemplo de ruta
   inventada —en el `SKILL.md` de `writing-plans`, línea 70— **no va a la línea base**.
-- **Barrer `.agent/skills/`.** Son **34** ficheros trackeados, en seis skills, y **también son de
-  terceros**, verificado: llevan licencia Apache-2.0 en sus metadatos, tres ficheros de
-  `react-components` declaran «Copyright 2026 Google LLC», y enlazan a los repositorios de shadcn-ui y
-  de remotion. Queda **fuera del barrido por el mismo criterio** que `superpowers-main`: sus citas no son
-  afirmaciones del proyecto. Hoy tiene **0 citas**, así que excluirlo no cambia ninguna cifra: se
-  excluye por el criterio, no por el número. ⚠️ La exclusión es **del barrido** —de las citas que viven
+- **Barrer `.agent/skills/`.** Son **34** ficheros trackeados, en seis skills. **Que sean de terceros
+  está verificado sólo para una de las seis:** **cuatro** ficheros de `react-components` llevan cabecera
+  de licencia Apache 2.0 con «Copyright 2026 Google LLC» (dos `.tsx`, un `.sh` y un `.js`). El literal
+  «Apache-2.0» sólo aparece en su `package-lock.json`, y ahí son licencias de **dependencias**, no de
+  la skill. Los enlaces a los repositorios de shadcn-ui y de remotion **no prueban autoría**: el
+  `SKILL.md` de remotion remite a las skills que mantiene Remotion, que son otras. **Hipótesis**, sin
+  evidencia de licencia: que las otras cinco también sean de terceros. *(La versión anterior decía
+  «verificado» para las seis, contaba tres ficheros con «Google LLC» y tomaba el `package-lock.json` y
+  los enlaces por prueba: estaba inflada.)* Queda **fuera del barrido** porque hoy tiene **0 citas**, así
+  que excluirlo no cambia ninguna cifra, y porque la que está verificada no es afirmación del proyecto. ⚠️ La exclusión es **del barrido** —de las citas que viven
   ahí—, **no del índice de resolución**: su `package.json` sigue siendo candidato, y la precedencia
   exacta de la Pieza 2 resuelve el nombre pelado a la raíz igual.
 - **Ficheros sin trackear.** Los 8 de hoy quedan fuera por construcción, sin lista de exclusión.
@@ -166,14 +170,22 @@ comprobar las citas ancladas a revisión, y además pondría el build en rojo **
 en juego»: las citas que viven en un fichero que el push cambia más las que apuntan a uno. Gerencia
 decidió el **barrido completo** con un dato que la ronda no tenía: **con línea base, que una cita esté
 bien o rota depende sólo del fichero donde vive y del fichero al que apunta**. El barrido completo da
-por tanto el mismo resultado que el alcance por push, **y además caza lo que llegó roto de un push sin
-hook** —el hueco del segundo clon de la Pieza 6—. Es más simple y cabe en coste (§7). Cinco precisiones:
+por tanto el mismo resultado que el alcance por push **siempre que la cita resuelva igual antes y
+después del push** —para eso está el índice remoto de la precisión 1—, **y además caza lo que llegó
+roto de un push sin hook** —el hueco del segundo clon de la Pieza 6—. Es más simple y cabe en coste
+(§7). Cinco precisiones:
 
-1. **Del stdin sólo se lee el sha LOCAL.** Git pasa una línea por referencia
-   (`<ref local> <sha local> <ref remota> <sha remoto>`), y el detector comprueba **todo** contra el sha
-   local. **Borrado de rama** (sha local todo ceros): nada que comprobar, salir con 0. Desaparecen el
-   rango entre el sha remoto y el local, el `merge-base` y el caso de rama nueva. Si la entrada trae
-   varias referencias, se comprueba **cada sha local distinto**, sin dejar ninguno sin mirar.
+1. **Todo se comprueba contra el sha LOCAL; el sha remoto se usa SÓLO como índice de resolución.** Git
+   pasa una línea por referencia (`<ref local> <sha local> <ref remota> <sha remoto>`). El detector
+   comprueba **todo** contra el sha local, y del sha remoto sólo saca un índice de nombres con
+   `git ls-tree -r --name-only <sha remoto>`: **sin rango y sin `merge-base`**. Un token que **resolvía
+   en el índice remoto y no resuelve en el sha local BLOQUEA** como «fichero inexistente (existía en
+   `<sha remoto>`)», **lleve `/` o no**. **Rama nueva** (sha remoto todo ceros): el índice se toma de
+   `origin/main` si existe; si no existe, **el mensaje dice que esa comprobación no se hizo**, nunca en
+   silencio. Lo mismo si el objeto del sha remoto no está en el clon —**hipótesis**: que `pre-push` pueda
+   recibir un sha remoto que el clon no tiene—. **Borrado de rama** (sha local todo ceros): nada que
+   comprobar, salir con 0. Si la entrada trae varias referencias, se comprueba **cada sha local
+   distinto**, con el índice de **su** sha remoto. Coste del índice: 33-64 ms (§7).
 2. **Se verifica contra LO QUE SE EMPUJA, no contra el árbol de trabajo**: la cosecha con `git grep`
    sobre el sha local y la lectura de cada fichero citado por revisión sobre ese mismo sha. El árbol
    puede tener ediciones sin commitear que no viajan en el push (M8). Las ancladas, contra su propia
@@ -192,12 +204,19 @@ hook** —el hueco del segundo clon de la Pieza 6—. Es más simple y cabe en c
    push no toque ni el fichero donde vive la cita ni el citado (M29). Es justo lo que el alcance por push
    no podía ver.
 
-**Borrados y renombrados, sin `-M`.** Un fichero borrado o renombrado deja sin resolver las citas con
-`/` que apuntan a él, que bloquean como «fichero inexistente» (Pieza 2, rojo g). **El mensaje ya no
-dice «renombrado»**: para saberlo haría falta leer el sha remoto, que la decisión Q8 descarta. **M7 se
-retira** por eso, y lo que pierde es precisión del mensaje, no detección. Una cita **sin `/`** a un
-fichero renombrado sigue saltándose, como cualquier token sin `/` que no resuelve: es el hueco que ya
-declaran Q2 y R-5.
+**Borrados y renombrados, sin `-M` y sin perder detección.** ⚠️ **La versión anterior de este párrafo
+era FALSA.** Retiraba M7 diciendo que se perdía «precisión del mensaje, no detección», y confundía dos
+casos distintos. El hueco de Q2 es el de los tokens sin `/` que **no resuelven hoy**. Una cita sin `/`
+que **resolvía y deja de resolver** porque su fichero se borró o se renombró es otro caso, y sin índice
+remoto **se saltaba**: si se renombra `transitions.ts`, cualquier cita pelada a él deja de resolver, no
+lleva `/` y el push sale. No es un caso marginal: **1.084 citas sin `/` resuelven hoy a un único
+fichero** —133 a `transitions.ts`, 97 a `ticketService.ts`, 74 a `schema.sql`, 68 a `debt.md`—
+(medido aquí el 2026-09-13; el analista midió 1.075 con su cosecha, orientativo). **Con el índice
+remoto de la precisión 1**, borrar o renombrar el fichero bloquea **todas** esas citas, con `/` y sin
+ella, y el mensaje dice en qué revisión existía. **M7 vuelve con su número, redefinida** (§6): quitar el
+índice remoto hace que la cita pelada al fichero renombrado pase a saltada, y la prueba se pone roja.
+Lo que sigue sin decirse es **a dónde** fue el fichero: eso exigiría el diff entre los dos shas, y Q8
+lo descarta.
 
 ### Pieza 2 · Cómo se resuelve la ruta
 
@@ -212,6 +231,7 @@ resuelven por sufijo de ruta a un único fichero; **145** son **ambiguas** (`rep
 | Ruta completa o **sufijo con frontera de segmento** (`<ruta> === <algo>` o `<ruta>` termina en `/<algo>`) a **un** candidato | 1.603 | **Comprueba y bloquea** si está rota | Es el 86 % del censo con una verdad única |
 | **Ambigua** (varios candidatos) | 145 | **Comprueba en TODAS.** Bloquea **sólo si está rota en todas**; si alguna la valida, se **salta e informa** | Una cita ambigua no tiene verdad única, pero si **ninguna** candidata la sostiene está rota sea la que sea. Bloquear cualquier ambigua obligaría a desambiguar 145 citas a mano antes de poder instalar el hook: eso es una migración, no esta tanda |
 | **Fuera del repositorio**: el token empieza por `~/`, por `/` o por letra de unidad (`C:\`, `C:/`), o lleva esquema `://` | — | **Se salta e informa en su PROPIA cifra**, separada de las demás saltadas. **No bloquea y no entra en la línea base** | No es una cita del repositorio: no hay árbol contra el que comprobarla. Sin esta categoría, la cita de `CLAUDE.md:333` en `648432d` a un contrato de `~/.claude/skills/` —**válida**, y fuera del repositorio— caería en la fila siguiente, y como `CLAUDE.md` lo modifica la unidad de trabajo 2, **acabaría en la base como rota sin estarlo**. Se evalúa **antes** que la fila siguiente |
+| **Resolvía en el índice remoto y no resuelve en el sha local**, lleve `/` o no | — | **Bloquea** como «fichero inexistente (existía en `<sha remoto>`)» | Es el fichero borrado o renombrado por el propio push (Pieza 1, precisión 1). Sin esta fila, las 1.084 citas peladas que hoy resuelven se saltarían al renombrar su fichero. Se evalúa **después** de «fuera del repositorio» y **antes** de las dos filas siguientes |
 | **No resuelve y el token lleva `/`** | parte de las 125 | **Bloquea** como «fichero inexistente» | Es exactamente el caso de los borrados y renombrados de la Pieza 1: rompen las citas que apuntan al fichero |
 | **No resuelve y el token NO lleva `/`** | parte de las 125 | **Se salta e informa** | `R08.1.md` no es sufijo de ruta sino **subcadena del basename** de `docs/Manifesto/Desk2.0_..._R08.1.md`, y `app.test.ts` no existe. Resolver por subcadena haría casar `.ts:5` con cualquier fichero; bloquear todo lo que no resuelva convertiría cualquier `x.ts:5` escrito en prosa en un push parado |
 | `<algo>` resuelve a un **directorio** del árbol | — | Se salta e informa | Una cita a un directorio con número de línea no es comprobable |
@@ -220,7 +240,7 @@ resuelven por sufijo de ruta a un único fichero; **145** son **ambiguas** (`rep
 propia tanda quedarían ambiguas y se saltarían.** Medido de disco: **`package.json` tiene SEIS
 candidatos trackeados** —la raíz; `apps/desk`, `apps/hub-sync`, `packages/shared` y
 `packages/zoho-sync`, por los workspaces que declara la propia raíz; y `.agent/skills/react-components/`,
-de una skill de terceros (§2, «No entra»)—. *(La versión anterior decía cinco: se le escapaba el de
+de una skill importada (§2, «No entra»)—. *(La versión anterior decía cinco: se le escapaba el de
 `.agent/skills/`. La conclusión no cambia.)* Así que con sufijo a secas **toda**
 cita a `package.json` sería ambigua y el detector la saltaría informando. Con la precedencia, el nombre
 pelado resuelve a la raíz, que es lo que quiere decir quien lo escribe. **Control del otro signo:**
@@ -470,7 +490,13 @@ la diferencia con la tabla de arriba, donde el intérprete era `cmd.exe` porque 
 
 **Y si faltan las dependencias, el hook FALLA con mensaje explícito.** No sale 0. Un hook que pasa
 cuando no ha podido comprobar nada es exactamente el modo de fallo de la guarda en `sh`: la imposición
-desaparece en silencio (M16, cuyo control es precisamente la variante con `npx tsx` a secas).
+desaparece en silencio (M16).
+
+**Y la forma de invocar la vigila un guardián ESTÁTICO, no una prueba con red.** Un control que
+ejecutara `npx tsx` a secas para ver que descarga dependería de que haya red en el entorno de pruebas.
+El guardián lee `.githooks/pre-push` y **falla si invoca `tsx` con `npx` sin `--no`**. Se prueba por la
+regla de mutación 2 del proyecto: se **ensucia el fichero vigilado** escribiendo en él `npx tsx` a secas,
+y el guardián se pone rojo; con `node_modules/.bin/tsx` o `npx --no tsx`, verde.
 
 ### Pieza 6 · El mensaje del hook: lo que NO comprueba, y el aviso de escalada
 
@@ -530,7 +556,7 @@ que aquí no hay excusa de `.tsx`: todo rojo es escribible.**
 | **d** | Anclada a revisión real → 0; anclada a revisión inventada → ≠ 0 | Que las ancladas se leen con `git show`, y que su ausencia no pasa por válida |
 | **e** | Cita rota en un fichero **sin trackear** → se ignora | El alcance por construcción |
 | ~~**f**~~ | **RETIRADO por Q8.** Era: push de varios commits con la rotura en el primero → ≠ 0 | Probaba que el rango salía de stdin y no de `HEAD~1`; con el barrido completo no hay rango |
-| **g** | Fichero citado **renombrado** → la cita con `/` que apunta a él da ≠ 0 como «fichero inexistente» | Que un renombrado rompe las citas sin necesidad de `-M`. El mensaje ya no dice «renombrado» (Pieza 1) |
+| **g** | Fichero citado **renombrado** → una cita con `/` **y una cita pelada** que apuntaban a él dan ≠ 0 como «fichero inexistente (existía en `<sha remoto>`)» | Que el índice remoto detecta el renombrado sin `-M`, también en la cita pelada (Pieza 1, precisión 1) |
 | **h** | `prepare` en un directorio **sin `.git`** → 0 **y no instala**; **con `.git`** → 0 **e instala** | Los dos signos. Uno solo lo pasan las tres variantes |
 | **i** | Repositorio sintético con **una** identidad → sin aviso; con **dos** → aviso **y el mismo código de salida** | El aviso de escalada de la Pieza 6, y que **no** bloquea |
 
@@ -565,7 +591,7 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M4** | Rango con el extremo **final** fuera (el inicial bien) | ≠ 0, y el mensaje nombra **cuál** de los dos extremos | Rango con los dos extremos bien → 0. **Y el inverso también**: extremo **inicial** en línea en blanco con el final bien → ≠ 0. Los dos casos se dieron esta misma sesión (§1), así que probar un solo extremo dejaría fuera la mitad medida |
 | **M5** | Cita rota en un fichero **sin trackear** | Se ignora: 0 | `git add` a ese fichero → pasa a bloquear. Prueba que el alcance es «trackeado», no «existe en disco» |
 | ~~**M6**~~ | **RETIRADA por Q8**, conserva su número. Era: push de varios commits con la rotura en el primero | — | Probaba que el rango venía de stdin y no de `HEAD~1`; con el barrido completo no hay rango que probar. Lo que cubría lo cubre ahora M29, con más alcance |
-| ~~**M7**~~ | **RETIRADA por Q8**, conserva su número. Era: renombrar un fichero citado y que el mensaje dijera «renombrado» | — | Nombrar el renombrado exige leer el sha remoto, que Q8 descarta. **El renombrado sigue bloqueando** como fichero inexistente (rojo g); se pierde precisión del mensaje, no detección |
+| **M7 · el índice remoto** (VUELVE con su número, redefinida) | **Quitar el índice remoto** de la resolución | Con una cita **pelada** a un fichero que el push renombra: con el índice, **bloquea** como «fichero inexistente (existía en `<sha remoto>`)»; sin él, **pasa a saltada**, sale 0 y la prueba se pone roja | **El otro signo:** la misma cita pelada a un fichero que **no** se renombra → se comprueba y sale 0. Y la **rama nueva sin `origin/main`**: el mensaje dice que la comprobación del índice no se hizo, en vez de callarlo. *(Se retiró por Q8 creyendo que sólo perdía precisión del mensaje; perdía detección en las citas peladas, Pieza 1.)* |
 | **M8** (D1.3) | Reparar la cita **en el árbol de trabajo** sin commitear, y empujar el commit roto | ≠ 0 | La variante que lee el worktree lo deja pasar |
 | **M9** (D2.2) | Reparar una cita que está en la **línea base**, sin quitar su entrada | **El hook FALLA** hasta que se quite de la base | Quitar también la entrada → 0. Es el mecanismo que impide que la base se podre |
 | **M10** (D2.3) | Añadir una cita rota **nueva** con la base ya presente | Bloquea | La base no crece desde el hook: el único camino es editarla a mano, y eso sale en el diff |
@@ -574,7 +600,7 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M13** (D4.2) | Hacer fallar el `git config` **con** repositorio presente | Mensaje visible en la salida y `npm ci` **sigue en verde** (exit 0) | Que el mensaje exista: un fallo silencioso aquí es el defecto que esta pieza evita |
 | **M14 · las tres exclusiones** | Cita rota **dentro** de `openspec/changes/archive/`, otra dentro de `.claude/skills/superpowers-main/` y otra dentro de `.agent/skills/` | Se ignoran: 0 | La misma cita fuera de los tres directorios → bloquea |
 | **M15 · las ambiguas** | Cita ambigua rota en **todas** las candidatas | ≠ 0 | Rota en **una sola** → se salta y el contador de saltadas sube en 1. Un detector que no contara las saltadas mentiría por omisión |
-| **M16 · el hook sin dependencias** | Borrar `node_modules` y empujar, con el hook invocando `node_modules/.bin/tsx` o `npx --no tsx` | **≠ 0**, con mensaje explícito | **Control:** la misma prueba con el hook invocando **`npx tsx` a secas** → el stdin no es TTY, `npx` asume `--yes`, descarga `tsx` y **la mutación sale verde** (Pieza 5). Si el entorno de pruebas no tiene red, este control no es automatizable y se declara así. Un hook que saliera 0 aquí repite el fallo de la guarda en `sh` |
+| **M16 · el hook sin dependencias** | Borrar `node_modules` y empujar, con el hook invocando `node_modules/.bin/tsx` o `npx --no tsx` | **≠ 0**, con mensaje explícito | **Control sin red, estático** (regla de mutación 2): un guardián lee `.githooks/pre-push` y falla si invoca `tsx` con `npx` sin `--no`. Se **ensucia el fichero vigilado** escribiendo `npx tsx` a secas → el guardián se pone **rojo**; con `node_modules/.bin/tsx` o `npx --no tsx` → verde. Sustituye al control anterior, que ejecutaba `npx tsx` y dependía de la red. Un hook que saliera 0 aquí repite el fallo de la guarda en `sh` |
 | **M17 · la posición** (regla de mutación 1) | Mover la consulta a la línea base **después** de decidir el bloqueo | Una entrada de la base debe empezar a bloquear → la prueba de la base se pone roja | Si sigue verde, **el orden no está probado** y un comentario que lo declare deliberado no es prueba |
 | **M18 · el orden de la tanda** | Instalar el hook **antes** de generar la línea base | El push de cierre se bloquea por citas que esta tanda no rompió | Es la precondición dura del §8, y por eso es criterio de aceptación con orden, no una recomendación |
 | **M19 · el coste** | — | Medir el hook con la entrada real por stdin | §7 |
@@ -607,7 +633,8 @@ prohíbe. Así que el tiempo **no es una métrica de calidad, es la condición d
 | El prototipo completo: 1.873 citas, 663 ficheros —**barría ya el árbol entero, pero no leía anclas**— | **541 ms** (incluye el `git grep`) | nivel 2 |
 | Las anclas: 53 citas fuera del archive y de `superpowers-main`, **8 pares** (revisión, fichero), en **un solo `git cat-file --batch`** | **0,12 s** | analista; reproducido aquí en 31-49 ms |
 | *(la misma lectura con un `git show` por par, para comparar)* | *0,75 s* | *analista; reproducido aquí en 280-299 ms* |
-| **Total: prototipo + anclas + shortlog** | **~1 s contra un objetivo de 5 s — unas 5× de margen** | suma de las filas anteriores |
+| El índice remoto: `git ls-tree -r --name-only` de un sha (665 rutas) y construir el índice de sufijos en Node, cinco intentos | **64 / 39 / 33 / 34 / 61 ms** | medido aquí, 2026-09-13. *(Lanzado desde bash, sólo el `ls-tree` tarda 163-194 ms: es el arranque de proceso de Git Bash, no git)* |
+| **Total: prototipo + anclas + shortlog + índice remoto** | **~1 s contra un objetivo de 5 s — unas 5× de margen** | suma de las filas anteriores |
 
 ⚠️ **Dos cosas que ese total NO incluye, y se dicen.** El arranque de `tsx`, que se mide en la tanda
 (última fila de la tabla de abajo); y el efecto del barrido completo sobre el coste, que es **nulo**:
@@ -651,14 +678,14 @@ cierta y luego dejó de serlo.
 | **R-4** | **Un falso positivo para el push de una persona y la salida fácil es `--no-verify`** | Media | Mensaje con ruta, línea, cita literal y las **dos** salidas legítimas: reparar, o añadir a la base **a mano**. Y la regla de que `--no-verify` no se usa, escrita en el mensaje y en IV-10 |
 | **R-5** | **El hueco declarado**: 145 ambiguas + 125 sin resolver no se comprueban del todo | Cierta | Las dos cifras se imprimen en cada ejecución (M15). Decidido por Q1 y Q2 |
 | **R-6** | **Cobertura**: el detector cuenta contra el 92 % (`vitest.config.ts:53`, `:58-63`) y puede arrastrar la cifra global | Media | `strict_tdd` con los ocho rojos vigentes del §4 (el f, retirado por Q8). Si baja, **es la señal**; bajar el umbral exige justificación en el commit (`vitest.config.ts:36-39`) |
-| **R-7** | **El detector se convierte en dependencia de la entrega**: si se cuelga, no se empuja | Media | Coste ya medido en ~1 s con unas 5× de margen, anclas incluidas (§7); salida 0 inmediata en el único caso degenerado que queda con el barrido completo: el borrado de rama |
+| **R-7** | **El detector se convierte en dependencia de la entrega**: si se cuelga, no se empuja | Media | Coste ya medido en ~1 s con unas 5× de margen, anclas incluidas (§7); salida 0 inmediata en el borrado de rama; y en la rama nueva sin `origin/main`, un mensaje que dice que el índice remoto no se comprobó, en vez de colgarse o callarlo |
 | **R-8** | **`prepare` es nuevo y corre en tres sitios más** (`ci.yml:26`, `Dockerfile:6`, `:19`) | Media | Verificado: en el CI hay `.git` y fijar `core.hooksPath` es inocuo porque no empuja; en la imagen no hay `.git` ni `git` y sale 0 (M12) |
 | **R-9** | **Presupuesto de revisión.** `changed_lines` se mide diffeando el **árbol entero** del intento (`CLAUDE.md:353-356` en `648432d`) y los artefactos SDD cuentan | Media | **Precondición, no recomendación:** `proposal.md`, el spec, `design.md` y `tasks.md` **commiteados antes de que el intento de `sdd-apply` adquiera** |
 | **R-10** | **Paralelismo.** Dos tandas SDD sobre `C:\dev\Desk_2_R1.023` se imputan líneas entre sí, y desbloquearlo exige `sdd-attempt reset`, reservado a un mantenedor | Media | Una tanda por árbol de trabajo. Si hace falta otra, worktree aislado |
 | **R-11** | **La tanda se rompe a sí misma.** Sus artefactos citan los dos ficheros que modifica, y el detector **no caza las citas que quedan en contenido equivocado**, en rango y no vacías. En la ilustración de la Pieza 3 —+1 en `CLAUDE.md`, +20 en `openspec/config.yaml`— se desplazan **ocho** y caza **cuatro**; con +5 en `CLAUDE.md`, o de +25 a +40 en `openspec/config.yaml`, **no caza ninguna** | **Cierta sin anclaje — ya pasó una vez en esta propuesta** | Anclaje a `648432d` **cita por cita** en los cuatro ficheros que la tanda toca, la mutación M20, y la comprobación final del §8 sobre los artefactos commiteados |
 | **R-12** | **El 60 % de las abreviadas queda huérfano** con la atribución por línea física —**el 71 %** con los requisitos (a) a (d) de la Pieza 2—, y se salta en silencio | Alta | Es nota explícita para `sdd-design` (Pieza 2) con la medición hecha, y el hueco que decida **se declara**. En esta propuesta las abreviadas a los cuatro ficheros de la tanda se reescribieron como citas completas |
 | **R-13** | **El extremo del RANGO es el modo de fallo dominante, no el número suelto.** Medido en esta sesión: **cinco** citas desfasadas, **las cinco** por un extremo del rango; una de ellas mal **por los dos** a la vez (inicio en línea en blanco, final cortando el párrafo). Un detector que comprobara sólo el inicio, o sólo la existencia de la línea, dejaría fuera la mitad medida | **Cierta — ya ocurrió cinco veces** | Rojo (c) del §4 y mutación **M4 en sus dos direcciones**: final fuera con inicio bueno, **e** inicio en línea en blanco con final bueno. Y el mensaje nombra **cuál** de los dos extremos falla, porque «el rango está roto» no dice dónde mirar |
-| **R-14** | **Presupuesto de la línea base.** Si `sdd-design` amplía la atribución de las abreviadas (nota de la Pieza 2), el detector definitivo **comprobará muchas más citas** —hoy quedan huérfanas 683 con el patrón del sondeo, 803 con los requisitos (a) a (d)— y la base puede crecer **muy por encima de las ~43** del sondeo. **Cada entrada es una línea** contra las 800 de `review_budget_lines` (`openspec/config.yaml:29` en `648432d`) | Media | **Medir con el prototipo y la atribución ampliada ANTES de cerrar `sdd-design`.** **Umbral: 100 entradas.** El extremo alto de la estimación del §11 sin la base suma 582 líneas con el barrido completo (622 antes de Q8); con 100 entradas son 682, que dejan 118 de margen —un 15 %— contra las 800. **Si la medición pasa de 100, se para y se pregunta a Gerencia antes de generar la base.** El umbral supone una línea por entrada: si el formato usa más, se divide por las líneas que ocupe cada una |
+| **R-14** | **Presupuesto de la línea base.** Si `sdd-design` amplía la atribución de las abreviadas (nota de la Pieza 2), el detector definitivo **comprobará muchas más citas** —hoy quedan huérfanas 683 con el patrón del sondeo, 803 con los requisitos (a) a (d)— y la base puede crecer **muy por encima de las ~43** del sondeo. **Cada entrada es una línea** contra las 800 de `review_budget_lines` (`openspec/config.yaml:29` en `648432d`) | Media | **Medir con el prototipo y la atribución ampliada ANTES de cerrar `sdd-design`.** **Umbral: 100 entradas.** El extremo alto de la estimación del §11 sin la base suma 617 líneas con el barrido completo y el índice remoto (622 antes de Q8); con 100 entradas son 717, que dejan 83 de margen —un 10 %— contra las 800. **Si la medición pasa de 100, se para y se pregunta a Gerencia antes de generar la base.** El umbral supone una línea por entrada: si el formato usa más, se divide por las líneas que ocupe cada una |
 
 ---
 
@@ -687,8 +714,8 @@ cierta y luego dejó de serlo.
 
 | Área | Impacto | Qué cambia | Líneas est. |
 |---|---|---|---|
-| `apps/desk/server/citas/` (detector + CLI) | **Nuevo** | Cosecha, resolución, comprobación, salida. **Sin** el rango entre shas, `merge-base`, rama nueva ni `-M`; **con** la lectura de anclas en un `cat-file --batch` | 115-180 *(130-200 antes de Q8)* |
-| `apps/desk/server/citas/*.test.ts` | **Nuevo** | Los ocho rojos vigentes del §4 y las mutaciones automatizables del §6: **sin** f, M6 ni M7; **con** M29 | 145-240 *(160-260 antes de Q8)* |
+| `apps/desk/server/citas/` (detector + CLI) | **Nuevo** | Cosecha, resolución, comprobación, salida. **Sin** el rango entre shas, `merge-base` ni `-M`; **con** la lectura de anclas en un `cat-file --batch` y el **índice remoto** con su caso de rama nueva | 125-195 *(130-200 antes de Q8)* |
+| `apps/desk/server/citas/*.test.ts` | **Nuevo** | Los ocho rojos vigentes del §4 y las mutaciones automatizables del §6: **sin** f ni M6; **con** M7 redefinida, M29 y el guardián estático de M16 | 160-260 *(igual que antes de Q8)* |
 | `apps/desk/server/citas/` (línea base) | **Nuevo** | **Generada**, no copiada. Una entrada por cita rota | ~45 (según la cifra definitiva) |
 | `.githooks/pre-push` | **Nuevo** | Invoca al detector con `node_modules/.bin/tsx` y el stdin, sin lógica de shell, **+ el aviso de escalada** (`git shortlog`, ~10 líneas) | 15-25 |
 | `apps/desk/server/citas/` (prueba del aviso) | **Nuevo** | **Los dos signos** del aviso de escalada: una identidad / dos | 25-30 |
@@ -697,14 +724,14 @@ cierta y luego dejó de serlo.
 | `DEPLOY.md` | Modificado | El comando manual para `--ignore-scripts` y el `--unset` de la reversión | 3-6 |
 | `CLAUDE.md` | Modificado | Fila **IV-10**, el recuento de `CLAUDE.md:249` en `648432d` («Cuatro» → «Cinco») **y la frase de Q6 en la regla de mutación 4** | 12-24 |
 | `openspec/config.yaml` | Modificado | IV-10 en `incumplimientos_vivos`, tras el final de IV-9 | 25-40 |
-| **Total código + pruebas + datos** | | | **~405-625** *(~440-660 antes de Q8)* |
+| **Total código + pruebas + datos** | | | **~430-660** *(~440-660 antes de Q8)* |
 
 **Talla S, confirmada, con la reserva dicha.** No hay lógica de dominio nueva ni esquema ni escritura a
 Zoho: es un lector de texto con su hook. Lo que la engorda son las pruebas, y eso es lo correcto bajo
 `strict_tdd`. El aviso de escalada subió la estimación de 400-620 a ~440-660 (~10 líneas en el hook más
-25-30 de prueba de dos signos), y el barrido completo de Q8 la baja a **~405-625**: se va la lógica del
-rango con sus pruebas —f, M6 y M7— y entran la lectura en `cat-file --batch` y M29. Es **estimación**,
-no medida.
+25-30 de prueba de dos signos), y el barrido completo de Q8 la deja en **~430-660**: se va la lógica del
+rango con sus pruebas —f y M6— y entran la lectura en `cat-file --batch`, el índice remoto con M7
+redefinida, M29 y el guardián estático de M16. Es **estimación**, no medida.
 **Presupuesto `review_budget_lines: 800`** (`openspec/config.yaml:29` en `648432d`): cabe, pero sin la
 holgura de una tanda S típica — depende de R-9 (planificación commiteada antes de adquirir) y R-10
 (árbol aislado).
@@ -755,7 +782,7 @@ cerrarla**, y reabre el alcance de la Pieza 1 con un dato que la ronda no tenía
 | **Q5** | ¿Quién vigila `git shortlog -sne --all`? | **RECHAZADA en su forma.** No es tarea de persona: por el reverso de la regla del ciclo 1 es trabajo que una tanda hace aquí, y sacarla del recuento sería maquillarlo. **Lo hace el hook**: aviso visible **sin bloquear** con más de una identidad, y prueba de los dos signos | Pieza 6; §1; §2 «Entra» 5; rojo (i); M21; §11 |
 | **Q6** | El ejemplo de cita rota del §2 tenía **forma de cita**, así que el detector lo trataría como rota | **ACEPTADA, opción (i)**: el ejemplo se reescribe **sin forma de cita**, y se añade a la tanda **una frase en la regla de mutación 4 de `CLAUDE.md`**: «un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como rota» | §2 «No entra» y «Entra» 9; convención 2 de la cabecera; M22; unidad de trabajo 2 |
 | **Q7** | **NUEVA, y verificada de disco por Gerencia.** «Insertar IV-10 no desfasa ninguna cita en alcance» se midió **antes de que la propuesta existiera**: era cierta entonces y es **FALSA ahora** | **Tres partes: (a)** anclar a `648432d` toda cita de los artefactos de la tanda a los cuatro ficheros que la tanda modifica; **(b)** rehacer la medición **incluyendo los artefactos de la propia tanda** y mover la comprobación **al final, sobre los artefactos commiteados**; **(c)** añadir la mutación del anclaje | Cabecera (convenciones 1 y 2); Pieza 3 (medición rehecha); §8 (segunda comprobación); M20; R-11; §15 |
-| **Q8** | **POSTERIOR a la ronda (2026-09-13), y reabre el alcance.** ¿Barrer «lo que el push pone en juego» o barrer todo? | **BARRIDO COMPLETO en cada push.** Con línea base, que una cita esté bien o rota depende sólo del fichero donde vive y del citado: el barrido completo da el mismo resultado, **caza lo que llegó roto de un push sin hook**, es más simple y cabe en coste (~1 s). Del stdin sólo se lee el sha local | Pieza 1; §2 «Entra» 2; Pieza 6 (hueco del segundo clon); §4 (f retirado, g reformulado); §6 (M6 y M7 retiradas, M29 nueva); §7; §11; R-7; R-14; §15 |
+| **Q8** | **POSTERIOR a la ronda (2026-09-13), y reabre el alcance.** ¿Barrer «lo que el push pone en juego» o barrer todo? | **BARRIDO COMPLETO en cada push.** Con línea base, que una cita esté bien o rota depende sólo del fichero donde vive y del citado: el barrido completo da el mismo resultado, **caza lo que llegó roto de un push sin hook**, es más simple y cabe en coste (~1 s). Todo se comprueba contra el sha local. **Corregida el mismo día:** el sha remoto se usa **sólo como índice de resolución** (`git ls-tree`), porque sin él las citas **peladas** a un fichero renombrado se saltaban | Pieza 1; Pieza 2 (fila del índice remoto); §2 «Entra» 2; Pieza 6 (hueco del segundo clon); §4 (f retirado, g con cita pelada); §6 (M6 retirada, M7 redefinida, M29 nueva); §7; §11; R-7; R-14; §15 |
 
 **Lo que Q7 enseña, y por eso no es una corrección menor:** en la ilustración de la Pieza 3 —+1 en
 `CLAUDE.md`, +20 en `openspec/config.yaml`— la inserción de IV-10 desplaza **ocho** citas, y el detector
@@ -794,17 +821,23 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
       declara por escrito las dos cosas de la Pieza 4: que viaja inerte a la imagen y que **nada de
       producción lo importa**.
 - [ ] `apps/desk/server/index.ts` **no** lo alcanza en su grafo de imports, comprobado.
-- [ ] **Barrido COMPLETO en cada push** (Q8): del stdin sólo se lee el **sha local** —cada sha local
-      distinto si hay varias referencias—, todo se comprueba contra él con `git grep` y lectura por
+- [ ] **Barrido COMPLETO en cada push** (Q8): todo se comprueba contra el **sha local** —cada sha local
+      distinto si hay varias referencias; el remoto sólo da el índice de resolución, criterio propio más abajo—, con `git grep` y lectura por
       revisión, **nunca contra el árbol de trabajo** (M8), y el borrado de rama sale con 0.
 - [ ] **Una cita rota por un commit ya empujado sin hook bloquea** en un push posterior que no toca ni
       el fichero donde vive ni el citado, y **con la cita en la línea base informa y sale 0** (M29, dos
       signos).
 - [ ] **Las anclas se leen agrupadas por (revisión, fichero) en UN solo proceso `git cat-file
       --batch`**, no con un `git show` por cita: es lo que sostiene el coste del §7.
+- [ ] **El índice remoto** (Pieza 1, precisión 1): el sha remoto se usa **sólo** para
+      `git ls-tree -r --name-only`, sin rango ni `merge-base`; un token que resolvía en el índice remoto y
+      no resuelve en el sha local **bloquea**, lleve `/` o no, con el sha remoto en el mensaje; en la rama
+      nueva el índice sale de `origin/main`, y si no existe **el mensaje dice que la comprobación no se
+      hizo**. Probado con M7 y el rojo g.
 - [ ] El hook invoca el detector con **`node_modules/.bin/tsx` o `npx --no tsx`, nunca con `npx tsx` a
-      secas**, y M16 se corrió con su control: la variante con `npx tsx` a secas sale verde sin
-      `node_modules` (o se declara no automatizable si el entorno no tiene red).
+      secas**, y lo vigila un **guardián estático** sobre `.githooks/pre-push`, probado **ensuciando el
+      fichero vigilado** con `npx tsx` a secas (M16, regla de mutación 2). Ningún control depende de la
+      red.
 - [ ] La regla de resolución de la Pieza 2 está implementada tal cual (Q1 y Q2), con **sufijo de ruta
       con frontera de segmento** y **nunca** subcadena del basename.
 - [ ] **La coincidencia EXACTA tiene precedencia sobre el sufijo** (Pieza 2, M23): sin ella, las seis
@@ -853,8 +886,8 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
 - [ ] El coste está **medido y registrado** con la entrada real por stdin, dentro del objetivo de Q3
       (≤ 5 s, tope 10 s); y la decisión sobre `docs/artefactos/` se tomó **por el número**, con la
       exclusión declarada si la hay.
-- [ ] **Las veintisiete mutaciones vigentes del §6 se ejecutaron** —de M1 a M29 sin M6 ni M7, retiradas
-      por Q8 con su número—, cada una con su control. Las que no se puedan
+- [ ] **Las veintiocho mutaciones vigentes del §6 se ejecutaron** —de M1 a M29 sin M6, retirada por Q8
+      con su número—, cada una con su control. Las que no se puedan
       automatizar van declaradas como tal, no omitidas. **M20 corre SIEMPRE sobre un repositorio
       sintético**, nunca sobre las líneas reales de `CLAUDE.md`, con la inserción construida para que la
       cita desanclada caiga en **línea vacía**; el árbol real lo mide la comprobación final del §8.
