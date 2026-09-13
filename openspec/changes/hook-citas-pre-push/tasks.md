@@ -1,0 +1,287 @@
+# Tasks: detector de citas ruta:línea impuesto en pre-push
+
+Fuentes: `proposal.md` (§4 rojos, §6 mutaciones M1-M30, §8, §11, §12, §15), `specs/citas-verificables/spec.md`
+(RQ-CV-01 a RQ-CV-18), `design.md` (§1 respuesta, §3 ficheros, §4 decisiones D1-D12, §7 coste, §8 pruebas,
+§10 despliegue, §11 divergencias). Ninguna cita a este propio cambio lleva línea (convención 2 de la
+propuesta): las referencias a otros artefactos de la tanda usan ID (RQ-CV-NN, M-NN, D-NN, Pieza N, §N),
+nunca `fichero:línea`.
+
+## Review Workload Forecast
+
+| Corte | Ficheros | Líneas (hipótesis) | Riesgo contra 800/intento |
+|---|---|---|---|
+| Sin trocear — Unidad 1 completa | `git.ts`, `cosecha.ts`, `resolucion.ts`, `detector.ts`, `informe.ts`, `cli.ts`, `reposDePrueba.ts` + 4-7 ficheros `*.test.ts` | **565-815** (estimación propia del diseño, §3) | **Alto** — el extremo superior (815) supera el ledger de 800 |
+| **1a** · núcleo puro + pruebas en memoria | `cosecha.ts`, `resolucion.ts`, `detector.ts`, `informe.ts`, porción memoria de `reposDePrueba.ts`, `detector.test.ts`, `cosecha.test.ts`, `resolucion.test.ts`, `informe.test.ts` | **~390-560** (hipótesis mía sobre las líneas por fichero del diseño; el diseño no desglosa las 365-520 líneas de prueba por fichero, así que el reparto entre 1a/1b es una hipótesis de segundo nivel) | Bajo |
+| **1b** · adaptador git + CLI + pruebas sintéticas | `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts` | **~155-225** (misma reserva de hipótesis que 1a) | Bajo |
+| **2** · línea base + IV-10 + regla de mutación 4 | `lineaBase.jsonl` (51, medida), `CLAUDE.md` + `openspec/config.yaml` (38-66, diseño) | **~89-117** | Bajo |
+| **3** · hook + instalador + `.gitattributes` + `DEPLOY.md` | `.githooks/pre-push` (4, fijo), `instalar-hooks.mjs` (25-35), `package.json` (1-2), `.gitattributes` (3-5), `DEPLOY.md` (3-6), `guardianes.test.ts` + `instalador.test.ts` (resto del presupuesto de pruebas) | **~116-162** | Bajo |
+
+1a + 1b recombinadas (545-785) quedan por debajo de 800 en mi propia hipótesis, pero **no** en la del
+diseño (565-815, que sí lo roza) — es la discrepancia exacta que motiva el troceado en vez de decidirlo
+por mí. 2 y 3 no necesitan más división: incluso en su extremo alto quedan muy por debajo de 800.
+
+```text
+Decision needed before apply: No (respondida por Gerencia: A)
+Chained PRs recommended: Yes
+Chain strategy: stacked-to-main
+400-line budget risk: High
+```
+
+**800-line per-attempt risk** (el ledger real de este proyecto; `review_budget_lines: 800` en
+`openspec/config.yaml:29` en `648432d`): **Alto** si la Unidad 1 se implementa en un solo intento de
+`sdd-apply` (extremo superior 815, diseño §3); **Bajo** en cada uno de los cuatro cortes 1a/1b/2/3
+propuestos (todos por debajo de 800 incluso en su extremo alto, hipótesis).
+
+### Decisión pendiente para el usuario (ask-on-risk)
+
+¿Qué estrategia de entrega se usa para los cuatro cortes 1a → 1b → 2 → 3 (dependencia lineal: 2 necesita
+el detector completo —1a+1b— para generar la base con `--generar-base`; 3 necesita 2, por el orden M18)?
+
+- **(A) Stacked PRs to main** — cada corte se fusiona a main en orden, empezando por 1a. Ninguno de los
+  cuatro lo importa nada de producción (RQ-CV-18), así que fusionar uno solo no activa nada a medio
+  construir. Líneas por corte: 1a ~390-560, 1b ~155-225, 2 ~89-117, 3 ~116-162.
+- **(B) Feature Branch Chain** — una rama tracker acumula los cuatro cortes; PR 1 (1a) apunta al tracker,
+  PR 2 (1b) apunta a PR 1, PR 3 (2) a PR 2, PR 4 (3) a PR 3; sólo el tracker se fusiona a main al cierre.
+  Mismas líneas que (A) por corte.
+- **(C) size:exception** — un solo PR con la Unidad 1 entera sin trocear (1a+1b juntas, ~565-815 según el
+  diseño), aprobado explícitamente por un mantenedor porque roza el techo de 800 en su extremo alto; 2 y
+  3 seguirían troceadas aparte (~89-117 y ~116-162), muy por debajo del límite.
+
+No elijo por el usuario. Con `ask-on-risk`, el orquestador pregunta antes de `sdd-apply`.
+
+**Respuesta de Gerencia (2026-09-13): (A) Stacked PRs to main.** Cómo se ejecuta en este repositorio:
+sin PR de GitHub; cada corte es **un** intento de `sdd-apply` y, al verificarlo, commit y push directos a
+`main` (conventional commits, sin coautoría, nunca `--no-verify`). Orden lineal 1a → 1b → 2 → 3, sin
+adelantar nada: ni `.githooks`, ni `prepare`, ni `core.hooksPath` hasta el corte 3. Una sola tanda SDD
+sobre este árbol, nada en paralelo (regla del ciclo 2).
+
+### Suggested Work Units
+
+| Unit | Goal | Likely PR | Focused test command | Runtime harness | Rollback boundary |
+|---|---|---|---|---|---|
+| 1a | Núcleo puro: cosecha, resolución, comprobación, línea base, informe — sin git | PR 1 | `npx vitest run apps/desk/server/citas/detector.test.ts apps/desk/server/citas/cosecha.test.ts apps/desk/server/citas/resolucion.test.ts apps/desk/server/citas/informe.test.ts` | N/A — lógica pura contra `Repo` en memoria, sin proceso real | Revertir los 4 ficheros núcleo + porción memoria de `reposDePrueba.ts` + 4 test files; nada los importa en producción (RQ-CV-18) |
+| 1b | Adaptador git (`spawnSync`) + CLI + pruebas con repositorio sintético | PR 2 | `npx vitest run apps/desk/server/citas/hook.test.ts` | Repositorio git temporal por prueba, `cli.ts` invocado en proceso vía `ejecutar({argv, entrada, cwd})` | Revertir `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts`; sin efecto de ejecución sin Unidad 3 |
+| 2 | Línea base generada + IV-10 + dos frases de la regla de mutación 4 | PR 3 | `npm test` (regresión completa) | Manual: `npx tsx apps/desk/server/citas/cli.ts --generar-base` sobre el árbol de 1a+1b ya commiteado; inspeccionar `lineaBase.jsonl` (cifra ≤100, R-14) | Revertir `lineaBase.jsonl` + las filas/frases de `CLAUDE.md` y `openspec/config.yaml`; sin efecto sin Unidad 3 |
+| 3 | Hook versionado, instalador, `.gitattributes`, `DEPLOY.md` | PR 4 | `npx vitest run apps/desk/server/citas/guardianes.test.ts apps/desk/server/citas/instalador.test.ts` | Manual: push real de cierre con el hook instalado (M16 en ejecución, M18, M19 — Fase 5) | `git revert` + `git config --unset core.hooksPath` en cada clon que ya lo tuviera (el revert del fichero no deshace el `git config`) |
+
+---
+
+## Fase 1 (Unidad 1a) — Núcleo puro + pruebas en memoria
+
+- [ ] 1.1 Setup: crear `apps/desk/server/testing/reposDePrueba.ts` — porción `Repo` en memoria +
+      constructores `cita()`, `abreviada()`, `anclada()` en tiempo de ejecución (D7).
+- [ ] 1.2 RED (RQ-CV-08, rojos a+b): `detector.test.ts` — cita rota en doc trackeado ≠0; misma cita
+      válida →0.
+- [ ] 1.3 GREEN: `cosecha.ts` (tokeniza citas completas) + `detector.ts` (fichero+línea+vacía) mínimo
+      para 1.2.
+- [ ] 1.4 RED (RQ-CV-08, rojo c, M4, dos direcciones): extremo final fuera con inicial OK ≠0 nombrando
+      el extremo; e inicial en línea en blanco con final OK ≠0 nombrando el otro extremo.
+- [ ] 1.5 GREEN: comprobar los dos extremos del rango por separado en `detector.ts`, mensaje nombra cuál
+      falla.
+- [ ] 1.6 RED (RQ-CV-06, rojo d, M3): anclada a revisión real →0; anclada a revisión inventada ≠0
+      (`Repo` en memoria simula revisiones).
+- [ ] 1.7 GREEN: patrón de cita anclada en `cosecha.ts`; `detector.ts` resuelve vía `leerLote` simulado.
+- [ ] 1.8 RED (M9, M10, M17): entrada de la base ya reparada sin quitarla → hook falla; quitándola → 0;
+      cita rota nueva con base presente → bloquea.
+- [ ] 1.9 GREEN: casar la base por (fichero, cita) con multiplicidad (D6); consultar la base ANTES de
+      decidir el bloqueo.
+- [ ] 1.10 MUT (regla de mutación 1, M17): mover temporalmente la consulta de la base a DESPUÉS del
+      bloqueo en `detector.ts`; confirmar que 1.8 se pone roja; revertir.
+- [ ] 1.11 RED (RQ-CV-09, M30): la base generada no contiene abreviadas; abreviada rota → aparece en el
+      informe sin bloquear; abreviada válida → entre las comprobadas.
+- [ ] 1.12 GREEN: generación/lectura de la base excluye abreviadas; una abreviada rota nunca cambia el
+      código de salida.
+- [ ] 1.13 RED (D11): un solo `leerLote` por árbol para sha local + anclas; la lectura de una anclada
+      vuelve al índice de su propia revisión sólo si el fichero no está en el sha local.
+- [ ] 1.14 GREEN: `detector.ts` agrupa todas las lecturas en una única llamada a `Repo.leerLote`.
+- [ ] 1.15 RED (M22): ejemplo de cita rota CON forma de cita en doc trackeado → bloquea; el mismo ejemplo
+      en prosa, sin forma de cita → pasa.
+- [ ] 1.16 GREEN: confirmar sin código nuevo — ya cubierto por 1.3/1.7 (`cosecha.ts` no distingue
+      "ejemplos").
+- [ ] 1.17 RED (M24, M25): cita válida a `Dockerfile` (sin extensión) → comprobada y 0, fuera de rango →
+      bloquea; cita válida a `.dockerignore` (punto inicial) → comprobada, fuera de rango → bloquea.
+- [ ] 1.18 GREEN: patrón de nombre en `cosecha.ts` sin lista de extensiones y que admite punto inicial.
+- [ ] 1.19 RED (M26): «fichero A, abreviada, fichero B», válida en A/vacía en B → comprobada, no en lista
+      de rotas; A/B intercambiados → en lista de rotas.
+- [ ] 1.20 RED (M27): mención pelada de un fichero que resuelve, seguida de varias abreviadas → todas
+      atribuidas y comprobadas; una fuera de rango → en lista de rotas; sin (d), o capturando cualquier
+      token pelado, deja de figurar.
+- [ ] 1.21 GREEN: atribución Lbc en `cosecha.ts` — último fichero anterior por índice en la misma línea
+      física; mención pelada cuenta si resuelve a fichero trackeado.
+- [ ] 1.22 RED (D1, los dos cortes de Lbc, dos signos cada uno): una cita completa que no resuelve, antes
+      de una abreviada, corta la atribución; una abreviada tras la barra de una celda de tabla corta la
+      atribución.
+- [ ] 1.23 GREEN: los dos cortes de Lbc en `cosecha.ts` (sin corte por vocabulario).
+- [ ] 1.24 RED (RQ-CV-16, D3): `host:puerto` dentro de una URL con esquema → ni comprobada ni saltada;
+      cita real de dos puntos fuera de una URL → se cosecha.
+- [ ] 1.25 GREEN: `cosecha.ts` no trata como cita un `host:puerto` dentro de `<esquema>://…`.
+- [ ] 1.26 RED (M28, RQ-CV-04): token `~/x/y.md:3` → cifra "fuera del repositorio", no bloquea; ruta
+      relativa que no existe → bloquea (control del otro signo).
+- [ ] 1.27 GREEN: categoría "fuera del repositorio" evaluada antes que cualquier regla de resolución.
+- [ ] 1.28 RED (RQ-CV-05, pasos 6-8 de D4): token con `/` que no resuelve en el índice local → bloquea
+      "fichero inexistente"; token SIN `/` que no resuelve → se salta e informa.
+- [ ] 1.29 GREEN: pasos 6-8 del orden D4 en `resolucion.ts` (el paso 5, índice remoto, se prueba en
+      Fase 2).
+- [ ] 1.30 RED (M15): token ambiguo roto en TODAS sus candidatas → bloquea; roto en una sola → se salta,
+      saltadas +1.
+- [ ] 1.31 GREEN: RQ-CV-03 en `resolucion.ts` — comprobar cada candidata, bloquear sólo si todas fallan.
+- [ ] 1.32 RED (M23): quitar la precedencia exacta → cita a `package.json` (seis candidatos) pasa a
+      ambigua y saltada; `ci.yml` (sin candidato exacto) sigue resolviendo por sufijo.
+- [ ] 1.33 GREEN: RQ-CV-02 — coincidencia exacta antes que sufijo con frontera de segmento.
+- [ ] 1.34 MUT (regla de mutación 1, M23): invertir el orden — sufijo antes que exacta — en
+      `resolucion.ts`; confirmar que 1.32 se pone roja; revertir.
+- [ ] 1.35 RED (regla de mutación 1, D4 paso 4 antes del 7): token con `/` que resuelve a un DIRECTORIO
+      → saltado, nunca "fichero inexistente".
+- [ ] 1.36 GREEN: fijar el orden D4 de ocho pasos, paso de directorio ANTES que el de "lleva `/`".
+- [ ] 1.37 MUT (regla de mutación 1): mover el paso de directorio a DESPUÉS del paso "lleva `/`";
+      confirmar que 1.35 se pone roja; revertir.
+- [ ] 1.38 RED (D3): marca ISO y hora `HH:MM` sin `/` que no resuelven → "no es cita"; fichero trackeado
+      con nombre de sólo dígitos → comprobado con normalidad.
+- [ ] 1.39 GREEN: en `resolucion.ts`, tras fallar la resolución local Y remota y sin `/`, reclasificar
+      marca ISO/hora como "no es cita".
+- [ ] 1.40 RED (RQ-CV-10): mensaje con cuatro cifras, desglose de saltadas, "no son citas", frases fijas
+      y ausencia de `--no-verify`.
+- [ ] 1.41 GREEN: `informe.ts` arma el mensaje completo (divergencia #4 del diseño).
+- [ ] 1.42 RED+GREEN (RQ-CV-18): recorrido de imports desde `apps/desk/server/index.ts` no alcanza
+      `citas/`; cabecera de cada fichero declara las dos frases de RQ-CV-18.
+
+## Fase 2 (Unidad 1b) — Adaptador git + CLI + pruebas sintéticas
+
+- [ ] 2.1 Setup: extender `reposDePrueba.ts` con el constructor de repositorio git temporal aislado
+      (`GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE` vacíos, `GIT_CONFIG_NOSYSTEM`, `GIT_CONFIG_GLOBAL`
+      vacío, `GIT_CEILING_DIRECTORIES`, identidad por entorno, `core.autocrlf=false`).
+- [ ] 2.2 RED (M1, obligatoria): push que sólo mueve líneas en fichero citado, sin tocar el que lo cita
+      → hook ≠0; el mismo push con la cita reparada → 0.
+- [ ] 2.3 GREEN: `git.ts` implementa `lineas()` con `git grep --null -n -I -E`; `cli.ts` orquesta cosecha
+      + resolución + detección sobre el sha local.
+- [ ] 2.4 RED (rojo g, M7): fichero renombrado, cita con `/` y cita pelada al mismo fichero → ambas
+      bloquean "existía en `<sha remoto>`"; sin el índice remoto (mutación) la pelada pasa a saltada.
+- [ ] 2.5 GREEN: `git.ts.rutas()` vía `git ls-tree -r --name-only`; `resolucion.ts` añade la regla del
+      índice remoto (RQ-CV-05, D4 paso 5), tras "fuera del repositorio" y antes de las dos últimas.
+- [ ] 2.6 RED: rama nueva con y sin `origin/main` — con él, índice se toma de ahí; sin él, el mensaje
+      dice que no se hizo, sin callarlo.
+- [ ] 2.7 GREEN: `cli.ts` resuelve el índice remoto: `origin/main` en rama nueva; si falta, "NO HECHO"
+      en el informe.
+- [ ] 2.8 RED (M8): cita reparada sólo en el árbol de trabajo, commit empujado sigue roto → bloquea
+      (nunca lee el árbol de trabajo).
+- [ ] 2.9 GREEN: `git.ts` lee siempre por sha (`rutas`, `lineas`, `leerLote`), nunca el árbol de trabajo.
+- [ ] 2.10 RED (M29): cita rota en contenido por un commit YA empujado sin hook, sin renombrar ni borrar,
+      y un push posterior que no toca ni el fichero ni el citado → bloquea; con esa cita en la base →
+      informa y sale 0.
+- [ ] 2.11 GREEN: barrido siempre COMPLETO del árbol del sha local (RQ-CV-01), nunca limitado a los
+      ficheros que cambia el push.
+- [ ] 2.12 RED (M5, divergencia #1 del diseño): cita rota en fichero sin trackear → 0; el mismo fichero
+      tras `git add` Y COMMIT → bloquea.
+- [ ] 2.13 GREEN: `git.ts.lineas()` opera sobre el sha ya commiteado, nunca sobre el índice.
+- [ ] 2.14 RED (M14, divergencia #2 — SEIS exclusiones): cita rota dentro de
+      `openspec/changes/archive/`, `.claude/skills/superpowers-main/`, `.agent/skills/`,
+      `docs/artefactos/`, un `.csv` y dentro de `apps/desk/server/citas/lineaBase.jsonl` → las seis se
+      ignoran; la misma cita fuera de ellas → bloquea.
+- [ ] 2.15 GREEN: constante de exclusiones en `git.ts`/`cli.ts` con las seis rutas/patrones (RQ-CV-07,
+      D5, D6).
+- [ ] 2.16 RED (D12): borrado de rama, stdin vacío, sha que no pela a árbol, varias referencias al mismo
+      árbol → cada caso sale 0 o "no comprobado", nunca cuelga ni bloquea sin comprobar.
+- [ ] 2.17 GREEN: `cli.ts` implementa D12 — deduplicar por árbol, informar "no comprobado" cuando el sha
+      no pela.
+- [ ] 2.18 RED: ruta no ASCII y salida de `git grep` por encima de 1 MB — el detector no trunca ni falla
+      por tamaño de búfer.
+- [ ] 2.19 GREEN: `maxBuffer` explícito en `git.ts`, salida por `Buffer` (no cadena) en el lote.
+- [ ] 2.20 RED (M20, SIEMPRE en repositorio sintético): documento con cita desanclada, commit que inserta
+      líneas delante cayendo en línea vacía → bloquea; la misma cita anclada a la revisión ANTERIOR →
+      pasa. Nunca sobre las líneas reales de `CLAUDE.md`.
+- [ ] 2.21 GREEN: soporte real de anclaje vía `git cat-file --batch` contra la revisión indicada.
+- [ ] 2.22 RED (M21, aviso de escalada en TypeScript — D8, divergencia #6): repositorio sintético con una
+      identidad → sin aviso; con dos → aviso visible, MISMO código de salida.
+- [ ] 2.23 GREEN: `cli.ts` ejecuta `git shortlog -sne --all` vía `git.ts.identidades()`; imprime el aviso
+      sin tocar el código de salida (RQ-CV-11).
+- [ ] 2.24 Confirmar (coste, RQ-CV-01): las anclas se leen agrupadas por (revisión, fichero) en UN solo
+      `git cat-file --batch`, nunca un `git show` por cita, con varios pares en `hook.test.ts`.
+
+## Fase 3 (Unidad 2) — Línea base + IV-10 + regla de mutación 4
+
+- [ ] 3.1 Precondición (RQ-CV-14, primera pasada; M18 orden): correr `cli.ts --sha HEAD` sobre el árbol
+      de la Unidad 1 (1a+1b) ya commiteada y confirmar 0 bloqueantes antes de generar la base.
+- [ ] 3.2 Ejecutar `cli.ts --generar-base` y escribir `apps/desk/server/citas/lineaBase.jsonl` (JSON
+      Lines, UTF-8 sin BOM, LF, una entrada por línea, ordenada por fichero y línea; D6). Si la cifra
+      supera 100 entradas, PARAR y preguntar a Gerencia (R-14) — la medición previa fue 51.
+- [ ] 3.3 Añadir fila **IV-10** en `CLAUDE.md` (recuento `CLAUDE.md:249` en `648432d`, de «Cuatro» a
+      «Cinco»; tabla `CLAUDE.md:262-265` en `648432d` gana la fila) y en `openspec/config.yaml`
+      (`incumplimientos_vivos`, tras el final de IV-9 en `openspec/config.yaml:798` en `648432d`), con
+      cifra, fecha de medición, SIN dueño y la frase de Q4: «la base no encoge hasta que Gerencia asigne
+      quién la repara» (RQ-CV-15).
+- [ ] 3.4 Añadir a la regla de mutación 4 de `CLAUDE.md:171-205` en `648432d` las DOS frases: la de Q6
+      («un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como rota») y la
+      de Q9 (el detector no bloquea la forma abreviada; su comprobación sigue siendo de lectura humana,
+      con el informe como ayuda) (RQ-CV-15).
+- [ ] 3.5 Reescribir el ejemplo de cita rota del archive (§2 de la propuesta) SIN forma de cita, en
+      prosa (Q6, opción i) — sin escribir ningún `fichero:línea` de ejemplo.
+- [ ] 3.6 Confirmar M22 con el ejemplo real ya insertado en `CLAUDE.md`: con forma de cita → bloquea;
+      sin forma → pasa (cierra 1.15-1.16 contra contenido real).
+
+## Fase 4 (Unidad 3) — Hook, instalador, `.gitattributes`, `DEPLOY.md`
+
+- [ ] 4.1 RED (M16 estático, `guardianes.test.ts`): espera que `.githooks/pre-push` invoque `tsx` vía
+      `node_modules/.bin/tsx` o `npx --no tsx`; falla porque el fichero aún no existe.
+- [ ] 4.2 GREEN: crear `.githooks/pre-push` (4 líneas): sin `node_modules/.bin/tsx` falla con mensaje
+      explícito; si existe, `exec node_modules/.bin/tsx apps/desk/server/citas/cli.ts "$@"`.
+- [ ] 4.3 MUT (regla de mutación 2, tres formas): ensuciar `.githooks/pre-push` con `npx tsx` a secas,
+      `npm exec tsx`, `npm x tsx` (una mutación por forma) → el guardián se pone rojo cada vez; revertir
+      a `node_modules/.bin/tsx`.
+- [ ] 4.4 RED (D10, `guardianes.test.ts`): `git check-attr eol` sobre `.githooks/pre-push` debe devolver
+      `lf`; falla porque `.gitattributes` no declara la regla.
+- [ ] 4.5 GREEN: añadir `.githooks/* text eol=lf` a `.gitattributes` (candidatos de anclaje ya presentes:
+      `.gitattributes:29` en `648432d`, `.gitattributes:31-33` en `648432d`,
+      `.gitattributes:36` en `648432d`).
+- [ ] 4.6 MUT (regla de mutación 2): repositorio sintético SIN esa línea → el guardián se pone rojo; con
+      ella, verde.
+- [ ] 4.7 Añadir el hook con `git add --chmod=+x` (bit de ejecución, declarado y sin guardián — D10).
+- [ ] 4.8 RED (rojo h, M11, dos signos obligatorios, `instalador.test.ts`): directorio sin `.git` →
+      `spawnSync` sale 0 y NO instala; directorio CON `.git` → sale 0 Y `git config --get
+      core.hooksPath` devuelve `.githooks`.
+- [ ] 4.9 RED (M12): entorno sin binario `git` (`status` nulo) → 0 y no instala; con `git` presente →
+      instala.
+- [ ] 4.10 RED (M13): `git config` falla CON repositorio presente → mensaje visible, `npm ci` sigue en
+      verde.
+- [ ] 4.11 RED (D9): directorio sin `.git` propio, anidado dentro de otro repositorio → `git rev-parse
+      --show-toplevel` no coincide con el actual → sale 0 sin instalar.
+- [ ] 4.12 GREEN: crear `scripts/instalar-hooks.mjs` con `spawnSync('git', ['rev-parse','--git-dir'])` +
+      comparación de raíz (D9) + `git config core.hooksPath .githooks`, cubriendo 4.8-4.11.
+- [ ] 4.13 Añadir script `prepare` a `package.json` (`package.json:10-23` en `648432d` no lo declara)
+      que invoque `scripts/instalar-hooks.mjs`.
+- [ ] 4.14 Añadir a `DEPLOY.md` el comando manual de instalación para `--ignore-scripts` y el `--unset
+      core.hooksPath` de la reversión de urgencia (candidatos de anclaje: `DEPLOY.md:64` en `648432d` o
+      `DEPLOY.md:204` en `648432d`).
+
+## Fase 5 — Verificación final y precondición dura (manual, cuenta como tareas)
+
+- [ ] 5.1 M16 en ejecución (registrar en verify): borrar `node_modules`, intentar un push con el hook
+      invocando `node_modules/.bin/tsx` o `npx --no tsx`; confirmar que falla con mensaje explícito,
+      nunca sale 0 en silencio.
+- [ ] 5.2 M18, orden (registrar en verify): confirmar que el orden real fue detector-con-pruebas → base
+      generada → IV-10 escrito → hook e instalador, y que el push de cierre NO quedó bloqueado por
+      citas que la tanda no rompió.
+- [ ] 5.3 M19, coste (registrar en verify): invocar el hook directamente con la entrada real de
+      `pre-push` por stdin, sobre el árbol completo; registrar el tiempo total (objetivo ≤5 s, tope
+      duro 10 s) y confirmar margen (RQ-CV-13).
+- [ ] 5.4 Comprobación FINAL sobre lo COMMITEADO (RQ-CV-14, segunda pasada — Q7b): con `proposal.md`,
+      spec, `design.md`, `tasks.md`, `CLAUDE.md` y `openspec/config.yaml` ya en su forma definitiva
+      (IV-10 dentro), correr el detector y confirmar 0 bloqueantes. No vale la comprobación intermedia.
+- [ ] 5.5 Confirmar que TODA cita de los artefactos de la tanda a `CLAUDE.md`, `openspec/config.yaml`,
+      `package.json`, `DEPLOY.md` o `.gitattributes` está ANCLADA a `648432d`, cita por cita, en su
+      misma línea física, y que ningún ancla quedó partida por el salto de línea.
+- [ ] 5.6 `npm test`, `npm run typecheck`, `npm run lint` (≤158 avisos) y `npm run build` en verde;
+      cobertura sobre los umbrales de `vitest.config.ts:58-63`.
+
+---
+
+## Tareas de PERSONA — fuera del recuento (regla del ciclo 1)
+
+Archivar NO las da por hechas. Ninguna describe trabajo que una tanda pudiera hacer en este
+repositorio (reverso de la regla).
+
+- **P.1** Leer lo semántico: que cada línea citada de la línea base (51 entradas medidas sobre
+      `773ad75`) DIGA lo que su frase afirma. Dueño: quien decida el alcance de la reparación (casos
+      A/B/C de `CLAUDE.md:195-199` en `648432d`). Registro: dueño, resultado y fecha.
+- **P.2** Asignar destino a IV-10 y decidir quién repara la base. Dueño: Gerencia. Registro: en la
+      propia fila IV-10 de `CLAUDE.md` y `openspec/config.yaml`, con la frase de Q4 mientras siga sin
+      decidir.
