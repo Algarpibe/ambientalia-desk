@@ -134,6 +134,12 @@ comprobar las citas ancladas a revisión, y además pondría el build en rojo **
   `CLAUDE.md` con número de línea que hay en el repositorio están **todas** dentro del archive, y una
   de ellas —en el `proposal.md` de `por-entregar-es-espera`— apunta a la línea 206 de `CLAUDE.md`, que
   **hoy está vacía**. Es el caso B de la regla 4 y **se queda como está**.
+- **Barrer `.claude/skills/superpowers-main/`.** Son **41** ficheros trackeados **de terceros**, y ya no
+  es hipótesis por el nombre: los 41 tienen homólogo en el plugin `superpowers` 5.1.0 instalado en la
+  máquina, que declara un autor ajeno al proyecto, y **40 son idénticos byte a byte** (el que difiere es
+  un `.dot` de `writing-skills`). Sus citas **no son afirmaciones del proyecto**, así que el directorio
+  queda fuera del barrido igual que el archive, **declarado** y no escondido. Su ejemplo de ruta
+  inventada —en el `SKILL.md` de `writing-plans`, línea 70— **no va a la línea base**.
 - **Ficheros sin trackear.** Los 8 de hoy quedan fuera por construcción, sin lista de exclusión.
 - **Hooks de `pre-commit` o `commit-msg`.** Un hook por push, y sólo uno.
 - **Renumerar citas automáticamente.** Un barrido que renumera a ciegas convierte un registro fechado
@@ -178,6 +184,7 @@ resuelven por sufijo de ruta a un único fichero; **145** son **ambiguas** (`rep
 |---|---|---|---|
 | Ruta completa o **sufijo con frontera de segmento** (`<ruta> === <algo>` o `<ruta>` termina en `/<algo>`) a **un** candidato | 1.603 | **Comprueba y bloquea** si está rota | Es el 86 % del censo con una verdad única |
 | **Ambigua** (varios candidatos) | 145 | **Comprueba en TODAS.** Bloquea **sólo si está rota en todas**; si alguna la valida, se **salta e informa** | Una cita ambigua no tiene verdad única, pero si **ninguna** candidata la sostiene está rota sea la que sea. Bloquear cualquier ambigua obligaría a desambiguar 145 citas a mano antes de poder instalar el hook: eso es una migración, no esta tanda |
+| **Fuera del repositorio**: el token empieza por `~/`, por `/` o por letra de unidad (`C:\`, `C:/`), o lleva esquema `://` | — | **Se salta e informa en su PROPIA cifra**, separada de las demás saltadas. **No bloquea y no entra en la línea base** | No es una cita del repositorio: no hay árbol contra el que comprobarla. Sin esta categoría, la cita de `CLAUDE.md:333` en `648432d` a un contrato de `~/.claude/skills/` —**válida**, y fuera del repositorio— caería en la fila siguiente, y como `CLAUDE.md` lo modifica la unidad de trabajo 2, **acabaría en la base como rota sin estarlo**. Se evalúa **antes** que la fila siguiente |
 | **No resuelve y el token lleva `/`** | parte de las 125 | **Bloquea** como «fichero inexistente» | Es exactamente el caso de la precisión 1.2: un borrado o un renombrado rompe las citas que apuntan al fichero |
 | **No resuelve y el token NO lleva `/`** | parte de las 125 | **Se salta e informa** | `R08.1.md` no es sufijo de ruta sino **subcadena del basename** de `docs/Manifesto/Desk2.0_..._R08.1.md`, y `app.test.ts` no existe. Resolver por subcadena haría casar `.ts:5` con cualquier fichero; bloquear todo lo que no resuelva convertiría cualquier `x.ts:5` escrito en prosa en un push parado |
 | `<algo>` resuelve a un **directorio** del árbol | — | Se salta e informa | Una cita a un directorio con número de línea no es comprobable |
@@ -219,11 +226,17 @@ cita válida de la ignorada. Mutaciones M24 a M27 (§6).
 ⚠️ **El hueco queda declarado, no disimulado.** Las ambiguas que alguna candidata valida y las no
 resueltas sin `/` son citas que el detector **no** comprueba. Es el molde que ya nombra
 `CLAUDE.md:66-67` en `648432d` —«un detector que no caza todo lo que la afirmación abarca»—, y el mensaje
-del hook imprime **las dos cifras** en cada ejecución: lo comprobado y lo saltado. Un detector que sólo
-informara de sus aciertos mentiría por omisión.
+del hook imprime **las dos cifras** en cada ejecución: lo comprobado y lo saltado —con las de **fuera
+del repositorio** desglosadas en la suya—. Un detector que sólo informara de sus aciertos mentiría por
+omisión.
 
 ⚠️ **Si el detector definitivo encuentra tokens con `/` sin resolver sobre el árbol de hoy, van a la
-línea base.** Para eso existe (Pieza 3), y es lo que hace viable la precondición dura del §8.
+línea base.** Para eso existe (Pieza 3), y es lo que hace viable la precondición dura del §8. **Medido
+con `git grep` sin archive** (nivel 2 de procedencia, 2026-09-13): con la regla Q2 a secas son **cinco**.
+**Tres son roturas de verdad** —tres citas a `apps/desk/server/app.test.ts`, fichero que ya no existe— y
+van a la base. **Las otras dos son falsos positivos** y no llegan a ella: la cita a `~/.claude/skills/`
+de `CLAUDE.md:333` en `648432d` cae en la categoría **fuera del repositorio**, y el ejemplo de ruta
+inventada de `superpowers-main` queda fuera del barrido (§2, «No entra»). Control de dos signos en M28.
 
 > #### 📐 Nota para `sdd-design` — NO es una decisión de esta propuesta
 >
@@ -253,6 +266,21 @@ línea base.** Para eso existe (Pieza 3), y es lo que hace viable la precondici�
 > protege nada — que es justo lo contrario de para lo que se puso. Salieron **dos** casos así en esta
 > propuesta, reparados moviendo el corte de línea. `sdd-design` decide si la detección del ancla mira
 > la línea siguiente, y **declara el hueco si no lo hace**.
+>
+> **Y los puertos de una URL no son números de línea.** Sin lista de extensiones (requisito (a)), un
+> `host:puerto` pasa a candidata sin `/`: no bloquea, pero **ensucia la cifra de saltadas**. El
+> cosechador **no trata como cita un `host:puerto` dentro de una URL** (`esquema://…`). Control de dos
+> signos: http://localhost:3001 → **ni comprobada ni saltada**; `Dockerfile:18` → **comprobada**. Es la
+> frontera con la categoría **fuera del repositorio**: una URL con puerto no es una cita de fuera, **no
+> es una cita**.
+>
+> **Medido, para decidir con número** (nivel 2 de procedencia, 2026-09-13, sin archive, con la cosecha
+> de los requisitos (a) a (d)): de las **864** candidatas sin `/` que se saltan, `host:puerto` son
+> **18** —**13** dentro de una URL y **5** con nombre de host pelado, como `localhost` o `postgres`—, 12
+> de ellas en `docs/superpowers/`. **El ruido grande no son los puertos**: son **408 marcas de tiempo
+> ISO** (fecha, `T`, hora y minutos) y **44 números pelados** —horas escritas como `HH:MM`—, más de la
+> mitad de las saltadas. `sdd-design` decide si el cosechador las descarta también, y **declara** lo
+> que siga contando como saltada.
 
 ### Pieza 3 · La línea base: sólo encoge
 
@@ -503,13 +531,13 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M11 · el fichero vigilado** (D4) | `prepare` en un directorio **sin `.git`** | Sale 0 y **NO instala** | **Control de dos signos, obligatorio:** **con** `.git` → sale 0 y **`git config --get core.hooksPath` devuelve `.githooks`**. La mutación de un solo signo la pasan las tres variantes de la tabla de la Pieza 5 |
 | **M12** (D4.1) | Sin binario `git` (`node:22-alpine`) | `status` es `null` → sale 0 | Con `git` presente → instala |
 | **M13** (D4.2) | Hacer fallar el `git config` **con** repositorio presente | Mensaje visible en la salida y `npm ci` **sigue en verde** (exit 0) | Que el mensaje exista: un fallo silencioso aquí es el defecto que esta pieza evita |
-| **M14 · el alcance del archive** | Cita rota **dentro** de `openspec/changes/archive/` | Se ignora: 0 | La misma cita fuera del archive → bloquea |
+| **M14 · el alcance del archive y de `superpowers-main`** | Cita rota **dentro** de `openspec/changes/archive/`, y otra dentro de `.claude/skills/superpowers-main/` | Se ignoran: 0 | La misma cita fuera de los dos directorios → bloquea |
 | **M15 · las ambiguas** | Cita ambigua rota en **todas** las candidatas | ≠ 0 | Rota en **una sola** → se salta y el contador de saltadas sube en 1. Un detector que no contara las saltadas mentiría por omisión |
 | **M16 · el hook sin dependencias** | Borrar `node_modules` y empujar | **≠ 0**, con mensaje explícito | Un hook que saliera 0 aquí repite el fallo de la guarda en `sh`: imposición que desaparece en silencio |
 | **M17 · la posición** (regla de mutación 1) | Mover la consulta a la línea base **después** de decidir el bloqueo | Una entrada de la base debe empezar a bloquear → la prueba de la base se pone roja | Si sigue verde, **el orden no está probado** y un comentario que lo declare deliberado no es prueba |
 | **M18 · el orden de la tanda** | Instalar el hook **antes** de generar la línea base | El push de cierre se bloquea por citas que esta tanda no rompió | Es la precondición dura del §8, y por eso es criterio de aceptación con orden, no una recomendación |
 | **M19 · el coste** | — | Medir el hook con la entrada real por stdin | §7 |
-| **M20 · el anclaje de la propia tanda** (Q7c) | **Desanclar** una cita de un artefacto de esta tanda a `CLAUDE.md` —dejarla como cita del presente— **y** aplicar la inserción de IV-10 | El hook **bloquea** | Con la cita **anclada a `648432d`** → pasa. Es la única prueba de que el anclaje sirve para algo. **La cita se elige con el desplazamiento REAL** —el del diff de la unidad de trabajo 2—, **no con el de la ilustración de la Pieza 3**: el reparto cambia con cada línea insertada, y con +5 en `CLAUDE.md` o de +25 a +40 en `openspec/config.yaml` no cae ninguna en línea vacía. La prueba **afirma primero** que la cita desanclada cae en línea vacía o fuera de rango con ese desplazamiento; si ninguna cita de la tanda lo hace, M20 se construye sobre un **repositorio sintético** y se declara así. Con una cita que se escapa, la mutación saldría verde por el motivo equivocado |
+| **M20 · el anclaje** (Q7c) | **SIEMPRE en un repositorio sintético**: un documento con una cita **desanclada** a otro fichero del mismo repositorio, y un commit que **inserta líneas delante** de la línea citada de modo que ésta caiga en **línea vacía** | El hook **bloquea** | La misma cita **anclada a la revisión anterior a la inserción** → pasa. Es la única prueba de que el anclaje sirve para algo. **Nunca sobre las líneas reales de `CLAUDE.md`**: una prueba atada a ellas se rompe con la siguiente edición del fichero, y haría depender el tipo de prueba del tamaño del diff de la unidad de trabajo 2. **La medición sobre el árbol real ya la hace la comprobación final del §8**, que se ejecuta una vez y se registra. Y la inserción del sintético se construye para caer en línea vacía, no en contenido equivocado: si cayera en contenido, la cita desanclada pasaría y la mutación saldría verde por el motivo equivocado |
 | **M21 · el aviso de escalada** (Q5) | Repositorio sintético con **dos** identidades de autor | El hook **imprime el aviso** | Con **una** identidad → sin aviso. Y en los dos casos el **código de salida es el mismo**: si al añadir la segunda identidad el hook empieza a bloquear, el aviso se convirtió en guarda y eso no es lo decidido |
 | **M22 · el ejemplo sin forma de cita** (Q6) | Escribir el ejemplo de cita rota **con** forma de cita (`fichero:línea`) en un doc trackeado | El detector lo trata como cita y **bloquea** | Escrito **sin** forma de cita —«la línea 206 de `CLAUDE.md`, hoy vacía»— → pasa. Es la prueba de que la frase nueva de la regla 4 hacía falta |
 | **M23 · la precedencia del nombre pelado** | Quitar la precedencia de **coincidencia exacta** y dejar sólo el sufijo | Toda cita a `package.json` pasa de **comprobada** a **ambigua y saltada**, y el contador de saltadas sube | Con la precedencia, `package.json:10-23` en `648432d` se comprueba contra la raíz. **Y el control del otro signo:** `ci.yml`, que **no** tiene coincidencia exacta, debe seguir resolviendo por sufijo a `.github/workflows/ci.yml`. Una precedencia que rompiera el caso del sufijo cambiaría un hueco por otro |
@@ -517,6 +545,7 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M25 · (b) el punto inicial** | Exigir que el nombre empiece por letra o dígito | La cita rota a `.dockerignore` pasa a **saltada** y deja de bloquear | La válida figura entre las **comprobadas**, no entre las saltadas |
 | **M26 · (c) la atribución por índice** | Atribuir la abreviada al último fichero **de la línea** | Las dos salidas del control de (c) se invierten: **falso positivo** con A válido y B vacío, y **escape** con los dos intercambiados | Con la atribución por índice, las dos salidas vuelven a su signo. Probar un solo orden no distingue las dos reglas |
 | **M27 · (d) la mención pelada** | Dos mutaciones: **quitar** (d), y dejar que **cualquier** token pelado capture, resuelva o no | En las dos, la abreviada rota tras `.dockerignore` deja de bloquear: huérfana en la primera; atribuida a `.git` o a `docs` y saltada en la segunda | Las tres abreviadas válidas del párrafo de la Pieza 4 figuran entre las **comprobadas**, y ninguna entre las huérfanas |
+| **M28 · fuera del repositorio** | Quitar la categoría **fuera del repositorio** de la Pieza 2 | Una cita a `~/x/y.md` con la línea 3 pasa de **saltada en la cifra de fuera** a **bloquear** como fichero inexistente → la prueba se pone roja | **El otro signo:** una cita a `apps/no-existe.ts` con la línea 3 **bloquea** con la categoría puesta. Una categoría que se tragara también las rutas relativas cambiaría un falso positivo por un escape |
 
 ---
 
@@ -728,7 +757,8 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
       en las dos direcciones (M4): final fuera con inicio bueno, **e** inicio en línea en blanco con
       final bueno. No es una nota al pie: es el modo de fallo **dominante** medido —cinco de cinco en
       esta sesión, una de ellas mal por los dos extremos a la vez (R-13)—.
-- [ ] El mensaje del hook imprime **las dos cifras** —comprobadas y **saltadas**—, dice **qué NO
+- [ ] El mensaje del hook imprime **las dos cifras** —comprobadas y **saltadas**, con las de fuera del
+      repositorio desglosadas en la suya—, dice **qué NO
       comprueba** (lo semántico) y nombra las **dos** salidas legítimas: reparar, o añadir a la línea
       base **a mano**.
 - [ ] **El aviso de la condición de escalada está en el hook** (Q5): `git shortlog -sne --all`, aviso
@@ -738,8 +768,8 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
       de medición**.
 - [ ] La base **sólo encoge**: una entrada que ya no está rota **pone el hook rojo** (M9); y una cita
       rota que no está en la base **bloquea** aunque la base exista (M10).
-- [ ] El barrido cubre **sólo ficheros trackeados** y **excluye `openspec/changes/archive/`**,
-      comprobado con M5 y M14.
+- [ ] El barrido cubre **sólo ficheros trackeados** y **excluye `openspec/changes/archive/` y
+      `.claude/skills/superpowers-main/`**, las dos exclusiones declaradas en el §2, comprobado con M5 y M14.
 - [ ] `prepare` existe en `package.json` y la guarda vive en un **`.mjs`**, no en la línea del script.
 - [ ] **La mutación de la instalación se corrió con LOS DOS SIGNOS** (M11): sin `.git` → 0 y **no
       instala**; con `.git` → 0 y `git config --get core.hooksPath` devuelve `.githooks`. **Un solo
@@ -765,11 +795,14 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
 - [ ] El coste está **medido y registrado** con la entrada real por stdin, dentro del objetivo de Q3
       (≤ 5 s, tope 10 s); y la decisión sobre `docs/artefactos/` se tomó **por el número**, con la
       exclusión declarada si la hay.
-- [ ] **Las veintisiete mutaciones del §6 se ejecutaron**, cada una con su control. Las que no se puedan
-      automatizar van declaradas como tal, no omitidas. **M20 usa una cita que, desanclada, el detector
-      SÍ caza con el desplazamiento REAL de la unidad de trabajo 2** —afirmado en la propia prueba—, o un
-      repositorio sintético declarado como tal: con una cita que se escapa saldría verde por el motivo
-      equivocado.
+- [ ] **Las veintiocho mutaciones del §6 se ejecutaron**, cada una con su control. Las que no se puedan
+      automatizar van declaradas como tal, no omitidas. **M20 corre SIEMPRE sobre un repositorio
+      sintético**, nunca sobre las líneas reales de `CLAUDE.md`, con la inserción construida para que la
+      cita desanclada caiga en **línea vacía**; el árbol real lo mide la comprobación final del §8.
+- [ ] **La categoría fuera del repositorio de la Pieza 2 está implementada y probada con sus dos
+      signos** (M28): un token que empieza por `~/`, por `/` o por letra de unidad, o que lleva `://`,
+      se salta e informa **en su propia cifra**, no bloquea y no entra en la base; una ruta relativa que
+      no resuelve **sigue bloqueando**.
 - [ ] **Los cuatro requisitos de la cosecha de la Pieza 2 están implementados y probados con sus dos
       signos** (M24 a M27): (a) el nombre no es una lista de extensiones; (b) admite el punto inicial;
       (c) la abreviada va al último fichero **anterior** a ella por índice; (d) la mención pelada que
