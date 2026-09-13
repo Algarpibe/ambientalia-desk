@@ -81,7 +81,7 @@ fallo que se produjo.
 
 ---
 
-## Las tres reglas de la mutación — qué mutar para no necesitar revisor
+## Las cuatro reglas de la mutación — qué mutar para no necesitar revisor
 
 Las de arriba dicen **qué** hay que cumplir. Estas dicen **dónde mirar** para enterarse de que no se
 cumple, sin que haga falta que otro lo lea. Salieron de la revisión adversaria de F1B-01
@@ -145,12 +145,48 @@ espacios es *truthy* en JS— mientras el servidor sí recortaba antes de decidi
 tandas conocían la regla 13; las dos la escribieron en sus artefactos; ninguna de las dos hizo la
 comparación línea a línea.
 
-**Lo que estas tres NO cazan.** H5 —la divergencia entre `normalizarNombreCliente`
+### Regla de mutación 4 — mover una línea rompe el índice, y nada se pone rojo
+
+> Toda tanda que **INSERTE, BORRE o MUEVA** líneas en un fichero muy citado barre
+> `grep -rnoE "<fichero>\\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio y comprueba **CADA** resultado
+> contra el fichero, como parte del **CIERRE**.
+>
+> - **No basta con que la línea exista:** hay que leer qué **AFIRMA** la frase que cita y comprobar
+>   que la línea lo dice. Cuatro rangos distintos citaban el mismo bloque de `estados.ts` y sólo uno
+>   acertaba.
+> - **Los RANGOS se desfasan por los dos extremos.** Comprueba el principio y el final por separado.
+> - **La forma abreviada (`` `:92-96` ``, sin nombre de fichero) NO la captura ese grep.** Hace falta
+>   un segundo pase en los ficheros que ya citan el módulo.
+> - **Una cita en un comentario NO es una aserción:** ni `tsc`, ni `eslint`, ni las pruebas la ven.
+>   Por eso va en el cierre y no se descubre sola.
+
+*Por qué existe:* mover dos entradas de bloque en `packages/shared/src/estados.ts` (`4359b28`, que
+añadió **+6 líneas** de comentario y con ellas corrió `100→106`, `106→112`, `114→120`) desfasó ~20
+citas de medio repositorio, y el barrido de reparación de `30e698c` **dejó 16 más** —una de ellas
+apuntando a una **línea vacía** desde un fichero de pruebas que esa misma tanda había editado
+(`boardView.test.ts:80` → `estados.ts:87-88` en `5919b6e`). Engram obs. 505.
+
+**Y la parte que sólo se ve al repararlas: una cita sólo es verificable contra una revisión.** Por eso
+la reparación no es renumerar, son **tres casos**, y se decide leyendo qué afirma la frase:
+
+| Caso | Qué afirma la frase | Reparación |
+|---|---|---|
+| **A · presente** | algo que sigue siendo cierto del árbol de hoy | se apunta a la línea de hoy |
+| **B · histórico** | algo cierto en su momento y falso hoy —un paquete fechado, un «en su momento»— | se **nombra la revisión** en la cita (`estados.ts:114` en `eb98a59`). Renumerar a hoy volvería **FALSA** la frase: «nueve entradas» con el número de hoy dice once |
+| **C · superado** | algo que otra tanda ya cerró | se conserva con su revisión y se añade qué lo cerró |
+
+Renumerar a ciegas los tres casos por igual es el fallo que esto evita: convierte un registro fechado
+en una afirmación falsa sobre el presente, y encima **parece** reparado. El otro modo de fallo tiene
+el signo contrario —una cita que el barrido da por rota y está bien—: `transitions-st/spec.md:30`
+citaba `estados.ts:59-103` en `ad1875b`, y 103 era `ESTADOS` cuando se escribió; `30e698c` lo llevó a `59-112`, que
+es `ESTADOS` hoy. Correcta. Por eso el barrido se comprueba contra el fichero, nunca contra la lista.
+
+**Lo que estas cuatro NO cazan.** H5 —la divergencia entre `normalizarNombreCliente`
 (`apps/desk/server/backfillClientId.ts:47-68`, que pliega acentos y formas societarias) y el
 `LOWER(...) LIKE '%q%'` de `searchClients` (`packages/zoho-sync/src/books/repo.ts:117-127`, que no
 pliega nada)— es una divergencia **entre dos implementaciones de la misma noción**, ninguna de las
-dos rota por separado. Para eso hace falta un lector, o una prueba que las enfrente. Que estas reglas
-cubran cuatro de cinco no las convierte en el revisor.
+dos rota por separado. Para eso hace falta un lector, o una prueba que las enfrente. Que las tres
+primeras cubran cuatro de cinco no las convierte en el revisor.
 
 ---
 
@@ -203,7 +239,7 @@ está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 | 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | **PUNTO ABIERTO PARA GERENCIA.** Ninguna tanda lo cubre, y **tampoco es una fila que falte**: el destino viejo («F1A o F1C, decisión de alcance») *era* el aviso de que nadie había decidido. Las tres fechas que deriva son **operandos de KPI** —`Fecha Remisión Entrada` abre el bodegaje de entrada (`bodegaje.ts:60-66`)—, así que no es cosmético. O el servidor las impone, o se declara que son prellenado y los KPIs dicen que su fuente es opcional |
 | — | `apps/desk/server/routes/remision.ts:218-226` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | **CONSTRUIBLE desde el 2026-09-10** · `decision/n52-cardinalidad-ov` (`plan:350`). Nº 52 quedó cerrado como **`1 ticket : N OV`**: una OV pertenece como mucho a un ticket, así que **se construye la tercera puerta y las dos existentes se quedan** (`ticketService.ts:45-48` y `:134-135`). La variante que ponía la regla en duda —la OV global por lote— desaparece por proceso: subórdenes `OV-AAAA-NNN-SS`, una por ticket. El daño está medido (`ordenVentaUnTicket.test.ts:150-158`) y el `it.fails` de `:161` se pone verde con un `409`. *(Antes decía: «PUNTO ABIERTO Nº 52 … el arreglo es retirar las dos puertas existentes». Invertido por la decisión.)* |
 | — | `apps/desk/server/services/ticketService.ts:39` — al completar `clientId` desde la orden de venta (`clientId = clientId ?? ov.clientId ?? null`), si el cuerpo YA trae su propio `clientId`, el de la OV nunca se contrasta con nada: un ticket puede quedar con cliente y equipo de un lado y la orden de venta de otro, sin ningún aviso. La guarda equipo↔cliente de `cerrar-hallazgos-revision-f1b-01` (P1, `:65-77`) compara el `clientId` final contra `equipo.clientId`, no contra `ov.clientId`, así que esta pareja queda fuera de su alcance a propósito (`proposal.md` §3) | **PUNTO ABIERTO, sin destino** — a propósito, criterio de aceptación nº 8 de `cerrar-hallazgos-revision-f1b-01`. ⚠️ **SIGUE VIVO, pero por otra razón desde el 2026-09-10.** Su justificación vieja —«esperar a que Gerencia resuelva nº 52»— **caducó**: nº 52 está decidido. Lo que lo mantiene abierto es que **nº 52 es CARDINALIDAD, no TITULARIDAD** (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:178-181`): la decisión no dice que la OV y el equipo puedan ser de clientes distintos, y esa pregunta —la titularidad— **sigue sin decidir y sin clave en la tabla de decisiones del plan**. IV-8 vive ahí. **No usar nº 52 para justificar tocar la guarda equipo↔cliente** (`ticketService.ts:65-83`) |
-| 1 | **REDUCIDO por `por-entregar-es-espera` (2026-09-12).** Era el mismo desvío que IV-1, en tres puntos; ahora sobreviven **dos**, y los dos son para COLOR. `ClienteDetalle.tsx:18` —el que CLASIFICABA— pasó a consumir el predicado compartido `apps/desk/src/lib/enEspera.ts` y ya no cuenta aquí. Sobreviven `ClienteDetalle.tsx:22` (`/espera/i`, color del badge) y `apps/desk/src/components/TicketDetailView.tsx:245` (`/espera\|hold/i`, color del `className`), decisión de Gerencia Q1: `Por Entregar` no es un atasco y el tablero ya lo pinta azul (`TicketCard.tsx:21`). Ninguna de las dos lee `ESTADOS_EN_ESPERA` (`estados.ts:120`). **Remedido el 2026-09-12 contra los ONCE `en_espera` de hoy: siguen acertando 2** —`En Espera de Repuestos` y `En espera de SKU inventario`, el numerador no cambia porque ninguno de los dos estados reclasificados contiene «espera» ni «hold»— **y se les escapan NUEVE**: los siete de antes más `Por Entregar` y `Por Entregar / Sin facturar`, deliberadamente —Gerencia decidió que esos dos no pintan ámbar—. Es defecto **por defecto**, no por exceso, pero ya sólo afecta al color: la mitad de clasificación la cerró esta misma tanda. ⚠️ Los dos ficheros son `.tsx` y quedan **fuera de la red de pruebas** por decisión de Gerencia (`vitest.config.ts:16`, `:17-20`, `:57`; F0-00), así que **no admiten rojo previo bajo `strict_tdd`**, y esta vez arreglarlos con la lista **sería el defecto**: es justo lo que Q1 rechazó. Sigue siendo el molde de **H5** —dos implementaciones de la misma noción, ninguna rota por separado—, y las tres reglas de mutación no lo cazan | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Que lo asigne quien decida el alcance — el arreglo de verdad es una sola fuente de color (`TicketCard.tsx:14`), no sustituir la regex por el registro. Todo lo que esa decisión necesita —las dos ubicaciones, la medición y el condicionante de las pruebas— está en `openspec/config.yaml` (IV-9) |
+| 1 | **REDUCIDO por `por-entregar-es-espera` (2026-09-12).** Era el mismo desvío que IV-1, en tres puntos; ahora sobreviven **dos**, y los dos son para COLOR. `ClienteDetalle.tsx:18` —el que CLASIFICABA— pasó a consumir el predicado compartido `apps/desk/src/lib/enEspera.ts` y ya no cuenta aquí. Sobreviven `ClienteDetalle.tsx:22` (`/espera/i`, color del badge) y `apps/desk/src/components/TicketDetailView.tsx:245` (`/espera\|hold/i`, color del `className`), decisión de Gerencia Q1: `Por Entregar` no es un atasco y el tablero ya lo pinta azul (`TicketCard.tsx:21`). Ninguna de las dos lee `ESTADOS_EN_ESPERA` (`estados.ts:120`). **Remedido el 2026-09-12 contra los ONCE `en_espera` de hoy: siguen acertando 2** —`En Espera de Repuestos` y `En espera de SKU inventario`, el numerador no cambia porque ninguno de los dos estados reclasificados contiene «espera» ni «hold»— **y se les escapan NUEVE**: los siete de antes más `Por Entregar` y `Por Entregar / Sin facturar`, deliberadamente —Gerencia decidió que esos dos no pintan ámbar—. Es defecto **por defecto**, no por exceso, pero ya sólo afecta al color: la mitad de clasificación la cerró esta misma tanda. ⚠️ Los dos ficheros son `.tsx` y quedan **fuera de la red de pruebas** por decisión de Gerencia (`vitest.config.ts:16`, `:17-20`, `:57`; F0-00), así que **no admiten rojo previo bajo `strict_tdd`**, y esta vez arreglarlos con la lista **sería el defecto**: es justo lo que Q1 rechazó. Sigue siendo el molde de **H5** —dos implementaciones de la misma noción, ninguna rota por separado—, y las cuatro reglas de mutación no lo cazan | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Que lo asigne quien decida el alcance — el arreglo de verdad es una sola fuente de color (`TicketCard.tsx:14`), no sustituir la regex por el registro. Todo lo que esa decisión necesita —las dos ubicaciones, la medición y el condicionante de las pruebas— está en `openspec/config.yaml` (IV-9) |
 
 **IV-1 está CERRADO EN `boardView.ts` y ya no cuenta ahí — pero el defecto no está cerrado, y esa
 distinción es toda la entrada.** Era la clasificación de esperas por regex de

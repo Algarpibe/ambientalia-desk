@@ -321,7 +321,7 @@ incumplimientos_vivos:
     cuantificado_en: "F0-02, 2026-09-08, base ad1875b"
     alcance_exacto: >
       La regex casa con EXACTAMENTE 2 de los 8 estados `en_espera` que declara
-      `estados.ts:59-114`: `En Espera de Repuestos` y
+      `estados.ts:59-111` en `ad1875b` (base de `cuantificado_en`; hoy `:59-120`, y ONCE): `En Espera de Repuestos` y
       `En espera de SKU inventario`. Y tiene CERO falsos positivos entre los 13
       estados restantes de los 21. Es decir: es un defecto POR DEFECTO, no por
       exceso, y eso cambia cómo se arregla — no hay que estrechar el criterio,
@@ -341,7 +341,7 @@ incumplimientos_vivos:
       dueño mientras el fichero seguía diciendo que lo tenía.
       DOS COSAS DISTINTAS EN ESA FRASE, y sólo una era destino. La dependencia
       —el registro— ya está satisfecha: ESTADOS_EN_ESPERA existe desde F0-04
-      (packages/shared/src/estados.ts:111) y boardView.ts NO lo importa (su
+      (packages/shared/src/estados.ts:120) y boardView.ts NO lo importa (su
       única importación es el tipo Ticket, :1). O sea que el bloqueo que la
       frase implicaba desapareció hace tandas; lo único que faltaba era la
       épica.
@@ -504,7 +504,7 @@ incumplimientos_vivos:
       `'Notificación Comercial'`, `'En Proceso'`, `'Notificación cliente'`,
       `'Por Facturar'`, `'Por Entregar / Sin facturar'`, `'Por Entregar'` y
       `'En Espera de Repuestos'`, todas ellas presentes en
-      CLASIFICACION_EN_ESPERA (`packages/shared/src/estados.ts:59-100`). El
+      CLASIFICACION_EN_ESPERA (`packages/shared/src/estados.ts:59-106`). El
       lookup de :26 —`statusColorMap[ticket.status]`— ya casa con datos reales, y
       el respaldo `bg-slate-100` pasa a ser lo que siempre debió ser: el caso por
       omisión, no el único caso. La tanda retiró además el campo `label`, que era
@@ -734,7 +734,7 @@ incumplimientos_vivos:
       `proposal.md` §13 de `por-entregar-es-espera`): `ClienteDetalle.tsx:22` y
       `TicketDetailView.tsx:245` pintan un badge, no deciden en qué lista cae un
       ticket. Ninguna de las dos lee el registro `ESTADOS_EN_ESPERA`
-      (`packages/shared/src/estados.ts:114`), y siguen sin decir lo mismo entre
+      (`packages/shared/src/estados.ts:120`), y siguen sin decir lo mismo entre
       sí: una es `/espera/i` y la otra `/espera|hold/i`, VARIANTES DISTINTAS de
       la misma noción, aunque midan el mismo conjunto de estados (ver
       `alcance_exacto`).
@@ -759,7 +759,7 @@ incumplimientos_vivos:
       `Por Entregar / Sin facturar`.
       LOS DOS ÚLTIMOS LOS AÑADIÓ `por-entregar-es-espera` (2026-09-12): la
       reclasificación de `Por Entregar` y `Por Entregar / Sin facturar` a
-      `externa` (`estados.ts:59-100`) subió el escape de siete a nueve. Y es
+      `externa` (`estados.ts:72-73`) subió el escape de siete a nueve. Y es
       DELIBERADO, no un defecto pendiente: Gerencia (Q1) decidió que estos dos
       estados NO deben pintarse de ámbar — el equipo está listo, no atascado, y
       el tablero ya los pinta azul (`TicketCard.tsx:20-21`).

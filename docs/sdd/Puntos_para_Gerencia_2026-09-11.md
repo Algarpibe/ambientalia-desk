@@ -218,7 +218,7 @@ acierta **2 de los 8** estados `en_espera` sin ningún falso positivo. Consecuen
 de espera se listan como «abiertos»** (`Servicio externo`, `Notificación cliente`, `Notificación a
 Compras`, `Notificación Comercial`, `Solicitado`, `Liberación Comercial`). Es un arreglo técnico sin
 decisión pendiente —sustituir la regex por `ESTADOS_EN_ESPERA`, que ya existe en
-`packages/shared/src/estados.ts:111`— y va en la misma tanda, **F1B-08**.
+`packages/shared/src/estados.ts:120`— y va en la misma tanda, **F1B-08**.
 
 **Acto de registro.** Añadir a la tabla de decisiones del plan:
 

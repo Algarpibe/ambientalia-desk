@@ -598,7 +598,7 @@ mismo patrón que §3.1 (C1).
 
 **Qué era** (comportamiento a corregir, destino F1B-08 antes de esta tanda). `boardView.ts:35`
 clasificaba las esperas con `/espera/i` sobre el nombre del estado, usado en `:43` y `:44`. El registro
-declaraba ocho estados en espera (`estados.ts:59-114` en su momento); la regex casaba con exactamente
+declaraba ocho estados en espera (`estados.ts:59-111` en `ad1875b`); la regex casaba con exactamente
 **dos**: `En Espera de Repuestos` y `En espera de SKU inventario`. Cero falsos positivos entre los 13
 estados restantes. Defecto **por defecto**, no por exceso.
 
@@ -660,7 +660,7 @@ declaraba `en_espera` con **9 estados**, y el texto decía «la vista muestra la
 `packages/shared/src/sla.test.ts:50-54` afirma que ningún estado con SLA está en `ESTADOS_EN_ESPERA`
 — más fuerte que la regla escrita arriba, que sólo exige independencia, no exclusión mutua. Si una
 tanda futura declara SLA para `Remisión creada` (la otra mitad de P21,
-`Decisiones_Gerencia_2026-09-10.md:331-337`), esa prueba se pondrá roja sin que nada esté mal; se
+`Decisiones_Gerencia_2026-09-10.md:336-342`), esa prueba se pondrá roja sin que nada esté mal; se
 reformula entonces, no se toca preventivamente aquí. Detalle en
 `sdd/vista-todos-y-estados-en-espera/archive-report`.
 

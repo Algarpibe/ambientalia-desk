@@ -52,7 +52,7 @@ trabajo de otra talla y otro alcance, y sigue debiéndose. Registrado también e
 | # | Hallazgo de la R04 (`:2713`) | Estado a `e8c5e90` | Evidencia | Dueño |
 |---|---|---|---|---|
 | 1 | **La guarda que no bloquea** | **CERRADO**, y sigue cerrado | `apps/desk/server/transitionExec.ts:76-77` — `const faltaObligatorio = f.kind === 'checkbox' ? asBool(raw) !== true : empty`, y va **antes** del bloque del checkbox (`:78-84`), que es la mitad del arreglo. Probado en `transitionExec.test.ts:83`, `:90-133` | C1 · F1A-01 (`ec0ed1f`) |
-| 2 | **Los cuatro estados sin salida** | **SIGUEN**, los cuatro | `packages/shared/src/estados.ts:140-148` — `En Espera de Repuestos`, `Solicitado`, `Servicio externo`, `En espera de SKU inventario`. F1A no los tocó | C3 · **F1C-03** (`plan:168`), bloqueada por la decisión `decision/c3-salida-esperas` (`plan:356`) |
+| 2 | **Los cuatro estados sin salida** | **SIGUEN**, los cuatro | `packages/shared/src/estados.ts:151-160` — `En Espera de Repuestos`, `Solicitado`, `Servicio externo`, `En espera de SKU inventario`. F1A no los tocó | C3 · **F1C-03** (`plan:168`), bloqueada por la decisión `decision/c3-salida-esperas` (`plan:356`) |
 | 3 | **El ciclo reentrante** | **SIGUE**, y son exactamente los mismos diez campos | `packages/shared/src/invariantesGrafo.test.ts:137-149` — la lista no ha crecido ni menguado. El campo nuevo de F1A-04 **no** entró en ella, y eso está probado donde se añadió (`bodegaje.test.ts:111-116`) | C4 · **F1C-02** (`plan:167`) y F1C-06 |
 | 4 | **La anulación** | **SIN CONSTRUIR** | No existe ningún estado `Anulado` en `packages/shared/src/estados.ts`. No hay transición ni motivo tipificado | C2 · **F1C-01** (`plan:166`), bloqueada por **P32** |
 

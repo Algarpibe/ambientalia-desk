@@ -77,7 +77,7 @@ describe('applyBoardView · RQ-VT-05, un cerrado nunca aparece en espera', () =>
  * reconocía, y estos dos NO vienen de esa regex — meterlos ahí volvería falso un título verdadero.
  *
  * CUANDO SE ESCRIBIÓ, este bloque fallaba: `Por Entregar` y `Por Entregar / Sin facturar` estaban
- * clasificados `'ninguna'` (`estados.ts:87-88` en su momento; hoy están en `:72-73`, ya `'externa'`) y
+ * clasificados `'ninguna'` (`estados.ts:87-88` en `5919b6e`; hoy están en `:72-73`, ya `'externa'`) y
  * caían en `'abiertos'`, no en `'espera'`. Gerencia decidió lo contrario
  * (decision/por-entregar-es-espera, 2026-09-12): el equipo ya fue avisado y espera a que el cliente lo
  * recoja, así que debe contar como espera. Este describe se puso VERDE en la Fase 2 del diseño, al

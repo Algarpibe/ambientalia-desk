@@ -217,7 +217,7 @@ los 751 y el rótulo «Todos los Tickets» (`boardView.ts:22`). **Hay que separa
 ### Se cierra junto con IV-1, que no necesita decisión
 
 La regex `/espera/i` de `boardView.ts:35` acierta **2 de los 8** estados `en_espera` y no tiene falsos
-positivos. Se sustituye por `ESTADOS_EN_ESPERA`, que ya existe en `packages/shared/src/estados.ts:111`.
+positivos. Se sustituye por `ESTADOS_EN_ESPERA`, que ya existe en `packages/shared/src/estados.ts:120`.
 Hoy **seis estados de espera se listan como «abiertos»**. Las dos viven en el mismo fichero: **F1B-08**.
 
 ---
@@ -323,10 +323,15 @@ lo construido**, no lo cambia.
 `Ticket creado` mezcla dos situaciones; `Remisión creada` significa una sola. **No hace falta estado
 nuevo.**
 
-**Pero `Remisión creada` NO está entre los 8 `en_espera`:** `estados.ts:90` la clasifica como
-`'ninguna'`. Los equipos parados en bodega **no aparecen como espera en ningún sitio**. Hay que
+**Pero `Remisión creada` NO está entre los 8 `en_espera`:** `estados.ts:90` en `ad1875b` la clasifica
+como `'ninguna'`. Los equipos parados en bodega **no aparecen como espera en ningún sitio**. Hay que
 añadirla con área **Comercial**, y hace falta **junto con** la corrección de `boardView.ts:35` —la
 regex que acierta 2 de 8— para que lleguen a verse. Las dos van en la misma tanda.
+
+> **HECHO el mismo día, después de escribirse esto.** `c30c74c` reclasificó `Remisión creada` a
+> `'interna'`; hoy vive en `estados.ts:86`. Y la corrección de `boardView.ts:35` la cerró F1B-08.
+> Se deja la frase como estaba —con su revisión nombrada— porque es el registro de lo que se
+> decidió, no una afirmación sobre el árbol de hoy.
 
 ### 7.2 · La alarma: N = 3 días
 
