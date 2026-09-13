@@ -43,7 +43,7 @@ hoy sobre `e8c5e90`: `scripts/` contiene un solo fichero, `docx2md.sh`.
 
 → **Esta auditoría NO regenera el artefacto** y no reclama haberlo hecho. Construir el generador es
 trabajo de otra talla y otro alcance, y sigue debiéndose. Registrado también en
-`openspec/config.yaml:435-461`.
+`openspec/config.yaml:807-838`, la entrada `PF-1` de `premisas_falsas_corregidas`.
 
 ---
 

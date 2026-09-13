@@ -6,7 +6,7 @@
 | Cubre | `FUNCTIONAL_VIEWS`, `viewLabel`, `applyBoardView` (`apps/desk/src/lib/boardView.ts`) — qué tickets devuelve cada vista y qué rótulo promete, incluida una clave desconocida |
 | Tanda que la escribe | `vista-todos-y-estados-en-espera` (F1B-08) |
 | Depende de | `packages/shared/src/estados.ts` (`ESTADOS_EN_ESPERA`; NO de `enEsperaDe`, ver RQ-VT-04) |
-| Fuente en el maestro | *Hipótesis*: ítem 22 «Interfaz que replica la estructura de Zoho Desk», citado de segunda mano vía `openspec/config.yaml:328-329`. No verificado contra el `.md` del maestro en esta sesión |
+| Fuente en el maestro | Ítem **22** del **§3.2 «MVP — P0 · *Control y ejecución*»**: «Interfaz que replica la estructura de Zoho Desk con blueprints controlados» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md:2978`; su registro completo es `:2977-2982`, en la tabla que abre en `:2851` con columnas `#`/`Funcionalidad`/`Módulo`/`Eje`/`Valor`/`Complejidad`). **Verificado contra el `.md` del maestro el 2026-09-13**, ya no es cita de segunda mano. ⚠️ Pero ese §3.2 está marcado `[EN REVISIÓN — R08]` (`:2841`) y el maestro dice que la tabla «se mantiene como está, sin retocar» hasta esa sesión (`:2842`): el ítem es la fuente, y la fuente está pendiente de revisar |
 
 ## Purpose
 
