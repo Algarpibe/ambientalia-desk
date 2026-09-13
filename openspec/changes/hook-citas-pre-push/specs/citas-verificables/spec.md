@@ -452,6 +452,7 @@ nunca un control que ejecute `npx` y dependa de la red.
   `npx --no tsx`
 - WHEN corre el hook
 - THEN falla con mensaje explícito, nunca sale 0 en silencio
+
 #### Scenario: guardián estático de la invocación, sin red (control de M16)
 - GIVEN un guardián que lee `.githooks/pre-push` y falla si invoca `tsx` con `npx` sin `--no`
 - WHEN el fichero vigilado invoca `node_modules/.bin/tsx` o `npx --no tsx`
