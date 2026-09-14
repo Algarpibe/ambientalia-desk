@@ -1,5 +1,167 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 3 — verificación del orquestador (4.1-4.14 y los tres añadidos)
+
+Partida `35f2698`. **4.7, hecha por el orquestador:** `git add --chmod=+x .githooks/pre-push`; `git ls-files -s`
+da modo 100755, el blob tiene 4 líneas y 0 CR, y `git check-attr eol` devuelve `lf`.
+
+**Mutaciones sobre los ficheros VIGILADOS reales** (regla de mutación 2; el sub-agente las hizo en memoria o
+sobre copias). Cada una: copia en el scratchpad, fichero real ensuciado, `npx vitest run` en proceso nuevo,
+restauración y `cmp` idéntico en las diez:
+
+| Tarea | Fichero ensuciado | Mutación | Salida literal |
+|---|---|---|---|
+| 4.3 | `.githooks/pre-push` | `exec npx tsx` | `AssertionError: expected false to be true` |
+| 4.3 | `.githooks/pre-push` | `exec npm exec tsx` | `AssertionError: expected false to be true` |
+| 4.3 | `.githooks/pre-push` | `exec npm x tsx` | `AssertionError: expected false to be true` |
+| 4.6 | `.gitattributes` | quitar la línea de `.githooks` | `AssertionError: expected 'unspecified' to be 'lf'` |
+| añadido 1 | `Dockerfile` | quitar `COPY scripts ./scripts` | `AssertionError: expected [ 'etapa 2, línea "RUN npm ci"' ] to deeply equal []` |
+| añadido 1 | `Dockerfile` | mover el `COPY` detrás de `npm ci` (posición) | la misma |
+| 4.8 | `scripts/instalar-hooks.mjs` | fijar otra clave en vez de `core.hooksPath` | `AssertionError: expected null to be '.githooks'` |
+| 4.9 | `scripts/instalar-hooks.mjs` | lanzar el error cuando no hay binario `git` | `AssertionError: expected 1 to be +0` |
+| 4.10 | `scripts/instalar-hooks.mjs` | callar el mensaje del fallo de `git config` | `AssertionError: expected '' to match /no se pudo fijar core\.hooksPath/` |
+| 4.11 | `scripts/instalar-hooks.mjs` | quitar la comparación de raíz (D9) | `AssertionError: expected '.githooks' to be null` |
+
+**`docker build` real** (Docker 29.6.2, 2026-09-14), sobre el árbol de trabajo del corte: **salida 0** en 33 s;
+las dos etapas ejecutaron `npm ci` sin caché y las dos lanzaron `node scripts/instalar-hooks.mjs` (562 y 167
+paquetes), que sale 0 sin `.git`. Final: `naming to docker.io/library/desk-citas-verif:corte3 done`.
+**Control del otro signo**, el mismo `Dockerfile` sin el `COPY scripts` pasado por stdin: **salida 1**, con
+`Error: Cannot find module '/app/scripts/instalar-hooks.mjs'` y `ERROR: failed to solve: process "/bin/sh -c npm
+ci" did not complete successfully: exit code: 1`. El comentario de `tsx` como devDep de la etapa 2 no se tocó.
+
+**Cierre de la regla de mutación 4 con el detector**: `--sha` sobre un commit temporal con todo el corte
+(`5116132`) → salida 0, 0 bloqueantes, 37 informadas, 0 caducadas. Citas comprobadas a los ficheros que el corte
+modifica: `DEPLOY.md` 31 (18 completas, 8 abreviadas y 4 ancladas, más 1 abreviada rota que ya estaba antes del
+corte), `package.json` 14 (12 ancladas, 1 completa y 1 abreviada), `CLAUDE.md` 40 ancladas, `openspec/config.yaml`
+35 (18 ancladas, 15 completas y 2 abreviadas, más 1 en la base), `Dockerfile` 8 (5 completas y 3 abreviadas) y
+`.gitattributes` 9 ancladas. **Reparadas por el orquestador:** dos citas de la propuesta al `RUN npm ci` de la
+etapa 2 del `Dockerfile`, que el `COPY` nuevo desplazó tres líneas sin que nada se pusiera rojo; el sub-agente no
+barrió el `Dockerfile`. Van ancladas a `648432d` (caso B), revisión en la que el `Dockerfile` era idéntico al de
+`35f2698`.
+
+**Cierre**: `npm run typecheck` exit 0; `eslint . --max-warnings 158` → 0 errores, 158 avisos; `npm run test:coverage` → 1108 pasadas y 2 omitidas de 1110 (120 ficheros y 1 omitido), global 94,79 % líneas · 83,96 % ramas · 98,2 % funciones, `apps/desk/server/citas` 99,23 % · 95,42 % · 97,29 %; `core.hooksPath` del clon real sin fijar hasta el paso de instalación; **coste del hook** sobre el árbol del corte completo salvo estas cifras (`ab8ed6e`), tres tomas: 2.896, 2.373 y 1.925 ms, salida 0; `--sha` sobre ese árbol → salida 0, 0 bloqueantes, 37 informadas; 0 bytes de control en los blobs tocados. **Tamaño con git:** `git diff --shortstat 35f2698` → 12 ficheros, +404/-22 = 426 (con el hook ya en el índice), más lo nuevo sin trackear (`instalador.test.ts` 119 y `scripts/instalar-hooks.mjs` 46) = **591**, por debajo de la parada de ~650.
+
+## Corte 3 — Fase 4 (Unidad 3): hook, instalador, `.gitattributes`, `DEPLOY.md` + 2 añadidos (15/16, 4.7 pendiente del orquestador)
+
+Partida `35f2698`. Preflight `openspec/config.yaml:25-30` en `648432d`: `interactive · hybrid ·
+ask-on-risk · 800 líneas · strict_tdd`. Modo Strict TDD activo: todas las tareas siguieron
+RED → GREEN → (MUT donde aplica). Sin commit, push ni `git add` en el repositorio real (fuera de
+`sdd-apply`); las comprobaciones de contenido de blob usaron `GIT_INDEX_FILE` aparte, índice real
+intacto en cada comprobación.
+
+### TDD Cycle Evidence
+
+| Tarea | Fichero de prueba | Capa | Red de seguridad | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 4.1-4.3 (M16) | `guardianes.test.ts` | Estático (contenido real + variantes en memoria) | ✅ 14/14 antes de tocar | ✅ `ENOENT` real | ✅ 1 → 8 pasan | ✅ 3 formas sucias | ➖ sin cambios necesarios |
+| 4.4-4.6 (D10) | `guardianes.test.ts` | Estático (real) + sintético (`repoGitTemporal`) | ✅ 8/8 antes | ✅ `expected 'unspecified' to be 'lf'` | ✅ 11/11 | ✅ sintético sin/con la línea | ➖ sin cambios necesarios |
+| 4.8-4.12 (M11/M12/M13/D9) | `instalador.test.ts` (nuevo) | Proceso hijo del `.mjs` | N/A (fichero nuevo) | ✅ 6/6 rojas (`status:1`, excepción por script ausente) | ✅ 6/6 | ✅ M11 dos signos, M12 dos signos, M13, D9 | ➖ sin cambios necesarios |
+| 4.13 (`prepare`) | `package.json` (JSON válido) | Estático | N/A (script nuevo) | — (tarea mecánica, sin comportamiento que fallar antes) | ✅ | ➖ Single | ➖ N/A |
+| 4.13-A1 (Dockerfile) | `guardianes.test.ts` | Estático (contenido real + en memoria) | ✅ 11/11 antes | ✅ `expected [ 'etapa 3, línea "RUN npm ci"' ] to deeply equal []` | ✅ 14/14 | ✅ MUT quitar `COPY` + MUT posición (después de `npm ci`) | ➖ sin cambios necesarios |
+| 4.14 (`DEPLOY.md`) | — (documental) | N/A | N/A | — (sección nueva, sin comportamiento comprobable por vitest) | ✅ lectura manual | ➖ N/A | ➖ N/A |
+| 4.14-A2 (IV-10 `--no-verify`) | — (documental + `js-yaml`) | N/A | N/A | — | ✅ YAML válido, 10 entradas | ➖ N/A | ➖ N/A |
+
+### Test Summary
+- **Total tests escritos esta tanda**: 20 (14 en `guardianes.test.ts` incluidas las 4 preexistentes de
+  M16/D10/Dockerfile nuevas = 10 nuevas + 6 en `instalador.test.ts`).
+- **Total tests pasando (regresión completa, `npm test`)**: 1108/1110 (2 skipped, mismo fichero que ya
+  se saltaba antes: `migrate.integration.test.ts`, sin `DATABASE_URL`). Antes de este corte: 1092/1094.
+- **Capas usadas**: Estático (2: M16, guardián Dockerfile) · Estático+sintético (1: D10) · Proceso hijo
+  (1: instalador) · Documental sin prueba automatizada (2: `DEPLOY.md`, IV-10).
+- **Ficheros de prueba nuevos**: `apps/desk/server/citas/instalador.test.ts` (119 líneas, 6 pruebas).
+- **Ficheros de prueba ampliados**: `apps/desk/server/citas/guardianes.test.ts` (+123 líneas: bloques
+  M16, D10 y Dockerfile).
+
+### Mutaciones — salida literal
+
+| # | Qué se muta | Dónde | Salida literal | Restaurado / `cmp` |
+|---|---|---|---|---|
+| M16 | `.githooks/pre-push` → `npx tsx` | En memoria (contenido real de la suite) | `invocaTsxDeFormaSegura(sucio)` → `false` (assert pasa) | No aplica (nunca se escribió a disco); además control físico en `$SP`: `npx tsx -> INSEGURO (rojo)` |
+| M16 | `.githooks/pre-push` → `npm exec tsx` | En memoria | `false` | `$SP`: `npm exec tsx -> INSEGURO (rojo)` |
+| M16 | `.githooks/pre-push` → `npm x tsx` | En memoria | `false` | `$SP`: `npm x tsx -> INSEGURO (rojo)` |
+| M16 (control físico) | copia real de `.githooks/pre-push` en `$SP`, proceso `node` nuevo | `$SP/mut-c3-m16/` | `original -> SEGURO (verde)`; las tres sucias `-> INSEGURO (rojo)` | `cmp $SP/.../pre-push-original` vs real: **idéntico**, hook real intacto |
+| D10 | repositorio sintético (`repoGitTemporal`) SIN `.githooks/* text eol=lf` | `guardianes.test.ts` (test sintético permanente) | `eolDeclarado(...)` ≠ `'lf'` (assert pasa) | Repositorio temporal, borrado tras la prueba; `.gitattributes` real nunca tocado |
+| D10 (control) | mismo repositorio sintético CON la línea | ídem | `eolDeclarado(...)` === `'lf'` | ídem |
+| Dockerfile (AÑADIDO 1) | quitar `COPY scripts ./scripts` de la etapa 2 | En memoria (regex sobre contenido real) | `etapasNpmCiSinScripts(sucio)` → `['etapa 2, línea "RUN npm ci"']` (no vacío, assert pasa) | No aplica (en memoria) |
+| Dockerfile posición (regla de mutación 1) | `COPY scripts` movido a DESPUÉS de `RUN npm ci` | En memoria | ídem, no vacío | No aplica (en memoria) |
+| Dockerfile (control físico) | copia real en `$SP`, proceso `node` nuevo, quitar `COPY` | `$SP/mut-c3-dockerfile/` | original → `[]`; sin `COPY` → `['etapa 2, linea: RUN npm ci']` | `cmp $SP/.../Dockerfile-original` vs real: **idéntico**, `Dockerfile` real intacto |
+
+### Barrido de la regla de mutación 4 (ficheros que este corte inserta líneas)
+
+Puntos de inserción medidos con `git diff 35f2698`: `package.json` (+1 línea, antes de la vieja línea
+11 → todo lo de ahí en adelante +1), `.gitattributes` (+6 líneas al FINAL del fichero, nada se
+desplaza), `openspec/config.yaml` (+4 líneas tras la vieja línea 824, antes de `por_que_sin_destino:`
+→ todo lo de ahí en adelante +4; más un cambio de contenido sin desplazamiento en las líneas 60-61),
+`DEPLOY.md` (+19 líneas tras la vieja línea 203, antes de `## Notas` → todo lo de ahí en adelante +19),
+`CLAUDE.md` (0 líneas netas: la fila IV-10 crece dentro de su misma línea física).
+
+`git grep -noE` de cada fichero sin `openspec/changes/archive/`, comprobado contra el árbol de hoy.
+**Tabla deliberadamente SIN forma de cita** (decisión Q6 de la propuesta, aplicada aquí porque este
+propio artefacto queda en alcance del barrido en cuanto el hook se instale): fichero y número se
+nombran por separado, nunca unidos por dos puntos dentro de una misma comilla invertida.
+
+| Documento que cita | Línea del citante | Fichero citado | Línea citada (antes) | ¿Cruza el punto de inserción? | Caso | Reparación |
+|---|---|---|---|---|---|---|
+| `openspec/config.yaml`, sección de cobertura | 60 y 61 | `package.json` | 55 y 22 | Sí (inserción en la línea 11) | A · presente | pasan a 56 y 23 |
+| `docs/sdd/Paquete_de_Despliegue_2026-09-10.md` | 127 | `DEPLOY.md` | 205 | Sí (inserción en la línea 204) | A · presente | pasa a 224 |
+| `docs/sdd/Paquete_de_Despliegue_2026-09-10.md` | 138 | `DEPLOY.md`, forma abreviada atribuida por Lbc a la mención de `DEPLOY.md` de esa misma línea | 205 | Sí — encontrada en la segunda pasada (forma abreviada), el primer barrido sólo mira la forma completa | A · presente | pasa a 224 |
+| `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md` | 46 | `openspec/config.yaml` | rango 807-838 | Cruza el punto de inserción de esta tanda (línea 825), pero la cita ya está ANCLADA a la revisión `648432d` desde el corte 2 | Anclada, inmune | Ninguna |
+| Este mismo artefacto (`apply-progress.md`), narrativa del corte 2 | en torno a la línea 96 de hoy | `openspec/config.yaml` | rango 807-838 | Cruza, pero es narrativa sobre una reparación ya hecha, no una afirmación viva sobre el presente | — | Ninguna |
+| `proposal.md`, `design.md`, `tasks.md` y `spec.md` de esta propia tanda | varias | `openspec/config.yaml`, `.gitattributes` y `DEPLOY.md` | varias, algunas por encima de los puntos de inserción de hoy | Da igual: todas van ANCLADAS a la revisión `648432d` por la convención 1 de la propia propuesta | Ancladas, inmunes | Ninguna |
+| `CLAUDE.md`, `openspec/specs/*/spec.md` y la línea base (dato, excluida del barrido) | varias | `openspec/config.yaml`, `DEPLOY.md`, `.gitattributes` | varias | Todas por debajo de sus puntos de inserción, o son dato excluido del barrido | A · sin desplazamiento | Ninguna |
+
+La segunda pasada (forma abreviada) sobre los documentos que citan estos cuatro módulos encontró la
+entrada de la línea 138 de `Paquete_de_Despliegue_2026-09-10.md` —la forma abreviada atribuida a
+`DEPLOY.md` por la regla Lbc, en la misma línea física— que el primer barrido (sólo forma completa) no
+veía. Ninguna otra forma abreviada nueva apareció.
+
+### Controles
+
+- **Tamaño con git, medido AL FINAL** (tras escribir `tasks.md` y este mismo artefacto):
+  `git diff --shortstat 35f2698` → **8 ficheros, 167 inserciones, 6 borrados = 173 líneas**. Nuevos sin
+  trackear: `.githooks/pre-push` (4), `apps/desk/server/citas/instalador.test.ts` (119),
+  `scripts/instalar-hooks.mjs` (46) = **169**. **Total: 342 líneas**, muy por debajo de la parada de
+  ~650 y del presupuesto de 800.
+- `git config --get core.hooksPath` sobre el repositorio real: **vacío, código 1**, comprobado antes y
+  después de toda la tanda (incluidas las 6 pruebas de `instalador.test.ts`, que sólo tocan
+  repositorios sintéticos).
+- **0 bytes de control y 0 CR** en los blobs de los 11 ficheros tocados/nuevos (índice temporal
+  `GIT_INDEX_FILE`, comprobado byte a byte con Node sobre `git cat-file -p`; el índice real quedó
+  intacto en cada comprobación — `git status --short` sólo mostraba los `M`/`??` esperados, nada
+  staged).
+- Los 8 documentos ajenos de `docs/` sin trackear (lista base del orquestador): **intactos**, comprobado
+  por diferencia de conjuntos contra la lista base.
+- Guardián de binarios (tarea 1.0) y RQ-CV-18: en verde dentro de la regresión completa (120/121
+  ficheros, 1108/1110 pruebas).
+- `npm test`: 120/121 ficheros (1 `skipped`, sin `DATABASE_URL`), 1108/1110 pruebas (2 `skipped`).
+- `npm run typecheck`: limpio (`tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit`, sin salida).
+- `npx eslint . --max-warnings 158`: **0 errores, 158 avisos** — mismo trinquete, sin avisos nuevos.
+- `npm run test:coverage`: **All files 94,79% stmts · 83,96% branch · 98,2% funcs · 94,79% lines**
+  (thresholds 92/78/96/92, todos superados). `apps/desk/server/citas`: **99,23% stmts · 95,42% branch ·
+  97,29% funcs · 99,23% lines**.
+
+### Work Unit Evidence
+
+| Evidencia | Valor |
+|---|---|
+| Comando de prueba enfocado y resultado | `npx vitest run apps/desk/server/citas/guardianes.test.ts apps/desk/server/citas/instalador.test.ts` → 20/20 verdes |
+| Arnés de runtime real | `instalador.test.ts` invoca `scripts/instalar-hooks.mjs` como PROCESO HIJO real (`spawnSync(process.execPath, [SCRIPT], ...)`) contra repositorios git temporales aislados y directorios sueltos — es el runtime real del instalador, no un mock |
+| Frontera de reversión | `git checkout -- .githooks .gitattributes CLAUDE.md DEPLOY.md Dockerfile openspec/config.yaml package.json apps/desk/server/citas/guardianes.test.ts` + `rm scripts/instalar-hooks.mjs apps/desk/server/citas/instalador.test.ts .githooks/pre-push` revierte exactamente este corte, sin tocar la Unidad 1, la Unidad 2 ni los 8 documentos ajenos de `docs/` |
+
+### Deviaciones del diseño
+Ninguna. El contenido del hook (§5), la guarda en `.mjs` (Pieza 5 de la propuesta, D9) y el punto de
+anclaje de `.gitattributes` (D10) se implementaron tal cual el diseño. El único añadido no previsto en
+`design.md`/`proposal.md` es el guardián del `Dockerfile` (AÑADIDO 1 de Gerencia, fuera del alcance
+original de la Unidad 3 pero necesario porque el `prepare` nuevo interactúa con el build de Docker), y
+la frase de `--no-verify` en IV-10 (AÑADIDO 2), ambos encargados explícitamente por Gerencia el
+2026-09-14 y registrados como tareas propias en `tasks.md` (4.13-A1, 4.14-A2).
+
+### Pendiente
+- **4.7** (bit de ejecución, `git add --chmod=+x .githooks/pre-push`): el fichero ya está escrito y
+  verificado (4.1-4.3); la operación de índice la hace el orquestador al commitear, fuera del alcance
+  de `sdd-apply`.
+- **Fase 5** (5.1-5.6, verificación final y precondición dura): pendiente, corte siguiente.
+
 ## Corte 2 — verificación del orquestador (tareas 3.8-3.10 y 3.1-3.7, 10/10)
 
 Partida `984b797`; la primera parte está en el commit `73a9acb` y el resto se commitea encima.

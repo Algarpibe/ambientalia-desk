@@ -124,7 +124,7 @@ ahí** sin calificar. Mismo destino, ahora explícito. Es el cierre del incumpli
 > `ADD COLUMN IF NOT EXISTS`». Es falso — la de `:306` no lo es. La conclusión (la migración es
 > segura) sobrevive, pero por las dos razones de arriba, no por aquélla.
 
-`DEPLOY.md:205` ya declara que `migrate` es idempotente y que cada deploy es seguro. Este paquete no
+`DEPLOY.md:224` ya declara que `migrate` es idempotente y que cada deploy es seguro. Este paquete no
 lo cambia.
 
 ---
@@ -135,7 +135,7 @@ lo cambia.
 
 - **Cómo se publica:** `DEPLOY.md` §5 «Desplegar» (`:174-177`) — botón **Deploy** en EasyPanel, el
   server corre `migrate` en el arranque, y luego se abre el dominio.
-- **Idempotencia de la migración:** `DEPLOY.md` §Notas (`:205`).
+- **Idempotencia de la migración:** `DEPLOY.md` §Notas (`:224`).
 - **Orden con la replicación lógica:** `DEPLOY.md` §0 (`:50-51`) — el DDL va primero en el
   suscriptor (`desk`) y después en el hub. **No aplica a este paquete**: ninguna de las 13
   sentencias toca las cuatro tablas replicadas (`desk.activities`, `books.contacts`,

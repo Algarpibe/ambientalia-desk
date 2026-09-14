@@ -470,37 +470,92 @@ imponerla.
 
 ## Fase 4 (Unidad 3) — Hook, instalador, `.gitattributes`, `DEPLOY.md`
 
-- [ ] 4.1 RED (M16 estático, `guardianes.test.ts`): espera que `.githooks/pre-push` invoque `tsx` vía
+**Corte 3** (tareas 4.1-4.14 más dos añadidos de Gerencia, 2026-09-14).
+
+- [x] 4.1 RED (M16 estático, `guardianes.test.ts`): espera que `.githooks/pre-push` invoque `tsx` vía
       `node_modules/.bin/tsx` o `npx --no tsx`; falla porque el fichero aún no existe.
-- [ ] 4.2 GREEN: crear `.githooks/pre-push` (4 líneas): sin `node_modules/.bin/tsx` falla con mensaje
+      **CERRADO.** Rojo real: `ENOENT: no such file or directory, open '.githooks/pre-push'`.
+- [x] 4.2 GREEN: crear `.githooks/pre-push` (4 líneas): sin `node_modules/.bin/tsx` falla con mensaje
       explícito; si existe, `exec node_modules/.bin/tsx apps/desk/server/citas/cli.ts "$@"`.
-- [ ] 4.3 MUT (regla de mutación 2, tres formas): ensuciar `.githooks/pre-push` con `npx tsx` a secas,
+      **CERRADO.** Contenido exacto del §5 del diseño; LF puro, 0 CR, sin BOM (comprobado en el blob del
+      índice temporal).
+- [x] 4.3 MUT (regla de mutación 2, tres formas): ensuciar `.githooks/pre-push` con `npx tsx` a secas,
       `npm exec tsx`, `npm x tsx` (una mutación por forma) → el guardián se pone rojo cada vez; revertir
       a `node_modules/.bin/tsx`.
-- [ ] 4.4 RED (D10, `guardianes.test.ts`): `git check-attr eol` sobre `.githooks/pre-push` debe devolver
+      **CERRADO.** Las tres formas mutadas EN MEMORIA sobre el contenido real (regla de mutación 2: se
+      ensucia lo vigilado, nunca el fichero real del árbol de trabajo) se ponen rojas; control físico
+      adicional en `$SP` (copias del hook, proceso `node` nuevo): las tres formas → INSEGURO; el
+      original → SEGURO; `cmp` confirma el `.githooks/pre-push` real intacto.
+- [x] 4.4 RED (D10, `guardianes.test.ts`): `git check-attr eol` sobre `.githooks/pre-push` debe devolver
       `lf`; falla porque `.gitattributes` no declara la regla.
-- [ ] 4.5 GREEN: añadir `.githooks/* text eol=lf` a `.gitattributes` (candidatos de anclaje ya presentes:
+      **CERRADO.** Rojo real: `expected 'unspecified' to be 'lf'`.
+- [x] 4.5 GREEN: añadir `.githooks/* text eol=lf` a `.gitattributes` (candidatos de anclaje ya presentes:
       `.gitattributes:29` en `648432d`, `.gitattributes:31-33` en `648432d`,
       `.gitattributes:36` en `648432d`).
-- [ ] 4.6 MUT (regla de mutación 2): repositorio sintético SIN esa línea → el guardián se pone rojo; con
+      **CERRADO.** Línea añadida al final del fichero (tras `*.sh text eol=lf`), con su porqué.
+- [x] 4.6 MUT (regla de mutación 2): repositorio sintético SIN esa línea → el guardián se pone rojo; con
       ella, verde.
-- [ ] 4.7 Añadir el hook con `git add --chmod=+x` (bit de ejecución, declarado y sin guardián — D10).
-- [ ] 4.8 RED (rojo h, M11, dos signos obligatorios, `instalador.test.ts`): directorio sin `.git` →
+      **CERRADO.** Dos pruebas con `repoGitTemporal()`: sin la regla en el `.gitattributes` sintético →
+      `eolDeclarado` ≠ `lf`; con ella → `lf`. El `.gitattributes` real del repositorio nunca se toca
+      para esta mutación.
+- [x] 4.7 Añadir el hook con `git add --chmod=+x` (bit de ejecución, declarado y sin guardián — D10).
+      **CERRADO por el orquestador** (2026-09-14): `git add --chmod=+x .githooks/pre-push`, y
+      `git ls-files -s` da modo 100755; el blob tiene 4 líneas y 0 CR, y `git check-attr eol` devuelve
+      `lf`. El contenido es el verificado por 4.1-4.3.
+- [x] 4.8 RED (rojo h, M11, dos signos obligatorios, `instalador.test.ts`): directorio sin `.git` →
       `spawnSync` sale 0 y NO instala; directorio CON `.git` → sale 0 Y `git config --get
       core.hooksPath` devuelve `.githooks`.
-- [ ] 4.9 RED (M12): entorno sin binario `git` (`status` nulo) → 0 y no instala; con `git` presente →
+      **CERRADO.** Rojo real: ambas pruebas fallaban con `status: 1` (excepción del proceso hijo por
+      `scripts/instalar-hooks.mjs` inexistente).
+- [x] 4.9 RED (M12): entorno sin binario `git` (`status` nulo) → 0 y no instala; con `git` presente →
       instala.
-- [ ] 4.10 RED (M13): `git config` falla CON repositorio presente → mensaje visible, `npm ci` sigue en
+      **CERRADO**, con control del otro signo (con `git` en el `PATH` → instala).
+- [x] 4.10 RED (M13): `git config` falla CON repositorio presente → mensaje visible, `npm ci` sigue en
       verde.
-- [ ] 4.11 RED (D9): directorio sin `.git` propio, anidado dentro de otro repositorio → `git rev-parse
+      **CERRADO.** Fallo forzado con un DIRECTORIO llamado `config.lock` dentro de `.git/`.
+- [x] 4.11 RED (D9): directorio sin `.git` propio, anidado dentro de otro repositorio → `git rev-parse
       --show-toplevel` no coincide con el actual → sale 0 sin instalar.
-- [ ] 4.12 GREEN: crear `scripts/instalar-hooks.mjs` con `spawnSync('git', ['rev-parse','--git-dir'])` +
+      **CERRADO.**
+- [x] 4.12 GREEN: crear `scripts/instalar-hooks.mjs` con `spawnSync('git', ['rev-parse','--git-dir'])` +
       comparación de raíz (D9) + `git config core.hooksPath .githooks`, cubriendo 4.8-4.11.
-- [ ] 4.13 Añadir script `prepare` a `package.json` (`package.json:10-23` en `648432d` no lo declara)
+      **CERRADO.** 6/6 pruebas de `instalador.test.ts` en verde tras crear el script; `core.hooksPath`
+      del repositorio real comprobado vacío antes y después (`git config --get` sale con código 1).
+- [x] 4.13 Añadir script `prepare` a `package.json` (`package.json:10-23` en `648432d` no lo declara)
       que invoque `scripts/instalar-hooks.mjs`.
-- [ ] 4.14 Añadir a `DEPLOY.md` el comando manual de instalación para `--ignore-scripts` y el `--unset
+      **CERRADO.** `"prepare": "node scripts/instalar-hooks.mjs"`, primera entrada de `scripts`. JSON
+      válido comprobado. La inserción desplaza en `package.json` la línea que antes era la 22 (ahora la
+      23) y la que antes era la 55 (ahora la 56); reparadas las dos citas vivas que las nombraban, en
+      `openspec/config.yaml`, líneas 60 y 61 (caso A, barrido de la regla de mutación 4).
+- [x] 4.13-A1 **AÑADIDO 1 (Gerencia, 2026-09-14) — el `prepare` rompe el build de Docker.** La etapa 2
+      (runtime) del `Dockerfile` copiaba sólo `package.json`, `package-lock.json`, `packages` y `apps`
+      antes de `npm ci`, que dispara `prepare`; sin `scripts/` copiado, el build fallaría. RED:
+      guardián estático nuevo en `guardianes.test.ts` (`etapasNpmCiSinScripts`): toda etapa que ejecuta
+      `npm ci` copia `scripts/` antes o usa `--ignore-scripts`. Rojo real con el `Dockerfile` de hoy:
+      `expected [ 'etapa 3, línea "RUN npm ci"' ] to deeply equal []` (numerado desde el primer trozo
+      del `split`, que incluye el comentario previo al primer `FROM`; corregido a enumerar sólo trozos
+      que empiezan por `FROM`, sin cambiar la lógica). GREEN: `COPY scripts ./scripts` añadido en la
+      etapa 2, antes de `RUN npm ci`, con una línea de comentario explicando por qué. MUT (regla de
+      mutación 2, en memoria sobre el contenido real): quitar el `COPY` → rojo; MUT posición (regla de
+      mutación 1): el mismo `COPY` puesto DESPUÉS de `RUN npm ci` → rojo. Control físico adicional en
+      `$SP` (copia real, proceso `node` nuevo): original → `[]` (verde); sin el `COPY` → detecta la
+      etapa 2; `cmp` confirma el `Dockerfile` real intacto tras el control. Un `git diff` contra la
+      partida del corte confirma que el ÚNICO cambio del `Dockerfile` es el `COPY` y su comentario — el
+      comentario preexistente sobre `tsx` como devDep de la etapa 2 (falso, registrado aparte) no se tocó.
+- [x] 4.14 Añadir a `DEPLOY.md` el comando manual de instalación para `--ignore-scripts` y el `--unset
       core.hooksPath` de la reversión de urgencia (candidatos de anclaje: `DEPLOY.md:64` en `648432d` o
       `DEPLOY.md:204` en `648432d`).
+      **CERRADO.** Nueva sección «## 8. El hook de citas (`pre-push`...)», insertada justo antes de
+      «## Notas» (el candidato de anclaje `DEPLOY.md:204` en `648432d`), con los dos comandos y la
+      frase de que `--no-verify` nunca es la salida legítima. La inserción desplaza en `DEPLOY.md` la
+      línea que antes era la 205 (ahora la 224); reparadas las DOS citas vivas (sin ancla) que la
+      nombraban, en `docs/sdd/Paquete_de_Despliegue_2026-09-10.md`, líneas 127 y 138 del propio
+      documento — la segunda encontrada en la segunda pasada de la forma abreviada (atribuida a
+      `DEPLOY.md` por Lbc, misma línea física; caso A, barrido de la regla de mutación 4).
+- [x] 4.14-A2 **AÑADIDO 2 (Gerencia, 2026-09-14) — `--no-verify` en IV-10.** Frase mínima en prosa, sin
+      forma de cita, en la fila IV-10 de `CLAUDE.md` y en la entrada IV-10 de `openspec/config.yaml`
+      (campo `no_verify` nuevo): saltarse el hook con `--no-verify` NO es una salida legítima; las
+      legítimas son reparar la cita o añadirla a mano a la base (mitigación de R-4 de la propuesta).
+      YAML validado con `js-yaml` tras el cambio: 10 entradas en `incumplimientos_vivos`, última `IV-10`.
 
 ## Fase 5 — Verificación final y precondición dura (manual, cuenta como tareas)
 

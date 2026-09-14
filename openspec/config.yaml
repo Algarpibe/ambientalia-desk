@@ -57,8 +57,8 @@ testing:
       CORREGIDO EN F1A-05 (2026-09-09). La entrada anterior decía «no está
       instalado; vitest.config.ts no declara sección coverage», y era cierta al
       baseline a3a8f03 (2026-08-20) y falsa desde edbce13 (2026-09-08). Hoy el
-      proveedor está instalado (package.json:55), hay script test:coverage
-      (package.json:22) y vitest.config.ts:49-64 declara umbrales:
+      proveedor está instalado (package.json:56), hay script test:coverage
+      (package.json:23) y vitest.config.ts:49-64 declara umbrales:
       lines/statements 92, functions 96, branches 78. El CI lo ejecuta
       (.github/workflows/ci.yml:39). Medido a F1A-05: 94,31 lines, 81,97
       branches, 98,28 functions — verde. El denominador excluye los .tsx a
@@ -822,6 +822,10 @@ incumplimientos_vivos:
       entradas, 42 claves — no se borra (caso B de la regla de mutación 4 de
       CLAUDE.md): es una medición fechada sobre esa revisión.
     destino: "SIN ASIGNAR — decidido explícitamente, no por omisión (decisión Q4)"
+    no_verify: >
+      Saltarse el hook con --no-verify NO es una salida legítima de un
+      bloqueo: las dos legítimas son reparar la cita o añadirla a mano a la
+      base (mitigación de R-4 de la propuesta de hook-citas-pre-push).
     por_que_sin_destino: >
       La base SÓLO ENCOGE (RQ-CV-09) y NO CRECE desde el hook: una entrada rota
       nueva bloquea siempre, y añadir una entrada a la base exige editarla a

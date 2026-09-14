@@ -570,7 +570,7 @@ Cómo va:
 3. Una línea en `DEPLOY.md` con el comando manual, para clones con `--ignore-scripts`. Anclas
    candidatas: `DEPLOY.md:64` en `648432d` (§2, el clon) o `DEPLOY.md:204` en `648432d` (`## Notas`).
 
-**Dónde corre `prepare` hoy, verificado:** `ci.yml:26` (`npm ci`) y `Dockerfile:6` y `:19` (dos veces).
+**Dónde corre `prepare` hoy, verificado:** `ci.yml:26` (`npm ci`) y `Dockerfile:6` en `648432d` y `Dockerfile:19` en `648432d` (dos veces).
 En el CI **sí** hay `.git` —`checkout@v4` lo crea—, así que fijará `core.hooksPath` en el workspace del
 runner: inocuo, porque el CI no empuja. En la imagen no hay `.git` ni binario `git`: sale 0.
 
@@ -795,7 +795,7 @@ cierta y luego dejó de serlo.
 | **R-5** | **El hueco declarado**: 145 ambiguas + 125 sin resolver no se comprueban del todo | Cierta | Las cifras de comprobadas y saltadas se imprimen en cada ejecución (M15), junto a las de fuera del repositorio y abreviadas rotas (Pieza 6). Decidido por Q1 y Q2 |
 | **R-6** | **Cobertura**: el detector cuenta contra el 92 % (`vitest.config.ts:53`, `:58-63`) y puede arrastrar la cifra global | Media | `strict_tdd` con los ocho rojos vigentes del §4 (el f, retirado por Q8). Si baja, **es la señal**; bajar el umbral exige justificación en el commit (`vitest.config.ts:36-39`) |
 | **R-7** | **El detector se convierte en dependencia de la entrega**: si se cuelga, no se empuja | Media | Coste ya medido en ~1 s con unas 5× de margen, anclas incluidas (§7); salida 0 inmediata en el borrado de rama; y en la rama nueva sin `origin/main`, un mensaje que dice que el índice remoto no se comprobó, en vez de colgarse o callarlo |
-| **R-8** | **`prepare` es nuevo y corre en tres sitios más** (`ci.yml:26`, `Dockerfile:6`, `:19`) | Media | Verificado: en el CI hay `.git` y fijar `core.hooksPath` es inocuo porque no empuja; en la imagen no hay `.git` ni `git` y sale 0 (M12) |
+| **R-8** | **`prepare` es nuevo y corre en tres sitios más** (`ci.yml:26`, `Dockerfile:6` en `648432d`, `Dockerfile:19` en `648432d`) | Media | Verificado: en el CI hay `.git` y fijar `core.hooksPath` es inocuo porque no empuja; en la imagen no hay `.git` ni `git` y sale 0 (M12) |
 | **R-9** | **Presupuesto de revisión.** `changed_lines` se mide diffeando el **árbol entero** del intento (`CLAUDE.md:353-356` en `648432d`) y los artefactos SDD cuentan | Media | **Precondición, no recomendación:** `proposal.md`, el spec, `design.md` y `tasks.md` **commiteados antes de que el intento de `sdd-apply` adquiera** |
 | **R-10** | **Paralelismo.** Dos tandas SDD sobre `C:\dev\Desk_2_R1.023` se imputan líneas entre sí, y desbloquearlo exige `sdd-attempt reset`, reservado a un mantenedor | Media | Una tanda por árbol de trabajo. Si hace falta otra, worktree aislado |
 | **R-11** | **La tanda se rompe a sí misma.** Sus artefactos citan los dos ficheros que modifica, y el detector **no caza las citas que quedan en contenido equivocado**, en rango y no vacías. En la ilustración de la Pieza 3 —+1 en `CLAUDE.md`, +20 en `openspec/config.yaml`— se desplazan **ocho** y caza **cuatro**; con +5 en `CLAUDE.md`, o de +25 a +40 en `openspec/config.yaml`, **no caza ninguna** | **Cierta sin anclaje — ya pasó una vez en esta propuesta** | Anclaje a `648432d` **cita por cita** en los cuatro ficheros que la tanda toca, la mutación M20, y la comprobación final del §8 sobre los artefactos commiteados |

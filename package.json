@@ -8,6 +8,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "prepare": "node scripts/instalar-hooks.mjs",
     "dev": "concurrently -k -n web,api -c blue,green \"npm:dev:web\" \"npm:dev:api\"",
     "dev:web": "npm --workspace @ambientalia/desk run dev",
     "dev:api": "tsx watch apps/desk/server/index.ts",

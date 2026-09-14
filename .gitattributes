@@ -34,3 +34,9 @@ docs/artefactos/*.html -diff -merge
 # Hoy hay cuatro `.sh` con CRLF en el árbol (todos en `.agent/skills/`), que se corregirán solos en
 # el próximo checkout.
 *.sh text eol=lf
+
+# `.githooks/pre-push` (capacidad `citas-verificables`, D10) NO tiene extensión, así que la regla
+# `*.sh` de arriba no lo alcanza y depende de `* text=auto` — es decir, de `core.autocrlf` de cada
+# máquina. Con CRLF en el árbol de trabajo, `sh` no lo ejecuta —el mismo modo de fallo que un `.sh`
+# con CRLF—, así que se fija en LF sin depender de esa configuración.
+.githooks/* text eol=lf

@@ -16,6 +16,9 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 COPY packages ./packages
 COPY apps ./apps
+# `scripts/` tiene que estar ANTES de `npm ci`: el `prepare` nuevo (capacidad `citas-verificables`)
+# invoca `scripts/instalar-hooks.mjs`, y `npm ci` lo dispara. Sin este COPY, el build fallaría aquí.
+COPY scripts ./scripts
 RUN npm ci
 # Frontend ya compilado (debe quedar en /app/dist porque el server sirve desde process.cwd()/dist).
 COPY --from=build /app/dist ./dist

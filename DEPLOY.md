@@ -201,6 +201,25 @@ derivación de `sales_records` (requiere `SALES_TRACKER_DATABASE_URL`) y el *mar
 contra EasyPanel en esta revisión. Antes de recrearlo, cópialas de la pestaña Environment del
 servicio existente.
 
+## 8. El hook de citas (`pre-push`, capacidad `citas-verificables`)
+
+`npm ci` normal lo instala solo, vía el script `prepare` (`package.json`): fija
+`git config core.hooksPath .githooks`. Dos casos que necesitan un paso manual.
+
+**Clon con `--ignore-scripts` (el `prepare` no corre):**
+```bash
+git config core.hooksPath .githooks
+```
+
+**Reversión de urgencia** (quitar la imposición del hook en un clon, sin tocar el fichero):
+```bash
+git config --unset core.hooksPath
+```
+El hook `.githooks/pre-push` sigue versionado en el repositorio; esto sólo deja de apuntarlo desde
+`core.hooksPath`, así que `git push` vuelve a usar (o a no usar) `.git/hooks/pre-push` local, como
+antes de instalarlo. `--no-verify` **nunca** es la salida legítima de un push bloqueado por el
+detector de citas: repara la cita o añádela a mano a `apps/desk/server/citas/lineaBase.jsonl`.
+
 ## Notas
 - **Migraciones:** `migrate` es idempotente (`CREATE TABLE IF NOT EXISTS`); cada deploy es seguro.
 - **Backfill grande:** si hay miles de tickets, el primer backfill tarda; corre en segundo

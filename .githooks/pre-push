@@ -1,0 +1,4 @@
+#!/bin/sh
+# Detector de citas: toda la lógica está en apps/desk/server/citas/cli.ts
+[ -f node_modules/.bin/tsx ] || { echo "pre-push: falta node_modules/.bin/tsx (npm ci). El push se para sin comprobar." >&2; exit 1; }
+exec node_modules/.bin/tsx apps/desk/server/citas/cli.ts "$@"
