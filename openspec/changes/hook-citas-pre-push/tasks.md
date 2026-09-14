@@ -20,6 +20,31 @@ nunca `fichero:línea`.
 diseño (565-815, que sí lo roza) — es la discrepancia exacta que motiva el troceado en vez de decidirlo
 por mí. 2 y 3 no necesitan más división: incluso en su extremo alto quedan muy por debajo de 800.
 
+### Recalibración con lo medido (Gerencia, 2026-09-13)
+
+**La tabla de arriba es la estimación previa y se deja como estaba.** El corte 1a-i (tareas 1.1-1.27,
+commit `7625921`) midió **~30 líneas por tarea**: 819 líneas de código y pruebas en seis ficheros para 27
+tareas, más `tasks.md` y `apply-progress.md` (109). Con esa tasa, 1a entero no cabía, y 1b tampoco cabe
+en un corte. Los cortes quedan **1a-ii → 1b-i → 1b-ii → 2 → 3**:
+
+| Corte | Tareas | Líneas (medida × tareas) |
+|---|---|---|
+| **1a-ii** | 1.0 y 1.28-1.42 (16) | ~480 + `tasks.md` y `apply-progress.md` (~50) ≈ **530** |
+| **1b-i** | 2.1-2.11 (11) | ~330 + ~50 ≈ **380** |
+| **1b-ii** | 2.12-2.24 (13) | ~390 + ~50 ≈ **440** |
+| **2** | 3.1-3.7 (7) | `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 (~10) ≈ **100-130** |
+| **3** | 4.1-4.14 | sin cambios: **~116-162** |
+
+**El ledger NO mide lo que parecía.** El intento 1 registró `changed_lines: 55` con 928 líneas nuevas
+sin trackear (`wc -l` de los siete ficheros de `7625921`): sus árboles de principio y fin
+(`e92f6e2`, `ff7e330`) sólo difieren en `tasks.md` (+27/-27) y `design.md` (+1). Cuenta lo trackeado.
+
+**Control de tamaño por corte (decisión c), con git y no con el ledger:** `git diff --shortstat` contra
+el commit de partida del corte **más** `wc -l` de lo no trackeado (`git ls-files --others
+--exclude-standard`). **A las ~650 líneas se PARA y se pregunta.** Prohibido `git add -N`: hipótesis, haría
+visible lo nuevo al ledger; el corte se bloquearía por presupuesto y desbloquearlo exige un `reset` de
+mantenedor.
+
 ```text
 Decision needed before apply: No (respondida por Gerencia: A)
 Chained PRs recommended: Yes
@@ -63,6 +88,10 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
 | 1b | Adaptador git (`spawnSync`) + CLI + pruebas con repositorio sintético | PR 2 | `npx vitest run apps/desk/server/citas/hook.test.ts` | Repositorio git temporal por prueba, `cli.ts` invocado en proceso vía `ejecutar({argv, entrada, cwd})` | Revertir `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts`; sin efecto de ejecución sin Unidad 3 |
 | 2 | Línea base generada + IV-10 + dos frases de la regla de mutación 4 | PR 3 | `npm test` (regresión completa) | Manual: `npx tsx apps/desk/server/citas/cli.ts --generar-base` sobre el árbol de 1a+1b ya commiteado; inspeccionar `lineaBase.jsonl` (cifra ≤100, R-14) | Revertir `lineaBase.jsonl` + las filas/frases de `CLAUDE.md` y `openspec/config.yaml`; sin efecto sin Unidad 3 |
 | 3 | Hook versionado, instalador, `.gitattributes`, `DEPLOY.md` | PR 4 | `npx vitest run apps/desk/server/citas/guardianes.test.ts apps/desk/server/citas/instalador.test.ts` | Manual: push real de cierre con el hook instalado (M16 en ejecución, M18, M19 — Fase 5) | `git revert` + `git config --unset core.hooksPath` en cada clon que ya lo tuviera (el revert del fichero no deshace el `git config`) |
+
+Tras la recalibración, 1a se entrega como **1a-i** (1.1-1.27, ya en `main`) y **1a-ii** (1.0 y 1.28-1.42), y
+1b como **1b-i** (2.1-2.11) y **1b-ii** (2.12-2.24). Mismo comando de prueba y misma frontera de reversión
+que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_unit` propio.
 
 ---
 
@@ -118,6 +147,17 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
 - [x] 1.26 RED (M28, RQ-CV-04): token `~/x/y.md:3` → cifra "fuera del repositorio", no bloquea; ruta
       relativa que no existe → bloquea (control del otro signo).
 - [x] 1.27 GREEN: categoría "fuera del repositorio" evaluada antes que cualquier regla de resolución.
+**Corte 1a-ii** (tareas 1.0 y 1.28-1.42):
+
+- [ ] 1.0 GUARDIÁN (regla de mutación 2, decisión b de Gerencia): **ningún fichero trackeado con extensión
+      de texto** (`ts`, `tsx`, `js`, `mjs`, `md`, `yaml`, `yml`, `json`, `jsonl`, `sql`, `sh`) **es binario
+      para git**, leído del `--numstat` de `git diff` desde el árbol vacío (binario = `-` `-`). Motivo:
+      `git grep -I` se salta EN SILENCIO lo que git cree binario, y ése es un hueco del propio detector.
+      El diff va contra lo trackeado del árbol de trabajo: en CI (clon limpio) es HEAD, y en local es lo
+      único que deja observar el verde sin commitear. Orden: (1) ROJO hoy por `detector.ts`, con su
+      salida literal; (2) el NUL de `detector.ts` pasa al escape `\u0000` → verde; (3) MUT sobre el
+      fichero vigilado: un NUL en un `.ts` de `citas/` → rojo; restaurar y comprobar con `cmp`. El NUL es
+      el byte que git usa para decidir «binario»; otro byte de control no lo activa, y se registra.
 - [ ] 1.28 RED (RQ-CV-05, pasos 6-8 de D4): token con `/` que no resuelve en el índice local → bloquea
       "fichero inexistente"; token SIN `/` que no resuelve → se salta e informa.
 - [ ] 1.29 GREEN: pasos 6-8 del orden D4 en `resolucion.ts` (el paso 5, índice remoto, se prueba en
@@ -147,6 +187,8 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
 
 ## Fase 2 (Unidad 1b) — Adaptador git + CLI + pruebas sintéticas
 
+**Corte 1b-i** (tareas 2.1-2.11):
+
 - [ ] 2.1 Setup: extender `reposDePrueba.ts` con el constructor de repositorio git temporal aislado
       (`GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE` vacíos, `GIT_CONFIG_NOSYSTEM`, `GIT_CONFIG_GLOBAL`
       vacío, `GIT_CEILING_DIRECTORIES`, identidad por entorno, `core.autocrlf=false`).
@@ -170,6 +212,8 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
       informa y sale 0.
 - [ ] 2.11 GREEN: barrido siempre COMPLETO del árbol del sha local (RQ-CV-01), nunca limitado a los
       ficheros que cambia el push.
+**Corte 1b-ii** (tareas 2.12-2.24):
+
 - [ ] 2.12 RED (M5, divergencia #1 del diseño): cita rota en fichero sin trackear → 0; el mismo fichero
       tras `git add` Y COMMIT → bloquea.
 - [ ] 2.13 GREEN: `git.ts.lineas()` opera sobre el sha ya commiteado, nunca sobre el índice.
@@ -217,6 +261,11 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
       prosa (Q6, opción i) — sin escribir ningún `fichero:línea` de ejemplo.
 - [ ] 3.6 Confirmar M22 con el ejemplo real ya insertado en `CLAUDE.md`: con forma de cita → bloquea;
       sin forma → pasa (cierra 1.15-1.16 contra contenido real).
+- [ ] 3.7 Corregir la regla del ciclo 2 de `CLAUDE.md` (decisión d de Gerencia):
+      `CLAUDE.md:353` en `648432d` dice que `gentle-ai sdd-attempt` mide `changed_lines` «diffeando el
+      ÁRBOL ENTERO», y lo medido lo desmiente: el intento 1 de esta tanda registró 55 con 928 líneas nuevas sin trackear,
+      porque sus árboles de principio y fin sólo difieren en lo trackeado. La frase nueva dice que cuenta
+      lo trackeado, con esa medición y su cita anclada.
 
 ## Fase 4 (Unidad 3) — Hook, instalador, `.gitattributes`, `DEPLOY.md`
 
