@@ -433,8 +433,15 @@ declarar explícitamente que **no comprueba lo semántico** (si la línea dice l
 **MUST** nombrar las **dos** salidas legítimas de un bloqueo: reparar la cita, o añadirla a la línea
 base a mano. `--no-verify` **MUST NOT** presentarse como salida.
 
+Fuera de las cuatro cifras, en su propia línea, el mensaje **MUST** imprimir cuántos ficheros
+trackeados del sha local con extensión de texto (`ts`, `tsx`, `js`, `mjs`, `md`, `yaml`, `yml`, `json`,
+`jsonl`, `sql`, `sh`) trata git como **binarios**, y que **no se barren**. `git grep -I` se los salta en
+silencio: sin esta cifra, ese hueco del barrido sólo lo vería el guardián de las pruebas y nunca la
+ejecución del hook.
+
 *(No tiene mutación dedicada en el §6: lo exigen los criterios de aceptación del §15 sobre las cuatro
-cifras, la declaración de lo no comprobado, la de las abreviadas y las dos salidas legítimas.)*
+cifras, la declaración de lo no comprobado, la de las abreviadas y las dos salidas legítimas. La cifra
+de ficheros de texto que git cree binarios la añade una decisión de Gerencia del 2026-09-13.)*
 
 #### Scenario: mensaje completo en una ejecución con citas saltadas y abreviadas rotas
 - GIVEN una ejecución con citas comprobadas, ambiguas saltadas, citas fuera del repositorio y
@@ -447,6 +454,13 @@ cifras, la declaración de lo no comprobado, la de las abreviadas y las dos sali
 - GIVEN una cita rota que bloquea el push
 - WHEN se imprime el mensaje
 - THEN nombra reparar la cita y añadirla a la base a mano, y no menciona `--no-verify`
+
+#### Scenario: un fichero de texto que git cree binario se declara, no se calla
+- GIVEN un `.md` trackeado con un byte NUL en sus primeros 8.000 bytes y una cita rota dentro
+- WHEN corre el hook
+- THEN la cita no se cosecha ni bloquea, y el mensaje imprime la línea de texto que git cree binario
+  con 1 y la nota «no barridos»
+- AND sin el NUL, la misma línea dice 0 y la cita bloquea
 
 ### Requirement: RQ-CV-11 · El aviso de la condición de escalada: más de una identidad, sin bloquear
 

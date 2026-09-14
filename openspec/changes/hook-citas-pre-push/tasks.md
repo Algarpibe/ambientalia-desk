@@ -29,15 +29,17 @@ en un corte. Los cortes quedan **1a-ii → 1b-i → 1b-ii → 2 → 3**:
 
 | Corte | Tareas | Líneas (medida × tareas) |
 |---|---|---|
-| **1a-ii** | 1.0 y 1.28-1.42 (16) | ~480 + `tasks.md` y `apply-progress.md` (~50) ≈ **530** |
-| **1b-i** | 2.1-2.11 (11) | ~330 + ~50 ≈ **380** |
-| **1b-ii** | 2.12-2.24 (13) | ~390 + ~50 ≈ **440** |
-| **2** | 3.1-3.7 (7) | `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 (~10) ≈ **100-130** |
+| **1a-ii** | 1.0 y 1.28-1.42 (16) | ~480 + `tasks.md` y `apply-progress.md` (~50) ≈ **530** · **cerrado en `69bc3a9`: 495 medidas con git, 144 en el ledger** |
+| **1b-i** | 2.0-2.11 (12) | ~330 + tarea 2.0 (~65: doce expectativas reescritas, dos pruebas nuevas y cuatro `push`) + ~50 ≈ **445** |
+| **1b-ii** | 2.12-2.25 (14) | ~390 + tarea 2.25 (~20) + ~50 ≈ **460** |
+| **2** | 3.1-3.7 (7) | `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 ampliada (~15) ≈ **105-135** |
 | **3** | 4.1-4.14 | sin cambios: **~116-162** |
 
 **El ledger NO mide lo que parecía.** El intento 1 registró `changed_lines: 55` con 928 líneas nuevas
 sin trackear (`wc -l` de los siete ficheros de `7625921`): sus árboles de principio y fin
 (`e92f6e2`, `ff7e330`) sólo difieren en `tasks.md` (+27/-27) y `design.md` (+1). Cuenta lo trackeado.
+Y el intento 2 midió una segunda ceguera: `changed_lines: 144` frente a 247 trackeadas medidas con git.
+Las 103 que faltan son de `detector.ts`, que era binario en el árbol de partida y el ledger cuenta como 0.
 
 **Control de tamaño por corte (decisión c), con git y no con el ledger:** `git diff --shortstat` contra
 el commit de partida del corte **más** `wc -l` de lo no trackeado (`git ls-files --others
@@ -187,7 +189,20 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
 
 ## Fase 2 (Unidad 1b) — Adaptador git + CLI + pruebas sintéticas
 
-**Corte 1b-i** (tareas 2.1-2.11):
+**Corte 1b-i** (tareas 2.0-2.11):
+
+- [ ] 2.0 DEFECTO D6, PRIMERA del corte (decisión a de Gerencia; viene de 1a-i). RQ-CV-09 y D6 fijan que
+      una entrada de la base y un elemento del informe llevan el DOCUMENTO que cita y la línea de la cita.
+      `detectar()` los construye con el fichero CITADO (`resuelto` o `c.fichero`) y la línea citada, aunque
+      la cosecha trae `origenFichero` y `origenLinea`:
+      `apps/desk/server/citas/detector.ts:154` en `69bc3a9`, `apps/desk/server/citas/detector.ts:163` en `69bc3a9`,
+      `apps/desk/server/citas/detector.ts:170` en `69bc3a9`, `apps/desk/server/citas/detector.ts:195` en `69bc3a9`.
+      Consecuencias: el informe no dice dónde corregir, y dos documentos con la misma cita rota comparten
+      clave. RED (i): la entrada de base, la lista de bloqueantes y la de abreviadas rotas llevan el
+      documento que cita y su línea. RED (ii): la misma cita rota en dos documentos A y B, con base = {A};
+      reparar en A y romper en B NO se compensa: B bloquea y la entrada de A caduca. GREEN: los cuatro
+      `push` usan el origen, y se reescriben las doce expectativas que fijaban el fichero citado. MUT:
+      volver a la clave del fichero citado → (ii) en rojo; restaurar y comprobar con `cmp`.
 
 - [ ] 2.1 Setup: extender `reposDePrueba.ts` con el constructor de repositorio git temporal aislado
       (`GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE` vacíos, `GIT_CONFIG_NOSYSTEM`, `GIT_CONFIG_GLOBAL`
@@ -212,7 +227,7 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       informa y sale 0.
 - [ ] 2.11 GREEN: barrido siempre COMPLETO del árbol del sha local (RQ-CV-01), nunca limitado a los
       ficheros que cambia el push.
-**Corte 1b-ii** (tareas 2.12-2.24):
+**Corte 1b-ii** (tareas 2.12-2.25):
 
 - [ ] 2.12 RED (M5, divergencia #1 del diseño): cita rota en fichero sin trackear → 0; el mismo fichero
       tras `git add` Y COMMIT → bloquea.
@@ -240,6 +255,15 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       sin tocar el código de salida (RQ-CV-11).
 - [ ] 2.24 Confirmar (coste, RQ-CV-01): las anclas se leen agrupadas por (revisión, fichero) en UN solo
       `git cat-file --batch`, nunca un `git show` por cita, con varios pares en `hook.test.ts`.
+- [ ] 2.25 RED+GREEN (RQ-CV-10, decisión b de Gerencia): línea «texto que git cree binario .. N (no
+      barridos)» en el informe, para que el hueco de `git grep -I` se vea también en ejecución. RED en
+      `hook.test.ts`, repositorio sintético: un `.md` trackeado con un NUL en sus primeros 8.000 bytes y
+      una cita rota → la línea dice 1 y la cita no se cosecha ni bloquea; sin el NUL → la línea dice 0 y la
+      cita bloquea (control del otro signo). El NUL se genera en tiempo de ejecución con `Buffer`, nunca
+      como escape en el fuente. GREEN: la función del guardián de la 1.0 pasa a `git.ts`, con la revisión
+      como parámetro (el guardián la importa), y lee el `--numstat` desde el árbol vacío contra el sha
+      local; `informe.ts` añade la línea fuera de las cuatro cifras. Coste medido: 182-194 ms por
+      ejecución (numstat sobre `ef08129`, tres tomas).
 
 ## Fase 3 (Unidad 2) — Línea base + IV-10 + regla de mutación 4
 
@@ -261,11 +285,14 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       prosa (Q6, opción i) — sin escribir ningún `fichero:línea` de ejemplo.
 - [ ] 3.6 Confirmar M22 con el ejemplo real ya insertado en `CLAUDE.md`: con forma de cita → bloquea;
       sin forma → pasa (cierra 1.15-1.16 contra contenido real).
-- [ ] 3.7 Corregir la regla del ciclo 2 de `CLAUDE.md` (decisión d de Gerencia):
-      `CLAUDE.md:353` en `648432d` dice que `gentle-ai sdd-attempt` mide `changed_lines` «diffeando el
-      ÁRBOL ENTERO», y lo medido lo desmiente: el intento 1 de esta tanda registró 55 con 928 líneas nuevas sin trackear,
-      porque sus árboles de principio y fin sólo difieren en lo trackeado. La frase nueva dice que cuenta
-      lo trackeado, con esa medición y su cita anclada.
+- [ ] 3.7 Corregir la frase de que `gentle-ai sdd-attempt` mide `changed_lines` «diffeando el árbol
+      entero» (decisiones d y c de Gerencia) en sus DOS sitios: la regla del ciclo 2 de `CLAUDE.md`
+      (`CLAUDE.md:353` en `648432d`) y el §3 de `design.md` (sin línea, por la convención 2). Lo medido la
+      desmiente, y la frase nueva registra las DOS cegueras del ledger, con su medición y su cita anclada:
+      (1) no cuenta lo que no está trackeado: el intento 1 registró 55 con 928 líneas nuevas sin trackear,
+      porque sus árboles de principio y fin sólo difieren en lo trackeado; (2) cuenta 0 para un fichero
+      que era binario en el árbol de partida: el intento 2 registró 144 frente a 247 trackeadas medidas con
+      git, y las 103 que faltan son de `detector.ts`, que en `ef08129` llevaba un NUL.
 
 ## Fase 4 (Unidad 3) — Hook, instalador, `.gitattributes`, `DEPLOY.md`
 

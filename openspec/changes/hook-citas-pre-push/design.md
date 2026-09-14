@@ -415,11 +415,18 @@ citas · <sha corto> · <ref local>
   fuera del repositorio .. <N>
   abreviadas rotas ....... <N>   (informativas: no bloquean)
   no son citas ........... <N>   (marcas de hora ISO, horas y puertos de URL; fuera de las cuatro cifras)
+  texto que git cree binario .. <N>   (no barridos)
   índice remoto .......... <sha corto> | origin/main | NO HECHO: <motivo>
   línea base ............. <N> informadas · <N> caducadas
 ```
 
-Detrás van las listas, cada elemento con fichero, línea, cita y motivo:
+**La línea `texto que git cree binario`** (RQ-CV-10, decisión de Gerencia del 2026-09-13) cuenta los
+ficheros trackeados con extensión de texto que `git grep -I` se salta en silencio: sale del `--numstat`
+de `git diff` desde el árbol vacío contra el sha local, con la misma lista de extensiones que el
+guardián de las pruebas, y esa función vive en `git.ts`. Cuesta **182-194 ms** por ejecución (tres
+tomas sobre `ef08129`), dentro del margen de RQ-CV-13 que mide el §7.
+
+Detrás van las listas, cada elemento con el documento que cita, la línea de la cita, la cita y el motivo:
 - **abreviadas rotas**;
 - **bloqueantes**, con **cuál** extremo falla;
 - **caducadas**.
@@ -514,7 +521,7 @@ desde `sh`, con `node_modules/.bin/tsx` y la entrada de `pre-push` por stdin. Ci
 | M24, M25, M26, M27; **los dos cortes de Lbc —cita completa que no resuelve y barra de celda—, cada uno con dos signos** (sin pruebas de corte por vocabulario, que D1 no construye); puerto de URL frente a cita real; las formas de «fuera del repositorio» | `cosecha.test.ts` | Memoria |
 | M15, M23, M28; **posición del paso de directorio antes del de `/`** (regla de mutación 1); marca ISO descartada frente a fichero trackeado con nombre de dígitos, **comprobado** | `resolucion.test.ts` | Memoria |
 | RQ-CV-10: cuatro cifras, desglose, frases fijas, dos salidas, ausencia de `--no-verify`; texto del aviso | `informe.test.ts` | Memoria |
-| M1, rojo g y M7, M8, M20, M21, M29; M5 (el control es **`git add` y commit**, §11); **M14 con seis exclusiones**; borrado de rama; rama nueva con y sin `origin/main`; ruta no ASCII; salida de `git grep` por encima de 1 MB; dos referencias al mismo árbol | `hook.test.ts` | Sintético |
+| M1, rojo g y M7, M8, M20, M21, M29; M5 (el control es **`git add` y commit**, §11); **M14 con seis exclusiones**; borrado de rama; rama nueva con y sin `origin/main`; ruta no ASCII; salida de `git grep` por encima de 1 MB; dos referencias al mismo árbol; **un `.md` con un NUL: cifra de texto que git cree binario, con y sin el NUL** | `hook.test.ts` | Sintético |
 | M16 estático con las tres formas sucias (`npx tsx`, `npm exec tsx`, `npm x tsx`) sobre el contenido real de `.githooks/pre-push`, y el real en verde; **grafo de imports**: el recorrido desde `apps/desk/server/index.ts` (primer import relativo en `apps/desk/server/index.ts:10`) no alcanza `citas/`, y un grafo en memoria donde un módulo de producción importa `citas/` se pone rojo; **`eol=lf`** real y sintético | `guardianes.test.ts` | Estático y sintético |
 | M11 (dos signos), M12 (`PATH` vacío con `process.execPath`), M13 (un directorio llamado `config.lock` dentro de `.git` hace fallar `git config`), D9 (directorio anidado en otro repositorio) | `instalador.test.ts` | Proceso hijo del `.mjs` |
 | M16 en ejecución (sin `node_modules`), M18 (orden de la tanda), M19 (coste) | — | **Manual**, registrado en verify |
