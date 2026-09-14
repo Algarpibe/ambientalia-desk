@@ -242,3 +242,29 @@ describe('detectar · (c) la abreviada va SIEMPRE al fichero anterior, en los do
     expect(resultado2.bloquea).toBe(false) // una abreviada nunca bloquea (Q9)
   })
 })
+
+describe('detectar · RQ-CV-05, pasos 6-8 de D4: lo que no resuelve', () => {
+  it('con barra y sin resolver bloquea como fichero inexistente; sin barra se salta e informa (1.28)', () => {
+    const repo = repoEnMemoria({ LOCAL: { 'doc.md': `${cita('no/existe.md', 3)} y ${cita('noexiste.md', 3)}.` } })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'no/existe.md', motivo: 'fichero inexistente' })])
+    expect(resultado.saltadas.sinBarra).toBe(1)
+  })
+})
+
+describe('detectar · RQ-CV-03: una ambigua bloquea sólo si está rota en TODAS sus candidatas (M15)', () => {
+  const doc = { 'doc.md': `Ver ${cita('comun.md', 2)}.` }
+
+  it('rota en todas sus candidatas bloquea', () => {
+    const repo = repoEnMemoria({ LOCAL: { ...doc, 'a/comun.md': 'uno\n', 'b/comun.md': 'uno' } })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'comun.md', linea: 2 })])
+  })
+
+  it('válida en una sola candidata se salta, no bloquea y suma 1 a las ambiguas saltadas', () => {
+    const repo = repoEnMemoria({ LOCAL: { ...doc, 'a/comun.md': 'uno\ndos', 'b/comun.md': 'uno' } })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.saltadas.ambiguas).toBe(1)
+  })
+})

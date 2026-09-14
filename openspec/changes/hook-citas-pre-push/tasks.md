@@ -149,7 +149,7 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
 - [x] 1.27 GREEN: categoría "fuera del repositorio" evaluada antes que cualquier regla de resolución.
 **Corte 1a-ii** (tareas 1.0 y 1.28-1.42):
 
-- [ ] 1.0 GUARDIÁN (regla de mutación 2, decisión b de Gerencia): **ningún fichero trackeado con extensión
+- [x] 1.0 GUARDIÁN (regla de mutación 2, decisión b de Gerencia): **ningún fichero trackeado con extensión
       de texto** (`ts`, `tsx`, `js`, `mjs`, `md`, `yaml`, `yml`, `json`, `jsonl`, `sql`, `sh`) **es binario
       para git**, leído del `--numstat` de `git diff` desde el árbol vacío (binario = `-` `-`). Motivo:
       `git grep -I` se salta EN SILENCIO lo que git cree binario, y ése es un hueco del propio detector.
@@ -158,31 +158,31 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       salida literal; (2) el NUL de `detector.ts` pasa al escape `\u0000` → verde; (3) MUT sobre el
       fichero vigilado: un NUL en un `.ts` de `citas/` → rojo; restaurar y comprobar con `cmp`. El NUL es
       el byte que git usa para decidir «binario»; otro byte de control no lo activa, y se registra.
-- [ ] 1.28 RED (RQ-CV-05, pasos 6-8 de D4): token con `/` que no resuelve en el índice local → bloquea
+- [x] 1.28 RED (RQ-CV-05, pasos 6-8 de D4): token con `/` que no resuelve en el índice local → bloquea
       "fichero inexistente"; token SIN `/` que no resuelve → se salta e informa.
-- [ ] 1.29 GREEN: pasos 6-8 del orden D4 en `resolucion.ts` (el paso 5, índice remoto, se prueba en
+- [x] 1.29 GREEN: pasos 6-8 del orden D4 en `resolucion.ts` (el paso 5, índice remoto, se prueba en
       Fase 2).
-- [ ] 1.30 RED (M15): token ambiguo roto en TODAS sus candidatas → bloquea; roto en una sola → se salta,
+- [x] 1.30 RED (M15): token ambiguo roto en TODAS sus candidatas → bloquea; roto en una sola → se salta,
       saltadas +1.
-- [ ] 1.31 GREEN: RQ-CV-03 en `resolucion.ts` — comprobar cada candidata, bloquear sólo si todas fallan.
-- [ ] 1.32 RED (M23): quitar la precedencia exacta → cita a `package.json` (seis candidatos) pasa a
+- [x] 1.31 GREEN: RQ-CV-03 en `resolucion.ts` — comprobar cada candidata, bloquear sólo si todas fallan.
+- [x] 1.32 RED (M23): quitar la precedencia exacta → cita a `package.json` (seis candidatos) pasa a
       ambigua y saltada; `ci.yml` (sin candidato exacto) sigue resolviendo por sufijo.
-- [ ] 1.33 GREEN: RQ-CV-02 — coincidencia exacta antes que sufijo con frontera de segmento.
-- [ ] 1.34 MUT (regla de mutación 1, M23): invertir el orden — sufijo antes que exacta — en
+- [x] 1.33 GREEN: RQ-CV-02 — coincidencia exacta antes que sufijo con frontera de segmento.
+- [x] 1.34 MUT (regla de mutación 1, M23): invertir el orden — sufijo antes que exacta — en
       `resolucion.ts`; confirmar que 1.32 se pone roja; revertir.
-- [ ] 1.35 RED (regla de mutación 1, D4 paso 4 antes del 7): token con `/` que resuelve a un DIRECTORIO
+- [x] 1.35 RED (regla de mutación 1, D4 paso 4 antes del 7): token con `/` que resuelve a un DIRECTORIO
       → saltado, nunca "fichero inexistente".
-- [ ] 1.36 GREEN: fijar el orden D4 de ocho pasos, paso de directorio ANTES que el de "lleva `/`".
-- [ ] 1.37 MUT (regla de mutación 1): mover el paso de directorio a DESPUÉS del paso "lleva `/`";
+- [x] 1.36 GREEN: fijar el orden D4 de ocho pasos, paso de directorio ANTES que el de "lleva `/`".
+- [x] 1.37 MUT (regla de mutación 1): mover el paso de directorio a DESPUÉS del paso "lleva `/`";
       confirmar que 1.35 se pone roja; revertir.
-- [ ] 1.38 RED (D3): marca ISO y hora `HH:MM` sin `/` que no resuelven → "no es cita"; fichero trackeado
+- [x] 1.38 RED (D3): marca ISO y hora `HH:MM` sin `/` que no resuelven → "no es cita"; fichero trackeado
       con nombre de sólo dígitos → comprobado con normalidad.
-- [ ] 1.39 GREEN: en `resolucion.ts`, tras fallar la resolución local Y remota y sin `/`, reclasificar
+- [x] 1.39 GREEN: en `resolucion.ts`, tras fallar la resolución local Y remota y sin `/`, reclasificar
       marca ISO/hora como "no es cita".
-- [ ] 1.40 RED (RQ-CV-10): mensaje con cuatro cifras, desglose de saltadas, "no son citas", frases fijas
+- [x] 1.40 RED (RQ-CV-10): mensaje con cuatro cifras, desglose de saltadas, "no son citas", frases fijas
       y ausencia de `--no-verify`.
-- [ ] 1.41 GREEN: `informe.ts` arma el mensaje completo (divergencia #4 del diseño).
-- [ ] 1.42 RED+GREEN (RQ-CV-18): recorrido de imports desde `apps/desk/server/index.ts` no alcanza
+- [x] 1.41 GREEN: `informe.ts` arma el mensaje completo (divergencia #4 del diseño).
+- [x] 1.42 RED+GREEN (RQ-CV-18): recorrido de imports desde `apps/desk/server/index.ts` no alcanza
       `citas/`; cabecera de cada fichero declara las dos frases de RQ-CV-18.
 
 ## Fase 2 (Unidad 1b) — Adaptador git + CLI + pruebas sintéticas

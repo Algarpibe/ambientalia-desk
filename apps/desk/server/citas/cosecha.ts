@@ -3,7 +3,7 @@
  *
  * Este fichero viaja a la imagen de producción como código INERTE: no lo ejecuta el servidor, sólo
  * el hook de `pre-push` bajo `tsx` (RQ-CV-18). NADA de producción lo importa — `guardianes.test.ts`
- * (unidad 3) recorre el grafo de imports desde `apps/desk/server/index.ts` y lo comprueba.
+ * recorre el grafo de imports desde `apps/desk/server/index.ts` y lo comprueba.
  */
 
 /** Una línea candidata cosechada del árbol (RQ-CV-01): dónde vive y qué dice. */
