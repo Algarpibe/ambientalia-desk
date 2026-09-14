@@ -1,6 +1,29 @@
+```yaml
+schema: gentle-ai.verify-result/v1
+evidence_revision: sha256:400a38b98ec9ccdbe5d96ae762ac4441f3e3691e7aa45d968fd1d4b11a00fc73
+verdict: fail
+blockers: 0
+critical_findings: 0
+requirements: 18/18
+scenarios: 62/64
+test_command: npm test
+test_exit_code: 0
+test_output_hash: sha256:74013b6ecf8d939a6f5b517e5c6f5afdaa5f6507c75e58404273e6db1cb5dff6
+build_command: npm run build
+build_exit_code: 0
+build_output_hash: sha256:54079bee2e53effae66943ef329de5f32b9bf78a25d3eb637a5e676deb4b1c90
+```
+
 # Informe de verificación — hook-citas-pre-push
 
-**Fase**: sdd-verify · **Rama**: `main` · **HEAD verificado**: `a4d5b81` (= `origin/main`)
+**Sobre del resultado:** `test_output_hash` y `build_output_hash` son el sha256 de la salida completa
+(stdout y stderr) de `npm test` y `npm run build` ejecutados sobre `b861065`, el commit de la primera
+versión de este informe, que no cambia código. `evidence_revision` es el sha256 de las dos salidas
+concatenadas, primero la de test y después la de build. `scenarios: 62/64` porque dos escenarios son
+PARTIAL (WARNING-3).
+
+**Fase**: sdd-verify · **Rama**: `main` · **HEAD verificado**: `a4d5b81` (= `origin/main`); test y build del
+sobre, repetidos sobre `b861065`
 **Preflight** (`openspec/config.yaml:25-30`): interactive · hybrid · ask-on-risk · 800 líneas · strict_tdd
 **Modo de verificación**: artefactos completos (propuesta, spec, diseño, tareas y progreso de apply).
 `gentle-ai sdd-status`: 102/102 tareas, apply `all_done`, verify `ready`.
@@ -8,16 +31,24 @@
 Convención de este informe: no cita líneas de ningún artefacto de la tanda (convención 2 de la
 propuesta). Los nombra por apartado, tarea o identificador. Las citas a código van contra `a4d5b81`.
 
-## Veredicto: PASS WITH WARNINGS
+## Veredicto: FAIL — por evidencia incompleta, sin bloqueantes ni CRITICAL
 
-**0 CRITICAL · 2 WARNING · 3 SUGGESTION.**
+**0 CRITICAL · 3 WARNING · 3 SUGGESTION.**
+
+El veredicto es FAIL porque dos de los 64 escenarios están cubiertos sólo en parte (WARNING-3). El
+validador nativo (`gentle-ai sdd-verify-validate`) rechaza un veredicto aprobatorio con `scenarios`
+incompleto: «passing verdict contradicts failing or incomplete evidence». Contar esos dos como
+cubiertos sería falso: los escenarios dicen «WHEN corre el hook» y las pruebas sólo ejercen la cosecha.
+No hay nada roto. Lo que falta es una prueba de integración, y la tanda no es archivable hasta que
+exista (o hasta que alguien con autoridad reescriba esos dos escenarios).
 
 Los 18 requisitos de la spec están implementados y probados, las 102 tareas están cerradas y los cinco
-comandos de la tarea 5.6 dan `exit 0` con cifras propias de este verify. Hay **un criterio de aceptación
-de la propuesta incumplido** (WARNING-1: los artefactos de la tanda se citan entre sí por línea) y una
-afirmación imprecisa sobre la evidencia del push de `f962e81` (WARNING-2). Ninguno de los dos cambia el
-comportamiento del detector ni del hook. Si WARNING-1 debe repararse antes de archivar es una decisión
-de quien cierra la tanda: aquí se registra, no se repara, porque verify es de sólo lectura.
+comandos de la tarea 5.6 dan `exit 0` con cifras propias de este verify. De los 64 escenarios, 62 están
+cubiertos (48 con prueba automática y 14 con evidencia manual verificable) y 2 sólo en parte
+(WARNING-3). Hay **un criterio de aceptación de la propuesta incumplido** (WARNING-1: los artefactos de
+la tanda se citan entre sí por línea) y una afirmación imprecisa sobre la evidencia del push de
+`f962e81` (WARNING-2). Ninguno de los tres cambia el comportamiento del detector ni del hook. Aquí se
+registran y no se reparan, porque verify es de sólo lectura.
 
 ---
 
@@ -94,6 +125,82 @@ antes y después, y repetirla sobre el binario real añade riesgo sin aportar se
 | RQ-CV-18 · vive fuera de `testing/` y nada de producción lo importa | PASS | `apps/desk/server/citas/informe.ts:4-6` lo declara; `guardianes.test.ts` (14/14) recorre el grafo de imports desde `apps/desk/server/index.ts` |
 
 **18 de 18.**
+
+### 4.1 Matriz por escenario (64)
+
+Cada fila da el `it` que ejerce el escenario, leyendo su cuerpo y no sólo el nombre. Ninguna de las
+pruebas citadas está marcada `.skip`, `.todo` ni `it.fails`. «Manual» quiere decir evidencia
+verificable fuera de la suite: una tarea de la fase 5 con su comprobación, o un fichero real.
+
+| nº | RQ-CV | Escenario | Prueba o evidencia | Estado |
+|---|---|---|---|---|
+| 1 | 01 | un push que sólo mueve líneas del citado bloquea (M1) | `apps/desk/server/citas/hook.test.ts:48` | COMPLIANT |
+| 2 | 01 | una rotura que llegó sin hook la caza el push siguiente (M29) | `apps/desk/server/citas/hook.test.ts:118` | COMPLIANT |
+| 3 | 01 | fichero renombrado, con cita completa y con cita pelada (rojo g, M7) | `apps/desk/server/citas/hook.test.ts:65` | COMPLIANT |
+| 4 | 01 | rama nueva, con y sin `origin/main` | `apps/desk/server/citas/hook.test.ts:82` | COMPLIANT |
+| 5 | 01 | una reparación sin commitear no cuenta (M8) | `apps/desk/server/citas/hook.test.ts:104` | COMPLIANT |
+| 6 | 01 | borrado de rama | `apps/desk/server/citas/hook.test.ts:268` | COMPLIANT |
+| 7 | 01 | las anclas se leen en un solo proceso | `apps/desk/server/citas/detector.test.ts:138`; implementación en `apps/desk/server/citas/git.ts:73` | COMPLIANT |
+| 8 | 02 | nombre pelado con varios candidatos resuelve a la raíz | `apps/desk/server/citas/resolucion.test.ts:16` | COMPLIANT |
+| 9 | 02 | control: sin coincidencia exacta, el sufijo sigue funcionando | `apps/desk/server/citas/resolucion.test.ts:20` | COMPLIANT |
+| 10 | 02 | mutación: quitar la precedencia (M23) | la misma prueba del nº 8, que la mutación pone en rojo | COMPLIANT |
+| 11 | 03 | rota en todas sus candidatas | `apps/desk/server/citas/detector.test.ts:296` | COMPLIANT |
+| 12 | 03 | válida en una sola candidata | `apps/desk/server/citas/detector.test.ts:302` | COMPLIANT |
+| 13 | 04 | una ruta `~/` se salta en su propia cifra | `apps/desk/server/citas/cosecha.test.ts:89` y la invariante de conservación de `hook.test.ts` | COMPLIANT |
+| 14 | 04 | control: la ruta relativa que no resuelve sigue bloqueando | `apps/desk/server/citas/cosecha.test.ts:95` y `apps/desk/server/citas/detector.test.ts:285` | COMPLIANT |
+| 15 | 04 | mutación: quitar la categoría (M28) | la misma prueba del nº 13 | COMPLIANT |
+| 16 | 05 | la cita pelada a un fichero renombrado bloquea (M7) | pruebas de los nº 3 y nº 4 | COMPLIANT |
+| 17 | 05 | un token sin barra que no resuelve se informa | `apps/desk/server/citas/detector.test.ts:285` | COMPLIANT |
+| 18 | 05 | un token con barra que no resuelve bloquea | la misma prueba del nº 17 | COMPLIANT |
+| 19 | 05 | un token que resuelve a directorio se salta | `apps/desk/server/citas/resolucion.test.ts:27` | COMPLIANT |
+| 20 | 06 | abreviadas tras un nombre con punto inicial: todas comprobadas | `apps/desk/server/citas/cosecha.test.ts:22`, sólo a nivel de cosecha | **PARTIAL** |
+| 21 | 06 | (a) un nombre sin extensión se cosecha y se comprueba (M24) | `apps/desk/server/citas/cosecha.test.ts:8` y `apps/desk/server/citas/detector.test.ts:238` | COMPLIANT |
+| 22 | 06 | (b) un nombre con punto inicial se cosecha (M25) | `apps/desk/server/citas/cosecha.test.ts:14` y `apps/desk/server/citas/detector.test.ts:238` | COMPLIANT |
+| 23 | 06 | (c) abreviada atribuida al fichero anterior, en los dos órdenes (M26) | `apps/desk/server/citas/detector.test.ts:264` y `apps/desk/server/citas/cosecha.test.ts:42` | COMPLIANT |
+| 24 | 06 | (d) la mención pelada que resuelve captura la atribución y la que no, no (M27) | `apps/desk/server/citas/cosecha.test.ts:22` y `apps/desk/server/citas/cosecha.test.ts:31`, sólo a nivel de cosecha | **PARTIAL** |
+| 25 | 06 | la abreviada rota se informa y no bloquea (M30) | `apps/desk/server/citas/detector.test.ts:112`; `generarBase` sólo recorre bloqueantes (`apps/desk/server/citas/cli.ts:124`) | COMPLIANT |
+| 26 | 06 | una revisión inventada en una cita anclada bloquea | `apps/desk/server/citas/detector.test.ts:53` | COMPLIANT |
+| 27 | 06 | mutación: el ancla protege del desfase de contenido (M20) | `apps/desk/server/citas/hook.test.ts:373` | COMPLIANT |
+| 28 | 07 | un fichero sin trackear se ignora | `apps/desk/server/citas/hook.test.ts:212` | COMPLIANT |
+| 29 | 07 | control: el mismo fichero, trackeado, bloquea | la misma prueba del nº 28 | COMPLIANT |
+| 30 | 07 | una cita rota dentro de un directorio excluido se ignora | `apps/desk/server/citas/hook.test.ts:228` | COMPLIANT |
+| 31 | 08 | la cita rota bloquea y la válida pasa (rojos a y b) | `apps/desk/server/citas/detector.test.ts:6` | COMPLIANT |
+| 32 | 08 | extremo final fuera de rango (rojo c, M4) | `apps/desk/server/citas/detector.test.ts:29` | COMPLIANT |
+| 33 | 08 | control: extremo inicial en blanco (M4) | `apps/desk/server/citas/detector.test.ts:41` | COMPLIANT |
+| 34 | 09 | una entrada de la base ya reparada pone el hook en rojo (M9) | `apps/desk/server/citas/detector.test.ts:79` | COMPLIANT |
+| 35 | 09 | una cita rota nueva, con la base presente, bloquea (M10) | `apps/desk/server/citas/detector.test.ts:97` | COMPLIANT |
+| 36 | 09 | la base no contiene abreviadas | `apps/desk/server/citas/detector.test.ts:112` y `apps/desk/server/citas/cli.ts:124` | COMPLIANT |
+| 37 | 09 | mutación de posición: la base se aplica después de decidir el bloqueo (M17) | manual: «MUT 1.10» del corte 1, mutación a mano sobre `detector.ts` que pone en rojo `apps/desk/server/citas/detector.test.ts:103`, revertida | COMPLIANT (manual) |
+| 38 | 10 | mensaje completo: cuatro cifras, lista y frases fijas | `apps/desk/server/citas/informe.test.ts:29`, `:42` y `:47` | COMPLIANT |
+| 39 | 10 | el mensaje de bloqueo nombra las dos salidas | `apps/desk/server/citas/informe.test.ts:47` | COMPLIANT |
+| 40 | 10 | un fichero de texto que git cree binario se declara | `apps/desk/server/citas/hook.test.ts:444` | COMPLIANT |
+| 41 | 11 | con una identidad, sin aviso | `apps/desk/server/citas/hook.test.ts:392` | COMPLIANT |
+| 42 | 11 | con dos identidades, aviso sin bloquear | la misma prueba del nº 41 | COMPLIANT |
+| 43 | 11 | hueco declarado: segundo clon con `--ignore-scripts` | manual: `DEPLOY.md:204` (apartado 8, con el comando manual) | COMPLIANT (manual) |
+| 44 | 12 | sin `.git`, no instala | `apps/desk/server/citas/instalador.test.ts:40` | COMPLIANT |
+| 45 | 12 | con `.git`, instala de verdad | `apps/desk/server/citas/instalador.test.ts:50` | COMPLIANT |
+| 46 | 12 | sin binario `git` (M12) | `apps/desk/server/citas/instalador.test.ts:63` y su control en `:76` | COMPLIANT |
+| 47 | 12 | `git config` falla con el repositorio presente | `apps/desk/server/citas/instalador.test.ts:89` | COMPLIANT |
+| 48 | 12 | el hook sin dependencias falla en voz alta (M16) | manual: tarea 5.1, `tsx` renombrado y hook real con `exit=1` y mensaje explícito | COMPLIANT (manual) |
+| 49 | 12 | guardián estático de la invocación (control de M16) | `apps/desk/server/citas/guardianes.test.ts:94` | COMPLIANT |
+| 50 | 13 | la medición queda dentro del objetivo de 5 s | manual: tarea 5.3, seis tomas entre 1,99 y 2,83 s | COMPLIANT (manual) |
+| 51 | 13 | control del tope duro de 10 s | manual: la misma medición | COMPLIANT (manual) |
+| 52 | 14 | orden correcto: detector, base, IV-10 y hook | manual: tarea 5.2, reconstruida con `git log` y `sdd-attempt status` | COMPLIANT (manual) |
+| 53 | 14 | mutación: instalar antes de generar la base (M18) | manual: tarea 5.2; el apartado 8 del diseño declara M18 manual | COMPLIANT (manual) |
+| 54 | 14 | comprobación final sobre lo commiteado | manual: tarea 5.4, `--sha 53c6fc5` con 0 bloqueantes; repetida por este verify sobre `a4d5b81` | COMPLIANT (manual) |
+| 55 | 15 | IV-10 declarado sin dueño | manual: `CLAUDE.md:272` | COMPLIANT (manual) |
+| 56 | 15 | el recuento pasa de cuatro a cinco | manual: `CLAUDE.md:255` | COMPLIANT (manual) |
+| 57 | 15 | la regla de mutación 4 gana las dos frases | manual: `CLAUDE.md:185` (Q6) y `CLAUDE.md:188` (Q9) | COMPLIANT (manual) |
+| 58 | 15 | mutación: un ejemplo con forma de cita bloquea (M22) | `apps/desk/server/citas/detector.test.ts:214` | COMPLIANT |
+| 59 | 16 | `host:puerto` dentro de una URL no se cuenta | `apps/desk/server/citas/cosecha.test.ts:75` | COMPLIANT |
+| 60 | 16 | control: una cita real con dos puntos sigue siendo cita | `apps/desk/server/citas/cosecha.test.ts:81` | COMPLIANT |
+| 61 | 17 | el diseño elige la atribución y declara el hueco | manual: decisión D1 del diseño | COMPLIANT (manual) |
+| 62 | 17 | la base generada supera la guarda de R-14 | manual: tarea 3.2, 37 entradas (≤ 100) | COMPLIANT (manual) |
+| 63 | 18 | el grafo de imports de producción no llega al detector | `apps/desk/server/citas/guardianes.test.ts:51` | COMPLIANT |
+| 64 | 18 | la cobertura del detector cuenta | manual: `vitest.config.ts:51-57` incluye `apps/desk/server/**`, y la cobertura medida en el apartado 3 | COMPLIANT (manual) |
+
+**Recuento:** 48 COMPLIANT con prueba automática, 14 COMPLIANT con evidencia manual, 2 PARTIAL, 0
+UNTESTED y 0 FAILING. **62 de 64.**
 
 ---
 
@@ -181,8 +288,8 @@ módulo de esta tanda. Tipos: `exit 0`.
 
 **Ninguno.** Se evaluaron las tres condiciones que la skill de verify trata como CRITICAL y ninguna se da:
 (1) no hay tareas marcadas como completas sin evidencia (102/102 con evidencia de cierre); (2) ningún
-comando termina con código distinto de cero (apartado 3); (3) ningún requisito de la spec queda sin
-prueba verde (apartado 4).
+comando termina con código distinto de cero (apartado 3); (3) ningún escenario queda sin cubrir ni en
+rojo (apartado 4.1: 0 UNTESTED y 0 FAILING; los 2 PARTIAL van en WARNING-3).
 
 ### WARNING
 
@@ -254,6 +361,21 @@ se reconstruye.
 **Imprecisión:** «no registrada» es inexacto. Hay registro de las cifras clave; lo que falta es la salida
 literal completa. Debería decir «no registrada en forma literal».
 
+#### WARNING-3 · Dos escenarios de RQ-CV-06 sólo se prueban a nivel de cosecha
+
+Los nº 20 y nº 24 de la matriz (abreviadas tras un nombre con punto inicial, y la mención pelada que
+resuelve o no) sólo tienen prueba sobre `cosechar()`: `apps/desk/server/citas/cosecha.test.ts:22` y
+`:31`. Ninguna prueba ejecuta `detectar()` ni el hook con esa misma configuración (`.dockerignore`
+seguido de `.git` y `docs`) para comprobar el resto del escenario: que las abreviadas acaban entre las
+comprobadas y no entre las huérfanas, y que una abreviada fuera de rango en esa línea aparece en la
+lista de abreviadas rotas con el push en `exit 0`. La atribución, que es la parte difícil, sí está
+probada; el tramo que falta es de integración. Además, el control de `cosecha.test.ts:31` anuncia en
+su nombre dos signos («sin (d), o capturando cualquier token pelado»), pero su cuerpo sólo ejerce el
+primero: no hay prueba de que capturar un token pelado que no resuelve desvíe la atribución a `.git` o
+a `docs`. **Remedio:** una prueba en `detector.test.ts` con esa línea exacta que compruebe comprobadas,
+huérfanas y lista de abreviadas rotas, con los dos signos de la mutación de (d). Es trabajo de apply,
+no de verify.
+
 ### SUGGESTION
 
 - **SUGGESTION-1 · 0,01 pp en la cobertura de ramas.** El corte 4 registró 83,95 % y este verify mide
@@ -279,10 +401,11 @@ literal completa. Debería decir «no registrada en forma literal».
 
 ## 13. Conclusión
 
-La capacidad `citas-verificables` cumple su spec: 18/18 requisitos con ejecución real, 102/102 tareas,
-los cinco comandos de la 5.6 en verde con cifras propias y RQ-CV-14 reproducido sobre `a4d5b81`. La tanda
-**no cumple** uno de sus propios criterios de aceptación (WARNING-1, 25 citas por línea entre
-artefactos). El remedio es documental y está descrito arriba.
+La capacidad `citas-verificables` cumple su spec: 18/18 requisitos, 62/64 escenarios (2 PARTIAL),
+102/102 tareas, los cinco comandos de la 5.6 en verde con cifras propias y RQ-CV-14 reproducido sobre
+`a4d5b81`. La tanda **no cumple** uno de sus propios criterios de aceptación (WARNING-1, 25 citas por
+línea entre artefactos). El remedio es documental y está descrito arriba.
 
-**Siguiente paso recomendado:** decidir si WARNING-1 se repara antes de `sdd-archive` o se archiva con
-el incumplimiento registrado. En los dos casos, el informe se commitea antes de archivar.
+**Siguiente paso recomendado:** no archivar todavía. Primero una remediación acotada con dos piezas:
+(1) la prueba de integración de WARNING-3, con rojo previo bajo `strict_tdd`, y (2) reescribir en
+prosa las 25 citas de WARNING-1. Después, un verify nuevo. WARNING-2 y las SUGGESTION no bloquean.
