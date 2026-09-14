@@ -5,8 +5,8 @@
  * el hook de `pre-push` bajo `tsx` (RQ-CV-18). NADA de producción lo importa — `guardianes.test.ts`
  * recorre el grafo de imports desde `apps/desk/server/index.ts` y lo comprueba.
  *
- * Índices por árbol y la regla de resolución de una ruta, en el orden de D4 (§4 del diseño). Esta
- * unidad (1a) sólo construye el índice LOCAL; el índice remoto (paso 5 de D4) lo añade la unidad 1b.
+ * Índices por árbol y la regla de resolución de una ruta, en el orden de los ocho pasos de D4 (§4 del
+ * diseño), con el índice remoto en el paso 5.
  */
 
 export interface IndiceArbol {
@@ -51,6 +51,7 @@ export type Resolucion =
   | { tipo: 'unico'; ruta: string }
   | { tipo: 'ambiguo'; candidatos: string[] }
   | { tipo: 'directorio' }
+  | { tipo: 'existia'; en: string }
   | { tipo: 'no-es-cita' }
   | { tipo: 'inexistente' }
   | { tipo: 'sin-barra' }
@@ -67,11 +68,12 @@ function esDirectorio(nombre: string, indice: IndiceArbol): boolean {
 }
 
 /** La regla de D4 en su orden, para un token que ya no es «fuera del repositorio» ni puerto de URL
- *  (pasos 1-2, en la cosecha). El paso 5, índice remoto, lo añade la unidad 1b. */
-export function resolverRuta(nombre: string, indice: IndiceArbol): Resolucion {
+ *  (pasos 1-2, en la cosecha). `remoto` es el índice del lado remoto del push (RQ-CV-01), si lo hay. */
+export function resolverRuta(nombre: string, indice: IndiceArbol, remoto?: { en: string; indice: IndiceArbol }): Resolucion {
   const local = resolverToken(nombre, indice) // paso 3
   if (local.tipo !== 'no-resuelto') return local
   if (esDirectorio(nombre, indice)) return { tipo: 'directorio' } // paso 4: ANTES que el 7 (regla de mutación 1)
+  if (remoto && resolverToken(nombre, remoto.indice).tipo !== 'no-resuelto') return { tipo: 'existia', en: remoto.en } // paso 5
   if (!nombre.includes('/') && MARCA_DE_TIEMPO.test(nombre)) return { tipo: 'no-es-cita' } // paso 6
   if (nombre.includes('/')) return { tipo: 'inexistente' } // paso 7
   return { tipo: 'sin-barra' } // paso 8

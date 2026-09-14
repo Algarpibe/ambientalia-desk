@@ -13,7 +13,7 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     const resultadoRoto = detectar({ repo: rota, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultadoRoto.bloquea).toBe(true)
     expect(resultadoRoto.bloqueantes).toHaveLength(1)
-    expect(resultadoRoto.bloqueantes[0]).toMatchObject({ fichero: 'citado.md', linea: 3 })
+    expect(resultadoRoto.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', linea: 1, motivo: expect.stringContaining('línea 3 de citado.md') })
 
     const valida = repoEnMemoria({
       LOCAL: {
@@ -35,7 +35,7 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.bloquea).toBe(true)
-    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'citado.md', motivo: expect.stringContaining('final') })
+    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: expect.stringContaining('final') })
   })
 
   it('el extremo INICIAL en línea en blanco con el final OK bloquea nombrando el extremo inicial (control de la otra dirección, M4)', () => {
@@ -47,7 +47,7 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.bloquea).toBe(true)
-    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'citado.md', motivo: expect.stringContaining('inicial') })
+    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: expect.stringContaining('inicial') })
   })
 
   it('cita anclada a una revisión real pasa; anclada a una revisión inventada bloquea (rojo d, M3)', () => {
@@ -64,7 +64,7 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     })
     const resultadoInventada = detectar({ repo: repoInventada, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultadoInventada.bloquea).toBe(true)
-    expect(resultadoInventada.bloqueantes[0]).toMatchObject({ fichero: 'citado.md', motivo: expect.stringContaining('revisión') })
+    expect(resultadoInventada.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: expect.stringContaining('revisión') })
   })
 })
 
@@ -83,7 +83,7 @@ describe('detectar · línea base (RQ-CV-09, M9, M10, M17)', () => {
         'citado.md': 'uno\ndos\ntres\ncuatro',
       },
     })
-    const entradaCaduca = { fichero: 'citado.md', linea: 3, cita: cita('citado.md', 3), motivo: 'línea vacía' }
+    const entradaCaduca = { fichero: 'origen.md', linea: 1, cita: cita('citado.md', 3), motivo: 'línea vacía' }
 
     const conBase = detectar({ repo: repoReparado, arbolLocal: 'LOCAL', exclusiones: [], base: [entradaCaduca] })
     expect(conBase.bloquea).toBe(true)
@@ -102,7 +102,7 @@ describe('detectar · línea base (RQ-CV-09, M9, M10, M17)', () => {
 
   it('la misma cita rota, ya presente en la base, informa y no bloquea', () => {
     const repo = arbolConCitaRota()
-    const entrada = { fichero: 'citado.md', linea: 3, cita: cita('citado.md', 3), motivo: 'línea vacía' }
+    const entrada = { fichero: 'origen.md', linea: 1, cita: cita('citado.md', 3), motivo: 'línea vacía' }
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [entrada] })
     expect(resultado.bloquea).toBe(false)
   })
@@ -120,7 +120,7 @@ describe('detectar · abreviadas: se informan, nunca bloquean (RQ-CV-06, RQ-CV-0
     expect(resultadoRota.bloquea).toBe(false)
     expect(resultadoRota.bloqueantes).toHaveLength(0)
     expect(resultadoRota.abreviadasRotas).toHaveLength(1)
-    expect(resultadoRota.abreviadasRotas[0]).toMatchObject({ fichero: 'citado.md', linea: 3 })
+    expect(resultadoRota.abreviadasRotas[0]).toMatchObject({ fichero: 'origen.md', linea: 1, motivo: 'abreviada rota (atribuida a citado.md)' })
 
     const repoValida = repoEnMemoria({
       LOCAL: {
@@ -247,7 +247,7 @@ describe('detectar · RQ-CV-05, pasos 6-8 de D4: lo que no resuelve', () => {
   it('con barra y sin resolver bloquea como fichero inexistente; sin barra se salta e informa (1.28)', () => {
     const repo = repoEnMemoria({ LOCAL: { 'doc.md': `${cita('no/existe.md', 3)} y ${cita('noexiste.md', 3)}.` } })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
-    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'no/existe.md', motivo: 'fichero inexistente' })])
+    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'doc.md', cita: cita('no/existe.md', 3), motivo: 'fichero inexistente' })])
     expect(resultado.saltadas.sinBarra).toBe(1)
   })
 })
@@ -258,7 +258,7 @@ describe('detectar · RQ-CV-03: una ambigua bloquea sólo si está rota en TODAS
   it('rota en todas sus candidatas bloquea', () => {
     const repo = repoEnMemoria({ LOCAL: { ...doc, 'a/comun.md': 'uno\n', 'b/comun.md': 'uno' } })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
-    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'comun.md', linea: 2 })])
+    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'doc.md', linea: 1, cita: cita('comun.md', 2) })])
   })
 
   it('válida en una sola candidata se salta, no bloquea y suma 1 a las ambiguas saltadas', () => {
@@ -266,5 +266,31 @@ describe('detectar · RQ-CV-03: una ambigua bloquea sólo si está rota en TODAS
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.bloquea).toBe(false)
     expect(resultado.saltadas.ambiguas).toBe(1)
+  })
+})
+
+describe('detectar · D6: la base y el informe llevan el DOCUMENTO que cita y la línea de la cita (tarea 2.0)', () => {
+  const SALTO = String.fromCharCode(10)
+
+  it('(i) bloqueante, abreviada rota y entrada de base van por el documento y su línea, no por el fichero citado', () => {
+    const repo = repoEnMemoria({
+      LOCAL: { 'doc.md': ['título', `Ver ${cita('citado.md', 9)} y ${abreviada(8)}.`].join(SALTO), 'citado.md': 'uno' },
+    })
+    const sinBase = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(sinBase.bloqueantes).toEqual([expect.objectContaining({ fichero: 'doc.md', linea: 2 })])
+    expect(sinBase.abreviadasRotas).toEqual([expect.objectContaining({ fichero: 'doc.md', linea: 2 })])
+    const entrada = { fichero: 'doc.md', linea: 2, cita: cita('citado.md', 9), motivo: 'extremo inicial fuera de rango' }
+    expect(detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [entrada] }).bloquea).toBe(false)
+  })
+
+  it('(ii) la misma cita rota en A y en B, con la base de A: reparar en A y romper en B NO se compensa', () => {
+    const citado = ['uno', 'dos'].join(SALTO)
+    const antes = repoEnMemoria({ LOCAL: { 'A.md': `Ver ${cita('citado.md', 9)}.`, 'B.md': `Ver ${cita('citado.md', 2)}.`, 'citado.md': citado } })
+    const base = detectar({ repo: antes, arbolLocal: 'LOCAL', exclusiones: [], base: [] }).bloqueantes // lo que generaría --generar-base
+    const despues = repoEnMemoria({ LOCAL: { 'A.md': `Ver ${cita('citado.md', 2)}.`, 'B.md': `Ver ${cita('citado.md', 9)}.`, 'citado.md': citado } })
+    const resultado = detectar({ repo: despues, arbolLocal: 'LOCAL', exclusiones: [], base })
+    expect(resultado.bloquea).toBe(true)
+    expect(resultado.bloqueantes).toEqual([expect.objectContaining({ fichero: 'B.md' })])
+    expect(resultado.caducadas).toEqual([expect.objectContaining({ fichero: 'A.md' })])
   })
 })

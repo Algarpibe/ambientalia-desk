@@ -1,5 +1,62 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 1b-i (tareas 2.0–2.11) — cerrado
+
+**12/12.** Intento 3 del ledger, tras el `reset` de Gerencia; base del corte `01df7ce`. Salidas literales
+de vitest y mutaciones sobre copia, restauradas con `cmp`, como en 1a-ii.
+
+| Tarea | RED observado | GREEN |
+|---|---|---|
+| 2.0 (i) | «expected [ { fichero: 'citado.md', …(3) } ] to deeply equal [ ObjectContaining{…} ]» | `origen()`: documento, línea de la cita y cita literal |
+| 2.0 (ii) | «expected false to be true»: con la clave vieja, reparar en A y romper en B se compensaba | ídem; la base de la prueba la genera el propio detector |
+| 2.1 | arnés, sin rojo propio; su mutación, abajo | `repoGitTemporal` aislado |
+| 2.2/2.3 | «Cannot find module './cli'» | `git.ts` (`git grep --null` sobre el sha) y `cli.ts` |
+| 2.4/2.5 | «expected '…' to match /sin barra y sin resolver 0/»: la pelada se saltaba | paso 5 de D4 con el índice remoto |
+| 2.6/2.7 | «to match /índice remoto \.+ NO HECHO: no ha…/main» | `origin/main` en rama nueva; «NO HECHO» con motivo, también con el objeto ausente |
+| 2.8/2.9 | nació VERDE: `git.ts` lee por sha desde la 2.3. Rojo por la mutación de la tarea, abajo | — |
+| 2.10/2.11 | «bloquea sin base» nació verde (el barrido ya era completo); la parte de la base, «to match /línea base \.+ 1 informadas · 0 caduc…/» | la base se lee del sha empujado y se excluye del barrido |
+
+**Las doce expectativas de 1a que fijaban el fichero citado**, reescritas en la 2.0 (diez pruebas en
+rojo tras corregir los cuatro `push`): en `detector.test.ts`, nueve (RQ-CV-08 línea vacía, extremo final,
+extremo inicial y revisión inventada; las dos entradas de base de M9 y de «ya presente en la base»; la
+abreviada rota de M30; el inexistente de 1.28 y la ambigua de 1.30); en `informe.test.ts`, tres (la base
+y las dos líneas de las listas). ⚠️ La de M9 seguía **verde** con la clave vieja: la entrada caducaba
+igual, así que no discriminaba el campo.
+
+### Mutaciones
+
+| Mutación | Salida | Control |
+|---|---|---|
+| 2.0 · `origen()` vuelve al fichero citado y la línea citada | 10 failed / 8 passed, entre ellos (ii) «expected false to be true» | `cmp` idéntico |
+| 2.1 · el arnés no borra las variables heredadas (GIT_DIR apunta a un señuelo temporal) | «git add -A salió 128: fatal: this operation must be run in a work tree» | `cmp` idéntico |
+| 2.4 · se retira el paso 5 (sin índice remoto) | «to match /sin barra y sin resolver 0/» · 1 failed | `cmp` idéntico |
+| 2.9 · `git grep` sin el sha: lee el árbol de trabajo | «expected +0 to be 1» · sólo falla M8; M1 no lo distingue | `cmp` idéntico |
+| 2.10 · barrido limitado a los ficheros que cambia el push | 5 failed / 1 passed; M29 «expected +0 to be 1» | `cmp` idéntico |
+
+### Coste de la divergencia nº 8, medido sobre HEAD real (tres tomas, seis exclusiones de D5/D6)
+
+| Cifra | Valor |
+|---|---|
+| Citas cosechadas · ancladas · revisiones distintas | 3.360 · 94 · 6 (todas pelan a árbol) |
+| Ancladas leídas por ruta literal | 85 |
+| **Ancladas que se DESCARTAN EN SILENCIO** (ni comprobadas, ni bloqueantes, ni en ninguna cifra) | **9**: todas son el nombre pelado `estados.ts` con ancla, el caso B de la regla de mutación 4 |
+| De esas 9, resolubles por D11 (índice del sha local) · válidas | 9 · 9 · 0 índices de revisión construidos |
+| Lote literal · lote extra de D11 | 51-60 ms · **33-56 ms** |
+
+La divergencia no rompe ninguna cita hoy, pero deja 9 sin mirar y sin contarlas. Cerrarla cuesta un lote.
+
+### Hallazgos que este corte NO corrige
+
+1. **La divergencia nº 8 descarta en silencio** las anclas cuya ruta literal no existe en su revisión
+   (cifras arriba). Destino: lo decide Gerencia.
+2. **Exclusiones:** sólo la base, que la 2.11 necesitaba; las otras cinco llegan con la 2.15. El signo
+   «dentro de la base se ignora» de la 2.14 nacerá verde, y su rojo tendrá que salir de mutación.
+3. **D12 a medias:** «no hay origin/main» y «objeto ausente» ya están, con prueba (2.6); un fallo de git o
+   una base ilegible todavía lanzan excepción en vez de salir con 2 (tarea 2.17).
+4. **`ejecutar` recibe también `env`**, que el §5 del diseño no nombra: sin él, git en proceso heredaría
+   el entorno del padre y el aislamiento del arnés no llegaría al adaptador.
+5. `hook.test.ts` tarda ~11 s en local (seis pruebas con git real en Windows).
+
 ## Corte 1a-ii (tareas 1.0 y 1.28–1.42) — cerrado
 
 **16/16.** Intento 2 del ledger, tras el `reset` que ejecutó Gerencia (objetivo «corte 1a-ii», techo de

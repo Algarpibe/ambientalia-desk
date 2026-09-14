@@ -21,7 +21,7 @@ const repo = repoEnMemoria({
     'b/comun.md': '',
   },
 })
-const base = [{ fichero: 'a.md', linea: 8, cita: cita('a.md', 8), motivo: 'extremo inicial fuera de rango' }]
+const base = [{ fichero: 'doc.md', linea: 5, cita: cita('a.md', 8), motivo: 'extremo inicial fuera de rango' }]
 const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base })
 const texto = informe(resultado, { sha: 'abc1234', ref: 'refs/heads/main', indiceRemoto: 'origin/main' })
 
@@ -40,8 +40,8 @@ describe('informe · RQ-CV-10: cuatro cifras, desglose, «no son citas» y frase
   })
 
   it('lista la abreviada rota y la bloqueante con fichero, línea y motivo, nombrando el extremo que falla', () => {
-    expect(texto).toContain('a.md, línea 9: ' + abreviada(9) + ' — abreviada rota')
-    expect(texto).toContain('a.md, línea 7: ' + cita('a.md', 7) + ' — extremo inicial fuera de rango')
+    expect(texto).toContain('doc.md, línea 1: ' + abreviada(9) + ' — abreviada rota (atribuida a a.md)')
+    expect(texto).toContain('doc.md, línea 5: ' + cita('a.md', 7) + ' — extremo inicial fuera de rango (línea 7 de a.md)')
   })
 
   it('declara lo que no comprueba, por qué las abreviadas no bloquean y las dos salidas, sin --no-verify', () => {

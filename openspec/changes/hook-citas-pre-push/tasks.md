@@ -191,7 +191,7 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
 
 **Corte 1b-i** (tareas 2.0-2.11):
 
-- [ ] 2.0 DEFECTO D6, PRIMERA del corte (decisión a de Gerencia; viene de 1a-i). RQ-CV-09 y D6 fijan que
+- [x] 2.0 DEFECTO D6, PRIMERA del corte (decisión a de Gerencia; viene de 1a-i). RQ-CV-09 y D6 fijan que
       una entrada de la base y un elemento del informe llevan el DOCUMENTO que cita y la línea de la cita.
       `detectar()` los construye con el fichero CITADO (`resuelto` o `c.fichero`) y la línea citada, aunque
       la cosecha trae `origenFichero` y `origenLinea`:
@@ -204,28 +204,28 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       `push` usan el origen, y se reescriben las doce expectativas que fijaban el fichero citado. MUT:
       volver a la clave del fichero citado → (ii) en rojo; restaurar y comprobar con `cmp`.
 
-- [ ] 2.1 Setup: extender `reposDePrueba.ts` con el constructor de repositorio git temporal aislado
+- [x] 2.1 Setup: extender `reposDePrueba.ts` con el constructor de repositorio git temporal aislado
       (`GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE` vacíos, `GIT_CONFIG_NOSYSTEM`, `GIT_CONFIG_GLOBAL`
       vacío, `GIT_CEILING_DIRECTORIES`, identidad por entorno, `core.autocrlf=false`).
-- [ ] 2.2 RED (M1, obligatoria): push que sólo mueve líneas en fichero citado, sin tocar el que lo cita
+- [x] 2.2 RED (M1, obligatoria): push que sólo mueve líneas en fichero citado, sin tocar el que lo cita
       → hook ≠0; el mismo push con la cita reparada → 0.
-- [ ] 2.3 GREEN: `git.ts` implementa `lineas()` con `git grep --null -n -I -E`; `cli.ts` orquesta cosecha
+- [x] 2.3 GREEN: `git.ts` implementa `lineas()` con `git grep --null -n -I -E`; `cli.ts` orquesta cosecha
       + resolución + detección sobre el sha local.
-- [ ] 2.4 RED (rojo g, M7): fichero renombrado, cita con `/` y cita pelada al mismo fichero → ambas
+- [x] 2.4 RED (rojo g, M7): fichero renombrado, cita con `/` y cita pelada al mismo fichero → ambas
       bloquean "existía en `<sha remoto>`"; sin el índice remoto (mutación) la pelada pasa a saltada.
-- [ ] 2.5 GREEN: `git.ts.rutas()` vía `git ls-tree -r --name-only`; `resolucion.ts` añade la regla del
+- [x] 2.5 GREEN: `git.ts.rutas()` vía `git ls-tree -r --name-only`; `resolucion.ts` añade la regla del
       índice remoto (RQ-CV-05, D4 paso 5), tras "fuera del repositorio" y antes de las dos últimas.
-- [ ] 2.6 RED: rama nueva con y sin `origin/main` — con él, índice se toma de ahí; sin él, el mensaje
+- [x] 2.6 RED: rama nueva con y sin `origin/main` — con él, índice se toma de ahí; sin él, el mensaje
       dice que no se hizo, sin callarlo.
-- [ ] 2.7 GREEN: `cli.ts` resuelve el índice remoto: `origin/main` en rama nueva; si falta, "NO HECHO"
+- [x] 2.7 GREEN: `cli.ts` resuelve el índice remoto: `origin/main` en rama nueva; si falta, "NO HECHO"
       en el informe.
-- [ ] 2.8 RED (M8): cita reparada sólo en el árbol de trabajo, commit empujado sigue roto → bloquea
+- [x] 2.8 RED (M8): cita reparada sólo en el árbol de trabajo, commit empujado sigue roto → bloquea
       (nunca lee el árbol de trabajo).
-- [ ] 2.9 GREEN: `git.ts` lee siempre por sha (`rutas`, `lineas`, `leerLote`), nunca el árbol de trabajo.
-- [ ] 2.10 RED (M29): cita rota en contenido por un commit YA empujado sin hook, sin renombrar ni borrar,
+- [x] 2.9 GREEN: `git.ts` lee siempre por sha (`rutas`, `lineas`, `leerLote`), nunca el árbol de trabajo.
+- [x] 2.10 RED (M29): cita rota en contenido por un commit YA empujado sin hook, sin renombrar ni borrar,
       y un push posterior que no toca ni el fichero ni el citado → bloquea; con esa cita en la base →
       informa y sale 0.
-- [ ] 2.11 GREEN: barrido siempre COMPLETO del árbol del sha local (RQ-CV-01), nunca limitado a los
+- [x] 2.11 GREEN: barrido siempre COMPLETO del árbol del sha local (RQ-CV-01), nunca limitado a los
       ficheros que cambia el push.
 **Corte 1b-ii** (tareas 2.12-2.25):
 

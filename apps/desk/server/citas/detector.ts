@@ -70,6 +70,8 @@ export interface OpcionesDetector {
   arbolLocal: string
   exclusiones: readonly string[]
   base: readonly EntradaBase[]
+  /** Rutas del lado remoto del push y cómo nombrarlo en el motivo (RQ-CV-05). Sin él, el paso 5 no corre. */
+  remoto?: { en: string; rutas: readonly string[] }
 }
 
 function lineaVacia(texto: string | undefined): boolean {
@@ -102,6 +104,12 @@ function rotura(c: { desde: number; hasta: number }, contenido: string): { linea
   return null
 }
 
+/** D6 y RQ-CV-09: un elemento del informe y de la base es el DOCUMENTO que cita, la línea de la cita y
+ *  la cita literal. Nunca el fichero citado: dos documentos con la misma cita compartirían clave. */
+function origen(c: { origenFichero: string; origenLinea: number; cruda: string }): Omit<ItemCita, 'motivo'> {
+  return { fichero: c.origenFichero, linea: c.origenLinea, cita: c.cruda }
+}
+
 /** ¿En qué árbol se lee el contenido citado? El sha local, salvo que vaya anclada (D11). */
 function arbolDeLectura(c: { ancla?: string }, arbolLocal: string): string {
   return c.ancla ?? arbolLocal
@@ -109,6 +117,7 @@ function arbolDeLectura(c: { ancla?: string }, arbolLocal: string): string {
 
 export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
   const { repo, arbolLocal, exclusiones, base } = opciones
+  const remoto = opciones.remoto && { en: opciones.remoto.en, indice: construirIndice(opciones.remoto.rutas) }
   const rutas = repo.rutas(arbolLocal) ?? []
   const indice = construirIndice(rutas)
   const lineas = repo.lineas(arbolLocal, exclusiones)
@@ -124,7 +133,7 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
         if (repo.arbol(c.ancla) !== null) objetosNecesarios.add(`${c.ancla}:${c.fichero}`) // divergencia nº 8
         continue
       }
-      const r = resoluciones.get(c.fichero) ?? resolverRuta(c.fichero, indice)
+      const r = resoluciones.get(c.fichero) ?? resolverRuta(c.fichero, indice, remoto)
       resoluciones.set(c.fichero, r)
       if (r.tipo === 'unico') objetosNecesarios.add(`${arbolLocal}:${r.ruta}`)
       if (r.tipo === 'ambiguo') for (const ruta of r.candidatos) objetosNecesarios.add(`${arbolLocal}:${ruta}`)
@@ -151,7 +160,7 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
       if (resuelto === null) continue // no resuelve: fuera de alcance de esta tarea
       const contenido = lote.get(`${arbolLocal}:${resuelto}`)
       if (contenido === null || contenido === undefined) continue
-      if (rotura(c, contenido)) abreviadasRotas.push({ fichero: resuelto, linea: c.desde, cita: c.cruda, motivo: 'abreviada rota' })
+      if (rotura(c, contenido)) abreviadasRotas.push({ ...origen(c), motivo: `abreviada rota (atribuida a ${resuelto})` })
       else comprobadas++
       continue
     }
@@ -160,18 +169,22 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
     if (c.tipo !== 'completa') continue
 
     if (c.ancla !== undefined && repo.arbol(c.ancla) === null) {
-      candidatosDeBloqueo.push({ fichero: c.fichero, linea: c.desde, cita: c.cruda, motivo: `revisión inexistente (${c.ancla})` })
+      candidatosDeBloqueo.push({ ...origen(c), motivo: `revisión inexistente (${c.ancla})` })
       continue
     }
     let rutasCandidatas = [c.fichero]
     if (c.ancla === undefined) {
       const r = resoluciones.get(c.fichero)
       if (r?.tipo === 'inexistente') {
-        candidatosDeBloqueo.push({ fichero: c.fichero, linea: c.desde, cita: c.cruda, motivo: 'fichero inexistente' })
+        candidatosDeBloqueo.push({ ...origen(c), motivo: 'fichero inexistente' })
         continue
       }
       if (r?.tipo === 'sin-barra') {
         saltadas.sinBarra++
+        continue
+      }
+      if (r?.tipo === 'existia') {
+        candidatosDeBloqueo.push({ ...origen(c), motivo: `fichero inexistente (existía en ${r.en})` })
         continue
       }
       if (r?.tipo === 'directorio') {
@@ -192,7 +205,7 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
     // RQ-CV-03: con varias candidatas bloquea sólo si está rota en TODAS; si una la valida, se salta.
     if (primera && roturas.every((x) => x !== null)) {
       const motivo = roturas.length > 1 ? `ambigua, rota en sus ${roturas.length} candidatas` : primera.motivo
-      candidatosDeBloqueo.push({ fichero: c.fichero, linea: primera.linea, cita: c.cruda, motivo })
+      candidatosDeBloqueo.push({ ...origen(c), motivo: `${motivo} (línea ${primera.linea} de ${c.fichero})` })
       continue
     }
     if (roturas.length > 1) {

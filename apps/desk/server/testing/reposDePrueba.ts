@@ -1,3 +1,7 @@
+import { spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import type { Repo, LineaFuente } from '../citas/detector'
 
 /**
@@ -9,8 +13,8 @@ import type { Repo, LineaFuente } from '../citas/detector'
  * repositorio en cuanto exista el hook. Por eso `cita`, `abreviada` y `anclada` concatenan sus partes
  * — el fuente de este fichero no contiene ningún dos-puntos seguido de un dígito.
  *
- * Esta porción es sólo la de MEMORIA (unidad 1a: núcleo puro, sin git de verdad). La porción con un
- * repositorio git temporal aislado se añade en la unidad 1b.
+ * Dos porciones: la de MEMORIA (unidad 1a, núcleo puro) y un repositorio git temporal AISLADO (unidad
+ * 1b, `repoGitTemporal`), para el adaptador y el CLI con git de verdad.
  */
 
 /** Un fichero visto en `` `<ruta>:<línea>` ``, sin forma de cita en el propio fuente. */
@@ -78,6 +82,72 @@ export function repoEnMemoria(arboles: Record<string, ArbolMemoria>, identidades
     },
     identidades(): string[] {
       return identidades
+    },
+  }
+}
+
+/** Variables con las que un proceso padre (un hook, otra prueba) apuntaría git a OTRO repositorio. */
+const VARIABLES_DE_REPOSITORIO = [
+  'GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_COUNT',
+]
+
+export interface RepoGitDePrueba {
+  dir: string
+  env: NodeJS.ProcessEnv
+  git(...args: string[]): string
+  escribir(ficheros: Record<string, string>): void
+  /** `git add -A` y commit; devuelve el sha. */
+  commit(mensaje: string): string
+  borrar(): void
+}
+
+/**
+ * Repositorio git temporal y aislado (§8 del diseño): sin las variables de repositorio del padre, sin
+ * configuración de sistema ni global, con techo de directorios, identidad por entorno y
+ * `core.autocrlf=false`. El `env` que devuelve es el que el CLI tiene que usar.
+ */
+export function repoGitTemporal(): RepoGitDePrueba {
+  const raiz = mkdtempSync(path.join(tmpdir(), 'citas-'))
+  const dir = path.join(raiz, 'repo')
+  mkdirSync(dir)
+  const configVacia = path.join(raiz, 'gitconfig')
+  writeFileSync(configVacia, '')
+  const env: NodeJS.ProcessEnv = { ...process.env }
+  for (const variable of VARIABLES_DE_REPOSITORIO) delete env[variable]
+  Object.assign(env, {
+    GIT_CONFIG_NOSYSTEM: '1',
+    GIT_CONFIG_GLOBAL: configVacia,
+    GIT_CEILING_DIRECTORIES: raiz,
+    GIT_AUTHOR_NAME: 'Autora Única',
+    GIT_AUTHOR_EMAIL: 'autora@example.com',
+    GIT_COMMITTER_NAME: 'Autora Única',
+    GIT_COMMITTER_EMAIL: 'autora@example.com',
+  })
+  const git = (...args: string[]): string => {
+    const r = spawnSync('git', args, { cwd: dir, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+    if (r.status !== 0) throw new Error(`git ${args.join(' ')} salió ${r.status}: ${r.stderr}`)
+    return r.stdout.trim()
+  }
+  git('init', '-q', '-b', 'main')
+  git('config', 'core.autocrlf', 'false')
+  return {
+    dir,
+    env,
+    git,
+    escribir(ficheros) {
+      for (const [ruta, contenido] of Object.entries(ficheros)) {
+        mkdirSync(path.dirname(path.join(dir, ruta)), { recursive: true })
+        writeFileSync(path.join(dir, ruta), contenido)
+      }
+    },
+    commit(mensaje) {
+      git('add', '-A')
+      git('commit', '-q', '--allow-empty', '-m', mensaje)
+      return git('rev-parse', 'HEAD')
+    },
+    borrar() {
+      rmSync(raiz, { recursive: true, force: true })
     },
   }
 }
