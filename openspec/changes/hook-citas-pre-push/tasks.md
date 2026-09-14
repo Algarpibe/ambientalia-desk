@@ -31,8 +31,8 @@ en un corte. Los cortes quedan **1a-ii → 1b-i → 1b-ii → 2 → 3**:
 |---|---|---|
 | **1a-ii** | 1.0 y 1.28-1.42 (16) | ~480 + `tasks.md` y `apply-progress.md` (~50) ≈ **530** · **cerrado en `69bc3a9`: 495 medidas con git, 144 en el ledger** |
 | **1b-i** | 2.0-2.11 (12) | ~330 + tarea 2.0 (~65: doce expectativas reescritas, dos pruebas nuevas y cuatro `push`) + ~50 ≈ **445** · **cerrado en `56a0095`: 529 medidas con git (494 inserciones y 35 borrados contra `01df7ce`), un 19 % por encima** |
-| **1b-ii** | 2.12-2.26 (15) | ~390 + tarea 2.25 (~20) + tarea 2.26 (~80-90: tres rojos con repositorio sintético y la resolución en `detector.ts`) + ~50 ≈ **540-550** · **con el desvío medido en 1b-i (×1,19), 640-655: roza la parada de las ~650** |
-| **2** | 3.1-3.7 (7) | `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 ampliada (~15) ≈ **105-135** |
+| **1b-ii** | 2.12-2.26 (15) | ~390 + tarea 2.25 (~20) + tarea 2.26 (~80-90: tres rojos con repositorio sintético y la resolución en `detector.ts`) + ~50 ≈ **540-550** · **con el desvío medido en 1b-i (×1,19), 640-655: roza la parada de las ~650** · **cerrado en `36e5a2d`: 843 con git y 843 en el ledger (todo trackeado), ×1,53-1,56 sobre la previsión** |
+| **2** | 3.8, 3.9 y 3.1-3.7 (9) | Previsión anterior de 3.1-3.7: `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 ampliada (~15) ≈ 105-135. **Recalculada el 2026-09-14:** tarea 3.8 (~45: caché y contador en memoria) + tarea 3.9 (~35) + `lineaBase.jsonl` (~37: el detector del corte 1b-ii da hoy 37 bloqueantes sobre el árbol de `36e5a2d`, no 51) + filas y frases (38-66) + 3.7 (~15) + `tasks.md` y `apply-progress.md` (~50) ≈ **220-250** · **con el desvío medido en 1b-ii (×1,55), 340-390** · ⚠️ **sin contar los modos `--sha` y `--generar-base` del CLI**: 3.1 y 3.2 los usan, `ejecutar` no lee `argv` en `36e5a2d` y ninguna tarea los construye |
 | **3** | 4.1-4.14 | sin cambios: **~116-162** |
 
 **El ledger NO mide lo que parecía.** El intento 1 registró `changed_lines: 55` con 928 líneas nuevas
@@ -328,6 +328,33 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
 
 ## Fase 3 (Unidad 2) — Línea base + IV-10 + regla de mutación 4
 
+**Corte 2** (tareas 3.8, 3.9 y 3.1-3.7). Las dos primeras corrigen el detector ANTES de generar la base
+(decisión de Gerencia, 2026-09-14): la base se genera con el detector que va a imponerla.
+
+- [ ] 3.8 COSTE, PRIMERA del corte (RQ-CV-13, D11; hallazgo (a) de 1b-ii en `apply-progress.md`). Hoy
+      `detectar()` pide el árbol de la revisión ancla una vez por cita anclada y por pasada:
+      `apps/desk/server/citas/detector.ts:154` en `36e5a2d`, `apps/desk/server/citas/detector.ts:200` en `36e5a2d`;
+      y el adaptador lanza un `git rev-parse` por llamada, sin caché:
+      `apps/desk/server/citas/git.ts:90-91` en `36e5a2d`. Medido con `GIT_TRACE` sobre el árbol del corte
+      1b-ii: ~200 procesos `rev-parse`, 160 de ellos para una sola revisión, y el hook en 7,8-9,6 s. REGLA:
+      una sola resolución de árbol por revisión DISTINTA (caché por revisión en `detectar()`, o un
+      `<rev>^{commit}` por revisión dentro del lote, como pide D11), nunca una por cita. RED en
+      `detector.test.ts`, `Repo` en memoria con un contador sobre `arbol()`: N anclas a la MISMA revisión
+      → las llamadas deben ser 1 (hoy 2N); con dos revisiones distintas → 2. Siguen verdes la de un solo
+      `leerLote` por árbol (1.13 y 2.24) y la de revisión inexistente (1.6). MUT: quitar la caché → N
+      llamadas → rojo; restaurar y comprobar con `cmp`. CIERRE: hook invocado como en `pre-push` sobre el
+      árbol real con el informe completo (línea de binarios incluida), **≤5 s en tres tomas**; si alguna
+      toma pasa de 5 s, se PARA y se pregunta.
+- [ ] 3.9 RQ-CV-03 EN ANCLADAS AMBIGUAS, SEGUNDA del corte (hallazgo (b) de 1b-ii). Hoy, si el nombre de
+      una anclada resuelve en el índice local a varias candidatas y alguna no existe en la revisión del
+      ancla, bloquea «fichero inexistente» sin mirar las demás:
+      `apps/desk/server/citas/detector.ts:244-245` en `36e5a2d`. REGLA: una candidata ausente en la
+      revisión cuenta como rota para esa candidata, y la anclada bloquea sólo si está rota en TODAS; si
+      alguna la valida, se salta como ambigua. Una anclada con UNA sola candidata ausente sigue bloqueando
+      (casos ii y iii de la 2.26). RED en `detector.test.ts`, `Repo` en memoria: una candidata ausente en
+      la revisión y otra válida → no bloquea y cuenta como ambigua; control del otro signo: todas ausentes
+      → bloquea. El invariante de conservación sigue cuadrando. MUT: volver a bloquear en cuanto una
+      candidata falta → rojo; restaurar y comprobar con `cmp`.
 - [ ] 3.1 Precondición (RQ-CV-14, primera pasada; M18 orden): correr `cli.ts --sha HEAD` sobre el árbol
       de la Unidad 1 (1a+1b) ya commiteada y confirmar 0 bloqueantes antes de generar la base.
 - [ ] 3.2 Ejecutar `cli.ts --generar-base` y escribir `apps/desk/server/citas/lineaBase.jsonl` (JSON
