@@ -32,7 +32,7 @@ en un corte. Los cortes quedan **1a-ii → 1b-i → 1b-ii → 2 → 3**:
 | **1a-ii** | 1.0 y 1.28-1.42 (16) | ~480 + `tasks.md` y `apply-progress.md` (~50) ≈ **530** · **cerrado en `69bc3a9`: 495 medidas con git, 144 en el ledger** |
 | **1b-i** | 2.0-2.11 (12) | ~330 + tarea 2.0 (~65: doce expectativas reescritas, dos pruebas nuevas y cuatro `push`) + ~50 ≈ **445** · **cerrado en `56a0095`: 529 medidas con git (494 inserciones y 35 borrados contra `01df7ce`), un 19 % por encima** |
 | **1b-ii** | 2.12-2.26 (15) | ~390 + tarea 2.25 (~20) + tarea 2.26 (~80-90: tres rojos con repositorio sintético y la resolución en `detector.ts`) + ~50 ≈ **540-550** · **con el desvío medido en 1b-i (×1,19), 640-655: roza la parada de las ~650** · **cerrado en `36e5a2d`: 843 con git y 843 en el ledger (todo trackeado), ×1,53-1,56 sobre la previsión** |
-| **2** | 3.8, 3.9 y 3.1-3.7 (9) | Previsión anterior de 3.1-3.7: `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 ampliada (~15) ≈ 105-135. **Recalculada el 2026-09-14:** tarea 3.8 (~45: caché y contador en memoria) + tarea 3.9 (~35) + `lineaBase.jsonl` (~37: el detector del corte 1b-ii da hoy 37 bloqueantes sobre el árbol de `36e5a2d`, no 51) + filas y frases (38-66) + 3.7 (~15) + `tasks.md` y `apply-progress.md` (~50) ≈ **220-250** · **con el desvío medido en 1b-ii (×1,55), 340-390** · ⚠️ **sin contar los modos `--sha` y `--generar-base` del CLI**: 3.1 y 3.2 los usan, `ejecutar` no lee `argv` en `36e5a2d` y ninguna tarea los construye |
+| **2** | 3.8, 3.9, 3.10 y 3.1-3.7 (10) | **Con la 3.10 (2026-09-14):** la recalculada que sigue en esta celda (220-250) + tarea 3.10 (~130-150: modos y lectura perezosa de stdin en `cli.ts` ~40-55, pruebas sintéticas de los tres apartados ~85-95) ≈ **350-400** · **con el desvío medido en 1b-ii (×1,55), 540-620: no pasa de las ~650, pero su extremo alto queda a 30** · la actualización de la cifra de la base en tres artefactos (3.2) va dentro de las filas y frases. Previsión anterior de 3.1-3.7: `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 ampliada (~15) ≈ 105-135. **Recalculada el 2026-09-14:** tarea 3.8 (~45: caché y contador en memoria) + tarea 3.9 (~35) + `lineaBase.jsonl` (~37: el detector del corte 1b-ii da hoy 37 bloqueantes sobre el árbol de `36e5a2d`, no 51) + filas y frases (38-66) + 3.7 (~15) + `tasks.md` y `apply-progress.md` (~50) ≈ **220-250** · **con el desvío medido en 1b-ii (×1,55), 340-390** · no contaba los modos `--sha` y `--generar-base` del CLI, que 3.1 y 3.2 usan y `ejecutar` no lee en `36e5a2d`: los construye la 3.10 |
 | **3** | 4.1-4.14 | sin cambios: **~116-162** |
 
 **El ledger NO mide lo que parecía.** El intento 1 registró `changed_lines: 55` con 928 líneas nuevas
@@ -328,8 +328,9 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
 
 ## Fase 3 (Unidad 2) — Línea base + IV-10 + regla de mutación 4
 
-**Corte 2** (tareas 3.8, 3.9 y 3.1-3.7). Las dos primeras corrigen el detector ANTES de generar la base
-(decisión de Gerencia, 2026-09-14): la base se genera con el detector que va a imponerla.
+**Corte 2** (tareas 3.8, 3.9, 3.10 y 3.1-3.7). Las tres primeras corrigen y completan el detector ANTES
+de generar la base (decisiones de Gerencia, 2026-09-14): la base se genera con el detector que va a
+imponerla.
 
 - [ ] 3.8 COSTE, PRIMERA del corte (RQ-CV-13, D11; hallazgo (a) de 1b-ii en `apply-progress.md`). Hoy
       `detectar()` pide el árbol de la revisión ancla una vez por cita anclada y por pasada:
@@ -355,11 +356,41 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       la revisión y otra válida → no bloquea y cuenta como ambigua; control del otro signo: todas ausentes
       → bloquea. El invariante de conservación sigue cuadrando. MUT: volver a bloquear en cuanto una
       candidata falta → rojo; restaurar y comprobar con `cmp`.
+- [ ] 3.10 MODOS `--sha` Y `--generar-base` DEL CLI, TERCERA del corte (§5 del diseño; decisión de Gerencia,
+      2026-09-14). Hoy `ejecutar` declara `argv` y no lo lee, y el punto de entrada lee el stdin SIEMPRE:
+      `apps/desk/server/citas/cli.ts:20` en `36e5a2d`, `apps/desk/server/citas/cli.ts:126` en `36e5a2d`.
+      Sin estos modos, 3.1 y 3.2 no se pueden ejecutar. Tres partes, cada una con su rojo en
+      `hook.test.ts` (repositorio sintético) y su mutación restaurada con `cmp`:
+      (a) **SÓLO el modo hook lee stdin.** Invocado a mano desde una terminal, el stdin es un TTY y la
+      lectura esperaría un EOF que no llega. La lectura pasa a ser una función que `ejecutar` llama sólo en
+      modo hook (el punto de entrada pasa la lectura de stdin sin ejecutarla), y la firma del §5 del diseño
+      se actualiza en el mismo intento. RED: `ejecutar` con `--sha` y una lectura inyectada que cuenta
+      llamadas (o que falla) → 0 llamadas; en modo hook → 1. MUT: leer stdin en todos los modos → rojo.
+      (b) **`--sha <rev>`**, dos signos: una cita rota en esa revisión → salida 1; la misma cita válida →
+      0. Índice remoto de `origin/main`; sin `origin/main`, el informe dice «NO HECHO», nunca silencio (los
+      dos casos probados).
+      (c) **`--generar-base`** escribe `apps/desk/server/citas/lineaBase.jsonl` ÉL MISMO, no por
+      redirección: UTF-8 sin BOM, LF, una entrada por candidato de bloqueo del árbol de `HEAD` calculado
+      con la base VACÍA (así una base previa no esconde entradas), ordenada por documento que cita y línea
+      (a igualdad, por orden de aparición), cada entrada con documento, línea, cita literal y motivo (D6,
+      corregido en la 2.0); imprime la cifra y sale 0. RED: el fichero existe tras la llamada, su primer
+      byte no es BOM, no contiene CR, está ordenado y tiene una entrada por bloqueante de un repositorio
+      sintético con al menos dos documentos y dos roturas por documento. Control del otro signo: tras
+      commitear la base generada (el detector la lee por sha, M8), `ejecutar` en modo hook sobre ese commit
+      → 0 bloqueantes, N informadas y salida 0. MUT: escribir con BOM → rojo; escribir sin ordenar → rojo
+      (dos mutaciones).
 - [ ] 3.1 Precondición (RQ-CV-14, primera pasada; M18 orden): correr `cli.ts --sha HEAD` sobre el árbol
       de la Unidad 1 (1a+1b) ya commiteada y confirmar 0 bloqueantes antes de generar la base.
 - [ ] 3.2 Ejecutar `cli.ts --generar-base` y escribir `apps/desk/server/citas/lineaBase.jsonl` (JSON
       Lines, UTF-8 sin BOM, LF, una entrada por línea, ordenada por fichero y línea; D6). Si la cifra
       supera 100 entradas, PARAR y preguntar a Gerencia (R-14) — la medición previa fue 51.
+      **Añadido (Gerencia, 2026-09-14): la cifra se fija aquí, con fecha y sha.** Sobre `36e5a2d` el
+      detector del corte 1b-ii da hoy ~37 bloqueantes, frente a las 51 que la propuesta, el spec y el
+      diseño midieron sobre `773ad75`. Al generar la base, se escribe la cifra nueva con su fecha y el sha
+      del árbol en los TRES artefactos: la propuesta (R-14, Q9 y Pieza 3), el spec (medición de R-14 en
+      RQ-CV-09 y cierre de R-14) y el diseño (§1, §3 y la medición 7 del §12). Las 51 **no se borran**: son
+      una medición fechada sobre `773ad75`, caso B de la regla de mutación 4, y renumerarlas volvería falsa
+      la frase. Se añade la cifra vigente al lado, y el reparto por motivo si cambió.
 - [ ] 3.3 Añadir fila **IV-10** en `CLAUDE.md` (recuento `CLAUDE.md:249` en `648432d`, de «Cuatro» a
       «Cinco»; tabla `CLAUDE.md:262-265` en `648432d` gana la fila) y en `openspec/config.yaml`
       (`incumplimientos_vivos`, tras el final de IV-9 en `openspec/config.yaml:798` en `648432d`), con
