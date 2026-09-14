@@ -403,7 +403,7 @@ inventada de `superpowers-main` queda fuera del barrido (§2, «No entra»). Con
 > **Y los puertos de una URL no son números de línea.** Sin lista de extensiones (requisito (a)), un
 > `host:puerto` pasa a candidata sin `/`: no bloquea, pero **ensucia la cifra de saltadas**. El
 > cosechador **no trata como cita un `host:puerto` dentro de una URL** (`esquema://…`). Control de dos
-> signos: http://localhost:3001 → **ni comprobada ni saltada**; `Dockerfile:18` → **comprobada**. Es la
+> signos: http://localhost:3001 → **ni comprobada ni saltada**; `Dockerfile:18` en `648432d` → **comprobada**. Es la
 > frontera con la categoría **fuera del repositorio**: una URL con puerto no es una cita de fuera, **no
 > es una cita**.
 >
@@ -533,7 +533,7 @@ ya dice que bajar el umbral exige una línea de justificación en el commit.
 
 Dos cosas van escritas **en el propio fichero**:
 
-1. **Viaja a la imagen de producción y es código inerte allí.** `Dockerfile:18` copia `apps` entera;
+1. **Viaja a la imagen de producción y es código inerte allí.** `Dockerfile:18` en `648432d` copia `apps` entera;
    `.dockerignore` deja fuera `.git` (`:3`), `docs` (`:10`) y `*.md` (`:12`), así que dentro del
    contenedor no tendría nada que leer. Igual que `testing/` hoy.
 2. **No lo importa nada de producción.** Si aparece en el grafo de imports de
@@ -562,7 +562,7 @@ Cómo va:
 
 1. Guarda e instalación en un **`.mjs` pequeño** (así no hay comillas anidadas en `package.json`):
    `spawnSync('git', ['rev-parse','--git-dir'])`; si `status !== 0`, **salir con 0**. Eso cubre *sin
-   repositorio* **y** *sin binario `git`*: `node:22-alpine` no instala git (`Dockerfile:2`, `:10`, sin
+   repositorio* **y** *sin binario `git`*: `node:22-alpine` no instala git (`Dockerfile:2` en `648432d`, `:10` en `648432d`, sin
    `apk add` — verificado) y ahí `status` sale **`null`**. Si no, `git config core.hooksPath .githooks`.
 2. Si el `git config` falla **con** repositorio presente, que lo diga **en voz alta** —mensaje visible
    en la salida de `npm ci`— sin tumbar la instalación. El fallo silencioso es lo que esto viene a

@@ -559,23 +559,56 @@ imponerla.
 
 ## Fase 5 — Verificación final y precondición dura (manual, cuenta como tareas)
 
-- [ ] 5.1 M16 en ejecución (registrar en verify): borrar `node_modules`, intentar un push con el hook
-      invocando `node_modules/.bin/tsx` o `npx --no tsx`; confirmar que falla con mensaje explícito,
-      nunca sale 0 en silencio.
-- [ ] 5.2 M18, orden (registrar en verify): confirmar que el orden real fue detector-con-pruebas → base
+- [x] 5.1 M16 en ejecución (registrar en verify): **RENOMBRAR** `node_modules/.bin/tsx` (decisión de
+      Gerencia 2026-09-14 — no borrar `node_modules`), intentar el push con el hook invocando
+      `node_modules/.bin/tsx`; confirmar que falla con mensaje explícito, nunca sale 0 en silencio.
+      **CERRADO.** `sha256sum` guardado, renombrado a `tsx.fase5-bak` con `trap` de restauración.
+      Invocación directa (stdin real de `pre-push`): `exit=1`, `pre-push: falta node_modules/.bin/tsx
+      (npm ci). El push se para sin comprobar.` (mensaje literal de `.githooks/pre-push:3`). Restaurado;
+      sha256 idéntico al original. Repetida con `tsx` restaurado: `exit=0`, informe completo
+      (`comprobadas 1755`). Detalle en `apply-progress.md`, sección «Corte 4».
+- [x] 5.2 M18, orden (registrar en verify): confirmar que el orden real fue detector-con-pruebas → base
       generada → IV-10 escrito → hook e instalador, y que el push de cierre NO quedó bloqueado por
       citas que la tanda no rompió.
-- [ ] 5.3 M19, coste (registrar en verify): invocar el hook directamente con la entrada real de
+      **CERRADO.** Orden reconstruido con `git log --oneline 773ad75..f962e81` y
+      `gentle-ai sdd-attempt status`: detector con pruebas `7625921`…`73a9acb` → base generada ANTES de
+      tocar `CLAUDE.md` (`apply-progress.md:442` genera la base sobre `73a9acb`, `apply-progress.md:448`
+      escribe IV-10 en `CLAUDE.md` después) en `35f2698` → hook e instalador en `f962e81`. Push de cierre:
+      `origin/main` = `HEAD` = `f962e81` y `gh run list` muestra el run `34874300637` en `success` sobre
+      ese commit — no pudo haber quedado bloqueado. La salida LITERAL del hook durante ESE push concreto
+      no quedó registrada en ningún artefacto: **no registrada**, no se reconstruye.
+- [x] 5.3 M19, coste (registrar en verify): invocar el hook directamente con la entrada real de
       `pre-push` por stdin, sobre el árbol completo; registrar el tiempo total (objetivo ≤5 s, tope
       duro 10 s) y confirmar margen (RQ-CV-13).
+      **CERRADO.** Tres tomas cronometradas con `date +%s%N` sobre HEAD (`f962e81`): 1.985, 2.190 y
+      2.097 ms, `exit=0` y `comprobadas=1755` en las tres (barrido real, no cortocircuitado). Margen
+      ~2,8-3 s contra el objetivo de 5 s y ~7,8-8 s contra el tope de 10 s.
 - [ ] 5.4 Comprobación FINAL sobre lo COMMITEADO (RQ-CV-14, segunda pasada — Q7b): con `proposal.md`,
       spec, `design.md`, `tasks.md`, `CLAUDE.md` y `openspec/config.yaml` ya en su forma definitiva
       (IV-10 dentro), correr el detector y confirmar 0 bloqueantes. No vale la comprobación intermedia.
-- [ ] 5.5 Confirmar que TODA cita de los artefactos de la tanda a `CLAUDE.md`, `openspec/config.yaml`,
-      `package.json`, `DEPLOY.md` o `.gitattributes` está ANCLADA a `648432d`, cita por cita, en su
-      misma línea física, y que ningún ancla quedó partida por el salto de línea.
-- [ ] 5.6 `npm test`, `npm run typecheck`, `npm run lint` (≤158 avisos) y `npm run build` en verde;
+- [x] 5.5 Confirmar que TODA cita de `proposal.md`, `specs/spec.md`, `design.md`, `tasks.md` y
+      `apply-progress.md` a `CLAUDE.md`, `openspec/config.yaml`, `package.json`, `DEPLOY.md`,
+      `.gitattributes` **y `Dockerfile`** está ANCLADA, cita por cita, en su misma línea física, a la
+      revisión donde lo que afirma era cierto (`648432d` o la que corresponda), y que ningún ancla quedó
+      partida por el salto de línea.
+      **CERRADO.** Script `tsx` en el scratchpad (nunca en el repositorio) que importa `cosechar` de
+      `cosecha.ts` y `resolverToken`/`construirIndice` de `resolucion.ts` reales, aplicado a los cinco
+      artefactos filtrado por los seis destinos: **91 citas** encontradas, **5 en presente** en la
+      primera pasada. Reparadas las **4** que eran afirmaciones nuevas sin ancla (`proposal.md:406`,
+      `:536` y `:565` ×2, sobre `Dockerfile`, verificadas ciertas en `648432d` con
+      `git show 648432d:Dockerfile`) y la **1** restante (`apply-progress.md:488`,
+      `openspec/config.yaml:807-838` en `648432d`, verificada como la entrada `PF-1` con
+      `git show 648432d:openspec/config.yaml`). Segunda pasada: **91/91 ancladas, 0 en presente, 0
+      partidas**. Regla de mutación 4: `apply-progress.md` (+230) y este `tasks.md` (+33) sí crecen;
+      el barrido de citas a los dos no encuentra ninguna fuera del cambio, y las autocitas ya usan la
+      numeración nueva. Detalle en `apply-progress.md`, sección «Corte 4».
+- [x] 5.6 `npm test`, `npm run typecheck`, `npm run lint` (≤158 avisos) y `npm run build` en verde;
       cobertura sobre los umbrales de `vitest.config.ts:58-63`.
+      **CERRADO.** `npm test`: 1108/1110 pasadas, 2 omitidas (120/121 ficheros). `npm run typecheck`:
+      exit 0. `npm run lint`: 0 errores, 158 avisos (≤158). `npm run build`: exit 0. `npm run
+      test:coverage`: exit 0, global 94,79 % stmts · 83,95 % ramas · 98,2 % funcs · 94,79 % líneas
+      (umbrales `vitest.config.ts:58-63`: 92/78/96/92, todos superados); `apps/desk/server/citas` 99,23 %
+      · 95,42 % · 97,29 % · 99,23 %.
 
 ---
 

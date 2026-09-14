@@ -1,5 +1,235 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 4 — Fase 5: verificación final (5.1-5.3, 5.5, 5.6)
+
+Partida `f962e81` (= `origin/main` = `HEAD`). Intento de runtime `sdd-attempt` ordinal 7, token
+`sha256:232898218cbeecd78a7f0b93bfafcd0b4d57a3a1cea21541cd5a83b1d98e7661`. Fase de verificación y
+anclaje de citas: **sin código de producción tocado**; los únicos cambios son texto en `proposal.md` y
+en este mismo `apply-progress.md` (anclajes de citas, tarea 5.5) y la actualización de `tasks.md`
+(marcas `[x]` y evidencia). 5.4 queda `[ ]`, es tarea del orquestador. Sin `git add`, commit ni push.
+
+### TDD Cycle Evidence
+
+Las cinco tareas de esta fase son de **verificación manual y documental** (diseño,
+`design.md:546` y `:550-552`: «M16 en ejecución ..., M18 ..., M19 ... — Manual, registrado en
+verify»); 5.5 es un anclaje de citas igual en naturaleza a 4.14/4.14-A2 del corte 3 (documental, sin
+prueba automatizada); 5.6 ejecuta la suite ya existente sin escribir código nuevo. Por eso el ciclo
+RED → GREEN → REFACTOR no aplica: no hay producción que hacer fallar primero.
+
+| Tarea | Fichero de prueba | Capa | Red de seguridad | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 5.1 (M16 en ejecución) | — | Manual (proceso real, hook + `sh`) | N/A (sin código de producción tocado) | ➖ N/A (verificación, no desarrollo) | ✅ ejecutado dos veces (roto y restaurado), evidencia abajo | ➖ N/A | ➖ N/A |
+| 5.2 (M18, orden) | — | Documental (`git log`, `sdd-attempt status`, `apply-progress.md`) | N/A | ➖ N/A | ✅ orden reconstruido y contrastado con tres fuentes | ➖ N/A | ➖ N/A |
+| 5.3 (M19, coste) | — | Manual (proceso real, hook + `sh`) | N/A | ➖ N/A | ✅ tres tomas ejecutadas, evidencia abajo | ✅ 3 tomas (triangulación por repetición) | ➖ N/A |
+| 5.5 (anclaje) | — | Documental (script `tsx` propio sobre `cosecha.ts`/`resolucion.ts` reales) | ✅ 91/91 citas comprobadas antes de tocar nada | ➖ N/A (no es TDD de producción) | ✅ script ejecutado, 5 en presente detectadas | ✅ segunda pasada tras reparar, 0 en presente | ➖ N/A |
+| 5.6 (suite) | — | N/A (ejecución de suite existente) | ✅ 1108/1110 antes de esta fase (heredado del corte 3) | ➖ N/A | ✅ 1108/1110 tras la fase, sin regresión | ➖ N/A | ➖ N/A |
+
+### Test Summary
+- **Total tests escritos esta tanda**: 0 (fase de verificación, sin producción nueva).
+- **Total tests pasando (regresión completa, `npm test`)**: 1108/1110 (2 `skipped`), sin cambio frente
+  al corte 3.
+- **Capas usadas**: Manual (2: M16 en ejecución, M19 coste) · Documental (2: M18 orden, anclaje 5.5) ·
+  Regresión (1: suite completa).
+
+### 5.1 — M16 en ejecución, sin borrar `node_modules`
+
+Método real (decisión de Gerencia 2026-09-14): en vez de borrar `node_modules`, se renombra sólo
+`node_modules/.bin/tsx`, con `sha256sum` guardado antes y un `trap` de restauración en la misma sesión
+de shell, para que el binario vuelva aunque algo falle a media prueba.
+
+**Salida literal 1 — sin `tsx` (invocación directa del hook, mismo stdin que fabrica `pre-push`):**
+
+```
+pre-push: falta node_modules/.bin/tsx (npm ci). El push se para sin comprobar.
+exit=1
+```
+
+Mensaje explícito de `.githooks/pre-push:3`; nunca sale 0 en silencio. Confirmado tras restaurar:
+`sha256sum node_modules/.bin/tsx` → `ccf543c56fffe704c66222818bfc4e6bfe7330fa980d5d15c7f7d9db15cd2353`,
+idéntico al guardado antes de renombrar.
+
+**Salida literal 2 — con `tsx` restaurado (control del otro signo):**
+
+```
+citas · f962e81 · refs/heads/main
+  comprobadas ............ 1755
+  saltadas ............... 1574   (sin barra y sin resolver 383 · ambiguas con alguna candidata válida 139 · directorios 0 · abreviadas huérfanas 1052 · anclas sin resolver 0 · no legibles 0)
+  fuera del repositorio .. 3
+  abreviadas rotas ....... 7   (informativas: no bloquean)
+  no son citas ........... 7   (marcas de hora ISO, horas y puertos de URL; fuera de las cuatro cifras)
+  texto que git cree binario .. 0   (no barridos)
+  índice remoto .......... f962e81
+  línea base ............. 37 informadas · 0 caducadas
+exit=0
+```
+
+(el bloque de «Abreviadas rotas» con las 7 líneas se omite aquí por brevedad; es el mismo listado que
+imprime `--sha HEAD` más abajo). Redacción de la tarea 5.1 ajustada en `tasks.md`: decía «borrar
+`node_modules`»; el método real es renombrar `node_modules/.bin/tsx` (decisión de Gerencia
+2026-09-14), sin perder qué se comprueba: que el hook falla con mensaje explícito, nunca en silencio.
+
+### 5.2 — M18, el orden real
+
+Reconstruido con tres fuentes independientes: `git log --oneline 773ad75..f962e81`,
+`gentle-ai sdd-attempt status --cwd C:/dev/Desk_2_R1.023 --change hook-citas-pre-push` (ordinales 3-7)
+y este propio `apply-progress.md`.
+
+1. **Detector con pruebas**: `7625921` (núcleo, 1.1-1.27) → `ef08129` → `69bc3a9` → `01df7ce` →
+   `56a0095` (adaptador git + CLI, 2.0-2.11) → `049a233` → `36e5a2d` (2.12-2.26) → `742359b` →
+   `984b797` → `73a9acb` (coste por revisión, RQ-CV-03 en ancladas, modos `--sha`/`--generar-base`,
+   3.8-3.10). Confirmado por `sdd-attempt status`, ordinales 3-5 (`outcome: passed` los tres).
+2. **Base generada e IV-10 escrito**, ambos en `35f2698`, y **en ese orden dentro del mismo commit**:
+   la base se generó ANTES de tocar `CLAUDE.md`. Cita en este mismo artefacto: `apply-progress.md:442`
+   («**3.2** ... `--generar-base` sobre `73a9acb`: 37 entradas, 28 claves») antecede a
+   `apply-progress.md:448` («**3.3.** `CLAUDE.md`: ... fila nueva ... IV-10»). Confirmado también por
+   `sdd-attempt status` ordinal 5, `work_unit`: «coste por revision, RQ-CV-03 en ancladas, modos del
+   CLI, linea base, IV-10 y regla de mutacion 4 (tareas 3.8, 3.9, 3.10 y 3.1-3.7)».
+3. **Hook e instalador**, en `f962e81` (`sdd-attempt status` ordinal 6, `work_unit`: «corte 3: hook
+   versionado, instalador, gitattributes, DEPLOY, arreglo del Dockerfile y --no-verify en IV-10»).
+
+**Push de cierre.** `git rev-parse HEAD origin/main` → los dos valen
+`f962e81bf498144c1bafcd3eade485bcc1a9edba`. `gh run list --limit 8` muestra el run `34874300637`
+(«feat(citas): hook pre-push, instalador, eol=lf, DEPLOY y arreglo del …», evento `push`, rama `main`)
+en `completed / success`, 2026-09-14T17:21:56Z. Como el workflow de CI sólo se dispara cuando GitHub
+recibe el push, esto confirma que el push de `f962e81` llegó y no quedó bloqueado por ninguna cita que
+la tanda no rompiera. **La salida LITERAL del hook durante ESE push concreto no quedó registrada en
+ningún artefacto de la tanda: se dice así, «no registrada», y no se reconstruye.**
+
+### 5.3 — M19, coste
+
+Invocación directa del hook con el stdin real de `pre-push` (`refs/heads/main <sha-local>
+refs/heads/main <sha-remoto>`), sobre el árbol completo (HEAD = `f962e81`), tres tomas cronometradas
+con `date +%s%N`:
+
+| Toma | Tiempo | Salida | `comprobadas` |
+|---|---|---|---|
+| 1 | 1.985 ms | 0 | 1.755 |
+| 2 | 2.190 ms | 0 | 1.755 |
+| 3 | 2.097 ms | 0 | 1.755 |
+
+Las tres cifras de `comprobadas` son idénticas y no cero: el barrido corrió de verdad sobre el árbol
+completo, no cortocircuitó por local = remoto (de hecho local y remoto SÍ son iguales aquí — primer
+push ya integrado —, y aun así el hook barre igual: no hay atajo de «nada que revisar»). Margen: **~2,8
+a ~3 s** contra el objetivo de 5 s (RQ-CV-13) y **~7,8 a ~8 s** contra el tope duro de 10 s.
+
+### 5.5 — Anclaje de citas a los seis destinos
+
+**Alcance.** `proposal.md`, `specs/citas-verificables/spec.md`, `design.md`, `tasks.md` y este
+`apply-progress.md`, filtrados por citas a `CLAUDE.md`, `openspec/config.yaml`, `package.json`,
+`DEPLOY.md`, `.gitattributes` y `Dockerfile` (añadido a la lista porque el corte 3 lo modificó).
+
+**Método.** Script `anclaje-fase5.mts`, SÓLO en el scratchpad
+(`C:\Users\algar\AppData\Local\Temp\claude\C--dev-Desk-2-R1-023\41e88804-b007-406a-a955-7ac3c33a5b7b\scratchpad`,
+nunca en el repositorio), que importa `cosechar` de `apps/desk/server/citas/cosecha.ts` y
+`construirIndice`/`resolverToken` de `apps/desk/server/citas/resolucion.ts` — el mismo código que usa
+el hook real, sin reimplementar su lógica — y los aplica línea a línea a los cinco artefactos.
+
+**Antes (primera pasada): 91 citas encontradas a los seis destinos, 86 ancladas, 5 en presente** (las filas usan la numeración de hoy; antes de insertar esta sección, la `:488` era la `:258`):
+
+| Documento:línea | Cita | Destino | Estado |
+|---|---|---|---|
+| `apply-progress.md:488` | `` `openspec/config.yaml:807-838` `` | `openspec/config.yaml` | en presente |
+| `proposal.md:406` | `` `Dockerfile:18` `` (ejemplo de control, dos signos) | `Dockerfile` | en presente |
+| `proposal.md:536` | `` `Dockerfile:18` `` («copia `apps` entera») | `Dockerfile` | en presente |
+| `proposal.md:565` | `` `Dockerfile:2` `` («`node:22-alpine` no instala git») | `Dockerfile` | en presente |
+| `proposal.md:565` | `` `:10` `` (abreviada, atribuida a `Dockerfile`) | `Dockerfile` | en presente |
+
+0 anclas partidas por salto de línea en ninguna de las 91.
+
+**Reparación, cita por cita (caso B de `CLAUDE.md:195-199` en `648432d` — anclar a la revisión donde
+la frase sigue siendo cierta, sin renumerar):**
+
+| Documento:línea | Revisión probada | Comprobación | Resultado |
+|---|---|---|---|
+| `proposal.md:406` | `648432d` | `Dockerfile:18` en `648432d` = `COPY apps ./apps` (`git show 648432d:Dockerfile \| sed -n '18p'`) | Cierto → anclada a `648432d` |
+| `proposal.md:536` | `648432d` | ídem — `COPY apps ./apps` en la línea 18 | Cierto → anclada a `648432d` |
+| `proposal.md:565` (completa) | `648432d` | `Dockerfile:2` en `648432d` = `FROM node:22-alpine AS build` | Cierto → anclada a `648432d` |
+| `proposal.md:565` (abreviada `:10`) | `648432d` | `Dockerfile:10` en `648432d` = `FROM node:22-alpine`; sin `apk add` en todo el fichero | Cierto → anclada a `648432d` |
+| `apply-progress.md:488` | `648432d` | `openspec/config.yaml:807` en `648432d` = `- id: PF-1`; `:838` en `648432d` = `docs/artefactos/NOTA.md.` (cierre del bloque de esa entrada) | Cierto → anclada a `648432d` |
+
+Las tres claims sobre `Dockerfile` siguen siendo también ciertas HOY (`f962e81`): el `COPY scripts
+./scripts` del corte 3 se insertó DESPUÉS de la línea 18, así que no desplazó ni la línea 2 ni la 10 ni
+la 18. Se ancla igual a `648432d`, por consistencia con la convención Q7a (`design.md:308-311`), que
+manda anclar TODA cita a estos seis ficheros desde los artefactos de la tanda, sin condicionarlo a que
+además siga siendo cierto en el presente.
+
+**Después (segunda pasada, mismo script, antes de escribir esta propia sección): 91/91 ancladas, 0 en
+presente, 0 partidas.**
+
+⚠️ **Nota de método (efecto recursivo, mismo molde que Q6 en `apply-progress.md` del corte 3).** Las
+tablas de esta misma sección 5.5, al citar `` `Dockerfile:18` ``, `` `apply-progress.md:488` ``, etc.
+con forma de cita para dejar rastro exacto, entran ELLAS MISMAS en el alcance del barrido en cuanto se
+escriben — el propio `apply-progress.md` es uno de los cinco artefactos vigilados. Volviendo a correr
+el script una vez escrita esta sección (incluida la reparación de los dos nuevos casos que ese
+crecimiento sacó a la luz: `apply-progress.md`, la abreviada `` `:838` `` de la fila de reparación de
+`config.yaml`, y `tasks.md`, la cita completa a `` `openspec/config.yaml:807-838` `` del resumen de
+5.5) el recuento final, reproducible y estable es **98 filas, 98 ancladas, 0 en presente, 0 partidas**.
+Las 91 originales quedan documentadas arriba como la fotografía ANTES de escribir este párrafo; las 7
+adicionales son citas de ESTE mismo informe sobre sí mismo, no citas nuevas en el código o los
+artefactos de diseño.
+
+Las 86 citas que ya llegaban ancladas de cortes anteriores no se re-verificaron una a una en esta fase
+—ya tienen su propia evidencia de verificación en las secciones de los cortes 2 y 3 de este mismo
+artefacto—; el script sí las recorrió todas y no encontró ninguna sin ancla ni con ancla partida.
+
+**Comprobación intermedia** (item 6 de la tarea): `node_modules/.bin/tsx apps/desk/server/citas/cli.ts
+--sha HEAD` → `exit=0`, `comprobadas 1755`, 0 bloqueantes — mismo resultado antes y después de los
+anclajes de esta fase, porque `--sha HEAD` lee el árbol COMMITEADO (`f962e81`) y los cuatro anclajes
+que añadió esta fase están en el árbol de trabajo, sin commitear. Para lo no commiteado la comprobación
+válida es el propio script, no `--sha HEAD`: así se deja dicho aquí explícitamente.
+
+**Bloques de salida literal pegada** (los cinco ```text``` de este mismo `apply-progress.md`, líneas
+874-917 tras insertar esta sección): revisados a mano — no contienen ninguna cita a los seis destinos (son salidas de `vitest`
+sobre pruebas del detector, no menciones a `CLAUDE.md`/`config.yaml`/`package.json`/`DEPLOY.md`/
+`.gitattributes`/`Dockerfile`); el propio barrido del script tampoco encontró coincidencias ahí. No se
+tocan.
+
+**Regla de mutación 4 (corregido por el orquestador).** Los anclajes van DENTRO de su línea física y
+`proposal.md` sigue en 1.068 líneas, pero esta sección añade 230 líneas arriba de `apply-progress.md`
+(701 → 931) y la fase 5 añade 33 a `tasks.md`. Barrido con `git grep -nE "(apply-progress|tasks)\.md:[0-9]+"`:
+fuera del cambio no hay citas a estos dos ficheros; dentro, las tres autocitas (`:442`, `:448`, `:488`) ya usan la numeración nueva.
+
+### 5.6 — Suite completa
+
+| Comando | Resultado |
+|---|---|
+| `npm test` | **1108/1110** pasadas, 2 `skipped` (120/121 ficheros, 1 `skipped` sin `DATABASE_URL`) |
+| `npm run typecheck` | exit 0, sin salida |
+| `npm run lint` | **0 errores, 158 avisos** (≤ 158, mismo trinquete que el corte 3) |
+| `npm run build` | exit 0, `vite build` completo (`✓ built in 1.67s`) |
+| `npm run test:coverage` | exit 0 — **global 94,79 % stmts · 83,95 % ramas · 98,2 % funcs · 94,79 % líneas**; `apps/desk/server/citas` **99,23 % · 95,42 % · 97,29 % · 99,23 %** |
+
+Umbrales de `vitest.config.ts:58-63` (lines 92, statements 92, functions 96, branches 78): los cinco
+superados con margen. Sin cambio frente a las cifras del corte 3 (fase de verificación, sin producción
+nueva).
+
+### Tamaño y limpieza
+
+- **Tamaño con git** (corregido por el orquestador; la cifra anterior, 8, se midió antes de escribir
+  esta sección y `tasks.md`): `git diff --numstat f962e81` → `apply-progress.md` +231/-1,
+  `proposal.md` +3/-3, `tasks.md` +42/-9 = **276 inserciones, 13 borrados, 289 líneas**, antes de la
+  5.4. Por debajo del presupuesto de 800 de este intento.
+- **Nuevo sin trackear**: ninguno fuera de los 8 documentos ajenos de `docs/` de la línea base del
+  orquestador (`linea-base-sin-trackear-f962e81.txt`, comprobado por diferencia de conjuntos: los
+  mismos 8 ficheros, mismo tamaño en líneas cada uno).
+- **`tsx` restaurado**: `sha256sum node_modules/.bin/tsx` tras la prueba de 5.1 →
+  `ccf543c56fffe704c66222818bfc4e6bfe7330fa980d5d15c7f7d9db15cd2353`, idéntico al guardado antes de
+  renombrar; `node_modules/.bin/tsx.fase5-bak` no existe (restaurado por el `trap` al terminar la
+  sesión de shell que hizo el renombrado).
+- **Scripts**: `anclaje-fase5.mts` y `coverage-out.txt` viven SÓLO en el scratchpad; nada se escribió
+  en el repositorio salvo los ficheros de la tanda (`proposal.md`, `apply-progress.md`, `tasks.md`).
+- **`git status --porcelain` final**: `M openspec/changes/hook-citas-pre-push/apply-progress.md`,
+  `M openspec/changes/hook-citas-pre-push/proposal.md` (más `tasks.md` tras esta misma edición), y los
+  8 documentos ajenos de `docs/`, intactos, sin tocar. Sin `git add`, commit ni push.
+
+### Work Unit Evidence
+
+| Evidencia | Valor |
+|---|---|
+| Comando de prueba enfocado y resultado | Invocación directa de `.githooks/pre-push` vía stdin real (mismo comando de 5.1/5.3): sin `tsx` → `exit=1` con mensaje explícito; con `tsx` → `exit=0`, `comprobadas 1755`, 0 bloqueantes |
+| Arnés de runtime real | El propio hook (`sh .githooks/pre-push`) invocado con el binario real `node_modules/.bin/tsx` sobre el árbol de trabajo real — es el runtime real de producción, no un mock ni una prueba sintética |
+| Frontera de reversión | `git checkout -- openspec/changes/hook-citas-pre-push/proposal.md openspec/changes/hook-citas-pre-push/apply-progress.md openspec/changes/hook-citas-pre-push/tasks.md` revierte exactamente esta fase, sin tocar ninguna unidad de producción de los cortes 1-3 |
+
 ## Corte 3 — verificación del orquestador (4.1-4.14 y los tres añadidos)
 
 Partida `35f2698`. **4.7, hecha por el orquestador:** `git add --chmod=+x .githooks/pre-push`; `git ls-files -s`
@@ -255,7 +485,7 @@ Método», que no existe: la regla está en `CLAUDE.md`.
 
 `git grep -nE "CLAUDE\.md:[0-9]+"` y `"config\.yaml:[0-9]+"` sin archive: **38 + 31 = 69** citas; de las que caen
 detrás de un punto de inserción, todas ancladas salvo **UNA**: `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:46` →
-`openspec/config.yaml:807-838` («la entrada `PF-1`»). Caso **B · histórico** (auditoría fechada al
+`openspec/config.yaml:807-838` en `648432d` («la entrada `PF-1`»). Caso **B · histórico** (auditoría fechada al
 commit `e8c5e90`, 2026-09-09; IV-10 desplaza el rango): reparada anclándola a `648432d` y nombrando el
 desplazamiento. Las 68 restantes, ya ancladas, no necesitan reparación con independencia de dónde
 inserte esta tanda. Las citas a las líneas 349, 519, 658 y 22-30 de `openspec/config.yaml` que hace
