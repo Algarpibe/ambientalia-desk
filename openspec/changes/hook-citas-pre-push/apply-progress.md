@@ -1,5 +1,66 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 4 — verificación del orquestador y tarea 5.4
+
+Partida `f962e81`. Intento de runtime ordinal 7. Commit A `53c6fc5` (tareas 5.1-5.3, 5.5 y 5.6);
+la 5.4 va en el commit de cierre, porque exige un commit sobre el que correr `--sha`.
+
+**Repetido por el orquestador**, no heredado del sub-agente:
+
+- **5.1.** `node_modules/.bin/tsx` renombrado con `trap` de restauración y hook invocado directamente
+  con el stdin de `pre-push`:
+
+  ```text
+  pre-push: falta node_modules/.bin/tsx (npm ci). El push se para sin comprobar.
+  exit=1
+  ```
+
+  Restaurado: sha256 idéntico y la copia de respaldo ya no existe. Repetido con `tsx`: `exit=0` y
+  `comprobadas 1755`.
+- **5.3.** Tres tomas más: 2.639, 2.544 y 2.831 ms, `exit=0` y `comprobadas 1755` en las tres. Con las
+  del sub-agente (1.985-2.190 ms), el rango medido es 1,99-2,83 s: cumple el objetivo de 5 s y queda
+  lejos del tope de 10 s.
+- **5.5.** El script del scratchpad, repetido tras las correcciones de abajo: **98 filas, 98 ancladas,
+  0 en presente, 0 partidas**.
+- **Hook instalado de verdad**: `git config --show-origin core.hooksPath` → `.githooks`, desde `.git/config`.
+
+**Corregido por el orquestador antes del commit A.** La sección del sub-agente traía afirmaciones
+falsas:
+
+- decía que `wc -l` no había cambiado y que no hacía falta el barrido de la regla de mutación 4, cuando
+  `apply-progress.md` pasó de 701 a 931 líneas y `tasks.md` creció 33;
+- daba un tamaño de 8 líneas, cuando eran 289;
+- situaba los bloques literales en la numeración anterior a insertar la sección.
+
+Las tres se corrigieron en el sitio, sin mover líneas, y la misma afirmación falsa se corrigió en la 5.5
+de `tasks.md`. El barrido hecho: fuera del cambio nadie cita líneas de estos dos ficheros; dentro, las
+autocitas se comprobaron contra el fichero.
+
+### 5.4 — Comprobación final sobre lo COMMITEADO (RQ-CV-14, segunda pasada)
+
+`node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha 53c6fc5`, con `proposal.md`, spec,
+`design.md`, `tasks.md`, `CLAUDE.md` y `openspec/config.yaml` en su forma definitiva:
+
+```text
+citas · 53c6fc5 · 53c6fc5
+  comprobadas ............ 1765
+  saltadas ............... 1601   (sin barra y sin resolver 383 · ambiguas con alguna candidata válida 157 · directorios 0 · abreviadas huérfanas 1061 · anclas sin resolver 0 · no legibles 0)
+  fuera del repositorio .. 3
+  abreviadas rotas ....... 7   (informativas: no bloquean)
+  no son citas ........... 7   (marcas de hora ISO, horas y puertos de URL; fuera de las cuatro cifras)
+  texto que git cree binario .. 0   (no barridos)
+  índice remoto .......... origin/main
+  línea base ............. 37 informadas · 0 caducadas
+exit=0
+```
+
+**0 bloqueantes · 37 informadas · 0 caducadas**, en 2.207 ms. No aparece la cabecera «Bloqueantes:», y
+`apps/desk/server/citas/informe.ts:30` sólo la omite con la lista vacía. Como este commit de cierre
+vuelve a tocar `apply-progress.md` y `tasks.md`, el hook del push lo comprueba otra vez sobre el sha final.
+
+**Tamaño del intento 7** con git: `git diff --shortstat f962e81`, medido con este cierre escrito →
+**3 ficheros, 342 inserciones y 14 borrados: 356 líneas**, dentro del presupuesto de 800. Nada nuevo sin trackear fuera de los 8 documentos ajenos de la línea base.
+
 ## Corte 4 — Fase 5: verificación final (5.1-5.3, 5.5, 5.6)
 
 Partida `f962e81` (= `origin/main` = `HEAD`). Intento de runtime `sdd-attempt` ordinal 7, token
@@ -79,9 +140,9 @@ y este propio `apply-progress.md`.
    `984b797` → `73a9acb` (coste por revisión, RQ-CV-03 en ancladas, modos `--sha`/`--generar-base`,
    3.8-3.10). Confirmado por `sdd-attempt status`, ordinales 3-5 (`outcome: passed` los tres).
 2. **Base generada e IV-10 escrito**, ambos en `35f2698`, y **en ese orden dentro del mismo commit**:
-   la base se generó ANTES de tocar `CLAUDE.md`. Cita en este mismo artefacto: `apply-progress.md:442`
+   la base se generó ANTES de tocar `CLAUDE.md`. Cita en este mismo artefacto: `apply-progress.md:503`
    («**3.2** ... `--generar-base` sobre `73a9acb`: 37 entradas, 28 claves») antecede a
-   `apply-progress.md:448` («**3.3.** `CLAUDE.md`: ... fila nueva ... IV-10»). Confirmado también por
+   `apply-progress.md:509` («**3.3.** `CLAUDE.md`: ... fila nueva ... IV-10»). Confirmado también por
    `sdd-attempt status` ordinal 5, `work_unit`: «coste por revision, RQ-CV-03 en ancladas, modos del
    CLI, linea base, IV-10 y regla de mutacion 4 (tareas 3.8, 3.9, 3.10 y 3.1-3.7)».
 3. **Hook e instalador**, en `f962e81` (`sdd-attempt status` ordinal 6, `work_unit`: «corte 3: hook
@@ -124,11 +185,11 @@ nunca en el repositorio), que importa `cosechar` de `apps/desk/server/citas/cose
 `construirIndice`/`resolverToken` de `apps/desk/server/citas/resolucion.ts` — el mismo código que usa
 el hook real, sin reimplementar su lógica — y los aplica línea a línea a los cinco artefactos.
 
-**Antes (primera pasada): 91 citas encontradas a los seis destinos, 86 ancladas, 5 en presente** (las filas usan la numeración de hoy; antes de insertar esta sección, la `:488` era la `:258`):
+**Antes (primera pasada): 91 citas encontradas a los seis destinos, 86 ancladas, 5 en presente** (las filas usan la numeración de hoy; en `f962e81` era la línea 258):
 
 | Documento:línea | Cita | Destino | Estado |
 |---|---|---|---|
-| `apply-progress.md:488` | `` `openspec/config.yaml:807-838` `` | `openspec/config.yaml` | en presente |
+| `apply-progress.md:549` | `` `openspec/config.yaml:807-838` `` | `openspec/config.yaml` | en presente |
 | `proposal.md:406` | `` `Dockerfile:18` `` (ejemplo de control, dos signos) | `Dockerfile` | en presente |
 | `proposal.md:536` | `` `Dockerfile:18` `` («copia `apps` entera») | `Dockerfile` | en presente |
 | `proposal.md:565` | `` `Dockerfile:2` `` («`node:22-alpine` no instala git») | `Dockerfile` | en presente |
@@ -145,7 +206,7 @@ la frase sigue siendo cierta, sin renumerar):**
 | `proposal.md:536` | `648432d` | ídem — `COPY apps ./apps` en la línea 18 | Cierto → anclada a `648432d` |
 | `proposal.md:565` (completa) | `648432d` | `Dockerfile:2` en `648432d` = `FROM node:22-alpine AS build` | Cierto → anclada a `648432d` |
 | `proposal.md:565` (abreviada `:10`) | `648432d` | `Dockerfile:10` en `648432d` = `FROM node:22-alpine`; sin `apk add` en todo el fichero | Cierto → anclada a `648432d` |
-| `apply-progress.md:488` | `648432d` | `openspec/config.yaml:807` en `648432d` = `- id: PF-1`; `:838` en `648432d` = `docs/artefactos/NOTA.md.` (cierre del bloque de esa entrada) | Cierto → anclada a `648432d` |
+| `apply-progress.md:549` | `648432d` | `openspec/config.yaml:807` en `648432d` = `- id: PF-1`; `:838` en `648432d` = `docs/artefactos/NOTA.md.` (cierre del bloque de esa entrada) | Cierto → anclada a `648432d` |
 
 Las tres claims sobre `Dockerfile` siguen siendo también ciertas HOY (`f962e81`): el `COPY scripts
 ./scripts` del corte 3 se insertó DESPUÉS de la línea 18, así que no desplazó ni la línea 2 ni la 10 ni
@@ -157,7 +218,7 @@ además siga siendo cierto en el presente.
 presente, 0 partidas.**
 
 ⚠️ **Nota de método (efecto recursivo, mismo molde que Q6 en `apply-progress.md` del corte 3).** Las
-tablas de esta misma sección 5.5, al citar `` `Dockerfile:18` ``, `` `apply-progress.md:488` ``, etc.
+tablas de esta misma sección 5.5, al citar `` `Dockerfile:18` ``, `` `apply-progress.md:549` ``, etc.
 con forma de cita para dejar rastro exacto, entran ELLAS MISMAS en el alcance del barrido en cuanto se
 escriben — el propio `apply-progress.md` es uno de los cinco artefactos vigilados. Volviendo a correr
 el script una vez escrita esta sección (incluida la reparación de los dos nuevos casos que ese
@@ -179,7 +240,7 @@ que añadió esta fase están en el árbol de trabajo, sin commitear. Para lo no
 válida es el propio script, no `--sha HEAD`: así se deja dicho aquí explícitamente.
 
 **Bloques de salida literal pegada** (los cinco ```text``` de este mismo `apply-progress.md`, líneas
-874-917 tras insertar esta sección): revisados a mano — no contienen ninguna cita a los seis destinos (son salidas de `vitest`
+935-978 hoy): revisados a mano — no contienen ninguna cita a los seis destinos (son salidas de `vitest`
 sobre pruebas del detector, no menciones a `CLAUDE.md`/`config.yaml`/`package.json`/`DEPLOY.md`/
 `.gitattributes`/`Dockerfile`); el propio barrido del script tampoco encontró coincidencias ahí. No se
 tocan.
@@ -187,7 +248,7 @@ tocan.
 **Regla de mutación 4 (corregido por el orquestador).** Los anclajes van DENTRO de su línea física y
 `proposal.md` sigue en 1.068 líneas, pero esta sección añade 230 líneas arriba de `apply-progress.md`
 (701 → 931) y la fase 5 añade 33 a `tasks.md`. Barrido con `git grep -nE "(apply-progress|tasks)\.md:[0-9]+"`:
-fuera del cambio no hay citas a estos dos ficheros; dentro, las tres autocitas (`:442`, `:448`, `:488`) ya usan la numeración nueva.
+fuera del cambio no hay citas a estos dos ficheros; dentro, las tres autocitas (hoy `:503`, `:509` y `:549`) se renumeraron y se comprobaron.
 
 ### 5.6 — Suite completa
 

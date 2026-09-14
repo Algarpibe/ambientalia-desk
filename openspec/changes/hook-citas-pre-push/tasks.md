@@ -572,7 +572,7 @@ imponerla.
       citas que la tanda no rompió.
       **CERRADO.** Orden reconstruido con `git log --oneline 773ad75..f962e81` y
       `gentle-ai sdd-attempt status`: detector con pruebas `7625921`…`73a9acb` → base generada ANTES de
-      tocar `CLAUDE.md` (`apply-progress.md:442` genera la base sobre `73a9acb`, `apply-progress.md:448`
+      tocar `CLAUDE.md` (`apply-progress.md:503` genera la base sobre `73a9acb`, `apply-progress.md:509`
       escribe IV-10 en `CLAUDE.md` después) en `35f2698` → hook e instalador en `f962e81`. Push de cierre:
       `origin/main` = `HEAD` = `f962e81` y `gh run list` muestra el run `34874300637` en `success` sobre
       ese commit — no pudo haber quedado bloqueado. La salida LITERAL del hook durante ESE push concreto
@@ -583,9 +583,13 @@ imponerla.
       **CERRADO.** Tres tomas cronometradas con `date +%s%N` sobre HEAD (`f962e81`): 1.985, 2.190 y
       2.097 ms, `exit=0` y `comprobadas=1755` en las tres (barrido real, no cortocircuitado). Margen
       ~2,8-3 s contra el objetivo de 5 s y ~7,8-8 s contra el tope de 10 s.
-- [ ] 5.4 Comprobación FINAL sobre lo COMMITEADO (RQ-CV-14, segunda pasada — Q7b): con `proposal.md`,
+- [x] 5.4 Comprobación FINAL sobre lo COMMITEADO (RQ-CV-14, segunda pasada — Q7b): con `proposal.md`,
       spec, `design.md`, `tasks.md`, `CLAUDE.md` y `openspec/config.yaml` ya en su forma definitiva
       (IV-10 dentro), correr el detector y confirmar 0 bloqueantes. No vale la comprobación intermedia.
+      **CERRADO por el orquestador.** Hecha tras commitear 5.1-5.3, 5.5 y 5.6 en `53c6fc5`: `--sha 53c6fc5`
+      da `exit=0`, 1.765 comprobadas, **0 bloqueantes, 37 informadas y 0 caducadas**, en 2.207 ms. El
+      commit de cierre lo vuelve a comprobar el hook en el push. Salida literal en `apply-progress.md`,
+      sección «Corte 4 — verificación del orquestador».
 - [x] 5.5 Confirmar que TODA cita de `proposal.md`, `specs/spec.md`, `design.md`, `tasks.md` y
       `apply-progress.md` a `CLAUDE.md`, `openspec/config.yaml`, `package.json`, `DEPLOY.md`,
       `.gitattributes` **y `Dockerfile`** está ANCLADA, cita por cita, en su misma línea física, a la
@@ -596,7 +600,7 @@ imponerla.
       artefactos filtrado por los seis destinos: **91 citas** encontradas, **5 en presente** en la
       primera pasada. Reparadas las **4** que eran afirmaciones nuevas sin ancla (`proposal.md:406`,
       `:536` y `:565` ×2, sobre `Dockerfile`, verificadas ciertas en `648432d` con
-      `git show 648432d:Dockerfile`) y la **1** restante (`apply-progress.md:488`,
+      `git show 648432d:Dockerfile`) y la **1** restante (`apply-progress.md:549`,
       `openspec/config.yaml:807-838` en `648432d`, verificada como la entrada `PF-1` con
       `git show 648432d:openspec/config.yaml`). Segunda pasada: **91/91 ancladas, 0 en presente, 0
       partidas**. Regla de mutación 4: `apply-progress.md` (+230) y este `tasks.md` (+33) sí crecen;
