@@ -30,8 +30,8 @@ en un corte. Los cortes quedan **1a-ii → 1b-i → 1b-ii → 2 → 3**:
 | Corte | Tareas | Líneas (medida × tareas) |
 |---|---|---|
 | **1a-ii** | 1.0 y 1.28-1.42 (16) | ~480 + `tasks.md` y `apply-progress.md` (~50) ≈ **530** · **cerrado en `69bc3a9`: 495 medidas con git, 144 en el ledger** |
-| **1b-i** | 2.0-2.11 (12) | ~330 + tarea 2.0 (~65: doce expectativas reescritas, dos pruebas nuevas y cuatro `push`) + ~50 ≈ **445** |
-| **1b-ii** | 2.12-2.25 (14) | ~390 + tarea 2.25 (~20) + ~50 ≈ **460** |
+| **1b-i** | 2.0-2.11 (12) | ~330 + tarea 2.0 (~65: doce expectativas reescritas, dos pruebas nuevas y cuatro `push`) + ~50 ≈ **445** · **cerrado en `56a0095`: 529 medidas con git (494 inserciones y 35 borrados contra `01df7ce`), un 19 % por encima** |
+| **1b-ii** | 2.12-2.26 (15) | ~390 + tarea 2.25 (~20) + tarea 2.26 (~80-90: tres rojos con repositorio sintético y la resolución en `detector.ts`) + ~50 ≈ **540-550** · **con el desvío medido en 1b-i (×1,19), 640-655: roza la parada de las ~650** |
 | **2** | 3.1-3.7 (7) | `lineaBase.jsonl` (51) + filas y frases (38-66) + tarea 3.7 ampliada (~15) ≈ **105-135** |
 | **3** | 4.1-4.14 | sin cambios: **~116-162** |
 
@@ -87,12 +87,12 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
 | Unit | Goal | Likely PR | Focused test command | Runtime harness | Rollback boundary |
 |---|---|---|---|---|---|
 | 1a | Núcleo puro: cosecha, resolución, comprobación, línea base, informe — sin git | PR 1 | `npx vitest run apps/desk/server/citas/detector.test.ts apps/desk/server/citas/cosecha.test.ts apps/desk/server/citas/resolucion.test.ts apps/desk/server/citas/informe.test.ts` | N/A — lógica pura contra `Repo` en memoria, sin proceso real | Revertir los 4 ficheros núcleo + porción memoria de `reposDePrueba.ts` + 4 test files; nada los importa en producción (RQ-CV-18) |
-| 1b | Adaptador git (`spawnSync`) + CLI + pruebas con repositorio sintético | PR 2 | `npx vitest run apps/desk/server/citas/hook.test.ts` | Repositorio git temporal por prueba, `cli.ts` invocado en proceso vía `ejecutar({argv, entrada, cwd})` | Revertir `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts`; sin efecto de ejecución sin Unidad 3 |
+| 1b | Adaptador git (`spawnSync`) + CLI + pruebas con repositorio sintético | PR 2 | `npx vitest run apps/desk/server/citas/hook.test.ts` | Repositorio git temporal por prueba, `cli.ts` invocado en proceso vía `ejecutar({argv, entrada, cwd, env})` | Revertir `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts`; sin efecto de ejecución sin Unidad 3 |
 | 2 | Línea base generada + IV-10 + dos frases de la regla de mutación 4 | PR 3 | `npm test` (regresión completa) | Manual: `npx tsx apps/desk/server/citas/cli.ts --generar-base` sobre el árbol de 1a+1b ya commiteado; inspeccionar `lineaBase.jsonl` (cifra ≤100, R-14) | Revertir `lineaBase.jsonl` + las filas/frases de `CLAUDE.md` y `openspec/config.yaml`; sin efecto sin Unidad 3 |
 | 3 | Hook versionado, instalador, `.gitattributes`, `DEPLOY.md` | PR 4 | `npx vitest run apps/desk/server/citas/guardianes.test.ts apps/desk/server/citas/instalador.test.ts` | Manual: push real de cierre con el hook instalado (M16 en ejecución, M18, M19 — Fase 5) | `git revert` + `git config --unset core.hooksPath` en cada clon que ya lo tuviera (el revert del fichero no deshace el `git config`) |
 
 Tras la recalibración, 1a se entrega como **1a-i** (1.1-1.27, ya en `main`) y **1a-ii** (1.0 y 1.28-1.42), y
-1b como **1b-i** (2.1-2.11) y **1b-ii** (2.12-2.24). Mismo comando de prueba y misma frontera de reversión
+1b como **1b-i** (2.0-2.11) y **1b-ii** (2.12-2.26). Mismo comando de prueba y misma frontera de reversión
 que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_unit` propio.
 
 ---
@@ -227,7 +227,31 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       informa y sale 0.
 - [x] 2.11 GREEN: barrido siempre COMPLETO del árbol del sha local (RQ-CV-01), nunca limitado a los
       ficheros que cambia el push.
-**Corte 1b-ii** (tareas 2.12-2.25):
+**Corte 1b-ii** (tareas 2.12-2.26):
+
+- [ ] 2.26 DEFECTO de la divergencia nº 8, PRIMERA del corte (decisión de Gerencia, 2026-09-14; va antes
+      de 2.20, 2.21 y 2.24, que prueban anclas). Hoy una cita anclada se lee por su ruta literal en su
+      revisión, sin pasar por el índice del sha local; con nombre pelado la lectura devuelve `null` y el
+      bucle la descarta sin contarla ni informarla:
+      `apps/desk/server/citas/detector.ts:133` en `56a0095`, `apps/desk/server/citas/detector.ts:202` en `56a0095`.
+      Es lo contrario de RQ-CV-10, y cae justo sobre las citas de caso B que prescribe la regla de
+      mutación 4: en el árbol real son nueve, todas a `estados.ts` con nombre pelado, ancladas a tres
+      revisiones. REGLA: la anclada resuelve su fichero con el índice del sha local (D11) y el orden D4
+      —exacta, sufijo, RQ-CV-03 si es ambigua— y se lee en la ruta resuelta dentro de su revisión; si esa
+      ruta no existe en la revisión, bloquea como hoy una ruta inexistente. RED en `hook.test.ts`,
+      repositorio sintético con dos commits: (i) ancla pelada válida en su revisión → hoy 0 comprobadas
+      y 0 bloqueantes → debe contar como comprobada; (ii) la misma ancla apuntando a una línea vacía en
+      su revisión → debe bloquear; (iii) nombre pelado que resuelve en el índice local a una ruta que no
+      existía en la revisión del ancla → debe bloquear «fichero inexistente». La (iii) se añade al
+      encargo porque sin ella la regla de bloqueo no tiene rojo. Siguen verdes las pruebas de 1.13: un
+      solo `leerLote` por árbol, y el fichero ausente del sha local leído por su ruta literal en su
+      revisión. GREEN en `detector.ts`. MUT: quitar la resolución por índice → vuelve el descarte
+      silencioso → (i), (ii) y (iii) en rojo; restaurar y comprobar con `cmp`. Coste medido por
+      Gerencia: 33-56 ms. Fuera de esta tarea, declarado en el §11 del diseño: un nombre que NO resuelve
+      en el índice local se sigue leyendo por su ruta literal y, si esa lectura falla, se descarta sin
+      informar; y no se construye el índice de la propia revisión. Las nueve anclas reales se comprobaron
+      con git el 2026-09-14: la ruta existe en las tres revisiones y las nueve líneas están en rango y
+      no vacías, así que pasan a comprobadas y no añaden bloqueantes a la base del corte 2.
 
 - [ ] 2.12 RED (M5, divergencia #1 del diseño): cita rota en fichero sin trackear → 0; el mismo fichero
       tras `git add` Y COMMIT → bloquea.

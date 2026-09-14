@@ -384,9 +384,19 @@ un árbol lo fija la primera prueba sintética.
 | `--sha <rev>` | Comprobación manual del §8 de la propuesta; índice remoto de `origin/main`. En PowerShell se invoca con `npx --no tsx`, porque el shim de `.bin` es un script `sh` |
 | `--generar-base` | Escribe `lineaBase.jsonl` para el árbol de `HEAD` |
 
-`cli.ts` exporta `ejecutar({ argv, entrada, cwd })` y sólo se autoejecuta cuando es el punto de
+`cli.ts` exporta `ejecutar({ argv, entrada, cwd, env })` y sólo se autoejecuta cuando es el punto de
 entrada. Así las pruebas lo llaman **en proceso** y el adaptador y el CLI **cuentan en la cobertura**:
 la cobertura v8 no ve procesos hijos.
+
+**`env` existe por el aislamiento del arnés.** Es opcional y vale `process.env` por defecto
+(`apps/desk/server/citas/cli.ts:53` en `56a0095`); `ejecutar` se lo da al adaptador, que lo pasa a cada
+`git` hijo (`apps/desk/server/citas/git.ts:24-28` en `56a0095`). El repositorio sintético necesita un
+entorno sin las variables de repositorio del proceso padre (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`
+y demás), sin configuración de sistema ni global, con techo de directorios e identidad propia
+(`apps/desk/server/testing/reposDePrueba.ts:116-126` en `56a0095`). Como la prueba llama a `ejecutar` en
+proceso, la alternativa sería mutar `process.env`, que es global al proceso; pasarlo como argumento deja
+el entorno del arnés dentro de la prueba que lo crea. El punto de entrada no lo pasa
+(`apps/desk/server/citas/cli.ts:71` en `56a0095`), así que el hook usa el entorno que le da git.
 
 **El hook:**
 
@@ -574,7 +584,7 @@ de desarrollo.
 | 5 | RQ-CV-09 | La base casa por (fichero, cita) con multiplicidad; la línea es informativa | D6 |
 | 6 | Propuesta, §11 | El aviso de escalada va en TypeScript; `.gitattributes` entra en la unidad 3; la talla sube | D8, D10, §3 |
 | 7 | RQ-CV-12, M16 | La ejecución sin `node_modules` queda manual; el guardián estático se automatiza | §8 |
-| 8 | D11 y §5 (puerto `Repo`), corte 1a | Una cita anclada se lee por su ruta literal en el árbol de su revisión, sin consultar antes el índice del sha local ni resolver sufijo o ambigüedad dentro del ancla. El puerto `Repo` se declara en `detector.ts`, no en un fichero propio | En el corte 1a la única prueba en memoria de la vuelta del ancla pasa con la lectura directa, y el diseño no fija dónde vive el puerto. No se refactoriza, por decisión de Gerencia (2026-09-13): el coste se mide en el corte 1b, donde hay git de verdad |
+| 8 | D11 y §5 (puerto `Repo`), cortes 1a y 1b-ii | **Primera mitad CERRADA por la tarea 2.26** (Gerencia, 2026-09-14): la anclada resuelve su fichero con el índice del sha local y el orden D4, y se lee en la ruta resuelta dentro de su revisión; si esa ruta no existe en la revisión, bloquea como una ruta inexistente. **Sigue abierto:** (a) no se construye el índice de la propia revisión que pide D11, así que un nombre que no resuelve en el índice local se lee por su ruta literal y, si esa lectura falla, se descarta sin informar; y un fichero movido desde la revisión del ancla bloquea en vez de resolverse en ella; (b) el puerto `Repo` se declara en `detector.ts`, no en un fichero propio | En el corte 1a la única prueba en memoria de la vuelta del ancla pasaba con la lectura directa, y el diseño no fija dónde vive el puerto. Con git de verdad, la lectura literal descartaba en silencio las nueve anclas peladas del árbol real —lo contrario de RQ-CV-10—, y por eso se arregla la resolución. El índice de la revisión y el sitio del puerto no se refactorizan (Gerencia, 2026-09-13) |
 
 ---
 
