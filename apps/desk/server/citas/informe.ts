@@ -15,6 +15,8 @@ export interface ContextoInforme {
   ref: string
   /** `<sha corto>`, `origin/main` o `NO HECHO: <motivo>`: lo resuelve el CLI (unidad 1b). */
   indiceRemoto: string
+  /** RQ-CV-10 (decisión b): ficheros de texto que git trata como binarios, no barridos (tarea 2.25). */
+  binarios?: number
 }
 
 const SALTO = String.fromCharCode(10)
@@ -31,14 +33,15 @@ function lista(titulo: string, items: readonly ItemCita[]): string[] {
 
 export function informe(r: ResultadoDeteccion, contexto: ContextoInforme): string {
   const s = r.saltadas
-  const saltadas = s.sinBarra + s.ambiguas + s.directorios + s.huerfanas
+  const saltadas = s.sinBarra + s.ambiguas + s.directorios + s.huerfanas + s.anclasSinResolver + s.noLegibles
   return [
     `citas · ${contexto.sha} · ${contexto.ref}`,
     cifra('comprobadas', r.comprobadas),
-    cifra('saltadas', saltadas, `sin barra y sin resolver ${s.sinBarra} · ambiguas con alguna candidata válida ${s.ambiguas} · directorios ${s.directorios} · abreviadas huérfanas ${s.huerfanas}`),
+    cifra('saltadas', saltadas, `sin barra y sin resolver ${s.sinBarra} · ambiguas con alguna candidata válida ${s.ambiguas} · directorios ${s.directorios} · abreviadas huérfanas ${s.huerfanas} · anclas sin resolver ${s.anclasSinResolver} · no legibles ${s.noLegibles}`),
     cifra('fuera del repositorio', r.fueraDelRepositorio),
     cifra('abreviadas rotas', r.abreviadasRotas.length, 'informativas: no bloquean'),
     cifra('no son citas', r.noSonCitas, 'marcas de hora ISO, horas y puertos de URL; fuera de las cuatro cifras'),
+    cifra('texto que git cree binario', contexto.binarios ?? 0, 'no barridos'),
     cifra('índice remoto', contexto.indiceRemoto),
     cifra('línea base', `${r.informadas} informadas · ${r.caducadas.length} caducadas`),
     ...lista('Abreviadas rotas', r.abreviadasRotas),

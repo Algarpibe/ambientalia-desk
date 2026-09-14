@@ -9,7 +9,7 @@
  * que sabe de git le llega por este puerto.
  */
 import { cosechar, type LineaFuente } from './cosecha'
-import { construirIndice, resolverRuta, type Resolucion } from './resolucion'
+import { construirIndice, resolverRuta, resolverToken, type Resolucion, type ResolucionLocal } from './resolucion'
 
 export type { LineaFuente }
 
@@ -40,10 +40,20 @@ export interface Saltadas {
   ambiguas: number
   directorios: number
   huerfanas: number
+  /** El nombre de una anclada no resuelve en el índice del sha local, y su lectura literal en su
+   *  propia revisión también falla: el "ancla ilegible" (tarea 2.26, decisión c de Gerencia). */
+  anclasSinResolver: number
+  /** Defensivo: una ruta trackeada por el índice cuyo contenido git no devuelve como blob (p. ej. un
+   *  submódulo). Nunca se descarta en silencio (invariante de conservación, tarea 2.26). */
+  noLegibles: number
 }
 
 export interface ResultadoDeteccion {
   comprobadas: number
+  /** Toda cita cosechada, invariante de conservación (tarea 2.26): comprobadas + Σ saltadas +
+   *  fueraDelRepositorio + noSonCitas + abreviadasRotas.length + bloqueantes.length + informadas
+   *  SHALL sumar exactamente esta cifra. `caducadas` queda fuera: no es una cita cosechada. */
+  cosechadas: number
   saltadas: Saltadas
   /** RQ-CV-04: su propia cifra, separada de las saltadas. */
   fueraDelRepositorio: number
@@ -127,18 +137,34 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
   // nunca una llamada por cita. Primera pasada: reunir las claves que hacen falta.
   const objetosNecesarios = new Set<string>()
   const resoluciones = new Map<string, Resolucion>()
+  // Tarea 2.26 (divergencia nº 8, primera mitad): el índice del sha local NO depende de la revisión
+  // ancla, así que se resuelve una sola vez por nombre y se comparte entre todas sus anclas.
+  const resolucionesAncla = new Map<string, ResolucionLocal>()
+  function resolverParaAncla(nombre: string): ResolucionLocal {
+    let r = resolucionesAncla.get(nombre)
+    if (!r) {
+      r = resolverToken(nombre, indice) // D4: exacta, sufijo, RQ-CV-03 si ambigua
+      resolucionesAncla.set(nombre, r)
+    }
+    return r
+  }
   for (const c of citas) {
     if (c.tipo === 'completa') {
       if (c.ancla !== undefined) {
-        if (repo.arbol(c.ancla) !== null) objetosNecesarios.add(`${c.ancla}:${c.fichero}`) // divergencia nº 8
+        if (repo.arbol(c.ancla) !== null) {
+          const r = resolverParaAncla(c.fichero)
+          if (r.tipo === 'unico') objetosNecesarios.add(`${c.ancla}:${r.ruta}`)
+          else if (r.tipo === 'ambiguo') for (const ruta of r.candidatos) objetosNecesarios.add(`${c.ancla}:${ruta}`)
+          else objetosNecesarios.add(`${c.ancla}:${c.fichero}`) // no-resuelto: lectura literal declarada (§11 D)
+        }
         continue
       }
       const r = resoluciones.get(c.fichero) ?? resolverRuta(c.fichero, indice, remoto)
       resoluciones.set(c.fichero, r)
       if (r.tipo === 'unico') objetosNecesarios.add(`${arbolLocal}:${r.ruta}`)
       if (r.tipo === 'ambiguo') for (const ruta of r.candidatos) objetosNecesarios.add(`${arbolLocal}:${ruta}`)
-    } else if (c.tipo === 'abreviada' && c.atribuidoA !== null && indice.exactos.has(c.atribuidoA)) {
-      objetosNecesarios.add(`${arbolLocal}:${c.atribuidoA}`)
+    } else if (c.tipo === 'abreviada' && c.atribuidoA !== null) {
+      objetosNecesarios.add(`${arbolLocal}:${c.atribuidoA}`) // atribuidoA SIEMPRE está en indice.exactos
     }
   }
   const lote = repo.leerLote([...objetosNecesarios])
@@ -146,7 +172,7 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
   const candidatosDeBloqueo: ItemCita[] = []
   const abreviadasRotas: ItemCita[] = []
   let comprobadas = 0
-  const saltadas: Saltadas = { sinBarra: 0, ambiguas: 0, directorios: 0, huerfanas: 0 }
+  const saltadas: Saltadas = { sinBarra: 0, ambiguas: 0, directorios: 0, huerfanas: 0, anclasSinResolver: 0, noLegibles: 0 }
   let fueraDelRepositorio = 0
   let noSonCitas = 0
 
@@ -156,11 +182,14 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
         saltadas.huerfanas++
         continue
       }
-      const resuelto = indice.exactos.has(c.atribuidoA) ? c.atribuidoA : null
-      if (resuelto === null) continue // no resuelve: fuera de alcance de esta tarea
-      const contenido = lote.get(`${arbolLocal}:${resuelto}`)
-      if (contenido === null || contenido === undefined) continue
-      if (rotura(c, contenido)) abreviadasRotas.push({ ...origen(c), motivo: `abreviada rota (atribuida a ${resuelto})` })
+      // c.atribuidoA SIEMPRE está en indice.exactos: cosecha.ts atribuye con el MISMO índice (invariante
+      // de conservación, tarea 2.26 — antes había aquí un chequeo redundante, código muerto).
+      const contenido = lote.get(`${arbolLocal}:${c.atribuidoA}`)
+      if (contenido === null || contenido === undefined) {
+        saltadas.noLegibles++ // defensivo: tracked pero git no devuelve su contenido (p. ej. un submódulo)
+        continue
+      }
+      if (rotura(c, contenido)) abreviadasRotas.push({ ...origen(c), motivo: `abreviada rota (atribuida a ${c.atribuidoA})` })
       else comprobadas++
       continue
     }
@@ -173,6 +202,11 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
       continue
     }
     let rutasCandidatas = [c.fichero]
+    // Tarea 2.26 (divergencia nº 8): si la resolución LOCAL de la anclada tuvo éxito, un contenido
+    // ilegible bloquea como "fichero inexistente" (la ruta resuelta no existe en su revisión); si el
+    // nombre no resolvió localmente, el `continue` de más abajo cuenta como "ancla sin resolver", nunca
+    // en silencio.
+    let ancladaResueltaPorIndiceLocal = false
     if (c.ancla === undefined) {
       const r = resoluciones.get(c.fichero)
       if (r?.tipo === 'inexistente') {
@@ -197,9 +231,23 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
       }
       if (r?.tipo === 'unico') rutasCandidatas = [r.ruta]
       if (r?.tipo === 'ambiguo') rutasCandidatas = r.candidatos
+    } else {
+      const r = resolverParaAncla(c.fichero)
+      if (r.tipo === 'unico') { rutasCandidatas = [r.ruta]; ancladaResueltaPorIndiceLocal = true }
+      else if (r.tipo === 'ambiguo') { rutasCandidatas = r.candidatos; ancladaResueltaPorIndiceLocal = true }
+      // 'no-resuelto': rutasCandidatas queda en [c.fichero] — lectura literal declarada (§11 D del diseño)
     }
     const contenidos = rutasCandidatas.map((ruta) => lote.get(`${arbolDeLectura(c, arbolLocal)}:${ruta}`))
-    if (contenidos.some((contenido) => contenido === null || contenido === undefined)) continue
+    if (contenidos.some((contenido) => contenido === null || contenido === undefined)) {
+      if (c.ancla === undefined) {
+        saltadas.noLegibles++ // defensivo: tracked pero git no devuelve su contenido (p. ej. un submódulo)
+      } else if (ancladaResueltaPorIndiceLocal) {
+        candidatosDeBloqueo.push({ ...origen(c), motivo: 'fichero inexistente' })
+      } else {
+        saltadas.anclasSinResolver++ // el "ancla ilegible": ni resuelve localmente, ni lee por su ruta literal
+      }
+      continue
+    }
     const roturas = contenidos.map((contenido) => rotura(c, contenido as string))
     const primera = roturas[0]
     // RQ-CV-03: con varias candidatas bloquea sólo si está rota en TODAS; si una la valida, se salta.
@@ -238,5 +286,8 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
   }
 
   const informadas = candidatosDeBloqueo.length - bloqueantes.length
-  return { comprobadas, saltadas, fueraDelRepositorio, noSonCitas, informadas, bloqueantes, caducadas, abreviadasRotas, bloquea: bloqueantes.length > 0 || caducadas.length > 0 }
+  return {
+    comprobadas, cosechadas: citas.length, saltadas, fueraDelRepositorio, noSonCitas, informadas,
+    bloqueantes, caducadas, abreviadasRotas, bloquea: bloqueantes.length > 0 || caducadas.length > 0,
+  }
 }

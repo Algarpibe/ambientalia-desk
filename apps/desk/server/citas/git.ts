@@ -21,6 +21,20 @@ const MAX_BUFFER = 512 * 1024 * 1024
 /** Un fallo operativo de git: el CLI lo convierte en salida 2, nunca en un pase (D12). */
 export class ErrorDeGit extends Error {}
 
+const EXTENSION_DE_TEXTO = /\.(ts|tsx|js|mjs|md|yaml|yml|json|jsonl|sql|sh)$/
+
+/** RQ-CV-10 (decisión b, tarea 2.25): ficheros trackeados con extensión de texto que `git grep -I` se
+ *  salta EN SILENCIO por tratarlos como binarios — `-` `-` en el numstat del diff desde el árbol vacío.
+ *  Sin `revision`, compara contra el árbol de TRABAJO (guardián estático, 1.0); con ella, contra ese sha
+ *  commiteado (uso del CLI, por push). Antes vivía sólo en `guardianes.test.ts`; ahora el guardián la
+ *  importa de aquí. */
+export function textoQueGitCreeBinario(cwd: string, env: NodeJS.ProcessEnv, revision?: string): string[] {
+  const arbolVacio = spawnSync('git', ['hash-object', '-t', 'tree', '--stdin'], { cwd, env, input: '', encoding: 'utf8' }).stdout.trim()
+  const args = ['-c', 'core.quotepath=off', 'diff', '--numstat', '-z', '--no-renames', '--no-ext-diff', '--no-textconv', arbolVacio, ...(revision ? [revision] : [])]
+  const salida = spawnSync('git', args, { cwd, env, encoding: 'utf8', maxBuffer: MAX_BUFFER }).stdout
+  return salida.split(NUL).filter((e) => e.startsWith(`-${TAB}-${TAB}`)).map((e) => e.slice(4)).filter((ruta) => EXTENSION_DE_TEXTO.test(ruta))
+}
+
 export function repoGit(cwd: string, env: NodeJS.ProcessEnv = process.env): Repo {
   function git(args: string[], opciones: { entrada?: string; admite?: number[] } = {}): Buffer | null {
     const r = spawnSync('git', ['-c', 'core.quotepath=off', ...args], {

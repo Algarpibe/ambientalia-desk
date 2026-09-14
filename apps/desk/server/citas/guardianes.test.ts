@@ -1,40 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { spawnSync } from 'node:child_process'
 import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
+import { textoQueGitCreeBinario } from './git'
 
 /**
  * Guardianes estáticos del detector de citas (capacidad `citas-verificables`): leen ficheros
  * vigilados del propio repositorio, así que se prueban ENSUCIANDO lo vigilado (regla de mutación 2).
+ *
+ * La función vigilada vive en `git.ts` (tarea 2.25): contra el árbol de TRABAJO, no contra HEAD —
+ * en CI (clon limpio) es lo mismo, y en local deja ver el verde sin commitear (tarea 1.0).
  */
-
-function git(args: string[], input?: string): string {
-  const r = spawnSync('git', args, { encoding: 'utf8', input, maxBuffer: 64 * 1024 * 1024 })
-  if (r.status !== 0) throw new Error(`git ${args.join(' ')} salió ${r.status}: ${r.stderr}`)
-  return r.stdout
-}
-
-const TAB = String.fromCharCode(9)
-const EXTENSION_DE_TEXTO = /\.(ts|tsx|js|mjs|md|yaml|yml|json|jsonl|sql|sh)$/
-
-/**
- * Ficheros trackeados con extensión de texto que git trata como binarios: `-` `-` en el numstat del
- * diff desde el árbol vacío. Va contra lo trackeado del árbol de trabajo, no contra HEAD: en CI (clon
- * limpio) es lo mismo, y en local deja ver el verde sin commitear (desviación aceptada, tarea 1.0).
- */
-function textoQueGitCreeBinario(): string[] {
-  const arbolVacio = git(['hash-object', '-t', 'tree', '--stdin'], '').trim()
-  const salida = git(['-c', 'core.quotepath=off', 'diff', '--numstat', '-z', '--no-renames', '--no-ext-diff', '--no-textconv', arbolVacio])
-  return salida
-    .split(String.fromCharCode(0))
-    .filter((entrada) => entrada.startsWith(`-${TAB}-${TAB}`))
-    .map((entrada) => entrada.slice(4))
-    .filter((ruta) => EXTENSION_DE_TEXTO.test(ruta))
-}
-
 describe('guardián · ningún fichero de texto trackeado es binario para git (tarea 1.0)', () => {
   it('`git grep -I` se salta EN SILENCIO lo que git cree binario, así que la lista tiene que estar vacía', () => {
-    expect(textoQueGitCreeBinario()).toEqual([])
+    expect(textoQueGitCreeBinario(process.cwd(), process.env)).toEqual([])
   })
 })
 

@@ -28,7 +28,7 @@ const texto = informe(resultado, { sha: 'abc1234', ref: 'refs/heads/main', indic
 describe('informe · RQ-CV-10: cuatro cifras, desglose, «no son citas» y frases fijas (tareas 1.40-1.41)', () => {
   it('imprime las cuatro cifras por separado, con el desglose de las saltadas', () => {
     expect(texto).toMatch(/comprobadas \.+ 1$/m)
-    expect(texto).toMatch(/saltadas \.+ 4 +\(sin barra y sin resolver 1 · ambiguas con alguna candidata válida 1 · directorios 1 · abreviadas huérfanas 1\)/)
+    expect(texto).toMatch(/saltadas \.+ 4 +\(sin barra y sin resolver 1 · ambiguas con alguna candidata válida 1 · directorios 1 · abreviadas huérfanas 1 · anclas sin resolver 0 · no legibles 0\)/)
     expect(texto).toMatch(/fuera del repositorio \.+ 1$/m)
     expect(texto).toMatch(/abreviadas rotas \.+ 1 +\(informativas: no bloquean\)/)
   })

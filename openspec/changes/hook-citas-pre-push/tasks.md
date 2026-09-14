@@ -229,7 +229,7 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       ficheros que cambia el push.
 **Corte 1b-ii** (tareas 2.12-2.26):
 
-- [ ] 2.26 DEFECTO de la divergencia nº 8, PRIMERA del corte (decisión de Gerencia, 2026-09-14; va antes
+- [x] 2.26 DEFECTO de la divergencia nº 8, PRIMERA del corte (decisión de Gerencia, 2026-09-14; va antes
       de 2.20, 2.21 y 2.24, que prueban anclas). Hoy una cita anclada se lee por su ruta literal en su
       revisión, sin pasar por el índice del sha local; con nombre pelado la lectura devuelve `null` y el
       bucle la descarta sin contarla ni informarla:
@@ -253,33 +253,70 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
       con git el 2026-09-14: la ruta existe en las tres revisiones y las nueve líneas están en rango y
       no vacías, así que pasan a comprobadas y no añaden bloqueantes a la base del corte 2.
 
-- [ ] 2.12 RED (M5, divergencia #1 del diseño): cita rota en fichero sin trackear → 0; el mismo fichero
-      tras `git add` Y COMMIT → bloquea.
-- [ ] 2.13 GREEN: `git.ts.lineas()` opera sobre el sha ya commiteado, nunca sobre el índice.
-- [ ] 2.14 RED (M14, divergencia #2 — SEIS exclusiones): cita rota dentro de
+      **CERRADO** (`apps/desk/server/citas/detector.ts`). La anclada resuelve `c.fichero` con
+      `resolverToken` (D4: exacta, sufijo, RQ-CV-03 si ambigua) contra el índice del sha local, con un
+      caché por nombre (`resolverParaAncla`, no depende de la revisión). Si resuelve, se lee la ruta
+      RESUELTA dentro de la revisión del ancla; si esa lectura falla, bloquea «fichero inexistente». Si
+      NO resuelve localmente, sigue la lectura literal de siempre en su propia revisión.
+
+      **AÑADIDO de Gerencia (decisión c), invariante de conservación — cerrado en el mismo intento.**
+      Cada cita cosechada cae en EXACTAMENTE una cifra del informe: `comprobadas + Σ saltadas +
+      fueraDelRepositorio + noSonCitas + abreviadasRotas.length + bloqueantes.length + informadas =
+      cosechadas` (`Σ saltadas = sinBarra + ambiguas + directorios + huerfanas + anclasSinResolver +
+      noLegibles`; `caducadas` y la línea de binarios quedan FUERA). `cosechadas` se expone en
+      `ResultadoDeteccion` como `citas.length`. Dos categorías nuevas en `Saltadas`:
+      `anclasSinResolver` (el «ancla ilegible»: no resuelve localmente y su lectura literal también
+      falla) y `noLegibles` (defensivo: una ruta trackeada cuyo contenido git no devuelve como blob,
+      p. ej. un submódulo — cubre la abreviada y la completa no anclada). Se eliminó además un chequeo
+      muerto en la rama de abreviadas (`resuelto === null`): por construcción, `cosecha.ts` sólo atribuye
+      con el MISMO índice que usa `detector.ts`, así que nunca podía dispararse. **La frase «Fuera de
+      esta tarea… si esa lectura falla, se descarta sin informar» queda CORREGIDA**: ahora se cuenta como
+      saltada con el motivo «ancla sin resolver», nunca en silencio. Pruebas: `hook.test.ts` (tarea
+      2.26 propia, con MUT sobre archivo restaurado con `cmp`, y el invariante con un caso de cada
+      categoría) y `detector.test.ts` (defensivo `noLegibles` con dos signos; triangulación de la
+      anclada ambigua, RQ-CV-03).
+
+- [x] 2.12 RED (M5, divergencia #1 del diseño): cita rota en fichero sin trackear → 0; el mismo fichero
+      tras `git add` Y COMMIT → bloquea. **Nació verde**: `git.ts.lineas()` ya lee `git grep <árbol>`,
+      que por construcción no ve nada sin commitear. `hook.test.ts` (tareas 2.12-2.13).
+- [x] 2.13 GREEN: `git.ts.lineas()` opera sobre el sha ya commiteado, nunca sobre el índice. Sin cambios
+      de producción (ya lo hacía desde 1b-i).
+- [x] 2.14 RED (M14, divergencia #2 — SEIS exclusiones): cita rota dentro de
       `openspec/changes/archive/`, `.claude/skills/superpowers-main/`, `.agent/skills/`,
       `docs/artefactos/`, un `.csv` y dentro de `apps/desk/server/citas/lineaBase.jsonl` → las seis se
-      ignoran; la misma cita fuera de ellas → bloquea.
-- [ ] 2.15 GREEN: constante de exclusiones en `git.ts`/`cli.ts` con las seis rutas/patrones (RQ-CV-07,
-      D5, D6).
-- [ ] 2.16 RED (D12): borrado de rama, stdin vacío, sha que no pela a árbol, varias referencias al mismo
-      árbol → cada caso sale 0 o "no comprobado", nunca cuelga ni bloquea sin comprobar.
-- [ ] 2.17 GREEN: `cli.ts` implementa D12 — deduplicar por árbol, informar "no comprobado" cuando el sha
-      no pela.
-- [ ] 2.18 RED: ruta no ASCII y salida de `git grep` por encima de 1 MB — el detector no trunca ni falla
-      por tamaño de búfer.
-- [ ] 2.19 GREEN: `maxBuffer` explícito en `git.ts`, salida por `Buffer` (no cadena) en el lote.
-- [ ] 2.20 RED (M20, SIEMPRE en repositorio sintético): documento con cita desanclada, commit que inserta
+      ignoran; la misma cita fuera de ellas → bloquea. `hook.test.ts` (tareas 2.14-2.15): las cinco de
+      punta a punta con el hook (rojo real: «expected 1 to be +0», el control bloqueaba antes de
+      excluirlas) y la sexta con `repo.lineas()` directo (evita el `JSON.parse` de `leerBase` sobre
+      contenido no-JSON).
+- [x] 2.15 GREEN: `EXCLUSIONES` en `cli.ts`, exportada, con las seis rutas/patrones (RQ-CV-07, D5, D6).
+- [x] 2.16 RED (D12): borrado de rama, sha que no pela a árbol, varias referencias al mismo árbol → cada
+      caso sale 0 o "no comprobado", nunca cuelga ni bloquea sin comprobar. `hook.test.ts`.
+- [x] 2.17 GREEN: `cli.ts` implementa D12 — `porArbol` dedup por árbol con unión de índices remotos
+      (`indiceRemotoUnido`), mensajes explícitos para rama borrada y sha-sin-árbol, y el defecto cerrado:
+      TODO `ejecutar()` corre dentro de un `try/catch` que convierte cualquier `ErrorDeGit` o
+      `SyntaxError` (base ilegible) en `{codigo:2, texto:'citas: fallo operativo — ...'}`, nunca una
+      excepción sin capturar. Rojo real de la línea mal formada: «expected +0 to be 2»; el fallo de git
+      genérico se fuerza con `GIT_DIR` a una ruta inexistente (rojo real: `identidades()` no admite
+      ningún status).
+- [x] 2.18 RED: ruta no ASCII y salida de `git grep` por encima de 1 MB — el detector no trunca ni falla
+      por tamaño de búfer. **Nació verde** (`hook.test.ts`, tareas 2.18-2.19): `core.quotepath=off` y
+      `maxBuffer` ya estaban desde 1b-i; prueba con 20.000 líneas candidatas (>1 MB de salida de
+      `git grep`) confirma `comprobadas .... 20000` sin truncar.
+- [x] 2.19 GREEN: `maxBuffer` explícito en `git.ts`, salida por `Buffer` (no cadena) en el lote. Sin
+      cambios de producción (ya lo hacía desde 1b-i).
+- [x] 2.20 RED (M20, SIEMPRE en repositorio sintético): documento con cita desanclada, commit que inserta
       líneas delante cayendo en línea vacía → bloquea; la misma cita anclada a la revisión ANTERIOR →
-      pasa. Nunca sobre las líneas reales de `CLAUDE.md`.
-- [ ] 2.21 GREEN: soporte real de anclaje vía `git cat-file --batch` contra la revisión indicada.
-- [ ] 2.22 RED (M21, aviso de escalada en TypeScript — D8, divergencia #6): repositorio sintético con una
-      identidad → sin aviso; con dos → aviso visible, MISMO código de salida.
-- [ ] 2.23 GREEN: `cli.ts` ejecuta `git shortlog -sne --all` vía `git.ts.identidades()`; imprime el aviso
-      sin tocar el código de salida (RQ-CV-11).
-- [ ] 2.24 Confirmar (coste, RQ-CV-01): las anclas se leen agrupadas por (revisión, fichero) en UN solo
-      `git cat-file --batch`, nunca un `git show` por cita, con varios pares en `hook.test.ts`.
-- [ ] 2.25 RED+GREEN (RQ-CV-10, decisión b de Gerencia): línea «texto que git cree binario .. N (no
+      pasa. Nunca sobre las líneas reales de `CLAUDE.md`. `hook.test.ts`.
+- [x] 2.21 GREEN: soporte real de anclaje vía `git cat-file --batch` contra la revisión indicada. **Nació
+      verde**: ya implementado desde 1b-i (`arbolDeLectura`, D11); 2.20 lo confirma con git de verdad.
+- [x] 2.22 RED (M21, aviso de escalada en TypeScript — D8, divergencia #6): repositorio sintético con una
+      identidad → sin aviso; con dos → aviso visible, MISMO código de salida. `hook.test.ts`.
+- [x] 2.23 GREEN: `cli.ts` ejecuta `git shortlog -sne --all` vía `git.ts.identidades()` (`avisoDeEscalada`);
+      imprime el aviso sin tocar el código de salida (RQ-CV-11).
+- [x] 2.24 Confirmar (coste, RQ-CV-01): las anclas se leen agrupadas por (revisión, fichero) en UN solo
+      `git cat-file --batch`, nunca un `git show` por cita, con varios pares en `hook.test.ts`. Confirmado
+      con git real: cuatro anclas en dos revisiones → una sola llamada a `leerLote`.
+- [x] 2.25 RED+GREEN (RQ-CV-10, decisión b de Gerencia): línea «texto que git cree binario .. N (no
       barridos)» en el informe, para que el hueco de `git grep -I` se vea también en ejecución. RED en
       `hook.test.ts`, repositorio sintético: un `.md` trackeado con un NUL en sus primeros 8.000 bytes y
       una cita rota → la línea dice 1 y la cita no se cosecha ni bloquea; sin el NUL → la línea dice 0 y la

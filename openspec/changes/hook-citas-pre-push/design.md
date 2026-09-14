@@ -421,7 +421,7 @@ contra la raíz.
 ```
 citas · <sha corto> · <ref local>
   comprobadas ............ <N>
-  saltadas ............... <N>   (sin barra y sin resolver <N> · ambiguas con alguna candidata válida <N> · directorios <N> · abreviadas huérfanas <N>)
+  saltadas ............... <N>   (sin barra y sin resolver <N> · ambiguas con alguna candidata válida <N> · directorios <N> · abreviadas huérfanas <N> · anclas sin resolver <N> · no legibles <N>)
   fuera del repositorio .. <N>
   abreviadas rotas ....... <N>   (informativas: no bloquean)
   no son citas ........... <N>   (marcas de hora ISO, horas y puertos de URL; fuera de las cuatro cifras)
@@ -584,7 +584,7 @@ de desarrollo.
 | 5 | RQ-CV-09 | La base casa por (fichero, cita) con multiplicidad; la línea es informativa | D6 |
 | 6 | Propuesta, §11 | El aviso de escalada va en TypeScript; `.gitattributes` entra en la unidad 3; la talla sube | D8, D10, §3 |
 | 7 | RQ-CV-12, M16 | La ejecución sin `node_modules` queda manual; el guardián estático se automatiza | §8 |
-| 8 | D11 y §5 (puerto `Repo`), cortes 1a y 1b-ii | **Primera mitad CERRADA por la tarea 2.26** (Gerencia, 2026-09-14): la anclada resuelve su fichero con el índice del sha local y el orden D4, y se lee en la ruta resuelta dentro de su revisión; si esa ruta no existe en la revisión, bloquea como una ruta inexistente. **Sigue abierto:** (a) no se construye el índice de la propia revisión que pide D11, así que un nombre que no resuelve en el índice local se lee por su ruta literal y, si esa lectura falla, se descarta sin informar; y un fichero movido desde la revisión del ancla bloquea en vez de resolverse en ella; (b) el puerto `Repo` se declara en `detector.ts`, no en un fichero propio | En el corte 1a la única prueba en memoria de la vuelta del ancla pasaba con la lectura directa, y el diseño no fija dónde vive el puerto. Con git de verdad, la lectura literal descartaba en silencio las nueve anclas peladas del árbol real —lo contrario de RQ-CV-10—, y por eso se arregla la resolución. El índice de la revisión y el sitio del puerto no se refactorizan (Gerencia, 2026-09-13) |
+| 8 | D11 y §5 (puerto `Repo`), cortes 1a y 1b-ii | **Primera mitad CERRADA por la tarea 2.26** (Gerencia, 2026-09-14): la anclada resuelve su fichero con el índice del sha local y el orden D4, y se lee en la ruta resuelta dentro de su revisión; si esa ruta no existe en la revisión, bloquea como una ruta inexistente. **Sigue abierto:** (a) no se construye el índice de la propia revisión que pide D11, así que un nombre que no resuelve en el índice local se lee por su ruta literal y, si esa lectura falla, **cuenta como saltada con el motivo «ancla sin resolver»** (invariante de conservación, decisión c de Gerencia, 2026-09-14 — ya NO se descarta sin informar); y un fichero movido desde la revisión del ancla bloquea como «fichero inexistente» en vez de resolverse en ella; (b) el puerto `Repo` se declara en `detector.ts`, no en un fichero propio | En el corte 1a la única prueba en memoria de la vuelta del ancla pasaba con la lectura directa, y el diseño no fija dónde vive el puerto. Con git de verdad, la lectura literal descartaba en silencio las nueve anclas peladas del árbol real —lo contrario de RQ-CV-10—, y por eso se arregla la resolución. El índice de la revisión y el sitio del puerto no se refactorizan (Gerencia, 2026-09-13) |
 
 ---
 

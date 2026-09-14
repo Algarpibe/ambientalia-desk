@@ -269,6 +269,53 @@ describe('detectar · RQ-CV-03: una ambigua bloquea sólo si está rota en TODAS
   })
 })
 
+describe('detectar · defensivo: contenido "tracked" pero no legible por git no se descarta en silencio (tarea 2.26, decisión c)', () => {
+  it('una completa y una abreviada cuyo contenido llega null desde leerLote pese a estar en el índice cuentan como noLegibles', () => {
+    const base = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${cita('gitlink', 1)} y luego ${abreviada(1)}.`,
+        gitlink: 'contenido que no debería leerse',
+      },
+    })
+    const repoIlegible: typeof base = {
+      ...base,
+      leerLote(objetos) {
+        const mapa = base.leerLote(objetos)
+        mapa.set('LOCAL:gitlink', null) // simula un submódulo: tracked, pero sin blob legible
+        return mapa
+      },
+    }
+    const resultado = detectar({ repo: repoIlegible, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.saltadas.noLegibles).toBe(2)
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.comprobadas).toBe(0)
+
+    // control del otro signo: sin el defecto, las dos se comprueban con normalidad
+    const resultadoNormal = detectar({ repo: base, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultadoNormal.saltadas.noLegibles).toBe(0)
+    expect(resultadoNormal.comprobadas).toBe(2)
+  })
+})
+
+describe('detectar · divergencia nº 8 (tarea 2.26): la anclada ambigua se resuelve por el índice del sha local (RQ-CV-03)', () => {
+  it('rota en todas sus candidatas de la revisión ancla bloquea; válida en una sola se salta como ambigua', () => {
+    const repoRota = repoEnMemoria({
+      LOCAL: { 'doc.md': `Ver ${anclada(cita('comun.md', 2), 'rev1')}.`, 'a/comun.md': 'uno', 'b/comun.md': 'uno' },
+      rev1: { 'a/comun.md': 'uno', 'b/comun.md': 'uno' },
+    })
+    const resultadoRota = detectar({ repo: repoRota, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultadoRota.bloqueantes).toHaveLength(1)
+
+    const repoValida = repoEnMemoria({
+      LOCAL: { 'doc.md': `Ver ${anclada(cita('comun.md', 2), 'rev1')}.`, 'a/comun.md': 'uno', 'b/comun.md': 'uno' },
+      rev1: { 'a/comun.md': 'uno\ndos', 'b/comun.md': 'uno' },
+    })
+    const resultadoValida = detectar({ repo: repoValida, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultadoValida.bloquea).toBe(false)
+    expect(resultadoValida.saltadas.ambiguas).toBe(1)
+  })
+})
+
 describe('detectar · D6: la base y el informe llevan el DOCUMENTO que cita y la línea de la cita (tarea 2.0)', () => {
   const SALTO = String.fromCharCode(10)
 

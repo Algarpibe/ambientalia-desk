@@ -1,5 +1,155 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 1b-ii (tareas 2.12–2.26) — CERRADO, 15/15
+
+Base del corte: `049a233`. **Tamaño con git: `git diff --shortstat 049a233` → 11 ficheros, +711/-89 =
+800 líneas** al terminar el sub-agente, medido por el orquestador; 0 ficheros nuevos sin trackear frente a
+la línea base de Gerencia (`comm -13`; los 8 documentos ajenos de `docs/` siguen `??`, sin tocar). El
+sub-agente había escrito aquí 752 (663+89): midió ANTES de escribir `tasks.md` y este fichero. **La parada
+de ~750 de este corte se superó**; Gerencia decidió el 2026-09-14 hacer settle y commit igualmente. Con
+esta corrección del orquestador incluida, el corte se commitea con **+754/-89 = 843 líneas** medidas con git. Todo
+está trackeado, así que el ledger cuenta lo mismo que git (en 1b-i contó 238 frente a 529 porque 291 eran
+ficheros nuevos sin trackear: `cli.ts` 74, `git.ts` 86 y `hook.test.ts` 131).
+
+Cierre repetido por el orquestador: `npm run typecheck` exit 0; `eslint . --max-warnings 158` → 0 errores,
+158 avisos; `npm run test:coverage` → 1085 pasadas y 2 omitidas de 1087 (119 ficheros y 1 omitido),
+global 94,75 % líneas · 83,88 % ramas · 98,44 % funciones, `apps/desk/server/citas` 99,17 % líneas ·
+95,98 % ramas · 100 % funciones. 0 bytes de control y 0 CR en los 11 ficheros tocados. Guardián de
+binarios (1.0) y RQ-CV-18 en verde. Detector sobre un commit temporal del corte frente a `049a233`: la
+misma lista de 37 bloqueantes, ninguna cita rota nueva en lo tocado.
+
+### Tabla de mutaciones del corte (17, repetidas por el orquestador en proceso nuevo)
+
+Cada una: copia del fichero en el scratchpad de la sesión (nunca dentro del repositorio), sustitución con
+exactamente una coincidencia por patrón, `npx vitest run <prueba> -t "<nombre>"`, restauración y `cmp`.
+Las dos que el sub-agente hizo (2.26 y 2.25) están repetidas aquí. Salida literal: la primera aserción que
+falla. Donde la salida de vitest trae una cita con forma de cita, se describe en prosa para no romper el
+barrido.
+
+| # | Tarea | Mutación | Salida literal | Control |
+|---|---|---|---|---|
+| 1 | 2.26 invariante | `detector.ts`: `saltadas.anclasSinResolver++` → `void 0` | `AssertionError: expected 11 to be 12 // Object.is equality` | `cmp` idéntico |
+| 2 | 2.26 invariante | `detector.ts`, rama abreviada: `saltadas.noLegibles++` → `void 0` | `AssertionError: expected 1 to be 2 // Object.is equality` | `cmp` idéntico |
+| 3 | 2.26 invariante | `detector.ts`, completa no anclada: `saltadas.noLegibles++` → `void 0` | `AssertionError: expected 1 to be 2 // Object.is equality` | `cmp` idéntico |
+| 4 | 2.26 | `detector.ts`: `resolverToken(nombre, indice)` → siempre `no-resuelto` | `AssertionError: expected +0 to be 1 // Object.is equality` | `cmp` idéntico |
+| 5 | 2.12-2.13 | `git.ts`: `git grep` sobre el disco con `--untracked` en vez del árbol | `AssertionError: expected 2 to be +0 // Object.is equality` | `cmp` idéntico |
+| 6 | 2.14-2.15 | `cli.ts`: quitar `'*.csv'` de `EXCLUSIONES` | `AssertionError: expected 1 to be +0 // Object.is equality` | `cmp` idéntico |
+| 7 | 2.14-2.15 | `cli.ts`: quitar `RUTA_BASE` de `EXCLUSIONES` | `AssertionError: expected [ { …(3) } ] to deeply equal []` | `cmp` idéntico |
+| 8 | 2.16-2.17 | `cli.ts`: rama del sha local en ceros → `if (false)` | `AssertionError: expected 'citas · 0000000 · refs/heads/main: no…' to contain 'rama borrada'` | `cmp` idéntico |
+| 9 | 2.16-2.17 | `cli.ts`: agrupar por `ref` en vez de por árbol | `AssertionError: expected [ '', …(2) ] to have a length of 2 but got 3` | `cmp` idéntico |
+| 10 | 2.17 | `cli.ts`: el `catch` hace `throw e` en vez de devolver salida 2 | 2 fallos: `Error: línea de stdin mal formada (se esperaban 4 campos): "esto no son cuatro campos"` y `Error: git shortlog -sne --all salió 129: error: too many arguments given outside repository` | `cmp` idéntico |
+| 11 | 2.18 | `git.ts`: quitar `-c core.quotepath=off` | **VERDE** (`Tests 1 passed \| 21 skipped (22)`): no discrimina, ver hallazgo (c) | `cmp` idéntico |
+| 12 | 2.18 | `git.ts`: decodificar la salida de `git grep` en `latin1` | `AssertionError: expected +0 to be 1 // Object.is equality` | `cmp` idéntico |
+| 13 | 2.19 | `git.ts`: `MAX_BUFFER` de 1 MB | `AssertionError: expected 2 to be +0 // Object.is equality` | `cmp` idéntico |
+| 14 | 2.20-2.21 | `detector.ts`: `arbolDeLectura` devuelve siempre el árbol local | `AssertionError: expected 'citas · bb70362 · refs/heads/main\n  …' not to contain` la anclada a la revisión anterior | `cmp` idéntico |
+| 15 | 2.22-2.23 | `cli.ts`: umbral de escalada `<= 1` → `<= 2` | `AssertionError: expected 'citas · d3cbe6e · refs/heads/main\n  …' to match /identidad/` | `cmp` idéntico |
+| 16 | 2.24 | `detector.ts`: un `leerLote` por objeto | `AssertionError: expected 4 to be 1 // Object.is equality` | `cmp` idéntico |
+| 17 | 2.25 | `informe.ts`: quitar la línea `texto que git cree binario` | `AssertionError: expected 'citas · d68523d · refs/heads/main\n  …' to match /texto que git cree binario \.+ 1 +\(n…/` | `cmp` idéntico |
+
+Antes de las mutaciones, `npx vitest run apps/desk/server/citas` sin mutar: 6 ficheros, 68 pruebas en verde.
+
+### Tareas que NACIERON VERDES y de dónde sale su rojo
+
+- **2.12-2.13** (M5): `git.ts` ya leía el árbol commiteado desde 1b-i. Rojo: mutación 5.
+- **2.18-2.19** (ruta no ASCII y búfer): ya estaban desde 1b-i. Rojo: mutaciones 12 y 13 (la 11 no
+  discrimina).
+- **2.20-2.21** (protección del ancla): ya estaba desde 1b-i. Rojo: mutación 14.
+- **2.24** (lote único): ya estaba desde 1a-ii. Rojo: mutación 16.
+
+### Rojo previo NO registrado
+
+**En 2.15-2.16 y 2.22-2.23 el rojo previo al GREEN NO quedó registrado; lo sustituye el rojo de
+mutación** (mutaciones 6-9 y 15). Es una sustitución declarada, no el rojo de strict_tdd. En 2.14 y 2.17 sí
+quedó el rojo literal en `tasks.md`, y 2.17 añade el de la mutación 10.
+
+### Hallazgos que este corte NO corrige (registrados por decisión de Gerencia, 2026-09-14)
+
+- **(a) Coste del hook: 7,8-9,6 s** (tres tomas: 8.125, 7.776 y 9.598 ms) con el informe completo, sobre
+  el árbol real del corte, invocado como el hook (`node_modules/.bin/tsx`, stdin de `pre-push`). RQ-CV-13
+  pide ≤5 s con tope duro de 10 s; el §7 del diseño midió 1,34-1,49 s. **No lo introduce este corte**: el
+  código de `049a233` tarda 9,6 s sobre el mismo árbol. Causa medida con `GIT_TRACE`: ~200 procesos
+  `git rev-parse --verify -q <rev>^{tree}`, **160 de ellos para `648432d`**, porque `detectar()` llama a
+  `repo.arbol()` por cada cita anclada en las dos pasadas y el adaptador lanza un `rev-parse` por llamada,
+  sin caché. D11 pedía una resolución por revisión distinta dentro del lote.
+- **(b) Borde de RQ-CV-03 en ancladas ambiguas:** si el nombre de una anclada resuelve en el índice local
+  a varias candidatas y una de ellas no existe en la revisión del ancla, la anclada bloquea «fichero
+  inexistente» aunque otra candidata sea válida allí. RQ-CV-03 dice que bloquea sólo si está rota en
+  TODAS. No afecta a las nueve anclas peladas reales, que resuelven a una sola ruta.
+- **(c) `core.quotepath=off` no discrimina** (mutación 11): con `-z` y `--null` git no entrecomilla las
+  rutas, así que la opción es redundante en `ls-tree` y `grep` (hipótesis sobre el porqué; lo medido es que
+  quitarla deja la prueba en verde). Redundancia declarada; la ruta no ASCII sí tiene detector
+  (mutación 12).
+
+### Descartes silenciosos convertidos (tarea 2.26 + invariante, ver enumeración íntegra más abajo)
+
+1. `detector.ts:159-160` (antes) — chequeo muerto en abreviadas, ELIMINADO (nunca podía dispararse).
+2. `detector.ts:161-162` (antes) — abreviada con contenido `null` pese a indexada → `saltadas.noLegibles`.
+3. `detector.ts:202` (antes) — completa con contenido `null`, TRES caminos: ancla resuelta localmente
+   pero ausente en su revisión → bloquea «fichero inexistente»; ancla no resuelta localmente y lectura
+   literal también falla → `saltadas.anclasSinResolver` («ancla sin resolver»); completa no anclada
+   defensiva → `saltadas.noLegibles`.
+
+Ecuación cerrada: `comprobadas + Σ saltadas + fueraDelRepositorio + noSonCitas + abreviadasRotas.length +
+bloqueantes.length + informadas = cosechadas` (`caducadas` y la línea de binarios fuera de la suma),
+verificada con un número LITERAL de citas escritas por la prueba en `hook.test.ts` (12 citas → 12).
+
+### Enumeración de descartes silenciosos (tarea 2.26, ANTES de tocar nada), sobre `049a233`
+
+Barrido de todo `continue` en `detectar()` (`apps/desk/server/citas/detector.ts`) que no incrementa
+ninguna cifra ni empuja a una lista, antes de cualquier cambio de este corte:
+
+1. **Abreviada, atribución fuera del índice exacto** — `detector.ts:159-160` en `049a233`:
+   `const resuelto = indice.exactos.has(c.atribuidoA) ? c.atribuidoA : null; if (resuelto === null)
+   continue // no resuelve: fuera de alcance de esta tarea`. **Código muerto**: `cosecha.ts` sólo fija
+   `atribuidoA` cuando `resuelveAFichero(nombre)` es true, y `resuelveAFichero` es exactamente
+   `indice.exactos.has(nombre)` con el MISMO índice que usa `detector.ts` en la misma llamada. Por
+   construcción, `resuelto` nunca es `null` aquí. Tratamiento: se ELIMINA el chequeo redundante (no
+   hace falta motivo nuevo: nunca se ejecuta, y una prueba para él sería intestable por construcción).
+
+2. **Abreviada, contenido `null` pese a estar en el índice exacto** — `detector.ts:161-162` en
+   `049a233`: `const contenido = lote.get(...); if (contenido === null || contenido === undefined)
+   continue`. Alcanzable de forma defensiva (p. ej. un submódulo git: listado por `ls-tree -r` pero
+   `cat-file --batch` no da un blob, sólo una cabecera `commit`). Tratamiento: cuenta como
+   `saltadas.noLegibles` (motivo «no legible»).
+
+3. **Completa (anclada o no), contenido `null` tras resolución** — `detector.ts:202` en `049a233`:
+   `if (contenidos.some((contenido) => contenido === null || contenido === undefined)) continue`. Cubre
+   TRES caminos distintos que había que separar:
+   - **(a)** Anclada, el nombre RESUELVE en el índice local (D11/D4: exacta, sufijo, RQ-CV-03 si
+     ambigua) pero la ruta resuelta no existe en la revisión del ancla → pasa a BLOQUEAR «fichero
+     inexistente» (regla central de la tarea 2.26, casos ii/iii de su encargo).
+   - **(b)** Anclada, el nombre NO resuelve en el índice local y la lectura literal en su propia
+     revisión también falla (el «ancla ilegible») → cuenta como `saltadas.anclasSinResolver`.
+   - **(c)** No anclada, contenido `null` pese a resolución local exitosa (defensivo, submódulo) →
+     cuenta como `saltadas.noLegibles`.
+
+**Ecuación corregida** (con el término que faltaba, decisión c de Gerencia):
+`comprobadas + Σ saltadas + fueraDelRepositorio + noSonCitas + abreviadasRotas.length +
+bloqueantes.length + informadas = cosechadas`, donde `Σ saltadas = sinBarra + ambiguas + directorios +
+huerfanas + anclasSinResolver + noLegibles`. `caducadas` (entradas de la base) y la línea de binarios
+(ficheros) quedan FUERA de la suma, como pide el encargo. `cosechadas` se expone en
+`ResultadoDeteccion` como `citas.length` (cardinalidad del array que produce `cosechar()`).
+
+**Categorías nuevas en `Saltadas`:** `anclasSinResolver` (motivo «ancla sin resolver», el ancla
+ilegible) y `noLegibles` (motivo «no legible», el caso defensivo de contenido `null` pese a índice).
+
+### Plan de implementación (antes de escribir código)
+
+- `detector.ts`: importar `resolverToken` y `ResolucionLocal` de `./resolucion`; nuevo caché
+  `resolverParaAncla(nombre)` memoizado por nombre (el índice local no depende de la revisión ancla);
+  primera pasada de `objetosNecesarios` usa la resolución para pedir la ruta correcta del árbol ancla;
+  segunda pasada separa bloqueo/saltada según si la resolución local tuvo éxito; abreviada simplificada
+  (elimina el chequeo muerto, cuenta `noLegibles` en el `continue` de contenido).
+- `informe.ts`: añade los dos motivos nuevos al desglose de «saltadas».
+- `informe.test.ts`: actualiza el regex de la prueba existente con los dos motivos nuevos (cifra 0).
+- `hook.test.ts`: dos bloques nuevos — (1) los tres rojos propios de 2.26 (i/ii/iii) con su MUT; (2) el
+  invariante de conservación con un caso de cada categoría más el ancla ilegible, llamando a `detectar()`
+  directamente sobre un `Repo` git real (para tener el objeto `ResultadoDeteccion` completo, no sólo el
+  texto del CLI).
+- `detector.test.ts`: un bloque para `noLegibles` (con y sin el defecto, dos signos) y uno de
+  triangulación para el caso «ambiguo» de una anclada resuelta por el índice local.
+- `design.md` §11 fila 8 (a) y §5 (línea «saltadas»); `tasks.md` tarea 2.26: documentar el cierre.
+
 ## Corte 1b-i (tareas 2.0–2.11) — cerrado
 
 **12/12.** Intento 3 del ledger, tras el `reset` de Gerencia; base del corte `01df7ce`. Salidas literales
