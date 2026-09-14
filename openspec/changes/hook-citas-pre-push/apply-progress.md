@@ -1,5 +1,66 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 2 — primera parte (tareas 3.8, 3.9, 3.10) — CERRADO, 3/3
+
+Base del corte: `984b797`. Orden ejecutado: 3.8 → 3.9 → 3.10, como exige la nota del corte en `tasks.md`
+(las tres corrigen el detector ANTES de generar la base en 3.1-3.7, que no son de este intento).
+
+### 3.8 · Coste (RQ-CV-13, D11)
+
+`detector.test.ts`: caché `arbolCacheado` por revisión DISTINTA dentro de `detectar()`. RED: `expected 6
+to be 1` (3 anclas a la misma revisión) y `expected 4 to be 2` (2 anclas, 2 revisiones) — sin caché,
+`arbol()` se llamaba 2 veces por cita y pasada. GREEN: 22/22 en `detector.test.ts`. MUT (quitar la caché,
+`arbolCacheado` vuelve a llamar `repo.arbol(rev)` directo) → mismo rojo exacto; restaurado, `cmp` idéntico.
+
+CIERRE (hook invocado como `pre-push` sobre el árbol real, commit temporal con índice APARTE,
+`origin/main` = `984b797`): tres tomas **2.779 / 2.618 / 2.699 ms**, las tres ≤5 s (antes: 7,8-9,6 s,
+hallazgo (a) de 1b-ii). Índice real intacto tras la medición (`git diff --cached --quiet`). Informe con
+`texto que git cree binario .. 0`.
+
+### 3.9 · RQ-CV-03 en ancladas ambiguas
+
+`detector.test.ts`: una candidata ausente en la revisión del ancla cuenta como rota PARA ESA candidata,
+nunca bloquea de inmediato. RED: `expected true to be false` (candidata ausente + otra válida bloqueaba
+en la versión mala). Control del otro signo (todas ausentes → bloquea) nace verde. GREEN: 24/24. MUT
+(bloquear en cuanto falta una candidata) → mismo rojo; restaurado, `cmp` idéntico. El invariante de
+conservación de `hook.test.ts` (tarea 2.26) sigue en verde.
+
+### 3.10 · Modos `--sha` y `--generar-base` (§5 del diseño)
+
+`entrada` pasa de `string` a `() => string`; `ejecutar` sólo la invoca en modo hook. Tres partes en
+`hook.test.ts`, repositorio sintético:
+
+| Parte | RED | GREEN | MUT | Resultado |
+|---|---|---|---|---|
+| (a) lectura perezosa | `codigo: 2` (modo no existía; `entrada.split` sobre una función) | `llamadas` 0 con `--sha`, 1 en modo hook | leer stdin en TODOS los modos | `expected 1 to be +0`; restaurado, `cmp` idéntico |
+| (b) `--sha <rev>` | `codigo: 2` (modo no existía) | rota→1, válida→0; sin `origin/main` → `NO HECHO`; con él, lo nombra | cubierta por la MUT de (a): sin `--sha` no hay modo que mutar aparte | — |
+| (c) `--generar-base` | `codigo: 2` (modo no existía) | 5 entradas, sin BOM, sin CR, orden `a.md:1,a.md:2,a.md:3,b.md:1,b.md:2` (con `a.md:1` y `a.md:3` la MISMA cita rota repetida, y `a.md:2` una cita distinta entre medias); commiteada, el hook da `línea base .. 5 informadas · 0 caducadas`, salida 0 | escribir con BOM | `expected 239 not to be 239` (primer byte `0xEF`); restaurado, `cmp` idéntico |
+| (c) | — | — | escribir SIN el `.sort()` | `expected [ 'a.md:1', 'a.md:3', 'a.md:2', …(2) ] to deeply equal [ 'a.md:1', 'a.md:2', 'a.md:3', …(2) ]`; restaurado, `cmp` idéntico |
+
+**MUT «sin ordenar» — corregida (orquestador, 2026-09-14): SÍ discrimina.** «No discrimina» era
+**falso**: la prueba nunca repetía la MISMA cita rota en un documento. `bloqueantes` se construye
+recorriendo `porClaveCandidatos` (`Map` de `agrupar()`, clave = documento + texto de la cita): dos
+ocurrencias de la MISMA cita rota comparten clave y salen JUNTAS, aunque entre ellas haya otra cita rota
+distinta. Ampliada la prueba con ese caso: sin `.sort()`, `a.md:1, a.md:3, a.md:2`, no el de aparición.
+Necesario con datos reales (51 entradas, 42 claves sobre `773ad75`). Detalle en el §11, fila 10.
+
+### Verificación final
+
+`npm test`: 1092/1094 (2 skipped preexistentes, 119/120 ficheros verdes; un `[vitest-worker]: Timeout
+calling "onTaskUpdate"` transitorio en la primera corrida no reprodujo en la segunda, exit 0, mismo
+recuento). `npm run typecheck`: limpio. `eslint . --max-warnings 158`: 0 errores, 158 avisos (igual que
+baseline, ninguno nuevo). `npm run test:coverage`: global 94,79 % líneas/sentencias · 83,93 % ramas ·
+98,21 % funciones (umbral 92/92/96/78, todos superados); `apps/desk/server/citas`: 99,24 % líneas ·
+95,11 % ramas · 97,43 % funciones · 99,24 % sentencias. 0 bytes de control y 0 CR en el BLOB a commitear
+de los 7 ficheros tocados (verificado con un índice git temporal aislado, nunca el real; el CRLF del
+árbol de trabajo es el efecto normal de `core.autocrlf=true` en Windows, no una violación — lo que se
+commitea es LF puro). Guardián de binarios (1.0) y RQ-CV-18 (grafo de imports): verdes, dentro de la
+suite completa.
+
+**Tamaño con git, medido AL FINAL** (tras la corrección de la 3.10(c)): `git diff --shortstat 984b797` →
+**327/22 = 349 líneas** en 7 ficheros; 0 nuevos sin trackear. **Pendiente:** 3.1-3.7 de esta Fase 3, Fase 4
+y Fase 5.
+
 ## Corte 1b-ii (tareas 2.12–2.26) — CERRADO, 15/15
 
 Base del corte: `049a233`. **Tamaño con git: `git diff --shortstat 049a233` → 11 ficheros, +711/-89 =

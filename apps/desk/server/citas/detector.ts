@@ -148,10 +148,18 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
     }
     return r
   }
+  // Tarea 3.8 (RQ-CV-13, D11): UNA sola resolución de árbol por revisión DISTINTA, nunca una por cita.
+  // Sin esta caché, `arbolCacheado` se llamaría 2N veces para N anclas a la misma revisión (una por
+  // pasada), y el hook mide ~200 `git rev-parse` en el árbol real, 160 de ellos para una sola revisión.
+  const arbolesPorRevision = new Map<string, string | null>()
+  function arbolCacheado(rev: string): string | null {
+    if (!arbolesPorRevision.has(rev)) arbolesPorRevision.set(rev, repo.arbol(rev))
+    return arbolesPorRevision.get(rev) as string | null
+  }
   for (const c of citas) {
     if (c.tipo === 'completa') {
       if (c.ancla !== undefined) {
-        if (repo.arbol(c.ancla) !== null) {
+        if (arbolCacheado(c.ancla) !== null) {
           const r = resolverParaAncla(c.fichero)
           if (r.tipo === 'unico') objetosNecesarios.add(`${c.ancla}:${r.ruta}`)
           else if (r.tipo === 'ambiguo') for (const ruta of r.candidatos) objetosNecesarios.add(`${c.ancla}:${ruta}`)
@@ -197,7 +205,7 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
     if (c.tipo === 'no-es-cita') noSonCitas++
     if (c.tipo !== 'completa') continue
 
-    if (c.ancla !== undefined && repo.arbol(c.ancla) === null) {
+    if (c.ancla !== undefined && arbolCacheado(c.ancla) === null) {
       candidatosDeBloqueo.push({ ...origen(c), motivo: `revisión inexistente (${c.ancla})` })
       continue
     }
@@ -238,7 +246,10 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
       // 'no-resuelto': rutasCandidatas queda en [c.fichero] — lectura literal declarada (§11 D del diseño)
     }
     const contenidos = rutasCandidatas.map((ruta) => lote.get(`${arbolDeLectura(c, arbolLocal)}:${ruta}`))
-    if (contenidos.some((contenido) => contenido === null || contenido === undefined)) {
+    const ausentes = contenidos.filter((contenido) => contenido === null || contenido === undefined).length
+    if (ausentes === contenidos.length) {
+      // TODAS las candidatas están ausentes: nada que comprobar. Con una sola candidata (el caso normal,
+      // y también el de una anclada ÚNICA — casos ii/iii de la 2.26) esta rama ya lo cubre entera.
       if (c.ancla === undefined) {
         saltadas.noLegibles++ // defensivo: tracked pero git no devuelve su contenido (p. ej. un submódulo)
       } else if (ancladaResueltaPorIndiceLocal) {
@@ -248,7 +259,12 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
       }
       continue
     }
-    const roturas = contenidos.map((contenido) => rotura(c, contenido as string))
+    // Tarea 3.9 (RQ-CV-03 en ancladas ambiguas): si SÓLO ALGUNAS candidatas están ausentes en la
+    // revisión (esto exige más de una candidata: con una sola, "ausentes === contenidos.length" ya
+    // decidió arriba), cada ausencia cuenta como rota PARA ESA candidata, sin bloquear por mirar sólo
+    // la primera. El resto sigue la regla normal: bloquea sólo si TODAS acaban rotas; si alguna valida,
+    // se salta como ambigua.
+    const roturas = contenidos.map((contenido) => (contenido === null || contenido === undefined ? { linea: c.desde, motivo: 'no existe en esta revisión' } : rotura(c, contenido)))
     const primera = roturas[0]
     // RQ-CV-03: con varias candidatas bloquea sólo si está rota en TODAS; si una la valida, se salta.
     if (primera && roturas.every((x) => x !== null)) {

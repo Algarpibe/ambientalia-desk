@@ -5,11 +5,18 @@
  * el hook de `pre-push` bajo `tsx` (RQ-CV-18). NADA de producción lo importa — `guardianes.test.ts`
  * recorre el grafo de imports desde `apps/desk/server/index.ts` y lo comprueba.
  *
- * El CLI (§5 del diseño): lee el stdin de `pre-push`, llama al núcleo sobre el sha local, arma el
- * informe y fija el código de salida. `ejecutar` es puro respecto al proceso para que las pruebas lo
- * llamen en proceso y el adaptador cuente en la cobertura; sólo se autoejecuta como punto de entrada.
+ * El CLI (§5 del diseño): tres modos. Sin argumentos, el modo HOOK lee el stdin de `pre-push`, llama al
+ * núcleo sobre el sha local, arma el informe y fija el código de salida. `--sha <rev>` comprueba una
+ * revisión concreta a mano (§8 de la propuesta), con el índice remoto de `origin/main`. `--generar-base`
+ * escribe `lineaBase.jsonl` para el árbol de `HEAD` (D6). `ejecutar` es puro respecto al proceso para
+ * que las pruebas lo llamen en proceso y el adaptador cuente en la cobertura; sólo se autoejecuta como
+ * punto de entrada.
+ *
+ * Tarea 3.10(a): `entrada` es una LECTURA PEREZOSA (`() => string`), no el texto ya leído. `ejecutar` la
+ * invoca sólo en modo HOOK: a mano, desde una terminal, el stdin es un TTY y una lectura en `--sha` o
+ * `--generar-base` esperaría un EOF que no llega.
  */
-import { readFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { detectar, type EntradaBase, type Repo } from './detector'
@@ -18,7 +25,8 @@ import { informe } from './informe'
 
 export interface EntradaCli {
   argv: string[]
-  entrada: string
+  /** Lectura perezosa del stdin: sólo el modo hook la invoca (tarea 3.10a). */
+  entrada: () => string
   cwd: string
   env?: NodeJS.ProcessEnv
 }
@@ -30,6 +38,7 @@ export interface SalidaCli {
 
 const SALTO = String.fromCharCode(10)
 const CEROS_RE = /^0+$/
+const CEROS = '0'.repeat(40)
 
 /** La base viaja en el mismo sha que se empuja (D6). Se excluye del barrido porque tiene forma de cita. */
 const RUTA_BASE = 'apps/desk/server/citas/lineaBase.jsonl'
@@ -79,14 +88,61 @@ function indiceRemotoUnido(repo: Repo, remotos: readonly string[]): { remoto?: {
   return en !== undefined ? { remoto: { en, rutas: [...rutas] }, etiqueta: en } : { etiqueta: indices[0].etiqueta }
 }
 
-export function ejecutar({ entrada, cwd, env = process.env }: EntradaCli): SalidaCli {
+type Modo = { modo: 'hook' } | { modo: 'sha'; rev: string } | { modo: 'generar-base' }
+
+/** Tarea 3.10: `--sha <rev>` (comprobación manual) y `--generar-base` (escribe la línea base); sin
+ *  ninguno de los dos, modo HOOK (lee el stdin de `pre-push`). */
+function parseArgv(argv: readonly string[]): Modo {
+  const i = argv.indexOf('--sha')
+  if (i !== -1 && argv[i + 1] !== undefined) return { modo: 'sha', rev: argv[i + 1] }
+  if (argv.includes('--generar-base')) return { modo: 'generar-base' }
+  return { modo: 'hook' }
+}
+
+/** Tarea 3.10(b): `--sha <rev>` — comprobación manual del §8 de la propuesta. El índice remoto SALE
+ *  SIEMPRE de `origin/main` (o "NO HECHO" si no existe): mismo camino que una rama nueva en modo hook,
+ *  reutilizando `indiceRemoto` con el sha remoto en ceros. */
+function comprobarSha(repo: Repo, cwd: string, env: NodeJS.ProcessEnv, rev: string): SalidaCli {
+  const arbol = repo.arbol(rev)
+  if (arbol === null) return { codigo: 2, texto: `citas: fallo operativo — revisión inexistente (${rev})` }
+  const { remoto, etiqueta } = indiceRemoto(repo, CEROS)
+  const resultado = detectar({ repo, arbolLocal: arbol, exclusiones: EXCLUSIONES, base: leerBase(repo, arbol), remoto })
+  const binarios = textoQueGitCreeBinario(cwd, env, rev).length
+  const texto = informe(resultado, { sha: rev.slice(0, 7), ref: rev, indiceRemoto: etiqueta, binarios })
+  return { codigo: resultado.bloquea ? 1 : 0, texto }
+}
+
+/** Tarea 3.10(c): `--generar-base` escribe `lineaBase.jsonl` ÉL MISMO (UTF-8 sin BOM, LF), nunca por
+ *  redirección — en PowerShell 5.1 la redirección escribe UTF-16 (§5, D6). Calculada con la base VACÍA,
+ *  para que una base previa no esconda entradas; ordenada por documento y línea (a igualdad, por orden
+ *  de aparición: `Array.prototype.sort` es estable). Una entrada por CANDIDATO DE BLOQUEO, nunca por
+ *  abreviada (RQ-CV-09). */
+function generarBase(repo: Repo, cwd: string): SalidaCli {
+  const arbol = repo.arbol('HEAD')
+  if (arbol === null) return { codigo: 2, texto: 'citas: fallo operativo — HEAD no pela a un árbol' }
+  const resultado = detectar({ repo, arbolLocal: arbol, exclusiones: EXCLUSIONES, base: [] })
+  const entradas: EntradaBase[] = resultado.bloqueantes
+    .map(({ fichero, linea, cita, motivo }): EntradaBase => ({ fichero, linea, cita, motivo }))
+    .sort((a, b) => (a.fichero === b.fichero ? a.linea - b.linea : a.fichero < b.fichero ? -1 : 1))
+  const texto = entradas.map((e) => JSON.stringify(e)).join(SALTO) + (entradas.length > 0 ? SALTO : '')
+  const rutaAbsoluta = path.join(cwd, RUTA_BASE)
+  mkdirSync(path.dirname(rutaAbsoluta), { recursive: true })
+  writeFileSync(rutaAbsoluta, texto, 'utf8') // Node no antepone BOM; el propio CLI la escribe, no por redirección
+  return { codigo: 0, texto: `citas: línea base generada · ${entradas.length} entradas` }
+}
+
+export function ejecutar({ argv, entrada, cwd, env = process.env }: EntradaCli): SalidaCli {
   try {
     const repo = repoGit(cwd, env)
+    const modo = parseArgv(argv)
+    if (modo.modo === 'generar-base') return generarBase(repo, cwd)
+    if (modo.modo === 'sha') return comprobarSha(repo, cwd, env, modo.rev)
+    // modo hook (tarea 3.10a): ÚNICA rama que invoca `entrada()`.
     const textos: string[] = []
     let codigo: 0 | 1 = 0
     // D12: dedup por ÁRBOL — dos referencias con el MISMO sha local cuestan un solo barrido.
     const porArbol = new Map<string, { ref: string; shaLocal: string; remotos: string[] }>()
-    for (const linea of entrada.split(SALTO).filter((l) => l.trim() !== '')) {
+    for (const linea of entrada().split(SALTO).filter((l) => l.trim() !== '')) {
       const partes = linea.trim().split(' ')
       if (partes.length !== 4) throw new ErrorDeGit(`línea de stdin mal formada (se esperaban 4 campos): "${linea}"`)
       const [ref, shaLocal, , shaRemoto] = partes
@@ -123,7 +179,7 @@ export function ejecutar({ entrada, cwd, env = process.env }: EntradaCli): Salid
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { codigo, texto } = ejecutar({ argv: process.argv.slice(2), entrada: readFileSync(0, 'utf8'), cwd: process.cwd() })
+  const { codigo, texto } = ejecutar({ argv: process.argv.slice(2), entrada: () => readFileSync(0, 'utf8'), cwd: process.cwd() })
   process.stderr.write(texto + SALTO)
   process.exitCode = codigo
 }

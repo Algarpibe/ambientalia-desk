@@ -87,7 +87,7 @@ sobre este árbol, nada en paralelo (regla del ciclo 2).
 | Unit | Goal | Likely PR | Focused test command | Runtime harness | Rollback boundary |
 |---|---|---|---|---|---|
 | 1a | Núcleo puro: cosecha, resolución, comprobación, línea base, informe — sin git | PR 1 | `npx vitest run apps/desk/server/citas/detector.test.ts apps/desk/server/citas/cosecha.test.ts apps/desk/server/citas/resolucion.test.ts apps/desk/server/citas/informe.test.ts` | N/A — lógica pura contra `Repo` en memoria, sin proceso real | Revertir los 4 ficheros núcleo + porción memoria de `reposDePrueba.ts` + 4 test files; nada los importa en producción (RQ-CV-18) |
-| 1b | Adaptador git (`spawnSync`) + CLI + pruebas con repositorio sintético | PR 2 | `npx vitest run apps/desk/server/citas/hook.test.ts` | Repositorio git temporal por prueba, `cli.ts` invocado en proceso vía `ejecutar({argv, entrada, cwd, env})` | Revertir `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts`; sin efecto de ejecución sin Unidad 3 |
+| 1b | Adaptador git (`spawnSync`) + CLI + pruebas con repositorio sintético | PR 2 | `npx vitest run apps/desk/server/citas/hook.test.ts` | Repositorio git temporal por prueba, `cli.ts` invocado en proceso vía `ejecutar({argv, entrada, cwd, env})` — **corregido en la tarea 3.10(a): `entrada` pasa a ser `() => string`, una lectura perezosa que sólo invoca el modo hook** | Revertir `git.ts`, `cli.ts`, porción sintética de `reposDePrueba.ts`, `hook.test.ts`; sin efecto de ejecución sin Unidad 3 |
 | 2 | Línea base generada + IV-10 + dos frases de la regla de mutación 4 | PR 3 | `npm test` (regresión completa) | Manual: `npx tsx apps/desk/server/citas/cli.ts --generar-base` sobre el árbol de 1a+1b ya commiteado; inspeccionar `lineaBase.jsonl` (cifra ≤100, R-14) | Revertir `lineaBase.jsonl` + las filas/frases de `CLAUDE.md` y `openspec/config.yaml`; sin efecto sin Unidad 3 |
 | 3 | Hook versionado, instalador, `.gitattributes`, `DEPLOY.md` | PR 4 | `npx vitest run apps/desk/server/citas/guardianes.test.ts apps/desk/server/citas/instalador.test.ts` | Manual: push real de cierre con el hook instalado (M16 en ejecución, M18, M19 — Fase 5) | `git revert` + `git config --unset core.hooksPath` en cada clon que ya lo tuviera (el revert del fichero no deshace el `git config`) |
 
@@ -332,7 +332,7 @@ que la unidad de la que salen; cada uno es un intento de `sdd-apply` con `work_u
 de generar la base (decisiones de Gerencia, 2026-09-14): la base se genera con el detector que va a
 imponerla.
 
-- [ ] 3.8 COSTE, PRIMERA del corte (RQ-CV-13, D11; hallazgo (a) de 1b-ii en `apply-progress.md`). Hoy
+- [x] 3.8 COSTE, PRIMERA del corte (RQ-CV-13, D11; hallazgo (a) de 1b-ii en `apply-progress.md`). Hoy
       `detectar()` pide el árbol de la revisión ancla una vez por cita anclada y por pasada:
       `apps/desk/server/citas/detector.ts:154` en `36e5a2d`, `apps/desk/server/citas/detector.ts:200` en `36e5a2d`;
       y el adaptador lanza un `git rev-parse` por llamada, sin caché:
@@ -346,7 +346,10 @@ imponerla.
       llamadas → rojo; restaurar y comprobar con `cmp`. CIERRE: hook invocado como en `pre-push` sobre el
       árbol real con el informe completo (línea de binarios incluida), **≤5 s en tres tomas**; si alguna
       toma pasa de 5 s, se PARA y se pregunta.
-- [ ] 3.9 RQ-CV-03 EN ANCLADAS AMBIGUAS, SEGUNDA del corte (hallazgo (b) de 1b-ii). Hoy, si el nombre de
+      **CERRADO.** Caché `arbolCacheado` en `detectar()`. RED: 6→1 y 4→2. MUT (quitar caché) → mismo rojo;
+      restaurado, `cmp` idéntico. CIERRE: tres tomas 2.779/2.618/2.699 ms, todas ≤5 s. Detalle en
+      `apply-progress.md`, sección «Corte 2 — primera parte».
+- [x] 3.9 RQ-CV-03 EN ANCLADAS AMBIGUAS, SEGUNDA del corte (hallazgo (b) de 1b-ii). Hoy, si el nombre de
       una anclada resuelve en el índice local a varias candidatas y alguna no existe en la revisión del
       ancla, bloquea «fichero inexistente» sin mirar las demás:
       `apps/desk/server/citas/detector.ts:244-245` en `36e5a2d`. REGLA: una candidata ausente en la
@@ -356,7 +359,9 @@ imponerla.
       la revisión y otra válida → no bloquea y cuenta como ambigua; control del otro signo: todas ausentes
       → bloquea. El invariante de conservación sigue cuadrando. MUT: volver a bloquear en cuanto una
       candidata falta → rojo; restaurar y comprobar con `cmp`.
-- [ ] 3.10 MODOS `--sha` Y `--generar-base` DEL CLI, TERCERA del corte (§5 del diseño; decisión de Gerencia,
+      **CERRADO.** RED: `expected true to be false`. MUT (bloquear en cuanto falta una) → mismo rojo;
+      restaurado, `cmp` idéntico. Invariante de conservación (`hook.test.ts`) sigue en verde.
+- [x] 3.10 MODOS `--sha` Y `--generar-base` DEL CLI, TERCERA del corte (§5 del diseño; decisión de Gerencia,
       2026-09-14). Hoy `ejecutar` declara `argv` y no lo lee, y el punto de entrada lee el stdin SIEMPRE:
       `apps/desk/server/citas/cli.ts:20` en `36e5a2d`, `apps/desk/server/citas/cli.ts:126` en `36e5a2d`.
       Sin estos modos, 3.1 y 3.2 no se pueden ejecutar. Tres partes, cada una con su rojo en
@@ -379,6 +384,18 @@ imponerla.
       commitear la base generada (el detector la lee por sha, M8), `ejecutar` en modo hook sobre ese commit
       → 0 bloqueantes, N informadas y salida 0. MUT: escribir con BOM → rojo; escribir sin ordenar → rojo
       (dos mutaciones).
+      **CERRADO**, las tres partes. (a) RED `expected 1/0 to be +0/1`; MUT (leer stdin siempre) → mismo
+      rojo; restaurado, `cmp` idéntico. (b) RED dos signos con `expected 2 to be 1`; GREEN confirma NO
+      HECHO sin `origin/main` y `origin/main` con él. (c) RED con `expected 2 to be +0`; GREEN: fichero
+      generado, ordenado, sin BOM ni CR, commiteado pasa el hook en verde. MUT-BOM → rojo (`expected 239
+      not to be 239`), restaurado y `cmp` idéntico. **MUT-sin-ordenar: SÍ discrimina.** La prueba se
+      amplió con una cita rota repetida en el MISMO documento con otra distinta entre medias, porque
+      `agrupar()` (`detector.ts`) casa `bloqueantes` por (documento, texto de la cita): dos ocurrencias de
+      la MISMA cita rota comparten clave y salen JUNTAS del `Map`, así que sin `.sort()` el orden natural
+      NO es el de aparición. Rojo: `expected [ 'a.md:1', 'a.md:3', 'a.md:2', …(2) ] to deeply equal
+      [ 'a.md:1', 'a.md:2', 'a.md:3', …(2) ]`; restaurado y `cmp` idéntico. El `.sort()` es necesario con
+      datos reales (51 entradas, 42 claves sobre `773ad75`), no defensivo. Detalle completo en
+      `apply-progress.md` y §11 del diseño, fila 10.
 - [ ] 3.1 Precondición (RQ-CV-14, primera pasada; M18 orden): correr `cli.ts --sha HEAD` sobre el árbol
       de la Unidad 1 (1a+1b) ya commiteada y confirmar 0 bloqueantes antes de generar la base.
 - [ ] 3.2 Ejecutar `cli.ts --generar-base` y escribir `apps/desk/server/citas/lineaBase.jsonl` (JSON

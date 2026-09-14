@@ -172,6 +172,44 @@ describe('detectar · un solo lote por árbol (D11)', () => {
   })
 })
 
+describe('detectar · 3.8: una sola resolución de árbol por revisión DISTINTA (RQ-CV-13, D11)', () => {
+  it('tres anclas a la MISMA revisión cuestan 1 llamada a arbol() (hoy 2N: dos pasadas por cita)', () => {
+    const base = repoEnMemoria({
+      LOCAL: {
+        'doc.md': [
+          `Una: ${anclada(cita('a.md', 1), 'rev1')}.`,
+          `Dos: ${anclada(cita('b.md', 1), 'rev1')}.`,
+          `Tres: ${anclada(cita('c.md', 1), 'rev1')}.`,
+        ].join('\n'),
+      },
+      rev1: { 'a.md': 'uno', 'b.md': 'uno', 'c.md': 'uno' },
+    })
+    let llamadas = 0
+    const repoContado: typeof base = { ...base, arbol(rev) { llamadas++; return base.arbol(rev) } }
+    const resultado = detectar({ repo: repoContado, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.comprobadas).toBe(3)
+    expect(llamadas).toBe(1)
+  })
+
+  it('dos anclas a revisiones DISTINTAS cuestan 2 llamadas a arbol()', () => {
+    const base = repoEnMemoria({
+      LOCAL: {
+        'doc.md': [
+          `Una: ${anclada(cita('a.md', 1), 'rev1')}.`,
+          `Dos: ${anclada(cita('b.md', 1), 'rev2')}.`,
+        ].join('\n'),
+      },
+      rev1: { 'a.md': 'uno' },
+      rev2: { 'b.md': 'uno' },
+    })
+    let llamadas = 0
+    const repoContado: typeof base = { ...base, arbol(rev) { llamadas++; return base.arbol(rev) } }
+    const resultado = detectar({ repo: repoContado, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.comprobadas).toBe(2)
+    expect(llamadas).toBe(2)
+  })
+})
+
 describe('detectar · M22 — un ejemplo de cita rota CON forma de cita bloquea; en prosa, sin forma, pasa', () => {
   it('regla de mutación 4: un ejemplo con forma de cita se trata como cita real', () => {
     const repoConEjemploEnFormaDeCita = repoEnMemoria({
@@ -313,6 +351,28 @@ describe('detectar · divergencia nº 8 (tarea 2.26): la anclada ambigua se resu
     const resultadoValida = detectar({ repo: repoValida, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultadoValida.bloquea).toBe(false)
     expect(resultadoValida.saltadas.ambiguas).toBe(1)
+  })
+})
+
+describe('detectar · 3.9: RQ-CV-03 en ancladas AMBIGUAS — una candidata AUSENTE en la revisión no bloquea sola', () => {
+  it('una candidata ausente en la revisión y otra válida: no bloquea, cuenta como ambigua', () => {
+    const repo = repoEnMemoria({
+      LOCAL: { 'doc.md': `Ver ${anclada(cita('comun.md', 1), 'rev1')}.`, 'a/comun.md': 'uno', 'b/comun.md': 'uno' },
+      rev1: { 'a/comun.md': 'uno\ndos' }, // sólo a/comun.md existe en rev1; b/comun.md está AUSENTE, no rota
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.saltadas.ambiguas).toBe(1)
+  })
+
+  it('control del otro signo: TODAS las candidatas ausentes en la revisión sigue bloqueando', () => {
+    const repo = repoEnMemoria({
+      LOCAL: { 'doc.md': `Ver ${anclada(cita('comun.md', 1), 'rev1')}.`, 'a/comun.md': 'uno', 'b/comun.md': 'uno' },
+      rev1: {}, // ni a/comun.md ni b/comun.md existen en rev1
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(true)
+    expect(resultado.bloqueantes[0]).toMatchObject({ motivo: 'fichero inexistente' })
   })
 })
 
