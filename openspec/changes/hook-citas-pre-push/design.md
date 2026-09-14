@@ -40,7 +40,7 @@ de RQ-CV-17 con número, da el veredicto de la opción del ref local y fija el c
 | Ficheros `.csv` | **Fuera del barrido por extensión, no del índice**, declarado igual que `docs/artefactos/` | Saltadas sin `/`: **5.072 → 975**; números pelados **4.151 → 54**; la base es **51** en los dos casos |
 | Opción (d), ref local | **Se declara, no se construye** (§6) | 50-60 líneas, +0,23 s, y sólo cierra el hueco en clones con validación previa |
 | Coste (RQ-CV-13) | **Medido por la ruta diseñada bajo `tsx`: 1,34-1,49 s** de reloj (§7) | Margen de ~3,5 s contra 5 s y ~8,5 s contra 10 s |
-| Línea base | `apps/desk/server/citas/lineaBase.jsonl`, JSON Lines, una entrada por línea, **excluida del barrido** | **51** líneas, 42 claves (fichero, cita) distintas |
+| Línea base | `apps/desk/server/citas/lineaBase.jsonl`, JSON Lines, una entrada por línea, **excluida del barrido** | **51** líneas, 42 claves (fichero, cita) distintas (cifra vigente: **37** líneas, 28 claves, medida el 2026-09-14 sobre `73a9acb`; las 51 no se borran, caso B de la regla de mutación 4) |
 | Cadenas rotas en las pruebas | Citas **construidas en tiempo de ejecución** y repositorios sintéticos; **ningún fichero de pruebas sale del barrido** | 0 exclusiones nuevas por pruebas |
 
 ⚠️ **La base es 51, no 47.** La versión anterior de este diseño decía 47, cifra de un prototipo que
@@ -89,7 +89,7 @@ reglas de `rules.design` (`openspec/config.yaml:970-972` en `648432d`) tampoco: 
 | `apps/desk/server/citas/cli.ts` | Crear | 1 | Modos de hook, `--sha` y `--generar-base`; aviso de escalada; código de salida. **Cabecera con las dos declaraciones de RQ-CV-18** | 30-45 |
 | `apps/desk/server/testing/reposDePrueba.ts` | Crear | 1 | Arnés: `Repo` en memoria, repositorio git temporal aislado, y los constructores de citas en tiempo de ejecución (D7) | 30-45 |
 | `apps/desk/server/citas/*.test.ts` | Crear | 1 y 3 | §8 | 365-520 |
-| `apps/desk/server/citas/lineaBase.jsonl` | Crear | 2 | Generada con `--generar-base` | 51 |
+| `apps/desk/server/citas/lineaBase.jsonl` | Crear | 2 | Generada con `--generar-base` | 51 (cifra vigente: 37, medida el 2026-09-14 sobre `73a9acb`) |
 | `CLAUDE.md` y `openspec/config.yaml` | Modificar | 2 | IV-10 y las dos frases de la regla de mutación 4, sin cambios respecto a la propuesta | 38-66 |
 | `.githooks/pre-push` | Crear | 3 | Cuatro líneas (§5) | 4 |
 | `scripts/instalar-hooks.mjs` | Crear | 3 | Guarda en Node y `git config core.hooksPath .githooks` (D9) | 25-35 |
@@ -114,10 +114,13 @@ las pruebas; y la base sube de 47 a 51. La versión anterior de esta tabla, con 
 
 **El criterio de corte es por INTENTO, no por tanda.** Cada intento de `sdd-apply` tiene que quedar por
 debajo de las 800 líneas del ledger, no sólo la tanda en conjunto: `gentle-ai sdd-attempt` mide
-`changed_lines` diffeando el árbol entero entre el principio y el final del intento (regla del ciclo 2,
-`CLAUDE.md:353-356` en `648432d`), y un intento que pasa del presupuesto se para en
-`blocked(maintainer_decision)` (`CLAUDE.md:360-361` en `648432d`). La costura 1a/1b hay que medirla
-contra eso: cada lado, con sus pruebas, por debajo de 800.
+`changed_lines` diffeando el árbol entre el principio y el final del intento, **pero no como un
+`git diff --shortstat` del árbol entero**: no cuenta lo nuevo sin trackear, y un fichero binario para
+git en el árbol de partida cuenta 0 (regla del ciclo 2 de `CLAUDE.md`, corregida en la unidad de
+trabajo 2 con las mediciones de `hook-citas-pre-push`), y un intento que pasa del
+presupuesto se para en `blocked(maintainer_decision)` (regla del ciclo 2). La costura 1a/1b hay que
+medirla con `git diff --shortstat` contra el commit de partida **más** lo nuevo sin trackear, no con el
+número que reporte el ledger: cada lado, con sus pruebas, por debajo de 800.
 
 ---
 
@@ -592,7 +595,7 @@ de desarrollo.
 | 7 | RQ-CV-12, M16 | La ejecución sin `node_modules` queda manual; el guardián estático se automatiza | §8 |
 | 8 | D11 y §5 (puerto `Repo`), cortes 1a y 1b-ii | **Primera mitad CERRADA por la tarea 2.26** (Gerencia, 2026-09-14): la anclada resuelve su fichero con el índice del sha local y el orden D4, y se lee en la ruta resuelta dentro de su revisión; si esa ruta no existe en la revisión, bloquea como una ruta inexistente. **Sigue abierto:** (a) no se construye el índice de la propia revisión que pide D11, así que un nombre que no resuelve en el índice local se lee por su ruta literal y, si esa lectura falla, **cuenta como saltada con el motivo «ancla sin resolver»** (invariante de conservación, decisión c de Gerencia, 2026-09-14 — ya NO se descarta sin informar); y un fichero movido desde la revisión del ancla bloquea como «fichero inexistente» en vez de resolverse en ella; (b) el puerto `Repo` se declara en `detector.ts`, no en un fichero propio | En el corte 1a la única prueba en memoria de la vuelta del ancla pasaba con la lectura directa, y el diseño no fija dónde vive el puerto. Con git de verdad, la lectura literal descartaba en silencio las nueve anclas peladas del árbol real —lo contrario de RQ-CV-10—, y por eso se arregla la resolución. El índice de la revisión y el sitio del puerto no se refactorizan (Gerencia, 2026-09-13) |
 | 9 | D11 (coste), RQ-CV-03 en ancladas, §5 (`--sha`/`--generar-base`) — corte 2, tareas 3.8-3.10 | **CERRADAS las tres.** 3.8: `detectar()` cachea `arbol()` por revisión DISTINTA (antes 2N llamadas para N anclas a la misma revisión); el hook baja de 7,8-9,6 s (hallazgo (a) de 1b-ii) a 2,6-2,8 s sobre el mismo árbol real. 3.9: una anclada ambigua con alguna candidata ausente en su revisión ya no bloquea sola — bloquea sólo si TODAS sus candidatas están rotas (ausentes o fuera de rango), igual que RQ-CV-03 exige para el resto. 3.10: `ejecutar` gana `--sha <rev>` y `--generar-base`; `entrada` pasa de `string` a `() => string` (lectura perezosa, sólo el modo hook la invoca) | El hallazgo (a) y (b) de 1b-ii quedaban registrados como NO corregidos; esta era su corrección. El modo `--sha`/`--generar-base` lo exige RQ-CV-14 (3.1-3.2), que no puede correr sin ellos |
-| 10 | §5, `generarBase` — corte 2, tarea 3.10(c) | **Corregido.** La primera versión de esta fila afirmaba que la mutación «escribir sin ordenar» no discriminaba con el adaptador git real; era **falso**, por una prueba incompleta que nunca repetía la MISMA cita rota dos veces en un documento. `resultado.bloqueantes` se construye recorriendo `porClaveCandidatos`, un `Map` de `agrupar()` (`detector.ts`, clave = documento + texto de la cita): dos ocurrencias de la MISMA cita rota en el MISMO documento comparten clave y salen JUNTAS al iterar el `Map`, aunque entre ellas haya otra cita rota distinta. Con `a.md` citando `` `citado.md:6` `` roto en su línea 1, `` `citado.md:7` `` roto en su línea 2 y `` `citado.md:6` `` otra vez roto en su línea 3, el orden SIN `.sort()` es `a.md:1, a.md:3, a.md:2` — no el de aparición. Con datos reales hay multiplicidad (51 entradas, 42 claves sobre `773ad75`), así que el hueco es real. Quitar el `.sort()` ahora produce `expected [ 'a.md:1', 'a.md:3', 'a.md:2', …(2) ] to deeply equal [ 'a.md:1', 'a.md:2', 'a.md:3', …(2) ]` (`hook.test.ts`) | El `.sort()` de `generarBase` es necesario, no defensivo: la agrupación por clave de `agrupar()` reordena `bloqueantes` cada vez que una cita rota se repite en un documento con otra distinta entre medias |
+| 10 | §5, `generarBase` — corte 2, tarea 3.10(c) | **Corregido.** La primera versión de esta fila afirmaba que la mutación «escribir sin ordenar» no discriminaba con el adaptador git real; era **falso**, por una prueba incompleta que nunca repetía la MISMA cita rota dos veces en un documento. `resultado.bloqueantes` se construye recorriendo `porClaveCandidatos`, un `Map` de `agrupar()` (`detector.ts`, clave = documento + texto de la cita): dos ocurrencias de la MISMA cita rota en el MISMO documento comparten clave y salen JUNTAS al iterar el `Map`, aunque entre ellas haya otra cita rota distinta. Con `a.md` citando `` `citado.md:6` `` roto en su línea 1, `` `citado.md:7` `` roto en su línea 2 y `` `citado.md:6` `` otra vez roto en su línea 3, el orden SIN `.sort()` es `a.md línea 1, a.md línea 3, a.md línea 2` — no el de aparición. Con datos reales hay multiplicidad (51 entradas, 42 claves sobre `773ad75`), así que el hueco es real. Quitar el `.sort()` ahora produce `expected [ 'a.md línea 1', 'a.md línea 3', 'a.md línea 2', …(2) ] to deeply equal [ 'a.md línea 1', 'a.md línea 2', 'a.md línea 3', …(2) ]` (`hook.test.ts`) | El `.sort()` de `generarBase` es necesario, no defensivo: la agrupación por clave de `agrupar()` reordena `bloqueantes` cada vez que una cita rota se repite en un documento con otra distinta entre medias |
 
 ---
 
@@ -614,6 +617,10 @@ resultado.
 6. **CERRADA, con la atribución que decide D1.** Lbc con `*.csv` excluido: **34** rotas informadas y
    **843** huérfanas de 1.154 (la base aún no existe, así que su exclusión no cambia nada).
 7. **CERRADA.** Claves (fichero, cita) distintas entre las 51 entradas: **42** (multiplicidad de D6).
+   **Cifra vigente: 37 entradas, 28 claves distintas, medida el 2026-09-14 sobre `73a9acb`** con el
+   detector definitivo (27 extremo inicial en línea vacía, 5 extremo inicial fuera de rango, 1 extremo
+   final fuera de rango, 3 fichero inexistente y 1 ambigua rota en todas sus candidatas); las 51 no se
+   borran, caso B de la regla de mutación 4.
 8. Duración actual de `npm test` y lo que añaden las pruebas sintéticas en Windows.
 9. **ABIERTA.** Coste de un push con dos árboles distintos.
 10. Talla real de la unidad 1 frente a las 800 líneas (§3), por intento de `sdd-apply`.

@@ -1,5 +1,119 @@
 # Apply progress — hook-citas-pre-push
 
+## Corte 2 — verificación del orquestador (tareas 3.8-3.10 y 3.1-3.7, 10/10)
+
+Partida `984b797`; la primera parte está en el commit `73a9acb` y el resto se commitea encima.
+
+**Mutaciones de la primera parte, repetidas en proceso nuevo** (copia en el scratchpad, `cmp` idéntico
+en las cinco):
+
+| Tarea | Mutación | Salida literal |
+|---|---|---|
+| 3.8 | `arbolCacheado` devuelve `repo.arbol(rev)` sin la caché | `AssertionError: expected 7 to be 1` y `expected 6 to be 2` |
+| 3.9 | bloquear en cuanto falta una candidata (`ausentes > 0`) | `AssertionError: expected true to be false` |
+| 3.10(a) | leer stdin antes de elegir modo | `AssertionError: expected 1 to be +0` |
+| 3.10(c) | escribir la base con BOM | `AssertionError: expected 239 not to be 239` |
+| 3.10(c) | quitar el `.sort()` | `expected [ 'a.md línea 1', 'a.md línea 3', 'a.md línea 2', …(2) ] to deeply equal [ 'a.md línea 1', 'a.md línea 2', 'a.md línea 3', …(2) ]` |
+
+La mutación del orden la declaró primero el sub-agente como «no discrimina» porque git ya daría las
+bloqueantes ordenadas. Era falso: `agrupar()` en `detector.ts` agrupa por (documento, cita), así que las
+repeticiones de una misma cita salen juntas. La prueba ganó ese caso y la mutación se pone roja.
+
+**Coste del hook (3.8)**, tres tomas con el informe completo: sobre el árbol `b977229` (3.8-3.10),
+2.810, 2.837 y 2.663 ms; sobre el árbol del corte completo salvo estas cifras (`8459867`), 1.850, 1.957 y 1.871 ms, salida 0.
+
+**3.1 y 3.2**, ejecutadas por el orquestador el 2026-09-14: `--sha` sobre el árbol `b977229` → salida 1,
+37 bloqueantes; `--generar-base` sobre `73a9acb` → 37 entradas, 28 claves, sin BOM ni CR, ordenada.
+
+**Cierre de la regla de mutación 4 con el detector**: `--sha` sobre un commit temporal con TODO el corte
+(`dc71a6c`, base incluida) → salida 0, 0 bloqueantes, 37 informadas, 0 caducadas. Citas a los dos
+ficheros que este corte inserta, comprobadas por el detector en ese árbol (75): `CLAUDE.md` 40 (38
+ancladas, 1 completa y 1 abreviada, comprobadas todas) y `openspec/config.yaml` 35 (17 ancladas, 15
+completas y 2 abreviadas comprobadas; 1 completa en la base, de `openspec/specs/trazas/spec.md`). Las
+completas sin ancla a `config.yaml` caen todas antes del punto de inserción de IV-10; la única detrás
+(`docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md`) quedó anclada. La completa sin ancla a `CLAUDE.md`
+estaba en este mismo fichero, con una línea equivocada, y se reparó (ver el barrido). Una bloqueante
+nueva la habría causado este corte y se habría reparado; no hubo ninguna.
+
+**Cierre**: `npm run typecheck` exit 0; `eslint . --max-warnings 158` → 0 errores, 158 avisos; `npm run test:coverage` → 1092 pasadas y 2 omitidas de 1094 (119 ficheros y 1 omitido), global 94,79 % líneas · 83,96 % ramas · 98,2 % funciones, `apps/desk/server/citas` 99,23 % · 95,42 % · 97,29 %; `--sha` sobre el árbol `8459867` → salida 0, 0 bloqueantes, 37 informadas, 0 caducadas; 0 bytes de control en los blobs de los ficheros tocados; guardián de binarios y RQ-CV-18 en verde. **Tamaño con git:** `git diff --shortstat 984b797` → 12 ficheros, +570/-48 = 618, más `lineaBase.jsonl` sin trackear (37) = **655**, frente a la parada de ~650: se alcanzó al cerrar, sin trabajo pendiente, y parte del exceso es esta misma sección de evidencia.
+
+## Corte 2 — segunda parte (tareas 3.1-3.7) — CERRADO, 7/7
+
+Base: `984b797` (+ commit local `73a9acb` sin empujar). `lineaBase.jsonl` llegó SIN TRACKEAR, generado
+por el orquestador: no se regeneró/editó/borró. Sin `git add`, commit ni push (fuera de `sdd-apply`).
+
+**3.1** (registro). `cli.ts --sha bfb0b284b160dea29dd9aedf529b8b2f7bd3468b` (árbol `b977229` = el de
+`73a9acb`), 2026-09-14: salida 1, **37 bloqueantes**, índice remoto `.. origin/main`, texto binario
+`.. 0`. El texto original pedía «confirmar 0»: Gerencia (2026-09-14) sustituyó esa condición por traer
+la lista (37 líneas, `c2-bloqueantes.txt`). Ninguna toca `CLAUDE.md`/`config.yaml`.
+
+**3.2** (registro + documental). `--generar-base` sobre `73a9acb`: **37 entradas, 28 claves**, UTF-8
+sin BOM, 0 CR, ordenada, ≤100. Por motivo: 27 línea vacía, 5 inicio fuera de rango, 1 final fuera de
+rango, 3 fichero inexistente, 1 ambigua (27+5+1+3+1=37). Cifra vigente añadida AL LADO de las 51 (caso
+B, no se borran) en: `proposal.md` (R-14 §9, Q9 §13, Pieza 3 punto 4), `spec.md` (RQ-CV-09, RQ-CV-17) y
+`design.md` (§1, §3, medición 7 del §12).
+
+**3.3.** `CLAUDE.md`: «Cuatro»→«Cinco»; fila nueva (`Regla = — (regla de mutación 4)`, no 1/13: IV-10
+no es espejo cliente/servidor de la regla invariable 13) con la cifra y la frase de Q4 literal.
+`config.yaml`: `id: IV-10` tras IV-9, mismos campos que IV-8/IV-9. Validado con `js-yaml`: 10 entradas,
+última `IV-10`.
+
+**3.4/3.5.** Dos bullets nuevos en la regla de mutación 4 de `CLAUDE.md`: Q6 («un ejemplo de cita rota
+se escribe sin forma de cita, o el detector lo tratará como rota») con el ejemplo REAL del archive en
+prosa: «la línea 206 de este fichero», que cita el `proposal.md` archivado de `por-entregar-es-espera` y
+en `984b797` era una línea vacía; y Q9 (el detector no bloquea la abreviada, lectura humana con el
+informe como ayuda). **Corregido por el orquestador:** la primera redacción decía que esa línea estaba
+«hoy vacía», y dejó de ser cierto con las propias inserciones de esta tanda (tras ellas la 206 tenía
+texto); ahora se fecha contra `984b797`, donde se comprobó vacía.
+
+**3.6 (repetida por el orquestador con el ejemplo REAL).** La primera comprobación del sub-agente usó una
+cita inventada fuera de rango, no el ejemplo real. Se repitió con tres commits temporales, índice aparte,
+padre `73a9acb`, todo el corte y `lineaBase.jsonl` incluidos, y que difieren sólo en el blob de
+`CLAUDE.md` (`git hash-object -w` + `git update-index --cacheinfo`):
+
+| Variante del ejemplo de Q6 | Commit | Salida | Bloqueantes | Línea base |
+|---|---|---|---|---|
+| En prosa (redacción final) | `dc71a6c` | 0 | 0 | 37 informadas · 0 caducadas |
+| Con forma de cita, anclada a `984b797` | `f8887d1` | 1 | 1: extremo inicial en línea vacía (línea 206 de `CLAUDE.md`) | 37 informadas · 0 caducadas |
+| Con forma de cita, sin ancla | `4ab1974` | 1 | 1: extremo inicial en línea vacía (línea 206 de `CLAUDE.md`) | 37 informadas · 0 caducadas |
+
+Índice real intacto (`git diff --cached --quiet`). Cierra 1.15-1.16 contra contenido real.
+
+**3.7.** `CLAUDE.md` (regla del ciclo 2): pierde «ÁRBOL ENTERO» y gana un párrafo con las dos cegueras
+medidas, las dos por DEFECTO: (1) lo nuevo sin trackear no cuenta —intento 1, 55 con 928 líneas nuevas
+sin trackear; corte 1b-i, 238 frente a 529 con git por 291 de ficheros nuevos—; (2) un fichero binario
+para git en el árbol de partida cuenta 0 —intento 2, 144 frente a 247, las 103 de `detector.ts`, que en
+`ef08129` llevaba un NUL (1 byte NUL, comprobado)—; con todo trackeado y sin binarios (1b-ii) contó 843,
+lo mismo que git. `design.md` §3, mismo defecto corregido. **Corregido por el orquestador:** la primera
+redacción ocupaba 21 líneas de `CLAUDE.md` y afirmaba un mecanismo no medido («cuenta sólo lo trackeado
+en ambos extremos»); quedó en 11 líneas y sólo con lo medido. En el §3 del diseño decía además «Nota de
+Método», que no existe: la regla está en `CLAUDE.md`.
+
+### Barrido de la regla de mutación 4
+
+`git grep -nE "CLAUDE\.md:[0-9]+"` y `"config\.yaml:[0-9]+"` sin archive: **38 + 31 = 69** citas; de las que caen
+detrás de un punto de inserción, todas ancladas salvo **UNA**: `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:46` →
+`openspec/config.yaml:807-838` («la entrada `PF-1`»). Caso **B · histórico** (auditoría fechada al
+commit `e8c5e90`, 2026-09-09; IV-10 desplaza el rango): reparada anclándola a `648432d` y nombrando el
+desplazamiento. Las 68 restantes, ya ancladas, no necesitan reparación con independencia de dónde
+inserte esta tanda. Las citas a las líneas 349, 519, 658 y 22-30 de `openspec/config.yaml` que hace
+`CLAUDE.md` (`CLAUDE.md:62` en `984b797`, `CLAUDE.md:315` en `984b797`) y las 7 de
+`openspec/specs/*/spec.md` a la declaración de capacidad: caso **A · presente**, todas antes de la
+línea 798 (punto de inserción de IV-10), sin cambio. *(Corregido por el orquestador: la primera
+redacción las citaba sin ancla y con la segunda línea equivocada, 323 en vez de 315.)* Segunda pasada (forma abreviada, en los ficheros que citan
+`CLAUDE.md`/`config.yaml`): ninguna forma abreviada adicional referencia a esos dos ficheros.
+
+### Controles
+
+- **Tamaño con git**: la cifra final del corte está en la verificación del orquestador, arriba. Sin
+  trackear nuevo salvo `lineaBase.jsonl` (37, del orquestador, sin tocar).
+- 0 bytes de control y 0 CR en el blob de cada fichero tocado (índice temporal `GIT_INDEX_FILE`, real
+  intacto en cada comprobación).
+- Los 8 documentos ajenos de `docs/` sin trackear: intactos.
+- `npx vitest run apps/desk/server/citas`: 6 ficheros, 75 pruebas verdes.
+- `npm test`: 119/120 ficheros, 1092/1094 pruebas — igual que la primera parte.
+- `npm run typecheck`: limpio. `npm run lint`: 0 errores, 158 avisos — sin avisos nuevos.
+
 ## Corte 2 — primera parte (tareas 3.8, 3.9, 3.10) — CERRADO, 3/3
 
 Base del corte: `984b797`. Orden ejecutado: 3.8 → 3.9 → 3.10, como exige la nota del corte en `tasks.md`
@@ -34,14 +148,14 @@ conservación de `hook.test.ts` (tarea 2.26) sigue en verde.
 |---|---|---|---|---|
 | (a) lectura perezosa | `codigo: 2` (modo no existía; `entrada.split` sobre una función) | `llamadas` 0 con `--sha`, 1 en modo hook | leer stdin en TODOS los modos | `expected 1 to be +0`; restaurado, `cmp` idéntico |
 | (b) `--sha <rev>` | `codigo: 2` (modo no existía) | rota→1, válida→0; sin `origin/main` → `NO HECHO`; con él, lo nombra | cubierta por la MUT de (a): sin `--sha` no hay modo que mutar aparte | — |
-| (c) `--generar-base` | `codigo: 2` (modo no existía) | 5 entradas, sin BOM, sin CR, orden `a.md:1,a.md:2,a.md:3,b.md:1,b.md:2` (con `a.md:1` y `a.md:3` la MISMA cita rota repetida, y `a.md:2` una cita distinta entre medias); commiteada, el hook da `línea base .. 5 informadas · 0 caducadas`, salida 0 | escribir con BOM | `expected 239 not to be 239` (primer byte `0xEF`); restaurado, `cmp` idéntico |
-| (c) | — | — | escribir SIN el `.sort()` | `expected [ 'a.md:1', 'a.md:3', 'a.md:2', …(2) ] to deeply equal [ 'a.md:1', 'a.md:2', 'a.md:3', …(2) ]`; restaurado, `cmp` idéntico |
+| (c) `--generar-base` | `codigo: 2` (modo no existía) | 5 entradas, sin BOM, sin CR, orden `a.md línea 1,a.md línea 2,a.md línea 3,b.md línea 1,b.md línea 2` (con `a.md línea 1` y `a.md línea 3` la MISMA cita rota repetida, y `a.md línea 2` una cita distinta entre medias); commiteada, el hook da `línea base .. 5 informadas · 0 caducadas`, salida 0 | escribir con BOM | `expected 239 not to be 239` (primer byte `0xEF`); restaurado, `cmp` idéntico |
+| (c) | — | — | escribir SIN el `.sort()` | `expected [ 'a.md línea 1', 'a.md línea 3', 'a.md línea 2', …(2) ] to deeply equal [ 'a.md línea 1', 'a.md línea 2', 'a.md línea 3', …(2) ]`; restaurado, `cmp` idéntico |
 
 **MUT «sin ordenar» — corregida (orquestador, 2026-09-14): SÍ discrimina.** «No discrimina» era
 **falso**: la prueba nunca repetía la MISMA cita rota en un documento. `bloqueantes` se construye
 recorriendo `porClaveCandidatos` (`Map` de `agrupar()`, clave = documento + texto de la cita): dos
 ocurrencias de la MISMA cita rota comparten clave y salen JUNTAS, aunque entre ellas haya otra cita rota
-distinta. Ampliada la prueba con ese caso: sin `.sort()`, `a.md:1, a.md:3, a.md:2`, no el de aparición.
+distinta. Ampliada la prueba con ese caso: sin `.sort()`, `a.md línea 1, a.md línea 3, a.md línea 2`, no el de aparición.
 Necesario con datos reales (51 entradas, 42 claves sobre `773ad75`). Detalle en el §11, fila 10.
 
 ### Verificación final
@@ -303,8 +417,9 @@ La divergencia no rompe ninguna cita hoy, pero deja 9 sin mirar y sin contarlas.
    `linea` dónde estaba; el detector guarda el fichero **citado** y la línea citada (`fichero: c.fichero`,
    `linea: c.desde`). Viene de 1a-i. Importa antes del corte 2, que genera la base con esa clave, y el
    informe lista hoy el fichero citado en vez de dónde reparar. Destino: lo decide Gerencia.
-2. **La frase de la regla del ciclo 2 también está en el §3 de `design.md`** («diffeando el árbol
-   entero»). La tarea 3.7 sólo nombra `CLAUDE.md`.
+2. **CERRADO en el corte 2, segunda parte (tarea 3.7).** La frase de la regla del ciclo 2 también
+   estaba en el §3 de `design.md` («diffeando el árbol entero») y la tarea 3.7 sólo nombraba
+   `CLAUDE.md`; ambos sitios quedaron corregidos en la misma tanda.
 3. **`git diff -a` no cambia el numstat de un fichero que es binario en la base**: `detector.ts` sigue
    dando `-` `-` contra `ef08129`. El control de tamaño lo cuenta con `diff` tras cambiar el NUL por otro
    carácter.

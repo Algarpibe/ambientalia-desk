@@ -392,13 +392,19 @@ imponerla.
       amplió con una cita rota repetida en el MISMO documento con otra distinta entre medias, porque
       `agrupar()` (`detector.ts`) casa `bloqueantes` por (documento, texto de la cita): dos ocurrencias de
       la MISMA cita rota comparten clave y salen JUNTAS del `Map`, así que sin `.sort()` el orden natural
-      NO es el de aparición. Rojo: `expected [ 'a.md:1', 'a.md:3', 'a.md:2', …(2) ] to deeply equal
-      [ 'a.md:1', 'a.md:2', 'a.md:3', …(2) ]`; restaurado y `cmp` idéntico. El `.sort()` es necesario con
+      NO es el de aparición. Rojo: `expected [ 'a.md línea 1', 'a.md línea 3', 'a.md línea 2', …(2) ] to deeply equal
+      [ 'a.md línea 1', 'a.md línea 2', 'a.md línea 3', …(2) ]`; restaurado y `cmp` idéntico. El `.sort()` es necesario con
       datos reales (51 entradas, 42 claves sobre `773ad75`), no defensivo. Detalle completo en
       `apply-progress.md` y §11 del diseño, fila 10.
-- [ ] 3.1 Precondición (RQ-CV-14, primera pasada; M18 orden): correr `cli.ts --sha HEAD` sobre el árbol
+- [x] 3.1 Precondición (RQ-CV-14, primera pasada; M18 orden): correr `cli.ts --sha HEAD` sobre el árbol
       de la Unidad 1 (1a+1b) ya commiteada y confirmar 0 bloqueantes antes de generar la base.
-- [ ] 3.2 Ejecutar `cli.ts --generar-base` y escribir `apps/desk/server/citas/lineaBase.jsonl` (JSON
+      **CERRADO (registro del orquestador).** `cli.ts --sha bfb0b284b160dea29dd9aedf529b8b2f7bd3468b`
+      (commit temporal, árbol `b977229`, el mismo de `73a9acb`), 2026-09-14: **salida 1, 37
+      bloqueantes**, índice remoto `.. origin/main`, texto que git cree binario `.. 0`. El texto
+      original pedía «confirmar 0 bloqueantes»: el resultado real fue 37, y Gerencia (2026-09-14)
+      sustituyó esa condición por traer la lista (registrada en 3.2). Ninguna de las 37 está en
+      `CLAUDE.md` ni en `openspec/config.yaml`.
+- [x] 3.2 Ejecutar `cli.ts --generar-base` y escribir `apps/desk/server/citas/lineaBase.jsonl` (JSON
       Lines, UTF-8 sin BOM, LF, una entrada por línea, ordenada por fichero y línea; D6). Si la cifra
       supera 100 entradas, PARAR y preguntar a Gerencia (R-14) — la medición previa fue 51.
       **Añadido (Gerencia, 2026-09-14): la cifra se fija aquí, con fecha y sha.** Sobre `36e5a2d` el
@@ -408,20 +414,47 @@ imponerla.
       RQ-CV-09 y cierre de R-14) y el diseño (§1, §3 y la medición 7 del §12). Las 51 **no se borran**: son
       una medición fechada sobre `773ad75`, caso B de la regla de mutación 4, y renumerarlas volvería falsa
       la frase. Se añade la cifra vigente al lado, y el reparto por motivo si cambió.
-- [ ] 3.3 Añadir fila **IV-10** en `CLAUDE.md` (recuento `CLAUDE.md:249` en `648432d`, de «Cuatro» a
+      **CERRADO.** `--generar-base` sobre `HEAD` = `73a9acb`, 2026-09-14 (hecho por el orquestador; el
+      fichero llegó SIN TRACKEAR, no se regeneró ni se editó en esta tanda): **37 entradas, 28 claves
+      (documento, cita) distintas**, UTF-8 sin BOM, 0 CR, ordenada, ≤100 (R-14 no se dispara). Por
+      motivo: 27 extremo inicial en línea vacía, 5 extremo inicial fuera de rango, 1 extremo final
+      fuera de rango, 3 fichero inexistente, 1 ambigua rota en sus 4 candidatas. Cifra vigente añadida
+      AL LADO de las 51, sin borrarlas (caso B), en los seis sitios: `proposal.md` (fila R-14 del §9,
+      fila Q9 del §13, Pieza 3 punto 4), `spec.md` (medición de R-14 en RQ-CV-09, cierre de R-14 en
+      RQ-CV-17) y `design.md` (§1 fila «Línea base», §3 fila `lineaBase.jsonl`, medición 7 del §12).
+- [x] 3.3 Añadir fila **IV-10** en `CLAUDE.md` (recuento `CLAUDE.md:249` en `648432d`, de «Cuatro» a
       «Cinco»; tabla `CLAUDE.md:262-265` en `648432d` gana la fila) y en `openspec/config.yaml`
       (`incumplimientos_vivos`, tras el final de IV-9 en `openspec/config.yaml:798` en `648432d`), con
       cifra, fecha de medición, SIN dueño y la frase de Q4: «la base no encoge hasta que Gerencia asigne
       quién la repara» (RQ-CV-15).
-- [ ] 3.4 Añadir a la regla de mutación 4 de `CLAUDE.md:171-205` en `648432d` las DOS frases: la de Q6
+      **CERRADO.** `CLAUDE.md`: «Cuatro» → «Cinco»; nueva fila en la tabla de incumplimientos vivos con
+      `regla: — (regla de mutación 4)`, la cifra (37 entradas, 28 claves, 2026-09-14, `73a9acb`) y la
+      frase de Q4 literal. `openspec/config.yaml`: entrada `id: IV-10` añadida tras el final de IV-9
+      (`regla`, `ubicacion`, `verificado`, `encontrado_en`, `descripcion`, `destino`,
+      `por_que_sin_destino`), validada con `js-yaml` (10 entradas en `incumplimientos_vivos`, la última
+      `IV-10`).
+- [x] 3.4 Añadir a la regla de mutación 4 de `CLAUDE.md:171-205` en `648432d` las DOS frases: la de Q6
       («un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como rota») y la
       de Q9 (el detector no bloquea la forma abreviada; su comprobación sigue siendo de lectura humana,
       con el informe como ayuda) (RQ-CV-15).
-- [ ] 3.5 Reescribir el ejemplo de cita rota del archive (§2 de la propuesta) SIN forma de cita, en
+      **CERRADO.** Dos bullets nuevos en el blockquote de la regla de mutación 4, tras la cuarta
+      («Una cita en un comentario NO es una aserción»): la frase de Q6 y la de Q9, las dos con las
+      palabras literales que pide RQ-CV-15.
+- [x] 3.5 Reescribir el ejemplo de cita rota del archive (§2 de la propuesta) SIN forma de cita, en
       prosa (Q6, opción i) — sin escribir ningún `fichero:línea` de ejemplo.
-- [ ] 3.6 Confirmar M22 con el ejemplo real ya insertado en `CLAUDE.md`: con forma de cita → bloquea;
+      **CERRADO.** El bullet de Q6 (3.4) trae el ejemplo real del archive en prosa, sin
+      `fichero:línea`: «la línea 206 de este fichero», que cita el `proposal.md` archivado de
+      `por-entregar-es-espera` y en `984b797` era una línea vacía (fechado contra esa revisión: las
+      inserciones de esta tanda le pusieron texto).
+- [x] 3.6 Confirmar M22 con el ejemplo real ya insertado en `CLAUDE.md`: con forma de cita → bloquea;
       sin forma → pasa (cierra 1.15-1.16 contra contenido real).
-- [ ] 3.7 Corregir la frase de que `gentle-ai sdd-attempt` mide `changed_lines` «diffeando el árbol
+      **CERRADO, con el ejemplo real** (repetida por el orquestador: la primera comprobación usó una
+      cita inventada). Tres commits temporales con índice aparte, todo el corte y `lineaBase.jsonl`
+      incluidos, que difieren sólo en `CLAUDE.md`: en prosa (`dc71a6c`) → salida 0, 0 bloqueantes, 37
+      informadas; con forma de cita anclada a `984b797` (`f8887d1`) → salida 1, una bloqueante
+      «extremo inicial en línea vacía»; con forma de cita sin ancla (`4ab1974`) → salida 1, la misma.
+      Índice real intacto.
+- [x] 3.7 Corregir la frase de que `gentle-ai sdd-attempt` mide `changed_lines` «diffeando el árbol
       entero» (decisiones d y c de Gerencia) en sus DOS sitios: la regla del ciclo 2 de `CLAUDE.md`
       (`CLAUDE.md:353` en `648432d`) y el §3 de `design.md` (sin línea, por la convención 2). Lo medido la
       desmiente, y la frase nueva registra las DOS cegueras del ledger, con su medición y su cita anclada:
@@ -429,6 +462,11 @@ imponerla.
       porque sus árboles de principio y fin sólo difieren en lo trackeado; (2) cuenta 0 para un fichero
       que era binario en el árbol de partida: el intento 2 registró 144 frente a 247 trackeadas medidas con
       git, y las 103 que faltan son de `detector.ts`, que en `ef08129` llevaba un NUL.
+      **CERRADO.** `CLAUDE.md`: la regla del ciclo 2 pierde «ÁRBOL ENTERO» y gana un párrafo con las
+      dos cegueras medidas, las dos por defecto (lo nuevo sin trackear no cuenta: intento 1 y corte
+      1b-i; un binario en el árbol de partida cuenta 0: intento 2), y el dato de que con todo trackeado
+      (1b-ii) el ledger contó lo mismo que git. `design.md` §3: mismo defecto corregido, nombrando la
+      regla por su apartado de `CLAUDE.md`. Redacción ajustada por el orquestador a lo medido.
 
 ## Fase 4 (Unidad 3) — Hook, instalador, `.gitattributes`, `DEPLOY.md`
 

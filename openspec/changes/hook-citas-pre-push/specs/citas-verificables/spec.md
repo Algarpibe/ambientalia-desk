@@ -386,7 +386,11 @@ que se quite de la base. Una cita rota que **no** está en la base **MUST** bloq
 distintas. Por motivo: 36 en línea vacía, 8 fuera de rango, 4 ambiguas rotas en todas sus candidatas
 y 3 con fichero inexistente. Medido el 2026-09-13 sobre `773ad75` **por la ruta diseñada**: `git grep
 -nI` sobre el sha, sin `docs/artefactos/` ni `*.csv`, y un `git cat-file --batch` de lo citado (nivel 2
-de procedencia). La cifra definitiva la produce el detector de la tanda.
+de procedencia). La cifra definitiva la produce el detector de la tanda. **Cifra vigente: 37 entradas,
+28 claves distintas, medida el 2026-09-14 sobre `73a9acb`** con el detector definitivo (27 extremo
+inicial en línea vacía, 5 extremo inicial fuera de rango, 1 extremo final fuera de rango, 3 fichero
+inexistente y 1 ambigua rota en todas sus candidatas); las 51 no se borran, caso B de la regla de
+mutación 4 de `CLAUDE.md`.
 
 ⚠️ **La versión anterior decía 47, y era una cifra de prototipo con otro criterio de binario.** Aquel
 prototipo descartaba cualquier fichero con un byte NUL en cualquier punto. El plan
@@ -702,7 +706,8 @@ ve; misma línea o, si no, el fichero de detrás, 128 y 699. Las dos opciones qu
 sus cifras son de prototipo y la opción es incompatible con la cosecha (el último fichero de la línea
 anterior, 164 y 584; el último del párrafo, 195 y 453, sobre 1.151).
 
-**R-14 queda CERRADO para el diseño con la base de 51 entradas** de RQ-CV-09 (decisión Q9). El umbral
+**R-14 queda CERRADO para el diseño con la base de 51 entradas** de RQ-CV-09 (decisión Q9; cifra
+vigente: 37 entradas, medida el 2026-09-14 sobre `73a9acb`, RQ-CV-09). El umbral
 de **100 entradas** —calculado contra `review_budget_lines: 800`
 (`openspec/config.yaml:29` en `648432d`), suponiendo una línea por entrada y dividiendo si el formato
 ocupa más— **se conserva sólo

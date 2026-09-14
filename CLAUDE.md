@@ -182,6 +182,12 @@ comparación línea a línea.
 >   un segundo pase en los ficheros que ya citan el módulo.
 > - **Una cita en un comentario NO es una aserción:** ni `tsc`, ni `eslint`, ni las pruebas la ven.
 >   Por eso va en el cierre y no se descubre sola.
+> - **Un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como rota**
+>   (`hook-citas-pre-push`, Q6). Se nombra en prosa, como «la línea 206 de este fichero», que cita el
+>   `proposal.md` archivado de `por-entregar-es-espera` y en `984b797` era una línea vacía.
+> - **El detector no bloquea la forma abreviada** (dos puntos y número, sin nombre de fichero): su
+>   comprobación sigue siendo de lectura humana, con el informe del hook como ayuda
+>   (`hook-citas-pre-push`, Q9).
 
 *Por qué existe:* mover dos entradas de bloque en `packages/shared/src/estados.ts` (`4359b28`, que
 añadió **+6 líneas** de comentario y con ellas corrió `100→106`, `106→112`, `114→120`) desfasó ~20
@@ -246,7 +252,7 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-**Cuatro** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Cinco** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
@@ -263,6 +269,7 @@ está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 | — | `apps/desk/server/routes/remision.ts:218-226` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta` — la regla «una OV, un ticket» tiene **tres** puertas y sólo **dos** la comprueban | **CONSTRUIBLE desde el 2026-09-10** · `decision/n52-cardinalidad-ov` (`plan:350`). Nº 52 quedó cerrado como **`1 ticket : N OV`**: una OV pertenece como mucho a un ticket, así que **se construye la tercera puerta y las dos existentes se quedan** (`ticketService.ts:45-48` y `:134-135`). La variante que ponía la regla en duda —la OV global por lote— desaparece por proceso: subórdenes `OV-AAAA-NNN-SS`, una por ticket. El daño está medido (`ordenVentaUnTicket.test.ts:150-158`) y el `it.fails` de `:161` se pone verde con un `409`. *(Antes decía: «PUNTO ABIERTO Nº 52 … el arreglo es retirar las dos puertas existentes». Invertido por la decisión.)* |
 | — | `apps/desk/server/services/ticketService.ts:39` — al completar `clientId` desde la orden de venta (`clientId = clientId ?? ov.clientId ?? null`), si el cuerpo YA trae su propio `clientId`, el de la OV nunca se contrasta con nada: un ticket puede quedar con cliente y equipo de un lado y la orden de venta de otro, sin ningún aviso. La guarda equipo↔cliente de `cerrar-hallazgos-revision-f1b-01` (P1, `:65-77`) compara el `clientId` final contra `equipo.clientId`, no contra `ov.clientId`, así que esta pareja queda fuera de su alcance a propósito (`proposal.md` §3) | **PUNTO ABIERTO, sin destino** — a propósito, criterio de aceptación nº 8 de `cerrar-hallazgos-revision-f1b-01`. ⚠️ **SIGUE VIVO, pero por otra razón desde el 2026-09-10.** Su justificación vieja —«esperar a que Gerencia resuelva nº 52»— **caducó**: nº 52 está decidido. Lo que lo mantiene abierto es que **nº 52 es CARDINALIDAD, no TITULARIDAD** (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:178-181`): la decisión no dice que la OV y el equipo puedan ser de clientes distintos, y esa pregunta —la titularidad— **sigue sin decidir y sin clave en la tabla de decisiones del plan**. IV-8 vive ahí. **No usar nº 52 para justificar tocar la guarda equipo↔cliente** (`ticketService.ts:65-83`) |
 | 1 | **REDUCIDO por `por-entregar-es-espera` (2026-09-12).** Era el mismo desvío que IV-1, en tres puntos; ahora sobreviven **dos**, y los dos son para COLOR. `ClienteDetalle.tsx:18` —el que CLASIFICABA— pasó a consumir el predicado compartido `apps/desk/src/lib/enEspera.ts` y ya no cuenta aquí. Sobreviven `ClienteDetalle.tsx:22` (`/espera/i`, color del badge) y `apps/desk/src/components/TicketDetailView.tsx:245` (`/espera\|hold/i`, color del `className`), decisión de Gerencia Q1: `Por Entregar` no es un atasco y el tablero ya lo pinta azul (`TicketCard.tsx:21`). Ninguna de las dos lee `ESTADOS_EN_ESPERA` (`estados.ts:120`). **Remedido el 2026-09-12 contra los ONCE `en_espera` de hoy: siguen acertando 2** —`En Espera de Repuestos` y `En espera de SKU inventario`, el numerador no cambia porque ninguno de los dos estados reclasificados contiene «espera» ni «hold»— **y se les escapan NUEVE**: los siete de antes más `Por Entregar` y `Por Entregar / Sin facturar`, deliberadamente —Gerencia decidió que esos dos no pintan ámbar—. Es defecto **por defecto**, no por exceso, pero ya sólo afecta al color: la mitad de clasificación la cerró esta misma tanda. ⚠️ Los dos ficheros son `.tsx` y quedan **fuera de la red de pruebas** por decisión de Gerencia (`vitest.config.ts:16`, `:17-20`, `:57`; F0-00), así que **no admiten rojo previo bajo `strict_tdd`**, y esta vez arreglarlos con la lista **sería el defecto**: es justo lo que Q1 rechazó. Sigue siendo el molde de **H5** —dos implementaciones de la misma noción, ninguna rota por separado—, y las cuatro reglas de mutación no lo cazan | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Que lo asigne quien decida el alcance — el arreglo de verdad es una sola fuente de color (`TicketCard.tsx:14`), no sustituir la regex por el registro. Todo lo que esa decisión necesita —las dos ubicaciones, la medición y el condicionante de las pruebas— está en `openspec/config.yaml` (IV-9) |
+| — (regla de mutación 4) | **IV-10.** La línea base de citas `ruta:línea` ya rotas que el detector de `hook-citas-pre-push` genera en `apps/desk/server/citas/lineaBase.jsonl`, para imponerse en `pre-push`: **37** entradas, 28 claves (documento, cita) distintas, medida el 2026-09-14 sobre `73a9acb` con el detector definitivo (27 extremo inicial en línea vacía, 5 extremo inicial fuera de rango, 1 extremo final fuera de rango, 3 fichero inexistente y 1 ambigua rota en todas sus candidatas). La base sólo encoge y no crece desde el hook: una entrada nueva exige editarla a mano | **SIN ASIGNAR, decidido explícitamente, no por omisión** (Q4 de `hook-citas-pre-push`): «la base no encoge hasta que Gerencia asigne quién la repara» |
 
 **IV-1 está CERRADO EN `boardView.ts` y ya no cuenta ahí — pero el defecto no está cerrado, y esa
 distinción es toda la entrada.** Era la clasificación de esperas por regex de
@@ -350,10 +357,17 @@ es una tarea de verdad y sacarla es maquillar el contador.
 
 #### Regla del ciclo 2 — una tanda SDD por árbol de trabajo, nunca dos a la vez
 
-> `gentle-ai sdd-attempt` mide `changed_lines` diffeando el **ÁRBOL ENTERO** entre el principio y el
-> final del intento, no el cambio. Dos tandas SDD corriendo a la vez sobre el mismo working tree se
-> imputan las líneas la una a la otra. Si hacen falta dos en paralelo, van en **worktrees aislados**,
-> uno por cambio.
+> `gentle-ai sdd-attempt` mide `changed_lines` diffeando el árbol entre el principio y el final del
+> intento, no el cambio. Dos tandas SDD corriendo a la vez sobre el mismo working tree se imputan las
+> líneas la una a la otra. Si hacen falta dos en paralelo, van en **worktrees aislados**, uno por cambio.
+>
+> **Y no cuenta todo el árbol: tiene dos cegueras medidas, y las dos cuentan de MENOS.** (1) Lo nuevo
+> sin trackear no cuenta: el intento 1 de `hook-citas-pre-push` registró 55 con 928 líneas nuevas sin
+> trackear, y el corte 1b-i registró 238 frente a 529 con git porque 291 eran ficheros nuevos. (2) Un
+> fichero que era binario para git en el árbol de partida cuenta 0: el intento 2 registró 144 frente a
+> 247 trackeadas, y las 103 que faltaban eran de `detector.ts`, que en `ef08129` llevaba un NUL. Con
+> todo trackeado y sin binarios (corte 1b-ii) contó 843, lo mismo que git. **La medida real es
+> `git diff --shortstat` contra el commit de partida más `wc -l` de lo nuevo sin trackear.**
 
 *Por qué existe:* el 2026-09-10 se lanzó el `sdd-archive` de `reasignar-desvios-huerfanos` y el
 `sdd-apply` de `mensaje-422-cliente-duplicado` al mismo tiempo sobre `C:\dev\Desk_2_R1.023`. El

@@ -797,6 +797,39 @@ incumplimientos_vivos:
       necesita: las dos ubicaciones, la medición y el condicionante de la red de
       pruebas.
 
+  # IV-10 nace de la tanda hook-citas-pre-push: el detector de citas ruta:línea
+  # que se impone en pre-push GENERA su propia línea base con las citas que ya
+  # estaban rotas antes de instalar el hook (RQ-CV-09), pero repararlas queda
+  # fuera de su alcance (proposal.md §2, "No entra"): no es renumerar, son los
+  # tres casos A/B/C de CLAUDE.md, y elegir entre ellos exige leer qué afirma
+  # cada frase.
+  - id: IV-10
+    regla: "— (regla de mutación 4: citas ruta:línea que el detector de hook-citas-pre-push aún no repara)"
+    ubicacion: "apps/desk/server/citas/lineaBase.jsonl"
+    verificado: true
+    encontrado_en: >
+      Tanda `hook-citas-pre-push`, RQ-CV-09 y RQ-CV-15. El detector de citas
+      ruta:línea se impone en pre-push y genera la línea base con las citas que
+      ya estaban rotas antes de instalar el hook; sólo entradas que bloquean
+      (completas y ancladas), ninguna abreviada (decisión Q9).
+    descripcion: >
+      37 entradas, 28 claves (documento, cita) distintas, medidas el 2026-09-14
+      sobre `73a9acb` por la ruta diseñada (`git grep`, con el detector
+      definitivo de la tanda): 27 extremo inicial en línea vacía, 5 extremo
+      inicial fuera de rango, 1 extremo final fuera de rango, 3 fichero
+      inexistente y 1 ambigua rota en todas sus candidatas. Cifra histórica de
+      la propuesta y la spec, medida el 2026-09-13 sobre `773ad75`: 51
+      entradas, 42 claves — no se borra (caso B de la regla de mutación 4 de
+      CLAUDE.md): es una medición fechada sobre esa revisión.
+    destino: "SIN ASIGNAR — decidido explícitamente, no por omisión (decisión Q4)"
+    por_que_sin_destino: >
+      La base SÓLO ENCOGE (RQ-CV-09) y NO CRECE desde el hook: una entrada rota
+      nueva bloquea siempre, y añadir una entrada a la base exige editarla a
+      mano. Gerencia (Q4) decidió no asignar dueño de memoria — el mismo
+      precedente que dejó cuatro desvíos huérfanos al cerrar F1A — y fijó la
+      frase que esta fila declara literalmente: «la base no encoge hasta que
+      Gerencia asigne quién la repara».
+
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
 # mal declarado. Cada entrada dice qué decía la premisa, qué se verificó y qué

@@ -43,7 +43,9 @@ hoy sobre `e8c5e90`: `scripts/` contiene un solo fichero, `docx2md.sh`.
 
 → **Esta auditoría NO regenera el artefacto** y no reclama haberlo hecho. Construir el generador es
 trabajo de otra talla y otro alcance, y sigue debiéndose. Registrado también en
-`openspec/config.yaml:807-838`, la entrada `PF-1` de `premisas_falsas_corregidas`.
+`openspec/config.yaml:807-838` en `648432d`, la entrada `PF-1` de `premisas_falsas_corregidas`
+(la tanda `hook-citas-pre-push` inserta `IV-10` justo delante y desplaza la entrada; caso B de la
+regla de mutación 4 de `CLAUDE.md`, auditoría fechada al commit `e8c5e90`).
 
 ---
 
