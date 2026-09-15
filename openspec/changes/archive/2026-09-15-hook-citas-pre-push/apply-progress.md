@@ -76,7 +76,7 @@ igual.
   95,42 anterior sin cambiar ningún fuente del módulo. Hipótesis, no medida: las pruebas nuevas hacen que
   v8 informe más bloques de rama y crece el denominador. Sentencias, funciones y líneas no se mueven
   (94,79 / 98,2 / 94,79; `citas` 99,23 / 97,29 / 99,23). Ningún umbral en riesgo (ramas ≥ 78).
-- `Dockerfile:14` no se toca: está registrado aparte.
+- `Dockerfile:14` en `5f05466` no se toca: está registrado aparte.
 
 ### Comprobaciones sobre el árbol remediado (antes del commit)
 

@@ -57,7 +57,7 @@ apartado 6.
 Los 18 requisitos de la spec están implementados y probados, las 102 tareas están cerradas y los cinco
 comandos de la tarea 5.6 dan `exit 0` con cifras propias de este verify (apartado 3). De los 64
 escenarios, 64 están cubiertos: 50 con prueba automática y 14 con evidencia manual verificable. Queda
-**una SUGGESTION abierta por decisión** (el comentario falso de `Dockerfile:14`, registrado aparte y
+**una SUGGESTION abierta por decisión** (el comentario falso de `Dockerfile:14` en `5f05466`, registrado aparte y
 fuera de alcance a propósito) y ninguna WARNING ni CRITICAL.
 
 ---
@@ -327,9 +327,9 @@ hipótesis sobre una cifra medida, no una conclusión medida.
 
 ### SUGGESTION-2 · comentario falso preexistente en `Dockerfile` — SIGUE ABIERTA, a propósito
 
-`Dockerfile:14` sigue diciendo que `tsx` es `devDependency`, cuando `package.json:42` lo declara en
+`Dockerfile:14` en `5f05466` sigue diciendo que `tsx` es `devDependency`, cuando `package.json:42` lo declara en
 `dependencies`. La tarea 4.13-A1 ya lo registró como falso y fuera de alcance, y la remediación lo deja
-explícitamente sin tocar («`Dockerfile:14` no se toca: está registrado aparte»). Sigue sin cerrarse —
+explícitamente sin tocar («`Dockerfile:14` en `5f05466` no se toca: está registrado aparte»). Sigue sin cerrarse —
 correcto: no era tarea de esta remediación ni de este verify, y forzarlo sería tocar código fuera del
 encargo.
 
@@ -453,7 +453,7 @@ rojo (apartado 4.1: 0 UNTESTED, 0 FAILING, 0 PARTIAL).
 
 ### SUGGESTION
 
-- **SUGGESTION-2 (abierta, a propósito) · comentario falso preexistente en `Dockerfile`.** `Dockerfile:14`
+- **SUGGESTION-2 (abierta, a propósito) · comentario falso preexistente en `Dockerfile`.** `Dockerfile:14` en `5f05466`
   dice «tsx es devDep», pero `package.json:42` lo declara en `dependencies`. Fuera de alcance por decisión
   explícita de la tanda (4.13-A1) y de esta remediación.
 

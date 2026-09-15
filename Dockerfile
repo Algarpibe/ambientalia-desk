@@ -10,9 +10,9 @@ RUN npm run build          # npm --workspace @ambientalia/desk run build  →  /
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-# Instala dependencias del workspace (crea los symlinks de packages/* + apps/*).
-# tsx es devDep: con NODE_ENV=production `npm ci` lo omite, pero el CMD usa `npx tsx`,
-# que lo descarga en runtime si falta (mismo comportamiento que el setup actual).
+# Instala dependencias del workspace (symlinks de packages/* + apps/*). `tsx` va en `dependencies`
+# A PROPÓSITO: el CMD lo usa en runtime (`npx tsx`). En devDependencies, `npm ci` lo omitiría aquí y
+# `npx` bajaría del registro un tsx sin versión fijada al arrancar: sin red, el arranque falla.
 COPY package.json package-lock.json ./
 COPY packages ./packages
 COPY apps ./apps

@@ -84,13 +84,15 @@ El segundo verify (gen 9) falló porque el validador nativo rechaza un veredicto
 
 ## Abiertos tras el archivado
 
-### SUGGESTION de `Dockerfile:14`
+### SUGGESTION de `Dockerfile:14` en `5f05466` — CERRADA después del archivado
 
 No es sólo de redacción: el comentario falso invita a mover `tsx` a `devDependencies`, y con eso `npm ci` en producción dejaría de instalarlo.
 
-**Ubicación:** `Dockerfile:14` dice «tsx es devDep», pero `package.json:42` declara `tsx` dentro de `dependencies` (bloque que abre en `:25`; `devDependencies` en `:44`).
+**Ubicación:** `Dockerfile:14` en `5f05466` dice «tsx es devDep», pero `package.json:42` declara `tsx` dentro de `dependencies` (bloque que abre en `:25`; `devDependencies` en `:44`).
 
 **Tarea:** 4.13-A1 lo declaró falso y fuera de alcance.
+
+**Cierre (caso C, 2026-09-15):** lo cerró el commit «docs(docker): el comentario de tsx dice la verdad», posterior a este archivado, sustituyendo las tres líneas de comentario por otras tres (mismo número de líneas, ninguna instrucción tocada). El comentario nuevo dice que `tsx` va en `dependencies` a propósito porque el `CMD` lo usa en runtime. Medido en `node:22-alpine` sin TTY: sin `tsx` instalado, `npx tsx` lo descarga del registro y arranca con red, y falla sin red (`EAI_AGAIN`). Por eso el comentario no dice que el arranque se rompa siempre, sino que depende de la red.
 
 **Archivar:** no lo corrige. La tanda no asigna destino. Queda como SUGGESTION.
 
@@ -143,4 +145,4 @@ No es sólo de redacción: el comentario falso invita a mover `tsx` a `devDepend
 - ✅ `apply-progress.md`
 - ✅ `verify-report.md`
 
-Se archiva con 102/102 tareas y el verify en PASS. **Archivar no da por hechas** P.1 ni P.2, que siguen pendientes con sus dueños. Tampoco corrige la SUGGESTION de `Dockerfile:14` ni explica la varianza de la cobertura: las tres cosas quedan registradas arriba.
+Se archiva con 102/102 tareas y el verify en PASS. **Archivar no da por hechas** P.1 ni P.2, que siguen pendientes con sus dueños. Tampoco corrige la SUGGESTION de `Dockerfile:14` en `5f05466` (cerrada después, ver arriba) ni explica la varianza de la cobertura: las tres cosas quedan registradas arriba.
