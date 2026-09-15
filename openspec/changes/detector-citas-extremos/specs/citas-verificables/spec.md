@@ -9,7 +9,7 @@ citas de una misma línea física, la precedencia del ancla propia sobre la here
 fallo de ancla como categoría propia. RQ-CV-03 no cambia de texto: el escenario ambiguo nuevo de
 RQ-CV-08 lo ejercita sin modificarlo, y por eso no aparece en este delta.
 
-**Prefijo de esta tanda.** Las mutaciones y pruebas nuevas se nombran `DCE-M1`…`DCE-M5`, `DCE-M7` y
+**Prefijo de esta tanda.** Las mutaciones y pruebas nuevas se nombran `DCE-M1`…`DCE-M5`, `DCE-M7`…`DCE-M11` y
 `DCE-P1`…`DCE-P8` (de *detector-citas-extremos*), para no chocar con la numeración `M1`…`M30` ya usada
 en la spec viva. `DCE-M6` no aparece en ninguno de los dos requisitos: es la mutación del fichero
 vigilado sobre las cinco reparaciones de citas de la propuesta (regla de mutación 2 del proyecto), y
@@ -64,7 +64,13 @@ existe** en esa revisión, la abreviada **SHALL** informarse en «abreviadas rot
 **nombre la revisión**, y **MUST NOT** bloquear, **MUST NOT** entrar en la línea base, y **MUST NOT**
 contarse ni en «no legibles» ni en «anclas sin resolver» (d). Una abreviada con ancla —propia o
 heredada— rota **por contenido** (la revisión sí pela y el fichero sí existe en ella, pero la línea
-citada falla) **SHALL** también nombrar la revisión en su motivo (b.3).
+citada falla) **SHALL** también nombrar la revisión en su motivo (b.3). Toda abreviada rota **por
+contenido**, con ancla o sin ella, **SHALL** nombrar además qué extremo falla, con el mismo motivo que
+RQ-CV-08 da a la completa (decisión de Gerencia del 2026-09-15). Literales exactos:
+`abreviada rota (atribuida a <fichero>): <motivo del extremo> (línea <N> de <fichero>)` sin ancla;
+`abreviada rota (atribuida a <fichero> en <rev>): <motivo del extremo> (línea <N> de <fichero>)` con ancla;
+`abreviada rota (atribuida a <fichero> en <rev>): revisión inexistente` y
+`abreviada rota (atribuida a <fichero> en <rev>): fichero inexistente en la revisión` en el fallo de ancla.
 
 Cada caso nuevo de este requisito cae en **exactamente un** sumando del invariante de conservación: la
 abreviada heredada o con ancla propia, válida o rota por contenido, cuenta en comprobadas o en
@@ -78,9 +84,11 @@ ancla (d).
 
 (Previously: la abreviada atribuida se leía siempre en el sha local, ignorando el ancla de la completa
 que la precede en su misma línea física; no existía herencia de ancla, ni precedencia del ancla propia,
-ni el fallo de ancla como categoría propia con motivo.)
+ni el fallo de ancla como categoría propia con motivo; y el motivo de una abreviada rota no nombraba el
+extremo que fallaba.)
 
-*(Mutaciones: M3, M20, M24, M25, M26, M27, M30, DCE-M3, DCE-M4, DCE-M5, DCE-M7 · Rojo: d. **Precisión
+*(Mutaciones: M3, M20, M24, M25, M26, M27, M30, DCE-M3, DCE-M4, DCE-M5, DCE-M7, DCE-M8, DCE-M9, DCE-M10,
+DCE-M11 · Rojo: d. **Precisión
 sobre M24 y M25**, que corrige la
 lectura literal de Q9 —«M24 a M27 cambian bloquea por figura en la lista de abreviadas rotas»—: los
 requisitos (a) y (b) deciden también a qué nombre se atribuye una abreviada, pero sus controles de dos
@@ -174,17 +182,19 @@ M26 y M27 pasan a la lista de abreviadas rotas.)*
 - WHEN corre el hook
 - THEN la abreviada se lee en el sha local, no en la primera revisión: la completa sin ancla reinicia
   la herencia a «ninguna»
-- AND si está rota, su motivo **no** nombra ninguna revisión
-- AND este escenario nace verde —hoy también se lee en local—; la mutación DCE-M7, que conserva el
-  ancla anterior en vez de vaciarla, lo pone rojo
+- AND si está rota, su motivo **no** nombra ninguna revisión y **sí** nombra el extremo que falla, con
+  el literal sin ancla
+- AND este escenario **nace rojo**: hoy también se lee en local, pero su motivo no nombra el extremo
+  (H6); la mutación DCE-M7, que conserva el ancla anterior en vez de vaciarla, lo vuelve a poner rojo tras
+  la implementación
 
 #### Scenario: el motivo de una abreviada heredada rota por contenido nombra la revisión (DCE-P4, b.3)
 - GIVEN una abreviada que hereda el ancla de la completa anterior de su línea, con esa revisión
   existente y el fichero atribuido presente en ella, pero la línea citada rota —fuera de rango o
   vacía— dentro de esa revisión
 - WHEN corre el hook
-- THEN la abreviada figura en la lista de abreviadas rotas con un motivo que nombra la revisión
-  heredada, no sólo el motivo de la rotura
+- THEN la abreviada figura en la lista de abreviadas rotas con el literal con ancla: nombra la revisión
+  heredada y, detrás, el extremo que falla con su línea
 
 #### Scenario: el ancla propia de la abreviada gana sobre la heredada (DCE-P5)
 - GIVEN una completa anclada a una primera revisión con la línea rota, y una segunda revisión donde la
@@ -217,19 +227,25 @@ M26 y M27 pasan a la lista de abreviadas rotas.)*
 - GIVEN dos abreviadas con ancla propia: una a una revisión que no existe en el repositorio, y otra a
   una revisión real que no contiene el fichero atribuido
 - WHEN corre el hook
-- THEN las dos figuran en la lista de abreviadas rotas, cada una con un motivo que nombra su revisión
+- THEN las dos figuran en la lista de abreviadas rotas, con los literales exactos de revisión inexistente
+  y de fichero inexistente en la revisión
 - AND ninguna de las dos bloquea el push, ni cuenta en «no legibles»
+- AND la mutación DCE-M8 —comprobar la revisión inexistente después del contenido ausente— cambia el
+  literal de la primera y la pone roja
 
-#### Scenario: el invariante de conservación se cumple con un caso de cada camino nuevo (DCE-P8, nace verde)
+#### Scenario: el invariante de conservación se cumple con un caso de cada camino nuevo (DCE-P8, nace rojo)
 - GIVEN un árbol con al menos un caso de cada camino nuevo de este requisito: una abreviada heredada
   válida, una heredada rota por contenido, una con fallo de ancla y una con ancla propia que gana
 - WHEN el detector cosecha y comprueba
 - THEN la suma de todas las cifras del invariante —comprobadas, las seis saltadas, fuera del
   repositorio, no son citas, abreviadas rotas, bloqueantes e informadas— sigue cuadrando contra el total
   de citas cosechadas
-- AND este escenario nace verde: la suma ya cuadraba antes de la tanda porque los casos nuevos caen en
-  sumandos existentes; la mutación DCE-M5 —mandar el fallo de ancla a «no legibles» o a bloqueantes en
-  vez de a abreviadas rotas— lo pone rojo
+- AND además el total cosechado es igual a una constante contada a mano en el fixture, y el desglose por
+  cifra es exacto, cifra a cifra
+- AND este escenario **nace rojo** por el desglose: hoy la abreviada heredada válida sale rota. La suma
+  sola nacería verde y no discrimina DCE-M5 —mandar el fallo de ancla a «no legibles» o a bloqueantes en
+  vez de a abreviadas rotas—, que mueve una cita entre cifras sin cambiar la suma; el desglose sí la
+  pone roja
 
 ### Requirement: RQ-CV-08 · Comprobación mecánica: fichero, rango, línea vacía en los DOS extremos por separado, cada uno con su motivo exacto
 
@@ -241,17 +257,19 @@ abreviada atribuida la comprobación es la misma, pero su resultado **se informa
 
 El extremo **final** de un rango **SHALL** comprobarse contra línea vacía con la misma regla que el
 inicial: un rango cuyo extremo final cae en una línea vacía **MUST** bloquear, con motivo exacto
-`extremo final en línea vacía`, tanto en una cita completa simple como en cada candidata de una cita
+`extremo final en línea vacía (línea <N> de <token>)` —la cadena entera, comparada con igualdad—, tanto
+en una cita completa simple como en cada candidata de una cita
 ambigua — RQ-CV-03 no cambia: la candidata con el final vacío cuenta como rota, y la ambigua bloquea
 sólo si lo está en todas. Cuando los **dos** extremos de un rango caen en línea vacía, el motivo
 **SHALL** nombrar el **inicial**, nunca el final. Un extremo **fuera de rango** **MUST** informarse con
 el motivo `extremo <inicial|final> fuera de rango`, y **MUST NOT** informarse como «en línea vacía»
 aunque la línea no exista: fuera de rango y línea vacía son motivos distintos y no intercambiables entre
-sí.
+sí. En una abreviada atribuida rota por contenido, el motivo del extremo **SHALL** figurar en el suyo,
+con su línea (RQ-CV-06).
 
 (Previously: el detector comprobaba línea vacía sólo en el extremo inicial de un rango; el extremo final
 sólo se comprobaba fuera de rango, nunca vacío, y el mensaje no fijaba un motivo textual exacto por cada
-combinación de extremo y tipo de fallo.)
+combinación de extremo y tipo de fallo; en una abreviada, el extremo no llegaba a su motivo.)
 
 *(Mutaciones: M2, M4, DCE-M1, DCE-M2 · Rojos: a, b, c · DCE-M1 exige que la cuarta rama corra después
 de la tercera; DCE-M2 exige que corra después de la segunda)*
@@ -279,7 +297,8 @@ de la tercera; DCE-M2 exige que corra después de la segunda)*
 - GIVEN un rango de una cita completa cuyo extremo inicial tiene contenido y cuyo extremo final cae en
   línea vacía
 - WHEN corre el hook
-- THEN bloquea con motivo exacto `extremo final en línea vacía`
+- THEN bloquea con motivo exacto `extremo final en línea vacía (línea <N> de <token>)`, con N el extremo
+  final y token el nombre citado
 
 #### Scenario: el final vacío en una candidata ambigua bloquea si lo está en todas, y se salta si otra la valida (DCE-P2)
 - GIVEN un token ambiguo con dos candidatas trackeadas, una con el extremo final en línea vacía
@@ -291,6 +310,10 @@ de la tercera; DCE-M2 exige que corra después de la segunda)*
 #### Scenario: motivo exacto según la posición del extremo vacío, y fuera de rango nunca se informa como vacío (DCE-P3)
 - GIVEN un rango con los dos extremos en línea vacía
 - WHEN corre el hook
-- THEN bloquea con motivo exacto `extremo inicial en línea vacía`, nombrando el inicial y no el final
+- THEN bloquea con motivo exacto `extremo inicial en línea vacía (línea <N> de <token>)`, nombrando el
+  inicial y no el final
 - AND un rango con el extremo final fuera del número de líneas del fichero bloquea con motivo exacto
-  `extremo final fuera de rango`, nunca con un motivo que diga «en línea vacía»
+  `extremo final fuera de rango (línea <N> de <token>)`, nunca con un motivo que diga «en línea vacía»
+- AND una abreviada rota por contenido lleva ese mismo motivo del extremo detrás de su atribución
+  (RQ-CV-06), como fijan los asertos existentes que la tanda cambia de valor esperado antes de la
+  implementación

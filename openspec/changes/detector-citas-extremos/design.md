@@ -17,11 +17,11 @@
 |---|---|---|
 | 1 | Dónde vive el ancla heredada | En el campo `ancla` que ya existe; la precedencia (la propia gana) se resuelve en la cosecha con una sola expresión. Sin campo nuevo (D1) |
 | 2 | Lectura en dos pasadas | Las dos pasadas construyen la clave con `arbolDeLectura`; la primera no pide nada si la revisión no pela; la segunda decide en el orden huérfana → revisión inexistente → contenido ausente → rotura. Nada reutiliza la vía de la completa (D2) |
-| 3 | Motivos | Cuarta rama: `extremo final en línea vacía`. Abreviada: `abreviada rota (atribuida a <fichero>[ en <rev>])[: <fallo de ancla>]`. No incluye el motivo de `rotura()` (D3) |
+| 3 | Motivos | Cuarta rama: `extremo final en línea vacía`. Abreviada rota por contenido: `abreviada rota (atribuida a <fichero>[ en <rev>]): <motivo de rotura()> (línea <N> de <fichero>)`; fallo de ancla: `abreviada rota (atribuida a <fichero> en <rev>): <fallo de ancla>`. **Incluye el motivo de `rotura()`** (H6, decisión de Gerencia del 2026-09-15) (D3) |
 | 4 | Posición y cosecha | Cuarta rama después de la tercera. El ancla vigente cambia exactamente cuando cambia la atribución, más (b.2); el ancla propia no se propaga (D4) |
 | 5 | Invariante | Cada salida de la rama abreviada suma 1 en exactamente un sumando; DCE-P8 afirma la suma **y el desglose**, porque la suma sola no ve DCE-M5 (D5) |
 | 6 | Mutaciones | Copia fuera del repositorio, prueba roja nombrada, restauración con `cmp` y `git diff --exit-code`; DCE-M6 con `git stash create` y `--sha`: rojo en las nº 1-3, verde medido en las nº 4-5 (D6) |
-| 7 | Huecos de RQ-CV-17 | Siete, H1 a H7 (D7) |
+| 7 | Huecos de RQ-CV-17 | Seis: H1 a H5 y H7. H6 entró en la tanda por decisión de Gerencia (D7) |
 | 8 | Commits | 0 y 1 en pushes propios; 2 y 3 en el mismo push; 4 aparte (D8) |
 
 ---
@@ -128,16 +128,25 @@ con ancla falsa sigue siendo huérfana.
 
 ## 5 · D3 · Motivos exactos
 
-Marcadores: `<fichero>` es `atribuidoA`, `<rev>` es `ancla`, `<N>` y `<token>` los de la completa.
+Marcadores: `<fichero>` es `atribuidoA`, `<rev>` es `ancla`, `<N>` es la línea que devuelve `rotura()`,
+`<token>` el nombre de la completa tal como se cosechó, y `<motivo de rotura()>` uno de los cuatro:
+`extremo inicial fuera de rango`, `extremo final fuera de rango`, `extremo inicial en línea vacía`,
+`extremo final en línea vacía`.
 
 | Caso | Literal |
 |---|---|
 | Cuarta rama de `rotura()` | `extremo final en línea vacía` |
 | Completa simple con el final vacío (lo que compara DCE-P1) | `extremo final en línea vacía (línea <N> de <token>)` |
-| Abreviada rota por contenido, sin ancla | `abreviada rota (atribuida a <fichero>)` — **sin cambio** |
-| Abreviada rota por contenido, con ancla propia o heredada (b.3) | `abreviada rota (atribuida a <fichero> en <rev>)` |
+| Abreviada rota por contenido, sin ancla (H6) | `abreviada rota (atribuida a <fichero>): <motivo de rotura()> (línea <N> de <fichero>)` |
+| Abreviada rota por contenido, con ancla propia o heredada (b.3 y H6) | `abreviada rota (atribuida a <fichero> en <rev>): <motivo de rotura()> (línea <N> de <fichero>)` |
 | Fallo de ancla: revisión que no pela (d) | `abreviada rota (atribuida a <fichero> en <rev>): revisión inexistente` |
 | Fallo de ancla: fichero ausente en la revisión (d) | `abreviada rota (atribuida a <fichero> en <rev>): fichero inexistente en la revisión` |
+
+**Orden de los dos sufijos (decisión de este diseño):** el ancla va **dentro** del paréntesis de la
+atribución, porque califica al fichero leído; el extremo va **detrás**, tras dos puntos, porque es el
+motivo, igual que en el fallo de ancla. El sufijo «(línea N de fichero)» es el mismo que la completa
+recibe en su rama de bloqueo, con `<fichero>` en el lugar de `<token>`, porque la abreviada no tiene
+token propio. En el fallo de ancla no hay extremo que nombrar: `rotura()` no llega a correr.
 
 - **El sufijo de la completa no es nuevo:** lo añade `apps/desk/server/citas/detector.ts:271-272` en `1c5ee7e`
   a todo motivo de `rotura()`. «Motivo exacto» en DCE-P1 y DCE-P3 es la cadena entera, comparada con
@@ -148,16 +157,24 @@ Marcadores: `<fichero>` es `atribuidoA`, `<rev>` es `ancla`, `<N>` y `<token>` l
   La cita cruda de la abreviada no lleva su ancla (`apps/desk/server/citas/cosecha.ts:142` en `1c5ee7e`): por
   eso la revisión tiene que ir en el motivo.
 
-**Decisión: el motivo de una abreviada NO incluye el de `rotura()`.**
+**Decisión de Gerencia (2026-09-15): el motivo de una abreviada rota SÍ incluye el de `rotura()` (H6
+entra en la tanda).** RQ-CV-08 exige nombrar qué extremo falla también en la abreviada
+(`openspec/specs/citas-verificables/spec.md:349-353` en `1c5ee7e`), y la rama de la abreviada hoy lo descarta
+(`apps/desk/server/citas/detector.ts:200` en `d2a89e9`). La primera versión de este diseño lo dejaba como hueco
+H6; esa opción queda descartada. Consecuencias, que se declaran:
 
-| Opción | Coste | Decisión |
-|---|---|---|
-| Añadir el motivo de `rotura()` a toda abreviada rota | Cambia el literal sin ancla, que fijan con igualdad `apps/desk/server/citas/detector.test.ts:123` en `1c5ee7e` y `apps/desk/server/citas/detector.test.ts:321` en `1c5ee7e`; y el escenario (b.2) del delta, que declara que nace verde, nacería rojo sólo por el literal | Rechazada |
-| **Conservar el literal sin ancla y añadir sólo la revisión y el fallo de ancla** | Nada fuera de lo que (b.3) y (d) piden | **Elegida** |
-
-Ninguna decisión de Gerencia pide nombrar el extremo en una abreviada, aunque el texto de RQ-CV-08 se
-puede leer como si lo exigiera (`openspec/specs/citas-verificables/spec.md:349-353` en `1c5ee7e`). Se registra
-como hueco (H6), no se construye.
+- **Dos asertos existentes cambian de valor esperado ANTES de la implementación**, con rojo literal:
+  `apps/desk/server/citas/detector.test.ts:123` en `d2a89e9` pasa a
+  «abreviada rota (atribuida a citado.md): extremo inicial en línea vacía (línea 3 de citado.md)» (citado.md
+  tiene la 3 vacía), y `apps/desk/server/citas/detector.test.ts:321` en `d2a89e9` pasa a
+  «abreviada rota (atribuida a .dockerignore): extremo inicial fuera de rango (línea 9 de .dockerignore)».
+  Hipótesis del rojo: `toMatchObject` falla con el literal viejo recibido.
+- **El escenario b.2 nace rojo** por el literal (la abreviada sin ancla rota ya sale rota hoy, pero sin el
+  extremo). DCE-M7 sigue declarada: con ella el motivo nombraría la revisión de la primera completa.
+- `apps/desk/server/citas/informe.test.ts:43` en `d2a89e9` también pasa por `detectar`
+  (`apps/desk/server/citas/informe.test.ts:25` en `d2a89e9`), pero compara con `toContain`, y el literal nuevo
+  empieza por el viejo: **seguiría verde sin discriminar H6**, aunque su título promete nombrar el extremo que
+  falla. Se endurece para incluir el extremo, con rojo literal antes de la implementación.
 
 ---
 
@@ -306,9 +323,13 @@ Control previo: `--sha HEAD` tras el commit 3 da **0 bloqueantes**.
 | 4 | Línea 328 de openspec/specs/tickets-core/spec.md | **Verde, medido por el orquestador** |
 | 5 | Comentario de la línea 20 de apps/desk/server/routes/directory.ts | **Verde, medido por el orquestador** |
 
-- **Los tres rojos son ambiguas rotas en todas sus candidatas** (Engram 597, medido por el orquestador).
-  El literal completo —número de candidatas y línea de la primera— lo registra `sdd-apply` al ejecutarlo.
-  Hipótesis del número de candidatas: 2, 3 y 3, por los ficheros homónimos del árbol de trabajo.
+- **Los tres rojos son ambiguas rotas en todas sus candidatas.** Motivos medidos por el orquestador sobre
+  `d2a89e9` con una copia del detector que ya arregla los dos defectos: la nº 1, «ambigua, rota en sus 2
+  candidatas (línea 67 de directory.ts)»; la nº 2, «ambigua, rota en sus 3 candidatas (línea 40 de
+  vistas-tablero/spec.md)»; la nº 3, «ambigua, rota en sus 3 candidatas (línea 70 de migrate.ts)». `sdd-apply`
+  los vuelve a registrar con el detector real.
+- **Decisión de Gerencia (2026-09-15): DCE-M6 exige rojo sólo en las nº 1-3; las nº 4 y 5 se comprueban
+  leyendo la frase contra el fichero y quedan en H2.** Se ejecutan igual para registrar su verde.
 - **Las nº 4 y 5 no se prometen rojas, porque no lo son.** La nº 4 cita la ruta completa y única de
   routes/directory.ts del 61 al 66, y sus dos extremos tienen contenido
   (`apps/desk/server/routes/directory.ts:61-66` en `1c5ee7e`): el error es de referente, no de sintaxis. La nº 5
@@ -326,8 +347,10 @@ Control previo: `--sha HEAD` tras el commit 3 da **0 bloqueantes**.
 | H3 | El ancla, y con ella la herencia, sólo se lee en la misma línea física (`apps/desk/server/citas/cosecha.ts:59` en `1c5ee7e`; D2 del diseño archivado de `hook-citas-pre-push`) | Una completa anclada en la línea anterior no ancla las abreviadas de la siguiente | (b) lo fija en la misma línea |
 | H4 | «Mismo fichero» se decide por nombre cosechado | Hoy equivale a ruta resuelta; dejaría de hacerlo si la cosecha resolviera por sufijo | Sin efecto hoy (D4) |
 | H5 | Una completa anclada cuyo nombre ya no está en el índice local corta la atribución (corte 1) | Sus abreviadas quedan huérfanas justo donde el ancla más protegería: un fichero renombrado o borrado después | Resolver en el índice de la revisión metería git en la cosecha, que es pura (`apps/desk/server/citas/cosecha.ts:170-171` en `1c5ee7e`) |
-| H6 | El motivo de una abreviada rota por contenido no nombra el extremo que falla | RQ-CV-08 puede leerse como si lo exigiera | Nadie lo decidió (D3) |
 | H7 | La huérfana con ancla propia no se lee, y el ancla propia no se propaga | Una segunda abreviada que el autor quería en la misma revisión se lee en la vigente o en local | Decisión de D4 |
+
+H6 —el motivo de la abreviada no nombraba el extremo que falla— figuraba en la primera versión de esta
+tabla y **salió de ella**: Gerencia lo metió en la tanda el 2026-09-15 (D3). Los números no se reutilizan.
 
 ---
 
@@ -337,7 +360,7 @@ Control previo: `--sha HEAD` tras el commit 3 da **0 bloqueantes**.
 |---|---|---|---|
 | 0 | Planificación: propuesta, delta, este diseño, `tasks.md` | Propio, antes de que el intento de `sdd-apply` adquiera | Hook, con el detector de hoy |
 | 1 | Las cinco reparaciones y la anotación del triaje | Propio | Antes: `--sha HEAD` de partida, cifras registradas. Después: `--sha HEAD` con el detector de hoy (0 bloqueantes), `npm test` y hook. CI verde: sólo cambian comentarios y documentos |
-| 2 | Pruebas en rojo (§11) | **Con el 3** | `npm test` con el rojo literal de cada prueba registrado; `npm run typecheck` verde, porque las pruebas sólo usan API que ya existe, campo `ancla` incluido; `npm run lint` |
+| 2 | Pruebas en rojo (§11), incluidos los tres asertos existentes que H6 cambia de valor esperado | **Con el 3** | `npm test` con el rojo literal de cada prueba registrado; `npm run typecheck` verde, porque las pruebas sólo usan API que ya existe, campo `ancla` incluido; `npm run lint` |
 | 3 | Implementación | **Con el 2** | `npm test`, `npm run typecheck` y `npm run lint -- --max-warnings 158` como el CI (`.github/workflows/ci.yml:41` en `1c5ee7e`); `--sha HEAD`: 0 bloqueantes y habilitar_servicio en abreviadas rotas con el literal de revisión inexistente; mutaciones de código; DCE-M6; después, el push |
 | 4 | Cierre: barrido de la regla de mutación 4, `CLAUDE.md`, `openspec/config.yaml` | Propio | `--sha HEAD` y hook |
 
@@ -362,12 +385,13 @@ Control previo: `--sha HEAD` tras el commit 3 da **0 bloqueantes**.
 | DCE-P1 | `detector.test.ts`, «detectar · RQ-CV-08 comprobación mecánica básica» | Rango del 1 al 3 con la 3 vacía; motivo `extremo final en línea vacía (línea 3 de citado.md)` | Rojo: `bloquea` es falso |
 | DCE-P2 | `detector.test.ts`, «detectar · RQ-CV-03: una ambigua bloquea sólo si está rota en TODAS sus candidatas (M15)» | Rango del 1 al 3; a/comun.md con la 3 vacía y b/comun.md de una línea → bloquea con `ambigua, rota en sus 2 candidatas (línea 3 de comun.md)`; con b/comun.md válida → `saltadas.ambiguas` 1 | Rojo la primera; la segunda nace verde |
 | DCE-P3 | `detector.test.ts`, el `describe` de DCE-P1 | Dos extremos vacíos → `extremo inicial en línea vacía (línea 1 de citado.md)`; y endurecer a igualdad `apps/desk/server/citas/detector.test.ts:38` en `1c5ee7e` y `apps/desk/server/citas/detector.test.ts:50` en `1c5ee7e` | Nace verde: DCE-M1, DCE-M2 |
-| DCE-P4 | `detector.test.ts`, `describe` nuevo «detectar · RQ-CV-06: la abreviada se lee en su ancla, propia o heredada» | (i) completa anclada a rev1 y abreviada a la 3, vacía en local y con contenido en rev1 → comprobada, con `arbol()` llamado una vez; (ii) al revés → rota con `abreviada rota (atribuida a citado.md en rev1)`; (iii) b.2, una completa sin ancla del mismo fichero en medio → rota con `abreviada rota (atribuida a citado.md)` | (i) y (ii) rojos; el contador y (iii) nacen verdes: DCE-M11, DCE-M7 |
+| DCE-P4 | `detector.test.ts`, `describe` nuevo «detectar · RQ-CV-06: la abreviada se lee en su ancla, propia o heredada» | (i) completa anclada a rev1 y abreviada a la 3, vacía en local y con contenido en rev1 → comprobada, con `arbol()` llamado una vez; (ii) al revés → rota con `abreviada rota (atribuida a citado.md en rev1): extremo inicial en línea vacía (línea 3 de citado.md)`; (iii) b.2, una completa sin ancla del mismo fichero en medio → rota con `abreviada rota (atribuida a citado.md): extremo inicial en línea vacía (línea 3 de citado.md)` | (i), (ii) y (iii) rojos —(iii) por el literal de H6—; el contador nace verde: DCE-M11. DCE-M7 sigue declarada sobre (iii) |
 | DCE-P5 | el `describe` de DCE-P4 | Local y rev1 con la 3 vacía, rev2 con contenido; abreviada anclada a rev2 → comprobada | Rojo |
 | DCE-P6 | el `describe` de DCE-P4 | Otro fichero: mención de otro.md, ausente en rev1 → comprobada en local. Mismo fichero: mención de citado.md, con la 3 vacía en local y con contenido en rev1 → comprobada | Otro: nace verde (DCE-M3). Mismo: rojo |
 | DCE-P7 | el `describe` de DCE-P4 | (i) ancla propia «inventada» → `abreviada rota (atribuida a citado.md en inventada): revisión inexistente`; (ii) rev1 sin citado.md → `abreviada rota (atribuida a citado.md en rev1): fichero inexistente en la revisión`; en las dos, `bloquea` falso y `saltadas.noLegibles` 0 | Rojo: `expected [] to have a length of 1 but got 0` |
 | Filas de cosecha | `cosecha.test.ts`, `describe` nuevo «cosechar · herencia del ancla en la misma línea física (RQ-CV-06, b)» | Tabla de D4 sobre el campo `ancla`: completa con ancla, b.2, corte 1, mención de otro, mención del mismo, la propia gana, la propia no se propaga | Rojo por las filas que heredan; discrimina DCE-M3, M4, M7, M9 y M10 |
-| DCE-P8 | `hook.test.ts`, `it` nuevo en el `describe` del invariante (`apps/desk/server/citas/hook.test.ts:164-209` en `1c5ee7e`) | D5 | Hipótesis: rojo por el desglose, porque hoy la heredada válida sale rota |
+| DCE-P8 | `hook.test.ts`, `it` nuevo en el `describe` del invariante (`apps/desk/server/citas/hook.test.ts:164-209` en `1c5ee7e`) | D5 | **Rojo** por el desglose, porque hoy la heredada válida sale rota (el delta lo declara así tras la corrección de Gerencia) |
+| Asertos existentes (H6) | `apps/desk/server/citas/detector.test.ts:123` en `d2a89e9`, `apps/desk/server/citas/detector.test.ts:321` en `d2a89e9` y `apps/desk/server/citas/informe.test.ts:43` en `d2a89e9` | Sus fixtures de hoy; literales nuevos de D3 | Los dos de `detector.test.ts`, rojos por igualdad; el de `informe.test.ts`, rojo tras endurecerlo para incluir el extremo |
 
 ---
 
@@ -380,6 +404,8 @@ Control previo: `--sha HEAD` tras el commit 3 da **0 bloqueantes**.
 | `apps/desk/server/citas/detector.test.ts` | DCE-P1 a DCE-P7 y dos asertos endurecidos | 120-170 |
 | `apps/desk/server/citas/cosecha.test.ts` | Filas de cosecha | 25-35 |
 | `apps/desk/server/citas/hook.test.ts` | DCE-P8 | 35-50 |
+| `apps/desk/server/citas/informe.test.ts` | Aserto de la abreviada endurecido con el extremo (H6) | 1-2 |
+| `apps/desk/server/citas/detector.ts` (H6, añadido a la fila de arriba) | El motivo de `rotura()` y su sufijo en la abreviada | 2-4 |
 | `apps/desk/server/admin.test.ts`, `apps/desk/server/routes/directory.ts`, `docs/sdd/Paquete_de_Despliegue_2026-09-10.md`, `openspec/specs/tickets-core/spec.md` | Las cinco reparaciones, una línea cada una | 10 |
 | `docs/sdd/Triaje_Linea_Base_Citas_2026-09-15.md` | Anotación de la nº 4 | 2-4 |
 | `apply-progress.md` | Nuevo, sin trackear (ceguera 1 del ledger) | 60-150 |
@@ -392,7 +418,11 @@ desglose de DCE-P8. Por debajo de 800; con `ask-on-risk`, sólo se señala. La m
 
 ---
 
-## 13 · Divergencias con el delta y la propuesta que `sdd-tasks` tiene que llevar
+## 13 · Divergencias con el delta y la propuesta
+
+**Resueltas por Gerencia el 2026-09-15:** el delta se corrigió para coincidir con este diseño (filas 1, 2
+y 4, más H6 y b.2 que nace rojo), y la propuesta, para la fila 7 (DCE-M6 exige rojo sólo en las nº 1-3).
+Se conserva la tabla como registro de qué divergía.
 
 | # | Dónde | Qué fija el diseño | Por qué |
 |---|---|---|---|
@@ -402,7 +432,7 @@ desglose de DCE-P8. Por debajo de 800; con `ask-on-risk`, sólo se señala. La m
 | 4 | Delta, prefijo de mutaciones | Se añaden DCE-M8, DCE-M9, DCE-M10 y DCE-M11 | Regla de mutación 1 sobre las posiciones y decisiones nuevas |
 | 5 | Propuesta §6, DCE-P6 otro fichero (hipótesis) | Confirmado leyendo: nace verde, hoy la abreviada se lee en local (`apps/desk/server/citas/detector.ts:195` en `1c5ee7e`) | D2 |
 | 6 | Propuesta §8 | El bloque (ii) sube a ~277-462 | §12 |
-| 7 | Propuesta, criterio 9 | DCE-M6 corre sobre las cinco: rojo en las nº 1-3, verde medido en las nº 4-5 | D6 |
+| 7 | Propuesta, criterio 9 | DCE-M6 corre sobre las cinco, pero **exige rojo sólo en las nº 1-3**; las nº 4 y 5 se comprueban leyendo y quedan en H2 | D6 |
 
 ## 14 · Preguntas abiertas
 

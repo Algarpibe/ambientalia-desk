@@ -71,6 +71,17 @@ amplía el §5:
   el triaje de B3) y el comentario de la línea 20 de routes/directory.ts. Las dos citas del cambio archivado
   `2026-09-09-cerrar-hallazgos-revision-f1b-01` son caso B y no se tocan.
 
+**Tercera respuesta de Gerencia (2026-09-15)**, sobre el diseño:
+
+- **(H6)** Entra en la tanda: el motivo de una abreviada rota incluye el motivo de `rotura()`, es decir,
+  qué extremo falla, porque RQ-CV-08 lo exige también para la abreviada. Los literales los fija el
+  diseño; los asertos existentes que fijan el literal viejo cambian primero de valor esperado, con rojo
+  literal, y el caso b.2 de DCE-P4 nace rojo.
+- **(Delta)** El delta de spec se corrige para coincidir con el diseño: DCE-P8 nace rojo; el motivo exacto
+  lleva el sufijo de línea y fichero; DCE-M8 a DCE-M11 figuran en las líneas de mutaciones; b.2 nace rojo.
+- **(M6)** DCE-M6 exige rojo sólo en las reparaciones nº 1-3; las nº 4 y 5 se comprueban leyendo la frase
+  y quedan en el hueco H2 del diseño.
+
 ---
 
 ## 3 · Alcance
@@ -82,6 +93,7 @@ amplía el §5:
    (`apps/desk/server/citas/detector.ts:200` en `8222dd9`).
 2. **Herencia del ancla en la cosecha**, con las reglas de (b).
 3. **Lectura de la abreviada en su ancla** (propia o heredada) y el **fallo de ancla** a abreviadas rotas (d).
+   Y el **motivo de la abreviada rota nombra el extremo que falla** (H6).
 4. **Las cinco reparaciones** del §5 (tres que la cuarta rama bloquearía y dos del mismo origen que el
    detector no ve), antes o junto al commit que activa la cuarta rama.
 5. **Delta de `citas-verificables`** (c): RQ-CV-08 y RQ-CV-06 modificados.
@@ -186,11 +198,12 @@ caso «no pela» se puede montar sin `git`.
 | **P1** | Espejo del final vacío en una completa: rango del 1 al 3, la 1 con contenido y la 3 vacía | Pasa: `bloquea` es `false` y `comprobadas` 1 → `expected false to be true` | Bloquea; motivo exacto `extremo final en línea vacía` |
 | **P2** | Final vacío en una ambigua: dos candidatas, una con la 3 vacía y otra con dos líneas | Se salta: `saltadas.ambiguas` 1 → `expected false to be true` | Bloquea como `ambigua, rota en sus 2 candidatas` |
 | **P3** | Posición (regla 1): los dos extremos vacíos; y final fuera de rango con motivo exacto | Los dos extremos: nace verde (motivo inicial). Fuera de rango: nace verde | Se fija el motivo **exacto**, no «contiene final» |
-| **P4** | Herencia: completa anclada a `rev1` y abreviada a la 3, vacía en local y con contenido en `rev1`; el signo contrario (b.3: su motivo nombra `rev1`); y (b.2) una completa válida sin ancla entre la anclada y la abreviada | `abreviadasRotas` 1 (se lee en local); el contrario sale comprobada; la de b.2 sale rota (se lee en local), igual que tras la tanda | Comprobada; el contrario, rota con `rev1` en el motivo; la de b.2 rota y **sin** revisión en el motivo. La de b.2 **nace verde**: mutación M7 |
+| **P4** | Herencia: completa anclada a `rev1` y abreviada a la 3, vacía en local y con contenido en `rev1`; el signo contrario (b.3: su motivo nombra `rev1`); y (b.2) una completa válida sin ancla entre la anclada y la abreviada | `abreviadasRotas` 1 (se lee en local); el contrario sale comprobada; la de b.2 sale rota (se lee en local), igual que tras la tanda | Comprobada; el contrario, rota con `rev1` en el motivo; la de b.2 rota, **sin** revisión y **con** el extremo en el motivo. La de b.2 **nace roja** por el literal de H6; M7 sigue declarada |
 | **P5** | Ancla propia gana: local y `rev1` con la 3 vacía, `rev2` con contenido, abreviada con ancla `rev2` | `abreviadasRotas` 1 | Comprobada |
 | **P6** | Corte por mención: completa anclada a `rev1`, mención de otro fichero, abreviada; `rev1` no tiene ese fichero. Y (b.1) la misma línea con una mención del **mismo** fichero, vacío en local en la línea citada y con contenido en `rev1` | Otro fichero: comprobada (se lee en local). Mismo fichero: `abreviadasRotas` 1 (se lee en local) | Otro fichero: comprobada, **nace verde** (hipótesis a confirmar en apply). Mismo fichero: comprobada (hereda `rev1`) |
 | **P7** | Fallo de ancla: (i) ancla propia a una revisión inexistente; (ii) revisión existente sin el fichero atribuido | Comprobada en los dos: `abreviadasRotas` 0 → `expected [] to have a length of 1 but got 0` | `abreviadasRotas` 1 con la revisión en el motivo; `bloquea` `false`; `noLegibles` 0 |
-| **P8** | Invariante: un caso de cada camino nuevo suma `cosechadas` | Hipótesis: nace verde (la suma ya cuadra, los casos caen en otro sumando) | Verde; su detector es la mutación M5 |
+| **P8** | Invariante: un caso de cada camino nuevo suma `cosechadas`, con el total contado a mano y el desglose exacto por cifra | **Rojo** por el desglose: hoy la heredada válida sale rota (la suma sola nacería verde y no vería M5) | Verde; el desglose discrimina la mutación M5 |
+| **H6** | Los asertos existentes que fijan el motivo de una abreviada rota sin el extremo (dos por igualdad y uno por inclusión, que se endurece) | Rojo literal con el valor esperado nuevo | Verde con el extremo en el motivo |
 
 **Mutaciones que ponen rojo lo que nace verde** (reglas de mutación 1 y 2):
 
@@ -202,7 +215,7 @@ caso «no pela» se puede montar sin `git`.
 | **M4** | Invertir la precedencia (la heredada gana) | P5 |
 | **M5** | Mandar el fallo de ancla a `noLegibles` o a `candidatosDeBloqueo` | P7 y P8 |
 | **M7** | Que una completa válida sin ancla conserve el ancla anterior en vez de dejarla vacía | P4, caso b.2: sale comprobada en `rev1` o con `rev1` en el motivo |
-| **M6 · fichero vigilado** (regla 2) | Devolver al árbol el texto viejo de cualquiera de las tres reparaciones | El hook contra el propio repositorio bloquea; reparado, sale 0 |
+| **M6 · fichero vigilado** (regla 2) | Devolver al árbol el texto viejo de cada una de las cinco reparaciones, una a una | **Rojo exigido sólo en las nº 1-3**: el hook contra el propio repositorio bloquea; reparado, sale 0. Las nº 4 y 5 son invisibles al detector y se comprueban **leyendo** la frase contra el fichero; su verde se registra y queda en el hueco H2 (Gerencia, 2026-09-15) |
 
 ---
 
@@ -336,7 +349,7 @@ revierten**: son válidas con cualquiera de los dos detectores. Sin efecto en da
 6. El fallo de ancla va a abreviadas rotas con la revisión en el motivo, nunca bloquea y no toca `noLegibles` (M5 en rojo).
 7. La abreviada de habilitar_servicio figura en abreviadas rotas como informativa.
 8. El invariante de conservación se cumple con un caso de cada camino nuevo.
-9. Las cinco citas del §5 están reparadas en un commit anterior o igual al que activa la cuarta rama, la anotación del triaje de B3 está hecha, y M6 se ejecutó sobre las tres que el detector ve.
+9. Las cinco citas del §5 están reparadas en un commit anterior o igual al que activa la cuarta rama, la anotación del triaje de B3 está hecha, y M6 se ejecutó: rojo en las nº 1-3; las nº 4 y 5, comprobadas leyendo la frase y registradas en H2.
 10. Hook en verde contra el propio repositorio tras la tanda: 0 bloqueantes, 0 caducadas, base en 0.
 11. `npm test`, `npm run typecheck` y `npm run lint` en verde.
 12. Delta de `citas-verificables` con RQ-CV-08 y RQ-CV-06 modificados según (c).
