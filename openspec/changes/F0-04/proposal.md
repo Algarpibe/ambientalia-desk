@@ -148,7 +148,7 @@ Por consecuencia:
 
 1. **Las cuatro salidas únicas de los estados de espera** — gate de F1C-03, las cuatro huérfanas.
 2. **Las dos ramas del ciclo de facturación** — gate de F1C-02.
-3. **Prueba en rojo de C1.** `transitionExec.ts:63-70` hace `continue` en la rama del checkbox antes del chequeo de obligatorio; `transitionExec.test.ts:82-86` usa un campo de texto. El único checkbox `required: true` es `:247`. **Sin ella F1A-01 no puede arrancar.**
+3. **Prueba en rojo de C1.** `transitionExec.ts:63-70` hace `continue` en la rama del checkbox antes del chequeo de obligatorio; `apps/desk/server/transitionExec.test.ts:82-86` en `3d44e1e` (la prueba en rojo la añadió F0-04 en b5deda0, en transicionesEjecucion.test.ts; C1 lo cerró F1A-01 en ec0ed1f) usa un campo de texto. El único checkbox `required: true` es `:247`. **Sin ella F1A-01 no puede arrancar.**
 4. Las 16 restantes.
 
 ---

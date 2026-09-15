@@ -255,7 +255,7 @@ No se retiran en F0-02. Se documentan en el Anexo G como campos del layout de Zo
 
 F1F es demasiado tarde: de aquí a F1F hay cuatro meses de ventana. Y F0-04 es el momento natural porque **monta el entorno de staging** (plan R01.1, fila F0-04: «staging sobre la VPS Hostinger con PostgreSQL»), que necesita sus propias credenciales de todas formas: ya se va a tocar la superficie de credenciales, se toca entera.
 
-**Verificado, y por eso es higiene y no incendio:** `.env` nunca entró en el histórico de git —sólo `.env.example`— y `.gitignore:19-20` lo cubre. No hay constancia de fuga.
+**Verificado, y por eso es higiene y no incendio:** `.env` nunca entró en el histórico de git —sólo `.env.example`— y `.gitignore:17-18` en `a5da6b8` lo cubre. No hay constancia de fuga.
 
 El barrido `git log -S` sobre los valores se hace igualmente, como confirmación de que nada se incrustó en un fichero de código.
 

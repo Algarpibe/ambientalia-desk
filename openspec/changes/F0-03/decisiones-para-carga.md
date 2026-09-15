@@ -109,7 +109,7 @@ verificar contra el código se carga **sin** ese campo antes que con una hipóte
 | 3 | Serial obligatorio en la remisión | Cumplida por otra vía: el serial sale del equipo del catálogo, no se teclea (`apps/desk/server/services/ticketService.ts:64-66`). `tickets-core` RQ-TC-04 |
 | 4 | Desplegable inicial de rama | **Construida a medias.** Las tres clasificaciones se ofrecen y sólo una tiene grafo (`ticketCreate.ts:5`). `tickets-core` §4.3, destino F1B-06 |
 | 12 | Permisos y vistas por rol | Construida y **probada** en el servidor (`apps/desk/server/permisos.test.ts:41-110`). Es lo que cerró IV-3 |
-| 30 | Derivación nunca obligatoria | Exacta: `required: false` en las 34 (`packages/shared/src/transitions.ts:95-97`). `derivacion-avisos` RQ-AV-01 |
+| 30 | Derivación nunca obligatoria | Exacta: `required: false` en las 34 (`packages/shared/src/transitions.ts:96-98` en `085481e`). `derivacion-avisos` RQ-AV-01 |
 | 31 | Las etapas proponen un cargo | Exacta, y son **tres** (`transitions.ts:267-276`). `derivacion-avisos` RQ-AV-02 |
 | 44 | Las dos entradas no se cruzan | Exacta, en un solo sitio (`apps/desk/server/db/estadoPorRemision.ts:41`). `transitions-st` RQ-TS-02 |
 

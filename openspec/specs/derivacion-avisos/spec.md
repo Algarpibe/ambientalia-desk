@@ -107,18 +107,18 @@ No **SHALL** haber tabla de derivaciones: la cadena vive en `ticket_transitions.
 ### RQ-AV-04 · El destinatario se calcula desde el estado de llegada, no desde el área que ejecutó
 
 `areasSiguientes` **SHALL** devolver las áreas base de todas las transiciones cuyo `from` incluye el
-estado (`packages/shared/src/transitions.ts:320-327`), y **MUST NOT** usarse el `area` de la
+estado (`packages/shared/src/transitions.ts:327-334`), y **MUST NOT** usarse el `area` de la
 transición ejecutada.
 
 La razón **SHALL** quedar escrita, y es un caso concreto: `escalado_a_comercial` es de área
 `Servicio Técnico` y deja el ticket en `Notificación Comercial`, donde quien tiene que actuar es
 Comercial; «avisar por el área de la transición ejecutada mandaría el aviso justo a quien acaba de
-hacer el trabajo» (`transitions.ts:312-315`; maestro M1.9.3, `:1671`; diseño `:21-27`).
+hacer el trabajo» (`packages/shared/src/transitions.ts:320-323`; maestro M1.9.3, `:1671`; diseño `:21-27`).
 
 - Un estado terminal **SHALL** devolver lista vacía: «no hay a quién pasarle el testigo» (`:317`;
   probado en `apps/desk/server/services/avisoArea.test.ts:28`).
 - Las áreas compuestas **SHALL** descomponerse por `' / '` antes de contarlas
-  (`areasForTransition`, `transitions.ts:307-309`).
+  (`areasForTransition`, `packages/shared/src/transitions.ts:313-315`).
 
 > **Given** un ticket en `Notificado` sobre el que Servicio Técnico ejecuta `escalado_a_comercial`
 > **When** se calcula a quién avisar

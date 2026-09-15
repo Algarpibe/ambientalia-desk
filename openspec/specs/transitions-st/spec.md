@@ -118,7 +118,7 @@ Lo que no está en el archivo de transiciones es el `from`/`to`, porque no son g
 produce `statusType: 'Closed'` (`transitionExec.ts:5`, `:39`). Todos los demás producen `'Open'`.
 
 `areasSiguientes` **SHALL** devolver lista vacía para un estado terminal: no hay a quién pasarle el
-testigo (`transitions.ts:318-327`).
+testigo (`packages/shared/src/transitions.ts:325-334`).
 
 ### RQ-TS-05 · Alcanzabilidad de los 21 estados
 
@@ -185,7 +185,7 @@ El permiso **SHALL** calcularse con `canExecuteTransition(userAreas, isAdmin, tr
 (`packages/shared/src/permissions.ts:4-6`), que es siete líneas y el único sitio de la regla.
 
 - Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`, `Compras`
-  (`transitions.ts:303`).
+  (`packages/shared/src/transitions.ts:310`).
 - Un área compuesta se descompone por el separador `' / '` (`packages/shared/src/transitions.ts:313-315`).
 - **Ocho** de las 34 transiciones **SHALL** ser compartidas por dos áreas: cinco
   `Comercial / Compras` y tres `Comercial / Servicio Técnico`. El emparejamiento id → área está
@@ -308,7 +308,7 @@ derivar no puede frenar un ticket (`transitions.ts:96-98`, `:277-291`; maestro M
 ### RQ-TS-13 · Avisos: se calculan desde el estado de llegada
 
 El destinatario **SHALL** calcularse desde el **estado de llegada** y **MUST NOT** calcularse desde el
-área que ejecutó la transición (`transitions.ts:310-327`; maestro M1.9.3, `:1670-1671`).
+área que ejecutó la transición (`packages/shared/src/transitions.ts:317-334`; maestro M1.9.3, `:1670-1671`).
 
 - `areasAAvisar(estado, areasActor)` **SHALL** ser `areasSiguientes(estado)` **menos** las áreas de
   quien pulsó (`services/avisoArea.ts:15-17`). Sin la resta, `facturado` avisaría a Comercial de que

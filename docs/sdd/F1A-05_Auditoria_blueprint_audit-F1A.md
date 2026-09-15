@@ -36,9 +36,9 @@ queda escrito en §6.
 
 `plan:388` declara que `docs/artefactos/blueprintserviciotecnico.html` «se regenera en cada tanda
 `audit-*`», y la fila `:142` hereda esa premisa para calcular la talla. **La premisa es falsa y ya
-estaba registrada como falsa**: `docs/artefactos/NOTA.md:33-46` lo verificó sobre el commit `a3a8f03`
+estaba registrada como falsa**: `docs/artefactos/NOTA.md:34-46` en `43821b8` lo verificó sobre el commit `a3a8f03`
 —cero referencias a `blueprintserviciotecnico` en `apps/`, `packages/`, `scripts/` y `package.json`—
-y concluye que las tandas `audit-*` tienen que **CONSTRUIR el generador, no invocarlo**. Se confirma
+y concluye que las tandas `audit-*` tienen que **CONSTRUIR el generador, no invocarlo** (conclusión en `docs/artefactos/NOTA.md:55-56` en `43821b8`, corregida por c45bcb1). Se confirma
 hoy sobre `e8c5e90`: `scripts/` contiene un solo fichero, `docx2md.sh`.
 
 → **Esta auditoría NO regenera el artefacto** y no reclama haberlo hecho. Construir el generador es

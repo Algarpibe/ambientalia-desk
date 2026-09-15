@@ -535,7 +535,7 @@ fichero ya tuvo que desactivar con una nota al pie.
 - El actor es el usuario de la sesión: `apps/desk/server/services/ticketService.ts:111`
   (`const actor = user.name ?? TRANSITION_ACTOR`).
 - Comprobado en **las 34 transiciones**, ejercitando **todos** los `from` de cada una —36 ejecuciones,
-  porque `habilitar_servicio` tiene tres—: `apps/desk/server/transicionesEjecucion.test.ts:312-325`
+  porque `habilitar_servicio` tiene tres—: `apps/desk/server/transicionesEjecucion.test.ts:312-325` en `34f1b88`
   lee `transition_id`, `from_status`, `to_status`, `area` y `performed_by` de la fila resultante.
 
 **El matiz que la corrección debe conservar, no esconder.** `TRANSITION_ACTOR`

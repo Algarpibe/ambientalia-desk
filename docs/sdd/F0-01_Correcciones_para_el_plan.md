@@ -175,7 +175,7 @@ Comercial no es cuándo llegó el equipo. Es exactamente la avería que C9 exist
 
 **El problema, en dos mitades que el plan trata como una sola.** `plan:388` da por hecho que el
 artefacto «se regenera en cada tanda `audit-*`», y las tallas **S** de `:412` y `:421` se apoyan en
-esa premisa. **No hay generador en el repositorio**: verificado en `docs/artefactos/NOTA.md:33-46`
+esa premisa. **No hay generador en el repositorio**: verificado en `docs/artefactos/NOTA.md:34-46` en `c45bcb1`
 sobre el commit `a3a8f03`, y de nuevo en F1A-05 sobre `43821b8` —`scripts/` contiene un solo fichero,
 `docx2md.sh`—. No se puede regenerar lo que no tiene generador.
 

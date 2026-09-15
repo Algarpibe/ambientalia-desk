@@ -1,7 +1,0 @@
-{"fichero":"docs/sdd/F0-00_Recomendaciones_R02.md","linea":258,"cita":"`.gitignore:19-20`","motivo":"extremo inicial en línea vacía (línea 19 de .gitignore)"}
-{"fichero":"docs/sdd/F0-01_Correcciones_para_el_maestro.md","linea":538,"cita":"`apps/desk/server/transicionesEjecucion.test.ts:312-325`","motivo":"extremo inicial fuera de rango (línea 312 de apps/desk/server/transicionesEjecucion.test.ts)"}
-{"fichero":"docs/sdd/F0-01_Correcciones_para_el_plan.md","linea":178,"cita":"`docs/artefactos/NOTA.md:33-46`","motivo":"extremo inicial en línea vacía (línea 33 de docs/artefactos/NOTA.md)"}
-{"fichero":"docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md","linea":39,"cita":"`docs/artefactos/NOTA.md:33-46`","motivo":"extremo inicial en línea vacía (línea 33 de docs/artefactos/NOTA.md)"}
-{"fichero":"openspec/changes/F0-03/decisiones-para-carga.md","linea":112,"cita":"`packages/shared/src/transitions.ts:95-97`","motivo":"extremo inicial en línea vacía (línea 95 de packages/shared/src/transitions.ts)"}
-{"fichero":"openspec/changes/F0-04/proposal.md","linea":151,"cita":"`transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de transitionExec.test.ts)"}
-{"fichero":"packages/zoho-sync/src/db/rows.ts","linea":120,"cita":"`transitionExec.ts:89-91`","motivo":"extremo inicial en línea vacía (línea 89 de transitionExec.ts)"}

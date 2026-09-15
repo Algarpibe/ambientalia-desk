@@ -117,7 +117,7 @@ export const PROMOTED_COLUMNS: Array<{ col: keyof TicketRow; label: string; kind
   { col: 'fecha_orden_compra_final', label: 'Fecha Orden de Compra Final', kind: 'date' },
   { col: 'fecha_orden_venta_final', label: 'Fecha Orden de Venta Final', kind: 'date' },
   // C9 · el ÚNICO de esta lista que NO viene de Zoho: lo crea la corrección C9 y lo escribe
-  // `habilitado_para_entrega`. Está aquí porque `transitionExec.ts:89-91` usa esta lista para decidir
+  // `habilitado_para_entrega`. Está aquí porque `apps/desk/server/transitionExec.ts:90-92` usa esta lista para decidir
   // columna o `custom_fields`, y el jsonb NO SIRVE: `repo.ts:62` hace `custom_fields=EXCLUDED.custom_fields`
   // en cada upsert, así que el sync —cada 3 min— borraría la fecha de aviso de todo ticket que no sea
   // `managed_by_app`. En columna propia sobrevive, porque `TICKET_COLS` no la incluye y el sync no la toca.
