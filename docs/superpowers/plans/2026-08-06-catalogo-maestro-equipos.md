@@ -1323,7 +1323,7 @@ git commit -m "feat(desk): endpoint de siembra del catálogo"
 
 **Files:**
 - Modify: `apps/desk/server/db/equipos.ts:94-146` (`EquipoInput`, `toLite`, `toFull`, `createEquipo`, `updateEquipo`, lecturas)
-- Modify: `apps/desk/server/routes/equipos.ts:36-68`
+- Modify: `apps/desk/server/routes/equipos.ts:36-68` en `0bea513`
 - Test: `apps/desk/server/app.test.ts`
 
 - [ ] **Step 1: Escribir los tests que fallan**
@@ -1509,7 +1509,7 @@ git commit -m "feat(desk): el equipo toma marca, modelo y tipo de su modelo del 
 - Modify: `apps/desk/server/db/equipos.ts:160-195` (borrar `FacetasMarca` y `equipoFacets`)
 - Modify: `apps/desk/server/routes/equipos.ts:4,26-28`
 - Modify: `apps/desk/server/db/equipos.test.ts` (borrar los dos tests de facetas)
-- Modify: `apps/desk/server/app.test.ts:1371` (el test `facets devuelve marcas/tipos; manage lista; 401 sin sesión`)
+- Modify: `apps/desk/server/app.test.ts:1371` en `0bea513` (el test `facets devuelve marcas/tipos; manage lista; 401 sin sesión`)
 
 - [ ] **Step 1: Borrar el código y sus tests**
 
@@ -1540,7 +1540,7 @@ git commit -m "refactor(desk): retirar las facetas derivadas, que el catálogo s
 ## Task 12: Cliente HTTP del navegador
 
 **Files:**
-- Modify: `apps/desk/src/api/client.ts:188-205`
+- Modify: `apps/desk/src/api/client.ts:188-204` en `0bea513`
 
 - [ ] **Step 1: Sustituir `equipoFacets` por el catálogo**
 
@@ -1973,7 +1973,7 @@ git commit -m "feat(desk): el alta de equipos elige del catálogo y ya no invent
 ## Task 15: Montar la pantalla
 
 **Files:**
-- Modify: `apps/desk/src/components/Configuracion.tsx:24-30` (props) y `:122-129` (categoría)
+- Modify: `apps/desk/src/components/Configuracion.tsx:24-30` en `0bea513` (props) y `:122-129` (categoría)
 - Modify: `apps/desk/src/App.tsx:25` (lazy), `:144-162` (montaje)
 
 - [ ] **Step 1: Enlazar desde Configuración**

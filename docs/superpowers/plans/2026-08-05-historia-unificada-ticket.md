@@ -287,7 +287,7 @@ ya creados no la ganan: eso no tiene arreglo retroactivo."
 ### Tarea 3: `history.ts` se queda solo con Zoho
 
 **Ficheros:**
-- Modificar: `packages/zoho-sync/src/db/history.ts:21-36`
+- Modificar: `packages/zoho-sync/src/db/history.ts:21-36` en `9cea347`
 - Modificar: `packages/zoho-sync/src/db/history.test.ts`
 
 - [ ] **Paso 1: mover el test del fallback fuera**

@@ -9,13 +9,13 @@
 **Spec:** `docs/superpowers/specs/2026-06-19-hardening-fase-b-design.md`.
 
 **Contexto verificado del código (de la auditoría):**
-- `apps/desk/server/app.ts:46` `createApp({db,zohoFetch,sync,config})` → `app.use(express.json()); app.use(cookieParser()); registerAuthRoutes(app, db)`.
-- `app.ts:55-61` helper local `requireAdmin(req,res)` = `req.query.token === config.adminToken` (a eliminar). Usado en `:206` y `:217`.
-- `app.ts:15` importa `requireAdmin as requireSuperAdmin` (middleware de rol admin de sesión).
-- `app.ts:71` `app.use('/api/tickets', requireAuth(db))`.
-- DELETE resolución: `app.ts:104` (`/resolution/attachments/:attId`) y `:108` (`/resolution`).
+- `apps/desk/server/app.ts:46` en `1d030d5` `createApp({db,zohoFetch,sync,config})` → `app.use(express.json()); app.use(cookieParser()); registerAuthRoutes(app, db)`.
+- `apps/desk/server/app.ts:55-61` en `1d030d5` helper local `requireAdmin(req,res)` = `req.query.token === config.adminToken` (a eliminar). Usado en `:206` y `:217`.
+- `apps/desk/server/app.ts:15` en `1d030d5` importa `requireAdmin as requireSuperAdmin` (middleware de rol admin de sesión).
+- `apps/desk/server/app.ts:71` en `1d030d5` `app.use('/api/tickets', requireAuth(db))`.
+- DELETE resolución: `apps/desk/server/app.ts:104` en `1d030d5` (`/resolution/attachments/:attId`) y `:108` (`/resolution`).
 - ~32 `catch (err) { res.status(500).json({ error: String(err) }) }` en `app.ts`.
-- Passthrough deliberado de estado upstream (NO genericalizar): `app.ts:373` (attachment proxy `res.status(zres.status)`) y `:430` (reply `res.status(zres.status)`).
+- Passthrough deliberado de estado upstream (NO genericalizar): `apps/desk/server/app.ts:373` en `1d030d5` (attachment proxy `res.status(zres.status)`) y `:430` (reply `res.status(zres.status)`).
 - `repo.ts:117` ≈ `:130`: `.map((row:any)=>({row, refs:{accountName:row.account_name, agentName:row.agent_name, contactName:[row.c_first,row.c_last].filter(Boolean).join(' ').trim()||null, read: row.read_at!=null && (row.modified_time==null || new Date(row.read_at)>=new Date(row.modified_time))}}))`.
 - Raíz `package.json`: `tsx`,`cross-env` en `devDependencies`.
 
@@ -101,7 +101,7 @@ it('error no manejado → 500 genérico (sin filtrar el mensaje)', async () => {
 - [ ] **Step 4: Implementar en `app.ts`:**
   - Añadir helper (top de `createApp` o módulo): `const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) => { fn(req, res, next).catch(next) }` (importar `NextFunction` de express).
   - Reemplazar los **~32** handlers con `try/catch → res.status(500).json({error:String(err)})` por `asyncHandler(async (req,res)=>{ ...cuerpo sin try/catch... })`.
-    - **Conservar** las respuestas in-flow de estado upstream: `app.ts:373` (`res.status(zres.status)...` del attachment) y `:430` (reply). Esos endpoints: envolver en `asyncHandler` y quitar SOLO el `catch` final (la respuesta upstream-status dentro del flujo se queda; el error de red cae al handler central).
+    - **Conservar** las respuestas in-flow de estado upstream: `apps/desk/server/app.ts:373` en `1d030d5` (`res.status(zres.status)...` del attachment) y `:430` (reply). Esos endpoints: envolver en `asyncHandler` y quitar SOLO el `catch` final (la respuesta upstream-status dentro del flujo se queda; el error de red cae al handler central).
   - Añadir al FINAL de `createApp` (después de TODAS las rutas, antes de `return app`):
 ```ts
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

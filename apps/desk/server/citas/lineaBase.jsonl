@@ -2,16 +2,6 @@
 {"fichero":"docs/sdd/F0-01_Correcciones_para_el_maestro.md","linea":538,"cita":"`apps/desk/server/transicionesEjecucion.test.ts:312-325`","motivo":"extremo inicial fuera de rango (línea 312 de apps/desk/server/transicionesEjecucion.test.ts)"}
 {"fichero":"docs/sdd/F0-01_Correcciones_para_el_plan.md","linea":178,"cita":"`docs/artefactos/NOTA.md:33-46`","motivo":"extremo inicial en línea vacía (línea 33 de docs/artefactos/NOTA.md)"}
 {"fichero":"docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md","linea":39,"cita":"`docs/artefactos/NOTA.md:33-46`","motivo":"extremo inicial en línea vacía (línea 33 de docs/artefactos/NOTA.md)"}
-{"fichero":"docs/superpowers/plans/2026-06-19-hardening-fase-b.md","linea":16,"cita":"`app.ts:104`","motivo":"extremo inicial fuera de rango (línea 104 de app.ts)"}
-{"fichero":"docs/superpowers/plans/2026-06-19-hardening-fase-b.md","linea":18,"cita":"`app.ts:373`","motivo":"extremo inicial fuera de rango (línea 373 de app.ts)"}
-{"fichero":"docs/superpowers/plans/2026-06-19-hardening-fase-b.md","linea":104,"cita":"`app.ts:373`","motivo":"extremo inicial fuera de rango (línea 373 de app.ts)"}
-{"fichero":"docs/superpowers/plans/2026-08-05-historia-unificada-ticket.md","linea":290,"cita":"`packages/zoho-sync/src/db/history.ts:21-36`","motivo":"extremo final fuera de rango (línea 36 de packages/zoho-sync/src/db/history.ts)"}
-{"fichero":"docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos.md","linea":1326,"cita":"`apps/desk/server/routes/equipos.ts:36-68`","motivo":"extremo inicial en línea vacía (línea 36 de apps/desk/server/routes/equipos.ts)"}
-{"fichero":"docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos.md","linea":1512,"cita":"`apps/desk/server/app.test.ts:1371`","motivo":"fichero inexistente"}
-{"fichero":"docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos.md","linea":1543,"cita":"`apps/desk/src/api/client.ts:188-205`","motivo":"extremo inicial en línea vacía (línea 188 de apps/desk/src/api/client.ts)"}
-{"fichero":"docs/superpowers/plans/2026-08-06-catalogo-maestro-equipos.md","linea":1976,"cita":"`apps/desk/src/components/Configuracion.tsx:24-30`","motivo":"extremo inicial en línea vacía (línea 24 de apps/desk/src/components/Configuracion.tsx)"}
-{"fichero":"docs/superpowers/plans/2026-08-12-mano-de-obra-por-modelo.md","linea":111,"cita":"`apps/desk/server/app.test.ts:1595`","motivo":"fichero inexistente"}
-{"fichero":"docs/superpowers/plans/2026-08-12-mano-de-obra-por-modelo.md","linea":254,"cita":"`apps/desk/src/components/CatalogoEquipos.tsx:13-19`","motivo":"extremo inicial en línea vacía (línea 13 de apps/desk/src/components/CatalogoEquipos.tsx)"}
 {"fichero":"openspec/changes/F0-03/decisiones-para-carga.md","linea":112,"cita":"`packages/shared/src/transitions.ts:95-97`","motivo":"extremo inicial en línea vacía (línea 95 de packages/shared/src/transitions.ts)"}
 {"fichero":"openspec/changes/F0-04/proposal.md","linea":151,"cita":"`transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de transitionExec.test.ts)"}
 {"fichero":"openspec/specs/derivacion-avisos/spec.md","linea":60,"cita":"`transitions.ts:95-97`","motivo":"extremo inicial en línea vacía (línea 95 de transitions.ts)"}

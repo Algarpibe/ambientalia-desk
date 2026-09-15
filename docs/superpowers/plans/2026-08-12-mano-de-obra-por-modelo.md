@@ -108,7 +108,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 **Files:**
 - Modify: `packages/shared/src/types.ts:208-219` (doc y constante)
 - Modify: `apps/desk/server/routes/catalogo.ts:14` (import) y `:164-172` (el 422)
-- Test: `apps/desk/server/app.test.ts:1595` (una aserción más en el test que ya cubre esta puerta)
+- Test: `apps/desk/server/app.test.ts:1595` en `db3b807` (una aserción más en el test que ya cubre esta puerta)
 
 - [ ] **Step 1: escribir la aserción que falla**
 
@@ -251,7 +251,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 La sección se pinta sola —el render es `CLASES_ARTICULO.map(...)`—, así que aquí solo hay etiquetas, la condición del desplegable y el texto explicativo.
 
 **Files:**
-- Modify: `apps/desk/src/components/CatalogoEquipos.tsx:13-19` (etiquetas), `:897-905` (texto de la sección), `:935` (condición del desplegable)
+- Modify: `apps/desk/src/components/CatalogoEquipos.tsx:15-20` en `db3b807` (etiquetas), `:897-905` (texto de la sección), `:935` (condición del desplegable)
 
 - [ ] **Step 1: las etiquetas**
 
