@@ -17,7 +17,7 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
   }))
 
   /**
-   * cerrar-hallazgos-revision-f1b-01 · P2 — resolución de cliente por identidad, calcada de `:62-67`
+   * cerrar-hallazgos-revision-f1b-01 · P2 — resolución de cliente por identidad, calcada de `:74-79`
    * (contactos/cuentas de Zoho). No amplía superficie: `getClient` (`books/repo.ts:129`) no filtra por
    * `contact_type`, igual que la búsqueda por texto de arriba tampoco lo hace para quien ya conoce el
    * id (`books/repo.ts:115-116` documenta ese filtro como deliberado sólo en la búsqueda por texto).

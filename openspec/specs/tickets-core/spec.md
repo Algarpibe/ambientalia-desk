@@ -325,7 +325,7 @@ que la propuesta fijó en su §3; se declara como decisión explícita.
 ### RQ-TC-14 · Resolución de cliente por identidad
 
 `GET /api/clients/:id` **SHALL** requerir sesión (`requireAuth`, mismo patrón que
-`apps/desk/server/routes/directory.ts:61-66`) y **SHALL** resolver contra `getClient(db, id)`
+`apps/desk/server/routes/directory.ts:74-79`) y **SHALL** resolver contra `getClient(db, id)`
 (`packages/zoho-sync/src/books/repo.ts:129`), respondiendo `404` cuando no exista la fila.
 
 #### Scenario: Cliente encontrado
@@ -541,7 +541,7 @@ tocan **ocho** tablas distintas:
 
 | Esquema donde vive la tabla | Tablas | `ALTER` | Líneas |
 |---|---|---|---|
-| `public` (`PUBLIC_TABLES`, `migrate.ts:70-74`) | `remisiones` (7) · `users` (3) · `roles` (1) · `avisos` (1) · `catalogo_modelos` (1) | **13** | `:291`, `:306`, `:309-310`, `:313`, `:316-317` · `:112`, `:115-116` · `:143` · `:145` · `:374` |
+| `public` (`PUBLIC_TABLES`, `packages/zoho-sync/src/db/migrate.ts:70-73`) | `remisiones` (7) · `users` (3) · `roles` (1) · `avisos` (1) · `catalogo_modelos` (1) | **13** | `:291`, `:306`, `:309-310`, `:313`, `:316-317` · `:112`, `:115-116` · `:143` · `:145` · `:374` |
 | `desk` (`DESK_TABLES`, `migrate.ts:63-64`) | `tickets` (7) · `equipos` (2) · `contacts` (1) | **10** | `:123`, `:185`, `:187`, `:206`, `:228-230` · `:208`, `:354` · `:256` |
 
 Las **13 de `public`** son el hueco de verdad. Hoy resuelven bien porque el nombre no existe en `desk`

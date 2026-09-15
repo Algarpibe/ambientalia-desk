@@ -186,7 +186,7 @@ de `openspec/changes/archive/2026-09-10-vista-todos-y-estados-en-espera/tasks.md
 | 2 | `Notificación cliente` pinta ámbar (`#FFF9E6`/`#D97706`) | QA / quien despliegue | ídem |
 | 3 | `En Espera de Repuestos` se lee entero, sin `...` | QA / quien despliegue | ídem |
 | 4 | Un estado sin entrada en el mapa (p. ej. `Finalizado`, visible en «Todos») conserva el chip neutro con nombre completo | QA / quien despliegue | ídem |
-| 5 | En «Todos», los cerrados aparecen **después** de los activos, sin intercalar (RQ-VT-01, sin detector automático — tarea 4.5) | QA / quien despliegue | `vistas-tablero/spec.md:35-40` — anotar resultado |
+| 5 | En «Todos», los cerrados aparecen **después** de los activos, sin intercalar (RQ-VT-01, sin detector automático — tarea 4.5) | QA / quien despliegue | `openspec/specs/vistas-tablero/spec.md:35-39` — anotar resultado |
 
 **La sexta**, declarada en `archive-report.md:142-154` y `:176-178`: el escenario «**el rótulo declara
 el total real de cerrados**» de RQ-VT-01 es también verificación manual, con el mismo dueño. Es el

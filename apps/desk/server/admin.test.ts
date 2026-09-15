@@ -194,7 +194,7 @@ describe('GET /api/clients y /api/sales-orders (Books)', () => {
 
   /**
    * cerrar-hallazgos-revision-f1b-01 · P2 — resolución de cliente por identidad, calcada de
-   * `directory.ts:62-67`. La usará `CreateTicket.tsx` en vez de `searchClients(nombre).find(...)`:
+   * `apps/desk/server/routes/directory.ts:74-79`. La usará `CreateTicket.tsx` en vez de `searchClients(nombre).find(...)`:
    * un lookup por id no arrastra el `LIKE` (`books/repo.ts:117-127`, que no pliega acentos ni
    * puntuación) ni el `LIMIT 20` que podía dejar fuera al cliente correcto.
    */
