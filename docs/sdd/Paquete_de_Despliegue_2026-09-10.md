@@ -52,7 +52,7 @@ obligatorio de F1B-01 (V6).
 
 **Y trae un efecto de segundo orden que nadie había medido:** ese mismo campo es el que abre el
 **bodegaje de salida**, uno de los tres KPIs de M1.10, y los tickets anteriores al 2026-09-09 no lo
-tienen. Ver §7.5 — el indicador arranca con un corte y **la cuenta está sin medir**.
+tienen. Ver §7.5 — el indicador arranca con un corte y **la cuenta está sin medir** *(medida el 2026-09-15: ver §7.5, «Medido el 2026-09-15»)*.
 
 ---
 
@@ -323,7 +323,7 @@ tanda de la alarma de 72 h»). Sus cambios en el rango son **comentarios y el no
 (`git show 3b7d89c -- packages/shared/src/sla.test.ts`). **No hay nada que verificar ni que vigilar
 en producción.** Se anota sólo para que nadie lo confunda con una prueba rota.
 
-### 7.5 · El bodegaje de SALIDA arranca con un corte, y la cuenta está SIN MEDIR
+### 7.5 · El bodegaje de SALIDA arranca con un corte, y la cuenta está SIN MEDIR *(medida el 2026-09-15: ver «Medido el 2026-09-15»)*
 
 **Es el efecto de segundo orden del campo de §7.1, y no lo había visto nadie.** No cambia nada de lo
 que hay que publicar; cambia lo que se puede afirmar del indicador cuando alguien lo mire.
@@ -343,7 +343,7 @@ que hay que publicar; cambia lo que se puede afirmar del indicador cuando alguie
 tiene esa clave en su `values`, porque el campo aún no existía. Su bodegaje de salida **nunca abre**.
 El indicador sólo se puede calcular **hacia delante**, con un corte en la fecha de `e8c5e90`.
 
-**LA CUENTA ESTÁ SIN MEDIR, Y SE DECLARA ASÍ A PROPÓSITO.** Hace falta consultar
+**LA CUENTA ESTÁ SIN MEDIR, Y SE DECLARA ASÍ A PROPÓSITO.** *(Medida el 2026-09-15: ver «Medido el 2026-09-15», más abajo.)* Hace falta consultar
 `desk.ticket_transitions` y en local no hay `psql` ni `DATABASE_URL`. **No se estima a ojo**: esta
 misma sesión acumuló varias cifras caducadas por citarlas de memoria, y una de ellas iba camino de un
 correo a otra área.
@@ -418,9 +418,58 @@ tramo no hay reentrancia, y la comprobación de arriba lo demuestra. La conclusi
 era correcta con un motivo equivocado, que es la clase de error que se sostiene hasta que alguien la
 revisa por el motivo.)*
 
-**Destino: sin asignar.** Es un hallazgo, no una tanda. Quién lo arregla y cómo —backfill desde
-`tickets.fecha_aviso_cliente`, declarar el corte en la definición del KPI, o asumirlo— **lo decide
-quien vea el número**, y el número todavía no existe.
+**Medido el 2026-09-15.** Lo midió **Gerencia** en `psql` de producción, base `desk`. Las cifras de este bloque
+son su medición: el terminal no tiene acceso a la base y **no las ha verificado**.
+
+- **Las dos consultas de arriba dan 0 y 0.**
+- **Controles de población:**
+  - `transition_id = 'habilitado_para_entrega'` tiene **1** fila, con min = max = 2026-09-12 16:02:15 UTC;
+  - con `to_status = 'Por Entregar'` sólo está esa;
+  - `desk.ticket_transitions` tiene **11** filas en total, la primera del 2026-09-12 15:57:46 UTC.
+- **Las 11 son TODAS del mismo ticket**, `app-5603f7c4-5eb1-410c-a8e6-969ea8e5b046`, con `performed_by`
+  Administrador, entre las 15:57:46 y las 16:02:15 UTC. Por orden: `enviar`, `remision_confirmada`,
+  `habilitar_servicio`, `ingreso_a_servicio`, `escalado_a_revision`, `escalado_a_comercial`,
+  `notif_cliente_comercial`, `aprobacion`, `finalizacion_servicio`, `facturado` y `habilitado_para_entrega`.
+- `SELECT id, number, subject, status FROM desk.tickets WHERE id LIKE 'app-%'` devuelve **una** fila: el
+  **#10002**, de prueba, en «Por Entregar». Es el único ticket nacido en la app; todos los demás vienen de
+  Zoho y no tienen transiciones.
+
+**Lectura.**
+
+- **El 0/0 no es un resultado: es una población vacía.** No dice que los tickets anteriores al 2026-09-09
+  tengan el campo; dice que en `desk.ticket_transitions` no hay ninguno.
+- **La premisa de este apartado no tiene a quién aplicarse.** «Todo ticket que pasó por
+  `habilitado_para_entrega` antes del 2026-09-09» supone pasadas históricas en la tabla, y la tabla sólo
+  recibe transiciones hechas **dentro de Desk 2.0**. En el código la llenan tres `INSERT`, los tres de la app:
+  la transición ejecutada (`packages/zoho-sync/src/db/repo.ts:282-286`), la foto con que nace un ticket creado en la
+  app (`packages/zoho-sync/src/db/repo.ts:393-401`) e `insertTransition` (`packages/zoho-sync/src/db/repo.ts:226-232`), que sólo llama su
+  prueba (`packages/zoho-sync/src/db/repo.test.ts:110`). El sync de Zoho escribe la historia en otra tabla
+  (`packages/zoho-sync/src/sync.ts:80`), y la replicación del hub no la incluye (`DEPLOY.md:38-42`).
+  El prefijo `app-` sólo lo acuña la creación desde la app (`packages/zoho-sync/src/db/repo.ts:381`, con
+  `PREFIJO_TICKET_APP` de `packages/shared/src/transitions.ts:124`).
+- **El problema es más amplio que el corte del bodegaje de salida.** Ningún KPI calculado sobre
+  `ticket_transitions.values` —la regla de `packages/shared/src/reentrancia.ts:24`— tiene población real
+  hasta el uso real: F1F-03, «Pruebas de aceptación con Servicio Técnico sobre dos o tres servicios reales»
+  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:214`). Y la única pasada que hay **sí** trae
+  «Fecha de aviso al cliente»: se deduce de las cifras de Gerencia, con población 1 y la segunda consulta en 0.
+- **Hipótesis, sin verificar:** `desk.ticket_history` como posible fuente de un backfill. La llena la
+  historia de Zoho (`packages/zoho-sync/src/db/history.ts:14-18`, llamada desde
+  `packages/zoho-sync/src/sync.ts:80`); no se ha comprobado que traiga lo que un KPI necesita.
+
+**Acción previa al uso real: borrar el #10002.** Con «Eliminar ticket», en el menú de la ficha, que sólo ve
+un administrador (`apps/desk/src/components/TicketDetailView.tsx:208-212`). Llama a
+`DELETE /api/tickets/:id`, protegido por `requireSuperAdmin` (`apps/desk/server/routes/tickets.ts:88`),
+que es `requireAdmin` y exige `isAdmin` (`apps/desk/server/auth/middleware.ts:27`). Enseña antes una
+vista previa con `dryRun=true` (`apps/desk/src/components/EliminarTicket.tsx:24`, que acaba en
+`apps/desk/src/api/client.ts:137`), y **no hay papelera ni deshacer** (`apps/desk/server/routes/tickets.ts:83`).
+Sólo borra tickets nacidos en la app (`apps/desk/server/db/eliminarTicket.ts:116`) y se lleva sus
+transiciones (`apps/desk/server/db/eliminarTicket.ts:53`): con las cifras de Gerencia, tras borrarlo
+`desk.ticket_transitions` queda sin filas, y la medición de los KPIs empieza de verdad con el uso real.
+
+**Destino: PENDIENTE DE GERENCIA.** El número ya existe: **0 sobre una población de 1 pasada, de prueba**.
+Lo que queda no es una medición sino una decisión: **declarar desde cuándo se miden los KPIs calculados
+sobre transiciones, o rellenar el histórico**. Este documento no le asigna tanda. *(Antes decía:
+«**Destino: sin asignar.** Es un hallazgo, no una tanda. Quién lo arregla y cómo —backfill desde `tickets.fecha_aviso_cliente`, declarar el corte en la definición del KPI, o asumirlo— **lo decide quien vea el número**, y el número todavía no existe.»)*
 
 ---
 
