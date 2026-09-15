@@ -821,7 +821,12 @@ incumplimientos_vivos:
       la propuesta y la spec, medida el 2026-09-13 sobre `773ad75`: 51
       entradas, 42 claves — no se borra (caso B de la regla de mutación 4 de
       CLAUDE.md): es una medición fechada sobre esa revisión.
-    destino: "SIN ASIGNAR — decidido explícitamente, no por omisión (decisión Q4)"
+    destino: "REPARACIÓN DE LA BASE POR BLOQUES — decidido el 2026-09-15 (P.2 de hook-citas-pre-push); IV-10 se cierra cuando la base llegue a 0. Antes: SIN ASIGNAR, decidido explícitamente, no por omisión (decisión Q4)"
+    decision_2026_09_15: >
+      Gerencia, P.2 de hook-citas-pre-push: repara la línea base el terminal,
+      como trabajo documental directo, y Gerencia aprueba por bloques. IV-10 se
+      cierra cuando la base llegue a 0 entradas. La reparación de cada bloque
+      empieza sólo cuando Gerencia lo aprueba.
     no_verify: >
       Saltarse el hook con --no-verify NO es una salida legítima de un
       bloqueo: las dos legítimas son reparar la cita o añadirla a mano a la
@@ -832,7 +837,8 @@ incumplimientos_vivos:
       mano. Gerencia (Q4) decidió no asignar dueño de memoria — el mismo
       precedente que dejó cuatro desvíos huérfanos al cerrar F1A — y fijó la
       frase que esta fila declara literalmente: «la base no encoge hasta que
-      Gerencia asigne quién la repara».
+      Gerencia asigne quién la repara». Caso C de la regla de mutación 4: la
+      frase se conserva — decidido el 2026-09-15 (ver decision_2026_09_15).
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
