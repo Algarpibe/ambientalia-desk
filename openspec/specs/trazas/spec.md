@@ -2,7 +2,7 @@
 
 | Dato | Valor |
 |---|---|
-| Capacidad | `trazas` (`openspec/config.yaml:122-124`) |
+| Capacidad | `trazas` (`openspec/config.yaml:145-147`) |
 | Estado | **as-built parcial** (`status_at_start` de `config.yaml`: «decidido R08 sin excepciones»), contrastado contra el código |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |

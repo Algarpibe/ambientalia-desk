@@ -186,7 +186,7 @@ El permiso **SHALL** calcularse con `canExecuteTransition(userAreas, isAdmin, tr
 
 - Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`, `Compras`
   (`transitions.ts:303`).
-- Un área compuesta se descompone por el separador `' / '` (`transitions.ts:306-308`).
+- Un área compuesta se descompone por el separador `' / '` (`packages/shared/src/transitions.ts:313-315`).
 - **Ocho** de las 34 transiciones **SHALL** ser compartidas por dos áreas: cinco
   `Comercial / Compras` y tres `Comercial / Servicio Técnico`. El emparejamiento id → área está
   fijado, no sólo el número (`invariantesGrafo.test.ts:91-106`).

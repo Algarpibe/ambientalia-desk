@@ -4,10 +4,4 @@
 {"fichero":"docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md","linea":39,"cita":"`docs/artefactos/NOTA.md:33-46`","motivo":"extremo inicial en línea vacía (línea 33 de docs/artefactos/NOTA.md)"}
 {"fichero":"openspec/changes/F0-03/decisiones-para-carga.md","linea":112,"cita":"`packages/shared/src/transitions.ts:95-97`","motivo":"extremo inicial en línea vacía (línea 95 de packages/shared/src/transitions.ts)"}
 {"fichero":"openspec/changes/F0-04/proposal.md","linea":151,"cita":"`transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de transitionExec.test.ts)"}
-{"fichero":"openspec/specs/derivacion-avisos/spec.md","linea":60,"cita":"`transitions.ts:95-97`","motivo":"extremo inicial en línea vacía (línea 95 de transitions.ts)"}
-{"fichero":"openspec/specs/derivacion-avisos/spec.md","linea":65,"cita":"`transitions.ts:88-93`","motivo":"extremo inicial en línea vacía (línea 88 de transitions.ts)"}
-{"fichero":"openspec/specs/remisiones/spec.md","linea":331,"cita":"`schema.sql:311-312`","motivo":"extremo inicial en línea vacía (línea 311 de schema.sql)"}
-{"fichero":"openspec/specs/remisiones/spec.md","linea":339,"cita":"`apps/desk/server/admin.test.ts:373`","motivo":"extremo inicial en línea vacía (línea 373 de apps/desk/server/admin.test.ts)"}
-{"fichero":"openspec/specs/tickets-core/spec.md","linea":457,"cita":"`repo.test.ts:93`","motivo":"ambigua, rota en sus 4 candidatas (línea 93 de repo.test.ts)"}
-{"fichero":"openspec/specs/trazas/spec.md","linea":5,"cita":"`openspec/config.yaml:122-124`","motivo":"extremo inicial en línea vacía (línea 122 de openspec/config.yaml)"}
 {"fichero":"packages/zoho-sync/src/db/rows.ts","linea":120,"cita":"`transitionExec.ts:89-91`","motivo":"extremo inicial en línea vacía (línea 89 de transitionExec.ts)"}

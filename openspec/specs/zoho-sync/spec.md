@@ -186,7 +186,7 @@ entera**.
 ### RQ-ZS-09 · Las tablas «lite» de Books son hoy vistas, no tablas
 
 `public.clients` y `public.sales_orders` **SHALL** ser **vistas** sobre `books.contacts` y
-`books.sales_orders` (`schema.sql:169-183`), para que la App las lea sin cambiar sus consultas.
+`books.sales_orders` (`packages/zoho-sync/src/db/schema.sql:169-182`), para que la App las lea sin cambiar sus consultas.
 
 - Una columna nueva **SHALL** añadirse **al final** de la lista, porque `CREATE OR REPLACE VIEW` sólo
   admite eso (`schema.sql:168` y `:175`).

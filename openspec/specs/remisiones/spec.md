@@ -2,7 +2,7 @@
 
 | Dato | Valor |
 |---|---|
-| Capacidad | `remisiones` (`openspec/config.yaml:106-108`) |
+| Capacidad | `remisiones` (`openspec/config.yaml:129-131`) |
 | Estado | **as-built parcial** (`status_at_start` de `config.yaml`), contrastado contra el código |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas. El código de `ad1875b` es idéntico al de `b6fb6d4`: `git diff --name-only ad1875b..HEAD` no devuelve ningún fichero fuera de `docs/`, `openspec/` y `CLAUDE.md` |
 | Tanda que la escribe | F0-02 |
@@ -189,7 +189,7 @@ volver a intentarlo a ciegas» (`routes/remision.ts:141-142`).
 ### RQ-RE-07 · La reclamación del envío es atómica
 
 `reclamarEnvio` **SHALL** ser un **único `UPDATE` condicional** y **MUST NOT** ser un `SELECT` seguido
-de un `UPDATE` (`db/remisiones.ts:170-183`). La razón está escrita: dos peticiones simultáneas —doble
+de un `UPDATE` (`apps/desk/server/db/remisiones.ts:170-182`). La razón está escrita: dos peticiones simultáneas —doble
 clic, dos pestañas, o un reintento tras perder la cobertura— «pasarían las dos el filtro si se leyera
 primero, y cada una generaría su propio documento y su propia carpeta en Drive» (`:156-159`).
 
@@ -328,15 +328,15 @@ importado de la hoja de Google trae remisiones que no calzan con ningún ticket 
 estado legítimo, no un dato que falta» (`schema.sql:305-306`).
 
 - El origen **SHALL** distinguirse en la columna `origen`, con `'app'` por omisión
-  (`schema.sql:311-312`), porque «una remisión histórica no tiene fotos ni carpeta de Drive, y la
-  pantalla debe poder tratarla distinto» (`:311`).
+  (`packages/zoho-sync/src/db/schema.sql:312-313`), porque «una remisión histórica no tiene fotos ni carpeta de Drive, y la
+  pantalla debe poder tratarla distinto» (`:312`).
 - El recuento de la importación **SHALL** distinguir **traer** un número de ticket de **haberlo
   resuelto** (`apps/desk/server/db/remisionesHistoricas.ts:14-30`), y la razón es un caso real: «en la
   primera corrida real, 113 filas traían número de ticket pero solo 90 enlazaron (23 apuntaban a
   tickets de Zoho que ya no están en la base)» (`:10-13`).
 - El seed **SHALL** llevar **149** filas —`grep -cE '^\s*\{'` sobre
   `apps/desk/server/db/remisionesHistoricasSeed.ts` da 149, con la constante declarada en `:35`— y
-  `apps/desk/server/admin.test.ts:373` fija el total contra la constante, no contra un literal.
+  `apps/desk/server/admin.test.ts:403` fija el total contra la constante, no contra un literal.
 - El `created_at` de las históricas **SHALL** anclarse a las 12:00 del día de servicio y no a
   medianoche, porque la columna es `timestamptz` y el panel formatea en `America/Bogota`: «un `date`
   convertido a pelo se pinta como el día ANTERIOR a las 19:00» (`schema.sql:319`). La condición del

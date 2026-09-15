@@ -97,7 +97,7 @@ El alta **SHALL** exigir un `equipoId` del catálogo, y **MUST NOT** aceptar el 
 libre (`ticketService.ts:22-25`: `422 'Falta el equipo'` y `422 'Equipo no registrado'`).
 
 - La marca, el modelo, el tipo y el serial **SHALL** salir del equipo, no del formulario
-  (`ticketService.ts:64-66`, leyendo `getEquipo` de `apps/desk/server/db/equipos.ts:75-79`).
+  (`ticketService.ts:64-66`, leyendo `getEquipo` de `apps/desk/server/db/equipos.ts:75-78`).
 - El catálogo **SHALL** poder buscarse por serial, y también por nombre de cliente
   (`equipos.ts:58-69`), y sólo devuelve los activos (`:66`).
 - El serial **SHALL** exigirse además en `habilitar_servicio`, porque los tickets sincronizados desde
@@ -325,7 +325,7 @@ que la propuesta fijó en su §3; se declara como decisión explícita.
 ### RQ-TC-14 · Resolución de cliente por identidad
 
 `GET /api/clients/:id` **SHALL** requerir sesión (`requireAuth`, mismo patrón que
-`routes/directory.ts:62-67`) y **SHALL** resolver contra `getClient(db, id)`
+`apps/desk/server/routes/directory.ts:61-66`) y **SHALL** resolver contra `getClient(db, id)`
 (`packages/zoho-sync/src/books/repo.ts:129`), respondiendo `404` cuando no exista la fila.
 
 #### Scenario: Cliente encontrado
@@ -454,7 +454,7 @@ tanda del §5 del plan.
 
 **Comportamiento actual, a corregir cuando alguien toque el fichero.**
 `packages/zoho-sync/src/db/migrate.test.ts:33` lleva el comentario `// 1.000.000, no 959`, y la base
-real es **10.000** (`migrate.ts:43`, afirmado en `repo.test.ts:93`). La aserción es correcta —usa la
+real es **10.000** (`migrate.ts:43`, afirmado en `packages/zoho-sync/src/db/repo.test.ts:95`). La aserción es correcta —usa la
 constante—; lo que miente es el comentario. Es la misma clase de defecto que M-5 de
 `transitions-st`: **una cuenta escrita a mano que envejeció**. F0-02 no lo corrige: es código.
 

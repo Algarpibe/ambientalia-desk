@@ -2,7 +2,7 @@
 
 | Dato | Valor |
 |---|---|
-| Capacidad | `permissions` (`openspec/config.yaml:110-112`) |
+| Capacidad | `permissions` (`openspec/config.yaml:133-135`) |
 | Estado | **as-built por área** (`status_at_start` de `config.yaml`), contrastado contra el código |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |
@@ -48,10 +48,10 @@ servidor. El cliente la **consume**; **MUST NOT** reescribirla (regla invariable
 ### RQ-PM-02 · Tres áreas base, y las compuestas se descomponen
 
 Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`, `Compras`
-(`packages/shared/src/transitions.ts:303`).
+(`packages/shared/src/transitions.ts:310`).
 
 - Un área compuesta **SHALL** descomponerse por el separador `' / '`
-  (`transitions.ts:306-308`).
+  (`packages/shared/src/transitions.ts:313-315`).
 - Un usuario **MAY** ejecutar una transición compuesta si tiene **al menos una** de sus áreas
   (`permissions.ts:6`, el `.some(...)`).
 - «Gerencia» / Director **MUST NOT** ser un área nueva: es un rol con las tres

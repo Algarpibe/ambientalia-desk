@@ -57,12 +57,12 @@ declararse una a una (`packages/shared/src/transitions.ts:288-291`). La razón e
 la quiere en todas, y «repetirla en las 34 entradas garantizaría olvidarla en la 35.ª» (`:282-283`).
 
 - **SHALL** ser `required: false` siempre: «derivar no puede frenar un ticket»
-  (`transitions.ts:95-97`; el maestro lo dice igual en M1.9.2, `:1653`).
+  (`packages/shared/src/transitions.ts:96-98`; el maestro lo dice igual en M1.9.2, `:1653`).
 - **SHALL** ir la última del formulario «para no colarse entre los campos de negocio» (`:284`).
 - Si alguna etapa dejara de ofrecerla, la salida **SHALL** ser un conjunto de excepciones en ese mismo
   punto, «nunca volver a las 34 copias» (`:285`).
 - La clave **SHALL** ser a la vez la clave en `values` y el **nombre de la columna**, y por eso va en
-  `snake_case`: «no es un campo de Zoho, es nuestro» (`transitions.ts:88-93`).
+  `snake_case`: «no es un campo de Zoho, es nuestro» (`packages/shared/src/transitions.ts:90-92`).
 
 ### RQ-AV-02 · Tres etapas proponen destinatario; las otras 31 heredan
 
