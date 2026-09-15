@@ -807,13 +807,16 @@ incumplimientos_vivos:
     regla: "— (regla de mutación 4: citas ruta:línea que el detector de hook-citas-pre-push aún no repara)"
     ubicacion: "apps/desk/server/citas/lineaBase.jsonl"
     verificado: true
+    estado: CERRADO
+    cerrado_por: "Reparación de la línea base por bloques B1-B4, trabajo documental directo (P.2 de hook-citas-pre-push)"
+    cerrado_verificado_en: "2026-09-15, base 23b2349"
     encontrado_en: >
       Tanda `hook-citas-pre-push`, RQ-CV-09 y RQ-CV-15. El detector de citas
       ruta:línea se impone en pre-push y genera la línea base con las citas que
       ya estaban rotas antes de instalar el hook; sólo entradas que bloquean
       (completas y ancladas), ninguna abreviada (decisión Q9).
     descripcion: >
-      7 entradas y 7 claves (documento, cita) distintas desde el 2026-09-15, en `334142b`, que reparó el bloque B3: 6 extremo inicial en línea vacía y 1 extremo inicial fuera de rango. Cifras anteriores, que se conservan como caso C: 13 entradas y 13 claves desde el 2026-09-15, en `e982672`, tras el bloque B2 (11 extremo inicial en línea vacía, 1 extremo inicial fuera de rango y 1 ambigua rota en todas sus candidatas); 23 entradas y 22 claves desde el 2026-09-15, en `37d6e71`, tras el bloque B1 (15 extremo inicial en línea vacía, 4 extremo inicial fuera de rango, 1 extremo final fuera de rango, 2 fichero inexistente y 1 ambigua rota en todas sus candidatas); y 37 entradas, 28 claves (documento, cita) distintas, medidas el 2026-09-14
+      0 entradas desde el 2026-09-15, en `23b2349`, que reparó el bloque B4; el fichero se queda vacío. Cifras anteriores, que se conservan como caso C: 7 entradas y 7 claves desde el 2026-09-15, en `334142b`, tras el bloque B3 (6 extremo inicial en línea vacía y 1 extremo inicial fuera de rango); 13 entradas y 13 claves desde el 2026-09-15, en `e982672`, tras el bloque B2 (11 extremo inicial en línea vacía, 1 extremo inicial fuera de rango y 1 ambigua rota en todas sus candidatas); 23 entradas y 22 claves desde el 2026-09-15, en `37d6e71`, tras el bloque B1 (15 extremo inicial en línea vacía, 4 extremo inicial fuera de rango, 1 extremo final fuera de rango, 2 fichero inexistente y 1 ambigua rota en todas sus candidatas); y 37 entradas, 28 claves (documento, cita) distintas, medidas el 2026-09-14
       sobre `73a9acb` por la ruta diseñada (`git grep`, con el detector
       definitivo de la tanda): 27 extremo inicial en línea vacía, 5 extremo
       inicial fuera de rango, 1 extremo final fuera de rango, 3 fichero
@@ -839,6 +842,24 @@ incumplimientos_vivos:
       frase que esta fila declara literalmente: «la base no encoge hasta que
       Gerencia asigne quién la repara». Caso C de la regla de mutación 4: la
       frase se conserva — decidido el 2026-09-15 (ver decision_2026_09_15).
+    por_que_esta_cerrado: >
+      La base llegó a 0 entradas el 2026-09-15 en `23b2349` (bloque B4) y el
+      fichero se queda, vacío. Historia: 37 entradas y 28 claves (2026-09-14,
+      `73a9acb`) → 23 con B1 (`37d6e71`) → 13 con B2 (`e982672`) → 7 con B3
+      (`334142b`) → 0 con B4 (`23b2349`). La reparación fue trabajo documental
+      directo, aprobado por Gerencia bloque a bloque (decision_2026_09_15); el
+      detalle fila a fila está en docs/sdd/Triaje_Linea_Base_Citas_2026-09-15.md.
+      La base sólo encoge y no crece desde el hook: una cita rota nueva bloquea
+      siempre, y --no-verify sigue sin ser una salida legítima.
+      NO borrar esta entrada: queda como histórico, igual que IV-3.
+    hallazgos_que_siguen_vivos: >
+      No se cierran con IV-10: quedan pendientes de tanda SDD. (1) El detector
+      sólo comprueba que el extremo INICIAL no caiga en línea vacía, no el final
+      (`apps/desk/server/citas/detector.ts:109-115`). (2) Una abreviada que va
+      detrás de una cita anclada se atribuye a su fichero pero se lee contra el sha
+      local, no contra el ancla (`apps/desk/server/citas/detector.ts:174-176` y `:195`):
+      da abreviadas rotas informativas que son falsos positivos y alguna comprobada
+      por casualidad.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
