@@ -1,17 +1,3 @@
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":25,"cita":"`apps/desk/server/transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de apps/desk/server/transitionExec.test.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":97,"cita":"`packages/zoho-sync/src/db/rows.ts:83-123`","motivo":"extremo inicial en línea vacía (línea 83 de packages/zoho-sync/src/db/rows.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":167,"cita":"`apps/desk/server/transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de apps/desk/server/transitionExec.test.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":171,"cita":"`apps/desk/server/app.test.ts:1793`","motivo":"fichero inexistente"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":219,"cita":"`apps/desk/server/db/equipos.ts:260-292`","motivo":"extremo inicial en línea vacía (línea 260 de apps/desk/server/db/equipos.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":231,"cita":"`packages/zoho-sync/src/db/rows.ts:83-123`","motivo":"extremo inicial en línea vacía (línea 83 de packages/zoho-sync/src/db/rows.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":235,"cita":"`transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de transitionExec.test.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":238,"cita":"`packages/zoho-sync/src/db/rows.ts:83-123`","motivo":"extremo inicial en línea vacía (línea 83 de packages/zoho-sync/src/db/rows.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":316,"cita":"`apps/desk/server/routes/equipos.ts:142-152`","motivo":"extremo inicial fuera de rango (línea 142 de apps/desk/server/routes/equipos.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":428,"cita":"`apps/desk/server/db/equipos.ts:260-292`","motivo":"extremo inicial en línea vacía (línea 260 de apps/desk/server/db/equipos.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":478,"cita":"`apps/desk/server/transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de apps/desk/server/transitionExec.test.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":499,"cita":"`apps/desk/server/db/equipos.ts:260-292`","motivo":"extremo inicial en línea vacía (línea 260 de apps/desk/server/db/equipos.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":513,"cita":"`transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de transitionExec.test.ts)"}
-{"fichero":"docs/sdd/F0-00_Baseline_as-built.md","linea":520,"cita":"`apps/desk/server/transitionExec.test.ts:82-86`","motivo":"extremo inicial en línea vacía (línea 82 de apps/desk/server/transitionExec.test.ts)"}
 {"fichero":"docs/sdd/F0-00_Recomendaciones_R02.md","linea":258,"cita":"`.gitignore:19-20`","motivo":"extremo inicial en línea vacía (línea 19 de .gitignore)"}
 {"fichero":"docs/sdd/F0-01_Correcciones_para_el_maestro.md","linea":538,"cita":"`apps/desk/server/transicionesEjecucion.test.ts:312-325`","motivo":"extremo inicial fuera de rango (línea 312 de apps/desk/server/transicionesEjecucion.test.ts)"}
 {"fichero":"docs/sdd/F0-01_Correcciones_para_el_plan.md","linea":178,"cita":"`docs/artefactos/NOTA.md:33-46`","motivo":"extremo inicial en línea vacía (línea 33 de docs/artefactos/NOTA.md)"}
