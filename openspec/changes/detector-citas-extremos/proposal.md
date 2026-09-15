@@ -60,6 +60,17 @@ Ronda de preguntas de `execution_mode: interactive`, **respondida** (Engram 601)
 - **Fuera de alcance también:** la cita del test de transitionExec a rows.ts anotada en el triaje, y
   cualquier barrido semántico de `openspec/specs`.
 
+**Segunda respuesta de Gerencia (2026-09-15)** — confirma los supuestos del §14, que pasan a decisiones, y
+amplía el §5:
+
+- **(b.1)** Una mención del MISMO fichero no corta la herencia.
+- **(b.2)** Una completa válida sin ancla, posterior a una anclada, deja la abreviada siguiente sin ancla.
+- **(b.3)** El motivo de una abreviada heredada y rota por contenido nombra la revisión.
+- **(§5)** La reparación nº 1 (del 74 al 79) es correcta. Se añaden dos reparaciones del mismo origen, que
+  van en el commit 1 con las otras tres: la línea 328 de la spec de tickets-core (caso C, anotado también en
+  el triaje de B3) y el comentario de la línea 20 de routes/directory.ts. Las dos citas del cambio archivado
+  `2026-09-09-cerrar-hallazgos-revision-f1b-01` son caso B y no se tocan.
+
 ---
 
 ## 3 · Alcance
@@ -71,7 +82,8 @@ Ronda de preguntas de `execution_mode: interactive`, **respondida** (Engram 601)
    (`apps/desk/server/citas/detector.ts:200` en `8222dd9`).
 2. **Herencia del ancla en la cosecha**, con las reglas de (b).
 3. **Lectura de la abreviada en su ancla** (propia o heredada) y el **fallo de ancla** a abreviadas rotas (d).
-4. **Las tres reparaciones** del §5, antes o junto al commit que activa la cuarta rama.
+4. **Las cinco reparaciones** del §5 (tres que la cuarta rama bloquearía y dos del mismo origen que el
+   detector no ve), antes o junto al commit que activa la cuarta rama.
 5. **Delta de `citas-verificables`** (c): RQ-CV-08 y RQ-CV-06 modificados.
 6. **Pruebas** del §6 y **cierre** del §9.
 
@@ -82,9 +94,9 @@ Ronda de preguntas de `execution_mode: interactive`, **respondida** (Engram 601)
 - La cita del test de transitionExec a rows.ts y cualquier barrido semántico de `openspec/specs`.
 - Una cifra nueva en el informe: (d) fija «abreviadas rotas». Hipótesis: `apps/desk/server/citas/informe.ts` no cambia.
 - `apps/desk/server/citas/resolucion.ts`: no interviene en ninguno de los dos defectos.
-- **Observación, no reparación obligatoria:** la abreviada gemela de la línea 20 de routes/directory.ts
-  (dice del 62 al 67) tiene el mismo desfase que la reparación 1, pero es huérfana —no hay fichero antes
-  en su línea— y no bloquea. Que la tome o no lo deciden `sdd-design`/`sdd-tasks`.
+- Las dos citas a routes/directory.ts del 62 al 67 del cambio archivado
+  `2026-09-09-cerrar-hallazgos-revision-f1b-01` (línea 77 de su proposal.md y línea 87 de su delta de
+  tickets-core): son **caso B**, ciertas contra el padre de `9ed5635`, y no se tocan (Gerencia, 2026-09-15).
 
 ---
 
@@ -107,11 +119,13 @@ con final vacío pasa a contar como rota, y la ambigua bloquea sólo si lo está
 ### Pieza 2 · La herencia, en la cosecha
 
 Junto al último fichero válido se guarda **el ancla de la completa que lo fijó**. Se reinicia cada vez
-que cambia la atribución: completa válida (toma su ancla o ninguna), completa que no resuelve (corte 1,
-ya deja la atribución vacía) y mención que resuelve (corte de (b)). El corte por barra de celda ya deja
+que cambia la atribución: completa válida (toma su ancla o **ninguna**, b.2), completa que no resuelve
+(corte 1, ya deja la atribución vacía) y mención que resuelve a **otro** fichero (corte de (b)); una
+mención del **mismo** fichero no la corta (b.1). El corte por barra de celda ya deja
 huérfana la abreviada (`apps/desk/server/citas/cosecha.ts:137-141` en `8222dd9`). El ancla propia gana.
 El campo `ancla` de `CitaAbreviada` ya existe (`apps/desk/server/citas/cosecha.ts:27-36` en `8222dd9`):
 hipótesis, no hace falta tipo nuevo; `sdd-design` decide si distingue propia de heredada para el motivo.
+Por (b.3), una abreviada con ancla —propia o heredada— rota por contenido también nombra la revisión.
 
 ### Pieza 3 · La lectura, en el detector
 
@@ -141,16 +155,20 @@ citas nuevas, sólo rellena un campo. Cada caso nuevo cae en **exactamente un** 
 
 ---
 
-## 5 · Las tres reparaciones — verificadas por el orquestador en `8222dd9`
+## 5 · Las cinco reparaciones — verificadas por el orquestador en `8222dd9` y `e91c47a`
 
-Las tres son **caso A** de la tabla de la regla de mutación 4: la frase sigue siendo cierta del árbol de
-hoy. El historial de `git` es de segunda mano (Engram 601); lo del árbol de hoy se leyó en esta fase.
+Las tres primeras son **caso A** de la tabla de la regla de mutación 4: la frase sigue siendo cierta del
+árbol de hoy, y la cuarta rama las bloquearía. Las nº 4 y 5 las añadió Gerencia el 2026-09-15: son del
+mismo origen que la nº 1 y el detector no las ve. El historial de `git` de las tres primeras es de segunda
+mano (Engram 601); el de las nº 4 y 5 lo comprobó el orquestador sobre `e91c47a`.
 
 | # | Dónde | Qué afirma la frase | Evidencia | Reparación |
 |---|---|---|---|---|
 | **1** | Línea 197 de apps/desk/server/admin.test.ts, **sólo el comentario**; cita directory.ts del 62 al 67 | «resolución de cliente por identidad, calcada de» ese rango | El comentario gemelo precisa «(contactos/cuentas de Zoho)» (`apps/desk/server/routes/directory.ts:19-24` en `8222dd9`). Esas rutas ocupan hoy `apps/desk/server/routes/directory.ts:74-79` en `8222dd9`. De segunda mano: `9ed5635` insertó 12 líneas encima, la ruta de clientes por id, y en su padre ocupaban 62-67; en el árbol de hoy ese bloque va de la 19 a la 30 con la línea en blanco, y 62 más 12 da 74, consistente. **La propuesta del analista (del 61 al 66) es INCORRECTA**: conserva la anchura pero apunta a la ruta de actividades (`apps/desk/server/routes/directory.ts:61-66` en `8222dd9`) | Ruta completa a routes/directory.ts, del 74 al 79 |
 | **2** | Línea 189 de docs/sdd/Paquete_de_Despliegue_2026-09-10.md, fila 5 de la tabla de QA; cita vistas-tablero/spec.md del 35 al 40 | Dónde está el escenario que QA comprueba | Hoy el escenario «activos y cerrados, sin entrelazar» ocupa `openspec/specs/vistas-tablero/spec.md:35-39` en `8222dd9` y la 40 está vacía. De segunda mano: en `661c037`, que escribió la cita, ya era así | Sin ancla, ruta completa a openspec/specs/vistas-tablero/spec.md, del 35 al 39. La ruta completa quita además la ambigüedad con las dos copias archivadas |
 | **3** | Línea 544 de openspec/specs/tickets-core/spec.md; cita migrate.ts del 70 al 74 | Ubicación de `PUBLIC_TABLES` | `PUBLIC_TABLES` ocupa `packages/zoho-sync/src/db/migrate.ts:70-73` en `8222dd9` y la 74 está vacía. Comprobado por el orquestador ejecutando `cosechar()` antes y después: las 10 abreviadas de las otras celdas de la fila siguen huérfanas por el corte de barra y ninguna pasa a atribuirse a migrate.ts | Ruta completa a packages/zoho-sync/src/db/migrate.ts, del 70 al 73 |
+| **4** | Línea 328 de openspec/specs/tickets-core/spec.md (RQ-TC-14); cita routes/directory.ts del 61 al 66 | «requerir sesión (requireAuth, mismo patrón que» ese rango) y resolver por identidad, «respondiendo 404» | **Caso C.** La reparó `334142b` (B3) desde el 62 al 67 a `apps/desk/server/routes/directory.ts:61-66` en `e91c47a`, que es /api/activities: el triaje lo justificó porque el rango viejo «dejaba fuera la línea 61, la del requireAuth que la frase invoca». Pero el rango viejo, escrito contra el padre de `9ed5635`, eran las rutas por identidad con 404 de contactos y cuentas, que hoy ocupan `apps/desk/server/routes/directory.ts:74-79` en `e91c47a` (la 74 abre /api/contacts/:id y la 79 es el cierre de /api/accounts/:id); esas dos rutas también llevan requireAuth. Comprobado por el orquestador sobre `e91c47a` | Ruta completa a routes/directory.ts, del 74 al 79. **Y** se anota en el triaje (docs/sdd/Triaje_Linea_Base_Citas_2026-09-15.md, hallazgo del final vacío, donde registra la reparación de B3 de esa línea) qué la corrigió y por qué |
+| **5** | Línea 20 de apps/desk/server/routes/directory.ts, **sólo el comentario**; abreviada del 62 al 67 | «calcada de» ese rango «(contactos/cuentas de Zoho)» | La escribió `9ed5635` contra su padre, en el mismo commit que insertó las 12 líneas de la ruta de clientes por id. Es **huérfana** (no hay fichero antes en su línea), así que el detector no la ve ni con la tanda hecha. Mismo referente que la nº 1 | Abreviada del 74 al 79, en la misma línea |
 
 ---
 
@@ -168,9 +186,9 @@ caso «no pela» se puede montar sin `git`.
 | **P1** | Espejo del final vacío en una completa: rango del 1 al 3, la 1 con contenido y la 3 vacía | Pasa: `bloquea` es `false` y `comprobadas` 1 → `expected false to be true` | Bloquea; motivo exacto `extremo final en línea vacía` |
 | **P2** | Final vacío en una ambigua: dos candidatas, una con la 3 vacía y otra con dos líneas | Se salta: `saltadas.ambiguas` 1 → `expected false to be true` | Bloquea como `ambigua, rota en sus 2 candidatas` |
 | **P3** | Posición (regla 1): los dos extremos vacíos; y final fuera de rango con motivo exacto | Los dos extremos: nace verde (motivo inicial). Fuera de rango: nace verde | Se fija el motivo **exacto**, no «contiene final» |
-| **P4** | Herencia: completa anclada a `rev1` y abreviada a la 3, vacía en local y con contenido en `rev1`; y el signo contrario | `abreviadasRotas` 1 (se lee en local); el contrario sale comprobada | Comprobada; el contrario, rota |
+| **P4** | Herencia: completa anclada a `rev1` y abreviada a la 3, vacía en local y con contenido en `rev1`; el signo contrario (b.3: su motivo nombra `rev1`); y (b.2) una completa válida sin ancla entre la anclada y la abreviada | `abreviadasRotas` 1 (se lee en local); el contrario sale comprobada; la de b.2 sale rota (se lee en local), igual que tras la tanda | Comprobada; el contrario, rota con `rev1` en el motivo; la de b.2 rota y **sin** revisión en el motivo. La de b.2 **nace verde**: mutación M7 |
 | **P5** | Ancla propia gana: local y `rev1` con la 3 vacía, `rev2` con contenido, abreviada con ancla `rev2` | `abreviadasRotas` 1 | Comprobada |
-| **P6** | Corte por mención: completa anclada a `rev1`, mención de otro fichero, abreviada; `rev1` no tiene ese fichero | Comprobada (se lee en local) | Comprobada. **Nace verde** (hipótesis a confirmar en apply) |
+| **P6** | Corte por mención: completa anclada a `rev1`, mención de otro fichero, abreviada; `rev1` no tiene ese fichero. Y (b.1) la misma línea con una mención del **mismo** fichero, vacío en local en la línea citada y con contenido en `rev1` | Otro fichero: comprobada (se lee en local). Mismo fichero: `abreviadasRotas` 1 (se lee en local) | Otro fichero: comprobada, **nace verde** (hipótesis a confirmar en apply). Mismo fichero: comprobada (hereda `rev1`) |
 | **P7** | Fallo de ancla: (i) ancla propia a una revisión inexistente; (ii) revisión existente sin el fichero atribuido | Comprobada en los dos: `abreviadasRotas` 0 → `expected [] to have a length of 1 but got 0` | `abreviadasRotas` 1 con la revisión en el motivo; `bloquea` `false`; `noLegibles` 0 |
 | **P8** | Invariante: un caso de cada camino nuevo suma `cosechadas` | Hipótesis: nace verde (la suma ya cuadra, los casos caen en otro sumando) | Verde; su detector es la mutación M5 |
 
@@ -183,6 +201,7 @@ caso «no pela» se puede montar sin `git`.
 | **M3** | Quitar el reinicio del ancla en la rama de mención | P6: hereda `rev1`, fallo de ancla, `abreviadasRotas` 1 |
 | **M4** | Invertir la precedencia (la heredada gana) | P5 |
 | **M5** | Mandar el fallo de ancla a `noLegibles` o a `candidatosDeBloqueo` | P7 y P8 |
+| **M7** | Que una completa válida sin ancla conserve el ancla anterior en vez de dejarla vacía | P4, caso b.2: sale comprobada en `rev1` o con `rev1` en el motivo |
 | **M6 · fichero vigilado** (regla 2) | Devolver al árbol el texto viejo de cualquiera de las tres reparaciones | El hook contra el propio repositorio bloquea; reparado, sale 0 |
 
 ---
@@ -192,7 +211,7 @@ caso «no pela» se puede montar sin `git`.
 | # | Commit | Condición |
 |---|---|---|
 | 0 | Planificación: esta propuesta, delta de spec, `design.md`, `tasks.md` | **Antes** de que el intento de `sdd-apply` adquiera |
-| 1 | Reparaciones de las tres citas | Antes o junto al 3; verde con el detector de hoy |
+| 1 | Las cinco reparaciones del §5 y la anotación del triaje de B3 | Antes o junto al 3; verde con el detector de hoy |
 | 2 | Pruebas en rojo | Rojo literal del §6 |
 | 3 | Implementación | Verde; activa la cuarta rama y la lectura en el ancla |
 | 4 | Cierre (§9) | Barrido y registros |
@@ -213,11 +232,11 @@ trackear. **Todas las cifras son hipótesis** salvo la de esta propuesta, medida
 | | `design.md` | 150-300 |
 | | `tasks.md` | 120-220 |
 | | **Subtotal (i)** | **~790-1090** |
-| **(ii) Ledger de apply** | Reparaciones (3 líneas, más 1 si design toma la gemela) | 6-8 |
+| **(ii) Ledger de apply** | Reparaciones (5 líneas, ± cada una) y anotación del triaje de B3 | 10-14 |
 | | Pruebas: 8 `it` a 9-25 líneas (mediana y máximo, medidos por el orquestador) más asertos endurecidos | 75-210 |
 | | `cosecha.ts` (prototipo +4/−1) y `detector.ts` (prototipo +3/−2), más motivo con revisión y fallo de ancla | 25-60 |
 | | `apply-progress.md`, nuevo sin trackear (ceguera 1 del ledger) | 60-150 |
-| | **Subtotal (ii)** | **~170-430** |
+| | **Subtotal (ii)** | **~175-435** |
 | **(iii) Cierre y archivo** | Barrido de la regla 4, `CLAUDE.md`, `openspec/config.yaml` | 20-70 |
 | | `verify-report.md` y `archive-report.md` | 250-400 |
 | | Fusión del delta en `openspec/specs/citas-verificables/spec.md` | 40-90 |
@@ -270,7 +289,8 @@ No toca `apps/desk/src`: el detector vive en `apps/desk/server/citas` y es códi
 | `apps/desk/server/citas/detector.ts` | Cuarta rama; lectura de la abreviada en su ancla; fallo de ancla |
 | `apps/desk/server/citas/cosecha.ts` | Herencia del ancla y sus cortes |
 | `apps/desk/server/citas/detector.test.ts`, `cosecha.test.ts`, `hook.test.ts` | P1-P8 |
-| `apps/desk/server/admin.test.ts`, `docs/sdd/Paquete_de_Despliegue_2026-09-10.md`, `openspec/specs/tickets-core/spec.md` | Una línea cada uno (§5) |
+| `apps/desk/server/admin.test.ts`, `apps/desk/server/routes/directory.ts`, `docs/sdd/Paquete_de_Despliegue_2026-09-10.md`, `openspec/specs/tickets-core/spec.md` | Una línea cada uno, dos en la spec de tickets-core (§5); los dos `.ts`, sólo comentarios |
+| `docs/sdd/Triaje_Linea_Base_Citas_2026-09-15.md` | Anotación de la corrección de la reparación nº 4 (§5) |
 | `CLAUDE.md`, `openspec/config.yaml` | Cierre (§9) |
 
 ---
@@ -288,13 +308,14 @@ No toca `apps/desk/src`: el detector vive en `apps/desk/server/citas` y es códi
 
 ---
 
-## 14 · Supuestos que spec y design deben fijar
+## 14 · Lecturas de (b) — confirmadas por Gerencia el 2026-09-15
 
-Lectura literal de (b), a confirmar por Gerencia sólo si spec o design la ven ambigua:
+Eran supuestos en la primera versión de esta propuesta; Gerencia los confirmó y pasan a decisiones (§2,
+b.1 a b.3):
 
 1. Una mención del **mismo** fichero no corta la herencia: la última completa válida sigue siendo la misma.
 2. Una completa válida **sin ancla** posterior a una anclada deja la abreviada siguiente sin ancla.
-3. El motivo de una abreviada heredada **rota por contenido** también nombra la revisión (hipótesis; (d) sólo lo exige para el fallo de ancla).
+3. El motivo de una abreviada heredada **rota por contenido** también nombra la revisión.
 
 ---
 
@@ -311,11 +332,11 @@ revierten**: son válidas con cualquiera de los dos detectores. Sin efecto en da
 2. `rotura()` bloquea el final vacío con motivo exacto `extremo final en línea vacía`, en completa simple y ambigua rota en todas.
 3. P3 fija el motivo exacto; las mutaciones M1 y M2 lo ponen rojo.
 4. La abreviada se lee en su ancla propia o, si no la tiene, en la heredada de la última completa válida de su línea física.
-5. La herencia se corta con una mención de otro fichero (M3 en rojo) y cede ante el ancla propia (M4 en rojo).
+5. La herencia se corta con una mención de otro fichero (M3 en rojo), no con una del mismo fichero, se pierde tras una completa válida sin ancla, y cede ante el ancla propia (M4 en rojo).
 6. El fallo de ancla va a abreviadas rotas con la revisión en el motivo, nunca bloquea y no toca `noLegibles` (M5 en rojo).
 7. La abreviada de habilitar_servicio figura en abreviadas rotas como informativa.
 8. El invariante de conservación se cumple con un caso de cada camino nuevo.
-9. Las tres citas del §5 están reparadas en un commit anterior o igual al que activa la cuarta rama, y M6 se ejecutó.
+9. Las cinco citas del §5 están reparadas en un commit anterior o igual al que activa la cuarta rama, la anotación del triaje de B3 está hecha, y M6 se ejecutó sobre las tres que el detector ve.
 10. Hook en verde contra el propio repositorio tras la tanda: 0 bloqueantes, 0 caducadas, base en 0.
 11. `npm test`, `npm run typecheck` y `npm run lint` en verde.
 12. Delta de `citas-verificables` con RQ-CV-08 y RQ-CV-06 modificados según (c).
