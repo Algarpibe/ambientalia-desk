@@ -144,19 +144,19 @@ verificable fuera de la suite: una tarea de la fase 5 con su comprobación, o un
 | 8 | 02 | nombre pelado con varios candidatos resuelve a la raíz | `apps/desk/server/citas/resolucion.test.ts:16` | COMPLIANT |
 | 9 | 02 | control: sin coincidencia exacta, el sufijo sigue funcionando | `apps/desk/server/citas/resolucion.test.ts:20` | COMPLIANT |
 | 10 | 02 | mutación: quitar la precedencia (M23) | la misma prueba del nº 8, que la mutación pone en rojo | COMPLIANT |
-| 11 | 03 | rota en todas sus candidatas | `apps/desk/server/citas/detector.test.ts:296` | COMPLIANT |
-| 12 | 03 | válida en una sola candidata | `apps/desk/server/citas/detector.test.ts:302` | COMPLIANT |
-| 13 | 04 | una ruta `~/` se salta en su propia cifra | `apps/desk/server/citas/cosecha.test.ts:89` y la invariante de conservación de `hook.test.ts` | COMPLIANT |
-| 14 | 04 | control: la ruta relativa que no resuelve sigue bloqueando | `apps/desk/server/citas/cosecha.test.ts:95` y `apps/desk/server/citas/detector.test.ts:285` | COMPLIANT |
+| 11 | 03 | rota en todas sus candidatas | `apps/desk/server/citas/detector.test.ts:339` | COMPLIANT |
+| 12 | 03 | válida en una sola candidata | `apps/desk/server/citas/detector.test.ts:345` | COMPLIANT |
+| 13 | 04 | una ruta `~/` se salta en su propia cifra | `apps/desk/server/citas/cosecha.test.ts:97` y la invariante de conservación de `hook.test.ts` | COMPLIANT |
+| 14 | 04 | control: la ruta relativa que no resuelve sigue bloqueando | `apps/desk/server/citas/cosecha.test.ts:103` y `apps/desk/server/citas/detector.test.ts:328` | COMPLIANT |
 | 15 | 04 | mutación: quitar la categoría (M28) | la misma prueba del nº 13 | COMPLIANT |
 | 16 | 05 | la cita pelada a un fichero renombrado bloquea (M7) | pruebas de los nº 3 y nº 4 | COMPLIANT |
-| 17 | 05 | un token sin barra que no resuelve se informa | `apps/desk/server/citas/detector.test.ts:285` | COMPLIANT |
+| 17 | 05 | un token sin barra que no resuelve se informa | `apps/desk/server/citas/detector.test.ts:328` | COMPLIANT |
 | 18 | 05 | un token con barra que no resuelve bloquea | la misma prueba del nº 17 | COMPLIANT |
 | 19 | 05 | un token que resuelve a directorio se salta | `apps/desk/server/citas/resolucion.test.ts:27` | COMPLIANT |
 | 20 | 06 | abreviadas tras un nombre con punto inicial: todas comprobadas | `apps/desk/server/citas/cosecha.test.ts:22`, sólo a nivel de cosecha | **PARTIAL** |
 | 21 | 06 | (a) un nombre sin extensión se cosecha y se comprueba (M24) | `apps/desk/server/citas/cosecha.test.ts:8` y `apps/desk/server/citas/detector.test.ts:238` | COMPLIANT |
 | 22 | 06 | (b) un nombre con punto inicial se cosecha (M25) | `apps/desk/server/citas/cosecha.test.ts:14` y `apps/desk/server/citas/detector.test.ts:238` | COMPLIANT |
-| 23 | 06 | (c) abreviada atribuida al fichero anterior, en los dos órdenes (M26) | `apps/desk/server/citas/detector.test.ts:264` y `apps/desk/server/citas/cosecha.test.ts:42` | COMPLIANT |
+| 23 | 06 | (c) abreviada atribuida al fichero anterior, en los dos órdenes (M26) | `apps/desk/server/citas/detector.test.ts:264` y `apps/desk/server/citas/cosecha.test.ts:50` | COMPLIANT |
 | 24 | 06 | (d) la mención pelada que resuelve captura la atribución y la que no, no (M27) | `apps/desk/server/citas/cosecha.test.ts:22` y `apps/desk/server/citas/cosecha.test.ts:31`, sólo a nivel de cosecha | **PARTIAL** |
 | 25 | 06 | la abreviada rota se informa y no bloquea (M30) | `apps/desk/server/citas/detector.test.ts:112`; `generarBase` sólo recorre bloqueantes (`apps/desk/server/citas/cli.ts:124`) | COMPLIANT |
 | 26 | 06 | una revisión inventada en una cita anclada bloquea | `apps/desk/server/citas/detector.test.ts:53` | COMPLIANT |
@@ -192,8 +192,8 @@ verificable fuera de la suite: una tarea de la fase 5 con su comprobación, o un
 | 56 | 15 | el recuento pasa de cuatro a cinco | manual: `CLAUDE.md:255` | COMPLIANT (manual) |
 | 57 | 15 | la regla de mutación 4 gana las dos frases | manual: `CLAUDE.md:185` (Q6) y `CLAUDE.md:188` (Q9) | COMPLIANT (manual) |
 | 58 | 15 | mutación: un ejemplo con forma de cita bloquea (M22) | `apps/desk/server/citas/detector.test.ts:214` | COMPLIANT |
-| 59 | 16 | `host:puerto` dentro de una URL no se cuenta | `apps/desk/server/citas/cosecha.test.ts:75` | COMPLIANT |
-| 60 | 16 | control: una cita real con dos puntos sigue siendo cita | `apps/desk/server/citas/cosecha.test.ts:81` | COMPLIANT |
+| 59 | 16 | `host:puerto` dentro de una URL no se cuenta | `apps/desk/server/citas/cosecha.test.ts:83` | COMPLIANT |
+| 60 | 16 | control: una cita real con dos puntos sigue siendo cita | `apps/desk/server/citas/cosecha.test.ts:89` | COMPLIANT |
 | 61 | 17 | el diseño elige la atribución y declara el hueco | manual: decisión D1 del diseño | COMPLIANT (manual) |
 | 62 | 17 | la base generada supera la guarda de R-14 | manual: tarea 3.2, 37 entradas (≤ 100) | COMPLIANT (manual) |
 | 63 | 18 | el grafo de imports de producción no llega al detector | `apps/desk/server/citas/guardianes.test.ts:51` | COMPLIANT |

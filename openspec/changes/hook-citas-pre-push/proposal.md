@@ -713,7 +713,7 @@ el hook está instalado es la mutación de dos signos del `prepare` (M11), y no 
 | **M11 · el fichero vigilado** (D4) | `prepare` en un directorio **sin `.git`** | Sale 0 y **NO instala** | **Control de dos signos, obligatorio:** **con** `.git` → sale 0 y **`git config --get core.hooksPath` devuelve `.githooks`**. La mutación de un solo signo la pasan las tres variantes de la tabla de la Pieza 5 |
 | **M12** (D4.1) | Sin binario `git` (`node:22-alpine`) | `status` es `null` → sale 0 | Con `git` presente → instala |
 | **M13** (D4.2) | Hacer fallar el `git config` **con** repositorio presente | Mensaje visible en la salida y `npm ci` **sigue en verde** (exit 0) | Que el mensaje exista: un fallo silencioso aquí es el defecto que esta pieza evita |
-| **M14 · las cuatro exclusiones** | Cita rota **dentro** de `openspec/changes/archive/`, otra dentro de `.claude/skills/superpowers-main/`, otra dentro de `.agent/skills/` y otra dentro de `docs/artefactos/` | Se ignoran: 0 | La misma cita fuera de los cuatro directorios → bloquea |
+| **M14 · las cuatro exclusiones** | Cita rota **dentro** de `openspec/changes/archive/`, otra dentro de `.claude/skills/superpowers-main/`, otra dentro de `.agent/skills/` y otra dentro de `docs/artefactos/` | Se ignoran: 0 | La misma cita fuera de los cuatro directorios → bloquea. **Ampliadas a SEIS** por la divergencia nº 2 del apartado 11 del diseño: se suman la propia línea base `apps/desk/server/citas/lineaBase.jsonl` y `*.csv` (implementadas en `apps/desk/server/citas/cli.ts:46-53`, verificado el 2026-09-15: la línea 46 abre `EXCLUSIONES` y la 53 lo cierra) |
 | **M15 · las ambiguas** | Cita ambigua rota en **todas** las candidatas | ≠ 0 | Rota en **una sola** → se salta y el contador de saltadas sube en 1. Un detector que no contara las saltadas mentiría por omisión |
 | **M16 · el hook sin dependencias** | Borrar `node_modules` y empujar, con el hook invocando `node_modules/.bin/tsx` o `npx --no tsx` | **≠ 0**, con mensaje explícito | **Control sin red, estático** (regla de mutación 2): un guardián lee `.githooks/pre-push` y falla si invoca `tsx` con `npx`, `npm exec` o `npm x` sin `--no`. Se **ensucia el fichero vigilado**, una mutación por forma: `npx tsx` a secas → **rojo**; `npm exec tsx` → **rojo**; `npm x tsx` → **rojo**; con `node_modules/.bin/tsx` o `npx --no tsx` → verde. Sustituye al control anterior, que ejecutaba `npx tsx` y dependía de la red. Un hook que saliera 0 aquí repite el fallo de la guarda en `sh` |
 | **M17 · la posición** (regla de mutación 1) | Mover la consulta a la línea base **después** de decidir el bloqueo | Una entrada de la base debe empezar a bloquear → la prueba de la base se pone roja | Si sigue verde, **el orden no está probado** y un comentario que lo declare deliberado no es prueba |
@@ -990,7 +990,10 @@ Ninguna unidad toca el esquema de base de datos, escribe hacia Zoho ni depende d
       rota que no está en la base **bloquea** aunque la base exista (M10).
 - [ ] El barrido cubre **sólo ficheros trackeados** y **excluye `openspec/changes/archive/`,
       `.claude/skills/superpowers-main/`, `.agent/skills/` y `docs/artefactos/`**, las cuatro exclusiones
-      declaradas en el §2, comprobado con M5 y M14.
+      declaradas en el §2, comprobado con M5 y M14. **Ampliadas a SEIS** por la divergencia nº 2 del
+      apartado 11 del diseño: se suman la propia línea base `apps/desk/server/citas/lineaBase.jsonl` y
+      `*.csv` (implementadas en `apps/desk/server/citas/cli.ts:46-53`, verificado el 2026-09-15: la línea
+      46 abre `EXCLUSIONES` y la 53 lo cierra).
 - [ ] `prepare` existe en `package.json` y la guarda vive en un **`.mjs`**, no en la línea del script.
 - [ ] **La mutación de la instalación se corrió con LOS DOS SIGNOS** (M11): sin `.git` → 0 y **no
       instala**; con `.git` → 0 y `git config --get core.hooksPath` devuelve `.githooks`. **Un solo

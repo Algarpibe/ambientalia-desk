@@ -1,5 +1,97 @@
 # Apply progress — hook-citas-pre-push
 
+## Remediación del verify fallido (evidencia `sha256:400a38b9…fc73`) — WARNING-1, 2, 3 y SUGGESTION
+
+Partida `fac7709`, 2026-09-15, decisión de Gerencia, un solo intento. El `acquire` con la unidad de
+trabajo nueva devolvió `blocked(maintainer_decision)`: el ledger rechaza el reset (candidato sin
+deriva) y ofrece `rescope`, que ejecutó Alfonso (generación 10, `max_attempts 2` y `max_changed_lines
+800`, arrastrando 1 intento y 155 líneas). Después, `acquire` con `--remediates-evidence-revision` →
+`proceed`, intento ordinal 10.
+
+### WARNING-3 · los dos escenarios de RQ-CV-06, a través de `detectar()`
+
+Pruebas nuevas en `apps/desk/server/citas/detector.test.ts:284`, bloque «RQ-CV-06 de punta a punta»:
+
+- `apps/desk/server/citas/detector.test.ts:285` — abreviadas válidas tras un nombre con punto inicial.
+  `Dockerfile` tiene 2 líneas y `.dockerignore` 4; las abreviadas 3 y 4 sólo son válidas atribuidas a
+  `.dockerignore`. Comprueba 4 comprobadas, 0 huérfanas, 0 rotas y que no bloquea.
+- `apps/desk/server/citas/detector.test.ts:307` — (d), la línea del escenario: `.dockerignore` pelado,
+  `.git` (no trackeado) y `docs` (directorio, sólo existe `docs/guia.md`), cada uno seguido de una
+  abreviada válida para `.dockerignore`. Comprueba 3 comprobadas, 0 huérfanas, 0 no legibles, 0 rotas.
+- `apps/desk/server/citas/detector.test.ts:317` — la misma línea con la última abreviada fuera de rango:
+  1 abreviada rota con fichero, línea y motivo «atribuida a .dockerignore», no bloquea, 2 comprobadas.
+  Va en un `it` aparte a propósito: juntas, el primer `expect` que falla bajo mutación tapaba si la mitad
+  de la rota discrimina por sí sola.
+
+Control de `apps/desk/server/citas/cosecha.test.ts:31`: su nombre anunciaba dos signos y sólo ejercía
+uno. Se añade el segundo en `apps/desk/server/citas/cosecha.test.ts:39`: con un resolvedor que da por
+buena CUALQUIER mención pelada, las abreviadas van a `.git` y a `docs`, y la atribución a
+`.dockerignore` se pierde.
+
+**Rojo.** El comportamiento ya existía, así que las pruebas nuevas salen verdes sin mutar (39/39 en los
+dos ficheros): **el rojo sale de la mutación**. Tres mutaciones sobre `apps/desk/server/citas/cosecha.ts`,
+cada una con copia en el scratchpad, restaurada y comprobada con `cmp` idéntico:
+
+| Mutación | Cambio | Rojas | Qué dice cada roja |
+|---|---|---|---|
+| MUT-b · el nombre no puede empezar por punto | `NOMBRE_FICHERO` pasa a exigir letra, dígito, `_` o `-` al principio | 5 de 39 | punto inicial: `expected 2 to be 4`; (d) válida: `expected +0 to be 3`; (d) rota: `expected [] to have a length of 1 but got +0`; las dos de cosecha, incluido el segundo signo del control: `expected [ null, 'docs' ] to deeply equal [ '.git', 'docs' ]` |
+| MUT-d1 · se quita (d) | la mención pelada nunca cuenta (`false &&` delante del resolvedor) | 5 de 39 | las mismas tres de `detectar()`; control, segundo signo: `expected [ null, null ] to deeply equal [ '.git', 'docs' ]` |
+| MUT-d2 · (d) captura cualquier token pelado | `true \|\|` delante del resolvedor | 4 de 39 | (d) válida: `expected 1 to be 3` (dos abreviadas van a `.git` y `docs` y quedan como no legibles); (d) rota: `expected [] to have a length of 1 but got +0`; control, PRIMER signo: la abreviada deja de quedar huérfana |
+
+La prueba del punto inicial sigue verde bajo MUT-d2, y es lo esperado: en su línea no hay ningún token
+pelado que no resuelva. Los dos signos del control se cubren en cruz: MUT-d1 pone rojo el segundo y
+MUT-d2 el primero. Tras las tres, control sin mutar: 39/39 y `git status` sólo con los dos ficheros de
+prueba. Primera tanda del script inválida y descartada: no hay `python` en la máquina, las sustituciones
+no se aplicaron y el diff salió vacío. El script se rehízo con `node` y ahora aborta si el diff sale vacío.
+
+### WARNING-1 · 25 citas por línea entre artefactos de la tanda, reescritas en prosa
+
+19 completas y 6 abreviadas, en este fichero (corte 4: «TDD Cycle Evidence», «5.2 — M18, el orden
+real» y «5.5», con sus tablas «Antes» y «Reparación», la nota de método y la frase final) y en
+`tasks.md` (tareas 5.2 y 5.5). Cada una nombra ahora el apartado, la pieza o la tarea. No se renumeró
+ninguna. Cada apartado nombrado se comprobó contra el artefacto en `fac7709`. En la tabla «Antes» se
+quitó el paréntesis que explicaba la numeración de las filas, porque las filas ya no llevan número.
+
+Cierre, comprobado sobre el árbol remediado:
+`git grep -nE "(apply-progress|tasks|proposal|design|spec|verify-report)\.md:[0-9]"` sobre la carpeta
+del cambio → **0**. Las abreviadas que quedan en `apply-progress.md`, `tasks.md` y `proposal.md` apuntan
+todas a `Dockerfile`, `openspec/config.yaml`, `.dockerignore` o `vitest.config.ts`: **0 autocitas**.
+Fuera del cambio no hay citas por línea a estos artefactos.
+
+### WARNING-2 · la salida del hook en el push de `f962e81`
+
+«No registrada» era inexacto. En el apartado «5.2 — M18, el orden real» va ahora la copia literal
+PARCIAL, con su procedencia y el recorte declarado. La frase de la tarea 5.2 de `tasks.md` se corrigió
+igual.
+
+### SUGGESTION
+
+- `proposal.md`, fila M14 del apartado 6 y casilla del apartado 15: «cuatro exclusiones» se conserva
+  (caso C) y se añade que la tanda las llevó a seis, nombrando las dos que se suman.
+- Cobertura de ramas del corte 4: 83,95 → 83,96, en la tabla de 5.6 de este fichero y en la tarea 5.6.
+  **Medido en esta remediación, y cambia la lectura:** no es un redondeo. Tres tomas de `npm run
+  test:coverage` sobre el MISMO árbol remediado, sin tocar ningún fuente, dan ramas global **83,94 ·
+  83,94 · 83,93**. La cifra global de ramas varía entre ejecuciones (hipótesis: la cobertura de bloques
+  de v8 fuera de `citas`). La de `apps/desk/server/citas` es estable en las tres, **95,39**, frente al
+  95,42 anterior sin cambiar ningún fuente del módulo. Hipótesis, no medida: las pruebas nuevas hacen que
+  v8 informe más bloques de rama y crece el denominador. Sentencias, funciones y líneas no se mueven
+  (94,79 / 98,2 / 94,79; `citas` 99,23 / 97,29 / 99,23). Ningún umbral en riesgo (ramas ≥ 78).
+- `Dockerfile:14` no se toca: está registrado aparte.
+
+### Comprobaciones sobre el árbol remediado (antes del commit)
+
+`npm test` exit 0, **1111 pasan y 2 saltadas** (1108 + 3 `it` nuevos); `npm run typecheck` exit 0;
+`npm run lint` exit 0, **0 errores y 158 avisos**; `npm run build` exit 0; `npm run test:coverage`
+exit 0 con las cifras de arriba. Tamaño del código: `git diff --shortstat fac7709 -- apps/` → 2 ficheros,
+52 inserciones y 1 borrado.
+
+**Regla de mutación 4.** Las pruebas nuevas desplazan `detector.test.ts` 43 líneas a partir de la 284 y
+`cosecha.test.ts` 8 a partir de la 38. El barrido de `(detector|cosecha)\.test\.ts:[0-9]+` en todo el
+repositorio, sin archive, sólo encuentra citas en `verify-report.md` y en esta sección. Nueve citas
+del report, en ocho filas de su matriz de escenarios (11 a 14, 17, 23, 59 y 60), quedaban desplazadas. Se reparan como
+caso A (siguen siendo ciertas hoy) y cada línea nueva se comprobó contra el fichero: es la misma prueba
+que citaban en `fac7709`. No hay abreviadas afectadas. El report entero se rehace en el verify nuevo.
+
 ## Corte 4 — verificación del orquestador y tarea 5.4
 
 Partida `f962e81`. Intento de runtime ordinal 7. Commit A `53c6fc5` (tareas 5.1-5.3, 5.5 y 5.6);
@@ -71,9 +163,10 @@ en este mismo `apply-progress.md` (anclajes de citas, tarea 5.5) y la actualizac
 
 ### TDD Cycle Evidence
 
-Las cinco tareas de esta fase son de **verificación manual y documental** (diseño,
-`design.md:546` y `:550-552`: «M16 en ejecución ..., M18 ..., M19 ... — Manual, registrado en
-verify»); 5.5 es un anclaje de citas igual en naturaleza a 4.14/4.14-A2 del corte 3 (documental, sin
+Las cinco tareas de esta fase son de **verificación manual y documental** (diseño, §8 «Estrategia de
+pruebas», última fila de la tabla de mutaciones y controles: «M16 en ejecución ..., M18 ..., M19 ... —
+Manual, registrado en verify», con la nota siguiente que explica por qué M16 en ejecución queda
+manual); 5.5 es un anclaje de citas igual en naturaleza a 4.14/4.14-A2 del corte 3 (documental, sin
 prueba automatizada); 5.6 ejecuta la suite ya existente sin escribir código nuevo. Por eso el ciclo
 RED → GREEN → REFACTOR no aplica: no hay producción que hacer fallar primero.
 
@@ -140,9 +233,9 @@ y este propio `apply-progress.md`.
    `984b797` → `73a9acb` (coste por revisión, RQ-CV-03 en ancladas, modos `--sha`/`--generar-base`,
    3.8-3.10). Confirmado por `sdd-attempt status`, ordinales 3-5 (`outcome: passed` los tres).
 2. **Base generada e IV-10 escrito**, ambos en `35f2698`, y **en ese orden dentro del mismo commit**:
-   la base se generó ANTES de tocar `CLAUDE.md`. Cita en este mismo artefacto: `apply-progress.md:503`
-   («**3.2** ... `--generar-base` sobre `73a9acb`: 37 entradas, 28 claves») antecede a
-   `apply-progress.md:509` («**3.3.** `CLAUDE.md`: ... fila nueva ... IV-10»). Confirmado también por
+   la base se generó ANTES de tocar `CLAUDE.md`. En este mismo artefacto, la tarea 3.2
+   («... `--generar-base` sobre `73a9acb`: 37 entradas, 28 claves») antecede a la tarea 3.3
+   («`CLAUDE.md`: ... fila nueva ... IV-10»). Confirmado también por
    `sdd-attempt status` ordinal 5, `work_unit`: «coste por revision, RQ-CV-03 en ancladas, modos del
    CLI, linea base, IV-10 y regla de mutacion 4 (tareas 3.8, 3.9, 3.10 y 3.1-3.7)».
 3. **Hook e instalador**, en `f962e81` (`sdd-attempt status` ordinal 6, `work_unit`: «corte 3: hook
@@ -153,8 +246,32 @@ y este propio `apply-progress.md`.
 («feat(citas): hook pre-push, instalador, eol=lf, DEPLOY y arreglo del …», evento `push`, rama `main`)
 en `completed / success`, 2026-09-14T17:21:56Z. Como el workflow de CI sólo se dispara cuando GitHub
 recibe el push, esto confirma que el push de `f962e81` llegó y no quedó bloqueado por ninguna cita que
-la tanda no rompiera. **La salida LITERAL del hook durante ESE push concreto no quedó registrada en
-ningún artefacto de la tanda: se dice así, «no registrada», y no se reconstruye.**
+la tanda no rompiera.
+
+**Procedencia.** La salida LITERAL del hook durante ESE push concreto es una copia literal PARCIAL,
+tomada del informe de turno del corte 3 que el orquestador entregó a Gerencia y que Gerencia pegó en la
+sesión del analista; el analista la devolvió el 2026-09-15. Engram obs. 558 y 559 sólo tienen resúmenes
+numéricos (salida 0, 1.755 comprobadas, 37 informadas, 0 bloqueantes), no el bloque; la afirmación
+previa del analista de que la obs. 559 tenía una copia literal parcial era falsa y la corrigió él mismo.
+
+    citas · f962e81 · refs/heads/main
+      comprobadas ............ 1755
+      saltadas ............... 1574   (sin barra y sin resolver 383 · ambiguas con alguna candidata válida 139 · directorios 0 · abreviadas huérfanas 1052 · anclas sin resolver 0 · no legibles 0)
+      fuera del repositorio .. 3
+      abreviadas rotas ....... 7   (informativas: no bloquean)
+      no son citas ........... 7   (marcas de hora ISO, horas y puertos de URL; fuera de las cuatro cifras)
+      texto que git cree binario .. 0   (no barridos)
+      índice remoto .......... 35f2698
+      línea base ............. 37 informadas · 0 caducadas
+    Abreviadas rotas: (7 listadas, ya presentes antes del corte)
+    …
+    To https://github.com/Algarpibe/ambientalia-desk.git
+       35f2698..f962e81  main -> main
+
+**Recorte declarado.** La línea «(7 listadas, ya presentes antes del corte)» y la elipsis «…» NO son
+salida del hook: las escribió el orquestador en su informe. Lo que el hook imprimió entre la cabecera
+«Abreviadas rotas:» y la línea `To https://…` (la lista de las 7 abreviadas rotas y cualquier otra
+línea) no está en la copia y no se reconstruye.
 
 ### 5.3 — M19, coste
 
@@ -185,41 +302,41 @@ nunca en el repositorio), que importa `cosechar` de `apps/desk/server/citas/cose
 `construirIndice`/`resolverToken` de `apps/desk/server/citas/resolucion.ts` — el mismo código que usa
 el hook real, sin reimplementar su lógica — y los aplica línea a línea a los cinco artefactos.
 
-**Antes (primera pasada): 91 citas encontradas a los seis destinos, 86 ancladas, 5 en presente** (las filas usan la numeración de hoy; en `f962e81` era la línea 258):
+**Antes (primera pasada): 91 citas encontradas a los seis destinos, 86 ancladas, 5 en presente:**
 
-| Documento:línea | Cita | Destino | Estado |
+| Documento (ubicación) | Cita | Destino | Estado |
 |---|---|---|---|
-| `apply-progress.md:549` | `` `openspec/config.yaml:807-838` `` | `openspec/config.yaml` | en presente |
-| `proposal.md:406` | `` `Dockerfile:18` `` (ejemplo de control, dos signos) | `Dockerfile` | en presente |
-| `proposal.md:536` | `` `Dockerfile:18` `` («copia `apps` entera») | `Dockerfile` | en presente |
-| `proposal.md:565` | `` `Dockerfile:2` `` («`node:22-alpine` no instala git») | `Dockerfile` | en presente |
-| `proposal.md:565` | `` `:10` `` (abreviada, atribuida a `Dockerfile`) | `Dockerfile` | en presente |
+| Este mismo `apply-progress.md`, Corte 2 — segunda parte, «Barrido de la regla de mutación 4» | `` `openspec/config.yaml:807-838` `` | `openspec/config.yaml` | en presente |
+| `proposal.md`, §3 Pieza 2, nota para `sdd-design` (ejemplo de control, dos signos, sobre host:puerto) | `` `Dockerfile:18` `` (ejemplo de control, dos signos) | `Dockerfile` | en presente |
+| `proposal.md`, §3 Pieza 4, «Dos cosas van escritas en el propio fichero», punto 1 | `` `Dockerfile:18` `` («copia `apps` entera») | `Dockerfile` | en presente |
+| `proposal.md`, §3 Pieza 5, «Cómo va», punto 1 (cita completa) | `` `Dockerfile:2` `` («`node:22-alpine` no instala git») | `Dockerfile` | en presente |
+| `proposal.md`, §3 Pieza 5, «Cómo va», punto 1 (abreviada) | `` `:10` `` (abreviada, atribuida a `Dockerfile`) | `Dockerfile` | en presente |
 
 0 anclas partidas por salto de línea en ninguna de las 91.
 
 **Reparación, cita por cita (caso B de `CLAUDE.md:195-199` en `648432d` — anclar a la revisión donde
 la frase sigue siendo cierta, sin renumerar):**
 
-| Documento:línea | Revisión probada | Comprobación | Resultado |
+| Documento (ubicación) | Revisión probada | Comprobación | Resultado |
 |---|---|---|---|
-| `proposal.md:406` | `648432d` | `Dockerfile:18` en `648432d` = `COPY apps ./apps` (`git show 648432d:Dockerfile \| sed -n '18p'`) | Cierto → anclada a `648432d` |
-| `proposal.md:536` | `648432d` | ídem — `COPY apps ./apps` en la línea 18 | Cierto → anclada a `648432d` |
-| `proposal.md:565` (completa) | `648432d` | `Dockerfile:2` en `648432d` = `FROM node:22-alpine AS build` | Cierto → anclada a `648432d` |
-| `proposal.md:565` (abreviada `:10`) | `648432d` | `Dockerfile:10` en `648432d` = `FROM node:22-alpine`; sin `apk add` en todo el fichero | Cierto → anclada a `648432d` |
-| `apply-progress.md:549` | `648432d` | `openspec/config.yaml:807` en `648432d` = `- id: PF-1`; `:838` en `648432d` = `docs/artefactos/NOTA.md.` (cierre del bloque de esa entrada) | Cierto → anclada a `648432d` |
+| `proposal.md`, §3 Pieza 2, nota para `sdd-design` (ejemplo de control, dos signos, sobre host:puerto) | `648432d` | `Dockerfile:18` en `648432d` = `COPY apps ./apps` (`git show 648432d:Dockerfile \| sed -n '18p'`) | Cierto → anclada a `648432d` |
+| `proposal.md`, §3 Pieza 4, «Dos cosas van escritas en el propio fichero», punto 1 | `648432d` | ídem — `COPY apps ./apps` en la línea 18 | Cierto → anclada a `648432d` |
+| `proposal.md`, §3 Pieza 5, «Cómo va», punto 1 (cita completa) | `648432d` | `Dockerfile:2` en `648432d` = `FROM node:22-alpine AS build` | Cierto → anclada a `648432d` |
+| `proposal.md`, §3 Pieza 5, «Cómo va», punto 1 (abreviada `:10`) | `648432d` | `Dockerfile:10` en `648432d` = `FROM node:22-alpine`; sin `apk add` en todo el fichero | Cierto → anclada a `648432d` |
+| Este mismo `apply-progress.md`, Corte 2 — segunda parte, «Barrido de la regla de mutación 4» | `648432d` | `openspec/config.yaml:807` en `648432d` = `- id: PF-1`; `:838` en `648432d` = `docs/artefactos/NOTA.md.` (cierre del bloque de esa entrada) | Cierto → anclada a `648432d` |
 
 Las tres claims sobre `Dockerfile` siguen siendo también ciertas HOY (`f962e81`): el `COPY scripts
 ./scripts` del corte 3 se insertó DESPUÉS de la línea 18, así que no desplazó ni la línea 2 ni la 10 ni
-la 18. Se ancla igual a `648432d`, por consistencia con la convención Q7a (`design.md:308-311`), que
-manda anclar TODA cita a estos seis ficheros desde los artefactos de la tanda, sin condicionarlo a que
-además siga siendo cierto en el presente.
+la 18. Se ancla igual a `648432d`, por consistencia con la convención Q7a de `design.md` (§4, decisión
+D10, «.githooks/* text eol=lf»), que manda anclar TODA cita a estos seis ficheros desde los artefactos
+de la tanda, sin condicionarlo a que además siga siendo cierto en el presente.
 
 **Después (segunda pasada, mismo script, antes de escribir esta propia sección): 91/91 ancladas, 0 en
 presente, 0 partidas.**
 
 ⚠️ **Nota de método (efecto recursivo, mismo molde que Q6 en `apply-progress.md` del corte 3).** Las
-tablas de esta misma sección 5.5, al citar `` `Dockerfile:18` ``, `` `apply-progress.md:549` ``, etc.
-con forma de cita para dejar rastro exacto, entran ELLAS MISMAS en el alcance del barrido en cuanto se
+tablas de esta misma sección 5.5, al citar `` `Dockerfile:18` `` y la propia fila de reparación de
+`openspec/config.yaml`, etc., con forma de cita para dejar rastro exacto, entran ELLAS MISMAS en el alcance del barrido en cuanto se
 escriben — el propio `apply-progress.md` es uno de los cinco artefactos vigilados. Volviendo a correr
 el script una vez escrita esta sección (incluida la reparación de los dos nuevos casos que ese
 crecimiento sacó a la luz: `apply-progress.md`, la abreviada `` `:838` `` de la fila de reparación de
@@ -248,7 +365,10 @@ tocan.
 **Regla de mutación 4 (corregido por el orquestador).** Los anclajes van DENTRO de su línea física y
 `proposal.md` sigue en 1.068 líneas, pero esta sección añade 230 líneas arriba de `apply-progress.md`
 (701 → 931) y la fase 5 añade 33 a `tasks.md`. Barrido con `git grep -nE "(apply-progress|tasks)\.md:[0-9]+"`:
-fuera del cambio no hay citas a estos dos ficheros; dentro, las tres autocitas (hoy `:503`, `:509` y `:549`) se renumeraron y se comprobaron.
+fuera del cambio no hay citas a estos dos ficheros; dentro, las tres autocitas —las de la tarea 3.2, la
+tarea 3.3 y el hallazgo del barrido de la regla de mutación 4 del Corte 2 (segunda parte)— se
+renumeraron en el corte 4 y se comprobaron. La remediación del verify (WARNING-1) las reescribió además
+en prosa, sin forma de cita, por la convención 2 de la propuesta.
 
 ### 5.6 — Suite completa
 
@@ -258,7 +378,7 @@ fuera del cambio no hay citas a estos dos ficheros; dentro, las tres autocitas (
 | `npm run typecheck` | exit 0, sin salida |
 | `npm run lint` | **0 errores, 158 avisos** (≤ 158, mismo trinquete que el corte 3) |
 | `npm run build` | exit 0, `vite build` completo (`✓ built in 1.67s`) |
-| `npm run test:coverage` | exit 0 — **global 94,79 % stmts · 83,95 % ramas · 98,2 % funcs · 94,79 % líneas**; `apps/desk/server/citas` **99,23 % · 95,42 % · 97,29 % · 99,23 %** |
+| `npm run test:coverage` | exit 0 — **global 94,79 % stmts · 83,96 % ramas · 98,2 % funcs · 94,79 % líneas** (el registro original decía 83,95; el verify lo remidió en 83,96 con el mismo comando y el mismo árbol); `apps/desk/server/citas` **99,23 % · 95,42 % · 97,29 % · 99,23 %** |
 
 Umbrales de `vitest.config.ts:58-63` (lines 92, statements 92, functions 96, branches 78): los cinco
 superados con margen. Sin cambio frente a las cifras del corte 3 (fase de verificación, sin producción

@@ -29,12 +29,20 @@ describe('cosechar · (d) la mención pelada que resuelve cuenta como fichero al
   })
 
   it('control: sin (d), o capturando cualquier token pelado resuelva o no, la atribución se pierde', () => {
-    // Control de un signo: si la mención pelada NUNCA cuenta (aunque resuelva), la abreviada queda huérfana.
+    // Primer signo: si la mención pelada NUNCA cuenta (aunque resuelva), la abreviada queda huérfana.
     const noCuentaNunca = () => false
     const texto = `\`.dockerignore\` ${abreviada(1)}`
     const citas = cosechar([linea('doc.md', texto)], { resuelveAFichero: noCuentaNunca })
     const abrev = citas.find((c) => c.tipo === 'abreviada')
     expect(abrev).toMatchObject({ atribuidoA: null })
+
+    // Segundo signo: si cuenta CUALQUIER mención pelada, resuelva o no, cada abreviada va al último token
+    // pelado anterior —`.git` o `docs`— y la atribución a `.dockerignore` se pierde igual.
+    const cuentaSiempre = () => true
+    const textoConPeladas = `\`.dockerignore\` cerca de \`.git\` ${abreviada(1)} y \`docs\` ${abreviada(9)}`
+    const atribuciones = cosechar([linea('doc.md', textoConPeladas)], { resuelveAFichero: cuentaSiempre })
+      .flatMap((c) => (c.tipo === 'abreviada' ? [c.atribuidoA] : []))
+    expect(atribuciones).toEqual(['.git', 'docs'])
   })
 })
 

@@ -572,11 +572,12 @@ imponerla.
       citas que la tanda no rompió.
       **CERRADO.** Orden reconstruido con `git log --oneline 773ad75..f962e81` y
       `gentle-ai sdd-attempt status`: detector con pruebas `7625921`…`73a9acb` → base generada ANTES de
-      tocar `CLAUDE.md` (`apply-progress.md:503` genera la base sobre `73a9acb`, `apply-progress.md:509`
-      escribe IV-10 en `CLAUDE.md` después) en `35f2698` → hook e instalador en `f962e81`. Push de cierre:
+      tocar `CLAUDE.md` (la tarea 3.2 genera la base sobre `73a9acb`, la tarea 3.3 escribe IV-10 en
+      `CLAUDE.md` después) en `35f2698` → hook e instalador en `f962e81`. Push de cierre:
       `origin/main` = `HEAD` = `f962e81` y `gh run list` muestra el run `34874300637` en `success` sobre
       ese commit — no pudo haber quedado bloqueado. La salida LITERAL del hook durante ESE push concreto
-      no quedó registrada en ningún artefacto: **no registrada**, no se reconstruye.
+      SÍ está registrada, sólo como copia literal PARCIAL, con procedencia y recorte declarados en el
+      apartado 5.2 («M18, el orden real», push de cierre) del progreso de apply.
 - [x] 5.3 M19, coste (registrar en verify): invocar el hook directamente con la entrada real de
       `pre-push` por stdin, sobre el árbol completo; registrar el tiempo total (objetivo ≤5 s, tope
       duro 10 s) y confirmar margen (RQ-CV-13).
@@ -598,11 +599,12 @@ imponerla.
       **CERRADO.** Script `tsx` en el scratchpad (nunca en el repositorio) que importa `cosechar` de
       `cosecha.ts` y `resolverToken`/`construirIndice` de `resolucion.ts` reales, aplicado a los cinco
       artefactos filtrado por los seis destinos: **91 citas** encontradas, **5 en presente** en la
-      primera pasada. Reparadas las **4** que eran afirmaciones nuevas sin ancla (`proposal.md:406`,
-      `:536` y `:565` ×2, sobre `Dockerfile`, verificadas ciertas en `648432d` con
-      `git show 648432d:Dockerfile`) y la **1** restante (`apply-progress.md:549`,
-      `openspec/config.yaml:807-838` en `648432d`, verificada como la entrada `PF-1` con
-      `git show 648432d:openspec/config.yaml`). Segunda pasada: **91/91 ancladas, 0 en presente, 0
+      primera pasada. Reparadas las **4** que eran afirmaciones nuevas sin ancla en `proposal.md` —§3
+      Pieza 2 (nota para `sdd-design`, ejemplo de control host:puerto), §3 Pieza 4 (punto 1), y §3 Pieza
+      5 (punto 1, cita completa y cita abreviada)—, sobre `Dockerfile`, verificadas ciertas en `648432d`
+      con `git show 648432d:Dockerfile`; y la **1** restante en `apply-progress.md`, Corte 2 — segunda
+      parte, «Barrido de la regla de mutación 4», `openspec/config.yaml:807-838` en `648432d`, verificada
+      como la entrada `PF-1` con `git show 648432d:openspec/config.yaml`. Segunda pasada: **91/91 ancladas, 0 en presente, 0
       partidas**. Regla de mutación 4: `apply-progress.md` (+230) y este `tasks.md` (+33) sí crecen;
       el barrido de citas a los dos no encuentra ninguna fuera del cambio, y las autocitas ya usan la
       numeración nueva. Detalle en `apply-progress.md`, sección «Corte 4».
@@ -610,7 +612,8 @@ imponerla.
       cobertura sobre los umbrales de `vitest.config.ts:58-63`.
       **CERRADO.** `npm test`: 1108/1110 pasadas, 2 omitidas (120/121 ficheros). `npm run typecheck`:
       exit 0. `npm run lint`: 0 errores, 158 avisos (≤158). `npm run build`: exit 0. `npm run
-      test:coverage`: exit 0, global 94,79 % stmts · 83,95 % ramas · 98,2 % funcs · 94,79 % líneas
+      test:coverage`: exit 0, global 94,79 % stmts · 83,96 % ramas (el registro original decía 83,95; el
+      verify lo remidió en 83,96 con el mismo comando y el mismo árbol) · 98,2 % funcs · 94,79 % líneas
       (umbrales `vitest.config.ts:58-63`: 92/78/96/92, todos superados); `apps/desk/server/citas` 99,23 %
       · 95,42 % · 97,29 % · 99,23 %.
 

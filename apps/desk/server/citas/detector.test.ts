@@ -281,6 +281,49 @@ describe('detectar · (c) la abreviada va SIEMPRE al fichero anterior, en los do
   })
 })
 
+describe('detectar · RQ-CV-06 de punta a punta: nombre con punto inicial y mención pelada (M25, M27)', () => {
+  it('abreviadas válidas tras un nombre con punto inicial: todas entre las comprobadas, ninguna huérfana ni rota', () => {
+    // `Dockerfile` tiene 2 líneas y `.dockerignore` 4: las abreviadas 3 y 4 sólo son válidas atribuidas a
+    // `.dockerignore`. Si el nombre con punto no contara, irían a `Dockerfile` y saldrían rotas.
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'doc.md': `${cita('Dockerfile', 1)} ${abreviada(2)} y \`.dockerignore\` ${abreviada(3)} ${abreviada(4)}`,
+        Dockerfile: 'FROM node\nEXPOSE 3000',
+        '.dockerignore': 'node_modules\ndist\n.env\ncoverage',
+      },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.comprobadas).toBe(4) // la completa y las tres abreviadas
+    expect(resultado.saltadas.huerfanas).toBe(0)
+    expect(resultado.abreviadasRotas).toHaveLength(0)
+    expect(resultado.bloquea).toBe(false)
+  })
+
+  // `.dockerignore` resuelve; `.git` no está trackeado y `docs` es un directorio: ninguno de los dos resuelve.
+  const lineaConPeladas = (ultima: number) =>
+    `\`.dockerignore\` ${abreviada(1)} cerca de \`.git\` ${abreviada(2)} y \`docs\` ${abreviada(ultima)}`
+  const arbolConPeladas = { '.dockerignore': 'node_modules\ndist\n.env', 'docs/guia.md': 'guía' }
+
+  it('(d) la mención pelada que resuelve captura; .git y docs no: las tres abreviadas válidas, comprobadas y ninguna huérfana', () => {
+    const repo = repoEnMemoria({ LOCAL: { ...arbolConPeladas, 'doc.md': lineaConPeladas(3) } })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.comprobadas).toBe(3)
+    expect(resultado.saltadas.huerfanas).toBe(0)
+    expect(resultado.saltadas.noLegibles).toBe(0)
+    expect(resultado.abreviadasRotas).toHaveLength(0)
+    expect(resultado.bloquea).toBe(false)
+  })
+
+  it('(d) la misma línea con la última abreviada fuera de rango: figura en la lista de abreviadas rotas y sale 0', () => {
+    const repo = repoEnMemoria({ LOCAL: { ...arbolConPeladas, 'doc.md': lineaConPeladas(9) } })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(1)
+    expect(resultado.abreviadasRotas[0]).toMatchObject({ fichero: 'doc.md', linea: 1, motivo: 'abreviada rota (atribuida a .dockerignore)' })
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.comprobadas).toBe(2)
+  })
+})
+
 describe('detectar · RQ-CV-05, pasos 6-8 de D4: lo que no resuelve', () => {
   it('con barra y sin resolver bloquea como fichero inexistente; sin barra se salta e informa (1.28)', () => {
     const repo = repoEnMemoria({ LOCAL: { 'doc.md': `${cita('no/existe.md', 3)} y ${cita('noexiste.md', 3)}.` } })
