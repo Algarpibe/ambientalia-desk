@@ -206,6 +206,61 @@ describe('hook · invariante de conservación (decisión c de Gerencia, 2026-09-
       r.borrar()
     }
   }, LENTO)
+
+  it('DCE-P8: un caso de cada camino NUEVO (RQ-CV-06 y RQ-CV-08) — la suma cuadra Y el desglose es exacto', () => {
+    const r = repoGitTemporal()
+    try {
+      r.escribir({ 'citado.md': lineas('uno', 'dos', 'tres') })
+      const conTres = r.commit('citado.md con la línea 3 llena; ausente.md todavía no existe')
+      r.escribir({ 'citado.md': lineas('uno', 'dos', ''), 'ausente.md': lineas('a', 'b', 'c') })
+      const sinTres = r.commit('la línea 3 de citado.md queda vacía; aparece ausente.md')
+      r.escribir({
+        'doc.md': [
+          `Heredada válida ${anclada(cita('citado.md', 1), conTres)} y ${abreviada(3)}.`,
+          `Heredada rota por contenido ${anclada(cita('citado.md', 1), sinTres)} y ${abreviada(3)}.`,
+          `Ancla propia que no pela ${cita('citado.md', 1)} y ${anclada(abreviada(1), 'noesunarevision')}.`,
+          `Fichero ausente en su revisión ${cita('ausente.md', 1)} y ${anclada(abreviada(1), conTres)}.`,
+          `Ancla propia que gana ${anclada(cita('citado.md', 1), sinTres)} y ${anclada(abreviada(3), conTres)}.`,
+          `Huérfana con ancla propia ${anclada(abreviada(2), 'inventada')}.`,
+          `Completa con el final vacío ${cita('citado.md', 1, 3)}.`,
+        ].join(SALTO),
+      })
+      const local = r.commit('doc con un caso de cada camino nuevo')
+      const repo = repoGit(r.dir, r.env)
+      const arbol = repo.arbol(local) as string
+      const resultado = detectar({ repo, arbolLocal: arbol, exclusiones: [], base: [] })
+
+      const CITAS_ESCRITAS = 12 // cuenta LITERAL de las citas del doc, no derivada del propio detector
+      expect(resultado.cosechadas).toBe(CITAS_ESCRITAS)
+      const sumaSaltadas = Object.values(resultado.saltadas).reduce((a, b) => a + b, 0)
+      const suma = resultado.comprobadas + sumaSaltadas + resultado.fueraDelRepositorio + resultado.noSonCitas +
+        resultado.abreviadasRotas.length + resultado.bloqueantes.length + resultado.informadas
+      expect(suma).toBe(CITAS_ESCRITAS)
+
+      // D5: la suma sola NO distingue DCE-M5 —mandar el fallo de ancla a otro sumando no la cambia—.
+      // El desglose sí: 7 comprobadas (las 5 completas válidas, la heredada válida y la de ancla propia),
+      // 3 abreviadas rotas (la heredada rota y los dos fallos de ancla), 1 huérfana y 1 bloqueante.
+      expect({
+        comprobadas: resultado.comprobadas,
+        saltadas: resultado.saltadas,
+        fueraDelRepositorio: resultado.fueraDelRepositorio,
+        noSonCitas: resultado.noSonCitas,
+        abreviadasRotas: resultado.abreviadasRotas.length,
+        bloqueantes: resultado.bloqueantes.length,
+        informadas: resultado.informadas,
+      }).toEqual({
+        comprobadas: 7,
+        saltadas: { sinBarra: 0, ambiguas: 0, directorios: 0, huerfanas: 1, anclasSinResolver: 0, noLegibles: 0 },
+        fueraDelRepositorio: 0,
+        noSonCitas: 0,
+        abreviadasRotas: 3,
+        bloqueantes: 1,
+        informadas: 0,
+      })
+    } finally {
+      r.borrar()
+    }
+  }, LENTO)
 })
 
 describe('hook · M5, divergencia #1 del diseño: el barrido lee el sha COMMITEADO, nunca el índice ni el disco (tareas 2.12-2.13)', () => {

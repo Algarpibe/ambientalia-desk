@@ -35,7 +35,10 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.bloquea).toBe(true)
-    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: expect.stringContaining('final') })
+    // DCE-P3 (a): igualdad, no `stringContaining` — «fuera de rango» y «en línea vacía» son motivos
+    // distintos y no intercambiables (RQ-CV-08), y la cuarta rama corrida antes de ésta los confundiría
+    // (DCE-M2): `lineaVacia(undefined)` es verdadero.
+    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: 'extremo final fuera de rango (línea 9 de citado.md)' })
   })
 
   it('el extremo INICIAL en línea en blanco con el final OK bloquea nombrando el extremo inicial (control de la otra dirección, M4)', () => {
@@ -47,7 +50,8 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.bloquea).toBe(true)
-    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: expect.stringContaining('inicial') })
+    // DCE-P3 (b): igualdad, no `stringContaining` — fija el motivo entero del extremo inicial vacío.
+    expect(resultado.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: 'extremo inicial en línea vacía (línea 1 de citado.md)' })
   })
 
   it('cita anclada a una revisión real pasa; anclada a una revisión inventada bloquea (rojo d, M3)', () => {
@@ -65,6 +69,35 @@ describe('detectar · RQ-CV-08 comprobación mecánica básica', () => {
     const resultadoInventada = detectar({ repo: repoInventada, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultadoInventada.bloquea).toBe(true)
     expect(resultadoInventada.bloqueantes[0]).toMatchObject({ fichero: 'origen.md', motivo: expect.stringContaining('revisión') })
+  })
+
+  it('DCE-P1: el extremo FINAL en línea vacía bloquea, con el motivo exacto (cuarta rama de rotura())', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${cita('citado.md', 1, 3)}.`,
+        // tres líneas: la 1 con contenido, la 3 VACÍA — hoy sólo se mira el extremo inicial
+        'citado.md': 'uno\ndos\n',
+      },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(true)
+    expect(resultado.bloqueantes[0]).toMatchObject({
+      fichero: 'origen.md',
+      linea: 1,
+      motivo: 'extremo final en línea vacía (línea 3 de citado.md)',
+    })
+  })
+
+  it('DCE-P3 (c): con los DOS extremos en línea vacía el motivo nombra el INICIAL, nunca el final (DCE-M1)', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${cita('citado.md', 1, 3)}.`,
+        'citado.md': '\ndos\n', // la 1 y la 3, las dos vacías
+      },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(true)
+    expect(resultado.bloqueantes[0]).toMatchObject({ motivo: 'extremo inicial en línea vacía (línea 1 de citado.md)' })
   })
 })
 
@@ -120,7 +153,9 @@ describe('detectar · abreviadas: se informan, nunca bloquean (RQ-CV-06, RQ-CV-0
     expect(resultadoRota.bloquea).toBe(false)
     expect(resultadoRota.bloqueantes).toHaveLength(0)
     expect(resultadoRota.abreviadasRotas).toHaveLength(1)
-    expect(resultadoRota.abreviadasRotas[0]).toMatchObject({ fichero: 'origen.md', linea: 1, motivo: 'abreviada rota (atribuida a citado.md)' })
+    // H6: el motivo de una abreviada rota por contenido lleva DETRÁS el del extremo que falla, con su
+    // línea — el mismo que RQ-CV-08 da a la completa. `citado.md` tiene la 3 vacía.
+    expect(resultadoRota.abreviadasRotas[0]).toMatchObject({ fichero: 'origen.md', linea: 1, motivo: 'abreviada rota (atribuida a citado.md): extremo inicial en línea vacía (línea 3 de citado.md)' })
 
     const repoValida = repoEnMemoria({
       LOCAL: {
@@ -131,6 +166,133 @@ describe('detectar · abreviadas: se informan, nunca bloquean (RQ-CV-06, RQ-CV-0
     const resultadoValida = detectar({ repo: repoValida, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultadoValida.abreviadasRotas).toHaveLength(0)
     expect(resultadoValida.comprobadas).toBe(2) // la completa y la abreviada válida
+  })
+})
+
+describe('detectar · RQ-CV-06: la abreviada se lee en su ancla, propia o heredada', () => {
+  it('DCE-P4 (i): hereda el ancla de la completa anterior de su línea — válida en la revisión, vacía en LOCAL', () => {
+    const base = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${anclada(cita('citado.md', 1), 'rev1')} y ${abreviada(3)}.`,
+        'citado.md': 'uno\ndos\n', // la 3, VACÍA en el sha local: leerla aquí la daría por rota
+      },
+      rev1: { 'citado.md': 'uno\ndos\ntres' }, // la 3, con contenido en la revisión heredada
+    })
+    let llamadas = 0
+    const repoContado: typeof base = { ...base, arbol(rev) { llamadas++; return base.arbol(rev) } }
+    const resultado = detectar({ repo: repoContado, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(0)
+    expect(resultado.comprobadas).toBe(2) // la completa anclada y la abreviada heredada
+    // RQ-CV-13 / DCE-M11: la abreviada comparte la caché de árboles con la completa de su misma revisión.
+    expect(llamadas).toBe(1)
+  })
+
+  it('DCE-P4 (ii), el otro signo: rota EN la revisión heredada, el motivo nombra la revisión y el extremo', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${anclada(cita('citado.md', 1), 'rev1')} y ${abreviada(3)}.`,
+        'citado.md': 'uno\ndos\ntres', // válida en LOCAL: si se leyera aquí, no saldría rota
+      },
+      rev1: { 'citado.md': 'uno\ndos\n' }, // la 3, VACÍA en la revisión heredada
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(1)
+    expect(resultado.abreviadasRotas[0]).toMatchObject({
+      fichero: 'origen.md',
+      linea: 1,
+      motivo: 'abreviada rota (atribuida a citado.md en rev1): extremo inicial en línea vacía (línea 3 de citado.md)',
+    })
+    expect(resultado.bloquea).toBe(false) // una abreviada nunca bloquea (Q9)
+  })
+
+  it('DCE-P4 (iii), b.2: una completa válida SIN ancla en medio deja la abreviada en el sha local, y su motivo no nombra revisión (DCE-M7)', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${anclada(cita('citado.md', 1), 'rev1')}, también ${cita('citado.md', 2)} y ${abreviada(3)}.`,
+        'citado.md': 'uno\ndos\n', // la 3, VACÍA en el sha local, que es donde hay que leerla
+      },
+      rev1: { 'citado.md': 'uno\ndos\ntres' },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(1)
+    expect(resultado.abreviadasRotas[0]).toMatchObject({
+      motivo: 'abreviada rota (atribuida a citado.md): extremo inicial en línea vacía (línea 3 de citado.md)',
+    })
+  })
+
+  it('DCE-P5: el ancla PROPIA de la abreviada gana sobre la heredada (DCE-M4)', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${anclada(cita('citado.md', 1), 'rev1')} y ${anclada(abreviada(3), 'rev2')}.`,
+        'citado.md': 'uno\ndos\n', // la 3, vacía en el sha local
+      },
+      rev1: { 'citado.md': 'uno\ndos\n' }, // y vacía también en la heredada
+      rev2: { 'citado.md': 'uno\ndos\ntres' }, // sólo en su ancla PROPIA tiene contenido
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(0)
+    expect(resultado.comprobadas).toBe(2)
+  })
+
+  it('DCE-P6 (a): una mención pelada de OTRO fichero corta la herencia; la abreviada vuelve al sha local (DCE-M3)', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${anclada(cita('citado.md', 1), 'rev1')} y \`otro.md\` ${abreviada(3)}.`,
+        'citado.md': 'uno\ndos\ntres',
+        'otro.md': 'x\ny\nz', // la 3 válida en LOCAL; `otro.md` NO existe en rev1
+      },
+      rev1: { 'citado.md': 'uno\ndos\ntres' },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(0)
+    expect(resultado.comprobadas).toBe(2) // la completa y la abreviada, leída en LOCAL
+  })
+
+  it('DCE-P6 (b), b.1: una mención pelada del MISMO fichero NO corta la herencia', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${anclada(cita('citado.md', 1), 'rev1')} y \`citado.md\` ${abreviada(3)}.`,
+        'citado.md': 'uno\ndos\n', // la 3, vacía en el sha local
+      },
+      rev1: { 'citado.md': 'uno\ndos\ntres' },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(0)
+    expect(resultado.comprobadas).toBe(2)
+  })
+
+  it('DCE-P7 (i): ancla propia a una revisión que NO pela — rota informativa, ni bloqueante ni «no legible»', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${cita('citado.md', 1)} y ${anclada(abreviada(3), 'inventada')}.`,
+        'citado.md': 'uno\ndos\ntres', // válida en LOCAL: el rojo viene del ancla, no del contenido
+      },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(1)
+    expect(resultado.abreviadasRotas[0]).toMatchObject({
+      fichero: 'origen.md',
+      motivo: 'abreviada rota (atribuida a citado.md en inventada): revisión inexistente',
+    })
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.saltadas.noLegibles).toBe(0)
+  })
+
+  it('DCE-P7 (ii): ancla propia a una revisión REAL que no contiene el fichero atribuido (DCE-M8)', () => {
+    const repo = repoEnMemoria({
+      LOCAL: {
+        'origen.md': `Ver ${cita('citado.md', 1)} y ${anclada(abreviada(3), 'rev1')}.`,
+        'citado.md': 'uno\ndos\ntres',
+      },
+      rev1: { 'otro.md': 'la revisión existe, pero sin el fichero atribuido' },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.abreviadasRotas).toHaveLength(1)
+    expect(resultado.abreviadasRotas[0]).toMatchObject({
+      motivo: 'abreviada rota (atribuida a citado.md en rev1): fichero inexistente en la revisión',
+    })
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.saltadas.noLegibles).toBe(0)
   })
 })
 
@@ -318,7 +480,8 @@ describe('detectar · RQ-CV-06 de punta a punta: nombre con punto inicial y menc
     const repo = repoEnMemoria({ LOCAL: { ...arbolConPeladas, 'doc.md': lineaConPeladas(9) } })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.abreviadasRotas).toHaveLength(1)
-    expect(resultado.abreviadasRotas[0]).toMatchObject({ fichero: 'doc.md', linea: 1, motivo: 'abreviada rota (atribuida a .dockerignore)' })
+    // H6: con el extremo detrás. `.dockerignore` tiene 3 líneas, así que la 9 queda FUERA DE RANGO.
+    expect(resultado.abreviadasRotas[0]).toMatchObject({ fichero: 'doc.md', linea: 1, motivo: 'abreviada rota (atribuida a .dockerignore): extremo inicial fuera de rango (línea 9 de .dockerignore)' })
     expect(resultado.bloquea).toBe(false)
     expect(resultado.comprobadas).toBe(2)
   })
@@ -344,6 +507,31 @@ describe('detectar · RQ-CV-03: una ambigua bloquea sólo si está rota en TODAS
 
   it('válida en una sola candidata se salta, no bloquea y suma 1 a las ambiguas saltadas', () => {
     const repo = repoEnMemoria({ LOCAL: { ...doc, 'a/comun.md': 'uno\ndos', 'b/comun.md': 'uno' } })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(false)
+    expect(resultado.saltadas.ambiguas).toBe(1)
+  })
+
+  const docConRango = { 'doc.md': `Ver ${cita('comun.md', 1, 3)}.` }
+
+  it('DCE-P2: el extremo final vacío cuenta como rota EN SU CANDIDATA; con la otra rota también, la ambigua bloquea', () => {
+    const repo = repoEnMemoria({
+      // a/comun.md tiene la 3 VACÍA (cuarta rama); b/comun.md, una sola línea (final fuera de rango)
+      LOCAL: { ...docConRango, 'a/comun.md': 'uno\ndos\n', 'b/comun.md': 'uno' },
+    })
+    const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
+    expect(resultado.bloquea).toBe(true)
+    expect(resultado.bloqueantes[0]).toMatchObject({
+      fichero: 'doc.md',
+      linea: 1,
+      motivo: 'ambigua, rota en sus 2 candidatas (línea 3 de comun.md)',
+    })
+  })
+
+  it('DCE-P2, control del otro signo: con la otra candidata VÁLIDA se salta como ambigua y no bloquea (RQ-CV-03)', () => {
+    const repo = repoEnMemoria({
+      LOCAL: { ...docConRango, 'a/comun.md': 'uno\ndos\n', 'b/comun.md': 'uno\ndos\ntres' },
+    })
     const resultado = detectar({ repo, arbolLocal: 'LOCAL', exclusiones: [], base: [] })
     expect(resultado.bloquea).toBe(false)
     expect(resultado.saltadas.ambiguas).toBe(1)

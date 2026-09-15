@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { cosechar } from './cosecha'
-import { cita, abreviada } from '../testing/reposDePrueba'
+import { cita, abreviada, anclada } from '../testing/reposDePrueba'
 
 const linea = (fichero: string, texto: string, n = 1) => ({ fichero, n, texto })
 
@@ -76,6 +76,53 @@ describe('cosechar · D1, los dos cortes de Lbc', () => {
     const citas = cosechar([linea('doc.md', texto)], { resuelveAFichero: () => true })
     const abrev = citas.find((c) => c.tipo === 'abreviada')
     expect(abrev).toMatchObject({ atribuidoA: 'valido.md' })
+  })
+})
+
+describe('cosechar · herencia del ancla en la misma línea física (RQ-CV-06, b)', () => {
+  // Una fila por rama de la tabla D4 del diseño, sobre el campo `ancla` de la abreviada COSECHADA —la
+  // revisión en la que se leería: la propia o, si no la lleva, la vigente en su posición—, nunca sobre
+  // el resultado del detector. El ancla vigente cambia exactamente cuando cambia la atribución, más (b.2).
+  const abreviadasDe = (texto: string, resuelve: (nombre: string) => boolean = () => true) =>
+    cosechar([linea('doc.md', texto)], { resuelveAFichero: resuelve })
+      .flatMap((c) => (c.tipo === 'abreviada' ? [{ atribuidoA: c.atribuidoA, ancla: c.ancla }] : []))
+
+  it('(a) una completa VÁLIDA con ancla la deja vigente: la abreviada siguiente la hereda', () => {
+    const texto = `${anclada(cita('valido.md', 1), 'rev1')} y ${abreviada(2)}`
+    expect(abreviadasDe(texto)).toEqual([{ atribuidoA: 'valido.md', ancla: 'rev1' }])
+  })
+
+  it('(b) b.2: una completa válida SIN ancla, detrás de una anclada, deja la abreviada SIN ancla (DCE-M7)', () => {
+    const texto = `${anclada(cita('valido.md', 1), 'rev1')} luego ${cita('valido.md', 2)} y ${abreviada(3)}`
+    expect(abreviadasDe(texto)).toEqual([{ atribuidoA: 'valido.md', ancla: undefined }])
+  })
+
+  it('(c) corte 1: una completa que NO resuelve corta la atribución Y el ancla vigente (DCE-M10)', () => {
+    const texto = `${anclada(cita('valido.md', 1), 'rev1')} luego ${cita('noresuelve.md', 1)} y ${abreviada(2)}`
+    expect(abreviadasDe(texto, (nombre) => nombre === 'valido.md')).toEqual([{ atribuidoA: null, ancla: undefined }])
+  })
+
+  it('(d) una mención pelada que resuelve a OTRO fichero corta la herencia (DCE-M3)', () => {
+    const texto = `${anclada(cita('valido.md', 1), 'rev1')} y \`otro.md\` ${abreviada(2)}`
+    expect(abreviadasDe(texto)).toEqual([{ atribuidoA: 'otro.md', ancla: undefined }])
+  })
+
+  it('(e) b.1: una mención pelada del MISMO fichero NO corta la herencia', () => {
+    const texto = `${anclada(cita('valido.md', 1), 'rev1')} y \`valido.md\` ${abreviada(2)}`
+    expect(abreviadasDe(texto)).toEqual([{ atribuidoA: 'valido.md', ancla: 'rev1' }])
+  })
+
+  it('(f) corte 2: la barra de celda anula la atribución SÓLO de esa abreviada, no el estado siguiente', () => {
+    const texto = `| ${anclada(cita('valido.md', 1), 'rev1')} | ${abreviada(2)} ${cita('otro.md', 1)} ${abreviada(3)} |`
+    expect(abreviadasDe(texto).map((a) => a.atribuidoA)).toEqual([null, 'otro.md'])
+  })
+
+  it('(g) el ancla PROPIA gana para su abreviada y NO se propaga a la siguiente (DCE-M4, DCE-M9)', () => {
+    const texto = `${anclada(cita('valido.md', 1), 'rev1')} y ${anclada(abreviada(2), 'rev2')} y ${abreviada(3)}`
+    expect(abreviadasDe(texto)).toEqual([
+      { atribuidoA: 'valido.md', ancla: 'rev2' },
+      { atribuidoA: 'valido.md', ancla: 'rev1' },
+    ])
   })
 })
 

@@ -40,7 +40,9 @@ describe('informe · RQ-CV-10: cuatro cifras, desglose, «no son citas» y frase
   })
 
   it('lista la abreviada rota y la bloqueante con fichero, línea y motivo, nombrando el extremo que falla', () => {
-    expect(texto).toContain('doc.md, línea 1: ' + abreviada(9) + ' — abreviada rota (atribuida a a.md)')
+    // H6: el motivo de la abreviada rota nombra el extremo que falla, como promete el título de la
+    // prueba. `a.md` tiene 2 líneas, así que la 9 queda FUERA DE RANGO por el extremo inicial.
+    expect(texto).toContain('doc.md, línea 1: ' + abreviada(9) + ' — abreviada rota (atribuida a a.md): extremo inicial fuera de rango (línea 9 de a.md)')
     expect(texto).toContain('doc.md, línea 5: ' + cita('a.md', 7) + ' — extremo inicial fuera de rango (línea 7 de a.md)')
   })
 
