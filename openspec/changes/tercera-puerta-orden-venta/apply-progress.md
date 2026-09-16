@@ -1,10 +1,32 @@
 # Apply-progress — `tercera-puerta-orden-venta` (desvío IV-4)
 
-> ⚠️ **PRE-SEMBRADO ANTES DE `sdd-apply`. NINGUNA TAREA ESTÁ HECHA.**
-> Este fichero existe hoy sólo para llevar hasta el `apply` un hecho que ocurrió FUERA del repositorio
-> y que no vive en ningún otro artefacto que el `apply` lea. **Cuando `sdd-apply` corra, LEE esto
-> primero y FUSIONA su progreso encima — no lo sobrescribas** (Apply-Progress Continuity).
-> Estado de tareas a fecha de hoy: **0 de N**, porque `sdd-tasks` todavía no ha corrido.
+> Estado de tareas a fecha de hoy (2026-09-16, tras el intento R1): **9 de 23** (`1.1`–`1.9` hechas;
+> `2.1`–`2.14` de la Rebanada R2 siguen pendientes, dueño: el siguiente intento del ledger sobre este
+> mismo cambio). Este fichero fusiona el progreso encima de la pre-siembra original — no la sobrescribe.
+
+## Rebanada R1 · La guarda — CERRADA el 2026-09-16 (intento/commit 1)
+
+Secuencia de rojos ejecutada tal cual `design.md` §5 / `tasks.md` la definió, sin reordenar ninguna
+casilla y sin dejar ninguna mutación aplicada al cierre:
+
+| Tarea | Resultado |
+|---|---|
+| 1.1 [RED] | Quitado el `.fails` de `ordenVentaUnTicket.test.ts:161`. Rojo confirmado **exclusivamente** por `expected 201 to be 409` |
+| 1.2 [GREEN] | Guarda `ticketConOrdenVenta` insertada en `remision.ts`, entre el `422` de la orden y el `UPDATE` (D2+D3). El bloque de la OV pasa de `:218-226` a `:218-240` (+14 líneas reales, no +11 estimadas) |
+| 1.3 | `npm test` completo: ex-`it.fails` VERDE; `:141-159` ROJA por `expected 409 to be 201` (mutación deseada); ninguna otra prueba cayó (1130 verdes / 1 roja / 2 skip) |
+| 1.4 [FUSIÓN D1] | Borrada `:141-159`; cabecera reescrita por tramos (Caso A/B/C); `describe` de la puerta 3 retitulado sin el paréntesis «la que no comprueba nada». `npm test` → todo verde (3/3 en el fichero) |
+| 1.5 | Cinco citas re-ancladas: `:19`→`ticketService.ts:132-136` (A); `:20`→`remision.ts:218-240` (A, en el tramo del mapa); `:23`→`ticketService.ts:45,:134` en `b99d47a` (C, con qué lo cerró); `:24`→`remision.ts:223` en `b99d47a` (C, con nota de que hoy el WHERE, `:237`, queda ADEMÁS y no en lugar de); `:136`→`remision.ts:237` (A, doc del fixture) |
+| 1.6 [RED→GREEN, D4] | Prueba de posición nueva al final de `remisiones.test.ts`, fixture propio (sin `equipo_id` ni serial, con `client_id`). VERDE al primer intento (54/54 en el fichero) |
+| 1.7 [Mutación M-a] | Guarda subida con su prelusión por encima del 422 del serial (temporal). Prueba de posición → ROJA `expected 409 to be 422`; M5 → VERDE (solapamiento cero verificado). Revertido |
+| 1.8 [Mutación M-b] | Guarda del serial bajada por debajo del bloque de la OV (temporal). Prueba de posición → ROJA `expected 409 to be 422`; M5 → ROJA (columnas escritas pese al rechazo). Las dos mutaciones revertidas; `npm test` → 1131 verdes / 0 rojas / 2 skip |
+| 1.9 | `npm test`, `npm run typecheck`, `npm run lint` → los tres verdes (lint: 0 errores, sólo warnings preexistentes de `no-explicit-any` en ficheros no tocados por esta tanda) |
+
+**Desviación respecto al contrato, declarada:** ninguna. El diseño (D1–D4, §5) se siguió literalmente.
+La única corrección de cifra fue la propia (el bloque de la OV creció 14 líneas, no 11): no cambia
+ninguna decisión, sólo el número exacto que las citas de 1.5 usan.
+
+**Alcance de R1 respetado:** no se tocó ninguna casilla `2.x`; no se tocó `apps/desk/src/**`; no se
+tocó `packages/zoho-sync/src/db/repo.ts`; no se corrió `sdd-verify` ni `sdd-archive`.
 
 ---
 

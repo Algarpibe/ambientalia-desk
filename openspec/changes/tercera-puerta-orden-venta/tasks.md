@@ -59,12 +59,12 @@ Chain strategy: pending
 Secuencia de rojos de `design.md` §5, bajo `strict_tdd`. Runner: `npm test` (`vitest run`); iteración con
 `npx vitest run apps/desk/server/ordenVentaUnTicket.test.ts`.
 
-- [ ] **1.1 [RED]** En `apps/desk/server/ordenVentaUnTicket.test.ts:161`, quitar el `.fails`. Correr
+- [x] **1.1 [RED]** En `apps/desk/server/ordenVentaUnTicket.test.ts:161`, quitar el `.fails`. Correr
       `npx vitest run apps/desk/server/ordenVentaUnTicket.test.ts`. **Confirmar rojo exclusivamente por
       «expected 201 to be 409»**; si el motivo es otro (import, 404, 500), el rojo no vale — parar y
       averiguar antes de seguir. (design.md R1)
 
-- [ ] **1.2 [GREEN]** En `apps/desk/server/routes/remision.ts:5`, añadir `ticketConOrdenVenta` al import
+- [x] **1.2 [GREEN]** En `apps/desk/server/routes/remision.ts:5`, añadir `ticketConOrdenVenta` al import
       de `@ambientalia/zoho-sync/db/repo` que ya existe. Dentro de `if (b.salesOrderId)` (`:218-226`),
       **entre** el `422` de `:220` y el `UPDATE` de `:221-225`, insertar la guarda (D2+D3):
       `const enUso = await ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId)`;
@@ -74,11 +74,11 @@ Secuencia de rojos de `design.md` §5, bajo `strict_tdd`. Runner: `npm test` (`v
       `Decisiones_Gerencia_2026-09-10.md:147-150`). **No tocar** el comentario de `:205-217`. (design.md
       R2, D2, D3, §10)
 
-- [ ] **1.3** Correr `npm test` completo. Confirmar: el ex-`it.fails` (`:161`) **VERDE**; `:141-159`
+- [x] **1.3** Correr `npm test` completo. Confirmar: el ex-`it.fails` (`:161`) **VERDE**; `:141-159`
       **ROJA por «expected 409 to be 201»** — prevista y deseada, es la prueba por mutación de que la
       guarda cambió el comportamiento; **ninguna otra prueba cae**. (design.md R2)
 
-- [ ] **1.4 [FUSIÓN — D1]** En `ordenVentaUnTicket.test.ts`: borrar `:141-159`. Reescribir la cabecera
+- [x] **1.4 [FUSIÓN — D1]** En `ordenVentaUnTicket.test.ts`: borrar `:141-159`. Reescribir la cabecera
       por tramos según la tabla D1 de `design.md` §2: `:16-20` Caso A (mapa de las tres puertas, la 3 en
       `409 ✅`); `:22-34` Caso C; `:35-46` Caso C + resultado 2026-09-16 (población 1, `0` filas, con la
       frase de `proposal.md` §12.1 al lado); `:48-53` reescrito con el argumento de D1 (por qué ahora
@@ -88,14 +88,14 @@ Secuencia de rojos de `design.md` §5, bajo `strict_tdd`. Runner: `npm test` (`v
       `remision.ts` no se vuelve a tocar**: su desplazamiento queda congelado para el barrido de R2.
       (design.md R3, D1)
 
-- [ ] **1.5** Re-anclar, en el mismo fichero y el mismo commit, las cinco citas de `design.md` §8.2:
+- [x] **1.5** Re-anclar, en el mismo fichero y el mismo commit, las cinco citas de `design.md` §8.2:
       `:19`→`ticketService.ts:132-136` (Caso A); `:20`→bloque de la OV de hoy tras 1.2, con el
       `201❌→409✅` registrado en el tramo Caso C de 1.4 (Caso A en ubicación); `:23`→`ticketService.ts:45`
       y `:134` (Caso C: anclada a su revisión + qué la cerró); `:24`→`remision.ts:223` (Caso C: anclada +
       nota de que el `WHERE` ya no está «en lugar de» la guarda, sino **además**); `:136`→`remision.ts:223`
       (Caso A, doc del fixture). **Ninguna aserción `expect(...)` se toca.**
 
-- [ ] **1.6 [RED→GREEN, D4]** Al **final** de `apps/desk/server/remisiones.test.ts` (hoy termina en
+- [x] **1.6 [RED→GREEN, D4]** Al **final** de `apps/desk/server/remisiones.test.ts` (hoy termina en
       `:1006`, tras el `describe` de M5 `:990-1005`), escribir un `describe` nuevo con la prueba de
       posición: ticket dueño con la OV (número **y** `salesorder_id`) + ticket destino con **fixture
       propio**, sin `equipo_id` y sin serial — **no usar** `ticketSinOrden()` de
@@ -104,19 +104,19 @@ Secuencia de rojos de `design.md` §5, bajo `strict_tdd`. Runner: `npm test` (`v
       (`orden_venta`, `salesorder_id`, `fecha_orden_venta`, idioma de `remisiones.test.ts:1002-1004`); el
       ticket dueño sigue siendo el único con la orden. Correr → **VERDE**. (design.md R4)
 
-- [ ] **1.7 [Mutación M-a]** Subir la guarda nueva, **con su prelusión** (`getSalesOrder` + `422`), por
+- [x] **1.7 [Mutación M-a]** Subir la guarda nueva, **con su prelusión** (`getSalesOrder` + `422`), por
       encima del `422` del serial de `:152`, dejando el `UPDATE` donde está. Compilar y correr: la
       prueba de posición de 1.6 **debe** ponerse **ROJA con «expected 409 to be 422»** — si sigue verde,
       no prueba la posición y hay que rehacerla. **M5 debe seguir VERDE** (solapamiento cero: la OV
       `so-9` de `remisiones.test.ts:994-995` no la tiene ningún otro ticket). Revertir el movimiento.
       (design.md R5, M-a — regla de mutación 1)
 
-- [ ] **1.8 [Mutación M-b]** Bajar la guarda del serial por debajo del bloque de la OV. Compilar y
+- [x] **1.8 [Mutación M-b]** Bajar la guarda del serial por debajo del bloque de la OV. Compilar y
       correr: la prueba de posición **ROJA** («expected 409 to be 422») **y M5 ROJA** (el `UPDATE`
       escribe la OV en un rechazo). Deja registrado que las dos matan la misma mutación por lados
       distintos. **Revertir las dos** y correr la suite completa en verde. (design.md R5, M-b)
 
-- [ ] **1.9** Correr `npm test`, `npm run typecheck`, `npm run lint` → **verde**. Cierre de R1.
+- [x] **1.9** Correr `npm test`, `npm run typecheck`, `npm run lint` → **verde**. Cierre de R1.
       (design.md R6)
 
 ---

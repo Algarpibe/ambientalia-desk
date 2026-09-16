@@ -1004,3 +1004,48 @@ describe('F1B-01 · el rechazo por serial no deja escrito nada en el ticket', ()
       .toMatchObject({ orden_venta: null, salesorder_id: null, fecha_orden_venta: null })
   })
 })
+
+/**
+ * IV-4 · MUTACIÓN DE POSICIÓN de la tercera puerta de «una OV, un ticket» (regla de mutación 1 de
+ * `CLAUDE.md`). La guarda de `ticketConOrdenVenta` (RQ-RE-16, `remision.ts:230`) vive DESPUÉS del 422
+ * del serial (`remision.ts:152-157`) y ANTES del `UPDATE`. Esta prueba fija ese ORDEN, no solo la
+ * condición: con un ticket destino sin serial Y una orden ya usada por otro ticket, tiene que ganar
+ * el 422 del serial, porque esa guarda corre primero.
+ *
+ * Es la gemela de M5 (`:990-1005`), que prueba las MISMAS dos guardas por el otro lado: M5 mira QUÉ
+ * QUEDA ESCRITO cuando se rechaza; ésta mira QUÉ ERROR SE OYE. No reutiliza `ticketSinOrden()` de
+ * `ordenVentaUnTicket.test.ts:157` —trae `equipo_id`, y aquí hace falta un destino sin equipo ni
+ * serial propio—, así que monta su propio fixture.
+ *
+ * Verificado por ejecución (`design.md` §5, M-a/M-b): subir la guarda de la OV por encima de la del
+ * serial pone esta prueba ROJA con «expected 409 to be 422», con M5 verde al lado (solapamiento
+ * cero); bajar la guarda del serial por debajo del bloque de la OV pone ROJAS las dos, cada una por
+ * su lado. Las dos mutaciones se revierten: no queda ninguna aplicada en este commit.
+ */
+describe('IV-4 · el 422 del serial gana al 409 nuevo de la OV (mutación de posición)', () => {
+  it('ticket destino sin serial y con una OV ya usada por otro: 422 "falta el serial", no 409', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-dueno','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date) VALUES ('so-dueno','OV-2026-900','cli-dueno','2026-08-01')")
+    // El ticket que YA tiene la orden, por las dos vías.
+    await db.query(`INSERT INTO tickets (id,number,subject,status,orden_venta,salesorder_id,client_id)
+                    VALUES ('t-dueno-pos',7010,'El que ya la tiene','Ingresado','OV-2026-900','so-dueno','cli-dueno')`)
+    // El ticket destino: sin equipo_id y sin serial propio —fixture propio, no ticketSinOrden()—, con
+    // client_id para que getClient resuelva más abajo si la guarda se desplazara.
+    await db.query(`INSERT INTO tickets (id,number,subject,status,client_id)
+                    VALUES ('t-destino-pos',7011,'El que la quiere','Ticket creado','cli-dueno')`)
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-destino-pos', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-dueno' })
+
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatch(/serial/i)
+    const t = await db.query("SELECT orden_venta, salesorder_id, fecha_orden_venta FROM tickets WHERE id='t-destino-pos'")
+    expect(t.rows[0], 'la petición se rechazó por el serial: ninguna de las tres columnas debió escribirse')
+      .toMatchObject({ orden_venta: null, salesorder_id: null, fecha_orden_venta: null })
+    // Y el ticket dueño sigue siendo el único con la orden.
+    expect((await db.query("SELECT number FROM tickets WHERE salesorder_id='so-dueno'")).rows.map((r: { number: number }) => Number(r.number)))
+      .toEqual([7010])
+  })
+})

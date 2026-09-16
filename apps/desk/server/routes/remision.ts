@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist } from '@ambientalia/shared'
-import { getTicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
+import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'
 import { checklistDeRemision } from '../db/checklistRemision'
@@ -218,6 +218,20 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (b.salesOrderId) {
       const ov = await getSalesOrder(db, String(b.salesOrderId))
       if (!ov) { res.status(422).json({ error: 'Orden de venta no encontrada' }); return }
+      /*
+       * TERCERA PUERTA de «una OV, un ticket» (IV-4, RQ-RE-16). Transitoria: se retira el día en que
+       * la tabla propia con `salesorder_id` como PRIMARY KEY (`Decisiones_Gerencia_2026-09-10.md:147-150`)
+       * sustituya a las tres guardas de aplicación; retirar sólo ésta sin retirar las otras dos sería
+       * el defecto. Las DOS vías son requisito, no preferencia: el sync puede dejar a un ticket con
+       * sólo una de las dos columnas vigente (IV-11, fuera de alcance), y comprobar sólo por número
+       * dejaría ese ticket sin protección. El propio ticket va excluido: reenviar la misma orden al
+       * mismo ticket no es duplicarla.
+       */
+      const enUso = await ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId)
+      if (enUso) {
+        res.status(409).json({ error: `La orden de venta ${ov.number} ya está asociada al ticket #${enUso.number}` })
+        return
+      }
       await db.query(
         `UPDATE tickets SET orden_venta = $2, fecha_orden_venta = $3, salesorder_id = $4, updated_at = now()
           WHERE id = $1 AND COALESCE(orden_venta, '') = ''`,
