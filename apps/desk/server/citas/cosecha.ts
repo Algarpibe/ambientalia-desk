@@ -29,6 +29,9 @@ export interface CitaAbreviada {
   desde: number
   hasta: number
   atribuidoA: string | null
+  /** RQ-CV-06 (b): la revisión en la que se leería esta abreviada — la PROPIA, si la lleva, o, si no,
+   *  la VIGENTE en su posición, heredada de la última cita completa válida anterior de su misma línea
+   *  física. El detector sólo la consume cuando `atribuidoA` no es nulo. */
   ancla?: string
   origenFichero: string
   origenLinea: number
@@ -105,6 +108,10 @@ function cosecharLinea(linea: LineaFuente, opciones: OpcionesCosecha): Cita[] {
   // dónde terminó su span: el corte 2 (D1) mira si hay una barra de celda ENTRE ese punto y la abreviada.
   let ultimoFicheroValido: string | null = null
   let ultimoFicheroValidoFin = 0
+  // RQ-CV-06 (b): el ancla que hereda una abreviada sin ancla propia. Cambia EXACTAMENTE cuando cambia
+  // la atribución vigente, más (b.2): una completa válida SIN ancla la deja en «ninguna». Una abreviada
+  // nunca la toca — ni siquiera con ancla propia (H7): (b) hereda de la última COMPLETA válida.
+  let anclaVigente: string | undefined = undefined
 
   for (let i = 0; i < spans.length; i++) {
     const span = spans[i]
@@ -124,8 +131,13 @@ function cosecharLinea(linea: LineaFuente, opciones: OpcionesCosecha): Cita[] {
       if (opciones.resuelveAFichero(clasificado.fichero)) {
         ultimoFicheroValido = clasificado.fichero
         ultimoFicheroValidoFin = span.fin
+        // «Válida» es que el nombre resuelva en el índice local, no que la cita esté comprobada: una
+        // anclada rota por contenido fija igual la atribución y su ancla. Sin ancla propia, la herencia
+        // queda en «ninguna» (b.2), nunca conserva la de una completa anterior.
+        anclaVigente = ancla
       } else {
         ultimoFicheroValido = null
+        anclaVigente = undefined // corte 1: cae la atribución, cae el ancla con ella
       }
       continue
     }
@@ -139,7 +151,9 @@ function cosecharLinea(linea: LineaFuente, opciones: OpcionesCosecha): Cita[] {
       resultado.push({
         tipo: 'abreviada', desde: clasificado.desde, hasta: clasificado.hasta,
         atribuidoA: cruzaBarra ? null : ultimoFicheroValido,
-        ancla, origenFichero: linea.fichero, origenLinea: linea.n, cruda: span.cruda,
+        // RQ-CV-06 (b): la PROPIA gana sobre la heredada. `anclaVigente` no cambia aquí.
+        ancla: ancla ?? anclaVigente,
+        origenFichero: linea.fichero, origenLinea: linea.n, cruda: span.cruda,
       })
       continue
     }
@@ -148,6 +162,10 @@ function cosecharLinea(linea: LineaFuente, opciones: OpcionesCosecha): Cita[] {
       // requisito (d): una mención PELADA (sin número de línea) cuenta como fichero al que atribuir
       // sólo si resuelve a un fichero trackeado — nunca por sí sola, sin comprobarlo.
       if (opciones.resuelveAFichero(clasificado.nombre)) {
+        // RQ-CV-06 (b.1): una mención del MISMO fichero no cambia la atribución, así que tampoco corta
+        // la herencia; una de OTRO fichero sí la cambia, y el ancla de la completa anterior deja de
+        // valer para lo que venga detrás. La comparación es de cadenas, como la atribución (H4).
+        if (clasificado.nombre !== ultimoFicheroValido) anclaVigente = undefined
         ultimoFicheroValido = clasificado.nombre
         ultimoFicheroValidoFin = span.fin
       }

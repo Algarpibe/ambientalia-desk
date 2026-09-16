@@ -111,7 +111,19 @@ function rotura(c: { desde: number; hasta: number }, contenido: string): { linea
   if (c.desde < 1 || c.desde > lineasFichero.length) return { linea: c.desde, motivo: 'extremo inicial fuera de rango' }
   if (c.hasta < 1 || c.hasta > lineasFichero.length) return { linea: c.hasta, motivo: 'extremo final fuera de rango' }
   if (lineaVacia(lineasFichero[c.desde - 1])) return { linea: c.desde, motivo: 'extremo inicial en línea vacía' }
+  // La cuarta rama va DESPUÉS de la tercera —con los dos extremos vacíos el motivo nombra el INICIAL
+  // (DCE-M1)— y nunca antes de la segunda: `lineaVacia(undefined)` es verdadero, así que adelantarla
+  // informaría un extremo final FUERA DE RANGO como «en línea vacía» (DCE-M2), que RQ-CV-08 prohíbe.
+  if (lineaVacia(lineasFichero[c.hasta - 1])) return { linea: c.hasta, motivo: 'extremo final en línea vacía' }
   return null
+}
+
+/** D3 y RQ-CV-06: el motivo de una abreviada rota, en un solo sitio para las tres ramas que lo escriben.
+ *  El ancla va DENTRO del paréntesis de la atribución, porque califica al fichero leído; el motivo va
+ *  detrás, tras dos puntos. En la rotura por contenido es el de `rotura()` con su sufijo «(línea N de
+ *  fichero)» (H6); en un fallo de ancla no hay extremo que nombrar, porque `rotura()` no llega a correr. */
+function motivoAbreviada(atribuidoA: string, ancla: string | undefined, motivo: string): string {
+  return `abreviada rota (atribuida a ${atribuidoA}${ancla !== undefined ? ` en ${ancla}` : ''}): ${motivo}`
 }
 
 /** D6 y RQ-CV-09: un elemento del informe y de la base es el DOCUMENTO que cita, la línea de la cita y
@@ -172,7 +184,12 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
       if (r.tipo === 'unico') objetosNecesarios.add(`${arbolLocal}:${r.ruta}`)
       if (r.tipo === 'ambiguo') for (const ruta of r.candidatos) objetosNecesarios.add(`${arbolLocal}:${ruta}`)
     } else if (c.tipo === 'abreviada' && c.atribuidoA !== null) {
-      objetosNecesarios.add(`${arbolLocal}:${c.atribuidoA}`) // atribuidoA SIEMPRE está en indice.exactos
+      // D2: la clave se construye con el MISMO `arbolDeLectura` que la completa, así que hay una sola
+      // forma de construirla. `atribuidoA` SIEMPRE está en indice.exactos y no se resuelve otra vez.
+      // Con un ancla que NO pela no se pide NADA: la segunda pasada la informa como revisión inexistente.
+      if (c.ancla === undefined || arbolCacheado(c.ancla) !== null) {
+        objetosNecesarios.add(`${arbolDeLectura(c, arbolLocal)}:${c.atribuidoA}`)
+      }
     }
   }
   const lote = repo.leerLote([...objetosNecesarios])
@@ -186,19 +203,35 @@ export function detectar(opciones: OpcionesDetector): ResultadoDeteccion {
 
   for (const c of citas) {
     if (c.tipo === 'abreviada') {
-      if (c.atribuidoA === null) {
-        saltadas.huerfanas++
+      // D2: seis ramas en este orden, cada una con su `continue`, así que cada abreviada suma 1 en
+      // EXACTAMENTE un sumando del invariante (D5). Ninguna bloquea nunca (RQ-CV-06, decisión Q9).
+      const atribuidoA = c.atribuidoA
+      if (atribuidoA === null) {
+        saltadas.huerfanas++ // (1) huérfana, aunque lleve ancla propia: sin fichero no hay qué leer
+        continue
+      }
+      // (2) ANTES que la (3): una revisión que no pela no tiene clave en el lote, así que invertirlas
+      // informaría una revisión inexistente como fichero ausente (DCE-M8).
+      if (c.ancla !== undefined && arbolCacheado(c.ancla) === null) {
+        abreviadasRotas.push({ ...origen(c), motivo: motivoAbreviada(atribuidoA, c.ancla, 'revisión inexistente') })
         continue
       }
       // c.atribuidoA SIEMPRE está en indice.exactos: cosecha.ts atribuye con el MISMO índice (invariante
       // de conservación, tarea 2.26 — antes había aquí un chequeo redundante, código muerto).
-      const contenido = lote.get(`${arbolLocal}:${c.atribuidoA}`)
+      const contenido = lote.get(`${arbolDeLectura(c, arbolLocal)}:${atribuidoA}`)
       if (contenido === null || contenido === undefined) {
-        saltadas.noLegibles++ // defensivo: tracked pero git no devuelve su contenido (p. ej. un submódulo)
+        // (3) con ancla: el fichero no está en ESA revisión, y eso se informa, no se calla. (4) sin
+        // ancla: defensivo, tracked pero git no devuelve su contenido (p. ej. un submódulo).
+        if (c.ancla !== undefined) {
+          abreviadasRotas.push({ ...origen(c), motivo: motivoAbreviada(atribuidoA, c.ancla, 'fichero inexistente en la revisión') })
+        } else {
+          saltadas.noLegibles++
+        }
         continue
       }
-      if (rotura(c, contenido)) abreviadasRotas.push({ ...origen(c), motivo: `abreviada rota (atribuida a ${c.atribuidoA})` })
-      else comprobadas++
+      const rota = rotura(c, contenido) // (5) rota por contenido, con el extremo que falla (H6)
+      if (rota) abreviadasRotas.push({ ...origen(c), motivo: motivoAbreviada(atribuidoA, c.ancla, `${rota.motivo} (línea ${rota.linea} de ${atribuidoA})`) })
+      else comprobadas++ // (6)
       continue
     }
     if (c.tipo === 'fuera-de-repositorio') fueraDelRepositorio++
