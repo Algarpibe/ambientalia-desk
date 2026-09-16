@@ -146,7 +146,7 @@ entre copia y fichero; `git diff --exit-code` sobre el fichero.
 
 ## Fase 6 — Verificación final
 
-- [x] 6.1 `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 158` en verde sobre el árbol final. Confirmar los 13 criterios de aceptación de la propuesta (§16), uno a uno, con su evidencia.
+- [x] 6.1 `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 158` en verde sobre el árbol final. Confirmar los 13 criterios de aceptación de la propuesta (§16), uno a uno, con su evidencia. **Matizado el 2026-09-16:** `typecheck` y `lint` salen en 0 (158 avisos, el techo del CI); `npm test` da 1131 pasadas, 2 saltadas y **0 fallos**, pero el proceso sale en **1** por un error de infraestructura de vitest. El criterio 11 queda declarado en sus dos mitades en `apply-progress.md`, con las siete mediciones que prueban que ese 1 es ANTERIOR a la tanda.
 
 ---
 
