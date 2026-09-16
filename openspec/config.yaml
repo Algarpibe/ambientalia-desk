@@ -853,13 +853,28 @@ incumplimientos_vivos:
       siempre, y --no-verify sigue sin ser una salida legítima.
       NO borrar esta entrada: queda como histórico, igual que IV-3.
     hallazgos_que_siguen_vivos: >
-      No se cierran con IV-10: quedan pendientes de tanda SDD. (1) El detector
-      sólo comprueba que el extremo INICIAL no caiga en línea vacía, no el final
-      (`apps/desk/server/citas/detector.ts:109-115`). (2) Una abreviada que va
-      detrás de una cita anclada se atribuye a su fichero pero se lee contra el sha
-      local, no contra el ancla (`apps/desk/server/citas/detector.ts:174-176` y `:195`):
-      da abreviadas rotas informativas que son falsos positivos y alguna comprobada
-      por casualidad.
+      CERRADOS el 2026-09-15 por la tanda detector-citas-extremos (commit 9ed0254).
+      Se conservan como histórico, igual que IV-3: no volver a anotarlos como vivos.
+      (1) El detector sólo comprobaba que el extremo INICIAL no cayera en línea
+      vacía, no el final (`apps/desk/server/citas/detector.ts:109-115` en `d2a89e9`).
+      (2) Una abreviada detrás de una cita anclada se atribuía a su fichero pero se
+      leía contra el sha local, no contra el ancla
+      (`apps/desk/server/citas/detector.ts:174-176` en `d2a89e9`): daba abreviadas
+      rotas informativas que eran falsos positivos y alguna comprobada por casualidad.
+      Qué los cerró: cuarta rama de rotura() para el extremo final vacío; lectura de
+      la abreviada en su ancla, propia o heredada de la última completa válida de su
+      misma línea física; y el motivo de una abreviada rota nombra la revisión y el
+      extremo que falla. Medido al implementarlo: abreviadas rotas de 16 a 11 y una
+      cita rota nueva cazada en el primer barrido.
+    hallazgo_revision_re: >
+      VIVO, sin destino asignado, fuera de alcance de detector-citas-extremos por
+      decisión de Gerencia del 2026-09-15. El patrón que reconoce un ancla
+      (`apps/desk/server/citas/cosecha.ts:60` en `d2a89e9`) acepta cualquier palabra
+      como revisión: en la línea 167 de docs/sdd/Puntos_para_Gerencia_2026-09-11.md,
+      un nombre de función detrás de «en» se lee como ancla, y esa abreviada sale hoy
+      como rota informativa por revisión inexistente. En una cita completa ya
+      bloqueaba antes de la tanda. Una palabra que sí es una referencia real de git,
+      como un nombre de rama, se leería «válida por casualidad».
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance

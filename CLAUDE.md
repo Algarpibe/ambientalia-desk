@@ -316,12 +316,20 @@ documental directo y aprobada bloque a bloque: la base bajó de **37** entradas 
 (`334142b`) y a **0** con B4 (`23b2349`), todo el 2026-09-15. El fichero se queda, vacío: la base sólo encoge
 y no crece desde el hook, así que una cita rota nueva bloquea siempre, y saltarse el hook con `--no-verify`
 sigue sin ser una salida legítima. El detalle fila a fila está en
-`docs/sdd/Triaje_Linea_Base_Citas_2026-09-15.md`. **Lo que NO se cerró con IV-10, y sigue VIVO como pendiente
-de tanda SDD:** (1) el detector sólo comprueba que el extremo INICIAL no caiga en línea vacía, no el final
-(`apps/desk/server/citas/detector.ts:109-115`); y (2) una abreviada que va detrás de una cita anclada se
-atribuye a su fichero pero se lee contra el sha local, no contra el ancla (`apps/desk/server/citas/detector.ts:174-176`, `:195`),
-lo que hoy da abreviadas rotas informativas que son falsos positivos y alguna comprobada por casualidad. Se
-deja escrito aquí para que nadie lo vuelva a anotar como vivo, ni dé por cerrados esos dos.
+`docs/sdd/Triaje_Linea_Base_Citas_2026-09-15.md`. **Lo que NO se cerró con IV-10 — y está CERRADO desde el
+2026-09-15 por la tanda `detector-citas-extremos`.** Eran dos: (1) el detector sólo comprobaba que el extremo
+INICIAL no cayera en línea vacía, no el final (`apps/desk/server/citas/detector.ts:109-115` en `d2a89e9`); y
+(2) una abreviada detrás de una cita anclada se atribuía a su fichero pero se leía contra el sha local, no
+contra el ancla (`apps/desk/server/citas/detector.ts:174-176` en `d2a89e9`, y la lectura de la línea 195 de
+ese mismo fichero), lo que daba abreviadas rotas informativas que eran falsos positivos y alguna comprobada
+por casualidad. Los cerró `9ed0254`: `rotura()` gana una cuarta rama para el final vacío, la abreviada se lee
+en su ancla —propia o heredada de la última completa válida de su misma línea física— y su motivo nombra la
+revisión y el extremo que falla. *Medido en el árbol real al implementarlo:* las abreviadas rotas bajan de 16
+a 11 —cinco eran falsos positivos por leerse en el sha local— y la cuarta rama cazó en su primer barrido una
+cita rota que el detector viejo daba por buena. Se deja escrito aquí para que nadie lo vuelva a anotar como
+vivo. **Lo que sí sigue vivo es otra cosa**, y no la cierra esa tanda: el patrón que reconoce un ancla
+(`apps/desk/server/citas/cosecha.ts:60` en `d2a89e9`) acepta **cualquier palabra** como revisión, así que un
+nombre de función detrás de «en» se lee como ancla.
 
 > **La lección de método, que vale más que las entradas cerradas de arriba.** Este fichero y `openspec/config.yaml`
 > **pueden estar caducos**: los dos daban IV-3 por vivo cuando F0-04 llevaba días habiéndolo cerrado.
