@@ -383,13 +383,19 @@ es una tarea de verdad y sacarla es maquillar el contador.
 > intento, no el cambio. Dos tandas SDD corriendo a la vez sobre el mismo working tree se imputan las
 > líneas la una a la otra. Si hacen falta dos en paralelo, van en **worktrees aislados**, uno por cambio.
 >
-> **Y no cuenta todo el árbol: tiene dos cegueras medidas, y las dos cuentan de MENOS.** (1) Lo nuevo
-> sin trackear no cuenta: el intento 1 de `hook-citas-pre-push` registró 55 con 928 líneas nuevas sin
-> trackear, y el corte 1b-i registró 238 frente a 529 con git porque 291 eran ficheros nuevos. (2) Un
-> fichero que era binario para git en el árbol de partida cuenta 0: el intento 2 registró 144 frente a
-> 247 trackeadas, y las 103 que faltaban eran de `detector.ts`, que en `ef08129` llevaba un NUL. Con
-> todo trackeado y sin binarios (corte 1b-ii) contó 843, lo mismo que git. **La medida real es
-> `git diff --shortstat` contra el commit de partida más `wc -l` de lo nuevo sin trackear.**
+> **Y no cuenta todo el árbol: tiene TRES desvíos medidos — dos que cuentan de MENOS y uno que cuenta
+> de MÁS.** (1) Lo nuevo sin trackear no cuenta: el intento 1 de `hook-citas-pre-push` registró 55 con
+> 928 líneas nuevas sin trackear, y el corte 1b-i registró 238 frente a 529 con git porque 291 eran
+> ficheros nuevos. (2) Un fichero que era binario para git en el árbol de partida cuenta 0: el intento 2
+> registró 144 frente a 247 trackeadas, y las 103 que faltaban eran de `detector.ts`, que en `ef08129`
+> llevaba un NUL. Con todo trackeado y sin binarios (corte 1b-ii) contó 843, lo mismo que git.
+> (3) **Y el que cuenta de MÁS: el ledger mide SIN detección de renombrado.** Probado por ejecución el
+> 2026-09-16 en el `sdd-archive` de `detector-citas-extremos`: contra el MISMO par de árboles,
+> `git diff --shortstat` da **440** y `git diff --shortstat --no-renames` da **4.502**, y el ledger
+> registró **4.502**. O sea que **un `git mv` cuesta el DOBLE de las líneas movidas** —una vez borradas
+> y otra insertadas—, aunque git las marque `R100` y no cambie un byte. **Un `sdd-archive` cuesta dos
+> veces el tamaño de la carpeta, más la fusión del delta y el `archive-report`.** **La medida real es
+> `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear.**
 
 *Por qué existe:* el 2026-09-10 se lanzó el `sdd-archive` de `reasignar-desvios-huerfanos` y el
 `sdd-apply` de `mensaje-422-cliente-duplicado` al mismo tiempo sobre `C:\dev\Desk_2_R1.023`. El
@@ -399,6 +405,21 @@ presupuesto de 800** — y las suyas eran **73** (`ticketService.ts` +9/-3, `tic
 Las otras ~1.645 eran el `verify-report.md` (+206) y el `archive-report.md` (+125) de la
 primera y sus fusiones en `openspec/specs/`. El diff de los dos árboles del propio intento lo enseña
 en una línea.
+
+*El precedente del archive, que es lo que fija el tamaño del presupuesto:* el `sdd-archive` de
+`detector-citas-extremos` movió siete artefactos de 2.031 líneas. Con el techo de **800** del preflight
+se habría pasado **5,6 veces**; Gerencia aprobó **5.000** el 2026-09-16 y quedaron **498** de margen.
+La justificación que hace legítimo pedir tanto no es el tamaño, es que **4.062 de esas 4.502 líneas son
+un `git mv` verbatim cuya carga de revisión es CERO**: el contenido realmente revisable eran 440.
+
+*Y la lección de estimación, que costó un `reset`:* **en un objetivo que incluya `verify` o `archive`,
+el informe que esa fase GENERA es un sumando obligatorio, no un extra.** La remediación de esa misma
+tanda presupuestó ~510 y gastó **946** contra un techo de 800, y la diferencia era el `verify-report.md`
+que el propio verify escribe: **358 líneas**. El `archive-report.md` de esa tanda fueron **264** (los
+cinco precedentes reales miden 110, 125, 148, 181 y 240). **La fusión del delta NO se estima, se mide:**
+estimarla por tamaño de bloque —300 líneas nuevas menos 136 viejas— daba 436, y el coste real fue
+**176**, porque git casa las muchas líneas idénticas entre el requisito vivo y su versión del delta.
+Hacer la fusión en un worktree y medirla cuesta un minuto.
 
 *Lo que cuesta, y por eso no es un detalle:* desbloquearlo exige `gentle-ai sdd-attempt reset`, que la
 herramienta **reserva a un mantenedor y nunca hace sola**. O sea que un descuido de paralelismo del

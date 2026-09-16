@@ -1071,3 +1071,38 @@ rules:
   archive:
     - Avisar antes de fusionar deltas destructivos.
     - Actualizar el Anexo H del documento maestro (as-built frente a plan) al archivar.
+
+# Cómo mide el ledger de `gentle-ai sdd-attempt` el presupuesto de un intento.
+# Detalle y precedentes en CLAUDE.md, regla del ciclo 2.
+presupuesto_del_ledger:
+  medida: >
+    `git diff --shortstat --no-renames` contra el commit de partida, MÁS `wc -l`
+    de lo nuevo sin trackear. Diffea el ÁRBOL entre el principio y el final del
+    intento, no el cambio: dos tandas a la vez sobre el mismo working tree se
+    imputan las líneas la una a la otra.
+  tres_desvios_medidos: >
+    DOS cuentan de MENOS y UNO cuenta de MÁS. (1) Lo nuevo sin trackear no
+    cuenta. (2) Un fichero que era binario para git en el árbol de partida
+    cuenta 0. (3) Mide SIN detección de renombrado, y ése cuenta de MÁS.
+  sin_deteccion_de_renombrado: >
+    PROBADO POR EJECUCIÓN el 2026-09-16 en el sdd-archive de
+    detector-citas-extremos: contra el MISMO par de árboles, `git diff
+    --shortstat` da 440 y `--no-renames` da 4502, y el ledger registró 4502.
+    Consecuencia: un `git mv` cuesta el DOBLE de las líneas movidas, aunque git
+    las marque R100 y no cambie un byte. Un sdd-archive cuesta dos veces el
+    tamaño de la carpeta, más la fusión del delta y el archive-report.
+  precedente_del_archive: >
+    Ese archive movió 7 artefactos de 2031 líneas. Con el techo de 800 del
+    session_preflight se habría pasado 5,6 veces. Gerencia aprobó 5000 el
+    2026-09-16 y quedaron 498 de margen. Lo que hace legítimo pedir tanto no es
+    el tamaño: es que 4062 de las 4502 son un git mv verbatim cuya carga de
+    revisión es CERO, y el contenido realmente revisable eran 440.
+  al_estimar: >
+    En un objetivo que incluya verify o archive, el informe que esa fase GENERA
+    es un sumando obligatorio, no un extra: el verify-report de esa tanda fueron
+    358 líneas y el archive-report 264 (los cinco precedentes miden 110, 125,
+    148, 181 y 240). Presupuestar sin contarlo costó un reset de mantenedor:
+    ~510 estimadas contra 946 gastadas, sobre un techo de 800. Y la fusión del
+    delta NO se estima, se mide: por tamaño de bloque daba 436 y el coste real
+    fue 176, porque git casa las líneas idénticas entre el requisito vivo y su
+    versión del delta.
