@@ -852,7 +852,13 @@ incumplimientos_vivos:
       La base sólo encoge y no crece desde el hook: una cita rota nueva bloquea
       siempre, y --no-verify sigue sin ser una salida legítima.
       NO borrar esta entrada: queda como histórico, igual que IV-3.
-    hallazgos_que_siguen_vivos: >
+    # Renombrada el 2026-09-16. Se llamaba hallazgos_que_siguen_vivos, y su valor
+    # empezaba por CERRADOS desde el 2026-09-15: el nombre decía lo contrario que el
+    # contenido, en un fichero que se carga en CADA sesión y en cada sub-agente. Los
+    # artefactos de detector-citas-extremos (proposal, design, exploration y tasks)
+    # la nombran por el nombre viejo: son registros fechados y no se reescriben.
+    # El hallazgo que sí sigue VIVO tiene su propia clave, hallazgo_revision_re.
+    hallazgos_cerrados_por_detector_citas_extremos: >
       CERRADOS el 2026-09-15 por la tanda detector-citas-extremos (commit 9ed0254).
       Se conservan como histórico, igual que IV-3: no volver a anotarlos como vivos.
       (1) El detector sólo comprobaba que el extremo INICIAL no cayera en línea

@@ -9,7 +9,10 @@ citas rotas en forma de cita bloquearían.
 |---|---|---|
 | 1 (ordinal 1, presupuesto 800) | `interrupted`, `blocked(maintainer_decision)`, 843 líneas contadas | Otra ventana commiteó 485 líneas ajenas en el mismo árbol durante el intento (expediente R08.3 y su reparación). El ledger mide el ÁRBOL, no el cambio: de las 843, sólo 358 eran de la tanda |
 | Reset | Aplicado por Alfonso | Contador a 0; el árbol de referencia pasa a ser el de hoy |
-| 2 (ordinal 2, presupuesto 800) | En curso | Cubre los commits 3 y 4 |
+| 2 (ordinal 2, presupuesto 800) | `passed`, 335 líneas | Cubre los commits 3 a 5 |
+| 3 (ordinal 3, presupuesto 800) | **`failed`** | El `sdd-verify`: 2/2 requisitos, 22/22 escenarios, 12/13 criterios, 1 CRITICAL por `test_exit_code` 1 |
+| Rescope a generación 4 | Firmado por Alfonso | Objetivo nuevo: la remediación. Arrastra `cumulative_attempts` 1 de 2, así que va a UN disparo |
+| 4 (ordinal 4, presupuesto 800) | La remediación | Partir `hook.test.ts`, barrido de citas y la clave de la configuración |
 
 ## Commits
 
@@ -19,7 +22,10 @@ citas rotas en forma de cita bloquearían.
 | 2 | `d8cf56c` | El rojo: DCE-P1 a DCE-P8, las siete filas de herencia y los tres asertos de H6 | 319 + / 27 − |
 | 1b | `ff5ec4d` | Reparación nacida después: la cita del expediente R08.3 que terminaba en línea vacía | 1 + / 1 − |
 | 3 | `9ed0254` | La implementación: cuarta rama de rotura(), lectura de la abreviada en su ancla, motivo con extremo | 79 + / 28 − (con tasks.md) |
-| 4 | este | Cierre: barrido de la regla 4, los dos hallazgos como caso C y el alta del de REVISION_RE | — |
+| 4 | `a00f037` | Cierre: barrido de la regla 4, los dos hallazgos como caso C y el alta del de REVISION_RE | 14 + / 6 − |
+| 5 | `4382789` | El registro de la medición del código 1 contra el árbol previo a la tanda | 75 + / 4 − |
+| 6 | `058e4e7` | **La remediación:** partir `hook.test.ts` en dos por el bloque de la línea 396 | 238 + / 210 − |
+| 7 | este | La clave de la configuración renombrada y este registro | — |
 
 Tamaño contra el inicio del intento 2, medido con `git diff --shortstat` más `wc -l` de lo nuevo sin
 trackear: **109 líneas** al cerrar el commit 3 (80 inserciones, 29 borrados, 0 ficheros nuevos sin
@@ -131,31 +137,119 @@ El CI no lo reproduce, con un matiz que conviene no borrar: allí el paso no es 
 commit 4 salió en verde. O sea que la evidencia del CI dice «no ocurre con ESE comando en ESA máquina»,
 no «el mismo comando sale en 0».
 
-## Criterio de aceptación nº 11 — leído en sus dos mitades
+## La remediación del 2026-09-16 — partir `hook.test.ts`
+
+El `sdd-verify` salió **FAIL** por este código 1: su Decision Gate («Test command exits non-zero →
+CRITICAL») no admite excepción por causa, y el runtime nativo lo dijo con todas las letras —
+`test_exit_code must be zero for archive readiness`—. Que el 1 sea anterior a la tanda es contexto,
+no una eximente. Gerencia firmó el `rescope` a generación 4 y se hizo.
+
+**La causa, medida y no configurable.** El RPC de vitest usa el `DEFAULT_TIMEOUT` de birpc, 60.000 ms,
+y `hook.test.ts` tardaba 63-72 s en un solo worker. Cuando la llamada `onTaskUpdate` no se contesta a
+tiempo, vitest la declara «Unhandled Error» después del recuento y el proceso sale distinto de 0
+aunque no falle ninguna prueba.
+
+**El corte está forzado, no elegido.** Midiendo el coste por bloque `describe` —parseando las
+duraciones por prueba del reporter— el reparto sale así en orden de fichero:
+
+| Acumulado | Bloque |
+|---|---|
+| 35,3 s | hasta el bloque de D12 inclusive (once bloques) |
+| **+20,6 s** | **«ruta no ASCII y `git grep` por encima de 1 MB», DOS pruebas, el 27 % del fichero** |
+| 75,7 s | el resto hasta el final |
+
+Si ese bloque se queda arriba, el acumulado es 55,9 s y pasa del objetivo de 45. Si baja, arriba
+quedan 35,3 y abajo 40,4. Ningún otro corte deja las dos mitades por debajo de 45: uno más tarde deja
+el bloque grande arriba, y uno más temprano engorda la cola a 47,0. Es, además, el más pequeño que
+cumple.
+
+**Ni una aserción, ni un orden, ni un fixture cambian.** Sólo se mueven bloques `describe` completos,
+los ocho del final, a `hook.bordes.test.ts`.
+
+**Y ninguna línea de la mitad que se queda se desplaza.** El único import que quedaba sin usar arriba
+era `spawnSync` —y la regla de lint que lo caza es **error**, no aviso, así que dejarlo habría tumbado
+el CI—. Se sustituyó por un comentario de UNA línea que dice dónde fue el resto: documenta y conserva
+el índice a la vez. El `git diff` tiene sólo dos hunks, las líneas 1-6 y la cola desde 393, y los once
+bloques que se quedan están en líneas idénticas.
+
+### Las doce corridas, antes y después
+
+| Comando | Antes (sin partir) | Después |
+|---|---|---|
+| `hook.test.ts` solo | 26 pruebas · 67,7 / 70,5 / 68,7 s · **1, 1, 1** | 17 pruebas · 33,8 / 32,8 / 30,4 s · **0, 0, 0** |
+| `hook.bordes.test.ts` solo | no existía | 9 pruebas · 39,9 / 40,5 / 41,6 s · **0, 0, 0** |
+| la carpeta `citas` entera | 114 pruebas · 66,5 / 62,2 / 67,2 s · **1, 1, 1** | 114 pruebas · 41,0 / 39,4 / 38,7 s · **0, 0, 0** |
+| `npm test` | 1131 + 2 saltadas · 68,3 / 68,0 / 57,3 s · **1, 1, 0** | 1131 + 2 saltadas · 47,6 / 46,3 / 45,7 s · **0, 0, 0** |
+
+**El recuento no cambia:** 17 + 9 = 26, las mismas 26 de antes; 114 en la carpeta; 1131 pasadas y 2
+saltadas en la suite. Ése es el control de `strict_tdd` de esta remediación: partir ficheros no cambia
+comportamiento y no admite rojo previo, así que lo que se comprueba es que no se pierde ni se duplica
+una sola prueba.
+
+**Un dato del ANTES que conviene no perder:** `npm test` daba **1, 1, 0**, no siempre 1. Y la corrida
+que pasaba era también la más corta —57,3 s frente a 68,3 y 68,0—: cuando la suite entera iba más
+rápida, la llamada cruzaba por debajo de los 60 s. Es la misma causa vista por el otro signo, y por eso
+el listón de esta remediación era que saliera 0 **las tres veces**, no una.
+
+De propina, la suite entera baja de unos 68 s a unos 46 s de reloj: `hook.test.ts` era el camino
+crítico de la corrida en paralelo.
+
+### El barrido de la regla de mutación 4: cero reparaciones, medido
+
+Partir un fichero muy citado es justo el caso que la regla 4 vigila. Se barrieron las **25** citas del
+fichero seguidas de dos puntos y número que hay en el repositorio, y el resultado es cero trabajo, por
+dos razones distintas:
+
+- **23 apuntan por debajo del corte** y su contenido es **idéntico**, comprobado comparando el md5 de
+  la primera y la última línea de cada rango antes y después (los dos extremos por separado, como
+  manda la regla). No es que «la línea exista»: es que dice exactamente lo mismo.
+- **2 cruzan el corte**, las dos en el informe de verificación archivado de `hook-citas-pre-push`, que
+  vive bajo el directorio de archivo — una de las SEIS exclusiones del barrido del detector, así que
+  ni se comprueban. Y son **caso B** bien puestas: ese informe declara en su cabecera que todas sus
+  citas van contra su propia revisión. Se comprobó además que **ya estaban desfasadas antes de esta
+  partición**: en el árbol anterior esa línea era una llave de cierre y el bloque que la frase nombra
+  estaba ochenta líneas más abajo. Renumerarlas volvería falsa una frase fechada.
+
+### La clave de la configuración de OpenSpec
+
+La clave de IV-10 se llamaba `hallazgos_que_siguen_vivos` y su valor empezaba por «CERRADOS el
+2026-09-15». El nombre decía lo contrario que el contenido, en el fichero que se carga en **cada**
+sesión y en cada sub-agente. Renombrada a `hallazgos_cerrados_por_detector_citas_extremos`. El
+hallazgo que sí sigue vivo ya tenía clave propia, `hallazgo_revision_re`, y se queda.
+
+**Lo que NO se hizo, a propósito:** los nueve sitios de los artefactos de la tanda que nombran la clave
+vieja no se tocan. Son registros fechados. En su lugar, la clave nueva lleva seis líneas de comentario
+que dicen cómo se llamaba y por qué cambió, para que quien siga esas referencias no se quede sin hilo.
+
+## Criterio de aceptación nº 11 — cerrado en sus dos mitades
 
 El criterio dice «`npm test`, `npm run typecheck` y `npm run lint` en verde». «Verde» son dos cosas
-distintas y aquí no coinciden, así que se declara por separado y no se da por cumplido sin más:
+distintas, y **desde la remediación del 2026-09-16 coinciden**:
 
 | Mitad | Cifra | Estado |
 |---|---|---|
 | Ninguna prueba falla | 1131 pasan, 2 se saltan, **0 fallan** | **cumplida** |
-| El proceso sale en N | **N = 1** | **no cumplida en la letra**, por el `onTaskUpdate` de arriba |
+| El proceso sale en N | **N = 0**, las tres corridas | **cumplida** |
 | `npm run typecheck` | — | sale en **0** |
-| `npm run lint` | 158 avisos, 0 errores — el techo exacto del CI | sale en **0** |
+| `npm run lint` | 158 avisos, 0 errores — el techo exacto del CI, sin moverse | sale en **0** |
 
-La razón del 1 está medida y es anterior a la tanda (medición 7). No lo introduce este cambio y no
-hay nada en él que lo cierre: cerrarlo es acortar `hook.test.ts` o subir el plazo del RPC, y las dos
-cosas son otra tanda. Queda anotado como desviación, no como criterio verde.
+*Antes de la remediación esta tabla decía «N = 1 · no cumplida en la letra», y la razón —un
+`Timeout calling "onTaskUpdate"` anterior a la tanda— estaba medida en siete mediciones. Se deja
+escrito que estuvo así: el criterio no se declaró verde mientras salía en 1.*
 
 ## Desviaciones y avisos
 
-1. **`npm test` sale con código 1 sin ninguna prueba fallida.** Medido en siete mediciones —quince corridas— y acotado en el
-   apartado de arriba: es `Timeout calling "onTaskUpdate"` de vitest, anterior a la tanda —reproducido
-   en `6be9cf0` tres veces de tres sobre el fichero culpable—, y la tanda sólo eleva su frecuencia al
-   añadir una prueba a `hook.test.ts`. El CI no lo reproduce, con el matiz de arriba. *(Este punto decía antes «comprobado dos
-   veces contra el árbol sin la tanda: ya salía igual», sin registrar comando ni cifras; ahora están.)*
-2. **Una reparación nueva, no prevista** (commit 1b): la del expediente R08.3. Las reparaciones del commit 1
-   se calcularon antes de que ese documento existiera, y la propia regla nueva lo cazó.
+1. **`npm test` salía con código 1 sin ninguna prueba fallida. CERRADO el 2026-09-16** partiendo
+   `hook.test.ts`; las tres corridas salen en 0. Se conserva la historia porque es lo que explica la
+   partición: era `Timeout calling "onTaskUpdate"` de vitest, medido en siete mediciones y quince
+   corridas, anterior a la tanda —reproducido en el árbol de partida tres veces de tres sobre el
+   fichero culpable—, y la tanda sólo elevó su frecuencia al añadir una prueba a ese fichero. *(Este
+   punto decía antes «comprobado dos veces contra el árbol sin la tanda: ya salía igual», sin registrar
+   comando ni cifras; luego se midió, y luego se arregló.)*
+2. **Una reparación nueva, no prevista** (commit 1b): la del expediente R08.3. Las reparaciones del
+   commit 1 se calcularon antes de que ese documento existiera, y la propia regla nueva lo cazó.
 3. `typecheck` en verde y `lint` en 158 avisos, justo el techo del CI.
-4. **Pendiente que esta tanda no cierra:** el plazo del RPC de vitest contra la duración de
-   `hook.test.ts`. Es del entorno de pruebas, no del detector, y no tiene destino asignado.
+4. **Lo que hay que vigilar de la partición:** `hook.bordes.test.ts` es la mitad más ajustada,
+   39,9-41,6 s contra un objetivo de 45 y un umbral real de 60. **La mitad de ese fichero es el bloque
+   de 20,6 s.** Si ese bloque crece, es el que hay que volver a partir. No es deuda: es dónde mirar si
+   el código 1 reaparece.
