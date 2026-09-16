@@ -432,6 +432,14 @@ incumplimientos_vivos:
       sitios: este registro y la tabla de CLAUDE.md, los dos corregidos aquí, y
       `apps/desk/server/permisos.test.ts:36`, que es CÓDIGO y por tanto F0-02 no
       lo toca. Destino de ese tercero: F1C-05, la tanda que toca los permisos.
+    recuento_desfasado: >
+      AÑADIDO EL 2026-09-16, y no se corrige la frase de arriba. «Los
+      incumplimientos vivos son los OTROS cuatro» era cierta al escribirse (F0-02,
+      2026-09-08) y es FALSA HOY: son CINCO desde que `tercera-puerta-orden-venta`
+      registró IV-11. Caso B de la tabla de la regla de mutación 4 de CLAUDE.md:
+      la frase se conserva con su fecha, porque renumerarla a ciegas convertiría un
+      registro fechado en una afirmación sobre el presente. EL RECUENTO VIVO LO DA
+      LA TABLA DE CLAUDE.md, no esta entrada cerrada.
 
   - id: IV-4
     regla: "—"
@@ -482,6 +490,22 @@ incumplimientos_vivos:
       clave Engram y su sesión. Hoy no está, y por eso ni siquiera llega a la
       agenda del viernes. Redactado como entrada 5 de
       docs/sdd/F0-01_Correcciones_para_el_plan.md.
+    guarda_transitoria: >
+      AÑADIDO EL 2026-09-16 por la propuesta de `tercera-puerta-orden-venta`.
+      LA TERCERA PUERTA NACE CON FECHA DE CADUCIDAD, Y ESO NO LA HACE OPCIONAL.
+      docs/sdd/Decisiones_Gerencia_2026-09-10.md:147-150 fija como destino una
+      TABLA PROPIA DE LA APP CON `salesorder_id` COMO `PRIMARY KEY`, que convierte
+      «una OV, un ticket» en restricción de la BASE DE DATOS «en vez de tres
+      guardas de aplicación que hay que mantener sincronizadas». Esta tanda
+      construye LA TERCERA DE ESAS TRES, y `:137-140` ordena construirla
+      igualmente para no dejar la ventana sin protección (decisión 2 de la ronda
+      de preguntas del 2026-09-16, exploration.md §8). Cuando llegue la tabla, las
+      TRES guardas se retiran juntas; retirar sólo la tercera sería el defecto.
+      POR QUÉ ESTO VIVE AQUÍ Y NO SÓLO EN EL `proposal.md`: los artefactos de un
+      cambio archivado NO LOS LEE NADIE en la sesión siguiente. Un destino que sólo
+      vive en un documento cerrado no es un destino — es el mismo modo de fallo que
+      dejó cuatro desvíos huérfanos al cerrar F1A. Este fichero y CLAUDE.md sí se
+      cargan en cada sesión y en cada sub-agente.
 
   - id: IV-5
     regla: "—"
@@ -881,6 +905,86 @@ incumplimientos_vivos:
       como rota informativa por revisión inexistente. En una cita completa ya
       bloqueaba antes de la tanda. Una palabra que sí es una referencia real de git,
       como un nombre de rama, se leería «válida por casualidad».
+
+  # IV-11 nace de la propuesta de tercera-puerta-orden-venta (2026-09-16). No lo
+  # buscaba: salió del barrido de vías de escritura de la orden de venta que la
+  # tanda hizo para saber cuántas puertas había de verdad. Gerencia lo dejó FUERA
+  # de esa tanda (decisión 3 de su ronda de preguntas, exploration.md §8): SE
+  # REGISTRA, NO SE CORRIGE. Y esa misma decisión es la que convierte «comprobar
+  # por las DOS vías» en REQUISITO de la tercera puerta y no en preferencia de
+  # estilo: es lo único que mantiene la guarda en pie mientras esto siga vivo.
+  - id: IV-11
+    regla: "—"
+    ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-226"
+    verificado: true
+    encontrado_en: >
+      Exploración de `tercera-puerta-orden-venta` (2026-09-16, árbol 14b45ee), §2,
+      y recogido en su `proposal.md` §6 como hallazgo del barrido de vías de
+      escritura. Cadena verificada línea a línea, no inferida.
+    descripcion: >
+      LA SINCRONIZACIÓN DESASOCIA LA ORDEN DE VENTA A MEDIAS, Y DEJA LA FILA
+      DICIENDO DOS COSAS DISTINTAS POR SUS DOS VÍAS. `upsertTicket` es una CUARTA
+      vía de escritura sobre las columnas de la OV. No ASOCIA por decisión de
+      nadie, pero puede DESASOCIAR en silencio.
+    las_dos_mitades: >
+      `orden_venta` (`packages/zoho-sync/src/db/repo.ts:48`) y `fecha_orden_venta`
+      (`:50`) están en `TICKET_COLS` (`:44-54`), así que el sync las REESCRIBE.
+      `salesorder_id` está FUERA de esa lista, porque se añadió después por `ALTER`
+      (`packages/zoho-sync/src/db/schema.sql:187`), así que SOBREVIVE. Ése es todo
+      el desvío: las dos mitades de un mismo dato no se borran juntas.
+    la_cadena: >
+      (1) `upsertTicket` (`repo.ts:56-68`) sólo se abstiene cuando
+      `managed_by_app === true` (`:58-59`). (2) El `UPDATE` de la remisión de
+      entrada (`apps/desk/server/routes/remision.ts:218-226`) NO pone esa bandera,
+      mientras `applyTransition` SÍ la pone (`repo.ts:271`). (3) El sync corre cada
+      180000 ms por defecto (`packages/zoho-sync/src/config.ts:88`).
+      CONSECUENCIA. Un ticket venido de Zoho (`managed_by_app = false`) al que la
+      remisión le escribe la orden conserva las columnas coherentes sólo hasta la
+      siguiente pasada del sync que lo alcance. En esa pasada `orden_venta` vuelve
+      a lo que diga Zoho —a menudo nula, porque no hay write-back— mientras
+      `salesorder_id` se queda con el valor viejo.
+    afecta_tambien_a_la_puerta_2: >
+      NO ES SÓLO UN PROBLEMA DE LA TERCERA PUERTA. La puerta 2 comprueba SÓLO POR
+      NÚMERO (`apps/desk/server/services/ticketService.ts:134`), porque
+      `plan.columns.orden_venta` es un campo de texto de la transición y ahí no hay
+      id. Si el sync vacía `orden_venta` y `salesorder_id` sobrevive, la puerta 2
+      TAMPOCO encuentra ese ticket. La puerta 1 (`ticketService.ts:45-49`) y la
+      tercera SÍ, porque miran las dos vías — y por eso las dos vías son REQUISITO
+      de la tercera puerta, no preferencia.
+    medicion: >
+      Medición de Gerencia EN PRODUCCIÓN del 2026-09-16: divergencia 0 sobre
+      población 1. ⚠️ CON POBLACIÓN 1, UN 0 NO DICE QUE NO OCURRA. El número va con
+      su advertencia pegada a propósito: separarlos convierte una muestra de un
+      caso en una afirmación sobre el comportamiento del sistema.
+    remedicion: >
+      La remedición natural cae en F1F-03 —«Pruebas de aceptación con Servicio
+      Técnico sobre dos o tres servicios reales»,
+      docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:214—, que es donde
+      habrá población suficiente para que el 0 signifique algo. ⚠️ ESO NO ES UN
+      DESTINO: es dónde volvería a verse, no quién lo arregla.
+    familia: >
+      Es el molde de H5, el hallazgo que CLAUDE.md nombra en «Lo que estas cuatro
+      NO cazan»: dos representaciones de la misma noción que dejan de decir lo
+      mismo, ninguna rota por separado. Las cuatro reglas de mutación no lo cazan
+      —ni mutar la posición de una guarda, ni ensuciar un fichero vigilado, ni
+      enumerar las decisiones del cliente enfrentan dos representaciones entre sí—.
+      Para esto hizo falta un lector, que es exactamente como salió.
+    destino: "SIN DESTINO ASIGNADO — a propósito"
+    por_que_sin_destino: >
+      Mismo precedente que IV-9: asignar un destino DE MEMORIA es exactamente lo
+      que dejó cuatro desvíos huérfanos al cerrar F1A. Un destino es una promesa, y
+      ni la exploración ni la propuesta están en condiciones de hacerla — no les
+      corresponde decidir el alcance.
+      Y HAY ALGO QUE DECIDIR ANTES, QUE NO ES TÉCNICO. Las dos salidas conocidas NO
+      son equivalentes. (a) Que el escritor de la remisión ponga
+      `managed_by_app = true`, como hace `applyTransition`: conserva la orden, pero
+      saca ese ticket del alcance del sync para TODAS sus columnas, no sólo para
+      las de la OV. (b) Que `salesorder_id` entre en `TICKET_COLS`, para que las dos
+      mitades se borren juntas: deja la fila coherente, y a cambio pierde el dato
+      que hoy sobrevive. Elegir entre conservar el dato y conservar la coherencia
+      es una decisión de producto. Lo que sí queda fijado aquí es todo lo que esa
+      decisión necesita: las dos mitades, la cadena, la medición con su
+      advertencia, y que la puerta 2 también está afectada.
 
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
