@@ -371,8 +371,11 @@ comprobado contra el fichero:
   **todas por encima de las dos inserciones.** No se mueven.
 - **`openspec/changes/archive/`**: decenas de citas a los dos ficheros. Son **Caso B/C y NO se
   renumeran**; se conservan con su revisión. Renumerarlas a hoy las volvería falsas sobre su propia
-  fecha — incluida `detector-citas-extremos/proposal.md:28` y `:270`, que citan `CLAUDE.md:319-324`,
-  el rango exacto de la tabla que hoy gana una fila.
+  fecha — incluidas las de las líneas 28 y 270 del `proposal.md` de `detector-citas-extremos`, que
+  apuntan al rango 319-324 de `CLAUDE.md`, el rango exacto de la tabla que hoy gana una fila.
+  *(Las dos se nombran aquí EN PROSA y sin forma de cita, a propósito: escritas como cita, el
+  detector las trata como rotas —Q6 de `hook-citas-pre-push`— y el 2026-09-17 bloquearon un `push`
+  por eso mismo. Es el ejemplo de esa regla, no una excepción a ella.)*
 - **Segundo pase, forma abreviada** (`` `:349` ``, sin nombre de fichero): ese `grep` no la captura.
   Revisadas por lectura las líneas vivas que ya citan los dos módulos; ninguna hereda un ancla
   desplazada, porque el único ancla que se movió es el de este documento.

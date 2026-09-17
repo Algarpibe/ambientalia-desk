@@ -55,7 +55,7 @@ verificables.** Las dos copias conviven y cada una tiene un oficio:
 > +107 y el final del documento +232. Un `sed` sobre el número es el modo de fallo, no la reparación.
 
 *Por qué se versiona la R08.2 el 2026-09-17:* el fichero llevaba dos días en el disco **sin trackear**
-mientras `docs/sdd/R08.3_Expediente_de_cambios.md:9-12` —que sí está versionado— ya declaraba que «el
+mientras `docs/sdd/R08.3_Expediente_de_cambios.md:10-12` —que sí está versionado— ya declaraba que «el
 `.md` citable de partida es …R08.2.md». O sea que el repositorio afirmaba por escrito depender de un
 fichero que no contenía. Quien clonara no podía comprobar ni una sola cita de ese expediente.
 
