@@ -14,7 +14,7 @@
 | Documento corregido | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` |
 | Tanda que abre el fichero | **F1A-02** (entrada 1) |
 | Entradas posteriores | **F1A-03** (entrada 2) · **F1A-04** (entrada 3) · **F1A-05** (entrada 4) · **barrido de desvíos** (entrada 5) |
-| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3; `43821b8` para la entrada 4; `607e26a` para la entrada 5. Rama `main` |
+| Base | commit `6ea3ca8` para la entrada 1; `5218d11` para las entradas 2 y 3; `43821b8` para la entrada 4; `607e26a` para la entrada 5. Rama `main`. **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido. |
 | Fuentes del contraste | `docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md` (480 líneas) · maestro `R08.1.md` |
 | Fecha | 2026-09-09 |
 

@@ -10,7 +10,7 @@
 
 Un solo documento con lo que ya está escrito y espera decisión. **No propone respuestas técnicas
 disfrazadas de opciones**: cada punto expone las salidas que la documentación del proyecto ya deriva,
-con su coste, y dice quién decide.
+con su coste, y dice quién decide. **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido.
 
 | | |
 |---|---|

@@ -4,8 +4,8 @@
 |---|---|
 | Fase | Fase 0 — Cimientos SDD |
 | Estado | **Aprobada y ejecutada el 2026-09-09.** Visto bueno de Gerencia a las tres clases (a), (b) y (c); la carga en Engram se hizo sobre `f51846f` |
-| Base | commit `da084e9`, rama `main` |
-| Definición en el plan | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:125`, con su fila de trazabilidad en `:406` |
+| Base | commit `da084e9`, rama `main`. **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido. |
+| Definición en el plan | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:125`, con su fila de trazabilidad en `:406`, las dos en `da084e9`; **hoy `:127` y `:457`** |
 | Apartados de las fuentes | Maestro **§1.8** (`R08.1.md:734-870`) y Anexo C.10 (`:3815-3816`, **caduco**: §2.2) · **Acta del 03/09**, parte III (`Desk2.0_Acta_Sesion_2026-09-03.md:268-480`) |
 | Entradas | El maestro §1.8 · **el acta del 03/09** (480 líneas, exportada de Notion en `da084e9`) · el baseline `docs/sdd/F0-00_Baseline_as-built.md` · el estado real del proyecto Engram `ambientalia-desk` |
 | Depende de | F0-00 (hecha) · F0-01 (hecha) · F0-02 (hecha: siete specs, commit `fa445ac`) |

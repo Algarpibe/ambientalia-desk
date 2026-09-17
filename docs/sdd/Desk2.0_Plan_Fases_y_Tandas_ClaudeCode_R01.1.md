@@ -4,6 +4,8 @@
 **Base documental:** Documento Maestro R08.1 (§1.8, §1.9, M1.3, M2, M11, §3.2, §3.2.1, Anexos D y H) · Acta de la sesión del 03/09/2026 (Notion «Desk 2.0 03/09/2026») · Estructura de inspección física GRIMM EDM180 v1.8 y HORIBA AP370 v1.4 · Lectura del repositorio `C:\dev\Desk_2_R1.023` (HEAD `a3a8f03`) · Decisiones de Gerencia del 07/09/2026
 **Estado:** Propuesta para validar en la sesión del viernes 11/09/2026
 **Cambios R01 → R01.1:** tanda de auditoría del as-built F0-00 antes de escribir specs · §2.4 nuevo con el punto de partida real del repositorio · §4.7 reescrito sobre la estructura documental existente en `docs/` · mapeo N1 → transiciones, N2/N3 → checkpoints incorporado en el principio 4 y en F1D-03
+**Sincronizado con:** el libro de revisión Man on the Loop **R01.3** (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_Revision_MoL_R01.3.xlsx`, 15/09/2026), versionado en `docs/sdd/` junto a este fichero. Sincronización hecha el **17/09/2026**. **El denominador de avance son 51 tandas hasta F1F** —F0 5 · F1A 9 · F1B 11 · F1C 8 · F1D 9 · F1E 5 · F1F 4—, 69 contando F2–F5. Es reproducible desde el repositorio: el libro es la fuente, este documento el destino, y las dos cifras salen de contar filas de la hoja «Tandas».
+**El nombre del fichero sigue diciendo `R01.1` a propósito, y no se renombra:** el plan está citado por nombre **23 veces en 17 ficheros** y por línea (`plan:NNN`) **95 veces en 21 ficheros** (medido el 17/09/2026); renombrarlo las rompería todas de golpe. Lo que declara contra qué revisión está sincronizado es **esta cabecera**, no el nombre del fichero.
 
 ---
 
@@ -131,7 +133,7 @@ Sin gates. Es trabajo de desarrollo puro y no depende de ninguna decisión pendi
 
 Es el MVP. Se divide en cinco épicas que **no son estrictamente secuenciales**: 1A y 1C son correcciones, 1B es paridad, 1D y 1E son las dos adiciones decididas. El orden de ejecución recomendado y sus dependencias están en §3.7.
 
-#### Épica 1A — Correcciones sin decisión pendiente · S38 (1 semana)
+#### Épica 1A — Correcciones y desvíos sin decisión pendiente · S37–S38 (1 semana)
 
 | Tanda | Corrección | Fuente | Gate |
 |---|---|---|---|
@@ -140,6 +142,10 @@ Es el MVP. Se divide en cinco épicas que **no son estrictamente secuenciales**:
 | F1A-03 | **C12** Salidas aprobada/rechazada de `Verificación` en el flujo de equipo nuevo | M1.4 · P38 | Ninguno para la transición (as-is: Verificación —Liberación→ Finalizado, 71 usos observados). La GUARDA de obligatoriedad por familia espera a Gustavo/Calidad · Anexo D nº 38. Se hace antes de F1B-06, que la hereda |
 | F1A-04 | **C9** (parte técnica) Los tres bodegajes de M1.10 (:1685-1702) calculados sobre ticket_transitions; reanclar los indicadores 48 y 49 en la marca de «Ingreso a Servicio»; añadir el campo «fecha de aviso al cliente» | M1.10 · P41 | La definición de los tres bodegajes ya está resuelta en la R08 |
 | F1A-05 | Auditoría de blueprint tras las correcciones (`audit-F1A`) | M11.6 | Ninguno. NO regenera `docs/artefactos/` (no hay generador todavía); audita leyendo el código |
+| F1A-06 | **Generador del mapa del blueprint.** Script que produce `docs/artefactos/blueprint-*.md` (Mermaid `stateDiagram-v2`) desde `transitions.ts`, `estados.ts` y `permissions.ts`: el diagrama completo más una vista por cada una de las tres fases de M1.3.1, con prueba anti-desfase en CI (el mismo patrón que `migrate.test.ts`). `docs/artefactos/blueprintserviciotecnico.html` queda como histórico congelado en `a3a8f03`. Antes del criterio de aceptación hay que cerrar el hueco entre los **38 pasos** que cita el maestro y los **36** que declara el código (34 con botón + 2 sin botón) | Anexo F (R08.2) · Decisiones 10/09 §9 · entrada 4 de `docs/sdd/F0-01_Correcciones_para_el_plan.md` | Ninguno (`decision/mapa-blueprint-generado`, 10/09). **Va antes de F1B-06**, para que los flujos nuevos nazcan con su diagrama |
+| F1A-07 | **IV-2 · Fechas derivadas impuestas por el servidor.** `Fecha creación ticket`, `Fecha Remisión Entrada` y `Fecha Revisión Informe` se calculan en el servidor, que ignora lo que llegue del navegador para esos tres campos; hoy las deriva el cliente en `apps/desk/src/lib/valoresTransicion.ts` y el servidor sólo exige que lleguen (`apps/desk/server/transitionExec.ts:77`). La zona horaria se fija de forma explícita: `diaLocal` usa la del proceso, y en el VPS cinco horas de cada día cambiarían de fecha. Decide la tanda si recalcula siempre o respeta un valor ya escrito (semántica actual de `yaEsta`); antes, barrer qué otros KPI o campos consumen las tres fechas | M1.10 (R08.2) · Decisiones 10/09 §4 | Ninguno (`decision/iv2-fechas-derivadas`, 10/09). Con **P21** cerrado, IV-2 deja de ser opcional: es condición previa del bodegaje de entrada |
+| F1A-08 | **IV-4 · Tercera puerta de la asociación OV ↔ ticket.** El alta de remisión escribía `salesorder_id` sin pasar por `ticketConOrdenVenta`; se valida ahí la misma regla que las otras dos puertas, «una OV → un solo ticket vigente» | Decisiones 10/09 §2 · M4.4 (R08.2) | Ninguno (`decision/n52-cardinalidad-ov` la desbloquea). ⚠️ **YA CONSTRUIDA** por el cambio `tercera-puerta-orden-venta`, archivado el 16/09 (`openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/`): la guarda vive hoy en `apps/desk/server/routes/remision.ts:230-234`, fijada por `RQ-RE-16`, y el ex-`it.fails` de `apps/desk/server/ordenVentaUnTicket.test.ts:161` corre en positivo. El libro R01.3 la mide al 15/09 y por eso la da por escrita |
+| F1A-09 | **Barrido de citas tras la R08.2.** Regenerar `docs/Manifesto/…_R08.2.md` desde el `.docx` y actualizar las citas por línea en specs, registros de correcciones, documento de decisiones, `CLAUDE.md` y este plan: un cambio de revisión del maestro desplaza **todas** las citas a la vez | R08.2 §1.2 «Después de esta revisión» | Ninguno. La R08.2 la declara **tanda propia**, no efecto secundario de otra |
 
 #### Épica 1B — Paridad funcional con el Desk 1.0 · S39–S44 (6 semanas)
 
@@ -149,13 +155,14 @@ Aquí se replica lo que el Desk 1.0 hace hoy, con la interfaz que replica la est
 |---|---|---|---|
 | F1B-01 | 1 · 19 | Código único de ticket basado en serial; serial obligatorio en la remisión; **autocompletado por serial** (cliente, modelo, OV activas) desde la base propia y la lectura de Zoho | Ninguno (decidido 14/08 y 20/08) |
 | F1B-02 | 9 | Hoja de vida del equipo: alta por Comercial al conocer el serial; fecha de adquisición, fecha de factura, fin de garantía y **código interno del cliente** como identificador secundario; botón de enlace a la carpeta de Drive (fase 0 de la migración, P8) | **P8/P54** sólo para el botón de Drive: confirmar que la «fase 0» (enlace, no migración) es la solución de arranque. Quién carga los cuatro campos |
-| F1B-03 | 2 · 20 | Desplegable inicial de tipo de servicio (`Clasificaciones`) que oculta pasos; prefijos autogenerados y sólo documentales (P37 cerrado); comportamiento del ticket **sin OV** | **P21** ingreso sin orden de venta: OV obligatoria desde el inicio o estado provisional. Hasta decidirlo se implementa el modelo actual del demostrador (OV exigida en `Habilitar Servicio`) y se deja la regla parametrizada |
+| F1B-03 | 2 · 20 | Desplegable inicial de tipo de servicio (`Clasificaciones`) que oculta pasos; prefijos autogenerados y sólo documentales (P37 cerrado). **P21 confirma el modelo construido**: OV **opcional** al crear el ticket y **obligatoria** en `Habilitar Servicio` —«obligatoria para trabajar, no para recibir»—, así que deja de ser regla parametrizada. Se añade la guarda «**`Habilitar Servicio` exige remisión de entrada vigente en los tres orígenes**»: retirar el origen `Ticket creado` obliga a **relajar a propósito el invariante 3** (admitir estados cuya única salida la aplica el servidor), y el recuento de pasos resultante **se mide, no se supone**. Y la **OVI de garantía** a nombre del cliente real, que es cambio de práctica. Antes de cambiar nada, contar los tickets que llegaron a `Ingresado` sin remisión | `decision/p21-ingreso-sin-ov` **CERRADO 10/09** · pendiente `decision/ovi-garantia-autor`. **Pasa de talla M a L** por la guarda y la OVI, y se parte en dos cambios si no cabe en tres días |
 | F1B-04 | 10 · 4 | Registro de entrada en recepción: remisión con datos de cliente y equipo, accesorios por lista cerrada (menú visual, ítem 21 queda como mejora), foto sólo con novedad, rotulación y almacenamiento —la «recepción unificada» del acta 03/09—; sustitución del texto libre por desplegables en las etapas críticas | Ninguno |
 | F1B-05 | 5 · 6 · 7 | Permisos y vistas por rol (área); traspaso formal entre agentes al cambiar de fase; checkbox «Cumple condiciones comerciales» en `Habilitar Servicio`; **trazas completas** (fecha, hora, persona) en toda etapa y transición, sin excepciones | Ninguno (R08 lo decide sin excepciones) |
 | F1B-06 | — | Blueprints de **equipo nuevo** y **soporte remoto** (M1.4, M1.5) implementados en `transitions.ts` con la misma convención; hereda C12 | Alcance de los flujos **comercial** y **posible-cliente** (M1.11, M1.12) en Desk 2.0: se propone dejarlos en Zoho CRM durante 2026 y sincronizarlos en lectura. Confirmar |
 | F1B-07 | 8 | Prioridad automática por calificación del cliente y contrato activo (High/Low, as-is R05); «Mis tickets» autoordenado; edición manual bloqueada para el técnico | Si los **Top 5** entran en la regla automática (Bloque 6 de la convocatoria) |
-| F1B-08 | 17 · 22 | Cierre de la paridad: vistas de listado y ficha equivalentes a las de Zoho Desk; conexión Zoho en solo lectura verificada en las tres entidades; **política de escritura** (P44): ninguna, salvo precarga de borrador de cotización si se decide | **P44** |
+| F1B-08 | 17 · 22 | Cierre de la paridad: vistas de listado y ficha equivalentes a las de Zoho Desk; conexión Zoho en solo lectura verificada en las tres entidades; **política de escritura** (P44): ninguna, salvo precarga de borrador de cotización si se decide. Recibe además el tablero: la vista «Todos» devuelve también los cerrados con `case 'todos'` separado de `default:`, **IV-1** (la regex de esperas sustituida por `ESTADOS_EN_ESPERA`) y `Remisión creada` reclasificada como espera con alarma de 72 h. **Pasa de talla M a L** | **P44** · `decision/escalado-remision-creada` (sin el cargo de Comercial que recibe el escalado, la alarma deja **roja** la guarda de C11). ⚠️ **PARCIAL a 15/09:** el tablero está construido y archivado el 10/09 —hoy `apps/desk/src/lib/boardView.ts:39` consume el predicado compartido, `:53` es `case 'todos': return tickets` y `packages/shared/src/estados.ts:86` da `Remisión creada` como espera interna—; **siguen pendientes** la alarma de 72 h (`packages/shared/src/sla.ts:32`, cuya única entrada hoy es `:34`) y la paridad de listado y ficha con Zoho |
 | F1B-10 | — | Orden único de precedencia entre guardas en las dos puertas del motor (createManagedTicket y executeTransition), y en la del alta de remisión; unifica transitions-st §3.8 (a) y (b) y tickets-core §4.1 | Ninguno técnico; el orden se declara en la spec |
+| F1B-11 | — | **Asociación OV ↔ ticket (1 : N) y subOV de lote.** Tabla de asociación **propia de la app** —ticket, OV, transición que asocia, fecha, hora y persona—: la FK no puede ir en `sales_orders` porque `books.sales_orders` es réplica del hub (`packages/zoho-sync/src/db/schema.sql:160`) y el sync la borraría. Una asociación se marca **liberada con motivo** y nunca se borra; índice único parcial para «una OV, un solo ticket vigente». `Aprobación` y `Aprobación y S. Repuestos` **añaden** OV sin sustituir la de entrada, la fecha de OC vive en cada asociación —lo que resuelve su reentrancia— y el bodegaje de entrada toma la de la OV asociada en `Habilitar Servicio`. **SubOV de lote (opción A):** formato `OV-AAAA-NNN-SS`, cuarentena de números no canónicos, saldo por lote (creadas / consumidas / libres), exclusión de OV anuladas o en borrador —el estado ya se sincroniza, `schema.sql:161`— y acción manual «liberar subOV» con traza hasta que exista C2. El `N° Ticket` de Books (`cf_n_ticket`) **sólo sugiere** en el desplegable | `decision/vigencia-contrato` (no bloquea el núcleo) · `decision/titularidad-ov-equipo` (**IV-8**). El núcleo es ejecutable: lo abren `decision/n52-cardinalidad-ov` y `decision/subov-lote-convencion`, las dos cerradas el 10/09. **Se parte en dos cambios** —asociación 1 : N y subOV de lote—; antes, barrer si ya existe alguna subOV con formato `_1` |
 | F1B-09 | — | Auditoría de blueprint de los tres flujos (`audit-F1B`); extensión a equipo nuevo y soporte remoto como pide M11.6 | Ninguno. Hereda el generador de diagramas de `decision/mapa-blueprint-generado`, que se construye en F1A antes de F1B-06; la extensión de M11.6 deja de ser manual |
 
 #### Épica 1C — Correcciones que cambian el proceso · se intercalan a medida que llegan las decisiones (S40–S48)
@@ -232,26 +239,33 @@ Etapa independiente, como decidió el 27/08: C8 (21 estados → etapas visibles)
 
 ### 3.7 Calendario de la Fase 1 y contraste con el 31/12/2026
 
-| Semana | 1A | 1B | 1C (según decisiones) | 1D | 1E | 1F |
-|---|---|---|---|---|---|---|
-| S37 (07/09) | **F0-00** · F0-01 · F0-03 | | | | | |
-| S38 | F0-02 · F0-04 · F1A-01…05 | | | | | |
-| S39 | | F1B-01 · F1B-02 | | | | |
-| S40 | | F1B-03 · F1B-04 | C2 si decidido | | | |
-| S41 | | F1B-05 | C4 | | | |
-| S42 | | F1B-06 | | F1D-01 | | |
-| S43 | | F1B-07 | C3 | F1D-02 | | |
-| S44 | | F1B-08 · F1B-09 | C5 · C10 | F1D-03 | | |
-| S45 | | | | F1D-04 | | |
-| S46 | | | C7+C9 | F1D-05 · F1D-06 | F1E-01 | |
-| S47 | | | C6 | F1D-07 · F1D-08 · F1D-09 | F1E-02 | |
-| S48 | | | Rutas abreviadas | | F1E-03 | |
-| S49 | | | | | F1E-04 | |
-| S50 | | | | | F1E-05 | F1F-01 |
-| S51 | | | | | | F1F-02 · F1F-03 |
-| S52–S53 | | | | | | F1F-03 · F1F-04 · margen |
+Cotejado con la hoja «Calendario» del libro R01.3 (15/09/2026). El lunes de cada semana va en la primera columna, que es lo que hace el cuadro reproducible.
 
-**Lectura.** Cabe, pero sin holgura: el margen real son las dos últimas semanas de diciembre, que coinciden con vacaciones. Tres cosas lo protegen: (a) las tandas 1C no están en la ruta crítica —si una decisión se retrasa, la corrección entra en enero sin mover el MVP, salvo **C2**, que conviene cerrar antes de F1E porque el informe de salida necesita distinguir finalizado de anulado—; (b) 1D y 1E pueden solaparse porque el modelo del informe (F1E-01) sólo necesita el modelo del catálogo (F1D-01); (c) F1B-06 (equipo nuevo y soporte remoto) es la tanda que se puede recortar a un solo flujo si hay que ganar una semana, porque el 90 % de los tickets son de servicio técnico.
+| Semana | F0 + 1A | 1B | 1C (según decisiones) | 1D | 1E | 1F |
+|---|---|---|---|---|---|---|
+| S37 (07/09) | F0-00…F0-04 (ejecutadas) · F1A-01, -02, -04, -05 (cerradas 09/09) | F1B-01 (ejecutada 09/09, **adelantada**) | | | | |
+| S38 (14/09) | F1A-03 · F1A-06 · F1A-07 · F1A-08 · F1A-09 | | | | | |
+| S39 (21/09) | | F1B-02 | | | | |
+| S40 (28/09) | | F1B-03 · F1B-04 | C2 si decidido | | | |
+| S41 (05/10) | | F1B-05 · F1B-11 (propuesta) | C4 | | | |
+| S42 (12/10) | | F1B-06 | | F1D-01 | | |
+| S43 (19/10) | | F1B-07 | C3 | F1D-02 | | |
+| S44 (26/10) | | F1B-08 (ampliada) · F1B-09 | C5 · C10 | F1D-03 | | |
+| S45 (02/11) | | | | F1D-04 | | |
+| S46 (09/11) | | | C7+C9 | F1D-05 · F1D-06 | F1E-01 | |
+| S47 (16/11) | | | C6 | F1D-07 · F1D-08 · F1D-09 | F1E-02 | |
+| S48 (23/11) | | | Rutas abreviadas | | F1E-03 | |
+| S49 (30/11) | | | | | F1E-04 | |
+| S50 (07/12) | | | | | F1E-05 | F1F-01 |
+| S51 (14/12) | | | | | | F1F-02 · F1F-03 |
+| S52 (21/12) | | | | | | F1F-03 · F1F-04 |
+| S53 (28/12) | | | | | | Margen · meta 31/12 |
+
+**F1B-10 no tiene semana**, y se dice a propósito: el libro lo registra igual («sigue sin semana, como en el plan .md»). Un hueco declarado no es un olvido; asignarle una de memoria sí sería el defecto.
+
+**De dónde sale el adelanto, y en qué se gasta (lectura del libro, R01.2 del 10/09, vigente en la R01.3).** La Fase 0 entera, **cuatro de las cinco** tandas de F1A y F1B-01 se cerraron entre el 07 y el 09/09, y dejan **una semana de adelanto**. Esa semana no sobra: **la absorben las cuatro tandas nuevas de F1A** —F1A-06, -07, -08 y -09, todas sin gate— **y F1B-11**. O sea que el adelanto se consumió antes de existir en el papel, y el margen del 31/12 sigue sin holgura. Si hay que ganar otra semana, las dos piezas recortables son **F1B-06** (a un solo flujo) y **F1D-08** (Horiba, diferible a enero); **F1B-08 y F1B-11 se parten** si no caben en tres días.
+
+**Lectura.** Cabe, pero sin holgura: el margen real son las dos últimas semanas de diciembre, que coinciden con vacaciones. Tres cosas lo protegen: (a) las tandas 1C no están en la ruta crítica —si una decisión se retrasa, la corrección entra en enero sin mover el MVP, salvo **C2**, que conviene cerrar antes de F1E porque el informe de salida necesita distinguir finalizado de anulado, y que además es **quien libera la subOV al anular** (F1B-11)—; (b) 1D y 1E pueden solaparse porque el modelo del informe (F1E-01) sólo necesita el modelo del catálogo (F1D-01); (c) F1B-06 (equipo nuevo y soporte remoto) es la tanda que se puede recortar a un solo flujo si hay que ganar una semana, porque el 90 % de los tickets son de servicio técnico.
 
 Lo que **no** cabe antes del 31/12 y conviene decirlo en la sesión del 11/09: el área de cliente (ítem 26) —confirmando lo que el 27/08 ya apuntó—, la app móvil con offline, OCR/QR/NFC, los comentarios predefinidos y cualquier cosa del eje ② más allá de los timestamps.
 
@@ -350,10 +364,21 @@ Tabla para llevar a cada sesión de los viernes. Cuando una decisión se cierra,
 | `decision/n52-cardinalidad-ov` | **DECIDIDO 10/09.** La relación es `1 ticket : N OV`, sin tabla puente. La OV global por lote se elimina: Comercial subdivide en subórdenes (`OV-AAAA-NNN-SS`), una por ticket, al crear la OV | **IV-4 pasa de bloqueado a construible** (tercera puerta, `remision.ts:218-240`). ⚠️ La TITULARIDAD va aparte y sigue abierta: ahí queda IV-8 | 10/09 — cerrado |
 | `decision/vista-todos-tablero` | **DECIDIDO 10/09.** Opción (b): «Todos» pasa a devolver también los cerrados. Se descarta renombrarla a «Abiertos». Separar `case 'todos'` de `default:` no es opcional y va en la misma tanda | **F1B-08**, junto con IV-1 (`boardView.ts:35`), que no necesita decisión | 10/09 — cerrado |
 | `decision/p21-ingreso-sin-ov` | **DECIDIDO 10/09.** Se deja como está: OV **opcional** en «Nuevo ticket», **obligatoria** en `Habilitar Servicio`. «OV obligatoria para trabajar, no para recibir». Confirma lo construido, no lo cambia | F1B-03 (regla definitiva). Arrastra a **F1B-08** el trabajo de `Remisión creada` / `en_espera` (§7.1 de las decisiones). Y con esta salida **IV-2 deja de ser opcional** | 10/09 — cerrado |
+| `decision/habilitar-servicio-sin-remision` | **DECIDIDO 10/09, y sin destino hasta el 17/09** (§7.3 de `docs/sdd/Decisiones_Gerencia_2026-09-10.md:353-356`). La guarda exigirá **remisión de entrada vigente (no anulada)** para los tres orígenes de `Habilitar Servicio`, incluido `Ticket creado`, que hoy llega a `Ingresado` **sin remisión**. Medido el 17/09: el código sigue sin la guarda — las siete de `executeTransition` (`ticketService.ts:117`, `:119`, `:121`, `:124`, `:128`, `:135`, `:143`) no miran remisiones | **F1B-03.** Por procedencia y por capacidad: misma transición y mismo documento que `p21` (`:366` de este fichero, que ya rutea ahí «la regla definitiva»), y la guarda vive en `executeTransition`, capacidad `transitions-st`, que es suya por `:470`. ⚠️ **Construirla MODIFICA `RQ-TS-02`** (`openspec/specs/transitions-st/spec.md:78-79`), que hoy declara con **SHALL** que `habilitar_servicio` sale de las tres fases tempranas: **no es añadir un requisito, es cambiar uno vivo.** **Dos condicionantes que la propia §7.3 ya trae:** (a) **rompe el invariante 3** (`packages/shared/src/invariantesGrafo.test.ts:62`, «Finalizado es el único estado sin transición de salida»), porque `habilitar_servicio` es la única transición **con botón** que sale de `Ticket creado` (`transitions.ts:178`; la otra ocurrencia, `:164`, es una función auxiliar), y **relajarlo lo toca F1B-06**; (b) exige un **conteo previo** —cuántos tickets llegaron a `Ingresado` sin remisión— que **nadie ha hecho y necesita acceso a la base de producción**: es **tarea de persona**, va declarada aparte y **NO se cuenta como tarea** (regla del ciclo 1 de `CLAUDE.md`) | decidida 10/09 · destino 17/09 · **S40** |
+| `decision/subov-lote-convencion` | **DECIDIDO 10/09.** Opción A: convención `OV-AAAA-NNN-SS` —modifica el formato del 27/08—, cuarentena de números no canónicos, saldo por lote, **un ticket vigente por subOV** y anulación que libera. B y C quedan registradas como alternativas | **F1B-11** (subOV de lote) | 10/09 — cerrado |
+| `decision/iv2-fechas-derivadas` | **DECIDIDO 10/09.** Opción (a): el servidor calcula las tres fechas derivadas e **ignora** lo que llegue del navegador; la zona horaria se fija de forma explícita | **F1A-07** | 10/09 — cerrado |
+| `decision/mapa-blueprint-generado` | **DECIDIDO 10/09.** Sí, generado desde `transitions.ts` con prueba anti-desfase. El artefacto interactivo queda como **histórico congelado en `a3a8f03`** | **F1A-06** (lo construye) · **F1B-09** (lo hereda funcionando) | 10/09 — cerrado |
+| P38 · salida aprobada (Engram obs. #400) | **DECIDIDO 10/09 con datos de Zoho Desk.** `Verificación` —`Liberación`→ `Finalizado`, observada **71 veces en 181 tickets**. `Verificación` es paso del flujo, condicional por familia de equipo. Cierra **P38 en parte**: el resto va en la fila siguiente | **F1A-03** | 10/09 — cerrado |
 | `decision/p8-p54-drive` | Botón de enlace a Drive como fase 0; convivencia con Drive | F1B-02 | 11/09 |
 | `decision/p45-macro-fases` | Juego de macro-fases común a todas las marcas | F1D-03 | 11/09 (Johny) |
 | `decision/flujos-comercial-posible-cliente` | Alcance de M1.11 y M1.12 en Desk 2.0 | F1B-06 | 11/09 |
 | `decision/top5-prioridad` | Si los Top 5 entran en la prioridad automática | F1B-07 | 11/09 |
+| `decision/p38-verificacion-calidad` | El **resto** de P38: obligatoriedad por familia, lote AP-370 de 2024, salida rechazada → `Notificado`, guarda de certificado | F1B-06 · F1C-07 | 11/09 (Gustavo / Calidad) |
+| `decision/escalado-remision-creada` | Qué cargo de Comercial recibe el escalado de `Remisión creada` a las 72 h | **F1B-08** | 11/09. ⚠️ Sin él la guarda de C11 queda **en rojo**: `habilitar_servicio` no tiene entrada en `DERIVACION_POR_DEFECTO` |
+| `decision/ovi-garantia-autor` | Quién crea la OVI de un servicio en garantía | **F1B-03** | 11/09. Hoy las crea Servicio Técnico: sería una excepción de autor a «Comercial crea la OV» |
+| `decision/vigencia-contrato` | Si una subOV libre de un contrato **vencido** se puede consumir | F1B-11 (no bloquea el núcleo) | 11/09 (Alfonso / Comercial). Si la respuesta es no, primer motivo para pasar a la opción B |
+| `decision/titularidad-ov-equipo` | Si la OV y el equipo pueden ser de **clientes distintos** (**IV-8**, `apps/desk/server/services/ticketService.ts:39`) | F1B-11 | 11/09. Va con P52 pero **como punto separado**: nº 52 es cardinalidad, no titularidad |
+| `decision/p62-capa-as-built` | Qué se hace con la capa as-built: retirarla o mantener el Anexo H | — (premisa de F0-02) | 11/09. Llevado al 03/09 y no tratado; vuelve al Anexo D |
 | `decision/c2-anulado` | Estado Anulado; tratamiento del histórico | F1C-01 (y protege F1E-03) | 11/09 o 18/09 |
 | `decision/c4-dos-ramas` | Dos ramas; si Facturado es estado | F1C-02 | 18/09 |
 | `decision/c3-salida-esperas` | Destino y caducidad de las cuatro esperas | F1C-03 | 18/09 |
@@ -368,6 +393,28 @@ Tabla para llevar a cada sesión de los viernes. Cuando una decisión se cierra,
 | `decision/p44-escritura-zoho` | Política de escritura contra Zoho | F1B-08 | Octubre |
 | `decision/p55-backup` | Responsable, alcance, periodicidad | F1F-02 | Antes de noviembre |
 | `decision/fecha-corte` | Desde cuándo los tickets nacen en la app | F1F-01 | Noviembre |
+| `decision/p64-historico-c1` | Qué se hace con las filas de «Liberación sin factura» escritas **antes** del arreglo de C1 | — (dato de producción, sin tanda) | Por asignar. Contar primero contra producción (R08.2 nº 64) |
+
+> **⚠️ Barrido de ruteo de `Decisiones_Gerencia_2026-09-10.md`, hecho el 2026-09-17 al registrar la §7.3.**
+> El ruteo de ese documento se hizo **sección a sección**, y por eso se pierden secciones enteras sin que
+> nada lo avise: `:366` de este fichero rutea la **§7.1** por su nombre, y la **§7.3** estuvo siete días sin destino. Medido
+> contra este plan y `openspec/config.yaml`, las **tres seguían sin rutear** esa mañana, y a las tres las rutea la sincronización con el libro R01.3 de esa misma tarde. Se conservan las dos medidas, porque lo que enseña el hueco es **cuánto duró**, no que siga abierto:
+>
+> | Sección | Asunto | Estado medido el 17/09, **antes** de la sincronización con el libro R01.3 | Estado **después** |
+> |---|---|---|---|
+> | **§7.2** (`:336`) | La alarma `N = 3 días`, que va a `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32`, cuya única entrada hoy es `:34`) | **sin clave y sin destino** — cero apariciones de su asunto en el plan y en `config.yaml`. La propia §7.2 avisa de que pondrá **roja** la guarda de C11 | **RUTEADA.** El libro la lleva como `decision/escalado-remision-creada` → **F1B-08**, con el mismo aviso sobre C11 |
+> | **§7.4** (`:379`) | `Garantía → OVI`, que es un cambio de práctica | **sin clave y sin destino** — los aciertos de «garantía» del plan son F1B-02 (hoja de vida), otro asunto | **RUTEADA.** `decision/ovi-garantia-autor` → **F1B-03**, que además la lleva en su contenido |
+> | **§7.5** (`:403`) | Segunda OV en `Aprobación`: **añade, nunca sustituye** | **sin clave propia.** El modelo `1 ticket : N OV` está en `decision/n52-cardinalidad-ov`, pero ni la regla ni su consecuencia —que `Fecha Orden de Compra` deje de pisarse— | **RUTEADA, sin clave propia.** La regla y su consecuencia entran en el contenido de **F1B-11**: «`Aprobación` y `Aprobación y S. Repuestos` añaden OV sin sustituir la de entrada, y la fecha de OC vive en cada asociación» |
+>
+> Y aparte de las secciones: **seis claves `decision/*` viven en `openspec/config.yaml` sin fila en esta
+> tabla** — `as-is-antes-de-redisenar`, `f0-00-preflight-y-tooling`, `f0-03-punto-3`,
+> `informes-en-fase-1`, `serial-obligatorio-en-remision` y `x-v2`. **Eran siete hasta el 17/09**:
+> `subov-lote-convencion` —que es la **§8** entera— ya tiene fila propia, traída de la hoja «Gates» del
+> libro R01.3 en esta misma sincronización.
+>
+> **A ninguna se le asigna destino aquí, y se dice a propósito**, por la misma razón que la llevan escrita
+> IV-9 e IV-11 de `CLAUDE.md`: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al
+> cerrar F1A. Que lo asigne quien decida el alcance.
 
 ### 4.6 Cadencia semanal
 
@@ -414,15 +461,20 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F1A-03 | C12 salidas de Verificación | transitions-equipo-nuevo | P38 | — | S | S38 |
 | F1A-04 | C9 bodegajes contra Ingreso a Servicio + campo | trazas, kpis | P41 | — | S | S38 |
 | F1A-05 | audit-F1A | — | M11.6 | — | S | S38 |
+| F1A-06 | Generador del mapa del blueprint | transitions-st | Anexo F (R08.2), Decisiones 10/09 §9, entrada 4 | — (`mapa-blueprint-generado`, 10/09) | Por dimensionar (exploración corta; si da más que S se revisa la decisión) | S38 |
+| F1A-07 | IV-2 · Fechas derivadas impuestas por el servidor | trazas | M1.10 (R08.2), Decisiones 10/09 §4 | — (`iv2-fechas-derivadas`, 10/09) | S (a confirmar) | S38 |
+| F1A-08 | IV-4 · Tercera puerta de la asociación OV ↔ ticket | remisiones, tickets-core | Decisiones 10/09 §2, M4.4 (R08.2) | — (la desbloquea `n52-cardinalidad-ov`) | S | S38 |
+| F1A-09 | Barrido de citas tras la R08.2 | — | R08.2 §1.2 | — | S | S38 |
 | F1B-01 | Serial único + autocompletado | tickets-core, zoho-sync | ítems 1, 19 | — | M | S39 |
 | F1B-02 | Hoja de vida y cuatro campos + enlace Drive | hojas-vida | ítem 9, P8 | p8-p54 | M | S39 |
-| F1B-03 | Desplegable de tipo de servicio y ticket sin OV | tickets-core, transitions-st | ítems 2, 20, P21, P37 | p21 | M | S40 |
+| F1B-03 | Tipo de servicio y ticket sin OV (+ guarda de remisión vigente y OVI de garantía) | tickets-core, transitions-st | ítems 2, 20; P21 (cerrado), P37; M1.2 (R08.2); Decisiones 10/09 §7 | p21 cerrado 10/09 · pendiente `ovi-garantia-autor` | L | S40 |
 | F1B-04 | Recepción unificada y fin del texto libre | remisiones, tickets-core | ítems 4, 10; acta 03/09 | — | L | S40 |
 | F1B-05 | Roles, traspaso, checkbox comercial, trazas | permissions, trazas | ítems 5, 6, 7 | — | M | S41 |
 | F1B-06 | Blueprints equipo nuevo y soporte remoto | transitions-equipo-nuevo, transitions-soporte-remoto | M1.4, M1.5 | flujos comerciales | L | S42 |
 | F1B-07 | Prioridad automática y Mis tickets | tickets-core | ítem 8 | top5 | S | S43 |
-| F1B-08 | Paridad de vistas y política Zoho | tickets-core, zoho-sync | ítems 17, 22, P44 | p44 | M | S44 |
+| F1B-08 | Paridad de vistas y política Zoho (+ tablero: «Todos», IV-1 y `Remisión creada` como espera) | tickets-core, zoho-sync | ítems 17, 22, P44; Decisiones 10/09 §3 y §7.1–7.2 | p44 · `escalado-remision-creada` | L | S44 · **PARCIAL** (tablero cerrado el 10/09; pendientes la alarma de 72 h y la paridad Zoho) |
 | F1B-10 | Orden único de precedencia entre guardas | transitions-st, tickets-core | transitions-st §3.8 (a) y (b), tickets-core §4.1; entrada 5.a de F0-01 | — (ninguno técnico; el orden se declara en la spec) | M | Por asignar |
+| F1B-11 | Asociación OV ↔ ticket (1 : N) y subOV de lote | tickets-core, zoho-sync | M4.4 (R08.2), P52 (cerrado), Decisiones 10/09 §2, §7.5 y §8 | `vigencia-contrato` (no bloquea el núcleo) · `titularidad-ov-equipo` (IV-8) | L | S41 (propuesta) |
 | F1B-09 | audit-F1B | — | M11.6 | — | S | S44 |
 | F1C-01…08 | C2, C4, C3, C5, C10, C7+C9, C6, rutas abreviadas | transitions-st, permissions, kpis | §3.2.1 | uno por tanda (§4.5) | S–M | S40–S48 |
 | F1D-01 | Modelo de datos del catálogo | diagnostico-checklist | M2.2, acta 03/09 | — | M | S42 |
@@ -445,6 +497,8 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F1F-04 | Formación, Zoho a solo lectura, audit-F1 | — | — | — | — | S53 |
 
 Tamaños: XS < medio día · S un día · M dos o tres días · L cuatro o cinco días (una L se parte en dos cambios si al proponerla no cabe en tres días).
+
+**Cómo se cuentan las 51 tandas, porque la tabla NO tiene 51 filas.** Son **44 filas** y **51 tandas**: la fila `F1C-01…08` colapsa **ocho** tandas en una sola, que es como está escrita desde la R01. El reparto es F0 **5** · F1A **9** · F1B **11** · F1C **8** · F1D **9** · F1E **5** · F1F **4**. Contar filas da 44 y contar tandas da 51; el denominador de avance es el segundo. La hoja «Tandas» del libro R01.3 lleva las 51 en filas separadas (`R2`–`R52`), más 18 de F2–F5 hasta 69.
 
 ---
 

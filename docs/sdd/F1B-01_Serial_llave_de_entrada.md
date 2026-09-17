@@ -2,7 +2,7 @@
 
 | Dato | Valor |
 |---|---|
-| Tanda | `F1B-01`, fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:150` · talla **M** (`:413`) |
+| Tanda | `F1B-01`, fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:150` · talla **M** (`:413`), las dos en `a5da6b8`; **hoy `:156` y `:468`** |
 | Fuentes | Ítems 1 y 19 del §3.1 · **M1.1** del maestro (`R08.1.md:1042-1049`) |
 | Base | commit `c45bcb1`, rama `main` |
 | Fecha | 2026-09-09 |

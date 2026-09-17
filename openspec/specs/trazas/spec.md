@@ -278,7 +278,7 @@ en `derivacion-avisos`.
 >
 > **Lo que sigue siendo cierto:** «lo que falta no es la traza, es el indicador que la lea». El módulo
 > de dominio existe y está probado (21 pruebas), pero **nadie lo consume**: sin endpoint, sin pantalla
-> y sin KPI. Destino: capacidad `kpis`, F1C-06 (`plan:171`). Ver
+> y sin KPI. Destino: capacidad `kpis`, F1C-06 (`plan:179`). Ver
 > `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md` §3.
 
 **Comportamiento de partida, el que C9 corrigió** (maestro M1.10, `:1678-1684`, punto abierto nº 41).

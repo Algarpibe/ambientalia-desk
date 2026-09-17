@@ -2,9 +2,9 @@
 
 | Dato | Valor |
 |---|---|
-| Tanda | `F1A-05`, fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:142` |
+| Tanda | `F1A-05`, fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:142` en `a5da6b8`; **hoy `:144`** |
 | Fuente | `M11.6` del maestro (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md:2713`) |
-| Commit auditado | `e8c5e90` (rama `main`) |
+| Commit auditado | `e8c5e90` (rama `main`). **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido. |
 | Fecha | 2026-09-09 |
 | Gate declarado en el plan | «—». La raya no es «ninguno»: nadie la rellenó. §0 la resuelve |
 

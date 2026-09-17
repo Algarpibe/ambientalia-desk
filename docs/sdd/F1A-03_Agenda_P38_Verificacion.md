@@ -3,7 +3,7 @@
 > **Para la sesión del viernes 11/09/2026.** Una página. El punto es de **Gustavo / Calidad**
 > (`R08.1.md:4005`) y hoy bloquea una tanda del plan, así que conviene cerrarlo en esa sesión.
 >
-> Lo que sigue no propone una respuesta: expone la que el maestro dejó a medias y las dos que se
+> **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido. Lo que sigue no propone una respuesta: expone la que el maestro dejó a medias y las dos que se
 > derivan de ella. Quien decide es Calidad, con Servicio Técnico.
 
 ---

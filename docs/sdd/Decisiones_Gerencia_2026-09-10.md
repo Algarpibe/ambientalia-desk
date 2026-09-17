@@ -1,7 +1,7 @@
 # Decisiones de Gerencia — 10/09/2026
 
 Respuestas a los puntos planteados en `docs/sdd/Puntos_para_Gerencia_2026-09-11.md`, decididas por
-Gerencia (Alfonso García del Pino) el **10/09/2026**, la víspera de la sesión.
+Gerencia (Alfonso García del Pino) el **10/09/2026**, la víspera de la sesión. **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido.
 
 **Cuatro de los seis puntos quedan cerrados aquí.** El quinto (IV-8) se resuelve solo con el nº 52.
 El sexto (las cinco entradas de correcciones al plan) sigue pendiente.

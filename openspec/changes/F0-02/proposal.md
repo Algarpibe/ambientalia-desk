@@ -4,7 +4,7 @@
 |---|---|
 | Fase | Fase 0 — Cimientos SDD |
 | Estado | **Propuesta — pendiente de visto bueno** |
-| Base | commit `ad1875b`, rama `main` |
+| Base | commit `ad1875b`, rama `main`. **Las citas de línea al plan (`plan:NNN` y `…ClaudeCode_R01.1.md:NNN`) de este documento se leen contra el plan en `a5da6b8` (539 líneas), NO contra el de hoy** (caso B/C de la regla de mutación 4 de `CLAUDE.md`): el plan creció a 598 líneas el 2026-09-17 al sincronizarse con el libro R01.3, y renumerarlas volvería falsas las frases que citan texto ya corregido. |
 | Apartado del maestro | **Anexo H** (`R08.1.md:4477-4512`), con su regla en H.1 (`:4485`) y la fila de servicio técnico en H.2 (`:4493-4496`) |
 | Entradas | los 52 diseños de `docs/superpowers/specs/` (02/06–12/08/2026) · `docs/sdd/F0-00_Baseline_as-built.md` · `openspec/config.yaml` |
 | Depende de | F0-00 (hecha) · F0-01 (hecha) · F0-04 (hecha: 110 ficheros / 931 pruebas, 109 en verde y 1 saltado, medido en esta tanda sobre `ad1875b`) |

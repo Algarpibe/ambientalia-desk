@@ -450,7 +450,7 @@ son su medición: el terminal no tiene acceso a la base y **no las ha verificado
 - **El problema es más amplio que el corte del bodegaje de salida.** Ningún KPI calculado sobre
   `ticket_transitions.values` —la regla de `packages/shared/src/reentrancia.ts:24`— tiene población real
   hasta el uso real: F1F-03, «Pruebas de aceptación con Servicio Técnico sobre dos o tres servicios reales»
-  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:214`). Y la única pasada que hay **sí** trae
+  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:221`). Y la única pasada que hay **sí** trae
   «Fecha de aviso al cliente»: se deduce de las cifras de Gerencia, con población 1 y la segunda consulta en 0.
 - **Hipótesis, sin verificar:** `desk.ticket_history` como posible fuente de un backfill. La llena la
   historia de Zoho (`packages/zoho-sync/src/db/history.ts:14-18`, llamada desde

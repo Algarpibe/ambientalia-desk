@@ -396,7 +396,7 @@ habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le habí
 ### 4.2 · La tercera puerta de la orden de venta: DECIDIDA, y se construye
 
 > **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** El punto abierto nº 52 está cerrado:
-> **`1 ticket : N OV`, sin tabla puente**, y está en la tabla de decisiones del plan (`plan:350`).
+> **`1 ticket : N OV`, sin tabla puente**, y está en la tabla de decisiones del plan (`plan:364`).
 >
 > **Se CONSTRUYE la tercera puerta; las dos que ya existen SE QUEDAN** — `ticketService.ts:45-48` en el
 > alta (RQ-TC-08) y `:134-135` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un

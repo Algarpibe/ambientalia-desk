@@ -47,9 +47,12 @@ ni entrada de `package.json`. **Hoy no existe forma de reproducirlo.**
 
 ## 4 · Cambio de alcance: las tandas `audit-*` NO regeneran este fichero
 
-El plan `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388` dice que este fichero
-«se regenera en cada tanda `audit-*`», y sus filas `:142` (F1A-05, `audit-F1A`) y `:158`
-(F1B-09, `audit-F1B`) heredan esa premisa, con talla **S** en `:412` y `:421`.
+El plan `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388` **en `a5da6b8`** decía que este
+fichero «se regenera en cada tanda `audit-*`», y sus filas `:142` (F1A-05, `audit-F1A`) y `:158`
+(F1B-09, `audit-F1B`) heredaban esa premisa, con talla **S** en `:412` y `:421` — **las cinco citas
+son de `a5da6b8` y NO se renumeran a hoy** (caso C de la regla de mutación 4 de `CLAUDE.md`):
+renumerarlas volvería falsa la frase, porque el plan de hoy dice justo lo contrario en esa fila.
+Revisión nombrada el 2026-09-17, al sincronizar el plan con el libro R01.3.
 `F0-00_Baseline_as-built.md:564` la repite: «para que … no se regenere sobre una cifra incorrecta».
 
 **Es falso.** No se puede regenerar lo que no tiene generador.
