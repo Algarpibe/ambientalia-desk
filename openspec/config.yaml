@@ -205,6 +205,22 @@ capabilities:
       (:1684) y la R08 la sustituyó por un par de campos de fecha (:1694).
       Corregido como entrada 3 de docs/sdd/F0-01_Correcciones_para_el_plan.md.
 
+  - name: citas-verificables
+    covers: >
+      Línea base de citas verificables, detector (apps/desk/server/citas/cli.ts) y hook de
+      pre-push. Su incumplimiento vivo es IV-10.
+    status_at_start: "nueva — nacida el 2026-09-15 en hook-citas-pre-push"
+    declarada_en: >
+      2026-09-17, corrección de registro. La spec existía desde el 15/09 y esta lista no la
+      recogía, así que el preflight no la cargaba. Ver E-002 de docs/sdd/ENTRADA.md.
+
+  - name: vistas-tablero
+    covers: >
+      Vistas de listado del tablero: «Todos», clasificación por ESTADOS_EN_ESPERA y paridad con
+      Zoho Desk.
+    status_at_start: "nueva — nacida el 2026-09-10 en vista-todos-y-estados-en-espera"
+    declarada_en: "2026-09-17, corrección de registro. Ver E-002 de docs/sdd/ENTRADA.md."
+
 # Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
 # registro del movimiento, no como tarea pendiente: los dos ficheros están en su
 # destino y docs/sdd/changes/ ya no existe.
@@ -371,7 +387,17 @@ incumplimientos_vivos:
       COMENTARIO de cabecera, no el código: la regla ejecutable está en :49-79.
       La cita no es falsa —ahí se declara el incumplimiento— pero apunta a la
       documentación, no a la implementación.
-    destino: "PUNTO ABIERTO PARA GERENCIA — sin tanda, y a propósito"
+    destino: "F1A-07 · IV-2 · Fechas derivadas impuestas por el servidor"
+    reasignado_2026_09_17: >
+      CORRECCIÓN DE REGISTRO. El destino anterior —«PUNTO ABIERTO PARA GERENCIA — sin tanda, y a
+      propósito»— fue CIERTO hasta el 10/09 y es FALSO desde entonces, y llevó siete días diciendo
+      lo contrario de lo que dice el plan. Lo que cambió: `decision/iv2-fechas-derivadas` cerró la
+      disyuntiva el 10/09 con la opción (a) —el servidor calcula las tres fechas derivadas e IGNORA
+      lo que llegue del navegador, con la zona horaria fijada de forma explícita— y el plan abrió
+      F1A-07 para construirla (§4.5 y §5).
+      LA LECCIÓN, que vale más que la entrada: este fichero PUEDE ESTAR CADUCO también en la
+      dirección optimista. Ya constaba que un destino podía nombrar una épica cerrada; ahora consta
+      que un «sin destino» puede sobrevivir a la decisión que le dio uno.
     reasignado: >
       2026-09-09. El destino anterior era "F1A o F1C, decisión de alcance", y esa
       disyuntiva ERA el aviso: nunca fue un destino, fue la constancia de que
@@ -1133,6 +1159,67 @@ premisas_falsas_corregidas:
       3.370.299 bytes, y .gitattributes lo marca `-diff -merge`. Detalle en
       docs/artefactos/NOTA.md.
 
+  - id: PF-2
+    corregida_en: "docs/sdd/Brecha_Maestro_R08.2_2026-09-17.md §2.1"
+    fecha: "2026-09-17"
+    afecta_a: ["decision/habilitar-servicio-sin-remision", "F1B-03"]
+    premisa_del_baseline: >
+      Al cerrar «Habilitar Servicio nunca sin remisión» (docs/sdd/Decisiones_Gerencia_2026-09-10.md
+      §7.3) se dio salida al servicio en sitio suponiendo que «en el plan hay descrito la necesidad
+      de crear un nuevo flujo de trabajo para este tipo de servicios».
+    verificacion: >
+      FALSA, por los dos lados. (1) `grep -ci "en sitio"` sobre
+      docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md devuelve 0: ninguna fila, ningún
+      gate, ninguna mención. (2) El maestro dice lo contrario de lo que la premisa supone —M1.6b,
+      nota del revisor [R08]: el servicio en sitio «hoy no está en el alcance y no hay mapeo as-is
+      de él», entra «como línea a explorar, no como flujo a construir». Punto abierto nº 43.
+    correccion: >
+      La guarda de remisión NO admite excepción por servicio en sitio, porque la rama a la que esa
+      excepción derivaría no existe ni está planificada. Mientras nº 43 no se decida, un servicio en
+      sitio no tiene ruta en Desk 2.0, y ninguna tanda puede prometer que «va por el flujo de
+      servicio en sitio». Si nº 43 se decide que sí, el maestro exige levantar primero su as-is —el
+      orden que siguieron las otras tres ramas—, y eso es una tanda de campo que hoy no existe.
+
+# Números que el documento maestro fija a mano y que el código puede haber movido sin que nadie lo
+# note. Los recomprueba la comprobación 5 de `npm run reconcile`
+# (docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md). Divergir NO siempre es un error: la clave
+# `divergencia` dice qué significa en cada caso, y esa distinción es la mitad del valor.
+cifras_ancladas:
+  - id: esperas
+    maestro: "4 — M1.3.4 y glosario del Anexo E («Estado de espera … Hay cuatro»)"
+    codigo: >
+      DOS registros, no uno. packages/shared/src/estados.ts declara `ESTADOS_EN_ESPERA` (ONCE:
+      5 externa + 6 interna) y `ESTADOS_SIN_SALIDA` (los CUATRO de M1.3.4), con el discriminador
+      escrito y una prueba de coherencia en estados.test.ts.
+    divergencia: >
+      EL CÓDIGO VA POR DELANTE DEL MAESTRO, y ése es todo el desvío. Medido el 2026-09-17 contra
+      estados.ts: el código ya distingue los dos criterios —espera externa frente a sin salida de
+      emergencia—, los declara por separado y razona por qué `Liberación Comercial` y `Remisión
+      creada` no entran en los cuatro pese a tener salida única. Quien no lo ha recogido es el
+      maestro. Material de CLASE A para la R08.4; NO es un hueco de planificación.
+      LO QUE SÍ SIGUE ABIERTO: `decision/c7-reloj-sla` (F1C-06) no puede adoptar ninguno de los dos
+      registros —el comentario de ESTADOS_EN_ESPERA avisa de que «es la lista de la VISTA; el reloj
+      del SLA no la lee»— y tiene que decidir el suyo. Y `Pendiente` es el único de los 21 estados
+      bajo «sin clasificar», esperando a Servicio Técnico desde el 11/09.
+      POR QUÉ ESTA ENTRADA EXISTE, aunque su divergencia sea legítima: la primera redacción del
+      informe de brechas afirmó que nadie había escrito la distinción, y el error salió de leer
+      este config.yaml en vez del código. Esta comprobación lee `packages/shared`.
+  - id: pasos_del_mapa
+    maestro: "38 — M1.3, ya marcado «en revisión» en la R08.2 con su hipótesis escrita"
+    codigo: "transiciones con botón de transitions.ts + las 2 sin botón de estadoPorRemision.ts — 36 el 2026-09-08"
+    divergencia: >
+      ERROR PENDIENTE. La R08.2 ya lo declara y aventura que el mapa cuenta CAMINOS y no
+      transiciones. Lo cierra F1A-06 al generar el mapa desde el código: es lo único que lo zanja
+      con un número en vez de con una hipótesis.
+  - id: transiciones
+    maestro: "34"
+    codigo: "cuenta de transiciones en packages/shared/src/transitions.ts"
+    divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
+  - id: estados
+    maestro: "21"
+    codigo: "cuenta de estados en packages/shared/src/estados.ts (claves de CLASIFICACION_EN_ESPERA)"
+    divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
+
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
 unidad_de_avance:
@@ -1257,7 +1344,7 @@ memoria_engram:
 
 rules:
   proposal:
-    - Cada propuesta cita el apartado del documento maestro R08.1 del que sale (p. ej. M1.3.4, C3, P31).
+    - Cada propuesta cita el apartado del documento maestro VIGENTE del que sale (p. ej. M1.3.4, C3, P31). Hoy es la R08.2; lo ya superado por la revisión en curso esta en docs/sdd/R08.3_Expediente_de_cambios.md. Corregido el 2026-09-17: esta linea decia R08.1, que dejo de mandar en la R08.2.
     - Incluir plan de rollback para cambios de riesgo.
   specs:
     - Usar Given/When/Then para escenarios.
