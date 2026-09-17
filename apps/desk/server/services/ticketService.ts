@@ -40,22 +40,16 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     ordenVenta = ordenVenta ?? ov.number ?? null
     fechaOrdenVenta = ov.date ?? null
   }
-  // Una OV, un ticket. El buscador ya solo ofrece las libres, pero una lista no es una frontera: sin
-  // esto basta con mandar el id a mano —o llegar con la lista cacheada— para duplicar la orden.
-  const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
-  if (enUso) {
-    const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
-    throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${enUso.number}` })
-  }
   /*
-   * Hallazgo de la revisión adversaria de F1B-01 (P1) · la guarda equipo↔cliente.
+   * Hallazgo de la revisión adversaria de F1B-01 (P1) · la guarda equipo↔cliente. Escalón **C**
+   * —contenido— de la escalera de precedencia (`transitions-st` §3.8), en la posición que fija
+   * `tickets-core` RQ-TC-05/RQ-TC-13. Compara el `clientId` YA RESUELTO en este punto —del cuerpo o,
+   * en su defecto, de la orden de venta (`:39`)— contra `equipo.clientId`.
    *
-   * Compara el `clientId` YA RESUELTO en este punto —del cuerpo o, en su defecto, de la orden de
-   * venta (`:39`)— contra `equipo.clientId`. Va AQUÍ, después del 409 de la OV y antes de los
-   * obligatorios, por dos razones: (a) la rama (i) de abajo tiene que rellenar el hueco ANTES de
-   * `:88` (`if (!clientId) missing.push('cliente')`), o un cuerpo sin `clientId` cuyo equipo sí lo
-   * trae moriría como «falta el cliente»; (b) meterla antes del 409 alteraría el tramo 409/422 que
-   * `ticketService.test.ts` declara y deja explícitamente sin decidir (no es esta tanda).
+   * Va AQUÍ, antes de los obligatorios, porque la rama (i) de abajo tiene que rellenar el hueco antes
+   * de que la comprobación de obligatorios lo cuente como ausente (`if (!clientId)
+   * missing.push('cliente')`), o un cuerpo sin `clientId` cuyo equipo sí lo trae moriría como «falta
+   * el cliente».
    *
    * Es integridad de datos, NO autorización: `tickets.client_id` no filtra ni autoriza nada, sólo
    * resuelve el nombre a mostrar. El desvío que esto cierra es el mismo patrón que `CLAUDE.md` ya
@@ -67,10 +61,10 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     // efecto que M1.1 exige: sin `clientId` en el cuerpo, el equipo manda sobre la OV.
     clientId = equipo.clientId
   } else if (clientId && equipo.clientId && clientId !== equipo.clientId) {
-    // (ii) — los dos existen y difieren: 422 explícito, mismo criterio que el 409 de arriba (error
-    // que se puede corregir, no una imposición silenciosa). `equipo.clientId` NULL queda FUERA de
-    // esta rama a propósito (iii): es el ~3,4 % de equipos que `backfillClientId.ts` no enlazó, y ahí
-    // no hay nada que comparar — comparar sin ese guard rompería ese respaldo.
+    // (ii) — los dos existen y difieren: 422 explícito, mismo criterio que el 409 de la OV ya usada
+    // (error que se puede corregir, no una imposición silenciosa). `equipo.clientId` NULL queda FUERA
+    // de esta rama a propósito (iii): es el ~3,4 % de equipos que `backfillClientId.ts` no enlazó, y
+    // ahí no hay nada que comparar — comparar sin ese guard rompería ese respaldo.
     logger.warn({ equipoId: equipo.id, equipoClientId: equipo.clientId, clientId }, 'alta de ticket: el cliente no corresponde al equipo')
     // La consulta va DENTRO de la rama y DESPUÉS del warn: sólo se paga en el camino de error, y si
     // fallara, la señal ya está emitida. El ayudante vive aquí a propósito (design §2, §6).
@@ -92,6 +86,16 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   if (missing.length) throw new HttpError(422, { error: `Faltan campos obligatorios: ${missing.join(', ')}` })
   const cliente = await getClient(db, clientId!)
   if (!cliente) throw new HttpError(422, { error: 'Cliente no encontrado' })
+  // La OV ya asociada a otro ticket. Escalón **D** —unicidad— de la escalera de precedencia
+  // (`transitions-st` §3.8): existencia < estado/permiso < contenido < unicidad, así que va al FINAL,
+  // como última guarda antes de crear el ticket — el mismo lugar que ocupa el `409` equivalente de
+  // `executeTransition`. El buscador de OV ya sólo ofrece las libres, pero una lista no es una
+  // frontera: sin esta comprobación basta con mandar el id a mano para duplicar la orden.
+  const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
+  if (enUso) {
+    const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
+    throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${enUso.number}` })
+  }
   const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie: equipo.serial, modelo: equipo.modelo ?? '', fecha: new Date() })
   const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo: equipo.tipo ?? '', codigo: codigoServicio })
   const id = await createTicket(db, {
@@ -126,14 +130,6 @@ export async function executeTransition(
   const values = (b.values ?? {}) as Record<string, unknown>
   const plan = buildTransitionPlan(t, values)
   if (plan.errors.length) throw new HttpError(422, { errors: plan.errors })
-  // La segunda puerta por la que una OV entra en un ticket (Habilitar Servicio). Misma regla que en
-  // la creación: una orden, un servicio. Se excluye el propio ticket, porque reconfirmar la OV que ya
-  // tiene no es duplicarla.
-  const nuevaOrdenVenta = plan.columns.orden_venta
-  if (typeof nuevaOrdenVenta === 'string' && nuevaOrdenVenta) {
-    const enUso = await ticketConOrdenVenta(db, { numero: nuevaOrdenVenta }, id)
-    if (enUso) throw new HttpError(409, { error: `La orden de venta ${nuevaOrdenVenta} ya está asociada al ticket #${enUso.number}` })
-  }
   // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
   // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
   // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.
@@ -141,6 +137,16 @@ export async function executeTransition(
   if (typeof derivadoA === 'string' && derivadoA) {
     const persona = await getUserById(db, derivadoA)
     if (!persona?.active) throw new HttpError(422, { errors: ['La persona a la que se deriva no existe o está dada de baja'] })
+  }
+  // La OV ya asociada a otro ticket, la segunda puerta de «una OV, un ticket» (Habilitar Servicio).
+  // Escalón **D** —unicidad— de la escalera de precedencia (`transitions-st` §3.8): va al FINAL, como
+  // última guarda antes de `applyTransition` — el mismo lugar que ocupa el `409` equivalente del alta
+  // (`createManagedTicket`). Se excluye el propio ticket, porque reconfirmar la OV que ya tiene no es
+  // duplicarla.
+  const nuevaOrdenVenta = plan.columns.orden_venta
+  if (typeof nuevaOrdenVenta === 'string' && nuevaOrdenVenta) {
+    const enUso = await ticketConOrdenVenta(db, { numero: nuevaOrdenVenta }, id)
+    if (enUso) throw new HttpError(409, { error: `La orden de venta ${nuevaOrdenVenta} ya está asociada al ticket #${enUso.number}` })
   }
   const actor = user.name ?? TRANSITION_ACTOR
   const derivadoAntes = current.row.derivado_a ?? null

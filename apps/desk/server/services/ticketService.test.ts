@@ -124,21 +124,25 @@ describe('executeTransition · cada guarda por separado', () => {
 })
 
 /**
- * EL ORDEN, DECLARADO. `ticketService.ts:82-110`, de arriba abajo:
+ * EL ORDEN, DECLARADO. `executeTransition`, de arriba abajo:
  *
- *   400 transición desconocida → 404 ticket → 409 estado → 403 área → 422 plan → 409 OV → 422 derivación
+ *   400 transición desconocida → 404 ticket → 409 estado → 403 área → 422 plan → 422 derivación → 409 OV
  *
- * DOS TRAMOS DE ESE ORDEN NO SON OBVIOS Y CONVIENE MIRARLOS DOS VECES:
+ * Es la escalera de precedencia de `transitions-st` §3.8, aplicada como ORDEN TOTAL —nunca por código
+ * HTTP—: **A** existencia (transición, ticket) < **B** estado y permiso < **C** contenido (plan,
+ * derivación) < **D** unicidad (OV ya usada).
  *
- * 1. **409 antes que 403.** El estado se comprueba ANTES que el permiso, así que a quien no tiene el
- *    área se le contesta por el estado del ticket. Es información que un 403 no daría. No es
- *    gratuito —el 403 llegaría igual en cuanto el ticket estuviera en el estado bueno, así que no
- *    oculta nada duradero—, pero es una decisión, y hasta hoy no estaba escrita en ningún sitio.
+ * UN TRAMO DE ESE ORDEN NO ES OBVIO Y CONVIENE MIRARLO DOS VECES:
  *
- * 2. **422 antes que 409 de la OV.** Quien manda una orden de venta ya usada Y se deja el serial
- *    recibe la queja del serial, no la de la orden. Arregla el serial, vuelve a enviar, y entonces
- *    —y sólo entonces— se entera de que la orden estaba cogida. Dos viajes para dos problemas que ya
- *    se conocían en el primero.
+ * **409 antes que 403.** El estado se comprueba ANTES que el permiso, así que a quien no tiene el
+ * área se le contesta por el estado del ticket. Es información que un 403 no daría. No es gratuito
+ * —el 403 llegaría igual en cuanto el ticket estuviera en el estado bueno, así que no oculta nada
+ * duradero—, pero es una decisión, y hasta hoy no estaba escrita en ningún sitio (§3.8(b) del delta,
+ * conservado sin reordenar).
+ *
+ * El 422 de la derivación antes que el 409 de la OV YA NO ES UNA RAREZA (F1B-10): es la MISMA regla
+ * —contenido antes que unicidad— aplicada dos veces, consecuencia de la escalera de arriba, no una
+ * excepción que haya que excusar.
  */
 describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
   it('transición desconocida gana a ticket inexistente: 400, no 404', async () => {
@@ -173,23 +177,20 @@ describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
    * `habilitar_servicio` es la única transición que lleva las dos cosas: campos obligatorios Y la
    * puerta de la orden de venta. Por eso los dos casos de abajo son suyos.
    *
-   * ⚠️ ESTA PRUEBA Y LA DE `:327` DICEN LO CONTRARIO, Y LAS DOS ESTÁN EN VERDE. Compara los títulos:
+   * ESTA PRUEBA Y LA DEL ALTA DE TICKET DICEN LO MISMO, Y LAS DOS ESTÁN EN VERDE. Compara los
+   * títulos:
    *
-   *   aquí   → «los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409»
-   *   `:327` → «la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422»
+   *   aquí → «los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409»
+   *   alta → «los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409»
    *
-   * Son la MISMA pareja de guardas con el ganador invertido, según por qué puerta se entre. No es un
-   * descuido de nadie: `executeTransition` y `createManagedTicket` se escribieron por separado y cada
-   * una fijó el orden que le salió. Lo que sí es un problema es que, leída sola, cada una parece
-   * declarar que la precedencia está decidida — y no lo está.
+   * Son la MISMA pareja de guardas con el MISMO ganador en las dos puertas: la escalera A/B/C/D
+   * (`transitions-st` §3.8) es un orden único aplicado dos veces, no dos reglas independientes que
+   * casualmente coinciden.
    *
-   * **La precedencia NO está decidida.** El defecto vive en `transitions-st` §3.8 (que son DOS
-   * inversiones, no una) y en `tickets-core` §4.1; las dos decían «destino F1A» y F1A cerró sin
-   * tocarlas. No hay ninguna fila del plan que lo cubra: es una fila que falta, redactada como
-   * entrada 5.a de `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
-   *
-   * Cuando se fije el orden único, **una de las dos cambia sí o sí**. No hace falta decidir cuál
-   * desde aquí; hace falta que quien lea una no crea que ya está resuelto.
+   * **La precedencia YA ESTÁ DECIDIDA (F1B-10).** Antes vivía en dos comentarios que se
+   * contradecían —`transitions-st` §3.8 (que declaraba DOS inversiones) y `tickets-core` §4.1—, los
+   * dos con destino «F1A» y F1A cerró sin tocarlos. Era la fila que faltaba en el plan, entrada 5.a de
+   * `docs/sdd/F0-01_Correcciones_para_el_plan.md`; esta tanda es la que la cierra.
    */
   it('los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409', async () => {
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
@@ -202,15 +203,15 @@ describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
     expect(r.body.errors).toEqual(['Falta el campo obligatorio: Serial'])
   })
 
-  it('la orden de venta ya usada gana a la persona de derivación inexistente: 409, no 422', async () => {
+  it('la persona de derivación inexistente gana a la orden de venta ya usada: 422, no 409', async () => {
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
     await ticket('t1', STATUS_TICKET_CREADO, 8102)
     const r = await fallo(() => executeTransition(db, 't1', {
       transitionId: 'habilitar_servicio',
       values: { 'Orden de Venta': 'OV-DUP', Serial: '18A20070', derivado_a: 'no-existe' },
     }, ADMIN))
-    expect(r.status).toBe(409)
-    expect(r.body.error).toBe('La orden de venta OV-DUP ya está asociada al ticket #8101')
+    expect(r.status).toBe(422)
+    expect(r.body.errors).toEqual(['La persona a la que se deriva no existe o está dada de baja'])
   })
 
   // La última de la cadena, para que el tramo quede cerrado por los dos extremos: sin la OV de por
@@ -300,44 +301,64 @@ describe('createManagedTicket · cada guarda por separado', () => {
 })
 
 /**
- * EL ORDEN, DECLARADO. `ticketService.ts:22-94`, de arriba abajo:
+ * EL ORDEN, DECLARADO. `createManagedTicket`, de arriba abajo:
  *
- *   422 equipo → 422 OV inexistente → **409 OV ya usada** → 422 obligatorios → 422 cliente
+ *   422 equipo → 422 equipo no registrado → 422 OV inexistente → 422 equipo↔cliente →
+ *   422 obligatorios → 422 cliente → **409 OV ya usada**
  *
- * ⚠️ EL TRAMO QUE SORPRENDE: el 409 de la orden de venta va ANTES del 422 de los obligatorios, al
- * revés que en `executeTransition`, donde el 422 del plan va antes del 409 de la misma regla. Las
- * dos puertas de «una OV, un ticket» evalúan la misma comprobación en órdenes OPUESTOS.
+ * Es la escalera de precedencia de `transitions-st` §3.8, la misma que en `executeTransition`:
+ * **A** existencia (equipo, catálogo, OV) < **C** contenido (equipo↔cliente, obligatorios, cliente en
+ * Books) < **D** unicidad (OV ya usada). El 409 de la orden de venta YA NO va antes de los
+ * obligatorios: va AL FINAL, el mismo lugar que ocupa su equivalente en `executeTransition` — es la
+ * MISMA regla aplicada dos veces (F1B-10), no dos arreglos que sólo se parecen.
  *
- * La consecuencia práctica: quien manda un formulario a medias con una orden ya usada recibe aquí la
- * queja de la orden, y en Habilitar Servicio la de los campos. Es la misma pantalla del mismo flujo
- * contestando distinto al mismo error doble.
+ * La consecuencia práctica: quien manda un formulario a medias con una orden ya usada recibe la queja
+ * del contenido que le falta, y sólo se entera de que la orden estaba cogida cuando ya no le falta
+ * nada más. Es la misma escalera que la puerta de Habilitar Servicio.
  */
 describe('createManagedTicket · el ORDEN en que se evalúan las guardas', () => {
+  // N1 (F1B-10, design §5.2) — G4 vs G5. Hoy responde 409 (rojo NATURAL, sin tocar producción): G4
+  // (OV ya usada) corre antes que G5 (equipo↔cliente). Se pone en verde moviendo G4 al final (§2 de
+  // esta tanda).
+  it('N1 · la discrepancia equipo↔cliente gana a la orden de venta ya usada: 422, no 409', async () => {
+    await equipoConCliente('eq-1', 'cli-A')
+    await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
+    const r = await fallo(() => createManagedTicket(db, {
+      equipoId: 'eq-1', clientId: 'cli-B', ordenVenta: 'OV-DUP',
+      tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT',
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain('cli-A')
+  })
+
   it('el equipo que falta gana a la orden de venta inexistente: «Falta el equipo», no la de la OV', async () => {
     const r = await fallo(() => createManagedTicket(db, { salesOrderId: 'no-existe' }, 'Admin'))
     expect(r.body.error).toBe('Falta el equipo')
   })
 
   /**
-   * ⚠️ ESTA PRUEBA Y LA DE `:194` DICEN LO CONTRARIO, Y LAS DOS ESTÁN EN VERDE. Ver el bloque de
-   * `:171-193` para el contraste completo: misma pareja de guardas, ganador invertido según la
-   * puerta. **La precedencia no está decidida** —`transitions-st` §3.8 y `tickets-core` §4.1, ambas
-   * huérfanas desde que cerró F1A—, y al fijarla una de las dos pruebas cambiará de expectativa.
+   * ESTA PRUEBA Y LA DE `executeTransition` («los obligatorios que faltan ganan a la orden de venta
+   * ya usada») DICEN LO MISMO, Y LAS DOS ESTÁN EN VERDE. Misma pareja de guardas, mismo ganador en
+   * las dos puertas: la escalera A/B/C/D (`transitions-st` §3.8) fija un orden único, y esta tanda
+   * (F1B-10) es la que lo aplica en las dos.
    */
-  it('la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422', async () => {
+  it('los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409', async () => {
     await equipo()
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
-    // Sin `tipoServicio`, sin `clasificaciones` y sin `prefijo`: el 422 de obligatorios está servido.
+    // Sin `clientId`, sin `tipoServicio`, sin `clasificaciones` y sin `prefijo`: el 422 de
+    // obligatorios está servido, y ahora gana porque el contenido (escalón C) precede a la unicidad
+    // (escalón D).
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ordenVenta: 'OV-DUP' }, 'Admin'))
-    expect(r.status).toBe(409)
-    expect(r.body.error).toBe('La orden de venta OV-DUP ya está asociada al ticket #8101')
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones, prefijo')
   })
 
-  it('la orden de venta ya usada gana también al cliente inexistente: 409, no 422', async () => {
+  it('el cliente inexistente gana a la orden de venta ya usada: 422, no 409', async () => {
     await equipo()
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, ordenVenta: 'OV-DUP' }, 'Admin'))
-    expect(r.status).toBe(409)
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Cliente no encontrado')
   })
 
   it('los obligatorios que faltan ganan al cliente inexistente: la lista, no «Cliente no encontrado»', async () => {
@@ -394,6 +415,17 @@ describe('createManagedTicket · la guarda equipo↔cliente', () => {
     await createManagedTicket(db, { equipoId: 'eq-1', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT' }, 'Admin')
     const t = (await db.query('SELECT client_id FROM tickets')).rows[0]
     expect(t.client_id).toBe('cli-A')
+  })
+
+  // N2 (F1B-10, design §5.2) — G5 vs G6, DENTRO del escalón C. Nace VERDE: el equipo ya rellena el
+  // hueco (regla i) antes de que el bloque de obligatorios cuente «cliente» como ausente. El rojo se
+  // obtiene por MUTACIÓN (moviendo G5 detrás de G6 y revirtiendo), no de forma natural — ver
+  // `apply-progress` para la evidencia.
+  it('N2 · dentro del escalón C, el equipo↔cliente se resuelve antes de contar los obligatorios: «cliente» no aparece', async () => {
+    await equipoConCliente('eq-1', 'cli-A')
+    const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1' }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Faltan campos obligatorios: tipo de servicio, clasificaciones, prefijo')
   })
 
   // mensaje-422-cliente-duplicado — design §1. Las cuatro pruebas afirman con `toBe` sobre la cadena
