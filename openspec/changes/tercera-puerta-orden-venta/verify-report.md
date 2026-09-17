@@ -1,14 +1,14 @@
 ```yaml
 schema: gentle-ai.verify-result/v1
-evidence_revision: sha256:f4330d894d879600d06c93f63badc9d37e7e662b2a2a8bd805eab256be62db2c
-verdict: fail
-blockers: 1
-critical_findings: 1
+evidence_revision: sha256:9694e61c26e7657d42c105b671bfca96fecb01f1451fd2f9a23a1161f912d9ab
+verdict: pass
+blockers: 0
+critical_findings: 0
 requirements: 2/2
-scenarios: 3/4
+scenarios: 4/4
 test_command: npm test
 test_exit_code: 0
-test_output_hash: sha256:62b2a69b70e49d2d81899f880dec49d676af3e3b69125650bb0f1221875ed6a3
+test_output_hash: sha256:5710ea5b1c9648e0eb3868f5753778535fd328e0d9022a9297a64514ca08d129
 build_command: npm run typecheck
 build_exit_code: 0
 build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e721545e547
@@ -17,155 +17,238 @@ build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e
 ## Verification Report
 
 **Change**: tercera-puerta-orden-venta (IV-4)
-**Version**: R1 `79cf09b` + R2 `f367186` (HEAD de `main`)
+**Version**: R1 `79cf09b` + R2 `f367186` + R3 `f2a3555` (HEAD de `main`, sin empujar; `origin/main` sigue en `f9c85de`)
 **Mode**: Strict TDD
+**Segunda pasada.** El `sdd-verify` de `f9c85de` salio `fail` con 1 CRITICAL (escenario 3 de RQ-RE-16 sin prueba). Este informe reemplaza al anterior por completo y verifica R3 (`f2a3555`) con evidencia propia, no por transcripcion del `apply`.
 
 ### Completeness
 | Metric | Value |
 |--------|-------|
-| Tasks total | 24 |
-| Tasks complete | 24 |
+| Tasks total | 28 |
+| Tasks complete | 28 |
 | Tasks incomplete | 0 |
 
-Confirmado por conteo directo sobre `openspec/changes/tercera-puerta-orden-venta/tasks.md`: `grep -c '^- \[x\]'` → 24, `grep -c '^- \[ \]'` → 0.
+Confirmado por conteo directo: `grep -c "^- \[x\]" tasks.md` -> 28; `grep -cE "^- \[[x ]\]" tasks.md` -> 28 (mismo total, 0 sin marcar).
 
 ### Build & Tests Execution
 
-**Build**: ✅ Passed
+**Build**: Passed
 ```text
 npm run typecheck  (tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit)
-exit 0, sin salida
+exit 0, sin salida (solo el banner de npm)
 ```
 
-**Tests**: ✅ 1131 passed / ❌ 0 failed / ⚠️ 2 skipped
+**Tests**: 1132 passed / 0 failed / 2 skipped
 ```text
 npm test
-121 archivos de prueba, 1131 tests pasados, 2 skip, exit 0
+Test Files  121 passed | 1 skipped (122)
+Tests  1132 passed | 2 skipped (1134)
+exit 0
 ```
 
-**Coverage**: ➖ No disponible (el runner de este repositorio no tiene herramienta de cobertura configurada; no es un fallo, es lo que hay)
+**Coverage**: No disponible (el runner de este repositorio no tiene herramienta de cobertura configurada; no es un fallo, es lo que hay)
 
 ### Spec Compliance Matrix
 
 | Requirement | Scenario | Test | Result |
 |---|---|---|---|
-| RQ-RE-16 | Una orden ya asociada a otro ticket se rechaza antes de escribir nada | `ordenVentaUnTicket.test.ts` > describe puerta 3 > `it('rechaza con 409 una orden de venta que ya está en otro ticket')` | ✅ COMPLIANT |
-| RQ-RE-16 | El 422 del serial gana al 409 nuevo | `remisiones.test.ts` > `it('ticket destino sin serial y con una OV ya usada por otro: 422 "falta el serial", no 409')` | ✅ COMPLIANT |
-| RQ-RE-16 | Reenviar la misma orden al propio ticket no se rechaza a sí mismo | (ninguna encontrada) | ❌ UNTESTED |
-| tickets-core 4.2 | La cardinalidad OV↔ticket, resuelta en la misma dirección en las dos specs | Sin cambio de texto; escenario narrativo sobre una decisión de Gerencia, cubierto por las pruebas ya existentes de las puertas 1 y 2 (`ordenVentaUnTicket.test.ts:118-133`) | ✅ COMPLIANT |
+| RQ-RE-16 | Una orden ya asociada a otro ticket se rechaza antes de escribir nada | `ordenVentaUnTicket.test.ts` puerta 3 (linea 155) - it "rechaza con 409 una orden de venta que ya esta en otro ticket" (161-176) | COMPLIANT |
+| RQ-RE-16 | El 422 del serial gana al 409 nuevo | `remisiones.test.ts` describe IV-4 el 422 del serial gana al 409 nuevo de la OV (1028) - it "ticket destino sin serial y con una OV ya usada por otro: 422 falta el serial, no 409" (1029-1053) | COMPLIANT |
+| RQ-RE-16 | Reenviar la misma orden al propio ticket no se rechaza a si mismo | `ordenVentaUnTicket.test.ts` puerta 3 - it "reenviar la misma orden al propio ticket no se rechaza a si mismo: 201 y el UPDATE es no-op" (185-205) - NUEVA, anadida en R3 (tarea 3.1) | COMPLIANT - cierra el CRITICAL de f9c85de |
+| tickets-core 4.2 | La cardinalidad OV-ticket, resuelta en la misma direccion en las dos specs | Sin cambio de texto; escenario narrativo sobre una decision de Gerencia. Cubierto conjuntamente por las tres puertas: puerta 1 (117-133), puerta 2 (135-153) y puerta 3 (155-206, ver filas de arriba) | COMPLIANT |
 
-**Compliance summary**: 3/4 scenarios compliant
+**Compliance summary**: 4/4 scenarios compliant (antes 3/4; el escenario 3 pasa de UNTESTED a COMPLIANT con la prueba nueva de R3).
 
 ### Correctness (Static Evidence)
 
 | Requirement | Status | Notes |
 |---|---|---|
-| RQ-RE-16 | ✅ Implemented | `remision.ts:230-234` — guarda por las dos vías, propio ticket excluido, después del 422 de `:220` y antes del UPDATE de `:235-239` |
-| tickets-core 4.2 | ✅ Implemented | Narrativa corregida en el delta; código sin cambios en esta tanda porque las puertas 1 y 2 ya existían |
+| RQ-RE-16 | Implemented | `remision.ts:230-234` guarda por las dos vias (salesorderId: ov.id, numero: ov.number), propio ticket excluido (ticketId como tercer argumento), despues del 422 de :220 y antes del UPDATE de :235-239. Sin diff neto desde f9c85de |
+| tickets-core 4.2 | Implemented | Narrativa corregida en el delta; codigo sin cambios en esta tanda porque las puertas 1 y 2 ya existian (ticketService.ts:45-49, :132-136) |
 
 ### Coherence (Design)
 
 | Decision | Followed? | Notes |
 |---|---|---|
-| D1 — fusionar `:141-159` en el ex-`it.fails` | ✅ Sí | El bloque `:141-159` ya no existe; el describe de la puerta 3 lo sustituye |
-| D2 — posición de la guarda dentro del bloque OV | ✅ Sí | Verificado línea a línea (sección 2.2 abajo) |
-| D3 — forma de la llamada y de la respuesta 409 | ✅ Sí | `ov.id`/`ov.number`/`ticketId`, `res.status(409).json(); return`, sin `HttpError` |
-| D4 — prueba de posición al final de `remisiones.test.ts` | ✅ Sí | `remisiones.test.ts:1028-1054`, pegada a M5 |
-| Citas re-ancladas por Caso A/B/C (regla de mutación 4) | ⚠️ Con matiz | `proposal.md` decía Caso B para las cinco; `design.md` §8.2 corrigió a 3×A + 2×C, y el trabajo sigue la corrección (sección 3 abajo) |
+| D1 - fusionar :141-159 en el ex-it.fails | Si | El bloque :141-159 no existe; el describe de la puerta 3 lo sustituye |
+| D2 - posicion de la guarda dentro del bloque OV | Si | Verificado linea a linea (seccion 2 del detalle) |
+| D3 - forma de la llamada y de la respuesta 409 | Si | ov.id/ov.number/ticketId, res.status(409).json(); return, sin HttpError (0 coincidencias en remision.ts) |
+| D4 - prueba de posicion al final de remisiones.test.ts | Si | remisiones.test.ts:1028-1053, pegada a M5 |
+| Escenario 3 de RQ-RE-16 (remediacion R3) | Si | Prueba nueva sin RED clasico (guarda ya construida en R1); verificada por MUTACION M-c en vez de RED, desviacion declarada y correcta bajo la regla de mutacion 1 de CLAUDE.md |
+| Citas re-ancladas por Caso A/B/C (regla de mutacion 4) | Con matiz, heredado de R1/R2 | Sin cambios en R3 (diff del fichero es puramente aditivo, lineas 1-174 identicas a f9c85de); matiz ya documentado en el verify de f9c85de y no reabierto aqui |
 
 ### Issues Found
 
-**CRITICAL**:
-1. `RQ-RE-16`, escenario «Reenviar la misma orden al propio ticket no se rechaza a sí mismo» — **UNTESTED**. Ninguna prueba de la suite (`ordenVentaUnTicket.test.ts` completo, `remisiones.test.ts` completo, ni `packages/zoho-sync/src/db/repo.test.ts`) envía a `POST /api/remisiones` el `salesOrderId` que el propio ticket destino YA tiene. La exclusión existe en el código (`ticketId` como tercer argumento de `ticketConOrdenVenta`, `remision.ts:230`) y es correcta por lectura, pero ninguna corrida la ejercita en este endpoint. Bajo la regla del skill de verify («un escenario sin prueba que pase en runtime no es conforme»), es un hallazgo bloqueante para el archive.
+**CRITICAL**: Ninguno.
 
-**WARNING**:
-1. El rojo de la tarea 1.1 («expected 201 to be 409») y las mutaciones M-a/M-b (`design.md` §5) no son reproducibles por esta fase sin abrir otro intento del ledger (regla del ciclo 2 de `CLAUDE.md`: una tanda SDD por árbol de trabajo). Se verificó en su lugar que la prueba de posición existe y que su aserción distingue de verdad 422 de 409 (sección 2.3 abajo).
-2. La cabecera de `apply-progress.md` (línea 3) dice «23 de 24» tareas hechas, pero `tasks.md` de hoy tiene las 24 casillas en `[x]` y el propio cuerpo de `apply-progress.md` documenta más abajo que la condición dura de 2.15 sí se cumplió tras la decisión de Gerencia de anclar las seis citas. La cabecera no se actualizó tras esa decisión: desajuste de redacción, no trabajo pendiente.
+**WARNING**: Ninguno.
 
-**SUGGESTION**: Ninguna adicional a lo ya nombrado como límite (sección 4 abajo).
+**SUGGESTION**: Ninguna.
 
 ### Verdict
 
-**FAIL**
+**PASS**
 
-Decide el veredicto un único CRITICAL: el escenario de auto-exclusión de `RQ-RE-16` no tiene prueba de cobertura en ningún fichero de la suite. Todo lo demás —guarda en su posición y forma exactas, `npm test` en 1131/1131 verdes, `typecheck` limpio, detector de citas en 0 bloqueantes con línea base en cero, y el cierre de IV-4/registro de IV-11 verificados línea a línea— cumple con evidencia propia. El detalle completo, criterio a criterio, sigue debajo.
+El unico CRITICAL del verify anterior (f9c85de) - el escenario 3 de RQ-RE-16 sin prueba de cobertura - esta cerrado: ordenVentaUnTicket.test.ts:185-205 lo ejercita con aserciones de valor reales (201, sin 409, y comparacion campo a campo antes/despues con toEqual, no solo conteo de filas). remision.ts no tiene diff neto desde el veredicto anterior. npm test en 1132/1132 verdes, typecheck limpio, detector de citas en 0 bloqueantes con linea base en cero, y el cierre de IV-4/registro de IV-11 verificados linea a linea contra el arbol de hoy, no por transcripcion del apply. El detalle completo, criterio a criterio, sigue debajo.
 
 ---
 
-## Detalle extendido — criterio a criterio, evidencia propia
+## Detalle extendido - criterio a criterio, evidencia propia
 
-**Fecha:** 2026-09-16 · **Árbol verificado:** `f367186`
-**Método:** evidencia propia leída del árbol de hoy. Cada veredicto lleva el comando que lo sostiene
-o la cita `ruta:línea` que lo demuestra. Lo que no se pudo reproducir sin abrir otro intento del ledger
-va marcado como **límite**, no como aprobado.
+**Fecha:** 2026-09-16 - **Arbol verificado:** `f2a3555`
+**Metodo:** evidencia propia leida del arbol de hoy. Cada veredicto lleva el comando que lo sostiene o la cita ruta:linea que lo demuestra. Lo que no se pudo reproducir sin abrir otro intento del ledger va marcado como LIMITE, no como aprobado.
 
-### 1 · Criterios de `proposal.md` §13, uno a uno
+### 1. El CRITICAL, cerrado de verdad
+
+`ordenVentaUnTicket.test.ts:185-205` (nuevo en R3, +29 lineas, diff puramente aditivo confirmado con `git diff f9c85de f2a3555 -- apps/desk/server/ordenVentaUnTicket.test.ts`):
+
+- Inserta un ticket t-propia (7003) cuya orden_venta/salesorder_id YA son la orden que llega (OV-2026-300/soX).
+- Envia POST /api/remisiones con ese mismo salesOrderId al propio ticket.
+- Afirma res.status a 201 y res.body.error indefinido.
+- La asercion de no-op compara VALORES, no solo el numero de filas: lee orden_venta, salesorder_id, fecha_orden_venta antes y despues del POST, y hace expect(despues).toEqual(antes), con el comentario propio de la prueba diciendolo por escrito (linea 204: "no-op: mismos valores antes y despues, no solo el mismo numero de filas"). Responde exactamente a la pregunta del encargo: compara los tres valores, no cuenta filas.
+
+Este escenario era exactamente el declarado con SHALL en specs/remisiones/spec.md:74-80 y que el verify de f9c85de marco UNTESTED. Hoy tiene cobertura real de ejecucion (pasa dentro de los 1132 tests verdes).
+
+### 2. Los cuatro escenarios de los dos deltas, uno a uno
+
+Ver "Spec Compliance Matrix" arriba. El envelope del verify anterior decia scenarios: 3/4; el de hoy es 4/4: el unico cambio es el escenario 3 de RQ-RE-16, que pasa de UNTESTED a COMPLIANT con la prueba nueva de la seccion 1. Los otros tres escenarios no cambiaron de cobertura respecto al verify anterior, y se comprobo de nuevo con lectura directa de cada fichero de prueba citado (no por transcripcion):
+
+- Escenario 1 - ordenVentaUnTicket.test.ts:161-176, sin cambios desde f9c85de (fuera del rango que R3 toco).
+- Escenario 2 - remisiones.test.ts:1028-1053, sin cambios desde f9c85de (R3 no toco este fichero: no aparece en el --stat de la seccion 3, es decir, diff vacio).
+- Escenario tickets-core 4.2 - cubierto por las tres puertas conjuntamente, sin cambio de texto en el propio escenario (asi lo declara el delta de tickets-core, lineas 15-20).
+
+### 3. La guarda sigue donde estaba
+
+`git diff f9c85de f2a3555 -- apps/desk/server/routes/remision.ts` -> salida vacia, exit 0. R3 no toco este fichero, tal como exigia su alcance. Confirmado tambien por lectura directa de remision.ts:140-240: el 422 del serial esta en :154-157, la remision pendiente en :174-183, el checklist en :191-197, y el bloque de la orden de venta en :218-240 con la guarda en :230-234 (despues del 422 de :220, antes del UPDATE de :235-239), por las dos vias (ov.id, ov.number) y con ticketId como tercer argumento de exclusion.
+
+`git diff --stat f9c85de f2a3555` completo, para que quede constancia de que SI cambio R3:
+```text
+ apps/desk/server/ordenVentaUnTicket.test.ts        | 29 +++++++
+ .../tercera-puerta-orden-venta/apply-progress.md   | 91 +++++++++++++++++++++-
+ .../specs/remisiones/spec.md                       |  2 +-
+ .../changes/tercera-puerta-orden-venta/tasks.md    | 46 +++++++++++
+ .../tercera-puerta-orden-venta/verify-report.md    |  2 +-
+ 5 files changed, 164 insertions(+), 6 deletions(-)
+```
+Ni remision.ts ni remisiones.test.ts aparecen: confirma por si solo que R3 no toco codigo de produccion ni las pruebas de los escenarios 1 y 2.
+
+### 4. La mutacion M-c
+
+LIMITE declarado, no reproducido en esta fase. El apply (obs. 660) registra el literal "AssertionError: expected 409 to be 201" al quitar el tercer argumento (ticketId) de la llamada a ticketConOrdenVenta en remision.ts:230, y su reversion limpia (git diff --exit-code sin salida, confirmado tambien por esta fase en la seccion 3). Reproducirlo exigiria abrir otro intento del ledger sobre el mismo arbol (regla del ciclo 2 de CLAUDE.md), fuera del mandato de esta fase.
+
+Lo que si se comprobo sin mutar, por lectura de packages/zoho-sync/src/db/repo.ts:328-344 (ticketConOrdenVenta): sin excluirTicketId, la clausula AND id <> $N no se anade a la consulta, asi que el SELECT encontraria al propio t-propia como "el ticket que ya tiene la orden" (coincide por salesorder_id y por orden_venta) y remision.ts responderia 409 contra si mismo. Esto corrobora por lectura de codigo, no por ejecucion, que la mutacion descrita produciria el rojo declarado.
+
+La asercion de la prueba nueva SI distingue de verdad 201 de 409 (dos ramas de codigo distintas en remision.ts:231-239, una devuelve y corta con return, la otra sigue al UPDATE) y su asercion de no-op FALLARIA si el UPDATE escribiera algo distinto a los valores ya presentes - esta protegida por el WHERE COALESCE(orden_venta,'') = '' de :237, que es justamente lo que el propio escenario 3 del delta declara (linea 79, ya corregida a :237 por la tarea 3.3).
+
+### 5. Detector sobre la punta - CONDICION DURA
+
+```text
+node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha f2a3555
+comprobadas ............ 1962
+linea base ............. 0 informadas . 0 caducadas
+abreviadas rotas ....... 12   (informativas: no bloquean)
+codigo de salida ....... 0
+```
+
+CUMPLE exactamente la condicion dura del encargo: 0 bloqueantes, codigo de salida 0, linea base en cero. Las 12 abreviadas rotas son las mismas informativas ya conocidas de R2 (sin cambio); son informativas y no bloquean, segun el propio detector.
+
+### 6. Criterios de aceptacion de proposal.md 13, uno a uno
 
 | # | Criterio | Veredicto | Evidencia propia |
 |---|---|---|---|
-| 1 | `.fails` de `:161` quitado y visto rojo por «expected 201 to be 409» | **LIMITE, no reproducible sin mutar** | `ordenVentaUnTicket.test.ts` de hoy ya no tiene `.fails` (línea 161 forma parte del `it` normal de la puerta 3, líneas 155-177). El único registro del rojo original está en `apply-progress.md` (tabla R1, fila 1.1); reproducirlo exigiría revertir la guarda y re-ejecutar, que es abrir otro intento del ledger. No se hizo. |
-| 2 | Prueba de `:141-159` invertida, afirma `409` | **CUMPLE** | Ese bloque ya no existe. `ordenVentaUnTicket.test.ts:155-177` en `f9c85de` afirma `res.status` a `409` (línea 172). Verde en los 1131 tests pasados. |
-| 3 | Guarda llama a `ticketConOrdenVenta` por las dos vías, propio ticket excluido, después del 422 de `:220` y antes del UPDATE | **CUMPLE** | `remision.ts:230` llama `ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId)`. `:220` es el 422, `:230-234` la guarda, `:235-239` el UPDATE. |
-| 4 | 409 con `res.status(409).json(...); return`, texto de `ticketService.ts:135` | **CUMPLE** | `remision.ts:232-233`, mismo patrón y texto que la puerta 2, sin condicional de la puerta 1. `HttpError` no aparece en `remision.ts` (0 coincidencias). |
-| 5 | `WHERE COALESCE(orden_venta,'') = ''` intacto | **CUMPLE** | `remision.ts:237`, sin cambios de comportamiento. |
-| 6 | Prueba de posición existe, afirma 422 «Falta el serial» (no 409), tres columnas sin escribir | **CUMPLE** | `remisiones.test.ts:1028-1054`. Afirma status 422, error que casa `/serial/i`, tres columnas en null, ticket dueño único. Verde. |
-| 7 | Cinco citas caducas re-ancladas como Caso B, sin tocar aserciones, ancla en la misma línea física | **CUMPLE CON MATIZ** | `design.md` §8.2 corrigió la propuesta: tres son Caso A y dos Caso C, no las cinco Caso B. El trabajo sigue esa corrección (detalle sección 3). Ninguna aserción `expect(...)` se tocó. |
-| 8 | `npm test` verde y `npm run typecheck` sin errores | **CUMPLE** | Ver Build & Tests Execution arriba. |
-| 9 | `CLAUDE.md`/`config.yaml` registran IV-11 y el recuento concuerda con la tabla | **CUMPLE** | Ver 2.5 y 2.6 más abajo. |
+| 1 | .fails de :161 quitado y visto rojo por "expected 201 to be 409" | LIMITE, no reproducible sin mutar | Confirmado que no queda ningun it.fails( activo: grep de .fails solo encuentra menciones en prosa/comentarios (lineas 59-86), ninguna como llamada real. El rojo original no se reprodujo (exigiria abrir otro intento del ledger); el registro vive en apply-progress.md (tabla R1, fila 1.1) |
+| 2 | Prueba de :141-159 invertida, afirma 409 | CUMPLE | Ese bloque no existe. ordenVentaUnTicket.test.ts:161-176 afirma res.status a 409 (linea 172). Verde en los 1132 tests pasados |
+| 3 | Guarda llama a ticketConOrdenVenta por las dos vias, propio ticket excluido, despues del 422 de :220 y antes del UPDATE | CUMPLE | remision.ts:230 llama ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId). :220 es el 422, :230-234 la guarda, :235-239 el UPDATE. Sin diff neto desde f9c85de |
+| 4 | 409 con res.status(409).json(...); return, texto de ticketService.ts:135 | CUMPLE | remision.ts:232-233, mismo patron y texto (La orden de venta X ya esta asociada al ticket #N) que ticketService.ts:135. HttpError no aparece en remision.ts (0 coincidencias) |
+| 5 | WHERE COALESCE(orden_venta,'') = '' intacto | CUMPLE | remision.ts:237, sin cambios de comportamiento |
+| 6 | Prueba de posicion existe, afirma 422 "Falta el serial" (no 409), tres columnas sin escribir | CUMPLE | remisiones.test.ts:1029-1053. Afirma status 422, error que casa /serial/i, tres columnas en null, ticket dueno unico (toEqual([7010])). Verde |
+| 7 | Cinco citas caducas re-ancladas como Caso B/A/C, sin tocar aserciones, ancla en la misma linea fisica | CUMPLE, heredado sin cambios | git diff f9c85de f2a3555 sobre ordenVentaUnTicket.test.ts muestra que las lineas 1-174 (donde viven las cinco citas) son byte-identicas a f9c85de; R3 solo anadio al final. El matiz ya documentado en el verify de f9c85de (3xA + 2xC en vez de 5xB) no se reabre porque nada lo toco |
+| 8 | npm test verde y npm run typecheck sin errores | CUMPLE | Ver Build & Tests Execution arriba: 1132/1132, exit 0; typecheck exit 0 |
+| 9 | CLAUDE.md/config.yaml registran IV-11 y el recuento concuerda con la tabla | CUMPLE | Ver seccion 7 abajo |
 
-### 2 · Los siete puntos que Gerencia exige verificar
+### 7. IV-4 cerrado e IV-11 vivo
 
-**2.1 · Escenarios de los dos deltas, contra las pruebas que existen** — ver «Spec Compliance Matrix» arriba. El hallazgo CRITICAL de esa tabla (escenario 3 de RQ-RE-16, UNTESTED) es la razón del veredicto FAIL. Se buscó exhaustivamente: `ordenVentaUnTicket.test.ts` completo (178 líneas), `remisiones.test.ts` completo (las 5 apariciones de `salesOrderId` revisadas, ninguna reenvía la OV que el ticket destino ya tiene), y `packages/zoho-sync/src/db/repo.test.ts` (0 menciones de `ticketConOrdenVenta`). El único test que ejercita auto-exclusión es el de la puerta 2 (`transiciones.test.ts:312-319`), sobre un endpoint distinto.
+IV-4, en CLAUDE.md (leido directamente del fichero en disco, no de un resumen de sesion): encabezado (linea 255) dice "Cuatro desvios vivos"; la tabla de "Incumplimientos vivos" (lineas 275-280) tiene exactamente 4 filas de datos (valoresTransicion.ts, ticketService.ts:39 clientId, por-entregar-es-espera/IV-9, y la divergencia de sincronizacion/IV-11) y ninguna es IV-4; el parrafo (lineas 259-266) cuenta los DOS movimientos fechados (alta de IV-11 el 2026-09-16, baja de IV-4 en 79cf09b); y el parrafo dedicado (lineas 298-304) dice literalmente "IV-4 esta CERRADO y ya no cuenta", con la cita a remision.ts:218-240, RQ-RE-16 y las dos pruebas que lo fijan. Cumple los cuatro sub-puntos.
 
-**2.2 · La guarda, en su posición y forma exactas** — CUMPLE, sin matices. Confirmado por lectura directa: `:218` abre el bloque OV; `:219-220` `getSalesOrder` + 422; `:221-229` comentario transitorio; `:230-234` la guarda; `:235-239` el UPDATE con el WHERE intacto en `:237`. El 422 del serial (`:152-157`) sigue por encima del bloque OV: orden real ticket/fecha (`:123-127`) a serial (`:152-157`) a remisión pendiente (`:174-183`) a checklist (`:191-197`) a bloque OV (`:218-240`) a `createRemision`.
+IV-4, en openspec/config.yaml (bloque id: IV-4, lineas 444-508): tiene estado: CERRADO, cerrado_por: tercera-puerta-orden-venta, cerrado_verificado_en: 2026-09-16 base 79cf09b, y por_que_esta_cerrado apuntando a RQ-RE-16. ubicacion (linea 446) esta actualizado a :218-240, el rango real de hoy. Los campos destino/matiz_de_verificacion conservan texto historico (CONSTRUIBLE...) que la tarea 2.7 no pedia tocar - no es una tarea incumplida, es el mismo patron de preservar el registro historico que usan los bloques id: IV-5/id: IV-6 ya cerrados.
 
-**2.3 · El rojo de 1.1 y las dos mutaciones — LIMITE declarado, no dado por bueno.** No se reprodujo sin abrir otro intento del ledger. Se comprobó en su lugar: la prueba de posición existe (`remisiones.test.ts:1028-1054`) y su aserción distingue de verdad 422 de 409 (status + regex + tres columnas null + conteo del ticket dueño) — no es tautológica, ejercita `request(app).post(...)` contra código real. El comentario que la acompaña (`:1011-1027`) describe el mecanismo de M-a/M-b con el mensaje exacto esperado, pero es prosa, no ejecución.
+IV-11, vivo: CLAUDE.md linea 280 (fila de "Incumplimientos vivos") y openspec/config.yaml bloque id: IV-11 (lineas 930 en adelante): sin estado: CERRADO, destino: "SIN DESTINO ASIGNADO - a proposito", y la advertencia de poblacion 1 presente palabra por palabra: "CON POBLACION 1, UN 0 NO DICE QUE NO OCURRA". Cumple.
 
-**2.4 · El detector de citas — CONDICION DURA.** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha f367186` da comprobadas 1944, abreviadas rotas 12 (informativas), línea base 0 informadas y 0 caducadas, codigo de salida 0, 0 bloqueantes. CUMPLE exactamente como exige el punto 5 del encargo.
+Nota de metodo, fuera del alcance de esta verificacion pero digna de registro: el CLAUDE.md inyectado en el contexto inicial de esta sesion (bloque "Contents of ... CLAUDE.md") mostraba la fila de IV-4 todavia abierta ("CONSTRUIBLE desde el 2026-09-10..."), contradiciendo lo que el apply declaraba cerrado. La lectura directa del fichero en disco confirma que el archivo SI tiene a IV-4 cerrado y coincide con apply-progress. Es decir: el snapshot inyectado en el prompt de esta sesion estaba desactualizado respecto al arbol de trabajo real; esta verificacion se sostiene en la lectura directa del fichero, no en ese snapshot, tal como exige la regla de metodo de CLAUDE.md ("toda afirmacion sobre el comportamiento del codigo lleva ruta y linea... una cita de segunda mano es una hipotesis").
 
-**2.5 · El cierre de IV-4, en sus dos ficheros.** `CLAUDE.md`: (a) fila de IV-4 retirada de la tabla de «Incumplimientos vivos» — la tabla de hoy (`:277-280`) tiene cuatro filas y ninguna es IV-4; (b) párrafo «IV-4 está CERRADO y ya no cuenta» en `:298-304`, mismo patrón que IV-1/IV-3/IV-5/IV-6/IV-7/IV-10, entre el cierre de IV-3 y el de IV-5; (c) párrafo `:259-266` cuenta los dos movimientos fechados (alta IV-11 2026-09-16, baja IV-4 en `79cf09b`); (d) encabezado `:255` en «Cuatro», contado contra la tabla ya editada (4 filas reales). `openspec/config.yaml` bloque `id: IV-4`: `estado: CERRADO`, `cerrado_por`, `cerrado_verificado_en`, `por_que_esta_cerrado` apuntando a RQ-RE-16. **CUMPLE en los cuatro sub-puntos.**
+### 8. Las 28 casillas
 
-**2.6 · IV-11 sigue registrado y vivo.** `CLAUDE.md:280` y `openspec/config.yaml` bloque `id: IV-11` (`:930` en adelante): sin `estado: CERRADO`, `destino: "SIN DESTINO ASIGNADO — a propósito"`, advertencia de población 1 presente. **CUMPLE.**
+tasks.md: grep -c de lineas marcadas [x] da 28, y el total de lineas de tarea (marcadas o no) tambien da 28 (0 sin marcar). La seccion "Rebanada R3" (lineas 285-297) dice por escrito, sin adornos: "El hueco NO es de la ejecucion, es del plan... Ninguna planifico una prueba para el escenario 3, asi que el apply no se la salto: nunca se la pidieron." Esto coincide con la evidencia de codigo: remision.ts no tiene diff neto desde f9c85de (seccion 3), lo que confirma que la guarda ya estaba completa y solo faltaba la prueba.
 
-### 3 · Dónde el verify y el registro del `apply` NO coinciden
+## Divergencias entre el verify y el registro del apply
 
-Dos divergencias reales:
+Ninguna. Se contrasto cada afirmacion de apply-progress.md (obs. 660) contra el arbol de hoy:
 
-1. **Clasificación de las cinco citas (criterio 7 de §13).** `apply-progress.md` (tarea 1.5) ejecuta el re-anclaje sin corregir la clasificación de `proposal.md` §2.6 («todas Caso B»); `design.md` §8.2 ya había corregido a 3xA + 2xC antes del `apply`. Verificado contra el fichero de hoy que el trabajo sigue la corrección del diseño: la tabla de las tres puertas (`ordenVentaUnTicket.test.ts:19-21`) refleja el estado actual (Caso A); el párrafo «EL DEFECTO, VERIFICADO» (`:23-38`) está anclado a `b99d47a` (Caso C); el doc del fixture (`:156`) cita `remision.ts:237`, la línea de hoy (Caso A). El resultado es correcto; la palabra «Caso B» de §13 quedó desactualizada por la corrección posterior del diseño.
-2. **El recuento de la cabecera de `apply-progress.md`.** Dice «23 de 24» (línea 3), pero `tasks.md` tiene las 24 casillas en `[x]` y el cuerpo del propio `apply-progress.md`, en la sección de 2.15, documenta que Gerencia decidió anclar las seis citas restantes y que la condición dura terminó cumplida. La cabecera no se actualizó tras esa decisión.
+- El diff declarado (5 files, +164/-6 vs f9c85de) coincide exactamente con git diff --stat (seccion 3).
+- La reversion de la mutacion M-c (git diff --exit-code limpio sobre remision.ts) se confirmo de forma independiente con git diff f9c85de f2a3555 -- apps/desk/server/routes/remision.ts -> vacio.
+- La correccion de la cita specs/remisiones/spec.md linea 79 (de :223 a :237) se confirmo por diff exacto de una sola linea (seccion 3, diff mostrado en el detalle del punto 1 de este informe).
+- La reparacion del propio verify-report.md linea 107 (anclar a "en f9c85de" en vez de renumerar) se confirmo por diff exacto: solo esas cuatro palabras cambiaron, el veredicto CUMPLE y el resto de la evidencia de esa fila son byte-identicos entre f9c85de y f2a3555.
+- El detector final (1962 comprobadas, 0 bloqueantes, codigo 0, 12 abreviadas rotas informativas, linea base en cero) coincide con lo que apply-progress declara.
+- npm test (1132/1132) y typecheck (exit 0) coinciden con lo declarado.
 
-**La divergencia que sí importa para el veredicto no está en lo que el `apply` registró, sino en lo que NO registró:** `apply-progress.md` no menciona en ningún punto que el escenario de auto-exclusión de RQ-RE-16 carece de prueba propia. No es una afirmación falsa del `apply` — su mandato era ejecutar tareas, no auditar cobertura escenario por escenario contra los deltas de spec.
+No se encontro ninguna afirmacion del apply que esta verificacion no pudiera sostener con evidencia propia.
 
-En todo lo demás —los nueve criterios de §13, los siete puntos de Gerencia, IV-4/IV-11, el detector, `npm test`/`typecheck`— el verify y el `apply` coinciden, confirmado con evidencia propia y no por transcripción.
+## Limites de esta verificacion
 
-### 4 · Límites de esta verificación
+1. No se reprodujo el rojo original de la tarea 1.1 ni las mutaciones M-a/M-b/M-c sin abrir otro intento del ledger - fuera del mandato de esta fase (regla del ciclo 2 de CLAUDE.md: una tanda SDD por arbol de trabajo). Para M-c se corroboro por lectura de codigo que la mutacion descrita produciria el rojo declarado (seccion 4).
+2. No se re-audito cita a cita el barrido completo de las poblaciones A (34) y B (26) de design.md 8.3/8.4: ese barrido no cambio entre f9c85de y f2a3555 (R3 es aditivo puro sobre ordenVentaUnTicket.test.ts y de una sola linea sobre specs/remisiones/spec.md), y ya fue verificado por muestreo dirigido en el verify anterior sin encontrar divergencias.
+3. sdd-archive no se ejecuto ni se preparo, conforme al alcance de esta fase. La seccion 5.1 de openspec/specs/remisiones/spec.md (viva) sigue describiendo el defecto ya cerrado como "DECIDIDA, y se construye" - es deuda declarada, no un hallazgo nuevo, y solo se resuelve al fundirse el delta.
+4. El caso (c), la guarda equipo-cliente (IV-8) y las puertas 1 y 2 quedan fuera de alcance, tal como fija el encargo.
+5. npm run lint se corrio como verificacion adicional (no exigida por 13 de proposal.md): exit 0, 158 warnings preexistentes de no-explicit-any, ninguno en los ficheros tocados por esta tanda.
+6. f2a3555 (HEAD verificado) no esta empujado a origin/main al momento de este informe; el push queda a cargo de una persona, segun el encargo.
 
-1. No se reprodujo el rojo de 1.1 ni las mutaciones M-a/M-b sin abrir otro intento del ledger — fuera del mandato de esta fase.
-2. No se re-auditó cita a cita el barrido completo de las poblaciones A (34) y B (26) de `design.md` §8.3/§8.4: se comprobó por muestreo dirigido (citas del bloque OV en `remisiones/spec.md`, los bloques `id: IV-4`/`id: IV-11`, y las cinco citas de `ordenVentaUnTicket.test.ts`) más la condición dura del detector, que cubre existencia y no vacuidad de línea pero no el contenido semántico de cada cita — el propio detector lo declara. El muestreo no encontró divergencias.
-3. `sdd-archive` no se ejecutó ni se preparó, conforme al alcance de esta fase. La sección 5.1 de `openspec/specs/remisiones/spec.md` (viva) sigue describiendo el defecto ya cerrado como «DECIDIDA, y se construye» — confirmado por lectura directa— porque el delta que la retira sólo toma efecto al fundirse en el archive. Es deuda declarada, no un hallazgo nuevo.
-4. `npm run lint` se corrió como verificación adicional (no exigida por §13): 0 errores, 158 warnings preexistentes de no-explicit-any, ninguno en los ficheros tocados por esta tanda.
+---
 
-### 5 · Nota sobre el veredicto
+## TDD Compliance (Strict TDD)
 
-El veredicto FAIL no cuestiona la calidad de la guarda construida — está en su posición y forma exactas, probada por dos escenarios reales y por una prueba de posición cuya aserción distingue el 409 del 422— sino que señala que uno de los tres escenarios que el propio delta declara con SHALL no tiene ninguna prueba que lo ejecute. Corregirlo es añadir un `it` a `ordenVentaUnTicket.test.ts` o a `remisiones.test.ts` que reenvíe a un ticket el `salesOrderId` que ya tiene y confirme 201 sin 409; no toca `remision.ts`, que ya implementa la exclusión correctamente por lectura de código.
+| Check | Result | Details |
+|-------|--------|---------|
+| TDD Evidence reported | Si | apply-progress.md tiene tabla "TDD Cycle Evidence (R3)" (lineas 244-250) |
+| All tasks have tests | Si | 3.1 tiene prueba propia; 3.2 es verificacion por mutacion (sin fichero de prueba nuevo, por diseno); 3.3 es correccion documental (cita en spec.md, sin codigo) |
+| RED confirmado (test existe) | Si | ordenVentaUnTicket.test.ts:185-205 existe y se ejecuta dentro de la suite |
+| GREEN confirmado (test pasa) | Si | 1132/1132 verdes hoy, exit 0 |
+| Triangulacion adecuada | Escenario unico | RQ-RE-16 solo declara un escenario para el reenvio a si mismo; un solo it es proporcional |
+| Safety Net de ficheros modificados | Si | Unico fichero de prueba tocado por R3: ordenVentaUnTicket.test.ts, apendice puro (+29/-0); el resto de la suite (1131 tests previos) sirvio de red de seguridad y siguio verde |
 
-### 6 · Añadido por el orquestador al comprobar este informe — un hallazgo que el verify no vio
+Desviacion declarada, no penalizada: la tarea 3.1 no sigue el ciclo clasico RED-GREEN porque la guarda de produccion ya existia (construida en R1, remision.ts:230). apply-progress.md lo declara por escrito y sustituye el RED por la mutacion M-c (seccion 4 de este informe), que es exactamente lo que exige la regla de mutacion 1 de CLAUDE.md para probar una exclusion ya construida. No es una tarea saltada.
 
-El verify auditó los deltas contra las pruebas, pero no contrastó las citas del delta **entre sí**. Al
-hacerlo aparece una incoherencia dentro del propio `specs/remisiones/spec.md` de esta tanda:
+TDD Compliance: 6/6 checks pasan (1 con desviacion declarada y verificada, no un fallo)
 
-- Su línea 37 dice que el `WHERE ... COALESCE(orden_venta,'') = ''` del `UPDATE` está en la línea **237**
-  — correcto contra el árbol de hoy, comprobado en `apps/desk/server/routes/remision.ts`.
-- Su línea 79, dentro del escenario «Reenviar la misma orden al propio ticket no se rechaza a sí mismo»,
-  sigue diciendo que ese mismo `WHERE` está en la línea **223**, que es donde estaba **antes** de que R1
-  insertara la guarda.
+---
 
-O sea: **el mismo documento sitúa el mismo `WHERE` en dos líneas distintas.** La 37 la actualizó la tarea
-2.3; la 79 se quedó atrás porque va en forma abreviada, y la forma abreviada **no bloquea** al detector —
-es informativa—. Por eso pasó el barrido de R2 con el detector en 0 y por eso no la caza ninguna
-comprobación automática: es exactamente el caso que `CLAUDE.md` describe cuando dice que el detector no
-comprueba que la línea diga lo que la frase afirma.
+### Test Layer Distribution
 
-**Severidad: WARNING, no bloqueante.** No cambia el veredicto `fail` ni los recuentos del envelope: no es
-un escenario sin prueba ni un requisito incumplido. Cae natural en la misma tanda que cierre el CRITICAL,
-porque toca ese mismo fichero y ese mismo escenario.
+| Layer | Tests | Files | Tools |
+|-------|-------|-------|-------|
+| Unit | 0 | 0 | - |
+| Integration | 3 (las tres puertas) | 2 (ordenVentaUnTicket.test.ts, remisiones.test.ts) | vitest + supertest + Postgres de pruebas |
+| E2E | 0 | 0 | no instalado |
+| Total (ficheros tocados por el cambio) | 3 | 2 | |
+
+Distribucion informativa (nivel SUGGESTION, sin impacto en el veredicto): las tres pruebas que cubren RQ-RE-16 son de integracion real contra HTTP + base de datos, no unitarias con mocks - apropiado para una guarda de backend que depende de una consulta SQL.
+
+---
+
+### Changed File Coverage
+
+Coverage analysis skipped - no coverage tool detected (mismo estado que el verify anterior; no es un fallo, el runner de este repositorio no tiene herramienta configurada).
+
+---
+
+### Assertion Quality
+
+Auditados ordenVentaUnTicket.test.ts completo (207 lineas) y las secciones de remisiones.test.ts citadas en este cambio (M5 lineas 990-1006, posicion lineas 1008-1053). Sin patrones vetados: sin tautologias, sin bucles fantasma, sin aserciones huerfanas de tipo sin acompanamiento de valor, sin acoplamiento a detalle de implementacion, sin exceso de mocks (0 vi.mock() en estos ficheros - son pruebas de integracion contra HTTP y base de datos reales). La prueba nueva de la seccion 1 combina asercion de estado (201), de ausencia de error, y de igualdad de valores completos antes/despues (toEqual), con comentario propio que declara por que compara valores y no solo conteo.
+
+Assertion quality: Todas las aserciones verifican comportamiento real
+
+---
+
+### Quality Metrics
+
+Linter: 0 errores (158 warnings preexistentes de no-explicit-any, ninguno en ficheros tocados por esta tanda)
+Type Checker: 0 errores
