@@ -59,7 +59,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
    *
    * Es integridad de datos, NO autorización: `tickets.client_id` no filtra ni autoriza nada, sólo
    * resuelve el nombre a mostrar. El desvío que esto cierra es el mismo patrón que `CLAUDE.md` ya
-   * registra en `routes/remision.ts:218-226` («una OV, un ticket» con una puerta sin comprobar):
+   * registra en `routes/remision.ts:218-240` («una OV, un ticket» con una puerta sin comprobar):
    * guardar sólo el `clientId` del cuerpo dejaría la puerta de la OV (`:39`) con el mismo hueco.
    */
   if (!clientId && equipo.clientId) {

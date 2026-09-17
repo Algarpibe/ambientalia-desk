@@ -542,11 +542,11 @@ fichero ya tuvo que desactivar con una nota al pie.
 (`apps/desk/server/transitionActor.ts:3`) sigue existiendo como respaldo, con el valor
 `'Equipo Técnico'` y configurable por entorno. Hay **un** camino por el que puede llegar a escribirse
 en el historial, y no es el endpoint de transición: el **callback de n8n** de la remisión
-(`apps/desk/server/routes/remision.ts:320`), que aplica el paso sin botón de M1.3.3. Esa petición **no
+(`apps/desk/server/routes/remision.ts:363`), que aplica el paso sin botón de M1.3.3. Esa petición **no
 tiene sesión** —n8n no manda la cookie—, así que firma quien creó la remisión y cae al marcador sólo
-si la remisión no trae autor, que es el caso de las históricas (`routes/remision.ts:315-319`).
+si la remisión no trae autor, que es el caso de las históricas (`routes/remision.ts:358-362`).
 
-Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:282` y `:292`— van
+Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:325` y `:335`— van
 detrás de `requireAuth` y `requireAdmin` (`:275` y `:287`), así que ahí `req.user.name` está siempre
 presente y el `?? TRANSITION_ACTOR` es defensivo, no alcanzable. En el endpoint de transición tampoco
 se alcanza: el middleware exige sesión (`apps/desk/server/routes/tickets.ts:35`).

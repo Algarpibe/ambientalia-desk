@@ -171,7 +171,7 @@ Barrido sobre `orden_venta` y `salesorder_id`, contrastado dos veces:
 
 - `ordenVentaUnTicket.test.ts:97-113` — puerta 1, verde
 - `ordenVentaUnTicket.test.ts:115-133` — puerta 2, verde
-- `ordenVentaUnTicket.test.ts:141-159` — puerta 3, el daño fijado **en positivo** (201, y la orden en los dos tickets)
+- `ordenVentaUnTicket.test.ts:141-159` en `14b45ee` (bloque retirado por `79cf09b`, fusión D1) — puerta 3, el daño fijado **en positivo** (201, y la orden en los dos tickets)
 - `ordenVentaUnTicket.test.ts:161-176` — el `it.fails` esperando 409
 - `remisiones.test.ts:990-1005` (M5) — el 422 del serial sin dejar nada escrito
 

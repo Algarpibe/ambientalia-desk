@@ -979,11 +979,14 @@ describe('F1B-01 · POST /api/remisiones exige el serial', () => {
  * llegar a la guarda. La petición se rechaza, quien la hizo entiende que no pasó nada, y el ticket se
  * ha quedado con una orden de venta encima.
  *
- * ⚠️ Y AQUÍ NO ES UN DAÑO CUALQUIERA: esa escritura es la **tercera puerta** de «una OV, un ticket»,
- * la que pone `salesorder_id` sin llamar a `ticketConOrdenVenta` —IV-4, `tickets-core` §4.2, con su
- * `it.fails` en `ordenVentaUnTicket.test.ts:161`—. Un rechazo que igualmente quema la OV en un ticket
- * es exactamente el modo de fallo que esa puerta ya tiene, disparado ahora desde una petición que
- * ni siquiera prosperó.
+ * ⚠️ Y AQUÍ NO ERA UN DAÑO CUALQUIERA: esa escritura era la **tercera puerta** de «una OV, un ticket»,
+ * la que ponía `salesorder_id` sin llamar a `ticketConOrdenVenta` —IV-4, `tickets-core` §4.2, con su
+ * `it.fails` en `ordenVentaUnTicket.test.ts:161` en `b99d47a`—. Un rechazo que igualmente quemara la OV
+ * en un ticket era exactamente el modo de fallo que esa puerta tenía. **CERRADO por
+ * `tercera-puerta-orden-venta` (`79cf09b`):** el `it.fails` ya no existe como tal —la prueba pasa a
+ * afirmar el `409` en positivo— y la tercera puerta llama hoy a `ticketConOrdenVenta`
+ * (`remision.ts:230`). Esta M5 sigue viva porque prueba una guarda DISTINTA, la del serial, disparada
+ * ahora desde una petición que ni siquiera prosperó.
  *
  * La prueba no comprueba el 422 —eso ya está arriba—: comprueba que **el ticket no cambió**.
  */

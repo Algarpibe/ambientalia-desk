@@ -127,7 +127,7 @@ Procedimiento por cita, no por lista (`design.md` §8.1): leer qué AFIRMA la fr
 (A/B/C de la regla de mutación 4 de `CLAUDE.md`), anclar en la misma línea física si es B o C, no tocar
 ninguna aserción, y sólo al final (aquí, en R2), cuando el desplazamiento de R1 ya está congelado.
 
-- [ ] **2.1 [Segundo pase, obligatorio]** Antes de reparar nada: repetir
+- [x] **2.1 [Segundo pase, obligatorio]** Antes de reparar nada: repetir
       `git grep -rnoE "remision\.ts:[0-9]+(-[0-9]+)?" -- . ':!openspec/changes/archive'` y
       `git grep -rnoE "ordenVentaUnTicket\.test\.ts:[0-9]+(-[0-9]+)?" -- . ':!openspec/changes/archive'`
       sobre el árbol ya congelado por 1.4, **y además** un pase manual por **forma abreviada**
@@ -157,24 +157,24 @@ usa para la Población B):
   `:410-415` que el delta de `tickets-core` **reescribe entera** (`MODIFIED Requirements`). Repararla en
   el fichero vivo se perdería al fusionar el delta: **no se toca aquí**, la reemplaza 2.3.
 
-- [ ] **2.2** Repasar y corregir, contra el `remision.ts` congelado, las citas de:
+- [x] **2.2** Repasar y corregir, contra el `remision.ts` congelado, las citas de:
       `openspec/specs/remisiones/spec.md:31, :34, :35, :152, :203, :206, :222, :235, :270, :295, :487,
       :491, :503` (13 de las 15 originales; `:379`/`:386` excluidas, ver arriba) ·
-      `openspec/specs/trazas/spec.md:228, :231, :233` ·
+      `openspec/specs/trazas/spec.md:228`, `:231` y `:233` ·
       `openspec/specs/transitions-st/spec.md:575` ·
-      `docs/sdd/F0-01_Correcciones_para_el_maestro.md:545, :547, :549` ·
-      `docs/sdd/F0-00_Baseline_as-built.md:173, :468` ·
+      `docs/sdd/F0-01_Correcciones_para_el_maestro.md:545`, `:547` y `:549` ·
+      `docs/sdd/F0-00_Baseline_as-built.md:173` y `:468` ·
       `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:168` ·
       `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:350` ·
       `docs/superpowers/plans/2026-08-07-ficha-tecnica-modelo.md:31` ·
       `apps/desk/server/services/ticketService.ts:62` (comentario — código que ni `tsc` ni `eslint` ven,
       entra igual) · `CLAUDE.md:277` (fila IV-11, que **se queda**: sólo se renumera la cita, la fila no
-      se toca) · `openspec/config.yaml:918, :938` (bloque `id: IV-11`, que se queda igual).
-      **`openspec/config.yaml:446` y `CLAUDE.md:274` NO se tocan aquí**: van dentro de 2.7 y 2.8
+      se toca) · `openspec/config.yaml:918` y `:938` (bloque `id: IV-11`, que se queda igual).
+      **`openspec/config.yaml:446` y `CLAUDE.md:274` en `79cf09b` NO se tocan aquí**: van dentro de 2.7 y 2.8
       (cierre de IV-4), que les da un tratamiento distinto al simple desplazamiento.
 
-- [ ] **2.3** Verificar las citas de `remision.ts` **dentro de los dos deltas de esta misma tanda**
-      (`openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md:30-31, :35, :37` y
+- [x] **2.3** Verificar las citas de `remision.ts` **dentro de los dos deltas de esta misma tanda**
+      (`openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md:30-31`, `:35`, `:37` y
       `specs/tickets-core/spec.md:42-43`) contra el `remision.ts` ya construido: describen la posición
       POST-guarda (`:218-226`, `:220`, `:221-225`, `:152-157`, `:223`) y hay que confirmar que coinciden
       con el rango real antes de que el `archive` funda el delta en la spec viva — si no coinciden, se
@@ -187,20 +187,20 @@ usa para la Población B):
 26 líneas distintas medidas (`design.md` §8.4). **8 se resuelven solas** (declaradas, no borradas de la
 lista) y **18 son reparaciones reales** (9 Caso C + 9 Caso B), cada grupo con su propia casilla.
 
-- [ ] **2.4 [Declarar, no editar]** Las **8 auto-resueltas**, y por qué: `openspec/specs/remisiones/
+- [x] **2.4 [Declarar, no editar]** Las **8 auto-resueltas**, y por qué: `openspec/specs/remisiones/
       spec.md:368, :369, :391, :393, :406, :413, :414` (las siete caen dentro de `### 5.1`, que el delta
       de `remisiones` retira entera) y `openspec/specs/tickets-core/spec.md:414` (cae en la narrativa
       `:410-415` que el delta de `tickets-core` ya reescribe). No se tocan: desaparecen o se sustituyen
       solas cuando el `archive` funda los deltas.
 
-- [ ] **2.5 [Caso C]** `apps/desk/server/remisiones.test.ts:984` (comentario de prueba, CÓDIGO): anclar
+- [x] **2.5 [Caso C]** `apps/desk/server/remisiones.test.ts:984` (comentario de prueba, CÓDIGO): anclar
       a su revisión y añadir que el `it.fails` de `ordenVentaUnTicket.test.ts:161` ya no existe como tal
       — la prueba pasa a afirmar el `409` en positivo (desde 1.4).
 
-- [ ] **2.6 [Caso C]** `openspec/specs/transitions-st/spec.md:581, :582`: anclar a su revisión y añadir
+- [x] **2.6 [Caso C]** `openspec/specs/transitions-st/spec.md:581` y `:582`: anclar a su revisión y añadir
       qué cerró el `it.fails` de `:161`.
 
-- [ ] **2.7 [Caso C + cierre IV-4, mismo bloque YAML]** `openspec/config.yaml`, bloque `id: IV-4`
+- [x] **2.7 [Caso C + cierre IV-4, mismo bloque YAML]** `openspec/config.yaml`, bloque `id: IV-4`
       (`:444-508`): (a) Caso C en `:474` (campo `decidido`) y `:485-486` (campo `reasignado`) — anclar a
       su revisión (2026-09-10) y añadir qué lo cerró (`tercera-puerta-orden-venta`, guarda construida en
       1.2); (b) Caso A en `:446` (campo `ubicacion`) — actualizar al rango real de `remision.ts` tras
@@ -209,7 +209,7 @@ lista) y **18 son reparaciones reales** (9 Caso C + 9 Caso B), cada grupo con su
       apuntando a `RQ-RE-16` de `remisiones/spec.md` — mismo patrón que los bloques `id: IV-5` e
       `id: IV-6` de este mismo fichero (`:510-516` y equivalente).
 
-- [ ] **2.8 [Cierre IV-4 en `CLAUDE.md` — DOS sitios del recuento]** En la tabla de «Incumplimientos
+- [x] **2.8 [Cierre IV-4 en `CLAUDE.md` — DOS sitios del recuento]** En la tabla de «Incumplimientos
       vivos»: **retirar** la fila
       `| — | apps/desk/server/routes/remision.ts:218-226 escribe salesorder_id... | CONSTRUIBLE desde
       el 2026-09-10... |` (fila 2, hoy `:274` — esto **absorbe** su reparación Caso C de Población B, no
@@ -238,31 +238,47 @@ lista) y **18 son reparaciones reales** (9 Caso C + 9 Caso B), cada grupo con su
       da por cubierta por 2.7: 2.7 cierra IV-4 en `openspec/config.yaml`, y el recuento de `CLAUDE.md`
       es otro fichero, con encabezado (`:255`) y párrafo (`:259-262`) que se editan por separado.
 
-- [ ] **2.9 [Caso B]** `docs/sdd/Decisiones_Gerencia_2026-09-10.md:137, :138` (`:138` sólo sale por
+- [x] **2.9 [Caso B]** `docs/sdd/Decisiones_Gerencia_2026-09-10.md:137` y `:138` (`:138` sólo sale por
       abreviada): anclar en su revisión (2026-09-10), **sin renumerar** — son ciertas en su momento, no
       hoy.
 
-- [ ] **2.10 [Caso B]** `docs/sdd/F1B-01_Serial_llave_de_entrada.md:142, :143, :222, :223` (`:142` y
+- [x] **2.10 [Caso B]** `docs/sdd/F1B-01_Serial_llave_de_entrada.md:142`, `:143`, `:222` y `:223` (`:142` y
       `:222` sólo salen por el texto «`it.fails`»): anclar en su revisión, **sin renumerar**.
 
-- [ ] **2.11 [Caso B]** `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:173, :177`: anclar en su revisión
+- [x] **2.11 [Caso B]** `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:173` y `:177`: anclar en su revisión
       (2026-09-11), **sin renumerar**.
 
-- [ ] **2.12 [Caso B, ya correcta — declarar]** `docs/sdd/R08.3_Expediente_de_cambios.md:321`: **ya
+- [x] **2.12 [Caso B, ya correcta — declarar]** `docs/sdd/R08.3_Expediente_de_cambios.md:321`: **ya
       ancla** («contra `6be9cf0`»). Comprobar que sigue siendo exacta y declararla correcta de fábrica;
       no necesita edición.
 
-- [ ] **2.13 [Verificación IV-11]** Confirmar que el registro de IV-11 (ya presente:
+- [x] **2.13 [Verificación IV-11]** Confirmar que el registro de IV-11 (ya presente:
       `CLAUDE.md:277` fila de «Incumplimientos vivos», y `openspec/config.yaml` bloque `id: IV-11`,
       `:916-…`) queda consistente **después** de 2.2 (renumeración de su cita a `remision.ts`) y de 2.8
       (retirada de la fila de IV-4, que no debe arrastrar ni duplicar la fila de IV-11). No se crea
       registro nuevo: sólo se verifica que el ya existente sobrevive intacto y bien anclado.
 
-- [ ] **2.14 [Cierre de R2]** `npm test` → verde (sin código tocado, sólo para confirmar que nada se
-      rompió). Informe del hook de `pre-push` (citas, `apps/desk/server/citas/`) limpio — **el hook NO
-      basta por sí solo**: `remision.ts` sólo crece, así que ninguna cita desplazada cae en línea vacía
-      y el hook pasaría con citas ya mintiendo. **Lectura manual, cita a cita**, de las tareas 2.2 a
-      2.13 contra el fichero final, con el informe del hook como ayuda, no como sustituto.
+- [x] **2.14 [Citas rotas que introdujo ESTA tanda — tipo NUEVO, fuera del inventario de 26 + 31]**
+      Las **nueve** citas de este mismo `tasks.md` que el detector da por **bloqueantes** con el motivo
+      «fichero inexistente», en las líneas **163, 165, 166, 172, 177, 200, 241, 245 y 248**. El defecto
+      es de **ESCRITURA, no de desplazamiento**: llevan **varias citas dentro de UN SOLO par de
+      acentos** —la ruta y, detrás, dos o más números de línea separados por comas, todos dentro del
+      mismo par—, y el detector cosecha **todo** el contenido del acento como nombre de fichero, comas
+      incluidas, y lo da por inexistente. **No están en el inventario de 26 + 31** de `design.md` §8.3
+      y §8.4: las introdujo esta misma tanda al escribir `tasks.md`, así que 2.1 no las vio.
+      **Reparación:** cada cita en **su propio par de acentos**, o las adicionales **en prosa** («y
+      también las líneas 231 y 233»). ⚠️ **NO se añade NADA a la línea base**: está en **0** desde que
+      se cerró IV-10, sólo encoge, y reabrirla sería el peor arreglo posible. Las líneas de esta
+      reparación **CUENTAN** en la medida del intento.
+
+- [x] **2.15 [Cierre de R2]** `npm test` → verde (sin código tocado, sólo para confirmar que nada se
+      rompió). **Y la condición dura, que no es `npm test`:**
+      `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha <commit de R2>` → **0 bloqueantes y
+      código de salida 0**. Medido sobre `79cf09b` el 2026-09-16 salía con **código 1 y 20
+      bloqueantes**, nueve de ellos los de 2.14. El detector **NO basta por sí solo**: `remision.ts`
+      sólo crece, así que ninguna cita desplazada cae en línea vacía y el detector pasaría con citas ya
+      mintiendo. **Lectura manual, cita a cita**, de las tareas 2.2 a 2.14 contra el fichero final, con
+      el informe del detector como ayuda, no como sustituto.
 
 ---
 

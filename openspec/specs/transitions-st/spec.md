@@ -572,15 +572,17 @@ tiene **tres** puertas y sólo **dos** la comprueban:
 |---|---|---|---|
 | Creación de ticket | Sí, `409` | El `409` de la OV **gana** | `ticketService.ts:45-49` |
 | Transición `habilitar_servicio` | Sí, `409` | El `422` de obligatorios **gana** | `ticketService.ts:134-135` |
-| **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-226` |
+| **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-240` |
 
 **Las dos primeras no son equivalentes**: comprueban la misma regla en órdenes opuestos. Es una
 inversión de precedencia, y va aparte en §3.8.
 
-La tercera confía en `WHERE COALESCE(orden_venta,'') = ''`, que impide pisar la OV del propio ticket
-pero **no** que dos tickets distintos acaben con la misma. Hay un `it.fails` esperando
-(`apps/desk/server/ordenVentaUnTicket.test.ts:161`), y una prueba que fija el daño observable: la
-orden queda en los dos tickets, por sus dos vías (`:156-158`).
+La tercera confiaba sólo en `WHERE COALESCE(orden_venta,'') = ''`, que impide pisar la OV del propio
+ticket pero **no** evitaba que dos tickets distintos acabaran con la misma. Había un `it.fails`
+esperando (`apps/desk/server/ordenVentaUnTicket.test.ts:161` en `b99d47a`), con una prueba que fijaba
+el daño observable: la orden quedaba en los dos tickets, por sus dos vías (`:156-158` en `b99d47a`).
+**CERRADO por `tercera-puerta-orden-venta` (`79cf09b`):** el `it.fails` se puso verde con un `409`, y
+la tercera puerta llama hoy también a `ticketConOrdenVenta` (`remision.ts:230`).
 
 ### 3.5 · C5 — las transiciones no llevan tipo de evento · **destino: sin tanda asignada**
 

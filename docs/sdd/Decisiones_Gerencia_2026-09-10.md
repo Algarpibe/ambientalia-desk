@@ -134,10 +134,10 @@ singular `salesorder_id` y en el desplegable de selección única.
 
 ### Tres comprobaciones contra el código
 
-1. **`ordenVentaUnTicket.test.ts:141-159` prueba la dirección que se mantiene.** Afirma
-   `porId: [7001, 7002]`, es decir una OV que acaba en DOS tickets. **Sigue en verde**, y el `it.fails`
-   de `:161` **debe ponerse verde**: la tercera puerta sigue mereciendo construirse. **IV-4 pasa de
-   bloqueado a construible.**
+1. **`ordenVentaUnTicket.test.ts:141-159` en `b99d47a` probó la dirección que se mantiene.** Afirmaba
+   `porId: [7001, 7002]`, es decir una OV que acaba en DOS tickets. **Seguía en verde**, y el `it.fails`
+   de `:161` en `b99d47a` **debía ponerse verde**: la tercera puerta merecía construirse. **IV-4 pasó de
+   bloqueado a construible, y quedó CERRADO por `tercera-puerta-orden-venta` (`79cf09b`).**
 
 2. **La FK no puede ir en `sales_orders`.** `schema.sql:160` la declara en el esquema `books` con
    `synced_at`: es la **réplica del hub**, y `public.sales_orders` (`:176`) sólo una vista. Escribir

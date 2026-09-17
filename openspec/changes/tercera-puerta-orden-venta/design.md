@@ -29,7 +29,7 @@ valen más líneas que la guarda.
 
 ## 2 · Decisiones de arquitectura
 
-### D1 · Qué pasa con `ordenVentaUnTicket.test.ts:141-159` (pregunta A)
+### D1 · Qué pasa con `ordenVentaUnTicket.test.ts:141-159` en `14b45ee` (pregunta A; lo retiró `79cf09b`)
 
 **Elección: FUNDIRLAS EN UNA. Se BORRA `:141-159` y sobrevive el ex-`it.fails` de `:161-176`.**
 
@@ -339,8 +339,8 @@ barrido igual que los `.md`, y es justo la clase de cita que se descubre en el c
 
 **Y el otro grep, aparte de esos 34:**
 `git grep -rnoE "ordenVentaUnTicket\.test\.ts:[0-9]+(-[0-9]+)?"` — borrar `:141-159` sube el ex-`it.fails`
-~19 líneas. **~15 aciertos vivos**, incluidos `apps/desk/server/remisiones.test.ts:984`, `CLAUDE.md:274`
-(que cita `:150-158`, **dentro del bloque borrado**) y `openspec/specs/remisiones/spec.md:406` (cita
+~19 líneas. **~15 aciertos vivos**, incluidos `apps/desk/server/remisiones.test.ts:984`, `CLAUDE.md:274` en `79cf09b`
+(que cita `:150-158`, **dentro del bloque borrado**; esa fila la retiró la casilla 2.8 de ESTA tanda, así que la cita se ancla, no se renumera: la regla de mutación 4 aplicada a la tanda contra sí misma) y `openspec/specs/remisiones/spec.md:406` (cita
 `:158`, **borrada también**). Casi todos dicen «el `it.fails` de `:161`»: **Caso C** — se anclan y se
 añade qué lo cerró. **No se renumeran**, o dirían que hay un `it.fails` donde ya no lo hay.
 

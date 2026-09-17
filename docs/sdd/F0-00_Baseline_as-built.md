@@ -170,7 +170,7 @@ Ficheros canónicos auditados: `packages/shared/src/transitions.ts` (328 líneas
 
 **e.8 — La traza obligatoria se comprueba en una sola transición.** `apps/desk/server/app.test.ts:1793-1804` en `a3a8f03` (cerrado después por F0-04, b5deda0: las 34 transiciones dejan traza) verifica `performed_by === 'Admin'` para `aprobacion`; no hay prueba de que las 34 dejen fila en `ticket_transitions`. → Condiciona F1B-05.
 
-**e.9 — `estadoPorRemision.ts` y `ticketService.ts` no tienen fichero de prueba propio.** No existe `estadoPorRemision.test.ts`; `sincronizarEstadoPorRemision` sólo se ejercita de refilón desde `app.test.ts:2421` vía `apps/desk/server/routes/remision.ts:282,292,320`. La guarda de no-cruce (`estadoPorRemision.ts:41`), que es la regla invariable 7, no tiene prueba que la nombre. `executeTransition` (`ticketService.ts:74-181`) y `createManagedTicket` (`:20-71`) sólo se prueban por HTTP.
+**e.9 — `estadoPorRemision.ts` y `ticketService.ts` no tienen fichero de prueba propio.** No existe `estadoPorRemision.test.ts`; `sincronizarEstadoPorRemision` sólo se ejercita de refilón desde `app.test.ts:2421` vía `apps/desk/server/routes/remision.ts:325`, `:335` y `:363`. La guarda de no-cruce (`estadoPorRemision.ts:41`), que es la regla invariable 7, no tiene prueba que la nombre. `executeTransition` (`ticketService.ts:74-181`) y `createManagedTicket` (`:20-71`) sólo se prueban por HTTP.
 
 **e.10 — La única prueba contra PostgreSQL real se salta en local, pero sí corre en CI.** `packages/zoho-sync/src/db/migrate.integration.test.ts:5-6` (`const d = url ? describe : describe.skip`). En local todo corre sobre `pg-mem`, cuyo dialecto no implementa el `ON CONFLICT … WHERE` atómico de `upsertAccount`.
 
@@ -465,7 +465,7 @@ Un diseño sin plan: `2026-08-10-articulos-por-modelo-design.md`, en estado «pr
 
 **Respuesta: no.** `remisiones_entrada` **no es una tabla de este repositorio ni de PostgreSQL**: es la hoja de Google Sheets `Remision_Data/remisiones_entrada`, escrita por el nodo `BBDD remisiones_entrada` del flujo de n8n `Remisiones_ST_3.13_Desk` (id `BpLlnPAfjpHaoeKA`), documentado en `docs/superpowers/specs/2026-08-04-remision-entrada-desenlace-design.md:11,52,88`. Ese nodo vive enteramente en n8n (SaaS externo), fuera del código de este repositorio.
 
-**Lo que sí está en el repo es el disparador.** `apps/desk/server/routes/remision.ts:259` llama a `dispararRemision` (`apps/desk/server/remisionWebhook.ts:75-108`), que hace `POST` al webhook de n8n (`config.remisionWebhookUrl`) con el payload que arma `buildRemisionPayload` (`remisionWebhook.ts:31-66`). Ese `POST` dispara las siete ramas paralelas del flujo, una de las cuales es `BBDD remisiones_entrada`.
+**Lo que sí está en el repo es el disparador.** `apps/desk/server/routes/remision.ts:302` llama a `dispararRemision` (`apps/desk/server/remisionWebhook.ts:75-108`), que hace `POST` al webhook de n8n (`config.remisionWebhookUrl`) con el payload que arma `buildRemisionPayload` (`remisionWebhook.ts:31-66`). Ese `POST` dispara las siete ramas paralelas del flujo, una de las cuales es `BBDD remisiones_entrada`.
 
 **No tiene ninguna relación con la hoja de vida.** El módulo de hoja de vida (`apps/desk/server/db/historial.ts`) sólo lee `ticket_history`, `ticket_transitions` y `remisiones` de PostgreSQL.
 

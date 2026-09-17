@@ -165,16 +165,16 @@ puede apoyarse en nº 52**.
 
 **El giro que hace urgente decidir.** El código **ya impone** «una OV, un ticket» en dos puertas
 (`apps/desk/server/services/ticketService.ts:45` en el alta y `:128` en `habilitar_servicio`), y deja
-una tercera sin comprobar (`apps/desk/server/routes/remision.ts:218-226`, el desvío IV-4).
+una tercera sin comprobar (`apps/desk/server/routes/remision.ts:218-240`, el desvío IV-4).
 
 | Salida | Qué hay que hacer | Coste |
 |---|---|---|
 | **(a) A favor de las tres variantes** | **RETIRAR** las dos puertas que ya existen. No construir la tercera | Trabajo ya hecho que se deshace. Nada que construir |
-| **(b) A favor de «una OV, un ticket»** | **CONSTRUIR** la tercera puerta en el alta de remisión | El `it.fails` que ya espera (`apps/desk/server/ordenVentaUnTicket.test.ts:161`) se pone verde |
+| **(b) A favor de «una OV, un ticket»** | **CONSTRUIR** la tercera puerta en el alta de remisión | El `it.fails` que ya esperaba (`apps/desk/server/ordenVentaUnTicket.test.ts:161` en `b99d47a`) se puso verde — cerrado por `tercera-puerta-orden-venta` (`79cf09b`) |
 
 **Construir la tercera antes de decidir cuesta el doble**, porque si la decisión va en la dirección (a)
 hay que retirarla acto seguido. Y lo medido no se pierde en ninguno de los dos casos: la prueba que fija
-el daño observable de hoy está escrita en positivo (`ordenVentaUnTicket.test.ts:141-159`).
+el daño observable de entonces está escrito en positivo (`ordenVentaUnTicket.test.ts:141-159` en `b99d47a`).
 
 **Acto de registro, vaya como vaya.** Añadir a la tabla de decisiones del plan:
 

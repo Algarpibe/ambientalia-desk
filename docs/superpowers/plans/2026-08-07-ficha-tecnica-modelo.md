@@ -28,7 +28,7 @@
 Ficheros de referencia que hay que leer antes de empezar:
 - `apps/desk/server/db/catalogo.ts` — el repo del catálogo (~280 líneas). Aquí se amplía.
 - `apps/desk/server/routes/catalogo.ts` — sus rutas, con el patrón de `requireAuth` + `requireSuperAdmin`.
-- `apps/desk/server/routes/remision.ts:310-328` — **el patrón exacto** de subir y servir un binario.
+- `apps/desk/server/routes/remision.ts:367-385` — **el patrón exacto** de subir y servir un binario.
 - `apps/desk/server/db/remisiones.ts:190-230` — cómo se guardan y leen las fotos.
 
 ---

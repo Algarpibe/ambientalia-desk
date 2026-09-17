@@ -27,14 +27,14 @@ Antes de escribir `orden_venta`, `fecha_orden_venta` y `salesorder_id` sobre el 
 `POST /api/remisiones` **SHALL** comprobar contra `ticketConOrdenVenta(db, { salesorderId, numero },
 ticketId)` (`packages/zoho-sync/src/db/repo.ts:330-347`) que la orden no pertenezca ya a otro ticket,
 por las **dos vías** —`salesorder_id` y número— y **excluyendo el propio ticket destino**. La
-comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-226`,
-**después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:221-225`).
+comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-240`,
+**después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:235-239`).
 
 Si la orden ya pertenece a otro ticket, la respuesta **SHALL** ser `409`, con el texto de
 `ticketService.ts:135` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
 las tres columnas **SHALL** quedar escrita. El `422` del serial (`remision.ts:152-157`) **SHALL**
 seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condición
-`WHERE ... COALESCE(orden_venta,'') = ''` (`:223`) **SHALL** mantenerse intacta: protege la carrera de
+`WHERE ... COALESCE(orden_venta,'') = ''` (`:237`) **SHALL** mantenerse intacta: protege la carrera de
 dos remisiones sobre el **mismo** ticket, una pregunta distinta de la que resuelve este requisito.
 
 **Las dos vías son requisito, no preferencia.** La divergencia `orden_venta`/`salesorder_id` por
@@ -89,5 +89,5 @@ a comportamiento decidido y construido.)
 Su contenido y sus dos escenarios se funden en `RQ-RE-16`.)
 (Migration: `Hoy, sin la tercera puerta, una OV puede duplicarse` y `Gerencia decidió, y el arreglo es
 completar la tercera puerta` se sustituyen por los tres escenarios de `RQ-RE-16`. Toda cita a
-`remisiones/spec.md:353-417` debe re-anclarse en el `archive`, por la regla de mutación 4 de
-`CLAUDE.md`.)
+`openspec/specs/remisiones/spec.md:353-416` debe re-anclarse en el `archive`, por la regla de mutación 4
+de `CLAUDE.md`.)

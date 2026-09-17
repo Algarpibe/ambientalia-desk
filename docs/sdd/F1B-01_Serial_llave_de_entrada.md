@@ -140,8 +140,9 @@ quedado con una orden de venta encima.
 normal:** un ticket de Zoho sin serial más un `salesOrderId`. Y ahí el daño no es genérico — esa
 escritura es la **tercera puerta** de «una OV, un ticket», la que pone `salesorder_id` sin llamar a
 `ticketConOrdenVenta` (**IV-4**, `tickets-core` §4.2, con su `it.fails` en
-`ordenVentaUnTicket.test.ts:161`). Un rechazo que igualmente quema la OV es ese mismo modo de fallo
-disparado desde una petición que **ni siquiera prosperó**.
+`ordenVentaUnTicket.test.ts:161` en `b99d47a` — CERRADO por `tercera-puerta-orden-venta`, `79cf09b`). Un
+rechazo que igualmente quemara la OV era ese mismo modo de fallo disparado desde una petición que **ni
+siquiera prosperó**.
 
 La prueba que la mata no comprueba el `422` —eso ya estaba—: comprueba que **el ticket no cambió**
 (`remisiones.test.ts`, «M5 · con orden de venta y sin serial: 422 y el ticket sigue sin OV»).
@@ -220,8 +221,10 @@ guardianes que sí crecieron son los del **esquema**, y son otra familia:
 **Y un hallazgo que NO se corrige aquí:** `tickets-core` §4.1 y §4.2 declaran **«destino F1A»** —la
 inversión `409`/`422` del alta y la tercera puerta de la OV—, y **F1A cerró sin tocar ninguna de las
 dos**: `ticketService.ts:43-49` sigue evaluando el `409` antes del `422`, y el `it.fails` de
-`ordenVentaUnTicket.test.ts:161` sigue esperando. No son de esta tanda —y §4.1 avisa de que «corregir
-una sin la otra deja el problema»—, pero **su destino declarado ya pasó**. Necesitan uno nuevo.
+`ordenVentaUnTicket.test.ts:161` en `b99d47a` seguía esperando —**cerrado por
+`tercera-puerta-orden-venta`, `79cf09b`**—. La inversión 409/422 del alta no es de esta tanda —y §4.1
+avisa de que «corregir una sin la otra deja el problema»—, pero **su destino declarado ya pasó**.
+Necesita uno nuevo.
 
 ---
 

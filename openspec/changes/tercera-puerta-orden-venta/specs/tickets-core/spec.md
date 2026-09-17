@@ -34,12 +34,13 @@ porque sigue siendo cierta, con un puntero añadido a `RQ-RE-16`.
 > lote, **desaparece por proceso**: se sustituye por subórdenes `OV-AAAA-NNN-SS`, una por ticket
 > (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` `RQ-RE-16`.
 >
-> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` fija el modo de fallo exacto y `:161`
-> deja el `it.fails` esperando — ahora con dirección: verde con un `409`.
+> *Lo medido no se pierde, y ya está cerrado:* `ordenVentaUnTicket.test.ts:141-159` en `b99d47a` fijó el
+> modo de fallo exacto y el `it.fails` de `:161` en `b99d47a` dejaba esperando — cerrado por
+> `tercera-puerta-orden-venta` (`79cf09b`): hoy verde con un `409`.
 
 **Comportamiento actual. IV-4 CERRADO.** El alta de remisión ya llama a `ticketConOrdenVenta` por las
 **dos vías** —`salesorder_id` y número—, excluyendo el propio ticket, dentro del bloque de la orden de
-venta (`apps/desk/server/routes/remision.ts:218-226`), antes del `UPDATE` (`:221-225`). El `it.fails`
+venta (`apps/desk/server/routes/remision.ts:218-240`), antes del `UPDATE` (`:235-239`). El `it.fails`
 de `apps/desk/server/ordenVentaUnTicket.test.ts:161` deja de existir como tal: la prueba pasa a
 afirmar el `409` en positivo. **La regla completa es de `remisiones`** (hoy `RQ-RE-16`).
 

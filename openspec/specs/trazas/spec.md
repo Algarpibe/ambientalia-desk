@@ -225,12 +225,12 @@ NOT** contarse como persona (`:17-18`, `:30`).
 
 **Comportamiento actual.** `TRANSITION_ACTOR` (`transitionActor.ts:3`, valor `'Equipo Técnico'`,
 configurable por entorno) puede llegar a `performed_by` por **un** camino: el **callback de n8n** de
-la remisión (`apps/desk/server/routes/remision.ts:320`), que aplica el paso sin botón. Esa petición
+la remisión (`apps/desk/server/routes/remision.ts:363`), que aplica el paso sin botón. Esa petición
 **no tiene sesión** —n8n no manda la cookie—, así que firma quien creó la remisión y cae al marcador
 sólo si la remisión no trae autor, que es el caso de las **históricas**
-(`routes/remision.ts:315-319`).
+(`routes/remision.ts:358-362`).
 
-Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:282` y `:292`— van
+Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:325` y `:335`— van
 detrás de `requireAuth` y `requireAdmin` (`:275`, `:287`), así que ahí es defensivo y no alcanzable.
 En el endpoint de transición tampoco se alcanza: el middleware exige sesión
 (`routes/tickets.ts:35`).

@@ -24,7 +24,7 @@ La tercera escribe `orden_venta`, `fecha_orden_venta` y `salesorder_id` con un `
 única condición es `WHERE id = $1 AND COALESCE(orden_venta,'') = ''` (`:223`). Esa condición **protege otra
 pregunta**: mira si el ticket DESTINO ya tiene orden, no si la orden que llega ya está en otro ticket.
 
-**El daño está medido, no conjeturado.** `apps/desk/server/ordenVentaUnTicket.test.ts:141-159` fija en
+**El daño está medido, no conjeturado.** `apps/desk/server/ordenVentaUnTicket.test.ts:141-159` en `14b45ee` —bloque que `79cf09b` retiró al fusionar D1— fija en
 positivo el modo de fallo: `201` sin error de ningún tipo (`:153-154`) y la orden en los **dos** tickets por
 sus dos vías (`:158`). Al lado, el `it.fails` de `:161-176` deja escrito el contrato de la corrección: `409`,
 mensaje que nombre el ticket `7001` (`:172-173`) y la columna sin escribir (`:175`).

@@ -443,17 +443,29 @@ incumplimientos_vivos:
 
   - id: IV-4
     regla: "—"
-    ubicacion: "apps/desk/server/routes/remision.ts:218-226"
+    ubicacion: "apps/desk/server/routes/remision.ts:218-240"
     verificado: true
+    estado: CERRADO
+    cerrado_por: "tercera-puerta-orden-venta"
+    cerrado_verificado_en: "2026-09-16, base 79cf09b"
     descripcion: >
-      El bloque `if (b.salesOrderId)` escribe `salesorder_id` (y `orden_venta`,
+      El bloque `if (b.salesOrderId)` escribía `salesorder_id` (y `orden_venta`,
       `fecha_orden_venta`) con un UPDATE condicional en el SQL, SIN llamar a
-      `ticketConOrdenVenta`. La regla "una OV, un ticket" tiene TRES puertas y
-      sólo DOS la comprueban: `ticketService.ts:45-48` y `ticketService.ts:134-135`
+      `ticketConOrdenVenta`. La regla "una OV, un ticket" tenía TRES puertas y
+      sólo DOS la comprobaban: `ticketService.ts:45-48` y `ticketService.ts:134-135`
       (`ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:330`).
-      Esta tercera confía en `WHERE COALESCE(orden_venta,'') = ''`, que impide
-      pisar la OV del propio ticket pero NO que dos tickets distintos acaben
-      con la misma.
+      Esta tercera confiaba sólo en `WHERE COALESCE(orden_venta,'') = ''`, que
+      impide pisar la OV del propio ticket pero NO que dos tickets distintos
+      acabaran con la misma.
+    por_que_esta_cerrado: >
+      La guarda llama hoy a `ticketConOrdenVenta` dentro del bloque de la OV
+      (`apps/desk/server/routes/remision.ts:230`), por las dos vías —
+      `salesorder_id` y número— y con el propio ticket excluido. El requisito que
+      lo fija es `RQ-RE-16` de `openspec/specs/remisiones/spec.md`. La prueba que
+      lo confirma es el ex-`it.fails` de `ordenVentaUnTicket.test.ts:161`, verde
+      con un `409` desde `79cf09b`. El `WHERE COALESCE(orden_venta,'') = ''`
+      (`:237`) sigue existiendo, pero ya no está EN LUGAR DE la guarda: queda
+      ADEMÁS de ella.
     matiz_de_verificacion: >
       El proposal cita :188-196. El rango real es :189-197 (la 188 es el cierre
       `*/` del comentario). El UPDATE está en :192-196. ACTUALIZADO EN reasignar-desvios-huerfanos: tras F1B-01 el bloque es :218-226 y el UPDATE :221-225 — la guarda del serial lo bajo 29 lineas.
@@ -471,7 +483,8 @@ incumplimientos_vivos:
       OV-AAAA-NNN-SS, una por ticket, generadas al crear la OV
       (decision/subov-lote-convencion). Las otras dos variantes del maestro son
       N OV → 1 ticket, o sea 1:N desde el ticket, y no contradicen la regla.
-      EL `it.fails` de ordenVentaUnTicket.test.ts:161 se pone verde con un 409.
+      EL `it.fails` de ordenVentaUnTicket.test.ts:161 se puso verde con un 409,
+      y quedó CERRADO por `tercera-puerta-orden-venta` (`79cf09b`, 2026-09-16).
     reasignado: >
       2026-09-09, SUPERADO POR LA DECISIÓN DEL 10/09. Se conserva como registro.
       El destino anterior era "F1A"; F1A cerró sin tocarlo. Al buscarle sitio se
@@ -482,10 +495,11 @@ incumplimientos_vivos:
       tercera. ESE ENMARCADO QUEDÓ INVERTIDO: ver `decidido`.
       También decía que CERO FILAS DEL PLAN mencionaban la cardinalidad OV↔ticket.
       Hoy sí: plan:350, `decision/n52-cardinalidad-ov`.
-      LO QUE SÍ ESTÁ HECHO Y NO SE PIERDE: `ordenVentaUnTicket.test.ts:161` deja
-      un `it.fails` esperando, y `:150-158` fija en positivo el modo de fallo
-      exacto —201 sin queja, y la orden queda en los DOS tickets—. Sea cual sea
-      la decisión, el daño está medido y la prueba dirá cuándo cambia.
+      LO QUE SÍ ESTABA HECHO Y NO SE PERDIÓ: `ordenVentaUnTicket.test.ts:161` en
+      `b99d47a` dejaba un `it.fails` esperando, y `:150-158` en `b99d47a` fijaba
+      en positivo el modo de fallo exacto —201 sin queja, y la orden quedaba en
+      los DOS tickets—. El daño estaba medido y la prueba dijo cuándo cambió:
+      CERRADO por `tercera-puerta-orden-venta` (`79cf09b`).
       QUÉ HACE FALTA: que nº 52 entre en la tabla de decisiones del plan con su
       clave Engram y su sesión. Hoy no está, y por eso ni siquiera llega a la
       agenda del viernes. Redactado como entrada 5 de
@@ -915,7 +929,7 @@ incumplimientos_vivos:
   # estilo: es lo único que mantiene la guarda en pie mientras esto siga vivo.
   - id: IV-11
     regla: "—"
-    ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-226"
+    ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-240"
     verificado: true
     encontrado_en: >
       Exploración de `tercera-puerta-orden-venta` (2026-09-16, árbol 14b45ee), §2,
@@ -935,7 +949,7 @@ incumplimientos_vivos:
     la_cadena: >
       (1) `upsertTicket` (`repo.ts:56-68`) sólo se abstiene cuando
       `managed_by_app === true` (`:58-59`). (2) El `UPDATE` de la remisión de
-      entrada (`apps/desk/server/routes/remision.ts:218-226`) NO pone esa bandera,
+      entrada (`apps/desk/server/routes/remision.ts:218-240`) NO pone esa bandera,
       mientras `applyTransition` SÍ la pone (`repo.ts:271`). (3) El sync corre cada
       180000 ms por defecto (`packages/zoho-sync/src/config.ts:88`).
       CONSECUENCIA. Un ticket venido de Zoho (`managed_by_app = false`) al que la

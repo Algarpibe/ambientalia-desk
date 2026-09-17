@@ -404,13 +404,13 @@ habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le habí
 > lote, **desaparece por proceso**: se sustituye por subórdenes `OV-AAAA-NNN-SS`, una por ticket
 > (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` §5.1.
 >
-> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` fija el modo de fallo exacto y `:161`
+> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` en `14b45ee` (retirado por `79cf09b`, fusión D1) fija el modo de fallo exacto y `:161`
 > deja el `it.fails` esperando — ahora con dirección: verde con un `409`.
 
 **Comportamiento actual. IV-4 pasa de bloqueado a CONSTRUIBLE** (`config.yaml`,
 `incumplimientos_vivos`, IV-4). El alta
 de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
-(`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 subiera la
+(`apps/desk/server/routes/remision.ts:218-240` — eran `:189-197` antes de que F1B-01 subiera la
 guarda del serial). Hay un `it.fails` esperando (`apps/desk/server/ordenVentaUnTicket.test.ts:161`) y
 una prueba que fija el daño observable (`:156-158`). La regla completa es de `remisiones`.
 
