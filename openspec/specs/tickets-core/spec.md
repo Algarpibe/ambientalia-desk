@@ -402,17 +402,17 @@ habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le habí
 > alta (RQ-TC-08) y `:134-135` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un
 > ticket, que es justo lo que comprueban. La variante que ponía la regla en duda, la OV global por
 > lote, **desaparece por proceso**: se sustituye por subórdenes `OV-AAAA-NNN-SS`, una por ticket
-> (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` §5.1.
+> (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` `RQ-RE-16`.
 >
-> *Lo medido no se pierde:* `ordenVentaUnTicket.test.ts:141-159` en `14b45ee` (retirado por `79cf09b`, fusión D1) fija el modo de fallo exacto y `:161`
-> deja el `it.fails` esperando — ahora con dirección: verde con un `409`.
+> *Lo medido no se pierde, y ya está cerrado:* `ordenVentaUnTicket.test.ts:141-159` en `b99d47a` fijó el
+> modo de fallo exacto y el `it.fails` de `:161` en `b99d47a` dejaba esperando — cerrado por
+> `tercera-puerta-orden-venta` (`79cf09b`): hoy verde con un `409`.
 
-**Comportamiento actual. IV-4 pasa de bloqueado a CONSTRUIBLE** (`config.yaml`,
-`incumplimientos_vivos`, IV-4). El alta
-de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
-(`apps/desk/server/routes/remision.ts:218-240` — eran `:189-197` antes de que F1B-01 subiera la
-guarda del serial). Hay un `it.fails` esperando (`apps/desk/server/ordenVentaUnTicket.test.ts:161`) y
-una prueba que fija el daño observable (`:156-158`). La regla completa es de `remisiones`.
+**Comportamiento actual. IV-4 CERRADO.** El alta de remisión ya llama a `ticketConOrdenVenta` por las
+**dos vías** —`salesorder_id` y número—, excluyendo el propio ticket, dentro del bloque de la orden de
+venta (`apps/desk/server/routes/remision.ts:218-240`), antes del `UPDATE` (`:235-239`). El `it.fails`
+de `apps/desk/server/ordenVentaUnTicket.test.ts:161` deja de existir como tal: la prueba pasa a
+afirmar el `409` en positivo. **La regla completa es de `remisiones`** (hoy `RQ-RE-16`).
 
 (Previously: no nombraba explícitamente el enmarcado «retirar, no añadir» de `remisiones` §5.1 como
 el mismo enmarcado adoptado aquí. Y encabezaba con «a corregir en F1A», épica cerrada, con la segunda
@@ -420,6 +420,10 @@ puerta citada en `:100` cuando vivía en `:128-129`. **Y sostuvo ese enmarcado e
 las dos puertas», «nº 52 no está en la tabla de decisiones»— hasta que se barrió, el 2026-09-10, el
 mismo día en que `decision/n52-cardinalidad-ov` lo invirtió.** La segunda puerta vive hoy en
 `:134-135`.)
+
+(Previously, tras `tercera-puerta-orden-venta`: decía «IV-4 pasa de bloqueado a CONSTRUIBLE», que el
+alta de remisión escribía `salesorder_id` **sin** llamar a `ticketConOrdenVenta`, y que el `it.fails`
+de `ordenVentaUnTicket.test.ts:161` seguía esperando.)
 
 #### Scenario: La cardinalidad OV↔ticket, resuelta en la misma dirección en las dos specs
 

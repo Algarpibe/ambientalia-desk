@@ -317,6 +317,64 @@ porque permite script embebido (`routes/remision.ts:19-20` y `:329`).
   (`:87-90`), y la comilla que se saldría del atributo en el HTML que la historia del ticket devuelve
   por la API, «y dejaría la seguridad entera en manos de quien lo pinte» (`:94-98`).
 
+### RQ-RE-16 · La tercera puerta: una orden de venta no puede quedar en dos tickets
+
+Antes de escribir `orden_venta`, `fecha_orden_venta` y `salesorder_id` sobre el ticket destino,
+`POST /api/remisiones` **SHALL** comprobar contra `ticketConOrdenVenta(db, { salesorderId, numero },
+ticketId)` (`packages/zoho-sync/src/db/repo.ts:330-347`) que la orden no pertenezca ya a otro ticket,
+por las **dos vías** —`salesorder_id` y número— y **excluyendo el propio ticket destino**. La
+comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-240`,
+**después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:235-239`).
+
+Si la orden ya pertenece a otro ticket, la respuesta **SHALL** ser `409`, con el texto de
+`ticketService.ts:135` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
+las tres columnas **SHALL** quedar escrita. El `422` del serial (`remision.ts:152-157`) **SHALL**
+seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condición
+`WHERE ... COALESCE(orden_venta,'') = ''` (`:237`) **SHALL** mantenerse intacta: protege la carrera de
+dos remisiones sobre el **mismo** ticket, una pregunta distinta de la que resuelve este requisito.
+
+**Las dos vías son requisito, no preferencia.** La divergencia `orden_venta`/`salesorder_id` por
+sincronización (IV-11, fuera de alcance) puede dejar a un ticket con sólo una de las dos columnas
+vigente; comprobar sólo por número dejaría ese ticket sin protección.
+
+**Tercer punto de captura legítimo.** La remisión de entrada **SHALL** contarse como el tercer punto
+de captura de la orden de venta, junto con el alta del ticket (`tickets-core` RQ-TC-08) y
+`habilitar_servicio` (`ticketService.ts:134-135`). La lista de
+`docs/sdd/Decisiones_Gerencia_2026-09-10.md:156-164`, que sólo nombraba los dos primeros, quedó
+incompleta por omisión de redacción, no por decisión (decisión 1 de la ronda de preguntas del
+2026-09-16).
+
+**Guarda transitoria.** Esta guarda **SHALL** retirarse el día en que la tabla propia con
+`salesorder_id` como `PRIMARY KEY` (`Decisiones_Gerencia_2026-09-10.md:147-150`) sustituya a las tres
+guardas de aplicación; retirar sólo ésta sin retirar las otras dos sería el defecto.
+
+(Previously: dos escenarios sueltos en `§5.1 · Comportamiento actual, a corregir`, que narraban el
+defecto sin corregir y la decisión pendiente de construir. Promovidos aquí porque IV-4 pasa de defecto
+a comportamiento decidido y construido.)
+
+#### Scenario: Una orden ya asociada a otro ticket se rechaza antes de escribir nada
+
+- GIVEN una orden de venta ya asociada al ticket 7001
+- WHEN se crea una remisión de entrada sobre otro ticket con esa misma orden
+- THEN responde `409`, con el texto que nombra la orden y el ticket 7001
+- AND ninguna de las tres columnas del ticket destino queda escrita
+
+#### Scenario: El 422 del serial gana al 409 nuevo
+
+- GIVEN un ticket destino sin serial —ni equipo con serial— y una orden ya asociada a otro ticket
+- WHEN se crea la remisión de entrada
+- THEN responde `422` «Falta el serial», no `409`
+- AND ninguna de las tres columnas del destino queda escrita, y el ticket dueño de la orden sigue
+      siendo el único
+
+#### Scenario: Reenviar la misma orden al propio ticket no se rechaza a sí mismo
+
+- GIVEN un ticket cuya orden de venta ya es la que llega en la remisión (reintento de red, doble clic)
+- WHEN se crea la remisión de entrada
+- THEN la comprobación excluye al propio ticket destino y no llega al `409`
+- AND el `UPDATE` es no-op porque `orden_venta` ya no está vacía (`:237`), y la remisión se crea con
+      `201`
+
 ---
 
 ## 4 · El histórico importado
@@ -349,71 +407,6 @@ estado legítimo, no un dato que falta» (`schema.sql:305-306`).
 
 *(La numeración de esta sección va aparte de la de requisitos: aquí se registra lo que hay, no lo que
 debe haber.)*
-
-### 5.1 · La tercera puerta de la orden de venta: DECIDIDA, y se construye
-
-> **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** El punto abierto nº 52 está cerrado:
-> **la relación es `1 ticket : N OV`, sin tabla puente.** Verificado contra Zoho Books (org. 714421387)
-> y registrado en `docs/sdd/Decisiones_Gerencia_2026-09-10.md:112-126` y en la tabla de decisiones del
-> plan (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:350`).
->
-> **La dirección: se CONSTRUYE la tercera puerta, y las dos que ya existen SE QUEDAN.** `1 ticket : N
-> OV` significa que una OV pertenece **como mucho a un ticket** — exactamente lo que comprueban las dos
-> puertas vivas (`ticketService.ts:45-48` en el alta y `:134-135` en `habilitar_servicio`). La variante
-> que ponía la regla en duda —la OV global por lote, `1 OV → N tickets`— **desaparece por proceso**: la
-> decisión la elimina sustituyéndola por subórdenes `OV-AAAA-NNN-SS`, una por ticket, generadas al
-> crear la OV (`decision/subov-lote-convencion`). Las otras dos variantes del maestro son `N OV → 1
-> ticket`, que es 1:N desde el ticket y no contradice nada.
->
-> **IV-4 pasa de BLOQUEADO a CONSTRUIBLE.** El `it.fails` de
-> `apps/desk/server/ordenVentaUnTicket.test.ts:161` está esperando para ponerse verde con un `409`.
->
-> *(Previously, y durante ocho tandas: «el arreglo **puede ser RETIRAR** las dos puertas que ya
-> existen, no añadir la tercera», porque `R08.1.md:2071-2079` listaba tres variantes reales y concluía
-> que «ninguna de las tres encaja en un modelo de "una OV, un ticket"». **Ese enmarcado queda
-> invertido por la decisión del 10/09**, y con él la frase de que nº 52 «no está en la tabla de
-> decisiones del plan»: hoy sí está.)*
-
-`POST /api/remisiones` **escribe** `orden_venta`, `fecha_orden_venta` y `salesorder_id` en el ticket
-con un `UPDATE` condicional, **sin llamar a `ticketConOrdenVenta`**
-(`apps/desk/server/routes/remision.ts:218-226` — eran `:189-197` antes de que F1B-01 bajara 29 líneas
-la guarda del serial; el `UPDATE`, en `:221-225`). Las otras dos puertas sí la llaman: el alta
-(`services/ticketService.ts:43-49`, RQ-TC-08) y `habilitar_servicio`
-(`services/ticketService.ts:134-135`, RQ-TS-14 — eran `:128-129` antes de que
-`mensaje-422-cliente-duplicado` bajara 6 líneas la guarda equipo↔cliente).
-
-**Lo que la condición sí impide y lo que no.** El `WHERE ... COALESCE(orden_venta,'') = ''`
-(`remision.ts:223`) impide pisar la OV que el propio ticket ya tenga —por eso el formulario la enseña
-en gris (`:214-216`, la frase en `:215`)— y **no** impide que **dos tickets distintos** acaben con la
-misma orden.
-
-El daño observable está fijado en positivo, no como conjetura:
-`apps/desk/server/ordenVentaUnTicket.test.ts:141-159` en `14b45ee` (bloque retirado por `79cf09b` al fusionar D1) toma una OV ya asociada al ticket 7001 y la
-manda a un ticket nuevo; la prueba **exige `201`, sin error de ningún tipo** (`:153-154`), y comprueba
-que la orden queda en los dos tickets por sus dos vías (`:158`). Al lado, el `it.fails` (`:161-176`)
-deja escrito el modo de fallo que corregir esta puerta pondría en verde, **sea cual sea la dirección
-de la decisión de nº 52**: `409`, mensaje que nombre el ticket 7001, y la columna **sin escribir**
-(`:174`).
-
-(Previously: destino «F1A»; enmarcado único como «añadir la tercera puerta»; citas de `remision.ts`
-sin actualizar tras el corrimiento de F1B-01.)
-
-#### Scenario: Hoy, sin la tercera puerta, una OV puede duplicarse
-
-- GIVEN una orden de venta ya asociada al ticket 7001
-- WHEN se crea una remisión de entrada sobre otro ticket con esa misma orden de venta
-- THEN el alta responde `201` sin ningún error
-- AND la orden queda asociada a los dos tickets, por sus dos vías (`ordenVentaUnTicket.test.ts:158`)
-
-#### Scenario: Gerencia decidió, y el arreglo es completar la tercera puerta
-
-- GIVEN que el punto abierto nº 52 del maestro quedó resuelto el 2026-09-10 como `1 ticket : N OV`
-      (`decision/n52-cardinalidad-ov`)
-- WHEN el alta de remisión escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`
-- THEN el arreglo correcto es **completar la tercera puerta** con el `409` que el `it.fails` de
-      `ordenVentaUnTicket.test.ts:161` ya deja esperando
-- AND las dos puertas existentes **no se tocan**: una OV pertenece como mucho a un ticket, que es lo
-      que comprueban
 
 ### 5.2 · La remisión de salida no existe · **destino F1C-02**
 
