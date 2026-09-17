@@ -174,4 +174,33 @@ describe('una OV, un ticket · puerta 3 · la REMISIÓN DE ENTRADA', () => {
     // Y la orden se queda donde estaba: un 409 que ya hubiera escrito la columna no sería una guarda.
     expect(await ticketsConLaOrden()).toEqual({ porId: [7001], porNumero: [7001] })
   })
+
+  /**
+   * Escenario 3 de RQ-RE-16 (`specs/remisiones/spec.md:74-80`): reenviar a un ticket la orden que
+   * YA es suya —reintento de red, doble clic en el formulario— no es duplicarla. `ticketConOrdenVenta`
+   * excluye al propio ticket destino (`remision.ts:230`, tercer argumento `ticketId`), así que la
+   * comprobación no llega al `409`, y el `UPDATE` es no-op porque `orden_venta` ya no está vacía
+   * (`remision.ts:237`, `COALESCE(orden_venta,'') = ''`).
+   */
+  it('reenviar la misma orden al propio ticket no se rechaza a sí mismo: 201 y el UPDATE es no-op', async () => {
+    const cookie = await adminCookie()
+    await equipo()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date) VALUES ('soX','OV-2026-300','cli1','2026-07-15')")
+    await db.query(
+      "INSERT INTO tickets (id,number,subject,status,equipo_id,client_id,orden_venta,salesorder_id) VALUES ('t-propia',7003,'El que reenvía su propia orden','Ingresado','eq-1','cli1','OV-2026-300','soX')")
+    const antes = (await db.query(
+      "SELECT orden_venta, salesorder_id, fecha_orden_venta FROM tickets WHERE id='t-propia'")).rows[0]
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie).send({
+      ticketId: 't-propia', fecha: '2026-08-03', incluye: [], salesOrderId: 'soX',
+    })
+
+    expect(res.status).toBe(201)
+    expect(res.body.error).toBeUndefined()
+    const despues = (await db.query(
+      "SELECT orden_venta, salesorder_id, fecha_orden_venta FROM tickets WHERE id='t-propia'")).rows[0]
+    expect(despues).toEqual(antes) // no-op: mismos valores antes y después, no sólo el mismo número de filas
+  })
 })

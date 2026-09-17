@@ -282,6 +282,52 @@ lista) y **18 son reparaciones reales** (9 Caso C + 9 Caso B), cada grupo con su
 
 ---
 
+## Rebanada R3 · Remediación del CRITICAL del `sdd-verify` (intento/commit 3)
+
+**Por qué existe esta rebanada, dicho sin adornos.** El `sdd-verify` de `f9c85de` salió **`fail`** con un
+CRITICAL: el delta `openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md:74` declara con
+**SHALL** el escenario «Reenviar la misma orden al propio ticket no se rechaza a sí mismo» y **ninguna
+prueba lo ejercita**. Los tres `it` de `apps/desk/server/ordenVentaUnTicket.test.ts` (`:118`, `:136`,
+`:161`) dicen los tres «rechaza con 409 una orden que ya está en otro ticket», y las cinco llamadas con
+`salesOrderId` de `apps/desk/server/remisiones.test.ts` no reenvían a un ticket su propia orden.
+
+**El hueco NO es de la ejecución, es del plan.** Las casillas 1.1 a 1.6 planificaron el `409`, la fusión
+D1 —una prueba por puerta— y la prueba de posición. **Ninguna planificó una prueba para el escenario 3**,
+así que el `apply` no se la saltó: nunca se la pidieron. La casilla que sigue es la que faltaba, y se
+escribe aquí para que **la cuenta de casillas refleje el trabajo real** en vez de esconder el hueco en el
+registro del `apply`.
+
+- [x] **3.1 [La prueba que faltaba — escenario 3 de RQ-RE-16]** En
+      `apps/desk/server/ordenVentaUnTicket.test.ts`, dentro del `describe` de la puerta 3, un `it` nuevo:
+      un ticket **cuya orden de venta YA es la que llega en la remisión** (reintento de red, doble clic).
+      Afirma **`201`**, que **NO** hay `409`, y que el `UPDATE` es **no-op**: `orden_venta`,
+      `fecha_orden_venta` y `salesorder_id` valen **lo mismo** después que antes. El fixture necesita
+      serial —o equipo del catálogo— para no chocar con el `422` del serial, que va por encima.
+
+- [x] **3.2 [Mutación M-c — el rojo que sí existe]** ⚠️ Bajo `strict_tdd`, la prueba de 3.1 **NACE
+      VERDE**, porque la exclusión ya está construida. **No se declara un rojo que no existe.** Lo que se
+      declara es la MUTACIÓN que la pone roja: **quitar el tercer argumento (`ticketId`) de la llamada a
+      `ticketConOrdenVenta` en `apps/desk/server/routes/remision.ts:230`** → la prueba de 3.1 **debe**
+      ponerse **ROJA con un `409`**. Se deja **el literal exacto** del mensaje de fallo en el registro.
+      Restaurar y comprobar la reversión con `git diff --exit-code` sobre `remision.ts`, que tiene que
+      salir **limpio**. Es la regla de mutación 1 de `CLAUDE.md` aplicada al argumento en vez de a la
+      posición.
+
+- [x] **3.3 [La cita incoherente del delta]** En
+      `openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md`, **línea 79**: la cita
+      abreviada del `WHERE` del `UPDATE` dice la línea **223** —donde estaba antes de R1— mientras la
+      **línea 37 del mismo documento** ya dice la **237**, que es la correcta hoy. **El mismo documento
+      sitúa el mismo `WHERE` en dos sitios.** No la caza el detector, porque la forma abreviada es
+      informativa y no bloquea; la caza **contrastar las citas del documento entre sí**. Corregir a la
+      237, en su misma línea física.
+
+- [x] **3.4 [Cierre de R3]** `npm test` → **0 fallos**, `npm run typecheck` y `npm run lint` limpios, y
+      la condición dura: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha <commit de R3>` →
+      **0 bloqueantes, código de salida 0**, con la línea base en **0 informadas · 0 caducadas**, que no
+      se toca. `apply-progress.md` recoge la remediación **y a quién pertenecía el hueco**.
+
+---
+
 ## Notas de cierre para `sdd-apply`
 
 - El orden R1 → R2 no se invierte: R2 depende de que R1 haya congelado el desplazamiento real de

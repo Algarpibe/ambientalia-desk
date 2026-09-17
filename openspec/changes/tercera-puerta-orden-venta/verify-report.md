@@ -104,7 +104,7 @@ va marcado como **límite**, no como aprobado.
 | # | Criterio | Veredicto | Evidencia propia |
 |---|---|---|---|
 | 1 | `.fails` de `:161` quitado y visto rojo por «expected 201 to be 409» | **LIMITE, no reproducible sin mutar** | `ordenVentaUnTicket.test.ts` de hoy ya no tiene `.fails` (línea 161 forma parte del `it` normal de la puerta 3, líneas 155-177). El único registro del rojo original está en `apply-progress.md` (tabla R1, fila 1.1); reproducirlo exigiría revertir la guarda y re-ejecutar, que es abrir otro intento del ledger. No se hizo. |
-| 2 | Prueba de `:141-159` invertida, afirma `409` | **CUMPLE** | Ese bloque ya no existe. `ordenVentaUnTicket.test.ts:155-177` afirma `res.status` a `409` (línea 172). Verde en los 1131 tests pasados. |
+| 2 | Prueba de `:141-159` invertida, afirma `409` | **CUMPLE** | Ese bloque ya no existe. `ordenVentaUnTicket.test.ts:155-177` en `f9c85de` afirma `res.status` a `409` (línea 172). Verde en los 1131 tests pasados. |
 | 3 | Guarda llama a `ticketConOrdenVenta` por las dos vías, propio ticket excluido, después del 422 de `:220` y antes del UPDATE | **CUMPLE** | `remision.ts:230` llama `ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId)`. `:220` es el 422, `:230-234` la guarda, `:235-239` el UPDATE. |
 | 4 | 409 con `res.status(409).json(...); return`, texto de `ticketService.ts:135` | **CUMPLE** | `remision.ts:232-233`, mismo patrón y texto que la puerta 2, sin condicional de la puerta 1. `HttpError` no aparece en `remision.ts` (0 coincidencias). |
 | 5 | `WHERE COALESCE(orden_venta,'') = ''` intacto | **CUMPLE** | `remision.ts:237`, sin cambios de comportamiento. |

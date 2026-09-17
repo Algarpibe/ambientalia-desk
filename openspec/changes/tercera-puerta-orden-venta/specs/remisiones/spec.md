@@ -76,7 +76,7 @@ a comportamiento decidido y construido.)
 - GIVEN un ticket cuya orden de venta ya es la que llega en la remisión (reintento de red, doble clic)
 - WHEN se crea la remisión de entrada
 - THEN la comprobación excluye al propio ticket destino y no llega al `409`
-- AND el `UPDATE` es no-op porque `orden_venta` ya no está vacía (`:223`), y la remisión se crea con
+- AND el `UPDATE` es no-op porque `orden_venta` ya no está vacía (`:237`), y la remisión se crea con
       `201`
 
 ## REMOVED Requirements

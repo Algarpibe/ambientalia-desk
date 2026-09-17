@@ -1,9 +1,10 @@
 # Apply-progress — `tercera-puerta-orden-venta` (desvío IV-4)
 
-> Estado de tareas a fecha de hoy (2026-09-16, tras los intentos R1 y R2): **23 de 24** (`1.1`–`1.9` y
-> `2.1`–`2.14` hechas; `2.15` corrida pero con su condición dura SIN cumplir — 6 bloqueantes del
-> detector siguen en pie, todos fuera del alcance de `apply`, ver la sección de R2 más abajo). Este
-> fichero fusiona el progreso encima de la pre-siembra original y de R1 — no los sobrescribe.
+> Estado de tareas a fecha de hoy (2026-09-16, tras los intentos R1, R2 y R3): **28 de 28**
+> (`1.1`–`1.9`, `2.1`–`2.15` y `3.1`–`3.4` hechas). R2 cerró su condición dura por decisión de
+> Gerencia (anclar los seis bloqueantes que quedaban, ver más abajo). R3 remedia el CRITICAL que
+> devolvió el `sdd-verify` de `f9c85de`. Este fichero fusiona el progreso encima de la pre-siembra
+> original, de R1 y de R2 — no los sobrescribe.
 
 ## Rebanada R1 · La guarda — CERRADA el 2026-09-16 (intento/commit 1)
 
@@ -176,3 +177,85 @@ por sincronización, en la tabla de «Incumplimientos vivos» de `CLAUDE.md` y e
 - Sigue sin poder usarse este `0` para argumentar que la divergencia del sync (IV-11) no ocurre. Es la
   misma población, con la misma advertencia.
 - Las tres exclusiones de alcance de `proposal.md` §2 siguen en pie.
+
+---
+
+## Rebanada R3 · Remediación del CRITICAL del `sdd-verify` — CERRADA el 2026-09-16 (intento/commit 3)
+
+**De quién era el hueco, dicho sin adornos.** El `sdd-verify` de `f9c85de` salió `fail` con un
+CRITICAL: el delta `specs/remisiones/spec.md:74` declara con `SHALL` el escenario «Reenviar la misma
+orden al propio ticket no se rechaza a sí mismo» (RQ-RE-16, escenario 3) y ninguna prueba lo
+ejercitaba. **El defecto es de `design.md`/`tasks.md`, no de la ejecución de R1/R2**: las casillas
+1.1–1.6 planificaron el `409`, la fusión D1 y la prueba de posición; ninguna planificó una prueba
+para el escenario 3, así que R1/R2 no se la saltaron — nunca se les pidió. R3 añade la casilla que
+faltaba y la ejecuta.
+
+| Tarea | Resultado |
+|---|---|
+| 3.1 [La prueba que faltaba] | Nuevo `it` en `ordenVentaUnTicket.test.ts`, dentro del `describe` de la puerta 3 (líneas 178-205): un ticket (`t-propia`) cuya `orden_venta`/`salesorder_id` YA son los que llega la remisión. Afirma `201`, `res.body.error` indefinido, y el `UPDATE` no-op comparando la fila completa (`orden_venta`, `salesorder_id`, `fecha_orden_venta`) ANTES y DESPUÉS con `toEqual` — no sólo el número de filas. Ejecutada: **NACIÓ VERDE** (4/4 en el fichero), tal como anticipaba la propia tarea: la exclusión del propio ticket ya existe en `remision.ts:230` desde R1 |
+| 3.2 [Mutación M-c] | Se quitó el tercer argumento (`ticketId`) de `ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId)` en `remision.ts:230`. La prueba de 3.1 se puso **ROJA**, literal exacto capturado: `AssertionError: expected 409 to be 201` en `ordenVentaUnTicket.test.ts:200:24` (las otras 3 pruebas del fichero siguieron verdes: solapamiento cero, igual que las mutaciones M-a/M-b de R1). Revertido el argumento; `git diff --exit-code apps/desk/server/routes/remision.ts` → **código de salida 0**, diff vacío. Regla de mutación 1 de `CLAUDE.md` aplicada al argumento de exclusión en vez de a la posición de la guarda |
+| 3.3 [Cita incoherente del delta] | `specs/remisiones/spec.md:79`: la cita abreviada del `WHERE` decía `:223` (dónde estaba ANTES de R1) mientras la línea 37 del mismo documento ya decía `:237` (la correcta, tras R1). Corregida a `:237`, en su misma línea física — sin insertar ni borrar ninguna línea del documento |
+| 3.4 [Cierre de R3] | Ver evidencia completa abajo |
+
+### Barrido de citas (regla de mutación 4 de `CLAUDE.md`), disparado por 3.1
+
+3.1 INSERTA 28 líneas en `ordenVentaUnTicket.test.ts` (un fichero muy citado), así que se barrió
+`grep -rnoE "ordenVentaUnTicket\.test\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio completo. **23
+resultados**, comprobados cada uno contra el fichero final:
+
+- **22 de 23 siguen siendo exactos.** Todas las líneas citadas (155, 157, 158, 161, 172-176 y sus
+  rangos) están **antes** del punto de inserción (que entra tras la línea 176, antigua `})` de la
+  puerta 3): 3.1 no tocó ni desplazó ni una sola línea de las ya existentes, sólo añadió después.
+  Incluye las citas ancladas a revisiones pasadas (`b99d47a`, `6be9cf0`), que ya eran históricas y
+  siguen siéndolo.
+- **1 de 23 quedó desactualizada por la propia inserción de 3.1, y se REPARÓ — Caso B de la regla de
+  mutación 4.** El informe de `sdd-verify` (`verify-report.md`, línea 107) fijaba el rango completo
+  del `describe` de la puerta 3 en el fichero de pruebas de la orden de venta, para su propio
+  `evidence_revision` (`sha256:f4330d894d879600d06c93f63badc9d37e7e662b2a2a8bd805eab256be62db2c`,
+  hash de `f9c85de`). En ese árbol el extremo final de ese rango era el cierre del `describe`; tras la
+  inserción de 3.1 esa misma línea física quedó en blanco (separa el `it` viejo del nuevo), y el
+  detector la marca bloqueante por extremo final vacío. Cierto en su momento, falso hoy — Caso B—,
+  así que la cita se ancló a su revisión (con «en» seguido del hash entre acentos, en la misma línea
+  física) en vez de renumerarla: renumerar a la línea de hoy habría estirado el rango fuera del bloque
+  que el informe describe, y habría sido una afirmación distinta a la que el informe hizo el día del
+  veredicto. La aserción de fondo del informe —el número de línea que afirma el `409`— sigue siendo
+  literalmente cierta hoy: no se movió. Es la única línea de `verify-report.md` que esta rebanada
+  toca, y sólo para anclar; ningún veredicto, criterio ni evidencia del informe se reescribió.
+
+### Task 3.4 — Evidencia de cierre
+
+| Comprobación | Comando | Resultado |
+|---|---|---|
+| Suite completa | `npm test` | **1132 passed, 2 skipped, 0 failed** (121 ficheros + 1 skip) |
+| Typecheck | `npm run typecheck` | Limpio, sin salida (0 errores) |
+| Lint | `npm run lint` | **0 errores, 158 warnings** preexistentes de `no-explicit-any`, en ficheros no tocados por R3 (`packages/zoho-sync/src/**`, mismos que R1 ya declaró) |
+| Condición dura (detector), primera pasada | `--sha f2b4e72` (commit de R3 antes de reparar la cita) | **2 bloqueantes, código de salida 1**: uno era esta misma declaración del párrafo anterior, escrita con forma de cita en vez de en prosa (autoinfligido); el otro era `verify-report.md`, línea 107 |
+| Condición dura (detector), pasada final | `--sha 95ee3ba` (commit de R3 con la cita de `verify-report.md:107` anclada y esta declaración reescrita sin forma de cita) | **1962 comprobadas, 0 bloqueantes, código de salida 0.** 12 abreviadas rotas, informativas, mismas que R2 |
+| Línea base de citas | `apps/desk/server/citas/lineaBase.jsonl` | **Sin tocar — sigue en `0 informadas · 0 caducadas`** |
+
+### Work Unit Evidence (R3)
+
+| Evidencia | Valor |
+|---|---|
+| Comando de prueba focalizado y resultado exacto | `npx vitest run apps/desk/server/ordenVentaUnTicket.test.ts` → antes de la mutación: **4/4 passed**; con la mutación M-c aplicada: **3 passed / 1 failed**, literal `AssertionError: expected 409 to be 201` en `:200:24`; tras revertir: **4/4 passed** de nuevo |
+| Comando/escenario de arnés en tiempo real y resultado exacto | Integración HTTP real vía `supertest` contra la app Express completa (`createApp`) sobre Postgres simulado (`pg-mem`, migraciones reales de `migrate()`): `POST /api/remisiones` con `salesOrderId` igual al que el ticket destino ya tiene → `201`, fila de `tickets` (`orden_venta`, `salesorder_id`, `fecha_orden_venta`) idéntica antes y después (no-op verificado por comparación de fila completa, no sólo del código de estado) |
+| Límite de reversión (rollback boundary) | El único cambio de comportamiento reversible de forma aislada es el `it` nuevo de `ordenVentaUnTicket.test.ts` (líneas 178-205) y la corrección de cita en `specs/remisiones/spec.md:79`; ninguno de los dos toca `remision.ts` (la mutación de 3.2 se revirtió antes de commitear, confirmado con `git diff --exit-code` en código de salida 0) ni ningún otro fichero de producción. Revertir el commit de R3 entero deja R1+R2 intactos: no hay dependencia hacia adelante |
+
+### TDD Cycle Evidence (R3)
+
+| Tarea | Fichero de prueba | Capa | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 3.1 | `ordenVentaUnTicket.test.ts` | Integración (HTTP + pg-mem) | ✅ 3/3 (baseline antes de editar) | ⚠️ **No hay RED por ausencia de código** — la exclusión (`remision.ts:230`, tercer argumento) ya la construyó R1; la prueba nace verde, tal como `tasks.md` 3.2 anticipa explícitamente. El ROJO que demuestra que la prueba vigila algo real se obtiene por **MUTACIÓN** en la tarea 3.2, no por TDD clásico | ✅ 4/4, ejecutado | ➖ Escenario único (RQ-RE-16 sólo declara un caso para el reenvío a sí mismo) | ➖ Ninguno necesario |
+| 3.2 | (mutación temporal sobre `remision.ts`, sin fichero de prueba propio) | N/A — verificación por mutación, no TDD | N/A | ✅ **Éste es el rojo real**: mutación M-c ejecutada, literal `AssertionError: expected 409 to be 201`, capturado y revertido | N/A (no se escribió código de producción nuevo; se restauró el original) | N/A | N/A |
+| 3.3 | `specs/remisiones/spec.md` (prosa/cita) | Documental, no código | N/A | N/A | N/A | N/A | N/A |
+
+**Desviación respecto al ciclo RED→GREEN clásico, declarada:** 3.1 no sigue el orden RED-antes-que-GREEN
+porque la producción ya existía (construida en R1, casilla 1.2). `tasks.md` 3.2 ya anticipa esto
+explícitamente («la prueba de 3.1 NACE VERDE… no se declara un rojo que no existe») y sustituye el RED
+por una prueba de mutación, que es exactamente lo que exige la regla de mutación 1 de `CLAUDE.md`
+para una guarda ya construida. No es una tarea saltada: es la forma correcta de probar una exclusión
+que ya está en producción.
+
+**Alcance de R3 respetado:** no se tocó ninguna casilla `1.x`/`2.x`; no se tocó
+`apps/desk/src/**`; no se tocó `packages/zoho-sync/src/db/repo.ts`; no se corrió `sdd-verify` ni
+`sdd-archive`; `remision.ts` no tiene diff neto (la mutación de 3.2 se revirtió antes de commitear).
