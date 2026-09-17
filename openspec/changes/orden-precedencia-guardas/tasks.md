@@ -41,62 +41,62 @@ de entrega. Este documento no decide por Gerencia.
 
 ## Phase 1 · RED natural — N1 (equipo↔cliente gana a la OV ya usada)
 
-- [ ] 1.1 Escribir N1 en `ticketService.test.ts`: `equipoConCliente('eq-1','cli-A')`, cuerpo con
+- [x] 1.1 Escribir N1 en `ticketService.test.ts`: `equipoConCliente('eq-1','cli-A')`, cuerpo con
   `clientId:'cli-B'` y `ordenVenta:'OV-DUP'` ya usada; se espera `422` con el mensaje de `:82`.
   RQ: `tickets-core` Scenario «La discrepancia equipo↔cliente gana a la orden de venta ya usada».
-- [ ] 1.2 Correr la suite y confirmar rojo NATURAL de N1 (hoy responde `409`), sin tocar producción.
+- [x] 1.2 Correr la suite y confirmar rojo NATURAL de N1 (hoy responde `409`), sin tocar producción.
   Registrar el nombre del `it` en el `apply-progress`.
 
 ## Phase 2 · GREEN — bajar G4 detrás de G7 (alta de ticket) — Rebanada 1
 
-- [ ] 2.1 Mover el bloque `ticketService.ts:43-49` COMPLETO (comentario `:43-44` + `const enUso` de
+- [x] 2.1 Mover el bloque `ticketService.ts:43-49` COMPLETO (comentario `:43-44` + `const enUso` de
   `:45` + las 5 líneas ejecutables) detrás de `:94`, antes de `:95`. RQ: `tickets-core` RQ-TC-05.
-- [ ] 2.2 Reescribir el comentario del bloque G4: declarar el escalón D y su posición (última guarda
+- [x] 2.2 Reescribir el comentario del bloque G4: declarar el escalón D y su posición (última guarda
   antes de `createTicket`, `:97`), no la anécdota del buscador de OV.
-- [ ] 2.3 Reescribir el comentario `:50-64` de G5: conservar razón (a) — la rama (i) rellena
+- [x] 2.3 Reescribir el comentario `:50-64` de G5: conservar razón (a) — la rama (i) rellena
   `clientId` antes de `:88` —; retirar razón (b) («no es esta tanda», caduca: ésta ES la tanda);
   remitir a `tickets-core` RQ-TC-05/RQ-TC-13, no repetir la posición en prosa (molde H3, `CLAUDE.md`).
-- [ ] 2.4 Correr la suite y confirmar N1 en VERDE.
+- [x] 2.4 Correr la suite y confirmar N1 en VERDE.
 
 ## Phase 3 · Voltear las dos pruebas del error doble en el alta — Rebanada 1
 
-- [ ] 3.1 `ticketService.test.ts:327` → `422` + `r.body.error` =
+- [x] 3.1 `ticketService.test.ts:327` → `422` + `r.body.error` =
   `'Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones, prefijo'` (el montaje ya
   usa `equipo()` sin `client_id` y un cuerpo sin obligatorios). RQ: `tickets-core` RQ-TC-05, Scenario
   «La orden de venta ya usada deja de ganar a los obligatorios que faltan».
-- [ ] 3.2 `ticketService.test.ts:336` → `422` + **aserción de texto NUEVA y obligatoria**
+- [x] 3.2 `ticketService.test.ts:336` → `422` + **aserción de texto NUEVA y obligatoria**
   `r.body.error` = `'Cliente no encontrado'` (hoy sólo lleva `toBe(409)` sin texto; un `toBe(422)`
   pelado no distingue cuál de las tres guardas del escalón C ganó — regla de mutación 1). RQ:
   RQ-TC-05, Scenario «La orden de venta ya usada deja de ganar al cliente no encontrado».
 
 ## Phase 4 · N2 — G5 vs G6, nace verde, rojo por mutación — Rebanada 1
 
-- [ ] 4.1 Escribir N2 en `ticketService.test.ts`: sin `clientId` en el cuerpo, equipo con `client_id`
+- [x] 4.1 Escribir N2 en `ticketService.test.ts`: sin `clientId` en el cuerpo, equipo con `client_id`
   válido, demás obligatorios vacíos → `422` listando los que faltan SIN «cliente» entre ellos. Nace
   VERDE. RQ: `tickets-core` Scenario «Dentro del escalón C, la discrepancia equipo↔cliente se
   resuelve antes de contar los obligatorios».
-- [ ] 4.2 Mutación: mover temporalmente `:65-83` detrás de `:92`; correr la suite; confirmar que el
+- [x] 4.2 Mutación: mover temporalmente `:65-83` detrás de `:92`; correr la suite; confirmar que el
   `it` de N2 (y no otro) se pone rojo; revertir con `git diff`. Registrar en `apply-progress`: nombre
   del `it`, mutación aplicada, diff de reversión.
 
 ## Phase 5 · GREEN — bajar el `409` de `executeTransition` — Rebanada 1
 
-- [ ] 5.1 Mover el bloque ejecutable `ticketService.ts:132-136` (con la `const nuevaOrdenVenta` de
+- [x] 5.1 Mover el bloque ejecutable `ticketService.ts:132-136` (con la `const nuevaOrdenVenta` de
   `:132` incluida) y su comentario `:129-131`, detrás de `:140-144`, antes de `:145`. RQ:
   `transitions-st` RQ-TS-06.
-- [ ] 5.2 Reescribir el comentario `:129-131`: declarar el escalón D y el paralelo con `createTicket`
+- [x] 5.2 Reescribir el comentario `:129-131`: declarar el escalón D y el paralelo con `createTicket`
   (`:97`), no la anécdota de «la segunda puerta».
-- [ ] 5.3 `ticketService.test.ts:205` → `422`, cambiando la FORMA del cuerpo a `r.body.errors` =
+- [x] 5.3 `ticketService.test.ts:205` → `422`, cambiando la FORMA del cuerpo a `r.body.errors` =
   `['La persona a la que se deriva no existe o está dada de baja']` (NO `r.body.error`; la guarda de
   derivación lanza `{ errors: [...] }`, forma ya visible en `:224`).
 
 ## Phase 6 · Docblocks del fichero de pruebas — Rebanada 1
 
-- [ ] 6.1 Reescribir `ticketService.test.ts:127-142`: retirar el rango falso `:82-110` y la nota «422
+- [x] 6.1 Reescribir `ticketService.test.ts:127-142`: retirar el rango falso `:82-110` y la nota «422
   antes que 409 es una rareza»; declararlo consecuencia del orden total.
-- [ ] 6.2 Reescribir `:172-193` (incluye la reparación P4 de `:186-192`, que hoy dice «la precedencia
+- [x] 6.2 Reescribir `:172-193` (incluye la reparación P4 de `:186-192`, que hoy dice «la precedencia
   NO está decidida… es una fila que falta»): tras la tanda ya no se contradice con `:327`.
-- [ ] 6.3 Reescribir `:302-314` y `:321-326`: el rango `:22-94` sigue acertando por casualidad, pero
+- [x] 6.3 Reescribir `:302-314` y `:321-326`: el rango `:22-94` sigue acertando por casualidad, pero
   lo que el bloque AFIRMA deja de ser cierto; se reescribe por lo que afirma, no porque la línea
   exista.
 
