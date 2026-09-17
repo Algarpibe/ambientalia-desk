@@ -49,7 +49,7 @@ instalarArnes()
  * sin aviso.
  *
  * **RESULTADO, Gerencia en `psql` contra producción el 2026-09-16:** `0` filas sobre población `1`
- * (detalle en `openspec/changes/tercera-puerta-orden-venta/apply-progress.md` y `proposal.md` §12.1).
+ * (detalle en `openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/apply-progress.md` y `proposal.md` §12.1).
  * **La cifra se cumple POR VACÍO, no por comprobación:** con población 1 un duplicado es
  * aritméticamente imposible, así que el `0` dice que nadie PUDO usar la puerta abierta, no que nadie
  * la usó. La ventana en la que esa cifra empieza a tener poder de refutación es F1F-03 (`plan:214`),

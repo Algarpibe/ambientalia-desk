@@ -110,7 +110,7 @@ nuevo, nacido de esta misma tanda, y se declara sin maquillar en vez de esconder
 ### Reparaciones adicionales, fuera del inventario de tasks.md pero dentro del mandato de `design.md` §8.1/§8.4
 
 - **`openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md`, línea 92**: la nota de migración citaba la sección 353 a 417 de `remisiones/spec.md` sin calificar el directorio, y el detector la marcaba ambigua/rota (una de las 20 de partida). Al calificar el directorio salió un SEGUNDO defecto, éste sí nuevo de encontrar: la línea 417 está en blanco —separa `### 5.1` de `### 5.2`—, así que el rango real de la sección es 353 a 416. Corregida a `openspec/specs/remisiones/spec.md:353-416` en `67a90c1`. (`design.md`, línea 7, y `tasks.md`, línea 154, repiten la forma abreviada de la sección vieja, no bloqueante y fuera del alcance de esta tanda —`design.md` por estar excluido, `tasks.md` por no ser una tarea asignada— y se dejan como residuo documentado, no como defecto escondido).
-- **`openspec/changes/tercera-puerta-orden-venta/specs/tickets-core/spec.md:37-38`** (recuadro copiado verbatim): `design.md` §8.4 asigna esta reparación "en el delta, en R7" sin numerarla como tarea propia. Reescrita en pasado con ancla `b99d47a` y nota de cierre — era una de las 20 bloqueantes de partida.
+- **`openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/specs/tickets-core/spec.md:37-38`** (recuadro copiado verbatim): `design.md` §8.4 asigna esta reparación "en el delta, en R7" sin numerarla como tarea propia. Reescrita en pasado con ancla `b99d47a` y nota de cierre — era una de las 20 bloqueantes de partida.
 
 ### Deuda de redacción encontrada y DEJADA SIN TOCAR — fuera del alcance literal de 2.2/2.7/2.8
 

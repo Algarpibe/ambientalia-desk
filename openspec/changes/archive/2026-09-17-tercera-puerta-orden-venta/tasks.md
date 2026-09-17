@@ -173,7 +173,7 @@ usa para la Población B):
       (cierre de IV-4), que les da un tratamiento distinto al simple desplazamiento.
 
 - [x] **2.3** Verificar las citas de `remision.ts` **dentro de los dos deltas de esta misma tanda**
-      (`openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md:30-31`, `:35`, `:37` y
+      (`openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/specs/remisiones/spec.md:35-36`, `:40`, `:42` y
       `specs/tickets-core/spec.md:42-43`) contra el `remision.ts` ya construido: describen la posición
       POST-guarda (`:218-226`, `:220`, `:221-225`, `:152-157`, `:223`) y hay que confirmar que coinciden
       con el rango real antes de que el `archive` funda el delta en la spec viva — si no coinciden, se
@@ -283,7 +283,7 @@ lista) y **18 son reparaciones reales** (9 Caso C + 9 Caso B), cada grupo con su
 ## Rebanada R3 · Remediación del CRITICAL del `sdd-verify` (intento/commit 3)
 
 **Por qué existe esta rebanada, dicho sin adornos.** El `sdd-verify` de `f9c85de` salió **`fail`** con un
-CRITICAL: el delta `openspec/changes/tercera-puerta-orden-venta/specs/remisiones/spec.md:74` declara con
+CRITICAL: el delta `openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/specs/remisiones/spec.md:79` declara con
 **SHALL** el escenario «Reenviar la misma orden al propio ticket no se rechaza a sí mismo» y **ninguna
 prueba lo ejercita**. Los tres `it` de `apps/desk/server/ordenVentaUnTicket.test.ts` (`:118`, `:136`,
 `:161`) dicen los tres «rechaza con 409 una orden que ya está en otro ticket», y las cinco llamadas con
