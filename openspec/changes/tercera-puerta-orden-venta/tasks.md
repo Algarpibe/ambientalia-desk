@@ -150,16 +150,15 @@ cantidad. No se estima "+11": se mide contra el fichero real.
 de 12 ficheros/34 aciertos no las excluye explícitamente, pero quedan fuera por la misma razón que ya
 usa para la Población B):
 
-- `openspec/specs/remisiones/spec.md:379` y `:386` citan `remision.ts:218-226`/`:223` **dentro de
-  `### 5.1`** (`:353-417`), la sección que el delta de `remisiones` **RETIRA** entera. Se resuelven
+- `openspec/specs/remisiones/spec.md:379` en `67a90c1` y `:386` en `67a90c1` citan `remision.ts:218-226`/`:223` **dentro de
+  `### 5.1`** (`:353-417` en `67a90c1`), la sección que el delta de `remisiones` **RETIRA** entera. Se resuelven
   solas igual que las siete de Población B que ya caen en esa misma sección — no se reparan aquí.
-- `openspec/specs/tickets-core/spec.md:413` cita `remision.ts:218-226` dentro de la narrativa
-  `:410-415` que el delta de `tickets-core` **reescribe entera** (`MODIFIED Requirements`). Repararla en
+- `openspec/specs/tickets-core/spec.md:413` en `67a90c1` cita `remision.ts:218-226` dentro de la narrativa
+  `:410-415` en `67a90c1` que el delta de `tickets-core` **reescribe entera** (`MODIFIED Requirements`). Repararla en
   el fichero vivo se perdería al fusionar el delta: **no se toca aquí**, la reemplaza 2.3.
 
 - [x] **2.2** Repasar y corregir, contra el `remision.ts` congelado, las citas de:
-      `openspec/specs/remisiones/spec.md:31, :34, :35, :152, :203, :206, :222, :235, :270, :295, :487,
-      :491, :503` (13 de las 15 originales; `:379`/`:386` excluidas, ver arriba) ·
+      `openspec/specs/remisiones/spec.md:31`, `:34`, `:35`, `:152`, `:203`, `:206`, `:222`, `:235`, `:270`, `:295`, `:487` en `67a90c1`, `:491` en `67a90c1`, `:503` en `67a90c1` (13 de las 15 originales; `:379` en `67a90c1`/`:386` en `67a90c1` excluidas, ver arriba) ·
       `openspec/specs/trazas/spec.md:228`, `:231` y `:233` ·
       `openspec/specs/transitions-st/spec.md:575` ·
       `docs/sdd/F0-01_Correcciones_para_el_maestro.md:545`, `:547` y `:549` ·
@@ -187,10 +186,9 @@ usa para la Población B):
 26 líneas distintas medidas (`design.md` §8.4). **8 se resuelven solas** (declaradas, no borradas de la
 lista) y **18 son reparaciones reales** (9 Caso C + 9 Caso B), cada grupo con su propia casilla.
 
-- [x] **2.4 [Declarar, no editar]** Las **8 auto-resueltas**, y por qué: `openspec/specs/remisiones/
-      spec.md:368, :369, :391, :393, :406, :413, :414` (las siete caen dentro de `### 5.1`, que el delta
-      de `remisiones` retira entera) y `openspec/specs/tickets-core/spec.md:414` (cae en la narrativa
-      `:410-415` que el delta de `tickets-core` ya reescribe). No se tocan: desaparecen o se sustituyen
+- [x] **2.4 [Declarar, no editar]** Las **8 auto-resueltas**, y por qué: `openspec/specs/remisiones/spec.md:368` en `67a90c1`, `:369` en `67a90c1`, `:391` en `67a90c1`, `:393` en `67a90c1`, `:406` en `67a90c1`, `:413` en `67a90c1`, `:414` en `67a90c1` (las siete caen dentro de `### 5.1`, que el delta
+      de `remisiones` retira entera) y `openspec/specs/tickets-core/spec.md:414` en `67a90c1` (cae en la narrativa
+      `:410-415` en `67a90c1` que el delta de `tickets-core` ya reescribe). No se tocan: desaparecen o se sustituyen
       solas cuando el `archive` funda los deltas.
 
 - [x] **2.5 [Caso C]** `apps/desk/server/remisiones.test.ts:984` (comentario de prueba, CÓDIGO): anclar

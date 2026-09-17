@@ -14,10 +14,15 @@ no-op silencioso con `201`— y la divergencia `orden_venta`/`salesorder_id` por
 sólo como razón de por qué las dos vías son obligatorias, no como algo que esta tanda corrija.
 `tickets-core §4.2` tiene su propio párrafo y su propio escenario sobre IV-4, pero ese escenario
 (`La cardinalidad OV↔ticket, resuelta en la misma dirección en las dos specs`) no cambia de texto: mi
-requisito lo ejercita sin modificarlo, igual que `citas-verificables` con `RQ-CV-03`, así que
-`tickets-core` **no lleva delta**. Su narrativa de `§4.2` (líneas 410-415, hoy describe IV-4 como
-`CONSTRUIBLE` y sin resolver) queda desactualizada por este cambio; corregirla es trabajo de citas y de
-bitácora (`config.yaml`, `CLAUDE.md`) en el cierre, no un requisito de comportamiento.
+requisito lo ejercita sin modificarlo, igual que `citas-verificables` con `RQ-CV-03`.
+
+**CORRECCIÓN DEL CIERRE (2026-09-17).** Este párrafo decía que «`tickets-core` **no lleva delta**» y
+que corregir la narrativa de su `§4.2` era trabajo de bitácora del cierre, no un requisito. **Es FALSO,
+y lo fue desde el origen:** los DOS deltas nacieron en el MISMO commit (`b99d47a`), y el de
+`tickets-core` reescribe esa narrativa como `MODIFIED Requirements` —incluida su línea `:405`, que
+apuntaba a la `§5.1` que este delta retira—. Lo que sí sigue siendo cierto es el alcance: el escenario
+`La cardinalidad OV↔ticket…` no cambia de texto. Se corrige aquí para no congelar la falsedad en el
+`archive`.
 
 ## ADDED Requirements
 
@@ -89,5 +94,5 @@ a comportamiento decidido y construido.)
 Su contenido y sus dos escenarios se funden en `RQ-RE-16`.)
 (Migration: `Hoy, sin la tercera puerta, una OV puede duplicarse` y `Gerencia decidió, y el arreglo es
 completar la tercera puerta` se sustituyen por los tres escenarios de `RQ-RE-16`. Toda cita a
-`openspec/specs/remisiones/spec.md:353-416` debe re-anclarse en el `archive`, por la regla de mutación 4
+`openspec/specs/remisiones/spec.md:353-416` en `67a90c1` debe re-anclarse en el `archive`, por la regla de mutación 4
 de `CLAUDE.md`.)

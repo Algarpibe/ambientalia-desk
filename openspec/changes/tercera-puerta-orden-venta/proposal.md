@@ -31,7 +31,7 @@ mensaje que nombre el ticket `7001` (`:172-173`) y la columna sin escribir (`:17
 
 **Por qué ahora.** `docs/sdd/Decisiones_Gerencia_2026-09-10.md:137-140` ordena literalmente que «el `it.fails`
 de `:161` **debe ponerse verde**… **IV-4 pasa de bloqueado a construible**». Está recogido en `plan:350`
-(`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:350`) y en `openspec/specs/remisiones/spec.md:353-399`.
+(`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:350`) y en `openspec/specs/remisiones/spec.md:353-399` en `67a90c1`.
 
 ---
 
@@ -72,7 +72,7 @@ de `:161` **debe ponerse verde**… **IV-4 pasa de bloqueado a construible**». 
 ### Modificadas
 - **`remisiones`**: `POST /api/remisiones` pasa a rechazar con `409` una orden de venta ya asociada a otro
   ticket, antes de escribir nada. El delta sustituye el escenario que hoy fija el defecto
-  (`openspec/specs/remisiones/spec.md:401` y siguientes) y **corrige por omisión la lista de puntos de
+  (`openspec/specs/remisiones/spec.md:401` en `67a90c1` y siguientes) y **corrige por omisión la lista de puntos de
   captura** de `Decisiones_Gerencia_2026-09-10.md:156-164`, que nombra dos («Nuevo ticket» y
   «Habilitar Servicio → Ingresado») y omite la remisión de entrada: según la decisión 1 de la ronda, la
   omisión fue de redacción, no de criterio — la remisión de entrada es un **tercer punto de captura legítimo**.

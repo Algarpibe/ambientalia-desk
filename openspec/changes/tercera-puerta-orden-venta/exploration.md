@@ -57,7 +57,7 @@ comentario de `:144-147` fija el orden de la pareja serial/pendiente, no una reg
 
 `docs/sdd/Decisiones_Gerencia_2026-09-10.md:137-140`: «el `it.fails` de `:161` **debe ponerse verde**:
 la tercera puerta sigue mereciendo construirse. **IV-4 pasa de bloqueado a construible.**»
-Recogido ya en `openspec/specs/remisiones/spec.md:360-375`.
+Recogido ya en `openspec/specs/remisiones/spec.md:360-375` en `67a90c1`.
 
 ---
 
@@ -200,7 +200,7 @@ sigue con el valor viejo.
 | `:24` | `remision.ts:194` | `:223` |
 | `:136` | «el `WHERE` de `remision.ts:194`» | `:223` |
 
-`openspec/config.yaml` y `openspec/specs/remisiones/spec.md:377-399` ya llevan las correctas, y hasta
+`openspec/config.yaml` y `openspec/specs/remisiones/spec.md:377-399` en `67a90c1` ya llevan las correctas, y hasta
 anotan el corrimiento. Sólo el test conserva las viejas. **Ninguna la caza un detector automático**:
 `:23`, `:24` y `:136` van en prosa o en forma abreviada.
 
