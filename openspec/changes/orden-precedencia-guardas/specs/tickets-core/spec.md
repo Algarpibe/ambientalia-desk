@@ -32,7 +32,7 @@ orden total de precedencia (`transitions-st` §3.8):
 | 7 | La orden de venta ya está asociada a otro ticket | D | `409` | `:45-49` (movida detrás de la guarda 6) |
 
 - El `422` de obligatorios **SHALL** listar **todos** los que faltan y no de uno en uno (probado en
-  `services/ticketService.test.ts:273`).
+  `services/ticketService.test.ts:273` en `ad65161`).
 - El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:91`).
 - El `409` de unicidad de la OV **SHALL** ser la **última** guarda antes de la primera escritura
   (`createTicket`, `:97`): cumple el orden total A/B/C/D de `transitions-st` §3.8.

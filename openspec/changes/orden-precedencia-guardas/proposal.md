@@ -167,7 +167,7 @@ Tres comprobaciones hechas contra el código antes de proponerlo:
 - **`derivadoA` sigue declarado antes de su segundo uso** en `:161` (el aviso de derivación), que es
   posterior a la escritura.
 
-**Ninguna prueba nueva hace falta para este par.** `ticketService.test.ts:205` **ya es** prueba de
+**Ninguna prueba nueva hace falta para este par.** `ticketService.test.ts:205` en `ad65161` **ya es** prueba de
 posición: manda `'Orden de Venta': 'OV-DUP'` y `derivado_a: 'no-existe'` a la vez (`:210`). Se
 **voltea** de `409` a `422`. Y `:218` —una sola guarda, sin OV de por medio— sobrevive **intacta**.
 
@@ -184,7 +184,7 @@ como **IV-12** (§12.3), no se corrige aquí.
 |---|---|---|---|
 | `ticketService.test.ts:327` | 409 | **422** | P1 · G4 vs G6 |
 | `ticketService.test.ts:336` | 409 | **422** | P1 · G4 vs G7 |
-| `ticketService.test.ts:205` | 409 | **422** | obs. #702 · OV vs derivación |
+| `ticketService.test.ts:205` en `ad65161` | 409 | **422** | obs. #702 · OV vs derivación |
 
 **Intactas — las otras 9, más la de remisión:** `ticketService.test.ts:144`, `:149`, **`:154`**,
 **`:160`**, **`:166`**, **`:194`**, **`:218`**, `:316`, `:343`, y

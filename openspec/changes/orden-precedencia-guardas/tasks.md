@@ -86,7 +86,7 @@ de entrega. Este documento no decide por Gerencia.
   `transitions-st` RQ-TS-06.
 - [x] 5.2 Reescribir el comentario `:129-131`: declarar el escalón D y el paralelo con `createTicket`
   (`:97`), no la anécdota de «la segunda puerta».
-- [x] 5.3 `ticketService.test.ts:205` → `422`, cambiando la FORMA del cuerpo a `r.body.errors` =
+- [x] 5.3 `ticketService.test.ts:205` en `60f03ae` → `422`, cambiando la FORMA del cuerpo a `r.body.errors` =
   `['La persona a la que se deriva no existe o está dada de baja']` (NO `r.body.error`; la guarda de
   derivación lanza `{ errors: [...] }`, forma ya visible en `:224`).
 
@@ -102,24 +102,24 @@ de entrega. Este documento no decide por Gerencia.
 
 ## Phase 7 · Contrato de errores 404/422 (P3) — Rebanada 2
 
-- [ ] 7.1 Crear `apps/desk/server/contratoErrores.test.ts` (convención de nombres de
+- [x] 7.1 Crear `apps/desk/server/contratoErrores.test.ts` (convención de nombres de
   `ordenVentaUnTicket.test.ts`, `transicionesEjecucion.test.ts`).
-- [ ] 7.2 Escribir N3: `id` de ruta inexistente en `executeTransition` → `404`. Nace VERDE. Mutación:
-  cambiar ese `404` (`:119`) por `422`, correr, confirmar rojo del `it` NUEVO (no sólo `:149`, que
-  también se pone rojo con la misma mutación), revertir. RQ: `transitions-st` Scenario «El sujeto
-  direccionado por la URL responde 404…».
-- [ ] 7.3 Escribir N4: `id` de ruta existente, `derivado_a` inexistente → `422`. Nace VERDE. Mutación:
-  cambiar ese `422` (`:143`) por `404`, correr, confirmar rojo del `it` NUEVO, revertir. RQ: mismo
-  Scenario, segunda mitad.
-- [ ] 7.4 Confirmar que P3 no cambió ningún código, texto ni guarda de producción en `ticketService.ts`
-  ni en `remision.ts`.
+- [x] 7.2 Escribir N3: `id` de ruta inexistente en `executeTransition` → `404`. Nace VERDE. Mutación:
+  cambiar ese `404` (`:123` tras R1) por `422`, correr, confirmar rojo del `it` NUEVO (y del
+  colateral `:153`/`:84`, que también se pone rojo con la misma mutación), revertir. RQ: `transitions-st`
+  Scenario «El sujeto direccionado por la URL responde 404…».
+- [x] 7.3 Escribir N4: `id` de ruta existente, `derivado_a` inexistente → `422`. Nace VERDE. Mutación:
+  cambiar ese `422` (`:139` tras R1) por `404`, correr, confirmar rojo del `it` NUEVO, revertir. RQ:
+  mismo Scenario, segunda mitad.
+- [x] 7.4 Confirmar que P3 no cambió ningún código, texto ni guarda de producción en `ticketService.ts`
+  ni en `remision.ts` — confirmado con `git diff --stat` vacío tras revertir las dos mutaciones.
 
 ## Phase 8 · Reparación documental P4 (afirmaciones vivas + Caso C) — Rebanada 2
 
-- [ ] 8.1 Reparar las 5 afirmaciones vivas restantes de P4 (`proposal.md` §5.7), conservando el texto
+- [x] 8.1 Reparar las 5 afirmaciones vivas restantes de P4 (`proposal.md` §5), conservando el texto
   y añadiendo qué lo cierra: `openspec/specs/transitions-st/spec.md:675`, `:679-680`, `:685` y
   `openspec/specs/tickets-core/spec.md:358`, `:366`.
-- [ ] 8.2 Añadir las 4 notas de Caso C, conservando el texto original: `docs/sdd/F0-01_Correcciones_
+- [x] 8.2 Añadir las 4 notas de Caso C, conservando el texto original: `docs/sdd/F0-01_Correcciones_
   para_el_plan.md:243`, `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:366`, `:369`, `:373`,
   `docs/sdd/Decisiones_Gerencia_2026-09-10.md:598`.
 
@@ -133,41 +133,56 @@ A/presente, B/histórico (ancla a su revisión) o C/superado. **El número final
 después de editar — nunca del mapa de renumeración de `design.md` §4**, porque los tres comentarios
 reescritos (Fases 2, 5) alteran el conteo.
 
-- [ ] 9.1 IV-11 — el más fácil de saltar porque no habla de precedencia (3 sitios): `CLAUDE.md:332`,
-  `openspec/config.yaml:984` (`:134` → la línea de `ticketConOrdenVenta` en `executeTransition` tras
-  el movimiento) y `openspec/config.yaml:987` (`:45-49`, reapuntar los DOS extremos).
-- [ ] 9.2 IV-4 cerrado, Caso B — **NO renumerar**, anclar a su revisión: `openspec/config.yaml:455` y
-  la forma ABREVIADA de `:478`.
-- [ ] 9.3 G5 se desplaza −7: `openspec/config.yaml:721`, `:736` (`:65-77`/`:65-83`).
-- [ ] 9.4 `CLAUDE.md:208` (sólo el paréntesis «hoy la guarda existe» es presente; el resto es
-  histórico) y `CLAUDE.md:330` (`:65-83` reapunta; `:39` sin cambio).
-- [ ] 9.5 `openspec/specs/transitions-st/spec.md:306` (RQ-TS-12, Caso A: `:140-144` sube a
-  `:132-136`).
-- [ ] 9.6 `openspec/specs/tickets-core/spec.md:181`, `:185`, `:401` (con forma abreviada) — Caso A;
-  `:87`, `:100`, `:214`, `:474`, `:476`, `:479` — clasificar leyendo la frase, algunas ya falsas
-  antes de esta tanda.
-- [ ] 9.7 `openspec/specs/remisiones/spec.md:330` (⚠️ cita `:135`, NO `:134` — un `grep` anclado en
-  `:134` no la caza) y `:342`.
-- [ ] 9.8 `apps/desk/server/ordenVentaUnTicket.test.ts:19`, `:20` — Caso A. **NO tocar** `:25` (lleva
-  ancla propia «en `b99d47a`», Caso B).
-- [ ] 9.9 `DEPLOY.md:160` (`:141` sube a `:133`).
-- [ ] 9.10 Documentos fechados — Caso B, **NO renumerar**, anclar a su fecha: `docs/sdd/*`,
-  `docs/runbooks/*`, `docs/Manifesto/*`, `openspec/changes/F0-0*/`. **NO tocar**
-  `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` (veto de Gerencia, modificado en local).
-- [ ] 9.11 Registrar SIN CORREGIR — ya falsas antes de esta tanda, corregirlas no es tarea de quien
-  las encuentra: `openspec/specs/permissions/spec.md:71`, `:86`, `:301`, `:303`;
-  `apps/desk/server/permisos.test.ts:30`, `:53`; `apps/desk/server/remisiones.test.ts:903`;
-  `apps/desk/server/transicionesEjecucion.test.ts:115`.
+- [x] 9.1 IV-11 — el más fácil de saltar porque no habla de precedencia (3 sitios): `CLAUDE.md:332`
+  reapuntada a `:148`; `openspec/config.yaml:984` (`:134`→`:148`, línea de `ticketConOrdenVenta` en
+  `executeTransition` tras el movimiento) y `openspec/config.yaml:987` (`:45-49`→`:94-98`, los DOS
+  extremos).
+- [x] 9.2 IV-4 cerrado, Caso B — **verificado, NO renumerado**: `openspec/config.yaml:455` y la forma
+  ABREVIADA de `:478` ya llevan su propio ancla (`cerrado_verificado_en: base 79cf09b` / fecha
+  2026-09-10); no necesitan tocarse.
+- [x] 9.3 G5 se desplaza −6 (medido, no los −7 del mapa pre-reescritura): `openspec/config.yaml:721`
+  (`:65-77`→`:59-71`), `:736` (`:65-83`→`:59-77`).
+- [x] 9.4 `CLAUDE.md:208` reapuntada a `:43-77` (sólo el paréntesis «hoy la guarda existe» es
+  presente; el resto sigue anclado a `607e26a`) y `CLAUDE.md:330` (`:65-77`→`:59-71` y
+  `:65-83`→`:59-77`, las DOS citas de esa fila; `:39` sin cambio).
+- [x] 9.5 `openspec/specs/transitions-st/spec.md:306` (RQ-TS-12) — **medido contra el fichero, no
+  contra el mapa**: `:140-144` sube a `:136-140` (NO `:132-136` como estimaba el mapa pre-reescritura
+  de comentarios de `design.md` §4; ese rango pertenece hoy al bloque de la OV).
+- [x] 9.6 `openspec/specs/tickets-core/spec.md:181` (`:43-49`→`:94-98`), `:185` (`:43-44`→`:89-93`);
+  nota de §4.2 (`:45-48`→`:94-97`, `:134-135`→`:148-149`). Las seis restantes (`:87`, `:100`, `:214`,
+  `:474`, `:476`, `:479`) medidas contra `60f03ae`: las SEIS ya citaban líneas ajenas al tema que
+  describen (dentro del bloque G5, no de `codigoServicio`/`marca`/`obligatorios`) — **ya falsas antes
+  de esta tanda**, no las rompió F1B-10; se registran, no se corrigen (`CLAUDE.md`).
+- [x] 9.7 `openspec/specs/remisiones/spec.md:330` (`:135`→`:149`) y `:342` (`:134-135`→`:148-149`).
+- [x] 9.8 `apps/desk/server/ordenVentaUnTicket.test.ts:19` (`:45-49`→`:94-98`), `:20`
+  (`:132-136`→`:146-150`). `:25` NO tocada (ancla propia «en `b99d47a`», Caso B).
+- [x] 9.9 `DEPLOY.md:160` — reapuntada a `:181` (la línea real de `conCopia: true`, la semántica
+  «copia a otras personas»; el mapa pre-reescritura de `design.md` sugería `:133`, que hoy es sólo el
+  comentario de derivación, no la copia).
+- [x] 9.10 Documentos fechados — verificados, Caso B, NO renumerados: `docs/sdd/*`, `docs/runbooks/*`,
+  `docs/Manifesto/*`, `openspec/changes/F0-0*/`. NO tocada
+  `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` (veto de Gerencia).
+- [x] 9.11 Registradas SIN CORREGIR — ya falsas antes de esta tanda:
+  `openspec/specs/permissions/spec.md:71`, `:86`, `:301`, `:303`; `apps/desk/server/permisos.test.ts:30`,
+  `:53`; `apps/desk/server/remisiones.test.ts:903`; `apps/desk/server/transicionesEjecucion.test.ts:115`.
+  **Barrido adicional, fuera del inventario de 18 pero necesario para el 0 bloqueantes**: 15 citas
+  bloqueantes que el detector encontró sobre `ccedf4f` (ver `apply-progress`), 6 de ellas la misma
+  cita a la línea 205 del fichero de pruebas, repetida en `design.md`/`proposal.md`/los dos
+  deltas/este mismo fichero (Caso B, ancladas inline `en ad65161`/`60f03ae`), 2 citas de texto
+  citado-como-ejemplo de un
+  docblock ya erróneo (`design.md:143`,`:145`, de-citadas a prosa), y las demás repartidas entre
+  reapuntado (Caso A) y anclaje inline (Caso B) según lo que afirma la frase.
 
 ## Phase 10 · Verificación final — Rebanada 2
 
-- [ ] 10.1 `npm test` completo en verde, incluidas las 9 pruebas que quedan INTACTAS (`:144`, `:149`,
-  `:154`, `:160`, `:166`, `:194`, `:218`, `:316`, `:343`) y `remisiones.test.ts:957`, ninguna tocada.
-- [ ] 10.2 `npm run typecheck` en verde.
-- [ ] 10.3 `npm run lint` en verde.
-- [ ] 10.4 Cerrar el `apply-progress` con: evidencia de mutación+reversión de N2, N3 y N4 (nombre del
-  `it`, mutación aplicada, `git diff` de la reversión); medida final de
-  `git diff --shortstat --no-renames` + `wc -l` de lo nuevo sin trackear, contra el disparador de 500.
+- [x] 10.1 `npm test` completo en verde: **1136 passed, 2 skipped** (122/123 ficheros), incluidas las 9
+  pruebas que quedan INTACTAS (`:144`, `:149`, `:154`, `:160`, `:166`, `:194`, `:218`, `:316`, `:343`)
+  y `remisiones.test.ts:957`, ninguna tocada.
+- [x] 10.2 `npm run typecheck` en verde (sin salida).
+- [x] 10.3 `npm run lint` en verde — 0 errores, 158 warnings preexistentes (mismo recuento que R1,
+  ninguno en ficheros tocados).
+- [x] 10.4 Cerrado el `apply-progress` combinado R1+R2: evidencia de mutación+reversión de N2 (R1), N3
+  y N4 (R2); medida final de `git diff --shortstat --no-renames` + `wc -l` de lo nuevo sin trackear.
 
 ---
 

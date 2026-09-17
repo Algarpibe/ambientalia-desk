@@ -86,7 +86,7 @@ El orden **MUST** tenerse en cuenta al probar: una matriz de permisos montada so
 origen inválido comprueba el `409` de la guarda 3 y cree comprobar el `403` de la 4
 (`permisos.test.ts:29-33`).
 
-El intercambio de las guardas 6 y 7 lo fija `ticketService.test.ts:205`, que manda a la vez una orden
+El intercambio de las guardas 6 y 7 lo fija `ticketService.test.ts:205` en `ad65161`, que manda a la vez una orden
 de venta ya usada y una derivación que no resuelve: antes ganaba el `409` de la OV, ahora gana el `422`
 de la derivación. `:218` —una sola guarda, sin OV de por medio— sobrevive intacta.
 

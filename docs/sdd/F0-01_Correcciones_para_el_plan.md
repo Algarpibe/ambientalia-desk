@@ -275,6 +275,13 @@ Y §3.8 cierra con **«corregir una sin la otra deja el problema»**: son una so
 
 y su fila en la tabla de trazabilidad (`plan:413` y siguientes) con talla **M**.
 
+> ✅ **CERRADO — la fila se añadió y la tanda se ejecutó.** `F1B-10` entró al plan como
+> `orden-precedencia-guardas` (`sdd-propose`, 2026-09-17; retallada de **M** a **L** en `proposal.md`
+> §7, porque la premisa que fijó la M —«no toca código»— resultó falsa). Cierra las dos inversiones de
+> (a) y (b) descritas arriba: el orden A/B/C/D queda aplicado en las dos puertas del motor (commit
+> `ccedf4f`) y §3.8(b) se conserva, no se corrige. Nota Caso C (`CLAUDE.md` regla de mutación 4): este
+> párrafo se conserva con su fecha, no se reescribe.
+
 ---
 
 #### 5.b · Falta una decisión: la cardinalidad OV ↔ ticket (punto abierto nº 52)

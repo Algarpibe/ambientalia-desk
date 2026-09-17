@@ -327,7 +327,7 @@ comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `r
 **después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:235-239`).
 
 Si la orden ya pertenece a otro ticket, la respuesta **SHALL** ser `409`, con el texto de
-`ticketService.ts:135` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
+`ticketService.ts:149` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
 las tres columnas **SHALL** quedar escrita. El `422` del serial (`remision.ts:152-157`) **SHALL**
 seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condición
 `WHERE ... COALESCE(orden_venta,'') = ''` (`:237`) **SHALL** mantenerse intacta: protege la carrera de
@@ -339,7 +339,7 @@ vigente; comprobar sólo por número dejaría ese ticket sin protección.
 
 **Tercer punto de captura legítimo.** La remisión de entrada **SHALL** contarse como el tercer punto
 de captura de la orden de venta, junto con el alta del ticket (`tickets-core` RQ-TC-08) y
-`habilitar_servicio` (`ticketService.ts:134-135`). La lista de
+`habilitar_servicio` (`ticketService.ts:148-149`). La lista de
 `docs/sdd/Decisiones_Gerencia_2026-09-10.md:156-164`, que sólo nombraba los dos primeros, quedó
 incompleta por omisión de redacción, no por decisión (decisión 1 de la ronda de preguntas del
 2026-09-16).

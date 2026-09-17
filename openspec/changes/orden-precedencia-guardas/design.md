@@ -56,7 +56,7 @@ y su salida son las ocho entradas de abajo.
 2. **Mover G4**: el bloque `ticketService.ts:43-49` completo pasa detrás de `:94`. N1 se pone verde.
 3. **Voltear `ticketService.test.ts:327` y `:336`** a `422`, con su aserción de texto.
 4. **Mover el `409` de `executeTransition`**: `:129-136` detrás de `:144`.
-5. **Voltear `ticketService.test.ts:205`** a `422`, **cambiando además la forma del cuerpo**.
+5. **Voltear `ticketService.test.ts:205` en `60f03ae`** a `422`, **cambiando además la forma del cuerpo**.
 6. **Escribir N2, N3 y N4**, que nacen verdes: el rojo de cada una se obtiene **mutando** (§5.2).
 7. **Reescribir los tres comentarios** y los dos bloques de docblock del fichero de pruebas (§3.3).
 8. **Reparar las seis afirmaciones vivas y añadir las cuatro notas de Caso C** (P4).
@@ -140,9 +140,9 @@ su comentario `:129-131` viaja con él. Destino: **detrás de `:140-144`, antes 
 | `ticketService.ts:43-44` | «Una OV, un ticket. El buscador ya solo ofrece las libres…» | Viaja con el bloque y **se reescribe para declarar el escalón D y su posición** (última guarda antes de `createTicket`, `:97`), no la anécdota del buscador |
 | `ticketService.ts:50-64` | razona la posición de G5 con **dos** motivos: **(a)** la rama (i) tiene que rellenar `clientId` antes de `:88`; **(b)** «meterla antes del 409 alteraría el tramo 409/422 que `ticketService.test.ts` declara y deja explícitamente sin decidir (**no es esta tanda**)» | **(a) sobrevive**: sigue siendo la restricción dura. **(b) CADUCA — ésta ES la tanda.** Se sustituye por la referencia al escalón C y a `tickets-core` RQ-TC-05/RQ-TC-13, y **la posición de G5 sale del comentario y entra en la spec**: es el molde de **H3** de `CLAUDE.md` —posición declarada por comentario y no fijada por prueba— y cerrarlo es trabajo de esta tanda (N1 y N2, §5.2) |
 | `ticketService.ts:129-131` | «La segunda puerta por la que una OV entra en un ticket…» | Viaja con el bloque y se reescribe para declarar el escalón D y el paralelo con el alta |
-| `ticketService.test.ts:127-142` | «EL ORDEN, DECLARADO. `ticketService.ts:82-110`» + «DOS TRAMOS… 2. 422 antes que 409 de la OV» | **Reescrito.** El rango `:82-110` ya era falso antes de esta tanda (`executeTransition` empieza en `:108`), y el tramo 2 deja de ser una rareza para ser consecuencia del orden total |
+| `ticketService.test.ts:127-142` | «EL ORDEN, DECLARADO. ticketService.ts, líneas 82 a 110» + «DOS TRAMOS… 2. 422 antes que 409 de la OV» | **Reescrito.** El rango 82 a 110 ya era falso antes de esta tanda (`executeTransition` empieza en `:108`), y el tramo 2 deja de ser una rareza para ser consecuencia del orden total |
 | `ticketService.test.ts:172-193` | «⚠️ ESTA PRUEBA Y LA DE `:327` DICEN LO CONTRARIO» y «**La precedencia NO está decidida**… es una fila que falta» (`:186-192`) | **Reescrito** — es la reparación P4 del fichero de pruebas. Tras la tanda ya no se contradicen y la fila existe |
-| `ticketService.test.ts:302-314` y `:321-326` | «EL ORDEN, DECLARADO. `ticketService.ts:22-94`» + «EL TRAMO QUE SORPRENDE» + «al fijarla una de las dos pruebas cambiará» | **Reescritos.** El rango `:22-94` sigue acertando por casualidad tras el movimiento (las guardas siguen ocupando `22`–`94`), pero **lo que el bloque afirma deja de ser cierto**, y una cita se comprueba por lo que afirma, no por que la línea exista |
+| `ticketService.test.ts:302-314` en `60f03ae` y `:321-326` | «EL ORDEN, DECLARADO. ticketService.ts, líneas 22 a 94» + «EL TRAMO QUE SORPRENDE» + «al fijarla una de las dos pruebas cambiará» | **Reescritos.** El rango 22 a 94 sigue acertando por casualidad tras el movimiento (las guardas siguen ocupando `22`–`94`), pero **lo que el bloque afirma deja de ser cierto**, y una cita se comprueba por lo que afirma, no por que la línea exista |
 
 ---
 
@@ -180,7 +180,7 @@ Comprobaciones de consistencia: `:45` → `:90`, `:49` → `:94`, `:65` → `:58
 |---|---|---|---|
 | `ticketService.test.ts:327` | `409` + `r.body.error` = `'La orden de venta OV-DUP ya está asociada al ticket #8101'` | **`422`** + `r.body.error` = `'Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones, prefijo'` | El montaje (`:328-331`) usa `equipo()` **sin** `client_id` y un cuerpo sin ninguno de los cuatro obligatorios, así que la lista sale entera |
 | `ticketService.test.ts:336` | `409`, **sin ninguna aserción de texto** (`:340`) | **`422`** + **aserción de texto nueva**: `r.body.error` = `'Cliente no encontrado'` | El montaje (`:337-339`) manda `CAMPOS_OK` (`:251`) y no inserta `cliente()`, así que el único `422` alcanzable es el de `:94`. **La aserción de texto es obligatoria**: un `toBe(422)` a secas no distingue cuál de las tres guardas C ganó, y una prueba que no distingue no es una prueba de posición (regla de mutación 1) |
-| `ticketService.test.ts:205` | `409` + **`r.body.error`** (`:213`) | **`422`** + **`r.body.errors`** = `['La persona a la que se deriva no existe o está dada de baja']` | **Cambia la FORMA del cuerpo, no sólo el número.** La guarda de derivación lanza `{ errors: [...] }` (`:143`), no `{ error }`. La forma correcta ya está a la vista en `:224` |
+| `ticketService.test.ts:205` en `60f03ae` | `409` + **`r.body.error`** (`:213`) | **`422`** + **`r.body.errors`** = `['La persona a la que se deriva no existe o está dada de baja']` | **Cambia la FORMA del cuerpo, no sólo el número.** La guarda de derivación lanza `{ errors: [...] }` (`:143`), no `{ error }`. La forma correcta ya está a la vista en `:224` |
 
 ### 5.2 · Las cuatro nuevas, y **qué rojo tiene cada una**
 
@@ -268,7 +268,7 @@ barrido guiado por el asunto de la tanda no las mira.
 | `apps/desk/server/remisiones.test.ts:903`, `permisos.test.ts:30`, `:53`, `transicionesEjecucion.test.ts:115` | `:53-58`, `:89`, `:86`, `:86` | **A** / ya falsas | Ficheros que el `grep` alcanza y el `proposal.md` §8.2 no nombraba |
 | `DEPLOY.md:160` | `:141` | **A** | Cae en el tramo que sube a `:133` |
 | `docs/sdd/*`, `docs/runbooks/*`, `docs/Manifesto/*`, `openspec/changes/F0-0*/` | varias | **B** | Documentos **fechados**: se anclan a su fecha. Renumerarlos los volvería falsos sobre sí mismos |
-| `docs/sdd/Desk2.0_Plan_..._R01.1.md:367`, `:380` | `:117`, `:39` | — | **VETO DE GERENCIA: no se toca.** Está modificado en local. Si hay que citar el plan, se cita anclado a `ad65161` |
+| El plan de fases y tandas (nombre abreviado con puntos suspensivos, líneas 367 y 380 de su revisión R01.1) | `:117`, `:39` | — | **VETO DE GERENCIA: no se toca.** Está modificado en local. Si hay que citar el plan, se cita anclado a `ad65161`, y su nombre abreviado se escribe en prosa, sin forma de cita (Q6 de `hook-citas-pre-push`) |
 | `openspec/changes/archive/**` | decenas | **B/C** | **No se renumeran nunca.** Y si hace falta nombrarlas, **se nombran en prosa y sin forma de cita** — escritas como cita el detector las trata como rotas (Q6 de `hook-citas-pre-push`) |
 
 ### 6.3 · Los propios deltas de esta tanda también entran en el barrido

@@ -718,7 +718,7 @@ incumplimientos_vivos:
       `clientId`, el de la OV nunca se mira ni se contrasta: un ticket puede
       quedar con cliente y equipo de un lado y la orden de venta de otro, sin
       ningún aviso. La guarda equipo↔cliente que la misma tanda añadió (P1,
-      `ticketService.ts:65-77`) compara el `clientId` YA RESUELTO contra
+      `ticketService.ts:59-71`) compara el `clientId` YA RESUELTO contra
       `equipo.clientId`, no contra `ov.clientId`: esta pareja queda fuera de su
       alcance a propósito (proposal.md §3, "Qué NO hace").
     relacion_con_iv4: >
@@ -733,7 +733,7 @@ incumplimientos_vivos:
       titularidad— sigue SIN DECIDIR y SIN CLAVE en la tabla de decisiones del
       plan, y es donde vive IV-8.
       NO usar nº 52 para justificar tocar la guarda equipo↔cliente
-      (`ticketService.ts:65-83`).
+      (`ticketService.ts:59-77`).
     destino: "PUNTO ABIERTO, sin destino — a propósito (criterio nº 8)"
     por_que_sin_destino: >
       ACTUALIZADO EL 2026-09-10. Decía: «cerrarlo exige antes decidir la
@@ -981,10 +981,10 @@ incumplimientos_vivos:
       `salesorder_id` se queda con el valor viejo.
     afecta_tambien_a_la_puerta_2: >
       NO ES SÓLO UN PROBLEMA DE LA TERCERA PUERTA. La puerta 2 comprueba SÓLO POR
-      NÚMERO (`apps/desk/server/services/ticketService.ts:134`), porque
+      NÚMERO (`apps/desk/server/services/ticketService.ts:148`), porque
       `plan.columns.orden_venta` es un campo de texto de la transición y ahí no hay
       id. Si el sync vacía `orden_venta` y `salesorder_id` sobrevive, la puerta 2
-      TAMPOCO encuentra ese ticket. La puerta 1 (`ticketService.ts:45-49`) y la
+      TAMPOCO encuentra ese ticket. La puerta 1 (`ticketService.ts:94-98`) y la
       tercera SÍ, porque miran las dos vías — y por eso las dos vías son REQUISITO
       de la tercera puerta, no preferencia.
     medicion: >

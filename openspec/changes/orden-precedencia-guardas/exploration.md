@@ -107,7 +107,8 @@ cita está CADUCADA.** Contra el árbol de hoy:
 | **`:194`** | `it('los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409', …)` |
 | **`:327`** | `it('la orden de venta ya usada gana a los obligatorios que faltan: 409, no 422', …)` |
 
-Las contradictorias son hoy `:194` y `:327`. **`tickets-core/spec.md:373-375` ya las cita bien**; el
+Las contradictorias son hoy `:194` y `:327`. **`openspec/specs/tickets-core/spec.md:380-382` ya las
+cita bien**; el
 desfase vive **sólo** en `transitions-st`. Es la regla de mutación 4 de `CLAUDE.md`, **caso A ·
 presente**: la afirmación sigue siendo cierta, sólo hay que reapuntar la línea.
 

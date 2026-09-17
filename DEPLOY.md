@@ -157,7 +157,7 @@ configuración.
 **`AVISOS_COPIA_EMAIL`** — *muleta de pruebas, y la que más cuidado pide*
 
 - *Qué enciende:* una dirección que recibe **copia de los avisos de derivación dirigidos a otras
-  personas** (`ticketService.ts:141`, `avisosWebhook.ts:11-27`). Existe para poder verificar que el
+  personas** (`ticketService.ts:181`, `avisosWebhook.ts:11-27`). Existe para poder verificar que el
   canal de correo sale de verdad. **Vacía —lo normal— no copia nada**, y se apaga borrando la
   variable, sin tocar código.
 - *Qué rompe si se pone mal:* es la única de las cuatro que **manda correo a alguien que no es el

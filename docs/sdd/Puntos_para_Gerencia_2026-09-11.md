@@ -366,11 +366,20 @@ vacío, misma talla S, mismo generador inexistente— y con la extensión a dos 
 Tres huecos que destapó el mismo barrido, de dos clases distintas: **una fila que falta** y **dos
 decisiones que no llegan a la agenda**.
 
+> ✅ **CERRADO — la fila 5.a ya se creó y se ejecutó.** `F1B-10` (`orden-precedencia-guardas`,
+> `sdd-propose` 2026-09-17) es esa fila. Nota Caso C (`CLAUDE.md` regla de mutación 4): este párrafo se
+> conserva con su fecha, no se reescribe; el cierre se detalla junto a la entrada 5.a de abajo.
+
 **5.a — Falta una fila: el contrato de errores del motor no tiene tanda.** Las dos puertas del motor
 evalúan la misma regla en órdenes opuestos: en el alta gana el `409` de la orden de venta; en
 `habilitar_servicio` ganan los `422` de obligatorios. Y hay una segunda inversión hermana: el `409` de
 estado contesta antes que el `403` de área. Las specs lo declaran y añaden que **corregir una sin la
 otra deja el problema**. Ninguna fila del plan lo cubre.
+
+> ✅ **CERRADO por `orden-precedencia-guardas` (F1B-10).** Las dos puertas del motor evalúan hoy la
+> misma regla en el mismo orden (A/B/C/D, commit `ccedf4f`); la segunda inversión —`409` de estado
+> antes que `403` de área— se conserva a propósito, como sub-orden legítimo dentro del escalón B, no
+> como defecto. Nota Caso C: párrafo de arriba conservado con su fecha.
 
 *Talla cuantificada, no prometida:* hay **12 pruebas de precedencia** en el fichero del motor. Dos
 tienen títulos literalmente opuestos y las dos están en verde, así que **una cambia sí o sí**. Bajo el

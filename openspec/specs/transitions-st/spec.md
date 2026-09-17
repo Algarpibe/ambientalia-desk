@@ -303,7 +303,7 @@ derivar no puede frenar un ticket (`transitions.ts:96-98`, `:277-291`; maestro M
   (`transitionExec.ts:48-61`): la clave **ausente** no toca lo que hubiera; la clave **vacía** borra
   la derivación. Sin esa distinción, vaciar la casilla no haría nada.
 - Un id de persona recibido **MUST** comprobarse: inexistente o dada de baja produce `422`
-  (`ticketService.ts:140-144`).
+  (`ticketService.ts:136-140`).
 
 ### RQ-TS-13 · Avisos: se calculan desde el estado de llegada
 
@@ -682,6 +682,15 @@ reformula entonces, no se toca preventivamente aquí. Detalle en
 > precedencia, `:176` y `:295` son directamente contradictorias —así que **una cambia sí o sí**— y
 > bajo el orden natural cambian **6 de 12**, tres de ellas alterando qué error ve el usuario.
 
+> ✅ **CERRADO por `orden-precedencia-guardas` (F1B-10), 2026-09-17.** El plan SÍ tiene ya la fila que
+> faltaba: es esta misma tanda. Las dos inversiones de (a) y (b) quedan resueltas —(a) con el orden
+> A/B/C/D aplicado en las dos puertas (commit `ccedf4f`, `ticketService.ts`, pruebas de posición N1/N2
+> en `ticketService.test.ts`); (b) se **conserva**, no se corrige: sigue siendo sub-orden legítimo
+> dentro del escalón B, con sus tres pruebas de respaldo intactas (`:154`, `:160`, `:166`)—. El párrafo
+> de abajo («Comportamiento actual») queda como registro histórico del estado ANTES de F1B-10 (Caso C,
+> `CLAUDE.md` regla de mutación 4); el `SHALL` normativo definitivo sustituye esta sección cuando
+> `sdd-archive` funda el delta de `openspec/changes/orden-precedencia-guardas/specs/transitions-st/spec.md`.
+
 **Comportamiento actual. Sin tanda: falta una fila en el plan (entrada 5.a del fichero de correcciones).** Son dos, y son hermanas: las dos consisten en que el
 orden en que se evalúan las guardas no es el orden que el contrato debería tener. Las fijó
 `d24466e` («test(server): precedencia entre guardas de ticketService»), que las descubrió al probar
@@ -693,10 +702,10 @@ casos que rompen **dos** guardas a la vez — por HTTP el orden no se distingue
 | Puerta | Orden declarado | Quién gana ante el error doble |
 |---|---|---|
 | `createManagedTicket` (`ticketService.ts:22-60`) | 422 equipo → 422 OV inexistente → **409 OV ya usada** → 422 obligatorios → 422 cliente | el **`409`** de la OV (`ticketService.test.ts:295`) |
-| `executeTransition` (`ticketService.ts:82-110`) | 400 → 404 → 409 estado → 403 área → **422 plan** → **409 OV** → 422 derivación | el **`422`** de obligatorios (`ticketService.test.ts:176`) |
+| `executeTransition` (ticketService.ts, líneas 82 a 110) | 400 → 404 → 409 estado → 403 área → **422 plan** → **409 OV** → 422 derivación | el **`422`** de obligatorios (`ticketService.test.ts:176`) |
 
 El motor **SHALL** dar hoy respuestas distintas al mismo error doble según por dónde se entre
-(`ticketService.test.ts:277-287`). La consecuencia es de usabilidad y de contrato: quien manda un
+(`ticketService.test.ts:277-287` en `60f03ae`). La consecuencia es de usabilidad y de contrato: quien manda un
 formulario a medias con una orden ya usada recibe en la creación la queja de la orden y en
 `habilitar_servicio` la de los campos, y hacen falta **dos viajes para dos problemas que ya se
 conocían en el primero** (`ticketService.test.ts:138-141`).
@@ -770,7 +779,7 @@ hoy no la llama nadie.
 
 **La primera de las dos piezas de la ampliación YA ESTABA CONSTRUIDA.** «Aviso redundante por correo
 cuando una transición cambia de área» (`:1573`) es lo que el motor hace desde antes de esta tanda
-(`ticketService.ts:154-177`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
+(`ticketService.ts:160-183`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
 dice nueve líneas más abajo de pedirlo**: «`[AS-BUILT]` Al ejecutarse cualquier transición, el sistema
 calcula el área destinataria del aviso a partir del estado de llegada y notifica en la aplicación **y
 por correo**» (`:1582`). Lo que faltaba en ese canal era poder encenderlo sin romper la regla de

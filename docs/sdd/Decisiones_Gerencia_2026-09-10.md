@@ -595,7 +595,7 @@ evidencia de los 181 tickets la dejó caduca el mismo día.
 | **2** · el gate de F1A-03 | Aprobada **con el texto corregido** (ver abajo) |
 | **3** · el ancla del bodegaje | Aprobada tal cual |
 | **4** · el generador | Decidida — §9 de este documento |
-| **5** · la fila que falta y las dos decisiones | Aprobada tal cual |
+| **5** · la fila que falta y las dos decisiones | Aprobada tal cual — ✅ **la fila (F1B-10, `orden-precedencia-guardas`) se creó y se ejecutó el 2026-09-17; nota Caso C, fila conservada con su fecha** |
 
 **Texto corregido de la entrada 2** para la columna Gate de `plan:140`:
 

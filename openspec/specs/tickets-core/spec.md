@@ -124,7 +124,7 @@ las guardas de `createManagedTicket` (`ticketService.ts:20-105`) **en este orden
 | 7 | El cliente no existe en Books | `422 'Cliente no encontrado'` | `:93-94` |
 
 - El `422` de obligatorios **SHALL** listar **todos** los que faltan y no de uno en uno
-  (probado en `services/ticketService.test.ts:273`).
+  (probado en `services/ticketService.test.ts:278`).
 - El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:91`).
 - **El orden 4 antes que 6 sigue siendo la inversión de precedencia conocida** respecto de
   `executeTransition` (`tickets-core` §4.1, `transitions-st` §3.8); esta tanda no la toca.
@@ -178,11 +178,11 @@ RQ-TS-02. Aquí sólo se fija de dónde arranca el ticket.
 
 Ésta es la **primera** de las tres puertas. El alta **SHALL** rechazar con `409` una orden ya
 asociada a otro ticket, mirando las **dos vías** —`salesorder_id` y `orden_venta`—
-(`ticketService.ts:43-49`, con `ticketConOrdenVenta` en `repo.ts:330-347`).
+(`ticketService.ts:94-98`, con `ticketConOrdenVenta` en `repo.ts:330-347`).
 
 - La razón **SHALL** quedar escrita: el buscador ya sólo ofrece las libres, «pero una lista no es una
   frontera» — basta mandar el id a mano o llegar con la lista cacheada para duplicar la orden
-  (`ticketService.ts:43-44`).
+  (`ticketService.ts:89-93`).
 - La **fecha** de la orden **SHALL** viajar con su número y guardarse en el alta
   (`ticketService.ts:30-34`, `:41`; el campo en `CreateTicketInput` está documentado en
   `repo.ts:359-365`): sin ella, `habilitar_servicio` pide una fecha que nadie puede rellenar, porque
@@ -363,11 +363,19 @@ debe haber.)*
 > el `409` de estado antes del `403` de área, sólo en `executeTransition`. Corregir una sin la otra
 > deja el problema (`transitions-st` §3.8).
 
+> ✅ **CERRADO por `orden-precedencia-guardas` (F1B-10), 2026-09-17.** El plan SÍ tiene ya la fila que
+> faltaba: es esta misma tanda. El `409` de la OV deja de ganar al `422` de obligatorios en el alta —el
+> orden A/B/C/D se aplica también aquí (commit `ccedf4f`, `ticketService.ts`, pruebas de posición N1/N2
+> en `ticketService.test.ts`)—, la misma regla que cierra `transitions-st` §3.8(a). El párrafo de abajo
+> queda como registro histórico del estado ANTES de F1B-10 (Caso C, `CLAUDE.md` regla de mutación 4);
+> el `SHALL` normativo definitivo sustituye esta sección cuando `sdd-archive` funda el delta de
+> `openspec/changes/orden-precedencia-guardas/specs/tickets-core/spec.md`.
+
 **Comportamiento actual. Sin tanda: falta una fila en el plan (entrada 5.a del fichero de
 correcciones).** En el alta, el `409` de la orden de venta gana al `422` de obligatorios
 (`ticketService.ts:43-49` antes de `:81-86`; fijado en `services/ticketService.test.ts:327`). En
 `habilitar_servicio` es al revés (`ticketService.test.ts:194`). **Las dos puertas de la misma regla
-evalúan en órdenes opuestos** (`ticketService.test.ts:302-314`).
+evalúan en órdenes opuestos** (`ticketService.test.ts:302-314` en `60f03ae`).
 
 **Talla cuantificada, no prometida.** Hay **12** pruebas de precedencia
 (`services/ticketService.test.ts:143` y `:315`, un `describe` por endpoint). `:194` («los obligatorios
@@ -398,8 +406,8 @@ habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le habí
 > **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** El punto abierto nº 52 está cerrado:
 > **`1 ticket : N OV`, sin tabla puente**, y está en la tabla de decisiones del plan (`plan:364`).
 >
-> **Se CONSTRUYE la tercera puerta; las dos que ya existen SE QUEDAN** — `ticketService.ts:45-48` en el
-> alta (RQ-TC-08) y `:134-135` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un
+> **Se CONSTRUYE la tercera puerta; las dos que ya existen SE QUEDAN** — `ticketService.ts:94-97` en el
+> alta (RQ-TC-08) y `:148-149` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un
 > ticket, que es justo lo que comprueban. La variante que ponía la regla en duda, la OV global por
 > lote, **desaparece por proceso**: se sustituye por subórdenes `OV-AAAA-NNN-SS`, una por ticket
 > (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` `RQ-RE-16`.
