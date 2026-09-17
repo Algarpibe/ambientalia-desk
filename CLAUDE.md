@@ -34,37 +34,81 @@ npm run build    # build del cliente
 
 El maestro es un `.docx` y **no se edita desde el repositorio**. La copia citable por línea es:
 
-    docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md   (4.935 líneas)
+    docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md   (5.167 líneas)
 
 Se regenera con `scripts/docx2md.sh <entrada.docx> [salida.md]`. No hay `pandoc` en las máquinas del
 equipo: el script son veinte líneas sobre `unzip` y `sed`. Cada revisión del maestro se vuelve a
 exportar; el `.docx` sigue siendo el original editable.
 
+**Y la R08.1.md SE CONSERVA trackeada, a propósito: es la única forma de que 147 citas sigan siendo
+verificables.** Las dos copias conviven y cada una tiene un oficio:
+
+| Copia | Líneas | Para qué |
+|---|---|---|
+| `…R08.2.md` | 5.167 | **Toda cita NUEVA.** Es el maestro vigente |
+| `…R08.1.md` | 4.935 | **Sólo para leer las 147 citas `R08.1.md:NNNN` que ya existen.** No se cita desde hoy |
+
+> ⚠️ **Las 147 citas viejas NO se renumeran a la R08.2.** Es el **caso B** de la regla de mutación 4:
+> afirman algo que era cierto de la R08.1, y su revisión va en la propia cita. Renumerarlas a ciegas
+> las volvería falsas, y encima **parecería** reparado — que es exactamente el fallo que esa regla
+> registra. La R08.2 tiene **+232 líneas** y el desplazamiento **no es uniforme**: el §3.2 se mueve
+> +107 y el final del documento +232. Un `sed` sobre el número es el modo de fallo, no la reparación.
+
+*Por qué se versiona la R08.2 el 2026-09-17:* el fichero llevaba dos días en el disco **sin trackear**
+mientras `docs/sdd/R08.3_Expediente_de_cambios.md:9-12` —que sí está versionado— ya declaraba que «el
+`.md` citable de partida es …R08.2.md». O sea que el repositorio afirmaba por escrito depender de un
+fichero que no contenía. Quien clonara no podía comprobar ni una sola cita de ese expediente.
+
+**La R08.3 todavía NO existe como `.md`**, y no es un olvido: `R08.3_Expediente_de_cambios.md` es un
+encargo **pendiente de aplicar al `.docx`** («Destinatario: el proyecto de Claude que tiene el `.docx`
+delante», `:4`). El día que Gerencia lo pegue y se reexporte, la citable pasa a ser la R08.3.md y esta
+tabla gana una fila — la R08.2.md se queda, por la misma razón que hoy se queda la R08.1.md.
+
 Las correcciones que el maestro necesita **no se aplican al `.docx`**: se entregan como texto en
 `docs/sdd/F0-01_Correcciones_para_el_maestro.md` para que Gerencia las pegue.
 
 **Un apartado del maestro está marcado `[EN REVISIÓN — R08]`, y citar un ítem suyo no es citar algo
-acordado.** Es el **§3.2 «MVP — P0 · *Control y ejecución*»** (`:2839-3015`). Su tabla ocupa
-`:2851-3012`: cabecera de columnas en `:2851`, última fila el ítem 28 en `:3008-3012`. Las
-`:3013-3015` son tres notas posteriores, no filas. En `:2841` el revisor marca **todo el backlog
-del MVP** como pendiente de revisar y discutir a fondo —no objeta un ítem concreto: la lista se
-construyó antes de conocerse el as-built—, y en `:2842` el maestro dice que **la tabla se mantiene
-como está, sin retocar, hasta esa sesión**, remitiendo al **Anexo H** como lo que sí refleja el
-estado real.
+acordado.** Es el **§3.2 «MVP — P0 · *Control y ejecución*»**. **Remedido contra la R08.2.md el
+2026-09-17**, ocupa `:2946-3122`. Su tabla empieza en la cabecera de columnas `:2958` y termina en la
+última fila, el ítem 28, `:3114-3119`. Las `:3120-3122` son tres notas posteriores, no filas. En
+`:2948` el revisor marca **todo el backlog del MVP** como pendiente de revisar y discutir a fondo
+—no objeta un ítem concreto: la lista se construyó antes de conocerse el as-built—, y en `:2949` el
+maestro dice que **la tabla siguiente se mantiene como está, sin retocar, hasta esa sesión**,
+remitiendo al **Anexo H** como lo que sí refleja el estado real.
+
+*Los mismos límites en la R08.1.md, para leer las citas viejas:* §3.2 en `:2839-3015`, cabecera de
+columnas `:2851`, ítem 28 `:3008-3012`, notas `:3013-3015`, marca `:2841`, «se mantiene» `:2842`.
+El apartado se desplaza **+107 líneas** entre las dos copias; el final del documento, +232. Por eso
+el desplazamiento no se aplica con una resta.
 
 *Qué hacer con eso:* un ítem de esa tabla vale como **procedencia** —de dónde salió una fila del
 plan— y NO como alcance acordado. Si una tanda nueva se apoya en uno para justificar su alcance, la
 justificación operativa tiene que ser el plan o una decisión de Gerencia, no el ítem.
 
-*Medido el 2026-09-13, y la conclusión fue que la marca NO se propaga:* de las **109** citas
-`R08.1.md:NNNN` del repositorio sólo **una** cae dentro del §3.2 —la de
-`openspec/specs/vistas-tablero/spec.md:9`, que ya la lleva escrita—. Hay además **tres** menciones
-SIN línea (`ítem 22 del maestro` en `openspec/config.yaml:349`, `:519` y `:658`), y las tres usan el
-ítem exactamente como procedencia de `plan:157` para justificar destinos **ya cerrados** (IV-1,
-IV-5, IV-7 → F1B-08): no hay nada que corregir en ellas. ⚠️ Esas tres **no las caza** ni
-`grep -rn "Fuente en el maestro" openspec/specs` ni un barrido de `R08.1.md:[0-9]+`, porque no
-llevan número de línea. Hicieron falta **tres** detectores, que es el mismo molde de siempre: un
-detector que no caza todo lo que la afirmación abarca.
+*Remedido el 2026-09-17, y la conclusión NO cambia: la marca no se propaga.* De las **147** citas
+`R08.1.md:NNNN` del repositorio —eran 109 el 2026-09-13— sigue cayendo sólo **una** dentro del §3.2:
+la de `openspec/specs/vistas-tablero/spec.md:9`, que apunta a `R08.1.md:2978` y ya lleva la marca
+escrita. Hay además **tres** menciones SIN línea (`ítem 22 del maestro` en `openspec/config.yaml:349`,
+`:557` y `:696`), y las tres usan el ítem exactamente como procedencia de `plan:163` para justificar
+destinos **ya cerrados** (IV-1, IV-5, IV-7 → F1B-08): no hay nada que corregir en ellas.
+
+⚠️ Esas tres **no las caza** ni `grep -rn "Fuente en el maestro" openspec/specs` ni un barrido de
+`R08.1.md:[0-9]+`, porque no llevan número de línea. Hicieron falta **tres** detectores, que es el
+mismo molde de siempre: un detector que no caza todo lo que la afirmación abarca.
+
+*Y este mismo párrafo lo demostró otra vez al remedirlo:* decía `:519` y `:658`, y hoy son `:557` y
+`:696`. Dos de sus tres referencias se habían desfasado **sin que nada se pusiera rojo**, y las dos
+razones son las que esta sección ya tiene escritas, cada una en su sitio:
+
+1. **Son abreviadas**, y el detector no bloquea la forma abreviada (regla de mutación 4, último
+   guion). El `openspec/config.yaml:349` completo sí entra en el barrido —el patrón de
+   `apps/desk/server/citas/cosecha.ts:65` no exige extensión conocida, así que un `.yaml` se caza
+   igual que un `.ts`—, pero `:557` y `:696` no llevan nombre de fichero y quedan en lectura humana.
+2. **Y aunque fueran completas, tampoco bastaría:** el detector comprueba que la línea EXISTA y no
+   esté vacía, nunca que DIGA lo que la frase afirma. Una cita desplazada a otra línea con texto
+   pasa en verde.
+
+Es la regla de mutación 4 aplicada a este fichero: **el que escribe la regla no está exento de ella.**
 
 ---
 
@@ -252,7 +296,7 @@ reabra el punto.
 
 ## Incumplimientos vivos — registrados, no corregidos
 
-**Cuatro** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
+**Cinco** desvíos vivos. Están anotados para que no se pierdan; **corregirlos no es tarea de la tanda
 que los encuentre**, salvo que su destino sea esa tanda. La lista completa, con la misma información,
 está también en `openspec/config.yaml` (`incumplimientos_vivos`).
 
@@ -264,6 +308,14 @@ puerta de «una OV, un ticket»—, y la **baja de IV-4** devuelve el encabezado
 `valoresTransicion.ts`, `ticketService.ts:39` (clientId), `por-entregar-es-espera` (color) e IV-11.
 Contar sólo el alta dejaría este párrafo afirmando un «quinto» que ya no existe; contar sólo la baja
 perdería por qué el encabezado llegó a decir cinco.
+
+**Y un tercer movimiento, el 2026-09-17, que devuelve el encabezado a CINCO.** El **alta de IV-12** —el
+alta de remisión no cumple, en dos puntos, el orden total de precedencia que F1B-10 declara— la
+registró la propuesta de `orden-precedencia-guardas`, y la registra **sin destino**, como IV-9 e IV-11.
+Los cinco de hoy son: `valoresTransicion.ts`, `ticketService.ts:39` (clientId), `por-entregar-es-espera`
+(color), IV-11 e IV-12. **Este párrafo se actualiza, no se reescribe**: la narración de 2026-09-16 sigue
+siendo cierta de su fecha, y renumerarla o refundirla la volvería falsa sobre sí misma — es el Caso B de
+la regla de mutación 4 aplicado al propio recuento.
 
 > **⚠️ REGLA: un destino es una promesa, y hay que barrerla al cerrar la épica.** Cuando una épica se
 > cierra, **compruébese si algún desvío la nombraba** y reasígnese en el mismo acto. Al cerrar F1A los
@@ -277,7 +329,8 @@ perdería por qué el encabezado llegó a decir cinco.
 | 1 | `apps/desk/src/lib/valoresTransicion.ts` — regla de dominio sólo en cliente (declarada en el bloque de cabecera `:3-17`, implementada en `valoresConocidos`, `:49-79`) | **PUNTO ABIERTO PARA GERENCIA.** Ninguna tanda lo cubre, y **tampoco es una fila que falte**: el destino viejo («F1A o F1C, decisión de alcance») *era* el aviso de que nadie había decidido. Las tres fechas que deriva son **operandos de KPI** —`Fecha Remisión Entrada` abre el bodegaje de entrada (`bodegaje.ts:60-66`)—, así que no es cosmético. O el servidor las impone, o se declara que son prellenado y los KPIs dicen que su fuente es opcional |
 | — | `apps/desk/server/services/ticketService.ts:39` — al completar `clientId` desde la orden de venta (`clientId = clientId ?? ov.clientId ?? null`), si el cuerpo YA trae su propio `clientId`, el de la OV nunca se contrasta con nada: un ticket puede quedar con cliente y equipo de un lado y la orden de venta de otro, sin ningún aviso. La guarda equipo↔cliente de `cerrar-hallazgos-revision-f1b-01` (P1, `:65-77`) compara el `clientId` final contra `equipo.clientId`, no contra `ov.clientId`, así que esta pareja queda fuera de su alcance a propósito (`proposal.md` §3) | **PUNTO ABIERTO, sin destino** — a propósito, criterio de aceptación nº 8 de `cerrar-hallazgos-revision-f1b-01`. ⚠️ **SIGUE VIVO, pero por otra razón desde el 2026-09-10.** Su justificación vieja —«esperar a que Gerencia resuelva nº 52»— **caducó**: nº 52 está decidido. Lo que lo mantiene abierto es que **nº 52 es CARDINALIDAD, no TITULARIDAD** (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:178-181`): la decisión no dice que la OV y el equipo puedan ser de clientes distintos, y esa pregunta —la titularidad— **sigue sin decidir y sin clave en la tabla de decisiones del plan**. IV-8 vive ahí. **No usar nº 52 para justificar tocar la guarda equipo↔cliente** (`ticketService.ts:65-83`) |
 | 1 | **REDUCIDO por `por-entregar-es-espera` (2026-09-12).** Era el mismo desvío que IV-1, en tres puntos; ahora sobreviven **dos**, y los dos son para COLOR. `ClienteDetalle.tsx:18` —el que CLASIFICABA— pasó a consumir el predicado compartido `apps/desk/src/lib/enEspera.ts` y ya no cuenta aquí. Sobreviven `ClienteDetalle.tsx:22` (`/espera/i`, color del badge) y `apps/desk/src/components/TicketDetailView.tsx:245` (`/espera\|hold/i`, color del `className`), decisión de Gerencia Q1: `Por Entregar` no es un atasco y el tablero ya lo pinta azul (`TicketCard.tsx:21`). Ninguna de las dos lee `ESTADOS_EN_ESPERA` (`estados.ts:120`). **Remedido el 2026-09-12 contra los ONCE `en_espera` de hoy: siguen acertando 2** —`En Espera de Repuestos` y `En espera de SKU inventario`, el numerador no cambia porque ninguno de los dos estados reclasificados contiene «espera» ni «hold»— **y se les escapan NUEVE**: los siete de antes más `Por Entregar` y `Por Entregar / Sin facturar`, deliberadamente —Gerencia decidió que esos dos no pintan ámbar—. Es defecto **por defecto**, no por exceso, pero ya sólo afecta al color: la mitad de clasificación la cerró esta misma tanda. ⚠️ Los dos ficheros son `.tsx` y quedan **fuera de la red de pruebas** por decisión de Gerencia (`vitest.config.ts:16`, `:17-20`, `:57`; F0-00), así que **no admiten rojo previo bajo `strict_tdd`**, y esta vez arreglarlos con la lista **sería el defecto**: es justo lo que Q1 rechazó. Sigue siendo el molde de **H5** —dos implementaciones de la misma noción, ninguna rota por separado—, y las cuatro reglas de mutación no lo cazan | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Que lo asigne quien decida el alcance — el arreglo de verdad es una sola fuente de color (`TicketCard.tsx:14`), no sustituir la regex por el registro. Todo lo que esa decisión necesita —las dos ubicaciones, la medición y el condicionante de las pruebas— está en `openspec/config.yaml` (IV-9) |
-| — | **La sincronización DESASOCIA la orden de venta a medias, y deja la fila diciendo dos cosas.** Registrado el 2026-09-16 por `tercera-puerta-orden-venta`, que lo encontró barriendo las vías de escritura. **Las dos mitades:** `orden_venta` (`packages/zoho-sync/src/db/repo.ts:48`) y `fecha_orden_venta` (`:50`) están en `TICKET_COLS` (`:44-54`), así que el sync las reescribe; **`salesorder_id` está FUERA de esa lista**, porque se añadió después por `ALTER` (`packages/zoho-sync/src/db/schema.sql:187`), así que sobrevive. **La cadena:** `upsertTicket` (`repo.ts:56-68`) sólo se abstiene cuando `managed_by_app === true` (`:58-59`); el `UPDATE` de `apps/desk/server/routes/remision.ts:218-240` **no** pone esa bandera, mientras `applyTransition` sí (`repo.ts:271`); y el sync corre cada **180000 ms** por defecto (`packages/zoho-sync/src/config.ts:88`). Un ticket venido de Zoho al que la remisión le escribe la orden queda coherente sólo hasta la siguiente pasada que lo alcance. **Afecta TAMBIÉN a la puerta 2**, que comprueba **sólo por número** (`apps/desk/server/services/ticketService.ts:134`): si el sync vacía `orden_venta` y `salesorder_id` sobrevive, la puerta 2 tampoco encuentra ese ticket — la puerta 1 y la tercera sí, porque miran las dos vías, y por eso las dos vías son **requisito** de la tercera puerta y no preferencia. **Medición de Gerencia en producción del 2026-09-16: divergencia 0 sobre población 1 — y con población 1, un 0 no dice que no ocurra.** La remedición natural cae en **F1F-03** (`plan:214`, aceptación con servicios reales), que no es un destino: es dónde volvería a verse. Es el molde de **H5** —dos implementaciones de la misma noción, ninguna rota por separado—, y las cuatro reglas de mutación no lo cazan | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Que lo asigne quien decida el alcance. Las dos salidas conocidas —que el escritor de la remisión ponga `managed_by_app`, o que `salesorder_id` entre en `TICKET_COLS` para que las dos mitades se borren juntas— **no son equivalentes y ninguna está decidida**. Todo lo que esa decisión necesita está en `openspec/config.yaml` (IV-11) |
+| — | **La sincronización DESASOCIA la orden de venta a medias, y deja la fila diciendo dos cosas.** Registrado el 2026-09-16 por `tercera-puerta-orden-venta`, que lo encontró barriendo las vías de escritura. **Las dos mitades:** `orden_venta` (`packages/zoho-sync/src/db/repo.ts:48`) y `fecha_orden_venta` (`:50`) están en `TICKET_COLS` (`:44-54`), así que el sync las reescribe; **`salesorder_id` está FUERA de esa lista**, porque se añadió después por `ALTER` (`packages/zoho-sync/src/db/schema.sql:187`), así que sobrevive. **La cadena:** `upsertTicket` (`repo.ts:56-68`) sólo se abstiene cuando `managed_by_app === true` (`:58-59`); el `UPDATE` de `apps/desk/server/routes/remision.ts:218-240` **no** pone esa bandera, mientras `applyTransition` sí (`repo.ts:271`); y el sync corre cada **180000 ms** por defecto (`packages/zoho-sync/src/config.ts:88`). Un ticket venido de Zoho al que la remisión le escribe la orden queda coherente sólo hasta la siguiente pasada que lo alcance. **Afecta TAMBIÉN a la puerta 2**, que comprueba **sólo por número** (`apps/desk/server/services/ticketService.ts:134`): si el sync vacía `orden_venta` y `salesorder_id` sobrevive, la puerta 2 tampoco encuentra ese ticket — la puerta 1 y la tercera sí, porque miran las dos vías, y por eso las dos vías son **requisito** de la tercera puerta y no preferencia. **Medición de Gerencia en producción del 2026-09-16: divergencia 0 sobre población 1 — y con población 1, un 0 no dice que no ocurra.** La remedición natural cae en **F1F-03** (`plan:221`, aceptación con servicios reales), que no es un destino: es dónde volvería a verse. Es el molde de **H5** —dos implementaciones de la misma noción, ninguna rota por separado—, y las cuatro reglas de mutación no lo cazan | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. Que lo asigne quien decida el alcance. Las dos salidas conocidas —que el escritor de la remisión ponga `managed_by_app`, o que `salesorder_id` entre en `TICKET_COLS` para que las dos mitades se borren juntas— **no son equivalentes y ninguna está decidida**. Todo lo que esa decisión necesita está en `openspec/config.yaml` (IV-11) |
+| — | **El alta de remisión no cumple el orden único de precedencia, y son DOS puntos.** Registrado el 2026-09-17 por `orden-precedencia-guardas` (F1B-10), la tanda que declara ese orden como **orden total** sobre cuatro escalones —**A** existencia < **B** estado y permiso < **C** contenido < **D** unicidad— y lo aplica a las dos puertas del motor. **Los dos, medidos línea a línea:** (1) **C antes que A** — `apps/desk/server/routes/remision.ts:127` («Fecha inválida», validez de contenido) corre **ANTES** de `:155` («Falta el serial del equipo», existencia del sujeto); (2) **A después de C** — `apps/desk/server/routes/remision.ts:220` («Orden de venta no encontrada») corre **DESPUÉS** de `:127` y de `:197` («Ítems fuera del checklist»), los dos escalón C. **Los dos son OBSERVABLES:** una fecha mala sobre un ticket sin serial activa `:127` y `:155` a la vez y el usuario ve la de C — se le pide corregir la fecha cuando lo que va a bloquearle es el serial. **Ninguno de los dos depende** de cómo se clasifique el `409` de remisión pendiente (`:177`), que las obs. #700 y #707 fijan en **D**; y de mantenerlo en D se deduce **además** que ese `409` precede también a `:197` (C) y a `:220` (A) — se anota para que quien lo arregle no crea que bastan dos movimientos. **Lo que SÍ cumple, y por eso no se toca:** el `422` del serial (`:155`, A) gana al `409` pendiente (`:177`, D) **porque A precede a D**, así que el precedente de F1B-01 pasa a ser **consecuencia** del orden total en vez de excepción declarada, y `apps/desk/server/remisiones.test.ts:957` queda intacta. **Ninguna de las cuatro reglas de mutación lo caza**, y la razón importa: una prueba de posición fija un **PAR** de guardas, y aquí lo que falla es el orden del **CONJUNTO** — las ocho guardas del alta están probadas por pares donde hace falta y aun así la puerta incumple | **SIN DESTINO ASIGNADO**, y se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. **F1B-10 NO lo corrige:** P1 (obs. #690) mantiene el alta de remisión sin cambios y la obs. #707 lo confirma al desbloquear la tanda — mover guardas ahí reabriría el precedente que F1B-01 fijó a propósito, sin una decisión que lo pida, y tocar `remision.ts` activaría el barrido de la regla de mutación 4 sobre un tercer fichero muy citado. Que lo asigne quien decida el alcance; y antes hay algo **no técnico** que decidir, porque reordenar el alta cambia **qué error ve el técnico** en el formulario de entrada, que es la pantalla de campo del subsistema. Todo lo que esa decisión necesita está en `openspec/config.yaml` (IV-12) |
 
 **IV-1 está CERRADO EN `boardView.ts` y ya no cuenta ahí — pero el defecto no está cerrado, y esa
 distinción es toda la entrada.** Era la clasificación de esperas por regex de

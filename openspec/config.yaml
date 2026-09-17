@@ -200,7 +200,7 @@ capabilities:
       LO QUE SIGUE EN FASE 2: los indicadores en sí. No hay módulo de KPIs ni
       pantalla, y el 48 y el 49 tienen su ancla pero no están calculados. La
       capacidad NO tiene spec y sigue debiéndose.
-      OJO al citar el plan: plan:141 manda anclar el bodegaje de entrada «contra
+      OJO al citar el plan: plan:143 manda anclar el bodegaje de entrada «contra
       la marca de tiempo de Ingreso a Servicio», que es la prescripción de la R05
       (:1684) y la R08 la sustituyó por un par de campos de fecha (:1694).
       Corregido como entrada 3 de docs/sdd/F0-01_Correcciones_para_el_plan.md.
@@ -345,7 +345,7 @@ incumplimientos_vivos:
       única importación es el tipo Ticket, :1). O sea que el bloqueo que la
       frase implicaba desapareció hace tandas; lo único que faltaba era la
       épica.
-      POR QUÉ F1B-08 Y NO OTRA: plan:157 declara "vistas de listado y ficha
+      POR QUÉ F1B-08 Y NO OTRA: plan:163 declara "vistas de listado y ficha
       equivalentes a las de Zoho Desk", ítem 22 del maestro ("Interfaz que
       replica la estructura de Zoho Desk"). La regex alimenta las vistas
       `abiertos` (:43) y `espera` (:44): es exactamente una vista de listado que
@@ -376,9 +376,9 @@ incumplimientos_vivos:
       2026-09-09. El destino anterior era "F1A o F1C, decisión de alcance", y esa
       disyuntiva ERA el aviso: nunca fue un destino, fue la constancia de que
       nadie había decidido. F1A cerró y la disyuntiva sigue abierta.
-      NINGUNA TANDA LO CUBRE POR CONTENIDO. Se buscó: F1C-06 (plan:171) calcula
+      NINGUNA TANDA LO CUBRE POR CONTENIDO. Se buscó: F1C-06 (plan:179) calcula
       los bodegajes y el reloj del SLA, no decide dónde vive la derivación de
-      fechas; F1B-06 (plan:155) añade grafos, no mueve reglas al servidor. Cero
+      fechas; F1B-06 (plan:161) añade grafos, no mueve reglas al servidor. Cero
       filas del plan hablan de trasladar derivaciones del cliente al servidor.
       Y TAMPOCO ES UNA FILA QUE FALTE, que es la otra salida posible: antes de
       escribir una tanda hay que decidir si esto necesita contrapartida, y esa
@@ -469,7 +469,7 @@ incumplimientos_vivos:
     matiz_de_verificacion: >
       El proposal cita :188-196. El rango real es :189-197 (la 188 es el cierre
       `*/` del comentario). El UPDATE está en :192-196. ACTUALIZADO EN reasignar-desvios-huerfanos: tras F1B-01 el bloque es :218-226 y el UPDATE :221-225 — la guarda del serial lo bajo 29 lineas.
-    destino: "CONSTRUIBLE — nº 52 decidido el 2026-09-10 (decision/n52-cardinalidad-ov, plan:350)"
+    destino: "CONSTRUIBLE — nº 52 decidido el 2026-09-10 (decision/n52-cardinalidad-ov, plan:364)"
     decidido: >
       2026-09-10. `decision/n52-cardinalidad-ov`: la relación es `1 ticket : N OV`,
       sin tabla puente. Verificado contra Zoho Books (org. 714421387) y registrado
@@ -494,7 +494,7 @@ incumplimientos_vivos:
       arreglo PODÍA SER RETIRAR las dos puertas existentes en vez de añadir la
       tercera. ESE ENMARCADO QUEDÓ INVERTIDO: ver `decidido`.
       También decía que CERO FILAS DEL PLAN mencionaban la cardinalidad OV↔ticket.
-      Hoy sí: plan:350, `decision/n52-cardinalidad-ov`.
+      Hoy sí: plan:364, `decision/n52-cardinalidad-ov`.
       LO QUE SÍ ESTABA HECHO Y NO SE PERDIÓ: `ordenVentaUnTicket.test.ts:161` en
       `b99d47a` dejaba un `it.fails` esperando, y `:150-158` en `b99d47a` fijaba
       en positivo el modo de fallo exacto —201 sin queja, y la orden quedaba en
@@ -553,7 +553,7 @@ incumplimientos_vivos:
     reasignado: >
       2026-09-09. El destino anterior era "F1A, cosmético". F1A cerró; el
       "cosmético" era correcto, la épica no.
-      POR QUÉ F1B-08: plan:157, "vistas de listado y ficha equivalentes a las de
+      POR QUÉ F1B-08: plan:163, "vistas de listado y ficha equivalentes a las de
       Zoho Desk", ítem 22 del maestro. TicketCard es la tarjeta del listado, así
       que su mapa de colores es parte de esa paridad. Misma fila que IV-1 e IV-7,
       y no es casualidad: los tres son el tablero.
@@ -615,12 +615,12 @@ incumplimientos_vivos:
     por_que_ese_destino: >
       Tres razones, y ninguna es la talla. (1) F1B-01 es la PRIMERA tanda de la
       Fase 1 que declara la capacidad `zoho-sync` en la trazabilidad del plan
-      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:413`), así que
+      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:413 EN a5da6b8`; hoy :468), así que
       es la primera que abre este paquete con un motivo propio; las cinco de
-      F1A no lo tocan (:408-412). (2) El arreglo es una prueba, no un cambio de
+      F1A no lo tocan (:408-412 EN a5da6b8; hoy son NUEVE, :459-467). (2) El arreglo es una prueba, no un cambio de
       esquema, así que no compite por alcance con el trabajo funcional de la
       tanda. (3) Y es la razón de peso: tiene que aterrizar ANTES de F1D-01 y
-      F1D-02 (:183-184), que son las tandas que AÑADEN tablas y columnas al
+      F1D-02 (:183-184 EN a5da6b8; hoy :191-192), que son las tandas que AÑADEN tablas y columnas al
       esquema. Un guardián extendido después de que lleguen es un guardián que
       llegó tarde a lo único que tenía que cazar.
     estado: >
@@ -659,7 +659,7 @@ incumplimientos_vivos:
       (1) `boardView.ts:53` es hoy `case 'todos': return tickets`, sin filtro: la
       vista devuelve de verdad todos, incluidos los cerrados. Es la opción (b) de
       `decision/vista-todos-tablero`, decidida por Gerencia el 2026-09-10 y
-      registrada en plan:351.
+      registrada en plan:365.
       (2) La rama `default` dejó de compartir cuerpo con `todos`: `:54` es
       `default: return vistaNoReconocida(key)` y la guarda vive en `:59` —
       `function vistaNoReconocida(_key: never): Ticket[] { void _key; return [] }`.
@@ -692,14 +692,14 @@ incumplimientos_vivos:
       de los dos casos: una clave desconocida no debería filtrar en silencio.
     destino: "F1B-08, tras la decisión de Gerencia entre (a) y (b)"
     por_que_ese_destino: >
-      plan:157, "vistas de listado y ficha equivalentes a las de Zoho Desk",
+      plan:163, "vistas de listado y ficha equivalentes a las de Zoho Desk",
       ítem 22 del maestro ("Interfaz que replica la estructura de Zoho Desk").
       Este defecto se encontró justamente comparando con esa interfaz, así que
       cae dentro de la fila sin forzarla. Misma tanda que IV-1 e IV-5, que son el
       mismo fichero y el mismo tablero.
       DECIDIDO EL 2026-09-10: `decision/vista-todos-tablero`, opción (b) — «Todos»
       pasa a devolver también los cerrados; se descarta renombrarla. Ya está en la
-      tabla de decisiones del plan (plan:351). Separar `case 'todos'` de `default:`
+      tabla de decisiones del plan (plan:365). Separar `case 'todos'` de `default:`
       NO es opcional y va en la misma tanda.
       (Antes decía: «La decisión (a)/(b) NO está en la tabla de decisiones del
       plan». Hoy sí está y está resuelta.)
@@ -995,7 +995,7 @@ incumplimientos_vivos:
     remedicion: >
       La remedición natural cae en F1F-03 —«Pruebas de aceptación con Servicio
       Técnico sobre dos o tres servicios reales»,
-      docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:214—, que es donde
+      docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:221—, que es donde
       habrá población suficiente para que el 0 signifique algo. ⚠️ ESO NO ES UN
       DESTINO: es dónde volvería a verse, no quién lo arregla.
     familia: >
@@ -1022,6 +1022,77 @@ incumplimientos_vivos:
       decisión necesita: las dos mitades, la cadena, la medición con su
       advertencia, y que la puerta 2 también está afectada.
 
+  # IV-12 nace de orden-precedencia-guardas (F1B-10). Esa tanda declara el orden
+  # único de precedencia como ORDEN TOTAL sobre cuatro escalones —A existencia,
+  # B estado y permiso, C contenido, D unicidad— y lo aplica a las DOS puertas del
+  # motor. El alta de remisión NO lo cumple, y P1 (obs. #690), confirmada al
+  # desbloquear la tanda (obs. #707), mantiene esa puerta SIN CAMBIOS: se
+  # REGISTRA, NO SE CORRIGE. Es el mismo reparto que dejó vivo a IV-11.
+  - id: IV-12
+    regla: "— (orden único de precedencia declarado por F1B-10: A existencia < B estado y permiso < C contenido < D unicidad)"
+    ubicacion: "apps/desk/server/routes/remision.ts:127, :155, :197, :220"
+    verificado: true
+    encontrado_en: >
+      Ronda de decisiones de `orden-precedencia-guardas` (F1B-10), 2026-09-17,
+      árbol ad65161. Lo midió Gerencia al resolver la clasificación del `409` de
+      remisión pendiente (obs. Engram #707), clasificando línea a línea las ocho
+      guardas del alta. No salió de una prueba en rojo: salió de leer la lista.
+    descripcion: >
+      EL ALTA DE REMISIÓN NO CUMPLE EL ORDEN TOTAL QUE F1B-10 DECLARA, EN DOS
+      PUNTOS. No es una diferencia de criterio entre puertas: es la misma regla,
+      incumplida en la única puerta que la tanda no toca.
+    los_dos_incumplimientos: >
+      (1) C ANTES QUE A — `apps/desk/server/routes/remision.ts:127` («Fecha
+      inválida», validez de contenido, escalón C) corre ANTES de `:155` («Falta el
+      serial del equipo», existencia del sujeto, escalón A).
+      (2) A DESPUÉS DE C — `apps/desk/server/routes/remision.ts:220` («Orden de
+      venta no encontrada», escalón A) corre DESPUÉS de `:127` y de `:197`
+      («Ítems fuera del checklist»), los dos escalón C.
+    son_observables: >
+      LOS DOS SON OBSERVABLES, no teóricos. Una fecha mala sobre un ticket sin
+      serial activa `:127` y `:155` a la vez, y el usuario ve la de C: se le pide
+      corregir la fecha cuando lo que va a bloquearle es el serial. Y NINGUNO DE
+      LOS DOS DEPENDE de cómo se clasifique el `409` de remisión pendiente
+      (`:177`), que obs. #700 y #707 fijan en D.
+    lo_que_ademas_se_deduce: >
+      CONSECUENCIA ARITMÉTICA de mantener el `:177` en D, anotada para que quien
+      lo arregle no crea que bastan dos movimientos: el `409` de unicidad
+      (`:177`, D) precede también a `:197` (C) y a `:220` (A). Ni el veredicto
+      —la puerta incumple el orden total— ni el destino cambian por ello.
+    por_que_no_se_arregla_aqui: >
+      P1 (obs. #690) mantiene el alta de remisión SIN CAMBIOS y obs. #707 lo
+      confirma al desbloquear la tanda. Mover guardas en ese manejador reabriría
+      el precedente que F1B-01 fijó a propósito —la prueba de posición de
+      `apps/desk/server/remisiones.test.ts:957`, el caso del que nació la regla de
+      mutación 1 de CLAUDE.md— sin una decisión que lo pida. Y tocar
+      `remision.ts` activaría el barrido de la regla de mutación 4 sobre un tercer
+      fichero muy citado, dentro de una tanda que ya arrastra dos.
+    lo_que_si_queda_cumplido: >
+      El `422` del serial (`:155`, A) gana al `409` de remisión pendiente
+      (`:177`, D) PORQUE A PRECEDE A D. El precedente de F1B-01 pasa a ser
+      CONSECUENCIA del orden total en vez de una excepción declarada, y
+      `apps/desk/server/remisiones.test.ts:957` queda intacta.
+    familia: >
+      NO es el molde de H5 —dos implementaciones de la misma noción que dejan de
+      decir lo mismo—: es una tercera puerta que evalúa en un orden propio. Las
+      cuatro reglas de mutación tampoco lo cazan, y la razón importa: una prueba
+      de posición fija un PAR de guardas, y aquí lo que falla es el orden del
+      CONJUNTO. Las ocho guardas del alta están probadas por pares donde hace
+      falta y aun así la puerta incumple. Hizo falta clasificar y leer la lista.
+    destino: "SIN DESTINO ASIGNADO — a propósito"
+    por_que_sin_destino: >
+      Mismo precedente que IV-9 e IV-11: asignar un destino DE MEMORIA es
+      exactamente lo que dejó cuatro desvíos huérfanos al cerrar F1A. Un destino
+      es una promesa, y ni esta propuesta ni esta tanda están en condiciones de
+      hacerla: no les corresponde decidir el alcance.
+      Y HAY ALGO QUE DECIDIR ANTES, QUE NO ES TÉCNICO. Reordenar el alta cambia
+      QUÉ ERROR VE EL TÉCNICO en el formulario de entrada, que es la pantalla de
+      campo del subsistema; y el orden de hoy no es un descuido en su tramo
+      probado, porque `remisiones.test.ts:957` lo fija. Lo que sí queda fijado
+      aquí es todo lo que esa decisión necesita: los dos incumplimientos con su
+      línea, que son observables, la consecuencia del `:177`, y por qué no se
+      tocó.
+
 # Premisas del baseline y del plan R01.1 verificadas y encontradas FALSAS. Hermana
 # de incumplimientos_vivos: aquélla registra deuda de código, ésta registra alcance
 # mal declarado. Cada entrada dice qué decía la premisa, qué se verificó y qué
@@ -1034,11 +1105,11 @@ premisas_falsas_corregidas:
     fecha: "2026-09-08"
     afecta_a: ["F1A-05", "F1B-09"]
     premisa_del_baseline: >
-      El plan R01.1 declara que `docs/artefactos/blueprintserviciotecnico.html`
-      "se regenera en cada tanda audit-*"
-      (docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388), y de ahí
-      cuelgan las dos tandas de auditoría de blueprint: F1A-05 / audit-F1A (:142,
-      :412) y F1B-09 / audit-F1B (:158, :421). El baseline repite la premisa en
+      El plan R01.1 declaraba que `docs/artefactos/blueprintserviciotecnico.html` "se regenera en cada tanda audit-*"
+      (docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388 EN a5da6b8), y de ahí colgaban las dos tandas de
+      auditoría de blueprint: F1A-05 / audit-F1A (:142, :412) y F1B-09 / audit-F1B (:158, :421), las cuatro EN a5da6b8.
+      CASO C de la regla de mutación 4, revisión nombrada el 2026-09-17: las cinco se conservan CON SU REVISIÓN y NO se
+      renumeran, porque el plan de hoy dice lo contrario —"Histórico, congelado en a3a8f03 ... Ninguna tanda lo regenera ni lo cita"—, que es justo lo que cerró esta premisa. El baseline repite la premisa en
       docs/sdd/F0-00_Baseline_as-built.md:564 ("para que ... no se regenere sobre
       una cifra incorrecta").
     verificacion: >
