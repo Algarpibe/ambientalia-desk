@@ -4,7 +4,7 @@
 **Base documental:** Documento Maestro R08.1 (§1.8, §1.9, M1.3, M2, M11, §3.2, §3.2.1, Anexos D y H) · Acta de la sesión del 03/09/2026 (Notion «Desk 2.0 03/09/2026») · Estructura de inspección física GRIMM EDM180 v1.8 y HORIBA AP370 v1.4 · Lectura del repositorio `C:\dev\Desk_2_R1.023` (HEAD `a3a8f03`) · Decisiones de Gerencia del 07/09/2026
 **Estado:** Propuesta para validar en la sesión del viernes 11/09/2026
 **Cambios R01 → R01.1:** tanda de auditoría del as-built F0-00 antes de escribir specs · §2.4 nuevo con el punto de partida real del repositorio · §4.7 reescrito sobre la estructura documental existente en `docs/` · mapeo N1 → transiciones, N2/N3 → checkpoints incorporado en el principio 4 y en F1D-03
-**Sincronizado con:** el libro de revisión Man on the Loop **R01.3** (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_Revision_MoL_R01.3.xlsx`, 15/09/2026), versionado en `docs/sdd/` junto a este fichero. Sincronización hecha el **17/09/2026**. **El denominador de avance son 51 tandas hasta F1F** —F0 5 · F1A 9 · F1B 11 · F1C 8 · F1D 9 · F1E 5 · F1F 4—, 69 contando F2–F5. Es reproducible desde el repositorio: el libro es la fuente, este documento el destino, y las dos cifras salen de contar filas de la hoja «Tandas».
+**Sincronizado con:** el libro de revisión Man on the Loop **R01.3** (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_Revision_MoL_R01.3.xlsx`, 15/09/2026), versionado en `docs/sdd/` junto a este fichero. Sincronización hecha el **17/09/2026**. **El denominador de avance son 52 tandas hasta F1F** —F0 6 · F1A 9 · F1B 11 · F1C 8 · F1D 9 · F1E 5 · F1F 4—, 70 contando F2–F5. Es reproducible desde el repositorio: el libro es la fuente, este documento el destino, y las dos cifras salen de contar filas de la hoja «Tandas».
 **El nombre del fichero sigue diciendo `R01.1` a propósito, y no se renombra:** el plan está citado por nombre **23 veces en 17 ficheros** y por línea (`plan:NNN`) **95 veces en 21 ficheros** (medido el 17/09/2026); renombrarlo las rompería todas de golpe. Lo que declara contra qué revisión está sincronizado es **esta cabecera**, no el nombre del fichero.
 
 ---
@@ -456,6 +456,7 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F0-02 | Specs as-built destiladas de F0-00 y de `docs/superpowers/specs` | todas las as-built | M1.3, M1.9, Anexo G | F0-00 | L | S38 |
 | F0-03 | Proyecto Engram y carga de decisiones | — | §1.8, acta 03/09 | — | S | S37 |
 | F0-04 | Pruebas del motor, staging, CI | transitions-st | M11.5 | — | M | S38 |
+| F0-05 | Mecanismo de reconciliación y bandeja de entrada (cabecera R-1, `npm run reconcile`, bandeja `ENTRADA.md`) | citas-verificables | Brecha 17/09 · E-001 · `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md` | — (`tanda-por-contenido`, 17/09) | S | S38 |
 | F1A-01 | C1 guarda del checkbox | transitions-st | P33 | — | XS | S38 |
 | F1A-02 | C11 SLA Notificado + escalado | transitions-st, derivacion-avisos | P40 | — | S | S38 |
 | F1A-03 | C12 salidas de Verificación | transitions-equipo-nuevo | P38 | — | S | S38 |
@@ -498,7 +499,7 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 
 Tamaños: XS < medio día · S un día · M dos o tres días · L cuatro o cinco días (una L se parte en dos cambios si al proponerla no cabe en tres días).
 
-**Cómo se cuentan las 51 tandas, porque la tabla NO tiene 51 filas.** Son **44 filas** y **51 tandas**: la fila `F1C-01…08` colapsa **ocho** tandas en una sola, que es como está escrita desde la R01. El reparto es F0 **5** · F1A **9** · F1B **11** · F1C **8** · F1D **9** · F1E **5** · F1F **4**. Contar filas da 44 y contar tandas da 51; el denominador de avance es el segundo. La hoja «Tandas» del libro R01.3 lleva las 51 en filas separadas (`R2`–`R52`), más 18 de F2–F5 hasta 69.
+**Cómo se cuentan las 52 tandas, porque la tabla NO tiene 52 filas.** Son **45 filas** y **52 tandas**: la fila `F1C-01…08` colapsa **ocho** tandas en una sola, que es como está escrita desde la R01. El reparto es F0 **6** · F1A **9** · F1B **11** · F1C **8** · F1D **9** · F1E **5** · F1F **4**. Contar filas da 45 y contar tandas da 52; el denominador de avance es el segundo. La hoja «Tandas» del libro R01.3 lleva las 52 en filas separadas (`R2`–`R53`), más 18 de F2–F5 hasta 70. **El denominador se movió el 17/09/2026: de 51 a 52 tandas,** por la fila nueva `F0-05`. Se registra aquí y no en un anexo, como pide la regla (a) de `unidad_de_avance`: «51 tandas al corte de S37–S38, 52 al corte de S38». El movimiento es **por alcance nuevo, no por trabajo**, y la fila entró primero en la hoja «Tandas» del libro R01.3 (como `R53`) y después aquí, que es el orden que esta misma sección declara.
 
 ---
 
