@@ -919,6 +919,28 @@ incumplimientos_vivos:
       como rota informativa por revisión inexistente. En una cita completa ya
       bloqueaba antes de la tanda. Una palabra que sí es una referencia real de git,
       como un nombre de rama, se leería «válida por casualidad».
+    hallazgo_ancla_de_cabecera: >
+      VIVO, SIN DESTINO ASIGNADO. Destapado el 2026-09-17 al corregir el
+      archive-report de tercera-puerta-orden-venta. El ancla sólo se lee POR LÍNEA
+      FÍSICA: `apps/desk/server/citas/cosecha.ts:63` en `fd0d17b`, REVISION_RE busca
+      la revisión inmediatamente detrás de la cita. Un documento que declara su ancla
+      en la CABECERA queda leído contra el sha local, cita por cita, como si no la
+      tuviera. Los dos artefactos grandes de esa tanda usan esa forma:
+      `design.md:3` (**Árbol:** 14b45ee, declarado en :13-14) y `tasks.md:3`
+      (**Árbol de referencia:** 14b45ee, declarado en :4-5), hoy en
+      openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/.
+      QUÉ PRODUCE: falsos positivos. La abreviada de design.md:124 sale como rota
+      contra packages/shared/src/types.ts:224 —línea vacía— cuando leída en su ancla
+      14b45ee apunta a remision.ts:224, el array de parámetros del UPDATE, y ACIERTA.
+      Fallan DOS reglas a la vez: la atribución toma types.ts:306 por ser la última
+      cita completa de esa línea física, y la lectura ignora el ancla de cabecera.
+      Ese falso positivo llegó a escribirse en el archive-report como si fuera la
+      prueba del verde falso; se retiró el 2026-09-17. La conclusión del verde falso
+      se sostiene sola con el recuento (1.963 -> 1.741), no con la anécdota.
+      HERMANO de hallazgo_revision_re y del span partido por salto de línea: los tres
+      son huecos de la MISMA capa, la que decide qué cita se lee y contra qué.
+      No asignar épica de memoria: es lo que dejó cuatro desvíos huérfanos al cerrar
+      F1A. Que lo asigne quien decida el alcance.
 
   # IV-11 nace de la propuesta de tercera-puerta-orden-venta (2026-09-16). No lo
   # buscaba: salió del barrido de vías de escritura de la orden de venta que la

@@ -62,7 +62,7 @@ que anteriormente se verificaban dejan de contabilizarse de golpe.
 
 **Medido corriendo el detector en los TRES estados del intento, no estimado:**
 
-| Métrica | Punta `67a90c1` | Reparado y fusionado `0f5f49c` | Tras el traslado `b637bc2` |
+| Métrica | Punta `67a90c1` | Reparado y fusionado `0f5f49c` | Tras el traslado `fd0d17b` |
 |---|---|---|---|
 | Citas comprobadas | 1.949 | **1.963** | **1.741** |
 | Abreviadas rotas informativas | 12 | 13 | 11 |
@@ -74,11 +74,22 @@ comprobadas de 1.949 a 1.963: juntar los dos spans partidos hizo verificables di
 nunca había mirado, y eso sacó a la luz una abreviada rota más (12 → 13) que llevaba ahí desde siempre.
 El traslado las BAJÓ de 1.963 a 1.741: **−222 de golpe**, ninguna por haberse arreglado.
 
-**La prueba, y no es hipótesis — comprobada hoy contra el árbol:** la abreviada rota de `design.md:124`
-apunta a `packages/shared/src/types.ts:224`, que **es una línea VACÍA**. La cita sigue rota exactamente
-igual que antes, y el detector ya no la informa. El contador baja de 13 a 11 por ocultación, no por
-reparación, y nada en la salida del hook distingue un caso del otro.
-**Toda próxima tanda que archive sin reparar antes sufrirá el mismo verde engañoso**, sin advertencia.
+**La prueba es el RECUENTO, no la anécdota — y el ejemplo que parecía probarlo era FALSO.** La primera
+versión de este informe sostuvo que la abreviada de `design.md:124` seguía rota contra
+`packages/shared/src/types.ts:224`, una línea vacía. **No lo está, y la corrección queda escrita porque
+el error es instructivo.** `design.md:3` lleva `**Árbol:** 14b45ee` y `:13-14` declara que **todas** sus
+citas se leen contra esa revisión. Contra ella, `remision.ts:224` es
+`[ticketId, ov.number, ov.date ?? null, ov.id],` —el array de parámetros del `UPDATE`— y las dos filas
+que lo citan **aciertan**: `:123` dice que `ov.id` es el `$4` y `:124` que `ov.number` es el `$2`.
+
+El detector se equivoca ahí por **DOS motivos a la vez**: atribuye la abreviada a `types.ts` porque
+`types.ts:306` es la última cita completa de esa misma línea física, y la lee contra el sha local
+ignorando el ancla de cabecera. Es **la misma clase de falso positivo** que este informe ya caza en
+`§3a` para `F0-03`, y la lección se repite: una anécdota no prueba un recuento.
+
+**El hallazgo no depende de ese ejemplo y se sostiene solo con las cifras:** 222 citas dejan de
+comprobarse de golpe, y en la salida del hook eso es indistinguible de 222 citas reparadas.
+**Toda próxima tanda que archive sin reparar antes tendrá el mismo verde engañoso**, sin advertencia.
 
 **La mitigación para esta tanda:** las citas se repararon en este mismo intento de archivo (commit
 `fcfd502`, §3a), ANTES del traslado y mientras el detector aún las barría. El traslado las llevó a la
@@ -106,6 +117,16 @@ estructural del detector.
 4. **Una referencia de ruta ciega**: `apps/desk/server/ordenVentaUnTicket.test.ts:52` nombraba la carpeta
    del cambio como ruta pelada (sin número de línea); `cosecha.ts` la clasifica como `mencion` y una
    mención no se comprueba. Actualizada a la ruta del archivo en `openspec/changes/archive/`.
+
+**Y un TERCER hueco del detector que esto destapa, y que esta tanda NO cierra.** El ancla sólo se lee
+**por línea física**: `apps/desk/server/citas/cosecha.ts:63`, `` REVISION_RE = /^s+ens+`([w.-]+)`/ ``,
+busca la revisión inmediatamente detrás de la cita. **Un documento que declara su ancla en la CABECERA
+queda leído contra el sha local**, cita por cita, como si no tuviera ancla. Los dos artefactos grandes de
+esta tanda usan justo esa forma —`design.md:3` (`**Árbol:** 14b45ee`, declarado en `:13-14`) y
+`tasks.md:3` (`**Árbol de referencia:** 14b45ee`, declarado en `:4-5`)—, y es lo que produjo el falso
+positivo de `§3`. Es hermano de los otros dos ya registrados: el span partido (punto 2 de esta sección) y
+el `REVISION_RE` que acepta cualquier palabra detrás de «en» como revisión. **SIN DESTINO ASIGNADO**, y
+se dice a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A.
 
 ---
 
@@ -152,10 +173,15 @@ Gerencia aprobó `--max-changed-lines 5200` el 2026-09-17, sobre medición en wo
   `design.md` 539, `exploration.md` 271, `proposal.md` 283, `specs/remisiones/spec.md` 98,
   `specs/tickets-core/spec.md` 67, `tasks.md` 335, `verify-report.md` 254).
   `git diff --shortstat` da 0; `git diff --shortstat --no-renames` da 4.216. **Carga de revisión: CERO**.
-- **395 líneas realmente revisables**: la fusión de los dos deltas (145), la reparación de citas (47) y
-  este informe (203). Todo lo demás del intento es traslado verbatim.
-- **Gasto real del intento, medido al cerrar:** `git diff --shortstat --no-renames 67a90c1 HEAD` = 2.383
-  inserciones + 2.180 borrados = **4.563 líneas** contra el techo de 5.200. Quedan 646 de margen.
+- **422 líneas realmente revisables**: la fusión de los dos deltas (145), la reparación de citas (47) y
+  este informe (230). Todo lo demás del intento es traslado verbatim.
+- **Gasto real del intento, medido al cerrar:** `git diff --shortstat --no-renames 67a90c1 fd0d17b` =
+  2.383 inserciones + 2.180 borrados = **4.563 líneas** contra el techo de 5.200. **Quedan 637 de
+  margen**, y el ledger registró esa misma cifra. El commit del traslado por sí solo cuesta **4.421**
+  (2.312 + 2.109, medido con `git show --shortstat --no-renames fd0d17b`).
+- **Las correcciones POSTERIORES a este cierre no cuentan en esa cifra**, y por eso no la mueven: el
+  intento quedó `passed` y `complete` en `fd0d17b`. Las de este informe son trabajo documental directo,
+  fuera del ledger.
 
 **Precedente que valida la aritmética:** `detector-citas-extremos` (2026-09-16), fusión commit `8db663c`
 (176 líneas reales) + archive commit `2dcb901` (4.326 líneas con `--no-renames`) = **4.502**, exactamente
@@ -168,7 +194,7 @@ dice el doble de líneas movidas.
 
 | Comprobación | Resultado |
 |---|---|
-| Detector sobre el sha final `b637bc2` | **1.741 citas comprobadas**, **0 bloqueantes**, 11 abreviadas rotas informativas, línea base **0 informadas · 0 caducadas**. Sobre `0f5f49c`, antes del traslado: 1.963 comprobadas, 0 bloqueantes (ver §3) |
+| Detector sobre el sha final `fd0d17b` | **1.741 citas comprobadas**, **0 bloqueantes**, 11 abreviadas rotas informativas, línea base **0 informadas · 0 caducadas**. Sobre `0f5f49c`, antes del traslado: 1.963 comprobadas, 0 bloqueantes (ver §3) |
 | `npm test` (concurrencia default) | 1.132 passed / 2 skipped / 0 failed, **pero exit 1** por timeout IPC de workers (`[vitest-worker]: Timeout calling "onTaskUpdate"`) |
 | `npm test --maxWorkers=2` | 1.132 passed / 2 skipped / 0 failed, **exit 0** — el timeout es de infraestructura, no defecto de pruebas |
 | `npm run typecheck` | exit 0, sin errores |
@@ -187,6 +213,7 @@ dice el doble de líneas movidas.
 | **IV-8** — `ticketService.ts:39`, el `clientId` de la OV nunca se contrasta | SIN DESTINO ASIGNADO, a propósito | La pregunta viva es TITULARIDAD, no cardinalidad. Nº 52 ya está decidido (`Decisiones_Gerencia_2026-09-10.md:176-181`). IV-8 sigue abierto |
 | **El caso (c)** — OV libre + ticket con orden propia distinta, hoy no-op silencioso con `201` | — | Sin requisito a propósito. Cambiar su respuesta es una decisión de UX que nadie pidió |
 | **El patrón de `cosecha.ts`** — acepta cualquier palabra como revisión | — | Sigue vivo. Un nombre de función detrás de «en» se lee como ancla |
+| **El ancla de CABECERA no se lee** — `cosecha.ts:63`, `REVISION_RE` sólo mira la misma línea física | SIN DESTINO ASIGNADO | Un documento anclado por su encabezado se lee contra el sha local, cita por cita. `design.md:3` y `tasks.md:3` de esta tanda usan esa forma; produjo el falso positivo de `§3`. Detalle en `§3a` y en `openspec/config.yaml` |
 | **La medición de Gerencia en producción el 2026-09-16** — divergencia 0 sobre población 1 | F1F-03 (`plan:214`, aceptación con servicios reales) | Con población 1 un duplicado es aritméticamente imposible; ese 0 **no refuta nada**. La remedición natural cae donde la población crece |
 
 ---
