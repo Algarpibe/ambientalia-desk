@@ -1220,6 +1220,40 @@ cifras_ancladas:
     codigo: "cuenta de estados en packages/shared/src/estados.ts (claves de CLASIFICACION_EN_ESPERA)"
     divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
 
+# DECISIONES DE GERENCIA, con su respuesta textual. Esta clave existe por un agujero concreto
+# que se detectó el 2026-09-17: `docs/sdd/ENTRADA.md` es la BANDEJA —el histórico de por dónde
+# entró cada cosa— y NADIE la carga. `CLAUDE.md` la menciona, pero mencionar no es cargar. Una
+# decisión que aterrizara sólo allí sería invisible para toda sesión, que es exactamente el modo
+# de fallo que el mecanismo de F0-05 existe para cerrar.
+#
+# LA REGLA, y no admite excepción: TODA respuesta de Gerencia aterriza en un fichero que la sesión
+# CARGA, sea gate o no. Si es gate, además en su fila de la tabla §4.5 del plan. Si toca una
+# capacidad, un desvío o una cifra, además en su clave de este fichero. Y siempre aquí, con su
+# texto. La bandeja conserva la traza; esta clave carga el hecho.
+#
+# QUIÉN ESCRIBE AQUÍ: el parte de supervisión, en el corte siguiente a la respuesta, o Gerencia
+# en el momento. Se escribe la respuesta TEXTUAL, no un resumen: un resumen es una interpretación,
+# y quien lea esto dentro de un mes necesita las palabras que se dijeron.
+decisiones_de_gerencia:
+  - clave: "decision/tanda-por-contenido"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Un trabajo que realiza el contenido de una fila del §5 del plan cuenta como esa tanda,
+      aunque su carpeta se llame de otra manera? Primer caso: `tercera-puerta-orden-venta`, que
+      hace el contenido de F1A-08 y no lo declara en ninguna parte.
+    respuesta_textual: >
+      «Damos F1A-08 por cerrada, aunque la carpeta se llame de otra manera. F1A-08 queda cerrada,
+      el avance pasa a 11 de 51, y de ahora en adelante cada carpeta nueva escribe en su primera
+      línea a qué trabajo del plan corresponde —o dice "a ninguno", y por qué.»
+    consecuencias: >
+      (1) F1A-08 CERRADA por `tercera-puerta-orden-venta` (`79cf09b`). (2) La regla R-1 de
+      CLAUDE.md queda firme y sin condicional. (3) Retroajuste de cabecera en los changes ya
+      archivados, con el reparto ratificado en el paso 0 de
+      docs/sdd/F0-05_Bloques_para_ClaudeCode.md.
+      DENOMINADOR: el avance se publicó como 11/51 el mismo día; esa misma tarde la fila nueva
+      F0-05 lo movió a 11/52, por alcance nuevo y no por trabajo.
+    registro: "docs/sdd/ENTRADA.md → E-001 (cerrada)"
+
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
 unidad_de_avance:

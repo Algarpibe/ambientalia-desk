@@ -452,6 +452,12 @@ ninguno, hay una decisión de alcance pendiente y se queda como punto abierto CO
 aire. No se inventa destino: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al
 cerrar F1A.
 
+**Y la bandeja NO ES FUENTE.** `ENTRADA.md` guarda la traza de por dónde entró cada cosa; nadie la
+carga al arrancar, y mencionarla aquí no la carga. La DECISIÓN vive en `openspec/config.yaml` →
+`decisiones_de_gerencia`, con su respuesta textual, y si es un gate además en su fila de la tabla
+§4.5 del plan. Toda respuesta de Gerencia aterriza en un fichero que la sesión CARGA, sea gate o
+no. Una decisión que sólo esté en la bandeja no ha llegado: trátala como pendiente y dilo.
+
 ## Contexto SDD
 
 - Configuración: `openspec/config.yaml` (capacidades, preflight, reglas por fase, unidad de avance).
