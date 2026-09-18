@@ -160,6 +160,36 @@ capabilities:
       por decisión de Gerencia registrada en Engram (obs. #236, F0-00
       2026-09-08). El "catálogo" de diagnostico-checklist se renombró a
       "árbol de inspección" para no confundirse con este.
+    precision_de_gerencia_2026_09_18: >
+      GERENCIA PRECISÓ EL 18/09 QUE AQUÍ HAY DOS COSAS, NO UNA. El `covers` de
+      arriba las mete en el mismo saco y por eso la pregunta que se le devolvió
+      salió confusa. Son, en sus palabras:
+      (1) EQUIPOS — "donde se alojan las hojas de vida. Hay un equipo por número
+      de serie, y se corresponden a una marca, modelo, tipo, cliente y estado. A
+      estos equipos se accede a través de «Registro de equipos»". En la base es
+      la tabla `equipos`, con `modelo_id`.
+      (2) CATÁLOGO DE EQUIPOS — "son 29 modelos donde se detalla marca, modelo,
+      tipo, nombre, categoría y SKU, y donde se aloja una ficha de cada uno de
+      los equipos". En la base son `catalogo_modelos`, `catalogo_marcas`,
+      `catalogo_tipos`, `catalogo_articulos` y `catalogo_modelo_categorias`.
+      (3) La tercera, el ÁRBOL DE INSPECCIÓN, ya estaba separada y vive en
+      diagnostico-checklist.
+      VERIFICADO CONTRA EL CÓDIGO EL 18/09: la separación entre (1) y (2) existe
+      ya en el esquema — `apps/desk/server/db/catalogo.ts:101` consulta `equipos`
+      por `modelo_id`, `:195` inserta en `catalogo_modelos`, y
+      `catalogoArticulos.ts:50,86,215-221` lleva SKU y categorías POR MODELO, no
+      por equipo. La bisagra con (3) es la columna `catalogo_modelos.revisar`
+      (`catalogo.ts:87`), que marca qué modelos llevan inspección.
+      CONSECUENCIA PARA EL PLAN: lo que faltaba en el §5 no es una fila sino
+      posiblemente dos, una por cada una de las dos entidades. Devuelto como
+      preguntas al apartado 06 del panel.
+    cifra_en_duda_2026_09_18: >
+      DISCREPANCIA NO RESUELTA. `status_at_start` declara 35 modelos (siembra del
+      2026-08-07, ya marcada entonces como "cifra NO reverificada"); Gerencia dice
+      29 el 18/09. No se puede dirimir desde el repositorio: el dato vive en la
+      base de la VPS. Hasta que se recuente contra producción, NINGUNA de las dos
+      cifras es citable, y toda la épica F1D se apoya en ella. Devuelto como
+      pregunta al apartado 06.
 
   - name: diagnostico-checklist
     covers: >
@@ -1253,6 +1283,39 @@ decisiones_de_gerencia:
       DENOMINADOR: el avance se publicó como 11/51 el mismo día; esa misma tarde la fila nueva
       F0-05 lo movió a 11/52, por alcance nuevo y no por trabajo.
     registro: "docs/sdd/ENTRADA.md → E-001 (cerrada)"
+
+  - clave: "decision/escalado-remision-creada"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Qué cargo de Comercial recibe el aviso cuando un ticket lleva más de 72 horas en
+      `Remisión creada` sin orden de venta? Sin el cargo, la guarda de C11 queda en rojo:
+      `habilitar_servicio` no tiene entrada en `DERIVACION_POR_DEFECTO`
+      (`packages/shared/src/transitions.ts:274-282`).
+    respuesta_textual: >
+      «Tanto el que tiene cargo de director comercial como el que tiene cargo de coordinador
+      comercial deberían recibir el aviso cuando un ticket lleva más de 72 horas en remisión creada
+      sin orden de venta.»
+    consecuencias: >
+      MEDIDAS CONTRA EL CÓDIGO EL 2026-09-18, árbol `995adbc`. Se anotan, no se deciden.
+      (1) EL DESTINATARIO ES DOBLE Y EL CÓDIGO DE HOY NO PUEDE REPRESENTARLO. `destinatarioDelEscalado`
+      (`packages/shared/src/sla.ts:96-112`) devuelve `hay:false, motivo:'ambiguo'` en cuanto encuentra
+      DOS cargos distintos, y lo hace a propósito — `sla.ts:78-82`: «tampoco se elige el primero: eso
+      sería inventar un orden entre dos puestos». El tipo `DestinatarioEscalado` (`sla.ts:86-88`) lleva
+      UN `cargo`, no una lista. Atender esta respuesta no es rellenar una entrada de tabla: es pasar el
+      tipo a destinatarios en plural. Es la consecuencia que la pregunta no anticipaba, porque la
+      pregunta decía «qué cargo», en singular.
+      (2) `Director Comercial` NO EXISTE COMO CARGO EN EL CÓDIGO. Medido:
+      `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` da 0 aciertos. Los dos cargos
+      declarados son `Director Técnico` y `Coordinador Comercial` (`transitions.ts:276-281`).
+      (3) LA ALARMA DE 72 H SIGUE SIN CONSTRUIR. `SLA_HORAS_POR_ESTADO`
+      (`packages/shared/src/sla.ts:32-35`) tiene una sola entrada, `'Notificado': 24`; `Remisión creada`
+      no está. La decisión desbloquea el trabajo, no lo sustituye.
+      (4) DAR ENTRADA A `habilitar_servicio` EN `DERIVACION_POR_DEFECTO` CAMBIA UN REQUISITO VIVO:
+      `RQ-AV-02` (`openspec/specs/derivacion-avisos/spec.md:67-70`) declara con SHALL que la tabla lleva
+      EXACTAMENTE TRES entradas, y el recuento 34 − 3 = 31 de `:287` cuelga de ahí.
+      (5) NO MUEVE EL NUMERADOR DEL AVANCE: F1B-08 sigue parcial, y su parte de tablero ya estaba
+      cerrada desde el 10/09.
+    registro: "docs/sdd/ENTRADA.md → E-014 (cerrada) · plan §4.5, fila `decision/escalado-remision-creada`"
 
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.

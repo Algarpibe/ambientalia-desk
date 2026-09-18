@@ -135,6 +135,14 @@ cuál de los dos casos es cada vez.
 desde el baseline en vez de desde el maestro. La segunda frase no es retórica: es exactamente el
 fallo que se produjo.
 
+### Regla de redacción — no se mencionan reuniones
+
+Gerencia, 2026-09-17, panel. **No menciones reuniones, ni celebradas ni previstas**, en ningún
+documento del repositorio. Las decisiones se toman en la conversación de Cowork y en el panel.
+Un gate pendiente se describe por **qué decide**, **a quién corresponde** y **qué desbloquea** —nunca
+por una fecha de encuentro—. Si te encuentras una mención heredada mientras editas ese fichero,
+quítala.
+
 ### Regla de secretos
 
 > Un secreto no entra nunca en un chat, una captura o un prompt. Si aparece en uno, **está quemado**:
