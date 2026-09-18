@@ -1,3 +1,13 @@
+---
+tanda: F0-03
+motivo: ""
+capacidad: []
+maestro: ["§1.8", "Anexo C.10"]
+cierra: si
+toca_maestro: si
+origen_cabecera: derivada-17/09
+---
+
 # F0-03 · Memoria del proyecto — ordenar Engram, no crearlo
 
 | Dato | Valor |

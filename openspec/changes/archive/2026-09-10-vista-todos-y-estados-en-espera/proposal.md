@@ -1,3 +1,13 @@
+---
+tanda: F1B-08
+motivo: ""
+capacidad: [transitions-st, vistas-tablero]
+maestro: ["ítem 22"]
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Propuesta: la vista «Todos» deja de mentir, y las esperas dejan de adivinarse
 
 **Tanda A · F1B-08 · base `b0bb704` (rama `main`)**

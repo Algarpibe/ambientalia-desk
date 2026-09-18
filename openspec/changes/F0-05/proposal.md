@@ -135,7 +135,7 @@ Y, como consecuencia **medida** de la comprobación 4: el campo `estado` en las 
   vez de borrarse porque la propuesta declaró lo contrario y el cambio de alcance tiene que ser
   legible, no silencioso.
 - **Decidir destinos** de incumplimientos vivos o de entradas de `ENTRADA.md`. Se registran; no se
-  rutean. R-3 de `CLAUDE.md:411` es explícita: no se inventa destino.
+  rutean. R-3 de `CLAUDE.md:457-462` es explícita: no se inventa destino.
 - **Reescribir el contenido de los changes existentes.** Se les **AÑADE** cabecera y nada más: el
   `git diff` de esta tanda sobre ellos **sólo añade** líneas de cabecera.
 - **Tocar código de producto.** Ni `transitions.ts`, ni `estados.ts`, ni nada bajo `apps/desk/src`
@@ -203,7 +203,7 @@ nadie distinguiría una cabecera declarada de una reconstruida, y **el valor com
 la afirmación la hace quien hizo el trabajo**: una cabecera derivada es una lectura de terceros
 sobre un documento acabado, y vale menos. Doce de las trece van a ser derivadas. Que se vea.
 
-**Se añade también a la definición de R-1 en `CLAUDE.md:411`** —la regla nace con siete campos, no
+**Se añade también a la definición de R-1 en `CLAUDE.md:423-434`** —la regla nace con siete campos, no
 con seis y un parche— y a la comprobación de forma de la tarea 1 como séptimo campo.
 
 ### 4.1 · Los ocho archivados — y la corrección aritmética
@@ -549,7 +549,7 @@ invisible — y es justo lo que la comprobación 1 de esta misma tanda caza.
 | `apps/desk/server/citas/` | La comprobación de forma —siete campos— y sus pruebas |
 | `openspec/changes/**/proposal.md` | **Doce cabeceras**, sólo añadidas (F0-04 parada) |
 | `openspec/config.yaml` | Regla (d) de `unidad_de_avance`; campo `estado` en las doce IV |
-| `CLAUDE.md:411` | R-1 pasa a siete campos, con `origen_cabecera` |
+| `CLAUDE.md:423-434` | R-1 pasa a siete campos, con `origen_cabecera` |
 | `docs/sdd/RECONCILIACION.md` | Fichero nuevo, generado |
 | `package.json` | Script `reconcile` |
 | `C:/dev/Desk_2_R1.023-worktrees/f1b-10-r1` | **Segunda copia de la cabecera de `orden-precedencia-guardas`** (§5.1) |
@@ -772,7 +772,7 @@ Mínimos del encargo, **ampliables en la spec**:
 11. Las **doce** entradas de `incumplimientos_vivos` llevan `estado`, y la prosa de IV-6 sigue en el
     fichero, en clave propia.
 12. `unidad_de_avance` tiene **cuatro** reglas de lectura; las tres anteriores intactas.
-13. `CLAUDE.md:411` define R-1 con **siete** campos.
+13. `CLAUDE.md:423-434` define R-1 con **siete** campos.
 14. **Nada de lo anterior modifica `transitions.ts`, `estados.ts` ni ningún fichero de `apps/desk/src`.**
 15. **Barrido de la regla de mutación 4 como CIERRE**: esta tanda inserta líneas en
     `openspec/config.yaml` y en `CLAUDE.md`, los dos muy citados.

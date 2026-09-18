@@ -19,6 +19,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { comprobarCabeceras, type ResultadoCabeceras } from './cabecera'
 import { detectar, type EntradaBase, type Repo } from './detector'
 import { ErrorDeGit, repoGit, textoQueGitCreeBinario } from './git'
 import { informe } from './informe'
@@ -51,6 +52,23 @@ export const EXCLUSIONES = [
   'docs/artefactos/',
   '*.csv',
 ]
+
+/** D2 y RQ-CV-20 (F0-05, R1): alcance PROPIO del barrido de cabeceras — todo `proposal.md` bajo
+ *  `openspec/changes/<nombre>/`, INCLUIDO el archive. NO reutiliza `EXCLUSIONES`: esa lista excluye
+ *  `openspec/changes/archive/` a propósito (RQ-CV-07), y ocho de las trece cabeceras del retroajuste
+ *  viven ahí — reutilizarla dejaría ocho cabeceras sin comprobar y la suite en verde (D2, hallazgo
+ *  del diseño). Los dos alcances son distintos a propósito; R1.3.2 lleva su propia prueba y mutación. */
+const PATRON_PROPOSAL = /^openspec\/changes\/.+\/proposal\.md$/
+
+/** Cabeceras R-1 del árbol local: rutas trackeadas que cazan `PATRON_PROPOSAL`, leídas en UN solo
+ *  `leerLote` (mismo patrón que `leerBase`, D11: nunca una lectura por fichero). */
+function comprobarCabecerasDelArbol(repo: Repo, arbol: string): ResultadoCabeceras {
+  const rutas = (repo.rutas(arbol) ?? []).filter((r) => PATRON_PROPOSAL.test(r))
+  const objetos = rutas.map((r) => `${arbol}:${r}`)
+  const lote = repo.leerLote(objetos)
+  const ficheros = rutas.map((r) => ({ ruta: r, texto: lote.get(`${arbol}:${r}`) ?? '' }))
+  return comprobarCabeceras(ficheros)
+}
 
 function leerBase(repo: Repo, arbol: string): EntradaBase[] {
   const objeto = `${arbol}:${RUTA_BASE}`
@@ -163,9 +181,13 @@ export function ejecutar({ argv, entrada, cwd, env = process.env }: EntradaCli):
       const { remoto, etiqueta } = indiceRemotoUnido(repo, remotos)
       // RQ-CV-01: barrido COMPLETO del árbol del sha local, nunca limitado a lo que cambia el push (M29).
       const resultado = detectar({ repo, arbolLocal: arbol, exclusiones: EXCLUSIONES, base: leerBase(repo, arbol), remoto })
+      // R1.3.3 / R1.3.5 (M4, regla de mutación 1): el barrido de cabeceras corre EN LA MISMA
+      // iteración, antes del informe único y de la decisión de código — nunca detrás del bucle ni
+      // condicionado a `resultado.bloquea`, o un push con las dos roturas a la vez sólo nombraría una.
+      const cabeceras = comprobarCabecerasDelArbol(repo, arbol)
       const binarios = textoQueGitCreeBinario(cwd, env, shaLocal).length
-      textos.push(informe(resultado, { sha: shaLocal.slice(0, 7), ref, indiceRemoto: etiqueta, binarios }))
-      if (resultado.bloquea) codigo = 1
+      textos.push(informe(resultado, { sha: shaLocal.slice(0, 7), ref, indiceRemoto: etiqueta, binarios, cabeceras }))
+      if (resultado.bloquea || cabeceras.invalidas.length > 0) codigo = 1
     }
     const aviso = avisoDeEscalada(repo)
     if (aviso !== null) textos.push(aviso)

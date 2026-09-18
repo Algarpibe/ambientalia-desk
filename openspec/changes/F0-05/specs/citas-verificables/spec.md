@@ -25,7 +25,7 @@ capacidad comprueba que la cabecera **existe y tiene forma**; nunca que su conte
 
 En cada push, el detector **SHALL** comprobar que **todo** `openspec/changes/<nombre>/proposal.md` del
 sha local empieza con un bloque YAML delimitado por `---` **antes de cualquier prosa**, y que ese
-bloque lleva los **siete** campos de R-1 (`CLAUDE.md:411` en `ce93480`): `tanda`, `motivo`,
+bloque lleva los **siete** campos de R-1 (`CLAUDE.md:423-434`): `tanda`, `motivo`,
 `capacidad`, `maestro`, `cierra`, `toca_maestro` y `origen_cabecera`.
 
 La comprobación **SHALL** ser de **forma y dominio cerrado**, nunca de criterio:

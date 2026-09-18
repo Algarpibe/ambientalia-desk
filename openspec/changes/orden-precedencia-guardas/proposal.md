@@ -1,3 +1,13 @@
+---
+tanda: F1B-10
+motivo: ""
+capacidad: [transitions-st, tickets-core]
+maestro: ["nº 52"]
+cierra: si
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Propuesta — `orden-precedencia-guardas` (F1B-10)
 
 **Fase:** `sdd-propose` · **Árbol de referencia:** `ad65161` (limpio)

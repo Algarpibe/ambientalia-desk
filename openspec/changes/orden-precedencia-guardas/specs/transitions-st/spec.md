@@ -39,8 +39,8 @@ completo contra `60f03ae`, buscando los DOS bloques que se mueven):
 delta, igual que `:574`**). Los otros ocho son documentos **fechados** (Caso B, **no se renumeran**,
 se leen anclados a su fecha): `docs/sdd/F1B-01_Serial_llave_de_entrada.md:223`,
 `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:167`, `docs/sdd/F0-01_Correcciones_para_el_plan.md:293`,
-`docs/runbooks/verificaciones-pendientes-F0.md:148`, `openspec/changes/F0-01/proposal.md:120`,
-`openspec/changes/F0-04/proposal.md:194`, `openspec/config.yaml:478` (⚠️ abreviada: «`:45-48` … y
+`docs/runbooks/verificaciones-pendientes-F0.md:148`, `openspec/changes/F0-01/proposal.md:130`,
+`openspec/changes/F0-04/proposal.md:204`, `openspec/config.yaml:478` (⚠️ abreviada: «`:45-48` … y
 `:134-135`», sin nombre de fichero) y `openspec/config.yaml:987` (`ticketService.ts:45-49`).
 
 De los **veinte** sitios (seis + catorce), **dos** —`transitions-st/spec.md:573` y `:574`— los resuelve

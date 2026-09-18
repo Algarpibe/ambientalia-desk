@@ -1,3 +1,13 @@
+---
+tanda: F1A-08
+motivo: ""
+capacidad: [remisiones, tickets-core]
+maestro: ["M4.4", "nº 52"]
+cierra: si
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Propuesta — `tercera-puerta-orden-venta` (desvío IV-4)
 
 **Fase:** `sdd-propose` · **Fecha:** 2026-09-16 · **Árbol:** `14b45ee`

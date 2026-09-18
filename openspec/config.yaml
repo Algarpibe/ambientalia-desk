@@ -1154,7 +1154,7 @@ incumplimientos_vivos:
 # mal declarado. Cada entrada dice qué decía la premisa, qué se verificó y qué
 # tandas cambian de contenido. Precedente: F0-04 §1 ya corrigió una premisa falsa
 # del plan por esta misma vía ("F0-04 no crea la red de pruebas: la mide y la
-# completa donde falta", openspec/changes/F0-04/proposal.md:18).
+# completa donde falta", openspec/changes/F0-04/proposal.md:28).
 premisas_falsas_corregidas:
   - id: PF-1
     corregida_en: "F0-01"

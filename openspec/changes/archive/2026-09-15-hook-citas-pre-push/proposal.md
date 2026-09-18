@@ -1,3 +1,13 @@
+---
+tanda: fuera-del-plan
+motivo: "Instala el detector de citas verificables como comprobación de pre-push, en vez de depender de que alguien se acuerde de comprobar a mano"
+capacidad: [citas-verificables]
+maestro: []
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Propuesta: el detector de citas se impone en `pre-push`, y la regla 4 deja de depender de que alguien se acuerde
 
 **Tanda · base `648432d` (rama `main`) · talla declarada S**

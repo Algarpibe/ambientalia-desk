@@ -1,3 +1,13 @@
+---
+tanda: fuera-del-plan
+motivo: "Cierra los hallazgos de la revisión adversaria de F1B-01 (H1-H4): posición de guardas, guardián de ALTER TABLE, guarda equipo-cliente y el .trim() del serial"
+capacidad: [remisiones, tickets-core, zoho-sync]
+maestro: ["M1.1", "§1.4.3", "M3"]
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # cerrar-hallazgos-revision-f1b-01 · Cerrar los hallazgos de la revisión adversaria de F1B-01
 
 | Dato | Valor |

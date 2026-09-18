@@ -420,8 +420,8 @@ nombre de función detrás de «en» se lee como ancla.
 
 Mecanismo completo: `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`. Tres reglas.
 
-**R-1 · Cabecera obligatoria del proposal.** Todo `openspec/changes/<nombre>/proposal.md` empieza con
-este YAML, antes de cualquier prosa:
+**R-1 · Cabecera obligatoria del proposal, con SIETE campos.** Todo `openspec/changes/<nombre>/proposal.md`
+empieza con este YAML, antes de cualquier prosa:
 
     ---
     tanda: F1A-08                 # ID del §5 del plan, o el literal `fuera-del-plan`
@@ -430,6 +430,7 @@ este YAML, antes de cualquier prosa:
     maestro: ["M4.4", "nº 52"]    # pasajes que lo justifican; [] si ninguno
     cierra: si                    # si | no — ¿deja la fila TERMINADA, o sólo avanza una parte?
     toca_maestro: si              # si | no — ¿queda el maestro desactualizado al terminar?
+    origen_cabecera: declarada    # declarada (la escribe quien hace el trabajo) | derivada-<fecha>
     ---
 
 Un trabajo que realiza el contenido de una fila del §5 **LLEVA SU ID**, aunque la carpeta se llame de

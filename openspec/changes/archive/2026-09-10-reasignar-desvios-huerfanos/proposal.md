@@ -1,3 +1,13 @@
+---
+tanda: fuera-del-plan
+motivo: "Reasigna los desvíos que quedaron huérfanos (sin dueño ni destino) al cerrar la épica F1A"
+capacidad: [remisiones, tickets-core]
+maestro: []
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Proposal: Reasignar desvíos huérfanos tras el cierre de F1A
 
 ## Intent
