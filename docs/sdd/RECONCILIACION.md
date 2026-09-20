@@ -1,7 +1,7 @@
 # Reconciliación
 
-**Commit medido:** `0e4049f` · **Fecha del commit:** 2026-09-20
-**Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
+**Commit medido:** `b03282b` · **Fecha del commit:** 2026-09-20
+**Árbol de trabajo:** limpio
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
 este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la pasada anterior.
@@ -55,10 +55,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  1 sin trackear
-
-Hallazgos (informativos, no bloquean):
-  - `docs/sdd/RECONCILIACION.md` — en disco y fuera del índice
+  0 sin trackear
 
 ---
 
