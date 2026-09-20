@@ -120,10 +120,10 @@ Chain strategy: stacked-to-main
 - [x] R1.2.2 Cabecera en `F0-01`, `F0-02`, `F0-03`, valores de `proposal.md §4.2` (con los tres avisos
       ⚠️ de §4.3, sin resolverlos).
 - [x] R1.2.3 Cabecera de `orden-precedencia-guardas/proposal.md` en `main` (proposal §5.1).
-- [ ] R1.2.4 La MISMA cabecera de `orden-precedencia-guardas/proposal.md`, en el worktree `f1b-10-r1`
+- [x] R1.2.4 La MISMA cabecera de `orden-precedencia-guardas/proposal.md`, en el worktree `f1b-10-r1`
       (proposal §5.1) — si entrara sólo en `main`, la fusión de la rama reintroduce el bloqueo.
-      **NO EJECUTADA a propósito** (fuera del boundary de este intento: otro worktree, otra tanda en
-      vuelo). El bloque exacto que se escribiría allí va en el informe de esta tanda.
+      **HECHA el 2026-09-20**, commit `21b16ec` de la rama `f1b-10-r1`: +10/-0, bytes idénticos a la
+      copia de `main`. No mueve la medición del intento: ese worktree no es su árbol.
 - [x] R1.2.5 (2b) `F0-04/proposal.md`: cabecera con `cierra: no`, `origen_cabecera: derivada-17/09`;
       `Estado` deja de decir «pendiente de visto bueno»; las tres casillas de secretos se declaran
       aparte (ver «Fuera del recuento» abajo).
@@ -204,10 +204,10 @@ Chain strategy: stacked-to-main
       llegaron **sin commitear** al `git status` de arranque de esta tanda (`?? openspec/changes/F0-05/`)
       y este `sdd-attempt` es el primero en tocar el árbol desde entonces. Decisión pendiente de
       Gerencia/orquestador: ver el informe de esta tanda.
-- [ ] R1.4.6 Con la medición dentro de presupuesto: escribir el `apply-progress` y `sdd-attempt
-      settle` de R1 sobre `main`. **NO EJECUTADA**: R1.4.5 no cerró dentro de presupuesto. El
-      `apply-progress` SÍ se escribe (es la persistencia obligatoria de la fase); `settle` NO se
-      ejecuta — corresponde al orquestador, y sólo tras la decisión de R1.4.5.
+- [x] R1.4.6 Con la medición dentro de presupuesto: escribir el `apply-progress` y `sdd-attempt
+      settle` de R1. **HECHA el 2026-09-20**, tras el `reset` a `generation: 2` que rebasó el intento
+      sobre `38c9c04`: R1 mide **738** líneas, **753** con este cierre, contra el techo de **800**. La
+      evidencia, el desglose y lo que el detector sigue bloqueando van en el `apply-progress`.
 
 ---
 

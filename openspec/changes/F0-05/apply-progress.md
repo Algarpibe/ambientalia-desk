@@ -1,23 +1,20 @@
 # Apply progress — F0-05 · R1 «el contrato»
 
-**Intento:** `f0-05-r1-actor-2026-09-18-a`, token de ledger heredado del padre (`proceed`, sin mutación
-propia). **Commit de partida:** `5cfd056`. **Worktree:** `C:/dev/Desk_2_R1.023-worktrees/f0-05-r1`,
-rama `f0-05-r1`.
+**Intento:** ordinal **2** del objetivo `generation: 2` (`acquire` `f0-05-r1-acquire-2026-09-18-c`).
+**Commit de partida:** `38c9c04`, árbol `8748d870`. **Worktree:** `C:/dev/Desk_2_R1.023-worktrees/f0-05-r1`,
+rama `f0-05-r1`. **Commit de R1:** `778d617`.
 
-**Estado: BLOQUEADO EN R1.4.5 — medición sobre presupuesto. Sin commit. Sin `settle`.**
+**Estado: R1 CERRADA — 738 líneas medidas contra un techo de 800. Ver «Cierre», al final.**
 
 ---
 
 ## Resumen ejecutivo
 
-Todo el trabajo de R1 (Fases 0-4, casillas R1.0.2 a R1.4.5, con la excepción declarada de R1.2.4) está
-**implementado, probado y verificado en el árbol de trabajo**, pero **no comiteado**: la medición de
-R1.4.5 da **2.728 líneas** contra el techo de **800**, y esa casilla ordena parar y preguntar antes de
-`settle`. El propio desglose de la medición muestra que la implementación de R1 en sí mide **494
-líneas** —dentro del rango estimado (450-540)—; el resto, **2.234 líneas**, son los propios artefactos
-de F0-05 (`proposal.md`, `design.md`, `tasks.md`, dos delta specs), que llegaron sin commitear al
-`git status` de arranque de esta tanda y que este intento es el primero en tocar el árbol desde
-entonces.
+R1 está **implementada, probada y commiteada** en `778d617`, R1.2.4 incluida. La medición de R1.4.5
+contra la base VIEJA `5cfd056` dio **2.728** líneas y paró la tanda; el `reset` a `generation: 2` movió
+la base a `38c9c04` —los artefactos de F0-05 commiteados aparte, en su propio commit— y contra esa base
+R1 mide **738**. Lo de abajo NO se renumera: era cierto de su base, y es el Caso B de la regla de
+mutación 4.
 
 ## TDD Cycle Evidence
 
@@ -111,9 +108,8 @@ nuevo ya está en el `git diff` de arriba.
 | Artefactos propios de F0-05 (`proposal.md` 918, `design.md` 545, `tasks.md` 312 + 2 delta specs 291+168) | **2.234** | Nunca comiteados antes de este intento; el `git status` de arranque de la sesión ya los mostraba como `?? openspec/changes/F0-05/` |
 | **Total medido** | **2.728** | **Supera el techo de 800 en 1.928 líneas** |
 
-**No se ha commiteado nada.** El árbol de trabajo queda con todo staged (`git add -A` ya ejecutado,
-`git status --short` limpio de sorpresas — sólo los 28 ficheros de la tabla de arriba) para que el
-orquestador o Gerencia decida sin tener que reconstruir el estado.
+**Eso era el estado del 18/09 y está superado:** el `reset` rebasó el intento sobre `38c9c04` y R1 se
+commiteó entera en `778d617`. La medición que vale es la de «Cierre».
 
 ### La pregunta que esto abre
 
@@ -138,3 +134,18 @@ se pregunta.
 Ninguna precondición de las que `proposal.md` enumera bloquea R1 (todas resueltas antes de empezar:
 H-a y H-b cerradas por `5cfd056`, F0-04 resuelto por §18, orden interno respetado — cabeceras antes
 que activación).
+
+## Cierre de R1 (2026-09-20)
+
+**Medición.** `git diff --shortstat --no-renames 38c9c04` → **738** líneas en `778d617` (689 + 49) y
+**753** con este commit de cierre, sobre un techo de 800; `git status --porcelain` vacío. **Evidencia.** `npm test` 1144 pasadas · 2 saltadas, salida 0 (la
+primera corrida añadió un `Timeout calling "onTaskUpdate"` del reportero de vitest, no reproducible en
+la segunda); `typecheck` y `lint` en 0, con 158 avisos preexistentes y ninguno en los ficheros de la
+tanda. Detector en **modo hook** sobre `778d617`: **cabeceras R-1 inválidas 0**; sobre la base
+`38c9c04`, **13**, una por proposal sin bloque — esa es la discriminación, no la corrida verde. `--sha`
+NO comprueba cabeceras: sólo el modo hook, como pide `RQ-CV-19`, así que la quinta cifra se lee de ahí.
+
+**Lo que el detector sigue bloqueando, y no es de R1:** 7 citas rotas en `778d617` frente a **13** en
+`38c9c04`; R1 cerró 6 (H-c). Las que quedan citan ficheros que siguen sin trackear en `main`. **R1.2.4**
+se ejecutó en el worktree `f1b-10-r1` (`21b16ec`, +10/-0, bytes idénticos a la copia de `main`): no mueve
+las 738, porque ese worktree no es el árbol del intento.
