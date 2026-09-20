@@ -203,3 +203,57 @@ código que este commit no lleva:
   en vez de deducirlo. `RQ-RC-05` exige siete cierres por commit y ningún artefacto los declara de
   forma legible por máquina —el §5 del plan no tiene columna de estado—. Leerlos del texto de la spec
   sería leer el registro para comprobar el registro. Muerde en R2.3.3, no aquí.
+
+## R2 · Fase 1 · entrega B — el render y el comando (2026-09-20)
+
+**Intento:** ordinal 5 del objetivo `generation: 4` (`acquire` `f0-05-r2-fase1b-acquire-2026-09-20`),
+techo 800. **Base:** `1a51ba0`, árbol `9cc678f7`. Cierra R2.1.1, R2.1.2 y R2.1.4, y con ellas la
+**Fase 1 entera**.
+
+**Por qué R2.1.4 se marca AQUÍ y no en la entrega A:** es el GREEN de los TRES módulos, y hasta esta
+entrega no estaban los tres. Marcarla con A habría dado por hecho un verde que sólo existía en el
+árbol de trabajo y no en el commit — que es exactamente lo que la verificación con B aislada
+descartó.
+
+### TDD — los dos rojos, y qué DISCRIMINA cada uno
+
+| Casilla | Rojo observado | Verde | Lo que el caso distingue |
+|---|---|---|---|
+| R2.1.1 · `RQ-RC-02` | `Failed to load url ./comprobaciones` | 3/3 en `informe.test.ts` | que el texto lleve la fecha del COMMIT y no la de hoy |
+| R2.1.2 · `RQ-RC-03` | `Failed to load url ./cli` | 4/4 en `cli.test.ts` | que sólo la 1 y la 3 muevan el código de salida |
+
+**El caso de determinismo que importa no es la igualdad.** Dos llamadas a una función pura sobre la
+misma entrada coinciden siempre: eso no prueba nada. Lo que lo prueba es la tercera aserción — el
+texto contiene la fecha del commit sintético y **NO** contiene la de hoy. Un render que leyera el
+reloj (D7) se pondría rojo ahí, y sólo ahí.
+
+**Y el de salida se comprueba por los DOS signos:** las dos vías bloqueantes —una spec huérfana, y un
+cambio fuera del plan sin motivo escrito— dan código distinto de 0; la divergencia legítima de
+`esperas`, once frente a cuatro, sale en el fichero y **no** toca el código. Sin el segundo caso, una
+implementación que bloqueara por todo pasaría igual de verde.
+
+### Lo que se construyó
+
+| Fichero | Líneas | Qué hace |
+|---|---|---|
+| `reconciliacion/informe.ts` | 79 | Render determinista: un array de líneas unido al final, cifras alineadas con puntos, cabecera con sha, fecha del commit y limpieza del árbol |
+| `reconciliacion/informe.test.ts` | 49 | Los tres casos de `RQ-RC-02` |
+| `reconciliacion/cli.ts` | 135 | Adaptador propio con `spawnSync` (D6), `Arbol` de disco, `ejecutar` puro respecto al proceso y defecto cerrado en código 2 |
+| `reconciliacion/cli.test.ts` | 102 | Los cuatro casos de `RQ-RC-03` y `RQ-RC-01` |
+
+**D6 cumplido y comprobable:** `cli.ts` NO importa el adaptador del detector de citas. Sus dos
+operaciones de git —el `HEAD` con su fecha y su limpieza, y los ficheros sin trackear— van en un
+envoltorio propio de `spawnSync`, sin `shell`, con `-c core.quotepath=off` y separador nulo.
+
+**D8 cumplido:** se lee UN solo árbol, el de trabajo, y la cabecera del informe lo dice. La
+comprobación 6 cuenta ficheros SIN TRACKEAR, que por definición no están en ningún commit: leerlos
+del commit la dejaría siempre en cero, y mezclar dos árboles sin decirlo es lo que `RQ-RC-01`
+prohíbe.
+
+### Verificación sobre el árbol COMMITEADO
+
+    npm test            126 ficheros · 1155 pasadas · 2 saltadas · salida 0
+    npm run typecheck   0
+    npm run lint        0 errores · 158 avisos, todos preexistentes
+
+**La Fase 1 queda cerrada.** Lo que sigue son las Fases 2 y 3, cada una en su propio objetivo.

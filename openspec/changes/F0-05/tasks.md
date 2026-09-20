@@ -249,18 +249,28 @@ Chain strategy: stacked-to-main
 
 ## R2 · Fase 1 — Núcleo de reconciliación (RED→GREEN) — RQ-RC-01 a RQ-RC-04
 
-- [ ] R2.1.1 RED: dos llamadas sobre el mismo árbol sintético devuelven textos distintos
-      (determinismo, RQ-RC-02).
-- [ ] R2.1.2 RED: huérfana ⇒ espera código ≠0, recibe 0; `esperas 4/11` ⇒ espera 0 (RQ-RC-03).
+- [x] R2.1.1 RED: dos llamadas sobre el mismo árbol sintético devuelven textos distintos
+      (determinismo, RQ-RC-02). **HECHA el 2026-09-20**, en la entrega **B**: rojo observado
+      (`Failed to load url ./comprobaciones`) y verde en `informe.test.ts`, tres casos. El caso que
+      DISCRIMINA no es la igualdad entre dos llamadas —eso lo cumple cualquier función pura— sino
+      que el texto lleve la fecha del commit y **NO** la de hoy: ahí se pondría rojo un render que
+      leyera el reloj (D7).
+- [x] R2.1.2 RED: huérfana ⇒ espera código ≠0, recibe 0; `esperas 4/11` ⇒ espera 0 (RQ-RC-03).
+      **HECHA el 2026-09-20**, en la entrega **B**: rojo observado (`Failed to load url ./cli`) y
+      verde en `cli.test.ts`, cuatro casos. Se comprueba por los DOS signos: las dos vías
+      bloqueantes dan ≠0, y la divergencia legítima de `esperas` sale en el fichero sin tocar el
+      código de salida. Sin el segundo, una implementación que bloqueara por todo pasaría igual.
 - [x] R2.1.3 RED: árbol sintético con `ESTADOS_EN_ESPERA` de once y `cifras_ancladas` diciendo otra
       cosa ⇒ espera 11, leído del código (RQ-RC-04). **HECHA el 2026-09-20**, en la entrega **A** de
       la Fase 1: rojo observado (`Failed to load url ./comprobaciones`) y verde en
       `comprobaciones.test.ts`, cuatro casos. El árbol sintético AFIRMA «SIETE» en `cifras_ancladas`
       mientras `estados.ts` declara once: si la cifra saliera del registro, la prueba se pondría roja.
-- [ ] R2.1.4 GREEN: `comprobaciones.ts` (núcleo puro, tipos `Comprobacion`/`Arbol`/`Hallazgo` de
+- [x] R2.1.4 GREEN: `comprobaciones.ts` (núcleo puro, tipos `Comprobacion`/`Arbol`/`Hallazgo` de
       `design.md` §5), `informe.ts` (render determinista, fecha del commit medido — D7, pregunta
       abierta para Gerencia si debiera ser la del reloj) y `cli.ts` (adaptador `spawnSync` propio, sin
-      importar `citas/git.ts` — D6).
+      importar `citas/git.ts` — D6). **HECHA el 2026-09-20**, y se marca con la entrega **B** y no con
+      la **A** a propósito: es el GREEN de los TRES módulos, y hasta B no estaban los tres. 11/11 en
+      `reconciliacion/`.
 
 ## R2 · Fase 2 — Guardas del autocertificado + regla (d) + `estado` en las 12 IV — RQ-RC-05 a RQ-RC-08
 
