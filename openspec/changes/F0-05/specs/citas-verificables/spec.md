@@ -147,14 +147,37 @@ base a mano. Para una cabecera inválida la única salida **MUST** ser **escribi
 línea base (`RQ-CV-20`). `--no-verify` **MUST NOT** presentarse como salida.
 
 Fuera de las cinco cifras, en su propia línea, el mensaje **MUST** seguir imprimiendo cuántos ficheros
-trackeados del sha local con extensión de texto trata git como **binarios**, y que **no se barren**, sin
-cambio respecto de su redacción anterior.
+trackeados del sha local con extensión de texto (`ts`, `tsx`, `js`, `mjs`, `md`, `yaml`, `yml`, `json`,
+`jsonl`, `sql`, `sh`) trata git como **binarios**, y que **no se barren**. `git grep -I` se los salta en
+silencio: sin esta cifra, ese hueco del barrido sólo lo vería el guardián de las pruebas y nunca la
+ejecución del hook.
+
+*(No tiene mutación dedicada en el §6: lo exigen los criterios de aceptación del §15 sobre las cuatro
+cifras, la declaración de lo no comprobado, la de las abreviadas y las dos salidas legítimas. La cifra
+de ficheros de texto que git cree binarios la añade una decisión de Gerencia del 2026-09-13. **El §15
+sigue diciendo «cuatro» y aquí se deja tal cual**: es un documento archivado y renumerarlo a cinco lo
+volvería falso —caso B de la regla de mutación 4—. La quinta cifra, las cabeceras R-1 inválidas, la
+añade esta delta, y quien la exige es `RQ-CV-19` con `RQ-CV-20`.)*
 
 #### Scenario: el mensaje declara las cinco cifras
-- GIVEN una ejecución con citas comprobadas, saltadas, fuera del repositorio, abreviadas rotas y una
-  cabecera inválida
+- GIVEN una ejecución con citas comprobadas, ambiguas saltadas, citas fuera del repositorio,
+  abreviadas rotas y una cabecera inválida
 - WHEN el hook termina
-- THEN imprime las **cinco** cifras por separado, y la cabecera inválida con su fichero y su campo
+- THEN imprime las **cinco** cifras por separado, la lista de abreviadas rotas con fichero, línea y
+  motivo, la cabecera inválida con su fichero y su campo, la frase que declara qué no comprueba y la
+  que dice que las abreviadas no bloquean y por qué
+
+#### Scenario: mensaje de bloqueo nombra las dos salidas
+- GIVEN una cita rota que bloquea el push
+- WHEN se imprime el mensaje
+- THEN nombra reparar la cita y añadirla a la base a mano, y no menciona `--no-verify`
+
+#### Scenario: un fichero de texto que git cree binario se declara, no se calla
+- GIVEN un `.md` trackeado con un byte NUL en sus primeros 8.000 bytes y una cita rota dentro
+- WHEN corre el hook
+- THEN la cita no se cosecha ni bloquea, y el mensaje imprime la línea de texto que git cree binario
+  con 1 y la nota «no barridos»
+- AND sin el NUL, la misma línea dice 0 y la cita bloquea
 
 #### Scenario: la salida de una cabecera inválida no ofrece línea base
 - GIVEN un push bloqueado sólo por una cabecera inválida
