@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { arbolEnMemoria } from '../testing/arbolDePrueba'
@@ -75,5 +75,49 @@ describe('registro · RQ-RC-08: las DOCE entradas de `incumplimientos_vivos` dec
   it('control del otro signo: borrando UN `estado` de una copia, aparece el defecto', () => {
     const sucio = configReal().replace(/^ {4}estado: CERRADO$/m, '    verificado: true')
     expect(defectosDeRegistro(sucio)).toContain('1 defectos de registro')
+  })
+})
+
+/** La comprobación 1 del núcleo, corrida sobre el `config.yaml` real y las specs de disco. */
+const capacidades = (textoConfig: string, specs: readonly string[]) => {
+  const ficheros: Record<string, string> = { [RUTA_CONFIG]: textoConfig }
+  for (const n of specs) ficheros['openspec/specs/' + n + '/spec.md'] = '# ' + n
+  return reconciliar(arbolEnMemoria({ ficheros })).find((x) => x.id === 1)
+}
+
+const specsEnDisco = (): string[] =>
+  readdirSync(path.join(RAIZ, 'openspec/specs'), { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)
+
+describe('registro · RQ-RC-01 y RQ-RC-09: ninguna spec de disco queda fuera de `capabilities`', () => {
+  it('cero huérfanas sobre el fichero real: las entradas son objetos con `name:`, no una lista plana', () => {
+    const c = capacidades(configReal(), specsEnDisco())
+    expect(c?.hallazgos.map((h) => h.clave)).toEqual([])
+  })
+
+  it('control del otro signo: una spec en disco que NO está declarada sí sale huérfana', () => {
+    const c = capacidades(configReal(), [...specsEnDisco(), 'una-que-nadie-declaro'])
+    expect(c?.hallazgos.map((h) => h.clave)).toEqual(['una-que-nadie-declaro'])
+  })
+})
+
+describe('registro · el barrido real destapa lo que un árbol sintético no puede (R2.3.3)', () => {
+  it('cuenta las capacidades UNA vez: `- name: X` no es además un elemento de lista plana', () => {
+    const c = capacidades(configReal(), specsEnDisco())
+    expect(c?.cifras[0]).toBe('18 declaradas')
+  })
+
+  it('sin lectura de código no hay divergencia que reportar: decirla sería inventar el hallazgo', () => {
+    const c5 = reconciliar(arbolEnMemoria({ ficheros: { [RUTA_CONFIG]: configReal() } })).find((x) => x.id === 5)
+    // `transiciones` y `estados` declaran «ERROR si difiere», pero el barrido NO lee su cifra del
+    // código todavía: marcarlas afirma una divergencia que nadie ha medido.
+    expect(c5?.hallazgos.map((h) => h.clave)).not.toContain('transiciones')
+    expect(c5?.hallazgos.map((h) => h.clave)).not.toContain('estados')
+  })
+
+  it('y `esperas`, que sí se lee del código, tampoco se marca: su divergencia es LEGÍTIMA', () => {
+    const c5 = reconciliar(arbolEnMemoria({ ficheros: { [RUTA_CONFIG]: configReal() } })).find((x) => x.id === 5)
+    expect(c5?.hallazgos.map((h) => h.clave)).not.toContain('esperas')
   })
 })

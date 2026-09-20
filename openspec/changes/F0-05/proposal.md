@@ -89,7 +89,7 @@ decisiones que se toman en conversación— y corren a velocidades distintas. El
 un commit: se ve en el agregado. Cuando por fin se miró, salieron cuatro casos reales, y los
 cuatro ya habían ocurrido.
 
-El principio ya estaba escrito en `openspec/config.yaml:1249` (`unidad_de_avance.trazabilidad`):
+El principio ya estaba escrito en `openspec/config.yaml:1249` en `ce93480` (`unidad_de_avance.trazabilidad`):
 *«el as-built no se recuerda: se verifica»*. **Lo que faltaba era quién lo ejecuta y cada cuánto.**
 
 **Esta tanda NO arregla ningún desvío: los hace visibles.** Es la distinción entera, y conviene
@@ -324,7 +324,7 @@ sin checkout nuevo y sin sacar F1B-10 de su aislamiento.
 
 Lo confirma después el `archive-report` por la guarda (a) de §6. Y el propio F1B-10 es el caso que
 lo enseña: **declara el orden total en su spec pero NO toca el alta de remisión** —eso es IV-12,
-registrado y sin destino (`openspec/config.yaml:1057`)—. Así que
+registrado y sin destino (`openspec/config.yaml:1104`)—. Así que
 
 > «cierra la fila» y «no quedan desvíos en su territorio» son **dos afirmaciones distintas**,
 
@@ -405,7 +405,7 @@ una suma.
 
 ## 7 · El campo `estado` en las DOCE entradas de `incumplimientos_vivos`
 
-Medido el 2026-09-17 sobre `openspec/config.yaml:307` y siguientes. **Doce entradas; cinco vivos.**
+Medido el 2026-09-17 sobre `openspec/config.yaml:307` en `995adbc` y siguientes. **Doce entradas; cinco vivos.**
 Hoy el campo `estado` existe **sólo en los cerrados**, así que «vivo» se deduce de que **falte una
 línea** — y un barrido que cuenta ausencias miente en cuanto alguien añade una entrada y se olvida
 del campo.

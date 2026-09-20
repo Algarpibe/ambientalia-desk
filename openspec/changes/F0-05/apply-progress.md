@@ -322,3 +322,86 @@ leer el aviso no es lo mismo que aplicarlo.
     npm test            127 ficheros · 1173 pasadas · 2 saltadas · salida 0   (eran 1155: +18)
     npm run typecheck   0
     npm run lint        0 errores · 158 avisos, todos preexistentes
+
+## R2 · Fase 3 — el barrido real, y lo que sólo el árbol real enseña (2026-09-20)
+
+**Intento:** ordinal 7 del objetivo `generation: 6` (`acquire` `f0-05-r2-fase3-acquire-2026-09-20`),
+techo 800. **Base:** `0e4049f`. Cierra R2.3.1 a R2.3.8, y con ellas **R2 entera: 47 casillas de 47**.
+
+### Lo que el árbol real destapó y ningún árbol sintético podía
+
+Las pruebas del núcleo usaban `capabilities` como lista plana. En el fichero real son **bloques**
+`- name: X`, y el barrido daba las NUEVE specs de disco por huérfanas. Ese es el valor de R2.3.3:
+no confirma lo que las pruebas ya decían, sino que expone lo que las pruebas no sabían preguntar.
+
+| Defecto | Cómo se veía | Rojo previo | Arreglo |
+|---|---|---|---|
+| Capacidades contadas dos veces | `36 declaradas` en vez de 18 | `expected '36 declaradas' to be '18 declaradas'` | `- name:` y lista plana se admiten, pero nunca a la vez |
+| Divergencia ERROR sin medir | `transiciones` y `estados` marcadas | `expected [ 'transiciones', 'estados' ] to not include 'transiciones'` | sin lectura de código no hay divergencia que reportar |
+
+El segundo es el fallo del 2026-09-17 **al revés**: aquel afirmó que nadie había escrito algo,
+leyendo el registro en vez del código; éste afirmaba una divergencia que nadie había medido. Las dos
+formas de mentir con el mismo mecanismo.
+
+### Las cifras de cierre, y las dos que NO salieron
+
+    18 capacidades · 9 specs · 0 huérfanas          ← RQ-RC-09 demostrado en su primera ejecución
+    5 fuera del plan · 0 sin motivo                  ← coincide con lo esperado
+    12 entradas IV · 5 vivos · 0 defectos de registro
+    esperas: código 11 · maestro 4                   ← leído de packages/shared, no del registro
+    dos pasadas seguidas → `cmp` sin diferencias     ← RQ-RC-02, comprobado y no supuesto
+
+**El numerador no sale, y las dos mitades fallan por razones distintas.** Los **6 derivables**
+(F0-01, F0-02, F0-03, F0-05, F1A-08, F1B-10) frente a los 4 esperados son legítimos: la cifra 4 está
+anclada a `ce93480`, cuando F0-05 y F1B-10 todavía no tenían cabecera. Los **0 declarados por
+commit** frente a 7 son el hueco real: **ningún artefacto declara esa lista de forma legible por
+máquina** —el §5 del plan no tiene columna de estado—, y leerla del texto de la spec sería leer el
+registro para comprobar el registro. El barrido lo DICE y no la inventa, que es lo que `RQ-RC-05`
+ordena al prohibir la cabecera retroactiva.
+
+### El barrido de anclaje da más de lo que cabe en esta tanda
+
+Citas a `config.yaml`, `package.json` y `guardianes.test.ts`: **81 con ancla inline** —se leen contra
+su revisión y R2 no las toca—, **34 intactas**, **47 sin ancla y desplazadas**.
+
+| Dónde viven | Cuántas | Qué se hizo |
+|---|---|---|
+| Carpeta de F0-05 y el propio `config.yaml` | 6 | **reparadas**: 2 ancladas (caso B) y 4 repuntadas a hoy (caso A) |
+| `openspec/changes/archive/**` | 24 | se reportan: son registros históricos y renumerarlos los volvería falsos sobre su fecha |
+| Rama de F1B-10 | 15 | se reportan: no son de esta tanda |
+| `CLAUDE.md` y `docs/sdd/**` | 4 | se reportan |
+
+⚠️ **«Desplazada por R2» es una COTA SUPERIOR, no un veredicto.** Las tres de `CLAUDE.md` se
+comprobaron a mano y **ya estaban mal en `5cfd056`**, antes de que R2 existiera. El barrido mecánico
+compara el contenido de la línea entre dos revisiones; no puede saber qué afirma la frase. Sólo
+leerla puede, y por eso esta casilla no se automatiza.
+
+### Verificación sobre el árbol COMMITEADO
+
+    npm test            127 ficheros · 1178 pasadas · 2 saltadas · CERO FALLOS · salida 1
+    npm run typecheck   0
+    npm run lint        0 errores · 158 avisos, todos preexistentes
+    npm run reconcile   salida 0, el fichero escrito y determinista (`cmp` sin diferencias)
+
+### ⚠️ La suite sale 1 con CERO pruebas rojas, y por eso R2 no se cierra aquí
+
+Ninguna prueba falla: 1.178 pasan y 2 se saltan. La salida 1 viene de un error NO CONTROLADO del
+reportero de vitest —un tiempo de espera agotado en su canal interno de actualización de tareas—,
+que vitest cuenta como «1 error» y convierte en salida distinta de cero.
+
+Medido, no supuesto:
+
+| Dónde | Pruebas | Salida |
+|---|---|---|
+| worktree `f0-05-r1`, en `b55bfc7` | 1.144 | **0** |
+| este worktree, Fase 2 | 1.173 | **0** |
+| este worktree, Fase 3, tres corridas seguidas | 1.178 | **1**, las tres |
+| este worktree, Fase 3, quitando `registro.test.ts` | 1.167 | **1** |
+
+No lo causa el fichero nuevo —quitarlo no lo quita— y no aparece con una suite más pequeña ni
+apareció en la Fase 2. Apunta a un fallo del reportero bajo carga, no del código.
+
+**Aun así se para.** `npm test` es el `test_command` del contrato, y una salida 1 es ROJA aunque la
+razón no sea una prueba: decir «suite en verde» aquí sería exactamente la clase de afirmación que
+este proyecto castiga. Las 47 casillas están hechas y su trabajo commiteado; lo que NO se hace es
+el `settle`, que esperaba una suite en verde.

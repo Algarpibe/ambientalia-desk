@@ -75,14 +75,21 @@ function listaYaml(texto: string, clave: string): string[] {
   return valores
 }
 
-/** Bloques `- id: X` bajo una clave, con su cuerpo, para poder leerles un campo escalar. */
-function entradasYaml(texto: string, clave: string): { id: string; cuerpo: string }[] {
+/**
+ * Bloques `- <campoClave>: X` bajo una clave, con su cuerpo, para poder leerles un campo escalar.
+ *
+ * El campo que encabeza cada bloque NO siempre es `id`: `capabilities` los encabeza con `name`, y
+ * leerlas como lista plana daba las nueve specs de disco por huérfanas. Se parametriza en vez de
+ * escribir un segundo parser, que sería el molde de H5.
+ */
+function entradasYaml(texto: string, clave: string, campoClave = 'id'): { id: string; cuerpo: string }[] {
   const lineas = texto.split(SALTO).map(sinRetorno)
   const inicio = lineas.findIndex((l) => l.trimEnd() === clave + ':')
   if (inicio === -1) return []
+  const reCabeza = new RegExp('^ {2}- ' + campoClave + ': (.+)$')
   const entradas: { id: string; cuerpo: string[] }[] = []
   for (const linea of lineas.slice(inicio + 1)) {
-    const cabeza = /^ {2}- id: (.+)$/.exec(linea)
+    const cabeza = reCabeza.exec(linea)
     if (cabeza) {
       entradas.push({ id: cabeza[1]!.trim(), cuerpo: [] })
       continue
@@ -158,7 +165,12 @@ function esperasDelCodigo(fuente: string): number {
 
 /** 1 · `capabilities` frente a specs en disco. Huérfana es SPEC SIN DECLARAR, nunca al revés. */
 function capacidades(arbol: Arbol): Comprobacion {
-  const declaradas = listaYaml(arbol.leer(RUTA_CONFIG) ?? '', 'capabilities')
+  const config = arbol.leer(RUTA_CONFIG) ?? ''
+  // Las capacidades se declaran como bloques `- name: X`, no como lista plana. Las dos formas se
+  // admiten, pero NUNCA a la vez: `listaYaml` también caza `- name: X` como elemento suelto, y
+  // concatenarlas contaba cada capacidad DOS veces. Lo destapó el barrido real, no una prueba.
+  const porNombre = entradasYaml(config, 'capabilities', 'name').map((e) => e.id)
+  const declaradas = porNombre.length > 0 ? porNombre : listaYaml(config, 'capabilities')
   const enDisco = arbol
     .listar(PREFIJO_SPECS)
     .filter((r) => r.endsWith(SUFIJO_SPEC))
@@ -297,14 +309,18 @@ function cifrasAncladas(arbol: Arbol): Comprobacion {
   const hallazgos: Hallazgo[] = []
   for (const entrada of entradasYaml(config, 'cifras_ancladas')) {
     const maestro = (campo(entrada.cuerpo, 'maestro') ?? '—').split(' ')[0]!
-    if (entrada.id === 'esperas') {
-      const delCodigo = esperasDelCodigo(arbol.leer(RUTA_ESTADOS) ?? '')
-      cifras.push('esperas: código ' + String(delCodigo) + ' · maestro ' + maestro)
-    } else {
+    // La clasificación se REPRODUCE, no se reinterpreta: la decide la entrada, no el barrido.
+    const esError = /^ERROR/i.test(campo(entrada.cuerpo, 'divergencia') ?? '')
+    if (entrada.id !== 'esperas') {
+      // Sin lectura de código no hay divergencia que reportar. Marcarla afirmaría que se midió algo
+      // que nadie midió, y ése es el molde del hallazgo falso del 2026-09-17 al revés.
       cifras.push(entrada.id + ': maestro ' + maestro + ' · sin lectura de código')
+      continue
     }
-    if (/^ERROR/i.test(campo(entrada.cuerpo, 'divergencia') ?? '')) {
-      hallazgos.push({ clave: entrada.id, detalle: 'divergencia declarada ERROR por la propia entrada' })
+    const delCodigo = String(esperasDelCodigo(arbol.leer(RUTA_ESTADOS) ?? ''))
+    cifras.push('esperas: código ' + delCodigo + ' · maestro ' + maestro)
+    if (delCodigo !== maestro && esError) {
+      hallazgos.push({ clave: entrada.id, detalle: 'diverge del maestro y su propia entrada lo declara ERROR' })
     }
   }
   return {

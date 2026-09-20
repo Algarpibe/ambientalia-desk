@@ -57,8 +57,8 @@ testing:
       CORREGIDO EN F1A-05 (2026-09-09). La entrada anterior decía «no está
       instalado; vitest.config.ts no declara sección coverage», y era cierta al
       baseline a3a8f03 (2026-08-20) y falsa desde edbce13 (2026-09-08). Hoy el
-      proveedor está instalado (package.json:56), hay script test:coverage
-      (package.json:23) y vitest.config.ts:49-64 declara umbrales:
+      proveedor está instalado (package.json:57), hay script test:coverage
+      (package.json:24) y vitest.config.ts:49-64 declara umbrales:
       lines/statements 92, functions 96, branches 78. El CI lo ejecuta
       (.github/workflows/ci.yml:39). Medido a F1A-05: 94,31 lines, 81,97
       branches, 98,28 functions — verde. El denominador excluye los .tsx a
@@ -250,6 +250,18 @@ capabilities:
       Zoho Desk.
     status_at_start: "nueva — nacida el 2026-09-10 en vista-todos-y-estados-en-espera"
     declarada_en: "2026-09-17, corrección de registro. Ver E-002 de docs/sdd/ENTRADA.md."
+
+  - name: reconciliacion
+    covers: >
+      Barrido de reconciliación: npm run reconcile y su fichero docs/sdd/RECONCILIACION.md, las
+      seis comprobaciones, la regla (d) de unidad_de_avance, las dos guardas del autocertificado
+      y el campo estado de incumplimientos_vivos.
+    status_at_start: "nueva — nacida el 2026-09-20 en F0-05 R2"
+    declarada_en: >
+      2026-09-20, EN EL MISMO CAMBIO que crea su spec, por RQ-RC-09 y la regla R-2. No es
+      formalismo: es la comprobación 1 aplicada a esta misma capacidad. Una spec que no está en
+      capabilities no la carga el preflight, así que nacer sin declarar la habría hecho el desvío
+      que existe para cazar.
 
 # Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
 # registro del movimiento, no como tarea pendiente: los dos ficheros están en su

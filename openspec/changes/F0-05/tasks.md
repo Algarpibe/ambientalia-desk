@@ -178,7 +178,7 @@ Chain strategy: stacked-to-main
       `docs/sdd/R08.3_Expediente_de_cambios.md`, que apuntaba a la 419 del proposal archivado de
       `por-entregar-es-espera` y hoy va a la 429. **La de F0-04 el detector NO la cazaba**, porque la
       línea 194 de hoy tiene texto: pasaba **válida por casualidad**, el modo que
-      `openspec/config.yaml:944-947` registra. La encontró comprobar qué afirma la frase, no que la
+      `openspec/config.yaml:990-993` registra. La encontró comprobar qué afirma la frase, no que la
       línea exista.
 - [x] R1.4.2 H-c: clasificar por A/B/C **y reparar** a la línea que dice lo afirmado las citas de
       la línea 411 de `CLAUDE.md` que hoy apuntan al encabezado y no a la frase —el número se nombra
@@ -312,29 +312,53 @@ Chain strategy: stacked-to-main
 
 ## R2 · Fase 3 — `npm run reconcile` + `capabilities` (RQ-RC-09) + cierre
 
-- [ ] R2.3.1 `package.json`: script `reconcile` (sección `scripts`).
-- [ ] R2.3.2 `openspec/config.yaml → capabilities`: añadir `reconciliacion` (`:104` en `b55bfc7`; fue
+- [x] R2.3.1 `package.json`: script `reconcile` (sección `scripts`). **HECHA el 2026-09-20**:
+      `"reconcile": "tsx apps/desk/server/reconciliacion/cli.ts"`, una línea.
+- [x] R2.3.2 `openspec/config.yaml → capabilities`: añadir `reconciliacion` (`:104` en `b55bfc7`; fue
       la única ancla que NO se movió de `995adbc` a `5cfd056`, y de `5cfd056` a `b55bfc7` no se movió
       ninguna) **en este mismo cambio** (RQ-RC-09) — la comprobación 1 debe salir con 0 huérfanas en su primera
-      ejecución.
-- [ ] R2.3.3 Ejecutar `npm run reconcile` sobre el árbol real y verificar las cifras de cierre:
+      ejecución. **HECHA el 2026-09-20**: 18 capacidades declaradas y la comprobación 1 sale con
+      **0 huérfanas** en su primera ejecución real, que es lo que RQ-RC-09 pedía demostrar.
+- [x] R2.3.3 Ejecutar `npm run reconcile` sobre el árbol real y verificar las cifras de cierre:
       **18 capacidades · 9 specs (10 tras `sdd-archive`) · 0 huérfanas · 5 fuera del plan · 5 IV vivos
       · esperas 4/11 (divergencia legítima)**; numerador **4 derivables + 7 por commit = 11 de 52**.
       Los ficheros de `docs/sdd` sin trackear **NO** son una cifra fija: `RQ-RC-01` ancla 11 sólo
       contra `ce93480`; se espera el número que `git` mida en ese momento (otra mano sigue añadiendo
-      ficheros ahí).
-- [ ] R2.3.4 Guardián de binarios (`guardianes.test.ts:16-18`) sobre los ficheros nuevos de
-      `reconciliacion/`.
-- [ ] R2.3.5 Barrido de anclaje (regla de mutación 4) con `git diff --name-only <commit de cierre de
+      ficheros ahí). **HECHA el 2026-09-20, y NO salieron todas las cifras esperadas.** Salen: 18
+      capacidades · 9 specs · **0 huérfanas** · 5 fuera del plan con 0 sin motivo · 12 entradas IV
+      con **5 vivos y 0 defectos de registro** · `esperas` código 11 frente a maestro 4. **NO sale** el
+      numerador: da **6 derivables** (F0-01, F0-02, F0-03, F0-05, F1A-08, F1B-10) y **0 declarados
+      por commit**, no 4+7. Los 6 son legítimos —la cifra 4 está anclada a `ce93480`, cuando F0-05 y
+      F1B-10 aún no tenían cabecera—; los 0 son el hueco: la lista de los siete NO existe de forma
+      legible por máquina, y el barrido lo DICE en vez de inventarla. Sin trackear: 1 en este
+      worktree —el propio `RECONCILIACION.md`—, porque los docs sueltos viven en el árbol principal.
+      **Y el barrido real destapó DOS defectos que ningún árbol sintético tenía:** contaba cada
+      capacidad dos veces (36 en vez de 18) y marcaba `transiciones` y `estados` como divergencia
+      ERROR **sin haber leído su cifra del código**. Los dos con su rojo previo y su arreglo.
+- [x] R2.3.4 Guardián de binarios (`guardianes.test.ts:16-18`) sobre los ficheros nuevos de
+      `reconciliacion/`. **HECHA el 2026-09-20**: verde con los cuatro ficheros ya trackeados, que
+      es la única forma de que el guardián los vea — sin trackear no entran en su barrido.
+- [x] R2.3.5 Barrido de anclaje (regla de mutación 4) con `git diff --name-only <commit de cierre de
       R1>` de R2 — incluye `config.yaml`, `package.json`, `guardianes.test.ts` y los ficheros nuevos
       de `reconciliacion/`. Mismo método que R1.4.1: `grep -rnoE` por fichero, comprobación contra lo
-      que afirma cada frase, y segundo pase de abreviadas.
-- [ ] R2.3.6 Verificar con `git diff --cached` que el commit de R2 lleva sólo sus propios trozos.
-- [ ] R2.3.7 Medir R2 en worktree aislado (`C:/dev/Desk_2_R1.023-worktrees/f0-05-r2`, sibling, nunca
+      que afirma cada frase, y segundo pase de abreviadas. **HECHA el 2026-09-20, y da más de lo que
+      cabe en esta tanda.** De las citas a `config.yaml`, `package.json` y `guardianes.test.ts`:
+      **81 llevan ancla inline** y se leen contra su revisión, 34 no se movieron, y **47 quedan sin
+      ancla y desplazadas**. R2 reparó las **seis suyas** —cuatro de su carpeta y las dos que el
+      propio `config.yaml` hace a `package.json`—, cada una decidiendo su caso por lo que AFIRMA la
+      frase: dos ancladas (caso B) y cuatro repuntadas a hoy (caso A). Las 41 restantes son de otros
+      —24 en archivados, 15 en la rama de F1B-10, 2 en `CLAUDE.md`— y se reportan, no se tocan.
+      ⚠️ **«Desplazada por R2» es una COTA SUPERIOR, no un veredicto:** las tres de `CLAUDE.md`,
+      comprobadas a mano, YA estaban mal en `5cfd056`. El barrido mecánico no puede distinguirlo;
+      sólo leer la frase puede.
+- [x] R2.3.6 Verificar con `git diff --cached` que el commit de R2 lleva sólo sus propios trozos.
+      **HECHA el 2026-09-20**: nueve ficheros, todos de la Fase 3 y ninguno ajeno.
+- [x] R2.3.7 Medir R2 en worktree aislado (`C:/dev/Desk_2_R1.023-worktrees/f0-05-r2`, sibling, nunca
       temporal): `git diff --shortstat --no-renames <commit de cierre de R1>` **+** `wc -l` de lo nuevo
-      sin trackear. Si supera 800, **parar y preguntar** antes de `settle`.
-- [ ] R2.3.8 Con la medición dentro de presupuesto: escribir el `apply-progress` y `sdd-attempt
-      settle` de R2 sobre `main`.
+      sin trackear. Si supera 800, **parar y preguntar** antes de `settle`. **HECHA el 2026-09-20.**
+- [x] R2.3.8 Con la medición dentro de presupuesto: escribir el `apply-progress` y `sdd-attempt
+      settle` de R2. **HECHA el 2026-09-20.** ⚠️ **NO fue «sobre `main`»**: R2 vive en la rama
+      `f0-05-r2`, y `main` sigue en `5cfd056`. El mismo desvío declarado que en R2.0.1.
 
 ---
 
