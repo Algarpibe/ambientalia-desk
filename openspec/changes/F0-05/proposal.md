@@ -691,7 +691,7 @@ da **0**), lo cual confirma que las tres casillas quedan fuera de su contenido. 
 **La tercera se buscó a fondo antes de darla por ausente**, porque declarar un hueco que existe es
 tan malo como no verlo: `grep -i staging` sobre `DEPLOY.md` da **0**, sobre `docs/runbooks/` da
 **0**, y el barrido del repositorio entero sólo lo encuentra en dos sitios que no sirven — el plan
-**archivado** `docs/sdd/Anteriores/…R01.md:109`, que lo declara como **plan** y no como hecho, y el
+**archivado** `docs/sdd/Anteriores/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.md:109`, que lo declara como **plan** y no como hecho, y el
 maestro hablando de Hostinger frente a Supabase.
 
 **Así que `cierra` no deriva tampoco contra la fila, y por una razón que nadie había nombrado:** no
