@@ -239,6 +239,32 @@ La fusión inserta 142 líneas **en mitad** de un fichero citable, así que toda
 - **Caso B de la regla de mutación 4: no se renumeran.** Llevan su revisión escrita y renumerarlas
   al árbol de hoy las volvería falsas.
 
+**El SEGUNDO barrido, que es el que mordió — y lo disparó la entrega del Anexo H, no la fusión.**
+Añadir la entrada 15 a `docs/sdd/F0-01_Correcciones_para_el_maestro.md` metió **una línea de más en
+su tabla de cabecera** (cuatro filas pasaron a cinco), y ese `+1` desplazó **todo** el fichero. El
+detector lo cazó en el acto: las abreviadas rotas subieron de **16 a 18**. Barrido de
+`F0-01_Correcciones_para_el_maestro\.md:[0-9]+` sobre el árbol: **3** resultados, **los 3 tocados**.
+
+| Quién cita | Decía | Dice | Caso |
+|---|---|---|---|
+| `openspec/specs/permissions/spec.md:309` | línea 128 y rango 141-166 | línea 129 y rango 142-167 | **A · presente** |
+| `openspec/specs/transitions-st/spec.md:813` | línea 128 y rango 141-166 | línea 129 y rango 142-167 | **A · presente** |
+| `openspec/changes/archive/2026-09-17-tercera-puerta-orden-venta/tasks.md:164` | líneas 545, 547 y 549 | los mismos números, **anclados a `8e1ea3a`** | **B · histórico** |
+
+Tres cosas que este barrido deja probadas y que no se ven en el primero:
+
+1. **El número suelto 128 de las dos specs NO lo cazó el detector**, y el rango 141-166 sí. La razón
+   está escrita en la propia regla: el detector comprueba que la línea **exista y no esté vacía**,
+   nunca que **diga** lo que la frase afirma. La 141 quedó en blanco y saltó; la 128 quedó con texto
+   —otra fila de la misma tabla— y pasó en verde apuntando a la corrección equivocada.
+2. **La tercera no la caza nadie**, porque vive en `openspec/changes/archive/` y el archive es
+   exclusión (`RQ-CV-07`). Se encontró con el `git grep` del cierre, que es exactamente para lo que
+   la regla lo exige. Su tercer número, el 549, apuntaba ya a una línea **vacía**.
+3. **Los dos primeros son caso A y el tercero caso B, y por eso se reparan distinto.** Las specs
+   afirman dónde vive hoy la corrección: se repuntan. El `tasks.md` archivado afirma qué citas
+   repasó una tanda cerrada: renumerarlo lo volvería falso sobre sí mismo, así que se le pone la
+   revisión en la que sus tres números son verificables.
+
 ---
 
 ## 8 · Lo que NO cierra esta tanda
