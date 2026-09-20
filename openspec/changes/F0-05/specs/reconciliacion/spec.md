@@ -60,7 +60,7 @@ Las **seis** comprobaciones, y lo que cada una reporta medido contra `ce93480`:
 - «Huérfana» **SHALL** significar **spec en disco que no está en `capabilities`**, no al revés: una
   capacidad declarada sin spec es trabajo pendiente, no un desvío de registro.
 - La comprobación 3 **SHALL** contar **cinco**, no seis. La enumeración de
-  `docs/sdd/ENTRADA.md:24` en `ce93480` (E-001) es exhaustiva y correcta —`cerrar-hallazgos-revision-f1b-01`,
+  `docs/sdd/ENTRADA.md:24` (E-001) es exhaustiva y correcta —`cerrar-hallazgos-revision-f1b-01`,
   `mensaje-422-cliente-duplicado`, `reasignar-desvios-huerfanos`, `hook-citas-pre-push`,
   `detector-citas-extremos`—; el numeral «seis» que la acompaña es un off-by-one, porque `6+1+2 = 9`
   sobre **ocho** archivados y `5+1+2 = 8` sí cierra.
