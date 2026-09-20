@@ -373,9 +373,9 @@ comprobado contra el fichero:
 
 - **Una sola cita viva se desplazó, y era de este mismo documento:** `rules.proposal` pasó de
   `config.yaml:1189` a **`:1260`** (+71). Corregida en la cabecera, en la misma edición.
-- **`CLAUDE.md:91` y `:104`** (→ `config.yaml:349`) y **`CLAUDE.md:414`** (→ `config.yaml:22-30`)
+- **`CLAUDE.md:91` y `:104`** (→ `config.yaml:349`) y **`CLAUDE.md:474`** (→ `config.yaml:22-30`)
   apuntan a líneas **anteriores** a la inserción: comprobado, no se mueven. *(El encargo las citaba
-  como `:405`; hoy es `:414`, porque el párrafo del recuento añadió nueve líneas por encima.)*
+  como `:405`; hoy es `:474` — fue `:414` cuando el párrafo del recuento añadió nueve líneas por encima, y la fusión de main con F0-05 la desplazó sesenta más.)*
 - **Las specs vivas** citan `config.yaml:72-77`, `:83-85`, `:87-89`, `:114-116`, `:117`, `:118-120`,
   `:122-125`, `:129-131`, `:133-135`, `:145-147`, `:29`, y `CLAUDE.md:171-205`, `:186-190`, `:249`:
   **todas por encima de las dos inserciones.** No se mueven.

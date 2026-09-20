@@ -26,7 +26,7 @@ completo contra `60f03ae`, buscando los DOS bloques que se mueven):
 
 | Sitio | Cita | Qué afirma | Pendiente de `apply` |
 |---|---|---|---|
-| `CLAUDE.md:332` | `:134` | IV-11: la puerta 2 comprueba «sólo por número» | sí |
+| `CLAUDE.md:341` | `:134` | IV-11: la puerta 2 comprueba «sólo por número» | sí |
 | `openspec/config.yaml:455` | `:134-135` (y `:45-48`, ver abajo) | IV-4 cerrado, describe qué comprobaba la tercera puerta | sí |
 | `openspec/config.yaml:984` | `:134` | IV-11, misma afirmación | sí |
 | `openspec/specs/remisiones/spec.md:330` | `:135` | texto del `409` citado en `RQ-RE-16` | sí — ⚠️ cita `:135`, no `:134`: un `grep` de `:134` no la caza aunque esté en el mismo bloque |

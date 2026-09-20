@@ -244,7 +244,7 @@ barrido guiado por el asunto de la tanda no las mira.
 
 | Sitio | Cita | Qué afirma | Caso | Reparación |
 |---|---|---|---|---|
-| `CLAUDE.md:332` | `ticketService.ts:134` | «la puerta 2 comprueba **sólo por número**» | **A** (sigue siendo cierto) | reapuntar (`:134` → la línea del `ticketConOrdenVenta` de `executeTransition` tras el movimiento) |
+| `CLAUDE.md:341` | `ticketService.ts:134` | «la puerta 2 comprueba **sólo por número**» | **A** (sigue siendo cierto) | reapuntar (`:134` → la línea del `ticketConOrdenVenta` de `executeTransition` tras el movimiento) |
 | `openspec/config.yaml:984` | `ticketService.ts:134` | misma afirmación, campo `afecta_tambien_a_la_puerta_2` del bloque IV-11 | **A** | reapuntar |
 | `openspec/config.yaml:987` | `ticketService.ts:45-49` | «La puerta 1 … SÍ, porque mira las dos vías» | **A** | reapuntar los **dos** extremos |
 
@@ -255,8 +255,8 @@ barrido guiado por el asunto de la tanda no las mira.
 | `openspec/config.yaml:455` | `:45-48` y `:134-135` | **B** | Bloque IV-4, `estado: CERRADO`, `cerrado_verificado_en: 2026-09-16, base 79cf09b`. **Se ancla a su revisión, no se renumera** |
 | `openspec/config.yaml:478` | `:45-48` y la **abreviada** `:134-135` | **B** | Mismo bloque, campo `decidido:` (fechado 2026-09-10). ⚠️ **Es la abreviada que el `grep` no caza** |
 | `openspec/config.yaml:721`, `:736` | `:65-77`, `:65-83` | **A** | G5 se desplaza −7 |
-| `CLAUDE.md:208` | `:50-78` | **A** parcial | La frase es histórica (se lee contra `607e26a`) **salvo el paréntesis «hoy la guarda existe»**, que es presente |
-| `CLAUDE.md:330` | `:39`, `:65-83` | `:39` sin cambio; `:65-83` **A** | IV-8, vivo |
+| `CLAUDE.md:216` | `:50-78` | **A** parcial | La frase es histórica (se lee contra `607e26a`) **salvo el paréntesis «hoy la guarda existe»**, que es presente |
+| `CLAUDE.md:339` | `:39`, `:65-83` | `:39` sin cambio; `:65-83` **A** | IV-8, vivo |
 | `openspec/specs/transitions-st/spec.md:306` | `:140-144` | **A** | RQ-TS-12; la derivación sube a `:132-136`. **No está en la tabla de cinco sitios del delta** |
 | `openspec/specs/transitions-st/spec.md:573`, `:574`, `:577` | `:45-49`, `:134-135` | **ver §7** | ⚠️ **No es sólo el número: `:573` y `:577` se vuelven FALSOS** |
 | `openspec/specs/tickets-core/spec.md:181`, `:185`, `:401` | `:43-49`, `:43-44`, `:45-48` + abreviada `:134-135` | **A** | RQ-TC-08 y §4.2 siguen siendo ciertos; sólo derivan los números |
