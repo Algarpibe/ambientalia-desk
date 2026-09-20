@@ -1298,9 +1298,9 @@ decisiones_de_gerencia:
     consecuencias: >
       MEDIDAS CONTRA EL CÓDIGO EL 2026-09-18, árbol `995adbc`. Se anotan, no se deciden.
       (1) EL DESTINATARIO ES DOBLE Y EL CÓDIGO DE HOY NO PUEDE REPRESENTARLO. `destinatarioDelEscalado`
-      (`packages/shared/src/sla.ts:96-112`) devuelve `hay:false, motivo:'ambiguo'` en cuanto encuentra
+      (`packages/shared/src/sla.ts:92-109`) devuelve `hay:false, motivo:'ambiguo'` en cuanto encuentra
       DOS cargos distintos, y lo hace a propósito — `sla.ts:78-82`: «tampoco se elige el primero: eso
-      sería inventar un orden entre dos puestos». El tipo `DestinatarioEscalado` (`sla.ts:86-88`) lleva
+      sería inventar un orden entre dos puestos». El tipo `DestinatarioEscalado` (`sla.ts:88-90`) lleva
       UN `cargo`, no una lista. Atender esta respuesta no es rellenar una entrada de tabla: es pasar el
       tipo a destinatarios en plural. Es la consecuencia que la pregunta no anticipaba, porque la
       pregunta decía «qué cargo», en singular.

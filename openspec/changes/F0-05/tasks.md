@@ -213,9 +213,14 @@ Chain strategy: stacked-to-main
 
 ## R2 · Fase 0 — Arranque del intento
 
-- [ ] R2.0.1 `sdd-attempt acquire` sobre `main`, con el commit de cierre de R1 como commit de partida
-      de R2.
-- [ ] R2.0.2 **RE-ANCLAR LAS CITAS DE `config.yaml` AL COMMIT DE CIERRE DE R1, LEÍDAS DEL COMMIT Y NO
+- [x] R2.0.1 `sdd-attempt acquire` sobre `main`, con el commit de cierre de R1 como commit de partida
+      de R2. **HECHA el 2026-09-20**: `request-id` `f0-05-r2-acquire-2026-09-20`, `state: proceed`,
+      `generation: 3`, ordinal 3, techo 800, `initial_candidate_tree` `4b4f91f7` (el árbol de `b55bfc7`).
+      ⚠️ **NO fue «sobre `main`», y no podía serlo:** R1 vive sólo en la rama `f0-05-r1` y `main` sigue
+      en `5cfd056`, así que `b55bfc7` no existe ahí. El intento se abrió sobre el worktree aislado
+      `C:/dev/Desk_2_R1.023-worktrees/f0-05-r2` (rama `f0-05-r2`, creada en `b55bfc7`), que es lo que
+      R2.3.7 ya exigía. Fusionar R1 a `main` es decisión ajena a esta tanda.
+- [x] R2.0.2 **RE-ANCLAR LAS CITAS DE `config.yaml` AL COMMIT DE CIERRE DE R1, LEÍDAS DEL COMMIT Y NO
       DEL ÁRBOL.** Es una casilla, no un aviso. `R2.2.3` cita `:1330` / `:1331` / `:1336` / `:1341` y
       `R2.2.4` cita `:337`, todas en `5cfd056`: **ciertas contra `5cfd056` y potencialmente falsas
       contra el árbol que R1 deja**, porque R1 no toca `config.yaml` pero cualquier otra mano sí puede.
@@ -224,6 +229,23 @@ Chain strategy: stacked-to-main
       **nunca** `sed -n` sobre el fichero del árbol. Comprobar los rangos por los **dos extremos**. Si
       alguna se movió, re-anclar antes de tocar nada; el desplazamiento **no es uniforme** y no se
       aplica con una resta (medido `995adbc`→`5cfd056`: 0, +30, +63 en el mismo fichero).
+      **HECHA el 2026-09-20. Las SEIS anclas remedidas en `b55bfc7`** con `git show b55bfc7:openspec/config.yaml | grep -n`:
+      `capabilities:` `:104`, `incumplimientos_vivos:` `:337` —sus 12 entradas arrancan en `:338`—,
+      `reglas_de_lectura:` `:1330`, `a` `:1331`, `b` `:1336`, `c` `:1341`. **NINGUNA se movió**, y el
+      fichero mide 1.503 líneas en las dos revisiones. La premisa «R1 no toca `config.yaml`» salió
+      FALSA —R1 cambió `:1157` (`proposal.md:18`→`:28`, por las 10 líneas de la cabecera R-1 de
+      `F0-04`)—, pero fue una modificación EN SITIO y por eso no desplazó nada: la conclusión aguanta
+      por una razón distinta de la que estaba escrita. Los números se quedan; lo que cambia es la
+      **revisión que nombran**, `5cfd056` → `b55bfc7`, en R2.2.3, R2.2.4 y R2.3.2.
+      **Y DOS citas rotas reparadas dentro de `config.yaml`, las dos caso A** —nacieron rotas, así que
+      se reparan a las líneas de hoy y NO se anclan a ninguna revisión—. La de `:1301` apuntaba a las
+      líneas 96 a 112 y hoy apunta a `packages/shared/src/sla.ts:92-109` (`destinatarioDelEscalado`;
+      el fichero tiene 109 líneas y en toda su historia sólo ha medido 53 y 109, así que 112 nunca
+      existió). La de `:1303` apuntaba a las líneas 86 a 88 y hoy apunta a `sla.ts:88-90`, y ésa el
+      detector NO caza: la frase afirma que `DestinatarioEscalado` «lleva UN `cargo`, no una lista» y
+      `cargo: string` está en `:89`, fuera del rango viejo, cuyos dos extremos existen y no están
+      vacíos. Es la regla de mutación 4 en su letra: no basta con que la línea exista. Las otras dos
+      citas a `sla.ts` del mismo bloque —`:1302` `:78-82` y `:1311` `:32-35`— comprobadas y correctas.
 
 ## R2 · Fase 1 — Núcleo de reconciliación (RED→GREEN) — RQ-RC-01 a RQ-RC-04
 
@@ -244,10 +266,10 @@ Chain strategy: stacked-to-main
 - [ ] R2.2.2 M3 (mutación): quitar la regla (d) de `unidad_de_avance` en una copia de `config.yaml`; el
       guardián debe pedir los cuatro ids `a,b,c,d` con las tres primeras intactas; revertir con `cmp`.
 - [ ] R2.2.3 `openspec/config.yaml`: cuarta regla de lectura en `unidad_de_avance` (RQ-RC-07), dentro
-      del bloque `reglas_de_lectura` (`:1330` en `5cfd056`), sin tocar `a` (`:1331`), `b` (`:1336`) ni
-      `c` (`:1341`), todas en `5cfd056` (eran `:1267` / `:1268` / `:1273` / `:1278` en `995adbc`).
+      del bloque `reglas_de_lectura` (`:1330` en `b55bfc7`), sin tocar `a` (`:1331`), `b` (`:1336`) ni
+      `c` (`:1341`), todas en `b55bfc7` (eran `:1267` / `:1268` / `:1273` / `:1278` en `995adbc`).
 - [ ] R2.2.4 `openspec/config.yaml`: campo `estado` en las 12 entradas de `incumplimientos_vivos`
-      (`:337` en `5cfd056` y siguientes; era `:307` en `995adbc`): `CERRADO` en IV-1,3,4,5,7,10; IV-6 pasa a `CERRADO`
+      (`:337` en `b55bfc7` y siguientes; era `:307` en `995adbc`): `CERRADO` en IV-1,3,4,5,7,10; IV-6 pasa a `CERRADO`
       conservando su prosa en clave propia; `estado` nuevo (vivo) en IV-2,8,9,11,12.
 - [ ] R2.2.5 Comprobación 2 + guarda (b): marcar `F0-02` «sin verificar» (su `maestro: [Anexo H]` no
       cruza con `plan:456`) — resultado esperado, no se corrige.
@@ -257,9 +279,9 @@ Chain strategy: stacked-to-main
 ## R2 · Fase 3 — `npm run reconcile` + `capabilities` (RQ-RC-09) + cierre
 
 - [ ] R2.3.1 `package.json`: script `reconcile` (sección `scripts`).
-- [ ] R2.3.2 `openspec/config.yaml → capabilities`: añadir `reconciliacion` (`:104` en `5cfd056`, la
-      única ancla que NO se movió) **en
-      este mismo cambio** (RQ-RC-09) — la comprobación 1 debe salir con 0 huérfanas en su primera
+- [ ] R2.3.2 `openspec/config.yaml → capabilities`: añadir `reconciliacion` (`:104` en `b55bfc7`; fue
+      la única ancla que NO se movió de `995adbc` a `5cfd056`, y de `5cfd056` a `b55bfc7` no se movió
+      ninguna) **en este mismo cambio** (RQ-RC-09) — la comprobación 1 debe salir con 0 huérfanas en su primera
       ejecución.
 - [ ] R2.3.3 Ejecutar `npm run reconcile` sobre el árbol real y verificar las cifras de cierre:
       **18 capacidades · 9 specs (10 tras `sdd-archive`) · 0 huérfanas · 5 fuera del plan · 5 IV vivos
