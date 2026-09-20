@@ -62,5 +62,28 @@ export default defineConfig({
         branches: 78,
       },
     },
+    /*
+     * ⚠️ UMBRAL DURO, NO UNA PREFERENCIA. No subas este número sin volver a medir.
+     *
+     * El RPC interno de vitest (birpc) vence a los 60 s y NO se puede configurar: el `6e4` está
+     * en la línea 3 del chunk `index.B521nVV-.js` de vitest —vive en `node_modules`, que git
+     * ignora, así que se nombra en prosa y NO con ruta y línea: el detector de citas lo daría
+     * por fichero inexistente y bloquearía el push—, y ni `createRuntimeRpc` ni
+     * `createForksRpcOptions` le pasan un `timeout` propio. Un fichero de prueba que tarde más
+     * de 60 s produce un unhandled error y la suite sale 1 SIN NINGUNA PRUEBA ROTA.
+     * Medido: el número de `Errors` es EXACTAMENTE el de ficheros por encima de 60 s.
+     *
+     * Con los 16 workers por defecto sobre 16 CPUs, las pruebas del hook de citas —que lanzan
+     * subprocesos git— sobresuscriben la máquina y los dos ficheros pesados se arrastran hasta
+     * 53-57 s, a un suspiro del umbral. Bajar a 4 no cuesta tiempo, LO AHORRA: la suite baja de
+     * 63,0 s a 41,3 s de media y ningún fichero pasa de 35 s (24 corridas, 2026-09-20).
+     *
+     * Va aquí y no en un script porque tiene que cubrir `npm test` —lo que corre verify— Y
+     * `npm run test:coverage` —lo que corre el CI—. Un flag sólo cubriría uno de los dos.
+     *
+     * Partir los ficheros pesados ya se intentó (`058e4e7`) y duró CUATRO DÍAS: volvieron a
+     * cruzar el umbral sin que nadie los tocara, sólo porque la suite creció. No repitas eso.
+     */
+    maxWorkers: 4,
   },
 })
