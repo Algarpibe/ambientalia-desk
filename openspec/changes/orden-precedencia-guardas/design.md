@@ -5,7 +5,7 @@
 `interactive · hybrid · ask-on-risk · 800 · strict_tdd`
 **Entradas:** `proposal.md` y los dos deltas de `specs/` de esta misma carpeta; `CLAUDE.md` del
 repositorio (tres reglas, cuatro de mutación, dos del ciclo).
-**`rules.design`** (`openspec/config.yaml:1266-1268`): esta tanda **no contiene ninguna sentencia de
+**`rules.design`** (`openspec/config.yaml:1506-1508`): esta tanda **no contiene ninguna sentencia de
 creación de tabla**, así que la regla de calificar el esquema `desk.`/`public.` no tiene sujeto. No se
 introduce ninguna lectura ni escritura nueva contra la base: los dos bloques que se mueven ya existen
 y conservan su SQL palabra por palabra.
@@ -245,16 +245,16 @@ barrido guiado por el asunto de la tanda no las mira.
 | Sitio | Cita | Qué afirma | Caso | Reparación |
 |---|---|---|---|---|
 | `CLAUDE.md:341` | `ticketService.ts:134` | «la puerta 2 comprueba **sólo por número**» | **A** (sigue siendo cierto) | reapuntar (`:134` → la línea del `ticketConOrdenVenta` de `executeTransition` tras el movimiento) |
-| `openspec/config.yaml:984` | `ticketService.ts:134` | misma afirmación, campo `afecta_tambien_a_la_puerta_2` del bloque IV-11 | **A** | reapuntar |
-| `openspec/config.yaml:987` | `ticketService.ts:45-49` | «La puerta 1 … SÍ, porque mira las dos vías» | **A** | reapuntar los **dos** extremos |
+| `openspec/config.yaml:1057` | `ticketService.ts:134` | misma afirmación, campo `afecta_tambien_a_la_puerta_2` del bloque IV-11 | **A** | reapuntar |
+| `openspec/config.yaml:1060` | `ticketService.ts:45-49` | «La puerta 1 … SÍ, porque mira las dos vías» | **A** | reapuntar los **dos** extremos |
 
 ### 6.2 · El resto del inventario vivo, medido
 
 | Sitio | Cita(s) | Caso | Nota |
 |---|---|---|---|
-| `openspec/config.yaml:455` | `:45-48` y `:134-135` | **B** | Bloque IV-4, `estado: CERRADO`, `cerrado_verificado_en: 2026-09-16, base 79cf09b`. **Se ancla a su revisión, no se renumera** |
-| `openspec/config.yaml:478` | `:45-48` y la **abreviada** `:134-135` | **B** | Mismo bloque, campo `decidido:` (fechado 2026-09-10). ⚠️ **Es la abreviada que el `grep` no caza** |
-| `openspec/config.yaml:721`, `:736` | `:65-77`, `:65-83` | **A** | G5 se desplaza −7 |
+| `openspec/config.yaml:524` | `:45-48` y `:134-135` | **B** | Bloque IV-4, `estado: CERRADO`, `cerrado_verificado_en: 2026-09-16, base 79cf09b`. **Se ancla a su revisión, no se renumera** |
+| `openspec/config.yaml:547` | `:45-48` y la **abreviada** `:134-135` | **B** | Mismo bloque, campo `decidido:` (fechado 2026-09-10). ⚠️ **Es la abreviada que el `grep` no caza** |
+| `openspec/config.yaml:792`, `:807` | `:65-77`, `:65-83` | **A** | G5 se desplaza −7 |
 | `CLAUDE.md:216` | `:50-78` | **A** parcial | La frase es histórica (se lee contra `607e26a`) **salvo el paréntesis «hoy la guarda existe»**, que es presente |
 | `CLAUDE.md:339` | `:39`, `:65-83` | `:39` sin cambio; `:65-83` **A** | IV-8, vivo |
 | `openspec/specs/transitions-st/spec.md:306` | `:140-144` | **A** | RQ-TS-12; la derivación sube a `:132-136`. **No está en la tabla de cinco sitios del delta** |
@@ -392,7 +392,7 @@ La reversión es `git revert` del commit del orden y devuelve los dos bloques a 
 | `apply` deja `:336` con un `toBe(422)` sin texto y la prueba deja de distinguir | Media | §5.1 lo declara aserción obligatoria, con su razón (regla de mutación 1) |
 | Las tres comprobaciones que nacen verdes se dan por buenas sin mutar | Media | §5.2 fija la mutación de cada una **y** exige que el rojo se observe en la prueba nueva, no en la suite |
 | El barrido se salta `ticketService.ts:134` (IV-11, no habla de precedencia) | Media | §6.1, tabla propia con los tres sitios |
-| El barrido se salta la **forma abreviada** (`config.yaml:478`, `tickets-core:401`) | Media | §6 exige el segundo pase; §6.2 nombra los dos sitios medidos |
+| El barrido se salta la **forma abreviada** (`config.yaml:547`, `tickets-core:401`) | Media | §6 exige el segundo pase; §6.2 nombra los dos sitios medidos |
 | Se renumeran a ciegas los documentos fechados y se vuelven falsos sobre su propia fecha | Media | §6.2 los marca **Caso B** uno a uno; P4 fija Caso C: se conserva el texto y se añade qué lo cerró |
 | Los cuerpos normativos de los deltas se publican con la numeración de `ad65161` | Media | §6.3 separa cabecera (B) de tabla normativa (A) |
 | `apply` se pasa de 800 por el informe | Media | `proposal.md` §7: disparador medible de 500 y corte en dos rebanadas ya decidido |

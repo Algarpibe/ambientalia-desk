@@ -134,14 +134,14 @@ después de editar — nunca del mapa de renumeración de `design.md` §4**, por
 reescritos (Fases 2, 5) alteran el conteo.
 
 - [x] 9.1 IV-11 — el más fácil de saltar porque no habla de precedencia (3 sitios): `CLAUDE.md:341`
-  reapuntada a `:148`; `openspec/config.yaml:984` (`:134`→`:148`, línea de `ticketConOrdenVenta` en
-  `executeTransition` tras el movimiento) y `openspec/config.yaml:987` (`:45-49`→`:94-98`, los DOS
+  reapuntada a `:148`; `openspec/config.yaml:1057` (`:134`→`:148`, línea de `ticketConOrdenVenta` en
+  `executeTransition` tras el movimiento) y `openspec/config.yaml:1060` (`:45-49`→`:94-98`, los DOS
   extremos).
-- [x] 9.2 IV-4 cerrado, Caso B — **verificado, NO renumerado**: `openspec/config.yaml:455` y la forma
-  ABREVIADA de `:478` ya llevan su propio ancla (`cerrado_verificado_en: base 79cf09b` / fecha
+- [x] 9.2 IV-4 cerrado, Caso B — **verificado, NO renumerado**: `openspec/config.yaml:524` y la forma
+  ABREVIADA de `:547` ya llevan su propio ancla (`cerrado_verificado_en: base 79cf09b` / fecha
   2026-09-10); no necesitan tocarse.
-- [x] 9.3 G5 se desplaza −6 (medido, no los −7 del mapa pre-reescritura): `openspec/config.yaml:721`
-  (`:65-77`→`:59-71`), `:736` (`:65-83`→`:59-77`).
+- [x] 9.3 G5 se desplaza −6 (medido, no los −7 del mapa pre-reescritura): `openspec/config.yaml:792`
+  (`:65-77`→`:59-71`), `:807` (`:65-83`→`:59-77`).
 - [x] 9.4 `CLAUDE.md:216` reapuntada a `:43-77` (sólo el paréntesis «hoy la guarda existe» es
   presente; el resto sigue anclado a `607e26a`) y `CLAUDE.md:339` (`:65-77`→`:59-71` y
   `:65-83`→`:59-77`, las DOS citas de esa fila; `:39` sin cambio).

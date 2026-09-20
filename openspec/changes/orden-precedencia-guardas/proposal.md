@@ -25,7 +25,7 @@ mutación 4: se lee anclado a `ad65161`, no renumerado a hoy. **El plan se cita 
 **Procedencia:** `plan:425` — «Orden único de precedencia entre guardas», capacidades
 `transitions-st` y `tickets-core`, talla **M**, bloqueo «ninguno técnico; el orden se declara en la
 spec». Entrada 5.a de `docs/sdd/F0-01_Correcciones_para_el_plan.md:243`.
-**Cita del maestro** (`rules.proposal`, `openspec/config.yaml:1260`): la guarda cuya precedencia se
+**Cita del maestro** (`rules.proposal`, `openspec/config.yaml:1260` en `21b16ec`): la guarda cuya precedencia se
 ordena es «una OV, un ticket», punto abierto nº 52, `R08.1.md:2079` — fuera del §3.2 marcado
 `[EN REVISIÓN — R08]` (`:2839-3015`), así que es procedencia válida.
 
@@ -372,12 +372,12 @@ Insertar IV-12 desplaza todo lo que va debajo en los dos ficheros. Barrido ejecu
 comprobado contra el fichero:
 
 - **Una sola cita viva se desplazó, y era de este mismo documento:** `rules.proposal` pasó de
-  `config.yaml:1189` a **`:1260`** (+71). Corregida en la cabecera, en la misma edición.
+  la línea 1189 a la 1260 (+71). Corregida en la cabecera, en la misma edición. Después, la fusión con F0-05 la llevó a `openspec/config.yaml:1500`.
 - **`CLAUDE.md:91` y `:104`** (→ `config.yaml:349`) y **`CLAUDE.md:474`** (→ `config.yaml:22-30`)
   apuntan a líneas **anteriores** a la inserción: comprobado, no se mueven. *(El encargo las citaba
-  como `:405`; hoy es `:474` — fue `:414` cuando el párrafo del recuento añadió nueve líneas por encima, y la fusión de main con F0-05 la desplazó sesenta más.)*
+  como la línea 405; hoy es `:474` — fue la línea 414 cuando el párrafo del recuento añadió nueve líneas por encima, y la fusión de main con F0-05 la desplazó sesenta más.)*
 - **Las specs vivas** citan `config.yaml:72-77`, `:83-85`, `:87-89`, `:114-116`, `:117`, `:118-120`,
-  `:122-125`, `:129-131`, `:133-135`, `:145-147`, `:29`, y `CLAUDE.md:171-205`, `:186-190`, `:249`:
+  `:122-125`, `:129-131`, `:133-135`, `:145-147`, `:29`, y `CLAUDE.md:171-205` en `648432d`, `:186-190`, `:249`:
   **todas por encima de las dos inserciones.** No se mueven.
 - **`openspec/changes/archive/`**: decenas de citas a los dos ficheros. Son **Caso B/C y NO se
   renumeran**; se conservan con su revisión. Renumerarlas a hoy las volvería falsas sobre su propia

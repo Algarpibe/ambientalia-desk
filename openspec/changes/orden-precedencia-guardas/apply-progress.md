@@ -54,7 +54,7 @@ vacío tras revertir las dos mutaciones (ver evidencia de mutación más abajo).
 ### Fase 9 · Barrido de citas de cierre
 
 **18 sitios del inventario de `design.md` §6** — 16 reapuntados (Caso A), 2 ya anclados y verificados
-sin tocar (Caso B: `config.yaml:455`, `:478`, IV-4 cerrado):
+sin tocar (Caso B: `config.yaml:524`, `:547`, IV-4 cerrado):
 
 | Fichero | Cita vieja → nueva |
 |---|---|

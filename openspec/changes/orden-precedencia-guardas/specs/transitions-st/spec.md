@@ -27,8 +27,8 @@ completo contra `60f03ae`, buscando los DOS bloques que se mueven):
 | Sitio | Cita | Qué afirma | Pendiente de `apply` |
 |---|---|---|---|
 | `CLAUDE.md:341` | `:134` | IV-11: la puerta 2 comprueba «sólo por número» | sí |
-| `openspec/config.yaml:455` | `:134-135` (y `:45-48`, ver abajo) | IV-4 cerrado, describe qué comprobaba la tercera puerta | sí |
-| `openspec/config.yaml:984` | `:134` | IV-11, misma afirmación | sí |
+| `openspec/config.yaml:524` | `:134-135` (y `:45-48`, ver abajo) | IV-4 cerrado, describe qué comprobaba la tercera puerta | sí |
+| `openspec/config.yaml:1057` | `:134` | IV-11, misma afirmación | sí |
 | `openspec/specs/remisiones/spec.md:330` | `:135` | texto del `409` citado en `RQ-RE-16` | sí — ⚠️ cita `:135`, no `:134`: un `grep` de `:134` no la caza aunque esté en el mismo bloque |
 | `openspec/specs/remisiones/spec.md:342` | `:134-135` | `SHALL` del tercer punto de captura de la OV | sí |
 | `openspec/specs/transitions-st/spec.md:574` | `:134-135` | tabla de §3.4: «el 422 de obligatorios gana» en `habilitar_servicio` | **NO — la resuelve el `MODIFIED` de `3.4` de este mismo delta** |
@@ -40,8 +40,8 @@ delta, igual que `:574`**). Los otros ocho son documentos **fechados** (Caso B, 
 se leen anclados a su fecha): `docs/sdd/F1B-01_Serial_llave_de_entrada.md:223`,
 `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:167`, `docs/sdd/F0-01_Correcciones_para_el_plan.md:293`,
 `docs/runbooks/verificaciones-pendientes-F0.md:148`, `openspec/changes/F0-01/proposal.md:130`,
-`openspec/changes/F0-04/proposal.md:204`, `openspec/config.yaml:478` (⚠️ abreviada: «`:45-48` … y
-`:134-135`», sin nombre de fichero) y `openspec/config.yaml:987` (`ticketService.ts:45-49`).
+`openspec/changes/F0-04/proposal.md:204`, `openspec/config.yaml:547` (⚠️ abreviada: «`:45-48` … y
+`:134-135`», sin nombre de fichero) y `openspec/config.yaml:1060` (`ticketService.ts:45-49`).
 
 De los **veinte** sitios (seis + catorce), **dos** —`transitions-st/spec.md:573` y `:574`— los resuelve
 ya este delta, al traer `3.4` a `MODIFIED Requirements`. Quedan **dieciocho** pendientes del barrido de
