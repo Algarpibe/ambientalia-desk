@@ -1335,6 +1335,37 @@ decisiones_de_gerencia:
       cerrada desde el 10/09.
     registro: "docs/sdd/ENTRADA.md → E-014 (cerrada) · plan §4.5, fila `decision/escalado-remision-creada`"
 
+  - clave: "decision/veto-plan-r01-1"
+    fecha: "2026-09-20"
+    pregunta: >
+      El veto que impide tocar `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` se apoya
+      en una premisa ESCRITA —«no se toca. Está modificado en local»— que hoy es falsa. Mientras
+      rige, tres citas rotas bloquean el `pre-push` de main y la rama no se empuja. ¿Se levanta?
+    respuesta_textual: >
+      «Levanto el veto.»
+    consecuencias: >
+      LA PREMISA CADUCÓ, Y ÉSA ES LA RAZÓN: no que el veto estorbe. El veto se redactó en
+      `openspec/changes/orden-precedencia-guardas/design.md` y su texto condiciona el veto a que el
+      fichero esté modificado en local. MEDIDO EL 2026-09-20: `git status --porcelain` sobre ese
+      fichero sale VACÍO en los CUATRO árboles de trabajo —main, `f0-05-r2`, `f1b-10-r1` y
+      `f0-05-r1`—, y desde que se escribió el veto se commiteó DOS veces: `ce93480` (17/09) y
+      `5cfd056` (18/09). El veto protegía un trabajo en curso que ya aterrizó.
+      (1) HABILITA DOS REPARACIONES DE CITA, las dos CASO A —afirman algo cierto del árbol de hoy,
+      así que se reparan a las líneas de hoy y NO se anclan—. En el plan y en este mismo fichero,
+      la cita de `destinatarioDelEscalado` pasa del rango 96-112 a
+      `packages/shared/src/sla.ts:92-109`, y la del tipo `DestinatarioEscalado` pasa del rango
+      86-88 a `packages/shared/src/sla.ts:88-90`, que es donde está su `cargo: string`.
+      (2) LAS DOS NACIERON ROTAS, no se desfasaron: `packages/shared/src/sla.ts` es BYTE A BYTE
+      idéntico en `995adbc` —el árbol contra el que la frase dice haber medido— y hoy, y tiene 109
+      líneas. El rango 96-112 nunca acertó, por los dos extremos.
+      (3) LA SEGUNDA NO BLOQUEABA Y ERA FALSA IGUAL. El rango 86-88 pasa el detector en verde
+      porque esas líneas existen y no están vacías, pero son el final de un comentario y la primera
+      línea del `type`, sin el campo que la frase afirma. Reparar sólo la que bloquea habría dejado
+      viva la que nadie mira. Es el modo de fallo que la regla de mutación 4 de CLAUDE.md describe.
+      (4) DESBLOQUEA EL PUSH DE MAIN, que acumulaba seis commits sin empujar.
+      NO REABRE EL CONTENIDO DEL PLAN: se repara la cita, no lo que el plan dice.
+    registro: "docs/sdd/ENTRADA.md → E-016"
+
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
 unidad_de_avance:
