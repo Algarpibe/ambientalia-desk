@@ -149,3 +149,57 @@ NO comprueba cabeceras: sólo el modo hook, como pide `RQ-CV-19`, así que la qu
 `38c9c04`; R1 cerró 6 (H-c). Las que quedan citan ficheros que siguen sin trackear en `main`. **R1.2.4**
 se ejecutó en el worktree `f1b-10-r1` (`21b16ec`, +10/-0, bytes idénticos a la copia de `main`): no mueve
 las 738, porque ese worktree no es el árbol del intento.
+
+## R2 · Fase 1 · entrega A — el núcleo (2026-09-20)
+
+**Intento:** ordinal 4 del objetivo `generation: 3` (`acquire` `f0-05-r2-fase1a-acquire-2026-09-20`),
+techo 800. **Base:** `81fb7dc`. **Worktree:** `C:/dev/Desk_2_R1.023-worktrees/f0-05-r2`.
+
+**Por qué la Fase 1 va en DOS entregas.** Escrita entera mide 763 líneas de código y pruebas; con las
+marcas y un informe proporcionado pasa de 800, y el techo **no se puede subir**: `rescope` es la única
+vía que el ledger ofrece y sus dos límites no pueden exceder los del objetivo vigente. Cambiar de
+objetivo tampoco valía —el candidato no había derivado y se rechaza como «elective budget reset»—, así
+que la salida fue partir el trabajo por donde el grafo de imports ya lo separaba.
+
+**El corte, medido contra los imports reales:** `comprobaciones.ts` sólo importa `../citas/cabecera`;
+`testing/arbolDePrueba.ts` sólo un TIPO suyo; `informe.ts` y `cli.ts` dependen de él y no al revés. El
+núcleo no sabe nada del render ni del comando, así que la entrega A se sostiene sola.
+
+| Entrega | Ficheros | Líneas | Cierra |
+|---|---|---|---|
+| **A · núcleo** | `comprobaciones.ts`, `comprobaciones.test.ts`, `testing/arbolDePrueba.ts` | 398 | R2.1.3 |
+| **B · render y comando** | `informe.ts`, `informe.test.ts`, `cli.ts`, `cli.test.ts` | 365 | R2.1.1, R2.1.2, R2.1.4 |
+
+### TDD — el rojo DISCRIMINA, no sólo falla
+
+Rojo observado antes de escribir nada: `Failed to load url ./comprobaciones`. Verde después: 4/4 en
+`reconciliacion/comprobaciones.test.ts`. Lo que hace que el verde signifique algo es el árbol
+sintético: **AFIRMA «SIETE»** en su `cifras_ancladas` mientras `estados.ts` declara **once**. Una
+implementación que leyera el registro para comprobar el registro —el fallo del 2026-09-17, que
+`RQ-RC-04` existe para cerrar— pondría la prueba roja. Los otros tres casos fijan que el 4 del maestro
+sigue enfrentado al 11, que «SIETE» no aparece como cifra del código, y que una divergencia declarada
+legítima no convierte la comprobación 5 en bloqueante.
+
+**Y el arnés NO ordena a propósito:** `listar()` devuelve en orden de declaración. Ordenar es trabajo
+del núcleo (`RQ-RC-02`), y un arnés que entregara la lista ya ordenada no distinguiría si lo hace.
+
+### Verificación con la entrega B AISLADA, no por inspección
+
+Los cuatro ficheros de B se movieron FUERA del árbol antes de medir, para que el verde no viniera de
+código que este commit no lleva:
+
+    npm test            124 ficheros · 1148 pasadas · 2 saltadas · salida 0   (eran 1144: +4, los de A)
+    npm run typecheck   0
+    npm run lint        0 errores · 158 avisos, todos preexistentes y ninguno en los ficheros nuevos
+
+### Dos decisiones de construcción, escritas para que no se relean como descuido
+
+- `comprobaciones.ts` **no reimplementa** la validación de cabecera: importa `comprobarCabeceras` de
+  `citas/cabecera` —la dependencia que la spec de esta capacidad declara— y sólo lee dos campos de un
+  bloque YA validado. Se descartó extender `cabecera.ts` para que devolviera las cabeceras válidas,
+  que sería más limpio, porque R2.3.5 no incluye ese fichero en su barrido de anclaje: la tanda no
+  está pensada para tocarlo.
+- La comprobación 2 **DICE** que `cierres_declarados_por_commit` no está declarado en `config.yaml`,
+  en vez de deducirlo. `RQ-RC-05` exige siete cierres por commit y ningún artefacto los declara de
+  forma legible por máquina —el §5 del plan no tiene columna de estado—. Leerlos del texto de la spec
+  sería leer el registro para comprobar el registro. Muerde en R2.3.3, no aquí.

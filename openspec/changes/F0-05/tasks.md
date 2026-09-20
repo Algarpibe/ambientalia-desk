@@ -252,8 +252,11 @@ Chain strategy: stacked-to-main
 - [ ] R2.1.1 RED: dos llamadas sobre el mismo árbol sintético devuelven textos distintos
       (determinismo, RQ-RC-02).
 - [ ] R2.1.2 RED: huérfana ⇒ espera código ≠0, recibe 0; `esperas 4/11` ⇒ espera 0 (RQ-RC-03).
-- [ ] R2.1.3 RED: árbol sintético con `ESTADOS_EN_ESPERA` de once y `cifras_ancladas` diciendo otra
-      cosa ⇒ espera 11, leído del código (RQ-RC-04).
+- [x] R2.1.3 RED: árbol sintético con `ESTADOS_EN_ESPERA` de once y `cifras_ancladas` diciendo otra
+      cosa ⇒ espera 11, leído del código (RQ-RC-04). **HECHA el 2026-09-20**, en la entrega **A** de
+      la Fase 1: rojo observado (`Failed to load url ./comprobaciones`) y verde en
+      `comprobaciones.test.ts`, cuatro casos. El árbol sintético AFIRMA «SIETE» en `cifras_ancladas`
+      mientras `estados.ts` declara once: si la cifra saliera del registro, la prueba se pondría roja.
 - [ ] R2.1.4 GREEN: `comprobaciones.ts` (núcleo puro, tipos `Comprobacion`/`Arbol`/`Hallazgo` de
       `design.md` §5), `informe.ts` (render determinista, fecha del commit medido — D7, pregunta
       abierta para Gerencia si debiera ser la del reloj) y `cli.ts` (adaptador `spawnSync` propio, sin
