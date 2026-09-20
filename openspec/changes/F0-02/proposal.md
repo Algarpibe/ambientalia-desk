@@ -1,3 +1,13 @@
+---
+tanda: F0-02
+motivo: ""
+capacidad: [transitions-st, tickets-core, permissions, trazas, remisiones, derivacion-avisos, zoho-sync]
+maestro: ["Anexo H"]
+cierra: si
+toca_maestro: si
+origen_cabecera: derivada-17/09
+---
+
 # F0-02 · Specs as-built de siete capacidades
 
 | Dato | Valor |

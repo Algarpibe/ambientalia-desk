@@ -1,3 +1,13 @@
+---
+tanda: fuera-del-plan
+motivo: "El detector de citas comprueba también el extremo FINAL de un rango, y una abreviada anclada se lee contra su ancla en vez del sha local"
+capacidad: [citas-verificables]
+maestro: []
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Propuesta: el detector comprueba el extremo FINAL y lee la abreviada en su ancla
 
 **Tanda · base `8222dd9` (rama `main`) · cambio `detector-citas-extremos`**

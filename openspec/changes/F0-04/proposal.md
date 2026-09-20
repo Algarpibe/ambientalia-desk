@@ -1,9 +1,19 @@
+---
+tanda: F0-04
+motivo: ""
+capacidad: [transitions-st, permissions]
+maestro: []
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # F0-04 · Base técnica: red de seguridad del motor, staging y puertas de CI
 
 | Dato | Valor |
 |---|---|
 | Fase | Fase 0 — Cimientos SDD |
-| Estado | **Propuesta — pendiente de visto bueno** |
+| Estado | **Ejecutada — registro cerrado por F0-05 R1 (`cierra: no`, §18 de `openspec/changes/F0-05/proposal.md`): dos de los tres contenidos de su fila están verificados; falta constancia de staging (`plan:128`)** |
 | Base | commit `a3a8f03` |
 | Entradas | `F0-00_Baseline_as-built.md` · `F0-00_Correcciones_desde_Maestro_R08.1.md` · `F0-00_Respuestas_Gerencia_R03.md` |
 | Depende de | F0-00 (hecha). No depende de F0-01 |

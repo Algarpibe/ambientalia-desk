@@ -57,8 +57,8 @@ testing:
       CORREGIDO EN F1A-05 (2026-09-09). La entrada anterior decía «no está
       instalado; vitest.config.ts no declara sección coverage», y era cierta al
       baseline a3a8f03 (2026-08-20) y falsa desde edbce13 (2026-09-08). Hoy el
-      proveedor está instalado (package.json:56), hay script test:coverage
-      (package.json:23) y vitest.config.ts:49-64 declara umbrales:
+      proveedor está instalado (package.json:57), hay script test:coverage
+      (package.json:24) y vitest.config.ts:49-64 declara umbrales:
       lines/statements 92, functions 96, branches 78. El CI lo ejecuta
       (.github/workflows/ci.yml:39). Medido a F1A-05: 94,31 lines, 81,97
       branches, 98,28 functions — verde. El denominador excluye los .tsx a
@@ -160,6 +160,36 @@ capabilities:
       por decisión de Gerencia registrada en Engram (obs. #236, F0-00
       2026-09-08). El "catálogo" de diagnostico-checklist se renombró a
       "árbol de inspección" para no confundirse con este.
+    precision_de_gerencia_2026_09_18: >
+      GERENCIA PRECISÓ EL 18/09 QUE AQUÍ HAY DOS COSAS, NO UNA. El `covers` de
+      arriba las mete en el mismo saco y por eso la pregunta que se le devolvió
+      salió confusa. Son, en sus palabras:
+      (1) EQUIPOS — "donde se alojan las hojas de vida. Hay un equipo por número
+      de serie, y se corresponden a una marca, modelo, tipo, cliente y estado. A
+      estos equipos se accede a través de «Registro de equipos»". En la base es
+      la tabla `equipos`, con `modelo_id`.
+      (2) CATÁLOGO DE EQUIPOS — "son 29 modelos donde se detalla marca, modelo,
+      tipo, nombre, categoría y SKU, y donde se aloja una ficha de cada uno de
+      los equipos". En la base son `catalogo_modelos`, `catalogo_marcas`,
+      `catalogo_tipos`, `catalogo_articulos` y `catalogo_modelo_categorias`.
+      (3) La tercera, el ÁRBOL DE INSPECCIÓN, ya estaba separada y vive en
+      diagnostico-checklist.
+      VERIFICADO CONTRA EL CÓDIGO EL 18/09: la separación entre (1) y (2) existe
+      ya en el esquema — `apps/desk/server/db/catalogo.ts:101` consulta `equipos`
+      por `modelo_id`, `:195` inserta en `catalogo_modelos`, y
+      `catalogoArticulos.ts:50,86,215-221` lleva SKU y categorías POR MODELO, no
+      por equipo. La bisagra con (3) es la columna `catalogo_modelos.revisar`
+      (`catalogo.ts:87`), que marca qué modelos llevan inspección.
+      CONSECUENCIA PARA EL PLAN: lo que faltaba en el §5 no es una fila sino
+      posiblemente dos, una por cada una de las dos entidades. Devuelto como
+      preguntas al apartado 06 del panel.
+    cifra_en_duda_2026_09_18: >
+      DISCREPANCIA NO RESUELTA. `status_at_start` declara 35 modelos (siembra del
+      2026-08-07, ya marcada entonces como "cifra NO reverificada"); Gerencia dice
+      29 el 18/09. No se puede dirimir desde el repositorio: el dato vive en la
+      base de la VPS. Hasta que se recuente contra producción, NINGUNA de las dos
+      cifras es citable, y toda la épica F1D se apoya en ella. Devuelto como
+      pregunta al apartado 06.
 
   - name: diagnostico-checklist
     covers: >
@@ -204,6 +234,34 @@ capabilities:
       la marca de tiempo de Ingreso a Servicio», que es la prescripción de la R05
       (:1684) y la R08 la sustituyó por un par de campos de fecha (:1694).
       Corregido como entrada 3 de docs/sdd/F0-01_Correcciones_para_el_plan.md.
+
+  - name: citas-verificables
+    covers: >
+      Línea base de citas verificables, detector (apps/desk/server/citas/cli.ts) y hook de
+      pre-push. Su incumplimiento vivo es IV-10.
+    status_at_start: "nueva — nacida el 2026-09-15 en hook-citas-pre-push"
+    declarada_en: >
+      2026-09-17, corrección de registro. La spec existía desde el 15/09 y esta lista no la
+      recogía, así que el preflight no la cargaba. Ver E-002 de docs/sdd/ENTRADA.md.
+
+  - name: vistas-tablero
+    covers: >
+      Vistas de listado del tablero: «Todos», clasificación por ESTADOS_EN_ESPERA y paridad con
+      Zoho Desk.
+    status_at_start: "nueva — nacida el 2026-09-10 en vista-todos-y-estados-en-espera"
+    declarada_en: "2026-09-17, corrección de registro. Ver E-002 de docs/sdd/ENTRADA.md."
+
+  - name: reconciliacion
+    covers: >
+      Barrido de reconciliación: npm run reconcile y su fichero docs/sdd/RECONCILIACION.md, las
+      seis comprobaciones, la regla (d) de unidad_de_avance, las dos guardas del autocertificado
+      y el campo estado de incumplimientos_vivos.
+    status_at_start: "nueva — nacida el 2026-09-20 en F0-05 R2"
+    declarada_en: >
+      2026-09-20, EN EL MISMO CAMBIO que crea su spec, por RQ-RC-09 y la regla R-2. No es
+      formalismo: es la comprobación 1 aplicada a esta misma capacidad. Una spec que no está en
+      capabilities no la carga el preflight, así que nacer sin declarar la habría hecho el desvío
+      que existe para cazar.
 
 # Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
 # registro del movimiento, no como tarea pendiente: los dos ficheros están en su
@@ -361,6 +419,7 @@ incumplimientos_vivos:
     regla: 1
     ubicacion: "apps/desk/src/lib/valoresTransicion.ts"
     verificado: parcial
+    estado: VIVO
     descripcion: >
       Regla de dominio que vive SÓLO en el cliente: qué fecha corresponde a qué
       campo de transición. El propio fichero lo declara en su bloque de
@@ -371,7 +430,17 @@ incumplimientos_vivos:
       COMENTARIO de cabecera, no el código: la regla ejecutable está en :49-79.
       La cita no es falsa —ahí se declara el incumplimiento— pero apunta a la
       documentación, no a la implementación.
-    destino: "PUNTO ABIERTO PARA GERENCIA — sin tanda, y a propósito"
+    destino: "F1A-07 · IV-2 · Fechas derivadas impuestas por el servidor"
+    reasignado_2026_09_17: >
+      CORRECCIÓN DE REGISTRO. El destino anterior —«PUNTO ABIERTO PARA GERENCIA — sin tanda, y a
+      propósito»— fue CIERTO hasta el 10/09 y es FALSO desde entonces, y llevó siete días diciendo
+      lo contrario de lo que dice el plan. Lo que cambió: `decision/iv2-fechas-derivadas` cerró la
+      disyuntiva el 10/09 con la opción (a) —el servidor calcula las tres fechas derivadas e IGNORA
+      lo que llegue del navegador, con la zona horaria fijada de forma explícita— y el plan abrió
+      F1A-07 para construirla (§4.5 y §5).
+      LA LECCIÓN, que vale más que la entrada: este fichero PUEDE ESTAR CADUCO también en la
+      dirección optimista. Ya constaba que un destino podía nombrar una épica cerrada; ahora consta
+      que un «sin destino» puede sobrevivir a la decisión que le dio uno.
     reasignado: >
       2026-09-09. El destino anterior era "F1A o F1C, decisión de alcance", y esa
       disyuntiva ERA el aviso: nunca fue un destino, fue la constancia de que
@@ -623,7 +692,8 @@ incumplimientos_vivos:
       F1D-02 (:183-184 EN a5da6b8; hoy :191-192), que son las tandas que AÑADEN tablas y columnas al
       esquema. Un guardián extendido después de que lleguen es un guardián que
       llegó tarde a lo único que tenía que cazar.
-    estado: >
+    estado: CERRADO
+    estado_prosa: >
       CERRADO en F1B-01 (2026-09-09, commit de la tanda). El guardián se extendió
       con altersDelEsquema() y tres pruebas en migrate.test.ts, reutilizando las
       MISMAS tres listas que el de CREATE. Y hubo que calificar 13 sentencias,
@@ -708,6 +778,7 @@ incumplimientos_vivos:
     regla: "—"
     ubicacion: "apps/desk/server/services/ticketService.ts:39"
     verificado: true
+    estado: VIVO
     encontrado_en: >
       Revisión adversaria de F1B-01 (git diff c45bcb1 607e26a), cerrada por
       cerrar-hallazgos-revision-f1b-01 (2026-09-09). Anotado por su criterio de
@@ -762,6 +833,7 @@ incumplimientos_vivos:
       apps/desk/src/components/TicketDetailView.tsx:245 —
       `/espera|hold/i.test(ticket.status)`.
     verificado: true
+    estado: VIVO
     descripcion: >
       REDUCIDO por `por-entregar-es-espera` (2026-09-12). Hasta entonces eran
       TRES implementaciones independientes del predicado «está en espera»; la
@@ -953,6 +1025,7 @@ incumplimientos_vivos:
     regla: "—"
     ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-240"
     verificado: true
+    estado: VIVO
     encontrado_en: >
       Exploración de `tercera-puerta-orden-venta` (2026-09-16, árbol 14b45ee), §2,
       y recogido en su `proposal.md` §6 como hallazgo del barrido de vías de
@@ -1032,6 +1105,7 @@ incumplimientos_vivos:
     regla: "— (orden único de precedencia declarado por F1B-10: A existencia < B estado y permiso < C contenido < D unicidad)"
     ubicacion: "apps/desk/server/routes/remision.ts:127, :155, :197, :220"
     verificado: true
+    estado: VIVO
     encontrado_en: >
       Ronda de decisiones de `orden-precedencia-guardas` (F1B-10), 2026-09-17,
       árbol ad65161. Lo midió Gerencia al resolver la clasificación del `409` de
@@ -1098,7 +1172,7 @@ incumplimientos_vivos:
 # mal declarado. Cada entrada dice qué decía la premisa, qué se verificó y qué
 # tandas cambian de contenido. Precedente: F0-04 §1 ya corrigió una premisa falsa
 # del plan por esta misma vía ("F0-04 no crea la red de pruebas: la mide y la
-# completa donde falta", openspec/changes/F0-04/proposal.md:18).
+# completa donde falta", openspec/changes/F0-04/proposal.md:28).
 premisas_falsas_corregidas:
   - id: PF-1
     corregida_en: "F0-01"
@@ -1133,6 +1207,165 @@ premisas_falsas_corregidas:
       3.370.299 bytes, y .gitattributes lo marca `-diff -merge`. Detalle en
       docs/artefactos/NOTA.md.
 
+  - id: PF-2
+    corregida_en: "docs/sdd/Brecha_Maestro_R08.2_2026-09-17.md §2.1"
+    fecha: "2026-09-17"
+    afecta_a: ["decision/habilitar-servicio-sin-remision", "F1B-03"]
+    premisa_del_baseline: >
+      Al cerrar «Habilitar Servicio nunca sin remisión» (docs/sdd/Decisiones_Gerencia_2026-09-10.md
+      §7.3) se dio salida al servicio en sitio suponiendo que «en el plan hay descrito la necesidad
+      de crear un nuevo flujo de trabajo para este tipo de servicios».
+    verificacion: >
+      FALSA, por los dos lados. (1) `grep -ci "en sitio"` sobre
+      docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md devuelve 0: ninguna fila, ningún
+      gate, ninguna mención. (2) El maestro dice lo contrario de lo que la premisa supone —M1.6b,
+      nota del revisor [R08]: el servicio en sitio «hoy no está en el alcance y no hay mapeo as-is
+      de él», entra «como línea a explorar, no como flujo a construir». Punto abierto nº 43.
+    correccion: >
+      La guarda de remisión NO admite excepción por servicio en sitio, porque la rama a la que esa
+      excepción derivaría no existe ni está planificada. Mientras nº 43 no se decida, un servicio en
+      sitio no tiene ruta en Desk 2.0, y ninguna tanda puede prometer que «va por el flujo de
+      servicio en sitio». Si nº 43 se decide que sí, el maestro exige levantar primero su as-is —el
+      orden que siguieron las otras tres ramas—, y eso es una tanda de campo que hoy no existe.
+
+# Números que el documento maestro fija a mano y que el código puede haber movido sin que nadie lo
+# note. Los recomprueba la comprobación 5 de `npm run reconcile`
+# (docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md). Divergir NO siempre es un error: la clave
+# `divergencia` dice qué significa en cada caso, y esa distinción es la mitad del valor.
+cifras_ancladas:
+  - id: esperas
+    maestro: "4 — M1.3.4 y glosario del Anexo E («Estado de espera … Hay cuatro»)"
+    codigo: >
+      DOS registros, no uno. packages/shared/src/estados.ts declara `ESTADOS_EN_ESPERA` (ONCE:
+      5 externa + 6 interna) y `ESTADOS_SIN_SALIDA` (los CUATRO de M1.3.4), con el discriminador
+      escrito y una prueba de coherencia en estados.test.ts.
+    divergencia: >
+      EL CÓDIGO VA POR DELANTE DEL MAESTRO, y ése es todo el desvío. Medido el 2026-09-17 contra
+      estados.ts: el código ya distingue los dos criterios —espera externa frente a sin salida de
+      emergencia—, los declara por separado y razona por qué `Liberación Comercial` y `Remisión
+      creada` no entran en los cuatro pese a tener salida única. Quien no lo ha recogido es el
+      maestro. Material de CLASE A para la R08.4; NO es un hueco de planificación.
+      LO QUE SÍ SIGUE ABIERTO: `decision/c7-reloj-sla` (F1C-06) no puede adoptar ninguno de los dos
+      registros —el comentario de ESTADOS_EN_ESPERA avisa de que «es la lista de la VISTA; el reloj
+      del SLA no la lee»— y tiene que decidir el suyo. Y `Pendiente` es el único de los 21 estados
+      bajo «sin clasificar», esperando a Servicio Técnico desde el 11/09.
+      POR QUÉ ESTA ENTRADA EXISTE, aunque su divergencia sea legítima: la primera redacción del
+      informe de brechas afirmó que nadie había escrito la distinción, y el error salió de leer
+      este config.yaml en vez del código. Esta comprobación lee `packages/shared`.
+  - id: pasos_del_mapa
+    maestro: "38 — M1.3, ya marcado «en revisión» en la R08.2 con su hipótesis escrita"
+    codigo: "transiciones con botón de transitions.ts + las 2 sin botón de estadoPorRemision.ts — 36 el 2026-09-08"
+    divergencia: >
+      ERROR PENDIENTE. La R08.2 ya lo declara y aventura que el mapa cuenta CAMINOS y no
+      transiciones. Lo cierra F1A-06 al generar el mapa desde el código: es lo único que lo zanja
+      con un número en vez de con una hipótesis.
+  - id: transiciones
+    maestro: "34"
+    codigo: "cuenta de transiciones en packages/shared/src/transitions.ts"
+    divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
+  - id: estados
+    maestro: "21"
+    codigo: "cuenta de estados en packages/shared/src/estados.ts (claves de CLASIFICACION_EN_ESPERA)"
+    divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
+
+# DECISIONES DE GERENCIA, con su respuesta textual. Esta clave existe por un agujero concreto
+# que se detectó el 2026-09-17: `docs/sdd/ENTRADA.md` es la BANDEJA —el histórico de por dónde
+# entró cada cosa— y NADIE la carga. `CLAUDE.md` la menciona, pero mencionar no es cargar. Una
+# decisión que aterrizara sólo allí sería invisible para toda sesión, que es exactamente el modo
+# de fallo que el mecanismo de F0-05 existe para cerrar.
+#
+# LA REGLA, y no admite excepción: TODA respuesta de Gerencia aterriza en un fichero que la sesión
+# CARGA, sea gate o no. Si es gate, además en su fila de la tabla §4.5 del plan. Si toca una
+# capacidad, un desvío o una cifra, además en su clave de este fichero. Y siempre aquí, con su
+# texto. La bandeja conserva la traza; esta clave carga el hecho.
+#
+# QUIÉN ESCRIBE AQUÍ: el parte de supervisión, en el corte siguiente a la respuesta, o Gerencia
+# en el momento. Se escribe la respuesta TEXTUAL, no un resumen: un resumen es una interpretación,
+# y quien lea esto dentro de un mes necesita las palabras que se dijeron.
+decisiones_de_gerencia:
+  - clave: "decision/tanda-por-contenido"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Un trabajo que realiza el contenido de una fila del §5 del plan cuenta como esa tanda,
+      aunque su carpeta se llame de otra manera? Primer caso: `tercera-puerta-orden-venta`, que
+      hace el contenido de F1A-08 y no lo declara en ninguna parte.
+    respuesta_textual: >
+      «Damos F1A-08 por cerrada, aunque la carpeta se llame de otra manera. F1A-08 queda cerrada,
+      el avance pasa a 11 de 51, y de ahora en adelante cada carpeta nueva escribe en su primera
+      línea a qué trabajo del plan corresponde —o dice "a ninguno", y por qué.»
+    consecuencias: >
+      (1) F1A-08 CERRADA por `tercera-puerta-orden-venta` (`79cf09b`). (2) La regla R-1 de
+      CLAUDE.md queda firme y sin condicional. (3) Retroajuste de cabecera en los changes ya
+      archivados, con el reparto ratificado en el paso 0 de
+      docs/sdd/F0-05_Bloques_para_ClaudeCode.md.
+      DENOMINADOR: el avance se publicó como 11/51 el mismo día; esa misma tarde la fila nueva
+      F0-05 lo movió a 11/52, por alcance nuevo y no por trabajo.
+    registro: "docs/sdd/ENTRADA.md → E-001 (cerrada)"
+
+  - clave: "decision/escalado-remision-creada"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Qué cargo de Comercial recibe el aviso cuando un ticket lleva más de 72 horas en
+      `Remisión creada` sin orden de venta? Sin el cargo, la guarda de C11 queda en rojo:
+      `habilitar_servicio` no tiene entrada en `DERIVACION_POR_DEFECTO`
+      (`packages/shared/src/transitions.ts:274-282`).
+    respuesta_textual: >
+      «Tanto el que tiene cargo de director comercial como el que tiene cargo de coordinador
+      comercial deberían recibir el aviso cuando un ticket lleva más de 72 horas en remisión creada
+      sin orden de venta.»
+    consecuencias: >
+      MEDIDAS CONTRA EL CÓDIGO EL 2026-09-18, árbol `995adbc`. Se anotan, no se deciden.
+      (1) EL DESTINATARIO ES DOBLE Y EL CÓDIGO DE HOY NO PUEDE REPRESENTARLO. `destinatarioDelEscalado`
+      (`packages/shared/src/sla.ts:92-109`) devuelve `hay:false, motivo:'ambiguo'` en cuanto encuentra
+      DOS cargos distintos, y lo hace a propósito — `sla.ts:78-82`: «tampoco se elige el primero: eso
+      sería inventar un orden entre dos puestos». El tipo `DestinatarioEscalado` (`sla.ts:88-90`) lleva
+      UN `cargo`, no una lista. Atender esta respuesta no es rellenar una entrada de tabla: es pasar el
+      tipo a destinatarios en plural. Es la consecuencia que la pregunta no anticipaba, porque la
+      pregunta decía «qué cargo», en singular.
+      (2) `Director Comercial` NO EXISTE COMO CARGO EN EL CÓDIGO. Medido:
+      `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` da 0 aciertos. Los dos cargos
+      declarados son `Director Técnico` y `Coordinador Comercial` (`transitions.ts:276-281`).
+      (3) LA ALARMA DE 72 H SIGUE SIN CONSTRUIR. `SLA_HORAS_POR_ESTADO`
+      (`packages/shared/src/sla.ts:32-35`) tiene una sola entrada, `'Notificado': 24`; `Remisión creada`
+      no está. La decisión desbloquea el trabajo, no lo sustituye.
+      (4) DAR ENTRADA A `habilitar_servicio` EN `DERIVACION_POR_DEFECTO` CAMBIA UN REQUISITO VIVO:
+      `RQ-AV-02` (`openspec/specs/derivacion-avisos/spec.md:67-70`) declara con SHALL que la tabla lleva
+      EXACTAMENTE TRES entradas, y el recuento 34 − 3 = 31 de `:287` cuelga de ahí.
+      (5) NO MUEVE EL NUMERADOR DEL AVANCE: F1B-08 sigue parcial, y su parte de tablero ya estaba
+      cerrada desde el 10/09.
+    registro: "docs/sdd/ENTRADA.md → E-014 (cerrada) · plan §4.5, fila `decision/escalado-remision-creada`"
+
+  - clave: "decision/veto-plan-r01-1"
+    fecha: "2026-09-20"
+    pregunta: >
+      El veto que impide tocar `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md` se apoya
+      en una premisa ESCRITA —«no se toca. Está modificado en local»— que hoy es falsa. Mientras
+      rige, tres citas rotas bloquean el `pre-push` de main y la rama no se empuja. ¿Se levanta?
+    respuesta_textual: >
+      «Levanto el veto.»
+    consecuencias: >
+      LA PREMISA CADUCÓ, Y ÉSA ES LA RAZÓN: no que el veto estorbe. El veto se redactó en
+      `openspec/changes/orden-precedencia-guardas/design.md` y su texto condiciona el veto a que el
+      fichero esté modificado en local. MEDIDO EL 2026-09-20: `git status --porcelain` sobre ese
+      fichero sale VACÍO en los CUATRO árboles de trabajo —main, `f0-05-r2`, `f1b-10-r1` y
+      `f0-05-r1`—, y desde que se escribió el veto se commiteó DOS veces: `ce93480` (17/09) y
+      `5cfd056` (18/09). El veto protegía un trabajo en curso que ya aterrizó.
+      (1) HABILITA DOS REPARACIONES DE CITA, las dos CASO A —afirman algo cierto del árbol de hoy,
+      así que se reparan a las líneas de hoy y NO se anclan—. En el plan y en este mismo fichero,
+      la cita de `destinatarioDelEscalado` pasa del rango 96-112 a
+      `packages/shared/src/sla.ts:92-109`, y la del tipo `DestinatarioEscalado` pasa del rango
+      86-88 a `packages/shared/src/sla.ts:88-90`, que es donde está su `cargo: string`.
+      (2) LAS DOS NACIERON ROTAS, no se desfasaron: `packages/shared/src/sla.ts` es BYTE A BYTE
+      idéntico en `995adbc` —el árbol contra el que la frase dice haber medido— y hoy, y tiene 109
+      líneas. El rango 96-112 nunca acertó, por los dos extremos.
+      (3) LA SEGUNDA NO BLOQUEABA Y ERA FALSA IGUAL. El rango 86-88 pasa el detector en verde
+      porque esas líneas existen y no están vacías, pero son el final de un comentario y la primera
+      línea del `type`, sin el campo que la frase afirma. Reparar sólo la que bloquea habría dejado
+      viva la que nadie mira. Es el modo de fallo que la regla de mutación 4 de CLAUDE.md describe.
+      (4) DESBLOQUEA EL PUSH DE MAIN, que acumulaba seis commits sin empujar.
+      NO REABRE EL CONTENIDO DEL PLAN: se repara la cita, no lo que el plan dice.
+    registro: "docs/sdd/ENTRADA.md → E-016"
+
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
 unidad_de_avance:
@@ -1159,6 +1392,13 @@ unidad_de_avance:
       detalle: >
         No es "el proyecto completo". Lo que el maestro tiene como P2/P3 no
         tiene tandas y no entra en el denominador.
+    - id: d
+      regla: "El numerador se publica con el MOTIVO de su cambio: por trabajo o por dictamen."
+      detalle: >
+        El 2026-09-17 el numerador pasó de 10 a 11 sin que nadie escribiera
+        código: lo movió un dictamen. Es correcto, pero quien vea la serie sin
+        más creerá que fue un día productivo. El denominador ya va fechado por
+        la regla (a); el numerador necesita lo simétrico.
   trazabilidad: >
     Cada spec as-built lleva ESCRITOS los IDs de tanda que la tocan, para que el
     avance se derive del repositorio y no de la memoria. Es la regla del propio
@@ -1257,7 +1497,7 @@ memoria_engram:
 
 rules:
   proposal:
-    - Cada propuesta cita el apartado del documento maestro R08.1 del que sale (p. ej. M1.3.4, C3, P31).
+    - Cada propuesta cita el apartado del documento maestro VIGENTE del que sale (p. ej. M1.3.4, C3, P31). Hoy es la R08.2; lo ya superado por la revisión en curso esta en docs/sdd/R08.3_Expediente_de_cambios.md. Corregido el 2026-09-17: esta linea decia R08.1, que dejo de mandar en la R08.2.
     - Incluir plan de rollback para cambios de riesgo.
   specs:
     - Usar Given/When/Then para escenarios.

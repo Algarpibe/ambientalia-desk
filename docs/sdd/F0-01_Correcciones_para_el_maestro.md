@@ -10,10 +10,11 @@
 
 | Dato | Valor |
 |---|---|
-| Tanda | F0-01, ampliado por **F0-02** (entradas 8–12), **F0-03** (entrada 13) y **F1A-01** (entrada 14) |
-| Base | commit `a3a8f03` (F0-01) · `ad1875b` (las cinco de F0-02, 8–12) · `da084e9` (la de F0-03, 13) · `3aaa0f1` (la de F1A-01, 14) |
-| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) |
-| Fecha | 2026-09-08, ampliado el 2026-09-09 |
+| Tanda | F0-01, ampliado por **F0-02** (entradas 8–12), **F0-03** (entrada 13), **F1A-01** (entrada 14) y **F0-05** (entrada 15) |
+| Base | commit `a3a8f03` (F0-01) · `ad1875b` (las cinco de F0-02, 8–12) · `da084e9` (la de F0-03, 13) · `3aaa0f1` (la de F1A-01, 14) · `bd2122f` (la de F0-05, 15) |
+| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) · **F0-05** (el Anexo H al archivar, que `openspec/config.yaml:1524` exige) |
+| Fecha | 2026-09-08, ampliado el 2026-09-09 y el 2026-09-20 |
+| Copia citable | Las entradas **1–14** citan la **R08.1** (4.935 líneas); la **15** cita la **R08.2** (5.167), vigente desde el 2026-09-17. Las viejas **no se renumeran** |
 
 > **Por qué las de F0-02 viven en el fichero de F0-01 y no en uno propio.** El canal hacia el maestro
 > es **uno**, y partirlo por tanda obligaría a Gerencia a abrir dos ficheros para pegar en el mismo
@@ -783,6 +784,69 @@ obligatorio sin marcar devuelve 422 y el ticket no se mueve.»
 lo único que sigue vivo. Y `debt.md` M-2 pasa de latente a **resuelto**, con una corrección propia:
 su ejemplo —'Cumple condiciones comerciales'— **no** es un checkbox obligatorio (`transitions.ts:189`);
 el único que existe es 'Liberación del ticket sin facturar' (`:247`).
+
+---
+
+## La de F0-05 (15)
+
+> **Esta entrada cita la R08.2, no la R08.1.** El encabezado de este fichero y las catorce entradas
+> anteriores se escribieron contra
+> `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.1.md` (4.935 líneas), que
+> era la copia citable entonces. Desde el 2026-09-17 la vigente es la **R08.2** (5.167 líneas), y
+> toda cita nueva va contra ella. **Las catorce anteriores NO se renumeran:** afirman lo que era
+> cierto de la R08.1 y renumerarlas a ciegas las volvería falsas — el desplazamiento entre las dos
+> copias **no es uniforme** (+107 en el §3.2, +232 al final del documento).
+
+### 15 · Anexo H, H.1 — la cadencia deja de ser sólo manual *(F0-05)*
+
+**Dónde va:** Anexo H, apartado **H.1 «Cómo se lee y cómo se mantiene»**,
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:4620-4628`. En concreto,
+**detrás del párrafo `Cadencia`** (`:4627`).
+
+**Por qué va en H.1 y no en H.2, H.3, H.4 ni H.5.** Lo que F0-05 entrega no es un flujo, ni una de
+las doce correcciones, ni un módulo, ni un indicador: es **maquinaria del propio anexo**. H.1 dice
+en `:4626` que «el as-built no se recuerda: se verifica», y en `:4627` fija una cadencia —«se
+actualiza en cada revisión del documento y en cada hito de desarrollo»— que hasta hoy dependía
+enteramente de que alguien se acordara. F0-05 mecaniza una parte de esa comprobación. La promesa de
+H.1 no cambia; cambia quién la vigila.
+
+**Texto propuesto, listo para pegar detrás de `:4627`:**
+
+> **Comprobación automática de la deriva (desde el 20/09/2026).** Parte de lo que este anexo
+> compara a mano se comprueba ya de forma mecánica en el repositorio, y deja rastro fechado:
+>
+> - **Cada propuesta de cambio declara su procedencia en una cabecera de siete campos** —qué fila
+>   del plan realiza, qué capacidades toca, qué pasajes de este documento la justifican, si cierra
+>   la fila y si deja el maestro desactualizado—. La comprobación corre en cada `push` y **bloquea**
+>   si la cabecera falta o tiene un campo fuera de su dominio. Es comprobación de **forma**, no de
+>   criterio: que el campo esté y sea válido, nunca que lo que afirma sea cierto.
+> - **Un barrido ejecutable, `npm run reconcile`, contrasta lo declarado contra lo que hay en
+>   disco** y escribe un informe determinista. Dos pasadas sobre un árbol quieto producen el mismo
+>   fichero, así que su diferencia con la pasada anterior **es** la lista de desvíos nuevos.
+> - **Las ideas, correcciones y hallazgos entran por una bandeja** con tres salidas y ninguna más:
+>   una fila del plan, un punto abierto del Anexo D con dueño, o un pasaje del expediente de
+>   cambios en curso. Nada se queda en el aire sin que se vea.
+>
+> **Estado medido el 20/09/2026:** el repositorio declara **18 capacidades**; **10** tienen ya su
+> especificación escrita en disco (eran 9 antes de esta tanda). La diferencia no es deuda oculta:
+> es exactamente lo que el barrido publica en cada pasada.
+>
+> **Lo que esto NO hace, y conviene que quede dicho en el propio anexo:** ninguna de las tres
+> piezas comprueba que una afirmación sea **verdadera**. La cabecera comprueba que el campo existe,
+> no que la fila del plan que nombra sea la correcta. El barrido compara declaraciones contra
+> ficheros, no contra la realidad del negocio. Este anexo sigue necesitando lectura humana para la
+> columna **Diferencia**; lo que gana es que la columna **As-built** deja de depender de que alguien
+> se acuerde de mirar.
+
+**Procedencia de las cifras, para que se puedan rehacer:** las 18 capacidades salen de la clave
+`capabilities` de `openspec/config.yaml`; las 10 especificaciones, de contar los directorios de
+`openspec/specs/` tras archivar F0-05. Las dos se remiden en un minuto y el barrido las publica.
+
+**Lo que esta entrada NO pide.** No toca H.2, H.3, H.4 ni H.5: ninguna de sus filas cambia por
+F0-05. Tampoco toca **H.6 «Lo que esta revisión deja en entredicho»** ni el punto abierto nº 62
+sobre si la capa as-built se retira (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:4235`): esa contradicción sigue abierta y esta
+entrada no la resuelve ni la presupone. Si Gerencia decidiera retirar la capa as-built, este
+párrafo se va con ella.
 
 ---
 ## Qué NO contiene este fichero

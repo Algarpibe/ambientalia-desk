@@ -161,7 +161,7 @@ usa para la Población B):
       `openspec/specs/remisiones/spec.md:31`, `:34`, `:35`, `:152`, `:203`, `:206`, `:222`, `:235`, `:270`, `:295`, `:487` en `67a90c1`, `:491` en `67a90c1`, `:503` en `67a90c1` (13 de las 15 originales; `:379` en `67a90c1`/`:386` en `67a90c1` excluidas, ver arriba) ·
       `openspec/specs/trazas/spec.md:228`, `:231` y `:233` ·
       `openspec/specs/transitions-st/spec.md:575` ·
-      `docs/sdd/F0-01_Correcciones_para_el_maestro.md:545`, `:547` y `:549` ·
+      `docs/sdd/F0-01_Correcciones_para_el_maestro.md:545` en `8e1ea3a`, `:547` y `:549` ·
       `docs/sdd/F0-00_Baseline_as-built.md:173` y `:468` ·
       `docs/sdd/Puntos_para_Gerencia_2026-09-11.md:168` ·
       `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:350` ·

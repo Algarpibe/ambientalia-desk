@@ -1,3 +1,13 @@
+---
+tanda: F0-01
+motivo: ""
+capacidad: []
+maestro: ["§4.4", "§4.7"]
+cierra: si
+toca_maestro: si
+origen_cabecera: derivada-17/09
+---
+
 # F0-01 · Init SDD, configuración y `CLAUDE.md`
 
 | Dato | Valor |

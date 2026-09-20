@@ -223,7 +223,7 @@ son **dos trabajos distintos**:
    queriendo el artefacto que el Anexo F declara.
 
 **Por qué importa.** Es la misma clase de premisa falsa que F0-04 ya corrigió una vez —«F0-04 no crea
-la red de pruebas: la mide y la completa donde falta» (`openspec/changes/F0-04/proposal.md:18`)—, y
+la red de pruebas: la mide y la completa donde falta» (`openspec/changes/F0-04/proposal.md:28`)—, y
 si no se corrige aquí, **F1B-09 la hereda entera** en la semana S44: misma fila sin gate, misma talla
 S, mismo generador inexistente, y además con la extensión a dos flujos más que M11.6 pide.
 

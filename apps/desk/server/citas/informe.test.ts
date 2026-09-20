@@ -54,3 +54,36 @@ describe('informe · RQ-CV-10: cuatro cifras, desglose, «no son citas» y frase
     expect(texto).not.toContain('--no-verify')
   })
 })
+
+describe('informe · RQ-CV-10 (MODIFICADO, F0-05 R1): quinta cifra «cabeceras R-1 inválidas» (R1.3.4)', () => {
+  it('sin cabeceras en el contexto, la quinta cifra sale en cero (compatibilidad hacia atrás)', () => {
+    expect(texto).toMatch(/cabeceras R-1 inválidas \.+ 0/)
+  })
+
+  it('con cabeceras inválidas, imprime la cifra y lista fichero + campo que falla', () => {
+    const conCabeceras = informe(resultado, {
+      sha: 'abc1234',
+      ref: 'refs/heads/main',
+      indiceRemoto: 'origin/main',
+      cabeceras: {
+        comprobadas: 2,
+        invalidas: [
+          { fichero: 'openspec/changes/x/proposal.md', campo: 'origen_cabecera', motivo: "falta el campo 'origen_cabecera'" },
+          { fichero: 'openspec/changes/y/proposal.md', campo: null, motivo: 'falta el bloque de cabecera (la primera línea no es «---»)' },
+        ],
+      },
+    })
+    expect(conCabeceras).toMatch(/cabeceras R-1 inválidas \.+ 2/)
+    expect(conCabeceras).toContain("openspec/changes/x/proposal.md, campo 'origen_cabecera': falta el campo 'origen_cabecera'")
+    expect(conCabeceras).toContain('openspec/changes/y/proposal.md: falta el bloque de cabecera')
+  })
+
+  it('la declaración de lo no comprobado cubre también el tanda: de la cabecera', () => {
+    expect(texto).toContain('ni que el tanda: de una cabecera sea el que le corresponde')
+  })
+
+  it('D4: la quinta cifra no altera el invariante de conservación de las cuatro cifras de citas', () => {
+    expect(texto).toMatch(/comprobadas \.+ 1$/m)
+    expect(texto).toMatch(/fuera del repositorio \.+ 1$/m)
+  })
+})

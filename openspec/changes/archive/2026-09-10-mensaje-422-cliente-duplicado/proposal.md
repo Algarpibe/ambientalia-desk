@@ -1,3 +1,13 @@
+---
+tanda: fuera-del-plan
+motivo: "El 422 de la guarda equipo-cliente pasa a decir QUIÉN es el cliente duplicado, no sólo que lo es"
+capacidad: [tickets-core]
+maestro: ["M1.1", "§1.4.3"]
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # mensaje-422-cliente-duplicado · El 422 de la guarda equipo↔cliente tiene que decir QUIÉN
 
 | Dato | Valor |

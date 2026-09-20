@@ -1,3 +1,13 @@
+---
+tanda: F1B-08
+motivo: ""
+capacidad: [transitions-st, vistas-tablero]
+maestro: ["M1.10"]
+cierra: no
+toca_maestro: no
+origen_cabecera: derivada-17/09
+---
+
 # Propuesta: `Por Entregar` es espera, y el predicado que CLASIFICA se escribe una sola vez
 
 **Tanda · base `2e6b4d8` (rama `main`)**

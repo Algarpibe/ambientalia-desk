@@ -135,6 +135,14 @@ cuál de los dos casos es cada vez.
 desde el baseline en vez de desde el maestro. La segunda frase no es retórica: es exactamente el
 fallo que se produjo.
 
+### Regla de redacción — no se mencionan reuniones
+
+Gerencia, 2026-09-17, panel. **No menciones reuniones, ni celebradas ni previstas**, en ningún
+documento del repositorio. Las decisiones se toman en la conversación de Cowork y en el panel.
+Un gate pendiente se describe por **qué decide**, **a quién corresponde** y **qué desbloquea** —nunca
+por una fecha de encuentro—. Si te encuentras una mención heredada mientras editas ese fichero,
+quítala.
+
 ### Regla de secretos
 
 > Un secreto no entra nunca en un chat, una captura o un prompt. Si aparece en uno, **está quemado**:
@@ -408,6 +416,57 @@ nombre de función detrás de «en» se lee como ancla.
 > el código**. Es la regla de método aplicada a los propios registros del proyecto.
 
 ---
+
+## Reconciliación y bandeja de entrada (F0-05, 17/09/2026)
+
+Mecanismo completo: `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`. Tres reglas.
+
+**R-1 · Cabecera obligatoria del proposal, con SIETE campos.** Todo `openspec/changes/<nombre>/proposal.md`
+empieza con este YAML, antes de cualquier prosa:
+
+    ---
+    tanda: F1A-08                 # ID del §5 del plan, o el literal `fuera-del-plan`
+    motivo: ""                    # obligatorio y NO vacío si tanda es `fuera-del-plan`
+    capacidad: [remisiones, tickets-core]
+    maestro: ["M4.4", "nº 52"]    # pasajes que lo justifican; [] si ninguno
+    cierra: si                    # si | no — ¿deja la fila TERMINADA, o sólo avanza una parte?
+    toca_maestro: si              # si | no — ¿queda el maestro desactualizado al terminar?
+    origen_cabecera: declarada    # declarada (la escribe quien hace el trabajo) | derivada-<fecha>
+    ---
+
+Un trabajo que realiza el contenido de una fila del §5 **LLEVA SU ID**, aunque la carpeta se llame de
+otra manera. Si no lo lleva, es trabajo fuera del denominador de avance y tiene que declararlo con
+motivo escrito. Respaldo: **decisión de Gerencia del 2026-09-17**, `decision/tanda-por-contenido`
+(E-001 de `docs/sdd/ENTRADA.md`). Precedentes que la regla cierra: `tercera-puerta-orden-venta` ES
+F1A-08 y no lo decía; `citas-verificables` nació como capacidad entera sin fila y sin entrada en
+`capabilities`.
+
+**`cierra` no es decorativo, y es lo que separa dos cosas que no son la misma.** Llevar el ID de una
+fila y cerrarla son afirmaciones distintas: `vista-todos-y-estados-en-espera` hace contenido de
+F1B-08 y NO la termina. El numerador del avance cuenta sólo los `cierra: si`.
+
+**La cabecera la escribe quien hace el trabajo, así que se declara y no se da por probada.** El
+`verify: pass` demuestra que el cambio cumplió su propio `tasks.md`, no lo que pide la fila del plan
+—son dos documentos y nadie los enfrenta—. Por eso el `archive-report.md` de todo cambio con `tanda:`
+dice en UNA línea qué parte del contenido de esa fila cubrió y qué dejó fuera; es lo que sostiene el
+`cierra`, y lo que el barrido contrasta.
+
+**R-2 · Toda capacidad nueva se declara.** Si un cambio crea `openspec/specs/<nombre>/spec.md`, en el
+MISMO cambio se añade `<nombre>` a `openspec/config.yaml → capabilities`. Una spec que no está en
+`capabilities` no la carga el preflight: existe y es invisible.
+
+**R-3 · La bandeja tiene tres salidas y ninguna más.** Las ideas, correcciones y hallazgos entran por
+`docs/sdd/ENTRADA.md`. Toda entrada acaba en EXACTAMENTE UNO de tres sitios: una fila del §5 del
+plan, un punto abierto del Anexo D con dueño y fecha, o un pasaje del expediente R08.x. Si no cabe en
+ninguno, hay una decisión de alcance pendiente y se queda como punto abierto CON DUEÑO — nunca en el
+aire. No se inventa destino: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al
+cerrar F1A.
+
+**Y la bandeja NO ES FUENTE.** `ENTRADA.md` guarda la traza de por dónde entró cada cosa; nadie la
+carga al arrancar, y mencionarla aquí no la carga. La DECISIÓN vive en `openspec/config.yaml` →
+`decisiones_de_gerencia`, con su respuesta textual, y si es un gate además en su fila de la tabla
+§4.5 del plan. Toda respuesta de Gerencia aterriza en un fichero que la sesión CARGA, sea gate o
+no. Una decisión que sólo esté en la bandeja no ha llegado: trátala como pendiente y dilo.
 
 ## Contexto SDD
 
