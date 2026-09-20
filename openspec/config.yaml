@@ -407,6 +407,7 @@ incumplimientos_vivos:
     regla: 1
     ubicacion: "apps/desk/src/lib/valoresTransicion.ts"
     verificado: parcial
+    estado: VIVO
     descripcion: >
       Regla de dominio que vive SÓLO en el cliente: qué fecha corresponde a qué
       campo de transición. El propio fichero lo declara en su bloque de
@@ -679,7 +680,8 @@ incumplimientos_vivos:
       F1D-02 (:183-184 EN a5da6b8; hoy :191-192), que son las tandas que AÑADEN tablas y columnas al
       esquema. Un guardián extendido después de que lleguen es un guardián que
       llegó tarde a lo único que tenía que cazar.
-    estado: >
+    estado: CERRADO
+    estado_prosa: >
       CERRADO en F1B-01 (2026-09-09, commit de la tanda). El guardián se extendió
       con altersDelEsquema() y tres pruebas en migrate.test.ts, reutilizando las
       MISMAS tres listas que el de CREATE. Y hubo que calificar 13 sentencias,
@@ -764,6 +766,7 @@ incumplimientos_vivos:
     regla: "—"
     ubicacion: "apps/desk/server/services/ticketService.ts:39"
     verificado: true
+    estado: VIVO
     encontrado_en: >
       Revisión adversaria de F1B-01 (git diff c45bcb1 607e26a), cerrada por
       cerrar-hallazgos-revision-f1b-01 (2026-09-09). Anotado por su criterio de
@@ -818,6 +821,7 @@ incumplimientos_vivos:
       apps/desk/src/components/TicketDetailView.tsx:245 —
       `/espera|hold/i.test(ticket.status)`.
     verificado: true
+    estado: VIVO
     descripcion: >
       REDUCIDO por `por-entregar-es-espera` (2026-09-12). Hasta entonces eran
       TRES implementaciones independientes del predicado «está en espera»; la
@@ -1009,6 +1013,7 @@ incumplimientos_vivos:
     regla: "—"
     ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-240"
     verificado: true
+    estado: VIVO
     encontrado_en: >
       Exploración de `tercera-puerta-orden-venta` (2026-09-16, árbol 14b45ee), §2,
       y recogido en su `proposal.md` §6 como hallazgo del barrido de vías de
@@ -1088,6 +1093,7 @@ incumplimientos_vivos:
     regla: "— (orden único de precedencia declarado por F1B-10: A existencia < B estado y permiso < C contenido < D unicidad)"
     ubicacion: "apps/desk/server/routes/remision.ts:127, :155, :197, :220"
     verificado: true
+    estado: VIVO
     encontrado_en: >
       Ronda de decisiones de `orden-precedencia-guardas` (F1B-10), 2026-09-17,
       árbol ad65161. Lo midió Gerencia al resolver la clasificación del `409` de
@@ -1343,6 +1349,13 @@ unidad_de_avance:
       detalle: >
         No es "el proyecto completo". Lo que el maestro tiene como P2/P3 no
         tiene tandas y no entra en el denominador.
+    - id: d
+      regla: "El numerador se publica con el MOTIVO de su cambio: por trabajo o por dictamen."
+      detalle: >
+        El 2026-09-17 el numerador pasó de 10 a 11 sin que nadie escribiera
+        código: lo movió un dictamen. Es correcto, pero quien vea la serie sin
+        más creerá que fue un día productivo. El denominador ya va fechado por
+        la regla (a); el numerador necesita lo simétrico.
   trazabilidad: >
     Cada spec as-built lleva ESCRITOS los IDs de tanda que la tocan, para que el
     avance se derive del repositorio y no de la memoria. Es la regla del propio

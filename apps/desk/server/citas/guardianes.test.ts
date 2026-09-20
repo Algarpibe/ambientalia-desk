@@ -63,10 +63,30 @@ describe('guardián · RQ-CV-18: nada de producción importa el detector, y cada
     expect(alcanzables('srv/index.ts', (ruta) => grafo[ruta] ?? null).has('srv/citas/detector.ts')).toBe(true)
   })
 
-  it('cada fichero del detector declara que viaja inerte y que nada de producción lo importa', () => {
-    const carpeta = 'apps/desk/server/citas'
+  // R2.2.6: el barrido de reconciliación es inerte por la MISMA razón, y se guarda con el MISMO
+  // guardián. Va en aserción propia en vez de añadirse al filtro de arriba para que, cuando se
+  // rompa, el mensaje diga CUÁL de las dos carpetas se coló.
+  it('el grafo tampoco alcanza reconciliacion/, que corre sólo bajo `npm run reconcile`', () => {
+    const grafo = alcanzables('apps/desk/server/index.ts', leerDelDisco)
+    expect(grafo.has('apps/desk/server/app.ts')).toBe(true) // el mismo control: el recorrido camina
+    expect([...grafo].filter((ruta) => ruta.startsWith('apps/desk/server/reconciliacion/'))).toEqual([])
+  })
+
+  it('control del otro signo para reconciliacion/, en memoria: si producción lo reexportara, se vería', () => {
+    const grafo: Record<string, string> = {
+      'srv/index.ts': "import { crear } from './app'",
+      'srv/app.ts': "export { reconciliar } from './reconciliacion/comprobaciones.js'",
+      'srv/reconciliacion/comprobaciones.ts': 'export const reconciliar = 1',
+    }
+    expect(alcanzables('srv/index.ts', (ruta) => grafo[ruta] ?? null).has('srv/reconciliacion/comprobaciones.ts')).toBe(true)
+  })
+
+  it.each([
+    ['apps/desk/server/citas', 4],
+    ['apps/desk/server/reconciliacion', 3],
+  ])('cada fichero de %s declara que viaja inerte y que nada de producción lo importa', (carpeta, minimo) => {
     const ficheros = readdirSync(carpeta).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
-    expect(ficheros.length).toBeGreaterThanOrEqual(4)
+    expect(ficheros.length).toBeGreaterThanOrEqual(minimo)
     for (const f of ficheros) {
       const fuente = readFileSync(path.posix.join(carpeta, f), 'utf8')
       expect(fuente, f).toContain('código INERTE')

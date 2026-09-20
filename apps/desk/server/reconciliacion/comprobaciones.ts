@@ -51,6 +51,7 @@ const PREFIJO_DOCS_SDD = 'docs/sdd'
 const SUFIJO_SPEC = '/spec.md'
 const SUFIJO_PROPOSAL = '/proposal.md'
 const FUERA_DEL_PLAN = 'fuera-del' + '-plan'
+const ESTADO_CERRADO = 'CERRADO'
 
 const ordenar = (xs: readonly string[]): string[] => [...xs].sort()
 
@@ -119,6 +120,26 @@ function proposals(arbol: Arbol): { ruta: string; texto: string }[] {
     .map((ruta) => ({ ruta, texto: arbol.leer(ruta) ?? '' }))
 }
 
+/** Las filas del apartado 5 del plan: ID de tanda → su columna de FUENTES, que es la cuarta. */
+function filasDelPlan(plan: string): Map<string, string> {
+  const filas = new Map<string, string>()
+  for (const m of plan.matchAll(/^\| (F[01][A-F]?-\d\d) \|.*$/gm)) {
+    const columnas = m[0].split('|').map((c) => c.trim())
+    filas.set(m[1]!, columnas[4] ?? '')
+  }
+  return filas
+}
+
+/** La lista `maestro: [...]` de una cabecera R-1, ya sin corchetes ni comillas. */
+function listaMaestro(cabecera: string): string[] {
+  return (campo(cabecera, 'maestro') ?? '')
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .split(',')
+    .map((x) => x.trim().replace(/^["']/, '').replace(/["']$/, ''))
+    .filter((x) => x !== '')
+}
+
 /** `ESTADOS_EN_ESPERA` se DERIVA de las clases `externa` e `interna`, no es una lista aparte. */
 function esperasDelCodigo(fuente: string): number {
   const lineas = fuente.split(SALTO).map(sinRetorno)
@@ -164,21 +185,27 @@ function capacidades(arbol: Arbol): Comprobacion {
  */
 function numerador(arbol: Arbol): Comprobacion {
   const config = arbol.leer(RUTA_CONFIG) ?? ''
-  const plan = arbol.leer(RUTA_PLAN) ?? ''
-  const filas = new Set([...plan.matchAll(/^\| (F[01][A-F]?-\d\d) \|/gm)].map((m) => m[1]!))
+  const filas = filasDelPlan(arbol.leer(RUTA_PLAN) ?? '')
   const ficheros = proposals(arbol)
   const invalidas = new Set(comprobarCabeceras(ficheros).invalidas.map((i) => i.fichero))
-  const derivables = ordenar(
-    ficheros
-      .filter((f) => !invalidas.has(f.ruta) && campo(bloque(f.texto), 'cierra') === 'si')
-      .map((f) => campo(bloque(f.texto), 'tanda') ?? '')
-      .filter((t) => t !== '' && t !== FUERA_DEL_PLAN),
-  )
+  const cerradas = ficheros
+    .filter((f) => !invalidas.has(f.ruta) && campo(bloque(f.texto), 'cierra') === 'si')
+    .map((f) => ({ tanda: campo(bloque(f.texto), 'tanda') ?? '', maestro: listaMaestro(bloque(f.texto)) }))
+    .filter((x) => x.tanda !== '' && x.tanda !== FUERA_DEL_PLAN)
+  const derivables = ordenar(cerradas.map((x) => x.tanda))
   const porCommit = ordenar(listaYaml(config, 'cierres_declarados_por_commit'))
-  const hallazgos: Hallazgo[] =
-    porCommit.length === 0
-      ? [{ clave: 'cierres_declarados_por_commit', detalle: 'sin declarar en config.yaml: el barrido no lo inventa' }]
-      : []
+  const hallazgos: Hallazgo[] = [...cerradas]
+    .sort((a, b) => (a.tanda < b.tanda ? -1 : 1))
+    .flatMap(({ tanda, maestro }) => {
+      const fuente = filas.get(tanda)
+      // Sin fila, o con una fila que no declara fuentes, no hay nada que cruzar y marcar sería ruido.
+      if (fuente === undefined || fuente === '' || fuente === '—') return []
+      if (maestro.some((m) => fuente.includes(m))) return []
+      return [{ clave: tanda, detalle: 'sin verificar: su `maestro:` no cita ninguna fuente de su fila del apartado 5 (' + fuente + ')' }]
+    })
+  if (porCommit.length === 0) {
+    hallazgos.push({ clave: 'cierres_declarados_por_commit', detalle: 'sin declarar en config.yaml: el barrido no lo inventa' })
+  }
   return {
     id: 2,
     titulo: 'Numerador del avance — dos cifras, nunca una suma',
@@ -187,6 +214,7 @@ function numerador(arbol: Arbol): Comprobacion {
       String(derivables.length) + ' derivables de cabecera: ' + (derivables.join(', ') || '—'),
       String(porCommit.length) + ' declarados por commit: ' + (porCommit.join(', ') || '—'),
       'denominador ' + String(filas.size) + ' tandas del apartado 5 del plan',
+      String(hallazgos.filter((h) => h.detalle.startsWith('sin verificar')).length) + ' marcadas sin verificar',
     ],
     hallazgos,
   }
@@ -213,18 +241,46 @@ function fueraDelPlan(arbol: Arbol): Comprobacion {
   }
 }
 
-/** 4 · Incumplimientos vivos. R2.2.1 le añade el recuento POR EL CAMPO `estado`. */
+/**
+ * 4 · Incumplimientos vivos, contados POR EL CAMPO `estado` y nunca por su ausencia (RQ-RC-08).
+ *
+ * La distinción no es cosmética: **un barrido que cuenta ausencias miente en cuanto alguien añade una
+ * entrada y se olvida del campo**. Una entrada sin `estado` no es un incumplimiento vivo, es un
+ * DEFECTO DE REGISTRO, y sale como tal para que se arregle escribiéndolo — que es la única salida.
+ */
 function incumplimientos(arbol: Arbol): Comprobacion {
   const entradas = entradasYaml(arbol.leer(RUTA_CONFIG) ?? '', 'incumplimientos_vivos')
-  const noCerrados = entradas
-    .filter((e) => (campo(e.cuerpo, 'estado') ?? '') !== 'CERRADO')
-    .map((e): Hallazgo => ({ clave: e.id, detalle: 'incumplimiento no cerrado' }))
+  const hallazgos: Hallazgo[] = []
+  let vivos = 0
+  let cerrados = 0
+  let defectos = 0
+  for (const e of entradas) {
+    const estado = campo(e.cuerpo, 'estado')
+    // `null` es «no hay línea»; la cadena vacía es «hay línea y no dice nada». Las dos son el mismo
+    // defecto de registro, y ninguna de las dos es una declaración de que siga vivo.
+    if (estado === null || estado.trim() === '') {
+      defectos += 1
+      hallazgos.push({ clave: e.id, detalle: 'defecto de registro: la entrada no declara `estado`' })
+      continue
+    }
+    if (estado === ESTADO_CERRADO) {
+      cerrados += 1
+      continue
+    }
+    vivos += 1
+    hallazgos.push({ clave: e.id, detalle: 'incumplimiento vivo, declarado por el campo `estado`: ' + estado })
+  }
   return {
     id: 4,
     titulo: 'Incumplimientos vivos, gates y claves de decisión',
     bloqueante: false,
-    cifras: [String(entradas.length) + ' entradas', String(noCerrados.length) + ' no cerrados'],
-    hallazgos: noCerrados,
+    cifras: [
+      String(entradas.length) + ' entradas',
+      String(vivos) + ' vivos',
+      String(cerrados) + ' cerrados',
+      String(defectos) + ' defectos de registro',
+    ],
+    hallazgos,
   }
 }
 

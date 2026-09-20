@@ -161,8 +161,12 @@ Chain strategy: stacked-to-main
       `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` sobre el repositorio; cada resultado comprobado contra
       el fichero — qué **afirma** la frase, no sólo que la línea exista. Segundo pase para abreviadas
       (`` `:NNN` `` sin nombre de fichero) en los documentos que ya citan esos módulos.
-      **Reparadas 3** (`docs/sdd/F0-01_Correcciones_para_el_plan.md:226`, `openspec/config.yaml:1157`,
-      `openspec/specs/transitions-st/spec.md:12`, todas `F0-04/proposal.md:18→28` o `:20-26→30-36`).
+      **Reparadas 3**, y las tres se ANCLAN porque afirman lo que R1 reparó, no el árbol de hoy:
+      `docs/sdd/F0-01_Correcciones_para_el_plan.md:226` en `b55bfc7`,
+      `openspec/config.yaml:1157` en `b55bfc7` y
+      `openspec/specs/transitions-st/spec.md:12` en `b55bfc7`, todas de
+      `F0-04/proposal.md:18→28` o `:20-26→30-36`. La de `config.yaml` la desplazó la Fase 2 de R2 al
+      insertar catorce líneas por encima: caso B de la regla de mutación 4, se ancla y no se renumera.
       **Reparadas 4 más: las que esta misma tanda rompió** al insertar diez líneas de cabecera arriba
       de trece proposals. Es la regla de mutación 4 ocurriendo en vivo, y la caza el propio detector al
       comparar sus bloqueantes contra los de la base: 26 en la base, 12 aquí, con cinco entradas nuevas
@@ -274,20 +278,37 @@ Chain strategy: stacked-to-main
 
 ## R2 · Fase 2 — Guardas del autocertificado + regla (d) + `estado` en las 12 IV — RQ-RC-05 a RQ-RC-08
 
-- [ ] R2.2.1 RED: entrada de `incumplimientos_vivos` sin `estado` ⇒ espera **defecto de registro**,
-      recibe «vivo» (RQ-RC-08).
-- [ ] R2.2.2 M3 (mutación): quitar la regla (d) de `unidad_de_avance` en una copia de `config.yaml`; el
+- [x] R2.2.1 RED: entrada de `incumplimientos_vivos` sin `estado` ⇒ espera **defecto de registro**,
+      recibe «vivo» (RQ-RC-08). **HECHA el 2026-09-20**, y el rojo fue REAL, no por módulo ausente:
+      `expected 'incumplimiento no cerrado' to contain 'defecto de registro'`. Verde con la
+      comprobación 4 reescrita para contar por el campo; cinco casos en `comprobaciones.test.ts`.
+- [x] R2.2.2 M3 (mutación): quitar la regla (d) de `unidad_de_avance` en una copia de `config.yaml`; el
       guardián debe pedir los cuatro ids `a,b,c,d` con las tres primeras intactas; revertir con `cmp`.
-- [ ] R2.2.3 `openspec/config.yaml`: cuarta regla de lectura en `unidad_de_avance` (RQ-RC-07), dentro
+      **HECHA el 2026-09-20**, ensuciando el fichero VIGILADO y no el guardián: borradas sus siete
+      líneas, el guardián pasó a `expected [ 'a', 'b', 'c' ] to deeply equal [ 'a', 'b', 'c', 'd' ]`;
+      restaurado, `cmp` sin diferencias, sha256 idéntico y el `git diff` de vuelta en 14/1.
+- [x] R2.2.3 `openspec/config.yaml`: cuarta regla de lectura en `unidad_de_avance` (RQ-RC-07), dentro
       del bloque `reglas_de_lectura` (`:1330` en `b55bfc7`), sin tocar `a` (`:1331`), `b` (`:1336`) ni
       `c` (`:1341`), todas en `b55bfc7` (eran `:1267` / `:1268` / `:1273` / `:1278` en `995adbc`).
-- [ ] R2.2.4 `openspec/config.yaml`: campo `estado` en las 12 entradas de `incumplimientos_vivos`
+      **HECHA el 2026-09-20**: siete líneas nuevas dentro del bloque, detrás de la (c) y delante de
+      `trazabilidad`. Las tres primeras no se tocaron, y el guardián lo comprueba por su TEXTO y no
+      por su posición, que es lo que sobrevive a que el fichero se mueva.
+- [x] R2.2.4 `openspec/config.yaml`: campo `estado` en las 12 entradas de `incumplimientos_vivos`
       (`:337` en `b55bfc7` y siguientes; era `:307` en `995adbc`): `CERRADO` en IV-1,3,4,5,7,10; IV-6 pasa a `CERRADO`
       conservando su prosa en clave propia; `estado` nuevo (vivo) en IV-2,8,9,11,12.
-- [ ] R2.2.5 Comprobación 2 + guarda (b): marcar `F0-02` «sin verificar» (su `maestro: [Anexo H]` no
-      cruza con `plan:456`) — resultado esperado, no se corrige.
-- [ ] R2.2.6 Extender el grafo de imports del guardián existente (`guardianes.test.ts:50-55` en
+      **HECHA el 2026-09-20**, y medido después: siete `CERRADO` (IV-1,3,4,5,6,7,10) y cinco `VIVO`
+      (IV-2,8,9,11,12). La prosa de IV-6 se conserva íntegra en `estado_prosa`, no se borró: su
+      `estado: >` era un bloque de prosa que el barrido leía VACÍO, o sea un defecto de registro más.
+- [x] R2.2.5 Comprobación 2 + guarda (b): marcar `F0-02` «sin verificar» (su `maestro: [Anexo H]` no
+      cruza con `plan:456`) — resultado esperado, no se corrige. **HECHA el 2026-09-20**: rojo
+      (`expected undefined to be defined`) y verde. La guarda cruza el `maestro:` de cada fila dada
+      por cerrada contra la columna de fuentes de su fila del §5, MARCA y no rechaza, y la 2 sigue
+      sin ser bloqueante. Cuatro casos, con el del otro signo: la que sí cruza no se marca.
+- [x] R2.2.6 Extender el grafo de imports del guardián existente (`guardianes.test.ts:50-55` en
       `995adbc`) a `apps/desk/server/reconciliacion/`, con el control del otro signo de `:57-64`.
+      **HECHA el 2026-09-20**: aserción propia y no añadida al filtro de citas, para que al romperse
+      el mensaje diga CUÁL de las dos carpetas se coló; su control del otro signo en memoria; y el
+      chequeo textual de las dos frases pasa a `it.each` sobre las dos carpetas. 17/17.
 
 ## R2 · Fase 3 — `npm run reconcile` + `capabilities` (RQ-RC-09) + cierre
 

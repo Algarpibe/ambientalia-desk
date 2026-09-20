@@ -257,3 +257,68 @@ prohíbe.
     npm run lint        0 errores · 158 avisos, todos preexistentes
 
 **La Fase 1 queda cerrada.** Lo que sigue son las Fases 2 y 3, cada una en su propio objetivo.
+
+## R2 · Fase 2 — las guardas del autocertificado y el campo `estado` (2026-09-20)
+
+**Intento:** ordinal 6 del objetivo `generation: 5` (`acquire` `f0-05-r2-fase2-acquire-2026-09-20`),
+techo 800. **Base:** `4199ce8`, árbol `f7c9ac9f`. Cierra R2.2.1 a R2.2.6.
+
+### Los dos rojos, y por qué ninguno fue «falta el módulo»
+
+Los rojos de la Fase 1 eran de importación: el módulo no existía. Los de ésta son de
+**comportamiento**, que es un rojo más caro de conseguir y más barato de creerse.
+
+| Casilla | Rojo observado, literal | Verde |
+|---|---|---|
+| R2.2.1 · `RQ-RC-08` | `expected 'incumplimiento no cerrado' to contain 'defecto de registro'` | 5 casos |
+| R2.2.5 · `RQ-RC-06` | `expected undefined to be defined` | 4 casos |
+
+**R2.2.1 es la ausencia dejando de contar como vida.** Antes, una entrada sin `estado` caía en «no
+cerrada» y se sumaba a los vivos. Ahora es un **defecto de registro** con su propia cifra, porque
+«un barrido que cuenta ausencias miente en cuanto alguien añade una entrada y se olvida del campo».
+
+**R2.2.5 es la guarda (b), que MARCA y no rechaza.** Cruza el `maestro:` de cada fila dada por
+cerrada contra la columna de fuentes de su fila del §5 del plan; si no hay intersección, la marca
+«sin verificar» sin tocar el código de salida. Va con su control del otro signo: una fila cuyo
+`maestro:` sí cruza NO se marca. Sin ese caso, una guarda que sospechara de todas pasaría igual.
+
+### M3 — la mutación se hizo sobre el fichero VIGILADO
+
+Regla de mutación 2: mutar el guardián sólo demuestra que se ejecuta; mutar lo vigilado demuestra
+que DISCRIMINA. Se borraron las siete líneas de la regla (d) de `openspec/config.yaml` en disco:
+
+    sucio      → expected [ 'a', 'b', 'c' ] to deeply equal [ 'a', 'b', 'c', 'd' ]
+    restaurado → cmp sin diferencias · sha256 idéntico · git diff de vuelta en 14/1 · guardián 6/6
+
+La reversión se COMPROBÓ, no se supuso. Y el guardián lleva además su propio control del otro signo
+en memoria, para que el caso siga vigilado cuando la mutación ya no se repita.
+
+### Lo que cambió en el registro
+
+| Cambio | Detalle |
+|---|---|
+| Regla (d) de `unidad_de_avance` | 7 líneas, detrás de la (c) y delante de `trazabilidad`. Las tres primeras intactas, comprobado por su TEXTO y no por su posición |
+| `estado` en las DOCE IV | siete `CERRADO` (IV-1,3,4,5,6,7,10) y cinco `VIVO` (IV-2,8,9,11,12) |
+| IV-6 | su `estado` era PROSA, que el barrido leía vacío — o sea, un defecto de registro. Pasa a `CERRADO` y la prosa se CONSERVA íntegra en `estado_prosa` |
+
+**El guardián del registro es nuevo y vive en `reconciliacion/registro.test.ts`**: comprueba los
+cuatro ids contra el fichero real y los cero defectos de registro haciendo pasar el `config.yaml`
+real por el propio núcleo. Comprobar el registro con el mismo código que lo barre, y no con un
+segundo parser, evita el molde de H5 que `CLAUDE.md` registra.
+
+### La regla de mutación 4 se cobró su peaje EN ESTA MISMA TANDA
+
+Las catorce líneas nuevas de `config.yaml` desplazaron una cita de R1 que vivía en `tasks.md`, y el
+detector la cazó como séptimo bloqueante. **Es el caso B**: la frase afirma lo que R1 reparó, no el
+árbol de hoy, así que se ANCLA y no se renumera. Anclada, el detector vuelve a seis.
+
+**Y el primer intento de anclarla no funcionó**, por una razón que el propio detector imprime en cada
+corrida: el ancla había quedado en la línea SIGUIENTE a su cita, porque el párrafo se partió justo
+ahí. Hizo falta reflujar para que cada cita y su ancla compartieran línea física. Se anota porque
+leer el aviso no es lo mismo que aplicarlo.
+
+### Verificación sobre el árbol COMMITEADO
+
+    npm test            127 ficheros · 1173 pasadas · 2 saltadas · salida 0   (eran 1155: +18)
+    npm run typecheck   0
+    npm run lint        0 errores · 158 avisos, todos preexistentes
