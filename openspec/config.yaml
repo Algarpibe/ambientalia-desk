@@ -190,6 +190,11 @@ capabilities:
       base de la VPS. Hasta que se recuente contra producción, NINGUNA de las dos
       cifras es citable, y toda la épica F1D se apoya en ella. Devuelto como
       pregunta al apartado 06.
+    cifra_de_gerencia_2026_09_17: >
+      RESPUESTA DE GERENCIA, 17/09, recogida el 21/09: «En este momento hay 29».
+      Se cita como «29 modelos, según Gerencia, 17/09». Declarada, no medida por
+      la supervisión contra la base. `status_at_start` (35) se conserva como
+      histórico de la siembra del 07/08 (`decision/e003c-recuento-modelos`).
 
   - name: diagnostico-checklist
     covers: >
@@ -816,6 +821,12 @@ incumplimientos_vivos:
       El principio no cambia: inventar un destino sin esa decisión repetiría el
       error que IV-2 e IV-4 ya tienen registrado — una tanda no resuelve lo que
       Gerencia no ha decidido.
+    titularidad_decidida_2026_09_17: >
+      AÑADIDO EL 2026-09-21. La titularidad ya está decidida
+      (`decision/titularidad-ov-equipo`): la OV y el equipo PUEDEN ser de clientes distintos, en el
+      caso del mantenedor. IV-8 sigue VIVO: el código no conoce al mantenedor, y cómo lo reconoce
+      está devuelto como pregunta (`titularidad-mantenedor`, panel). Destino PROPUESTO: F1B-11, por
+      la fila de §4.5; el campo `destino` de arriba no se toca hasta esa respuesta.
 
   # IV-9 nace del cierre de IV-1 (F1B-08, 2026-09-10). No es un desvío nuevo: es
   # el MISMO desvío, en los tres puntos que la tanda no tocó. Se abre en el mismo
@@ -1334,6 +1345,7 @@ decisiones_de_gerencia:
       (5) NO MUEVE EL NUMERADOR DEL AVANCE: F1B-08 sigue parcial, y su parte de tablero ya estaba
       cerrada desde el 10/09.
     registro: "docs/sdd/ENTRADA.md → E-014 (cerrada) · plan §4.5, fila `decision/escalado-remision-creada`"
+    precisada_por: "decision/escalado-destinatario-doble (17/09, posterior): el aviso va sólo al Coordinador Comercial"
 
   - clave: "decision/veto-plan-r01-1"
     fecha: "2026-09-20"
@@ -1365,6 +1377,147 @@ decisiones_de_gerencia:
       (4) DESBLOQUEA EL PUSH DE MAIN, que acumulaba seis commits sin empujar.
       NO REABRE EL CONTENIDO DEL PLAN: se repara la cita, no lo que el plan dice.
     registro: "docs/sdd/ENTRADA.md → E-016"
+
+  # ── Recogidas en el corte del 2026-09-21 (docs/sdd/Parte_2026-09-21.md). Las siete llegaron por el
+  # panel el 17/09 por la noche y el corte del 18/09 no las vio. Respuesta TEXTUAL, sin resumir.
+  - clave: "decision/escalado-destinatario-doble"
+    fecha: "2026-09-17"
+    pregunta: >
+      La respuesta del 17/09 al escalado de 72 h nombra DOS cargos. ¿El aviso va a los dos, o el
+      escalado conserva un único destinatario? Y `Director Comercial` no existe hoy como cargo en el
+      código: ¿se crea?
+    respuesta_textual: >
+      «En usuarios existe Nombre: Administrador, Cargo: Director Comercial, revisa. El aviso debe ir
+      a cargo de coordinador comercial»
+    consecuencias: >
+      (1) PRECISA EL DESTINATARIO de `decision/escalado-remision-creada`, de la misma fecha y escrita
+      DESPUÉS (panel, `ts` 1789697892709 frente a 1789690252627): el aviso de 72 h va a UN cargo,
+      `Coordinador Comercial`. Aquella entrada no se borra; sus consecuencias (1) y (2) —tipo en
+      plural y cargo inexistente— dejan de aplicar al destinatario.
+      (2) `Coordinador Comercial` YA EXISTE como cargo en el código
+      (`packages/shared/src/transitions.ts:278`, `escalado_a_comercial`). Con un solo cargo,
+      `destinatarioDelEscalado` (`packages/shared/src/sla.ts:92-109`) no devuelve `ambiguo`: no hay
+      que pasar el tipo a plural.
+      (3) «En usuarios existe … Director Comercial» es un dato de la BASE, no del código. Medido el
+      21/09: `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` = 0. La supervisión no ve
+      la base: ni lo confirma ni lo refuta. No cambia nada, porque el aviso no va a ese cargo.
+      (4) SIGUE EN PIE: la alarma de 72 h no está construida (`SLA_HORAS_POR_ESTADO`,
+      `packages/shared/src/sla.ts:32-35`, sólo lleva `'Notificado': 24`), y darle entrada a
+      `habilitar_servicio` en `DERIVACION_POR_DEFECTO` cambia `RQ-AV-02`
+      (`openspec/specs/derivacion-avisos/spec.md:67-70`), que declara exactamente tres entradas.
+    registro: "docs/sdd/ENTRADA.md → E-014 (adenda 21/09) · plan §4.5, fila `decision/escalado-remision-creada`"
+
+  - clave: "decision/e013-staging-f0-04"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Existe una copia de pruebas de la aplicación en el servidor de Hostinger —separada de la que
+      usa la gente— o se trabaja directamente sobre la buena?
+    respuesta_textual: >
+      «No existe copia de pruebas en el servidor de Hostinger. Se trabaja directamente sobre la
+      aplicación de verdad.»
+    consecuencias: >
+      (1) CONFIRMA `cierra: no` de F0-04 (`openspec/changes/F0-04/proposal.md:6`): de los tres
+      contenidos de su fila (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:128`) hay
+      pruebas del motor y CI, y la copia de pruebas NO EXISTE. F0-04 deja de figurar como cerrada en
+      el panel: el numerador publicado pierde 1 por este motivo (por dictamen, no por trabajo).
+      (2) PARCIAL. La respuesta dice que NO EXISTE; no dice si se va a construir o se retira de la
+      fila con fecha. E-013 abría esas dos salidas y la respuesta elimina sólo la tercera («existe y
+      falta escribirlo»). Devuelta como pregunta nueva al panel, `e013b-copia-pruebas`.
+      (3) Consecuencia que la respuesta no preveía: mientras no haya copia, todo despliegue —y la
+      migración de F1F-01— se prueba sobre la aplicación que usa la gente.
+    registro: "docs/sdd/ENTRADA.md → E-013 (adenda 21/09, sigue abierta por la pregunta nueva)"
+
+  - clave: "decision/ovi-garantia-autor"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Quién crea la OVI de un servicio en garantía: Servicio Técnico, como hoy, o Comercial?
+    respuesta_textual: >
+      «La OVI la crea Servicio Técnico, más concretamente el Director Técnico»
+    consecuencias: >
+      (1) Confirma lo de hoy y lo PRECISA A UN CARGO: Director Técnico. Es la excepción de autor a
+      «Comercial crea la OV». `Director Técnico` existe como cargo en el código
+      (`packages/shared/src/transitions.ts:276`).
+      (2) Desbloquea la parte de garantía de F1B-03 (S40).
+      (3) Una regla POR CARGO llega antes que la matriz de cargos: `decision/c10-permisos-cargo`
+      (F1C-05, S44) sigue pendiente y es la que hace que los permisos dejen de ser sólo por área.
+      HIPÓTESIS, no medido: si F1B-03 se construye antes que F1C-05, su guarda tendrá que nombrar un
+      cargo sin la matriz.
+    registro: "docs/sdd/ENTRADA.md → E-017 (cerrada) · plan §4.5, fila `decision/ovi-garantia-autor`"
+
+  - clave: "decision/p44-escritura-zoho"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Cuál es la política de escritura contra Zoho: qué escribe la aplicación y qué no?
+    respuesta_textual: >
+      «Por ahora no queremos activar la escritura contra Zoho. En caso necesario nos tocará tener un
+      "espejo de Zoho" en nuestra app que permita comparar y escribir nosotros a mano en Zoho hasta
+      que estemos preparados para activar la escritura en Zoho (futuro).»
+    consecuencias: >
+      (1) La aplicación NO escribe en Zoho hasta nueva decisión. Cierra el gate de la parte «política
+      Zoho» de F1B-08; F1B-08 sigue parcial por la alarma de 72 h y la paridad de vistas.
+      (2) El «espejo de Zoho» es alcance CONDICIONAL («en caso necesario») y sin fila en el plan. Se
+      anota en la bandeja sin destino; no se convierte en tanda.
+      (3) OBSERVADO, NO MEDIDO: las ramas sin fusionar `feat/mark-and-sweep` y
+      `fix/sweep-contacts-all-types` hablan de borrados verificados en Books
+      (`git log -1 feat/mark-and-sweep`). Si alguna escribe o borra en Zoho, choca con esta política
+      antes de fusionarse. Hay que leerlas antes de dar la política por cumplida.
+      (4) Anexo D nº 44 → resuelto, para el expediente R08.x.
+    registro: "docs/sdd/ENTRADA.md → E-018 (cerrada) · plan §4.5, fila `decision/p44-escritura-zoho` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+
+  - clave: "decision/titularidad-ov-equipo"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Pueden la orden de venta y el equipo ser de clientes distintos?
+    respuesta_textual: >
+      «Generalmente el titular del equipo es el que genera la orden de venta. Tenemos 1 solo caso
+      donde el generador de la orden de venta no es el propietario del equipo es el mantenedor del
+      equipo»
+    consecuencias: >
+      (1) SÍ PUEDEN, como excepción: hay al menos un caso real, el mantenedor. Una guarda estricta
+      «cliente de la OV = cliente del equipo» bloquearía ese caso.
+      (2) IV-8 (`apps/desk/server/services/ticketService.ts:39`) SIGUE VIVO: la decisión da el
+      criterio, pero el código no conoce la figura del mantenedor
+      (`grep -rni mantenedor packages/ apps/ --include=*.ts` = 0). Cómo reconoce la aplicación ese
+      caso se devuelve como pregunta nueva, `titularidad-mantenedor`.
+      (3) Destino PROPUESTO de IV-8: F1B-11, por la fila de §4.5. No se escribe en su `destino` hasta
+      que se responda la pregunta del mantenedor.
+    registro: "docs/sdd/ENTRADA.md → E-019 (cerrada) · plan §4.5, fila `decision/titularidad-ov-equipo` · `incumplimientos_vivos` → IV-8"
+
+  - clave: "decision/vigencia-contrato"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Una subOV libre de un contrato vencido se puede consumir?
+    respuesta_textual: >
+      «En teoría no pero si el contrato se vence antes del final del año se puede hacer una
+      ampliación del contrato para consumir los trabajos no ejecutados. Si ya pasamos al siguiente
+      año no se podría consumir porque la lista de precios cambia.»
+    consecuencias: >
+      (1) Regla: una subOV libre de un contrato vencido NO se consume, salvo ampliación del contrato
+      dentro del mismo año; pasado el año, no, porque cambia la lista de precios. Se lee «año» como
+      año natural: INTERPRETACIÓN, no dicho literalmente.
+      (2) La fila §4.5 decía: «Si la respuesta es no, primer motivo para pasar a la opción B». La
+      respuesta es «no, salvo ampliación»: no es el «no» liso que disparaba la revisión. Se señala;
+      la opción A del 10/09 no se reabre por esto.
+      (3) El código no conoce ni el vencimiento de un contrato ni su ampliación
+      (`grep -rniE "ampliaci" packages/ apps/ --include=*.ts` sólo da comentarios ajenos,
+      `packages/shared/src/sla.ts:58` y `apps/desk/src/lib/boardView.test.ts:76`). F1B-11 tendrá que
+      modelar las dos cosas o recibirlas de Zoho.
+    registro: "docs/sdd/ENTRADA.md → E-020 (cerrada) · plan §4.5, fila `decision/vigencia-contrato`"
+
+  - clave: "decision/e003c-recuento-modelos"
+    fecha: "2026-09-17"
+    pregunta: >
+      ¿Cuántos modelos hay realmente en el catálogo: 29 o 35?
+    respuesta_textual: >
+      «En este momento hay 29»
+    consecuencias: >
+      (1) 29 es la cifra DECLARADA por Gerencia el 17/09; la supervisión NO la ha medido contra la
+      base. 35 fue la siembra del 07/08, ya entonces «NO reverificada». Las dos pueden ser ciertas en
+      su fecha.
+      (2) Se cita como «29 modelos, según Gerencia, 17/09» (`capabilities` → `catalogo-equipos` →
+      `cifra_de_gerencia_2026_09_17`). El `status_at_start` con 35 no se borra.
+      (3) No responde a `e003-catalogo-equipos` ni a `e003b-registro-equipos`, que siguen abiertas.
+    registro: "docs/sdd/ENTRADA.md → E-003 (adenda 21/09)"
 
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.

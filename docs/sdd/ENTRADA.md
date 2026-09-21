@@ -71,6 +71,12 @@ Quien no hacía la distinción era **el registro**: `config.yaml:154` metía (1)
    el dato vive en la base de la VPS. Anotado en `config.yaml` como `cifra_en_duda_2026_09_18` y devuelto como
    tercera pregunta (`e003c-recuento-modelos`). Hasta el recuento, **ninguna de las dos cifras es citable**.
 
+**ADENDA 21/09 — RESPUESTA DE GERENCIA A `e003c-recuento-modelos`, 17/09, TEXTUAL:** «En este momento hay 29».
+Aterrizó en `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/e003c-recuento-modelos`) y en `capabilities` →
+`catalogo-equipos` → `cifra_de_gerencia_2026_09_17`. Cifra **declarada**, no medida por la supervisión. Las otras dos
+preguntas (`e003-catalogo-equipos`, `e003b-registro-equipos`) **siguen sin respuesta**: esta entrada sigue `triada`.
+**Clave Engram a cargar:** `decision/e003c-recuento-modelos`.
+
 ## E-004 · 2026-09-17 · decision
 **Qué:** Servicio en sitio: el plan NO lo contempla (`grep -ci "en sitio"` = 0) y el maestro lo deja fuera de alcance como «línea a explorar» (M1.6b, nº 43). La salida que se le dio el 10/09 se apoyaba en una premisa falsa.
 **De dónde viene:** informe de brechas del 17/09, §2.1
@@ -97,7 +103,7 @@ Quien no hacía la distinción era **el registro**: `config.yaml:154` metía (1)
 **De dónde viene:** informe de brechas del 17/09, §2.6, corregido el mismo día
 **Afecta a:** la R08.4 (clase A) · F1C-06 (25/09) · la clasificación de `Pendiente`, pendiente de Servicio Técnico desde el 11/09
 **Estado:** triada
-**Destino:** pasaje del expediente R08.x (el maestro va por detrás) + entrada en `cifras_ancladas`. **Ya NO va a la sesión del 18/09**
+**Destino:** pasaje del expediente R08.x (el maestro va por detrás) + entrada en `cifras_ancladas`. **Ya no espera fecha: la decide Gerencia en el panel**
 
 ## E-008 · 2026-09-17 · hallazgo
 **Qué:** Ocho puntos del Anexo D que tocan Fase 1 no aparecen en el plan: 3, 7, 9, 43, 47, 53, 56, 61. Los tres con vencimiento cercano son el 56 (bloquea F1D-07, S47), el 47 (bloquea F1D-06, S46) y el 53 (el informe trimestral cuelga de la convención de subOV ya decidida).
@@ -114,9 +120,9 @@ Quien no hacía la distinción era **el registro**: `config.yaml:154` metía (1)
 **Destino:** ver E-003 (catalogo-equipos); `kpis` es Fase 2 por declaración de `config.yaml`
 
 ## E-010 · 2026-09-17 · hallazgo
-**Qué:** Punto abierto nº 61 —mecanismo de incorporación de actas— ya se cobró una pieza: el R08.3 §B.3 registra que de la sesión del 11/09 no hay evidencia de que se celebrara, y sus siete gates siguen pendientes.
+**Qué:** Punto abierto nº 61 —mecanismo de incorporación de actas— ya se cobró una pieza: el R08.3 §B.3 registra que siete gates previstos para el 11/09 no tienen decisión escrita y siguen pendientes.
 **De dónde viene:** informe de brechas del 17/09, §2.7
-**Afecta a:** siete gates con sesión prevista el 11/09
+**Afecta a:** siete gates previstos para el 11/09
 **Estado:** triada
 **Destino:** Anexo D nº 61, con dueño y fecha. Esta bandeja es media respuesta al propio punto
 
@@ -190,6 +196,14 @@ que se resuelven por la regla del ciclo 1 y quedan declaradas aparte en `docs/ru
 construcción— ni en el expediente R08.x —no es un pasaje del maestro—: es una decisión de alcance sobre
 contenido ya planificado, y R-3 dice que eso se queda como punto abierto con dueño, nunca en el aire
 
+
+**ADENDA 21/09 — RESPUESTA DE GERENCIA A `e013-staging-f0-04`, 17/09, TEXTUAL:** «No existe copia de pruebas en el
+servidor de Hostinger. Se trabaja directamente sobre la aplicación de verdad.»
+Aterrizó en `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/e013-staging-f0-04`). **Parcial:** confirma
+`cierra: no` de F0-04 y descarta la salida «existe y falta escribirlo», pero **no elige** entre construir la copia o
+retirarla de la fila con fecha. Devuelta al panel como pregunta nueva, `e013b-copia-pruebas`. **Estado:** sigue
+`triada`, dueño Gerencia. **Clave Engram a cargar:** `decision/e013-staging-f0-04`.
+
 ## E-014 · 2026-09-17 · decision · **CERRADA**
 **Qué:** Qué cargo de Comercial recibe el aviso cuando un ticket lleva más de 72 h en `Remisión creada` sin orden de venta (gate `decision/escalado-remision-creada`, abierto desde el 11/09).
 **De dónde viene:** panel de ejecución, colección `respuestas`, documento `escalado-remision-creada`, fecha 17/09/2026
@@ -205,9 +219,59 @@ contenido ya planificado, y R-3 dice que eso se queda como punto abierto con due
 **Lo que la decisión NO desbloquea todavía:** la alarma en sí. `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35`) tiene una sola entrada, `'Notificado': 24`; `Remisión creada` no está. F1B-08 sigue parcial y el numerador no se mueve.
 **Clave Engram a cargar:** `decision/escalado-remision-creada`.
 
+
+**ADENDA 21/09 — PRECISIÓN DE GERENCIA (`escalado-destinatario-doble`), 17/09, posterior a la respuesta de arriba, TEXTUAL:**
+«En usuarios existe Nombre: Administrador, Cargo: Director Comercial, revisa. El aviso debe ir a cargo de coordinador comercial»
+El aviso va a **un** cargo, `Coordinador Comercial`, que ya existe en el código (`packages/shared/src/transitions.ts:278`).
+Las consecuencias 1 y 2 de arriba dejan de aplicar al destinatario; la 3 y la alarma sin construir siguen en pie. El
+«Director Comercial» en usuarios es dato de la base, que la supervisión no ve. Aterrizó en `openspec/config.yaml` →
+`decisiones_de_gerencia` (`decision/escalado-destinatario-doble`, y `precisada_por` en la entrada anterior) y en la fila
+de §4.5. **Clave Engram a cargar:** `decision/escalado-destinatario-doble`.
+
 ## E-015 · 2026-09-18 · regla · **RUTEADA**
 **Qué:** No se mencionan reuniones, ni celebradas ni previstas. Las decisiones se toman en la conversación de Cowork y en el panel; un gate pendiente se describe por qué decide, a quién corresponde y qué desbloquea.
 **De dónde viene:** Gerencia, 17/09, fijada como regla de redacción no negociable y repetida en el encargo del parte
 **Afecta a:** `CLAUDE.md` y toda redacción de `docs/sdd/`, el plan y el panel
 **Estado:** ruteada
 **Destino:** `CLAUDE.md` § «Regla de redacción» (escrita el 18/09). Barrido aplicado el mismo día a la tabla §4.5 del plan: 26 menciones de calendario de encuentros sustituidas por estado y dueño, y la columna «Sesión prevista» pasa a «Estado · a quién corresponde». **Quedan menciones heredadas fuera de §4.5** —`plan:4`, `:5`, `:14`, `:170`, `:270`, `:599` y `docs/sdd/R08.3_Expediente_de_cambios.md:360`—, listadas en el parte del 18/09 y no barridas aquí porque están fuera del alcance de escritura de la sesión de supervisión
+
+> **Nota del corte del 21/09:** `openspec/config.yaml` → `decision/veto-plan-r01-1` cita como registro «`ENTRADA.md` →
+> E-016», y E-016 **no existe** en este fichero. Se deja el número libre y se señala en `docs/sdd/Parte_2026-09-21.md`;
+> las entradas siguientes empiezan en E-017.
+
+## E-017 · 2026-09-17 · decision · **CERRADA**
+**Qué:** Quién crea la OVI de un servicio en garantía (gate `decision/ovi-garantia-autor`).
+**De dónde viene:** panel, colección `respuestas`, documento `ovi-garantia-autor`, 17/09/2026; recogida el 21/09
+**Afecta a:** F1B-03 · cruza con `decision/c10-permisos-cargo` (F1C-05)
+**Estado:** cerrada
+**RESPUESTA DE GERENCIA, TEXTUAL:** «La OVI la crea Servicio Técnico, más concretamente el Director Técnico»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/ovi-garantia-autor`
+**Clave Engram a cargar:** `decision/ovi-garantia-autor`
+
+## E-018 · 2026-09-17 · decision · **CERRADA**
+**Qué:** Política de escritura contra Zoho (gate `decision/p44-escritura-zoho`, Anexo D nº 44).
+**De dónde viene:** panel, documento `p44-escritura-zoho`, 17/09/2026; recogida el 21/09
+**Afecta a:** F1B-08 · expediente R08.x (nº 44) · ramas sin fusionar `feat/mark-and-sweep` y `fix/sweep-contacts-all-types`
+**Estado:** cerrada
+**RESPUESTA DE GERENCIA, TEXTUAL:** «Por ahora no queremos activar la escritura contra Zoho. En caso necesario nos tocará tener un "espejo de Zoho" en nuestra app que permita comparar y escribir nosotros a mano en Zoho hasta que estemos preparados para activar la escritura en Zoho (futuro).»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/p44-escritura-zoho` · `docs/sdd/R08.3_Expediente_de_cambios.md` §11
+**El «espejo de Zoho»:** alcance **condicional** y futuro. No cabe todavía en ninguna de las tres salidas: se queda aquí **sin destino**, a propósito, hasta que Gerencia diga que es necesario.
+**Clave Engram a cargar:** `decision/p44-escritura-zoho`
+
+## E-019 · 2026-09-17 · decision · **CERRADA**
+**Qué:** Si la OV y el equipo pueden ser de clientes distintos (gate `decision/titularidad-ov-equipo`, donde vive IV-8).
+**De dónde viene:** panel, documento `titularidad-ov-equipo`, 17/09/2026; recogida el 21/09
+**Afecta a:** F1B-11 · IV-8
+**Estado:** cerrada — y abre una pregunta nueva, `titularidad-mantenedor`
+**RESPUESTA DE GERENCIA, TEXTUAL:** «Generalmente el titular del equipo es el que genera la orden de venta. Tenemos 1 solo caso donde el generador de la orden de venta no es el propietario del equipo es el mantenedor del equipo»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` y `incumplimientos_vivos` → IV-8 (`titularidad_decidida_2026_09_17`) · plan §4.5, fila `decision/titularidad-ov-equipo`
+**Clave Engram a cargar:** `decision/titularidad-ov-equipo`
+
+## E-020 · 2026-09-17 · decision · **CERRADA**
+**Qué:** Si una subOV libre de un contrato vencido se puede consumir (gate `decision/vigencia-contrato`).
+**De dónde viene:** panel, documento `vigencia-contrato`, 17/09/2026; recogida el 21/09
+**Afecta a:** F1B-11
+**Estado:** cerrada
+**RESPUESTA DE GERENCIA, TEXTUAL:** «En teoría no pero si el contrato se vence antes del final del año se puede hacer una ampliación del contrato para consumir los trabajos no ejecutados. Si ya pasamos al siguiente año no se podría consumir porque la lista de precios cambia.»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/vigencia-contrato`
+**Clave Engram a cargar:** `decision/vigencia-contrato`
