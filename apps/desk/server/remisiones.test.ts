@@ -1052,3 +1052,57 @@ describe('IV-4 · el 422 del serial gana al 409 nuevo de la OV (mutación de pos
       .toEqual([7010])
   })
 })
+
+/*
+ * IV-12 · EL ALTA DE REMISIÓN NO CUMPLE EL ORDEN TOTAL, y esto lo FIJA sin corregirlo.
+ *
+ * F1B-10 declara un orden total sobre cuatro escalones —A existencia < B estado y permiso <
+ * C contenido < D unicidad— y lo aplica a las dos puertas del motor. El alta de remisión NO lo
+ * cumple, y éste es el primero de sus dos puntos: `routes/remision.ts:127` («Fecha inválida»,
+ * escalón C) corre ANTES que `:155` («Falta el serial…», escalón A). Está registrado como IV-12
+ * en `CLAUDE.md` y en `openspec/config.yaml`, SIN destino y a propósito: reordenarlo cambia qué
+ * error ve el técnico en el formulario de entrada, que es la pantalla de campo del subsistema, y
+ * eso es una decisión de alcance que no toma una tanda.
+ *
+ * QUÉ FIJA, entonces: el comportamiento de HOY, para que un movimiento accidental del orden se
+ * ponga rojo en vez de pasar en silencio. Es la regla de mutación 1 del `CLAUDE.md` —mutar la
+ * POSICIÓN de la guarda, no sólo su condición—, y de ahí que lleve DOS aserciones.
+ *
+ * EL CONTROL DE POBLACIÓN es la segunda, y es lo que hace valer a la primera: sin él, esta prueba
+ * pasaría igual con un ticket que SÍ tuviera serial, porque entonces sólo estaría activa la guarda
+ * de la fecha y no habría competencia entre las dos. Es exactamente el defecto que el verify cazó
+ * en `remisiones.test.ts:190`, cuya única petición con fecha no-ISO del repositorio va sobre el
+ * `t1` de `preparar()`, que se inserta CON serial. Aquí, el mismo ticket con fecha VÁLIDA tiene
+ * que contestar por el serial: eso demuestra que las dos guardas estaban activas a la vez.
+ *
+ * Y FIJA EL MENSAJE, no sólo el código: las dos contestan `422`, así que el status no distingue
+ * cuál de las dos respondió.
+ */
+describe('IV-12 · en el alta de remisión la fecha inválida (C) gana a la falta de serial (A) — desvío registrado, no corregido', () => {
+  /** Como los que llegan del sync de Zoho: sin equipo del catálogo y sin serial propio. */
+  const ticketSinSerialNiEquipo = async () => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-iv12','Gecelca S.A. E.S.P.')")
+    await db.query(`INSERT INTO tickets (id, number, status, managed_by_app, client_id, tipo_servicio, equipo_id, marca, modelo, serial)
+                    VALUES ('t-iv12', 7100, 'Ticket creado', false, 'cli-iv12', 'Mantenimiento', NULL, 'Grimm', 'EDM180C', NULL)`)
+  }
+
+  it('con las dos guardas activas contesta por la FECHA; con fecha válida, el mismo ticket contesta por el SERIAL', async () => {
+    const cookie = await adminCookie(); await ticketSinSerialNiEquipo()
+    const { app } = appWith()
+
+    // Las DOS activas a la vez: fecha inválida sobre un ticket sin serial.
+    const ambas = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-iv12', fecha: '03/08/2026', incluye: [] })
+    expect(ambas.status).toBe(422)
+    expect(ambas.body.error, 'gana la guarda de la fecha (C), que corre antes que la del serial (A)')
+      .toBe('Fecha inválida')
+
+    // CONTROL DE POBLACIÓN. Si esto no contestara por el serial, la aserción de arriba no probaría
+    // nada: querría decir que la guarda del serial nunca estuvo activa.
+    const soloSerial = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-iv12', fecha: '2026-08-03', incluye: [] })
+    expect(soloSerial.status).toBe(422)
+    expect(soloSerial.body.error, 'el ticket NO tiene serial: la otra guarda sí estaba activa')
+      .toMatch(/^Falta el serial del equipo/)
+  })
+})

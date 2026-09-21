@@ -176,7 +176,7 @@ reescritos (Fases 2, 5) alteran el conteo.
 ## Phase 10 · Verificación final — Rebanada 2
 
 - [x] 10.1 `npm test` completo en verde: **1136 passed, 2 skipped** (122/123 ficheros), incluidas las 9
-  pruebas que quedan INTACTAS (`:144`, `:149`, `:154`, `:160`, `:166`, `:194`, `:218`, `:316`, `:343`)
+  pruebas que quedan INTACTAS de `apps/desk/server/services/ticketService.test.ts` (`:148`, `:153`, `:158`, `:164`, `:170`, `:183`, `:219`, `:334`, `:364`, reapuntadas en R3 leyendo el nombre de cada `it(`: el desplazamiento NO es uniforme, va de −11 a +21)
   y `remisiones.test.ts:957`, ninguna tocada.
 - [x] 10.2 `npm run typecheck` en verde (sin salida).
 - [x] 10.3 `npm run lint` en verde — 0 errores, 158 warnings preexistentes (mismo recuento que R1,
@@ -185,6 +185,29 @@ reescritos (Fases 2, 5) alteran el conteo.
   y N4 (R2); medida final de `git diff --shortstat --no-renames` + `wc -l` de lo nuevo sin trackear.
 
 ---
+
+## Phase 11 · Cerrar el CRITICAL y las cuatro WARNING del verify — Rebanada 3
+
+- [x] 11.1 N5 · la prueba que fija IV-12 en `apps/desk/server/remisiones.test.ts`: ticket sin equipo
+  del catálogo y sin serial propio **más** fecha inválida → `422` y `error === 'Fecha inválida'`.
+- [x] 11.2 En la MISMA prueba, el control de población: el mismo ticket con fecha **válida** → `422` y
+  `/^Falta el serial del equipo/`. Sin él la prueba pasaría con un ticket que sí tuviera serial, que
+  es el defecto que el verify cazó en `remisiones.test.ts:190`.
+- [x] 11.3 Rojo por **mutación de posición** (regla de mutación 1 del `CLAUDE.md`), no artificial: con
+  las guardas de `apps/desk/server/routes/remision.ts:127` y `:152-157` intercambiadas la prueba falla
+  con `expected 'Falta el serial del equipo: el ticket…' to be 'Fecha inválida'`, exit 1. Revertida:
+  exit 0 y `git diff` vacío sobre `remision.ts`, blob idéntico al de `91d026f`.
+- [x] 11.4 WARNING-1: restituida la tabla `## TDD Cycle Evidence` de las fases 1-6 desde `3f2bb7c`, con
+  la fila de R3 dentro.
+- [x] 11.5 WARNING-2: `apply-progress.md:6` reapuntado de `cc6aa1d` (huérfano) a `7daedf4`.
+- [x] 11.6 WARNING-3: las 9 citas de 10.1 reapuntadas leyendo el nombre de cada `it(`.
+- [x] 11.7 WARNING-4: medidas las líneas del cambio. R2 son **519** y el total **705**; el fichero decía
+  292 y 474, y Engram obs. 726 decía 701. Ninguna de esas era cierta.
+
+**IV-12 NO se corrige**, y eso es deliberado: reordenar el alta de remisión cambia qué error ve el
+técnico en el formulario de entrada, que es la pantalla de campo del subsistema. El desvío sigue vivo
+y sin destino en `CLAUDE.md` y en `openspec/config.yaml`; lo que R3 añade es que ahora está FIJADO por
+una prueba, así que un movimiento accidental del orden se pone rojo en vez de pasar en silencio.
 
 ## No entra en `sdd-apply` — registrado, no ejecutado aquí
 
