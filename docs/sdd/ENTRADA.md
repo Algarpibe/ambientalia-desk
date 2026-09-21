@@ -275,3 +275,40 @@ de §4.5. **Clave Engram a cargar:** `decision/escalado-destinatario-doble`.
 **RESPUESTA DE GERENCIA, TEXTUAL:** «En teoría no pero si el contrato se vence antes del final del año se puede hacer una ampliación del contrato para consumir los trabajos no ejecutados. Si ya pasamos al siguiente año no se podría consumir porque la lista de precios cambia.»
 **Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/vigencia-contrato`
 **Clave Engram a cargar:** `decision/vigencia-contrato`
+
+## E-021 · 2026-09-21 · hallazgo
+**Qué:** El Código Servicio toma el día de la zona horaria del proceso, el mismo defecto que IV-2, y lo calcula el servidor.
+**De dónde viene:** el analista, en la ronda de preguntas de F1A-07 (`fechas-derivadas-servidor`), 21/09; verificado de disco en `4976787`
+**Afecta a:** el Código Servicio de todo ticket dado de alta en Desk sin código propio
+**Estado:** nueva
+**Destino:** — (decisión de alcance pendiente; dueño: Gerencia)
+
+**Lo verificado.** `yymmdd` (`packages/shared/src/ticketCreate.ts:7-10`) usa `getFullYear`/`getMonth`/`getDate`, o sea la
+zona del proceso que lo ejecuta. `buildCodigoServicio` (`:12-14`) lo usa, y lo llama el SERVIDOR al dar de alta un ticket
+sin `codigoServicio` en el cuerpo, con `new Date()` (`apps/desk/server/services/ticketService.ts:99`). La imagen es
+`node:22-alpine` (`Dockerfile:2` y `:10`), y ni el `Dockerfile`, ni `DEPLOY.md`, ni `.env.example` fijan zona horaria.
+
+**Hipótesis, no comprobada:** el contenedor de producción corre en UTC, salvo que EasyPanel fije la zona, cosa que no se
+ve desde el repositorio. Si es así, un ticket dado de alta entre las 19:00 y las 23:59 de Bogotá lleva en su código el día
+siguiente.
+
+**Por qué no lo arregla F1A-07:** está fuera de su alcance (sus tres fechas son las de IV-2). Su arreglo natural es la
+función de día en zona de Bogotá que F1A-07 crea en `packages/shared`: el día que alguien lo tome, no tiene que escribir
+otra.
+
+## E-022 · 2026-09-21 · hallazgo
+**Qué:** Una petición puede meter en el historial de cualquier transición un operando de bodegaje que esa transición no declara, y el KPI lo lee.
+**De dónde viene:** el orquestador de F1A-07 (`fechas-derivadas-servidor`), al contrastar la decisión P-2 de su propuesta; verificado de disco en `4976787`
+**Afecta a:** los tres bodegajes (`packages/shared/src/bodegaje.ts:58-80`), en cuanto tengan consumidor (F1C-06)
+**Estado:** nueva
+**Destino:** — (decisión de alcance pendiente; dueño: Gerencia)
+
+**Lo verificado.** `buildTransitionPlan` sólo recorre los campos que la transición declara (`apps/desk/server/transitionExec.ts:42`),
+pero el historial guarda el `values` ENTERO que llega (`packages/zoho-sync/src/db/repo.ts:285`), y `periodosDeBodegaje` lee
+cada operando en cualquier paso del historial, sin mirar qué transición lo escribió (`bodegaje.ts:174`, `:186`). O sea que
+`Fecha Orden De Venta`, `Fecha de Cotización`, `Fecha Orden de Compra`, `Fecha de aviso al cliente` o `Fecha Remisión de
+Salida` enviadas por la API en una transición que no las pide entran en el historial y abren o cierran un bodegaje.
+
+**Lo que F1A-07 sí cierra, y por qué sólo eso:** su P-2 descarta del `values` las TRES fechas de IV-2 cuando la transición
+no las declara. Las demás son operandos de otras tandas y no son IV-2. El arreglo general —que el historial guarde sólo los
+campos declarados— cambia qué registra TODA transición, y esa decisión no es de una tanda de correcciones.
