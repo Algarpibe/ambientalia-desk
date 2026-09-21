@@ -4,7 +4,7 @@
 
 ## Resumen Ejecutivo
 
-Tanda F1B-10 cerrada y archivada. Implementó el orden total de precedencia de guardas declarado en el plan (`plan:425`) en las **dos puertas del motor** (alta de ticket e intentos de transición), aplicó pruebas de posición que fijan la cadena A < B < C < D, registró el desvío vivo IV-12 (el alta de remisión no cumple ese orden, decisión de Gerencia de no tocar esa puerta). **Cierra el alcance declarado en proposal.md** sin tocar remisiones. Verify R2 **PASS con 0 blockers / 0 critical / 0 warnings / 0 suggestions**.
+Tanda F1B-10 cerrada y archivada. Implementó el orden total de precedencia de guardas declarado en el plan (`plan:164`) en las **dos puertas del motor** (alta de ticket e intentos de transición), aplicó pruebas de posición que fijan la cadena A < B < C < D, registró el desvío vivo IV-12 (el alta de remisión no cumple ese orden, decisión de Gerencia de no tocar esa puerta). **Cierra el alcance declarado en proposal.md** sin tocar remisiones. Verify R2 **PASS con 0 blockers / 0 critical / 0 warnings / 0 suggestions**.
 
 ## Estado Final
 
@@ -41,10 +41,10 @@ Tanda F1B-10 cerrada y archivada. Implementó el orden total de precedencia de g
 | Elemento | Acción | Línea nueva | Detalles |
 |---|---|---|---|
 | RQ-TC-05 | MODIFIED | 111 | Orden de las guardas del alta, en bloque compacto |
-| 4.1 · Precedencia 409/422 | RENAMED+MODIFIED | 380 | Antiguo título preservado como Caso B; anchored a ad65161 |
+| 4.1 · Precedencia 409/422 | RENAMED+MODIFIED | 386 | El título VIEJO desaparece de la spec viva (0 apariciones); el renombrado queda registrado en el bloque RENAMED del delta archivado |
 | RQ-TC-13 | MODIFIED | 274 | Guarda equipo↔cliente impone interpretación única de identidad |
 
-**Delta cost**: +62 líneas (prev. 49), -22 líneas (prev. 50)
+**Delta cost**: +85 inserciones, -80 borrados, medido con `git show --numstat aa886c6 -- openspec/specs/tickets-core/spec.md`
 
 ### Transitions-ST (`openspec/specs/transitions-st/spec.md`)
 
@@ -54,7 +54,7 @@ Tanda F1B-10 cerrada y archivada. Implementó el orden total de precedencia de g
 | 3.4 · OV en executeTransition | MODIFIED | 566 | Las dos primeras puertas de la OV evalúan en el mismo orden |
 | 3.8 · Precedencia: dos inversiones | RENAMED+MODIFIED | 703 | Patrón de dos violaciones; `:120-122` antes del `422` en executeTransition + C antes de A en alta de remisión (IV-12) |
 
-**Delta cost**: +189 líneas (prev. 57), -133 líneas (prev. 29)
+**Delta cost**: +166 inserciones, -75 borrados, medido con `git show --numstat aa886c6 -- openspec/specs/transitions-st/spec.md`
 
 **Total merge cost**: 251 insertions + 155 deletions (medido con `--no-renames`)
 
@@ -92,7 +92,7 @@ Línea reparada (Caso B, retiene ruta original + ancla de revisión):
 
 ### Otras citas verificadas
 
-- `tickets-core/spec.md:372` y `transitions-st/spec.md:692`: Se retiran con los bloques MODIFIED (rerouted al archivo)
+- Las dos rutas que citaban la carpeta desde las specs vivas —la línea 372 de tickets-core y la 692 de transitions-st, antes de fusionar— desaparecen con los bloques que el MODIFIED reemplaza: no hay nada que reapuntar
 - `CLAUDE.md:262 → transitions-st/spec.md:30`: No se mueve (primera línea editada cae en línea 152, diferencia de offset)
 - `plan R01.1:367 → transitions-st/spec.md:78-79`: No se mueve por mismo motivo
 - **33 citas dentro de la carpeta**: Silenciadas al mover a archivo (detector excluye `archive/`)
@@ -101,7 +101,7 @@ Línea reparada (Caso B, retiene ruta original + ancla de revisión):
 
 ### Lo que cubre esta tanda
 
-**Requisitos del plan (`plan:425`)**: «Orden único de precedencia entre guardas»
+**Requisitos del plan (`plan:164`)**: «Orden único de precedencia entre guardas»
 
 1. ✅ Declaración en spec del orden total A < B < C < D sobre cuatro escalones
 2. ✅ Aplicación a **dos puertas** (alta de ticket + executeTransition)
@@ -121,7 +121,7 @@ El `cierra` se sostiene por **decisión documentada de Gerencia** que aparece en
 - `openspec/config.yaml:1100-1113` (IV-12, entrada Anexo D)
 - `CLAUDE.md` (fila IV-12 de incumplimientos vivos)
 
-La palabra «cierra» afirma que la **fila del plan está terminada**, no que el defecto esté corregido. El defecto es IV-12 vivo, pero el plan (`plan:425`) pedía **un orden declarado**, y eso está hecho. El servidor lo impone en dos puertas. La tercera queda fuera por decisión operativa de alcance, registrada con dueño.
+La palabra «cierra» afirma que la **fila del plan está terminada**, no que el defecto esté corregido. El defecto es IV-12 vivo, pero el plan (`plan:164`) pedía **un orden declarado**, y eso está hecho. El servidor lo impone en dos puertas. La tercera queda fuera por decisión operativa de alcance, registrada con dueño.
 
 **IV-12 sigue VIVO. Archive NO lo cierra, NO le asigna épica.** No se edita `CLAUDE.md` ni `openspec/config.yaml` (IV-12).
 
@@ -141,18 +141,18 @@ openspec/changes/archive/2026-09-21-orden-precedencia-guardas/
 └── archive-report.md (this file)
 ```
 
-**Verificación de copia**: `diff -r` post-move vacío (comprobado contra snapshot pre-move)
+**Verificación de copia**: los OCHO blobs movidos son idénticos a los de `7bf0626`, comprobado fichero a fichero con `git rev-parse <rev>:<ruta>`
 
 ## Métricas y Presupuesto
 
 | Métrica | Valor |
 |---|---|
 | Techo aprobado (2026-09-21) | 6.200 líneas |
-| Medición medida anterior | 5.613 líneas |
-| Esta tanda (cifra reservada para oracle) | — líneas |
-| Margen disponible | — |
+| Medición previa (worktree desechable) | 5.613 líneas |
+| Esta tanda, `git diff --shortstat --no-renames 7bf0626 HEAD` | **5.481** líneas (2.874 + 2.607) |
+| Margen contra el techo | **719** líneas |
 
-**Nota**: El cierre de git diff para el ledger se mide DESPUÉS de este commit.
+**Nota**: el desglose medido es 4.902 el movimiento + 406 la fusión + 2 la cita + 171 este informe = 5.481. La previsión daba 5.613 porque reservaba 303 para el informe, que salió de 171. Con detección de renombrado el mismo cambio son 423 inserciones y 156 borrados: las 4.902 del `git mv` tienen carga de revisión CERO.
 
 ## Observaciones Finales
 
@@ -162,7 +162,7 @@ openspec/changes/archive/2026-09-21-orden-precedencia-guardas/
 
 3. **Deuda registrada**: IV-12 queda como punto abierto sin destino de EPG, para que lo asigne quien decida el alcance futuro de remisiones.
 
-4. **Merge success**: La fusión de dos deltas se hace sin conflictos. El script validado produce exactamente 6 líneas de traza (3 MODIFIED + 3 RENAMED+MODIFIED).
+4. **Merge success**: La fusión de dos deltas se hace sin conflictos. El script validado produce exactamente 6 líneas de traza (4 MODIFIED + 2 RENAMED+MODIFIED).
 
 5. **Task closure**: Todos los 44 tasks están marcados completados. Verify R2 valida que sí lo están.
 
