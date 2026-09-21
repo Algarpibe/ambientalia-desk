@@ -98,7 +98,7 @@ de la derivación. `:218` —una sola guarda, sin OV de por medio— sobrevive i
 > **When** se ejecuta `aprobacion`, cuyo único `from` es `Notificación cliente`
 > **Then** el servidor responde `409` y no escribe nada.
 
-### Requirement: 3.4 · La tercera puerta de la orden de venta · DECIDIDA, y se construye
+### Requirement: 3.4 · La tercera puerta de la orden de venta · **DECIDIDA, y se construye**
 
 > **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** Es el mismo defecto que
 > `remisiones` §5.1 y `tickets-core` §4.2, visto desde la tercera spec. El punto abierto nº 52 quedó
@@ -267,3 +267,8 @@ remisión.)
 - GIVEN una fecha inválida y un ticket sin serial en la misma petición de alta de remisión
 - WHEN se envía
 - THEN responde `422` de fecha inválida (escalón C) antes que la falta de serial (escalón A) — IV-12
+
+## RENAMED Requirements
+
+- FROM: ### Requirement: 3.8 · Dos inversiones de precedencia entre guardas · **destino REASIGNADO: fila que falta en el plan**
+- TO: ### Requirement: 3.8 · El orden único de precedencia entre guardas — cerrado en el motor por `orden-precedencia-guardas`

@@ -184,3 +184,8 @@ después de él y pasa a ir antes.)
 - WHEN se crea el ticket
 - THEN responde `422` (regla 2), aunque antes de la guarda equipo↔cliente el ticket se creaba en
   silencio con `client_id = "cli-B"`
+
+## RENAMED Requirements
+
+- FROM: ### Requirement: 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios
+- TO: ### Requirement: 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios — cerrada por `orden-precedencia-guardas`
