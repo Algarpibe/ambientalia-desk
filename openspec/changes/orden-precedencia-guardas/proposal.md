@@ -373,7 +373,7 @@ comprobado contra el fichero:
 
 - **Una sola cita viva se desplazó, y era de este mismo documento:** `rules.proposal` pasó de
   la línea 1189 a la 1260 (+71). Corregida en la cabecera, en la misma edición. Después, la fusión con F0-05 la llevó a `openspec/config.yaml:1500`.
-- **`CLAUDE.md:91` y `:104`** (→ `config.yaml:349`) y **`CLAUDE.md:474`** (→ `config.yaml:22-30`)
+- **`CLAUDE.md:91` y `:104`** (→ `config.yaml:407`) y **`CLAUDE.md:474`** (→ `config.yaml:22-30`)
   apuntan a líneas **anteriores** a la inserción: comprobado, no se mueven. *(El encargo las citaba
   como la línea 405; hoy es `:474` — fue la línea 414 cuando el párrafo del recuento añadió nueve líneas por encima, y la fusión de main con F0-05 la desplazó sesenta más.)*
 - **Las specs vivas** citan `config.yaml:72-77`, `:83-85`, `:87-89`, `:114-116`, `:117`, `:118-120`,

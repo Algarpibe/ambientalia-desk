@@ -88,20 +88,20 @@ justificación operativa tiene que ser el plan o una decisión de Gerencia, no e
 *Remedido el 2026-09-17, y la conclusión NO cambia: la marca no se propaga.* De las **147** citas
 `R08.1.md:NNNN` del repositorio —eran 109 el 2026-09-13— sigue cayendo sólo **una** dentro del §3.2:
 la de `openspec/specs/vistas-tablero/spec.md:9`, que apunta a `R08.1.md:2978` y ya lleva la marca
-escrita. Hay además **tres** menciones SIN línea (`ítem 22 del maestro` en `openspec/config.yaml:349`,
-`:557` y `:696`), y las tres usan el ítem exactamente como procedencia de `plan:163` para justificar
+escrita. Hay además **tres** menciones SIN línea (`ítem 22 del maestro` en `openspec/config.yaml:407`,
+`:626` y `:766`), y las tres usan el ítem exactamente como procedencia de `plan:163` para justificar
 destinos **ya cerrados** (IV-1, IV-5, IV-7 → F1B-08): no hay nada que corregir en ellas.
 
 ⚠️ Esas tres **no las caza** ni `grep -rn "Fuente en el maestro" openspec/specs` ni un barrido de
 `R08.1.md:[0-9]+`, porque no llevan número de línea. Hicieron falta **tres** detectores, que es el
 mismo molde de siempre: un detector que no caza todo lo que la afirmación abarca.
 
-*Y este mismo párrafo lo demostró otra vez al remedirlo:* decía `:519` y `:658`, y hoy son `:557` y
-`:696`. Dos de sus tres referencias se habían desfasado **sin que nada se pusiera rojo**, y las dos
+*Y este mismo párrafo lo demostró otra vez al remedirlo:* decía las líneas 519 y 658; pasaron a ser la 557 y la 696, y hoy, tras traer F0-05, son `:626` y
+`:766`. Dos de sus tres referencias se habían desfasado **sin que nada se pusiera rojo**, y las dos
 razones son las que esta sección ya tiene escritas, cada una en su sitio:
 
 1. **Son abreviadas**, y el detector no bloquea la forma abreviada (regla de mutación 4, último
-   guion). El `openspec/config.yaml:349` completo sí entra en el barrido —el patrón de
+   guion). El `openspec/config.yaml:407` completo sí entra en el barrido —el patrón de
    `apps/desk/server/citas/cosecha.ts:65` no exige extensión conocida, así que un `.yaml` se caza
    igual que un `.ts`—, pero `:557` y `:696` no llevan nombre de fichero y quedan en lectura humana.
 2. **Y aunque fueran completas, tampoco bastaría:** el detector comprueba que la línea EXISTA y no

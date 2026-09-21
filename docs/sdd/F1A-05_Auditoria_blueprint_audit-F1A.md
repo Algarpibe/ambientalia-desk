@@ -116,8 +116,8 @@ Verificado por búsqueda de `periodosDeBodegaje`, `diasDeBodegaje` y `marcaIngre
 compilando, y su riesgo es el contrario: envejece en silencio mientras nadie lo llama, y el día que
 alguien lo cablee puede llevar meses de deriva respecto al esquema que lee.
 
-**Quién lo cablea:** la capacidad **`kpis`** (`openspec/config.yaml:168`), fase 2. El propio
-`config.yaml:170-183` ya lo dejó registrado con las palabras exactas: «F1A-04 adelantó de esta
+**Quién lo cablea:** la capacidad **`kpis`** (`openspec/config.yaml:220`), fase 2. El propio
+`config.yaml:223-236` ya lo dejó registrado con las palabras exactas: «F1A-04 adelantó de esta
 capacidad la PIEZA DE DOMINIO de C9, y sólo ésa … LO QUE SIGUE EN FASE 2: los indicadores en sí. No
 hay módulo de KPIs ni pantalla, y el 48 y el 49 tienen su ancla pero no están calculados. La
 capacidad NO tiene spec y sigue debiéndose.»
@@ -218,7 +218,7 @@ F1A-05 **no toca código de producción**. Añade dos pruebas de caracterizació
 
 | Dónde | Qué dice | Por qué caducó | Acción |
 |---|---|---|---|
-| `openspec/config.yaml` · `coverage.available: false` | «`@vitest/coverage-v8` no está instalado; `vitest.config.ts` no declara sección coverage» | **La afirmación más caduca de las tres.** Era cierta al baseline `a3a8f03` (2026-08-20) y falsa desde `edbce13` (2026-09-08): el proveedor está en `package.json:55`, el script en `:22`, la sección en `vitest.config.ts:49-64` con cuatro umbrales, y el CI la ejecuta (`ci.yml:39`) | **Corregido** en esta tanda, con la medida de hoy |
+| `openspec/config.yaml` · `coverage.available: false` | «`@vitest/coverage-v8` no está instalado; `vitest.config.ts` no declara sección coverage» | **La afirmación más caduca de las tres.** Era cierta al baseline `a3a8f03` (2026-08-20) y falsa desde `edbce13` (2026-09-08): el proveedor está en `package.json:57`, el script en `:24`, la sección en `vitest.config.ts:49-64` con cuatro umbrales, y el CI la ejecuta (`ci.yml:45`) | **Corregido** en esta tanda, con la medida de hoy |
 | `openspec/config.yaml` · `quality_tools.linter` | «…; **sin `--max-warnings`**» | También falso desde `edbce13`: el CI corre `npm run lint -- --max-warnings 158` (`ci.yml:35`), un trinquete sin holgura. La cifra de avisos en sí **no** había caducado: siguen siendo 158 | **Corregido**, con el aviso de A-5 sobre medirlo en local |
 | `openspec/config.yaml` · `ci:` | «npm ci -> typecheck -> lint -> test -> build» | El paso es `test:coverage`, no `test`, y `lint` lleva techo | **Corregido** en esta tanda |
 | `openspec/specs/trazas/spec.md` §3.4 | «destino F1A-04 → F1C», y describe la vía preferida como leer la marca de `Ingreso a Servicio` | F1A-04 lo construyó, y **no así**: la R08 (`:1694`) sustituyó esa prescripción de la R05 por el par de campos `Fecha Orden De Venta − Fecha Remisión Entrada` (`bodegaje.ts:60-66`). La marca de `Ingreso a Servicio` quedó como ancla de los indicadores **48 y 49**, no del bodegaje de entrada | **Corregido** en esta tanda |

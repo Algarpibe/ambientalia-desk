@@ -86,7 +86,7 @@ frecuencia**, que es lo que decide si construir el generador merece una tanda o 
 congela como histórico. Eso es agenda de Gerencia, no de una tanda.
 
 Es la misma clase de premisa falsa del baseline que ya se corrigió en **F0-04** («F0-04 no
-crea la red de pruebas: la mide y la completa donde falta» — `openspec/changes/F0-04/proposal.md:18`).
+crea la red de pruebas: la mide y la completa donde falta» — `openspec/changes/F0-04/proposal.md:28`).
 La corrección queda registrada en `openspec/config.yaml`.
 ## 5 · Por qué se versiona pese al tamaño
 
