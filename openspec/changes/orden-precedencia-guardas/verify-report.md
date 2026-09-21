@@ -1,5 +1,121 @@
 ```yaml
 schema: gentle-ai.verify-result/v1
+evidence_revision: sha256:915ac0f340db6daacbca871eaa3d1d8551458a7e08c66f423b7504aa08035be0
+verdict: pass
+blockers: 0
+critical_findings: 0
+requirements: 6/6
+scenarios: 18/18
+test_command: npm test
+test_exit_code: 0
+test_output_hash: sha256:2a3257623647c4e1a023e2e1c400f779c5730daad3c56364f7d67bcfc2b4a12a
+build_command: npm run typecheck
+build_exit_code: 0
+build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e721545e547
+```
+
+## Verification Report -- R2 (reevaluacion)
+
+**Cambio**: orden-precedencia-guardas (F1B-10)
+**Version**: HEAD afa3efd0e533dafdd0d85acbafaaa3510e853b1a (worktree f1b-10-r1, arbol limpio)
+**Modo**: Strict TDD
+
+Segunda pasada de verify. La primera (commit 91d026f, conservada integra mas abajo) dio FAIL con 1
+CRITICAL y 4 WARNING. Entre medias corrieron dos commits: f337a96 (Fase 11 / Rebanada 3, cierra los
+cinco hallazgos) y afa3efd (repara una cita que la propia Fase 11 dejo mal apuntada). evidence_revision
+es sha256 de la salida de `git rev-parse HEAD`.
+
+### Completeness
+| Metrica | Valor |
+|---|---|
+| Tareas totales | 44 (37 de R1/R2 + 7 de la Fase 11) |
+| Tareas completas | 44 |
+| Tareas incompletas | 0 |
+
+Medido con `grep -c '^\- \[x\]'` y `'^\- \[ \]'` sobre tasks.md.
+
+### Build & Tests Execution
+
+`npm test` (unica ejecucion, sola, sin nada en paralelo) -- exit 0
+```text
+Test Files  128 passed | 1 skipped (129)
+     Tests  1183 passed | 2 skipped (1185)
+  Duration  84.52s
+```
+Sube de 1182 a 1183 respecto al informe R1: la unica prueba nueva es N5 (IV-12), y paso.
+
+`npm run typecheck` -- exit 0, sin salida (tsc -b y tsc -p apps/desk/tsconfig.server.json --noEmit).
+
+`npm run lint` -- exit 0, 158 problemas (0 errores, 158 warnings), misma cifra que R1. El unico
+warning de `remisiones.test.ts` (linea 713) es preexistente al cambio y esta fuera del bloque que N5
+anadio (N5 vive despues de la linea 1052; el fichero tiene 1108 lineas en total tras f337a96).
+
+### Escenario que causo el CRITICAL de R1
+
+| Escenario (transitions-st:266-269) | Test | Resultado hoy |
+|---|---|---|
+| El alta de remision no cumple el orden total (IV-12) | `remisiones.test.ts`, describe `IV-12 ...`, 1 `it` con DOS aserciones | COMPLIANT |
+
+Leida la prueba completa (commit f337a96): la primera asercion manda fecha invalida sobre un ticket
+sin equipo de catalogo y sin serial propio, y fija el MENSAJE concreto, `error === 'Fecha invalida'`
+-- no solo el status. La segunda, en la MISMA prueba, es el control de poblacion: el mismo ticket con
+fecha valida fija otro mensaje concreto, `/^Falta el serial del equipo/`. Sin la segunda, la primera
+no probaria que las DOS guardas estaban activas a la vez -- es exactamente el defecto que el CRITICAL
+de R1 diagnostico en `remisiones.test.ts:190` (unica peticion previa con fecha no-ISO, sobre un
+ticket que SI tenia serial). El rojo que la respalda es por MUTACION DE POSICION (intercambiar
+`routes/remision.ts:127` y `:152-157`, regla de mutacion 1 del CLAUDE.md), no artificial: exit 1 con
+las guardas cambiadas, exit 0 revertido (evidencia en el commit f337a96 y en apply-progress.md, Fase
+11).
+
+Produccion sin tocar: blob de `apps/desk/server/routes/remision.ts` en HEAD =
+`54fdbf9d5868e7fdfe6f3b332340ff3dc25863ca`, identico al de `91d026f`. Blob de
+`apps/desk/server/services/ticketService.ts` tambien identico entre HEAD y `91d026f`
+(`858d40a42bdbaeb878f89d58373d958f7bf18d19`), asi que el resto de la matriz de 18 escenarios (version
+completa conservada en el Informe R1 de abajo) no cambio: sigue COMPLIANT fila por fila. IV-12 pasa de
+UNTESTED a COMPLIANT. Compliance actualizado: **18/18 escenarios, 6/6 requisitos** (recontados con el
+mismo grep de R1 sobre `### Requirement:` y `#### Scenario:` de los dos deltas: 3+3 requisitos, 5+13
+escenarios).
+
+### Las cuatro WARNING de R1, una por una
+
+| # | Warning de R1 | Estado hoy | Evidencia |
+|---|---|---|---|
+| 1 | Tabla `TDD Cycle Evidence` de las Fases 1-6 se perdio al fusionar R1 con R2 | CERRADA | `apply-progress.md:22-37`, tabla restituida con la fila 11 (R3) anadida |
+| 2 | `apply-progress.md:6` autocitaba el commit R2 como `cc6aa1d` (huerfano, no ancestro de HEAD) | CERRADA | `apply-progress.md:6` dice hoy `7daedf4`; `git merge-base --is-ancestor cc6aa1d HEAD` sigue fallando, `7daedf4` si es ancestro de HEAD |
+| 3 | Las 9 citas de `tasks.md` 10.1 desfasadas +4/+5 lineas | CERRADA | Las 9 lineas de hoy (148,153,158,164,170,195,219,334,364) verificadas una a una: cada una es la cabecera `it(` real en `ticketService.test.ts`. La sexta se reapunto DOS VECES (primero a `:183`, un docblock, no un `it(`; corregida en `afa3efd` a `:195`) |
+| 4 | Engram (obs. 726, 701 lineas) y disco (474 lineas) en desacuerdo | CERRADA | Medido de nuevo: `git diff --shortstat --no-renames 3f2bb7c 7daedf4` = 519; `... a756d74 7daedf4` = 705. Disco (`apply-progress.md`) y Engram (obs. 726, ya actualizada con nota "CORREGIDO en R3") dicen los dos 519/705 |
+
+### Tabla de los cinco hallazgos de R1
+
+| Hallazgo | Estado hoy | Evidencia |
+|---|---|---|
+| CRITICAL -- escenario IV-12 sin prueba | CERRADO | N5 en `remisiones.test.ts` (commit f337a96), ver arriba |
+| WARNING-1 -- tabla TDD incompleta | CERRADO | `apply-progress.md:22-37` |
+| WARNING-2 -- cita de commit R2 rota | CERRADO | `apply-progress.md:6` |
+| WARNING-3 -- deriva de linea en `tasks.md` 10.1 | CERRADO | `tasks.md:178-186`, verificado linea a linea contra `ticketService.test.ts` |
+| WARNING-4 -- Engram vs disco | CERRADO | 519/705 medido hoy, coincide en las dos copias |
+
+### Issues Found
+
+CRITICAL: Ninguno.
+WARNING: Ninguno.
+SUGGESTION: Ninguna.
+
+### Verdict
+PASS. Los cinco hallazgos de R1 (1 CRITICAL, 4 WARNING) estan cerrados con evidencia de disco
+verificada hoy, sin tocar codigo de produccion (`remision.ts` y `ticketService.ts` con el mismo blob
+que en `91d026f`): 44/44 tareas completas, 1183/1185 pruebas en verde (`npm test` exit 0), typecheck y
+lint limpios (exit 0 los dos, 158 warnings preexistentes), y el escenario formal de IV-12 tiene ahora
+una prueba que fija el mensaje de las dos guardas en competencia, con su control de poblacion.
+
+## Informe R1 (91d026f) -- CONSERVADO, no reescrito
+
+Informe original de la primera pasada de verify, integro y sin renumerar. Es un registro fechado
+(Caso B de la regla de mutacion 4 del CLAUDE.md): su veredicto FAIL y su bloque YAML ya NO son el
+contrato vigente del cambio -- el vigente es el bloque de arriba.
+
+```yaml
+schema: gentle-ai.verify-result/v1
 evidence_revision: sha256:41c3cd92e6228f7ea0b54a68151f04600079cabac8ceec6d8ad3b38537c6cb36
 verdict: fail
 blockers: 1
