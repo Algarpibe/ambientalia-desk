@@ -176,8 +176,14 @@ reescritos (Fases 2, 5) alteran el conteo.
 ## Phase 10 · Verificación final — Rebanada 2
 
 - [x] 10.1 `npm test` completo en verde: **1136 passed, 2 skipped** (122/123 ficheros), incluidas las 9
-  pruebas que quedan INTACTAS de `apps/desk/server/services/ticketService.test.ts` (`:148`, `:153`, `:158`, `:164`, `:170`, `:183`, `:219`, `:334`, `:364`, reapuntadas en R3 leyendo el nombre de cada `it(`: el desplazamiento NO es uniforme, va de −11 a +21)
+  pruebas que quedan INTACTAS de `apps/desk/server/services/ticketService.test.ts` (`:148`, `:153`, `:158`, `:164`, `:170`, `:195`, `:219`, `:334`, `:364`, reapuntadas en R3 leyendo el nombre de cada `it(`: el desplazamiento NO es uniforme, va de −11 a +21)
   y `remisiones.test.ts:957`, ninguna tocada.
+  **Reapuntada la sexta el 2026-09-21**: de esas nueve, la sexta apuntaba a la línea 183, que es el
+  docblock que reproduce el título de la prueba, no su cabecera; el `it(` está en
+  `apps/desk/server/services/ticketService.test.ts:195`. Caso A. El método de R3 falló porque ese
+  título aparece DOS VECES en el fichero y la búsqueda por nombre encuentra antes el comentario; para
+  las otras ocho no pasaba. Al barrer citas a un fichero de pruebas, ancla la búsqueda a la
+  cabecera `it(` al principio de línea, no al título suelto.
 - [x] 10.2 `npm run typecheck` en verde (sin salida).
 - [x] 10.3 `npm run lint` en verde — 0 errores, 158 warnings preexistentes (mismo recuento que R1,
   ninguno en ficheros tocados).
