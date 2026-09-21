@@ -111,38 +111,65 @@ libre (`ticketService.ts:22-25`: `422 'Falta el equipo'` y `422 'Equipo no regis
 ### RQ-TC-05 · Orden de las guardas del alta, y qué contesta cada una
 
 `POST /api/tickets` (`routes/tickets.ts:124-126`) **SHALL** exigir sesión (`:35`) y **SHALL** aplicar
-las guardas de `createManagedTicket` (`ticketService.ts:20-105`) **en este orden**, que es observable:
+las guardas de `createManagedTicket` (`ticketService.ts:20-105`) **en este orden**, el que exige el
+orden total de precedencia (`transitions-st` §3.8):
 
-| Orden | Guarda | Respuesta | Evidencia |
-|---|---|---|---|
-| 1 | Falta el equipo | `422 'Falta el equipo'` | `ticketService.ts:22-23` |
-| 2 | El equipo no está en el catálogo | `422 'Equipo no registrado'` | `:24-25` |
-| 3 | La orden de venta no existe en Books | `422 'Orden de venta no encontrada'` | `:35-37` |
-| 4 | La orden de venta ya está asociada a otro ticket | `409` | `:45-49` |
-| 5 | Discrepancia equipo↔cliente (nueva) | `422`, nombrando al cliente del equipo | `:65-83` |
-| 6 | Faltan obligatorios (cliente, tipo de servicio, clasificaciones, prefijo) | `422`, con **todos** en una lista | `:87-92` |
-| 7 | El cliente no existe en Books | `422 'Cliente no encontrado'` | `:93-94` |
+| Orden | Guarda | Escalón | Respuesta | Evidencia |
+|---|---|---|---|---|
+| 1 | Falta el equipo | A | `422 'Falta el equipo'` | `ticketService.ts:22-23` |
+| 2 | El equipo no está en el catálogo | A | `422 'Equipo no registrado'` | `:24-25` |
+| 3 | La orden de venta no existe en Books | A | `422 'Orden de venta no encontrada'` | `:35-37` |
+| 4 | Discrepancia equipo↔cliente | C | `422`, nombrando al cliente del equipo | `:65-83` |
+| 5 | Faltan obligatorios (cliente, tipo de servicio, clasificaciones, prefijo) | C | `422`, con **todos** en una lista | `:87-92` |
+| 6 | El cliente no existe en Books | C | `422 'Cliente no encontrado'` | `:93-94` |
+| 7 | La orden de venta ya está asociada a otro ticket | D | `409` | `:45-49` (movida detrás de la guarda 6) |
 
-- El `422` de obligatorios **SHALL** listar **todos** los que faltan y no de uno en uno
-  (probado en `services/ticketService.test.ts:278`).
+- El `422` de obligatorios **SHALL** listar **todos** los que faltan y no de uno en uno (probado en
+  `services/ticketService.test.ts:273` en `ad65161`).
 - El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:91`).
-- **El orden 4 antes que 6 sigue siendo la inversión de precedencia conocida** respecto de
-  `executeTransition` (`tickets-core` §4.1, `transitions-st` §3.8); esta tanda no la toca.
-- La guarda 5 **SHALL** ejecutarse inmediatamente después del `409` de la orden de venta —que puede
-  completar `clientId` cuando el cuerpo no lo trae (`:39`)— y antes de las guardas 6 y 7.
+- El `409` de unicidad de la OV **SHALL** ser la **última** guarda antes de la primera escritura
+  (`createTicket`, `:97`): cumple el orden total A/B/C/D de `transitions-st` §3.8.
+- La guarda equipo↔cliente **SHALL** ejecutarse inmediatamente después de la existencia de la orden de
+  venta en Books (`:37`) —que puede completar `clientId` cuando el cuerpo no lo trae (`:39`)— y antes
+  de los obligatorios, del cliente y del `409` de unicidad.
 
-(Previously: dos correcciones distintas, no una. **(a) Citas.** Cinco números de línea desactualizados
-por el desplazamiento que introdujo la guarda equipo↔cliente en `9ed5635` —la cabecera, las filas 6 y
-7, y dos de las cuatro viñetas—. **(b) Orden.** Las filas 4 y 5 estaban invertidas: el código ejecuta
-primero el `409` de la OV (`:48`) y después la discrepancia equipo↔cliente (`:82`), no al revés; se
-renumeran para que el orden numerado sea el que el código ejecuta. **Esto no reabre el punto abierto
-§4.1** —que pregunta qué orden DEBERÍA existir entre el `409` y el `422` de obligatorios, y sigue sin
-decidirse—: sólo corrige una descripción errónea del orden que ya existe.)
+(Previously: dos correcciones de citas por el desplazamiento de `9ed5635`, y las filas 4/5 —OV ya usada
+antes que la discrepancia equipo↔cliente— en el orden que el código todavía ejecutaba.
+`orden-precedencia-guardas` mueve el `409` de la OV al final: deja de ser la guarda 4 y pasa a ser la
+7.)
 
 #### Scenario: El alta sin discrepancia no cambia
 - GIVEN un alta sin equipo con `clientId` propio, o con `clientId` igual al del equipo
 - WHEN se crea el ticket
 - THEN responde `201` y el comportamiento es idéntico al de hoy
+
+#### Scenario: La orden de venta ya usada deja de ganar a los obligatorios que faltan
+- GIVEN un alta con los obligatorios sin completar y una orden de venta ya asociada a otro ticket
+- WHEN se crea el ticket
+- THEN responde `422` (obligatorios, escalón C) y no `409` (OV, escalón D)
+
+#### Scenario: La orden de venta ya usada deja de ganar al cliente no encontrado
+- GIVEN un alta cuyo `clientId` no existe en Books y cuya orden de venta ya está asociada a otro
+  ticket
+- WHEN se crea el ticket
+- THEN responde `422` (`'Cliente no encontrado'`, escalón C) y no `409` (OV, escalón D)
+
+#### Scenario: La discrepancia equipo↔cliente gana a la orden de venta ya usada
+- GIVEN un alta cuyo equipo es de un cliente distinto del solicitado, y cuya orden de venta ya está
+  asociada a otro ticket
+- WHEN se crea el ticket
+- THEN responde `422` (equipo↔cliente, escalón C) y no `409` (OV, escalón D)
+
+#### Scenario: Dentro del escalón C, la discrepancia equipo↔cliente se resuelve antes de contar los obligatorios
+- GIVEN un alta sin `clientId` propio, con un equipo cuyo `clientId` sí resuelve al cliente correcto,
+  y con los demás obligatorios sin completar
+- WHEN se crea el ticket
+- THEN responde `422` listando los obligatorios que faltan, sin incluir «cliente» entre ellos
+
+**Bajo `strict_tdd`:** la prueba de «equipo↔cliente gana a la OV ya usada» nace **roja de forma
+natural** —hoy el código contesta `409`—; la de «equipo↔cliente gana a los obligatorios» nace **verde**
+—el código ya la cumple— y su rojo se obtiene **por mutación**: invertir el orden de las dos guardas,
+correr la suite, confirmar el rojo, revertir.
 
 ### RQ-TC-06 · El alta es atómica y deja dos filas
 
@@ -259,24 +286,29 @@ antes de crear el ticket (`:97`), el sistema **SHALL** comparar ese `clientId` f
    y ocultar el id ahí ocultaría justo el caso que hace falta distinguir.
    - Si `equipo.clienteNombre` es nulo, el lado del equipo **SHALL** mostrar sólo el id, con la nota
      «sin nombre en el equipo».
-   - Si `getClient(db, clientId)` devuelve `null` —alcanzable, porque «Cliente no encontrado» es guarda
-     posterior (`:94`)— el lado solicitado **SHALL** mostrar sólo el id, con la nota «sin ficha en
-     Books» (`books/repo.ts:129-131`).
+   - Si `getClient(db, clientId)` devuelve `null` —alcanzable, porque «Cliente no encontrado» es
+     guarda posterior (`:94`)— el lado solicitado **SHALL** mostrar sólo el id, con la nota «sin
+     ficha en Books» (`books/repo.ts:129-131`).
 3. Si `equipo.clientId` es `NULL`, el sistema **MUST NOT** alterar comportamiento existente (protege
    al ~3,4 % de equipos sin enlazar); esta rama **SHALL** quedar fuera de la comparación del punto 2.
 
-La posición de la guarda —tras el `409` de la OV (`:45-49`) y antes de los obligatorios
-(`:87-92`)— y el `422` **SHALL** seguir igual.
+La posición de la guarda —tras la existencia de la orden de venta en Books (`:37`) y antes de los
+obligatorios (`:87-92`)— y el `422` **SHALL** seguir igual. El `409` de unicidad de la orden de
+venta —antes en `:45-49`, inmediatamente antes de esta guarda— pasa a evaluarse **después** de los
+obligatorios y del cliente, como última guarda del alta (`transitions-st` §3.8; `RQ-TC-05`): la
+posición RELATIVA de esta guarda frente al `409` de unicidad se invierte; frente a los obligatorios no
+cambia.
 
 La severidad es de **integridad de datos, no de autorización**: `tickets.client_id` no autoriza nada,
 sólo resuelve el nombre a mostrar (`tickets-core` RQ-TC-12).
 
 **Consecuencia declarada.** El `clientId` final puede venir de la orden de venta y no sólo del cuerpo
-(`:39`): un ticket cuya OV es de un cliente distinto del equipo pasa a dar `422` donde hoy crea el
-ticket en silencio. Toca el punto abierto nº 52 del maestro (`R08.1.md:2071-2079`) y amplía el alcance
-que la propuesta fijó en su §3; se declara como decisión explícita.
+(`:39`): un ticket cuya OV es de un cliente distinto del equipo pasa a dar `422` donde antes creaba el
+ticket en silencio. Toca el punto abierto nº 52 del maestro (`R08.1.md:2071-2079`).
 
-(Previously: el mensaje sólo nombraba al cliente del equipo, sin id ni identificar al solicitado.)
+(Previously: «tras el `409` de la OV (`:45-49`) y antes de los obligatorios (`:87-92`)».
+`orden-precedencia-guardas` mueve el `409` de la OV al final del alta, así que esta guarda deja de ir
+después de él y pasa a ir antes.)
 
 #### Scenario: El equipo manda cuando el cuerpo no trae cliente
 - GIVEN un alta sin `clientId`, con equipo `equipo.clientId = "cli-A"`
@@ -320,7 +352,8 @@ que la propuesta fijó en su §3; se declara como decisión explícita.
 #### Scenario: La orden de venta manda sobre el equipo cuando el cuerpo calla
 - GIVEN sin `clientId` en el cuerpo, OV cuyo cliente es `"cli-B"`, y equipo `equipo.clientId = "cli-A"`
 - WHEN se crea el ticket
-- THEN responde `422` (regla 2), aunque hoy el ticket se crea en silencio con `client_id = "cli-B"`
+- THEN responde `422` (regla 2), aunque antes de la guarda equipo↔cliente el ticket se creaba en
+  silencio con `client_id = "cli-B"`
 
 ### RQ-TC-14 · Resolución de cliente por identidad
 
@@ -350,56 +383,28 @@ que la propuesta fijó en su §3; se declara como decisión explícita.
 *(La numeración de esta sección va aparte de la de requisitos: aquí se registra lo que hay, no lo que
 debe haber.)*
 
-### 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios
+### 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios — cerrada por `orden-precedencia-guardas`
 
-> **⚠️ REASIGNADO EL 2026-09-09.** Decía «destino F1A» y F1A cerró sin tocarlo: `ticketService.ts:43-49`
-> sigue evaluando el `409` antes del `422`. **No hay tanda en el plan que lo cubra** —
-> `grep -niE "guarda|precedenc|409|422"` sobre el plan entero devuelve cero filas sobre esta
-> precedencia— es una fila que falta, redactada como entrada **5.a** de
-> `docs/sdd/F0-01_Correcciones_para_el_plan.md`.
->
-> Va con `transitions-st` §3.8, que **son DOS inversiones, no una**: (a) esta misma — el `409` de la
-> OV contra el `422` de obligatorios, en órdenes opuestos entre el alta y `habilitar_servicio` — y (b)
-> el `409` de estado antes del `403` de área, sólo en `executeTransition`. Corregir una sin la otra
-> deja el problema (`transitions-st` §3.8).
+**Cerrado.** El `409` de unicidad de la orden de venta deja de ganar en el alta: pasa a ser la
+**última** guarda antes de la primera escritura (`ticketService.ts:97`), detrás de las guardas de
+contenido — igual que en `habilitar_servicio`. Las dos puertas de la misma regla evalúan ahora en el
+**mismo** orden (`transitions-st` §3.8(a)).
 
-> ✅ **CERRADO por `orden-precedencia-guardas` (F1B-10), 2026-09-17.** El plan SÍ tiene ya la fila que
-> faltaba: es esta misma tanda. El `409` de la OV deja de ganar al `422` de obligatorios en el alta —el
-> orden A/B/C/D se aplica también aquí (commit `ccedf4f`, `ticketService.ts`, pruebas de posición N1/N2
-> en `ticketService.test.ts`)—, la misma regla que cierra `transitions-st` §3.8(a). El párrafo de abajo
-> queda como registro histórico del estado ANTES de F1B-10 (Caso C, `CLAUDE.md` regla de mutación 4);
-> el `SHALL` normativo definitivo sustituye esta sección cuando `sdd-archive` funda el delta de
-> `openspec/changes/orden-precedencia-guardas/specs/tickets-core/spec.md`.
+**Talla, contada de nuevo.** De las 12 pruebas de precedencia cambian **3**:
+`ticketService.test.ts:327`, `:336` (el error doble ya no lo gana la OV) y `:205` (par distinto, la
+OV frente a la derivación, cerrado en `executeTransition` por obs. #702). Las otras **9**, más
+`remisiones.test.ts:957`, quedan intactas.
 
-**Comportamiento actual. Sin tanda: falta una fila en el plan (entrada 5.a del fichero de
-correcciones).** En el alta, el `409` de la orden de venta gana al `422` de obligatorios
-(`ticketService.ts:43-49` antes de `:81-86`; fijado en `services/ticketService.test.ts:327`). En
-`habilitar_servicio` es al revés (`ticketService.test.ts:194`). **Las dos puertas de la misma regla
-evalúan en órdenes opuestos** (`ticketService.test.ts:302-314` en `60f03ae`).
+(Previously: «Sin tanda: falta una fila en el plan», con la talla contada en «6 de 12» bajo un orden
+natural que nunca llegó a aplicarse. `orden-precedencia-guardas` es esa fila, y la cifra real,
+verificada contra el cambio efectivamente aplicado, es 3.)
 
-**Talla cuantificada, no prometida.** Hay **12** pruebas de precedencia
-(`services/ticketService.test.ts:143` y `:315`, un `describe` por endpoint). `:194` («los obligatorios
-que faltan ganan a la orden de venta ya usada: 422, no 409») y `:327` («la orden de venta ya usada
-gana a los obligatorios que faltan: 409, no 422») son **títulos opuestos literales, las dos en
-verde**: una cambia sí o sí. Bajo el orden natural cambian **6 de 12**
-(`:154`, `:160`, `:166`, `:205`, `:327`, `:336`), y tres de ellas alteran **qué error ve el usuario**,
-no sólo el código de estado.
-
-Detalle completo, con la segunda inversión hermana, en `transitions-st` §3.8. **Corregir una sin la
-otra deja el problema.**
-
-(Previously: citaba la segunda inversión sin declarar que eran dos, sin la talla cuantificada de las
-12 pruebas y sin el resultado del `grep` sobre el plan. Y encabezaba con «Comportamiento actual, a
-corregir en F1A» —épica cerrada— con las diez citas de línea de antes de `9ed5635`: fundir este delta
-habría devuelto a la spec principal el destino muerto que `0a2c4ff` ya le había quitado.)
-
-#### Scenario: El mismo error doble responde distinto según la puerta de entrada
-
+#### Scenario: El mismo error doble responde igual en las dos puertas del motor
 - GIVEN un ticket con obligatorios sin completar y una orden de venta ya usada por otro ticket
 - WHEN se manda por `POST /api/tickets`
-- THEN responde `409` (la orden de venta gana)
+- THEN responde `422` (los obligatorios ganan)
 - WHEN el mismo error doble se manda por `habilitar_servicio`
-- THEN responde `422` (los obligatorios ganan) — el mismo par de errores, dos resultados
+- THEN responde también `422` — el mismo par de errores, el mismo resultado en las dos puertas
 
 ### 4.2 · La tercera puerta de la orden de venta: DECIDIDA, y se construye
 

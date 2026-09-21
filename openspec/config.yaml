@@ -1345,7 +1345,7 @@ decisiones_de_gerencia:
       «Levanto el veto.»
     consecuencias: >
       LA PREMISA CADUCÓ, Y ÉSA ES LA RAZÓN: no que el veto estorbe. El veto se redactó en
-      `openspec/changes/orden-precedencia-guardas/design.md` y su texto condiciona el veto a que el
+      `openspec/changes/orden-precedencia-guardas/design.md` en `7bf0626` y su texto condiciona el veto a que el
       fichero esté modificado en local. MEDIDO EL 2026-09-20: `git status --porcelain` sobre ese
       fichero sale VACÍO en los CUATRO árboles de trabajo —main, `f0-05-r2`, `f1b-10-r1` y
       `f0-05-r1`—, y desde que se escribió el veto se commiteó DOS veces: `ce93480` (17/09) y
