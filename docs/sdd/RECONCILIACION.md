@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `b03282b` · **Fecha del commit:** 2026-09-20
+**Commit medido:** `054b02b` · **Fecha del commit:** 2026-09-21
 **Árbol de trabajo:** limpio
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -11,7 +11,7 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 ## 1 · Capacidades declaradas frente a specs en disco
 
   18 declaradas
-  9 ficheros
+  10 ficheros
   0 huérfanas
 
 ## 2 · Numerador del avance — dos cifras, nunca una suma
