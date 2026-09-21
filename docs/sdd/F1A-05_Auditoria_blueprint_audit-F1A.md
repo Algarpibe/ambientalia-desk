@@ -116,8 +116,8 @@ Verificado por búsqueda de `periodosDeBodegaje`, `diasDeBodegaje` y `marcaIngre
 compilando, y su riesgo es el contrario: envejece en silencio mientras nadie lo llama, y el día que
 alguien lo cablee puede llevar meses de deriva respecto al esquema que lee.
 
-**Quién lo cablea:** la capacidad **`kpis`** (`openspec/config.yaml:220`), fase 2. El propio
-`config.yaml:223-236` ya lo dejó registrado con las palabras exactas: «F1A-04 adelantó de esta
+**Quién lo cablea:** la capacidad **`kpis`** (`openspec/config.yaml:225`), fase 2. El propio
+`config.yaml:228-241` ya lo dejó registrado con las palabras exactas: «F1A-04 adelantó de esta
 capacidad la PIEZA DE DOMINIO de C9, y sólo ésa … LO QUE SIGUE EN FASE 2: los indicadores en sí. No
 hay módulo de KPIs ni pantalla, y el 48 y el 49 tienen su ancla pero no están calculados. La
 capacidad NO tiene spec y sigue debiéndose.»
