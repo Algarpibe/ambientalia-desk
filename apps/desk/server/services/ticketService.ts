@@ -3,8 +3,8 @@ import { getTicketWithRefs, createTicket, applyTransition, ticketConOrdenVenta }
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'
-import { buildSubject, buildCodigoServicio, PREFIJOS } from '@ambientalia/shared'
-import { transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambientalia/shared'
+import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
 import { areasAAvisar, textoAvisoArea } from './avisoArea'
@@ -127,9 +127,9 @@ export async function executeTransition(
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
   }
-  const values = (b.values ?? {}) as Record<string, unknown>
+  const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, b.values)
   const plan = buildTransitionPlan(t, values)
-  if (plan.errors.length) throw new HttpError(422, { errors: plan.errors })
+  if (plan.errors.length || erroresFecha.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha] })
   // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
   // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
   // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.

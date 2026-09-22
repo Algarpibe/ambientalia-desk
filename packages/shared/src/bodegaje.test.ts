@@ -407,3 +407,26 @@ describe('F1A-05 · auditoría: la rama de aprobación sin repuestos no cierra e
     expect(escriben).not.toContain('aprobacion')
   })
 })
+
+/**
+ * F1A-07 · IV-2 — `dia()` consume la fórmula compartida `diaEnZona` (P-3, `design.md` §6.1).
+ *
+ * Antes `dia()` usaba `toISOString().slice(0, 10)`, día UTC puro. Un instante en la ventana
+ * 00:00–04:59 UTC cae en el día ANTERIOR en Bogotá (`ZONA_NEGOCIO`, `RQ-TZ-13`), y ese es el caso que
+ * esta prueba fija: ninguna otra prueba de este fichero lee un instante con `dia()` — todos sus
+ * valores son `YYYY-MM-DD` o `'sin fecha'` (medido) — así que este es el primer caso real.
+ */
+describe('F1A-07 · IV-2 — dia() consume diaEnZona, no el día UTC', () => {
+  const paso = (transitionId: string, performedAt: string, values: Record<string, unknown> = {}): PasoDelHistorial =>
+    ({ transitionId, performedAt, values })
+
+  it('21 · un instante en la ventana 00:00–04:59 UTC abre el periodo en el día de Bogotá, no en el UTC', () => {
+    const historial = [
+      paso('ingreso_a_servicio', '2026-02-01T10:00:00Z', { 'Fecha Remisión Entrada': '2026-02-02T02:00:00Z' }),
+      paso('aprobacion_y_repuestos', '2026-02-09T10:00:00Z', { 'Fecha Orden De Venta': '2026-02-09' }),
+    ]
+    expect(periodosDeBodegaje(historial)).toEqual([
+      { clase: 'entrada', desde: '2026-02-01', hasta: '2026-02-09', dias: 8 },
+    ])
+  })
+})

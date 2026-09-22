@@ -36,23 +36,23 @@ Chain strategy: pending
 
 ### Fase A.1 — `packages/shared/src/fechasDerivadas.ts` (nuevo)
 
-- [ ] A.1.1 **RED (esqueleto).** Crear el fichero con las firmas exportadas de `design.md` §4.1
+- [x] A.1.1 **RED (esqueleto).** Crear el fichero con las firmas exportadas de `design.md` §4.1
   (`ZONA_NEGOCIO`, `FUENTE_DE_FECHA`, `EtiquetaFechaDerivada`, `FuenteDeFecha`, `FuentesDeFechas`,
   `diaEnZona`, `fechasDerivadas`, `fuentesQueNecesita`, `valoresEfectivos`), cada cuerpo devolviendo un
   valor trivialmente incorrecto (`null`, `{}`, `new Set()`) para que compile sin `any` (~35 líneas).
-- [ ] A.1.2 **RED (prueba).** Crear `fechasDerivadas.test.ts`: las **cinco ramas** de `diaEnZona` (A-5:
+- [x] A.1.2 **RED (prueba).** Crear `fechasDerivadas.test.ts`: las **cinco ramas** de `diaEnZona` (A-5:
   `YYYY-MM-DD` real; `YYYY-MM-DD` irreal; instante con `Z`/`±hh:mm` o `Date`; fecha-hora sin
   desplazamiento; valor ilegible); `fechasDerivadas` (las tres fuentes); `valoresEfectivos` (D-1
   recalcula siempre, D-3 mensaje `Fecha inválida en el campo: <label>`, P-2 filtra las tres etiquetas)
   (~90 líneas). Correr `npx vitest run packages/shared/src/fechasDerivadas.test.ts`; confirmar rojo
   **por aserción** (p. ej. `expected '2026-09-09' to be null`), nunca por `Cannot find module`; registrar
   la salida exacta en `apply-progress.md`.
-- [ ] A.1.3 **GREEN.** Implementar la lógica real: `diaEnZona` con `Intl.DateTimeFormat('en-US', {
+- [x] A.1.3 **GREEN.** Implementar la lógica real: `diaEnZona` con `Intl.DateTimeFormat('en-US', {
   timeZone: ZONA_NEGOCIO, … })` construido **una vez** a nivel de módulo (A-7) y `formatToParts`;
   `fechasDerivadas`/`fuentesQueNecesita`/`valoresEfectivos` por §4.1 (~75 líneas netas sobre el
   esqueleto).
-- [ ] A.1.4 Correr la prueba de A.1.2, confirmar verde.
-- [ ] A.1.5 **GREEN (demostración de zona, criterios 6-7).** Añadir a `fechasDerivadas.test.ts` un
+- [x] A.1.4 Correr la prueba de A.1.2, confirmar verde.
+- [x] A.1.5 **GREEN (demostración de zona, criterios 6-7).** Añadir a `fechasDerivadas.test.ts` un
   bloque `describe.each(['UTC', 'America/Bogota'])` para el caso `2026-09-10T00:30:00Z` → `2026-09-09`,
   con las **tres condiciones del analista** (obs. #846): (1) autocomprobación propia por bloque —
   `new Date('2026-09-10').getDate()` vale `9` en Bogotá y `10` en UTC —; (2) `vi.stubEnv('TZ', zona)` en
@@ -60,23 +60,23 @@ Chain strategy: pending
   salir aquí —el módulo ya está en verde—: la da la mutación **A.5.5** (la noción vieja de `diaLocal`),
   con comando y salida en `apply-progress.md` (~35 líneas). Correr
   `npx vitest run packages/shared/src/fechasDerivadas.test.ts -t zona`, confirmar verde en los dos bloques.
-- [ ] A.1.6 Añadir `export * from './fechasDerivadas'` como `packages/shared/src/index.ts:17` (+1 línea).
+- [x] A.1.6 Añadir `export * from './fechasDerivadas'` como `packages/shared/src/index.ts:17` (+1 línea).
 
 ### Fase A.2 — `packages/shared/src/bodegaje.ts` consume `diaEnZona` (P-3, A-9)
 
-- [ ] A.2.1 **RED.** Añadir al final de `bodegaje.test.ts` el caso de `design.md` §6.1: `'Fecha Remisión
+- [x] A.2.1 **RED.** Añadir al final de `bodegaje.test.ts` el caso de `design.md` §6.1: `'Fecha Remisión
   Entrada': '2026-02-02T02:00:00Z'` abre el periodo `2026-02-01` vía `periodosDeBodegaje` (con su
   `paso()`) (~18 líneas). Correr `npx vitest run packages/shared/src/bodegaje.test.ts`, confirmar rojo por
   aserción (`2026-02-02` en vez de `2026-02-01`, día UTC de `toISOString().slice(0,10)`).
-- [ ] A.2.2 **GREEN, en sitio (A-9).** `bodegaje.ts:19` (línea en blanco) pasa a
+- [x] A.2.2 **GREEN, en sitio (A-9).** `bodegaje.ts:19` (línea en blanco) pasa a
   `import { diaEnZona } from './fechasDerivadas'`; `bodegaje.ts:129-132` pasan a dos líneas de comentario
   citando `RQ-TZ-13` + `return diaEnZona(valor)`, borrando el cuerpo viejo de `dia()` (~8 líneas, neto 0
   en el fichero: la cabecera `:1-18` y el resto no se tocan).
-- [ ] A.2.3 Correr la prueba, confirmar verde.
+- [x] A.2.3 Correr la prueba, confirmar verde.
 
 ### Fase A.3 — `valoresDeTransicion.test.ts`: RED contra el `executeTransition` de HOY
 
-- [ ] A.3.1 **RED.** Crear `apps/desk/server/services/valoresDeTransicion.test.ts` con `instalarArnes()`
+- [x] A.3.1 **RED.** Crear `apps/desk/server/services/valoresDeTransicion.test.ts` con `instalarArnes()`
   y `db` (`appHarness.ts:25`, `:34-40`), montaje de precedente leído (§6.1 del diseño: `created_time`
   literal, `INSERT INTO remisiones (…)`, `INSERT INTO ticket_transitions (…, performed_at)`), llamando a
   `executeTransition` **directo**, sin importar el módulo nuevo (aún no existe). Cubrir los **cinco
@@ -87,31 +87,31 @@ Chain strategy: pending
   reciente, tal cual; (3) con fuente y sin mandar las fechas → `200`; (4) sin fuente: `2026-02-28` pasa,
   `2026-02-30`/`10/09/2026`/`2026-09-10T00:30` → `422` con el mensaje; (5) P-2: `Fecha Remisión Entrada`
   enviada en `escalado_a_revision` y en `reporte_por_garantia` no llega al historial (~130 líneas).
-- [ ] A.3.2 **RED — posición (regla de mutación 1, casos naturales).** Añadir **P-a**: `ingreso_a_servicio`
+- [x] A.3.2 **RED — posición (regla de mutación 1, casos naturales).** Añadir **P-a**: `ingreso_a_servicio`
   sin remisión, `Fecha Remisión Entrada: '2026-02-30'` **y** `derivado_a: 'no-existe'` → `errors =
   ['Fecha inválida en el campo: Fecha Remisión Entrada']` (sin el error de derivación). **P-b**: lo mismo
   sin `Código Servicio` → `errors = ['Falta el campo obligatorio: Código Servicio', 'Fecha inválida en el
   campo: Fecha Remisión Entrada']`, en ese orden exacto (~25 líneas).
-- [ ] A.3.3 Correr `npx vitest run apps/desk/server/services/valoresDeTransicion.test.ts`, confirmar rojo
+- [x] A.3.3 Correr `npx vitest run apps/desk/server/services/valoresDeTransicion.test.ts`, confirmar rojo
   **por aserción contra el código de hoy** en los 5 criterios y en P-a/P-b (el servidor de hoy no deriva
   nada); registrar cada salida exacta en `apply-progress.md`. **Excepción declarada:** en el criterio 4,
   `2026-02-28` sin fuente ya pasa hoy; ese caso nace VERDE y se registra como no regresión, no como rojo.
 
 ### Fase A.4 — GREEN: módulo servidor + `ticketService.ts` en sitio
 
-- [ ] A.4.1 Crear `apps/desk/server/services/valoresDeTransicion.ts` (`design.md` §4.2):
+- [x] A.4.1 Crear `apps/desk/server/services/valoresDeTransicion.ts` (`design.md` §4.2):
   `valoresConFechasDerivadas(db, current, t, recibidos)` — `fuentesQueNecesita(t)` vacío →
   `valoresEfectivos(t, recibidos, {})` sin consultas; si no, `iso(current.row.created_time)`,
   `listRemisionesByTicket` (`remisiones.ts:76-79`) si pide `remisionEntrada`,
   `instanteUltimaTransicion(db, id, 'escalado_a_revision')` (`fechasTicket.ts:22-35`) si pide
   `escaladoARevisionAt` (~35 líneas).
-- [ ] A.4.2 Editar `apps/desk/server/services/ticketService.ts` **en sitio**, texto exacto de `design.md`
+- [x] A.4.2 Editar `apps/desk/server/services/ticketService.ts` **en sitio**, texto exacto de `design.md`
   §3: `:6` funde los dos imports de `@ambientalia/shared` en una línea; `:7` nuevo,
   `import { valoresConFechasDerivadas } from './valoresDeTransicion'`; `:130` pasa a
   `const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, b.values)`; `:132`
   pasa a `if (plan.errors.length || erroresFecha.length) throw new HttpError(422, { errors:
   [...plan.errors, ...erroresFecha] })`. `:131` y `:153` no se tocan (~8 líneas, neto 0).
-- [ ] A.4.3 Correr `npx vitest run apps/desk/server/services/valoresDeTransicion.test.ts`, confirmar verde
+- [x] A.4.3 Correr `npx vitest run apps/desk/server/services/valoresDeTransicion.test.ts`, confirmar verde
   en los 5 criterios y en P-a/P-b.
 
 ### Fase A.5 — Mutaciones de comprobación (evidencia obligatoria en `apply-progress.md`)
@@ -121,20 +121,20 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
 `ticketService.ts` sería falso con los cambios de A.4.2 sin commitear. Cada mutación se revierte con
 `git checkout -- <fichero>` (restaura desde el índice) y se confirma con `git diff -- <fichero>` vacío.
 
-- [ ] A.5.1 **Mutación P-a (regla de mutación 1).** Mover temporalmente la comprobación de `erroresFecha`
+- [x] A.5.1 **Mutación P-a (regla de mutación 1).** Mover temporalmente la comprobación de `erroresFecha`
   de `ticketService.ts:132` a **después** de la guarda de derivación (`:136-140`) — p. ej., separar el
   `throw` de fecha inválida en un bloque propio tras esas líneas. Correr P-a; confirmar que se pone rojo
   (la respuesta pasa a ser la de derivación, no la de fecha). Revertir y confirmar como dice el preámbulo.
-- [ ] A.5.2 **Mutación P-b.** Invertir el `spread` de `:132` a `[...erroresFecha, ...plan.errors]`. Correr
+- [x] A.5.2 **Mutación P-b.** Invertir el `spread` de `:132` a `[...erroresFecha, ...plan.errors]`. Correr
   P-b; confirmar rojo (el orden de `errors` cambia). Revertir y confirmar.
-- [ ] A.5.3 **Mutación P-2.** Quitar temporalmente el filtro de las tres etiquetas en `valoresEfectivos`
+- [x] A.5.3 **Mutación P-2.** Quitar temporalmente el filtro de las tres etiquetas en `valoresEfectivos`
   (dejar que `recibidos` se copie entero). Correr el criterio 5; confirmar rojo. Revertir y confirmar
   sobre `fechasDerivadas.ts`.
-- [ ] A.5.4 **Mutación `diaEnZona`, día UTC.** Sustituir temporalmente la conversión de instantes por
+- [x] A.5.4 **Mutación `diaEnZona`, día UTC.** Sustituir temporalmente la conversión de instantes por
   `toISOString().slice(0, 10)` (día UTC puro, ignorando `ZONA_NEGOCIO`). Correr el bloque de zona de A.1.5;
   confirmar rojo en **los dos bloques** (dan `2026-09-10`, no `2026-09-09`, porque el día UTC no depende de
   la zona del proceso). Revertir y confirmar.
-- [ ] A.5.5 **Mutación `diaEnZona`, la noción vieja — fase roja de la demostración de zona de shared
+- [x] A.5.5 **Mutación `diaEnZona`, la noción vieja — fase roja de la demostración de zona de shared
   (condición 3 del analista).** Sustituir temporalmente la conversión de instantes por los getters locales
   de `diaLocal` (`getFullYear`/`getMonth`/`getDate`, la zona del proceso). Correr
   `npx vitest run packages/shared/src/fechasDerivadas.test.ts -t zona`; confirmar **bloque UTC rojo**
@@ -143,27 +143,27 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
 
 ### Fase A.6 — Invariantes (verificación, no código)
 
-- [ ] A.6.1 `git diff --stat -- apps/desk/server/transitionExec.ts` → vacío.
-- [ ] A.6.2 `git diff --stat -- packages/zoho-sync/src/db/repo.ts` → vacío.
-- [ ] A.6.3 `git diff --stat -- vitest.config.ts` → vacío (P-4 retirada).
-- [ ] A.6.4 `ticketService.ts` con desplazamiento neto 0: `git diff --stat -- apps/desk/server/services/ticketService.ts`
+- [x] A.6.1 `git diff --stat -- apps/desk/server/transitionExec.ts` → vacío.
+- [x] A.6.2 `git diff --stat -- packages/zoho-sync/src/db/repo.ts` → vacío.
+- [x] A.6.3 `git diff --stat -- vitest.config.ts` → vacío (P-4 retirada).
+- [x] A.6.4 `ticketService.ts` con desplazamiento neto 0: `git diff --stat -- apps/desk/server/services/ticketService.ts`
   sin líneas añadidas netas (`+N -N` con `N` igual) y `wc -l` del fichero idéntico antes/después.
-- [ ] A.6.5 `bodegaje.ts` con desplazamiento neto 0: mismo método sobre
+- [x] A.6.5 `bodegaje.ts` con desplazamiento neto 0: mismo método sobre
   `packages/shared/src/bodegaje.ts`.
 
 ### Fase A.7 — Cierre de la unidad A
 
-- [ ] A.7.1 **Tarea docker** (`design.md` §6.5):
+- [x] A.7.1 **Tarea docker** (`design.md` §6.5):
   `docker run --rm node:22-alpine node -e "…"` (script literal del diseño), esperando `2026-09-09`. Si la
   máquina no tiene docker, escribir «no ejecutable» en `apply-progress.md`, nunca «verde».
-- [ ] A.7.2 `npm test` completo, **en solitario** (sin otros procesos en paralelo), verde.
-- [ ] A.7.3 `npm run typecheck`, en solitario, verde.
-- [ ] A.7.4 `npm run lint`, en solitario, verde.
-- [ ] A.7.5 Cerrar el `apply-progress.md` de A: evidencia RED/GREEN de A.1.2/A.1.5/A.2.1/A.3.3, las
+- [x] A.7.2 `npm test` completo, **en solitario** (sin otros procesos en paralelo), verde.
+- [x] A.7.3 `npm run typecheck`, en solitario, verde.
+- [x] A.7.4 `npm run lint`, en solitario, verde.
+- [x] A.7.5 Cerrar el `apply-progress.md` de A: evidencia RED/GREEN de A.1.2/A.1.5/A.2.1/A.3.3, las
   cinco mutaciones de A.5 con su reversión confirmada, resultado de A.7.1, y medida
   `git diff --shortstat --no-renames` contra el commit base del intento 1 (el que añade este `tasks.md`) +
   `wc -l` de lo nuevo sin trackear (~110–150 líneas de informe).
-- [ ] A.7.6 **Commit de la unidad A** (conventional commit), **antes** del `sdd-attempt settle` del
+- [x] A.7.6 **Commit de la unidad A** (conventional commit), **antes** del `sdd-attempt settle` del
   intento 1.
 
 ---
