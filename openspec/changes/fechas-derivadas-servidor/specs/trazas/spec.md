@@ -170,7 +170,8 @@ NOT** depender de la zona del proceso que ejecuta el cálculo.
 - Una fecha-hora **SIN** desplazamiento **SHALL** devolver `null`: leerla con la zona del proceso es
   justo la dependencia que se retira.
 - Un valor ilegible **SHALL** devolver `null`.
-- `dia()` (`packages/shared/src/bodegaje.ts:129-133`) **SHALL** consumir esta misma noción: hoy usa
+- `dia()` (`packages/shared/src/bodegaje.ts:129-133`) **SHALL** consumir esta misma noción: tras
+  `fechas-derivadas-servidor` delega en `diaEnZona` (zona de negocio); antes usaba
   `toISOString().slice(0, 10)`, día UTC. Una `YYYY-MM-DD` no cambia de resultado; un instante en la
   ventana 00:00–04:59 UTC sí, porque hoy cae en el día UTC y con la zona de negocio cae en el día
   anterior en Bogotá.

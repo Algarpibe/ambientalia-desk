@@ -581,7 +581,7 @@ primeras la comprueban, y ahora **en el mismo orden** entre sí:
 | Puerta | Comprueba | Precedencia del `409` frente al `422` de obligatorios | Evidencia |
 |---|---|---|---|
 | Creación de ticket | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:45-49` (movida detrás de la guarda de cliente, `:94`) |
-| Transición `habilitar_servicio` | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:132-136` (movida detrás de la guarda de derivación, `:144`) |
+| Transición `habilitar_servicio` | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:146-150` (detrás de la guarda de derivación, `:136-140`; hoy `:132` es el `422` de las fechas derivadas de `fechas-derivadas-servidor`, no el bloque de la OV) |
 | **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-240` |
 
 **Las dos primeras SON equivalentes ahora**: comprueban la misma regla en el mismo orden. La inversión

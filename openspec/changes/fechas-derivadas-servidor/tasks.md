@@ -69,7 +69,7 @@ Chain strategy: pending
   `paso()`) (~18 líneas). Correr `npx vitest run packages/shared/src/bodegaje.test.ts`, confirmar rojo por
   aserción (`2026-02-02` en vez de `2026-02-01`, día UTC de `toISOString().slice(0,10)`).
 - [x] A.2.2 **GREEN, en sitio (A-9).** `bodegaje.ts:19` (línea en blanco) pasa a
-  `import { diaEnZona } from './fechasDerivadas'`; `bodegaje.ts:129-132` pasan a dos líneas de comentario
+  `import { diaEnZona } from './fechasDerivadas'`; `bodegaje.ts:130-132` pasan a dos líneas de comentario
   citando `RQ-TZ-13` + `return diaEnZona(valor)`, borrando el cuerpo viejo de `dia()` (~8 líneas, neto 0
   en el fichero: la cabecera `:1-18` y el resto no se tocan).
 - [x] A.2.3 Correr la prueba, confirmar verde.

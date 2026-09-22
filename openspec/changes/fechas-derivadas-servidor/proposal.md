@@ -61,8 +61,9 @@ historial; una sola fórmula, en `packages/shared`, con la zona fijada; el clien
   petición puede meter `Fecha Remisión Entrada` en cualquier transición y queda en el historial, donde
   `periodosDeBodegaje` la lee en cualquier paso (`bodegaje.ts:174`, `:186`). Ignorar el navegador para esos
   tres campos incluye ese canal. Sólo esas tres: el resto del `values` no se toca.
-- **P-3 · `dia()` de `bodegaje.ts:129-133` consume la función nueva.** Hoy es otra noción de «día de un
-  valor» (`toISOString`, día UTC). Así queda una sola en el paquete: una `YYYY-MM-DD` sigue igual y un
+- **P-3 · `dia()` de `bodegaje.ts:129-133` consume la función nueva.** Antes de esta tanda era otra
+  noción de «día de un valor» (`toISOString`, día UTC); tras la unidad A, `dia()` delega en `diaEnZona`.
+  Así queda una sola en el paquete: una `YYYY-MM-DD` sigue igual y un
   instante pasa a leerse en Bogotá. *Hipótesis:* hoy ningún escritor deja instantes en campos de fecha
   (el `<input type="date">` manda `YYYY-MM-DD`, `TransitionPanel.tsx:254`), así que el cambio no mueve
   ningún bodegaje real.
