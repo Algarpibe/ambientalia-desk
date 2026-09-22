@@ -238,3 +238,158 @@ proyecto (`openspec/config.yaml:29`).
 
 Criterio 1 de propuesta §14 (regeneración e idempotencia): `npm run generar-mapa-blueprint` × 2,
 `sha256sum` de los cuatro ficheros idéntico entre ejecuciones.
+
+---
+
+# Apply progress — Unidad C · cierre documental (F1A-06)
+
+**Intento SDD 3**, mismo worktree `f1a-06-r1`, base commit `8a36d03` (Unidades A y B completas y
+commiteadas). Ledger `sdd-attempt`: `acquire` confirmado `state: proceed` (mutación cero) antes de
+tocar nada.
+
+Unidad puramente documental: **sin producción de código**, `strict_tdd` no aplica (declarado también
+en `design.md`, «Threat matrix: N/A» y «Regla invariable 13: NO APLICA»). No hay ciclo RED/GREEN que
+registrar — la evidencia es lectura directa del árbol antes/después de cada edición, citada por línea.
+
+## Work Unit Evidence
+
+| Evidence | Valor |
+|---|---|
+| Focused test command y resultado | N/A — cambios de documentación, sin prueba automática que los cubra (mismo criterio que la fila C de `tasks.md`, «Suggested Work Units») |
+| Runtime harness / escenario real | N/A — documentación, no código ejecutable |
+| Rollback boundary | `git revert` del commit de C. No toca `packages/`, `apps/`, `scripts/` ni `openspec/specs/`; sólo `docs/artefactos/NOTA.md`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md` y las casillas de `tasks.md`. No toca A ni B |
+
+## C.1 — `docs/artefactos/NOTA.md`
+
+- **C.1.1 (§3, "NO HAY GENERADOR").** No se retiró ni una línea del texto original (`:32-46` antes de
+  editar): sigue siendo cierto que `blueprintserviciotecnico.html` no tiene generador y nunca lo tendrá
+  —queda histórico congelado en `a3a8f03`, decisión heredada H-1—. Se añadió un bloque de precisión
+  justo detrás, con el mismo formato que el precedente «CORREGIDO POR F1A-05» de §4, que declara la
+  existencia del generador NUEVO (para el mapa vigente, no para el `.html`) con ruta exacta del módulo
+  (`packages/shared/src/mapaBlueprint.ts`), la CLI (`scripts/generar-mapa-blueprint.ts`,
+  `npm run generar-mapa-blueprint`) y los cuatro ficheros de salida. Caso B de la regla de mutación 4:
+  la frase vieja fue y sigue siendo cierta de su objeto (`blueprintserviciotecnico.html`); no se
+  renumera ni se reescribe.
+- **C.1.2 (§6, "Cómo actualizarlo hoy").** Reescrita en dos mitades explícitas: la del `.html` (sigue
+  sin procedimiento automático, sigue congelado, F1A-05 no lo construyó) y la del mapa vigente (desde
+  F1A-06, `npm run generar-mapa-blueprint` regenera los cuatro ficheros, determinista, con la prueba
+  anti-desfase como guarda de CI). El aviso de caducidad de §7 **no se tocó ni se retiró** —se declara
+  explícitamente en el texto nuevo que sigue vigente, porque avisa de un fichero distinto que sigue
+  congelado—, cumpliendo la instrucción de la propuesta §6 y de C.1.2.
+
+**Barrido de citas de `NOTA.md:NN`** (`grep -rnoE "NOTA\.md:[0-9]+(-[0-9]+)?"` sobre todo el árbol,
+excluyendo `archive/`): 8 ocurrencias externas al propio fichero. Todas verificadas:
+- 5 dentro de `openspec/changes/generador-mapa-blueprint/` (`proposal.md:33,35,152,248`,
+  `specs/mapa-blueprint/spec.md:14`) — self-ancladas a `125ae3e` por la cabecera de sus propios
+  ficheros («Toda cita ruta:línea se lee contra 125ae3e»), mismo convenio que `design.md`/`tasks.md`.
+  Describen el estado ANTES de esta tanda (el propio §3 original, el aviso de §7, la pregunta abierta
+  de §"quién abre el mapa"); siguen siendo ciertas de esa revisión — no se repararon, por diseño.
+- 3 en documentos históricos ya cerrados y anclados a un commit explícito
+  (`Triaje_Linea_Base_Citas_2026-09-15.md` filas 33/34, `F0-01_Correcciones_para_el_plan.md:178`,
+  `F1A-05_Auditoria_blueprint_audit-F1A.md:39,41`) — citan `NOTA.md:NN en <sha>`, ya reparadas y
+  cerradas por Gerencia el 2026-09-15 (Caso D). No se tocan: no citan «hoy».
+
+Ninguna cita viva describía el estado de `NOTA.md` **de hoy** sin anclar a una revisión — no hizo
+falta reparar ninguna.
+
+## C.2 — Entrada 17 de `F0-01_Correcciones_para_el_maestro.md`
+
+**Última entrada antes de esta tanda: la 16** (`## La de F1A-07 (16)` en `:853`, confirmado por
+`grep -n "^## La de\|^### [0-9]"` antes de editar — no se dio por buena la cifra del prompt de
+lanzamiento sin comprobarla). Entrada 17 añadida **al final del fichero**, detrás de la 16 y antes de
+`## Qué NO contiene este fichero`: no desplaza ninguna entrada anterior (confirmado: `1-891` intactas,
+sólo se insertó contenido entre `:889` y `:892` de antes de editar).
+
+**Dos partes, como pedía C.2.1:**
+- **(a)** M1.3.3 (`R08.2.md:1198`) y Anexo F (`:4412-4413`) — verificadas por lectura directa contra
+  el maestro, no contra `design.md`/`proposal.md` (regla de método): las dos siguen diciendo «Faltan
+  dos y no se sabe cuáles» / «Hueco nombrado, no resuelto», exactamente el texto que la propuesta §3
+  citaba en `125ae3e`. Se cierra citando la aritmética verificada en este árbol:
+  `TRANSICIONES_BASE` (`packages/shared/src/transitions.ts:171-263`, 34 entradas), `habilitar_servicio`
+  con `from` de 3 elementos (`:178`), 33×1+1×3=36 + 2 sin botón (`:150-151`) = 38, y la aserción real
+  del generador (`mapaBlueprint.test.ts`, RQ-MB-02, verificada en B.4.2: 38 aristas, 3 desde
+  `habilitar_servicio`).
+- **(b)** M1.3.3 (`:1198`) dice, en el texto que la propia entrada 11 de este mismo fichero propuso y
+  que Gerencia pegó en la R08.2 (`:488-501` de este fichero, verificado por lectura directa): «Lo que
+  no tienen es `from` ni `to`». Falso desde la Unidad A (P-2): las dos constantes
+  (`transitions.ts:150-151`) declaran `from`/`to` con el par exacto, en sitio, delta de líneas cero.
+  Se distingue explícitamente de la entrada 11 —que corrige una frase DISTINTA de la misma línea
+  (dónde vive la declaración) y sigue vigente sin tocar— para que quien lea entienda que son dos
+  correcciones sobre el mismo párrafo, no una duplicada.
+
+**Hallazgo, no reparado a propósito (fuera de la asignación de C.2, es trabajo de `sdd-archive`):**
+`openspec/specs/transitions-st/spec.md:956` (fila M-4, spec VIVA) describe el mismo hallazgo que la
+entrada 11 en su forma ANTERIOR a que Gerencia la pegara en la R08.2 («Exacto para la aplicación, falso
+para la declaración»); no queda invalidada por esta entrada 17 —sigue siendo una lectura correcta del
+maestro R08.1/anterior a R08.2—, pero converge con el mismo tema. Su reconciliación con el delta
+`specs/transitions-st/spec.md` fusionado es explícitamente trabajo de `sdd-archive`
+(`tasks.md`, sección «Para el archive»), no de esta Unidad.
+
+## C.3 — `openspec/config.yaml` (verificación, no edición)
+
+**C.3.1 confirmado por lectura directa:** `config.yaml:271-284` tiene `mapa-blueprint` en
+`capabilities`, con `covers`, `status_at_start` y `declarada_en` completos, escrita en la fase
+`sdd-spec` de esta misma tanda (Engram obs. #879). No fue tocada por A ni por B
+(`git log --oneline -- openspec/config.yaml` desde `7670f89`: sin commits de A ni B sobre este
+fichero) ni por esta Unidad C: `git diff 8a36d03 -- openspec/config.yaml` vacío.
+
+## Barrido final de citas de `F0-01_Correcciones_para_el_maestro.md:NN`
+
+`grep -rnoE "F0-01_Correcciones_para_el_maestro\.md:[0-9]+(-[0-9]+)?"` sobre todo el árbol, excluyendo
+`archive/`: 3 ocurrencias externas.
+- `openspec/specs/permissions/spec.md:309` cita `:129` y `:142-167` — muy por debajo de la línea `:891`
+  donde empieza la inserción de la entrada 17; sin desplazamiento, sin reparar.
+- `generador-mapa-blueprint/apply-progress.md:63` (este mismo fichero, texto de la Unidad A) cita
+  `:510` atribuyéndolo a «entrada 16» — la línea 510 en sí es correcta y no se desplazó (está dentro
+  de la entrada 11, `:488-515`, muy por debajo de `:891`); la etiqueta «entrada 16» en esa nota de la
+  Unidad A es imprecisa (la cita real pertenece a la entrada 11), pero no es una cita rota
+  `ruta:línea` — es prosa de otra Unidad ya commiteada, fuera del alcance de C, y no bloquea ningún
+  criterio de cierre. Se deja anotado para quien reconcilie en `sdd-archive`.
+- Dos citas en cambios YA archivados (`archive/2026-09-17-tercera-puerta-orden-venta/tasks.md:164`,
+  `archive/2026-09-22-fechas-derivadas-servidor/{apply-progress,proposal}.md`) — excluidas por
+  convención de la regla de mutación 4 (`excluyendo openspec/changes/archive/`), ancladas a commits
+  explícitos.
+
+## C.4 — Cierre de la Unidad C / de la tanda: los ocho criterios de `proposal.md` §14
+
+| # | Criterio | Estado | Evidencia / remisión |
+|---|---|---|---|
+| 1 | `npm run <script>` regenera los cuatro `.md` y el árbol queda limpio | ✅ | Unidad B, B.2.2/B.4: `npm run generar-mapa-blueprint` × 2, `sha256sum` idéntico. No re-ejecutado en C (C no toca el generador ni sus fuentes) |
+| 2 | Los seis criterios de §7 en verde, con la fase roja registrada, incluida la mutación del fichero vigilado | ✅ | Unidades A (5b) y B (B.1.1/B.1.2 RED, B.3.2/B.3.3 mutaciones) |
+| 3 | El diagrama completo tiene 38 aristas, fijado por aserción | ✅ | Unidad B, B.4.2 (`mapaBlueprint.test.ts`, RQ-MB-02) |
+| 4 | `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` en verde | ✅ | Confirmación FINAL de C.4.2, tras C.1-C.3, ver tabla de comandos abajo |
+| 5 | `estadoPorRemision.test.ts` en verde sin tocar sus aserciones | ✅ | Unidad A, A.3.2. C no toca `apps/desk/server/db/` |
+| 6 | Barrido de la regla de mutación 4 sobre `transitions.ts` y `estadoPorRemision.ts` | ✅ | Unidad A, A.4.1 (extendido), sin roturas nuevas en B ni en C |
+| 7 | `mapa-blueprint` en `capabilities`; `NOTA.md` §3/§6 actualizadas; entrada 17 escrita | ✅ | C.3.1 (verificación) + C.1.1/C.1.2 + C.2.1 — los tres de esta Unidad |
+| 8 | El `archive-report.md` dice en su `cierra` qué parte de F1A-06 cubrió, y que el hueco 38/36 quedó cerrado con la cuenta de §3 | ⏳ pendiente | Es artefacto de `sdd-archive`, no de `sdd-apply` — no existe todavía. Insumo ya preparado: entrada 17(a) de este mismo documento trae la cuenta exacta (36+2=38) lista para citar en la línea de `cierra` |
+
+## Resultado de los comandos de cierre (C.4.2) — FINALES de la tanda completa (A+B+C)
+
+Comandos completos, sin truncar, con `echo "EXIT_CODE=$?"` inmediatamente después en el mismo comando:
+
+- `npm test`: **EXIT_CODE=0**. 132 test files passed + 1 skipped (133); **1247 tests passed, 2 skipped
+  (1249 total), 0 failed**. El hallazgo pre-existente de la Unidad A
+  (`apps/desk/server/reconciliacion/registro.test.ts:108`, «19 declaradas» vs «18 declaradas»
+  esperado) **ya no reproduce**: la suite completa está en 0 failed. No se investiga más a fondo por no
+  ser tarea de C ni bloquear ningún criterio — se deja constancia de que el hallazgo de A quedó
+  resuelto en algún punto entre A y este cierre.
+- `npm run typecheck`: **EXIT_CODE=0**, sin salida (silencioso = éxito de `tsc -b`).
+- `npm run lint`: **EXIT_CODE=0**, **0 errores, 165 avisos** — idéntico al recuento que dejó la Unidad
+  B, sin avisos nuevos introducidos por C (C sólo toca `.md`, fuera de `eslint . `de todos modos porque
+  no son `.ts`/`.tsx`).
+- `npm run build`: **EXIT_CODE=0**. `tsc -b && vite build`, 109 módulos, bundle final generado sin
+  error.
+
+## Presupuesto de la Unidad C
+
+`git diff --shortstat --no-renames 8a36d03` (commit de cierre de B) hasta el commit de cierre de C:
+**2 ficheros de contenido** (`NOTA.md`, `F0-01_Correcciones_para_el_maestro.md`) + las casillas de
+`tasks.md`. Autoría de contenido: 106 inserciones + 3 borrados = **109 líneas**, dentro del rango
+estimado por `tasks.md` (~150-180) y muy por debajo del techo de 800. Este mismo `apply-progress.md`
+(sumando obligatorio, regla del ciclo 2) se cuenta aparte, en el ledger vía `wc -l`, no en el
+presupuesto de revisión (documentación de cierre, no código de producción).
+
+## Estado final de `tasks.md`: 38/38 casillas de Unidades A+B+C
+
+Confirmado por lectura del fichero tras marcar las últimas casillas: cero `- [ ]` pendientes en
+`openspec/changes/generador-mapa-blueprint/tasks.md`.

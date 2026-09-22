@@ -172,16 +172,16 @@ Chain strategy: N/A
 
 ### Fase C.1 — `docs/artefactos/NOTA.md`
 
-- [ ] C.1.1 Reescribir §3 (`:32-46`, "NO HAY GENERADOR") declarando que el generador existe desde esta
+- [x] C.1.1 Reescribir §3 (`:32-46`, "NO HAY GENERADOR") declarando que el generador existe desde esta
   tanda, con la ruta del módulo y la CLI. No retirar la evidencia histórica de que no existía antes de
   F1A-06 (regla de mutación 4, caso B para la frase que fue cierta).
-- [ ] C.1.2 Reescribir §6 (`:107-111`, "Cómo actualizarlo hoy") describiendo el procedimiento nuevo:
+- [x] C.1.2 Reescribir §6 (`:107-111`, "Cómo actualizarlo hoy") describiendo el procedimiento nuevo:
   `npm run <script>` regenera los cuatro ficheros; el `.html` viejo sigue congelado (propuesta §6). El
   aviso de caducidad del §7 **no se retira** (sigue siendo cierto del `.html`).
 
 ### Fase C.2 — Maestro: entrada 17 de `F0-01_Correcciones_para_el_maestro.md`
 
-- [ ] C.2.1 Añadir `## La de F1A-06 (17)` / `### 17 · <título> (F1A-06)`, mismo formato que la entrada 16
+- [x] C.2.1 Añadir `## La de F1A-06 (17)` / `### 17 · <título> (F1A-06)`, mismo formato que la entrada 16
   (`:853-857` en adelante), con dos partes (propuesta §8): (a) M1.3.3 (`:1198`) y Anexo F (`:4413`) dicen
   "Faltan dos y no se sabe cuáles" — cerrado por M1.3.7 (`:1301-1458`) y el recuento de la propuesta §3
   (33×1 + 1×3 = 36 + 2 = 38); (b) M1.3.3 (`:1198`) dice de los dos pasos "Lo que no tienen es `from` ni
@@ -190,18 +190,18 @@ Chain strategy: N/A
 
 ### Fase C.3 — `openspec/config.yaml` (R-2, YA SATISFECHA — verificación, no edición)
 
-- [ ] C.3.1 **Verificado contra el árbol, no re-hacer.** `mapa-blueprint` ya está en `capabilities`
+- [x] C.3.1 **Verificado contra el árbol, no re-hacer.** `mapa-blueprint` ya está en `capabilities`
   (`config.yaml:271-281`), escrita en la fase `sdd-spec` de esta misma tanda —R-2 de F0-05 exige que el
   MISMO cambio que crea la spec añada la capacidad, y así ocurrió—. Confirmar en el cierre de C que la
   entrada sigue presente y sin editar, y que ninguna tarea de A/B la tocó por accidente.
 
 ### Fase C.4 — Cierre de la Unidad C / de la tanda
 
-- [ ] C.4.1 Marcar en `apply-progress.md` de C los ocho criterios de éxito de `proposal.md` §14 uno a
+- [x] C.4.1 Marcar en `apply-progress.md` de C los ocho criterios de éxito de `proposal.md` §14 uno a
   uno, con evidencia o remisión a la unidad que la produjo (A/B).
-- [ ] C.4.2 `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, en solitario, verdes —
+- [x] C.4.2 `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, en solitario, verdes —
   confirmación final tras C.1-C.3 (no deberían tocar código).
-- [ ] C.4.3 Commit de la Unidad C (conventional commit), antes del `sdd-attempt settle` del último
+- [x] C.4.3 Commit de la Unidad C (conventional commit), antes del `sdd-attempt settle` del último
   intento.
 
 ---
