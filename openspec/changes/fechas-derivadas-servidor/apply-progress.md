@@ -317,3 +317,17 @@ gen. 3 ya settleada): `git diff --shortstat --no-renames 98cbda7` → **214 inse
 Desviaciones de diseño: ninguna. `TransitionPanel.tsx` sin diff (comodidad ya probada, regla 13.3, no
 tocado). Comprobaciones de persona (regla del ciclo 1, fuera del recuento): las (a)/(b) de la unidad A
 siguen fuera del repositorio; sin novedad en B.
+
+### Detector, sobre el commit FINAL (Q6: no sobre uno anterior)
+
+Primer commit de cierre, `b4c3bcf`: `tsx apps/desk/server/citas/cli.ts --sha b4c3bcf` → **exit 1**, 2
+bloqueantes, los dos causados por B.1.4 (`diaLocal` borrado, `valoresConocidos` desplazado): `exploration.md:53`
+citaba `valoresTransicion.ts:20` (línea vacía hoy; `yaEsta` está en `:22`) y `proposal.md:33` citaba
+`valoresTransicion.ts:49-79` (fuera de rango, el fichero tiene hoy 68 líneas). Reparados: el primero se
+renumera (`:22`, sigue siendo cierto hoy); el segundo se ancla a `4976787` (caso B — el párrafo describe
+el problema que motivó la tanda, no el árbol de hoy) en vez de renumerarse. Commit `7e64c30`.
+```
+tsx apps/desk/server/citas/cli.ts --sha 7e64c30
+comprobadas 2154 · saltadas 2056 · abreviadas rotas 11 (mismas de siempre, informativas) ·
+cabeceras R-1 inválidas 0 · exit 0
+```
