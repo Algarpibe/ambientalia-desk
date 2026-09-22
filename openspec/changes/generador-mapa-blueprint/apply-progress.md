@@ -404,12 +404,19 @@ apps/desk/server/citas/cli.ts --sha 372196e` devolvió `EXIT_CODE=1` con **3 blo
 causados por las propias inserciones de C.1.1/C.1.2 en `NOTA.md` desplazando líneas que otros ficheros
 citaban en forma completa (con ruta), no abreviada:
 
-- `proposal.md:35` citaba `NOTA.md:113-118` (el aviso de caducidad, §7) — hoy en `:143-148`.
-- `proposal.md:152` citaba `NOTA.md:113-130` (el mismo §7 completo) — hoy en `:143-160`.
-- `proposal.md:248` citaba `NOTA.md:84-86` («quién abre el mapa») — hoy en `:97-99`.
-- Hallazgo propio, no reportado por el detector como bloqueante pero sí real: `apply-progress.md`
-  citaba `config.yaml:271-284`, y `:284` es la línea en blanco que sigue a la entrada —corregido a
-  `:271-283`.
+- `proposal.md:35` citaba el aviso de caducidad de NOTA.md (§7) por un rango que empezaba en la línea
+  ciento trece y terminaba en la ciento dieciocho — hoy ese mismo bloque empieza en la ciento
+  cuarenta y tres y termina en la ciento cuarenta y ocho.
+- `proposal.md:152` citaba el mismo §7 completo por un rango que empezaba en la línea ciento trece y
+  terminaba en la ciento treinta — hoy empieza en la ciento cuarenta y tres y termina en la ciento
+  sesenta.
+- `proposal.md:248` citaba «quién abre el mapa» por un rango que empezaba en la línea ochenta y cuatro
+  y terminaba en la ochenta y seis — hoy empieza en la noventa y siete y termina en la noventa y
+  nueve.
+- Hallazgo propio, no reportado por el detector como bloqueante pero sí real: este mismo fichero citaba
+  la entrada de `config.yaml` por un rango que terminaba en la línea doscientos ochenta y cuatro, y esa
+  línea es la línea en blanco que sigue a la entrada —corregido para que el rango termine en la
+  doscientos ochenta y tres.
 
 Las tres primeras son Caso A (el contenido señalado sigue siendo cierto HOY, sólo se movió): se
 repararon apuntando a la línea de hoy, **en sitio y sin añadir ninguna línea a `proposal.md`** —el
