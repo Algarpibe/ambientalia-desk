@@ -962,6 +962,56 @@ completa de los 38 pasos: esa tabla ya acertaba desde que se escribió: esta ent
 que M1.3.3 y el Anexo F dejaban abierta sobre ella.
 
 ---
+
+## La de F1B-02 (18)
+
+> **Esta entrada cita la R08.2**, como la 15, la 16 y la 17.
+
+### 18 · M3.1 — la fila «Código interno» describe la columna 32, no la 33 *(F1B-02)*
+
+**Dónde va:** M3.1 «Estructura de datos», `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:2025-2027` (fila «Código interno · Existe · Incluye serial y modelo; se mantiene por ISO 9001.»).
+
+**Texto actual (`:2025-2027`):**
+
+> «Código interno · Existe · Incluye serial y modelo; se mantiene por ISO 9001.»
+
+**Por qué está mal etiquetada, y no es una opinión.** El glosario de columnas del mismo documento
+distingue dos campos consecutivos y los describe con precisión: columna 32 «Código Servicio» →
+`Tiposervicio_NumeroSerie_Modelo_aammdd`, ejemplo `MT_18A20070_EDM180C_260130`
+(`R08.2.md:4498-4500`); columna 33 «Código Interno» → «Código que el cliente asigna a su equipo. Se
+requiere para los entregables cuando el cliente lo pide.» (`R08.2.md:4501-4503`). Lo único de las dos
+que «incluye serial y modelo» es la columna 32: el propio código lo construye así, literalmente —
+`buildCodigoServicio` (`packages/shared/src/ticketCreate.ts:12-13`) devuelve
+`[prefijo, serie, modelo, yymmdd].join('_')` — y el esquema declara `codigo_servicio` y
+`codigo_interno` como columnas distintas (`packages/zoho-sync/src/db/schema.sql:28-29`). La fila de
+M3.1 describe el contenido de la columna 32 bajo la etiqueta de la 33.
+
+**Coste de la etiqueta floja.** Bloqueó una fase completa: la propuesta de F1B-02 (capacidad
+`hojas-vida`) leyó la fila al pie de la letra, la comparó contra el campo `codigo_interno` que ya
+sincroniza de Zoho (`packages/zoho-sync/src/db/repo.ts:47`), encontró una descripción incompatible
+—ISO 9001 frente a código del cliente— y paró la tanda hasta verificarla contra el glosario.
+
+**Texto propuesto:** sustituir la observación de la fila «Código interno» de M3.1 por
+
+> «Es la columna 33 del glosario de columnas (`Código que el cliente asigna a su equipo`); no
+> incluye serial ni modelo — eso lo hace `Código Servicio`, columna 32, con la que esta fila
+> comparte etiqueta pero no contenido.»
+
+**La fila «Código interno del cliente · Falta» no cambia** — es correcta tal cual: describe la
+ausencia de un campo estructurado en `equipos` para ese dato (hoy sólo existe, desnormalizado, en
+`tickets.codigo_interno`, junto a `marca`/`modelo`/`serial`, `repo.ts:47`), y su observación «Alfonso
+debe extraer y entregar el listado» es el trabajo de carga de datos, no una contradicción con la fila
+de arriba.
+
+**Dónde queda escrito en el repositorio.** `openspec/changes/hojas-vida/proposal.md`, sección
+«Fuera», documenta la resolución con las mismas tres citas.
+
+**Lo que esta entrada NO pide.** No reabre M3.1 en ningún otro campo, ni afirma que exista un código
+ISO 9001 real en algún otro sitio del sistema — verificado que no está modelado hoy en el código
+(`grep -rni "ISO 9001" packages/ apps/ --include=*.ts` no devuelve ninguna línea) — y ese punto queda
+fuera del alcance de esta corrección.
+
+---
 ## Qué NO contiene este fichero
 
 - No aplica ningún cambio al `.docx`. Es texto propuesto, no un parche.
