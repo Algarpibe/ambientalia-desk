@@ -14,7 +14,7 @@ import { sincronizarEstadoPorRemision } from './estadoPorRemision'
  *
  * LA REGLA ES ESTA LÍNEA, y es toda la línea:
  *
- *   `estadoPorRemision.ts:41` → `if (actual !== STATUS_TICKET_CREADO && actual !== STATUS_REMISION_CREADA) return`
+ *   `estadoPorRemision.ts:41` → `if (![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return`
  *
  * Dice que este enganche SOLO manda en la fase temprana, y por tanto que las dos entradas al flujo
  * —la remisión, que es automática, y la transición que hace una persona— no se cruzan. Fuera de esas

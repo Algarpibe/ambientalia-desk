@@ -39,58 +39,58 @@ Chain strategy: N/A
 
 ### Fase A.1 — `packages/shared/src/fasesBlueprint.ts` (nuevo, D-1/P-3)
 
-- [ ] A.1.1 **RED.** Crear `fasesBlueprint.test.ts`: (a) `Object.keys(FASE_POR_ESTADO)` ordenado ===
+- [x] A.1.1 **RED.** Crear `fasesBlueprint.test.ts`: (a) `Object.keys(FASE_POR_ESTADO)` ordenado ===
   `[...ESTADOS].sort()` (`estados.ts:112`); (b) recuento 4/12/5 de `design.md` §7; (c) las tres
   asignaciones no mecánicas citadas por línea (`Ingresado`→`entrada`; `Pendiente`→`diagnostico`,
   `estados.ts:101-105`; los cuatro de `ESTADOS_SIN_SALIDA`→`diagnostico`, `estados.ts:151-160`) (~35
   líneas). Confirmar rojo, registrar en `apply-progress.md`.
-- [ ] A.1.2 **GREEN.** Crear `fasesBlueprint.ts`: `FaseId`, `Fase`, `FASES` (M1.3.1, `R08.2.md:1187-1191`)
+- [x] A.1.2 **GREEN.** Crear `fasesBlueprint.ts`: `FaseId`, `Fase`, `FASES` (M1.3.1, `R08.2.md:1187-1191`)
   y `FASE_POR_ESTADO = {...} satisfies Record<Estado, FaseId>` (contratos de `design.md` §3), tabla de
   §7 (~55 líneas). Correr A.1.1, confirmar verde.
-- [ ] A.1.3 **Mutación del guarda de COMPILACIÓN (D-1, riesgo #5 — la primera de las dos guardas).**
+- [x] A.1.3 **Mutación del guarda de COMPILACIÓN (D-1, riesgo #5 — la primera de las dos guardas).**
   Quitar temporalmente una clave de `FASE_POR_ESTADO`, correr `npm run typecheck` en solitario, confirmar
   error de `tsc` por `satisfies` incompleto. Revertir, confirmar verde. Registrar comando y salida. **La
   guarda de EJECUCIÓN (`throw` del generador) es tarea de la Unidad B (B.1.2): vive en `mapaBlueprint.ts`,
   no aquí — las dos hacen falta y no son la misma (`design.md` D-1).**
-- [ ] A.1.4 Añadir `export * from './fasesBlueprint'` a `packages/shared/src/index.ts:18` (EOF, +1 línea,
+- [x] A.1.4 Añadir `export * from './fasesBlueprint'` a `packages/shared/src/index.ts:18` (EOF, +1 línea,
   no desplaza `:1-17`).
 
 ### Fase A.2 — P-2: `transitions.ts:150-151` gana `from`/`to`
 
-- [ ] A.2.1 **RED.** Reescribir `invariantesGrafo.test.ts:120-127` (el `it` de 5b) con el texto exacto de
+- [x] A.2.1 **RED.** Reescribir `invariantesGrafo.test.ts:120-127` (el `it` de 5b) con el texto exacto de
   `design.md` §6 (8 líneas, cita textual, no rederivar), y `:108-119` (comentario, 12 líneas) con la
   explicación de qué deja de afirmar 5b y qué gana — total **20 líneas exactas** para no mover `:137` y
   lo que sigue. Añadir `STATUS_TICKET_CREADO, STATUS_REMISION_CREADA` a `:3` (lista ya multi-nombre, sin
   insertar línea). Correr `npx vitest run packages/shared/src/invariantesGrafo.test.ts -t 5b`, confirmar
   rojo contra el código de hoy.
-- [ ] A.2.2 **GREEN.** Editar `transitions.ts:150-151` en sitio, texto ANTES/DESPUÉS exacto de
+- [x] A.2.2 **GREEN.** Editar `transitions.ts:150-151` en sitio, texto ANTES/DESPUÉS exacto de
   `design.md` §4 (orden `id · name · from · to · area`). Confirmar `wc -l transitions.ts` idéntico antes/
   después.
-- [ ] A.2.3 Correr A.2.1, confirmar verde; correr `invariantesGrafo.test.ts` completo, confirmar
+- [x] A.2.3 Correr A.2.1, confirmar verde; correr `invariantesGrafo.test.ts` completo, confirmar
   invariantes 1-6 en verde.
 
 ### Fase A.3 — `estadoPorRemision.ts` deriva de la declaración (delta 0)
 
-- [ ] A.3.1 Editar `apps/desk/server/db/estadoPorRemision.ts` en sitio, las siete líneas exactas de
+- [x] A.3.1 Editar `apps/desk/server/db/estadoPorRemision.ts` en sitio, las siete líneas exactas de
   `design.md` §5 (10, 11, 41, 49, 50, 56, 57 — incluido `.some(...)` en `:41`, no `.includes` por el
   tipado de `actual`). Confirmar `wc -l` idéntico antes/después.
-- [ ] A.3.2 Correr `estadoPorRemision.test.ts` (arnés `pg-mem`+`migrate()`), confirmar las **mismas
+- [x] A.3.2 Correr `estadoPorRemision.test.ts` (arnés `pg-mem`+`migrate()`), confirmar las **mismas
   aserciones de hoy, sin tocar ninguna**, en verde — criterio 6 de la propuesta §7.
 
 ### Fase A.4 — Cierre de la Unidad A
 
-- [ ] A.4.1 **Barrido de la regla de mutación 4 sobre `invariantesGrafo.test.ts` (riesgo #1, ausente en
+- [x] A.4.1 **Barrido de la regla de mutación 4 sobre `invariantesGrafo.test.ts` (riesgo #1, ausente en
   la propuesta).** `grep -rnoE "invariantesGrafo\.test\.ts:[0-9]+(-[0-9]+)?"` sobre todo el árbol final,
   excluyendo `openspec/changes/archive/`; comprobar cada resultado leyendo qué afirma. Reparar por caso
   A/B/C, nunca renumerar en bloque. El orquestador midió ~28-36 ocurrencias antes de esta tanda; remedir,
   no copiar.
-- [ ] A.4.2 `npm run test:coverage`: confirmar `packages/shared/src/**` sobre `92/92/96/78`
+- [x] A.4.2 `npm run test:coverage`: confirmar `packages/shared/src/**` sobre `92/92/96/78`
   (líneas/statements/funciones/ramas, `vitest.config.ts:58-63`) con `fasesBlueprint.ts` incluido.
-- [ ] A.4.3 `npm test`, `npm run typecheck`, `npm run lint`, en solitario, verdes.
-- [ ] A.4.4 Cerrar `apply-progress.md` de A: evidencia RED/GREEN de A.1.1/A.2.1, mutación A.1.3 con su
+- [x] A.4.3 `npm test`, `npm run typecheck`, `npm run lint`, en solitario, verdes.
+- [x] A.4.4 Cerrar `apply-progress.md` de A: evidencia RED/GREEN de A.1.1/A.2.1, mutación A.1.3 con su
   reversión, resultado de A.4.1, `git diff --shortstat --no-renames` contra el commit base del intento 1
   + `wc -l` de lo nuevo sin trackear.
-- [ ] A.4.5 Commit de la Unidad A (conventional commit), antes del `sdd-attempt settle` del intento 1.
+- [x] A.4.5 Commit de la Unidad A (conventional commit), antes del `sdd-attempt settle` del intento 1.
 
 ---
 

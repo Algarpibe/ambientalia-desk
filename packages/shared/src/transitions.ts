@@ -147,8 +147,8 @@ export const STATUS_REMISION_CREADA = 'Remisión creada'
  * La transición que dispara el desenlace de n8n, y su inversa al anular. NO están en `TRANSITIONS`
  * porque ahí solo va lo que la interfaz ofrece como botón: éstas las aplica el servidor solo.
  */
-export const TRANSICION_REMISION_CONFIRMADA = { id: 'remision_confirmada', name: 'Remisión creada', area: 'Servicio Técnico' }
-export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Remisión anulada', area: 'Servicio Técnico' }
+export const TRANSICION_REMISION_CONFIRMADA = { id: 'remision_confirmada', name: 'Remisión creada', from: [STATUS_TICKET_CREADO], to: STATUS_REMISION_CREADA, area: 'Servicio Técnico' }
+export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Remisión anulada', from: [STATUS_REMISION_CREADA], to: STATUS_TICKET_CREADO, area: 'Servicio Técnico' }
 
 /**
  * Si en este estado todavía tiene sentido ofrecer "Crear remisión".
