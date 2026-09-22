@@ -1,7 +1,7 @@
 # Reconciliación
 
-**Commit medido:** `054b02b` · **Fecha del commit:** 2026-09-21
-**Árbol de trabajo:** limpio
+**Commit medido:** `822ccbc` · **Fecha del commit:** 2026-09-22
+**Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
 este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la pasada anterior.
@@ -16,7 +16,7 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
 ## 2 · Numerador del avance — dos cifras, nunca una suma
 
-  6 derivables de cabecera ...................... F0-01, F0-02, F0-03, F0-05, F1A-08, F1B-10
+  7 derivables de cabecera ...................... F0-01, F0-02, F0-03, F0-05, F1A-07, F1A-08, F1B-10
   0 declarados por commit ....................... —
   denominador 52 tandas del apartado 5 del plan
   3 marcadas sin verificar
@@ -35,12 +35,11 @@ Hallazgos (informativos, no bloquean):
 ## 4 · Incumplimientos vivos, gates y claves de decisión
 
   12 entradas
-  5 vivos
-  7 cerrados
+  4 vivos
+  8 cerrados
   0 defectos de registro
 
 Hallazgos (informativos, no bloquean):
-  - `IV-2` — incumplimiento vivo, declarado por el campo `estado`: VIVO
   - `IV-8` — incumplimiento vivo, declarado por el campo `estado`: VIVO
   - `IV-9` — incumplimiento vivo, declarado por el campo `estado`: VIVO
   - `IV-11` — incumplimiento vivo, declarado por el campo `estado`: VIVO
@@ -55,7 +54,20 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  0 sin trackear
+  11 sin trackear
+
+Hallazgos (informativos, no bloquean):
+  - `docs/sdd/Alcance_Replica_ZohoDesk_Fase1.md` — en disco y fuera del índice
+  - `docs/sdd/Brecha_Maestro_R08.2_2026-09-17.docx` — en disco y fuera del índice
+  - `docs/sdd/Brecha_Maestro_R08.2_2026-09-17.md` — en disco y fuera del índice
+  - `docs/sdd/Decision_Correo_n8n_vs_GmailAPI.md` — en disco y fuera del índice
+  - `docs/sdd/Estado_As-Built_2026-09-09.md` — en disco y fuera del índice
+  - `docs/sdd/Evidencia_Transporte_Tarea_Programada_2026-09-18.txt` — en disco y fuera del índice
+  - `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md` — en disco y fuera del índice
+  - `docs/sdd/Integracion_Hallazgos_en_Sesiones.md` — en disco y fuera del índice
+  - `docs/sdd/Inventario_ZohoDesk_Configuracion.md` — en disco y fuera del índice
+  - `docs/sdd/Parte_2026-09-18.md` — en disco y fuera del índice
+  - `docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md` — en disco y fuera del índice
 
 ---
 
