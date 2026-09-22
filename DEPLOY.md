@@ -32,7 +32,7 @@ Hay **dos** servicios Postgres y **dos** procesos Node, todos del mismo reposito
 
 **Quién escribe cada base.** El worker `hub-sync` escribe **sólo** en `zoho-hub`
 (`apps/hub-sync/src/hub-sync.ts`): tickets, actividades y contactos de Desk, más `books.*`
-(artículos, órdenes de venta, facturas, pagos, órdenes de compra) y `crm.*` cuando sus
+(artículos, órdenes de venta, facturas, pagos, órdenes de compra, facturas de anticipo) y `crm.*` cuando sus
 credenciales y flags están puestos. La App escribe **sólo** en `desk`.
 
 **Replicación lógica hub → desk.** La publicación `zoho_ref_pub` (en `zoho-hub`) y la suscripción

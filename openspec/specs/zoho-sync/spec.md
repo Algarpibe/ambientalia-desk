@@ -120,7 +120,7 @@ El intervalo **SHALL** salir de `syncIntervalMs`, con **180 000 ms** por omisió
 | Worker | 3 | CRM, `crmSync.syncRecent` | `hubSync.ts:91-94` |
 
 - Los dos ciclos principales **SHALL** llevar un cerrojo `syncing` que impide solapar «si una tarda
-  más que el intervalo» (`index.ts:81-84`; `hubSync.ts:77-84`).
+  más que el intervalo» (`index.ts:81-84`; `hubSync.ts:88-95`).
 - Los tres temporizadores del worker **SHALL** compartir el mismo `intervalMs`
   (`hub-sync.ts:49`).
 
@@ -218,10 +218,10 @@ exactamente una: `DESK_TABLES` (10), `PUBLIC_TABLES` (16) y `BOOKS_TABLES` (3)
 | Dominio | Qué se ingiere | Dónde | Evidencia |
 |---|---|---|---|
 | **Zoho Desk** | tickets, conversaciones, adjuntos, cuentas, contactos, agentes, actividades e historial | `desk.*` (y `public.*` antes del reorg) | `packages/zoho-sync/src/sync.ts:14-24` |
-| **Zoho Books (rico)** | contactos, artículos, órdenes de venta, facturas, pagos y órdenes de compra, con sus líneas | `books.*`, **8** tablas | `booksHub/sync.ts:8-17`; `booksHub/schema-books.sql` |
+| **Zoho Books (rico)** | contactos, artículos, órdenes de venta, facturas, pagos, órdenes de compra y facturas de anticipo, con sus líneas | `books.*`, **9** tablas | `booksHub/sync.ts:8-18`; `booksHub/schema-books.sql` |
 | **Zoho CRM** | **9** módulos: `leads`, `deals`, `tasks`, `events`, `calls`, `products`, `quotes`, `campaigns`, `visits` | `crm.*`, **10** tablas (los 9 más `quote_line_items`) | `crmHub/modules.ts:18-66`; `crmHub/schema-crm.sql` |
 
-**Recuentos por comando:** `grep -cE "^CREATE TABLE" schema-books.sql` = 8;
+**Recuentos por comando:** `grep -cE "^CREATE TABLE" schema-books.sql` = 9;
 `grep -cE "^CREATE TABLE" schema-crm.sql` = 10; los 9 módulos salen de `grep -oE "table: '[a-z_]+'"
 crmHub/modules.ts | sort -u`.
 
