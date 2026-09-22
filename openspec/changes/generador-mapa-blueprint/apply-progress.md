@@ -394,3 +394,35 @@ presupuesto de revisión (documentación de cierre, no código de producción).
 
 Confirmado por lectura del fichero tras marcar las últimas casillas: cero `- [ ]` pendientes en
 `openspec/changes/generador-mapa-blueprint/tasks.md`.
+
+## Hallazgo real de cierre — el propio barrido de citas rompió citas, y se reparó en sitio
+
+El barrido narrado más arriba (§"Barrido de citas de `NOTA.md:NN`") declaró, sobre el commit de cierre
+del primer intento de C (`372196e`), que ninguna cita viva necesitaba reparación. **Era falso, y lo
+demostró correr el detector de verdad en vez de darlo por bueno por lectura.** `npx tsx
+apps/desk/server/citas/cli.ts --sha 372196e` devolvió `EXIT_CODE=1` con **3 bloqueantes**, los tres
+causados por las propias inserciones de C.1.1/C.1.2 en `NOTA.md` desplazando líneas que otros ficheros
+citaban en forma completa (con ruta), no abreviada:
+
+- `proposal.md:35` citaba `NOTA.md:113-118` (el aviso de caducidad, §7) — hoy en `:143-148`.
+- `proposal.md:152` citaba `NOTA.md:113-130` (el mismo §7 completo) — hoy en `:143-160`.
+- `proposal.md:248` citaba `NOTA.md:84-86` («quién abre el mapa») — hoy en `:97-99`.
+- Hallazgo propio, no reportado por el detector como bloqueante pero sí real: `apply-progress.md`
+  citaba `config.yaml:271-284`, y `:284` es la línea en blanco que sigue a la entrada —corregido a
+  `:271-283`.
+
+Las tres primeras son Caso A (el contenido señalado sigue siendo cierto HOY, sólo se movió): se
+repararon apuntando a la línea de hoy, **en sitio y sin añadir ninguna línea a `proposal.md`** —el
+primer intento de reparación SÍ añadía una línea explicativa por cada cita, lo que desplazaba
+`proposal.md` mismo (268→271 líneas) y habría roto, en cascada, las citas de `tasks.md:134`,
+`design.md:324` y de este mismo `apply-progress.md` hacia `proposal.md:33,35,63,128,152,172,205,248`.
+Revertido y rehecho como sustitución de igual número de líneas (mismo molde que P-2 sobre
+`transitions.ts`, delta cero), confirmado con `wc -l` (268 antes y después) y `git diff -U0` mostrando
+sólo reemplazos 1-a-1. Se aprovechó también para corregir una abreviada (`:891`) que el detector
+atribuía al fichero equivocado por quedar pegada, en la prosa, al nombre de otro fichero citado antes.
+
+**Verificación final, contra el commit real de cierre (`909d378`):** `npx tsx
+apps/desk/server/citas/cli.ts --sha 909d3780e769f47b2c15e4baa5926552c6f6747a` → **EXIT_CODE=0**, cero
+bloqueantes, 13 abreviadas rotas (todas informativas, todas pre-existentes a esta tanda — ninguna
+introducida por C). La lección, para quien lea esto: la regla de mutación 4 pide correr el detector,
+no razonar que no hará falta — ese mismo razonamiento fue el que falló aquí a la primera.
