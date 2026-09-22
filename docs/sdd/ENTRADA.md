@@ -341,7 +341,7 @@ el commit del archive las reescribe con el fichero ya movido, así que en su pro
 
 **Parte de la causa, verificada:** F1B-10. En `f367186` las anclas eran ciertas; `ccedf4f` (su código) desplazó las líneas de
 `executeTransition` y de `createManagedTicket`, y `aa886c6` (su archive) fusionó en la spec viva anclas medidas antes de ese
-desplazamiento. Ejemplo comprobado de disco: `openspec/specs/transitions-st/spec.md:286` cita la línea 145 de `ticketService.ts`
+desplazamiento. Ejemplo comprobado de disco: `openspec/specs/transitions-st/spec.md:294` cita la línea 145 de `ticketService.ts`
 como la del actor; en `f367186` lo era, y en `4976787` esa línea es un comentario y el actor está en la 151.
 
 **Por qué el detector no lo caza:** comprueba que la línea citada exista y no esté vacía, nunca que diga lo que la frase afirma
