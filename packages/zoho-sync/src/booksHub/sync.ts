@@ -184,6 +184,9 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
         // hace que solo se marquen los realmente borrados.
         { schema: 'books', table: 'contacts', pk: 'contact_id', collectLive: () => collectLiveIds('contacts', 'contacts', 'contact_id'), confirmDeleted: (id) => verifyDeleted('contacts', id) },
         { schema: 'books', table: 'items', pk: 'item_id', collectLive: () => collectLiveIds('items', 'items', 'item_id'), confirmDeleted: (id) => verifyDeleted('items', id) },
+        // Anticipos: sin tabla hija, las líneas viven en raw. Un anticipo borrado en Zoho que
+        // siguiera en la réplica dispararía en el portal un aviso falso de «sin aplicar».
+        { schema: 'books', table: 'retainer_invoices', pk: 'retainerinvoice_id', collectLive: () => collectLiveIds('retainerinvoices', 'retainerinvoices', 'retainerinvoice_id'), confirmDeleted: (id) => verifyDeleted('retainerinvoices', id) },
       ]
       const reports: SweepReport[] = []
       for (const e of entities) {

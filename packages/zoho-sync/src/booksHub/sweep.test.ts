@@ -75,4 +75,22 @@ describe('booksHub sweep', () => {
     expect(inv.deleted).toBe(0)
     expect((await db.query('SELECT count(*)::int AS c FROM books.invoices')).rows[0].c).toBe(3)
   })
+
+  it('anticipos: borra el huérfano confirmado ausente y deja el vivo', async () => {
+    for (const id of ['R1', 'R2']) await db.query('INSERT INTO books.retainer_invoices (retainerinvoice_id) VALUES ($1)', [id])
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      const other = emptyOthers(path)
+      if (other) return Promise.resolve(other)
+      if (path.startsWith('/retainerinvoices/R2')) return Promise.resolve(new Response(JSON.stringify({ code: 1002, message: 'El recurso no existe.' }), { status: 404 }))
+      if (path.startsWith('/retainerinvoices')) return Promise.resolve(new Response(JSON.stringify({ retainerinvoices: [{ retainerinvoice_id: 'R1' }] }), { status: 200 }))
+      // Las facturas del beforeEach siguen vivas: aquí solo se mide el barrido de anticipos.
+      if (path.startsWith('/invoices')) return Promise.resolve(new Response(JSON.stringify({ invoices: [{ invoice_id: 'A' }, { invoice_id: 'B' }, { invoice_id: 'C' }] }), { status: 200 }))
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    const reports = await sync.sweep({ dryRun: false, guard })
+    const ant = reports.find((r) => r.table === 'books.retainer_invoices')!
+    expect(ant).toMatchObject({ live: 1, replica: 2, orphans: 1, confirmed: 1, deleted: 1 })
+    expect((await db.query('SELECT retainerinvoice_id FROM books.retainer_invoices')).rows.map((r: any) => r.retainerinvoice_id)).toEqual(['R1'])
+  })
 })
