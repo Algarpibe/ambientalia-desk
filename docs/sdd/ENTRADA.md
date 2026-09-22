@@ -84,12 +84,12 @@ preguntas (`e003-catalogo-equipos`, `e003b-registro-equipos`) **siguen sin respu
 **Estado:** triada
 **Destino:** Anexo D nº 43 (ya existe, sin dueño con fecha) + registrar **PF-2** en `premisas_falsas_corregidas`
 
-## E-005 · 2026-09-17 · decision
+## E-005 · 2026-09-17 · decision · **DECIDIDA 21/09 — CERRADA, y abre dos preguntas (adenda del 22/09, al final)**
 **Qué:** IV-4 e IV-11 son un par: la tercera puerta impide el duplicado, y el sync puede dejar la fila incoherente igualmente (`orden_venta` en `TICKET_COLS`, `salesorder_id` fuera). Elegir salida (a) `managed_by_app` o (b) meter `salesorder_id` en `TICKET_COLS`.
 **De dónde viene:** informe de brechas del 17/09, §2.8
 **Afecta a:** dar IV-4 por cerrado en producción
-**Estado:** triada
-**Destino:** decisión de alcance de Gerencia; luego tanda
+**Estado:** cerrada — la salida elegida es la (c); quedan abiertas `e005b-parche-vehiculo` y `e005c-discrepancia-sin-espejo`
+**Destino:** **F1B-11, con un parche antes** (`decision/e005-iv4-iv11`, 21/09). El vehículo del parche en el plan está por decidir
 
 ## E-006 · 2026-09-17 · correccion
 **Qué:** El `destino` de IV-2 en `config.yaml` sigue diciendo «sin tanda, y a propósito» cuando el plan lo rutea a F1A-07 con clave `iv2-fechas-derivadas` desde el 10/09.
@@ -120,7 +120,7 @@ preguntas (`e003-catalogo-equipos`, `e003b-registro-equipos`) **siguen sin respu
 **Destino:** ver E-003 (catalogo-equipos); `kpis` es Fase 2 por declaración de `config.yaml`
 
 ## E-010 · 2026-09-17 · hallazgo
-**Qué:** Punto abierto nº 61 —mecanismo de incorporación de actas— ya se cobró una pieza: el R08.3 §B.3 registra que siete gates previstos para el 11/09 no tienen decisión escrita y siguen pendientes.
+**Qué:** Punto abierto nº 61 —mecanismo de incorporación de decisiones— ya se cobró una pieza: el R08.3 §B.3 registra que siete gates que R01.2 fechaba el 11/09 no tienen decisión escrita y siguen pendientes.
 **De dónde viene:** informe de brechas del 17/09, §2.7
 **Afecta a:** siete gates previstos para el 11/09
 **Estado:** triada
@@ -160,7 +160,7 @@ mismos cinco que nombra `CLAUDE.md`.
 `CERRADO` y **la prosa se conserva en una clave propia**, porque este fichero tiene por cultura conservar el registro.
 Las dos afirmaciones caducas de arriba quedan **anotadas y paradas**: no son de esta tanda
 
-## E-013 · 2026-09-17 · hallazgo
+## E-013 · 2026-09-17 · hallazgo · **CERRADA 21/09** (adenda del 22/09, al final)
 **Qué:** La fila **F0-04** del §5 pide **tres** cosas y sólo **dos** se verifican en el repositorio.
 `plan:128` pide «completar las pruebas del motor de transiciones …; **staging sobre la VPS Hostinger con
 PostgreSQL**; CI que ejecuta `test`, `typecheck` y `lint`». Las pruebas están (`apps/desk/server/permisos.test.ts`,
@@ -190,7 +190,7 @@ perdería contenido sin registro.
 que se resuelven por la regla del ciclo 1 y quedan declaradas aparte en `docs/runbooks/verificaciones-pendientes-F0.md:98-100`.
 **Es un cuarto elemento que nadie había nombrado.**
 **Afecta a:** la fila F0-04 del §5, el numerador del avance, y `docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md` si el staging fuese requisito de algo posterior
-**Estado:** triada
+**Estado:** cerrada — Gerencia decidió el 21/09 no montar la copia de pruebas y retirar la pieza de la fila con fecha
 **Dueño:** **Gerencia**
 **Destino:** **punto abierto CON DUEÑO** (R-3, tercera salida). No cabe en una fila del §5 —no es trabajo de
 construcción— ni en el expediente R08.x —no es un pasaje del maestro—: es una decisión de alcance sobre
@@ -262,7 +262,7 @@ de §4.5. **Clave Engram a cargar:** `decision/escalado-destinatario-doble`.
 **Qué:** Si la OV y el equipo pueden ser de clientes distintos (gate `decision/titularidad-ov-equipo`, donde vive IV-8).
 **De dónde viene:** panel, documento `titularidad-ov-equipo`, 17/09/2026; recogida el 21/09
 **Afecta a:** F1B-11 · IV-8
-**Estado:** cerrada — y abre una pregunta nueva, `titularidad-mantenedor`
+**Estado:** cerrada — y la pregunta que abrió, `titularidad-mantenedor`, está respondida el 21/09 (adenda del 22/09, al final)
 **RESPUESTA DE GERENCIA, TEXTUAL:** «Generalmente el titular del equipo es el que genera la orden de venta. Tenemos 1 solo caso donde el generador de la orden de venta no es el propietario del equipo es el mantenedor del equipo»
 **Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` y `incumplimientos_vivos` → IV-8 (`titularidad_decidida_2026_09_17`) · plan §4.5, fila `decision/titularidad-ov-equipo`
 **Clave Engram a cargar:** `decision/titularidad-ov-equipo`
@@ -349,3 +349,99 @@ como la del actor; en `f367186` lo era, y en `4976787` esa línea es un comentar
 
 **Lo que F1A-07 sí hace, y nada más:** reancla como caso A las citas de `ticketService.ts` de los tres bloques que su delta
 reescribe, y al archivar las vuelve a comprobar contra el árbol de ese momento.
+
+---
+
+# Adendas y entradas del corte del 2026-09-22
+
+Se escriben al final, y no dentro de cada entrada, para no desplazar las líneas que otros documentos citan.
+Las entradas de arriba llevan marcado su estado nuevo en su cabecera.
+
+## ADENDA a E-005 · respuesta de Gerencia a `e005-iv4-iv11`, 21/09 (editada el 22/09), TEXTUAL
+
+«Opción (c). Regla: si la orden de venta se eligió en la aplicación, manda la aplicación y el sincronizador no la pisa,
+ni el número ni su fecha; si no, manda Zoho, como hoy. Descarto (a) mientras convivamos con Zoho, porque congela el
+ticket entero, y (b), porque borra el identificador. Si alguien escribe en Zoho una orden distinta a la elegida en la
+aplicación, no se pierde en silencio: se enseña en el espejo de Zoho para corregirla a mano. Va en F1B-11, y SÍ queremos
+un parche antes de esa tanda (elegido el 22/09). Dónde se teclean hoy las órdenes —sólo en la aplicación, todavía en
+Zoho, o en los dos— queda SIN CONFIRMAR: no cambia la decisión del parche.»
+
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/e005-iv4-iv11`) · `incumplimientos_vivos`
+→ IV-8 no, IV-**11**, cuyo `destino` pasa de «SIN DESTINO ASIGNADO» a «F1B-11, con un parche antes» · `CLAUDE.md`, fila de
+IV-11 · `docs/sdd/Parte_2026-09-22.md`.
+**Medido el 22/09 sobre `125ae3e`:** «ni el número ni su fecha» son DOS columnas, `orden_venta` (`packages/zoho-sync/src/db/repo.ts:48`)
+y `fecha_orden_venta` (`:50`). **Lo que la respuesta no preveía:** hoy no hay forma de saber POR FILA que la orden se
+eligió en la aplicación —la única bandera, `managed_by_app` (`repo.ts:58-59`), es del ticket entero, que es la salida (a)
+descartada—, y el «espejo de Zoho» al que se manda la discrepancia no existe ni tiene fila (E-018). Las dos salen al panel
+como `e005b-parche-vehiculo` y `e005c-discrepancia-sin-espejo`.
+**Clave Engram a cargar:** `decision/e005-iv4-iv11`.
+
+## ADENDA a E-013 · respuesta de Gerencia a `e013b-copia-pruebas`, 21/09, TEXTUAL
+
+«No la montamos, y se escribe así: F0-04 se da por cerrada con esa pieza retirada y con la fecha de la decisión, y el
+avance recupera 1. Cuesta que cualquier error —incluida la mudanza— se descubra ya delante de los usuarios.»
+
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/e013b-copia-pruebas`) · fila F0-04 del §5
+del plan (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:128`), donde la pieza queda **tachada y fechada**, sin
+borrar el texto · `docs/sdd/Parte_2026-09-22.md`.
+**Lo que queda pendiente y NO lo hace esta sesión:** `openspec/changes/F0-04/proposal.md:6` sigue con `cierra: no`, y la
+supervisión no toca `openspec/changes/`. Hasta que una sesión de construcción lo cambie citando esta decisión, la cifra
+derivable de cabecera y la publicada difieren en 1, a propósito.
+**Clave Engram a cargar:** `decision/e013b-copia-pruebas`.
+
+## ADENDA a E-019 · respuesta de Gerencia a `titularidad-mantenedor`, 21/09, TEXTUAL
+
+«Opción 1 — el mantenedor se apunta en la hoja de vida del equipo y sólo él puede pagar órdenes de ese equipo; cualquier
+otra discrepancia se bloquea. Es la más segura; cuesta un campo más en la hoja de vida y mantenerlo al día.»
+
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/titularidad-mantenedor`) y
+`incumplimientos_vivos` → IV-8, cuyo `destino` pasa a **F1B-11** · plan §4.5, fila `decision/titularidad-ov-equipo` ·
+`CLAUDE.md`, fila de IV-8 · `docs/sdd/R08.3_Expediente_de_cambios.md` §11 · `docs/sdd/Parte_2026-09-22.md`.
+**Consecuencia que la respuesta no preveía:** el campo vive en la hoja de vida, que es contenido de F1B-02 (**S39, esta
+semana**, cuatro campos declarados en `plan:157`), y la guarda vive en F1B-11 (S41). Destino del campo **propuesto**,
+no escrito.
+**Clave Engram a cargar:** `decision/titularidad-mantenedor`.
+
+## ADENDA a E-018 · el «espejo de Zoho» ya tiene un uso declarado
+
+La respuesta `e005-iv4-iv11` (21/09) manda la discrepancia de orden de venta «al espejo de Zoho». El espejo sigue **sin
+fila en el §5** y sigue siendo alcance condicional, pero ya no es sólo una posibilidad futura: es donde una decisión
+tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se señala en el parte del 22/09.
+
+## E-024 · 2026-09-21 · decision · **CERRADA**
+**Qué:** Si el enlace a Drive es definitivo o el sistema sustituye a Drive (gate `decision/p8-p54-drive`, Anexo D nº 8 y 54).
+**De dónde viene:** panel, colección `respuestas`, documento `p8-p54-drive`, 21/09/2026; recogida el 22/09
+**Afecta a:** F1B-02 (S39) · `decision/p55-backup` (F1F-02)
+**Estado:** cerrada
+**RESPUESTA DE GERENCIA, TEXTUAL:** «Por cuestiones de capacidad de almacenamiento en nuestro servidor vamos a seguir teniendo enlace a Drive»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/p8-p54-drive` · `docs/sdd/R08.3_Expediente_de_cambios.md` §11
+**Consecuencia señalada, no decidida:** si los documentos viven en Drive, el respaldo de F1F-02 no los cubre por estar en el servidor.
+**Clave Engram a cargar:** `decision/p8-p54-drive`
+
+## E-025 · 2026-09-21 · decision · **CERRADA**
+**Qué:** Si los flujos comercial y posible-cliente (M1.11 y M1.12) entran en Desk 2.0 en 2026 (gate `decision/flujos-comercial-posible-cliente`).
+**De dónde viene:** panel, documento `flujos-comercial`, 21/09/2026; recogida el 22/09
+**Afecta a:** F1B-06 (S42) · Anexo D nº 42 · `docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md`
+**Estado:** cerrada
+**RESPUESTA DE GERENCIA, TEXTUAL:** «Se quedan en Zoho CRM no se queda en Desk 2.0»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/flujos-comercial-posible-cliente` · `docs/sdd/R08.3_Expediente_de_cambios.md` §11
+**Lo que arrastra y queda sin responder:** de dónde sale «Preparación Cotizac.» (Anexo D nº 42) si esa rama no se construye. Medido el 22/09: `grep -rniE "posible.cliente" packages/ apps/ --include=*.ts` = 0.
+**Clave Engram a cargar:** `decision/flujos-comercial-posible-cliente`
+
+## E-026 · 2026-09-21 · decision · **PARCIAL**
+**Qué:** Si los clientes Top 5 entran en el cálculo automático de prioridad (gate `decision/top5-prioridad`).
+**De dónde viene:** panel, documento `top5-prioridad`, 21/09/2026; recogida el 22/09
+**Afecta a:** F1B-07 (S43)
+**Estado:** triada — la mitad respondida está registrada; la otra vuelve como pregunta
+**RESPUESTA DE GERENCIA, TEXTUAL:** «No automático, Hay que pensar en una forma de hacerlo manual»
+**Dónde aterrizó:** `openspec/config.yaml` → `decisiones_de_gerencia` · plan §4.5, fila `decision/top5-prioridad`, ahora **parcial**
+**Lo que falta:** cómo se pone a mano y qué cargo puede hacerlo —el plan promete «edición manual bloqueada para el técnico» (`plan:162`)—. Devuelto al panel como `top5-manual`. Medido el 22/09: la noción de Top 5 no existe en el código.
+**Clave Engram a cargar:** `decision/top5-prioridad`
+
+## E-027 · 2026-09-22 · hallazgo
+**Qué:** Seis commits de producto entraron en `main` el 22/09 —la copia de las facturas de anticipo de Zoho Books— sin cambio de OpenSpec, sin cabecera `tanda:` y sin fila en el §5.
+**De dónde viene:** corte del 22/09, `git log --first-parent 4976787..822ccbc^`
+**Afecta a:** el denominador y el numerador del avance · la comprobación 2 de `npm run reconcile`, que sólo mira cabeceras de `proposal.md` · la spec viva `openspec/specs/zoho-sync/spec.md:221`, modificada en el mismo lote
+**Estado:** triada
+**Destino:** — **sin destino, a propósito.** Es exactamente el caso «trabajo sin fila» que F0-05 dice cerrar, y el mecanismo no lo caza: el hook comprueba cabeceras cuando hay `proposal.md`, y aquí no lo hay. Decidir si todo cambio de producto necesita ficha, o si los ajustes de sincronización pueden ir directos, es alcance de método: devuelto al panel como `trabajo-sin-ficha`.
+**Lo medido (22/09, sobre `125ae3e`):** `ea3dbc1`, `a233e1d`, `7cfd198`, `8d03c0d`, `d041b1c`, `bde29fb` — 13 ficheros, +155/−18, con pruebas. No escriben en Zoho: son lectura y copia, así que no chocan con `decision/p44-escritura-zoho`.

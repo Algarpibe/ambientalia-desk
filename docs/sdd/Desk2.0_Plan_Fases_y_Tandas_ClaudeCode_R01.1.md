@@ -1,7 +1,7 @@
 # Desk 2.0 — Plan de fases y tandas de desarrollo con Claude Code
 
 **Revisión:** R01.1 · **Fecha:** 07/09/2026 · **Autor:** Gerencia (Alfonso García del Pino), con apoyo de Claude
-**Base documental:** Documento Maestro R08.1 (§1.8, §1.9, M1.3, M2, M11, §3.2, §3.2.1, Anexos D y H) · Acta del 03/09/2026 (Notion «Desk 2.0 03/09/2026») · Estructura de inspección física GRIMM EDM180 v1.8 y HORIBA AP370 v1.4 · Lectura del repositorio `C:\dev\Desk_2_R1.023` (HEAD `a3a8f03`) · Decisiones de Gerencia del 07/09/2026
+**Base documental:** Documento Maestro R08.1 (§1.8, §1.9, M1.3, M2, M11, §3.2, §3.2.1, Anexos D y H) · Registro de decisiones del 03/09/2026 (Notion «Desk 2.0 03/09/2026») · Estructura de inspección física GRIMM EDM180 v1.8 y HORIBA AP370 v1.4 · Lectura del repositorio `C:\dev\Desk_2_R1.023` (HEAD `a3a8f03`) · Decisiones de Gerencia del 07/09/2026
 **Estado:** Propuesta; los gates se deciden en la conversación de Cowork y en el panel (tabla §4.5)
 **Cambios R01 → R01.1:** tanda de auditoría del as-built F0-00 antes de escribir specs · §2.4 nuevo con el punto de partida real del repositorio · §4.7 reescrito sobre la estructura documental existente en `docs/` · mapeo N1 → transiciones, N2/N3 → checkpoints incorporado en el principio 4 y en F1D-03
 **Sincronizado con:** el libro de revisión Man on the Loop **R01.3** (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_Revision_MoL_R01.3.xlsx`, 15/09/2026), versionado en `docs/sdd/` junto a este fichero. Sincronización hecha el **17/09/2026**. **El denominador de avance son 52 tandas hasta F1F** —F0 6 · F1A 9 · F1B 11 · F1C 8 · F1D 9 · F1E 5 · F1F 4—, 70 contando F2–F5. Es reproducible desde el repositorio: el libro es la fuente, este documento el destino, y las dos cifras salen de contar filas de la hoja «Tandas».
@@ -11,7 +11,7 @@
 
 ## 0. Qué resuelve este documento
 
-El acta del 27/08 frenó el desarrollo hasta consensuar el documento maestro y pidió, después, «trocear el proyecto por fases y prioridades». El acta del 03/09 recoge el criterio de troceo (replicar primero el Desk 1.0), metió el módulo de informes en la Fase 1 y fijó la jerarquía del diagnóstico (fase → nivel macro → subnivel → ítem). Lo que faltaba era el paso siguiente: convertir eso en un plan que Claude Code pueda ejecutar tanda a tanda sin perder el hilo entre sesiones.
+El registro de decisiones del 27/08 frenó el desarrollo hasta consensuar el documento maestro y pidió, después, «trocear el proyecto por fases y prioridades». El registro de decisiones del 03/09 recoge el criterio de troceo (replicar primero el Desk 1.0), metió el módulo de informes en la Fase 1 y fijó la jerarquía del diagnóstico (fase → nivel macro → subnivel → ítem). Lo que faltaba era el paso siguiente: convertir eso en un plan que Claude Code pueda ejecutar tanda a tanda sin perder el hilo entre sesiones.
 
 Este documento responde a dos preguntas:
 
@@ -53,7 +53,7 @@ Cuatro decisiones de Gerencia del 07/09 lo condicionan y no se vuelven a discuti
 
 **Encaja, y mejor que una estructura propia.** Gentle-AI implementa SDD sobre la convención OpenSpec, que separa dos cosas que este proyecto necesita separar: **la verdad actual** (`openspec/specs/<capacidad>/spec.md`, lo que el sistema hace hoy) y **el cambio propuesto** (`openspec/changes/<id>/`, con `proposal.md`, `design.md`, `tasks.md` y los deltas de spec). Esa separación es exactamente la distinción as-built / plan que el documento maestro mantiene en el Anexo H, llevada al repositorio. Al archivar un cambio (`sdd-archive`), sus deltas se funden en las specs: el as-built se actualiza solo.
 
-Engram cubre el otro hueco, el que hizo que el acta del 27/08 tardara cinco revisiones en entrar al documento: la memoria entre sesiones. Cada sesión de Claude Code arranca con `mem_context` (qué se decidió, qué quedó a medias) y termina con `mem_session_summary`. Las decisiones de negocio se guardan con `topic_key` estable (`decision/c3-salida-esperas`), de modo que una tanda posterior las encuentre con `mem_search` sin releer actas.
+Engram cubre el otro hueco, el que hizo que el registro de decisiones del 27/08 tardara cinco revisiones en entrar al documento: la memoria entre sesiones. Cada sesión de Claude Code arranca con `mem_context` (qué se decidió, qué quedó a medias) y termina con `mem_session_summary`. Las decisiones de negocio se guardan con `topic_key` estable (`decision/c3-salida-esperas`), de modo que una tanda posterior las encuentre con `mem_search` sin releer los registros de decisiones.
 
 Tres cautelas que conviene conocer antes de empezar:
 
@@ -124,8 +124,8 @@ Objetivo: que la primera tanda funcional arranque sobre specs de lo que ya exist
 | **F0-00 Auditoría del as-built** | Tanda sin código. `sdd-explore` con un sub-agente por frente: (a) **motor de flujo** —confirmar 34 transiciones y 21 estados, que `transitions.ts` y `permissions.ts` siguen siendo el único sitio de cada regla, y los seis hallazgos de la R04; (b) **esquema de datos** frente a las 59 columnas del Anexo G y a los diseños de `docs/superpowers/specs` (subsistemas A, B, E, F); (c) **sincronización Zoho** (`packages/zoho-sync`, `apps/hub-sync`): qué entidades, cadencia, regla de no cruce; (d) **UI** (`apps/desk/src`): qué pantallas replican ya Zoho Desk y cuáles son prototipo; (e) **pruebas y build**: cobertura real de los 96 ficheros, `typecheck` y `lint` en verde o no; (f) **deuda**: reclasificar `debt.md` en «cierra en F1A/F1C», «se arrastra» y «obsoleto». Cada frente devuelve un veredicto **conservar / refactorizar / rehacer** con justificación. Contraste con el Anexo H; desvíos al Anexo D. Resultado a Engram como observaciones `baseline/*` | El proyecto arranca sobre un punto de partida verificado, no sobre la memoria de agosto. Si algún frente saliera en «rehacer», se decide antes de gastar una tanda funcional en él |
 | F0-01 `sdd-init` y convención | `sdd-init` sobre el repo; `openspec/config.yaml` con contexto del proyecto, `strict_tdd: true` (vitest ya existe), reglas por fase; `CLAUDE.md` con las reglas invariables (§4.4) y el mapa documental de §4.7; decisión sobre qué skills de `.claude/skills` y `.agent/skills` se conservan | Repo preparado; Claude Code conoce las reglas sin que se le repitan |
 | F0-02 Specs as-built | A partir del inventario de F0-00 y de los diseños de `docs/superpowers/specs`, redacción de las specs de `transitions-st`, `permissions`, `remisiones`, `zoho-sync`, `derivacion-avisos`, `trazas`, `tickets-core` **tal como están**, incluidos los hallazgos de la R04 marcados como «comportamiento actual, a corregir en Cx». Cada spec cita el diseño de Superpowers del que procede y el apartado del documento maestro | El Anexo H tiene su espejo en el repositorio; Superpowers queda archivado como histórico y OpenSpec pasa a ser la verdad |
-| F0-03 Memoria del proyecto | Proyecto Engram; carga de las decisiones cerradas (§1.8 del documento maestro y acta 03/09) como observaciones `decision/*` y del baseline de F0-00; convención de `topic_key`; evaluar Git Sync para compartir con el equipo | Cualquier sesión recupera el estado del proyecto con `mem_context` |
-| F0-04 Base técnica | Completar las pruebas del motor de transiciones donde F0-00 detecte huecos (que cada transición parte y llega a los estados declarados; que `Finalizado` es el único terminal; permisos por área); staging sobre la VPS Hostinger con PostgreSQL; CI que ejecuta `test`, `typecheck` y `lint` | Red de seguridad para tocar el motor en F1A |
+| F0-03 Memoria del proyecto | Proyecto Engram; carga de las decisiones cerradas (§1.8 del documento maestro y decisiones del 03/09) como observaciones `decision/*` y del baseline de F0-00; convención de `topic_key`; evaluar Git Sync para compartir con el equipo | Cualquier sesión recupera el estado del proyecto con `mem_context` |
+| F0-04 Base técnica | Completar las pruebas del motor de transiciones donde F0-00 detecte huecos (que cada transición parte y llega a los estados declarados; que `Finalizado` es el único terminal; permisos por área); ~~staging sobre la VPS Hostinger con PostgreSQL~~ **pieza RETIRADA por Gerencia el 21/09** (`decision/e013b-copia-pruebas`: no se monta copia de pruebas; se trabaja sobre la aplicación de verdad); CI que ejecuta `test`, `typecheck` y `lint` | Red de seguridad para tocar el motor en F1A |
 
 Sin gates. Es trabajo de desarrollo puro y no depende de ninguna decisión pendiente. F0-00 va primero; F0-01 y F0-03 pueden correr en paralelo con ella; F0-02 y F0-04 dependen de su resultado.
 
@@ -156,10 +156,10 @@ Aquí se replica lo que el Desk 1.0 hace hoy, con la interfaz que replica la est
 | F1B-01 | 1 · 19 | Código único de ticket basado en serial; serial obligatorio en la remisión; **autocompletado por serial** (cliente, modelo, OV activas) desde la base propia y la lectura de Zoho | Ninguno (decidido 14/08 y 20/08) |
 | F1B-02 | 9 | Hoja de vida del equipo: alta por Comercial al conocer el serial; fecha de adquisición, fecha de factura, fin de garantía y **código interno del cliente** como identificador secundario; botón de enlace a la carpeta de Drive (fase 0 de la migración, P8) | **P8/P54** sólo para el botón de Drive: confirmar que la «fase 0» (enlace, no migración) es la solución de arranque. Quién carga los cuatro campos |
 | F1B-03 | 2 · 20 | Desplegable inicial de tipo de servicio (`Clasificaciones`) que oculta pasos; prefijos autogenerados y sólo documentales (P37 cerrado). **P21 confirma el modelo construido**: OV **opcional** al crear el ticket y **obligatoria** en `Habilitar Servicio` —«obligatoria para trabajar, no para recibir»—, así que deja de ser regla parametrizada. Se añade la guarda «**`Habilitar Servicio` exige remisión de entrada vigente en los tres orígenes**»: retirar el origen `Ticket creado` obliga a **relajar a propósito el invariante 3** (admitir estados cuya única salida la aplica el servidor), y el recuento de pasos resultante **se mide, no se supone**. Y la **OVI de garantía** a nombre del cliente real, que es cambio de práctica. Antes de cambiar nada, contar los tickets que llegaron a `Ingresado` sin remisión | `decision/p21-ingreso-sin-ov` **CERRADO 10/09** · pendiente `decision/ovi-garantia-autor`. **Pasa de talla M a L** por la guarda y la OVI, y se parte en dos cambios si no cabe en tres días |
-| F1B-04 | 10 · 4 | Registro de entrada en recepción: remisión con datos de cliente y equipo, accesorios por lista cerrada (menú visual, ítem 21 queda como mejora), foto sólo con novedad, rotulación y almacenamiento —la «recepción unificada» del acta 03/09—; sustitución del texto libre por desplegables en las etapas críticas | Ninguno |
+| F1B-04 | 10 · 4 | Registro de entrada en recepción: remisión con datos de cliente y equipo, accesorios por lista cerrada (menú visual, ítem 21 queda como mejora), foto sólo con novedad, rotulación y almacenamiento —la «recepción unificada» del registro del 03/09—; sustitución del texto libre por desplegables en las etapas críticas | Ninguno |
 | F1B-05 | 5 · 6 · 7 | Permisos y vistas por rol (área); traspaso formal entre agentes al cambiar de fase; checkbox «Cumple condiciones comerciales» en `Habilitar Servicio`; **trazas completas** (fecha, hora, persona) en toda etapa y transición, sin excepciones | Ninguno (R08 lo decide sin excepciones) |
 | F1B-06 | — | Blueprints de **equipo nuevo** y **soporte remoto** (M1.4, M1.5) implementados en `transitions.ts` con la misma convención; hereda C12 | Alcance de los flujos **comercial** y **posible-cliente** (M1.11, M1.12) en Desk 2.0: se propone dejarlos en Zoho CRM durante 2026 y sincronizarlos en lectura. Confirmar |
-| F1B-07 | 8 | Prioridad automática por calificación del cliente y contrato activo (High/Low, as-is R05); «Mis tickets» autoordenado; edición manual bloqueada para el técnico | Si los **Top 5** entran en la regla automática (Bloque 6 de la convocatoria) |
+| F1B-07 | 8 | Prioridad automática por calificación del cliente y contrato activo (High/Low, as-is R05); «Mis tickets» autoordenado; edición manual bloqueada para el técnico | Si los **Top 5** entran en la regla automática (Bloque 6 del documento de puntos del 03/09) |
 | F1B-08 | 17 · 22 | Cierre de la paridad: vistas de listado y ficha equivalentes a las de Zoho Desk; conexión Zoho en solo lectura verificada en las tres entidades; **política de escritura** (P44): ninguna, salvo precarga de borrador de cotización si se decide. Recibe además el tablero: la vista «Todos» devuelve también los cerrados con `case 'todos'` separado de `default:`, **IV-1** (la regex de esperas sustituida por `ESTADOS_EN_ESPERA`) y `Remisión creada` reclasificada como espera con alarma de 72 h. **Pasa de talla M a L** | **P44** · `decision/escalado-remision-creada` (sin el cargo de Comercial que recibe el escalado, la alarma deja **roja** la guarda de C11). ⚠️ **PARCIAL a 15/09:** el tablero está construido y archivado el 10/09 —hoy `apps/desk/src/lib/boardView.ts:39` consume el predicado compartido, `:53` es `case 'todos': return tickets` y `packages/shared/src/estados.ts:86` da `Remisión creada` como espera interna—; **siguen pendientes** la alarma de 72 h (`packages/shared/src/sla.ts:32`, cuya única entrada hoy es `:34`) y la paridad de listado y ficha con Zoho |
 | F1B-10 | — | Orden único de precedencia entre guardas en las dos puertas del motor (createManagedTicket y executeTransition), y en la del alta de remisión; unifica transitions-st §3.8 (a) y (b) y tickets-core §4.1 | Ninguno técnico; el orden se declara en la spec |
 | F1B-11 | — | **Asociación OV ↔ ticket (1 : N) y subOV de lote.** Tabla de asociación **propia de la app** —ticket, OV, transición que asocia, fecha, hora y persona—: la FK no puede ir en `sales_orders` porque `books.sales_orders` es réplica del hub (`packages/zoho-sync/src/db/schema.sql:160`) y el sync la borraría. Una asociación se marca **liberada con motivo** y nunca se borra; índice único parcial para «una OV, un solo ticket vigente». `Aprobación` y `Aprobación y S. Repuestos` **añaden** OV sin sustituir la de entrada, la fecha de OC vive en cada asociación —lo que resuelve su reentrancia— y el bodegaje de entrada toma la de la OV asociada en `Habilitar Servicio`. **SubOV de lote (opción A):** formato `OV-AAAA-NNN-SS`, cuarentena de números no canónicos, saldo por lote (creadas / consumidas / libres), exclusión de OV anuladas o en borrador —el estado ya se sincroniza, `schema.sql:161`— y acción manual «liberar subOV» con traza hasta que exista C2. El `N° Ticket` de Books (`cf_n_ticket`) **sólo sugiere** en el desplegable | `decision/vigencia-contrato` (no bloquea el núcleo) · `decision/titularidad-ov-equipo` (**IV-8**). El núcleo es ejecutable: lo abren `decision/n52-cardinalidad-ov` y `decision/subov-lote-convencion`, las dos cerradas el 10/09. **Se parte en dos cambios** —asociación 1 : N y subOV de lote—; antes, barrer si ya existe alguna subOV con formato `_1` |
@@ -188,14 +188,14 @@ Es la primera de las dos adiciones al Desk 1.0. Se construye como motor + datos,
 
 | Tanda | Contenido | Fuente | Gate |
 |---|---|---|---|
-| F1D-01 | **Modelo de datos del catálogo**: fase → nivel macro → subnivel → ítem; por ítem: qué se verifica, cómo, tipo de dato (booleano / numérico con unidades y límites), obligatoriedad, criterio de falla (Alerta / Cobrable / Bloqueante), evidencia fotográfica requerida, repuesto asociado, acción si No OK, ítems relacionados, comentario de falla para el informe. Versionado del catálogo por marca-modelo | M2.2, acta 03/09 tema 3, Excel GRIMM v9 | Ninguno: la estructura está validada por Johny el 03/09 |
+| F1D-01 | **Modelo de datos del catálogo**: fase → nivel macro → subnivel → ítem; por ítem: qué se verifica, cómo, tipo de dato (booleano / numérico con unidades y límites), obligatoriedad, criterio de falla (Alerta / Cobrable / Bloqueante), evidencia fotográfica requerida, repuesto asociado, acción si No OK, ítems relacionados, comentario de falla para el informe. Versionado del catálogo por marca-modelo | M2.2, decisiones del 03/09 tema 3, Excel GRIMM v9 | Ninguno: la estructura está validada por Johny el 03/09 |
 | F1D-02 | **Importador desde Excel** del catálogo (GRIMM EDM180 v9 y Horiba APxA-370), con validación de estructura y reporte de filas rechazadas; el catálogo se carga, no se teclea | M2.1 «alimentar los checklists desde plantillas en Excel» | Versión depurada del Excel por Johny y Gustavo (compromiso 11/09) — se puede importar la v9 y reimportar después |
 | F1D-03 | **Niveles macro (N1) como transiciones internas**: transiciones dentro de `Rev./Diagnostico` declaradas en `transitions.ts` y **generadas desde el N1 del catálogo importado** (los ocho N1 del GRIMM, o su agrupación en las cuatro macro-fases del 27/08, según P45); N2 y N3 son los checkpoints de cada transición; el equipo sin novedades recorre igualmente las macros y deja constancia | M2.1 arquitectura híbrida, P59, `docs/inspecciones` | **P45**: fijar si la transición es cada N1 o la macro-fase que los agrupa, y que el juego sea común a todas las marcas (Johny) |
-| F1D-04 | **Captura por visita y validación por macro**: el técnico valida el macro; si OK, subniveles e ítems se dan por conformes; si No OK, se despliega el detalle; registro OK / No OK por etapa obligatorio para transicionar; campos de valor con verificación de rango; foto sólo cuando hay novedad | Acta 03/09 «flujo de validación por niveles», M2.3 | Ninguno |
+| F1D-04 | **Captura por visita y validación por macro**: el técnico valida el macro; si OK, subniveles e ítems se dan por conformes; si No OK, se despliega el detalle; registro OK / No OK por etapa obligatorio para transicionar; campos de valor con verificación de rango; foto sólo cuando hay novedad | Decisiones del 03/09 «flujo de validación por niveles», M2.3 | Ninguno |
 | F1D-05 | **Encadenamiento No OK**: al fallar un ítem se activan los ítems relacionados (tabla plana origen → destino, como la hoja «Flujo No OK 2»); rama activa visible; acción sugerida | Excel v7/v9; tarea de Gerencia para el 11/09 | Ninguno para el motor; el contenido llega con el catálogo |
-| F1D-06 | **Criterio de falla en acción**: Alerta registra e informa; Cobrable genera línea de cotización (repuesto + horas estimadas, ítem 12); Bloqueante impide liberar; el técnico ve **sólo los repuestos de la etapa** (lectura de Zoho Books por categoría) | M2.2, M2.3 R08, acta 03/09 tema 4 | Ninguno |
-| F1D-07 | **Formulario de falla nueva**: cuando la falla no está en el catálogo, formulario condicional con la misma estructura (qué, cómo, tipo de dato, parte); alimenta la base de conocimiento; decidir si es bloqueante o deja un aviso | Acta 03/09 tema 5 | Definición de Gustavo (si bloquea o no) |
-| F1D-08 | **Segundo equipo**: importar y recorrer un Horiba APxA-370 completo para demostrar que incorporar un equipo es configuración, no desarrollo | Acta 03/09: los macros coinciden entre modelos Horiba | Catálogo Horiba depurado |
+| F1D-06 | **Criterio de falla en acción**: Alerta registra e informa; Cobrable genera línea de cotización (repuesto + horas estimadas, ítem 12); Bloqueante impide liberar; el técnico ve **sólo los repuestos de la etapa** (lectura de Zoho Books por categoría) | M2.2, M2.3 R08, decisiones del 03/09 tema 4 | Ninguno |
+| F1D-07 | **Formulario de falla nueva**: cuando la falla no está en el catálogo, formulario condicional con la misma estructura (qué, cómo, tipo de dato, parte); alimenta la base de conocimiento; decidir si es bloqueante o deja un aviso | Decisiones del 03/09 tema 5 | Definición de Gustavo (si bloquea o no) |
+| F1D-08 | **Segundo equipo**: importar y recorrer un Horiba APxA-370 completo para demostrar que incorporar un equipo es configuración, no desarrollo | Decisiones del 03/09: los macros coinciden entre modelos Horiba | Catálogo Horiba depurado |
 | F1D-09 | Auditoría (`audit-F1D`): coherencia entre macro-transiciones y catálogo; ítems sin criterio; ramas sin salida | M11.6 | — |
 
 Queda **fuera** de la Fase 1, y se anota para la Fase 2 o posteriores: comentarios predefinidos (decidido 03/09: tras ~90 tickets), dictado por voz (aplazado 03/09), copiloto sobre la KBI (ítem 54), criterios analíticos de aprobación (P46/P12, M2.7 sin especificar).
@@ -206,10 +206,10 @@ Segunda adición, decidida el 03/09. Depende de F1D-04 y F1D-06: el informe se d
 
 | Tanda | Contenido | Fuente | Gate |
 |---|---|---|---|
-| F1E-01 | **Modelo del informe**: tres bloques —estado inicial del equipo, diagnóstico, tabla de repuestos—; en Fase 1 con **campos abiertos** y comentarios editables; el comentario de falla del catálogo se vuelca automáticamente cuando el ítem sale No OK | Acta 03/09 tema 6; M2.5 | **P14**: quién escribe `remisiones_entrada` (define de dónde salen los datos de cabecera) |
-| F1E-02 | **Informe de diagnóstico**: generación por plantilla desde el ticket + checklist; nomenclatura de repuestos legible por vía del comentario, sin diccionario aparte | M2.5, acta 03/09 | Ninguno |
+| F1E-01 | **Modelo del informe**: tres bloques —estado inicial del equipo, diagnóstico, tabla de repuestos—; en Fase 1 con **campos abiertos** y comentarios editables; el comentario de falla del catálogo se vuelca automáticamente cuando el ítem sale No OK | Decisiones del 03/09 tema 6; M2.5 | **P14**: quién escribe `remisiones_entrada` (define de dónde salen los datos de cabecera) |
+| F1E-02 | **Informe de diagnóstico**: generación por plantilla desde el ticket + checklist; nomenclatura de repuestos legible por vía del comentario, sin diccionario aparte | M2.5, decisiones del 03/09 | Ninguno |
 | F1E-03 | **Informe de salida**: los puntos rojos pasan a verde si se corrigieron o quedan en rojo con **motivo tipificado** (cliente no aprueba · repuesto inexistente · sin solución); evidencia fotográfica; conclusión derivada | M2.5 «El informe de salida», decidido 27/08 | Ninguno |
-| F1E-04 | **Validación antes de emitir**: etapa de revisión por dos personas ligada a roles; firma cargada automáticamente por etapa; el informe emitido es inmutable y queda en la hoja de vida | P10 (marcado como decidido en la convocatoria), M9.1 | Roles concretos que validan |
+| F1E-04 | **Validación antes de emitir**: etapa de revisión por dos personas ligada a roles; firma cargada automáticamente por etapa; el informe emitido es inmutable y queda en la hoja de vida | P10 (marcado como decidido en el documento de puntos del 03/09), M9.1 | Roles concretos que validan |
 | F1E-05 | **Flujo de construcción del informe** documentado en el documento maestro (entregable 3 del 27/08) y reflejado en la spec `informes` | Compromiso de Gerencia | Es entregable documental, no de código: cierra el hueco más grande del documento maestro |
 
 #### Épica 1F — Puesta en producción · S50–S53 (3–4 semanas, con margen)
@@ -217,7 +217,7 @@ Segunda adición, decidida el 03/09. Depende de F1D-04 y F1D-06: el informe se d
 | Tanda | Contenido | Gate |
 |---|---|---|
 | F1F-01 | Migración de los **tickets abiertos** de Zoho Desk al estado equivalente; regla de corte (fecha desde la que los tickets nacen en la app) | Fecha de corte |
-| F1F-02 | **Respaldo y continuidad** (propuesta M12.8 de la convocatoria): exportación periódica de PostgreSQL, adjuntos e informes; formato y periodicidad | **P55**: responsable y alcance |
+| F1F-02 | **Respaldo y continuidad** (propuesta M12.8 del documento de puntos del 03/09): exportación periódica de PostgreSQL, adjuntos e informes; formato y periodicidad | **P55**: responsable y alcance |
 | F1F-03 | Pruebas de aceptación con Servicio Técnico sobre dos o tres servicios reales (el piloto del Excel v9 recomendado); ajustes | — |
 | F1F-04 | Formación breve del equipo; Zoho Desk pasa a solo lectura; auditoría final (`audit-F1`) y actualización del Anexo H | — |
 
@@ -227,7 +227,7 @@ Lo que el criterio de §3.1 (fecha comprometida e integridad del dato) manda a c
 
 ### Fase 3 — Área de cliente nivel básico y seguridad · 2027 · T2
 
-Etapa independiente, como decidió el 27/08: C8 (21 estados → etapas visibles), ítem 26 (hoja de vida reducida, seguimiento y aprobación de cotizaciones en un clic, piloto con contratos activos, ítem 29), identidad registrada (52) y los nueve puntos de seguridad de la convocatoria (ciclo de vida de usuarios del cliente, MFA, identificadores no enumerables en certificados públicos, integridad del firmware, filtro en la recuperación KBI/KBE, datos personales, respuesta a incidentes, sesiones, revisión previa a la apertura). Regla de apertura M8.6 más la revisión de seguridad.
+Etapa independiente, como decidió el 27/08: C8 (21 estados → etapas visibles), ítem 26 (hoja de vida reducida, seguimiento y aprobación de cotizaciones en un clic, piloto con contratos activos, ítem 29), identidad registrada (52) y los nueve puntos de seguridad del documento de puntos del 03/09 (ciclo de vida de usuarios del cliente, MFA, identificadores no enumerables en certificados públicos, integridad del firmware, filtro en la recuperación KBI/KBE, datos personales, respuesta a incidentes, sesiones, revisión previa a la apertura). Regla de apertura M8.6 más la revisión de seguridad.
 
 ### Fase 4 — Eficiencia, capacidad y conocimiento · 2027 · S2
 
@@ -310,7 +310,7 @@ Hazlo con SDD. Antes de proponer, recupera contexto con Engram (mem_context y
 mem_search "encadenamiento no ok") y lee los apartados fuente.
 
 Fuente (documento maestro R08.1, docs/Manifesto/…_R08.1.md): M2.1 «La arquitectura híbrida»,
-M2.2, M2.3. Acta 03/09/2026 tema 4 («Encadenamiento pendiente»). Datos de referencia:
+M2.2, M2.3. Decisiones del 03/09/2026, tema 4 («Encadenamiento pendiente»). Datos de referencia:
 docs/inspecciones/Grimm/Inspeccion_Fisica_GRIMM_EDM180_v1.8.xlsx, hoja «Flujo No OK 2»
 (tabla plana origen → destino, un renglón por enlace). Mapeo: N1 → transición interna,
 N2/N3 → checkpoints.
@@ -324,7 +324,7 @@ Fuera de alcance: comentarios predefinidos (Fase 2), sugerencia por IA (Fase 4),
 cambios en las macro-transiciones (F1D-03).
 
 Gates: ninguno. Decisiones ya tomadas que aplican: validación por nivel macro
-(acta 03/09); el equipo sin novedades recorre las macros (P59, 27/08).
+(decisiones del 03/09); el equipo sin novedades recorre las macros (P59, 27/08).
 
 Criterios de aceptación mínimos (amplíalos en la spec):
 - Dado un ítem con ítems relacionados, cuando se registra No OK, entonces los
@@ -351,7 +351,7 @@ Son las que ninguna spec puede contradecir. Se escriben una vez en la Fase 0 y s
 7. **Las dos entradas no se cruzan**: un ticket nacido en Zoho no se marca `managed_by_app` por una transición de la app (M1.3.2).
 8. **El diagnóstico es configuración**: un equipo nuevo se incorpora importando su catálogo; si una tanda necesita código específico de una marca, la propuesta lo justifica.
 9. **El cálculo es determinista; la IA recupera, no compromete** (principio nº 8). Ninguna fecha, carga o cifra de compromiso sale de un modelo de lenguaje.
-10. **Cada spec cita su fuente** (apartado del documento maestro, acta o punto abierto). Una spec sin fuente no se aprueba.
+10. **Cada spec cita su fuente** (apartado del documento maestro, registro de decisiones o punto abierto). Una spec sin fuente no se aprueba.
 11. **El borrado de administrador no se usa para cerrar servicios** (P36); cerrar un servicio caído es `Anulado` (C2) o, mientras no exista, queda documentado en Engram.
 12. **Idioma:** interfaz y specs en español; código y nombres técnicos en inglés como ya está en el repositorio.
 
@@ -369,16 +369,16 @@ Cada fila dice **qué decide**, **a quién corresponde** y **qué desbloquea**. 
 | `decision/iv2-fechas-derivadas` | **DECIDIDO 10/09.** Opción (a): el servidor calcula las tres fechas derivadas e **ignora** lo que llegue del navegador; la zona horaria se fija de forma explícita | **F1A-07** | cerrado 10/09 |
 | `decision/mapa-blueprint-generado` | **DECIDIDO 10/09.** Sí, generado desde `transitions.ts` con prueba anti-desfase. El artefacto interactivo queda como **histórico congelado en `a3a8f03`** | **F1A-06** (lo construye) · **F1B-09** (lo hereda funcionando) | cerrado 10/09 |
 | P38 · salida aprobada (Engram obs. #400) | **DECIDIDO 10/09 con datos de Zoho Desk.** `Verificación` —`Liberación`→ `Finalizado`, observada **71 veces en 181 tickets**. `Verificación` es paso del flujo, condicional por familia de equipo. Cierra **P38 en parte**: el resto va en la fila siguiente | **F1A-03** | cerrado 10/09 |
-| `decision/p8-p54-drive` | Botón de enlace a Drive como fase 0; convivencia con Drive | F1B-02 | pendiente |
+| `decision/p8-p54-drive` | **DECIDIDO 21/09.** Textual: «Por cuestiones de capacidad de almacenamiento en nuestro servidor vamos a seguir teniendo enlace a Drive». Decía: «Botón de enlace a Drive como fase 0; convivencia con Drive» | F1B-02 | **cerrado 21/09** (recogido 22/09). El enlace se queda y no hay versión que sustituya a Drive; F1B-02 (S39) queda ejecutable. El motivo es capacidad del servidor, así que se revisa el día que esa capacidad cambie. ⚠️ Quien responda `decision/p55-backup` tiene que decir si el respaldo alcanza a Drive |
 | `decision/p45-macro-fases` | Juego de macro-fases común a todas las marcas | F1D-03 | pendiente · Johny |
-| `decision/flujos-comercial-posible-cliente` | Alcance de M1.11 y M1.12 en Desk 2.0 | F1B-06 | pendiente |
-| `decision/top5-prioridad` | Si los Top 5 entran en la prioridad automática | F1B-07 | pendiente |
+| `decision/flujos-comercial-posible-cliente` | **DECIDIDO 21/09.** Textual: «Se quedan en Zoho CRM no se queda en Desk 2.0» | F1B-06 | **cerrado 21/09** (recogido 22/09). M1.11 y M1.12 quedan fuera de Desk 2.0 en 2026: F1B-06 construye **dos** ramas, no tres. La independencia comprometida es de Zoho **Desk**; CRM se queda. Arrastra el Anexo D nº 42 —de dónde sale «Preparación Cotizac.»—, que queda sin responder |
+| `decision/top5-prioridad` | **DECIDIDO EN PARTE 21/09.** Textual: «No automático, Hay que pensar en una forma de hacerlo manual» | F1B-07 | **parcial** (recogido 22/09). Los Top 5 **no** entran en el cálculo automático; **falta** cómo se pone a mano y qué cargo puede —el plan promete «edición manual bloqueada para el técnico» (`:162`)—. Devuelto como `top5-manual`, de Gerencia. Medido el 22/09: la noción de Top 5 no existe en el código |
 | `decision/p38-verificacion-calidad` | El **resto** de P38: obligatoriedad por familia, lote AP-370 de 2024, salida rechazada → `Notificado`, guarda de certificado | F1B-06 · F1C-07 | pendiente · Gustavo / Calidad |
 | `decision/escalado-remision-creada` | **DECIDIDO 17/09.** Textual: «Tanto el que tiene cargo de director comercial como el que tiene cargo de coordinador comercial deberían recibir el aviso cuando un ticket lleva más de 72 horas en remisión creada sin orden de venta.» Registrada en `openspec/config.yaml` → `decisiones_de_gerencia` | **F1B-08.** Desbloquea la alarma de 72 h, que sigue sin construir: `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35`) tiene una sola entrada, `'Notificado': 24` | **cerrado 17/09.** ⚠️ **Tres consecuencias medidas el 18/09 contra `995adbc`, anotadas y NO decididas:** (a) el destinatario es **doble** y `destinatarioDelEscalado` (`sla.ts:92-109`) devuelve `ambiguo` con dos cargos, a propósito (`sla.ts:78-82`) — el tipo `DestinatarioEscalado` (`sla.ts:88-90`) lleva **un** cargo, no una lista; (b) `Director Comercial` **no existe** como cargo en el código (`grep -rn "Director Comercial" packages/ apps/ --include=*.ts` = 0); (c) dar entrada a `habilitar_servicio` en `DERIVACION_POR_DEFECTO` **cambia `RQ-AV-02`** (`openspec/specs/derivacion-avisos/spec.md:67-70`), que declara con SHALL **exactamente tres** entradas. **PRECISADO 17/09, recogido 21/09** (`decision/escalado-destinatario-doble`), textual: «En usuarios existe Nombre: Administrador, Cargo: Director Comercial, revisa. El aviso debe ir a cargo de coordinador comercial». El aviso va a **un** cargo, `Coordinador Comercial` (`transitions.ts:278`): (a) y (b) dejan de aplicar; (c) sigue en pie |
 | `decision/ovi-garantia-autor` | **DECIDIDO 17/09.** Textual: «La OVI la crea Servicio Técnico, más concretamente el Director Técnico». Registrada en `openspec/config.yaml` → `decisiones_de_gerencia` | **F1B-03** | **cerrado 17/09** (recogido 21/09). Excepción de autor a «Comercial crea la OV», y por CARGO: cruza con `decision/c10-permisos-cargo`, pendiente |
 | `decision/vigencia-contrato` | **DECIDIDO 17/09.** Textual: «En teoría no pero si el contrato se vence antes del final del año se puede hacer una ampliación del contrato para consumir los trabajos no ejecutados. Si ya pasamos al siguiente año no se podría consumir porque la lista de precios cambia.» | F1B-11 (no bloquea el núcleo) | **cerrado 17/09** (recogido 21/09). No es el «no» liso que habría abierto la opción B: la A del 10/09 no se reabre. El código no modela vencimiento ni ampliación |
-| `decision/titularidad-ov-equipo` | **DECIDIDO 17/09.** Textual: «Generalmente el titular del equipo es el que genera la orden de venta. Tenemos 1 solo caso donde el generador de la orden de venta no es el propietario del equipo es el mantenedor del equipo» (**IV-8**, `apps/desk/server/services/ticketService.ts:39`) | F1B-11 | **cerrado 17/09** (recogido 21/09). Pueden ser de clientes distintos en el caso del mantenedor. IV-8 sigue vivo: cómo reconoce la app al mantenedor es pregunta abierta (`titularidad-mantenedor`), de Gerencia |
-| `decision/p62-capa-as-built` | Qué se hace con la capa as-built: retirarla o mantener el Anexo H | — (premisa de F0-02) | pendiente. Quedó sin tratar el 03/09; vuelve al Anexo D |
+| `decision/titularidad-ov-equipo` | **DECIDIDO 17/09.** Textual: «Generalmente el titular del equipo es el que genera la orden de venta. Tenemos 1 solo caso donde el generador de la orden de venta no es el propietario del equipo es el mantenedor del equipo» (**IV-8**, `apps/desk/server/services/ticketService.ts:39`) | F1B-11 | **cerrado 17/09** (recogido 21/09). Pueden ser de clientes distintos en el caso del mantenedor. **PRECISADO 21/09, recogido 22/09** (`decision/titularidad-mantenedor`), textual: «Opción 1 — el mantenedor se apunta en la hoja de vida del equipo y sólo él puede pagar órdenes de ese equipo; cualquier otra discrepancia se bloquea». **IV-8 pasa a tener destino: F1B-11.** El campo de la hoja de vida cae en el contenido de F1B-02 (S39), que hoy declara cuatro campos: destino **propuesto**, no escrito |
+| `decision/p62-capa-as-built` | Qué se hace con la capa as-built: retirarla o mantener el Anexo H | — (premisa de F0-02) | pendiente. Sin decidir desde el 03/09; vuelve al Anexo D |
 | `decision/c2-anulado` | Estado Anulado; tratamiento del histórico | F1C-01 (y protege F1E-03) | pendiente |
 | `decision/c4-dos-ramas` | Dos ramas; si Facturado es estado | F1C-02 | pendiente |
 | `decision/c3-salida-esperas` | Destino y caducidad de las cuatro esperas | F1C-03 | pendiente |
@@ -454,7 +454,7 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F0-00 | Auditoría del as-built (seis frentes, veredicto conservar/refactorizar/rehacer, baseline a Engram) | todas las as-built | Anexo H, `debt.md`, `docs/superpowers` | — | M | S37 |
 | F0-01 | Init SDD, config, CLAUDE.md y export .md del documento maestro | — | §4.4, §4.7 | — | S | S37 |
 | F0-02 | Specs as-built destiladas de F0-00 y de `docs/superpowers/specs` | todas las as-built | M1.3, M1.9, Anexo G | F0-00 | L | S38 |
-| F0-03 | Proyecto Engram y carga de decisiones | — | §1.8, acta 03/09 | — | S | S37 |
+| F0-03 | Proyecto Engram y carga de decisiones | — | §1.8, decisiones del 03/09 | — | S | S37 |
 | F0-04 | Pruebas del motor, staging, CI | transitions-st | M11.5 | — | M | S38 |
 | F0-05 | Mecanismo de reconciliación y bandeja de entrada (cabecera R-1, `npm run reconcile`, bandeja `ENTRADA.md`) | citas-verificables | Brecha 17/09 · E-001 · `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md` | — (`tanda-por-contenido`, 17/09) | S | S38 |
 | F1A-01 | C1 guarda del checkbox | transitions-st | P33 | — | XS | S38 |
@@ -469,7 +469,7 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F1B-01 | Serial único + autocompletado | tickets-core, zoho-sync | ítems 1, 19 | — | M | S39 |
 | F1B-02 | Hoja de vida y cuatro campos + enlace Drive | hojas-vida | ítem 9, P8 | p8-p54 | M | S39 |
 | F1B-03 | Tipo de servicio y ticket sin OV (+ guarda de remisión vigente y OVI de garantía) | tickets-core, transitions-st | ítems 2, 20; P21 (cerrado), P37; M1.2 (R08.2); Decisiones 10/09 §7 | p21 cerrado 10/09 · pendiente `ovi-garantia-autor` | L | S40 |
-| F1B-04 | Recepción unificada y fin del texto libre | remisiones, tickets-core | ítems 4, 10; acta 03/09 | — | L | S40 |
+| F1B-04 | Recepción unificada y fin del texto libre | remisiones, tickets-core | ítems 4, 10; decisiones del 03/09 | — | L | S40 |
 | F1B-05 | Roles, traspaso, checkbox comercial, trazas | permissions, trazas | ítems 5, 6, 7 | — | M | S41 |
 | F1B-06 | Blueprints equipo nuevo y soporte remoto | transitions-equipo-nuevo, transitions-soporte-remoto | M1.4, M1.5 | flujos comerciales | L | S42 |
 | F1B-07 | Prioridad automática y Mis tickets | tickets-core | ítem 8 | top5 | S | S43 |
@@ -478,16 +478,16 @@ Regla práctica: cuando un documento tenga versión (`_R08.1`, `_v1.8`), la spec
 | F1B-11 | Asociación OV ↔ ticket (1 : N) y subOV de lote | tickets-core, zoho-sync | M4.4 (R08.2), P52 (cerrado), Decisiones 10/09 §2, §7.5 y §8 | `vigencia-contrato` (no bloquea el núcleo) · `titularidad-ov-equipo` (IV-8) | L | S41 (propuesta) |
 | F1B-09 | audit-F1B | — | M11.6 | — | S | S44 |
 | F1C-01…08 | C2, C4, C3, C5, C10, C7+C9, C6, rutas abreviadas | transitions-st, permissions, kpis | §3.2.1 | uno por tanda (§4.5) | S–M | S40–S48 |
-| F1D-01 | Modelo de datos del catálogo | diagnostico-checklist | M2.2, acta 03/09 | — | M | S42 |
+| F1D-01 | Modelo de datos del catálogo | diagnostico-checklist | M2.2, decisiones del 03/09 | — | M | S42 |
 | F1D-02 | Importador desde Excel | diagnostico-checklist | M2.1 | — | M | S43 |
 | F1D-03 | Macro-fases como transiciones | transitions-st, diagnostico-checklist | M2.1, P59 | p45 | M | S44 |
-| F1D-04 | Captura por visita y validación por macro | diagnostico-checklist | M2.3, acta 03/09 | — | L | S45 |
+| F1D-04 | Captura por visita y validación por macro | diagnostico-checklist | M2.3, decisiones del 03/09 | — | L | S45 |
 | F1D-05 | Encadenamiento No OK | diagnostico-checklist | Excel v9 | — | M | S46 |
 | F1D-06 | Criterio de falla y repuestos por etapa | diagnostico-checklist, inventario-lectura | M2.2, ítem 12 | — | M | S46 |
-| F1D-07 | Formulario de falla nueva | diagnostico-checklist | acta 03/09 tema 5 | falla-nueva | S | S47 |
-| F1D-08 | Segundo equipo (Horiba) | diagnostico-checklist | acta 03/09 | catálogo Horiba | S | S47 |
+| F1D-07 | Formulario de falla nueva | diagnostico-checklist | decisiones del 03/09 tema 5 | falla-nueva | S | S47 |
+| F1D-08 | Segundo equipo (Horiba) | diagnostico-checklist | decisiones del 03/09 | catálogo Horiba | S | S47 |
 | F1D-09 | audit-F1D | — | M11.6 | — | S | S47 |
-| F1E-01 | Modelo del informe | informes | acta 03/09 tema 6 | p14 | M | S46 |
+| F1E-01 | Modelo del informe | informes | decisiones del 03/09 tema 6 | p14 | M | S46 |
 | F1E-02 | Informe de diagnóstico | informes | M2.5 | — | M | S47 |
 | F1E-03 | Informe de salida con motivos tipificados | informes | M2.5 (27/08) | c2 recomendado | M | S48 |
 | F1E-04 | Validación por dos personas y firma | informes, permissions | P10 | roles | M | S49 |
@@ -528,7 +528,7 @@ Tamaños: XS < medio día · S un día · M dos o tres días · L cuatro o cinco
 Qué problema resuelve, en una frase que Servicio Técnico reconozca.
 
 ## Fuente
-Apartados del documento maestro (Mx.y, Cn, Pnn), actas y datos de referencia.
+Apartados del documento maestro (Mx.y, Cn, Pnn), registros de decisiones y datos de referencia.
 
 ## Alcance
 Lo que esta tanda entrega. Verbos concretos.

@@ -818,7 +818,7 @@ incumplimientos_vivos:
       plan, y es donde vive IV-8.
       NO usar nº 52 para justificar tocar la guarda equipo↔cliente
       (`ticketService.ts:59-77`).
-    destino: "PUNTO ABIERTO, sin destino — a propósito (criterio nº 8)"
+    destino: "F1B-11 — escrito el 2026-09-22 por `decision/titularidad-mantenedor`. Antes, y hasta esa respuesta: PUNTO ABIERTO, sin destino, a propósito (criterio nº 8)"
     por_que_sin_destino: >
       ACTUALIZADO EL 2026-09-10. Decía: «cerrarlo exige antes decidir la
       cardinalidad OV↔ticket (punto abierto nº 52)». Eso ya está decidido; lo que
@@ -1097,7 +1097,7 @@ incumplimientos_vivos:
       —ni mutar la posición de una guarda, ni ensuciar un fichero vigilado, ni
       enumerar las decisiones del cliente enfrentan dos representaciones entre sí—.
       Para esto hizo falta un lector, que es exactamente como salió.
-    destino: "SIN DESTINO ASIGNADO — a propósito"
+    destino: "F1B-11, con un parche antes — escrito el 2026-09-22 por `decision/e005-iv4-iv11`, opción (c). El vehículo del parche en el plan está por decidir. Antes: SIN DESTINO ASIGNADO, a propósito"
     por_que_sin_destino: >
       Mismo precedente que IV-9: asignar un destino DE MEMORIA es exactamente lo
       que dejó cuatro desvíos huérfanos al cerrar F1A. Un destino es una promesa, y
@@ -1526,6 +1526,153 @@ decisiones_de_gerencia:
       `cifra_de_gerencia_2026_09_17`). El `status_at_start` con 35 no se borra.
       (3) No responde a `e003-catalogo-equipos` ni a `e003b-registro-equipos`, que siguen abiertas.
     registro: "docs/sdd/ENTRADA.md → E-003 (adenda 21/09)"
+
+  - clave: "decision/e005-iv4-iv11"
+    fecha: "2026-09-21"
+    pregunta: >
+      Un ticket guarda su orden de venta en DOS campos y Zoho reescribe uno cada 3 minutos. Cuando
+      discrepan, ¿qué preferimos: (a) desconectar ese ticket de Zoho por completo, (b) dejar que Zoho
+      gestione también el otro campo, o (c) decidir cuál de los dos manda?
+    respuesta_textual: >
+      «Opción (c). Regla: si la orden de venta se eligió en la aplicación, manda la aplicación y el
+      sincronizador no la pisa, ni el número ni su fecha; si no, manda Zoho, como hoy. Descarto (a)
+      mientras convivamos con Zoho, porque congela el ticket entero, y (b), porque borra el
+      identificador. Si alguien escribe en Zoho una orden distinta a la elegida en la aplicación, no
+      se pierde en silencio: se enseña en el espejo de Zoho para corregirla a mano. Va en F1B-11, y
+      SÍ queremos un parche antes de esa tanda (elegido el 22/09). Dónde se teclean hoy las órdenes
+      —sólo en la aplicación, todavía en Zoho, o en los dos— queda SIN CONFIRMAR: no cambia la
+      decisión del parche.»
+    consecuencias: >
+      (1) Son DOS columnas, no una. «Ni el número ni su fecha» = `orden_venta`
+      (`packages/zoho-sync/src/db/repo.ts:48`) y `fecha_orden_venta` (`:50`), las dos en
+      `TICKET_COLS`. `salesorder_id` ya sobrevive porque entró por `ALTER`
+      (`packages/zoho-sync/src/db/schema.sql:187`). MEDIDO el 22/09 sobre `125ae3e`.
+      (2) La regla necesita saber, por fila, si la OV se eligió en la aplicación, y hoy eso NO existe
+      con ese grano: la única bandera es `managed_by_app`, y es del ticket entero
+      (`repo.ts:58-59`) — que es justo la salida (a) descartada. Derivarlo de `salesorder_id` no nulo
+      es HIPÓTESIS, no medido: hay 37 usos de `salesorder_id` fuera de pruebas. Es diseño de la
+      tanda, no de esta decisión.
+      (3) IV-11 deja de estar sin destino: destino F1B-11, con un parche antes. IV-4 sigue CERRADO, y
+      la medición del 16/09 en producción sigue con población 1.
+      (4) Consecuencia que la respuesta no preveía: «se enseña en el espejo de Zoho» da al espejo
+      (E-018, alcance CONDICIONAL y sin fila en el §5) su primer uso declarado. Mientras el espejo no
+      exista, un parche que sólo proteja las dos columnas deja la discrepancia SIN ENSEÑAR, que es lo
+      contrario de «no se pierde en silencio». Devuelto como pregunta, `e005c-discrepancia-sin-espejo`.
+      (5) El parche es trabajo ANTES de F1B-11 y no tiene fila en el §5. Por la regla de las tres
+      salidas necesita fila propia (el denominador pasaría de 52 a 53) o cabecera `fuera-del-plan`
+      con motivo (no cuenta en el avance). No se elige aquí: devuelto como pregunta,
+      `e005b-parche-vehiculo`.
+      (6) Dónde se teclean hoy las órdenes queda SIN CONFIRMAR por Gerencia. No cambia el parche; sí
+      cuánta discrepancia enseñará el espejo el día que exista.
+    registro: "docs/sdd/ENTRADA.md → E-005 (adenda 22/09) · `incumplimientos_vivos` → IV-11 · `CLAUDE.md` (fila de IV-11)"
+
+  - clave: "decision/e013b-copia-pruebas"
+    fecha: "2026-09-21"
+    pregunta: >
+      Hoy no hay copia de pruebas: cada cambio se prueba directamente sobre la aplicación que usa la
+      gente. ¿Queremos tener una antes de mudar los tickets de Zoho, o damos por bueno trabajar sin
+      ella?
+    respuesta_textual: >
+      «No la montamos, y se escribe así: F0-04 se da por cerrada con esa pieza retirada y con la
+      fecha de la decisión, y el avance recupera 1. Cuesta que cualquier error —incluida la
+      mudanza— se descubra ya delante de los usuarios.»
+    consecuencias: >
+      (1) F0-04 pasa a CERRADA por DICTAMEN, no por trabajo: el numerador publicado gana 1 con ese
+      motivo. La pieza retirada —«staging sobre la VPS Hostinger con PostgreSQL»— queda TACHADA y
+      fechada en su fila del §5
+      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:128`), sin borrar el texto.
+      (2) `openspec/changes/F0-04/proposal.md:6` sigue diciendo `cierra: no`, y la supervisión NO
+      toca `openspec/changes/`: hasta que una sesión de construcción lo cambie citando esta
+      decisión, `npm run reconcile` no contará F0-04 por cabecera y la cifra derivable y la publicada
+      diferirán en 1, a propósito.
+      (3) Precio aceptado por escrito: todo despliegue —y la mudanza de F1F-01, S50— se prueba sobre
+      la aplicación que usa la gente. La única red que queda es el respaldo, que es `decision/p55-backup`
+      (F1F-02, S51) y sigue pendiente: OBSERVACIÓN, no medición.
+    registro: "docs/sdd/ENTRADA.md → E-013 (adenda 22/09, cerrada) · plan §5, fila F0-04"
+
+  - clave: "decision/p8-p54-drive"
+    fecha: "2026-09-21"
+    pregunta: >
+      ¿El botón de enlace a Drive es la fase 0 definitiva, o el sistema sustituye a Drive del todo, y
+      desde qué versión?
+    respuesta_textual: >
+      «Por cuestiones de capacidad de almacenamiento en nuestro servidor vamos a seguir teniendo
+      enlace a Drive»
+    consecuencias: >
+      (1) Gate cerrado: el enlace a Drive se queda, y no hay versión en la que el sistema lo
+      sustituya. F1B-02 (S39) queda ejecutable con el botón de enlace, no con almacenamiento propio.
+      (2) El motivo es capacidad del servidor, así que la decisión se revisa sola el día que cambie
+      esa capacidad: no es una preferencia de producto.
+      (3) Coherente con lo construido: la transición de finalización ya lleva la casilla
+      «Documentacion Almacenada en el Drive?» (`packages/shared/src/transitions.ts:223`).
+      (4) OBSERVADO, NO MEDIDO: si los documentos viven en Drive, el respaldo de F1F-02
+      (`decision/p55-backup`, pendiente) no los cubre por estar en el servidor. Quien responda p55
+      tiene que decir si el respaldo alcanza a Drive.
+      (5) Anexo D nº 8 y nº 54 → resueltos, para el expediente R08.x.
+    registro: "docs/sdd/ENTRADA.md → E-024 (cerrada) · plan §4.5, fila `decision/p8-p54-drive` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+
+  - clave: "decision/flujos-comercial-posible-cliente"
+    fecha: "2026-09-21"
+    pregunta: >
+      ¿Entran M1.11 y M1.12 —flujo comercial y posible-cliente— en Desk 2.0 en 2026, o se quedan en
+      Zoho CRM?
+    respuesta_textual: >
+      «Se quedan en Zoho CRM no se queda en Desk 2.0»
+    consecuencias: >
+      (1) Gate cerrado: M1.11 y M1.12 quedan FUERA de Desk 2.0 en 2026. F1B-06 construye dos ramas
+      —equipo nuevo y soporte remoto—, no tres.
+      (2) La independencia comprometida para el 31/12 es de Zoho DESK; Zoho CRM se queda, y con él la
+      integración que haga falta para que un posible cliente acabe siendo ticket. Eso no está
+      construido ni tiene fila: MEDIDO el 22/09, `grep -rniE "posible.cliente" packages/ apps/
+      --include=*.ts` = 0.
+      (3) Arrastra el Anexo D nº 42 por contenido: de dónde sale «Preparación Cotizac.» si la rama no
+      se construye queda sin responder. Se anota para el expediente; no se inventa destino.
+    registro: "docs/sdd/ENTRADA.md → E-025 (cerrada) · plan §4.5, fila `decision/flujos-comercial-posible-cliente` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+
+  - clave: "decision/top5-prioridad"
+    fecha: "2026-09-21"
+    pregunta: >
+      ¿Los Top 5 entran en el cálculo automático de prioridad?
+    respuesta_textual: >
+      «No automático, Hay que pensar en una forma de hacerlo manual»
+    consecuencias: >
+      (1) PARCIAL, y por eso el gate no se cierra entero: dice que NO entran en el cálculo automático
+      y que hará falta una forma manual, pero no dice cuál, ni quién la usa.
+      (2) INTERPRETACIÓN, no dicho literalmente: se lee que el cálculo automático sigue en pie para
+      el resto de clientes y que lo manual es la excepción de los Top 5. Si lo que se quiso decir es
+      que la prioridad deja de calcularse sola, F1B-07 cambia de contenido entero.
+      (3) Choca con lo que el plan ya promete en F1B-07: «edición manual bloqueada para el técnico»
+      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:162`). Si alguien la pone a mano,
+      hay que decir qué cargo puede.
+      (4) MEDIDO el 22/09: la noción de Top 5 no existe en el código
+      (`grep -rniE "top ?5|top5" packages/ apps/ --include=*.ts` = 0). No hay nada que desactivar:
+      hay algo que construir.
+      (5) Devuelto como pregunta, `top5-manual`.
+    registro: "docs/sdd/ENTRADA.md → E-026 (triada, sigue abierta) · plan §4.5, fila `decision/top5-prioridad`"
+
+  - clave: "decision/titularidad-mantenedor"
+    fecha: "2026-09-21"
+    pregunta: >
+      A veces la orden de venta la paga quien mantiene el equipo, no quien es su dueño. ¿Cómo debe
+      reconocer la aplicación ese caso?
+    respuesta_textual: >
+      «Opción 1 — el mantenedor se apunta en la hoja de vida del equipo y sólo él puede pagar órdenes
+      de ese equipo; cualquier otra discrepancia se bloquea. Es la más segura; cuesta un campo más en
+      la hoja de vida y mantenerlo al día.»
+    consecuencias: >
+      (1) IV-8 deja de estar sin destino: destino F1B-11 (S41). La guarda pasa a comparar el cliente
+      de la OV contra el dueño del equipo Y contra su mantenedor
+      (`apps/desk/server/services/ticketService.ts:39`), y bloquea cualquier otra discrepancia.
+      (2) El campo vive en la hoja de vida, que la construye F1B-02 (S39), y la guarda vive en
+      F1B-11 (S41). Destino PROPUESTO del campo: F1B-02, que hoy declara CUATRO campos
+      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:157`) y pasaría a cinco. No se
+      escribe en su fila: lo decide quien fije el alcance de F1B-02, que es esta semana.
+      (3) INTERPRETACIÓN, no dicho literalmente: un mantenedor por equipo, y el dueño sigue pudiendo
+      pagar sus propias órdenes —la respuesta dice «sólo él» refiriéndose al caso del mantenedor, no
+      a excluir al dueño—. Si se quiso decir que el mantenedor DESPLAZA al dueño, la guarda es otra.
+      (4) Dato que nadie ha cargado: el único caso conocido hay que apuntarlo a mano en la hoja de
+      vida. Tarea de persona, no cuenta como tanda.
+    registro: "docs/sdd/ENTRADA.md → E-019 (adenda 22/09) · `incumplimientos_vivos` → IV-8 · `CLAUDE.md` (fila de IV-8) · plan §4.5, fila `decision/titularidad-ov-equipo` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
 
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
