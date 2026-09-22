@@ -163,7 +163,7 @@ Chain strategy: N/A
   con salidas exactas, resultado de B.4.1/B.4.2, `git diff --shortstat --no-renames` contra el commit de
   cierre de A + `wc -l` de lo nuevo sin trackear (los cuatro `.md` generados entran aquí, no en el
   presupuesto de revisión).
-- [ ] B.4.5 Commit de la Unidad B (conventional commit), antes del `sdd-attempt settle` del intento
+- [x] B.4.5 Commit de la Unidad B (conventional commit), antes del `sdd-attempt settle` del intento
   correspondiente.
 
 ---
