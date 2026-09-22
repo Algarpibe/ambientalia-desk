@@ -268,6 +268,20 @@ capabilities:
       capabilities no la carga el preflight, así que nacer sin declarar la habría hecho el desvío
       que existe para cazar.
 
+  - name: mapa-blueprint
+    covers: >
+      El generador determinista del mapa visual del flujo de servicio técnico: función pura
+      grafo -> Mermaid en packages/shared, la CLI delgada de escritura, los cuatro
+      docs/artefactos/blueprint-*.md (completo + tres vistas por fase de M1.3.1) y la prueba
+      anti-desfase contra el fichero commiteado.
+    status_at_start: "nueva — nacida el 2026-09-22 en generador-mapa-blueprint (F1A-06)"
+    declarada_en: >
+      2026-09-22, EN EL MISMO CAMBIO que crea su spec, por la regla R-2 de F0-05. Capacidad
+      propia y no fundida en transitions-st: el contrato del artefacto (ficheros, dialecto,
+      partición por fases, guarda anti-desfase) no es un requisito del motor de transiciones.
+      transitions-st sí recibe delta en el mismo cambio, porque RQ-TS-03 se modifica (P-2 de la
+      propuesta).
+
 # Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
 # registro del movimiento, no como tarea pendiente: los dos ficheros están en su
 # destino y docs/sdd/changes/ ya no existe.
