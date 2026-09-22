@@ -219,7 +219,31 @@ propósito, sin una decisión de Gerencia que lo pida.
 - THEN responde `422` de fecha inválida (escalón C) antes que la falta de serial (escalón A) — IV-12
 
 #### Scenario: La fecha derivada sin fuente inválida es escalón C, y no altera la escalera A-B-C-D
+
+**Garantía estructural documentada, no escenario con test de ejecución pendiente.** De las 34
+transiciones declaradas en `packages/shared/src/transitions.ts`, sólo `habilitar_servicio`
+(`:178-189`) declara `cfOrdenVenta` — el campo que activa la guarda de unicidad de OV, escalón D — y
+esa misma entrada no declara ninguna de las tres fechas derivadas; y la única transición que declara
+fechas derivadas junto a otros campos propios, `ingreso_a_servicio` (`:190-191`, declara `Fecha
+creación ticket` y `Fecha Remisión Entrada`), no declara `cfOrdenVenta`. El GIVEN de abajo — una
+fecha derivada inválida sin fuente Y una orden de venta ya asociada a otro ticket, en la MISMA
+petición — no es alcanzable hoy con ninguna de las 34 transiciones reales: no existe una que declare
+los dos campos a la vez.
+
+La garantía queda sostenida por inspección de código y por la prueba de mutación de posición (regla
+de mutación 1 de `CLAUDE.md`): el orden lineal de `executeTransition` valida la fecha derivada
+(escalón C, `ticketService.ts:130-132`) incondicionalmente antes que la unicidad de OV (escalón D,
+`ticketService.ts:146-150`), sin ninguna rama que pueda invertirlos, y ese mismo tramo está probado
+en rojo y revertido por los casos `P-a`/`P-b` de
+`apps/desk/server/services/valoresDeTransicion.test.ts:176-197`.
+
 - GIVEN una transición con sus obligatorios completos, sin fuente para una fecha derivada, y un valor
   tecleado inválido, ejecutada sobre un ticket con una orden de venta ya asociada a otro ticket
 - WHEN se ejecuta la transición
 - THEN responde `422` de la fecha (escalón C) y no `409` de la OV (escalón D)
+
+> **Nota — esta enmienda no cierra la puerta a la cobertura de ejecución.** Si en el futuro una
+> transición real llega a declarar a la vez un campo de fecha derivada y `cfOrdenVenta`, el GIVEN de
+> arriba pasa a ser alcanzable con datos reales y el requisito vuelve a exigir un test de integración
+> que lo ejercite exactamente — esta nota documenta que hoy (34 transiciones, ninguna combina los dos
+> campos) la garantía es estructural, no que quede eximida para siempre.
