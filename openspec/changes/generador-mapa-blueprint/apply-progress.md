@@ -60,7 +60,7 @@ orquestador antes de esta tanda). Comprobadas una a una contra el fichero:
 - Las citas que apuntan DENTRO de `:108-127` (`proposal.md:63,172,205`, `design.md:163`, delta
   `specs/transitions-st/spec.md:19,30`, `tasks.md:60`) describen la NUEVA forma del bloque (ya
   anticipaban el cambio, al ser artefactos de esta misma tanda) — siguen siendo ciertas.
-- `docs/sdd/F0-01_Correcciones_para_el_maestro.md:510` (entrada 16) cita `:120-127` como evidencia de
+- `docs/sdd/F0-01_Correcciones_para_el_maestro.md:510` (entrada 16) cita `invariantesGrafo.test.ts:120-127` en `125ae3e` como evidencia de
   que las dos constantes «no tienen `from` ni `to`». **Caso B (histórico)**: era cierto cuando se
   escribió esa entrada, y deja de serlo tras P-2. NO se repara en la Unidad A — es exactamente el
   contenido que la tarea C.2.1 (Unidad C, entrada 17) ya anticipa por diseño («M1.3.3 dice de los dos

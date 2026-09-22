@@ -156,7 +156,7 @@ export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Re
 ```
 
 Orden de propiedades `id · name · from · to · area`, el mismo de `interface Transition`
-(`transitions.ts:55-62`). No hay regla `max-len` en `eslint.config.js`, y `:178` ya mide ~166
+(`transitions.ts:55-62`). No hay regla `max-len` en `eslint.config.js`, y `transitions.ts:178` ya mide ~166
 caracteres: las nuevas (~185) no mueven el trinquete de 158 avisos de `ci.yml:41`.
 
 El comentario de `:146-149` **no se toca**: sigue siendo cierto (no están en `TRANSITIONS`). Quien
