@@ -335,3 +335,69 @@ tsx apps/desk/server/citas/cli.ts --sha 7e64c30
 comprobadas 2154 · saltadas 2056 · abreviadas rotas 11 (mismas de siempre, informativas) ·
 cabeceras R-1 inválidas 0 · exit 0
 ```
+
+## Remediación del verdict FAIL de `verify-report.md` (gen. 6, dos huecos de cobertura)
+
+**Intento único**, rama `f1a-07-r1`, base `aadcef5` (el `verify-report.md` en FAIL, commit ya en la
+rama). Objetivo: cerrar los dos hallazgos CRITICAL del verify sin tocar código de producción — las 51
+tareas de `tasks.md` ya estaban completas; nada que añadir ahí. `strict_tdd`.
+
+### Hallazgo 1 (requisito `3.8`, escenario «La fecha derivada sin fuente inválida es escalón C»)
+
+**Sin test nuevo, por instrucción explícita: el hueco es de alcance, no de ejecución.** El delta
+`specs/transitions-st/spec.md:221-225` se enmienda para documentar garantía estructural en vez de
+exigir cobertura de ejecución: de las 34 transiciones de `packages/shared/src/transitions.ts`, sólo
+`habilitar_servicio` (`:178-189`) declara `cfOrdenVenta` y no declara ninguna de las tres fechas
+derivadas; `ingreso_a_servicio` (`:190-191`), la única que declara fechas derivadas junto a otros
+campos, no declara `cfOrdenVenta`. El `GIVEN` del escenario (fecha derivada inválida + OV ya asociada,
+misma petición) no es alcanzable hoy con ninguna transición real. Se deja explícito en el propio texto
+que la excepción NO es permanente: si una transición futura declara los dos campos a la vez, el
+requisito vuelve a exigir un test de integración para ese `GIVEN`. Commit `5e8c843`.
+
+### Hallazgo 2 (requisito `RQ-TZ-12`, escenario «Recalcular siempre ignora también lo que ya hubiera en la columna»)
+
+**Caso runtime nuevo**, `apps/desk/server/services/valoresDeTransicion.test.ts` (caso `6`, mismo arnés
+`pg-mem` que los 11 casos preexistentes): precarga `fecha_remision_entrada` con `'2020-01-01'` (valor
+obsoleto, distinto del que la fuente da hoy), ejecuta `ingreso_a_servicio` con la fuente disponible
+(una remisión de entrada con `fecha = '2026-08-01'`) y confirma que la columna termina en `'2026-08-01'`
+— el derivado de la fuente actual, no el valor precargado. Commit `62140e4`.
+
+**Nota strict_tdd obligatoria — el "rojo" de este caso es AUSENCIA, no aserción fallida.** El
+comportamiento ya era correcto antes de escribir el test: `fechasDerivadas.ts:108-134` y
+`valoresDeTransicion.ts:14-32` nunca leen `current.row.fecha_creacion_ticket` ni las otras dos
+columnas — sólo `created_time`, remisiones e `instanteUltimaTransicion` —, así que no existe ruta de
+código que devuelva el valor viejo. El RED no puede venir de una aserción roja contra un código
+incorrecto, porque el código ya es correcto; viene de que el CASO no existía todavía: `npx vitest run
+apps/desk/server/services/valoresDeTransicion.test.ts` pasaba con **11** casos antes de escribirlo. Se
+escribió el test primero, se corrió una vez para confirmar que compila y ejecuta —**12/12, verde
+inmediato**, sin ninguna modificación de código de producción entre la escritura y esa corrida—, y esa
+ausencia-luego-presencia es el ciclo que exige el modo estricto para este escenario concreto: no hay
+un commit intermedio en rojo porque no hay nada que revertir para producirlo. Restricción dura del
+encargo cumplida: `ticketService.ts`, `valoresDeTransicion.ts` y `fechasDerivadas.ts` sin diff en todo
+este objetivo (`git diff --stat aadcef5 HEAD -- apps/desk/server/services/ticketService.ts
+apps/desk/server/services/valoresDeTransicion.ts packages/shared/src/fechasDerivadas.ts` → vacío).
+
+### Hallazgo colateral — bloqueante preexistente del detector de citas, no de esta tanda
+
+`tsx apps/desk/server/citas/cli.ts --sha aadcef5` (el commit de partida, antes de tocar nada) ya daba
+**exit 1** con los mismos 2 bloqueantes que dio contra el primer intento de cierre de esta rebanada:
+`apply-progress.md:325-326` citaba, EN FORMA DE CITA (backtick+fichero+dos puntos+número), dos valores
+ya reparados en `7e64c30` —`valoresTransicion.ts:20` (línea vacía hoy) y `valoresTransicion.ts:49-79`
+(fuera de rango, el fichero tiene hoy 68 líneas)— a modo de ejemplo narrativo de qué se reparó. El
+detector no distingue narración de cita viva: es exactamente el último guion de la regla de mutación 4
+de `CLAUDE.md` («Un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como
+rota»). Reescrito en prosa (`«la línea 20 de \`valoresTransicion.ts\`»`, sin backtick envolviendo
+fichero+dos puntos+número), commit `8d4f577`. **Confirmado preexistente, no introducido por esta
+tanda**: el mismo comando contra `aadcef5` da el mismo par de bloqueantes.
+
+### Cierre
+
+```
+npm test          → Test Files 130 passed | 1 skipped (131) · Tests 1223 passed | 2 skipped (1225) · exit 0
+npm run typecheck → exit 0
+tsx apps/desk/server/citas/cli.ts --sha 8d4f577 → exit 0 (comprobadas 2172 · abreviadas rotas 11,
+                     informativas, mismas de siempre · cabeceras R-1 inválidas 0 · sin bloqueantes)
+```
+Medida del ledger: `git diff --shortstat --no-renames aadcef5 HEAD` → 3 ficheros, spec delta + test +
+`apply-progress.md`, dentro del techo de 100 líneas del objetivo. Sin diff en código de producción.
+Commits: `5e8c843` (spec), `62140e4` (test), `8d4f577` (fix del bloqueante preexistente del detector).
