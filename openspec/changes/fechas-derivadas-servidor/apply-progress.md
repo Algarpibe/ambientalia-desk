@@ -174,7 +174,7 @@ carpeta, tal como decía el encargo.
 | `openspec/changes/fechas-derivadas-servidor/proposal.md:64` | P-3: «`dia()`… Hoy es otra noción… (`toISOString`, día UTC)» | Roto por contenido, mismo caso que trazas:173 | Reparado: «Antes de esta tanda era otra noción…; tras la unidad A, `dia()` delega en `diaEnZona`» |
 | `openspec/changes/fechas-derivadas-servidor/proposal.md:197` | meta: `:130`/`:132` cambian de contenido sin moverse | Es la regla misma, no una cita de comportamiento | Sin cambio |
 | `openspec/changes/fechas-derivadas-servidor/design.md:32` (A-9) | `bodegaje.ts:19` pasa a import; `:130-132` a comentario+`return` | Prescriptivo, coincide con lo implementado | Sin cambio |
-| `openspec/changes/fechas-derivadas-servidor/design.md:246,:249,:250` | tabla regla de mutación 3: `:130` deriva, `:132` valida | Presente, describe el árbol de hoy | Sin cambio |
+| `openspec/changes/fechas-derivadas-servidor/design.md:246`, `:249`, `:250` | tabla regla de mutación 3: `:130` deriva, `:132` valida | Presente, describe el árbol de hoy | Sin cambio |
 | `openspec/changes/fechas-derivadas-servidor/exploration.md:99` | 422 en `transitionExec.ts:77`, `ticketService.ts:132` | Presente, describe el árbol de hoy | Sin cambio |
 | `openspec/changes/fechas-derivadas-servidor/tasks.md:6` | cabecera: `:130`/`:132` cambian de contenido sin moverse | Meta, correcto | Sin cambio |
 | `openspec/changes/fechas-derivadas-servidor/tasks.md:71-72` (A.2.2) | `bodegaje.ts:19` → import; `:129-132` → comentario+`return` | Rango impreciso: `:129` es la firma de `dia()`, no cambió | Reparado: `:129-132` → `:130-132` |
