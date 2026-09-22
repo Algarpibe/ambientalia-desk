@@ -1,96 +1,111 @@
-# Archive Report — generador-mapa-blueprint (F1A-06)
+# Informe de archivo — `generador-mapa-blueprint` (F1A-06)
 
-**Change**: `generador-mapa-blueprint`  
-**Archived**: 2026-09-22  
-**Status**: CLOSED  
-**Observation IDs** (hybrid mode): #879 (spec), #880 (design), #882 (tasks), #884 (apply-progress), #886 (Unit B), #895 (verify-report)
+| Dato | Valor |
+|---|---|
+| Tanda | F1A-06 — fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:145` |
+| Cabecera R-1 | `cierra: si` · `toca_maestro: si` · `capacidad: [mapa-blueprint, transitions-st]` |
+| Base | `main` en `125ae3e` |
+| Archivado | 2026-09-22, en `openspec/changes/archive/2026-09-22-generador-mapa-blueprint/` |
+| Verify | PASS WITH WARNINGS · 0 CRITICAL · tres WARNING por requisito, cuatro por escenario (`34ee71f`) |
 
----
+Este informe registra el estado **al cierre**. `apply-progress.md` y `verify-report.md` son
+instantáneas intermedias: donde discrepen de lo que sigue, manda lo que sigue.
 
-## Cycle Summary
+## 1 · Qué se fusionó en las specs vivas
 
-Generador-mapa-blueprint (F1A-06 — generating the state-machine blueprint per M1.3.1, M1.3.7, and Anexo F) 
-completed in three SDD units with one maintenance reset (Unit B) and one exceeding self-imposed budget 
-(Unit C, settled by maintainer as **blocks** until reset). Verification: **PASS WITH WARNINGS**, 
-0 CRITICAL, 3 WARNING. All 38/38 tasks marked complete.
+- **`mapa-blueprint`, capacidad nueva** — `openspec/specs/mapa-blueprint/spec.md`, copia literal del
+  delta (149 líneas, seis requisitos RQ-MB-01..06, doce escenarios). Ya estaba declarada en
+  `openspec/config.yaml → capabilities` desde la fase de spec (R-2 de F0-05); no se añade dos veces.
+- **`transitions-st`, RQ-TS-03 modificado** — `openspec/specs/transitions-st/spec.md`, +39/−6. El
+  bloque de RQ-TS-03 se sustituye por el del delta: las dos transiciones sin botón declaran `from`/`to`
+  y `estadoPorRemision.ts` deriva de esa declaración en vez de repetir los literales. La fusión
+  desplaza **+33 líneas** todo lo que la spec tiene desde el antiguo RQ-TS-04.
+- **Reanclaje en el mismo commit que la fusión** — `docs/sdd/ENTRADA.md:344` pasa a citar
+  `openspec/specs/transitions-st/spec.md:327` (caso A: la frase sigue siendo cierta del árbol de hoy).
+  El texto citado estaba en la línea 294 antes de la fusión; tras ella, la 294 es otra frase no vacía,
+  así que el detector de citas la habría dado por buena. Barrido previo: es la **única** cita que
+  apunta a la zona desplazada; las abreviadas sin fichero de esa zona se leyeron una a una y remiten a
+  código o al maestro, ninguna a la propia spec.
 
-## Deliverables
+La fusión es idéntica, byte a byte, a la del commit desechable de medición `dea0f42`
+(`git diff --stat dea0f42 <cierre> -- openspec/specs` vacío).
 
-### Specs Synced
+## 2 · Qué se entregó, por unidad
 
-- **`mapa-blueprint`** (NEW, 149 lines): Pure function `mapaBlueprint()` (state/transition graph → 
-  Mermaid), four generated `.md` files, CLI `generar-mapa-blueprint`, anti-drift test (RQ-MB-01…06, 
-  12 scenarios). Capability registered in `openspec/config.yaml`.
-
-- **`transitions-st`** (MODIFIED, +39/-6): RQ-TS-03 — the two buttonless steps now declare 
-  explicit `from`/`to` matching their row in the spec table; `estadoPorRemision.ts:41` (phase guard) 
-  and `:49` (destination) derive from those constants instead of re-encoding status literals (kills 
-  the third-copy duplication, proposal P-2). Master-doc discrepancy M1.3.3 `:1198` corrected in 
-  F0-01 entry 17 per CLAUDE.md mutation rule 4.
-
-### Archive Contents
-
-- ✅ proposal.md (18,563 bytes)
-- ✅ design.md (23,554 bytes)
-- ✅ specs/mapa-blueprint/ (149 lines)
-- ✅ specs/transitions-st/ (delta, merged)
-- ✅ tasks.md (38/38 complete)
-- ✅ apply-progress.md (Units A, B, C detailed)
-- ✅ verify-report.md (PASS WITH WARNINGS)
-
-### Verification Results
-
-**Command suite** (final commit `3b6c168`):
-
-1. `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` → EXIT=0, 2,029 citations verified, 
-   11 malformed (all pre-existing, informative only), 0 blockers
-2. `npm test` → EXIT=0, 1,247 passed / 2 skipped / 0 failed (1,249 total)
-3. `npm run typecheck` → EXIT=0
-4. `npm run lint` → EXIT=0, 0 errors, 165 warnings (no increase)
-
-Verdict: **PASS WITH WARNINGS**. Four scenarios lack runtime test coverage (per CLAUDE.md strict_tdd):
-
-| Requirement | Scenario | Reason | Verification |
+| Unidad | Commits | Contenido | Ledger |
 |---|---|---|---|
-| RQ-MB-01 | "the function does not read from disk" | I/O boundary (file interaction only via CLI and test) | Code reading: `mapaBlueprint.ts` has no `fs` import; CLI alone calls `writeFileSync` |
-| RQ-MB-01 | "the function does not call permissions.ts" | API boundary (authorization check outside scope) | Code reading: no `import ... from 'permissions.ts'`; `ticketService.ts:123-125` enforces server-side |
-| RQ-MB-06 | "generated output does not have duplicate state literals in the Mermaid stateDiagram" | Structural property (parser cannot express as assertion) | Code reading: `mapaBlueprint.ts:56-65` uses `Set` to collect state aliases; alias collisions cannot occur |
-| RQ-TS-03 | "two steps declare their `from`/`to` exact, inverted invariant 5b" | Inverted test (5b now asserts presence instead of absence) | Code reading: `transitions.ts:150-151` declare both pairs; `invariantesGrafo.test.ts:120-127` inverted by Unit C |
+| A · datos y motor | `e864b7a` (`54d00f1`, entre A y B, fuera de objetivo) | `fasesBlueprint.ts`; P-2: las dos constantes ganan `from`/`to`; `estadoPorRemision.ts` deriva de ellas; invariante 5b invertido | ordinal 1, 325 líneas |
+| B · generador | `c1680a8`..`8a36d03` | `mapaBlueprint.ts` (función pura), CLI `generar-mapa-blueprint`, los cuatro `docs/artefactos/blueprint-*.md`, prueba anti-desfase RQ-MB-06 | ordinales 2 y 3 |
+| C · cierre documental | `372196e`..`d2bca6f` | `docs/artefactos/NOTA.md`; entrada 17 de `F0-01` (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:897`); capacidad verificada | ordinales 4 y 5 |
+| verify | `34ee71f`, `8df464b`, `3b6c168` | `verify-report.md` | ordinal 6, 177 líneas |
+| archive | este commit y el que lo corrige | mover, fusionar, reanclar, informe | ordinal 7, techo 4300 |
 
-**Comprobadas de verdad:** Verified by direct code reading with `ruta:línea`, not by test absence alone 
-(see verify-report #895 for details).
+`tasks.md`: 38/38.
 
-## Work Units
+## 3 · Hechos de estado final que las instantáneas no recogen
 
-- **Unit A** (e864b7a4): `fasesBlueprint.ts` (data table), P-2 derivation in `transitions.ts`, 
-  inverted invariant 5b, `estadoPorRemision.ts` refactored to use `.from`/`.to`. 14/14 tasks.
-  
-- **Unit B** (c1680a8..8a36d03, reset authorized): `mapaBlueprint.ts` (pure function), CLI, 
-  four blueprint `.md` files, anti-drift test. Fixed regression in Unit A (`estadoPorRemision.ts:41` 
-  TS2345 uncaught by typecheck). 15/15 tasks. Reset due to ledger measurement discrepancy.
-  
-- **Unit C** (372196e..d2bca6f): Documentatio — NOTA.md §3/§6 rewritten (case B, historical evidence 
-  preserved), F0-01 entry 17 (master-doc correction), `mapa-blueprint` capability verified in 
-  `config.yaml`. Repair of broken citations in `proposal.md` discovered and fixed in-place 
-  (rule of mutation 4). 9/9 tasks.
+- **La regresión de tipos la introdujo la Unidad A, no era deuda previa.** En `125ae3e`,
+  `apps/desk/server/db/estadoPorRemision.ts:41` comparaba literales; `e864b7a` introdujo el patrón que
+  rompe `tsc` (`TS2345`), y el cierre de A declaró typecheck verde sin serlo. Lo corrigió la Unidad B
+  en `c1680a8`, con delta 0 y sin tocar ninguna aserción de `estadoPorRemision.test.ts`.
+- **Dos resets de mantenedor, los dos por techos autoimpuestos**, no por trabajo pendiente: Unidad B,
+  779 líneas contra 700; Unidad C, 324 contra 300. El techo del preflight es 800
+  (`openspec/config.yaml:29`); con él, los dos habrían liquidado limpios. Desde entonces se adquiere a
+  800, y el archive con el techo aprobado por Gerencia (4300 sobre 3.848 estimadas).
+- **`4312d9c`**, fuera de objetivo: ancla dos abreviadas rotas de la tanda — la de `design.md:159`,
+  falso positivo de atribución, pasa a ruta completa; la de `apply-progress.md:63` es caso B y se ancla
+  en `125ae3e` (apuntaba a `invariantesGrafo.test.ts`, no a `transitions.ts`).
+- **`8df464b`**: el verify corrió el detector sobre `4312d9c`, antes de commitear su propio informe, y
+  declaró cero bloqueantes; sobre `34ee71f` el detector daba exit 1, porque `verify-report.md:35`
+  narraba con forma de cita una cita rota ajena. Se pasó a prosa sin mover líneas.
+- **`3b6c168`**: el verify contaba sus avisos en dos unidades sin decirlo. La lista de avisos agrupa
+  por requisito (tres); la matriz cuenta escenarios (cuatro). Las líneas 174 y 177 del verify-report
+  dicen ahora «tres WARNING (cuatro escenarios)».
+- **Primera versión de este informe (`9f5d426`), sustituida por esta:** tenía una tabla de huecos que
+  no coincidía con la matriz del verify, atribuía a un commit cifras que no eran suyas y carecía de la
+  línea de cierre. Se reescribió leyendo cada dato en su fuente.
 
-Ledger: attempts 1–6 passed; Unit B and Unit C required maintainer resets due to self-imposed line 
-budgets (700, then 300; budget ceiling is 800 per `openspec/config.yaml:29`). No work remained 
-pending after any ledger block; reset was accounting only.
+## 4 · Huecos declarados — los cuatro escenarios sin prueba de ejecución
 
-## Gap to Plan
+Son ciertos hoy, comprobados por lectura con cita en el verify; lo que falta es una prueba que impida
+que dejen de serlo sin que nada se ponga rojo. Filas de la matriz de `verify-report.md`:
 
-**Cierra: SÍ** — F1A-06 (plan row 145, `Desk2.0_Plan_…_R01.1.md`) covered in full:
-- ✅ Generador (function + CLI)
-- ✅ Specs (new + delta)
-- ✅ Four artifact `.md` files per M1.3.1
-- ✅ Closed the 38-vs-36 discrepancy (M1.3.7 cite into M1.3.3, Anexo F)
-- ✅ Closed M1.3.3 `:1198` correction (master-doc, F0-01 entry 17)
+| Fila | Requisito | Escenario | Por qué es cierto hoy |
+|---|---|---|---|
+| `:67` | RQ-MB-01 | la función pura no importa `permissions.ts` | `packages/shared/src/mapaBlueprint.ts:8` importa sólo de `./transitions`; `:9`, sólo tipos de `./fasesBlueprint` |
+| `:68` | RQ-MB-01 | la CLI delega todo el cálculo | `scripts/generar-mapa-blueprint.ts` sólo invoca la función pura y escribe |
+| `:78` | RQ-MB-06 | una transición sintética sin regenerar da rojo | verificado una vez en la Unidad B con un script suelto no versionado; la igualdad estricta de la prueba permanente cubre el mismo modo de fallo en la práctica |
+| `:80` | RQ-TS-03 | sin literales duplicados en `estadoPorRemision.ts` | las líneas 41 y 49 usan `.from`/`.to` de las constantes |
 
-**Declared gap**: Four scenarios have no runtime test (noted above), per strict_tdd without 
-`apps/desk/src` coverage scope (CLAUDE.md F0-00). Comprobadas are direct code readings; 
-no test-absence downgrade to CRITICAL or BLOCKED.
+Destino: **ninguno asignado**, a propósito — que lo decida quien fije el alcance. La recomendación del
+verify es cerrarlos en la próxima tanda que toque `mapaBlueprint.ts` o `estadoPorRemision.ts`.
 
----
+## 5 · Contra la fila del plan
 
-*Archive persisted to Engram (hybrid mode) as topic `sdd/generador-mapa-blueprint/archive-report`.*
+La fila (`…R01.1.md:145`) pide cinco cosas:
+
+1. **Generador que produce `docs/artefactos/blueprint-*.md` en Mermaid `stateDiagram-v2`** — hecho
+   (Unidad B).
+2. **Diagrama completo más una vista por cada una de las tres fases de M1.3.1** — hecho: cuatro
+   ficheros.
+3. **Prueba anti-desfase en CI** — hecho: `mapaBlueprint.test.ts` corre en `npm run test:coverage`
+   (`.github/workflows/ci.yml:45`).
+4. **`blueprintserviciotecnico.html` como histórico congelado en `a3a8f03`** — hecho,
+   `docs/artefactos/NOTA.md:50`.
+5. **Cerrar antes el hueco 38/36** — hecho: entrada 17 de F0-01 (`…Correcciones_para_el_maestro.md:897`),
+   que el maestro tiene que recibir (`toca_maestro: si`).
+
+**Desvío declarado respecto de la letra de la fila:** la fila dice «desde `transitions.ts`,
+`estados.ts` y `permissions.ts`». El generador **no** lee `permissions.ts`, por decisión de spec:
+`canExecuteTransition` decide sobre un usuario y el mapa no tiene usuario
+(`openspec/specs/mapa-blueprint/spec.md:21-27`); las áreas salen de `AREAS` y `areasForTransition`,
+que viven en `packages/shared/src/transitions.ts:310` y `:313`.
+
+## 6 · Verificación de cierre
+
+Los cuatro comandos —detector de citas, `npm test`, `npm run typecheck`, `npm run lint`— se corren
+sobre el commit **que contiene este informe**, completos y leyendo su exit code real, y sus cifras
+quedan en la liquidación del ordinal 7 del ledger. No se escriben aquí: un informe no puede medir el
+commit que lo contiene, y hacerlo sobre el anterior es exactamente el fallo de `34ee71f`.
+
+**Cierre (R-1):** F1A-06 cubre las cinco piezas de su fila del plan —generador, cuatro vistas, prueba anti-desfase en CI, HTML congelado y hueco 38/36 cerrado vía entrada 17 de F0-01— con un desvío declarado (el generador no lee `permissions.ts`, por RQ-MB-01) y deja fuera, como hueco declarado sin destino, cuatro escenarios sin prueba de ejecución: RQ-MB-01 ×2 (`permissions.ts`, CLI delgada), RQ-MB-06 (transición sintética) y RQ-TS-03 (literales en `estadoPorRemision.ts`).
