@@ -1,165 +1,204 @@
 ```yaml
 schema: gentle-ai.verify-result/v1
-evidence_revision: sha256:d3a81b78c34165cd06cd54bdf1ebac1919b3ce14ee76b5554965534d89b29f13
-verdict: fail
+evidence_revision: sha256:ac2fdaac42a2f01adb009a48cf3e854fad0d7df20bcaf4679fdcabbe4e46dda6
+verdict: pass_with_warnings
 blockers: 0
-critical_findings: 2
-requirements: 5/7
-scenarios: 19/21
+critical_findings: 0
+requirements: 7/7
+scenarios: 21/21
 test_command: npm test
 test_exit_code: 0
-test_output_hash: sha256:651282ea58d651df0a47c998bc997f79d4528a8fa9f6aee4802a6bd22b97466c
+test_output_hash: sha256:f768f6daa7a430bcd9b87015961e2f54dfb7bae6c090fdf0b430c389add0745a
 build_command: npm run build
 build_exit_code: 0
-build_output_hash: sha256:94300f934c9b128f4eeaf2a7c70dfaab8041fa27a9b654dc7f7a3ef275aaa2d6
+build_output_hash: sha256:17816f0370addd6353417cefda3cd4e3133bd55ab0feee65ce939997eba05e98
 ```
 
 ## Verification Report
 
-**Change**: fechas-derivadas-servidor (F1A-07 · IV-2)
-**Version**: worktree `f1a-07-r1`, HEAD `2f9d78c696caf4afaccb6af377a28bdde6956c42` (rama sin publicar)
+**Change**: fechas-derivadas-servidor (F1A-07 - IV-2)
+**Version**: worktree f1a-07-r1, HEAD ad927dc5c6eee75d6dffc5164d89671cc562f23e (rama sin publicar)
 **Mode**: Strict TDD
+**Naturaleza**: RE-VERIFICACION tras remediacion del verify-report.md anterior (commit aadcef5,
+verdict FAIL, 2 CRITICAL). Verificacion COMPLETA de unidades A+B, no solo del delta de la remediacion.
 
 ### Completeness
 
 | Metrica | Valor |
 |---|---|
-| Tareas totales (recuento en `tasks.md`) | 51 (Unidad A: 31, Unidad B: 20) |
+| Tareas totales (recuento en tasks.md) | 51 (Unidad A: 31, Unidad B: 20) |
 | Tareas completas | 51 |
 | Tareas incompletas | 0 |
 | Comprobaciones de persona (fuera del recuento, regla del ciclo 1) | 2 -- (a) zona horaria en contenedor real, dueno consola EasyPanel; (b) operandos de bodegaje fuera de formato, dueno acceso a produccion. Ninguna la da por hecha este informe, ninguna cuenta como tarea pendiente |
 
-Las 51 casillas de `openspec/changes/fechas-derivadas-servidor/tasks.md` (Fases A.1-A.7 y B.1-B.7) estan
-`[x]`, verificado leyendo el fichero completo linea a linea, no por conteo automatico. `A.7.6` y `B.7.5`
-(los commits) tambien estan marcados, y coinciden con commits reales en el log
-(`98cbda7` unidad A, `b4c3bcf`/`7e64c30`/`2f9d78c` unidad B).
+Las 51 casillas de openspec/changes/fechas-derivadas-servidor/tasks.md siguen [x], recontadas con
+grep -c "^- [x]" (51) y grep -n "^- [ ]" (0 resultados) contra el arbol actual, ademas de lectura
+directa del fichero. Sin cambio respecto al verify anterior.
+
+Ningun fichero de codigo de produccion tiene diff desde el verify FAIL anterior:
+git diff --stat aadcef5 HEAD -- apps/desk/server/services/ticketService.ts
+apps/desk/server/services/valoresDeTransicion.ts packages/shared/src/fechasDerivadas.ts
+resulta vacio (confirmado independientemente en esta sesion). El rango aadcef5..HEAD (5e8c843, 62140e4,
+8d4f577, 2e94bf7, c907a32, ad927dc) toca solo 3 ficheros: apps/desk/server/services/valoresDeTransicion.test.ts
+(+15), el delta specs/transitions-st/spec.md (+24), y apply-progress.md (+91/-4).
+git diff --stat aadcef5 HEAD confirmado: 3 files changed, 126 insertions(+), 4 deletions(-).
 
 ---
 
-### Build & Tests Execution -- reproducido en esta sesion
+### Build and Tests Execution -- reproducido en esta sesion (independiente, no reciclado del verify anterior)
 
 **Build**: OK Passed
 ```
 $ npm run build
 > tsc -b && vite build
-- 107 modules transformed.
-- built in 1.96s
+- 107 modules transformed
+- built in 2.43s
 exit 0
 ```
 
-**Tests -- foco de la tanda (4 ficheros)**: OK 72 passed / 0 failed
+**Tests -- foco de la tanda (4 ficheros)**: OK 73 passed / 0 failed (antes 72; +1 por el caso 6 nuevo de RQ-TZ-12)
 ```
-$ npx vitest run packages/shared/src/fechasDerivadas.test.ts packages/shared/src/bodegaje.test.ts \
-    apps/desk/server/services/valoresDeTransicion.test.ts apps/desk/src/lib/valoresTransicion.test.ts
+$ npx vitest run packages/shared/src/fechasDerivadas.test.ts packages/shared/src/bodegaje.test.ts apps/desk/server/services/valoresDeTransicion.test.ts apps/desk/src/lib/valoresTransicion.test.ts
 fechasDerivadas.test.ts (23 tests)
 bodegaje.test.ts (22 tests)
 valoresTransicion.test.ts (16 tests)
-valoresDeTransicion.test.ts (11 tests)
+valoresDeTransicion.test.ts (12 tests)
 Test Files  4 passed (4)
-     Tests  72 passed (72)
+     Tests  73 passed (73)
 ```
 
-**Tests -- suite completa, en solitario**: OK 1222 passed / 0 failed / 2 skipped
+**Tests -- fichero remediado, aislado**: OK 12/12, incluido el caso nuevo
+```
+$ npx vitest run apps/desk/server/services/valoresDeTransicion.test.ts
+valoresDeTransicion.test.ts (12 tests) 522ms
+Test Files  1 passed (1)
+     Tests  12 passed (12)
+```
+El caso 6 (RQ-TZ-12: recalcular ignora tambien lo que YA hubiera en la columna) precarga
+fecha_remision_entrada = '2020-01-01' con UPDATE tickets antes de ejecutar ingreso_a_servicio
+con fuente disponible (fecha = '2026-08-01'), y confirma que la columna termina en 2026-08-01, no en
+el valor precargado. Es la evidencia de ejecucion que el hallazgo CRITICAL 2 del verify anterior exigia.
+
+**Tests -- evidencia de posicion (3.8), aislada**: OK, ya en verde antes de esta remediacion
+```
+$ npx vitest run apps/desk/server/services/valoresDeTransicion.test.ts -t posicion
+P-a - sin remision, fecha invalida Y derivado_a inexistente: SOLO el error de fecha
+P-b - lo mismo, y ADEMAS sin Codigo Servicio: los dos errores, presencia antes que validez
+```
+
+**Tests -- soporte del requisito 3.8 (citas del delta), reejecutados**: OK
+```
+$ npx vitest run apps/desk/server/contratoErrores.test.ts apps/desk/server/remisiones.test.ts apps/desk/server/services/ticketService.test.ts
+contratoErrores.test.ts (2 tests), remisiones.test.ts (55 tests), ticketService.test.ts (36 tests)
+Test Files  3 passed (3)
+     Tests  93 passed (93)
+```
+
+**Tests -- suite completa, en solitario**: OK 1223 passed / 0 failed / 2 skipped
 ```
 $ npm test
 Test Files  130 passed | 1 skipped (131)
-     Tests  1222 passed | 2 skipped (1224)
-Duration  89.84s
+     Tests  1223 passed | 2 skipped (1225)
+Duration  82.12s
 exit 0
 ```
-Nota de reproducibilidad: una corrida previa de la suite completa dio `1 failed` en
-`apps/desk/server/citas/hook.bordes.test.ts` con `Error: [vitest-worker]: Timeout calling "onTaskUpdate"`
-(60s de techo de RPC). Ese fichero **no pertenece** a esta tanda (no esta en la lista de ficheros a
-inspeccionar ni lo toca ningun commit del rango `b3c089b..2f9d78c`). Ejecutado en aislamiento
-(`npx vitest run apps/desk/server/citas/hook.bordes.test.ts`), pasa limpio: `9 passed (9)`, 27.4s --
-coincide con la nota que el propio `apply-progress.md` ya deja para el cierre de la unidad B (\`repetida
-en solitario, limpia\`). Se repitio `npm test` una segunda vez, en solitario, y dio limpio: el resultado
-reportado en el YAML de cabecera (`test_output_hash`) es el de esa segunda corrida limpia.
+(Antes de la remediacion: 1222; +1 por el caso 6 nuevo de valoresDeTransicion.test.ts. Corrida unica y
+limpia en esta sesion, sin el fallo intermitente de hook.bordes.test.ts reportado en el verify anterior.)
 
-**Typecheck**: OK exit 0 (`tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit`)
+**Typecheck**: OK exit 0 (tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit)
 
-**Lint**: OK exit 0 -- 0 errors, 158 warnings, los 158 preexistentes en `packages/zoho-sync` (todos
-`@typescript-eslint/no-explicit-any`). **Ninguno** en los ficheros de esta tanda, comprobado con
-`npm run lint 2>&1 | grep -iE "fechasDerivadas|valoresDeTransicion|valoresTransicion|bodegaje\.ts|ticketService\.ts"`
--> sin salida.
+**Lint**: OK exit 0 -- 0 errors, 158 warnings, todos preexistentes en packages/zoho-sync
+(@typescript-eslint/no-explicit-any). Mismo recuento que el verify anterior; ninguno en ficheros de
+esta tanda ni en el fichero de test remediado.
 
-**Coverage** (`npx vitest run --coverage` acotado a los 4 ficheros de foco -- no representa el global,
-que necesita la suite completa): `fechasDerivadas.ts` 100% lineas / 96.07% ramas - `valoresDeTransicion.ts`
-(servidor) 100/100/100 - `valoresTransicion.ts` (cliente) 100% lineas / 83.33% ramas - `bodegaje.ts` 97.43%
-lineas (unica linea sin cubrir, `:235`, es `transicionesQueEscriben`, funcion preexistente que esta tanda
-no toca). `ticketService.ts` sale bajo (38%) en esta corrida acotada porque su cobertura real viene de
-`ticketService.test.ts`/`contratoErrores.test.ts`, fuera de este subconjunto -- no es una medida fiable de
-ese fichero. Informativo, no bloqueante: no se corrio `--coverage` sobre la suite completa por tiempo.
+**Citas (detector)**: OK exit 0
+```
+$ npx tsx apps/desk/server/citas/cli.ts --sha HEAD
+comprobadas 2174, abreviadas rotas 11 (informativas, no bloquean, las mismas de siempre, ninguna
+en ficheros de esta tanda), cabeceras R-1 invalidas 0, sin bloqueantes
+```
 
 ---
 
 ### Spec Compliance Matrix
 
-#### Domain: `transitions-st` (delta MODIFIED)
+#### Domain: transitions-st (delta MODIFIED)
 
 | Requirement | Scenario | Test / Evidencia | Resultado |
 |---|---|---|---|
-| RQ-TS-06 (orden de guardas, fila 6 nueva) | La fecha derivada invalida sin fuente responde 422, detras de los obligatorios | `valoresDeTransicion.test.ts` caso 4 (it.each, 422 con el mensaje) + P-b (orden presencia->validez) | COMPLIANT |
-| RQ-TS-06 | Tabla de 8 filas, orden A<B<C<D | Lectura directa `ticketService.ts:121,123,124-126,127-129,132,132,136-140,146-150` -- las 8 evidencias coinciden exactamente con la tabla del delta | COMPLIANT (estatica, confirmada linea a linea) |
-| RQ-TS-08 (validacion de contenido fuera de `buildTransitionPlan`) | `transitionExec.ts` no cambia | `git diff --stat b3c089b 2f9d78c -- apps/desk/server/transitionExec.ts` -> vacio (verificado directamente, no solo por el informe de apply) | COMPLIANT |
-| 3.8 (orden total de precedencia) | La guarda equipo<->cliente (C) gana a la unicidad de OV (D) | `ticketService.test.ts:323` (`N1`) -- preexistente, sigue en verde | COMPLIANT |
-| 3.8 | Dentro de B, estado de origen precede al area | `ticketService.test.ts:158` -- preexistente, sigue en verde | COMPLIANT |
-| 3.8 | Sujeto de la URL -> 404; referencia del cuerpo -> 422 | `apps/desk/server/contratoErrores.test.ts:71,77` (`N3`/`N4`) -- preexistente, sigue en verde | COMPLIANT |
-| 3.8 | Alta de remision incumple el orden total (IV-12), registrado sin corregir | `apps/desk/server/remisiones.test.ts:1081` (describe `IV-12`) -- preexistente, sigue en verde; `remision.ts` sin diff en esta tanda (confirmado) | COMPLIANT |
-| 3.8 | Fecha derivada sin fuente invalida es C, no altera la escalera, ni con una OV en D en la misma peticion | Ninguna prueba de integracion combina "fecha derivada invalida" + "OV ya asociada a otro ticket" en la misma llamada -- ninguna transicion real declara a la vez un campo de fecha derivada y el campo `orden_venta` (`habilitar_servicio`, la unica que toca OV, no declara ninguna de las tres fechas; verificado en `transitions.ts:178-186`), asi que el GIVEN del escenario no es alcanzable con datos reales. La garantia es posicional: `:130-132` (C, fecha) preceden incondicionalmente a `:146-150` (D, OV) en el cuerpo lineal de `executeTransition`, sin ninguna rama que pueda invertirlos, y esa MISMA posicion esta bajo guarda de mutacion (P-a/P-b, regla de mutacion 1) frente a la guarda de derivacion que si comparte linea | PARTIAL -- cierto por inspeccion y por la mutacion de posicion ya probada, pero sin un test de integracion que ejercite el GIVEN exacto (porque no hay transicion real que lo permita) |
+| RQ-TS-06 | La fecha derivada invalida sin fuente responde 422, detras de los obligatorios | valoresDeTransicion.test.ts caso 4 (it.each, 422 con el mensaje) + P-b (orden presencia-validez) -- reejecutado, verde | COMPLIANT |
+| RQ-TS-06 | Tabla de 8 filas, orden A menor B menor C menor D | Lectura directa ticketService.ts:121,123,124-126,127-129,132,132,136-140,146-150 -- las 8 evidencias coinciden con la tabla del delta; sin diff desde el verify anterior | COMPLIANT (estatica, releida) |
+| RQ-TS-08 | transitionExec.ts no cambia | git diff --stat aadcef5 HEAD -- apps/desk/server/transitionExec.ts resulta vacio (verificado en esta sesion) | COMPLIANT |
+| 3.8 | La guarda equipo-cliente (C) gana a la unicidad de OV (D) | ticketService.test.ts:323 (N1) -- reejecutado, verde | COMPLIANT |
+| 3.8 | Dentro de B, estado de origen precede al area | ticketService.test.ts:158 -- reejecutado, verde | COMPLIANT |
+| 3.8 | Sujeto de la URL da 404; referencia del cuerpo da 422 | contratoErrores.test.ts:71,77 (N3/N4) -- reejecutado, verde | COMPLIANT |
+| 3.8 | Alta de remision incumple el orden total (IV-12), registrado sin corregir | remisiones.test.ts:1081 (describe IV-12) -- reejecutado, verde; remision.ts sin diff | COMPLIANT |
+| 3.8 (REMEDIADO, commit 5e8c843) | Fecha derivada sin fuente invalida es C, no altera la escalera, ni con una OV en D en la misma peticion | El delta enmienda el escenario (spec.md:221-243) a "garantia estructural documentada, no escenario con test de ejecucion pendiente", con cita verificada: transitions.ts:178-189 (habilitar_servicio, unica transicion que declara cfOrdenVenta, NO declara ninguna fecha derivada) y :190-191 (ingreso_a_servicio, unica que declara fechas derivadas junto a otros campos, NO declara cfOrdenVenta). Reverificado independientemente en esta sesion: grep de cfOrdenVenta( en transitions.ts da una sola ocurrencia, linea 189; lectura directa de :178-191 confirma el contenido exacto citado. El GIVEN (fecha invalida + OV duplicada, misma peticion) sigue sin ser alcanzable con las 34 transiciones reales. La garantia queda sostenida por P-a/P-b (valoresDeTransicion.test.ts, reejecutados en verde), que fijan por mutacion que :130-132 (C) precede incondicionalmente a :146-150 (D). El texto incluye una nota de reapertura explicita si una transicion futura combina ambos campos | COMPLIANT-STRUCTURAL (ver WARNING en Issues Found; resuelto por enmienda de spec coherente con el codigo citado, no por test de ejecucion directo del GIVEN exacto) |
 
-#### Domain: `trazas` (delta MODIFIED + ADDED)
+#### Domain: trazas (delta MODIFIED + ADDED)
 
 | Requirement | Scenario | Test / Evidencia | Resultado |
 |---|---|---|---|
-| RQ-TZ-03 | El historial guarda el derivado, no lo que mando el navegador | `valoresDeTransicion.test.ts` casos 1a/1b (D-1) | COMPLIANT |
-| RQ-TZ-03 | Una fecha derivada fuera de su transicion no llega al historial | `valoresDeTransicion.test.ts` caso 5 (P-2) | COMPLIANT |
-| RQ-TZ-11 | El servidor impone la fecha derivada aunque el navegador no la mande | `valoresDeTransicion.test.ts` caso 3 | COMPLIANT |
-| RQ-TZ-12 | Con fuente, el derivado gana aunque el navegador mande otro | `valoresDeTransicion.test.ts` casos 1a/1b | COMPLIANT |
-| RQ-TZ-12 | `Fecha Remision Entrada` = entrada vigente mas reciente | `valoresDeTransicion.test.ts` caso 2 | COMPLIANT |
-| RQ-TZ-12 | El instante se reduce al dia de zona de negocio, no UTC | `valoresDeTransicion.test.ts` casos 1a/1b (`2026-09-10T00:30:00Z`->`2026-09-09`) + `fechasDerivadas.test.ts` bloques `zona` | COMPLIANT |
-| RQ-TZ-12 | Con fuente, pasa aunque el navegador no mande el campo | `valoresDeTransicion.test.ts` caso 3 | COMPLIANT |
-| RQ-TZ-12 | Recalcular ignora tambien lo que YA HUBIERA en la columna | Sin test dedicado. Los 11 casos de `valoresDeTransicion.test.ts` parten siempre de un ticket recien insertado con la columna derivada en `NULL`; ninguno pre-carga un valor en `fecha_creacion_ticket`/`fecha_remision_entrada`/`fecha_revision_informe` y vuelve a ejecutar una transicion que la declare para comprobar que se pisa. La garantia es de codigo: `valoresConFechasDerivadas`/`valoresEfectivos` (`fechasDerivadas.ts:108-134`, `valoresDeTransicion.ts:14-32`) no leen `current.row.fecha_creacion_ticket` ni las otras dos columnas en ningun punto -- solo `created_time`, remisiones y `instanteUltimaTransicion` -- asi que no existe ruta de codigo que devuelva el valor viejo de la columna | PARTIAL -- comportamiento correcto por construccion (sin lectura de la columna en el codigo), pero sin un test runtime que lo demuestre re-ejecutando sobre una columna ya poblada |
-| RQ-TZ-12 | Sin fuente, tecleado valido pasa / invalido da 422 | `valoresDeTransicion.test.ts` caso 4 | COMPLIANT |
-| RQ-TZ-12 | Fecha derivada fuera de su transicion no llega al historial | `valoresDeTransicion.test.ts` caso 5 (mismo que RQ-TZ-03) | COMPLIANT |
-| RQ-TZ-13 | Una `YYYY-MM-DD` nunca se desplaza de dia | `fechasDerivadas.test.ts` caso 1 | COMPLIANT |
-| RQ-TZ-13 | Un instante se reduce al dia de zona de negocio | `fechasDerivadas.test.ts` caso 3 + bloques `zona` | COMPLIANT |
-| RQ-TZ-13 | Fecha-hora sin desplazamiento da `null` | `fechasDerivadas.test.ts` caso 4 | COMPLIANT |
-| RQ-TZ-13 | `dia()` de bodegaje consume la misma nocion, `YYYY-MM-DD` no cambia | `bodegaje.test.ts:419-432` (no 21, campo `Fecha Orden De Venta: '2026-02-09'` pasado tal cual a `hasta`) + las pruebas preexistentes del fichero, todas en verde | COMPLIANT |
+| RQ-TZ-03 | El historial guarda el derivado, no lo que mando el navegador | valoresDeTransicion.test.ts casos 1a/1b (D-1) -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-03 | Una fecha derivada fuera de su transicion no llega al historial | valoresDeTransicion.test.ts caso 5 (P-2) -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-11 | El servidor impone la fecha derivada aunque el navegador no la mande | valoresDeTransicion.test.ts caso 3 -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-12 | Con fuente, el derivado gana aunque el navegador mande otro | valoresDeTransicion.test.ts casos 1a/1b -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-12 | Fecha Remision Entrada es la entrada vigente mas reciente | valoresDeTransicion.test.ts caso 2 -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-12 | El instante se reduce al dia de zona de negocio, no UTC | valoresDeTransicion.test.ts casos 1a/1b + fechasDerivadas.test.ts bloques zona -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-12 | Con fuente, pasa aunque el navegador no mande el campo | valoresDeTransicion.test.ts caso 3 -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-12 (REMEDIADO, commit 62140e4) | Recalcular ignora tambien lo que YA hubiera en la columna | Caso runtime nuevo valoresDeTransicion.test.ts caso 6: precarga fecha_remision_entrada = 2020-01-01 via UPDATE, ejecuta ingreso_a_servicio con fuente disponible (remision 2026-08-01), confirma columna final igual a 2026-08-01. Ejecutado en esta sesion, en solitario y dentro de la suite acotada: 12/12 verde. Es exactamente la evidencia de ejecucion que el hallazgo CRITICAL 2 del verify anterior pedia: test que precarga la columna y comprueba que el derivado la pisa | COMPLIANT |
+| RQ-TZ-12 | Sin fuente, tecleado valido pasa / invalido da 422 | valoresDeTransicion.test.ts caso 4 -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-12 | Fecha derivada fuera de su transicion no llega al historial | valoresDeTransicion.test.ts caso 5 (mismo que RQ-TZ-03) -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-13 | Una YYYY-MM-DD nunca se desplaza de dia | fechasDerivadas.test.ts caso 1 -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-13 | Un instante se reduce al dia de zona de negocio | fechasDerivadas.test.ts caso 3 + bloques zona -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-13 | Fecha-hora sin desplazamiento da null | fechasDerivadas.test.ts caso 4 -- reejecutado, verde | COMPLIANT |
+| RQ-TZ-13 | dia() de bodegaje consume la misma nocion, YYYY-MM-DD no cambia | bodegaje.test.ts caso 2026-02-09 + resto del fichero -- reejecutado, verde | COMPLIANT |
 
-**Compliance summary**: 19/21 escenarios COMPLIANT con test de ejecucion cubriendo exactamente el
-`GIVEN/WHEN/THEN`; 2/21 PARTIAL (correctos por inspeccion de codigo y por garantias estructurales ya
-bajo prueba de mutacion, pero sin un test de integracion que ejercite el GIVEN exacto del escenario).
-0 escenarios FAILING o UNTESTED sin evidencia alguna.
+**Compliance summary**: 20/21 escenarios COMPLIANT con test de ejecucion cubriendo exactamente el
+GIVEN/WHEN/THEN (todos reejecutados de forma independiente en esta sesion, no reciclados del informe
+anterior). 1/21 (3.8, "fecha derivada sin fuente invalida es C") COMPLIANT-STRUCTURAL: resuelto por
+enmienda de spec verificada coherente con el codigo citado (transitions.ts:178-191) y sostenida por
+mutacion de posicion ya bajo prueba (P-a/P-b), pero sin un test de integracion que ejerza el GIVEN
+exacto, porque ese GIVEN sigue sin ser alcanzable con datos reales, verificado independientemente.
+0 escenarios CRITICAL/FAILING/UNTESTED sin evidencia alguna. Requisitos: 7/7 con toda su cobertura
+resuelta (RQ-TZ-12 paso de PARTIAL a COMPLIANT integro; 3.8 paso de PARTIAL/CRITICAL a
+COMPLIANT-STRUCTURAL con caveat documentado, ver Issues Found > WARNING).
 
 ---
 
-### Correctness (Static Evidence) -- contratos de `design.md`
+### Correctness (Static Evidence) -- contratos de design.md
+
+Sin cambio desde el verify anterior: ningun fichero de codigo de produccion tiene diff (git diff
+--stat aadcef5 HEAD confirma que solo cambiaron el spec delta, un fichero de test y apply-progress.md).
+Los contratos reverificados en esta sesion:
 
 | Contrato | Estado | Nota |
 |---|---|---|
-| Section 3 -- 4 lineas exactas de `ticketService.ts` (`:6`,`:7`,`:130`,`:132`) | Implementado | Texto literal identico al diseno, confirmado por lectura directa; `:131`/`:153` intactas |
-| Section 4.1 -- `fechasDerivadas.ts` (firmas, `ZONA_NEGOCIO`, `FUENTE_DE_FECHA`, `diaEnZona`, `fechasDerivadas`, `fuentesQueNecesita`, `valoresEfectivos`) | Implementado | Firmas y comportamiento coinciden exactamente con el contrato; `diaEnZona` cubre las 5 ramas de A-5 |
-| Section 4.2 -- `valoresDeTransicion.ts` (servidor) | Implementado | `fuentesQueNecesita(t)` vacio -> 0 consultas (P-2); lectura condicional de `createdAt`/`remisiones`/`escaladoARevisionAt` |
-| Section 4.3 -- cliente `valoresTransicion.ts` | Implementado | `diaLocal` borrado, `valoresConocidos` consume `fechasDerivadas`; regla 13 punto 3 (espejo legitimo) sostenida por la imposicion probada del servidor |
-| A-1/A-2 -- `ticketService.ts` sin mover linea, imports fundidos en `:6` | Cumplido | `wc -l` identico antes/despues (221->221), `+4/-4` |
-| A-7 -- `Intl.DateTimeFormat` construido UNA vez a nivel de modulo | Cumplido | `fechasDerivadas.ts:46-48`, fuera de cualquier funcion |
-| A-8 -- demostracion de zona permanente con `vi.stubEnv`, sin tocar `vitest.config.ts` | Cumplido | `git diff --stat` de `vitest.config.ts` vacio en todo el rango `b3c089b..2f9d78c` |
-| A-9 -- `bodegaje.ts` en sitio, `:19` import, `:129-133` delega en `diaEnZona` | Cumplido | `wc -l` identico (236->236), `+4/-4` |
-| Section 6.5 -- tarea docker (ICU completo en `node:22-alpine`) | Ejecutada (comprobacion de persona aparte para produccion) | Salida `2026-09-09`, registrada en `apply-progress.md`; docker no se re-ejecuto en esta verificacion (evidencia ya registrada y no forma parte del recuento de tareas del repositorio) |
+| Section 3 -- 4 lineas exactas de ticketService.ts (:6,:7,:130,:132) | Implementado | Sin diff desde el verify anterior; texto literal identico al diseno |
+| Section 4.1 -- fechasDerivadas.ts (firmas, ZONA_NEGOCIO, FUENTE_DE_FECHA, diaEnZona, fechasDerivadas, fuentesQueNecesita, valoresEfectivos) | Implementado | Sin diff; 23/23 tests reejecutados verdes |
+| Section 4.2 -- valoresDeTransicion.ts (servidor) | Implementado | Sin diff; fuentesQueNecesita(t) vacio da 0 consultas (P-2) |
+| Section 4.3 -- cliente valoresTransicion.ts | Implementado | Sin diff; 16/16 tests reejecutados verdes |
+| A-1/A-2 -- ticketService.ts sin mover linea | Cumplido | Confirmado, sin diff |
+| A-7 -- Intl.DateTimeFormat construido una vez a nivel de modulo | Cumplido | Sin diff |
+| A-8 -- demostracion de zona permanente con vi.stubEnv | Cumplido | vitest.config.ts sin diff en todo b3c089b..HEAD |
+| A-9 -- bodegaje.ts en sitio | Cumplido | Sin diff; 22/22 tests reejecutados verdes |
+| Section 6.5 -- tarea docker | Ejecutada (evidencia en apply-progress.md, no repetida en esta sesion; no forma parte del recuento de tareas del repositorio) | Sin cambio |
 
 ---
 
 ### Coherence (Design) -- decisiones clave
 
+Sin cambio desde el verify anterior (cero diff de produccion). Reconfirmado por ausencia de diff, no
+por nueva lectura completa de design.md:
+
 | Decision | Seguida? | Notas |
 |---|---|---|
-| A-3 -- regla en `shared`, lectura en el servidor (regla invariable 13.1) | Si | `valoresDeTransicion.ts` solo lee fuentes; `valoresEfectivos`/`fechasDerivadas` (la regla) viven en `packages/shared` |
-| A-4 -- 422 unico, fecha detras de obligatorios y delante de derivacion | Si | `ticketService.ts:132` (`[...plan.errors, ...erroresFecha]`) antes de `:136-140`; probado por P-a/P-b |
-| A-5 -- `diaEnZona` rechaza fecha-hora sin desplazamiento y fecha irreal | Si | 5 ramas cubiertas en `fechasDerivadas.test.ts` |
-| A-6 -- `iso()` normaliza `created_time` (`Date` vs `string`) | Si | `valoresDeTransicion.ts:25` |
-| Section 9 -- regla de mutacion 3 (comodidad del cliente probada en servidor) | Si | Tabla transcrita en `apply-progress.md` B.2, releida contra el arbol final; `TransitionPanel.tsx:32-36`,`:174`,`:254` sin diff, coherentes con las citas |
-| Invariantes de Section 7 (desplazamiento por fichero) | Si | `transitionExec.ts`, `packages/zoho-sync/src/db/repo.ts`, `vitest.config.ts` sin diff en todo el rango `b3c089b..2f9d78c` (verificado directamente); `ticketService.ts`/`bodegaje.ts` neto 0 |
+| A-3 -- regla en shared, lectura en el servidor (regla invariable 13.1) | Si | Sin diff |
+| A-4 -- 422 unico, fecha detras de obligatorios y delante de derivacion | Si | ticketService.ts:132 sin diff; P-a/P-b reejecutados verdes |
+| A-5 -- diaEnZona rechaza fecha-hora sin desplazamiento y fecha irreal | Si | 5 ramas, fechasDerivadas.test.ts reejecutado verde |
+| A-6 -- iso() normaliza created_time | Si | Sin diff |
+| Section 9 -- regla de mutacion 3 | Si | Sin diff en apply-progress.md B.2; TransitionPanel.tsx sin diff |
+| Invariantes de Section 7 (desplazamiento por fichero) | Si | transitionExec.ts, packages/zoho-sync/src/db/repo.ts, vitest.config.ts sin diff en todo b3c089b..HEAD |
 
 ---
 
@@ -167,13 +206,13 @@ bajo prueba de mutacion, pero sin un test de integracion que ejercite el GIVEN e
 
 | Check | Resultado | Detalle |
 |---|---|---|
-| TDD Evidence reportada | Si | `apply-progress.md` trae tabla "TDD Cycle Evidence" para Unidad A (4 filas) y evidencia RED/GREEN narrada para Unidad B (B.1) |
-| Todas las tareas con test | Si | Los 4 ficheros nuevos/tocados con test (`fechasDerivadas.ts`, `valoresDeTransicion.ts`, `bodegaje.ts`, `valoresTransicion.ts`) tienen su `.test.ts` correspondiente, confirmados por lectura directa |
-| RED confirmado (ficheros existen) | Si | Los 4 ficheros de test existen en el arbol y sus casos coinciden con los descritos en `apply-progress.md` |
-| GREEN confirmado (pasan en ejecucion) | Si | 72/72 en la corrida acotada; 1222/1222 en la suite completa (segunda corrida, limpia) |
-| Triangulacion adecuada | Si | `diaEnZona` 5 ramas + zona; `valoresEfectivos` D-1/D-3/P-2/vacio/no-objeto (7 casos); `executeTransition` 5 criterios + P-a/P-b + zona (11 casos) |
-| Safety Net para ficheros modificados | Si | `ticketService.ts`/`bodegaje.ts`/`valoresTransicion.ts` modificados con neto 0 de lineas; su suite completa (130 ficheros) pasa en verde |
-| Mutaciones de posicion/contenido (regla de mutacion 1) | Si | 5 mutaciones (P-a, P-b, P-2, `diaEnZona` dia UTC, `diaEnZona` nocion vieja) confirmadas en rojo y revertidas -- `git status` limpio al cierre de esta verificacion, sin restos |
+| TDD Evidence reportada | Si | apply-progress.md trae ahora ademas la seccion "Remediacion del verdict FAIL" con la nota estricta sobre el caso 6: RED por AUSENCIA (el codigo ya era correcto, fechasDerivadas.ts/valoresDeTransicion.ts nunca leen las columnas derivadas), no por asercion fallida; documentado explicitamente como el ciclo que aplica a este escenario concreto |
+| Todas las tareas con test | Si | Sin cambio |
+| RED confirmado | Si | Caso 6: RED-por-ausencia documentado y coherente (11 casos antes, 12 despues, sin modificar codigo de produccion en el intervalo) |
+| GREEN confirmado (pasan en ejecucion) | Si | 73/73 en la corrida acotada (esta sesion); 1223/1223 en la suite completa (esta sesion, corrida unica limpia) |
+| Triangulacion adecuada | Si | executeTransition pasa de 11 a 12 casos: 5 criterios + P-a/P-b + zona + el caso 6 de recalculo sobre columna precargada |
+| Safety Net para ficheros modificados | Si | Ningun fichero de produccion modificado en la remediacion; suite completa (130 ficheros) en verde |
+| Mutaciones de posicion/contenido (regla de mutacion 1) | Si | Sin cambio; P-a/P-b siguen protegiendo la posicion de la guarda de fecha frente a la guarda de OV, reejecutados verdes en esta sesion |
 
 **TDD Compliance**: 7/7 checks passed
 
@@ -183,23 +222,21 @@ bajo prueba de mutacion, pero sin un test de integracion que ejercite el GIVEN e
 
 | Layer | Tests | Files | Tools |
 |---|---|---|---|
-| Unit | 39 | 2 (`fechasDerivadas.test.ts`, `bodegaje.test.ts` caso nuevo) | vitest, sin arnes |
-| Integracion (pg-mem) | 11 | 1 (`valoresDeTransicion.test.ts`) | `instalarArnes()`/`appHarness.ts` |
-| Unit (cliente, modulo puro) | 16 | 1 (`valoresTransicion.test.ts`) | vitest, sin arnes -- `.tsx` excluido de la red por F0-00, este modulo SI esta en la red por ser `.ts` |
-| E2E | 0 | 0 | no instalado en el repositorio |
-| **Total (foco de la tanda)** | **72** (dentro de las 1222 de la suite) | **4** | |
+| Unit | 39 | 2 (fechasDerivadas.test.ts, bodegaje.test.ts) | vitest, sin arnes |
+| Integracion (pg-mem) | 12 (antes 11) | 1 (valoresDeTransicion.test.ts) | instalarArnes() / appHarness.ts |
+| Unit (cliente, modulo puro) | 16 | 1 (valoresTransicion.test.ts) | vitest, sin arnes |
+| E2E | 0 | 0 | no instalado |
+| Total (foco de la tanda) | 73 (dentro de las 1223 de la suite) | 4 | |
 
 ---
 
 ### Assertion Quality
 
-Auditados los 4 ficheros de test de la tanda completos, linea a linea. **Ningun patron vetado
-encontrado**: sin tautologias, sin bucles vacios, sin aserciones sin llamada a codigo de produccion, sin
-`toBeDefined()`/`not.toBeNull()` en solitario, sin acoplamiento a detalle de implementacion (clases CSS,
-conteo de mocks). Cada `it` llama a una funcion de produccion real (`diaEnZona`, `fechasDerivadas`,
-`valoresEfectivos`, `executeTransition` via HTTP simulado con `pg-mem`, `valoresConocidos`) y afirma un
-valor concreto, no solo presencia. Proporcion mock/asercion: 0 mocks en los 4 ficheros -- `pg-mem` es un
-arnes de base de datos real, no un mock de la funcion bajo prueba.
+El caso 6 nuevo de valoresDeTransicion.test.ts auditado linea a linea: usa el mismo patron que los 11
+casos preexistentes (arnes pg-mem real, sin mocks), precarga con un UPDATE directo contra la base de
+pruebas (no una funcion auxiliar que pudiera enmascarar el efecto) y afirma un valor de columna
+concreto via el mismo helper fechaColumna que usan los demas casos. Sin patrones vetados: sin
+tautologias, sin toBeDefined() en solitario, sin acoplamiento a detalle de implementacion.
 
 **Assertion quality**: All assertions verify real behavior
 
@@ -207,74 +244,68 @@ arnes de base de datos real, no un mock de la funcion bajo prueba.
 
 ### Quality Metrics
 
-**Linter**: No errors (0 en los ficheros de esta tanda; 158 warnings preexistentes en `packages/zoho-sync`)
+**Linter**: No errors (0 en los ficheros de esta tanda; 158 warnings preexistentes en packages/zoho-sync, sin cambio)
 **Type Checker**: No errors
 
 ---
 
-
 ### Issues Found
 
-**CRITICAL**:
-1. `openspec/specs/transitions-st` (delta) -- el escenario "La fecha derivada sin fuente invalida es
-   escalon C, y no altera la escalera A-B-C-D" (bajo el requisito `3.8`) no tiene un test de integracion
-   que ejercite el `GIVEN` exacto (fecha invalida + OV ya asociada, en la misma peticion). Per la regla
-   dura del propio protocolo de verificacion, "a spec scenario is compliant only when a covering test
-   passed at runtime" -- este no lo tiene, y se clasifica CRITICAL por ese criterio, aunque el riesgo
-   real medido es bajo: ninguna transicion real declara a la vez un campo de fecha derivada y el campo
-   de orden de venta (`habilitar_servicio` es la unica que toca OV y no declara ninguna de las tres
-   fechas -- `packages/shared/src/transitions.ts:178-186`), asi que el `GIVEN` del escenario no es
-   alcanzable con datos reales de las 34 transiciones existentes hoy. La garantia queda sostenida por
-   inspeccion de codigo (orden lineal incondicional `ticketService.ts:130-132` antes de `:146-150`, sin
-   ninguna rama que pueda invertirlos) y por la mutacion de posicion ya probada sobre esas mismas lineas
-   (P-a/P-b, regla de mutacion 1). Remediacion sugerida: si en el futuro una transicion real llega a
-   declarar ambos campos, anadir un caso a `valoresDeTransicion.test.ts` que los combine; hasta entonces,
-   el escenario documenta una garantia estructural sin caso de prueba directo.
-2. `openspec/changes/fechas-derivadas-servidor/specs/trazas/spec.md` -- el escenario "Recalcular siempre
-   ignora tambien lo que ya hubiera en la columna" (bajo `RQ-TZ-12`) no tiene un test que pre-cargue la
-   columna con un valor distinto y vuelva a ejecutar la transicion para comprobar que se sobrescribe.
-   Se clasifica CRITICAL por el mismo criterio de cobertura runtime, con el mismo matiz de riesgo bajo:
-   `fechasDerivadas.ts:108-134` y `valoresDeTransicion.ts:14-32` nunca leen
-   `current.row.fecha_creacion_ticket`/`fecha_remision_entrada`/`fecha_revision_informe` -- solo fuentes
-   externas (`created_time`, remisiones, `instanteUltimaTransicion`) --, asi que no hay ruta de codigo
-   que pudiera devolver el valor viejo; el defecto tendria que introducirse activamente (leer la columna
-   en la formula) para que este escenario dejara de cumplirse, y ese cambio de codigo seria visible en
-   cualquier revision del propio `fechasDerivadas.ts`/`valoresDeTransicion.ts`. Remediacion sugerida:
-   anadir a `valoresDeTransicion.test.ts` un caso que haga un `UPDATE` directo de la columna con un
-   valor distinto antes de ejecutar una segunda transicion que la vuelva a declarar, y comprobar que se
-   sobrescribe con el nuevo derivado.
+**CRITICAL**: None. Los 2 hallazgos CRITICAL del verify anterior (commit aadcef5) quedaron resueltos:
 
-**WARNING**: None mas alla de las dos CRITICAL de arriba (reclasificadas segun la regla dura de
-verificacion: "a spec scenario is compliant only when a covering test passed at runtime" -- un hueco de
-cobertura sobre un escenario de spec formal no puede quedar en WARNING aunque el riesgo funcional medido
-sea bajo).
+1. Requisito RQ-TZ-12, escenario "Recalcular siempre ignora tambien lo que ya hubiera en la columna":
+   resuelto con evidencia de ejecucion (test nuevo, valoresDeTransicion.test.ts caso 6, 12/12 verde,
+   reejecutado independientemente en esta sesion). Cumple el criterio explicito de la re-verificacion:
+   "el hallazgo RQ-TZ-12 SI debe tener ahora un test que pase en runtime".
+2. Requisito 3.8, escenario "La fecha derivada sin fuente invalida es escalon C": resuelto por enmienda
+   del escenario de spec, verificada coherente con el codigo citado en esta sesion
+   (transitions.ts:178-189 / :190-191, confirmado con grep y lectura directa: una sola declaracion de
+   cfOrdenVenta en todo el fichero, en habilitar_servicio, que no declara fechas derivadas; e
+   ingreso_a_servicio declara fechas derivadas sin declarar cfOrdenVenta). Cumple el criterio explicito
+   de la re-verificacion: "el hallazgo 3.8 debe tener el escenario de spec enmendado y coherente con el
+   codigo citado". No se reclasifica como CRITICAL de nuevo porque el propio texto del delta ya no
+   reclama un escenario testeable en runtime; reclama, explicitamente, una garantia estructural
+   documentada, con nota de reapertura si el codigo cambia.
+
+**WARNING**:
+1. specs/transitions-st/spec.md:221-243 -- el escenario "fecha derivada sin fuente invalida es escalon
+   C" sigue sin un test de integracion que ejerza su GIVEN/WHEN/THEN literal (fecha invalida + OV
+   duplicada, misma peticion). Esto no es un defecto funcional: el GIVEN esta verificado como no
+   alcanzable con las 34 transiciones reales de transitions.ts, y la garantia subyacente (orden
+   C-antes-de-D) esta bajo prueba de mutacion de posicion (P-a/P-b). Se deja como WARNING, no CRITICAL,
+   porque la re-verificacion aplico el criterio que el propio encargo de remediacion fijo para este
+   hallazgo (enmienda coherente, no test), y porque exigir un test de un GIVEN que no se puede construir
+   con datos reales convertiria este hallazgo en un bloqueo permanente sin remediacion posible salvo
+   cambiar codigo de produccion sin necesidad funcional. Accion de seguimiento, no bloqueante: si una
+   transicion futura llega a declarar a la vez un campo de fecha derivada y cfOrdenVenta, este WARNING
+   se reabre como CRITICAL hasta que se anada el caso de integracion; la propia nota del delta de spec
+   ya lo advierte.
 
 **SUGGESTION**:
-1. Cobertura de lineas por fichero solo se midio sobre el subconjunto de 4 ficheros de la tanda (no
-   sobre la suite completa, por tiempo de ejecucion); si se necesita la cifra global exacta de
-   `ticketService.ts`, correr `npm run test:coverage` completo por separado.
-2. El fichero `apps/desk/server/citas/hook.bordes.test.ts` sigue mostrando el margen de 60s de RPC
-   documentado en `design.md` Section 10 nota 2 bajo carga de la suite completa (no es un defecto de
-   esta tanda, ya registrado por el propio `apply-progress.md` de la unidad B); considerar, fuera de
-   esta tanda, si ese margen necesita revision de infraestructura.
+1. Cobertura de lineas por fichero no se remidio en esta sesion (no cambio codigo de produccion desde
+   el verify anterior, que ya la midio sobre el subconjunto de 4 ficheros de la tanda); si se necesita
+   la cifra global exacta de ticketService.ts, correr npm run test:coverage completo por separado.
+2. El fichero apps/desk/server/citas/hook.bordes.test.ts mostro el margen de 60s de RPC bajo carga de
+   suite completa en el verify anterior (no reproducido en esta sesion, corrida unica limpia); sigue sin
+   ser un defecto de esta tanda. Considerar, fuera de esta tanda, si ese margen necesita revision de
+   infraestructura.
 
 ---
 
 ### Verdict
 
-**FAIL**
+**PASS WITH WARNINGS**
 
 Los siete requisitos de los dos deltas de spec estan implementados y coinciden linea a linea con el
-codigo (`design.md` Section 3-4 cumplido al literal); las 51 tareas de `tasks.md` estan completas y cada
-una se confirmo contra el codigo real, no solo contra la casilla; la suite completa pasa limpia en
-solitario (1222/1222, exit 0), typecheck y lint limpios (0 errores), build del cliente limpio. Pero 2 de
-21 escenarios de spec formal no tienen un test de ejecucion que cubra exactamente su `GIVEN/WHEN/THEN`
--- les falta un caso de integracion dedicado, aunque el comportamiento subyacente es correcto por
-inspeccion de codigo (sin ruta que pueda devolver el valor viejo, en un caso; sin transicion real que
-alcance el `GIVEN`, en el otro) y por garantias de posicion ya bajo prueba de mutacion. Bajo la regla
-dura de este protocolo -- "a spec scenario is compliant only when a covering test passed at runtime" --
-esos dos huecos son motivo de FAIL, no de advertencia. El riesgo funcional medido es bajo y no hay
-ningun comportamiento observado incorrecto: la recomendacion es anadir los dos casos de prueba senalados
-en "Issues Found" > CRITICAL (remediacion sugerida en cada uno) y volver a correr `sdd-verify`, sin
-necesidad de reabrir `sdd-apply` para nada mas: no hay codigo de produccion que cambiar, solo dos test
-cases nuevos.
+codigo (sin diff de produccion desde el verify FAIL anterior); las 51 tareas de tasks.md estan
+completas; la suite completa pasa limpia en solitario (1223/1223, exit 0, +1 test respecto al verify
+anterior), typecheck y lint limpios (0 errores), build del cliente limpio, detector de citas exit 0. Los
+2 hallazgos CRITICAL del verify anterior quedaron resueltos: RQ-TZ-12 con un test runtime nuevo que
+precarga la columna y comprueba que el derivado la pisa (evidencia de ejecucion exigida, entregada); 3.8
+con el escenario de spec enmendado a garantia estructural documentada, verificada coherente con el
+codigo citado en esta sesion de forma independiente. Queda 1 WARNING no bloqueante: el escenario 3.8
+remediado sigue sin un test de integracion que ejerza su GIVEN literal, porque ese GIVEN no es
+alcanzable con las 34 transiciones reales; riesgo funcional bajo, con condicion de reapertura ya
+escrita en el propio delta de spec. No hay ningun comportamiento observado incorrecto ni codigo de
+produccion sin cubrir. Recomendacion: sdd-archive puede proceder; el WARNING queda registrado para
+seguimiento si el catalogo de transiciones cambia.
