@@ -54,6 +54,13 @@ CREATE TABLE IF NOT EXISTS books.purchase_order_line_items (
   raw jsonb, synced_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS books.retainer_invoices (
+  retainerinvoice_id text PRIMARY KEY, retainerinvoice_number text, reference_number text,
+  date date, status text, customer_id text, customer_name text, currency_code text,
+  total numeric, payment_made numeric, payment_drawn numeric,
+  raw jsonb, zoho_last_modified timestamptz, synced_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_books_soli_so ON books.salesorder_line_items (salesorder_id);
 CREATE INDEX IF NOT EXISTS idx_books_ili_inv ON books.invoice_line_items (invoice_id);
 CREATE INDEX IF NOT EXISTS idx_books_cpi_payment ON books.customer_payment_invoices (payment_id);

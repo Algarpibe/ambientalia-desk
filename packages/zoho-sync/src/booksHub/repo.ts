@@ -1,7 +1,13 @@
 import type { Queryable } from '../db/migrate'
-import type { ContactRow, ItemRow, SalesOrderRow, InvoiceRow, SoLineRow, InvoiceLineRow, CustomerPaymentRow, PaymentInvoiceRow, PurchaseOrderRow, PoLineRow } from './mappers'
+import type { ContactRow, ItemRow, SalesOrderRow, InvoiceRow, SoLineRow, InvoiceLineRow, CustomerPaymentRow, PaymentInvoiceRow, PurchaseOrderRow, PoLineRow, RetainerInvoiceRow } from './mappers'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
+
+/**
+ * Tablas-cabecera de books.* con marca de agua. Antes la unión se escribía a mano en dos
+ * sitios (aquí y en `incremental` de sync.ts); una tabla nueva obligaba a acordarse de ambos.
+ */
+export type BooksTable = 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments' | 'purchase_orders' | 'retainer_invoices'
 
 export async function upsertContact(db: Queryable, r: ContactRow): Promise<void> {
   await db.query(
@@ -141,8 +147,20 @@ export async function replacePoLines(db: Queryable, purchaseorderId: string, lin
   for (const l of lines) await insertPoLine(db, l)
 }
 
+export async function upsertRetainerInvoice(db: Queryable, r: RetainerInvoiceRow): Promise<void> {
+  await db.query(
+    `INSERT INTO books.retainer_invoices (retainerinvoice_id,retainerinvoice_number,reference_number,date,status,customer_id,customer_name,currency_code,total,payment_made,payment_drawn,raw,zoho_last_modified,synced_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now())
+     ON CONFLICT (retainerinvoice_id) DO UPDATE SET retainerinvoice_number=EXCLUDED.retainerinvoice_number,reference_number=EXCLUDED.reference_number,
+       date=EXCLUDED.date,status=EXCLUDED.status,customer_id=EXCLUDED.customer_id,customer_name=EXCLUDED.customer_name,
+       currency_code=EXCLUDED.currency_code,total=EXCLUDED.total,payment_made=EXCLUDED.payment_made,payment_drawn=EXCLUDED.payment_drawn,
+       raw=EXCLUDED.raw,zoho_last_modified=EXCLUDED.zoho_last_modified,synced_at=now()`,
+    [r.retainerinvoice_id, r.retainerinvoice_number, r.reference_number, r.date, r.status, r.customer_id, r.customer_name, r.currency_code, r.total, r.payment_made, r.payment_drawn, J(r.raw), r.zoho_last_modified],
+  )
+}
+
 /** Marca de agua: máximo zoho_last_modified de una de las tablas-cabecera. */
-export async function maxZohoLastModified(db: Queryable, table: 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments' | 'purchase_orders'): Promise<string | null> {
+export async function maxZohoLastModified(db: Queryable, table: BooksTable): Promise<string | null> {
   const r = await db.query(`SELECT MAX(zoho_last_modified) AS m FROM books.${table}`)
   return r.rows[0]?.m ?? null
 }

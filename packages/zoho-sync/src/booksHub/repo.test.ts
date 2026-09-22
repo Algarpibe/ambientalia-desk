@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '../db/migrate'
 import { migrateBooks } from './migrate'
-import { upsertContact, upsertItem, upsertSalesOrder, upsertInvoice, replaceSoLines, replaceInvoiceLines, maxZohoLastModified } from './repo'
-import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow } from './mappers'
+import { upsertContact, upsertItem, upsertSalesOrder, upsertInvoice, replaceSoLines, replaceInvoiceLines, upsertRetainerInvoice, maxZohoLastModified } from './repo'
+import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, retainerInvoiceRow } from './mappers'
 
 let db: Queryable
 beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db); await migrateBooks(db) })
@@ -44,5 +44,16 @@ describe('booksHub repo', () => {
     await upsertContact(db, contactRow({ contact_id: 'c2', contact_name: 'B', last_modified_time: '2026-03-01T00:00:00Z' }))
     const wm = await maxZohoLastModified(db, 'contacts')
     expect(new Date(wm!).getTime()).toBe(new Date('2026-03-01T00:00:00Z').getTime())
+  })
+
+  it('upsertRetainerInvoice inserta, actualiza sin duplicar y da marca de agua', async () => {
+    await upsertRetainerInvoice(db, retainerInvoiceRow({ retainerinvoice_id: 'ri1', status: 'sent', payment_made: 0, payment_drawn: 0, last_modified_time: '2026-09-01T00:00:00Z' }))
+    await upsertRetainerInvoice(db, retainerInvoiceRow({ retainerinvoice_id: 'ri1', status: 'paid', payment_made: 500, payment_drawn: 0, last_modified_time: '2026-09-02T00:00:00Z' }))
+    const r = await db.query("SELECT status, payment_made FROM books.retainer_invoices WHERE retainerinvoice_id='ri1'")
+    expect(r.rows.length).toBe(1)
+    expect(r.rows[0].status).toBe('paid')
+    expect(Number(r.rows[0].payment_made)).toBe(500)
+    const wm = await maxZohoLastModified(db, 'retainer_invoices')
+    expect(new Date(wm!).getTime()).toBe(new Date('2026-09-02T00:00:00Z').getTime())
   })
 })
