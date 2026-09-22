@@ -168,6 +168,21 @@ it('5 · P-2: «Fecha Remisión Entrada» enviada en una transición que no la d
   expect('Fecha Remisión Entrada' in hist2).toBe(false)
 })
 
+it('6 · RQ-TZ-12: recalcular ignora también lo que YA hubiera en la columna', async () => {
+  await ticket('t1', 'Ingresado', 8210, '2026-09-10T00:30:00Z')
+  await remision('t1', '2026-08-01')
+  // Precarga la columna con un valor distinto del que la fuente da hoy — simula un ticket que ya
+  // pasó por esta transición antes con otra remisión vigente.
+  await db.query('UPDATE tickets SET fecha_remision_entrada = $1 WHERE id = $2', ['2020-01-01', 't1'])
+
+  await executeTransition(db, 't1', {
+    transitionId: 'ingreso_a_servicio',
+    values: { 'Código Servicio': 'CS-6' },
+  }, ADMIN)
+
+  expect(await fechaColumna('t1', 'fecha_remision_entrada')).toBe('2026-08-01')
+})
+
 /**
  * P-a/P-b — regla de mutación 1: la POSICIÓN de la guarda de fecha derivada, no sólo su condición.
  * `design.md` §6.3. Posible porque `TRANSITIONS` añade la derivación a TODAS (`transitions.ts:295-298`).
