@@ -98,68 +98,68 @@ Chain strategy: N/A
 
 ### Fase B.1 — `packages/shared/src/mapaBlueprint.ts` (nuevo, motor puro)
 
-- [ ] B.1.1 **RED (esqueleto).** Crear `mapaBlueprint.ts` con las firmas exactas de `design.md` §3
+- [x] B.1.1 **RED (esqueleto).** Crear `mapaBlueprint.ts` con las firmas exactas de `design.md` §3
   (`PasoSinBoton`, `EntradaMapa`, `generarMapaBlueprint`), cuerpo trivialmente incorrecto. Crear
   `mapaBlueprint.test.ts` con los escenarios puros de `spec.md`: RQ-MB-02 (38 aristas, 3 desde
   `habilitar_servicio`), RQ-MB-03 (`Object.keys(...)` con 4 claves), RQ-MB-04 (frontera en las dos vistas
   cuando `fasePorEstado[from] !== fasePorEstado[to]`), RQ-MB-05 (leyenda, 3 áreas base + 1 compartida con
   dos marcas) (~150 líneas). Confirmar rojo por aserción.
-- [ ] B.1.2 **RED — guarda de EJECUCIÓN de D-1 (riesgo #5, la segunda guarda).** Escenario RQ-MB-04 "un
+- [x] B.1.2 **RED — guarda de EJECUCIÓN de D-1 (riesgo #5, la segunda guarda).** Escenario RQ-MB-04 "un
   estado sin fase bloquea la generación": invocar `generarMapaBlueprint` con `fasePorEstado` **inyectado**
   al que falta una clave real de `ESTADOS`, esperar `throw` — es la única de las dos guardas de D-1 que
   una prueba puede poner en rojo, y vive aquí porque el `throw` está en el generador (~15 líneas).
   Confirmar rojo (el esqueleto de B.1.1 aún no lanza).
-- [ ] B.1.3 **GREEN.** Implementar `generarMapaBlueprint` completo (`design.md` D-3/D-4/D-5/D-6): una
+- [x] B.1.3 **GREEN.** Implementar `generarMapaBlueprint` completo (`design.md` D-3/D-4/D-5/D-6): una
   arista por elemento de `from` (P-1); `conBoton` derivado, nunca declarado (D-4); orden determinista —
   nodos por `ESTADOS`, aristas por orden de `TRANSITIONS` + las 2 sin botón (D-5)—; alias `eNN` por
   posición; `state "Nombre" as eNN` para los seis estados con espacio/tilde/`.`/`/` (D-6); marca de área
   por `areasForTransition` (`transitions.ts:313-315`) en la etiqueta; vistas por fase con frontera
   anotada (§7); leyenda de área en el completo; cabecera "generado, no editar" en los cuatro (~200-230
   líneas).
-- [ ] B.1.4 Correr B.1.1 y B.1.2 completos, confirmar verde en los escenarios puros y en el `throw` de la
+- [x] B.1.4 Correr B.1.1 y B.1.2 completos, confirmar verde en los escenarios puros y en el `throw` de la
   guarda de ejecución.
 
 ### Fase B.2 — CLI + primer volcado a disco
 
-- [ ] B.2.1 Crear `scripts/generar-mapa-blueprint.ts`: importa `generarMapaBlueprint` y sus fuentes,
+- [x] B.2.1 Crear `scripts/generar-mapa-blueprint.ts`: importa `generarMapaBlueprint` y sus fuentes,
   itera `Object.entries(...)`, `writeFileSync` bajo `docs/artefactos/`. Sin lógica de grafo, sin prueba
   propia (RQ-MB-01) — la CLI vive fuera de `vitest.config.ts:17-20`, no se ejecutaría nunca en silencio
   (~20 líneas).
-- [ ] B.2.2 `package.json`: añadir el script como **última entrada de `scripts`**, tras `"test:coverage"`
+- [x] B.2.2 `package.json`: añadir el script como **última entrada de `scripts`**, tras `"test:coverage"`
   (hoy `:24`) (+1 línea). Ejecutar `npm run <script>`, confirmar los cuatro
   `docs/artefactos/blueprint-*.md` creados y árbol limpio en una segunda ejecución (criterio 1, propuesta
   §14).
-- [ ] B.2.3 **Reparación de citas (riesgo #2).** El `+1` desplaza `package.json:57`→`:58`. Reapuntar
+- [x] B.2.3 **Reparación de citas (riesgo #2).** El `+1` desplaza `package.json:57`→`:58`. Reapuntar
   `openspec/config.yaml:60` y `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:221`, comprobando primero
   qué afirman (regla de mutación 4). `proposal.md:128` (cita `package.json:43`) es caso B: no se
   renumera, sigue siendo cierta de `125ae3e`.
-- [ ] B.2.4 Añadir `export * from './mapaBlueprint'` a `packages/shared/src/index.ts:19` (EOF, +1 línea).
+- [x] B.2.4 Añadir `export * from './mapaBlueprint'` a `packages/shared/src/index.ts:19` (EOF, +1 línea).
 
 ### Fase B.3 — RQ-MB-06: prueba anti-desfase, mutación sobre el fichero vigilado
 
-- [ ] B.3.1 Añadir a `mapaBlueprint.test.ts` el diff de cadenas contra disco —
+- [x] B.3.1 Añadir a `mapaBlueprint.test.ts` el diff de cadenas contra disco —
   `new URL('../../../docs/artefactos/…', import.meta.url)`, regenerar desde el import real, comparar con
   los cuatro `.md` commiteados tras B.2.2 (~30 líneas). Nace VERDE (B.2.2 ya generó los ficheros
   correctos); el rojo lo dan las dos mutaciones siguientes.
-- [ ] B.3.2 **Mutación (regla de mutación 2, `CLAUDE.md`): ensuciar el fichero VIGILADO.** Editar a mano
+- [x] B.3.2 **Mutación (regla de mutación 2, `CLAUDE.md`): ensuciar el fichero VIGILADO.** Editar a mano
   una línea de `docs/artefactos/blueprint-completo.md` commiteado, correr B.3.1, confirmar rojo con la
   diferencia señalada. Revertir (`git checkout -- docs/artefactos/blueprint-completo.md`), confirmar
   `git diff` vacío. Mutar sólo el generador **no** vale como esta prueba (RQ-MB-06).
-- [ ] B.3.3 **Mutación — transición añadida sin regenerar.** En la prueba, construir un `EntradaMapa` con
+- [x] B.3.3 **Mutación — transición añadida sin regenerar.** En la prueba, construir un `EntradaMapa` con
   una transición sintética añadida y comparar contra los `.md` commiteados (no contra la salida fresca),
   confirmar rojo.
-- [ ] B.3.4 Registrar en `apply-progress.md` las dos salidas rojas de B.3.2/B.3.3 con comando exacto.
+- [x] B.3.4 Registrar en `apply-progress.md` las dos salidas rojas de B.3.2/B.3.3 con comando exacto.
 
 ### Fase B.4 — Cierre de la Unidad B
 
-- [ ] B.4.1 `npm run test:coverage`: confirmar `packages/shared/src/**` sobre `92/92/96/78` con
+- [x] B.4.1 `npm run test:coverage`: confirmar `packages/shared/src/**` sobre `92/92/96/78` con
   `mapaBlueprint.ts` incluido; si una rama de las vistas por fase o la leyenda compuesta queda sin
   ejercitar, añadir el caso que falte antes de cerrar.
-- [ ] B.4.2 Verificar por aserción, no por lectura: el diagrama completo tiene exactamente **38**
+- [x] B.4.2 Verificar por aserción, no por lectura: el diagrama completo tiene exactamente **38**
   aristas, **3** con origen `habilitar_servicio`, **2** marcadas sin botón (criterio 2, propuesta §14).
-- [ ] B.4.3 `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, en solitario, verdes
+- [x] B.4.3 `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, en solitario, verdes
   (criterio 4, propuesta §14).
-- [ ] B.4.4 Cerrar `apply-progress.md` de B: evidencia RED/GREEN de B.1.1/B.1.2, mutaciones B.3.2/B.3.3
+- [x] B.4.4 Cerrar `apply-progress.md` de B: evidencia RED/GREEN de B.1.1/B.1.2, mutaciones B.3.2/B.3.3
   con salidas exactas, resultado de B.4.1/B.4.2, `git diff --shortstat --no-renames` contra el commit de
   cierre de A + `wc -l` de lo nuevo sin trackear (los cuatro `.md` generados entran aquí, no en el
   presupuesto de revisión).

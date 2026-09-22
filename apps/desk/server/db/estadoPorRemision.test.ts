@@ -12,9 +12,9 @@ import { sincronizarEstadoPorRemision } from './estadoPorRemision'
  * callback— sino una prueba que DIGA la regla, porque una regla que ninguna prueba nombra se borra
  * sin que nadie note que la borró.
  *
- * LA REGLA ES ESTA LÍNEA, y es toda la línea:
+ * LA REGLA ES ESTA LÍNEA, y es toda la línea (el `actual === undefined ||` es guarda de tipo, F1A-06):
  *
- *   `estadoPorRemision.ts:41` → `if (![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return`
+ *   `estadoPorRemision.ts:41` → `if (actual === undefined || ![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return`
  *
  * Dice que este enganche SOLO manda en la fase temprana, y por tanto que las dos entradas al flujo
  * —la remisión, que es automática, y la transición que hace una persona— no se cruzan. Fuera de esas

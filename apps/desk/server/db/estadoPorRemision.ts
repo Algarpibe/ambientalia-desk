@@ -38,7 +38,7 @@ export async function sincronizarEstadoPorRemision(db: Queryable, ticketId: stri
 
   const t = await db.query('SELECT status FROM tickets WHERE id = $1', [ticketId])
   const actual = (t.rows[0] as { status?: string } | undefined)?.status
-  if (![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return
+  if (actual === undefined || ![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return
 
   const c = await db.query(
     `SELECT COUNT(*)::int AS n FROM remisiones

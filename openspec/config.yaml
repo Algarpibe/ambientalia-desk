@@ -57,7 +57,7 @@ testing:
       CORREGIDO EN F1A-05 (2026-09-09). La entrada anterior decía «no está
       instalado; vitest.config.ts no declara sección coverage», y era cierta al
       baseline a3a8f03 (2026-08-20) y falsa desde edbce13 (2026-09-08). Hoy el
-      proveedor está instalado (package.json:57), hay script test:coverage
+      proveedor está instalado (package.json:58), hay script test:coverage
       (package.json:24) y vitest.config.ts:49-64 declara umbrales:
       lines/statements 92, functions 96, branches 78. El CI lo ejecuta
       (.github/workflows/ci.yml:39). Medido a F1A-05: 94,31 lines, 81,97
