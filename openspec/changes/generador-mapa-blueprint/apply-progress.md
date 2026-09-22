@@ -164,23 +164,18 @@ Token `sha256:cbc246b7...`, `state: proceed` confirmado antes de tocar nada.
 | B.2.1-B.2.4 | CLI, sin prueba propia (RQ-MB-01) | N/A | ➖ Por diseño | ✅ `npm run generar-mapa-blueprint` escribe 4 ficheros; 2ª ejecución **byte a byte idéntica** (`sha256sum`) | ➖ N/A | ➖ N/A |
 | B.3.1-B.3.4 | bloque RQ-MB-06 | Unit (diff vs disco) | ✅ Nace verde | ✅ 1/1 tras normalizar `\r\n`→`\n` (CRLF de Windows, ver hallazgo) | ➖ N/A | ➖ N/A |
 
-## Dos hallazgos de implementación
+## Hallazgos de implementación y mutaciones
 
-1. **Regex de arista contaba el cierre del `<!-- -->`.** `/-->/g` daba 39, no 38: la cabecera cierra
-   con un `-->` suelto. Corregido exigiendo alias a los dos lados: `/e\d{2} --> e\d{2}/g`.
-2. **CRLF del árbol de trabajo en Windows.** `.gitattributes` fija LF en el índice pero deja CRLF en
-   el árbol (`core.autocrlf`, confirmado con `cat -A`: `^M$` en cada línea). El generador produce LF
-   siempre (D-5); la prueba normaliza al leer disco, comparando por contenido, no por terminador.
-
-## Mutaciones B.3.2/B.3.3
-
-**B.3.2 (fichero vigilado).** `sed -i` cambia una línea de `blueprint-completo.md` commiteado →
-`npx vitest run … -t "igual al commiteado en disco"` → **1 failed**, diff señala exactamente la línea
-mutada. `git checkout -- docs/artefactos/blueprint-completo.md` → diff vacío → **1 passed**.
-
-**B.3.3 (transición sintética sin regenerar).** Script `tsx` aparte (no queda como prueba permanente
-que mute disco): `EntradaMapa` con una transición sintética extra, comparado contra el `.md` YA
-commiteado (sin tocarlo) → mismatch confirmado, contiene la sintética el regenerado y no el commiteado.
+- **Regex de arista contaba el `<!-- -->`.** `/-->/g` daba 39, no 38 (cierre del comentario de
+  cabecera). Corregido a `/e\d{2} --> e\d{2}/g` (alias a los dos lados).
+- **CRLF en Windows.** `.gitattributes` fija LF en el índice, CRLF en el árbol de Windows
+  (`core.autocrlf`, confirmado `cat -A`: `^M$`). El generador produce LF (D-5); la prueba normaliza al
+  leer disco.
+- **B.3.2 (fichero vigilado).** `sed -i` muta una línea de `blueprint-completo.md` commiteado →
+  `vitest -t "igual al commiteado en disco"` → **1 failed**, diff señala la línea exacta. `git
+  checkout --` → diff vacío → **1 passed**.
+- **B.3.3 (transición sintética sin regenerar).** Script `tsx` aparte: `EntradaMapa` con una
+  transición sintética extra, comparado contra el `.md` YA commiteado → mismatch confirmado.
 
 ## Work Unit Evidence
 
@@ -221,16 +216,12 @@ mismo precedente que el barrido extendido de la Unidad A (A.4.1).
 
 ## Presupuesto
 
-```
-$ git diff --shortstat --no-renames 54d00f1 HEAD
-15 files changed, 771 insertions(+), 154 deletions(-)
-```
-
-Incluye los cuatro `.md` generados (~187 líneas, excluidos del presupuesto de **revisión** por
-convención de `sdd-phase-common.md` §E, pero contados en el ledger) y el propio `apply-progress.md`
-como sumando obligatorio (lección de `CLAUDE.md`, regla del ciclo 2). Autoría de código+prueba+CLI:
-`mapaBlueprint.ts` 231 + su prueba 178 + la CLI 44 = 453 líneas nuevas, dentro del rango estimado por
-`tasks.md` (~480-560) y del techo de revisión de 800 del proyecto (`openspec/config.yaml:29`).
+`git diff --shortstat --no-renames 54d00f1 HEAD` incluye los cuatro `.md` generados (~187 líneas,
+excluidos del presupuesto de **revisión** por convención de `sdd-phase-common.md` §E, pero contados
+en el ledger) y este mismo `apply-progress.md` como sumando obligatorio (`CLAUDE.md`, regla del ciclo
+2). Autoría de código+prueba+CLI: `mapaBlueprint.ts` 231 + su prueba 178 + la CLI 44 = 453 líneas
+nuevas, dentro del rango estimado por `tasks.md` (~480-560) y del techo de revisión de 800 del
+proyecto (`openspec/config.yaml:29`).
 
 ## Resultado de los comandos de cierre (B.4.1-B.4.3)
 
