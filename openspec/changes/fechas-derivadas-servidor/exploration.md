@@ -50,7 +50,7 @@ Sólo uno: la sincronización de Zoho. `TICKET_COLS` incluye las tres (`packages
 y `upsertTicket` se abstiene sólo si `managed_by_app === true` (`:59`). Como `writeTransition` fija esa
 bandera en la misma escritura (`:271`), tras la primera transición ejecutada en la app el sync ya no
 las pisa. **Antes** de esa primera transición, un valor tecleado a mano en Zoho entra por sync, y es el
-que `yaEsta` (`valoresTransicion.ts:20`) respeta como «ya está». Ninguna ruta de remisión, callback de
+que `yaEsta` (`valoresTransicion.ts:22`) respeta como «ya está». Ninguna ruta de remisión, callback de
 n8n, backfill ni script escribe esas columnas (barrido sobre `apps/` y `packages/`).
 
 ## 4 · Barrido de consumidores (Decisiones 10/09 `:276-279`)

@@ -30,7 +30,7 @@ consumidores, ya hecho (exploración §4); el hueco de la vía sin fuente tiene 
 
 ## 1 · Intención
 
-Hoy las tres fechas derivadas se calculan **sólo en el navegador** (`apps/desk/src/lib/valoresTransicion.ts:49-79`),
+Hoy las tres fechas derivadas se calculan **sólo en el navegador** (`apps/desk/src/lib/valoresTransicion.ts:49-79` en `4976787`),
 con la zona del proceso (`diaLocal`, `:30-36`). El servidor sólo exige que lleguen
 (`apps/desk/server/transitionExec.ts:77`), las lleva a su columna tal cual (`:90-91`) y guarda en el
 historial el `values` crudo (`packages/zoho-sync/src/db/repo.ts:285`). Bajo la regla invariable 13, punto
