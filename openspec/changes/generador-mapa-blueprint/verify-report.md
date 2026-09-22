@@ -32,8 +32,8 @@ build_output_hash: sha256:9f6123f3c016d60ec9c362eca94e9d4ac06ef710baef0e27ed4df8
 1. `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` → EXIT=0. 2029 comprobadas, 11
    abreviadas rotas (informativas; las 11 son pre-existentes a esta tanda: `F0-00`, `F1A-05`,
    `Puntos_para_Gerencia`, dos `plans/` de agosto, `F0-04/proposal.md` archivado y tres specs
-   —`derivacion-avisos`, `permissions`, `transitions-st`— que citan `permissions.ts:1636` y
-   `transitions.ts:1653,1671`; ninguna toca ficheros de esta tanda). 0 bloqueantes.
+   —`derivacion-avisos`, `permissions`, `transitions-st`— que citan la línea 1636 de permissions.ts y
+   las 1653 y 1671 de transitions.ts, fuera de rango; ninguna toca ficheros de esta tanda). 0 bloqueantes.
 2. `npm test` → EXIT=0. 132 test files passed + 1 skipped (133); 1247 tests passed, 2 skipped
    (1249), 0 failed.
 3. `npm run typecheck` → EXIT=0, sin salida.
