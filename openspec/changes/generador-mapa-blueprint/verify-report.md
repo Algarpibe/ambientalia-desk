@@ -171,7 +171,7 @@ Los 38/38 criterios de tareas están cumplidos y coinciden con el código; los c
 exigidos más `build` y `test:coverage` corren en verde con las mismas cifras que reportan las tres
 unidades; la mutación de la regla 2 se reprodujo de forma independiente (rojo, revertido, verde);
 la regresión de tipos de Unidad A está confirmada corregida; la regla invariable 13 correctamente
-no aplica. Las tres WARNING son huecos de prueba automática sobre propiedades que hoy son ciertas,
+no aplica. Las tres WARNING (cuatro escenarios) son huecos de prueba automática sobre propiedades que hoy son ciertas,
 verificadas por lectura directa con cita exacta — no defectos activos. No hay CRITICAL ni
 bloqueadores; listo para `sdd-archive` en lo funcional, con la recomendación de cerrar las tres
-WARNING en cualquier tanda que vuelva a tocar `mapaBlueprint.ts` o `estadoPorRemision.ts`.
+WARNING (cuatro escenarios) en cualquier tanda que vuelva a tocar `mapaBlueprint.ts` o `estadoPorRemision.ts`.
