@@ -271,7 +271,7 @@ en `derivacion-avisos`.
 > vía preferida como «leer el historial tomando la marca de `Ingreso a Servicio`». **F1A-04 lo
 > construyó, y NO así.** La R08 (`R08.1.md:1694`) sustituyó esa prescripción de la R05 (`:1684`) por
 > un par de VALORES de campo: `Fecha Orden De Venta − Fecha Remisión Entrada`
-> (`packages/shared/src/bodegaje.ts:60-66`). La marca de `Ingreso a Servicio` quedó como ancla de los
+> (`packages/shared/src/bodegaje.ts:59-65`). La marca de `Ingreso a Servicio` quedó como ancla de los
 > **indicadores 48 y 49** —tiempo de inicio de servicio y tiempo de diagnóstico (`:2330`)—, y por eso
 > el módulo la expone aparte (`bodegaje.ts:225`, `marcaIngresoAServicio`). Son dos averías distintas
 > con dos arreglos distintos, y el párrafo de abajo las mezclaba.

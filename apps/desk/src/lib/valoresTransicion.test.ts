@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { transitionById, CLAVE_DERIVACION } from '@ambientalia/shared'
 import { valoresConocidos } from './valoresTransicion'
 
@@ -28,15 +28,23 @@ describe('valoresConocidos', () => {
     }
   })
 
-  // Si la transición ya se ejecutó una vez, manda lo que quedó guardado: derivarlo otra vez
-  // reescribiría con la fecha de hoy algo que se decidió entonces.
-  it('lo que el ticket ya guarda gana sobre lo derivado', () => {
+  // INVERTIDA (B.1.1, D-1): el servidor recalcula SIEMPRE que hay fuente — ya no gana lo que el
+  // ticket tenía guardado. Antes esta prueba afirmaba lo contrario; la comodidad de "lo tecleado
+  // manda" queda para cuando NO hay fuente en absoluto (ver el caso nuevo, abajo).
+  it('con fuente disponible, gana SIEMPRE lo derivado, no lo que el ticket ya guardaba', () => {
     const v = valoresConocidos(
       { customFields: { 'Fecha creación ticket': '2026-01-01', 'Fecha Remisión Entrada': '2026-01-02' }, createdAt: '2026-08-06T16:14:00.000Z' },
       [{ tipo: 'entrada', fecha: '2026-08-04' }],
     )
-    expect(v['Fecha creación ticket']).toBe('2026-01-01')
-    expect(v['Fecha Remisión Entrada']).toBe('2026-01-02')
+    expect(v['Fecha creación ticket']).toBe('2026-08-06')
+    expect(v['Fecha Remisión Entrada']).toBe('2026-08-04')
+  })
+
+  // NUEVA (B.1.2): SIN fuente en absoluto no hay nada que recalcular, así que ahí sí manda lo que
+  // el ticket ya trae — se conserva para teclear encima si hace falta (D-3).
+  it('sin fuente, la columna se prellena con lo que el ticket ya trae', () => {
+    const v = valoresConocidos({ customFields: { 'Fecha creación ticket': '2026-03-03' } }, [])
+    expect(v['Fecha creación ticket']).toBe('2026-03-03')
   })
 
   // Un ticket de Zoho sin remisión: el campo se queda vacío y por tanto EDITABLE, que es lo correcto
@@ -89,18 +97,25 @@ describe('valoresConocidos · Fecha Revisión Informe', () => {
   })
 
   /**
-   * El día es el del NAVEGADOR, no el del ISO recortado. `performed_at` es un instante en UTC, así que
-   * un escalado a las 20:00 en Colombia (UTC-5) se guarda como la 01:00Z del día siguiente y
-   * `slice(0, 10)` daría un día de más. Es la misma trampa que ya costó un bug con las remisiones.
-   *
-   * El instante se construye con getters LOCALES para que el test valga sea cual sea la zona de la
-   * máquina. Donde la zona es UTC —local y UTC coinciden— las dos implementaciones dan lo mismo y esto
-   * no discrimina; en Colombia, que es donde se usa, sí.
+   * DEMOSTRACIÓN DE ZONA (B.1.3, repropósito del viejo "día local" — ya tautológico desde que el
+   * cálculo deja de depender de la zona del navegador). Mismas TRES condiciones del analista que
+   * `fechasDerivadas.test.ts` A.1.5 (obs. #846): autocomprobación propia por bloque, `vi.stubEnv('TZ', …)`
+   * por bloque, y la fase roja documentada en `apply-progress.md`.
    */
-  it('el día es el local, no el recorte del instante en UTC', () => {
-    const casiMedianoche = new Date(2026, 7, 10, 23, 30).toISOString()
-    const v = valoresConocidos({ ...sinNada, escaladoARevisionAt: casiMedianoche }, [])
-    expect(v['Fecha Revisión Informe']).toBe('2026-08-10')
+  describe.each(['UTC', 'America/Bogota'])('zona · %s', (zona) => {
+    beforeAll(() => { vi.stubEnv('TZ', zona) })
+    afterAll(() => { vi.unstubAllEnvs() })
+
+    it(`autocomprobación propia — new Date('2026-09-10').getDate() en ${zona}`, () => {
+      const esperado = zona === 'America/Bogota' ? 9 : 10
+      expect(new Date('2026-09-10').getDate()).toBe(esperado)
+    })
+
+    it(`el día de 2026-09-10T00:30:00Z en Fecha creación ticket y Fecha Revisión Informe no depende de la zona del proceso`, () => {
+      const v = valoresConocidos({ ...sinNada, createdAt: '2026-09-10T00:30:00Z', escaladoARevisionAt: '2026-09-10T00:30:00Z' }, [])
+      expect(v['Fecha creación ticket']).toBe('2026-09-09')
+      expect(v['Fecha Revisión Informe']).toBe('2026-09-09')
+    })
   })
 
   /**
@@ -113,13 +128,13 @@ describe('valoresConocidos · Fecha Revisión Informe', () => {
     expect(valoresConocidos(sinNada, [])['Fecha Revisión Informe']).toBeNull()
   })
 
-  // Si la etapa ya se ejecutó una vez, manda lo que quedó guardado: la misma regla que las otras dos.
-  it('lo que el ticket ya guarda gana sobre lo derivado', () => {
+  // INVERTIDA (B.1.1, D-1): misma regla que las otras dos — gana lo derivado, no lo ya guardado.
+  it('con fuente disponible, gana SIEMPRE lo derivado, no lo que el ticket ya guardaba', () => {
     const v = valoresConocidos(
       { customFields: { 'Fecha Revisión Informe': '2026-01-01' }, escaladoARevisionAt: '2026-08-10T15:00:00.000Z' },
       [],
     )
-    expect(v['Fecha Revisión Informe']).toBe('2026-01-01')
+    expect(v['Fecha Revisión Informe']).toBe('2026-08-10')
   })
 
   // La clave sale del Blueprint y no de una constante propia: si alguien renombra el campo allí, esto

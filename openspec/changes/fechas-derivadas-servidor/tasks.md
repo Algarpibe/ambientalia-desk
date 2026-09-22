@@ -172,15 +172,15 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
 
 ### Fase B.1 — `apps/desk/src/lib/valoresTransicion.ts` + demostración de zona
 
-- [ ] B.1.1 **RED — invertir pruebas viejas.** `valoresTransicion.test.ts:33-40` («lo que el ticket ya
+- [x] B.1.1 **RED — invertir pruebas viejas.** `valoresTransicion.test.ts:33-40` («lo que el ticket ya
   guarda gana sobre lo derivado») y `:117-123` (misma afirmación para `Fecha Revisión Informe`): cambiar
   la expectativa a que gane **lo derivado**, no lo ya guardado. Nombrarlas explícitamente como
   inversiones en el comentario del `it`. Correr, confirmar rojo contra el código actual (~15 líneas
   modificadas).
-- [ ] B.1.2 **RED — caso nuevo.** Añadir «sin fuente, la columna se prellena»: sin remisión ni
+- [x] B.1.2 **RED — caso nuevo.** Añadir «sin fuente, la columna se prellena»: sin remisión ni
   `createdAt`/`escaladoARevisionAt`, el valor ya presente en `customFields` se conserva para teclear (~12
   líneas). Correr, confirmar rojo.
-- [ ] B.1.3 **RED — repropósito de `:100-104` como demostración de zona.** `:100-104` («el día es el
+- [x] B.1.3 **RED — repropósito de `:100-104` como demostración de zona.** `:100-104` («el día es el
   local, no el recorte del instante en UTC»), tautológica desde que el cálculo deja de depender de la
   zona del navegador, se reescribe como el bloque `describe.each(['UTC', 'America/Bogota'])` para
   `2026-09-10T00:30:00Z` → `2026-09-09`, con las **mismas tres condiciones del analista** que A.1.5
@@ -189,36 +189,36 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
   zona`; confirmar rojo **natural**: bloque UTC rojo (`'2026-09-10'`), bloque Bogotá verde **en falso**
   (todavía usa `diaLocal`, que depende de la zona del proceso, no de `ZONA_NEGOCIO`); registrar la salida
   exacta.
-- [ ] B.1.4 **GREEN.** Reescribir `valoresTransicion.ts` en sitio (`design.md` §4.3): `:1` añade los
+- [x] B.1.4 **GREEN.** Reescribir `valoresTransicion.ts` en sitio (`design.md` §4.3): `:1` añade los
   nombres importados dentro de sus llaves; cabecera `:3-17` reescrita; `valoresConocidos` pasa a
   `derivadas[etiqueta] ?? (yaEsta(cf[etiqueta]) ? cf[etiqueta] : null)` con
   `derivadas = fechasDerivadas({ createdAt, remisiones, escaladoARevisionAt })`; se borra `diaLocal`
   (`:22-36`) (≈ −20 líneas netas desde `:21`, ≈ +8 nuevas; `:3` no se mueve).
-- [ ] B.1.5 Correr `npx vitest run apps/desk/src/lib/valoresTransicion.test.ts`, confirmar verde: las dos
+- [x] B.1.5 Correr `npx vitest run apps/desk/src/lib/valoresTransicion.test.ts`, confirmar verde: las dos
   inversiones (B.1.1), el caso sin fuente (B.1.2) y los dos bloques de zona (B.1.3).
 
 ### Fase B.2 — Regla de mutación 3, por escrito
 
-- [ ] B.2.1 Transcribir y verificar contra el código final la tabla de `design.md` §9 (qué decide el
+- [x] B.2.1 Transcribir y verificar contra el código final la tabla de `design.md` §9 (qué decide el
   cliente — prellena, bloquea, deja teclear — y la línea del servidor que lo impone, o «ninguna, a
   propósito» cuando corresponda) en `apply-progress.md` de B, sección `## Regla de mutación 3`.
 
 ### Fase B.3 — Regla de mutación 4, barrido
 
-- [ ] B.3.1 `grep -rnoE "valoresTransicion\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio + segundo pase de
+- [x] B.3.1 `grep -rnoE "valoresTransicion\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio + segundo pase de
   forma abreviada en los ficheros que ya citan el módulo; comprobar los dos extremos de cada rango.
   Reapuntar `openspec/config.yaml:434` (ficha IV-2) y `docs/sdd/F0-00_Baseline_as-built.md:147`, `:574`;
   reapuntar las abreviadas de la fila IV-2 de `CLAUDE.md` (`:3-17`, `:49-79`) con las líneas de después de
   editar.
-- [ ] B.3.2 Barrido de `bodegaje.ts`: los **cuatro** rangos desplazados una línea de `design.md` §8
+- [x] B.3.2 Barrido de `bodegaje.ts`: los **cuatro** rangos desplazados una línea de `design.md` §8
   (`openspec/config.yaml:468`, `openspec/specs/trazas/spec.md:274`, `CLAUDE.md:338`,
   `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:224`; el bloque real es `:59-65`). Clasificar
   caso a caso A/presente, B/histórico o C/superado y reparar según el caso (nunca renumerar en bloque).
-- [ ] B.3.3 Comprobación dirigida de `ticketService.ts:130` y `:132`: confirmar que toda cita viva que los
+- [x] B.3.3 Comprobación dirigida de `ticketService.ts:130` y `:132`: confirmar que toda cita viva que los
   nombre describe el contenido **nuevo** (`valoresConFechasDerivadas`; el `422` con
   `[...plan.errors, ...erroresFecha]`), no el viejo (`transitions-st/spec.md:162`, fila 5 de RQ-TS-06,
   entre otras).
-- [ ] B.3.4 **Barrido de los tres documentos que la propia unidad B mueve**, DESPUÉS de B.4, B.5 y B.6:
+- [x] B.3.4 **Barrido de los tres documentos que la propia unidad B mueve**, DESPUÉS de B.4, B.5 y B.6:
   `CLAUDE.md` (B.4.2 quita una fila de la tabla e inserta un párrafo; B.4.3 añade otro),
   `openspec/config.yaml` (B.4.1 añade campos a la ficha IV-2) y `docs/sdd/ENTRADA.md` (B.6.1 alarga
   E-021 y desplaza E-022 y E-023). `grep -rnoE` de `CLAUDE\.md:[0-9]+`, `config\.yaml:[0-9]+` y
@@ -228,13 +228,13 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
 
 ### Fase B.4 — IV-2 → CERRADO
 
-- [ ] B.4.1 `openspec/config.yaml`: ficha IV-2 (`:423-477`) — `estado: VIVO` → `CERRADO`, con campo nuevo
+- [x] B.4.1 `openspec/config.yaml`: ficha IV-2 (`:423-477`) — `estado: VIVO` → `CERRADO`, con campo nuevo
   citando la fecha/tanda que cierra (F1A-07, 2026-09-21) y la evidencia (`fechasDerivadas.ts` +
   `valoresConFechasDerivadas` + los criterios 1-5/P-a/P-b/mutaciones en verde).
-- [ ] B.4.2 `CLAUDE.md`: quitar la fila de la regla 1 (`valoresTransicion.ts`, hoy `:338`) de la tabla de
+- [x] B.4.2 `CLAUDE.md`: quitar la fila de la regla 1 (`valoresTransicion.ts`, hoy `:338`) de la tabla de
   incumplimientos vivos, e insertar el párrafo «**IV-2 está CERRADO…**» en su lugar en la secuencia ya
   usada (tras «IV-1 está CERRADO…», orden ascendente de ID), citando qué lo cierra.
-- [ ] B.4.3 `CLAUDE.md`: actualizar el numeral superior «**Cinco**» → «**Cuatro**» (`:308`) y **añadir** un
+- [x] B.4.3 `CLAUDE.md`: actualizar el numeral superior «**Cinco**» → «**Cuatro**» (`:308`) y **añadir** un
   párrafo nuevo (no reescribir los anteriores, caso B de la regla de mutación 4 aplicada al propio
   recuento) — «Y un cuarto movimiento, el 2026-09-21, que devuelve el encabezado a CUATRO» — con su
   propia lista «Los cuatro de hoy son: `ticketService.ts:39` (clientId), `por-entregar-es-espera`
@@ -242,7 +242,7 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
 
 ### Fase B.5 — Maestro: entrada 16
 
-- [ ] B.5.1 Redactar la entrada 16 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`, formato de las
+- [x] B.5.1 Redactar la entrada 16 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`, formato de las
   entradas 14/15 (`## La de F1A-07 (16)` con nota de contexto, `### 16 · <título> *(F1A-07)*`): texto
   actual de M1.10 (`R08.2.md:1756-1757`, con la regla de fondo «no admite excepciones» en `:1755`) frente
   al texto propuesto, que documenta la vía sin fuente (D-3: el servidor acepta lo tecleado si es una
@@ -250,21 +250,21 @@ estado verde en el índice. `git diff` no ve un fichero nuevo sin trackear, y un
 
 ### Fase B.6 — E-021
 
-- [ ] B.6.1 Actualizar E-021 en `docs/sdd/ENTRADA.md` (`:279-287`) con el resultado de la tarea docker
+- [x] B.6.1 Actualizar E-021 en `docs/sdd/ENTRADA.md` (`:279-287`) con el resultado de la tarea docker
   de A.7.1: estado del hallazgo, si la hipótesis de ICU completo en `node:22-alpine` quedó respondida por
   el `node -e` local, y remitir la comprobación de producción (§ comprobaciones de persona) como
   pendiente aparte.
 
 ### Fase B.7 — Cierre de la unidad B
 
-- [ ] B.7.1 `npm test` completo, en solitario, verde.
-- [ ] B.7.2 `npm run typecheck`, en solitario, verde.
-- [ ] B.7.3 `npm run lint`, en solitario, verde.
-- [ ] B.7.4 Cerrar el `apply-progress.md` de B: evidencia roja de B.1.3 (bloque UTC rojo, Bogotá verde en
+- [x] B.7.1 `npm test` completo, en solitario, verde.
+- [x] B.7.2 `npm run typecheck`, en solitario, verde.
+- [x] B.7.3 `npm run lint`, en solitario, verde.
+- [x] B.7.4 Cerrar el `apply-progress.md` de B: evidencia roja de B.1.3 (bloque UTC rojo, Bogotá verde en
   falso), la tabla de B.2.1, el barrido de B.3, la medida del intento 2 (`git diff --shortstat
   --no-renames` contra el commit de la unidad A + `wc -l` de lo nuevo sin trackear) y la acumulada A+B
   contra el commit base de la tanda (~60–100 líneas de informe).
-- [ ] B.7.5 **Commit de la unidad B** (conventional commit), **antes** del `sdd-attempt settle` del
+- [x] B.7.5 **Commit de la unidad B** (conventional commit), **antes** del `sdd-attempt settle` del
   intento 2.
 
 ---

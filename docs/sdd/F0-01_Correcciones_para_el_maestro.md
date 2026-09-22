@@ -12,7 +12,7 @@
 |---|---|
 | Tanda | F0-01, ampliado por **F0-02** (entradas 8–12), **F0-03** (entrada 13), **F1A-01** (entrada 14) y **F0-05** (entrada 15) |
 | Base | commit `a3a8f03` (F0-01) · `ad1875b` (las cinco de F0-02, 8–12) · `da084e9` (la de F0-03, 13) · `3aaa0f1` (la de F1A-01, 14) · `bd2122f` (la de F0-05, 15) |
-| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) · **F0-05** (el Anexo H al archivar, que `openspec/config.yaml:1677` exige) |
+| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) · **F0-05** (el Anexo H al archivar, que `openspec/config.yaml:1685` exige) |
 | Fecha | 2026-09-08, ampliado el 2026-09-09 y el 2026-09-20 |
 | Copia citable | Las entradas **1–14** citan la **R08.1** (4.935 líneas); la **15** cita la **R08.2** (5.167), vigente desde el 2026-09-17. Las viejas **no se renumeran** |
 
@@ -849,10 +849,50 @@ entrada no la resuelve ni la presupone. Si Gerencia decidiera retirar la capa as
 párrafo se va con ella.
 
 ---
+
+## La de F1A-07 (16)
+
+> **Esta entrada cita la R08.2**, como la 15.
+
+### 16 · M1.10 — la vía SIN fuente no ignora lo tecleado, lo valida *(F1A-07)*
+
+**Dónde va:** M1.10 «Registro de tiempos, anulación y métricas»,
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1756-1757`, detrás del
+párrafo de la zona horaria (`:1757`). La regla de fondo de M1.10, «no admite excepciones» (`:1755`),
+es de otro registro —el de quién y cuándo— y no la toca esta entrada.
+
+**Texto actual (`:1756-1757`):** «Las tres fechas derivadas las impone el servidor... Pasan a
+calcularse en el servidor, **que ignora lo que llegue del cliente** para esos tres campos.» y la
+fijación de zona horaria del párrafo siguiente.
+
+**Por qué hace falta matizarlo.** «Ignora lo que llegue del cliente» describe el caso CON fuente
+(D-1: el servidor recalcula siempre y pisa lo tecleado), pero F1A-07 añade un segundo caso que el
+texto actual no distingue: SIN fuente disponible —un ticket de Zoho sin remisión de entrada, por
+ejemplo—, el servidor **no** ignora lo tecleado: lo **valida**. Si es una fecha real, la acepta
+(D-3); si no lo es, `422` de contenido (`packages/shared/src/fechasDerivadas.ts:108-134`,
+`valoresEfectivos`, y `ticketService.ts:132`). «Ignora» sin matiz sugiere que el campo siempre viene
+del servidor solo, y hay un camino —sin fuente— donde sigue siendo el técnico quien lo escribe.
+
+**Texto propuesto, listo para pegar detrás de `:1757`:**
+
+> **Precisión (F1A-07, 2026-09-21): la imposición tiene una vía sin fuente.** Cuando SÍ hay fuente
+> —remisión de entrada vigente, fecha de creación del ticket, último escalado a revisión, según el
+> campo—, el servidor recalcula siempre y descarta lo que llegue del navegador, tal como dice el
+> párrafo anterior. Cuando NO hay fuente para una de las tres, el servidor no impone nada: acepta lo
+> tecleado si es una fecha de calendario real, y responde `422` si no lo es. No es una excepción a la
+> regla de M1.10 —el «quién y cuándo» de la transición se sigue registrando igual—: es que, sin dato
+> que derivar, alguien tiene que teclearlo, y el servidor sólo exige que lo tecleado sea una fecha
+> real.
+
+**Lo que esta entrada NO pide.** No toca la fijación de zona horaria (`:1757`), que F1A-07 deja
+intacta —la zona sigue siendo `America/Bogota`, fijada en el servidor—. Tampoco reabre M1.9.2 ni la
+derivación de responsable, que es de otra fila del maestro.
+
+---
 ## Qué NO contiene este fichero
 
 - No aplica ningún cambio al `.docx`. Es texto propuesto, no un parche.
 - No modifica los proposals de `openspec/changes/`.
-- Los **cinco incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
+- Los **cuatro incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
   `openspec/config.yaml` (`incumplimientos_vivos`), porque son deuda de código, no correcciones del
   maestro.

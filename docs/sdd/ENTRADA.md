@@ -280,8 +280,18 @@ de §4.5. **Clave Engram a cargar:** `decision/escalado-destinatario-doble`.
 **Qué:** El Código Servicio toma el día de la zona horaria del proceso, el mismo defecto que IV-2, y lo calcula el servidor.
 **De dónde viene:** el analista, en la ronda de preguntas de F1A-07 (`fechas-derivadas-servidor`), 21/09; verificado de disco en `4976787`
 **Afecta a:** el Código Servicio de todo ticket dado de alta en Desk sin código propio
-**Estado:** nueva
+**Estado:** triada — la hipótesis de ICU respondida (ver abajo), la del contenedor sigue pendiente
 **Destino:** — (decisión de alcance pendiente; dueño: Gerencia)
+
+**Tarea docker de A.7.1 (F1A-07, unidad A), 2026-09-21.** `docker run --rm node:22-alpine node -e
+"…Intl.DateTimeFormat('en-US',{timeZone:'America/Bogota',…})…"` sobre `2026-09-10T00:30:00Z` dio
+`2026-09-09`, el resultado correcto en Docker 29.6.2. **Responde la hipótesis de ICU de la propuesta
+(`proposal.md:185-186`): SÍ, `node:22-alpine` trae ICU completo con su propia base de zonas — no
+depende del `tzdata` de Alpine.** Quien arregle E-021 con el mismo patrón de `diaEnZona`
+(`packages/shared/src/fechasDerivadas.ts`) no necesita cambiar de imagen. **Lo que esto NO responde**
+es la hipótesis propia de E-021 —la zona del PROCESO en el contenedor REAL de producción, no en un
+`docker run` local—: sigue pendiente como comprobación de persona, dueño quien tenga la consola de
+EasyPanel, con `node -e "console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)"`.
 
 **Lo verificado.** `yymmdd` (`packages/shared/src/ticketCreate.ts:7-10`) usa `getFullYear`/`getMonth`/`getDate`, o sea la
 zona del proceso que lo ejecuta. `buildCodigoServicio` (`:12-14`) lo usa, y lo llama el SERVIDOR al dar de alta un ticket

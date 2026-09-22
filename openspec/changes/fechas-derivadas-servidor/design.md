@@ -232,11 +232,11 @@ de EasyPanel. Qué: el mismo `node -e` en el contenedor real, y además
   Aquí las ediciones de `ticketService.ts` son en sitio, pero **`:130` y `:132` cambian de contenido**: toda cita
   que las nombre tiene que describir el contenido nuevo (`valoresConFechasDerivadas`; el `422` con
   `[...plan.errors, ...erroresFecha]`). Va en las tareas de cierre y en el `archive-report.md`.
-- **`valoresTransicion.ts:3-17`**: `openspec/config.yaml:434` (ficha IV-2, que el cierre pasa a CERRADO) y
+- **`valoresTransicion.ts:3-17`**: `openspec/config.yaml:442` (ficha IV-2, que el cierre pasa a CERRADO) y
   `F0-00_Baseline_as-built.md:147`, `:574` (mismo anclaje). Las abreviadas de la fila IV-2 de `CLAUDE.md`
   (`:3-17`, `:49-79`) se reescriben con la fila, con las líneas de después de editar.
 - **Rango desplazado una línea** (la propuesta midió dos; aquí cuatro): `bodegaje.ts:60-66` en
-  `openspec/config.yaml:468`, `openspec/specs/trazas/spec.md:274`, `CLAUDE.md:338` y
+  `openspec/config.yaml:476`, `openspec/specs/trazas/spec.md:274`, `CLAUDE.md:338` y
   `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:224`; el bloque es `:59-65`. Se decide caso a caso (A/B/C).
 
 ## 9 · Regla de mutación 3 — la tabla que se completa en el cierre

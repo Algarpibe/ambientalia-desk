@@ -202,3 +202,118 @@ npm test → Test Files 130 passed | 1 skipped (131) · Tests 1218 passed | 2 sk
 Sin diff en código vivo: los cuatro ficheros tocados son documentales (dos specs delta, `proposal.md`,
 `tasks.md`, y la spec viva `transitions-st`). `npm run typecheck`/`lint` no aplican (sin `.ts` de
 producción tocado).
+
+## Unidad B — cliente + cierre (objetivo rescopeado, gen. 4, resto de la unidad B)
+
+**Intento único**, rama `f1a-07-r1`, base `02c8ac2` (§4.1 ya reparado). Tareas: `tasks.md` B.1–B.7;
+contratos: `design.md` §4.3, §8, §9. `strict_tdd`.
+
+### B.1 — `apps/desk/src/lib/valoresTransicion.ts`, RED antes que GREEN
+
+| Fase | Qué | RED | GREEN |
+|---|---|---|---|
+| B.1.1 | Invertir las dos «ya guarda gana» (`:33-40`, `:117-123` antes de editar) a «gana SIEMPRE lo derivado» | ✅ por aserción | ✅ |
+| B.1.2 | Caso nuevo: sin fuente, se conserva lo que el ticket ya trae | ➖ nace verde (ver nota) | ✅ |
+| B.1.3 | Repropósito de `:100-104` como demostración de zona (`describe.each`, tres condiciones) | ✅ natural | ✅ |
+
+**B.1.1/B.1.3 — RED por aserción, contra el código de antes de B.1.4:**
+```
+npx vitest run apps/desk/src/lib/valoresTransicion.test.ts
+× valoresConocidos > con fuente disponible, gana SIEMPRE lo derivado, no lo que el ticket ya guardaba
+  expected '2026-01-01' to be '2026-08-06'
+× valoresConocidos · Fecha Revisión Informe > zona · UTC > el día de 2026-09-10T00:30:00Z…
+  expected '2026-09-10' to be '2026-09-09'
+× valoresConocidos · Fecha Revisión Informe > con fuente disponible, gana SIEMPRE lo derivado…
+  expected '2026-01-01' to be '2026-08-10'
+Test Files  1 failed (1)
+     Tests  3 failed | 13 passed (16)
+```
+El bloque `zona · America/Bogota` pasa **verde en falso** con el código viejo (getters locales, bajo
+`vi.stubEnv('TZ','America/Bogota')` coincide con la zona de negocio) — exactamente lo que predice
+`design.md` §6.4, y por eso no cuenta como fallo.
+
+**B.1.2 — nace verde, no regresión (excepción declarada, mismo molde que `2026-02-28` en A.3.3):** sin
+ninguna fuente, el ternario viejo (`yaEsta(cf[...]) ? cf[...] : diaLocal(...)`) YA devolvía el valor de
+`customFields` cuando lo había — `diaLocal(undefined)` da `null`, pero el ternario ni lo evalúa. El caso
+nuevo coincide con el viejo por construcción; no hay contraste que producir.
+
+**B.1.4 — GREEN**, en sitio (`design.md` §4.3): `:1` añade `fechasDerivadas` a la desestructuración;
+cabecera reescrita; `diaLocal` borrado; `valoresConocidos` pasa a
+`derivadas[etiqueta] ?? (yaEsta(cf[etiqueta]) ? cf[etiqueta] : null)` con
+`derivadas = fechasDerivadas({ createdAt, remisiones, escaladoARevisionAt })`.
+
+**B.1.5 — verde:**
+```
+npx vitest run apps/desk/src/lib/valoresTransicion.test.ts
+Test Files  1 passed (1)
+     Tests  16 passed (16)
+```
+
+### B.2 — Regla de mutación 3 (transcrita y verificada contra el código final)
+
+| Decisión del cliente | Dónde | Línea del servidor que la impone |
+|---|---|---|
+| Prellena la derivada cuando hay fuente | `valoresConocidos` | `ticketService.ts:130` → `valoresConFechasDerivadas` (D-1). Espejo legítimo: los criterios 1-5/P-a/P-b de la unidad A están en verde |
+| La enseña bloqueada | `TransitionPanel.tsx:32-36` (`yaLoTraeElTicket`), `:174` | La misma: el servidor ignora lo que llegue (D-1) |
+| Sin fuente, prellena la columna y la bloquea | `valoresConocidos` y `TransitionPanel.tsx:32-36` | **Ninguna, a propósito**: sin fuente el servidor acepta cualquier fecha real (D-3). El bloqueo es comodidad genérica del panel, no regla |
+| Sin fuente ni columna, deja teclear | `TransitionPanel.tsx:254` (`type="date"`) | Presencia `transitionExec.ts:77`; validez `ticketService.ts:132` (`erroresFecha`) |
+| Manda `YYYY-MM-DD` | `TransitionPanel.tsx:254` | `ticketService.ts:132` |
+| *Hipótesis:* no manda las tres en transiciones que no las declaran | `TransitionPanel` | P-2 en `valoresEfectivos`: el servidor las descarta igual |
+
+Las cinco citas de código se releyeron contra el árbol de hoy (post-B.1.4): todas describen el
+contenido actual, ninguna quedó apuntando al `diaLocal` borrado.
+
+### B.3 — Regla de mutación 4, resto (B.3.1, B.3.2, B.3.4 — B.3.3 ya cerrado en la gen. 3)
+
+**B.3.1 · `valoresTransicion.ts`.** Grep propio confirma: `F0-00_Baseline_as-built.md:147,574` y
+`design.md:235` citan `:3-17` (cabecera); `proposal.md:33`, `exploration.md` y `specs/trazas/spec.md:180`
+citan el cuerpo viejo (`:49-79`, `diaLocal:30-36`) — los tres documentos están AUTO-declarados caso B
+(«tras el apply, este documento es caso B de la regla 4», `design.md:8`; «en cuanto el apply mueva
+líneas», `proposal.md:14`; `exploration.md` fecha su propio árbol en la cabecera) y las líneas SÍ se
+movieron (`:49-79`→`:35-67`, `diaLocal` desaparece). Único fix real: `design.md:235` apuntaba a
+`config.yaml:434` (mi propio B.4.1 lo desplazó a `:442`) — corregido.
+
+**B.3.2 · `bodegaje.ts`, rango `:60-66`→`:59-65` (preexistente, cuatro sitios).** Verificado contra el
+código (`packages/shared/src/bodegaje.ts:59-65`, el objeto `entrada` completo). Corregidos:
+`openspec/config.yaml` (dentro de la ficha IV-2, ahora `:476`), `openspec/specs/trazas/spec.md:274`,
+`docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:224`. El cuarto sitio, `CLAUDE.md:338`, desapareció
+solo: era la misma fila que B.4.2 borró.
+
+**B.3.4 · Barrido de `CLAUDE.md`, `config.yaml`, `ENTRADA.md`.** `config.yaml` desplazó **+8** líneas
+desde `estado: CERRADO` de IV-2 (verificado con dos anclas de control: IV-3 `:479`→`:487`). Barrido
+completo de citas externas a `config.yaml` por encima de esa línea: la mayoría —`reconciliacion/spec.md`
+(11), `F1A-05_Auditoria...:46`— están **ancladas a una revisión** (`en ce93480`, `en 648432d`) y son caso
+B por diseño, sin tocar. Sin anclar y con contenido presente, se corrigieron: `CLAUDE.md:344`
+(`:1467-1484`→`:1475-1492`, `:824-829`→`:832-837`), `F0-01_Correcciones_para_el_maestro.md:15`
+(`:1677`→`:1685`, verificado contra el texto «Actualizar el Anexo H…»), `R08.3_Expediente_de_cambios.md`
+(`:1524-1562`→`:1532-1570`, `:1525`→`:1533`, verificado contra `unidad_de_avance:`).
+`CLAUDE.md` desplazó **+13** desde el §308 (verificado con dos anclas: los bloques R-1/R-2 de
+`openspec/config.yaml → capabilities`, `:424→:437`, `:454→:467`). Corregidos:
+`openspec/specs/citas-verificables/spec.md:942` y `openspec/specs/reconciliacion/spec.md:281`.
+Los citantes DE `CLAUDE.md:338`/`:308` desde dentro del propio cambio (`design.md:239`, `proposal.md:200-203`,
+`tasks.md:210-214`) son instrucciones/planes fechados contra `4976787` (caso B declarado) o quedaron
+moot por la fila borrada; no se tocan. `F0-01_Correcciones_para_el_maestro.md` pasó de 858 a 898 líneas;
+las tres citas que lo nombran (`:704`, `:129`×2) siguen dentro de rango.
+
+### Cierre de la unidad B
+
+```
+npm test          → Test Files 130 passed | 1 skipped (131) · Tests 1222 passed | 2 skipped (1224) · exit 0
+                     (una corrida previa dio "[vitest-worker]: Timeout calling onTaskUpdate" con 2
+                     errores de RPC — el margen de 60s de design.md §10 nota 2; repetida en solitario,
+                     limpia)
+npm run typecheck → exit 0
+npm run lint      → ✖ 158 problems (0 errors, 158 warnings) · exit 0 — mismo techo que la unidad A
+```
+1222 = 1218 (unidad A) + 4 (B.1: 2 inversiones sin cambio de cardinalidad, −1 test viejo +4 de zona,
++1 de B.1.2 = +4 neto).
+
+**Medida de este intento** (gen. 4, base `02c8ac2`): `git diff --shortstat --no-renames 02c8ac2` →
+**140 insertions(+), 67 deletions(-)**, 12 ficheros. Techo 800, muy por debajo.
+**Acumulada de la unidad B completa** (contra el commit de la unidad A, `98cbda7`, incluye también la
+gen. 3 ya settleada): `git diff --shortstat --no-renames 98cbda7` → **214 insertions(+), 72 deletions(-)**,
+17 ficheros.
+
+Desviaciones de diseño: ninguna. `TransitionPanel.tsx` sin diff (comodidad ya probada, regla 13.3, no
+tocado). Comprobaciones de persona (regla del ciclo 1, fuera del recuento): las (a)/(b) de la unidad A
+siguen fuera del repositorio; sin novedad en B.
