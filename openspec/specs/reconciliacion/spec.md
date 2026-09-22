@@ -278,7 +278,7 @@ Distribución medida en `ce93480`:
 
 `reconciliacion` **SHALL** añadirse a `openspec/config.yaml → capabilities`
 (`openspec/config.yaml:104` en `ce93480`) **en el mismo cambio** que crea
-`openspec/specs/reconciliacion/spec.md`, según R-2 (`CLAUDE.md:454-456`).
+`openspec/specs/reconciliacion/spec.md`, según R-2 (`CLAUDE.md:467-469`).
 
 **No es formalismo: es la comprobación 1 aplicada a esta misma capacidad.** Una spec que no está en
 `capabilities` no la carga el preflight — existe y es invisible. Crear esta capacidad sin declararla

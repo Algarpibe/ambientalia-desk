@@ -424,7 +424,15 @@ incumplimientos_vivos:
     regla: 1
     ubicacion: "apps/desk/src/lib/valoresTransicion.ts"
     verificado: parcial
-    estado: VIVO
+    estado: CERRADO
+    cerrado_por: "F1A-07 (fechas-derivadas-servidor)"
+    cerrado_verificado_en: >
+      2026-09-21, worktree f1a-07-r1. El servidor impone las tres fechas derivadas en
+      `packages/shared/src/fechasDerivadas.ts` y `apps/desk/server/services/valoresDeTransicion.ts`
+      (`valoresConFechasDerivadas`), consumidos por `ticketService.ts:130`/`:132`; los criterios
+      1-5, P-a y P-b, y las mutaciones de A.5 en verde (`apply-progress.md` de la unidad A). El
+      cliente (`valoresTransicion.ts`) pasa a comodidad probada (regla invariable 13, punto 3):
+      consume la MISMA fórmula compartida en vez de reimplementarla.
     descripcion: >
       Regla de dominio que vive SÓLO en el cliente: qué fecha corresponde a qué
       campo de transición. El propio fichero lo declara en su bloque de
@@ -465,7 +473,7 @@ incumplimientos_vivos:
       guarda, y una guarda en el cliente no es una guarda.
       LO QUE HACE QUE NO SEA COSMÉTICO, y es el dato que faltaba en la entrada
       anterior: las tres son operandos de indicadores. `Fecha Remisión Entrada`
-      abre el bodegaje de entrada (bodegaje.ts:60-66) y `Fecha creación ticket`
+      abre el bodegaje de entrada (bodegaje.ts:59-65) y `Fecha creación ticket`
       es justo la que rompió los indicadores 48, 49 y 56 al separarse del ingreso
       real. Un cliente que se salte la derivación no ensucia una pantalla:
       ensucia los KPIs.

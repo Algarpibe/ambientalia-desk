@@ -939,7 +939,7 @@ hermana y el grafo de imports, y la Pieza 4 de la propuesta.)*
 
 En cada push, el detector **SHALL** comprobar que **todo** `openspec/changes/<nombre>/proposal.md` del
 sha local empieza con un bloque YAML delimitado por `---` **antes de cualquier prosa**, y que ese
-bloque lleva los **siete** campos de R-1 (`CLAUDE.md:424-435`): `tanda`, `motivo`,
+bloque lleva los **siete** campos de R-1 (`CLAUDE.md:437-448`): `tanda`, `motivo`,
 `capacidad`, `maestro`, `cierra`, `toca_maestro` y `origen_cabecera`.
 
 La comprobación **SHALL** ser de **forma y dominio cerrado**, nunca de criterio:

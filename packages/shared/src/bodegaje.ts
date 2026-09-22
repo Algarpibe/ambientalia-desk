@@ -16,7 +16,7 @@
 // El efecto es cuantificable y sale en `bodegaje.test.ts` nº 6: un ticket que da dos vueltas al ciclo
 // de cotización tiene DOS bodegajes de proceso. Leído por columna sale uno, el de la última vuelta,
 // y el tiempo de la primera desaparece.
-
+import { diaEnZona } from './fechasDerivadas'
 import { TRANSITIONS } from './transitions'
 
 export type ClaseBodegaje = 'entrada' | 'proceso' | 'salida'
@@ -127,9 +127,9 @@ const MS_POR_DIA = 86_400_000
  * `NaN` envenena la suma entera sin decir cuál lo hizo.
  */
 function dia(valor: unknown): string | null {
-  if (typeof valor !== 'string' || !valor.trim()) return null
-  const t = Date.parse(valor)
-  return Number.isNaN(t) ? null : new Date(t).toISOString().slice(0, 10)
+  // RQ-TZ-13 (F1A-07 · IV-2, P-3): el día se calcula en ZONA_NEGOCIO, no en la del proceso.
+  // Antes: `Date.parse(valor)` + `toISOString().slice(0, 10)`, día UTC puro.
+  return diaEnZona(valor)
 }
 
 /** Días completos entre dos días. Nunca negativo: ver `periodosDeBodegaje`. */
