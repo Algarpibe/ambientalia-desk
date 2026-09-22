@@ -322,10 +322,14 @@ siguen fuera del repositorio; sin novedad en B.
 
 Primer commit de cierre, `b4c3bcf`: `tsx apps/desk/server/citas/cli.ts --sha b4c3bcf` → **exit 1**, 2
 bloqueantes, los dos causados por B.1.4 (`diaLocal` borrado, `valoresConocidos` desplazado): `exploration.md:53`
-citaba `valoresTransicion.ts:20` (línea vacía hoy; `yaEsta` está en `:22`) y `proposal.md:33` citaba
-`valoresTransicion.ts:49-79` (fuera de rango, el fichero tiene hoy 68 líneas). Reparados: el primero se
-renumera (`:22`, sigue siendo cierto hoy); el segundo se ancla a `4976787` (caso B — el párrafo describe
-el problema que motivó la tanda, no el árbol de hoy) en vez de renumerarse. Commit `7e64c30`.
+citaba la línea 20 de `valoresTransicion.ts` (vacía hoy; `yaEsta` está en `:22`) y `proposal.md:33` citaba
+las líneas 49-79 de `valoresTransicion.ts` (fuera de rango, el fichero tiene hoy 68 líneas). Reparados: el
+primero se renumera (`:22`, sigue siendo cierto hoy); el segundo se ancla a `4976787` (caso B — el párrafo
+describe el problema que motivó la tanda, no el árbol de hoy) en vez de renumerarse. Commit `7e64c30`.
+**Nota de la regla de mutación 4 (`CLAUDE.md`): este mismo párrafo era, hasta esta reparación, el
+ejemplo vivo del guion final de esa regla — un ejemplo de cita rota escrito CON forma de cita, que el
+detector trataba como rota de verdad. Se reescribe en prosa, sin backtick+dos puntos+número, y deja
+de bloquear.**
 ```
 tsx apps/desk/server/citas/cli.ts --sha 7e64c30
 comprobadas 2154 · saltadas 2056 · abreviadas rotas 11 (mismas de siempre, informativas) ·
