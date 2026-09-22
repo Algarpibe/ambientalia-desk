@@ -135,3 +135,70 @@ Docker 29.6.2. Suite, en solitario. 158 avisos = techo del CI (`eslint.config.js
 tanda. Docker y suite repetidos por el orquestador, mismas salidas. Desviaciones de diseño: ninguna
 (`design.md` §3 literal en `ticketService.ts:6`, `:7`, `:130`, `:132`; `bodegaje.ts` en sitio, A-9).
 Medida del ledger: en el commit de la unidad A. Comprobaciones de persona: `tasks.md`, fuera del recuento.
+
+## B.3 — Barrido de la regla de mutación 4 tras la unidad A (objetivo rescopeado, gen. 3)
+
+**Intento único** (rescope 200 líneas / 1 intento real, `cumulative_attempts` heredado del `interrupted`
+de la gen. 2), rama `f1a-07-r1`, base `98cbda7`. Evidence-goal: cada cita viva a `ticketService.ts:6`,
+`:7`, `:130`, `:132` y `bodegaje.ts:19`, `:129-133` leída y reparada o justificada por caso; detector en
+modo hook exit 0.
+
+### Inventario (grep propio sobre `98cbda7`, no la lista heredada)
+
+Formas completas (`grep -rnoE "ticketService\.ts:(6|7|130|132)\b"` y `"bodegaje\.ts:19\b"` /
+`"bodegaje\.ts:12[0-9]-13[0-9]"`) confirmaron el inventario recibido: toda cita a `bodegaje.ts:19` o
+`:129-133` vive dentro de la carpeta del cambio; de `ticketService.ts:6/:7/:130/:132`, la única fuera de
+la carpeta es `openspec/specs/transitions-st/spec.md:584`. Segundo pase (abreviadas, sin nombre de
+fichero) en los ficheros que ya citan el módulo: encontró además la fila 7/8 de la tabla de
+`RQ-TS-06` en la MISMA spec viva (`:164`, abreviada `:132-136`) y la fila 5 (`:162`, abreviada `:132`) —
+ninguna de las dos aparecía en la lista completa por ser abreviada. Verificado contra `docs/sdd/ENTRADA.md`
+E-023 (`:316-341`): esas dos filas viven dentro de `RQ-TS-06`, uno de los TRES bloques que el propio
+delta de F1A-07 reescribe (`specs/transitions-st/spec.md` del cambio, `:34-47`, ya trae las OCHO filas
+reancladas contra `4976787`, con evidencia `:121`, `:123`, `:124-126`, `:127-129`, `:132`, `:132`,
+`:136-140`, `:146-150`) — se sobrescriben enteras al archivar, así que tocar la tabla vieja ahora sería
+trabajo perdido (`tasks.md` «Para el archive» lo dice explícitamente: las anclas de los deltas se
+comprueban contra el árbol del momento del archive, no ahora). `:584` vive en §3.4 («la tercera puerta de
+la orden de venta»), que NINGÚN delta reescribe: por eso es la única reparación directa de fuera de la
+carpeta, tal como decía el encargo.
+
+### Tabla cita a cita
+
+| Dónde | Qué afirma | Caso | Qué se hizo |
+|---|---|---|---|
+| `openspec/specs/transitions-st/spec.md:584` | «`ticketService.ts:132-136` (movida detrás de la guarda de derivación, `:144`)», evidencia del 409 de unicidad de OV en `habilitar_servicio` | Roto por contenido — hoy `:132` es el 422 de fechas derivadas, no la OV; el bloque real es `:146-150` | Reparado entero: evidencia → `:146-150` (detrás de `:136-140`), con nota explícita de por qué `:132` ya no vale. Única excepción a «E-023 no se toca» |
+| `openspec/changes/…/specs/trazas/spec.md:173` | «`dia()` … hoy usa `toISOString().slice(0,10)`, día UTC» | Roto por contenido — hoy delega en `diaEnZona` | Reparado: «tras `fechas-derivadas-servidor` delega en `diaEnZona`; antes usaba `toISOString()…`» |
+| `openspec/changes/…/specs/trazas/spec.md:198` | GIVEN `'2026-09-09'` pasado a `dia()` (`bodegaje.ts:129-133`) | Cita de posición pura, sin afirmación de contenido | Sin cambio — sigue siendo cierta |
+| `openspec/changes/…/specs/transitions-st/spec.md:72` | `executeTransition` (`:132`) valida contenido fuera de `buildTransitionPlan` | Presente, describe el árbol de hoy | Sin cambio |
+| `openspec/changes/…/specs/transitions-st/spec.md:80` | el llamador traduce a `422` en `:132` | Presente, describe el árbol de hoy | Sin cambio |
+| `packages/shared/src/fechasDerivadas.ts:106` | comentario: el `422` de `ticketService.ts:132` impide escribir `erroresFecha` | Presente, describe el árbol de hoy | Sin cambio |
+| `openspec/changes/…/proposal.md:64` | P-3: «`dia()`… Hoy es otra noción… (`toISOString`, día UTC)» | Roto por contenido, mismo caso que trazas:173 | Reparado: «Antes de esta tanda era otra noción…; tras la unidad A, `dia()` delega en `diaEnZona`» |
+| `openspec/changes/…/proposal.md:197` | meta: `:130`/`:132` cambian de contenido sin moverse | Es la regla misma, no una cita de comportamiento | Sin cambio |
+| `openspec/changes/…/design.md:32` (A-9) | `bodegaje.ts:19` pasa a import; `:130-132` a comentario+`return` | Prescriptivo, coincide con lo implementado | Sin cambio |
+| `openspec/changes/…/design.md:246,:249,:250` | tabla regla de mutación 3: `:130` deriva, `:132` valida | Presente, describe el árbol de hoy | Sin cambio |
+| `openspec/changes/…/exploration.md:99` | 422 en `transitionExec.ts:77`, `ticketService.ts:132` | Presente, describe el árbol de hoy | Sin cambio |
+| `openspec/changes/…/tasks.md:6` | cabecera: `:130`/`:132` cambian de contenido sin moverse | Meta, correcto | Sin cambio |
+| `openspec/changes/…/tasks.md:71-72` (A.2.2) | `bodegaje.ts:19` → import; `:129-132` → comentario+`return` | Rango impreciso: `:129` es la firma de `dia()`, no cambió | Reparado: `:129-132` → `:130-132` |
+| `openspec/changes/…/tasks.md:125` (A.4.2) | `:6`,`:7`,`:130`,`:132` — texto exacto del diseño | Prescriptivo, coincide 1:1 con lo implementado | Sin cambio |
+| `openspec/changes/…/tasks.md:217` (B.3.3) | cita como ejemplo de «lo viejo» `transitions-st/spec.md:162, fila 5 de RQ-TS-06` | Correcto como ejemplo — esa fila SÍ está caduca, pero vive en el bloque que el delta reescribe entero al archivar | Sin cambio (no es trabajo de esta rebanada; ver inventario arriba) |
+| `openspec/changes/…/tasks.md:293` | meta: anclas de los deltas se comprueban en el archive, no ahora | Correcto | Sin cambio |
+| `openspec/specs/transitions-st/spec.md:162` (fila 5, RQ-TS-06) y `:164` (fila 7) | evidencia `:128` y `:132-136` — abreviadas, encontradas en el 2º pase | Rotas por contenido, pero dentro de un bloque que el delta de F1A-07 reescribe entero al archivar | Sin cambio ahora — se resuelven solas al fusionar el delta (ya reanclado, `:34-47` del delta) |
+
+### Cierre
+
+```
+git diff --shortstat --no-renames 98cbda7
+ 4 files changed, 7 insertions(+), 5 deletions(-)
+```
+Commit `32ec47f` (antes del settle).
+```
+tsx apps/desk/server/citas/cli.ts --sha 32ec47f
+comprobadas 2098 · saltadas 1959 · abreviadas rotas 11 (informativas, preexistentes, ninguna de esta
+tanda — incluye Puntos_para_Gerencia_2026-09-11.md:167 → ticketService.ts:128, parte del mismo E-023) ·
+cabeceras R-1 inválidas 0 · exit 0
+```
+```
+npm test → Test Files 130 passed | 1 skipped (131) · Tests 1218 passed | 2 skipped (1220) · exit 0
+```
+Sin diff en código vivo: los cuatro ficheros tocados son documentales (dos specs delta, `proposal.md`,
+`tasks.md`, y la spec viva `transitions-st`). `npm run typecheck`/`lint` no aplican (sin `.ts` de
+producción tocado).
