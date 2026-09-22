@@ -98,4 +98,30 @@ describe('booksHub sync', () => {
     expect(r.items).toBe(1)
     expect((await db.query("SELECT name FROM books.items WHERE item_id='new'")).rows.length).toBe(1)
   })
+
+  it('backfillRetainerInvoices trae la cabecera por lista y la descripción de la línea por detalle', async () => {
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      if (path.startsWith('/retainerinvoices?')) return Promise.resolve(page('retainerinvoices', [{ retainerinvoice_id: 'ri1', retainerinvoice_number: 'ANT-2026-063', last_modified_time: '2026-09-15T00:00:00Z' }]))
+      if (path.startsWith('/retainerinvoices/ri1')) return Promise.resolve(detail('retainerinvoice', { retainerinvoice_id: 'ri1', retainerinvoice_number: 'ANT-2026-063', status: 'paid', payment_made: 9505784, payment_drawn: 0, last_modified_time: '2026-09-15T00:00:00Z', line_items: [{ line_item_id: 'rl1', description: 'Anticipo OV-2026-167' }] }))
+      return Promise.resolve(page('retainerinvoices', []))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    expect(await sync.backfillRetainerInvoices()).toBe(1)
+    const { rows } = await db.query("SELECT payment_made, raw FROM books.retainer_invoices WHERE retainerinvoice_id='ri1'")
+    expect(Number(rows[0].payment_made)).toBe(9505784)
+    const raw = typeof rows[0].raw === 'string' ? JSON.parse(rows[0].raw) : rows[0].raw
+    expect(raw.line_items[0].description).toBe('Anticipo OV-2026-167')
+  })
+
+  it('syncRecent incluye los anticipos', async () => {
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      if (path.startsWith('/retainerinvoices?')) return Promise.resolve(page('retainerinvoices', [{ retainerinvoice_id: 'ri1', last_modified_time: '2026-09-15T00:00:00Z' }]))
+      if (path.startsWith('/retainerinvoices/ri1')) return Promise.resolve(detail('retainerinvoice', { retainerinvoice_id: 'ri1', last_modified_time: '2026-09-15T00:00:00Z', line_items: [] }))
+      // El resto de recursos responde sin su clave → lista vacía.
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    const r = await sync.syncRecent()
+    expect(r.retainerInvoices).toBe(1)
+  })
 })

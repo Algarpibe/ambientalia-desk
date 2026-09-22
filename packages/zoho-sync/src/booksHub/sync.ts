@@ -1,7 +1,7 @@
 import type { AppConfig } from '../config'
 import type { Queryable } from '../db/migrate'
-import { upsertContact, upsertItem, upsertSalesOrder, upsertInvoice, replaceSoLines, replaceInvoiceLines, upsertCustomerPayment, replacePaymentInvoices, upsertPurchaseOrder, replacePoLines, maxZohoLastModified } from './repo'
-import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow, purchaseOrderRow, poLineRow } from './mappers'
+import { upsertContact, upsertItem, upsertSalesOrder, upsertInvoice, replaceSoLines, replaceInvoiceLines, upsertCustomerPayment, replacePaymentInvoices, upsertPurchaseOrder, replacePoLines, upsertRetainerInvoice, maxZohoLastModified, type BooksTable } from './repo'
+import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow, purchaseOrderRow, poLineRow, retainerInvoiceRow } from './mappers'
 import { sweepEntity, type SweepOpts, type SweepReport, type SweepEntity } from '../sweep/sweep'
 
 interface Deps { booksFetch: (path: string, init?: RequestInit) => Promise<Response>; db: Queryable; config: AppConfig }
@@ -12,7 +12,8 @@ export interface BooksHubSync {
   backfillInvoices(): Promise<number>
   backfillPayments(): Promise<number>
   backfillPurchaseOrders(): Promise<number>
-  syncRecent(): Promise<{ contacts: number; items: number; salesOrders: number; invoices: number; payments: number; purchaseOrders: number }>
+  backfillRetainerInvoices(): Promise<number>
+  syncRecent(): Promise<{ contacts: number; items: number; salesOrders: number; invoices: number; payments: number; purchaseOrders: number; retainerInvoices: number }>
   sweep(opts: SweepOpts): Promise<SweepReport[]>
 }
 const PAGE_SIZE = 200
@@ -95,6 +96,12 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     await upsertPurchaseOrder(db, purchaseOrderRow(d))
     await replacePoLines(db, d.purchaseorder_id, (d.line_items ?? []).map((l: any) => poLineRow(d.purchaseorder_id, l)))
   }
+  async function persistRetainerInvoice(header: any): Promise<void> {
+    // El listado no trae line_items, y la descripción de la línea («Anticipo OV-2026-167») es
+    // el único enlace del anticipo con su OV: sin el detalle, hub-api no podría cruzarlo.
+    const d = await fetchDetail('retainerinvoices', 'retainerinvoice', header.retainerinvoice_id)
+    await upsertRetainerInvoice(db, retainerInvoiceRow(d))
+  }
 
   // ── Backfill (todas las páginas) ──
   async function backfillSimple(resource: string, key: string, extra: Record<string, string>, persist: (raw: any) => Promise<void>): Promise<number> {
@@ -110,7 +117,7 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
   }
 
   // ── Incremental (corta al alcanzar la marca de agua) ──
-  async function incremental(resource: string, key: string, table: 'contacts' | 'items' | 'sales_orders' | 'invoices' | 'customer_payments' | 'purchase_orders', extra: Record<string, string>, persist: (raw: any) => Promise<void>): Promise<number> {
+  async function incremental(resource: string, key: string, table: BooksTable, extra: Record<string, string>, persist: (raw: any) => Promise<void>): Promise<number> {
     const watermark = await maxZohoLastModified(db, table)
     const wm = watermark ? new Date(watermark).getTime() : 0
     let page = 1, count = 0
@@ -155,6 +162,7 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
     backfillInvoices: () => backfillSimple('invoices', 'invoices', {}, persistInvoice),
     backfillPayments: () => backfillSimple('customerpayments', 'customerpayments', {}, persistPayment),
     backfillPurchaseOrders: () => backfillSimple('purchaseorders', 'purchaseorders', {}, persistPurchaseOrder),
+    backfillRetainerInvoices: () => backfillSimple('retainerinvoices', 'retainerinvoices', {}, persistRetainerInvoice),
     async syncRecent() {
       return {
         contacts: await incremental('contacts', 'contacts', 'contacts', { contact_type: 'customer' }, persistContact),
@@ -163,6 +171,7 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
         invoices: await incremental('invoices', 'invoices', 'invoices', {}, persistInvoice),
         payments: await incremental('customerpayments', 'customerpayments', 'customer_payments', {}, persistPayment),
         purchaseOrders: await incremental('purchaseorders', 'purchaseorders', 'purchase_orders', {}, persistPurchaseOrder),
+        retainerInvoices: await incremental('retainerinvoices', 'retainerinvoices', 'retainer_invoices', {}, persistRetainerInvoice),
       }
     },
     async sweep(opts: SweepOpts): Promise<SweepReport[]> {
