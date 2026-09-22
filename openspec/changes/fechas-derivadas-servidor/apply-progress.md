@@ -381,9 +381,10 @@ apps/desk/server/services/valoresDeTransicion.ts packages/shared/src/fechasDeriv
 
 `tsx apps/desk/server/citas/cli.ts --sha aadcef5` (el commit de partida, antes de tocar nada) ya daba
 **exit 1** con los mismos 2 bloqueantes que dio contra el primer intento de cierre de esta rebanada:
-`apply-progress.md:325-326` citaba, EN FORMA DE CITA (backtick+fichero+dos puntos+número), dos valores
-ya reparados en `7e64c30` —`valoresTransicion.ts:20` (línea vacía hoy) y `valoresTransicion.ts:49-79`
-(fuera de rango, el fichero tiene hoy 68 líneas)— a modo de ejemplo narrativo de qué se reparó. El
+las antiguas líneas 325-326 de este mismo fichero citaban, EN FORMA DE CITA (backtick+fichero+dos
+puntos+número), dos valores ya reparados en `7e64c30` — la línea 20 de `valoresTransicion.ts` (vacía
+hoy) y las líneas 49-79 del mismo fichero (fuera de rango, tiene hoy 68 líneas) — a modo de ejemplo
+narrativo de qué se reparó. El
 detector no distingue narración de cita viva: es exactamente el último guion de la regla de mutación 4
 de `CLAUDE.md` («Un ejemplo de cita rota se escribe sin forma de cita, o el detector lo tratará como
 rota»). Reescrito en prosa (`«la línea 20 de \`valoresTransicion.ts\`»`, sin backtick envolviendo
