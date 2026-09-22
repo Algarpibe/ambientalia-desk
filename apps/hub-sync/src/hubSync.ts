@@ -64,6 +64,17 @@ export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSy
         console.error('Backfill de OC falló (se reintentará en el incremental):', e)
       }
     }
+    // Guard aparte: los anticipos (facturas de anticipo, /retainerinvoices) llegaron después
+    // que el resto de Books. Aislado igual que los demás: un fallo aquí nunca tumba el worker.
+    if ((await maxZohoLastModified(db, 'retainer_invoices')) == null) {
+      console.log('Books anticipos vacío: backfill…')
+      try {
+        const n = await booksHubSync.backfillRetainerInvoices()
+        console.log(`Backfill de anticipos: ${n} anticipos`)
+      } catch (e) {
+        console.error('Backfill de anticipos falló (se reintentará en el incremental):', e)
+      }
+    }
   }
   if (crmSync) {
     await migrateCrm(db)

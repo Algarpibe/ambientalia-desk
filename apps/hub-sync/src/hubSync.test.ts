@@ -51,14 +51,15 @@ describe('hubBootstrap', () => {
       backfillInvoices: async () => { calls.push('inv'); return 0 },
       backfillPayments: async () => { calls.push('pay'); return 0 },
       backfillPurchaseOrders: async () => { calls.push('po'); return 0 },
-      syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0 }),
+      backfillRetainerInvoices: async () => { calls.push('ant'); return 0 },
+      syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0, retainerInvoices: 0 }),
       sweep: async () => [],
     }
     await hubBootstrap({ db, sync: mockSync(), booksHubSync })
     // pg-mem no soporta information_schema.schemata: una consulta calificada exitosa
     // prueba que el esquema books + la tabla existen (lanza si no).
     expect((await db.query('SELECT count(*)::int AS n FROM books.contacts')).rows[0].n).toBe(0)
-    expect(calls).toEqual(['c', 'i', 'so', 'inv', 'pay', 'po'])
+    expect(calls).toEqual(['c', 'i', 'so', 'inv', 'pay', 'po', 'ant'])
   })
 
   // BACKFILL_CONTACTS existe porque el guard normal mira `books.items`: sin él, repoblar contactos
@@ -71,7 +72,8 @@ describe('hubBootstrap', () => {
     backfillInvoices: async () => { calls.push('inv'); return 0 },
     backfillPayments: async () => { calls.push('pay'); return 0 },
     backfillPurchaseOrders: async () => { calls.push('po'); return 0 },
-    syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0 }),
+    backfillRetainerInvoices: async () => { calls.push('ant'); return 0 },
+    syncRecent: async () => ({ contacts: 0, items: 0, salesOrders: 0, invoices: 0, payments: 0, purchaseOrders: 0, retainerInvoices: 0 }),
     sweep: async () => [],
   })
   /**
