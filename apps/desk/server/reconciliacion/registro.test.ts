@@ -105,7 +105,7 @@ describe('registro · RQ-RC-01 y RQ-RC-09: ninguna spec de disco queda fuera de 
 describe('registro · el barrido real destapa lo que un árbol sintético no puede (R2.3.3)', () => {
   it('cuenta las capacidades UNA vez: `- name: X` no es además un elemento de lista plana', () => {
     const c = capacidades(configReal(), specsEnDisco())
-    expect(c?.cifras[0]).toBe('18 declaradas')
+    expect(c?.cifras[0]).toBe('19 declaradas')
   })
 
   it('sin lectura de código no hay divergencia que reportar: decirla sería inventar el hallazgo', () => {

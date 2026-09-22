@@ -889,6 +889,79 @@ intacta —la zona sigue siendo `America/Bogota`, fijada en el servidor—. Tamp
 derivación de responsable, que es de otra fila del maestro.
 
 ---
+
+## La de F1A-06 (17)
+
+> **Esta entrada cita la R08.2**, como la 15 y la 16.
+
+### 17 · M1.3.3 — el hueco 38/36 se cierra y los dos pasos sin botón ya declaran `from`/`to` *(F1A-06)*
+
+**Dónde va:** M1.3.3 «Dos pasos sin botón» [AS-BUILT],
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1198`, y Anexo F — Fuentes,
+`:4412-4413`. Dos partes independientes, sobre la misma línea `:1198`.
+
+#### (a) · El hueco 38 vs 36 queda cerrado
+
+**Texto actual (`:1198`, segunda oración):** «[R08.2] La cifra de 38 pasos está en revisión: el código
+declara 34 transiciones con botón más 2 sin botón, 36. Faltan dos y no se sabe cuáles. Hipótesis: el
+mapa cuenta caminos y no transiciones —Habilitar Servicio tiene tres orígenes y dibuja tres flechas—.
+Ver Anexo F.»
+
+**Y en Anexo F (`:4413`):** «Hueco nombrado, no resuelto. M1.3.3 dice que el mapa tiene 38 pasos. El
+código tiene 34 transiciones con botón más 2 sin botón = 36. Faltan dos y no se sabe cuáles; puede que
+el mapa cuente caminos en vez de transiciones. La cifra está en revisión y el generador tiene que
+cerrarla antes de su criterio de aceptación.»
+
+**Texto propuesto, listo para pegar detrás de las dos:**
+
+> **Cerrado (F1A-06, 2026-09-22).** La hipótesis de M1.3.3 y del Anexo F era correcta: el mapa cuenta
+> caminos, no transiciones declaradas. `TRANSICIONES_BASE`
+> (`packages/shared/src/transitions.ts:171-263`) son 34 entradas y sólo `habilitar_servicio` (`:178`)
+> tiene más de un origen —un `from` de tres elementos—, así que dibuja tres flechas, no una:
+> 33×1 + 1×3 = 36 caminos con botón, más los 2 sin botón (`:150-151`) = **38**. El generador
+> determinista de `packages/shared/src/mapaBlueprint.ts` dibuja **una arista por elemento de `from`**,
+> no una por transición declarada, y fija el recuento por aserción: el diagrama completo tiene
+> exactamente 38 aristas, 3 con origen `habilitar_servicio`
+> (`packages/shared/src/mapaBlueprint.test.ts`). Detalle del artefacto en la capacidad nueva
+> `mapa-blueprint` (`openspec/specs/mapa-blueprint/spec.md`).
+
+#### (b) · «Lo que no tienen es `from` ni `to`» ya es falso
+
+**Texto actual (`:1198`, dentro del primer párrafo — texto que la propia entrada 11 de este fichero
+propuso y que Gerencia pegó en la R08.2):** «Su declaración vive en el archivo de transiciones —
+`packages/shared/src/transitions.ts:150-151`, junto a las 34—, y quien los aplica es
+`apps/desk/server/db/estadoPorRemision.ts`. **Lo que no tienen es `from` ni `to`: no son grafo, y por
+eso quedan fuera de la lista que la pantalla ofrece como botones.**»
+
+**Por qué hace falta corregirlo, y por qué no es la misma corrección que la entrada 11.** La entrada 11
+(`:488` de este fichero) corrigió una frase distinta de M1.3.3 —dónde vive la declaración frente a quién
+la aplica— y esa parte sigue siendo cierta hoy: no se toca. Lo que cambia con F1A-06 es la frase que la
+propia entrada 11 añadió al pegarse en la R08.2: la Unidad A de F1A-06 (P-2) edita
+`transitions.ts:150-151` **en sitio, con delta de líneas cero**, y las dos constantes
+(`TRANSICION_REMISION_CONFIRMADA`, `TRANSICION_REMISION_RETIRADA`) pasan a declarar `from`/`to` con el
+par exacto de su transición. Siguen fuera de `TRANSITIONS` y siguen siendo de «Servicio Técnico» a
+secas —eso no cambia—, pero ya no es cierto que «no tienen `from` ni `to`». Probado por el invariante
+5b invertido (`packages/shared/src/invariantesGrafo.test.ts:120-127`), que hoy afirma el par exacto en
+vez de la ausencia.
+
+**Texto propuesto, sustituye la frase en negrita de arriba:**
+
+> Su declaración vive en el archivo de transiciones —`packages/shared/src/transitions.ts:150-151`,
+> junto a las 34—, y quien los aplica es `apps/desk/server/db/estadoPorRemision.ts`. **Desde F1A-06
+> (2026-09-22), las dos constantes SÍ declaran `from` y `to`, con el par exacto de su transición** —
+> antes vivían por fuera, y el servidor las reconstruía por separado en `estadoPorRemision.ts` con
+> literales propios; ahora el servidor deriva la guarda y el destino de esa misma declaración—. Lo que
+> las sigue dejando fuera de la lista que la pantalla ofrece como botones no es la ausencia de
+> `from`/`to`: es que nunca se añaden a `TRANSITIONS`, la única lista que la interfaz recorre para
+> pintar botones.
+
+**Lo que esta entrada NO pide.** No toca H-2 (fichas de hallazgos fuera del mapa) ni H-3 (diagrama
+completo más una vista por cada fase de M1.3.1), las dos decisiones heredadas de la propuesta
+`generador-mapa-blueprint` que este cierre no reabre. Tampoco reescribe M1.3.7 (`:1301-1458`), la tabla
+completa de los 38 pasos: esa tabla ya acertaba desde que se escribió: esta entrada sólo cierra la duda
+que M1.3.3 y el Anexo F dejaban abierta sobre ella.
+
+---
 ## Qué NO contiene este fichero
 
 - No aplica ningún cambio al `.docx`. Es texto propuesto, no un parche.

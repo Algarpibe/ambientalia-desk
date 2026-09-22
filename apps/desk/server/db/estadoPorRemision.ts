@@ -7,8 +7,8 @@
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
-  STATUS_REMISION_CREADA, STATUS_TICKET_CREADO,
-  TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA,
+  TRANSICION_REMISION_CONFIRMADA,
+  TRANSICION_REMISION_RETIRADA,
 } from '@ambientalia/shared'
 import { applyTransition } from '@ambientalia/zoho-sync/db/repo'
 
@@ -38,7 +38,7 @@ export async function sincronizarEstadoPorRemision(db: Queryable, ticketId: stri
 
   const t = await db.query('SELECT status FROM tickets WHERE id = $1', [ticketId])
   const actual = (t.rows[0] as { status?: string } | undefined)?.status
-  if (actual !== STATUS_TICKET_CREADO && actual !== STATUS_REMISION_CREADA) return
+  if (actual === undefined || ![...TRANSICION_REMISION_CONFIRMADA.from, ...TRANSICION_REMISION_RETIRADA.from].some((s) => s === actual)) return
 
   const c = await db.query(
     `SELECT COUNT(*)::int AS n FROM remisiones
@@ -46,15 +46,15 @@ export async function sincronizarEstadoPorRemision(db: Queryable, ticketId: stri
     [ticketId],
   )
   const confirmadas = (c.rows[0] as { n: number }).n
-  const destino = confirmadas > 0 ? STATUS_REMISION_CREADA : STATUS_TICKET_CREADO
-  if (destino === actual) return
+  const paso = confirmadas > 0 ? TRANSICION_REMISION_CONFIRMADA : TRANSICION_REMISION_RETIRADA
+  if (paso.to === actual) return
 
   await applyTransition(
     db,
     ticketId,
     actual,
-    confirmadas > 0 ? TRANSICION_REMISION_CONFIRMADA : TRANSICION_REMISION_RETIRADA,
-    { status: destino, statusType: 'Open', columns: {}, customFields: {} },
+    paso,
+    { status: paso.to, statusType: 'Open', columns: {}, customFields: {} },
     actor,
     {},
   )

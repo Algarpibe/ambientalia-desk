@@ -45,6 +45,19 @@ a este fichero.)
 Lo produjo **una conversación de agente en agosto de 2026**. No quedó script, ni plantilla,
 ni entrada de `package.json`. **Hoy no existe forma de reproducirlo.**
 
+> **⚠️ PRECISIÓN DE F1A-06 (2026-09-22): sigue sin haber generador para ESTE fichero, y ahora SÍ
+> hay uno para el mapa vigente.** Nada de lo de arriba se retira: `blueprintserviciotecnico.html`
+> queda **histórico congelado** en el commit `a3a8f03` (decisión heredada H-1 de la propuesta
+> `generador-mapa-blueprint`), y sigue siendo cierto que este `.html` concreto no tiene ni tendrá
+> generador. Lo que cambia es que el flujo tiene, desde esta tanda, un mapa **generado y
+> reproducible**, como sustituto vigente: función pura en
+> `packages/shared/src/mapaBlueprint.ts`, CLI en `scripts/generar-mapa-blueprint.ts`
+> (`npm run generar-mapa-blueprint`), y salida en cuatro ficheros —
+> `docs/artefactos/blueprint-completo.md` más una vista por cada una de las tres fases de
+> M1.3.1—, con una prueba anti-desfase que se pone roja si el fichero commiteado y el grafo dejan
+> de decir lo mismo (`packages/shared/src/mapaBlueprint.test.ts`). Detalle del procedimiento en
+> §6.
+
 ## 4 · Cambio de alcance: las tandas `audit-*` NO regeneran este fichero
 
 El plan `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:388` **en `a5da6b8`** decía que este
@@ -106,9 +119,26 @@ El coste se acota con `.gitattributes` en la raíz, que lo marca **`-diff -merge
 
 ## 6 · Cómo actualizarlo hoy
 
-No hay procedimiento automático, y **F1A-05 no construyó el generador**: la única vía sigue siendo
-producir un fichero nuevo y sustituir éste entero. Si eso ocurre, actualizar en esta nota tamaño,
-número de líneas y fecha de generación, y **retirar el aviso de caducidad** (§7).
+**Para ESTE fichero, `blueprintserviciotecnico.html`, nada cambió: sigue sin procedimiento
+automático**, y **F1A-05 no construyó el generador** — es histórico congelado (§3) y no se
+regenera. Si algún día se sustituyera entero por un fichero nuevo, tocaría actualizar en esta nota
+tamaño, número de líneas y fecha de generación, y retirar el aviso de caducidad (§7); pero eso no
+es lo que hizo F1A-06.
+
+**Para el mapa vigente del flujo, desde F1A-06 (2026-09-22) SÍ hay procedimiento automático, y es
+éste:**
+
+```
+npm run generar-mapa-blueprint
+```
+
+Regenera los cuatro ficheros de `docs/artefactos/blueprint-*.md` (el completo y las tres vistas por
+fase de M1.3.1) desde `TRANSITIONS`/`ESTADOS` en `packages/shared/src`, de forma determinista —dos
+ejecuciones seguidas producen bytes idénticos—. La prueba `mapaBlueprint.test.ts` compara la salida
+regenerada contra lo commiteado y falla si alguien edita uno de esos cuatro ficheros a mano o si el
+grafo cambia sin volver a correr el script: no hace falta acordarse de regenerar, el CI lo impone.
+El aviso de caducidad del `.html` (§7) sigue vigente y **no se retira** por esto: avisa de un
+fichero distinto, que sigue congelado.
 
 ## 7 · El aviso de caducidad que lleva incrustado
 

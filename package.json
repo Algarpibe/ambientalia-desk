@@ -21,7 +21,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "generar-mapa-blueprint": "tsx scripts/generar-mapa-blueprint.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TRANSITIONS, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA,
+  TRANSITIONS, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
 } from './transitions'
 import { ESTADOS } from './estados'
 import { camposFechaReentrantes } from './reentrancia'
@@ -106,21 +106,21 @@ describe('invariantes del grafo de transiciones', () => {
   })
 
   /**
-   * LA EXCLUSIÓN, ESCRITA, para que el siguiente no la descubra tropezando.
+   * LA EXCLUSIÓN, ESCRITA, para que el siguiente no la descubra tropezando — invertida por P-2.
    *
    * `TRANSICION_REMISION_CONFIRMADA` y `TRANSICION_REMISION_RETIRADA` (`transitions.ts:150-151`)
-   * tienen `id`, `name` y `area`, pero NO tienen `from` ni `to`: no son botones, las aplica el
-   * servidor solo cuando n8n confirma o anula el documento. Un invariante de grafo escrito sobre
-   * «todas las transiciones exportadas» se rompería con ellas, porque no hay grafo que recorrer.
+   * AHORA declaran `from`/`to`, con el par exacto: se cierra la tercera copia que
+   * `estadoPorRemision.ts` reconstruía con literales sueltos (P-2 del proposal). Siguen sin ser
+   * botones — las aplica el servidor solo cuando n8n confirma o anula el documento.
    *
-   * Quedan fuera de los invariantes 1-5 por eso, y ninguna de las dos mueve el ocho del invariante
-   * 5: las dos son de `Servicio Técnico` a secas. Esta prueba fija esas dos cosas —que siguen sin
-   * `from`/`to` y que siguen sin área compartida— para que la exclusión no se quede en un comentario.
+   * El discriminador de «no es botón» ya no puede ser `from`/`to` ausente: pasa a ser `fields`
+   * ausente, porque las 34 de `TRANSITIONS` siempre lo llevan. Ninguna de las dos mueve el ocho
+   * del invariante 5: las dos siguen siendo de `Servicio Técnico` a secas.
    */
-  it('5b · las dos sin botón se excluyen del grafo a propósito, y no mueven el ocho', () => {
-    for (const t of [TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA]) {
-      expect(t).not.toHaveProperty('from')
-      expect(t).not.toHaveProperty('to')
+  it('5b · las dos sin botón declaran su par exacto y siguen fuera de TRANSITIONS', () => {
+    for (const [t, from, to] of [[TRANSICION_REMISION_CONFIRMADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA], [TRANSICION_REMISION_RETIRADA, STATUS_REMISION_CREADA, STATUS_TICKET_CREADO]] as const) {
+      expect([t.from, t.to], `${t.id} ya no declara su par`).toEqual([[from], to])
+      expect(t, `${t.id} ganó fields: ya es un botón`).not.toHaveProperty('fields')
       expect(t.area, `${t.id} dejó de ser de Servicio Técnico a secas`).toBe('Servicio Técnico')
       expect(TRANSITIONS.some((x) => x.id === t.id), `${t.id} se coló en TRANSITIONS`).toBe(false)
     }
