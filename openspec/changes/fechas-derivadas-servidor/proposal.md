@@ -66,7 +66,8 @@ historial; una sola fórmula, en `packages/shared`, con la zona fijada; el clien
   instante pasa a leerse en Bogotá. *Hipótesis:* hoy ningún escritor deja instantes en campos de fecha
   (el `<input type="date">` manda `YYYY-MM-DD`, `TransitionPanel.tsx:254`), así que el cambio no mueve
   ningún bodegaje real.
-- **P-4 · `vitest.config.ts:7` pasa a `process.env.TZ ??= 'UTC'`** (§5).
+- **P-4 · RETIRADA** (2026-09-21, tras el diseño). Proponía `process.env.TZ ??= 'UTC'` en `vitest.config.ts:7`;
+  la demostración de zona vive ahora dentro de la suite y `vitest.config.ts` no se toca (§5).
 
 ## 3 · Enfoque
 
@@ -131,6 +132,10 @@ demás fechas cambia todas las transiciones y no es IV-2.
 - **E-022** (`docs/sdd/ENTRADA.md`, registrada al contrastar P-2): el mismo canal de P-2 existe para los
   **demás** operandos de bodegaje (`bodegaje.ts:58-80`). P-2 lo cierra sólo para las tres fechas de IV-2; el
   arreglo general cambia qué registra toda transición y no es de esta tanda. Sin destino.
+- **E-023** (`docs/sdd/ENTRADA.md`, registrada al escribir la spec): las citas a `ticketService.ts` están
+  caducas en masa (medida del analista: 76 de 124 sin ancla, 41 en specs vivas y `config.yaml`, y es un
+  suelo). Esta tanda sólo reancla los tres bloques de `transitions-st` que reescribe su delta; el resto,
+  reparación por bloques en `main` que decide Gerencia.
 
 ## 5 · Pruebas (`strict_tdd`) y la demostración de zona horaria
 
@@ -138,19 +143,24 @@ demás fechas cambia todas las transiciones y no es IV-2.
 un `TZ` externo (sonda del orquestador, `exploration.md`, «Contraste», punto 1). «Verde con
 `TZ=America/Bogota`» no se obtiene hoy con una variable de entorno.
 
-- **Propuesta (P-4):** `process.env.TZ ??= 'UTC'`. Por defecto sigue en UTC (CI en `ubuntu-latest`,
-  `.github/workflows/ci.yml:9`; contenedores, comentario `vitest.config.ts:4-6`), y un `TZ` explícito
-  manda. **En sitio:** `:4-7` se reescriben sin cambiar el número de líneas, porque el fichero tiene 37 citas vivas en 15 ficheros; entre ellas, `CLAUDE.md` cita
-  `vitest.config.ts:16` y `:17-20`. *Hipótesis a comprobar como primera tarea del `apply`:* que el `TZ`
-  externo llega a los workers (vitest 3, pool por defecto); la sonda imprime `getTimezoneOffset()` = 300.
-- **Riesgo:** quien tenga `TZ` puesto en su shell correrá la suite en otra zona. Se escribe en el propio
-  comentario de `:4-6`.
-- **Alternativa descartada:** un script con `tsx` fuera de vitest. Es un segundo arnés que ni `npm test`
-  ni el CI corren, y su resultado no queda en la suite.
+- **P-4 · RETIRADA por el analista el 2026-09-21, tras el diseño.** `vitest.config.ts` **no se toca**.
+  El diseño encontró el mecanismo dentro de la suite: `apps/desk/src/lib/remisionResultado.test.ts:15-16`
+  ya corre un fichero en Bogotá con `vi.stubEnv('TZ', …)`, y se autocomprueba en `:23`. La demostración
+  pasa a ser **permanente**: `describe.each` sobre `UTC` y `America/Bogota`, en cada `npm test` y en el CI.
+- **Tres condiciones del analista**, porque el precedente fija UNA zona por fichero y aquí se cambia de zona
+  ENTRE BLOQUES dentro del mismo proceso:
+  1. **Cada bloque lleva su PROPIA autocomprobación**, antes de mirar nada: en Bogotá, el parseo ingenuo de
+     una `YYYY-MM-DD` retrocede un día; en UTC, no. Un bloque que no demuestra que su zona está puesta no vale.
+  2. **`vi.stubEnv` en el `beforeAll` de cada bloque y `vi.unstubAllEnvs()` en su `afterAll`**, para que
+     ninguna zona se escape al bloque siguiente.
+  3. **La fase roja queda escrita en `apply-progress`** con comando y salida: la prueba contra la
+     implementación vieja, con el bloque UTC en **rojo** y el de Bogotá en verde **en falso**. Después de
+     implementar, los dos en verde.
+- **Alternativas descartadas:** `process.env.TZ ??= 'UTC'` en la configuración (tocaba un fichero con 37
+  citas vivas en 15 ficheros, y un `TZ` puesto en la shell correría toda la suite en otra zona) y un script
+  con `tsx` fuera de vitest (un segundo arnés que ni `npm test` ni el CI corren).
 - **La demostración, literal:** el instante `2026-09-10T00:30:00Z` da `2026-09-09` en `Fecha creación
-  ticket` y en `Fecha Revisión Informe`. **Roja** con `TZ=UTC` contra la implementación vieja (fase roja);
-  **verde** con `TZ=America/Bogota` **y** con `TZ=UTC` contra la nueva; y la vieja **pasa en falso** bajo
-  Bogotá. Las cuatro corridas quedan en `apply-progress` con comando y salida.
+  ticket` y en `Fecha Revisión Informe`, en los dos bloques.
 
 **Criterios mínimos de prueba** (el diseño los amplía):
 
@@ -179,9 +189,13 @@ un `TZ` externo (sonda del orquestador, `exploration.md`, «Contraste», punto 1
 - **Regla de mutación 3:** enumerar por escrito cada decisión del cliente sobre estas fechas —qué
   prellena, qué bloquea, qué deja teclear— y la línea del servidor que la impone.
 - **Regla de mutación 4:** barrido de `valoresTransicion.ts` (3 citas vivas en 2 ficheros),
-  `ticketService.ts` (125 en 32), `bodegaje.ts` (14 en 8) y `vitest.config.ts`; `transitionExec.ts` sólo
+  `ticketService.ts` (125 en 32) y `bodegaje.ts` (14 en 8); `vitest.config.ts` ya no (P-4 retirada); `transitionExec.ts` sólo
   si se toca. Las fechadas son caso B. Ya hay candidatos medidos: la ficha IV-2 de `openspec/config.yaml`
   y el §3.4 de `trazas` citan el bloque de entrada del bodegaje con un rango desplazado una línea.
+- **Anclas de los deltas al archivar** (indicación del analista, 2026-09-21): las citas de los bloques
+  `MODIFIED` y `ADDED` se vuelven a comprobar contra el árbol de ESE momento, no contra `4976787`.
+  `ticketService.ts:130` y `:132` no se mueven, pero cambian de contenido: toda cita que las nombre tiene
+  que describir el contenido nuevo. Es lo que falló en F1B-10 (E-023, `docs/sdd/ENTRADA.md`).
 - **IV-2 pasa a CERRADO a la vez** en `openspec/config.yaml:423-477` y en `CLAUDE.md:338` (su fila,
   que aún dice «PUNTO ABIERTO PARA GERENCIA. Ninguna tanda lo cubre», caducada desde el 17/09:
   `openspec/config.yaml:439`). El recuento «**Cinco** desvíos vivos» (`CLAUDE.md:308`, lista en `:324-325`) baja a
@@ -208,7 +222,6 @@ un `TZ` externo (sonda del orquestador, `exploration.md`, «Contraste», punto 1
 | `packages/shared/src/bodegaje.ts` | `dia()` consume la función nueva (P-3) |
 | `apps/desk/server/services/ticketService.ts` | Lectura de fuentes y valores efectivos en `executeTransition` |
 | `apps/desk/src/lib/valoresTransicion.ts` + prueba | Consume la función compartida; se va `diaLocal` |
-| `vitest.config.ts` | `TZ ??= 'UTC'`, en sitio (P-4) |
 | `openspec/specs/trazas`, `openspec/specs/transitions-st` | Deltas: RQ-TZ-03, RQ-TZ-11; RQ-TS-06, RQ-TS-08 y §3.8 |
 | `CLAUDE.md`, `openspec/config.yaml`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md` | Cierre de IV-2 y entrada 16 |
 
@@ -218,7 +231,7 @@ un `TZ` externo (sonda del orquestador, `exploration.md`, «Contraste», punto 1
 |---|---|---|
 | Mover líneas de `ticketService.ts` desfasa hasta 125 citas | Alta | Edición en sitio o barrido presupuestado (§3.2) |
 | El navegador no tenía la fuente que el servidor sí tiene: lo tecleado se descarta sin aviso | Baja | Es lo que decide (a); la respuesta devuelve el ticket con el valor impuesto |
-| Con `??=`, un `TZ` en la shell cambia la zona de toda la suite | Media | Comentario en `vitest.config.ts:4-6`; el CI no se ve afectado |
+| Un bloque de zona que no cambia de zona pasa en verde sin probar nada | Media | Autocomprobación propia en cada bloque de `describe.each` (§5, condición 1) |
 | `Intl` con zona no funciona en Alpine | Baja | Tarea docker + comprobación de persona (§5) |
 | Pruebas viejas que se invierten leídas como regresión | Media | §3.3 las nombra; la fase roja se escribe antes |
 
@@ -231,7 +244,7 @@ y en el historial: revertir no deja nada que reparar.
 ## 11 · Presupuesto (techo 800 por intento)
 
 - **Apply, código + pruebas:** ~420–520 (módulo y pruebas ~220, servidor y pruebas HTTP ~190, cliente
-  ~50, `bodegaje` ~20, config ~4). **Cierre documental:** ~75–135 (0–60 de barrido según §3.2).
+  ~50, `bodegaje` ~20). **Cierre documental:** ~75–135 (0–60 de barrido según §3.2).
   **Total del apply: ~500–650.**
 - **`verify-report.md`, sumando obligatorio aparte:** 186–358 por precedentes. **Apply y verify no caben
   juntos en 800:** van en intentos distintos. El `archive` necesita techo propio (regla del ciclo 2).
@@ -240,8 +253,8 @@ y en el historial: revertir no deja nada que reparar.
 ## 12 · Criterios de éxito
 
 - [ ] Los siete criterios de prueba de §5, en verde, con su fase roja registrada.
-- [ ] La demostración de zona: roja-vieja/UTC, verde-nueva/UTC, verde-nueva/Bogotá y vieja en falso
-      bajo Bogotá, con salida.
+- [ ] La demostración de zona dentro de la suite: contra la vieja, bloque UTC rojo y bloque Bogotá verde
+      en falso; contra la nueva, los dos verdes; cada bloque con su autocomprobación, y la fase roja con salida.
 - [ ] Tarea docker ejecutada o marcada «no ejecutable»; comprobación de persona declarada aparte.
 - [ ] `npm test`, `npm run typecheck` y `npm run lint` en verde; `transitionExec.ts` y `repo.ts` sin diff.
 - [ ] Reglas de mutación 3 y 4 hechas por escrito; IV-2 CERRADO en `config.yaml` y `CLAUDE.md` a la vez.

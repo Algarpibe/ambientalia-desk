@@ -312,3 +312,30 @@ Salida` enviadas por la API en una transición que no las pide entran en el hist
 **Lo que F1A-07 sí cierra, y por qué sólo eso:** su P-2 descarta del `values` las TRES fechas de IV-2 cuando la transición
 no las declara. Las demás son operandos de otras tandas y no son IV-2. El arreglo general —que el historial guarde sólo los
 campos declarados— cambia qué registra TODA transición, y esa decisión no es de una tanda de correcciones.
+
+## E-023 · 2026-09-21 · hallazgo
+**Qué:** Las citas `ruta:línea` a `apps/desk/server/services/ticketService.ts` están caducas en masa: afirman en presente algo que la línea citada ya no dice, y el detector del pre-push no lo ve.
+**De dónde viene:** la spec de F1A-07 (`fechas-derivadas-servidor`), al reanclar la tabla de RQ-TS-06 de `transitions-st`; medido por el analista el 21/09
+**Afecta a:** specs vivas y `openspec/config.yaml` —lo que la sesión carga—, y el resto de documentos que citan el módulo
+**Estado:** triada
+**Destino propuesto:** reparación documental directa por bloques en `main`, como la de la línea base de IV-10 (P.2 de `hook-citas-pre-push`, 15/09), **fuera** de los tres bloques de `transitions-st` que reescribe el delta de F1A-07 (RQ-TS-06, RQ-TS-08 y §3.8), para no cruzarse con él. **Lo decide Gerencia.**
+
+**La medida, del analista, sobre `4976787`** (no repetida por el orquestador): **124** citas a `ticketService.ts` sin ancla de
+revisión, de las que **76 fallan** la comprobación —el texto de la línea citada en la revisión en que se escribió la cita no es
+el texto de esa línea hoy—. **41** de las 76 están en specs vivas y en `config.yaml`: `derivacion-avisos` 12, `transitions-st`
+11, `tickets-core` 5, `trazas` 4, `permissions` 4, `openspec/config.yaml` 4 y `remisiones` 1.
+
+**Y es un SUELO, no el total.** Las anclas de un bloque que un archive fusionó en una spec viva no se ven con esa comprobación:
+el commit del archive las reescribe con el fichero ya movido, así que en su propia revisión parecen ciertas. El caso de §3.8 de
+`transitions-st` salió leyendo, no con el detector.
+
+**Parte de la causa, verificada:** F1B-10. En `f367186` las anclas eran ciertas; `ccedf4f` (su código) desplazó las líneas de
+`executeTransition` y de `createManagedTicket`, y `aa886c6` (su archive) fusionó en la spec viva anclas medidas antes de ese
+desplazamiento. Ejemplo comprobado de disco: `openspec/specs/transitions-st/spec.md:286` cita la línea 145 de `ticketService.ts`
+como la del actor; en `f367186` lo era, y en `4976787` esa línea es un comentario y el actor está en la 151.
+
+**Por qué el detector no lo caza:** comprueba que la línea citada exista y no esté vacía, nunca que diga lo que la frase afirma
+(`CLAUDE.md`, regla de mutación 4).
+
+**Lo que F1A-07 sí hace, y nada más:** reancla como caso A las citas de `ticketService.ts` de los tres bloques que su delta
+reescribe, y al archivar las vuelve a comprobar contra el árbol de ese momento.
