@@ -32,7 +32,7 @@ la regla de mutación 4. **Procedencia:** fila F1A-06,
 El mapa visual del flujo **no tiene generador**: lo produjo una conversación de agente en agosto y hoy
 no hay forma de reproducirlo (`docs/artefactos/NOTA.md:32-46`). La consecuencia ya ocurrió: el
 artefacto describe desde el 21/08 un flujo anterior a C1, C11 y C9, y por eso lleva incrustado un aviso
-de caducidad (`NOTA.md:113-118`). El maestro lo dice en una línea que es el porqué entero de esta
+de caducidad (`NOTA.md:143-148`; era `:113-118` en `125ae3e`, reanclada tras Unidad C). El maestro lo dice en una línea que es el porqué entero de esta
 tanda: **«se actualiza con cada auditoría» no era un mecanismo, era una promesa, y nadie la cumplió**
 (`R08.2.md:4412`; el mismo diagnóstico en `:210`).
 
@@ -149,7 +149,7 @@ aguanta: `applyTransition` recibe `Transitionish` (`packages/zoho-sync/src/db/re
 ## 6 · Fuera de alcance
 
 - **Regenerar o retirar `blueprintserviciotecnico.html`.** Queda congelado en `a3a8f03` con su aviso
-  (`NOTA.md:113-130`). Lo único que se hace es actualizar `NOTA.md` para decir que **ya hay generador**.
+  (`NOTA.md:143-160`; era `:113-130` en `125ae3e`, reanclada tras Unidad C). Lo único que se hace es actualizar `NOTA.md` para decir que **ya hay generador**.
 - Las fichas de hallazgos en el mapa (H-2, decisión del maestro) y cualquier leyenda interactiva.
 - Los grafos nuevos de **F1B-06**: el generador se construye antes para que nazcan con diagrama
   (`plan:145`), no para dibujarlos ahora.
@@ -245,7 +245,7 @@ usuario: van aquí, con el supuesto que se ha usado mientras tanto.
 
 1. **¿Capacidad propia o dentro de `transitions-st`?** Supuesto: propia (`mapa-blueprint`), porque el
    contrato del artefacto no es un requisito del motor. Cambiarlo no cambia el trabajo.
-2. **¿Quién abre el mapa y cada cuánto?** `NOTA.md:84-86` deja abierto justo esto y lo manda a
+2. **¿Quién abre el mapa y cada cuánto?** `NOTA.md:97-99` (era `:84-86` en `125ae3e`, reanclada tras Unidad C) deja abierto justo esto y lo manda a
    Gerencia. Supuesto: entregable de consulta, no de operación diaria — por eso basta `.md` en el
    repositorio, sin publicación ni enlace desde la aplicación.
 3. **¿La vista por fase repite las transiciones frontera en las dos vistas, o se corta por una?**

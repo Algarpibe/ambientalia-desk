@@ -327,7 +327,7 @@ maestro R08.1/anterior a R08.2—, pero converge con el mismo tema. Su reconcili
 
 ## C.3 — `openspec/config.yaml` (verificación, no edición)
 
-**C.3.1 confirmado por lectura directa:** `config.yaml:271-284` tiene `mapa-blueprint` en
+**C.3.1 confirmado por lectura directa:** `config.yaml:271-283` tiene `mapa-blueprint` en
 `capabilities`, con `covers`, `status_at_start` y `declarada_en` completos, escrita en la fase
 `sdd-spec` de esta misma tanda (Engram obs. #879). No fue tocada por A ni por B
 (`git log --oneline -- openspec/config.yaml` desde `7670f89`: sin commits de A ni B sobre este
@@ -337,8 +337,9 @@ fichero) ni por esta Unidad C: `git diff 8a36d03 -- openspec/config.yaml` vacío
 
 `grep -rnoE "F0-01_Correcciones_para_el_maestro\.md:[0-9]+(-[0-9]+)?"` sobre todo el árbol, excluyendo
 `archive/`: 3 ocurrencias externas.
-- `openspec/specs/permissions/spec.md:309` cita `:129` y `:142-167` — muy por debajo de la línea `:891`
-  donde empieza la inserción de la entrada 17; sin desplazamiento, sin reparar.
+- `openspec/specs/permissions/spec.md:309` cita `:129` y `:142-167` — muy por debajo del punto de
+  inserción de la entrada 17 en F0-01_Correcciones_para_el_maestro.md (línea 891 de antes de editar);
+  sin desplazamiento, sin reparar.
 - `generador-mapa-blueprint/apply-progress.md:63` (este mismo fichero, texto de la Unidad A) cita
   `:510` atribuyéndolo a «entrada 16» — la línea 510 en sí es correcta y no se desplazó (está dentro
   de la entrada 11, `:488-515`, muy por debajo de `:891`); la etiqueta «entrada 16» en esa nota de la
