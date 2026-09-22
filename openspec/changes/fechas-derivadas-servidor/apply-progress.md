@@ -398,6 +398,18 @@ npm run typecheck → exit 0
 tsx apps/desk/server/citas/cli.ts --sha 8d4f577 → exit 0 (comprobadas 2172 · abreviadas rotas 11,
                      informativas, mismas de siempre · cabeceras R-1 inválidas 0 · sin bloqueantes)
 ```
-Medida del ledger: `git diff --shortstat --no-renames aadcef5 HEAD` → 3 ficheros, spec delta + test +
-`apply-progress.md`, dentro del techo de 100 líneas del objetivo. Sin diff en código de producción.
-Commits: `5e8c843` (spec), `62140e4` (test), `8d4f577` (fix del bloqueante preexistente del detector).
+Medida del ledger: `git diff --shortstat --no-renames aadcef5 HEAD` (antes de esta propia frase) →
+3 ficheros, **113 insertions(+), 4 deletions(-)**, spec delta + test + `apply-progress.md`. **Por
+ENCIMA del techo de 100 líneas** declarado en el `acquire` de este objetivo — el techo se calculó sobre
+el spec delta y el test, y no presupuestó el fix del bloqueante preexistente del detector ni su propio
+registro en este fichero (Hallazgo colateral, arriba). Sin diff en código de producción.
+Commits: `5e8c843` (spec), `62140e4` (test), `8d4f577` (fix del bloqueante preexistente del detector),
+`2e94bf7` (esta sección).
+
+**`gentle-ai sdd-attempt settle`** (`outcome: passed`, `changed_lines: 117`) devolvió
+`changed_line_budget_exceeded: true` y, tras registrar la evidencia, `gentle-ai sdd-attempt status`
+reporta `decision_required: true`, `complete: false`, `next_action: "reset"` para este cambio. Por la
+regla del ciclo 2 de `CLAUDE.md`, `gentle-ai sdd-attempt reset` está **reservado a un mantenedor y esta
+tanda no lo ejecuta**: el trabajo de código, spec y test queda completo, commiteado y en verde, pero
+abrir el SIGUIENTE objetivo de `sdd-attempt` en este cambio —incluido el que abriría `sdd-verify`—
+queda bloqueado hasta ese reset.
