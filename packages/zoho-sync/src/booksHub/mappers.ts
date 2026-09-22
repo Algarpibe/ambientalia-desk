@@ -12,6 +12,7 @@ export interface CustomerPaymentRow { payment_id: string; payment_number: string
 export interface PaymentInvoiceRow { invoice_payment_id: string; payment_id: string; invoice_id: string | null; invoice_number: string | null; amount_applied: number | null; tax_amount_withheld: number | null; total: number | null; balance: number | null; due_date: string | null; apply_date: string | null; raw: unknown }
 export interface PurchaseOrderRow { purchaseorder_id: string; purchaseorder_number: string | null; reference_number: string | null; vendor_id: string | null; vendor_name: string | null; date: string | null; delivery_date: string | null; status: string | null; order_status: string | null; received_status: string | null; billed_status: string | null; currency_code: string | null; exchange_rate: number | null; total: number | null; raw: unknown; zoho_last_modified: string | null }
 export interface PoLineRow { line_item_id: string; purchaseorder_id: string; item_id: string | null; sku: string | null; name: string | null; quantity: number | null; quantity_received: number | null; quantity_cancelled: number | null; quantity_billed: number | null; rate: number | null; bcy_rate: number | null; item_total: number | null; raw: unknown }
+export interface RetainerInvoiceRow { retainerinvoice_id: string; retainerinvoice_number: string | null; reference_number: string | null; date: string | null; status: string | null; customer_id: string | null; customer_name: string | null; currency_code: string | null; total: number | null; payment_made: number | null; payment_drawn: number | null; raw: unknown; zoho_last_modified: string | null }
 
 export function contactRow(raw: any): ContactRow {
   // Dirección y teléfono viven en `billing_address`, que SOLO viene en el detalle del contacto
@@ -105,5 +106,17 @@ export function poLineRow(purchaseorderId: string, raw: any): PoLineRow {
     quantity: num(raw.quantity), quantity_received: num(raw.quantity_received),
     quantity_cancelled: num(raw.quantity_cancelled), quantity_billed: num(raw.quantity_billed),
     rate: num(raw.rate), bcy_rate: num(raw.bcy_rate), item_total: num(raw.item_total), raw,
+  }
+}
+export function retainerInvoiceRow(raw: any): RetainerInvoiceRow {
+  // Sin tabla de líneas: una línea de anticipo solo trae descripción e importe, y la
+  // descripción («Anticipo OV-2026-167») es lo único que la enlaza con su OV. hub-api la lee
+  // de raw->'line_items'. payment_made = lo cobrado, payment_drawn = lo ya aplicado a facturas.
+  return {
+    retainerinvoice_id: raw.retainerinvoice_id, retainerinvoice_number: str(raw.retainerinvoice_number),
+    reference_number: str(raw.reference_number), date: raw.date || null, status: str(raw.status),
+    customer_id: str(raw.customer_id), customer_name: str(raw.customer_name), currency_code: str(raw.currency_code),
+    total: num(raw.total), payment_made: num(raw.payment_made), payment_drawn: num(raw.payment_drawn),
+    raw, zoho_last_modified: raw.last_modified_time ?? null,
   }
 }

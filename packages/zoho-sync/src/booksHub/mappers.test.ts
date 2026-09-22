@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow, purchaseOrderRow, poLineRow } from './mappers'
+import { contactRow, itemRow, salesOrderRow, soLineRow, invoiceRow, invoiceLineRow, customerPaymentRow, paymentInvoiceRow, purchaseOrderRow, poLineRow, retainerInvoiceRow } from './mappers'
 
 describe('booksHub mappers', () => {
   it('contactRow mapea campos y guarda raw completo', () => {
@@ -123,5 +123,24 @@ describe('booksHub mappers', () => {
     expect(r.invoice_number).toBe('AM1439')
     expect(r.amount_applied).toBe(1000000)
     expect(r.balance).toBe(0)
+  })
+
+  it('retainerInvoiceRow mapea cobrado y aplicado, y deja las líneas en raw', () => {
+    const r = retainerInvoiceRow({
+      retainerinvoice_id: 'ri1', retainerinvoice_number: 'ANT-2026-063', reference_number: '',
+      date: '2026-09-15', status: 'paid', customer_id: 'c1', customer_name: 'SGS Colombia S.A.S.',
+      currency_code: 'COP', total: '9505784', payment_made: '9505784', payment_drawn: '0',
+      last_modified_time: '2026-09-15T10:00:00-0500',
+      line_items: [{ line_item_id: 'rl1', description: 'Anticipo OV-2026-167', item_total: 9505784 }],
+    })
+    expect(r.retainerinvoice_id).toBe('ri1')
+    expect(r.retainerinvoice_number).toBe('ANT-2026-063')
+    expect(r.reference_number).toBeNull()
+    expect(r.status).toBe('paid')
+    expect(r.total).toBe(9505784)
+    expect(r.payment_made).toBe(9505784)
+    expect(r.payment_drawn).toBe(0)
+    expect(r.zoho_last_modified).toBe('2026-09-15T10:00:00-0500')
+    expect((r.raw as any).line_items[0].description).toBe('Anticipo OV-2026-167')
   })
 })
