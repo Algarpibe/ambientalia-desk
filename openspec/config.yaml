@@ -65,11 +65,11 @@ testing:
       propósito (vitest.config.ts:45-48): ver ui_tests.
   quality_tools:
     linter: >
-      eslint . (eslint ^9.15.0) — 0 errores, 158 avisos (157 no-explicit-any,
-      1 react-hooks/exhaustive-deps). La cifra NO se ha movido desde el baseline
-      a3a8f03: las tandas F1A no añadieron ni un aviso.
+      eslint . (eslint ^9.15.0) — 0 errores, 165 avisos: los 158 del baseline
+      a3a8f03 (157 no-explicit-any, 1 react-hooks/exhaustive-deps) más 7
+      no-explicit-any de booksHub/ del 22/09, deuda registrada en ENTRADA.md E-028.
       CORREGIDO EN F1A-05 el «sin --max-warnings»: desde edbce13 (2026-09-08) el
-      CI corre `npm run lint -- --max-warnings 158` (.github/workflows/ci.yml:41),
+      CI corre `npm run lint -- --max-warnings` 158; 165 desde f7c9dc1 (ci.yml:41),
       que es un TRINQUETE sin holgura, no un objetivo.
       ARREGLADO EN F1A-05 (hallazgo A-5): hasta este commit `eslint .` daba 161 en
       cuanto existía el directorio `coverage/` —salida de test:coverage, ignorada
@@ -80,7 +80,7 @@ testing:
       arregló eliminando la dependencia, no documentándola.
     type_checker: "tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit (typescript ~5.6.2)"
     formatter: "—"
-  ci: ".github/workflows/ci.yml — Node 22, servicio postgres:17 adjunto, npm ci -> typecheck -> lint (--max-warnings 158) -> test:coverage (umbrales de vitest.config.ts:58-63) -> build"
+  ci: ".github/workflows/ci.yml — Node 22, servicio postgres:17 adjunto, npm ci -> typecheck -> lint (--max-warnings 165) -> test:coverage (umbrales de vitest.config.ts:58-63) -> build"
   volume:
     ts_tsx_incluyendo_pruebas: 30677
     ts_tsx_excluyendo_pruebas: 19292
