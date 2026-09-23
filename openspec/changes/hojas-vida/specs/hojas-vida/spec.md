@@ -29,7 +29,7 @@ no la de compra del equipo, y la casilla de Drive del ticket es por transición
 
 ## 1 · Los seis campos, todos opcionales
 
-### RQ-HV-01 · Los seis campos son opcionales y no alteran el comportamiento existente
+### Requirement: RQ-HV-01 · Los seis campos son opcionales y no alteran el comportamiento existente
 
 El sistema **SHALL** permitir guardar, por equipo, seis campos nuevos, todos opcionales: fecha de
 adquisición, fecha de factura de compra, fin de garantía, código interno, mantenedor (referencia a un
@@ -48,7 +48,7 @@ seguir operando un equipo: hoy el alta sólo exige `serial`, `clientId` y `model
 - WHEN se envía el `POST /api/equipos`
 - THEN el equipo se crea con `201` y la respuesta devuelve los seis valores
 
-### RQ-HV-02 · Se extiende el POST y el PATCH existentes; no hay endpoint nuevo
+### Requirement: RQ-HV-02 · Se extiende el POST y el PATCH existentes; no hay endpoint nuevo
 
 El sistema **SHALL** aceptar los seis campos en el mismo `POST /api/equipos` y `PATCH /api/equipos/:id`
 que ya existen (`apps/desk/server/routes/equipos.ts:47`, `:66`; escritura en `db/equipos.ts:104`
@@ -62,7 +62,7 @@ se escribe lo que llega.
 - THEN responde `200` y sólo ese campo queda escrito
 - AND los otros cinco siguen vacíos, y el resto del equipo (serial, modelo, cliente, `active`) no cambia
 
-### RQ-HV-03 · Toda fecha se valida en servidor, y el rechazo precede a cualquier escritura
+### Requirement: RQ-HV-03 · Toda fecha se valida en servidor, y el rechazo precede a cualquier escritura
 
 El sistema **SHALL** validar el formato de las tres fechas (adquisición, factura de compra, fin de
 garantía) en el servidor y **MUST NOT** escribir nada del `POST` o `PATCH` cuando una de ellas es
@@ -77,7 +77,7 @@ formato en este mismo repositorio: `apps/desk/server/routes/remision.ts:127` val
 - THEN responde `422`
 - AND ninguno de los seis campos nuevos, ni el resto del equipo, queda escrito
 
-### RQ-HV-04 · El enlace de Drive se valida con `urlSegura`, sólo `https://`
+### Requirement: RQ-HV-04 · El enlace de Drive se valida con `urlSegura`, sólo `https://`
 
 El sistema **SHALL** validar el enlace de Drive con `urlSegura`
 (`packages/shared/src/remision.ts:100-102`), la función ya compartida que usan el cliente (paneles de
@@ -106,7 +106,7 @@ escribirlo.
 - AND este escenario es el que distingue usar `urlSegura` de un `startsWith('https://')` desnudo: sólo
   `urlSegura` lo rechaza
 
-### RQ-HV-05 · El mantenedor se valida contra Books, igual que el cliente
+### Requirement: RQ-HV-05 · El mantenedor se valida contra Books, igual que el cliente
 
 El sistema **SHALL** validar el mantenedor contra `getClient` (`packages/zoho-sync/src/books/repo.ts:129-132`),
 con el mismo patrón `422` que ya usa `clientId` en el alta y el `PATCH`
@@ -122,7 +122,7 @@ con el mismo patrón `422` que ya usa `clientId` en el alta y el `PATCH`
 a **F1B-11**; aquí sólo se guarda y valida el dato (`decision/titularidad-mantenedor`,
 `openspec/config.yaml:1677-1679`).
 
-### RQ-HV-06 · El código interno es identificador secundario de búsqueda
+### Requirement: RQ-HV-06 · El código interno es identificador secundario de búsqueda
 
 `searchEquipos` (`apps/desk/server/db/equipos.ts:58-73`) **SHALL** encontrar un equipo por su código
 interno con el mismo criterio —insensible a mayúsculas, por coincidencia parcial— con el que ya busca por
@@ -133,7 +133,7 @@ serial hoy (`LOWER(serial) LIKE $1`, `:66-67`).
 - WHEN se busca por `INT-001`
 - THEN el resultado incluye ese equipo, igual que buscarlo por `SN-1`
 
-### RQ-HV-07 · La hoja de vida muestra los seis campos, vacíos o poblados
+### Requirement: RQ-HV-07 · La hoja de vida muestra los seis campos, vacíos o poblados
 
 La cabecera de `HojaDeVida.tsx` (hoy marca, modelo, tipo, serie, cliente y estado, `:159-165`)
 **SHALL** enseñar los seis campos nuevos, con un marcador explícito de vacío (p. ej. «—») cuando no
@@ -161,7 +161,7 @@ tengan valor, y **MUST NOT** lanzar error por su ausencia.
   escritos · WHEN se abre su hoja de vida · THEN la cabecera enseña los seis valores, y el enlace de
   Drive abre en una pestaña nueva.
 
-### RQ-HV-08 · El alta y la edición piden los seis campos
+### Requirement: RQ-HV-08 · El alta y la edición piden los seis campos
 
 `EquipoForm` (`apps/desk/src/components/EquiposAdmin.tsx:95`, payload hoy en `:148`) **SHALL** pedir los
 seis campos, en alta y en edición, y enviarlos en el mismo payload que ya manda `serial`, `modeloId` y
