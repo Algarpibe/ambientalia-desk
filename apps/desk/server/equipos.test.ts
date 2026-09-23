@@ -335,9 +335,9 @@ describe('Hoja de vida — F1B-02', () => {
     const porSerial = await request(app).get('/api/equipos?search=SN-1-HV9').set('Cookie', cookie)
     const porCodigo = await request(app).get('/api/equipos?search=INT-001').set('Cookie', cookie)
     const porCodigoMin = await request(app).get('/api/equipos?search=int-001').set('Cookie', cookie)
-    expect(porSerial.body.map((e: any) => e.id)).toContain(id)
-    expect(porCodigo.body.map((e: any) => e.id)).toContain(id)
-    expect(porCodigoMin.body.map((e: any) => e.id)).toContain(id)
+    expect(porSerial.body.map((e: { id: string }) => e.id)).toContain(id)
+    expect(porCodigo.body.map((e: { id: string }) => e.id)).toContain(id)
+    expect(porCodigoMin.body.map((e: { id: string }) => e.id)).toContain(id)
   })
 
   it("[RQ-HV-07 servidor] /historial trae los seis campos comerciales, y vaciar driveUrl con '' lo deja nulo", async () => {
