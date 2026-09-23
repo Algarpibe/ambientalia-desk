@@ -455,3 +455,17 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 
 1. **La deuda: los 7 `any`.** Gerencia decidió el 23/09 subir el techo a **165 y ni uno más** (`f7c9dc1`), porque arreglarlos es una tanda aparte. Esa tanda no existe todavía. Mientras no exista, el techo absorbe deuda ajena ya fusionada, y sólo esa: los avisos que traiga código nuevo se arreglan en su propia tanda y no suben el techo.
 2. **El hallazgo de método, más grave que el número.** El trinquete no falló, falló que nadie lo lee. GitHub Actions registra **tres** ejecuciones de main en rojo, todas en el paso de lint: `bde29fb` (22/09 14:13 UTC), `125ae3e` (22/09 16:21, fusión de F1A-07) y `acf2701` (22/09 22:29, tras fusionar F1A-06). Entre medias hubo **dos** fusiones (`822ccbc`, `b69fef0`) y nadie miró el CI: los cierres comprobaban `npm run lint` a secas, que no lleva `--max-warnings` y da exit 0 con cualquier cifra. **Punto abierto: quién mira el CI de main y en qué momento del cierre.** Mientras se decide, el cierre de F1B-02 corre el lint con `--max-warnings 165`, igual que el CI.
+
+## E-030 · 2026-09-23 · hallazgo
+**Qué:** El `verify-report.md` archivado de F1A-06 no pasa hoy `gentle-ai sdd-verify-validate`, y tiene dos defectos, no uno.
+**De dónde viene:** cierre de F1B-02, 23/09, al usarlo como modelo del sobre `gentle-ai.verify-result/v1`. Medido con gentle-ai 2.4.0.
+**Afecta a:** `openspec/changes/archive/2026-09-22-generador-mapa-blueprint/verify-report.md` · la confianza en que un informe archivado revalide si el validador se endurece
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia). El informe está archivado y NO se toca: se registra.
+
+**Lo medido.**
+1. **`evidence_revision` inválido** (`:3`): pone `sha256:` delante de un SHA-1 de git de 40 caracteres, `4312d9c7…`. `sdd-verify-validate --requirements 7 --scenarios 15` → exit 1, «invalid evidence_revision in verify result envelope».
+2. **Veredicto aprobatorio con evidencia incompleta.** Corrigiendo SÓLO el campo anterior por stdin, sigue rechazado: `verdict: pass` (`:4`) con `scenarios: 11/15` (`:8`) → «passing verdict contradicts failing or incomplete evidence». Tampoco valdría `pass_with_warnings`: el validador exige los escenarios completos para cualquier veredicto aprobatorio.
+3. **El resto está bien.** Barrido de los **12** `verify-report.md` de `openspec/changes/archive/`, cada uno validado con los totales de su propio sobre: **11 dan `valid: true`** y sólo falla el de F1A-06.
+
+**La lección.** El sobre de F1A-06 era el precedente a copiar para F1B-02, y copiarlo habría repetido los dos defectos. Un precedente archivado no es un modelo válido hasta que se revalida con la herramienta de hoy.
