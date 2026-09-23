@@ -450,7 +450,7 @@ describe('getEquipoHistorial · remisiones dentro del ticket', () => {
  * primera: `EquipoLite` no llevaba `client_id`, así que el formulario resolvía el cliente **por
  * NOMBRE** (`CreateTicket.tsx:141-149`, con `searchClients(e.clienteNombre)` y comparación
  * normalizada). Es EXACTAMENTE el apaño que este repositorio abandonó en el servidor el 2026-08-09
- * —ver el comentario de `searchEquipos` (`equipos.ts:45-53`) y la prueba de arriba—, y por la misma
+ * —ver el comentario de `searchEquipos` (`equipos.ts:46-54`) y la prueba de arriba—, y por la misma
  * razón: basta que dos clientes compartan un fragmento de nombre para acabar en el equivocado.
  *
  * Con `clientId` en la respuesta, las dos mitades se cierran de una vez: el cliente se resuelve por

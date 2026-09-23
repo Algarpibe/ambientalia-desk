@@ -163,7 +163,7 @@ export function CreateTicket({ onClose, onCreated }: {
      * SIN `client_id`: la vía por nombre, que ahora es SÓLO el respaldo. La carga inicial dejó ~352
      * equipos sin enlazar y el backfill llegó al 96,6 %; el resto sigue aquí. Resolver por nombre es
      * el apaño que el servidor abandonó el 2026-08-09 —dos clientes con un fragmento común acaban
-     * cruzados (`apps/desk/server/db/equipos.ts:45-53`)—, así que se conserva sólo donde no hay
+     * cruzados (`apps/desk/server/db/equipos.ts:46-54`)—, así que se conserva sólo donde no hay
      * alternativa, y si no casa queda el aviso ámbar de abajo y el cliente lo elige la persona.
      */
     if (e.clienteNombre) {

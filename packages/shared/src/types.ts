@@ -339,7 +339,7 @@ export interface EquipoLite {
    *
    * Subió de `EquipoFull` a `EquipoLite` en F1B-01. Sin esto, resolver el cliente desde el serial
    * sólo podía hacerse POR NOMBRE, que es el apaño que el servidor abandonó el 2026-08-09
-   * (`apps/desk/server/db/equipos.ts:45-53`). Es además lo que deja al serial abrir las órdenes de
+   * (`apps/desk/server/db/equipos.ts:46-54`). Es además lo que deja al serial abrir las órdenes de
    * venta activas del cliente, la mitad de `R08.1.md:1048` que faltaba.
    */
   clientId?: string

@@ -80,9 +80,22 @@ corte de contingencia si hiciera falta: servidor (esquema→routes→pruebas) pr
 
 ## Phase 7: Cierre
 
-- [ ] 7.1 Barrido de la regla de mutación 4 sobre los seis ficheros tocados (schema.sql,
+- [x] 7.1 Barrido de la regla de mutación 4 sobre los seis ficheros tocados (schema.sql,
       types.ts, db/equipos.ts, routes/equipos.ts, HojaDeVida.tsx, EquiposAdmin.tsx,
-      equipos.test.ts).
+      equipos.test.ts). Resultado: `schema.sql` sin desplazamiento (ALTER al final, tras `:448`,
+      nada antes se mueve). `db/equipos.ts` se desplaza y quedaron corregidas 9 citas vivas en 6
+      ficheros (`types.ts:342`, `CreateTicket.tsx:166`, `remisiones.test.ts:880`,
+      `db/equipos.test.ts:453`, `openspec/specs/tickets-core/spec.md` en 4 puntos —incluidas 2
+      formas abreviadas—, `packages/shared/src/bodegaje.ts:99` y
+      `openspec/specs/remisiones/spec.md:417` contra `types.ts`, que también se desplazó por la
+      ampliación de `EquipoFull`). `docs/sdd/ENTRADA.md:455` (E-028) se dejó intacta a propósito:
+      está anclada a `acf2701` y fuera de esta tanda. Los fechados (`F0-00_Baseline*`,
+      `F1B-01_Serial*`, `Triaje_Linea_Base_Citas*`, `Puntos_para_Gerencia_2026-09-11`) y los
+      propios `proposal.md`/`spec.md`/`design.md` de esta tanda son **caso B**, anclados a su
+      commit de origen; no se renumeran. Efecto colateral hallado y corregido: el guardián
+      `migrate.test.ts` («son 29 ALTER…») fijaba el recuento de `ALTER TABLE` sin calificar;
+      subió a 35 (18 calificadas + 17 sin calificar) por las seis nuevas de `equipos` — mismo
+      conjunto de tablas, sólo cambia la cifra.
 
 ## Fuera de esta tanda
 

@@ -877,7 +877,7 @@ describe('Estados tempranos: Ticket creado → Remisión creada', () => {
  *
  * El daño no es la columna vacía: es que la remisión es el documento que ACOMPAÑA AL EQUIPO. Sin
  * serial no identifica qué equipo entró, y el enlace ticket ↔ equipo del historial se hace por
- * serial (`db/equipos.ts:220-223`), no por el código de servicio.
+ * serial (`db/equipos.ts:253-256`), no por el código de servicio.
  */
 describe('F1B-01 · POST /api/remisiones exige el serial', () => {
   /** Un ticket como los que llegan del sync de Zoho: sin equipo del catálogo y sin serial propio. */
