@@ -1,3 +1,27 @@
+```yaml
+schema: gentle-ai.verify-result/v1
+evidence_revision: sha256:97f410db6df1bbff26db42ec22958a5dc4129164fae56da0f8238a48027f1a81
+verdict: pass_with_warnings
+blockers: 0
+critical_findings: 0
+requirements: 8/8
+scenarios: 8/8
+test_command: npm test
+test_exit_code: 0
+test_output_hash: sha256:3ad656de0ddbf66a3c7a6136a9703a0b09cf7e663dc4114339c17a922b6c3ef0
+build_command: npm run typecheck
+build_exit_code: 0
+build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e721545e547
+```
+
+> **Sobre del bloque de arriba, añadido el 2026-09-23 fuera de objetivo del ledger (corrección de formato).**
+> El informe nació sin él y el dispatcher enrutaba a `remediate`. `evidence_revision` es el sha256 de
+> `git ls-tree -r HEAD` sobre `749eeff`, el candidato verificado. Los dos hashes de salida son de
+> `npm test` (exit 0; 132 ficheros y 1 saltado, 1257 pruebas y 2 saltadas) y de `npm run typecheck`
+> (exit 0), redirigidos a fichero sin tuberías. `scenarios: 8/8` es la cifra DESPUÉS de enmendar la
+> spec: tenía 10, y los dos de RQ-HV-07 (DOM de `.tsx`, fuera de la red por F0-00) pasaron a
+> comprobación de persona. Ver aviso 4: no nacieron así, y archivar no los da por hechos.
+
 # Verify report: hoja de vida -- seis campos comerciales (F1B-02)
 
 **Cambio**: hojas-vida | **Tanda**: F1B-02 | **Modo**: Strict TDD | **Almacen**: hybrid
@@ -203,6 +227,17 @@ Ninguno.
    bloque correcto, pero la condicion literal de emparejamiento por serial esta en :260-261, no en el
    rango citado. No es una cita rota (la regla de mutacion 4 no la marcaria en rojo), pero es mas
    contextual que exacta. Informativo.
+
+4. **La spec se enmendó DESPUÉS de este verify, y dos escenarios salieron del recuento automático.**
+   Añadido el 2026-09-23 por el orquestador, fuera de objetivo del ledger. Este informe se escribió
+   contra una spec con **10** escenarios, y la matriz de arriba lo refleja: los dos de RQ-HV-07 figuran
+   como parte de UI no ejecutada. Al añadir el sobre, `gentle-ai sdd-verify-validate` rechazó
+   `pass_with_warnings` con `scenarios: 8/10` («passing verdict contradicts failing or incomplete
+   evidence»). Por decisión de Gerencia, esos dos pasaron a comprobación de persona en el delta
+   (`specs/hojas-vida/spec.md`, sección «Comprobaciones de persona de RQ-HV-07»), aplicando la regla
+   del ciclo 1: son DOM de `HojaDeVida.tsx`, y los `.tsx` están fuera de la red por F0-00. Desde
+   entonces la spec tiene **8** escenarios y el sobre dice `8/8`. Los dos NO nacieron así, NO se
+   verificaron, y archivar no los da por hechos.
 
 ### SUGGESTION
 

@@ -139,15 +139,27 @@ La cabecera de `HojaDeVida.tsx` (hoy marca, modelo, tipo, serie, cliente y estad
 **SHALL** enseñar los seis campos nuevos, con un marcador explícito de vacío (p. ej. «—») cuando no
 tengan valor, y **MUST NOT** lanzar error por su ausencia.
 
-#### Scenario: Hoja de vida con los seis campos vacíos
-- GIVEN un equipo sin ninguno de los seis campos comerciales
-- WHEN se abre su hoja de vida
-- THEN la cabecera enseña un marcador de vacío en cada uno de los seis, sin error
+#### Comprobaciones de persona de RQ-HV-07 — NO son escenarios automáticos
 
-#### Scenario: Hoja de vida con los seis campos poblados
-- GIVEN un equipo con los seis campos escritos
-- WHEN se abre su hoja de vida
-- THEN la cabecera enseña los seis valores, y el enlace de Drive abre en una pestaña nueva
+> **Enmienda del 2026-09-23, en el delta y antes de fusionar.** Hasta esta fecha las dos comprobaciones
+> de abajo estaban escritas como `Scenario`. Pasan a comprobación de persona por la regla del ciclo 1
+> de `CLAUDE.md`, porque describen trabajo que **ninguna tanda puede hacer hoy en este repositorio**:
+> son afirmaciones sobre el DOM de `HojaDeVida.tsx`, y los `.tsx` quedan fuera de la red de pruebas por
+> **decisión de Gerencia F0-00** (`vitest.config.ts:16`, `environment: 'node'`, y `:17-20`, que sólo
+> incluye `*.test.ts`). Automatizarlas exigiría jsdom, y proponerlo requiere que Gerencia reabra F0-00.
+> Lo que sí es automatizable de RQ-HV-07 —que `/historial` entregue los seis campos— lo cubre
+> `apps/desk/server/equipos.test.ts:343-359`.
+>
+> **Dueño:** Comercial/Gerencia, verificación manual en staging. **Dónde queda escrito:** esta sección,
+> `apply-progress.md` («Comprobación de persona pendiente») y `verify-report.md` (aviso 4 y tabla de
+> comprobaciones de persona). **ARCHIVAR ESTE CAMBIO NO LAS DA POR HECHAS.**
+
+- **Persona-1 · Hoja de vida con los seis campos vacíos.** GIVEN un equipo sin ninguno de los seis
+  campos comerciales · WHEN se abre su hoja de vida · THEN la cabecera enseña un marcador de vacío en
+  cada uno de los seis, sin error.
+- **Persona-2 · Hoja de vida con los seis campos poblados.** GIVEN un equipo con los seis campos
+  escritos · WHEN se abre su hoja de vida · THEN la cabecera enseña los seis valores, y el enlace de
+  Drive abre en una pestaña nueva.
 
 ### RQ-HV-08 · El alta y la edición piden los seis campos
 
