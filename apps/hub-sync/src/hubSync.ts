@@ -3,7 +3,7 @@ import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { migrateBooks } from '@ambientalia/zoho-sync/booksHub/migrate'
 import { maxZohoLastModified } from '@ambientalia/zoho-sync/booksHub/repo'
 import { migrateCrm } from '@ambientalia/zoho-sync/crmHub/migrate'
-import type { Sync } from '@ambientalia/zoho-sync/sync'
+import type { Sync, ResultadoHistoriaPendiente } from '@ambientalia/zoho-sync/sync'
 import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
 import type { CrmSync } from '@ambientalia/zoho-sync/crmHub/sync'
 
@@ -90,7 +90,11 @@ export function scheduleHubSync(deps: { sync: Sync; booksHubSync?: BooksHubSync 
   timers.push(setInterval(() => {
     if (syncing) return
     syncing = true
-    sync.syncRecent().then(() => sync.syncActivities()).then(() => sync.syncContacts())
+    sync.syncRecent()
+      // La historia va con su propio catch: un Zoho que falla al traer historias no puede dejar al
+      // ciclo sin actividades ni contactos.
+      .then(() => sync.syncPendingHistory({ limite: 50 }).then(registrarHistoria, (e) => console.error('Historia pendiente falló:', e)))
+      .then(() => sync.syncActivities()).then(() => sync.syncContacts())
       .catch((e) => console.error('Sync incremental falló:', e))
       .finally(() => { syncing = false })
   }, intervalMs))
@@ -105,4 +109,11 @@ export function scheduleHubSync(deps: { sync: Sync; booksHubSync?: BooksHubSync 
     }, intervalMs))
   }
   return () => timers.forEach((t) => clearInterval(t))
+}
+
+/** Deja rastro en el log solo cuando la pasada ha hecho algo: un ciclo sin pendientes no dice nada. */
+function registrarHistoria(r: ResultadoHistoriaPendiente): void {
+  if (r.intentados === 0) return
+  const fallos = r.fallidos > 0 ? `, ${r.fallidos} fallidos (primero: ${r.motivoPrimerFallo})` : ''
+  console.log(`Historia pendiente: ${r.poblados} de ${r.intentados} tickets${fallos}`)
 }
