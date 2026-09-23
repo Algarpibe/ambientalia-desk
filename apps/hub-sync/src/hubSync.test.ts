@@ -4,6 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { hubBootstrap, scheduleHubSync } from './hubSync'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
+import type { CrmSync, ResultadoFasesGanadas } from '@ambientalia/zoho-sync/crmHub/sync'
 
 let db: Queryable
 beforeEach(() => { const pg = newDb().adapters.createPg(); db = new pg.Pool() })
@@ -175,5 +176,73 @@ describe('scheduleHubSync', () => {
     // Lo recoge el catch propio de la historia, no el general del ciclo.
     expect(errores).toHaveBeenCalledWith('Historia pendiente falló:', expect.any(Error))
     errores.mockRestore()
+  })
+
+  /** Un CRM que apunta el orden en que se le llama. `falla` hace rechazar el listado o las fichas. */
+  function crmQueApunta(orden: string[], falla: 'listado' | 'fichas' | null = null, resultado: ResultadoFasesGanadas = { intentados: 0, poblados: 0, fallidos: 0 }): CrmSync {
+    return {
+      backfillAll: async () => ({}),
+      backfillIfEmpty: async () => ({}),
+      sweep: async () => [],
+      syncRecent: vi.fn(async () => { orden.push('listado'); if (falla === 'listado') throw new Error('CRM 500'); return {} }),
+      syncPendingWonStages: vi.fn(async () => { orden.push('fichas'); if (falla === 'fichas') throw new Error('CRM 429'); return resultado }),
+    }
+  }
+
+  /**
+   * Las fichas van DESPUÉS del listado, porque `syncRecent` es quien avanza el `modified_time` y la fase
+   * que deciden qué fichas faltan.
+   */
+  it('CRM: lee las fichas de los ganados después del listado, con límite de 50', async () => {
+    vi.useFakeTimers()
+    const orden: string[] = []
+    const crmSync = crmQueApunta(orden)
+    const stop = scheduleHubSync({ sync: mockSync(), crmSync, intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop()
+    expect(orden).toEqual(['listado', 'fichas'])
+    expect(crmSync.syncPendingWonStages).toHaveBeenCalledWith({ limite: 50 })
+  })
+
+  /** Las fichas pendientes ya están en el hub: un listado que falla no es motivo para no leerlas. */
+  it('CRM: un fallo del listado no impide leer las fichas', async () => {
+    vi.useFakeTimers()
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const orden: string[] = []
+    const stop = scheduleHubSync({ sync: mockSync(), crmSync: crmQueApunta(orden, 'listado'), intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop()
+    expect(orden).toEqual(['listado', 'fichas'])
+    expect(errores).toHaveBeenCalledWith('CRM syncRecent falló:', expect.any(Error))
+    errores.mockRestore()
+  })
+
+  it('CRM: un fallo de las fichas lo recoge su propio catch', async () => {
+    vi.useFakeTimers()
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const orden: string[] = []
+    const stop = scheduleHubSync({ sync: mockSync(), crmSync: crmQueApunta(orden, 'fichas'), intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop()
+    expect(orden).toEqual(['listado', 'fichas'])
+    expect(errores).toHaveBeenCalledWith('Fases ganadas pendientes falló:', expect.any(Error))
+    errores.mockRestore()
+  })
+
+  it('CRM: deja rastro en el log solo cuando la pasada de fichas hizo algo', async () => {
+    vi.useFakeTimers()
+    const logs = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const conTrabajo = { intentados: 3, poblados: 2, fallidos: 1, motivoPrimerFallo: 'CRM /Deals/d2 404' }
+    const stop = scheduleHubSync({ sync: mockSync(), crmSync: crmQueApunta([], null, conTrabajo), intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop()
+    expect(logs).toHaveBeenCalledWith('Fases ganadas: 2 de 3 tratos, 1 fallidos (primero: CRM /Deals/d2 404)')
+
+    logs.mockClear()
+    const stop2 = scheduleHubSync({ sync: mockSync(), crmSync: crmQueApunta([]), intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop2()
+    expect(logs.mock.calls.some((c) => String(c[0]).startsWith('Fases ganadas'))).toBe(false)
+    logs.mockRestore()
   })
 })

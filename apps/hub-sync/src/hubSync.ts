@@ -5,7 +5,7 @@ import { maxZohoLastModified } from '@ambientalia/zoho-sync/booksHub/repo'
 import { migrateCrm } from '@ambientalia/zoho-sync/crmHub/migrate'
 import type { Sync, ResultadoHistoriaPendiente } from '@ambientalia/zoho-sync/sync'
 import type { BooksHubSync } from '@ambientalia/zoho-sync/booksHub/sync'
-import type { CrmSync } from '@ambientalia/zoho-sync/crmHub/sync'
+import type { CrmSync, ResultadoFasesGanadas } from '@ambientalia/zoho-sync/crmHub/sync'
 
 /** Migra el hub y hace el backfill inicial solo si está vacío. Idempotente entre reinicios. */
 export async function hubBootstrap(deps: { db: Queryable; sync: Sync; booksHubSync?: BooksHubSync | null; crmSync?: CrmSync | null; backfillContacts?: boolean }): Promise<void> {
@@ -105,7 +105,12 @@ export function scheduleHubSync(deps: { sync: Sync; booksHubSync?: BooksHubSync 
   }
   if (crmSync) {
     timers.push(setInterval(() => {
-      crmSync.syncRecent().catch((e) => console.error('CRM syncRecent falló:', e))
+      crmSync.syncRecent()
+        .catch((e) => console.error('CRM syncRecent falló:', e))
+        // Las fichas de los ganados van DESPUÉS del listado, que avanza el modified_time que decide
+        // cuáles faltan, y con su propio catch: un Zoho que falla al leerlas no afecta al listado.
+        .then(() => crmSync.syncPendingWonStages({ limite: 50 }))
+        .then(registrarFasesGanadas, (e) => console.error('Fases ganadas pendientes falló:', e))
     }, intervalMs))
   }
   return () => timers.forEach((t) => clearInterval(t))
@@ -116,4 +121,11 @@ function registrarHistoria(r: ResultadoHistoriaPendiente): void {
   if (r.intentados === 0) return
   const fallos = r.fallidos > 0 ? `, ${r.fallidos} fallidos (primero: ${r.motivoPrimerFallo})` : ''
   console.log(`Historia pendiente: ${r.poblados} de ${r.intentados} tickets${fallos}`)
+}
+
+/** Deja rastro en el log solo cuando la pasada de fichas ha hecho algo: un ciclo sin pendientes no dice nada. */
+function registrarFasesGanadas(r: ResultadoFasesGanadas): void {
+  if (r.intentados === 0) return
+  const fallos = r.fallidos > 0 ? `, ${r.fallidos} fallidos (primero: ${r.motivoPrimerFallo})` : ''
+  console.log(`Fases ganadas: ${r.poblados} de ${r.intentados} tratos${fallos}`)
 }
