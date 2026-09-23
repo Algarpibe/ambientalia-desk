@@ -469,3 +469,18 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 3. **El resto está bien.** Barrido de los **12** `verify-report.md` de `openspec/changes/archive/`, cada uno validado con los totales de su propio sobre: **11 dan `valid: true`** y sólo falla el de F1A-06.
 
 **La lección.** El sobre de F1A-06 era el precedente a copiar para F1B-02, y copiarlo habría repetido los dos defectos. Un precedente archivado no es un modelo válido hasta que se revalida con la herramienta de hoy.
+
+## E-031 · 2026-09-23 · hallazgo
+**Qué:** El `sdd-spec` de F1B-02 (`ee0ed40`) produjo DOS defectos estructurales, y los dos sólo se vieron al intentar archivar.
+**De dónde viene:** cierre de F1B-02, 23/09, con `archive: blocked` y `blockedReasons: []` tras un verify en verde. Medido con gentle-ai 2.4.0 en la rama `f1b-02-r1`.
+**Afecta a:** `openspec/changes/hojas-vida/specs/hojas-vida/spec.md` · el coste de cierre de toda tanda cuya spec salga fuera de formato
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia).
+
+**Los dos defectos.**
+1. **Spec en la ruta viva en vez del delta.** `ee0ed40` crea `openspec/specs/hojas-vida/spec.md` (171 líneas), no `openspec/changes/hojas-vida/specs/…`. Lo reparó `b0c6b41` con un `git mv` (R100, 0 líneas de contenido).
+2. **Encabezados fuera del formato de su propio skill.** En `ee0ed40` la spec tiene **0** encabezados `### Requirement:` y **8** `### RQ-HV-`; la plantilla es `### Requirement: {Requirement Name}` (`~/.claude/skills/sdd-spec/SKILL.md:116`) y así están los deltas archivados (`openspec/changes/archive/2026-09-22-generador-mapa-blueprint/specs/mapa-blueprint/spec.md:21`). `sdd-status` mide los totales en la spec (`~/.claude/skills/_shared/sdd-status-contract.md:139`), contaba 0 contra los 8/8 del sobre y dejaba archive bloqueado (`:141`) sin decir por qué. Lo reparó `0c23a34`: 8+/8−, 183 líneas antes y después. Después, `sdd-status` da `archive: ready`, `nextRecommended: archive`, `blockedReasons: []`.
+
+**Coste medido.** Un `git mv` (`b0c6b41`). Una generación del ledger gastada en un refresco que no cambió un byte: la generación 3, «verify de refresco F1B-02», con árbol de inicio y de fin idénticos (`5248066`) y `changed_lines: 0`. Y cuatro vueltas —sobre añadido (`4a9ebb9`), refresco, diagnóstico y corrección— para encontrar una causa que estaba escrita en `sdd-status-contract.md:139-141`. La generación se gastó por inferir la causa en vez de leer el contrato; `sdd-verify-validate` daba `valid: true` porque recibe los totales de fuera y no mira la spec.
+
+**Punto abierto.** Si el dispatcher exige ese formato para archivar, ¿por qué ninguna fase lo comprueba antes de llegar al final? Hoy `sdd-spec`, `sdd-apply` y `sdd-verify` pasan con 0 requisitos contables, y el defecto sólo aparece cuando ya no se puede avanzar.
