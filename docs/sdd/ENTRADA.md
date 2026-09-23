@@ -448,11 +448,12 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 
 ## E-028 · 2026-09-22 · hallazgo
 **Qué:** Siete sitios formatean una fecha con `toISOString().slice(0, 10)` (o el mismo idiom), que convierte a UTC antes de recortar el día — el mismo mecanismo que `packages/shared/src/bodegaje.ts:131` documenta como «día UTC puro» y que F1A-07 ya reemplazó ahí por `diaEnZona` (`packages/shared/src/fechasDerivadas.ts:63`). Los siete siguen sin migrar.
-**De dónde viene:** `sdd-design` de F1B-02 (`hojas-vida`), al diseñar la lectura de las nuevas fechas de `equipos` con `fechaSolo` (`packages/zoho-sync/src/books/repo.ts:94-101`, cuyo comentario en `:89-92` documenta el mismo desplazamiento); verificado de disco en `acf2701` (base de `f1b-02-r1`, ninguno de estos siete ficheros lo toca esta tanda)
+**De dónde viene:** `sdd-design` de F1B-02 (`hojas-vida`), al diseñar la lectura de las nuevas fechas de `equipos` con `fechaSolo` (`packages/zoho-sync/src/books/repo.ts:94-101`, cuyo comentario en `:89-92` documenta el mismo desplazamiento); verificado de disco originalmente en `acf2701` (base de `f1b-02-r1`)
+**Actualización (`sdd-apply` de F1B-02, commit `094eaa4`):** `apps/desk/server/db/equipos.ts` **sí** lo tocó esta tanda —añadió los seis campos comerciales en otras funciones del mismo fichero—, así que la premisa «ninguno de estos siete ficheros lo toca esta tanda» ya no es cierta para éste. **El defecto en sí sigue sin corregir**: `remisionesDelEquipo` creció de línea por las inserciones de arriba y el mismo patrón `toISOString().slice(0, 10)` se desplazó de `:190` a `:223` (caso A de la regla de mutación 4 — sigue siendo cierto del árbol de hoy, se actualiza el número). Los otros seis ficheros no los tocó esta tanda (`git diff --stat ae7dcbb..094eaa4` confirma que sólo `equipos.ts` cambió de los siete).
 **Afecta a:**
 - `apps/desk/server/db/backfillFechaOrdenVenta.ts:27`
 - `apps/desk/server/db/eliminarTicket.ts:61`
-- `apps/desk/server/db/equipos.ts:190`
+- `apps/desk/server/db/equipos.ts:223` (era `:190` antes de F1B-02; ver actualización arriba)
 - `apps/desk/server/db/historial.ts:79`
 - `apps/desk/server/db/remisiones.ts:14`
 - `apps/desk/server/db/remisiones.ts:107`
