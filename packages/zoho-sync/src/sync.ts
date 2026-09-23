@@ -11,7 +11,7 @@ interface Deps {
   db: Queryable
   config: AppConfig
 }
-export interface Sync {
+export interface Sync extends HistoriaPendiente {
   backfillTickets(): Promise<number>
   backfillArchivedTickets(): Promise<number>
   syncRecent(): Promise<number>
@@ -283,5 +283,66 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
       }
       return total
     },
+    /**
+     * Trae la historia de los tickets cuya copia puede estar desfasada: los que nunca se han traído
+     * (`history_synced_at` nulo) y los que Zoho ha modificado después de la última vez
+     * (`history_synced_at` anterior a `modified_time`). Lo corre el worker en cada ciclo.
+     *
+     * No reutiliza `backfillTicketHistory` porque ese solo mira si el ticket tiene ALGUNA historia: un
+     * ticket que cambia de fase después del barrido no volvería a pedirse nunca.
+     *
+     * - La marca es el `modified_time` LEÍDO al elegir el ticket, no `now()`: si Zoho lo cambia
+     *   mientras se trae su historia, su `modified_time` avanza y la pasada siguiente lo vuelve a elegir.
+     * - Un ticket sin `modified_time` se marca con el epoch: se trae una vez y no vuelve a salir hasta
+     *   que Zoho le ponga fecha. Marcarlo con nulo lo haría salir en todas las pasadas.
+     * - Tolerante, como el barrido: un fallo se cuenta, se guarda el motivo del primero y se sigue. El
+     *   ticket fallido no se marca, así que vuelve a salir en la pasada siguiente.
+     * - Una sola consulta simple: pg-mem, el motor de los tests, no resuelve subconsultas correlacionadas.
+     */
+    async syncPendingHistory({ limite, pausaMs = 500 }: HistoriaPendienteOpts): Promise<ResultadoHistoriaPendiente> {
+      const r = await db.query(
+        `SELECT id, modified_time FROM tickets
+         WHERE id NOT LIKE $1 AND (history_synced_at IS NULL OR history_synced_at < modified_time)
+         ORDER BY modified_time DESC NULLS LAST LIMIT $2`,
+        [`${PREFIJO_TICKET_APP}%`, limite],
+      )
+      const tanda = r.rows as { id: string; modified_time: Date | null }[]
+      let poblados = 0, fallidos = 0
+      let motivoPrimerFallo: string | undefined
+      for (const [i, t] of tanda.entries()) {
+        if (i > 0 && pausaMs > 0) await new Promise((res) => setTimeout(res, pausaMs))
+        try {
+          await traerHistoria(t.id)
+          await db.query('UPDATE tickets SET history_synced_at = $1 WHERE id = $2', [t.modified_time ?? new Date(0), t.id])
+          poblados++
+        } catch (e) {
+          fallidos++
+          motivoPrimerFallo ??= e instanceof Error ? e.message : String(e)
+        }
+      }
+      return { intentados: tanda.length, poblados, fallidos, motivoPrimerFallo }
+    },
   }
+}
+
+/**
+ * El relleno de la historia que corre el worker `hub-sync`. Va en una interfaz aparte y al final del
+ * fichero para no mover ninguna línea de `Sync` ni de los tipos de arriba, que la documentación del
+ * repositorio cita por número.
+ */
+export interface HistoriaPendiente {
+  syncPendingHistory(opts: HistoriaPendienteOpts): Promise<ResultadoHistoriaPendiente>
+}
+export interface HistoriaPendienteOpts {
+  /** Cuántos tickets como mucho en esta pasada. Obligatorio: sin tope, el primer arranque pediría todas las historias de golpe. */
+  limite: number
+  /** Espera entre tickets. `zohoFetch` no reintenta ante un 429. Por omisión 500 ms, como el barrido. */
+  pausaMs?: number
+}
+export interface ResultadoHistoriaPendiente {
+  intentados: number
+  poblados: number
+  fallidos: number
+  /** Por qué falló el PRIMERO que falló. Ausente si no falló ninguno. */
+  motivoPrimerFallo?: string
 }
