@@ -22,9 +22,9 @@ export const MODULES: CrmModule[] = [
     toRow: (r) => ({ id: String(r.id), company: str(r.Company), first_name: str(r.First_Name), last_name: str(r.Last_Name), full_name: str(r.Full_Name), email: str(r.Email), phone: str(r.Phone), mobile: str(r.Mobile), lead_source: str(r.Lead_Source), lead_status: str(r.Lead_Status), industry: str(r.Industry), city: str(r.City), pais: str(r.Pa_s), departamento: str(r.Departamento), cargo: str(r.Cargo), is_converted: bool(r.Converted__s), converted_deal_id: lkId(r.Converted_Deal), converted_deal_name: lkName(r.Converted_Deal), owner_id: lkId(r.Owner), owner_name: lkName(r.Owner), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
   },
   {
-    table: 'deals', apiName: 'Deals',
-    fields: 'Deal_Name,Amount,Stage,Type,Probability,Closing_Date,Expected_Revenue,Next_Step,Account_Name,Contact_Name,Owner,N_mero_Ticket,Stage_Modified_Time,Created_Time,Modified_Time',
-    toRow: (r) => ({ id: String(r.id), deal_name: str(r.Deal_Name), amount: num(r.Amount), stage: str(r.Stage), type: str(r.Type), probability: num(r.Probability), closing_date: r.Closing_Date || null, expected_revenue: num(r.Expected_Revenue), next_step: str(r.Next_Step), account_id: lkId(r.Account_Name), account_name: lkName(r.Account_Name), contact_id: lkId(r.Contact_Name), contact_name: lkName(r.Contact_Name), owner_id: lkId(r.Owner), owner_name: lkName(r.Owner), numero_ticket: num(r.N_mero_Ticket), stage_modified_time: ts(r.Stage_Modified_Time), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
+    table: 'deals', apiName: 'Deals', // Sin Stage_Modified_Time: el listado de Zoho lo da siempre nulo y pisaria el de la ficha, que trae syncPendingWonStages (crmHub/sync.ts).
+    fields: 'Deal_Name,Amount,Stage,Type,Probability,Closing_Date,Expected_Revenue,Next_Step,Account_Name,Contact_Name,Owner,N_mero_Ticket,Created_Time,Modified_Time',
+    toRow: (r) => ({ id: String(r.id), deal_name: str(r.Deal_Name), amount: num(r.Amount), stage: str(r.Stage), type: str(r.Type), probability: num(r.Probability), closing_date: r.Closing_Date || null, expected_revenue: num(r.Expected_Revenue), next_step: str(r.Next_Step), account_id: lkId(r.Account_Name), account_name: lkName(r.Account_Name), contact_id: lkId(r.Contact_Name), contact_name: lkName(r.Contact_Name), owner_id: lkId(r.Owner), owner_name: lkName(r.Owner), numero_ticket: num(r.N_mero_Ticket), created_time: ts(r.Created_Time), raw: J(r), modified_time: ts(r.Modified_Time) }),
   },
   {
     table: 'tasks', apiName: 'Tasks',
