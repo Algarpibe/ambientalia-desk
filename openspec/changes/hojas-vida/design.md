@@ -1,6 +1,6 @@
 # Diseño: hoja de vida con seis campos comerciales (F1B-02)
 
-Insumo: `proposal.md` y `openspec/specs/hojas-vida/spec.md` (RQ-HV-01…08). Citas releídas contra `ee0ed40`.
+Insumo: `proposal.md` y `specs/hojas-vida/spec.md` de este cambio (RQ-HV-01…08; en `ee0ed40` estaba en `openspec/specs/hojas-vida/`, movida al delta el 2026-09-23 sin cambiar su contenido). Citas releídas contra `ee0ed40`.
 
 ## Enfoque técnico
 

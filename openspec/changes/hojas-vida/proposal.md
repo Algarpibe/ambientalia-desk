@@ -66,7 +66,7 @@ decisiones de Gerencia `decision/p8-p54-drive` (`openspec/config.yaml:1607-1626`
 ## Capacidades
 
 ### Nuevas
-- `hojas-vida`: ya declarada en `openspec/config.yaml:149-151` (R-2 satisfecha); falta crear `openspec/specs/hojas-vida/`.
+- `hojas-vida`: ya declarada en `openspec/config.yaml:149-151` (R-2 satisfecha). Su spec se escribe como delta DENTRO del cambio, en `openspec/changes/hojas-vida/specs/hojas-vida/spec.md`; la spec viva `openspec/specs/hojas-vida/` no se crea a mano: aparece al archivar, cuando `sdd-archive` fusiona el delta. *(Corregido el 2026-09-23: esta línea decía «falta crear `openspec/specs/hojas-vida/`», `ee0ed40` la creó ahí directamente y el dispatcher dejó de ver la spec — `specs: missing`, verify bloqueado.)*
 
 ### Modificadas
 - Ninguna.
