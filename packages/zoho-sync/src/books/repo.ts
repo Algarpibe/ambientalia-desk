@@ -91,7 +91,7 @@ function clientToLite(r: any): ClientLite {
  * Ese fallo no se manifiesta bajo `TZ=UTC`, que es lo que fuerza vitest, de modo que ningún test lo
  * cazaría: por eso queda escrito aquí.
  */
-function fechaSolo(v: unknown): string | undefined {
+export function fechaSolo(v: unknown): string | undefined {
   if (!v) return undefined
   if (v instanceof Date) {
     const dosCifras = (n: number) => String(n).padStart(2, '0')

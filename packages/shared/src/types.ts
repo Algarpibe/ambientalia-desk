@@ -339,16 +339,27 @@ export interface EquipoLite {
    *
    * Subió de `EquipoFull` a `EquipoLite` en F1B-01. Sin esto, resolver el cliente desde el serial
    * sólo podía hacerse POR NOMBRE, que es el apaño que el servidor abandonó el 2026-08-09
-   * (`apps/desk/server/db/equipos.ts:45-53`). Es además lo que deja al serial abrir las órdenes de
+   * (`apps/desk/server/db/equipos.ts:46-54`). Es además lo que deja al serial abrir las órdenes de
    * venta activas del cliente, la mitad de `R08.1.md:1048` que faltaba.
    */
   clientId?: string
   /** FK al catálogo maestro (`catalogo_modelos`); ausente en equipos que la siembra no pudo casar. */
   modeloId?: string
+  /** Identificador secundario de búsqueda (F1B-02); `searchEquipos` también busca por él. */
+  codigoInterno?: string
 }
 
 export interface EquipoFull extends EquipoLite {
   active: boolean
+  /** F1B-02: seis campos comerciales de la hoja de vida, todos opcionales. */
+  fechaAdquisicion?: string
+  fechaFacturaCompra?: string
+  finGarantia?: string
+  /** FK al cliente de Books que mantiene el equipo (`decision/titularidad-mantenedor`). */
+  mantenedorId?: string
+  /** Derivado por `LEFT JOIN clients`, no persistido. */
+  mantenedorNombre?: string
+  driveUrl?: string
 }
 
 export interface CatalogoTipo { id: string; nombre: string; activo: boolean }

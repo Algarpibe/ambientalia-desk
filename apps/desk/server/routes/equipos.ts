@@ -1,6 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
+import { urlSegura } from '@ambientalia/shared'
 import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull, deleteEquipo, getEquipoHistorial } from '../db/equipos'
 import { getModelo } from '../db/catalogo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
@@ -56,9 +57,15 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
       if (!cliente) { res.status(422).json({ error: 'Cliente no encontrado' }); return }
       const modelo = await getModelo(db, modeloId)
       if (!modelo) { res.status(422).json({ error: 'Modelo no encontrado' }); return }
+      const camposResult = await camposHojaDeVida(db, b)
+      if ('error' in camposResult) { res.status(422).json({ error: camposResult.error }); return }
+      const campos = camposResult.campos
       const id = await createEquipo(db, {
         serial, marca: modelo.marca, modelo: modelo.nombre, tipo: modelo.tipo,
         clienteNombre: cliente.name, clientId, modeloId,
+        fechaAdquisicion: campos.fechaAdquisicion ?? null, fechaFacturaCompra: campos.fechaFacturaCompra ?? null,
+        finGarantia: campos.finGarantia ?? null, codigoInterno: campos.codigoInterno ?? null,
+        mantenedorId: campos.mantenedorId ?? null, driveUrl: campos.driveUrl ?? null,
       })
       res.status(201).json(await getEquipoFull(db, id))
   }))
@@ -86,6 +93,9 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
         if (!modelo) { res.status(422).json({ error: 'Modelo no encontrado' }); return }
         patch.modeloId = modeloId; patch.marca = modelo.marca; patch.modelo = modelo.nombre; patch.tipo = modelo.tipo
       }
+      const camposResult = await camposHojaDeVida(db, b)
+      if ('error' in camposResult) { res.status(422).json({ error: camposResult.error }); return }
+      Object.assign(patch, camposResult.campos)
       if (Object.keys(patch).length) await updateEquipo(db, id, patch)
       if (b.active !== undefined) await setEquipoActive(db, id, Boolean(b.active))
       res.json(await getEquipoFull(db, id))
@@ -98,4 +108,82 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
       await deleteEquipo(db, id)
       res.json({ ok: true })
   }))
+}
+
+/** Los seis campos comerciales de la hoja de vida (F1B-02), sólo los que llegaron en el cuerpo. */
+interface CamposHojaDeVida {
+  fechaAdquisicion?: string | null
+  fechaFacturaCompra?: string | null
+  finGarantia?: string | null
+  codigoInterno?: string | null
+  mantenedorId?: string | null
+  driveUrl?: string | null
+}
+
+/**
+ * `AAAA-MM-DD` con ida y vuelta por UTC: la regex sola deja pasar `2026-02-30` (RQ-HV-03), que
+ * `new Date` normaliza a marzo sin avisar. El precedente de la regex es `routes/remision.ts:127`;
+ * no hay validador de fecha en `packages/shared/src`.
+ */
+function esFechaIso(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false
+  return new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v
+}
+
+/**
+ * Valida y normaliza los seis campos comerciales de la hoja de vida, SIN escribir nada: el llamador
+ * decide qué hacer con `campos` (creación completa o `PATCH` parcial). Sólo toca las claves presentes
+ * en `b` — `undefined` no entra en `campos`, que es la misma semántica que ya sigue el resto del
+ * `PATCH` (`if (b.X !== undefined) …`). Un valor vacío o `null` normaliza a `null` (vaciar el campo).
+ *
+ * Orden interno —existencia antes que contenido—: mantenedor (`getClient`) primero, luego las tres
+ * fechas, y Drive al final. Se corre ENTERO antes de escribir nada, así que un error en Drive tumba
+ * también un `codigoInterno` que ya había validado bien: la ruta nunca escribe un subconjunto
+ * (ver la prueba de posición de `equipos.test.ts`, regla de mutación 1).
+ */
+async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>): Promise<{ error: string } | { campos: CamposHojaDeVida }> {
+  const campos: CamposHojaDeVida = {}
+
+  if (b.mantenedorId !== undefined) {
+    const v = b.mantenedorId ? String(b.mantenedorId) : ''
+    if (!v) { campos.mantenedorId = null }
+    else {
+      const mantenedor = await getClient(db, v)
+      if (!mantenedor) return { error: 'Mantenedor no encontrado' }
+      campos.mantenedorId = v
+    }
+  }
+
+  if (b.fechaAdquisicion !== undefined) {
+    const v = b.fechaAdquisicion ? String(b.fechaAdquisicion) : ''
+    if (!v) { campos.fechaAdquisicion = null }
+    else if (!esFechaIso(v)) { return { error: 'La fecha de adquisición no es válida' } }
+    else { campos.fechaAdquisicion = v }
+  }
+  if (b.fechaFacturaCompra !== undefined) {
+    const v = b.fechaFacturaCompra ? String(b.fechaFacturaCompra) : ''
+    if (!v) { campos.fechaFacturaCompra = null }
+    else if (!esFechaIso(v)) { return { error: 'La fecha de factura de compra no es válida' } }
+    else { campos.fechaFacturaCompra = v }
+  }
+  if (b.finGarantia !== undefined) {
+    const v = b.finGarantia ? String(b.finGarantia) : ''
+    if (!v) { campos.finGarantia = null }
+    else if (!esFechaIso(v)) { return { error: 'El fin de garantía no es válido' } }
+    else { campos.finGarantia = v }
+  }
+
+  if (b.codigoInterno !== undefined) {
+    const v = b.codigoInterno ? String(b.codigoInterno) : ''
+    campos.codigoInterno = v || null
+  }
+
+  if (b.driveUrl !== undefined) {
+    const v = b.driveUrl ? String(b.driveUrl) : ''
+    if (!v) { campos.driveUrl = null }
+    else if (urlSegura(v) === null) { return { error: 'El enlace de Drive debe empezar por https:// y no llevar comillas' } }
+    else { campos.driveUrl = v }
+  }
+
+  return { campos }
 }

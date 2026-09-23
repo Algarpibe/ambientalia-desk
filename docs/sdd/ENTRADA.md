@@ -446,6 +446,24 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 **Destino:** — **sin destino, a propósito.** Es exactamente el caso «trabajo sin fila» que F0-05 dice cerrar, y el mecanismo no lo caza: el hook comprueba cabeceras cuando hay `proposal.md`, y aquí no lo hay. Decidir si todo cambio de producto necesita ficha, o si los ajustes de sincronización pueden ir directos, es alcance de método: devuelto al panel como `trabajo-sin-ficha`.
 **Lo medido (22/09, sobre `125ae3e`):** `ea3dbc1`, `a233e1d`, `7cfd198`, `8d03c0d`, `d041b1c`, `bde29fb` — 13 ficheros, +155/−18, con pruebas. No escriben en Zoho: son lectura y copia, así que no chocan con `decision/p44-escritura-zoho`.
 
+## E-028 · 2026-09-22 · hallazgo
+**Qué:** Siete sitios formatean una fecha con `toISOString().slice(0, 10)` (o el mismo idiom), que convierte a UTC antes de recortar el día — el mismo mecanismo que `packages/shared/src/bodegaje.ts:131` documenta como «día UTC puro» y que F1A-07 ya reemplazó ahí por `diaEnZona` (`packages/shared/src/fechasDerivadas.ts:63`). Los siete siguen sin migrar.
+**De dónde viene:** `sdd-design` de F1B-02 (`hojas-vida`), al diseñar la lectura de las nuevas fechas de `equipos` con `fechaSolo` (`packages/zoho-sync/src/books/repo.ts:94-101`, cuyo comentario en `:89-92` documenta el mismo desplazamiento); verificado de disco originalmente en `acf2701` (base de `f1b-02-r1`)
+**Actualización (`sdd-apply` de F1B-02, commit `094eaa4`):** `apps/desk/server/db/equipos.ts` **sí** lo tocó esta tanda —añadió los seis campos comerciales en otras funciones del mismo fichero—, así que la premisa «ninguno de estos siete ficheros lo toca esta tanda» ya no es cierta para éste. **El defecto en sí sigue sin corregir**: `remisionesDelEquipo` creció de línea por las inserciones de arriba y el mismo patrón `toISOString().slice(0, 10)` se desplazó de `:190` a `:223` (caso A de la regla de mutación 4 — sigue siendo cierto del árbol de hoy, se actualiza el número). Los otros seis ficheros no los tocó esta tanda (`git diff --stat ae7dcbb..094eaa4` confirma que sólo `equipos.ts` cambió de los siete).
+**Afecta a:**
+- `apps/desk/server/db/backfillFechaOrdenVenta.ts:27`
+- `apps/desk/server/db/eliminarTicket.ts:61`
+- `apps/desk/server/db/equipos.ts:223` (era `:190` antes de F1B-02; ver actualización arriba)
+- `apps/desk/server/db/historial.ts:79`
+- `apps/desk/server/db/remisiones.ts:14`
+- `apps/desk/server/db/remisiones.ts:107`
+- `apps/desk/src/components/RemisionesPage.tsx:119` — menor y distinta: no lee una fecha de base de datos, nombra el `.csv` de descarga con `new Date().toISOString().slice(0, 10)`, así que sólo se ve afectada la fecha del nombre de fichero, nunca un dato guardado
+**Estado:** nueva
+**Destino:** — sin destino, a propósito (R-3: dueño, no épica inventada). Dueño: Gerencia, para decidir si entra en una tanda existente o abre una nueva.
+**Precedente exacto — E-021 (arriba, `:279-307`).** Es la misma familia de defecto —el día calculado sin pasar por `diaEnZona`—, pero **no el mismo mecanismo**: E-021 es `ticketCreate.ts:7-10`, que usa `getFullYear`/`getMonth`/`getDate` **locales** y depende de la zona horaria del *proceso* (UTC si nadie la fija en el contenedor); esta entrada son siete sitios que fuerzan **UTC explícito** vía `toISOString()`, sin depender de la zona del proceso. Las dos comparten la misma corrección disponible — `diaEnZona`, construida por F1A-07 — y las dos siguen sin usarla salvo en `bodegaje.ts`.
+**El límite, dicho con honestidad:** está **medido el inventario de llamadas** (las siete ubicaciones de arriba, cada una releída contra el fichero). **NO está medido el impacto.** Si la columna de origen es `date` (sin componente de hora) y no `timestamptz`, pg puede no introducir el desplazamiento que sí afecta a un `timestamptz` con hora — depende de cómo el driver construye el `Date` en cada caso, y eso no se ha comprobado sitio por sitio. Que nadie lea esta entrada como defecto confirmado: es hipótesis de corrección, no un bug verificado en producción.
+**Por qué F1B-02 no lo arregla, aunque toca uno de los siete ficheros.** `apps/desk/server/db/equipos.ts` es un fichero que esta tanda sí modifica (añade las seis columnas comerciales y su lectura), pero la línea `:190` pertenece a `remisionesDelEquipo`, una función que F1B-02 no toca ni necesita tocar para su alcance. **Registrado, no corregido** — es el encabezado de la sección «Incumplimientos vivos» de `CLAUDE.md`, y sin esta frase alguien podría leer mañana que se pasó por alto en una tanda que sí tenía el fichero abierto.
+
 ## E-029 · 2026-09-23 · hallazgo
 **Qué:** Los lotes de E-027 metieron 7 avisos `@typescript-eslint/no-explicit-any` en `packages/zoho-sync/src/booksHub/`, rompieron el trinquete de lint del CI y lo dejaron en rojo desde el 22/09 sin que nadie lo leyera.
 **De dónde viene:** medición previa al `sdd-verify` de F1B-02, 23/09. Bisect `--first-parent c45bcb1..125ae3e` con `npm run lint -- --max-warnings 158`: el padre de `ea3dbc1` da 158, `ea3dbc1` da 160, y con `a233e1d`, `7cfd198` y `8d03c0d` se llega a 165. Reparto: `mappers.ts` +1, `mappers.test.ts` +1, `sweep.test.ts` +2, `sync.test.ts` +2, `sync.ts` +1. Un checkout limpio y el árbol local dan lo mismo (165): `coverage/` no influye (`eslint.config.js:16`).
@@ -484,3 +502,18 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 **Coste medido.** Un `git mv` (`b0c6b41`). Una generación del ledger gastada en un refresco que no cambió un byte: la generación 3, «verify de refresco F1B-02», con árbol de inicio y de fin idénticos (`5248066`) y `changed_lines: 0`. Y cuatro vueltas —sobre añadido (`4a9ebb9`), refresco, diagnóstico y corrección— para encontrar una causa que estaba escrita en `sdd-status-contract.md:139-141`. La generación se gastó por inferir la causa en vez de leer el contrato; `sdd-verify-validate` daba `valid: true` porque recibe los totales de fuera y no mira la spec.
 
 **Punto abierto.** Si el dispatcher exige ese formato para archivar, ¿por qué ninguna fase lo comprueba antes de llegar al final? Hoy `sdd-spec`, `sdd-apply` y `sdd-verify` pasan con 0 requisitos contables, y el defecto sólo aparece cuando ya no se puede avanzar.
+
+## E-032 · 2026-09-23 · hallazgo
+**Qué:** ARCHIVAR SILENCIA EL DETECTOR. `apps/desk/server/citas/cli.ts:49` excluye `openspec/changes/archive/` del barrido, así que un cambio que llega al archive con citas rotas en sus propios artefactos las entierra en vez de repararlas, y el pre-push pasa a salida 0 sin que nadie haya arreglado nada.
+**De dónde viene:** cierre de F1B-02, 23/09. Sobre `afa0add` el detector daba salida 1 con 5 bloqueantes, los mismos que sobre `0c23a34`; tres estaban en artefactos del propio cambio (`proposal.md:32`, `:38` y `specs/hojas-vida/spec.md:70`). Nadie lo señaló: se vio leyendo `cli.ts:49` antes de adquirir el archive.
+**Afecta a:** todo `sdd-archive` · el `exit 0` del pre-push como prueba de que un cambio archivado no deja citas rotas
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia).
+
+**El mecanismo.** La exclusión es deliberada (`cli.ts:46`, RQ-CV-07): el archive es registro fechado y no se barre. Pero el `git mv` del archive saca los artefactos del alcance del detector en el mismo commit en que dejarían de repararse. Lo que estaba rojo el minuto antes pasa a verde sin cambiar un byte de contenido. Sólo sigue a la vista la copia de la spec en `openspec/specs/<capacidad>/`, que no está excluida.
+
+**Primo de E-023, por otra vía.** E-023 registra que el commit del archive reescribe las anclas con el fichero ya movido, y en su propia revisión parecen ciertas (`:338-339`). Aquí el archive no reescribe nada: saca la ruta del barrido. Los dos acaban igual, con citas rotas que ningún detector ve después del archive.
+
+**Qué se hizo en F1B-02.** Las cinco se repararon antes de adquirir el archive (`cb30fa1`; detector con salida 0, 2031 comprobadas). Eso lo cazó una lectura, no un mecanismo: el orden «reparar y después archivar» no lo impone nada.
+
+**Punto abierto.** Si el detector debe correr sobre los artefactos del cambio ANTES del `git mv`, o si el propio archive debe negarse con bloqueantes vivos en la carpeta que mueve. Ninguna de las dos cosas existe hoy.

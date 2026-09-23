@@ -40,7 +40,7 @@ duplicidad.
 **Sobre el `UNIQUE` que NO se ha puesto, y por qué.** `codigo_servicio` es `text` sin restricción
 (`schema.sql:28`). Se comprobó qué pasaría si dos tickets compartieran código y **el daño es
 cosmético**: el enlace ticket ↔ equipo del historial se hace **por serial**
-(`db/equipos.ts:220-223`), no por el código, que sólo se muestra (`HojaDeVida.tsx:70`,
+(`db/equipos.ts:253-256`), no por el código, que sólo se muestra (`HojaDeVida.tsx:70`,
 `db/historial.ts:44`) y sirve de fuente al backfill (`backfillSerial.ts:11-16`). Un `UNIQUE` sobre una
 columna derivada rechazaría en producción el segundo servicio legítimo del mismo equipo el mismo día,
 y nadie ha decidido que eso deba pasar. **Se registra como pregunta, no se construye.**
@@ -67,7 +67,7 @@ cliente, no asociaba las órdenes de venta. **El diagnóstico era correcto y la 
 Lo que se encontró al mirar: `CreateTicket.tsx` resolvía el cliente del equipo **POR NOMBRE**
 —`searchClients(e.clienteNombre)` y comparación normalizada—, que es **exactamente el apaño que el
 servidor abandonó el 2026-08-09**. El comentario de `searchEquipos` lo dice con todas las letras
-(`db/equipos.ts:45-53`):
+(`db/equipos.ts:46-54`):
 
 > «La acotación es por `client_id` y nada más … Ese apaño dejó de hacer falta cuando
 > `backfill-client-id` enlazó el 96,6 %, y cobraba un precio: bastaba que dos clientes compartieran un

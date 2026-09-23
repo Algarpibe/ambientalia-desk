@@ -196,7 +196,7 @@ Ficheros canónicos auditados: `packages/shared/src/transitions.ts` (328 líneas
 
 **f.5 — El guard anti-drift `DESK_TABLES`↔`schema.sql` no existe como prueba.** `packages/zoho-sync/src/db/migrate.integration.test.ts` no contiene ninguna referencia a `DESK_TABLES` (grep sin resultados). `debt.md` lo da por existente o sugerido. **Hallazgo nuevo.** → Condiciona F0-04.
 
-**f.6 — `getEquipo` sin filtro `active` (M-9) dejó de ser riesgo teórico.** Confirmado vigente en `apps/desk/server/db/equipos.ts:75-78`; y desde que `apps/desk/src/components/EquiposAdmin.tsx:31-34` (`toggleActive`/`setEquipoActive`) permite dar de baja equipos desde la interfaz, un equipo desactivado **sí puede usarse hoy** para crear un ticket si se conoce su id. → Condiciona F1B.
+**f.6 — `getEquipo` sin filtro `active` (M-9) dejó de ser riesgo teórico.** Confirmado vigente en `apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`; y desde que `apps/desk/src/components/EquiposAdmin.tsx:31-34` (`toggleActive`/`setEquipoActive`) permite dar de baja equipos desde la interfaz, un equipo desactivado **sí puede usarse hoy** para crear un ticket si se conoce su id. → Condiciona F1B.
 
 **f.7 — El bloqueo de `books.items` ya está resuelto en producción.** 1428 artículos replicados (`debt.md:288-305`). Lo que se arrastra es sólo la población de accesorios en 26 de 35 modelos (`debt.md:174-183,237-239`), que es contenido, no motor. → **Abarata F1D-06.**
 
@@ -299,9 +299,9 @@ Auditoría completa de `debt.md` (903 líneas) contra el código al commit `a3a8
 | M-1 `status_type` fino | NO-APLICA-AL-MVP | — | Reportería/`kpis` es capacidad de Fase 2 en §2.3 |
 | **M-2 checkbox obligatorio** | **CIERRA-EN-F1A (F1A-01, C1)** | `apps/desk/server/transitionExec.ts:63-70`; `packages/shared/src/transitions.ts:247` | Único punto de `debt.md` que el maestro registra explícitamente (M11.7) y único que cierra en una tanda nombrada del plan |
 | M-3 enumeración por timing en el login | SE-ARRASTRA | `apps/desk/server/auth/routes.ts:18-22` (el `||` cortocircuita antes de `verifyPassword`) | Confirmado vigente; bajo riesgo, sin tanda |
-| M-9 `getEquipo` sin filtro `active` | SE-ARRASTRA | `apps/desk/server/db/equipos.ts:75-78`; `apps/desk/src/components/EquiposAdmin.tsx:31-34` | Confirmado vigente, y **ya no es teórico**: existe la UI de baja lógica, luego un equipo desactivado puede usarse para crear un ticket si se conoce su id |
+| M-9 `getEquipo` sin filtro `active` | SE-ARRASTRA | `apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`; `apps/desk/src/components/EquiposAdmin.tsx:31-34` | Confirmado vigente, y **ya no es teórico**: existe la UI de baja lógica, luego un equipo desactivado puede usarse para crear un ticket si se conoce su id |
 | M-10 dedup del parser de la semilla | NO-APLICA-AL-MVP | — | Siembra de una sola vez, catálogo cerrado, sin re-siembra prevista |
-| M-14 PATCH `serial` vacío | SE-ARRASTRA | `apps/desk/server/routes/equipos.ts:71` (sólo `trim()`) | Confirmado vigente |
+| M-14 PATCH `serial` vacío | SE-ARRASTRA | `apps/desk/server/routes/equipos.ts:71` en `a3a8f03` (sólo `trim()`) | Confirmado vigente |
 | M-5 escapar comodines de búsqueda | SE-ARRASTRA | — | **No reverificado en código** en esta pasada; bajo riesgo, sin tanda |
 | M-12 zona horaria en `due_date` | NO-APLICA-AL-MVP | `apps/desk/src/board.ts:68` | Confirmado presente; vistas finas son Fase 2, bajo impacto |
 | `config.syncBooks` sin uso | SE-ARRASTRA | `packages/zoho-sync/src/config.ts:91` (sólo referenciado por su propio test) | Limpieza cosmética pendiente |
@@ -557,7 +557,7 @@ Su gate es P14. La parte técnica **está respondida** por esta auditoría (§7.
 
 ### F1B / F1B-01 · Registro de equipos — **REPLANTEAR (defecto activo)**
 
-`getEquipo` no filtra por `active` (`apps/desk/server/db/equipos.ts:75-78`) y desde que existe la UI de baja lógica (`apps/desk/src/components/EquiposAdmin.tsx:31-34`) **un equipo dado de baja puede usarse hoy para crear un ticket** si se conoce su id. `debt.md` lo clasificaba como riesgo teórico «para cuando llegue la gestión de equipos»: ya llegó (#222, hallazgo 4).
+`getEquipo` no filtra por `active` (`apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`) y desde que existe la UI de baja lógica (`apps/desk/src/components/EquiposAdmin.tsx:31-34`) **un equipo dado de baja puede usarse hoy para crear un ticket** si se conoce su id. `debt.md` lo clasificaba como riesgo teórico «para cuando llegue la gestión de equipos»: ya llegó (#222, hallazgo 4).
 
 ### F1A-05 y F1B-09 · Auditorías de blueprint — **REPLANTEAR (dato de entrada corregido)**
 

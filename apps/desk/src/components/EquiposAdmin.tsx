@@ -113,6 +113,20 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
   // reabre al elegir (elegir reescribe `clientQuery`, lo que re-disparaba la búsqueda).
   const [clienteOpen, setClienteOpen] = useState(false)
 
+  // Los seis campos comerciales de la hoja de vida (F1B-02); todos opcionales, el servidor los
+  // valida enteros antes de escribir nada (`camposHojaDeVida`). Fecha vacía manda '' → el servidor
+  // la normaliza a NULL, igual que el resto de campos vaciables.
+  const [fechaAdquisicion, setFechaAdquisicion] = useState(equipo?.fechaAdquisicion ?? '')
+  const [fechaFacturaCompra, setFechaFacturaCompra] = useState(equipo?.fechaFacturaCompra ?? '')
+  const [finGarantia, setFinGarantia] = useState(equipo?.finGarantia ?? '')
+  const [codigoInterno, setCodigoInterno] = useState(equipo?.codigoInterno ?? '')
+  const [driveUrl, setDriveUrl] = useState(equipo?.driveUrl ?? '')
+  const [mantenedorId, setMantenedorId] = useState<string | null>(equipo?.mantenedorId ?? null)
+  const [mantenedorNombre, setMantenedorNombre] = useState(equipo?.mantenedorNombre ?? '')
+  const [mantenedorQuery, setMantenedorQuery] = useState('')
+  const [mantenedorResults, setMantenedorResults] = useState<ClientLite[]>([])
+  const [mantenedorOpen, setMantenedorOpen] = useState(false)
+
   useEffect(() => {
     // `incluir` trae el modelo del equipo aunque esté desactivado (junto con su marca): sin eso,
     // editar un equipo cuyo modelo se retiró del catálogo dejaría el campo en blanco y obligaría a
@@ -134,6 +148,14 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
     searchClients(clientQuery).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
     return () => { alive = false }
   }, [clientQuery, clientId])
+  // Mismo patrón que el buscador de cliente, para el mantenedor (opcional, F1B-02).
+  useEffect(() => {
+    if (mantenedorId) { setMantenedorResults([]); return }
+    if (mantenedorQuery.trim().length < 2) { setMantenedorResults([]); return }
+    let alive = true
+    searchClients(mantenedorQuery).then((r) => { if (alive) setMantenedorResults(r) }).catch(() => {})
+    return () => { alive = false }
+  }, [mantenedorQuery, mantenedorId])
 
   // La misma regla alimenta la pista bajo el campo y el freno al enviar: si se separaran, una diría
   // que hay problema y la otra dejaría guardar.
@@ -145,7 +167,11 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
       // El nombre del cliente no viaja en el payload ni el servidor lo aceptaría —lo deriva del
       // cliente de Books—, así que teclearlo sin elegir de la lista guardaba «bien» sin cambiar nada.
       if (avisoCliente) { setError(avisoCliente); return }
-      const payload = { serial, modeloId, clientId: clientId ?? undefined }
+      const payload = {
+        serial, modeloId, clientId: clientId ?? undefined,
+        fechaAdquisicion, fechaFacturaCompra, finGarantia, codigoInterno, driveUrl,
+        mantenedorId: mantenedorId ?? '',
+      }
       if (equipo) await updateEquipo(equipo.id, payload)
       else await createEquipo(payload)
       onSaved()
@@ -216,6 +242,42 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
             ? <div className="text-[11px] text-slate-400 mt-1">Cliente vinculado: {clientName}</div>
             : avisoCliente && <div className="text-[11px] text-amber-600 mt-1">{avisoCliente}</div>}
         </div>
+
+        {/* Los seis campos comerciales de la hoja de vida (F1B-02), todos opcionales. */}
+        <div className="grid grid-cols-3 gap-2">
+          <label className="text-[11px] text-slate-500 flex flex-col gap-1">Adquisición
+            <input type="date" className={field} value={fechaAdquisicion} onChange={(e) => setFechaAdquisicion(e.target.value)} />
+          </label>
+          <label className="text-[11px] text-slate-500 flex flex-col gap-1">Factura de compra
+            <input type="date" className={field} value={fechaFacturaCompra} onChange={(e) => setFechaFacturaCompra(e.target.value)} />
+          </label>
+          <label className="text-[11px] text-slate-500 flex flex-col gap-1">Fin de garantía
+            <input type="date" className={field} value={finGarantia} onChange={(e) => setFinGarantia(e.target.value)} />
+          </label>
+        </div>
+        <input className={field} placeholder="Código interno" value={codigoInterno} onChange={(e) => setCodigoInterno(e.target.value)} />
+        <input className={field} placeholder="Enlace de la carpeta de Drive (https://…)" value={driveUrl} onChange={(e) => setDriveUrl(e.target.value)} />
+        <div className="relative">
+          <input className={`${field} w-full`} placeholder="Mantenedor (Books, opcional)"
+            value={mantenedorId ? mantenedorNombre : mantenedorQuery} disabled={!!mantenedorId}
+            onFocus={() => setMantenedorOpen(true)} onBlur={() => setMantenedorOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setMantenedorOpen(false) }}
+            onChange={(e) => { setMantenedorQuery(e.target.value); setMantenedorOpen(true) }} />
+          {mantenedorOpen && mantenedorResults.length > 0 && (
+            <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
+              {mantenedorResults.map((c) => (
+                <li key={c.id}><button type="button" onClick={() => { setMantenedorId(c.id); setMantenedorNombre(c.name); setMantenedorQuery(''); setMantenedorResults([]) }} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">{c.name} {c.nit ? `· NIT ${c.nit}` : ''}</button></li>
+              ))}
+            </ul>
+          )}
+          {mantenedorId && (
+            <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
+              Mantenedor: {mantenedorNombre}
+              <button type="button" onClick={() => { setMantenedorId(null); setMantenedorNombre(''); setMantenedorQuery('') }} className="text-blue-600 underline">Quitar</button>
+            </div>
+          )}
+        </div>
+
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>

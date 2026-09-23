@@ -297,8 +297,14 @@ export async function createTicket(payload: CreateTicketPayload): Promise<Ticket
 }
 
 /** `modeloId` apunta al catálogo maestro, que es quien escribe marca/modelo/tipo en el servidor: por
- *  eso esos tres textos ya no viajan desde aquí (el endpoint los ignoraría de todos modos). */
-export interface EquipoInput { serial: string; modeloId: string; clientId?: string }
+ *  eso esos tres textos ya no viajan desde aquí (el endpoint los ignoraría de todos modos).
+ *  Los seis campos comerciales de la hoja de vida (F1B-02) son opcionales y el servidor los valida
+ *  entero antes de escribir nada (`camposHojaDeVida`, `routes/equipos.ts`); el cliente sólo los pasa. */
+export interface EquipoInput {
+  serial: string; modeloId: string; clientId?: string
+  fechaAdquisicion?: string | null; fechaFacturaCompra?: string | null; finGarantia?: string | null
+  codigoInterno?: string | null; mantenedorId?: string | null; driveUrl?: string | null
+}
 
 export function listEquiposManage(search: string, page = 1): Promise<{ items: EquipoFull[]; page: number }> {
   return fetch(`/api/equipos/manage?search=${encodeURIComponent(search)}&page=${page}`, { credentials: 'include' }).then((r) => json<{ items: EquipoFull[]; page: number }>(r))

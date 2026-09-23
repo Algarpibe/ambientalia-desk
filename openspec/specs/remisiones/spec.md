@@ -414,7 +414,7 @@ debe haber.)*
 dentro del `INSERT`** (`apps/desk/server/db/remisiones.ts:48`), así que ninguna ruta del producto
 puede crear una remisión de salida. La columna existe y admite el valor (`schema.sql:274`), el tipo de
 shared lo declara —«la rama de salida está en el roadmap, así que no se da por supuesto»
-(`packages/shared/src/types.ts:472`)— y la historia del ticket ya sabe redactarla
+(`packages/shared/src/types.ts:492`)— y la historia del ticket ya sabe redactarla
 (`apps/desk/server/db/conversacion.ts:100`), pero nadie la escribe.
 
 Importa porque el maestro apoya en ella las **dos vías de cierre** de M1.3.5 (`:1191`): «Por Facturar

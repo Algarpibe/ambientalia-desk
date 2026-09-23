@@ -96,7 +96,7 @@ export const HITO_INDICADORES_ROTOS = 'ingreso_a_servicio'
 /**
  * Un paso del historial: una fila de `ticket_transitions` tal como la escribe `repo.ts:282-286`.
  *
- * NO se reutiliza `HistorialTransition` (`types.ts:421`) aunque se parezca: aquella es el tipo de la
+ * NO se reutiliza `HistorialTransition` (`types.ts:441`) aunque se parezca: aquella es el tipo de la
  * línea de tiempo de la pantalla —lleva comentario y adjuntos, y NO lleva `values` ni `transitionId`,
  * que es justo lo que este módulo necesita—. Compartirlo obligaría a una de las dos a cargar con
  * campos que no usa.

@@ -198,7 +198,7 @@ Son entidades distintas y confundirlas costaría caro. El **catálogo** es el mo
 
 El argumento decisivo no es taxonómico: **el checklist de F1D-01 se parametriza por marca-modelo**, y ésa es exactamente la entidad `modelo` del catálogo. Si el catálogo no es capacidad, la spec de `diagnostico-checklist` no tiene dónde anclar su referencia, y F1D-01 acabaría inventando un maestro de modelos paralelo al que ya está en producción con 26 tipos, 6 marcas, 35 modelos y 354 equipos. Lo mismo vale para F1D-06, que lee artículos por modelo para enseñar sólo los repuestos de la etapa.
 
-Efectos: los siete diseños de Superpowers de ese dominio encuentran su sitio en F0-02; `diagnostico-checklist` declara dependencia de `catalogo-equipos`; y F1D se abarata, porque el ancla de parametrización ya existe y está poblada. Le da dueño, además, al defecto activo de `getEquipo`, que no filtra por `active` (`apps/desk/server/db/equipos.ts:75-78`) y hoy no tiene casa.
+Efectos: los siete diseños de Superpowers de ese dominio encuentran su sitio en F0-02; `diagnostico-checklist` declara dependencia de `catalogo-equipos`; y F1D se abarata, porque el ancla de parametrización ya existe y está poblada. Le da dueño, además, al defecto activo de `getEquipo`, que no filtra por `active` (`apps/desk/server/db/equipos.ts:75-78` en `a5da6b8`) y hoy no tiene casa.
 
 ---
 

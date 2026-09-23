@@ -198,7 +198,7 @@ tabla de Desk. **No había bug vivo** —`packages/zoho-sync/src/db/pool.ts:5` f
 `search_path=desk,public` y `books` nunca está ahí, así que una `ALTER` sin calificar aterriza en
 `desk.contacts`—: había un guardián diciendo que estaba bien lo que no lo estaba. Y sólo se ve
 escribiendo esa sentencia en el fichero vigilado, que es exactamente lo que hace hoy el fixture
-sintético de `migrate.test.ts:391-393`. Blindaje de intención, no corrección de un fallo.
+sintético de `migrate.test.ts:396-398`. Blindaje de intención, no corrección de un fallo.
 
 ### Regla de mutación 3 — la regla 13 es una casilla que se marca, no un principio que se recuerda
 
