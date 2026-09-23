@@ -69,14 +69,14 @@ corte de contingencia si hiciera falta: servidor (esquema→routes→pruebas) pr
 
 ## Phase 6: Cliente (`.tsx`, fuera de la red de pruebas — F0-00)
 
-- [ ] 6.1 `apps/desk/src/api/client.ts:301` — `EquipoInput` + seis opcionales.
-- [ ] 6.2 `HojaDeVida.tsx`, tras `:161` — rejilla de seis pares etiqueta/valor (`'—'` si vacío,
+- [x] 6.1 `apps/desk/src/api/client.ts:301` — `EquipoInput` + seis opcionales.
+- [x] 6.2 `HojaDeVida.tsx`, tras `:161` — rejilla de seis pares etiqueta/valor (`'—'` si vacío,
       fechas tal cual, sin `fmtFecha`); botón «Ver en Google Drive» sólo si
       `urlSegura(eq.driveUrl)`, `target="_blank" rel="noopener noreferrer"`. [RQ-07] Verificación
-      manual en staging.
-- [ ] 6.3 `EquiposAdmin.tsx` (`EquipoForm`, `:95-227`) — tres `type="date"`, código interno, Drive,
+      manual en staging — PENDIENTE (comprobación de persona).
+- [x] 6.3 `EquiposAdmin.tsx` (`EquipoForm`, `:95-227`) — tres `type="date"`, código interno, Drive,
       `SelectorMantenedor` local (`searchClients` + «Quitar»); payload `:148` manda los seis.
-      [RQ-08] Verificación manual en staging.
+      [RQ-08] Verificación manual en staging — PENDIENTE (comprobación de persona).
 
 ## Phase 7: Cierre
 
