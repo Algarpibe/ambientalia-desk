@@ -502,3 +502,18 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 **Coste medido.** Un `git mv` (`b0c6b41`). Una generación del ledger gastada en un refresco que no cambió un byte: la generación 3, «verify de refresco F1B-02», con árbol de inicio y de fin idénticos (`5248066`) y `changed_lines: 0`. Y cuatro vueltas —sobre añadido (`4a9ebb9`), refresco, diagnóstico y corrección— para encontrar una causa que estaba escrita en `sdd-status-contract.md:139-141`. La generación se gastó por inferir la causa en vez de leer el contrato; `sdd-verify-validate` daba `valid: true` porque recibe los totales de fuera y no mira la spec.
 
 **Punto abierto.** Si el dispatcher exige ese formato para archivar, ¿por qué ninguna fase lo comprueba antes de llegar al final? Hoy `sdd-spec`, `sdd-apply` y `sdd-verify` pasan con 0 requisitos contables, y el defecto sólo aparece cuando ya no se puede avanzar.
+
+## E-032 · 2026-09-23 · hallazgo
+**Qué:** ARCHIVAR SILENCIA EL DETECTOR. `apps/desk/server/citas/cli.ts:49` excluye `openspec/changes/archive/` del barrido, así que un cambio que llega al archive con citas rotas en sus propios artefactos las entierra en vez de repararlas, y el pre-push pasa a salida 0 sin que nadie haya arreglado nada.
+**De dónde viene:** cierre de F1B-02, 23/09. Sobre `afa0add` el detector daba salida 1 con 5 bloqueantes, los mismos que sobre `0c23a34`; tres estaban en artefactos del propio cambio (`proposal.md:32`, `:38` y `specs/hojas-vida/spec.md:70`). Nadie lo señaló: se vio leyendo `cli.ts:49` antes de adquirir el archive.
+**Afecta a:** todo `sdd-archive` · el `exit 0` del pre-push como prueba de que un cambio archivado no deja citas rotas
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia).
+
+**El mecanismo.** La exclusión es deliberada (`cli.ts:46`, RQ-CV-07): el archive es registro fechado y no se barre. Pero el `git mv` del archive saca los artefactos del alcance del detector en el mismo commit en que dejarían de repararse. Lo que estaba rojo el minuto antes pasa a verde sin cambiar un byte de contenido. Sólo sigue a la vista la copia de la spec en `openspec/specs/<capacidad>/`, que no está excluida.
+
+**Primo de E-023, por otra vía.** E-023 registra que el commit del archive reescribe las anclas con el fichero ya movido, y en su propia revisión parecen ciertas (`:338-339`). Aquí el archive no reescribe nada: saca la ruta del barrido. Los dos acaban igual, con citas rotas que ningún detector ve después del archive.
+
+**Qué se hizo en F1B-02.** Las cinco se repararon antes de adquirir el archive (`cb30fa1`; detector con salida 0, 2031 comprobadas). Eso lo cazó una lectura, no un mecanismo: el orden «reparar y después archivar» no lo impone nada.
+
+**Punto abierto.** Si el detector debe correr sobre los artefactos del cambio ANTES del `git mv`, o si el propio archive debe negarse con bloqueantes vivos en la carpeta que mueve. Ninguna de las dos cosas existe hoy.
