@@ -446,7 +446,7 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 **Destino:** — **sin destino, a propósito.** Es exactamente el caso «trabajo sin fila» que F0-05 dice cerrar, y el mecanismo no lo caza: el hook comprueba cabeceras cuando hay `proposal.md`, y aquí no lo hay. Decidir si todo cambio de producto necesita ficha, o si los ajustes de sincronización pueden ir directos, es alcance de método: devuelto al panel como `trabajo-sin-ficha`.
 **Lo medido (22/09, sobre `125ae3e`):** `ea3dbc1`, `a233e1d`, `7cfd198`, `8d03c0d`, `d041b1c`, `bde29fb` — 13 ficheros, +155/−18, con pruebas. No escriben en Zoho: son lectura y copia, así que no chocan con `decision/p44-escritura-zoho`.
 
-## E-028 · 2026-09-23 · hallazgo
+## E-029 · 2026-09-23 · hallazgo
 **Qué:** Los lotes de E-027 metieron 7 avisos `@typescript-eslint/no-explicit-any` en `packages/zoho-sync/src/booksHub/`, rompieron el trinquete de lint del CI y lo dejaron en rojo desde el 22/09 sin que nadie lo leyera.
 **De dónde viene:** medición previa al `sdd-verify` de F1B-02, 23/09. Bisect `--first-parent c45bcb1..125ae3e` con `npm run lint -- --max-warnings 158`: el padre de `ea3dbc1` da 158, `ea3dbc1` da 160, y con `a233e1d`, `7cfd198` y `8d03c0d` se llega a 165. Reparto: `mappers.ts` +1, `mappers.test.ts` +1, `sweep.test.ts` +2, `sync.test.ts` +2, `sync.ts` +1. Un checkout limpio y el árbol local dan lo mismo (165): `coverage/` no influye (`eslint.config.js:16`).
 **Afecta a:** el trinquete de `.github/workflows/ci.yml:41` · la verificación de main, porque con el lint en rojo el CI no llegaba a correr `test:coverage` ni `build`

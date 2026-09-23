@@ -67,7 +67,7 @@ testing:
     linter: >
       eslint . (eslint ^9.15.0) — 0 errores, 165 avisos: los 158 del baseline
       a3a8f03 (157 no-explicit-any, 1 react-hooks/exhaustive-deps) más 7
-      no-explicit-any de booksHub/ del 22/09, deuda registrada en ENTRADA.md E-028.
+      no-explicit-any de booksHub/ del 22/09, deuda registrada en ENTRADA.md E-029.
       CORREGIDO EN F1A-05 el «sin --max-warnings»: desde edbce13 (2026-09-08) el
       CI corre `npm run lint -- --max-warnings` 158; 165 desde f7c9dc1 (ci.yml:41),
       que es un TRINQUETE sin holgura, no un objetivo.
