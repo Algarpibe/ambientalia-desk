@@ -29,13 +29,13 @@ decisiones de Gerencia `decision/p8-p54-drive` (`openspec/config.yaml:1607-1626`
 - Cinco columnas nuevas en `equipos`, todas **opcionales (nullable)**: fecha de adquisición, fecha de
   factura de COMPRA, fin de garantía, `codigo_interno` y mantenedor; y una sexta para el enlace a Drive.
   `ALTER TABLE` sin calificar, correcto porque `equipos` está en `DESK_TABLES` (`migrate.ts:63-64`).
-- Tipos compartidos, lectura (`toLite`/`toFull`, `apps/desk/server/db/equipos.ts:38-43`, `:96-102`) y
+- Tipos compartidos, lectura (`toLite`/`toFull`, `apps/desk/server/db/equipos.ts:38-43` en `acf2701`, `:96-102`) y
   escritura extendiendo el `PATCH` y el `POST` existentes (`apps/desk/server/routes/equipos.ts:47-92`,
   `updateEquipo` en `db/equipos.ts:114-126`). Sin endpoint nuevo. El servidor valida lo que se guarda
   (regla 13): fechas, enlace de Drive **sólo `https://`** consumiendo `urlSegura`
   (`packages/shared/src/remision.ts:100-102`, ya usada en 20 sitios fuera de su fichero — no se
   escribe un validador nuevo, regla 13.1) y mantenedor contra Books, como ya hace con `clientId`
-  (`routes/equipos.ts:72-76`).
+  (`routes/equipos.ts:79-83`).
 - `codigo_interno` como identificador secundario: `searchEquipos` (`db/equipos.ts:58-73`) también busca por él.
 - Cabecera de `HojaDeVida` con los cinco campos y el botón «Ver en Google Drive»; `EquipoForm`
   (`apps/desk/src/components/EquiposAdmin.tsx:95`) los pide en alta y edición.

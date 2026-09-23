@@ -67,7 +67,7 @@ se escribe lo que llega.
 El sistema **SHALL** validar el formato de las tres fechas (adquisición, factura de compra, fin de
 garantía) en el servidor y **MUST NOT** escribir nada del `POST` o `PATCH` cuando una de ellas es
 inválida — el mismo principio que ya aplican `clientId` y `modeloId`, cuyo `422` se devuelve **antes** de
-construir el `patch` que se escribe (`routes/equipos.ts:72-88`, escritura recién en `:89`). Precedente de
+construir el `patch` que se escribe (`routes/equipos.ts:79-95`, escritura recién en `:99`). Precedente de
 formato en este mismo repositorio: `apps/desk/server/routes/remision.ts:127` valida fecha contra
 `^\d{4}-\d{2}-\d{2}$`.
 

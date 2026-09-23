@@ -67,7 +67,7 @@ cliente, no asociaba las órdenes de venta. **El diagnóstico era correcto y la 
 Lo que se encontró al mirar: `CreateTicket.tsx` resolvía el cliente del equipo **POR NOMBRE**
 —`searchClients(e.clienteNombre)` y comparación normalizada—, que es **exactamente el apaño que el
 servidor abandonó el 2026-08-09**. El comentario de `searchEquipos` lo dice con todas las letras
-(`db/equipos.ts:45-53`):
+(`db/equipos.ts:46-54`):
 
 > «La acotación es por `client_id` y nada más … Ese apaño dejó de hacer falta cuando
 > `backfill-client-id` enlazó el 96,6 %, y cobraba un precio: bastaba que dos clientes compartieran un
