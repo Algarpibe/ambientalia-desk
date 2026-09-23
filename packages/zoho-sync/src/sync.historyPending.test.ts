@@ -43,3 +43,131 @@ describe('esquema · history_synced_at', () => {
     expect((await marca('100'))?.toISOString()).toBe('2026-01-04T16:00:00.000Z')
   })
 })
+
+const evento = () =>
+  ({ eventName: 'TicketUpdated', eventTime: '2026-01-05T15:00:00Z', actor: { name: 'Agente', type: 'Agent' }, eventInfo: [] })
+
+/** Una página con un evento y después vacío, para cualquier ticket. */
+const unaPagina = () => vi.fn().mockImplementation(async (url: string) =>
+  url.includes('from=1')
+    ? new Response(JSON.stringify({ data: [evento()] }), { status: 200 })
+    : new Response(JSON.stringify({ data: [] }), { status: 200 }))
+
+/** Los ids de ticket cuya historia se pidió, en el orden en que se pidieron. */
+const pedidos = (zohoFetch: ReturnType<typeof vi.fn>) =>
+  zohoFetch.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('from=1')).map((u) => u.split('/')[2])
+
+const sinPausa = { pausaMs: 0 }
+
+describe('syncPendingHistory', () => {
+  it('elige los que nunca se trajeron y los modificados después de la última vez', async () => {
+    await ticket('100', '2026-01-04T16:00:00Z')
+    await ticket('200', '2026-02-04T16:00:00Z', '2026-01-10T16:00:00Z')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    const r = await sync.syncPendingHistory({ ...sinPausa, limite: 50 })
+
+    expect(r).toEqual({ intentados: 2, poblados: 2, fallidos: 0 })
+    expect(pedidos(zohoFetch).sort()).toEqual(['100', '200'])
+    expect((await db.query('SELECT count(*)::int AS c FROM ticket_history')).rows[0].c).toBe(2)
+  })
+
+  it('no elige los que ya están al día', async () => {
+    await ticket('100', '2026-01-04T16:00:00Z', '2026-01-04T16:00:00Z')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toEqual({ intentados: 0, poblados: 0, fallidos: 0 })
+    expect(zohoFetch).not.toHaveBeenCalled()
+  })
+
+  /**
+   * La marca es el `modified_time` LEÍDO al elegir el ticket, no la hora de la pasada: con `now()`,
+   * un ticket que Zoho cambia mientras se trae su historia quedaría marcado como al día sin estarlo.
+   */
+  it('marca history_synced_at con el modified_time leído', async () => {
+    await ticket('100', '2026-01-04T16:00:00Z')
+    const sync = createSync({ zohoFetch: unaPagina(), db, config })
+
+    await sync.syncPendingHistory({ ...sinPausa, limite: 50 })
+
+    expect((await marca('100'))?.toISOString()).toBe('2026-01-04T16:00:00.000Z')
+  })
+
+  it('un ticket que cambia mientras se trae su historia vuelve a salir en la pasada siguiente', async () => {
+    await ticket('100', '2026-01-04T16:00:00Z')
+    const base = unaPagina()
+    const zohoFetch = vi.fn().mockImplementation(async (url: string) => {
+      // Zoho lo modifica justo mientras se pide su historia, como haría un syncRecent entre medias.
+      await db.query('UPDATE tickets SET modified_time = $1 WHERE id = $2', [new Date('2026-01-04T17:00:00Z'), '100'])
+      return base(url)
+    })
+    const sync = createSync({ zohoFetch, db, config })
+
+    await sync.syncPendingHistory({ ...sinPausa, limite: 50 })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 1 })
+  })
+
+  /**
+   * El invariante de la pasada: un fallo NO corta los demás, y el ticket fallido NO se marca, así
+   * que la pasada siguiente lo vuelve a intentar sin hacer nada especial.
+   */
+  it('un fallo de Zoho en un ticket no corta la pasada y ese ticket queda sin marcar', async () => {
+    await ticket('100', '2026-01-04T16:00:00Z')
+    await ticket('200', '2026-02-04T16:00:00Z')
+    const base = unaPagina()
+    const zohoFetch = vi.fn().mockImplementation(async (url: string) =>
+      url.includes('/tickets/100/') ? new Response('nope', { status: 404 }) : base(url))
+    const sync = createSync({ zohoFetch, db, config })
+
+    const r = await sync.syncPendingHistory({ ...sinPausa, limite: 50 })
+
+    expect(r).toMatchObject({ intentados: 2, poblados: 1, fallidos: 1 })
+    expect(r.motivoPrimerFallo).toContain('404')
+    expect(await marca('100')).toBeNull()
+    expect((await marca('200'))?.toISOString()).toBe('2026-02-04T16:00:00.000Z')
+
+    zohoFetch.mockClear()
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1 })
+    expect(pedidos(zohoFetch)).toEqual(['100'])
+  })
+
+  it('respeta el límite y empieza por los modificados más recientemente', async () => {
+    await ticket('100', '2026-01-04T16:00:00Z')
+    await ticket('200', '2026-03-04T16:00:00Z')
+    await ticket('300', '2026-02-04T16:00:00Z')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    const r = await sync.syncPendingHistory({ ...sinPausa, limite: 2 })
+
+    expect(r).toMatchObject({ intentados: 2, poblados: 2 })
+    expect(pedidos(zohoFetch)).toEqual(['200', '300'])
+    expect(await marca('100')).toBeNull()
+  })
+
+  /** Zoho no conoce los tickets nacidos en la app: preguntarle sería un 404 por cabeza en cada ciclo. */
+  it('excluye los tickets nacidos en la app', async () => {
+    await ticket('app-0001', '2026-08-01T16:00:00Z')
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 0 })
+    expect(zohoFetch).not.toHaveBeenCalled()
+  })
+
+  /**
+   * Sin `modified_time` no hay valor leído que guardar, y marcarlo con nulo lo haría salir en TODAS
+   * las pasadas. Se marca con el epoch: se trae una vez y no vuelve hasta que Zoho le ponga fecha.
+   */
+  it('un ticket sin modified_time se trae una vez y no vuelve a salir', async () => {
+    await ticket('100', null)
+    const zohoFetch = unaPagina()
+    const sync = createSync({ zohoFetch, db, config })
+
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 1, poblados: 1 })
+    expect(await sync.syncPendingHistory({ ...sinPausa, limite: 50 })).toMatchObject({ intentados: 0 })
+  })
+})

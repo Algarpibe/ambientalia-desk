@@ -19,6 +19,7 @@ function mockSync(): Sync {
     syncTicketHistory: vi.fn().mockResolvedValue(undefined),
     syncActivities: vi.fn().mockResolvedValue(0),
     syncContacts: vi.fn().mockResolvedValue(0),
+    syncPendingHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0 }),
   }
 }
 describe('hubBootstrap', () => {

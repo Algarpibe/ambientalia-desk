@@ -27,6 +27,7 @@ describe('detail backfiller', () => {
       syncActivities: vi.fn(),
       syncTicketHistory: vi.fn(),
       syncContacts: vi.fn(),
+      syncPendingHistory: vi.fn(),
     }
 
     const b = createDetailBackfiller({ zohoFetch, sync, config, delayMs: 0 })
@@ -59,6 +60,7 @@ describe('detail backfiller', () => {
       syncActivities: vi.fn(),
       syncTicketHistory: vi.fn(),
       syncContacts: vi.fn(),
+      syncPendingHistory: vi.fn(),
     }
 
     const b = createDetailBackfiller({ zohoFetch, sync, config, delayMs: 0 })
