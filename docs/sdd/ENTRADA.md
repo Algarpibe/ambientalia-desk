@@ -463,3 +463,42 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 **Precedente exacto — E-021 (arriba, `:279-307`).** Es la misma familia de defecto —el día calculado sin pasar por `diaEnZona`—, pero **no el mismo mecanismo**: E-021 es `ticketCreate.ts:7-10`, que usa `getFullYear`/`getMonth`/`getDate` **locales** y depende de la zona horaria del *proceso* (UTC si nadie la fija en el contenedor); esta entrada son siete sitios que fuerzan **UTC explícito** vía `toISOString()`, sin depender de la zona del proceso. Las dos comparten la misma corrección disponible — `diaEnZona`, construida por F1A-07 — y las dos siguen sin usarla salvo en `bodegaje.ts`.
 **El límite, dicho con honestidad:** está **medido el inventario de llamadas** (las siete ubicaciones de arriba, cada una releída contra el fichero). **NO está medido el impacto.** Si la columna de origen es `date` (sin componente de hora) y no `timestamptz`, pg puede no introducir el desplazamiento que sí afecta a un `timestamptz` con hora — depende de cómo el driver construye el `Date` en cada caso, y eso no se ha comprobado sitio por sitio. Que nadie lea esta entrada como defecto confirmado: es hipótesis de corrección, no un bug verificado en producción.
 **Por qué F1B-02 no lo arregla, aunque toca uno de los siete ficheros.** `apps/desk/server/db/equipos.ts` es un fichero que esta tanda sí modifica (añade las seis columnas comerciales y su lectura), pero la línea `:190` pertenece a `remisionesDelEquipo`, una función que F1B-02 no toca ni necesita tocar para su alcance. **Registrado, no corregido** — es el encabezado de la sección «Incumplimientos vivos» de `CLAUDE.md`, y sin esta frase alguien podría leer mañana que se pasó por alto en una tanda que sí tenía el fichero abierto.
+
+## E-029 · 2026-09-23 · hallazgo
+**Qué:** Los lotes de E-027 metieron 7 avisos `@typescript-eslint/no-explicit-any` en `packages/zoho-sync/src/booksHub/`, rompieron el trinquete de lint del CI y lo dejaron en rojo desde el 22/09 sin que nadie lo leyera.
+**De dónde viene:** medición previa al `sdd-verify` de F1B-02, 23/09. Bisect `--first-parent c45bcb1..125ae3e` con `npm run lint -- --max-warnings 158`: el padre de `ea3dbc1` da 158, `ea3dbc1` da 160, y con `a233e1d`, `7cfd198` y `8d03c0d` se llega a 165. Reparto: `mappers.ts` +1, `mappers.test.ts` +1, `sweep.test.ts` +2, `sync.test.ts` +2, `sync.ts` +1. Un checkout limpio y el árbol local dan lo mismo (165): `coverage/` no influye (`eslint.config.js:16`).
+**Afecta a:** el trinquete de `.github/workflows/ci.yml:41` · la verificación de main, porque con el lint en rojo el CI no llegaba a correr `test:coverage` ni `build`
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia). Son dos cosas, y ninguna tiene fila:
+
+1. **La deuda: los 7 `any`.** Gerencia decidió el 23/09 subir el techo a **165 y ni uno más** (`f7c9dc1`), porque arreglarlos es una tanda aparte. Esa tanda no existe todavía. Mientras no exista, el techo absorbe deuda ajena ya fusionada, y sólo esa: los avisos que traiga código nuevo se arreglan en su propia tanda y no suben el techo.
+2. **El hallazgo de método, más grave que el número.** El trinquete no falló, falló que nadie lo lee. GitHub Actions registra **tres** ejecuciones de main en rojo, todas en el paso de lint: `bde29fb` (22/09 14:13 UTC), `125ae3e` (22/09 16:21, fusión de F1A-07) y `acf2701` (22/09 22:29, tras fusionar F1A-06). Entre medias hubo **dos** fusiones (`822ccbc`, `b69fef0`) y nadie miró el CI: los cierres comprobaban `npm run lint` a secas, que no lleva `--max-warnings` y da exit 0 con cualquier cifra. **Punto abierto: quién mira el CI de main y en qué momento del cierre.** Mientras se decide, el cierre de F1B-02 corre el lint con `--max-warnings 165`, igual que el CI.
+
+## E-030 · 2026-09-23 · hallazgo
+**Qué:** El `verify-report.md` archivado de F1A-06 no pasa hoy `gentle-ai sdd-verify-validate`, y tiene dos defectos, no uno.
+**De dónde viene:** cierre de F1B-02, 23/09, al usarlo como modelo del sobre `gentle-ai.verify-result/v1`. Medido con gentle-ai 2.4.0.
+**Afecta a:** `openspec/changes/archive/2026-09-22-generador-mapa-blueprint/verify-report.md` · la confianza en que un informe archivado revalide si el validador se endurece
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia). El informe está archivado y NO se toca: se registra.
+
+**Lo medido.**
+1. **`evidence_revision` inválido** (`:3`): pone `sha256:` delante de un SHA-1 de git de 40 caracteres, `4312d9c7…`. `sdd-verify-validate --requirements 7 --scenarios 15` → exit 1, «invalid evidence_revision in verify result envelope».
+2. **Veredicto aprobatorio con evidencia incompleta.** Corrigiendo SÓLO el campo anterior por stdin, sigue rechazado: `verdict: pass` (`:4`) con `scenarios: 11/15` (`:8`) → «passing verdict contradicts failing or incomplete evidence». Tampoco valdría `pass_with_warnings`: el validador exige los escenarios completos para cualquier veredicto aprobatorio.
+3. **El resto está bien.** Barrido de los **12** `verify-report.md` de `openspec/changes/archive/`, cada uno validado con los totales de su propio sobre: **11 dan `valid: true`** y sólo falla el de F1A-06.
+
+**La lección.** El sobre de F1A-06 era el precedente a copiar para F1B-02, y copiarlo habría repetido los dos defectos. Un precedente archivado no es un modelo válido hasta que se revalida con la herramienta de hoy.
+
+## E-031 · 2026-09-23 · hallazgo
+**Qué:** El `sdd-spec` de F1B-02 (`ee0ed40`) produjo DOS defectos estructurales, y los dos sólo se vieron al intentar archivar.
+**De dónde viene:** cierre de F1B-02, 23/09, con `archive: blocked` y `blockedReasons: []` tras un verify en verde. Medido con gentle-ai 2.4.0 en la rama `f1b-02-r1`.
+**Afecta a:** `openspec/changes/hojas-vida/specs/hojas-vida/spec.md` · el coste de cierre de toda tanda cuya spec salga fuera de formato
+**Estado:** triada
+**Destino:** — (sin destino, a propósito; dueño: Gerencia).
+
+**Los dos defectos.**
+1. **Spec en la ruta viva en vez del delta.** `ee0ed40` crea `openspec/specs/hojas-vida/spec.md` (171 líneas), no `openspec/changes/hojas-vida/specs/…`. Lo reparó `b0c6b41` con un `git mv` (R100, 0 líneas de contenido).
+2. **Encabezados fuera del formato de su propio skill.** En `ee0ed40` la spec tiene **0** encabezados `### Requirement:` y **8** `### RQ-HV-`; la plantilla es `### Requirement: {Requirement Name}` (`~/.claude/skills/sdd-spec/SKILL.md:116`) y así están los deltas archivados (`openspec/changes/archive/2026-09-22-generador-mapa-blueprint/specs/mapa-blueprint/spec.md:21`). `sdd-status` mide los totales en la spec (`~/.claude/skills/_shared/sdd-status-contract.md:139`), contaba 0 contra los 8/8 del sobre y dejaba archive bloqueado (`:141`) sin decir por qué. Lo reparó `0c23a34`: 8+/8−, 183 líneas antes y después. Después, `sdd-status` da `archive: ready`, `nextRecommended: archive`, `blockedReasons: []`.
+
+**Coste medido.** Un `git mv` (`b0c6b41`). Una generación del ledger gastada en un refresco que no cambió un byte: la generación 3, «verify de refresco F1B-02», con árbol de inicio y de fin idénticos (`5248066`) y `changed_lines: 0`. Y cuatro vueltas —sobre añadido (`4a9ebb9`), refresco, diagnóstico y corrección— para encontrar una causa que estaba escrita en `sdd-status-contract.md:139-141`. La generación se gastó por inferir la causa en vez de leer el contrato; `sdd-verify-validate` daba `valid: true` porque recibe los totales de fuera y no mira la spec.
+
+**Punto abierto.** Si el dispatcher exige ese formato para archivar, ¿por qué ninguna fase lo comprueba antes de llegar al final? Hoy `sdd-spec`, `sdd-apply` y `sdd-verify` pasan con 0 requisitos contables, y el defecto sólo aparece cuando ya no se puede avanzar.

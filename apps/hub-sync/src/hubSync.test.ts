@@ -19,6 +19,7 @@ function mockSync(): Sync {
     syncTicketHistory: vi.fn().mockResolvedValue(undefined),
     syncActivities: vi.fn().mockResolvedValue(0),
     syncContacts: vi.fn().mockResolvedValue(0),
+    syncPendingHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0 }),
   }
 }
 describe('hubBootstrap', () => {
@@ -132,5 +133,47 @@ describe('scheduleHubSync', () => {
     stop()
     await vi.advanceTimersByTimeAsync(3000)
     expect(sync.syncRecent).toHaveBeenCalledTimes(1)
+  })
+
+  /** Un sync que apunta el orden en que se le llama. `fallaHistoria` hace que la historia rechace. */
+  function syncQueApunta(orden: string[], fallaHistoria = false): Sync {
+    const s = mockSync()
+    s.syncRecent = vi.fn(async () => { orden.push('tickets'); return 0 })
+    s.syncPendingHistory = vi.fn(async () => {
+      orden.push('historia')
+      if (fallaHistoria) throw new Error('Zoho 429')
+      return { intentados: 0, poblados: 0, fallidos: 0 }
+    })
+    s.syncActivities = vi.fn(async () => { orden.push('actividades'); return 0 })
+    s.syncContacts = vi.fn(async () => { orden.push('contactos'); return 0 })
+    return s
+  }
+
+  /**
+   * La historia va DESPUÉS de los tickets, porque `syncRecent` es quien avanza el `modified_time`
+   * que decide qué historias faltan, y ANTES de actividades y contactos, que no dependen de ella.
+   */
+  it('trae la historia pendiente entre los tickets y las actividades, con límite de 50', async () => {
+    vi.useFakeTimers()
+    const orden: string[] = []
+    const sync = syncQueApunta(orden)
+    const stop = scheduleHubSync({ sync, intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop()
+    expect(orden).toEqual(['tickets', 'historia', 'actividades', 'contactos'])
+    expect(sync.syncPendingHistory).toHaveBeenCalledWith({ limite: 50 })
+  })
+
+  it('un fallo de la historia no corta actividades ni contactos', async () => {
+    vi.useFakeTimers()
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const orden: string[] = []
+    const stop = scheduleHubSync({ sync: syncQueApunta(orden, true), intervalMs: 1000 })
+    await vi.advanceTimersByTimeAsync(1000)
+    stop()
+    expect(orden).toEqual(['tickets', 'historia', 'actividades', 'contactos'])
+    // Lo recoge el catch propio de la historia, no el general del ciclo.
+    expect(errores).toHaveBeenCalledWith('Historia pendiente falló:', expect.any(Error))
+    errores.mockRestore()
   })
 })

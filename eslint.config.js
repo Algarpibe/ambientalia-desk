@@ -12,7 +12,7 @@ export default defineConfig([
   // máquina que hubiera corrido la cobertura alguna vez.
   //
   // Lo que arregla: que la cifra deje de depender del estado local de la máquina. Lo que NO
-  // arregla: el techo del CI sigue en 158 y sigue SIN HOLGURA a propósito (`ci.yml:28-41`).
+  // arregla: el techo del CI (165 desde el 23/09) sigue SIN HOLGURA a propósito (`ci.yml:28-41`).
   globalIgnores(['dist', '.agent', 'tmp-app', 'docs', 'coverage']),
   {
     files: ['**/*.{ts,tsx}'],

@@ -447,6 +447,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_articulos_ocultos_unico ON public.catalogo
 -- sentencia en dos y las dos mitades fallan. Por eso este bloque no contiene ninguno
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_aviso_cliente date;
 
+-- Marca de la historia de Zoho ya traida por el worker hub-sync. Guarda el modified_time del ticket leido al elegirlo, no la hora de la pasada, asi que un ticket con modified_time posterior vuelve a elegirse. En desk-db queda sin usar porque alli no corre ese relleno
+--
+-- SIN CALIFICAR A PROPOSITO, como el resto de ALTER sobre tickets: es tabla de DESK_TABLES y en produccion el search_path la lleva a desk. Y sin el caracter de punto y coma en este comentario, que migrate parte el fichero por el
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS history_synced_at timestamptz;
+
 -- F1B-02: seis campos comerciales de la hoja de vida del equipo, todos opcionales (RQ-HV-01)
 -- SIN CALIFICAR A PROPOSITO, mismo caso que el ALTER de arriba: equipos esta en DESK_TABLES
 -- (migrate.ts:63-64), asi que en produccion search_path=desk,public lo lleva a desk
