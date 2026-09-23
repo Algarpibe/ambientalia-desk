@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { fechaSolo } from '@ambientalia/zoho-sync/books/repo'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition, PasoHojaDeVida } from '@ambientalia/shared'
 import { etapasDesdeHistoria, ticketDeRemision } from '@ambientalia/shared'
@@ -38,7 +39,7 @@ export async function upsertEquipo(db: Queryable, r: EquipoRow): Promise<void> {
 function toLite(r: any): EquipoLite {
   return {
     id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined,
-    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined,
+    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined, codigoInterno: r.codigo_interno ?? undefined,
   }
 }
 
@@ -62,9 +63,10 @@ export async function searchEquipos(db: Queryable, q: string, clientId?: string 
   if (clientId) { params.push(clientId); clienteFilter = `AND client_id = $${params.length}` }
   params.push(limit)
   const r = await db.query(
-    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id FROM equipos
+    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,codigo_interno FROM equipos
      WHERE active = true AND (LOWER(serial) LIKE $1 OR LOWER(COALESCE(cliente_nombre,'')) LIKE $1
-       OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1)
+       OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1
+       OR LOWER(COALESCE(codigo_interno,'')) LIKE $1)
      ${clienteFilter}
      ORDER BY serial LIMIT $${params.length}`,
     params,
@@ -73,7 +75,7 @@ export async function searchEquipos(db: Queryable, q: string, clientId?: string 
 }
 
 export async function getEquipo(db: Queryable, id: string): Promise<EquipoLite | null> {
-  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id FROM equipos WHERE id=$1', [id])
+  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,codigo_interno FROM equipos WHERE id=$1', [id])
   return r.rows[0] ? toLite(r.rows[0]) : null
 }
 
@@ -91,6 +93,15 @@ export interface EquipoInput {
   clientId: string | null
   /** FK al catálogo maestro. Marca/modelo/tipo se derivan de él; ver `registerEquipoRoutes`. */
   modeloId: string | null
+  /** F1B-02: seis campos comerciales de la hoja de vida, todos opcionales y validados en la ruta.
+   *  Opcionales aquí también: los llamadores que no conocen la hoja de vida (siembra, backfill,
+   *  las pruebas de este mismo fichero) no tienen por qué mandarlos. */
+  fechaAdquisicion?: string | null
+  fechaFacturaCompra?: string | null
+  finGarantia?: string | null
+  codigoInterno?: string | null
+  mantenedorId?: string | null
+  driveUrl?: string | null
 }
 
 function toFull(r: any): EquipoFull {
@@ -98,15 +109,23 @@ function toFull(r: any): EquipoFull {
     id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined,
     tipo: r.tipo ?? undefined, clienteNombre: r.cliente_nombre ?? undefined,
     active: r.active === true, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined,
+    codigoInterno: r.codigo_interno ?? undefined,
+    fechaAdquisicion: fechaSolo(r.fecha_adquisicion), fechaFacturaCompra: fechaSolo(r.fecha_factura_compra),
+    finGarantia: fechaSolo(r.fin_garantia), mantenedorId: r.mantenedor_id ?? undefined,
+    mantenedorNombre: r.mantenedor_nombre ?? undefined, driveUrl: r.drive_url ?? undefined,
   }
 }
 
 export async function createEquipo(db: Queryable, input: EquipoInput): Promise<string> {
   const id = 'eq-' + randomUUID()
   await db.query(
-    `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,source,active,updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'app',true,now())`,
-    [id, input.serial, input.marca, input.modelo, input.tipo, input.clienteNombre, input.clientId, input.modeloId],
+    `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,
+       fecha_adquisicion,fecha_factura_compra,fin_garantia,codigo_interno,mantenedor_id,drive_url,
+       source,active,updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'app',true,now())`,
+    [id, input.serial, input.marca, input.modelo, input.tipo, input.clienteNombre, input.clientId, input.modeloId,
+      input.fechaAdquisicion ?? null, input.fechaFacturaCompra ?? null, input.finGarantia ?? null,
+      input.codigoInterno ?? null, input.mantenedorId ?? null, input.driveUrl ?? null],
   )
   return id
 }
@@ -122,6 +141,12 @@ export async function updateEquipo(db: Queryable, id: string, patch: Partial<Equ
   if (patch.clienteNombre !== undefined) add('cliente_nombre', patch.clienteNombre)
   if (patch.clientId !== undefined) add('client_id', patch.clientId)
   if (patch.modeloId !== undefined) add('modelo_id', patch.modeloId)
+  if (patch.fechaAdquisicion !== undefined) add('fecha_adquisicion', patch.fechaAdquisicion)
+  if (patch.fechaFacturaCompra !== undefined) add('fecha_factura_compra', patch.fechaFacturaCompra)
+  if (patch.finGarantia !== undefined) add('fin_garantia', patch.finGarantia)
+  if (patch.codigoInterno !== undefined) add('codigo_interno', patch.codigoInterno)
+  if (patch.mantenedorId !== undefined) add('mantenedor_id', patch.mantenedorId)
+  if (patch.driveUrl !== undefined) add('drive_url', patch.driveUrl)
   await db.query(`UPDATE equipos SET ${sets.join(',')} WHERE id=$1`, params)
 }
 
@@ -134,18 +159,26 @@ export async function deleteEquipo(db: Queryable, id: string): Promise<void> {
   await db.query('DELETE FROM equipos WHERE id=$1', [id])
 }
 
+/** Columnas + JOIN comunes a `getEquipoFull` y `listEquiposManage`: sin séptima columna propia,
+ *  el nombre del mantenedor se deriva de `clients` (precedente: `analisis.ts:16`). */
+const SELECT_EQUIPO_FULL = `SELECT e.id,e.serial,e.marca,e.modelo,e.tipo,e.cliente_nombre,e.client_id,e.active,e.modelo_id,
+       e.fecha_adquisicion,e.fecha_factura_compra,e.fin_garantia,e.codigo_interno,e.mantenedor_id,e.drive_url,
+       cl.name AS mantenedor_nombre
+     FROM equipos e LEFT JOIN clients cl ON e.mantenedor_id = cl.id`
+
 export async function getEquipoFull(db: Queryable, id: string): Promise<EquipoFull | null> {
-  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active,modelo_id FROM equipos WHERE id=$1', [id])
+  const r = await db.query(`${SELECT_EQUIPO_FULL} WHERE e.id=$1`, [id])
   return r.rows[0] ? toFull(r.rows[0]) : null
 }
 
 export async function listEquiposManage(db: Queryable, q: string, limit = 50, offset = 0): Promise<EquipoFull[]> {
   const like = `%${q.toLowerCase()}%`
   const r = await db.query(
-    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,active,modelo_id FROM equipos
-     WHERE LOWER(serial) LIKE $1 OR LOWER(COALESCE(cliente_nombre,'')) LIKE $1
-       OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1
-     ORDER BY serial LIMIT $2 OFFSET $3`,
+    `${SELECT_EQUIPO_FULL}
+     WHERE LOWER(e.serial) LIKE $1 OR LOWER(COALESCE(e.cliente_nombre,'')) LIKE $1
+       OR LOWER(COALESCE(e.marca,'')) LIKE $1 OR LOWER(COALESCE(e.modelo,'')) LIKE $1 OR LOWER(COALESCE(e.tipo,'')) LIKE $1
+       OR LOWER(COALESCE(e.codigo_interno,'')) LIKE $1
+     ORDER BY e.serial LIMIT $2 OFFSET $3`,
     [like, limit, offset],
   )
   return r.rows.map(toFull)

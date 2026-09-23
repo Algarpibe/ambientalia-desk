@@ -446,3 +446,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_articulos_ocultos_unico ON public.catalogo
 -- caracter de punto y coma a ciegas, comentarios incluidos. Uno dentro de un comentario parte la
 -- sentencia en dos y las dos mitades fallan. Por eso este bloque no contiene ninguno
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_aviso_cliente date;
+
+-- F1B-02: seis campos comerciales de la hoja de vida del equipo, todos opcionales (RQ-HV-01)
+-- SIN CALIFICAR A PROPOSITO, mismo caso que el ALTER de arriba: equipos esta en DESK_TABLES
+-- (migrate.ts:63-64), asi que en produccion search_path=desk,public lo lleva a desk
+--
+-- AL FINAL del fichero para no desplazar las citas schema.sql:3xx-4xx (regla de mutacion 4)
+--
+-- mantenedor_id referencia a un cliente de Books (packages/zoho-sync/src/books/repo.ts:129-132),
+-- igual que client_id: no es una FK de SQL porque clients llega replicado y sin garantia de orden
+--
+-- SIN PUNTO Y COMA en este comentario, misma trampa que arriba (:445-447): schemaStatements
+-- (migrate.ts:20) trocea por el caracter de punto y coma a ciegas, comentarios incluidos
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_adquisicion date;
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fecha_factura_compra date;
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fin_garantia date;
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS codigo_interno text;
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mantenedor_id text;
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS drive_url text;

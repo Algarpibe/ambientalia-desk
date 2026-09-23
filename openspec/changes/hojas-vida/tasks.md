@@ -23,48 +23,48 @@ corte de contingencia si hiciera falta: servidor (esquema→routes→pruebas) pr
 
 ## Phase 1: Esquema
 
-- [ ] 1.1 `packages/zoho-sync/src/db/schema.sql`, al final (tras `:448`): seis `ALTER TABLE equipos
+- [x] 1.1 `packages/zoho-sync/src/db/schema.sql`, al final (tras `:448`): seis `ALTER TABLE equipos
       ADD COLUMN IF NOT EXISTS` (fecha_adquisicion, fecha_factura_compra, fin_garantia,
       codigo_interno, mantenedor_id, drive_url); comentario sin `;`.
 
 ## Phase 2: Tipos
 
-- [ ] 2.1 `packages/zoho-sync/src/books/repo.ts:94` — exportar `fechaSolo`.
-- [ ] 2.2 `packages/shared/src/types.ts` — `EquipoLite` (`:329`) + `codigoInterno?`; `EquipoFull`
+- [x] 2.1 `packages/zoho-sync/src/books/repo.ts:94` — exportar `fechaSolo`.
+- [x] 2.2 `packages/shared/src/types.ts` — `EquipoLite` (`:329`) + `codigoInterno?`; `EquipoFull`
       (`:350`) + `fechaAdquisicion?`, `fechaFacturaCompra?`, `finGarantia?`, `mantenedorId?`,
       `mantenedorNombre?`, `driveUrl?`.
 
 ## Phase 3: `db/equipos.ts`
 
-- [ ] 3.1 `EquipoInput` (`:85`): seis campos `string | null` opcionales.
-- [ ] 3.2 `createEquipo`: INSERT con las seis columnas.
-- [ ] 3.3 `updateEquipo`: seis `add(...)` condicionales.
-- [ ] 3.4 `toLite`/`toFull`: mapear `codigoInterno` y los otros cinco (fechas vía `fechaSolo`).
-- [ ] 3.5 `getEquipoFull`/`listEquiposManage`: SELECT de las seis + `LEFT JOIN clients` →
+- [x] 3.1 `EquipoInput` (`:85`): seis campos `string | null` opcionales.
+- [x] 3.2 `createEquipo`: INSERT con las seis columnas.
+- [x] 3.3 `updateEquipo`: seis `add(...)` condicionales.
+- [x] 3.4 `toLite`/`toFull`: mapear `codigoInterno` y los otros cinco (fechas vía `fechaSolo`).
+- [x] 3.5 `getEquipoFull`/`listEquiposManage`: SELECT de las seis + `LEFT JOIN clients` →
       `mantenedor_nombre`.
-- [ ] 3.6 `searchEquipos`/`listEquiposManage`: `OR` por `codigo_interno`.
+- [x] 3.6 `searchEquipos`/`listEquiposManage`: `OR` por `codigo_interno`.
 
 ## Phase 4: `routes/equipos.ts`
 
-- [ ] 4.1 Helper `camposHojaDeVida(db, b)`: mantenedor (`getClient`) → tres fechas (`esFechaIso`)
+- [x] 4.1 Helper `camposHojaDeVida(db, b)`: mantenedor (`getClient`) → tres fechas (`esFechaIso`)
       → Drive (`urlSegura`); vacío/`null` → `NULL`, `undefined` no toca.
-- [ ] 4.2 Llamada en POST (entre `:58`/`:59`), pasar `campos` a `createEquipo`.
-- [ ] 4.3 Llamada en PATCH (entre `:88`/`:89`), antes de `updateEquipo` **y** de `setEquipoActive`
+- [x] 4.2 Llamada en POST (entre `:58`/`:59`), pasar `campos` a `createEquipo`.
+- [x] 4.3 Llamada en PATCH (entre `:88`/`:89`), antes de `updateEquipo` **y** de `setEquipoActive`
       (`:90`).
 
 ## Phase 5: Pruebas de servidor (`equipos.test.ts`, nuevo `describe('Hoja de vida — F1B-02')`)
 
-- [ ] 5.1 [RQ-01] POST mínimo → 201, seis vacíos; PATCH `{active}` sigue. Muta: exigir campo nuevo.
-- [ ] 5.2 [RQ-01/02] POST con los seis → 201 + `mantenedorNombre`. Muta: quitar columna del INSERT.
-- [ ] 5.3 [RQ-02] PATCH sólo `codigoInterno` → resto intacto. Muta: `add` incondicional.
-- [ ] 5.4 [RQ-03] Fecha `2026/01/01` (POST) y `2026-02-30` (PATCH) → 422. Muta: quitar `esFechaIso`.
-- [ ] 5.5 [RQ-04] Drive `http://` → 422, no escrito. Muta: quitar la rama Drive.
-- [ ] 5.6 [RQ-04] Drive con comilla doble → 422. Muta: `startsWith` en vez de `urlSegura`.
-- [ ] 5.7 [RQ-05] Mantenedor inexistente → 422. Muta: saltar `getClient`.
-- [ ] 5.8 [mutación 1] PATCH `{codigoInterno, active:false, driveUrl:'http://x'}` → 422;
+- [x] 5.1 [RQ-01] POST mínimo → 201, seis vacíos; PATCH `{active}` sigue. Muta: exigir campo nuevo.
+- [x] 5.2 [RQ-01/02] POST con los seis → 201 + `mantenedorNombre`. Muta: quitar columna del INSERT.
+- [x] 5.3 [RQ-02] PATCH sólo `codigoInterno` → resto intacto. Muta: `add` incondicional.
+- [x] 5.4 [RQ-03] Fecha `2026/01/01` (POST) y `2026-02-30` (PATCH) → 422. Muta: quitar `esFechaIso`.
+- [x] 5.5 [RQ-04] Drive `http://` → 422, no escrito. Muta: quitar la rama Drive.
+- [x] 5.6 [RQ-04] Drive con comilla doble → 422. Muta: `startsWith` en vez de `urlSegura`.
+- [x] 5.7 [RQ-05] Mantenedor inexistente → 422. Muta: saltar `getClient`.
+- [x] 5.8 [mutación 1] PATCH `{codigoInterno, active:false, driveUrl:'http://x'}` → 422;
       `codigoInterno` sigue null y `active` sigue `true`. Muta: mover el helper tras `:89`/`:90`.
-- [ ] 5.9 [RQ-06] `INT-001`/`int-001` → mismo id que `SN-1`. Muta: quitar el `OR`.
-- [ ] 5.10 [RQ-07 servidor] `/historial` trae los seis; `driveUrl:''` → nulo. Muta: `toFull` no
+- [x] 5.9 [RQ-06] `INT-001`/`int-001` → mismo id que `SN-1`. Muta: quitar el `OR`.
+- [x] 5.10 [RQ-07 servidor] `/historial` trae los seis; `driveUrl:''` → nulo. Muta: `toFull` no
       los mapea.
 
 ## Phase 6: Cliente (`.tsx`, fuera de la red de pruebas — F0-00)

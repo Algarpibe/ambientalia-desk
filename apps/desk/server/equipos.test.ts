@@ -199,3 +199,162 @@ describe('Gestión de equipos (Subsistema F)', () => {
     expect(Array.isArray(res.body.items)).toBe(true)
   })
 })
+
+describe('Hoja de vida — F1B-02', () => {
+  /** Cliente y modelo mínimos, con id único por caso para no colisionar entre pruebas. */
+  async function clienteYModelo(sufijo: string): Promise<{ clientId: string; modeloId: string }> {
+    const clientId = `cli-hv-${sufijo}`
+    const modeloId = `mo-hv-${sufijo}`
+    await db.query('INSERT INTO books.contacts (contact_id,contact_name) VALUES ($1,$2)', [clientId, `Cliente ${sufijo}`])
+    await db.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [`m-hv-${sufijo}`, 'Grimm'])
+    await db.query('INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ($1,$2,$3)', [modeloId, `m-hv-${sufijo}`, 'EDM180C'])
+    return { clientId, modeloId }
+  }
+
+  it('[RQ-HV-01] POST mínimo sin los seis campos comerciales sigue creando el equipo, y PATCH {active} sigue', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('01')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV1', modeloId, clientId })
+    expect(create.status).toBe(201)
+    expect(create.body).toMatchObject({ serial: 'SN-HV1' })
+    expect(create.body.fechaAdquisicion).toBeUndefined()
+    expect(create.body.fechaFacturaCompra).toBeUndefined()
+    expect(create.body.finGarantia).toBeUndefined()
+    expect(create.body.codigoInterno).toBeUndefined()
+    expect(create.body.mantenedorId).toBeUndefined()
+    expect(create.body.mantenedorNombre).toBeUndefined()
+    expect(create.body.driveUrl).toBeUndefined()
+    const patch = await request(app).patch(`/api/equipos/${create.body.id}`).set('Cookie', cookie).send({ active: false })
+    expect(patch.status).toBe(200)
+    expect(patch.body.active).toBe(false)
+  })
+
+  it('[RQ-HV-01/02] POST con los seis campos comerciales → 201, los devuelve con mantenedorNombre', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('02')
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-mant-02','Mantenedor Dos')")
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({
+      serial: 'SN-HV2', modeloId, clientId,
+      fechaAdquisicion: '2024-01-10', fechaFacturaCompra: '2024-01-12', finGarantia: '2026-01-10',
+      codigoInterno: 'INT-002', mantenedorId: 'cli-mant-02', driveUrl: 'https://drive.google.com/drive/folders/abc',
+    })
+    expect(create.status).toBe(201)
+    expect(create.body).toMatchObject({
+      fechaAdquisicion: '2024-01-10', fechaFacturaCompra: '2024-01-12', finGarantia: '2026-01-10',
+      codigoInterno: 'INT-002', mantenedorId: 'cli-mant-02', mantenedorNombre: 'Mantenedor Dos',
+      driveUrl: 'https://drive.google.com/drive/folders/abc',
+    })
+  })
+
+  it('[RQ-HV-02] PATCH sólo con codigoInterno deja los otros cinco campos comerciales intactos', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('03')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV3', modeloId, clientId })
+    const id = create.body.id
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie).send({ codigoInterno: 'INT-003' })
+    expect(patch.status).toBe(200)
+    expect(patch.body.codigoInterno).toBe('INT-003')
+    expect(patch.body.fechaAdquisicion).toBeUndefined()
+    expect(patch.body.driveUrl).toBeUndefined()
+    expect(patch.body.mantenedorId).toBeUndefined()
+    expect(patch.body.serial).toBe('SN-HV3')
+  })
+
+  it('[RQ-HV-03] Fecha inválida en POST y fecha imposible en PATCH → 422 sin escritura', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('04')
+    const { app } = appWith()
+    const bad = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV4', modeloId, clientId, fechaAdquisicion: '2026/01/01' })
+    expect(bad.status).toBe(422)
+    expect((await listEquiposManage(db, 'SN-HV4')).length).toBe(0)
+
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV4b', modeloId, clientId })
+    const id = create.body.id
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie).send({ finGarantia: '2026-02-30' })
+    expect(patch.status).toBe(422)
+    const after = await request(app).get(`/api/equipos/${id}`).set('Cookie', cookie)
+    expect(after.body.finGarantia).toBeUndefined()
+  })
+
+  it('[RQ-HV-04] Enlace de Drive con http:// → 422, no queda escrito', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('05')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV5', modeloId, clientId, driveUrl: 'http://drive.google.com/x' })
+    expect(create.status).toBe(422)
+    expect((await listEquiposManage(db, 'SN-HV5')).length).toBe(0)
+  })
+
+  it('[RQ-HV-04] Enlace de Drive https:// con comilla doble → 422 (distingue urlSegura de un startsWith desnudo)', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('06')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({
+      serial: 'SN-HV6', modeloId, clientId,
+      driveUrl: 'https://drive.google.com/x" onmouseover="alert(1)',
+    })
+    expect(create.status).toBe(422)
+    expect((await listEquiposManage(db, 'SN-HV6')).length).toBe(0)
+  })
+
+  it('[RQ-HV-05] Mantenedor que no resuelve a ningún cliente de Books → 422', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('07')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV7', modeloId, clientId, mantenedorId: 'no-existe' })
+    expect(create.status).toBe(422)
+    expect((await listEquiposManage(db, 'SN-HV7')).length).toBe(0)
+  })
+
+  // Regla de mutación 1: fija la POSICIÓN de la guarda. Si el helper corriera DESPUÉS de
+  // updateEquipo/setEquipoActive, el driveUrl inválido llegaría tarde: codigoInterno ya estaría
+  // escrito y el equipo ya desactivado. Aquí el 422 tiene que tumbar el PATCH entero.
+  it('[posición] PATCH con codigoInterno válido + active + driveUrl inválido rechaza el conjunto, sin desactivar ni escribir el código', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('08')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-HV8', modeloId, clientId })
+    const id = create.body.id
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie)
+      .send({ codigoInterno: 'INT-008', active: false, driveUrl: 'http://x' })
+    expect(patch.status).toBe(422)
+    const after = await request(app).get(`/api/equipos/${id}`).set('Cookie', cookie)
+    expect(after.body.codigoInterno).toBeUndefined()
+    expect(after.body.active).toBe(true)
+  })
+
+  it('[RQ-HV-06] Buscar por código interno (con y sin mayúsculas) devuelve el mismo equipo que por serial', async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('09')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({ serial: 'SN-1-HV9', modeloId, clientId, codigoInterno: 'INT-001' })
+    const id = create.body.id
+    const porSerial = await request(app).get('/api/equipos?search=SN-1-HV9').set('Cookie', cookie)
+    const porCodigo = await request(app).get('/api/equipos?search=INT-001').set('Cookie', cookie)
+    const porCodigoMin = await request(app).get('/api/equipos?search=int-001').set('Cookie', cookie)
+    expect(porSerial.body.map((e: any) => e.id)).toContain(id)
+    expect(porCodigo.body.map((e: any) => e.id)).toContain(id)
+    expect(porCodigoMin.body.map((e: any) => e.id)).toContain(id)
+  })
+
+  it("[RQ-HV-07 servidor] /historial trae los seis campos comerciales, y vaciar driveUrl con '' lo deja nulo", async () => {
+    const cookie = await adminCookie()
+    const { clientId, modeloId } = await clienteYModelo('10')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', cookie).send({
+      serial: 'SN-HV10', modeloId, clientId,
+      codigoInterno: 'INT-010', driveUrl: 'https://drive.google.com/drive/folders/x10',
+    })
+    const id = create.body.id
+    const hist1 = await request(app).get(`/api/equipos/${id}/historial`).set('Cookie', cookie)
+    expect(hist1.status).toBe(200)
+    expect(hist1.body.equipo).toMatchObject({ codigoInterno: 'INT-010', driveUrl: 'https://drive.google.com/drive/folders/x10' })
+
+    await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie).send({ driveUrl: '' })
+    const hist2 = await request(app).get(`/api/equipos/${id}/historial`).set('Cookie', cookie)
+    expect(hist2.body.equipo.driveUrl).toBeUndefined()
+  })
+})

@@ -345,10 +345,21 @@ export interface EquipoLite {
   clientId?: string
   /** FK al catálogo maestro (`catalogo_modelos`); ausente en equipos que la siembra no pudo casar. */
   modeloId?: string
+  /** Identificador secundario de búsqueda (F1B-02); `searchEquipos` también busca por él. */
+  codigoInterno?: string
 }
 
 export interface EquipoFull extends EquipoLite {
   active: boolean
+  /** F1B-02: seis campos comerciales de la hoja de vida, todos opcionales. */
+  fechaAdquisicion?: string
+  fechaFacturaCompra?: string
+  finGarantia?: string
+  /** FK al cliente de Books que mantiene el equipo (`decision/titularidad-mantenedor`). */
+  mantenedorId?: string
+  /** Derivado por `LEFT JOIN clients`, no persistido. */
+  mantenedorNombre?: string
+  driveUrl?: string
 }
 
 export interface CatalogoTipo { id: string; nombre: string; activo: boolean }
