@@ -422,7 +422,7 @@ escenario, `plan:512-516`:
 |---|---|---|---|
 | 1 | El alta cuelga de la **remisión de entrada** | El alta cuelga del **formulario de ticket** | Son **dos puertas distintas** y el plan sólo nombra una. Mismo molde que IV-4: una regla con tres puertas y dos comprobadas |
 | 2 | El ticket **no se crea** hasta que el equipo exista | «poder ingresar un serial que no exista» | Compatible, pero **no es lo mismo**. El plan no relaja la guarda: da la forma de satisfacerla sin salir de la ventana. El 422 de `apps/desk/server/services/ticketService.ts:22-25` se queda |
-| 3 | Campos: fecha de adquisición, fecha de factura, fin de garantía, código interno del cliente | Campos: serie, marca, modelo, tipo, cliente, **estado** | **No coinciden.** Hoy marca, modelo y tipo **no se escriben**: se derivan del modelo del catálogo (`apps/desk/server/routes/equipos.ts:59-60`), y «estado» es el booleano `active` (`:91`) |
+| 3 | Campos: fecha de adquisición, fecha de factura, fin de garantía, código interno del cliente | Campos: serie, marca, modelo, tipo, cliente, **estado** | **No coinciden.** Hoy marca, modelo y tipo **no se escriben**: se derivan del modelo del catálogo (`apps/desk/server/routes/equipos.ts:63-64`), y «estado» es el booleano `active` (`:100`) |
 
 **La única que decide Gerencia es la fila 3**, y detrás hay una pregunta concreta: un equipo de un
 modelo que **nadie ha registrado todavía** obliga a decidir si este formulario puede **crear también
@@ -434,7 +434,7 @@ cuanto la 3 esté fijada.
 con dos listas de campos distintas y **elige una por su cuenta**.
 
 **Acto de registro.** El alta ya existe a medias: `POST /api/equipos`
-(`apps/desk/server/routes/equipos.ts:47-64`) crea el equipo con serial, cliente y modelo del catálogo.
+(`apps/desk/server/routes/equipos.ts:47-64` en `9670f5d`) crea el equipo con serial, cliente y modelo del catálogo.
 Lo que falta no es el endpoint: es el formulario, la puerta y la decisión de la fila 3.
 
 ---

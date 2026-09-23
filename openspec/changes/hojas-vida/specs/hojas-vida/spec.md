@@ -35,7 +35,7 @@ El sistema **SHALL** permitir guardar, por equipo, seis campos nuevos, todos opc
 adquisición, fecha de factura de compra, fin de garantía, código interno, mantenedor (referencia a un
 cliente de Books) y enlace a la carpeta de Drive. Ninguno **SHALL** ser obligatorio para crear o para
 seguir operando un equipo: hoy el alta sólo exige `serial`, `clientId` y `modeloId`
-(`apps/desk/server/routes/equipos.ts:47-64`), y los seis campos nuevos **MUST NOT** ampliar esa lista.
+(`apps/desk/server/routes/equipos.ts:48-71`), y los seis campos nuevos **MUST NOT** ampliar esa lista.
 
 #### Scenario: Alta de equipo sin los cinco campos comerciales
 - GIVEN un alta que trae sólo `serial`, `modeloId` y `clientId` (los tres exigidos hoy)
@@ -51,9 +51,9 @@ seguir operando un equipo: hoy el alta sólo exige `serial`, `clientId` y `model
 ### Requirement: RQ-HV-02 · Se extiende el POST y el PATCH existentes; no hay endpoint nuevo
 
 El sistema **SHALL** aceptar los seis campos en el mismo `POST /api/equipos` y `PATCH /api/equipos/:id`
-que ya existen (`apps/desk/server/routes/equipos.ts:47`, `:66`; escritura en `db/equipos.ts:104`
-`createEquipo` y `:114` `updateEquipo`), y **MUST NOT** crear una ruta nueva. Un `PATCH` **SHALL** seguir
-el patrón ya construido de campos opcionales (`if (b.X !== undefined) …`, `routes/equipos.ts:71-88`): sólo
+que ya existen (`apps/desk/server/routes/equipos.ts:48`, `:73`; escritura en `db/equipos.ts:119`
+`createEquipo` y `:133` `updateEquipo`), y **MUST NOT** crear una ruta nueva. Un `PATCH` **SHALL** seguir
+el patrón ya construido de campos opcionales (`if (b.X !== undefined) …`, `routes/equipos.ts:78-95`): sólo
 se escribe lo que llega.
 
 #### Scenario: PATCH parcial que sólo toca uno de los campos nuevos
@@ -110,7 +110,7 @@ escribirlo.
 
 El sistema **SHALL** validar el mantenedor contra `getClient` (`packages/zoho-sync/src/books/repo.ts:129-132`),
 con el mismo patrón `422` que ya usa `clientId` en el alta y el `PATCH`
-(`routes/equipos.ts:55-56` y `:73-74`, «Cliente no encontrado»).
+(`routes/equipos.ts:56-57` y `:80-81`, «Cliente no encontrado»).
 
 #### Scenario: Mantenedor inexistente → 422
 - GIVEN un alta o un `PATCH` cuyo mantenedor no resuelve a ningún cliente de Books
@@ -124,9 +124,9 @@ a **F1B-11**; aquí sólo se guarda y valida el dato (`decision/titularidad-mant
 
 ### Requirement: RQ-HV-06 · El código interno es identificador secundario de búsqueda
 
-`searchEquipos` (`apps/desk/server/db/equipos.ts:58-73`) **SHALL** encontrar un equipo por su código
+`searchEquipos` (`apps/desk/server/db/equipos.ts:59-75`) **SHALL** encontrar un equipo por su código
 interno con el mismo criterio —insensible a mayúsculas, por coincidencia parcial— con el que ya busca por
-serial hoy (`LOWER(serial) LIKE $1`, `:66-67`).
+serial hoy (`LOWER(serial) LIKE $1`, `:67-68`).
 
 #### Scenario: Buscar por código interno devuelve el mismo equipo que por serial
 - GIVEN un equipo con serial `SN-1` y código interno `INT-001`
@@ -178,6 +178,6 @@ seis campos, en alta y en edición, y enviarlos en el mismo payload que ya manda
 - **Cálculo automático de garantía y alertas**, **marca de visibilidad por campo** para el portal, y
   **almacenamiento propio de documentos** — gate cerrado a favor del enlace (`config.yaml:1616-1617`).
 - **Permisos por área** para escribir equipos: hoy basta `requireAuth`
-  (`routes/equipos.ts:47`, `:66`); esta spec no lo cambia.
+  (`routes/equipos.ts:48`, `:73`); esta spec no lo cambia.
 - **`tickets.codigo_interno`, `tickets.fecha_factura`, `tickets.doc_almacenada_drive`** — nociones
   distintas del ticket, no se tocan (`packages/zoho-sync/src/db/repo.ts:47`, `:50`, `:53`).

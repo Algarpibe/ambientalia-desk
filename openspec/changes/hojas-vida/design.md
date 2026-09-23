@@ -17,7 +17,7 @@ Extender la cadena existente capa a capa, sin endpoint nuevo: esquema → tipos 
 | Validar Drive | `urlSegura` de `@ambientalia/shared` (`remision.ts:100-102`), importada como en `db/eliminarTicket.ts:13` | `startsWith('https://')` | Decidido; sólo `urlSegura` rechaza la comilla (`:94-98`) |
 | Validar fecha | helper local `esFechaIso`: regex de `routes/remision.ts:127` + ida y vuelta `new Date(v+'T00:00:00Z').toISOString().slice(0,10) === v` | sólo regex | La regex deja pasar `2026-02-30`; hipótesis: PostgreSQL lo rechazaría en el `INSERT` y el usuario vería un 500 en vez de un 422. No existe validador de fecha en `packages/shared/src` |
 | Vaciar un campo | `''` o `null` escriben `NULL`; `undefined` no toca | rechazar `''` | El formulario de edición manda los seis siempre; sin esto no se podría borrar un dato erróneo |
-| `EquipoLite` vs `EquipoFull` | `codigoInterno` en `Lite`; el resto en `Full` | todo en `Lite` | `searchEquipos` devuelve `Lite` (`db/equipos.ts:58`) y casa por `codigo_interno`: quien lee el resultado debe ver por qué casó |
+| `EquipoLite` vs `EquipoFull` | `codigoInterno` en `Lite`; el resto en `Full` | todo en `Lite` | `searchEquipos` devuelve `Lite` (`db/equipos.ts:59`) y casa por `codigo_interno`: quien lee el resultado debe ver por qué casó |
 
 ## Flujo de datos
 

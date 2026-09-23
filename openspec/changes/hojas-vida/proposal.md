@@ -30,13 +30,13 @@ decisiones de Gerencia `decision/p8-p54-drive` (`openspec/config.yaml:1607-1626`
   factura de COMPRA, fin de garantía, `codigo_interno` y mantenedor; y una sexta para el enlace a Drive.
   `ALTER TABLE` sin calificar, correcto porque `equipos` está en `DESK_TABLES` (`migrate.ts:63-64`).
 - Tipos compartidos, lectura (`toLite`/`toFull`, `apps/desk/server/db/equipos.ts:38-43` en `acf2701`, `:96-102`) y
-  escritura extendiendo el `PATCH` y el `POST` existentes (`apps/desk/server/routes/equipos.ts:47-92`,
-  `updateEquipo` en `db/equipos.ts:114-126`). Sin endpoint nuevo. El servidor valida lo que se guarda
+  escritura extendiendo el `PATCH` y el `POST` existentes (`apps/desk/server/routes/equipos.ts:47-92` en `acf2701`,
+  `updateEquipo` en `db/equipos.ts:114-126` en `acf2701`). Sin endpoint nuevo. El servidor valida lo que se guarda
   (regla 13): fechas, enlace de Drive **sólo `https://`** consumiendo `urlSegura`
   (`packages/shared/src/remision.ts:100-102`, ya usada en 20 sitios fuera de su fichero — no se
   escribe un validador nuevo, regla 13.1) y mantenedor contra Books, como ya hace con `clientId`
   (`routes/equipos.ts:79-83`).
-- `codigo_interno` como identificador secundario: `searchEquipos` (`db/equipos.ts:58-73`) también busca por él.
+- `codigo_interno` como identificador secundario: `searchEquipos` (`db/equipos.ts:59-75`) también busca por él.
 - Cabecera de `HojaDeVida` con los cinco campos y el botón «Ver en Google Drive»; `EquipoForm`
   (`apps/desk/src/components/EquiposAdmin.tsx:95`) los pide en alta y edición.
 
@@ -61,7 +61,7 @@ decisiones de Gerencia `decision/p8-p54-drive` (`openspec/config.yaml:1607-1626`
   mismo trabajo que la comprobación de persona de la carga retroactiva, más abajo.
 - Cálculo automático de garantía y alertas (`R08.2.md:2043`, `:2046`); marca de visibilidad por campo
   para el portal (`R08.2.md:2052`); almacenamiento propio de documentos (gate cerrado, `config.yaml:1616-1617`).
-- Restringir por área quién escribe equipos: hoy basta `requireAuth` (`routes/equipos.ts:47`, `:66`).
+- Restringir por área quién escribe equipos: hoy basta `requireAuth` (`routes/equipos.ts:48`, `:73`).
 
 ## Capacidades
 
