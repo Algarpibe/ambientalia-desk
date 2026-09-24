@@ -56,4 +56,4 @@ Chain strategy: pending
 
 ## Datos de persona (fuera del recuento — regla del ciclo 1)
 
-- [ ] Cierres de fin de año 2026/2027: Alfonso los registra por `INSERT` directo en `public.calendario_cierres`. Archivar **no** los da por hechos; pendientes, sin fecha fijada.
+- **Cierres de fin de año 2026/2027** · dueño: Alfonso (Gerencia) · destino: `INSERT` directo en `public.calendario_cierres`, producción · dónde queda escrito: esta sección y el parte. Las fechas las pide el orquestador al usuario. Alfonso los registra por `INSERT` directo en `public.calendario_cierres`. Archivar **no** los da por hechos; pendientes, sin fecha fijada.
