@@ -23,7 +23,7 @@ trabajo y no el presupuesto.
 Hay cinco sitios donde vive la verdad de este proyecto —código, `openspec/`, plan, maestro y las
 decisiones que se toman en conversación— y corren a velocidades distintas. El desvío no se ve en un
 commit: se ve en el agregado. El principio ya estaba escrito en
-`openspec/config.yaml:1249` en `ce93480` (`unidad_de_avance.trazabilidad`):
+`openspec/config.yaml:1259` en `ce93480` (`unidad_de_avance.trazabilidad`):
 *«el as-built no se recuerda: se verifica»*. Lo que faltaba era **quién lo ejecuta y cada cuánto**.
 
 **Límite explícito, y gobierna toda la capacidad: este barrido NO arregla ningún desvío. Los hace
@@ -54,7 +54,7 @@ Las **seis** comprobaciones, y lo que cada una reporta medido contra `ce93480`:
 | 2 | Tandas del §5 **vs** cabeceras `tanda:` | **dos cifras separadas** — `RQ-RC-05` |
 | 3 | Cambios con `tanda: fuera-del-plan`, con su motivo | **CINCO** |
 | 4 | IVs vivos sin destino · gates sin sesión · claves `decision/*` sin fila | **5 vivos** (`openspec/config.yaml:307` en `ce93480`) |
-| 5 | Cifras ancladas (`openspec/config.yaml:1187` en `ce93480`) | esperas **4 / 11**, divergencia **legítima** |
+| 5 | Cifras ancladas (`openspec/config.yaml:1197` en `ce93480`) | esperas **4 / 11**, divergencia **legítima** |
 | 6 | Ficheros de `docs/sdd` sin trackear | **once** |
 
 - «Huérfana» **SHALL** significar **spec en disco que no está en `capabilities`**, no al revés: una
@@ -133,7 +133,7 @@ barrido que se salta no existe.
 ### Requirement: RQ-RC-04 · La comprobación 5 lee `packages/shared`, NUNCA la documentación
 
 La comprobación 5 **SHALL** obtener la cifra del código leyendo `packages/shared` —`estados.ts` y
-`transitions.ts`— y compararla contra `cifras_ancladas` (`openspec/config.yaml:1187` en `ce93480`).
+`transitions.ts`— y compararla contra `cifras_ancladas` (`openspec/config.yaml:1197` en `ce93480`).
 **MUST NOT** derivar la cifra del código de ningún documento, incluido el propio `config.yaml`.
 
 Cada entrada de `cifras_ancladas` **SHALL** declarar si divergir es un **error** o una **diferencia
@@ -225,9 +225,9 @@ trabajo.** Cuadrar el plan con el documento es decidir cuál de los dos manda, y
 ### Requirement: RQ-RC-07 · Regla (d) de `unidad_de_avance`: el numerador se publica con el motivo de su cambio
 
 `openspec/config.yaml` **SHALL** ganar una **cuarta** regla de lectura en `unidad_de_avance`
-(`openspec/config.yaml:1233` en `ce93480`): el numerador se publica con el **motivo** de su cambio,
-`por trabajo` o `por dictamen`. Las tres existentes —`openspec/config.yaml:1235` en `ce93480`,
-`openspec/config.yaml:1240` en `ce93480` y `openspec/config.yaml:1245` en `ce93480`— **MUST NOT**
+(`openspec/config.yaml:1243` en `ce93480`): el numerador se publica con el **motivo** de su cambio,
+`por trabajo` o `por dictamen`. Las tres existentes —`openspec/config.yaml:1245` en `ce93480`,
+`openspec/config.yaml:1250` en `ce93480` y `openspec/config.yaml:1255` en `ce93480`— **MUST NOT**
 tocarse.
 
 **Por qué:** el 2026-09-17 el numerador pasó de 10 a 11 **sin que nadie escribiera código** —lo movió

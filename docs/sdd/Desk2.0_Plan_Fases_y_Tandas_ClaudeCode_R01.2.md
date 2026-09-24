@@ -8,7 +8,7 @@
 
 **Qué es este fichero y qué no.** Es una revisión **diferencial**: contiene íntegras las secciones que cambian —§4.5 gates, §5 catálogo y §3.7 calendario— y remite a la R01.1 para todo lo demás. No reproduce las 618 líneas a propósito: regenerarlas desplazaría las citas `plan:NNN` de medio repositorio y la regla de mutación 4 de `CLAUDE.md` dice exactamente por qué eso es el modo de fallo, no la reparación.
 
-**Qué la motiva.** Las 59 decisiones de `openspec/config.yaml → decisiones_de_gerencia`, y en particular la del corte: **el 31/12/2026 deja de ser la meta y la sustituye el lunes 14/12/2026** (`decision/fecha-corte`, `openspec/config.yaml:2151-2167`).
+**Qué la motiva.** Las 59 decisiones de `openspec/config.yaml → decisiones_de_gerencia`, y en particular la del corte: **el 31/12/2026 deja de ser la meta y la sustituye el lunes 14/12/2026** (`decision/fecha-corte`, `openspec/config.yaml:2161-2177`).
 
 **Lo medido y lo supuesto.** Todo cuadro de este documento lleva su `ruta:línea`. Donde hay estimación y no medida, se dice con la palabra **hipótesis** delante.
 
@@ -20,24 +20,24 @@ Cuatro, y **sólo cuatro**. Cada una con la clave de decisión que la respalda.
 
 | ID | Nombre | Capacidad | Fuente (clave) | Talla | Semana |
 |---|---|---|---|---|---|
-| **F0-06** | Vigilancias del repaso automático | `reconciliacion` | `decision/barrido-comprobaciones-nuevas` (`config.yaml:2472-2487`) | S | S39 |
-| **F1B-12** | Calendario laboral (jornada, festivos, día hábil) | `kpis` | `decision/calendario-habil` (`config.yaml:2455-2470`) | S | S40 |
-| **F1B-13** | Reclamación de garantía al fabricante | `tickets-core` | `decision/anexo-7-garantia-proveedor` (`config.yaml:2256-2271`) | S | junto a F1B-03 |
+| **F0-06** | Vigilancias del repaso automático | `reconciliacion` | `decision/barrido-comprobaciones-nuevas` (`config.yaml:2482-2497`) | S | S39 |
+| **F1B-12** | Calendario laboral (jornada, festivos, día hábil) | `kpis` | `decision/calendario-habil` (`config.yaml:2465-2480`) | S | S40 |
+| **F1B-13** | Reclamación de garantía al fabricante | `tickets-core` | `decision/anexo-7-garantia-proveedor` (`config.yaml:2266-2281`) | S | junto a F1B-03 |
 | **F1F-05** | Continuidad de los indicadores de Zoho Desk | `kpis` | `decision/e009-kpis` (`:2438-2453`) + `decision/e009b-lista-indicadores` (`:2555-2773`) | S–M | **S47** (ver §D) |
 
-**F0-06 llega con ID y talla ya decididos por Gerencia** (`config.yaml:2477-2487`): «fila nueva F0-06, *Vigilancias del repaso automático*, tamaño S, en la cola de Fase 0». Los ID de las otras tres los propone esta revisión y **no están decididos**: es nomenclatura, no alcance.
+**F0-06 llega con ID y talla ya decididos por Gerencia** (`config.yaml:2487-2497`): «fila nueva F0-06, *Vigilancias del repaso automático*, tamaño S, en la cola de Fase 0». Los ID de las otras tres los propone esta revisión y **no están decididos**: es nomenclatura, no alcance.
 
 **F1B-12 es dependencia dura, no una fila más.** `decision/anexo-3-alerta` (`:2240-2254`) fija la alerta en **4 días hábiles**, y `decision/c7-reloj-sla` (`:1895-1915`) para el reloj del SLA según de quién sea la demora. Sin calendario laboral no existe «día hábil» que contar: por eso su fila va **antes** que cualquier alarma, que es lo que la propia decisión dice.
 
-**F1F-05 trae el primer criterio de aceptación numérico que Gerencia fija para una tanda** (`config.yaml:2563`): ≥ 95 % de tickets coincidentes, diferencia máxima de un día, y cada diferencia mayor explicada por escrito.
+**F1F-05 trae el primer criterio de aceptación numérico que Gerencia fija para una tanda** (`config.yaml:2573`): ≥ 95 % de tickets coincidentes, diferencia máxima de un día, y cada diferencia mayor explicada por escrito.
 
 ### A.1 · Lo que NO es fila nueva, aunque lo parezca
 
 | Asunto | Qué es en realidad | Dónde |
 |---|---|---|
-| Registro de contrato e informe trimestral | **Alcance añadido a F1B-11**, no fila. El propio registro lo dice: «ALCANCE AÑADIDO A F1B-11 (S41, talla L), que ya es la tanda más grande de la épica 1B» | `config.yaml:2377` |
-| Catálogo de equipos | **Ya está hecho.** «No necesita fila propia», medido contra el código el 23/09 | `config.yaml:2049-2064` |
-| Registro de equipos | **Ya tiene fila**: F1B-02, archivada y fusionada el 23/09 | `config.yaml:2066-2081` |
+| Registro de contrato e informe trimestral | **Alcance añadido a F1B-11**, no fila. El propio registro lo dice: «ALCANCE AÑADIDO A F1B-11 (S41, talla L), que ya es la tanda más grande de la épica 1B» | `config.yaml:2387` |
+| Catálogo de equipos | **Ya está hecho.** «No necesita fila propia», medido contra el código el 23/09 | `config.yaml:2059-2074` |
+| Registro de equipos | **Ya tiene fila**: F1B-02, archivada y fusionada el 23/09 | `config.yaml:2076-2091` |
 
 ### A.2 · Tres filas que me pediste y que NO escribo, con su razón
 
@@ -116,7 +116,7 @@ Escribirles fila sería inventar destino, que es lo que R-3 prohíbe y lo que de
 
 ### D.3 · Qué entra, con su semana
 
-Las once semanas se reparten así. **La construcción no llega a S50: termina el miércoles 9/12**, que es la fecha de examen que fija `decision/fecha-corte` (`config.yaml:2160`), y el fin de semana 12–13/12 es la migración.
+Las once semanas se reparten así. **La construcción no llega a S50: termina el miércoles 9/12**, que es la fecha de examen que fija `decision/fecha-corte` (`config.yaml:2170`), y el fin de semana 12–13/12 es la migración.
 
 | Semana | Entra |
 |---|---|
@@ -127,14 +127,14 @@ Las once semanas se reparten así. **La construcción no llega a S50: termina el
 | S44 (26/10) | **F1A-03** · F1B-07 prioridad y Mis tickets |
 | S45 (02/11) | **F1B-11** (OV 1:N + contrato + parche IV-11) — talla L, se parte |
 | S46 (09/11) | F1B-11 (segunda mitad) · F1B-08 alarma 72 h |
-| **S47 (16/11)** | **F1F-05 arranca y empieza a medir** — las cuatro semanas en paralelo que exige `config.yaml:2564` |
+| **S47 (16/11)** | **F1F-05 arranca y empieza a medir** — las cuatro semanas en paralelo que exige `config.yaml:2574` |
 | S48 (23/11) | 1C: C2 · C4 · C6 (el estado Control de calidad) |
 | S49 (30/11) | 1C: C3 · C5 · C7 · C10 · F1B-09 audit-F1B |
 | S50 (07/12) | **Examen el miércoles 9/12** (cuatro condiciones) · **F1F-01** migración de tickets abiertos · **F1F-03** pruebas con servicios reales |
 | **12–13/12** | **Migración**, fin de semana, sin copia donde ensayarla (`e013b-copia-pruebas`) |
 | **14/12** | **CORTE EN SECO** |
 
-**F1F-02** (respaldo) no tiene semana propia: `config.yaml:2178` dice que «el adelanto es trabajo sin tanda» y que F1F-02 sigue con el resto. Se deja declarado, no inventado.
+**F1F-02** (respaldo) no tiene semana propia: `config.yaml:2188` dice que «el adelanto es trabajo sin tanda» y que F1F-02 sigue con el resto. Se deja declarado, no inventado.
 
 ---
 
@@ -152,7 +152,7 @@ Las once semanas se reparten así. **La construcción no llega a S50: termina el
 
 ### El tiempo
 
-Medido contra el calendario, no estimado: del **24/09 al 14/12** hay **81 días = 11,6 semanas**; hasta el **examen del 9/12**, **76 días = 10,9 semanas**. `config.yaml:2159` lo dice igual: «quedan ONCE semanas hasta el 14/12, no catorce hasta fin de año».
+Medido contra el calendario, no estimado: del **24/09 al 14/12** hay **81 días = 11,6 semanas**; hasta el **examen del 9/12**, **76 días = 10,9 semanas**. `config.yaml:2169` lo dice igual: «quedan ONCE semanas hasta el 14/12, no catorce hasta fin de año».
 
 **33 filas ÷ 10,9 semanas = 3,0 filas por semana.**
 
@@ -164,7 +164,7 @@ Del 09/09 al 23/09 —catorce días— se archivaron **13 cambios**, de los que 
 
 ### Por qué aun así NO puedo confirmarlo
 
-`decision/fecha-corte` (`config.yaml:2160`) fija **cuatro condiciones de confirmación** para el examen del 9/12. **Dos de las cuatro no tienen fila en el plan:**
+`decision/fecha-corte` (`config.yaml:2170`) fija **cuatro condiciones de confirmación** para el examen del 9/12. **Dos de las cuatro no tienen fila en el plan:**
 
 | Condición del corte | Estado |
 |---|---|
@@ -173,7 +173,7 @@ Del 09/09 al 23/09 —catorce días— se archivaron **13 cambios**, de los que 
 | **Histórico completo verificado** (repatriación) | **SIN FILA, y sin decisión.** La palabra «repatriación» no aparece ni en `config.yaml` ni en `ENTRADA.md`: sólo en tres ficheros de `docs/sdd/` **sin trackear** |
 | Pruebas | F1F-03, con semana asignada |
 
-Y hay una tercera pieza nombrada por el criterio que tampoco tiene fila: **la encuesta de satisfacción**. `config.yaml:2447` lo dice él mismo — «es alcance que la pregunta no contenía: hoy la envía Zoho al finalizar el ticket», y cruza con el correo propio. `config.yaml:2565` remata: las dos dependencias de F1F-05 «son piezas **sin fila hoy**».
+Y hay una tercera pieza nombrada por el criterio que tampoco tiene fila: **la encuesta de satisfacción**. `config.yaml:2457` lo dice él mismo — «es alcance que la pregunta no contenía: hoy la envía Zoho al finalizar el ticket», y cruza con el correo propio. `config.yaml:2575` remata: las dos dependencias de F1F-05 «son piezas **sin fila hoy**».
 
 **Conclusión, con el número delante:** las 33 filas conocidas caben en 10,9 semanas al ritmo que este proyecto ya demuestra. Lo que no cabe en ninguna cuenta es lo que **no está contado**: tres piezas —correo propio, repatriación del histórico y encuesta— que el criterio mete antes del corte, que dos de ellas son **condición de examen**, y que hoy no tienen fila, ni talla, ni dueño. Dos de las tres sólo viven en ficheros **sin trackear**, así que quien clone el repositorio no las ve.
 
@@ -201,7 +201,7 @@ Más alcance añadido a F1B-11, que la R01.1 ya marcaba como talla L y «se part
 
 ### D.3 · La restricción que lo decide
 
-`decision/e009b-lista-indicadores` (`config.yaml:2564`) lo dice con estas palabras: **«⚠️ EL CALENDARIO NO CUADRA, Y ES LO QUE HAY QUE MIRAR. La comprobación dura las cuatro semanas previas al corte: del 16/11 (S47) al 14/12.»**
+`decision/e009b-lista-indicadores` (`config.yaml:2574`) lo dice con estas palabras: **«⚠️ EL CALENDARIO NO CUADRA, Y ES LO QUE HAY QUE MIRAR. La comprobación dura las cuatro semanas previas al corte: del 16/11 (S47) al 14/12.»**
 
 O sea que **F1F-05 tiene que estar construida y midiendo en S47**, no en S50. La R01.1 sitúa toda la épica 1F en S50–S52 (`plan:259-261`). Eso adelanta 1F **tres semanas** sobre lo planificado, en el mismo movimiento en que se pierden tres semanas por el otro extremo.
 

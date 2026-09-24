@@ -8,11 +8,11 @@
 
 ### 1. **F1B-12 · Calendario laboral** (S, capacidad `kpis`)
 
-**Por qué va primera:** es dependencia dura de todo lo que cuenta tiempo, y hay dos decisiones cerradas esperándola. `decision/anexo-3-alerta` fija la alerta en **4 días hábiles** y `decision/c7-reloj-sla` para el reloj según de quién sea la demora — y sin calendario no existe «día hábil» que contar. La propia decisión dice que se construye **antes de cualquier alarma** (`config.yaml:2455-2470`). Construir una alarma antes que ella sería construirla sobre una noción que no existe.
+**Por qué va primera:** es dependencia dura de todo lo que cuenta tiempo, y hay dos decisiones cerradas esperándola. `decision/anexo-3-alerta` fija la alerta en **4 días hábiles** y `decision/c7-reloj-sla` para el reloj según de quién sea la demora — y sin calendario no existe «día hábil» que contar. La propia decisión dice que se construye **antes de cualquier alarma** (`config.yaml:2465-2480`). Construir una alarma antes que ella sería construirla sobre una noción que no existe.
 
 ### 2. **F1F-05 · Continuidad de los indicadores** (S–M, capacidad `kpis`)
 
-**Por qué va segunda y no en su épica:** su criterio de aceptación exige **cuatro semanas de medición en paralelo antes del corte, del 16/11 (S47) al 14/12** (`config.yaml:2564`). Si empieza cuando le toca por épica (S50), no hay cuatro semanas: hay dos. Es la única tanda del plan cuya fecha de inicio está fijada por su propio criterio de aceptación y no por su posición. Depende de F1B-12 para el tiempo de servicio.
+**Por qué va segunda y no en su épica:** su criterio de aceptación exige **cuatro semanas de medición en paralelo antes del corte, del 16/11 (S47) al 14/12** (`config.yaml:2574`). Si empieza cuando le toca por épica (S50), no hay cuatro semanas: hay dos. Es la única tanda del plan cuya fecha de inicio está fijada por su propio criterio de aceptación y no por su posición. Depende de F1B-12 para el tiempo de servicio.
 
 ### 3. **F0-06 · Vigilancias del repaso automático** (S, misma semana que F1B-12)
 
@@ -30,9 +30,9 @@ F0-06 sube al tercer puesto porque es **S, está decidida con ID y talla por Ger
 
 | Qué | Quién decide | Qué bloquea |
 |---|---|---|
-| **⚠️ Correo propio — respuesta al cliente sin Zoho** | Gerencia | **Es CONDICIÓN del examen del 9/12** (`config.yaml:2160`) y **no tiene fila**. La decisión n8n vs Gmail API vive en un fichero **sin trackear**. Sin fila no hay semana, y sin semana no hay examen que pasar |
+| **⚠️ Correo propio — respuesta al cliente sin Zoho** | Gerencia | **Es CONDICIÓN del examen del 9/12** (`config.yaml:2170`) y **no tiene fila**. La decisión n8n vs Gmail API vive en un fichero **sin trackear**. Sin fila no hay semana, y sin semana no hay examen que pasar |
 | **⚠️ Repatriación del histórico** | Gerencia | **Es CONDICIÓN del examen del 9/12** y **no tiene fila ni decisión**: la palabra no aparece ni en `config.yaml` ni en `ENTRADA.md`, sólo en tres ficheros sin trackear |
-| **⚠️ Encuesta de satisfacción** | Gerencia | Entra en el criterio junto a los indicadores, pero `config.yaml:2447` la declara «alcance que la pregunta no contenía» y `:2565` dice que es **pieza sin fila hoy**. Cruza con el correo propio |
+| **⚠️ Encuesta de satisfacción** | Gerencia | Entra en el criterio junto a los indicadores, pero `config.yaml:2457` la declara «alcance que la pregunta no contenía» y `:2565` dice que es **pieza sin fila hoy**. Cruza con el correo propio |
 | **P44 · escritura contra Zoho** | Gerencia | La mitad de **paridad Zoho** de F1B-08. Decidido «no por ahora», así que esa mitad no se puede construir |
 | **`equipo-nuevo-alta-en-ticket`** | Gerencia | Destino *propuesto* F1B-06, no escrito (`ENTRADA.md:1089`). Sin decisión no entra en ninguna fila |
 | **`edicion-datos-comerciales-equipo`** | Gerencia | **Sin destino.** Es además decisión de permiso (`ENTRADA.md:1097`) |
@@ -48,7 +48,7 @@ Ninguna la da por hecha archivar nada (regla del ciclo 1).
 
 | Tarea | Dueño | Fecha |
 |---|---|---|
-| **Los tres recuentos contra producción** (histórico C1, liberaciones sin factura y el tercero) | Alfonso | **viernes 25/09/2026** — decidido en `decision/p64b-quien-ejecuta` (`config.yaml:2538-2553`). Claude Code prepara antes **un único fichero con las consultas** |
+| **Los tres recuentos contra producción** (histórico C1, liberaciones sin factura y el tercero) | Alfonso | **viernes 25/09/2026** — decidido en `decision/p64b-quien-ejecuta` (`config.yaml:2548-2563`). Claude Code prepara antes **un único fichero con las consultas** |
 | **Carga retroactiva de los seis campos comerciales** del parque ya sembrado | Comercial | **sin fecha.** Declarada al archivar F1B-02: los campos nacen opcionales y se rellenan cuando el equipo pasa por servicio |
 | **Las dos comprobaciones de persona de RQ-HV-07** (hoja de vida con los seis campos vacíos y poblados) | Comercial / Gerencia | **sin fecha.** Fuera de la red de pruebas por F0-00; archivar F1B-02 **no las dio por hechas** |
 | **Remedición de IV-11 en producción** | Gerencia | cae en **F1F-03**, que no es destino sino dónde volvería a verse. La medición del 16/09 fue divergencia 0 sobre población 1 |

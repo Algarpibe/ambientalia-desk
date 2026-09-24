@@ -12,7 +12,7 @@
 |---|---|
 | Tanda | F0-01, ampliado por **F0-02** (entradas 8–12), **F0-03** (entrada 13), **F1A-01** (entrada 14) y **F0-05** (entrada 15) |
 | Base | commit `a3a8f03` (F0-01) · `ad1875b` (las cinco de F0-02, 8–12) · `da084e9` (la de F0-03, 13) · `3aaa0f1` (la de F1A-01, 14) · `bd2122f` (la de F0-05, 15) |
-| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) · **F0-05** (el Anexo H al archivar, que `openspec/config.yaml:1685` exige) |
+| Fuente de las correcciones | F0-00 (baseline as-built, correcciones desde maestro, respuestas de Gerencia) · **F0-02** (destilado de `openspec/specs/transitions-st/spec.md` contra el código) · **F0-03** (contraste del Anexo C.10 con la copia citable del acta del 03/09) · **F1A-01** (lo que costó arreglar C1, contra lo que el maestro estimaba) · **F0-05** (el Anexo H al archivar, que `openspec/config.yaml:1695` exige) |
 | Fecha | 2026-09-08, ampliado el 2026-09-09 y el 2026-09-20 |
 | Copia citable | Las entradas **1–14** citan la **R08.1** (4.935 líneas); la **15** cita la **R08.2** (5.167), vigente desde el 2026-09-17. Las viejas **no se renumeran** |
 
