@@ -44,9 +44,9 @@ const defectosDeRegistro = (textoConfig: string): string => {
   return (c?.cifras ?? []).join(' ')
 }
 
-describe('registro · RQ-RC-07: `unidad_de_avance` declara CUATRO reglas de lectura', () => {
-  it('los ids son exactamente `a`, `b`, `c` y `d`, en ese orden', () => {
-    expect(idsDeReglasDeLectura(configReal())).toEqual(['a', 'b', 'c', 'd'])
+describe('registro · RQ-RC-07: `unidad_de_avance` declara CINCO reglas de lectura', () => {
+  it('los ids son exactamente `a`, `b`, `c`, `d` y `e`, en ese orden', () => {
+    expect(idsDeReglasDeLectura(configReal())).toEqual(['a', 'b', 'c', 'd', 'e'])
   })
 
   it('las TRES primeras siguen intactas: el denominador fechado, las dos cifras y el alcance hasta F1F', () => {
@@ -57,9 +57,9 @@ describe('registro · RQ-RC-07: `unidad_de_avance` declara CUATRO reglas de lect
   })
 
   it('M3, control del otro signo: quitando la regla (d) de una COPIA, el guardián se pone rojo', () => {
-    const sucio = configReal().replace(/^ {4}- id: d$[\s\S]*?(?=^ {2}[a-z_]+:)/m, '')
-    expect(idsDeReglasDeLectura(sucio)).not.toEqual(['a', 'b', 'c', 'd'])
-    expect(idsDeReglasDeLectura(sucio)).toEqual(['a', 'b', 'c'])
+    const sucio = configReal().replace(/^ {4}- id: d$[\s\S]*?(?=^ {4}- id: |^ {2}[a-z_]+:)/m, '')
+    expect(idsDeReglasDeLectura(sucio)).not.toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(idsDeReglasDeLectura(sucio)).toEqual(['a', 'b', 'c', 'e'])
   })
 })
 
@@ -119,5 +119,39 @@ describe('registro · el barrido real destapa lo que un árbol sintético no pue
   it('y `esperas`, que sí se lee del código, tampoco se marca: su divergencia es LEGÍTIMA', () => {
     const c5 = reconciliar(arbolEnMemoria({ ficheros: { [RUTA_CONFIG]: configReal() } })).find((x) => x.id === 5)
     expect(c5?.hallazgos.map((h) => h.clave)).not.toContain('esperas')
+  })
+})
+
+/** El bloque `- id: <id>` … hasta el siguiente id o clave de dos espacios (misma regex acotada que M3). */
+const bloqueDeRegla = (texto: string, id: string): string => {
+  const patron = new RegExp(`^ {4}- id: ${id}$[\\s\\S]*?(?=^ {4}- id: |^ {2}[a-z_]+:)`, 'm')
+  return patron.exec(texto)?.[0] ?? ''
+}
+
+describe('registro · RQ-RC-07: el TEXTO de las reglas (d) y (e) está en el registro', () => {
+  it('el bloque de la regla (d) declara el motivo: "por trabajo" y "por dictamen"', () => {
+    const bloqueD = bloqueDeRegla(configReal(), 'd')
+    expect(bloqueD).toContain('por trabajo')
+    expect(bloqueD).toContain('por dictamen')
+  })
+
+  it('control del otro signo: quitando el motivo del bloque (d) de una COPIA, deja de contenerlo', () => {
+    const sucio = configReal().replace('por trabajo o por dictamen', 'sin decir el motivo')
+    const bloqueD = bloqueDeRegla(sucio, 'd')
+    expect(bloqueD).not.toContain('por trabajo')
+    expect(bloqueD).not.toContain('por dictamen')
+  })
+
+  it('el bloque de la regla (e) declara: UN SOLO `tanda:` y «cuenta en parte»', () => {
+    const bloqueE = bloqueDeRegla(configReal(), 'e')
+    expect(bloqueE).toContain('UN SOLO `tanda:`')
+    expect(bloqueE).toContain('cuenta en parte')
+  })
+
+  it('control del otro signo: quitando la regla (e) completa de una COPIA, su bloque deja de contener el texto', () => {
+    const sucio = configReal().replace(/^ {4}- id: e$[\s\S]*?(?=^ {4}- id: |^ {2}[a-z_]+:)/m, '')
+    const bloqueE = bloqueDeRegla(sucio, 'e')
+    expect(bloqueE).not.toContain('UN SOLO `tanda:`')
+    expect(bloqueE).not.toContain('cuenta en parte')
   })
 })

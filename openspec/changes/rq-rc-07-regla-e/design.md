@@ -18,6 +18,19 @@ ya trae `a`-`e` y es la fuente; la prueba y la spec se alinean con él. **Delta 
 | D3 | La alternativa `^ {2}[a-z_]+:` se conserva en el lookahead | Sólo `^ {4}- id: ` | Si algún día (d) vuelve a ser la última regla, la regex sin esa alternativa llegaría al final del fichero |
 | D4 | **NO** se añade el control de texto «No existe «cuenta en parte»» | Añadir `expect(texto).toContain(...)` en `:52-57` | Es barato, pero suma ≥1 línea y desplaza citas externas a este fichero (`registro.test.ts:96`, `:101`, `:108` en `openspec/changes/archive/2026-09-20-F0-05/verify-report.md:171` y `archive/2026-09-22-generador-mapa-blueprint/apply-progress.md:131`, `:373`), lo que obliga al barrido de la regla de mutación 4. Lo que protege —que el id `e` sea la regla de «un solo `tanda:`»— es un riesgo bajo: el texto es decisión de Gerencia y sólo cambia con otra decisión. Queda como seguimiento opcional |
 
+**Nota de remediación (post-verify, sin renumerar D4).** El `verify` marcó `fail` con 2 CRITICAL:
+los dos escenarios de texto de (d) y (e) —«un cierre por dictamen se distingue de uno por
+trabajo» y «un cambio... lleva un único `tanda:`»— no tenían ningún test que los cubriera, y la
+regla de este skill para spec scenarios es incondicional (sin excepción de verificación manual
+declarada en `config.yaml`). D4 seguía siendo la decisión correcta para su alternativa original
+—insertar el control DENTRO del `describe` de `:47-63`, entre `:52` y `:57`, sí desplaza `:96`,
+`:101` y `:108`—, así que el CRITICAL no lo cierra revirtiendo D4: se añade un `describe` **nuevo,
+al final del fichero** (después de la línea 123, que es exactamente lo que D4 quería evitar). Esa
+posición dejó las líneas 1-123 byte a byte iguales — confirmado con `git diff` y con la lectura
+directa de `:96`/`:101`/`:108` tras el cambio — así que las citas externas ancladas siguen
+apuntando a lo mismo que apuntaban. El control de texto que D4 dejó como «seguimiento opcional»
+queda hecho, sin el coste que D4 quería evitar.
+
 ## Flujo de datos
 
     config.yaml (real) ──readFileSync──→ idsDeReglasDeLectura ──→ ['a'..'e']      (:49)
