@@ -217,6 +217,7 @@ ninguna cita de las secciones A-F (F0-05, R-1: «todo trabajo que realiza el con
 | ID | Capacidad | Talla | Contenido | Decisión de Gerencia |
 |---|---|---|---|---|
 | F1B-12 | `calendario-laboral` | S | Jornada L-V 8-17h, festivos de Colombia calculados por año, cierres de empresa inyectados, y la función única de horas/días hábiles (`decision/calendario-habil`) | `openspec/config.yaml:2534-2535` |
+| F1B-14 | `tickets-core` · `hojas-vida` | S–M | «Alta y edición del equipo»: alta del equipo en el mismo paso que el ticket de «Equipo nuevo», con reutilización del equipo si el serial ya existe (`decision/equipo-nuevo-alta-en-ticket`); restricción por área de fecha de factura, fin de garantía y mantenedor, registro de cambios de los seis campos y botón «Editar» en la hoja de vida (`decision/edicion-datos-comerciales-equipo`). Se entrega en dos cambios SDD: `alta-equipo-nuevo-en-ticket` (`cierra: no`) y `edicion-comercial-equipo` (`cierra: si`). ID asignado como supuesto de nomenclatura (modo producción, reversible): siguiente libre tras F1B-13 | `openspec/config.yaml:2758-2773` · `openspec/config.yaml:2775-2790` |
 
 **Nota:** el paso de `'Notificado'` de 24 h de reloj a 9 h hábiles (`SLA_HORAS_POR_ESTADO`, `sla.ts:34`)
 **no** va en F1B-12 — va en la misma tanda que construye la alerta de 4 días hábiles de
