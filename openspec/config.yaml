@@ -160,6 +160,21 @@ capabilities:
       por decisión de Gerencia registrada en Engram (obs. #236, F0-00
       2026-09-08). El "catálogo" de diagnostico-checklist se renombró a
       "árbol de inspección" para no confundirse con este.
+    estado_2026_09_24: >
+      GERENCIA, 2026-09-23, panel. LAS DOS MITADES DE ESTA CAPACIDAD QUEDAN RESUELTAS, y con
+      respuestas DISTINTAS, que es por lo que la pregunta se partió en dos el 18/09.
+      (1) MODELOS (`decision/e003-catalogo-equipos`): «ya está: no necesita fila propia». Los tres
+      catálogos con su API y su pantalla, artículos por modelo con SKU y categorías, mano de obra
+      como una de las tres clases de artículo (`packages/shared/src/types.ts:239`) y la columna
+      `revisar`. F1D-01 lo da por hecho y el denominador SIGUE EN 52.
+      (2) REGISTRO DE EQUIPOS (`decision/e003b-registro-equipos`): «le queda trabajo, y ya tiene
+      fila: F1B-02». Queda CUBIERTA por F1B-02, que además estrenó capacidad propia `hojas-vida`
+      con spec. Sin fila nueva; denominador en 52.
+      LO QUE SIGUE ABIERTO Y NO ES CÓDIGO: cuántos de los modelos llevan inspección y cuántos
+      tienen artículos y mano de obra cargados. Es medición contra la base, no construcción, y va
+      junto al recuento de modelos de `decision/e003c-recuento-modelos` (29, 17/09), que TAMPOCO
+      se ha verificado. ESTA CAPACIDAD SIGUE DECLARADA Y SIN `spec.md`: que el código esté hecho
+      no escribe la spec (medido el 2026-09-24: 19 declaradas, 12 con fichero).
     precision_de_gerencia_2026_09_18: >
       GERENCIA PRECISÓ EL 18/09 QUE AQUÍ HAY DOS COSAS, NO UNA. El `covers` de
       arriba las mete en el mismo saco y por eso la pregunta que se le devolvió
@@ -232,6 +247,19 @@ capabilities:
       tickets.*, por la regla de reentrancia.ts:24—, y expone el hito de los
       indicadores 48 y 49. Se añadió el campo «Fecha de aviso al cliente», que
       faltaba (:1704), a habilitado_para_entrega.
+      ADELANTO DECIDIDO A FASE 1 — GERENCIA, 2026-09-24, `decision/e009-kpis`. Se adelanta UNA
+      sola pieza: la CONTINUIDAD de los indicadores que hoy calcula Zoho Desk. Antes del corte del
+      14/12 (`decision/fecha-corte`), Desk 2.0 los calcula sobre las marcas de tiempo de las
+      transiciones —la base que dejó F1A-04— y los entrega como TABLA EXPORTABLE: sin tablero, sin
+      semáforos y sin umbrales. Se calculan EN PARALELO con Zoho las semanas previas al corte, para
+      comprobar que coinciden. Y la encuesta de satisfacción que hoy envía Zoho al finalizar el
+      ticket pasa a enviarla Desk 2.0 desde el corte, para que el reporte trimestral no se quede sin
+      datos — eso es envío de correo al cliente y cruza con `docs/sdd/Decision_Correo_n8n_vs_GmailAPI.md`.
+      FILA NUEVA DECIDIDA en la épica 1F, talla S–M, capacidad `kpis`. Esta supervisión NO escribe
+      en el §5 del plan: el denominador es 52 hoy y pasa a 53 el día que la fila se escriba. Con
+      ella, `kpis` deja de ser una de las dos capacidades declaradas sin ninguna tanda.
+      LA LISTA DE INDICADORES QUEDA ABIERTA: Gerencia la dio entre corchetes y terminada en puntos
+      suspensivos. Devuelta como pregunta `e009b-lista-indicadores`.
       LO QUE SIGUE EN FASE 2: los indicadores en sí. No hay módulo de KPIs ni
       pantalla, y el 48 y el 49 tienen su ancla pero no están calculados. La
       capacidad NO tiene spec y sigue debiéndose.
@@ -1056,6 +1084,17 @@ incumplimientos_vivos:
   # estilo: es lo único que mantiene la guarda en pie mientras esto siga vivo.
   - id: IV-11
     regla: "—"
+    destino: "F1B-11 (S41), con un parche antes declarado `tanda: F1B-11, cierra: no`"
+    destino_decidido: >
+      GERENCIA, 2026-09-23, panel (`decision/e005b-parche-vehiculo` y `decision/e005c-discrepancia-sin-espejo`).
+      El destino es F1B-11, «que es donde el problema desaparece de raíz al existir la tabla de
+      asociación propia». El parche que va antes NO abre fila: se declara `tanda: F1B-11` con
+      `cierra: no`, así que el denominador sigue en 52 y el numerador no se mueve hasta que
+      F1B-11 cierre. Y mientras no exista el espejo de Zoho, el parche NO ignora la discrepancia
+      en silencio: protege el dato y crea un aviso al área Comercial sobre ese ticket por el
+      mecanismo que ya existe (`apps/desk/server/db/avisos.ts`, `/api/avisos`, bandeja de la
+      cabecera), con la regla anti-ruido escrita — un solo aviso por ticket mientras la
+      discrepancia no cambie, y sólo se reavisa si el valor que trae Zoho es otro.
     ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-240"
     verificado: true
     estado: VIVO
@@ -1241,6 +1280,18 @@ premisas_falsas_corregidas:
       docs/artefactos/NOTA.md.
 
   - id: PF-2
+    cerrada_2026_09_24: >
+      GERENCIA, 2026-09-24, `decision/anexo-43-en-sitio`: «sí, pero en 2027». El servicio en sitio
+      entra como CUARTA rama del blueprint en el segundo trimestre de 2027, NO en 2026, así que
+      esta premisa deja de ser un hueco vivo y pasa a ser alcance fechado. DOS CONSECUENCIAS PARA
+      2026, y la segunda es la que importaba: (1) campo «Modalidad: remoto / en sitio» en la rama
+      de soporte remoto de F1B-06 (S42), que no exige remisión — alcance añadido a una tanda que ya
+      existe, sin fila nueva; (2) LA GUARDA DE REMISIÓN NO ADMITE EXCEPCIÓN, «se mantiene sin
+      excepciones», así que `decision/habilitar-servicio-sin-remision` (10/09) deja de tener el
+      condicional que esta premisa le dejaba abierto y F1B-03 puede construirla sin él. Las visitas
+      registradas en 2026 se quedan en soporte remoto y NO se migran. Disparador de adelanto escrito
+      y sin dueño: si antes llegan instalaciones o puestas en marcha en sitio (proyecto de estaciones
+      de calidad del aire), la construcción se adelanta.
     corregida_en: "docs/sdd/Brecha_Maestro_R08.2_2026-09-17.md §2.1"
     fecha: "2026-09-17"
     afecta_a: ["decision/habilitar-servicio-sin-remision", "F1B-03"]
@@ -1285,6 +1336,17 @@ cifras_ancladas:
       POR QUÉ ESTA ENTRADA EXISTE, aunque su divergencia sea legítima: la primera redacción del
       informe de brechas afirmó que nadie había escrito la distinción, y el error salió de leer
       este config.yaml en vez del código. Esta comprobación lee `packages/shared`.
+      LA LISTA DEL RELOJ YA NO ESTÁ EN DUDA — GERENCIA, 2026-09-23, `decision/c7-reloj-sla`. El
+      aviso que el propio `estados.ts` dejaba escrito («es la lista de la VISTA; el reloj del SLA
+      no la lee») queda atendido: el reloj declara lista PROPIA, y la respuesta dice expresamente
+      que NO se deriva de la de la vista, «para que un cambio en el tablero no mueva el SLA».
+      PARA en 5 —`Notificación cliente`, `Por Entregar`, `Por Entregar / Sin facturar`, `En espera
+      de repuestos`, `Servicio externo`— y SIGUE CORRIENDO en las 6 esperas internas. Medido el
+      2026-09-24 sobre `3f30710`: `CLASIFICACION_EN_ESPERA` tiene 21 claves, 5 `externa`,
+      6 `interna`, 9 `ninguna`, 1 `sin_clasificar`. Los cardinales COINCIDEN hoy con `externa` e
+      `interna`; como la decisión prohíbe derivarla, una prueba tiene que impedir que se importe
+      la de la vista. `Pendiente` sigue `sin_clasificar` y ya tiene regla provisional escrita: el
+      reloj CORRE, hasta que Servicio Técnico diga qué espera.
   - id: pasos_del_mapa
     maestro: "38 — M1.3, ya marcado «en revisión» en la R08.2 con su hipótesis escrita"
     codigo: "transiciones con botón de transitions.ts + las 2 sin botón de estadoPorRemision.ts — 36 el 2026-09-08"
@@ -1299,7 +1361,16 @@ cifras_ancladas:
   - id: estados
     maestro: "21"
     codigo: "cuenta de estados en packages/shared/src/estados.ts (claves de CLASIFICACION_EN_ESPERA)"
-    divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
+    divergencia: >
+      ERROR si difiere. No hay criterio alternativo que lo justifique.
+      AVISO DE MOVIMIENTO PREVISTO POR DECISIÓN, no por error — anotado el 2026-09-24. Tres
+      respuestas de Gerencia del 23 y 24/09 añaden estados nuevos, y cuando se construyan esta
+      cifra dejará de ser 21 sin que nadie se haya equivocado: `Anulado` (`decision/c2-anulado`,
+      F1C-01), `Pendiente de facturar` como estado de la rama sin factura (`decision/c4-dos-ramas`,
+      F1C-02) y `Control de calidad` entre `En Proceso` y `Por Facturar` (`decision/c6-qa-liberacion`,
+      F1C-07). NO hay estado `Facturado`: `c4` lo declara atributo del ticket, en `fecha_factura`.
+      Y la señal de tablero «esperando aprobación del cliente» de `decision/anexo-3-alerta` NO es
+      un estado: es marca de vista, y no cuenta aquí.
 
 # DECISIONES DE GERENCIA, con su respuesta textual. Esta clave existe por un agujero concreto
 # que se detectó el 2026-09-17: `docs/sdd/ENTRADA.md` es la BANDEJA —el histórico de por dónde
@@ -1334,6 +1405,8 @@ decisiones_de_gerencia:
       DENOMINADOR: el avance se publicó como 11/51 el mismo día; esa misma tarde la fila nueva
       F0-05 lo movió a 11/52, por alcance nuevo y no por trabajo.
     registro: "docs/sdd/ENTRADA.md → E-001 (cerrada)"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/escalado-remision-creada"
     fecha: "2026-09-17"
@@ -1367,6 +1440,8 @@ decisiones_de_gerencia:
       (5) NO MUEVE EL NUMERADOR DEL AVANCE: F1B-08 sigue parcial, y su parte de tablero ya estaba
       cerrada desde el 10/09.
     registro: "docs/sdd/ENTRADA.md → E-014 (cerrada) · plan §4.5, fila `decision/escalado-remision-creada`"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
     precisada_por: "decision/escalado-destinatario-doble (17/09, posterior): el aviso va sólo al Coordinador Comercial"
 
   - clave: "decision/veto-plan-r01-1"
@@ -1399,6 +1474,8 @@ decisiones_de_gerencia:
       (4) DESBLOQUEA EL PUSH DE MAIN, que acumulaba seis commits sin empujar.
       NO REABRE EL CONTENIDO DEL PLAN: se repara la cita, no lo que el plan dice.
     registro: "docs/sdd/ENTRADA.md → E-016"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   # ── Recogidas en el corte del 2026-09-21 (docs/sdd/Parte_2026-09-21.md). Las siete llegaron por el
   # panel el 17/09 por la noche y el corte del 18/09 no las vio. Respuesta TEXTUAL, sin resumir.
@@ -1428,6 +1505,8 @@ decisiones_de_gerencia:
       `habilitar_servicio` en `DERIVACION_POR_DEFECTO` cambia `RQ-AV-02`
       (`openspec/specs/derivacion-avisos/spec.md:67-70`), que declara exactamente tres entradas.
     registro: "docs/sdd/ENTRADA.md → E-014 (adenda 21/09) · plan §4.5, fila `decision/escalado-remision-creada`"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/e013-staging-f0-04"
     fecha: "2026-09-17"
@@ -1448,6 +1527,8 @@ decisiones_de_gerencia:
       (3) Consecuencia que la respuesta no preveía: mientras no haya copia, todo despliegue —y la
       migración de F1F-01— se prueba sobre la aplicación que usa la gente.
     registro: "docs/sdd/ENTRADA.md → E-013 (adenda 21/09, sigue abierta por la pregunta nueva)"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/ovi-garantia-autor"
     fecha: "2026-09-17"
@@ -1465,6 +1546,8 @@ decisiones_de_gerencia:
       HIPÓTESIS, no medido: si F1B-03 se construye antes que F1C-05, su guarda tendrá que nombrar un
       cargo sin la matriz.
     registro: "docs/sdd/ENTRADA.md → E-017 (cerrada) · plan §4.5, fila `decision/ovi-garantia-autor`"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/p44-escritura-zoho"
     fecha: "2026-09-17"
@@ -1485,6 +1568,8 @@ decisiones_de_gerencia:
       antes de fusionarse. Hay que leerlas antes de dar la política por cumplida.
       (4) Anexo D nº 44 → resuelto, para el expediente R08.x.
     registro: "docs/sdd/ENTRADA.md → E-018 (cerrada) · plan §4.5, fila `decision/p44-escritura-zoho` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/titularidad-ov-equipo"
     fecha: "2026-09-17"
@@ -1504,6 +1589,8 @@ decisiones_de_gerencia:
       (3) Destino PROPUESTO de IV-8: F1B-11, por la fila de §4.5. No se escribe en su `destino` hasta
       que se responda la pregunta del mantenedor.
     registro: "docs/sdd/ENTRADA.md → E-019 (cerrada) · plan §4.5, fila `decision/titularidad-ov-equipo` · `incumplimientos_vivos` → IV-8"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/vigencia-contrato"
     fecha: "2026-09-17"
@@ -1525,6 +1612,8 @@ decisiones_de_gerencia:
       `packages/shared/src/sla.ts:58` y `apps/desk/src/lib/boardView.test.ts:76`). F1B-11 tendrá que
       modelar las dos cosas o recibirlas de Zoho.
     registro: "docs/sdd/ENTRADA.md → E-020 (cerrada) · plan §4.5, fila `decision/vigencia-contrato`"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/e003c-recuento-modelos"
     fecha: "2026-09-17"
@@ -1540,6 +1629,8 @@ decisiones_de_gerencia:
       `cifra_de_gerencia_2026_09_17`). El `status_at_start` con 35 no se borra.
       (3) No responde a `e003-catalogo-equipos` ni a `e003b-registro-equipos`, que siguen abiertas.
     registro: "docs/sdd/ENTRADA.md → E-003 (adenda 21/09)"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/e005-iv4-iv11"
     fecha: "2026-09-21"
@@ -1579,6 +1670,8 @@ decisiones_de_gerencia:
       (6) Dónde se teclean hoy las órdenes queda SIN CONFIRMAR por Gerencia. No cambia el parche; sí
       cuánta discrepancia enseñará el espejo el día que exista.
     registro: "docs/sdd/ENTRADA.md → E-005 (adenda 22/09) · `incumplimientos_vivos` → IV-11 · `CLAUDE.md` (fila de IV-11)"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/e013b-copia-pruebas"
     fecha: "2026-09-21"
@@ -1603,6 +1696,8 @@ decisiones_de_gerencia:
       la aplicación que usa la gente. La única red que queda es el respaldo, que es `decision/p55-backup`
       (F1F-02, S51) y sigue pendiente: OBSERVACIÓN, no medición.
     registro: "docs/sdd/ENTRADA.md → E-013 (adenda 22/09, cerrada) · plan §5, fila F0-04"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/p8-p54-drive"
     fecha: "2026-09-21"
@@ -1624,6 +1719,8 @@ decisiones_de_gerencia:
       tiene que decir si el respaldo alcanza a Drive.
       (5) Anexo D nº 8 y nº 54 → resueltos, para el expediente R08.x.
     registro: "docs/sdd/ENTRADA.md → E-024 (cerrada) · plan §4.5, fila `decision/p8-p54-drive` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/flujos-comercial-posible-cliente"
     fecha: "2026-09-21"
@@ -1642,6 +1739,8 @@ decisiones_de_gerencia:
       (3) Arrastra el Anexo D nº 42 por contenido: de dónde sale «Preparación Cotizac.» si la rama no
       se construye queda sin responder. Se anota para el expediente; no se inventa destino.
     registro: "docs/sdd/ENTRADA.md → E-025 (cerrada) · plan §4.5, fila `decision/flujos-comercial-posible-cliente` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/top5-prioridad"
     fecha: "2026-09-21"
@@ -1663,6 +1762,8 @@ decisiones_de_gerencia:
       hay algo que construir.
       (5) Devuelto como pregunta, `top5-manual`.
     registro: "docs/sdd/ENTRADA.md → E-026 (triada, sigue abierta) · plan §4.5, fila `decision/top5-prioridad`"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
 
   - clave: "decision/titularidad-mantenedor"
     fecha: "2026-09-21"
@@ -1687,6 +1788,786 @@ decisiones_de_gerencia:
       (4) Dato que nadie ha cargado: el único caso conocido hay que apuntarlo a mano en la hoja de
       vida. Tarea de persona, no cuenta como tanda.
     registro: "docs/sdd/ENTRADA.md → E-019 (adenda 22/09) · `incumplimientos_vivos` → IV-8 · `CLAUDE.md` (fila de IV-8) · plan §4.5, fila `decision/titularidad-ov-equipo` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
+    maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
+    maestro_revision: "pendiente"
+
+
+  # ── CORTE DEL 2026-09-24 · 36 respuestas de Gerencia (23 y 24/09) ──────────────────
+  # Todas llevan `maestro_pasaje` y `maestro_revision`, los dos campos que `decision/anexo-61-incorporacion`
+  # (24/09) hizo obligatorios en esta misma tanda de respuestas. `maestro_revision: pendiente` es lo que
+  # la comprobación 7 del barrido tendrá que contar, y lo que el parte lista con su antigüedad.
+
+  - clave: "decision/c2-anulado"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Qué motivos tipificados tiene «Anulado», y qué se hace con el histórico cerrado como Finalizado que en realidad se abandonó?
+    respuesta_textual: |
+      «Motivos de Anulado, la misma lista que usa el informe de salida: (1) el cliente no aprueba o se echa atrás, (2) sin solución técnica, (3) repuesto no disponible, (4) caducidad de espera: el cliente no responde ni retira el equipo, (5) otro, con texto obligatorio. No entra «creado por error» ni «duplicado»: eso se borra, no se anula, para no contaminar la cifra de abandonos.
+      Histórico: se marca, no se reescribe. Los candidatos se sacan por la huella que dejó el apaño —tickets que pasaron por Rechazo y terminaron en Finalizado— y una persona los confirma. Los confirmados siguen como Finalizado, como se registraron, pero llevan la marca «abandonado» con su motivo, y las tres métricas los excluyen. No se cambia el estado de tickets cerrados, por la auditoría inmutable de M11.4. Antes de empezar se cuenta cuántos candidatos hay. El mismo criterio de marcar se aplica a las filas de «Liberación sin factura» escritas antes del arreglo de C1.»
+    consecuencias: |
+      (1) F1C-01 (S40) QUEDA EJECUTABLE. El estado `Anulado` es un estado 22: la cifra anclada de 21 estados (`CLASIFICACION_EN_ESPERA`, `packages/shared/src/estados.ts`) SE MUEVE cuando se construya, y el maestro dice 21. Queda anotado en `cifras_ancladas` como movimiento previsto por decisión, no como error.
+      (2) LA REGLA «MARCAR, NO REESCRIBIR» ES DOCTRINA DE PROYECTO, y se aplica dos veces más el mismo día: `p64-historico-c1` (24/09) la extiende a las filas de Liberación sin factura, y `anexo-33-checkbox` (24/09) la da por hecha. Es coherente con M11.4 (auditoría inmutable) y con la política del repositorio de no borrar histórico.
+      (3) EL RECUENTO PREVIO ES TAREA DE PERSONA, no tanda: «antes de empezar se cuenta cuántos candidatos hay», por la huella Rechazo→Finalizado. Necesita acceso a producción; esta supervisión sólo ve ficheros.
+      (4) «CREADO POR ERROR» Y «DUPLICADO» SALEN DE AQUÍ Y ENTRAN EN EL BORRADO de `anexo-36-aviso` (24/09), con su registro inmutable. Las dos respuestas encajan sin hueco.
+      (5) LAS TRES MÉTRICAS EXCLUYEN LOS MARCADOS: eso cambia el cálculo, no sólo el dato. Quien construya F1C-01 tiene que tocar las tres, no sólo añadir el estado.
+    registro: "docs/sdd/ENTRADA.md → E-043 · plan §4.5, fila decision/c2-anulado · openspec/config.yaml → cifras_ancladas (estados) · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 32)"
+    maestro_pasaje: "Anexo D nº 32"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-01 · S40"
+
+  - clave: "decision/c3-salida-esperas"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿A dónde sale cada una de las cuatro esperas —a Por Facturar cobrando el diagnóstico, o a Anulado— y con qué caducidad?
+    respuesta_textual: |
+      «Las cuatro esperas no se tratan igual: dos esperan a terceros y dos a nosotros.
+      En espera de repuestos y Servicio externo (proveedor y laboratorio externo): tienen dos salidas y decide Comercial en cada caso, porque cobrar o no el diagnóstico depende del cliente y de quién falló. O se cobra el diagnóstico → Por Facturar, o se anula → Anulado, con motivo repuesto no disponible o sin solución técnica.
+      Solicitado (nuestro almacén): no se abandona. Si no hay pieza, vuelve a En espera de repuestos para pedirla fuera.
+      En espera de SKU (trámite nuestro): no se abandona ni se anula. Si se retrasa, se avisa a Comercial para que cree el SKU.
+      Caducidad: nunca ejecuta sola una salida. En las externas sugiere la salida a Comercial; en las internas escala al área responsable. El plazo de cada una se fija con datos: lo que hoy tarda el 90 % de los tickets en ese estado, medido en el historial. Se conserva la vía de escape manual con traza acordada el 27/08.»
+    consecuencias: |
+      (1) F1C-03 (S42) QUEDA EJECUTABLE, y con una precisión que la pregunta no traía: las cuatro NO se tratan igual. Dos tienen dos salidas (decide Comercial) y dos no se abandonan nunca.
+      (2) LA LISTA DE LAS CUATRO NO ESTABA EN DUDA y sigue sin estarlo: `ESTADOS_SIN_SALIDA` (`packages/shared/src/estados.ts:151`) las declara, con el discriminador escrito. Esta respuesta fija el DESTINO, que era lo que faltaba.
+      (3) «LA CADUCIDAD NUNCA EJECUTA SOLA UNA SALIDA» es la decisión de diseño que evita el peor fallo posible: un ticket anulado por un temporizador. La caducidad sugiere o escala; decide una persona.
+      (4) EL PLAZO SE FIJA CON DATOS, NO POR CRITERIO: percentil 90 del historial por estado. Es una MEDICIÓN CONTRA PRODUCCIÓN que nadie ha hecho y que esta supervisión no puede hacer —sólo ve ficheros—. Sin ella, F1C-03 se construye con plazos inventados. Tarea de persona.
+      (5) DEPENDE DE `c2-anulado` (mismo día): «Anulado con motivo repuesto no disponible o sin solución técnica» son dos de los cinco motivos que allí se fijaron. Las dos van juntas, y F1C-01 (S40) va antes que F1C-03 (S42), que es el orden correcto.
+    registro: "docs/sdd/ENTRADA.md → E-044 · plan §4.5, fila decision/c3-salida-esperas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 31)"
+    maestro_pasaje: "Anexo D nº 31"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-03 · S42"
+
+  - clave: "decision/c4-dos-ramas"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿«Facturado» es un estado propio del flujo o un atributo del ticket?
+    respuesta_textual: |
+      «Facturado es un atributo del ticket, no un estado. Adoptamos las dos ramas que propone la R08 para eliminar el ciclo facturar↔entregar, con un cambio: en la rama sin factura, Pendiente de facturar sí es estado —ahí vive el equipo entregado y no facturado, y su antigüedad se mide—, pero de ahí se sale con la transición Facturar, que registra la factura y su fecha, directamente a Finalizado, sin un estado «Facturado» intermedio. El hecho de estar facturado vive en el campo fecha_factura, que ya existe, y así no hay dos sitios que puedan decir cosas distintas. El ticket termina al facturar; el cobro se sigue en contabilidad, no en el ticket.»
+    consecuencias: |
+      (1) F1C-02 (S41) QUEDA EJECUTABLE y el ciclo facturar↔entregar desaparece: dos ramas que avanzan y no vuelven.
+      (2) «NO HAY DOS SITIOS QUE PUEDAN DECIR COSAS DISTINTAS» es el mismo razonamiento que Gerencia aplicó el 21/09 a la orden de venta (`e005-iv4-iv11`): un solo sitio manda. Aquí el sitio es `fecha_factura`, campo que YA EXISTE — medido: aparece en el código como campo de la tabla de tickets (y NO de equipos, según se precisó en `e003b-registro-equipos` el 23/09).
+      (3) EL CONTEO DE ESTADOS SE MUEVE POCO: `Pendiente de facturar` es estado y no hay `Facturado`. Junto con `Anulado` de `c2` y `Control de calidad` de `c6`, la cifra anclada de 21 estados queda desfasada por decisión, no por error. Anotado en `cifras_ancladas`.
+      (4) «EL COBRO SE SIGUE EN CONTABILIDAD, NO EN EL TICKET» acota el alcance y deja fuera una integración con Books que nadie ha dimensionado — pese a que la copia de facturas de anticipo de Zoho Books ya entró en la aplicación el 22/09 (los seis commits sin ficha).
+      (5) LA ANTIGÜEDAD DE `Pendiente de facturar` SE MIDE, y de ahí cuelga la alarma por fecha prevista de facturación de `anexo-33-checkbox` (24/09). Las dos respuestas construyen la misma pieza desde dos lados.
+    registro: "docs/sdd/ENTRADA.md → E-045 · plan §4.5, fila decision/c4-dos-ramas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 34)"
+    maestro_pasaje: "Anexo D nº 34"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-02 · S41"
+
+  - clave: "decision/c5-tipo-evento"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Cómo se desambigua «Creación de informe», que hoy cae en tres categorías a la vez?
+    respuesta_textual: |
+      «No bloquea la aplicación del tipo de evento. Medido el 23/09: ninguna de las transiciones de la aplicación es «Creación de informe»; el informe sólo aparece como el campo «Fecha Revisión Informe» dentro de otras transiciones (packages/shared/src/transitions.ts:218-221), y hoy se hace fuera del flujo. F1C-04 puede aplicar el tipo de evento a todas las transiciones ya, sin esperar a esto.
+      La desambiguación se aplica en F1E, cuando el informe entre en el flujo. «Operativo manual» y «Operativo digital» son la misma categoría desde el 17/02, así que el solape se reduce a dos, y se resuelve nombrando distinto cada acto: Elaboración del informe → Operativo (redactarlo y generarlo); Emisión del informe → Administrativo (cerrarlo como soporte del servicio facturable). La validación por dos personas de F1E-04 va a Decisional, como Aprobación técnica. El informe pasa por tres categorías porque son tres actos distintos, cada uno con su nombre.»
+    consecuencias: |
+      (1) DESBLOQUEA F1C-04 (S43) DE INMEDIATO, que es lo que estaba en juego: la pregunta se planteó como bloqueante y la respuesta la desactiva con una medición. F1C-04 puede etiquetar las 34 transiciones ya.
+      (2) LA MEDICIÓN DE GERENCIA ES CORRECTA Y SE VERIFICA: `packages/shared/src/transitions.ts:218-221` contiene «Fecha Revisión Informe» como campo dentro de transiciones, no como transición. Comprobado el 2026-09-24 sobre `3f30710`.
+      (3) MUEVE LA DECISIÓN A F1E, con nombres concretos: Elaboración → Operativo, Emisión → Administrativo, Validación → Decisional. F1E-04 (S49) hereda la clasificación ya hecha, no la discusión.
+      (4) «OPERATIVO MANUAL» Y «OPERATIVO DIGITAL» SON LA MISMA CATEGORÍA DESDE EL 17/02: eso reduce el solape de tres a dos y es un dato de negocio que el repositorio no tenía escrito en ninguna parte.
+      (5) M7.3 (análisis de tiempos por tipo de evento) deja de depender de esta decisión y pasa a depender sólo de que F1C-04 se construya.
+    registro: "docs/sdd/ENTRADA.md → E-046 · plan §4.5, fila decision/c5-tipo-evento · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 35)"
+    maestro_pasaje: "Anexo D nº 35"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-04 · S43"
+
+  - clave: "decision/c6-qa-liberacion"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Cómo es la etapa de control de calidad antes de liberar, y quién firma?
+    respuesta_textual: |
+      «Se añade un estado Control de calidad entre En Proceso y Por Facturar. Aprobado → Por Facturar; rechazado → vuelve a En Proceso con prioridad alta, y el retrabajo queda registrado para medirlo.
+      Se aplica la misma regla que la Verificación decidida hoy: el checklist se hace siempre; la verificación con gas patrón, sólo cuando la pide el tipo de equipo y tenemos el gas.
+      El checklist revisa los puntos que fallaron en el diagnóstico y alimenta el informe de salida.
+      No se entrega el equipo sin foto del equipo embalado y checklist firmado.
+      Firma [el Coordinador Técnico / Calidad], nunca el técnico que hizo el trabajo. La firma se carga automáticamente con la imagen del responsable, como se decidió el 27/08.»
+    consecuencias: |
+      (1) F1C-07 (S47) QUEDA EJECUTABLE. Estado nuevo `Control de calidad` entre `En Proceso` y `Por Facturar`: es el tercer estado nuevo decidido esta semana, junto a `Anulado` (c2) y `Pendiente de facturar` (c4). La cifra anclada de 21 estados queda desfasada por decisión.
+      (2) EL CORCHETE «[el Coordinador Técnico / Calidad]» QUEDA RESUELTO POR UNA RESPUESTA POSTERIOR, y por eso NO vuelve como pregunta: `roles-validacion-informe` (24/09) dice literalmente «la revisión del Coordinador es la misma firma del Control de calidad: se hace en un solo paso y no se pide dos veces». Firma el COORDINADOR TÉCNICO. Interpretación declarada de esta supervisión, no dicho en una sola frase por Gerencia: si se quiso dejar a Calidad, dígase y se corrige.
+      (3) «NUNCA EL TÉCNICO QUE HIZO EL TRABAJO» es una guarda de permisos por PERSONA, no por área ni por cargo: `c10-permisos-cargo` (23/09) construye cargo y área, pero no «el autor no valida». Hay que escribirlo aparte.
+      (4) HEREDA LA REGLA DE `p38-verificacion-calidad` (23/09) sobre el gas patrón: checklist siempre, verificación sólo si el tipo de equipo la pide y hay gas. Una sola regla para dos etapas.
+      (5) EL RETRABAJO SE REGISTRA PARA MEDIRLO: indicador nuevo que hoy no existe, y que encaja con la tanda de `kpis` decidida el 24/09 (`e009-kpis`).
+    registro: "docs/sdd/ENTRADA.md → E-047 · plan §4.5, fila decision/c6-qa-liberacion · openspec/config.yaml → cifras_ancladas (estados) · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-07 · S47"
+
+  - clave: "decision/c7-reloj-sla"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Qué estados paran el reloj del SLA?
+    respuesta_textual: |
+      «El reloj del SLA se para sólo cuando la demora no es de Ambientalia: cuando esperamos al cliente o a alguien de fuera. Nunca por esperas internas, que son demora nuestra.
+      Se para en: Notificación cliente, Por Entregar y Por Entregar / Sin facturar (esperamos al cliente); En espera de repuestos (al proveedor) y Servicio externo (al laboratorio externo).
+      Sigue corriendo en las seis esperas internas: Notificación a Compras, Notificación Comercial, En espera de SKU, Solicitado, Liberación Comercial y Remisión creada.
+      La lista se declara propia del reloj, aunque hoy coincida con las esperas «externas» de la vista: no se deriva de ella, para que un cambio en el tablero no mueva el SLA.
+      Pendiente queda fuera hasta que Servicio Técnico diga qué espera; mientras tanto, el reloj corre.
+      El cuadro de mando enseña dos tiempos: el del SLA (sin pausas) y el total que esperó el cliente.»
+    consecuencias: |
+      (1) F1C-06 (S45) QUEDA EJECUTABLE, y la respuesta hace EXACTAMENTE lo que el código pedía: `packages/shared/src/estados.ts` avisa de que `ESTADOS_EN_ESPERA` «es la lista de la VISTA y el reloj del SLA no la lee». Gerencia declara una lista PROPIA del reloj. El aviso del código queda atendido.
+      (2) LAS CIFRAS CUADRAN CON EL CÓDIGO, medido el 2026-09-24 sobre `3f30710`: `CLASIFICACION_EN_ESPERA` tiene 21 claves, de ellas 5 `externa`, 6 `interna`, 9 `ninguna` y 1 `sin_clasificar`. La respuesta para el reloj en 5 estados y lo deja correr en 6 — los mismos cardinales que `externa` e `interna`. HOY COINCIDEN; la respuesta dice expresamente que no se deriva, así que se declara aparte y una prueba tiene que impedir que se importe la de la vista.
+      (3) `Pendiente` SIGUE SIN CLASIFICAR, y ahora con regla provisional escrita: el reloj corre. Es el único de los 21 estados bajo `sin_clasificar`, esperando a Servicio Técnico desde el 11/09. La entrada de `cifras_ancladas` → `esperas` se actualiza con esto.
+      (4) DOS TIEMPOS EN EL CUADRO DE MANDO —el del SLA sin pausas y el total que esperó el cliente— es alcance de `kpis`, no de F1C-06, y engancha con la tanda nueva de `e009-kpis` (24/09).
+      (5) CONFIRMA `e001-por-entregar` (24/09) DESDE EL OTRO LADO: `Por Entregar` para el reloj por ser espera del cliente, pero eso no convierte el cambio `por-entregar-es-espera` en contenido de F1C-06. Las dos respuestas lo dicen igual.
+    registro: "docs/sdd/ENTRADA.md → E-048 · plan §4.5, fila decision/c7-reloj-sla · openspec/config.yaml → cifras_ancladas (esperas) · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-06 · S45"
+
+  - clave: "decision/c10-permisos-cargo"
+    fecha: "2026-09-23"
+    pregunta: |
+      La matriz cargo × transición: ¿qué cargos existen y qué puede ejecutar cada uno?
+    respuesta_textual: |
+      «La base sigue siendo el área, como hoy: cualquiera de un área ejecuta sus transiciones. El cargo sólo restringe, con una lista corta de excepciones; lo que no está en la lista no cambia.
+      Cargos: Director Técnico, Coordinador Técnico, Técnico, Técnico de campo, Director Comercial, Coordinador Comercial y Asistente Comercial. «Gerente comercial» y «Director Comercial» son [el mismo cargo / cargos distintos].
+      Restricciones ya decididas: Liberación sin factura → Director Comercial. Crear OVI de garantía → Director Técnico. Prioridad de los Top 5 → Director Comercial.
+      Regla para el resto: las transiciones que F1C-04 clasifique como Decisionales sólo las ejecuta el Director o el Coordinador del área correspondiente; las demás, cualquiera del área.
+      Propietario del registro: se decide más adelante, cuando la restricción por cargo esté funcionando.»
+    consecuencias: |
+      (1) F1C-05 (S44) QUEDA EJECUTABLE, y BARATA: «el cargo sólo restringe, con una lista corta de excepciones; lo que no está en la lista no cambia». No hay matriz cargo × 34 transiciones que rellenar. Es la diferencia entre una tanda S–M y una L.
+      (2) F1C-05 PASA A DEPENDER DE F1C-04 (S43), y el orden del plan ya es ése: la regla del resto se apoya en la clasificación Decisional que F1C-04 produce. Si F1C-04 resbala, F1C-05 resbala con ella.
+      (3) SIETE CARGOS DECLARADOS Y EL CÓDIGO CONOCE DOS. Medido el 2026-09-24 sobre `3f30710`: `packages/shared/src/transitions.ts:276-281` declara `Director Técnico` y `Coordinador Comercial`. Faltan cinco, entre ellos `Director Comercial`, que ya aparecía como ausente el 18/09 y sigue sin existir.
+      (4) PARCIAL — EL CORCHETE NO SE PUEDE RESOLVER POR ESTA SUPERVISIÓN: «Gerente comercial» y «Director Comercial» son [el mismo cargo / cargos distintos] queda sin elegir. NO es cosmético: el plan promete que «Liberación sin factura pasa a ser exclusiva del gerente comercial» y la respuesta la asigna al Director Comercial. Si son cargos distintos, el plan y la decisión dicen cosas diferentes. Devuelto como pregunta `c10b-gerente-director`.
+      (5) EL PROPIETARIO DEL REGISTRO SE APLAZA EXPRESAMENTE, y eso hay que escribirlo en la fila: F1C-05 construye cargo, no propietario. El plan promete hoy «permisos por cargo Y por propietario».
+      (6) RECOGE TRES RESTRICCIONES YA DECIDIDAS en otras respuestas —`anexo-33-checkbox`, `ovi-garantia-autor` (17/09) y `top5-manual`— y las convierte en la lista corta. No son nuevas: quedan reunidas.
+    registro: "docs/sdd/ENTRADA.md → E-049 · plan §4.5, fila decision/c10-permisos-cargo · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 39)"
+    maestro_pasaje: "Anexo D nº 39"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-05 · S44"
+
+  - clave: "decision/top5-manual"
+    fecha: "2026-09-23"
+    pregunta: |
+      Los clientes Top 5 dejan de entrar en el cálculo automático de prioridad. ¿Quién les pone entonces la prioridad, y sobre qué: sobre el cliente o sobre cada ticket?
+    respuesta_textual: |
+      «La prioridad automática sigue para todos los clientes; los Top 5 son la excepción y su prioridad se pone a mano. Se pone sobre el cliente, no sobre cada ticket: se fija una vez y todos sus tickets la heredan, para que ningún ticket de un Top 5 se quede sin prioridad porque alguien se olvidó. La pone el [Director Comercial], que también mantiene la lista de quiénes son Top 5. El técnico sigue sin poder editarla, como dice el plan: el bloqueo es para el técnico, no para ese cargo. Si hace falta que un ticket concreto de un Top 5 vaya distinto, ese mismo cargo puede ajustarlo en el ticket con motivo escrito.»
+    consecuencias: |
+      (1) CIERRA ENTERA LA FILA `decision/top5-prioridad`, que estaba PARCIAL desde el 21/09. La tabla §4.5 deja de tener gates a medias.
+      (2) DESMIENTE LA INTERPRETACIÓN QUE ESTA SUPERVISIÓN DEJÓ POR ESCRITO EL 22/09, y así se registra: se preguntó si el cálculo automático seguía para el resto o se retiraba para todos. Sigue para todos; los Top 5 son la excepción. La tanda F1B-07 NO cambia entera.
+      (3) LA PRIORIDAD VIVE EN EL CLIENTE, NO EN EL TICKET. Eso cambia el modelo de F1B-07 (S43) y coincide con `anexo-53-contratos` (24/09), que también pone la prioridad en el cliente. Las dos respuestas convergen.
+      (4) EL PLAN NO SE CONTRADICE: «edición manual bloqueada para el técnico» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:162`) sigue en pie. La respuesta lo dice expresamente: el bloqueo es para el técnico, no para ese cargo.
+      (5) EL CARGO VA ENTRE CORCHETES pero es el mismo que `c10-permisos-cargo` recoge en su lista corta de restricciones: `Prioridad de los Top 5 → Director Comercial`. Se toma como firme por esa coincidencia, y el corchete que SÍ queda abierto es si ese cargo es el mismo que «gerente comercial» (pregunta `c10b-gerente-director`).
+      (6) MEDIDO EL 22/09 Y NO CAMBIADO: la noción de Top 5 no existe en el código. No hay nada que desactivar; hay lista de Top 5, prioridad en el cliente y ajuste por ticket con motivo que construir.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/top5-manual) · plan §4.5, fila decision/top5-prioridad, ahora cerrada · docs/sdd/ENTRADA.md → E-026, cerrada"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-07 · S43"
+
+  - clave: "decision/p38-verificacion-calidad"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿La Verificación es obligatoria por familia de equipo? ¿Qué pasó con el lote AP-370 de 2024? ¿La salida rechazada va a Notificado?
+    respuesta_textual: |
+      «1. Sí: la Verificación es obligatoria por tipo de equipo, sea cual sea su marca: para analizadores de gases y convertidores, y no para el resto. Es la regla que ya se sigue: en 181 tickets, todos los AP-370 fuera de un solo lote y 7 de 8 convertidores pasaron por ella; GRIMM, dataloggers, shelters y Environics, nunca. Se convierte en guarda: no se puede liberar un equipo de esos tipos sin pasar por Verificación.
+      2. La guarda sólo la exige cuando disponemos del gas patrón que esa verificación necesita. El lote AP-370 de 2024 (#601–#622 y #653–#654) no pasó por Verificación porque son analizadores de H2S, TRS y NH3, y no tenemos gas patrón de esos compuestos: no fue un error, es el criterio. Los convertidores sí se verifican, porque se les pasa un gas que sí tenemos. La lista de gases patrón disponibles se mantiene como dato que se puede cambiar: si conseguimos gas patrón de H2S, TRS o NH3, la Verificación pasa a ser obligatoria también para esos analizadores.
+      3. Sí, la salida rechazada va a Notificado, igual que el único caso de producto no conforme registrado. El volumen esperado es casi nulo; lo que importa es que exista.
+      Respondo por Gerencia; Calidad lo ha validado.»
+    consecuencias: |
+      (1) CIERRA ENTERO EL Nº 38, que estaba «parcialmente resuelto» desde el 10/09 y necesitaba las TRES respuestas. Ya las tiene. F1A-03 (S38, VENCIDA), F1B-06 (S42) y F1C-07 (S47) quedan las tres ejecutables.
+      (2) F1A-03 SALE DE LA ESPERA. Era una de las dos tandas vencidas de S38 que seguían sin empezar, y su gate era éste. Deja de ser espera y pasa a ser trabajo pendiente: cambia dónde hay que empujar.
+      (3) EL LOTE AP-370 DE 2024 NO FUE UN ERROR, Y ESO ERA LO QUE ESTABA EN DUDA. Con los seriales escritos (#601–#622 y #653–#654) y el motivo —H2S, TRS y NH3 sin gas patrón—, el hueco del histórico deja de ser un incumplimiento y pasa a ser el criterio funcionando.
+      (4) LA GUARDA ES CONDICIONAL A UN DATO QUE NO EXISTE: la lista de gases patrón disponibles. Es un dato mantenible, no una constante, y hoy no hay dónde guardarlo. Quien construya la guarda tiene que crearlo. Medido: `grep -rniE "gas.?patron|gas patrón" packages/ apps/ --include=*.ts` = 0.
+      (5) LA SALIDA RECHAZADA → `Notificado` CIERRA C12 por el lado que faltaba. F1A-03 construye las DOS salidas de Verificación: `Liberación` → `Finalizado` (ya medida, 71 de 181) y rechazada → `Notificado`.
+      (6) «RESPONDO POR GERENCIA; CALIDAD LO HA VALIDADO» — la fila del plan decía «pendiente · Gustavo / Calidad». Queda cerrada por Gerencia con Calidad validando.
+    registro: "docs/sdd/ENTRADA.md → E-052 · plan §4.5, fila decision/p38-verificacion-calidad · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 38, pasa de parcial a resuelto)"
+    maestro_pasaje: "Anexo D nº 38"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1A-03 · F1B-06 · F1C-07"
+
+  - clave: "decision/p45-macro-fases"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Un juego de macro-fases común a todas las marcas, o uno por marca-modelo? Y antes: ¿está este punto resuelto o no?
+    respuesta_textual: |
+      «Los N1 son propios de cada marca, no comunes a todas. El Grimm EDM180 conserva sus 8 N1 y el Horiba sus 10 N1, tal como están en los catálogos (Grimm v1.8, Horiba v1.4). Dentro de una misma familia tecnológica los N1 sí son comunes: los 10 del Horiba valen para los cuatro AP-370. Lo que hace del diagnóstico una plataforma es que el motor es uno y cada equipo entra como datos importados de su catálogo; F1D-03 genera las transiciones desde los N1 de cada catálogo. Las cuatro macro-fases del 27/08 quedan superadas, y se corrige el maestro, que en el punto 45 hablaba de un juego común a todas las marcas. Si más adelante el análisis de tiempos necesita comparar fases entre marcas, se añade al catálogo una columna opcional de categoría común, sin tocar los N1. Correcciones dentro del Horiba: en el APNA, «Conexiones neumáticas traseras» pasa de Gabinete a Línea de muestreo, y se unifican entre los cuatro modelos los nombres de N2 que designan lo mismo.»
+    consecuencias: |
+      (1) RESUELVE LA CONTRADICCIÓN DETECTADA EL 17/09 —el nº 45 aparecía TACHADO en el maestro mientras el gate seguía abierto—: el maestro estaba equivocado, no resuelto de más. Se corrige el maestro, no se cierra el gate a su favor.
+      (2) F1D-03 (S44) QUEDA EJECUTABLE y con el diseño fijado: el motor es uno, los N1 entran como datos del catálogo de cada marca. Es lo que separa una plataforma de diagnóstico de un formulario por equipo.
+      (3) LAS CUATRO MACRO-FASES DEL 27/08 QUEDAN SUPERADAS. Esta supervisión NO borra la decisión del 27/08: se registra que la supera esta del 23/09, con fecha, como hace el proyecto con todo el histórico.
+      (4) DOS CORRECCIONES DE CATÁLOGO QUE SON TAREA DE PERSONA, no de tanda: en el APNA, «Conexiones neumáticas traseras» pasa de Gabinete a Línea de muestreo; y se unifican los nombres de N2 equivalentes entre los cuatro modelos Horiba. Se hacen sobre los catálogos (Horiba v1.4), no sobre el código.
+      (5) LA COLUMNA OPCIONAL DE CATEGORÍA COMÚN queda como salida prevista si el análisis de tiempos la necesita — registrada para que nadie la reinvente, y expresamente SIN tocar los N1.
+      (6) CIFRAS CITABLES QUE EL REPOSITORIO NO TENÍA: Grimm EDM180, 8 N1; Horiba, 10 N1 válidos para los cuatro AP-370.
+    registro: "docs/sdd/ENTRADA.md → E-053 · plan §4.5, fila decision/p45-macro-fases · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 45, y corrección del maestro)"
+    maestro_pasaje: "Anexo D nº 45"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1D-03 · S44"
+
+  - clave: "decision/p14-remisiones-entrada"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿De dónde sale `remisiones_entrada`: de la plataforma de hojas de vida o de la aplicación?
+    respuesta_textual: |
+      «De la aplicación. remisiones_entrada era una pestaña de una hoja de Google (no la plataforma de hojas de vida). Sus 149 remisiones (29/01/2025–24/07/2026) se importaron una sola vez el 04/08, y desde entonces las remisiones de entrada se crean y viven en la aplicación, con su checklist y sus fotos; ningún proceso vuelve a leer la hoja. El punto 14 queda resuelto y F1E-01 se apoya en las remisiones de la aplicación. La hoja de Google [ya no se usa / se sigue usando y se cierra a partir de hoy]. Las remisiones históricas conservan como texto libre lo que traía el equipo; los informes de esos tickets mostrarán el estado inicial sólo como texto.»
+    consecuencias: |
+      (1) F1E-01 (S46) QUEDA EJECUTABLE y sin dependencia externa: se apoya en las remisiones de la aplicación. Era el riesgo de la pregunta —que el módulo de informes dependiera de una hoja de cálculo fuera del sistema— y queda descartado.
+      (2) CORRIGE UNA PREMISA DEL REGISTRO: no era «la plataforma de hojas de vida», era una pestaña de una hoja de Google. Ninguna de las dos opciones de la pregunta era exacta. Material de clase C para la R08.x.
+      (3) DATO DURO PARA LA MIGRACIÓN: 149 remisiones, 29/01/2025–24/07/2026, importación única del 04/08. Es una cifra citable que el repositorio no tenía.
+      (4) LAS HISTÓRICAS SON TEXTO LIBRE, no checklist: «los informes de esos tickets mostrarán el estado inicial sólo como texto». Eso es una rama del generador de informes de F1E, no un detalle de datos, y hay que escribirla en su alcance.
+      (5) PARCIAL: si la hoja de Google se sigue usando en paralelo o ya no, queda entre corchetes sin elegir. Importa porque, si alguien la sigue rellenando, hay dos registros de remisiones y sólo uno es el bueno. Devuelto como pregunta `p14b-hoja-google`.
+    registro: "docs/sdd/ENTRADA.md → E-050 · plan §4.5, fila decision/p14-remisiones-entrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 14)"
+    maestro_pasaje: "Anexo D nº 14"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1E-01 · S46"
+
+  - clave: "decision/p15-p59-rutas"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Se rehabilitan las rutas abreviadas para equipo sin novedad y calibración directa?
+    respuesta_textual: |
+      «Equipo sin novedad: no se rehabilita la ruta abreviada. Ya se decidió el 03/09: debe recorrer igualmente las etapas macro. Con el checklist dinámico pasa rápido —marca OK en cada macro y no despliega detalle— y queda constancia de que se revisó. Hay que registrar aquí esa decisión del 03/09, que no había llegado al plan.
+      Calibración directa: sí. Cuando la orden de venta ya cubre la calibración, el ticket salta diagnóstico, cotización y aprobación y pasa directamente al trabajo. Tres condiciones: (1) sólo con la orden de venta de calibración asignada; (2) si aparece una falla, sale a la ruta completa para cotizar; (3) pasa igualmente por el Control de calidad. Se construye preferentemente con el tipo de servicio de F1B-03, que ya oculta los pasos que no aplican; F1C-08 se queda con lo que F1B-03 no cubra.»
+    consecuencias: |
+      (1) RESPUESTA PARTIDA: no a una ruta, sí a la otra. F1C-08 (S48) no se cancela, pero ENCOGE: lo que puede, lo hace F1B-03 (S40) con el tipo de servicio, que ya oculta pasos. F1C-08 se queda con el resto. Hay que anotarlo en las dos filas.
+      (2) RECUPERA UNA DECISIÓN PERDIDA, y Gerencia lo señala expresamente: «hay que registrar aquí esa decisión del 03/09, que no había llegado al plan». Es exactamente el modo de fallo que F0-05 existe para cerrar —una decisión tomada y sin destino— y lleva VEINTIÚN DÍAS suelta. Queda registrada aquí.
+      (3) TRES CONDICIONES ESCRITAS PARA LA CALIBRACIÓN DIRECTA, y la tercera es la que protege: pasa igualmente por Control de calidad, el estado que `c6-qa-liberacion` decidió el mismo día. Un atajo que no se salta la calidad.
+      (4) «SI APARECE UNA FALLA, SALE A LA RUTA COMPLETA» es una transición de escape desde la ruta corta a la larga: no es configuración, es un camino más en el grafo, y toca `transitions.ts`.
+      (5) DEPENDE DEL CHECKLIST DINÁMICO (épica F1D, S42–S47) para que «equipo sin novedad pase rápido». F1D-01 y siguientes van DESPUÉS de F1B-03: mientras no exista el checklist dinámico, equipo sin novedad recorre las macro sin el atajo de marcarlas de golpe.
+    registro: "docs/sdd/ENTRADA.md → E-051 · plan §4.5, fila decision/p15-p59-rutas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 15 y 59, y la decisión del 03/09 no registrada)"
+    maestro_pasaje: "Anexo D nº 15 y 59"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-08 · S48 · y F1B-03"
+
+  - clave: "decision/falla-nueva-bloqueante"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿El formulario de falla nueva bloquea la transición o sólo avisa?
+    respuesta_textual: |
+      «Son dos cosas. Rellenar el formulario es obligatorio: si el técnico encuentra una falla que no está en el catálogo, no puede avanzar sin describirla. El formulario es corto —qué es, dónde está, gravedad y foto— para que no desanime a reportar. Si la falla bloquea la liberación depende de su gravedad, igual que las del catálogo: el técnico le asigna Alerta, Cobrable o Bloqueante, y tiene el mismo efecto que en el catálogo (se registra, se cotiza, o impide liberar el equipo). Toda falla nueva genera un aviso al [Director Técnico], que confirma la gravedad y decide si se incorpora al catálogo en su siguiente versión.»
+    consecuencias: |
+      (1) LA PREGUNTA ERA FALSA DICOTOMÍA Y GERENCIA LO DESHACE: son dos cosas distintas. Rellenar es obligatorio SIEMPRE; bloquear depende de la gravedad, con las mismas tres categorías del catálogo. F1D-07 (S47) queda ejecutable.
+      (2) LAS TRES GRAVEDADES —Alerta, Cobrable, Bloqueante— YA EXISTEN PARA EL CATÁLOGO, así que la falla nueva reutiliza el mecanismo y no estrena uno. Eso abarata F1D-07.
+      (3) CIERRA EL CIRCUITO CON `anexo-9-comentarios` (24/09) por el otro extremo: allí se decidió que si el Director Técnico incorpora la falla, su comentario pasa a ser predeterminado en la siguiente versión del catálogo. Aquí se decide quién confirma la gravedad. Las dos son el mismo circuito.
+      (4) DEPENDE DE `anexo-56-taxonomia` (24/09): sin la ISO 14224 simplificada, el formulario no tiene contra qué clasificar. Las dos respuestas llegan la misma semana y F1D-07 pasa de bloqueada por dos gates a ejecutable.
+      (5) EL CARGO VA ENTRE CORCHETES, [Director Técnico], pero coincide con la lista de `c10-permisos-cargo` y con `ovi-garantia-autor` (17/09): se toma como firme. El aviso usa el mecanismo que ya existe (`apps/desk/server/db/avisos.ts`), el mismo que `e005c-discrepancia-sin-espejo` reutiliza.
+      (6) «PARA QUE NO DESANIME A REPORTAR» es criterio de diseño explícito, no adorno: cuatro campos y foto. Conviene que quede escrito, porque un formulario que crece es la forma habitual de que nadie reporte.
+    registro: "docs/sdd/ENTRADA.md → E-054 · plan §4.5, fila decision/falla-nueva-bloqueante · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1D-07 · S47"
+
+  - clave: "decision/e003-catalogo-equipos"
+    fecha: "2026-09-23"
+    pregunta: |
+      Catálogo de equipos (los modelos): ¿le queda trabajo por hacer, o ya está listo para que el diagnóstico se apoye en él?
+    respuesta_textual: |
+      «Ya está: no necesita fila propia. Medido contra el código el 23/09 — los tres catálogos con su API y su pantalla, artículos por modelo con SKU y categorías, mano de obra como una de las tres clases de artículo (packages/shared/src/types.ts:239), y la columna revisar que marca qué modelos llevan inspección. Se escribe que F1D-01 lo da por hecho y el hueco se cierra sin mover el denominador, que sigue en 52. Lo que queda no es construcción sino datos: hay que comprobar contra la base cuántos de los modelos llevan inspección y cuántos tienen sus artículos y su mano de obra cargados, porque eso no se ve desde el repositorio. Va junto con el recuento de modelos, en la misma comprobación.»
+    consecuencias: |
+      (1) EL DENOMINADOR NO SE MUEVE: sigue en 52 por esta respuesta. Era la mitad de lo que estaba en juego —la otra opción abría fila y lo llevaba a 53—.
+      (2) LA CAPACIDAD `catalogo-equipos` SIGUE DECLARADA Y SIN SPEC, y eso NO lo arregla esta respuesta: medido el 2026-09-24, 19 capacidades declaradas y 12 con `spec.md`. Que el código esté hecho no escribe la spec. F1D-01 se apoya en una capacidad sin spec; quien la construya tendrá que destilarla.
+      (3) EL TRABAJO QUE QUEDA ES DE DATOS, NO DE CÓDIGO, y es tarea de persona contra producción: cuántos modelos llevan inspección, cuántos tienen artículos y mano de obra cargados. Va junto al recuento de modelos de `e003c` (29, respondido el 17/09), que también sigue sin verificar contra la base.
+      (4) TRES COMPROBACIONES DE PRODUCCIÓN SE ACUMULAN Y NINGUNA SE HA HECHO: recuento de modelos (17/09), modelos con inspección y con artículos cargados (23/09), y el recuento de `p64-historico-c1` (24/09). Todas necesitan lo mismo: una persona con acceso a la base. Es el cuello de botella real de este corte.
+      (5) `F1D` SON NUEVE TANDAS ENTRE S42 Y S47 y se apoyan en este catálogo: la respuesta las desbloquea por el lado del código y las deja colgando por el lado de los datos.
+    registro: "openspec/config.yaml → capabilities (catalogo-equipos) · docs/sdd/ENTRADA.md → E-003, cerrada"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1D-01 · S42"
+
+  - clave: "decision/e003b-registro-equipos"
+    fecha: "2026-09-23"
+    pregunta: |
+      Registro de equipos (las hojas de vida): ¿le queda trabajo por hacer, o está terminado?
+    respuesta_textual: |
+      «Le queda trabajo, y ya tiene fila: F1B-02, S39, sin empezar. No hace falta fila nueva y el denominador se queda en 52. Medido contra el código el 23/09: la tabla equipos existe con serial, marca, modelo, tipo, cliente y estado (packages/zoho-sync/src/db/schema.sql:189-208), pero no tiene ninguno de los cuatro campos de la hoja de vida ni el enlace a Drive — están todos por construir en F1B-02. Ojo: codigo_interno y fecha_factura aparecen en el código pero son de la tabla de tickets, no de equipos; no cuentan. Con la decisión del mantenedor, F1B-02 pasa de cuatro campos a cinco. Se escribe que la capacidad catalogo-equipos, en su parte de registro de equipos, queda cubierta por F1B-02.»
+    consecuencias: |
+      (1) ESTA RESPUESTA HA QUEDADO SUPERADA POR LOS HECHOS EN VEINTICUATRO HORAS, y es lo primero que hay que decir: F1B-02 ya NO está «sin empezar». Medido el 2026-09-24 sobre `3f30710`: está archivada (`openspec/changes/archive/2026-09-23-hojas-vida/`, `cierra: si`, `toca_maestro: si`) y fusionada en `main` (`aa1962a`, 23/09). La respuesta se registra como se dio; el estado de la fila lo corrige el barrido.
+      (2) EL DENOMINADOR NO SE MUEVE: sigue en 52. Sin fila nueva.
+      (3) F1B-02 SE CONSTRUYÓ CON SEIS CAMPOS COMERCIALES, no con los cinco de la respuesta. Medido en los commits: `3793f87` y `a53969a`, «seis campos comerciales en HojaDeVida y EquipoForm». Gerencia decía cuatro→cinco con el mantenedor; se construyeron seis. No es un desvío grave, pero el número de la respuesta y el del código no coinciden, y quien lea la fila mañana tiene que saberlo.
+      (4) LA PRECISIÓN SOBRE `codigo_interno` Y `fecha_factura` ES CORRECTA Y ÚTIL: son campos de la tabla de tickets, no de equipos. Evita dar por hecho lo que no está. Se conserva como aviso.
+      (5) `catalogo-equipos`, EN SU PARTE DE REGISTRO DE EQUIPOS, QUEDA CUBIERTA POR F1B-02 — que además estrenó su propia capacidad, `hojas-vida`, con spec (`openspec/specs/hojas-vida/spec.md`). La capacidad `catalogo-equipos` sigue sin spec por su otra mitad, la de modelos (`e003`).
+    registro: "openspec/config.yaml → capabilities (catalogo-equipos) · docs/sdd/ENTRADA.md → E-003b, cerrada"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-02 · cerrada el 23/09"
+
+  - clave: "decision/e005b-parche-vehiculo"
+    fecha: "2026-09-23"
+    pregunta: |
+      El arreglo provisional de la orden de venta no está en el plan: ¿lo contamos como una tanda más, o como trabajo aparte que no suma al avance?
+    respuesta_textual: |
+      «Ninguna de las dos: el parche se declara como parte de F1B-11, sin cerrarla (tanda: F1B-11, cierra: no), igual que los dos parciales que ya tiene F1B-08. El total sigue en 52 y el avance no se mueve hasta que F1B-11 cierre. Y con esto IV-11 deja de estar sin destino: su destino es F1B-11, que es donde el problema desaparece de raíz al existir la tabla de asociación propia. Hay que anotar en la fila de F1B-11, con fecha, que también cubre IV-11. Asumo que si F1B-11 se retrasa, el parche no se verá en el avance mientras tanto.»
+    consecuencias: |
+      (1) TERCERA VÍA, NO UNA DE LAS DOS OFRECIDAS, y es la que el mecanismo ya contemplaba: `tanda: F1B-11` con `cierra: no`. El denominador se queda en 52 y el numerador no se mueve. Es exactamente para lo que existe el campo `cierra`.
+      (2) COHERENTE CON `e001-por-entregar` (24/09), y conviene leerlas juntas: allí Gerencia escribió «no existe cuenta en parte; cada cambio lleva un único ID de tanda o fuera-del-plan». Un `cierra: no` NO es «contar en parte»: es llevar el ID sin cerrar la fila. Las dos respuestas son compatibles y juntas dejan la regla completa.
+      (3) IV-11 DEJA DE ESTAR SIN DESTINO: destino F1B-11. Con IV-8 (21/09) ya ruteado ahí, F1B-11 acumula DOS incumplimientos vivos, la subOV de lote, la asociación 1:N, el registro de contrato de `anexo-53` y el parche. Es la tanda más cargada del proyecto y está en S41 con talla L.
+      (4) EL RIESGO QUE GERENCIA MISMA NOMBRA: «si F1B-11 se retrasa, el parche no se verá en el avance mientras tanto». Queda asumido por escrito, no descubierto después.
+      (5) QUEDAN DOS INCUMPLIMIENTOS VIVOS SIN DESTINO —IV-9 (dos predicados de color divergentes) e IV-12 (orden de guardas en el alta)—. No se les inventa destino.
+    registro: "openspec/config.yaml → incumplimientos_vivos (IV-11, destino F1B-11) · docs/sdd/ENTRADA.md → E-005, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-11 · S41"
+
+  - clave: "decision/e005c-discrepancia-sin-espejo"
+    fecha: "2026-09-23"
+    pregunta: |
+      Mientras no exista el espejo de Zoho, ¿qué hace el arreglo provisional cuando Zoho trae otra orden de venta?
+    respuesta_textual: |
+      «Opción 1, y no hace falta esperar al espejo: el mecanismo de avisos ya existe y se usa —apps/desk/server/db/avisos.ts, /api/avisos y la bandeja de la cabecera, lo mismo que dispara el escalado del SLA—, así que enseñar la discrepancia es una llamada más, no una pantalla nueva. Cuando la sincronización traiga una orden distinta a la elegida en la aplicación: se protege el dato, y se crea un aviso al área Comercial sobre ese ticket, diciendo qué orden trae Zoho y cuál tiene la aplicación, para corregirlo a mano. Un solo aviso por ticket mientras la discrepancia no cambie; sólo se vuelve a avisar si el valor que trae Zoho es otro. Cuando exista el espejo de Zoho, esa misma información se mostrará allí y el aviso podrá retirarse.»
+    consecuencias: |
+      (1) DESACTIVA EL COSTE QUE LA PREGUNTA ATRIBUÍA A LA OPCIÓN 1. Se preguntó diciendo que enseñar la discrepancia «cuesta que el arreglo deje de ser pequeño y se convierta en la primera pieza del espejo». Gerencia señala que el mecanismo de avisos YA EXISTE y se usa. Verificado el 2026-09-24: `apps/desk/server/db/avisos.ts` existe en el árbol. La objeción de la pregunta era errónea y así queda registrado.
+      (2) CIERRA EL HUECO QUE LA RESPUESTA DEL 21/09 DEJABA: allí se dijo «no se pierde en silencio: se enseña en el espejo», y el espejo no existe ni tiene fecha. Ahora la discrepancia se ve sin esperar al espejo.
+      (3) LA REGLA ANTI-RUIDO ESTÁ ESCRITA Y ES LA PARTE FINA: un solo aviso por ticket mientras la discrepancia no cambie; sólo se reavisa si el valor que trae Zoho es otro. Sin eso, un sincronizador que corre cada 3 minutos (`config.ts:88`) genera un aviso cada 3 minutos.
+      (4) EL AVISO ES RETIRABLE cuando exista el espejo: no crea deuda permanente.
+      (5) EL PARCHE CRECE, Y ESO TOCA A `e005b`: con el aviso dentro, el parche deja de ser mínimo. Sigue siendo `tanda: F1B-11, cierra: no` y sigue sin mover el avance, pero su tamaño real es mayor que el que se supuso al preguntar.
+    registro: "openspec/config.yaml → incumplimientos_vivos (IV-11) · docs/sdd/ENTRADA.md → E-005, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-11 · S41"
+
+  - clave: "decision/mantenedor-campo-cuando"
+    fecha: "2026-09-23"
+    pregunta: |
+      El campo del mantenedor: ¿entra ahora, en la hoja de vida, o entra con el control que lo usa?
+    respuesta_textual: |
+      «Opción 1: el campo entra ahora, en la hoja de vida. Es opcional, y vacío significa que paga el dueño del equipo, que es como funciona hoy: mientras nadie lo rellene no bloquea nada. Sólo se apuntan las excepciones, no los 354 equipos. Lo que ganamos son tres semanas para ir descubriendo los casos que no tenemos en la lista —hoy conocemos uno— antes de que el control empiece a bloquear en S41. La fila de la hoja de vida pasa de cuatro campos a cinco: queda anotado como cambio de alcance con fecha de hoy, no colado. El control de quién puede pagar sigue en la tanda de las órdenes de venta, sin cambios.»
+    consecuencias: |
+      (1) LA RESPUESTA LLEGÓ EL 23/09 Y F1B-02 SE CERRÓ EL 23/09. Hay que comprobar si el campo entró. Medido el 2026-09-24 sobre `3f30710`: los commits de F1B-02 hablan de «seis campos comerciales» (`3793f87`, `a53969a`), y el 22/09 la propuesta se tituló «hoja de vida, cinco campos + enlace Drive» (`c0e0042`). El campo del mantenedor NO está nombrado en ningún mensaje de commit. ES UN DESVÍO ABIERTO y se enseña, no se resuelve: si la tanda cerró sin el campo, la decisión de Gerencia del 23/09 no se cumplió y hay que abrir trabajo; si entró con otro nombre, hay que decir cuál.
+      (2) «VACÍO SIGNIFICA QUE PAGA EL DUEÑO» es lo que hace el campo inocuo hasta S41: no bloquea nada mientras nadie lo rellene. Buena decisión de secuencia.
+      (3) CIFRA CITABLE NUEVA: 354 equipos. El repositorio no la tenía.
+      (4) DE CUATRO CAMPOS A CINCO, «anotado como cambio de alcance con fecha, no colado» — y lo construido fueron seis. La fila del §5 declara cuatro (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:157`). Tres cifras distintas para la misma fila: 4 en el plan, 5 en la decisión, 6 en el código.
+      (5) EL CONTROL SIGUE EN F1B-11 (S41), SIN CAMBIOS, y ahí es donde IV-8 se cierra.
+    registro: "openspec/config.yaml → incumplimientos_vivos (IV-8) · docs/sdd/ENTRADA.md → E-019, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-02 · F1B-11"
+
+  - clave: "decision/trabajo-sin-ficha"
+    fecha: "2026-09-23"
+    pregunta: |
+      ¿Todo cambio en la aplicación necesita su ficha, aunque sea pequeño, o los ajustes de la copia de datos de contabilidad pueden ir directos?
+    respuesta_textual: |
+      «Ninguna de las tres tal cual. El problema no es la política sino que nada compara los commits con las fichas: la opción 1 sería una regla sin quien la haga cumplir. Primero, una comprobación nueva en npm run reconcile: commits en main que tocan apps/ o packages/ y que ninguna ficha reclama se listan en el parte. Es barato — el cli.ts ya hace las llamadas a git y el núcleo está hecho para añadir comprobaciones. Y con eso, la regla: si un cambio toca openspec/specs/, lleva ficha; si no, puede ir directo y el barrido lo lista. Este cambio tocaba specs/zoho-sync/spec.md:221, así que debió llevarla, y se le hace una ficha retroactiva. Asumo que cada corte traerá una lista de trabajo sin ficha que hay que leer: si nadie la lee, volvemos al punto de partida.»
+    consecuencias: |
+      (1) LA REGLA VA A `CLAUDE.md` COMO R-5: si un cambio toca `openspec/specs/`, lleva ficha; si no, puede ir directo y el barrido lo lista. Es la primera regla del proyecto que se apoya en una comprobación en vez de en la disciplina.
+      (2) LA COMPROBACIÓN ES CÓDIGO Y NO TIENE FILA. F0-05 está archivada y cerrada (20/09), así que «añadir una comprobación a `npm run reconcile`» no cabe en ninguna tanda viva. Es la misma situación que deja `anexo-61-incorporacion` (24/09) con su comprobación de decisiones pendientes de maestro. Las dos juntas, devueltas como pregunta `barrido-comprobaciones-nuevas`.
+      (3) LA FICHA RETROACTIVA ESTÁ PENDIENTE: el lote del 22/09 tocaba `openspec/specs/zoho-sync/spec.md:221`, así que debió llevarla. La hace una sesión de construcción, no el parte.
+      (4) Y YA HAY UN SEGUNDO CASO, MEDIDO HOY: entre el 22/09 y el 24/09 entraron CINCO commits más de producto sin ficha —`b7c1ba8`, `42172d7`, `244c237`, `3951ad0`, `3385281`—, la historia de tickets desde Zoho (`desk.ticket_history`), sobre `packages/`. La regla ya está decidida y el mecanismo que la haría cumplir todavía no existe: en esa ventana el trabajo sigue entrando sin que nada lo cace.
+      (5) GERENCIA ASUME EL RIESGO POR ESCRITO: «si nadie la lee, volvemos al punto de partida». La lista entra en el parte de cada corte, que es quien la lee.
+    registro: "CLAUDE.md → R-5 · docs/sdd/ENTRADA.md → E-027, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "el propio mecanismo · sin fila"
+
+  - clave: "decision/fecha-corte"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Desde qué fecha los tickets nacen en la aplicación y no en Zoho Desk?
+    respuesta_textual: |
+      «Los tickets nacen en la aplicación desde el lunes 14 de diciembre de 2026. Es un corte en seco: desde ese día nadie crea ni edita tickets en Zoho Desk, y ningún ticket se registra en los dos sistemas. El fin de semana anterior (12–13 de diciembre) los tickets abiertos de Zoho pasan a la aplicación en su estado equivalente, y Zoho queda en solo lectura. Las pruebas con dos o tres servicios reales se hacen antes del corte, no después. La fecha se confirma el miércoles 9 de diciembre si están listos: creación y movimiento de tickets, respuestas al cliente por correo sin pasar por Zoho, histórico completo verificado y pruebas superadas. Si algo falta, el corte pasa al lunes 21 de diciembre, que es la última fecha posible: después hace falta una semana de funcionamiento sin Zoho, con Zoho todavía contratado, antes de darlo de baja en la fecha de renovación de las licencias.»
+    consecuencias: |
+      (1) LA FECHA DEL PROYECTO DEJA DE SER «31/12» Y PASA A SER 14/12, CON ALTERNATIVA EL 21/12. Es la decisión más restrictiva de este corte: el calendario del §5 llega a S53 y el corte cae en S51. Todo lo que el plan sitúa en S52 y S53 queda DESPUÉS del corte, y eso hay que mirarlo fila a fila.
+      (2) MARGEN REAL, MEDIDO HOY (24/09, S39): quedan ONCE semanas hasta el 14/12, no catorce hasta fin de año. El tile de «semanas al 31/12» del panel medía contra la fecha equivocada.
+      (3) CUATRO CONDICIONES DE CONFIRMACIÓN, con fecha de examen (miércoles 9 de diciembre): creación y movimiento de tickets, respuesta al cliente por correo SIN Zoho, histórico completo verificado y pruebas superadas. La segunda es la que hoy no tiene tanda cerrada y depende de `docs/sdd/Decision_Correo_n8n_vs_GmailAPI.md`, que está SIN TRACKEAR en git.
+      (4) «CORTE EN SECO, NINGÚN TICKET EN LOS DOS SISTEMAS» elimina la convivencia y con ella una clase entera de problemas de sincronización — y refuerza `p44-escritura-zoho` (17/09, sin escritura contra Zoho): no hay que activarla nunca, sólo dejar de leer.
+      (5) LA MIGRACIÓN ES UN FIN DE SEMANA (12–13/12) Y NO HAY COPIA DE PRUEBAS donde ensayarla: `e013b-copia-pruebas` (21/09) decidió no montarla. La mudanza se hace directamente sobre la aplicación en uso. Es coherente con lo decidido, y conviene que esté escrito junto.
+      (6) EL TOPE ES DURO: el 21/12 es la última fecha posible por la renovación de licencias de Zoho, con una semana de funcionamiento sin Zoho antes de darlo de baja.
+    registro: "docs/sdd/ENTRADA.md → E-055 · plan §4.5, fila decision/fecha-corte · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1F-01 · S50"
+
+  - clave: "decision/p55-backup"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Quién es responsable del respaldo, con qué alcance y con qué periodicidad?
+    respuesta_textual: |
+      «Responsable: Alfonso (Gerencia). La copia es automática; el responsable recibe un aviso por correo si una copia falla y revisa cada mes el resultado de la prueba de restauración. Alcance: la base de datos completa y todos los archivos (adjuntos, fotos, informes emitidos, firmas), guardados cifrados fuera del servidor de Hostinger, en [Google Drive de la empresa / otro destino]. Las claves de acceso se guardan aparte, también cifradas. Periodicidad: una copia cada noche, y una copia extra antes de cada cambio que se suba a la aplicación. Se conservan las 7 últimas diarias, 4 semanales y 12 mensuales. Una vez al mes se restaura una copia en una base aparte y se comprueba que los tickets coinciden; el resultado queda anotado en el parte.
+      Como se trabaja directamente sobre la aplicación en uso, la copia nocturna y la previa a cada cambio se adelantan y se ponen en marcha ya, sin esperar a diciembre; el resto de la tanda F1F-02 sigue en su fecha.»
+    consecuencias: |
+      (1) LO URGENTE NO ES LA TANDA, ES EL ADELANTO: «la copia nocturna y la previa a cada cambio se ponen en marcha YA, sin esperar a diciembre». F1F-02 es S51; esto es para esta semana. Es consecuencia directa de `e013b-copia-pruebas` (21/09): sin copia de pruebas, cada cambio se prueba sobre la aplicación en uso, y entonces la copia previa deja de ser higiene y pasa a ser la única red.
+      (2) NO TIENE FILA PROPIA. El adelanto es trabajo sin tanda: F1F-02 sigue en S51 con el resto. Esta supervisión no inventa la fila; queda declarado como trabajo adelantado que alguien tiene que situar.
+      (3) RESPONDE A LA ADVERTENCIA QUE LA PROPIA TABLA §4.5 DEJÓ ESCRITA en `decision/p8-p54-drive`: «quien responda `decision/p55-backup` tiene que decir si el respaldo alcanza a Drive». La respuesta enumera el alcance —base completa y todos los archivos— pero NO menciona los documentos que viven en Drive por el enlace del 21/09. Consecuencia no prevista: el enlace a Drive existe justamente porque el servidor no tiene capacidad, así que esos ficheros NO están en el servidor y el respaldo de «todos los archivos» no los alcanza.
+      (4) PARCIAL: el destino de las copias queda entre corchetes, [Google Drive de la empresa / otro destino]. No es menor —guardar las copias en el mismo Drive que ya aloja documentos operativos concentra el riesgo—. Devuelto como pregunta `p55b-destino-copia`, junto con la cuestión del punto (3).
+      (5) «EL RESULTADO QUEDA ANOTADO EN EL PARTE» asigna trabajo recurrente a esta supervisión: la prueba de restauración mensual entra en el parte. Se recoge.
+    registro: "docs/sdd/ENTRADA.md → E-056 · plan §4.5, fila decision/p55-backup · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 55)"
+    maestro_pasaje: "Anexo D nº 55"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1F-02 · S51 · con adelanto inmediato"
+
+  - clave: "decision/p62-capa-as-built"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Se retira la capa as-built o se mantiene el Anexo H?
+    respuesta_textual: |
+      «Se aplican los dos criterios, cada uno en su sitio. El cuerpo del maestro (M1–M12) describe cómo debe funcionar el sistema: se retiran las marcas [AS-BUILT], las rutas de ficheros y los números de línea. Los pasajes as-built que contienen una regla decidida no se borran: se reescriben como regla de negocio, sin referencia al código. El Anexo H se mantiene como único lugar del maestro donde se compara lo planificado con lo construido, pero deja de redactarse a mano: en cada revisión R08.x se genera a partir de docs/sdd/RECONCILIACION.md (npm run reconcile), con la fecha y el commit contra el que se midió. Donde decía «demostrador», se actualiza: la aplicación ya está en uso. La limpieza se hace en la próxima revisión del maestro. Cierra el punto abierto nº 62.»
+    consecuencias: |
+      (1) CIERRA UN GATE QUE LLEVABA SIN DECIDIR DESDE EL 03/09 —VEINTIÚN DÍAS— y que la tabla §4.5 marcaba como premisa de F0-02. No eran dos criterios opuestos: son dos sitios distintos.
+      (2) EL ANEXO H PASA A GENERARSE, NO A REDACTARSE, y su fuente es `docs/sdd/RECONCILIACION.md`. Eso da a `npm run reconcile` un consumidor de verdad y cierra el bucle de F0-05: el barrido deja de ser un fichero que nadie lee y pasa a ser el origen de un anexo del maestro.
+      (3) TRABAJO MEDIBLE PARA LA R08.x: retirar marcas [AS-BUILT], rutas y números de línea del cuerpo M1–M12, y reescribir como regla de negocio los pasajes as-built que contengan una regla decidida. Es la tarea más grande que este corte deja al expediente.
+      (4) ATENCIÓN AL EFECTO SOBRE LAS CITAS: quitar rutas y números de línea del maestro reduce el trabajo del detector de citas y de la regla de mutación 4 sobre ese documento, pero la R08.2 sigue siendo el objetivo de F1A-09 («barrido de citas tras la R08.2»), que está VENCIDA desde S38 y sin empezar. Conviene hacer F1A-09 y esta limpieza en el orden correcto, o se barren citas que van a desaparecer.
+      (5) «DONDE DECÍA DEMOSTRADOR, SE ACTUALIZA: LA APLICACIÓN YA ESTÁ EN USO». Es un cambio de estatus del proyecto entero, no una errata, y toca todo el maestro.
+    registro: "docs/sdd/ENTRADA.md → E-057 · plan §4.5, fila decision/p62-capa-as-built · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 62)"
+    maestro_pasaje: "Anexo D nº 62"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "premisa de F0-02 · sin tanda"
+
+  - clave: "decision/p64-historico-c1"
+    fecha: "2026-09-24"
+    pregunta: |
+      Las filas de «Liberación sin factura» escritas antes del arreglo de C1: ¿se corrigen, se marcan, o se excluyen del indicador?
+    respuesta_textual: |
+      «Se marcan; no se corrigen ni se excluyen, según el criterio ya decidido en c2. Las liberaciones sin factura registradas antes del arreglo de C1 conservan sus valores tal como se guardaron en ticket_transitions.values y llevan la marca «anterior al arreglo de C1 — sin afirmación registrada». Cuentan en el recuento de liberaciones sin factura y quedan fuera sólo de los indicadores que dependen del motivo o de la fecha prevista de facturación, porque no los tienen. Las que correspondan a tickets que siguen en Pendiente de facturar se regularizan hacia adelante: el Director Comercial registra ahora motivo y fecha prevista como un evento nuevo, con su nombre y fecha, sin modificar la fila original; desde ese momento les aplica la alarma del punto 33. Claude Code prepara la consulta de solo lectura que cuenta estas filas y separa las que siguen sin facturar; la ejecuta contra producción [nombre de la persona].»
+    consecuencias: |
+      (1) TERCERA APLICACIÓN DE LA MISMA DOCTRINA EN DOS DÍAS: marcar, no reescribir (`c2-anulado` 23/09, `anexo-33-checkbox` 24/09, y ésta). Ya no es un criterio por caso: es la regla del proyecto para todo histórico, y conviene que se lea así.
+      (2) «REGULARIZAR HACIA ADELANTE» ES LA PIEZA NUEVA, y es elegante: no se toca la fila vieja, se añade un evento nuevo con su autor y su fecha. A partir de ahí le aplica la alarma de `anexo-33-checkbox`. Un histórico inmutable que aun así se pone al día.
+      (3) TAREA REPARTIDA EN DOS, Y UNA ES DE PERSONA: Claude Code prepara la consulta de SOLO LECTURA; alguien la ejecuta contra producción. Esta supervisión no puede: sólo ve ficheros.
+      (4) PARCIAL: quién la ejecuta queda entre corchetes, [nombre de la persona]. Sin nombre, la consulta se escribe y se queda sin correr, que es exactamente lo que ya pasó con el recuento de modelos (`e003c`, respondido el 17/09) y con el conteo de tickets que llegaron a `Ingresado` sin remisión. Devuelto como pregunta `p64b-quien-ejecuta`.
+      (5) LA FILA DE LA TABLA §4.5 DECÍA «Por asignar. Contar primero contra producción»: el criterio ya no está por asignar. Lo que queda es el recuento, y es tarea de persona, no tanda.
+    registro: "docs/sdd/ENTRADA.md → E-058 · plan §4.5, fila decision/p64-historico-c1 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 64)"
+    maestro_pasaje: "Anexo D nº 64"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "sin tanda · dato de producción"
+
+  - clave: "decision/roles-validacion-informe"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Qué dos roles validan un informe antes de emitirse?
+    respuesta_textual: |
+      «Un informe lleva tres firmas: Elaboró (el técnico que hizo el trabajo), Revisó (el Coordinador Técnico) y Aprobó (el Director Técnico). Las dos validaciones antes de emitir son las del Coordinador Técnico y el Director Técnico. La revisión del Coordinador es la misma firma del Control de calidad: se hace en un solo paso y no se pide dos veces. Nadie valida un informe que él mismo elaboró. Si el autor es el Coordinador Técnico, el Director Técnico revisa y aprueba en un solo paso. Si el Director Técnico no está disponible, el Coordinador Técnico revisa y aprueba en un solo paso. En ambos casos el informe se emite con una sola validación y queda marcado como «validación única». Si el autor es el Coordinador Técnico y el Director no está, el informe espera al regreso del Director. El área Comercial no valida informes. Una vez aprobado, el informe se emite con la imagen de las firmas cargada automáticamente y ya no se puede modificar.
+      La ausencia del Director Técnico se registra en el sistema con fecha de inicio y fin; sólo mientras esté vigente se permite que el Coordinador apruebe.»
+    consecuencias: |
+      (1) F1E-04 (S49) QUEDA EJECUTABLE, con los cuatro casos escritos —normal, autor Coordinador, Director ausente, y las dos a la vez— en vez de con la regla general y sus excepciones por descubrir.
+      (2) RESUELVE EL CORCHETE DE `c6-qa-liberacion` (23/09) SIN PREGUNTAR: «la revisión del Coordinador es la misma firma del Control de calidad». Firma el Coordinador Técnico, y no se pide dos veces. Una respuesta cierra dos gates.
+      (3) «NADIE VALIDA UN INFORME QUE ÉL MISMO ELABORÓ» es una guarda por PERSONA, no por cargo ni por área. `c10-permisos-cargo` construye cargo; esto no cabe ahí y hay que escribirlo aparte. Es la misma consecuencia que deja `c6-qa-liberacion`.
+      (4) LA AUSENCIA DEL DIRECTOR TÉCNICO SE REGISTRA CON FECHAS DE INICIO Y FIN, y la habilitación del Coordinador cuelga de que esté vigente. Eso es una entidad nueva —un registro de ausencias— que hoy no existe en ninguna tanda. Pequeña, pero es alcance.
+      (5) «UNA VEZ APROBADO YA NO SE PUEDE MODIFICAR» encaja con la auditoría inmutable de M11.4 y con la doctrina de marcar-y-no-reescribir de este mismo corte.
+      (6) LA FIRMA SE CARGA AUTOMÁTICAMENTE CON LA IMAGEN DEL RESPONSABLE, como se acordó el 27/08: se reutiliza, no se reinventa.
+    registro: "docs/sdd/ENTRADA.md → E-059 · plan §4.5, fila decision/roles-validacion-informe · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 10)"
+    maestro_pasaje: "Anexo D nº 10"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1E-04 · S49"
+
+  - clave: "decision/anexo-3-alerta"
+    fecha: "2026-09-24"
+    pregunta: |
+      La alerta de no-aprobación del cliente: ¿24 o 48 horas?
+    respuesta_textual: |
+      «4 días hábiles, para todos los clientes. Cuando un ticket lleva 4 días hábiles en Notificación cliente sin aprobación ni rechazo, se avisa al Coordinador Comercial para que haga seguimiento, y el ticket se señala en el tablero como «esperando aprobación del cliente»; no se crea un estado nuevo. Un día hábil va de lunes a viernes, de 8 a 17 h (9 horas), sin festivos de Colombia; el tiempo fuera de ese horario no cuenta. El mismo criterio se aplica a las tres alarmas de SLA_HORAS_POR_ESTADO, expresadas en días hábiles: Notificado, 1 día hábil (9 horas hábiles); Remisión creada, 3 días hábiles (27 horas hábiles); Notificación cliente, 4 días hábiles (36 horas hábiles). Esta alerta es independiente del reloj del SLA de c7: el reloj se para en Notificación cliente porque la espera es del cliente, y la alerta mide precisamente esa espera. Cierra el punto abierto nº 3.»
+    consecuencias: |
+      (1) NINGUNA DE LAS DOS OPCIONES DE LA PREGUNTA: la respuesta es 4 días hábiles, no 24 ni 48 horas de reloj.
+      (2) LAS TRES ENTRADAS DE `SLA_HORAS_POR_ESTADO` QUEDAN FIJADAS, y hoy hay UNA. Medido el 2026-09-24 sobre `3f30710`: `packages/shared/src/sla.ts:32-35` declara `{'Notificado': 24}` y nada más. La respuesta pide 9, 27 y 36 horas HÁBILES. El 'Notificado: 24' de hoy no es el de la respuesta: 24 horas de reloj no son 9 hábiles.
+      (3) CONSECUENCIA QUE LA PREGUNTA NO ANTICIPABA — EL CALENDARIO HÁBIL NO EXISTE Y NO TIENE FILA. Contar en horas hábiles exige horario (L-V 8-17) y festivos de Colombia. Medido: `grep -rniE "festivo|habil|holiday" packages/ apps/ --include=*.ts` = 0 aciertos. No es un número que se cambie: es una pieza nueva de la que dependen las tres alarmas, el escalado de C11 y el reloj del SLA de `c7`. Sin fila y sin dueño. Devuelto como pregunta `calendario-habil`.
+      (4) NO CREA ESTADO NUEVO: la señal del tablero es una marca de vista, no un estado, así que la cifra anclada de 21 estados no se mueve.
+    registro: "docs/sdd/ENTRADA.md → E-033 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 3)"
+    maestro_pasaje: "Anexo D nº 3"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1A-02 · F1B-08"
+
+  - clave: "decision/anexo-7-garantia-proveedor"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Cómo se incorpora la gestión de garantía con el proveedor, hoy fuera del sistema?
+    respuesta_textual: |
+      «La reclamación de garantía al fabricante se incorpora como una ficha propia vinculada al ticket y a la OVI de garantía, no como rama del blueprint: el ticket se cierra cuando el cliente queda atendido, y la reclamación sigue su curso aparte. Al crear la OVI de garantía, el Director Técnico responde «¿Se reclama al fabricante?». Si responde sí, se abre la ficha. Si responde no, elige el motivo de una lista cerrada: fuera de garantía de fábrica · daño por mal uso · el costo de envío supera el valor de la pieza. La ficha registra: fabricante, pieza (referencia y serial), ticket y OVI de origen, número de caso del fabricante (RMA), valor reclamado (tomado del costo de la OVI), estado (abierta → enviada al fabricante → resuelta: reposición, nota crédito o rechazada) y valor recuperado. Si una reclamación lleva más de [60] días abierta, se avisa al Director Técnico. Se miden el valor recuperado frente al reclamado por marca y las piezas con fallas repetidas, que alimentan la taxonomía ISO 14224. Entra en Fase 1 junto a la OVI de garantía (F1B-03), como tanda pequeña. Cierra el punto abierto nº 7.»
+    consecuencias: |
+      (1) ALCANCE NUEVO CON FILA NUEVA: «entra en Fase 1 junto a la OVI de garantía, como tanda pequeña». Es una fila del §5 que HOY NO EXISTE. Esta supervisión no escribe en el §5: la fila la escribe quien fije el alcance. DENOMINADOR: 52 hoy; pasa a 53 el día que se escriba, y el porcentaje baja ese día por alcance nuevo, no por trabajo.
+      (2) NO ES RAMA DEL BLUEPRINT, y eso es lo que la abarata: no toca `transitions.ts` ni los 21 estados. Es una ficha vinculada, con su propio ciclo de cuatro estados internos.
+      (3) DEPENDE DE F1B-03 (S40), que construye la OVI de garantía, y de `decision/ovi-garantia-autor` (17/09), que ya fijó que la crea el Director Técnico: la pregunta «¿se reclama al fabricante?» cuelga de ese mismo acto.
+      (4) INTERPRETACIÓN, no dicho en firme: los [60] días van entre corchetes en la respuesta. Se toma 60 como valor propuesto por Gerencia y se registra como tal; si se quiso dejar abierto, dígase y vuelve como pregunta.
+      (5) ALIMENTA LA TAXONOMÍA de `anexo-56-taxonomia` (ISO 14224), decidida el mismo día: las piezas con fallas repetidas son entrada de esa taxonomía.
+    registro: "docs/sdd/ENTRADA.md → E-034 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 7)"
+    maestro_pasaje: "Anexo D nº 7"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "fila nueva junto a F1B-03"
+
+  - clave: "decision/anexo-9-comentarios"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Comentarios predeterminados por etapa, o textos dinámicos con consulta a la base de conocimiento?
+    respuesta_textual: |
+      «Comentarios predeterminados. Cuando un ítem sale No OK, el comentario de falla de su catálogo (Grimm v1.8, Horiba v1.4) aparece escrito automáticamente. El técnico puede añadir una nota libre, pero no borrar el texto del catálogo; el sistema guarda por separado el comentario del catálogo usado y la nota, y los análisis se hacen sobre el primero. Si la falla no está en el catálogo, se usa el formulario de falla nueva ya decidido, y si el Director Técnico la incorpora, su comentario pasa a ser predeterminado en la siguiente versión del catálogo. La consulta a la base de conocimiento no se usa para escribir comentarios: cuando exista (punto abierto nº 51), mostrará al técnico casos parecidos como sugerencia al lado, sin escribir en el informe. F1D-04 se construye con esta regla y no depende de la base de conocimiento. Cierra el punto abierto nº 9.»
+    consecuencias: |
+      (1) F1D-04 QUEDA EJECUTABLE y, sobre todo, DESACOPLADA del punto abierto nº 51 (base de conocimiento), que era el riesgo real de la pregunta: la opción de textos dinámicos habría hecho que una tanda de S46 dependiera de algo sin fila ni fecha.
+      (2) DOS CAMPOS, NO UNO: comentario del catálogo (inmutable, sobre el que se analiza) y nota libre del técnico. Es un requisito de modelo de datos, no de pantalla, y hay que escribirlo así en la spec de la capacidad `diagnostico-checklist` — que está DECLARADA Y SIN SPEC (medido el 24/09: 19 capacidades declaradas, 12 con `spec.md`).
+      (3) ENGANCHA CON `falla-nueva-bloqueante` (23/09): el circuito «falla nueva → el Director Técnico la incorpora → pasa a predeterminada en la siguiente versión del catálogo» es el mismo que allí se decidió, y aquí se cierra por el otro extremo.
+      (4) VERSIONADO DE CATÁLOGO: «la siguiente versión del catálogo» presupone que los catálogos se versionan (Grimm v1.8, Horiba v1.4). Hoy eso vive en ficheros de datos, no en la aplicación: quien construya F1D-04 tiene que decir dónde vive el número de versión.
+    registro: "docs/sdd/ENTRADA.md → E-035 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 9)"
+    maestro_pasaje: "Anexo D nº 9"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1D-04"
+
+  - clave: "decision/anexo-33-checkbox"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Sigue «Liberación del ticket sin facturar» siendo un checkbox, o pasa a ser un campo que el motor pueda exigir?
+    respuesta_textual: |
+      «Deja de ser un checkbox. La transición «Liberación sin factura», que sólo ejecuta el Director Comercial, exige dos campos obligatorios en su lugar: (1) Motivo, de una lista cerrada: fecha de corte de facturación del cliente · servicio incluido en contrato con facturación periódica · autorización excepcional de Dirección Comercial, con texto obligatorio; y (2) Fecha prevista de facturación. Si esa fecha pasa y el ticket sigue en «Pendiente de facturar», el sistema avisa al Director Comercial. Las liberaciones registradas antes del arreglo del 09/09 conservan su casilla tal como se guardó y se marcan según el criterio ya decidido para el histórico (c2); no se reescriben.»
+    consecuencias: |
+      (1) CIERRA LA SEGUNDA MITAD DEL Nº 33. La primera la cerró C1 (F1A-01, 09/09): un checkbox sin marcar ya devuelve 422. Ahora el checkbox desaparece y lo sustituyen dos campos exigibles.
+      (2) TOCA TRABAJO YA CERRADO, y hay que decirlo: F1A-01 está CERRADA y construyó la guarda sobre el checkbox. Esto no la reabre —la guarda sigue siendo correcta— pero SÍ cambia lo que la guarda exige. El trabajo va donde vaya la transición «Liberación sin factura», que es `c4-dos-ramas` (F1C-02, S41) por la rama sin factura, y `c10-permisos-cargo` (F1C-05, S44) por la restricción de cargo.
+      (3) TERCERA ALARMA POR FECHA, distinta de las tres de `SLA_HORAS_POR_ESTADO`: ésta no cuenta horas en un estado, compara una fecha prometida contra hoy. No cabe en `SLA_HORAS_POR_ESTADO` tal como está.
+      (4) SE APOYA EN `c2-anulado` (23/09) para el histórico y en `p64-historico-c1` (24/09), que decide exactamente qué se hace con esas filas: las dos respuestas son coherentes —se marcan, no se reescriben—.
+      (5) «Director Comercial» SIGUE SIN EXISTIR COMO CARGO EN EL CÓDIGO (medido el 18/09 y no cambiado: `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` = 0). Lo crea `c10-permisos-cargo`.
+    registro: "docs/sdd/ENTRADA.md → E-036 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 33)"
+    maestro_pasaje: "Anexo D nº 33"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-02 · F1C-05"
+
+  - clave: "decision/anexo-36-aviso"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Se acepta formalmente la pérdida de aviso en la ventana entre las dos escrituras? ¿Y es el borrado de administrador compatible con la auditoría inmutable que exige M11.4?
+    respuesta_textual: |
+      «1. Se acepta formalmente que una caída entre la escritura de la transición y la del aviso pueda perder el aviso, porque la transición y la derivación quedan siempre guardadas. Como protección, una revisión nocturna recorre las transiciones del día, recalcula a quién correspondía avisar (estado de llegada menos las áreas de quien ejecutó) y crea los avisos que falten.
+      2. El borrado de administrador se mantiene, pero sólo para tickets sin actividad real (sin remisión, sin orden de venta y sin transiciones posteriores a su creación); todo ticket con actividad se cierra con Anulado. Exige un motivo de lista cerrada (creado por error · duplicado · prueba) y, antes de borrar, escribe en un registro de borrados que nadie puede modificar ni borrar: quién, cuándo, motivo y copia completa del ticket. Los tickets traídos de Zoho no se pueden borrar. Con esto el borrado es compatible con la auditoría inmutable de M11.4 y se cierra el punto abierto nº 36.»
+    consecuencias: |
+      (1) LAS DOS PREGUNTAS QUEDAN RESPONDIDAS, y la segunda con una condición que no estaba en la pregunta: el borrado sobrevive, pero acotado a tickets SIN actividad y con registro inmutable de borrados. Eso es una tabla nueva.
+      (2) COHERENTE CON `c2-anulado` (23/09): allí Gerencia excluyó «creado por error» y «duplicado» de los motivos de Anulado «porque eso se borra, no se anula, para no contaminar la cifra de abandonos». Aquí aparecen esos mismos dos motivos en la lista del borrado, más «prueba». Las dos respuestas encajan: son las dos mitades del mismo criterio.
+      (3) LA REVISIÓN NOCTURNA ES PIEZA NUEVA SIN FILA. Recalcular «estado de llegada menos las áreas de quien ejecutó» es exactamente lo que hace `DERIVACION_POR_DEFECTO` (`packages/shared/src/transitions.ts:274-282`), así que la lógica existe; lo que no existe es el proceso que la corre de noche. Sin destino: no se le inventa uno.
+      (4) «TICKETS TRAÍDOS DE ZOHO NO SE PUEDEN BORRAR» es una guarda concreta y comprobable, y cuelga del prefijo que ya existe: `PREFIJO_TICKET_APP = 'app-'` (`packages/shared/src/transitions.ts:124`). Lo que no lleve ese prefijo viene de Zoho.
+      (5) NO REABRE M11.4: la respuesta declara el borrado compatible con la auditoría inmutable, con el registro de borrados como contrapartida.
+    registro: "docs/sdd/ENTRADA.md → E-037 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 36)"
+    maestro_pasaje: "Anexo D nº 36"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "sin fila · dueño Gerencia"
+
+  - clave: "decision/anexo-43-en-sitio"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Entra el servicio en sitio como cuarta rama del blueprint en 2026?
+    respuesta_textual: |
+      «Sí, pero en 2027. El servicio en sitio entra como cuarta rama del blueprint en el segundo trimestre de 2027, no en 2026. Mientras tanto, cualquier visita a instalaciones del cliente se registra por la rama de soporte remoto (F1B-06), que no exige remisión, con un campo nuevo «Modalidad: remoto / en sitio». La regla de remisión obligatoria para habilitar un servicio técnico se mantiene sin excepciones. Las visitas registradas así son la base del levantamiento de cómo se hace hoy, que se hace al comenzar 2027 y es requisito para construir la rama. La primera versión sigue la referencia de campo del maestro: Asignado → En viaje → En sitio → En ejecución → En pausa → Validación de calidad → Cerrado. Usa un acta de visita firmada por el cliente en lugar de la remisión de entrada, y reutiliza el reloj del SLA, el control de calidad, la validación del informe y el árbol de inspección de las otras ramas. La geolocalización y el registro por NFC quedan para una segunda versión. Las visitas registradas en 2026 se quedan en soporte remoto; la rama nueva sólo aplica a los servicios que se abran desde su puesta en marcha. Si antes llegan instalaciones o puestas en marcha en sitio (por ejemplo, del proyecto de estaciones de calidad del aire), la construcción se adelanta.»
+    consecuencias: |
+      (1) NO ENTRA EN 2026: el denominador de 52 tandas NO se mueve por esta respuesta, y `PF-2` («el plan no contempla servicio en sitio») deja de ser una premisa falsa viva y pasa a ser alcance fechado en 2027 T2.
+      (2) SÍ TOCA 2026, Y ES LA PARTE QUE IMPORTA: el campo «Modalidad: remoto / en sitio» entra en F1B-06 (S42), que hoy construye DOS ramas por `decision/flujos-comercial-posible-cliente` (21/09). Es alcance añadido a una tanda existente, pequeño, y hay que anotarlo en su fila.
+      (3) LA GUARDA DE REMISIÓN NO SE TOCA: «se mantiene sin excepciones». Esto CIERRA el hueco que `decision/habilitar-servicio-sin-remision` (10/09) dejaba entreabierto —si el servicio en sitio sería la excepción— y F1B-03 puede construir la guarda sin condicional.
+      (4) CONDICIÓN DE ADELANTO ESCRITA, no de memoria: si llegan instalaciones o puestas en marcha en sitio (proyecto de estaciones de calidad del aire), la construcción se adelanta. Eso es un disparador que alguien tiene que vigilar; no tiene dueño escrito.
+      (5) LAS VISITAS DE 2026 NO SE MIGRAN a la rama nueva: quedan en soporte remoto. Evita una migración de datos en 2027.
+    registro: "docs/sdd/ENTRADA.md → E-038 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 43) · openspec/config.yaml → premisas_falsas_corregidas (PF-2)"
+    maestro_pasaje: "Anexo D nº 43"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-06 (campo) · rama en 2027 T2"
+
+  - clave: "decision/anexo-47-repuestos"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Qué repuestos se adelantan al diagnóstico y cuáles esperan a la orden de compra?
+    respuesta_textual: |
+      «Criterio en tres casos, que el sistema aplica solo cuando el técnico marca un repuesto en el diagnóstico:
+
+      Si el repuesto está en inventario, se reserva desde el diagnóstico, siempre; si el cliente rechaza, la reserva se libera.
+      Si no está en inventario pero es de rotación, se solicita a Compras desde el diagnóstico hasta un total de $3.000.000 COP por ticket (valor de compra, antes de IVA), sin esperar la orden del cliente; lo que exceda ese total espera a la orden. Si el cliente rechaza, la pieza entra a inventario y la consume el siguiente servicio.
+      Si es un repuesto específico o de baja rotación, o supera ese valor, espera a la orden del cliente.
+
+      La marca de rotación la pone Compras en cada artículo, con los consumos del Portal de Análisis de Inventario, y la revisa cada trimestre. El sistema no compra: genera la solicitud y Compras la ejecuta. Se mide cada mes el valor de los repuestos pedidos por adelantado que quedaron sin servicio; si crece, se ajustan el umbral o la lista. F1D-06 construye la mecánica con este criterio.»
+    consecuencias: |
+      (1) F1D-06 (S46) QUEDA EJECUTABLE: tenía la mecánica sin criterio, y el criterio es lo que faltaba.
+      (2) CAMPO NUEVO EN EL CATÁLOGO DE ARTÍCULOS: la «marca de rotación» no existe hoy. Medido el 2026-09-24: `grep -rniE "rotacion|rotation" packages/ apps/ --include=*.ts` = 0. Vive en `catalogo_articulos`, que es capacidad `catalogo-equipos` — DECLARADA Y SIN SPEC.
+      (3) EL UMBRAL ES UNA CIFRA DE NEGOCIO, no una constante de código: $3.000.000 COP por ticket, antes de IVA, revisable con la medición mensual. Se registra como dato configurable, no como literal.
+      (4) DEPENDE DE UN DATO QUE LA APLICACIÓN NO TIENE: «si el repuesto está en inventario» exige lectura de inventario. La capacidad `inventario-lectura` está DECLARADA Y SIN SPEC y sin tanda que la construya. Esto no lo resuelve la respuesta: es la dependencia que F1D-06 va a encontrar.
+      (5) EL SISTEMA NO COMPRA, GENERA LA SOLICITUD. Eso acota el alcance y evita una integración con Compras que nadie ha dimensionado.
+    registro: "docs/sdd/ENTRADA.md → E-039 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 47)"
+    maestro_pasaje: "Anexo D nº 47"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1D-06 · S46"
+
+  - clave: "decision/anexo-53-contratos"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Cómo identifica el sistema que un ticket pertenece a un contrato, cómo afecta eso a la prioridad, y cómo alimentan las subOV el informe trimestral?
+    respuesta_textual: |
+      «Se añade un registro de contrato en Desk, que complementa la convención de subOV (no la sustituye): Comercial lo crea al recibir la orden de compra, con cliente, lote (OV-AAAA-NNN), fecha de inicio y fecha de fin, ampliable dentro del mismo año según lo decidido sobre vigencia.
+
+      Identificación: un ticket es de contrato cuando tiene asociada una subOV de un lote registrado como contrato vigente. Nadie lo marca a mano.
+      Prioridad: se toma del cliente, no del ticket. Si el cliente tiene un contrato vigente, sus tickets nacen en prioridad Alta, también los correctivos cotizados aparte. Si el cliente es además Top 5, manda la prioridad más alta de las dos.
+      Informe trimestral: cada subOV del lote está libre (sin ticket), en curso (ticket abierto) o ejecutada (ticket finalizado). Por cada trimestre del contrato, contado desde su fecha de inicio, el sistema genera desde la ficha del contrato: % ejecutado (ejecutadas / creadas), lista de servicios del trimestre con equipo, serial, tipo de servicio, fecha e informe, subOV libres y días hasta el vencimiento. Si al ritmo actual no se van a consumir todas antes de la fecha de fin, avisa a Comercial para proponer la ampliación.
+
+      En Fase 1 entran el registro de contrato y la prioridad (junto con F1B-11), y el informe como tabla exportable. La versión con formato para enviar al cliente queda para el portal. Cierra el punto abierto nº 53.»
+    consecuencias: |
+      (1) ALCANCE AÑADIDO A F1B-11 (S41, talla L), que ya es la tanda más grande de la épica 1B: el registro de contrato es una entidad nueva con su ficha. NO se le inventa fila propia —la respuesta dice «junto con F1B-11»—, pero hay que anotar en su fila que crece, con fecha, no colado.
+      (2) UNE TRES DECISIONES QUE ESTABAN SUELTAS: `decision/subov-lote-convencion` (10/09, el lote `OV-AAAA-NNN`), `decision/vigencia-contrato` (17/09, la ampliación dentro del año) y `top5-manual` (23/09, la prioridad de los Top 5). La regla «manda la prioridad más alta de las dos» es la que resuelve el choque entre contrato y Top 5, que nadie había planteado.
+      (3) LA PRIORIDAD PASA A SER DEL CLIENTE, NO DEL TICKET, y eso CAMBIA F1B-07 (S43), que hoy promete «prioridad calculada desde la calificación del cliente y su contrato» en el ticket. Es coherente con `top5-manual`, que ya dijo «se pone sobre el cliente, no sobre cada ticket». Las dos respuestas empujan en la misma dirección: F1B-07 tiene que modelar la prioridad en el cliente.
+      (4) EL INFORME TRIMESTRAL ENTRA COMO TABLA EXPORTABLE, no como documento con formato: eso lo abarata y lo saca del módulo de informes (F1E).
+      (5) «Contado desde su fecha de inicio» — el trimestre es del contrato, no natural. Detalle pequeño y caro de descubrir tarde.
+    registro: "docs/sdd/ENTRADA.md → E-040 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 53)"
+    maestro_pasaje: "Anexo D nº 53"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-11 · S41"
+
+  - clave: "decision/anexo-56-taxonomia"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Cuál es la norma de taxonomía de fallas que se aplica?
+    respuesta_textual: |
+      «La norma es la ISO 14224 (edición 2016), sobre datos de fiabilidad y mantenimiento de equipos. Se adopta la ISO 14224 simplificada, como referencia y no para certificación: sus conceptos se corresponden con las cuatro columnas del maestro (objeto = pieza mantenible, síntoma = modo de falla, causa = causa de la falla, acción = actividad de mantenimiento) y las listas de valores se ajustan a los equipos Grimm, Horiba y Environics. Es la misma norma que M3.2 usa para la jerarquía de equipos. Corrección pendiente en el maestro: en la R08.2, el párrafo de M2.4 y el punto 56 del Anexo D quedaron con «14224» donde debía decir «14024» y ya no se entienden; hay que restaurar el texto de la R08.1. Con esto se cierra el punto abierto nº 56.»
+    consecuencias: |
+      (1) F1D-07 (S47) DEJA DE ESTAR BLOQUEADA: «sin taxonomía no hay formulario de falla nueva que alimente nada». Con la norma fijada, F1D-07 y `falla-nueva-bloqueante` (23/09) quedan las dos ejecutables.
+      (2) TRAE UNA CORRECCIÓN DEL MAESTRO QUE GERENCIA SEÑALA, y es material de clase C para la R08.x: en la R08.2 el párrafo de M2.4 y el punto 56 del Anexo D dicen «14224» donde debía decir «14024». ATENCIÓN AL SENTIDO, porque se lee al revés de lo intuitivo: la norma correcta ES la 14224, y lo que la R08.2 estropeó fue el texto de la R08.1 al sustituir una cadena por otra. Se restaura el texto de la R08.1. Esta supervisión NO toca el maestro: se anota para el expediente.
+      (3) «SIMPLIFICADA, COMO REFERENCIA Y NO PARA CERTIFICACIÓN» es la frase que evita una lectura cara: no hay auditoría ISO ni cumplimiento formal que sostener.
+      (4) LAS CUATRO COLUMNAS DEL MAESTRO QUEDAN MAPEADAS UNA A UNA a los conceptos de la norma. Eso es lo que hace la decisión construible en vez de declarativa.
+      (5) ENGANCHA CON M3.2 (jerarquía de equipos), que ya usaba la misma norma: deja de haber dos taxonomías posibles en el proyecto.
+    registro: "docs/sdd/ENTRADA.md → E-041 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 56, y clase C: errata 14224/14024 de la R08.2)"
+    maestro_pasaje: "Anexo D nº 56"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1D-07 · S47"
+
+  - clave: "decision/anexo-61-incorporacion"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿Con qué cadencia y contra qué fuente se comprueba que todo lo decidido ha entrado en el documento maestro?
+    respuesta_textual: |
+      «La fuente de lo decidido es openspec/config.yaml → decisiones_de_gerencia, donde aterrizan todas las respuestas del panel. Cada entrada lleva dos datos más: el pasaje del maestro que modifica (sección y nº del Anexo D) y la revisión del maestro en la que entró, o «pendiente». Lunes y jueves, npm run reconcile añade una comprobación que lista las decisiones pendientes de entrar al maestro con su antigüedad, y el parte la incluye. Cada dos semanas, o antes si hay 10 pendientes, la sesión de supervisión redacta una revisión R08.x que las incorpora y Gerencia la aprueba; al publicarla, cada decisión queda marcada con su revisión y su punto del Anexo D se tacha con fecha. Ninguna decisión puede llevar más de un mes pendiente: si ocurre, el parte lo señala como desvío. El panel muestra, junto a «En el plan», la marca «En el maestro R08.x». Con esto, ENTRADA.md recoge lo que entra y esta comprobación garantiza que llega al maestro. Cierra el punto abierto nº 61.»
+    consecuencias: |
+      (1) ES UNA DECISIÓN SOBRE EL PROPIO MECANISMO DE F0-05, y por eso su consecuencia es inmediata: obliga a DOS campos nuevos en cada entrada de `decisiones_de_gerencia` —`maestro_pasaje` y `maestro_revision`— y a una COMPROBACIÓN 7 nueva en `npm run reconcile`. Los campos los escribe esta supervisión desde este corte. La comprobación es código y NO TIENE FILA: F0-05 está archivada y cerrada (20/09). Devuelto como pregunta `barrido-comprobaciones-nuevas`, junto con la otra comprobación que Gerencia pidió el 23/09.
+      (2) EL UMBRAL DISPARA HOY MISMO: «cada dos semanas, o antes si hay 10 pendientes». Este corte deja 36 decisiones con `maestro_revision: pendiente`. La R08.3 hay que redactarla ya, y su expediente lleva abierto desde el 17/09.
+      (3) «NINGUNA DECISIÓN MÁS DE UN MES PENDIENTE» convierte una buena práctica en desvío medible. Las más antiguas son del 17/09: el reloj empieza ahí, y vencen el 17/10.
+      (4) EL PANEL ESTRENA UNA MARCA, «En el maestro R08.x», junto a «En el plan». Hoy la página sólo pinta la primera: es trabajo de página, no de repositorio.
+      (5) NO SUSTITUYE A `ENTRADA.md`: la respuesta lo dice expresamente —la bandeja recoge lo que entra, la comprobación garantiza que llega al maestro—. Son las dos mitades, y la que faltaba es ésta.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (campos maestro_pasaje y maestro_revision) · docs/sdd/ENTRADA.md → E-042 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 61)"
+    maestro_pasaje: "Anexo D nº 61"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "sin fila · devuelto como pregunta"
+
+  - clave: "decision/e001-por-entregar"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿`por-entregar-es-espera` cuenta como F1B-08 en parte, o como trabajo fuera del plan?
+    respuesta_textual: |
+      «Fuera del plan. Según el dictamen del 17/09, un cambio cuenta como una tanda cuando realiza el contenido de su fila, y la fila de F1B-08 es paridad de listado y ficha con Zoho Desk y política de escritura; clasificar Por Entregar como espera no es paridad con Zoho. Tampoco realiza F1C-06: la lista de estados que paran el reloj del SLA es propia y no se deriva de la del tablero (c7). Se registra con tanda: fuera-del-plan y motivo: «Por Entregar se muestra en el tablero como espera del cliente; coherente con la lista del reloj de c7, pero independiente de ella». No mueve cifras: F1B-08 sigue parcial. Regla general que queda escrita: no existe «cuenta en parte»; cada cambio lleva un único ID de tanda o fuera-del-plan con motivo.»
+    consecuencias: |
+      (1) LA REGLA GENERAL ES LO QUE MÁS PESA, más que el caso: «no existe cuenta en parte». Va a `CLAUDE.md` como regla R-4 del mecanismo de F0-05 y a `unidad_de_avance`. Cierra por escrito la ambigüedad que el campo `cierra:` dejaba abierta: `cierra:` dice si la fila termina, y ESTA regla dice que el `tanda:` es único y excluyente.
+      (2) EXIGE CAMBIAR UNA CABECERA YA ARCHIVADA, y eso no lo hace esta supervisión. Medido el 2026-09-24: `openspec/changes/archive/2026-09-12-por-entregar-es-espera/proposal.md:2` dice `tanda: F1B-08` con `motivo: ""`. Pasa a `tanda: fuera-del-plan` con el motivo textual de Gerencia. Es edición de un artefacto archivado: la hace una sesión de construcción, no el parte.
+      (3) EL NUMERADOR NO SE MUEVE hoy por esta respuesta —el cambio tenía `cierra: no`, así que nunca contó— pero la comprobación 3 del barrido pasará de 5 a 6 cambios fuera del plan cuando se aplique.
+      (4) F1B-08 SIGUE PARCIAL, con un solo parcial en vez de dos: le queda `vista-todos-y-estados-en-espera` (`tanda: F1B-08`, `cierra: no`).
+      (5) CONFIRMA `c7-reloj-sla` POR EL OTRO EXTREMO: la lista del reloj es propia y no se deriva de la del tablero. Las dos respuestas dicen lo mismo desde sitios distintos.
+    registro: "openspec/config.yaml → unidad_de_avance (regla e) · CLAUDE.md → R-4 · docs/sdd/ENTRADA.md → E-001 (cerrada) · docs/sdd/Parte_2026-09-24.md"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "fuera-del-plan"
+
+  - clave: "decision/e009-kpis"
+    fecha: "2026-09-24"
+    pregunta: |
+      ¿La capacidad `kpis` se queda entera en Fase 2, o adelanta algo a Fase 1?
+    respuesta_textual: |
+      «Adelanta una sola pieza a Fase 1: la continuidad de los indicadores que hoy calcula Zoho Desk. Antes del corte del 14/12, Desk 2.0 calcula sobre las marcas de tiempo de las transiciones (base ya hecha en F1A-04) los indicadores del Anexo G que hoy se usan: [cumplimiento del tiempo promesa, tiempo de servicio, tiempo de diagnóstico, satisfacción del cliente…]. Se entregan como tabla exportable, sin tablero, semáforos ni umbrales, y se calculan en paralelo con Zoho durante las semanas previas al corte para comprobar que coinciden. La encuesta de satisfacción que hoy envía Zoho al finalizar el ticket pasa a enviarla Desk 2.0 desde el corte, para que el reporte trimestral no se quede sin datos. Se crea una tanda nueva en la épica 1F (tamaño S–M, capacidad kpis). Todo lo demás de kpis —tablero Kanban, OTD y lead times con semáforo, dashboards por rol— se queda en Fase 2 como está planificado.»
+    consecuencias: |
+      (1) FILA NUEVA DECIDIDA EN LA ÉPICA 1F, talla S–M, capacidad `kpis`. Esta supervisión NO escribe en el §5: la fila la escribe quien fije el alcance. DENOMINADOR: 52 hoy; 53 el día que se escriba. `kpis` deja de ser una de las dos capacidades declaradas SIN NINGUNA TANDA.
+      (2) ATADA A LA FECHA DE CORTE, y por tanto a `fecha-corte` (misma respuesta del 24/09): «antes del corte del 14/12» y «en paralelo con Zoho durante las semanas previas». La 1F va de S50 a S53 y el corte es el lunes 14/12, que cae en S51: el cálculo en paralelo tiene que estar ANTES, no en su semana.
+      (3) LA ENCUESTA DE SATISFACCIÓN ES ALCANCE QUE LA PREGUNTA NO CONTENÍA: hoy la envía Zoho al finalizar el ticket. Pasarla a Desk 2.0 es envío de correo al cliente, que cruza con `docs/sdd/Decision_Correo_n8n_vs_GmailAPI.md`. No es un indicador: es un disparador de correo más.
+      (4) LA LISTA DE INDICADORES QUEDA ABIERTA: la respuesta la da entre corchetes y terminada en puntos suspensivos. Sin la lista cerrada no se puede dimensionar ni comprobar «que coinciden». Devuelto como pregunta `e009b-lista-indicadores`.
+      (5) SE APOYA EN F1A-04, CERRADA (commit `e8c5e90`): los tres bodegajes ya se calculan sobre `ticket_transitions` y no sobre la fecha de creación. Esa es la base que la respuesta da por hecha, y lo está.
+    registro: "openspec/config.yaml → capabilities (kpis) · docs/sdd/ENTRADA.md → E-009, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "fila nueva en 1F"
+
+  - clave: "decision/calendario-habil"
+    fecha: "2026-09-24"
+    pregunta: |
+      El aviso al cliente a los 4 días HÁBILES, y las otras tres alarmas contadas igual, exigen que el sistema sepa cuándo se trabaja y qué días son festivos en Colombia. Hoy no lo sabe y ninguna tanda lo construye. ¿De dónde sale ese calendario?
+    respuesta_textual: |
+      «Opción 2: el calendario laboral se construye ahora como pieza propia, antes de cualquier alarma, en una tanda nueva de tamaño S. Contenido: jornada de lunes a viernes de 8 a 17 h; tabla de días no laborables con los festivos de Colombia (generados por año según la ley de festivos, incluidos los que se trasladan a lunes y los que dependen de Semana Santa) más los cierres de la empresa que registre Gerencia; y una sola función compartida que calcula horas y días hábiles entre dos fechas. La usan las tres alarmas de SLA_HORAS_POR_ESTADO (Notificado 9 h, Remisión creada 27 h, Notificación cliente 36 h hábiles), el reloj del SLA (c7), el tiempo promesa, la fecha prevista de facturación (punto 33) y los indicadores que se midan en días hábiles. Ninguna otra tanda construye su propio cálculo de horas hábiles. La entrada actual 'Notificado': 24 horas de reloj pasa a 9 horas hábiles cuando la pieza exista. Se acepta que el avance baje una fila al crearla. Cierra la entrada E-061.»
+    consecuencias: |
+      (1) FILA NUEVA DECIDIDA, talla S, y esta supervisión NO escribe en el §5: la escribe quien fije el alcance. DENOMINADOR: 52 hoy; 53 cuando se escriba ésta, 54 con F0-06 (`barrido-comprobaciones-nuevas`, mismo corte). El porcentaje baja el día que se escriban, por alcance y no por trabajo.
+      (2) MEDIDO EL 2026-09-24 SOBRE `3f30710`: `grep -rniE "festivo|holiday" packages/ apps/ --include=*.ts` = **0 aciertos**. La pieza no existe en ninguna forma. ⚠️ El comando que el corte anterior citó para esto —`grep -rniE "festivo|habil|holiday"`— NO da 0 sino **126**, porque `habil` acierta dentro de `habilitar`/`habilitarServicio` (125 de los 126). La conclusión no cambia; la cita sí, y queda corregida aquí y en E-061.
+      (3) TOCA UN VALOR YA CONSTRUIDO, no sólo trabajo nuevo: `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35`) tiene hoy una sola entrada, `'Notificado': 24`, comentada como «Un día = 24 h» y en horas de reloj. La decisión la convierte en **9 horas hábiles**. F1A-02 está CERRADA: es reapertura de contenido de una tanda cerrada, y hay que decir en qué fila entra.
+      (4) ES UNA PRECEDENCIA, y ahí está el riesgo de calendario: «ninguna otra tanda construye su propio cálculo» pone por delante de F1B-08 (S44, alarma de 72 h), F1C-06 (S45, reloj del SLA), la fecha prevista de facturación del Anexo D nº 33 y los indicadores de `e009b-lista-indicadores` a una pieza **que hoy no tiene semana**. Si se escribe tarde, o bloquea a las cuatro o las cuatro la incumplen.
+      (5) CIERRA E-061, que nació como consecuencia no prevista de `decision/anexo-3-alerta` en este mismo día.
+    registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-063 y E-061 (cerrada) · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo D nº 3 (las tres alarmas, en días hábiles) — por dependencia"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "fila nueva, talla S · sin escribir en el §5"
+
+  - clave: "decision/barrido-comprobaciones-nuevas"
+    fecha: "2026-09-24"
+    pregunta: |
+      Las dos vigilancias nuevas del repaso automático —que liste el trabajo que entra sin ficha, y que liste las decisiones que todavía no han llegado al documento maestro— no tienen dónde ir: la tanda que construyó el repaso está terminada y cerrada. ¿De dónde sale ese trabajo?
+    respuesta_textual: |
+      «Opción 1: fila nueva F0-06, «Vigilancias del repaso automático», tamaño S, en la cola de inmediato. Es la continuación de F0-05 y se trata igual: tanda de método dentro de Fase 0, que cuenta en el total y en el avance. Contenido: dos comprobaciones nuevas en apps/desk/server/reconciliacion/cli.ts. (1) Commits de main sin ficha: lista cada commit del periodo que no pertenece a ningún cambio de openspec/changes ni está declarado fuera del plan con motivo. (2) Decisiones sin llegar al maestro: lista las entradas de decisiones_de_gerencia sin revisión del maestro asignada, con su antigüedad, y marca como desvío las que pasen de un mes. Se acepta que el total pase a 53 (54 con la tanda del calendario laboral) y que el porcentaje baje el día que se creen. Independientemente de la tanda, la primera revisión R08.x que incorpora las decisiones pendientes se publica antes del 17/10, para que el plazo de un mes se cumpla desde el principio.»
+    consecuencias: |
+      (1) FILA NUEVA **F0-06** DECIDIDA, talla S, Fase 0, y cuenta en el denominador. Esta supervisión no escribe en el §5. Gerencia fija ella misma las dos cifras: 53 con F0-06, 54 con la del calendario laboral.
+      (2) DA MECANISMO A UNA REGLA QUE HOY ESTÁ ESCRITA Y NO SE HACE CUMPLIR SOLA: R-5 de `CLAUDE.md` (`decision/trabajo-sin-ficha`, 23/09). Mientras F0-06 no exista, la ventana sigue abierta — y el 23/09 entraron por ella cinco commits de producto (`b7c1ba8`, `42172d7`, `244c237`, `3951ad0`, `3385281`), el segundo lote en tres días.
+      (3) EL PLAZO DEL 17/10 ES UN COMPROMISO CON FECHA Y NO DEPENDE DE LA TANDA: la primera R08.x se publica antes de esa fecha. Medido hoy: **52** entradas de `decisiones_de_gerencia` con `maestro_revision: pendiente`, y las 16 más antiguas son del 17/09, así que vencen el **17/10** — la misma fecha. No hay holgura entre las dos.
+      (4) LA COMPROBACIÓN 2 QUE PIDE ES LA QUE `anexo-61-incorporacion` DEJÓ SIN CONSTRUCTOR: las dos respuestas se cierran entre sí, y el bucle de F0-05 queda completo por primera vez.
+      (5) NO REABRE F0-05, archivada el 20/09: es fila nueva, no ampliación de una cerrada. Es la lectura contraria a la de `calendario-habil`, que sí toca contenido de una tanda cerrada (F1A-02), y conviene ver las dos juntas.
+    registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-064 y E-060 (cerrada) · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo D nº 61 (incorporación de lo decidido) — por dependencia"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F0-06 · fila nueva, talla S · sin escribir en el §5"
+
+  - clave: "decision/c10b-gerente-director"
+    fecha: "2026-09-24"
+    pregunta: |
+      Al repartir quién puede hacer qué se nombró el cargo de Director Comercial. El plan, para esa misma tanda, dice que liberar un ticket sin factura pasa a ser exclusivo del «gerente comercial». ¿Son la misma persona con dos nombres, o dos puestos distintos?
+    respuesta_textual: |
+      «Son el mismo cargo. «Gerente comercial» es el nombre informal que usaba la hoja de mapeo del 16/02; el cargo es Director Comercial. Se corrige la línea 162 del plan para que diga Director Comercial. Liberar un ticket sin factura y fijar la prioridad de los Top 5 son exclusivos del Director Comercial, como está en la decisión de permisos por cargo (c10). Los cargos son siete: Director Técnico, Coordinador Técnico, Técnico, Técnico de campo, Director Comercial, Coordinador Comercial y Asistente Comercial.»
+    consecuencias: |
+      (1) CIERRA EL ÚLTIMO FLECO DE `c10-permisos-cargo`: su fila de la §4.5 deja de estar «cerrada con un fleco». No queda ninguna respuesta parcial de esa rama.
+      (2) CORRECCIÓN DOCUMENTAL APLICADA EN ESTE CORTE. La línea es la **178**, no la 162 (el fichero creció desde la referencia que usó Gerencia): `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:178`, fila F1C-05, decía «`Liberación sin factura` exclusiva del gerente comercial». Corregida a **Director Comercial**, con nota de procedencia y sin borrar el texto superado.
+      (3) NO CIERRA EL HUECO DEL CÓDIGO, y esto no cambia con la respuesta: medido el 2026-09-24 sobre `3f30710`, `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` = **0 aciertos**. Los cargos declarados en el código siguen siendo dos (`packages/shared/src/transitions.ts:276-281`) frente a los siete que Gerencia enumera. Es contenido de F1C-05.
+      (4) DEJA UNA SOLA NOMENCLATURA para todo el proyecto, que es lo que valía la pregunta: siete cargos, con esos nombres exactos, y cualquier otro nombre es informal.
+    registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:178 y §4.5 (fila c10-permisos-cargo) · docs/sdd/ENTRADA.md → E-065 · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo D nº 39 (permisos por cargo)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-05 (ya abierta por c10-permisos-cargo)"
+
+  - clave: "decision/p14b-hoja-google"
+    fecha: "2026-09-24"
+    pregunta: |
+      Las remisiones antiguas salieron de una hoja de cálculo de Google volcada una sola vez en agosto, y desde entonces las remisiones se hacen en la aplicación. ¿Alguien sigue rellenando esa hoja?
+    respuesta_textual: |
+      «Se sigue usando y se cierra con la migración completa a Desk 2.0, el día del corte (14/12/2026). Mientras convivan, la aplicación es la que manda: cuando la hoja y la aplicación discrepen, vale lo registrado en la aplicación y la hoja se corrige. Antes del 31/10 se averigua quién la rellena y para qué: qué dato, formato o uso le da la hoja que la aplicación no le da. Lo que salga se construye en la aplicación antes del corte o se acepta perderlo, por escrito. El día del corte, las filas apuntadas en la hoja después del 24/07/2026 se comparan una a una contra las remisiones de la aplicación; las que falten se registran en la aplicación con una nota que indique que vienen de la hoja, sin hacer una segunda importación. Después, la hoja pasa a solo lectura con la primera fila «Cerrada el 14/12/2026 — las remisiones se registran en Desk 2.0».»
+    consecuencias: |
+      (1) MATIZA `p14-remisiones-entrada` SIN CONTRADECIRLA: «ningún proceso vuelve a leer la hoja» sigue siendo cierto para la máquina y falso para las personas. F1E-01 sigue sin dependencia externa de código, que era el riesgo que la pregunta perseguía.
+      (2) DOS COMPROMISOS CON FECHA Y SIN FILA. **Antes del 31/10**: averiguar quién rellena la hoja y qué le da que la aplicación no —es tarea de persona, no tanda, y lo que salga puede abrir alcance nuevo a seis semanas del corte—. **El 14/12**: cotejo una a una de las filas posteriores al **24/07/2026** contra las remisiones de la aplicación. Ese cotejo es trabajo de migración y hoy no está en el contenido de F1F-01, que habla de tickets abiertos, no de remisiones.
+      (3) FIJA UNA REGLA DE PRECEDENCIA REUTILIZABLE: mientras dos sistemas convivan, manda la aplicación y el otro se corrige. Es la misma doctrina que `c4-dos-ramas` («que no haya dos sitios que puedan decir cosas distintas»), ahora aplicada a la convivencia.
+      (4) ES LA SEGUNDA FUENTE VIVA FUERA DE ZOHO que aparece en dos días, tras la carpeta de Drive de `p55b-destino-copia`. La independencia comprometida es de Zoho Desk; las hojas y carpetas de Google son un frente aparte y hoy sin dueño escrito.
+    registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-066 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo D nº 14) · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo D nº 14 (remisiones_entrada)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1E-01 y F1F-01 (contenido nuevo, no escrito) · dos tareas de persona con fecha"
+
+  - clave: "decision/p55b-destino-copia"
+    fecha: "2026-09-24"
+    pregunta: |
+      El respaldo se decidió «fuera del servidor», pero el destino quedó entre corchetes; y los documentos que hoy viven en Drive no están en el servidor, así que copiar «la base y todos los archivos» no los alcanza.
+    respuesta_textual: |
+      «Destino: un almacenamiento de objetos de un proveedor distinto de Google y de Hostinger ([Backblaze B2 / Cloudflare R2 / Amazon S3]), con credenciales propias que no se usan para trabajar y con bloqueo de borrado durante el periodo de retención, de modo que ni una cuenta de Google comprometida ni un servidor comprometido puedan destruir las copias. La base de datos y los archivos del servidor se copian ahí cada noche, como ya está decidido. Drive: el respaldo alcanza a la carpeta de documentación de servicio de Google Drive a la que enlaza Desk 2.0, no al resto del Drive de la empresa. Se copia al mismo destino una vez por semana, con copia incremental y retención de 12 meses, de Drive al almacenamiento directamente sin pasar por el disco del servidor. La prueba mensual de restauración incluye recuperar un documento de esa carpeta.»
+    consecuencias: |
+      (1) CIERRA LA ADVERTENCIA QUE `p8-p54-drive` DEJÓ ESCRITA EL 21/09: el respaldo sí alcanza a Drive, acotado a la carpeta de documentación de servicio a la que enlaza la aplicación, semanal, incremental y con 12 meses de retención.
+      (2) FIJA DOS PROPIEDADES DE SEGURIDAD QUE NO ESTABAN EN LA PREGUNTA: credenciales propias que no se usan para trabajar, y **bloqueo de borrado durante la retención**. Eso descarta implementarlo con una cuenta de servicio cualquiera y es contenido de F1F-02, que crece.
+      (3) EL PROVEEDOR SIGUE ENTRE CORCHETES —[Backblaze B2 / Cloudflare R2 / Amazon S3]—, y no es un detalle aplazable: `p55-backup` ordenó poner en marcha **ya** la copia nocturna y la previa a cada cambio, sin esperar a diciembre, y no se puede arrancar sin destino. Devuelto como `p55c-proveedor-copia`.
+      (4) EL ADELANTO INMEDIATO SIGUE SIN FILA, igual que el 24/09 por la mañana: F1F-02 está en S51, que es la semana del corte. Lo que hay que poner en marcha ya no es la tanda.
+      (5) CONFIRMA QUE LA COPIA DE DRIVE NO PASA POR EL SERVIDOR: es una transferencia directa entre dos servicios, y por tanto no consume el disco de Hostinger cuya capacidad motivó `p8-p54-drive`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5 (fila p55-backup) · docs/sdd/ENTRADA.md → E-067 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo D nº 55) · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo D nº 55 (respaldo)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1F-02 (crece) · adelanto inmediato sin fila"
+
+  - clave: "decision/p64b-quien-ejecuta"
+    fecha: "2026-09-24"
+    pregunta: |
+      Hay tres recuentos pendientes contra la base de datos real, y ninguno es trabajo de programación: son consultas de sólo lectura. Llevan entre uno y siete días esperando. ¿Quién los hace, y para cuándo?
+    respuesta_textual: |
+      «Los hace Alfonso, los tres juntos, el viernes 25/09. Claude Code prepara antes un único fichero con las tres consultas de solo lectura, cada una con su explicación en una línea y el formato de salida esperado. Alfonso las ejecuta en la consola de la base de datos de producción y pega las tres cifras en el panel. Plazos límite si algo se retrasa: el recuento de tickets Rechazo → Finalizado, el viernes 25/09, porque la tanda del estado Anulado empieza el 28/09; el del catálogo de modelos, el 09/10, antes de la épica del diagnóstico; el de liberaciones sin factura anteriores al arreglo, el 02/10. Con esto se rellena también el nombre pendiente del punto 64: lo ejecuta Alfonso.»
+    consecuencias: |
+      (1) DESATASCA EL CUELLO DE BOTELLA QUE LOS TRES ÚLTIMOS PARTES VENÍAN NOMBRANDO SIN DUEÑO: las tres mediciones contra producción tienen ahora persona y fecha. Ninguna es trabajo de código, y por eso ninguna se movía.
+      (2) HAY UNA TAREA DE CONSTRUCCIÓN CON VENCIMIENTO **HOY**, y es la parte frágil: el fichero con las tres consultas de sólo lectura lo prepara Claude Code **antes** del viernes 25/09. Hoy es jueves 24/09 y ese fichero no existe — medido: no hay ningún fichero de consultas en `docs/sdd` ni en `scripts/` que las contenga. Sin él, la fecha de mañana no se cumple y la cadena vuelve a pararse.
+      (3) LOS TRES PLAZOS ESTÁN ATADOS A TANDAS, no son deseos: 25/09 el recuento Rechazo → Finalizado porque F1C-01 (Anulado) empieza el **28/09**; 02/10 las liberaciones sin factura anteriores al arreglo de C1; 09/10 el catálogo de modelos, antes de la épica del diagnóstico (F1D).
+      (4) CIERRA EL NOMBRE QUE FALTABA EN `p64-historico-c1`: quién ejecuta la consulta contra producción es Alfonso. El punto 64 del Anexo D queda resuelto entero.
+      (5) LAS CIFRAS SE PEGAN EN EL PANEL, no en un correo: el panel pasa a ser también entrada de datos medidos, y no sólo de decisiones. El corte siguiente las recoge por la misma vía que las respuestas.
+    registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5 (fila p64-historico-c1) · docs/sdd/ENTRADA.md → E-068 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo D nº 64) · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo D nº 64 (histórico de C1)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "— (tarea de persona, con fecha) · prepara consultas: sin fila, vence hoy"
+
+  - clave: "decision/e009b-lista-indicadores"
+    fecha: "2026-09-24"
+    pregunta: |
+      Se decidió que la aplicación calcule, antes del corte de diciembre, los indicadores que hoy da Zoho, y se nombraron seguidos de puntos suspensivos. Para comprobar que salen iguales hace falta la lista cerrada: ¿cuáles son exactamente?
+    respuesta_textual: |
+      «La lista cerrada son nueve indicadores del Anexo G: tiempo de permanencia (47), tiempo de diagnóstico (49), tiempo de servicio en días hábiles (50·53), tiempo de recogida del equipo (51), cumplimiento del tiempo promesa (54, contra el tiempo promesa del 52), satisfacción del cliente (55), tiempo de cotización (57), tiempo de orden de compra (58) y tiempo de orden de venta (59). Quedan fuera las columnas 48 y 56, inválidas desde 2026 y sustituidas por los tres bodegajes de F1A-04, y la 16, que no se usa. Comprobación: durante las cuatro semanas previas al corte, se calculan los nueve en la aplicación sobre los mismos tickets que tiene Zoho; se dan por buenos si coinciden en al menos el 95 % de los tickets, con diferencia máxima de un día en los tiempos, y cada diferencia mayor se explica por escrito. Si a la aplicación le falta algún hito para calcular uno de ellos, se dice antes de construir y se decide aparte. Dependencias: el tiempo de servicio necesita el calendario laboral, y la satisfacción necesita que la aplicación envíe la encuesta por la salida de correo propia antes del 14/12.»
+    consecuencias: |
+      (1) LISTA CERRADA DE NUEVE, con sus columnas del Anexo G: 47, 49, 50·53, 51, 54 (contra el tiempo promesa del 52), 55, 57, 58 y 59. Fuera quedan la 48 y la 56 —inválidas desde 2026 y sustituidas por los tres bodegajes de **F1A-04**, que está cerrada— y la 16. Con esto la fila nueva de la épica 1F se puede dimensionar.
+      (2) ES EL PRIMER CRITERIO DE ACEPTACIÓN NUMÉRICO QUE GERENCIA FIJA PARA UNA TANDA: ≥ 95 % de los tickets coincidentes, diferencia máxima de un día, y cada diferencia mayor explicada por escrito. Deja de ser «que coincidan».
+      (3) ⚠️ EL CALENDARIO NO CUADRA, Y ES LO QUE HAY QUE MIRAR. La comprobación dura **las cuatro semanas previas al corte**: del 16/11 (S47) al 14/12. El §5 sitúa la épica 1F en **S50–S52** (`:259-261`), y la fila nueva de `kpis` aún no está escrita. Para comparar cuatro semanas contra Zoho, lo calculado tiene que estar funcionando en S47, tres semanas antes de donde el plan pone la épica.
+      (4) DOS DEPENDENCIAS DECLARADAS POR LA PROPIA RESPUESTA, y las dos son piezas sin fila hoy: el **calendario laboral** (`calendario-habil`, decidido este mismo corte, talla S, sin semana) para el tiempo de servicio, y la **salida de correo propia** antes del 14/12 para la encuesta de satisfacción, que cruza `docs/sdd/Decision_Correo_n8n_vs_GmailAPI.md`.
+      (5) CLÁUSULA DE ESCAPE ESCRITA: si a la aplicación le falta un hito para calcular alguno, se dice **antes** de construir y se decide aparte. Es la primera vez que una respuesta prevé su propio descubrimiento y fija qué hacer con él.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (junto a e009-kpis) · docs/sdd/ENTRADA.md → E-069 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo G) · docs/sdd/Parte_2026-09-24.md §9"
+    maestro_pasaje: "Anexo G (indicadores) · capacidad kpis"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "fila nueva en 1F (ya decidida por e009-kpis) · ahora dimensionable"
 
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
@@ -1721,6 +2602,17 @@ unidad_de_avance:
         código: lo movió un dictamen. Es correcto, pero quien vea la serie sin
         más creerá que fue un día productivo. El denominador ya va fechado por
         la regla (a); el numerador necesita lo simétrico.
+    - id: e
+      regla: "Un cambio lleva UN SOLO `tanda:`. No existe «cuenta en parte»."
+      detalle: >
+        GERENCIA, 2026-09-24, panel (`decision/e001-por-entregar`), textual: «no existe
+        "cuenta en parte"; cada cambio lleva un único ID de tanda o fuera-del-plan con
+        motivo». Cierra la ambigüedad que el campo `cierra:` dejaba abierta: `cierra:`
+        dice si la fila TERMINA; esta regla dice que el `tanda:` es ÚNICO y excluyente.
+        Un `cierra: no` no es contar en parte — es llevar el ID sin cerrar la fila, que
+        es lo que Gerencia eligió para el parche de F1B-11 el 23/09 (`decision/e005b-parche-vehiculo`).
+        Primer caso al que se aplica: `por-entregar-es-espera` pasa de `tanda: F1B-08` a
+        `tanda: fuera-del-plan` con motivo escrito. Lo aplica una sesión de construcción.
   trazabilidad: >
     Cada spec as-built lleva ESCRITOS los IDs de tanda que la tocan, para que el
     avance se derive del repositorio y no de la memoria. Es la regla del propio

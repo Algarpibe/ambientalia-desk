@@ -475,6 +475,25 @@ ninguno, hay una decisión de alcance pendiente y se queda como punto abierto CO
 aire. No se inventa destino: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al
 cerrar F1A.
 
+**R-4 · Un cambio lleva UN SOLO `tanda:`. No existe «cuenta en parte».** Gerencia, 2026-09-24, panel
+(`decision/e001-por-entregar`): «no existe "cuenta en parte"; cada cambio lleva un único ID de tanda o
+`fuera-del-plan` con motivo». `cierra:` dice si la fila TERMINA; R-4 dice que el `tanda:` es ÚNICO y
+excluyente. Llevar `tanda: X` con `cierra: no` NO es contar en parte: es trabajo de esa fila que no la
+cierra, y es lo que Gerencia eligió el 23/09 para el parche de F1B-11. Lo que no vale es repartir un
+cambio entre dos filas.
+
+**R-5 · Si un cambio toca `openspec/specs/`, lleva ficha. Si no, puede ir directo y el barrido lo lista.**
+Gerencia, 2026-09-23, panel (`decision/trabajo-sin-ficha`). La regla se apoya en una comprobación, no en
+la disciplina: `npm run reconcile` lista los commits de `main` que tocan `apps/` o `packages/` y que
+ninguna ficha reclama, y el parte de cada corte los enseña. **Esa comprobación todavía no existe**
+(E-060), así que hasta que se construya la regla está escrita y no se hace cumplir sola.
+
+**R-6 · Una ficha del panel que describe lo que se verá lleva la marca «Aún no construido» mientras la tanda
+no esté terminada.** Gerencia, 2026-09-24, panel (dentro de la idea `25i881jbkytb1kqj0wqb`): las fichas del apartado 02
+describen lo que se podrá ver **cuando la tanda esté construida**, y sin la marca se leen como si ya estuviera en la
+aplicación. La marca va junto a «Qué se podrá ver», visible, en toda ficha cuyo estado no sea cerrado. Es regla de
+redacción del panel, y la aplica la sesión de supervisión en cada corte.
+
 **Y la bandeja NO ES FUENTE.** `ENTRADA.md` guarda la traza de por dónde entró cada cosa; nadie la
 carga al arrancar, y mencionarla aquí no la carga. La DECISIÓN vive en `openspec/config.yaml` →
 `decisiones_de_gerencia`, con su respuesta textual, y si es un gate además en su fila de la tabla
