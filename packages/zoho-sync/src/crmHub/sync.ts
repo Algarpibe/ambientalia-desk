@@ -128,26 +128,33 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
   }
   /**
    * Trae la hora de entrada en la fase de los tratos ganados cuya copia puede estar desfasada: los que
-   * nunca se han leído (`stage_detail_synced_at` nulo) y los que Zoho ha modificado después de la última
-   * vez (`stage_detail_synced_at` anterior a `modified_time`). Lo corre el worker en cada ciclo de CRM.
+   * nunca se han leído (`stage_history_synced_at` nulo) y los que Zoho ha modificado después de la última
+   * vez (`stage_history_synced_at` anterior a `modified_time`). Lo corre el worker en cada ciclo de CRM.
    *
-   * Hace falta la ficha porque el listado de Zoho da `Stage_Modified_Time` siempre nulo y COQL rechaza
-   * la columna. Solo se piden los ganados, por economía de llamadas: el KPI no necesita las demás fases.
+   * La hora sale del historial de fases del trato, no de `Stage_Modified_Time` de la ficha: una
+   * operación masiva en Zoho del 2026-03-06 reescribió ese campo en cientos de tratos ganados, de cierres
+   * de 2020 a 2026, con la fecha de ese día y sin añadir nada a su historial. El historial conserva la
+   * hora real. El listado de Zoho, además, da `Stage_Modified_Time` siempre nulo y COQL rechaza la columna.
+   * Solo se piden los ganados, por economía de llamadas: el KPI no necesita las demás fases.
    *
-   * - La hora se guarda como la da la ficha, igual que `ts()` en los módulos: PostgreSQL convierte el
+   * - De las entradas del historial en una fase ganada cuenta la MÁS RECIENTE por instante, sin fiarse
+   *   del orden de la respuesta: un trato ganado, reabierto y ganado otra vez se cuenta por la última.
+   * - La hora se guarda como la da el historial, igual que `ts()` en los módulos: PostgreSQL convierte el
    *   texto con su desfase en el instante.
    * - La marca es el `modified_time` LEÍDO al elegir el trato, no `now()`: si Zoho lo cambia mientras se
-   *   lee su ficha, su `modified_time` avanza y la pasada siguiente lo vuelve a elegir.
+   *   lee su historial, su `modified_time` avanza y la pasada siguiente lo vuelve a elegir.
+   * - La marca es `stage_history_synced_at` y no la de la ficha (`stage_detail_synced_at`, que ya no se
+   *   usa): así todos los tratos que se rellenaron desde la ficha nacen sin marca y se recalculan solos.
    * - Un trato sin `modified_time` se marca con el epoch: se lee una vez y no vuelve a salir hasta que
    *   Zoho le ponga fecha. Marcarlo con nulo lo haría salir en todas las pasadas.
-   * - Tolerante: un fallo (HTTP, ficha vacía o sin hora, texto que no es fecha) se cuenta, se guarda el
+   * - Tolerante: un fallo (HTTP, historial vacío o sin entrada en una fase ganada) se cuenta, se guarda el
    *   motivo del primero y se sigue. El trato fallido no se marca y vuelve a salir en la pasada siguiente.
    * - Una sola consulta simple: pg-mem, el motor de los tests, no resuelve subconsultas correlacionadas.
    */
   async function syncPendingWonStages({ limite, pausaMs = 500 }: FasesGanadasOpts): Promise<ResultadoFasesGanadas> {
     const r = await db.query(
       `SELECT id, modified_time FROM crm.deals
-       WHERE stage = ANY($1) AND (stage_detail_synced_at IS NULL OR stage_detail_synced_at < modified_time)
+       WHERE stage = ANY($1) AND (stage_history_synced_at IS NULL OR stage_history_synced_at < modified_time)
        ORDER BY modified_time DESC NULLS LAST LIMIT $2`,
       [FASES_GANADAS, limite],
     )
@@ -157,13 +164,15 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     for (const [i, t] of tanda.entries()) {
       if (i > 0 && pausaMs > 0) await new Promise((res) => setTimeout(res, pausaMs))
       try {
-        const res = await crmFetch(`/Deals/${t.id}`)
-        if (!res.ok) throw new Error(`CRM /Deals/${t.id} ${res.status}`)
-        const ficha = (await readData(res)).data?.[0]
-        if (!ficha?.Stage_Modified_Time) throw new Error(`CRM /Deals/${t.id} sin Stage_Modified_Time`)
+        // Una sola página de 200 basta: el historial tiene una entrada por cambio de fase de ESE trato, y
+        // un trato con más de 200 cambios de fase no es realista. Por eso `info.more_records` no se sigue.
+        const res = await crmFetch(`/Deals/${t.id}/Stage_History?fields=Stage,Modified_Time&per_page=200`)
+        if (!res.ok) throw new Error(`CRM /Deals/${t.id}/Stage_History ${res.status}`)
+        const hora = ultimaEntradaGanada((await readData(res)).data)
+        if (!hora) throw new Error(`CRM /Deals/${t.id}/Stage_History sin entrada en ${FASES_GANADAS.join(' o ')}`)
         await db.query(
-          'UPDATE crm.deals SET stage_modified_time = $1, stage_detail_synced_at = $2 WHERE id = $3',
-          [String(ficha.Stage_Modified_Time), t.modified_time ?? new Date(0), t.id],
+          'UPDATE crm.deals SET stage_modified_time = $1, stage_history_synced_at = $2 WHERE id = $3',
+          [hora, t.modified_time ?? new Date(0), t.id],
         )
         poblados++
       } catch (e) {
@@ -182,6 +191,23 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
  * contaría tratos cuya hora este worker nunca rellena.
  */
 export const FASES_GANADAS: readonly string[] = ['Cerrado ganado']
+
+/**
+ * El `Modified_Time` de la entrada más reciente del historial de fases en una fase ganada, tal como lo
+ * da Zoho, o `undefined` si no hay ninguna. Compara por instante porque Zoho no garantiza el orden y las
+ * horas llevan desfase. Una hora que no es fecha no cuenta.
+ */
+function ultimaEntradaGanada(entradas: unknown): string | undefined {
+  if (!Array.isArray(entradas)) return undefined
+  let mejor: { texto: string; ms: number } | undefined
+  for (const e of entradas as { Stage?: unknown; Modified_Time?: unknown }[]) {
+    if (typeof e?.Stage !== 'string' || !FASES_GANADAS.includes(e.Stage) || typeof e.Modified_Time !== 'string') continue
+    const ms = Date.parse(e.Modified_Time)
+    if (Number.isNaN(ms)) continue
+    if (!mejor || ms > mejor.ms) mejor = { texto: e.Modified_Time, ms }
+  }
+  return mejor?.texto
+}
 
 /**
  * La hora de entrada en la fase ganada que corre el worker `hub-sync`. Va en una interfaz aparte y al
