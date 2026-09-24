@@ -6,7 +6,7 @@
 | Estado | **nueva** (`status_at_start: "nuevo"`, `config.yaml:151`) — sin código construido a la fecha de esta spec |
 | Tanda que la escribe | F1B-02 |
 | Procedencia | ítem 9 del §3.2 del maestro (`R08.2.md:3012-3013`), apartado `[EN REVISIÓN — R08]`: vale como procedencia, no como alcance acordado. Justificación operativa: `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:157` |
-| Decisiones de Gerencia | `decision/p8-p54-drive` (`openspec/config.yaml:1607-1626`) — el enlace a Drive es la solución definitiva, no fase 0 de una migración · `decision/titularidad-mantenedor` (`:1667-1689`) — el mantenedor se apunta en la hoja de vida |
+| Decisiones de Gerencia | `decision/p8-p54-drive` (`openspec/config.yaml:1702-1723`) — el enlace a Drive es la solución definitiva, no fase 0 de una migración · `decision/titularidad-mantenedor` (`:1667-1689`) — el mantenedor se apunta en la hoja de vida |
 | Depende de | `catalogo-equipos` (marca/modelo/tipo del equipo) · el propio `equipo` como entidad (`apps/desk/server/db/equipos.ts`) y el cliente de Books (`getClient`, `packages/zoho-sync/src/books/repo.ts:129-132`) |
 | La usa | **F1B-11**, que depende de esta tanda: construye la guarda que compara el cliente de la orden de venta contra el mantenedor. **IV-8 no se cierra aquí** (`openspec/config.yaml:1677-1679`) |
 
@@ -120,7 +120,7 @@ con el mismo patrón `422` que ya usa `clientId` en el alta y el `PATCH`
 
 **Fuera de esta spec:** la guarda que compara el mantenedor con el cliente de la orden de venta pertenece
 a **F1B-11**; aquí sólo se guarda y valida el dato (`decision/titularidad-mantenedor`,
-`openspec/config.yaml:1677-1679`).
+`openspec/config.yaml:1778-1780`).
 
 ### Requirement: RQ-HV-06 · El código interno es identificador secundario de búsqueda
 
@@ -174,9 +174,9 @@ seis campos, en alta y en edición, y enviarlos en el mismo payload que ya manda
 - **Carga retroactiva del parque ya sembrado** — comprobación de persona, no tarea de esta tanda
   (`openspec/changes/hojas-vida/proposal.md`, sección «Comprobaciones de persona»).
 - **La guarda del mantenedor sobre la orden de venta** → F1B-11. **IV-8 no se cierra aquí**
-  (`openspec/config.yaml:1677-1679`).
+  (`openspec/config.yaml:1778-1780`).
 - **Cálculo automático de garantía y alertas**, **marca de visibilidad por campo** para el portal, y
-  **almacenamiento propio de documentos** — gate cerrado a favor del enlace (`config.yaml:1616-1617`).
+  **almacenamiento propio de documentos** — gate cerrado a favor del enlace (`config.yaml:1711-1712`).
 - **Permisos por área** para escribir equipos: hoy basta `requireAuth`
   (`routes/equipos.ts:48`, `:73`); esta spec no lo cambia.
 - **`tickets.codigo_interno`, `tickets.fecha_factura`, `tickets.doc_almacenada_drive`** — nociones
