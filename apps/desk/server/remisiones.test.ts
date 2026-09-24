@@ -870,7 +870,7 @@ describe('Estados tempranos: Ticket creado → Remisión creada', () => {
  *
  * ⚠️ EL CASO NO ES TEÓRICO, Y ESE ES EL PUNTO. El serial se DERIVA —del equipo si el ticket lo tiene,
  * y si no de la copia propia del ticket—, así que un ticket del alta de la app siempre lo trae: el
- * alta exige `equipoId` del catálogo (`ticketService.ts:22-25`) y el equipo trae serial. Lo que
+ * alta exige `equipoId` del catálogo (`ticketService.ts:23-27`) y el equipo trae serial. Lo que
  * queda descubierto es la otra entrada, la que M1.3.2 llama la que «nunca se cruza» con aquélla:
  * **un ticket sincronizado desde Zoho llega SIN serial** —por eso `habilitar_servicio` lo exige
  * (`transitions.ts:189`, `R08.1.md:1046`)— y nada impide remisionarlo antes de pasar por ahí.

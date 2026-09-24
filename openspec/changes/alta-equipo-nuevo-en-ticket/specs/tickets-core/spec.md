@@ -53,14 +53,15 @@ equipo antes de la última guarda del alta debe poner la suite en rojo (regla de
 ### Requirement: RQ-TC-04 · El serial es la llave, y viene del catálogo
 
 El alta **SHALL** exigir un `equipoId` del catálogo, y **MUST NOT** aceptar el equipo como texto
-libre (`ticketService.ts:22-25`: `422 'Falta el equipo'` y `422 'Equipo no registrado'`). **Excepción:**
+libre (`ticketService.ts:23-27`: `422 'Falta el equipo'` en `:24` y `422 'Equipo no registrado'` en
+`:27`). **Excepción:**
 con `clasificaciones = 'Equipo nuevo'`, el alta **SHALL** admitir en su lugar los datos del equipo y
 registrarlo o reutilizarlo en el mismo paso, según `RQ-TC-15` y `RQ-TC-16`
 (`decision/equipo-nuevo-alta-en-ticket`). Tampoco en esa rama se acepta el equipo como texto libre: el
 modelo **SHALL** venir del catálogo.
 
 - La marca, el modelo, el tipo y el serial **SHALL** salir del equipo, no del formulario
-  (`ticketService.ts:102-103`, leyendo `getEquipo` de `apps/desk/server/db/equipos.ts:77-80`).
+  (`ticketService.ts:104-105`, leyendo `getEquipo` de `apps/desk/server/db/equipos.ts:77-80`).
 - El catálogo **SHALL** poder buscarse por serial, y también por nombre de cliente
   (`equipos.ts:59-71`), y sólo devuelve los activos (`:67`).
 - El serial **SHALL** exigirse además en `habilitar_servicio`, porque los tickets sincronizados desde
@@ -80,18 +81,18 @@ código.)
 ### Requirement: RQ-TC-05 · Orden de las guardas del alta, y qué contesta cada una
 
 `POST /api/tickets` (`routes/tickets.ts:124-126`) **SHALL** exigir sesión (`:35`) y **SHALL** aplicar
-las guardas de `createManagedTicket` (`ticketService.ts:20-109`) **en este orden**, el que exige el
+las guardas de `createManagedTicket` (`ticketService.ts:21-111`) **en este orden**, el que exige el
 orden total de precedencia (`transitions-st` §3.8):
 
 | Orden | Guarda | Escalón | Respuesta | Evidencia |
 |---|---|---|---|---|
-| 1 | Falta el equipo (salvo rama «Equipo nuevo», RQ-TC-15) | A | `422 'Falta el equipo'` | `ticketService.ts:22-23` |
-| 2 | El equipo no está en el catálogo | A | `422 'Equipo no registrado'` | `:24-25` |
-| 3 | La orden de venta no existe en Books | A | `422 'Orden de venta no encontrada'` | `:35-37` |
-| 4 | Discrepancia equipo↔cliente | C | `422`, nombrando al cliente del equipo | `:59-77` |
-| 5 | Faltan obligatorios (cliente, tipo de servicio, clasificaciones, prefijo) | C | `422`, con **todos** en una lista | `:81-86` |
-| 6 | El cliente no existe en Books | C | `422 'Cliente no encontrado'` | `:87-88` |
-| 7 | La orden de venta ya está asociada a otro ticket | D | `409` | `:94-98` |
+| 1 | Falta el equipo (salvo rama «Equipo nuevo», RQ-TC-15) | A | `422 'Falta el equipo'` | `ticketService.ts:23-24` |
+| 2 | El equipo no está en el catálogo | A | `422 'Equipo no registrado'` | `:26-27` |
+| 3 | La orden de venta no existe en Books | A | `422 'Orden de venta no encontrada'` | `:37-39` |
+| 4 | Discrepancia equipo↔cliente | C | `422`, nombrando al cliente del equipo | `:61-79` |
+| 5 | Faltan obligatorios (cliente, tipo de servicio, clasificaciones, prefijo) | C | `422`, con **todos** en una lista | `:83-88` |
+| 6 | El cliente no existe en Books | C | `422 'Cliente no encontrado'` | `:89-90` |
+| 7 | La orden de venta ya está asociada a otro ticket | D | `409` | `:96-100` |
 
 **Rama «Equipo nuevo» — dos guardas nuevas, mismo escalón.** Cuando la guarda 1 no aplica por
 `clasificaciones === 'Equipo nuevo'` (RQ-TC-15), el alta exige en su lugar:
@@ -107,11 +108,12 @@ el resto de la tabla.
 
 - El `422` de obligatorios **SHALL** listar **todos** los que faltan y no de uno en uno (probado en
   `services/ticketService.test.ts:273` en `ad65161`).
-- El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:85`).
-- El `409` de unicidad de la OV **SHALL** ser la **última** guarda antes de la primera escritura
-  (`createTicket`, `:101`): cumple el orden total A/B/C/D de `transitions-st` §3.8.
+- El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:87`).
+- El `409` de unicidad de la OV **SHALL** ser la **última** guarda antes de la primera escritura, sea
+  el equipo o el ticket (`crearTicketConEquipo`, `:103`): cumple el orden total A/B/C/D de
+  `transitions-st` §3.8.
 - La guarda equipo↔cliente **SHALL** ejecutarse inmediatamente después de la existencia de la orden de
-  venta en Books (`:37`) —que puede completar `clientId` cuando el cuerpo no lo trae (`:39`)— y antes
+  venta en Books (`:39`) —que puede completar `clientId` cuando el cuerpo no lo trae (`:41`)— y antes
   de los obligatorios, del cliente y del `409` de unicidad.
 
 (Previously: dos correcciones de citas por el desplazamiento de `9ed5635`, y las filas 4/5 —OV ya

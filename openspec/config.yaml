@@ -471,7 +471,7 @@ incumplimientos_vivos:
     cerrado_verificado_en: >
       2026-09-21, worktree f1a-07-r1. El servidor impone las tres fechas derivadas en
       `packages/shared/src/fechasDerivadas.ts` y `apps/desk/server/services/valoresDeTransicion.ts`
-      (`valoresConFechasDerivadas`), consumidos por `ticketService.ts:130`/`:132`; los criterios
+      (`valoresConFechasDerivadas`), consumidos por `ticketService.ts:132`/`:134`; los criterios
       1-5, P-a y P-b, y las mutaciones de A.5 en verde (`apply-progress.md` de la unidad A). El
       cliente (`valoresTransicion.ts`) pasa a comodidad probada (regla invariable 13, punto 3):
       consume la MISMA fórmula compartida en vez de reimplementarla.
@@ -831,7 +831,7 @@ incumplimientos_vivos:
 
   - id: IV-8
     regla: "—"
-    ubicacion: "apps/desk/server/services/ticketService.ts:39"
+    ubicacion: "apps/desk/server/services/ticketService.ts:41"
     verificado: true
     estado: VIVO
     encontrado_en: >
@@ -844,7 +844,7 @@ incumplimientos_vivos:
       `clientId`, el de la OV nunca se mira ni se contrasta: un ticket puede
       quedar con cliente y equipo de un lado y la orden de venta de otro, sin
       ningún aviso. La guarda equipo↔cliente que la misma tanda añadió (P1,
-      `ticketService.ts:59-71`) compara el `clientId` YA RESUELTO contra
+      `ticketService.ts:61-73`) compara el `clientId` YA RESUELTO contra
       `equipo.clientId`, no contra `ov.clientId`: esta pareja queda fuera de su
       alcance a propósito (proposal.md §3, "Qué NO hace").
     relacion_con_iv4: >
@@ -859,7 +859,7 @@ incumplimientos_vivos:
       titularidad— sigue SIN DECIDIR y SIN CLAVE en la tabla de decisiones del
       plan, y es donde vive IV-8.
       NO usar nº 52 para justificar tocar la guarda equipo↔cliente
-      (`ticketService.ts:59-77`).
+      (`ticketService.ts:61-79`).
     destino: "F1B-11 — escrito el 2026-09-22 por `decision/titularidad-mantenedor`. Antes, y hasta esa respuesta: PUNTO ABIERTO, sin destino, a propósito (criterio nº 8)"
     por_que_sin_destino: >
       ACTUALIZADO EL 2026-09-10. Decía: «cerrarlo exige antes decidir la
@@ -1126,10 +1126,10 @@ incumplimientos_vivos:
       `salesorder_id` se queda con el valor viejo.
     afecta_tambien_a_la_puerta_2: >
       NO ES SÓLO UN PROBLEMA DE LA TERCERA PUERTA. La puerta 2 comprueba SÓLO POR
-      NÚMERO (`apps/desk/server/services/ticketService.ts:148`), porque
+      NÚMERO (`apps/desk/server/services/ticketService.ts:150`), porque
       `plan.columns.orden_venta` es un campo de texto de la transición y ahí no hay
       id. Si el sync vacía `orden_venta` y `salesorder_id` sobrevive, la puerta 2
-      TAMPOCO encuentra ese ticket. La puerta 1 (`ticketService.ts:94-98`) y la
+      TAMPOCO encuentra ese ticket. La puerta 1 (`ticketService.ts:96-100`) y la
       tercera SÍ, porque miran las dos vías — y por eso las dos vías son REQUISITO
       de la tercera puerta, no preferencia.
     medicion: >
@@ -1592,7 +1592,7 @@ decisiones_de_gerencia:
     consecuencias: >
       (1) SÍ PUEDEN, como excepción: hay al menos un caso real, el mantenedor. Una guarda estricta
       «cliente de la OV = cliente del equipo» bloquearía ese caso.
-      (2) IV-8 (`apps/desk/server/services/ticketService.ts:39`) SIGUE VIVO: la decisión da el
+      (2) IV-8 (`apps/desk/server/services/ticketService.ts:41`) SIGUE VIVO: la decisión da el
       criterio, pero el código no conoce la figura del mantenedor
       (`grep -rni mantenedor packages/ apps/ --include=*.ts` = 0). Cómo reconoce la aplicación ese
       caso se devuelve como pregunta nueva, `titularidad-mantenedor`.
@@ -1787,7 +1787,7 @@ decisiones_de_gerencia:
     consecuencias: >
       (1) IV-8 deja de estar sin destino: destino F1B-11 (S41). La guarda pasa a comparar el cliente
       de la OV contra el dueño del equipo Y contra su mantenedor
-      (`apps/desk/server/services/ticketService.ts:39`), y bloquea cualquier otra discrepancia.
+      (`apps/desk/server/services/ticketService.ts:41`), y bloquea cualquier otra discrepancia.
       (2) El campo vive en la hoja de vida, que la construye F1B-02 (S39), y la guarda vive en
       F1B-11 (S41). Destino PROPUESTO del campo: F1B-02, que hoy declara CUATRO campos
       (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:157`) y pasaría a cinco. No se

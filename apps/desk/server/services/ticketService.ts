@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { getTicketWithRefs, createTicket, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
+import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'
@@ -15,13 +15,15 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
+import { exigirEquipoNuevo, validarCamposEquipoNuevo, crearTicketConEquipo } from './equipoNuevo'
 
 // Crea un ticket gestionado por la app en "Ticket creado" (Subsistema C). Pivota opcionalmente en una OV de Books.
 export async function createManagedTicket(db: Queryable, body: unknown, actorName: string): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const equipoId = b.equipoId ? String(b.equipoId) : ''
-  if (!equipoId) throw new HttpError(422, { error: 'Falta el equipo' })
-  const equipo = await getEquipo(db, equipoId)
+  if (!equipoId && b.clasificaciones !== 'Equipo nuevo') throw new HttpError(422, { error: 'Falta el equipo' })
+  const nuevo = !equipoId && b.clasificaciones === 'Equipo nuevo' ? await exigirEquipoNuevo(db, b) : null
+  const equipo = nuevo ? nuevo.equipo : await getEquipo(db, equipoId)
   if (!equipo) throw new HttpError(422, { error: 'Equipo no registrado' })
 
   let clientId: string | null = b.clientId ? String(b.clientId) : null
@@ -86,11 +88,11 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   if (missing.length) throw new HttpError(422, { error: `Faltan campos obligatorios: ${missing.join(', ')}` })
   const cliente = await getClient(db, clientId!)
   if (!cliente) throw new HttpError(422, { error: 'Cliente no encontrado' })
-  // La OV ya asociada a otro ticket. Escalón **D** —unicidad— de la escalera de precedencia
-  // (`transitions-st` §3.8): existencia < estado/permiso < contenido < unicidad, así que va al FINAL,
-  // como última guarda antes de crear el ticket — el mismo lugar que ocupa el `409` equivalente de
-  // `executeTransition`. El buscador de OV ya sólo ofrece las libres, pero una lista no es una
-  // frontera: sin esta comprobación basta con mandar el id a mano para duplicar la orden.
+  if (nuevo) await validarCamposEquipoNuevo(db, b)
+  // La OV ya asociada a otro ticket. Escalón **D** —unicidad—: va al FINAL, como última guarda antes
+  // de la primera escritura (sea el equipo o el ticket) — el mismo lugar que ocupa el `409`
+  // equivalente de `executeTransition` (`transitions-st` §3.8: existencia < estado/permiso <
+  // contenido < unicidad). Sin esta comprobación bastaría con mandar el id a mano para duplicarla.
   const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
   if (enUso) {
     const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
@@ -98,7 +100,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   }
   const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie: equipo.serial, modelo: equipo.modelo ?? '', fecha: new Date() })
   const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo: equipo.tipo ?? '', codigo: codigoServicio })
-  const id = await createTicket(db, {
+  const id = await crearTicketConEquipo(db, nuevo, cliente.name, {
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
     ordenVenta, fechaOrdenVenta, priority: b.prioridad ? String(b.prioridad) : null,

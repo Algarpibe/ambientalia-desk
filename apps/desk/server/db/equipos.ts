@@ -378,3 +378,26 @@ export async function getEquipoHistorial(db: Queryable, id: string): Promise<Equ
   const cronologia = paradas.sort(porFechaDesc((p) => p.at)).map((p) => p.entrada)
   return { equipo, cronologia }
 }
+
+/**
+ * Busca un equipo por serial, coincidencia EXACTA tras normalizar (`trim` + minúsculas). La usa el
+ * alta de «Equipo nuevo» (`services/equipoNuevo.ts`, RQ-TC-15) para reutilizar el equipo en vez de
+ * duplicarlo cuando el serial ya existe.
+ *
+ * `equipos.serial` no es `UNIQUE` (riesgo declarado, fuera de alcance de esta fase). Con duplicados,
+ * el ACTIVO más antiguo (`ORDER BY active DESC, created_at ASC`); si ninguno está activo, el
+ * INACTIVO más antiguo — determinista y reversible (design.md §3, supuesto a3′).
+ */
+export async function getEquipoBySerial(db: Queryable, serial: string): Promise<EquipoLite | null> {
+  // El recorte se hace en JS, no con `trim()` en SQL: pg-mem no lo implementa («function trim(text)
+  // does not exist», verificado al ejecutar la sonda de este fichero) y el resto del repositorio ya
+  // sigue esa misma convención (`routes/equipos.ts:50`, `db/catalogo.ts:227`). El serial almacenado
+  // ya llega recortado por esa vía; sólo hace falta plegar mayúsculas en la comparación.
+  const normalizado = serial.trim().toLowerCase()
+  const r = await db.query(
+    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,codigo_interno FROM equipos
+     WHERE lower(serial) = $1 ORDER BY active DESC, created_at ASC, id ASC LIMIT 1`,
+    [normalizado],
+  )
+  return r.rows[0] ? toLite(r.rows[0]) : null
+}

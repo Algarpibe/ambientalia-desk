@@ -16,8 +16,8 @@ instalarArnes()
  *
  * LAS TRES PUERTAS POR LAS QUE UNA OV ENTRA EN UN TICKET, Y HOY LAS TRES LA COMPRUEBAN:
  *
- *   1. la CREACIÓN del ticket .................. `ticketService.ts:94-98`   → 409  ✅
- *   2. «Habilitar Servicio» .................... `ticketService.ts:146-150` → 409  ✅
+ *   1. la CREACIÓN del ticket .................. `ticketService.ts:96-100`  → 409  ✅
+ *   2. «Habilitar Servicio» .................... `ticketService.ts:148-152` → 409  ✅
  *   3. la REMISIÓN DE ENTRADA .................. `remision.ts:218-240`      → 409  ✅
  *
  * ⚠️ EL DEFECTO, VERIFICADO — cierto hasta `b99d47a` (árbol de partida de esta tanda), se conserva

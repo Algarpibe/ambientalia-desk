@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ClientLite, SalesOrderLite, EquipoLite } from '@ambientalia/shared'
+import type { ClientLite, SalesOrderLite, EquipoLite, Catalogo } from '@ambientalia/shared'
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
-import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber } from '../api/client'
+import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo } from '../api/client'
 import { CrearRemision } from './CrearRemision'
 
 export function CreateTicket({ onClose, onCreated }: {
@@ -45,6 +45,40 @@ export function CreateTicket({ onClose, onCreated }: {
   const [clasificaciones, setClasificaciones] = useState('')
   const [prefijo, setPrefijo] = useState('MT')
   const [prioridad, setPrioridad] = useState('')
+
+  /**
+   * Bloque «Equipo nuevo» (`alta-equipo-nuevo-en-ticket`, RQ-TC-15): sólo aparece con la
+   * clasificación «Equipo nuevo» y sin equipo elegido. Los tres primeros son obligatorios —el
+   * servidor los exige igual (`exigirEquipoNuevo`, guarda 1)—; el resto, opcional, con la misma
+   * validación que la hoja de vida (F1B-02, `camposHojaDeVida`).
+   */
+  const equipoNuevoVisible = clasificaciones === 'Equipo nuevo' && !equipo
+  const [serialNuevo, setSerialNuevo] = useState('')
+  const [modeloNuevoId, setModeloNuevoId] = useState('')
+  const [fechaFacturaCompra, setFechaFacturaCompra] = useState('')
+  const [fechaAdquisicion, setFechaAdquisicion] = useState('')
+  const [finGarantia, setFinGarantia] = useState('')
+  const [codigoInternoNuevo, setCodigoInternoNuevo] = useState('')
+  const [driveUrlNuevo, setDriveUrlNuevo] = useState('')
+  const [mantenedorQuery, setMantenedorQuery] = useState('')
+  const [mantenedorResults, setMantenedorResults] = useState<ClientLite[]>([])
+  const [mantenedorId, setMantenedorId] = useState<string | null>(null)
+  const [catalogo, setCatalogo] = useState<Catalogo | null>(null)
+  useEffect(() => {
+    if (!equipoNuevoVisible || catalogo) return
+    let alive = true
+    getCatalogo().then((c) => { if (alive) setCatalogo(c) }).catch(() => {})
+    return () => { alive = false }
+  }, [equipoNuevoVisible, catalogo])
+  useEffect(() => {
+    if (mantenedorId) { setMantenedorResults([]); return }
+    if (mantenedorQuery.trim().length < 2) { setMantenedorResults([]); return }
+    let alive = true
+    searchClients(mantenedorQuery).then((r) => { if (alive) setMantenedorResults(r) }).catch(() => {})
+    return () => { alive = false }
+  }, [mantenedorQuery, mantenedorId])
+  const modeloNuevoElegido = catalogo?.modelos.find((m) => m.id === modeloNuevoId) ?? null
+  const equipoNuevoCompleto = equipoNuevoVisible && !!serialNuevo.trim() && !!modeloNuevoId && !!fechaFacturaCompra
 
   const [subjectOverride, setSubjectOverride] = useState<string | null>(null)
   const [codigoOverride, setCodigoOverride] = useState<string | null>(null)
@@ -117,10 +151,15 @@ export function CreateTicket({ onClose, onCreated }: {
   // avisa — bloquearlo ahí dejaría el formulario en un callejón sin salida (el alta exige clientId).
   const clienteBloqueado = !!clientId && (!!salesOrderId || !!equipo)
 
-  const codigo = codigoOverride ?? buildCodigoServicio({ prefijo, serie: equipo?.serial ?? '', modelo: equipo?.modelo ?? '', fecha: new Date() })
+  // Comodidad de vista previa (design.md §5): con el equipo nuevo, la serie y el modelo elegidos ya
+  // alcanzan para anticipar el código y el asunto. El servidor no deriva de aquí: acepta el valor
+  // recibido igual que hoy (`ticketService.ts:99-100`).
+  const codigo = codigoOverride ?? buildCodigoServicio({
+    prefijo, serie: equipo?.serial ?? serialNuevo.trim(), modelo: equipo?.modelo ?? modeloNuevoElegido?.nombre ?? '', fecha: new Date(),
+  })
   const subject = useMemo(
-    () => subjectOverride ?? buildSubject({ cliente: clientName, tipoEquipo: equipo?.tipo ?? '', codigo }),
-    [subjectOverride, clientName, equipo, codigo],
+    () => subjectOverride ?? buildSubject({ cliente: clientName, tipoEquipo: equipo?.tipo ?? modeloNuevoElegido?.tipoNombre ?? '', codigo }),
+    [subjectOverride, clientName, equipo, modeloNuevoElegido, codigo],
   )
 
   function pickOv(ov: SalesOrderLite) {
@@ -180,14 +219,23 @@ export function CreateTicket({ onClose, onCreated }: {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
     try {
-      if (!equipo) { setError('Selecciona un equipo registrado'); setBusy(false); return }
+      if (!equipo && !equipoNuevoCompleto) {
+        setError(equipoNuevoVisible ? 'Completa serie, modelo y fecha de factura de compra del equipo nuevo' : 'Selecciona un equipo registrado')
+        setBusy(false); return
+      }
       const creado = await createTicket({
         salesOrderId: salesOrderId ?? undefined,
         clientId: clientId ?? undefined,
-        equipoId: equipo.id,
+        equipoId: equipo?.id ?? '',
         tipoServicio, clasificaciones, prefijo,
         prioridad: prioridad || undefined,
         subject, codigoServicio: codigo,
+        ...(equipoNuevoCompleto ? { equipoNuevo: {
+          serial: serialNuevo.trim(), modeloId: modeloNuevoId, fechaFacturaCompra,
+          fechaAdquisicion: fechaAdquisicion || undefined, finGarantia: finGarantia || undefined,
+          codigoInterno: codigoInternoNuevo || undefined, driveUrl: driveUrlNuevo || undefined,
+          mantenedorId: mantenedorId ?? undefined,
+        } } : {}),
       })
       // Con remisión, la ventana NO se cierra: pasa al paso 2. Sin ella, termina aquí.
       if (conRemision) setCreado(creado.id)
@@ -281,7 +329,7 @@ export function CreateTicket({ onClose, onCreated }: {
               seleccionar uno del listado (el servidor exige `equipoId` y responde 422 si no). */}
           <input className={`${field} w-full ${equipoQuery.trim() && !equipo ? 'border-amber-400' : ''}`} placeholder="Buscar equipo registrado…" value={equipoQuery}
             {...comboProps('equipo')}
-            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null); setOpenCombo('equipo') }} required={!equipo} />
+            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null); setOpenCombo('equipo') }} required={!equipo && !equipoNuevoVisible} />
           {openCombo === 'equipo' && equipoResults.length > 0 && (
             <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {equipoResults.map((e) => (
@@ -315,6 +363,53 @@ export function CreateTicket({ onClose, onCreated }: {
             <div className="mt-1 text-[12px] text-slate-400">Escribe al menos 2 caracteres para buscar.</div>
           )}
         </div>
+
+        {equipoNuevoVisible && (
+          <div className="border border-slate-200 rounded p-3 flex flex-col gap-2">
+            <div className="text-[11px] font-bold text-slate-500 uppercase">Equipo nuevo</div>
+            <input className={`${field} w-full`} placeholder="Serie *" value={serialNuevo}
+              onChange={(e) => setSerialNuevo(e.target.value)} required={equipoNuevoVisible} />
+            <select className={field} value={modeloNuevoId} onChange={(e) => setModeloNuevoId(e.target.value)} required={equipoNuevoVisible}>
+              <option value="">Modelo del catálogo *</option>
+              {(catalogo?.modelos ?? []).map((m) => (
+                <option key={m.id} value={m.id}>{catalogo?.marcas.find((ma) => ma.id === m.marcaId)?.nombre ?? ''} {m.nombre}</option>
+              ))}
+            </select>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] text-slate-500">Factura de compra *</label>
+                <input type="date" className={`${field} w-full`} value={fechaFacturaCompra} onChange={(e) => setFechaFacturaCompra(e.target.value)} required={equipoNuevoVisible} />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500">Adquisición</label>
+                <input type="date" className={`${field} w-full`} value={fechaAdquisicion} onChange={(e) => setFechaAdquisicion(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500">Fin de garantía</label>
+                <input type="date" className={`${field} w-full`} value={finGarantia} onChange={(e) => setFinGarantia(e.target.value)} />
+              </div>
+            </div>
+            <input className={`${field} w-full`} placeholder="Código interno (opcional)" value={codigoInternoNuevo} onChange={(e) => setCodigoInternoNuevo(e.target.value)} />
+            <input className={`${field} w-full`} placeholder="Enlace de Drive https://… (opcional)" value={driveUrlNuevo} onChange={(e) => setDriveUrlNuevo(e.target.value)} />
+            <div className="relative">
+              <label className="text-[10px] text-slate-500">Mantenedor (opcional)</label>
+              <input className={`${field} w-full`} placeholder="Buscar cliente mantenedor…" value={mantenedorQuery}
+                onChange={(e) => { setMantenedorQuery(e.target.value); setMantenedorId(null) }} />
+              {mantenedorResults.length > 0 && (
+                <ul className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-32 overflow-auto shadow">
+                  {mantenedorResults.map((c) => (
+                    <li key={c.id}><button type="button"
+                      onClick={() => { setMantenedorId(c.id); setMantenedorQuery(c.name); setMantenedorResults([]) }}
+                      className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">{c.name}</button></li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="text-[11px] text-slate-500">
+              Si la serie ya está registrada, el servidor reutiliza ese equipo en vez de duplicarlo.
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <select className={field} value={tipoServicio} onChange={(e) => { setTipoServicio(e.target.value); setPrefijo(defaultPrefijoFor(e.target.value)); setCodigoOverride(null) }} required>

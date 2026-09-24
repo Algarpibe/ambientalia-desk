@@ -15,10 +15,10 @@ import { executeTransition } from './services/ticketService'
  *
  * LOS DOS LADOS, EN `executeTransition`:
  *
- *   · N3 — el `id` de la URL no existe → `404` (`ticketService.ts:123`, el ticket es el sujeto
+ *   · N3 — el `id` de la URL no existe → `404` (`ticketService.ts:125`, el ticket es el sujeto
  *     direccionado).
  *   · N4 — el `id` de la URL existe, pero `derivado_a` (referencia dentro del cuerpo) no resuelve a
- *     nadie activo → `422` (`ticketService.ts:139`).
+ *     nadie activo → `422` (`ticketService.ts:141`).
  *
  * LAS DOS NACEN VERDES: el comportamiento ya existe, cada una por su propia guarda, y hasta esta tanda
  * ninguna prueba fijaba las dos JUNTAS como dos caras de la MISMA regla. Bajo `strict_tdd` el rojo se

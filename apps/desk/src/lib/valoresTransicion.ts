@@ -10,7 +10,7 @@ import { CLAVE_DERIVACION, fechasDerivadas } from '@ambientalia/shared'
  * transición, así que su columna está vacía justo cuando el formulario las pregunta.
  *
  * Las tres fechas derivadas se calculan con `fechasDerivadas` (`@ambientalia/shared`), la MISMA
- * fórmula que impone el servidor (`ticketService.ts:130`). Esto es prellenado, no la regla: la
+ * fórmula que impone el servidor (`ticketService.ts:132`). Esto es prellenado, no la regla: la
  * imposición real vive en el servidor y está probada allí (regla invariable 13, punto 3) — aquí sólo
  * se copia para que el panel no arranque en blanco.
  *

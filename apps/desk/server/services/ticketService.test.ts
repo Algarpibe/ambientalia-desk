@@ -248,7 +248,7 @@ async function cliente(id = 'cli-1'): Promise<void> {
   await db.query("INSERT INTO books.contacts (contact_id, contact_name) VALUES ($1,'Gecelca S.A. E.S.P.')", [id])
 }
 
-/** Los campos que dejan pasar el bloque de obligatorios de `ticketService.ts:87-92`. */
+/** Los campos que dejan pasar el bloque de obligatorios y el de cliente de `ticketService.ts:83-90`. */
 const CAMPOS_OK = { clientId: 'cli-1', tipoServicio: 'Mantenimiento', clasificaciones: 'Correctivo', prefijo: 'MT' }
 
 describe('createManagedTicket · cada guarda por separado', () => {
@@ -494,4 +494,159 @@ describe('createManagedTicket · la guarda equipo↔cliente no cambia lo que ya 
     const t = (await db.query('SELECT client_id FROM tickets')).rows[0]
     expect(t.client_id).toBe('cli-1')
   })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// createManagedTicket · rama «Equipo nuevo» (alta-equipo-nuevo-en-ticket, RQ-TC-15, RQ-TC-16)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** Un modelo del catálogo, con marca y tipo propios (id `${id}-marca`/`${id}-tipo`). */
+async function modeloCatalogo(id: string, marca: string, nombreModelo: string, tipo = 'Monitor'): Promise<void> {
+  await db.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [`${id}-marca`, marca])
+  await db.query('INSERT INTO catalogo_tipos (id,nombre) VALUES ($1,$2)', [`${id}-tipo`, tipo])
+  await db.query('INSERT INTO catalogo_modelos (id,marca_id,nombre,tipo_id) VALUES ($1,$2,$3,$4)', [id, `${id}-marca`, nombreModelo, `${id}-tipo`])
+}
+
+describe('createManagedTicket · rama «Equipo nuevo», criterios de aceptación (proposal.md)', () => {
+  it('criterio 1 · datos válidos crea un equipo nuevo con el clientId del ticket, y el ticket queda enlazado a él', async () => {
+    await modeloCatalogo('mo-1', 'Grimm', 'EDM180C')
+    await cliente('cli-1')
+    await createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-1',
+      equipoNuevo: { serial: 'SN-NUEVO-1', modeloId: 'mo-1', fechaFacturaCompra: '2026-01-15' },
+    }, 'Admin')
+    const eq = (await db.query("SELECT id, client_id, marca, modelo FROM equipos WHERE serial='SN-NUEVO-1'")).rows[0]
+    expect(eq).toMatchObject({ client_id: 'cli-1', marca: 'Grimm', modelo: 'EDM180C' })
+    const t = (await db.query('SELECT client_id, equipo_id FROM tickets')).rows[0]
+    expect(t).toMatchObject({ client_id: 'cli-1', equipo_id: eq.id })
+  })
+
+  it('criterio 2 · serial ya existente (espacios y mayúsculas distintos) se reutiliza: no se crea un segundo equipo', async () => {
+    await modeloCatalogo('mo-2', 'Grimm', 'EDM180C')
+    await cliente('cli-2')
+    await db.query("INSERT INTO equipos (id, serial, marca, modelo, tipo) VALUES ('eq-existente','SN-2','Grimm','EDM180C','Monitor')")
+    await createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-2',
+      equipoNuevo: { serial: ' sn-2 ', modeloId: 'mo-2', fechaFacturaCompra: '2026-01-15' },
+    }, 'Admin')
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM equipos')).rows[0].n).toBe(1)
+    const t = (await db.query('SELECT equipo_id FROM tickets')).rows[0]
+    expect(t.equipo_id).toBe('eq-existente')
+  })
+
+  it('criterio 3 · faltan datos del equipo nuevo: 422 listando TODOS los que faltan, y no se escribe nada', async () => {
+    const r = await fallo(() => createManagedTicket(db, { clasificaciones: 'Equipo nuevo' }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Faltan datos del equipo nuevo: el serial, el modelo, la fecha de factura de compra')
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM equipos')).rows[0].n).toBe(0)
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM tickets')).rows[0].n).toBe(0)
+  })
+
+  it('criterio 4 · un dato opcional inválido (Drive): 422 con el mensaje de camposHojaDeVida (F1B-02), y no se escribe nada', async () => {
+    await modeloCatalogo('mo-4', 'Grimm', 'EDM180C')
+    await cliente('cli-4')
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-4',
+      equipoNuevo: { serial: 'SN-4', modeloId: 'mo-4', fechaFacturaCompra: '2026-01-15', driveUrl: 'javascript:alert(1)' },
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('El enlace de Drive debe empezar por https:// y no llevar comillas')
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM equipos')).rows[0].n).toBe(0)
+  })
+
+  // Aprobación (strict-tdd.md): fija que Mantenimiento y Soporte remoto NO cambian — la guarda 1
+  // sigue exigiendo `equipoId` sin excepción salvo para 'Equipo nuevo' (RQ-TC-04, escenario
+  // «Mantenimiento sin equipo sigue rechazándose»).
+  it('criterio 5 · una guarda posterior falla (OV ya usada): 409 y no queda ningún equipo nuevo escrito', async () => {
+    await modeloCatalogo('mo-5', 'Grimm', 'EDM180C')
+    await cliente('cli-5')
+    await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP-5' })
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-5',
+      ordenVenta: 'OV-DUP-5',
+      equipoNuevo: { serial: 'SN-5', modeloId: 'mo-5', fechaFacturaCompra: '2026-01-15' },
+    }, 'Admin'))
+    expect(r.status).toBe(409)
+    expect((await db.query("SELECT COUNT(*)::int AS n FROM equipos WHERE serial='SN-5'")).rows[0].n).toBe(0)
+  })
+
+  it('criterio 6 · Mantenimiento y Soporte remoto sin equipoId siguen en 422 «Falta el equipo»', async () => {
+    const r1 = await fallo(() => createManagedTicket(db, { clasificaciones: 'Equipo para servicio de mantenimiento' }, 'Admin'))
+    expect(r1.status).toBe(422)
+    expect(r1.body.error).toBe('Falta el equipo')
+    const r2 = await fallo(() => createManagedTicket(db, { clasificaciones: 'Soporte remoto' }, 'Admin'))
+    expect(r2.status).toBe(422)
+    expect(r2.body.error).toBe('Falta el equipo')
+  })
+})
+
+/**
+ * P1-P7 — pruebas de POSICIÓN de la rama «Equipo nuevo» (regla de mutación 1, `CLAUDE.md`;
+ * design.md §1). Cada una activa DOS guardas a la vez con el orden CORRECTO de hoy; la mutación (que
+ * NO vive en el código de producción final, sólo se aplicó y revirtió durante `sdd-apply` para
+ * confirmar el rojo) está documentada en `apply-progress.md` §Fase 7, con su diff de reversión.
+ */
+describe('createManagedTicket · rama «Equipo nuevo», P1-P7 (regla de mutación 1)', () => {
+  it('P1 · faltan datos del equipo nuevo + OV inexistente → 422 de datos, no de la OV', async () => {
+    const r = await fallo(() => createManagedTicket(db, { clasificaciones: 'Equipo nuevo', salesOrderId: 'no-existe' }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain('Faltan datos del equipo nuevo')
+  })
+
+  it('P2 · modelo inexistente + fecha opcional inválida → 422 «Modelo no encontrado», no la de la fecha', async () => {
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo',
+      equipoNuevo: { serial: 'SN-P2', modeloId: 'no-existe', fechaFacturaCompra: '2026-01-15', fechaAdquisicion: 'no-es-fecha' },
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Modelo no encontrado')
+  })
+
+  it('P3 · OV inexistente + Drive inválido → 422 de la OV, no de Drive (molde IV-12)', async () => {
+    await modeloCatalogo('mo-p3', 'Grimm', 'EDM180C')
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', salesOrderId: 'no-existe',
+      equipoNuevo: { serial: 'SN-P3', modeloId: 'mo-p3', fechaFacturaCompra: '2026-01-15', driveUrl: 'http://no-seguro' },
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Orden de venta no encontrada')
+  })
+
+  it('P4 · serial reutilizado de otro cliente + Drive inválido → 422 equipo↔cliente, no de Drive', async () => {
+    await modeloCatalogo('mo-p4', 'Grimm', 'EDM180C')
+    await equipoConCliente('eq-p4', 'cli-A')
+    await cliente('cli-B')
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', clientId: 'cli-B',
+      equipoNuevo: { serial: '18A20070', modeloId: 'mo-p4', fechaFacturaCompra: '2026-01-15', driveUrl: 'http://no-seguro' },
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain('cli-A')
+  })
+
+  it('P5 · cliente inexistente + Drive inválido → 422 «Cliente no encontrado», no de Drive', async () => {
+    await modeloCatalogo('mo-p5', 'Grimm', 'EDM180C')
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', clientId: 'no-existe', tipoServicio: 'Mantenimiento', prefijo: 'MT',
+      equipoNuevo: { serial: 'SN-P5', modeloId: 'mo-p5', fechaFacturaCompra: '2026-01-15', driveUrl: 'http://no-seguro' },
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('Cliente no encontrado')
+  })
+
+  it('P6 · Drive inválido + OV ya usada → 422 de Drive, no 409 de la OV', async () => {
+    await modeloCatalogo('mo-p6', 'Grimm', 'EDM180C')
+    await cliente('cli-p6')
+    await ticket('ocupado-p6', 'Ingresado', 8199, { orden_venta: 'OV-DUP-P6' })
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', clientId: 'cli-p6', tipoServicio: 'Mantenimiento', prefijo: 'MT', ordenVenta: 'OV-DUP-P6',
+      equipoNuevo: { serial: 'SN-P6', modeloId: 'mo-p6', fechaFacturaCompra: '2026-01-15', driveUrl: 'http://no-seguro' },
+    }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('El enlace de Drive debe empezar por https:// y no llevar comillas')
+  })
+
+  // P7 reutiliza el escenario de «criterio 5» de arriba (equipo nuevo válido + OV ya usada → 409, sin
+  // equipo escrito): es la MISMA pareja de guardas, así que no duplica el `it`. Su mutación —crear el
+  // equipo ANTES de la guarda de la OV— se aplicó y revirtió sobre ESE test; ver `apply-progress.md`.
 })

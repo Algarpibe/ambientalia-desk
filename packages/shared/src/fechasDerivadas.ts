@@ -103,7 +103,7 @@ function esObjetoPlano(v: unknown): v is Record<string, unknown> {
  * Los valores que de verdad se escriben: `recibidos`, con las tres etiquetas SIEMPRE filtradas (P-2)
  * y sustituidas por la derivada cuando hay fuente (D-1, pisa navegador y columna). Sin fuente, lo
  * tecleado se valida (D-3): inválido se queda en `values` —para que el plan no lo cuente además como
- * ausente— y entra en `erroresFecha`, que el `422` de `ticketService.ts:132` impide que se escriba.
+ * ausente— y entra en `erroresFecha`, que el `422` de `ticketService.ts:134` impide que se escriba.
  */
 export function valoresEfectivos(
   t: Pick<Transition, 'fields'>,

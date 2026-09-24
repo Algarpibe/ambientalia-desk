@@ -377,7 +377,7 @@ export interface CreateTicketInput {
  * de allí, y se conserva para lo que sigue llegando por el sync (ver `STATUS_OV_ASIGNADA`). Lo que
  * nace aquí usa el nombre que la fase tiene de verdad para el servicio técnico.
  */
-export async function createTicket(db: Queryable, input: CreateTicketInput): Promise<string> {
+export async function createTicket(db: Queryable, input: CreateTicketInput, opts: { transaccionAbierta?: boolean } = {}): Promise<string> {
   const id = `${PREFIJO_TICKET_APP}${randomUUID()}`
   const number = await nextTicketNumber(db)
   const run = async (q: Queryable): Promise<void> => {
@@ -401,7 +401,7 @@ export async function createTicket(db: Queryable, input: CreateTicketInput): Pro
     )
   }
   const pool = db as PoolLike
-  if (typeof pool.connect !== 'function') { await run(db); return id }
+  if (opts.transaccionAbierta || typeof pool.connect !== 'function') { await run(db); return id }
   const client = await pool.connect()
   try {
     await client.query('BEGIN')

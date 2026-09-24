@@ -236,6 +236,34 @@ describe('createTicket (Subsistema C)', () => {
 })
 
 /**
+ * `opts.transaccionAbierta` (RQ-TC-16, `alta-equipo-nuevo-en-ticket`, Fase 2). Cuando `createEquipo` y
+ * `createTicket` comparten UNA transacción abierta desde fuera (`enTransaccion`, `apps/desk/server`),
+ * `createTicket` NO puede abrir la suya propia — anidar transacciones con `pool.connect()` dos veces
+ * sobre el mismo pool las independiza (cada `connect()` reserva un cliente NUEVO), y un fallo tras el
+ * `INSERT` del ticket ya no revertiría el `INSERT` del equipo. El flag es explícito, no un pato
+ * implícito (`typeof pool.connect !== 'function'`): design.md, decisión «Atomicidad».
+ */
+describe('createTicket · opts.transaccionAbierta (RQ-TC-16)', () => {
+  it('con transaccionAbierta:true NO abre conexión propia, aunque el db recibido SÍ la tenga', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli2','Ambientalia S.A.S.')")
+    let connectLlamado = false
+    const conPoolFalso: Queryable & { connect: () => Promise<{ query: Queryable['query']; release: () => void }> } = {
+      query: (text, params) => db.query(text, params),
+      connect: async () => { connectLlamado = true; throw new Error('no debería llamarse con transaccionAbierta:true') },
+    }
+    const id = await createTicket(conPoolFalso, {
+      subject: 'Servicio Técnico Ambientalia S.A.S.', codigoServicio: 'MT_1', classification: 'Correctivo',
+      tipoServicio: 'Mantenimiento', equipo: 'Monitor', marca: 'Grimm', modelo: 'EDM180C', serial: '18A20071',
+      ordenVenta: null, priority: null, clientId: 'cli2', salesorderId: null, equipoId: 'eq-nuevo', actor: 'Admin',
+    }, { transaccionAbierta: true })
+    expect(connectLlamado).toBe(false)
+    expect(id).toMatch(/^app-/)
+    const row = (await db.query('SELECT equipo_id FROM tickets WHERE id=$1', [id])).rows[0]
+    expect(row.equipo_id).toBe('eq-nuevo')
+  })
+})
+
+/**
  * C9 · LA COLUMNA DE LA FECHA DE AVISO NO ENTRA EN `TICKET_COLS`, Y ESO ES LO QUE LA SALVA.
  *
  * `TICKET_COLS` es la lista que el upsert del sync sobrescribe con lo que traiga Zoho

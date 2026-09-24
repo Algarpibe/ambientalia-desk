@@ -135,7 +135,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
      * copia rechazaría tickets que SÍ tienen equipo, que es lo contrario de lo que se pide.
      *
      * A QUIÉN AFECTA DE VERDAD. Un ticket nacido en la app siempre lo trae: el alta exige `equipoId`
-     * del catálogo (`ticketService.ts:22-25`) y el equipo trae serial. Lo que esto cierra es la otra
+     * del catálogo (`ticketService.ts:23-27`) y el equipo trae serial. Lo que esto cierra es la otra
      * entrada —la que M1.3.2 llama la que «nunca se cruza» con aquélla—: un ticket sincronizado desde
      * Zoho llega SIN serial, y por eso `habilitar_servicio` lo exige (`transitions.ts:189`). Hasta
      * hoy nada impedía remisionarlo antes de pasar por ahí, y la remisión salía sin identificar el

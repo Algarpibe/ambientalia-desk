@@ -141,7 +141,7 @@ function esFechaIso(v: string): boolean {
  * también un `codigoInterno` que ya había validado bien: la ruta nunca escribe un subconjunto
  * (ver la prueba de posición de `equipos.test.ts`, regla de mutación 1).
  */
-async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>): Promise<{ error: string } | { campos: CamposHojaDeVida }> {
+export async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>): Promise<{ error: string } | { campos: CamposHojaDeVida }> {
   const campos: CamposHojaDeVida = {}
 
   if (b.mantenedorId !== undefined) {

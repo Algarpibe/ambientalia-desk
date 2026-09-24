@@ -324,6 +324,19 @@ export interface CreateTicketPayload {
   prioridad?: string
   subject?: string
   codigoServicio?: string
+  /** `alta-equipo-nuevo-en-ticket`, RQ-TC-15. Sólo se lee si `clasificaciones === 'Equipo nuevo'` y
+   *  no viene `equipoId`; el servidor registra o reutiliza el equipo en el mismo paso. */
+  equipoNuevo?: {
+    serial: string
+    modeloId: string
+    /** La fecha de COMPRA del equipo, no `tickets.fecha_factura`. */
+    fechaFacturaCompra: string
+    fechaAdquisicion?: string
+    finGarantia?: string
+    codigoInterno?: string
+    driveUrl?: string
+    mantenedorId?: string
+  }
 }
 
 export interface EquipoLite {

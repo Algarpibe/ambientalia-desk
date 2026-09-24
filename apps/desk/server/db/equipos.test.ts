@@ -3,7 +3,7 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { upsertEquipo, searchEquipos, getEquipo, countEquipos, type EquipoRow } from './equipos'
 import { createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull } from './equipos'
-import { getEquipoHistorial } from './equipos'
+import { getEquipoHistorial, getEquipoBySerial } from './equipos'
 import type { EntradaHojaDeVida, HistorialTicket } from '@ambientalia/shared'
 import { FROM_STATUS_CREACION } from '@ambientalia/shared'
 import { searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
@@ -503,5 +503,42 @@ describe('F1B-01 · el equipo lleva su client_id, para que el serial resuelva cl
     const [eq] = await searchEquipos(db, '18B0004')
     const ovs = await searchSalesOrders(db, '', eq.clientId, 20, true)
     expect(ovs.map((o) => o.number), 'sólo las del cliente del equipo, y sólo las confirmadas').toEqual(['SO-001'])
+  })
+})
+
+/**
+ * `getEquipoBySerial` (`alta-equipo-nuevo-en-ticket`, RQ-TC-15, Fase 3). Coincidencia EXACTA tras
+ * normalizar (`trim` + minúsculas, design.md §3): con duplicados, el ACTIVO más antiguo; si sólo hay
+ * inactivos, el inactivo más antiguo; serial inexistente, `null`.
+ */
+describe('getEquipoBySerial', () => {
+  it('normaliza el serial (trim + minúsculas) y encuentra el equipo aunque la caja o los espacios difieran', async () => {
+    await createEquipo(db, { serial: 'SN-1', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
+    const e = await getEquipoBySerial(db, ' Sn-1 ')
+    expect(e).toMatchObject({ serial: 'SN-1', marca: 'Grimm' })
+  })
+
+  it('serial inexistente devuelve null', async () => {
+    expect(await getEquipoBySerial(db, 'no-existe')).toBeNull()
+  })
+
+  it('con duplicados, uno activo y otro no, devuelve el ACTIVO más antiguo', async () => {
+    const viejoActivo = await createEquipo(db, { serial: 'SN-DUP', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
+    await createEquipo(db, { serial: 'SN-DUP', marca: 'Horiba', modelo: 'APMA-370', tipo: 'Analizador', clienteNombre: null, clientId: null, modeloId: null })
+    await setEquipoActive(db, viejoActivo, true) // ya nace activo; deja explícita la intención del caso
+    const otro = (await db.query('SELECT id FROM equipos WHERE serial=$1 AND id<>$2', ['SN-DUP', viejoActivo])).rows[0].id as string
+    await setEquipoActive(db, otro, false)
+    const e = await getEquipoBySerial(db, 'sn-dup')
+    expect(e?.id).toBe(viejoActivo)
+  })
+
+  it('con duplicados TODOS inactivos, devuelve el INACTIVO más antiguo', async () => {
+    const primero = await createEquipo(db, { serial: 'SN-DUP2', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
+    await createEquipo(db, { serial: 'SN-DUP2', marca: 'Horiba', modelo: 'APMA-370', tipo: 'Analizador', clienteNombre: null, clientId: null, modeloId: null })
+    await setEquipoActive(db, primero, false)
+    const segundo = (await db.query('SELECT id FROM equipos WHERE serial=$1 AND id<>$2', ['SN-DUP2', primero])).rows[0].id as string
+    await setEquipoActive(db, segundo, false)
+    const e = await getEquipoBySerial(db, 'SN-DUP2')
+    expect(e?.id).toBe(primero)
   })
 })
