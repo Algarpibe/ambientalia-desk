@@ -52,7 +52,7 @@ Chain strategy: pending
 
 - [x] 6.1 `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165`
 - [x] 6.2 Barrido regla mutación 4 (`grep -rnoE` citas) + `git diff --numstat` en `config.yaml`, `schema.sql`, `migrate.ts`, `migrate.test.ts`, `index.ts`, R01.3 — sin desplazamiento
-- [ ] 6.3 Nota: detector `tsx apps/desk/server/citas/cli.ts --sha HEAD` corre tras commit — orquestador, no esta tanda (fuera del alcance de `sdd-apply`, a cargo del orquestador tras el commit)
+- [x] 6.3 Nota: detector `tsx apps/desk/server/citas/cli.ts --sha HEAD` corre tras commit — orquestador, no esta tanda (fuera del alcance de `sdd-apply`, a cargo del orquestador tras el commit) — HECHO por el orquestador: primer barrido bloqueó `avisos.test.ts:1-10` (extremo final vacío) → corregido a `:1-9`; segundo barrido exit 0, 2140+ citas, 11 abreviadas rotas (las preexistentes).
 
 ## Datos de persona (fuera del recuento — regla del ciclo 1)
 
