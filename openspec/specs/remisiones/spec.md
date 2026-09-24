@@ -122,7 +122,7 @@ número de serie es obligatorio al crear la remisión» —.
 > **Then** responde `422` y no se crea ninguna remisión ni se escribe nada en el ticket.
 
 **A quién afecta de verdad.** Un ticket nacido en la app siempre trae serial: el alta exige `equipoId`
-del catálogo (`ticketService.ts:22-25`) y el equipo lo lleva. Lo que esto cierra es la otra entrada
+del catálogo (`ticketService.ts:23-27`) y el equipo lo lleva. Lo que esto cierra es la otra entrada
 —la que M1.3.2 llama la que «nunca se cruza» con aquélla—, donde el ticket llega de Zoho sin serial.
 
 **La columna sigue admitiendo `NULL`, a propósito** (`schema.sql:279`): la decisión dice «obligatorio
@@ -327,7 +327,7 @@ comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `r
 **después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:235-239`).
 
 Si la orden ya pertenece a otro ticket, la respuesta **SHALL** ser `409`, con el texto de
-`ticketService.ts:149` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
+`ticketService.ts:151` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
 las tres columnas **SHALL** quedar escrita. El `422` del serial (`remision.ts:152-157`) **SHALL**
 seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condición
 `WHERE ... COALESCE(orden_venta,'') = ''` (`:237`) **SHALL** mantenerse intacta: protege la carrera de
@@ -339,7 +339,7 @@ vigente; comprobar sólo por número dejaría ese ticket sin protección.
 
 **Tercer punto de captura legítimo.** La remisión de entrada **SHALL** contarse como el tercer punto
 de captura de la orden de venta, junto con el alta del ticket (`tickets-core` RQ-TC-08) y
-`habilitar_servicio` (`ticketService.ts:148-149`). La lista de
+`habilitar_servicio` (`ticketService.ts:150-151`). La lista de
 `docs/sdd/Decisiones_Gerencia_2026-09-10.md:156-164`, que sólo nombraba los dos primeros, quedó
 incompleta por omisión de redacción, no por decisión (decisión 1 de la ronda de preguntas del
 2026-09-16).

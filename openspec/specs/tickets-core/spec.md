@@ -6,10 +6,10 @@
 | Estado | **as-built parcial** (`status_at_start` de `config.yaml`), contrastado contra el código |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 929 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |
-| Contenido | **14** requisitos (`RQ-TC-01`…`RQ-TC-14`, §§1–3) · **5** entradas de comportamiento actual (§4.1–§4.5) · **7** discrepancias diseño↔código (D-1…D-7) y **6** maestro↔código (M-1…M-6), más el hallazgo de esquema cerrado en F1B-01 como **IV-6** (§5.3) |
+| Contenido | **16** requisitos (`RQ-TC-01`…`RQ-TC-16`, §§1–3; RQ-TC-15/RQ-TC-16 añadidos por `alta-equipo-nuevo-en-ticket`, F1B-14) · **5** entradas de comportamiento actual (§4.1–§4.5) · **7** discrepancias diseño↔código (D-1…D-7) y **6** maestro↔código (M-1…M-6), más el hallazgo de esquema cerrado en F1B-01 como **IV-6** (§5.3) |
 | Diseños de procedencia | `docs/superpowers/specs/2026-06-04-subsistema-c-creacion-tickets-design.md` (142 líneas) · `…-2026-06-04-subsistema-a-modelo-datos-design.md` (174 líneas). Los dos «Aprobados para planificación», **histórico congelado** (plan R01.1:382) |
-| Apartados del maestro | M1.1 (`R08.1.md:1042-1068`) · M1.2 (`:1069-1096`) · M1.3.2 (`:1145-1149`) · **Anexo G** (`:4289-4476`), con G.1 (`:4292`), G.2 (`:4314`), G.7 (`:4470-4472`) y G.8 (`:4473-4476`) |
-| Tandas que la tocan | **F1A-04 → F1C (C9)** · **F1B** (paridad de alta) · **F1D** (hojas de vida y catálogo, que reclaman el serial como llave) |
+| Apartados del maestro | M1.1 (`R08.1.md:1042-1068`) · M1.2 (`:1069-1096`) · M1.3.2 (`:1145-1149`) · **Anexo G** (`:4289-4476`), con G.1 (`:4292`), G.2 (`:4314`), G.7 (`:4470-4472`) y G.8 (`:4473-4476`) · M1.4 (`R08.2.md:1491-1492`, «Flujo equipo-nuevo») |
+| Tandas que la tocan | **F1A-04 → F1C (C9)** · **F1B** (paridad de alta) · **F1B-14** (alta con equipo nuevo, `alta-equipo-nuevo-en-ticket`) · **F1D** (hojas de vida y catálogo, que reclaman el serial como llave) |
 | Depende de | `transitions-st` (el estado inicial y el grafo) · `zoho-sync` (lo que llega de fuera) · `permissions` (quién puede crear) |
 
 ---
@@ -94,15 +94,30 @@ Los dos **SHALL** derivarse de sus componentes con funciones puras de
 ### RQ-TC-04 · El serial es la llave, y viene del catálogo
 
 El alta **SHALL** exigir un `equipoId` del catálogo, y **MUST NOT** aceptar el equipo como texto
-libre (`ticketService.ts:22-25`: `422 'Falta el equipo'` y `422 'Equipo no registrado'`).
+libre (`ticketService.ts:23-27`: `422 'Falta el equipo'` en `:24` y `422 'Equipo no registrado'` en
+`:27`). **Excepción:**
+con `clasificaciones = 'Equipo nuevo'`, el alta **SHALL** admitir en su lugar los datos del equipo y
+registrarlo o reutilizarlo en el mismo paso, según `RQ-TC-15` y `RQ-TC-16`
+(`decision/equipo-nuevo-alta-en-ticket`). Tampoco en esa rama se acepta el equipo como texto libre: el
+modelo **SHALL** venir del catálogo.
 
 - La marca, el modelo, el tipo y el serial **SHALL** salir del equipo, no del formulario
-  (`ticketService.ts:64-66`, leyendo `getEquipo` de `apps/desk/server/db/equipos.ts:77-80`).
+  (`ticketService.ts:104-105`, leyendo `getEquipo` de `apps/desk/server/db/equipos.ts:77-80`).
 - El catálogo **SHALL** poder buscarse por serial, y también por nombre de cliente
   (`equipos.ts:59-71`), y sólo devuelve los activos (`:67`).
 - El serial **SHALL** exigirse además en `habilitar_servicio`, porque los tickets sincronizados desde
   Zoho llegan sin él (`transitions.ts:189`; maestro M1.1 `[AS-BUILT]`, `:1046`). La razón está en
   `transitions.ts:174-177`.
+
+(Previously: el alta exigía siempre un `equipoId` ya registrado, sin excepción por clasificación, y la
+lectura de marca, modelo, tipo y serial se citaba en `ticketService.ts:64-66`, desfasada respecto del
+código.)
+
+#### Scenario: Mantenimiento sin equipo sigue rechazándose
+
+- GIVEN un alta con `clasificaciones = 'Equipo para servicio de mantenimiento'` y sin `equipoId`
+- WHEN se envía
+- THEN responde `422 'Falta el equipo'`, como antes de este cambio
 
 ---
 
@@ -111,32 +126,51 @@ libre (`ticketService.ts:22-25`: `422 'Falta el equipo'` y `422 'Equipo no regis
 ### RQ-TC-05 · Orden de las guardas del alta, y qué contesta cada una
 
 `POST /api/tickets` (`routes/tickets.ts:124-126`) **SHALL** exigir sesión (`:35`) y **SHALL** aplicar
-las guardas de `createManagedTicket` (`ticketService.ts:20-105`) **en este orden**, el que exige el
+las guardas de `createManagedTicket` (`ticketService.ts:21-111`) **en este orden**, el que exige el
 orden total de precedencia (`transitions-st` §3.8):
 
 | Orden | Guarda | Escalón | Respuesta | Evidencia |
 |---|---|---|---|---|
-| 1 | Falta el equipo | A | `422 'Falta el equipo'` | `ticketService.ts:22-23` |
-| 2 | El equipo no está en el catálogo | A | `422 'Equipo no registrado'` | `:24-25` |
-| 3 | La orden de venta no existe en Books | A | `422 'Orden de venta no encontrada'` | `:35-37` |
-| 4 | Discrepancia equipo↔cliente | C | `422`, nombrando al cliente del equipo | `:65-83` |
-| 5 | Faltan obligatorios (cliente, tipo de servicio, clasificaciones, prefijo) | C | `422`, con **todos** en una lista | `:87-92` |
-| 6 | El cliente no existe en Books | C | `422 'Cliente no encontrado'` | `:93-94` |
-| 7 | La orden de venta ya está asociada a otro ticket | D | `409` | `:45-49` (movida detrás de la guarda 6) |
+| 1 | Falta el equipo (salvo rama «Equipo nuevo», RQ-TC-15) | A | `422 'Falta el equipo'` | `ticketService.ts:23-24` |
+| 2 | El equipo no está en el catálogo | A | `422 'Equipo no registrado'` | `:26-27` |
+| 3 | La orden de venta no existe en Books | A | `422 'Orden de venta no encontrada'` | `:37-39` |
+| 4 | Discrepancia equipo↔cliente | C | `422`, nombrando al cliente del equipo | `:61-79` |
+| 5 | Faltan obligatorios (cliente, tipo de servicio, clasificaciones, prefijo) | C | `422`, con **todos** en una lista | `:83-88` |
+| 6 | El cliente no existe en Books | C | `422 'Cliente no encontrado'` | `:89-90` |
+| 7 | La orden de venta ya está asociada a otro ticket | D | `409` | `:96-100` |
+
+**Rama «Equipo nuevo» — dos guardas nuevas, mismo escalón.** Cuando la guarda 1 no aplica por
+`clasificaciones === 'Equipo nuevo'` (RQ-TC-15), el alta exige en su lugar:
+
+| Guarda nueva | Escalón | Respuesta |
+|---|---|---|
+| Falta `serial`, `modeloId` o `fechaFacturaCompra` | A | `422` |
+| Un campo opcional (fecha, Drive, mantenedor) es inválido | C | `422`, mensaje de F1B-02 |
+
+El orden relativo de estas dos guardas frente a las guardas 3-7 de la tabla de arriba, y entre sí, lo
+fija `design.md`; esta spec sólo impone el escalón: existencia (A) antes que contenido (C), igual que
+el resto de la tabla.
 
 - El `422` de obligatorios **SHALL** listar **todos** los que faltan y no de uno en uno (probado en
   `services/ticketService.test.ts:273` en `ad65161`).
-- El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:91`).
-- El `409` de unicidad de la OV **SHALL** ser la **última** guarda antes de la primera escritura
-  (`createTicket`, `:97`): cumple el orden total A/B/C/D de `transitions-st` §3.8.
+- El prefijo **SHALL** validarse contra `PREFIJOS`, no aceptarse libre (`:87`).
+- El `409` de unicidad de la OV **SHALL** ser la **última** guarda antes de la primera escritura, sea
+  el equipo o el ticket (`crearTicketConEquipo`, `:103`): cumple el orden total A/B/C/D de
+  `transitions-st` §3.8.
 - La guarda equipo↔cliente **SHALL** ejecutarse inmediatamente después de la existencia de la orden de
-  venta en Books (`:37`) —que puede completar `clientId` cuando el cuerpo no lo trae (`:39`)— y antes
+  venta en Books (`:39`) —que puede completar `clientId` cuando el cuerpo no lo trae (`:41`)— y antes
   de los obligatorios, del cliente y del `409` de unicidad.
 
 (Previously: dos correcciones de citas por el desplazamiento de `9ed5635`, y las filas 4/5 —OV ya usada
 antes que la discrepancia equipo↔cliente— en el orden que el código todavía ejecutaba.
 `orden-precedencia-guardas` mueve el `409` de la OV al final: deja de ser la guarda 4 y pasa a ser la
 7.)
+
+(Previously, tras `orden-precedencia-guardas`: la columna de evidencia de las filas 4-7 apuntaba a
+`:65-83`, `:87-92`, `:93-94` y `:45-49`; el rango de la función a `:20-105`; la nota del prefijo a
+`:91`; y la del `createTicket` a `:97` — las siete desfasadas por el propio desplazamiento de líneas
+de esa tanda, caso A de la regla de mutación 4 de `CLAUDE.md`. `alta-equipo-nuevo-en-ticket` repara
+las siete contra el árbol de hoy y añade la subtabla de la rama «Equipo nuevo».)
 
 #### Scenario: El alta sin discrepancia no cambia
 - GIVEN un alta sin equipo con `clientId` propio, o con `clientId` igual al del equipo
@@ -166,10 +200,28 @@ antes que la discrepancia equipo↔cliente— en el orden que el código todaví
 - WHEN se crea el ticket
 - THEN responde `422` listando los obligatorios que faltan, sin incluir «cliente» entre ellos
 
+#### Scenario: Rama «Equipo nuevo», datos obligatorios ausentes
+- GIVEN clasificaciones = 'Equipo nuevo', sin `equipoId`, y sin `serial` (o sin `modeloId`, o sin
+  `fechaFacturaCompra`)
+- WHEN se crea el ticket
+- THEN responde `422` (escalón A) y no se escribe nada
+
+#### Scenario: Rama «Equipo nuevo», dato opcional inválido
+- GIVEN clasificaciones = 'Equipo nuevo', sin `equipoId`, datos obligatorios completos, y un campo
+  opcional con formato inválido (fecha o Drive)
+- WHEN se crea el ticket
+- THEN responde `422` con el mensaje de F1B-02 (`hojas-vida` RQ-HV-03/RQ-HV-04) y no se escribe nada
+
+#### Scenario: Las otras dos clasificaciones no cambian
+- GIVEN clasificaciones = 'Equipo para servicio de mantenimiento' o 'Soporte remoto', sin `equipoId`
+- WHEN se crea el ticket
+- THEN responde `422 'Falta el equipo'`, igual que hoy — la guarda 1 no cambia para estas dos ramas
+
 **Bajo `strict_tdd`:** la prueba de «equipo↔cliente gana a la OV ya usada» nace **roja de forma
-natural** —hoy el código contesta `409`—; la de «equipo↔cliente gana a los obligatorios» nace **verde**
-—el código ya la cumple— y su rojo se obtiene **por mutación**: invertir el orden de las dos guardas,
-correr la suite, confirmar el rojo, revertir.
+natural** —hoy el código contesta `409`—; la de «equipo↔cliente gana a los obligatorios» nace
+**verde** —el código ya la cumple— y su rojo se obtiene **por mutación**: invertir el orden de las dos
+guardas, correr la suite, confirmar el rojo, revertir. Las pruebas de la rama «Equipo nuevo» nacen
+**rojas de forma natural**: la rama no existe hoy.
 
 ### RQ-TC-06 · El alta es atómica y deja dos filas
 
@@ -193,6 +245,52 @@ en ellas para contar la creación (`repo.ts:389-392`).
 > **Then** la foto no existe y la historia cae a la fila del ticket, sin forma de reconstruirla
 > (`repo.ts:390-392`; el discriminador está en `ticketFuentes.ts:63-75`).
 
+### RQ-TC-15 · Alta con «Equipo nuevo»: el equipo se crea o se reutiliza en el mismo paso
+
+Cuando `clasificaciones === 'Equipo nuevo'` y el cuerpo no trae `equipoId`, el sistema **SHALL**
+aceptar los datos del equipo nuevo en el mismo cuerpo del alta — obligatorios: `serial`, `modeloId`
+del catálogo y `fechaFacturaCompra` (la fecha de **compra** del equipo, no `tickets.fecha_factura`);
+opcionales: fecha de adquisición, fin de garantía, código interno, Drive y mantenedor, con la
+validación de F1B-02 (`hojas-vida` RQ-HV-03, RQ-HV-04, RQ-HV-05). Esta guarda **sustituye**, sólo para
+esta clasificación, la exigencia de `equipoId` de RQ-TC-04; `Equipo para servicio de mantenimiento` y
+`Soporte remoto` siguen exigiéndolo sin cambios.
+
+- Si ya existe un equipo cuyo `serial` normalizado (recortado y en minúsculas) coincide con el
+  `serial` recibido, el sistema **SHALL** reutilizar ese equipo y **MUST NOT** crear uno nuevo.
+- El `clientId` del equipo, creado o reutilizado, **SHALL** ser el `clientId` ya resuelto del ticket
+  (cuerpo o `salesOrderId`, RQ-TC-13).
+- El ticket **SHALL** quedar enlazado al equipo —creado o reutilizado— igual que queda enlazado hoy a
+  un equipo ya existente (RQ-TC-04).
+
+#### Scenario: Alta con datos válidos crea un equipo nuevo
+- GIVEN clasificaciones = 'Equipo nuevo', sin `equipoId`, con `serial`, `modeloId` y
+  `fechaFacturaCompra` válidos
+- WHEN se crea el ticket
+- THEN responde `201`, existe un equipo nuevo con `clientId` igual al del ticket, y el ticket queda
+  enlazado a él
+
+#### Scenario: Serial ya existente se reutiliza, sin duplicar
+- GIVEN un equipo existente con serial `"SN-1"`, y un alta con serial `" Sn-1 "` (espacios y
+  mayúsculas distintos)
+- WHEN se crea el ticket
+- THEN responde `201`, no se crea un segundo equipo, y el ticket queda enlazado al equipo existente
+
+### RQ-TC-16 · La creación del equipo nuevo es atómica con la del ticket
+
+El sistema **SHALL** crear el equipo nuevo sólo después de que todas las guardas del alta hayan
+pasado, y **SHALL** escribirlo en la misma transacción que el `INSERT` del ticket (RQ-TC-06), de modo
+que **MUST NOT** quede un equipo huérfano cuando una guarda posterior al punto de creación falla.
+
+#### Scenario: Una guarda posterior falla y no queda equipo creado
+- GIVEN clasificaciones = 'Equipo nuevo', datos del equipo válidos, y una orden de venta ya asociada a
+  otro ticket
+- WHEN se crea el ticket
+- THEN responde `409` (o el `422` de la guarda que falle) y no queda ningún equipo nuevo escrito
+
+**Bajo `strict_tdd`:** el rojo de esta guarda se obtiene también por mutación — mover la creación del
+equipo antes de la última guarda del alta debe poner la suite en rojo (regla de mutación 1 de
+`CLAUDE.md`).
+
 ### RQ-TC-07 · La fase inicial tiene dos nombres, y no se cruzan
 
 El ticket nacido en la app **SHALL** nacer en `Ticket creado` y **MUST NOT** nacer en `OV asignada`,
@@ -205,13 +303,15 @@ RQ-TS-02. Aquí sólo se fija de dónde arranca el ticket.
 
 Ésta es la **primera** de las tres puertas. El alta **SHALL** rechazar con `409` una orden ya
 asociada a otro ticket, mirando las **dos vías** —`salesorder_id` y `orden_venta`—
-(`ticketService.ts:94-98`, con `ticketConOrdenVenta` en `repo.ts:330-347`).
+(`ticketService.ts:96-100`, con `ticketConOrdenVenta` en `repo.ts:330-347`).
 
 - La razón **SHALL** quedar escrita: el buscador ya sólo ofrece las libres, «pero una lista no es una
   frontera» — basta mandar el id a mano o llegar con la lista cacheada para duplicar la orden
-  (`ticketService.ts:89-93`).
+  (`ticketService.ts:89-93` en `817eba3`; el comentario se reescribió en `alta-equipo-nuevo-en-ticket`
+  y hoy vive en `:92-95`, sin esta frase — sigue documentando el escalón D y el motivo de ir al final,
+  pero ya no cita literalmente «una lista no es una frontera»).
 - La **fecha** de la orden **SHALL** viajar con su número y guardarse en el alta
-  (`ticketService.ts:30-34`, `:41`; el campo en `CreateTicketInput` está documentado en
+  (`ticketService.ts:32-36`, `:43`; el campo en `CreateTicketInput` está documentado en
   `repo.ts:359-365`): sin ella, `habilitar_servicio` pide una fecha que nadie puede rellenar, porque
   el campo llega bloqueado y con él bloqueado no se pinta el buscador que la arrastra.
 
@@ -273,8 +373,8 @@ la app (`design C:47`; el `INSERT` de `repo.ts:385-386` no lo escribe).
 
 ### RQ-TC-13 · La guarda equipo↔cliente impone integridad de datos, no autorización
 
-Tras resolver el `clientId` final del bloque de la orden de venta (`ticketService.ts:27`, `:39`) y
-antes de crear el ticket (`:97`), el sistema **SHALL** comparar ese `clientId` final contra
+Tras resolver el `clientId` final del bloque de la orden de venta (`ticketService.ts:29`, `:41`) y
+antes de crear el ticket (`:99`), el sistema **SHALL** comparar ese `clientId` final contra
 `equipo.clientId` (`db/equipos.ts:42`):
 
 1. Si el `clientId` final es nulo y `equipo.clientId` existe, el sistema **SHALL** usar
@@ -292,7 +392,7 @@ antes de crear el ticket (`:97`), el sistema **SHALL** comparar ese `clientId` f
 3. Si `equipo.clientId` es `NULL`, el sistema **MUST NOT** alterar comportamiento existente (protege
    al ~3,4 % de equipos sin enlazar); esta rama **SHALL** quedar fuera de la comparación del punto 2.
 
-La posición de la guarda —tras la existencia de la orden de venta en Books (`:37`) y antes de los
+La posición de la guarda —tras la existencia de la orden de venta en Books (`:39`) y antes de los
 obligatorios (`:87-92`)— y el `422` **SHALL** seguir igual. El `409` de unicidad de la orden de
 venta —antes en `:45-49`, inmediatamente antes de esta guarda— pasa a evaluarse **después** de los
 obligatorios y del cliente, como última guarda del alta (`transitions-st` §3.8; `RQ-TC-05`): la
@@ -303,7 +403,7 @@ La severidad es de **integridad de datos, no de autorización**: `tickets.client
 sólo resuelve el nombre a mostrar (`tickets-core` RQ-TC-12).
 
 **Consecuencia declarada.** El `clientId` final puede venir de la orden de venta y no sólo del cuerpo
-(`:39`): un ticket cuya OV es de un cliente distinto del equipo pasa a dar `422` donde antes creaba el
+(`:41`): un ticket cuya OV es de un cliente distinto del equipo pasa a dar `422` donde antes creaba el
 ticket en silencio. Toca el punto abierto nº 52 del maestro (`R08.1.md:2071-2079`).
 
 (Previously: «tras el `409` de la OV (`:45-49`) y antes de los obligatorios (`:87-92`)».
@@ -386,7 +486,7 @@ debe haber.)*
 ### 4.1 · La precedencia del `409` de la OV frente al `422` de obligatorios — cerrada por `orden-precedencia-guardas`
 
 **Cerrado.** El `409` de unicidad de la orden de venta deja de ganar en el alta: pasa a ser la
-**última** guarda antes de la primera escritura (`ticketService.ts:97`), detrás de las guardas de
+**última** guarda antes de la primera escritura (`ticketService.ts:99`), detrás de las guardas de
 contenido — igual que en `habilitar_servicio`. Las dos puertas de la misma regla evalúan ahora en el
 **mismo** orden (`transitions-st` §3.8(a)).
 
@@ -411,8 +511,8 @@ verificada contra el cambio efectivamente aplicado, es 3.)
 > **✅ RESUELTO EL 2026-09-10 · `decision/n52-cardinalidad-ov`.** El punto abierto nº 52 está cerrado:
 > **`1 ticket : N OV`, sin tabla puente**, y está en la tabla de decisiones del plan (`plan:364`).
 >
-> **Se CONSTRUYE la tercera puerta; las dos que ya existen SE QUEDAN** — `ticketService.ts:94-97` en el
-> alta (RQ-TC-08) y `:148-149` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un
+> **Se CONSTRUYE la tercera puerta; las dos que ya existen SE QUEDAN** — `ticketService.ts:96-99` en el
+> alta (RQ-TC-08) y `:150-151` en `habilitar_servicio` (RQ-TS-14). Una OV pertenece como mucho a un
 > ticket, que es justo lo que comprueban. La variante que ponía la regla en duda, la OV global por
 > lote, **desaparece por proceso**: se sustituye por subórdenes `OV-AAAA-NNN-SS`, una por ticket
 > (`decision/subov-lote-convencion`). La regla completa vive en `remisiones` `RQ-RE-16`.

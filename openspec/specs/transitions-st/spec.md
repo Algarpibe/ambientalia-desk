@@ -182,20 +182,20 @@ aritmética mezcla dos convenciones.
 
 `POST /api/tickets/:id/transition` (`routes/tickets.ts:192-194`) **SHALL** exigir sesión
 (`routes/tickets.ts:35`) y **SHALL** aplicar las guardas de `executeTransition`
-(`services/ticketService.ts:112-221`) **en este orden**, que es el que exige el orden total de
+(`services/ticketService.ts:114-223`) **en este orden**, que es el que exige el orden total de
 precedencia (§3.8): existencia (A) y estado/permiso (B) antes que contenido (C), y éste antes que
 unicidad (D).
 
 | Orden | Guarda | Escalón | Respuesta | Evidencia |
 |---|---|---|---|---|
-| 1 | La transición existe | A | `400 'Transición desconocida'` | `ticketService.ts:121` |
-| 2 | El ticket existe | A | `404 'Ticket no encontrado'` | `:123` |
-| 3 | El estado actual está en el `from` de la transición | B | `409 '…no aplica desde el estado…'` | `:124-126` |
-| 4 | El área del usuario cubre el área de la transición | B | `403 '…no tiene permiso para esta transición…'` | `:127-129` |
-| 5 | Los campos obligatorios están presentes | C | `422 { errors: plan.errors }` | `:132` |
-| 6 | Una fecha derivada tecleada sin fuente no es una fecha real | C | `422 { errors }` | `:132` (fijada por el diseño; ver `RQ-TS-08`) |
-| 7 | La persona a la que se deriva existe y está activa | C | `422 'La persona a la que se deriva no existe o está dada de baja'` | `:136-140` |
-| 8 | La orden de venta no está ya asociada a otro ticket | D | `409 '…ya está asociada al ticket #…'` | `:146-150` |
+| 1 | La transición existe | A | `400 'Transición desconocida'` | `ticketService.ts:123` |
+| 2 | El ticket existe | A | `404 'Ticket no encontrado'` | `:125` |
+| 3 | El estado actual está en el `from` de la transición | B | `409 '…no aplica desde el estado…'` | `:126-128` |
+| 4 | El área del usuario cubre el área de la transición | B | `403 '…no tiene permiso para esta transición…'` | `:129-131` |
+| 5 | Los campos obligatorios están presentes | C | `422 { errors: plan.errors }` | `:134` |
+| 6 | Una fecha derivada tecleada sin fuente no es una fecha real | C | `422 { errors }` | `:134` (fijada por el diseño; ver `RQ-TS-08`) |
+| 7 | La persona a la que se deriva existe y está activa | C | `422 'La persona a la que se deriva no existe o está dada de baja'` | `:138-142` |
+| 8 | La orden de venta no está ya asociada a otro ticket | D | `409 '…ya está asociada al ticket #…'` | `:148-152` |
 
 (Previously: siete filas, sin la 6; evidencias `:117`, `:119`, `:120-122`, `:123-125`, `:128`,
 `:140-144` y `:132-136` — caducas contra `4976787`, reancladas por esta tanda. La guarda 6 antigua
@@ -251,7 +251,7 @@ en `plan.errors` en lugar de lanzar.
 **`buildTransitionPlan` DEJA de ser la única validación de campos, a secas.** Desde
 `fechas-derivadas-servidor` hay una segunda validación, de **contenido** y sólo para las tres fechas
 derivadas (`Fecha creación ticket`, `Fecha Remisión Entrada`, `Fecha Revisión Informe`). Vive fuera de
-`buildTransitionPlan`, en `executeTransition` (`apps/desk/server/services/ticketService.ts:132`), por
+`buildTransitionPlan`, en `executeTransition` (`apps/desk/server/services/ticketService.ts:134`), por
 dos razones: (1) no tocar `transitionExec.ts` — 40 citas vivas en 14 ficheros, medidas el 2026-09-21 —
 y (2) acotar la validación nueva a esas tres fechas. Sus errores **SHALL** salir en el mismo
 `422 { errors }` que los de presencia, **detrás** de ellos — presencia antes que validez, el sub-orden
@@ -259,7 +259,7 @@ que fija `transitions-st` §3.8. (Previously: «SHALL ser la única validación 
 
 - Un campo `required` que llega vacío **SHALL** producir
   `Falta el campo obligatorio: <label>` (`transitionExec.ts:77`), y el llamador **SHALL** traducirlo a
-  `422` (`ticketService.ts:132`).
+  `422` (`ticketService.ts:134`).
 - El **comentario NUNCA MAY declararse obligatorio**: el ayudante `comment()` no admite parámetro
   (`transitions.ts:65-74`), y por eso el motor se quedó sin la guarda aparte que lo comprobaba
   (`transitionExec.ts:95-99`). Es el principio de diseño nº 4 del maestro cumplido en el código
@@ -324,7 +324,9 @@ Toda transición **SHALL** dejar fila en `ticket_transitions` con su origen, su 
 excepciones» (`:1677`).
 
 - El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a la constante `TRANSITION_ACTOR`
-  sólo si la sesión no trae nombre (`ticketService.ts:145`, `transitionActor.ts:3`).
+  sólo si la sesión no trae nombre (`ticketService.ts:153` en el árbol de hoy; la cita venía de
+  `:145`, ya rota antes de este cambio —apuntaba a un comentario, no a la asignación—, corregida al
+  verificarla aquí, `transitionActor.ts:3`).
 - La cobertura **SHALL** ser de las 34: el barrido ejercita **todos** los `from` de cada transición
   —`habilitar_servicio` tiene tres—, o sea **36 ejecuciones**, y comprueba en cada una el estado
   destino y la fila del historial (`transicionesEjecucion.test.ts:105-117`, `:272-285`).
@@ -353,7 +355,7 @@ derivar no puede frenar un ticket (`transitions.ts:96-98`, `:277-291`; maestro M
   (`transitionExec.ts:48-61`): la clave **ausente** no toca lo que hubiera; la clave **vacía** borra
   la derivación. Sin esa distinción, vaciar la casilla no haría nada.
 - Un id de persona recibido **MUST** comprobarse: inexistente o dada de baja produce `422`
-  (`ticketService.ts:136-140`).
+  (`ticketService.ts:138-142`).
 
 ### RQ-TS-13 · Avisos: se calculan desde el estado de llegada
 
@@ -622,7 +624,7 @@ primeras la comprueban, y ahora **en el mismo orden** entre sí:
 | Puerta | Comprueba | Precedencia del `409` frente al `422` de obligatorios | Evidencia |
 |---|---|---|---|
 | Creación de ticket | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:45-49` (movida detrás de la guarda de cliente, `:94`) |
-| Transición `habilitar_servicio` | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:146-150` (detrás de la guarda de derivación, `:136-140`; hoy `:132` es el `422` de las fechas derivadas de `fechas-derivadas-servidor`, no el bloque de la OV) |
+| Transición `habilitar_servicio` | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:148-152` (detrás de la guarda de derivación, `:138-142`; hoy `:134` es el `422` de las fechas derivadas de `fechas-derivadas-servidor`, no el bloque de la OV) |
 | **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-240` |
 
 **Las dos primeras SON equivalentes ahora**: comprueban la misma regla en el mismo orden. La inversión
@@ -752,33 +754,33 @@ por grupo, no se enuncia como «precedencia observable» y no admite excepción 
 
 | Escalón | Qué clase de cosa comprueba | Guardas verificadas |
 |---|---|---|
-| **A · existencia** | ¿está presente y existe lo que la petición direcciona, o aporta por identificador? | `:121` transición desconocida · `:123` ticket no encontrado · `:23` falta el equipo · `:25` equipo no registrado · `:37` OV no encontrada |
-| **B · estado y permiso del sujeto** | ¿puede esta operación ocurrir sobre este sujeto ahora? | `:124-126` estado de origen · `:127-129` área |
-| **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:59-77` equipo↔cliente · `:86` obligatorios · `:88` cliente no encontrado · `:132` obligatorios del plan · **`:132` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:136-140` derivación |
-| **D · unicidad sobre un valor aportado** | ¿el valor aportado choca con otro registro? | `:94-98` OV ya usada en el alta (bloque que `orden-precedencia-guardas` movió detrás de `:88`) · `:146-150` OV ya usada en `habilitar_servicio` (bloque que `orden-precedencia-guardas` movió detrás de `:140`) |
+| **A · existencia** | ¿está presente y existe lo que la petición direcciona, o aporta por identificador? | `:123` transición desconocida · `:125` ticket no encontrado · `:24` falta el equipo · `:27` equipo no registrado · `:39` OV no encontrada |
+| **B · estado y permiso del sujeto** | ¿puede esta operación ocurrir sobre este sujeto ahora? | `:126-128` estado de origen · `:129-131` área |
+| **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:61-79` equipo↔cliente · `:88` obligatorios · `:90` cliente no encontrado · `:134` obligatorios del plan · **`:134` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:138-142` derivación |
+| **D · unicidad sobre un valor aportado** | ¿el valor aportado choca con otro registro? | `:96-100` OV ya usada en el alta (bloque que `orden-precedencia-guardas` movió detrás de `:90`) · `:148-152` OV ya usada en `habilitar_servicio` (bloque que `orden-precedencia-guardas` movió detrás de `:142`) |
 
 **La frontera A/C.**
-- `:88` «Cliente no encontrado» es **C**, no A: no comprueba una entidad aportada tal cual, comprueba
-  el `clientId` **ya resuelto** —cuerpo, orden de venta (`:39`) o equipo (`:62`)—. Valida el resultado
+- `:90` «Cliente no encontrado» es **C**, no A: no comprueba una entidad aportada tal cual, comprueba
+  el `clientId` **ya resuelto** —cuerpo, orden de venta (`:41`) o equipo (`:64`)—. Valida el resultado
   de una resolución, no un identificador recibido.
-- `:136-140` «la persona a la que se deriva» es **C**, no A (obs. #702): no es existencia pura, rechaza
-  también a quien existe pero está dado de baja (`:139`).
+- `:138-142` «la persona a la que se deriva» es **C**, no A (obs. #702): no es existencia pura, rechaza
+  también a quien existe pero está dado de baja (`:141`).
 
 **El criterio de fondo de P1 sobrevive intacto:** primero lo que el usuario puede arreglar (A y C),
 después lo que no (D). La escalera sólo lo hace decible sin contradecir a P2.
 
 **Sub-orden dentro de un escalón**, fijado por dependencia de datos y por prueba, no por la escalera:
-presencia antes que validez (`:132` obligatorios del plan antes que la fecha derivada sin fuente
-inválida —misma línea, `fechas-derivadas-servidor`—, y ésta antes de `:136-140` derivación) y el hueco
-se rellena antes de contarlo (`:59-77` antes de `:86`, porque la rama (i) de `:59-62` tiene que poner
-`clientId` antes de `:82`).
+presencia antes que validez (`:134` obligatorios del plan antes que la fecha derivada sin fuente
+inválida —misma línea, `fechas-derivadas-servidor`—, y ésta antes de `:138-142` derivación) y el hueco
+se rellena antes de contarlo (`:61-79` antes de `:88`, porque la rama (i) de `:61-64` tiene que poner
+`clientId` antes de `:84`).
 
 #### a) Las dos puertas de la OV comprueban ahora la misma regla en el mismo orden
 
 | Puerta | Orden declarado (guardas reales, tras esta tanda) | Quién gana ante el error doble (obligatorios / OV ya usada) |
 |---|---|---|
-| `createManagedTicket` | `:23` A · `:25` A · `:37` A · `:59-77` C · `:86` C · `:88` C · `:94-98` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
-| `executeTransition` | `:121` A · `:123` A · `:124-126` B · `:127-129` B · `:132` C · fecha derivada C (nueva) · `:136-140` C · `:146-150` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:195`) |
+| `createManagedTicket` | `:24` A · `:27` A · `:39` A · `:61-79` C · `:88` C · `:90` C · `:96-100` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
+| `executeTransition` | `:123` A · `:125` A · `:126-128` B · `:129-131` B · `:134` C · fecha derivada C (nueva) · `:138-142` C · `:148-152` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:195`) |
 
 Cero inversión: las dos puertas evalúan la misma pareja en el mismo orden.
 
@@ -792,7 +794,7 @@ guarda de fecha derivada en `executeTransition`.)
 #### b) El `409` de estado sigue contestando antes que el `403` de área — conservado como sub-orden de B
 
 En `executeTransition`, la guarda del estado de origen **SHALL** evaluarse antes que la guarda del área
-(`:124-126` antes de `:127-129`). Las **tres** pruebas de posición que clavan la cadena completa:
+(`:126-128` antes de `:129-131`). Las **tres** pruebas de posición que clavan la cadena completa:
 `ticketService.test.ts:158` (estado > área), `:164` (estado > obligatorios) y `:170` (área >
 obligatorios).
 
@@ -878,8 +880,8 @@ los dos campos a la vez.
 
 La garantía queda sostenida por inspección de código y por la prueba de mutación de posición (regla
 de mutación 1 de `CLAUDE.md`): el orden lineal de `executeTransition` valida la fecha derivada
-(escalón C, `ticketService.ts:130-132`) incondicionalmente antes que la unicidad de OV (escalón D,
-`ticketService.ts:146-150`), sin ninguna rama que pueda invertirlos, y ese mismo tramo está probado
+(escalón C, `ticketService.ts:132-134`) incondicionalmente antes que la unicidad de OV (escalón D,
+`ticketService.ts:148-152`), sin ninguna rama que pueda invertirlos, y ese mismo tramo está probado
 en rojo y revertido por los casos `P-a`/`P-b` de
 `apps/desk/server/services/valoresDeTransicion.test.ts:176-197`.
 
@@ -943,7 +945,7 @@ hoy no la llama nadie.
 
 **La primera de las dos piezas de la ampliación YA ESTABA CONSTRUIDA.** «Aviso redundante por correo
 cuando una transición cambia de área» (`:1573`) es lo que el motor hace desde antes de esta tanda
-(`ticketService.ts:160-183`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
+(`ticketService.ts:162-185`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
 dice nueve líneas más abajo de pedirlo**: «`[AS-BUILT]` Al ejecutarse cualquier transición, el sistema
 calcula el área destinataria del aviso a partir del estado de llegada y notifica en la aplicación **y
 por correo**» (`:1582`). Lo que faltaba en ese canal era poder encenderlo sin romper la regla de
