@@ -1,5 +1,5 @@
 // F1B-12 — lector de cierres de empresa: RQ-CL-06. Sin ruta HTTP (D6): el alta es directa en la base,
-// a cargo de Alfonso (proposal, pregunta 1). Molde de `avisos.test.ts:1-10`.
+// a cargo de Alfonso (proposal, pregunta 1). Molde de `avisos.test.ts:1-9`.
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
