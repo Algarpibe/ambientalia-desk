@@ -6,7 +6,7 @@ import { sweepEntity, type SweepOpts, type SweepReport, type SweepEntity } from 
 
 interface Deps { crmFetch: (path: string, init?: RequestInit) => Promise<Response>; db: Queryable; config: AppConfig }
 export type CrmCounts = Record<string, number>
-export interface CrmSync { backfillAll(): Promise<CrmCounts>; syncRecent(): Promise<CrmCounts>; backfillIfEmpty(): Promise<CrmCounts>; sweep(opts: SweepOpts): Promise<SweepReport[]> }
+export interface CrmSync extends FasesGanadasPendientes { backfillAll(): Promise<CrmCounts>; syncRecent(): Promise<CrmCounts>; backfillIfEmpty(): Promise<CrmCounts>; sweep(opts: SweepOpts): Promise<SweepReport[]> }
 const PER_PAGE = 200
 async function readData(res: Response): Promise<any> { const t = await res.text(); return t ? JSON.parse(t) : {} }
 
@@ -126,5 +126,80 @@ export function createCrmSync({ crmFetch, db, config }: Deps): CrmSync {
     }
     return reports
   }
-  return { backfillAll: () => runAll(backfillModule), syncRecent: () => runAll(incrementalModule), backfillIfEmpty, sweep }
+  /**
+   * Trae la hora de entrada en la fase de los tratos ganados cuya copia puede estar desfasada: los que
+   * nunca se han leído (`stage_detail_synced_at` nulo) y los que Zoho ha modificado después de la última
+   * vez (`stage_detail_synced_at` anterior a `modified_time`). Lo corre el worker en cada ciclo de CRM.
+   *
+   * Hace falta la ficha porque el listado de Zoho da `Stage_Modified_Time` siempre nulo y COQL rechaza
+   * la columna. Solo se piden los ganados, por economía de llamadas: el KPI no necesita las demás fases.
+   *
+   * - La hora se guarda como la da la ficha, igual que `ts()` en los módulos: PostgreSQL convierte el
+   *   texto con su desfase en el instante.
+   * - La marca es el `modified_time` LEÍDO al elegir el trato, no `now()`: si Zoho lo cambia mientras se
+   *   lee su ficha, su `modified_time` avanza y la pasada siguiente lo vuelve a elegir.
+   * - Un trato sin `modified_time` se marca con el epoch: se lee una vez y no vuelve a salir hasta que
+   *   Zoho le ponga fecha. Marcarlo con nulo lo haría salir en todas las pasadas.
+   * - Tolerante: un fallo (HTTP, ficha vacía o sin hora, texto que no es fecha) se cuenta, se guarda el
+   *   motivo del primero y se sigue. El trato fallido no se marca y vuelve a salir en la pasada siguiente.
+   * - Una sola consulta simple: pg-mem, el motor de los tests, no resuelve subconsultas correlacionadas.
+   */
+  async function syncPendingWonStages({ limite, pausaMs = 500 }: FasesGanadasOpts): Promise<ResultadoFasesGanadas> {
+    const r = await db.query(
+      `SELECT id, modified_time FROM crm.deals
+       WHERE stage = ANY($1) AND (stage_detail_synced_at IS NULL OR stage_detail_synced_at < modified_time)
+       ORDER BY modified_time DESC NULLS LAST LIMIT $2`,
+      [FASES_GANADAS, limite],
+    )
+    const tanda = r.rows as { id: string; modified_time: Date | null }[]
+    let poblados = 0, fallidos = 0
+    let motivoPrimerFallo: string | undefined
+    for (const [i, t] of tanda.entries()) {
+      if (i > 0 && pausaMs > 0) await new Promise((res) => setTimeout(res, pausaMs))
+      try {
+        const res = await crmFetch(`/Deals/${t.id}`)
+        if (!res.ok) throw new Error(`CRM /Deals/${t.id} ${res.status}`)
+        const ficha = (await readData(res)).data?.[0]
+        if (!ficha?.Stage_Modified_Time) throw new Error(`CRM /Deals/${t.id} sin Stage_Modified_Time`)
+        await db.query(
+          'UPDATE crm.deals SET stage_modified_time = $1, stage_detail_synced_at = $2 WHERE id = $3',
+          [String(ficha.Stage_Modified_Time), t.modified_time ?? new Date(0), t.id],
+        )
+        poblados++
+      } catch (e) {
+        fallidos++
+        motivoPrimerFallo ??= e instanceof Error ? e.message : String(e)
+      }
+    }
+    return { intentados: tanda.length, poblados, fallidos, motivoPrimerFallo }
+  }
+  return { backfillAll: () => runAll(backfillModule), syncRecent: () => runAll(incrementalModule), backfillIfEmpty, sweep, syncPendingWonStages }
+}
+
+/**
+ * Las fases de CRM que cuentan como trato ganado. TIENE QUE COINCIDIR con `WON_DEAL_STAGES` de
+ * SalesTracker, que cuenta los ganados por `stage_modified_time`: una fase que esté allí y no aquí
+ * contaría tratos cuya hora este worker nunca rellena.
+ */
+export const FASES_GANADAS: readonly string[] = ['Cerrado ganado']
+
+/**
+ * La hora de entrada en la fase ganada que corre el worker `hub-sync`. Va en una interfaz aparte y al
+ * final del fichero, como `HistoriaPendiente` en el sync de Desk, para no mover las líneas de arriba.
+ */
+export interface FasesGanadasPendientes {
+  syncPendingWonStages(opts: FasesGanadasOpts): Promise<ResultadoFasesGanadas>
+}
+export interface FasesGanadasOpts {
+  /** Cuántos tratos como mucho en esta pasada. Obligatorio: sin tope, el primer arranque pediría todas las fichas de golpe. */
+  limite: number
+  /** Espera entre fichas. `crmFetch` no reintenta ante un 429. Por omisión 500 ms, como la historia de Desk. */
+  pausaMs?: number
+}
+export interface ResultadoFasesGanadas {
+  intentados: number
+  poblados: number
+  fallidos: number
+  /** Por qué falló el PRIMERO que falló. Ausente si no falló ninguno. */
+  motivoPrimerFallo?: string
 }

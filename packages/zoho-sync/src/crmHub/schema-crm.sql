@@ -70,3 +70,8 @@ CREATE TABLE IF NOT EXISTS crm.quote_line_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_crm_qli_quote ON crm.quote_line_items (quote_id);
+
+-- Marca de la ficha del trato ya leida por hub-sync para traer Stage_Modified_Time, que el listado de Zoho da siempre nulo. Guarda el modified_time del trato leido al elegirlo, no la hora de la pasada, asi que un trato con modified_time posterior vuelve a elegirse
+--
+-- Calificada con crm como todo este fichero. Y sin el caracter de punto y coma en estos comentarios, que migrateCrm parte el fichero por el
+ALTER TABLE crm.deals ADD COLUMN IF NOT EXISTS stage_detail_synced_at timestamptz;
