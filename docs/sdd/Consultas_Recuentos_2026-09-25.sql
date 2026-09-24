@@ -60,11 +60,12 @@ ROLLBACK;
 --   activos, cuántos tienen artículos (accesorios, consumibles y repuestos) y cuántos mano de obra,
 --   sumando los cargados a mano y los que se derivan por categoría de Zoho Books.
 -- Salida: 1 fila → modelos_total | modelos_activos | activos_con_articulos | activos_con_mano_obra |
---   activos_con_ambos. Al panel: las cinco.
--- ⚠️ «CON INSPECCIÓN» NO SE PUEDE CONTAR: la base no guarda ninguna inspección por modelo (el árbol de
---   inspección está diseñado en docs/inspecciones/, no cargado). La columna `revisar` del catálogo marca
---   un conflicto de tipo, NO una inspección. Esa cifra necesita que Gerencia diga qué es «llevar
---   inspección»; hasta entonces se informa como «no medible».
+--   activos_con_ambos. Al panel: las cinco, más `modelos_con_inspeccion = 0`.
+-- «CON INSPECCIÓN» = modelo con catálogo de inspección cargado en la base (definición del usuario,
+--   24/09/2026). Hoy vale 0 y no hace falta consultarlo: la base no tiene ninguna tabla de inspección
+--   (el árbol está diseñado en docs/inspecciones/, sin cargar). No bloquea nada, porque 1D pasó a 2027.
+--   Al panel: `modelos_con_inspeccion = 0`. La columna `revisar` del catálogo marca un conflicto de
+--   tipo, NO una inspección.
 -- -----------------------------------------------------------------------------------------------------
 BEGIN TRANSACTION READ ONLY;
 
