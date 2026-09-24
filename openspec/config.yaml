@@ -23,7 +23,7 @@ strict_tdd: true
 # distinto que aparezca en un prompt de arranque (p. ej. "engram" o "auto-chain"
 # heredados de la sesión F0-00): estos son los vigentes.
 session_preflight:
-  execution_mode: interactive
+  execution_mode: auto   # modo producción: Gerencia, 24/09/2026 (CLAUDE.md, «Regla de ejecución»)
   artifact_store: hybrid
   delivery_strategy: ask-on-risk
   review_budget_lines: 800

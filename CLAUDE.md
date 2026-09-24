@@ -504,7 +504,7 @@ no. Una decisión que sólo esté en la bandeja no ha llegado: trátala como pen
 
 - Configuración: `openspec/config.yaml` (capacidades, preflight, reglas por fase, unidad de avance).
 - **El preflight de sesión está FIJADO en fichero y gana.** `openspec/config.yaml:22-30`:
-  `interactive · hybrid · ask-on-risk · 800 líneas · strict_tdd`. Su comentario lo dice por escrito —
+  `auto · hybrid · ask-on-risk · 800 líneas · strict_tdd` (`auto` desde el 24/09: «Regla de ejecución», al final). Su comentario lo dice —
   «corrige cualquier valor distinto que aparezca en un prompt de arranque»—, y eso incluye lo que se
   derive del resumen de Engram o del propio encargo de la sesión. **Léelo antes de declarar ningún
   preflight.** El 2026-09-10 se declaró de memoria y salieron mal dos de los cuatro (`auto` por
@@ -587,3 +587,26 @@ Hacer la fusión en un worktree y medirla cuesta un minuto.
 herramienta **reserva a un mantenedor y nunca hace sola**. O sea que un descuido de paralelismo del
 agente **para la tanda y necesita a una persona** para arrancar otra vez. Ganar diez minutos de reloj
 cuesta un turno entero.
+
+---
+
+## Regla de ejecución — modo producción
+
+Gerencia, 2026-09-24. **Las tandas de la R01.3 se encadenan en su orden, cada una con su ciclo SDD
+completo** —propuesta, especificación, diseño, tareas, aplicar, verify y archivar—, **sin parar a pedir
+aprobación entre fases**. Por eso `session_preflight.execution_mode` es `auto` desde ese día
+(`openspec/config.yaml`, `session_preflight`); el resto del preflight no cambia.
+
+> Cuando una duda tenga un **supuesto razonable y reversible**, se aplica, se anota en la propuesta y en
+> el parte, y se sigue. **Sólo se para y se pregunta** si la duda:
+>
+> 1. cambia el alcance de una fila;
+> 2. cuesta dinero;
+> 3. toca datos de producción;
+> 4. contradice una decisión registrada en `openspec/config.yaml`; o
+> 5. no tiene un supuesto razonable.
+
+*Lo que NO cambia:* la regla de método (ruta y línea, o «hipótesis»), `strict_tdd`, el ledger de
+`gentle-ai sdd-attempt` con sus intentos y su techo, la regla del ciclo 2 (una tanda SDD por árbol), el
+barrido de citas de la regla de mutación 4 al cerrar, y el contraste dato a dato de los informes de los
+subagentes antes de cada `settle`. Encadenar no es saltarse comprobaciones: es no pedir permiso entre ellas.
