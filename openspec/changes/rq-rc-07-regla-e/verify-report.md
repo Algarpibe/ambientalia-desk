@@ -25,11 +25,11 @@ build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e
 El verify previo (`fail`, 2 CRITICAL, Engram #1019) marcó 2/3 escenarios de la spec delta como
 UNTESTED: «un cierre por dictamen se distingue de uno por trabajo» y «un cambio... lleva un único
 `tanda:`». D4 del diseño había decidido no cubrirlos para no desplazar las citas externas ancladas en
-`registro.test.ts:96/:101/:108` (regla de mutación 4). La remediación (tareas R.1-R.8) añadió un
+`registro.test.ts:96`, `:101` y `:108` (regla de mutación 4). La remediación (tareas R.1-R.8) añadió un
 `describe` nuevo AL FINAL del fichero (`:125-157`, después de la línea 123 de `HEAD`), con
 `bloqueDeRegla` y 4 `it`: bloque (d) contiene «por trabajo»/«por dictamen» + control del otro signo;
 bloque (e) contiene «UN SOLO `tanda:`»/«cuenta en parte» + control del otro signo. `git diff HEAD`
-(ejecutado por este verify) confirma que sólo se insertaron líneas tras `:123`; `:96/:101/:108`
+(ejecutado por este verify) confirma que sólo se insertaron líneas tras `:123`; `:96`, `:101` y `:108`
 quedan byte a byte iguales a `HEAD`. Los dos CRITICAL quedan cerrados con test que pasa en runtime.
 
 ### Completeness
@@ -89,7 +89,7 @@ Coincide con el RED/GREEN real reportado en `apply-progress.md`.
 prueba declarado o la carpeta del cambio. Los cuatro ficheros sin trackear en `docs/sdd/` ya existían
 al inicio de la sesión, ajenos a esta tanda. `git diff HEAD -- registro.test.ts` muestra que las
 líneas 1-43 y 64-123 son idénticas a `HEAD`; sólo `:44-63` (cambio original, ya verificado antes) y lo
-posterior a `:123` (remediación) difieren. `:96/:101/:108` releídas y byte a byte iguales a `HEAD`.
+posterior a `:123` (remediación) difieren. `:96`, `:101` y `:108` releídas y byte a byte iguales a `HEAD`.
 
 ### TDD Compliance
 | Check | Result | Details |
