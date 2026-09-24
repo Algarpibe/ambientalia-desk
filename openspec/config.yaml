@@ -309,7 +309,7 @@ capabilities:
       partición por fases, guarda anti-desfase) no es un requisito del motor de transiciones.
       transitions-st sí recibe delta en el mismo cambio, porque RQ-TS-03 se modifica (P-2 de la
       propuesta).
-
+  - name: calendario-laboral
 # Cambios redactados fuera de openspec/ y ya movidos por F0-01. Se conserva el
 # registro del movimiento, no como tarea pendiente: los dos ficheros están en su
 # destino y docs/sdd/changes/ ya no existe.

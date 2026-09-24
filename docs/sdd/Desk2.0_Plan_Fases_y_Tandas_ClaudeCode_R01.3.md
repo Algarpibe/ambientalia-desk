@@ -204,3 +204,23 @@ Cifras de cierre, con las dos filas nuevas y el criterio de §C.2. Entre parént
 **Hipótesis de la fuente sobre M1**, que conviene ver confirmada o desmentida: los adjuntos «serán pocos», porque el campo «Documentacion Almacenada en el Drive?» existe precisamente porque los informes de servicio —lo pesado— viven en Drive y no como adjuntos de Zoho (`Plan_Independencia…md:45`).
 
 **Hipótesis de la fuente sobre M2:** los tres tickets más recientes (984, 985, 986) traen `channel: "Email"` pero **los creó un agente**: `createdBy` apunta a personas, la descripción viene vacía o escrita a mano, y dos de los tres tienen cero hilos de correo (`:51`).
+
+---
+
+## G · Catálogo de filas
+
+Esta R01.3 no trae un §5 propio (es el plan vigente heredado de la R01.2, sin esa sección escrita).
+Las tandas nuevas cuyo contenido decide Gerencia se registran aquí, al final, para no desplazar
+ninguna cita de las secciones A-F (F0-05, R-1: «todo trabajo que realiza el contenido de una fila del
+§5 lleva su ID»).
+
+| ID | Capacidad | Talla | Contenido | Decisión de Gerencia |
+|---|---|---|---|---|
+| F1B-12 | `calendario-laboral` | S | Jornada L-V 8-17h, festivos de Colombia calculados por año, cierres de empresa inyectados, y la función única de horas/días hábiles (`decision/calendario-habil`) | `openspec/config.yaml:2534-2535` |
+
+**Nota:** el paso de `'Notificado'` de 24 h de reloj a 9 h hábiles (`SLA_HORAS_POR_ESTADO`, `sla.ts:34`)
+**no** va en F1B-12 — va en la misma tanda que construye la alerta de 4 días hábiles de
+`decision/anexo-3-alerta`, para que las tres alarmas pasen a horas hábiles juntas. Supuesto aplicado
+(modo producción, reversible): esa tanda es **F1B-08**, porque `anexo-3-alerta` declara
+`tanda_que_abre: "F1A-02 · F1B-08"` (`config.yaml:2329`) y F1A-02 está cerrada (`proposal.md`,
+pregunta 2 de `calendario-laboral`).

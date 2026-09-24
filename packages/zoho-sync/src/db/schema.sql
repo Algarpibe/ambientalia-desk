@@ -469,3 +469,15 @@ ALTER TABLE equipos ADD COLUMN IF NOT EXISTS fin_garantia date;
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS codigo_interno text;
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS mantenedor_id text;
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS drive_url text;
+
+-- F1B-12: cierres de empresa (dias completos) para el calendario laboral (packages/shared/src/calendarioLaboral.ts). Sin pantalla de alta: el INSERT lo hace Alfonso directamente en la base (proposal, pregunta 1)
+--
+-- CALIFICADA A PROPOSITO: es dato propio de la app, no de Zoho Desk, y va en public junto a avisos
+--
+-- AL FINAL del fichero para no desplazar las citas schema.sql:3xx-4xx (regla de mutacion 4)
+CREATE TABLE IF NOT EXISTS public.calendario_cierres (
+  fecha date PRIMARY KEY,
+  motivo text NOT NULL,
+  registrado_por text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);

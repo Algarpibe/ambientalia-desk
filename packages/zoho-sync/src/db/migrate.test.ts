@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 29 tablas: 10 de Desk, 16 de la app en public y 3 replicadas de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 16, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(29)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(29)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(29)
+  it('son 30 tablas: 10 de Desk, 17 de la app en public y 3 replicadas de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 17, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(30)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(30)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(30)
   })
 
   /**
