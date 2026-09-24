@@ -2175,6 +2175,71 @@ decisiones_de_gerencia:
     maestro_pasaje: "sin punto del Anexo D asignado"
     maestro_revision: "pendiente"
     tanda_que_abre: "F1F-01 · S50"
+    corregida_por: |
+      CORRECCIÓN DE GERENCIA, 24/09/2026, panel (opción B). NO SUSTITUYE lo de arriba: lo precisa, y lo de arriba
+      se conserva porque es lo que se decidió esa mañana y lo que citan el plan y el expediente.
+      TEXTO LITERAL: «Corrección a fecha-corte (decidida por Gerencia el 24/09/2026, opción B). El corte se
+      hace en dos tiempos. (1) Lunes 14/12/2026, corte
+      operativo: desde ese día los tickets nacen en Desk 2.0 y Zoho Desk queda en solo lectura; hasta que exista
+      el correo propio (1H), las respuestas al cliente se envían desde el correo corporativo y se registran en el
+      ticket. (2) Independencia total cuando 1G (repatriación del histórico) y 1H (correo propio) estén
+      verificadas, prevista para enero de 2027: entonces se deja de consultar Zoho y se dan de baja las licencias.
+      Antes del 14/12 entra la paridad operativa con Zoho más la restricción de liberar sin factura por cargo
+      (anexo-33-checkbox); las otras siete correcciones 1C, F0-06 y el mapa en la aplicación van después del
+      corte. Las medidas M1, M2 y M3 del plan de independencia se hacen esta semana y fijan la talla de 1G y 1H.
+      El corte del 14/12 se confirma solo si queda al menos una semana de margen; si no, se aplica el plan A:
+      corte único el lunes 01/02/2027. Esta corrección modifica la decisión fecha-corte ya registrada; no la
+      sustituye en el histórico.»
+      QUÉ CAMBIA, punto por punto:
+      (a) «CORTE EN SECO» SE PARTE EN DOS. La consecuencia (4) de arriba —«elimina la convivencia y con ella una
+      clase entera de problemas de sincronización»— deja de ser cierta entre el 14/12 y enero: Zoho se sigue
+      CONSULTANDO para el histórico hasta que 1G cierre. Lo que sí se mantiene es que no se ESCRIBE en Zoho, así
+      que `p44-escritura-zoho` (17/09) sigue intacta.
+      (b) LA TERCERA CONDICIÓN DE CONFIRMACIÓN DEJA DE SER BLOQUEANTE. Arriba, «responder al cliente por correo
+      sin pasar por Zoho» era una de las cuatro condiciones del examen del 9/12, y era la única sin tanda cerrada.
+      La corrección la sustituye por una solución provisional escrita: correo corporativo, registrado en el
+      ticket. 1H deja de bloquear el 14/12 y pasa a bloquear la independencia de enero.
+      (c) APARECE UN PLAN A CON FECHA: corte único el lunes 01/02/2027 si el 14/12 no conserva una semana de
+      margen. El tope duro del 21/12 que fijaba la renovación de licencias queda superado por este plan A, y esa
+      superación hay que verificarla contra el contrato de Zoho: si las licencias vencen antes del 01/02/2027, el
+      plan A cuesta una renovación. NO ESTÁ MEDIDO y se devuelve como pregunta `corte-licencias-plan-a`.
+      (d) FIJA EL ORDEN DE TRABAJO DE ESTA SEMANA: M1, M2 y M3 del `docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md`
+      son tarea de persona, van antes que cualquier tanda de 1G/1H y son las que fijan su talla.
+      (e) CONTRADICE `decision/mapa-en-la-app` DEL MISMO DÍA, y se señala sin resolver: esta corrección sitúa «el
+      mapa en la aplicación» DESPUÉS del corte, y `mapa-en-la-app` lo sitúa ANTES de F1B-06, que está antes del
+      corte. Devuelto como pregunta `mapa-antes-o-despues-del-corte`.
+      POR QUÉ LLEGA: la responde la R01.3 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md` §D), que midió
+      un déficit de 3,6 a 5,6 semanas para el 14/12 con 1G y 1H dentro.
+    corregida_por_fecha: "2026-09-24"
+    corregida_por_registro: "docs/sdd/ENTRADA.md → E-073 · docs/sdd/R08.3_Expediente_de_cambios.md §11.4 · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md §C y §D"
+    aclarada_por: |
+      ACLARACIÓN DE GERENCIA A LA CORRECCIÓN, 24/09/2026, posterior al tercer corte del día; la trae el usuario a la
+      sesión de análisis. NO SUSTITUYE ni la decisión ni la corrección de arriba: las precisa, y las dos se conservan
+      tal como están escritas.
+      TEXTO LITERAL: «Del examen del 9/12 salen DOS condiciones, no una: la respuesta al cliente por correo sin Zoho y
+      el histórico completo verificado. Las dos pasan a la independencia total de enero, junto con 1G y 1H. Hasta
+      entonces, el histórico se consulta en Zoho Desk en solo lectura y las respuestas se envían desde el correo
+      corporativo y se registran en el ticket. El examen del 9/12 queda con dos condiciones: crear y mover tickets en
+      Desk 2.0, y pruebas con servicios reales superadas. mapa-antes-o-despues-del-corte queda decidido: después del
+      corte. La frase «va antes de F1B-06» de mapa-en-la-app queda sin efecto.»
+      QUÉ CAMBIA, punto por punto:
+      (a) EL EXAMEN DEL 9/12 PASA DE CUATRO CONDICIONES A DOS: crear y mover tickets en Desk 2.0, y pruebas con
+      servicios reales superadas. Salen el correo sin Zoho y el histórico completo verificado.
+      (b) RESUELVE UNA AMBIGÜEDAD DE LA CORRECCIÓN. Su punto (b) decía «la TERCERA condición deja de ser bloqueante»
+      y describía el correo, que en la enumeración (3) de la decisión original es la SEGUNDA; la tercera es el
+      histórico. Leída al pie de la letra, la corrección sólo desbloqueaba el correo y dejaba el histórico —y con él
+      1G— dentro del examen. La aclaración nombra las dos condiciones por su contenido, así que el ordinal deja de
+      importar.
+      (c) 1G Y 1H SALEN DEL BLOQUE DE ANTES DEL CORTE, y es lo que sostiene la cuenta de la R01.3 §D: margen de
+      +1,9 a +2,2 semanas contra el umbral de una semana, luego el plan A (01/02/2027) no se activa.
+      (d) CIERRA LA PREGUNTA `mapa-antes-o-despues-del-corte`: el mapa en la aplicación va DESPUÉS del corte. Queda
+      anotado también en `decision/mapa-en-la-app` → `aclarada_por`.
+      (e) LO QUE NO RESUELVE: `corte-licencias-plan-a` sigue abierta. Y aparece un cabo que ninguna de las tres
+      piezas cubre: la encuesta de satisfacción va dentro de F1F-05 y depende de la salida de correo de 1H-01 (R01.3
+      §B); con 1H en enero y Zoho en solo lectura desde el 14/12, nada dice cómo sale la encuesta entre el corte y la
+      independencia. Devuelto como pregunta `encuesta-entre-corte-e-independencia`.
+    aclarada_por_fecha: "2026-09-24"
+    aclarada_por_registro: "docs/sdd/ENTRADA.md → E-074 · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila decision/fecha-corte · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md §C y §D"
 
   - clave: "decision/p55-backup"
     fecha: "2026-09-24"
@@ -2689,6 +2754,64 @@ decisiones_de_gerencia:
     maestro_pasaje: "sin punto del Anexo D asignado"
     maestro_revision: "no aplica"
     tanda_que_abre: "hook-citas-pre-push — archivada el 15/09"
+
+  - clave: "decision/equipo-nuevo-alta-en-ticket"
+    fecha: "2026-09-24"
+    pregunta: |
+      Cuando entra un equipo que la empresa nunca ha registrado, hoy no se puede abrir su ticket sin darlo de alta antes por otro sitio. ¿Se permite registrarlo en el mismo paso en que se abre el ticket, y con qué fila?
+    respuesta_textual: |
+      «Opción 2: fila propia, tamaño S, que puede ir antes de S42 y no depende de F1B-06. Cuando el ticket se clasifica como «Equipo nuevo», el alta permite registrar el equipo en ese mismo paso: serial, modelo del catálogo, cliente y fecha de factura como obligatorios; fecha de adquisición, fin de garantía, código interno, Drive y mantenedor como opcionales. El equipo queda creado en Registro de equipos y el ticket enlazado a él. Si el serial ya existe en el registro, no se crea otro: se ofrece el equipo existente. Para «Equipo para servicio de mantenimiento» y «Soporte remoto» se mantiene la regla actual: el equipo tiene que existir. Se acepta que el total suba una fila y el porcentaje baje el día que se cree. Si F1B-06 se recorta, esta pieza se mantiene.»
+    consecuencias: |
+      (1) FILA NUEVA, TALLA S, DESACOPLADA DE F1B-06. Gerencia elige expresamente la opción de fila propia frente a meterla en F1B-06 (rama de equipo nuevo), y da la razón: «si F1B-06 se recorta, esta pieza se mantiene». Con `decision/edicion-datos-comerciales-equipo` (mismo día) la fila pasa a llamarse «Alta y edición del equipo», talla S–M. La fila NO se escribe en el §5: esta supervisión no escribe alcance.
+      (2) DENOMINADOR. Gerencia acepta expresamente que «el total suba una fila y el porcentaje baje el día que se cree». Acumulado del día: 52 base + F0-06 + calendario laboral + esta + el mapa en la aplicación = 55 cuando las cuatro se escriban. El movimiento es POR ALCANCE, no por trabajo (regla (d) de `unidad_de_avance`).
+      (3) LA GUARDA DEL SERIAL YA EXISTE Y SE REUTILIZA: «si el serial ya existe en el registro, no se crea otro, se ofrece el equipo existente». El serial es llave de entrada desde `docs/sdd/F1B-01_Serial_llave_de_entrada.md`; esto no estrena mecanismo, lo reutiliza.
+      (4) LAS OTRAS DOS CLASIFICACIONES NO CAMBIAN: mantenimiento y soporte remoto siguen exigiendo que el equipo exista. El alta en el ticket es excepción de una clasificación, no una regla nueva del alta.
+      (5) CRUCE MEDIDO CON F1B-02 (hoja de vida, archivada el 23/09): los campos opcionales que enumera —adquisición, fin de garantía, código interno, Drive y mantenedor— son los que F1B-02 acaba de construir. El alta escribe en la estructura ya construida; no la amplía.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/equipo-nuevo-alta-en-ticket) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-070, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.4"
+    maestro_pasaje: "M1.4 (rama de equipo nuevo) — sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "Fila nueva «Alta y edición del equipo», talla S–M, antes de S42 — sin escribir en el §5"
+
+  - clave: "decision/edicion-datos-comerciales-equipo"
+    fecha: "2026-09-24"
+    pregunta: |
+      Hoy cualquiera con sesión puede cambiar la fecha de factura, el fin de garantía y el mantenedor de un equipo, que son los datos que deciden si un servicio se cobra y a quién. ¿Se restringe, y a quién?
+    respuesta_textual: |
+      «Se reserva, por área y no por cargo. Fecha de factura, fin de garantía y mantenedor solo los pueden cambiar usuarios del área Comercial y los administradores, porque deciden si un servicio se cobra y quién puede pagarlo. Fecha de adquisición, código interno y enlace de Drive los puede corregir cualquier usuario con sesión. Todo cambio en cualquiera de los seis campos queda registrado con persona, fecha y hora, valor anterior y valor nuevo, y se ve en la hoja de vida. La hoja de vida tiene su propio botón «Editar», con las mismas reglas que desde la lista de Equipos, y el servidor aplica la restricción, no solo la pantalla. Se construye en la misma fila que el alta del equipo desde el ticket de equipo nuevo, que pasa a llamarse «Alta y edición del equipo» (tamaño S–M), en lugar de abrir una fila más. Si más adelante se quiere restringir a un cargo concreto de Comercial, se estrecha sobre esta misma regla.»
+    consecuencias: |
+      (1) POR ÁREA, NO POR CARGO, Y ESO ES COHERENTE CON `decision/c10-permisos-cargo` (23/09): «la base sigue siendo el área; el cargo sólo restringe, con una lista corta de excepciones». Esta NO entra en esa lista de excepciones, así que no añade trabajo a F1C-05. La puerta queda abierta: «si más adelante se quiere restringir a un cargo concreto de Comercial, se estrecha sobre esta misma regla».
+      (2) NO ABRE FILA: se pega a la fila de `decision/equipo-nuevo-alta-en-ticket`, que pasa de S a S–M y de «Alta del equipo» a «Alta y edición del equipo». El denominador sube UNA sola vez por las dos decisiones.
+      (3) «EL SERVIDOR APLICA LA RESTRICCIÓN, NO SOLO LA PANTALLA» es un requisito explícito y medible. El punto de partida está medido: `apps/desk/server/routes/equipos.ts:73` deja hoy editar los seis campos a cualquier usuario con sesión.
+      (4) ALCANCE NUEVO PEQUEÑO Y NO PREVISTO EN F1B-02: el registro de cambios con persona, fecha, valor anterior y valor nuevo, VISIBLE en la hoja de vida. F1B-02 construyó los seis campos, no su historial. Es la misma doctrina de auditoría de M11.4, aplicada a un dato maestro.
+      (5) LOS SEIS CAMPOS QUEDAN PARTIDOS EN DOS CLASES, y conviene que esté escrito: tres comerciales restringidos (factura, fin de garantía, mantenedor) y tres libres (adquisición, código interno, Drive). El mantenedor entra en la clase restringida, que es lo coherente con `decision/titularidad-mantenedor` (21/09): sólo el mantenedor puede pagar órdenes de ese equipo, luego quien lo edita decide quién puede pagar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/edicion-datos-comerciales-equipo) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-071, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.4"
+    maestro_pasaje: "M3.2 (registro de equipos) y M11.4 (auditoría) — sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "Misma fila que decision/equipo-nuevo-alta-en-ticket: «Alta y edición del equipo», S–M"
+
+  - clave: "decision/mapa-en-la-app"
+    fecha: "2026-09-24"
+    pregunta: |
+      El dibujo del recorrido de un ticket sólo se puede ver hoy abriendo el repositorio, y quien trabaja con él —Servicio Técnico y Comercial— no abre el repositorio. ¿Se enseña dentro de la aplicación, y con qué fila?
+    respuesta_textual: |
+      «Fila propia, «Mapa del blueprint en la aplicación», que va antes de F1B-06 para que las ramas de equipo nuevo y soporte remoto se vean en la aplicación desde el día en que se construyan. Primer paso de la tanda, antes de fijar la talla: comprobar si la compilación puede producir la imagen del diagrama. Si puede, el generador escribe además un SVG y la entrada «Blueprint (estados y transiciones)» de Configuración lo muestra (talla XS). Si no puede, esa pantalla carga el dibujante de diagramas solo al abrirse y pinta los mismos ficheros que ya genera el script (talla S). En los dos casos el diagrama sale del código, lo vigila la prueba que ya existe, y la entrada deja de estar marcada como «próximamente». Muestra el diagrama completo y una vista por cada fase, con las mismas reglas de acceso que el resto de Configuración.»
+    consecuencias: |
+      (1) FILA NUEVA CON TALLA CONDICIONADA A UNA MEDICIÓN, y es la primera vez que Gerencia fija una así: la talla (XS o S) no se decide hasta que la primera tarea de la tanda conteste si la compilación puede producir la imagen. Es método correcto —medir antes de estimar— y significa que el denominador sube una fila con talla «XS–S por medir».
+      (2) NO ESTRENA GENERADOR: F1A-06 (archivada el 22/09) ya produce `docs/artefactos/blueprint-completo.md` y las tres vistas por fase desde `transitions.ts`, `estados.ts` y `fasesBlueprint.ts`, con la prueba anti-desfase `mapaBlueprint.test.ts` (RQ-MB-06) vigilándolo. Las dos ramas de la decisión reutilizan ese generador y esa prueba; ninguna dibuja a mano.
+      (3) «VA ANTES DE F1B-06» ES ORDEN, NO SUGERENCIA, y lleva razón escrita: F1B-06 construye las ramas de equipo nuevo y soporte remoto, y si el mapa llega después, esas ramas nacen invisibles para quien las usa.
+      (4) RETIRA UNA MARCA DE «PRÓXIMAMENTE» DE LA APLICACIÓN EN USO: la entrada «Blueprint (estados y transiciones)» de Configuración deja de estar reservada. Es de las pocas piezas del corte que se ven sin haber construido nada de dominio.
+      (5) CRUCE CON EL CRITERIO DE CORTE: la R01.3 sitúa «el mapa en la aplicación» DESPUÉS del corte del 14/12 (§C). Esta decisión lo pone ANTES de F1B-06, que está antes del corte. Las dos afirmaciones no pueden ser ciertas a la vez, y la contradicción se señala sin resolverla: no es de esta supervisión decidir cuál manda.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/mapa-en-la-app) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-072, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.4"
+    maestro_pasaje: "Anexo F (mapa del blueprint) — sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "Fila nueva «Mapa del blueprint en la aplicación», talla XS–S por medir, antes de F1B-06 — sin escribir en el §5"
+    aclarada_por: |
+      ACLARACIÓN DE GERENCIA, 24/09/2026, la misma que precisa `decision/fecha-corte` → `aclarada_por`:
+      «mapa-antes-o-despues-del-corte queda decidido: después del corte. La frase «va antes de F1B-06» de
+      mapa-en-la-app queda sin efecto.» La respuesta textual y el `tanda_que_abre` de arriba se conservan sin tocar,
+      pero su «antes de F1B-06» y la consecuencia (3) dejan de regir, y la contradicción que señalaba la consecuencia
+      (5) queda resuelta a favor de la corrección de `fecha-corte`. Lo demás sigue: fila propia, talla XS–S por medir.
+    aclarada_por_fecha: "2026-09-24"
 
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.

@@ -20,22 +20,22 @@ Cuatro, y **sólo cuatro**. Cada una con la clave de decisión que la respalda.
 
 | ID | Nombre | Capacidad | Fuente (clave) | Talla | Semana |
 |---|---|---|---|---|---|
-| **F0-06** | Vigilancias del repaso automático | `reconciliacion` | `decision/barrido-comprobaciones-nuevas` (`config.yaml:2482-2497`) | S | S39 |
-| **F1B-12** | Calendario laboral (jornada, festivos, día hábil) | `kpis` | `decision/calendario-habil` (`config.yaml:2465-2480`) | S | S40 |
-| **F1B-13** | Reclamación de garantía al fabricante | `tickets-core` | `decision/anexo-7-garantia-proveedor` (`config.yaml:2266-2281`) | S | junto a F1B-03 |
-| **F1F-05** | Continuidad de los indicadores de Zoho Desk | `kpis` | `decision/e009-kpis` (`:2438-2453`) + `decision/e009b-lista-indicadores` (`:2555-2773`) | S–M | **S47** (ver §D) |
+| **F0-06** | Vigilancias del repaso automático | `reconciliacion` | `decision/barrido-comprobaciones-nuevas` (`config.yaml:2547-2562`) | S | S39 |
+| **F1B-12** | Calendario laboral (jornada, festivos, día hábil) | `kpis` | `decision/calendario-habil` (`config.yaml:2530-2545`) | S | S40 |
+| **F1B-13** | Reclamación de garantía al fabricante | `tickets-core` | `decision/anexo-7-garantia-proveedor` (`config.yaml:2331-2346`) | S | junto a F1B-03 |
+| **F1F-05** | Continuidad de los indicadores de Zoho Desk | `kpis` | `decision/e009-kpis` (`:2513-2528`) + `decision/e009b-lista-indicadores` (`:2630-2655`) | S–M | **S47** (ver §D) |
 
-**F0-06 llega con ID y talla ya decididos por Gerencia** (`config.yaml:2487-2497`): «fila nueva F0-06, *Vigilancias del repaso automático*, tamaño S, en la cola de Fase 0». Los ID de las otras tres los propone esta revisión y **no están decididos**: es nomenclatura, no alcance.
+**F0-06 llega con ID y talla ya decididos por Gerencia** (`config.yaml:2552-2562`): «fila nueva F0-06, *Vigilancias del repaso automático*, tamaño S, en la cola de Fase 0». Los ID de las otras tres los propone esta revisión y **no están decididos**: es nomenclatura, no alcance.
 
-**F1B-12 es dependencia dura, no una fila más.** `decision/anexo-3-alerta` (`:2240-2254`) fija la alerta en **4 días hábiles**, y `decision/c7-reloj-sla` (`:1895-1915`) para el reloj del SLA según de quién sea la demora. Sin calendario laboral no existe «día hábil» que contar: por eso su fila va **antes** que cualquier alarma, que es lo que la propia decisión dice.
+**F1B-12 es dependencia dura, no una fila más.** `decision/anexo-3-alerta` (`:2315-2329`) fija la alerta en **4 días hábiles**, y `decision/c7-reloj-sla` (`:1895-1915`) para el reloj del SLA según de quién sea la demora. Sin calendario laboral no existe «día hábil» que contar: por eso su fila va **antes** que cualquier alarma, que es lo que la propia decisión dice.
 
-**F1F-05 trae el primer criterio de aceptación numérico que Gerencia fija para una tanda** (`config.yaml:2573`): ≥ 95 % de tickets coincidentes, diferencia máxima de un día, y cada diferencia mayor explicada por escrito.
+**F1F-05 trae el primer criterio de aceptación numérico que Gerencia fija para una tanda** (`config.yaml:2638`): ≥ 95 % de tickets coincidentes, diferencia máxima de un día, y cada diferencia mayor explicada por escrito.
 
 ### A.1 · Lo que NO es fila nueva, aunque lo parezca
 
 | Asunto | Qué es en realidad | Dónde |
 |---|---|---|
-| Registro de contrato e informe trimestral | **Alcance añadido a F1B-11**, no fila. El propio registro lo dice: «ALCANCE AÑADIDO A F1B-11 (S41, talla L), que ya es la tanda más grande de la épica 1B» | `config.yaml:2387` |
+| Registro de contrato e informe trimestral | **Alcance añadido a F1B-11**, no fila. El propio registro lo dice: «ALCANCE AÑADIDO A F1B-11 (S41, talla L), que ya es la tanda más grande de la épica 1B» | `config.yaml:2452` |
 | Catálogo de equipos | **Ya está hecho.** «No necesita fila propia», medido contra el código el 23/09 | `config.yaml:2059-2074` |
 | Registro de equipos | **Ya tiene fila**: F1B-02, archivada y fusionada el 23/09 | `config.yaml:2076-2091` |
 
@@ -45,9 +45,9 @@ Cuatro, y **sólo cuatro**. Cada una con la clave de decisión que la respalda.
 
 | Asunto | Estado real en la bandeja |
 |---|---|
-| `equipo-nuevo-alta-en-ticket` | Destino **propuesto** F1B-06, no escrito (`ENTRADA.md:1089`) |
-| `edicion-datos-comerciales-equipo` | **«Sin destino»**; además es decisión de permiso (`ENTRADA.md:1097`) |
-| `mapa-en-la-app` | **«Sin destino»**, y remite a «Decide Gerencia» (`ENTRADA.md:1105`) |
+| `equipo-nuevo-alta-en-ticket` | Destino **propuesto** F1B-06, no escrito (`ENTRADA.md:1089` en `71499ba`; cerrada el 24/09, fila propia) |
+| `edicion-datos-comerciales-equipo` | **«Sin destino»**; además es decisión de permiso (`ENTRADA.md:1097` en `71499ba`; cerrada el 24/09, misma fila que E-070) |
+| `mapa-en-la-app` | **«Sin destino»**, y remite a «Decide Gerencia» (`ENTRADA.md:1105` en `71499ba`; cerrada el 24/09, fila propia) |
 
 Escribirles fila sería inventar destino, que es lo que R-3 prohíbe y lo que dejó cuatro desvíos huérfanos al cerrar F1A. **Quedan como punto abierto de Gerencia**, en §B de la entrega.
 
@@ -61,13 +61,13 @@ Escribirles fila sería inventar destino, que es lo que R-3 prohíbe y lo que de
 | **F1B-06** (equipo nuevo y soporte remoto) | **Construye DOS ramas, no tres**: los flujos comercial y posible-cliente se quedan en Zoho CRM | `decision/flujos-comercial-posible-cliente` (`:1725-1743`) |
 | **F1B-07** (prioridad y Mis tickets) | **Se desbloquea**: la prioridad automática sigue para todos y los Top 5 son la excepción manual. Cierra lo que el gate dejó a medias el 21/09 | `decision/top5-manual` (`:1939-1955`) |
 | **F1B-08** (paridad de vistas) | Sigue **partida**: la alarma tiene destinatario único (Coordinador Comercial), pero la paridad Zoho **sigue bloqueada** porque la escritura contra Zoho no se activa | `escalado-remision-creada` (`:1411-1445`) · `p44-escritura-zoho` (`:1552-1572`) |
-| **F1B-11** (OV ↔ ticket 1:N) | **Crece dos veces**: absorbe el registro de contrato e informe trimestral, y absorbe el parche de IV-11 con `cierra: no` | `anexo-53-contratos` (`:2364-2385`) · `e005b-parche-vehiculo` (`:2083-2098`) |
+| **F1B-11** (OV ↔ ticket 1:N) | **Crece dos veces**: absorbe el registro de contrato e informe trimestral, y absorbe el parche de IV-11 con `cierra: no` | `anexo-53-contratos` (`:2439-2460`) · `e005b-parche-vehiculo` (`:2083-2098`) |
 | **F1D-03** (macro-fases) | Los N1 son **propios de cada marca**, no comunes: Grimm conserva sus 8 y Horiba los suyos | `decision/p45-macro-fases` (`:1978-1994`) |
 | **F1D-07** (formulario de falla nueva) | El formulario es **obligatorio pero no bloqueante**: son dos cosas distintas | `decision/falla-nueva-bloqueante` (`:2031-2047`) |
-| **F1E-04** (validación y firma) | **Tres firmas**: Elaboró, Revisó y la tercera según el texto | `decision/roles-validacion-informe` (`:2221-2238`) |
-| **F1F-01** (migración y corte) | La fecha deja de ser 31/12: **corte en seco el 14/12/2026**. La hoja de Google se cierra ese mismo día | `fecha-corte` (`:2151-2167`) · `p14b-hoja-google` (`:2505-2519`) |
-| **F1F-02** (respaldo) | Responsable Alfonso, copia automática con aviso por correo, y **destino en proveedor distinto de Google y Hostinger** | `p55-backup` (`:2169-2185`) · `p55b-destino-copia` (`:2521-2536`) |
-| **Fase 2 (2027 T1)** | Entra el **servicio en sitio** como cuarta rama del blueprint, en el T2 de 2027. Sale de Fase 1 | `decision/anexo-43-en-sitio` (`:2324-2339`) |
+| **F1E-04** (validación y firma) | **Tres firmas**: Elaboró, Revisó y la tercera según el texto | `decision/roles-validacion-informe` (`:2296-2313`) |
+| **F1F-01** (migración y corte) | La fecha deja de ser 31/12: **corte en seco el 14/12/2026**. La hoja de Google se cierra ese mismo día | `fecha-corte` (`:2151-2167`) · `p14b-hoja-google` (`:2580-2594`) |
+| **F1F-02** (respaldo) | Responsable Alfonso, copia automática con aviso por correo, y **destino en proveedor distinto de Google y Hostinger** | `p55-backup` (`:2244-2260`) · `p55b-destino-copia` (`:2596-2611`) |
+| **Fase 2 (2027 T1)** | Entra el **servicio en sitio** como cuarta rama del blueprint, en el T2 de 2027. Sale de Fase 1 | `decision/anexo-43-en-sitio` (`:2399-2414`) |
 
 ---
 
@@ -127,14 +127,14 @@ Las once semanas se reparten así. **La construcción no llega a S50: termina el
 | S44 (26/10) | **F1A-03** · F1B-07 prioridad y Mis tickets |
 | S45 (02/11) | **F1B-11** (OV 1:N + contrato + parche IV-11) — talla L, se parte |
 | S46 (09/11) | F1B-11 (segunda mitad) · F1B-08 alarma 72 h |
-| **S47 (16/11)** | **F1F-05 arranca y empieza a medir** — las cuatro semanas en paralelo que exige `config.yaml:2574` |
+| **S47 (16/11)** | **F1F-05 arranca y empieza a medir** — las cuatro semanas en paralelo que exige `config.yaml:2639` |
 | S48 (23/11) | 1C: C2 · C4 · C6 (el estado Control de calidad) |
 | S49 (30/11) | 1C: C3 · C5 · C7 · C10 · F1B-09 audit-F1B |
 | S50 (07/12) | **Examen el miércoles 9/12** (cuatro condiciones) · **F1F-01** migración de tickets abiertos · **F1F-03** pruebas con servicios reales |
 | **12–13/12** | **Migración**, fin de semana, sin copia donde ensayarla (`e013b-copia-pruebas`) |
 | **14/12** | **CORTE EN SECO** |
 
-**F1F-02** (respaldo) no tiene semana propia: `config.yaml:2188` dice que «el adelanto es trabajo sin tanda» y que F1F-02 sigue con el resto. Se deja declarado, no inventado.
+**F1F-02** (respaldo) no tiene semana propia: `config.yaml:2253` dice que «el adelanto es trabajo sin tanda» y que F1F-02 sigue con el resto. Se deja declarado, no inventado.
 
 ---
 
@@ -173,7 +173,7 @@ Del 09/09 al 23/09 —catorce días— se archivaron **13 cambios**, de los que 
 | **Histórico completo verificado** (repatriación) | **SIN FILA, y sin decisión.** La palabra «repatriación» no aparece ni en `config.yaml` ni en `ENTRADA.md`: sólo en tres ficheros de `docs/sdd/` **sin trackear** |
 | Pruebas | F1F-03, con semana asignada |
 
-Y hay una tercera pieza nombrada por el criterio que tampoco tiene fila: **la encuesta de satisfacción**. `config.yaml:2457` lo dice él mismo — «es alcance que la pregunta no contenía: hoy la envía Zoho al finalizar el ticket», y cruza con el correo propio. `config.yaml:2575` remata: las dos dependencias de F1F-05 «son piezas **sin fila hoy**».
+Y hay una tercera pieza nombrada por el criterio que tampoco tiene fila: **la encuesta de satisfacción**. `config.yaml:2522` lo dice él mismo — «es alcance que la pregunta no contenía: hoy la envía Zoho al finalizar el ticket», y cruza con el correo propio. `config.yaml:2640` remata: las dos dependencias de F1F-05 «son piezas **sin fila hoy**».
 
 **Conclusión, con el número delante:** las 33 filas conocidas caben en 10,9 semanas al ritmo que este proyecto ya demuestra. Lo que no cabe en ninguna cuenta es lo que **no está contado**: tres piezas —correo propio, repatriación del histórico y encuesta— que el criterio mete antes del corte, que dos de ellas son **condición de examen**, y que hoy no tienen fila, ni talla, ni dueño. Dos de las tres sólo viven en ficheros **sin trackear**, así que quien clone el repositorio no las ve.
 
@@ -201,7 +201,7 @@ Más alcance añadido a F1B-11, que la R01.1 ya marcaba como talla L y «se part
 
 ### D.3 · La restricción que lo decide
 
-`decision/e009b-lista-indicadores` (`config.yaml:2574`) lo dice con estas palabras: **«⚠️ EL CALENDARIO NO CUADRA, Y ES LO QUE HAY QUE MIRAR. La comprobación dura las cuatro semanas previas al corte: del 16/11 (S47) al 14/12.»**
+`decision/e009b-lista-indicadores` (`config.yaml:2639`) lo dice con estas palabras: **«⚠️ EL CALENDARIO NO CUADRA, Y ES LO QUE HAY QUE MIRAR. La comprobación dura las cuatro semanas previas al corte: del 16/11 (S47) al 14/12.»**
 
 O sea que **F1F-05 tiene que estar construida y midiendo en S47**, no en S50. La R01.1 sitúa toda la épica 1F en S50–S52 (`plan:259-261`). Eso adelanta 1F **tres semanas** sobre lo planificado, en el mismo movimiento en que se pierden tres semanas por el otro extremo.
 
