@@ -1150,7 +1150,17 @@ incumplimientos_vivos:
       —ni mutar la posición de una guarda, ni ensuciar un fichero vigilado, ni
       enumerar las decisiones del cliente enfrentan dos representaciones entre sí—.
       Para esto hizo falta un lector, que es exactamente como salió.
-    destino: "F1B-11, con un parche antes — escrito el 2026-09-22 por `decision/e005-iv4-iv11`, opción (c). El vehículo del parche en el plan está por decidir. Antes: SIN DESTINO ASIGNADO, a propósito"
+    # ARREGLO DE REGISTRO 2026-09-24, autorizado por Gerencia. Esta clave era un
+    # SEGUNDO `destino:` dentro de la misma ficha de IV-11 — el primero está arriba,
+    # en la línea 1087 —, y un mapa YAML no admite dos claves iguales: el fichero
+    # NO PARSEABA («duplicated mapping key», 1153:5) con cualquier cargador estándar.
+    # No se pierde texto: la de arriba se conserva como `destino` por ser la
+    # RECIENTE (su `destino_decidido` cita el panel del 23/09, que fijó el vehículo
+    # del parche con `decision/e005b-parche-vehiculo`), y ésta pasa a
+    # `destino_anterior` por ser la del 22/09, cuando ese vehículo seguía sin decidir.
+    # Las dos dicen F1B-11; lo que cambió entre una y otra es que dejó de haber una
+    # incógnita, no el destino.
+    destino_anterior: "F1B-11, con un parche antes — escrito el 2026-09-22 por `decision/e005-iv4-iv11`, opción (c). El vehículo del parche en el plan está por decidir. Antes: SIN DESTINO ASIGNADO, a propósito"
     por_que_sin_destino: >
       Mismo precedente que IV-9: asignar un destino DE MEMORIA es exactamente lo
       que dejó cuatro desvíos huérfanos al cerrar F1A. Un destino es una promesa, y
@@ -2569,6 +2579,117 @@ decisiones_de_gerencia:
     maestro_revision: "pendiente"
     tanda_que_abre: "fila nueva en 1F (ya decidida por e009-kpis) · ahora dimensionable"
 
+  # ---------------------------------------------------------------------------
+  # RETROAJUSTE 2026-09-24. Las CINCO de abajo estaban en Engram con su clave
+  # `decision/<clave>` y NO en este fichero, que `CLAUDE.md` declara autoridad
+  # («la DECISIÓN vive en openspec/config.yaml → decisiones_de_gerencia»). Las
+  # cinco están tomadas y APLICADAS en código desde septiembre, así que el hueco
+  # era del registro, no de la decisión. Se incorporan para que el índice de
+  # Engram apunte siempre a un sitio que existe. Su redacción es RESUMEN: el
+  # texto largo de cada una vive en su observación de Engram, citada abajo.
+  # ---------------------------------------------------------------------------
+
+  - clave: "decision/iv2-fechas-derivadas"
+    fecha: "2026-09-10"
+    pregunta: >
+      Las tres fechas derivadas, ¿las impone el servidor o se acepta lo que mande
+      el navegador?
+    respuesta_textual: >
+      «El servidor debe calcular las tres fechas derivadas él mismo, ignorando lo
+      que llegue del navegador para esos campos» — opción (a). Se trata como
+      corrección de F1A, no como tanda con gate.
+    consecuencias: >
+      (1) ABRIÓ Y CERRÓ F1A-07 (`fechas-derivadas-servidor`), fusionada el 22/09:
+      `packages/shared/src/fechasDerivadas.ts` impone las tres y el cliente pasa a
+      consumir la misma fórmula.
+      (2) CERRÓ IV-2, que era regla de dominio sólo en cliente.
+      (3) Sin gate: no abre decisión de negocio, por eso no entró en la tabla §4.5.
+    registro: "Engram obs. #408 (decision/iv2-fechas-derivadas) · openspec/changes/archive/2026-09-22-fechas-derivadas-servidor/"
+    maestro_pasaje: "M1.10"
+    maestro_revision: "entrada 16 de docs/sdd/F0-01_Correcciones_para_el_maestro.md"
+    tanda_que_abre: "F1A-07 — cerrada y archivada el 22/09"
+
+  - clave: "decision/vista-todos-tablero"
+    fecha: "2026-09-10"
+    pregunta: >
+      La vista «Todos» del tablero oculta los tickets cerrados. ¿Se corrige o se
+      renombra a «Abiertos»?
+    respuesta_textual: >
+      «La vista Todos pasa a devolver también los tickets cerrados» — opción (b).
+      Se descarta renombrarla a «Abiertos».
+    consecuencias: >
+      (1) CERRÓ IV-7 en sus dos mitades: `apps/desk/src/lib/boardView.ts` devuelve
+      hoy `case 'todos': return tickets`, sin filtro, y el `default` quedó separado
+      con guarda tipada `never`.
+      (2) Lo ejecutó F1B-08 (`vista-todos-y-estados-en-espera`), archivada el 10/09.
+    registro: "Engram obs. #407 (decision/vista-todos-tablero) · openspec/changes/archive/2026-09-10-vista-todos-y-estados-en-espera/"
+    maestro_pasaje: "ítem 22"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-08 — parcial; esta mitad cerrada"
+
+  - clave: "decision/reparto-sdd"
+    fecha: "2026-09-10"
+    pregunta: >
+      ¿Qué trabajo va bajo el ciclo SDD y qué trabajo va directo?
+    respuesta_textual: >
+      El CÓDIGO va bajo el ciclo SDD de gentle-ai (propose → spec → design → tasks
+      → apply → verify → archive, con ledger de `sdd-attempt`); la DOCUMENTACIÓN se
+      trabaja directa, sin cambio SDD. `strict_tdd` NO se toca.
+    consecuencias: >
+      (1) ES LA REGLA DE REPARTO QUE RIGE TODA LA OPERATIVA desde entonces: las
+      reparaciones de citas, los cortes de Gerencia y los barridos van en commits
+      directos sin objetivo del ledger.
+      (2) `strict_tdd` intacto significa rojo antes que verde también en las tandas
+      pequeñas.
+      (3) Es anterior a la regla R-5 (`decision/trabajo-sin-ficha`, 23/09), que la
+      precisa: si toca `openspec/specs/` lleva ficha.
+    registro: "Engram obs. #469 (decision/reparto-sdd)"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — es regla de método"
+
+  - clave: "decision/detector-citas-pre-push"
+    fecha: "2026-09-13"
+    pregunta: >
+      La regla de mutación 4 (citas `ruta:línea` que se desfasan al mover líneas),
+      ¿cómo se impone?
+    respuesta_textual: >
+      Con un hook de `pre-push` versionado, que corre el detector con la historia
+      completa y bloquea el push si hay citas mecánicamente rotas — opción 4 de
+      cuatro.
+    consecuencias: >
+      (1) ABRIÓ LA CAPACIDAD `citas-verificables` y la tanda `hook-citas-pre-push`,
+      archivada el 15/09. Hoy `core.hooksPath=.githooks` y el hook nunca se salta
+      con `--no-verify`.
+      (2) LÍMITE DECLARADO, y ha mordido varias veces: el detector comprueba que la
+      línea EXISTA y no esté vacía, nunca que DIGA lo que la frase afirma. Una cita
+      desplazada a otra línea con texto pasa en verde.
+      (3) Y un segundo límite medido el 23/09: `apps/desk/server/citas/cli.ts:49`
+      excluye `openspec/changes/archive/`, así que ARCHIVAR SILENCIA AL DETECTOR
+      (E-032).
+    registro: "Engram obs. #513 (decision/detector-citas-pre-push) · openspec/changes/archive/2026-09-15-hook-citas-pre-push/ · docs/sdd/ENTRADA.md → E-032"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "hook-citas-pre-push — archivada el 15/09"
+
+  - clave: "decision/hook-citas-entrega"
+    fecha: "2026-09-13"
+    pregunta: >
+      `sdd-tasks` de `hook-citas-pre-push` supera el presupuesto de revisión.
+      ¿Se parte o se acepta con excepción?
+    respuesta_textual: >
+      Opción (A) «Stacked PRs to main»: cuatro cortes en orden lineal, un intento de
+      `sdd-apply` por corte.
+    consecuencias: >
+      (1) ES EL PRECEDENTE DE CÓMO SE PARTE UNA TANDA que no cabe en el techo, y la
+      primera vez que el gate `ask-on-risk` se resolvió partiendo en vez de con
+      `size:exception`.
+      (2) Los cuatro cortes se ejecutaron y la tanda se archivó el 15/09.
+    registro: "Engram obs. #534 (decision/hook-citas-entrega)"
+    maestro_pasaje: "sin punto del Anexo D asignado"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "hook-citas-pre-push — archivada el 15/09"
+
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
 unidad_de_avance:
@@ -2636,6 +2757,15 @@ memoria_engram:
         F0-03 cargó las 55 pasadas (43 del §1.8 del maestro + 12 del acta del
         03/09). El plan R01.1 reserva 20 claves para las futuras: 19 en su §4.5
         (:343-367) y una más en :534.
+        ⚠️ ESA CIFRA DE 55 ES OTRA POBLACIÓN, y no se suma con la de arriba.
+        Anotado el 2026-09-24. Las 55 son decisiones HISTÓRICAS que F0-03 volcó
+        a Engram desde el §1.8 del maestro y el acta del 03/09; las de
+        `decisiones_de_gerencia` de este mismo fichero son las respuestas de los
+        PANELES, de otra procedencia y otro periodo. Leídas de corrido invitan a
+        sumarlas, y sumarlas da un total que no existe. Al 24/09 hay 64 entradas
+        en `decisiones_de_gerencia` (59 de paneles + las 5 del retroajuste de esa
+        misma fecha), y las 55 de F0-03 no están entre ellas salvo donde una
+        respuesta posterior las haya reabierto.
       ejemplo: "decision/informes-en-fase-1"
     - clave: "punto-abierto/"
       guarda: >
