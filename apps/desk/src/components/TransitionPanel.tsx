@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { transitionsForStatus, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
+import { transicionesDelTicket, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
 import { executeTransition, getPersonas } from '../api/client';
 import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/personas';
 import { botonRemision } from '../lib/botonRemision';
@@ -35,9 +35,9 @@ function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string |
   return v != null && String(v).trim() !== ''
 }
 
-export function TransitionPanel({ ticketId, status, delTicket, primerDerivado, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
+export function TransitionPanel({ ticketId, status, clasificacion, delTicket, primerDerivado, clientId, derivadoActual, remisiones, onDone, onCrearRemision }: {
   ticketId: string
-  status: string
+  status: string; clasificacion: string | null
   /** `customFields` del ticket: lo que ya se sabe, para prellenar y bloquear. */
   delTicket: Record<string, string | null>
   /** Quien tomó el ticket. Lo propone «Aprobación», que devuelve el trabajo al taller. */
@@ -53,7 +53,7 @@ export function TransitionPanel({ ticketId, status, delTicket, primerDerivado, c
 }) {
   const boton = botonRemision(status, remisiones ?? null)
   const { user } = useAuth()
-  const transitions = transitionsForStatus(status).filter(
+  const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(
     (t) => !!user && canExecuteTransition(user.areas, user.isAdmin, t.area),
   )
   const [active, setActive] = useState<Transition | null>(null);

@@ -1,4 +1,4 @@
-import { areasSiguientes } from '@ambientalia/shared'
+import { areasSiguientes, type Transition } from '@ambientalia/shared'
 
 /**
  * A qué áreas hay que avisar tras dejar un ticket en `estado`.
@@ -12,8 +12,8 @@ import { areasSiguientes } from '@ambientalia/shared'
  * no dispara avisos de área. Es deliberado (ver el spec) — si hace el trabajo de las tres áreas, no
  * hay a quién pasarle el testigo.
  */
-export function areasAAvisar(estado: string, areasActor: string[]): string[] {
-  return areasSiguientes(estado).filter((a) => !areasActor.includes(a))
+export function areasAAvisar(estado: string, areasActor: string[], catalogo?: readonly Transition[]): string[] {
+  return areasSiguientes(estado, catalogo).filter((a) => !areasActor.includes(a))
 }
 
 export function textoAvisoArea(c: { ticketNumero: number; estado: string; actorNombre: string }): string {

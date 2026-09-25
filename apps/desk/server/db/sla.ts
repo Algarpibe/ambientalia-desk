@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { SLA_HORAS_POR_ESTADO, destinatarioDelEscalado, slaVencido, type DestinatarioEscalado, type Estado } from '@ambientalia/shared'
+import { SLA_HORAS_POR_ESTADO, destinatarioDelEscalado, flujoDelTicket, slaVencido, type DestinatarioEscalado, type Estado } from '@ambientalia/shared'
 
 export interface TicketConSlaVencido {
   id: string
@@ -42,10 +42,11 @@ export async function ticketsConSlaVencido(db: Queryable, ahora: Date): Promise<
   if (conSla.length === 0) return []
 
   const marcadores = conSla.map((_, i) => `$${i + 1}`).join(', ')
-  const r = await db.query(`SELECT id, number, status FROM tickets WHERE status IN (${marcadores})`, conSla)
+  const r = await db.query(`SELECT id, number, status, classification FROM tickets WHERE status IN (${marcadores})`, conSla)
 
   const vencidos: TicketConSlaVencido[] = []
-  for (const fila of r.rows as Array<{ id: string; number: number; status: string }>) {
+  for (const fila of r.rows as Array<{ id: string; number: number; status: string; classification: string | null }>) {
+    if (flujoDelTicket({ classification: fila.classification, status: fila.status }) !== 'servicio') continue
     const estado = fila.status as Estado
     const t = await db.query(
       'SELECT performed_at FROM ticket_transitions WHERE ticket_id = $1 AND to_status = $2 ORDER BY performed_at DESC, id DESC LIMIT 1',

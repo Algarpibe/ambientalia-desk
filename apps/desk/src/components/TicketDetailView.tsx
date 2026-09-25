@@ -321,7 +321,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                           {ticket && (
                             <TransitionPanel
                               ticketId={ticketId}
-                              status={ticket.status}
+                              status={ticket.status} clasificacion={ticket.classification ?? null}
                               // Lo que ya se sabe, para no volver a pedirlo. No basta con
                               // `customFields` —que son las columnas del ticket— porque las fechas de
                               // "Ingreso a Servicio" las escribe esa misma transición: se derivan de

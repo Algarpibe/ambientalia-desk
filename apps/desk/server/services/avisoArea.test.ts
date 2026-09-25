@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import type { Transition } from '@ambientalia/shared'
 import { areasAAvisar, textoAvisoArea } from './avisoArea'
 
 describe('areasAAvisar', () => {
@@ -27,6 +28,31 @@ describe('areasAAvisar', () => {
 
   it('un estado final no avisa a nadie', () => {
     expect(areasAAvisar('Finalizado', ['Servicio Técnico'])).toEqual([])
+  })
+})
+
+/**
+ * F1B-06, RQ-AV-04 (delta `derivacion-avisos`): `areasAAvisar` gana un tercer parámetro OPCIONAL, el
+ * catálogo del flujo del ticket. Sin él, `Análisis y acciones` (catálogo Equipo nuevo, `Notificado` →
+ * `Ingresado`) calcularía sus áreas siguientes sobre `TRANSITIONS` (servicio) en vez de sobre el
+ * catálogo del flujo aplicable — mismo nombre de estado, catálogo distinto.
+ *
+ * El catálogo SINTÉTICO de abajo tiene, a propósito, áreas siguientes DISTINTAS de las de servicio
+ * desde `Notificado` (`escalado_a_comercial`/`reporte_por_garantia` → Comercial/Compras): así M13
+ * (7.6 de `tasks.md`) es detectable aquí aunque no lo sea con el catálogo real (s2, las cinco EN son
+ * todas Servicio Técnico).
+ */
+describe('areasAAvisar con catálogo inyectado (F1B-06)', () => {
+  const CATALOGO_SINTETICO: Transition[] = [
+    { id: 'sintetica_1', name: 'Sintética 1', from: ['Notificado'], to: 'Ingresado', area: 'Compras', fields: [] },
+  ]
+
+  it('con catálogo inyectado, las áreas siguientes salen de ESE catálogo, no de TRANSITIONS', () => {
+    expect(areasAAvisar('Notificado', [], CATALOGO_SINTETICO)).toEqual(['Compras'])
+  })
+
+  it('sin catálogo inyectado, sigue calculando sobre TRANSITIONS (compatibilidad)', () => {
+    expect(areasAAvisar('Notificado', [])).toEqual(['Servicio Técnico'])
   })
 })
 

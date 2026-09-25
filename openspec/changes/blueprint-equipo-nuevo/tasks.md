@@ -195,7 +195,7 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
 
 ## Fase 6 · Guarda 3 en `executeTransition` (D3, cambio del orquestador sobre el diseño) — mutaciones M1, M2
 
-- [ ] 6.1 RED, fichero **nuevo** `apps/desk/server/flujoEquipoNuevo.test.ts` (arnés `appHarness.ts`,
+- [x] 6.1 RED, fichero **nuevo** `apps/desk/server/flujoEquipoNuevo.test.ts` (arnés `appHarness.ts`,
   patrón de `remisiones.test.ts:1-5`):
   - P1: ticket EN en `Ingresado`, ejecuta `ingreso_equipo_nuevo` → `200`, pasa a `En Proceso`.
   - P2: el mismo ticket intenta `ingreso_a_servicio` (catálogo de servicio, mismo origen) → `409` con
@@ -209,44 +209,44 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
     transiciones de `TRANSITIONS` desde ese estado (p. ej. `servicio_externo_pendiente`), sin `409`.
   - P6 (RQ-EN-02): usuario de área `Comercial` ejecuta cualquiera de las 5 EN → `403`.
   - Nace roja: `transitionById` sólo busca en `TRANSITIONS`, no existe guarda de flujo.
-- [ ] 6.2 GREEN — `apps/desk/server/services/ticketService.ts:6`: sustituir `transitionById` por
+- [x] 6.2 GREEN — `apps/desk/server/services/ticketService.ts:6`: sustituir `transitionById` por
   `transicionPorId, fueraDeFlujo, catalogoDelTicket` en el import de `@ambientalia/shared`.
-- [ ] 6.3 GREEN — `:122`: `const t = transicionPorId(String(b.transitionId))`.
-- [ ] 6.4 GREEN — al FINAL de `ticketService.ts` (tras la actual `:223`, cierre de `executeTransition`):
+- [x] 6.3 GREEN — `:122`: `const t = transicionPorId(String(b.transitionId))`.
+- [x] 6.4 GREEN — al FINAL de `ticketService.ts` (tras la actual `:223`, cierre de `executeTransition`):
   añadir la función local `exigirMismoFlujo(t, row)` que llama a `fueraDeFlujo(t, row)` y, si devuelve
   mensaje, lanza `HttpError(409, { error: motivo })` (cambio del orquestador sobre D3 — legibilidad, sin
   desplazar citas; tipos exactos de la fila contra `packages/zoho-sync/src/db/rows.ts:23` durante el
   apply).
-- [ ] 6.5 GREEN — `:125`: sustituir la sentencia única del `404` por DOS sentencias cortas en la MISMA
+- [x] 6.5 GREEN — `:125`: sustituir la sentencia única del `404` por DOS sentencias cortas en la MISMA
   línea: `if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' }); exigirMismoFlujo(t, current.row)`.
   **Cero líneas nuevas**: `:126-128` (estado) y `:129-131` (permiso) no se desplazan.
-- [ ] 6.6 Confirmar P1-P6 en verde A LA VEZ (verificación cruzada, regla de mutación 1). RQ: RQ-EN-02,
+- [x] 6.6 Confirmar P1-P6 en verde A LA VEZ (verificación cruzada, regla de mutación 1). RQ: RQ-EN-02,
   RQ-EN-03, RQ-EN-04, RQ-EN-05, RQ-TS-06 (guarda 3 y su posición).
-- [ ] 6.7 **M1** (posición): mover la llamada a `exigirMismoFlujo` DESPUÉS del bloque de estado
+- [x] 6.7 **M1** (posición): mover la llamada a `exigirMismoFlujo` DESPUÉS del bloque de estado
   (`:126-128`). Confirmar rojo: P3 pasa a responder «no aplica desde el estado» en vez del mensaje de
   flujo. Revertir.
-- [ ] 6.8 **M2**: quitar la llamada a `exigirMismoFlujo` de `:125`. Confirmar rojo: P2 (equipo nuevo +
+- [x] 6.8 **M2**: quitar la llamada a `exigirMismoFlujo` de `:125`. Confirmar rojo: P2 (equipo nuevo +
   `ingreso_a_servicio`) responde `200` en vez de `409`. Revertir.
 
 ## Fase 7 · Avisos por área desde el catálogo del flujo (D4) — mutación M13; corrección (e)
 
-- [ ] 7.1 RED en `apps/desk/server/services/avisoArea.test.ts`: ticket EN en `Notificado`, tras ejecutar
+- [x] 7.1 RED en `apps/desk/server/services/avisoArea.test.ts`: ticket EN en `Notificado`, tras ejecutar
   `Análisis y acciones` (catálogo EN, `from: Notificado`, `to: Ingresado`) → `areasAAvisar`/
   `areasSiguientes` calculado sobre el catálogo EN, no sobre `TRANSITIONS` (RQ-AV-04). Añadir un caso
   con catálogo SINTÉTICO cuyas áreas difieran de las de servicio, para que M13 (7.6) sea detectable.
   Nace roja: `areasSiguientes` hoy sólo recorre `TRANSITIONS`.
-- [ ] 7.2 GREEN — `packages/shared/src/transitions.ts:327`: `areasSiguientes(estado: string, transiciones: Transition[] = TRANSITIONS): string[]`
+- [x] 7.2 GREEN — `packages/shared/src/transitions.ts:327`: `areasSiguientes(estado: string, transiciones: Transition[] = TRANSITIONS): string[]`
   (segundo parámetro con valor por defecto, en línea; `:329-334` recorre `transiciones`).
-- [ ] 7.3 GREEN — `apps/desk/server/services/avisoArea.ts:1`: importar `catalogoDelTicket` de
+- [x] 7.3 GREEN — `apps/desk/server/services/avisoArea.ts:1`: importar `catalogoDelTicket` de
   `@ambientalia/shared`. `:15`/`:16`: `areasAAvisar` gana tercer parámetro opcional `catalogo?: Transition[]`
   que pasa a `areasSiguientes(estado, catalogo)`.
-- [ ] 7.4 GREEN — `apps/desk/server/services/ticketService.ts:196`:
+- [x] 7.4 GREEN — `apps/desk/server/services/ticketService.ts:196`:
   `const areasAvisar = areasAAvisar(t.to, user.areas, catalogoDelTicket({ classification: current.row.classification, status: t.to }))`.
   **Corrección (e), RQ-AV-04:** el flujo se evalúa con el ESTADO DE LLEGADA (`t.to`), ya documentado en
   `design.md` §2 D4 (líneas 135-136 de ese fichero); repetir esta misma anotación al comprobar RQ-AV-04
   en `verify-report.md`.
-- [ ] 7.5 Confirmar verde. RQ: RQ-AV-04 (delta `derivacion-avisos`), RQ-EN-06.
-- [ ] 7.6 **M13 — declarada NO detectable con datos reales.** Quitar el tercer parámetro de la llamada
+- [x] 7.5 Confirmar verde. RQ: RQ-AV-04 (delta `derivacion-avisos`), RQ-EN-06.
+- [x] 7.6 **M13 — declarada NO detectable con datos reales.** Quitar el tercer parámetro de la llamada
   de `:196`. Por s2 las cinco áreas EN son `Servicio Técnico` y coinciden con las salidas de servicio de
   los cuatro estados homónimos, así que con datos reales el resultado NO cambia y la prueba no se pone
   roja. Lo cubre la prueba UNITARIA de `areasAAvisar` con catálogo sintético de `7.1` (esa sí se pone
@@ -255,16 +255,16 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
 
 ## Fase 8 · SLA de `Notificado` excluye el flujo `equipo-nuevo` (D4) — mutación M8
 
-- [ ] 8.1 RED en `apps/desk/server/db/sla.test.ts`: ticket `classification = 'Equipo nuevo'`,
+- [x] 8.1 RED en `apps/desk/server/db/sla.test.ts`: ticket `classification = 'Equipo nuevo'`,
   `status = 'Notificado'`, última entrada a ese estado hace más de 24 h → `ticketsConSlaVencido` NO lo
   incluye (RQ-TS-15, RQ-EN-06). Nace roja: hoy el filtro es sólo por `status`.
-- [ ] 8.2 GREEN — `apps/desk/server/db/sla.ts:2`: importar `flujoDelTicket` de `@ambientalia/shared`.
-- [ ] 8.3 GREEN — `:45`: `SELECT id, number, status, classification FROM tickets WHERE status IN (...)`.
-- [ ] 8.4 GREEN — `:48`: el tipo del array de filas gana `classification: string | null`.
-- [ ] 8.5 GREEN — `:49`, antes de `const estado = fila.status as Estado`: insertar
+- [x] 8.2 GREEN — `apps/desk/server/db/sla.ts:2`: importar `flujoDelTicket` de `@ambientalia/shared`.
+- [x] 8.3 GREEN — `:45`: `SELECT id, number, status, classification FROM tickets WHERE status IN (...)`.
+- [x] 8.4 GREEN — `:48`: el tipo del array de filas gana `classification: string | null`.
+- [x] 8.5 GREEN — `:49`, antes de `const estado = fila.status as Estado`: insertar
   `if (flujoDelTicket({ classification: fila.classification, status: fila.status }) !== 'servicio') continue`.
-- [ ] 8.6 Confirmar verde. RQ: RQ-TS-15 (delta `transitions-st`), RQ-EN-06.
-- [ ] 8.7 **M8**: quitar el `continue` de `8.5`. Confirmar rojo: el ticket EN en `Notificado` >24 h
+- [x] 8.6 Confirmar verde. RQ: RQ-TS-15 (delta `transitions-st`), RQ-EN-06.
+- [x] 8.7 **M8**: quitar el `continue` de `8.5`. Confirmar rojo: el ticket EN en `Notificado` >24 h
   vuelve a aparecer en `ticketsConSlaVencido`. Revertir.
 
 ## Fase 9 · Panel de transiciones filtra por flujo (D4, `.tsx`) — mutación M14
@@ -273,16 +273,16 @@ Sin RED/GREEN automático: `TransitionPanel.tsx`/`TicketDetailView.tsx` son `.ts
 red de pruebas por decisión de Gerencia (F0-00, `vitest.config.ts:16-20`). Verificado por
 `npm run typecheck` y comprobación de persona (sección aparte, más abajo).
 
-- [ ] 9.1 `apps/desk/src/components/TransitionPanel.tsx:2`: importar `transicionesDelTicket` de
+- [x] 9.1 `apps/desk/src/components/TransitionPanel.tsx:2`: importar `transicionesDelTicket` de
   `@ambientalia/shared`, junto a lo ya importado.
-- [ ] 9.2 `:38`/`:40`: el componente gana la prop `clasificacion: string | null` en su firma.
-- [ ] 9.3 `:56`: `const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(...)`
+- [x] 9.2 `:38`/`:40`: el componente gana la prop `clasificacion: string | null` en su firma.
+- [x] 9.3 `:56`: `const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(...)`
   (conserva el filtro de área ya existente).
-- [ ] 9.4 `apps/desk/src/components/TicketDetailView.tsx:324`: pasar `clasificacion={ticket.classification}`
+- [x] 9.4 `apps/desk/src/components/TicketDetailView.tsx:324`: pasar `clasificacion={ticket.classification}`
   al `<TransitionPanel>`.
-- [ ] 9.5 `npm run typecheck` en verde para estos dos ficheros. RQ: RQ-EN-06 (espejo legítimo, regla
+- [x] 9.5 `npm run typecheck` en verde para estos dos ficheros. RQ: RQ-EN-06 (espejo legítimo, regla
   invariable 13 punto 3 — impuesto y probado por la guarda 3 del servidor, Fase 6).
-- [ ] 9.6 **M14 — declarada NO detectable.** Volver a `transitionsForStatus(status)` sin filtrar por
+- [x] 9.6 **M14 — declarada NO detectable.** Volver a `transitionsForStatus(status)` sin filtrar por
   flujo, en `:56`. Ninguna prueba automática lo detecta (`.tsx` fuera de `vitest.config.ts:17-20`,
   F0-00). Lo cubre la guarda 3 del servidor (Fase 6): el botón equivocado se vería en pantalla, pero al
   pulsarlo el servidor responde `409`. Cubierto por comprobación de persona (ver sección aparte) y por
@@ -290,16 +290,16 @@ red de pruebas por decisión de Gerencia (F0-00, `vitest.config.ts:16-20`). Veri
 
 ## Fase 10 · Guardianes extendidos: reentrancia, escalado, ejecución, permisos (D5) — mutaciones M9, M10; corrección (c)
 
-- [ ] 10.1 RED en `packages/shared/src/reentrancia.test.ts` (al final): `tablaDeReentrancia(TRANSITIONS_EQUIPO_NUEVO)`
+- [x] 10.1 RED en `packages/shared/src/reentrancia.test.ts` (al final): `tablaDeReentrancia(TRANSITIONS_EQUIPO_NUEVO)`
   produce un ciclo `{Ingresado, En Proceso, Notificado}`; `camposFechaReentrantes(TRANSITIONS_EQUIPO_NUEVO)` = `[]`.
-- [ ] 10.2 GREEN: confirmar que `tablaDeReentrancia`/`camposFechaReentrantes` (ya genéricas sobre
+- [x] 10.2 GREEN: confirmar que `tablaDeReentrancia`/`camposFechaReentrantes` (ya genéricas sobre
   cualquier `Transition[]`) no necesitan cambio de producción — sólo el fichero de prueba. Confirmar
   verde.
-- [ ] 10.3 RED en `packages/shared/src/sla.test.ts` (al final): ningún ambiguo de escalado en NINGÚN
+- [x] 10.3 RED en `packages/shared/src/sla.test.ts` (al final): ningún ambiguo de escalado en NINGÚN
   catálogo del registro de flujos (extender el guardián existente más allá de `TRANSITIONS`).
-- [ ] 10.4 GREEN: extender el guardián de escalado para iterar sobre los catálogos del registro de
+- [x] 10.4 GREEN: extender el guardián de escalado para iterar sobre los catálogos del registro de
   flujos. Confirmar verde.
-- [ ] 10.5 RED en `apps/desk/server/transicionesEjecucion.test.ts` (al final): `CASOS_EQUIPO_NUEVO`
+- [x] 10.5 RED en `apps/desk/server/transicionesEjecucion.test.ts` (al final): `CASOS_EQUIPO_NUEVO`
   escrita a mano (5 casos), huérfanas en los dos sentidos, extremos contra el grafo EN, barrido HTTP de
   las 5 con `classification = 'Equipo nuevo'`.
   **Corrección (c), OBLIGATORIA antes de escribir estos casos:** cada ticket sembrado en el arnés
@@ -308,18 +308,18 @@ red de pruebas por decisión de Gerencia (F0-00, `vitest.config.ts:16-20`). Veri
   ANTES de llegar al `200`/`400` que este barrido comprueba, y la prueba estaría comprobando la guarda 3
   en vez de la ejecución (mismo riesgo que ya advierte el comentario de `permisos.test.ts:29-33` sobre
   el estado de origen).
-- [ ] 10.6 GREEN: extender `transicionesEjecucion.test.ts` con `CASOS_EQUIPO_NUEVO`. Confirmar verde.
+- [x] 10.6 GREEN: extender `transicionesEjecucion.test.ts` con `CASOS_EQUIPO_NUEVO`. Confirmar verde.
   RQ: RQ-EN-01, RQ-EN-05.
-- [ ] 10.7 RED en `apps/desk/server/permisos.test.ts` (al final): matriz 5×3 de `Equipo nuevo` — 10
+- [x] 10.7 RED en `apps/desk/server/permisos.test.ts` (al final): matriz 5×3 de `Equipo nuevo` — 10
   casos prohibidos, 5 permitidos, escrita a mano (admin pasa las 5). **Misma corrección (c):** los 5
   tickets de la matriz se siembran con `classification: 'Equipo nuevo'` y cada uno en `t.from[0]` de su
   transición (mismo criterio que la matriz de servicio existente, `permisos.test.ts:24-27`), para que la
   respuesta observada sea el `403`/`200` de PERMISO y no el `409` de flujo ni el `409` de estado.
-- [ ] 10.8 GREEN: añadir la matriz al final de `permisos.test.ts`. Confirmar verde. RQ: RQ-EN-02.
-- [ ] 10.9 **M9**: cambiar temporalmente `liberacion` a área `Comercial` en `TRANSITIONS_EQUIPO_NUEVO`.
+- [x] 10.8 GREEN: añadir la matriz al final de `permisos.test.ts`. Confirmar verde. RQ: RQ-EN-02.
+- [x] 10.9 **M9**: cambiar temporalmente `liberacion` a área `Comercial` en `TRANSITIONS_EQUIPO_NUEVO`.
   Confirmar rojo: el total escrito a mano de la matriz EN (10 prohibidos/5 permitidos) cambia —
   Comercial pasa a poder ejecutarla y Servicio Técnico deja de poder. Revertir.
-- [ ] 10.10 **M10**: en `flujos.ts`, mutar temporalmente `transicionPorId` para que busque SÓLO en
+- [x] 10.10 **M10**: en `flujos.ts`, mutar temporalmente `transicionPorId` para que busque SÓLO en
   `TRANSITIONS` (ignorando el catálogo EN). Confirmar rojo: el barrido HTTP de las 5 EN de
   `transicionesEjecucion.test.ts` responde `400` («Transición desconocida») en vez de `200`. Revertir.
 
@@ -328,37 +328,37 @@ red de pruebas por decisión de Gerencia (F0-00, `vitest.config.ts:16-20`). Veri
 Reescribir EN SU SITIO (mismo número de líneas cada vez, sin desplazar nada — son las 17 líneas en 9
 ficheros que `design.md` §2 D5 identifica prediciendo «F1B-06 entra en `TRANSITIONS`»):
 
-- [ ] 11.1 `invariantesGrafo.test.ts:11-12`, `:73-74`: de «F1B-06 entra en `TRANSITIONS`» a «F1B-06
+- [x] 11.1 `invariantesGrafo.test.ts:11-12`, `:73-74`: de «F1B-06 entra en `TRANSITIONS`» a «F1B-06
   añade catálogos al registro de flujos; la red cubre la unión».
-- [ ] 11.2 `reentrancia.test.ts:16`, `:24`; `sla.test.ts:165`; `transicionesEjecucion.test.ts:193`;
+- [x] 11.2 `reentrancia.test.ts:16`, `:24`; `sla.test.ts:165`; `transicionesEjecucion.test.ts:193`;
   `permisos.test.ts:25`: de «dos grafos» (previsión) a «cualquier catálogo del registro».
-- [ ] 11.3 `transicionesEjecucion.test.ts:135-136`: de «la transición 35» a «una transición nueva de
+- [x] 11.3 `transicionesEjecucion.test.ts:135-136`: de «la transición 35» a «una transición nueva de
   cualquier catálogo».
-- [ ] 11.4 `reentrancia.ts:5`, `:91`, `:142`; `sla.ts:83` (shared); `bodegaje.ts:218`;
+- [x] 11.4 `reentrancia.ts:5`, `:91`, `:142`; `sla.ts:83` (shared); `bodegaje.ts:218`;
   `apps/desk/server/testing/appHarness.ts:62`: de «dos grafos» (previsión) a «catálogos del registro de
   flujos (`flujos.ts`)».
-- [ ] 11.5 Confirmar `npm test` sigue en verde (edición de comentarios, cero cambio de comportamiento).
+- [x] 11.5 Confirmar `npm test` sigue en verde (edición de comentarios, cero cambio de comportamiento).
 
 ## Fase 12 · Corrección (f), parte 2 — `permisos.test.ts:29-33` y su cita caducada
 
-- [ ] 12.1 Editar EN LÍNEA (mismo número de líneas) `apps/desk/server/permisos.test.ts:29-33`: «dos
+- [x] 12.1 Editar EN LÍNEA (mismo número de líneas) `apps/desk/server/permisos.test.ts:29-33`: «dos
   guardas por delante» → «tres guardas por delante», enumerando las tres: `404` (ticket no existe),
   `409` de flujo (Fase 6, RQ-EN-05, nueva desde este cambio) y `409` de estado.
-- [ ] 12.2 En el mismo bloque, corregir la cita caducada `ticketService.ts:89` a `ticketService.ts:130`
+- [x] 12.2 En el mismo bloque, corregir la cita caducada `ticketService.ts:89` a `ticketService.ts:130`
   (línea real del `403` hoy). Regla de mutación 4, Caso A: el `403` NO se desplaza por este cambio
   (`design.md` D3 confirma «0 líneas desplazadas»); la cita a `:89` ya estaba rota ANTES de este cambio
   y se corrige de paso, al tocar el mismo comentario por `12.1`.
-- [ ] 12.3 Confirmar `npm test` sigue verde.
+- [x] 12.3 Confirmar `npm test` sigue verde.
 
 ## Fase 13 · Cierre de calidad e intento del Lote 2
 
-- [ ] 13.1 `npm test` en verde; registrar el recuento (pasadas/ficheros) en `apply-progress.md`.
-- [ ] 13.2 `npm run typecheck` en verde.
-- [ ] 13.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente.
-- [ ] 13.4 `npm run build` en verde.
-- [ ] 13.5 `git add -N apps/desk/server/flujoEquipoNuevo.test.ts` (único fichero nuevo del Lote 2), y
+- [x] 13.1 `npm test` en verde; registrar el recuento (pasadas/ficheros) en `apply-progress.md`.
+- [x] 13.2 `npm run typecheck` en verde.
+- [x] 13.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente.
+- [x] 13.4 `npm run build` en verde.
+- [x] 13.5 `git add -N apps/desk/server/flujoEquipoNuevo.test.ts` (único fichero nuevo del Lote 2), y
   cualquier otro fichero nuevo sin trackear que resulte de las Fases 6-12.
-- [ ] 13.6 Medir `git diff --shortstat --no-renames <commit de cierre del Lote 1>` con lo anterior ya
+- [x] 13.6 Medir `git diff --shortstat --no-renames <commit de cierre del Lote 1>` con lo anterior ya
   indexado (`-N`). Registrar el número en `apply-progress.md` y contrastarlo contra la estimación de
   ~480.
 - [ ] 13.7 Commit del Lote 2 — hecho por el orquestador.
@@ -367,27 +367,27 @@ ficheros que `design.md` §2 D5 identifica prediciendo «F1B-06 entra en `TRANSI
 
 ## Fase 14 · Barrido de citas (regla de mutación 4, OBLIGATORIO) — sobre los dos lotes
 
-- [ ] 14.1 `grep -rnoE "transitions\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio (fuera de `archive/`).
+- [x] 14.1 `grep -rnoE "transitions\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio (fuera de `archive/`).
   Comprobar los dos extremos de cada rango por separado contra el árbol final. Predicción de
   `design.md`: **0 desplazadas** (todo lo nuevo va al final, tras `:334`, o en línea en `:327`).
-- [ ] 14.2 `grep -rnoE "estados\.ts:[0-9]+(-[0-9]+)?"` — comprobar los dos extremos. Predicción: 0
+- [x] 14.2 `grep -rnoE "estados\.ts:[0-9]+(-[0-9]+)?"` — comprobar los dos extremos. Predicción: 0
   desplazadas (todo en línea o al final, tras `:173`).
-- [ ] 14.3 `grep -rnoE "ticketService\.ts:[0-9]+(-[0-9]+)?"` — comprobar los dos extremos. Predicción: 0
+- [x] 14.3 `grep -rnoE "ticketService\.ts:[0-9]+(-[0-9]+)?"` — comprobar los dos extremos. Predicción: 0
   desplazadas (`:125` gana una sentencia en la misma línea; `exigirMismoFlujo` se añade al final, tras
   la actual `:223`).
-- [ ] 14.4 Releer sin buscar desplazamiento (el contenido cambia, la línea no — Caso A a confirmar):
+- [x] 14.4 Releer sin buscar desplazamiento (el contenido cambia, la línea no — Caso A a confirmar):
   `ticketService.ts:125` (`contratoErrores.test.ts:18`; `transitions-st/spec.md:33`, `:975`;
   `derivacion-avisos/spec.md:212`), `transitions.ts:327-334`, `estados.ts:101-105`/`:111`,
   `TransitionPanel.tsx:56-58`, `db/sla.ts:40-45`.
-- [ ] 14.5 `grep -rni "21 estados"` fuera de `archive/`: clasificar cada resultado. Las que hablan de
+- [x] 14.5 `grep -rni "21 estados"` fuera de `archive/`: clasificar cada resultado. Las que hablan de
   TODOS los estados del Blueprint (`ESTADOS`) pasan a **22** (Caso A si no citan revisión, Caso B si
   citan una fechada); las que hablan de la partición de FASES (`FASE_POR_ESTADO`/`ESTADOS_SERVICIO`)
   siguen en **21**, Caso A, sin tocar.
-- [ ] 14.6 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan
+- [x] 14.6 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan
   `transitions.ts`, `estados.ts` y `ticketService.ts`: `CLAUDE.md`, specs archivadas. **NO editar
   `openspec/config.yaml`** (decisiones de Gerencia): si una cita suya queda afectada, anotarlo en
   `apply-progress.md` para que el orquestador decida.
-- [ ] 14.7 Confirmar el resultado de `14.5`/`14.6` contra `openspec/config.yaml`: sólo LECTURA.
+- [x] 14.7 Confirmar el resultado de `14.5`/`14.6` contra `openspec/config.yaml`: sólo LECTURA.
 - [ ] 14.8 `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit del Lote 2 —
   **lo ejecuta el orquestador**, no esta fase.
 

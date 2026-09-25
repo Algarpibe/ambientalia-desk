@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { TRANSITIONS, transitionById } from './transitions'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, transitionById } from './transitions'
 import {
   INDICADORES_G6, camposFechaReentrantes, camposFechaReentrantesObligatorios,
   componenteQueContiene, tablaDeReentrancia,
@@ -13,16 +13,16 @@ import {
  *
  * Lo que la hace valer es que NO está escrita a mano: los componentes salen de Tarjan sobre
  * `TRANSITIONS` y los campos de las declaraciones de cada etapa. Un ciclo nuevo introducido por
- * F1B-06 —que añade dos grafos— aparece aquí en rojo el día que se añade, no el día que alguien
- * recalcula la tabla.
+ * cualquier catálogo del registro de flujos —F1B-06 añadió el primero aparte de `TRANSITIONS`—
+ * aparece aquí en rojo el día que se añade, no el día que alguien recalcula la tabla.
  *
  * ⚠️ F0-04 NO DISEÑA LA SOLUCIÓN. Esta tanda produce el dato; el diseño es F1C-02 desde M1.3.5 y
  * P34. Lo que aquí da verde son defectos DOCUMENTADOS, no defectos arreglados.
  */
 describe('tabla de reentrancia', () => {
   /**
-   * El guardia de F1B-06: tres ciclos, ni uno más. Un cuarto componente fuertemente conexo es un
-   * ciclo nuevo, y un ciclo nuevo con campos de fecha dentro es un KPI roto que nadie ha visto.
+   * El guardia de `TRANSITIONS` —cualquier catálogo del registro tiene el suyo—: tres ciclos, ni uno
+   * más. Un cuarto componente fuertemente conexo es un ciclo nuevo que nadie ha visto.
    */
   it('el grafo tiene exactamente tres ciclos, y son estos', () => {
     expect(tablaDeReentrancia().map((c) => c.estados)).toEqual([
@@ -175,5 +175,26 @@ describe('cruce de la reentrancia con los indicadores de G.6', () => {
     expect(conDuenio).toEqual([
       { columnas: [47], nombre: 'Tiempo permanencia', campos: ['Fecha Remisión de Salida'], alcance: 'C4' },
     ])
+  })
+})
+
+/**
+ * F1B-06 · EL CATÁLOGO `TRANSITIONS_EQUIPO_NUEVO` TIENE SU PROPIO CICLO.
+ *
+ * `tablaDeReentrancia`/`camposFechaReentrantes` ya son genéricas sobre `Transition[]` (aceptan un
+ * catálogo inyectado); esto no exige ningún cambio de producción, sólo la aserción sobre el catálogo
+ * nuevo. `ingreso_equipo_nuevo → producto_no_conforme → analisis_y_acciones` cierra el ciclo
+ * `Ingresado → En Proceso → Notificado → Ingresado`, y ninguna de las tres escribe fecha —el único
+ * campo de las cinco es el comentario—, así que el ciclo es CERO campos reentrantes.
+ */
+describe('reentrancia del catálogo equipo-nuevo (F1B-06)', () => {
+  it('el catálogo EN tiene exactamente un ciclo: Ingresado, En Proceso, Notificado', () => {
+    expect(tablaDeReentrancia(TRANSITIONS_EQUIPO_NUEVO).map((c) => c.estados)).toEqual([
+      ['Ingresado', 'En Proceso', 'Notificado'],
+    ])
+  })
+
+  it('el ciclo EN no tiene ningún campo de fecha reentrante', () => {
+    expect(camposFechaReentrantes(TRANSITIONS_EQUIPO_NUEVO)).toEqual([])
   })
 })

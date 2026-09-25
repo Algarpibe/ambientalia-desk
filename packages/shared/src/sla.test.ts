@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { SLA_HORAS_POR_ESTADO, destinatarioDelEscalado, slaVencido, venceSlaEn } from './sla'
 import { ESTADOS, ESTADOS_EN_ESPERA, ESTADOS_SIN_SALIDA } from './estados'
 import { CLAVE_DERIVACION, type DerivacionPorDefecto, type Transition } from './transitions'
+import { CATALOGO_POR_FLUJO } from './flujos'
 
 /** Una transición mínima con su casilla de derivación, para los grafos sintéticos de más abajo. */
 const trans = (id: string, from: string, porDefecto: DerivacionPorDefecto): Transition => ({
@@ -162,7 +163,7 @@ describe('C11 · a quién se escala', () => {
   })
 
   /**
-   * EL GUARDIÁN, y es el que importa cuando F1B-06 añada dos grafos enteros: hoy NINGÚN estado del
+   * EL GUARDIÁN, y es el que importa para cualquier catálogo del registro de flujos: hoy NINGÚN estado del
    * registro es ambiguo. El día que una tanda declare un segundo cargo saliente sobre un estado que
    * ya tenía uno, esta prueba lo dice antes de que el escalado empiece a elegir en silencio.
    */
@@ -188,5 +189,22 @@ describe('C11 · a quién se escala', () => {
   it('todo estado con SLA declarado tiene a quién escalar', () => {
     const mudos = Object.keys(SLA_HORAS_POR_ESTADO).filter((e) => !destinatarioDelEscalado(e as never).hay)
     expect(mudos, 'estados con SLA y sin destinatario de escalado').toEqual([])
+  })
+
+  /**
+   * F1B-06 — el guardián de ambigüedad se extiende MÁS ALLÁ de `TRANSITIONS`: ningún estado de
+   * NINGÚN catálogo del registro de flujos (`flujos.ts`) puede tener un escalado ambiguo. Con las
+   * cinco entradas de `TRANSITIONS_EQUIPO_NUEVO` sin `porDefecto` (sólo comentario y derivación
+   * heredada), hoy ninguna propone cargo — así que el catálogo EN no aporta ningún destinatario y,
+   * por tanto, tampoco ninguna ambigüedad.
+   */
+  it('ningún estado de ningún catálogo del registro de flujos tiene un escalado ambiguo', () => {
+    for (const catalogo of Object.values(CATALOGO_POR_FLUJO)) {
+      const estados = new Set<string>(catalogo.flatMap((t) => [...t.from, t.to]))
+      for (const estado of estados) {
+        const d = destinatarioDelEscalado(estado as never, catalogo as Transition[])
+        expect(!d.hay && d.motivo === 'ambiguo', `${estado} tiene un escalado ambiguo`).toBe(false)
+      }
+    }
   })
 })

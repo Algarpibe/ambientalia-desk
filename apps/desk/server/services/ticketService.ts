@@ -3,7 +3,7 @@ import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambien
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transitionById, canExecuteTransition, CLAVE_DERIVACION } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -119,10 +119,10 @@ export async function executeTransition(
   config?: AppConfig,
 ): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
-  const t = transitionById(String(b.transitionId))
+  const t = transicionPorId(String(b.transitionId))
   if (!t) throw new HttpError(400, { error: 'Transición desconocida' })
   const current = await getTicketWithRefs(db, id)
-  if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' })
+  if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' }); exigirMismoFlujo(t, current.row)
   if (!t.from.includes(current.row.status)) {
     throw new HttpError(409, { error: `La transición "${t.name}" no aplica desde el estado "${current.row.status}"` })
   }
@@ -193,7 +193,7 @@ export async function executeTransition(
    * Se deduplica por persona ANTES de escribir: quien sea destinataria por dos áreas a la vez
    * (Comercial y Compras salen juntas de varias fases) recibiría el mismo aviso dos veces.
    */
-  const areasAvisar = areasAAvisar(t.to, user.areas)
+  const areasAvisar = areasAAvisar(t.to, user.areas, catalogoDelTicket({ classification: current.row.classification, status: t.to }))
   if (areasAvisar.length) {
     const porPersona = new Map<string, { id: string; email: string; name: string }>()
     for (const area of areasAvisar) {
@@ -220,4 +220,15 @@ export async function executeTransition(
 
   const updated = await getTicketWithRefs(db, id)
   return updated ? rowToTicketDetail(updated.row, updated.refs) : {}
+}
+
+/**
+ * Guarda 3 (F1B-06, RQ-EN-05): la transición pedida tiene que pertenecer al flujo aplicable del
+ * ticket (`fueraDeFlujo`, `@ambientalia/shared`). Extraída como función nombrada — y no en línea en
+ * `:125` — por legibilidad; el orquestador la deja al FINAL del fichero a propósito, para no
+ * desplazar ninguna de las citas vivas a `ticketService.ts` (regla de mutación 4 de `CLAUDE.md`).
+ */
+function exigirMismoFlujo(t: Transition, row: TicketDeFlujo): void {
+  const motivo = fueraDeFlujo(t, row)
+  if (motivo) throw new HttpError(409, { error: motivo })
 }

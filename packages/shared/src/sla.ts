@@ -80,7 +80,7 @@ export function slaVencido(estado: Estado, desde: Date, ahora: Date): boolean {
  * - **Dos cargos distintos** ⇒ **ambiguo**, y tampoco se elige el primero: eso sería inventar un
  *   orden entre dos puestos, la misma clase de regla que `DerivacionPorDefecto` evita al ser una
  *   unión y no dos campos sueltos (`transitions.ts:38-43`). Hoy no ocurre en ningún estado, y hay
- *   una prueba que lo vigila para cuando F1B-06 añada dos grafos enteros.
+ *   una prueba que lo vigila para cuando el registro de flujos (`flujos.ts`) sume un catálogo nuevo.
  *
  * `transiciones` se inyecta para poder probar los casos que el grafo real todavía no tiene. En
  * producción es siempre `TRANSITIONS`.

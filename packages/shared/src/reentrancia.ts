@@ -2,8 +2,8 @@
 // escriben dentro de ellos y qué indicadores de G.6 los consumen.
 //
 // POR QUÉ ESTO ES CÓDIGO Y NO UN DOCUMENTO. La tabla ya estaba calculada a mano en el proposal
-// F0-04. Una tabla escrita a mano envejece en silencio: F1B-06 añade dos grafos al motor, y el día
-// que uno de ellos cierre un ciclo nuevo sobre un campo de fecha, el documento seguiría diciendo
+// F0-04. Una tabla escrita a mano envejece en silencio: los catálogos del registro de flujos
+// (`flujos.ts`) crecen, y el día que uno de ellos cierre un ciclo nuevo sobre un campo de fecha, el documento seguiría diciendo
 // «tres ciclos, nueve casos» y nadie se enteraría. Derivada del grafo, esa misma tanda da rojo.
 //
 // ⚠️ F0-04 NO DISEÑA LA SOLUCIÓN. Produce el dato de entrada de F1C-02, F1C-06, C9 y la spec `kpis`.
@@ -88,7 +88,7 @@ export const INDICADORES_G6: IndicadorG6[] = [
  * Cuenta también el `campoFecha` del buscador de órdenes de venta: no se teclea, pero se ESCRIBE
  * igual —lo rellena la OV elegida— y por tanto se pisa igual al repetir. Hoy ninguna transición
  * reentrante lleva buscador de OV, así que no cambia la tabla; dejarlo fuera haría que la tabla
- * mintiera el día que F1B-06 meta uno dentro de un ciclo.
+ * mintiera el día que algún catálogo del registro de flujos meta uno dentro de un ciclo.
  */
 function camposDeFecha(t: Transition): string[] {
   const campos: string[] = []
@@ -139,7 +139,7 @@ export function componentesFuertementeConexos(transiciones: Transition[] = TRANS
   }
 
   // Tarjan iterativo: 21 nodos caben de sobra en la pila del intérprete, pero un grafo lo recorre
-  // quien no sabe cuánto va a crecer —F1B-06 añade dos— y la versión iterativa no tiene ese techo.
+  // quien no sabe cuánto va a crecer —el registro de flujos (`flujos.ts`) puede sumar catálogos— y la versión iterativa no tiene ese techo.
   const indice = new Map<string, number>()
   const bajo = new Map<string, number>()
   const enPila = new Set<string>()

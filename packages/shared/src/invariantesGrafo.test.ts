@@ -8,9 +8,9 @@ import { camposFechaReentrantes } from './reentrancia'
 /**
  * LOS SIETE INVARIANTES DEL GRAFO (§2 del proposal F0-04).
  *
- * Cinco tandas de la Fase 1 tocan `transitions.ts` —F1A-01, F1B-06, F1C-02, F1C-05 y C9— y hoy
- * ninguna tiene red debajo: F1B-06 añade dos grafos enteros y puede romper el de servicio técnico
- * sin que nada dé rojo. Esto es esa red.
+ * Cinco tandas de la Fase 1 tocan `transitions.ts` —F1A-01, F1B-06, F1C-02, F1C-05 y C9—. F1B-06
+ * añade catálogos al registro de flujos (`flujos.ts`); la red cubre la unión, y ninguna de las cinco
+ * puede romper el de servicio técnico sin que nada dé rojo. Esto es esa red.
  *
  * ⚠️ SE AFIRMA SOBRE `TRANSITIONS`, NUNCA SOBRE `TRANSICIONES_BASE`.
  * `TRANSITIONS = TRANSICIONES_BASE.map(...)` (`transitions.ts:288-291`) y es lo que consumen
@@ -70,7 +70,7 @@ describe('invariantes del grafo de transiciones', () => {
    *
    * Es la otra mitad del 1: el 1 compara conjuntos y por tanto ya lo cubre hoy, pero se escribe
    * aparte porque el mensaje de fallo es el que importa —dice QUÉ estado no existe— y porque el día
-   * que el registro declare un estado todavía sin transiciones (F1B-06 añade dos grafos) el 1 se
+   * que el registro de flujos gane un catálogo con un estado todavía sin transiciones, el 1 se
    * relajará y este seguirá siendo exacto.
    */
   it('4 · ninguna transición apunta a un estado no declarado', () => {

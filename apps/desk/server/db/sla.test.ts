@@ -8,8 +8,8 @@ beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Poo
 
 const AHORA = new Date('2026-09-10T12:00:00.000Z')
 
-const ticket = (id: string, number: number, status: string) =>
-  db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)', [id, number, 'SLA', status])
+const ticket = (id: string, number: number, status: string, classification: string | null = null) =>
+  db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)', [id, number, 'SLA', status, classification])
 
 const entroEn = (ticketId: string, estado: string, cuando: string) =>
   db.query(
@@ -130,5 +130,17 @@ describe('C11 · los tickets con el SLA vencido', () => {
     expect(await ticketsConSlaVencido(espia, AHORA)).toHaveLength(1)
     const alHistorial = consultas.filter((q) => q.includes('ticket_transitions'))
     expect(alHistorial, 'una consulta al historial por cada ticket con SLA, y ni una más').toHaveLength(1)
+  })
+
+  /**
+   * F1B-06, RQ-TS-15 (delta `transitions-st`), RQ-EN-06. `Notificado` también es un estado del
+   * catálogo `equipo-nuevo` (`analisis_y_acciones`, `from: ['Notificado']`), y el SLA de 24h es una
+   * regla del flujo de SERVICIO (M1.7 del maestro): un ticket `Equipo nuevo` en `Notificado` NO
+   * cuenta, aunque el nombre del estado coincida.
+   */
+  it('un ticket Equipo nuevo en Notificado no cuenta para el SLA, aunque lleve más de 24 h', async () => {
+    await ticket('t10', 4209, 'Notificado', 'Equipo nuevo')
+    await entroEn('t10', 'Notificado', '2026-09-08T12:00:00.000Z')
+    expect(await ticketsConSlaVencido(db, AHORA)).toEqual([])
   })
 })

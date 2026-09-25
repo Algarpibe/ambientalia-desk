@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
-import { AREAS, TRANSITIONS, canExecuteTransition } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, canExecuteTransition } from '@ambientalia/shared'
 import { requireAuth, requireAdmin, requireArea } from './auth/middleware'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -21,16 +21,16 @@ instalarArnes()
  * servidor probando UNA sola transición real (`transiciones.test.ts`, `aprobacion`). Cinco tandas de
  * la Fase 1 tocan `permissions.ts` y `transitions.ts` sin más red que ésa.
  *
- * ⚠️ LA MATRIZ SE DERIVA DEL GRAFO, no se escriben 34 casos a mano. Escritos a mano, la transición 35
- * que añada F1B-06 no tendría fila y nadie se enteraría; derivada, aparece sola en la matriz y el
+ * ⚠️ LA MATRIZ SE DERIVA DEL GRAFO, no se escriben 34 casos a mano. Escritos a mano, una transición
+ * nueva de cualquier catálogo del registro no tendría fila y nadie se enteraría; derivada, aparece
  * servidor tiene que contestarle. Lo que sí va escrito a mano es el TOTAL —102 casos, 60 prohibidos y
  * 42 permitidos—, porque una matriz derivada de un grafo vacío también daría verde.
  *
  * ⚠️ Y SE PRUEBA CONTRA EL SERVIDOR, no contra `canExecuteTransition`. El 403 lo lanza
- * `ticketService.ts:89`, y entre la petición y esa línea hay dos guardas por delante —404 si el
- * ticket no existe, 409 si el estado de origen no aplica— que se comen la respuesta antes. Por eso
- * cada ticket se coloca en `t.from[0]`, un estado de origen VÁLIDO para su transición: con el estado
- * equivocado esta matriz estaría comprobando 409 y creyendo que comprueba permisos.
+ * `ticketService.ts:130`, con TRES guardas por delante —404 si el ticket no existe, 409 de flujo
+ * (guarda 3, F1B-06, RQ-EN-05) y 409 si el estado de origen no aplica— que se comen la respuesta
+ * antes. Por eso cada ticket se coloca en `t.from[0]`, un estado de origen VÁLIDO para su transición:
+ * con el estado equivocado esta matriz estaría comprobando 409 y creyendo que comprueba permisos.
  *
  * EFECTO DE SEGUNDO ORDEN, que conviene dejar escrito: con esta matriz probada,
  * `TransitionPanel.tsx:56-57` —que filtra los botones por área en el navegador— deja de ser un espejo
@@ -203,6 +203,70 @@ describe('guardas de autenticación', () => {
       expect(res.estado).toBe(0)
     })
   })
+})
+
+/**
+ * F1B-06 — LA MATRIZ 5×3 DEL CATÁLOGO `TRANSITIONS_EQUIPO_NUEVO`, CONTRA EL SERVIDOR.
+ *
+ * Escrita A MANO y no derivada: con cinco transiciones el total esperado (10 prohibidos, 5
+ * permitidos) es más claro escrito que calculado, y por s2 las cinco son `Servicio Técnico`, así que
+ * el resultado es uniforme.
+ *
+ * ⚠️ MISMA CORRECCIÓN (c) que `transicionesEjecucion.test.ts`: cada ticket se siembra con
+ * `classification: 'Equipo nuevo'` EXPLÍCITA y en `t.from[0]` de su transición, para que la
+ * respuesta observada sea el 403/200 de PERMISO y no el 409 de flujo (Fase 6) ni el 409 de estado.
+ */
+describe('matriz 5×3 · área × transición de Equipo nuevo, contra el servidor (F1B-06)', () => {
+  for (const area of AREAS) {
+    it(`las cinco transiciones de Equipo nuevo contestan lo mismo a un usuario de ${area}`, async () => {
+      const cookie = await userCookie([area])
+      const { app } = appWith()
+
+      const observado: Record<string, number> = {}
+      let n = 0
+      for (const t of TRANSITIONS_EQUIPO_NUEVO) {
+        n += 1
+        const id = `mtx-en-${n}`
+        await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
+          [id, 92000 + n, 'Matriz de permisos EN', t.from[0], 'Equipo nuevo'])
+        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+          .send({ transitionId: t.id, values: valoresValidos(t, n) })
+        observado[t.id] = res.status
+      }
+
+      const esperado: Record<string, number> = {}
+      for (const t of TRANSITIONS_EQUIPO_NUEVO) esperado[t.id] = canExecuteTransition([area], false, t.area) ? 200 : 403
+      expect(observado).toEqual(esperado)
+    }, 60_000)
+  }
+
+  it('la matriz EN son 15 casos: 10 prohibidos y 5 permitidos', () => {
+    const casos = TRANSITIONS_EQUIPO_NUEVO.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
+    expect(casos).toHaveLength(15)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(10)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(5)
+  })
+
+  it('un administrador pasa por las cinco sin que su área importe', async () => {
+    const u = await createUser(db, { email: 'jefa-en@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
+    const cookie = `sid=${await createSession(db, u.id)}`
+    const { app } = appWith()
+
+    const observado: Record<string, number> = {}
+    let n = 0
+    for (const t of TRANSITIONS_EQUIPO_NUEVO) {
+      n += 1
+      const id = `adm-en-${n}`
+      await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
+        [id, 93000 + n, 'Matriz de permisos EN', t.from[0], 'Equipo nuevo'])
+      const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        .send({ transitionId: t.id, values: valoresValidos(t, n) })
+      observado[t.id] = res.status
+    }
+    const esperado: Record<string, number> = {}
+    for (const t of TRANSITIONS_EQUIPO_NUEVO) esperado[t.id] = 200
+    expect(observado).toEqual(esperado)
+  }, 60_000)
 })
 
 /** Un usuario de mentira, con lo justo que las tres guardas miran. */

@@ -215,7 +215,7 @@ export function diasDeBodegaje(historial: PasoDelHistorial[], clase?: ClaseBodeg
  * La marca de tiempo del `Ingreso a Servicio`, o `null` si el ticket todavía no entró.
  *
  * Es el ancla de los indicadores 48 y 49. Se devuelve la PRIMERA: `ingreso_a_servicio` no está en
- * ningún ciclo del grafo, así que hoy ocurre una vez, pero si F1B-06 la metiera en uno, la llegada
+ * ningún ciclo del grafo, así que hoy ocurre una vez, pero si algún catálogo del registro de flujos la metiera en uno, la llegada
  * física del equipo seguiría siendo la primera y no la última.
  *
  * ⚠️ NO devuelve `Fecha creación ticket`, que la escribe esta MISMA transición

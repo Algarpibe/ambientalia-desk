@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { TRANSITIONS, ESTADOS_SIN_SALIDA } from '@ambientalia/shared'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, ESTADOS_SIN_SALIDA } from '@ambientalia/shared'
 import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testing/appHarness'
 
 instalarArnes()
@@ -132,8 +132,8 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
  * Pero MENCIONAR NO ES CUBRIR: `reentrancia.test.ts` nombra diez ids sin ejecutar ninguno, y las 34
  * que barre `permisos.test.ts` sólo se comprueban por su código HTTP. Por eso las 34 tienen caso
  * aquí y no sólo las 9 que quedaban sueltas: la cobertura que §5 pide es la ejecutada. El guardián
- * de más abajo compara la tabla con el grafo, así que la transición 35 que añada F1B-06 se pone roja
- * el día que llegue sin caso.
+ * de más abajo compara la tabla con el grafo, así que una transición nueva de cualquier catálogo se
+ * pone roja el día que llegue sin caso.
  */
 const CASOS: Record<string, { desde: string[]; a: string }> = {
   // ── 1 · LAS CUATRO SALIDAS ÚNICAS DE LOS ESTADOS SIN SALIDA — gate de F1C-03 ──────────────────
@@ -190,7 +190,7 @@ describe('las 34 transiciones, ejecutadas contra el servidor', () => {
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
    * Se afirma en los DOS sentidos porque los dos fallos existen y no son el mismo: una transición
-   * nueva sin caso (F1B-06 añade dos grafos enteros) y un caso que sobrevive a la transición que
+   * nueva sin caso (cualquier catálogo del registro de flujos puede añadir una) y un caso que sobrevive a la transición que
    * documentaba —un id renombrado deja el caso apuntando a nada, y el barrido de más abajo dejaría
    * de ejecutar esa transición sin que nadie se entere.
    */
@@ -284,4 +284,77 @@ describe('las 34 transiciones, ejecutadas contra el servidor', () => {
     // `habilitar_servicio` sale de tres estados. Un barrido sobre un grafo vacío también daría verde.
     expect(n, 'ejecuciones del barrido').toBe(36)
   }, 60_000)
+})
+
+/**
+ * F1B-06 — LAS CINCO TRANSICIONES DE `TRANSITIONS_EQUIPO_NUEVO`, EJECUTADAS CONTRA EL SERVIDOR.
+ *
+ * Mismo molde que el barrido de las 34 de arriba, escrita a mano y NO derivada — con cinco casos la
+ * derivación no aporta la segunda opinión que sí aporta con 34, y el guardián de huérfanas es el que
+ * cuida que ninguna quede sin caso.
+ *
+ * ⚠️ CORRECCIÓN (c), OBLIGATORIA. Cada ticket sembrado lleva `classification: 'Equipo nuevo'`
+ * EXPLÍCITO y se coloca en `t.from[0]` de SU transición EN: sin la clasificación, la guarda 3
+ * (Fase 6) respondería 409 de flujo antes de llegar al 200 que este barrido comprueba, y la prueba
+ * estaría comprobando la guarda 3 en vez de la ejecución — mismo riesgo que ya advierte el
+ * comentario de `permisos.test.ts:24-33` sobre el estado de origen.
+ */
+const CASOS_EQUIPO_NUEVO: Record<string, { desde: string[]; a: string }> = {
+  ingreso_equipo_nuevo: { desde: ['Ingresado'], a: 'En Proceso' },
+  producto_no_conforme: { desde: ['En Proceso'], a: 'Notificado' },
+  analisis_y_acciones: { desde: ['Notificado'], a: 'Ingresado' },
+  verificacion: { desde: ['En Proceso'], a: 'Verificación' },
+  liberacion: { desde: ['En Proceso'], a: 'Finalizado' },
+}
+
+describe('las cinco transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
+  it('ninguna transición del catálogo EN se queda sin caso, y ningún caso sobra', () => {
+    const conCaso = new Set(Object.keys(CASOS_EQUIPO_NUEVO))
+    const huerfanas = TRANSITIONS_EQUIPO_NUEVO.filter((t) => !conCaso.has(t.id)).map((t) => t.id)
+    expect(huerfanas, 'transiciones EN sin caso en CASOS_EQUIPO_NUEVO').toEqual([])
+
+    const declaradas = new Set(TRANSITIONS_EQUIPO_NUEVO.map((t) => t.id))
+    const sobrantes = Object.keys(CASOS_EQUIPO_NUEVO).filter((id) => !declaradas.has(id))
+    expect(sobrantes, 'casos que ya no corresponden a ninguna transición EN').toEqual([])
+  })
+
+  it('cada caso EN declara los mismos extremos que el catálogo EN', () => {
+    const delGrafo: Record<string, { desde: string[]; a: string }> = {}
+    for (const t of TRANSITIONS_EQUIPO_NUEVO) delGrafo[t.id] = { desde: t.from, a: t.to }
+    expect(CASOS_EQUIPO_NUEVO).toEqual(delGrafo)
+  })
+
+  it('las cinco salen de su origen, llegan a su destino y dejan traza', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+
+    const observado: Record<string, string> = {}
+    const esperado: Record<string, string> = {}
+    let n = 0
+    for (const t of TRANSITIONS_EQUIPO_NUEVO) {
+      n += 1
+      const id = `eje-en-${n}`
+      // Corrección (c): classification explícita, y el ticket nace en t.from[0] — la guarda 3 exige
+      // las dos cosas a la vez para reconocer el flujo equipo-nuevo (s5, `flujoDelTicket`).
+      await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
+        [id, 71000 + n, 'Barrido de ejecución EN', t.from[0], 'Equipo nuevo'])
+
+      const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+        .send({ transitionId: t.id, values: valoresValidos(t, n) })
+
+      const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
+      const estado = (ticket.rows[0] as { status: string }).status
+      const traza = await db.query(
+        'SELECT transition_id, from_status, to_status, area, performed_by FROM ticket_transitions WHERE ticket_id = $1', [id])
+      const f = traza.rows[0] as { transition_id: string; from_status: string; to_status: string; area: string; performed_by: string } | undefined
+
+      observado[t.id] = `${res.status} · ${estado} · ${traza.rows.length} traza(s)`
+        + (f ? `: ${f.transition_id} ${f.from_status}→${f.to_status} [${f.area}] por ${f.performed_by}` : '')
+      esperado[t.id] = `200 · ${CASOS_EQUIPO_NUEVO[t.id].a} · 1 traza(s)`
+        + `: ${t.id} ${t.from[0]}→${CASOS_EQUIPO_NUEVO[t.id].a} [${t.area}] por Admin`
+    }
+
+    expect(observado).toEqual(esperado)
+    expect(n, 'ejecuciones del barrido EN').toBe(5)
+  })
 })

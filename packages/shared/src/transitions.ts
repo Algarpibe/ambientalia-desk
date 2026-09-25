@@ -324,9 +324,9 @@ export function areasForTransition(area: string): string[] {
  *
  * Un estado terminal («Finalizado») devuelve lista vacía: no hay a quién pasarle el testigo.
  */
-export function areasSiguientes(estado: string): string[] {
+export function areasSiguientes(estado: string, transiciones: readonly Transition[] = TRANSITIONS): string[] {
   const areas = new Set<string>()
-  for (const t of TRANSITIONS) {
+  for (const t of transiciones) {
     if (!t.from.includes(estado)) continue
     for (const a of areasForTransition(t.area)) areas.add(a)
   }
