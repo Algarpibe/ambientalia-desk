@@ -1161,3 +1161,17 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** `CLAUDE.md`, regla del ciclo 2 (el desvío (1), «lo nuevo sin trackear no cuenta», pasaría a tener remedio) · procedimiento de apply de toda tanda SDD.
 **Estado:** nueva
 **Destino propuesto:** regla del ciclo 2 de `CLAUDE.md`, como remedio del desvío (1). **Dueño propuesto:** Gerencia. Mientras no se decida, el orquestador lo aplica en sus applies como medida propia y lo declara en el parte.
+
+## E-079 · 2026-09-25 · pregunta · **NUEVA**
+**Qué:** F1B-04 incluye «rotulación y almacenamiento» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:159`), pero no hay nada que decir qué se registra en la aplicación. El acta lo describe como pasos físicos de la recepción unificada (`docs/Manifesto/Desk2.0_Acta_Sesion_2026-09-03.md:324`) y el maestro igual, sin campo asociado (`Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:3893`); el código no tiene rastro (`grep -rni "rotulaci\|almacenami" apps/desk` sin aciertos del concepto). **Pregunta:** ¿la aplicación tiene que registrar algo de la rotulación y el almacenamiento (una confirmación, una ubicación de un catálogo, una etiqueta) o basta con el paso físico? Sin respuesta, no construir nada deja fuera un elemento de la fila, y construir cualquier cosa es inventar el dato.
+**De dónde viene:** exploración de F1B-04, 2026-09-25 (Engram `sdd/recepcion-unificada/explore`). El usuario eligió construir ahora sólo «foto sólo con novedad» y llevar esto a Gerencia.
+**Afecta a:** fila F1B-04 (no se puede cerrar sin esto) · capacidad `remisiones`.
+**Estado:** nueva
+**Destino propuesto:** fila F1B-04 del §5 del plan. **Dueño propuesto:** Gerencia.
+
+## E-080 · 2026-09-25 · pregunta · **NUEVA**
+**Qué:** F1B-04 pide «sustitución del texto libre por desplegables en las etapas críticas» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:159`), y ningún documento dice cuáles son esas etapas ni qué lista de valores sustituiría al texto. En la recepción, el único texto libre es la observación de la remisión (`apps/desk/src/components/CrearRemision.tsx:264`); no existe una lista cerrada de tipos de novedad (golpe, rayón, falta de accesorio…) en el maestro, en el acta ni en `openspec/config.yaml`. La procedencia del plan son los ítems 4 y 10 de la tabla §3.2 del maestro, que está `[EN REVISIÓN — R08]` y vale como procedencia, no como alcance. **Pregunta:** ¿qué etapas son las críticas y, para cada una, qué lista de valores sustituye al texto libre? Sin respuesta, reducirlo a la observación de la recepción recorta la fila.
+**De dónde viene:** exploración de F1B-04, 2026-09-25 (Engram `sdd/recepcion-unificada/explore`).
+**Afecta a:** fila F1B-04 (no se puede cerrar sin esto) · capacidades `remisiones` y `tickets-core`.
+**Estado:** nueva
+**Destino propuesto:** fila F1B-04 del §5 del plan. **Dueño propuesto:** Gerencia.
