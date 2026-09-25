@@ -1130,3 +1130,24 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Lo que deja abierto, y se devuelve como pregunta:**
 · **`corte-licencias-plan-a`** — sigue como la dejó E-073.
 · **`encuesta-entre-corte-e-independencia`** — la encuesta de satisfacción va dentro de F1F-05 y depende de la salida de correo de 1H-01 (R01.3 §B). Con 1H en enero y Zoho en solo lectura desde el 14/12, nada dice cómo sale la encuesta entre el corte y la independencia.
+
+## E-075 · 2026-09-25 · correccion · **NUEVA**
+**Qué:** Errata en el registro de `decision/edicion-datos-comerciales-equipo`: su `maestro_pasaje` dice «M3.2 (registro de equipos)» (`openspec/config.yaml:2788`), y la fila del expediente repite «M3.2» (`docs/sdd/R08.3_Expediente_de_cambios.md:611`). En la R08.2, M3.2 es «Taxonomía jerárquica ISO 14224» (`Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:2054`); los seis campos del equipo están en M3.1 «Estructura de datos» (`:2021-2053`). Hipótesis: el pasaje que corresponde es M3.1 (ni M3.1 ni M3.3 hablan literalmente de editar ni de registrar cambios; M3.1 define los campos y quién los da de alta, `:2053`).
+**De dónde viene:** propuesta de `edicion-comercial-equipo` (F1B-14), supuesto (c6), 2026-09-25.
+**Afecta a:** fila `decision/edicion-datos-comerciales-equipo` de `docs/sdd/R08.3_Expediente_de_cambios.md` (§11.4) · campo `maestro_pasaje` de esa decisión en `openspec/config.yaml`.
+**Estado:** nueva
+**Destino propuesto:** pasaje del expediente R08.3, como corrección pendiente. **Dueño propuesto:** Gerencia. `openspec/config.yaml` NO se toca desde una tanda: es un campo de una decisión de Gerencia.
+
+## E-076 · 2026-09-25 · hallazgo · **NUEVA**
+**Qué:** El comentario de `apps/desk/server/services/equipoNuevo.ts:63` llama «Validación C» al bloque que reutiliza `camposHojaDeVida`, pero la parte del mantenedor («Mantenedor no encontrado») es una comprobación de existencia de un identificador aportado tal cual, que la tabla canónica clasifica como escalón **A** (`openspec/specs/transitions-st/spec.md:754-765`). El `PATCH` de equipos, desde `edicion-comercial-equipo`, ya la trata como A. La misma guarda queda con dos etiquetas según la puerta.
+**De dónde viene:** validación de diseño de `edicion-comercial-equipo` (F1B-14), 2026-09-25. Es preexistente: no lo introduce ese cambio, y no lo corrige.
+**Afecta a:** `apps/desk/server/services/equipoNuevo.ts` (comentario y, si se reordena algo, el orden de guardas de la vía del ticket, `tickets-core` RQ-TC-05/RQ-TC-15).
+**Estado:** nueva
+**Destino propuesto:** la próxima tanda que toque la rama «Equipo nuevo» del alta de ticket (propuesta: F1B-06). **Dueño propuesto:** quien decida el alcance de F1B-06. Antes de cambiarlo hay que comprobar si es sólo el comentario o también el orden observable.
+
+## E-077 · 2026-09-25 · hallazgo · **NUEVA**
+**Qué:** Dependencia invertida: `camposHojaDeVida` vive en la capa de rutas (`apps/desk/server/routes/equipos.ts:144`) y la importa un servicio (`apps/desk/server/services/equipoNuevo.ts:6`). No hay ciclo de imports, pero un servicio depende de una ruta.
+**De dónde viene:** deuda que dejó `alta-equipo-nuevo-en-ticket` (F1B-14, primer cambio); `edicion-comercial-equipo` decidió en su diseño NO moverla (moverla desplaza citas muy usadas y cuesta presupuesto de revisión sin cambiar comportamiento).
+**Afecta a:** `apps/desk/server/routes/equipos.ts`, `apps/desk/server/services/equipoNuevo.ts` y las citas a `routes/equipos.ts:144-189` (barrido de la regla de mutación 4 al moverla).
+**Estado:** nueva
+**Destino propuesto:** tanda de refactor propia o la siguiente que ya toque ambos ficheros. **Dueño propuesto:** quien decida el alcance; no se asigna épica de memoria.
