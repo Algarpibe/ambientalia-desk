@@ -255,7 +255,7 @@ Chain strategy: stacked-to-main
 - [x] 13.2 `npm run typecheck` en verde.
 - [x] 13.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente (158 en el
   precedente más reciente de este árbol).
-- [ ] 13.4 Commit del lote 1 — cierre del primer intento de `sdd-apply` (ver Review Workload Forecast).
+- [x] 13.4 Commit del lote 1 — cierre del primer intento de `sdd-apply`. **Verificado por sdd-verify (2026-09-25)**: `git log --oneline` confirma el commit `f0304ec` con el alcance de servidor/esquema del lote 1.
 
 ## Fase 14 · Cliente — `EquiposAdmin.tsx` exporta `EquipoForm` (Enfoque punto 3)
 
@@ -280,7 +280,7 @@ Chain strategy: stacked-to-main
   rompió).
 - [x] 16.2 `npm run typecheck` en verde.
 - [x] 16.3 `npm run lint` en verde; 0 warnings nuevos.
-- [ ] 16.4 Commit del lote 2 — reservado al orquestador (mismo criterio que 13.4).
+- [x] 16.4 Commit del lote 2 — reservado al orquestador. **Verificado por sdd-verify (2026-09-25)**: `git log --oneline` confirma el commit `5d853fe` con el alcance de cliente `.tsx` + barrido de citas del lote 2.
 
 ## Fase 17 · Casilla de la regla de mutación 3 (`CLAUDE.md`) — tras el lote 2
 
@@ -328,12 +328,13 @@ Chain strategy: stacked-to-main
   `equipos.ts` fuera de la ya tratada en 18.1.
 - [x] 18.3 Confirmado `types.ts`: sin citas vivas a partir de `:546` en el árbol final (barrido repetido
   tras el lote 2 — el lote 2 no tocó `types.ts`; el punto más alto citado sigue siendo `:542-546`).
-- [ ] 18.4 Tras el commit final del cierre: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha
+- [x] 18.4 Tras el commit final del cierre: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha
   HEAD`. Confirmar verde antes de pasar a `sdd-verify`. **Diferido al orquestador**: el CLI sólo acepta
   `--sha <rev>` contra un árbol YA COMMITEADO (`repo.arbol(rev)` exige un objeto de commit) — no hay modo
   para comprobar el working tree sin commitear, y `--help` no imprime nada (revisado el fichero
   directamente, `apps/desk/server/citas/cli.ts:109-118`: sólo `--sha`, `--generar-base` o HOOK). No se
   crea un commit para probarlo, por instrucción explícita del orquestador de no commitear en este intento.
+  **Verificado por sdd-verify (2026-09-25)**: ejecutado tras el commit `9f7b808` (que ya incluye el anclaje de citas de este barrido) — `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` → exit 0, 14 abreviadas rotas informativas (no bloquean, ninguna nueva de este cambio), 0 cabeceras R-1 inválidas.
 
 ## Comprobaciones de persona (regla del ciclo 1 — NO son casillas contables)
 
