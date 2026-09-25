@@ -187,7 +187,7 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
   trackear que resulte de las Fases 1-4.
 - [x] 5.6 Medir `git diff --shortstat --no-renames e8640d7` con lo anterior ya indexado (`-N`).
   Registrar el número en `apply-progress.md` y contrastarlo contra la estimación de ~615.
-- [ ] 5.7 Commit del Lote 1 — hecho por el orquestador.
+- [x] 5.7 Commit del Lote 1 — hecho por el orquestador: `0ca870b`.
 
 ---
 
@@ -361,7 +361,7 @@ ficheros que `design.md` §2 D5 identifica prediciendo «F1B-06 entra en `TRANSI
 - [x] 13.6 Medir `git diff --shortstat --no-renames <commit de cierre del Lote 1>` con lo anterior ya
   indexado (`-N`). Registrar el número en `apply-progress.md` y contrastarlo contra la estimación de
   ~480.
-- [ ] 13.7 Commit del Lote 2 — hecho por el orquestador.
+- [x] 13.7 Commit del Lote 2 — hecho por el orquestador: `1b90a80`.
 
 ---
 
@@ -388,8 +388,8 @@ ficheros que `design.md` §2 D5 identifica prediciendo «F1B-06 entra en `TRANSI
   `openspec/config.yaml`** (decisiones de Gerencia): si una cita suya queda afectada, anotarlo en
   `apply-progress.md` para que el orquestador decida.
 - [x] 14.7 Confirmar el resultado de `14.5`/`14.6` contra `openspec/config.yaml`: sólo LECTURA.
-- [ ] 14.8 `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit del Lote 2 —
-  **lo ejecuta el orquestador**, no esta fase.
+- [x] 14.8 `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit del Lote 2 —
+  **lo ejecuta el orquestador**, no esta fase. Hecho: 4 bloqueantes en `1b90a80`, reparados en `6f31ae0`; salida 0, 0 bloqueantes.
 
 ## Archive (no es de `sdd-apply` — registrado, no ejecutado aquí)
 
