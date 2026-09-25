@@ -75,7 +75,7 @@ rastro. Gerencia decidió (`openspec/config.yaml:2775-2790`, `decision/edicion-d
   Comercial/Administrativa (R08.2.md:2053, M3.1).
 - **(b3)** — ya aplicado por el orquestador. El registro audita sólo los seis campos.
 - **(c1)** «Cambiar» se mide contra el valor guardado, tras normalizar (vacío = `null`, fechas `AAAA-MM-DD`).
-  Motivo: `EquipoForm` manda SIEMPRE los seis campos (`EquiposAdmin.tsx:170-174`); si la guarda mirara sólo
+  Motivo: `EquipoForm` manda SIEMPRE los seis campos (`EquiposAdmin.tsx:170-174` en `0807a77`); si la guarda mirara sólo
   la presencia de la clave, un técnico no podría corregir el enlace de Drive sin recibir `403`.
 - **(c2)** Orden de guardas del `PATCH`, conforme al orden total A<B<C<D (F1B-10): `404` (A) < `403` de área
   (B) < `422` de contenido (C). El orden exacto con la normalización lo fija `design.md`, con prueba de

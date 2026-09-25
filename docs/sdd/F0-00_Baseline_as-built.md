@@ -134,7 +134,7 @@ Ficheros canónicos auditados: `packages/shared/src/transitions.ts` (328 líneas
 
 **d.1 — No hay router.** `react-router` no está en `package.json` ni se usa; no hay `BrowserRouter`, `useNavigate` ni `history.pushState`. Las 13 «pantallas» son overlays controlados por booleanos de `useState` dentro de `apps/desk/src/App.tsx`, sin URL propia, sin deep-linking y sin historial de navegador.
 
-**d.2 — Reparto réplica/prototipo.** Réplicas de Zoho Desk: vista principal (`KanbanBoard.tsx:5`, `TicketList.tsx:10`, `TicketTable.tsx:15`), ficha de ticket (`TicketDetailView.tsx:37`, con comentario propio en `:95-100`), actividades (`ActividadesPage.tsx:15`, parcial) y los sub-paneles `TransitionPanel.tsx:38`, `TicketProperties.tsx:93`, `HistoriaPanel.tsx:17`, `ResolucionPanel.tsx:7`, `ActividadesPanel.tsx:10`, `Adjuntos.tsx:13`. Prototipos propios: `Login.tsx:4`, `CreateTicket.tsx:7`, `UsersAdmin.tsx:5`, `RolesAdmin.tsx:5`, `Configuracion.tsx:25`, `EquiposAdmin.tsx:15`, `CatalogoEquipos.tsx:41`, `Analisis.tsx:70`, `ClientesPage.tsx:17`, `RemisionesPage.tsx:132`, y los paneles `HojaDeVida.tsx:145`, `PanelRemisiones.tsx:111`, `CrearRemision.tsx:16`, `EliminarTicket.tsx:14`.
+**d.2 — Reparto réplica/prototipo.** Réplicas de Zoho Desk: vista principal (`KanbanBoard.tsx:5`, `TicketList.tsx:10`, `TicketTable.tsx:15`), ficha de ticket (`TicketDetailView.tsx:37`, con comentario propio en `:95-100`), actividades (`ActividadesPage.tsx:15`, parcial) y los sub-paneles `TransitionPanel.tsx:38`, `TicketProperties.tsx:93`, `HistoriaPanel.tsx:17`, `ResolucionPanel.tsx:7`, `ActividadesPanel.tsx:10`, `Adjuntos.tsx:13`. Prototipos propios: `Login.tsx:4`, `CreateTicket.tsx:7`, `UsersAdmin.tsx:5`, `RolesAdmin.tsx:5`, `Configuracion.tsx:25`, `EquiposAdmin.tsx:15`, `CatalogoEquipos.tsx:41`, `Analisis.tsx:70`, `ClientesPage.tsx:17`, `RemisionesPage.tsx:132`, y los paneles `HojaDeVida.tsx:145` en `a3a8f03`, `PanelRemisiones.tsx:111`, `CrearRemision.tsx:16`, `EliminarTicket.tsx:14`.
 
 **d.3 — La prioridad del ticket nunca se traduce.** `apps/desk/src/board.ts:32-34` (columnas del modo «prioridad» del Kanban), `TicketProperties.tsx:179`, `TicketTable.tsx:35` y —el más visible— **`CreateTicket.tsx:306`, el desplegable de alta que ofrece «High»/«Medium»/«Low» en inglés al técnico**. Existe `traducirPrioridad` (`apps/desk/src/lib/actividades.ts:14-18`), pero cubre el vocabulario de Activities (`highest/high/normal/low/lowest`), no el de Tickets, y sólo se usa en `ActividadesPanel.tsx:20` y `ActividadesPage.tsx:47`. Contradice la regla invariable 12 (§4.4).
 
@@ -196,7 +196,7 @@ Ficheros canónicos auditados: `packages/shared/src/transitions.ts` (328 líneas
 
 **f.5 — El guard anti-drift `DESK_TABLES`↔`schema.sql` no existe como prueba.** `packages/zoho-sync/src/db/migrate.integration.test.ts` no contiene ninguna referencia a `DESK_TABLES` (grep sin resultados). `debt.md` lo da por existente o sugerido. **Hallazgo nuevo.** → Condiciona F0-04.
 
-**f.6 — `getEquipo` sin filtro `active` (M-9) dejó de ser riesgo teórico.** Confirmado vigente en `apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`; y desde que `apps/desk/src/components/EquiposAdmin.tsx:31-34` (`toggleActive`/`setEquipoActive`) permite dar de baja equipos desde la interfaz, un equipo desactivado **sí puede usarse hoy** para crear un ticket si se conoce su id. → Condiciona F1B.
+**f.6 — `getEquipo` sin filtro `active` (M-9) dejó de ser riesgo teórico.** Confirmado vigente en `apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`; y desde que `apps/desk/src/components/EquiposAdmin.tsx:31-34` en `a3a8f03` (`toggleActive`/`setEquipoActive`) permite dar de baja equipos desde la interfaz, un equipo desactivado **sí puede usarse hoy** para crear un ticket si se conoce su id. → Condiciona F1B.
 
 **f.7 — El bloqueo de `books.items` ya está resuelto en producción.** 1428 artículos replicados (`debt.md:288-305`). Lo que se arrastra es sólo la población de accesorios en 26 de 35 modelos (`debt.md:174-183,237-239`), que es contenido, no motor. → **Abarata F1D-06.**
 
@@ -299,7 +299,7 @@ Auditoría completa de `debt.md` (903 líneas) contra el código al commit `a3a8
 | M-1 `status_type` fino | NO-APLICA-AL-MVP | — | Reportería/`kpis` es capacidad de Fase 2 en §2.3 |
 | **M-2 checkbox obligatorio** | **CIERRA-EN-F1A (F1A-01, C1)** | `apps/desk/server/transitionExec.ts:63-70`; `packages/shared/src/transitions.ts:247` | Único punto de `debt.md` que el maestro registra explícitamente (M11.7) y único que cierra en una tanda nombrada del plan |
 | M-3 enumeración por timing en el login | SE-ARRASTRA | `apps/desk/server/auth/routes.ts:18-22` (el `||` cortocircuita antes de `verifyPassword`) | Confirmado vigente; bajo riesgo, sin tanda |
-| M-9 `getEquipo` sin filtro `active` | SE-ARRASTRA | `apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`; `apps/desk/src/components/EquiposAdmin.tsx:31-34` | Confirmado vigente, y **ya no es teórico**: existe la UI de baja lógica, luego un equipo desactivado puede usarse para crear un ticket si se conoce su id |
+| M-9 `getEquipo` sin filtro `active` | SE-ARRASTRA | `apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`; `apps/desk/src/components/EquiposAdmin.tsx:31-34` en `a3a8f03` | Confirmado vigente, y **ya no es teórico**: existe la UI de baja lógica, luego un equipo desactivado puede usarse para crear un ticket si se conoce su id |
 | M-10 dedup del parser de la semilla | NO-APLICA-AL-MVP | — | Siembra de una sola vez, catálogo cerrado, sin re-siembra prevista |
 | M-14 PATCH `serial` vacío | SE-ARRASTRA | `apps/desk/server/routes/equipos.ts:71` en `a3a8f03` (sólo `trim()`) | Confirmado vigente |
 | M-5 escapar comodines de búsqueda | SE-ARRASTRA | — | **No reverificado en código** en esta pasada; bajo riesgo, sin tanda |
@@ -557,7 +557,7 @@ Su gate es P14. La parte técnica **está respondida** por esta auditoría (§7.
 
 ### F1B / F1B-01 · Registro de equipos — **REPLANTEAR (defecto activo)**
 
-`getEquipo` no filtra por `active` (`apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`) y desde que existe la UI de baja lógica (`apps/desk/src/components/EquiposAdmin.tsx:31-34`) **un equipo dado de baja puede usarse hoy para crear un ticket** si se conoce su id. `debt.md` lo clasificaba como riesgo teórico «para cuando llegue la gestión de equipos»: ya llegó (#222, hallazgo 4).
+`getEquipo` no filtra por `active` (`apps/desk/server/db/equipos.ts:75-78` en `a3a8f03`) y desde que existe la UI de baja lógica (`apps/desk/src/components/EquiposAdmin.tsx:31-34` en `a3a8f03`) **un equipo dado de baja puede usarse hoy para crear un ticket** si se conoce su id. `debt.md` lo clasificaba como riesgo teórico «para cuando llegue la gestión de equipos»: ya llegó (#222, hallazgo 4).
 
 ### F1A-05 y F1B-09 · Auditorías de blueprint — **REPLANTEAR (dato de entrada corregido)**
 

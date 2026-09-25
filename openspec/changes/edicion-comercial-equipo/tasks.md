@@ -15,7 +15,7 @@ por `design.md` coinciden byte a byte con el árbol de hoy.
 |---|---|---|
 | 1 | `packages/shared/src/equipoComercial.ts` + `.test.ts` (D1) | 45 + 70 |
 | 1 | `packages/shared/src/index.ts` (línea 21, al final) + `types.ts` (`CambioEquipo`, `CampoComercial`, campo `cambios`) | 1 + 12 |
-| 1 | `routes/equipos.ts` (imports `:4-5` en su sitio, PATCH `:96+`, D7, D4 en `:39/:41`) | ≈25 |
+| 1 | `routes/equipos.ts` (imports `:4-5` en su sitio, PATCH `:96+`, D7, D4 en `:39` y `:41`) | ≈25 |
 | 1 | `db/equiposCambios.ts` + `.test.ts` (D3, D5) | 55 + 60 |
 | 1 | `db/equipos.ts` (`:249` D4 en su sitio + re-exportación al final, D5) | 4 |
 | 1 | `schema.sql` + `migrate.ts` + `migrate.test.ts` (D3, regla de mutación 2) | 10 + 2 + 8 |
@@ -322,7 +322,7 @@ Chain strategy: stacked-to-main
     (`:319`→`:327`). Las tres corregidas; `CLAUDE.md` deja constancia de la remedición y su causa.
 - [x] 18.2 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan estos
   módulos: `hojas-vida/spec.md`, `CLAUDE.md`, `openspec/config.yaml`. Reapuntadas las abreviadas de
-  `HojaDeVida.tsx:159-165` (imports nuevos) → `:200-207`, y `EquiposAdmin.tsx:148` (ya incorrecta en
+  `HojaDeVida.tsx:159-165` en `0807a77` (imports nuevos) → `:200-207`, y `EquiposAdmin.tsx:148` (ya incorrecta en
   `0807a77`, caso A independiente de este cambio, según `design.md`) → `:177-181` (payload), con
   `EquiposAdmin.tsx:95` → `:97` en la misma frase. `openspec/config.yaml`: sin abreviadas de
   `equipos.ts` fuera de la ya tratada en 18.1.

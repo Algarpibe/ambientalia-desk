@@ -264,7 +264,7 @@ por separado.
 | spec viva `spec.md:56` | `:78-95` | `:79-96` | Desplazamiento +1 por el `404` de dos líneas |
 | spec viva `spec.md:70` | `:79-95`, abreviada `:99` | `:80-96`, `:113-119` | Mismo desplazamiento +1, más el mismo motivo que `spec.md:75` de la delta |
 | spec viva `spec.md:113` | `:80-81` | `:81-82` | Desplazamiento +1 |
-| spec viva `spec.md:138` (RQ-HV-07) | `HojaDeVida.tsx:159-165` | `:200-207` | La cabecera se desplazó por los imports y el estado nuevos de la Fase 15 de este lote |
+| spec viva `spec.md:138` (RQ-HV-07) | `HojaDeVida.tsx:159-165` en `0807a77` | `:200-207` | La cabecera se desplazó por los imports y el estado nuevos de la Fase 15 de este lote |
 | spec viva `spec.md:166` (RQ-HV-08) | `EquiposAdmin.tsx:95`, payload `:148` | `:97`, payload `:177-181` | `EquipoForm` ganó 2 líneas de imports/prop; el payload se desplazó por el bloqueo de campos de la Fase 14 |
 | `openspec/config.yaml:2784` | Caso B sin revisión nombrada | Revisión `0807a77` nombrada, con nota de que F1B-14 ya restringe | La afirmación («cualquiera edita») dejó de ser cierta desde el lote 1. **Revertido por el orquestador:** campo de una decisión de Gerencia; queda como corrección pendiente en `ENTRADA.md` → E-075 |
 | `CLAUDE.md:194` (abreviada) | `migrate.test.ts:319` | `:327` | Fase 5 del lote 1 insertó +8 líneas antes de este punto |
