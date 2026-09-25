@@ -1,8 +1,8 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
-import { urlSegura } from '@ambientalia/shared'
-import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull, deleteEquipo, getEquipoHistorial } from '../db/equipos'
+import { urlSegura, cambiosComerciales, CAMPOS_COMERCIALES_RESTRINGIDOS, puedeEditarCamposRestringidos } from '@ambientalia/shared'
+import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull, deleteEquipo, getEquipoHistorial, registrarEdicion, listarCambiosEquipo } from '../db/equipos'
 import { getModelo } from '../db/catalogo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
@@ -38,7 +38,7 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
   app.get('/api/equipos/:id/historial', requireAuth(db), asyncHandler(async (req, res) => {
     const h = await getEquipoHistorial(db, String(req.params.id))
     if (!h) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
-    res.json(h)
+    res.json({ ...h, cambios: await listarCambiosEquipo(db, String(req.params.id)) })
   }))
 
   // El catálogo es la fuente de marca/modelo/tipo: se eligen por `modeloId` y el servidor rellena los
@@ -72,7 +72,8 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
 
   app.patch('/api/equipos/:id', requireAuth(db), asyncHandler(async (req, res) => {
       const id = String(req.params.id)
-      if (!(await getEquipoFull(db, id))) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
+      const actual = await getEquipoFull(db, id)
+      if (!actual) { res.status(404).json({ error: 'Equipo no encontrado' }); return }
       const b = (req.body ?? {}) as Record<string, unknown>
       const patch: Record<string, unknown> = {}
       if (b.serial !== undefined) patch.serial = String(b.serial).trim()
@@ -94,9 +95,28 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
         patch.modeloId = modeloId; patch.marca = modelo.marca; patch.modelo = modelo.nombre; patch.tipo = modelo.tipo
       }
       const camposResult = await camposHojaDeVida(db, b)
+      // Escalón A (mantenedor inexistente): gana a la guarda de área de abajo. Escalón C (fechas,
+      // Drive) se retiene y se responde DESPUÉS del 403 (D8, RQ-HV-09 «El escalón B gana al 422 de
+      // contenido cuando compiten»).
+      if ('error' in camposResult && camposResult.escalon === 'A') { res.status(422).json({ error: camposResult.error }); return }
+      // F1B-14 (RQ-HV-09/RQ-HV-10): «cambia» se mide contra el CUERPO CRUDO, no contra
+      // `camposResult.campos` —que puede faltar si `camposHojaDeVida` cortó en un escalón C—, así que
+      // una fecha con formato inválido SIGUE contando como cambio para la guarda de área.
+      const cambios = cambiosComerciales(actual as unknown as Record<string, unknown>, b)
+      const cambiosRestringidos = cambios.filter((c) => (CAMPOS_COMERCIALES_RESTRINGIDOS as readonly string[]).includes(c.campo))
+      if (cambiosRestringidos.length && !puedeEditarCamposRestringidos(req.user!.areas, req.user!.isAdmin)) {
+        res.status(403).json({ error: 'Sólo el área Comercial o un administrador puede cambiar fecha de factura, fin de garantía o mantenedor' })
+        return
+      }
       if ('error' in camposResult) { res.status(422).json({ error: camposResult.error }); return }
       Object.assign(patch, camposResult.campos)
-      if (Object.keys(patch).length) await updateEquipo(db, id, patch)
+      if (Object.keys(patch).length) {
+        if (cambios.length) {
+          await registrarEdicion(db, id, cambios, { id: req.user!.id, nombre: req.user!.name }, (q) => updateEquipo(q, id, patch))
+        } else {
+          await updateEquipo(db, id, patch)
+        }
+      }
       if (b.active !== undefined) await setEquipoActive(db, id, Boolean(b.active))
       res.json(await getEquipoFull(db, id))
   }))
@@ -141,7 +161,7 @@ function esFechaIso(v: string): boolean {
  * también un `codigoInterno` que ya había validado bien: la ruta nunca escribe un subconjunto
  * (ver la prueba de posición de `equipos.test.ts`, regla de mutación 1).
  */
-export async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>): Promise<{ error: string } | { campos: CamposHojaDeVida }> {
+export async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>): Promise<{ error: string; escalon: 'A' | 'C' } | { campos: CamposHojaDeVida }> {
   const campos: CamposHojaDeVida = {}
 
   if (b.mantenedorId !== undefined) {
@@ -149,7 +169,9 @@ export async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>
     if (!v) { campos.mantenedorId = null }
     else {
       const mantenedor = await getClient(db, v)
-      if (!mantenedor) return { error: 'Mantenedor no encontrado' }
+      // Escalón A (D7, D8): un identificador aportado tal cual, sin resolver antes — igual que
+      // `clientId`/`modeloId` del propio PATCH — y no contenido (C), aunque el error se lea parecido.
+      if (!mantenedor) return { error: 'Mantenedor no encontrado', escalon: 'A' }
       campos.mantenedorId = v
     }
   }
@@ -157,19 +179,19 @@ export async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>
   if (b.fechaAdquisicion !== undefined) {
     const v = b.fechaAdquisicion ? String(b.fechaAdquisicion) : ''
     if (!v) { campos.fechaAdquisicion = null }
-    else if (!esFechaIso(v)) { return { error: 'La fecha de adquisición no es válida' } }
+    else if (!esFechaIso(v)) { return { error: 'La fecha de adquisición no es válida', escalon: 'C' } }
     else { campos.fechaAdquisicion = v }
   }
   if (b.fechaFacturaCompra !== undefined) {
     const v = b.fechaFacturaCompra ? String(b.fechaFacturaCompra) : ''
     if (!v) { campos.fechaFacturaCompra = null }
-    else if (!esFechaIso(v)) { return { error: 'La fecha de factura de compra no es válida' } }
+    else if (!esFechaIso(v)) { return { error: 'La fecha de factura de compra no es válida', escalon: 'C' } }
     else { campos.fechaFacturaCompra = v }
   }
   if (b.finGarantia !== undefined) {
     const v = b.finGarantia ? String(b.finGarantia) : ''
     if (!v) { campos.finGarantia = null }
-    else if (!esFechaIso(v)) { return { error: 'El fin de garantía no es válido' } }
+    else if (!esFechaIso(v)) { return { error: 'El fin de garantía no es válido', escalon: 'C' } }
     else { campos.finGarantia = v }
   }
 
@@ -181,7 +203,7 @@ export async function camposHojaDeVida(db: Queryable, b: Record<string, unknown>
   if (b.driveUrl !== undefined) {
     const v = b.driveUrl ? String(b.driveUrl) : ''
     if (!v) { campos.driveUrl = null }
-    else if (urlSegura(v) === null) { return { error: 'El enlace de Drive debe empezar por https:// y no llevar comillas' } }
+    else if (urlSegura(v) === null) { return { error: 'El enlace de Drive debe empezar por https:// y no llevar comillas', escalon: 'C' } }
     else { campos.driveUrl = v }
   }
 

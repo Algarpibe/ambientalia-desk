@@ -246,7 +246,7 @@ async function remisionesDelEquipo(db: Queryable, id: string, serial: string): P
  * al azar. `created_at` sirve para las dos procedencias porque el histórico ya lo trae corregido a su
  * día de servicio en la propia columna (ver el backfill de `schema.sql`).
  */
-export async function getEquipoHistorial(db: Queryable, id: string): Promise<EquipoHistorial | null> {
+export async function getEquipoHistorial(db: Queryable, id: string): Promise<Omit<EquipoHistorial, 'cambios'> | null> {
   const equipo = await getEquipoFull(db, id)
   if (!equipo) return null
   const serial = equipo.serial
@@ -401,3 +401,9 @@ export async function getEquipoBySerial(db: Queryable, serial: string): Promise<
   )
   return r.rows[0] ? toLite(r.rows[0]) : null
 }
+
+// F1B-14 (D5): re-exportadas desde `equiposCambios.ts` para que `routes/equipos.ts` las siga
+// importando desde `../db/equipos`, igual que el resto de funciones de este módulo, sin desplazar
+// ninguna de las citas que ya apuntan a las líneas de arriba (regla de mutación 4). El módulo de
+// origen vive aparte para no crear un ciclo: sólo importa `enTransaccion`.
+export { registrarEdicion, listarCambiosEquipo } from './equiposCambios'

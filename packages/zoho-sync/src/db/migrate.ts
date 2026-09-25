@@ -70,7 +70,7 @@ export const DESK_TABLES = ['accounts', 'contacts', 'agents', 'tickets', 'conver
 export const PUBLIC_TABLES = ['ticket_reads', 'users', 'sessions', 'roles', 'avisos',
   'resolution_attachments', 'remision_checklist', 'remisiones', 'remision_fotos',
   'catalogo_tipos', 'catalogo_marcas', 'catalogo_modelos', 'catalogo_documentos',
-  'catalogo_articulos', 'catalogo_modelo_categorias', 'catalogo_articulos_ocultos', 'calendario_cierres']
+  'catalogo_articulos', 'catalogo_modelo_categorias', 'catalogo_articulos_ocultos', 'calendario_cierres', 'equipos_cambios']
 
 /**
  * Tablas del esquema `books`: llegan REPLICADAS desde el hub y nadie en `apps/desk` las escribe. Van

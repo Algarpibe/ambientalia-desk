@@ -481,3 +481,26 @@ CREATE TABLE IF NOT EXISTS public.calendario_cierres (
   registrado_por text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- F1B-14: registro de cambios de los seis campos comerciales del equipo (RQ-HV-10). Tabla de solo
+-- insercion (M11.4, "tabla inmutable de auditoria", R08.2.md:2803): nadie hace UPDATE ni DELETE sobre
+-- ella. Sin FK hacia equipos (c4, edicion-comercial-equipo/proposal.md): sobrevive al borrado fisico
+-- del equipo (DELETE /api/equipos/:id -> deleteEquipo, db/equipos.ts:158-160).
+--
+-- CALIFICADA A PROPOSITO: es dato propio de la app, no de Zoho Desk (c3), igual que calendario_cierres
+--
+-- mantenedor_id referencia a un cliente de Books (packages/zoho-sync/src/books/repo.ts:129-132), igual
+-- que equipos.mantenedor_id: no es FK de SQL porque clients llega replicado y sin garantia de orden
+--
+-- AL FINAL del fichero para no desplazar las citas schema.sql:3xx-4xx (regla de mutacion 4)
+CREATE TABLE IF NOT EXISTS public.equipos_cambios (
+  id bigserial PRIMARY KEY,
+  equipo_id text NOT NULL,
+  campo text NOT NULL,
+  valor_anterior text,
+  valor_nuevo text,
+  usuario_id text NOT NULL,
+  usuario_nombre text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_equipos_cambios_equipo ON public.equipos_cambios (equipo_id);

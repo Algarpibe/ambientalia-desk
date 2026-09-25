@@ -543,6 +543,23 @@ export interface EquipoHistorial {
   equipo: EquipoFull
   /** Más reciente primero, ya mezclada y ordenada en el servidor. */
   cronologia: EntradaHojaDeVida[]
+  /** Registro de ediciones de los seis campos comerciales (F1B-14, RQ-HV-10), más reciente primero. */
+  cambios: CambioEquipo[]
+}
+
+/** Los seis campos comerciales de la hoja de vida del equipo (F1B-02/F1B-14, RQ-HV-01). */
+export type CampoComercial = 'fechaAdquisicion' | 'fechaFacturaCompra' | 'finGarantia' | 'codigoInterno' | 'mantenedorId' | 'driveUrl'
+
+/** Una fila del registro de cambios de un equipo (RQ-HV-10): quién cambió qué campo, y cuándo. */
+export interface CambioEquipo {
+  campo: CampoComercial
+  anterior: string | null
+  nuevo: string | null
+  /** Nombre del mantenedor, sólo cuando `campo === 'mantenedorId'` (derivado al leer, no persistido). */
+  anteriorTexto?: string
+  nuevoTexto?: string
+  usuarioNombre: string
+  fecha: string
 }
 export interface AnalisisPunto { label: string; value: number }
 export interface AnalisisMes { mes: string; creados: number; finalizados: number }

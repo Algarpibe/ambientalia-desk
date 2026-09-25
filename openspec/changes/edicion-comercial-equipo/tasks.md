@@ -71,96 +71,96 @@ Chain strategy: stacked-to-main
 
 ## Fase 1 · `packages/shared/src/equipoComercial.ts` — RED → GREEN (D1, D2)
 
-- [ ] 1.1 RED en `packages/shared/src/equipoComercial.test.ts`: normalización de `cambiosComerciales`
+- [x] 1.1 RED en `packages/shared/src/equipoComercial.test.ts`: normalización de `cambiosComerciales`
   (`'' → null`, `null` sin cambio, clave ausente no cuenta, fecha igual no cambia);
   `puedeEditarCamposRestringidos` verdadero con área `Comercial` y con `isAdmin`, falso con áreas
   vacías o distintas. Nace roja: el módulo no existe.
-- [ ] 1.2 GREEN: crear `equipoComercial.ts` — `CAMPOS_COMERCIALES` (seis), `CAMPOS_COMERCIALES_RESTRINGIDOS`
+- [x] 1.2 GREEN: crear `equipoComercial.ts` — `CAMPOS_COMERCIALES` (seis), `CAMPOS_COMERCIALES_RESTRINGIDOS`
   (tres), `ETIQUETA_CAMPO_COMERCIAL`, `puedeEditarCamposRestringidos(areas, isAdmin)` =
   `canExecuteTransition(areas, isAdmin, 'Comercial')` (`permissions.ts:4`), `cambiosComerciales(guardado,
   entrante)` (D2: omite ausentes, `nuevo = entrante[c] ? String(entrante[c]) : null`, `anterior =
   guardado[c] || null`, cambia si `anterior !== nuevo`).
-- [ ] 1.3 Confirmar verde. RQ: RQ-HV-09, RQ-HV-10.
-- [ ] 1.4 Añadir `export * from './equipoComercial'` como línea 21, al final de
+- [x] 1.3 Confirmar verde. RQ: RQ-HV-09, RQ-HV-10.
+- [x] 1.4 Añadir `export * from './equipoComercial'` como línea 21, al final de
   `packages/shared/src/index.ts` (hoy termina en `:20`, sin desplazar nada).
 
 ## Fase 2 · Mutaciones unitarias — M4, M9
 
-- [ ] 2.1 **M9**: en `cambiosComerciales`, quitar la normalización `'' → null`. Confirmar que
+- [x] 2.1 **M9**: en `cambiosComerciales`, quitar la normalización `'' → null`. Confirmar que
   `equipoComercial.test.ts` se pone rojo. Revertir (`git diff` limpio).
-- [ ] 2.2 **M4**: en `puedeEditarCamposRestringidos`, quitar la vía de `isAdmin`. Confirmar rojo.
+- [x] 2.2 **M4**: en `puedeEditarCamposRestringidos`, quitar la vía de `isAdmin`. Confirmar rojo.
   Revertir.
 
 ## Fase 3 · `camposHojaDeVida` distingue escalón A/C — RED → GREEN (D7)
 
-- [ ] 3.1 RED en `apps/desk/server/equipos.test.ts`: `camposHojaDeVida` devuelve `{ error, escalon: 'A'
+- [x] 3.1 RED en `apps/desk/server/equipos.test.ts`: `camposHojaDeVida` devuelve `{ error, escalon: 'A'
   }` cuando el mantenedor no existe (`routes/equipos.ts:152`), y `{ error, escalon: 'C' }` para fecha o
   Drive inválidos. Nace roja: el campo `escalon` no existe.
-- [ ] 3.2 GREEN: en `routes/equipos.ts:144-189`, el `return { error: ... }` de `:152` (mantenedor no
+- [x] 3.2 GREEN: en `routes/equipos.ts:144-189`, el `return { error: ... }` de `:152` (mantenedor no
   encontrado) gana `escalon: 'A'`; los demás `return { error: ... }` (fechas, Drive) ganan `escalon:
   'C'`. 0 líneas netas (D7).
-- [ ] 3.3 Confirmar verde. Confirmar que los llamadores existentes (`:61` mismo fichero,
+- [x] 3.3 Confirmar verde. Confirmar que los llamadores existentes (`:61` mismo fichero,
   `services/equipoNuevo.ts:71-72`) siguen en verde sin cambios — sólo miran `'error' in`.
 
 ## Fase 4 · `apps/desk/server/db/equiposCambios.ts` — RED → GREEN (D3, D5)
 
-- [ ] 4.1 RED en `apps/desk/server/db/equiposCambios.test.ts`: `registrarEdicion` inserta una fila por
+- [x] 4.1 RED en `apps/desk/server/db/equiposCambios.test.ts`: `registrarEdicion` inserta una fila por
   cada campo de `cambios` con persona/fecha-hora/anterior/nuevo; `listarCambiosEquipo` devuelve
   `created_at DESC, id DESC` y resuelve el nombre del mantenedor (`LEFT JOIN clients … AND c.campo =
   'mantenedorId'`); las filas sobreviven a `deleteEquipo` (`db/equipos.ts:158-160`), llamado
   directamente tras insertar filas de prueba. Nace roja: el módulo no existe / la tabla no existe.
-- [ ] 4.2 GREEN: crear `equiposCambios.ts` — sólo importa `enTransaccion` (`db/transaccion.ts:13`), sin
+- [x] 4.2 GREEN: crear `equiposCambios.ts` — sólo importa `enTransaccion` (`db/transaccion.ts:13`), sin
   ciclo. `registrarEdicion(db, equipoId, cambios, persona, escribir)`: `enTransaccion(db, q => {
   escribir(q); INSERT × N filas })`. `listarCambiosEquipo(db, equipoId)`: `SELECT … ORDER BY created_at
   DESC, id DESC`.
-- [ ] 4.3 Confirmar verde. RQ: RQ-HV-10.
-- [ ] 4.4 En `db/equipos.ts`, tras `:403` (final del fichero), añadir `export { registrarEdicion,
+- [x] 4.3 Confirmar verde. RQ: RQ-HV-10.
+- [x] 4.4 En `db/equipos.ts`, tras `:403` (final del fichero), añadir `export { registrarEdicion,
   listarCambiosEquipo } from './equiposCambios'` con un comentario que explique por qué está ahí (D5:
   evita desplazar 11 citas completas + 2 abreviadas). En `routes/equipos.ts:5`, ampliar el import de
   `../db/equipos` en su sitio con `registrarEdicion, listarCambiosEquipo`.
 
 ## Fase 5 · Esquema `public.equipos_cambios` — RED → GREEN (D3, regla de mutación 2)
 
-- [ ] 5.1 RED en `packages/zoho-sync/src/db/migrate.test.ts`: ampliar el recuento de `:282-286` a `[10,
+- [x] 5.1 RED en `packages/zoho-sync/src/db/migrate.test.ts`: ampliar el recuento de `:282-286` a `[10,
   18, 3]` / `31` tablas totales (hoy `[10, 17, 3]` / `30`); confirmar que `equipos_cambios` existe tras
   `migrate(db)`, con su índice. Nace roja: la tabla no existe y el recuento sigue en 30/17.
-- [ ] 5.2 GREEN: al final de `schema.sql`, `CREATE TABLE IF NOT EXISTS public.equipos_cambios (id
+- [x] 5.2 GREEN: al final de `schema.sql`, `CREATE TABLE IF NOT EXISTS public.equipos_cambios (id
   bigserial PRIMARY KEY, equipo_id text NOT NULL, campo text NOT NULL, valor_anterior text, valor_nuevo
   text, usuario_id text NOT NULL, usuario_nombre text NOT NULL, created_at timestamptz NOT NULL
   DEFAULT now())` + `CREATE INDEX IF NOT EXISTS idx_equipos_cambios_equipo ON
   public.equipos_cambios (equipo_id)`. Sin FK (c4). Añadir `'equipos_cambios'` al final de la MISMA
   línea `migrate.ts:73` (`PUBLIC_TABLES`), sin desplazar `migrate.ts:80`.
-- [ ] 5.3 Confirmar verde.
-- [ ] 5.4 **M7** (regla de mutación 2 — mutar el FICHERO VIGILADO): en `schema.sql`, escribir la tabla
+- [x] 5.3 Confirmar verde.
+- [x] 5.4 **M7** (regla de mutación 2 — mutar el FICHERO VIGILADO): en `schema.sql`, escribir la tabla
   sin calificar (`CREATE TABLE IF NOT EXISTS equipos_cambios (...)`). Confirmar rojo en
   `migrate.test.ts`. Revertir. Repetir quitando `'equipos_cambios'` de `PUBLIC_TABLES` (dejando la tabla
   calificada en el `.sql`). Confirmar rojo por el lado de clasificación. Revertir.
 
 ## Fase 6 · Atomicidad — RED → GREEN, mutaciones M6, M10
 
-- [ ] 6.1 RED en `equiposCambios.test.ts`, con `rastreadorDeVerbos` (`transaccion.test.ts:59`): camino
+- [x] 6.1 RED en `equiposCambios.test.ts`, con `rastreadorDeVerbos` (`transaccion.test.ts:59`): camino
   feliz → `BEGIN, UPDATE, INSERT×N, COMMIT`; `escribir` que lanza tras el `UPDATE` → `BEGIN, UPDATE,
   ROLLBACK`, sin `INSERT` de registro ni `COMMIT`. Nace roja: `registrarEdicion` aún no envuelve nada en
   transacción propia verificable por el arnés (o ya lo hace desde 4.2 — si ya está verde, esta tarea
   pasa a ser la prueba que 4.1 no cubrió: dejarla explícita igual, por claridad del arnés).
-- [ ] 6.2 GREEN: confirmar (o ajustar) que `registrarEdicion` llama a `escribir(q)` ANTES de las
+- [x] 6.2 GREEN: confirmar (o ajustar) que `registrarEdicion` llama a `escribir(q)` ANTES de las
   `INSERT` del registro, todo dentro de `enTransaccion`.
-- [ ] 6.3 Confirmar verde. RQ: RQ-HV-10.
-- [ ] 6.4 **M6**: quitar `enTransaccion` de `registrarEdicion` (llamar `escribir` y las `INSERT` sueltas,
+- [x] 6.3 Confirmar verde. RQ: RQ-HV-10.
+- [x] 6.4 **M6**: quitar `enTransaccion` de `registrarEdicion` (llamar `escribir` y las `INSERT` sueltas,
   sin `BEGIN`/`ROLLBACK`). Confirmar rojo en el escenario de fallo de 6.1. Revertir.
-- [ ] 6.5 **M10**: invertir el orden — insertar las filas de registro ANTES de llamar a `escribir(q)`.
+- [x] 6.5 **M10**: invertir el orden — insertar las filas de registro ANTES de llamar a `escribir(q)`.
   Confirmar rojo (la secuencia de verbos no coincide, o el escenario de fallo deja filas de registro
   huérfanas sin el `UPDATE`). Revertir.
 
 ## Fase 7 · `PATCH /api/equipos/:id` — RED → GREEN (D8, guarda de área, criterios 1-4 y 7)
 
-- [ ] 7.1 RED en `equipos.test.ts` (dentro de «Hoja de vida — F1B-02» o describe nuevo): (1) sin
+- [x] 7.1 RED en `equipos.test.ts` (dentro de «Hoja de vida — F1B-02» o describe nuevo): (1) sin
   Comercial, los tres restringidos IGUALES a lo guardado + `driveUrl` distinto → `200`, sólo `driveUrl`
   escrito. (2) sin Comercial, `fechaFacturaCompra` distinta de la guardada → `403`, nada escrito, 0
   filas. (3) con `userCookie(['Comercial'])` o `adminCookie()`, cambia los tres → `200`, los tres
   escritos. (4) desactivar (`PATCH { active }` solo) sigue funcionando para cualquier sesión, sin
   registro. Nacen rojas: no hay guarda de área ni registro todavía.
-- [ ] 7.2 GREEN en `routes/equipos.ts`: `:4` amplía el import de `@ambientalia/shared` en su sitio con
+- [x] 7.2 GREEN en `routes/equipos.ts`: `:4` amplía el import de `@ambientalia/shared` en su sitio con
   `cambiosComerciales, CAMPOS_COMERCIALES_RESTRINGIDOS, puedeEditarCamposRestringidos`. En el `PATCH`
   (a partir de `:96`), tras `camposHojaDeVida` y antes de escribir: calcular `cambiosComerciales(actual,
   b)` (donde `actual = getEquipoFull` ya resuelto en `:75`), filtrar por
@@ -169,91 +169,91 @@ Chain strategy: stacked-to-main
   `registrarEdicion(db, id, cambiosComerciales(actual, b), persona, q => updateEquipo(q, id, patch))`
   cuando `Object.keys(patch).length`; `setEquipoActive` queda FUERA de `registrarEdicion` (no genera
   registro, criterio 7).
-- [ ] 7.3 Confirmar verde. RQ: RQ-HV-09, RQ-HV-10.
+- [x] 7.3 Confirmar verde. RQ: RQ-HV-09, RQ-HV-10.
 
 ## Fase 8 · Precedencia A<B<C — RED → GREEN, mutaciones M1, M2, posición A<B
 
-- [ ] 8.1 RED — «El escalón A gana a la guarda de área»: sin Comercial, `mantenedorId` no resuelve +
+- [x] 8.1 RED — «El escalón A gana a la guarda de área»: sin Comercial, `mantenedorId` no resuelve +
   distinto del guardado → `422 'Mantenedor no encontrado'`, no `403`.
-- [ ] 8.2 RED — «El escalón B gana al 422 de contenido»: sin Comercial, `fechaFacturaCompra` con
+- [x] 8.2 RED — «El escalón B gana al 422 de contenido»: sin Comercial, `fechaFacturaCompra` con
   formato inválido y distinta de la guardada → `403`, no `422`.
-- [ ] 8.3 RED — «Posición A<B» (criterio 5 de `proposal.md`): sin Comercial, `PATCH` a un `id`
+- [x] 8.3 RED — «Posición A<B» (criterio 5 de `proposal.md`): sin Comercial, `PATCH` a un `id`
   inexistente con `finGarantia` → `404`, no `403`.
-- [ ] 8.4 GREEN: confirmar verde con el orden ya construido en la Fase 7 (paso 4 de D8 entre el escalón
+- [x] 8.4 GREEN: confirmar verde con el orden ya construido en la Fase 7 (paso 4 de D8 entre el escalón
   A de `camposHojaDeVida` y su escalón C) — si alguno de 8.1-8.3 sigue rojo, ajustar el orden de
   evaluación en `routes/equipos.ts`, no las condiciones.
-- [ ] 8.5 RED — P-AB: sin Comercial, `finGarantia` cambiada + `mantenedorId` inexistente → `422`
+- [x] 8.5 RED — P-AB: sin Comercial, `finGarantia` cambiada + `mantenedorId` inexistente → `422`
   mantenedor. **M1**: mover el `403` ANTES del paso 3 (escalón A de `camposHojaDeVida`). Confirmar rojo.
   Revertir.
-- [ ] 8.6 RED — P-BC: sin Comercial, `finGarantia` válida cambiada + Drive `http://` → `403`; el MISMO
+- [x] 8.6 RED — P-BC: sin Comercial, `finGarantia` válida cambiada + Drive `http://` → `403`; el MISMO
   cuerpo con Comercial → `422`. **M2**: mover el `403` DESPUÉS del paso 5 (escalón C). Confirmar rojo en
   este escenario Y en el de 8.2. Revertir.
-- [ ] 8.7 Confirmar las siete pruebas de esta fase en verde a la vez (verificación cruzada, regla de
+- [x] 8.7 Confirmar las siete pruebas de esta fase en verde a la vez (verificación cruzada, regla de
   mutación 1). RQ: RQ-HV-09.
 
 ## Fase 9 · Guarda por cambio real, no por presencia — mutaciones M3, M5
 
-- [ ] 9.1 RED en `equipos.test.ts` (criterio 4 de `proposal.md`): `PATCH` autorizado que cambia
+- [x] 9.1 RED en `equipos.test.ts` (criterio 4 de `proposal.md`): `PATCH` autorizado que cambia
   `codigoInterno` y `driveUrl` (dos de seis) deja EXACTAMENTE dos filas de registro; los otros cuatro no
   generan fila. `PATCH` con los seis IGUALES a lo guardado → `200`, cero filas.
-- [ ] 9.2 Confirmar verde (la implementación de las Fases 1, 4 y 7 ya debería cubrirlo — si no, ajustar
+- [x] 9.2 Confirmar verde (la implementación de las Fases 1, 4 y 7 ya debería cubrirlo — si no, ajustar
   el filtro de `cambiosComerciales` en `registrarEdicion` para cubrir los SEIS campos, no sólo los tres
   restringidos).
-- [ ] 9.3 **M3**: cambiar la condición del `403` (Fase 7.2) para disparar por PRESENCIA de la clave en
+- [x] 9.3 **M3**: cambiar la condición del `403` (Fase 7.2) para disparar por PRESENCIA de la clave en
   el cuerpo en vez de por VALOR distinto de lo guardado. Confirmar rojo en el escenario 7.1(1) (sin
   Comercial, restringidos iguales + Drive distinto → hoy `200`, con la mutación pasaría a `403`).
   Revertir.
-- [ ] 9.4 **M5**: hacer que `registrarEdicion` registre los SEIS campos siempre, no sólo los que
+- [x] 9.4 **M5**: hacer que `registrarEdicion` registre los SEIS campos siempre, no sólo los que
   cambian. Confirmar rojo en 9.1 (el `PATCH` de dos campos dejaría seis filas). Revertir.
 
 ## Fase 10 · RQ-HV-11 — el alta no aplica guarda ni genera registro — RED → GREEN, mutación M11
 
-- [ ] 10.1 RED en `equipos.test.ts`: `POST /api/equipos` sin Comercial con los tres restringidos →
+- [x] 10.1 RED en `equipos.test.ts`: `POST /api/equipos` sin Comercial con los tres restringidos →
   `201`, sin `403`, 0 filas en `equipos_cambios`.
-- [ ] 10.2 RED en `ticketService.test.ts` (donde ya vive la prueba de «Equipo nuevo» de
+- [x] 10.2 RED en `ticketService.test.ts` (donde ya vive la prueba de «Equipo nuevo» de
   `alta-equipo-nuevo-en-ticket`): `POST /api/tickets` con `clasificaciones = 'Equipo nuevo'`, datos
   comerciales completos, sin Comercial → `201`, equipo creado, 0 filas en `equipos_cambios`.
-- [ ] 10.3 Confirmar verde (D9: ni `POST /api/equipos` `:48-71` ni `crearTicketConEquipo`,
+- [x] 10.3 Confirmar verde (D9: ni `POST /api/equipos` `:48-71` ni `crearTicketConEquipo`,
   `services/equipoNuevo.ts:80-92`, llaman a `registrarEdicion` — no requiere cambio de producción si la
   Fase 7 sólo tocó el `PATCH`).
-- [ ] 10.4 **M11**: hacer que `POST /api/equipos` llame a `registrarEdicion` tras `createEquipo`.
+- [x] 10.4 **M11**: hacer que `POST /api/equipos` llame a `registrarEdicion` tras `createEquipo`.
   Confirmar rojo en 10.1 (aparecerían filas donde se esperan 0). Revertir.
 
 ## Fase 11 · Lectura — orden, mutación M8, y `GET /historial` amplía `cambios` (D4)
 
-- [ ] 11.1 **M8** sobre la prueba de orden de 4.1: cambiar `ORDER BY created_at DESC, id DESC` a `ASC`
+- [x] 11.1 **M8** sobre la prueba de orden de 4.1: cambiar `ORDER BY created_at DESC, id DESC` a `ASC`
   en `listarCambiosEquipo`. Confirmar rojo. Revertir.
-- [ ] 11.2 RED — prueba HTTP añadida por el orquestador (a): en `equipos.test.ts`, tras un `PATCH` que
+- [x] 11.2 RED — prueba HTTP añadida por el orquestador (a): en `equipos.test.ts`, tras un `PATCH` que
   cambia un campo, `GET /api/equipos/:id/historial` devuelve `cambios` con esa fila. Nace roja: la
   clave `cambios` no existe en la respuesta.
-- [ ] 11.3 GREEN (D4): `types.ts` — dentro de `EquipoHistorial` (`:542-546`), añadir la línea `cambios:
+- [x] 11.3 GREEN (D4): `types.ts` — dentro de `EquipoHistorial` (`:542-546`), añadir la línea `cambios:
   CambioEquipo[]`; detrás del cierre de la interfaz, añadir `CambioEquipo { campo, anterior, nuevo,
   anteriorTexto?, nuevoTexto?, usuarioNombre, fecha }` y `CampoComercial`. `db/equipos.ts:249`
   (`getEquipoHistorial`) pasa a devolver `Omit<EquipoHistorial, 'cambios'>`, en su sitio. `routes/
   equipos.ts:39` usa `String(req.params.id)` en línea (sin variable `id` nueva); `:41` cambia `res.json(h)`
   por `res.json({ ...h, cambios: await listarCambiosEquipo(db, String(req.params.id)) })`, en la MISMA
   línea.
-- [ ] 11.4 Confirmar verde. RQ: RQ-HV-10.
-- [ ] 11.5 Mutación de verificación de la prueba (a): quitar `cambios` del `res.json` de `:41`.
+- [x] 11.4 Confirmar verde. RQ: RQ-HV-10.
+- [x] 11.5 Mutación de verificación de la prueba (a): quitar `cambios` del `res.json` de `:41`.
   Confirmar que 11.2 se pone roja. Revertir.
 
 ## Fase 12 · Prueba HTTP añadida por el orquestador (b) — supervivencia tras `DELETE`
 
-- [ ] 12.1 En `equipos.test.ts`: con un equipo que tiene filas de registro (vía un `PATCH` autorizado
+- [x] 12.1 En `equipos.test.ts`: con un equipo que tiene filas de registro (vía un `PATCH` autorizado
   previo), `DELETE /api/equipos/:id` con `adminCookie()` → `200`; una consulta directa a
   `public.equipos_cambios WHERE equipo_id = $1` sigue devolviendo esas filas. Confirmar verde (c4: sin
   `ON DELETE CASCADE`, ya garantizado por el `CREATE TABLE` de la Fase 5 — no requiere cambio de
   producción).
-- [ ] 12.2 Mutación de verificación (regla de mutación 2, sobre el fichero vigilado): añadir
+- [x] 12.2 Mutación de verificación (regla de mutación 2, sobre el fichero vigilado): añadir
   temporalmente `REFERENCES public.equipos(id) ON DELETE CASCADE` a la columna `equipo_id` de
   `equipos_cambios` en `schema.sql`. Confirmar que 12.1 se pone rojo (las filas desaparecen). Revertir.
   RQ: RQ-HV-10.
 
 ## Fase 13 · Cierre lote 1
 
-- [ ] 13.1 `npm test` en verde; registrar recuento (pasadas/ficheros) en `apply-progress.md`.
-- [ ] 13.2 `npm run typecheck` en verde.
-- [ ] 13.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente (158 en el
+- [x] 13.1 `npm test` en verde; registrar recuento (pasadas/ficheros) en `apply-progress.md`.
+- [x] 13.2 `npm run typecheck` en verde.
+- [x] 13.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente (158 en el
   precedente más reciente de este árbol).
 - [ ] 13.4 Commit del lote 1 — cierre del primer intento de `sdd-apply` (ver Review Workload Forecast).
 

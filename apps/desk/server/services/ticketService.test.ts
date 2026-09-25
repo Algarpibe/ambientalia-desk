@@ -578,6 +578,23 @@ describe('createManagedTicket · rama «Equipo nuevo», criterios de aceptación
     expect(r2.status).toBe(422)
     expect(r2.body.error).toBe('Falta el equipo')
   })
+
+  // RQ-HV-11 (F1B-14, D9): la segunda vía de alta —equipo provisional dentro de POST /api/tickets—
+  // tampoco genera filas de registro, aunque traiga los tres campos comerciales restringidos.
+  it('RQ-HV-11 · alta de «Equipo nuevo» con los tres campos restringidos completos no genera fila de registro', async () => {
+    await modeloCatalogo('mo-hv11', 'Grimm', 'EDM180C')
+    await cliente('cli-hv11')
+    await createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-hv11',
+      equipoNuevo: {
+        serial: 'SN-NUEVO-HV11', modeloId: 'mo-hv11', fechaFacturaCompra: '2026-01-15',
+        finGarantia: '2027-01-15', mantenedorId: 'cli-hv11',
+      },
+    }, 'Admin')
+    const eq = (await db.query("SELECT id FROM equipos WHERE serial='SN-NUEVO-HV11'")).rows[0]
+    expect(eq).toBeDefined()
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM public.equipos_cambios WHERE equipo_id=$1', [eq.id])).rows[0].n).toBe(0)
+  })
 })
 
 /**

@@ -1,9 +1,36 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { upsertEquipo, listEquiposManage } from './db/equipos'
+import { camposHojaDeVida } from './routes/equipos'
 import { db, instalarArnes, equipoRow, appWith, adminCookie, userCookie } from './testing/appHarness'
 
 instalarArnes()
+
+/**
+ * `camposHojaDeVida` distingue escalón A (mantenedor inexistente, existencia de un identificador
+ * aportado) de escalón C (contenido: fechas, Drive) — D7, hace falta para el orden A<B<C de D8.
+ */
+describe('camposHojaDeVida — escalón A vs C (D7)', () => {
+  it('mantenedor inexistente → escalón A', async () => {
+    const r = await camposHojaDeVida(db, { mantenedorId: 'no-existe' })
+    expect(r).toMatchObject({ error: 'Mantenedor no encontrado', escalon: 'A' })
+  })
+
+  it('fecha de adquisición inválida → escalón C', async () => {
+    const r = await camposHojaDeVida(db, { fechaAdquisicion: '2026/01/01' })
+    expect(r).toMatchObject({ error: 'La fecha de adquisición no es válida', escalon: 'C' })
+  })
+
+  it('fin de garantía imposible (30 de febrero) → escalón C', async () => {
+    const r = await camposHojaDeVida(db, { finGarantia: '2026-02-30' })
+    expect(r).toMatchObject({ error: 'El fin de garantía no es válido', escalon: 'C' })
+  })
+
+  it('Drive con http:// → escalón C', async () => {
+    const r = await camposHojaDeVida(db, { driveUrl: 'http://x' })
+    expect(r).toMatchObject({ escalon: 'C' })
+  })
+})
 
 describe('GET /api/equipos', () => {
   it('busca equipos (con sesión)', async () => {
@@ -356,5 +383,201 @@ describe('Hoja de vida — F1B-02', () => {
     await request(app).patch(`/api/equipos/${id}`).set('Cookie', cookie).send({ driveUrl: '' })
     const hist2 = await request(app).get(`/api/equipos/${id}/historial`).set('Cookie', cookie)
     expect(hist2.body.equipo.driveUrl).toBeUndefined()
+  })
+})
+
+/**
+ * F1B-14 · guarda de área sobre los tres campos comerciales restringidos (RQ-HV-09), registro de
+ * cambios (RQ-HV-10), exención del alta (RQ-HV-11) y lectura ampliada de `/historial` (D4).
+ */
+describe('Hoja de vida — F1B-14: guarda de área y registro de cambios', () => {
+  async function setup(sufijo: string): Promise<{ clientId: string; modeloId: string; mantenedorId: string }> {
+    const clientId = `cli-f14-${sufijo}`
+    const modeloId = `mo-f14-${sufijo}`
+    const mantenedorId = `mant-f14-${sufijo}`
+    await db.query('INSERT INTO books.contacts (contact_id,contact_name) VALUES ($1,$2)', [clientId, `Cliente ${sufijo}`])
+    await db.query('INSERT INTO books.contacts (contact_id,contact_name) VALUES ($1,$2)', [mantenedorId, `Mantenedor ${sufijo}`])
+    await db.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [`m-f14-${sufijo}`, `Grimm ${sufijo}`])
+    await db.query('INSERT INTO catalogo_modelos (id,marca_id,nombre) VALUES ($1,$2,$3)', [modeloId, `m-f14-${sufijo}`, 'EDM180C'])
+    return { clientId, modeloId, mantenedorId }
+  }
+
+  /** Crea, con sesión de admin, un equipo con los tres restringidos poblados (y lo que venga en `extra`). */
+  async function crearEquipoConComerciales(admin: string, sufijo: string, extra: Record<string, unknown> = {}) {
+    const { app } = appWith()
+    const { clientId, modeloId, mantenedorId } = await setup(sufijo)
+    const create = await request(app).post('/api/equipos').set('Cookie', admin).send({
+      serial: `SN-F14-${sufijo}`, modeloId, clientId,
+      fechaFacturaCompra: '2024-01-10', finGarantia: '2026-01-10', mantenedorId,
+      ...extra,
+    })
+    return { app, id: create.body.id as string, clientId, modeloId, mantenedorId }
+  }
+
+  const filasDeCambios = async (id: string): Promise<string[]> =>
+    (await db.query('SELECT campo FROM public.equipos_cambios WHERE equipo_id=$1', [id])).rows.map((x: { campo: string }) => x.campo)
+
+  it('[criterio 1] sin Comercial, los tres restringidos IGUALES a lo guardado + driveUrl distinto → 200, sólo driveUrl escrito', async () => {
+    const admin = await adminCookie()
+    const { app, id, mantenedorId } = await crearEquipoConComerciales(admin, '01')
+    const op = await userCookie(['Servicio Técnico'])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({
+      fechaFacturaCompra: '2024-01-10', finGarantia: '2026-01-10', mantenedorId,
+      driveUrl: 'https://drive.google.com/drive/folders/new01',
+    })
+    expect(patch.status).toBe(200)
+    expect(patch.body.driveUrl).toBe('https://drive.google.com/drive/folders/new01')
+    expect(await filasDeCambios(id)).toEqual(['driveUrl'])
+  })
+
+  it('[criterio 2] sin Comercial, fechaFacturaCompra distinta de la guardada → 403, nada escrito, 0 filas', async () => {
+    const admin = await adminCookie()
+    const { app, id, mantenedorId } = await crearEquipoConComerciales(admin, '02')
+    const op = await userCookie(['Servicio Técnico'])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({
+      fechaFacturaCompra: '2025-06-01', finGarantia: '2026-01-10', mantenedorId, codigoInterno: 'INT-X',
+    })
+    expect(patch.status).toBe(403)
+    const after = await request(app).get(`/api/equipos/${id}`).set('Cookie', admin)
+    expect(after.body.fechaFacturaCompra).toBe('2024-01-10')
+    expect(after.body.codigoInterno).toBeUndefined()
+    expect(await filasDeCambios(id)).toEqual([])
+  })
+
+  it('[criterio 3] Comercial cambia los tres restringidos → 200, los tres escritos', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '03')
+    const { mantenedorId: mant2 } = await setup('03b')
+    const com = await userCookie(['Comercial'])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', com).send({
+      fechaFacturaCompra: '2025-02-02', finGarantia: '2027-02-02', mantenedorId: mant2,
+    })
+    expect(patch.status).toBe(200)
+    expect(patch.body).toMatchObject({ fechaFacturaCompra: '2025-02-02', finGarantia: '2027-02-02', mantenedorId: mant2 })
+    expect((await filasDeCambios(id)).sort()).toEqual(['fechaFacturaCompra', 'finGarantia', 'mantenedorId'])
+  })
+
+  it('[criterio 3b] administrador cambia los tres restringidos → 200', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '03c')
+    const { mantenedorId: mant2 } = await setup('03d')
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({
+      fechaFacturaCompra: '2025-03-03', finGarantia: '2027-03-03', mantenedorId: mant2,
+    })
+    expect(patch.status).toBe(200)
+  })
+
+  it('[criterio 7] desactivar (PATCH sólo con active) sigue funcionando para cualquier sesión y no genera registro', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '04')
+    const op = await userCookie([])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ active: false })
+    expect(patch.status).toBe(200)
+    expect(patch.body.active).toBe(false)
+    expect(await filasDeCambios(id)).toEqual([])
+  })
+
+  it('[posición 8.1] escalón A gana a la guarda de área: mantenedor inexistente y distinto del guardado → 422, no 403', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '05')
+    const op = await userCookie(['Servicio Técnico'])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ mantenedorId: 'no-existe' })
+    expect(patch.status).toBe(422)
+    expect(patch.body.error).toBe('Mantenedor no encontrado')
+  })
+
+  it('[posición 8.2] escalón B gana al 422 de contenido: formato de fecha inválido y distinta → 403, no 422', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '06')
+    const op = await userCookie(['Servicio Técnico'])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ fechaFacturaCompra: 'no-es-fecha' })
+    expect(patch.status).toBe(403)
+  })
+
+  it('[posición 8.3] A<B: PATCH a un id inexistente con finGarantia → 404, no 403', async () => {
+    const op = await userCookie(['Servicio Técnico'])
+    const { app } = appWith()
+    const patch = await request(app).patch('/api/equipos/no-existe').set('Cookie', op).send({ finGarantia: '2026-01-01' })
+    expect(patch.status).toBe(404)
+  })
+
+  it('[P-AB 8.5] finGarantia cambiada + mantenedorId inexistente, sin Comercial → 422 mantenedor', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '07')
+    const op = await userCookie(['Servicio Técnico'])
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ finGarantia: '2028-01-01', mantenedorId: 'no-existe' })
+    expect(patch.status).toBe(422)
+    expect(patch.body.error).toBe('Mantenedor no encontrado')
+  })
+
+  it('[P-BC 8.6a] finGarantia válida cambiada + Drive http://, sin Comercial → 403', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '08')
+    const op = await userCookie(['Servicio Técnico'])
+    const patch1 = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ finGarantia: '2029-01-01', driveUrl: 'http://x' })
+    expect(patch1.status).toBe(403)
+  })
+
+  it('[P-BC 8.6b] el MISMO cuerpo (finGarantia válida cambiada + Drive http://) con Comercial → 422', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '08b')
+    const com = await userCookie(['Comercial'])
+    const patch2 = await request(app).patch(`/api/equipos/${id}`).set('Cookie', com).send({ finGarantia: '2029-01-01', driveUrl: 'http://x' })
+    expect(patch2.status).toBe(422)
+  })
+
+  it('[9.1] PATCH autorizado que cambia dos de seis deja EXACTAMENTE dos filas; los otros cuatro no', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '09', { codigoInterno: 'INT-OLD09', fechaAdquisicion: '2020-01-01' })
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({
+      codigoInterno: 'INT-NEW09', driveUrl: 'https://drive.google.com/drive/folders/new09',
+      fechaAdquisicion: '2020-01-01', fechaFacturaCompra: '2024-01-10', finGarantia: '2026-01-10',
+    })
+    expect(patch.status).toBe(200)
+    expect((await filasDeCambios(id)).sort()).toEqual(['codigoInterno', 'driveUrl'])
+  })
+
+  it('[9.1b] PATCH con los seis campos IGUALES a lo guardado → 200, cero filas', async () => {
+    const admin = await adminCookie()
+    const { app, id, mantenedorId } = await crearEquipoConComerciales(admin, '10', {
+      codigoInterno: 'INT-SAME10', fechaAdquisicion: '2020-01-01', driveUrl: 'https://drive.google.com/drive/folders/same10',
+    })
+    const patch = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({
+      codigoInterno: 'INT-SAME10', fechaAdquisicion: '2020-01-01', driveUrl: 'https://drive.google.com/drive/folders/same10',
+      fechaFacturaCompra: '2024-01-10', finGarantia: '2026-01-10', mantenedorId,
+    })
+    expect(patch.status).toBe(200)
+    expect(await filasDeCambios(id)).toEqual([])
+  })
+
+  it('[RQ-HV-11] POST /api/equipos sin Comercial con los tres restringidos → 201, sin 403, 0 filas', async () => {
+    const op = await userCookie(['Servicio Técnico'])
+    const { clientId, modeloId, mantenedorId } = await setup('11')
+    const { app } = appWith()
+    const create = await request(app).post('/api/equipos').set('Cookie', op).send({
+      serial: 'SN-F14-11', clientId, modeloId,
+      fechaFacturaCompra: '2024-01-10', finGarantia: '2026-01-10', mantenedorId,
+    })
+    expect(create.status).toBe(201)
+    expect(await filasDeCambios(create.body.id)).toEqual([])
+  })
+
+  it('[11.2] GET /historial trae `cambios` con la fila de un PATCH previo', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '12', { codigoInterno: 'INT-OLD12' })
+    await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ codigoInterno: 'INT-NEW12' })
+    const hist = await request(app).get(`/api/equipos/${id}/historial`).set('Cookie', admin)
+    expect(hist.status).toBe(200)
+    expect(hist.body.cambios).toHaveLength(1)
+    expect(hist.body.cambios[0]).toMatchObject({ campo: 'codigoInterno', anterior: 'INT-OLD12', nuevo: 'INT-NEW12' })
+  })
+
+  it('[12.1] las filas de registro sobreviven al DELETE del equipo', async () => {
+    const admin = await adminCookie()
+    const { app, id } = await crearEquipoConComerciales(admin, '13', { codigoInterno: 'INT-OLD13' })
+    await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ codigoInterno: 'INT-NEW13' })
+    const del = await request(app).delete(`/api/equipos/${id}`).set('Cookie', admin)
+    expect(del.status).toBe(200)
+    expect(await filasDeCambios(id)).toEqual(['codigoInterno'])
   })
 })

@@ -279,11 +279,19 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 30 tablas: 10 de Desk, 17 de la app en public y 3 replicadas de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 17, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(30)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(30)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(30)
+  it('son 31 tablas: 10 de Desk, 18 de la app en public y 3 replicadas de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 18, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(31)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(31)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(31)
+  })
+
+  // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
+  // su índice (regla de mutación 2 se aplica aparte, mutando `schema.sql`, en `apply-progress.md`).
+  it('equipos_cambios existe tras migrate, con su índice (pg-mem no expone pg_indexes: basta con que el CREATE INDEX de schema.sql no reviente migrate)', async () => {
+    const db = await freshDb()
+    expect((await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name='equipos_cambios'")).rows).toHaveLength(1)
+    expect((await db.query('SELECT * FROM public.equipos_cambios')).rows).toEqual([])
   })
 
   /**
