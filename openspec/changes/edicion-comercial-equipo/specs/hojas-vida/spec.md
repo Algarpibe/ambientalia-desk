@@ -15,7 +15,7 @@ administrador recibe las tres áreas) para que un `PATCH /api/equipos/:id`
 (`apps/desk/server/routes/equipos.ts:73`) escriba `fechaFacturaCompra`, `finGarantia` o `mantenedorId`.
 «Cambiar» **SHALL** medirse contra el valor ya guardado (`getEquipoFull`, `apps/desk/server/db/equipos.ts:169-172`).
 La clave **AUSENTE** del cuerpo **MUST NOT** contar como cambio ni tocar el campo — mismo criterio que ya
-sigue `camposHojaDeVida` (`routes/equipos.ts:135-137`: `undefined` no entra en `campos`) y el resto del
+sigue `camposHojaDeVida` (`routes/equipos.ts:155-157`: `undefined` no entra en `campos`) y el resto del
 `PATCH` (`if (b.X !== undefined) …`). La clave PRESENTE vacía o `null` normaliza a `null`, y cuenta como
 cambio cuando el valor guardado no era ya `null`. Si al menos uno de los tres restringidos cambia de verdad
 y la sesión no califica, el sistema **SHALL** responder `403` y **MUST NOT** escribir nada del cuerpo, ni
@@ -27,10 +27,10 @@ libres sin calificar por área.
 guarda ocupa el escalón **B** (estado y permiso). `clientId`, `modeloId` y `mantenedorId` llegan al `PATCH`
 como identificadores tal cual —no resueltos previamente—, así que sus `422` (`Cliente no encontrado`,
 `:79-83`; `El modelo es obligatorio`/`Modelo no encontrado`, `:89-95`; `Mantenedor no encontrado`, dentro de
-`camposHojaDeVida`, `:147-155`) son escalón **A**, igual que `:24`/`:27` equipo y `:39` OV no encontrada en
+`camposHojaDeVida`, `:167-177`) son escalón **A**, igual que `:24`/`:27` equipo y `:39` OV no encontrada en
 la propia tabla canónica; la excepción A/C de `transitions-st/spec.md:763-765` (un `clientId` YA RESUELTO)
 no aplica aquí, porque estos tres llegan sin resolver. El `403` de esta guarda **SHALL** ejecutarse después
-del `404` de equipo inexistente (`:75`) y de esos `422` de escalón A, y **antes** de cualquier `422` de
+del `404` de equipo inexistente (`:76`) y de esos `422` de escalón A, y **antes** de cualquier `422` de
 contenido de escalón C: formato de las tres fechas (RQ-HV-03) y `urlSegura` de Drive (RQ-HV-04). El orden
 exacto de implementación, con prueba de posición, lo fija `design.md` (regla de mutación 1 de
 `CLAUDE.md`).
@@ -72,12 +72,12 @@ exacto de implementación, con prueba de posición, lo fija `design.md` (regla d
 
 ### Requirement: RQ-HV-10 · Registro de cambios de los seis campos: sólo inserción, uno por campo que cambia de verdad, legible desde la hoja de vida
 
-El sistema **SHALL**, en la misma transacción que el `UPDATE` del `PATCH` (`routes/equipos.ts:99`),
+El sistema **SHALL**, en la misma transacción que el `UPDATE` del `PATCH` (`routes/equipos.ts:113-119`),
 insertar una fila de registro por cada uno de los seis campos cuyo valor normalizado cambie de verdad
 (mismo criterio de RQ-HV-09, extendido a los tres campos libres), con persona (usuario de la sesión), fecha
 y hora, valor anterior y valor nuevo. **MUST NOT** insertar fila para un campo que no cambia. El registro
 **SHALL** ser de sólo inserción (M11.4, «tabla inmutable de auditoría») y **SHALL** sobrevivir al borrado
-físico del equipo (`DELETE /api/equipos/:id`, `:105-110` → `deleteEquipo`, `db/equipos.ts:158-160`): sin
+físico del equipo (`DELETE /api/equipos/:id`, `:125-130` → `deleteEquipo`, `db/equipos.ts:158-160`): sin
 `ON DELETE CASCADE` hacia el registro. El sistema **SHALL** exponer ese registro a la hoja de vida mediante
 un endpoint autenticado — ampliar `GET /api/equipos/:id/historial` (`:38-42`) o uno propio, lo decide
 `design.md` —, ordenado del cambio más reciente al más antiguo.
@@ -113,7 +113,7 @@ el registro documenta sólo cambios sobre un equipo YA existente. Esto cubre las
 primera vez en `hojas-vida`, que esa segunda vía escribe los seis campos comerciales:
 `crearTicketConEquipo` (`apps/desk/server/services/equipoNuevo.ts:80-92`) crea el equipo en transacción con
 los datos recogidos por `exigirEquipoNuevo` (`:49-59`) y validados por `validarCamposEquipoNuevo`
-(`:69-73`), que reutiliza `camposHojaDeVida` (`routes/equipos.ts:144-189`).
+(`:69-73`), que reutiliza `camposHojaDeVida` (`routes/equipos.ts:164-211`).
 
 #### Scenario: Alta directa con los tres campos restringidos, sesión sin Comercial
 - GIVEN una sesión sin área Comercial ni admin
@@ -130,7 +130,7 @@ los datos recogidos por `exigirEquipoNuevo` (`:49-59`) y validados por `validarC
 ### Requirement: RQ-HV-12 · Botón «Editar» en la hoja de vida, con los tres campos restringidos en solo lectura sin Comercial
 
 `HojaDeVida.tsx` **SHALL** ganar un botón «Editar» que reutilice el mismo formulario que la lista
-(`EquipoForm`, `apps/desk/src/components/EquiposAdmin.tsx:95`), y los tres campos restringidos
+(`EquipoForm`, `apps/desk/src/components/EquiposAdmin.tsx:97`), y los tres campos restringidos
 (`fechaFacturaCompra`, `finGarantia`, `mantenedorId`) **SHALL** renderizarse en solo lectura para una
 sesión sin área Comercial ni administrador — comodidad legítima bajo la regla 13.3 sólo porque el servidor
 la impone y lo prueba (RQ-HV-09). La hoja de vida **SHALL** ganar una sección «Cambios» que muestre el

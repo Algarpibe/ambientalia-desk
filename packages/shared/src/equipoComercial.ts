@@ -39,7 +39,7 @@ export type CambioComercial = Pick<CambioEquipo, 'campo' | 'anterior' | 'nuevo'>
  * Compara los seis campos comerciales entre lo guardado y lo entrante (D2), y devuelve un cambio por
  * cada campo cuyo valor normalizado difiere. Omite la clave si `entrante` no la trae — una clave
  * ausente no cuenta como cambio, mismo criterio que ya sigue `camposHojaDeVida`
- * (`apps/desk/server/routes/equipos.ts:135-137`: `undefined` no entra en `campos`). Un valor presente
+ * (`apps/desk/server/routes/equipos.ts:155-157`: `undefined` no entra en `campos`). Un valor presente
  * vacío o `null` normaliza a `null` (vaciar el campo). Sin `trim` ni validación de formato: sólo
  * compara cadenas, igual que hoy `camposHojaDeVida`.
  */

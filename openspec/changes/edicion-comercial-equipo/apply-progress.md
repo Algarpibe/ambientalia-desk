@@ -188,8 +188,159 @@ Ninguna decisión de `design.md` (D1-D10, D8) cambió: las cuatro desviaciones d
 - El precedente de "158 warnings" en `tasks.md` 13.3 está desactualizado (ver arriba) — no es un
   hallazgo de esta tanda, es una nota para quien reviselo.
 
-## Estado
+## Estado (lote 1, tal como se cerró)
 
 **50/50 tareas de las Fases 1-13 completas.** `npm test` / `typecheck` / `lint` en verde. Ningún `.tsx`
 tocado. Listo para que el orquestador decida el commit del lote 1 (Fase 13.4, fuera de este intento) y
 lance el lote 2 (Fases 14-18) como intento de ledger aparte.
+
+---
+
+# Lote 2 (Fases 14-18)
+
+**Fase:** `sdd-apply` · **Intento:** lote 2 (Fases 14-18 de `tasks.md`, más el barrido de citas) ·
+**Base:** `f0304ec` (lote 1 ya commiteado) · **Modo:** Standard (los `.tsx` quedan fuera de la red de
+pruebas por decisión de Gerencia F0-00, `vitest.config.ts:16-20`; no se propuso `jsdom` ni
+`@testing-library`) · **NO se hizo commit ni push** (instrucción explícita del orquestador; Fase 16.4 y
+18.4 quedan pendientes, las ejecuta el orquestador tras revisar este informe).
+
+## Tareas completadas (Fases 14-18, 12/13 casillas)
+
+Todas las casillas `[x]` salvo **16.4** (commit del lote 2) y **18.4** (correr el CLI de citas contra un
+sha committeado) — las dos reservadas al orquestador por la misma razón que 13.4 del lote 1.
+
+| Fase | Resumen |
+|---|---|
+| 14 | `EquiposAdmin.tsx`: `EquipoForm` pasa a `export`; nueva prop `areas: string[]`; `restringidosBloqueados = !!equipo && !puedeEditarCamposRestringidos(areas, isAdmin)` — **no bloquea el alta**, sólo la edición de un equipo ya existente (D9); los tres campos restringidos (`fechaFacturaCompra`, `finGarantia`, `mantenedorId`) quedan `disabled` con estilo de solo lectura cuando `restringidosBloqueados` |
+| 15 | `HojaDeVida.tsx`: importa `EquipoForm` (ciclo de módulos ya previsto y aceptado por `design.md`) y `useAuth`; botón «Editar» en la cabecera que abre `EquipoForm` en modal (`z-[80]`, por encima de la hoja `z-[75]`); `onSaved` llama a `reload()` de `useAsync`; nueva sección «Cambios» (`SeccionCambios`/`FilaCambio`) que lista `data.cambios`, ya ordenados por el servidor (Fase 11 del lote 1), con `ETIQUETA_CAMPO_COMERCIAL`, `usuarioNombre`, fecha+hora y anterior→nuevo (usa `anteriorTexto`/`nuevoTexto` para el mantenedor) |
+| 16 | Cierre: `npm test`, `npm run typecheck`, `npm run lint` en verde (ver evidencia abajo) |
+| 17 | Tabla de la regla de mutación 3 confirmada contra el árbol de HOY (no de memoria) — ver tabla abajo |
+| 18 | Barrido de citas completo (regla de mutación 4) — 15 citas reapuntadas (8 en la delta, 5 en la spec viva, 1 en `config.yaml`, 3 abreviadas en `migrate.test.ts`/`CLAUDE.md` como hallazgo adicional), `types.ts` confirmado limpio, CLI de citas diferido al orquestador (18.4) |
+
+## Work Unit Evidence
+
+| Evidencia | Valor |
+|---|---|
+| Comando de prueba enfocado y resultado exacto | `npm test` → 140 passed \| 1 skipped (141 files); 1383 passed \| 2 skipped (1385 tests). Exit 0. Idéntico al recuento del lote 1: ningún `.test.ts` se rompió ni se añadió (los `.tsx` no tienen red de pruebas, F0-00) |
+| Arnés de runtime / escenario real y resultado exacto | `npm run typecheck` → `tsc -b && tsc -p apps/desk/tsconfig.server.json --noEmit`, sin salida = 0 errores, exit 0. Compila el ciclo `HojaDeVida.tsx` ↔ `EquiposAdmin.tsx` sin error de tipos (el ciclo es de MÓDULOS, no de tipos: TS lo resuelve). `npm run lint` → 165 warnings, 0 errores — **idéntico al baseline del lote 1** (comprobado por diferencia, no por estimación: mismo recuento antes y después de este lote) |
+| Frontera de rollback | Cuatro ficheros de producción: `apps/desk/src/components/EquiposAdmin.tsx`, `apps/desk/src/components/HojaDeVida.tsx` (`git revert` de estos dos deshace el botón «Editar», el bloqueo de campos y la sección «Cambios», sin tocar ningún contrato de servidor); dos comentarios de documentación en código (`apps/desk/server/services/equipoNuevo.ts:64`, `packages/shared/src/equipoComercial.ts:42`) y una autocita en `packages/zoho-sync/src/db/migrate.test.ts:386` — los tres son comentarios, revertirlos no cambia comportamiento. El resto son ficheros de especificación/documentación (`openspec/**`, `CLAUDE.md`) |
+
+Nota de TDD: **no aplica RED→GREEN** a estos cuatro ficheros — son `.tsx` (fuera de la red de pruebas por
+decisión de Gerencia, F0-00) o comentarios/documentación (sin comportamiento que un test pueda fallar
+antes). El servidor que SÍ impone la regla (RQ-HV-09, guarda de área) ya se implementó con TDD estricto
+en el lote 1, Fase 7-9 — este lote sólo consume esa imposición desde el cliente (regla 13.3, comodidad
+probada).
+
+## Fase 17 — regla de mutación 3, confirmada contra el árbol de HOY
+
+| Decisión del cliente | Impuesta en (línea verificada hoy) |
+|---|---|
+| Bloquear los tres restringidos en edición si `!puedeEditarCamposRestringidos` | `apps/desk/server/routes/equipos.ts:107-110` (el `403`, paso 4 de D8) |
+| No bloquear nada en el alta (`equipo === null`) | Ninguna, a propósito: el alta es libre (a1, `routes/equipos.ts:48-71`, verificado sin cambios) |
+| Mandar los seis campos siempre | `packages/shared/src/equipoComercial.ts:46-55` (`cambiosComerciales` compara contra lo guardado, D2) |
+| Botón «Editar» visible para toda sesión | `requireAuth(db)` en `routes/equipos.ts:73` (verificado, línea exacta) |
+| Sección «Cambios» visible | `listarCambiosEquipo` (`apps/desk/server/db/equiposCambios.ts`, re-exportada en `db/equipos.ts:409`) + `routes/equipos.ts:41` (`GET /historial` la incluye en la respuesta) |
+
+## Fase 18 — barrido de citas (regla de mutación 4)
+
+Barrido `grep -rnoE "routes/equipos\.ts:[0-9]+(-[0-9]+)?"` y `grep -rnoE "db/equipos\.ts:[0-9]+(-[0-9]+)?"`
+sobre el repositorio completo (fuera de `archive/` y de los documentos fechados que `design.md` ya
+clasifica como caso B: `Triaje…`, `F0-00…`, `Puntos…`, el plan R01.1, `ENTRADA`, `Parte_*`, `F1B-01…`,
+`Paquete_de_Despliegue…`, y la propia `proposal.md`/`design.md`, ambas con «Base medida: `0807a77`»
+declarada en su cabecera). Cada resultado se comprobó contra el fichero real, los dos extremos del rango
+por separado.
+
+### Citas reapuntadas (caso A — 15 en total)
+
+| Fichero:línea de la cita | Antes | Ahora | Motivo |
+|---|---|---|---|
+| `services/equipoNuevo.ts:64` (comentario) | `routes/equipos.ts:144-189` | `:164-211` | `camposHojaDeVida` creció con `escalon` (Fase 3 del lote 1) |
+| delta `spec.md:18` | `:135-137` | `:155-157` | El JSDoc de `camposHojaDeVida` se desplazó por el nuevo parámetro de retorno |
+| delta `spec.md:30` | `:147-155` | `:167-177` | El bloque `mantenedorId` ganó el comentario D7/D8 (+2 líneas) |
+| delta `spec.md:33` | `:75` | `:76` | El `404` de equipo pasó a dos líneas (`const actual` + `if`) |
+| delta `spec.md:75` | `routes/equipos.ts:99` | `:113-119` | La escritura pasó de una línea a un bloque condicional con `registrarEdicion` |
+| delta `spec.md:80` | `:105-110` | `:125-130` | El `DELETE` se desplazó por el crecimiento del `PATCH` |
+| delta `spec.md:116` | `:144-189` | `:164-211` | Mismo motivo que `equipoNuevo.ts:64` |
+| spec viva `spec.md:56` | `:78-95` | `:79-96` | Desplazamiento +1 por el `404` de dos líneas |
+| spec viva `spec.md:70` | `:79-95`, abreviada `:99` | `:80-96`, `:113-119` | Mismo desplazamiento +1, más el mismo motivo que `spec.md:75` de la delta |
+| spec viva `spec.md:113` | `:80-81` | `:81-82` | Desplazamiento +1 |
+| spec viva `spec.md:138` (RQ-HV-07) | `HojaDeVida.tsx:159-165` | `:200-207` | La cabecera se desplazó por los imports y el estado nuevos de la Fase 15 de este lote |
+| spec viva `spec.md:166` (RQ-HV-08) | `EquiposAdmin.tsx:95`, payload `:148` | `:97`, payload `:177-181` | `EquipoForm` ganó 2 líneas de imports/prop; el payload se desplazó por el bloqueo de campos de la Fase 14 |
+| `openspec/config.yaml:2784` | Caso B sin revisión nombrada | Revisión `0807a77` nombrada, con nota de que F1B-14 ya restringe | La afirmación («cualquiera edita») dejó de ser cierta desde el lote 1. **Revertido por el orquestador:** campo de una decisión de Gerencia; queda como corrección pendiente en `ENTRADA.md` → E-075 |
+| `CLAUDE.md:194` (abreviada) | `migrate.test.ts:319` | `:327` | Fase 5 del lote 1 insertó +8 líneas antes de este punto |
+| `CLAUDE.md:201` (abreviada) | `migrate.test.ts:396-398` | `:404-406` | Mismo desplazamiento +8 |
+| `migrate.test.ts:386` (autocita, abreviada) | `:319` | `:327` | Mismo desplazamiento +8 |
+| `openspec/specs/zoho-sync/spec.md:250` | `migrate.test.ts:337-343` | `:345-351` | Mismo desplazamiento +8 |
+
+(17 filas — la tabla de `design.md` predijo 5 completas + 1 abreviada de la delta/spec viva; el barrido
+real de este lote encontró 3 más en la propia spec viva por el mismo desplazamiento +1, y **un hallazgo
+NO previsto por `design.md`**: el desplazamiento +8 en `migrate.test.ts` causado por la Fase 5 del lote 1,
+que afecta a 4 citas — 3 abreviadas más la de `zoho-sync/spec.md:250`.)
+
+### Confirmadas sin cambio (caso A, contenido verificado igual)
+
+`routes/equipos.ts`: `:38-42`, `:48-71`, `:48` y `:73` (sueltas), `:56-57`, `:79-83`, `:89-95`. `db/equipos.ts`
+entero salvo `:249` (ya en su sitio desde el lote 1): las 13 citas completas + 2 abreviadas que
+`design.md` listaba como intactas (spec viva `:54`, `:113`/abreviada `:80-81` — ojo, ésta se corrigió
+arriba porque SÍ se desplazó; ver tabla de reapuntadas —, `:127`/abreviada `:129`; `types.ts:355`;
+`tickets-core/spec.md:105`, `:378`, `:605`×2; `CreateTicket.tsx:205`; `remisiones.test.ts:880`;
+`db/equipos.ts:394` autocita) se comprobaron todas contra el árbol final y coinciden byte a byte.
+
+`packages/shared/src/index.ts:6` (única cita viva, `F1A-05_Auditoria_blueprint_audit-F1A.md:111`) — sin
+desplazar, confirmado (la reexportación de `equipoComercial` se añadió al final, línea 21, en el lote 1).
+
+`schema.sql`: 506 líneas totales hoy (483 antes del lote 1 + 23 de `equipos_cambios`, todo AL FINAL).
+Ninguna de las ~90 citas vivas a `schema.sql` (tablas `avisos`, `remisiones`, `permissions`,
+`zoho-sync`, etc., todas por debajo de línea 448) se desplaza — confirmado con el barrido completo.
+
+`migrate.ts:73` y `:80`: confirmadas sin desplazar — `equipos_cambios` se añadió a `PUBLIC_TABLES` EN LA
+MISMA línea 73 (D3), y `BOOKS_TABLES` sigue en la línea 80, tal como diseñó `design.md`.
+
+### `types.ts` (Fase 18.3)
+
+Barrido repetido sobre el árbol final: la cita viva de mayor número sigue siendo `:542-546`
+(`EquipoHistorial`). Ninguna cita apunta a partir de `:547` (donde vive el nuevo `CambioEquipo`/
+`CampoComercial` del lote 1) — confirmado, `types.ts` no se tocó en este lote 2.
+
+### CLI de citas (Fase 18.4) — diferido al orquestador
+
+`apps/desk/server/citas/cli.ts` sólo admite tres modos (`:109-118`): `--sha <rev>` (exige que `rev` pele
+a un árbol YA COMMITEADO, `repo.arbol(rev)`), `--generar-base`, o HOOK (lee `stdin` de `pre-push`).
+**No existe modo para comprobar el working tree sin commit**, y `--help` no imprime nada (no es una opción
+reconocida por `parseArgv`, `:113-118`). Por instrucción explícita del orquestador de no commitear en este
+intento, esta tarea queda pendiente: **el orquestador debe correr
+`node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha <sha-del-commit-del-lote-2>` tras commitear**,
+y confirmar código de salida 0 antes de lanzar `sdd-verify`.
+
+## Deviaciones del diseño
+
+Ninguna decisión de `design.md` (D1-D10) cambió. Una precisión de implementación no prevista por
+`tasks.md` ni `design.md`: **el bloqueo de los tres campos restringidos en `EquipoForm` se ató a
+`!!equipo` (edición) y no sólo al área/rol**, porque D9 exige explícitamente que el alta quede libre —
+sin esa condición, crear un equipo nuevo sin sesión Comercial habría bloqueado los tres campos en el
+formulario aunque el servidor los acepte sin guarda (RQ-HV-11). Está reflejado en la Fase 17 de `tasks.md`
+y en la Fase 17 de este informe. Ningún test lo prueba porque los `.tsx` quedan fuera de la red de
+pruebas (F0-00) — es Persona-2 de RQ-HV-12 en la tabla de comprobaciones de persona, sin cambiar su
+alcance (sigue siendo «sin Comercial, los tres restringidos en solo lectura», y este supuesto es
+consistente con esa comprobación: al ABRIR el formulario ya se sabe si es alta o edición).
+
+## Medida de tamaño (lote 2, sobre `f0304ec`)
+
+```
+git diff --shortstat --no-renames f0304ec  →  10 files changed, 98 insertions(+), 31 deletions(-)
+```
+
+(incluye el propio `tasks.md`, 42 inserciones + 25 borrados, de las 98/31 totales — no hay ficheros
+nuevos sin trackear en este lote: los cuatro de producción + `tasks.md` + cinco `.md`/`.yaml` de
+documentación son ediciones sobre ficheros ya trackeados). Muy por debajo del techo de 800 del preflight
+y de la estimación de `tasks.md` (~70-90 para el lote 2 de código; el resto son citas y documentación,
+no anticipadas como «lote» pero necesarias por la regla de mutación 4).
+
+## Ningún fichero nuevo. Ningún `.test.ts` tocado en este lote.
+
+## Estado (lote 2)
+
+**12/13 tareas de las Fases 14-18 completas.** `npm test` / `typecheck` / `lint` en verde, idéntico al
+baseline. Pendientes, reservadas al orquestador: **16.4** (commit del lote 2) y **18.4** (CLI de citas
+contra el sha del commit). Cambio `edicion-comercial-equipo` (F1B-14, cambio 2) completo en cuanto a
+código y documentación — listo para `sdd-verify` tras el commit y la ejecución de 18.4.

@@ -53,7 +53,7 @@ seguir operando un equipo: hoy el alta sólo exige `serial`, `clientId` y `model
 El sistema **SHALL** aceptar los seis campos en el mismo `POST /api/equipos` y `PATCH /api/equipos/:id`
 que ya existen (`apps/desk/server/routes/equipos.ts:48`, `:73`; escritura en `db/equipos.ts:119`
 `createEquipo` y `:133` `updateEquipo`), y **MUST NOT** crear una ruta nueva. Un `PATCH` **SHALL** seguir
-el patrón ya construido de campos opcionales (`if (b.X !== undefined) …`, `routes/equipos.ts:78-95`): sólo
+el patrón ya construido de campos opcionales (`if (b.X !== undefined) …`, `routes/equipos.ts:79-96`): sólo
 se escribe lo que llega.
 
 #### Scenario: PATCH parcial que sólo toca uno de los campos nuevos
@@ -67,7 +67,7 @@ se escribe lo que llega.
 El sistema **SHALL** validar el formato de las tres fechas (adquisición, factura de compra, fin de
 garantía) en el servidor y **MUST NOT** escribir nada del `POST` o `PATCH` cuando una de ellas es
 inválida — el mismo principio que ya aplican `clientId` y `modeloId`, cuyo `422` se devuelve **antes** de
-construir el `patch` que se escribe (`routes/equipos.ts:79-95`, escritura recién en `:99`). Precedente de
+construir el `patch` que se escribe (`routes/equipos.ts:80-96`, escritura recién en `:113-119`). Precedente de
 formato en este mismo repositorio: `apps/desk/server/routes/remision.ts:127` valida fecha contra
 `^\d{4}-\d{2}-\d{2}$`.
 
@@ -110,7 +110,7 @@ escribirlo.
 
 El sistema **SHALL** validar el mantenedor contra `getClient` (`packages/zoho-sync/src/books/repo.ts:129-132`),
 con el mismo patrón `422` que ya usa `clientId` en el alta y el `PATCH`
-(`routes/equipos.ts:56-57` y `:80-81`, «Cliente no encontrado»).
+(`routes/equipos.ts:56-57` y `:81-82`, «Cliente no encontrado»).
 
 #### Scenario: Mantenedor inexistente → 422
 - GIVEN un alta o un `PATCH` cuyo mantenedor no resuelve a ningún cliente de Books
@@ -135,7 +135,7 @@ serial hoy (`LOWER(serial) LIKE $1`, `:67-68`).
 
 ### Requirement: RQ-HV-07 · La hoja de vida muestra los seis campos, vacíos o poblados
 
-La cabecera de `HojaDeVida.tsx` (hoy marca, modelo, tipo, serie, cliente y estado, `:159-165`)
+La cabecera de `HojaDeVida.tsx` (hoy marca, modelo, tipo, serie, cliente y estado, `:200-207`)
 **SHALL** enseñar los seis campos nuevos, con un marcador explícito de vacío (p. ej. «—») cuando no
 tengan valor, y **MUST NOT** lanzar error por su ausencia.
 
@@ -163,7 +163,7 @@ tengan valor, y **MUST NOT** lanzar error por su ausencia.
 
 ### Requirement: RQ-HV-08 · El alta y la edición piden los seis campos
 
-`EquipoForm` (`apps/desk/src/components/EquiposAdmin.tsx:95`, payload hoy en `:148`) **SHALL** pedir los
+`EquipoForm` (`apps/desk/src/components/EquiposAdmin.tsx:97`, payload hoy en `:177-181`) **SHALL** pedir los
 seis campos, en alta y en edición, y enviarlos en el mismo payload que ya manda `serial`, `modeloId` y
 `clientId`.
 

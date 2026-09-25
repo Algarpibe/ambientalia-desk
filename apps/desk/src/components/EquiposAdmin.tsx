@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { EquipoFull, ClientLite, Catalogo } from '@ambientalia/shared'
+import { puedeEditarCamposRestringidos } from '@ambientalia/shared'
 import { listEquiposManage, getCatalogo, createEquipo, updateEquipo, setEquipoActive, deleteEquipo, searchClients } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { avisoClienteSinVincular } from '../lib/clienteEquipo'
@@ -82,6 +83,7 @@ export function EquiposAdmin({ onClose, onAbrirCatalogo }: { onClose: () => void
         <EquipoForm
           equipo={editing}
           isAdmin={!!user?.isAdmin}
+          areas={user?.areas ?? []}
           onAbrirCatalogo={onAbrirCatalogo}
           onClose={() => { setCreating(false); setEditing(null) }}
           onSaved={() => { setCreating(false); setEditing(null); reload() }}
@@ -92,13 +94,18 @@ export function EquiposAdmin({ onClose, onAbrirCatalogo }: { onClose: () => void
   )
 }
 
-function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
+export function EquipoForm({ equipo, isAdmin, areas, onAbrirCatalogo, onClose, onSaved }: {
   equipo: EquipoFull | null
   isAdmin: boolean
+  areas: string[]
   onAbrirCatalogo?: () => void
   onClose: () => void
   onSaved: () => void
 }) {
+  // Los tres campos restringidos (RQ-HV-09) sólo se bloquean EDITANDO un equipo ya existente: el
+  // alta es libre a propósito (D9, regla 13.3 — comodidad legítima porque el servidor la impone y
+  // la prueba, Fase 7 del PATCH).
+  const restringidosBloqueados = !!equipo && !puedeEditarCamposRestringidos(areas, isAdmin)
   const [serial, setSerial] = useState(equipo?.serial ?? '')
   const [marcaId, setMarcaId] = useState('')
   const [modeloId, setModeloId] = useState(equipo?.modeloId ?? '')
@@ -249,32 +256,35 @@ function EquipoForm({ equipo, isAdmin, onAbrirCatalogo, onClose, onSaved }: {
             <input type="date" className={field} value={fechaAdquisicion} onChange={(e) => setFechaAdquisicion(e.target.value)} />
           </label>
           <label className="text-[11px] text-slate-500 flex flex-col gap-1">Factura de compra
-            <input type="date" className={field} value={fechaFacturaCompra} onChange={(e) => setFechaFacturaCompra(e.target.value)} />
+            <input type="date" className={`${field}${restringidosBloqueados ? ' bg-slate-50 text-slate-500' : ''}`} value={fechaFacturaCompra} onChange={(e) => setFechaFacturaCompra(e.target.value)} disabled={restringidosBloqueados} />
           </label>
           <label className="text-[11px] text-slate-500 flex flex-col gap-1">Fin de garantía
-            <input type="date" className={field} value={finGarantia} onChange={(e) => setFinGarantia(e.target.value)} />
+            <input type="date" className={`${field}${restringidosBloqueados ? ' bg-slate-50 text-slate-500' : ''}`} value={finGarantia} onChange={(e) => setFinGarantia(e.target.value)} disabled={restringidosBloqueados} />
           </label>
         </div>
         <input className={field} placeholder="Código interno" value={codigoInterno} onChange={(e) => setCodigoInterno(e.target.value)} />
         <input className={field} placeholder="Enlace de la carpeta de Drive (https://…)" value={driveUrl} onChange={(e) => setDriveUrl(e.target.value)} />
         <div className="relative">
-          <input className={`${field} w-full`} placeholder="Mantenedor (Books, opcional)"
-            value={mantenedorId ? mantenedorNombre : mantenedorQuery} disabled={!!mantenedorId}
-            onFocus={() => setMantenedorOpen(true)} onBlur={() => setMantenedorOpen(false)}
+          <input className={`${field} w-full${restringidosBloqueados ? ' bg-slate-50 text-slate-500' : ''}`} placeholder="Mantenedor (Books, opcional)"
+            value={mantenedorId ? mantenedorNombre : mantenedorQuery} disabled={!!mantenedorId || restringidosBloqueados}
+            onFocus={() => !restringidosBloqueados && setMantenedorOpen(true)} onBlur={() => setMantenedorOpen(false)}
             onKeyDown={(e) => { if (e.key === 'Escape') setMantenedorOpen(false) }}
             onChange={(e) => { setMantenedorQuery(e.target.value); setMantenedorOpen(true) }} />
-          {mantenedorOpen && mantenedorResults.length > 0 && (
+          {!restringidosBloqueados && mantenedorOpen && mantenedorResults.length > 0 && (
             <ul onMouseDown={(e) => e.preventDefault()} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {mantenedorResults.map((c) => (
                 <li key={c.id}><button type="button" onClick={() => { setMantenedorId(c.id); setMantenedorNombre(c.name); setMantenedorQuery(''); setMantenedorResults([]) }} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">{c.name} {c.nit ? `· NIT ${c.nit}` : ''}</button></li>
               ))}
             </ul>
           )}
-          {mantenedorId && (
+          {mantenedorId && !restringidosBloqueados && (
             <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
               Mantenedor: {mantenedorNombre}
               <button type="button" onClick={() => { setMantenedorId(null); setMantenedorNombre(''); setMantenedorQuery('') }} className="text-blue-600 underline">Quitar</button>
             </div>
+          )}
+          {mantenedorId && restringidosBloqueados && (
+            <div className="text-[11px] text-slate-400 mt-1">Mantenedor: {mantenedorNombre}</div>
           )}
         </div>
 

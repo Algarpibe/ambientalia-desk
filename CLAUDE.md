@@ -191,14 +191,16 @@ sí.
 
 *Por qué existe:* H2 de aquella revisión, **ya cerrado por `9ed5635`**. El guardián de `ALTER TABLE`
 que F1B-01 añadió filtra por el **nombre pelado** de la tabla
-(`packages/zoho-sync/src/db/migrate.test.ts:319`, `a.tabla`), y `contacts` es la única colisión entre
+(`packages/zoho-sync/src/db/migrate.test.ts:327`, `a.tabla` — remedido el 2026-09-25 contra el árbol de
+hoy: F1B-14 insertó +8 líneas de prueba antes de este punto, entre `:286` y `:319` de la revisión citada
+originalmente; la afirmación no cambia, sólo la línea), y `contacts` es la única colisión entre
 las tres listas de `packages/zoho-sync/src/db/migrate.ts:63-64,70-73,80`: está en `DESK_TABLES` y,
 calificada, en `BOOKS_TABLES`. Una `ALTER TABLE contacts …` escrita para Books pasaba el guardián como
 tabla de Desk. **No había bug vivo** —`packages/zoho-sync/src/db/pool.ts:5` fija
 `search_path=desk,public` y `books` nunca está ahí, así que una `ALTER` sin calificar aterriza en
 `desk.contacts`—: había un guardián diciendo que estaba bien lo que no lo estaba. Y sólo se ve
 escribiendo esa sentencia en el fichero vigilado, que es exactamente lo que hace hoy el fixture
-sintético de `migrate.test.ts:396-398`. Blindaje de intención, no corrección de un fallo.
+sintético de `migrate.test.ts:404-406`. Blindaje de intención, no corrección de un fallo.
 
 ### Regla de mutación 3 — la regla 13 es una casilla que se marca, no un principio que se recuerda
 

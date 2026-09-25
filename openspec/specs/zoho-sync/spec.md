@@ -247,7 +247,7 @@ barrido entero, falla por lo mismo, y 747 líneas iguales en el log no informan 
 
 `contacts` es la única tabla cuyo nombre pelado existe en más de una lista calificada
 (`DESK_TABLES` y `BOOKS_TABLES`, `db/migrate.ts:63-64`, `:80`). El sub-test que fija qué `ALTER TABLE`
-pueden ir sin calificar (`altersDelEsquema()`, `packages/zoho-sync/src/db/migrate.test.ts:337-343`)
+pueden ir sin calificar (`altersDelEsquema()`, `packages/zoho-sync/src/db/migrate.test.ts:345-351`)
 filtra hoy por el nombre pelado (`a.tabla`), así que una `ALTER TABLE contacts` sin calificar cuya
 intención sea `books.contacts` pasa como si fuera de `desk.contacts`.
 

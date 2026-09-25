@@ -383,7 +383,7 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
 
 /**
  * cerrar-hallazgos-revision-f1b-01 · P3 — el guardián de arriba (`altersDelEsquema()`, local a este
- * fichero) filtra por el nombre PELADO (`a.tabla`, `:319`), así que una `ALTER TABLE contacts` sin
+ * fichero) filtra por el nombre PELADO (`a.tabla`, `:327`), así que una `ALTER TABLE contacts` sin
  * calificar cuya intención sea `books.contacts` pasa como si fuera de `desk.contacts` — `contacts` es
  * el ÚNICO nombre que existe en las dos listas (`DESK_TABLES` y `BOOKS_TABLES`).
  *

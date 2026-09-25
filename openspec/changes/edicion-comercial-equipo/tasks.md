@@ -259,32 +259,32 @@ Chain strategy: stacked-to-main
 
 ## Fase 14 · Cliente — `EquiposAdmin.tsx` exporta `EquipoForm` (Enfoque punto 3)
 
-- [ ] 14.1 En `EquiposAdmin.tsx:95`, anteponer `export` al componente `EquipoForm` — sin extraerlo a
+- [x] 14.1 En `EquiposAdmin.tsx:95`, anteponer `export` al componente `EquipoForm` — sin extraerlo a
   fichero nuevo (evita el diff de movimiento).
-- [ ] 14.2 Bloquear en solo lectura los tres campos restringidos (`fechaFacturaCompra`, `finGarantia`,
+- [x] 14.2 Bloquear en solo lectura los tres campos restringidos (`fechaFacturaCompra`, `finGarantia`,
   `mantenedorId`) cuando `!puedeEditarCamposRestringidos(areas, isAdmin)` (importado de
   `@ambientalia/shared`) — comodidad legítima bajo regla 13.3, impuesta en servidor por la Fase 7.
 
 ## Fase 15 · Cliente — `HojaDeVida.tsx` botón «Editar» + sección «Cambios»
 
-- [ ] 15.1 Importar `EquipoForm` desde `EquiposAdmin.tsx` y el hook de sesión existente (`areas`,
+- [x] 15.1 Importar `EquipoForm` desde `EquiposAdmin.tsx` y el hook de sesión existente (`areas`,
   `isAdmin`).
-- [ ] 15.2 Botón «Editar» que abre `EquipoForm` en modal (`z-[80]`, por encima de la hoja `z-[75]`,
+- [x] 15.2 Botón «Editar» que abre `EquipoForm` en modal (`z-[80]`, por encima de la hoja `z-[75]`,
   `HojaDeVida.tsx:219`); al guardar, recarga `GET /api/equipos/:id` y `/historial`.
-- [ ] 15.3 Sección «Cambios»: lista `cambios` de la respuesta ampliada de `/historial` (Fase 11) —
+- [x] 15.3 Sección «Cambios»: lista `cambios` de la respuesta ampliada de `/historial` (Fase 11) —
   persona, fecha y hora, campo (vía `ETIQUETA_CAMPO_COMERCIAL`), anterior → nuevo.
 
 ## Fase 16 · Cierre lote 2
 
-- [ ] 16.1 `npm test` en verde (no hay pruebas `.tsx`, F0-00; confirma que el servidor/shared no se
+- [x] 16.1 `npm test` en verde (no hay pruebas `.tsx`, F0-00; confirma que el servidor/shared no se
   rompió).
-- [ ] 16.2 `npm run typecheck` en verde.
-- [ ] 16.3 `npm run lint` en verde; 0 warnings nuevos.
-- [ ] 16.4 Commit del lote 2.
+- [x] 16.2 `npm run typecheck` en verde.
+- [x] 16.3 `npm run lint` en verde; 0 warnings nuevos.
+- [ ] 16.4 Commit del lote 2 — reservado al orquestador (mismo criterio que 13.4).
 
 ## Fase 17 · Casilla de la regla de mutación 3 (`CLAUDE.md`) — tras el lote 2
 
-- [ ] 17.1 Confirmar por escrito, decisión a decisión, cada una con la línea del servidor que la impone:
+- [x] 17.1 Confirmar por escrito, decisión a decisión, cada una con la línea del servidor que la impone:
 
 | Decisión del cliente | Impuesta en |
 |---|---|
@@ -296,25 +296,44 @@ Chain strategy: stacked-to-main
 
 ## Fase 18 · Cierre general — barrido de citas (regla de mutación 4, OBLIGATORIO)
 
-- [ ] 18.1 `grep -rnoE "routes/equipos\.ts:[0-9]+(-[0-9]+)?"` y `grep -rnoE "db/equipos\.ts:[0-9]+(-[0-9]+)?"`
+- [x] 18.1 `grep -rnoE "routes/equipos\.ts:[0-9]+(-[0-9]+)?"` y `grep -rnoE "db/equipos\.ts:[0-9]+(-[0-9]+)?"`
   sobre el repositorio (fuera de `archive/`). Comprobar CADA resultado contra el árbol final, los dos
   extremos de cada rango por separado, clasificando A (reapuntar), B (conservar con su revisión) o C
   (superado).
-  - Reapuntar lo que `design.md` (§«Barrido de citas») ya identificó como desplazado desde `routes/
-    equipos.ts:97` en adelante: `services/equipoNuevo.ts:64`; en la delta, `:18`, `:30`, `:75`, `:80`,
-    `:116`; en la spec viva, la abreviada `:99` de `hojas-vida/spec.md:70`.
-  - Comprobar sin tocar las citas que `design.md` predijo iguales (por encima de `:97`, o de
-    `db/equipos.ts` sin desplazamiento salvo `:249` en su sitio).
-  - Verificar el Caso B declarado en `design.md`: `config.yaml:2784` (`:73`) sigue apuntando a la línea
-    correcta, pero «deja editar a cualquiera» deja de ser cierto — nombrar `0807a77`.
-- [ ] 18.2 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan estos
-  módulos: `hojas-vida/spec.md`, `CLAUDE.md`, `openspec/config.yaml`. Incluye las abreviadas de
-  `HojaDeVida.tsx:159-165` (imports nuevos) y `EquiposAdmin.tsx:148` (ya incorrecta en `0807a77`, caso A
-  independiente de este cambio, según `design.md`).
-- [ ] 18.3 Confirmar `types.ts`: sin citas vivas a partir de `:546` (verificado en `design.md` el
-  2026-09-25); repetir la comprobación sobre el árbol final por si este mismo cambio introdujo una.
+  - Reapuntado lo que `design.md` (§«Barrido de citas») identificó como desplazado desde `routes/
+    equipos.ts:97` en adelante — verificado línea a línea contra el árbol de HOY (no contra la
+    predicción): `services/equipoNuevo.ts:64` → `:164-211`; en la delta, `:18`→`:155-157`, `:30`
+    (mantenedor)→`:167-177`, `:33` (404)→`:76`, `:75` (RQ-HV-10, transacción)→`:113-119`, `:80`
+    (DELETE)→`:125-130`, `:116`→`:164-211`; en la spec viva, `:56`→`:79-96`, `:70`→`:80-96` con su
+    abreviada `:99`→`:113-119`, `:113`→`:81-82` (la segunda mitad), `:138`→`:200-207`,
+    `:166`→`:97`+`:177-181`.
+  - Comprobado sin tocar: las citas que `design.md` predijo iguales (por encima de `:97` en
+    `routes/equipos.ts`: `:38-42`, `:48-71`, `:56-57`, `:79-83`, `:89-95`; y `db/equipos.ts` entero salvo
+    `:249`, que ya estaba en su sitio) — las 13 completas + 2 abreviadas listadas en `design.md`
+    confirman sin desplazamiento.
+  - Verificado el Caso B declarado en `design.md`: `config.yaml:2784` (`:73`) sigue apuntando a la línea
+    correcta; se nombró `0807a77` y se añadió que F1B-14 ya restringe ahí mismo tres de los seis campos.
+    **Revertido por el orquestador (2026-09-25):** es un campo de una decisión de Gerencia y no se edita
+    desde una tanda; la corrección pendiente queda en `docs/sdd/ENTRADA.md` → E-075.
+  - **Hallazgo adicional, no previsto por `design.md`** (causado por la Fase 5 del lote 1, +8 líneas
+    insertadas en `migrate.test.ts` antes de la línea 287 de la revisión `0807a77`): tres citas
+    ABREVIADAS a `migrate.test.ts` quedaron desplazadas — `CLAUDE.md:194` (`:319`→`:327`),
+    `CLAUDE.md:201` (`:396-398`→`:404-406`) y una autocita interna en el propio `migrate.test.ts:386`
+    (`:319`→`:327`). Las tres corregidas; `CLAUDE.md` deja constancia de la remedición y su causa.
+- [x] 18.2 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan estos
+  módulos: `hojas-vida/spec.md`, `CLAUDE.md`, `openspec/config.yaml`. Reapuntadas las abreviadas de
+  `HojaDeVida.tsx:159-165` (imports nuevos) → `:200-207`, y `EquiposAdmin.tsx:148` (ya incorrecta en
+  `0807a77`, caso A independiente de este cambio, según `design.md`) → `:177-181` (payload), con
+  `EquiposAdmin.tsx:95` → `:97` en la misma frase. `openspec/config.yaml`: sin abreviadas de
+  `equipos.ts` fuera de la ya tratada en 18.1.
+- [x] 18.3 Confirmado `types.ts`: sin citas vivas a partir de `:546` en el árbol final (barrido repetido
+  tras el lote 2 — el lote 2 no tocó `types.ts`; el punto más alto citado sigue siendo `:542-546`).
 - [ ] 18.4 Tras el commit final del cierre: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha
-  HEAD`. Confirmar verde antes de pasar a `sdd-verify`.
+  HEAD`. Confirmar verde antes de pasar a `sdd-verify`. **Diferido al orquestador**: el CLI sólo acepta
+  `--sha <rev>` contra un árbol YA COMMITEADO (`repo.arbol(rev)` exige un objeto de commit) — no hay modo
+  para comprobar el working tree sin commitear, y `--help` no imprime nada (revisado el fichero
+  directamente, `apps/desk/server/citas/cli.ts:109-118`: sólo `--sha`, `--generar-base` o HOOK). No se
+  crea un commit para probarlo, por instrucción explícita del orquestador de no commitear en este intento.
 
 ## Comprobaciones de persona (regla del ciclo 1 — NO son casillas contables)
 

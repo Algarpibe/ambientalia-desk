@@ -1,15 +1,25 @@
-import type { EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
-import { urlSegura } from '@ambientalia/shared'
+import { useState } from 'react'
+import type { CambioEquipo, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
+import { ETIQUETA_CAMPO_COMERCIAL, urlSegura } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchEquipoHistorial } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 import { Adjuntos } from './Adjuntos'
 import { FichaTecnica } from './FichaTecnica'
+import { EquipoForm } from './EquiposAdmin'
 
 function fmtFecha(s: string | null): string {
   if (!s) return ''
   const d = new Date(s)
   return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+/** Fecha y hora de una fila del registro de cambios (RQ-HV-10): a diferencia de `fmtFecha`, que sólo
+ * pinta el día de las fechas comerciales (`AAAA-MM-DD`), aquí `fecha` es una marca de tiempo completa. */
+function fmtFechaHora(s: string): string {
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? '' : d.toLocaleString('es-CO', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 /** Une lo que tenga contenido con el separador de siempre, saltándose los huecos. */
@@ -133,6 +143,32 @@ function PasoRemision({ r }: { r: HistorialRemision }) {
   )
 }
 
+/** Una fila del registro de cambios de los seis campos comerciales (RQ-HV-10). El mantenedor enseña su
+ * nombre (`anteriorTexto`/`nuevoTexto`, resuelto en el servidor) en vez del id crudo. */
+function FilaCambio({ c }: { c: CambioEquipo }) {
+  const anterior = c.anteriorTexto ?? c.anterior ?? '—'
+  const nuevo = c.nuevoTexto ?? c.nuevo ?? '—'
+  return (
+    <li className="text-[12px] text-slate-600 py-2 border-b border-slate-100 last:border-0">
+      <span className="font-bold text-slate-700">{ETIQUETA_CAMPO_COMERCIAL[c.campo]}</span>
+      <span className="text-slate-400"> · {c.usuarioNombre} · {fmtFechaHora(c.fecha)}</span>
+      <div className="mt-0.5">{anterior} → {nuevo}</div>
+    </li>
+  )
+}
+
+/** Sección «Cambios» de la hoja de vida (RQ-HV-12): el registro de RQ-HV-10, más reciente primero
+ * (ya lo devuelve así `GET /historial`, sin reordenar aquí). */
+function SeccionCambios({ cambios }: { cambios: CambioEquipo[] }) {
+  if (cambios.length === 0) return null
+  return (
+    <section className="bg-white border border-slate-200 rounded-md p-4 mb-4">
+      <h3 className="text-[13px] font-bold text-slate-700 uppercase tracking-wide mb-2">Cambios</h3>
+      <ul>{cambios.map((c, i) => <FilaCambio key={i} c={c} />)}</ul>
+    </section>
+  )
+}
+
 /**
  * La hoja de vida del equipo, en dos montajes y con una sola petición.
  *
@@ -144,11 +180,16 @@ function PasoRemision({ r }: { r: HistorialRemision }) {
  * una barra de desplazamiento dentro de otra.
  */
 export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: () => void }) {
-  const { data, loading, error } = useAsync<EquipoHistorial>(() => fetchEquipoHistorial(equipoId), [equipoId])
+  const { user } = useAuth()
+  const { data, loading, error, reload } = useAsync<EquipoHistorial>(() => fetchEquipoHistorial(equipoId), [equipoId])
   const eq = data?.equipo
   const cronologia = data?.cronologia ?? []
+  const cambios = data?.cambios ?? []
   const nTickets = cronologia.filter((e) => e.clase === 'ticket').length
   const nRemisiones = cronologia.length - nTickets
+  // Botón «Editar» (RQ-HV-12): reutiliza el mismo `EquipoForm` que el listado de Equipos; el
+  // servidor impone qué campos quedan en solo lectura (RQ-HV-09), aquí sólo es comodidad probada.
+  const [editando, setEditando] = useState(false)
 
   const aviso = error ? <div className="bg-red-50 text-red-700 text-[12px] px-4 py-2">{error}</div> : null
 
@@ -158,7 +199,10 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: 
       {eq && data && (
         <div className="max-w-[900px] mx-auto">
           <section className="bg-white border border-slate-200 rounded-md p-4 mb-4">
-            <h2 className="text-[16px] font-bold text-slate-800">{eq.marca} {eq.modelo} <span className="text-slate-400 font-normal">· {eq.tipo}</span></h2>
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="text-[16px] font-bold text-slate-800">{eq.marca} {eq.modelo} <span className="text-slate-400 font-normal">· {eq.tipo}</span></h2>
+              <button type="button" onClick={() => setEditando(true)} className="text-[12px] text-blue-600 shrink-0">Editar</button>
+            </div>
             <div className="text-[13px] text-slate-500 mt-1">Serie <b className="text-slate-700">{eq.serial}</b> · Cliente {eq.clienteNombre ?? '—'} · {eq.active ? 'Activo' : 'Inactivo'}</div>
             {/* Los seis campos comerciales (F1B-02), con '—' explícito si están vacíos: no son
                 obligatorios (RQ-HV-01) y esta cabecera no puede fallar por su ausencia. Las fechas
@@ -180,6 +224,8 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: 
               {nTickets} {nTickets === 1 ? 'ticket' : 'tickets'} · {nRemisiones} {nRemisiones === 1 ? 'remisión' : 'remisiones'}
             </div>
           </section>
+
+          <SeccionCambios cambios={cambios} />
 
           {/* Arriba, antes de la cronología: con esto, la hoja de vida pasa a ser el sitio único del
               equipo — qué es (ficha técnica), qué le ha pasado (cronología) y cómo se repara. */}
@@ -209,6 +255,15 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: 
             ))}
           </div>
         </div>
+      )}
+      {editando && eq && (
+        <EquipoForm
+          equipo={eq}
+          isAdmin={!!user?.isAdmin}
+          areas={user?.areas ?? []}
+          onClose={() => setEditando(false)}
+          onSaved={() => { setEditando(false); reload() }}
+        />
       )}
     </div>
   )

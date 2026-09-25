@@ -1137,6 +1137,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** fila `decision/edicion-datos-comerciales-equipo` de `docs/sdd/R08.3_Expediente_de_cambios.md` (§11.4) · campo `maestro_pasaje` de esa decisión en `openspec/config.yaml`.
 **Estado:** nueva
 **Destino propuesto:** pasaje del expediente R08.3, como corrección pendiente. **Dueño propuesto:** Gerencia. `openspec/config.yaml` NO se toca desde una tanda: es un campo de una decisión de Gerencia.
+**Y una segunda, en la misma decisión:** su consecuencia (3) afirma que `apps/desk/server/routes/equipos.ts:73` «deja hoy editar los seis campos a cualquier usuario con sesión». Era cierto en `0807a77`; desde `edicion-comercial-equipo` ya no (tres de los seis exigen Comercial o administrador). Es un caso B de la regla de mutación 4 —hay que nombrar la revisión en la cita—, y por la misma razón tampoco se corrige desde la tanda: queda para quien mantenga el registro de la decisión.
 
 ## E-076 · 2026-09-25 · hallazgo · **NUEVA**
 **Qué:** El comentario de `apps/desk/server/services/equipoNuevo.ts:63` llama «Validación C» al bloque que reutiliza `camposHojaDeVida`, pero la parte del mantenedor («Mantenedor no encontrado») es una comprobación de existencia de un identificador aportado tal cual, que la tabla canónica clasifica como escalón **A** (`openspec/specs/transitions-st/spec.md:754-765`). El `PATCH` de equipos, desde `edicion-comercial-equipo`, ya la trata como A. La misma guarda queda con dos etiquetas según la puerta.

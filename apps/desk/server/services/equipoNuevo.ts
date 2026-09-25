@@ -61,7 +61,7 @@ export async function exigirEquipoNuevo(db: Queryable, body: Record<string, unkn
 
 /**
  * Validación C de los campos opcionales del equipo nuevo (mantenedor, tres fechas, Drive),
- * reutilizando `camposHojaDeVida` (F1B-02, `routes/equipos.ts:144-189`). Se llama APARTE de
+ * reutilizando `camposHojaDeVida` (F1B-02/F1B-14, `routes/equipos.ts:164-211`). Se llama APARTE de
  * `exigirEquipoNuevo` y TARDE a propósito —`ticketService.ts:89`, la última guarda del escalón C,
  * justo antes del `409` de unicidad de la OV (escalón D)— para que la escalera de precedencia
  * (`transitions-st` §3.8) trate el contenido de este bloque igual que el resto del escalón C.
