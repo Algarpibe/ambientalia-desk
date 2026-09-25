@@ -190,19 +190,26 @@ unicidad (D).
 |---|---|---|---|---|
 | 1 | La transición existe | A | `400 'Transición desconocida'` | `ticketService.ts:123` |
 | 2 | El ticket existe | A | `404 'Ticket no encontrado'` | `:125` |
-| 3 | El estado actual está en el `from` de la transición | B | `409 '…no aplica desde el estado…'` | `:126-128` |
-| 4 | El área del usuario cubre el área de la transición | B | `403 '…no tiene permiso para esta transición…'` | `:129-131` |
-| 5 | Los campos obligatorios están presentes | C | `422 { errors: plan.errors }` | `:134` |
-| 6 | Una fecha derivada tecleada sin fuente no es una fecha real | C | `422 { errors }` | `:134` (fijada por el diseño; ver `RQ-TS-08`) |
-| 7 | La persona a la que se deriva existe y está activa | C | `422 'La persona a la que se deriva no existe o está dada de baja'` | `:138-142` |
-| 8 | La orden de venta no está ya asociada a otro ticket | D | `409 '…ya está asociada al ticket #…'` | `:148-152` |
+| 3 | La transición pertenece al flujo aplicable del ticket | B | `409`, mensaje de flujo | `transitions-equipo-nuevo` RQ-EN-05 |
+| 4 | El estado actual está en el `from` de la transición | B | `409 '…no aplica desde el estado…'` | `:126-128` |
+| 5 | El área del usuario cubre el área de la transición | B | `403 '…no tiene permiso para esta transición…'` | `:129-131` |
+| 6 | Los campos obligatorios están presentes | C | `422 { errors: plan.errors }` | `:134` |
+| 7 | Una fecha derivada tecleada sin fuente no es una fecha real | C | `422 { errors }` | `:134` (fijada por el diseño; ver `RQ-TS-08`) |
+| 8 | La persona a la que se deriva existe y está activa | C | `422 'La persona a la que se deriva no existe o está dada de baja'` | `:138-142` |
+| 9 | La orden de venta no está ya asociada a otro ticket | D | `409 '…ya está asociada al ticket #…'` | `:148-152` |
 
-(Previously: siete filas, sin la 6; evidencias `:117`, `:119`, `:120-122`, `:123-125`, `:128`,
-`:140-144` y `:132-136` — caducas contra `4976787`, reancladas por esta tanda. La guarda 6 antigua
-(persona) pasa a fila 7; la 7 antigua (OV) pasa a fila 8.)
+(Previously: ocho filas, sin la guarda 3 de flujo. La añade `blueprint-equipo-nuevo` (F1B-06) al
+entrar en juego un segundo catálogo (`transitions-equipo-nuevo`): hasta entonces todo ticket tenía un
+único flujo posible y la comprobación no hacía falta. Las guardas 3-7 antiguas pasan a ser 4-8, y la 8
+antigua pasa a ser 9.)
+
+(Previously, antes de esa: siete filas, sin la 6 (fecha derivada); evidencias `:117`, `:119`,
+`:120-122`, `:123-125`, `:128`, `:140-144` y `:132-136` — caducas contra `4976787`, reancladas por
+`fechas-derivadas-servidor`. La guarda 6 antigua (persona) pasó a fila 7; la 7 antigua (OV) pasó a
+fila 8.)
 
 El orden **MUST** tenerse en cuenta al probar: una matriz de permisos montada sobre un estado de
-origen inválido comprueba el `409` de la guarda 3 y cree comprobar el `403` de la 4
+origen inválido comprueba el `409` de la guarda 4 y cree comprobar el `403` de la 5
 (`permisos.test.ts:29-33`).
 
 > **Given** un ticket en estado `En Proceso`
@@ -214,6 +221,12 @@ origen inválido comprueba el `409` de la guarda 3 y cree comprobar el `403` de 
   tres fechas derivadas, y un valor tecleado que no es una fecha real (p. ej. `2026-02-30`)
 - WHEN se ejecuta la transición
 - THEN el servidor responde `422 { errors }`, con el error de esa fecha
+
+#### Scenario: La guarda de flujo (3) gana a la de estado (4) — posición fijada por prueba
+- GIVEN un ticket de servicio en `Rev./Diagnostico` (estado ausente del catálogo de `Equipo nuevo`)
+- WHEN se ejecuta `Ingreso equipo nuevo` (catálogo `transitions-equipo-nuevo`, `from: [Ingresado]`)
+- THEN responde `409` con el mensaje de flujo, no con «no aplica desde el estado» — invertir el orden
+  de las guardas 3 y 4 debe poner esta prueba en rojo (regla de mutación 1 de `CLAUDE.md`)
 
 ### RQ-TS-07 · Permisos por área
 
@@ -450,6 +463,12 @@ El SLA **SHALL** declararse como **dato**, no derivarse del grafo
 - El reloj **MUST NOT** leer `ESTADOS_EN_ESPERA`. El único estado con SLA está clasificado `ninguna`
   (`estados.ts:91`), así que no es ninguno de los **once** de la vista ni de los cuatro sin salida.
   Probado.
+- **El reloj MUST NOT aplicarse a un ticket cuyo flujo aplicable no es el de servicio, aunque su
+  estado actual coincida en NOMBRE con `Notificado`.** Desde `blueprint-equipo-nuevo` (F1B-06),
+  `Notificado` también existe en el catálogo de `Equipo nuevo` (`transitions-equipo-nuevo` RQ-EN-01):
+  la consulta de `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40-45`) filtra hoy sólo por
+  `status`, sin distinguir catálogo, así que **SHALL** excluir los tickets cuyo flujo aplicable
+  (`transitions-equipo-nuevo` RQ-EN-04) no sea `servicio` — supuesto s6 de la propuesta.
 
 **Lo que este requisito NO incluye, y sigue abierto — ver §3.10.** Nada de esto **dispara**: no hay
 planificador. El destinatario del escalado sí está resuelto, y es `RQ-TS-16`.

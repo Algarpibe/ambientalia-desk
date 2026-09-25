@@ -182,12 +182,12 @@ siquiera los tres campos libres (`fechaAdquisicion`, `codigoInterno`, `driveUrl`
 `PATCH`. Si ninguno de los tres restringidos cambia, la sesión **SHALL** poder escribir los tres campos
 libres sin calificar por área.
 
-**Orden**, contra la tabla canónica de escalones (`openspec/specs/transitions-st/spec.md:755-760`): esta
+**Orden**, contra la tabla canónica de escalones (`openspec/specs/transitions-st/spec.md:774-779`): esta
 guarda ocupa el escalón **B** (estado y permiso). `clientId`, `modeloId` y `mantenedorId` llegan al `PATCH`
 como identificadores tal cual —no resueltos previamente—, así que sus `422` (`Cliente no encontrado`,
 `:79-83`; `El modelo es obligatorio`/`Modelo no encontrado`, `:89-95`; `Mantenedor no encontrado`, dentro de
 `camposHojaDeVida`, `:167-177`) son escalón **A**, igual que `:24`/`:27` equipo y `:39` OV no encontrada en
-la propia tabla canónica; la excepción A/C de `transitions-st/spec.md:763-765` (un `clientId` YA RESUELTO)
+la propia tabla canónica; la excepción A/C de `transitions-st/spec.md:782-784` (un `clientId` YA RESUELTO)
 no aplica aquí, porque estos tres llegan sin resolver. El `403` de esta guarda **SHALL** ejecutarse después
 del `404` de equipo inexistente (`:76`) y de esos `422` de escalón A, y **antes** de cualquier `422` de
 contenido de escalón C: formato de las tres fechas (RQ-HV-03) y `urlSegura` de Drive (RQ-HV-04). El orden

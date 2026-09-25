@@ -347,9 +347,14 @@ Es el campo que activa los distintos flujos de trabajo (maestro Anexo G col. 11,
 (Anexo G col. 27, `:4337-4338`), y `TIPOS_SERVICIO` **SHALL** declararlo aparte
 (`ticketCreate.ts:4`).
 
-**Sólo una de las tres ramas está implementada.** `Equipo nuevo` y `Soporte remoto` no tienen grafo:
-son las capacidades `transitions-equipo-nuevo` y `transitions-soporte-remoto`, que F1B-06 construye.
-Hoy los tres valores se pueden elegir en el alta y los tres caen en el mismo grafo.
+**Dos de las tres ramas tienen grafo tras este cambio.** `Equipo nuevo` deja de caer en el grafo de
+servicio: tiene su propio catálogo, capacidad `transitions-equipo-nuevo` (spec propia, F1B-06, primer
+cambio, `blueprint-equipo-nuevo`). `Soporte remoto` sigue sin grafo — es `transitions-soporte-remoto`,
+el segundo cambio de F1B-06 (`blueprint-soporte-remoto`) — y sus tickets siguen cayendo en el grafo de
+servicio técnico.
+
+(Previously: «Sólo una de las tres ramas está implementada. `Equipo nuevo` y `Soporte remoto` no
+tienen grafo... Hoy los tres valores se pueden elegir en el alta y los tres caen en el mismo grafo.»)
 
 ### RQ-TC-11 · Un ticket sólo se borra si nació aquí
 
