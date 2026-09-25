@@ -458,9 +458,19 @@ Conclusiones, contrastadas contra `git diff --no-renames -U0 0ca870b` (hunk a hu
   `packages/shared/src/sla.test.ts:5`; el resto de bloques de prueba nuevos van antes del cierre final del
   fichero. Citas externas a esos dos ficheros con línea, **no comprobadas contra su contenido en este
   intento** (hipótesis: desplazadas +1): `openspec/specs/derivacion-avisos/spec.md:119` y `:139`
-  (`avisoArea.test.ts:28`, `:18`), `openspec/specs/transitions-st/spec.md:474`, `:733`, `:743`
-  (`sla.test.ts:50-54`), `docs/sdd/Paquete_de_Despliegue_2026-09-10.md:321` (`sla.test.ts:41-53`, registro
-  fechado, Caso B probable). Quedan para la Fase 14.8 / el orquestador.
+  (líneas 28 y 18 de avisoArea.test.ts), `openspec/specs/transitions-st/spec.md:474`, `:733`, `:743`
+  (rango 50-54 de sla.test.ts), `docs/sdd/Paquete_de_Despliegue_2026-09-10.md:321` (rango 41-53 de
+  sla.test.ts, registro fechado, Caso B probable). Quedan para la Fase 14.8 / el orquestador.
+- **Barrido del orquestador tras el reset (2026-09-25), contra el texto en `75e1362` y en `1b90a80`.** La
+  hipótesis era cierta: las dos pruebas corren +1 por el import. **Caso A** (afirman el presente): las
+  dos de `derivacion-avisos` pasan a `avisoArea.test.ts:29` (estado final) y `avisoArea.test.ts:19`
+  (administrador); las tres de `transitions-st` pasan a `packages/shared/src/sla.test.ts:51-55`, el `it`
+  completo del reloj y la vista. **Caso B**: la del `Paquete` describe `3b7d89c` y gana el ancla
+  `en 3b7d89c`, donde el rango 41-53 sí era el bloque citado. **Fuera de la lista, el mismo desfase:**
+  la delta de este cambio (`specs/derivacion-avisos/spec.md:18`, `specs/transitions-st/spec.md:111`),
+  `design.md:151` (170-176) y `:163`, y `tasks.md:333` (166). Las otras citas de la fila 11.2
+  (`reentrancia.test.ts:16`, `:24`, `transicionesEjecucion.test.ts:193`, `permisos.test.ts:25`) se
+  retocaron en línea y no se movieron.
 - **Caso A releído y cierto:** `ticketService.ts:125` (`contratoErrores.test.ts:18`),
   `ticketService.ts:132`/`:134` (`CLAUDE.md:363`, `config.yaml:474`), `ticketService.ts:41`, `:61-79`, `:86`,
   `:89`, `:130`, `:150` (todas antes de la 114, o ya corregida en la Fase 12), `transitions.ts:327-334`

@@ -148,7 +148,7 @@ if (!current) throw new HttpError(404, { error: 'Ticket no encontrado' }); const
 | Invariantes 1-4 (`invariantesGrafo.test.ts:35-82`) | Sobre `TRANSITIONS` y `ESTADOS` | En línea: 1, 2 y 3 comparan con `ESTADOS_SERVICIO` (`:5`, `:41`, `:50-53`, `:64`); siguen siendo «34 sobre 21» y «Finalizado único». **Al final**: bloque de la unión — derivados(unión) = `ESTADOS` (22); ids únicos en la unión; 5 entradas; sin salida en la unión = `['Finalizado', 'Verificación']` con `Verificación` como excepción nombrada; ninguna `from` fuera del registro; `ESTADOS_SOLO_EQUIPO_NUEVO` = derivados(EN) − derivados(servicio) |
 | `estados.test.ts:15-17`, `:66-67`, `:71` | 21, sólo `Pendiente` | En línea: 22 (21 + `Verificación`), `['Pendiente', 'Verificación']` |
 | Reentrancia (`reentrancia.test.ts`) | Tres ciclos de servicio | Al final: `tablaDeReentrancia(TRANSITIONS_EQUIPO_NUEVO)` = un ciclo {Ingresado, En Proceso, Notificado}; `camposFechaReentrantes(EN)` = `[]` |
-| Escalado (`sla.test.ts:169-175`) | Ningún ambiguo en `TRANSITIONS` | Al final: ningún ambiguo en ningún catálogo del registro |
+| Escalado (`sla.test.ts:170-176`) | Ningún ambiguo en `TRANSITIONS` | Al final: ningún ambiguo en ningún catálogo del registro |
 | Ejecución (`transicionesEjecucion.test.ts:188-287`) | 34/36 | Al final: `CASOS_EQUIPO_NUEVO` escrita a mano, huérfanas en los dos sentidos, extremos contra el grafo, barrido HTTP de 5 con `classification = 'Equipo nuevo'` (sin clasificación los tickets existentes siguen en servicio, así el barrido de 34 no cambia) |
 | Permisos (`permisos.test.ts:41-110`) | 34×3 = 102 | Al final: 5×3 = 15 casos, **10 prohibidos y 5 permitidos** escritos a mano; admin pasa las 5 |
 | Mapa (RQ-MB-06) | `ESTADOS` | `ESTADOS_SERVICIO` (D1); artefactos sin regenerar |
@@ -160,7 +160,7 @@ vuelven ciertas por la extensión de arriba.
 | Línea | Tratamiento |
 |---|---|
 | `invariantesGrafo.test.ts:11-12`, `:73-74` | Reescribir: F1B-06 añade catálogos al registro de flujos; la red cubre la unión |
-| `reentrancia.test.ts:16`, `:24`; `sla.test.ts:165`; `transicionesEjecucion.test.ts:193`; `permisos.test.ts:25` | Ciertas con la extensión; se retoca la frase para decir «cualquier catálogo del registro» |
+| `reentrancia.test.ts:16`, `:24`; `sla.test.ts:166`; `transicionesEjecucion.test.ts:193`; `permisos.test.ts:25` | Ciertas con la extensión; se retoca la frase para decir «cualquier catálogo del registro» |
 | `transicionesEjecucion.test.ts:135-136` | Reescribir: «la transición 35» → «una transición nueva de cualquier catálogo» |
 | `reentrancia.ts:5`, `:91`, `:142`; `sla.ts:83`; `bodegaje.ts:218`; `appHarness.ts:62` | Reescribir en su sitio: nombran «dos grafos» como previsión; pasan a «catálogos del registro de flujos (`flujos.ts`)» |
 

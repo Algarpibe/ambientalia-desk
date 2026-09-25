@@ -330,7 +330,7 @@ ficheros que `design.md` §2 D5 identifica prediciendo «F1B-06 entra en `TRANSI
 
 - [x] 11.1 `invariantesGrafo.test.ts:11-12`, `:73-74`: de «F1B-06 entra en `TRANSITIONS`» a «F1B-06
   añade catálogos al registro de flujos; la red cubre la unión».
-- [x] 11.2 `reentrancia.test.ts:16`, `:24`; `sla.test.ts:165`; `transicionesEjecucion.test.ts:193`;
+- [x] 11.2 `reentrancia.test.ts:16`, `:24`; `sla.test.ts:166`; `transicionesEjecucion.test.ts:193`;
   `permisos.test.ts:25`: de «dos grafos» (previsión) a «cualquier catálogo del registro».
 - [x] 11.3 `transicionesEjecucion.test.ts:135-136`: de «la transición 35» a «una transición nueva de
   cualquier catálogo».

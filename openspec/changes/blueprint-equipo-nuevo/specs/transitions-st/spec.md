@@ -108,7 +108,7 @@ de las dos listas. Las aserciones de `sla.test.ts` no cambian: sólo su título 
   `Por Entregar / Sin facturar` incluidas)
 - WHEN se comprueba la clasificación de `Notificado`, el único estado con SLA declarado
 - THEN sigue siendo `'ninguna'` y no pertenece ni a las once de la vista ni a las cuatro de
-  `ESTADOS_SIN_SALIDA` — `packages/shared/src/sla.test.ts:50-54` sigue verde sin tocar sus aserciones
+  `ESTADOS_SIN_SALIDA` — `packages/shared/src/sla.test.ts:51-55` sigue verde sin tocar sus aserciones
 
 #### Scenario: Un ticket `Equipo nuevo` en `Notificado` no cuenta para el SLA de 24 h
 - GIVEN un ticket `clasificaciones = 'Equipo nuevo'` que lleva más de 24 h en `Notificado`

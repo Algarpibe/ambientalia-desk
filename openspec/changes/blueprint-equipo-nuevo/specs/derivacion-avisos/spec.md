@@ -15,7 +15,7 @@ hacer el trabajo» (`packages/shared/src/transitions.ts:320-323`; maestro M1.9.3
 `:21-27`).
 
 - Un estado terminal **SHALL** devolver lista vacía: «no hay a quién pasarle el testigo» (`:317`;
-  probado en `apps/desk/server/services/avisoArea.test.ts:28`).
+  probado en `apps/desk/server/services/avisoArea.test.ts:29`).
 - Las áreas compuestas **SHALL** descomponerse por `' / '` antes de contarlas
   (`areasForTransition`, `packages/shared/src/transitions.ts:313-315`).
 - **Desde `blueprint-equipo-nuevo` (F1B-06), `areasSiguientes` SHALL calcularse sobre el catálogo del

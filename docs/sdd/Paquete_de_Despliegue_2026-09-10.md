@@ -318,7 +318,7 @@ registrado **sin destino**, a propósito.
 
 ### 7.4 · `sla.test.ts` — no es asunto de quien publica
 
-`packages/shared/src/sla.test.ts:41-53` se dejó verde a propósito («media mina que se pisa en la
+`packages/shared/src/sla.test.ts:41-53` en `3b7d89c` se dejó verde a propósito («media mina que se pisa en la
 tanda de la alarma de 72 h»). Sus cambios en el rango son **comentarios y el nombre de un `it()`**
 (`git show 3b7d89c -- packages/shared/src/sla.test.ts`). **No hay nada que verificar ni que vigilar
 en producción.** Se anota sólo para que nadie lo confunda con una prueba rota.

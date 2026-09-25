@@ -471,7 +471,7 @@ de las dos listas. Las aserciones de `sla.test.ts` no cambian: sólo su título 
   `Por Entregar / Sin facturar` incluidas)
 - WHEN se comprueba la clasificación de `Notificado`, el único estado con SLA declarado
 - THEN sigue siendo `'ninguna'` y no pertenece ni a las once de la vista ni a las cuatro de
-  `ESTADOS_SIN_SALIDA` — `packages/shared/src/sla.test.ts:50-54` sigue verde sin tocar sus aserciones
+  `ESTADOS_SIN_SALIDA` — `packages/shared/src/sla.test.ts:51-55` sigue verde sin tocar sus aserciones
 
 ### RQ-TS-16 · A quién se escala — la segunda pieza de C11, cerrada en F1A-02
 
@@ -730,7 +730,7 @@ Técnico.
 declaraba `en_espera` con **9 estados**, y el texto decía «la vista muestra las nueve».)*
 
 ⚠️ **Riesgo abierto, no resuelto por esta tanda (R-1 de `vista-todos-y-estados-en-espera`).**
-`packages/shared/src/sla.test.ts:50-54` afirma que ningún estado con SLA está en `ESTADOS_EN_ESPERA`
+`packages/shared/src/sla.test.ts:51-55` afirma que ningún estado con SLA está en `ESTADOS_EN_ESPERA`
 — más fuerte que la regla escrita arriba, que sólo exige independencia, no exclusión mutua. Si una
 tanda futura declara SLA para `Remisión creada` (la otra mitad de P21,
 `Decisiones_Gerencia_2026-09-10.md:336-342`), esa prueba se pondrá roja sin que nada esté mal; se
@@ -740,7 +740,7 @@ reformula entonces, no se toca preventivamente aquí. Detalle en
 #### Scenario: Remisión creada entra en la vista sin mover el reloj
 - GIVEN que `Remisión creada` pasa a clase `interna` (P21) y por tanto entra en `ESTADOS_EN_ESPERA`
 - WHEN se consulta `sla.ts` para ese estado
-- THEN no tiene SLA declarado, y `packages/shared/src/sla.test.ts:50-54` sigue verde: la vista muestra
+- THEN no tiene SLA declarado, y `packages/shared/src/sla.test.ts:51-55` sigue verde: la vista muestra
   un noveno estado en espera sin que el reloj se entere
 
 ### 3.8 · El orden único de precedencia entre guardas — cerrado en el motor por `orden-precedencia-guardas`

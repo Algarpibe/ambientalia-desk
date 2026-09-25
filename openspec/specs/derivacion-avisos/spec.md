@@ -116,7 +116,7 @@ Comercial; «avisar por el área de la transición ejecutada mandaría el aviso 
 hacer el trabajo» (`packages/shared/src/transitions.ts:320-323`; maestro M1.9.3, `:1671`; diseño `:21-27`).
 
 - Un estado terminal **SHALL** devolver lista vacía: «no hay a quién pasarle el testigo» (`:317`;
-  probado en `apps/desk/server/services/avisoArea.test.ts:28`).
+  probado en `apps/desk/server/services/avisoArea.test.ts:29`).
 - Las áreas compuestas **SHALL** descomponerse por `' / '` antes de contarlas
   (`areasForTransition`, `packages/shared/src/transitions.ts:313-315`).
 
@@ -136,7 +136,7 @@ hacer el trabajo» (`packages/shared/src/transitions.ts:320-323`; maestro M1.9.3
   ignorar» (`:6-9`; probado de punta a punta en `apps/desk/server/transiciones.test.ts:349`).
 - Un **administrador** tiene las tres áreas, así que la resta le deja el conjunto vacío y **MUST NOT**
   disparar ningún aviso de área. Es deliberado: «si hace el trabajo de las tres áreas, no hay a quién
-  pasarle el testigo» (`:11-13`; probado en `avisoArea.test.ts:18`; maestro M1.9.3, `:1672`).
+  pasarle el testigo» (`:11-13`; probado en `avisoArea.test.ts:19`; maestro M1.9.3, `:1672`).
 
 ### RQ-AV-06 · Tres supresiones en el aviso de derivación, y las tres tienen motivo
 
