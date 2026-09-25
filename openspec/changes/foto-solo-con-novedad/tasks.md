@@ -306,10 +306,13 @@ RQ-RE-19 sólo se puede comprobar en el DOM de `CrearRemision.tsx`, fuera de la 
 - [x] 10.2 Medir `git diff --shortstat --no-renames a0a2935` con lo anterior ya indexado (`-N`).
   Registrar el número en `apply-progress.md` y contrastarlo contra la estimación de ~505-580 de este
   documento.
-- [ ] 10.3 Commit del lote — reservado al orquestador.
-- [ ] 10.4 Tras el commit: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` — **diferido
-  al orquestador**, igual que en el precedente `edicion-comercial-equipo` (el CLI sólo acepta `--sha
-  <rev>` contra un árbol YA COMMITEADO; no hay modo de comprobar el working tree sin commitear).
+- [x] 10.3 Commit del lote — hecho por el orquestador; confirmado por `sdd-verify` con `git log
+  --oneline a0a2935..HEAD`: commit `265cd45` ("feat(remisiones): foto obligatoria solo cuando el
+  equipo llega con novedad (F1B-04, primer cambio)"), HEAD en `7aefbab`.
+- [x] 10.4 Tras el commit: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` —
+  ejecutado por `sdd-verify` contra HEAD `7aefbab`: **exit code 0** (2188 comprobadas, 14 abreviadas
+  rotas informativas que no bloquean — ninguna nueva de este cambio, son el patrón ya conocido de
+  prosa que cita líneas de otro fichero, regla de mutación 4 — 0 cabeceras R-1 inválidas).
 
 ## No entra en `sdd-apply` — registrado, no ejecutado aquí
 
