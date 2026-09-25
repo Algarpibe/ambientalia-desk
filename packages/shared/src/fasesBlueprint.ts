@@ -8,7 +8,7 @@
 // aparece también ahí, marcada como frontera (`mapaBlueprint.ts`, Unidad B). Sólo el ESTADO se
 // declara a mano.
 
-import type { Estado } from './estados'
+import type { EstadoServicio } from './estados'
 
 /** Las tres fases del recorrido, en el orden de M1.3.1. */
 export type FaseId = 'entrada' | 'diagnostico' | 'cierre'
@@ -26,7 +26,7 @@ export const FASES: Fase[] = [
 ]
 
 /**
- * La fase de cada uno de los 21 estados. `satisfies Record<Estado, FaseId>` es la guarda de
+ * La fase de cada uno de los 21 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
  * COMPILACIÓN de las dos que pide D-1 del diseño: una clave que falte o que sobre es error de
  * `tsc` en esta misma declaración, antes de que el generador (Unidad B) llegue a ejecutarse. La
  * otra guarda —el `throw` de `mapaBlueprint.ts` ante una tabla inyectada e incompleta— es la que
@@ -65,4 +65,4 @@ export const FASE_POR_ESTADO = {
   'Por Entregar': 'cierre',
   'Por Entregar / Sin facturar': 'cierre',
   'Finalizado': 'cierre',
-} satisfies Record<Estado, FaseId>
+} satisfies Record<EstadoServicio, FaseId>

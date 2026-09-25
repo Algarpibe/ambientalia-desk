@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TRANSITIONS, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
+  TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
 } from './transitions'
-import { ESTADOS } from './estados'
+import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO } from './estados'
 import { camposFechaReentrantes } from './reentrancia'
 
 /**
@@ -38,7 +38,7 @@ describe('invariantes del grafo de transiciones', () => {
       for (const f of t.from) derivados.add(f)
       derivados.add(t.to)
     }
-    expect([...derivados].sort()).toEqual([...ESTADOS].sort())
+    expect([...derivados].sort()).toEqual([...ESTADOS_SERVICIO].sort())
   })
 
   /**
@@ -49,7 +49,7 @@ describe('invariantes del grafo de transiciones', () => {
    */
   it('2 · 34 transiciones sobre 21 estados', () => {
     expect(TRANSITIONS).toHaveLength(34)
-    expect(ESTADOS).toHaveLength(21)
+    expect(ESTADOS_SERVICIO).toHaveLength(21)
     expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(34)
   })
 
@@ -61,7 +61,7 @@ describe('invariantes del grafo de transiciones', () => {
    */
   it('3 · Finalizado es el único estado sin transición de salida', () => {
     const conSalida = new Set(TRANSITIONS.flatMap((t) => t.from))
-    const sinSalida = ESTADOS.filter((e) => !conSalida.has(e))
+    const sinSalida = ESTADOS_SERVICIO.filter((e) => !conSalida.has(e))
     expect(sinSalida).toEqual(['Finalizado'])
   })
 
@@ -147,5 +147,71 @@ describe('invariantes del grafo de transiciones', () => {
       'Fecha Entrada de servicio externo',
       'Fecha Remisión de Salida',
     ])
+  })
+})
+
+/**
+ * INVARIANTES DE LA UNIÓN (F1B-06). `TRANSITIONS_EQUIPO_NUEVO` es catálogo SEPARADO (D1 de
+ * `design.md`): los siete invariantes de arriba siguen hablando sólo del flujo de servicio
+ * (`ESTADOS_SERVICIO`). Éstos comprueban la red completa — la unión de los dos catálogos — para que
+ * un estado nuevo sin registrar, un `from`/`to` fuera de sitio o un id repetido entre los dos flujos
+ * no se cuele sin que nada dé rojo.
+ */
+describe('invariantes de la unión de catálogos (F1B-06)', () => {
+  const UNION = [...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO]
+
+  it('1 · los estados derivados de la unión son exactamente ESTADOS (22)', () => {
+    const derivados = new Set<string>()
+    for (const t of UNION) {
+      for (const f of t.from) derivados.add(f)
+      derivados.add(t.to)
+    }
+    expect([...derivados].sort()).toEqual([...ESTADOS].sort())
+  })
+
+  it('la unión tiene 39 entradas (34 + 5), con ids únicos', () => {
+    expect(UNION).toHaveLength(39)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los dos catálogos').toBe(39)
+  })
+
+  it('3 · sin salida en la unión son exactamente Finalizado y Verificación — excepción nombrada', () => {
+    const conSalida = new Set(UNION.flatMap((t) => t.from))
+    const sinSalida = ESTADOS.filter((e) => !conSalida.has(e))
+    expect(sinSalida).toEqual(['Finalizado', 'Verificación'])
+  })
+
+  it('4 · ninguna transición de ningún catálogo apunta a un estado fuera del registro', () => {
+    const declarados = new Set<string>(ESTADOS)
+    for (const t of UNION) {
+      for (const f of t.from) expect(declarados.has(f), `${t.id}: from «${f}» no está declarado`).toBe(true)
+      expect(declarados.has(t.to), `${t.id}: to «${t.to}» no está declarado`).toBe(true)
+    }
+  })
+
+  it('ESTADOS_SOLO_EQUIPO_NUEVO es exactamente derivados(EN) − derivados(servicio)', () => {
+    const derivadosServicio = new Set<string>()
+    for (const t of TRANSITIONS) { for (const f of t.from) derivadosServicio.add(f); derivadosServicio.add(t.to) }
+    const derivadosEquipoNuevo = new Set<string>()
+    for (const t of TRANSITIONS_EQUIPO_NUEVO) { for (const f of t.from) derivadosEquipoNuevo.add(f); derivadosEquipoNuevo.add(t.to) }
+    const diferencia = [...derivadosEquipoNuevo].filter((e) => !derivadosServicio.has(e))
+    expect(diferencia).toEqual([...ESTADOS_SOLO_EQUIPO_NUEVO])
+  })
+
+  it('RQ-EN-01 · las cinco transiciones cubren exactamente los pares del catálogo, y ninguna sale de Verificación', () => {
+    expect(TRANSITIONS_EQUIPO_NUEVO.map((t) => [t.id, t.from, t.to])).toEqual([
+      ['ingreso_equipo_nuevo', ['Ingresado'], 'En Proceso'],
+      ['producto_no_conforme', ['En Proceso'], 'Notificado'],
+      ['analisis_y_acciones', ['Notificado'], 'Ingresado'],
+      ['verificacion', ['En Proceso'], 'Verificación'],
+      ['liberacion', ['En Proceso'], 'Finalizado'],
+    ])
+    expect(TRANSITIONS_EQUIPO_NUEVO.some((t) => t.from.includes('Verificación'))).toBe(false)
+  })
+
+  it('corrección (b) · las cinco entradas de Equipo nuevo declaran exactamente comentario y derivación', () => {
+    for (const t of TRANSITIONS_EQUIPO_NUEVO) {
+      expect(t.area, `${t.id} no es de Servicio Técnico (s2)`).toBe('Servicio Técnico')
+      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(['comment', 'derivado_a'])
+    }
   })
 })

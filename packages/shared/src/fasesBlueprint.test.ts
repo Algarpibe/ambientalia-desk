@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { FASE_POR_ESTADO, FASES } from './fasesBlueprint'
-import { ESTADOS, ESTADOS_SIN_SALIDA } from './estados'
+import { ESTADOS_SERVICIO, ESTADOS_SIN_SALIDA } from './estados'
 
 /**
  * `fasesBlueprint.ts` declara la partición estado → fase como DATO (P-3 del proposal
@@ -11,7 +11,7 @@ import { ESTADOS, ESTADOS_SIN_SALIDA } from './estados'
  */
 describe('fasesBlueprint — partición estado → fase', () => {
   it('cubre exactamente los estados declarados, ni uno de más ni de menos', () => {
-    expect(Object.keys(FASE_POR_ESTADO).sort()).toEqual([...ESTADOS].sort())
+    expect(Object.keys(FASE_POR_ESTADO).sort()).toEqual([...ESTADOS_SERVICIO].sort())
   })
 
   it('reparte los 21 estados en 4 · 12 · 5, entrada · diagnóstico · cierre', () => {

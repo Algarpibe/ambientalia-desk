@@ -98,17 +98,17 @@ export const CLASIFICACION_EN_ESPERA = {
   'OV asignada': 'ninguna',
   'Ticket creado': 'ninguna',
 
-  // ── sin clasificar (1) ───────────────────────────────────────────────────────────────────────
+  // ── sin clasificar (2) ───────────────────────────────────────────────────────────────────────
   // Pendiente de Servicio Técnico (11/09). Sale por `servicio_externo_pendiente` y por
   // `diagnostico_complementario`, las dos suyas, lo que apunta a `ninguna` — pero apuntar no es
   // decidir, y quien decide es Servicio Técnico.
-  'Pendiente': 'sin_clasificar',
+  'Pendiente': 'sin_clasificar', 'Verificación': 'sin_clasificar', // Verificación: flujo equipo-nuevo (F1B-06, RQ-EN-07), sin fuente que clasifique su espera
 } as const satisfies Record<string, EnEspera>
 
 /** Un estado del Blueprint. Es un tipo cerrado: lo que no está en el registro no es un estado. */
 export type Estado = keyof typeof CLASIFICACION_EN_ESPERA
 
-/** Los 21 estados, en el orden en que están clasificados. */
+/** Los 22 estados, en el orden en que están clasificados. */
 export const ESTADOS: Estado[] = Object.keys(CLASIFICACION_EN_ESPERA) as Estado[]
 
 /**
@@ -171,3 +171,20 @@ export function enEsperaDe(estado: string): EnEspera | undefined {
     ? CLASIFICACION_EN_ESPERA[estado as Estado]
     : undefined
 }
+
+/**
+ * `Verificación` (F1B-06) es del flujo `equipo-nuevo` y no del Blueprint de Servicio Técnico: no
+ * debe aparecer en el mapa generado ni en la partición de fases (`fasesBlueprint.ts`), las dos
+ * cosas que sólo conocen el flujo de servicio. Se declara aquí, junto al registro, y no en
+ * `flujos.ts` porque `fasesBlueprint.ts`/`mapaBlueprint.ts` no dependen de ese fichero (D1 de
+ * `design.md`).
+ */
+export const ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies readonly Estado[]
+
+/** Un estado del Blueprint de Servicio Técnico: todos menos los exclusivos de `equipo-nuevo`. */
+export type EstadoServicio = Exclude<Estado, (typeof ESTADOS_SOLO_EQUIPO_NUEVO)[number]>
+
+/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 21 de siempre. */
+export const ESTADOS_SERVICIO: EstadoServicio[] = ESTADOS.filter(
+  (e): e is EstadoServicio => !(ESTADOS_SOLO_EQUIPO_NUEVO as readonly string[]).includes(e),
+)

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import { generarMapaBlueprint, type EntradaMapa, type PasoSinBoton } from './mapaBlueprint'
 import { TRANSITIONS, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA } from './transitions'
-import { ESTADOS, ESTADOS_SIN_SALIDA } from './estados'
+import { ESTADOS_SERVICIO, ESTADOS_SIN_SALIDA } from './estados'
 import { FASES, FASE_POR_ESTADO } from './fasesBlueprint'
 
 // `mapaBlueprint.ts` recorre el grafo y devuelve los cuatro `.md` (RQ-MB-01..05). El diff
@@ -14,7 +14,7 @@ function entradaReal(): EntradaMapa {
   return {
     transiciones: TRANSITIONS,
     sinBoton: SIN_BOTON,
-    estados: ESTADOS,
+    estados: ESTADOS_SERVICIO,
     sinSalida: ESTADOS_SIN_SALIDA,
     fases: FASES,
     fasePorEstado: FASE_POR_ESTADO,
@@ -110,7 +110,7 @@ describe('mapaBlueprint — motor puro', () => {
     const salida = generarMapaBlueprint(entradaReal())
     // Los 21 estados aparecen entre las cuatro vistas (cada uno en su fase nativa al menos).
     const completo = salida['blueprint-completo.md']
-    for (const estado of ESTADOS) expect(completo).toContain(estado)
+    for (const estado of ESTADOS_SERVICIO) expect(completo).toContain(estado)
   })
 
   it('RQ-MB-05 · la leyenda nombra las tres áreas base y una compuesta lleva las dos marcas', () => {

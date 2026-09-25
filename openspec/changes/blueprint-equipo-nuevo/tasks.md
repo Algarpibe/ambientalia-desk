@@ -72,28 +72,28 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
 
 ## Fase 1 · Registro de estados — `Verificación` en `CLASIFICACION_EN_ESPERA` (D1), mutación M11
 
-- [ ] 1.1 RED en `packages/shared/src/estados.test.ts` (D5: `:15-17`, `:66-67`, `:71`): extender las
+- [x] 1.1 RED en `packages/shared/src/estados.test.ts` (D5: `:15-17`, `:66-67`, `:71`): extender las
   aserciones de 21 a **22** estados; el conjunto `sin_clasificar` pasa de `['Pendiente']` a
   `['Pendiente', 'Verificación']`; añadir `enEsperaDe('Verificación') === 'sin_clasificar'` (RQ-EN-07,
   parcial — clasificación). Nace roja: hoy son 21/`['Pendiente']`.
-- [ ] 1.2 GREEN — `estados.ts:105`: añadir `'Verificación': 'sin_clasificar',` a continuación de
+- [x] 1.2 GREEN — `estados.ts:105`: añadir `'Verificación': 'sin_clasificar',` a continuación de
   `'Pendiente': 'sin_clasificar',`, en el mismo bloque «sin clasificar». Reescribir en línea el
   encabezado de ese bloque (`:101`, hoy «sin clasificar (1)») a «sin clasificar (2)».
-- [ ] 1.3 GREEN — `estados.ts:111`: reescribir en línea «Los 21 estados» → «Los 22 estados» (Caso A:
+- [x] 1.3 GREEN — `estados.ts:111`: reescribir en línea «Los 21 estados» → «Los 22 estados» (Caso A:
   sigue siendo cierto de `ESTADOS`, que pasa de 21 a 22 con este cambio).
-- [ ] 1.4 GREEN — al FINAL de `estados.ts` (tras la actual `:173`, cierre de `enEsperaDe`): añadir
+- [x] 1.4 GREEN — al FINAL de `estados.ts` (tras la actual `:173`, cierre de `enEsperaDe`): añadir
   `ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies readonly Estado[]`; tipo
   `EstadoServicio = Exclude<Estado, (typeof ESTADOS_SOLO_EQUIPO_NUEVO)[number]>`; y
   `ESTADOS_SERVICIO: EstadoServicio[]` (= `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, mismo orden) —
   literal de `design.md` §2 D1.
-- [ ] 1.5 Confirmar `estados.test.ts` en verde. RQ: RQ-EN-07 (clasificación).
-- [ ] 1.6 **M11**: quitar `'Verificación': 'sin_clasificar',` de `1.2` (revertir sólo esa línea).
+- [x] 1.5 Confirmar `estados.test.ts` en verde. RQ: RQ-EN-07 (clasificación).
+- [x] 1.6 **M11**: quitar `'Verificación': 'sin_clasificar',` de `1.2` (revertir sólo esa línea).
   Confirmar rojo: `tsc` falla en `ESTADOS_SOLO_EQUIPO_NUEVO satisfies readonly Estado[]` (`'Verificación'`
   deja de ser miembro de `Estado`). Revertir.
 
 ## Fase 2 · Catálogo `TRANSITIONS_EQUIPO_NUEVO` + invariantes de la unión (D1, D5) — mutaciones M3, M4, M5, M11 (confirmación cruzada); corrección (b)
 
-- [ ] 2.1 RED en `packages/shared/src/invariantesGrafo.test.ts`: (i) en línea, los invariantes 1-3
+- [x] 2.1 RED en `packages/shared/src/invariantesGrafo.test.ts`: (i) en línea, los invariantes 1-3
   existentes comparan contra `ESTADOS_SERVICIO` en vez de `ESTADOS` (`:5`, `:41`, `:50-53`, `:64` —
   siguen siendo «34 sobre 21» y «Finalizado único»); (ii) al FINAL, bloque nuevo de la UNIÓN:
   `derivados(TRANSITIONS ∪ TRANSITIONS_EQUIPO_NUEVO)` = `ESTADOS` (22); ids únicos en la unión; la
@@ -103,28 +103,28 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
   `derivados(TRANSITIONS_EQUIPO_NUEVO) − derivados(TRANSITIONS)`. **Corrección (b):** cada una de las 5
   entradas del catálogo declara exactamente DOS campos (`comment()` + la casilla de derivación); ningún
   campo de negocio adicional (RQ-EN-07). Nace roja: `TRANSITIONS_EQUIPO_NUEVO` no existe.
-- [ ] 2.2 GREEN — al FINAL de `packages/shared/src/transitions.ts` (tras la actual `:334`, cierre de
+- [x] 2.2 GREEN — al FINAL de `packages/shared/src/transitions.ts` (tras la actual `:334`, cierre de
   `areasSiguientes`): `export const TRANSITIONS_EQUIPO_NUEVO: Transition[]` con las 5 entradas de
   `design.md` §2 D1 (`ingreso_equipo_nuevo`, `producto_no_conforme`, `analisis_y_acciones`,
   `verificacion`, `liberacion`), reutilizando `comment()`/`derivacion()` ya privados del fichero, todas
   `area: 'Servicio Técnico'` (RQ-EN-02, supuesto s2).
-- [ ] 2.3 Confirmar verde. RQ: RQ-EN-01, RQ-EN-02, RQ-EN-07 (campos).
-- [ ] 2.4 **M3** (regla de mutación 2 — mutar el fichero VIGILADO): ensuciar temporalmente una entrada
+- [x] 2.3 Confirmar verde. RQ: RQ-EN-01, RQ-EN-02, RQ-EN-07 (campos).
+- [x] 2.4 **M3** (regla de mutación 2 — mutar el fichero VIGILADO): ensuciar temporalmente una entrada
   del catálogo con `from: ['Revisión']` (estado inexistente). Confirmar rojo en los invariantes 1 y 4
   de la unión. Revertir.
-- [ ] 2.5 **M4**: añadir temporalmente una salida desde `Verificación` (sexta entrada con
+- [x] 2.5 **M4**: añadir temporalmente una salida desde `Verificación` (sexta entrada con
   `from: ['Verificación']`). Confirmar rojo en «ninguna sale de Verificación» y en el sin-salida de la
   unión. Revertir.
-- [ ] 2.6 **M5**: renombrar temporalmente el id de una entrada EN a `ingreso_a_servicio` (colisión con
+- [x] 2.6 **M5**: renombrar temporalmente el id de una entrada EN a `ingreso_a_servicio` (colisión con
   un id de servicio). Confirmar rojo en «ids únicos en la unión». Revertir.
-- [ ] 2.7 **M11, confirmación cruzada**: repetir la mutación de `1.6` (quitar `Verificación` de
+- [x] 2.7 **M11, confirmación cruzada**: repetir la mutación de `1.6` (quitar `Verificación` de
   `CLASIFICACION_EN_ESPERA`) ahora que existe el invariante de la unión. Confirmar rojo A LA VEZ en
   `tsc` (como en `1.6`) y en el invariante 1 de la unión (`derivados(unión) ≠ ESTADOS`, 21 ≠ 22).
   Revertir.
 
 ## Fase 3 · Registro de flujos `flujos.ts` (D2) — mutaciones M6, M7; corrección (a); RQ-EN-07 tablero
 
-- [ ] 3.1 RED, fichero **nuevo** `packages/shared/src/flujos.test.ts`:
+- [x] 3.1 RED, fichero **nuevo** `packages/shared/src/flujos.test.ts`:
   - Normalización (M6, RQ-EN-02/RQ-EN-04): `esClasificacionEquipoNuevo('Equipo Nuevo')` (Zoho, mayúscula)
     → `true`; `esClasificacionEquipoNuevo('Equipo nuevo usado')` → `false` (igualdad, no `includes`).
   - Enrutado (RQ-EN-04): ticket EN en `Ingresado` → `flujoDelTicket` = `'equipo-nuevo'`.
@@ -139,53 +139,53 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
   - **RQ-EN-07 (tablero):** `columnForStatus('Verificación') === 'otros'` (cae en `FALLBACK_COLUMN_ID`,
     `columns.ts:34`, `:45-46`).
   - Nace roja: `flujos.ts` no existe.
-- [ ] 3.2 GREEN — crear `packages/shared/src/flujos.ts` con la superficie de `design.md` §2 D2:
+- [x] 3.2 GREEN — crear `packages/shared/src/flujos.ts` con la superficie de `design.md` §2 D2:
   `Flujo`, `CATALOGO_POR_FLUJO`, `esClasificacionEquipoNuevo`, `flujoDelTicket`, `catalogoDelTicket`,
   `transicionesDelTicket`, `transicionPorId`, `flujoDeTransicion`, `fueraDeFlujo`.
-- [ ] 3.3 GREEN — `packages/shared/src/index.ts`: `export * from './flujos'` al FINAL (tras la actual
+- [x] 3.3 GREEN — `packages/shared/src/index.ts`: `export * from './flujos'` al FINAL (tras la actual
   `:21`).
-- [ ] 3.4 Confirmar verde. RQ: RQ-EN-02, RQ-EN-03, RQ-EN-04, RQ-EN-07, RQ-TC-10.
-- [ ] 3.5 **M6**: cambiar la normalización a igualdad estricta sin `trim`/colapso de espacios/minúsculas.
+- [x] 3.4 Confirmar verde. RQ: RQ-EN-02, RQ-EN-03, RQ-EN-04, RQ-EN-07, RQ-TC-10.
+- [x] 3.5 **M6**: cambiar la normalización a igualdad estricta sin `trim`/colapso de espacios/minúsculas.
   Confirmar rojo en el caso `'Equipo Nuevo'` (Zoho). Revertir.
-- [ ] 3.6 **M7**: quitar la condición «estado pertenece al catálogo EN» de `flujoDelTicket` (dejar sólo
+- [x] 3.6 **M7**: quitar la condición «estado pertenece al catálogo EN» de `flujoDelTicket` (dejar sólo
   la clasificación). Confirmar rojo: el ticket heredado en `Rev./Diagnostico` pasaría a `'equipo-nuevo'`
   y vería `[]` transiciones en vez de las de servicio (varado, viola s5). Revertir.
 
 ## Fase 4 · `EstadoServicio`/`ESTADOS_SERVICIO` en fases y mapa (D1, consecuencia) — mutación M12; corrección (f) parte 1
 
-- [ ] 4.1 Confirmar la regresión natural que trae la Fase 1: `tsc` falla en `fasesBlueprint.ts:68`
+- [x] 4.1 Confirmar la regresión natural que trae la Fase 1: `tsc` falla en `fasesBlueprint.ts:68`
   (`FASE_POR_ESTADO … satisfies Record<Estado, FaseId>`, falta la clave `'Verificación'`) y
   `fasesBlueprint.test.ts:14` se pone roja (`Object.keys(FASE_POR_ESTADO)` = 21 claves ≠ `[...ESTADOS]`
   = 22). Esto ES el RED de esta fase — no hace falta otra mutación.
-- [ ] 4.2 GREEN — `fasesBlueprint.ts:11`: `import type { EstadoServicio } from './estados'` (sustituye
+- [x] 4.2 GREEN — `fasesBlueprint.ts:11`: `import type { EstadoServicio } from './estados'` (sustituye
   a `Estado`). `:68`: `} satisfies Record<EstadoServicio, FaseId>`.
-- [ ] 4.3 **Corrección (f), parte 1** — GREEN en línea, `fasesBlueprint.ts:29`: reescribir el comentario
+- [x] 4.3 **Corrección (f), parte 1** — GREEN en línea, `fasesBlueprint.ts:29`: reescribir el comentario
   que dice «`satisfies Record<Estado, FaseId>`» para que nombre `Record<EstadoServicio, FaseId>`, que
   es lo que la declaración dice literalmente tras `4.2` (mismo número de líneas).
-- [ ] 4.4 GREEN — `fasesBlueprint.test.ts:3`: el import gana `ESTADOS_SERVICIO` (junto a
+- [x] 4.4 GREEN — `fasesBlueprint.test.ts:3`: el import gana `ESTADOS_SERVICIO` (junto a
   `ESTADOS_SIN_SALIDA`; comprobar si `ESTADOS` sigue haciendo falta en este fichero antes de retirarlo
   del import). `:14`: `[...ESTADOS_SERVICIO].sort()` en vez de `[...ESTADOS].sort()`.
-- [ ] 4.5 GREEN — `mapaBlueprint.test.ts:5`: el import gana `ESTADOS_SERVICIO`. `:17` (`entradaReal()`,
+- [x] 4.5 GREEN — `mapaBlueprint.test.ts:5`: el import gana `ESTADOS_SERVICIO`. `:17` (`entradaReal()`,
   campo `estados`) y `:113` pasan a `ESTADOS_SERVICIO`.
-- [ ] 4.6 GREEN — `scripts/generar-mapa-blueprint.ts:18`/`:31`: `ESTADOS_SERVICIO` en vez de `ESTADOS`.
-- [ ] 4.7 Confirmar `tsc` y las suites de `fasesBlueprint`/`mapaBlueprint` en verde. RQ: protege
+- [x] 4.6 GREEN — `scripts/generar-mapa-blueprint.ts:18`/`:31`: `ESTADOS_SERVICIO` en vez de `ESTADOS`.
+- [x] 4.7 Confirmar `tsc` y las suites de `fasesBlueprint`/`mapaBlueprint` en verde. RQ: protege
   RQ-MB-06 (anti-desfase, sin regenerar artefactos — el orden y el conteo de `ESTADOS_SERVICIO`
   coinciden con los 21 de antes).
-- [ ] 4.8 **M12**: dejar `'Verificación'` DENTRO de `ESTADOS_SERVICIO` (no excluirlo al construir el
+- [x] 4.8 **M12**: dejar `'Verificación'` DENTRO de `ESTADOS_SERVICIO` (no excluirlo al construir el
   array de la Fase 1.4). Confirmar rojo: `tsc` falla en `fasesBlueprint.ts:68` (clave de más) o el
   anti-desfase RQ-MB-06 se pone rojo (el mapa generado incluiría `Verificación` en el Blueprint de
   servicio). Revertir.
 
 ## Fase 5 · Cierre de calidad e intento del Lote 1
 
-- [ ] 5.1 `npm test` en verde; registrar el recuento (pasadas/ficheros) en `apply-progress.md`.
-- [ ] 5.2 `npm run typecheck` en verde.
-- [ ] 5.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente.
-- [ ] 5.4 `npm run build` en verde.
-- [ ] 5.5 `git add -N packages/shared/src/flujos.ts packages/shared/src/flujos.test.ts` (únicos
+- [x] 5.1 `npm test` en verde; registrar el recuento (pasadas/ficheros) en `apply-progress.md`.
+- [x] 5.2 `npm run typecheck` en verde.
+- [x] 5.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente.
+- [x] 5.4 `npm run build` en verde.
+- [x] 5.5 `git add -N packages/shared/src/flujos.ts packages/shared/src/flujos.test.ts` (únicos
   ficheros nuevos del Lote 1, medida E-078 de `docs/sdd/ENTRADA.md`), y cualquier otro fichero nuevo sin
   trackear que resulte de las Fases 1-4.
-- [ ] 5.6 Medir `git diff --shortstat --no-renames e8640d7` con lo anterior ya indexado (`-N`).
+- [x] 5.6 Medir `git diff --shortstat --no-renames e8640d7` con lo anterior ya indexado (`-N`).
   Registrar el número en `apply-progress.md` y contrastarlo contra la estimación de ~615.
 - [ ] 5.7 Commit del Lote 1 — hecho por el orquestador.
 

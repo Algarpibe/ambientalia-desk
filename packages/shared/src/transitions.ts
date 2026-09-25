@@ -332,3 +332,30 @@ export function areasSiguientes(estado: string): string[] {
   }
   return [...areas]
 }
+
+/**
+ * Catálogo del flujo `equipo-nuevo` (F1B-06, M1.4 del maestro, RQ-EN-01). Registro SEPARADO de
+ * `TRANSITIONS`: los cinco estados comparten NOMBRE con los de servicio (`Ingresado`, `En Proceso`,
+ * `Notificado`, `Finalizado`) pero no el grafo — fundirlo mezclaría los dos flujos en
+ * `transitionsForStatus`, `areasSiguientes` y `destinatarioDelEscalado` (`design.md` D1). El
+ * enrutado de un ticket a este catálogo vive en `flujos.ts`.
+ *
+ * `Verificación` no tiene transición de salida en este catálogo a propósito (s4 de `proposal.md`):
+ * las dos salidas —`Liberación` desde `Verificación` y la rechazada → `Notificado`— son contenido de
+ * F1A-03. Es la excepción nombrada del invariante 3 de la unión (`invariantesGrafo.test.ts`).
+ *
+ * Área: las cinco son `Servicio Técnico` por equivalencia (supuesto s2, ninguna fuente accesible la
+ * contradice). Campos: sólo `comment()` — ninguna fuente da otro campo de negocio (RQ-EN-07).
+ */
+export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
+  { id: 'ingreso_equipo_nuevo', name: 'Ingreso equipo nuevo', from: ['Ingresado'], to: 'En Proceso', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'producto_no_conforme', name: 'Producto no conforme', from: ['En Proceso'], to: 'Notificado', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'analisis_y_acciones', name: 'Análisis y acciones', from: ['Notificado'], to: 'Ingresado', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'verificacion', name: 'Verificación', from: ['En Proceso'], to: 'Verificación', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'liberacion', name: 'Liberación', from: ['En Proceso'], to: 'Finalizado', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+]

@@ -12,9 +12,9 @@ import {
  * CLASIFICACIÓN, que es decisión de Gerencia y no se deriva de nada.
  */
 describe('registro de estados', () => {
-  it('declara 21 estados, sin repetidos', () => {
-    expect(ESTADOS).toHaveLength(21)
-    expect(new Set(ESTADOS).size).toBe(21)
+  it('declara 22 estados, sin repetidos', () => {
+    expect(ESTADOS).toHaveLength(22)
+    expect(new Set(ESTADOS).size).toBe(22)
   })
 
   /**
@@ -63,12 +63,13 @@ describe('registro de estados', () => {
    * obligara a clasificarlo forzaría a inventar la respuesta, y la vista enseñaría una promesa que
    * nadie ha hecho.
    */
-  it('sin_clasificar es valor válido, y hoy solo lo lleva Pendiente', () => {
-    expect(estadosCon('sin_clasificar')).toEqual(['Pendiente'])
+  it('sin_clasificar es valor válido, y hoy lo llevan Pendiente y Verificación', () => {
+    expect(estadosCon('sin_clasificar')).toEqual(['Pendiente', 'Verificación'])
     expect(enEsperaDe('Pendiente')).toBe('sin_clasificar')
+    expect(enEsperaDe('Verificación')).toBe('sin_clasificar')
   })
 
-  it('5 + 6 + 9 + 1 = 21, y no hay ningún estado fuera de las cuatro clases', () => {
+  it('5 + 6 + 9 + 2 = 22, y no hay ningún estado fuera de las cuatro clases', () => {
     const total = estadosCon('externa').length + estadosCon('interna').length
       + estadosCon('ninguna').length + estadosCon('sin_clasificar').length
     expect(total).toBe(ESTADOS.length)
