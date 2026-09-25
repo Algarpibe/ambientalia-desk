@@ -72,7 +72,7 @@ sección «Archive», más abajo) para que no se pierda al cerrar el cambio.
 
 ## Fase 1 · Registro de estados — `Verificación` en `CLASIFICACION_EN_ESPERA` (D1), mutación M11
 
-- [x] 1.1 RED en `packages/shared/src/estados.test.ts` (D5: `:15-17`, `:66-67`, `:71`): extender las
+- [x] 1.1 RED en `packages/shared/src/estados.test.ts` (D5, líneas de `44ce003`: `:15-17`, `:66-67`, `:71`): extender las
   aserciones de 21 a **22** estados; el conjunto `sin_clasificar` pasa de `['Pendiente']` a
   `['Pendiente', 'Verificación']`; añadir `enEsperaDe('Verificación') === 'sin_clasificar'` (RQ-EN-07,
   parcial — clasificación). Nace roja: hoy son 21/`['Pendiente']`.
