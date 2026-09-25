@@ -69,25 +69,25 @@ por la razón de presupuesto explicada arriba.
 
 ## Fase 1 · Esquema `public.remisiones.hay_novedad` — RED → GREEN (D1, D2), mutación M5 (parte 1)
 
-- [ ] 1.1 RED en `packages/zoho-sync/src/db/migrate.test.ts`: ampliar la prueba de `:369-380` (recuento)
+- [x] 1.1 RED en `packages/zoho-sync/src/db/migrate.test.ts`: ampliar la prueba de `:369-380` (recuento)
   de `[36, 18 calificadas, 18 sin calificar]` a `[37, 19 calificadas ("14 de public"), 18 sin
   calificar]`; el conjunto de TABLAS sin calificar (`tickets`, `equipos`, `contacts`) no cambia; el
   conjunto de identidades calificadas gana `'public.remisiones'` — **ya está en la lista de `:380`**,
   así que esa aserción concreta no cambia, sólo el recuento total y el de calificadas. Nace roja: hoy
   son 36/18/18.
-- [ ] 1.2 GREEN: en `packages/zoho-sync/src/db/schema.sql`, **al FINAL del fichero** (después de
+- [x] 1.2 GREEN: en `packages/zoho-sync/src/db/schema.sql`, **al FINAL del fichero** (después de
   `:506-507`, tras la tabla `equipos_cambios`): `ALTER TABLE public.remisiones ADD COLUMN IF NOT
   EXISTS hay_novedad boolean` con un comentario de una línea explicando el propósito, sin `;` extra
   (D1: insertar junto a las `ALTER` de `:316-317` desplazaría `:319`, `:376-386`, `:390-391` y `:448`,
   citadas en `DEPLOY.md`, `zoho-sync/spec.md` y `migrate.test.ts:213,219,307`).
-- [ ] 1.3 Confirmar verde. RQ: RQ-RE-17 (P8).
-- [ ] 1.4 **Corrección menor #2 de la validación del diseño.** Editar EN LÍNEA (sin insertar líneas
+- [x] 1.3 Confirmar verde. RQ: RQ-RE-17 (P8).
+- [x] 1.4 **Corrección menor #2 de la validación del diseño.** Editar EN LÍNEA (sin insertar líneas
   nuevas: `CLAUDE.md:220` cita `migrate.test.ts:404-406` y cualquier línea nueva antes la rompería) el
   comentario narrativo de `migrate.test.ts:364-367` para que, además de contar hasta F1B-02 (36 ALTER,
   18/18), narre la entrada de F1B-04: el recuento sube de 36 a **37** y el de calificadas de 18 a
   **19** ("14 de public"); el conjunto de tablas sin calificar no cambia porque `public.remisiones` ya
   estaba calificada antes de este cambio.
-- [ ] 1.5 **M5, parte 1 (regla de mutación 2 — mutar el FICHERO VIGILADO).** En `schema.sql`, escribir
+- [x] 1.5 **M5, parte 1 (regla de mutación 2 — mutar el FICHERO VIGILADO).** En `schema.sql`, escribir
   temporalmente la `ALTER TABLE` de `hay_novedad` **sin calificar** (`ALTER TABLE remisiones ADD COLUMN
   ...`). Confirmar que `migrate.test.ts` se pone rojo (el recuento de calificadas baja a 18, el de sin
   calificar sube a 19 y la tabla `remisiones` no está en el conjunto esperado de sin-calificar).
@@ -95,30 +95,30 @@ por la razón de presupuesto explicada arriba.
 
 ## Fase 2 · Predicado compartido `faltaFotoPorNovedad` — RED → GREEN (D5)
 
-- [ ] 2.1 RED al final de `packages/shared/src/remision.test.ts`: `faltaFotoPorNovedad(true, 0)` →
+- [x] 2.1 RED al final de `packages/shared/src/remision.test.ts`: `faltaFotoPorNovedad(true, 0)` →
   `true`; `faltaFotoPorNovedad(true, 1)` → `false`; `faltaFotoPorNovedad(false, 0)` → `false`;
   `faltaFotoPorNovedad(null, 0)` → `false` (P1). Nace roja: la función no existe.
-- [ ] 2.2 GREEN: al final de `packages/shared/src/remision.ts` (después de `:102`, tras `urlSegura`):
+- [x] 2.2 GREEN: al final de `packages/shared/src/remision.ts` (después de `:102`, tras `urlSegura`):
   `export function faltaFotoPorNovedad(hayNovedad: boolean | null | undefined, numFotos: number):
   boolean { return hayNovedad === true && numFotos < 1 }`. No toca `index.ts` (`:14` ya re-exporta todo
   el módulo con `export * from './remision'`).
-- [ ] 2.3 Confirmar verde. RQ: RQ-RE-18.
-- [ ] 2.4 M4 (parte 1, sólo con P1 — la parte con P6 se repite en la Fase 4 cuando esa prueba exista):
+- [x] 2.3 Confirmar verde. RQ: RQ-RE-18.
+- [x] 2.4 M4 (parte 1, sólo con P1 — la parte con P6 se repite en la Fase 4 cuando esa prueba exista):
   cambiar el predicado a `hayNovedad !== false`. Confirmar rojo en P1 (el caso `false`/0 pasaría de
   `false` a `true`, y el caso `null`/0 también). Revertir.
 
 ## Fase 3 · Persistencia del alta — RED → GREEN (D3, D4, D6), mutaciones M6, M8, M5 (parte 2)
 
-- [ ] 3.1 RED, fichero **nuevo** `apps/desk/server/fotoNovedad.test.ts` (con `testing/appHarness`,
+- [x] 3.1 RED, fichero **nuevo** `apps/desk/server/fotoNovedad.test.ts` (con `testing/appHarness`,
   patrón de `remisiones.test.ts:1-5`): `POST /api/remisiones` con `hayNovedad: true` → `201` y
   `getRemision`/`GET` devuelve `hayNovedad: true`; con `hayNovedad: false` → `hayNovedad: false`; sin la
   clave `hayNovedad` en el cuerpo → `hayNovedad: null`; con `hayNovedad: 'true'` (cadena, no booleano)
   → `hayNovedad: null`, y en los cuatro casos responde `201` sin rechazar la petición (P2). Nace roja:
   la columna existe (Fase 1) pero nada la lee ni la persiste todavía.
-- [ ] 3.2 GREEN — `packages/shared/src/types.ts`: en la interfaz `Remision` (`:713-733`), justo antes
+- [x] 3.2 GREEN — `packages/shared/src/types.ts`: en la interfaz `Remision` (`:713-733`), justo antes
   del `}` de `:733`, añadir con dos líneas de JSDoc: `hayNovedad: boolean | null` (+3 líneas, D6; sin
   citas afectadas por debajo de `:733`).
-- [ ] 3.3 GREEN — `apps/desk/server/db/remisiones.ts` (D4, todo en línea, **0 líneas netas**):
+- [x] 3.3 GREEN — `apps/desk/server/db/remisiones.ts` (D4, todo en línea, **0 líneas netas**):
   - `:11-27` (`toRemision`): en la línea `:25` (`anuladaAt: isoOrNull(r.anulada_at), anuladaPor:
     (r.anulada_por as string) ?? null,`), añadir a continuación, en la MISMA línea, `hayNovedad: typeof
     r.hay_novedad === 'boolean' ? r.hay_novedad : null,`.
@@ -127,41 +127,41 @@ por la razón de presupuesto explicada arriba.
   - `:46-48` (`INSERT`): en `:47` añadir la columna `, hay_novedad` al final de la lista; en `:48`
     añadir `, $13` al final de `VALUES (...)`.
   - `:49-50` (array de valores): en `:50` añadir `, input.hayNovedad` al final.
-- [ ] 3.4 GREEN — `apps/desk/server/routes/remision.ts` (D3, **0 líneas netas**): en la línea `:246`
+- [x] 3.4 GREEN — `apps/desk/server/routes/remision.ts` (D3, **0 líneas netas**): en la línea `:246`
   (`creadoPor: req.user?.name ?? null,`, dentro de la llamada a `createRemision` de `:242-255`),
   añadir a continuación, en la MISMA línea, `hayNovedad: typeof b.hayNovedad === 'boolean' ?
   b.hayNovedad : null,`. No toca `:127`, `:155`, `:177`, `:197` ni `:220` (todas por encima de `:242`,
   IV-12 queda intacto).
-- [ ] 3.5 Confirmar verde. RQ: RQ-RE-17.
-- [ ] 3.6 M6: cambiar `:246` a `b.hayNovedad ?? null` (nullish coalescing en vez de comprobación de
+- [x] 3.5 Confirmar verde. RQ: RQ-RE-17.
+- [x] 3.6 M6: cambiar `:246` a `b.hayNovedad ?? null` (nullish coalescing en vez de comprobación de
   tipo). Confirmar rojo en el caso `'true'` (cadena) de P2 — con la mutación pasaría a persistirse tal
   cual en vez de normalizarse a `null`. Revertir.
-- [ ] 3.7 M8: quitar `hayNovedad` de `toRemision` (`:25`). Confirmar rojo en P2 (la respuesta ya no
+- [x] 3.7 M8: quitar `hayNovedad` de `toRemision` (`:25`). Confirmar rojo en P2 (la respuesta ya no
   refleja el valor persistido). Revertir.
-- [ ] 3.8 **M5, parte 2** (regla de mutación 2, con P8 y P2 ya existentes): en `schema.sql`, borrar por
+- [x] 3.8 **M5, parte 2** (regla de mutación 2, con P8 y P2 ya existentes): en `schema.sql`, borrar por
   completo la `ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad` de la Fase 1.
   Confirmar rojo en `migrate.test.ts` (recuento vuelve a 36/18) Y en `fotoNovedad.test.ts` (la columna
   no existe: el `INSERT` de `createRemision` falla). Revertir.
 
 ## Fase 4 · Sexta puerta en `POST /:id/enviar` — RED → GREEN (D7), mutaciones M1, M2, M3, M4 (parte 2)
 
-- [ ] 4.1 RED en `fotoNovedad.test.ts` — P3: remisión pendiente con `hay_novedad = true` y 0 fotos →
+- [x] 4.1 RED en `fotoNovedad.test.ts` — P3: remisión pendiente con `hay_novedad = true` y 0 fotos →
   `POST /:id/enviar` responde `422`; el `fetch`/disparo a n8n NO se llama (espía sobre
   `dispararRemision` o sobre el `fetch` global); `enviado_at` sigue `NULL` (consulta directa o
   `getRemision`). Nace roja: la guarda no existe.
-- [ ] 4.2 RED — P4 (**C<D**): a partir del `422` de P3, subir una foto (`POST /:id/fotos`) y reintentar
+- [x] 4.2 RED — P4 (**C<D**): a partir del `422` de P3, subir una foto (`POST /:id/fotos`) y reintentar
   `POST /:id/enviar` de inmediato (webhook configurado en el arnés, `fetch` simulado con `200`) →
   responde `200`. Nace roja junto con P3 (la ruta aún no llega a este punto).
-- [ ] 4.3 RED — P5 (**B<C**): remisión anulada con `hay_novedad = true` y 0 fotos → `409` de anulada
+- [x] 4.3 RED — P5 (**B<C**): remisión anulada con `hay_novedad = true` y 0 fotos → `409` de anulada
   (no `422`); remisión en `estado = 'ok'` con `hay_novedad = true` y 0 fotos → `409` de ya enviada (no
   `422`). Nace roja: sin la guarda, este escenario ya daba el `409` correcto por las guardas
   existentes, así que en rigor esta prueba fija el ORDEN futuro; se declara "nace roja" respecto a la
   guarda que se va a insertar, y se confirma que sigue en verde tras 4.4 (no debe cambiar de código de
   respuesta).
-- [ ] 4.4 RED — P6: remisión con `hay_novedad` en `false` o `null`, 0 fotos → `200` sin otros
+- [x] 4.4 RED — P6: remisión con `hay_novedad` en `false` o `null`, 0 fotos → `200` sin otros
   bloqueos. Misma nota que P5: ya es verde hoy por ausencia de guarda; se escribe ahora para fijarla
   como CARACTERIZACIÓN que no debe romperse al insertar la guarda.
-- [ ] 4.5 GREEN — `apps/desk/server/routes/remision.ts` (D7): en la línea `:4`
+- [x] 4.5 GREEN — `apps/desk/server/routes/remision.ts` (D7): en la línea `:4`
   (`import { perfilChecklist } from '@ambientalia/shared'`), ampliar en la MISMA línea a `import {
   perfilChecklist, faltaFotoPorNovedad } from '@ambientalia/shared'`. Insertar **5 líneas nuevas**
   entre la actual `:282` (cierre del bloque "ya enviada") y la actual `:283` (comentario de
@@ -170,32 +170,32 @@ por la razón de presupuesto explicada arriba.
   fotos.length)`, responder `422` con el mensaje «El equipo llegó con novedad y la remisión no tiene
   fotos: sube al menos una antes de enviarla.» y `return`, sin escribir nada ni llamar a
   `reclamarEnvio`. El bloque de "Reclamación atómica" (antiguo `:283-288`) queda en `:288-293`.
-- [ ] 4.6 Confirmar P3, P4, P5, P6 en verde A LA VEZ (verificación cruzada, regla de mutación 1). RQ:
+- [x] 4.6 Confirmar P3, P4, P5, P6 en verde A LA VEZ (verificación cruzada, regla de mutación 1). RQ:
   RQ-RE-08 (orden 4).
-- [ ] 4.7 **M1** (posición): mover la guarda nueva DESPUÉS del bloque de `reclamarEnvio`. Confirmar
+- [x] 4.7 **M1** (posición): mover la guarda nueva DESPUÉS del bloque de `reclamarEnvio`. Confirmar
   rojo: P4 pasa a dar `409` (reclamado ya) en vez de `200`, y en P3 `enviado_at` queda escrito en vez
   de `NULL`. Revertir.
-- [ ] 4.8 **M2** (posición): mover la guarda nueva ANTES del bloque de "anulada" (`:275-277`).
+- [x] 4.8 **M2** (posición): mover la guarda nueva ANTES del bloque de "anulada" (`:275-277`).
   Confirmar rojo: el caso anulado de P5 pasa a dar `422` de novedad en vez de `409` de anulada.
   Revertir.
-- [ ] 4.9 **M3** (posición): mover la guarda nueva ANTES del bloque de "ya enviada" (`:280-282`).
+- [x] 4.9 **M3** (posición): mover la guarda nueva ANTES del bloque de "ya enviada" (`:280-282`).
   Confirmar rojo: el caso `ok` de P5 pasa a dar `422` de novedad en vez de `409` de ya enviada.
   Revertir.
-- [ ] 4.10 **M4, parte 2** (con P1 de la Fase 2 y P6 de esta fase ya existentes): repetir la mutación
+- [x] 4.10 **M4, parte 2** (con P1 de la Fase 2 y P6 de esta fase ya existentes): repetir la mutación
   del predicado a `hayNovedad !== false` en `packages/shared/src/remision.ts`. Confirmar rojo en P1
   (`remision.test.ts`) Y en P6 (`fotoNovedad.test.ts`, el caso `null`/0 pasaría a bloquear con `422`).
   Confirmar las dos rojas A LA VEZ. Revertir.
 
 ## Fase 5 · El payload a n8n no cambia — RED → GREEN (D8), mutación M7
 
-- [ ] 5.1 En `fotoNovedad.test.ts` — P7: remisión con `hay_novedad = true` y 1 foto; al llamar
+- [x] 5.1 En `fotoNovedad.test.ts` — P7: remisión con `hay_novedad = true` y 1 foto; al llamar
   `POST /:id/enviar` (webhook configurado, `fetch` simulado y su cuerpo CAPTURADO), el JSON enviado NO
   tiene la clave `hayNovedad`. **Nace en VERDE**: D8 no exige ningún cambio de producción —
   `buildRemisionPayload` (`remisionWebhook.ts:31-66`) arma el cuerpo campo a campo, sin *spread* de
   `Remision`, así que `hayNovedad` no puede colarse sola. El valor de guardia de esta prueba se
   demuestra por mutación, no por un estado rojo inicial.
-- [ ] 5.2 Confirmar verde sin tocar `remisionWebhook.ts`. RQ: RQ-RE-17 (payload sin cambios).
-- [ ] 5.3 **M7**: añadir temporalmente `hayNovedad: r.hayNovedad` a `RemisionWebhookPayload` (`:5-24`) y
+- [x] 5.2 Confirmar verde sin tocar `remisionWebhook.ts`. RQ: RQ-RE-17 (payload sin cambios).
+- [x] 5.3 **M7**: añadir temporalmente `hayNovedad: r.hayNovedad` a `RemisionWebhookPayload` (`:5-24`) y
   al `return` de `buildRemisionPayload` (`:40-65`). Confirmar que P7 se pone ROJA (la clave aparece en
   el cuerpo capturado) — es lo que demuestra que la prueba vigila de verdad. Revertir.
 
@@ -205,9 +205,9 @@ Sin RED/GREEN automático: `CrearRemision.tsx` es `.tsx` y queda fuera de la red
 de Gerencia (F0-00, `vitest.config.ts:16-20`). Verificado por `npm run typecheck` y comprobación de
 persona (sección aparte, más abajo).
 
-- [ ] 6.1 `apps/desk/src/api/client.ts`: añadir `hayNovedad?: boolean` al FINAL de la interfaz
+- [x] 6.1 `apps/desk/src/api/client.ts`: añadir `hayNovedad?: boolean` al FINAL de la interfaz
   `CrearRemisionPayload` (después de `:533`). +1 línea, sin citas afectadas por encima de `:533`.
-- [ ] 6.2 `apps/desk/src/components/CrearRemision.tsx`:
+- [x] 6.2 `apps/desk/src/components/CrearRemision.tsx`:
   - Import de `faltaFotoPorNovedad` desde `@ambientalia/shared`, junto al import existente de `:2`.
   - Nuevo estado `const [hayNovedad, setHayNovedad] = useState<boolean | null>(null)`, declarado antes
     del `return` de `:153` (regla de los hooks de React — obliga a que el bloque de estados de
@@ -223,11 +223,11 @@ persona (sección aparte, más abajo).
     undefined`.
   - En la condición de «Continuar sin fotos» (`:328` actual: `creada && fotosPendientes > 0 &&
     !busy`), sumar `&& !faltaFotoPorNovedad(hayNovedad, envio.fotosSubidas)`.
-- [ ] 6.3 `npm run typecheck` en verde para estos dos ficheros.
+- [x] 6.3 `npm run typecheck` en verde para estos dos ficheros.
 
 ## Fase 7 · Casilla de la regla de mutación 3 (`CLAUDE.md`) — con corrección menor #3
 
-- [ ] 7.1 Confirmar por escrito, decisión a decisión, cada una con la línea del servidor que la
+- [x] 7.1 Confirmar por escrito, decisión a decisión, cada una con la línea del servidor que la
   impone — **con la corrección de la validación del diseño**: la fila «no deja crear con Sí y 0 fotos»
   se declara **13.2**, no 13.3 como en la tabla de `design.md` («Regla de mutación 3»). Razón: el
   cliente bloquea el envío ENTERO dentro de `submit()` — antes incluso de llamar a `crear`, es decir
@@ -245,19 +245,19 @@ persona (sección aparte, más abajo).
   | Oculta «Continuar sin fotos» si quedaría en 0 | La misma guarda de `/enviar` | 13.2, misma razón |
   | Manda `hayNovedad` sólo como booleano | `routes/remision.ts:246` normaliza a `true`/`false`/`null` en el alta | 13.3 — espejo legítimo: MISMO endpoint y MISMO momento, el servidor no confía en el cliente y decide de nuevo |
 
-- [ ] 7.2 Dejar constancia de esta corrección en `design.md` (nota junto a su tabla «Regla de mutación
+- [x] 7.2 Dejar constancia de esta corrección en `design.md` (nota junto a su tabla «Regla de mutación
   3»), sin reabrir sus Decisiones D1-D10.
 
 ## Fase 8 · Cierre de calidad del lote
 
-- [ ] 8.1 `npm test` en verde; registrar el recuento (pasadas/ficheros) en `apply-progress.md`.
-- [ ] 8.2 `npm run typecheck` en verde.
-- [ ] 8.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente.
-- [ ] 8.4 `npm run build` en verde.
+- [x] 8.1 `npm test` en verde; registrar el recuento (pasadas/ficheros) en `apply-progress.md`.
+- [x] 8.2 `npm run typecheck` en verde.
+- [x] 8.3 `npm run lint` en verde; confirmar 0 warnings nuevos sobre la base preexistente.
+- [x] 8.4 `npm run build` en verde.
 
 ## Fase 9 · Barrido de citas (regla de mutación 4, OBLIGATORIO) — incluye corrección menor #1
 
-- [ ] 9.1 `grep -rnoE "routes/remision\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio (fuera de
+- [x] 9.1 `grep -rnoE "routes/remision\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio (fuera de
   `archive/`). Comprobar CADA resultado contra el árbol final, los dos extremos de cada rango por
   separado. Sólo desplaza lo posterior a `:282` (+5, por la Fase 4.5), Caso A:
   - `trazas/spec.md`: `:363`→`:368`, `:358-362`→`:363-367`, `:325`→`:330`.
@@ -266,9 +266,9 @@ persona (sección aparte, más abajo).
   - `F0-01_Correcciones_para_el_maestro.md`: líneas 546, 548 y 550.
   - Confirmar SIN desplazamiento lo que cae por encima de `:283` (incluida la línea `:246` de la Fase
     3.4, que crece en el sitio sin mover nada).
-- [ ] 9.2 Clasificar como probable **Caso B** (registro fechado, se lee contra su revisión, NO se
+- [x] 9.2 Clasificar como probable **Caso B** (registro fechado, se lee contra su revisión, NO se
   renumera a ciegas): `F0-00_Baseline_as-built.md:173` y `:468` (ya señalados por `design.md`).
-- [ ] 9.3 **Corrección menor #1 de la validación del diseño** (hallazgo NO listado por `design.md`):
+- [x] 9.3 **Corrección menor #1 de la validación del diseño** (hallazgo NO listado por `design.md`):
   clasificar además `docs/sdd/F0-00_Baseline_as-built.md:137` — dentro de «d.2 — Reparto
   réplica/prototipo», cita `CrearRemision.tsx:16`, un inventario fechado de qué pantallas eran réplica
   y cuáles prototipo — y `docs/superpowers/plans/2026-08-04-remision-entrada-desenlace.md:486` — cita
@@ -276,14 +276,14 @@ persona (sección aparte, más abajo).
   momento anterior al desplazamiento que este diseño introduce en `CrearRemision.tsx` (Fase 6, D9:
   «desplazamiento inevitable»): **probable Caso B** — nombrar la revisión en la propia cita (p. ej.
   «cita válida en `a0a2935`, antes de F1B-04») en vez de renumerar a la línea de hoy.
-- [ ] 9.4 **`CrearRemision.tsx`: desplazamiento inevitable.** Re-apuntar: +1 desde `:3`, +2 desde `:52`,
+- [x] 9.4 **`CrearRemision.tsx`: desplazamiento inevitable.** Re-apuntar: +1 desde `:3`, +2 desde `:52`,
   ≈+5 desde `:93`, ≈+13 desde `:266` (bloque de la pregunta, Fase 6.2). Re-medir `CLAUDE.md:220`, que
   hoy dice que el cliente «hoy» recorta «en esa misma línea» `:195`: ese «hoy» se re-apunta a la línea
   real tras el desplazamiento. Clasificar `ENTRADA.md:1173` (cita `:264`) y
   `Paquete_de_Despliegue_2026-09-10.md:70` (cita `:195`).
-- [ ] 9.5 Confirmar `types.ts`: sin citas vivas a partir de `:733` en el árbol final (la adición de la
+- [x] 9.5 Confirmar `types.ts`: sin citas vivas a partir de `:733` en el árbol final (la adición de la
   Fase 3.2 no desplaza nada citado, según `design.md`).
-- [ ] 9.6 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan
+- [x] 9.6 Segundo pase por la forma ABREVIADA (sin nombre de fichero) en los ficheros que ya citan
   `routes/remision.ts` y `CrearRemision.tsx`: `remisiones/spec.md`, `CLAUDE.md`, `openspec/config.yaml`.
 
 ## Comprobaciones de persona (regla del ciclo 1 — NO son casillas contables)
@@ -299,11 +299,11 @@ RQ-RE-19 sólo se puede comprobar en el DOM de `CrearRemision.tsx`, fuera de la 
 
 ## Fase 10 · Cierre del intento — ledger (E-078) y commit
 
-- [ ] 10.1 **ANTES de devolver el apply** (medida propia del orquestador, E-078 de `docs/sdd/ENTRADA.md`):
+- [x] 10.1 **ANTES de devolver el apply** (medida propia del orquestador, E-078 de `docs/sdd/ENTRADA.md`):
   `git add -N apps/desk/server/fotoNovedad.test.ts` (único fichero nuevo del intento) y cualquier otro
   fichero nuevo sin trackear que resulte de las Fases 1-9, para que el ledger de `sdd-attempt` los
   cuente.
-- [ ] 10.2 Medir `git diff --shortstat --no-renames a0a2935` con lo anterior ya indexado (`-N`).
+- [x] 10.2 Medir `git diff --shortstat --no-renames a0a2935` con lo anterior ya indexado (`-N`).
   Registrar el número en `apply-progress.md` y contrastarlo contra la estimación de ~505-580 de este
   documento.
 - [ ] 10.3 Commit del lote — reservado al orquestador.

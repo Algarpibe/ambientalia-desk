@@ -531,6 +531,8 @@ export interface CrearRemisionPayload {
    * y no el número: el servidor resuelve número y fecha contra Books, que es donde vive el dato.
    */
   salesOrderId?: string
+  /** RQ-RE-17. Sin contestar viaja `undefined`, y el servidor lo guarda como `null` — sin declarar. */
+  hayNovedad?: boolean
 }
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {

@@ -42,6 +42,14 @@ lo mínimo.
 | Oculta «Continuar sin fotos» si quedaría en 0 | La misma `:285` | Espejo legítimo, igual que la fila anterior |
 | Manda `hayNovedad` sólo como booleano | `routes/remision.ts:246` normaliza a `true`/`false`/`null` | El servidor no confía en el cliente |
 
+> **Nota de `sdd-apply` (corrección menor #3, Fase 7 de `tasks.md`).** La fila «No deja crear con "Sí"
+> y 0 fotos» de esta tabla es **13.2, no 13.3**: el cliente bloquea el envío ENTERO dentro de
+> `submit()`, antes de llamar a `POST /api/remisiones`, y ese paso (el alta) no tiene ninguna guarda de
+> servidor, a propósito (IV-12). Lo que el servidor SÍ impone y prueba (Fase 4 de `tasks.md`) es la
+> CONSECUENCIA en `/enviar`, un endpoint y un momento distintos del que el cliente bloquea — no es el
+> mismo hecho reflejado dos veces (13.3), es una guarda de cliente sin contrapartida en ese punto
+> (13.2) cuya consecuencia sí queda impuesta más adelante. No reabre las Decisiones D1-D10.
+
 ## Estrategia de pruebas (strict TDD, en rojo antes que en verde)
 
 | Prueba | Fichero | Qué fija |
@@ -70,7 +78,13 @@ lo mínimo.
 
 **Desplazan 0:** `schema.sql`, `db/remisiones.ts`, `remisionWebhook.ts`, `shared/remision.ts`, `index.ts`, `migrate.test.ts`, `remisiones.test.ts` y `client.ts`.
 
-**`routes/remision.ts`: +5 desde la línea 283.** Se re-apuntan (Caso A):
+**`routes/remision.ts`: +5 desde la línea 283 (estimado).** Se re-apuntan (Caso A):
+
+> **Nota de `sdd-apply` (medido).** El desplazamiento real es **+7**, no +5: la guarda quedó en
+> `:283-289` (2 líneas de comentario + `const fotos` + el `if` + su `res.status` (2 líneas) + `}`, 7
+> líneas), no en 5. Todas las re-punterías de abajo usan +7; los valores originales de esta lista se
+> conservan tachados en la intención, no en el texto, porque el `apply-progress` de este cambio trae la
+> tabla completa con los números reales.
 
 - `trazas/spec.md`: la 377 pasa de `:363` a `:368`, la 380 de `:358-362` a `:363-367` y la 382 de `:325` a `:330`.
 - `remisiones/spec.md`: la 31 pasa de `:353-363` a `:358-368`, la 35 de `:275-288` a `:275-293`, la 203 de `:307` a `:312`, la 206 de `:309` a `:314`, la 235 de `:344-346` a `:349-351`, la 270 de `:363` a `:368`, la 295 de `:318` a `:323` y la 496 de `:354-356` a `:359-361`. A eso se suma un segundo pase por las abreviadas.
@@ -79,6 +93,14 @@ lo mínimo.
 Se clasifican leyendo la frase, por ser registros fechados y probablemente Caso B: `F0-00_Baseline…md:173` y `:468`, y el plan del 2026-08-07, línea 31. La delta y la propuesta están ancladas a `a0a2935`. **Al fusionar**, la tabla de RQ-RE-08 pasa a ser presente y hay que re-apuntar sus filas: la 5 a `:291-293`, la 6 a `:296` y la 4 a `:283-287`.
 
 **`CrearRemision.tsx`: desplazamiento inevitable.** El estado tiene que declararse antes del `return` de `:153` (reglas de los hooks). Quedan +1 desde `:3`, +2 desde `:52` y ≈+5 desde `:93`, y el bloque de la pregunta suma ≈+13 desde `:266`. Se remide la línea 220 de `CLAUDE.md`, que dice que el cliente «hoy» recorta «en esa misma línea» `:195`: ese «hoy» se re-apunta a la línea real. Hay que clasificar `ENTRADA.md:1173` (`:264`) y `Paquete_de_Despliegue_2026-09-10.md:70` (`:195`).
+
+> **Nota de `sdd-apply` (medido, no estimado — `git diff --stat a0a2935` sobre el fichero real).** Las
+> estimaciones de arriba son "≈"; el desplazamiento REAL, medido con el diff terminado, es otro:
+> **+1 desde `:3`** (coincide), **+4 desde `:59`** (no +2 desde `:52`: el estado `hayNovedad` lleva dos
+> líneas de comentario, no una), **+9 desde `:93`** (no +5: el bloqueo de `submit()` son 3 líneas de
+> comentario + 2 `if`), **+25 desde `:270`** (no +13 desde `:266`: la pregunta Sí/No con sus dos
+> `<label>` de radio ocupa 16 líneas, no ~13). El barrido de citas de este `apply-progress` usa estos
+> números reales, no los de arriba.
 
 **`types.ts`: +3 desde `:733`.** No tiene ninguna cita afectada.
 

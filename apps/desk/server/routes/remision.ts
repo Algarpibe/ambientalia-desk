@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
-import { perfilChecklist } from '@ambientalia/shared'
+import { perfilChecklist, faltaFotoPorNovedad } from '@ambientalia/shared'
 import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'
@@ -243,7 +243,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
       incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
-      creadoPor: req.user?.name ?? null,
+      creadoPor: req.user?.name ?? null, hayNovedad: typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
       // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
       // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos
@@ -279,6 +279,13 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // para el mismo equipo. Solo se reenvía lo que no llegó a buen puerto.
     if (rem.estado === 'ok' || rem.estado === 'ok_con_avisos') {
       res.status(409).json({ error: 'Esta remisión ya se envió' }); return
+    }
+    // RQ-RE-08, orden 4 (F1B-04): con novedad declarada y cero fotos, no se deja enviar. Va ANTES de
+    // reclamar: un 422 posterior a la reclamación dejaría la remisión bloqueada la ventana entera.
+    const fotos = await listFotos(db, id)
+    if (faltaFotoPorNovedad(rem.hayNovedad, fotos.length)) {
+      res.status(422).json({ error: 'El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.' })
+      return
     }
     // Reclamación atómica: cubre el reintento tras perder cobertura justo después de un disparo que
     // sí salió bien, y el doble clic o las dos pestañas. Leer el estado y decidir no es suficiente,

@@ -483,7 +483,9 @@ git commit -m "feat(desk): panel que sondea el desenlace de la remision y permit
 Hoy `submit()` llama a `onCreada()` nada más enviar, así que el técnico se va antes de que exista el desenlace. El envío se queda donde está (imperativo, una sola vez): ponerlo en un `useEffect` del panel lo dispararía dos veces bajo StrictMode y generaría dos documentos en Drive.
 
 **Files:**
-- Modify: `apps/desk/src/components/CrearRemision.tsx:1-5, 12-44, 49-51`
+- Modify: `apps/desk/src/components/CrearRemision.tsx:1-5, 12-44, 49-51` (cita válida en `a0a2935`;
+  histórico congelado, no se renumera — `foto-solo-con-novedad`/F1B-04 movió parte de ese rango tras
+  esta fecha)
 
 - [ ] **Step 1: Añadir el import y el estado**
 

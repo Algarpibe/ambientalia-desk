@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { perfilChecklist, PERFILES_CHECKLIST, ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from './remision'
+import { perfilChecklist, PERFILES_CHECKLIST, ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, faltaFotoPorNovedad } from './remision'
 
 describe('perfilChecklist', () => {
   it('resuelve por MODELO antes que por marca (igual que el Switch del flujo)', () => {
@@ -70,5 +70,15 @@ describe('urlSegura', () => {
     expect(urlSegura(undefined)).toBeNull()
     // Se interpola en `href="…"`: una comilla se saldría del atributo. La URL legítima la trae %22.
     expect(urlSegura('https://drive.google.com/x" onmouseover="alert(1)')).toBeNull()
+  })
+})
+
+describe('faltaFotoPorNovedad', () => {
+  // RQ-RE-18. El servidor (RQ-RE-08) y el formulario (RQ-RE-19) consumen esta MISMA función.
+  it('bloquea solo cuando hay novedad declarada y cero fotos', () => {
+    expect(faltaFotoPorNovedad(true, 0)).toBe(true)
+    expect(faltaFotoPorNovedad(true, 1)).toBe(false)
+    expect(faltaFotoPorNovedad(false, 0)).toBe(false)
+    expect(faltaFotoPorNovedad(null, 0)).toBe(false)
   })
 })

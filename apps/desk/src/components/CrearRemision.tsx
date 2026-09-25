@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { RemisionNueva, SalesOrderLite } from '@ambientalia/shared'
+import { faltaFotoPorNovedad } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, type RemisionConFotos } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
@@ -55,6 +56,9 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   // al formulario y el siguiente intento creaba una segunda.
   const [envio, setEnvio] = useState<EstadoEnvio>({ remisionId: null, fotosSubidas: 0 })
   const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
+  // RQ-RE-19. Sin valor por defecto a propósito: enviar `false` sin contestar y contestar `false` son
+  // elusiones equivalentes (regla 13, punto 2 — la obligación de contestar vive sólo aquí).
+  const [hayNovedad, setHayNovedad] = useState<boolean | null>(null)
   // Qué es lo que está en vuelo, porque `busy` no lo distingue: crear una remisión nueva y reenviar la
   // que quedó pendiente lo encienden igual, y los avisos de salida dicen cosas distintas en cada caso.
   const [enviandoPrevia, setEnviandoPrevia] = useState(false)
@@ -72,7 +76,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
       const r = await ejecutarEnvio(estado, fotos.length, {
         crear: async () => {
           const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
-          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined, permitirSegunda, salesOrderId: ordenVenta?.id })
+          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined, permitirSegunda, salesOrderId: ordenVenta?.id, hayNovedad: hayNovedad ?? undefined })
           return rem.id
         },
         subirFoto: async (id, i) => { await subirFotoRemision(id, await redimensionarImagen(fotos[i])) },
@@ -90,6 +94,11 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
+    // RQ-RE-19: la obligación de contestar y la de traer foto con «Sí» viven sólo aquí (regla 13,
+    // punto 2) — el alta del servidor no las exige (IV-12 no toca el alta); la consecuencia sí la
+    // impone el servidor, más adelante, en `/enviar` (RQ-RE-08).
+    if (hayNovedad === null) { setErr('Indica si el equipo llega con novedad.'); return }
+    if (hayNovedad === true && fotos.length === 0) { setErr('El equipo llega con novedad: sube al menos una foto antes de crear la remisión.'); return }
     // El cartel de abajo es solo un consejo, y sin esta pregunta ignorarlo cuesta un clic: se crearía
     // una SEGUNDA remisión pendiente, y la primera quedaría fuera de alcance para siempre (al crear,
     // `creada` esconde el cartel, y aunque se recargara solo se ofrece la más reciente). No se bloquea
@@ -264,6 +273,22 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
               <textarea className={`${campo} h-20 resize-none`} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} disabled={congelado} placeholder="Estado del equipo, golpes, faltantes…" />
             </div>
 
+            {/* RQ-RE-19. Sin valor preseleccionado (Persona-1): ni "Sí" ni "No" parten marcados, para
+                que quien abre el formulario tenga que decidir. */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">¿El equipo llega con novedad?</label>
+              <div className="flex gap-3 text-[13px]">
+                <label className={`flex items-center gap-1.5 ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
+                  <input type="radio" name="hayNovedad" className="accent-blue-600" checked={hayNovedad === true} onChange={() => setHayNovedad(true)} disabled={congelado} />
+                  Sí
+                </label>
+                <label className={`flex items-center gap-1.5 ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
+                  <input type="radio" name="hayNovedad" className="accent-blue-600" checked={hayNovedad === false} onChange={() => setHayNovedad(false)} disabled={congelado} />
+                  No
+                </label>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico</label>
               <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px] disabled:opacity-50 disabled:cursor-default" disabled={congelado}
@@ -325,7 +350,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
           {/* Salida para una foto que no sube nunca (corrupta, o demasiado pesada): sin esto el técnico
               se queda atrapado reintentando. Lo que ya subió sí viaja, y el flujo de n8n concilia
               contra lo que se mandó, así que una remisión con menos fotos no cuenta como error. */}
-          {creada && fotosPendientes > 0 && !busy && (
+          {creada && fotosPendientes > 0 && !busy && !faltaFotoPorNovedad(hayNovedad, envio.fotosSubidas) && (
             <button type="button" onClick={() => void ejecutar(envio, true)} className="px-3 py-1.5 text-[13px] text-slate-600 underline">
               Continuar sin {fotosPendientes === 1 ? 'la foto que falta' : `las ${fotosPendientes} fotos que faltan`}
             </button>

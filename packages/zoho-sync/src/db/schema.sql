@@ -504,3 +504,6 @@ CREATE TABLE IF NOT EXISTS public.equipos_cambios (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_equipos_cambios_equipo ON public.equipos_cambios (equipo_id);
+
+-- F1B-04: si el equipo llega con novedad, la remision de entrada exige al menos una foto antes de enviarse
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad boolean

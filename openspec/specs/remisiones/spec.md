@@ -28,11 +28,11 @@ script salieron bien.
 
 | Concepto | Diseño (04/08) | Maestro R08.1 | Código (`ad1875b`) |
 |---|---|---|---|
-| Qué cierra la remisión | «El colector decide»: un `Code` final clasifica y hace **una sola** llamada al callback (`design:21-23`) | M1.3.3 (`:1157`): el paso lo dispara «se crea una remisión para el ticket» | El ticket avanza **en el callback**, y sólo con desenlace confirmado (`apps/desk/server/routes/remision.ts:353-363`) |
+| Qué cierra la remisión | «El colector decide»: un `Code` final clasifica y hace **una sola** llamada al callback (`design:21-23`) | M1.3.3 (`:1157`): el paso lo dispara «se crea una remisión para el ticket» | El ticket avanza **en el callback**, y sólo con desenlace confirmado (`apps/desk/server/routes/remision.ts:360-370`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:353-363`) |
 | Los estados | `ok · ok_con_avisos · error` en el contrato del callback (`design:143`) | — | **Cuatro**, con `pendiente` como estado de partida (`packages/shared/src/remision.ts:60`) |
 | El checklist «Incluye» | Sale del **perfil** por marca y modelo, replicando el `Switch Entrada - Marca` del flujo (`design:11`) | — | Sale de los **accesorios del modelo**; al perfil sólo se cae sin modelo enlazado (`apps/desk/server/db/checklistRemision.ts:31-42`) |
 | La orden de venta | No aparece en el diseño | M1.3.5 (`:1192`): la fecha de remisión de salida «debe registrarse una sola vez» | La remisión de **entrada** puede capturarla, y es la **tercera puerta** —abierta— de «una OV, un ticket» (`routes/remision.ts:218-240`) |
-| Alcance del cerrojo de envío | «Sólo se permite enviar cuando el estado es `pendiente` o `error`» (`design:165-166`) | — | Eso, **más** el corte por anulación y una reclamación atómica (`routes/remision.ts:275-288`) |
+| Alcance del cerrojo de envío | «Sólo se permite enviar cuando el estado es `pendiente` o `error`» (`design:165-166`) | — | Eso, **más** el corte por anulación y una reclamación atómica (`routes/remision.ts:275-295`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:275-288`) |
 | Remisión de salida | Fuera de alcance: «la rama de **salida** del flujo, intacta» (`design:261`) | M1.3.5 (`:1191`) la nombra como hito de las dos vías de cierre | `createRemision` escribe `'entrada'` **literal** (`apps/desk/server/db/remisiones.ts:48`). No hay forma de crear una de salida |
 
 ---
@@ -200,10 +200,12 @@ primero, y cada una generaría su propio documento y su propia carpeta en Drive�
   reclamación caduca, y «un n8n simplemente lento —subir varias fotos a Drive pasa del minuto—
   acabaría generando un segundo documento mientras el primero sigue vivo»
   (`packages/shared/src/remision.ts:43` y `:53`, razonado en `:45-52`).
-- Si el disparo no sale, la reclamación **SHALL** soltarse (`routes/remision.ts:307`), para que un
+- Si el disparo no sale, la reclamación **SHALL** soltarse (`routes/remision.ts:314`, reapuntada por
+  `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:307`), para que un
   webhook mal configurado no obligue a esperar la ventana entera (`:261-263`; probado en
   `remisiones.test.ts:417` y `:431`).
-- La ruta **SHALL** responder `502` —no `500`— cuando n8n no contesta (`routes/remision.ts:309`;
+- La ruta **SHALL** responder `502` —no `500`— cuando n8n no contesta (`routes/remision.ts:316`,
+  reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:309`;
   probado en `remisiones.test.ts:454`), y `dispararRemision` **SHALL** desenvolver `error.cause`,
   porque el `fetch` nativo de Node «casi siempre rechaza con el genérico "fetch failed"» y sin mirarlo
   el técnico vería siempre el mismo mensaje inútil (`remisionWebhook.ts:96-98`, razonado en `:93-95`).
@@ -232,7 +234,8 @@ Drive de algo que se acaba de anular sería absurdo» (`:230-231`; probado en `r
 
 `POST /api/remisiones/:id/callback` **MUST NOT** usar la cookie de sesión —n8n no la tiene— y **SHALL**
 autenticarse con un secreto compartido en la cabecera `X-Remision-Callback`
-(`routes/remision.ts:344-346`).
+(`routes/remision.ts:351-353`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935`
+como `:344-346`).
 
 - Sin `REMISION_CALLBACK_TOKEN` configurado la ruta **SHALL** responder `503` y **MUST NOT** quedar
   abierta: «una remisión que nadie puede cerrar es mejor que un endpoint sin autenticar» (`:297-299`,
@@ -267,7 +270,7 @@ sitios, no desde uno:
 
 | Llamada | Momento | Evidencia |
 |---|---|---|
-| Callback de n8n | Al conocerse el desenlace | `routes/remision.ts:363` |
+| Callback de n8n | Al conocerse el desenlace | `routes/remision.ts:370` (reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:363`) |
 | Anulación | Tras marcar `anulada_at` | `:282` |
 | Restauración | Tras deshacer la anulación | `:292` |
 
@@ -292,7 +295,8 @@ RQ-TS-03).** Aquí sólo está desde dónde se invoca el paso y con qué recuent
 y haberse mandado a un cliente, así que borrar la fila dejaría ese documento sin nada que lo
 explique» (`:142-145`; el mismo razonamiento, en el esquema, en `schema.sql:315`).
 
-- Anular y restaurar **SHALL** exigir administrador (`routes/remision.ts:318` y `:330`; probado en
+- Anular y restaurar **SHALL** exigir administrador (`routes/remision.ts:325` y `:337`, reapuntadas por
+  `foto-solo-con-novedad`/F1B-04; citas válidas en `a0a2935` como `:318` y `:330`; probado en
   `remisiones.test.ts:605`).
 - El listado **MUST NOT** incluir anuladas por omisión, y `?incluirAnuladas=1` **SHALL** exigir
   administrador **dentro del handler** y no en la ruta entera, porque «un no-admin sigue pudiendo ver
@@ -477,7 +481,7 @@ describe (`design:222-229`). No están en ninguna tanda del §5 del plan.
 | # | Dice el diseño | Dice el código | Lectura |
 |---|---|---|---|
 | D-1 | El checklist sale del **perfil** por marca y modelo (`design:11`; `perfilChecklist` en `packages/shared/src/remision.ts:27`) | Sale de los **accesorios del modelo**; al perfil sólo se cae sin modelo enlazado (`checklistRemision.ts:35-42`) | **Superado por la fase 2.** El motivo está escrito en el código: el perfil «agrupaba familias enteras —todos los `ap*` de Horiba compartían lista—, así que un APMA y un APSA recibían lo mismo aunque no lleven lo mismo» (`checklistRemision.ts:19-22`). El perfil no se retiró: quedó como red de los ~79 históricos sin equipo enlazado (`:27-29`) |
-| D-2 | Cerrojo en `/:id/enviar`: «sólo se permite enviar cuando el estado es `pendiente` o `error`» (`design:165-166`) | Eso **y dos guardas más**: la anulación corta antes (`routes/remision.ts:275-277`) y la reclamación atómica después (`:286-288`) | **Ampliado.** El diseño resolvía el reintento del usuario; el código añadió el reintento *concurrente* —doble clic, dos pestañas—, que el diseño no contemplaba |
+| D-2 | Cerrojo en `/:id/enviar`: «sólo se permite enviar cuando el estado es `pendiente` o `error`» (`design:165-166`) | Eso **y dos guardas más**: la anulación corta antes (`routes/remision.ts:275-277`) y la reclamación atómica después (`:293-295`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:286-288`) | **Ampliado.** El diseño resolvía el reintento del usuario; el código añadió el reintento *concurrente* —doble clic, dos pestañas—, que el diseño no contemplaba |
 | D-3 | «No hay migración de esquema: `remisiones.estado`, `remisiones.resultado` y `remisiones.resuelto_at` ya existen» (`design:173-175`) | Cierto para esas tres. Pero el subsistema **sí** ganó columnas después: `enviado_at` (`schema.sql:291`), `empresa` y `persona_contacto` (`:308-309`), `origen` (`:312`), `anulada_at` y `anulada_por` (`:316-317`), más el `DROP NOT NULL` de `ticket_id` (`:306`) | El diseño era exacto **el 04/08**. Se anota porque es la clase de afirmación que envejece: siete sentencias después, «no hay migración de esquema» ya no describe este subsistema. Seis de esas siete son de las 23 sin calificar de IV-6 |
 | D-4 | El resultado se sondea «cada 2 s hasta 60 s» desde `CrearRemision.tsx` (`design:181`) | La espera es constante compartida, `ESPERA_DESENLACE_SEGUNDOS = 60` (`packages/shared/src/remision.ts:43`), con una hermana que el diseño no tenía: `VENTANA_REENVIO_SEGUNDOS = 120` (`:53`) | **Ampliado, y la ampliación es la que cierra el agujero.** El diseño dejaba las dos esperas al mismo valor implícito; el código las separa a propósito y escribe por qué (`:45-52`) |
 | D-5 | Empresa y persona de contacto no aparecen: el documento las toma del cliente | La remisión las **captura al crearse** y el envío usa las guardadas (`routes/remision.ts:211`; `remisionWebhook.ts:57`) | **Añadido después del diseño.** El razonamiento está en el código (`remisionWebhook.ts:50-56`): entre crear y enviar alguien pudo corregir el cliente en Books, y «el documento no puede desdecir lo que la remisión dice que era» |
@@ -493,7 +497,7 @@ describe (`design:222-229`). No están en ninguna tanda del §5 del plan.
 
 | # | Dice el maestro | Dice el código | Lectura |
 |---|---|---|---|
-| M-1 | M1.3.3 (`:1157`): el paso `Ticket creado → Remisión creada` lo dispara «**se crea** una remisión para el ticket» | Crear la remisión **no mueve nada**: la deja en `pendiente` (`routes/remision.ts:213-216`). El ticket avanza en el **callback**, y sólo si el desenlace es `ok` u `ok_con_avisos` (`:353-363`; el recuento, en `estadoPorRemision.ts:43-49`) | **Discrepancia real, no de matiz.** El propio código lo dice donde importa: «aquí es donde el ticket avanza a "Remisión creada", **y no al crear la remisión**: es este callback el que dice que el documento existe de verdad en Drive. Un desenlace en `error` no mueve nada» (`routes/remision.ts:354-356`). Con la redacción del maestro, una remisión fallida movería el ticket, que es justo lo que la implementación evita, y hay prueba de ello (`remisiones.test.ts:816`). **Corrección para el maestro**: el disparador es el desenlace confirmado, no el alta |
+| M-1 | M1.3.3 (`:1157`): el paso `Ticket creado → Remisión creada` lo dispara «**se crea** una remisión para el ticket» | Crear la remisión **no mueve nada**: la deja en `pendiente` (`routes/remision.ts:213-216`). El ticket avanza en el **callback**, y sólo si el desenlace es `ok` u `ok_con_avisos` (`:360-370`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:353-363`; el recuento, en `estadoPorRemision.ts:43-49`) | **Discrepancia real, no de matiz.** El propio código lo dice donde importa: «aquí es donde el ticket avanza a "Remisión creada", **y no al crear la remisión**: es este callback el que dice que el documento existe de verdad en Drive. Un desenlace en `error` no mueve nada» (`routes/remision.ts:361-363`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935` como `:354-356`). Con la redacción del maestro, una remisión fallida movería el ticket, que es justo lo que la implementación evita, y hay prueba de ello (`remisiones.test.ts:816`). **Corrección para el maestro**: el disparador es el desenlace confirmado, no el alta |
 | M-2 | M1.3.5 (`:1191`): las dos vías de cierre pasan por «**remisión de salida**» antes de `Finalizado` | No hay forma de crear una: `createRemision` escribe `'entrada'` literal (`db/remisiones.ts:48`) | **No construido**, registrado en §5.2. El maestro apoya el rediseño de C4 en un hito que hoy no tiene productor. **Punto a decidir** antes de F1C-02: si la remisión de salida se construye, o si la vía de cierre se apoya en otro hito |
 | M-3 | M11.1 `[DECIDIDO 21/08]` (`:2653`): el objetivo es «dejar de usar herramientas fragmentadas —**n8n**, Zoho Desk 1.0 y hojas de cálculo de Excel—». M11.3 (`:2690`) matiza: n8n «se integra y progresivamente se absorbe» | El documento de remisión **lo genera n8n entero**: el repositorio arma el cuerpo (`remisionWebhook.ts:31-66`) y espera el callback. Sin `N8N_REMISION_WEBHOOK_URL` la remisión se queda en `pendiente`, y el código lo declara estado legítimo y no fallo silencioso (`remisionWebhook.ts:72-73`, `:80`) | Sin discrepancia con M11.3, que es la redacción vigente; sí con la lectura corta de M11.1. Conviene que quede escrito **cuánto** queda por absorber: hoy n8n es la única vía de producir el documento, el PDF, la carpeta de Drive y la etiqueta `.dymo`. Ninguna tanda del §5 del plan lo absorbe. **Punto a decidir**, no corrección |
 

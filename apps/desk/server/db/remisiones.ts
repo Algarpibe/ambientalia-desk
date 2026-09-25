@@ -22,7 +22,7 @@ function toRemision(r: Record<string, unknown>): Remision {
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at ?? ''),
     empresa: (r.empresa as string) ?? null, personaContacto: (r.persona_contacto as string) ?? null,
     origen: String(r.origen ?? 'app'),
-    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null,
+    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null, hayNovedad: typeof r.hay_novedad === 'boolean' ? r.hay_novedad : null,
   }
 }
 
@@ -37,17 +37,17 @@ export interface CreateRemisionInput {
   observaciones: string | null
   creadoPor: string | null
   empresa: string | null
-  personaContacto: string | null
+  personaContacto: string | null; hayNovedad: boolean | null
 }
 
 /** Crea la remisión en estado `pendiente`: el flujo de n8n aún no ha respondido. */
 export async function createRemision(db: Queryable, input: CreateRemisionInput): Promise<string> {
   const id = `rem-${randomUUID()}`
   await db.query(
-    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto)
-     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12)`,
+    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad)
+     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13)`,
     [id, input.ticketId, input.fecha, input.tipoServicio, input.perfil, input.equipoId, input.serial,
-      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto],
+      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad],
   )
   return id
 }

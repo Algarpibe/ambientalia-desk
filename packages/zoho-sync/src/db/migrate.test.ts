@@ -363,13 +363,13 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    *
    * F1B-02 (`hojas-vida`) sumó SEIS `ALTER TABLE equipos` sin calificar (`schema.sql`, al final),
    * correctas por el mismo motivo que las otras dos de `equipos` (`:208`, `:354`): `equipos` está en
-   * `DESK_TABLES`. El recuento sube de 30 a 36 y el de sin calificar de 12 a 18; el conjunto de
-   * TABLAS sin calificar no cambia (`equipos` ya estaba), así que esa aserción sigue igual.
+   * `DESK_TABLES`. Sube de 30 a 36 (sin calificar 12→18, conjunto sin cambios). F1B-04 lo sube de 36
+   * a 37 (calificadas 18→19, "14 de public"); conjunto sin calificar intacto (`remisiones` ya estaba).
    */
-  it('son 36 ALTER: 18 calificadas (13 de public + 5 de books) y 18 sin calificar, todas de Desk', () => {
+  it('son 37 ALTER: 19 calificadas (14 de public + 5 de books) y 18 sin calificar, todas de Desk', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(36)
-    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(18)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(37)
+    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(19)
     expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(18)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las

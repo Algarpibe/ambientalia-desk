@@ -100,3 +100,13 @@ export const ETIQUETA_ESTADO_REMISION_DESCONOCIDA = 'Estado desconocido'
 export function urlSegura(v: string | null | undefined): string | null {
   return typeof v === 'string' && v.startsWith('https://') && !v.includes('"') ? v : null
 }
+
+/**
+ * RQ-RE-18. Predicado compartido: la remisión queda bloqueada por esta regla sólo cuando el equipo
+ * llegó con novedad DECLARADA (`true`, no ausente ni `null`) y no tiene ninguna foto todavía. Lo
+ * consumen el servidor (guarda de `/enviar`, RQ-RE-08) y el formulario (RQ-RE-19) — regla invariable
+ * 13, punto 1: la misma función en las dos orillas, no una reescritura del cliente.
+ */
+export function faltaFotoPorNovedad(hayNovedad: boolean | null | undefined, numFotos: number): boolean {
+  return hayNovedad === true && numFotos < 1
+}
