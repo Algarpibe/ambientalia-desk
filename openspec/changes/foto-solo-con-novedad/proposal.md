@@ -58,7 +58,7 @@ desplegables, que queda fuera.
 ## Capacidades
 
 - Nuevas: ninguna. R-2 no se activa.
-- Modificadas: `remisiones`. RQ-RE-08 («cinco puertas, en este orden», `openspec/specs/remisiones/spec.md:216-229`)
+- Modificadas: `remisiones`. RQ-RE-08 («cinco puertas, en este orden», `openspec/specs/remisiones/spec.md:216-229` en `d5d66a1`)
   pasa a seis. Requisito nuevo para la regla de la foto. RQ-RE-13 (`:305`), sólo si el diseño lo pide.
 
 ## Supuestos aplicados (modo producción, todos reversibles)

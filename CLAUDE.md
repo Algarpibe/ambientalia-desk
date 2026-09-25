@@ -217,8 +217,7 @@ fijaba `clientId` desde el equipo y `:118`/`:257` bloqueaban el campo, mientras 
 **no había ninguna comparación** entre `equipo.clientId` y el del cuerpo entre traer el equipo y
 escribir el `INSERT` (hoy la guarda existe, `ticketService.ts:45-79` — reapuntada por `orden-precedencia-guardas`,
 F1B-10, 2026-09-17, y por `alta-equipo-nuevo-en-ticket`, 2026-09-24; el resto se lee contra `607e26a`). En H4,
-`apps/desk/src/components/CrearRemision.tsx:195` (en `607e26a`; reapuntada por `foto-solo-con-novedad`/
-F1B-04 a `:204`) decidía con `!data.equipo.serial` —un serial de sólo
+`apps/desk/src/components/CrearRemision.tsx:195` en `607e26a` decidía con `!data.equipo.serial` —un serial de sólo
 espacios es *truthy* en JS— mientras el servidor sí recortaba antes de decidir
 (`routes/remision.ts:153`, `.trim()`); hoy el cliente recorta igual, en `CrearRemision.tsx:204`. Las dos
 tandas conocían la regla 13; las dos la escribieron en sus artefactos; ninguna de las dos hizo la

@@ -110,7 +110,7 @@ cita abreviada `:353-363` dentro de la fila M-1 (línea 500), además de la cita
 | `docs/sdd/F0-00_Baseline_as-built.md` | e.9 | `:325`,`:335`,`:363` | `:332`,`:342`,`:370` (nota: se reapunta pese a que `design.md` lo marcaba "probable Caso B" — el contenido asertado sigue siendo cierto hoy, no es histórico; se deja constancia de la desviación) |
 | ídem | 7.1 P14 | `:302` | `:309` (misma nota que arriba) |
 | `docs/superpowers/plans/2026-08-07-ficha-tecnica-modelo.md` | patrón de subir/servir binario | `:367-385` | `:374-392` |
-| `CLAUDE.md:220` | H4 (cita "hoy… misma línea") | `CrearRemision.tsx:195` | `CrearRemision.tsx:204` |
+| `CLAUDE.md:220` | H4 (cita "hoy… misma línea") | `CrearRemision.tsx:195` en `d5d66a1` | `CrearRemision.tsx:204` |
 | `docs/sdd/ENTRADA.md:1173` | E-080 | `CrearRemision.tsx:264` | `CrearRemision.tsx:273` |
 
 ### Caso B (fechado — se nombra la revisión, no se renumera)
@@ -118,7 +118,7 @@ cita abreviada `:353-363` dentro de la fila M-1 (línea 500), además de la cita
 | Fichero | Cita | Tratamiento |
 |---|---|---|
 | `docs/sdd/F0-00_Baseline_as-built.md:137` | `CrearRemision.tsx:16` (inventario réplica/prototipo, commit auditado `a3a8f03`) | Se deja `:16` con nota "en `a3a8f03`"; se añade que hoy (`a0a2935`) es `:17` |
-| `docs/sdd/Paquete_de_Despliegue_2026-09-10.md:70` | `CrearRemision.tsx:195` (paquete de despliegue fechado) | Se deja `:195` con nota "en `a0a2935`, cita válida de este paquete"; se añade que hoy es `:204` |
+| `docs/sdd/Paquete_de_Despliegue_2026-09-10.md:70` | `CrearRemision.tsx:195` en `d5d66a1` (paquete de despliegue fechado) | Se deja `:195` con nota "en `a0a2935`, cita válida de este paquete"; se añade que hoy es `:204` |
 | `docs/superpowers/plans/2026-08-04-remision-entrada-desenlace.md:486` | `CrearRemision.tsx:1-5, 12-44, 49-51` | Histórico congelado (`docs/superpowers/plans`, "materia prima, no autoridad"); rango no renumerable en bloque porque cruza la frontera 0/+1 de desplazamiento; se deja con nota |
 
 ### No editado — pendiente para el orquestador
