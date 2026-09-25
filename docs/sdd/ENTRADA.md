@@ -1175,3 +1175,11 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** fila F1B-04 (no se puede cerrar sin esto) · capacidades `remisiones` y `tickets-core`.
 **Estado:** nueva
 **Destino propuesto:** fila F1B-04 del §5 del plan. **Dueño propuesto:** Gerencia.
+
+## E-081 · 2026-09-25 · hallazgo · **NUEVA**
+**Qué:** El servidor no obliga a contestar «¿El equipo llega con novedad?». `POST /api/remisiones` guarda `hayNovedad` como `null` cuando el cuerpo no trae un booleano (`apps/desk/server/routes/remision.ts:246`: `typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null`), y con `null` el envío no exige foto (`packages/shared/src/remision.ts:110-111`: sólo `hayNovedad === true` la exige). La obligación de contestar vive sólo en el formulario (`apps/desk/src/components/CrearRemision.tsx`), declarada así en RQ-RE-19 como regla invariable 13, punto 2: una petición que no pase por el formulario crea una remisión que se envía sin foto aunque el equipo llegue con novedad.
+**Por qué no se arregló:** exigir la respuesta en el servidor al CREAR no afecta a las remisiones antiguas (se quedan en `null` y siguen sin exigir foto), pero añade una guarda al alta de remisión, cuyo orden de guardas está pendiente de decisión (IV-12, `openspec/config.yaml` → `incumplimientos_vivos`). Se decidió en `foto-solo-con-novedad` (F1B-04) no tocar el alta.
+**De dónde viene:** encargo de la sesión de supervisión, 2026-09-25, tras archivar `foto-solo-con-novedad`.
+**Afecta a:** `apps/desk/server/routes/remision.ts` (alta) · RQ-RE-19 de `openspec/specs/remisiones/spec.md` · IV-12.
+**Estado:** nueva
+**Destino propuesto:** la tanda que decida y reordene el alta de remisión (IV-12). **Dueño propuesto:** quien decida IV-12. No se arregla en esta tanda.
