@@ -1152,3 +1152,12 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** `apps/desk/server/routes/equipos.ts`, `apps/desk/server/services/equipoNuevo.ts` y las citas a `routes/equipos.ts:144-189` (barrido de la regla de mutación 4 al moverla).
 **Estado:** nueva
 **Destino propuesto:** tanda de refactor propia o la siguiente que ya toque ambos ficheros. **Dueño propuesto:** quien decida el alcance; no se asigna épica de memoria.
+
+## E-078 · 2026-09-25 · propuesta · **NUEVA**
+**Qué:** Propuesta de regla para el ledger de `gentle-ai sdd-attempt`: **antes de cada `settle` de un apply, `git add -N` (intent-to-add) de todos los ficheros nuevos del intento**, para que el techo de líneas los cuente. Hoy el ledger mide el árbol trackeado y deja fuera lo nuevo sin trackear, así que el techo de 800 no protege esa parte: dos applies lo pasaron en real sin que el ledger lo viera —`alta-equipo-nuevo-en-ticket`, 1.110 reales con 555 en el ledger; `edicion-comercial-equipo` lote 1, 926 reales con 453—.
+**Medición (2026-09-25, gentle-ai 2.4.0):** en un clon local desechable de `ac13405` —no en un worktree: el ledger vive en `.git/gentle-ai/sdd-runtime`, que un worktree comparte con el repositorio real—, dos intentos idénticos: un fichero nuevo de 100 líneas y 10 líneas añadidas a un fichero trackeado. **Control, sin `add -N`: el ledger registró 10.** **Con `git add -N` del fichero nuevo antes del `settle`: registró 110**, lo mismo que `git diff --shortstat --no-renames HEAD`. El clon se borró después; el ledger real no tiene rastro de los dos intentos (0 coincidencias en `.git/gentle-ai/sdd-runtime`).
+**Límites de lo medido:** sólo se probó el `add -N` hecho antes del `settle`, con un fichero de texto; no se probó un fichero binario. `add -N` no mete el contenido en el índice (el commit posterior sigue necesitando `git add`), así que no cambia qué se commitea.
+**De dónde viene:** encargo de la sesión de supervisión, 2026-09-25, tras cerrar F1B-14.
+**Afecta a:** `CLAUDE.md`, regla del ciclo 2 (el desvío (1), «lo nuevo sin trackear no cuenta», pasaría a tener remedio) · procedimiento de apply de toda tanda SDD.
+**Estado:** nueva
+**Destino propuesto:** regla del ciclo 2 de `CLAUDE.md`, como remedio del desvío (1). **Dueño propuesto:** Gerencia. Mientras no se decida, el orquestador lo aplica en sus applies como medida propia y lo declara en el parte.
