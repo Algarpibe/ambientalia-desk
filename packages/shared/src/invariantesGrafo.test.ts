@@ -169,15 +169,15 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 39 entradas (34 + 5), con ids únicos', () => {
-    expect(UNION).toHaveLength(39)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los dos catálogos').toBe(39)
+  it('la unión tiene 40 entradas (34 + 6), con ids únicos', () => {
+    expect(UNION).toHaveLength(40)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los dos catálogos').toBe(40)
   })
 
-  it('3 · sin salida en la unión son exactamente Finalizado y Verificación — excepción nombrada', () => {
+  it('3 · sin salida en la unión es exactamente Finalizado', () => {
     const conSalida = new Set(UNION.flatMap((t) => t.from))
     const sinSalida = ESTADOS.filter((e) => !conSalida.has(e))
-    expect(sinSalida).toEqual(['Finalizado', 'Verificación'])
+    expect(sinSalida).toEqual(['Finalizado'])
   })
 
   it('4 · ninguna transición de ningún catálogo apunta a un estado fuera del registro', () => {
@@ -197,18 +197,20 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect(diferencia).toEqual([...ESTADOS_SOLO_EQUIPO_NUEVO])
   })
 
-  it('RQ-EN-01 · las cinco transiciones cubren exactamente los pares del catálogo, y ninguna sale de Verificación', () => {
+  it('RQ-EN-01 · las seis transiciones cubren exactamente los pares del catálogo, y las salidas de Verificación son exactamente liberación y rechazo de verificación', () => {
     expect(TRANSITIONS_EQUIPO_NUEVO.map((t) => [t.id, t.from, t.to])).toEqual([
       ['ingreso_equipo_nuevo', ['Ingresado'], 'En Proceso'],
       ['producto_no_conforme', ['En Proceso'], 'Notificado'],
       ['analisis_y_acciones', ['Notificado'], 'Ingresado'],
       ['verificacion', ['En Proceso'], 'Verificación'],
-      ['liberacion', ['En Proceso'], 'Finalizado'],
+      ['liberacion', ['En Proceso', 'Verificación'], 'Finalizado'],
+      ['rechazo_verificacion', ['Verificación'], 'Notificado'],
     ])
-    expect(TRANSITIONS_EQUIPO_NUEVO.some((t) => t.from.includes('Verificación'))).toBe(false)
+    const salidasDeVerificacion = TRANSITIONS_EQUIPO_NUEVO.filter((t) => t.from.includes('Verificación')).map((t) => t.id)
+    expect(salidasDeVerificacion).toEqual(['liberacion', 'rechazo_verificacion'])
   })
 
-  it('corrección (b) · las cinco entradas de Equipo nuevo declaran exactamente comentario y derivación', () => {
+  it('corrección (b) · las seis entradas de Equipo nuevo declaran exactamente comentario y derivación', () => {
     for (const t of TRANSITIONS_EQUIPO_NUEVO) {
       expect(t.area, `${t.id} no es de Servicio Técnico (s2)`).toBe('Servicio Técnico')
       expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(['comment', 'derivado_a'])

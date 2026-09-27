@@ -206,17 +206,17 @@ describe('guardas de autenticación', () => {
 })
 
 /**
- * F1B-06 — LA MATRIZ 5×3 DEL CATÁLOGO `TRANSITIONS_EQUIPO_NUEVO`, CONTRA EL SERVIDOR.
+ * F1B-06/F1A-03 — LA MATRIZ 6×3 DEL CATÁLOGO `TRANSITIONS_EQUIPO_NUEVO`, CONTRA EL SERVIDOR.
  *
- * Escrita A MANO y no derivada: con cinco transiciones el total esperado (10 prohibidos, 5
- * permitidos) es más claro escrito que calculado, y por s2 las cinco son `Servicio Técnico`, así que
+ * Escrita A MANO y no derivada: con seis transiciones el total esperado (12 prohibidos, 6
+ * permitidos) es más claro escrito que calculado, y por s2 las seis son `Servicio Técnico`, así que
  * el resultado es uniforme.
  *
  * ⚠️ MISMA CORRECCIÓN (c) que `transicionesEjecucion.test.ts`: cada ticket se siembra con
  * `classification: 'Equipo nuevo'` EXPLÍCITA y en `t.from[0]` de su transición, para que la
  * respuesta observada sea el 403/200 de PERMISO y no el 409 de flujo (Fase 6) ni el 409 de estado.
  */
-describe('matriz 5×3 · área × transición de Equipo nuevo, contra el servidor (F1B-06)', () => {
+describe('matriz 6×3 · área × transición de Equipo nuevo, contra el servidor (F1B-06/F1A-03)', () => {
   for (const area of AREAS) {
     it(`las cinco transiciones de Equipo nuevo contestan lo mismo a un usuario de ${area}`, async () => {
       const cookie = await userCookie([area])
@@ -240,11 +240,11 @@ describe('matriz 5×3 · área × transición de Equipo nuevo, contra el servido
     }, 60_000)
   }
 
-  it('la matriz EN son 15 casos: 10 prohibidos y 5 permitidos', () => {
+  it('la matriz EN son 18 casos: 12 prohibidos y 6 permitidos', () => {
     const casos = TRANSITIONS_EQUIPO_NUEVO.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(15)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(10)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(5)
+    expect(casos).toHaveLength(18)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(12)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(6)
   })
 
   it('un administrador pasa por las cinco sin que su área importe', async () => {

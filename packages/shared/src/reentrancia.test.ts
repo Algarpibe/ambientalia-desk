@@ -188,9 +188,9 @@ describe('cruce de la reentrancia con los indicadores de G.6', () => {
  * campo de las cinco es el comentario—, así que el ciclo es CERO campos reentrantes.
  */
 describe('reentrancia del catálogo equipo-nuevo (F1B-06)', () => {
-  it('el catálogo EN tiene exactamente un ciclo: Ingresado, En Proceso, Notificado', () => {
+  it('el catálogo EN tiene exactamente un ciclo: Ingresado, En Proceso, Notificado, Verificación', () => {
     expect(tablaDeReentrancia(TRANSITIONS_EQUIPO_NUEVO).map((c) => c.estados)).toEqual([
-      ['Ingresado', 'En Proceso', 'Notificado'],
+      ['Ingresado', 'En Proceso', 'Notificado', 'Verificación'],
     ])
   })
 

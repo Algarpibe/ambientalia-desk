@@ -304,7 +304,8 @@ const CASOS_EQUIPO_NUEVO: Record<string, { desde: string[]; a: string }> = {
   producto_no_conforme: { desde: ['En Proceso'], a: 'Notificado' },
   analisis_y_acciones: { desde: ['Notificado'], a: 'Ingresado' },
   verificacion: { desde: ['En Proceso'], a: 'Verificación' },
-  liberacion: { desde: ['En Proceso'], a: 'Finalizado' },
+  liberacion: { desde: ['En Proceso', 'Verificación'], a: 'Finalizado' },
+  rechazo_verificacion: { desde: ['Verificación'], a: 'Notificado' },
 }
 
 describe('las cinco transiciones de Equipo nuevo, ejecutadas contra el servidor (F1B-06)', () => {
@@ -324,37 +325,43 @@ describe('las cinco transiciones de Equipo nuevo, ejecutadas contra el servidor 
     expect(CASOS_EQUIPO_NUEVO).toEqual(delGrafo)
   })
 
-  it('las cinco salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las seis salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
     const { app } = appWith()
 
-    const observado: Record<string, string> = {}
-    const esperado: Record<string, string> = {}
+    const observado: Record<string, string[]> = {}
+    const esperado: Record<string, string[]> = {}
     let n = 0
     for (const t of TRANSITIONS_EQUIPO_NUEVO) {
-      n += 1
-      const id = `eje-en-${n}`
-      // Corrección (c): classification explícita, y el ticket nace en t.from[0] — la guarda 3 exige
-      // las dos cosas a la vez para reconocer el flujo equipo-nuevo (s5, `flujoDelTicket`).
-      await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
-        [id, 71000 + n, 'Barrido de ejecución EN', t.from[0], 'Equipo nuevo'])
+      observado[t.id] = []
+      esperado[t.id] = []
+      // D5 de `design.md`: se recorren TODOS los `from`, no sólo `t.from[0]` — necesario para cubrir
+      // `Liberación` también desde `Verificación` (F1A-03), y cualquier origen futuro.
+      for (const origen of CASOS_EQUIPO_NUEVO[t.id].desde) {
+        n += 1
+        const id = `eje-en-${n}`
+        // Corrección (c): classification explícita, y el ticket nace en el origen declarado — la
+        // guarda 3 exige las dos cosas a la vez para reconocer el flujo equipo-nuevo (s5, `flujoDelTicket`).
+        await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
+          [id, 71000 + n, 'Barrido de ejecución EN', origen, 'Equipo nuevo'])
 
-      const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
-        .send({ transitionId: t.id, values: valoresValidos(t, n) })
+        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+          .send({ transitionId: t.id, values: valoresValidos(t, n) })
 
-      const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
-      const estado = (ticket.rows[0] as { status: string }).status
-      const traza = await db.query(
-        'SELECT transition_id, from_status, to_status, area, performed_by FROM ticket_transitions WHERE ticket_id = $1', [id])
-      const f = traza.rows[0] as { transition_id: string; from_status: string; to_status: string; area: string; performed_by: string } | undefined
+        const ticket = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
+        const estado = (ticket.rows[0] as { status: string }).status
+        const traza = await db.query(
+          'SELECT transition_id, from_status, to_status, area, performed_by FROM ticket_transitions WHERE ticket_id = $1', [id])
+        const f = traza.rows[0] as { transition_id: string; from_status: string; to_status: string; area: string; performed_by: string } | undefined
 
-      observado[t.id] = `${res.status} · ${estado} · ${traza.rows.length} traza(s)`
-        + (f ? `: ${f.transition_id} ${f.from_status}→${f.to_status} [${f.area}] por ${f.performed_by}` : '')
-      esperado[t.id] = `200 · ${CASOS_EQUIPO_NUEVO[t.id].a} · 1 traza(s)`
-        + `: ${t.id} ${t.from[0]}→${CASOS_EQUIPO_NUEVO[t.id].a} [${t.area}] por Admin`
+        observado[t.id].push(`${res.status} · ${estado} · ${traza.rows.length} traza(s)`
+          + (f ? `: ${f.transition_id} ${f.from_status}→${f.to_status} [${f.area}] por ${f.performed_by}` : ''))
+        esperado[t.id].push(`200 · ${CASOS_EQUIPO_NUEVO[t.id].a} · 1 traza(s)`
+          + `: ${t.id} ${origen}→${CASOS_EQUIPO_NUEVO[t.id].a} [${t.area}] por Admin`)
+      }
     }
 
     expect(observado).toEqual(esperado)
-    expect(n, 'ejecuciones del barrido EN').toBe(5)
+    expect(n, 'ejecuciones del barrido EN').toBe(7)
   })
 })

@@ -30,11 +30,11 @@ La frase «se hace antes de F1B-06» de `:142` está superada: F1B-06 fue primer
 - **E1** · Salida aprobada `Verificación —Liberación→ Finalizado`.
 - **E2** · Salida rechazada `Verificación → Notificado` (supuestos s1-s3).
 - Guardianes: invariante 3 de la unión pasa a `sinSalida = ['Finalizado']`
-  (`packages/shared/src/invariantesGrafo.test.ts:177-180`); pares del catálogo (`:200-208`) y recuento
+  (`packages/shared/src/invariantesGrafo.test.ts:177-180`); pares del catálogo (`:200-210`) y recuento
   de la unión (`:171-174`, 39 → 40); ciclo de reentrancia (`packages/shared/src/reentrancia.test.ts:191-194`:
   el componente conexo pasa a incluir `Verificación`); matriz de permisos escrita a mano
   (`apps/desk/server/permisos.test.ts:209-250`, 5×3 → 6×3); barrido de ejecución
-  (`apps/desk/server/transicionesEjecucion.test.ts:302-308`), con un caso de `Liberación` **desde
+  (`apps/desk/server/transicionesEjecucion.test.ts:302-309`, +1 línea por `rechazo_verificacion`), con un caso de `Liberación` **desde
   `Verificación`**, que el barrido por `t.from[0]` no alcanzaría.
 - Discrepancia de numeración: `openspec/specs/transitions-equipo-nuevo/spec.md:40` dice «invariante 1»
   y el código «invariante 3» (`transitions.ts:345`). Acierta el código: el 3 es «sin salida»
@@ -57,7 +57,7 @@ La frase «se hace antes de F1B-06» de `:142` está superada: F1B-06 fue primer
 |---|---|
 | s1 | E1 **amplía** `liberacion.from` a `['En Proceso', 'Verificación']`: una transición, dos orígenes (`R08.2.md:1518`; hipótesis de `openspec/changes/archive/2026-09-25-blueprint-equipo-nuevo/design.md:42`). Hay precedente de varios orígenes (`transitions.ts:178`). |
 | s2 | E2: id `rechazo_verificacion`, nombre «Rechazo de verificación», área `Servicio Técnico`, igual que `verificacion` y `producto_no_conforme` (`transitions.ts:353`, `:357`). |
-| s3 | E2 declara `comment()` y `derivacion()`, sin motivo obligatorio: los rechazos de servicio sólo declaran comentario (`transitions.ts:234-239`), el comentario nunca es obligatorio (`:65-74`) y el guardián fija esos dos campos en todo el catálogo (`invariantesGrafo.test.ts:211-214`). |
+| s3 | E2 declara `comment()` y `derivacion()`, sin motivo obligatorio: los rechazos de servicio sólo declaran comentario (`transitions.ts:234-239`), el comentario nunca es obligatorio (`:65-74`) y el guardián fija esos dos campos en todo el catálogo (`invariantesGrafo.test.ts:213-216`, desplazada +2 por el barrido de cierre de esta misma tanda). |
 
 ## Capacidades
 
@@ -103,12 +103,16 @@ el bloqueo de despliegue.
 
 ## Criterios de éxito
 
-- [ ] `sinSalida` de la unión es exactamente `['Finalizado']`. La prueba se pone roja si se quita
+- [x] `sinSalida` de la unión es exactamente `['Finalizado']`. La prueba se pone roja si se quita
       cualquiera de las dos salidas (mutación: retirar `Verificación` de `liberacion.from` / borrar E2).
-- [ ] Ticket `Equipo nuevo` en `Verificación`: `liberacion` → `200` y `Finalizado`;
+      Verificado por M1/M2/M3 (`tasks.md` Fase 3): las tres ponen roja la prueba de pares o el invariante 3.
+- [x] Ticket `Equipo nuevo` en `Verificación`: `liberacion` → `200` y `Finalizado`;
       `rechazo_verificacion` → `200` y `Notificado`; usuario sólo `Comercial` → `403`.
-- [ ] E-082 y E-083 escritas en `docs/sdd/ENTRADA.md`.
-- [ ] Barrido de citas: 0 rotas nuevas.
+      Probado en `flujoEquipoNuevo.test.ts` P6 (403×7) y P7 (200/Finalizado, 200/Notificado).
+- [x] E-082 y E-083 escritas en `docs/sdd/ENTRADA.md` (`:1187-1192`, `:1194-1199`).
+- [x] Barrido de citas: 0 rotas nuevas. Detector (`--sha HEAD`): 0 bloqueantes, 12 abreviadas rotas
+      preexistentes e informativas. Barrido manual de `transitions.ts` y los seis ficheros de prueba:
+      4 citas Case A reparadas (`proposal.md` propio), el resto Case B/C ya correctamente fechadas.
 
 ## `toca_maestro: si` — por qué
 

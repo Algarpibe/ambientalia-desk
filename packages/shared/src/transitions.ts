@@ -340,11 +340,11 @@ export function areasSiguientes(estado: string, transiciones: readonly Transitio
  * `transitionsForStatus`, `areasSiguientes` y `destinatarioDelEscalado` (`design.md` D1). El
  * enrutado de un ticket a este catálogo vive en `flujos.ts`.
  *
- * `Verificación` no tiene transición de salida en este catálogo a propósito (s4 de `proposal.md`):
- * las dos salidas —`Liberación` desde `Verificación` y la rechazada → `Notificado`— son contenido de
- * F1A-03. Es la excepción nombrada del invariante 3 de la unión (`invariantesGrafo.test.ts`).
+ * `Verificación` tiene hoy sus dos salidas en este catálogo (F1A-03): `Liberación` amplía su origen
+ * a `Verificación` (D1 de `design.md`) hacia `Finalizado`, y `rechazo_verificacion` (D2) hacia
+ * `Notificado`, con la misma forma que el resto: sólo `comment()` y `derivacion()` (s3).
  *
- * Área: las cinco son `Servicio Técnico` por equivalencia (supuesto s2, ninguna fuente accesible la
+ * Área: las seis son `Servicio Técnico` por equivalencia (supuesto s2, ninguna fuente accesible la
  * contradice). Campos: sólo `comment()` — ninguna fuente da otro campo de negocio (RQ-EN-07).
  */
 export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
@@ -356,6 +356,8 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
     fields: [comment(), derivacion()] },
   { id: 'verificacion', name: 'Verificación', from: ['En Proceso'], to: 'Verificación', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
-  { id: 'liberacion', name: 'Liberación', from: ['En Proceso'], to: 'Finalizado', area: 'Servicio Técnico',
+  { id: 'liberacion', name: 'Liberación', from: ['En Proceso', 'Verificación'], to: 'Finalizado', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'rechazo_verificacion', name: 'Rechazo de verificación', from: ['Verificación'], to: 'Notificado', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
 ]

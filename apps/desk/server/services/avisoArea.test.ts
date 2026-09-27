@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Transition } from '@ambientalia/shared'
+import { TRANSITIONS_EQUIPO_NUEVO, areasSiguientes } from '@ambientalia/shared'
 import { areasAAvisar, textoAvisoArea } from './avisoArea'
 
 describe('areasAAvisar', () => {
@@ -60,5 +61,22 @@ describe('textoAvisoArea', () => {
   it('dice el ticket, el estado nuevo y quién lo movió', () => {
     expect(textoAvisoArea({ ticketNumero: 1234, estado: 'Por Facturar', actorNombre: 'Ana' }))
       .toBe('Ana dejó el ticket #1234 en «Por Facturar»: le toca a tu área')
+  })
+})
+
+/**
+ * F1A-03 — `Verificación` gana salida en el catálogo EN, y `areasAAvisar` no dispara aviso nuevo.
+ *
+ * `verificacion` (la transición que LLEGA a `Verificación`) ya exige `Servicio Técnico`, y las dos
+ * salidas nuevas (`liberacion`, `rechazo_verificacion`) también son de esa área: `areasAAvisar` resta
+ * las áreas de quien acaba de actuar (`avisoArea.ts:16`), así que ningún actor autorizado genera aviso.
+ */
+describe('Verificación gana salida sin generar aviso nuevo (F1A-03)', () => {
+  it('areasSiguientes(Verificación, EN) es Servicio Técnico', () => {
+    expect(areasSiguientes('Verificación', TRANSITIONS_EQUIPO_NUEVO)).toEqual(['Servicio Técnico'])
+  })
+
+  it('areasAAvisar(Verificación, [Servicio Técnico], EN) no avisa a nadie', () => {
+    expect(areasAAvisar('Verificación', ['Servicio Técnico'], TRANSITIONS_EQUIPO_NUEVO)).toEqual([])
   })
 })

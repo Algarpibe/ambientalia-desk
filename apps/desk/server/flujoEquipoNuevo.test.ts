@@ -95,13 +95,41 @@ describe('guarda 3 · flujo aplicable del ticket', () => {
     const cookie = await userCookie(['Comercial'])
     const { app } = appWith()
     let n = 0
+    // D5 de `design.md`: se recorren TODOS los `from`, no sólo `t.from[0]` — 7 ejecuciones (F1A-03),
+    // porque `liberacion` gana un segundo origen (`Verificación`).
     for (const t of TRANSITIONS_EQUIPO_NUEVO) {
-      n += 1
-      const id = `en-p6-${n}`
-      await ticket(id, 91100 + n, t.from[0], 'Equipo nuevo')
-      const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
-        .send({ transitionId: t.id, values: valoresValidos(t, n) })
-      expect(res.status, `${t.id} debería responder 403 a Comercial`).toBe(403)
+      for (const origen of t.from) {
+        n += 1
+        const id = `en-p6-${n}`
+        await ticket(id, 91100 + n, origen, 'Equipo nuevo')
+        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+          .send({ transitionId: t.id, values: valoresValidos(t, n) })
+        expect(res.status, `${t.id} desde ${origen} debería responder 403 a Comercial`).toBe(403)
+      }
     }
+    expect(n, 'ejecuciones de P6').toBe(7)
+  })
+
+  // P7 — las dos salidas de Verificación (F1A-03, E1+E2): Liberación hacia Finalizado y Rechazo de
+  // verificación hacia Notificado, cada una por separado, con un ticket Equipo nuevo sembrado ahí.
+  it('P7 · un ticket Equipo nuevo en Verificación tiene sus dos salidas: Liberación y Rechazo de verificación', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+
+    await ticket('en-p7-lib', 91201, 'Verificación', 'Equipo nuevo')
+    const tLib = transicionPorId('liberacion')!
+    const resLib = await request(app).post('/api/tickets/en-p7-lib/transition').set('Cookie', cookie)
+      .send({ transitionId: tLib.id, values: valoresValidos(tLib, 1) })
+    expect(resLib.status).toBe(200)
+    const filaLib = await db.query('SELECT status FROM tickets WHERE id = $1', ['en-p7-lib'])
+    expect((filaLib.rows[0] as { status: string }).status).toBe('Finalizado')
+
+    await ticket('en-p7-rec', 91202, 'Verificación', 'Equipo nuevo')
+    const tRec = transicionPorId('rechazo_verificacion')!
+    const resRec = await request(app).post('/api/tickets/en-p7-rec/transition').set('Cookie', cookie)
+      .send({ transitionId: tRec.id, values: valoresValidos(tRec, 2) })
+    expect(resRec.status).toBe(200)
+    const filaRec = await db.query('SELECT status FROM tickets WHERE id = $1', ['en-p7-rec'])
+    expect((filaRec.rows[0] as { status: string }).status).toBe('Notificado')
   })
 })
