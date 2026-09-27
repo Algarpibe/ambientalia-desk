@@ -69,7 +69,7 @@ completo (`grep -rnoE`) de `transitions.ts` y los seis ficheros de prueba tocado
   (b) desplazada +2 por la fila nueva de pares); `proposal.md:33` (`invariantesGrafo.test.ts:200-208`→
   `:200-210`, rango del test RQ-EN-01 crecido); `proposal.md:37` (`transicionesEjecucion.test.ts:302-308`
   →`:302-309`, +1 por `rechazo_verificacion`); `openspec/specs/derivacion-avisos/spec.md:119,154`
-  (`avisoArea.test.ts:29`→`:30`, `:19`→`:20` — el import nuevo desplaza +1 todo desde la línea 3).
+  (`avisoArea.test.ts:29` en `f488c3d`→`:30`, `:19` en `f488c3d`→`:20` — el import nuevo desplaza +1 todo desde la línea 3).
 - **Caso B (histórico, correctamente fechado, sin tocar)**: todas las citas a `transitions.ts:343-361`
   desde `openspec/changes/salidas-verificacion/{proposal,design,tasks}.md` propias (describen el estado
   PRE-cambio a propósito, incluida la nota de migración que ya anticipa el desplazamiento); las citas
