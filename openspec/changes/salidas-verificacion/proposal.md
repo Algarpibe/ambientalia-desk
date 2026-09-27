@@ -55,7 +55,7 @@ La frase «se hace antes de F1B-06» de `:142` está superada: F1B-06 fue primer
 
 | # | Supuesto |
 |---|---|
-| s1 | E1 **amplía** `liberacion.from` a `['En Proceso', 'Verificación']`: una transición, dos orígenes (`R08.2.md:1518`; hipótesis de `blueprint-equipo-nuevo/design.md:42`). Hay precedente de varios orígenes (`transitions.ts:178`). |
+| s1 | E1 **amplía** `liberacion.from` a `['En Proceso', 'Verificación']`: una transición, dos orígenes (`R08.2.md:1518`; hipótesis de `openspec/changes/archive/2026-09-25-blueprint-equipo-nuevo/design.md:42`). Hay precedente de varios orígenes (`transitions.ts:178`). |
 | s2 | E2: id `rechazo_verificacion`, nombre «Rechazo de verificación», área `Servicio Técnico`, igual que `verificacion` y `producto_no_conforme` (`transitions.ts:353`, `:357`). |
 | s3 | E2 declara `comment()` y `derivacion()`, sin motivo obligatorio: los rechazos de servicio sólo declaran comentario (`transitions.ts:234-239`), el comentario nunca es obligatorio (`:65-74`) y el guardián fija esos dos campos en todo el catálogo (`invariantesGrafo.test.ts:211-214`). |
 

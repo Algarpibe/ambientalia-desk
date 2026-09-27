@@ -81,7 +81,7 @@ N/A — sin enrutado de procesos, shell, subprocesos, VCS ni clasificación de e
 
 Sin migración. Cierre: barrido `grep -rnoE "transitions\.ts:[0-9]+(-[0-9]+)?"` y el de los seis
 ficheros de prueba. Medido hoy, citan las zonas que cambian `proposal.md` (el rango `:350-361` pasa a
-`:350-363`) y `docs/sdd/ENTRADA.md:1197` (`:359` no se mueve, pero cambia lo que dice: leer la frase). Hipótesis: las cuatro citas a `transicionesEjecucion.test.ts:312` (maestro,
+`:350-363`) y `docs/sdd/ENTRADA.md:1197` (`transitions.ts:359` no se mueve, pero cambia lo que dice: leer la frase). Hipótesis: las cuatro citas a `transicionesEjecucion.test.ts:312` (maestro,
 `F0-01`, triaje) son de otra revisión (caso B); el barrido lo comprueba.
 
 ## Tamaño
