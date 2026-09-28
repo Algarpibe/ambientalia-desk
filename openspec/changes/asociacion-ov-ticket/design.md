@@ -68,7 +68,7 @@ Si (b) no se pone roja, pg-mem no discrimina y la guarda se duplica en `asociarO
 | Puerta 3, remisión (`remision.ts:230`) | Llamada intacta. El comentario `:221-229` se reescribe en sitio: la condición de retirada pasa a nombrar los índices de `ov_asociaciones` |
 
 **Escritores** (todos idempotentes: si ya hay una vigente del mismo número para el mismo ticket, no hacen nada):
-- **Alta:** en `crearTicketConEquipo` (`apps/desk/server/services/equipoNuevo.ts:80-92`, última función del fichero):
+- **Alta:** en `crearTicketConEquipo` (`apps/desk/server/services/equipoNuevo.ts:80-92` en `5ad3d37`; hoy `:80-99` tras el lote 2, última función del fichero):
   las dos ramas pasan a una transacción que llama a `createTicket(q, …, { transaccionAbierta: true })` y después a
   `asociarOV`. Sólo si hay `salesorderId` (S-4 intacto). `repo.ts:412-452` no se toca.
 - **Transición:** `repo.ts:311` en sitio añade, tras el `UPDATE`, `; await asociarDesdeTransicion(q, …, actor, transition.id)` dentro de
@@ -113,7 +113,7 @@ con la columna `orden_venta` (`rows.ts:99`) y la **sobrescribe**, y además `rep
   Opcional (S-10).
 - `cfOvAdicional` va **al final de `transitions.ts`** como declaración `function` (se eleva; un `const` al final daría
   error de zona muerta porque `TRANSICIONES_BASE` se evalúa al cargar el módulo).
-- `transitionExec.ts:21` en sitio (`comment?: string; ovAdicional?: string`) y `:92` en sitio
+- `transitionExec.ts:21` en sitio (`comment?: string; ovAdicional?: string`) y `:88` en sitio (dicho `:92` en el diseño original; corregido en el lote 6: la rama vive en `:88`)
   (`else if (f.target === 'ovAdicional') plan.ovAdicional = String(raw); else plan.customFields[…]`).
 - `repo.ts:267` en sitio: `TransitionApply` gana `ovAdicional?: string`.
 
@@ -133,7 +133,7 @@ prueba fija que el de entrada cierra con el valor de `habilitar_servicio`.
 | Clasificador | `packages/shared/src/subOV.ts` (nuevo, exportado al final de `index.ts:22`): `clasificarOV(numero)` → `ordinaria` \| `subov {lote, sufijo}` \| `cuarentena`; `motivoCuarentena`, `erroresCuarentena`. Regla: tras `trim`, casa `^OV-(\d{4})-(\d{3,4})-(\d{2})$` → subOV, lote `OV-AAAA-NNN`; `^OVI?-\d{4}-\d{3,}$` → ordinaria; esa base **seguida de un sufijo** (resto que EMPIEZA por un no-dígito: `OV-2026-00123` sin sufijo es ordinaria, `OV-2026-00123-01` es cuarentena; corregido en el lote 5) → cuarentena; cualquier otro formato → ordinaria (S-2, S-8) |
 | Guarda de servidor (escalón C, antes de D) | Alta: `ticketService.ts:96` en sitio antepone `if (motivoCuarentena(ordenVenta)) throw new HttpError(422, …);`. Transición: `:134` en sitio suma `erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional])` a los errores del `422` existente. Remisión: `remision.ts:220` en sitio, `if (!ov \|\| motivoCuarentena(ov.number))`, con el mensaje de «no encontrada» cuando `!ov` (A sigue primero). Imports en sitio: `ticketService.ts:6`, `remision.ts:4` |
 | Desplegable | `books/repo.ts:160-161` en sitio: cada `NOT IN` suma el de las asociaciones vigentes (por id y por número). Cuarentena en TS (pg-mem no tiene operador `~`: 0 apariciones en `index.js`): `:163` pide `limit * 3` SIEMPRE, con o sin `soloLibres` (aceptado por Gerencia en la revisión del lote 4: 4.18 exige la cuarentena fuera en los dos casos y el filtro es de TS; puede devolver menos de `limit` si más de 2/3 de la página está en cuarentena; sensible a mayúsculas, aceptado), `:176` filtra `!esCuarentena` y corta a `limit`; import en sitio `:2` |
-| Lista de cuarentena y saldo | `packages/zoho-sync/src/books/subOV.ts` (nuevo): `listarCuarentena`, `saldoPorLote` → creadas / consumidas (vigente) / libres / % ejecutado; cuarentena fuera de todo saldo; liberada cuenta como libre |
+| Lista de cuarentena y saldo | `packages/zoho-sync/src/books/subOV.ts` (nuevo): `listarCuarentena`, `saldoPorLote` → creadas / consumidas (vigente) / libres / `consumido` (= consumidas / creadas, %); cuarentena fuera de todo saldo; liberada cuenta como libre. **Nombre del campo (2026-09-28, lote 6):** `consumido`, no `ejecutado`. `Decisiones_Gerencia_2026-09-10.md:472` definía «% ejecutado = consumidas / creadas», pero la decisión posterior `decision/anexo-53-contratos` (24/09, `openspec/config.yaml:2448`; informe trimestral `:2457`) redefine «ejecutada» como subOV con ticket FINALIZADO y «% ejecutado» = ejecutadas / creadas. Ese % ejecutado es del cambio 3 de F1B-11 (`proposal.md:49`) y NO se implementa aquí; este cambio expone `consumido` (asociación vigente / creadas) |
 | Un ticket vigente por subOV | Los índices de §1 y las tres puertas |
 
 **Regla 13, decisión a decisión** (líneas de servidor nuevas se fijan en el `apply-progress.md` de su lote):
@@ -161,7 +161,7 @@ C motivo vacío `422`.
 | `packages/zoho-sync/src/db/schema.sql` | 110 | tabla e índices | AL FINAL (tras `:525`) | 0 |
 | `apps/desk/server/remisiones.test.ts` | 34 | ninguna | — | 0 |
 | `packages/shared/src/transitions.ts` | 217 | `:17`, `:199`, `:203`; `cfOvAdicional` | EN SITIO + AL FINAL | 3 vivas (`bodegaje.test.ts:360`, `:362`; `transitions-st` :295) + históricas del maestro y F0 (caso B) |
-| `apps/desk/server/transitionExec.ts` | 41 | `:21`, `:92` | EN SITIO | 2 vivas (`rows.ts:120`, `tickets-core` :328, las dos `:90-92`) |
+| `apps/desk/server/transitionExec.ts` | 41 | `:21`, `:88` (`:92` en el diseño original) | EN SITIO | 2 vivas (`rows.ts:120`, `tickets-core` :328, las dos `:90-92`) |
 | `packages/zoho-sync/src/books/repo.ts` | — | `:2`, `:160-161`, `:163`, `:176` | EN SITIO | 3 (`equipos.test.ts:458` y `F1B-01` `:145`; `Puntos_para_Gerencia` `:166-170`) |
 | `packages/zoho-sync/src/db/migrate.ts` | — | `:73` | EN SITIO | 2 (`tickets-core` :666 y `Paquete_2026-09-27` :75, las dos `:70`) |
 | `apps/desk/server/services/equipoNuevo.ts` | — | `:86-91` | AL FINAL (última función) | 1 (`hojas-vida` :273, `:80`, no cambia) |
@@ -215,7 +215,7 @@ revertir los commits del lote; la tabla puede quedarse.
 - **S-9** Sólo se liberan filas de asociación; la OV sólo-en-columna de tickets previos no es liberable.
 - **S-10** El campo «OV adicional» de las dos aprobaciones es opcional.
 - **S-11** Saldo por lote: «creadas» son las subOV del lote en `sales_orders` con cualquier `order_status` salvo
-  borrador y anulada; «consumidas», las que tienen asociación vigente.
+  borrador y anulada; «consumidas», las que tienen asociación vigente. **Hipótesis:** los literales `draft` y `void` que filtra `saldoPorLote` (`books/subOV.ts:18`) no están verificados contra datos reales; los comprueba la consulta de la tarea de persona P.4 (`docs/sdd/Consulta_SubOV_formato_2026-09-27.sql`, consulta 5) y hasta entonces siguen siendo hipótesis.
 - **S-12** En transiciones, la asociación se escribe aunque el número no resuelva en Books (`salesorder_id` NULL); el
   índice por número la protege. En el alta sigue S-4.
 

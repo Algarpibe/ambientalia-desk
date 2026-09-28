@@ -146,7 +146,7 @@ describe('GET /api/ov-asociaciones/cuarentena y /saldo/:lote', () => {
     await asociarOV(db, { ticketId: 't1', numero: 'OV-2026-170-01', salesorderId: 's1', origen: 'alta', actor: 't', fechaOrdenCompra: null })
     const { app } = appWith()
     const res = await request(app).get('/api/ov-asociaciones/saldo/OV-2026-170').set('Cookie', await userCookie(['Comercial']))
-    expect(res.body).toEqual({ lote: 'OV-2026-170', creadas: 2, consumidas: 1, libres: 1, ejecutado: 50 })
+    expect(res.body).toEqual({ lote: 'OV-2026-170', creadas: 2, consumidas: 1, libres: 1, consumido: 50 })
   })
 
   it('un lote con formato inválido → 422', async () => {

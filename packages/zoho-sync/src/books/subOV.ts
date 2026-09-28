@@ -19,7 +19,7 @@ const ESTADOS_FUERA_DEL_SALDO = ['draft', 'void']
 
 export interface OVCuarentena { id: string; number: string; customer_name: string | null; motivo: string }
 
-export interface SaldoLote { lote: string; creadas: number; consumidas: number; libres: number; ejecutado: number }
+export interface SaldoLote { lote: string; creadas: number; consumidas: number; libres: number; consumido: number }
 
 /** Las órdenes de venta cuyo número está en cuarentena, por número. */
 export async function listarCuarentena(db: Queryable): Promise<OVCuarentena[]> {
@@ -30,7 +30,7 @@ export async function listarCuarentena(db: Queryable): Promise<OVCuarentena[]> {
   })
 }
 
-/** Creadas / consumidas (asociación vigente) / libres y `% ejecutado = consumidas / creadas` (Gerencia, `Decisiones_Gerencia_2026-09-10.md:472`). */
+/** Creadas / consumidas (asociación vigente) / libres y `consumido` = consumidas / creadas, en %. NO es el «% ejecutado» de Gerencia (ejecutada = subOV con ticket FINALIZADO, `decision/anexo-53-contratos`; cambio 3 de F1B-11): ése no se implementa aquí. */
 export async function saldoPorLote(db: Queryable, lote: string): Promise<SaldoLote> {
   const so = await db.query('SELECT id, number, status, order_status FROM sales_orders WHERE number LIKE $1', [`${lote}-%`])
   const creadas = so.rows.filter((row) => {
@@ -44,6 +44,6 @@ export async function saldoPorLote(db: Queryable, lote: string): Promise<SaldoLo
   const consumidas = creadas.filter((row) => porNumero.has(String(row.number)) || porId.has(String(row.id))).length
   return {
     lote, creadas: creadas.length, consumidas, libres: creadas.length - consumidas,
-    ejecutado: creadas.length === 0 ? 0 : Math.round((100 * consumidas) / creadas.length),
+    consumido: creadas.length === 0 ? 0 : Math.round((100 * consumidas) / creadas.length),
   }
 }

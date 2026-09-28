@@ -455,3 +455,87 @@ Escalera: `A: inexistente → 404 aunque…`, `sin Comercial Y motivo vacío →
 ### Status
 
 Lote 5 completo: 3 + 22 tareas. Nacieron verdes (además de las celdas citadas): `un lote sin subOV`, `sin salesorder_id se reconoce por número`, `cuarentena fuera del buscador` (reutiliza 4.20, tarea 5.6).
+
+---
+
+## Lote 6 · Interfaz y cierre
+
+**Modo**: Strict TDD para lo que tiene red (renombrado, guardián del catálogo); `apps/desk/src/**/*.tsx` queda fuera de la red por decisión de Gerencia (F0-00), sin tareas RED para `.tsx`. HEAD de partida `1c1b5d7`.
+
+### 6.0a · `ejecutado` → `consumido` (RED/GREEN)
+
+- RED: se cambian las expectativas a `consumido` en `books/subOV.test.ts` (5 casos) y `routes/ovAsociaciones.test.ts` (1). Rojo: 6 fallos, `expected { lote: 'OV-2026-170', …(4) } to deeply equal { lote: 'OV-2026-170', …(4) }` (y `to match object { creadas: 1, consumidas: 1, …(2) }`).
+- GREEN: `SaldoLote.consumido` y su cálculo en `books/subOV.ts:22`/`:47`; la ruta devuelve el objeto tal cual. 43/43.
+- Porqué (escrito en `design.md` §5, fila «Lista de cuarentena y saldo», en su sitio): `Decisiones_Gerencia_2026-09-10.md:472` definía «% ejecutado = consumidas / creadas», pero `decision/anexo-53-contratos` (24/09, `openspec/config.yaml:2448`; informe trimestral `:2457`) redefine «ejecutada» como subOV con ticket FINALIZADO. Ese «% ejecutado» es del cambio 3 (`proposal.md:49`) y NO se implementa aquí. El documento de Gerencia no se renombra.
+- 6.0b: consulta 5 al final de `Consulta_SubOV_formato_2026-09-27.sql`; P.4 en `tasks.md`; `draft`/`void` siguen «hipótesis» en `design.md` (S-11).
+
+### 6.1-6.3 · Interfaz
+
+- 6.1 `api/client.ts` (al final): `listarOvAsociaciones`, `liberarOvAsociacion`, `listarCuarentena`, `saldoPorLote`, más `mensajeDelServidor` (extrae el `error` del `HTTP 4xx: {…}` para enseñarlo tal cual).
+- 6.2 `PanelOvAsociaciones.tsx` (nuevo) montado en `TicketDetailView.tsx` estrictamente DESPUÉS de `:245`, sobre la caja de transiciones, plegado por defecto; el `import` es segunda sentencia de la línea `:15`. `:245` no se mueve. Había 8 citas vivas EN `:245` (no «0 en o tras»); ninguna posterior.
+- 6.3 `OvCuarentenaSaldo.tsx` (nuevo), abierto desde Configuración → «Administración de datos» (la entrada `Órdenes de venta (Zoho Books)` era `soon: true`; se sustituye EN SU SITIO, `Configuracion.tsx:127`; `:118`, la que cita ENTRADA.md, no se mueve). Sólo lectura.
+
+### 6.4 · Regla 13 / mutación 3 — decisión del cliente → línea del servidor
+
+| Decisión del cliente | Línea del servidor que la impone |
+|---|---|
+| Botón «Liberar» sólo para Comercial y administrador (`PanelOvAsociaciones.tsx`, mismo `canExecuteTransition` de `@ambientalia/shared`) | `routes/ovAsociaciones.ts:46` (403) |
+| Motivo obligatorio: el cliente NO lo comprueba, manda y enseña el error | `routes/ovAsociaciones.ts:50` (422) |
+| Asociación ya liberada: el cliente NO lo comprueba, enseña el error | `routes/ovAsociaciones.ts:47` (409; carrera en `:53`) |
+| La lista de OV del ticket la ve cualquier usuario con sesión; el panel va plegado | `routes/ovAsociaciones.ts:25` (`requireAuth`, sin rol): la visibilidad es comodidad |
+| Cuarentena y saldo: la entrada y la pantalla las ve cualquiera; el formato del lote lo valida el servidor | `routes/ovAsociaciones.ts:29`, `:33` (`requireAuth`), `:35` (422 de formato) |
+| El desplegable de OV oculta las usadas y las de cuarentena | `books/repo.ts:159-162` (`libresFilter`) y `:176` (`esCuarentena`) |
+| `aprobacion`: al elegir la OV adicional se autorrellena `Fecha Orden de Venta Final` y se bloquea el teclado si ya tiene valor (`TransitionPanel.tsx:103`, `:174`) | **Ninguna.** `transitionExec.ts:91` guarda cualquier valor de ese campo como fecha normal (`convert`, `:33`, sólo trunca a 10 caracteres); el servidor no autorrellena ni comprueba que la fecha sea la de la OV. Comodidad pura (regla 13, punto 2), declarada. No bloquea nada que el servidor rechace |
+| `aprobacion_y_repuestos`: `Fecha Orden De Venta` vuelve a ser tecleable (`TransitionPanel.tsx:66`; `cfOvAdicional()` sin `campoFecha`) y obligatoria | `transitionExec.ts:77` (`Falta el campo obligatorio`), con `cfDate` `required = true` por defecto (`transitions.ts:75`) |
+| Filtro del desplegable por cliente | **Ninguna, a propósito** (IV-8; `books/repo.ts:148-149` sólo filtra si el cliente lo manda). Comodidad declarada |
+
+Sólo dos filas sin línea de servidor —autofill/bloqueo de la fecha final y filtro por cliente—, las dos comodidades declaradas; ninguna guarda vive sólo en el cliente.
+
+### Comprobación de `TransitionPanel.tsx:66`/`:103` (por lectura, sin cambio de `.tsx`)
+
+`fechasDeOV` (`:65-66`) oculta al teclado toda fecha que sea `campoFecha` de algún campo, y `:103` la escribe al elegir la OV. `cfOvAdicional()` de `aprobacion_y_repuestos` (`transitions.ts:199`) NO declara `campoFecha`, así que `Fecha Orden De Venta` NO está en `fechasDeOV` y se teclea a mano; en `aprobacion` (`:203`) la OV adicional arrastra `Fecha Orden de Venta Final`, que nunca resuelve a `fecha_orden_venta` (`rows.ts:118` la mapea a `fecha_orden_venta_final`). Guardián nuevo sobre el catálogo REAL (`transitionExec.test.ts`, al final, 2 `it`): `aprobacion_y_repuestos` → `campoFechas = []`; `aprobacion` → `['Fecha Orden de Venta Final']`. **Nacen VERDES** (describen el catálogo de hoy).
+
+### 6.5-6.6 · Documentos en su sitio
+
+- `CLAUDE.md`: fila de IV-11 (misma línea física) con la actualización del 2026-09-28: `ov_asociaciones` escrita por los tres escritores, tercera vía en las tres puertas, liberación con motivo; **REDUCIDO, no cerrado**: las filas elegidas antes de `parche-iv11-orden-venta` o de este cambio no tienen ni marca ni asociación (sin relleno, P.2 de Gerencia, dato de producción). Fila de IV-12: nota de que la cuarentena (`remision.ts:220`) queda detrás del `409` (`:177`), mismo molde. Sin líneas nuevas en la tabla (`@@ -348,2 +348,2`).
+- `openspec/config.yaml`: `adendas_incumplimientos_vivos` NO está al final (`:3099`); precedente de «al final con clave propia»: `aprobaciones_de_techo_del_ledger`. Se añade la clave `adenda_iv11_asociacion_ov_ticket` al final (con `P4_estados_de_books`) y la ficha de IV-11 la remite por clave en su sitio (`:1100`, comentario de `estado`).
+
+### 6.7 · Barrido de citas (regla de mutación 4)
+
+Método: `git grep -o` de `<fichero>:N(-M)?` fuera de `openspec/changes/archive`, filtrado por directorio (`repo.ts` es ambiguo: `db/` y `books/`); se leen las citas cuyo rango CORTA un rango editado (`git diff -U0 4501784^ HEAD` más el árbol de hoy) o cae en un tramo desplazado; segundo pase de la forma abreviada (`:N` en la misma línea física detrás de una cita del módulo). Desplazamientos reales: `app.ts` +1 desde `:61`; `transitions.ts` +13, `schema.sql` +29 y `equipoNuevo.ts` +7, los tres AL FINAL (sin cita posterior). Clasificación por lectura de lo que afirma cada frase.
+
+| Fichero | Citas totales | Leídas | A | B | C | Reparadas |
+|---|---|---|---|---|---|---|
+| `db/repo.ts` | 46 | 7 | 7 | 0 | 0 | 0 |
+| `remision.ts` | 132 | 46 (+8 abreviadas, todas A) | 32 | 10 | 3 | 1 (`remisiones/spec.md:110`: `:214-222` → `:218-244`/`:239-243`; ya rota antes, de F1B-01 `607e26a`) |
+| `ticketService.ts` | 179 | 39 (+15 abreviadas) | 31 | 8 | 0 | 0 |
+| `transitions.ts` | 233 | 34 (+3 abreviadas) | 17 | 17 | 0 | 0 |
+| `books/repo.ts` | 33 | 12 (+4) | 12 | 0 | 0 | 0 |
+| `app.ts` | 20 | 2 | 0 | 2 (ancladas `1d030d5`) | 0 | 0 |
+| `schema.sql` | 124 | 0 | 0 | 0 | 0 | 0 |
+| `equipoNuevo.ts` | 11 | 7 | 3 | 4 | 0 | 2 (`hojas-vida/spec.md:273`: `:80-92` → `:80-99`; `design.md:71`, con ancla `5ad3d37`) |
+| `eliminarTicket.ts` | 18 | 5 | 5 | 0 | 0 | 0 |
+| `transitionExec.ts` | 47 | 7 | 7 | 0 | 0 | 4 (`design.md:116`, `:164`, `tasks.md:209`, `:218`: la rama `ovAdicional` vive en `:88`, no en `:92`) |
+| `migrate.ts` | 53 | 9 (+1) | 9 | 0 | 0 | 0 |
+| `TicketDetailView.tsx` | 10 | 0 (las 8 de `:245` intactas) | 0 | 0 | 0 | 0 |
+
+B (históricas, no se tocan): citas datadas de `docs/sdd/F0-00*`, `F0-01`, `F1A-05`, `Recomendaciones_R02`, `Respuestas_Gerencia_R03`, `Paquete_de_Despliegue_2026-09-27.md:314`, `Brecha_Maestro_R08.2_2026-09-17.md:143`, `config.yaml:579`/`:1067`/`:1119`. C (superadas, conservadas como registro): `remisiones/spec.md:34`/`:603` («tercera puerta abierta») y `tickets-core/spec.md:531`. Deriva PREVIA a este cambio, no reparada (no la causa esta tanda): `derivacion-avisos/spec.md:44`/`:194`/`:403` (`ticketService.ts:113`, `:127-165`). `transitions-st/spec.md` (viva): la tabla de RQ-TS-09 no tenía `ovAdicional` ni la clave `OV adicional` en la frase de las 27 etiquetas; se corrige en el DELTA (`specs/transitions-st/spec.md`, requisito MODIFIED RQ-TS-09 completo) que fusiona el archive; la spec viva NO se toca.
+
+### 6.8 · Cierre
+
+`npx vitest run` 150 ficheros / 1614 pruebas en verde (2 saltadas, integración); `npm run typecheck` limpio; `npx eslint . --max-warnings 165` 0 errores, 165 avisos (en el techo, ninguno nuevo); `npm run build` verde. Criterios de éxito de `proposal.md` (estado, sin re-implementar): 1 dos OV vigentes tras `Aprobación` — cubierto (3.9); 2 `409` en las tres puertas y rojo en la base — cubierto (1.1, 2.9, 2.16, 2.18); 3 liberar: fila conservada, reasociable, sólo Comercial — cubierto en servidor (1.7, 1.8, 5.11-5.17), la pantalla queda para P.3; 4 cuarentena fuera del desplegable y del saldo, en la lista — cubierto (4.x, 5.x); 5 saldo correcto — cubierto (5.1, ahora `consumido`); 6 `remisiones.test.ts:988` y `ordenVentaUnTicket.test.ts` — verdes sin tocar sus casos.
+
+### Mutaciones (revertidas, `cmp` idéntico, copias con nombre de ruta completa)
+
+| | Mutación | Rojo |
+|---|---|---|
+| M1 | la ruta del saldo devuelve `ejecutado` en vez de `consumido` | `ovAsociaciones.test.ts` › `saldo devuelve saldoPorLote`: `expected { lote: 'OV-2026-170', …(4) } to deeply equal …` |
+| M2 (regla 2) | `cfOvAdicional('Fecha Orden De Venta')` en `transitions.ts:199` | 3 rojos: el guardián del lote 4 (`campoFecha "Fecha Orden De Venta" → fecha_orden_venta`), el guardián nuevo (`expected [ 'Fecha Orden De Venta' ] to deeply equal []`) y `4.0a` (`expected '2026-07-15' to be '2026-06-10'`) |
+
+### Desviaciones
+
+1. La consulta 5 va DESPUÉS del `ROLLBACK` final (se pidió «al final»); su cabecera lo dice y recomienda envolverla. 2. El hallazgo de 8 citas EN `:245` corrige la premisa de `tasks.md`/`design.md` («0 vivas»). 3. `design.md`/`tasks.md` decían `transitionExec.ts:92` para la rama `ovAdicional`; era `:88` desde el lote 3. 4. Ninguna pantalla probada por máquina: P.3 (verificación manual en la app) sigue de Comercial.
+
+### Status
+
+Lote 6 completo: 6.0a, 6.0b y 6.1-6.8. Todas las tareas del cambio completas (salvo las tareas de persona P.1-P.4, fuera del recuento). Siguiente: `sdd-verify`.

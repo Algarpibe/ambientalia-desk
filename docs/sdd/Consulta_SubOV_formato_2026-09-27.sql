@@ -114,3 +114,18 @@ SELECT base.salesorder_number AS numero_base,
  ORDER BY base.salesorder_number;
 
 ROLLBACK;
+
+-- (5) Literales de estado de las OV de Books (P.4 de asociacion-ov-ticket) -------------------------
+-- El saldo por lote (packages/zoho-sync/src/books/subOV.ts:18) descarta las subOV cuyo `order_status`
+-- o `status` valga 'draft' o 'void'. Son HIPÓTESIS: ningún fichero del repositorio fija esos literales.
+-- Esta consulta enseña qué valores existen de verdad y cuántas OV hay de cada uno, para confirmar
+-- cuáles significan borrador y anulada (S-11). Sólo lectura; va fuera del BEGIN/ROLLBACK de arriba,
+-- así que si se ejecuta suelta conviene envolverla en BEGIN READ ONLY … ROLLBACK.
+SELECT 'order_status' AS columna, COALESCE(so.order_status, '(nulo)') AS valor, count(*) AS ordenes
+  FROM books.sales_orders so
+ GROUP BY so.order_status
+UNION ALL
+SELECT 'status' AS columna, COALESCE(so.status, '(nulo)') AS valor, count(*) AS ordenes
+  FROM books.sales_orders so
+ GROUP BY so.status
+ ORDER BY columna, ordenes DESC, valor;

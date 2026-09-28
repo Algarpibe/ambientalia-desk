@@ -270,7 +270,7 @@ el registro documenta sólo cambios sobre un equipo YA existente. Esto cubre las
 /api/equipos` (`:48-71`) y la creación de equipo provisional dentro de `POST /api/tickets` con
 `clasificaciones = 'Equipo nuevo'` (`tickets-core` RQ-TC-15/RQ-TC-16). Este requisito documenta, por
 primera vez en `hojas-vida`, que esa segunda vía escribe los seis campos comerciales:
-`crearTicketConEquipo` (`apps/desk/server/services/equipoNuevo.ts:80-92`) crea el equipo en transacción con
+`crearTicketConEquipo` (`apps/desk/server/services/equipoNuevo.ts:80-99`) crea el equipo en transacción con
 los datos recogidos por `exigirEquipoNuevo` (`:49-59`) y validados por `validarCamposEquipoNuevo`
 (`:69-73`), que reutiliza `camposHojaDeVida` (`routes/equipos.ts:164-211`).
 

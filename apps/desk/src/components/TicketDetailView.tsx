@@ -12,7 +12,7 @@ import { Adjuntos } from './Adjuntos';
 import { valoresConocidos } from '../lib/valoresTransicion';
 import { ActividadesPanel } from './ActividadesPanel';
 import { CrearRemision } from './CrearRemision';
-import { PanelRemisiones } from './PanelRemisiones';
+import { PanelRemisiones } from './PanelRemisiones'; import { PanelOvAsociaciones } from './PanelOvAsociaciones';
 
 /** Manija de arrastre entre columnas (reemplaza el borde). */
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
@@ -315,6 +315,9 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         {activeView === 'otros' && (
                             <div className="flex-1 overflow-y-auto p-8 bg-white text-center text-[13px] text-slate-400">Pronto.</div>
                         )}
+
+                        {/* Órdenes de venta del ticket (asociacion-ov-ticket, lote 6): plegado por defecto, sobre la caja de transiciones. */}
+                        {ticket && <PanelOvAsociaciones ticketId={ticketId} />}
 
                         {/* Caja de respuesta + transiciones — al pie del hilo, en el flujo (sin solapar) */}
                         <div className="border-t border-slate-200 bg-white p-3 flex flex-col gap-2 shrink-0">

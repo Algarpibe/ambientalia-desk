@@ -107,7 +107,7 @@ número de serie es obligatorio al crear la remisión» —.
 - La cadena en blanco **SHALL** contar como ausente, igual que en el alta de tickets
   (`ticketService.ts:53-58`): el sync escribe `''` tan fácilmente como `NULL`.
 - La guarda **SHALL** evaluarse **antes de cualquier escritura**, y en particular antes del bloque de
-  la orden de venta, que hace un `UPDATE tickets` (`remision.ts:214-222`). Fijado por la prueba
+  la orden de venta, que hace un `UPDATE tickets` (bloque `remision.ts:218-244`, el `UPDATE` en `:239-243`). Fijado por la prueba
   «M5 · con orden de venta y sin serial: 422 y el ticket sigue sin OV».
 - La guarda va con los otros `422` y **antes** del `409` de la remisión pendiente, y esa precedencia
   **SHALL** quedar fijada por una prueba que active las dos condiciones a la vez: cuando un ticket

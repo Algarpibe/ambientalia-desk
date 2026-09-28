@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getHideEmptyColumns, setHideEmptyColumns } from '../boardSettings'
+import { getHideEmptyColumns, setHideEmptyColumns } from '../boardSettings'; import { OvCuarentenaSaldo } from './OvCuarentenaSaldo'
 
 type Item = { label: string; onClick?: () => void; soon?: boolean }
 type Category = { title: string; items: Item[] }
@@ -30,7 +30,7 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos
   onOpenCatalogo: () => void
   isAdmin: boolean
 }) {
-  const [section, setSection] = useState<'home' | 'tablero'>('home')
+  const [section, setSection] = useState<'home' | 'tablero' | 'ov'>('home')
   const [query, setQuery] = useState('')
   const [hideEmpty, setHide] = useState(getHideEmptyColumns)
 
@@ -124,7 +124,7 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos
       title: 'Administración de datos',
       items: [
         { label: 'Clientes (Zoho Books)', soon: true },
-        { label: 'Órdenes de venta (Zoho Books)', soon: true },
+        { label: 'Órdenes de venta: cuarentena y saldo por lote', onClick: () => setSection('ov') },
         // Solo para administradores: las rutas de escritura del catálogo exigen super administrador,
         // así que enseñar la entrada a quien no puede usarla solo llevaría a una pantalla de errores.
         ...(isAdmin ? [{ label: 'Catálogo de equipos', onClick: onOpenCatalogo }] : []),
@@ -161,6 +161,8 @@ export function Configuracion({ onClose, onOpenUsers, onOpenRoles, onOpenEquipos
       ],
     },
   ]
+
+  if (section === 'ov') return <OvCuarentenaSaldo onVolver={() => setSection('home')} />
 
   const q = query.trim().toLowerCase()
   const filtered = q

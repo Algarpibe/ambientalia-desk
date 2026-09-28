@@ -39,7 +39,7 @@ cubre el contenido de `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:
    de OC se guarda en esa asociación (`:409-415`).
 5. Las tres puertas y el desplegable (`soloLibres`) leen una tercera vía: la asociación vigente.
 6. SubOV: clasificador compartido del número, cuarentena (fuera del desplegable y de todo saldo, lista visible para
-   Comercial), saldo por lote (creadas / consumidas / libres, % ejecutado), guarda de servidor.
+   Comercial), saldo por lote (creadas / consumidas / libres, `consumido` en %; el «% ejecutado» de Gerencia es del cambio 3), guarda de servidor.
 7. Acción manual «liberar subOV/OV» con motivo, sólo Comercial, hasta que exista C2 (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:484-486`;
    `packages/shared/src/estados.ts` no contiene «Anulad»).
 8. Ficha del ticket: lista de sus OV (vigentes y liberadas). `cf_n_ticket` sólo sugiere (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:152-154`).

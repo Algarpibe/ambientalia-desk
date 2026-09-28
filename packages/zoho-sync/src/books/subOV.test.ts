@@ -45,14 +45,14 @@ async function lote5ConCuarentena(): Promise<void> {
 describe('saldoPorLote', () => {
   it('cinco subOV canónicas (2 vigentes, 3 libres) y una sexta en cuarentena → 5/2/3/40, cuarentena fuera', async () => {
     await lote5ConCuarentena()
-    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 5, consumidas: 2, libres: 3, ejecutado: 40 })
+    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 5, consumidas: 2, libres: 3, consumido: 40 })
   })
 
   it('S-11: una subOV en borrador y otra anulada no cuentan como creadas', async () => {
     await lote5ConCuarentena()
     await ov('sd', `${LOTE}-06`, 'draft')
     await ov('sv', `${LOTE}-07`, 'void')
-    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 5, consumidas: 2, libres: 3, ejecutado: 40 })
+    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 5, consumidas: 2, libres: 3, consumido: 40 })
   })
 
   it('una asociación liberada cuenta como libre, no como consumida', async () => {
@@ -60,18 +60,18 @@ describe('saldoPorLote', () => {
     const a = await asociar('t3', `${LOTE}-03`, 's03')
     expect((await saldoPorLote(db, LOTE)).consumidas).toBe(3)
     await liberarAsociacion(db, a.id, 'Comercial', 'error de tecleo')
-    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 5, consumidas: 2, libres: 3, ejecutado: 40 })
+    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 5, consumidas: 2, libres: 3, consumido: 40 })
   })
 
   it('una asociación sin salesorder_id se reconoce por número', async () => {
     await ov('s01', `${LOTE}-01`)
     await asociar('t1', `${LOTE}-01`, null)
-    expect(await saldoPorLote(db, LOTE)).toMatchObject({ creadas: 1, consumidas: 1, libres: 0, ejecutado: 100 })
+    expect(await saldoPorLote(db, LOTE)).toMatchObject({ creadas: 1, consumidas: 1, libres: 0, consumido: 100 })
   })
 
   it('un lote sin subOV da ceros, sin dividir por cero, y no mezcla otros lotes', async () => {
     await ov('s1', 'OV-2026-171-01')
-    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 0, consumidas: 0, libres: 0, ejecutado: 0 })
+    expect(await saldoPorLote(db, LOTE)).toEqual({ lote: LOTE, creadas: 0, consumidas: 0, libres: 0, consumido: 0 })
   })
 })
 

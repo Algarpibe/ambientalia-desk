@@ -251,3 +251,24 @@ describe('asociacion-ov-ticket · la OV adicional no autorrellena columnas de la
     }
   })
 })
+
+/**
+ * GUARDIÁN DEL CATÁLOGO (asociacion-ov-ticket, lote 6, comprobación de `TransitionPanel.tsx:66`/`:103`): el panel
+ * oculta al teclado toda fecha que sea `campoFecha` de algún campo (`fechasDeOV`, `:65-66`) y la escribe al elegir
+ * la OV (`:103`). Se fija con el catálogo real lo que la pantalla da por supuesto, sin tocar `.tsx`:
+ *  - `aprobacion_y_repuestos`: ningún campo declara `campoFecha`, así que `Fecha Orden De Venta` se TECLEA.
+ *  - `aprobacion`: la OV adicional escribe `Fecha Orden de Venta Final`, que es su propia fecha de venta final
+ *    (no resuelve a `fecha_orden_venta`, lo cubre el guardián de arriba).
+ * Nace verde: describe el catálogo de hoy; lo pone rojo ensuciarlo (mutación M2 del lote 6).
+ */
+describe('asociacion-ov-ticket · lo que TransitionPanel da por supuesto del catálogo', () => {
+  const campoFechas = (id: string) => (TRANSITIONS.find((t) => t.id === id)?.fields ?? []).map((f) => f.campoFecha).filter((x): x is string => !!x)
+
+  it('aprobacion_y_repuestos: ninguna fecha se oculta al teclado (Fecha Orden De Venta es tecleable)', () => {
+    expect(campoFechas('aprobacion_y_repuestos')).toEqual([])
+  })
+
+  it('aprobacion: sólo la OV adicional autorrellena, y con Fecha Orden de Venta Final', () => {
+    expect(campoFechas('aprobacion')).toEqual(['Fecha Orden de Venta Final'])
+  })
+})

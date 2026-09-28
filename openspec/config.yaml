@@ -1097,7 +1097,7 @@ incumplimientos_vivos:
       discrepancia no cambie, y sólo se reavisa si el valor que trae Zoho es otro.
     ubicacion: "packages/zoho-sync/src/db/repo.ts:64-95 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-244"
     verificado: true
-    estado: REDUCIDO  # detalle en adendas_incumplimientos_vivos → IV-11 → reduccion_2026_09_27, al final de este fichero
+    estado: REDUCIDO  # detalle en adendas_incumplimientos_vivos → IV-11 → reduccion_2026_09_27, al final de este fichero; y en `adenda_iv11_asociacion_ov_ticket` (2026-09-28, última clave del fichero)
     encontrado_en: >
       Exploración de `tercera-puerta-orden-venta` (2026-09-16, árbol 14b45ee), §2,
       y recogido en su `proposal.md` §6 como hallazgo del barrido de vías de
@@ -3137,3 +3137,32 @@ aprobaciones_de_techo_del_ledger:
       1151 (889+262) es la medida que Gerencia verificó en disco al aprobar, antes de los tres
       `no-explicit-any` retirados y del barrido final; 1178 (904+274) es la medida del árbol que se
       commiteó en `c289b30`, y la que registró el ledger. Las dos quedan bajo 1250.
+
+adenda_iv11_asociacion_ov_ticket:
+  # Adenda de IV-11 que llega DESPUÉS de `adendas_incumplimientos_vivos` y, como
+  # `aprobaciones_de_techo_del_ledger`, va al final del fichero para no desplazar líneas citadas.
+  # Se remite desde la ficha de IV-11 (`estado`) por su clave, nunca por número de línea.
+  id: IV-11
+  actualizacion_2026_09_28: >
+    `asociacion-ov-ticket` (F1B-11, cambio 2 de 3, `cierra: no`). NO CIERRA — REDUCE MÁS.
+    Lo que añade: la asociación propia `public.ov_asociaciones`
+    (`packages/zoho-sync/src/db/schema.sql:539-554`), con unicidad de la vigente por número y
+    por `salesorder_id`; la escriben los TRES escritores de la orden de venta en la misma
+    transacción que la columna —el alta (`apps/desk/server/services/equipoNuevo.ts:80-99`),
+    `writeTransition` (`packages/zoho-sync/src/db/repo.ts:311`) y la remisión de entrada
+    (`apps/desk/server/routes/remision.ts:239-243`)—; las tres puertas de «una OV, un ticket»
+    leen esa tercera vía (`repo.ts:362-379`); y liberar una asociación exige rol Comercial y motivo
+    (`apps/desk/server/routes/ovAsociaciones.ts:46`, `:50`), sin borrar nunca la fila.
+    IV-11 SIGUE REDUCIDO, NO CERRADO. Las filas cuya orden se eligió ANTES de
+    `parche-iv11-orden-venta` o de este cambio no tienen ni la marca `ov_elegida_en_app_at` ni fila
+    de asociación: no hay relleno retroactivo (P.2 de Gerencia pendiente, dato de producción), así
+    que el sincronizador puede seguir dejándolas a medias exactamente como describe `la_cadena` de
+    la ficha de IV-11. Destino escrito sin cambio: F1B-11 (cambio 3 de 3 pendiente).
+  P4_estados_de_books:
+    # Tarea de persona, fuera del recuento del cambio (regla del ciclo 1). Archivar NO la da por hecha.
+    dueño: Alfonso
+    consulta: docs/sdd/Consulta_SubOV_formato_2026-09-27.sql (consulta 5)
+    que_decide: >
+      Qué literales de `order_status`/`status` de `books.sales_orders` significan borrador y anulada.
+      Hoy `saldoPorLote` (`packages/zoho-sync/src/books/subOV.ts:18`) asume `draft` y `void`: es
+      hipótesis. Desbloquea confirmar S-11 del diseño.

@@ -40,6 +40,35 @@ no construida, lo que §3.4 de esta misma spec ya había corregido por separado.
 - WHEN se ejecuta `habilitar_servicio` con esa OV
 - THEN responde `422` de cuarentena, no `409` de unicidad
 
+### Requirement: RQ-TS-09 · Mapeo de campos a columnas
+
+El destino de cada valor **SHALL** derivarse de su `target` (`transitions.ts:17`):
+
+| `target` | Destino | Evidencia |
+|---|---|---|
+| `comment` | El comentario de la transición | `transitionExec.ts:46` |
+| `priority` | La columna `priority` | `transitionExec.ts:88` |
+| `derivacion` | La columna `derivado_a` | `transitionExec.ts:13`, `:58-61` |
+| `ovAdicional` | `plan.ovAdicional`, NUNCA una columna ni `custom_fields`: lo consume `asociarDesdeTransicion` para crear la asociación adicional (`RQ-TS-18`) | `transitionExec.ts:88` |
+| `customField` | Columna promovida si la etiqueta está en `PROMOTED_COLUMNS`; si no, a `custom_fields` | `transitionExec.ts:4`, `:90-92` |
+
+**Verificado en esta tanda:** las **27** etiquetas de campo distintas que declaran las 34 transiciones
+—contando el `campoFecha` que arrastra el buscador de órdenes de venta— están **todas** en
+`PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts`), de las 39 que ese mapa declara,
+**salvo la clave `OV adicional`** del campo nuevo de las dos aprobaciones: no es una etiqueta de Zoho,
+NO está en `PROMOTED_COLUMNS` (lo fija el guardián de `transitionExec.test.ts`) y tampoco cae al cajón
+`custom_fields`, porque su destino es `ovAdicional` y no `customField`. **Ninguna cae al cajón
+`custom_fields`.** Confirma M1.3.8 del maestro (`:1415`).
+
+El campo `ordenVenta` **SHALL** comportarse como texto para el motor pero **SHALL** pintarse como
+buscador contra las órdenes de venta de Books, y **SHALL** arrastrar la fecha declarada en su
+`campoFecha` (`transitions.ts:8-14`, `:85-87`). El campo de OV adicional de `aprobacion_y_repuestos`
+NO declara `campoFecha` (su `Fecha Orden De Venta` se teclea) y el de `aprobacion` arrastra
+`Fecha Orden de Venta Final`; ninguno resuelve a `orden_venta`/`fecha_orden_venta` (`RQ-TS-18`).
+
+(Previously: la tabla no tenía la fila `ovAdicional` —el `target` se añadió en este cambio— y la frase
+de las 27 etiquetas no contemplaba la clave `OV adicional`, que no es etiqueta de Zoho.)
+
 ## ADDED Requirements
 
 ### Requirement: RQ-TS-18 · `Aprobación` y `Aprobación y S. Repuestos` añaden una OV, no la sustituyen

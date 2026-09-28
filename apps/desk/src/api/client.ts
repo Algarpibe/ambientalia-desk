@@ -608,3 +608,63 @@ export async function mostrarArticuloModelo(modeloId: string, itemId: string): P
   })
   if (!r.ok) await json(r)
 }
+
+/** Una fila de `public.ov_asociaciones` tal como la devuelve el servidor (`routes/ovAsociaciones.ts`). */
+export interface OvAsociacion {
+  id: number
+  ticket_id: string
+  numero: string
+  salesorder_id: string | null
+  origen: string
+  asociada_at: string
+  asociada_por: string | null
+  fecha_orden_compra: string | null
+  liberada_at: string | null
+  liberada_por: string | null
+  motivo_liberacion: string | null
+}
+
+export interface OvCuarentena { id: string; number: string; customer_name: string | null; motivo: string }
+
+export interface SaldoLote { lote: string; creadas: number; consumidas: number; libres: number; consumido: number }
+
+/** Las OV de un ticket, vigentes y liberadas (`liberada_at` distingue unas de otras). */
+export function listarOvAsociaciones(ticketId: string): Promise<OvAsociacion[]> {
+  return fetch(`/api/tickets/${ticketId}/ov-asociaciones`, { credentials: 'include' }).then((r) => json<OvAsociacion[]>(r))
+}
+
+/**
+ * Libera una asociación con su motivo. La decisión es del servidor: si responde 403, 404, 409 o 422 el
+ * error sube tal cual y la pantalla lo enseña, sin repetir la comprobación en el cliente.
+ */
+export function liberarOvAsociacion(id: number, motivo: string): Promise<OvAsociacion> {
+  return fetch(`/api/ov-asociaciones/${id}/liberar`, {
+    method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ motivo }),
+  }).then((r) => json<OvAsociacion>(r))
+}
+
+/** Órdenes de venta cuyo número está en cuarentena (formato de subOV no reconocido). */
+export function listarCuarentena(): Promise<OvCuarentena[]> {
+  return fetch('/api/ov-asociaciones/cuarentena', { credentials: 'include' }).then((r) => json<OvCuarentena[]>(r))
+}
+
+/** Saldo de un lote de subOV (`OV-AAAA-NNN`): creadas, consumidas, libres y % consumido. */
+export function saldoPorLote(lote: string): Promise<SaldoLote> {
+  return fetch(`/api/ov-asociaciones/saldo/${encodeURIComponent(lote)}`, { credentials: 'include' }).then((r) => json<SaldoLote>(r))
+}
+
+/**
+ * `json()` lanza `HTTP 422: {"error":"…"}`. Las pantallas de OV enseñan sólo el mensaje del servidor:
+ * la decisión (403, 409, 422) es suya y aquí no se reescribe.
+ */
+export function mensajeDelServidor(e: unknown): string {
+  const texto = e instanceof Error ? e.message : String(e)
+  const m = /^HTTP \d+: ([\s\S]*)$/.exec(texto)
+  if (!m) return texto
+  try {
+    const cuerpo = JSON.parse(m[1]) as { error?: unknown }
+    return typeof cuerpo.error === 'string' ? cuerpo.error : texto
+  } catch {
+    return texto
+  }
+}

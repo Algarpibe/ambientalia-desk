@@ -206,7 +206,7 @@ asociación vigente); `apps/desk/server/ordenVentaUnTicket.test.ts` (casos nuevo
 | `packages/shared/src/transitions.ts` | `cfOvAdicional` (declaración `function`, elevada) | FINAL DE FICHERO |
 
 Otros ficheros del diseño: `apps/desk/server/transitionExec.ts:21` (interfaz gana `ovAdicional?: string`,
-EN SU SITIO), `:92` (rama `else if (f.target==='ovAdicional')…`, EN SU SITIO); `packages/zoho-sync/src/db/repo.ts:267`
+EN SU SITIO), `:88` (rama `else if (f.target==='ovAdicional')…`, EN SU SITIO; decía `:92`, corregido en el lote 6); `packages/zoho-sync/src/db/repo.ts:267`
 (`TransitionApply` gana `ovAdicional?: string`, EN SU SITIO); `apps/desk/server/services/ticketService.ts:148`
 (`plan.columns.orden_venta ?? plan.ovAdicional`, EN SU SITIO).
 
@@ -215,7 +215,7 @@ EN SU SITIO), `:92` (rama `else if (f.target==='ovAdicional')…`, EN SU SITIO);
   casaría en `LABEL_TO_COL` y sobrescribiría la columna).
 - [x] 3.2 Confirmar rojo natural (`FieldTarget` no admite `'ovAdicional'`).
 - [x] 3.3 GREEN — `transitions.ts:17` en su sitio: `FieldTarget` gana `| 'ovAdicional'`;
-  `transitionExec.ts:21` en su sitio: la interfaz gana el campo; `:92` en su sitio: rama `else if`.
+  `transitionExec.ts:21` en su sitio: la interfaz gana el campo; `:88` en su sitio: rama `else if` (decía `:92`, corregido en el lote 6).
 - [x] 3.4 Confirmar 3.1 en verde.
 - [x] 3.5 MUTACIÓN (riesgo de diseño, motor) — cambiar temporalmente la clave del campo nuevo a
   `'Orden de Venta'` en vez de `target:'ovAdicional'`; correr 3.9 (más abajo) y confirmar que se pone
@@ -350,7 +350,7 @@ ancladas ahí según `design.md` §6, así que el registro no desplaza nada cita
 - [x] 5.0c Docs en su sitio: `design.md:133` (regla), `design.md:135` (`:163` pide `limit * 3` SIEMPRE, aceptado en la revisión del lote 4; mayúsculas aceptado), `specs/tickets-core/spec.md` RQ-TC-18 (definición de «sufijo»). El texto del lote 4 de `apply-progress.md` queda como está (histórico, caso B): esta corrección lo SUPERA.
 - [x] 5.1 RED — `packages/zoho-sync/src/books/subOV.test.ts` (nuevo): `saldoPorLote(db, lote)` con cinco
   subOV canónicas del lote (2 con asociación vigente, 3 libres) y una sexta en cuarentena devuelve `{creadas:5,
-  consumidas:2, libres:3, ejecutado:40}`, con la de cuarentena fuera del recuento y dentro de `listarCuarentena`.
+  consumidas:2, libres:3, consumido:40}` (renombrado desde `ejecutado` en el lote 6, tarea 6.0a), con la de cuarentena fuera del recuento y dentro de `listarCuarentena`.
   Supuesto (orquestador, 2026-09-28): el escenario original (5/2/2/40) era incoherente. RQ: `zoho-sync` RQ-ZS-14, escenario 3.
 - [x] 5.2 Confirmar rojo natural.
 - [x] 5.3 GREEN — crear `books/subOV.ts`: `listarCuarentena(db)`, `saldoPorLote(db, lote)` sobre
@@ -404,31 +404,33 @@ ancladas ahí según `design.md` §6, así que el registro no desplaza nada cita
 | `openspec/config.yaml` | adenda nueva en `adendas_incumplimientos_vivos`, clave propia, remitida desde la ficha de IV-11 en su sitio | FINAL DE FICHERO |
 
 Otro fichero del diseño: `apps/desk/src/components/TicketDetailView.tsx`, montaje tras `:245` (0 citas
-vivas en o tras esa línea) — categoría propia del diseño «MITAD», fuera de las tres pedidas por el
+vivas tras esa línea; **corrección del lote 6:** SÍ hay 8 citas vivas EN `:245`, la de `className`, y ninguna después. El montaje va estrictamente DESPUÉS —sobre la caja de transiciones, `:319` de hoy—, y el `import` es segunda sentencia de la línea `:15`, así que `:245` no se mueve) — categoría propia del diseño «MITAD», fuera de las tres pedidas por el
 orquestador porque no hay ninguna cita que desplazar ahí. `apps/desk/src` queda fuera de la red de
 pruebas (F0-00, `vitest.config.ts:16-20`): sin tareas RED/GREEN para `.tsx`.
 
-- [ ] 6.1 Crear el cliente de las rutas del lote 5 (`apps/desk/src/lib`, al final de un módulo existente
+- [x] 6.0a RENOMBRAR `ejecutado` → `consumido` en `SaldoLote` (`books/subOV.ts`), en la respuesta de `GET /api/ov-asociaciones/saldo/:lote`, en `books/subOV.test.ts` y `routes/ovAsociaciones.test.ts`, en `specs/zoho-sync/spec.md` (RQ-ZS-14, texto y escenario) y en `design.md` §5 (con el porqué: `decision/anexo-53-contratos` redefine «ejecutada» como subOV con ticket FINALIZADO; ese «% ejecutado» es del cambio 3 de F1B-11). RED: 6 fallos (5 en `subOV.test.ts`, 1 en `ovAsociaciones.test.ts`, `expected {…} to deeply equal {…}`); GREEN: 43/43.
+- [x] 6.0b Consulta 5 al final de `docs/sdd/Consulta_SubOV_formato_2026-09-27.sql`: valores distintos y recuento de `order_status` y `status` de `books.sales_orders` (tarea de persona P.4, abajo). `draft`/`void` siguen como «hipótesis» en `design.md` (S-11).
+- [x] 6.1 Crear el cliente de las rutas del lote 5 (`apps/desk/src/lib`, al final de un módulo existente
   o uno propio): `listarOvAsociaciones`, `liberarOvAsociacion`, `listarCuarentena`, `saldoPorLote`.
-- [ ] 6.2 `TicketDetailView.tsx`, montaje tras `:245`: lista de OV vigentes/liberadas con botón
+- [x] 6.2 `TicketDetailView.tsx`, montaje tras `:245`: lista de OV vigentes/liberadas con botón
   «liberar» (Comercial, motivo obligatorio; el `422`/`403` del servidor se enseña, no se duplica en
   cliente — regla 13, punto 1). **Nota del lote 4 (4.0e):** comprobar aquí que `TransitionPanel.tsx:66`/`:103` siguen bien con `cfOvAdicional()` sin `campoFecha` en `aprobacion_y_repuestos` (la fecha manual vuelve a ser tecleable; ningún cambio de `.tsx` esperado).
-- [ ] 6.3 Nueva vista/sección para Comercial: lista de cuarentena y saldo por lote (fuente: rutas del
+- [x] 6.3 Nueva vista/sección para Comercial: lista de cuarentena y saldo por lote (fuente: rutas del
   lote 5).
-- [ ] 6.4 Regla 13 (checklist, sin código) — enumerar en `apply-progress.md` las decisiones de cliente
+- [x] 6.4 Regla 13 (checklist, sin código) — enumerar en `apply-progress.md` las decisiones de cliente
   de este cambio y su línea de servidor: ocultar OV usadas/cuarentena en el desplegable
   (`books/repo.ts:159-176` tras el lote 4), botón «liberar» sólo Comercial (`routes/ovAsociaciones.ts`,
   lote 5), motivo obligatorio al liberar (idem), filtro del desplegable por cliente **sin guarda nueva**
   (comodidad declarada, IV-8, regla 13 punto 2).
-- [ ] 6.5 Actualizar `CLAUDE.md`, fila de IV-11 (tabla «Incumplimientos vivos»), EN SU SITIO: la
+- [x] 6.5 Actualizar `CLAUDE.md`, fila de IV-11 (tabla «Incumplimientos vivos»), EN SU SITIO: la
   asociación propia (`public.ov_asociaciones`) cubre desde este cambio lo que sus tres escritores
   asocien; las filas previas sin marca ni asociación siguen expuestas (relleno pendiente, P.2); IV-11
   sigue **REDUCIDO, no cerrado**.
-- [ ] 6.6 Añadir la adenda de IV-11 al FINAL de `openspec/config.yaml` → `adendas_incumplimientos_vivos`
+- [x] 6.6 Añadir la adenda de IV-11 al FINAL de `openspec/config.yaml` → `adendas_incumplimientos_vivos`
   (clave propia), remitida por clave desde la ficha existente de IV-11 en su sitio — sin insertar en
   mitad del fichero (corrección del orquestador del 2026-09-28: `config.yaml` no admite inserción en
   mitad).
-- [ ] 6.7 Barrido completo de la regla de mutación 4 (cierre de la tanda): `grep -rnoE
+- [x] 6.7 Barrido completo de la regla de mutación 4 (cierre de la tanda): `grep -rnoE
   "<fichero>\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio para cada fichero tocado en los seis lotes
   (`repo.ts`, `remision.ts`, `ticketService.ts`, `schema.sql`, `migrate.ts`, `transitions.ts`,
   `transitionExec.ts`, `books/repo.ts`, `eliminarTicket.ts`, `equipoNuevo.ts`, `TicketDetailView.tsx`,
@@ -437,7 +439,7 @@ pruebas (F0-00, `vitest.config.ts:16-20`): sin tareas RED/GREEN para `.tsx`.
   en su sitio: el contenido cambia aunque la línea no se mueva); clasificar A/presente, B/histórico o
   C/superado. Ninguna edición de este cambio desplaza líneas (todo en su sitio o al final), así que el
   barrido es de VERIFICACIÓN de contenido, no de renumeración. **Pendiente conocido (lote 4):** la tabla de destinos de `openspec/specs/transitions-st/spec.md` no incluye `ovAdicional`; corregirla en este barrido. **Pendiente conocido (lote 2):** `openspec/specs/hojas-vida/spec.md:273` cita `equipoNuevo.ts:80-92` para «crea el equipo en transacción», y tras el lote 2 la función ocupa `:80-99` (caso A parcial: el final del rango se queda corto).
-- [ ] 6.8 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir
+- [x] 6.8 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD` del lote; confirmar uno a uno los seis
   criterios de éxito de `proposal.md` §Criterios de éxito.
 
@@ -490,6 +492,8 @@ Dueño, destino y registro en cada una. **Archivar este cambio NO las da por hec
 - **P.3 Comercial** verifica en la app, tras el despliegue del lote 6, que la ficha del ticket lista las
   OV vigentes y liberadas, que el botón «liberar» exige rol Comercial y motivo, y que la lista de
   cuarentena y el saldo por lote se ven correctamente (`ambientalia-desk.ambientalia.cloud`).
+
+- **P.4 Alfonso** ejecuta la consulta 5 de `docs/sdd/Consulta_SubOV_formato_2026-09-27.sql` (sólo lectura, valores distintos y recuento de `order_status` y `status` de `books.sales_orders`) y devuelve la salida; dice qué literales significan borrador y anulada. Desbloquea confirmar S-11 (`saldoPorLote` asume `draft` y `void`, hoy **hipótesis**). No bloquea construir; queda registrado aquí y en `openspec/config.yaml` → `adenda_iv11_asociacion_ov_ticket`. Archivar NO la da por hecha.
 
 ## Dependencias entre lotes
 
