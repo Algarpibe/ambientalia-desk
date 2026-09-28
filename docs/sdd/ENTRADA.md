@@ -955,7 +955,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 
 > Ninguna de las tres tal cual. El problema no es la política sino que nada compara los commits con las fichas: la opción 1 sería una regla sin quien la haga cumplir. Primero, una comprobación nueva en npm run reconcile: commits en main que tocan apps/ o packages/ y que ninguna ficha reclama se listan en el parte. Es barato — el cli.ts ya hace las llamadas a git y el núcleo está hecho para añadir comprobaciones. Y con eso, la regla: si un cambio toca openspec/specs/, lleva ficha; si no, puede ir directo y el barrido lo lista. Este cambio tocaba specs/zoho-sync/spec.md:221, así que debió llevarla, y se le hace una ficha retroactiva. Asumo que cada corte traerá una lista de trabajo sin ficha que hay que leer: si nadie la lee, volvemos al punto de partida.
 
-**Destino:** `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/trabajo-sin-ficha`). CLAUDE.md → R-5 · docs/sdd/ENTRADA.md → E-027, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2
+**Destino:** `openspec/config.yaml` → `decisiones_de_gerencia` (`decision/trabajo-sin-ficha`). CLAUDE.md → R-5 · docs/sdd/ENTRADA.md → E-027, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 La cita a la línea 221 de la spec de zoho-sync que hace la respuesta de Gerencia de arriba se lee contra `e2de125`, la revisión en que se escribió: `openspec/specs/zoho-sync/spec.md:221` en `e2de125` (fila «Zoho Books (rico)»).
 **Engram:** `decision/trabajo-sin-ficha`.
 
 ### E-003 · adenda del 2026-09-24
