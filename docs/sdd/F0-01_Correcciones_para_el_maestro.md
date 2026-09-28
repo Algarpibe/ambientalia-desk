@@ -1012,6 +1012,103 @@ ISO 9001 real en algún otro sitio del sistema — verificado que no está model
 fuera del alcance de esta corrección.
 
 ---
+
+## La de F1A-03 (19)
+
+> **Esta entrada cita la R08.2**, como la 15, la 16, la 17 y la 18.
+
+### 19 · M1.4 — «Seis transiciones» pasan a siete con la salida rechazada de Verificación, y la rama ya está en el código *(F1A-03)*
+
+**Dónde va:** M1.4 «Flujo equipo-nuevo» [AS-IS],
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1491-1515`. Tres partes
+independientes: (a) el recuento de `:1493` y la tabla de `:1494-1514`; (b) la última oración de `:1492`;
+(c) la frase de los caminos de `:1515`.
+
+**Qué cambió en el código.** F1A-03 (`openspec/changes/archive/2026-09-27-salidas-verificacion/`,
+commit `c373bcc`) da a `Verificación` sus dos salidas dentro del catálogo del flujo de equipo nuevo,
+`TRANSITIONS_EQUIPO_NUEVO` (`packages/shared/src/transitions.ts:350-363`), que había construido F1B-06:
+
+- la **aprobada**: `liberacion` amplía su origen a `['En Proceso', 'Verificación']`, hacia `Finalizado`
+  (`packages/shared/src/transitions.ts:359`). Es la fila que el maestro ya tiene en `:1512-1514`;
+- la **rechazada**, nueva: `rechazo_verificacion` («Rechazo de verificación»), de `Verificación` a
+  `Notificado`, área Servicio Técnico (`packages/shared/src/transitions.ts:361`).
+
+La rechazada sale de la respuesta 3 de `decision/p38-verificacion-calidad`
+(`openspec/config.yaml:1967-1986`, respuesta en `:1974`): «Sí, la salida rechazada va a Notificado,
+igual que el único caso de producto no conforme registrado. El volumen esperado es casi nulo; lo que
+importa es que exista.» La consecuencia (5) de esa decisión (`openspec/config.yaml:1981`) la asigna a
+F1A-03.
+
+#### (a) · El recuento y la tabla: siete filas, y hay que decir qué se cuenta
+
+**Texto actual (`:1493`):** «Seis transiciones, cinco estados. [R08.2]»
+
+**Por qué hace falta decir qué se cuenta.** La tabla del maestro pone **una fila por camino**
+(origen → destino): «Liberación» aparece dos veces, desde `En Proceso` (`:1509-1511`) y desde
+`Verificación` (`:1512-1514`). El código declara **seis** transiciones, pero una de ellas, `liberacion`,
+tiene dos orígenes, así que dibuja **siete** caminos. Es la misma convención que la entrada 17 de este
+fichero dejó fijada para el mapa del flujo de servicio: se cuenta una arista por cada elemento de
+`from`, no una por transición declarada. Con la salida rechazada, la tabla del maestro pasa de seis a
+**siete filas**. Los estados siguen siendo **cinco**: `Notificado` ya estaba (`:1502`).
+
+**Texto propuesto para `:1493`:**
+
+> Siete transiciones, cinco estados. Se cuenta una fila por camino: «Liberación» tiene dos orígenes
+> (En Proceso y Verificación), así que en el código son seis transiciones declaradas que dibujan siete
+> caminos.
+
+**Fila nueva, detrás de la última de la tabla (`:1512-1514`):**
+
+| Estado origen | Transición | Estado destino |
+|---|---|---|
+| Verificación | Rechazo de verificación | Notificado |
+
+La marca de revisión de la fila la pone Gerencia al pegarla, con la revisión en la que entre.
+
+#### (b) · «La rama aún no está implementada en la aplicación» (`:1492`) ya no es cierto del código
+
+**Texto actual (`:1492`, última oración):** «La rama aún no está implementada en la aplicación.»
+
+**Por qué hace falta corregirlo.** F1B-06 (`openspec/changes/archive/2026-09-25-blueprint-equipo-nuevo/`,
+commits `0ca870b` y `1b90a80`) construyó el flujo de equipo nuevo, y F1A-03 le dio a `Verificación` sus
+dos salidas (arriba). Las dos están en la rama principal del repositorio. **Lo que NO se puede afirmar
+es que estén en producción**: producción sigue en `ae5aaf4`, verificado el 2026-09-10 por el sha256 del
+bundle, y ese commit no contiene ninguna mención de `Verificación` en `packages/shared/src/transitions.ts`
+(`git show ae5aaf4:packages/shared/src/transitions.ts`, 0 coincidencias). Por eso el texto propuesto
+habla del código y deja la publicación a su paquete de despliegue
+(`docs/sdd/Paquete_de_Despliegue_2026-09-27.md`).
+
+**Texto propuesto, sustituye la oración:**
+
+> Desde F1A-03 (2026-09-27) la rama está construida en el código de la aplicación, con sus dos salidas
+> desde Verificación: la aprobada, por Liberación hacia Finalizado, y la rechazada, hacia Notificado.
+
+#### (c) · «Dos caminos y un bucle» (`:1515`) no nombra la salida rechazada
+
+**Texto actual (`:1515`):** «Dos caminos y un bucle: el normal (Ingresado → En Proceso → Finalizado), el
+desvío a Verificación —del que también se sale a Finalizado por Liberación—, y el bucle de producto no
+conforme […]»
+
+**Texto propuesto, detrás de «—del que también se sale a Finalizado por Liberación—»:**
+
+> —o, si la verificación se rechaza, a Notificado, que devuelve el equipo al mismo bucle de producto no
+> conforme—
+
+**Lo que esta entrada NO pide.**
+
+- **No afirma que exista ninguna guarda de Verificación.** La obligatoriedad de Verificación por tipo de
+  equipo y gas patrón está decidida (`openspec/config.yaml:1972-1973`) pero **no construida**: le faltan
+  dos datos que hoy no existen (`docs/sdd/ENTRADA.md:1187-1192`, E-082). La guarda de certificado en
+  Liberación desde Verificación está sin decidir (`docs/sdd/ENTRADA.md:1194-1199`, E-083). Hoy la
+  aplicación deja liberar un analizador sin pasar por Verificación, igual que Zoho (`:1548`).
+- **No toca `:1520`.** Su «sigue abierto… confirmar la salida rechazada hacia Notificado» quedó resuelto
+  por la misma decisión, y ese cierre ya lo lleva el expediente
+  (`docs/sdd/R08.3_Expediente_de_cambios.md:552`, Anexo D nº 38 de parcial a resuelto). Conviene pegar
+  las dos a la vez para que M1.4 no se contradiga.
+- **No toca `:5125`**, la fila del registro de la R08.2 que dice «Seis transiciones, cinco estados». Es
+  un registro fechado y era cierta en su revisión: caso B de la regla de mutación 4.
+
+---
 ## Qué NO contiene este fichero
 
 - No aplica ningún cambio al `.docx`. Es texto propuesto, no un parche.
