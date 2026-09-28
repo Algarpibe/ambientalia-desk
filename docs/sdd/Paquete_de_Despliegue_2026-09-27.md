@@ -193,10 +193,10 @@ y todo su contenido se puede volver a traer de Zoho. Hipótesis: rehacerlo cuest
 (`Dockerfile:19-22`), porque `package.json` tiene ahora un script `prepare` que corre
 `scripts/instalar-hooks.mjs` en cada `npm ci`. Ese script **nunca falla `npm ci`**: sin `.git` o sin
 binario `git` sale con 0 (`scripts/instalar-hooks.mjs:19-23`), y `.git` no entra en la imagen
-(`.dockerignore`). **La imagen de producción no se ha construido nunca con este `Dockerfile`**: producción
-es `ae5aaf4`, anterior a `f962e81`, y en esta sesión no se pudo construir en local (el demonio de Docker no
-estaba en marcha). Así que lo razonado arriba es lectura del código, no una construcción observada. **Si
-el Deploy falla en la fase de build**, mirar primero el `npm ci` y este `COPY`.
+(`.dockerignore`). **Construida en local el 2026-09-27 sobre `10453a9`** (Docker 29.6.2, `--no-cache`, sin
+publicar): salida 0; en las dos etapas `npm ci` corre `prepare` → `node scripts/instalar-hooks.mjs` sin error y
+termina (167 y 562 paquetes); `docker run --rm --network none … npx tsx --version` da `tsx v4.22.4`, así que va
+en la imagen. La de EasyPanel sigue sin construirse: **si el Deploy falla en el build**, mirar el `npm ci` y este `COPY`.
 
 ### 4.4 · Comprobar que producción está en el commit publicado
 
@@ -524,8 +524,8 @@ No bloquean nada; se listan para que no se pierdan.
 `Verificación` sin ninguna transición. Los dos van juntos en `dcb5c99`, así que el paquete es seguro
 **entero**. **No publicar un commit intermedio** entre `1b90a80` (F1B-06) y `c373bcc` (F1A-03).
 
-**Lo que no bloquea pero no se ha podido comprobar:** la construcción de la imagen con el `Dockerfile`
-nuevo (§4.3) y la versión que corre hoy el worker (§4.2).
+**Lo que no bloquea pero no se ha podido comprobar:** la versión que corre hoy el worker (§4.2). La imagen
+con el `Dockerfile` nuevo SÍ se construyó en local sobre `10453a9`, con salida 0 (§4.3).
 
 ---
 
