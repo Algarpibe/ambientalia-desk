@@ -62,31 +62,31 @@ paralelo. `verify`/`archive` son intentos aparte del ledger.
 
 Módulo nuevo, sin cita previa: `packages/zoho-sync/src/db/ovAsociaciones.ts`.
 
-- [ ] 1.1 RED — `packages/zoho-sync/src/db/ovAsociaciones.test.ts` (nuevo): `asociarOV` crea una fila
+- [x] 1.1 RED — `packages/zoho-sync/src/db/ovAsociaciones.test.ts` (nuevo): `asociarOV` crea una fila
   vigente; una segunda `asociarOV` con el mismo `numero`/`salesorderId` para otro ticket lanza `23505`.
   RQ: `tickets-core` RQ-TC-17, escenario «Segunda asociación vigente… rechazada por la base».
-- [ ] 1.2 Confirmar rojo natural (tabla/módulo inexistentes).
-- [ ] 1.3 GREEN — `schema.sql`, al final (tras `:525`): `CREATE TABLE IF NOT EXISTS public.ov_asociaciones (…)` +
+- [x] 1.2 Confirmar rojo natural (tabla/módulo inexistentes).
+- [x] 1.3 GREEN — `schema.sql`, al final (tras `:525`): `CREATE TABLE IF NOT EXISTS public.ov_asociaciones (…)` +
   `idx_ov_asoc_numero_vigente` + `idx_ov_asoc_so_vigente` (ambos `WHERE liberada_at IS NULL`) +
   `idx_ov_asoc_ticket` (`design.md` §1, bloque SQL).
-- [ ] 1.4 GREEN — `migrate.ts:73` en su sitio: añadir `'ov_asociaciones'` al final del array `PUBLIC_TABLES`.
-- [ ] 1.5 GREEN — crear `ovAsociaciones.ts`: `asociarOV(q, {ticketId, numero, salesorderId, origen, actor, fechaOrdenCompra})`
+- [x] 1.4 GREEN — `migrate.ts:73` en su sitio: añadir `'ov_asociaciones'` al final del array `PUBLIC_TABLES`.
+- [x] 1.5 GREEN — crear `ovAsociaciones.ts`: `asociarOV(q, {ticketId, numero, salesorderId, origen, actor, fechaOrdenCompra})`
   — `INSERT` idempotente (si ya hay vigente igual `numero`+`ticketId`, no-op); `listarAsociaciones(db, ticketId)`.
-- [ ] 1.6 Confirmar 1.1 en verde.
-- [ ] 1.7 RED — `ovAsociaciones.test.ts`: `liberarAsociacion` conserva la fila con fecha/persona/motivo
+- [x] 1.6 Confirmar 1.1 en verde.
+- [x] 1.7 RED — `ovAsociaciones.test.ts`: `liberarAsociacion` conserva la fila con fecha/persona/motivo
   de liberación y deja de contar como vigente. RQ-TC-19, escenario «Liberar conserva la fila con su motivo».
-- [ ] 1.8 RED — `ovAsociaciones.test.ts`: tras liberar, una `asociarOV` con el mismo `numero`/`salesorderId`
+- [x] 1.8 RED — `ovAsociaciones.test.ts`: tras liberar, una `asociarOV` con el mismo `numero`/`salesorderId`
   a otro ticket NO lanza `23505`. RQ-TC-19, escenario «Tras liberar, la OV es reasociable».
-- [ ] 1.9 Confirmar 1.7/1.8 en rojo (`liberarAsociacion` no existe).
-- [ ] 1.10 GREEN — `ovAsociaciones.ts`: `liberarAsociacion(q, id, actor, motivo)` — `UPDATE ... SET
+- [x] 1.9 Confirmar 1.7/1.8 en rojo (`liberarAsociacion` no existe).
+- [x] 1.10 GREEN — `ovAsociaciones.ts`: `liberarAsociacion(q, id, actor, motivo)` — `UPDATE ... SET
   liberada_at=now(), liberada_por=$2, motivo_liberacion=$3 WHERE id=$1 AND liberada_at IS NULL RETURNING *`;
   `liberarAsociacionesDeTicket(q, ticketId, motivo)` para el escritor de `eliminarTicket.ts` (lote 2).
-- [ ] 1.11 Confirmar 1.7/1.8 en verde.
-- [ ] 1.12 MUTACIÓN (regla 2, fichero vigilado) — ensuciar `schema.sql` quitando `WHERE liberada_at IS
+- [x] 1.11 Confirmar 1.7/1.8 en verde.
+- [x] 1.12 MUTACIÓN (regla 2, fichero vigilado) — ensuciar `schema.sql` quitando `WHERE liberada_at IS
   NULL` de `idx_ov_asoc_numero_vigente`; correr 1.8 y confirmar que se pone ROJA (sin el `WHERE`, el
   índice deja de discriminar por vigencia y la reasociación tras liberar vuelve a chocar); revertir;
   `git diff` limpio.
-- [ ] 1.13 Cierre del lote: `npx vitest run packages/zoho-sync/src/db/ovAsociaciones.test.ts
+- [x] 1.13 Cierre del lote: `npx vitest run packages/zoho-sync/src/db/ovAsociaciones.test.ts
   packages/zoho-sync/src/db/migrate.test.ts`; `npm run typecheck`; `eslint --max-warnings 165`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD`; barrido de citas (regla de mutación 4) sobre
   `schema.sql` (0 citas vivas esperadas, `design.md` §6) y `migrate.ts` (2 citas vivas: `tickets-core

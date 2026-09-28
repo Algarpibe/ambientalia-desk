@@ -523,3 +523,32 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad boolean;
 -- AL FINAL del fichero para no desplazar las citas schema.sql:3xx-4xx (regla de mutacion 4)
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS ov_elegida_en_app_at timestamptz;
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS ov_zoho_avisada text;
+
+-- asociacion-ov-ticket (F1B-11, cambio 2 de 3): modelo 1 ticket : N OV, en tabla propia. CALIFICADA A
+-- PROPOSITO: es dato propio de la app (public.remisiones ya apunta a tickets por ticket_id text sin
+-- FK, schema.sql:271-288). DESK_TABLES (migrate.ts:63-64) es el dominio de Zoho Desk.
+--
+-- Sin FK a tickets, mismo caso que public.remisiones: ticket_id llega de tickets creados por la app
+-- o por Zoho, y no hay garantia de orden entre las dos escrituras
+--
+-- Nunca hay DELETE sobre esta tabla: liberar es un UPDATE de la misma fila (RQ-TC-19), nunca un
+-- borrado. numero guarda el numero de OV congelado al asociar (no cambia si Books renumera despues).
+-- salesorder_id puede ser NULL si el numero tecleado no resuelve en Books (S-12)
+--
+-- AL FINAL del fichero para no desplazar las citas schema.sql:3xx-4xx (regla de mutacion 4)
+CREATE TABLE IF NOT EXISTS public.ov_asociaciones (
+  id bigserial PRIMARY KEY,
+  ticket_id text NOT NULL,
+  numero text NOT NULL,              -- numero congelado al asociar
+  salesorder_id text,                -- id de Books, NULL si el numero no resolvio (S-12)
+  origen text NOT NULL,              -- alta | habilitar_servicio | remision | aprobacion | aprobacion_y_repuestos
+  asociada_at timestamptz NOT NULL DEFAULT now(),
+  asociada_por text,
+  fecha_orden_compra date,           -- S-5
+  liberada_at timestamptz,
+  liberada_por text,
+  motivo_liberacion text
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ov_asoc_numero_vigente ON public.ov_asociaciones (numero) WHERE liberada_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ov_asoc_so_vigente ON public.ov_asociaciones (salesorder_id) WHERE liberada_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_ov_asoc_ticket ON public.ov_asociaciones (ticket_id);
