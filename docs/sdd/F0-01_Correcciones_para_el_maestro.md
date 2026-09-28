@@ -1029,7 +1029,7 @@ commit `c373bcc`) da a `Verificación` sus dos salidas dentro del catálogo del 
 `TRANSITIONS_EQUIPO_NUEVO` (`packages/shared/src/transitions.ts:350-363`), que había construido F1B-06:
 
 - la **aprobada**: `liberacion` amplía su origen a `['En Proceso', 'Verificación']`, hacia `Finalizado`
-  (`packages/shared/src/transitions.ts:359`). Es la fila que el maestro ya tiene en `:1512-1514`;
+  (`packages/shared/src/transitions.ts:359`). Es la fila que el maestro ya tiene en `R08.2.md:1512-1514`;
 - la **rechazada**, nueva: `rechazo_verificacion` («Rechazo de verificación»), de `Verificación` a
   `Notificado`, área Servicio Técnico (`packages/shared/src/transitions.ts:361`).
 
