@@ -4,8 +4,8 @@ import { clasificarOV, motivoCuarentena, erroresCuarentena, esCuarentena } from 
 /**
  * Clasificador de subOV (asociacion-ov-ticket, lote 4; RQ-TC-18). Regla, tras `trim`:
  *   1. `^OV-(\d{4})-(\d{3,4})-(\d{2})$`  → subOV canónica, lote `OV-AAAA-NNN(N)`.
- *   2. `^OVI?-\d{4}-\d{3,4}$`            → ordinaria (OV u OVI simple).
- *   3. esa base SEGUIDA DE CUALQUIER OTRO sufijo → cuarentena (S-2). Una OVI nunca tiene subOV canónica, así
+ *   2. `^OVI?-\d{4}-\d{3,}$`             → ordinaria (OV u OVI simple; 5+ dígitos sin sufijo también).
+ *   3. esa base SEGUIDA DE UN SUFIJO (resto que empieza por no-dígito) → cuarentena (S-2). Una OVI nunca tiene subOV canónica, así
  *      que `OVI-…` con sufijo es cuarentena aunque el sufijo sea de dos dígitos (S-8).
  *   4. cualquier otro formato → ordinaria (no es asunto del clasificador).
  */
@@ -19,10 +19,14 @@ describe('clasificarOV · tabla de casos', () => {
     expect(clasificarOV(numero)).toEqual({ tipo: 'subov', lote, sufijo })
     expect(motivoCuarentena(numero)).toBeNull()
   })
+  it('OV-2026-170-01 → subOV del lote OV-2026-170, sufijo 01', () => {
+    expect(clasificarOV('OV-2026-170-01')).toEqual({ tipo: 'subov', lote: 'OV-2026-170', sufijo: '01' })
+  })
 
   const ordinarias: unknown[] = [
     'OV-2026-001', 'OV-2026-0001', 'OVI-2026-001', '  OV-2026-001  ', // la base simple, con o sin espacios
     'SO-00123', 'OV-26-001', 'ov-2026-001-X9', '', '   ', null, undefined, 42, // otro formato o no-texto
+    'OV-2026-00123', 'OVI-2026-00123', 'OV-2026-001234', 'OV-2026-170', 'OVI-2026-170', // 5+ dígitos SIN sufijo: no hay resto no numérico (S-2 pone en cuarentena sólo «con sufijo»)
   ]
   it.each(ordinarias)('%j → ordinaria', (numero) => {
     expect(clasificarOV(numero)).toEqual({ tipo: 'ordinaria' })
@@ -42,6 +46,12 @@ describe('clasificarOV · tabla de casos', () => {
     ['OV-2026-001_01', 'separador distinto de guion'],
     ['OV-2026-001A', 'letra pegada a la base'],
     ['  OV-2026-001-X9  ', 'con espacios en los bordes, tras el trim sigue siendo no canónico'],
+    ['OV-2026-00123-01', 'tiene sufijo y su base de cinco dígitos no casa la subOV, que sigue exacta: consecuencia declarada, S-2 literal'],
+    ['OV-2026-170-1', 'lote 170, sufijo de un dígito'],
+    ['OV-2026-170_1', 'lote 170, separador distinto de guion'],
+    ['OV-2026-170-001', 'lote 170, sufijo de tres dígitos'],
+    ['OVI-2026-170-01', 'lote 170, OVI con sufijo (S-8)'],
+    ['OV-2026-170-01-', 'resto que empieza por no-dígito tras un sufijo válido'],
   ]
   it.each(cuarentena)('%s → cuarentena (%s)', (numero) => {
     const c = clasificarOV(numero)

@@ -407,3 +407,51 @@ Las citas de `archive/` y `config.yaml:579` a `ticketService.ts:134-135` son his
 ### Status
 
 **27/27 tareas del lote 4 completas (4.0a-4.0e y 4.1-4.22).** Siguiente: lote 5 (API de servidor).
+
+---
+
+## Lote 5 · API de servidor
+
+### 5.0a-5.0c · Corrección del clasificador (SUPERA la desviación 2 del lote 4, que queda como registro histórico, caso B)
+
+S-2 pone en cuarentena SÓLO «una OV con sufijo que no cumpla la expresión» (`Decisiones_Gerencia_2026-09-10.md:459-461`; expresión canónica en `Consulta_SubOV_formato_2026-09-27.sql:15`).
+El clasificador del lote 4 leía `OV-2026-00123` como base `OV-2026-0012` + resto `3` y la ponía en cuarentena, sin sufijo alguno. Regla corregida: **sufijo = resto que EMPIEZA por un no-dígito tras la base `OVI?-AAAA-NNN…`**.
+
+- RED (`subOV.test.ts`): `OV-2026-00123`, `OVI-2026-00123`, `OV-2026-001234` → ordinaria. Rojo: `expected { tipo: 'cuarentena', …(1) } to deeply equal { tipo: 'ordinaria' }`, 3 fallos.
+  Las demás filas nuevas (`OV-2026-170`/`OVI-2026-170` ordinarias; `OV-2026-00123-01`, `-170-1`, `_1`, `-001`, `OVI-…-170-01` cuarentena; `OV-2026-170-01` subOV del lote `OV-2026-170`) **nacieron VERDES**: guardas de regresión.
+- GREEN (`subOV.ts:24-25`): `BASE = /^OVI?-\d{4}-\d{3,}$/`, `BASE_CON_RESTO = /^OVI?-\d{4}-\d{3,}[^\d][\s\S]*$/`; `SUBOV` intacta. Cabecera reescrita en su sitio (4→4 líneas). 39/39.
+- Consecuencia declarada, S-2 literal: `OV-2026-00123-01` tiene sufijo y su base de cinco dígitos no casa la subOV (exacta) → cuarentena.
+- Docs en su sitio: `design.md:133`, `design.md:135` (`limit * 3` SIEMPRE, aceptado por Gerencia en la revisión del lote 4; mayúsculas aceptado), `specs/tickets-core/spec.md` RQ-TC-18 (+1 línea).
+- Citas: nadie cita `subOV.ts:N` (barrido `subOV\.ts:[0-9]+`: 0 resultados).
+
+### 5.1-5.22 · Saldo, rutas y matriz de permisos
+
+**Supuesto del escenario del saldo (orquestador, 2026-09-28, reversible).** La spec decía «cinco subOV: dos vigentes, dos libres, una en cuarentena → 5/2/2/40 %», incoherente (libres = creadas − consumidas). Gerencia fija sólo la fórmula (`Decisiones_Gerencia_2026-09-10.md:472`) y que la cuarentena no suma ni resta (`:459-461`). Se corrigió EN SITIO (`specs/zoho-sync/spec.md:35-38`, `tasks.md` 5.1): cinco subOV canónicas —dos vigentes, tres libres— y una sexta en cuarentena → **5/2/3/40 %**. Una subOV en cuarentena (`OV-2026-170-X9`) no tiene lote canónico según SUBOV: nunca entra en el saldo de ningún lote (sólo cuentan las canónicas del lote pedido) y sale en `listarCuarentena`.
+**S-11, HIPÓTESIS:** los literales de estado son `'draft'` y `'void'`. Verificado en el repo: `status NOT IN ('void','draft')` (`booksHub/salesRecords.ts:9`) y `order_status = 'open'` (`books/repo.ts:171`); ningún fichero fija los literales de `order_status`. `books/subOV.ts` comprueba `order_status` y `status`; lo declara en su comentario.
+**Lecturas** (supuesto reversible): cualquier usuario con sesión (`requireAuth`); leer no decide nada y la ficha la ve Servicio Técnico. `app.ts`: import en la misma línea `:22`, llamada nueva en `:61`; nada más.
+**Áreas:** `areasForTransition('Comercial')` → `['Comercial']` (`transitions.ts:313`, parte por `' / '`); `canExecuteTransition` exige que `user.areas` incluya `'Comercial'` (`permissions.ts:4-6`). Las áreas de usuario son las BASE (`AREAS`, `transitions.ts:310`), no hay valor `'Comercial / Compras'`: un usuario `['Comercial','Compras']` SÍ libera; uno `['Compras']` solo, NO.
+
+| Endpoint | sin sesión | Servicio Técnico | Compras sola | Comercial | Comercial+Compras | admin |
+|---|---|---|---|---|---|---|
+| `PUT …/:id/liberar` | 401 | 403 (fila intacta) | 403 (fila intacta) | 200 | 200 | 200 |
+| `GET /api/tickets/:id/ov-asociaciones` | 401 | 200 | 200 | 200 | 200 | 200 |
+| `GET /api/ov-asociaciones/cuarentena` | 401 | 200 | 200 | 200 | 200 | 200 |
+| `GET /api/ov-asociaciones/saldo/:lote` | 401 | 200 | 200 | 200 | 200 | 200 |
+
+Prueba de cada celda: `routes/ovAsociaciones.test.ts`, `describe` «PUT … · matriz por área» y «GET … · matriz por área» (un `it` por rol: `sin sesión`, `Servicio Técnico`, `Compras sola`, `Comercial`, `Comercial + Compras`, `administrador`). La celda «GET ficha, sin sesión» **nació verde** (el 401 ya lo daba el montaje de `/api/tickets`), y «A: 404» también.
+Escalera: `A: inexistente → 404 aunque…`, `sin Comercial Y motivo vacío → 403, no 422`, `sin Comercial Y ya liberada → 403, no 409`, `ya liberada Y motivo vacío (Comercial) → 409, no 422`, `C: motivo … → 422`.
+
+**Mutaciones (todas revertidas, `cmp` idéntico):**
+
+| | Mutación | Rojo |
+|---|---|---|
+| M1 (posición) | 403 tras el 422 | `sin Comercial Y motivo vacío → 403, no 422`: `expected 422 to be 403`; `…ya liberada → 403, no 409`: `expected 409 to be 403` |
+| M2 (posición) | 409 tras el 422 | `ya liberada Y motivo vacío (Comercial) → 409, no 422`: `expected 422 to be 409` |
+| M3 | sin comprobación de permiso | `matriz … Servicio Técnico` y `Compras sola`: `expected 200 to be 403` (+2 de la escalera) |
+| M4 (rule 2) | saldo cuenta draft/void | `S-11: una subOV en borrador y otra anulada no cuentan como creadas` |
+
+**Regla 13, servidor:** «botón liberar sólo Comercial» → `routes/ovAsociaciones.ts` (`canExecuteTransition`, consumida de `@ambientalia/shared`); «motivo obligatorio» → mismo fichero, 422 tras `trim`; «desplegable oculta usadas y cuarentena» → `books/repo.ts:159-176` (lote 4). Sin línea de servidor: filtro por cliente (IV-8, declarado).
+
+### Status
+
+Lote 5 completo: 3 + 22 tareas. Nacieron verdes (además de las celdas citadas): `un lote sin subOV`, `sin salesorder_id se reconoce por número`, `cuarentena fuera del buscador` (reutiliza 4.20, tarea 5.6).

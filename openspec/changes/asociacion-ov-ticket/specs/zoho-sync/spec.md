@@ -32,10 +32,10 @@ consumidas (con asociación vigente) y libres, y el porcentaje ejecutado. Las su
 
 #### Scenario: El saldo del lote cuenta correctamente
 
-- GIVEN un lote con cinco subOV: dos con asociación vigente, dos libres y una en cuarentena
+- GIVEN un lote con cinco subOV canónicas —dos con asociación vigente y tres libres— y una sexta en cuarentena
 - WHEN se calcula el saldo del lote
-- THEN reporta 5 creadas, 2 consumidas, 2 libres y 40 % ejecutado, con la de cuarentena fuera del
-  recuento
+- THEN reporta 5 creadas, 2 consumidas, 3 libres y 40 % ejecutado; la de cuarentena, fuera del
+  recuento y en la lista de cuarentena (supuesto del orquestador, 2026-09-28: Gerencia fija sólo la fórmula, `Decisiones_Gerencia_2026-09-10.md:472`, y que la cuarentena no suma ni resta, `:459-461`)
 
 ## Fuera de alcance de este delta
 

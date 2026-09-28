@@ -90,7 +90,8 @@ también la fila de asociación, en la misma transacción que su escritura de co
 en cuarentena: **cuarentena** es exactamente un número con sufijo que **no** casa
 `^OV-(\d{4})-(\d{3,4})-(\d{2})$` (`decision/subov-lote-convencion`, 2026-09-10,
 `Decisiones_Gerencia_2026-09-10.md:459-461`). Una OV simple `OV-AAAA-NNN` y una `OVI-` **MUST NOT**
-clasificarse en cuarentena.
+clasificarse en cuarentena. «Sufijo» es un resto que EMPIEZA por un no-dígito tras la base
+`OV(I)-AAAA-NNN…`: una secuencia de cinco o más dígitos sin sufijo (`OV-2026-00123`) no es cuarentena.
 
 Una OV en cuarentena **MUST NOT** poder asociarse a ningún ticket por ninguna de las tres puertas: el
 alta la rechaza con `422` en el **escalón C** —contenido—, evaluado **antes** de la comprobación de

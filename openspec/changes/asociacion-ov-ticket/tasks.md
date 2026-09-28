@@ -345,43 +345,46 @@ Ningún fichero de la lista de "muy citados" del orquestador se toca en este lot
 nuevos: `books/subOV.ts`, `routes/ovAsociaciones.ts`, registro en `app.ts` tras `:60` — 0 citas vivas
 ancladas ahí según `design.md` §6, así que el registro no desplaza nada citable).
 
-- [ ] 5.1 RED — `packages/zoho-sync/src/books/subOV.test.ts` (nuevo): `saldoPorLote(db, lote)` con 5
-  subOV del lote (2 con asociación vigente, 2 libres, 1 en cuarentena) devuelve `{creadas:5,
-  consumidas:2, libres:2, ejecutado:40}`, con la de cuarentena fuera del recuento. RQ: `zoho-sync`
-  RQ-ZS-14, escenario 3.
-- [ ] 5.2 Confirmar rojo natural.
-- [ ] 5.3 GREEN — crear `books/subOV.ts`: `listarCuarentena(db)`, `saldoPorLote(db, lote)` sobre
+- [x] 5.0a RED — corrección del clasificador (S-2 pone en cuarentena SÓLO «una OV con sufijo que no cumpla la expresión», `Decisiones_Gerencia_2026-09-10.md:459-461`): `packages/shared/src/subOV.test.ts` gana `OV-2026-00123`, `OVI-2026-00123`, `OV-2026-001234` → ordinaria (más `OV-2026-170`, `OVI-2026-170`) y `OV-2026-00123-01`, `OV-2026-170-1`, `OV-2026-170_1`, `OV-2026-170-001`, `OVI-2026-170-01` → cuarentena. Rojo: `expected { tipo: 'cuarentena', …(1) } to deeply equal { tipo: 'ordinaria' }` (3 fallos).
+- [x] 5.0b GREEN — `subOV.ts:24-25`: `BASE = ^OVI?-\d{4}-\d{3,}$`, `BASE_CON_RESTO = ^OVI?-\d{4}-\d{3,}[^\d][\s\S]*$`; `SUBOV` intacta; cabecera reescrita en su sitio (mismas líneas). 39/39 en verde.
+- [x] 5.0c Docs en su sitio: `design.md:133` (regla), `design.md:135` (`:163` pide `limit * 3` SIEMPRE, aceptado en la revisión del lote 4; mayúsculas aceptado), `specs/tickets-core/spec.md` RQ-TC-18 (definición de «sufijo»). El texto del lote 4 de `apply-progress.md` queda como está (histórico, caso B): esta corrección lo SUPERA.
+- [x] 5.1 RED — `packages/zoho-sync/src/books/subOV.test.ts` (nuevo): `saldoPorLote(db, lote)` con cinco
+  subOV canónicas del lote (2 con asociación vigente, 3 libres) y una sexta en cuarentena devuelve `{creadas:5,
+  consumidas:2, libres:3, ejecutado:40}`, con la de cuarentena fuera del recuento y dentro de `listarCuarentena`.
+  Supuesto (orquestador, 2026-09-28): el escenario original (5/2/2/40) era incoherente. RQ: `zoho-sync` RQ-ZS-14, escenario 3.
+- [x] 5.2 Confirmar rojo natural.
+- [x] 5.3 GREEN — crear `books/subOV.ts`: `listarCuarentena(db)`, `saldoPorLote(db, lote)` sobre
   `books.sales_orders` con `order_status` distinto de borrador/anulada (S-11); cuarentena filtrada en TS.
-- [ ] 5.4 Confirmar 5.1 en verde.
-- [ ] 5.5 RED — `books/subOV.test.ts`: una subOV en cuarentena no aparece ni en `soloLibres` ni en el
+- [x] 5.4 Confirmar 5.1 en verde.
+- [x] 5.5 RED — `books/subOV.test.ts`: una subOV en cuarentena no aparece ni en `soloLibres` ni en el
   saldo del lote. RQ-ZS-14, escenario 2.
-- [ ] 5.6 Confirmar en verde (reutiliza 4.20 del lote 4 + 5.3, sin GREEN adicional).
-- [ ] 5.7 RED — `apps/desk/server/routes/ovAsociaciones.test.ts` (nuevo, arnés `appHarness`):
+- [x] 5.6 Confirmar en verde (reutiliza 4.20 del lote 4 + 5.3, sin GREEN adicional).
+- [x] 5.7 RED — `apps/desk/server/routes/ovAsociaciones.test.ts` (nuevo, arnés `appHarness`):
   `GET /api/tickets/:id/ov-asociaciones` devuelve vigentes y liberadas, distinguibles por su estado. RQ:
   `tickets-core` RQ-TC-20, escenario 1.
-- [ ] 5.8 Confirmar rojo natural (ruta inexistente).
-- [ ] 5.9 GREEN — crear `routes/ovAsociaciones.ts`: `registerOvAsociacionesRoutes(app, {db})` con
+- [x] 5.8 Confirmar rojo natural (ruta inexistente).
+- [x] 5.9 GREEN — crear `routes/ovAsociaciones.ts`: `registerOvAsociacionesRoutes(app, {db})` con
   `GET /api/tickets/:id/ov-asociaciones` (`listarAsociaciones`); registrar en `app.ts` tras `:60`
   (import + llamada).
-- [ ] 5.10 Confirmar 5.7 en verde.
-- [ ] 5.11 RED — `ovAsociaciones.test.ts`: liberar sin rol Comercial responde `403` y la fila no cambia
+- [x] 5.10 Confirmar 5.7 en verde.
+- [x] 5.11 RED — `ovAsociaciones.test.ts`: liberar sin rol Comercial responde `403` y la fila no cambia
   (escalera F1B-10: A `404` inexistente < B `403`/`409` < C `422` motivo vacío). RQ-TC-19, escenario 2.
-- [ ] 5.12 Confirmar rojo natural.
-- [ ] 5.13 GREEN — `PUT /api/ov-asociaciones/:id/liberar`: `404` si no existe;
+- [x] 5.12 Confirmar rojo natural.
+- [x] 5.13 GREEN — `PUT /api/ov-asociaciones/:id/liberar`: `404` si no existe;
   `canExecuteTransition(user.areas, user.isAdmin, 'Comercial')` → `403`; `409` si ya liberada; `422` si
   `motivo` vacío tras `trim`; si no, `liberarAsociacion`.
-- [ ] 5.14 Confirmar 5.11 en verde.
-- [ ] 5.15 RED — `ovAsociaciones.test.ts`: motivo vacío → `422`; liberar una ya liberada → `409`;
+- [x] 5.14 Confirmar 5.11 en verde.
+- [x] 5.15 RED — `ovAsociaciones.test.ts`: motivo vacío → `422`; liberar una ya liberada → `409`;
   liberar con rol Comercial y motivo válido → `200` con la fila actualizada.
-- [ ] 5.16 Confirmar rojo natural.
-- [ ] 5.17 Confirmar 5.15 en verde (mismo GREEN de 5.13, sin GREEN adicional).
-- [ ] 5.18 RED — `ovAsociaciones.test.ts`: `GET /api/ov-asociaciones/cuarentena` y
+- [x] 5.16 Confirmar rojo natural.
+- [x] 5.17 Confirmar 5.15 en verde (mismo GREEN de 5.13, sin GREEN adicional).
+- [x] 5.18 RED — `ovAsociaciones.test.ts`: `GET /api/ov-asociaciones/cuarentena` y
   `GET /api/ov-asociaciones/saldo/:lote` devuelven `listarCuarentena`/`saldoPorLote`.
-- [ ] 5.19 Confirmar rojo natural.
-- [ ] 5.20 GREEN — registrar las dos rutas de lectura (`requireAuth`, sin restricción de rol: son de
+- [x] 5.19 Confirmar rojo natural.
+- [x] 5.20 GREEN — registrar las dos rutas de lectura (`requireAuth`, sin restricción de rol: son de
   sólo lectura para Comercial y quien consulte).
-- [ ] 5.21 Confirmar 5.18 en verde.
-- [ ] 5.22 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; medir
+- [x] 5.21 Confirmar 5.18 en verde.
+- [x] 5.22 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD`; barrido de citas sobre `app.ts` (0 citas
   vivas ancladas — comprobar por lectura la hipótesis de `design.md` §6 sobre las tres menciones de
   `Triaje_Linea_Base_Citas_2026-09-15.md:71-73`).

@@ -7,10 +7,10 @@
  *
  * Regla, tras `trim` (las tres ramas, en este orden):
  *   1. `^OV-(\d{4})-(\d{3,4})-(\d{2})$`  → `subov`, con el lote `OV-AAAA-NNN(N)` y el sufijo.
- *   2. `^OVI?-\d{4}-\d{3,4}$`            → `ordinaria` (OV u OVI simple).
- *   3. esa base seguida de CUALQUIER otro resto → `cuarentena`. Una `OVI` nunca tiene subOV canónica, así que
- *      `OVI-…-01` es cuarentena (S-8). Consecuencia declarada: una secuencia de cinco dígitos (`OV-2026-00123`)
- *      es la base `OV-2026-0012` más el resto `3`, y también cae aquí.
+ *   2. `^OVI?-\d{4}-\d{3,}$`            → `ordinaria` (OV u OVI simple; cinco o más dígitos SIN sufijo también).
+ *   3. `^OVI?-\d{4}-\d{3,}[^\d]…`       → `cuarentena`: sufijo = resto que EMPIEZA por un no-dígito tras la base. Una
+ *      `OVI` nunca tiene subOV canónica, así que `OVI-…-01` es cuarentena (S-8). Consecuencia declarada:
+ *      `OV-2026-00123-01` tiene sufijo y su base de cinco dígitos no casa la subOV (exacta), luego es cuarentena.
  *   4. cualquier otro formato (`SO-00123`, vacío, no-texto) → `ordinaria`: no es asunto de este clasificador.
  *
  * Es sensible a mayúsculas, como el resto de comparaciones de número de OV del repositorio.
@@ -21,8 +21,8 @@
  */
 
 const SUBOV = /^OV-(\d{4})-(\d{3,4})-(\d{2})$/
-const BASE = /^OVI?-\d{4}-\d{3,4}$/
-const BASE_CON_RESTO = /^OVI?-\d{4}-\d{3,4}[\s\S]+$/
+const BASE = /^OVI?-\d{4}-\d{3,}$/
+const BASE_CON_RESTO = /^OVI?-\d{4}-\d{3,}[^\d][\s\S]*$/
 
 export type ClasificacionOV =
   | { tipo: 'ordinaria' }
