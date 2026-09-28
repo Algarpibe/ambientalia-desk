@@ -157,8 +157,8 @@ export async function searchSalesOrders(db: Queryable, q: string, clientId?: str
    * columna sin rellenar — que es el caso de casi todos.
    */
   const libresFilter = soloLibres
-    ? `AND so.id NOT IN (SELECT salesorder_id FROM tickets WHERE salesorder_id IS NOT NULL)
-       AND so.number NOT IN (SELECT orden_venta FROM tickets WHERE COALESCE(orden_venta,'') <> '')`
+    ? `AND so.id NOT IN (SELECT salesorder_id FROM tickets WHERE salesorder_id IS NOT NULL) AND so.id NOT IN (SELECT salesorder_id FROM ov_asociaciones WHERE liberada_at IS NULL AND salesorder_id IS NOT NULL)
+       AND so.number NOT IN (SELECT orden_venta FROM tickets WHERE COALESCE(orden_venta,'') <> '') AND so.number NOT IN (SELECT numero FROM ov_asociaciones WHERE liberada_at IS NULL)`
     : ''
   params.push(limit)
   // Solo las OVs que en Zoho salen con "Estado de pedido" = Confirmado (`order_status = 'open'`):

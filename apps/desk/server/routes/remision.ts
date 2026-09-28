@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist, faltaFotoPorNovedad } from '@ambientalia/shared'
-import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
+import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'
 import { checklistDeRemision } from '../db/checklistRemision'
@@ -220,12 +220,12 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       if (!ov) { res.status(422).json({ error: 'Orden de venta no encontrada' }); return }
       /*
        * TERCERA PUERTA de «una OV, un ticket» (IV-4, RQ-RE-16). Transitoria: se retira el día en que
-       * la tabla propia con `salesorder_id` como PRIMARY KEY (`Decisiones_Gerencia_2026-09-10.md:147-150`)
-       * sustituya a las tres guardas de aplicación; retirar sólo ésta sin retirar las otras dos sería
-       * el defecto. Las DOS vías son requisito, no preferencia: el sync puede dejar a un ticket con
-       * sólo una de las dos columnas vigente (IV-11, fuera de alcance), y comprobar sólo por número
-       * dejaría ese ticket sin protección. El propio ticket va excluido: reenviar la misma orden al
-       * mismo ticket no es duplicarla.
+       * los índices únicos parciales de `ov_asociaciones` (`numero` y `salesorder_id`, los dos con
+       * `WHERE liberada_at IS NULL`) sustituyan a las guardas de aplicación; retirar sólo ésta sin
+       * retirar las otras dos sería el defecto. Las TRES vías son requisito, no preferencia: el sync
+       * puede dejar a un ticket con sólo una de las dos columnas vigente (IV-11, fuera de alcance), y
+       * la asociación vigente cubre lo que ninguna columna dice. El propio ticket va excluido:
+       * reenviar la misma orden al mismo ticket no es duplicarla.
        */
       const enUso = await ticketConOrdenVenta(db, { salesorderId: ov.id, numero: ov.number }, ticketId)
       if (enUso) {
@@ -236,11 +236,11 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       // protege estas dos columnas de la siguiente pasada del sincronizador (`zoho-sync` RQ-ZS-01
       // modificado). Si el WHERE no casa (ya tenía OV), la marca tampoco se pone: no hay nada nuevo
       // que proteger.
-      await db.query(
+      const fijada = await db.query(
         `UPDATE tickets SET orden_venta = $2, fecha_orden_venta = $3, salesorder_id = $4, ov_elegida_en_app_at = now(), updated_at = now()
-          WHERE id = $1 AND COALESCE(orden_venta, '') = ''`,
+          WHERE id = $1 AND COALESCE(orden_venta, '') = '' RETURNING id`,
         [ticketId, ov.number, ov.date ?? null, ov.id],
-      )
+      ); if (fijada.rows.length) await asociarOV(db, { ticketId, numero: ov.number, salesorderId: ov.id, origen: 'remision', actor: req.user?.name ?? TRANSITION_ACTOR, fechaOrdenCompra: null })
     }
 
     const id = await createRemision(db, {

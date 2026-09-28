@@ -8,7 +8,7 @@
  * Sustituye al runbook `docs/runbooks/borrar-tickets-de-prueba.md`, que sigue siendo la vía de rescate
  * si la aplicación no arranca.
  */
-import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'; import { liberarAsociacionesDeTicket } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import type { FilaBorrada, RastroDrive, ResumenEliminacion } from '@ambientalia/shared'
 import { urlSegura } from '@ambientalia/shared'
 import { nacidoEnLaApp, json } from './ticketFuentes'
@@ -151,7 +151,7 @@ export async function eliminarTicket(
   }
   if (opts.dryRun) return resumen
 
-  await enTransaccion(db, async (q) => {
+  await enTransaccion(db, async (q) => { await liberarAsociacionesDeTicket(q, ticketId, 'Ticket eliminado')
     for (const { tabla, col } of TABLAS) {
       const valores = col === 'remision_id' ? remisionIds : [ticketId]
       if (valores.length === 0) continue

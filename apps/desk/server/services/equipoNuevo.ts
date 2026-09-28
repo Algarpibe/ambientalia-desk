@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { createTicket, type CreateTicketInput } from '@ambientalia/zoho-sync/db/repo'
+import { createTicket, type CreateTicketInput } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import type { EquipoLite } from '@ambientalia/shared'
 import { getModelo } from '../db/catalogo'
 import { getEquipoBySerial, createEquipo, type EquipoInput } from '../db/equipos'
@@ -75,7 +75,7 @@ export async function validarCamposEquipoNuevo(db: Queryable, body: Record<strin
 /**
  * Crea el ticket y, si el equipo es provisional (`nuevo.equipo.id === ''`), lo crea también en la
  * MISMA transacción (RQ-TC-16) — así no queda un equipo huérfano si el `INSERT` del ticket falla.
- * Si el equipo ya está registrado o reutilizado, es idéntico a hoy: sólo `createTicket`.
+ * Las dos ramas van en transacción: con `salesorderId` (S-4 intacto) la fila de `ov_asociaciones` (RQ-TC-17) entra en ella.
  */
 export async function crearTicketConEquipo(
   db: Queryable,
@@ -83,10 +83,17 @@ export async function crearTicketConEquipo(
   clienteNombre: string | null,
   input: CreateTicketInput,
 ): Promise<string> {
-  if (!nuevo || nuevo.equipo.id) return createTicket(db, input)
-  const datos = nuevo.datos!
   return enTransaccion(db, async (q) => {
-    const equipoId = await createEquipo(q, { ...datos, clienteNombre, clientId: input.clientId })
-    return createTicket(q, { ...input, equipoId }, { transaccionAbierta: true })
+    const equipoId = nuevo && !nuevo.equipo.id
+      ? await createEquipo(q, { ...nuevo.datos!, clienteNombre, clientId: input.clientId })
+      : input.equipoId
+    const id = await createTicket(q, { ...input, equipoId }, { transaccionAbierta: true })
+    if (input.salesorderId && input.ordenVenta) {
+      await asociarOV(q, {
+        ticketId: id, numero: input.ordenVenta, salesorderId: input.salesorderId,
+        origen: 'alta', actor: input.actor, fechaOrdenCompra: null,
+      })
+    }
+    return id
   })
 }

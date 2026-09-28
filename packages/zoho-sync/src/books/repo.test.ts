@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '../db/migrate'
-import { searchClients, getClient, searchSalesOrders, getSalesOrder } from './repo'
+import { searchClients, getClient, searchSalesOrders, getSalesOrder } from './repo'; import { asociarOV, liberarAsociacion } from '../db/ovAsociaciones'
 
 let db: Queryable
 beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
@@ -72,5 +72,37 @@ describe('books repo (vistas sobre books.*)', () => {
     expect((await searchSalesOrders(db, 'OV', 'cliA')).map((s) => s.id).sort()).toEqual(['s-open', 's-part'])
     // El lookup por id NO filtra: una OV ya elegida debe seguir resolviéndose al crear el ticket.
     expect((await getSalesOrder(db, 's-inv'))!.id).toBe('s-inv')
+  })
+})
+
+/**
+ * asociacion-ov-ticket · lote 2 (RQ-ZS-14, escenario 1): `soloLibres` también deja fuera la OV cuya única
+ * traza de uso es una fila VIGENTE en `ov_asociaciones` —ni `tickets.salesorder_id` ni
+ * `tickets.orden_venta` la mencionan—, por id y por número; una asociación liberada la devuelve al buscador.
+ */
+describe('searchSalesOrders · soloLibres y ov_asociaciones', () => {
+  const ov = (id: string, numero: string) =>
+    db.query(
+      "INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date,total,status,raw) VALUES ($1,$2,'cliA','Corola','2026-06-01',200,'open','{\"order_status\":\"open\"}')",
+      [id, numero],
+    )
+  const ids = async () => (await searchSalesOrders(db, 'OV-2026', null, 20, true)).map((s) => s.id).sort()
+
+  it('excluye la OV asociada por id y la asociada sólo por número, y deja la libre', async () => {
+    await ov('s-usada', 'OV-2026-501'); await ov('s-solonum', 'OV-2026-502'); await ov('s-libre', 'OV-2026-503')
+    await asociarOV(db, { ticketId: 't-x', numero: 'OV-2026-501', salesorderId: 's-usada', origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+    await asociarOV(db, { ticketId: 't-y', numero: 'OV-2026-502', salesorderId: null, origen: 'habilitar_servicio', actor: 'test', fechaOrdenCompra: null })
+
+    expect(await ids()).toEqual(['s-libre'])
+    // Sin `soloLibres` (por defecto) el buscador no mira asociaciones: las tres siguen saliendo.
+    expect((await searchSalesOrders(db, 'OV-2026')).map((s) => s.id).sort()).toEqual(['s-libre', 's-solonum', 's-usada'])
+  })
+
+  it('una asociación liberada devuelve la OV al buscador', async () => {
+    await ov('s-usada', 'OV-2026-501')
+    const fila = await asociarOV(db, { ticketId: 't-x', numero: 'OV-2026-501', salesorderId: 's-usada', origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+    expect(await ids()).toEqual([])
+    await liberarAsociacion(db, fila.id, 'test', 'Liberada')
+    expect(await ids()).toEqual(['s-usada'])
   })
 })

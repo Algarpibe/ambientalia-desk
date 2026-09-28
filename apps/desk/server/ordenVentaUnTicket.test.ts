@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { STATUS_TICKET_CREADO } from '@ambientalia/shared'
-import { db, instalarArnes, appWith, adminCookie } from './testing/appHarness'
+import { db, instalarArnes, appWith, adminCookie } from './testing/appHarness'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 
 instalarArnes()
 
@@ -202,5 +202,121 @@ describe('una OV, un ticket · puerta 3 · la REMISIÓN DE ENTRADA', () => {
     const despues = (await db.query(
       "SELECT orden_venta, salesorder_id, fecha_orden_venta FROM tickets WHERE id='t-propia'")).rows[0]
     expect(despues).toEqual(antes) // no-op: mismos valores antes y después, no sólo el mismo número de filas
+  })
+})
+
+/**
+ * asociacion-ov-ticket · lote 2 · LA TERCERA VÍA en las tres puertas (RQ-TC-08 escenarios 1-3,
+ * RQ-TS-14, RQ-RE-16). Los tickets de arriba guardan la OV en sus columnas; aquí el ticket que «ya la
+ * tiene» NO la tiene en columnas: su única traza es una fila vigente en `ov_asociaciones`, que es lo
+ * que las dos vías de columna no ven. La comprobación es la misma función (`ticketConOrdenVenta`), así
+ * que la tercera vía llega a las tres puertas sin tocar sus llamadas.
+ *
+ * LAS PRUEBAS DE POSICIÓN (regla de mutación 1 de `CLAUDE.md`) activan A LA VEZ el 409 por tercera vía
+ * y la guarda vecina de esa puerta, y fijan cuál gana: en la puerta 1 el 422 de obligatorios (C), en la
+ * puerta 2 el 422 de obligatorios del plan (C). Cada una lleva su CONTROL DE POBLACIÓN (sin la guarda
+ * vecina, el mismo cuerpo contesta 409), o no probaría que las dos estaban activas.
+ */
+async function ticketSoloConAsociacion(): Promise<void> {
+  await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+  await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date) VALUES ('soX','OV-2026-300','cli1','2026-07-15')")
+  await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-dueno',7001,'Sólo la asociación la tiene','Ingresado')")
+  await asociarOV(db, { ticketId: 't-dueno', numero: 'OV-2026-300', salesorderId: 'soX', origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+}
+
+const filasVigentes = async (): Promise<number> =>
+  Number((await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones WHERE liberada_at IS NULL')).rows[0].n)
+
+describe('una OV, un ticket · tercera vía · puerta 1 · la CREACIÓN del ticket', () => {
+  const cuerpo = { equipoId: 'eq-1', salesOrderId: 'soX', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo nuevo', prefijo: 'MT' }
+
+  it('2.9 · la asociación vigente sin coincidencia por columna bloquea el alta con 409 y no escribe nada', async () => {
+    const cookie = await adminCookie()
+    await ticketSoloConAsociacion(); await equipo()
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets').set('Cookie', cookie).send(cuerpo)
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toContain('7001')
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM tickets')).rows[0].n).toBe(1)
+    expect(await filasVigentes()).toBe(1)
+  })
+
+  it('2.9 · regresión: el alta con una OV libre y sin ninguna asociación previa sigue en 201', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date) VALUES ('soX','OV-2026-300','cli1','2026-07-15')")
+    await equipo()
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets').set('Cookie', cookie).send(cuerpo)
+
+    expect(res.status).toBe(201)
+  })
+
+  it('POSICIÓN · faltan obligatorios (C) y la OV está asociada por tercera vía (D): gana el 422; con todo completo, el 409', async () => {
+    const cookie = await adminCookie()
+    await ticketSoloConAsociacion(); await equipo()
+    const { app } = appWith()
+
+    const ambas = await request(app).post('/api/tickets').set('Cookie', cookie).send({ ...cuerpo, tipoServicio: undefined })
+    expect(ambas.status, 'gana C: los obligatorios que faltan, no la unicidad').toBe(422)
+    expect(ambas.body.error).toMatch(/^Faltan campos obligatorios/)
+
+    const soloOV = await request(app).post('/api/tickets').set('Cookie', cookie).send(cuerpo)
+    expect(soloOV.status, 'control de población: sin el campo que falta, la misma OV contesta 409').toBe(409)
+  })
+})
+
+describe('una OV, un ticket · tercera vía · puerta 2 · «Habilitar Servicio»', () => {
+  const habilitar = { transitionId: 'habilitar_servicio' }
+
+  it('2.16 · la asociación vigente sin coincidencia por columna bloquea habilitar_servicio con 409 y el ticket no se mueve', async () => {
+    const cookie = await adminCookie()
+    await ticketSoloConAsociacion()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO])
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets/t-nuevo/transition').set('Cookie', cookie).send({
+      ...habilitar, values: { 'Orden de Venta': 'OV-2026-300', Serial: '18A20070' },
+    })
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('La orden de venta OV-2026-300 ya está asociada al ticket #7001')
+    expect((await db.query("SELECT status FROM tickets WHERE id='t-nuevo'")).rows[0].status).toBe(STATUS_TICKET_CREADO)
+    expect(await filasVigentes()).toBe(1)
+  })
+
+  it('2.16 · excluye al propio ticket: reenviar la OV que YA tiene asociada no se bloquea a sí mismo', async () => {
+    const cookie = await adminCookie()
+    await ticketSoloConAsociacion()
+    await db.query("UPDATE tickets SET status = $1 WHERE id = 't-dueno'", [STATUS_TICKET_CREADO])
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/tickets/t-dueno/transition').set('Cookie', cookie).send({
+      ...habilitar, values: { 'Orden de Venta': 'OV-2026-300', Serial: '18A20070' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(await filasVigentes()).toBe(1) // idempotente: no se duplica la fila
+  })
+
+  it('POSICIÓN · falta un obligatorio (C) y la OV está asociada por tercera vía (D): gana el 422; completo, el 409', async () => {
+    const cookie = await adminCookie()
+    await ticketSoloConAsociacion()
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO])
+    const { app } = appWith()
+
+    const ambas = await request(app).post('/api/tickets/t-nuevo/transition').set('Cookie', cookie).send({
+      ...habilitar, values: { 'Orden de Venta': 'OV-2026-300' }, // sin `Serial`, que también es obligatorio
+    })
+    expect(ambas.status, 'gana C: el obligatorio que falta, no la unicidad').toBe(422)
+    expect(ambas.body.errors).toEqual(['Falta el campo obligatorio: Serial'])
+
+    const completo = await request(app).post('/api/tickets/t-nuevo/transition').set('Cookie', cookie).send({
+      ...habilitar, values: { 'Orden de Venta': 'OV-2026-300', Serial: '18A20070' },
+    })
+    expect(completo.status, 'control de población: con el Serial, la misma OV contesta 409').toBe(409)
   })
 })

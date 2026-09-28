@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from './eliminarTicket'
+import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from './eliminarTicket'; import { asociarOV, listarAsociaciones } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 
 let db: Queryable
 beforeEach(async () => {
@@ -158,5 +158,48 @@ describe('eliminarTicket', () => {
     await ticketCompleto('app-1', 10000, 'rem-1')
     const r = await eliminarTicket(db, 'app-1', { dryRun: true })
     expect(r.ticket).toEqual({ id: 'app-1', numero: 10000, asunto: 'Asunto 10000', estado: 'Ingresado' })
+  })
+})
+
+/**
+ * asociacion-ov-ticket · lote 2 (RQ-TC-19, `design.md` §2): eliminar un ticket libera sus asociaciones
+ * VIGENTES antes de borrar sus filas. Sin esto la fila vigente de un ticket que ya no existe bloquearía la
+ * OV en el índice único para siempre, y ninguna de las tres puertas la vería (las tres leen `tickets`).
+ */
+describe('eliminarTicket · asociaciones OV', () => {
+  const asociar = (ticketId: string, numero: string, so: string) =>
+    asociarOV(db, { ticketId, numero, salesorderId: so, origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+
+  it('libera la asociación vigente del ticket eliminado con el motivo «Ticket eliminado», y no toca la del vecino', async () => {
+    await ticketCompleto('app-1', 10000, 'rem-1')
+    await ticketCompleto('app-2', 10001, 'rem-2')
+    await asociar('app-1', 'OV-2026-601', 'so-601')
+    await asociar('app-2', 'OV-2026-602', 'so-602')
+
+    await eliminarTicket(db, 'app-1')
+
+    const propia = await listarAsociaciones(db, 'app-1')
+    expect(propia).toHaveLength(1) // la fila se conserva (RQ-TC-17: nunca hay DELETE)
+    expect(propia[0].liberada_at).not.toBeNull()
+    expect(propia[0].motivo_liberacion).toBe('Ticket eliminado')
+    const vecino = await listarAsociaciones(db, 'app-2')
+    expect(vecino[0].liberada_at).toBeNull()
+  })
+
+  it('tras eliminar, la OV es reasociable a otro ticket sin chocar con el índice único', async () => {
+    await ticketCompleto('app-1', 10000, 'rem-1')
+    await asociar('app-1', 'OV-2026-601', 'so-601')
+    await eliminarTicket(db, 'app-1')
+
+    await expect(asociar('app-3', 'OV-2026-601', 'so-601')).resolves.toMatchObject({ ticket_id: 'app-3', liberada_at: null })
+  })
+
+  it('el simulacro no libera nada', async () => {
+    await ticketCompleto('app-1', 10000, 'rem-1')
+    await asociar('app-1', 'OV-2026-601', 'so-601')
+
+    await eliminarTicket(db, 'app-1', { dryRun: true })
+
+    expect((await listarAsociaciones(db, 'app-1'))[0].liberada_at).toBeNull()
   })
 })

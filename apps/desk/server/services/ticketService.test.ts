@@ -667,3 +667,78 @@ describe('createManagedTicket · rama «Equipo nuevo», P1-P7 (regla de mutació
   // equipo escrito): es la MISMA pareja de guardas, así que no duplica el `it`. Su mutación —crear el
   // equipo ANTES de la guarda de la OV— se aplicó y revirtió sobre ESE test; ver `apply-progress.md`.
 })
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// asociacion-ov-ticket · lote 2 · los escritores dejan la fila de `ov_asociaciones` (RQ-TC-17, RQ-TS-14)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+/** Una OV de Books libre (sin ticket) con el número y el id dados. */
+async function ordenDeBooks(id: string, numero: string): Promise<void> {
+  await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date) VALUES ($1,$2,'cli-1','2026-07-15')", [id, numero])
+}
+
+describe('asociacion-ov-ticket · escribir la OV crea la asociación en la misma transacción', () => {
+  it('2.5 · el alta con una OV libre deja una fila vigente en ov_asociaciones tras crear el ticket', async () => {
+    await equipo(); await cliente('cli-1'); await ordenDeBooks('so-25', 'OV-2026-425')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, salesOrderId: 'so-25' }, 'Admin')
+
+    const t = (await db.query('SELECT id FROM tickets')).rows[0]
+    const filas = (await db.query('SELECT * FROM ov_asociaciones')).rows
+    expect(filas).toHaveLength(1)
+    expect(filas[0]).toMatchObject({
+      ticket_id: t.id, numero: 'OV-2026-425', salesorder_id: 'so-25', origen: 'alta', asociada_por: 'Admin', liberada_at: null,
+    })
+  })
+
+  it('2.5 · la rama «Equipo nuevo» (transacción propia) también deja la fila, con el id del ticket recién creado', async () => {
+    await modeloCatalogo('mo-l2', 'Grimm', 'EDM180C'); await cliente('cli-1'); await ordenDeBooks('so-25b', 'OV-2026-426')
+    await createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-1', salesOrderId: 'so-25b',
+      equipoNuevo: { serial: 'SN-L2', modeloId: 'mo-l2', fechaFacturaCompra: '2026-01-15' },
+    }, 'Admin')
+
+    const t = (await db.query('SELECT id FROM tickets')).rows[0]
+    const filas = (await db.query('SELECT ticket_id, numero, salesorder_id, origen FROM ov_asociaciones')).rows
+    expect(filas).toEqual([{ ticket_id: t.id, numero: 'OV-2026-426', salesorder_id: 'so-25b', origen: 'alta' }])
+  })
+
+  it('2.5 · sin OV (S-4 intacto) no se escribe ninguna asociación', async () => {
+    await equipo(); await cliente('cli-1')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones')).rows[0].n).toBe(0)
+  })
+
+  it('2.12 · habilitar_servicio con una OV libre deja escrita la asociación tras la transición (salesorder_id resuelto por número)', async () => {
+    await cliente('cli-1'); await ordenDeBooks('so-212', 'OV-2026-412')
+    await ticket('t-h', STATUS_TICKET_CREADO, 8112)
+    await executeTransition(db, 't-h', {
+      transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-412', Serial: '18A20070' },
+    }, ADMIN)
+
+    const filas = (await db.query('SELECT ticket_id, numero, salesorder_id, origen, asociada_por FROM ov_asociaciones')).rows
+    expect(filas).toEqual([{ ticket_id: 't-h', numero: 'OV-2026-412', salesorder_id: 'so-212', origen: 'habilitar_servicio', asociada_por: 'Admin' }])
+  })
+
+  it('2.12 · si el número no resuelve en Books (S-12) la asociación se escribe igual, con salesorder_id NULL', async () => {
+    await ticket('t-h2', STATUS_TICKET_CREADO, 8113)
+    await executeTransition(db, 't-h2', {
+      transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-SIN-BOOKS', Serial: '18A20070' },
+    }, ADMIN)
+
+    const filas = (await db.query('SELECT ticket_id, numero, salesorder_id FROM ov_asociaciones')).rows
+    expect(filas).toEqual([{ ticket_id: 't-h2', numero: 'OV-SIN-BOOKS', salesorder_id: null }])
+  })
+
+  it('2.12 · reenviar la misma OV al propio ticket es idempotente: sigue habiendo una sola fila vigente', async () => {
+    await ticket('t-h3', STATUS_TICKET_CREADO, 8114)
+    await executeTransition(db, 't-h3', {
+      transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-414', Serial: '18A20070' },
+    }, ADMIN)
+    await db.query("UPDATE tickets SET status = $1 WHERE id = 't-h3'", [STATUS_TICKET_CREADO])
+    await executeTransition(db, 't-h3', {
+      transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-414', Serial: '18A20070' },
+    }, ADMIN)
+
+    expect((await db.query("SELECT COUNT(*)::int AS n FROM ov_asociaciones WHERE ticket_id='t-h3' AND liberada_at IS NULL")).rows[0].n).toBe(1)
+  })
+})

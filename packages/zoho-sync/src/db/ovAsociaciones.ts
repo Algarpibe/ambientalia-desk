@@ -99,3 +99,28 @@ export async function liberarAsociacionesDeTicket(q: Queryable, ticketId: string
     [ticketId, motivo],
   )
 }
+
+/**
+ * Escritor de las transiciones (`writeTransition`, `repo.ts`): si el plan fija `orden_venta` (hoy sólo
+ * `habilitar_servicio`), deja la asociación vigente en la MISMA transacción que el `UPDATE` del ticket
+ * (`RQ-TS-14`, escenario 1). Versión base del lote 2: sólo la columna `orden_venta`; `ovAdicional` y la
+ * fecha de orden de compra las suma el lote 3.
+ *
+ * El `salesorder_id` se resuelve por NÚMERO contra `sales_orders` porque las transiciones sólo traen el
+ * número. Si no resuelve, se asocia igual con `salesorder_id` NULL (S-12): el índice por número protege.
+ * Es idempotente (`asociarOV`): reenviar la misma OV al mismo ticket no crea una segunda fila.
+ */
+export async function asociarDesdeTransicion(
+  q: Queryable,
+  ticketId: string,
+  plan: { columns: Record<string, unknown> },
+  actor: string | null,
+): Promise<void> {
+  const numero = plan.columns.orden_venta
+  if (typeof numero !== 'string' || numero.trim() === '') return
+  const so = await q.query('SELECT id FROM sales_orders WHERE number = $1 LIMIT 1', [numero])
+  await asociarOV(q, {
+    ticketId, numero, salesorderId: so.rows[0] ? String(so.rows[0].id) : null,
+    origen: 'habilitar_servicio', actor, fechaOrdenCompra: null,
+  })
+}

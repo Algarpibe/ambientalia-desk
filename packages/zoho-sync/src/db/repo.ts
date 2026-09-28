@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { FROM_STATUS_CREACION, STATUS_TICKET_CREADO, PREFIJO_TICKET_APP } from '@ambientalia/shared'
 import { APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
-import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'
+import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'; import { asociarDesdeTransicion } from './ovAsociaciones'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -308,7 +308,7 @@ async function writeTransition(
     params.push(JSON.stringify(plan.customFields))
     sets.push(`custom_fields = custom_fields || $${params.length}::jsonb`)
   }
-  await q.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params)
+  await q.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params); await asociarDesdeTransicion(q, ticketId, plan, actor)
 
   // 3) Historial
   await q.query(
@@ -351,12 +351,12 @@ export async function applyTransition(
  * servicio: la misma orden en dos tickets deja el trabajo facturado dos veces contra el mismo
  * pedido, y nadie sabe cuál de los dos es el bueno.
  *
- * Mira las DOS vías por lo mismo que `searchSalesOrders(soloLibres)`: no siempre hay
- * `salesorder_id` —solo lo deja quien eligió la OV en un buscador—, y los tickets venidos de Zoho o
- * creados tecleando el número únicamente tienen `orden_venta`.
+ * Mira las TRES vías: las dos de columna (`salesorder_id`, `orden_venta`: no siempre hay id, solo lo
+ * deja quien eligió la OV en un buscador) y la asociación VIGENTE de `ov_asociaciones` (`asoc`, por
+ * id y por número), que cubre lo que sólo consta como asociación propia, sin coincidir por columna.
  *
- * `excluirTicketId` deja fuera al propio ticket: reconfirmar la OV que uno ya tiene no es
- * duplicarla, y sin esta salvedad Habilitar Servicio se bloquearía justo para los tickets que
+ * `excluirTicketId` deja fuera al propio ticket en las tres: reconfirmar la OV que uno ya tiene no
+ * es duplicarla, y sin esta salvedad Habilitar Servicio se bloquearía justo para los tickets que
  * llegan de Zoho con su orden ya puesta.
  */
 export async function ticketConOrdenVenta(
@@ -365,10 +365,10 @@ export async function ticketConOrdenVenta(
   excluirTicketId?: string | null,
 ): Promise<{ id: string; number: number } | null> {
   const params: unknown[] = []
-  const vias: string[] = []
-  if (ov.salesorderId) { params.push(ov.salesorderId); vias.push(`salesorder_id = $${params.length}`) }
-  if (ov.numero) { params.push(ov.numero); vias.push(`(COALESCE(orden_venta,'') <> '' AND orden_venta = $${params.length})`) }
-  if (!vias.length) return null
+  const vias: string[] = [], asoc: string[] = []
+  if (ov.salesorderId) { params.push(ov.salesorderId); vias.push(`salesorder_id = $${params.length}`); asoc.push(`salesorder_id = $${params.length}`) }
+  if (ov.numero) { params.push(ov.numero); vias.push(`(COALESCE(orden_venta,'') <> '' AND orden_venta = $${params.length})`); asoc.push(`numero = $${params.length}`) }
+  if (!vias.length) return null; vias.push(`id IN (SELECT ticket_id FROM ov_asociaciones WHERE liberada_at IS NULL AND (${asoc.join(' OR ')}))`)
   let exclusion = ''
   if (excluirTicketId) { params.push(excluirTicketId); exclusion = `AND id <> $${params.length}` }
   const r = await db.query(

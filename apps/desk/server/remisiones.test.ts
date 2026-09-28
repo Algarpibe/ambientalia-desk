@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import request from 'supertest'
 import { upsertEquipo } from './db/equipos'
 import type { RemisionListado } from '@ambientalia/shared'
-import { db, instalarArnes, equipoRow, appWith, adminCookie, userCookie } from './testing/appHarness'
+import { db, instalarArnes, equipoRow, appWith, adminCookie, userCookie } from './testing/appHarness'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 
 instalarArnes()
 
@@ -1135,5 +1135,107 @@ describe('IV-12 · en el alta de remisión la fecha inválida (C) gana a la falt
     expect(soloSerial.status).toBe(422)
     expect(soloSerial.body.error, 'el ticket NO tiene serial: la otra guarda sí estaba activa')
       .toMatch(/^Falta el serial del equipo/)
+  })
+})
+
+/**
+ * asociacion-ov-ticket · lote 2 · LA TERCERA PUERTA con la tercera vía (RQ-RE-16, ampliado). La remisión
+ * de entrada que captura una OV libre deja además una fila vigente en `ov_asociaciones` (escenario «El
+ * UPDATE también crea la fila de asociación»), y una OV que sólo consta como asociación vigente de otro
+ * ticket —sin coincidir por columna— se rechaza con 409 antes de escribir.
+ *
+ * POSICIÓN (regla de mutación 1): el 409 por tercera vía va DESPUÉS del 422 del serial (A antes que D) y
+ * DESPUÉS del 422 «Orden de venta no encontrada» (A). Cada prueba activa las dos guardas a la vez y lleva
+ * su control de población. Las pruebas de posición anteriores (`:988` y la de IV-4) no se tocan.
+ */
+describe('asociacion-ov-ticket · remisión de entrada · tercera vía y fila de asociación', () => {
+  const sembrar = async (opts: { serialDelDestino: boolean }) => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-l2','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date) VALUES ('so-l2','OV-2026-700','cli-l2','Gecelca S.A. E.S.P.','2026-07-15')")
+    await upsertEquipo(db, equipoRow('eq-l2', '18A20070'))
+    // Dueño de la OV SÓLO por asociación: sin `orden_venta` ni `salesorder_id` en sus columnas.
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-dueno-l2',7700,'Sólo la asociación la tiene','Ingresado')")
+    await asociarOV(db, { ticketId: 't-dueno-l2', numero: 'OV-2026-700', salesorderId: 'so-l2', origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+    // Destino: sin OV. Con o sin serial propio ni equipo, según el caso.
+    await db.query(
+      `INSERT INTO tickets (id,number,subject,status,client_id,equipo_id,marca,modelo,serial)
+       VALUES ('t-dest-l2',7701,'El que la quiere','Ticket creado','cli-l2',$1,'Grimm','EDM180C',NULL)`,
+      [opts.serialDelDestino ? 'eq-l2' : null],
+    )
+  }
+  const vigentes = async () => Number((await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones WHERE liberada_at IS NULL')).rows[0].n)
+
+  it('2.18 · captura una OV libre: el UPDATE deja la orden en el ticket Y una fila vigente en ov_asociaciones', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-l2','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date) VALUES ('so-l2','OV-2026-700','cli-l2','Gecelca S.A. E.S.P.','2026-07-15')")
+    await upsertEquipo(db, equipoRow('eq-l2', '18A20070'))
+    await db.query("INSERT INTO tickets (id,number,subject,status,client_id,equipo_id) VALUES ('t-dest-l2',7701,'El que la captura','Ticket creado','cli-l2','eq-l2')")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-dest-l2', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-l2' })
+
+    expect(res.status).toBe(201)
+    const filas = (await db.query('SELECT ticket_id, numero, salesorder_id, origen, liberada_at FROM ov_asociaciones')).rows
+    expect(filas).toEqual([{ ticket_id: 't-dest-l2', numero: 'OV-2026-700', salesorder_id: 'so-l2', origen: 'remision', liberada_at: null }])
+  })
+
+  it('2.18 · un ticket que YA tenía OV (el UPDATE condicional no escribe) no crea asociación', async () => {
+    const cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-l2','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date) VALUES ('so-l2','OV-2026-700','cli-l2','Gecelca S.A. E.S.P.','2026-07-15')")
+    await upsertEquipo(db, equipoRow('eq-l2', '18A20070'))
+    await db.query("INSERT INTO tickets (id,number,subject,status,client_id,equipo_id,orden_venta) VALUES ('t-dest-l2',7701,'Ya tenía OV','Ticket creado','cli-l2','eq-l2','OV-2026-111')")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-dest-l2', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-l2' })
+
+    expect(res.status).toBe(201)
+    expect(await vigentes(), 'la que ya estaba no se pisa, y por tanto tampoco se asocia la nueva').toBe(0)
+  })
+
+  it('2.18 · la OV asociada por tercera vía a otro ticket bloquea la remisión con 409 y no escribe nada', async () => {
+    const cookie = await adminCookie()
+    await sembrar({ serialDelDestino: true })
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-dest-l2', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-l2' })
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toContain('7700')
+    const t = (await db.query("SELECT orden_venta, salesorder_id FROM tickets WHERE id='t-dest-l2'")).rows[0]
+    expect(t).toEqual({ orden_venta: null, salesorder_id: null })
+    expect(await vigentes()).toBe(1)
+  })
+
+  it('POSICIÓN · sin serial (A) y OV asociada por tercera vía (D): gana el 422 del serial; con serial, el 409', async () => {
+    const cookie = await adminCookie()
+    await sembrar({ serialDelDestino: false })
+    const { app } = appWith()
+    const cuerpo = { ticketId: 't-dest-l2', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-l2' }
+
+    const ambas = await request(app).post('/api/remisiones').set('Cookie', cookie).send(cuerpo)
+    expect(ambas.status).toBe(422)
+    expect(ambas.body.error, 'gana el serial (A), que corre antes que la unicidad (D)').toMatch(/^Falta el serial del equipo/)
+
+    await db.query("UPDATE tickets SET equipo_id = 'eq-l2' WHERE id = 't-dest-l2'")
+    const soloOV = await request(app).post('/api/remisiones').set('Cookie', cookie).send(cuerpo)
+    expect(soloOV.status, 'control de población: con serial, la misma OV contesta 409').toBe(409)
+  })
+
+  it('POSICIÓN · OV inexistente en Books (A) pero asociada por id a otro ticket (D): gana el 422 «no encontrada», no el 409', async () => {
+    const cookie = await adminCookie()
+    await sembrar({ serialDelDestino: true })
+    await db.query("DELETE FROM books.sales_orders WHERE salesorder_id = 'so-l2'")
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't-dest-l2', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-l2' })
+
+    expect(res.status).toBe(422)
+    expect(res.body.error).toBe('Orden de venta no encontrada')
   })
 })

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
 import { asociarOV, listarAsociaciones, liberarAsociacion, liberarAsociacionesDeTicket } from './ovAsociaciones'
+import { ticketConOrdenVenta } from './repo'
 
 /**
  * `ov_asociaciones` no tiene FK a `tickets` (mismo caso que `public.remisiones`,
@@ -110,5 +111,42 @@ describe('liberarAsociacionesDeTicket', () => {
     const filas = await listarAsociaciones(db, 't7')
     expect(filas).toHaveLength(2)
     expect(filas.every((f) => f.liberada_at !== null && f.motivo_liberacion === 'Ticket eliminado')).toBe(true)
+  })
+})
+
+/**
+ * Lote 2 · la TERCERA VÍA de `ticketConOrdenVenta` (RQ-TC-17, base de RQ-TC-08 escenario 2). Ninguno de
+ * estos tickets guarda la OV en sus columnas: la única traza es la fila de `ov_asociaciones`, que es
+ * justo lo que las dos vías de columna no ven.
+ */
+describe('ticketConOrdenVenta · tercera vía (asociación vigente sin coincidencia por columna)', () => {
+  const ticketSinColumnas = (id: string, numero: number) =>
+    db.query("INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,'Sin OV en columnas','Ingresado')", [id, numero])
+  const asociar = (ticketId: string) =>
+    asociarOV(db, { ticketId, numero: 'OV-2026-401', salesorderId: 'so-401', origen: 'alta', actor: 'tester', fechaOrdenCompra: null })
+
+  it('encuentra el ticket que sólo tiene la OV en una asociación vigente, por número y por id', async () => {
+    await ticketSinColumnas('t-a', 9001)
+    await asociar('t-a')
+
+    expect(await ticketConOrdenVenta(db, { salesorderId: 'so-401', numero: 'OV-2026-401' })).toEqual({ id: 't-a', number: 9001 })
+    expect(await ticketConOrdenVenta(db, { numero: 'OV-2026-401' })).toEqual({ id: 't-a', number: 9001 })
+    expect(await ticketConOrdenVenta(db, { salesorderId: 'so-401' })).toEqual({ id: 't-a', number: 9001 })
+  })
+
+  it('excluye al propio ticket también en la tercera vía, y una OV distinta no casa', async () => {
+    await ticketSinColumnas('t-a', 9001)
+    await asociar('t-a')
+
+    expect(await ticketConOrdenVenta(db, { numero: 'OV-2026-401' }, 't-a')).toBeNull()
+    expect(await ticketConOrdenVenta(db, { salesorderId: 'so-otro', numero: 'OV-2026-999' })).toBeNull()
+  })
+
+  it('una asociación liberada ya no cuenta: la OV vuelve a quedar libre para las tres puertas', async () => {
+    await ticketSinColumnas('t-a', 9001)
+    const fila = await asociar('t-a')
+    await liberarAsociacion(db, fila.id, 'tester', 'Se asoció a otro servicio')
+
+    expect(await ticketConOrdenVenta(db, { salesorderId: 'so-401', numero: 'OV-2026-401' })).toBeNull()
   })
 })

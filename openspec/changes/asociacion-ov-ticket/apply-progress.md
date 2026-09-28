@@ -224,3 +224,68 @@ tests pasan y `equipos_cambios`/`ov_asociaciones` existen tras `migrate`).
 
 **13/13 tareas del lote 1 completas.** Lote 1 de 6 del cambio `asociacion-ov-ticket`. Siguiente:
 lote 2 (Escritores y puertas), que depende de este lote y ya puede arrancar.
+
+---
+
+## Lote 2 · Escritores y puertas (tasks 2.1-2.31) — COMPLETO
+
+**Mode**: Strict TDD. **HEAD de partida**: `3555b6c`. Detalle largo (salidas rojas y de mutación) en Engram,
+`sdd/asociacion-ov-ticket/apply-progress`.
+
+### TDD Cycle Evidence
+
+| Tasks | Prueba (fichero, al final) | RED capturado (17 rojas, un solo `vitest` antes de escribir código) | GREEN |
+|---|---|---|---|
+| 2.1-2.4 | `ovAsociaciones.test.ts` tercera vía (3 casos) | `expected null to deeply equal { id: 't-a', number: 9001 }` | `repo.ts:368-371` |
+| 2.5-2.8 | `ticketService.test.ts` alta y rama «Equipo nuevo» | `expected [] to have a length of 1 but got +0` / `expected [] to deeply equal [ … ]` | `equipoNuevo.ts:80-102` |
+| 2.9-2.11 | `ordenVentaUnTicket.test.ts` puerta 1 | `expected 201 to be 409` | (delega en `ticketConOrdenVenta`) |
+| 2.12-2.15 | `ticketService.test.ts` `habilitar_servicio` (3 casos) | `expected [] to deeply equal [ { ticket_id: 't-h', … } ]` | `repo.ts:311` + `asociarDesdeTransicion` |
+| 2.16-2.17 | `ordenVentaUnTicket.test.ts` puerta 2 | `expected 200 to be 409` | (delega) |
+| 2.18-2.22 | `remisiones.test.ts` puerta 3 | `expected [] to deeply equal [ { ticket_id: 't-dest-l2', … } ]`, `expected 201 to be 409` | `remision.ts:5,221-243` |
+| 2.23-2.26 | `books/repo.test.ts` `soloLibres` | `expected [ 's-libre', 's-solonum', 's-usada' ] to deeply equal [ 's-libre' ]` | `books/repo.ts:160-161` |
+| 2.27-2.30 | `eliminarTicket.test.ts` | `expected null not to be null` (liberada_at) y `23505` al reasociar | `eliminarTicket.ts:154` |
+
+**Nacieron verdes (por diseño, no son rojos):** excluir al propio ticket en la tercera vía, la asociación liberada
+no cuenta, el alta sin asociación previa sigue en 201 (2.9 escenario 1, regresión), `habilitar_servicio` del propio
+ticket con su OV asociada (2.16), las mitades «gana el 422» de las tres pruebas de posición (solo la mitad de
+control de población nace roja), el 422 «Orden de venta no encontrada» ante asociación (2.18), el simulacro de
+eliminar y «sin OV no asocia». Las pruebas de posición previas (incluida `remisiones.test.ts:988`) no se tocaron.
+
+### Mutaciones (todas revertidas, `git diff` de los ficheros de producción intacto tras cada una)
+
+| Mutación | Rojas |
+|---|---|
+| Quitar `vias.push(… ov_asociaciones …)` (tercera vía) | 7: 1 de `ovAsociaciones.test.ts`, 2 puerta 1, 2 puerta 2, 2 puerta 3 (las tres pruebas de tercera vía y sus tres de posición) |
+| Posición puerta 1: `ticketConOrdenVenta` antes de la guarda de obligatorios (`ticketService.ts`) | POSICIÓN puerta 1 |
+| Posición puerta 2: el 409 antes de los errores del plan (`ticketService.ts`) | POSICIÓN puerta 2 |
+| Posición puerta 3: todo el bloque de la OV antes del 422 del serial (`remision.ts`) | POSICIÓN puerta 3 nueva + M5 + IV-4 (esta ya existía) |
+| Quitar `liberarAsociacionesDeTicket` (`eliminarTicket.ts`) | 2 (liberar y reasociar) |
+| Quitar cada escritor (remisión, transición, alta) y la exclusión de `soloLibres` | 1, 3, 2 y 2 respectivamente |
+
+### Medida, cierre y citas (regla de mutación 4)
+
+`npm test`: 147 ficheros / 1.505 pruebas verdes (1 fichero, 2 pruebas omitidas de integración, como antes).
+`npm run typecheck`: limpio. `eslint --max-warnings 165`: 165 avisos, 0 errores. `repo.ts` sigue en 452 líneas y
+`remision.ts` en 397; ningún hunk desplaza líneas. Ningún fichero nuevo (`ovAsociaciones.ts` es del lote 1).
+Medida `git diff --shortstat --no-renames HEAD`: 635 líneas (569+/66-, 14 ficheros, con esta sección y `tasks.md`) sobre ~580 estimadas y 800 de techo. El detector de citas del repo actúa sobre
+commits (hook `pre-push`, `apps/desk/server/citas/cli.ts`), sin script npm: se ejecuta al empujar.
+
+Citas leídas contra el fichero editado: `repo.ts:349-352` (test de `ordenVentaUnTicket.test.ts:14`) sigue leyendo
+el arranque del comentario; `repo.ts:362-379` (remisiones/tickets-core/transitions-st) sigue siendo la función;
+`remision.ts:230`, `:220`, `:241` (`ordenVentaUnTicket.test.ts`, `remisiones.test.ts`, `CLAUDE.md`) intactas y
+ciertas; `remision.ts:239-243` (`remisiones` y `zoho-sync`) sigue siendo el `UPDATE`. **Un desfase, caso A
+parcial:** `hojas-vida/spec.md:273` cita `equipoNuevo.ts:80-92` para «crea el equipo en transacción»; la función
+ocupa ahora `:80-102`, así que el final del rango cae a mitad (el contenido citado sigue cierto). No se edita: es
+una spec viva, se anota para el barrido del lote 6.
+
+### Deviations from Design
+
+1. `fecha_orden_compra` de la asociación de remisión queda `null`, no `ov.date` (`tasks.md` 2.20): `ov.date` es la fecha
+   de la orden de VENTA y esa columna es la de orden de COMPRA (S-5); supuesto reversible, la remisión no trae OC.
+2. `asociarDesdeTransicion` tipa el plan de forma estructural (`{ columns }`), no con `TransitionApply`, para que
+   `ovAsociaciones.ts` siga importando sólo de `./migrate`.
+3. Las pruebas de tercera vía de `ticketConOrdenVenta` van en `ovAsociaciones.test.ts` (2.1 admitía ese sitio).
+
+### Status
+
+**31/31 tareas del lote 2 completas.** Siguiente: lote 3 (Varias OV por ticket), que amplía `asociarDesdeTransicion`.

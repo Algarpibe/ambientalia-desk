@@ -121,67 +121,67 @@ Otros ficheros del diseño (no en la lista de "muy citados" del orquestador, per
 borrar); `packages/zoho-sync/src/books/repo.ts:160-161` (EN SU SITIO — `soloLibres` suma exclusión por
 asociación vigente); `apps/desk/server/ordenVentaUnTicket.test.ts` (casos nuevos al final).
 
-- [ ] 2.1 RED — prueba de `ticketConOrdenVenta` (extensión del bloque existente en `repo.test.ts` o
+- [x] 2.1 RED — prueba de `ticketConOrdenVenta` (extensión del bloque existente en `repo.test.ts` o
   `ovAsociaciones.test.ts`): con una fila vigente en `ov_asociaciones` sin coincidir por columna,
   `ticketConOrdenVenta` la encuentra. RQ: `tickets-core` RQ-TC-17 (base de la tercera vía).
-- [ ] 2.2 Confirmar rojo natural.
-- [ ] 2.3 GREEN — `repo.ts:362-379` en su sitio: reescribir `ticketConOrdenVenta` añadiendo
+- [x] 2.2 Confirmar rojo natural.
+- [x] 2.3 GREEN — `repo.ts:362-379` en su sitio: reescribir `ticketConOrdenVenta` añadiendo
   `OR id IN (SELECT ticket_id FROM ov_asociaciones WHERE liberada_at IS NULL AND (salesorder_id = $s OR numero = $n))`;
   `:349-361` en su sitio, comentario «tres vías»; `:4` en su sitio, import de `asociarOV`/`listarAsociaciones`.
-- [ ] 2.4 Confirmar 2.1 en verde.
-- [ ] 2.5 RED — `ticketService.test.ts` (existente): un alta con OV libre deja una fila vigente en
+- [x] 2.4 Confirmar 2.1 en verde.
+- [x] 2.5 RED — `ticketService.test.ts` (existente): un alta con OV libre deja una fila vigente en
   `ov_asociaciones` tras crear el ticket. RQ-TC-17, escenario «Escribir la OV crea la asociación en la
   misma transacción» (vía alta).
-- [ ] 2.6 Confirmar rojo natural.
-- [ ] 2.7 GREEN — `equipoNuevo.ts:80-92` (última función, al final): envolver las dos ramas de
+- [x] 2.6 Confirmar rojo natural.
+- [x] 2.7 GREEN — `equipoNuevo.ts:80-92` (última función, al final): envolver las dos ramas de
   `crearTicketConEquipo` en `enTransaccion`, llamar `createTicket(q, …, {transaccionAbierta:true})` y,
   si `input.salesorderId`, `asociarOV(q, {ticketId:id, numero:input.ordenVenta, salesorderId:input.salesorderId, origen:'alta', actor, fechaOrdenCompra:null})`.
-- [ ] 2.8 Confirmar 2.5 en verde.
-- [ ] 2.9 RED — `ordenVentaUnTicket.test.ts` (al final): la asociación vigente por tercera vía bloquea el
+- [x] 2.8 Confirmar 2.5 en verde.
+- [x] 2.9 RED — `ordenVentaUnTicket.test.ts` (al final): la asociación vigente por tercera vía bloquea el
   alta con `409` sin coincidir por columna (RQ-TC-08, escenario 2); confirmar que el alta sin cuarentena
   ni asociación previa sigue en `201` (RQ-TC-08, escenario 1 — regresión explícita).
-- [ ] 2.10 Confirmar rojo natural del caso `409` nuevo.
-- [ ] 2.11 Confirmar 2.9 en verde tras 2.3/2.7 (la puerta 1 ya delega en `ticketConOrdenVenta`, sin GREEN adicional).
-- [ ] 2.12 RED — `ticketService.test.ts`: `habilitar_servicio` con OV libre deja escrita la asociación
+- [x] 2.10 Confirmar rojo natural del caso `409` nuevo.
+- [x] 2.11 Confirmar 2.9 en verde tras 2.3/2.7 (la puerta 1 ya delega en `ticketConOrdenVenta`, sin GREEN adicional).
+- [x] 2.12 RED — `ticketService.test.ts`: `habilitar_servicio` con OV libre deja escrita la asociación
   tras la transición. RQ: `transitions-st` RQ-TS-14, escenario 1.
-- [ ] 2.13 Confirmar rojo natural.
-- [ ] 2.14 GREEN — `repo.ts:311` en su sitio, dentro de `writeTransition`, tras el `UPDATE`:
+- [x] 2.13 Confirmar rojo natural.
+- [x] 2.14 GREEN — `repo.ts:311` en su sitio, dentro de `writeTransition`, tras el `UPDATE`:
   `; await asociarDesdeTransicion(q, ticketId, plan, actor)` (misma transacción). Crear
   `asociarDesdeTransicion` en `ovAsociaciones.ts` — versión base: sólo `plan.columns.orden_venta`,
   resuelve `salesorder_id` por número contra `sales_orders`, `origen:'habilitar_servicio'` (el lote 3
   la amplía con `ovAdicional`).
-- [ ] 2.15 Confirmar 2.12 en verde.
-- [ ] 2.16 RED — `ordenVentaUnTicket.test.ts` (al final): la asociación vigente por tercera vía bloquea
+- [x] 2.15 Confirmar 2.12 en verde.
+- [x] 2.16 RED — `ordenVentaUnTicket.test.ts` (al final): la asociación vigente por tercera vía bloquea
   `habilitar_servicio` con `409`, excluyendo el propio ticket.
-- [ ] 2.17 Confirmar en verde (delega en el mismo `ticketConOrdenVenta` de 2.3, sin GREEN adicional).
-- [ ] 2.18 RED — `apps/desk/server/remisiones.test.ts` (al final, SIN tocar `:988`): la remisión de
+- [x] 2.17 Confirmar en verde (delega en el mismo `ticketConOrdenVenta` de 2.3, sin GREEN adicional).
+- [x] 2.18 RED — `apps/desk/server/remisiones.test.ts` (al final, SIN tocar `:988`): la remisión de
   entrada que captura una OV libre deja una fila vigente en `ov_asociaciones` (RQ-RE-16, escenario «El
   UPDATE también crea la fila de asociación»); una segunda remisión sobre otro ticket con la misma OV
   asociada por tercera vía responde `409` (RQ-RE-16, escenario 1, ampliado a la tercera vía).
-- [ ] 2.19 Confirmar rojo natural.
-- [ ] 2.20 GREEN — `remision.ts:5` en su sitio (import de `asociarOV`, segunda sentencia de la línea);
+- [x] 2.19 Confirmar rojo natural.
+- [x] 2.20 GREEN — `remision.ts:5` en su sitio (import de `asociarOV`, segunda sentencia de la línea);
   `:239` → `const fijada = await db.query(`; `:241` → añade `RETURNING id`; `:243` →
   `); if (fijada.rows.length) await asociarOV(db, {ticketId, numero:ov.number, salesorderId:ov.id, origen:'remision', actor:TRANSITION_ACTOR, fechaOrdenCompra:ov.date ?? null})`;
   `:221-229` en su sitio, reescribir el comentario nombrando los índices de `ov_asociaciones`.
-- [ ] 2.21 Confirmar 2.18 en verde.
-- [ ] 2.22 Verificación de regresión (sin RED nuevo; pruebas de posición intactas) — correr
+- [x] 2.21 Confirmar 2.18 en verde.
+- [x] 2.22 Verificación de regresión (sin RED nuevo; pruebas de posición intactas) — correr
   `remisiones.test.ts:988` (el `422` del serial sigue ganando al `409`), el escenario de reenvío al
   propio ticket (no-op) y el de la marca `ov_elegida_en_app_at` tras el `UPDATE`; confirmar que sus
   aserciones no cambiaron con el `RETURNING id` añadido. RQ-RE-16, escenarios 2, 3 y 4.
-- [ ] 2.23 RED — `packages/zoho-sync/src/books/repo.test.ts` (existente): `searchSalesOrders` con
+- [x] 2.23 RED — `packages/zoho-sync/src/books/repo.test.ts` (existente): `searchSalesOrders` con
   `soloLibres` excluye una OV cuya única traza de uso es una fila vigente en `ov_asociaciones` (sin
   coincidir por columna). RQ: `zoho-sync` RQ-ZS-14, escenario 1.
-- [ ] 2.24 Confirmar rojo natural.
-- [ ] 2.25 GREEN — `books/repo.ts:160-161` en su sitio: sumar a cada `NOT IN` la subconsulta
+- [x] 2.24 Confirmar rojo natural.
+- [x] 2.25 GREEN — `books/repo.ts:160-161` en su sitio: sumar a cada `NOT IN` la subconsulta
   `SELECT numero/salesorder_id FROM ov_asociaciones WHERE liberada_at IS NULL`.
-- [ ] 2.26 Confirmar 2.23 en verde.
-- [ ] 2.27 RED — `apps/desk/server/db/eliminarTicket.test.ts` (existente): eliminar un ticket con una
+- [x] 2.26 Confirmar 2.23 en verde.
+- [x] 2.27 RED — `apps/desk/server/db/eliminarTicket.test.ts` (existente): eliminar un ticket con una
   asociación vigente la libera (motivo «Ticket eliminado») antes de borrar sus filas.
-- [ ] 2.28 Confirmar rojo natural.
-- [ ] 2.29 GREEN — `eliminarTicket.ts:154` en su sitio: dentro de `enTransaccion`, antes del bucle de
+- [x] 2.28 Confirmar rojo natural.
+- [x] 2.29 GREEN — `eliminarTicket.ts:154` en su sitio: dentro de `enTransaccion`, antes del bucle de
   `DELETE`, `await liberarAsociacionesDeTicket(q, ticketId, 'Ticket eliminado')`.
-- [ ] 2.30 Confirmar 2.27 en verde.
-- [ ] 2.31 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; medir
+- [x] 2.30 Confirmar 2.27 en verde.
+- [x] 2.31 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD`; barrido de citas (regla de mutación 4) sobre
   `repo.ts` (43 citas vivas — comprobar las 4 externas de `design.md` §6: `ordenVentaUnTicket.test.ts:14`,
   `tickets-core :306`, `transitions-st :399`, `remisiones :364`), `remision.ts` (118 citas — 21 externas
