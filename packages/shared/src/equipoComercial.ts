@@ -8,7 +8,7 @@ export const CAMPOS_COMERCIALES: readonly CampoComercial[] = [
 
 /**
  * Los tres campos que sólo puede CAMBIAR el área Comercial o un administrador (RQ-HV-09,
- * `decision/edicion-datos-comerciales-equipo`, `openspec/config.yaml:2775-2790`). Los otros tres
+ * `decision/edicion-datos-comerciales-equipo`, `openspec/config.yaml:2795-2810`). Los otros tres
  * (adquisición, código interno, Drive) los puede cambiar cualquier sesión.
  */
 export const CAMPOS_COMERCIALES_RESTRINGIDOS: readonly CampoComercial[] = ['fechaFacturaCompra', 'finGarantia', 'mantenedorId']

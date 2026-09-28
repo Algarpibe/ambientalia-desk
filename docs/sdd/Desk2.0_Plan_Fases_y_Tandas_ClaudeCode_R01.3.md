@@ -46,7 +46,7 @@ Objetivo: recibir y responder correo de clientes sin Zoho. El diseño existe des
 
 **No es fila propia: entra dentro de F1F-05** (continuidad de indicadores), como pidió Gerencia. Y **depende de la salida de correo de 1H**, porque enviar la encuesta al cliente es enviar correo.
 
-`config.yaml:2522` ya lo había visto: «la encuesta de satisfacción es alcance que la pregunta no contenía: hoy la envía Zoho al finalizar el ticket», y cruza con la decisión de correo. Con 1H en el plan, ese cruce deja de ser un cabo suelto y pasa a ser una dependencia declarada: **F1F-05 no puede cerrar antes que 1H-01**.
+`config.yaml:2531` ya lo había visto: «la encuesta de satisfacción es alcance que la pregunta no contenía: hoy la envía Zoho al finalizar el ticket», y cruza con la decisión de correo. Con 1H en el plan, ese cruce deja de ser un cabo suelto y pasa a ser una dependencia declarada: **F1F-05 no puede cerrar antes que 1H-01**.
 
 ---
 
@@ -62,7 +62,7 @@ Objetivo: recibir y responder correo de clientes sin Zoho. El diseño existe des
 
 Gerencia pidió decirlo si alguna corrección de 1C es necesaria para la paridad. **Hay una clara:**
 
-> **La restricción de «Liberación sin factura» por cargo.** Zoho la tenía, y Desk 2.0 hoy no: `decision/anexo-33-checkbox` (`config.yaml:2364-2379`) decide que deja de ser un checkbox y que **sólo la ejecuta el Director Comercial**. Si sale del corte, Desk 2.0 arranca permitiendo liberar sin factura a quien Zoho no se lo permitía — y eso es perder paridad, no aplazar una mejora. **Se queda dentro**, junto con la parte de `decision/c10-permisos-cargo` que la sostiene.
+> **La restricción de «Liberación sin factura» por cargo.** Zoho la tenía, y Desk 2.0 hoy no: `decision/anexo-33-checkbox` (`config.yaml:2373-2388`) decide que deja de ser un checkbox y que **sólo la ejecuta el Director Comercial**. Si sale del corte, Desk 2.0 arranca permitiendo liberar sin factura a quien Zoho no se lo permitía — y eso es perder paridad, no aplazar una mejora. **Se queda dentro**, junto con la parte de `decision/c10-permisos-cargo` que la sostiene.
 
 **Las otras siete de 1C no las clasifico, y la razón es que existe el instrumento y no se ha usado.** **M3** es literalmente la medida que responde «¿qué se usa de Zoho Desk que no esté en Desk 2.0?» (`Plan_Independencia…md:57-59`), y su lista de sospechosos —vistas personalizadas, plantillas de respuesta y firmas, macros, etiquetas, encuesta, informes nativos y el SLA propio de Zoho— es exactamente el material del que sale la frontera paridad/no-paridad. Clasificarlas a ojo antes de M3 sería inventar la respuesta que M3 va a dar en media hora.
 
@@ -216,12 +216,12 @@ ninguna cita de las secciones A-F (F0-05, R-1: «todo trabajo que realiza el con
 
 | ID | Capacidad | Talla | Contenido | Decisión de Gerencia |
 |---|---|---|---|---|
-| F1B-12 | `calendario-laboral` | S | Jornada L-V 8-17h, festivos de Colombia calculados por año, cierres de empresa inyectados, y la función única de horas/días hábiles (`decision/calendario-habil`) | `openspec/config.yaml:2534-2535` |
-| F1B-14 | `tickets-core` · `hojas-vida` | S–M | «Alta y edición del equipo»: alta del equipo en el mismo paso que el ticket de «Equipo nuevo», con reutilización del equipo si el serial ya existe (`decision/equipo-nuevo-alta-en-ticket`); restricción por área de fecha de factura, fin de garantía y mantenedor, registro de cambios de los seis campos y botón «Editar» en la hoja de vida (`decision/edicion-datos-comerciales-equipo`). Se entrega en dos cambios SDD: `alta-equipo-nuevo-en-ticket` (`cierra: no`) y `edicion-comercial-equipo` (`cierra: si`). ID asignado como supuesto de nomenclatura (modo producción, reversible): siguiente libre tras F1B-13 | `openspec/config.yaml:2758-2773` · `openspec/config.yaml:2775-2790` |
+| F1B-12 | `calendario-laboral` | S | Jornada L-V 8-17h, festivos de Colombia calculados por año, cierres de empresa inyectados, y la función única de horas/días hábiles (`decision/calendario-habil`) | `openspec/config.yaml:2554-2555` |
+| F1B-14 | `tickets-core` · `hojas-vida` | S–M | «Alta y edición del equipo»: alta del equipo en el mismo paso que el ticket de «Equipo nuevo», con reutilización del equipo si el serial ya existe (`decision/equipo-nuevo-alta-en-ticket`); restricción por área de fecha de factura, fin de garantía y mantenedor, registro de cambios de los seis campos y botón «Editar» en la hoja de vida (`decision/edicion-datos-comerciales-equipo`). Se entrega en dos cambios SDD: `alta-equipo-nuevo-en-ticket` (`cierra: no`) y `edicion-comercial-equipo` (`cierra: si`). ID asignado como supuesto de nomenclatura (modo producción, reversible): siguiente libre tras F1B-13 | `openspec/config.yaml:2778-2793` · `openspec/config.yaml:2795-2810` |
 
 **Nota:** el paso de `'Notificado'` de 24 h de reloj a 9 h hábiles (`SLA_HORAS_POR_ESTADO`, `sla.ts:34`)
 **no** va en F1B-12 — va en la misma tanda que construye la alerta de 4 días hábiles de
 `decision/anexo-3-alerta`, para que las tres alarmas pasen a horas hábiles juntas. Supuesto aplicado
 (modo producción, reversible): esa tanda es **F1B-08**, porque `anexo-3-alerta` declara
-`tanda_que_abre: "F1A-02 · F1B-08"` (`config.yaml:2329`) y F1A-02 está cerrada (`proposal.md`,
+`tanda_que_abre: "F1A-02 · F1B-08"` (`config.yaml:2338`) y F1A-02 está cerrada (`proposal.md`,
 pregunta 2 de `calendario-laboral`).

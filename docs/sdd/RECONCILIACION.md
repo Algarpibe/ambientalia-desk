@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `aa1962a` · **Fecha del commit:** 2026-09-23
+**Commit medido:** `6e471a8` · **Fecha del commit:** 2026-09-28
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -10,13 +10,13 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
 ## 1 · Capacidades declaradas frente a specs en disco
 
-  19 declaradas
-  12 ficheros
+  20 declaradas
+  14 ficheros
   0 huérfanas
 
 ## 2 · Numerador del avance — dos cifras, nunca una suma
 
-  9 derivables de cabecera ...................... F0-01, F0-02, F0-03, F0-05, F1A-06, F1A-07, F1A-08, F1B-02, F1B-10
+  11 derivables de cabecera ..................... F0-01, F0-02, F0-03, F0-05, F1A-06, F1A-07, F1A-08, F1B-02, F1B-10, F1B-12, F1B-14
   0 declarados por commit ....................... —
   denominador 52 tandas del apartado 5 del plan
   4 marcadas sin verificar
@@ -30,7 +30,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 3 · Cambios fuera del plan, con su motivo
 
-  5 fuera del plan
+  6 fuera del plan
   0 sin motivo
 
 ## 4 · Incumplimientos vivos, gates y claves de decisión
@@ -43,7 +43,7 @@ Hallazgos (informativos, no bloquean):
 Hallazgos (informativos, no bloquean):
   - `IV-8` — incumplimiento vivo, declarado por el campo `estado`: VIVO
   - `IV-9` — incumplimiento vivo, declarado por el campo `estado`: VIVO
-  - `IV-11` — incumplimiento vivo, declarado por el campo `estado`: VIVO
+  - `IV-11` — incumplimiento vivo, declarado por el campo `estado`: REDUCIDO  # detalle en adendas_incumplimientos_vivos → IV-11 → reduccion_2026_09_27, al final de este fichero
   - `IV-12` — incumplimiento vivo, declarado por el campo `estado`: VIVO
 
 ## 5 · Cifras ancladas — leídas del código, no del registro
@@ -55,21 +55,13 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  12 sin trackear
+  4 sin trackear
 
 Hallazgos (informativos, no bloquean):
-  - `docs/sdd/Alcance_Replica_ZohoDesk_Fase1.md` — en disco y fuera del índice
-  - `docs/sdd/Brecha_Maestro_R08.2_2026-09-17.docx` — en disco y fuera del índice
-  - `docs/sdd/Brecha_Maestro_R08.2_2026-09-17.md` — en disco y fuera del índice
-  - `docs/sdd/Decision_Correo_n8n_vs_GmailAPI.md` — en disco y fuera del índice
-  - `docs/sdd/Estado_As-Built_2026-09-09.md` — en disco y fuera del índice
   - `docs/sdd/Evidencia_Transporte_Tarea_Programada_2026-09-18.txt` — en disco y fuera del índice
-  - `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md` — en disco y fuera del índice
-  - `docs/sdd/Integracion_Hallazgos_en_Sesiones.md` — en disco y fuera del índice
-  - `docs/sdd/Inventario_ZohoDesk_Configuracion.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-09-18.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-09-22.md` — en disco y fuera del índice
-  - `docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md` — en disco y fuera del índice
+  - `docs/sdd/Parte_2026-09-24.md` — en disco y fuera del índice
 
 ---
 

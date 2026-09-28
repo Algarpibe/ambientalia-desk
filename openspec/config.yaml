@@ -2239,6 +2239,15 @@ decisiones_de_gerencia:
       §B); con 1H en enero y Zoho en solo lectura desde el 14/12, nada dice cómo sale la encuesta entre el corte y la
       independencia. Devuelto como pregunta `encuesta-entre-corte-e-independencia`.
     aclarada_por_fecha: "2026-09-24"
+    precisada_por: |
+      PRECISIÓN DE GERENCIA, 24/09/2026, recogida en el corte del 28/09 — `decision/corte-licencias-plan-a`:
+      el plan A del 01/02/2027 superaba el tope del 21/12 que fijaba la renovación de las licencias de Zoho, y
+      nadie había mirado el contrato. Queda decidido: antes del 21/12 se revisa la suscripción y se renueva SOLO
+      LO MÍNIMO —2 licencias de agente, facturación MENSUAL, suficientes para consultar el histórico en solo
+      lectura—, y se dan de baja en cuanto 1G y 1H estén verificadas. No se renueva en anual. Con esto el tope
+      del 21/12 deja de ser tope y el plan A deja de costar una renovación anual. La decisión original y la
+      corrección de arriba se conservan sin tocar.
+    precisada_por_fecha: "2026-09-24"
     aclarada_por_registro: "docs/sdd/ENTRADA.md → E-074 · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila decision/fecha-corte · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md §C y §D"
 
   - clave: "decision/p55-backup"
@@ -2526,6 +2535,17 @@ decisiones_de_gerencia:
     maestro_pasaje: "sin punto del Anexo D asignado"
     maestro_revision: "pendiente"
     tanda_que_abre: "fila nueva en 1F"
+    precisada_por: |
+      PRECISIÓN DE GERENCIA, 24/09/2026, recogida en el corte del 28/09 —
+      `decision/encuesta-entre-corte-e-independencia`: entre el corte del 14/12 y la independencia total, la
+      ENCUESTA DE SATISFACCIÓN se envía A MANO —Comercial manda desde el correo corporativo un enlace a un
+      formulario de Google con las mismas preguntas al finalizar cada servicio— y en enero las respuestas se
+      cargan en Desk 2.0 asociadas a su ticket. La encuesta automática desde Desk 2.0 entra con el correo propio
+      (1H) y sale de la cuenta de antes del corte. Con esto la dependencia que `decision/e009b-lista-indicadores`
+      declaraba —«la satisfacción necesita que la aplicación envíe la encuesta por la salida de correo propia
+      antes del 14/12»— queda sustituida, y el indicador nº 55 deja de bloquear el corte. La CARGA DE ENERO es
+      trabajo que hoy NO TIENE FILA: anotado sin destino en `docs/sdd/ENTRADA.md` → E-085.
+    precisada_por_fecha: "2026-09-24"
 
   - clave: "decision/calendario-habil"
     fecha: "2026-09-24"
@@ -2812,6 +2832,57 @@ decisiones_de_gerencia:
       pero su «antes de F1B-06» y la consecuencia (3) dejan de regir, y la contradicción que señalaba la consecuencia
       (5) queda resuelta a favor de la corrección de `fecha-corte`. Lo demás sigue: fila propia, talla XS–S por medir.
     aclarada_por_fecha: "2026-09-24"
+
+  - clave: "decision/corte-licencias-plan-a"
+    fecha: "2026-09-24"
+    pregunta: |
+      Hay un plan alternativo por si el 14 de diciembre no llega con margen: mudarlo todo al 1 de febrero de 2027. Pero al fijar la fecha se dijo que el 21 de diciembre era el último día posible, porque después hay que devolver las licencias de Zoho. ¿Se acepta pagar una renovación de Zoho, o el plan alternativo tiene que caber antes de que venzan?
+    respuesta_textual: |
+      «Antes del 21/12 se revisa la suscripción de Zoho Desk y se renueva solo lo mínimo: 2 licencias de agente, en facturación mensual, suficientes para consultar el histórico en solo lectura. Se dan de baja en cuanto 1G y 1H estén verificadas. No se renueva en anual.»
+    consecuencias: |
+      (1) NO ES NINGUNA DE LAS TRES OPCIONES TAL CUAL: es la tercera ejecutada y resuelta en el mismo acto. Se mira el contrato antes del 21/12 y se renueva, pero acotado —2 licencias de agente, facturación MENSUAL, solo lectura—, así que el tope del 21/12 deja de ser tope y el plan A del 01/02/2027 deja de costar una renovación anual. El riesgo que la pregunta señalaba pasa de «sin precio» a «acotado y mensual».
+      (2) LA BAJA QUEDA ATADA A 1G Y 1H, las mismas dos condiciones de la independencia total que fijó la aclaración del 24/09 (E-074). No aparece una tercera fecha que vigilar: la renovación mensual se corta cuando el histórico y el correo propio estén verificados, prevista enero de 2027.
+      (3) ES TAREA DE PERSONA, NO TANDA. La revisión de la suscripción la ejecuta Gerencia contra la consola de Zoho: esta supervisión sólo ve ficheros y no puede comprobar ni el importe ni la fecha de renovación (`grep -rniE "renovacion|licencia" openspec/ docs/sdd/ --include=*.yaml` no devuelve ninguna cifra de contrato). Queda como pendiente con fecha límite 21/12/2026.
+      (4) CONSECUENCIA NO PREVISTA EN LA PREGUNTA, y se señala sin resolverla: «2 licencias en solo lectura» significa que entre el 14/12 y enero el histórico de Zoho se consulta con DOS asientos, no con los de todo el equipo. Si en ese periodo más de dos personas necesitan consultarlo a la vez, hacen falta más licencias o que 1G (repatriación del histórico) llegue antes. NO ESTÁ MEDIDO cuántas personas consultan hoy el histórico de Zoho simultáneamente.
+      (5) NO MUEVE CIFRAS DEL AVANCE: no abre fila en el §5 y el denominador no se toca. Lo que mueve es el calendario: con el margen de +1,9 a +2,2 semanas que la R01.3 §D midió tras la aclaración, el plan A no se activa, y esta respuesta cubre el caso en que se active.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/corte-licencias-plan-a) y decision/fecha-corte → precisada_por · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila decision/fecha-corte, precisada · docs/sdd/ENTRADA.md → E-084, cerrada, y E-073/E-074 con su pregunta cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.5 · docs/sdd/Parte_2026-09-28.md"
+    maestro_pasaje: "sin punto del Anexo D asignado — acompaña a F1F-01 y al corte en dos tiempos"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "Ninguna. Tarea de persona con fecha límite 21/12/2026 (Gerencia): revisar la suscripción y renovar 2 licencias mensuales de solo lectura"
+
+  - clave: "decision/encuesta-entre-corte-e-independencia"
+    fecha: "2026-09-24"
+    pregunta: |
+      Desde el 14 de diciembre Zoho queda en solo lectura, y hoy es Zoho el que envía al cliente la encuesta de satisfacción al cerrar el servicio. El correo propio de la aplicación no llega hasta enero. ¿Cómo sale la encuesta en esas semanas, para que el reporte trimestral no se quede sin datos?
+    respuesta_textual: |
+      «Entre el 14/12 y la independencia total, la encuesta se envía a mano: al finalizar cada servicio, Comercial manda desde el correo corporativo un enlace a un formulario de Google con las mismas preguntas. En enero, las respuestas se cargan en Desk 2.0 asociadas a su ticket, para que el reporte trimestral no tenga hueco. La encuesta automática desde Desk 2.0 entra con el correo propio (1H) y sale de la cuenta de antes del corte.»
+    consecuencias: |
+      (1) EL ENVÍO ES TAREA DE PERSONA, NO TANDA: Comercial manda el enlace al finalizar cada servicio entre el 14/12 y la independencia. No abre fila en el §5 y no mueve el denominador.
+      (2) LA CARGA DE ENERO SÍ ES TRABAJO, Y HOY NO TIENE FILA: «las respuestas se cargan en Desk 2.0 asociadas a su ticket» es una importación pequeña con fecha (enero de 2027) y ninguna fila del §5 la reclama. SE ANOTA SIN DESTINO y se dice por qué: asignarle una fila sería decidir alcance, y eso no lo hace esta supervisión.
+      (3) DESATASCA EL INDICADOR Nº 55 DE LA LISTA CERRADA. `decision/e009b-lista-indicadores` (24/09) declaró como dependencia «la satisfacción necesita que la aplicación envíe la encuesta por la salida de correo propia antes del 14/12». Esa dependencia queda sustituida por el envío manual, así que el indicador 55 deja de bloquear el corte del 14/12.
+      (4) EL REMITENTE NO CAMBIA A MITAD DE TRIMESTRE: la encuesta automática «sale de la cuenta de antes del corte», es decir del mismo buzón, atada a 1H-01. El cliente no ve un remitente nuevo mientras dure la convivencia.
+      (5) LO QUE NO RESUELVE, y conviene que esté escrito: mientras las respuestas vivan en el formulario y no en la aplicación, el indicador 55 no se puede calcular en la aplicación en esas semanas. No rompe la comprobación del ≥ 95 % de `e009b-lista-indicadores`, porque ésa se hace en las CUATRO SEMANAS PREVIAS al corte, con Zoho vivo. El hueco es del periodo 14/12 → enero y lo tapa la carga del punto (2).
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/encuesta-entre-corte-e-independencia) y decision/e009-kpis → precisada_por · docs/sdd/ENTRADA.md → E-085, cerrada (con la carga de enero anotada SIN DESTINO) · docs/sdd/R08.3_Expediente_de_cambios.md §11.5 (Anexo G, indicador 55) · docs/sdd/Parte_2026-09-28.md"
+    maestro_pasaje: "Anexo G, indicador 55 (satisfacción del cliente) — sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "Ninguna todavía. La carga de enero queda SIN DESTINO, a la espera de decisión de alcance"
+
+  - clave: "decision/mapa-antes-o-despues-del-corte"
+    fecha: "2026-09-24"
+    pregunta: |
+      Dos decisiones del mismo día sitúan el mismo trabajo a los dos lados del corte: que el mapa del flujo dentro de la aplicación se construya antes de las ramas de equipo nuevo y soporte remoto, y que ese mismo mapa vaya después del corte de diciembre. Las ramas están antes del corte. ¿Cuál de las dos manda?
+    respuesta_textual: |
+      «Después del corte (opción 2), como ya quedó registrado en la aclaración de Gerencia del 24/09 a la enmienda de fecha-corte. La frase «va antes de F1B-06» de mapa-en-la-app queda sin efecto. Antes del corte solo entra lo necesario para no perder nada de lo que Zoho ya daba.»
+    consecuencias: |
+      (1) ELIGE LA OPCIÓN 2, NO LA 3. El mapa va después del corte sin condicionarlo a que la medición de la imagen salga barata. La medición sigue siendo la primera tarea de esa fila, pero ya no decide a qué lado del corte cae.
+      (2) YA ESTABA ATERRIZADA ANTES DE ESTA ENTRADA, por la aclaración del 24/09 (E-074): `decision/fecha-corte` → `aclarada_por`, `decision/mapa-en-la-app` → `aclarada_por`, y las dos filas del §4.5 del plan. Lo que faltaba, y es lo que añade esta entrada, es la CLAVE PROPIA `decision/mapa-antes-o-despues-del-corte`: sin ella la respuesta del panel no tenía clave `decision/*` que una sesión de construcción pudiera cargar.
+      (3) EL COSTE DE LA OPCIÓN 2 YA ESTÁ PAGADO Y ES MEDIBLE. La consecuencia (3) de `decision/mapa-en-la-app` avisaba de que, sin el mapa, las ramas nuevas «nacen invisibles para quien las usa». `blueprint-equipo-nuevo` (F1B-06, `cierra: no`) se archivó el 25/09 en `a2cbeb2` sin mapa en la aplicación: las ramas ya nacieron así.
+      (4) CIERRA LA ÚNICA CONTRADICCIÓN ENTRE DECISIONES DEL MISMO DÍA que el panel contaba: ese recuento pasa de 1 a 0.
+      (5) NO MUEVE CIFRAS. La fila «Mapa del blueprint en la aplicación» sigue decidida y sin escribir en el §5, con su talla XS–S por medir.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/mapa-antes-o-despues-del-corte), y ya antes en decision/fecha-corte → aclarada_por y decision/mapa-en-la-app → aclarada_por · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, filas decision/fecha-corte y decision/mapa-en-la-app · docs/sdd/ENTRADA.md → E-074, adenda del 28/09 con la respuesta textual · docs/sdd/R08.3_Expediente_de_cambios.md §11.5 · docs/sdd/Parte_2026-09-28.md"
+    maestro_pasaje: "Anexo F (mapa del blueprint) — sin punto del Anexo D asignado"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "Ninguna nueva: reordena la fila «Mapa del blueprint en la aplicación», que pasa a DESPUÉS del corte del 14/12"
 
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.

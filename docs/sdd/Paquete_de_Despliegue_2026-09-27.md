@@ -153,7 +153,7 @@ defecto») **no encuentra defecto en este rango**.
 aceptó por escrito que todo despliegue se prueba sobre la aplicación que usa la gente
 (`openspec/config.yaml:1705-1707`, `decision/e013b-copia-pruebas`). Y decidió también que haya **copia
 previa a cada cambio que se suba**, con responsable **Alfonso (Gerencia)**
-(`openspec/config.yaml:2244-2250`, `decision/p55-backup`, consecuencia (1) en `:2252`).
+(`openspec/config.yaml:2244-2250` en `6e471a8`, `decision/p55-backup`, consecuencia (1) en `:2252`).
 
 **Cómo:** `DEPLOY.md` **no describe** ningún procedimiento de copia. Lo siguiente es **hipótesis**, no
 procedimiento verificado: una copia lógica de la base `desk` con `pg_dump` desde un contenedor que llegue
@@ -342,7 +342,7 @@ lo tiene, el relleno inicial falla con un error en el log y no tumba el worker
 que la Verificación es obligatoria para analizadores de gases y convertidores cuando hay gas patrón de lo
 que miden (`openspec/config.yaml:1972-1973`). La guarda **no existe**: le faltan dos datos que hoy no
 están en ningún sitio —la familia y el compuesto de cada equipo, y la lista de gases patrón—
-(`docs/sdd/ENTRADA.md:1187-1192`, E-082). El riesgo lo registra la propuesta de F1A-03 con probabilidad
+(`docs/sdd/ENTRADA.md:1187-1192` en `6e471a8`, E-082). El riesgo lo registra la propuesta de F1A-03 con probabilidad
 media, «igual que en Zoho hoy, donde la regla es costumbre»
 (`openspec/changes/archive/2026-09-27-salidas-verificacion/proposal.md:89`). **Qué significa en la app:**
 «Liberación» desde `En Proceso` está disponible para cualquier «Equipo nuevo» (`packages/shared/src/transitions.ts:359`).
@@ -350,7 +350,7 @@ No es una regresión —hoy producción ni siquiera tiene el flujo—, pero **la
 decidió impedir**.
 
 **R2 · Tampoco hay guarda de certificado en Liberación desde Verificación.** Está sin decidir si se exige
-(`docs/sdd/ENTRADA.md:1194-1199`, E-083).
+(`docs/sdd/ENTRADA.md:1194-1199` en `6e471a8`, E-083).
 
 **R3 · Tickets «Equipo nuevo» ya abiertos cambian de flujo el día del Deploy.** El enrutado mira la
 clasificación y el estado actual (`packages/shared/src/flujos.ts:56-61`), no la fecha de alta. Un ticket

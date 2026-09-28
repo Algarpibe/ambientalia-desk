@@ -1098,8 +1098,8 @@ conforme […]»
 
 - **No afirma que exista ninguna guarda de Verificación.** La obligatoriedad de Verificación por tipo de
   equipo y gas patrón está decidida (`openspec/config.yaml:1972-1973`) pero **no construida**: le faltan
-  dos datos que hoy no existen (`docs/sdd/ENTRADA.md:1187-1192`, E-082). La guarda de certificado en
-  Liberación desde Verificación está sin decidir (`docs/sdd/ENTRADA.md:1194-1199`, E-083). Hoy la
+  dos datos que hoy no existen (`docs/sdd/ENTRADA.md:1190-1195`, E-082). La guarda de certificado en
+  Liberación desde Verificación está sin decidir (`docs/sdd/ENTRADA.md:1197-1202`, E-083). Hoy la
   aplicación deja liberar un analizador sin pasar por Verificación, igual que Zoho (`:1548`).
 - **No toca `:1520`.** Su «sigue abierto… confirmar la salida rechazada hacia Notificado» quedó resuelto
   por la misma decisión, y ese cierre ya lo lleva el expediente

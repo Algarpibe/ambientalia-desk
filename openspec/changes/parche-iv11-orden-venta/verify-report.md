@@ -143,7 +143,7 @@ citadas). Contenido verificado por lectura directa:
 Tambien verificado por lectura directa: la propia cita de `remision.ts:240` que este informe usa en
 el check (b) es correcta. `apps/desk/server/routes/remision.ts:240` es la linea del `UPDATE ... SET`
 que incluye `ov_elegida_en_app_at = now()`; la linea `:241` es el `WHERE id = $1 AND
-COALESCE(orden_venta, '') = ''`. CLAUDE.md:348 y openspec/config.yaml:3038 citan `:240` -- correcto,
+COALESCE(orden_venta, '') = ''`. CLAUDE.md:348 y openspec/config.yaml:3109 citan `:240` -- correcto,
 esa es la linea del SET, no del WHERE.
 
 evidence_revision SIN CAMBIOS: ningun fichero de codigo ni de test cambio desde el informe original
