@@ -28,7 +28,7 @@ septiembre, manda el código y la discrepancia se escribe (§4).
 |---|---|---|---|
 | Catálogo de transiciones | «`shared/transitions.ts` (34 transiciones + campos obligatorios)» (`design:27`) | «34 transiciones y 21 estados» (`:360`, `:889`) | 34 entradas en `TRANSICIONES_BASE` (`packages/shared/src/transitions.ts:171-256`), fijadas por prueba (`invariantesGrafo.test.ts:50-54`) |
 | Registro de estados | No existe en el diseño | «21 estados» (`:391`) | `estados.ts:59-112`. **No existía hasta F0-04**: se derivaban de los `from`/`to` (`estados.ts:3-4`) |
-| Destino de escritura | «**Postgres** (no Zoho)» (`design:19`) | — | `packages/zoho-sync/src/db/repo.ts:249-287`. Ninguna llamada a Zoho |
+| Destino de escritura | «**Postgres** (no Zoho)» (`design:19`) | — | `packages/zoho-sync/src/db/repo.ts:276-319`. Ninguna llamada a Zoho |
 | Actor | Constante `'Equipo Técnico'`, «el login/roles reales son el Subsistema H» (`design:20`) | M1.10: «toda etapa y toda transición deben registrar fecha, hora y persona» (`:1677`) | Usuario de la sesión, con la constante como respaldo (`ticketService.ts:145`, `transitionActor.ts:3`) |
 | Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:123-125`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110`) |
 | Endpoint | «Rewrite endpoint … en `server/app.ts`» (`design:88`) | — | `apps/desk/server/routes/tickets.ts:192-194` |
@@ -81,7 +81,7 @@ app— y **MUST NOT** existir ningún camino de una a la otra (`transitions.ts:1
   `estadoPorRemision.ts:41`, que abandona antes de tocar nada si el estado actual no es
   `Ticket creado` ni `Remisión creada`.
 - La razón **SHALL** quedar escrita: mover un ticket lo marca `managed_by_app = true`
-  (`repo.ts:271`) y lo saca del sincronismo sin que nadie lo haya pedido
+  (`repo.ts:298`) y lo saca del sincronismo sin que nadie lo haya pedido
   (`estadoPorRemision.ts:32-34`).
 
 > **Given** un ticket con estado `OV asignada`
@@ -316,24 +316,24 @@ buscador contra las órdenes de venta de Books, y **SHALL** arrastrar la fecha d
 
 Una transición **SHALL** producir exactamente tres escrituras, y **SHALL** aplicarlas en una
 transacción cuando el pool lo permita, con `ROLLBACK` ante cualquier fallo
-(`packages/zoho-sync/src/db/repo.ts:290-315`):
+(`packages/zoho-sync/src/db/repo.ts:322-347`):
 
 1. **Comentario** en `conversations`, sólo si hay comentario: `kind='comment'`, `author_type='agent'`,
    `is_public=false`, `content_type='plainText'`, `commented_time=now()`, `source='app'`
-   (`repo.ts:258-267`). El id se acuña con el prefijo `app-` (`:261`).
+   (`repo.ts:285-294`). El id se acuña con el prefijo `app-` (`:288`).
 2. **Update del ticket**: `status`, `status_type`, las columnas tipadas, la fusión en `custom_fields`,
    y **SHALL** fijar `managed_by_app=true`, `source='app'`, `modified_time=now()` y `updated_at=now()`
-   (`repo.ts:271-279`).
+   (`repo.ts:298-311`).
 3. **Historial** en `ticket_transitions`: `transition_id`, `transition_name`, `from_status`,
-   `to_status`, `area`, `performed_by`, `values` y `comment_id` (`repo.ts:282-286`).
+   `to_status`, `area`, `performed_by`, `values` y `comment_id` (`repo.ts:314-318`).
 
 Los nombres de columna del `SET` **MUST** proceder de `PROMOTED_COLUMNS` y **MUST NOT** poder llegar
-de fuera (`repo.ts:269-270`; la columna de derivación es constante del código, `transitionExec.ts:8-13`).
+de fuera (`repo.ts:296-297`; la columna de derivación es constante del código, `transitionExec.ts:8-13`).
 
 ### RQ-TS-11 · La traza: fecha, hora y persona, sin excepciones
 
 Toda transición **SHALL** dejar fila en `ticket_transitions` con su origen, su destino, su área y
-**quién la ejecutó** (`repo.ts:282-286`). Es M1.10 del maestro, `[DECIDIDO — R08]`, «no admite
+**quién la ejecutó** (`repo.ts:314-318`). Es M1.10 del maestro, `[DECIDIDO — R08]`, «no admite
 excepciones» (`:1677`).
 
 - El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a la constante `TRANSITION_ACTOR`
@@ -396,7 +396,7 @@ El destinatario **SHALL** calcularse desde el **estado de llegada** y **MUST NOT
 `habilitar_servicio` es la segunda de las tres puertas por las que una OV entra en un ticket. Al
 escribir `orden_venta`, la transición **SHALL** rechazar con `409` una orden ya asociada a otro
 ticket, excluyendo el propio (`ticketService.ts:95-102`, con `ticketConOrdenVenta` en
-`packages/zoho-sync/src/db/repo.ts:330-347`).
+`packages/zoho-sync/src/db/repo.ts:362-379`).
 
 La tercera puerta —el alta de remisión— **NO** la comprueba. Ver §3.4. Las otras dos puertas y la
 regla completa pertenecen a las specs `tickets-core` y `remisiones`.
@@ -615,7 +615,7 @@ El más visible es el ciclo entre `Por Facturar` y `Por Entregar / Sin facturar`
 indefinidamente y pisa `Fecha Remisión de Salida` (maestro M1.3.5, `:1190-1192`).
 
 **Lo que salva el caso, y por qué esto no obliga a rediseñar aquí:** `ticket_transitions.values` es
-`jsonb` y guarda **todos** los valores de cada transición (`repo.ts:282-286`). Las columnas de
+`jsonb` y guarda **todos** los valores de cada transición (`repo.ts:314-318`). Las columnas de
 `tickets` guardan el **último** valor; el historial guarda **todos**. De ahí la regla que esta spec
 deja escrita para `kpis` y F1C-06:
 
@@ -644,7 +644,7 @@ primeras la comprueban, y ahora **en el mismo orden** entre sí:
 |---|---|---|---|
 | Creación de ticket | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:45-49` (movida detrás de la guarda de cliente, `:94`) |
 | Transición `habilitar_servicio` | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:148-152` (detrás de la guarda de derivación, `:138-142`; hoy `:134` es el `422` de las fechas derivadas de `fechas-derivadas-servidor`, no el bloque de la OV) |
-| **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-240` |
+| **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-244` |
 
 **Las dos primeras SON equivalentes ahora**: comprueban la misma regla en el mismo orden. La inversión
 de precedencia que aquí se declaraba —«órdenes opuestos», «va aparte en §3.8»— la **resuelve**
@@ -847,7 +847,7 @@ en cada caso, correr el guión, confirmar el rojo, revertir con `git diff`.
 
 **El precedente de F1B-01 es consecuencia del orden, no una excepción.** `remision.ts:155` —el `422`
 del serial, escalón A— gana al `409` de remisión pendiente (`:177`, escalón D) porque A precede a D. La
-prueba de posición `remisiones.test.ts:957` queda intacta, sin necesidad de declarar nada aparte.
+prueba de posición `remisiones.test.ts:988` queda intacta, sin necesidad de declarar nada aparte.
 
 **El alta de remisión no cumple el orden total, y se registra sin corregirse** (IV-12, `CLAUDE.md`,
 `openspec/config.yaml`):
@@ -993,7 +993,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 |---|---|---|---|
 | D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:123-125`), matriz de 102 casos probada (`permisos.test.ts:77-82`), y el actor es el usuario de la sesión (`ticketService.ts:145`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
 | D-2 | «Rewrite endpoint `POST /api/tickets/:id/transition` en `server/app.ts`» (`design:88`) | Vive en `apps/desk/server/routes/tickets.ts:192-194` | Movido. Cualquier cita del diseño a `app.ts` apunta a un fichero que ya no lo contiene |
-| D-3 | `applyTransition(db, ticketId, fromStatus, transition, plan, actor)` — seis parámetros (`design:85`) | Siete: añade `values` al final (`repo.ts:290-298`) | El séptimo es lo que hace posible RQ-TS-11 y la salida de C4: sin `values` en el historial, `ticket_transitions` no guardaría «todos» los valores |
+| D-3 | `applyTransition(db, ticketId, fromStatus, transition, plan, actor)` — seis parámetros (`design:85`) | Siete: añade `values` al final (`repo.ts:322-330`) | El séptimo es lo que hace posible RQ-TS-11 y la salida de C4: sin `values` en el historial, `ticket_transitions` no guardaría «todos» los valores |
 | D-4 | «El mapeo usa el inverso de `PROMOTED_COLUMNS` (ya existe en `server/db/rows.ts`)» (`design:56`) | Vive en `packages/zoho-sync/src/db/rows.ts`, importado como `@ambientalia/zoho-sync/db/rows` (`transitionExec.ts:2`) | Movido al paquete al extraerse la sincronización |
 | D-5 | «Guard `ENABLE_WRITES`: **se quita** del endpoint de transición» (`design:22`) | `guardWrites` sigue existiendo (`routes/tickets.ts:27-33`) pero **no** se aplica al endpoint de transición; sí a `reply` (`:196`). La razón está escrita: «`ENABLE_WRITES` protege las escrituras hacia **Zoho**, y esto es local» (`:86`) | **Cumplido en el fondo, no en la letra.** El guard no desapareció: se acotó a lo que escribe hacia fuera |
 | D-6 | «Frontend: **sin cambios**» (`design:23`, `:93`) | `TransitionPanel.tsx` filtra por área (`:56-58`), pinta el buscador de OV, la casilla de derivación y las fechas que la OV arrastra (`:64-66`) | **Superado.** El diseño no previó ninguna de las tres piezas |
@@ -1009,7 +1009,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 | M-3 | M1.3.8 (`:1413`): «18 desde `OV asignada`, y desde `Ticket creado` los otros 20» | 19 y 19 contando el origen; 20 desde `Ticket creado` sólo sumando el paso sin botón (RQ-TS-05) | Las cifras mezclan dos convenciones de recuento. La conclusión —sin huérfanos— se sostiene. **Corrección menor para el maestro** |
 | M-4 | M1.3.3 (`:1151`): los dos pasos sin botón «viven en `estadoPorRemision.ts`, **no en el archivo de transiciones**» | Sus constantes están en `transitions.ts:150-151`; `estadoPorRemision.ts:9-12` las importa | Exacto para la aplicación, falso para la declaración. **Corrección menor para el maestro** |
 | M-5 | M1.9.2 (`:1653`): «Treinta y una heredan al responsable que el ticket ya traía» | 34 − 3 = **31** ✓. El docblock del código tiene **dos** cuentas mal, y van juntas: `transitions.ts:262` dice «las otras **32**» (son 31) y `:265` dice «en **35** declaraciones» (son 34) | **El maestro tiene razón y el comentario del código no, dos veces.** Defecto de comentario, no de comportamiento. Registrado como comportamiento actual en §3.9, destino F1B-06. F0-02 no lo corrige: es código |
-| M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:282-286`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:272-285`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
+| M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:314-318`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:272-285`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
 | M-7 | M1.9.1 (`:1615`) `[DECIDIDO]`: «Cada usuario ve **solo los estados y transiciones** de su rol» | Las **transiciones** sí se filtran (`TransitionPanel.tsx:56-58`). Los **tickets** no: el servidor los devuelve todos a todo el mundo, por decisión escrita en `docs/modelo-autorizacion.md` (`boardView.ts:29-32`) | Las dos mitades de la decisión tienen destinos distintos. La de visibilidad se decidió en contra a propósito. **Punto a aclarar** |
 | M-8 | M1.3.8 (`:1415`): «Las 27 etiquetas de campo mapean a columnas reales. Ninguna cae al cajón `custom_fields`» | **Verificado cierto** en esta tanda: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS`. **F1A-04: 28 de 40** | Sin discrepancia. Se anota porque es una de las afirmaciones as-built que sí resiste |
 | M-9 | Anexo H.2 (`:1495`): servicio técnico «construido y verificado … coincide con el código en las 38 filas del mapa» | 34 transiciones + 2 pasos sin botón + las 2 salidas extra de `habilitar_servicio` = 38 (`transitions.ts:178`; maestro `:388` explica el recuento) | Sin discrepancia, pero el 38 **no** es un número de transiciones: son filas de mapa. Conviene no citarlo como tal |

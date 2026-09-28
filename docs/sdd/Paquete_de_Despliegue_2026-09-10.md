@@ -336,7 +336,7 @@ que hay que publicar; cambia lo que se puede afirmar del indicador cuando alguie
   nº 41).
 - `bodegaje.ts:8-10` fija la regla, citando `reentrancia.ts:24`: **«Los KPIs de G.6 se calculan sobre
   `ticket_transitions.values`, no sobre `tickets.*`»**. Ese módulo no lee `tickets.*` a propósito.
-- Lo escribe `repo.ts:282-286`, un `INSERT` en `ticket_transitions` con `values` serializado; la
+- Lo escribe `repo.ts:282-286` en `17ddfec`, un `INSERT` en `ticket_transitions` con `values` serializado; la
   tabla está en `schema.sql:57-61` (`transition_id text`, `values jsonb`).
 
 **La consecuencia.** Todo ticket que pasó por `habilitado_para_entrega` **antes del 2026-09-09** no
@@ -441,11 +441,11 @@ son su medición: el terminal no tiene acceso a la base y **no las ha verificado
 - **La premisa de este apartado no tiene a quién aplicarse.** «Todo ticket que pasó por
   `habilitado_para_entrega` antes del 2026-09-09» supone pasadas históricas en la tabla, y la tabla sólo
   recibe transiciones hechas **dentro de Desk 2.0**. En el código la llenan tres `INSERT`, los tres de la app:
-  la transición ejecutada (`packages/zoho-sync/src/db/repo.ts:282-286`), la foto con que nace un ticket creado en la
-  app (`packages/zoho-sync/src/db/repo.ts:393-401`) e `insertTransition` (`packages/zoho-sync/src/db/repo.ts:226-232`), que sólo llama su
+  la transición ejecutada (`packages/zoho-sync/src/db/repo.ts:282-286` en `17ddfec`), la foto con que nace un ticket creado en la
+  app (`packages/zoho-sync/src/db/repo.ts:393-401` en `17ddfec`) e `insertTransition` (`packages/zoho-sync/src/db/repo.ts:226-232` en `17ddfec`), que sólo llama su
   prueba (`packages/zoho-sync/src/db/repo.test.ts:110`). El sync de Zoho escribe la historia en otra tabla
   (`packages/zoho-sync/src/sync.ts:80`), y la replicación del hub no la incluye (`DEPLOY.md:38-42`).
-  El prefijo `app-` sólo lo acuña la creación desde la app (`packages/zoho-sync/src/db/repo.ts:381`, con
+  El prefijo `app-` sólo lo acuña la creación desde la app (`packages/zoho-sync/src/db/repo.ts:381` en `17ddfec`, con
   `PREFIJO_TICKET_APP` de `packages/shared/src/transitions.ts:124`).
 - **El problema es más amplio que el corte del bodegaje de salida.** Ningún KPI calculado sobre
   `ticket_transitions.values` —la regla de `packages/shared/src/reentrancia.ts:24`— tiene población real

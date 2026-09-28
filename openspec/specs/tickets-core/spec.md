@@ -25,7 +25,7 @@ discrepancia se escribe (§4).
 
 | Concepto | Diseño (04/06) | Maestro R08.1 | Código (`ad1875b`) |
 |---|---|---|---|
-| Estado inicial del ticket nacido en la app | «**"OV asignada"** (transición #1 del Blueprint)» (`design C:12`, `:24`, `:72`) | M1.3.2: «`OV asignada` y `Ticket creado` son la misma fase con dos nombres» (`:1146`) | **`Ticket creado`** (`packages/zoho-sync/src/db/repo.ts:387`, `:400`) |
+| Estado inicial del ticket nacido en la app | «**"OV asignada"** (transición #1 del Blueprint)» (`design C:12`, `:24`, `:72`) | M1.3.2: «`OV asignada` y `Ticket creado` son la misma fase con dos nombres» (`:1146`) | **`Ticket creado`** (`packages/zoho-sync/src/db/repo.ts:422`, `:435`) |
 | Equipo | «Texto libre (**sin registro de equipos**; eso es Remisiones)» (`design C:26`, `:140`) | M1.1 `[DECIDIDO 21/08]`: el serial «pasa a ser la llave de entrada de todo el registro» (`:1048`) | **Obligatorio y por id de catálogo** (`apps/desk/server/services/ticketService.ts:22-25`) |
 | Numeración | «Continuar desde el máximo de Zoho (numeración continua)» (`design A:22`, `:107-113`) | — | **Espacio separado** con base 10.000 (`packages/zoho-sync/src/db/migrate.ts:38-43`) |
 | Almacenamiento de campos | «Híbrido: columnas tipadas + `custom_fields jsonb` para la cola larga» (`design A:21`) | Anexo G, 59 columnas (`:4291`) | Híbrido, tal cual (`packages/zoho-sync/src/db/schema.sql`, `db/rows.ts`) |
@@ -42,7 +42,7 @@ Un ticket **SHALL** llevar dos identificadores, y los dos **SHALL** distinguir s
 
 | Identificador | Nacido en la app | Venido de Zoho |
 |---|---|---|
-| `id` | `app-` + UUID (`repo.ts:381`, con `PREFIJO_TICKET_APP` en `packages/shared/src/transitions.ts:124`) | numérico, el de Zoho |
+| `id` | `app-` + UUID (`repo.ts:413`, con `PREFIJO_TICKET_APP` en `packages/shared/src/transitions.ts:124`) | numérico, el de Zoho |
 | `number` | desde **10.000** (`migrate.ts:43`) | ~1.000, el de Zoho |
 
 - El prefijo `app-` **SHALL** ser el único guardia fiable de «nació en la app»: `managed_by_app` y
@@ -60,7 +60,7 @@ Un ticket **SHALL** llevar dos identificadores, y los dos **SHALL** distinguir s
 ### RQ-TC-02 · La numeración de la app vive en su propio espacio
 
 `nextTicketNumber` **SHALL** tomar el número de la secuencia `ticket_number_seq`
-(`repo.ts:202-205`), y la re-siembra **MUST** mirar **sólo** los tickets de la app, con piso en la
+(`repo.ts:229-232`), y la re-siembra **MUST** mirar **sólo** los tickets de la app, con piso en la
 base (`migrate.ts:45-50`).
 
 - La base **SHALL** ser `APP_TICKET_NUMBER_BASE = 10_000` (`migrate.ts:43`).
@@ -68,7 +68,7 @@ base (`migrate.ts:45-50`).
   app y chocara con `UNIQUE(number)` — **bug #954** (`migrate.ts:38-42`).
 - `previewTicketNumber` **SHALL** ser una **previsión, no una reserva**: el número real lo asigna
   `nextval` de forma atómica al crear, así que puede diferir si otro usuario crea entremedias o si un
-  número se quemó en un `ROLLBACK` (`repo.ts:207-220`; expuesto en `routes/tickets.ts:39-41`).
+  número se quemó en un `ROLLBACK` (`repo.ts:234-247`; expuesto en `routes/tickets.ts:39-41`).
 
 ### RQ-TC-03 · El Código Servicio y el asunto se construyen, no se teclean
 
@@ -226,24 +226,24 @@ guardas, correr la suite, confirmar el rojo, revertir. Las pruebas de la rama «
 ### RQ-TC-06 · El alta es atómica y deja dos filas
 
 `createTicket` **SHALL** escribir el ticket y la fila de su creación en **una transacción** cuando el
-pool lo permita, con `ROLLBACK` ante cualquier fallo (`repo.ts:380-417`, `:403-415`).
+pool lo permita, con `ROLLBACK` ante cualquier fallo (`repo.ts:412-452`, `:438-450`).
 
-1. **La fila del ticket** (`repo.ts:385-388`): estado `Ticket creado`, `status_type='Open'`,
+1. **La fila del ticket** (`repo.ts:420-423`): estado `Ticket creado`, `status_type='Open'`,
    `managed_by_app=true`, `source='app'`, `created_time`, `modified_time` y `updated_at` a `now()`.
-2. **La foto de la creación** en `ticket_transitions` (`repo.ts:393-401`): `transition_id='enviar'`,
+2. **La foto de la creación** en `ticket_transitions` (`repo.ts:428-436`): `transition_id='enviar'`,
    `transition_name='Enviar'`, `from_status='(creación)'`, `to_status='Ticket creado'`,
    `area='Comercial'`, `performed_by` = actor, `comment_id=null`.
 
 `values` de esa segunda fila **SHALL** guardar el payload completo con el que nació el ticket —orden
 de venta, marca, modelo, serial, equipo, tipo de servicio, clasificación, prioridad, código de
-servicio y `client_id`— y **MUST NOT** limitarse a `{ orden_venta }` (`repo.ts:396-400`). La razón
+servicio y `client_id`— y **MUST NOT** limitarse a `{ orden_venta }` (`repo.ts:431-435`). La razón
 está escrita: las columnas de `tickets` son **estado actual**, así que la historia no puede apoyarse
-en ellas para contar la creación (`repo.ts:389-392`).
+en ellas para contar la creación (`repo.ts:424-427`).
 
 > **Given** un ticket creado en la app antes de que `createTicket` guardara el payload completo
 > **When** se compone su historia
 > **Then** la foto no existe y la historia cae a la fila del ticket, sin forma de reconstruirla
-> (`repo.ts:390-392`; el discriminador está en `ticketFuentes.ts:63-75`).
+> (`repo.ts:425-427`; el discriminador está en `ticketFuentes.ts:63-75`).
 
 ### RQ-TC-15 · Alta con «Equipo nuevo»: el equipo se crea o se reutiliza en el mismo paso
 
@@ -294,7 +294,7 @@ equipo antes de la última guarda del alta debe poner la suite en rojo (regla de
 ### RQ-TC-07 · La fase inicial tiene dos nombres, y no se cruzan
 
 El ticket nacido en la app **SHALL** nacer en `Ticket creado` y **MUST NOT** nacer en `OV asignada`,
-que es el nombre que esa misma fase tiene en Zoho (`repo.ts:373-378`, `:387`).
+que es el nombre que esa misma fase tiene en Zoho (`repo.ts:405-410`, `:422`).
 
 La regla completa —que ningún camino lleva de una a la otra, y por qué— es de `transitions-st`
 RQ-TS-02. Aquí sólo se fija de dónde arranca el ticket.
@@ -303,7 +303,7 @@ RQ-TS-02. Aquí sólo se fija de dónde arranca el ticket.
 
 Ésta es la **primera** de las tres puertas. El alta **SHALL** rechazar con `409` una orden ya
 asociada a otro ticket, mirando las **dos vías** —`salesorder_id` y `orden_venta`—
-(`ticketService.ts:96-100`, con `ticketConOrdenVenta` en `repo.ts:330-347`).
+(`ticketService.ts:96-100`, con `ticketConOrdenVenta` en `repo.ts:362-379`).
 
 - La razón **SHALL** quedar escrita: el buscador ya sólo ofrece las libres, «pero una lista no es una
   frontera» — basta mandar el id a mano o llegar con la lista cacheada para duplicar la orden
@@ -312,7 +312,7 @@ asociada a otro ticket, mirando las **dos vías** —`salesorder_id` y `orden_ve
   pero ya no cita literalmente «una lista no es una frontera»).
 - La **fecha** de la orden **SHALL** viajar con su número y guardarse en el alta
   (`ticketService.ts:32-36`, `:43`; el campo en `CreateTicketInput` está documentado en
-  `repo.ts:359-365`): sin ella, `habilitar_servicio` pide una fecha que nadie puede rellenar, porque
+  `repo.ts:391-397`): sin ella, `habilitar_servicio` pide una fecha que nadie puede rellenar, porque
   el campo llega bloqueado y con él bloqueado no se pinta el buscador que la arrastra.
 
 La segunda puerta es de `transitions-st` RQ-TS-14; la tercera está abierta y es de `remisiones`.
@@ -333,7 +333,7 @@ de aviso al cliente» a `habilitado_para_entrega`; la afirmación sigue siendo c
 (`:1046`).
 
 La cola larga **SHALL** fusionarse, no reemplazarse: `custom_fields = custom_fields || $n::jsonb`
-(`packages/zoho-sync/src/db/repo.ts:275-278`).
+(`packages/zoho-sync/src/db/repo.ts:307-310`).
 
 ### RQ-TC-10 · Las clasificaciones son el disparador de rama
 
@@ -374,7 +374,7 @@ La lectura **SHALL** devolver el nombre de la empresa igual para los tickets de 
 `account_id`— y los de la app —que traen `client_id`—, resolviendo por `COALESCE`
 (`design A` lo prescribe en `design C:49-52`; implementado en las consultas de
 `packages/zoho-sync/src/db/repo.ts`). `account_id` **SHALL** quedar `null` en los tickets creados por
-la app (`design C:47`; el `INSERT` de `repo.ts:385-386` no lo escribe).
+la app (`design C:47`; el `INSERT` de `repo.ts:420-421` no lo escribe).
 
 ### RQ-TC-13 · La guarda equipo↔cliente impone integridad de datos, no autorización
 
@@ -498,7 +498,7 @@ contenido — igual que en `habilitar_servicio`. Las dos puertas de la misma reg
 **Talla, contada de nuevo.** De las 12 pruebas de precedencia cambian **3**:
 `ticketService.test.ts:327`, `:336` (el error doble ya no lo gana la OV) y `:205` (par distinto, la
 OV frente a la derivación, cerrado en `executeTransition` por obs. #702). Las otras **9**, más
-`remisiones.test.ts:957`, quedan intactas.
+`remisiones.test.ts:988`, quedan intactas.
 
 (Previously: «Sin tanda: falta una fila en el plan», con la talla contada en «6 de 12» bajo un orden
 natural que nunca llegó a aplicarse. `orden-precedencia-guardas` es esa fila, y la cifra real,
@@ -528,7 +528,7 @@ verificada contra el cambio efectivamente aplicado, es 3.)
 
 **Comportamiento actual. IV-4 CERRADO.** El alta de remisión ya llama a `ticketConOrdenVenta` por las
 **dos vías** —`salesorder_id` y número—, excluyendo el propio ticket, dentro del bloque de la orden de
-venta (`apps/desk/server/routes/remision.ts:218-240`), antes del `UPDATE` (`:235-239`). El `it.fails`
+venta (`apps/desk/server/routes/remision.ts:218-244`), antes del `UPDATE` (`:239-243`). El `it.fails`
 de `apps/desk/server/ordenVentaUnTicket.test.ts:161` deja de existir como tal: la prueba pasa a
 afirmar el `409` en positivo. **La regla completa es de `remisiones`** (hoy `RQ-RE-16`).
 
@@ -588,16 +588,16 @@ constante—; lo que miente es el comentario. Es la misma clase de defecto que M
 
 | # | Dice el diseño | Dice el código | Lectura |
 |---|---|---|---|
-| D-1 | El ticket nace en **`'OV asignada'`** (`design C:12`, `:24`, `:72`, `:114`, `:131`, `:136`) | Nace en **`Ticket creado`** (`repo.ts:387`, `:400`; razón en `:373-378`) | **Superado, y es la discrepancia de peso.** De aquí sale toda la regla de las «dos entradas que nunca se cruzan» (M1.3.2), que el diseño no contempla. Cualquier lectura del diseño C como inventario del estado inicial es falsa |
+| D-1 | El ticket nace en **`'OV asignada'`** (`design C:12`, `:24`, `:72`, `:114`, `:131`, `:136`) | Nace en **`Ticket creado`** (`repo.ts:422`, `:435`; razón en `:405-410`) | **Superado, y es la discrepancia de peso.** De aquí sale toda la regla de las «dos entradas que nunca se cruzan» (M1.3.2), que el diseño no contempla. Cualquier lectura del diseño C como inventario del estado inicial es falsa |
 | D-2 | «Equipos: **texto libre** (sin registro de equipos; eso es Remisiones)» (`design C:26`), y el registro de equipos queda «fuera de alcance» (`:140`) | El `equipoId` es **obligatorio** y se valida contra el catálogo (`ticketService.ts:22-25`); marca, modelo, tipo y serial salen de él (`:64-66`) | **Superado.** El catálogo llegó (capacidad `catalogo-equipos`, sembrada el 2026-08-07) y el alta pasó a depender de él |
 | D-3 | «Continuar desde el máximo de Zoho (numeración continua, misma lógica actual)» (`design A:22`, `:107-113`) | **Dos espacios separados**, con base 10.000 para la app (`migrate.ts:38-43`, `:45-50`) | **Revertido por un bug de producción (#954).** El propio diseño anticipaba el «caveat de transición» (`design A:111-113`) y su mitigación no bastó |
-| D-4 | `createTicket(db, input): Promise<TicketDetail>` (`design C:69`) | `Promise<string>` — devuelve el `id` (`repo.ts:380`); el `TicketDetail` lo compone el llamador (`ticketService.ts:69-70`) | Cambio de contrato. El diseño ponía la composición dentro del repo |
-| D-5 | La fila de la creación lleva `values = { orden_venta }` (`design C:78`) | Lleva el **payload completo**: diez claves (`repo.ts:396-400`) | **Ampliado a propósito.** Lo pidió la historia unificada (`docs/superpowers/specs/2026-08-05-historia-unificada-ticket-design.md:36-40`), que documenta el caveat original |
+| D-4 | `createTicket(db, input): Promise<TicketDetail>` (`design C:69`) | `Promise<string>` — devuelve el `id` (`repo.ts:412`); el `TicketDetail` lo compone el llamador (`ticketService.ts:69-70`) | Cambio de contrato. El diseño ponía la composición dentro del repo |
+| D-5 | La fila de la creación lleva `values = { orden_venta }` (`design C:78`) | Lleva el **payload completo**: diez claves (`repo.ts:431-435`) | **Ampliado a propósito.** Lo pidió la historia unificada (`docs/superpowers/specs/2026-08-05-historia-unificada-ticket-design.md:36-40`), que documenta el caveat original |
 | D-6 | Endpoint en `server/app.ts` (`design C:84`) | En `apps/desk/server/routes/tickets.ts:124-126` | Movido, igual que el de transición (D-2 de `transitions-st`) |
 | D-7 | Validar `tipoEquipo`, `marca`, `modelo`, `serie` como obligatorios del cuerpo (`design C:92-93`) | Ninguno de los cuatro es obligatorio del cuerpo: **salen del equipo** (`ticketService.ts:64-66`). Los obligatorios son cliente, tipo de servicio, clasificaciones y prefijo (`:53-58`) | Consecuencia de D-2. El cuerpo del alta cambió de forma |
 
 > **Nota sobre el propio diseño de agosto.** El diseño de la historia unificada cita `createTicket` en
-> `repo.ts:326` (`historia-unificada:38`) y hoy está en `:380`. Es la clase de cita que envejece: por
+> `repo.ts:326` en `3675f81` (`historia-unificada:38`) y hoy está en `:412`. Es la clase de cita que envejece: por
 > eso las specs de este repositorio se verifican en cada tanda contra el commit que declaran.
 
 ### 5.2 · Maestro ↔ código

@@ -11,14 +11,14 @@ instalarArnes()
  *
  * LA REGLA. Una orden de venta pertenece a UN solo servicio. La misma orden en dos tickets deja el
  * trabajo facturado dos veces contra el mismo pedido y nadie sabe cuál de los dos es el bueno. Lo
- * dice el comentario de `repo.ts:317-320`, encima de `ticketConOrdenVenta`, que es la única función
+ * dice el comentario de `repo.ts:349-352`, encima de `ticketConOrdenVenta`, que es la única función
  * que sabe comprobarlo.
  *
  * LAS TRES PUERTAS POR LAS QUE UNA OV ENTRA EN UN TICKET, Y HOY LAS TRES LA COMPRUEBAN:
  *
  *   1. la CREACIÓN del ticket .................. `ticketService.ts:96-100`  → 409  ✅
  *   2. «Habilitar Servicio» .................... `ticketService.ts:148-152` → 409  ✅
- *   3. la REMISIÓN DE ENTRADA .................. `remision.ts:218-240`      → 409  ✅
+ *   3. la REMISIÓN DE ENTRADA .................. `remision.ts:218-244`      → 409  ✅
  *
  * ⚠️ EL DEFECTO, VERIFICADO — cierto hasta `b99d47a` (árbol de partida de esta tanda), se conserva
  * por su valor de registro. La evidencia era de una línea: `ticketConOrdenVenta` sólo se llamaba en
@@ -34,7 +34,7 @@ instalarArnes()
  * **CERRADO por `tercera-puerta-orden-venta`.** La tercera puerta llama hoy a `ticketConOrdenVenta`
  * desde `remision.ts:230`, por las DOS vías —`salesorder_id` y número— y con el propio ticket
  * excluido (`RQ-RE-16`, `openspec/specs/remisiones/spec.md`). El `WHERE` de arriba sigue existiendo
- * (hoy `remision.ts:237`), pero deja de estar EN LUGAR DE la guarda: queda ADEMÁS de ella, protegiendo
+ * (hoy `remision.ts:241`), pero deja de estar EN LUGAR DE la guarda: queda ADEMÁS de ella, protegiendo
  * la carrera de dos remisiones sobre el MISMO ticket, que es otra pregunta.
  *
  * ══ ⚠️ ANTES DE TAPARLA HABÍA QUE CORRER LA CONSULTA 4.1 DEL RUNBOOK. NO ERA UN TRÁMITE ══════════════
@@ -153,7 +153,7 @@ describe('una OV, un ticket · puerta 2 · «Habilitar Servicio»', () => {
 })
 
 describe('una OV, un ticket · puerta 3 · la REMISIÓN DE ENTRADA', () => {
-  /** El ticket destino: sin orden, para que la condición del `WHERE` de `remision.ts:237` deje pasar. */
+  /** El ticket destino: sin orden, para que la condición del `WHERE` de `remision.ts:241` deje pasar. */
   async function ticketSinOrden(): Promise<void> {
     await db.query("INSERT INTO tickets (id,number,subject,status,equipo_id,client_id) VALUES ('t-nuevo',7002,'El que la quiere',$1,'eq-1','cli1')", [STATUS_TICKET_CREADO])
   }
@@ -180,7 +180,7 @@ describe('una OV, un ticket · puerta 3 · la REMISIÓN DE ENTRADA', () => {
    * YA es suya —reintento de red, doble clic en el formulario— no es duplicarla. `ticketConOrdenVenta`
    * excluye al propio ticket destino (`remision.ts:230`, tercer argumento `ticketId`), así que la
    * comprobación no llega al `409`, y el `UPDATE` es no-op porque `orden_venta` ya no está vacía
-   * (`remision.ts:237`, `COALESCE(orden_venta,'') = ''`).
+   * (`remision.ts:241`, `COALESCE(orden_venta,'') = ''`).
    */
   it('reenviar la misma orden al propio ticket no se rechaza a sí mismo: 201 y el UPDATE es no-op', async () => {
     const cookie = await adminCookie()

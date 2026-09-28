@@ -10,7 +10,7 @@
 
 **Contexto verificado:**
 - pg-mem **no** soporta `search_path` ni `ALTER … SET SCHEMA` → el move y la resolución son prod-only, validados operativamente. Los tests cubren la **lógica** (config, createPool, las sentencias generadas).
-- App entrypoint `apps/desk/server/index.ts:28` = `await migrate(pool)`. Worker `apps/hub-sync/src/hub-sync.ts:37` = `await hubBootstrap(...)` (que internamente hace `migrate`).
+- App entrypoint `apps/desk/server/index.ts:28` en `f6ca119` = `await migrate(pool)`. Worker `apps/hub-sync/src/hub-sync.ts:37` = `await hubBootstrap(...)` (que internamente hace `migrate`).
 - `config.test.ts` tiene un env base (línea ~5). `pool.test.ts` ya prueba `createPoolFromUrl`.
 - 0 `public.` hardcodeado en queries; `setval/nextval('ticket_number_seq')` sin calificar.
 - Tablas Desk (10): accounts, contacts, agents, tickets, conversations, attachments, ticket_transitions, ticket_history, activities, equipos. App-native (public): users, sessions, roles, ticket_reads, resolution_attachments. Lite (public, transitorio): clients, sales_orders.

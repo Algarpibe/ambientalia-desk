@@ -22,7 +22,7 @@ function rastreador(failOnNthOf?: { verb: string; n: number }): { db: Queryable 
       contador += 1
       if (contador === failOnNthOf.n) throw new Error(`boom (${verb} #${failOnNthOf.n})`)
     }
-    // `nextTicketNumber` (`repo.ts:202-205`) lee `rows[0].n`: el rastreador no tiene BD real detrás,
+    // `nextTicketNumber` (`repo.ts:229-232`) lee `rows[0].n`: el rastreador no tiene BD real detrás,
     // así que le da un valor fijo para que `createTicket` pueda seguir su curso normal.
     if (sql.includes('nextval')) return { rows: [{ n: 1 }] }
     return { rows: [] }

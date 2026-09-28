@@ -365,12 +365,17 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * correctas por el mismo motivo que las otras dos de `equipos` (`:208`, `:354`): `equipos` está en
    * `DESK_TABLES`. Sube de 30 a 36 (sin calificar 12→18, conjunto sin cambios). F1B-04 lo sube de 36
    * a 37 (calificadas 18→19, "14 de public"); conjunto sin calificar intacto (`remisiones` ya estaba).
+   *
+   * `parche-iv11-orden-venta` (F1B-11, parche 1 de 3) suma DOS `ALTER TABLE tickets` sin calificar
+   * (`schema.sql`, al final): `ov_elegida_en_app_at` y `ov_zoho_avisada`, la marca de fila que protege
+   * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
+   * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 37 ALTER: 19 calificadas (14 de public + 5 de books) y 18 sin calificar, todas de Desk', () => {
+  it('son 39 ALTER: 19 calificadas (14 de public + 5 de books) y 20 sin calificar, todas de Desk', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(37)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(39)
     expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(19)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(18)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(20)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.

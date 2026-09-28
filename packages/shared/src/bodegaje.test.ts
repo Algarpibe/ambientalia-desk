@@ -27,7 +27,7 @@ import { camposFechaReentrantes } from './reentrancia'
  * misma frase.
  */
 describe('C9 · los tres bodegajes de M1.10', () => {
-  /** Un paso del historial: `ticket_transitions` tal como la escribe `repo.ts:282-286`. */
+  /** Un paso del historial: `ticket_transitions` tal como la escribe `repo.ts:314-318`. */
   const paso = (transitionId: string, performedAt: string, values: Record<string, unknown> = {}): PasoDelHistorial =>
     ({ transitionId, performedAt, values })
 

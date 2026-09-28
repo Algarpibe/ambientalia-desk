@@ -267,7 +267,7 @@ describe('createTicket · opts.transaccionAbierta (RQ-TC-16)', () => {
  * C9 · LA COLUMNA DE LA FECHA DE AVISO NO ENTRA EN `TICKET_COLS`, Y ESO ES LO QUE LA SALVA.
  *
  * `TICKET_COLS` es la lista que el upsert del sync sobrescribe con lo que traiga Zoho
- * (`repo.ts:62`). `fecha_aviso_cliente` NO viene de Zoho —la crea C9 y la escribe
+ * (`repo.ts:88`). `fecha_aviso_cliente` NO viene de Zoho —la crea C9 y la escribe
  * `habilitado_para_entrega`—, así que meterla ahí la pondría a `null` en cada pasada del sync, cada
  * 3 minutos, sin error y sin traza. Es la misma razón por la que `derivado_a` tampoco está
  * (`schema.sql:118-123`).
@@ -285,5 +285,136 @@ describe('C9 · la columna de la fecha de aviso sobrevive al sync', () => {
     expect(PROMOTED_COLUMNS.map((p) => p.col)).toContain('fecha_aviso_cliente')
     const entrada = PROMOTED_COLUMNS.find((p) => p.col === 'fecha_aviso_cliente')!
     expect([entrada.label, entrada.kind]).toEqual(['Fecha de aviso al cliente', 'date'])
+  })
+})
+
+/**
+ * parche-iv11-orden-venta (F1B-11, parche 1 de 3) · marca de fila `ov_elegida_en_app_at`.
+ *
+ * IV-11: `orden_venta`/`fecha_orden_venta` se pisaban en cada pasada del sync aunque un escritor de
+ * la app las hubiera fijado, porque la única frontera de escritura era `managed_by_app` (fila entera).
+ * Estas pruebas fijan la frontera FINA, por columna: con la marca puesta, esas dos columnas quedan
+ * protegidas aunque `managed_by_app` sea `false`.
+ */
+describe('upsertTicket · marca ov_elegida_en_app_at protege orden_venta/fecha_orden_venta', () => {
+  it('con la marca y OV distinta de Zoho: las dos columnas quedan intactas, subject sí cambia, y devuelve el descriptor', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP', fecha_orden_venta: '2026-01-01', subject: 'viejo' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now() WHERE id='1'")
+    const d = await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-ZOHO', fecha_orden_venta: '2026-02-02', subject: 'nuevo' })
+    const r = await getTicketRow(db, '1')
+    expect(r!.orden_venta).toBe('OV-APP')
+    expect((r!.fecha_orden_venta as unknown as Date).toISOString().slice(0, 10)).toBe('2026-01-01')
+    expect(r!.subject).toBe('nuevo') // el resto de TICKET_COLS sigue actualizándose con normalidad
+    expect(d).toEqual({ ticketId: '1', numero: 941, ovApp: 'OV-APP', ovZoho: 'OV-ZOHO' })
+  })
+
+  it('sin la marca, Zoho sigue mandando (comportamiento actual, sin cambios)', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    const d = await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-ZOHO' })
+    expect((await getTicketRow(db, '1'))!.orden_venta).toBe('OV-ZOHO')
+    expect(d).toBeNull()
+  })
+
+  it('managed_by_app=true gana aunque la marca esté puesta: el salto de :59 sigue PRIMERO', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), managed_by_app: true, orden_venta: 'OV-APP' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now() WHERE id='1'")
+    const d = await upsertTicket(db, { ...zTicket('1', 941, 'En Proceso'), orden_venta: 'OV-ZOHO' })
+    expect(d).toBeNull()
+    const r = await getTicketRow(db, '1')
+    expect(r!.status).toBe('Ingresado') // ni siquiera el status se toca: managed_by_app sale antes de mirar nada más
+  })
+
+  it('Zoho vacío tras trim no cuenta como discrepancia (S-2)', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now() WHERE id='1'")
+    const d = await upsertTicket(db, { ...zTicket('1', 941), orden_venta: '   ' })
+    expect(d).toBeNull()
+    expect((await getTicketRow(db, '1'))!.orden_venta).toBe('OV-APP')
+  })
+
+  // Distingue el chequeo de "Zoho vacío" del de "igual al último avisado": con `ov_zoho_avisada` NO
+  // vacío, un Zoho vacío que sólo comprobara contra `ov_zoho_avisada`/`orden_venta` colaría igual
+  // (ambos son distintos de ''), así que hace falta la comprobación explícita de vacío (S-2).
+  it('Zoho vacío tras trim no cuenta como discrepancia aunque ov_zoho_avisada tenga otro valor', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now(), ov_zoho_avisada = 'OV-OLD' WHERE id='1'")
+    const d = await upsertTicket(db, { ...zTicket('1', 941), orden_venta: '   ' })
+    expect(d).toBeNull()
+  })
+
+  it('Zoho igual al último valor ya avisado (ov_zoho_avisada) no repite la discrepancia', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now(), ov_zoho_avisada = 'OV-ZOHO' WHERE id='1'")
+    const d = await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-ZOHO' })
+    expect(d).toBeNull()
+  })
+
+  it('Zoho igual al valor que ya tiene la aplicación no es discrepancia', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now() WHERE id='1'")
+    const d = await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    expect(d).toBeNull()
+  })
+
+  it('ov_elegida_en_app_at y ov_zoho_avisada no están en TICKET_COLS: el sync nunca las escribe', () => {
+    expect(TICKET_COLS as readonly string[]).not.toContain('ov_elegida_en_app_at')
+    expect(TICKET_COLS as readonly string[]).not.toContain('ov_zoho_avisada')
+  })
+})
+
+describe('createTicket / writeTransition ponen la marca al fijar la orden de venta (D6)', () => {
+  const inputBase = {
+    subject: 'S', codigoServicio: null, classification: null, tipoServicio: null, equipo: null,
+    marca: null, modelo: null, serial: null, priority: null, salesorderId: null, equipoId: null, actor: 'Admin',
+  }
+
+  it('createTicket marca ov_elegida_en_app_at cuando ordenVenta no está vacía', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','X')")
+    const id = await createTicket(db, { ...inputBase, ordenVenta: 'OV-1', clientId: 'cli1' })
+    const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', [id])
+    expect(r.rows[0].ov_elegida_en_app_at).not.toBeNull()
+  })
+
+  it('createTicket NO marca cuando ordenVenta viene vacía o null', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli2','Y')")
+    const id = await createTicket(db, { ...inputBase, ordenVenta: null, clientId: 'cli2' })
+    const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', [id])
+    expect(r.rows[0].ov_elegida_en_app_at).toBeNull()
+  })
+
+  it('writeTransition (habilitar_servicio) marca cuando plan.columns fija orden_venta no vacía', async () => {
+    await upsertTicket(db, zTicket('1', 5, 'OV asignada'))
+    await applyTransition(
+      db, '1', 'OV asignada',
+      { id: 'habilitar_servicio', name: 'Habilitar Servicio', area: 'Comercial' },
+      { status: 'Ingresado', statusType: 'Open', columns: { orden_venta: 'OV-9' }, customFields: {} },
+      'Equipo Técnico', {},
+    )
+    const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', ['1'])
+    expect(r.rows[0].ov_elegida_en_app_at).not.toBeNull()
+  })
+
+  it('writeTransition NO marca cuando plan.columns.orden_venta viene vacía', async () => {
+    await upsertTicket(db, zTicket('1', 5, 'OV asignada'))
+    await applyTransition(
+      db, '1', 'OV asignada',
+      { id: 'habilitar_servicio', name: 'Habilitar Servicio', area: 'Comercial' },
+      { status: 'Ingresado', statusType: 'Open', columns: { orden_venta: '' }, customFields: {} },
+      'Equipo Técnico', {},
+    )
+    const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', ['1'])
+    expect(r.rows[0].ov_elegida_en_app_at).toBeNull()
+  })
+
+  it('writeTransition NO marca cuando plan.columns no incluye orden_venta', async () => {
+    await upsertTicket(db, zTicket('1', 5, 'OV asignada'))
+    await applyTransition(
+      db, '1', 'OV asignada',
+      { id: 'aprobacion', name: 'Aprobación', area: 'Comercial' },
+      { status: 'En Proceso', statusType: 'Open', columns: {}, customFields: {} },
+      'Equipo Técnico', {},
+    )
+    const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', ['1'])
+    expect(r.rows[0].ov_elegida_en_app_at).toBeNull()
   })
 })

@@ -7,8 +7,11 @@ import type { AppConfig } from './config'
 
 const config = { departmentId: 'DEP' } as AppConfig
 function page(t: unknown[]) { return new Response(JSON.stringify({ data: t }), { status: 200 }) }
-function z(id: string, n: number) {
-  return { id, ticketNumber: String(n), subject: 's', status: 'Ingresado', statusType: 'Open', accountId: 'a1', customFields: { Serial: 'SR' + id } }
+function z(id: string, n: number, ordenVenta?: string) {
+  return {
+    id, ticketNumber: String(n), subject: 's', status: 'Ingresado', statusType: 'Open', accountId: 'a1',
+    customFields: { Serial: 'SR' + id, ...(ordenVenta ? { 'Orden de Venta': ordenVenta } : {}) },
+  }
 }
 
 let db: Queryable
@@ -36,5 +39,41 @@ describe('sync (tipado)', () => {
     await expect(sync.syncRecent()).resolves.toBeDefined() // NO lanza
     expect(await getTicketRow(db, 'B')).not.toBeNull()     // el otro persistió
     expect(await getTicketRow(db, 'A')).toBeNull()         // el que colisiona, no
+  })
+})
+
+/**
+ * parche-iv11-orden-venta (F1B-11, D5). `createSync` recibe una devolución OPCIONAL que sólo cablea
+ * `apps/desk/server/index.ts` (el worker de `apps/hub-sync` no la pasa, RQ-AV-13): cuando
+ * `upsertTicket` detecta una discrepancia de orden de venta, `persistTicket` se la entrega.
+ */
+describe('createSync · alDiscrepanciaOV (D5)', () => {
+  const conMarca = () => db.query(
+    "INSERT INTO tickets (id, number, status, orden_venta, ov_elegida_en_app_at) VALUES ('A', 5, 'Ingresado', 'OV-APP', now())",
+  )
+
+  it('la devolución opcional recibe el descriptor una vez cuando upsertTicket detecta discrepancia', async () => {
+    await conMarca()
+    const recibidos: unknown[] = []
+    const zohoFetch = vi.fn().mockResolvedValueOnce(page([z('A', 5, 'OV-ZOHO')])).mockResolvedValue(page([]))
+    const sync = createSync({ zohoFetch, db, config, alDiscrepanciaOV: async (d) => { recibidos.push(d) } })
+    await sync.syncRecent()
+    expect(recibidos).toEqual([{ ticketId: 'A', numero: 5, ovApp: 'OV-APP', ovZoho: 'OV-ZOHO' }])
+  })
+
+  it('sin devolución, persistTicket no falla', async () => {
+    await conMarca()
+    const zohoFetch = vi.fn().mockResolvedValueOnce(page([z('A', 5, 'OV-ZOHO')])).mockResolvedValue(page([]))
+    const sync = createSync({ zohoFetch, db, config })
+    await expect(sync.syncRecent()).resolves.toBeDefined()
+  })
+
+  it('si la devolución lanza, el ticket sigue contando como persistido', async () => {
+    await conMarca()
+    const zohoFetch = vi.fn().mockResolvedValueOnce(page([z('A', 5, 'OV-ZOHO')])).mockResolvedValue(page([]))
+    const sync = createSync({ zohoFetch, db, config, alDiscrepanciaOV: async () => { throw new Error('boom') } })
+    const n = await sync.syncRecent()
+    expect(n).toBe(1)
+    expect(await getTicketRow(db, 'A')).not.toBeNull()
   })
 })

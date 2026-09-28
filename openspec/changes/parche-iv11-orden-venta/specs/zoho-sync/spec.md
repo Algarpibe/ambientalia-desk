@@ -9,16 +9,16 @@ lleva una marca puesta por un escritor de la aplicación. Reduce IV-11 sin cerra
 ### Requirement: RQ-ZS-01 · `managed_by_app` es la frontera de escritura, no el discriminador de origen
 
 Una fila con `managed_by_app = true` **MUST NOT** ser sobrescrita por el sync
-(`packages/zoho-sync/src/db/repo.ts:58-59` para tickets, `:20-21` para contactos, `:14` para cuentas).
+(`packages/zoho-sync/src/db/repo.ts:66-71` para tickets, `:20-21` para contactos, `:14` para cuentas).
 
 - En tickets, el `UPSERT` **SHALL** salir antes de escribir si la fila ya está gestionada por la app
-  (`repo.ts:58-59`: `// no sobrescribir lo gestionado por la app`), y la columna **MUST NOT** estar
-  entre las que el `ON CONFLICT` actualiza (`:62`).
+  (`repo.ts:66-71`: `// no sobrescribir lo gestionado por la app`), y la columna **MUST NOT** estar
+  entre las que el `ON CONFLICT` actualiza (`:88`).
 - En cuentas, la exclusión **SHALL** ir en el propio `WHERE` del `ON CONFLICT` (`:14`).
 - Lo que llega de Zoho **SHALL** nacer con `managed_by_app: false` y `source: 'zoho'`
   (`db/mappers.ts:53`, `:77`, `:85`).
 - Lo que la app toca **SHALL** quedar marcado: `applyTransition` pone `managed_by_app=true` y
-  `source='app'` en **cualquier** transición hecha desde Desk (`repo.ts:271`).
+  `source='app'` en **cualquier** transición hecha desde Desk (`repo.ts:298`).
 
 **Desde este cambio, dos columnas ganan una frontera propia, más fina que `managed_by_app`.** Cuando
 la fila lleva la marca de fila `ov_elegida_en_app_at timestamptz` puesta (**supuesto S-1**, reversible:
@@ -27,10 +27,10 @@ nullable, fuera de `TICKET_COLS`, sin relleno de filas previas), `orden_venta` y
 fila. Es la excepción por columnas que reduce IV-11 para las filas marcadas.
 
 - La marca **SHALL** ponerla, en la misma escritura, cualquiera de los **tres** escritores de la
-  aplicación que fijan `orden_venta`: el alta de ticket (`repo.ts:385-386`), `writeTransition` cuando
+  aplicación que fijan `orden_venta`: el alta de ticket (`repo.ts:420-421`), `writeTransition` cuando
   `plan.columns` incluye `orden_venta` —caso de `habilitar_servicio` (`transitions.ts:189`)—
-  (`repo.ts:271`, `:274`), y el `UPDATE` de la remisión de entrada (capacidad `remisiones`, RQ-RE-16
-  modificado, `apps/desk/server/routes/remision.ts:235-239`). `upsertTicket` **MUST NOT** ponerla
+  (`repo.ts:298`, `:301-306`), y el `UPDATE` de la remisión de entrada (capacidad `remisiones`, RQ-RE-16
+  modificado, `apps/desk/server/routes/remision.ts:239-243`). `upsertTicket` **MUST NOT** ponerla
   nunca: es de lectura para el sync, nunca de escritura.
 - Sin la marca, la fila **SHALL** seguir la regla de hoy sin cambios: `orden_venta` y
   `fecha_orden_venta` se sobrescriben con lo que traiga Zoho.

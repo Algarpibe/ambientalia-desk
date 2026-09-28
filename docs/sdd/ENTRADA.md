@@ -314,7 +314,7 @@ otra.
 **Destino:** — (decisión de alcance pendiente; dueño: Gerencia)
 
 **Lo verificado.** `buildTransitionPlan` sólo recorre los campos que la transición declara (`apps/desk/server/transitionExec.ts:42`),
-pero el historial guarda el `values` ENTERO que llega (`packages/zoho-sync/src/db/repo.ts:285`), y `periodosDeBodegaje` lee
+pero el historial guarda el `values` ENTERO que llega (`packages/zoho-sync/src/db/repo.ts:285` en `17ddfec`), y `periodosDeBodegaje` lee
 cada operando en cualquier paso del historial, sin mirar qué transición lo escribió (`bodegaje.ts:174`, `:186`). O sea que
 `Fecha Orden De Venta`, `Fecha de Cotización`, `Fecha Orden de Compra`, `Fecha de aviso al cliente` o `Fecha Remisión de
 Salida` enviadas por la API en una transición que no las pide entran en el historial y abren o cierran un bodegaje.
@@ -371,7 +371,7 @@ Zoho, o en los dos— queda SIN CONFIRMAR: no cambia la decisión del parche.»
 IV-11 · `docs/sdd/Parte_2026-09-22.md`.
 **Medido el 22/09 sobre `125ae3e`:** «ni el número ni su fecha» son DOS columnas, `orden_venta` (`packages/zoho-sync/src/db/repo.ts:48`)
 y `fecha_orden_venta` (`:50`). **Lo que la respuesta no preveía:** hoy no hay forma de saber POR FILA que la orden se
-eligió en la aplicación —la única bandera, `managed_by_app` (`repo.ts:58-59`), es del ticket entero, que es la salida (a)
+eligió en la aplicación —la única bandera, `managed_by_app` (`repo.ts:58-59` en `17ddfec`), es del ticket entero, que es la salida (a)
 descartada—, y el «espejo de Zoho» al que se manda la discrepancia no existe ni tiene fila (E-018). Las dos salen al panel
 como `e005b-parche-vehiculo` y `e005c-discrepancia-sin-espejo`.
 **Clave Engram a cargar:** `decision/e005-iv4-iv11`.
@@ -1177,7 +1177,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Destino propuesto:** fila F1B-04 del §5 del plan. **Dueño propuesto:** Gerencia.
 
 ## E-081 · 2026-09-25 · hallazgo · **NUEVA**
-**Qué:** El servidor no obliga a contestar «¿El equipo llega con novedad?». `POST /api/remisiones` guarda `hayNovedad` como `null` cuando el cuerpo no trae un booleano (`apps/desk/server/routes/remision.ts:246`: `typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null`), y con `null` el envío no exige foto (`packages/shared/src/remision.ts:110-111`: sólo `hayNovedad === true` la exige). La obligación de contestar vive sólo en el formulario (`apps/desk/src/components/CrearRemision.tsx`), declarada así en RQ-RE-19 como regla invariable 13, punto 2: una petición que no pase por el formulario crea una remisión que se envía sin foto aunque el equipo llegue con novedad.
+**Qué:** El servidor no obliga a contestar «¿El equipo llega con novedad?». `POST /api/remisiones` guarda `hayNovedad` como `null` cuando el cuerpo no trae un booleano (`apps/desk/server/routes/remision.ts:246` en `17ddfec`: `typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null`), y con `null` el envío no exige foto (`packages/shared/src/remision.ts:110-111`: sólo `hayNovedad === true` la exige). La obligación de contestar vive sólo en el formulario (`apps/desk/src/components/CrearRemision.tsx`), declarada así en RQ-RE-19 como regla invariable 13, punto 2: una petición que no pase por el formulario crea una remisión que se envía sin foto aunque el equipo llegue con novedad.
 **Por qué no se arregló:** exigir la respuesta en el servidor al CREAR no afecta a las remisiones antiguas (se quedan en `null` y siguen sin exigir foto), pero añade una guarda al alta de remisión, cuyo orden de guardas está pendiente de decisión (IV-12, `openspec/config.yaml` → `incumplimientos_vivos`). Se decidió en `foto-solo-con-novedad` (F1B-04) no tocar el alta.
 **De dónde viene:** encargo de la sesión de supervisión, 2026-09-25, tras archivar `foto-solo-con-novedad`.
 **Afecta a:** `apps/desk/server/routes/remision.ts` (alta) · RQ-RE-19 de `openspec/specs/remisiones/spec.md` · IV-12.

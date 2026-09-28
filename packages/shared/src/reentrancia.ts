@@ -14,7 +14,7 @@ import { TRANSITIONS, type Transition } from './transitions'
  * LO QUE SALVA EL CASO, Y POR QUÉ ESTO NO ES DISEÑO (§3.4 del proposal).
  *
  * `ticket_transitions.values` es `jsonb` y guarda TODOS los valores de cada transición
- * (`db/schema.sql:57-61` declara la columna, `db/repo.ts:282-286` la escribe en cada paso). O sea:
+ * (`db/schema.sql:57-61` declara la columna, `db/repo.ts:314-318` la escribe en cada paso). O sea:
  *
  *   **Las columnas de `tickets` guardan el ÚLTIMO valor; el historial guarda TODOS.**
  *

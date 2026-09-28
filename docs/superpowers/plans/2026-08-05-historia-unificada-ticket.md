@@ -204,7 +204,7 @@ el cliente se queda con las clases de Tailwind, que solo él entiende."
 ### Tarea 2: `createTicket` guarda el payload completo
 
 **Ficheros:**
-- Modificar: `packages/zoho-sync/src/db/repo.ts:323-327`
+- Modificar: `packages/zoho-sync/src/db/repo.ts:323-327` en `9cea347`
 - Test: `packages/zoho-sync/src/db/repo.test.ts`
 
 - [ ] **Paso 1: escribir el test que falla**

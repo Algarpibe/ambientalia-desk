@@ -24,7 +24,7 @@ una vista nueva se olvidara de su propio `case`.
 La vista `todos` **SHALL** devolver los tickets activos y los tickets cerrados, con los activos
 **primero** y los cerrados **después**, sin intercalarlos por fecha de creación. El indicador de la
 vista **SHALL** declarar el `total` de cerrados que reporta el servidor
-(`countClosedTickets`, `packages/zoho-sync/src/db/repo.ts:145-148`), no una cuenta local de lo ya
+(`countClosedTickets`, `packages/zoho-sync/src/db/repo.ts:172-175`), no una cuenta local de lo ya
 cargado. El bloque de cerrados **SHALL** respetar la paginación que el servidor impone
 (`pageSize = 50`, `apps/desk/server/routes/tickets.ts:106`; probado en `apps/desk/server/tickets.test.ts:84`).
 

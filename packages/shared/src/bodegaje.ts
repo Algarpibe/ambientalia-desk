@@ -94,7 +94,7 @@ export const BODEGAJES: DefinicionBodegaje[] = [
 export const HITO_INDICADORES_ROTOS = 'ingreso_a_servicio'
 
 /**
- * Un paso del historial: una fila de `ticket_transitions` tal como la escribe `repo.ts:282-286`.
+ * Un paso del historial: una fila de `ticket_transitions` tal como la escribe `repo.ts:314-318`.
  *
  * NO se reutiliza `HistorialTransition` (`types.ts:441`) aunque se parezca: aquella es el tipo de la
  * línea de tiempo de la pantalla —lleva comentario y adjuntos, y NO lleva `values` ni `transitionId`,

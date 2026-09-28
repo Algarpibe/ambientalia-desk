@@ -134,7 +134,7 @@ La columna 58 **es el bodegaje de proceso** (M1.10) y se calcula sobre `fecha_or
 
 ### 3.4 · Lo que salva el caso, y por qué esto no es diseño
 
-`ticket_transitions.values` es `jsonb` y guarda **todos** los valores de cada transición (`schema.sql:57-61`, `repo.ts:283-286`). No se pierde ningún dato: **las columnas guardan el último valor; el historial guarda todos.**
+`ticket_transitions.values` es `jsonb` y guarda **todos** los valores de cada transición (`schema.sql:57-61`, `repo.ts:283-286` en `17ddfec`). No se pierde ningún dato: **las columnas guardan el último valor; el historial guarda todos.**
 
 P34 ya nombra la solución —*«campo nuevo que no se sobreescriba, o evento en el historial»*— y la segunda escala a los diez campos sin añadir diez columnas. Es además la propuesta de Gerencia para C7: en el as-built toda pausa es un estado pleno, luego **el periodo queda delimitado por dos filas de `ticket_transitions`**, y calcular los bodegajes sobre ese registro *append-only* implementa M1.10 al pie de la letra y arregla la reentrancia en el mismo movimiento.
 

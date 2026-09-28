@@ -152,7 +152,7 @@ describe('buildTransitionPlan', () => {
  * C9 · LA FECHA DE AVISO ATERRIZA EN SU COLUMNA, Y NO ES UNA PREFERENCIA.
  *
  * Es el mismo fallo silencioso que ya vigilan los dos tests de arriba, pero con una vuelta de tuerca:
- * aquí el jsonb no es sólo «menos visible», es DESTRUCTIVO. `repo.ts:62` hace
+ * aquí el jsonb no es sólo «menos visible», es DESTRUCTIVO. `repo.ts:88` hace
  * `custom_fields=EXCLUDED.custom_fields` en cada upsert, y el sync corre cada 3 minutos, así que un
  * ticket venido de Zoho —cualquiera que no sea `managed_by_app`— perdería la fecha de aviso antes de
  * que nadie la mirase, y con ella el bodegaje de salida de M1.10.

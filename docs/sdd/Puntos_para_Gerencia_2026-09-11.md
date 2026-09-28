@@ -165,7 +165,7 @@ puede apoyarse en nº 52**.
 
 **El giro que hace urgente decidir.** El código **ya impone** «una OV, un ticket» en dos puertas
 (`apps/desk/server/services/ticketService.ts:45` en el alta y `:128` en `habilitar_servicio`), y deja
-una tercera sin comprobar (`apps/desk/server/routes/remision.ts:218-240`, el desvío IV-4).
+una tercera sin comprobar (`apps/desk/server/routes/remision.ts:218-240` en `17ddfec`, el desvío IV-4).
 
 | Salida | Qué hay que hacer | Coste |
 |---|---|---|

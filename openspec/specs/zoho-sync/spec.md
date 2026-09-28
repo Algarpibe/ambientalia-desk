@@ -45,7 +45,7 @@ junto a la Opción A y SP4, y el baseline lo clasifica **NO-APLICA-AL-MVP**
 
 | Concepto | Diseños (06/06 y 18/06) | Maestro R08.1 | Código (`ad1875b`) |
 |---|---|---|---|
-| Cadencia | «`SYNC_INTERVAL_MS=180000`» como valor por omisión de `loadConfig` (`sp1:24`) | M11.1 (`:2650`): «se actualiza cada tres minutos»; (`:2652`) «el cron alimenta PostgreSQL» | `setInterval` **dentro del proceso**, con `syncIntervalMs` por omisión 180 000 ms (`packages/zoho-sync/src/config.ts:88`; los temporizadores, en `apps/desk/server/index.ts:82-90` y `apps/hub-sync/src/hubSync.ts:79-95`). **No hay ningún cron** |
+| Cadencia | «`SYNC_INTERVAL_MS=180000`» como valor por omisión de `loadConfig` (`sp1:24`) | M11.1 (`:2650`): «se actualiza cada tres minutos»; (`:2652`) «el cron alimenta PostgreSQL» | `setInterval` **dentro del proceso**, con `syncIntervalMs` por omisión 180 000 ms (`packages/zoho-sync/src/config.ts:88`; los temporizadores, en `apps/desk/server/index.ts:85-93` y `apps/hub-sync/src/hubSync.ts:79-95`). **No hay ningún cron** |
 | Tablas replicadas | SP2 corrige su propio alcance a **tres**: `activities`, `clients`, `sales_orders`, excluyendo `contacts` (`sp2:1-7`) | — | **Cuatro**: `desk.activities`, `books.contacts`, `books.sales_orders`, `books.items` (`DEPLOY.md:42`). `clients` ya no es tabla: es **vista** sobre `books.contacts` (`schema.sql:169-173`) |
 | Escritura hacia Zoho | SP2: «no se tocan … ni las escrituras del app» (`sp2:20-21`) | M11.1 `[DECIDIDO]` (`:2651`): «Desk 2.0 lee la información de Zoho **sin permisos de edición ni de eliminación**» | Existe **una** ruta que escribe a Zoho, y está detrás de un interruptor que **nace cerrado**: `POST /api/tickets/:id/reply` con `guardWrites` (`apps/desk/server/routes/tickets.ts:27-30`, `:196`; `ENABLE_WRITES === 'true'` en `config.ts:84`) |
 | El paquete de lectura | «`@algarpibe/zoho-sync`, repo **independiente**; el monorepo NO se toca» (`paquete:decisión R1`) | — | En este repositorio el paquete se llama `@ambientalia/zoho-sync` y es un **workspace privado** (`packages/zoho-sync/package.json:1`). Son dos cosas distintas con nombre parecido |
@@ -58,16 +58,16 @@ junto a la Opción A y SP4, y el baseline lo clasifica **NO-APLICA-AL-MVP**
 ### RQ-ZS-01 · `managed_by_app` es la frontera de escritura, no el discriminador de origen
 
 Una fila con `managed_by_app = true` **MUST NOT** ser sobrescrita por el sync
-(`packages/zoho-sync/src/db/repo.ts:58-59` para tickets, `:20-21` para contactos, `:14` para cuentas).
+(`packages/zoho-sync/src/db/repo.ts:66-71` para tickets, `:20-21` para contactos, `:14` para cuentas).
 
 - En tickets, el `UPSERT` **SHALL** salir antes de escribir si la fila ya está gestionada por la app
-  (`repo.ts:58-59`: `// no sobrescribir lo gestionado por la app`), y la columna **MUST NOT** estar
-  entre las que el `ON CONFLICT` actualiza (`:62`).
+  (`repo.ts:66-71`: `// no sobrescribir lo gestionado por la app`), y la columna **MUST NOT** estar
+  entre las que el `ON CONFLICT` actualiza (`:88`).
 - En cuentas, la exclusión **SHALL** ir en el propio `WHERE` del `ON CONFLICT` (`:14`).
 - Lo que llega de Zoho **SHALL** nacer con `managed_by_app: false` y `source: 'zoho'`
   (`db/mappers.ts:53`, `:77`, `:85`).
 - Lo que la app toca **SHALL** quedar marcado: `applyTransition` pone `managed_by_app=true` y
-  `source='app'` en **cualquier** transición hecha desde Desk (`repo.ts:271`).
+  `source='app'` en **cualquier** transición hecha desde Desk (`repo.ts:298`).
 
 **Y de ahí sale el matiz que importa:** por ese último punto, `managed_by_app` **MUST NOT** usarse
 para saber si un ticket nació en la app. El guardia fiable es el prefijo `app-` del `id`, que es
@@ -114,13 +114,13 @@ El intervalo **SHALL** salir de `syncIntervalMs`, con **180 000 ms** por omisió
 
 | Proceso | Temporizador | Qué corre | Evidencia |
 |---|---|---|---|
-| App (`ambientalia-desk`) | 1 | `syncRecent` → `syncActivities` → `syncContacts`, encadenados | `apps/desk/server/index.ts:82-90` |
+| App (`ambientalia-desk`) | 1 | `syncRecent` → `syncActivities` → `syncContacts`, encadenados | `apps/desk/server/index.ts:85-93` |
 | Worker (`hub-sync`) | 1 | `syncRecent` → `syncActivities` → `syncContacts` | `apps/hub-sync/src/hubSync.ts:79-85` |
 | Worker | 2 | Books rico, `booksHubSync.syncRecent` | `hubSync.ts:87-89` |
 | Worker | 3 | CRM, `crmSync.syncRecent` | `hubSync.ts:91-94` |
 
 - Los dos ciclos principales **SHALL** llevar un cerrojo `syncing` que impide solapar «si una tarda
-  más que el intervalo» (`index.ts:81-84`; `hubSync.ts:88-95`).
+  más que el intervalo» (`index.ts:84-87`; `hubSync.ts:88-95`).
 - Los tres temporizadores del worker **SHALL** compartir el mismo `intervalMs`
   (`hub-sync.ts:49`).
 
@@ -205,7 +205,7 @@ exactamente una: `DESK_TABLES` (10), `PUBLIC_TABLES` (16) y `BOOKS_TABLES` (3)
   calificar» (`migrate.ts:53-56`; el guardián, en `migrate.test.ts:266`; el reparto, en `:282`).
 - `reorgToDesk` **SHALL** mover las 10 de `DESK_TABLES` de `public` a `desk`, más la secuencia de
   numeración, y **SHALL** ser tolerante por sentencia (`migrate.ts:83-88`, `:95-98`). Sólo corre
-  cuando `DB_SCHEMA === 'desk'` (`index.ts:23`; `hub-sync.ts:47`).
+  cuando `DB_SCHEMA === 'desk'` (`index.ts:26`; `hub-sync.ts:47`).
 - El `search_path` **SHALL** fijarse en el pool y sólo con ese mismo interruptor
   (`db/pool.ts:5`; probado en `db/pool.test.ts:17`).
 
@@ -380,7 +380,7 @@ son ocho apariciones fuera de pruebas, y **una sola** es una guarda:
 |---|---|
 | `packages/zoho-sync/src/config.ts:9`, `:84` | Lo declara y lo lee |
 | **`apps/desk/server/routes/tickets.ts:28`** | **Lo honra**: `guardWrites` responde `403` |
-| `apps/desk/server/index.ts:55` | Sólo lo **imprime** en el log de arranque |
+| `apps/desk/server/index.ts:58` | Sólo lo **imprime** en el log de arranque |
 | `apps/desk/server/routes/tickets.ts:86` | Un comentario que explica por qué el borrado no lo lleva |
 | `apps/desk/server/testing/appHarness.ts:46`, `:49` | Andamiaje de pruebas |
 
@@ -422,14 +422,14 @@ cada una con `grep -qF` contra `DEPLOY.md`, **15** aparecen y **27** no.
 Las ausentes incluyen las que más consecuencia tienen:
 
 - **`DB_SCHEMA`**, que decide dos cosas a la vez: si `reorgToDesk` mueve las diez tablas de `public` a
-  `desk` (`index.ts:23`; `hub-sync.ts:47`) y si el pool fija `search_path=desk,public`
+  `desk` (`index.ts:26`; `hub-sync.ts:47`) y si el pool fija `search_path=desk,public`
   (`db/pool.ts:5`). Es la variable de la que depende toda la topología de dos esquemas que
   `CLAUDE.md` describe, y no está en el documento de despliegue.
 - Las siete credenciales y dominios de Books y CRM que no son el `refresh_token`
   (`ZOHO_BOOKS_CLIENT_ID`, `ZOHO_BOOKS_CLIENT_SECRET`, `ZOHO_BOOKS_API_DOMAIN`,
   `ZOHO_BOOKS_ACCOUNTS_DOMAIN`, `ZOHO_CRM_CLIENT_ID`, `ZOHO_CRM_CLIENT_SECRET`,
   `ZOHO_CRM_API_DOMAIN`, `ZOHO_CRM_ACCOUNTS_DOMAIN`).
-- `ADMIN_EMAIL` y `ADMIN_PASSWORD`, que siembran el primer administrador (`index.ts:40-42`).
+- `ADMIN_EMAIL` y `ADMIN_PASSWORD`, que siembran el primer administrador (`index.ts:43-45`).
 - `BACKFILL_CONTACTS`, que nace apagada correctamente (`config.ts:110`) pero cuesta «~615 GET de
   detalle contra Books» cuando se enciende (`config.ts:36-38`), y que hay que acordarse de volver a
   apagar (`hubSync.ts:40`).
@@ -470,7 +470,7 @@ escribe todos los días a las 5:00.
 
 | # | Dice el maestro | Dice el código | Lectura |
 |---|---|---|---|
-| M-1 | M11.1 (`:2650`): «se actualiza **cada tres minutos**». Y (`:2652`): «el **cron** alimenta PostgreSQL». `openspec/config.yaml:117` lo repite: «as-built (**cron** cada 3 min)» | Tres minutos es correcto: `syncIntervalMs` vale 180 000 ms por omisión (`config.ts:88`). **Pero no hay ningún cron**: son `setInterval` dentro de dos procesos Node (`index.ts:82-90`; `hubSync.ts:79-95`), y el valor es configurable con `SYNC_INTERVAL_MS` (`DEPLOY.md:91`) | **La cifra resiste; la palabra no.** Y la diferencia tiene consecuencia operativa: un cron sobrevive al reinicio del proceso y se puede inspeccionar desde fuera; un `setInterval` muere con el proceso y no deja rastro. Además son **cuatro** temporizadores, no uno. **Corrección para el maestro**, y también para `config.yaml`: es un temporizador en proceso, con intervalo configurable |
+| M-1 | M11.1 (`:2650`): «se actualiza **cada tres minutos**». Y (`:2652`): «el **cron** alimenta PostgreSQL». `openspec/config.yaml:117` lo repite: «as-built (**cron** cada 3 min)» | Tres minutos es correcto: `syncIntervalMs` vale 180 000 ms por omisión (`config.ts:88`). **Pero no hay ningún cron**: son `setInterval` dentro de dos procesos Node (`index.ts:85-93`; `hubSync.ts:79-95`), y el valor es configurable con `SYNC_INTERVAL_MS` (`DEPLOY.md:91`) | **La cifra resiste; la palabra no.** Y la diferencia tiene consecuencia operativa: un cron sobrevive al reinicio del proceso y se puede inspeccionar desde fuera; un `setInterval` muere con el proceso y no deja rastro. Además son **cuatro** temporizadores, no uno. **Corrección para el maestro**, y también para `config.yaml`: es un temporizador en proceso, con intervalo configurable |
 | M-2 | M11.1 `[LOGRADO 21/08]` (`:2650`): la información sincronizada es «tickets, órdenes de venta y contactos». Y (`:2654`): «bases de datos de referencia en Zoho: clientes, artículos y tickets, más órdenes de venta y contactos» | Mucho más: de Desk, ocho entidades (`sync.ts:14-24`); de Books, seis con sus líneas sobre 8 tablas; de CRM, 9 módulos sobre 10 tablas | **Quedó corto por crecimiento, no por error.** La frase describía el estado del 21/08. **Corrección para el maestro**: el inventario real son tres dominios y ~30 tablas de referencia, y la lista de M11.1 se lee hoy como el alcance completo cuando es el punto de partida |
 | M-3 | M11.1 `[DECIDIDO]` (`:2651`): «Desk 2.0 lee la información de Zoho **sin permisos de edición ni de eliminación**». M11.3 (`:2689`) lo repite: «conexión de solo lectura durante la transición» | Cierto **por configuración, no por ausencia de capacidad**: existe una ruta que escribe a Zoho (`POST /api/tickets/:id/reply`, `routes/tickets.ts:196`), y lo que la cierra es `ENABLE_WRITES`, que nace en `false` (`config.ts:84`) y `DEPLOY.md` documenta apagada (`:89`, con el §6 «Activar escrituras» en `:125`) | **Sin discrepancia de hecho, sí de lectura.** Hoy no se escribe. Pero el maestro lo enuncia como propiedad del sistema y el código lo tiene como interruptor, con un apartado del despliegue dedicado a encenderlo. **Importa para F1B-08**, que es la tanda de la política de escritura (punto abierto **P44**): la decisión que P44 tiene que tomar no es «¿construimos la escritura?» sino «¿encendemos la que ya está?» |
 | M-4 | M11.5 `[CORREGIDO — R08]` (`:2702`): «se trabaja únicamente con PostgreSQL en la VPS propia de Hostinger» | `DEPLOY.md` describe **dos** servicios Postgres en EasyPanel —`desk-db` y `zoho-hub-db` (`:28-29`)— y el worker abre un tercer pool contra `SALES_TRACKER_DATABASE_URL` (`hub-sync.ts:53`) | Sin discrepancia sobre el motor —es PostgreSQL en las tres— pero sí sobre el número. «Únicamente PostgreSQL» resuelve la pregunta de Supabase y deja abierta la de cuántas instancias. **Corrección menor para el maestro**, relevante porque M11.5 es el apartado donde vive la decisión de «una sola instancia» (`:2701`) |

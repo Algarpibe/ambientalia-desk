@@ -1,12 +1,12 @@
 import type { AppConfig } from './config'
 import type { Queryable } from './db/migrate'
-import { upsertTicket, upsertConversation, upsertAttachment, upsertAccount, upsertContact, upsertAgent } from './db/repo'
+import { upsertTicket, upsertConversation, upsertAttachment, upsertAccount, upsertContact, upsertAgent, type DiscrepanciaOV } from './db/repo'
 import { upsertActivity } from './db/activities'
 import { upsertHistoryEvent } from './db/history'
 import { PREFIJO_TICKET_APP } from '@ambientalia/shared'
 import { ticketRowFromZoho, conversationRowFromZoho, attachmentRowsFrom, accountRowFromZoho, contactRowFromZoho, agentRowFromZoho, activityRowFromZoho } from './db/mappers'
 
-interface Deps {
+interface Deps extends AvisoOVDeps {
   zohoFetch: (path: string, init?: RequestInit) => Promise<Response>
   db: Queryable
   config: AppConfig
@@ -59,7 +59,7 @@ function dataArray(payload: ZohoRecord): ZohoRecord[] {
   return Array.isArray(payload.data) ? (payload.data as ZohoRecord[]) : []
 }
 
-export function createSync({ zohoFetch, db, config }: Deps): Sync {
+export function createSync({ zohoFetch, db, config, alDiscrepanciaOV }: Deps): Sync {
   // Cachés por proceso para no re-pedir la misma cuenta/contacto en el backfill (menos riesgo de 429).
   const accountSeen = new Set<string>()
   // contactId → accountId del contacto (el endpoint de LISTA de tickets no trae accountId).
@@ -116,7 +116,10 @@ export function createSync({ zohoFetch, db, config }: Deps): Sync {
     const row = ticketRowFromZoho(t)
     // El endpoint de LISTA omite accountId; recuperarlo del contacto para que el JOIN dé la empresa.
     if (!row.account_id) row.account_id = contactAccountId
-    await upsertTicket(db, row)
+    const discrepancia = await upsertTicket(db, row)
+    // parche-iv11-orden-venta (D5): devolución OPCIONAL, sólo cablea `apps/desk/server/index.ts`. Un
+    // fallo suyo no debe tumbar la persistencia del ticket, que ya ocurrió arriba.
+    if (discrepancia) await alDiscrepanciaOV?.(discrepancia)?.catch(() => {})
   }
 
   /** Persiste cada item aislando fallos: uno malo no aborta el lote. Devuelve cuántos persistieron OK. */
@@ -346,3 +349,10 @@ export interface ResultadoHistoriaPendiente {
   /** Por qué falló el PRIMERO que falló. Ausente si no falló ninguno. */
   motivoPrimerFallo?: string
 }
+
+/**
+ * parche-iv11-orden-venta (F1B-11, D5). Devolución OPCIONAL para la discrepancia de orden de venta
+ * que `upsertTicket` detecta (`db/repo.ts`, `DiscrepanciaOV`). Sólo la cablea
+ * `apps/desk/server/index.ts`: el worker `apps/hub-sync` no crea este aviso (RQ-AV-13).
+ */
+export interface AvisoOVDeps { alDiscrepanciaOV?: (d: DiscrepanciaOV) => Promise<unknown> }

@@ -530,7 +530,7 @@ fichero ya tuvo que desactivar con una nota al pie.
 
 **Evidencia de primera mano en el código.**
 
-- `packages/zoho-sync/src/db/repo.ts:282-286` inserta en `ticket_transitions` las nueve columnas de
+- `packages/zoho-sync/src/db/repo.ts:314-318` inserta en `ticket_transitions` las nueve columnas de
   la fila, `performed_by` incluida, en la misma sentencia que `from_status`, `to_status` y `area`. No
   hay camino que escriba la fila sin el actor.
 - El actor es el usuario de la sesión: `apps/desk/server/services/ticketService.ts:111`
@@ -543,11 +543,11 @@ fichero ya tuvo que desactivar con una nota al pie.
 (`apps/desk/server/transitionActor.ts:3`) sigue existiendo como respaldo, con el valor
 `'Equipo Técnico'` y configurable por entorno. Hay **un** camino por el que puede llegar a escribirse
 en el historial, y no es el endpoint de transición: el **callback de n8n** de la remisión
-(`apps/desk/server/routes/remision.ts:370`), que aplica el paso sin botón de M1.3.3. Esa petición **no
+(`apps/desk/server/routes/remision.ts:374`), que aplica el paso sin botón de M1.3.3. Esa petición **no
 tiene sesión** —n8n no manda la cookie—, así que firma quien creó la remisión y cae al marcador sólo
-si la remisión no trae autor, que es el caso de las históricas (`routes/remision.ts:365-369`).
+si la remisión no trae autor, que es el caso de las históricas (`routes/remision.ts:369-373`).
 
-Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:332` y `:342`— van
+Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:336` y `:346`— van
 detrás de `requireAuth` y `requireAdmin` (`:275` y `:287`), así que ahí `req.user.name` está siempre
 presente y el `?? TRANSITION_ACTOR` es defensivo, no alcanzable. En el endpoint de transición tampoco
 se alcanza: el middleware exige sesión (`apps/desk/server/routes/tickets.ts:35`).

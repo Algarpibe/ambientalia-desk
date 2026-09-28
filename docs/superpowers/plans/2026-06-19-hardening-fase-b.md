@@ -16,7 +16,7 @@
 - DELETE resolución: `apps/desk/server/app.ts:104` en `1d030d5` (`/resolution/attachments/:attId`) y `:108` (`/resolution`).
 - ~32 `catch (err) { res.status(500).json({ error: String(err) }) }` en `app.ts`.
 - Passthrough deliberado de estado upstream (NO genericalizar): `apps/desk/server/app.ts:373` en `1d030d5` (attachment proxy `res.status(zres.status)`) y `:430` (reply `res.status(zres.status)`).
-- `repo.ts:117` ≈ `:130`: `.map((row:any)=>({row, refs:{accountName:row.account_name, agentName:row.agent_name, contactName:[row.c_first,row.c_last].filter(Boolean).join(' ').trim()||null, read: row.read_at!=null && (row.modified_time==null || new Date(row.read_at)>=new Date(row.modified_time))}}))`.
+- `repo.ts:117` en `1d030d5` ≈ `:130`: `.map((row:any)=>({row, refs:{accountName:row.account_name, agentName:row.agent_name, contactName:[row.c_first,row.c_last].filter(Boolean).join(' ').trim()||null, read: row.read_at!=null && (row.modified_time==null || new Date(row.read_at)>=new Date(row.modified_time))}}))`.
 - Raíz `package.json`: `tsx`,`cross-env` en `devDependencies`.
 
 ---

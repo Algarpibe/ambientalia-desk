@@ -28,7 +28,7 @@ En este documento, cada afirmación técnica lleva su referencia o la etiqueta *
 
 Salió de la revisión del §7 y se ejecutó ya, porque decidir el alcance de C4 sin este dato era diseñar a ciegas.
 
-**Definición de la clase:** campos de fecha escritos por transiciones que están sobre un camino reentrante del grafo. Al volver a pasar, el `UPDATE` plano de `writeTransition` (`packages/zoho-sync/src/db/repo.ts:274`) pisa el valor anterior sin ninguna guarda.
+**Definición de la clase:** campos de fecha escritos por transiciones que están sobre un camino reentrante del grafo. Al volver a pasar, el `UPDATE` plano de `writeTransition` (`packages/zoho-sync/src/db/repo.ts:274` en `17ddfec`) pisa el valor anterior sin ninguna guarda.
 
 **Método:** descomposición del grafo de las 34 transiciones en componentes fuertemente conexos (Tarjan) y cruce con los campos `cfDate`/`cfOrdenVenta` de cada transición cuyo origen y destino caen en el mismo componente. Reproducible; entra en F0-04 como prueba.
 
@@ -62,7 +62,7 @@ Ocho de los diez campos son obligatorios (`cfDate` tiene `required = true` por d
 
 ### Lo que salva el caso, y reencuadra C4
 
-`ticket_transitions.values` es `jsonb` y guarda **todos** los valores de cada transición ejecutada (`packages/zoho-sync/src/db/schema.sql:57-61`, escritura en `packages/zoho-sync/src/db/repo.ts:283-286`).
+`ticket_transitions.values` es `jsonb` y guarda **todos** los valores de cada transición ejecutada (`packages/zoho-sync/src/db/schema.sql:57-61`, escritura en `packages/zoho-sync/src/db/repo.ts:283-286` en `17ddfec`).
 
 Luego **no se pierde ningún dato**. Lo que ocurre es más preciso y más útil de enunciar así:
 

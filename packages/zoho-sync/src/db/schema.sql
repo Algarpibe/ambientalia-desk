@@ -506,4 +506,20 @@ CREATE TABLE IF NOT EXISTS public.equipos_cambios (
 CREATE INDEX IF NOT EXISTS idx_equipos_cambios_equipo ON public.equipos_cambios (equipo_id);
 
 -- F1B-04: si el equipo llega con novedad, la remision de entrada exige al menos una foto antes de enviarse
-ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad boolean
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad boolean;
+
+-- F1B-11 (parche IV-11): marca de fila que protege orden_venta y fecha_orden_venta del sincronizador
+-- cuando la orden de venta ya se eligio en la aplicacion (packages/zoho-sync/src/db/repo.ts,
+-- upsertTicket). La ponen los tres escritores de la app (alta, transicion, remision de entrada) y el
+-- sincronizador nunca la escribe. ov_zoho_avisada es la marca anti-ruido del aviso de discrepancia a
+-- Comercial: solo se reavisa si el valor que trae Zoho cambia
+--
+-- SIN CALIFICAR A PROPOSITO, mismo caso que el resto de ALTER sobre tickets: es tabla de DESK_TABLES
+-- (migrate.ts:63-64) y en produccion el search_path=desk,public la lleva a desk
+--
+-- SIN PUNTO Y COMA en este comentario, misma trampa que arriba: schemaStatements (migrate.ts:20)
+-- trocea por el caracter de punto y coma a ciegas, comentarios incluidos
+--
+-- AL FINAL del fichero para no desplazar las citas schema.sql:3xx-4xx (regla de mutacion 4)
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS ov_elegida_en_app_at timestamptz;
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS ov_zoho_avisada text;

@@ -27,8 +27,8 @@ escribe (§5).
 |---|---|---|---|
 | Cómo se combinan las dos historias | «**Fallback** a `ticket_transitions` cuando no hay historial de Zoho» (`design historia:16`, `:68`) | — | **Unificadas**, no fallback: `[...zoho, ...transiciones, ...remisiones]` ordenado (`apps/desk/server/db/historial.ts:157`) |
 | Cómo se construye | «**Derivada al leer**» (`design unificada:32`) | — | Derivada al leer (`historial.ts:126-131`) |
-| El «quién» de cada transición | Actor = constante temporal `'Equipo Técnico'` (`design B:20`) | M1.10 `[DECIDIDO — R08]`: fecha, hora y persona, «**no admite excepciones**»; «lo que falta por confirmar es que registre siempre el usuario» (`:1677`) | **Confirmado**: `performed_by` en la misma sentencia que el resto de la fila (`packages/zoho-sync/src/db/repo.ts:282-286`), comprobado en las 34 (`transicionesEjecucion.test.ts:272-285`) |
-| Qué guarda la creación | `values = { orden_venta }` (`design C:78`) | — | **Payload completo**, diez claves (`repo.ts:396-400`) |
+| El «quién» de cada transición | Actor = constante temporal `'Equipo Técnico'` (`design B:20`) | M1.10 `[DECIDIDO — R08]`: fecha, hora y persona, «**no admite excepciones**»; «lo que falta por confirmar es que registre siempre el usuario» (`:1677`) | **Confirmado**: `performed_by` en la misma sentencia que el resto de la fila (`packages/zoho-sync/src/db/repo.ts:314-318`), comprobado en las 34 (`transicionesEjecucion.test.ts:272-285`) |
+| Qué guarda la creación | `values = { orden_venta }` (`design C:78`) | — | **Payload completo**, diez claves (`repo.ts:431-435`) |
 | Dónde vive el tracking | «**HISTORIA**, unificada; CONVERSACIONES se queda para el correo real» (`design unificada:31`) | — | Dos composiciones **hermanas** sobre las mismas fuentes: `historial.ts` y `conversacion.ts` |
 
 ---
@@ -39,11 +39,11 @@ escribe (§5).
 
 Toda transición **SHALL** insertar una fila en `ticket_transitions` con nueve columnas:
 `ticket_id`, `transition_id`, `transition_name`, `from_status`, `to_status`, `area`, `performed_by`,
-`values` y `comment_id` (`packages/zoho-sync/src/db/repo.ts:282-286`), más el `performed_at` que la
+`values` y `comment_id` (`packages/zoho-sync/src/db/repo.ts:314-318`), más el `performed_at` que la
 tabla pone por defecto.
 
 - **MUST NOT** existir ningún camino que escriba la fila sin actor: `performed_by` va en la misma
-  sentencia `INSERT` que el resto (`repo.ts:283-285`). Es M1.10 `[DECIDIDO — R08]`, «no admite
+  sentencia `INSERT` que el resto (`repo.ts:315-317`). Es M1.10 `[DECIDIDO — R08]`, «no admite
   excepciones» (`R08.1.md:1677`).
 - El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a `TRANSITION_ACTOR` sólo si la
   sesión no trae nombre (`apps/desk/server/services/ticketService.ts:111`;
@@ -52,12 +52,12 @@ tabla pone por defecto.
   —36 ejecuciones, porque `habilitar_servicio` tiene tres— y comprobando en cada una el estado destino
   **y** la fila del historial (`apps/desk/server/transicionesEjecucion.test.ts:105-117`, `:272-285`).
 - La escritura **SHALL** ser atómica con el resto de la transición: transacción cuando el pool lo
-  permita, con `ROLLBACK` (`repo.ts:290-315`).
+  permita, con `ROLLBACK` (`repo.ts:322-347`).
 
 ### RQ-TZ-02 · La fila de la creación se distingue por su origen
 
 La creación del ticket **SHALL** dejar fila con `from_status = '(creación)'`
-(`packages/shared/src/transitions.ts:110`, `FROM_STATUS_CREACION`; escrita en `repo.ts:396`).
+(`packages/shared/src/transitions.ts:110`, `FROM_STATUS_CREACION`; escrita en `repo.ts:431`).
 
 - No es un estado de Zoho —de ahí los paréntesis—: es la marca de que esa fila es la foto del
   nacimiento y no una transición (`transitions.ts:100-103`; maestro M1.3.8, `:1417`).
@@ -70,7 +70,7 @@ La creación del ticket **SHALL** dejar fila con `from_status = '(creación)'`
 ### RQ-TZ-03 · El `values` de cada fila es el rastro completo
 
 `values` **SHALL** guardar **todos** los valores diligenciados en la transición
-(`repo.ts:285`, con `JSON.stringify(values)`). **Para las tres fechas derivadas** (`Fecha creación
+(`repo.ts:317`, con `JSON.stringify(values)`). **Para las tres fechas derivadas** (`Fecha creación
 ticket`, `Fecha Remisión Entrada`, `Fecha Revisión Informe`) **SHALL** guardar el valor EFECTIVO —el
 derivado cuando hay fuente, lo tecleado y validado cuando no la hay— y **MUST NOT** guardar lo que
 mandó el navegador si difiere del derivado. El resto de `values` **SHALL** seguir siendo lo que llegó
@@ -109,12 +109,12 @@ fechas derivadas ni las transiciones que no las declaran.)
 
 El comentario de una transición **SHALL** escribirse como fila de `conversations` con
 `kind='comment'`, `author_type='agent'`, `is_public=false`, `content_type='plainText'`,
-`commented_time=now()` y `source='app'` (`repo.ts:258-267`), y su id **SHALL** llevar el prefijo
-`app-` (`repo.ts:261`).
+`commented_time=now()` y `source='app'` (`repo.ts:285-294`), y su id **SHALL** llevar el prefijo
+`app-` (`repo.ts:288`).
 
-- La fila del historial **SHALL** apuntarla por `comment_id` (`repo.ts:285`), y ese `comment_id`
-  **SHALL** ser `null` cuando no hubo comentario (`repo.ts:259-260`) y en la fila de la creación
-  (`repo.ts:395`).
+- La fila del historial **SHALL** apuntarla por `comment_id` (`repo.ts:317`), y ese `comment_id`
+  **SHALL** ser `null` cuando no hubo comentario (`repo.ts:286-287`) y en la fila de la creación
+  (`repo.ts:430`).
 - El comentario **MUST NOT** enseñarse además como campo diligenciado: se excluye por su clave
   (`ticketFuentes.ts:100`), porque `writeTransition` ya lo guarda como conversación propia y dejarlo
   lo enseñaba dos veces —una como mensaje y otra como campo— y encima etiquetado «Comment», la única
@@ -374,14 +374,14 @@ del navegador, y desaparece con esta tanda.)
 
 **Comportamiento actual.** `TRANSITION_ACTOR` (`transitionActor.ts:3`, valor `'Equipo Técnico'`,
 configurable por entorno) puede llegar a `performed_by` por **un** camino: el **callback de n8n** de
-la remisión (`apps/desk/server/routes/remision.ts:370`, reapuntada por `foto-solo-con-novedad`/F1B-04;
+la remisión (`apps/desk/server/routes/remision.ts:374`, reapuntada por `foto-solo-con-novedad`/F1B-04;
 cita válida en `a0a2935` como `:363`), que aplica el paso sin botón. Esa petición
 **no tiene sesión** —n8n no manda la cookie—, así que firma quien creó la remisión y cae al marcador
 sólo si la remisión no trae autor, que es el caso de las **históricas**
-(`routes/remision.ts:365-369`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935`
+(`routes/remision.ts:369-373`, reapuntada por `foto-solo-con-novedad`/F1B-04; cita válida en `a0a2935`
 como `:358-362`).
 
-Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:332` y `:342`
+Los otros dos usos del respaldo —anular y restaurar remisión, `routes/remision.ts:336` y `:346`
 (reapuntadas por `foto-solo-con-novedad`/F1B-04; citas válidas en `a0a2935` como `:325` y `:335`)— van
 detrás de `requireAuth` y `requireAdmin` (`:275`, `:287`), así que ahí es defensivo y no alcanzable.
 En el endpoint de transición tampoco se alcanza: el middleware exige sesión
@@ -397,7 +397,7 @@ nombre que parece una persona.
 
 **Comportamiento actual, no corregible.** Los tickets creados antes de que `createTicket` guardara el
 payload completo tienen en `values` sólo `{ orden_venta }`, y **no hay forma de reconstruir la foto**
-(`repo.ts:390-392`). Su historia cae a la fila del ticket, que es **estado actual**: si el ticket
+(`repo.ts:425-427`). Su historia cae a la fila del ticket, que es **estado actual**: si el ticket
 cambió de prioridad o de clasificación después, la historia contará la creación con los valores de
 hoy.
 
@@ -470,11 +470,11 @@ de aquí.
 | D-1 | «Tickets creados en la app: **fallback** a `ticket_transitions` cuando no hay historial de Zoho»; `getTicketHistory` → «**si vacío**, arma desde `ticket_transitions`» (`design historia:16`, `:68`) | **Unificado**: `[...zoho, ...transiciones, ...remisiones]` ordenado (`historial.ts:157`) | **Superado, y el diseño original era el defecto.** El de agosto lo nombra como «el fallo más grave de los tres porque oculta datos que sí existen»: un ticket que vino de Zoho y se movió en la app no enseñaba jamás sus transiciones (`design unificada:19-23`) |
 | D-2 | El historial no incluye remisiones (`design historia` no las menciona) | Tres eventos de remisión: creada, desenlace y anulada (`historial.ts:66-121`) | **Ampliado.** «Crear una remisión no deja rastro en el ticket» era el tercero de los tres fallos (`design unificada:24-25`) |
 | D-3 | La composición vive en `server/db/history.ts` (`design historia:65-70`) | Repartida: `history.ts` guarda y lee lo de Zoho (`:13-32`), y la composición está en `apps/desk/server/db/historial.ts` y `conversacion.ts`, con los ayudantes comunes en `ticketFuentes.ts` | Movida al extraerse el paquete de sincronización. Los ayudantes compartidos por los **dos** compositores son estructura que el diseño no previó |
-| D-4 | `createTicket` guarda `values = { orden_venta }` (`design C:78`) | Payload completo, diez claves (`repo.ts:396-400`) | **Ampliado a propósito**, y el diseño de agosto documenta el caveat que lo motivó (`design unificada:36-40`). Ver `tickets-core` D-5 |
+| D-4 | `createTicket` guarda `values = { orden_venta }` (`design C:78`) | Payload completo, diez claves (`repo.ts:431-435`) | **Ampliado a propósito**, y el diseño de agosto documenta el caveat que lo motivó (`design unificada:36-40`). Ver `tickets-core` D-5 |
 | D-5 | Actor = constante temporal `'Equipo Técnico'`; «el login/roles reales son el Subsistema H» (`design B:20`) | Usuario de la sesión, con la constante como respaldo alcanzable por un solo camino (`ticketService.ts:111`; §3.1) | **Superado.** El Subsistema H llegó |
 
-> **Nota sobre las citas del propio diseño de agosto.** Apunta a `createTicket` en `repo.ts:326`
-> (`design unificada:38`) y a `getTicketHistory` en `history.ts:24` (`:20`); hoy están en `:380` y
+> **Nota sobre las citas del propio diseño de agosto.** Apunta a `createTicket` en `repo.ts:326` en `3675f81`
+> (`design unificada:38`) y a `getTicketHistory` en `history.ts:24` (`:20`); hoy están en `:412` y
 > `:29`. Es la clase de cita que envejece, y la razón por la que estas specs se verifican contra el
 > commit que declaran.
 
@@ -482,10 +482,10 @@ de aquí.
 
 | # | Dice el maestro | Dice el código | Lectura |
 |---|---|---|---|
-| M-1 | M1.10 `[DECIDIDO — R08]` (`:1677`): «el as-built ya escribe la marca de tiempo…; **lo que falta por confirmar es que registre siempre el usuario** que la ejecutó» | **Confirmado**: `performed_by` va en la misma sentencia que el resto de la fila (`repo.ts:282-286`) y está comprobado en las 34 transiciones, 36 ejecuciones (`transicionesEjecucion.test.ts:272-285`) | **El pendiente está cerrado**, con el matiz de §3.1: ninguna fila se escribe sin actor, pero el actor no siempre es una persona identificada. **Actualización para el maestro** (entrada 12 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`) |
+| M-1 | M1.10 `[DECIDIDO — R08]` (`:1677`): «el as-built ya escribe la marca de tiempo…; **lo que falta por confirmar es que registre siempre el usuario** que la ejecutó» | **Confirmado**: `performed_by` va en la misma sentencia que el resto de la fila (`repo.ts:314-318`) y está comprobado en las 34 transiciones, 36 ejecuciones (`transicionesEjecucion.test.ts:272-285`) | **El pendiente está cerrado**, con el matiz de §3.1: ninguna fila se escribe sin actor, pero el actor no siempre es una persona identificada. **Actualización para el maestro** (entrada 12 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`) |
 | M-2 | Anexo G col. 12 (`:4328-4329`): «Hora de actualización del estado — marca de tiempo de cada transición» | `ticket_transitions.performed_at`, con `DEFAULT now()` (`design A:98`) | Sin discrepancia. La columna del diccionario tiene su equivalente, y con mejor granularidad: el diccionario guarda **una** marca por ticket y la tabla guarda **una por transición** |
-| M-3 | Anexo G col. 7 (`:4322-4323`): «Hora de modificación — se actualiza automáticamente en cada cambio de estado **y en cada comentario nuevo**» | `modified_time=now()` se escribe en cada transición (`repo.ts:271`). Un comentario **suelto** no pasa por ahí | **Verificado en esta tanda: hoy la diferencia no se manifiesta.** Sólo hay dos sentencias `INSERT INTO conversations` en producción — el `upsert` del sync (`repo.ts:70-76`) y `writeTransition` (`repo.ts:262-266`)—, así que **la app no tiene ningún camino para comentar sin transicionar**. La diferencia aparecerá el día que lo tenga, y entonces `modified_time` dejará de cumplir lo que el diccionario dice. **Punto a tener delante en F1B**, que es donde llega la paridad de comentarios |
-| M-4 | Anexo G.8 (`:4476`): «las columnas 48, 49 y 56 son las que la **C9** tiene que redefinir» | El dato para redefinirlas existe en el historial: `instanteUltimaTransicion` (`fechasTicket.ts:22-34`) y el `values` completo (`repo.ts:285`) | Sin discrepancia; se anota porque fija qué parte de C9 es de esta capacidad —la traza— y qué parte es de `kpis` —el cálculo—. Las columnas 48, 49 y 56 están rotas por **creación anticipada del ticket**, no por reentrancia, y su dueño es C9 (`packages/shared/src/reentrancia.ts:74-76`) |
+| M-3 | Anexo G col. 7 (`:4322-4323`): «Hora de modificación — se actualiza automáticamente en cada cambio de estado **y en cada comentario nuevo**» | `modified_time=now()` se escribe en cada transición (`repo.ts:298`). Un comentario **suelto** no pasa por ahí | **Verificado en esta tanda: hoy la diferencia no se manifiesta.** Sólo hay dos sentencias `INSERT INTO conversations` en producción — el `upsert` del sync (`repo.ts:97-103`) y `writeTransition` (`repo.ts:289-293`)—, así que **la app no tiene ningún camino para comentar sin transicionar**. La diferencia aparecerá el día que lo tenga, y entonces `modified_time` dejará de cumplir lo que el diccionario dice. **Punto a tener delante en F1B**, que es donde llega la paridad de comentarios |
+| M-4 | Anexo G.8 (`:4476`): «las columnas 48, 49 y 56 son las que la **C9** tiene que redefinir» | El dato para redefinirlas existe en el historial: `instanteUltimaTransicion` (`fechasTicket.ts:22-34`) y el `values` completo (`repo.ts:317`) | Sin discrepancia; se anota porque fija qué parte de C9 es de esta capacidad —la traza— y qué parte es de `kpis` —el cálculo—. Las columnas 48, 49 y 56 están rotas por **creación anticipada del ticket**, no por reentrancia, y su dueño es C9 (`packages/shared/src/reentrancia.ts:74-76`) |
 
 ---
 

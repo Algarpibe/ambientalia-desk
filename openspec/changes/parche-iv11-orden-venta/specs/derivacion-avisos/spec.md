@@ -26,7 +26,7 @@ que la aplicación tiene guardado y protegido (`zoho-sync` RQ-ZS-01 modificado).
   de esta capacidad (RQ-AV-09), y `enviado_at` **SHALL** quedar `NULL`.
 - El aviso **SHALL** originarse únicamente desde el proceso `ambientalia-desk`, a través de la
   devolución opcional que `createSync` (`packages/zoho-sync/src/sync.ts:62`) expone y que sólo ese
-  proceso cablea (`apps/desk/server/index.ts:20`). El proceso `apps/hub-sync` **MUST NOT** crear
+  proceso cablea (`apps/desk/server/index.ts:21-23`). El proceso `apps/hub-sync` **MUST NOT** crear
   este aviso: no cablea esa devolución.
 
 #### Scenario: Primera discrepancia genera un aviso

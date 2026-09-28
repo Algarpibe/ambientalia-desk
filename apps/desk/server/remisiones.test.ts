@@ -220,6 +220,37 @@ describe('POST /api/remisiones', () => {
     expect((await db.query("SELECT orden_venta FROM tickets WHERE id='t1'")).rows[0].orden_venta).toBe('OV-2026-300')
   })
 
+  /**
+   * parche-iv11-orden-venta (F1B-11, RQ-RE-16 modificado). El mismo `UPDATE` que escribe la orden de
+   * venta deja la marca de fila que la protege de la siguiente pasada del sincronizador (`zoho-sync`
+   * RQ-ZS-01 modificado). Sin OV que capturar, el `WHERE` es no-op y la marca no se pone: no hay nada
+   * que proteger todavía.
+   */
+  it('el UPDATE deja la orden protegida del sincronizador (marca ov_elegida_en_app_at)', async () => {
+    const cookie = await adminCookie(); await preparar()
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date,raw) VALUES ('ov1','OV-2026-300','cli1','2026-07-15','{\"order_status\":\"open\"}')")
+    const { app } = appWith()
+
+    const antes = await db.query("SELECT ov_elegida_en_app_at FROM tickets WHERE id='t1'")
+    expect(antes.rows[0].ov_elegida_en_app_at).toBeNull()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [], salesOrderId: 'ov1' })
+    expect(res.status).toBe(201)
+    const despues = await db.query("SELECT ov_elegida_en_app_at FROM tickets WHERE id='t1'")
+    expect(despues.rows[0].ov_elegida_en_app_at).not.toBeNull()
+  })
+
+  it('sin orden de venta que capturar, el UPDATE es no-op y no deja la marca', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie)
+      .send({ ticketId: 't1', fecha: '2026-08-03', incluye: [] })
+    expect(res.status).toBe(201)
+    const t = await db.query("SELECT ov_elegida_en_app_at FROM tickets WHERE id='t1'")
+    expect(t.rows[0].ov_elegida_en_app_at).toBeNull()
+  })
+
   it('una orden de venta que no existe en Books no crea la remisión', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith()

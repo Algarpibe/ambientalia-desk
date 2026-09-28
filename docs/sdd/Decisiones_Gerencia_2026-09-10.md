@@ -142,7 +142,7 @@ singular `salesorder_id` y en el desplegable de selección única.
 2. **La FK no puede ir en `sales_orders`.** `schema.sql:160` la declara en el esquema `books` con
    `synced_at`: es la **réplica del hub**, y `public.sales_orders` (`:176`) sólo una vista. Escribir
    `ticket_id` ahí lo borra cada pasada del sync — el mismo modo de fallo que el `serial` de los
-   tickets de Zoho (`repo.ts:63`, que sólo se salva por la guarda `managed_by_app` de `:58-59`).
+   tickets de Zoho (`repo.ts:63` en `17ddfec`, que sólo se salva por la guarda `managed_by_app` de `:58-59`).
 
    **La asociación va en tabla propia de la app, con `salesorder_id` como `PRIMARY KEY`.** No es una
    tabla puente —una puente tendría clave compuesta y permitiría N:M—: es el `1 ticket : N OV` exacto.
@@ -203,7 +203,7 @@ es casi un no-op. Así que (b) exige cambiar **qué se pide**, no cómo se filtr
 - Hay que pasar la petición de aterrizaje a `scope=all`, camino que **existe pero está declarado sin
   uso** en el front.
 - Pasa de ~25 filas a **~751 en cada carga**, con cinco `LEFT JOIN` por fila y sin `LIMIT` visible en
-  `getAllTickets` (`repo.ts:150`).
+  `getAllTickets` (`repo.ts:150` en `17ddfec`).
 
 **Forma recomendada, y es decisión de implementación, no de Gerencia:** la vista de aterrizaje sigue
 pidiendo los activos, y los cerrados se piden cuando el usuario **selecciona** «Todos». Rápido al

@@ -567,7 +567,7 @@ incumplimientos_vivos:
 
   - id: IV-4
     regla: "—"
-    ubicacion: "apps/desk/server/routes/remision.ts:218-240"
+    ubicacion: "apps/desk/server/routes/remision.ts:218-244"
     verificado: true
     estado: CERRADO
     cerrado_por: "tercera-puerta-orden-venta"
@@ -577,7 +577,7 @@ incumplimientos_vivos:
       `fecha_orden_venta`) con un UPDATE condicional en el SQL, SIN llamar a
       `ticketConOrdenVenta`. La regla "una OV, un ticket" tenía TRES puertas y
       sólo DOS la comprobaban: `ticketService.ts:45-48` y `ticketService.ts:134-135`
-      (`ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:330`).
+      (`ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:330` en `17ddfec`).
       Esta tercera confiaba sólo en `WHERE COALESCE(orden_venta,'') = ''`, que
       impide pisar la OV del propio ticket pero NO que dos tickets distintos
       acabaran con la misma.
@@ -1095,9 +1095,9 @@ incumplimientos_vivos:
       mecanismo que ya existe (`apps/desk/server/db/avisos.ts`, `/api/avisos`, bandeja de la
       cabecera), con la regla anti-ruido escrita — un solo aviso por ticket mientras la
       discrepancia no cambie, y sólo se reavisa si el valor que trae Zoho es otro.
-    ubicacion: "packages/zoho-sync/src/db/repo.ts:56-68 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-240"
+    ubicacion: "packages/zoho-sync/src/db/repo.ts:64-95 (upsertTicket) sobre apps/desk/server/routes/remision.ts:218-244"
     verificado: true
-    estado: VIVO
+    estado: REDUCIDO  # detalle en adendas_incumplimientos_vivos → IV-11 → reduccion_2026_09_27, al final de este fichero
     encontrado_en: >
       Exploración de `tercera-puerta-orden-venta` (2026-09-16, árbol 14b45ee), §2,
       y recogido en su `proposal.md` §6 como hallazgo del barrido de vías de
@@ -1114,10 +1114,10 @@ incumplimientos_vivos:
       (`packages/zoho-sync/src/db/schema.sql:187`), así que SOBREVIVE. Ése es todo
       el desvío: las dos mitades de un mismo dato no se borran juntas.
     la_cadena: >
-      (1) `upsertTicket` (`repo.ts:56-68`) sólo se abstiene cuando
+      (1) `upsertTicket` (`repo.ts:56-68` en `17ddfec`) sólo se abstiene cuando
       `managed_by_app === true` (`:58-59`). (2) El `UPDATE` de la remisión de
-      entrada (`apps/desk/server/routes/remision.ts:218-240`) NO pone esa bandera,
-      mientras `applyTransition` SÍ la pone (`repo.ts:271`). (3) El sync corre cada
+      entrada (`apps/desk/server/routes/remision.ts:218-240` en `17ddfec`) NO pone esa bandera,
+      mientras `applyTransition` SÍ la pone (`repo.ts:271` en `17ddfec`). (3) El sync corre cada
       180000 ms por defecto (`packages/zoho-sync/src/config.ts:88`).
       CONSECUENCIA. Un ticket venido de Zoho (`managed_by_app = false`) al que la
       remisión le escribe la orden conserva las columnas coherentes sólo hasta la
@@ -1219,7 +1219,7 @@ incumplimientos_vivos:
       P1 (obs. #690) mantiene el alta de remisión SIN CAMBIOS y obs. #707 lo
       confirma al desbloquear la tanda. Mover guardas en ese manejador reabriría
       el precedente que F1B-01 fijó a propósito —la prueba de posición de
-      `apps/desk/server/remisiones.test.ts:957`, el caso del que nació la regla de
+      `apps/desk/server/remisiones.test.ts:988`, el caso del que nació la regla de
       mutación 1 de CLAUDE.md— sin una decisión que lo pida. Y tocar
       `remision.ts` activaría el barrido de la regla de mutación 4 sobre un tercer
       fichero muy citado, dentro de una tanda que ya arrastra dos.
@@ -1227,7 +1227,7 @@ incumplimientos_vivos:
       El `422` del serial (`:155`, A) gana al `409` de remisión pendiente
       (`:177`, D) PORQUE A PRECEDE A D. El precedente de F1B-01 pasa a ser
       CONSECUENCIA del orden total en vez de una excepción declarada, y
-      `apps/desk/server/remisiones.test.ts:957` queda intacta.
+      `apps/desk/server/remisiones.test.ts:988` queda intacta.
     familia: >
       NO es el molde de H5 —dos implementaciones de la misma noción que dejan de
       decir lo mismo—: es una tercera puerta que evalúa en un orden propio. Las
@@ -1244,7 +1244,7 @@ incumplimientos_vivos:
       Y HAY ALGO QUE DECIDIR ANTES, QUE NO ES TÉCNICO. Reordenar el alta cambia
       QUÉ ERROR VE EL TÉCNICO en el formulario de entrada, que es la pantalla de
       campo del subsistema; y el orden de hoy no es un descuido en su tramo
-      probado, porque `remisiones.test.ts:957` lo fija. Lo que sí queda fijado
+      probado, porque `remisiones.test.ts:988` lo fija. Lo que sí queda fijado
       aquí es todo lo que esa decisión necesita: los dos incumplimientos con su
       línea, que son observables, la consecuencia del `:177`, y por qué no se
       tocó.
@@ -1664,7 +1664,7 @@ decisiones_de_gerencia:
       (`packages/zoho-sync/src/db/schema.sql:187`). MEDIDO el 22/09 sobre `125ae3e`.
       (2) La regla necesita saber, por fila, si la OV se eligió en la aplicación, y hoy eso NO existe
       con ese grano: la única bandera es `managed_by_app`, y es del ticket entero
-      (`repo.ts:58-59`) — que es justo la salida (a) descartada. Derivarlo de `salesorder_id` no nulo
+      (`repo.ts:58-59` en `125ae3e`) — que es justo la salida (a) descartada. Derivarlo de `salesorder_id` no nulo
       es HIPÓTESIS, no medido: hay 37 usos de `salesorder_id` fuera de pruebas. Es diseño de la
       tanda, no de esta decisión.
       (3) IV-11 deja de estar sin destino: destino F1B-11, con un parche antes. IV-4 sigue CERRADO, y
@@ -2119,7 +2119,7 @@ decisiones_de_gerencia:
       (3) LA REGLA ANTI-RUIDO ESTÁ ESCRITA Y ES LA PARTE FINA: un solo aviso por ticket mientras la discrepancia no cambie; sólo se reavisa si el valor que trae Zoho es otro. Sin eso, un sincronizador que corre cada 3 minutos (`config.ts:88`) genera un aviso cada 3 minutos.
       (4) EL AVISO ES RETIRABLE cuando exista el espejo: no crea deuda permanente.
       (5) EL PARCHE CRECE, Y ESO TOCA A `e005b`: con el aviso dentro, el parche deja de ser mínimo. Sigue siendo `tanda: F1B-11, cierra: no` y sigue sin mover el avance, pero su tamaño real es mayor que el que se supuso al preguntar.
-    registro: "openspec/config.yaml → incumplimientos_vivos (IV-11) · docs/sdd/ENTRADA.md → E-005, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
+    registro: "openspec/config.yaml → incumplimientos_vivos (IV-11) · docs/sdd/ENTRADA.md → E-005, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.1 (corregido el 2026-09-27: la fila vive en §11.1, no en §11.2, que no tiene fila para IV-11)"
     maestro_pasaje: "sin punto del Anexo D asignado"
     maestro_revision: "pendiente"
     tanda_que_abre: "F1B-11 · S41"
@@ -3024,3 +3024,25 @@ presupuesto_del_ledger:
     delta NO se estima, se mide: por tamaño de bloque daba 436 y el coste real
     fue 176, porque git casa las líneas idénticas entre el requisito vivo y su
     versión del delta.
+
+adendas_incumplimientos_vivos:
+  # Adendas que no caben en su ficha sin desplazar las líneas citadas de este
+  # fichero. Se remiten desde la ficha por su clave, nunca por número de línea.
+  - id: IV-11
+    reduccion_2026_09_27: >
+      `parche-iv11-orden-venta` (F1B-11, cambio 1 de 3, `cierra: no`). NO CIERRA —
+      REDUCE. La marca de fila `ov_elegida_en_app_at` (`packages/zoho-sync/src/db/repo.ts:71`,
+      `:73-81`; hoy `upsertTicket` ocupa `:64-95`, no ya `:56-68`) hace que, para las filas
+      que un escritor de la app marque DESDE AHORA —el alta, `writeTransition`
+      (`repo.ts:305`, caso `habilitar_servicio`), o el `UPDATE` de la remisión de
+      entrada (`apps/desk/server/routes/remision.ts:241`)—, `upsertTicket` deje de
+      sobrescribir `orden_venta`/`fecha_orden_venta` aunque `managed_by_app` sea
+      `false`, y avise a Comercial de la discrepancia
+      (`apps/desk/server/services/avisoDiscrepanciaOV.ts`, RQ-AV-13, sin espejo de
+      Zoho: `decision/e005c-discrepancia-sin-espejo`). Filas marcadas quedan
+      protegidas; filas SIN marca siguen exactamente como describe `la_cadena` de
+      la ficha de IV-11. Sigue vivo: las filas cuya OV ya se había elegido en la app ANTES de
+      este cambio no reciben la marca de forma retroactiva —sin relleno, decisión
+      de persona pendiente sobre datos de producción, supuesto S-1 del parche— y
+      la cura de raíz —la asociación propia OV↔ticket 1:N— es el cambio 2 de
+      F1B-11, todavía sin aplicar.

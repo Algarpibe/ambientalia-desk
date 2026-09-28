@@ -35,7 +35,7 @@ Tres fallos distintos, no uno:
 
 ## El caveat de la creación, y qué se hace con él
 
-`createTicket` (`packages/zoho-sync/src/db/repo.ts:326`) guarda en `values` **únicamente**
+`createTicket` (`packages/zoho-sync/src/db/repo.ts:326` en `3675f81`) guarda en `values` **únicamente**
 `{ orden_venta }`. El resto de los datos con los que nació el ticket —cliente, equipo, marca,
 modelo, serie, tipo de servicio, clasificación, prioridad— no está en la transición: está en la fila
 de `tickets`, que es **estado actual**, no una foto del momento.

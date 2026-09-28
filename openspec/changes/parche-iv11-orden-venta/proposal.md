@@ -21,9 +21,9 @@ opción (c): si la OV se eligió en la aplicación manda la aplicación, si no m
 con parche previo `tanda: F1B-11, cierra: no` (`:2097-2098`) y aviso a Comercial en vez de silencio (`:2114-2115`).
 
 **Dónde muerde hoy, medido.** De los tres escritores de la OV en la aplicación, dos ya sacan el ticket del sync:
-el alta inserta `managed_by_app = true` (`repo.ts:385-386`) y la transición `habilitar_servicio`
-(`packages/shared/src/transitions.ts:189`) pasa por `writeTransition`, que lo pone (`repo.ts:271`). **El único camino
-vivo es la remisión de entrada** (`apps/desk/server/routes/remision.ts:235-239`), que no toca la bandera.
+el alta inserta `managed_by_app = true` (`repo.ts:385-386` en `17ddfec`) y la transición `habilitar_servicio`
+(`packages/shared/src/transitions.ts:189`) pasa por `writeTransition`, que lo pone (`repo.ts:271` en `17ddfec`). **El único camino
+vivo es la remisión de entrada** (`apps/desk/server/routes/remision.ts:235-239` en `17ddfec`), que no toca la bandera.
 
 ## Alcance
 
@@ -74,11 +74,11 @@ rellena la fecha: no marca. Anti-ruido: `ov_zoho_avisada text`. Esquema: `ALTER 
 **Filas existentes:** sin relleno. Siguen como hoy —manda Zoho— hasta que un escritor vuelva a elegir su OV.
 
 **El aviso sale del proceso de la app, no del paquete.** `createSync` (`packages/zoho-sync/src/sync.ts:62`) recibe una
-devolución opcional que sólo cablea `apps/desk/server/index.ts:20`; el worker del hub no la pasa. Mismo motivo que
+devolución opcional que sólo cablea `apps/desk/server/index.ts:20` en `17ddfec`; el worker del hub no la pasa. Mismo motivo que
 `apps/desk/server/services/ticketService.ts:157-164`: `avisos` no es del paquete de sincronización.
 
 **Regla 13.** Ninguna decisión nueva en cliente. La OV en gris del formulario la impone
-`apps/desk/server/routes/remision.ts:237`.
+`apps/desk/server/routes/remision.ts:237` en `17ddfec`.
 
 ## Áreas afectadas
 

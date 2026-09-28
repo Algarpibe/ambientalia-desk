@@ -10,22 +10,22 @@ RQ-ZS-01 modificado). RQ-RE-16 deja de nombrar esta vía como fuera del alcance 
 
 Antes de escribir `orden_venta`, `fecha_orden_venta` y `salesorder_id` sobre el ticket destino,
 `POST /api/remisiones` **SHALL** comprobar contra `ticketConOrdenVenta(db, { salesorderId, numero },
-ticketId)` (`packages/zoho-sync/src/db/repo.ts:330-347`) que la orden no pertenezca ya a otro ticket,
+ticketId)` (`packages/zoho-sync/src/db/repo.ts:362-379`) que la orden no pertenezca ya a otro ticket,
 por las **dos vías** —`salesorder_id` y número— y **excluyendo el propio ticket destino**. La
-comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-240`,
-**después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:235-239`).
+comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-244`,
+**después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:239-243`).
 
 Si la orden ya pertenece a otro ticket, la respuesta **SHALL** ser `409`, con el texto de
 `ticketService.ts:151` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
 las tres columnas **SHALL** quedar escrita. El `422` del serial (`remision.ts:152-157`) **SHALL**
 seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condición
-`WHERE ... COALESCE(orden_venta,'') = ''` (`:237`) **SHALL** mantenerse intacta: protege la carrera de
+`WHERE ... COALESCE(orden_venta,'') = ''` (`:241`) **SHALL** mantenerse intacta: protege la carrera de
 dos remisiones sobre el **mismo** ticket, una pregunta distinta de la que resuelve este requisito.
 
 **Las dos vías son requisito, no preferencia.** La divergencia `orden_venta`/`salesorder_id` por
 sincronización (IV-11) puede dejar a un ticket con sólo una de las dos columnas vigente; comprobar
 sólo por número dejaría ese ticket sin protección. **Esta vía deja de estar fuera del alcance del
-parche de IV-11**: el mismo `UPDATE` que escribe las tres columnas (`remision.ts:235-239`) **SHALL**
+parche de IV-11**: el mismo `UPDATE` que escribe las tres columnas (`remision.ts:239-243`) **SHALL**
 poner también la marca de fila `ov_elegida_en_app_at` (**supuesto S-1**; `zoho-sync` RQ-ZS-01
 modificado), de modo que la orden capturada aquí quede protegida de la siguiente pasada del
 sincronizador. El resto de IV-11 —filas previas sin marca, y la asociación 1:N propia entre orden y
@@ -68,7 +68,7 @@ fuera del alcance de IV-11.)
 
 #### Scenario: El UPDATE deja la orden protegida del sincronizador
 - GIVEN una remisión de entrada que captura una orden de venta libre para su ticket
-- WHEN el `UPDATE` de `remision.ts:235-239` escribe `orden_venta`, `fecha_orden_venta` y
+- WHEN el `UPDATE` de `remision.ts:239-243` escribe `orden_venta`, `fecha_orden_venta` y
   `salesorder_id`
 - THEN la misma sentencia deja la marca `ov_elegida_en_app_at` puesta sobre la fila
 - AND una pasada posterior del sincronizador no pisa `orden_venta` ni `fecha_orden_venta` de ese

@@ -53,18 +53,45 @@ export const TICKET_COLS = [
   'doc_almacenada_drive','hv_actualizada','liberacion_sin_facturar','servicio_in_situ','custom_fields','managed_by_app','source','raw',
 ] as const
 
-export async function upsertTicket(db: Queryable, r: TicketRow): Promise<void> {
+/**
+ * Descriptor de discrepancia que `upsertTicket` devuelve cuando la fila está marcada
+ * (`ov_elegida_en_app_at`) y Zoho trae, en esta pasada, un `orden_venta` distinto al protegido
+ * (parche-iv11-orden-venta, D3). `null` en cualquier otro caso: sin marca, `managed_by_app=true`,
+ * Zoho vacío tras `trim` (S-2), o Zoho igual al valor de la app o al último ya avisado.
+ */
+export interface DiscrepanciaOV { ticketId: string; numero: number | null; ovApp: string; ovZoho: string }
+
+export async function upsertTicket(db: Queryable, r: TicketRow): Promise<DiscrepanciaOV | null> {
   // pg-mem no soporta `WHERE` en `ON CONFLICT ... DO UPDATE`; usamos guarda con SELECT previo.
-  const existing = await db.query('SELECT managed_by_app FROM tickets WHERE id=$1', [r.id])
-  if (existing.rows[0]?.managed_by_app === true) return // no sobrescribir lo gestionado por la app
-  const values = TICKET_COLS.map((c) => (c === 'custom_fields' || c === 'raw') ? J((r as any)[c]) : (r as any)[c])
-  const placeholders = TICKET_COLS.map((_, i) => `$${i + 1}`).join(',')
-  const updates = TICKET_COLS.filter((c) => c !== 'id' && c !== 'managed_by_app').map((c) => `${c}=EXCLUDED.${c}`).join(',')
+  const existing = await db.query(
+    'SELECT managed_by_app, ov_elegida_en_app_at, orden_venta, ov_zoho_avisada FROM tickets WHERE id=$1',
+    [r.id],
+  )
+  const prev = existing.rows[0] as { managed_by_app?: boolean; ov_elegida_en_app_at?: unknown; orden_venta?: string | null; ov_zoho_avisada?: string | null } | undefined
+  if (prev?.managed_by_app === true) return null // no sobrescribir lo gestionado por la app (va PRIMERO, regla 13/D2)
+
+  const marcada = prev?.ov_elegida_en_app_at != null
+  const ovZoho = r.orden_venta?.trim() ?? ''
+  let discrepancia: DiscrepanciaOV | null = null
+  const cols = marcada
+    ? TICKET_COLS.filter((c) => c !== 'orden_venta' && c !== 'fecha_orden_venta')
+    : TICKET_COLS
+  if (marcada && ovZoho && ovZoho !== (prev?.orden_venta ?? '') && ovZoho !== (prev?.ov_zoho_avisada ?? '')) {
+    discrepancia = { ticketId: r.id, numero: r.number ?? null, ovApp: prev?.orden_venta ?? '', ovZoho }
+  }
+
+  // Si hay marca, `orden_venta`/`fecha_orden_venta` salen de la lista de columnas del todo (no solo
+  // del `SET`): el `id` ya existe, así que este `INSERT` siempre choca con el `ON CONFLICT` y sólo
+  // corre el `DO UPDATE` — la lista de columnas del `INSERT` no importa en ese camino.
+  const values = cols.map((c) => (c === 'custom_fields' || c === 'raw') ? J((r as any)[c]) : (r as any)[c])
+  const placeholders = cols.map((_, i) => `$${i + 1}`).join(',')
+  const updates = cols.filter((c) => c !== 'id' && c !== 'managed_by_app').map((c) => `${c}=EXCLUDED.${c}`).join(',')
   await db.query(
-    `INSERT INTO tickets (${TICKET_COLS.join(',')}, synced_at, updated_at) VALUES (${placeholders}, now(), now())
+    `INSERT INTO tickets (${cols.join(',')}, synced_at, updated_at) VALUES (${placeholders}, now(), now())
      ON CONFLICT (id) DO UPDATE SET ${updates}, synced_at=now(), updated_at=now()`,
     values,
   )
+  return discrepancia
 }
 
 export async function upsertConversation(db: Queryable, r: ConversationRow): Promise<void> {
@@ -271,7 +298,12 @@ async function writeTransition(
   const sets = ['status=$2', 'status_type=$3', 'managed_by_app=true', "source='app'", 'modified_time=now()', 'updated_at=now()']
   const params: unknown[] = [ticketId, plan.status, plan.statusType]
   if (plan.priority) { params.push(plan.priority); sets.push(`priority=$${params.length}`) }
-  for (const [col, val] of Object.entries(plan.columns)) { params.push(val); sets.push(`${col}=$${params.length}`) }
+  for (const [col, val] of Object.entries(plan.columns)) {
+    params.push(val); sets.push(`${col}=$${params.length}`)
+    // parche-iv11-orden-venta (D6): la orden de venta fijada aquí (p. ej. `habilitar_servicio`) queda
+    // protegida del sincronizador, igual que la del alta y la de la remisión de entrada.
+    if (col === 'orden_venta' && typeof val === 'string' && val.trim() !== '') sets.push('ov_elegida_en_app_at=now()')
+  }
   if (Object.keys(plan.customFields).length) {
     params.push(JSON.stringify(plan.customFields))
     sets.push(`custom_fields = custom_fields || $${params.length}::jsonb`)
@@ -381,10 +413,13 @@ export async function createTicket(db: Queryable, input: CreateTicketInput, opts
   const id = `${PREFIJO_TICKET_APP}${randomUUID()}`
   const number = await nextTicketNumber(db)
   const run = async (q: Queryable): Promise<void> => {
+    // parche-iv11-orden-venta (D6): `ov_elegida_en_app_at` sólo se marca si el alta trae orden de
+    // venta; un alta sin ella no protege nada, porque no hay nada que proteger todavía.
+    const marcaOV = input.ordenVenta && input.ordenVenta.trim() !== '' ? new Date() : null
     await q.query(
-      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,fecha_orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at)
-       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$17,$13,$14,$15,true,'app',now(),now(),now())`,
-      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, STATUS_TICKET_CREADO, input.fechaOrdenVenta ?? null],
+      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,fecha_orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at,ov_elegida_en_app_at)
+       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$17,$13,$14,$15,true,'app',now(),now(),now(),$18)`,
+      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, STATUS_TICKET_CREADO, input.fechaOrdenVenta ?? null, marcaOV],
     )
     // La foto de con qué nació el ticket. Las columnas de `tickets` son estado ACTUAL, así que la
     // historia no puede apoyarse en ellas para contar la creación: aquí queda congelado. Los tickets

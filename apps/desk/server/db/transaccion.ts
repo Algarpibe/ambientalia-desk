@@ -6,7 +6,7 @@ interface ConPool { connect?: () => Promise<{ query: Queryable['query']; release
 /**
  * Envuelve `fn` en una transacción cuando `db` es un pool de verdad, y devuelve lo que `fn` devuelva.
  *
- * Mismo molde que `eliminarTicket.ts:175-189` y el bloque try/catch de `repo.ts:403-415`, con dos
+ * Mismo molde que `eliminarTicket.ts:175-189` y el bloque try/catch de `repo.ts:438-450`, con dos
  * diferencias: es genérico en `T` (para poder devolver, por ejemplo, el id del equipo recién creado
  * a quien la llama) y el cliente se libera SIEMPRE, con o sin error (regla RQ-TC-16).
  */

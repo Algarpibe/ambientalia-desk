@@ -67,14 +67,14 @@ sentencia existente cambia. Commits: `b7c1ba8`, `3793f87`, `66df3d8`, `f0304ec`,
 | 8 | `CREATE TABLE IF NOT EXISTS public.calendario_cierres (fecha date PRIMARY KEY, …)` | `packages/zoho-sync/src/db/schema.sql:478-483` | `public` | **Sí** | Sí, `IF NOT EXISTS` | F1B-12 |
 | 9 | `CREATE TABLE IF NOT EXISTS public.equipos_cambios (id bigserial PRIMARY KEY, …)` | `packages/zoho-sync/src/db/schema.sql:496-505` | `public` | **Sí** | Sí, `IF NOT EXISTS` | F1B-14 |
 | 10 | `CREATE INDEX IF NOT EXISTS idx_equipos_cambios_equipo ON public.equipos_cambios (equipo_id)` | `packages/zoho-sync/src/db/schema.sql:506` | `public` | **Sí** | Sí, `IF NOT EXISTS` | F1B-14 |
-| 11 | `ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad boolean` | `packages/zoho-sync/src/db/schema.sql:509` | `public` | **Sí** | Sí, `IF NOT EXISTS` | F1B-04 |
+| 11 | `ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS hay_novedad boolean` | `packages/zoho-sync/src/db/schema.sql:509` en `dcb5c99` | `public` | **Sí** | Sí, `IF NOT EXISTS` | F1B-04 |
 
 *(Son once filas de sentencia: la 2-7 agrupa seis `ALTER` iguales.)*
 
 **Las dos tablas nuevas están clasificadas.** `calendario_cierres` y `equipos_cambios` entran en
 `PUBLIC_TABLES` (`packages/zoho-sync/src/db/migrate.ts:70-73`), que es lo que exige el guardián de
 `packages/zoho-sync/src/db/migrate.test.ts`. Las sin calificar aterrizan en `desk` por dos vías que ya
-existían: `reorgToDesk` corre antes que `migrate` (`apps/desk/server/index.ts:23-24`) y la conexión fija
+existían: `reorgToDesk` corre antes que `migrate` (`apps/desk/server/index.ts:23-24` en `dcb5c99`) y la conexión fija
 `search_path=desk,public` (`packages/zoho-sync/src/db/pool.ts:5`).
 
 **Todas son ADITIVAS.** Tablas nuevas, columnas nuevas **anulables** y sin `NOT NULL`, y un índice. No se
@@ -85,14 +85,14 @@ borra ni se renombra nada, y ninguna columna existente cambia de tipo. Consecuen
 `books.sales_orders`, `books.items`, `DEPLOY.md:42`), así que la regla de orden de `DEPLOY.md:50-51`
 —DDL primero en el suscriptor— **no aplica a este paquete**.
 
-**La sentencia 11 no lleva punto y coma final** (`packages/zoho-sync/src/db/schema.sql:509`, última
+**La sentencia 11 no lleva punto y coma final** (`packages/zoho-sync/src/db/schema.sql:509` en `dcb5c99`, última
 línea del fichero). Hoy no importa: `schemaStatements` trocea por el carácter y conserva el último trozo
 (`packages/zoho-sync/src/db/migrate.ts:19-21`). Se anota porque la próxima sentencia que alguien añada
 debajo se pegaría a ésta y **las dos fallarían**. No bloquea este despliegue.
 
 ### 2.2 · Dónde se aplican: al arrancar, y en silencio si algo falla
 
-- **App:** `main()` llama a `migrate(pool)` en el arranque (`apps/desk/server/index.ts:24`), sobre `desk`.
+- **App:** `main()` llama a `migrate(pool)` en el arranque (`apps/desk/server/index.ts:24` en `dcb5c99`), sobre `desk`.
   Es lo que `DEPLOY.md:175` describe como «el server corre `migrate`».
 - **Worker `hub-sync`:** `hubBootstrap` llama a `migrate(db)` sobre el hub (`apps/hub-sync/src/hubSync.ts:13`),
   con **el mismo** `schema.sql`. Así que las dos tablas `public.*` nuevas y las columnas nuevas **también
@@ -265,7 +265,7 @@ reaplica su `schema.sql`, que es un subconjunto del nuevo.
 |---|---|---|
 | El tablero se queda en blanco tras el Deploy | Cualquier vista | Fallo de arranque o del `dist/`. Revisar logs del servicio App |
 | El build falla en EasyPanel | Pestaña de despliegue | Ver §4.3. Producción sigue en `ae5aaf4`: no hay nada que revertir |
-| **No se puede crear ninguna remisión** | Ficha de ticket → «Crear remisión» | La guarda nueva de novedad (`apps/desk/server/routes/remision.ts:286-287`) o la pregunta obligatoria del formulario (`apps/desk/src/components/CrearRemision.tsx:100`) bloquean de más |
+| **No se puede crear ninguna remisión** | Ficha de ticket → «Crear remisión» | La guarda nueva de novedad (`apps/desk/server/routes/remision.ts:286-287` en `dcb5c99`) o la pregunta obligatoria del formulario (`apps/desk/src/components/CrearRemision.tsx:100`) bloquean de más |
 | **No se puede crear ningún ticket** | Alta de ticket → Guardar | La rama de equipo nuevo del alta (`apps/desk/server/services/ticketService.ts:24`) está rechazando lo que no debe |
 | **Un ticket de servicio NO «Equipo nuevo» ve los botones del flujo de equipo nuevo** | Ficha del ticket | El enrutado de flujos (`packages/shared/src/flujos.ts:56-61`) está fallando |
 | Errores 500 al guardar un equipo | Equipos → Editar | Falta una columna de §2.1: comprobar con la consulta de §4.4 |
@@ -290,7 +290,7 @@ La tanda de cada cambio sale de la cabecera `tanda:` de su `proposal.md` archiva
 | **F1B-12** | `2026-09-24-calendario-laboral` (`cierra: si`) | **Nada todavía.** Hay módulo de calendario hábil, tabla de cierres y lector, pero **ningún consumidor**: el SLA sigue en horas de reloj y su paso a horas hábiles quedó para otra tanda (`openspec/changes/archive/2026-09-24-calendario-laboral/archive-report.md:15-19`). Con la tabla vacía no se nota nada | Lector: `apps/desk/server/db/calendarioCierres.ts:31-34`. Módulo: `packages/shared/src/calendarioLaboral.ts` |
 | **F1B-14** (1) | `2026-09-24-alta-equipo-nuevo-en-ticket` (`cierra: no`) | **Alta de ticket con equipo que aún no existe.** Con clasificación «Equipo nuevo» y sin equipo elegido aparece el bloque «Equipo nuevo» (Serie, Modelo del catálogo y Factura de compra obligatorios; Adquisición, Fin de garantía, Código interno, Drive y Mantenedor opcionales), con el aviso «Si la serie ya está registrada, el servidor reutiliza ese equipo en vez de duplicarlo». Errores nuevos: «Faltan datos del equipo nuevo: …» y «Modelo no encontrado» (422) | Cliente: `apps/desk/src/components/CreateTicket.tsx:55`, bloque `:367-409`. Servidor: `apps/desk/server/services/ticketService.ts:24`, `apps/desk/server/services/equipoNuevo.ts:41` y `:44` |
 | **F1B-14** (2) | `2026-09-25-edicion-comercial-equipo` (`cierra: si`) | **Botón «Editar» en la hoja de vida y sección «Cambios».** Sin área Comercial ni administrador, Factura de compra, Fin de garantía y Mantenedor salen en sólo lectura, y el servidor responde 403 «Sólo el área Comercial o un administrador puede cambiar fecha de factura, fin de garantía o mantenedor». Cada cambio queda registrado con quién y cuándo | Cliente: `apps/desk/src/components/HojaDeVida.tsx:204` (botón), `:162` (sección). Servidor: `apps/desk/server/routes/equipos.ts:107-108` (403) y `:115` (registro) |
-| **F1B-04** | `2026-09-25-foto-solo-con-novedad` (`cierra: no`) | **La remisión de entrada pregunta «¿El equipo llega con novedad?»**, sin respuesta preseleccionada. Sin contestar: «Indica si el equipo llega con novedad.» Con «Sí» y sin fotos: «El equipo llega con novedad: sube al menos una foto antes de crear la remisión.» El servidor rechaza el envío con 422 «El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.» Con «No», la foto deja de ser obligatoria | Cliente: `apps/desk/src/components/CrearRemision.tsx:61`, `:100`, `:101`, `:353`. Servidor: `apps/desk/server/routes/remision.ts:286-287` |
+| **F1B-04** | `2026-09-25-foto-solo-con-novedad` (`cierra: no`) | **La remisión de entrada pregunta «¿El equipo llega con novedad?»**, sin respuesta preseleccionada. Sin contestar: «Indica si el equipo llega con novedad.» Con «Sí» y sin fotos: «El equipo llega con novedad: sube al menos una foto antes de crear la remisión.» El servidor rechaza el envío con 422 «El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.» Con «No», la foto deja de ser obligatoria | Cliente: `apps/desk/src/components/CrearRemision.tsx:61`, `:100`, `:101`, `:353`. Servidor: `apps/desk/server/routes/remision.ts:286-287` en `dcb5c99` |
 | **F1B-06** | `2026-09-25-blueprint-equipo-nuevo` (`cierra: no`) | **Flujo propio para los tickets «Equipo nuevo».** Un ticket va a este flujo si su clasificación es exactamente «Equipo nuevo» **y** su estado es uno de los cinco del flujo (`Ingresado`, `En Proceso`, `Notificado`, `Verificación`, `Finalizado`). Entonces ve sólo estos botones: «Ingreso equipo nuevo», «Producto no conforme», «Análisis y acciones», «Verificación» y «Liberación», todos de Servicio Técnico. Un ticket en otro estado —por ejemplo `Rev./Diagnostico`— sigue en el flujo de servicio. `Verificación` es estado nuevo y cae en la columna «Otros» del tablero. Ejecutar una transición del otro flujo da 409 con mensaje que nombra los dos flujos | Enrutado: `packages/shared/src/flujos.ts:56-61`. Catálogo: `packages/shared/src/transitions.ts:350-363`. Botones: `apps/desk/src/components/TransitionPanel.tsx:56`. Guarda del servidor: `apps/desk/server/services/ticketService.ts:125`. Columna: `packages/shared/src/estados.ts:105`. El SLA no se aplica a este flujo: `apps/desk/server/db/sla.ts:49` |
 | **F1A-03** | `2026-09-27-salidas-verificacion` (`cierra: no`) | **`Verificación` tiene dos salidas:** «Liberación» hacia `Finalizado` y, nueva, «Rechazo de verificación» hacia `Notificado`. Las dos, de Servicio Técnico | `packages/shared/src/transitions.ts:359` (`liberacion`, origen ampliado) y `:361` (`rechazo_verificacion`) |
 
@@ -450,7 +450,7 @@ Fuente: `openspec/specs/remisiones/spec.md:476-485`. Dueño: Servicio Técnico, 
 | 3 | Leer el mensaje del 422 de envío: «El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.» | El técnico lo entiende sin explicación (`openspec/specs/remisiones/spec.md:484-485`) |
 
 La 3 no hace falta provocarla en un ticket real: basta con que el técnico lea el texto, que es literal de
-`apps/desk/server/routes/remision.ts:287`.
+`apps/desk/server/routes/remision.ts:287` en `dcb5c99`.
 
 ### 6.4 · La comprobación 2 de F1B-06 — Servicio Técnico
 

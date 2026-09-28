@@ -232,8 +232,12 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
         res.status(409).json({ error: `La orden de venta ${ov.number} ya está asociada al ticket #${enUso.number}` })
         return
       }
+      // parche-iv11-orden-venta (RQ-RE-16 modificado): la misma sentencia deja la marca de fila que
+      // protege estas dos columnas de la siguiente pasada del sincronizador (`zoho-sync` RQ-ZS-01
+      // modificado). Si el WHERE no casa (ya tenía OV), la marca tampoco se pone: no hay nada nuevo
+      // que proteger.
       await db.query(
-        `UPDATE tickets SET orden_venta = $2, fecha_orden_venta = $3, salesorder_id = $4, updated_at = now()
+        `UPDATE tickets SET orden_venta = $2, fecha_orden_venta = $3, salesorder_id = $4, ov_elegida_en_app_at = now(), updated_at = now()
           WHERE id = $1 AND COALESCE(orden_venta, '') = ''`,
         [ticketId, ov.number, ov.date ?? null, ov.id],
       )

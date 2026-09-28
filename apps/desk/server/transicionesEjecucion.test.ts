@@ -108,7 +108,7 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
  * QUÉ HABÍA Y QUÉ FALTABA. La matriz de `permisos.test.ts` (§4) ya barre las 34 contra el servidor,
  * pero sólo mira el CÓDIGO HTTP: comprueba quién puede pulsar el botón, no adónde lleva. Nadie
  * comprobaba que el ticket acabe en el estado declarado ni que quede constancia de la etapa. La
- * traza sólo se verificaba en UNA transición (`remisiones.test.ts:356`), y M1.10 `[DECIDIDO — R08]`
+ * traza sólo se verificaba en UNA transición (`remisiones.test.ts:387`), y M1.10 `[DECIDIDO — R08]`
  * la exige «sin excepciones».
  *
  * ⚠️ CUIDADO CON EL MONTAJE, que es lo que demostró la matriz de permisos: con el ticket en un
