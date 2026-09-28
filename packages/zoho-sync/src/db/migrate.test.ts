@@ -420,3 +420,25 @@ describe('nombresAmbiguos / altersAmbiguas — el guardián distingue intención
     expect(ambiguas[0]).toContain('modified_time')
   })
 })
+
+/**
+ * parche-iv11-orden-venta (D1) · una fila que YA EXISTÍA con `orden_venta` puesta ANTES de correr esta
+ * `ALTER` no recibe la marca por relleno automático (verify-report WARNING 2, remediación). Ejercita
+ * TODAS las sentencias REALES de `schema.sql` que tocan la columna (extraídas con `schemaStatements()`,
+ * no copiadas a mano) contra una tabla sintética con una fila previa: hoy es sólo la `ALTER`, y si
+ * alguien añadiera un `UPDATE` de relleno junto a ella (regla de mutación 2, se ensucia el FICHERO
+ * VIGILADO), el recuento de sentencias relacionadas cambia y esta prueba se pone en rojo.
+ */
+describe('parche-iv11-orden-venta · la ALTER de ov_elegida_en_app_at no rellena filas previas (D1, sin backfill)', () => {
+  it('sólo hay UNA sentencia relacionada (la ALTER), y una fila con orden_venta previa queda con la marca en NULL', async () => {
+    const pg = newDb().adapters.createPg()
+    const db = new pg.Pool()
+    await db.query('CREATE TABLE tickets (id text PRIMARY KEY, orden_venta text)')
+    await db.query("INSERT INTO tickets (id, orden_venta) VALUES ('legacy-1', 'OV-PREVIA')")
+    const relacionadas = schemaStatements().filter((s) => /ov_elegida_en_app_at/i.test(s))
+    expect(relacionadas, 'sentencias de schema.sql que mencionan ov_elegida_en_app_at').toHaveLength(1)
+    for (const s of relacionadas) await db.query(s)
+    const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', ['legacy-1'])
+    expect(r.rows[0].ov_elegida_en_app_at).toBeNull()
+  })
+})

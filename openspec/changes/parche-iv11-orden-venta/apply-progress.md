@@ -74,3 +74,18 @@ cumplió: desplazamientos +27/+32/+35 según segmento, medidos exactos vía hunk
 el objetivo exacto. Dos mutaciones del diseño (e, f) sobrevivieron a la primera pasada de tests y
 exigieron tests nuevos — no estaba previsto en el diseño pero es exactamente para lo que sirve la
 Fase 7.
+
+## Remediación del verify (2026-09-28)
+
+Cierra los 3 escenarios PARTIAL del verify-report (WARNING 1-3), sólo tests, sin tocar código de
+producción; todas las líneas nuevas van al FINAL de sus ficheros (regla de mutación 4).
+
+| Requisito | Test | Mutación real ejecutada | RED | Revertido |
+|---|---|---|---|---|
+| RQ-ZS-01 salesorder_id no cambia | `packages/zoho-sync/src/db/repo.test.ts:429-438` | Añadida `'salesorder_id'` a `TICKET_COLS` (`repo.ts`) | `expected null to be 'SO-APP'` | `git checkout -- repo.ts`, diff limpio |
+| RQ-ZS-01 sin relleno retroactivo | `packages/zoho-sync/src/db/migrate.test.ts:432-444` | Añadido `UPDATE tickets SET ov_elegida_en_app_at=now() WHERE ...` tras la ALTER (`schema.sql`) | `expected [ …(2) ] to have a length of 1 but got 2` | `git checkout -- schema.sql`, diff limpio |
+| RQ-AV-13 el hub nunca avisa | `apps/hub-sync/src/hub-sync.guardian.test.ts:17-20` (nuevo) | Añadido `alDiscrepanciaOV: async () => {}` a `createSync({...})` en `hub-sync.ts:21` | `expected ... not to contain 'alDiscrepanciaOV'` falló | `git checkout -- hub-sync.ts`, diff limpio |
+
+Verificación final, re-ejecutada por el orquestador: `npm test` 1474 pasan, 2 skip (+3 sobre 1471);
+`typecheck` limpio; `eslint --max-warnings 165` 165 warnings, 0 nuevos; `build` OK. El orquestador retiró
+un cuarto test en memoria del guardián de hub-sync: comprobaba su propia sustitución y era tautológico.

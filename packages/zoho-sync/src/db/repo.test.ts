@@ -418,3 +418,21 @@ describe('createTicket / writeTransition ponen la marca al fijar la orden de ven
     expect(r.rows[0].ov_elegida_en_app_at).toBeNull()
   })
 })
+
+/**
+ * parche-iv11-orden-venta (RQ-ZS-01) · remediación del verify: `salesorder_id` queda fuera de
+ * `TICKET_COLS` desde antes de este parche (se añadió por `ALTER`, `schema.sql:187`) y por eso el
+ * upsert del sync nunca la toca, con marca o sin ella. Cierto por construcción según el
+ * verify-report (WARNING 1); esta prueba lo fija contra regresión con una pasada REAL de
+ * `upsertTicket`, no sólo leyendo la lista.
+ */
+describe('parche-iv11-orden-venta · salesorder_id no cambia en una pasada de upsertTicket (RQ-ZS-01, remediación verify)', () => {
+  it('con la marca puesta, salesorder_id sobrevive a una pasada del sync y no está en TICKET_COLS', async () => {
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-APP' })
+    await db.query("UPDATE tickets SET ov_elegida_en_app_at = now(), salesorder_id = 'SO-APP' WHERE id='1'")
+    await upsertTicket(db, { ...zTicket('1', 941), orden_venta: 'OV-ZOHO' })
+    const r = await getTicketRow(db, '1')
+    expect(r!.salesorder_id).toBe('SO-APP')
+    expect(TICKET_COLS as readonly string[]).not.toContain('salesorder_id')
+  })
+})

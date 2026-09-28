@@ -1,17 +1,17 @@
 ```yaml
 schema: gentle-ai.verify-result/v1
-evidence_revision: sha256:993c09a4dce0e4a0980af1cf2d86404153ba624193435ca474d8b73dce122c73
-verdict: fail
+evidence_revision: sha256:0e82515522a4387fab85c398ceb0b7b3cec4d9315d36d1196ce063e844e2c8a2
+verdict: pass
 blockers: 0
 critical_findings: 0
 requirements: 3/3
-scenarios: 13/16
+scenarios: 16/16
 test_command: npm test
 test_exit_code: 0
-test_output_hash: sha256:975d29e0a624bdc8f5e3b3cc7ee31a5f596ec770119d646638f60bd2f143f21a
+test_output_hash: sha256:ab23fdd7c6d09c777ea63d0576e99f6bc6c71813db8d7804f34f322d8e890c62
 build_command: npm run build
 build_exit_code: 0
-build_output_hash: sha256:3288542432712808de81bc198467372dc4c63e1223a5caa88e8725cb08258865
+build_output_hash: sha256:9dc5f8701d6ddeca1436316ec8e6c09e61859445e310a85b7b0d90abcd993d43
 ```
 
 ## Verification Report
@@ -89,8 +89,8 @@ Revertido con `git checkout -- apps/desk/server/services/avisoDiscrepanciaOV.ts`
 | RQ-ZS-01 | El sync nunca escribe la marca | repo.test.ts:359-362 (TICKET_COLS no la incluye) | COMPLIANT |
 | RQ-ZS-01 | Con marca, no pisa las dos columnas | repo.test.ts:300-309 | COMPLIANT |
 | RQ-ZS-01 | Sin marca, Zoho manda | repo.test.ts:311-316 | COMPLIANT |
-| RQ-ZS-01 | salesorder_id no cambia | (ninguno dedicado) | PARTIAL -- F-2 |
-| RQ-ZS-01 | Fila existente no recibe marca retroactiva | (ninguno dedicado) | PARTIAL -- F-3 |
+| RQ-ZS-01 | salesorder_id no cambia | repo.test.ts:429-438 (remediacion) | COMPLIANT |
+| RQ-ZS-01 | Fila existente no recibe marca retroactiva | migrate.test.ts:432-444 (remediacion) | COMPLIANT |
 | RQ-RE-16 | Orden ya asociada -> 409 | ordenVentaUnTicket.test.ts:161-176 | COMPLIANT |
 | RQ-RE-16 | 422 del serial gana al 409 | remisiones.test.ts:1060-1084 | COMPLIANT |
 | RQ-RE-16 | Reenvio al propio ticket no se autorechaza | ordenVentaUnTicket.test.ts:185-203 | COMPLIANT |
@@ -100,10 +100,9 @@ Revertido con `git checkout -- apps/desk/server/services/avisoDiscrepanciaOV.ts`
 | RQ-AV-13 | Valor nuevo genera aviso nuevo | avisoDiscrepanciaOV.test.ts:71-80; e2e :79-81 | COMPLIANT |
 | RQ-AV-13 | Zoho vacio no es discrepancia | repo.test.ts:327-343 | COMPLIANT |
 | RQ-AV-13 | Aviso no dispara correo | avisoDiscrepanciaOV.test.ts:53-59 (enviado_at NULL); por construccion nunca llama a dispararAvisos (RQ-AV-09) | COMPLIANT |
-| RQ-AV-13 | El worker del hub nunca crea el aviso | Estatico: hub-sync.ts:21 sin alDiscrepanciaOV; generico sync.test.ts:64-69 | PARTIAL -- F-5 |
+| RQ-AV-13 | El worker del hub nunca crea el aviso | apps/hub-sync/src/hub-sync.guardian.test.ts:17-20 (remediacion) | COMPLIANT |
 
-Resumen: 13/16 escenarios COMPLIANT con test directo; 3/16 PARTIAL (ciertos por construccion, sin
-prueba dedicada que los fije contra regresion).
+Resumen: 16/16 escenarios COMPLIANT con test directo (3 de ellos tras la remediacion del 2026-09-28).
 
 ### TDD Compliance
 | Check | Resultado | Detalle |
@@ -184,14 +183,18 @@ Ninguno. El hallazgo original queda resuelto (ver "Corrective re-run" arriba).
 ### SUGGESTION
 Ninguna.
 
-## Verdict
-FAIL -- por cobertura, no por defecto funcional. El CRITICAL original queda resuelto por el registro
-`aprobaciones_de_techo_del_ledger` al final de openspec/config.yaml, y todo lo ejecutable pasa (1471
-tests, typecheck, lint 165, build; mutaciones c y d). Pero 3/16 escenarios son PARTIAL (WARNING 1-3:
-ciertos por construccion, sin prueba dedicada), y `sdd-verify-validate` fuerza `fail` con cobertura
-incompleta (front matter: scenarios 13/16). La salida es una remediacion de apply que anada esas tres
-pruebas; WARNING 4-6 no bloquean.
+## Re-verificacion tras la remediacion (2026-09-28, orquestador)
+Intento 2 del objetivo de verify, con `--remediates-evidence-revision` sobre la evidencia de la
+primera pasada. Tres pruebas nuevas, todas AL FINAL de su fichero (sin desplazar citas):
+`repo.test.ts:429-438`, `migrate.test.ts:432-444` y `apps/hub-sync/src/hub-sync.guardian.test.ts:17-20`.
+Mutaciones ejecutadas por el orquestador sobre el fichero vigilado, cada una en rojo y revertida:
+`salesorder_id` en `TICKET_COLS` (`repo.ts:48`) -> `expected null to be 'SO-APP'`;
+`alDiscrepanciaOV` en `createSync(...)` (`hub-sync.ts:21`) -> falla el guardian. La del relleno en
+`schema.sql` la ejecuto el subagente de apply (rojo: 2 sentencias en vez de 1). Se retiro un cuarto test
+en memoria del guardian por tautologico. Re-ejecutado: 1474 tests pasan (2 skip), typecheck limpio, lint
+165 (0 nuevos), build OK. WARNING 1-3 quedan resueltos; 4-6 siguen como observaciones no bloqueantes.
 
-*Nota del orquestador (2026-09-28):* el subagente murio por un error de red mientras reescribia esta
-seccion, que decia PASS WITH WARNINGS en contradiccion con su propio front matter. La completo el
-orquestador para que diga lo mismo que el front matter y el validador; ningun otro dato cambia.
+## Verdict
+PASS -- 3/3 requisitos y 16/16 escenarios con prueba directa; CRITICAL resuelto por
+`aprobaciones_de_techo_del_ledger`; WARNING 4-6 no bloquean. La primera pasada de este informe dio
+FAIL por cobertura (13/16) y se conserva en el historial de git (`a13cb86`).
