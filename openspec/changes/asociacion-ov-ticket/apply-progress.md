@@ -348,3 +348,62 @@ Citas leídas por CONTENIDO: `bodegaje.test.ts:360`/`:362` (`transitions.ts:199`
 ### Status
 
 **17/17 tareas del lote 3 completas.** Siguiente: lote 4 (Cuarentena).
+
+
+## Lote 4 · Cuarentena (tasks 4.0a-4.22) — COMPLETO
+
+Incluye primero la **corrección de RQ-TS-18** (4.0a-4.0e): `design.md:111-112` violaba la spec (`specs/transitions-st/spec.md:47-51`, «sin tocar la OV de entrada»).
+`cfOvAdicional('Fecha Orden De Venta')` daba a la OV adicional el `campoFecha` de la columna `fecha_orden_venta` (`rows.ts:108`): el autofill de `TransitionPanel.tsx:103` pisaba la
+fecha de entrada y `:66` ocultaba al teclado el campo manual obligatorio. **Cierra la desviación 1 y el riesgo 3 del lote 3** (arriba, históricos, caso B: no se reescriben).
+
+### TDD Cycle Evidence
+
+| Tarea | Prueba | RED capturado (mensaje exacto) |
+|---|---|---|
+| 4.0a | `ticketService.test.ts` «4.0a · aprobacion_y_repuestos: fecha_orden_venta conserva la fecha tecleada» | `la fecha tecleada gana al autofill de la OV adicional: expected '2026-07-15' to be '2026-06-10'` |
+| 4.0b | `transitionExec.test.ts` guardián «ningún campo con destino ovAdicional…» | nació VERDE tras el arreglo; con el catálogo viejo: `aprobacion_y_repuestos: campoFecha "Fecha Orden De Venta" → fecha_orden_venta: expected [ 'orden_venta', 'fecha_orden_venta' ] to not include 'fecha_orden_venta'` |
+| 4.0c | `ovAsociaciones.test.ts` «4.0c · el origen es el id de la transición…» | `expected 'aprobacion_y_repuestos' to be 'aprobacion'` (y la inversa: `expected 'aprobacion' to be 'aprobacion_y_repuestos'`) |
+| 4.0c | `ticketService.test.ts` «aprobacion sin fecha de OC final registra origen aprobacion» | **NACE VERDE** (la deducción vieja ya daba `aprobacion` sin fecha): guarda de regresión, no discrimina |
+| 4.1 | `subOV.test.ts` (tabla `it.each`, 27 casos) | `Cannot find module './subOV'` (módulo inexistente) |
+| 4.5 | `ticketService.test.ts` «4.5 · el alta con una OV en cuarentena responde 422…» y «POSICIÓN alta» | `se esperaba un HttpError y la llamada no lanzó ninguno`; posición: `la cuarentena (C) precede a la unicidad (D): expected 409 to be 422` |
+| 4.9 | «4.9 · habilitar_servicio…», «POSICIÓN habilitar_servicio», «la OV adicional de una aprobación» | `se esperaba un HttpError…` (×2); posición: `expected 409 to be 422` |
+| 4.13 | `remisiones.test.ts` (al final) «4.13 · OV en cuarentena y YA usada…» | `la cuarentena (C) precede a la unicidad (D): expected 409 to be 422` |
+| 4.18 | `books/repo.test.ts` «cuarentena de subOV» (2) | `expected [ 's-canon', 's-cuar', 's-madre' ] to deeply equal [ 's-canon', 's-madre' ]`; `expected [ 's-c1', 's-c2' ] to deeply equal [ 's-ok1', 's-ok2' ]` |
+
+Nacieron verdes a propósito (controles de población, no RED): las dos con subOV canónica que llegan al `409` (alta, transición, remisión) y «OV inexistente sigue diciendo *Orden de venta no encontrada*».
+
+### Mutaciones de posición (regla de mutación 1; una a la vez, revertida y `cmp` contra copia previa)
+
+| # | Mutación (guarda movida DESPUÉS de la unicidad) | Resultado |
+|---|---|---|
+| 4.17-a | `ticketService.ts:96` → tras el bloque del `409` (`:100`) | ROJA 1: `la cuarentena (C) precede a la unicidad (D): expected 409 to be 422` (POSICIÓN alta) |
+| 4.17-b | `ticketService.ts:134` → `erroresCuarentena` fuera del `422` y evaluado tras el `409` de `:151` | ROJA 1: mismo mensaje (POSICIÓN habilitar_servicio) |
+| 4.17-c | `remision.ts:220` → `if (!ov)` solo, y la cuarentena tras el `409` (`:234`) | ROJA 1: mismo mensaje (4.13) |
+
+### Lo aplicado y las restricciones «en sitio»
+
+`ticketService.ts` 234→234 (`:6`, `:96`, `:134`); `remision.ts` 397→397 (`:4`, `:220`); `repo.ts` 452→452 (`:311`); `books/repo.ts` 182→182 (`:2`, `:163`, `:176`);
+`transitions.ts` 376→376 (`:199`, `:372`, `:374`; comentario y firma de `cfOvAdicional`); `shared/index.ts` 22→23 (línea nueva AL FINAL). Verificado con `git diff -U0`.
+`subOV.ts`: clasificador (`clasificarOV`, `esCuarentena`, `motivoCuarentena`, `erroresCuarentena`). **Escalón:** la cuarentena es **C** (validez del contenido: la OV existe, su número es lo inválido),
+no A; por eso va tras la existencia y antes de la unicidad (D) en las tres puertas. `remision.ts:220` queda DETRÁS del `409` de remisión pendiente `:177` (molde de IV-12: se anota, no se corrige).
+
+### Cierre (4.22)
+
+`npx vitest run`: 148 ficheros / 1.557 pruebas verdes (1 fichero y 2 pruebas omitidos, como antes). `npm run typecheck` limpio. `eslint --max-warnings 165`: 165 avisos, 0 errores.
+Medida: `git add -N` sólo de `subOV.ts` y `subOV.test.ts`; `git diff --shortstat --no-renames HEAD`: **17 ficheros, +460 −50 = 510 líneas** (medida al cerrar, con este fichero, `tasks.md` y `design.md` incluidos; techo 800).
+Citas leídas por CONTENIDO (edición en sitio, nada se desplazó): `CLAUDE.md` IV-12 → `remision.ts:220` «Orden de venta no encontrada» sigue literal; `:127`, `:155`, `:177`, `:197` intactas;
+`ordenVentaUnTicket.test.ts:19`, `tickets-core/spec.md:306`/`:519`, `config.yaml:1132` → `ticketService.ts:96-100` (el `409` del alta sigue ahí, ahora con la cuarentena en `:96`); `transitions-st/spec.md:267`/`:275`/`:902`
+y `fechasDerivadas.ts:106` → `ticketService.ts:132-134` (el `422` de contenido, ahora también con la cuarentena; «C antes que D» sigue cierto y más completo); `bodegaje.test.ts:360` → `transitions.ts:199` sigue siendo `aprobacion_y_repuestos`.
+Las citas de `archive/` y `config.yaml:579` a `ticketService.ts:134-135` son históricas (caso B): no se tocan.
+
+### Deviations from Design
+
+1. **`books/repo.ts:163`:** el diseño decía `limit * 3` sólo con `soloLibres`; se aplica SIEMPRE, porque 4.18 pide la cuarentena fuera «con o sin `soloLibres`» y el filtro es de TS (pg-mem no tiene `~`).
+   Riesgo: si más de dos tercios de la página son cuarentena, devuelve menos de `limit`. Aceptado hasta conocer la cifra de P.1.
+2. **Regla del clasificador, consecuencia declarada:** una secuencia de cinco dígitos (`OV-2026-00123`) es la base `OV-2026-0012` más el resto `3` y cae en cuarentena (regla literal de `design.md` §5). Hipótesis: producción no tiene OV de cinco dígitos; lo confirma P.1.
+3. **RQ-TS-18:** el diseño del lote 3 se corrigió (4.0a-4.0d); la spec no cambia. Origen de la asociación adicional: ahora la transición (cierra la desviación 1 del lote 3).
+4. **Pendiente para el lote 6:** la tabla de destinos de `transitions-st/spec.md` no lista `ovAdicional`; el cliente depende de `campoFecha` (`TransitionPanel.tsx:66`/`:103`); ningún `.tsx` cambia en este lote.
+
+### Status
+
+**27/27 tareas del lote 4 completas (4.0a-4.0e y 4.1-4.22).** Siguiente: lote 5 (API de servidor).

@@ -106,3 +106,24 @@ describe('searchSalesOrders · soloLibres y ov_asociaciones', () => {
     expect(await ids()).toEqual(['s-usada'])
   })
 })
+
+// asociacion-ov-ticket · lote 4 (tarea 4.18, RQ-TC-18): una subOV en cuarentena no sale del buscador.
+describe('searchSalesOrders · cuarentena de subOV', () => {
+  const ov = (id: string, numero: string) =>
+    db.query(
+      "INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date,total,status,raw) VALUES ($1,$2,'cliA','Corola','2026-06-01',200,'open','{\"order_status\":\"open\"}')",
+      [id, numero],
+    )
+  const ids = async (soloLibres: boolean, limit = 20) => (await searchSalesOrders(db, 'OV-2026', null, limit, soloLibres)).map((s) => s.id).sort()
+
+  it('con y sin soloLibres, la subOV no canónica no aparece y la canónica y la ordinaria sí', async () => {
+    await ov('s-madre', 'OV-2026-600'); await ov('s-canon', 'OV-2026-600-01'); await ov('s-cuar', 'OV-2026-600-X9')
+    expect(await ids(false)).toEqual(['s-canon', 's-madre'])
+    expect(await ids(true)).toEqual(['s-canon', 's-madre'])
+  })
+
+  it('el límite se cuenta DESPUÉS de quitar la cuarentena: las de cuarentena no se comen la página', async () => {
+    await ov('s-c1', 'OV-2026-610-X1'); await ov('s-c2', 'OV-2026-610-X2'); await ov('s-ok1', 'OV-2026-611'); await ov('s-ok2', 'OV-2026-612')
+    expect((await searchSalesOrders(db, 'OV-2026', null, 2, false)).map((s) => s.id).sort()).toEqual(['s-ok1', 's-ok2'])
+  })
+})

@@ -71,7 +71,7 @@ Si (b) no se pone roja, pg-mem no discrimina y la guarda se duplica en `asociarO
 - **Alta:** en `crearTicketConEquipo` (`apps/desk/server/services/equipoNuevo.ts:80-92`, última función del fichero):
   las dos ramas pasan a una transacción que llama a `createTicket(q, …, { transaccionAbierta: true })` y después a
   `asociarOV`. Sólo si hay `salesorderId` (S-4 intacto). `repo.ts:412-452` no se toca.
-- **Transición:** `repo.ts:311` en sitio añade, tras el `UPDATE`, `; await asociarDesdeTransicion(q, …)` dentro de
+- **Transición:** `repo.ts:311` en sitio añade, tras el `UPDATE`, `; await asociarDesdeTransicion(q, …, actor, transition.id)` dentro de
   la misma transacción (precedente de dos sentencias en una línea: `ticketService.ts:125`). Import en sitio en
   `repo.ts:4`.
 - **Remisión de entrada:** `remision.ts:239` pasa a `const fijada = await db.query(`, `:241` añade `RETURNING id`, y
@@ -108,8 +108,8 @@ con la columna `orden_venta` (`rows.ts:99`) y la **sobrescribe**, y además `rep
 
 **Solución:** destino nuevo `'ovAdicional'` que nunca llega a columnas ni a `custom_fields`:
 - `transitions.ts:17` en sitio: `FieldTarget` gana `| 'ovAdicional'`.
-- `transitions.ts:199` y `:203` en sitio: cada `fields` gana `cfOvAdicional(…)`. En `aprobacion_y_repuestos` su
-  `campoFecha` es `'Fecha Orden De Venta'` (ya existe en `:199`); en `aprobacion`, `'Fecha Orden de Venta Final'`.
+- `transitions.ts:199` y `:203` en sitio: cada `fields` gana `cfOvAdicional(…)`. **CORREGIDO en el lote 4 (RQ-TS-18 manda sobre este diseño):** `aprobacion_y_repuestos` lleva `cfOvAdicional()` SIN `campoFecha` —el `'Fecha Orden De Venta'` que este texto decía es la columna `fecha_orden_venta` (`rows.ts:108`), la fecha de la OV de ENTRADA: el autofill de `TransitionPanel.tsx:103` la pisaba y `:66` ocultaba al teclado el campo manual obligatorio—; 
+  `aprobacion` conserva `'Fecha Orden de Venta Final'` (otra columna, `fecha_orden_venta_final`). Ningún servidor autorrellena nada: el autofill es comodidad del cliente (regla 13). 
   Opcional (S-10).
 - `cfOvAdicional` va **al final de `transitions.ts`** como declaración `function` (se eleva; un `const` al final daría
   error de zona muerta porque `TRANSICIONES_BASE` se evalúa al cargar el módulo).

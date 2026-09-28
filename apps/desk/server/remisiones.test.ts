@@ -1239,3 +1239,51 @@ describe('asociacion-ov-ticket · remisión de entrada · tercera vía y fila de
     expect(res.body.error).toBe('Orden de venta no encontrada')
   })
 })
+
+/*
+ * asociacion-ov-ticket · lote 4 (tarea 4.13, RQ-RE-16 escenario 5): una OV con sufijo no canónico bloquea la
+ * remisión con 422 ANTES del 409 de unicidad. Escalón C (contenido) < D (unicidad). La guarda vive en
+ * `remision.ts:220`, DETRÁS del 409 de remisión pendiente (`:177`, escalón D también): es el molde de IV-12 y
+ * se anota, no se corrige aquí. No toca `:988`.
+ */
+describe('asociacion-ov-ticket · remisión de entrada · cuarentena de subOV', () => {
+  const sembrarCuarentena = async (numero: string) => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-l4','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date) VALUES ('so-l4',$1,'cli-l4','Gecelca S.A. E.S.P.','2026-07-15')", [numero])
+    await upsertEquipo(db, equipoRow('eq-l4', '18A20070'))
+    await db.query("INSERT INTO tickets (id,number,subject,status,orden_venta) VALUES ('t-dueno-l4',7800,'Ya tiene la OV','Ingresado',$1)", [numero])
+    await asociarOV(db, { ticketId: 't-dueno-l4', numero, salesorderId: 'so-l4', origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+    await db.query("INSERT INTO tickets (id,number,subject,status,client_id,equipo_id) VALUES ('t-dest-l4',7801,'La quiere','Ticket creado','cli-l4','eq-l4')")
+  }
+  const cuerpo = { ticketId: 't-dest-l4', fecha: '2026-08-03', incluye: [], salesOrderId: 'so-l4' }
+
+  it('4.13 · OV en cuarentena y YA usada por otro ticket: 422 de cuarentena, no 409, y no escribe nada', async () => {
+    const cookie = await adminCookie()
+    await sembrarCuarentena('OV-2026-700-X9')
+    const { app } = appWith()
+
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie).send(cuerpo)
+
+    expect(res.status, 'la cuarentena (C) precede a la unicidad (D)').toBe(422)
+    expect(res.body.error).toContain('OV-2026-700-X9')
+    const t = (await db.query("SELECT orden_venta, salesorder_id FROM tickets WHERE id='t-dest-l4'")).rows[0]
+    expect(t).toEqual({ orden_venta: null, salesorder_id: null })
+  })
+
+  it('4.13 · control de población: la misma situación con una subOV canónica llega al 409 (las dos guardas estaban activas)', async () => {
+    const cookie = await adminCookie()
+    await sembrarCuarentena('OV-2026-700-05')
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie).send(cuerpo)
+    expect(res.status).toBe(409)
+  })
+
+  it('4.13 · la OV inexistente sigue diciendo «Orden de venta no encontrada» literal (A antes que C)', async () => {
+    const cookie = await adminCookie()
+    await sembrarCuarentena('OV-2026-700-X9')
+    const { app } = appWith()
+    const res = await request(app).post('/api/remisiones').set('Cookie', cookie).send({ ...cuerpo, salesOrderId: 'no-existe' })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toBe('Orden de venta no encontrada')
+  })
+})

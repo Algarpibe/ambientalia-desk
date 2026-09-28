@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { STATUS_TICKET_CREADO } from '@ambientalia/shared'
+import { STATUS_TICKET_CREADO, transicionPorId } from '@ambientalia/shared'
 import { HttpError } from '../util/httpError'
 import { createManagedTicket, executeTransition } from './ticketService'
 
@@ -832,5 +832,108 @@ describe('asociacion-ov-ticket · Aprobación añade una OV sin tocar la de entr
       .toEqual(['OV-2026-ENTRADA4', 'OV-2026-ENTRADA5'])
     expect((await db.query("SELECT status FROM tickets WHERE id IN ('t-a4','t-a5') ORDER BY id")).rows.map((r) => r.status))
       .toEqual(['En Proceso', 'En Espera de Repuestos'])
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// asociacion-ov-ticket · lote 4 · corrección de RQ-TS-18 (tarea 4.0a): el autofill del cliente NO puede
+// pisar la fecha de la OV de entrada
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+describe('asociacion-ov-ticket · RQ-TS-18: elegir la OV adicional no arrastra la fecha de la OV de entrada', () => {
+  /**
+   * Reproduce lo que hace `TransitionPanel.tsx:103` con el catálogo REAL: al elegir una OV escribe
+   * `values[f.key] = numero` y, si el campo declara `campoFecha`, `values[f.campoFecha] = fechaOV`.
+   * Si `cfOvAdicional` declarara `campoFecha: 'Fecha Orden De Venta'` (columna `fecha_orden_venta`, la
+   * fecha de la OV de ENTRADA), esa fecha manual y obligatoria de `aprobacion_y_repuestos` quedaría
+   * pisada por la de la OV adicional — el servidor la escribiría tal cual, porque no sabe de dónde vino.
+   */
+  it('4.0a · aprobacion_y_repuestos: fecha_orden_venta conserva la fecha tecleada, no la de la OV adicional', async () => {
+    const t = transicionPorId('aprobacion_y_repuestos')!
+    const ovAdicional = t.fields.find((f) => f.target === 'ovAdicional')!
+    const X = '2026-06-10' // tecleada a mano en el campo obligatorio «Fecha Orden De Venta»
+    const Y = '2026-07-15' // fecha de la OV adicional en Books
+    await ticketConOVDeEntrada('t-r1', 8401, 'OV-2026-ENTRADA-R1')
+    const values: Record<string, unknown> = { 'Fecha Orden de Compra': '2026-06-01', 'Fecha Orden De Venta': X }
+    values[ovAdicional.key] = 'OV-2026-950'
+    if (ovAdicional.campoFecha) values[ovAdicional.campoFecha] = Y
+
+    await executeTransition(db, 't-r1', { transitionId: 'aprobacion_y_repuestos', values }, ADMIN)
+
+    const r = (await db.query("SELECT orden_venta, fecha_orden_venta FROM tickets WHERE id = 't-r1'")).rows[0]
+    expect(r.orden_venta, 'la OV de entrada no cambia').toBe('OV-2026-ENTRADA-R1')
+    expect(dia(r.fecha_orden_venta), 'la fecha tecleada gana al autofill de la OV adicional').toBe(X)
+  })
+})
+
+describe('asociacion-ov-ticket · origen de la OV adicional (tarea 4.0c)', () => {
+  // NACE VERDE con la deducción vieja (sin fecha de OC final caía en 'aprobacion'): es guarda de regresión.
+  // La prueba que discrimina es la unitaria de `ovAsociaciones.test.ts` (4.0c), que se puso en rojo primero.
+  it('4.0c · aprobacion sin fecha de OC final registra origen aprobacion', async () => {
+    await ticketConOVDeEntrada('t-r2', 8402, 'OV-2026-ENTRADA-R2')
+    await executeTransition(db, 't-r2', { transitionId: 'aprobacion', values: { 'OV adicional': 'OV-2026-951' } }, ADMIN)
+    const fila = (await db.query("SELECT origen FROM ov_asociaciones WHERE numero = 'OV-2026-951'")).rows[0]
+    expect(fila.origen).toBe('aprobacion')
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// asociacion-ov-ticket · lote 4 · cuarentena de subOV (RQ-TC-18, RQ-TS-14). Escalón C: va antes de la unicidad (D)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+describe('asociacion-ov-ticket · cuarentena de subOV en el alta y en habilitar_servicio', () => {
+  const EN_CUARENTENA = 'OV-2026-990-X9' // base `OV-AAAA-NNN` + sufijo no canónico (`subOV.ts`, rama 3)
+
+  it('4.5 · el alta con una OV en cuarentena responde 422 con su motivo, y no escribe ni el ticket ni la asociación', async () => {
+    await equipo(); await cliente('cli-1'); await ordenDeBooks('so-q1', EN_CUARENTENA)
+    const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, salesOrderId: 'so-q1' }, 'Admin'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain(EN_CUARENTENA)
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM tickets')).rows[0].n).toBe(0)
+    expect((await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones')).rows[0].n).toBe(0)
+  })
+
+  it('4.5 · POSICIÓN alta: la OV en cuarentena YA está en otro ticket (columna y asociación): gana el 422 (C), no el 409 (D)', async () => {
+    await equipo(); await cliente('cli-1'); await ordenDeBooks('so-q2', EN_CUARENTENA)
+    await ticket('t-dueno-q', 'Ingresado', 8501, { orden_venta: EN_CUARENTENA })
+    await db.query("INSERT INTO ov_asociaciones (ticket_id, numero, salesorder_id, origen) VALUES ('t-dueno-q', $1, 'so-q2', 'alta')", [EN_CUARENTENA])
+    const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, salesOrderId: 'so-q2' }, 'Admin'))
+    expect(r.status, 'la cuarentena (C) precede a la unicidad (D)').toBe(422)
+    expect(r.body.error).toContain(EN_CUARENTENA)
+    // Control de población: la MISMA situación con una subOV canónica sí llega al 409, o sea que las dos guardas estaban activas.
+    await db.query('UPDATE books.sales_orders SET salesorder_number = $1 WHERE salesorder_id = $2', ['OV-2026-990-05', 'so-q2'])
+    await db.query("UPDATE tickets SET orden_venta = 'OV-2026-990-05' WHERE id = 't-dueno-q'")
+    const c = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, salesOrderId: 'so-q2' }, 'Admin'))
+    expect(c.status).toBe(409)
+  })
+
+  it('4.9 · habilitar_servicio con una OV en cuarentena responde 422 en errors, no 409 ni éxito', async () => {
+    await ticket('t-q3', STATUS_TICKET_CREADO, 8503)
+    const r = await fallo(() => executeTransition(db, 't-q3', {
+      transitionId: 'habilitar_servicio', values: { 'Orden de Venta': EN_CUARENTENA, Serial: '18A20070' },
+    }, ADMIN))
+    expect(r.status).toBe(422)
+    expect(JSON.stringify(r.body.errors)).toContain(EN_CUARENTENA)
+    expect((await db.query("SELECT orden_venta FROM tickets WHERE id = 't-q3'")).rows[0].orden_venta).toBeNull()
+  })
+
+  it('4.9 · POSICIÓN habilitar_servicio: la OV en cuarentena YA está en otro ticket: gana el 422 (C), no el 409 (D)', async () => {
+    await ticket('t-dueno-q4', 'Ingresado', 8504, { orden_venta: EN_CUARENTENA })
+    await db.query("INSERT INTO ov_asociaciones (ticket_id, numero, origen) VALUES ('t-dueno-q4', $1, 'habilitar_servicio')", [EN_CUARENTENA])
+    await ticket('t-q4', STATUS_TICKET_CREADO, 8505)
+    const valores = (ov: string) => ({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': ov, Serial: '18A20070' } })
+    const r = await fallo(() => executeTransition(db, 't-q4', valores(EN_CUARENTENA), ADMIN))
+    expect(r.status, 'la cuarentena (C) precede a la unicidad (D)').toBe(422)
+    // Control de población: con una subOV canónica y el mismo dueño, contesta 409.
+    await db.query("UPDATE tickets SET orden_venta = 'OV-2026-990-05' WHERE id = 't-dueno-q4'")
+    const c = await fallo(() => executeTransition(db, 't-q4', valores('OV-2026-990-05'), ADMIN))
+    expect(c.status).toBe(409)
+  })
+
+  it('4.9 · la OV adicional de una aprobación también entra en la cuarentena', async () => {
+    await ticketConOVDeEntrada('t-q5', 8506, 'OV-2026-ENTRADA-Q5')
+    const r = await fallo(() => executeTransition(db, 't-q5', { transitionId: 'aprobacion', values: { 'OV adicional': EN_CUARENTENA } }, ADMIN))
+    expect(r.status).toBe(422)
+    expect(JSON.stringify(r.body.errors)).toContain(EN_CUARENTENA)
   })
 })

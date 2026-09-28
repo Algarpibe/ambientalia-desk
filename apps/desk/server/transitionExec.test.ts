@@ -233,3 +233,21 @@ describe('asociacion-ov-ticket · el catálogo declara bien el campo de OV adici
     expect(otros).toEqual(['habilitar_servicio'])
   })
 })
+
+/**
+ * GUARDIÁN DEL CATÁLOGO (asociacion-ov-ticket, lote 4, corrección de RQ-TS-18): el `campoFecha` de un buscador
+ * de OV lo escribe el cliente con la fecha de la OV elegida (`TransitionPanel.tsx:103`). Si el campo de OV
+ * ADICIONAL declarara uno que resuelve a `orden_venta` o `fecha_orden_venta`, elegir la OV adicional pisaría
+ * la OV de entrada (RQ-TS-18: «sin tocar la OV de entrada»). Vigila el catálogo real, no el motor.
+ */
+describe('asociacion-ov-ticket · la OV adicional no autorrellena columnas de la OV de entrada', () => {
+  it('ningún campo con destino ovAdicional tiene un campoFecha que resuelva a orden_venta o fecha_orden_venta', () => {
+    const porEtiqueta = new Map(PROMOTED_COLUMNS.map((p) => [p.label, p.col]))
+    for (const t of TRANSITIONS) {
+      for (const f of t.fields.filter((x) => x.target === 'ovAdicional' && x.campoFecha)) {
+        const col = porEtiqueta.get(f.campoFecha!)
+        expect(['orden_venta', 'fecha_orden_venta'], `${t.id}: campoFecha "${f.campoFecha}" → ${col}`).not.toContain(col)
+      }
+    }
+  })
+})

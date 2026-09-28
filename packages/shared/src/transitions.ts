@@ -196,7 +196,7 @@ const TRANSICIONES_BASE: Transition[] = [
   { id: 'llegada_repuestos', name: 'Llegada de repuestos', from: ['En Espera de Repuestos'], to: 'En Proceso', area: 'Comercial / Compras',
     fields: [comment(), cfDate('Fecha Recepción de repuestos')] },
   { id: 'aprobacion_y_repuestos', name: 'Aprobación y S. Repuestos', from: ['Notificación cliente'], to: 'En Espera de Repuestos', area: 'Comercial / Compras',
-    fields: [comment(), cfDate('Fecha Orden de Compra'), cfDate('Fecha Orden De Venta'), cfOvAdicional('Fecha Orden De Venta')] },
+    fields: [comment(), cfDate('Fecha Orden de Compra'), cfDate('Fecha Orden De Venta'), cfOvAdicional()] },
   { id: 'solicitud_repuestos', name: 'Solicitud repuestos', from: ['En Proceso'], to: 'Solicitado', area: 'Servicio Técnico',
     fields: [comment()] },
   { id: 'aprobacion', name: 'Aprobación', from: ['Notificación cliente'], to: 'En Proceso', area: 'Comercial',
@@ -369,8 +369,8 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
  *
  * Su clave NO es una etiqueta de Zoho (`'OV adicional'` no está en `PROMOTED_COLUMNS`) y su destino es
  * `ovAdicional`, no `customField`: la OV de entrada vive en la columna `orden_venta`, y una clave que casara
- * con ella la sobrescribiría. Aquí sólo se elige la OV; `campoFecha` es la fecha que se rellena sola.
+ * con ella la sobrescribiría. Aquí sólo se elige la OV; `campoFecha` es opcional y NO puede ser la fecha de la OV de entrada (RQ-TS-18).
  */
-function cfOvAdicional(campoFecha: string, required = false): TransitionField {
+function cfOvAdicional(campoFecha?: string, required = false): TransitionField {
   return { key: 'OV adicional', label: 'OV adicional', kind: 'ordenVenta', required, target: 'ovAdicional', campoFecha }
 }

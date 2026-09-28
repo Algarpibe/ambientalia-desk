@@ -308,7 +308,7 @@ async function writeTransition(
     params.push(JSON.stringify(plan.customFields))
     sets.push(`custom_fields = custom_fields || $${params.length}::jsonb`)
   }
-  await q.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params); await asociarDesdeTransicion(q, ticketId, plan, actor)
+  await q.query(`UPDATE tickets SET ${sets.join(',')} WHERE id=$1`, params); await asociarDesdeTransicion(q, ticketId, plan, actor, transition.id)
 
   // 3) Historial
   await q.query(

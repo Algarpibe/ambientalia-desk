@@ -1,5 +1,5 @@
 import type { Queryable } from '../db/migrate'
-import type { ArticuloLite, ClientLite, SalesOrderLite } from '@ambientalia/shared'
+import { esCuarentena, type ArticuloLite, type ClientLite, type SalesOrderLite } from '@ambientalia/shared'
 
 // Sin `any` a propósito, aunque los dos mapeadores de abajo lo usen: cada uno nuevo sube el lint por
 // encima de la línea base del repo. El patrón es `Record<string, unknown>` con casteo campo a campo.
@@ -160,7 +160,7 @@ export async function searchSalesOrders(db: Queryable, q: string, clientId?: str
     ? `AND so.id NOT IN (SELECT salesorder_id FROM tickets WHERE salesorder_id IS NOT NULL) AND so.id NOT IN (SELECT salesorder_id FROM ov_asociaciones WHERE liberada_at IS NULL AND salesorder_id IS NOT NULL)
        AND so.number NOT IN (SELECT orden_venta FROM tickets WHERE COALESCE(orden_venta,'') <> '') AND so.number NOT IN (SELECT numero FROM ov_asociaciones WHERE liberada_at IS NULL)`
     : ''
-  params.push(limit)
+  params.push(limit * 3) // sobre-pide: la cuarentena se filtra en TS (pg-mem no tiene `~`) y luego se corta a `limit`
   // Solo las OVs que en Zoho salen con "Estado de pedido" = Confirmado (`order_status = 'open'`):
   // quedan fuera borradores, facturadas y anuladas. Las parcialmente facturadas siguen dentro
   // (siguen confirmadas y con ítems pendientes). El lookup por id (getSalesOrder) NO filtra, para
@@ -173,7 +173,7 @@ export async function searchSalesOrders(db: Queryable, q: string, clientId?: str
       ORDER BY so.date DESC NULLS LAST LIMIT $${params.length}`,
     params,
   )
-  return r.rows.map(salesOrderToLite)
+  return r.rows.map(salesOrderToLite).filter((s) => !esCuarentena(s.number)).slice(0, limit)
 }
 
 export async function getSalesOrder(db: Queryable, id: string): Promise<SalesOrderLite | null> {

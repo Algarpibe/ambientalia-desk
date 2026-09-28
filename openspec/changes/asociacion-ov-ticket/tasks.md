@@ -201,7 +201,7 @@ asociación vigente); `apps/desk/server/ordenVentaUnTicket.test.ts` (casos nuevo
 | Fichero | Línea | Tipo |
 |---|---|---|
 | `packages/shared/src/transitions.ts` | `:17` `FieldTarget` gana `\| 'ovAdicional'` | EN SU SITIO |
-| `packages/shared/src/transitions.ts` | `:199` `aprobacion_y_repuestos`: `fields` gana `cfOvAdicional('Fecha Orden De Venta')` | EN SU SITIO |
+| `packages/shared/src/transitions.ts` | `:199` `aprobacion_y_repuestos`: `fields` gana `cfOvAdicional()` (**corregido en lote 4**: sin `campoFecha`; decía `'Fecha Orden De Venta'`) | EN SU SITIO |
 | `packages/shared/src/transitions.ts` | `:203` `aprobacion`: `fields` gana `cfOvAdicional('Fecha Orden de Venta Final', false)` | EN SU SITIO |
 | `packages/shared/src/transitions.ts` | `cfOvAdicional` (declaración `function`, elevada) | FINAL DE FICHERO |
 
@@ -220,7 +220,7 @@ EN SU SITIO), `:92` (rama `else if (f.target==='ovAdicional')…`, EN SU SITIO);
 - [x] 3.5 MUTACIÓN (riesgo de diseño, motor) — cambiar temporalmente la clave del campo nuevo a
   `'Orden de Venta'` en vez de `target:'ovAdicional'`; correr 3.9 (más abajo) y confirmar que se pone
   ROJA (la clave casaría con la columna `orden_venta` y la sobrescribiría); revertir; `git diff` limpio.
-- [x] 3.6 GREEN — `transitions.ts:199`/`:203` en su sitio: añadir `cfOvAdicional('Fecha Orden De Venta')`
+- [x] 3.6 GREEN — `transitions.ts:199`/`:203` en su sitio: añadir `cfOvAdicional('Fecha Orden De Venta')` *(corregido en lote 4, tarea 4.0b: es `cfOvAdicional()`, sin `campoFecha`; el autofill pisaba `fecha_orden_venta`)*
   y `cfOvAdicional('Fecha Orden de Venta Final', false)` a los `fields` de `aprobacion_y_repuestos` y
   `aprobacion`; `cfOvAdicional` como `function` al final del fichero (elevada — un `const` daría error
   de zona muerta porque `TRANSICIONES_BASE` se evalúa al cargar el módulo).
@@ -272,46 +272,62 @@ Otro fichero del diseño: `packages/zoho-sync/src/books/repo.ts:2` (import, EN S
 (`limit * 3` con `soloLibres`, EN SU SITIO), `:176` (filtrar `!esCuarentena` y cortar a `limit`, EN SU
 SITIO). Módulo nuevo: `packages/shared/src/subOV.ts` (exportado al final de `index.ts:22`).
 
-- [ ] 4.1 RED — `packages/shared/src/subOV.test.ts` (nuevo): tabla de casos — `OV-2026-001-X9` (sufijo
+- [x] 4.0a RED — **corrección de RQ-TS-18** (`specs/transitions-st/spec.md:47-51`: «sin tocar la OV de entrada»). `ticketService.test.ts`
+  (al final): con el catálogo REAL de `aprobacion_y_repuestos`, simula el autofill de `TransitionPanel.tsx:103` (`values[f.key]=numero`;
+  `values[f.campoFecha]=fechaOV`) tras teclear a mano la `Fecha Orden De Venta` obligatoria; `fecha_orden_venta` debe seguir siendo la tecleada.
+  Rojo: `expected '2026-07-15' to be '2026-06-10'`.
+- [x] 4.0b GREEN — `transitions.ts:199` `cfOvAdicional()` y `function cfOvAdicional(campoFecha?: string, required = false)` (comentario en su sitio).
+  Guardián nuevo en `transitionExec.test.ts` (al final): ningún campo `ovAdicional` tiene un `campoFecha` que resuelva a `orden_venta`/`fecha_orden_venta`
+  (nació verde; con el catálogo viejo se pone rojo: `campoFecha "Fecha Orden De Venta" → fecha_orden_venta`). Las pruebas de lote 3 no citaban el `campoFecha` viejo: no se adaptó ninguna.
+- [x] 4.0c RED/GREEN — el origen de la asociación adicional es la TRANSICIÓN, no se deduce de la fecha de OC: `repo.ts:311` en su sitio pasa `transition.id`
+  a `asociarDesdeTransicion(…, actor, transitionId)`. Rojo discriminante en `ovAsociaciones.test.ts` (al final): transición `aprobacion` con `fecha_orden_compra` puesta
+  → `expected 'aprobacion_y_repuestos' to be 'aprobacion'`. La prueba pedida («`aprobacion` sin fecha de OC final → origen `aprobacion`», `ticketService.test.ts`) **nace VERDE** con la
+  deducción vieja: es guarda de regresión, no discrimina.
+- [x] 4.0d Docs en su sitio: `design.md:111-113` y `:74` corregidos con el porqué (RQ-TS-18 manda sobre el diseño); 3.6 y la fila de `:199` del lote 3, arriba, con nota «corregido en lote 4».
+  La desviación 1 y el riesgo 3 de `apply-progress.md` (lote 3) quedan CERRADOS por este lote (se dejan como están: son históricos, caso B).
+- [x] 4.0e Para el lote 6 (sin código ahora): el cliente depende del `campoFecha` (`TransitionPanel.tsx:66` lo oculta al teclado, `:103` lo escribe). Regla 13: el servidor no autorrellena
+  nada; el autofill es comodidad del cliente. Tras esta corrección no hace falta cambio en `.tsx` (el campo manual vuelve a ser tecleable); **verificar en el lote 6** (6.2) que la pantalla lo enseña.
+
+- [x] 4.1 RED — `packages/shared/src/subOV.test.ts` (nuevo): tabla de casos — `OV-2026-001-X9` (sufijo
   no canónico) → cuarentena; `OV-2026-001` → ordinaria; `OVI-2026-001` → ordinaria; `OVI-2026-001-X9` →
   cuarentena (S-8); espacios alrededor tras `trim`. RQ: `tickets-core` RQ-TC-18, escenarios 1 y 2.
-- [ ] 4.2 Confirmar rojo natural (módulo inexistente).
-- [ ] 4.3 GREEN — crear `subOV.ts`: `clasificarOV(numero)` (`ordinaria`\|`subov`\|`cuarentena`),
+- [x] 4.2 Confirmar rojo natural (módulo inexistente).
+- [x] 4.3 GREEN — crear `subOV.ts`: `clasificarOV(numero)` (`ordinaria`\|`subov`\|`cuarentena`),
   `motivoCuarentena(numero)`, `erroresCuarentena(numeros[])`; exportar al final de `index.ts:22`.
-- [ ] 4.4 Confirmar 4.1 en verde.
-- [ ] 4.5 RED — `ticketService.test.ts`: el alta con una OV en cuarentena responde `422` sin llegar a
+- [x] 4.4 Confirmar 4.1 en verde.
+- [x] 4.5 RED — `ticketService.test.ts`: el alta con una OV en cuarentena responde `422` sin llegar a
   comprobar unicidad. RQ-TC-18, escenario 1 (vía alta).
-- [ ] 4.6 Confirmar rojo natural.
-- [ ] 4.7 GREEN — `ticketService.ts:6` en su sitio (import); `:96` en su sitio: antepone la guarda de
+- [x] 4.6 Confirmar rojo natural.
+- [x] 4.7 GREEN — `ticketService.ts:6` en su sitio (import); `:96` en su sitio: antepone la guarda de
   cuarentena antes de `ticketConOrdenVenta`.
-- [ ] 4.8 Confirmar 4.5 en verde.
-- [ ] 4.9 RED — `ticketService.test.ts`: `habilitar_servicio` con OV en cuarentena responde `422`, no
+- [x] 4.8 Confirmar 4.5 en verde.
+- [x] 4.9 RED — `ticketService.test.ts`: `habilitar_servicio` con OV en cuarentena responde `422`, no
   `409`. RQ: `transitions-st` RQ-TS-14, escenario 2.
-- [ ] 4.10 Confirmar rojo natural.
-- [ ] 4.11 GREEN — `ticketService.ts:134` en su sitio: sumar `erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional])`
+- [x] 4.10 Confirmar rojo natural.
+- [x] 4.11 GREEN — `ticketService.ts:134` en su sitio: sumar `erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional])`
   al array de errores del `422` ya existente.
-- [ ] 4.12 Confirmar 4.9 en verde.
-- [ ] 4.13 RED — `apps/desk/server/remisiones.test.ts` (al final, SIN tocar `:988`): una OV con sufijo
+- [x] 4.12 Confirmar 4.9 en verde.
+- [x] 4.13 RED — `apps/desk/server/remisiones.test.ts` (al final, SIN tocar `:988`): una OV con sufijo
   no canónico bloquea la remisión con `422` antes del `409` de unicidad. RQ: `remisiones` RQ-RE-16,
   escenario 5.
-- [ ] 4.14 Confirmar rojo natural.
-- [ ] 4.15 GREEN — `remision.ts:4` en su sitio (import); `:220` en su sitio: `if (!ov ||
+- [x] 4.14 Confirmar rojo natural.
+- [x] 4.15 GREEN — `remision.ts:4` en su sitio (import); `:220` en su sitio: `if (!ov ||
   motivoCuarentena(ov.number)) { … }` (el mensaje de «no encontrada» se mantiene cuando `!ov`: A sigue
   primero).
-- [ ] 4.16 Confirmar 4.13 en verde.
-- [ ] 4.17 MUTACIÓN (regla 1, posición) — mover la guarda de cuarentena de `ticketService.ts:96` a
+- [x] 4.16 Confirmar 4.13 en verde.
+- [x] 4.17 MUTACIÓN (regla 1, posición) — mover la guarda de cuarentena de `ticketService.ts:96` a
   DESPUÉS de la comprobación de unicidad; correr 4.5 y confirmar que se pone ROJA (el `409` saldría
   antes que el `422` de cuarentena); revertir. Repetir la misma mutación con `ticketService.ts:134`
   (contra 4.9) y con `remision.ts:220` (contra 4.13); las tres deben ponerse rojas al invertir el orden;
   revertir cada una; `git diff` limpio.
-- [ ] 4.18 RED — `packages/zoho-sync/src/books/repo.test.ts`: una subOV en cuarentena no aparece en
+- [x] 4.18 RED — `packages/zoho-sync/src/books/repo.test.ts`: una subOV en cuarentena no aparece en
   `searchSalesOrders` (con o sin `soloLibres`). RQ-TC-18 (fuera del desplegable).
-- [ ] 4.19 Confirmar rojo natural.
-- [ ] 4.20 GREEN — `books/repo.ts:2` en su sitio (import); `:163` en su sitio: pedir `limit * 3` cuando
-  `soloLibres`; `:176` en su sitio: filtrar `!esCuarentena(r.number)` en TS y cortar a `limit` (pg-mem
+- [x] 4.19 Confirmar rojo natural.
+- [x] 4.20 GREEN — `books/repo.ts:2` en su sitio (import); `:163` en su sitio: pedir `limit * 3` cuando
+  `soloLibres` **(LO APLICADO: SIEMPRE `limit * 3`, con o sin `soloLibres`, porque 4.18 exige la cuarentena fuera en los dos casos y el filtro es de TS)**; `:176` en su sitio: filtrar `!esCuarentena(r.number)` en TS y cortar a `limit` (pg-mem
   no tiene operador `~`).
-- [ ] 4.21 Confirmar 4.18 en verde.
-- [ ] 4.22 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; medir
+- [x] 4.21 Confirmar 4.18 en verde.
+- [x] 4.22 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD`; barrido de citas sobre `ticketService.ts`
   (156 citas: ~30 externas + 5 propias — comprobar que `transitions-st :902-903` — «C antes que D» —
   sigue siendo cierto tras 4.7/4.11), `remision.ts` (confirmar que la guarda de cuarentena en `:220`
@@ -393,7 +409,7 @@ pruebas (F0-00, `vitest.config.ts:16-20`): sin tareas RED/GREEN para `.tsx`.
   o uno propio): `listarOvAsociaciones`, `liberarOvAsociacion`, `listarCuarentena`, `saldoPorLote`.
 - [ ] 6.2 `TicketDetailView.tsx`, montaje tras `:245`: lista de OV vigentes/liberadas con botón
   «liberar» (Comercial, motivo obligatorio; el `422`/`403` del servidor se enseña, no se duplica en
-  cliente — regla 13, punto 1).
+  cliente — regla 13, punto 1). **Nota del lote 4 (4.0e):** comprobar aquí que `TransitionPanel.tsx:66`/`:103` siguen bien con `cfOvAdicional()` sin `campoFecha` en `aprobacion_y_repuestos` (la fecha manual vuelve a ser tecleable; ningún cambio de `.tsx` esperado).
 - [ ] 6.3 Nueva vista/sección para Comercial: lista de cuarentena y saldo por lote (fuente: rutas del
   lote 5).
 - [ ] 6.4 Regla 13 (checklist, sin código) — enumerar en `apply-progress.md` las decisiones de cliente
@@ -417,7 +433,7 @@ pruebas (F0-00, `vitest.config.ts:16-20`): sin tareas RED/GREEN para `.tsx`.
   los DOS extremos de cada rango; LEER qué afirma cada cita contra el fichero editado (las ediciones son
   en su sitio: el contenido cambia aunque la línea no se mueva); clasificar A/presente, B/histórico o
   C/superado. Ninguna edición de este cambio desplaza líneas (todo en su sitio o al final), así que el
-  barrido es de VERIFICACIÓN de contenido, no de renumeración. **Pendiente conocido (lote 2):** `openspec/specs/hojas-vida/spec.md:273` cita `equipoNuevo.ts:80-92` para «crea el equipo en transacción», y tras el lote 2 la función ocupa `:80-99` (caso A parcial: el final del rango se queda corto).
+  barrido es de VERIFICACIÓN de contenido, no de renumeración. **Pendiente conocido (lote 4):** la tabla de destinos de `openspec/specs/transitions-st/spec.md` no incluye `ovAdicional`; corregirla en este barrido. **Pendiente conocido (lote 2):** `openspec/specs/hojas-vida/spec.md:273` cita `equipoNuevo.ts:80-92` para «crea el equipo en transacción», y tras el lote 2 la función ocupa `:80-99` (caso A parcial: el final del rango se queda corto).
 - [ ] 6.8 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD` del lote; confirmar uno a uno los seis
   criterios de éxito de `proposal.md` §Criterios de éxito.

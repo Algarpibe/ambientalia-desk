@@ -3,7 +3,7 @@ import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambien
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, motivoCuarentena, erroresCuarentena, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -93,7 +93,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   // de la primera escritura (sea el equipo o el ticket) — el mismo lugar que ocupa el `409`
   // equivalente de `executeTransition` (`transitions-st` §3.8: existencia < estado/permiso <
   // contenido < unicidad). Sin esta comprobación bastaría con mandar el id a mano para duplicarla.
-  const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
+  if (motivoCuarentena(ordenVenta)) throw new HttpError(422, { error: motivoCuarentena(ordenVenta) }); /* C antes que D */ const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
   if (enUso) {
     const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
     throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${enUso.number}` })
@@ -131,7 +131,7 @@ export async function executeTransition(
   }
   const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, b.values)
   const plan = buildTransitionPlan(t, values)
-  if (plan.errors.length || erroresFecha.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha] })
+  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ if (plan.errors.length || erroresFecha.length || errCuarentena.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena] })
   // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
   // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
   // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.

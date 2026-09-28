@@ -107,10 +107,10 @@ export async function liberarAsociacionesDeTicket(q: Queryable, ticketId: string
  *
  * - `plan.columns.orden_venta` (hoy sólo `habilitar_servicio`): la OV de entrada, `origen: 'habilitar_servicio'`.
  * - `plan.ovAdicional` (las dos aprobaciones, lote 3): una OV que se AÑADE a la de entrada sin sustituirla
- *   —el destino `ovAdicional` nunca llega a las columnas—. Su origen se deduce de la fecha de OC que la
- *   acompaña: `fecha_orden_compra` sólo la escribe `aprobacion_y_repuestos` (obligatoria allí) y
- *   `fecha_orden_compra_final` sólo `aprobacion`; sin ninguna de las dos, es `aprobacion` (la fecha es opcional
- *   en ella). Esa fecha se copia a `fecha_orden_compra` de la asociación (S-5).
+ *   —el destino `ovAdicional` nunca llega a las columnas—. Su origen es el id de la TRANSICIÓN que la trae
+ *   (`transitionId`: `aprobacion` | `aprobacion_y_repuestos`), no se deduce de la fecha de OC (que en
+ *   `aprobacion` es opcional y nada la ata a una transición concreta). La fecha de OC —`fecha_orden_compra`
+ *   o, si no, `fecha_orden_compra_final`— se copia a `fecha_orden_compra` de la asociación (S-5).
  *
  * El `salesorder_id` se resuelve por NÚMERO contra `sales_orders` porque las transiciones sólo traen el
  * número. Si no resuelve, se asocia igual con `salesorder_id` NULL (S-12): el índice por número protege.
@@ -121,6 +121,7 @@ export async function asociarDesdeTransicion(
   ticketId: string,
   plan: { columns: Record<string, unknown>; ovAdicional?: string },
   actor: string | null,
+  transitionId: string,
 ): Promise<void> {
   const resolver = async (numero: string): Promise<string | null> => {
     const so = await q.query('SELECT id FROM sales_orders WHERE number = $1 LIMIT 1', [numero])
@@ -135,11 +136,11 @@ export async function asociarDesdeTransicion(
   }
   const adicional = plan.ovAdicional
   if (typeof adicional === 'string' && adicional.trim() !== '') {
-    const conRepuestos = typeof plan.columns.fecha_orden_compra === 'string'
+    const origen: OrigenAsociacion = transitionId === 'aprobacion_y_repuestos' ? 'aprobacion_y_repuestos' : 'aprobacion'
     const fecha = plan.columns.fecha_orden_compra ?? plan.columns.fecha_orden_compra_final
     await asociarOV(q, {
       ticketId, numero: adicional, salesorderId: await resolver(adicional),
-      origen: conRepuestos ? 'aprobacion_y_repuestos' : 'aprobacion', actor,
+      origen, actor,
       fechaOrdenCompra: typeof fecha === 'string' && fecha !== '' ? fecha : null,
     })
   }

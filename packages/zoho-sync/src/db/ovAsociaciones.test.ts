@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
-import { asociarOV, listarAsociaciones, liberarAsociacion, liberarAsociacionesDeTicket } from './ovAsociaciones'
+import { asociarOV, asociarDesdeTransicion, listarAsociaciones, liberarAsociacion, liberarAsociacionesDeTicket } from './ovAsociaciones'
 import { ticketConOrdenVenta } from './repo'
 
 /**
@@ -148,5 +148,28 @@ describe('ticketConOrdenVenta · tercera vía (asociación vigente sin coinciden
     await liberarAsociacion(db, fila.id, 'tester', 'Se asoció a otro servicio')
 
     expect(await ticketConOrdenVenta(db, { salesorderId: 'so-401', numero: 'OV-2026-401' })).toBeNull()
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// asociacion-ov-ticket · lote 4 (tarea 4.0c): el origen de la OV adicional lo da la TRANSICIÓN, no la fecha de OC
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+describe('asociarDesdeTransicion · origen de la OV adicional', () => {
+  it('4.0c · el origen es el id de la transición aunque la fecha de OC diga otra (discrimina: fecha_orden_compra la escribe aprobacion_y_repuestos, pero la transición es aprobacion)', async () => {
+    await asociarDesdeTransicion(
+      db, 't-o1', { columns: { fecha_orden_compra: '2026-06-01' }, ovAdicional: 'OV-2026-960' }, 'Admin', 'aprobacion',
+    )
+    const fila = (await listarAsociaciones(db, 't-o1'))[0]
+    expect(fila.origen).toBe('aprobacion')
+  })
+
+  it('4.0c · aprobacion_y_repuestos, con la fecha de la otra aprobación, sigue diciendo aprobacion_y_repuestos', async () => {
+    await asociarDesdeTransicion(
+      db, 't-o2', { columns: { fecha_orden_compra_final: '2026-06-01' }, ovAdicional: 'OV-2026-961' }, 'Admin', 'aprobacion_y_repuestos',
+    )
+    const fila = (await listarAsociaciones(db, 't-o2'))[0]
+    expect(fila.origen).toBe('aprobacion_y_repuestos')
+    expect(String(fila.fecha_orden_compra)).toContain('2026')
   })
 })
