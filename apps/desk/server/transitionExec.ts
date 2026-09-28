@@ -18,7 +18,7 @@ export interface TransitionPlan {
   columns: Record<string, unknown>
   customFields: Record<string, string | null>
   priority?: string
-  comment?: string
+  comment?: string; ovAdicional?: string
   errors: string[]
 }
 
@@ -85,7 +85,7 @@ export function buildTransitionPlan(t: Transition, values: Record<string, unknow
 
     if (empty) continue
 
-    if (f.target === 'priority') { plan.priority = String(raw); continue }
+    if (f.target === 'priority') { plan.priority = String(raw); continue }; if (f.target === 'ovAdicional') { plan.ovAdicional = String(raw); continue }
 
     const col = LABEL_TO_COL.get(f.key)
     if (col) plan.columns[col.col as string] = convert(col.kind, raw)

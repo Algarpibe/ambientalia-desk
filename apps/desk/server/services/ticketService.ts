@@ -145,7 +145,7 @@ export async function executeTransition(
   // última guarda antes de `applyTransition` — el mismo lugar que ocupa el `409` equivalente del alta
   // (`createManagedTicket`). Se excluye el propio ticket, porque reconfirmar la OV que ya tiene no es
   // duplicarla.
-  const nuevaOrdenVenta = plan.columns.orden_venta
+  const nuevaOrdenVenta = plan.columns.orden_venta ?? plan.ovAdicional
   if (typeof nuevaOrdenVenta === 'string' && nuevaOrdenVenta) {
     const enUso = await ticketConOrdenVenta(db, { numero: nuevaOrdenVenta }, id)
     if (enUso) throw new HttpError(409, { error: `La orden de venta ${nuevaOrdenVenta} ya está asociada al ticket #${enUso.number}` })

@@ -289,3 +289,62 @@ una spec viva, se anota para el barrido del lote 6.
 ### Status
 
 **31/31 tareas del lote 2 completas.** Siguiente: lote 3 (Varias OV por ticket), que amplía `asociarDesdeTransicion`.
+
+## Lote 3 · Varias OV por ticket (tasks 3.1-3.17) — COMPLETO
+
+Detalle largo en Engram: `sdd/asociacion-ov-ticket/apply-progress-lote-3`.
+
+### TDD Cycle Evidence
+
+| Tarea | Prueba (fichero) | RED capturado |
+|---|---|---|
+| 3.1 | `transitionExec.test.ts` «3.1 · escribe plan.ovAdicional…» | `expected undefined to be 'OV-2026-777'` (el destino no existía, caía a la columna/jsonb) |
+| 3.1 | «vacío u omitido no deja nada» | nació VERDE: el campo opcional vacío nunca escribe, con o sin la rama |
+| 3.9 | `ticketService.test.ts` «3.9 · dos asociaciones vigentes» y «aprobacion_y_repuestos…» | sólo 1 asociación vigente (la de entrada): `OV adicional` caía a `custom_fields` |
+| 3.12 | «3.12 · fecha de OC en la asociación» | no había fila para `OV-2026-902` (`undefined`) |
+| S-10 | «S-10 · sin el campo opcional…» | nació VERDE: sin el campo el comportamiento es el de hoy; lo vigila la mutación de `required` |
+| guardián | `transitionExec.test.ts` «el catálogo declara bien…» (4 pruebas) | nacieron verdes (vigilan el catálogo ya escrito); su rojo es la mutación 2 |
+
+### Mutaciones (todas revertidas byte a byte; `cmp` contra copia previa)
+
+Ejecutar la suite entera con `npx vitest run` tras cada edición:
+- **3.5** en `transitions.ts`, `cfOvAdicional` → `key:'Orden de Venta'` + `target:'customField'`: rojas 5 (las tres de 3.9/3.12
+  y del guardián «sólo lo llevan las dos aprobaciones» y «ningún buscador… salvo la OV de entrada»).
+- **Mutación 2** (ensuciar el catálogo): clave `'Orden de Venta'` con `target:'ovAdicional'`: rojas 4 (3.9 ×2, 3.12 y el guardián
+  «su clave no casa con ninguna columna promovida»).
+- **S-10**: `cfOvAdicional('Fecha Orden de Venta Final', true)`: rojas 4 (guardián «es opcional», la S-10 de servicio y dos de
+  `transiciones.test.ts` «POST /api/tickets/:id/transition (Postgres)»).
+- **Rama `ovAdicional`** de `asociarDesdeTransicion` anulada (`const adicional = undefined as string | undefined`): rojas 3 (3.9 ×2, 3.12).
+
+**Guardián del catálogo:** `transitionExec.test.ts`, describe «el catálogo declara bien el campo de OV adicional» (nuevo, al
+final). Antes de este lote ninguna prueba vigilaba que una clave de campo de OV no casara con `PROMOTED_COLUMNS`.
+
+### Lo aplicado y las restricciones «en sitio»
+
+`transitions.ts` 363→376 (hunks `:17`, `:199`, `:203`, y `cfOvAdicional` al final, `function` elevada); `transitionExec.ts` 99→99
+(`:21`, `:88`); `repo.ts` 452→452 (`:267`); `ticketService.ts` 234→234 (`:148`). `asociarDesdeTransicion` (módulo del lote 1)
+asocia también `plan.ovAdicional`. Cliente (`apps/desk/src`) SIN tocar: el buscador de OV ya existe (`kind:'ordenVenta'`) y
+`TransitionPanel.tsx:103` escribe `values[f.key]` y `values[f.campoFecha]`, así que la regla 13 no aplica a este lote.
+Servidor que impone: `transitionExec.ts:88` (destino), `ticketService.ts:148-152` (409 de unicidad sobre la OV adicional).
+
+### Cierre (3.14-3.17)
+
+`bodegaje.test.ts` y `packages/shared` completo verdes sin cambios (3.14/3.15). `npm run typecheck` limpio (3.16: ningún `switch`
+exhaustivo sobre `FieldTarget`). `npm test`: 147 ficheros / 1.515 pruebas verdes (1 fichero y 2 pruebas omitidos, como antes).
+`eslint --max-warnings 165`: 165 avisos, 0 errores. `invariantesGrafo.test.ts` verde: el mapa del Blueprint no se regeneró.
+Citas leídas por CONTENIDO: `bodegaje.test.ts:360`/`:362` (`transitions.ts:199`, `:202-203`), `transitions-st/spec.md:295`
+(`transitions.ts:17`), `transitionExec.ts:88` (`transitions-st/spec.md:300`), `rows.ts:120` y `tickets-core/spec.md:328` (`:90-92`): ciertas.
+
+### Deviations from Design
+
+1. **Origen de la asociación adicional.** `asociarDesdeTransicion` no recibe la transición y `repo.ts:311` no puede cambiar en este
+   lote, así que `aprobacion` frente a `aprobacion_y_repuestos` se deduce de la fecha de OC del plan (`fecha_orden_compra`, obligatoria
+   sólo en la segunda; `fecha_orden_compra_final`, sólo en la primera). Supuesto reversible: pasar el `id` de la transición.
+2. **Clave del campo `'OV adicional'`** (no está en `PROMOTED_COLUMNS`), etiqueta y `label` iguales.
+3. **Riesgo visto, no corregido:** en `aprobacion_y_repuestos` el `campoFecha` del buscador es `'Fecha Orden De Venta'`, la misma fecha
+   obligatoria que ya existía; elegir la OV adicional REESCRIBE esa fecha en `fecha_orden_venta` del ticket. Con `aprobacion` no pasa
+   (`'…Final'` es otra columna).
+
+### Status
+
+**17/17 tareas del lote 3 completas.** Siguiente: lote 4 (Cuarentena).

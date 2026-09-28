@@ -742,3 +742,95 @@ describe('asociacion-ov-ticket · escribir la OV crea la asociación en la misma
     expect((await db.query("SELECT COUNT(*)::int AS n FROM ov_asociaciones WHERE ticket_id='t-h3' AND liberada_at IS NULL")).rows[0].n).toBe(1)
   })
 })
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// asociacion-ov-ticket · lote 3 · varias OV por ticket: las aprobaciones AÑADEN una OV (RQ-TS-18)
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+const NOTIFICACION_CLIENTE = 'Notificación cliente'
+
+/** Un ticket en `Notificación cliente` que ya entró con su OV de entrada, asociada y en columna. */
+async function ticketConOVDeEntrada(id: string, numero: number, ovEntrada: string): Promise<void> {
+  await ticket(id, NOTIFICACION_CLIENTE, numero, { orden_venta: ovEntrada })
+  await db.query("UPDATE tickets SET fecha_orden_venta = '2026-01-10' WHERE id = $1", [id])
+  await db.query(
+    "INSERT INTO ov_asociaciones (ticket_id, numero, origen, asociada_por) VALUES ($1, $2, 'habilitar_servicio', 'Admin')",
+    [id, ovEntrada],
+  )
+}
+
+/** pg-mem no tiene `to_char`: la fecha (`date`) llega como `Date` y se compara por su día ISO. */
+const dia = (d: unknown): string => new Date(d as string).toISOString().slice(0, 10)
+
+describe('asociacion-ov-ticket · Aprobación añade una OV sin tocar la de entrada', () => {
+  it('3.9 · el ticket queda con dos asociaciones vigentes y su orden_venta/fecha_orden_venta no cambian', async () => {
+    await ordenDeBooks('so-adi', 'OV-2026-900')
+    await ticketConOVDeEntrada('t-a1', 8301, 'OV-2026-ENTRADA')
+    await executeTransition(db, 't-a1', {
+      transitionId: 'aprobacion',
+      values: { 'OV adicional': 'OV-2026-900', 'Fecha Orden de Compra Final': '2026-07-01', 'Fecha Orden de Venta Final': '2026-07-15' },
+    }, ADMIN)
+
+    const vigentes = (await db.query(
+      "SELECT numero, salesorder_id, origen, asociada_por FROM ov_asociaciones WHERE ticket_id = 't-a1' AND liberada_at IS NULL ORDER BY id",
+    )).rows
+    expect(vigentes).toEqual([
+      { numero: 'OV-2026-ENTRADA', salesorder_id: null, origen: 'habilitar_servicio', asociada_por: 'Admin' },
+      { numero: 'OV-2026-900', salesorder_id: 'so-adi', origen: 'aprobacion', asociada_por: 'Admin' },
+    ])
+    const t = (await db.query("SELECT orden_venta, fecha_orden_venta, custom_fields FROM tickets WHERE id = 't-a1'")).rows[0]
+    expect(t.orden_venta, 'la OV de entrada sigue en su columna').toBe('OV-2026-ENTRADA')
+    expect(dia(t.fecha_orden_venta)).toBe('2026-01-10')
+    expect(JSON.stringify(t.custom_fields), 'la OV adicional no cae en el jsonb').not.toContain('OV-2026-900')
+  })
+
+  it('3.9 · aprobacion_y_repuestos lo hace igual, con su propio origen', async () => {
+    await ticketConOVDeEntrada('t-a2', 8302, 'OV-2026-ENTRADA2')
+    await executeTransition(db, 't-a2', {
+      transitionId: 'aprobacion_y_repuestos',
+      values: { 'OV adicional': 'OV-2026-901', 'Fecha Orden de Compra': '2026-06-01', 'Fecha Orden De Venta': '2026-06-10' },
+    }, ADMIN)
+
+    const vigentes = (await db.query(
+      "SELECT numero, origen FROM ov_asociaciones WHERE ticket_id = 't-a2' AND liberada_at IS NULL ORDER BY id",
+    )).rows
+    expect(vigentes).toEqual([
+      { numero: 'OV-2026-ENTRADA2', origen: 'habilitar_servicio' },
+      { numero: 'OV-2026-901', origen: 'aprobacion_y_repuestos' },
+    ])
+    expect((await db.query("SELECT orden_venta FROM tickets WHERE id = 't-a2'")).rows[0].orden_venta).toBe('OV-2026-ENTRADA2')
+  })
+
+  it('3.12 · la asociación creada por Aprobación guarda la fecha de OC, y ninguna columna del ticket la recibe', async () => {
+    await ticketConOVDeEntrada('t-a3', 8303, 'OV-2026-ENTRADA3')
+    await executeTransition(db, 't-a3', {
+      transitionId: 'aprobacion',
+      values: { 'OV adicional': 'OV-2026-902', 'Fecha Orden de Compra Final': '2026-07-01' },
+    }, ADMIN)
+
+    const a = (await db.query("SELECT fecha_orden_compra FROM ov_asociaciones WHERE numero = 'OV-2026-902'")).rows[0]
+    expect(dia(a.fecha_orden_compra)).toBe('2026-07-01')
+    // La fecha de OC de la transición sí queda en su columna propia (`fecha_orden_compra_final`); lo que
+    // no puede pasar es que la OV adicional pise la `fecha_orden_compra` de entrada del ticket.
+    const t = (await db.query("SELECT fecha_orden_compra FROM tickets WHERE id = 't-a3'")).rows[0]
+    expect(t.fecha_orden_compra).toBeNull()
+  })
+
+  it('S-10 · sin el campo opcional, Aprobación y Aprobación y S. Repuestos funcionan como hoy: sin asociación nueva y columnas intactas', async () => {
+    await ticketConOVDeEntrada('t-a4', 8304, 'OV-2026-ENTRADA4')
+    await ticketConOVDeEntrada('t-a5', 8305, 'OV-2026-ENTRADA5')
+    await executeTransition(db, 't-a4', { transitionId: 'aprobacion', values: {} }, ADMIN)
+    await executeTransition(db, 't-a5', {
+      transitionId: 'aprobacion_y_repuestos', values: { 'Fecha Orden de Compra': '2026-06-01', 'Fecha Orden De Venta': '2026-06-10' },
+    }, ADMIN)
+
+    for (const id of ['t-a4', 't-a5']) {
+      const n = (await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones WHERE ticket_id = $1', [id])).rows[0].n
+      expect(n, `${id}: sólo la asociación de entrada`).toBe(1)
+    }
+    expect((await db.query("SELECT orden_venta FROM tickets WHERE id IN ('t-a4','t-a5') ORDER BY id")).rows.map((r) => r.orden_venta))
+      .toEqual(['OV-2026-ENTRADA4', 'OV-2026-ENTRADA5'])
+    expect((await db.query("SELECT status FROM tickets WHERE id IN ('t-a4','t-a5') ORDER BY id")).rows.map((r) => r.status))
+      .toEqual(['En Proceso', 'En Espera de Repuestos'])
+  })
+})

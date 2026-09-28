@@ -14,7 +14,7 @@
 export type FieldKind = 'comment' | 'text' | 'date' | 'number' | 'checkbox' | 'select' | 'ordenVenta' | 'usuario'
 
 /** Dónde se escribe el valor del campo al ejecutar la transición. */
-export type FieldTarget = 'comment' | 'status' | 'priority' | 'classification' | 'customField' | 'derivacion'
+export type FieldTarget = 'comment' | 'status' | 'priority' | 'classification' | 'customField' | 'derivacion' | 'ovAdicional'
 
 export interface TransitionField {
   /** Para customField: la ETIQUETA exacta de Zoho (se mapea a su api-name en el backend). */
@@ -196,11 +196,11 @@ const TRANSICIONES_BASE: Transition[] = [
   { id: 'llegada_repuestos', name: 'Llegada de repuestos', from: ['En Espera de Repuestos'], to: 'En Proceso', area: 'Comercial / Compras',
     fields: [comment(), cfDate('Fecha Recepción de repuestos')] },
   { id: 'aprobacion_y_repuestos', name: 'Aprobación y S. Repuestos', from: ['Notificación cliente'], to: 'En Espera de Repuestos', area: 'Comercial / Compras',
-    fields: [comment(), cfDate('Fecha Orden de Compra'), cfDate('Fecha Orden De Venta')] },
+    fields: [comment(), cfDate('Fecha Orden de Compra'), cfDate('Fecha Orden De Venta'), cfOvAdicional('Fecha Orden De Venta')] },
   { id: 'solicitud_repuestos', name: 'Solicitud repuestos', from: ['En Proceso'], to: 'Solicitado', area: 'Servicio Técnico',
     fields: [comment()] },
   { id: 'aprobacion', name: 'Aprobación', from: ['Notificación cliente'], to: 'En Proceso', area: 'Comercial',
-    fields: [comment(), cfDate('Fecha Orden de Compra Final', false), cfDate('Fecha Orden de Venta Final', false)] },
+    fields: [comment(), cfDate('Fecha Orden de Compra Final', false), cfDate('Fecha Orden de Venta Final', false), cfOvAdicional('Fecha Orden de Venta Final', false)] },
   { id: 'entrega_repuestos', name: 'Entrega de Repuestos', from: ['Solicitado'], to: 'En Proceso', area: 'Servicio Técnico',
     fields: [comment()] },
   { id: 'marcar_pendiente', name: 'Marcar como pendiente', from: ['En Proceso'], to: 'Pendiente', area: 'Servicio Técnico',
@@ -361,3 +361,16 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
   { id: 'rechazo_verificacion', name: 'Rechazo de verificación', from: ['Verificación'], to: 'Notificado', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
 ]
+
+/**
+ * Buscador de una OV ADICIONAL (asociacion-ov-ticket, lote 3, S-10: opcional). Va al FINAL del fichero y como
+ * `function` —se eleva— porque `TRANSICIONES_BASE` se evalúa al cargar el módulo: un `const` aquí daría error
+ * de zona muerta, y insertarlo junto a `cfOrdenVenta` desplazaría las 217 citas de este fichero.
+ *
+ * Su clave NO es una etiqueta de Zoho (`'OV adicional'` no está en `PROMOTED_COLUMNS`) y su destino es
+ * `ovAdicional`, no `customField`: la OV de entrada vive en la columna `orden_venta`, y una clave que casara
+ * con ella la sobrescribiría. Aquí sólo se elige la OV; `campoFecha` es la fecha que se rellena sola.
+ */
+function cfOvAdicional(campoFecha: string, required = false): TransitionField {
+  return { key: 'OV adicional', label: 'OV adicional', kind: 'ordenVenta', required, target: 'ovAdicional', campoFecha }
+}

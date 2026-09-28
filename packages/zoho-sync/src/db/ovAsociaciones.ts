@@ -101,10 +101,16 @@ export async function liberarAsociacionesDeTicket(q: Queryable, ticketId: string
 }
 
 /**
- * Escritor de las transiciones (`writeTransition`, `repo.ts`): si el plan fija `orden_venta` (hoy sólo
- * `habilitar_servicio`), deja la asociación vigente en la MISMA transacción que el `UPDATE` del ticket
- * (`RQ-TS-14`, escenario 1). Versión base del lote 2: sólo la columna `orden_venta`; `ovAdicional` y la
- * fecha de orden de compra las suma el lote 3.
+ * Escritor de las transiciones (`writeTransition`, `repo.ts`): deja la asociación vigente en la MISMA
+ * transacción que el `UPDATE` del ticket (`RQ-TS-14`, escenario 1; `RQ-TS-18`). Dos entradas, que no se
+ * excluyen:
+ *
+ * - `plan.columns.orden_venta` (hoy sólo `habilitar_servicio`): la OV de entrada, `origen: 'habilitar_servicio'`.
+ * - `plan.ovAdicional` (las dos aprobaciones, lote 3): una OV que se AÑADE a la de entrada sin sustituirla
+ *   —el destino `ovAdicional` nunca llega a las columnas—. Su origen se deduce de la fecha de OC que la
+ *   acompaña: `fecha_orden_compra` sólo la escribe `aprobacion_y_repuestos` (obligatoria allí) y
+ *   `fecha_orden_compra_final` sólo `aprobacion`; sin ninguna de las dos, es `aprobacion` (la fecha es opcional
+ *   en ella). Esa fecha se copia a `fecha_orden_compra` de la asociación (S-5).
  *
  * El `salesorder_id` se resuelve por NÚMERO contra `sales_orders` porque las transiciones sólo traen el
  * número. Si no resuelve, se asocia igual con `salesorder_id` NULL (S-12): el índice por número protege.
@@ -113,14 +119,28 @@ export async function liberarAsociacionesDeTicket(q: Queryable, ticketId: string
 export async function asociarDesdeTransicion(
   q: Queryable,
   ticketId: string,
-  plan: { columns: Record<string, unknown> },
+  plan: { columns: Record<string, unknown>; ovAdicional?: string },
   actor: string | null,
 ): Promise<void> {
+  const resolver = async (numero: string): Promise<string | null> => {
+    const so = await q.query('SELECT id FROM sales_orders WHERE number = $1 LIMIT 1', [numero])
+    return so.rows[0] ? String(so.rows[0].id) : null
+  }
   const numero = plan.columns.orden_venta
-  if (typeof numero !== 'string' || numero.trim() === '') return
-  const so = await q.query('SELECT id FROM sales_orders WHERE number = $1 LIMIT 1', [numero])
-  await asociarOV(q, {
-    ticketId, numero, salesorderId: so.rows[0] ? String(so.rows[0].id) : null,
-    origen: 'habilitar_servicio', actor, fechaOrdenCompra: null,
-  })
+  if (typeof numero === 'string' && numero.trim() !== '') {
+    await asociarOV(q, {
+      ticketId, numero, salesorderId: await resolver(numero),
+      origen: 'habilitar_servicio', actor, fechaOrdenCompra: null,
+    })
+  }
+  const adicional = plan.ovAdicional
+  if (typeof adicional === 'string' && adicional.trim() !== '') {
+    const conRepuestos = typeof plan.columns.fecha_orden_compra === 'string'
+    const fecha = plan.columns.fecha_orden_compra ?? plan.columns.fecha_orden_compra_final
+    await asociarOV(q, {
+      ticketId, numero: adicional, salesorderId: await resolver(adicional),
+      origen: conRepuestos ? 'aprobacion_y_repuestos' : 'aprobacion', actor,
+      fechaOrdenCompra: typeof fecha === 'string' && fecha !== '' ? fecha : null,
+    })
+  }
 }

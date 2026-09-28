@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildTransitionPlan } from './transitionExec'
-import { transitionById } from '@ambientalia/shared'
+import { transitionById, TRANSITIONS } from '@ambientalia/shared'; import { PROMOTED_COLUMNS } from '@ambientalia/zoho-sync/db/rows'
 
 describe('buildTransitionPlan', () => {
   it('mapea a columnas tipadas + comentario para "Habilitar Servicio"', () => {
@@ -172,5 +172,64 @@ describe('C9 · Fecha de aviso al cliente', () => {
     const t = transitionById('habilitado_para_entrega')!
     const plan = buildTransitionPlan(t, { comment: 'sin avisar' })
     expect(plan.errors.length, 'debe frenar la transición, no dejarla pasar en blanco').toBeGreaterThan(0)
+  })
+})
+
+/**
+ * asociacion-ov-ticket · lote 3 · el destino `ovAdicional` (riesgo de diseño §4).
+ *
+ * Un campo de OV con clave `'Orden de Venta'` casaría en `LABEL_TO_COL` con la columna `orden_venta` y la
+ * SOBRESCRIBIRÍA —la OV de entrada del ticket—, y con cualquier otra clave acabaría en `custom_fields`.
+ * El destino `ovAdicional` no aterriza en ninguno de los dos: va a `plan.ovAdicional`, y de ahí sólo lo
+ * lee `asociarDesdeTransicion`. La prueba usa a propósito la clave que COLISIONA con la columna: si el
+ * despacho por destino desapareciera, la clave casaría y la OV de entrada se pisaría sin que nada fallara.
+ */
+describe('asociacion-ov-ticket · destino ovAdicional', () => {
+  const t = {
+    id: 'x', name: 'x', from: ['a'], to: 'b', area: 'Comercial',
+    fields: [{ key: 'Orden de Venta', label: 'OV adicional', kind: 'ordenVenta', required: false, target: 'ovAdicional' }],
+  } as unknown as Parameters<typeof buildTransitionPlan>[0]
+
+  it('3.1 · escribe plan.ovAdicional y no toca ni las columnas ni custom_fields', () => {
+    const plan = buildTransitionPlan(t, { 'Orden de Venta': 'OV-2026-777' })
+    expect(plan.ovAdicional).toBe('OV-2026-777')
+    expect(plan.columns, 'la clave colisiona con orden_venta: no debe llegar a la columna').toEqual({})
+    expect(plan.customFields).toEqual({})
+  })
+
+  it('3.1 · vacío u omitido no deja nada (es opcional, S-10)', () => {
+    expect(buildTransitionPlan(t, {}).ovAdicional).toBeUndefined()
+    expect(buildTransitionPlan(t, { 'Orden de Venta': '' }).ovAdicional).toBeUndefined()
+  })
+})
+
+/**
+ * GUARDIÁN DEL CATÁLOGO (regla de mutación 2): vigila el catálogo real, no el motor. Un campo con destino
+ * `ovAdicional` cuya clave casara con una etiqueta de `PROMOTED_COLUMNS` sería inofensivo HOY (el despacho por
+ * destino gana), pero el día que alguien lo pase a `customField` sobrescribiría `orden_venta`. Y es opcional
+ * en las dos aprobaciones (S-10): obligarlo rompería las aprobaciones que no añaden OV.
+ */
+describe('asociacion-ov-ticket · el catálogo declara bien el campo de OV adicional', () => {
+  const etiquetas = new Set(PROMOTED_COLUMNS.map((p) => p.label))
+  const campos = TRANSITIONS.flatMap((t) => t.fields.filter((f) => f.target === 'ovAdicional').map((f) => ({ t: t.id, f })))
+
+  it('sólo lo llevan las dos aprobaciones', () => {
+    expect(campos.map((c) => c.t).sort()).toEqual(['aprobacion', 'aprobacion_y_repuestos'])
+  })
+
+  it('su clave no casa con ninguna columna promovida', () => {
+    for (const { t, f } of campos) expect(etiquetas.has(f.key), `${t}: la clave "${f.key}" pisaría una columna`).toBe(false)
+  })
+
+  it('es un buscador de OV y es opcional (S-10)', () => {
+    for (const { t, f } of campos) {
+      expect(f.kind, t).toBe('ordenVenta')
+      expect(f.required, `${t}: obligarlo rompe las aprobaciones sin OV adicional`).toBe(false)
+    }
+  })
+
+  it('ningún buscador de OV con destino customField escribe una clave promovida, salvo la OV de entrada', () => {
+    const otros = TRANSITIONS.flatMap((t) => t.fields.filter((f) => f.kind === 'ordenVenta' && f.target === 'customField' && etiquetas.has(f.key)).map(() => t.id))
+    expect(otros).toEqual(['habilitar_servicio'])
   })
 })

@@ -264,7 +264,7 @@ export interface TransitionApply {
   columns: Record<string, unknown>
   customFields: Record<string, string | null>
   priority?: string
-  comment?: string
+  comment?: string; ovAdicional?: string
 }
 
 type Transitionish = { id: string; name: string; area: string }

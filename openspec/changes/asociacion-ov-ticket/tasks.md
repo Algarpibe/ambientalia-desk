@@ -161,7 +161,7 @@ asociación vigente); `apps/desk/server/ordenVentaUnTicket.test.ts` (casos nuevo
 - [x] 2.19 Confirmar rojo natural.
 - [x] 2.20 GREEN — `remision.ts:5` en su sitio (import de `asociarOV`, segunda sentencia de la línea);
   `:239` → `const fijada = await db.query(`; `:241` → añade `RETURNING id`; `:243` →
-  `); if (fijada.rows.length) await asociarOV(db, {ticketId, numero:ov.number, salesorderId:ov.id, origen:'remision', actor:TRANSITION_ACTOR, fechaOrdenCompra:ov.date ?? null})`;
+  `); if (fijada.rows.length) await asociarOV(db, {ticketId, numero:ov.number, salesorderId:ov.id, origen:'remision', actor:TRANSITION_ACTOR, fechaOrdenCompra:ov.date ?? null})`. **LO APLICADO (`remision.ts:243`) difiere en dos valores, a propósito:** `actor: req.user?.name ?? TRANSITION_ACTOR` (por las trazas: queda quién capturó la OV, y `TRANSITION_ACTOR` sólo si no hay usuario) y `fechaOrdenCompra: null` (porque `ov.date` es la fecha de la orden de VENTA, no la de la orden de COMPRA que guarda esa columna, S-5);
   `:221-229` en su sitio, reescribir el comentario nombrando los índices de `ov_asociaciones`.
 - [x] 2.21 Confirmar 2.18 en verde.
 - [x] 2.22 Verificación de regresión (sin RED nuevo; pruebas de posición intactas) — correr
@@ -210,41 +210,41 @@ EN SU SITIO), `:92` (rama `else if (f.target==='ovAdicional')…`, EN SU SITIO);
 (`TransitionApply` gana `ovAdicional?: string`, EN SU SITIO); `apps/desk/server/services/ticketService.ts:148`
 (`plan.columns.orden_venta ?? plan.ovAdicional`, EN SU SITIO).
 
-- [ ] 3.1 RED — `transitionExec.test.ts`: un campo con `target:'ovAdicional'` escribe `plan.ovAdicional`,
+- [x] 3.1 RED — `transitionExec.test.ts`: un campo con `target:'ovAdicional'` escribe `plan.ovAdicional`,
   no `plan.columns` ni `plan.customFields`. Cubre el riesgo de diseño §4 (la clave `'Orden de Venta'`
   casaría en `LABEL_TO_COL` y sobrescribiría la columna).
-- [ ] 3.2 Confirmar rojo natural (`FieldTarget` no admite `'ovAdicional'`).
-- [ ] 3.3 GREEN — `transitions.ts:17` en su sitio: `FieldTarget` gana `| 'ovAdicional'`;
+- [x] 3.2 Confirmar rojo natural (`FieldTarget` no admite `'ovAdicional'`).
+- [x] 3.3 GREEN — `transitions.ts:17` en su sitio: `FieldTarget` gana `| 'ovAdicional'`;
   `transitionExec.ts:21` en su sitio: la interfaz gana el campo; `:92` en su sitio: rama `else if`.
-- [ ] 3.4 Confirmar 3.1 en verde.
-- [ ] 3.5 MUTACIÓN (riesgo de diseño, motor) — cambiar temporalmente la clave del campo nuevo a
+- [x] 3.4 Confirmar 3.1 en verde.
+- [x] 3.5 MUTACIÓN (riesgo de diseño, motor) — cambiar temporalmente la clave del campo nuevo a
   `'Orden de Venta'` en vez de `target:'ovAdicional'`; correr 3.9 (más abajo) y confirmar que se pone
   ROJA (la clave casaría con la columna `orden_venta` y la sobrescribiría); revertir; `git diff` limpio.
-- [ ] 3.6 GREEN — `transitions.ts:199`/`:203` en su sitio: añadir `cfOvAdicional('Fecha Orden De Venta')`
+- [x] 3.6 GREEN — `transitions.ts:199`/`:203` en su sitio: añadir `cfOvAdicional('Fecha Orden De Venta')`
   y `cfOvAdicional('Fecha Orden de Venta Final', false)` a los `fields` de `aprobacion_y_repuestos` y
   `aprobacion`; `cfOvAdicional` como `function` al final del fichero (elevada — un `const` daría error
   de zona muerta porque `TRANSICIONES_BASE` se evalúa al cargar el módulo).
-- [ ] 3.7 GREEN — `repo.ts:267` en su sitio: `TransitionApply` gana `ovAdicional?: string`;
+- [x] 3.7 GREEN — `repo.ts:267` en su sitio: `TransitionApply` gana `ovAdicional?: string`;
   `ticketService.ts:148` en su sitio: `plan.columns.orden_venta ?? plan.ovAdicional`.
-- [ ] 3.8 GREEN — extender `asociarDesdeTransicion` (`ovAsociaciones.ts`, lote 2): aceptar también
+- [x] 3.8 GREEN — extender `asociarDesdeTransicion` (`ovAsociaciones.ts`, lote 2): aceptar también
   `plan.ovAdicional`, crear una asociación adicional con `origen:'aprobacion'|'aprobacion_y_repuestos'` y
   copiar `plan.columns.fecha_orden_compra`/`fecha_orden_compra_final` a `fecha_orden_compra` de la
   asociación (S-5); resolver `salesorder_id` por número, `NULL` si no resuelve (S-12).
-- [ ] 3.9 RED — `ticketService.test.ts` (existente): tras `Aprobación` con una OV nueva y su fecha de
+- [x] 3.9 RED — `ticketService.test.ts` (existente): tras `Aprobación` con una OV nueva y su fecha de
   OC, el ticket queda con dos asociaciones vigentes y `orden_venta`/`fecha_orden_venta` del ticket no
   cambian. RQ: `transitions-st` RQ-TS-18, escenario 1.
-- [ ] 3.10 Confirmar rojo natural.
-- [ ] 3.11 Confirmar 3.9 en verde tras 3.6-3.8.
-- [ ] 3.12 RED — `ticketService.test.ts`: la asociación creada por `Aprobación` tiene la fecha de OC, y
+- [x] 3.10 Confirmar rojo natural.
+- [x] 3.11 Confirmar 3.9 en verde tras 3.6-3.8.
+- [x] 3.12 RED — `ticketService.test.ts`: la asociación creada por `Aprobación` tiene la fecha de OC, y
   ninguna columna del ticket la guarda. RQ-TS-18, escenario 2.
-- [ ] 3.13 Confirmar en verde (mismo GREEN de 3.8, sin GREEN adicional).
-- [ ] 3.14 Verificación de regresión — `bodegaje.test.ts:360`/`:362` (existentes): el bodegaje de
+- [x] 3.13 Confirmar en verde (mismo GREEN de 3.8, sin GREEN adicional).
+- [x] 3.14 Verificación de regresión — `bodegaje.test.ts:360`/`:362` (existentes): el bodegaje de
   entrada cierra con la OV de `habilitar_servicio` sin cambio de código (criterio de éxito del
   `proposal.md`, punto 9); confirmar que siguen en verde tal cual.
-- [ ] 3.15 Confirmar verde sin cambios de código (bodegaje lee el historial por etiqueta).
-- [ ] 3.16 `npm run typecheck` intermedio (riesgo de diseño: `FieldTarget` en un `switch` exhaustivo en
+- [x] 3.15 Confirmar verde sin cambios de código (bodegaje lee el historial por etiqueta).
+- [x] 3.16 `npm run typecheck` intermedio (riesgo de diseño: `FieldTarget` en un `switch` exhaustivo en
   otro sitio del código).
-- [ ] 3.17 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; correr
+- [x] 3.17 Cierre del lote: `npm test`; `npm run typecheck`; `eslint --max-warnings 165`; correr
   `invariantesGrafo.test.ts` y regenerar el mapa del Blueprint si hace falta (riesgo de diseño); medir
   `git add -N . && git diff --shortstat --no-renames HEAD`; barrido de citas sobre `transitions.ts` (217
   citas vivas: comprobar `bodegaje.test.ts:360`/`:362`, `transitions-st :295`, y que ninguna edición cae
@@ -417,7 +417,7 @@ pruebas (F0-00, `vitest.config.ts:16-20`): sin tareas RED/GREEN para `.tsx`.
   los DOS extremos de cada rango; LEER qué afirma cada cita contra el fichero editado (las ediciones son
   en su sitio: el contenido cambia aunque la línea no se mueva); clasificar A/presente, B/histórico o
   C/superado. Ninguna edición de este cambio desplaza líneas (todo en su sitio o al final), así que el
-  barrido es de VERIFICACIÓN de contenido, no de renumeración.
+  barrido es de VERIFICACIÓN de contenido, no de renumeración. **Pendiente conocido (lote 2):** `openspec/specs/hojas-vida/spec.md:273` cita `equipoNuevo.ts:80-92` para «crea el equipo en transacción», y tras el lote 2 la función ocupa `:80-99` (caso A parcial: el final del rango se queda corto).
 - [ ] 6.8 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir
   `git add -N . && git diff --shortstat --no-renames HEAD` del lote; confirmar uno a uno los seis
   criterios de éxito de `proposal.md` §Criterios de éxito.

@@ -75,7 +75,7 @@ Si (b) no se pone roja, pg-mem no discrimina y la guarda se duplica en `asociarO
   la misma transacción (precedente de dos sentencias en una línea: `ticketService.ts:125`). Import en sitio en
   `repo.ts:4`.
 - **Remisión de entrada:** `remision.ts:239` pasa a `const fijada = await db.query(`, `:241` añade `RETURNING id`, y
-  `:243` añade `; if (fijada.rows.length) await asociarOV(…)`. Sólo asocia si el `UPDATE` condicional escribió.
+  `:243` añade `; if (fijada.rows.length) await asociarOV(…)`. Sólo asocia si el `UPDATE` condicional escribió. **Lo aplicado (`remision.ts:243`) usa `actor: req.user?.name ?? TRANSITION_ACTOR`** —por las trazas: queda quién capturó la OV, y `TRANSITION_ACTOR` sólo si no hay usuario— **y `fechaOrdenCompra: null`**, porque `ov.date` es la fecha de la orden de VENTA y no la de la orden de COMPRA que guarda esa columna (S-5).
   **Verificado por ejecución (2026-09-28):** `RETURNING id` en `UPDATE` bajo pg-mem devuelve la fila (no se usa `rowCount`: `eliminarTicket.ts:93` avisa de que no
   siempre lo expone). No es atómico con el `UPDATE` —como hoy el resto de ese manejador—; el hueco lo cubren las dos
   vías de columna.
