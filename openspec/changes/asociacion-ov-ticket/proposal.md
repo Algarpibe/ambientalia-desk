@@ -98,7 +98,7 @@ expuestas las filas previas sin marca ni asociación; su relleno es la misma dec
   una `OVI-` son OV ordinarias, NO cuarentena. Fuentes: `docs/sdd/Decisiones_Gerencia_2026-09-10.md:459-461` («una OV **con sufijo**»;
   maestro `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:2181`) y la consulta (`docs/sdd/Consulta_SubOV_formato_2026-09-27.sql:16`). Poner en
   cuarentena todo lo que no sea subOV sacaría del desplegable todas las OV normales y las OVI de garantía
-  (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:381-396`). Confirmado por Gerencia el 2026-09-28.
+  (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:381-396`). Es la lectura literal de `decision/subov-lote-convencion` (2026-09-10); la contraria se descartó al revisar esta propuesta.
 - **S-3** Un lote llegado sin subdividir no se distingue de una OV normal: admite un ticket y el segundo recibe el 409.
 - **S-4** Un alta con número tecleado que no resuelve en Books no crea asociación; queda como hoy.
 - **S-5** La fecha de OC se copia a la asociación; las columnas y el historial del ticket no cambian (el bodegaje lee el

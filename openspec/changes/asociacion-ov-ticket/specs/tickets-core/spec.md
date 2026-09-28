@@ -2,7 +2,7 @@
 
 Cambio `asociacion-ov-ticket` (F1B-11, cambio 2 de 3, `cierra: no`). Introduce el modelo `1 ticket : N
 OV` en tabla propia (`public.ov_asociaciones`, supuesto S-1), su índice único parcial, la cuarentena de
-subOV (S-2, confirmada por Gerencia el 2026-09-28), la liberación con traza y la lista de OV en la
+subOV (S-2, lectura literal de `decision/subov-lote-convencion`), la liberación con traza y la lista de OV en la
 ficha del ticket. La puerta 1 del alta gana la tercera vía y la guarda de cuarentena.
 
 ## MODIFIED Requirements
@@ -88,7 +88,7 @@ también la fila de asociación, en la misma transacción que su escritura de co
 
 `packages/shared` **SHALL** exportar un clasificador puro que decida si un número de OV es una subOV
 en cuarentena: **cuarentena** es exactamente un número con sufijo que **no** casa
-`^OV-(\d{4})-(\d{3,4})-(\d{2})$` (decisión de Gerencia del 2026-09-28, confirmando
+`^OV-(\d{4})-(\d{3,4})-(\d{2})$` (`decision/subov-lote-convencion`, 2026-09-10,
 `Decisiones_Gerencia_2026-09-10.md:459-461`). Una OV simple `OV-AAAA-NNN` y una `OVI-` **MUST NOT**
 clasificarse en cuarentena.
 
