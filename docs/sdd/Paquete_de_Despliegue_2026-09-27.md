@@ -441,13 +441,13 @@ que **las dos ediciones quedan registradas** (la tabla es de sólo inserción, `
 
 ### 6.3 · Las 3 comprobaciones del formulario de novedad (RQ-RE-19, F1B-04) — Servicio Técnico
 
-Fuente: `openspec/specs/remisiones/spec.md:476-485`. Dueño: Servicio Técnico, en la app (`:478`).
+Fuente: `openspec/specs/remisiones/spec.md:476-485` en `ca56c62`. Dueño: Servicio Técnico, en la app (`:478`).
 
 | # | Paso a paso | Resultado esperado |
 |---|---|---|
-| 1 | Ficha de un ticket → «Crear remisión» | La pregunta «¿El equipo llega con novedad?» está visible y **sin** opción preseleccionada (`openspec/specs/remisiones/spec.md:480-481`) |
-| 2 | Marcar «Sí», no subir ninguna foto, intentar crear o continuar | El formulario lo impide, con «El equipo llega con novedad: sube al menos una foto antes de crear la remisión.» (`openspec/specs/remisiones/spec.md:482-483`) |
-| 3 | Leer el mensaje del 422 de envío: «El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.» | El técnico lo entiende sin explicación (`openspec/specs/remisiones/spec.md:484-485`) |
+| 1 | Ficha de un ticket → «Crear remisión» | La pregunta «¿El equipo llega con novedad?» está visible y **sin** opción preseleccionada (`openspec/specs/remisiones/spec.md:480-481` en `ca56c62`) |
+| 2 | Marcar «Sí», no subir ninguna foto, intentar crear o continuar | El formulario lo impide, con «El equipo llega con novedad: sube al menos una foto antes de crear la remisión.» (`openspec/specs/remisiones/spec.md:482-483` en `ca56c62`) |
+| 3 | Leer el mensaje del 422 de envío: «El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.» | El técnico lo entiende sin explicación (`openspec/specs/remisiones/spec.md:484-485` en `ca56c62`) |
 
 La 3 no hace falta provocarla en un ticket real: basta con que el técnico lea el texto, que es literal de
 `apps/desk/server/routes/remision.ts:287` en `dcb5c99`.

@@ -374,8 +374,13 @@ seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condici�
 dos remisiones sobre el **mismo** ticket, una pregunta distinta de la que resuelve este requisito.
 
 **Las dos vías son requisito, no preferencia.** La divergencia `orden_venta`/`salesorder_id` por
-sincronización (IV-11, fuera de alcance) puede dejar a un ticket con sólo una de las dos columnas
-vigente; comprobar sólo por número dejaría ese ticket sin protección.
+sincronización (IV-11) puede dejar a un ticket con sólo una de las dos columnas vigente; comprobar
+sólo por número dejaría ese ticket sin protección. **Esta vía deja de estar fuera del alcance del
+parche de IV-11**: el mismo `UPDATE` que escribe las tres columnas (`remision.ts:239-243`) **SHALL**
+poner también la marca de fila `ov_elegida_en_app_at` (**supuesto S-1**; `zoho-sync` RQ-ZS-01
+modificado), de modo que la orden capturada aquí quede protegida de la siguiente pasada del
+sincronizador. El resto de IV-11 —filas previas sin marca, y la asociación 1:N propia entre orden y
+ticket— sigue fuera (cambios 2 y 3 de F1B-11, fuera de alcance de este delta).
 
 **Tercer punto de captura legítimo.** La remisión de entrada **SHALL** contarse como el tercer punto
 de captura de la orden de venta, junto con el alta del ticket (`tickets-core` RQ-TC-08) y
@@ -388,32 +393,37 @@ incompleta por omisión de redacción, no por decisión (decisión 1 de la ronda
 `salesorder_id` como `PRIMARY KEY` (`Decisiones_Gerencia_2026-09-10.md:147-150`) sustituya a las tres
 guardas de aplicación; retirar sólo ésta sin retirar las otras dos sería el defecto.
 
-(Previously: dos escenarios sueltos en `§5.1 · Comportamiento actual, a corregir`, que narraban el
-defecto sin corregir y la decisión pendiente de construir. Promovidos aquí porque IV-4 pasa de defecto
-a comportamiento decidido y construido.)
+(Previously: el `UPDATE` no dejaba ninguna marca sobre la fila; la orden capturada aquí quedaba
+expuesta a que la siguiente pasada del sincronizador la sobrescribiera, y esta vía se nombraba como
+fuera del alcance de IV-11.)
 
 #### Scenario: Una orden ya asociada a otro ticket se rechaza antes de escribir nada
-
 - GIVEN una orden de venta ya asociada al ticket 7001
 - WHEN se crea una remisión de entrada sobre otro ticket con esa misma orden
 - THEN responde `409`, con el texto que nombra la orden y el ticket 7001
 - AND ninguna de las tres columnas del ticket destino queda escrita
 
 #### Scenario: El 422 del serial gana al 409 nuevo
-
 - GIVEN un ticket destino sin serial —ni equipo con serial— y una orden ya asociada a otro ticket
 - WHEN se crea la remisión de entrada
 - THEN responde `422` «Falta el serial», no `409`
 - AND ninguna de las tres columnas del destino queda escrita, y el ticket dueño de la orden sigue
-      siendo el único
+  siendo el único
 
 #### Scenario: Reenviar la misma orden al propio ticket no se rechaza a sí mismo
-
 - GIVEN un ticket cuya orden de venta ya es la que llega en la remisión (reintento de red, doble clic)
 - WHEN se crea la remisión de entrada
 - THEN la comprobación excluye al propio ticket destino y no llega al `409`
 - AND el `UPDATE` es no-op porque `orden_venta` ya no está vacía (`:237`), y la remisión se crea con
-      `201`
+  `201`
+
+#### Scenario: El UPDATE deja la orden protegida del sincronizador
+- GIVEN una remisión de entrada que captura una orden de venta libre para su ticket
+- WHEN el `UPDATE` de `remision.ts:239-243` escribe `orden_venta`, `fecha_orden_venta` y
+  `salesorder_id`
+- THEN la misma sentencia deja la marca `ov_elegida_en_app_at` puesta sobre la fila
+- AND una pasada posterior del sincronizador no pisa `orden_venta` ni `fecha_orden_venta` de ese
+  ticket
 
 ### RQ-RE-17 · La remisión de entrada declara si el equipo llega con novedad
 

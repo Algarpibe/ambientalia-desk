@@ -441,7 +441,7 @@ tomada dice que se vea algo. Se mantiene **sin destino**, a propósito, y se se�
 ## E-027 · 2026-09-22 · hallazgo
 **Qué:** Seis commits de producto entraron en `main` el 22/09 —la copia de las facturas de anticipo de Zoho Books— sin cambio de OpenSpec, sin cabecera `tanda:` y sin fila en el §5.
 **De dónde viene:** corte del 22/09, `git log --first-parent 4976787..822ccbc^`
-**Afecta a:** el denominador y el numerador del avance · la comprobación 2 de `npm run reconcile`, que sólo mira cabeceras de `proposal.md` · la spec viva `openspec/specs/zoho-sync/spec.md:221`, modificada en el mismo lote
+**Afecta a:** el denominador y el numerador del avance · la comprobación 2 de `npm run reconcile`, que sólo mira cabeceras de `proposal.md` · la spec viva `openspec/specs/zoho-sync/spec.md:221` en `ca56c62`, modificada en el mismo lote
 **Estado:** triada
 **Destino:** — **sin destino, a propósito.** Es exactamente el caso «trabajo sin fila» que F0-05 dice cerrar, y el mecanismo no lo caza: el hook comprueba cabeceras cuando hay `proposal.md`, y aquí no lo hay. Decidir si todo cambio de producto necesita ficha, o si los ajustes de sincronización pueden ir directos, es alcance de método: devuelto al panel como `trabajo-sin-ficha`.
 **Lo medido (22/09, sobre `125ae3e`):** `ea3dbc1`, `a233e1d`, `7cfd198`, `8d03c0d`, `d041b1c`, `bde29fb` — 13 ficheros, +155/−18, con pruebas. No escriben en Zoho: son lectura y copia, así que no chocan con `decision/p44-escritura-zoho`.
