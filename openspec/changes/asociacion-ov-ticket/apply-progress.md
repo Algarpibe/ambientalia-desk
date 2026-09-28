@@ -237,7 +237,7 @@ lote 2 (Escritores y puertas), que depende de este lote y ya puede arrancar.
 | Tasks | Prueba (fichero, al final) | RED capturado (17 rojas, un solo `vitest` antes de escribir código) | GREEN |
 |---|---|---|---|
 | 2.1-2.4 | `ovAsociaciones.test.ts` tercera vía (3 casos) | `expected null to deeply equal { id: 't-a', number: 9001 }` | `repo.ts:368-371` |
-| 2.5-2.8 | `ticketService.test.ts` alta y rama «Equipo nuevo» | `expected [] to have a length of 1 but got +0` / `expected [] to deeply equal [ … ]` | `equipoNuevo.ts:80-102` |
+| 2.5-2.8 | `ticketService.test.ts` alta y rama «Equipo nuevo» | `expected [] to have a length of 1 but got +0` / `expected [] to deeply equal [ … ]` | `equipoNuevo.ts:80-99` |
 | 2.9-2.11 | `ordenVentaUnTicket.test.ts` puerta 1 | `expected 201 to be 409` | (delega en `ticketConOrdenVenta`) |
 | 2.12-2.15 | `ticketService.test.ts` `habilitar_servicio` (3 casos) | `expected [] to deeply equal [ { ticket_id: 't-h', … } ]` | `repo.ts:311` + `asociarDesdeTransicion` |
 | 2.16-2.17 | `ordenVentaUnTicket.test.ts` puerta 2 | `expected 200 to be 409` | (delega) |
@@ -275,7 +275,7 @@ el arranque del comentario; `repo.ts:362-379` (remisiones/tickets-core/transitio
 `remision.ts:230`, `:220`, `:241` (`ordenVentaUnTicket.test.ts`, `remisiones.test.ts`, `CLAUDE.md`) intactas y
 ciertas; `remision.ts:239-243` (`remisiones` y `zoho-sync`) sigue siendo el `UPDATE`. **Un desfase, caso A
 parcial:** `hojas-vida/spec.md:273` cita `equipoNuevo.ts:80-92` para «crea el equipo en transacción»; la función
-ocupa ahora `:80-102`, así que el final del rango cae a mitad (el contenido citado sigue cierto). No se edita: es
+ocupa ahora `:80-99`, así que el final del rango cae a mitad (el contenido citado sigue cierto). No se edita: es
 una spec viva, se anota para el barrido del lote 6.
 
 ### Deviations from Design
