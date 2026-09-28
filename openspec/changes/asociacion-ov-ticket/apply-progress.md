@@ -152,7 +152,7 @@ afectadas: `ov_asociaciones` sólo añade sentencias `CREATE TABLE`/`CREATE INDE
 ```
 
 `git diff --shortstat --no-renames HEAD` (mismos 5 paths): **5 files changed, 250 insertions(+), 6
-deletions(-)** → 256 líneas reales, dentro del presupuesto de ~570 estimado en `design.md` §7 y muy por
+deletions(-)** → 256 de código; **medida real del lote, con `apply-progress.md` (226) y `tasks.md` (26): 508 = ledger**, dentro del presupuesto de ~570 estimado en `design.md` §7 y muy por
 debajo del techo de 800/lote. Los ficheros nuevos se midieron con `git add -N <ruta>` por archivo
 explícito (nunca `git add .` ni `git add -N .`); los ficheros `docs/sdd/Parte_*`/`Evidencia_*`
 untracked de la sesión NO se tocaron (`git status --short` los muestra `??` antes y después).
@@ -218,7 +218,7 @@ tests pasan y `equipos_cambios`/`ov_asociaciones` existen tras `migrate`).
 - Boundary: empieza en el HEAD `8a46998` (nada de esquema/tabla previo); termina con la tabla, los
   índices, el módulo de acceso a datos y `PUBLIC_TABLES` actualizado, todo en verde. Rollback: revertir
   este commit; la tabla es nueva y nadie más la lee.
-- Estimated review budget impact: 256 líneas reales sobre ~570 estimadas y 800 de techo — bajo.
+- Estimated review budget impact: 508 líneas reales (256 de código y pruebas) sobre ~570 estimadas y 800 de techo — bajo.
 
 ### Status
 
