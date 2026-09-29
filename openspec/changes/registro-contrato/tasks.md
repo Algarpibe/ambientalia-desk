@@ -106,48 +106,48 @@ Módulos nuevos, sin cita previa: `packages/shared/src/contratos.ts`, `apps/desk
 **Hallazgo al planificar:** `migrate.test.ts:282-286` fija 32 tablas y `[10, 19, 3]`; añadir `contratos` lo pone rojo por
 diseño, y ese guardián (`:255-271`) es además el que cazaría una tabla sin clasificar o sin esquema (mutación 2, 1.24-1.25).
 
-- [ ] 1.1 RED — `migrate.test.ts:282-286` en su sitio: título «son 33 tablas: 10 de Desk, 20 de la app en public y 3…»,
+- [x] 1.1 RED — `migrate.test.ts:282-286` en su sitio: título «son 33 tablas: 10 de Desk, 20 de la app en public y 3…»,
   `[10, 20, 3]` y los tres `32` → `33`. RQ: soporte de RQ-TC-21 (tabla propia en `public`).
-- [ ] 1.2 Confirmar rojo natural (`PUBLIC_TABLES` tiene 19 y `schema.sql` 32 `CREATE TABLE`).
-- [ ] 1.3 RED — `packages/shared/src/contratos.test.ts` (nuevo), tablas de casos: `fechaCalendario` (`2026-02-30`,
+- [x] 1.2 Confirmar rojo natural (`PUBLIC_TABLES` tiene 19 y `schema.sql` 32 `CREATE TABLE`).
+- [x] 1.3 RED — `packages/shared/src/contratos.test.ts` (nuevo), tablas de casos: `fechaCalendario` (`2026-02-30`,
   `31/12/2026`, vacío, `null` → `null`; `2026-12-31` → tal cual) y `LOTE_OV` (`OV-2026-170` y `OV-2026-1700` sí;
   `OV-2026-170-01`, `OVI-2026-170`, `OV-2026-17`, `OV-2026-170'; DROP TABLE contratos` no). RQ: RQ-TC-21 (formato de lote, fechas reales).
-- [ ] 1.4 Confirmar rojo natural (módulo inexistente).
-- [ ] 1.5 GREEN — crear `contratos.ts`: `LOTE_OV` (`/^OV-\d{4}-\d{3,4}$/`), `fechaCalendario` (sobre `diaEnZona`, `fechasDerivadas.ts:63-73`),
+- [x] 1.4 Confirmar rojo natural (módulo inexistente).
+- [x] 1.5 GREEN — crear `contratos.ts`: `LOTE_OV` (`/^OV-\d{4}-\d{3,4}$/`), `fechaCalendario` (sobre `diaEnZona`, `fechasDerivadas.ts:63-73`),
   tipos `Contrato`; exportar en `index.ts` tras `:23` (al final). La prueba importa desde `@ambientalia/shared` (prueba el export).
-- [ ] 1.6 Confirmar 1.3 en verde.
-- [ ] 1.7 RED — `contratos.test.ts`: `estadoContrato(c, hoy)` en los extremos (fin `2026-12-31`: hoy `12-31` → vigente,
+- [x] 1.6 Confirmar 1.3 en verde.
+- [x] 1.7 RED — `contratos.test.ts`: `estadoContrato(c, hoy)` en los extremos (fin `2026-12-31`: hoy `12-31` → vigente,
   `2027-01-01` → vencido; inicio `2026-10-01`: hoy `10-01` → vigente, `09-30` → `no_iniciado`) y `motivoVencido(numero, contrato, hoy)`:
   subOV `OV-2026-170-01` + vencido → texto que nombra lote, contrato y fin; `null` con ordinaria, `OVI-2026-170`, cuarentena
   `OV-2026-170-X9`, contrato aún no iniciado, fin = hoy y sin contrato. RQ: RQ-TC-22 (3 escenarios), RQ-TC-25 (contenido de la guarda).
-- [ ] 1.8 Confirmar rojo natural.
-- [ ] 1.9 GREEN — `estadoContrato` (comparación de cadenas `YYYY-MM-DD`) y `motivoVencido` (usa `clasificarOV`, `subOV.ts:32-36`).
-- [ ] 1.10 Confirmar 1.7 en verde.
-- [ ] 1.11 RED — `contratos.test.ts`: `prioridadAlNacer(pedida, vigente)` (`true` → `'High'` aunque pida `'Low'`; `false` →
+- [x] 1.8 Confirmar rojo natural.
+- [x] 1.9 GREEN — `estadoContrato` (comparación de cadenas `YYYY-MM-DD`) y `motivoVencido` (usa `clasificarOV`, `subOV.ts:32-36`).
+- [x] 1.10 Confirmar 1.7 en verde.
+- [x] 1.11 RED — `contratos.test.ts`: `prioridadAlNacer(pedida, vigente)` (`true` → `'High'` aunque pida `'Low'`; `false` →
   `pedida ? String(pedida) : null`, con `'Low'`, `undefined`, `''`) y `hoyEnZona(ahora)` (las 23:30 de Bogotá del 31-dic caen a las
   04:30Z del 1-ene: «hoy» es 31-dic — S-11, nunca la zona del proceso).
-- [ ] 1.12 Confirmar rojo natural.
-- [ ] 1.13 GREEN — `prioridadAlNacer` y `hoyEnZona` (`diaEnZona`, `ZONA_NEGOCIO` de `fechasDerivadas.ts:13`).
-- [ ] 1.14 Confirmar 1.11 en verde.
-- [ ] 1.15 RED — `apps/desk/server/db/contratos.test.ts` (nuevo, pg-mem): ida y vuelta de `date` (`Date` y `string` los
+- [x] 1.12 Confirmar rojo natural.
+- [x] 1.13 GREEN — `prioridadAlNacer` y `hoyEnZona` (`diaEnZona`, `ZONA_NEGOCIO` de `fechasDerivadas.ts:13`).
+- [x] 1.14 Confirmar 1.11 en verde. **Adelantado del lote 4 a petición de la supervisión (2026-09-28):** `trimestresDelContrato` y `trimestreEn` con RED propio (inicio = hoy, fin = hoy, fin = ayer, cambio de trimestre, fin de mes, bisiesto); `sumarDias` exportado en sitio (`calendarioLaboral.ts:66`).
+- [x] 1.15 RED — `apps/desk/server/db/contratos.test.ts` (nuevo, pg-mem): ida y vuelta de `date` (`Date` y `string` los
   normaliza `comoDiaCivil`), `crearContrato`, `contratoDelLote`, `contratosDelCliente`, `listarContratos`; segundo contrato del
   mismo lote → `ContratoDuplicadoError` (`23505` traducido); `INSERT` directo con el lote repetido → `23505`; `INSERT`
   directo con `fecha_fin < fecha_inicio` → rechazado. RQ: RQ-TC-21 (unicidad por lote en la base, `CHECK`).
-- [ ] 1.16 Confirmar rojo natural (tabla y módulo inexistentes).
-- [ ] 1.17 GREEN — `schema.sql` AL FINAL (tras `:554`): `CREATE TABLE IF NOT EXISTS public.contratos (…)`,
+- [x] 1.16 Confirmar rojo natural (tabla y módulo inexistentes).
+- [x] 1.17 GREEN — `schema.sql` AL FINAL (tras `:554`): `CREATE TABLE IF NOT EXISTS public.contratos (…)`,
   `CONSTRAINT contratos_fin_no_antes_de_inicio CHECK`, `idx_contratos_lote` (único) e `idx_contratos_cliente` (`design.md` §1).
-- [ ] 1.18 GREEN — `migrate.ts:73` en su sitio: `'contratos'` al final de `PUBLIC_TABLES`.
-- [ ] 1.19 GREEN — `calendarioCierres.ts:18` en su sitio: `export function comoDiaCivil` (S-18).
-- [ ] 1.20 GREEN — crear `db/contratos.ts`: `crearContrato` (traduce `23505`), `listarContratos`, `contratoPorId`, `contratoDelLote`, `contratosDelCliente`. Consultas sin calificar, como `ov_asociaciones`; sin `DELETE` ni `UPDATE` (S-13).
-- [ ] 1.21 Confirmar 1.1 y 1.15 en verde. **Si pg-mem no impone el `CHECK`** (hipótesis de `design.md` §1), 1.15 queda rojo en esa
+- [x] 1.18 GREEN — `migrate.ts:73` en su sitio: `'contratos'` al final de `PUBLIC_TABLES`.
+- [x] 1.19 GREEN — `calendarioCierres.ts:18` en su sitio: `export function comoDiaCivil` (S-18).
+- [x] 1.20 GREEN — crear `db/contratos.ts`: `crearContrato` (traduce `23505`), `listarContratos`, `contratoPorId`, `contratoDelLote`, `contratosDelCliente`. Consultas sin calificar, como `ov_asociaciones`; sin `DELETE` ni `UPDATE` (S-13).
+- [x] 1.21 Confirmar 1.1 y 1.15 en verde. **Si pg-mem no impone el `CHECK`** (hipótesis de `design.md` §1), 1.15 queda rojo en esa
   aserción: se declara en `apply-progress.md` y en un comentario de la prueba, y la aserción se sustituye por una guardián
   estructural que LEE `schema.sql` y exige la `CONSTRAINT`; la mutación 1.23 se hace igual sobre el fichero.
-- [ ] 1.22 MUTACIÓN (regla 2, fichero vigilado) — ensuciar `schema.sql` quitando `UNIQUE` de `idx_contratos_lote`; correr 1.15 y
+- [x] 1.22 MUTACIÓN (regla 2, fichero vigilado) — ensuciar `schema.sql` quitando `UNIQUE` de `idx_contratos_lote`; correr 1.15 y
   confirmar ROJO (la segunda alta del lote deja de chocar); revertir; `git diff` limpio.
-- [ ] 1.23 MUTACIÓN (regla 2) — quitar el `CHECK` de `schema.sql`; confirmar ROJO (o, si 1.21 declaró que pg-mem no lo impone, ROJO de la guardián estructural); revertir.
-- [ ] 1.24 MUTACIÓN (regla 2, guardián `migrate.test.ts:255-271`) — escribir `CREATE TABLE IF NOT EXISTS contratos` SIN `public.`; confirmar ROJO; revertir.
-- [ ] 1.25 MUTACIÓN (regla 2) — quitar `'contratos'` de `PUBLIC_TABLES` (`migrate.ts:73`); confirmar ROJO (tabla sin clasificar y recuento); revertir.
-- [ ] 1.26 Cierre del lote 1: `npx vitest run packages/shared/src/contratos.test.ts apps/desk/server/db/contratos.test.ts packages/zoho-sync/src/db/migrate.test.ts`;
+- [x] 1.23 MUTACIÓN (regla 2) — quitar el `CHECK` de `schema.sql`; confirmar ROJO (o, si 1.21 declaró que pg-mem no lo impone, ROJO de la guardián estructural); revertir.
+- [x] 1.24 MUTACIÓN (regla 2, guardián `migrate.test.ts:255-271`) — escribir `CREATE TABLE IF NOT EXISTS contratos` SIN `public.`; confirmar ROJO; revertir.
+- [x] 1.25 MUTACIÓN (regla 2) — quitar `'contratos'` de `PUBLIC_TABLES` (`migrate.ts:73`); confirmar ROJO (tabla sin clasificar y recuento); revertir.
+- [x] 1.26 Cierre del lote 1: `npx vitest run packages/shared/src/contratos.test.ts apps/desk/server/db/contratos.test.ts packages/zoho-sync/src/db/migrate.test.ts`;
   `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `contratos.ts`, `contratos.test.ts` ×2, `db/contratos.ts`);
   recuentos: `migrate.ts` 131, `migrate.test.ts` 444, `calendarioCierres.ts` 34 sin cambio (`+1 −1` / `+n −n`), `schema.sql` 554→554+N y
   `index.ts` 23→24 con `−0`; barrido de citas sobre `schema.sql` (0 citas tras el punto: `design.md` §8), `migrate.ts` (`tickets-core :794`
@@ -269,10 +269,10 @@ Cita a releer: `tickets-core` delta `:86` (`ovAsociaciones.ts:21`).
 
 Módulos nuevos: `apps/desk/server/db/informeContrato.ts` y su prueba. `shared/contratos.ts` y `routes/contratos.ts` (ficheros nuevos de los lotes 1 y 3) ganan funciones y la ruta.
 
-- [ ] 4.1 RED — `contratos.test.ts` (al final): `trimestresDelContrato` (inicio `2026-02-10`, fin `2027-02-09` → t1 `2026-02-10`–`2026-05-09`, t2 desde `2026-05-10`, el último acaba en `2027-02-09`; inicio `2026-01-31` → t2 `2026-04-30`, t3 `2026-07-31`, siempre desde el inicio, S-12);
+- [ ] 4.1 RED — `contratos.test.ts` (al final): `trimestresDelContrato` YA EXISTE desde el lote 1: su caso aquí es regresión, sin rojo previo (inicio `2026-02-10`, fin `2027-02-09` → t1 `2026-02-10`–`2026-05-09`, t2 desde `2026-05-10`, el último acaba en `2027-02-09`; inicio `2026-01-31` → t2 `2026-04-30`, t3 `2026-07-31`, siempre desde el inicio, S-12);
   `diasEntre` (fin `2026-12-31`: hoy `12-01` → 30; `2027-01-05` → −5); `porcentaje` (0 sin creadas; 3/10 → 30); `estadoSubOV` (libre / en curso / ejecutada con `Finalizado`, S-6). RQ: RQ-ZS-15 (trimestres, días, sin creadas).
 - [ ] 4.2 Confirmar rojo natural.
-- [ ] 4.3 GREEN — `trimestresDelContrato`, `diasEntre` (`Date.UTC`, como `calendarioLaboral.ts:10`, `:54-57`), `porcentaje`, `estadoSubOV`.
+- [ ] 4.3 GREEN — `diasEntre` (`trimestresDelContrato` hecho en el lote 1) (`Date.UTC`, como `calendarioLaboral.ts:10`, `:54-57`), `porcentaje`, `estadoSubOV`.
 - [ ] 4.4 Confirmar 4.1 en verde.
 - [ ] 4.5 MUTACIÓN — calcular cada trimestre a partir del anterior (deriva) en vez de desde el inicio; 4.1 (caso `31-ene`) debe ponerse ROJO. Revertir.
 - [ ] 4.6 RED — `books/subOV.test.ts` (al final): `creadasDelLote(db, lote)` excluye cuarentena, borrador y anulada; **enfrentamiento (molde H5):** `creadasDelLote(l).length` = `saldoPorLote(l).creadas` sobre un lote con cuarentena, `draft` y `void`. RQ: RQ-ZS-15 «no cuentan».

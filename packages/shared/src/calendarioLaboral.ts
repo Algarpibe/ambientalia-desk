@@ -63,7 +63,7 @@ function partesDe(dia: DiaCivil): [number, number, number] {
 }
 
 /** Suma (o resta, con `n` negativo) días de calendario a un `DiaCivil`, por aritmética pura. */
-function sumarDias(dia: DiaCivil, n: number): DiaCivil {
+export function sumarDias(dia: DiaCivil, n: number): DiaCivil {
   const [anio, mes, d] = partesDe(dia)
   return diaCivil(anio, mes - 1, d + n)
 }

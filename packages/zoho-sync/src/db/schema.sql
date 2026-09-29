@@ -552,3 +552,22 @@ CREATE TABLE IF NOT EXISTS public.ov_asociaciones (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ov_asoc_numero_vigente ON public.ov_asociaciones (numero) WHERE liberada_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ov_asoc_so_vigente ON public.ov_asociaciones (salesorder_id) WHERE liberada_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_ov_asoc_ticket ON public.ov_asociaciones (ticket_id);
+
+-- registro-contrato (F1B-11, cambio 3 de 3), RQ-TC-21: un contrato por lote (la OV madre OV-AAAA-NNN(N)).
+-- client_id es clients.id (contact_id de Books), sin FK: la replica no garantiza orden. El indice unico por lote
+-- cierra la carrera de dos altas y el CHECK es defensa en la base ademas del 422 de la ruta.
+-- ritmo_avisado_trimestre es la marca anti-ruido del aviso de ritmo (S-14). Sin DELETE ni UPDATE de datos (S-13)
+-- AL FINAL del fichero para no desplazar citas (regla de mutacion 4)
+CREATE TABLE IF NOT EXISTS public.contratos (
+  id bigserial PRIMARY KEY,
+  client_id text NOT NULL,
+  lote text NOT NULL,
+  fecha_inicio date NOT NULL,
+  fecha_fin date NOT NULL,
+  creado_por text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  ritmo_avisado_trimestre integer,
+  CONSTRAINT contratos_fin_no_antes_de_inicio CHECK (fecha_fin >= fecha_inicio)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_contratos_lote ON public.contratos (lote);
+CREATE INDEX IF NOT EXISTS idx_contratos_cliente ON public.contratos (client_id);

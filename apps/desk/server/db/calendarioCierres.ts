@@ -15,7 +15,7 @@ function pad(n: number): string {
  * (nunca locales): el servidor corre en UTC (riesgo anotado en `proposal.md`), y un getter local
  * desplazaría el día en cualquier máquina con zona horaria distinta.
  */
-function comoDiaCivil(valor: unknown): DiaCivil {
+export function comoDiaCivil(valor: unknown): DiaCivil {
   if (valor instanceof Date) {
     return `${valor.getUTCFullYear()}-${pad(valor.getUTCMonth() + 1)}-${pad(valor.getUTCDate())}`
   }

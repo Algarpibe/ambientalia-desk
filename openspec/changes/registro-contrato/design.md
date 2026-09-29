@@ -160,7 +160,7 @@ sitio** (tres líneas de comentario y `const csvCampo = celdaCSV`), para que las
 **Periódico, sin cron nuevo.** Evaluarlo al leer el informe no avisa a nadie si nadie lo abre, que es justo el caso
 que el aviso cubre. Se engancha a la pasada existente de `apps/desk/server/index.ts:85-93`, **en sitio** en `:88`:
 `let p: Promise<unknown> = pasadaRitmoContratos(pool).then(() => sync.syncRecent())` (import al final de `:15`).
-Va **antes** de la sincronización para no depender de que ésta tenga éxito, y nunca lanza.
+Va **antes** de la sincronización para no depender de que ésta tenga éxito, y nunca lanza. **DEPENDENCIA declarada (2026-09-28):** no depende del éxito de la sincronización, pero **sí de que exista su pasada**: el único `setInterval` del proceso es el de la sincronización con Zoho (`index.ts:85-93`, incondicional, cada `syncIntervalMs`, `packages/zoho-sync/src/config.ts:88`). Hoy corre siempre; con la independencia de Zoho (enero de 2027) esa pasada se retira, y si se retira sin más el aviso de ritmo **deja de evaluarse en silencio** —nada falla ni se pone rojo—. Quien retire la sincronización tiene que darle al aviso otra pasada periódica: registrado en `docs/sdd/ENTRADA.md` (E-087), sin destino.
 
 `apps/desk/server/services/avisoRitmoContrato.ts` (nuevo), patrón de `avisoDiscrepanciaOV.ts:24-46`:
 - `pasadaRitmoContratos(db)`: como mucho una evaluación por día civil y proceso (variable de módulo).

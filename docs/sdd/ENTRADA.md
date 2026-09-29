@@ -1226,3 +1226,11 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** fila F1B-11 del §5 del plan · el cambio 3 construye el registro, la vigencia y la guarda de contrato vencido, y deja la ampliación FUERA hasta esta respuesta.
 **Estado:** nueva
 **Destino propuesto:** `openspec/config.yaml` → `decisiones_de_gerencia`, como precisión de `decision/vigencia-contrato`. **Dueño propuesto:** Gerencia. **Qué desbloquea:** la ampliación del contrato y, con ella, el cierre de la fila F1B-11 (el cambio 3 lleva `cierra: no` por esto).
+
+## E-087 · 2026-09-28 · hallazgo · **NUEVA**
+**Qué:** El aviso de ritmo del contrato (cambio 3 de F1B-11, `registro-contrato`, lote 5) se evalúa **dentro de la pasada periódica de la sincronización con Zoho** (`apps/desk/server/index.ts:85-93`), que es el único `setInterval` del proceso. Hoy esa pasada corre siempre, así que el aviso funciona. **Con la independencia de Zoho (enero de 2027) la pasada desaparece, y el aviso moriría en silencio**: nada falla, nada se pone rojo, simplemente deja de evaluarse.
+**Nota para quien retire la sincronización:** el aviso de ritmo necesita **otra pasada periódica** propia antes de quitar la de Zoho. Declarado como dependencia en `openspec/changes/registro-contrato/design.md` §7.
+**De dónde viene:** revisión de la planificación de `registro-contrato`, 2026-09-28, al abrir su lote 1.
+**Afecta a:** `apps/desk/server/index.ts` (pasada periódica) · aviso de ritmo del contrato (`derivacion-avisos`) · la tanda que retire la sincronización con Zoho.
+**Estado:** nueva
+**Destino:** **SIN DESTINO ASIGNADO**, a propósito: ninguna fila del §5 reclama hoy la retirada de la sincronización, y asignarle una sería decidir alcance. **Dueño propuesto:** Gerencia.

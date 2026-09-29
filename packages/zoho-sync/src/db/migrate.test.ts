@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 32 tablas: 10 de Desk, 19 de la app en public y 3 replicadas de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 19, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(32)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(32)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(32)
+  it('son 33 tablas: 10 de Desk, 20 de la app en public y 3 replicadas de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 20, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(33)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(33)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(33)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
