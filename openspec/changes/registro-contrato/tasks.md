@@ -308,7 +308,7 @@ Módulos nuevos: `apps/desk/server/db/informeContrato.ts` y su prueba. `shared/c
 | `apps/desk/server/index.ts` (99; 10 citas) | `:15` import de `pasadaRitmoContratos` al final de la línea; `:88` `let p: Promise<unknown> = pasadaRitmoContratos(pool).then(() => sync.syncRecent())` | EN SU SITIO |
 | `apps/desk/src/components/RemisionesPage.tsx` (336; 3 citas) | `:2` import de `celdaCSV`; `:85-88` tres líneas de comentario y `const csvCampo = celdaCSV` | EN SU SITIO |
 
-Módulos nuevos: `apps/desk/server/services/avisoRitmoContrato.ts` y su prueba. `db/avisos.ts` **no se toca**. Cita a releer: `:85` de `index.ts` (`zoho-sync :48, :177`; `proposal.md:118`) sigue siendo el `setInterval`.
+Módulos nuevos: `apps/desk/server/services/avisoRitmoContrato.ts` y su prueba. `db/avisos.ts` **no se toca**. Cita a releer: `apps/desk/server/index.ts:85` (`zoho-sync :48, :177`; `proposal.md:118`) sigue siendo el `setInterval`.
 
 - [x] 5.1 RED — `contratos.test.ts` (al final): `ritmoInsuficiente` (10 creadas, 3 ejecutadas, 90 transcurridos y 90 restantes → `true`; 6 ejecutadas → `false`; dentro del trimestre 1 → `false`; 0 creadas → `false`; contrato vencido → `false`; transcurridos = `diasEntre(inicio, hoy) + 1`, S-19);
   `celdaCSV` (`=`, `+`, `-`, `@`, TAB y CR al inicio → prefijo `'`; comillas, coma y LF → entrecomillada; texto normal intacto; mismas salidas que `csvCampo` de `RemisionesPage.tsx:86` en `5d93eb7` para comillas, coma y LF); `csvDelInforme` (una fila por trimestre y por servicio, columnas del escenario, «informe» con el hueco, una fórmula en `equipo` neutralizada). RQ: RQ-AV-14 (regla), RQ-ZS-15 (exportación), amenaza «fórmulas en el CSV».
