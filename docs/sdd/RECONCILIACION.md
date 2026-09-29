@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `0338be6` · **Fecha del commit:** 2026-09-28
+**Commit medido:** `b27f91b` · **Fecha del commit:** 2026-09-28
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -43,7 +43,7 @@ Hallazgos (informativos, no bloquean):
 Hallazgos (informativos, no bloquean):
   - `IV-8` — incumplimiento vivo, declarado por el campo `estado`: VIVO
   - `IV-9` — incumplimiento vivo, declarado por el campo `estado`: VIVO
-  - `IV-11` — incumplimiento vivo, declarado por el campo `estado`: REDUCIDO  # detalle en adendas_incumplimientos_vivos → IV-11 → reduccion_2026_09_27, al final de este fichero
+  - `IV-11` — incumplimiento vivo, declarado por el campo `estado`: REDUCIDO  # detalle en adendas_incumplimientos_vivos → IV-11 → reduccion_2026_09_27, al final de este fichero; y en `adenda_iv11_asociacion_ov_ticket` (2026-09-28, última clave del fichero)
   - `IV-12` — incumplimiento vivo, declarado por el campo `estado`: VIVO
 
 ## 5 · Cifras ancladas — leídas del código, no del registro
