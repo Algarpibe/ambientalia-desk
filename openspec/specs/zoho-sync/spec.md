@@ -344,6 +344,37 @@ guardián de pruebas, no la corrección de un defecto de producción.
 - WHEN corre el guardián de esquema
 - THEN la prueba sigue en verde, igual que hoy
 
+### RQ-ZS-14 · `soloLibres` excluye asociaciones vigentes y cuarentena; saldo por lote
+
+`searchSalesOrders` con `soloLibres` **SHALL** excluir toda OV con asociación vigente en
+`public.ov_asociaciones` (`tickets-core` RQ-TC-17), además de las que hoy excluye por columna, y
+**SHALL** excluir toda OV en cuarentena (`tickets-core` RQ-TC-18), sin excepción por cliente.
+
+El sistema **SHALL** exponer el saldo de un lote de subOV sobre `books.sales_orders`: creadas,
+consumidas (con asociación vigente) y libres, y el porcentaje consumido (consumidas / creadas; el «% ejecutado» de `decision/anexo-53-contratos` es del cambio 3 de F1B-11). Las subOV en cuarentena
+**MUST NOT** contarse en ninguna de las tres categorías del saldo: se listan aparte
+(`tickets-core` RQ-TC-18).
+
+#### Scenario: Una OV con asociación vigente no aparece en `soloLibres`
+
+- GIVEN una OV cuya única traza de uso es una fila vigente en `ov_asociaciones`, sin coincidir por
+  columna con ningún ticket
+- WHEN se pide el buscador con `soloLibres`
+- THEN esa OV no aparece en el resultado
+
+#### Scenario: Una subOV en cuarentena no aparece en el buscador ni en el saldo
+
+- GIVEN una subOV con sufijo no canónico
+- WHEN se piden `soloLibres` y el saldo del lote
+- THEN la subOV no aparece en ninguno de los dos, y sí en la lista de cuarentena
+
+#### Scenario: El saldo del lote cuenta correctamente
+
+- GIVEN un lote con cinco subOV canónicas —dos con asociación vigente y tres libres— y una sexta en cuarentena
+- WHEN se calcula el saldo del lote
+- THEN reporta 5 creadas, 2 consumidas, 3 libres y 40 % consumido; la de cuarentena, fuera del
+  recuento y en la lista de cuarentena (supuesto del orquestador, 2026-09-28: Gerencia fija sólo la fórmula, `Decisiones_Gerencia_2026-09-10.md:472`, y que la cuarentena no suma ni resta, `:459-461`)
+
 ---
 
 ## 5 · Comportamiento actual, a corregir

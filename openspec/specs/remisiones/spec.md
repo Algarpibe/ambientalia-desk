@@ -360,42 +360,47 @@ porque permite script embebido (`routes/remision.ts:19-20` y `:329`).
 ### RQ-RE-16 · La tercera puerta: una orden de venta no puede quedar en dos tickets
 
 Antes de escribir `orden_venta`, `fecha_orden_venta` y `salesorder_id` sobre el ticket destino,
-`POST /api/remisiones` **SHALL** comprobar contra `ticketConOrdenVenta(db, { salesorderId, numero },
-ticketId)` (`packages/zoho-sync/src/db/repo.ts:362-379`) que la orden no pertenezca ya a otro ticket,
-por las **dos vías** —`salesorder_id` y número— y **excluyendo el propio ticket destino**. La
-comprobación **SHALL** ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-244`,
-**después** del `422` «Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:239-243`).
+`POST /api/remisiones` **SHALL** comprobar, por **tres vías** —`salesorder_id`, número y la asociación
+vigente de `public.ov_asociaciones` (`tickets-core` RQ-TC-17)—, que la orden no pertenezca ya a otro
+ticket, excluyendo el propio ticket destino
+(`ticketConOrdenVenta(db, { salesorderId, numero }, ticketId)`,
+`packages/zoho-sync/src/db/repo.ts:362-379`, ampliado con la tercera vía). La comprobación **SHALL**
+ejecutarse dentro del bloque `if (b.salesOrderId)` de `remision.ts:218-244`, **después** del `422`
+«Orden de venta no encontrada» (`:220`) y **antes** del `UPDATE` (`:239-243`).
+
+Antes de esta comprobación de unicidad (escalón D), el alta de remisión **SHALL** aplicar la misma
+guarda de cuarentena que las otras dos puertas (`tickets-core` RQ-TC-18, escalón C) cuando la OV
+recibida lleve sufijo: una subOV en cuarentena se rechaza con `422` sin llegar a comprobar unicidad.
+Esto no reordena ninguna guarda existente del alta de remisión (IV-12 sigue sin corregirse aquí): la
+guarda de cuarentena se añade en su propio escalón, junto a la comprobación de unicidad que ya vive en
+ese mismo bloque.
 
 Si la orden ya pertenece a otro ticket, la respuesta **SHALL** ser `409`, con el texto de
 `ticketService.ts:151` («La orden de venta {ov} ya está asociada al ticket #{n}»), y **ninguna** de
 las tres columnas **SHALL** quedar escrita. El `422` del serial (`remision.ts:152-157`) **SHALL**
-seguir ganando al `409` nuevo, sin mover ninguna de las dos guardas. La condición
+seguir ganando al `409` nuevo, sin mover ninguna de las guardas. La condición
 `WHERE ... COALESCE(orden_venta,'') = ''` (`:241`) **SHALL** mantenerse intacta: protege la carrera de
 dos remisiones sobre el **mismo** ticket, una pregunta distinta de la que resuelve este requisito.
 
-**Las dos vías son requisito, no preferencia.** La divergencia `orden_venta`/`salesorder_id` por
-sincronización (IV-11) puede dejar a un ticket con sólo una de las dos columnas vigente; comprobar
-sólo por número dejaría ese ticket sin protección. **Esta vía deja de estar fuera del alcance del
-parche de IV-11**: el mismo `UPDATE` que escribe las tres columnas (`remision.ts:239-243`) **SHALL**
-poner también la marca de fila `ov_elegida_en_app_at` (**supuesto S-1**; `zoho-sync` RQ-ZS-01
-modificado), de modo que la orden capturada aquí quede protegida de la siguiente pasada del
-sincronizador. El resto de IV-11 —filas previas sin marca, y la asociación 1:N propia entre orden y
-ticket— sigue fuera (cambios 2 y 3 de F1B-11, fuera de alcance de este delta).
+**Las tres vías son requisito, no preferencia.** La divergencia `orden_venta`/`salesorder_id` por
+sincronización (IV-11) puede dejar a un ticket con sólo una de las dos columnas vigente; la asociación
+vigente cubre además el caso en que ninguna columna coincide pero la OV sigue en uso. El mismo `UPDATE`
+que escribe las tres columnas y la marca `ov_elegida_en_app_at` **SHALL** además insertar la fila de
+asociación (`tickets-core` RQ-TC-17), en la misma transacción.
 
 **Tercer punto de captura legítimo.** La remisión de entrada **SHALL** contarse como el tercer punto
 de captura de la orden de venta, junto con el alta del ticket (`tickets-core` RQ-TC-08) y
-`habilitar_servicio` (`ticketService.ts:150-151`). La lista de
-`docs/sdd/Decisiones_Gerencia_2026-09-10.md:156-164`, que sólo nombraba los dos primeros, quedó
-incompleta por omisión de redacción, no por decisión (decisión 1 de la ronda de preguntas del
-2026-09-16).
+`habilitar_servicio` (`transitions-st` RQ-TS-14).
 
-**Guarda transitoria.** Esta guarda **SHALL** retirarse el día en que la tabla propia con
-`salesorder_id` como `PRIMARY KEY` (`Decisiones_Gerencia_2026-09-10.md:147-150`) sustituya a las tres
-guardas de aplicación; retirar sólo ésta sin retirar las otras dos sería el defecto.
+**Guardas de aplicación, todavía necesarias.** Las tres guardas —alta, `habilitar_servicio` y ésta—
+**MUST NOT** retirarse: `public.ov_asociaciones` sólo cubre lo que sus escritores hayan asociado desde
+este cambio; sin relleno retroactivo de los tickets existentes (dato de persona pendiente, fuera de
+alcance) el histórico quedaría sin protección si se retiraran. Retirar sólo una de las tres sería el
+defecto.
 
-(Previously: el `UPDATE` no dejaba ninguna marca sobre la fila; la orden capturada aquí quedaba
-expuesta a que la siguiente pasada del sincronizador la sobrescribiera, y esta vía se nombraba como
-fuera del alcance de IV-11.)
+(Previously: dos vías, sin cuarentena ni escritura de asociación; la nota de retiro apuntaba al día en
+que existiera la tabla propia, y hoy esa tabla existe pero el relleno retroactivo sigue pendiente, así
+que las tres guardas de aplicación se quedan.)
 
 #### Scenario: Una orden ya asociada a otro ticket se rechaza antes de escribir nada
 - GIVEN una orden de venta ya asociada al ticket 7001
@@ -424,6 +429,16 @@ fuera del alcance de IV-11.)
 - THEN la misma sentencia deja la marca `ov_elegida_en_app_at` puesta sobre la fila
 - AND una pasada posterior del sincronizador no pisa `orden_venta` ni `fecha_orden_venta` de ese
   ticket
+
+#### Scenario: Una OV en cuarentena bloquea la remisión antes del 409 de unicidad
+- GIVEN una OV con sufijo no canónico, sin asociación vigente
+- WHEN se crea una remisión de entrada con esa OV
+- THEN responde `422` de cuarentena, no `409` de unicidad, y no se escribe nada
+
+#### Scenario: El UPDATE también crea la fila de asociación
+- GIVEN una remisión de entrada que captura una OV libre para su ticket
+- WHEN el `UPDATE` escribe las tres columnas y la marca `ov_elegida_en_app_at`
+- THEN también existe una fila vigente en `public.ov_asociaciones` para ese ticket y esa OV
 
 ### RQ-RE-17 · La remisión de entrada declara si el equipo llega con novedad
 
