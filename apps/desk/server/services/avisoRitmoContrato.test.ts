@@ -182,9 +182,15 @@ describe('pasadaRitmoContratos · una vez por día civil y proceso, y NUNCA lanz
     expect(syncRecent).toHaveBeenCalledTimes(1)
   })
 
-  it('index.ts:88 encadena la pasada ANTES de la sincronización (fichero vigilado, regla de mutación 2)', () => {
-    const lineas = readFileSync(fileURLToPath(new URL('../index.ts', import.meta.url)), 'utf8').split(/\r?\n/)
-    expect(lineas[87]).toBe('    let p: Promise<unknown> = pasadaRitmoContratos(pool).then(() => sync.syncRecent())')
-    expect(lineas[14]).toContain("import { pasadaRitmoContratos } from './services/avisoRitmoContrato'")
+  it('index.ts encadena la pasada ANTES de la sincronización del setInterval (fichero vigilado; fija el ORDEN, no la línea)', () => {
+    const texto = readFileSync(fileURLToPath(new URL('../index.ts', import.meta.url)), 'utf8')
+    expect(texto).toMatch(/import\s*\{[^}]*\bpasadaRitmoContratos\b[^}]*\}\s*from\s*['"]\.\/services\/avisoRitmoContrato['"]/)
+    // El cuerpo del setInterval: desde `setInterval(` hasta el `}, <intervalo>)` que lo cierra.
+    const cuerpo = /setInterval\(\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*\},\s*config\.syncIntervalMs\s*\)/.exec(texto)?.[1]
+    expect(cuerpo, 'no se encuentra el setInterval de la sincronización').toBeDefined()
+    // Las sentencias del cuerpo que llaman a la sincronización: exactamente una, y encadenada DETRÁS de la pasada.
+    const conSync = cuerpo!.split(/\r?\n/).map((l) => l.replace(/\s+/g, ' ').trim()).filter((l) => l.includes('sync.syncRecent()'))
+    expect(conSync).toHaveLength(1)
+    expect(conSync[0]).toMatch(/pasadaRitmoContratos\(pool\)\s*\.then\(\s*\(\)\s*=>\s*sync\.syncRecent\(\)\s*\)/)
   })
 })

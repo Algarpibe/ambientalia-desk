@@ -343,18 +343,18 @@ Módulos nuevos: `apps/desk/server/services/avisoRitmoContrato.ts` y su prueba. 
 
 Ficheros nuevos: `ContratosPanel.tsx`, `ContratoFicha.tsx`, `MarcaContrato.tsx` (en `apps/desk/src/components/`). Citas a releer: `TicketDetailView.tsx` `:245`, `:208`, `:37`; `Configuracion.tsx` `:118`, `:24`, `:25`. `CLAUDE.md` y `openspec/config.yaml` **no se tocan** (S-10, S-21).
 
-- [ ] 6.1 `client.ts` AL FINAL: `listarContratos`, `crearContrato`, `contratoPorId`, `informeDeContrato`, `contratoDelTicket`.
-- [ ] 6.2 `ContratosPanel.tsx` (nuevo): lista y alta; el `403`/`422`/`409` del servidor se enseñan, no se duplican (regla 13, punto 1).
-- [ ] 6.3 `ContratoFicha.tsx` (nuevo): datos, saldo, informe por trimestre y botón CSV (`csvDelInforme` de `shared`, BOM y `text/csv;charset=utf-8;`, patrón de `RemisionesPage.tsx:107-115`); el cliente no calcula ninguna cifra.
-- [ ] 6.4 `MarcaContrato.tsx` (nuevo): la marca sale sólo de `GET /api/tickets/:id/contrato`.
-- [ ] 6.5 `Configuracion.tsx` `:2`, `:33`, `:127`, `:165` en su sitio (entrada «Contratos»).
-- [ ] 6.6 `TicketDetailView.tsx` `:15` y `:320` en su sitio.
-- [ ] 6.7 Regla de mutación 3 (checklist escrito en `apply-progress.md`, sin código): para cada decisión del cliente, la línea del servidor que la impone, con la línea real (no la del diseño): «Nuevo contrato» sólo Comercial/admin ↔ `routes/contratos.ts` (`403`); formato de lote, fechas, fin ≥ inicio ↔ misma ruta (`422`) y `CHECK`; un contrato por lote ↔ `409` e índice único;
+- [x] 6.1 `client.ts` AL FINAL: `listarContratos`, `crearContrato`, `contratoPorId`, `informeDeContrato`, `contratoDelTicket`.
+- [x] 6.2 `ContratosPanel.tsx` (nuevo): lista y alta; el `403`/`422`/`409` del servidor se enseñan, no se duplican (regla 13, punto 1).
+- [x] 6.3 `ContratoFicha.tsx` (nuevo): datos, saldo, informe por trimestre y botón CSV (`csvDelInforme` de `shared`, BOM y `text/csv;charset=utf-8;`, patrón de `RemisionesPage.tsx:107-115`); el cliente no calcula ninguna cifra.
+- [x] 6.4 `MarcaContrato.tsx` (nuevo): la marca sale sólo de `GET /api/tickets/:id/contrato`.
+- [x] 6.5 `Configuracion.tsx` `:2`, `:33`, `:127`, `:165` en su sitio (entrada «Contratos»).
+- [x] 6.6 `TicketDetailView.tsx` `:15` y `:320` en su sitio.
+- [x] 6.7 Regla de mutación 3 (checklist escrito en `apply-progress.md`, sin código): para cada decisión del cliente, la línea del servidor que la impone, con la línea real (no la del diseño): «Nuevo contrato» sólo Comercial/admin ↔ `routes/contratos.ts` (`403`); formato de lote, fechas, fin ≥ inicio ↔ misma ruta (`422`) y `CHECK`; un contrato por lote ↔ `409` e índice único;
   marca de ticket ↔ `contratoDelTicket`; cifras del informe ↔ ruta del informe; `High` ↔ `ticketService.ts:106`; CSV ↔ ninguna, a propósito (regla en `shared`, probada en node). Sin línea, la decisión es la guarda: se para y se declara.
-- [ ] 6.8 Texto para el expediente R08.3, AL FINAL de `docs/sdd/R08.3_Expediente_de_cambios.md` (`toca_maestro: si`, sin tocar el `.docx`): `R08.2.md:2182` define % ejecutado como «consumidas / creadas» y Gerencia lo definió ejecutadas / creadas (`config.yaml:2457`); `:2185` sigue diciendo que no hay dónde guardar el fin de contrato; la prioridad `High` por contrato; el hueco del informe.
-- [ ] 6.9 Barrido completo de la regla de mutación 4 sobre los catorce ficheros de `design.md` §8 (`ticketService.ts`, `remision.ts`, `schema.sql`, `migrate.ts`, `app.ts`, `index.ts`, `books/subOV.ts`, `ovAsociaciones.ts`, `calendarioCierres.ts`, `shared/index.ts`, `TicketDetailView.tsx`, `Configuracion.tsx`, `RemisionesPage.tsx`, `client.ts`), con las tres reglas del cierre: dos extremos, forma abreviada, lectura de lo que afirma cada cita. Ninguna edición desplaza líneas, así que es verificación de contenido.
-- [ ] 6.10 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío.
-- [ ] 6.11 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (nuevos: tres `.tsx`); recuentos de los ficheros en sitio; confirmar uno a uno los siete criterios de éxito de `proposal.md`; `apply-progress.md`. Para el `archive-report`: una línea con qué parte de la fila F1B-11 cubre (`cierra: no`; la ampliación queda fuera, E-086).
+- [x] 6.8 Texto para el expediente R08.3, AL FINAL de `docs/sdd/R08.3_Expediente_de_cambios.md` (`toca_maestro: si`, sin tocar el `.docx`): `R08.2.md:2182` define % ejecutado como «consumidas / creadas» y Gerencia lo definió ejecutadas / creadas (`config.yaml:2457`); `:2185` sigue diciendo que no hay dónde guardar el fin de contrato; la prioridad `High` por contrato; el hueco del informe.
+- [x] 6.9 Barrido completo de la regla de mutación 4 sobre los catorce ficheros de `design.md` §8 (`ticketService.ts`, `remision.ts`, `schema.sql`, `migrate.ts`, `app.ts`, `index.ts`, `books/subOV.ts`, `ovAsociaciones.ts`, `calendarioCierres.ts`, `shared/index.ts`, `TicketDetailView.tsx`, `Configuracion.tsx`, `RemisionesPage.tsx`, `client.ts`), con las tres reglas del cierre: dos extremos, forma abreviada, lectura de lo que afirma cada cita. Ninguna edición desplaza líneas, así que es verificación de contenido.
+- [x] 6.10 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío.
+- [x] 6.11 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (nuevos: tres `.tsx`); recuentos de los ficheros en sitio; confirmar uno a uno los siete criterios de éxito de `proposal.md`; `apply-progress.md`. Para el `archive-report`: una línea con qué parte de la fila F1B-11 cubre (`cierra: no`; la ampliación queda fuera, E-086).
 
 ---
 

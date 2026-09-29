@@ -668,3 +668,37 @@ export function mensajeDelServidor(e: unknown): string {
     return texto
   }
 }
+
+/*
+ * Contratos (registro-contrato, lote 6; `tickets-core` RQ-TC-21/23, `zoho-sync` RQ-ZS-15). El cliente sólo pide y
+ * enseña: el permiso (403), el contenido (422), la unicidad (409), la marca «de contrato» y todas las cifras del
+ * informe las decide el servidor. Los errores se enseñan con `mensajeDelServidor`.
+ */
+type Contrato = import('@ambientalia/shared').Contrato
+type InformeContrato = import('@ambientalia/shared').InformeContrato
+
+export interface FichaContrato { contrato: Contrato; estado: InformeContrato['estado']; saldo: SaldoLote }
+export interface TicketDeContrato { deContrato: boolean; contrato?: Contrato; subOV?: string }
+export interface AltaContrato { clientId: string; lote: string; fechaInicio: string; fechaFin: string }
+
+export function listarContratos(): Promise<Contrato[]> {
+  return fetch('/api/contratos', { credentials: 'include' }).then((r) => json<Contrato[]>(r))
+}
+
+export function crearContrato(alta: AltaContrato): Promise<Contrato> {
+  return fetch('/api/contratos', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(alta),
+  }).then((r) => json<Contrato>(r))
+}
+
+export function contratoPorId(id: number): Promise<FichaContrato> {
+  return fetch(`/api/contratos/${id}`, { credentials: 'include' }).then((r) => json<FichaContrato>(r))
+}
+
+export function informeDeContrato(id: number): Promise<InformeContrato> {
+  return fetch(`/api/contratos/${id}/informe`, { credentials: 'include' }).then((r) => json<InformeContrato>(r))
+}
+
+export function contratoDelTicket(ticketId: string): Promise<TicketDeContrato> {
+  return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/contrato`, { credentials: 'include' }).then((r) => json<TicketDeContrato>(r))
+}

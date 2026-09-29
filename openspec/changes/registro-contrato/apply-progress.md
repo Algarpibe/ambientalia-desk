@@ -255,3 +255,62 @@ evaluaciones que leen la marca antes de escribirla es la del `UPDATE`, y ahora t
 **Cierre:** `npm test` 1848 verdes (+37); typecheck limpio; lint 165, los mismos. Barrido: ninguna línea de `index.ts` ni
 de `RemisionesPage.tsx` se desplaza; las citas a `index.ts:85`, `:85-93`, `RemisionesPage.tsx:107-115`, `:119`, `:132`
 siguen ciertas; `RemisionesPage.tsx:86` (dos citas: `design.md:279`, `tasks.md:314`) es caso B, anclada `en 5d93eb7`.
+
+## Lote 6 · Interfaz y cierre — 2026-09-29
+
+**Ledger:** objetivo generación 6, techo 800, 2 intentos. **Estimado antes de escribir:** ~600 (plan ~570 + la prueba de
+`index.ts` reescrita). La medida real va en el `settle`.
+
+**Primera tarea — la prueba de `index.ts` fija el ORDEN, no la línea.** La del lote 5 comparaba `index.ts` línea 88 y 15
+con su sangría exacta: una línea añadida arriba la ponía roja sin romper nada. Ahora busca el cuerpo del `setInterval`
+(hasta el `}, config.syncIntervalMs)` que lo cierra), exige que en él haya UNA sola sentencia con `sync.syncRecent()` y que
+esté encadenada detrás de `pasadaRitmoContratos(pool)`, y que exista el import; sin números de línea ni sangría.
+Mutaciones reproducidas: (a) invertir el orden (`sync.syncRecent().then(() => pasadaRitmoContratos(pool))`) → **rojo**;
+(b) una línea en blanco arriba del todo (`index.ts` pasa a 100 líneas) → **verde**. Las dos revertidas con `cmp`.
+
+| Fichero | Edición | Forma |
+|---|---|---|
+| `api/client.ts` | `listarContratos`, `crearContrato`, `contratoPorId`, `informeDeContrato`, `contratoDelTicket` y tres tipos | AL FINAL, 670 → 704 |
+| `ContratosPanel.tsx`, `ContratoFicha.tsx`, `MarcaContrato.tsx` | nuevos | — |
+| `Configuracion.tsx` `:2`, `:33`, `:127`, `:165` | import; `'contratos'` en la unión; segunda entrada en la misma línea; segunda sentencia | EN SITIO, 244 → 244 (+4 −4) |
+| `TicketDetailView.tsx` `:15`, `:320` | import; `MarcaContrato` junto a `PanelOvAsociaciones` | EN SITIO, 420 → 420 (+2 −2) |
+| `docs/sdd/R08.3_Expediente_de_cambios.md` | §12, texto para el maestro (`:2182`, `:2185`, M4.4) | AL FINAL, 657 → 674 |
+
+**Regla 13, decisión a decisión (regla de mutación 3), contra la línea REAL del servidor de hoy:**
+
+| Decisión del cliente | Dónde | Quién la impone en el servidor |
+|---|---|---|
+| El botón «Nuevo contrato» sólo lo ven Comercial y administradores | `ContratosPanel.tsx`, `canExecuteTransition` consumido | `routes/contratos.ts:43` (`403`, antes de leer el cuerpo); matriz por área en `routes/contratos.test.ts` |
+| La entrada «Contratos por lote» y la ficha las ve cualquier usuario con sesión | `Configuracion.tsx:127` | `routes/contratos.ts:24`, `:28`, `:65` (`requireAuth`, sin área: S-16) |
+| El formulario de alta no valida nada (lote, fechas, fin ≥ inicio, cliente, lote libre) | `ContratosPanel.tsx` → `mensajeDelServidor` | `routes/contratos.ts:49` (lote con `esLote`), `:50` (fechas), `:51` (fin ≥ inicio), `:52` (cliente), `:55` y `:59` (`409`); en la base, `schema.sql:570` (`CHECK`) y `:572` (índice único) |
+| El `type="date"` de las fechas | `ContratosPanel.tsx` | Comodidad de entrada, no guarda: `:50` rechaza cualquier otra forma (`31/12/2026` → `422`, probado) |
+| Ningún campo se puede editar ni borrar después del alta: no hay pantalla ni botón | `ContratosPanel.tsx`, `ContratoFicha.tsx` | Ausencia de ruta: `routes/contratos.ts` sólo registra `GET` y `POST`; `PUT`/`PATCH`/`DELETE` caen en el `404` JSON de `/api` |
+| Ningún campo del alta se bloquea en el cliente | `ContratosPanel.tsx` | No hay decisión que espejar: todos los campos los valida `:49-52` |
+| La marca «de contrato» en el ticket, sin control para ponerla ni quitarla | `MarcaContrato.tsx` | `routes/contratos.ts:36` → `db/contratos.ts:106` (`contratoDelTicket`, derivado al leer); ningún endpoint la acepta (prueba «no fijable») |
+| Estado, saldo, % ejecutado, en curso, libres, días, trimestres y servicios | `ContratoFicha.tsx` sólo los enseña | `routes/contratos.ts:28` (estado y saldo) y `:65` → `db/informeContrato.ts` |
+| Prioridad `High` por contrato: el formulario de alta de ticket no cambia | — | `ticketService.ts:106` (`prioridadAlNacer`) |
+| Neutralizar fórmulas en el CSV | `ContratoFicha.tsx` (BOM y `Blob`) | **Ninguna, a propósito**: el fichero lo genera el navegador. La regla vive en `shared/contratos.ts:219` (`celdaCSV`) y `:233` (`csvDelInforme`), probadas en node |
+
+Ninguna decisión se queda sin línea: no hay guarda que viva sólo en el cliente.
+
+**Barrido completo (6.9).** Script que cruza cada cita `fichero:N(-M)` sin ancla con las líneas que el cambio tocó desde
+`5e8f6d4` en los catorce ficheros de `design.md` §8: 97 coincidencias, 39 de ellas de `tasks.md`/`apply-progress.md`. Ninguna
+edición del cambio desplazó líneas, así que las citas de rango (`remision.ts:218-244`, `ticketService.ts:114-223`,
+`index.ts:85-93`, `migrate.ts:70-73`) siguen abarcando el mismo bloque. Leídas una a una las de una sola línea: siguen
+ciertas, **salvo un hallazgo PREVIO al cambio**: `openspec/specs/transitions-st/spec.md:32` y `:1052` citan
+`ticketService.ts:145` como «el actor es el usuario de la sesión», y esa línea ya era un comentario en `5e8f6d4`; hoy el
+actor está en `ticketService.ts:153`. No lo causa este cambio y no se corrige aquí; queda para el verify/archive.
+`git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` vacío.
+
+**Criterios de éxito de `proposal.md`, uno a uno:** (1) `High` con contrato vigente — `ticketService.test.ts`, lote 2;
+(2) vencido en las tres puertas con posición — lote 2; (3) ficha de ticket de contrato y deja de serlo al vencer — lote 3,
+`db/contratos.test.ts` y `MarcaContrato.tsx`; (4) 30 % ejecutado y 50 % consumido a la vez — `informeContrato.test.ts`;
+(5) informe por trimestre exportable con el hueco declarado — lotes 4 y 5; (6) aviso una vez por trimestre —
+`avisoRitmoContrato.test.ts`; (7) `remisiones.test.ts:988` intacta y `ordenVentaUnTicket.test.ts` sin cambios — `git diff
+5e8f6d4`: dos imports en sitio y 71 líneas al final en el primero, cero en el segundo.
+
+**Para el `archive-report`:** cubre de la fila F1B-11 el registro de contrato, la prioridad por contrato, la guarda de
+vencido, el ticket de contrato derivado, el informe trimestral exportable y el aviso de ritmo; deja fuera la ampliación
+(E-086) y la regla Top 5 (F1B-07). `cierra: no`.
+
+**Cierre:** `npm test` 1848 verdes; typecheck limpio; lint 165, los mismos; `npm run build` compila.
