@@ -189,3 +189,54 @@ export interface InformeContrato {
   sinFecha: SubOVDelInforme[]
   huecos: string[]
 }
+
+/*
+ * Lote 5 — ritmo del contrato (`derivacion-avisos` RQ-AV-14) y exportación CSV del informe (S-17, S-23).
+ */
+
+/**
+ * Si al ritmo actual el contrato no consumirá todas sus subOV antes del fin (S-8, S-19): sólo vigente, desde el
+ * trimestre 2 y con creadas. Proyección = ejecutadas + (ejecutadas / transcurridos) × restantes, con transcurridos
+ * contando el día de inicio (`diasEntre + 1`) y restantes = `diasEntre(hoy, fin)`.
+ */
+export function ritmoInsuficiente(c: VigenciaContrato, creadas: number, ejecutadas: number, hoy: DiaCivil): boolean {
+  const k = trimestreEn(c, hoy)
+  if (k == null || k < 2 || creadas <= 0) return false
+  const transcurridos = diasEntre(c.fechaInicio, hoy) + 1
+  const restantes = diasEntre(hoy, c.fechaFin)
+  return ejecutadas + (ejecutadas / transcurridos) * restantes < creadas
+}
+
+/**
+ * Una celda CSV segura (S-17; misma regla que tenía `csvCampo` de `RemisionesPage.tsx:86` en `5d93eb7`, más TAB y CR).
+ * Un TEXTO que empieza por `=`, `+`, `-`, `@`, TAB o CR se lee como fórmula en Excel/Sheets: se le antepone `'`.
+ * Luego se entrecomilla si lleva comilla, coma, CR o LF, duplicando las comillas internas.
+ *
+ * Un NÚMERO pasa tal cual, también negativo (`-5`): lo calcula el servidor, no lo escribe nadie, y neutralizarlo lo
+ * convertiría en texto y rompería ordenar y sumar en la hoja. El TEXTO `"-5"` sí se neutraliza: en texto libre no hay
+ * forma barata de distinguirlo de `-5+cmd|…`, y quien exporta números los pasa como número.
+ */
+export function celdaCSV(v: string | number | null | undefined): string {
+  if (v == null) return ''
+  if (typeof v === 'number') return String(v)
+  const seguro = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v
+  return /[",\r\n]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro
+}
+
+const COLUMNAS_CSV = ['Fila', 'Trimestre', 'Desde', 'Hasta', '% ejecutado acumulado', 'SubOV libres hoy', 'Días hasta el fin',
+  'SubOV', 'Ticket', 'Equipo', 'Serial', 'Tipo de servicio', 'Fecha', 'Informe']
+
+/**
+ * El CSV del informe (S-23): una fila por trimestre y, debajo, una por cada servicio suyo. El cliente sólo le pone el
+ * BOM y lo descarga (regla 13: no calcula nada). Separador `,` y fin de línea CRLF, como `RemisionesPage.tsx`.
+ */
+export function csvDelInforme(inf: Pick<InformeContrato, 'libres' | 'diasHastaFin' | 'trimestres'>): string {
+  const filas: Array<Array<string | number | null>> = [COLUMNAS_CSV]
+  for (const t of inf.trimestres) {
+    filas.push(['Trimestre', t.k, t.inicio, t.fin, t.porcentajeEjecutado, inf.libres, inf.diasHastaFin, null, null, null, null, null, null, null])
+    for (const s of t.servicios) {
+      filas.push(['Servicio', t.k, null, null, null, null, null, s.subOV, s.ticketNumber, s.equipo, s.serial, s.tipoServicio, s.fecha, s.informe])
+    }
+  }
+  return filas.map((f) => f.map(celdaCSV).join(',')).join('\r\n')
+}

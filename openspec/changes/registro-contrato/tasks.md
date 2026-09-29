@@ -310,21 +310,21 @@ Módulos nuevos: `apps/desk/server/db/informeContrato.ts` y su prueba. `shared/c
 
 Módulos nuevos: `apps/desk/server/services/avisoRitmoContrato.ts` y su prueba. `db/avisos.ts` **no se toca**. Cita a releer: `:85` de `index.ts` (`zoho-sync :48, :177`; `proposal.md:118`) sigue siendo el `setInterval`.
 
-- [ ] 5.1 RED — `contratos.test.ts` (al final): `ritmoInsuficiente` (10 creadas, 3 ejecutadas, 90 transcurridos y 90 restantes → `true`; 6 ejecutadas → `false`; dentro del trimestre 1 → `false`; 0 creadas → `false`; contrato vencido → `false`; transcurridos = `diasEntre(inicio, hoy) + 1`, S-19);
-  `celdaCSV` (`=`, `+`, `-`, `@`, TAB y CR al inicio → prefijo `'`; comillas, coma y LF → entrecomillada; texto normal intacto; mismas salidas que `csvCampo` de `RemisionesPage.tsx:86` para comillas, coma y LF); `csvDelInforme` (una fila por trimestre y por servicio, columnas del escenario, «informe» con el hueco, una fórmula en `equipo` neutralizada). RQ: RQ-AV-14 (regla), RQ-ZS-15 (exportación), amenaza «fórmulas en el CSV».
-- [ ] 5.2 Confirmar rojo natural.
-- [ ] 5.3 GREEN — `ritmoInsuficiente`, `celdaCSV`, `csvDelInforme` (S-17, S-19, S-23).
-- [ ] 5.4 Confirmar 5.1 en verde.
-- [ ] 5.5 MUTACIÓN — quitar TAB y CR de los prefijos de `celdaCSV`; 5.1 ROJO. Revertir.
-- [ ] 5.6 RED — `services/avisoRitmoContrato.test.ts` (nuevo, pg-mem): 3 de 10 con 90/90 tras t1 → un aviso a cada destinatario Comercial, con lote, cliente, 3, 10 y fecha de fin; segunda evaluación en el mismo trimestre (ahora 4 ejecutadas) → cero; trimestre siguiente → otro; 6 de 10 → cero; dentro de t1 → cero; 0 creadas y vencido con ritmo malo → cero;
+- [x] 5.1 RED — `contratos.test.ts` (al final): `ritmoInsuficiente` (10 creadas, 3 ejecutadas, 90 transcurridos y 90 restantes → `true`; 6 ejecutadas → `false`; dentro del trimestre 1 → `false`; 0 creadas → `false`; contrato vencido → `false`; transcurridos = `diasEntre(inicio, hoy) + 1`, S-19);
+  `celdaCSV` (`=`, `+`, `-`, `@`, TAB y CR al inicio → prefijo `'`; comillas, coma y LF → entrecomillada; texto normal intacto; mismas salidas que `csvCampo` de `RemisionesPage.tsx:86` en `5d93eb7` para comillas, coma y LF); `csvDelInforme` (una fila por trimestre y por servicio, columnas del escenario, «informe» con el hueco, una fórmula en `equipo` neutralizada). RQ: RQ-AV-14 (regla), RQ-ZS-15 (exportación), amenaza «fórmulas en el CSV».
+- [x] 5.2 Confirmar rojo natural.
+- [x] 5.3 GREEN — `ritmoInsuficiente`, `celdaCSV`, `csvDelInforme` (S-17, S-19, S-23).
+- [x] 5.4 Confirmar 5.1 en verde.
+- [x] 5.5 MUTACIÓN — quitar TAB y CR de los prefijos de `celdaCSV`; 5.1 ROJO. Revertir.
+- [x] 5.6 RED — `services/avisoRitmoContrato.test.ts` (nuevo, pg-mem): 3 de 10 con 90/90 tras t1 → un aviso a cada destinatario Comercial, con lote, cliente, 3, 10 y fecha de fin; segunda evaluación en el mismo trimestre (ahora 4 ejecutadas) → cero; trimestre siguiente → otro; 6 de 10 → cero; dentro de t1 → cero; 0 creadas y vencido con ritmo malo → cero;
   `enviado_at` `NULL` y sin canal de correo; **fallo forzado de `crearAviso` → la marca se revierte y no lanza**; `pasadaRitmoContratos` evalúa como mucho una vez por día civil y proceso y nunca lanza. RQ: RQ-AV-14 (7 escenarios), amenaza «un fallo del aviso tumba la sincronización».
-- [ ] 5.7 Confirmar rojo natural.
-- [ ] 5.8 GREEN — `avisoRitmoContrato.ts`: `avisarRitmoContratos(db, hoy)` con `UPDATE contratos SET ritmo_avisado_trimestre = $2 WHERE id = $1 AND COALESCE(ritmo_avisado_trimestre,0) < $2 RETURNING id` y `crearAviso` en la misma transacción (patrón de `avisoDiscrepanciaOV.ts:24-46`); `pasadaRitmoContratos`.
-- [ ] 5.9 Confirmar 5.6 en verde.
-- [ ] 5.10 MUTACIÓN — (a) quitar `AND COALESCE(…) < $2` del `UPDATE`: «segunda evaluación» ROJA; (b) sacar `crearAviso` de la transacción: «fallo forzado» ROJA. Revertir.
-- [ ] 5.11 GREEN (sin prueba de unidad: es el arranque del servidor) — `index.ts:15` y `:88` en su sitio; se comprueba por lectura y `npm run typecheck`. La pasada corre antes de `sync.syncRecent()` y no depende de que éste tenga éxito. Hipótesis: `index.ts:85` registra el `setInterval` siempre; la comprueba P.6.
-- [ ] 5.12 GREEN (sin prueba: `.tsx` fuera de la red, F0-00) — `RemisionesPage.tsx:2` y `:85-88` en su sitio: `const csvCampo = celdaCSV`; la equivalencia queda probada en 5.1.
-- [ ] 5.13 Cierre del lote 5: `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `avisoRitmoContrato.ts` y su prueba); recuentos `index.ts` 99 y `RemisionesPage.tsx` 336 sin cambio; barrido de citas sobre `index.ts` (10) y `RemisionesPage.tsx` (3: `:107`, `:119`, `:132`); `apply-progress.md`.
+- [x] 5.7 Confirmar rojo natural.
+- [x] 5.8 GREEN — `avisoRitmoContrato.ts`: `avisarRitmoContratos(db, hoy)` con `UPDATE contratos SET ritmo_avisado_trimestre = $2 WHERE id = $1 AND COALESCE(ritmo_avisado_trimestre,0) < $2 RETURNING id` y `crearAviso` en la misma transacción (patrón de `avisoDiscrepanciaOV.ts:24-46`); `pasadaRitmoContratos`.
+- [x] 5.9 Confirmar 5.6 en verde.
+- [x] 5.10 MUTACIÓN — (a) quitar `AND COALESCE(…) < $2` del `UPDATE`: «segunda evaluación» ROJA; (b) sacar `crearAviso` de la transacción: «fallo forzado» ROJA. Revertir.
+- [x] 5.11 GREEN (sin prueba de unidad del arranque; SÍ una del fichero vigilado, `avisoRitmoContrato.test.ts`, que lee `:15` y `:88`) — `index.ts:15` y `:88` en su sitio; se comprueba por lectura y `npm run typecheck`. La pasada corre antes de `sync.syncRecent()` y no depende de que éste tenga éxito. Hipótesis: `index.ts:85` registra el `setInterval` siempre; la comprueba P.6.
+- [x] 5.12 GREEN (sin prueba: `.tsx` fuera de la red, F0-00) — `RemisionesPage.tsx:2` y `:85-88` en su sitio: `const csvCampo = celdaCSV`; la equivalencia queda probada en 5.1.
+- [x] 5.13 Cierre del lote 5: `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `avisoRitmoContrato.ts` y su prueba); recuentos `index.ts` 99 y `RemisionesPage.tsx` 336 sin cambio; barrido de citas sobre `index.ts` (10) y `RemisionesPage.tsx` (3: `:107`, `:119`, `:132`); `apply-progress.md`.
 
 ---
 

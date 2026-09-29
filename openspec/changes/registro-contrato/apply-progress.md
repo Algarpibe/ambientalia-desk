@@ -208,3 +208,50 @@ la que hoy pone roja esa mutación.
 **Cierre:** `npm test` 1811 verdes (+27); typecheck limpio; lint 165, los mismos. Barrido: ninguna cita a `subOV.ts` pasa
 de la línea 49 y `shared/src/subOV.ts` no se toca; `LOTE_OV` sale del código y sus cuatro menciones de `design.md` pasan a
 `esLote` (la de `:62` dice que se retiró).
+
+## Lote 5 · Ritmo y CSV — 2026-09-29
+
+**Ledger:** objetivo generación 5, techo 800, 2 intentos. **Estimado antes de escribir:** ~580 (plan ~545 + la prueba
+del fichero vigilado `index.ts` y la tabla ampliada de `celdaCSV`). La medida real va en el `settle`.
+
+| Fichero | Edición | Forma |
+|---|---|---|
+| `shared/contratos.ts` | `ritmoInsuficiente`, `celdaCSV`, `csvDelInforme` | AL FINAL |
+| `services/avisoRitmoContrato.ts` y su prueba | nuevos (`marcarYAvisarRitmo`, `avisarRitmoContratos`, `pasadaRitmoContratos`) | — |
+| `index.ts` `:15`, `:88` | import al final de la línea; la pasada ANTES de `sync.syncRecent()` | EN SITIO, 99 → 99 (+2 −2) |
+| `RemisionesPage.tsx` `:2`, `:85-88` | import; tres líneas de comentario y `const csvCampo = celdaCSV` | EN SITIO, 336 → 336 (+5 −5) |
+| `db/avisos.ts` | no se toca | — |
+
+**El `-5`.** Un NÚMERO pasa tal cual, también negativo: lo calcula el servidor (`diasHastaFin`), nadie lo teclea, y
+neutralizarlo lo volvería texto y rompería ordenar y sumar en la hoja. Un TEXTO que empieza por `-` (también `"-5"`) se
+neutraliza con `'`: en texto libre no hay forma barata de distinguirlo de `-5+cmd|…`. Por eso `celdaCSV` acepta
+`string | number | null` y `csvDelInforme` pasa los números como números. `RemisionesPage` sólo pasa textos: su
+comportamiento con `-` no cambia; lo único nuevo son TAB y CR.
+
+**Atomicidad por estructura.** pg-mem no revierte un `ROLLBACK` (`db/transaccion.test.ts:25`, T0), así que «un fallo de
+`crearAviso` deja la marca sin cambiar» no se puede ver en la tabla. Se prueba con un rastreador que etiqueta quién
+recibe cada sentencia: `cliente:BEGIN, cliente:UPDATE, cliente:SELECT, cliente:INSERT, cliente:ROLLBACK` y nada por el
+pool. En Postgres de verdad, esa secuencia en un mismo cliente revierte también la marca.
+
+**Rojos previos:** 5.1 → 23 (`ritmoInsuficiente`, `celdaCSV`, `csvDelInforme` inexistentes). 5.6 → módulo inexistente;
+tras el GREEN del servicio quedó roja sólo la del fichero vigilado `index.ts:88`, hasta editar `index.ts`.
+
+**Mutaciones reproducidas por el orquestador (diff visible, revertidas con `cmp`):**
+
+| Mutación | Rojas |
+|---|---|
+| 5.5 · sin TAB ni CR en los prefijos | 2 |
+| 5.10a · `UPDATE` sin `AND COALESCE(…) < $2` | **0 en la primera pasada** → prueba nueva de `marcarYAvisarRitmo` dos veces en el mismo trimestre → 1 |
+| 5.10b · `crearAviso` por el pool, fuera de la transacción | 3 |
+| una vez por día · sin la variable de módulo | 1 |
+| nunca lanza · sin el `try/catch` de la pasada | 1 |
+| `-5` numérico tratado como texto | 2 |
+| sin `k < 2` (evaluar en el trimestre 1) | 1 |
+| prefiltro de la marca en `avisarRitmoContratos` | 0 — **declarado**: es una optimización (no calcular el informe de un contrato ya avisado); el `UPDATE` condicional cubre el caso |
+
+5.10a sobrevivía porque el prefiltro repetía la guarda antes de llegar al `UPDATE`. La guarda que protege de dos
+evaluaciones que leen la marca antes de escribirla es la del `UPDATE`, y ahora tiene su prueba.
+
+**Cierre:** `npm test` 1848 verdes (+37); typecheck limpio; lint 165, los mismos. Barrido: ninguna línea de `index.ts` ni
+de `RemisionesPage.tsx` se desplaza; las citas a `index.ts:85`, `:85-93`, `RemisionesPage.tsx:107-115`, `:119`, `:132`
+siguen ciertas; `RemisionesPage.tsx:86` (dos citas: `design.md:279`, `tasks.md:314`) es caso B, anclada `en 5d93eb7`.

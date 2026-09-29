@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { RemisionListado } from '@ambientalia/shared'
+import type { RemisionListado } from '@ambientalia/shared'; import { celdaCSV } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionesListado, anularRemision, restaurarRemision } from '../api/client'
 import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA, fmtFecha } from '../lib/remisionResultado'
@@ -82,10 +82,10 @@ function ticketNumeroPlano(r: RemisionListado): string {
  * como "- Sin cable" saldría como error en la celda—. Anteponer una comilla simple es la marca
  * estándar de "esto es texto"; Excel la usa para decidir y no la muestra.
  */
-function csvCampo(v: string): string {
-  const seguro = /^[=+\-@]/.test(v) ? `'${v}` : v
-  return /[",\r\n]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro
-}
+// La regla vive en `celdaCSV` de `shared` (registro-contrato, lote 5): la de esta función en `5d93eb7` más TAB y
+// CR al inicio. El informe de contratos la usa igual, para que las dos exportaciones no diverjan; su prueba está en
+// `packages/shared/src/contratos.test.ts`, porque este `.tsx` queda fuera de la red de pruebas (F0-00).
+const csvCampo = celdaCSV
 
 /**
  * La fecha para el CSV. Lleva la hora cuando la hay —mismo criterio que la tabla— pero en 24h

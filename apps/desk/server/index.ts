@@ -12,7 +12,7 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'
+import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -85,7 +85,7 @@ async function main() {
   setInterval(() => {
     if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
     syncing = true
-    let p: Promise<unknown> = sync.syncRecent()
+    let p: Promise<unknown> = pasadaRitmoContratos(pool).then(() => sync.syncRecent())
     if (config.syncActivities) p = p.then(() => sync.syncActivities())
     if (config.syncContacts) p = p.then(() => sync.syncContacts())
     p.catch((err) => logger.error({ err }, 'Sync incremental falló'))

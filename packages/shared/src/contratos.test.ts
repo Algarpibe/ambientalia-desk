@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { esLote, diasEntre, porcentaje, estadoSubOV, fechaCalendario, estadoContrato, motivoVencido, prioridadAlNacer, hoyEnZona, trimestresDelContrato, trimestreEn } from '@ambientalia/shared'
+import { esLote, ritmoInsuficiente, celdaCSV, csvDelInforme, diasEntre, porcentaje, estadoSubOV, fechaCalendario, estadoContrato, motivoVencido, prioridadAlNacer, hoyEnZona, trimestresDelContrato, trimestreEn } from '@ambientalia/shared'
 
 /**
  * Contrato por lote (registro-contrato, lote 1; `tickets-core` RQ-TC-21, RQ-TC-22). Se importa desde
@@ -156,5 +156,62 @@ describe('diasEntre, porcentaje y estadoSubOV', () => {
     expect(estadoSubOV('Finalizado')).toBe('ejecutada')
     expect(estadoSubOV('Por Facturar')).toBe('en_curso')
     expect(estadoSubOV('Ingresado')).toBe('en_curso')
+  })
+})
+
+// Lote 5 — ritmo (RQ-AV-14, S-19) y CSV (S-17, S-23; amenaza «fórmulas en el CSV»).
+describe('ritmoInsuficiente · proyección = ejecutadas + (ejecutadas / transcurridos) × restantes < creadas', () => {
+  // Inicio 2026-02-01, fin 2026-07-30: el trimestre 1 acaba el 2026-04-30. Hoy 2026-05-01 → transcurridos 90
+  // (diasEntre + 1, el de inicio cuenta) y restantes 90, ya en el trimestre 2.
+  const c = { fechaInicio: '2026-02-01', fechaFin: '2026-07-30' }
+  const HOY = '2026-05-01'
+  it('90/90 con 3 de 10 → true (proyección 6)', () => expect(ritmoInsuficiente(c, 10, 3, HOY)).toBe(true))
+  it('90/90 con 6 de 10 → false (proyección 12)', () => expect(ritmoInsuficiente(c, 10, 6, HOY)).toBe(false))
+  it('dentro del trimestre 1 → false, aunque vaya a 0', () => expect(ritmoInsuficiente(c, 10, 0, '2026-04-30')).toBe(false))
+  it('0 creadas → false', () => expect(ritmoInsuficiente(c, 0, 0, HOY)).toBe(false))
+  it('contrato vencido con ritmo malo → false', () => expect(ritmoInsuficiente(c, 10, 1, '2026-07-31')).toBe(false))
+  it('el último día del contrato, con 9 de 10 → true (restantes 0: proyección 9)', () => expect(ritmoInsuficiente(c, 10, 9, '2026-07-30')).toBe(true))
+})
+
+describe('celdaCSV · neutraliza fórmulas, escapa comillas, entrecomilla si hace falta', () => {
+  it.each<[string, string | number | null, string]>([
+    ['= fórmula', '=SUM(A1:A9)', "'=SUM(A1:A9)"],
+    ['+ fórmula', '+1+1', "'+1+1"],
+    ['- fórmula', '-2+3', "'-2+3"],
+    ['@ fórmula', '@SUM(A1)', "'@SUM(A1)"],
+    ['TAB inicial', '\t=1', "'\t=1"],
+    ['CR inicial (se neutraliza y, por llevar CR, se entrecomilla)', '\r=1', "\"'\r=1\""],
+    ['texto con «-» en medio', 'Equipo - sin cable', 'Equipo - sin cable'],
+    ['texto que empieza por «- »', '- Sin cable', "'- Sin cable"],
+    ['-5 como NÚMERO: pasa tal cual (lo calcula el servidor, no es texto de nadie)', -5, '-5'],
+    ['"-5" como TEXTO: se neutraliza (en texto libre no se distingue de «-5+cmd»)', '-5', "'-5"],
+    ['número positivo', 30, '30'],
+    ['texto normal', 'Mantenimiento', 'Mantenimiento'],
+    ['comillas → duplicadas y entrecomillado', 'Equipo "A"', '"Equipo ""A"""'],
+    ['coma → entrecomillado', 'Bogotá, D.C.', '"Bogotá, D.C."'],
+    ['LF → entrecomillado', 'línea 1\nlínea 2', '"línea 1\nlínea 2"'],
+    ['null → vacío', null, ''],
+  ])('%s', (_n, entrada, salida) => expect(celdaCSV(entrada)).toBe(salida))
+})
+
+describe('csvDelInforme · una fila por trimestre y por servicio (S-23)', () => {
+  const servicio = (fecha: string, equipo: string) => ({
+    subOV: 'OV-2026-170-01', ticketId: 't1', ticketNumber: 12, equipo, serial: 'S1', tipoServicio: 'Mantenimiento', fecha,
+    informe: 'No disponible en los datos' as const,
+  })
+  const inf = {
+    libres: 4, diasHastaFin: -5,
+    trimestres: [
+      { k: 1, inicio: '2026-01-01', fin: '2026-03-31', ejecutadasAlCierre: 1, porcentajeEjecutado: 20, servicios: [servicio('2026-02-10', '=HYPERLINK("x")')] },
+      { k: 2, inicio: '2026-04-01', fin: '2026-06-30', ejecutadasAlCierre: 1, porcentajeEjecutado: 20, servicios: [] },
+    ],
+  }
+  it('cabecera, fila de trimestre, sus servicios, y el hueco del informe; la fórmula del equipo, neutralizada', () => {
+    const lineas = csvDelInforme(inf).split('\r\n')
+    expect(lineas[0]).toBe('Fila,Trimestre,Desde,Hasta,% ejecutado acumulado,SubOV libres hoy,Días hasta el fin,SubOV,Ticket,Equipo,Serial,Tipo de servicio,Fecha,Informe')
+    expect(lineas[1]).toBe('Trimestre,1,2026-01-01,2026-03-31,20,4,-5,,,,,,,')
+    expect(lineas[2]).toBe('Servicio,1,,,,,,OV-2026-170-01,12,"\'=HYPERLINK(""x"")",S1,Mantenimiento,2026-02-10,No disponible en los datos')
+    expect(lineas[3]).toBe('Trimestre,2,2026-04-01,2026-06-30,20,4,-5,,,,,,,')
+    expect(lineas).toHaveLength(4)
   })
 })

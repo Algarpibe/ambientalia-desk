@@ -276,7 +276,7 @@ flag nuevo (no enciende ningún escritor externo). Alta de contratos vigentes: t
   `contratos.ritmo_avisado_trimestre`.
 - **S-15** Fecha de ejecución = primera llegada a `Finalizado` en `ticket_transitions`, en día de negocio.
 - **S-16** Lecturas abiertas a cualquier sesión; escritura, Comercial o administración.
-- **S-17** `celdaCSV` en `shared` amplía la regla de `RemisionesPage.tsx:86` con TAB y CR, y las dos pantallas la consumen.
+- **S-17** `celdaCSV` en `shared` amplía la regla de `RemisionesPage.tsx:86` en `5d93eb7` con TAB y CR, y las dos pantallas la consumen.
 - **S-18** `comoDiaCivil` se exporta en sitio desde `calendarioCierres.ts:18` y se reusa.
 - **S-19** Ritmo: días transcurridos incluyen el de inicio; sólo contratos vigentes, desde el trimestre 2, con creadas > 0.
 - **S-20** `creadasDelLote` nueva al final de `books/subOV.ts`; `saldoPorLote` intacto y enfrentado por prueba.
