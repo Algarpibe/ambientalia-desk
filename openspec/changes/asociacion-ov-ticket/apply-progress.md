@@ -479,11 +479,11 @@ Lote 5 completo: 3 + 22 tareas. Nacieron verdes (además de las celdas citadas):
 
 | Decisión del cliente | Línea del servidor que la impone |
 |---|---|
-| Botón «Liberar» sólo para Comercial y administrador (`PanelOvAsociaciones.tsx`, mismo `canExecuteTransition` de `@ambientalia/shared`) | `routes/ovAsociaciones.ts:46` (403) |
-| Motivo obligatorio: el cliente NO lo comprueba, manda y enseña el error | `routes/ovAsociaciones.ts:50` (422) |
-| Asociación ya liberada: el cliente NO lo comprueba, enseña el error | `routes/ovAsociaciones.ts:47` (409; carrera en `:53`) |
-| La lista de OV del ticket la ve cualquier usuario con sesión; el panel va plegado | `routes/ovAsociaciones.ts:25` (`requireAuth`, sin rol): la visibilidad es comodidad |
-| Cuarentena y saldo: la entrada y la pantalla las ve cualquiera; el formato del lote lo valida el servidor | `routes/ovAsociaciones.ts:29`, `:33` (`requireAuth`), `:35` (422 de formato) |
+| Botón «Liberar» sólo para Comercial y administrador (`PanelOvAsociaciones.tsx`, mismo `canExecuteTransition` de `@ambientalia/shared`) | `routes/ovAsociaciones.ts:47` (403) |
+| Motivo obligatorio: el cliente NO lo comprueba, manda y enseña el error | `routes/ovAsociaciones.ts:51` (422) |
+| Asociación ya liberada: el cliente NO lo comprueba, enseña el error | `routes/ovAsociaciones.ts:48` (409; carrera en `:54`) |
+| La lista de OV del ticket la ve cualquier usuario con sesión; el panel va plegado | `routes/ovAsociaciones.ts:26` (`requireAuth`, sin rol): la visibilidad es comodidad |
+| Cuarentena y saldo: la entrada y la pantalla las ve cualquiera; el formato del lote lo valida el servidor | `routes/ovAsociaciones.ts:30`, `:34` (`requireAuth`), `:36` (422 de formato) |
 | El desplegable de OV oculta las usadas y las de cuarentena | `books/repo.ts:159-162` (`libresFilter`) y `:176` (`esCuarentena`) |
 | `aprobacion`: al elegir la OV adicional se autorrellena `Fecha Orden de Venta Final` y se bloquea el teclado si ya tiene valor (`TransitionPanel.tsx:103`, `:174`) | **Ninguna.** `transitionExec.ts:91` guarda cualquier valor de ese campo como fecha normal (`convert`, `:33`, sólo trunca a 10 caracteres); el servidor no autorrellena ni comprueba que la fecha sea la de la OV. Comodidad pura (regla 13, punto 2), declarada. No bloquea nada que el servidor rechace |
 | `aprobacion_y_repuestos`: `Fecha Orden De Venta` vuelve a ser tecleable (`TransitionPanel.tsx:66`; `cfOvAdicional()` sin `campoFecha`) y obligatoria | `transitionExec.ts:77` (`Falta el campo obligatorio`), con `cfDate` `required = true` por defecto (`transitions.ts:75`) |

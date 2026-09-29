@@ -194,8 +194,8 @@ Ficheros de cliente tocados (`git diff --stat 4501784^ HEAD -- apps/desk/src`): 
 
 | Decisión del cliente | Línea citada | ¿Existe y dice lo que la tabla afirma? | Estado |
 |---|---|---|---|
-| Botón «Liberar» sólo Comercial/admin (`PanelOvAsociaciones.tsx:82`, `canExecuteTransition`) | `ovAsociaciones.ts:46` | Sí: 403 si no `canExecuteTransition(user.areas, user.isAdmin, 'Comercial')`. Probada por `RUT:31` | PASS, espejo probado |
-| Motivo obligatorio (el cliente no comprueba) | `ovAsociaciones.ts:50` | Sí: 422 si el motivo recortado es vacío. `RUT:117-122` | PASS |
+| Botón «Liberar» sólo Comercial/admin (`PanelOvAsociaciones.tsx:82`, `canExecuteTransition`) | `ovAsociaciones.ts:47` | Sí: 403 si no `canExecuteTransition(user.areas, user.isAdmin, 'Comercial')`. Probada por `RUT:31` | PASS, espejo probado |
+| Motivo obligatorio (el cliente no comprueba) | `ovAsociaciones.ts:51` | Sí: 422 si el motivo recortado es vacío. `RUT:117-122` | PASS |
 | Asociación ya liberada (el cliente no comprueba) | `:47` (409), carrera `:53` | Sí. `RUT:106`, `RUT:115` | PASS |
 | La lista de OV del ticket la ve cualquier usuario con sesión | `:25` | Sí: `requireAuth`, sin rol. `RUT:41-49` | PASS, comodidad |
 | Cuarentena y saldo | `:29`, `:33`, `:35` | Sí: `requireAuth` y 422 de formato del lote. `RUT:152` | PASS |
@@ -255,7 +255,7 @@ IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` re
 |---|---|---|
 | §1 tabla en `public`, dos índices parciales, nunca `DELETE` | `schema.sql:539`, `:552-553`; búsqueda de `DELETE FROM ov_asociaciones` en `apps` y `packages`: 0 | Cumple, por construcción |
 | §2 `eliminarTicket` libera las vigentes | `eliminarTicket.ts:154`; `EL:173`, `EL:189` | Cumple |
-| **§3 S-7: `liberarAsociacion` limpia `orden_venta`/`salesorder_id`/`fecha_orden_venta` y fija la marca** | `ovAsociaciones.ts:74-86` sólo hace `UPDATE ov_asociaciones`; la ruta (`ovAsociaciones.ts:52`) no toca `tickets` | **NO cumple** (CRITICAL 1) |
+| **§3 S-7: `liberarAsociacion` limpia `orden_venta`/`salesorder_id`/`fecha_orden_venta` y fija la marca** | `ovAsociaciones.ts:74-86` en `2c43e5c` sólo hace `UPDATE ov_asociaciones`; la ruta (`ovAsociaciones.ts:52` en `2c43e5c`) no toca `tickets` | **NO cumple** (CRITICAL 1) |
 | §4 destino `ovAdicional`, sin `campoFecha` en `aprobacion_y_repuestos` | `transitionExec.ts:88`, `transitions.ts:199`, `TX:244` | Cumple |
 | §5 clasificador: sufijo = resto que empieza por no-dígito | `subOV.ts:24-25`; `SO:31`, `SO:56` | Cumple |
 | Riesgos: la carrera puerta/`INSERT` sale como 500 | el 23505 no se atrapa en ningún sitio fuera de pruebas | Declarado en el diseño, ver WARNING 1 |
@@ -271,7 +271,7 @@ Ninguno tras la remediación. El del primer verify, conservado como historia:
 
 **1. [RESUELTO por la remediación] RQ-TC-19, escenario «Tras liberar, la OV es reasociable», y criterio de éxito 3: liberar NO deja la OV libre.**
 - **Qué exige la spec** (`specs/tickets-core/spec.md:142-143`): tras liberar, la asociación se crea sin que el índice único parcial la rechace, «y ninguna de las tres vías de las puertas la encuentra ya en el ticket que la liberó (S-7: liberar limpia sus columnas)». El diseño (`design.md:89-97`, `:213`) precisa que `liberarAsociacion` hace el `UPDATE` de la fila y además pone a NULL `orden_venta`, `salesorder_id` y `fecha_orden_venta` del ticket si guardan esa OV, con `ov_elegida_en_app_at = now()`. `design.md:184` lo repite («`liberarAsociacion` con limpieza de columna»).
-- **Qué hace el código** (lectura, sin ejecutar una sonda): `packages/zoho-sync/src/db/ovAsociaciones.ts:74-86` ejecuta un único `UPDATE ov_asociaciones`; la ruta que lo llama, `apps/desk/server/routes/ovAsociaciones.ts:52`, no toca `tickets`. La tarea 1.10 (`tasks.md:81-83`) ya omitió la limpieza y ninguna tarea posterior la recoge.
+- **Qué hace el código** (lectura, sin ejecutar una sonda): `packages/zoho-sync/src/db/ovAsociaciones.ts:74-86` en `2c43e5c` ejecuta un único `UPDATE ov_asociaciones`; la ruta que lo llama, `apps/desk/server/routes/ovAsociaciones.ts:52` en `2c43e5c`, no toca `tickets`. La tarea 1.10 (`tasks.md:81-83`) ya omitió la limpieza y ninguna tarea posterior la recoge.
 - **Por qué es real:** los tres escritores dejan la OV también en las columnas del ticket (alta con `ordenVenta`/`salesorderId`; `repo.ts:311`; `remision.ts:240`). Tras liberar, `ticketConOrdenVenta` (`repo.ts:366-372`) sigue encontrando ese ticket por `salesorder_id` y por `orden_venta`, así que un ticket nuevo con esa OV recibe el 409 de las tres puertas; y `libresFilter` (`books/repo.ts:159-162`) sigue excluyéndola del desplegable por las columnas de `tickets`. La OV liberada de un ticket real no vuelve.
 - **Por qué ninguna prueba se puso roja:** las pruebas que tocan «reasociable» usan tickets sin columnas: `OA:86` sólo llama a `asociarOV`, `OA:145` usa un ticket sin columnas y `BR:101` no crea ningún ticket. La matriz de `tasks.md:448-478` cuenta la tarea 1.8 como cobertura, pero la 1.8 sólo pide «no lanza 23505» (`tasks.md:78-79`), la mitad fácil del THEN. Es el molde de la regla de mutación 2: la prueba no sabe distinguir.
 - **Consecuencia sobre S-9:** su límite presupone que liberar sí limpia; sin la limpieza, ni las filas nuevas son liberables de verdad.

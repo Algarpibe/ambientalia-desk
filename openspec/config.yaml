@@ -3152,7 +3152,7 @@ adenda_iv11_asociacion_ov_ticket:
     `writeTransition` (`packages/zoho-sync/src/db/repo.ts:311`) y la remisión de entrada
     (`apps/desk/server/routes/remision.ts:239-243`)—; las tres puertas de «una OV, un ticket»
     leen esa tercera vía (`repo.ts:362-379`); y liberar una asociación exige rol Comercial y motivo
-    (`apps/desk/server/routes/ovAsociaciones.ts:46`, `:50`), sin borrar nunca la fila.
+    (`apps/desk/server/routes/ovAsociaciones.ts:47`, `:51`), sin borrar nunca la fila.
     IV-11 SIGUE REDUCIDO, NO CERRADO. Las filas cuya orden se eligió ANTES de
     `parche-iv11-orden-venta` o de este cambio no tienen ni la marca `ov_elegida_en_app_at` ni fila
     de asociación: no hay relleno retroactivo (P.2 de Gerencia pendiente, dato de producción), así
