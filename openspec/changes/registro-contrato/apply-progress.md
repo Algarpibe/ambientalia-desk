@@ -289,7 +289,7 @@ Mutaciones reproducidas: (a) invertir el orden (`sync.syncRecent().then(() => pa
 | La marca «de contrato» en el ticket, sin control para ponerla ni quitarla | `MarcaContrato.tsx` | `routes/contratos.ts:36` → `db/contratos.ts:106` (`contratoDelTicket`, derivado al leer); ningún endpoint la acepta (prueba «no fijable») |
 | Estado, saldo, % ejecutado, en curso, libres, días, trimestres y servicios | `ContratoFicha.tsx` sólo los enseña | `routes/contratos.ts:28` (estado y saldo) y `:65` → `db/informeContrato.ts` |
 | Prioridad `High` por contrato: el formulario de alta de ticket no cambia | — | `ticketService.ts:106` (`prioridadAlNacer`) |
-| Neutralizar fórmulas en el CSV | `ContratoFicha.tsx` (BOM y `Blob`) | **Ninguna, a propósito**: el fichero lo genera el navegador. La regla vive en `shared/contratos.ts:219` (`celdaCSV`) y `:233` (`csvDelInforme`), probadas en node |
+| Neutralizar fórmulas en el CSV | `ContratoFicha.tsx` (BOM y `Blob`) | **Ninguna, a propósito**: el fichero lo genera el navegador. La regla vive en `packages/shared/src/contratos.ts:219` (`celdaCSV`) y `:233` (`csvDelInforme`), probadas en node |
 
 Ninguna decisión se queda sin línea: no hay guarda que viva sólo en el cliente.
 
