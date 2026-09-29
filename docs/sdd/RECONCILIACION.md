@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `ee6de25` · **Fecha del commit:** 2026-09-29
+**Commit medido:** `4c371de` · **Fecha del commit:** 2026-09-29
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -11,12 +11,12 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 ## 1 · Capacidades declaradas frente a specs en disco
 
   20 declaradas
-  14 ficheros
+  15 ficheros
   0 huérfanas
 
 ## 2 · Numerador del avance — dos cifras, nunca una suma
 
-  11 derivables de cabecera ..................... F0-01, F0-02, F0-03, F0-05, F1A-06, F1A-07, F1A-08, F1B-02, F1B-10, F1B-12, F1B-14
+  12 derivables de cabecera ..................... F0-01, F0-02, F0-03, F0-05, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14
   0 declarados por commit ....................... —
   denominador 52 tandas del apartado 5 del plan
   4 marcadas sin verificar
