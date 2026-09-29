@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { crearAviso, listarAvisos, marcarLeidos, marcarEnviados, destinatariosDeArea } from './avisos'
+import { crearAviso, listarAvisos, marcarLeidos, marcarEnviados, destinatariosDeArea, destinatariosDeCargo } from './avisos'
 import { createRole, updateRole, actualizarRecibeAvisos } from '../auth/roles'
 import { createUser, updateUser } from '../auth/users'
 
@@ -102,5 +102,40 @@ describe('destinatariosDeArea', () => {
     await actualizarRecibeAvisos(db, tec.id, true)
     await createUser(db, { email: 'tec@x.co', name: 'Tec', passwordHash: 'h', roleId: tec.id })
     expect(await destinatariosDeArea(db, 'Comercial', '')).toEqual([])
+  })
+})
+
+/**
+ * alarmas-horas-habiles (F1B-08, lote 2) · RQ-AV-15: a quién va la alarma de SLA vencido.
+ *
+ * Exactamente los usuarios ACTIVOS cuyo `users.cargo` es el cargo de la alarma, comparado sin
+ * mayúsculas ni espacios en los extremos: el campo es texto libre (se escribe para firmar la remisión,
+ * `auth/routes.ts:67-68`). A diferencia de `destinatariosDeArea`, los administradores NO entran de
+ * oficio. Si no hay nadie, `[]`: el respaldo al área lo decide el servicio (S-4), no esta consulta.
+ */
+describe('destinatariosDeCargo', () => {
+  const alta = (email: string, cargo: string | null, extra: { isAdmin?: boolean } = {}) =>
+    createUser(db, { email, name: email, passwordHash: 'x', cargo, ...extra })
+
+  it('devuelve sólo los activos con ese cargo, sin mayúsculas ni espacios de más', async () => {
+    const a = await alta('a@x.co', 'Coordinador Comercial')
+    const b = await alta('b@x.co', '  coordinador COMERCIAL ')
+    const inactivo = await alta('c@x.co', 'Coordinador Comercial')
+    await updateUser(db, inactivo.id, { active: false })
+    await alta('d@x.co', 'Director Técnico')
+    await alta('admin@x.co', null, { isAdmin: true })
+    const ids = (await destinatariosDeCargo(db, 'Coordinador Comercial')).map((u) => u.id).sort()
+    expect(ids).toEqual([a.id, b.id].sort())
+  })
+
+  it('un cargo que nadie tiene devuelve una lista vacía, sin administradores de oficio', async () => {
+    await alta('admin@x.co', null, { isAdmin: true })
+    await alta('e@x.co', 'Coord. Comercial')
+    expect(await destinatariosDeCargo(db, 'Coordinador Comercial')).toEqual([])
+  })
+
+  it('devuelve id, correo y nombre, lo mismo que destinatariosDeArea', async () => {
+    const a = await alta('f@x.co', 'Coordinador Comercial')
+    expect(await destinatariosDeCargo(db, 'Coordinador Comercial')).toEqual([{ id: a.id, email: 'f@x.co', name: 'f@x.co' }])
   })
 })

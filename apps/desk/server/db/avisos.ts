@@ -91,3 +91,23 @@ export async function destinatariosDeArea(
   }
   return [...porId.values()]
 }
+
+/**
+ * Quién recibe una alarma de SLA vencido (alarmas-horas-habiles, RQ-AV-15): los usuarios ACTIVOS cuyo
+ * `users.cargo` es `cargo`, sin mayúsculas ni espacios en los extremos —es texto libre que se escribe para
+ * firmar la remisión—. Sin administradores de oficio, a diferencia de `destinatariosDeArea`. Vacío si
+ * nadie lo tiene: el respaldo al área lo decide el servicio (S-4).
+ *
+ * El cargo se compara en JS y no con `lower(trim(cargo))` en SQL porque pg-mem no tiene `trim(text)`
+ * (comprobado el 2026-09-29, hipótesis H2 de `design.md`); el filtro barato (activos) sí va en SQL.
+ */
+export async function destinatariosDeCargo(
+  db: Queryable,
+  cargo: string,
+): Promise<Array<{ id: string; email: string; name: string }>> {
+  const objetivo = cargo.trim().toLowerCase()
+  const r = await db.query('SELECT id, email, name, cargo FROM users WHERE active = true AND cargo IS NOT NULL')
+  return filas(r.rows)
+    .filter((x) => String(x.cargo).trim().toLowerCase() === objetivo)
+    .map((x) => ({ id: String(x.id), email: String(x.email), name: String(x.name) }))
+}

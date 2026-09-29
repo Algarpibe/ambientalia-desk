@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { ticketsConSlaVencido } from './sla'
+import { ticketsConSlaVencido, tieneOrdenVenta } from './sla'; import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 
 let db: Queryable
 beforeEach(async () => { const pg = newDb().adapters.createPg(); db = new pg.Pool(); await migrate(db) })
@@ -34,18 +34,18 @@ describe('C11 · los tickets con el SLA vencido', () => {
   })
 
   /**
-   * Y dice A QUIÉN ESCALARLO. El destinatario no es un dato nuevo: sale de la tabla de derivación por
-   * cargo que ya existe (`R08.1.md:1575`), y para `Notificado` es el `Coordinador Comercial` por vía
-   * de `escalado_a_comercial`. Sin este campo, la consulta diría que hay un retraso y no a quién
-   * comunicárselo, que es justo lo que la R08 pedía arreglar.
+   * Y dice QUÉ HACER con él. Desde F1B-08 el destinatario no sale del grafo sino de `ALARMAS_SLA`
+   * (`packages/shared/src/sla.ts`, S-8): cargo, área de respaldo y si mira la orden de venta o marca
+   * el tablero. `horas` es el umbral HÁBIL que se pasó. Hasta 55eac92 devolvía `escalarA`, derivado
+   * de `escalado_a_comercial`; el cargo es el mismo, y `sla.test.ts` vigila que no diverjan.
    */
-  it('un ticket que lleva dos días en Notificado está vencido, y dice desde cuándo y a quién escalarlo', async () => {
+  it('un ticket que lleva dos días en Notificado está vencido, y dice desde cuándo y qué alarma', async () => {
     await ticket('t1', 4200, 'Notificado')
     await entroEn('t1', 'Notificado', '2026-09-08T12:00:00.000Z')
     expect(await ticketsConSlaVencido(db, AHORA)).toEqual([
       {
-        id: 't1', number: 4200, estado: 'Notificado', desde: new Date('2026-09-08T12:00:00.000Z'),
-        escalarA: { hay: true, cargo: 'Coordinador Comercial', via: ['escalado_a_comercial'] },
+        id: 't1', number: 4200, estado: 'Notificado', desde: new Date('2026-09-08T12:00:00.000Z'), horas: 9,
+        alarma: { cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial' },
       },
     ])
   })
@@ -142,5 +142,132 @@ describe('C11 · los tickets con el SLA vencido', () => {
     await ticket('t10', 4209, 'Notificado', 'Equipo nuevo')
     await entroEn('t10', 'Notificado', '2026-09-08T12:00:00.000Z')
     expect(await ticketsConSlaVencido(db, AHORA)).toEqual([])
+  })
+})
+
+/**
+ * alarmas-horas-habiles (F1B-08, lote 2) · las TRES alarmas sobre la base.
+ *
+ * Todas las entradas son del lunes 14/09/2026 a las 08:00 en Bogotá y se evalúa el jueves 17/09 a
+ * las 10:00: 29 h hábiles. Vence `Notificado` (9) y `Remisión creada` (27); `Notificación cliente`
+ * (36) entra antes, el miércoles 09/09, para que también venza.
+ */
+describe('F1B-08 · candidatos a alarma, con la orden de venta y los cierres de la base', () => {
+  const JUEVES = new Date('2026-09-17T15:00:00.000Z')
+  const LUNES = '2026-09-14T13:00:00.000Z'
+
+  const conOV = (id: string, number: number, status: string, ov: { orden_venta?: string; salesorder_id?: string } = {}) =>
+    db.query('INSERT INTO tickets (id, number, subject, status, orden_venta, salesorder_id) VALUES ($1,$2,$3,$4,$5,$6)',
+      [id, number, 'SLA', status, ov.orden_venta ?? null, ov.salesorder_id ?? null])
+  const asociar = (ticketId: string, numero: string, salesorderId: string, liberada = false) =>
+    db.query(`INSERT INTO ov_asociaciones (ticket_id, numero, salesorder_id, origen, liberada_at) VALUES ($1,$2,$3,'alta',$4)`,
+      [ticketId, numero, salesorderId, liberada ? new Date('2026-09-15T15:00:00.000Z') : null])
+  const ids = async () => (await ticketsConSlaVencido(db, JUEVES)).map((v) => v.id).sort()
+
+  it('Remisión creada con 29 h hábiles y sin orden de venta está vencida, con su alarma', async () => {
+    await conOV('r0', 5000, 'Remisión creada')
+    await entroEn('r0', 'Remisión creada', LUNES)
+    expect(await ticketsConSlaVencido(db, JUEVES)).toEqual([{
+      id: 'r0', number: 5000, estado: 'Remisión creada', desde: new Date(LUNES), horas: 27,
+      alarma: { cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial', soloSinOrdenVenta: true },
+    }])
+  })
+
+  /**
+   * LA MISMA NOCIÓN, TRES IMPLEMENTACIONES (molde H5). «Este ticket tiene orden de venta» ya lo
+   * contestan las puertas de «una OV, un ticket» con `ticketConOrdenVenta` (`repo.ts:362-379`: la
+   * columna, `salesorder_id` y —la tercera vía— la asociación VIGENTE de `ov_asociaciones`). Esa
+   * función contesta la pregunta inversa (dada una OV, qué ticket la usa), así que no se puede
+   * reutilizar sin conocer la OV; `tieneOrdenVenta` es la tercera implementación. Esta prueba las
+   * enfrenta sobre los mismos cinco casos y exige que den lo mismo: si una cambia, se pone roja.
+   */
+  const CASOS = [
+    { caso: 'columna orden_venta', id: 'c1', ov: { orden_venta: 'SO-1' }, ref: { numero: 'SO-1', salesorderId: 'so-1' }, tiene: true },
+    { caso: 'sólo salesorder_id', id: 'c2', ov: { salesorder_id: 'so-2' }, ref: { numero: 'SO-2', salesorderId: 'so-2' }, tiene: true },
+    { caso: 'asociación vigente', id: 'c3', ov: {}, asoc: { numero: 'SO-3', so: 'so-3', liberada: false }, ref: { numero: 'SO-3', salesorderId: 'so-3' }, tiene: true },
+    { caso: 'asociación liberada', id: 'c4', ov: {}, asoc: { numero: 'SO-4', so: 'so-4', liberada: true }, ref: { numero: 'SO-4', salesorderId: 'so-4' }, tiene: false },
+    { caso: 'ninguna', id: 'c5', ov: {}, ref: { numero: 'SO-5', salesorderId: 'so-5' }, tiene: false },
+  ]
+
+  it('tieneOrdenVenta, ticketConOrdenVenta y la consulta de vencidos dan lo mismo en los cinco casos', async () => {
+    for (const [i, c] of CASOS.entries()) {
+      await conOV(c.id, 5100 + i, 'Remisión creada', c.ov)
+      await entroEn(c.id, 'Remisión creada', LUNES)
+      if (c.asoc) await asociar(c.id, c.asoc.numero, c.asoc.so, c.asoc.liberada)
+    }
+    const vencidos = await ids()
+    const tabla = await Promise.all(CASOS.map(async (c) => ({
+      caso: c.caso,
+      puertas: (await ticketConOrdenVenta(db, c.ref)) !== null,
+      tieneOrdenVenta: tieneOrdenVenta(
+        { orden_venta: c.ov.orden_venta ?? null, salesorder_id: c.ov.salesorder_id ?? null }, Boolean(c.asoc && !c.asoc.liberada)),
+      consulta: !vencidos.includes(c.id),
+    })))
+    expect(tabla).toEqual(CASOS.map((c) => ({ caso: c.caso, puertas: c.tiene, tieneOrdenVenta: c.tiene, consulta: c.tiene })))
+  })
+
+  it('una orden_venta en blanco no es una orden de venta, igual que en las puertas (COALESCE <> \'\')', () => {
+    expect(tieneOrdenVenta({ orden_venta: '', salesorder_id: null }, false)).toBe(false)
+    expect(tieneOrdenVenta({ orden_venta: null, salesorder_id: '' }, false)).toBe(false)
+  })
+
+  it('Notificado y Notificación cliente vencidos avisan aunque tengan orden de venta', async () => {
+    await conOV('n1', 5200, 'Notificado', { orden_venta: 'SO-6' })
+    await entroEn('n1', 'Notificado', LUNES)
+    await conOV('n2', 5201, 'Notificación cliente', { salesorder_id: 'so-7' })
+    await entroEn('n2', 'Notificación cliente', '2026-09-09T13:00:00.000Z')
+    expect(await ids()).toEqual(['n1', 'n2'])
+  })
+
+  it('la entrada que cuenta es la del estado ACTUAL, aunque haya otra más reciente a otro estado con alarma', async () => {
+    await conOV('e1', 5300, 'Remisión creada')
+    await entroEn('e1', 'Remisión creada', LUNES)                      // la del estado actual: 29 h, vencida
+    await entroEn('e1', 'Notificado', '2026-09-17T14:00:00.000Z')      // más reciente, pero a otro estado
+    expect(await ids()).toEqual(['e1'])
+  })
+
+  it('los cierres de public.calendario_cierres se leen de la base y no cuentan', async () => {
+    await conOV('k1', 5400, 'Remisión creada')
+    await entroEn('k1', 'Remisión creada', LUNES)
+    for (const fecha of ['2026-09-15', '2026-09-16'])
+      await db.query(`INSERT INTO calendario_cierres (fecha, motivo, registrado_por) VALUES ($1, 'inventario', 'prueba')`, [fecha])
+    expect(await ids(), 'lunes 9 h + jueves 2 h = 11 h hábiles, lejos de 27').toEqual([])
+  })
+
+  /**
+   * SIN N+1. Se cuentan las consultas por tabla con 1 candidato y con 5 (de los tres estados): tienen
+   * que ser las MISMAS. Una consulta al historial o a las asociaciones por ticket daría 5 contra 1.
+   */
+  it('el número de consultas no crece con el número de candidatos', async () => {
+    const contar = async () => {
+      const consultas: string[] = []
+      const espia: Queryable = { query: (text: string, params?: unknown[]) => { consultas.push(text); return db.query(text, params) } }
+      await ticketsConSlaVencido(espia, JUEVES)
+      const de = (tabla: string) => consultas.filter((q) => q.includes(tabla)).length
+      return { total: consultas.length, historial: de('ticket_transitions'), asociaciones: de('ov_asociaciones'), cierres: de('calendario_cierres') }
+    }
+    await conOV('p0', 5500, 'Remisión creada')
+    await entroEn('p0', 'Remisión creada', LUNES)
+    const conUno = await contar()
+    for (const [i, estado] of ['Notificado', 'Remisión creada', 'Notificación cliente', 'Remisión creada'].entries()) {
+      await conOV(`p${i + 1}`, 5501 + i, estado)
+      await entroEn(`p${i + 1}`, estado, estado === 'Notificación cliente' ? '2026-09-09T13:00:00.000Z' : LUNES)
+    }
+    expect(await ids()).toHaveLength(5)
+    expect(await contar()).toEqual(conUno)
+    expect(conUno).toMatchObject({ historial: 1, asociaciones: 1, cierres: 1 })
+  })
+
+  /**
+   * H3 de `design.md`, comprobada el 2026-09-29: pg-mem TRUNCA a milisegundos un `performed_at`
+   * escrito con microsegundos. La hipótesis de que la igualdad en SQL fallaría queda SIN DEMOSTRAR
+   * aquí (en producción PostgreSQL sí guarda µs); por eso la marca se compara en TS por `getTime()`.
+   */
+  it('un performed_at con microsegundos sale como Date de milisegundos (H3 en pg-mem)', async () => {
+    await conOV('u1', 5600, 'Notificado')
+    await db.query(`INSERT INTO ticket_transitions (ticket_id, transition_id, to_status, performed_at)
+      VALUES ('u1', 'x', 'Notificado', '2026-09-14 13:00:00.123456+00')`)
+    const [v] = await ticketsConSlaVencido(db, JUEVES)
+    expect(v!.desde.toISOString()).toBe('2026-09-14T13:00:00.123Z')
   })
 })

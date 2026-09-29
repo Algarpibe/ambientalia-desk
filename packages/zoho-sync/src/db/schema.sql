@@ -574,3 +574,23 @@ CREATE INDEX IF NOT EXISTS idx_contratos_cliente ON public.contratos (client_id)
 -- blueprint-soporte-remoto (F1B-06): modalidad del soporte remoto ('remoto' | 'en sitio'), nullable, sin relleno ni CHECK
 -- (la lista blanca vive en shared y la impone el servidor). Sin calificar: tickets es de DESK_TABLES. Fuera de TICKET_COLS
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS modalidad text;
+-- alarmas-horas-habiles (F1B-08): marca anti-duplicado de las alarmas de SLA vencido. Una fila por
+-- (ticket, estado, instante de entrada): reentrar es otra entrada y otra alarma. La clave primaria es
+-- la unicidad EN LA BASE, no solo en el codigo. Se escribe SIEMPRE que la alarma vence, haya o no
+-- destinatarios (avisos_creados puede ser 0). Sin FK a tickets, mismo caso que public.ov_asociaciones.
+-- Nunca hay UPDATE ni DELETE. AL FINAL del fichero para no desplazar citas (regla de mutacion 4)
+CREATE TABLE IF NOT EXISTS public.alarmas_avisadas (
+  ticket_id text NOT NULL,
+  estado text NOT NULL,
+  entrada_at timestamptz NOT NULL,
+  avisada_at timestamptz NOT NULL DEFAULT now(),
+  avisos_creados integer NOT NULL,
+  PRIMARY KEY (ticket_id, estado, entrada_at)
+);
+-- alarmas-horas-habiles (F1B-08, S-13): corte de la primera pasada. Una sola fila (id = 1), escrita UNA
+-- vez con ON CONFLICT DO NOTHING: lo vencido antes del corte se marca sin avisar, y un reinicio no lo
+-- mueve. Nunca hay UPDATE ni DELETE
+CREATE TABLE IF NOT EXISTS public.alarmas_corte (
+  id integer PRIMARY KEY,
+  corte_at timestamptz NOT NULL
+);

@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 33 tablas: 10 de Desk, 20 de la app en public y 3 replicadas de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 20, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(33)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(33)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(33)
+  it('son 35 tablas: 10 de Desk, 22 de la app en public (alarmas_avisadas y alarmas_corte, F1B-08) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 22, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(35)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(35)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(35)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -460,5 +460,54 @@ describe('blueprint-soporte-remoto · la ALTER de modalidad no rellena filas pre
     for (const s of relacionadas) await db.query(s)
     const r = await db.query('SELECT modalidad FROM tickets WHERE id=$1', ['legacy-sr'])
     expect(r.rows[0].modalidad).toBeNull()
+  })
+})
+
+/**
+ * alarmas-horas-habiles (F1B-08, lote 2) · LA UNICIDAD VIVE EN LA BASE, no sólo en el código.
+ *
+ * `public.alarmas_avisadas` no admite dos filas con la misma terna (ticket, estado, instante de
+ * entrada): es lo que impide avisar dos veces la misma entrada aunque dos pasadas corran a la vez.
+ * `public.alarmas_corte` tiene UNA fila (id = 1): el corte de la primera pasada (S-13) no se reescribe.
+ * Se ejercita el `schema.sql` real vía `migrate`: quitar la `PRIMARY KEY` del fichero pone esto rojo
+ * (regla de mutación 2).
+ *
+ * Hipótesis H1 de `design.md`, comprobada por ejecución el 2026-09-29: pg-mem NO cumple
+ * `ON CONFLICT … DO NOTHING RETURNING` —devuelve la fila también en el conflicto—, aunque sí deja
+ * de insertar. Por eso la prueba cuenta filas y no confía en el `RETURNING`; el servicio (lote 3)
+ * usa el plan B: `SELECT` previo dentro de la misma transacción, con la clave de cinturón.
+ */
+describe('alarmas-horas-habiles · la clave de no duplicado es de la base', () => {
+  const entrada = new Date('2026-09-14T13:00:00.000Z')
+  const conBase = async () => { const pg = newDb().adapters.createPg(); const db = new pg.Pool(); await migrate(db); return db }
+  const marcar = (db: Queryable, estado: string, at: Date, avisos: number) =>
+    db.query('INSERT INTO public.alarmas_avisadas (ticket_id, estado, entrada_at, avisos_creados) VALUES ($1,$2,$3,$4)', ['t1', estado, at, avisos])
+  const filas = async (db: Queryable) => Number((await db.query('SELECT count(*) AS n FROM public.alarmas_avisadas')).rows[0].n)
+
+  it('un segundo INSERT con la misma terna falla, y con ON CONFLICT DO NOTHING no añade nada', async () => {
+    const db = await conBase()
+    await marcar(db, 'Notificado', entrada, 2)
+    await expect(marcar(db, 'Notificado', entrada, 2)).rejects.toThrow(/duplicate key|unique/i)
+    await db.query(
+      `INSERT INTO public.alarmas_avisadas (ticket_id, estado, entrada_at, avisos_creados) VALUES ('t1','Notificado',$1,2)
+       ON CONFLICT (ticket_id, estado, entrada_at) DO NOTHING`, [entrada])
+    expect(await filas(db)).toBe(1)
+  })
+
+  it('otra entrada u otro estado del mismo ticket sí entran, con 0 o más avisos', async () => {
+    const db = await conBase()
+    await marcar(db, 'Notificado', entrada, 2)
+    await marcar(db, 'Notificado', new Date(entrada.getTime() + 1), 0)
+    await marcar(db, 'Remisión creada', entrada, 0)
+    expect(await filas(db)).toBe(3)
+  })
+
+  it('alarmas_corte guarda un solo corte: un segundo id = 1 falla y ON CONFLICT conserva el primero', async () => {
+    const db = await conBase()
+    await db.query('INSERT INTO public.alarmas_corte (id, corte_at) VALUES (1, $1)', [entrada])
+    await expect(db.query('INSERT INTO public.alarmas_corte (id, corte_at) VALUES (1, $1)', [new Date()])).rejects.toThrow(/duplicate key|unique/i)
+    await db.query('INSERT INTO public.alarmas_corte (id, corte_at) VALUES (1, $1) ON CONFLICT (id) DO NOTHING', [new Date()])
+    const r = await db.query('SELECT corte_at FROM public.alarmas_corte')
+    expect(r.rows.map((x: { corte_at: Date }) => new Date(x.corte_at).getTime())).toEqual([entrada.getTime()])
   })
 })

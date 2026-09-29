@@ -137,7 +137,7 @@ Medida: `git diff --shortstat --no-renames` + nuevo sin trackear (regla del cicl
 
 | Lote | Contenido | Estimación (incl. pruebas y apply-progress ~60) |
 |---|---|---|
-| 1 · `shared` | Tabla de alarmas, SLA hábil, puente de firma en `apps/desk/server/db/sla.ts:58`, pruebas | ~370 |
+| 1 · `shared` | Tabla de alarmas, SLA hábil, puente de firma en `apps/desk/server/db/sla.ts:58` en `55eac92`, pruebas | ~370 |
 | 2 · BD y consulta | `public.alarmas_avisadas`, `migrate.ts:73` y su prueba, `destinatariosDeCargo`, `tieneOrdenVenta`, `ticketsConSlaVencido` sin N+1 | ~475 |
 | 3 · Servicio y cableado | `services/alarmasSla.ts`, `index.ts:15` y `:88` (primer lote con efecto vivo) | ~625 |
 | 4 · Tablero y cierre | Campo del listado, `TicketCard.tsx`, regla 13 por escrito, barrido de la regla 4, texto para R08.3, nota de despliegue, adenda E-087 | ~375 |
