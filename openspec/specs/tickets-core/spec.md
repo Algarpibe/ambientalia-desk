@@ -147,7 +147,16 @@ orden total de precedencia (`transitions-st` §3.8):
 | Falta `serial`, `modeloId` o `fechaFacturaCompra` | A | `422` |
 | Un campo opcional (fecha, Drive, mantenedor) es inválido | C | `422`, mensaje de F1B-02 |
 
-El orden relativo de estas dos guardas frente a las guardas 3-7 de la tabla de arriba, y entre sí, lo
+**Modalidad — una guarda nueva, escalón C.** El alta valida `modalidad` (`transitions-soporte-remoto`
+RQ-SR-07 y RQ-SR-09): un valor fuera de `remoto` / `en sitio` con clasificación `Soporte remoto`, o
+cualquier `modalidad` enviada con otra clasificación, responde `422` nombrando el campo. Es contenido, así
+que gana al `409` de unicidad de la OV (guarda 7, escalón D).
+
+| Guarda nueva | Escalón | Respuesta |
+|---|---|---|
+| `modalidad` inválida, o enviada fuera de `Soporte remoto` | C | `422`, nombrando `modalidad` |
+
+El orden relativo de estas guardas frente a las guardas 3-7 de la tabla de arriba, y entre sí, lo
 fija `design.md`; esta spec sólo impone el escalón: existencia (A) antes que contenido (C), igual que
 el resto de la tabla.
 
@@ -217,33 +226,72 @@ las siete contra el árbol de hoy y añade la subtabla de la rama «Equipo nuevo
 - WHEN se crea el ticket
 - THEN responde `422 'Falta el equipo'`, igual que hoy — la guarda 1 no cambia para estas dos ramas
 
+#### Scenario: Modalidad inválida en un alta de soporte remoto
+- GIVEN un alta `Soporte remoto` con equipo existente y `modalidad = 'presencial'`
+- WHEN se crea el ticket
+- THEN responde `422` nombrando `modalidad` (escalón C) y no se escribe nada
+
+#### Scenario: Modalidad enviada con otra clasificación
+- GIVEN un alta `Equipo nuevo` (datos válidos) con `modalidad = 'remoto'`
+- WHEN se crea el ticket
+- THEN responde `422` nombrando `modalidad` y no se escribe nada
+
+#### Scenario: La guarda de modalidad gana a la orden de venta ya usada
+- GIVEN un alta `Soporte remoto` con `modalidad` inválida y una OV ya asociada a otro ticket
+- WHEN se crea el ticket
+- THEN responde `422` (escalón C) y no `409` (escalón D)
+
 **Bajo `strict_tdd`:** la prueba de «equipo↔cliente gana a la OV ya usada» nace **roja de forma
 natural** —hoy el código contesta `409`—; la de «equipo↔cliente gana a los obligatorios» nace
 **verde** —el código ya la cumple— y su rojo se obtiene **por mutación**: invertir el orden de las dos
 guardas, correr la suite, confirmar el rojo, revertir. Las pruebas de la rama «Equipo nuevo» nacen
-**rojas de forma natural**: la rama no existe hoy.
+**rojas de forma natural**: la rama no existe hoy. Las de `modalidad` también: el campo no existe hoy;
+su posición frente al `409` se fija por mutación (regla de mutación 1 de `CLAUDE.md`).
 
 ### RQ-TC-06 · El alta es atómica y deja dos filas
 
 `createTicket` **SHALL** escribir el ticket y la fila de su creación en **una transacción** cuando el
 pool lo permita, con `ROLLBACK` ante cualquier fallo (`repo.ts:412-452`, `:438-450`).
 
-1. **La fila del ticket** (`repo.ts:420-423`): estado `Ticket creado`, `status_type='Open'`,
-   `managed_by_app=true`, `source='app'`, `created_time`, `modified_time` y `updated_at` a `now()`.
+1. **La fila del ticket** (`repo.ts:420-423`): estado inicial `Ticket creado` —o `Solicitud Soporte` si
+   `clasificaciones = 'Soporte remoto'` (`transitions-soporte-remoto` RQ-SR-04)—, `status_type='Open'`,
+   `managed_by_app=true`, `source='app'`, `created_time`, `modified_time` y `updated_at` a `now()`, y
+   `modalidad` según `transitions-soporte-remoto` RQ-SR-07 a RQ-SR-09 (`NULL` fuera de `Soporte remoto`).
 2. **La foto de la creación** en `ticket_transitions` (`repo.ts:428-436`): `transition_id='enviar'`,
-   `transition_name='Enviar'`, `from_status='(creación)'`, `to_status='Ticket creado'`,
-   `area='Comercial'`, `performed_by` = actor, `comment_id=null`.
+   `transition_name='Enviar'`, `from_status='(creación)'`, `to_status` igual al estado inicial de la fila
+   del ticket (`Ticket creado` o `Solicitud Soporte`), `area='Comercial'`, `performed_by` = actor,
+   `comment_id=null`.
 
 `values` de esa segunda fila **SHALL** guardar el payload completo con el que nació el ticket —orden
 de venta, marca, modelo, serial, equipo, tipo de servicio, clasificación, prioridad, código de
-servicio y `client_id`— y **MUST NOT** limitarse a `{ orden_venta }` (`repo.ts:431-435`). La razón
+servicio y `client_id`— y **MUST NOT** limitarse a `{ orden_venta }` (`repo.ts:431-435`). Cuando la
+clasificación es `Soporte remoto`, el payload **SHALL** incluir también `modalidad` (supuesto de esta
+spec, reversible: la historia no puede reconstruir la modalidad de creación desde la columna). La razón
 está escrita: las columnas de `tickets` son **estado actual**, así que la historia no puede apoyarse
 en ellas para contar la creación (`repo.ts:424-427`).
+
+(Previously: el estado inicial y el `to_status` de la foto eran siempre `Ticket creado`.)
 
 > **Given** un ticket creado en la app antes de que `createTicket` guardara el payload completo
 > **When** se compone su historia
 > **Then** la foto no existe y la historia cae a la fila del ticket, sin forma de reconstruirla
 > (`repo.ts:425-427`; el discriminador está en `ticketFuentes.ts:63-75`).
+
+#### Scenario: Alta de soporte remoto deja las dos filas con `Solicitud Soporte`
+- GIVEN un alta válida `Soporte remoto` con `modalidad = 'en sitio'`
+- WHEN se crea el ticket
+- THEN la fila del ticket tiene `status = 'Solicitud Soporte'` y `modalidad = 'en sitio'`, y la foto
+  tiene `to_status = 'Solicitud Soporte'` y `values.modalidad = 'en sitio'`
+
+#### Scenario: Alta de otra clasificación no cambia
+- GIVEN un alta `Equipo para servicio de mantenimiento`
+- WHEN se crea el ticket
+- THEN el estado y el `to_status` son `Ticket creado` y `modalidad` es `NULL`
+
+#### Scenario: Un fallo posterior revierte las dos filas
+- GIVEN un alta `Soporte remoto` cuyo segundo `INSERT` falla
+- WHEN se ejecuta `createTicket`
+- THEN hay `ROLLBACK` y no queda ninguna de las dos filas
 
 ### RQ-TC-15 · Alta con «Equipo nuevo»: el equipo se crea o se reutiliza en el mismo paso
 
@@ -294,10 +342,24 @@ equipo antes de la última guarda del alta debe poner la suite en rojo (regla de
 ### RQ-TC-07 · La fase inicial tiene dos nombres, y no se cruzan
 
 El ticket nacido en la app **SHALL** nacer en `Ticket creado` y **MUST NOT** nacer en `OV asignada`,
-que es el nombre que esa misma fase tiene en Zoho (`repo.ts:405-410`, `:422`).
+que es el nombre que esa misma fase tiene en Zoho (`repo.ts:405-410`, `:422`). **Excepción:** un ticket
+`Soporte remoto` **SHALL** nacer en `Solicitud Soporte` (`transitions-soporte-remoto` RQ-SR-04), y
+tampoco **MUST** nacer en `OV asignada`.
 
 La regla completa —que ningún camino lleva de una a la otra, y por qué— es de `transitions-st`
 RQ-TS-02. Aquí sólo se fija de dónde arranca el ticket.
+
+(Previously: todo ticket nacido en la app nacía en `Ticket creado`, sin excepción.)
+
+#### Scenario: Ningún ticket de la app nace en `OV asignada`
+- GIVEN un alta de cada una de las tres clasificaciones
+- WHEN se crean los tres tickets
+- THEN ninguno tiene `status = 'OV asignada'`
+
+#### Scenario: El estado inicial depende de la clasificación
+- GIVEN un alta `Soporte remoto` y una `Equipo nuevo`
+- WHEN se crean
+- THEN la primera nace en `Solicitud Soporte` y la segunda en `Ticket creado`
 
 ### RQ-TC-08 · Una orden de venta, un ticket — en la puerta del alta
 
@@ -501,14 +563,30 @@ Es el campo que activa los distintos flujos de trabajo (maestro Anexo G col. 11,
 (Anexo G col. 27, `:4337-4338`), y `TIPOS_SERVICIO` **SHALL** declararlo aparte
 (`ticketCreate.ts:4`).
 
-**Dos de las tres ramas tienen grafo tras este cambio.** `Equipo nuevo` deja de caer en el grafo de
-servicio: tiene su propio catálogo, capacidad `transitions-equipo-nuevo` (spec propia, F1B-06, primer
-cambio, `blueprint-equipo-nuevo`). `Soporte remoto` sigue sin grafo — es `transitions-soporte-remoto`,
-el segundo cambio de F1B-06 (`blueprint-soporte-remoto`) — y sus tickets siguen cayendo en el grafo de
-servicio técnico.
+**Las tres ramas tienen grafo tras este cambio.** `Equipo para servicio de mantenimiento` usa el grafo de
+servicio (`transitions-st`); `Equipo nuevo` tiene su propio catálogo, capacidad `transitions-equipo-nuevo`
+(F1B-06, primer cambio, `blueprint-equipo-nuevo`); y `Soporte remoto` tiene el suyo, capacidad
+`transitions-soporte-remoto` (F1B-06, segundo cambio, `blueprint-soporte-remoto`). El flujo aplicable de un
+ticket lo decide su clasificación y su estado actual (`transitions-equipo-nuevo` RQ-EN-04); un ticket
+heredado en un estado ajeno a su catálogo sigue en el grafo de servicio.
 
-(Previously: «Sólo una de las tres ramas está implementada. `Equipo nuevo` y `Soporte remoto` no
-tienen grafo... Hoy los tres valores se pueden elegir en el alta y los tres caen en el mismo grafo.»)
+(Previously: «Dos de las tres ramas tienen grafo… `Soporte remoto` sigue sin grafo… y sus tickets siguen
+cayendo en el grafo de servicio técnico.»)
+
+#### Scenario: Un ticket `Equipo nuevo` deja de caer en el grafo de servicio
+- GIVEN un ticket con `clasificaciones = 'Equipo nuevo'` recién creado y llevado a `Ingresado`
+- WHEN se listan las transiciones que puede ejecutar
+- THEN son las del catálogo `transitions-equipo-nuevo`, nunca las de `TRANSITIONS`
+
+#### Scenario: Un ticket `Soporte remoto` deja de caer en el grafo de servicio
+- GIVEN un ticket con `clasificaciones = 'Soporte remoto'` recién creado, en `Solicitud Soporte`
+- WHEN se listan sus transiciones
+- THEN son las del catálogo `transitions-soporte-remoto` (`Asignación`), nunca las de `TRANSITIONS`
+
+#### Scenario: La prueba que fijaba «soporte remoto siempre enruta a servicio» se invierte
+- GIVEN la prueba de `packages/shared/src/flujos.test.ts:42-45` en `66ab783` («SIEMPRE servicio»)
+- WHEN se calcula `flujoDelTicket` para `Soporte remoto` en `Solicitud Soporte`
+- THEN devuelve `soporte-remoto`; y para `Soporte remoto` en `Ticket creado` devuelve `servicio`
 
 ### RQ-TC-11 · Un ticket sólo se borra si nació aquí
 
@@ -964,15 +1042,11 @@ de `ordenVentaUnTicket.test.ts:161` seguía esperando.)
 - AND la variante que ponía la regla en duda, la OV global por lote, deja de existir: se sustituye por
       subórdenes `OV-AAAA-NNN-SS`, una por ticket
 
-### 4.3 · Dos ramas de `Clasificaciones` sin grafo · **destino F1B-06**
+### 4.3 · Dos ramas de `Clasificaciones` sin grafo · **CERRADA** (F1B-06)
 
-**Comportamiento actual, a corregir en F1B-06.** El alta ofrece las tres clasificaciones
-(`ticketCreate.ts:5`) y sólo `Equipo para servicio de mantenimiento` tiene grafo. Un ticket creado
-como `Equipo nuevo` entra hoy en el flujo de servicio técnico, que no es el suyo. El maestro lo
-registra como no construido en el Anexo H.2 (`:4497-4504`).
+**Previously**: El alta ofrece las tres clasificaciones (`ticketCreate.ts:5`) y sólo `Equipo para servicio de mantenimiento` tiene grafo. Un ticket creado como `Equipo nuevo` entra hoy en el flujo de servicio técnico, que no es el suyo. El maestro lo registra como no construido en el Anexo H.2 (`:4497-4504`). *Hipótesis:* no hay ninguna guarda que lo impida ni ningún aviso al usuario. No se ha localizado ninguna en el código, pero tampoco se ha barrido el cliente exhaustivamente.
 
-*Hipótesis:* no hay ninguna guarda que lo impida ni ningún aviso al usuario. No se ha localizado
-ninguna en el código, pero tampoco se ha barrido el cliente exhaustivamente.
+**CERRADA**: `Equipo nuevo` por `blueprint-equipo-nuevo` (F1B-06, cambio 1, archivado en `openspec/changes/archive/2026-09-25-blueprint-equipo-nuevo/`) y `Soporte remoto` por `blueprint-soporte-remoto` (F1B-06, cambio 2, archivado en `openspec/changes/archive/2026-09-29-blueprint-soporte-remoto/`). Las tres ramas tienen ahora grafo propio: `Equipo para servicio de mantenimiento` usa el grafo de servicio (`transitions-st`), `Equipo nuevo` tiene su catálogo (`transitions-equipo-nuevo`), y `Soporte remoto` tiene el suyo (`transitions-soporte-remoto`).
 
 ### 4.4 · La identificación física por QR no existe · **destino: sin tanda asignada**
 
