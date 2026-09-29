@@ -269,29 +269,29 @@ Cita a releer: `tickets-core` delta `:86` (`ovAsociaciones.ts:21`).
 
 Módulos nuevos: `apps/desk/server/db/informeContrato.ts` y su prueba. `shared/contratos.ts` y `routes/contratos.ts` (ficheros nuevos de los lotes 1 y 3) ganan funciones y la ruta.
 
-- [ ] 4.1 RED — `contratos.test.ts` (al final): `trimestresDelContrato` YA EXISTE desde el lote 1: su caso aquí es regresión, sin rojo previo (inicio `2026-02-10`, fin `2027-02-09` → t1 `2026-02-10`–`2026-05-09`, t2 desde `2026-05-10`, el último acaba en `2027-02-09`; inicio `2026-01-31` → t2 `2026-04-30`, t3 `2026-07-31`, siempre desde el inicio, S-12);
+- [x] 4.1 RED — `contratos.test.ts` (al final): `trimestresDelContrato` YA EXISTE desde el lote 1: su caso aquí es regresión, sin rojo previo (inicio `2026-02-10`, fin `2027-02-09` → t1 `2026-02-10`–`2026-05-09`, t2 desde `2026-05-10`, el último acaba en `2027-02-09`; inicio `2026-01-31` → t2 `2026-04-30`, t3 `2026-07-31`, siempre desde el inicio, S-12);
   `diasEntre` (fin `2026-12-31`: hoy `12-01` → 30; `2027-01-05` → −5); `porcentaje` (0 sin creadas; 3/10 → 30); `estadoSubOV` (libre / en curso / ejecutada con `Finalizado`, S-6). RQ: RQ-ZS-15 (trimestres, días, sin creadas).
-- [ ] 4.2 Confirmar rojo natural.
-- [ ] 4.3 GREEN — `diasEntre` (`trimestresDelContrato` hecho en el lote 1) (`Date.UTC`, como `calendarioLaboral.ts:10`, `:54-57`), `porcentaje`, `estadoSubOV`.
-- [ ] 4.4 Confirmar 4.1 en verde.
-- [ ] 4.5 MUTACIÓN — calcular cada trimestre a partir del anterior (deriva) en vez de desde el inicio; 4.1 (caso `31-ene`) debe ponerse ROJO. Revertir.
-- [ ] 4.6 RED — `books/subOV.test.ts` (al final): `creadasDelLote(db, lote)` excluye cuarentena, borrador y anulada; **enfrentamiento (molde H5):** `creadasDelLote(l).length` = `saldoPorLote(l).creadas` sobre un lote con cuarentena, `draft` y `void`. RQ: RQ-ZS-15 «no cuentan».
-- [ ] 4.7 Confirmar rojo natural (función inexistente).
-- [ ] 4.8 GREEN — `creadasDelLote` AL FINAL de `books/subOV.ts` con el mismo `ESTADOS_FUERA_DEL_SALDO` (`:18`) y `clasificarOV` (S-20).
-- [ ] 4.9 Confirmar 4.6 en verde; `git diff HEAD -- packages/zoho-sync/src/books/subOV.ts` no toca `:34-49`.
-- [ ] 4.10 MUTACIÓN (molde H5) — quitar `'void'` del filtro de `creadasDelLote`; el enfrentamiento debe ponerse ROJO. Revertir.
-- [ ] 4.11 RED — `db/informeContrato.test.ts` (nuevo, pg-mem): 10 creadas, 3 con ticket `Finalizado`, 2 con ticket abierto, 5 sin asociación → 3 / 2 / 5 y 30 %, y `saldoPorLote` sigue dando 5 consumidas y 50 %; asociación liberada → libre; 3 válidas + cuarentena + `draft` + `void` → creadas 3;
+- [x] 4.2 Confirmar rojo natural.
+- [x] 4.3 GREEN — `diasEntre` (`trimestresDelContrato` hecho en el lote 1) (`Date.UTC`, como `calendarioLaboral.ts:10`, `:54-57`), `porcentaje`, `estadoSubOV`.
+- [x] 4.4 Confirmar 4.1 en verde.
+- [x] 4.5 MUTACIÓN — calcular cada trimestre a partir del anterior (deriva) en vez de desde el inicio; 4.1 (caso `31-ene`) debe ponerse ROJO. Revertir.
+- [x] 4.6 RED — `books/subOV.test.ts` (al final): `creadasDelLote(db, lote)` excluye cuarentena, borrador y anulada; **enfrentamiento (molde H5):** `creadasDelLote(l).length` = `saldoPorLote(l).creadas` sobre un lote con cuarentena, `draft` y `void`. RQ: RQ-ZS-15 «no cuentan».
+- [x] 4.7 Confirmar rojo natural (función inexistente).
+- [x] 4.8 GREEN — `creadasDelLote` AL FINAL de `books/subOV.ts` con el mismo `ESTADOS_FUERA_DEL_SALDO` (`:18`) y `clasificarOV` (S-20).
+- [x] 4.9 Confirmar 4.6 en verde; `git diff HEAD -- packages/zoho-sync/src/books/subOV.ts` no toca `:34-49`.
+- [x] 4.10 MUTACIÓN (molde H5) — quitar `'void'` del filtro de `creadasDelLote`; el enfrentamiento debe ponerse ROJO. Revertir.
+- [x] 4.11 RED — `db/informeContrato.test.ts` (nuevo, pg-mem): 10 creadas, 3 con ticket `Finalizado`, 2 con ticket abierto, 5 sin asociación → 3 / 2 / 5 y 30 %, y `saldoPorLote` sigue dando 5 consumidas y 50 %; asociación liberada → libre; 3 válidas + cuarentena + `draft` + `void` → creadas 3;
   2 finalizadas en t1 y 3 más en t2 → 20 % y 50 %, servicios de t2 = los 3; cada servicio con equipo, serial, tipo, fecha e `informe: 'No disponible en los datos'`; lote sin subOV → 0 %, 0 libres, días; ticket `Finalizado` sin fila de `ticket_transitions` → `sinFecha`, fuera de los acumulados;
   ticket reabierto y vuelto a finalizar → cuenta la PRIMERA llegada (S-15); `huecos[]` declarado. RQ: RQ-ZS-15 (7 escenarios de datos).
-- [ ] 4.12 Confirmar rojo natural.
-- [ ] 4.13 GREEN — `db/informeContrato.ts`, `informeContrato(db, contrato, hoy)` (`design.md` §6, pasos 1-5; agregación en TS, subconsulta no correlacionada de la tercera vía).
-- [ ] 4.14 Confirmar 4.11 en verde.
-- [ ] 4.15 MUTACIÓN — (a) cambiar «acumulado al cierre» por «sólo los del trimestre»: 4.11 (20/50) ROJO; (b) tomar la ÚLTIMA llegada a `Finalizado` en vez de la primera: ROJO. Revertir.
-- [ ] 4.16 RED — `routes/contratos.test.ts` (al final): `GET /api/contratos/:id/informe`: `401` sin sesión, `404` con `abc` (sin consultar) y con id inexistente, `200` con la forma de `design.md` §6 (`contrato`, `estado`, `hoy`, `creadas`, `ejecutadas`, `enCurso`, `libres`, `porcentajeEjecutado`, `consumido`, `subOV[]`, `trimestres[]`, `sinFecha[]`, `huecos[]`), abierto a sesión sin Comercial.
-- [ ] 4.17 Confirmar rojo natural.
-- [ ] 4.18 GREEN — ruta del informe en `routes/contratos.ts` (`requireAuth`, `404` antes de consultar).
-- [ ] 4.19 Confirmar 4.16 en verde.
-- [ ] 4.20 Cierre del lote 4: `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `db/informeContrato.ts`, `informeContrato.test.ts`); recuento `books/subOV.ts` 49→49+N con `−0`; barrido de citas sobre `books/subOV.ts` y `shared/src/subOV.ts` (mezcladas: separar cuál de los dos ficheros cita cada una); `apply-progress.md`.
+- [x] 4.12 Confirmar rojo natural.
+- [x] 4.13 GREEN — `db/informeContrato.ts`, `informeContrato(db, contrato, hoy)` (`design.md` §6, pasos 1-5; agregación en TS, subconsulta no correlacionada de la tercera vía).
+- [x] 4.14 Confirmar 4.11 en verde.
+- [x] 4.15 MUTACIÓN — (a) cambiar «acumulado al cierre» por «sólo los del trimestre»: 4.11 (20/50) ROJO; (b) tomar la ÚLTIMA llegada a `Finalizado` en vez de la primera: ROJO. Revertir.
+- [x] 4.16 RED — `routes/contratos.test.ts` (al final): `GET /api/contratos/:id/informe`: `401` sin sesión, `404` con `abc` (sin consultar) y con id inexistente, `200` con la forma de `design.md` §6 (`contrato`, `estado`, `hoy`, `creadas`, `ejecutadas`, `enCurso`, `libres`, `porcentajeEjecutado`, `consumido`, `subOV[]`, `trimestres[]`, `sinFecha[]`, `huecos[]`), abierto a sesión sin Comercial.
+- [x] 4.17 Confirmar rojo natural.
+- [x] 4.18 GREEN — ruta del informe en `routes/contratos.ts` (`requireAuth`, `404` antes de consultar).
+- [x] 4.19 Confirmar 4.16 en verde.
+- [x] 4.20 Cierre del lote 4: `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `db/informeContrato.ts`, `informeContrato.test.ts`); recuento `books/subOV.ts` 49→49+N con `−0`; barrido de citas sobre `books/subOV.ts` y `shared/src/subOV.ts` (mezcladas: separar cuál de los dos ficheros cita cada una); `apply-progress.md`.
 
 ---
 

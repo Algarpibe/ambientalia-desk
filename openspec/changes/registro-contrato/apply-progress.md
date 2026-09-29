@@ -160,3 +160,51 @@ repitieron con `diff` visible de cada mutación antes de correr.
 **Cierre:** `npm test` 1784 verdes (+62); typecheck limpio; lint 165, los mismos. Barrido: `app.ts` y `ovAsociaciones.ts`
 no mueven líneas; las citas a `ovAsociaciones.ts:13-14`, `:26`, `:30`, `:34`, `:36`, `:44`, `:47`, `:48`, `:50`, `:51`,
 `:54` siguen ciertas; `:21` (dos citas) caso B, anclada.
+
+## Lote 4 · Informe trimestral — 2026-09-29
+
+**Ledger:** objetivo generación 4, techo 800, 2 intentos. **Estimado antes de escribir:** ~690 (plan ~630 + la limpieza de
+`LOTE_OV` + las pruebas de reversión y de consumido frente a ejecutado). La medida real va en el `settle`.
+
+**Definición aplicada** (`decision/anexo-53-contratos`, `openspec/config.yaml:2457`; RQ-ZS-15): cada subOV creada está
+**libre** (sin asociación vigente), **en curso** (asociación vigente a un ticket cuyo estado HOY no es `Finalizado`) o
+**ejecutada** (ticket HOY en `Finalizado`), fechada por su PRIMERA fila de `ticket_transitions` hacia `Finalizado` (S-15).
+% ejecutado = ejecutadas / creadas. Todo se lee hoy y nada se graba, así que las dos reversiones salen sin escritura: la
+asociación liberada devuelve la subOV a libre; el ticket reabierto deja de estar ejecutado (y si vuelve a finalizar,
+cuenta la primera llegada). Los trimestres salen de `trimestresDelContrato` (lote 1), sin reimplementarlo.
+
+| Fichero | Edición | Forma |
+|---|---|---|
+| `books/subOV.ts` | `SubOVCreada`, `creadasDelLote` | AL FINAL, 49 → 66 (+17 −0); `:34-49` intactas |
+| `shared/contratos.ts` | `diasEntre`, `porcentaje`, `estadoSubOV`, `INFORME_NO_DISPONIBLE`, tipos del informe | AL FINAL |
+| `shared/contratos.ts` `:12-13`, `:107` | `LOTE_OV` retirado: sus dos líneas pasan a comentario EN SITIO (citas ancladas a `:65`) | EN SITIO |
+| `db/informeContrato.ts` y su prueba | nuevos | — |
+| `routes/contratos.ts` | `GET /api/contratos/:id/informe` (`404` antes de consultar) | al final de la función |
+| `shared/contratos.test.ts` | casos de `LOTE_OV` → `esLote` en sitio; el enfrentamiento pasa a «el lote de toda subOV canónica es lote» | EN SITIO + AL FINAL |
+
+**Rojos previos:** 4.1 → 3 (`diasEntre`, `porcentaje`, `estadoSubOV` inexistentes); los dos de trimestres nacen verdes
+(regresión del lote 1, declarado en la tarea). 4.6 → 2. 4.11 → módulo inexistente. 4.16 → 7 (`401` y `200`); el `404` nace
+verde porque la ruta no existía.
+
+**Mutaciones reproducidas por el orquestador (diff visible, revertidas con `cmp`):**
+
+| Mutación | Rojas |
+|---|---|
+| 4.5 · trimestre a partir del anterior (deriva) | 4 (31-ene, dos bisiestos, 31-ene del lote 4) |
+| 4.10 · sin `'void'` en `creadasDelLote` | 3 (incluido el enfrentamiento con `saldoPorLote`) |
+| 4.15a · «sólo los del trimestre» en vez de acumulado | 1 (20/50) |
+| 4.15b · última llegada en vez de la primera | 1 |
+| reabierta · ejecutada por haber llegado alguna vez a `Finalizado` | 1 |
+| liberada · contar asociaciones liberadas | **0 en la primera pasada** → prueba nueva (el mismo ticket libera la 01 y se asocia a la 02) → 1 |
+| `404` del informe sin filtro numérico | 1 |
+
+La mutación «liberada» sobrevivió porque la consulta de tickets ya filtra por vigentes y cubre el caso de un solo ticket;
+el hueco era un ticket con una asociación liberada y otra vigente. La prueba nueva nació verde (el código ya acertaba) y es
+la que hoy pone roja esa mutación.
+
+**Hueco declarado:** `huecos[]` dice que el documento «informe» del servicio no está en los datos (sólo
+`fecha_revision_informe`) y cada servicio lleva `informe: 'No disponible en los datos'`; también declara `sinFecha`.
+
+**Cierre:** `npm test` 1811 verdes (+27); typecheck limpio; lint 165, los mismos. Barrido: ninguna cita a `subOV.ts` pasa
+de la línea 49 y `shared/src/subOV.ts` no se toca; `LOTE_OV` sale del código y sus cuatro menciones de `design.md` pasan a
+`esLote` (la de `:62` dice que se retiró).

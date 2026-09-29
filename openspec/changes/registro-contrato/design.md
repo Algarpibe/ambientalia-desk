@@ -59,7 +59,7 @@ Exportado con una línea **al final** de `packages/shared/src/index.ts` (hoy ter
 |---|---|
 | `hoyEnZona(ahora = new Date())` | `diaEnZona(ahora)` de `fechasDerivadas.ts:63-73`, zona `America/Bogota` (`ZONA_NEGOCIO`, `fechasDerivadas.ts:13`). **S-11** |
 | `fechaCalendario(v)` | `YYYY-MM-DD` de un día real, o `null` (reusa `diaEnZona`, que rechaza `2026-02-30`, `fechasDerivadas.ts:69`) |
-| `LOTE_OV` | `/^OV-\d{4}-\d{3,4}$/`, el mismo que `apps/desk/server/routes/ovAsociaciones.ts:21` en `285ecf4`; desde el lote 3 esa ruta y el alta deciden con `esLote` (sobre `clasificarOV`), enfrentado a `LOTE_OV` por prueba |
+| `LOTE_OV` (retirado en el lote 4; hoy `esLote`) | `/^OV-\d{4}-\d{3,4}$/`, el mismo que `apps/desk/server/routes/ovAsociaciones.ts:21` en `285ecf4`; desde el lote 3 esa ruta y el alta deciden con `esLote` (sobre `clasificarOV`), enfrentado a `LOTE_OV` por prueba |
 | `estadoContrato(c, hoy)` | `no_iniciado` si `hoy < inicio`; `vencido` si `fin < hoy`; si no, `vigente` (extremos incluidos, S-4/S-5). Comparación de cadenas `YYYY-MM-DD` |
 | `motivoVencido(numero, contrato, hoy)` | Sólo si `clasificarOV(numero)` es `subov` (`subOV.ts:32-36`) y el contrato del lote está `vencido`: texto con lote, contrato y fin |
 | `prioridadAlNacer(pedida, conContratoVigente)` | `'High'` si hay contrato vigente; si no, **exactamente** lo de hoy: `pedida ? String(pedida) : null` (`ticketService.ts:106` en `9288779`) |
@@ -117,7 +117,7 @@ Fichero nuevo `apps/desk/server/routes/contratos.ts`, `registerContratosRoutes(a
 | Ruta | Quién | Escalera (F1B-10) |
 |---|---|---|
 | `GET /api/contratos` | sesión (`requireAuth`) | — |
-| `POST /api/contratos` | Comercial o admin: `canExecuteTransition(areas, isAdmin, 'Comercial')` (patrón `ovAsociaciones.ts:47`) | B `403` < C `422` (campo ausente, `LOTE_OV`, `fechaCalendario`, fin < inicio, `getClient` nulo) < D `409` (lote registrado; también el `23505` de la carrera) |
+| `POST /api/contratos` | Comercial o admin: `canExecuteTransition(areas, isAdmin, 'Comercial')` (patrón `ovAsociaciones.ts:47`) | B `403` < C `422` (campo ausente, `esLote`, `fechaCalendario`, fin < inicio, `getClient` nulo) < D `409` (lote registrado; también el `23505` de la carrera) |
 | `GET /api/contratos/:id` | sesión | A `404` (id no numérico o inexistente, patrón `ovAsociaciones.ts:44`). Devuelve contrato, estado y `saldoPorLote` |
 | `GET /api/contratos/:id/informe` | sesión | A `404` |
 | `GET /api/tickets/:id/contrato` | sesión | `{ deContrato, contrato?, subOV? }` |
@@ -209,7 +209,7 @@ sentencia); `TicketDetailView.tsx:15` (import), `:320` (segundo componente en la
 | Decisión del cliente | Quién la impone en el servidor |
 |---|---|
 | Botón «Nuevo contrato» sólo para Comercial/admin | `POST /api/contratos`, `403` con `canExecuteTransition` (consumido) |
-| Formato de lote, fechas reales, fin ≥ inicio | Misma ruta, `422` con `LOTE_OV`/`fechaCalendario` de `shared`; `CHECK` en la base |
+| Formato de lote, fechas reales, fin ≥ inicio | Misma ruta, `422` con `esLote`/`fechaCalendario` de `shared`; `CHECK` en la base |
 | Un contrato por lote | `409` de la ruta e índice único |
 | Marca «de contrato» en el ticket | `GET /api/tickets/:id/contrato` (`contratoDelTicket`) |
 | Cifras, estados y trimestres del informe | `GET /api/contratos/:id/informe`; el cliente no calcula nada |
@@ -253,7 +253,7 @@ filas, porque no hay shell, subprocesos ni automatización de VCS. El cambio sí
 | Rutas nuevas sin sesión | `requireAuth` en las cinco | `401` en cada una |
 | Alta sin Comercial | `403` antes de validar contenido | `403` con cuerpo inválido; admin sin área pasa |
 | Fechas malformadas o irreales, fin < inicio | `fechaCalendario` + `422`; `CHECK` | `2026-02-30`, `31/12/2026`, vacío, fin < inicio |
-| Lote malformado o con forma de subOV; texto hostil | `LOTE_OV` + `422`; SQL siempre parametrizado | `OV-2026-170-01`, `OV-2026-170'; DROP TABLE contratos` → `422` |
+| Lote malformado o con forma de subOV; texto hostil | `esLote` + `422`; SQL siempre parametrizado | `OV-2026-170-01`, `OV-2026-170'; DROP TABLE contratos` → `422` |
 | Cliente inexistente | `getClient` + `422` | id inventado |
 | Carrera de dos altas del mismo lote | índice único; `23505` → `409` | inserción directa y luego la ruta |
 | `:id` no numérico | `404` antes de consultar | `abc` |

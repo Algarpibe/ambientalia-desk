@@ -47,3 +47,20 @@ export async function saldoPorLote(db: Queryable, lote: string): Promise<SaldoLo
     consumido: creadas.length === 0 ? 0 : Math.round((100 * consumidas) / creadas.length),
   }
 }
+
+export interface SubOVCreada { id: string; number: string }
+
+/**
+ * Las subOV creadas del lote, una a una (registro-contrato, lote 4; `zoho-sync` RQ-ZS-15), para el informe
+ * trimestral. Mismo criterio que `saldoPorLote` —`clasificarOV` y `ESTADOS_FUERA_DEL_SALDO`— sin tocarlo: una prueba
+ * enfrenta las dos (molde H5), para que el informe y el saldo no puedan contar creadas distintas.
+ */
+export async function creadasDelLote(db: Queryable, lote: string): Promise<SubOVCreada[]> {
+  const so = await db.query('SELECT id, number, status, order_status FROM sales_orders WHERE number LIKE $1 ORDER BY number', [`${lote}-%`])
+  return so.rows.flatMap((row) => {
+    const c = clasificarOV(row.number)
+    if (c.tipo !== 'subov' || c.lote !== lote) return []
+    if (ESTADOS_FUERA_DEL_SALDO.includes(String(row.order_status ?? '')) || ESTADOS_FUERA_DEL_SALDO.includes(String(row.status ?? ''))) return []
+    return [{ id: String(row.id), number: String(row.number) }]
+  })
+}

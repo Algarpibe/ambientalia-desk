@@ -9,8 +9,8 @@ import { diaEnZona } from './fechasDerivadas'
 import { sumarDias, type DiaCivil } from './calendarioLaboral'
 import { clasificarOV } from './subOV'
 
-/** El lote es la OV madre `OV-AAAA-NNN(N)`, sin sufijo: nunca una subOV ni una OVI. */
-export const LOTE_OV = /^OV-\d{4}-\d{3,4}$/
+// El lote es la OV madre `OV-AAAA-NNN(N)`, sin sufijo: nunca una subOV ni una OVI. Lo decide `esLote` (al final).
+// Aquí vivía `LOTE_OV`, una regex paralela a la de `clasificarOV`: retirada en el lote 4 (limpieza H5).
 
 export interface Contrato {
   id: number
@@ -104,10 +104,88 @@ export function trimestreEn(c: VigenciaContrato, hoy: DiaCivil): number | null {
 /**
  * Si `valor` es un lote (registro-contrato, lote 3): la OV madre que `clasificarOV` (`subOV.ts:32-36`) devolvería
  * para una subOV canónica suya. Se decide con el clasificador y no con una regex propia, para que «lote» y «subOV»
- * no puedan divergir; sin recortar: un lote con espacios no es un lote. `LOTE_OV` dice lo mismo (prueba enfrentada).
+ * no puedan divergir; sin recortar: un lote con espacios no es un lote. Es la única definición de lote (sin `LOTE_OV`).
  */
 export function esLote(valor: unknown): boolean {
   if (typeof valor !== 'string') return false
   const c = clasificarOV(`${valor}-01`)
   return c.tipo === 'subov' && c.lote === valor
+}
+
+/*
+ * Lote 4 — informe trimestral (`zoho-sync` RQ-ZS-15; `decision/anexo-53-contratos`). Lo calcula el servidor
+ * (`apps/desk/server/db/informeContrato.ts`); aquí viven las piezas puras y la forma que devuelve.
+ */
+
+const ms = (d: DiaCivil): number => { const [a, m, dd] = d.split('-').map(Number); return Date.UTC(a!, m! - 1, dd!) }
+
+/** Días de calendario de `desde` a `hasta` (negativo si `hasta` es anterior), por aritmética pura con `Date.UTC`. */
+export function diasEntre(desde: DiaCivil, hasta: DiaCivil): number {
+  return Math.round((ms(hasta) - ms(desde)) / 86_400_000)
+}
+
+/** `parte` sobre `total` en %, redondeado como el `consumido` de `saldoPorLote`; 0 sin total. */
+export function porcentaje(parte: number, total: number): number {
+  return total === 0 ? 0 : Math.round((100 * parte) / total)
+}
+
+export type EstadoSubOV = 'libre' | 'en_curso' | 'ejecutada'
+
+/**
+ * El estado de una subOV creada según el ticket de su asociación VIGENTE (`null` = no hay): ejecutada sólo si ese
+ * ticket está HOY en `Finalizado` (S-6). Un ticket reabierto deja de estar ejecutado aunque llegara a finalizar.
+ */
+export function estadoSubOV(statusTicket: string | null): EstadoSubOV {
+  if (statusTicket == null) return 'libre'
+  return statusTicket === 'Finalizado' ? 'ejecutada' : 'en_curso'
+}
+
+/** Lo que la columna «informe» dice de cada servicio: el documento no está en los datos (hueco declarado). */
+export const INFORME_NO_DISPONIBLE = 'No disponible en los datos'
+
+export interface SubOVDelInforme {
+  numero: string
+  salesorderId: string
+  estado: EstadoSubOV
+  ticketId: string | null
+  ticketNumber: number | null
+  /** Día de la PRIMERA llegada del ticket a `Finalizado` (S-15); `null` si no está ejecutada o no hay transición. */
+  fechaEjecucion: DiaCivil | null
+}
+
+export interface ServicioDelInforme {
+  subOV: string
+  ticketId: string
+  ticketNumber: number | null
+  equipo: string | null
+  serial: string | null
+  tipoServicio: string | null
+  fecha: DiaCivil
+  informe: typeof INFORME_NO_DISPONIBLE
+}
+
+export interface TrimestreDelInforme extends Trimestre {
+  /** Ejecutadas con fecha en o antes del cierre del trimestre (acumulado, S-7). */
+  ejecutadasAlCierre: number
+  porcentajeEjecutado: number
+  servicios: ServicioDelInforme[]
+}
+
+export interface InformeContrato {
+  contrato: Contrato
+  estado: EstadoContrato
+  hoy: DiaCivil
+  creadas: number
+  ejecutadas: number
+  enCurso: number
+  libres: number
+  porcentajeEjecutado: number
+  /** El `consumido` de `saldoPorLote` (asociaciones vigentes / creadas): NO es el % ejecutado. */
+  consumido: number
+  diasHastaFin: number
+  subOV: SubOVDelInforme[]
+  trimestres: TrimestreDelInforme[]
+  /** Ejecutadas hoy sin fila de `ticket_transitions` hacia `Finalizado`: sin fecha, fuera de los acumulados. */
+  sinFecha: SubOVDelInforme[]
+  huecos: string[]
 }

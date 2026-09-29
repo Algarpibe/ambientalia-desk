@@ -5,6 +5,7 @@ import { saldoPorLote } from '@ambientalia/zoho-sync/books/subOV'
 import { canExecuteTransition, esLote, fechaCalendario, estadoContrato, hoyEnZona } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { informeContrato } from '../db/informeContrato'
 import { crearContrato, listarContratos, contratoPorId, contratoDelLote, contratoDelTicket, ContratoDuplicadoError } from '../db/contratos'
 
 /**
@@ -58,5 +59,13 @@ export function registerContratosRoutes(app: Express, deps: { db: Queryable }): 
       if (e instanceof ContratoDuplicadoError) { res.status(409).json({ error: e.message }); return }
       throw e
     }
+  }))
+
+  // Lote 4 — informe trimestral (RQ-ZS-15). A · existencia: un id no numérico no llega a la base.
+  app.get('/api/contratos/:id/informe', requireAuth(db), asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    const contrato = /^\d+$/.test(id) ? await contratoPorId(db, Number(id)) : null
+    if (!contrato) { res.status(404).json({ error: 'Contrato no encontrado' }); return }
+    res.json(await informeContrato(db, contrato, hoyEnZona()))
   }))
 }

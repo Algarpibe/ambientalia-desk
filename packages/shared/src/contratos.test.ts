@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { LOTE_OV, esLote, fechaCalendario, estadoContrato, motivoVencido, prioridadAlNacer, hoyEnZona, trimestresDelContrato, trimestreEn } from '@ambientalia/shared'
+import { esLote, diasEntre, porcentaje, estadoSubOV, fechaCalendario, estadoContrato, motivoVencido, prioridadAlNacer, hoyEnZona, trimestresDelContrato, trimestreEn } from '@ambientalia/shared'
 
 /**
  * Contrato por lote (registro-contrato, lote 1; `tickets-core` RQ-TC-21, RQ-TC-22). Se importa desde
@@ -15,10 +15,10 @@ describe('fechaCalendario · sólo un día real en forma YYYY-MM-DD', () => {
     })
 })
 
-describe('LOTE_OV · la OV madre, nunca una subOV', () => {
-  it.each(['OV-2026-170', 'OV-2026-1700'])('%s es un lote', (v) => expect(LOTE_OV.test(v)).toBe(true))
+describe('esLote · la OV madre, nunca una subOV (casos del lote 1, antes sobre LOTE_OV)', () => {
+  it.each(['OV-2026-170', 'OV-2026-1700'])('%s es un lote', (v) => expect(esLote(v)).toBe(true))
   it.each(['OV-2026-170-01', 'OVI-2026-170', 'OV-2026-17', 'OV-2026-17000', "OV-2026-170'; DROP TABLE contratos"])(
-    '%s no es un lote', (v) => expect(LOTE_OV.test(v)).toBe(false))
+    '%s no es un lote', (v) => expect(esLote(v)).toBe(false))
 })
 
 describe('estadoContrato · las dos fechas incluidas (S-4, S-5)', () => {
@@ -115,13 +115,46 @@ describe('trimestreEn · el trimestre en curso, o null fuera de la vigencia', ()
 })
 
 // Lote 3 — la ruta decide el lote con `clasificarOV` (subOV.ts:32-36), no con una regex propia: un lote es la OV
-// madre que `clasificarOV` devolvería para una subOV canónica suya. Enfrentamiento con `LOTE_OV` (molde H5).
+// madre que `clasificarOV` devolvería para una subOV canónica suya. (`LOTE_OV`, su gemela, se retiró en el lote 4.)
 describe('esLote · el lote que clasificarOV reconoce', () => {
   const casos: unknown[] = ['OV-2026-170', 'OV-2026-1700', 'OV-2026-170-01', 'OVI-2026-170', 'OV-2026-17', 'OV-2026-17000',
     "OV-2026-170'; DROP TABLE contratos", ' OV-2026-170', 'OV-2026-170 ', '', 'SO-00123', null, 170]
   it.each(['OV-2026-170', 'OV-2026-1700'])('%s es un lote', (v) => expect(esLote(v)).toBe(true))
   it.each(casos.slice(2))('%s no es un lote', (v) => expect(esLote(v)).toBe(false))
-  it('dice lo mismo que LOTE_OV en todos los casos de texto', () => {
-    for (const v of casos.filter((c): c is string => typeof c === 'string')) expect(esLote(v), v).toBe(LOTE_OV.test(v))
+  it('el lote de toda subOV canónica es un lote para esLote (misma fuente: clasificarOV)', () => {
+    for (const s of ['OV-2026-170-01', 'OV-2026-1700-99', 'OV-2099-001-00']) expect(esLote(s.slice(0, -3)), s).toBe(true)
+  })
+})
+
+// Lote 4 — informe trimestral (`zoho-sync` RQ-ZS-15). `trimestresDelContrato` es del lote 1: aquí es regresión.
+describe('trimestres del informe · desde el inicio, nunca naturales (S-12, regresión)', () => {
+  it('inicio 2026-02-10, fin 2027-02-09: t1 hasta 05-09, t2 desde 05-10, el último acaba el 2027-02-09', () => {
+    const t = trimestresDelContrato('2026-02-10', '2027-02-09')
+    expect(t[0]).toEqual({ k: 1, inicio: '2026-02-10', fin: '2026-05-09' })
+    expect(t[1]!.inicio).toBe('2026-05-10')
+    expect(t.at(-1)!.fin).toBe('2027-02-09')
+  })
+  it('inicio 31-ene: t2 el 30-abr y t3 el 31-jul, siempre desde el inicio (sin arrastrar el recorte)', () => {
+    const t = trimestresDelContrato('2026-01-31', '2027-01-30')
+    expect([t[1]!.inicio, t[2]!.inicio]).toEqual(['2026-04-30', '2026-07-31'])
+  })
+})
+
+describe('diasEntre, porcentaje y estadoSubOV', () => {
+  it('días hasta el fin: 30 con el contrato vigente, -5 con el vencido', () => {
+    expect(diasEntre('2026-12-01', '2026-12-31')).toBe(30)
+    expect(diasEntre('2027-01-05', '2026-12-31')).toBe(-5)
+    expect(diasEntre('2026-02-28', '2026-03-01')).toBe(1)
+  })
+  it('porcentaje: 0 sin creadas; 3 de 10 → 30; redondeado como el consumido', () => {
+    expect(porcentaje(0, 0)).toBe(0)
+    expect(porcentaje(3, 10)).toBe(30)
+    expect(porcentaje(1, 3)).toBe(33)
+  })
+  it('libre sin ticket; ejecutada sólo con el ticket HOY en Finalizado; cualquier otro estado, en curso (S-6)', () => {
+    expect(estadoSubOV(null)).toBe('libre')
+    expect(estadoSubOV('Finalizado')).toBe('ejecutada')
+    expect(estadoSubOV('Por Facturar')).toBe('en_curso')
+    expect(estadoSubOV('Ingresado')).toBe('en_curso')
   })
 })

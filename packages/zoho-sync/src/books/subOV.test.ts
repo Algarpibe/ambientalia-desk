@@ -3,7 +3,7 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '../db/migrate'
 import { asociarOV, liberarAsociacion } from '../db/ovAsociaciones'
 import { searchSalesOrders } from './repo'
-import { listarCuarentena, saldoPorLote } from './subOV'
+import { listarCuarentena, saldoPorLote, creadasDelLote } from './subOV'
 
 /**
  * Saldo por lote y lista de cuarentena (asociacion-ov-ticket, lote 5; `zoho-sync` RQ-ZS-14).
@@ -85,5 +85,25 @@ describe('cuarentena fuera del buscador y del saldo, dentro de su lista (RQ-ZS-1
     const cuarentena = await listarCuarentena(db)
     expect(cuarentena.map((c) => c.number)).toEqual([`${LOTE}-X9`])
     expect(cuarentena[0].motivo).toContain(`${LOTE}-X9`)
+  })
+})
+
+// registro-contrato, lote 4 — las «creadas» del informe trimestral (RQ-ZS-15) son las MISMAS que las del saldo.
+describe('creadasDelLote · las mismas creadas que saldoPorLote (enfrentamiento, molde H5)', () => {
+  beforeEach(async () => {
+    for (const n of ['01', '02', '03']) await ov(`s${n}`, `${LOTE}-${n}`)
+    await ov('sq', `${LOTE}-X9`) // cuarentena
+    await ov('sd', `${LOTE}-04`, 'draft')
+    await ov('sv', `${LOTE}-05`, 'void')
+    await ov('so', 'OV-2026-171-01') // otro lote
+  })
+
+  it('excluye cuarentena, borrador, anulada y otros lotes', async () => {
+    expect((await creadasDelLote(db, LOTE)).map((o) => o.number)).toEqual([`${LOTE}-01`, `${LOTE}-02`, `${LOTE}-03`])
+  })
+
+  it('cuenta exactamente lo que saldoPorLote cuenta como creadas', async () => {
+    expect((await creadasDelLote(db, LOTE)).length).toBe((await saldoPorLote(db, LOTE)).creadas)
+    expect((await creadasDelLote(db, 'OV-2026-999')).length).toBe((await saldoPorLote(db, 'OV-2026-999')).creadas)
   })
 })

@@ -199,3 +199,29 @@ describe('el «ticket de contrato» es DERIVADO: ningún cuerpo lo fija', () => 
     expect(Object.keys(res.body).sort()).toEqual(['clientId', 'creadoPor', 'createdAt', 'fechaFin', 'fechaInicio', 'id', 'lote', 'ritmoAvisadoTrimestre'])
   })
 })
+
+describe('GET /api/contratos/:id/informe (lote 4, RQ-ZS-15)', () => {
+  it.each(ROLES)('%s · lectura abierta a sesión', async (_r, cookie, _crear, esperado) => {
+    const c = await registrar()
+    expect((await con(request(appWith().app).get(`/api/contratos/${c.id}/informe`), cookie)).status).toBe(esperado)
+  })
+
+  it('404 con :id no numérico SIN consultar, y 404 con id inexistente', async () => {
+    let consultas = 0
+    const espia: Queryable = { query: ((sql: string, p?: unknown[]) => { if (/contratos|sales_orders|ov_asociaciones|ticket_transitions/.test(sql)) consultas++; return db.query(sql, p) }) as Queryable['query'] }
+    const cookie = await userCookie(['Servicio Técnico'])
+    const app = appWith({}, espia).app
+    expect((await request(app).get('/api/contratos/abc/informe').set('Cookie', cookie)).status).toBe(404)
+    expect(consultas).toBe(0)
+    expect((await request(app).get('/api/contratos/999/informe').set('Cookie', cookie)).status).toBe(404)
+  })
+
+  it('200 con la forma del design §6', async () => {
+    const c = await registrar()
+    const res = await request(appWith().app).get(`/api/contratos/${c.id}/informe`).set('Cookie', await userCookie(['Servicio Técnico']))
+    expect(res.status).toBe(200)
+    expect(Object.keys(res.body).sort()).toEqual(['consumido', 'contrato', 'creadas', 'diasHastaFin', 'ejecutadas', 'enCurso', 'estado', 'hoy',
+      'huecos', 'libres', 'porcentajeEjecutado', 'sinFecha', 'subOV', 'trimestres'])
+    expect(res.body.contrato).toEqual(c)
+  })
+})
