@@ -1234,3 +1234,18 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** `apps/desk/server/index.ts` (pasada periódica) · aviso de ritmo del contrato (`derivacion-avisos`) · la tanda que retire la sincronización con Zoho.
 **Estado:** nueva
 **Destino:** **SIN DESTINO ASIGNADO**, a propósito: ninguna fila del §5 reclama hoy la retirada de la sincronización, y asignarle una sería decidir alcance. **Dueño propuesto:** Gerencia.
+
+## E-088 · 2026-09-29 · hallazgo · **NUEVA**
+**Qué:** No existe forma de corregir un contrato mal dado de alta —lote o cliente equivocados— salvo en la base de datos. Las rutas de contratos son cuatro lecturas y un alta (`apps/desk/server/routes/contratos.ts:24`, `:28`, `:36`, `:40`, `:65`); no hay edición ni borrado, y la única escritura posterior sobre la tabla es la marca del aviso de ritmo (`apps/desk/server/services/avisoRitmoContrato.ts:28`). Y el error no se queda en el dato: el índice único por lote (`packages/zoho-sync/src/db/schema.sql:572`) deja **ocupado** el lote equivocado, de modo que su contrato verdadero ya no se puede registrar. La fecha de fin es otra cosa y es E-086; esto no.
+**De dónde viene:** preparación del paquete de despliegue del 2026-09-29 (`docs/sdd/Paquete_de_Despliegue_2026-09-29.md`, riesgos de §5.3).
+**Por qué es probable y no teórico:** la tarea de persona P.7 de `registro-contrato` da de alta **todos los contratos vigentes el mismo día del despliegue**, a mano y sin relleno automático. Es el momento de más altas en menos tiempo, y un lote mal tecleado entonces sólo se arregla en la base.
+**Afecta a:** capacidad `tickets-core` (RQ-TC-21, registro de contrato) · `apps/desk/server/routes/contratos.ts` · tarea P.7 de `registro-contrato`.
+**Estado:** nueva
+**Destino:** **SIN DESTINO ASIGNADO**, a propósito: ninguna fila del §5 reclama hoy la edición del contrato, y asignársela a una sería decidir alcance. **Dueño propuesto:** Gerencia.
+
+## E-089 · 2026-09-29 · pregunta · **NUEVA**
+**Qué:** Qué estados ve cada área. El maestro lo da por decidido («Cada usuario ve solo los estados y transiciones de su rol», M1.9.1, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1693`) y el código decidió lo contrario, por escrito y a propósito: todo el personal con sesión ve todos los tickets (`docs/modelo-autorizacion.md:14`); sólo las transiciones se filtran por área.
+**De dónde viene:** hasta hoy la pregunta sólo estaba escrita en una spec (`openspec/specs/permissions/spec.md:253-265`), que ninguna sesión carga al arrancar. Se reunió con las demás en `docs/sdd/Preguntas_Gerencia_2026-09-29.md`, pregunta 2, con sus tres opciones y su consecuencia.
+**Afecta a:** fila F1B-05 del §5 del plan (mitad de visibilidad) · capacidad `permissions`.
+**Estado:** nueva
+**Destino propuesto:** `openspec/config.yaml` → `decisiones_de_gerencia`; si la respuesta es segmentar, contenido de F1B-05. **Dueño propuesto:** Gerencia. **Qué desbloquea:** el cierre de F1B-05, que sin esta respuesta puede construir el resto de su contenido pero no cerrarse.

@@ -121,9 +121,12 @@ ROLLBACK;
 -- Esta consulta enseña qué valores existen de verdad y cuántas OV hay de cada uno, para confirmar
 -- cuáles significan borrador y anulada (S-11). Sólo lectura; va fuera del BEGIN/ROLLBACK de arriba,
 -- así que si se ejecuta suelta conviene envolverla en BEGIN READ ONLY … ROLLBACK.
-SELECT 'order_status' AS columna, COALESCE(so.order_status, '(nulo)') AS valor, count(*) AS ordenes
+-- `order_status` NO es columna de books.sales_orders (packages/zoho-sync/src/db/schema.sql:160-165): la vista
+-- public.sales_orders lo saca del JSON de Zoho con raw->>'order_status' (schema.sql:181), y aquí se lee igual.
+-- `status` sí es columna. Las dos partes confirman los literales de los DOS campos que mira ESTADOS_FUERA_DEL_SALDO.
+SELECT 'order_status' AS columna, COALESCE(so.raw->>'order_status', '(nulo)') AS valor, count(*) AS ordenes
   FROM books.sales_orders so
- GROUP BY so.order_status
+ GROUP BY so.raw->>'order_status'
 UNION ALL
 SELECT 'status' AS columna, COALESCE(so.status, '(nulo)') AS valor, count(*) AS ordenes
   FROM books.sales_orders so
