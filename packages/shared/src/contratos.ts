@@ -100,3 +100,14 @@ export function trimestreEn(c: VigenciaContrato, hoy: DiaCivil): number | null {
   if (estadoContrato(c, hoy) !== 'vigente') return null
   return trimestresDelContrato(c.fechaInicio, c.fechaFin).find((t) => t.inicio <= hoy && hoy <= t.fin)!.k
 }
+
+/**
+ * Si `valor` es un lote (registro-contrato, lote 3): la OV madre que `clasificarOV` (`subOV.ts:32-36`) devolvería
+ * para una subOV canónica suya. Se decide con el clasificador y no con una regex propia, para que «lote» y «subOV»
+ * no puedan divergir; sin recortar: un lote con espacios no es un lote. `LOTE_OV` dice lo mismo (prueba enfrentada).
+ */
+export function esLote(valor: unknown): boolean {
+  if (typeof valor !== 'string') return false
+  const c = clasificarOV(`${valor}-01`)
+  return c.tipo === 'subov' && c.lote === valor
+}

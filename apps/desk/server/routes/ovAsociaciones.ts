@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { listarAsociaciones, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import { listarCuarentena, saldoPorLote } from '@ambientalia/zoho-sync/books/subOV'
-import { canExecuteTransition } from '@ambientalia/shared'
+import { canExecuteTransition, esLote } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { enTransaccion } from '../db/transaccion'
 import { asyncHandler } from '../util/asyncHandler'
@@ -18,7 +18,7 @@ import { asyncHandler } from '../util/asyncHandler'
  * El permiso se CONSUME de `@ambientalia/shared` (`canExecuteTransition`, regla invariable 13): aquí no se
  * reescribe. El botón del cliente es comodidad; la imposición es esta.
  */
-const LOTE = /^OV-\d{4}-\d{3,4}$/
+// El lote se reconoce con `esLote` de `shared` (clasificarOV): el mismo criterio que el alta de contratos, sin regex propia.
 
 export function registerOvAsociacionesRoutes(app: Express, deps: { db: Queryable }): void {
   const { db } = deps
@@ -33,7 +33,7 @@ export function registerOvAsociacionesRoutes(app: Express, deps: { db: Queryable
 
   app.get('/api/ov-asociaciones/saldo/:lote', requireAuth(db), asyncHandler(async (req, res) => {
     const lote = String(req.params.lote)
-    if (!LOTE.test(lote)) { res.status(422).json({ error: 'El lote debe tener el formato OV-AAAA-NNN' }); return }
+    if (!esLote(lote)) { res.status(422).json({ error: 'El lote debe tener el formato OV-AAAA-NNN' }); return }
     res.json(await saldoPorLote(db, lote))
   }))
 

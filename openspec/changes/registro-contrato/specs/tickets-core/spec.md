@@ -83,7 +83,7 @@ la última guarda de contenido de la puerta era la cuarentena.)
 
 El sistema **SHALL** persistir el contrato en una tabla propia del esquema `public` (`public.contratos`,
 supuesto S-1), con una fila por contrato: cliente (id de `public.clients`, sin clave foránea porque es
-réplica de Books), lote (`OV-AAAA-NNN`, mismo formato que acepta `apps/desk/server/routes/ovAsociaciones.ts:21`),
+réplica de Books), lote (`OV-AAAA-NNN`, mismo formato que acepta `apps/desk/server/routes/ovAsociaciones.ts:21` en `285ecf4`),
 fecha de inicio, fecha de fin, y —como traza— persona y fecha de alta. **Ningún** campo del contrato es
 opcional. El sistema **SHALL** admitir a lo sumo **un** contrato por lote, impuesto por una restricción de
 unicidad de base de datos sobre el lote. El lote **MAY** no existir aún en Books (supuesto S-1): registrar

@@ -3,10 +3,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { comoDiaCivil } from './calendarioCierres'
+import { comoDiaCivil } from './calendarioCierres'; import { asociarOV, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import {
   crearContrato, listarContratos, contratoPorId, contratoDelLote, contratosDelCliente, ContratoDuplicadoError,
-  hayContratoVigente, motivoContratoVencido, erroresContratoVencido,
+  hayContratoVigente, motivoContratoVencido, erroresContratoVencido, contratoDelTicket,
 } from './contratos'
 
 let db: Queryable
@@ -103,5 +103,61 @@ describe('hayContratoVigente, motivoContratoVencido y erroresContratoVencido', (
     expect(e).toHaveLength(2)
     expect(e[0]).toContain('OV-2026-170-01')
     expect(e[1]).toContain('OV-2026-180-02')
+  })
+})
+
+/*
+ * Lote 3 — el ticket de contrato es DERIVADO (RQ-TC-23, S-3): se calcula al leer desde las asociaciones vigentes y
+ * el contrato del lote; ninguna columna lo guarda y nadie lo marca a mano (`decision/anexo-53-contratos`).
+ */
+describe('contratoDelTicket · derivado al leer, nunca guardado', () => {
+  const HOY = '2026-06-01'
+  const vigente = { clientId: 'C-A', lote: 'OV-2026-170', fechaInicio: '2026-01-15', fechaFin: '2026-12-31', creadoPor: 'c' }
+  const asociar = (ticketId: string, numero: string) =>
+    asociarOV(db, { ticketId, numero, salesorderId: null, origen: 'alta', actor: 't', fechaOrdenCompra: null })
+  const foto = async () => ({
+    tickets: (await db.query("SELECT * FROM tickets WHERE id = 't1'")).rows,
+    asociaciones: (await db.query('SELECT * FROM ov_asociaciones ORDER BY id')).rows,
+  })
+  beforeEach(async () => {
+    await db.query("INSERT INTO tickets (id, number, subject, status, client_id) VALUES ('t1', 1, 's', 'Ingresado', 'C-B')")
+  })
+
+  it('asociación vigente a una subOV de un lote con contrato vigente → de contrato, con su lote y su subOV', async () => {
+    const c = await crearContrato(db, vigente)
+    await asociar('t1', 'OV-2026-170-01')
+    expect(await contratoDelTicket(db, 't1', HOY)).toEqual({ deContrato: true, contrato: c, subOV: 'OV-2026-170-01' })
+  })
+
+  it('con el contrato vencido deja de serlo, y ni `tickets` ni `ov_asociaciones` han cambiado', async () => {
+    await crearContrato(db, { ...vigente, fechaFin: '2026-05-31' })
+    await asociar('t1', 'OV-2026-170-01')
+    const antes = await foto()
+    expect(await contratoDelTicket(db, 't1', HOY)).toEqual({ deContrato: false })
+    expect(await foto()).toEqual(antes)
+  })
+
+  it('una asociación liberada no cuenta', async () => {
+    await crearContrato(db, vigente)
+    const a = await asociar('t1', 'OV-2026-170-01')
+    await liberarAsociacion(db, a.id, 'c', 'error de tecleo')
+    expect(await contratoDelTicket(db, 't1', HOY)).toEqual({ deContrato: false })
+  })
+
+  it('la OV ordinaria del lote (con contrato registrado) y una subOV de un lote sin contrato no la convierten', async () => {
+    await crearContrato(db, vigente)
+    await asociar('t1', 'OV-2026-170')
+    await asociar('t1', 'OV-2026-180-01')
+    expect(await contratoDelTicket(db, 't1', HOY)).toEqual({ deContrato: false })
+  })
+
+  it('contrato del cliente A y ticket del cliente B: sigue siendo de contrato (no compara clientes, S-9)', async () => {
+    await crearContrato(db, vigente)
+    await asociar('t1', 'OV-2026-170-02')
+    expect((await contratoDelTicket(db, 't1', HOY)).deContrato).toBe(true)
+  })
+
+  it('un ticket sin asociaciones no es de contrato', async () => {
+    expect(await contratoDelTicket(db, 't1', HOY)).toEqual({ deContrato: false })
   })
 })

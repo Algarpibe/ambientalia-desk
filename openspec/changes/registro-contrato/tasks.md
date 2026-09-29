@@ -233,26 +233,26 @@ Citas a releer en el cierre (el contenido cambia, el número no): `tickets-core 
 Módulos nuevos: `apps/desk/server/routes/contratos.ts`, `apps/desk/server/routes/contratos.test.ts`. `db/contratos.ts` gana `contratoDelTicket` (fichero nuevo del lote 1).
 Cita a releer: `tickets-core` delta `:86` (`ovAsociaciones.ts:21`).
 
-- [ ] 3.1 RED — `db/contratos.test.ts` (al final): `contratoDelTicket(db, ticketId, hoy)`: asociación vigente a `OV-2026-170-01` + contrato vigente → de contrato, con lote `OV-2026-170`; contrato vencido → no, sin que cambie ninguna columna de `tickets` ni fila de `ov_asociaciones`;
+- [x] 3.1 RED — `db/contratos.test.ts` (al final): `contratoDelTicket(db, ticketId, hoy)`: asociación vigente a `OV-2026-170-01` + contrato vigente → de contrato, con lote `OV-2026-170`; contrato vencido → no, sin que cambie ninguna columna de `tickets` ni fila de `ov_asociaciones`;
   asociación liberada → no; asociación a ordinaria `OV-2026-170` con contrato registrado y a `OV-2026-180-01` sin contrato → no; contrato del cliente A y ticket del cliente B → sí, sin rechazo. RQ: RQ-TC-23 (5 escenarios).
-- [ ] 3.2 Confirmar rojo natural.
-- [ ] 3.3 GREEN — `contratoDelTicket` en `db/contratos.ts`: asociaciones vigentes → `clasificarOV` → contrato del lote → `estadoContrato === 'vigente'`; calculado al leer (S-3), sin comparar clientes (S-9).
-- [ ] 3.4 Confirmar 3.1 en verde.
-- [ ] 3.5 RED — `routes/contratos.test.ts` (nuevo, `appHarness`), lecturas: `401` sin sesión en `GET /api/contratos`, `GET /api/contratos/:id` y `GET /api/tickets/:id/contrato`; las tres devuelven `200` a un usuario con sesión sin Comercial; la ficha trae contrato, estado y `saldoPorLote`;
+- [x] 3.2 Confirmar rojo natural.
+- [x] 3.3 GREEN — `contratoDelTicket` en `db/contratos.ts`: asociaciones vigentes → `clasificarOV` → contrato del lote → `estadoContrato === 'vigente'`; calculado al leer (S-3), sin comparar clientes (S-9).
+- [x] 3.4 Confirmar 3.1 en verde.
+- [x] 3.5 RED — `routes/contratos.test.ts` (nuevo, `appHarness`), lecturas: `401` sin sesión en `GET /api/contratos`, `GET /api/contratos/:id` y `GET /api/tickets/:id/contrato`; las tres devuelven `200` a un usuario con sesión sin Comercial; la ficha trae contrato, estado y `saldoPorLote`;
   `:id` = `abc` → `404` **sin consultar** (se cuentan las consultas); id inexistente → `404`; `GET /api/tickets/:id/contrato` → `{ deContrato, contrato?, subOV? }`. RQ: RQ-TC-21 (lectura abierta), RQ-TC-23 (exposición en la lectura del ticket).
-- [ ] 3.6 Confirmar rojo natural (rutas inexistentes).
-- [ ] 3.7 GREEN — crear `routes/contratos.ts`, `registerContratosRoutes(app, { db })` con las tres lecturas (`requireAuth`); registrar en `app.ts:22` y `:61` **al final de las líneas existentes**.
-- [ ] 3.8 Confirmar 3.5 en verde.
-- [ ] 3.9 RED — `routes/contratos.test.ts`, alta: Comercial `POST /api/contratos` (`OV-2026-170`, `2026-01-15`–`2026-12-31`) → éxito con `creado_por` y `created_at`; sin Comercial → `403` con datos válidos **y** con cuerpo inválido, sin fila; administrador sin área → éxito;
+- [x] 3.6 Confirmar rojo natural (rutas inexistentes).
+- [x] 3.7 GREEN — crear `routes/contratos.ts`, `registerContratosRoutes(app, { db })` con las tres lecturas (`requireAuth`); registrar en `app.ts:22` y `:61` **al final de las líneas existentes**.
+- [x] 3.8 Confirmar 3.5 en verde.
+- [x] 3.9 RED — `routes/contratos.test.ts`, alta: Comercial `POST /api/contratos` (`OV-2026-170`, `2026-01-15`–`2026-12-31`) → éxito con `creado_por` y `created_at`; sin Comercial → `403` con datos válidos **y** con cuerpo inválido, sin fila; administrador sin área → éxito;
   segundo contrato del mismo lote de otro cliente → `409` y fila intacta; `422` en tabla: `OV-2026-170-01`, `OV-2026-170'; DROP TABLE contratos`, fin < inicio, sin fecha de fin, `2026-02-30`, `31/12/2026`, vacío, cliente inexistente (`getClient` nulo);
   **posición:** usuario sin Comercial + inválido + lote ya registrado → `403`; Comercial + inválido + lote ya registrado → `422`, no `409`; carrera: el `SELECT` previo se oculta con un envoltorio de `Queryable` y la base responde `23505` → `409`, no `500`. RQ: RQ-TC-21 (6 escenarios de escritura).
-- [ ] 3.10 Confirmar rojo natural.
-- [ ] 3.11 GREEN — `POST /api/contratos`: `403` con `canExecuteTransition(areas, isAdmin, 'Comercial')` antes de leer el cuerpo; `422` con `LOTE_OV`, `fechaCalendario`, fin ≥ inicio y `getClient`; `409` por consulta previa y por `ContratoDuplicadoError`; SQL siempre parametrizado; registra `creado_por` con el nombre de sesión.
-- [ ] 3.12 Confirmar 3.9 en verde.
-- [ ] 3.13 GREEN — `ovAsociaciones.ts:5` y `:21` en su sitio (consume `LOTE_OV`); verificar `routes/ovAsociaciones.test.ts` en verde sin cambios.
-- [ ] 3.14 MUTACIÓN (regla 1, posición) — en `routes/contratos.ts` mover el `403` DESPUÉS de la validación de contenido (3.9 rojo); mover la consulta de unicidad ANTES de la validación (3.9 rojo). Revertir.
-- [ ] 3.15 MUTACIÓN — en `contratoDelTicket` sacar el lote por prefijo del número en vez de por `clasificarOV`; 3.1 debe ponerse ROJO (la ordinaria `OV-2026-170` con contrato registrado pasaría a ser de contrato). Revertir.
-- [ ] 3.16 Cierre del lote 3: `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `routes/contratos.ts`, `routes/contratos.test.ts`); recuentos `app.ts` 96 y `ovAsociaciones.ts` 57 sin cambio; barrido de citas sobre `app.ts` (12, todas ancladas en `1d030d5` o históricas: comprobar por lectura que `Triaje_Linea_Base_Citas_2026-09-15.md:71-73` no cambia) y `ovAsociaciones.ts`; `apply-progress.md`.
+- [x] 3.10 Confirmar rojo natural.
+- [x] 3.11 GREEN — `POST /api/contratos`: `403` con `canExecuteTransition(areas, isAdmin, 'Comercial')` antes de leer el cuerpo; `422` con `LOTE_OV`, `fechaCalendario`, fin ≥ inicio y `getClient`; `409` por consulta previa y por `ContratoDuplicadoError`; SQL siempre parametrizado; registra `creado_por` con el nombre de sesión.
+- [x] 3.12 Confirmar 3.9 en verde.
+- [x] 3.13 GREEN — `ovAsociaciones.ts:5` y `:21` en su sitio (consume `esLote` de `shared`, no `LOTE_OV`: petición de la supervisión, «usa clasificarOV, no una regex nueva»; `:36` aplica el criterio); verificar `routes/ovAsociaciones.test.ts` en verde sin cambios.
+- [x] 3.14 MUTACIÓN (regla 1, posición) — en `routes/contratos.ts` mover el `403` DESPUÉS de la validación de contenido (3.9 rojo); mover la consulta de unicidad ANTES de la validación (3.9 rojo). Revertir.
+- [x] 3.15 MUTACIÓN — en `contratoDelTicket` sacar el lote por prefijo del número en vez de por `clasificarOV`; 3.1 debe ponerse ROJO (la ordinaria `OV-2026-170` con contrato registrado pasaría a ser de contrato). Revertir.
+- [x] 3.16 Cierre del lote 3: `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `routes/contratos.ts`, `routes/contratos.test.ts`); recuentos `app.ts` 96 y `ovAsociaciones.ts` 57 sin cambio; barrido de citas sobre `app.ts` (12, todas ancladas en `1d030d5` o históricas: comprobar por lectura que `Triaje_Linea_Base_Citas_2026-09-15.md:71-73` no cambia) y `ovAsociaciones.ts`; `apply-progress.md`.
 
 ---
 

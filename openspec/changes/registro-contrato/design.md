@@ -59,7 +59,7 @@ Exportado con una línea **al final** de `packages/shared/src/index.ts` (hoy ter
 |---|---|
 | `hoyEnZona(ahora = new Date())` | `diaEnZona(ahora)` de `fechasDerivadas.ts:63-73`, zona `America/Bogota` (`ZONA_NEGOCIO`, `fechasDerivadas.ts:13`). **S-11** |
 | `fechaCalendario(v)` | `YYYY-MM-DD` de un día real, o `null` (reusa `diaEnZona`, que rechaza `2026-02-30`, `fechasDerivadas.ts:69`) |
-| `LOTE_OV` | `/^OV-\d{4}-\d{3,4}$/`, el mismo que `apps/desk/server/routes/ovAsociaciones.ts:21`, que pasa a consumirlo en sitio |
+| `LOTE_OV` | `/^OV-\d{4}-\d{3,4}$/`, el mismo que `apps/desk/server/routes/ovAsociaciones.ts:21` en `285ecf4`; desde el lote 3 esa ruta y el alta deciden con `esLote` (sobre `clasificarOV`), enfrentado a `LOTE_OV` por prueba |
 | `estadoContrato(c, hoy)` | `no_iniciado` si `hoy < inicio`; `vencido` si `fin < hoy`; si no, `vigente` (extremos incluidos, S-4/S-5). Comparación de cadenas `YYYY-MM-DD` |
 | `motivoVencido(numero, contrato, hoy)` | Sólo si `clasificarOV(numero)` es `subov` (`subOV.ts:32-36`) y el contrato del lote está `vencido`: texto con lote, contrato y fin |
 | `prioridadAlNacer(pedida, conContratoVigente)` | `'High'` si hay contrato vigente; si no, **exactamente** lo de hoy: `pedida ? String(pedida) : null` (`ticketService.ts:106` en `9288779`) |

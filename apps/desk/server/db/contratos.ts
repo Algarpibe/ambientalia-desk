@@ -96,3 +96,20 @@ export async function erroresContratoVencido(db: Queryable, numeros: unknown[], 
   }
   return errores
 }
+
+/*
+ * Lote 3 — el ticket de contrato es DERIVADO (RQ-TC-23): se calcula al leer, no se guarda en ninguna columna (S-3) y
+ * nadie lo marca a mano. No compara el cliente del contrato con el del ticket (mantenedor, S-9).
+ */
+export interface TicketDeContrato { deContrato: boolean; contrato?: Contrato; subOV?: string }
+
+export async function contratoDelTicket(db: Queryable, ticketId: string, hoy: string = hoyEnZona()): Promise<TicketDeContrato> {
+  const r = await db.query('SELECT numero FROM ov_asociaciones WHERE ticket_id = $1 AND liberada_at IS NULL ORDER BY id', [ticketId])
+  for (const { numero } of r.rows as Array<{ numero: string }>) {
+    const c = clasificarOV(numero)
+    if (c.tipo !== 'subov') continue
+    const contrato = await contratoDelLote(db, c.lote)
+    if (contrato && estadoContrato(contrato, hoy) === 'vigente') return { deContrato: true, contrato, subOV: numero.trim() }
+  }
+  return { deContrato: false }
+}

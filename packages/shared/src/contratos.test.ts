@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { LOTE_OV, fechaCalendario, estadoContrato, motivoVencido, prioridadAlNacer, hoyEnZona, trimestresDelContrato, trimestreEn } from '@ambientalia/shared'
+import { LOTE_OV, esLote, fechaCalendario, estadoContrato, motivoVencido, prioridadAlNacer, hoyEnZona, trimestresDelContrato, trimestreEn } from '@ambientalia/shared'
 
 /**
  * Contrato por lote (registro-contrato, lote 1; `tickets-core` RQ-TC-21, RQ-TC-22). Se importa desde
@@ -112,4 +112,16 @@ describe('trimestreEn · el trimestre en curso, o null fuera de la vigencia', ()
     ['2026-12-31', 1], ['2027-01-01', 2], // cambio de trimestre
     ['2027-09-30', 4], ['2027-10-01', null], // fin = hoy, fin = ayer
   ])('hoy %s → %j', (hoy, k) => expect(trimestreEn(c, hoy)).toBe(k))
+})
+
+// Lote 3 — la ruta decide el lote con `clasificarOV` (subOV.ts:32-36), no con una regex propia: un lote es la OV
+// madre que `clasificarOV` devolvería para una subOV canónica suya. Enfrentamiento con `LOTE_OV` (molde H5).
+describe('esLote · el lote que clasificarOV reconoce', () => {
+  const casos: unknown[] = ['OV-2026-170', 'OV-2026-1700', 'OV-2026-170-01', 'OVI-2026-170', 'OV-2026-17', 'OV-2026-17000',
+    "OV-2026-170'; DROP TABLE contratos", ' OV-2026-170', 'OV-2026-170 ', '', 'SO-00123', null, 170]
+  it.each(['OV-2026-170', 'OV-2026-1700'])('%s es un lote', (v) => expect(esLote(v)).toBe(true))
+  it.each(casos.slice(2))('%s no es un lote', (v) => expect(esLote(v)).toBe(false))
+  it('dice lo mismo que LOTE_OV en todos los casos de texto', () => {
+    for (const v of casos.filter((c): c is string => typeof c === 'string')) expect(esLote(v), v).toBe(LOTE_OV.test(v))
+  })
 })

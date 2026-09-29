@@ -100,3 +100,63 @@ sacar el lote por prefijo (`OV-2026-170-X9` → mensaje de cuarentena, sin «con
 **Cierre:** `npm test` 1722 verdes; typecheck limpio; lint 165. Barrido: cinco citas a `ticketService.ts:106` que describían
 la regla anterior (proposal `:26`, design `:65`, delta `tickets-core :229`, `contratos.ts:65`, `contratos.test.ts:75`) son
 caso B y quedan ancladas `en 9288779`; las de `:96`, `:143-152` y `remision.ts:220` siguen ciertas.
+
+## Lote 3 · API y ticket de contrato — 2026-09-29
+
+**Ledger:** objetivo generación 3, techo 800, 2 intentos. **Estimado antes de escribir:** ~620 (plan ~540 + la prueba de
+«derivado, no fijable», la matriz por área y `esLote` con su enfrentamiento). La medida real va en el `settle`.
+
+**Desvío declarado (supuesto reversible, petición de la supervisión):** el lote se decide con `esLote` —nuevo en
+`packages/shared/src/contratos.ts`, AL FINAL—, que pregunta a `clasificarOV` (`subOV.ts:32-36`) si `lote + '-01'` es una
+subOV canónica de ese mismo lote. No hay regex nueva: `ovAsociaciones.ts:21` deja la suya (ahora es un comentario) y
+`:36` usa `esLote`. `LOTE_OV` se queda (lo usan sus pruebas del lote 1) y una prueba enfrenta los dos en 11 textos
+(molde H5). Citas afectadas, caso B, ancladas `en 285ecf4`: `design.md:62` y delta `tickets-core :86`.
+
+| Fichero | Edición | Forma |
+|---|---|---|
+| `app.ts` `:22`, `:61` | import y registro al final de las líneas existentes | EN SITIO, 96 → 96 |
+| `routes/ovAsociaciones.ts` `:5`, `:21`, `:36` | import de `esLote`; regex propia → comentario; `esLote(lote)` | EN SITIO, 57 → 57 |
+| `routes/contratos.ts`, `routes/contratos.test.ts` | nuevos | — |
+| `db/contratos.ts`, `db/contratos.test.ts`, `shared/contratos.ts`, `shared/contratos.test.ts` | `contratoDelTicket`, `esLote` y pruebas | AL FINAL (imports en sitio) |
+
+**Matriz de permisos por endpoint** (`routes/contratos.test.ts`, `ROLES` × cada ruta):
+
+| Rol | `POST /api/contratos` | `GET /api/contratos` · `/:id` · `/api/tickets/:id/contrato` |
+|---|---|---|
+| sin sesión | 401 | 401 |
+| Servicio Técnico | 403, sin fila | 200 |
+| Compras sola | 403, sin fila | 200 |
+| Comercial | 201, `creadoPor` de la sesión | 200 |
+| Comercial + Compras | 201 | 200 |
+| administrador sin área | 201 | 200 |
+
+**Rojos previos:** 3.1 → 6 `contratoDelTicket is not a function` + 14 de `esLote`. 3.5/3.9 → 40 (rutas inexistentes: `404`).
+Tras el GREEN, dos fallos eran de la PRUEBA: el orden esperado de claves (`creadoPor` < `createdAt`) y el alta de ticket sin
+`clientId` (`422 Faltan campos obligatorios: cliente`); se corrigió la prueba, no el código.
+
+**«Derivado, no fijable»:** un alta de ticket con `deContrato/de_contrato/esContrato/contrato/contratoId/contrato_id` a
+verdadero y sin subOV → `{ deContrato: false }`; otra con esos campos a falso y subOV de lote con contrato vigente →
+`deContrato: true`; ni `tickets` ni `ov_asociaciones` tienen columna que case `/contrat/i`. El alta del contrato ignora `id`,
+`creadoPor`, `createdAt`, `ritmoAvisadoTrimestre` y las marcas del cuerpo.
+
+**Mutaciones reproducidas por el orquestador (revertidas con `cmp`):**
+
+| Mutación | Rojas |
+|---|---|
+| M1 · `403` movido tras la validación de contenido | 2 (`403` con cuerpo inválido; posición B) |
+| M2 · consulta de unicidad antes del contenido | 1 (posición C < D) |
+| M3 · sin guarda `403` | 4 (ST, Compras, cuerpo inválido, posición) |
+| M4 · sin traducir `ContratoDuplicadoError` | 1 (carrera → 500) |
+| M5 · `:id` sin filtro numérico | 1 (`abc` → 500) |
+| M6 · lote por prefijo en vez de `clasificarOV` (3.15) | 1 (ordinaria `OV-2026-170` pasaba a ser de contrato) |
+| M7 · contar asociaciones liberadas | 1 |
+| M8 · `esLote` sin exigir `c.lote === valor` | 2 (`' OV-2026-170'`; enfrentamiento) |
+| M9 · `creadoPor` tomado del cuerpo | 1 (no fijable) |
+
+Nota de método: las tres primeras tentativas de M1, M2 y M6 no se aplicaron (no hay Python; y el heredoc de esta shell
+colapsa `\`, lo que dejó M6 como `OV-d{4}`, que rompía todo por otra razón). Sus verdes/rojos se descartaron y se
+repitieron con `diff` visible de cada mutación antes de correr.
+
+**Cierre:** `npm test` 1784 verdes (+62); typecheck limpio; lint 165, los mismos. Barrido: `app.ts` y `ovAsociaciones.ts`
+no mueven líneas; las citas a `ovAsociaciones.ts:13-14`, `:26`, `:30`, `:34`, `:36`, `:44`, `:47`, `:48`, `:50`, `:51`,
+`:54` siguen ciertas; `:21` (dos citas) caso B, anclada.
