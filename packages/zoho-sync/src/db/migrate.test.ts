@@ -371,11 +371,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 39 ALTER: 19 calificadas (14 de public + 5 de books) y 20 sin calificar, todas de Desk', () => {
+  it('son 40 ALTER: 19 calificadas (14 de public + 5 de books) y 21 sin calificar, todas de Desk (la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar, conjunto sin cambios)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(39)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(40)
     expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(19)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(20)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(21)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.
@@ -440,5 +440,25 @@ describe('parche-iv11-orden-venta · la ALTER de ov_elegida_en_app_at no rellena
     for (const s of relacionadas) await db.query(s)
     const r = await db.query('SELECT ov_elegida_en_app_at FROM tickets WHERE id=$1', ['legacy-1'])
     expect(r.rows[0].ov_elegida_en_app_at).toBeNull()
+  })
+})
+
+/**
+ * blueprint-soporte-remoto (F1B-06, cambio 2 · D5, S-9) · la columna `modalidad` nace SIN relleno ni
+ * `CHECK`: las filas previas quedan con NULL y la lista blanca vive en `shared`. Regla de mutación 2:
+ * se ejercitan las sentencias REALES de `schema.sql` que mencionan la columna; un `UPDATE` de relleno
+ * junto a la `ALTER` cambia el recuento y esta prueba se pone roja.
+ */
+describe('blueprint-soporte-remoto · la ALTER de modalidad no rellena filas previas (S-9, sin backfill)', () => {
+  it('sólo hay UNA sentencia relacionada (la ALTER), y una fila previa queda con modalidad en NULL', async () => {
+    const pg = newDb().adapters.createPg()
+    const db = new pg.Pool()
+    await db.query('CREATE TABLE tickets (id text PRIMARY KEY, classification text)')
+    await db.query("INSERT INTO tickets (id, classification) VALUES ('legacy-sr', 'Soporte remoto')")
+    const relacionadas = schemaStatements().filter((s) => /modalidad/i.test(s))
+    expect(relacionadas, 'sentencias de schema.sql que mencionan modalidad').toHaveLength(1)
+    for (const s of relacionadas) await db.query(s)
+    const r = await db.query('SELECT modalidad FROM tickets WHERE id=$1', ['legacy-sr'])
+    expect(r.rows[0].modalidad).toBeNull()
   })
 })

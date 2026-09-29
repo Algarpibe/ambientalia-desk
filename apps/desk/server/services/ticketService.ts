@@ -3,7 +3,7 @@ import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambien
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -17,7 +17,7 @@ import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
 import { exigirEquipoNuevo, validarCamposEquipoNuevo, crearTicketConEquipo } from './equipoNuevo'
 
-// Crea un ticket gestionado por la app en "Ticket creado" (Subsistema C). Pivota opcionalmente en una OV de Books.
+// Crea un ticket gestionado por la app (Subsistema C): nace en "Ticket creado", o en "Solicitud Soporte" si es soporte remoto. Pivota opcionalmente en una OV de Books.
 export async function createManagedTicket(db: Queryable, body: unknown, actorName: string): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const equipoId = b.equipoId ? String(b.equipoId) : ''
@@ -88,7 +88,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   if (missing.length) throw new HttpError(422, { error: `Faltan campos obligatorios: ${missing.join(', ')}` })
   const cliente = await getClient(db, clientId!)
   if (!cliente) throw new HttpError(422, { error: 'Cliente no encontrado' })
-  if (nuevo) await validarCamposEquipoNuevo(db, b)
+  if (nuevo) await validarCamposEquipoNuevo(db, b); const rm = modalidadDelAlta(clasificaciones, b.modalidad === undefined || b.modalidad === null || typeof b.modalidad === 'string' ? b.modalidad : JSON.stringify(b.modalidad)); if ('error' in rm) throw new HttpError(422, { error: rm.error }); const modalidad = rm.valor /* C: tras los opcionales de equipo nuevo y antes de cuarentena/vencido (:96) y del 409 (D) */
   // La OV ya asociada a otro ticket. Escalón **D** —unicidad—: va al FINAL, como última guarda antes
   // de la primera escritura (sea el equipo o el ticket) — el mismo lugar que ocupa el `409`
   // equivalente de `executeTransition` (`transitions-st` §3.8: existencia < estado/permiso <
@@ -104,7 +104,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
     ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!)),
-    clientId: clientId!, salesorderId, equipoId: equipo.id, actor: actorName,
+    clientId: clientId!, salesorderId, equipoId: equipo.id, modalidad, actor: actorName,
   })
   const created = await getTicketWithRefs(db, id)
   return created ? rowToTicketDetail(created.row, created.refs) : {}

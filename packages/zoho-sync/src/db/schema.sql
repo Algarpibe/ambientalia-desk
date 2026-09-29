@@ -571,3 +571,6 @@ CREATE TABLE IF NOT EXISTS public.contratos (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_contratos_lote ON public.contratos (lote);
 CREATE INDEX IF NOT EXISTS idx_contratos_cliente ON public.contratos (client_id);
+-- blueprint-soporte-remoto (F1B-06): modalidad del soporte remoto ('remoto' | 'en sitio'), nullable, sin relleno ni CHECK
+-- (la lista blanca vive en shared y la impone el servidor). Sin calificar: tickets es de DESK_TABLES. Fuera de TICKET_COLS
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS modalidad text;

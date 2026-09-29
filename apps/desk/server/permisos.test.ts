@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
-import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, canExecuteTransition } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition } from '@ambientalia/shared'
 import { requireAuth, requireAdmin, requireArea } from './auth/middleware'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -295,3 +295,40 @@ function arnesMiddleware(req: { cookies?: Record<string, string>; user?: UserPub
     llamadas,
   }
 }
+
+/**
+ * F1B-06 (cambio 2, `blueprint-soporte-remoto`) — LA MATRIZ 4×3 DE `TRANSITIONS_SOPORTE_REMOTO`, CONTRA EL SERVIDOR.
+ * A mano: por S-1 las cuatro son `Servicio Técnico`, así que sólo ese usuario pasa (4 permitidos, 8 prohibidos). Cada
+ * ticket es `Soporte remoto` y está en `t.from[0]`: lo observado es el 403/200 de PERMISO, no un 409 de flujo o de estado.
+ */
+describe('matriz 4×3 · área × transición de Soporte remoto, contra el servidor (F1B-06, cambio 2)', () => {
+  for (const area of AREAS) {
+    it(`las cuatro transiciones de Soporte remoto contestan lo mismo a un usuario de ${area}`, async () => {
+      const cookie = await userCookie([area])
+      const { app } = appWith()
+      const observado: Record<string, number> = {}
+      let n = 0
+      for (const t of TRANSITIONS_SOPORTE_REMOTO) {
+        n += 1
+        const id = `mtx-sr-${n}`
+        await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
+          [id, 94000 + n, 'Matriz de permisos SR', t.from[0], 'Soporte remoto'])
+        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+          .send({ transitionId: t.id, values: valoresValidos(t, n) })
+        observado[t.id] = res.status
+      }
+      const esperado: Record<string, number> = {}
+      for (const t of TRANSITIONS_SOPORTE_REMOTO) esperado[t.id] = canExecuteTransition([area], false, t.area) ? 200 : 403
+      expect(observado).toEqual(esperado)
+      // A mano, independiente de `canExecuteTransition`: sólo Servicio Técnico pasa (S-1).
+      expect(Object.values(observado).every((s) => s === (area === 'Servicio Técnico' ? 200 : 403))).toBe(true)
+    }, 60_000)
+  }
+
+  it('la matriz SR son 12 casos: 8 prohibidos y 4 permitidos', () => {
+    const casos = TRANSITIONS_SOPORTE_REMOTO.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
+    expect(casos).toHaveLength(12)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(8)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(4)
+  })
+})

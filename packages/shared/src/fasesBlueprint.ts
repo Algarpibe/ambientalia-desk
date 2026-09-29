@@ -37,7 +37,7 @@ export const FASES: Fase[] = [
  *   no aparece en `:1190`, que arranca en Rev./Diagnostico. `ingreso_a_servicio` es la frontera
  *   1→2.
  * - `Pendiente` → `diagnostico`: no está en M1.3.1 (nació el 11/09, posterior a esa redacción);
- *   deriva de sus dos únicas salidas, las dos de vuelta a Servicio Técnico (`estados.ts:101-105`).
+ *   deriva de sus dos únicas salidas EN EL CATÁLOGO DE SERVICIO, las dos de Servicio Técnico (`transitions.ts:230`, `:244`).
  * - Los cuatro de `ESTADOS_SIN_SALIDA` (`estados.ts:151-160`) → `diagnostico`: `R08.2.md:1190` los
  *   nombra en bloque como «los cuatro estados de espera» de esa fase.
  */

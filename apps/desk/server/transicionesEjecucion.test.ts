@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, ESTADOS_SIN_SALIDA } from '@ambientalia/shared'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, ESTADOS_SIN_SALIDA } from '@ambientalia/shared'
 import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testing/appHarness'
 
 instalarArnes()
@@ -363,5 +363,59 @@ describe('las cinco transiciones de Equipo nuevo, ejecutadas contra el servidor 
 
     expect(observado).toEqual(esperado)
     expect(n, 'ejecuciones del barrido EN').toBe(7)
+  })
+})
+
+/**
+ * F1B-06 (cambio 2) — LAS CUATRO TRANSICIONES DE `TRANSITIONS_SOPORTE_REMOTO`, EJECUTADAS CONTRA EL SERVIDOR.
+ * Molde del barrido EN, escrito a mano. Cada ticket lleva `classification: 'Soporte remoto'` y nace en su origen
+ * (corrección (c): sin las dos cosas, la guarda 3 o la de estado contestarían antes que el 200 que se comprueba).
+ */
+const CASOS_SOPORTE_REMOTO: Record<string, { desde: string[]; a: string }> = {
+  asignacion_soporte: { desde: ['Solicitud Soporte'], a: 'En Proceso' },
+  ejecutar_soporte: { desde: ['En Proceso'], a: 'Finalizado' },
+  soporte_pendiente: { desde: ['En Proceso'], a: 'Pendiente' },
+  continuacion_soporte: { desde: ['Pendiente'], a: 'En Proceso' },
+}
+
+describe('las cuatro transiciones de Soporte remoto, ejecutadas contra el servidor (F1B-06, cambio 2)', () => {
+  it('ninguna transición del catálogo SR se queda sin caso, y ningún caso sobra', () => {
+    const conCaso = new Set(Object.keys(CASOS_SOPORTE_REMOTO))
+    expect(TRANSITIONS_SOPORTE_REMOTO.filter((t) => !conCaso.has(t.id)).map((t) => t.id), 'transiciones SR sin caso').toEqual([])
+    const declaradas = new Set(TRANSITIONS_SOPORTE_REMOTO.map((t) => t.id))
+    expect(Object.keys(CASOS_SOPORTE_REMOTO).filter((id) => !declaradas.has(id)), 'casos sin transición SR').toEqual([])
+  })
+
+  it('cada caso SR declara los mismos extremos que el catálogo SR', () => {
+    const delGrafo: Record<string, { desde: string[]; a: string }> = {}
+    for (const t of TRANSITIONS_SOPORTE_REMOTO) delGrafo[t.id] = { desde: t.from, a: t.to }
+    expect(CASOS_SOPORTE_REMOTO).toEqual(delGrafo)
+  })
+
+  it('las cuatro salen de su origen, llegan a su destino y dejan traza', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const observado: Record<string, string[]> = {}
+    const esperado: Record<string, string[]> = {}
+    let n = 0
+    for (const t of TRANSITIONS_SOPORTE_REMOTO) {
+      observado[t.id] = []
+      esperado[t.id] = []
+      for (const origen of CASOS_SOPORTE_REMOTO[t.id].desde) {
+        n += 1
+        const id = `eje-sr-${n}`
+        await db.query('INSERT INTO tickets (id, number, subject, status, classification) VALUES ($1,$2,$3,$4,$5)',
+          [id, 72000 + n, 'Barrido de ejecución SR', origen, 'Soporte remoto'])
+        const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+          .send({ transitionId: t.id, values: valoresValidos(t, n) })
+        const estado = ((await db.query('SELECT status FROM tickets WHERE id = $1', [id])).rows[0] as { status: string }).status
+        const traza = await db.query('SELECT transition_id, from_status, to_status, area, performed_by FROM ticket_transitions WHERE ticket_id = $1', [id])
+        const f = traza.rows[0] as { transition_id: string; from_status: string; to_status: string; area: string; performed_by: string } | undefined
+        observado[t.id].push(`${res.status} · ${estado} · ${traza.rows.length} traza(s)` + (f ? `: ${f.transition_id} ${f.from_status}→${f.to_status} [${f.area}] por ${f.performed_by}` : ''))
+        esperado[t.id].push(`200 · ${CASOS_SOPORTE_REMOTO[t.id].a} · 1 traza(s): ${t.id} ${origen}→${CASOS_SOPORTE_REMOTO[t.id].a} [${t.area}] por Admin`)
+      }
+    }
+    expect(observado).toEqual(esperado)
+    expect(n, 'ejecuciones del barrido SR').toBe(4)
   })
 })

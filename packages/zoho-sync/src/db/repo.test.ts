@@ -436,3 +436,85 @@ describe('parche-iv11-orden-venta · salesorder_id no cambia en una pasada de up
     expect(TICKET_COLS as readonly string[]).not.toContain('salesorder_id')
   })
 })
+
+/**
+ * blueprint-soporte-remoto (F1B-06, cambio 2 · RQ-TC-06, RQ-TC-07, RQ-SR-04, RQ-SR-11) · el escritor único
+ * `createTicket` decide el estado de nacimiento con `estadoInicialDelAlta` (shared) y la fila y la foto #1
+ * salen de la MISMA constante. `modalidad` es columna propia: fuera de `TICKET_COLS`, el sync no la pisa.
+ */
+describe('createTicket · nacimiento por clasificación y modalidad (F1B-06, cambio 2)', () => {
+  const base = {
+    subject: 'Soporte', codigoServicio: 'SR_1', tipoServicio: 'Soporte', equipo: 'Monitor', marca: 'Grimm', modelo: 'EDM180C',
+    serial: '18A20070', ordenVenta: null, priority: null, clientId: 'c1', salesorderId: null, equipoId: 'eq1', actor: 'Admin',
+  }
+  const valores = (raw: unknown) => (typeof raw === 'string' ? JSON.parse(raw) : raw) as Record<string, unknown>
+  const leer = async (id: string) => ({
+    fila: (await db.query('SELECT status, modalidad FROM tickets WHERE id=$1', [id])).rows[0],
+    foto: (await db.query('SELECT transition_id, from_status, to_status, area, values FROM ticket_transitions WHERE ticket_id=$1', [id])).rows,
+  })
+
+  it('un alta de Soporte remoto con modalidad «en sitio» nace en Solicitud Soporte: fila, foto #1 y values.modalidad', async () => {
+    const id = await createTicket(db, { ...base, classification: 'Soporte remoto', modalidad: 'en sitio' })
+    const { fila, foto } = await leer(id)
+    expect(fila).toMatchObject({ status: 'Solicitud Soporte', modalidad: 'en sitio' })
+    expect(foto).toHaveLength(1)
+    expect(foto[0]).toMatchObject({ transition_id: 'enviar', from_status: '(creación)', to_status: 'Solicitud Soporte', area: 'Comercial' })
+    expect(valores(foto[0].values).modalidad).toBe('en sitio')
+  })
+
+  it('Soporte remoto sin modalidad (null): columna NULL y values SIN la clave; «soporte remoto» normalizado nace igual', async () => {
+    const a = await createTicket(db, { ...base, classification: 'Soporte remoto', modalidad: null })
+    const la = await leer(a)
+    expect(la.fila).toMatchObject({ status: 'Solicitud Soporte', modalidad: null })
+    expect(Object.keys(valores(la.foto[0].values))).not.toContain('modalidad')
+    const b = await createTicket(db, { ...base, classification: ' soporte remoto ' })
+    expect((await leer(b)).fila.status).toBe('Solicitud Soporte')
+  })
+
+  // REGRESIÓN (requisito 1 de supervisión): las otras dos clasificaciones nacen EXACTAMENTE como hoy.
+  it.each(['Equipo nuevo', 'Equipo para servicio de mantenimiento'])('%s nace en Ticket creado, modalidad NULL, values sin la clave, y nunca en OV asignada', async (clasificacion) => {
+    const id = await createTicket(db, { ...base, classification: clasificacion })
+    const { fila, foto } = await leer(id)
+    expect(fila).toMatchObject({ status: 'Ticket creado', modalidad: null })
+    expect(foto).toHaveLength(1)
+    expect(foto[0]).toMatchObject({ transition_id: 'enviar', from_status: '(creación)', to_status: 'Ticket creado', area: 'Comercial' })
+    expect(Object.keys(valores(foto[0].values))).not.toContain('modalidad')
+    expect(fila.status).not.toBe('OV asignada')
+  })
+
+  // pg-mem NO revierte un ROLLBACK (`transaccion.test.ts:25`): la atomicidad se prueba por la secuencia de verbos.
+  it('si falla el segundo INSERT de un alta de soporte remoto: BEGIN, INSERT ticket, INSERT foto (falla), ROLLBACK, sin COMMIT', async () => {
+    const pool = db as unknown as { query: Queryable['query']; connect: () => Promise<{ query: Queryable['query']; release: () => void }> }
+    const verbos: string[] = []
+    const envuelto = {
+      query: pool.query.bind(pool),
+      connect: async () => {
+        const c = await pool.connect()
+        return {
+          query: ((sql: string, p?: unknown[]) => {
+            verbos.push(/INSERT INTO ticket_transitions/.test(sql) ? 'INSERT foto' : /INSERT INTO tickets/.test(sql) ? 'INSERT ticket' : sql.trim().split(/s+/)[0])
+            return /INSERT INTO ticket_transitions/.test(sql) ? Promise.reject(new Error('fallo forzado')) : c.query(sql, p)
+          }) as Queryable['query'],
+          release: () => c.release(),
+        }
+      },
+    } as unknown as Queryable
+    await expect(createTicket(envuelto, { ...base, classification: 'Soporte remoto', modalidad: 'remoto' })).rejects.toThrow('fallo forzado')
+    expect(verbos).toEqual(['BEGIN', 'INSERT ticket', 'INSERT foto', 'ROLLBACK'])
+  })
+
+  it('modalidad está fuera de TICKET_COLS y de PROMOTED_COLUMNS', () => {
+    expect(TICKET_COLS as readonly string[]).not.toContain('modalidad')
+    expect(PROMOTED_COLUMNS.map((p) => p.col)).not.toContain('modalidad')
+  })
+
+  // Una fila NO gestionada por la app (`managed_by_app = false`), que es la que el sync sí reescribe: con una
+  // gestionada `upsertTicket` se abstiene entera y la prueba no probaría nada. El asunto cambia = el upsert corrió.
+  it('una pasada real del sync sobre una fila no gestionada reescribe el asunto y NO pisa la modalidad', async () => {
+    await upsertTicket(db, { ...zTicket('z-sr', 960, 'Solicitud Soporte'), classification: 'Soporte remoto', subject: 'Asunto de Zoho v1' })
+    await db.query("UPDATE tickets SET modalidad = 'en sitio' WHERE id = 'z-sr'")
+    await upsertTicket(db, { ...zTicket('z-sr', 960, 'Solicitud Soporte'), classification: 'Soporte remoto', subject: 'Asunto de Zoho v2' })
+    const r = (await db.query("SELECT subject, modalidad, managed_by_app FROM tickets WHERE id = 'z-sr'")).rows[0]
+    expect(r).toEqual({ subject: 'Asunto de Zoho v2', modalidad: 'en sitio', managed_by_app: false })
+  })
+})

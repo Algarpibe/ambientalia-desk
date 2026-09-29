@@ -211,7 +211,7 @@ Módulo nuevo: `packages/shared/src/transitionsSoporteRemoto.test.ts`. `packages
 | `packages/zoho-sync/src/db/schema.sql` (573; 200) | tras `:573`: comentario de dos líneas SIN punto y coma (`schema.sql:520-521`, el divisor de sentencias parte por `;`) y `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS modalidad text;` — sin calificar, sin `CHECK` | FINAL |
 | `packages/zoho-sync/src/db/repo.ts` (452; 95 como `db/repo.ts:`) | `:2` import `estadoInicialDelAlta` (y se retira `STATUS_TICKET_CREADO` si queda sin uso); `:401` `modalidad?: string \| null`; `:405-411` comentario; `:418` segunda sentencia `const estadoInicial = …`; `:420-422` columna, `$19`, `input.modalidad ?? null`; `:422` y `:435` `estadoInicial`; `:434` payload | EN SU SITIO |
 | `packages/zoho-sync/src/db/rows.ts` (132; 42) · `mappers.ts` (261; 9) · `packages/shared/src/types.ts` (810; 40) | `:50` · `:246` · `:131` | EN SU SITIO |
-| `apps/desk/server/services/ticketService.ts` (234-235; 496) | `:6` import; `:20` comentario; `:91` segunda sentencia (`exigirModalidad`); `:107` `modalidad` a `crearTicketConEquipo`; función `exigirModalidad` tras `:234` | EN SU SITIO + FINAL |
+| `apps/desk/server/services/ticketService.ts` (234-235; 496) | `:6` import; `:20` comentario; `:91` guarda en línea; `:107` `modalidad` a `crearTicketConEquipo` | EN SU SITIO (234 líneas) |
 | `packages/zoho-sync/src/db/migrate.test.ts` (444; 55) | `:374` título 39→40 y 20→21; `:376` 39→40; `:378` 20→21; `describe` FINAL tras `:444` | EN SU SITIO + FINAL |
 | `packages/zoho-sync/src/db/repo.test.ts`, `apps/desk/server/{permisos,transicionesEjecucion}.test.ts`, `apps/desk/server/services/avisoArea.test.ts` | casos nuevos | FINAL |
 
@@ -220,29 +220,29 @@ añadir la de `modalidad` lo pone rojo por diseño (40 y 21, conjunto igual porq
 
 ### Bloque A · Columna (regla de mutación 2: se ensucia el fichero vigilado)
 
-- [ ] 2.1 RED — `migrate.test.ts` en su sitio: `:374` («son 40 ALTER: 19 calificadas … y 21 sin calificar»), `:376` a 40, `:378` a 21. Al final, molde `:432-444`: sólo UNA sentencia de `schema.sql` menciona `modalidad` (la `ALTER`), y una fila previa queda con `modalidad` NULL (S-9, sin relleno).
-- [ ] 2.2 Confirmar rojo natural (hay 39 `ALTER` y 0 sentencias con `modalidad`).
-- [ ] 2.3 GREEN — `schema.sql` tras `:573` (comentario de dos líneas sin `;` + la `ALTER`).
-- [ ] 2.4 Confirmar 2.1 en verde y `migrate.integration.test.ts` sin cambios; `schema.sql` 573→573+N con `−0`.
-- [ ] 2.5 MUTACIÓN (M5, regla 2) — escribir en `schema.sql` `UPDATE tickets SET modalidad = 'remoto';`: ROJO (recuento de sentencias con `modalidad` = 2); revertir; `git diff` limpio.
-- [ ] 2.6 MUTACIÓN (M6, regla 2) — `ALTER TABLE desk.tickets ADD COLUMN IF NOT EXISTS modalidad text`: ROJO en `migrate.test.ts:374-385` (identidades calificadas); revertir.
+- [x] 2.1 RED — `migrate.test.ts` en su sitio: `:374` («son 40 ALTER: 19 calificadas … y 21 sin calificar»), `:376` a 40, `:378` a 21. Al final, molde `:432-444`: sólo UNA sentencia de `schema.sql` menciona `modalidad` (la `ALTER`), y una fila previa queda con `modalidad` NULL (S-9, sin relleno).
+- [x] 2.2 Confirmar rojo natural (hay 39 `ALTER` y 0 sentencias con `modalidad`).
+- [x] 2.3 GREEN — `schema.sql` tras `:573` (comentario de dos líneas sin `;` + la `ALTER`).
+- [x] 2.4 Confirmar 2.1 en verde y `migrate.integration.test.ts` sin cambios; `schema.sql` 573→573+N con `−0`.
+- [x] 2.5 MUTACIÓN (M5, regla 2) — escribir en `schema.sql` `UPDATE tickets SET modalidad = 'remoto';`: ROJO (recuento de sentencias con `modalidad` = 2); revertir; `git diff` limpio.
+- [x] 2.6 MUTACIÓN (M6, regla 2) — `ALTER TABLE desk.tickets ADD COLUMN IF NOT EXISTS modalidad text`: ROJO en `migrate.test.ts:374-385` (identidades calificadas); revertir.
 
 ### Bloque B · Escritor (`createTicket`)
 
-- [ ] 2.7 RED — `repo.test.ts` (al final; molde `:188-245`): alta SR con `modalidad: 'en sitio'` → fila `status = 'Solicitud Soporte'`, `modalidad = 'en sitio'`; foto #1 `to_status = 'Solicitud Soporte'`, `transition_id = 'enviar'`, `from_status = '(creación)'`, `area = 'Comercial'`, `values.modalidad = 'en sitio'`;
+- [x] 2.7 RED — `repo.test.ts` (al final; molde `:188-245`): alta SR con `modalidad: 'en sitio'` → fila `status = 'Solicitud Soporte'`, `modalidad = 'en sitio'`; foto #1 `to_status = 'Solicitud Soporte'`, `transition_id = 'enviar'`, `from_status = '(creación)'`, `area = 'Comercial'`, `values.modalidad = 'en sitio'`;
   SR sin modalidad (`null`) → columna `NULL` y `values` SIN la clave; «soporte remoto» normalizado nace en `Solicitud Soporte`; `Equipo nuevo` y `Equipo para servicio de mantenimiento` → `Ticket creado`, `modalidad` NULL, `values` sin la clave;
   ninguno de los tres nace en `OV asignada`; fallo del segundo `INSERT` de una alta SR (envoltorio de `Queryable` que lanza en `ticket_transitions`) → `ROLLBACK` y ninguna de las dos filas;
   `TICKET_COLS` no contiene `modalidad` y un `upsertTicket` con datos de Zoho no pisa `'en sitio'` (molde `:279-297` y `:299-363`). Si `modalidad` debe o no figurar en `PROMOTED_COLUMNS` se lee en el rojo (hipótesis: no, Zoho no la envía).
   RQ: RQ-TC-06 (3 escenarios), RQ-TC-07 (2), RQ-SR-04 (2), RQ-SR-11 (2), RQ-SR-07/09 a nivel de escritor.
-- [ ] 2.8 Confirmar rojo natural: rojos los de SR (nacimiento, foto, rollback SR, `modalidad`); **nacen verdes** y se declaran: EN y mantenimiento en `Ticket creado`, «ninguno en `OV asignada`», `TICKET_COLS` sin `modalidad` y «el sync no la pisa» (la columna existe tras 2.3).
-- [ ] 2.9 GREEN — `repo.ts` en su sitio (`:2`, `:401`, `:405-411`, `:418`, `:420-422`, `:434-435`): el estado de la fila y `to_status` de la foto salen de la MISMA constante local `estadoInicial`; `:434` gana `...(input.modalidad ? { modalidad: input.modalidad } : {})`.
-- [ ] 2.10 Confirmar 2.7 en verde; `git diff --numstat -- packages/zoho-sync/src/db/repo.ts` = `n n` (452 sin cambio).
-- [ ] 2.11 MUTACIÓN (M8, regla 2) — añadir `'modalidad'` a `TICKET_COLS` (`repo.ts:44-54`): ROJO (ausencia y «no la pisa»); revertir.
-- [ ] 2.12 MUTACIÓN — dejar `:435` en `STATUS_TICKET_CREADO` mientras `:422` usa `estadoInicial` (fila y foto se desacoplan): ROJO (SR: `to_status` ≠ `status`); revertir.
+- [x] 2.8 Confirmar rojo natural: rojos los de SR (nacimiento, foto, rollback SR, `modalidad`); **nacen verdes** y se declaran: EN y mantenimiento en `Ticket creado`, «ninguno en `OV asignada`», `TICKET_COLS` sin `modalidad` y «el sync no la pisa» (la columna existe tras 2.3).
+- [x] 2.9 GREEN — `repo.ts` en su sitio (`:2`, `:401`, `:405-411`, `:418`, `:420-422`, `:434-435`): el estado de la fila y `to_status` de la foto salen de la MISMA constante local `estadoInicial`; `:434` gana `...(input.modalidad ? { modalidad: input.modalidad } : {})`.
+- [x] 2.10 Confirmar 2.7 en verde; `git diff --numstat -- packages/zoho-sync/src/db/repo.ts` = `n n` (452 sin cambio).
+- [x] 2.11 MUTACIÓN (M8, regla 2) — añadir `'modalidad'` a `TICKET_COLS` (`repo.ts:44-54`): ROJO (ausencia y «no la pisa»); revertir.
+- [x] 2.12 MUTACIÓN — dejar `:435` en `STATUS_TICKET_CREADO` mientras `:422` usa `estadoInicial` (fila y foto se desacoplan): ROJO (SR: `to_status` ≠ `status`); revertir.
 
 ### Bloque C · Guarda de modalidad, ejecución y lectura
 
-- [ ] 2.13 RED — `flujoSoporteRemoto.test.ts` (nuevo, `appHarness`, molde `flujoEquipoNuevo.test.ts`), serie **P** (ejecución):
+- [x] 2.13 RED — `flujoSoporteRemoto.test.ts` (nuevo, `appHarness`, molde `flujoEquipoNuevo.test.ts`), serie **P** (ejecución):
   P1 SR en `Solicitud Soporte`, usuario de Servicio Técnico, `asignacion_soporte` → 200 y `En Proceso`; P2 usuario sólo de Comercial → 403 en las cuatro desde su estado de origen; P3 `soporte_pendiente` y luego `continuacion_soporte` → 200 y 200, `Pendiente` y de vuelta a `En Proceso`;
   P4 `ejecutar_soporte` → `Finalizado`, y una segunda ejecución no procede; P5 `marcar_pendiente` sobre SR en `En Proceso` → 409 con «soporte remoto» en el mensaje; **P6 posición (M4):** servicio en `Rev./Diagnostico` + `asignacion_soporte` → 409 de flujo, NO «no aplica desde el estado»;
   P7 SR heredado en `Rev./Diagnostico` ejecuta una transición de `TRANSITIONS` → 200; P8 en `Solicitud Soporte` las ejecutables por Servicio Técnico son exactamente `asignacion_soporte`; **P9** `ejecutar_soporte` con `values: { modalidad: 'en sitio' }` sobre SR con `modalidad = 'remoto'` → 200 y la fila conserva `'remoto'` (RQ-SR-10).
@@ -251,23 +251,23 @@ añadir la de `modalidad` lo pone rojo por diseño (40 y 21, conjunto igual porq
   **A7 posición (M3):** SR + modalidad inválida + OV ya asociada a otro ticket → 422, no 409; **A8 posición (M2):** SR + modalidad inválida + OV en cuarentena (`OV-2026-170-X9`) → 422 de modalidad, no el de cuarentena;
   **A9 posición (M1):** `Equipo nuevo` + fecha opcional inválida (F1B-02) + `modalidad: 'remoto'` → 422 del equipo nuevo, no el de modalidad; A10 `GET` de la ficha trae `modalidad` (`'en sitio'`) y `null` cuando no hay.
   RQ: RQ-SR-02, RQ-SR-05 (6), RQ-SR-07 (3), RQ-SR-08, RQ-SR-09 (2), RQ-SR-10 (1), RQ-SR-11 (lectura), RQ-TC-05 (3), RQ-TC-06 (1), RQ-EN-04 (1).
-- [ ] 2.14 RED — barridos (al final de cada fichero, sin tocar lo existente): `permisos.test.ts` (molde `:209-270`): matriz 4×3 de `TRANSITIONS_SOPORTE_REMOTO` contra el servidor, esperado = `canExecuteTransition`, 12 casos, sólo Comercial = 403;
+- [x] 2.14 RED — barridos (al final de cada fichero, sin tocar lo existente): `permisos.test.ts` (molde `:209-270`): matriz 4×3 de `TRANSITIONS_SOPORTE_REMOTO` contra el servidor, esperado = `canExecuteTransition`, 12 casos, sólo Comercial = 403;
   `transicionesEjecucion.test.ts` (molde `:290-340`): las cuatro ejecutadas, sin `huérfanas` (toda id con caso) y `delGrafo` origen→destino; `avisoArea.test.ts` (molde `:76-80`): `areasSiguientes('Solicitud Soporte', TRANSITIONS_SOPORTE_REMOTO)` = `['Servicio Técnico']` y `areasAAvisar(…)` de un usuario de Servicio Técnico = `[]`.
   Ninguna exclusión explícita de SLA: `packages/shared/src/sla.ts:32-35` sólo da SLA a `Notificado` y `sla.test.ts:202` ya recorre `CATALOGO_POR_FLUJO` (D6).
-- [ ] 2.15 Confirmar rojo natural: rojos A1, A2, A3, A5, A7, A8, A9, A10 (el campo y la guarda no existen). **Nacen VERDES y se declaran** —el lote 1 ya entrega el enrutado por la vía de `shared`—: P1-P9, A4, A6 y los tres barridos de 2.14.
+- [x] 2.15 Confirmar rojo natural: rojos A1, A2, A3, A5, A7, A8, A9, A10 (el campo y la guarda no existen). **Nacen VERDES y se declaran** —el lote 1 ya entrega el enrutado por la vía de `shared`—: P1-P9, A4, A6 y los tres barridos de 2.14.
   Su rojo se obtiene por mutación (2.18-2.23); es honesto decirlo, no maquillar la columna.
-- [ ] 2.16 GREEN — `ticketService.ts` en su sitio: `:6` importa `modalidadDelAlta`; `:20` reescribe el comentario «nace en Ticket creado» (`+n −n`); `:91` gana la segunda sentencia, tras `validarCamposEquipoNuevo` y antes de la cuarentena/vencido de `:96` y del `409` de `:97-100`;
-  `:107` pasa `modalidad` a `crearTicketConEquipo`; `exigirModalidad` AL FINAL tras `:234` (como `exigirMismoFlujo`), que lanza `HttpError(422, { error })` con el texto que nombra `modalidad`. `rows.ts:50`, `mappers.ts:246` y `types.ts:131` en su sitio (`modalidad ?? null`).
-- [ ] 2.17 Confirmar 2.13 y 2.14 en verde; `git diff --numstat -- apps/desk/server/services/ticketService.ts`: en sitio `+n −n` y la función al final `−0`; orden resultante del escalón C: equipo↔cliente (`:61-79`) < obligatorios (`:83-88`) < cliente (`:89-90`) < opcionales de EN (`:91`) < modalidad (`:91`) < cuarentena/vencido (`:96`).
-- [ ] 2.18 MUTACIÓN (M1, regla 1) — mover `exigirModalidad` ANTES de `validarCamposEquipoNuevo`: ROJO A9; revertir.
-- [ ] 2.19 MUTACIÓN (M2, regla 1) — moverla DESPUÉS de la cuarentena (`:96`): ROJO A8; revertir.
-- [ ] 2.20 MUTACIÓN (M3, regla 1) — moverla DESPUÉS del `409` (`:97-100`): ROJO A7; revertir.
-- [ ] 2.21 MUTACIÓN (M4, regla 1) — guarda 3 (`:125`) DESPUÉS de la de estado (`:126-128`): ROJO P6; revertir.
-- [ ] 2.22 MUTACIÓN (S-1 revertida, molde del cambio 1) — `area: 'Comercial'` en `asignacion_soporte`: ROJO en la matriz 4×3 y en P1/P2 (demuestra que los barridos discriminan); revertir.
-- [ ] 2.23 MUTACIÓN — quitar el `422` de «modalidad enviada fuera de soporte remoto» (RQ-SR-09): ROJO A5; y quitar el default `remoto` de `modalidadDelAlta`: ROJO A2 y 1.16; revertir ambas.
-- [ ] 2.24 Verificación de regresión (sin RED nuevo): `npx vitest run apps/desk/server/services/ticketService.test.ts apps/desk/server/ordenVentaUnTicket.test.ts apps/desk/server/remisiones.test.ts apps/desk/server/flujoEquipoNuevo.test.ts`
+- [x] 2.16 GREEN — `ticketService.ts` en su sitio: `:6` importa `modalidadDelAlta`; `:20` reescribe el comentario «nace en Ticket creado» (`+n −n`); `:91` gana la segunda sentencia, tras `validarCamposEquipoNuevo` y antes de la cuarentena/vencido de `:96` y del `409` de `:97-100`;
+  `:107` pasa `modalidad` a `crearTicketConEquipo`; la guarda EN LÍNEA en `:91` (corrección de supervisión: el mismo largo, 234), que lanza `HttpError(422, { error })` con el texto que nombra `modalidad`. `rows.ts:50`, `mappers.ts:246` y `types.ts:131` en su sitio (`modalidad ?? null`).
+- [x] 2.17 Confirmar 2.13 y 2.14 en verde; `git diff --numstat -- apps/desk/server/services/ticketService.ts`: en sitio `+n −n` y la función al final `−0`; orden resultante del escalón C: equipo↔cliente (`:61-79`) < obligatorios (`:83-88`) < cliente (`:89-90`) < opcionales de EN (`:91`) < modalidad (`:91`) < cuarentena/vencido (`:96`).
+- [x] 2.18 MUTACIÓN (M1, regla 1) — mover la guarda de modalidad ANTES de `validarCamposEquipoNuevo`: ROJO A9; revertir.
+- [x] 2.19 MUTACIÓN (M2, regla 1) — moverla DESPUÉS de la cuarentena (`:96`): ROJO A8; revertir.
+- [x] 2.20 MUTACIÓN (M3, regla 1) — moverla DESPUÉS del `409` (`:97-100`): ROJO A7; revertir.
+- [x] 2.21 MUTACIÓN (M4, regla 1) — guarda 3 (`:125`) DESPUÉS de la de estado (`:126-128`): ROJO P6; revertir.
+- [x] 2.22 MUTACIÓN (S-1 revertida, molde del cambio 1) — `area: 'Comercial'` en `asignacion_soporte`: ROJO en la matriz 4×3 y en P1/P2 (demuestra que los barridos discriminan); revertir.
+- [x] 2.23 MUTACIÓN — quitar el `422` de «modalidad enviada fuera de soporte remoto» (RQ-SR-09): ROJO A5; y quitar el default `remoto` de `modalidadDelAlta`: ROJO A2 y 1.16; revertir ambas.
+- [x] 2.24 Verificación de regresión (sin RED nuevo): `npx vitest run apps/desk/server/services/ticketService.test.ts apps/desk/server/ordenVentaUnTicket.test.ts apps/desk/server/remisiones.test.ts apps/desk/server/flujoEquipoNuevo.test.ts`
   en verde, con `git diff` que muestre sólo inserciones al final de los ficheros de prueba tocados (`remisiones.test.ts:988` y las aserciones existentes no se tocan). Cubre los ocho escenarios heredados de RQ-TC-05 y el de RQ-TC-06.
-- [ ] 2.25 Cierre del lote 2: comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`; medir (nuevo: `flujoSoporteRemoto.test.ts`); recuentos `repo.ts` 452 y `ticketService.ts` 234-235 sin cambio en sitio, `schema.sql` 573→573+N, `migrate.test.ts` 444→444+N;
+- [x] 2.25 Cierre del lote 2: comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`; medir (nuevo: `flujoSoporteRemoto.test.ts`); recuentos `repo.ts` 452 y `ticketService.ts` 234-235 sin cambio en sitio, `schema.sql` 573→573+N, `migrate.test.ts` 444→444+N;
   barrido de citas sobre `ticketService.ts` (496: las que apuntan a `:91`, `:107`, `:20`, y «C antes que D» de `transitions-st`), `db/repo.ts` (95: `:405-411`, `:418-422`, `:434-435`), `schema.sql`, `rows.ts`, `mappers.ts`, `types.ts` y `migrate.test.ts` (`:327`, `:409-411` no se mueven); `apply-progress.md` (~60 líneas).
 
 ---
@@ -294,7 +294,7 @@ añadir la de `modalidad` lo pone rojo por diseño (40 y 21, conjunto igual porq
 - [ ] 3.5 **Regla de mutación 3 — casilla de la regla 13, decisión a decisión de `CreateTicket.tsx`** (se escribe en `apply-progress.md`, dentro de las ~60 líneas; con la línea REAL leída al cerrar, no la del diseño). Se lee el fichero entero y se enumera todo lo que el cliente bloquea, rellena solo o avisa:
   | Decisión del cliente | Línea del servidor que la impone (a confirmar) |
   |---|---|
-  | Mostrar el selector sólo en SR y omitir la clave en otra clasificación | `ticketService.ts:91` (`exigirModalidad`, 422 si llega fuera de SR); prueba A5 |
+  | Mostrar el selector sólo en SR y omitir la clave en otra clasificación | `ticketService.ts:91` (guarda en línea sobre `modalidadDelAlta`, 422 si llega fuera de SR); prueba A5 |
   | Preseleccionar `remoto` | `modalidadDelAlta` en `flujos.ts` (el servidor pone `remoto` si falta); prueba A2 |
   | Ofrecer sólo dos valores | mismo `422` fuera del dominio; prueba A3 |
   | Enseñar la modalidad sólo en lectura | ninguna ruta la escribe tras el alta; prueba P9 |

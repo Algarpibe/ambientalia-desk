@@ -25,7 +25,7 @@ describe('fasesBlueprint — partición estado → fase', () => {
     expect(FASE_POR_ESTADO['Ingresado']).toBe('entrada')
   })
 
-  it('«Pendiente» cae en diagnóstico, derivado de sus dos salidas de Servicio Técnico (estados.ts:101-105)', () => {
+  it('«Pendiente» cae en diagnóstico, derivado de sus dos salidas del catálogo de servicio, las dos de Servicio Técnico (transitions.ts:230, :244)', () => {
     expect(FASE_POR_ESTADO['Pendiente']).toBe('diagnostico')
   })
 

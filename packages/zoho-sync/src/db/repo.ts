@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { FROM_STATUS_CREACION, STATUS_TICKET_CREADO, PREFIJO_TICKET_APP } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, PREFIJO_TICKET_APP, estadoInicialDelAlta } from '@ambientalia/shared'
 import { APP_TICKET_NUMBER_BASE, type Queryable } from './migrate'
 import type { AccountRow, ContactRow, AgentRow, TicketRow, ConversationRow, AttachmentRow } from './rows'; import { asociarDesdeTransicion } from './ovAsociaciones'
 
@@ -398,16 +398,16 @@ export interface CreateTicketInput {
   priority: string | null
   clientId: string
   salesorderId: string | null
-  equipoId: string | null
+  equipoId: string | null; modalidad?: string | null
   actor: string
 }
 
 /**
- * Crea un ticket gestionado por la app en "Ticket creado" + su transición #1, de forma atómica.
- *
- * El estado NO es el 'OV asignada' de Zoho: esa es la misma fase con el nombre que le da el Blueprint
- * de allí, y se conserva para lo que sigue llegando por el sync (ver `STATUS_OV_ASIGNADA`). Lo que
- * nace aquí usa el nombre que la fase tiene de verdad para el servicio técnico.
+ * Crea un ticket gestionado por la app + su transición #1, de forma atómica. Nace en "Ticket creado", salvo
+ * el soporte remoto, que nace en "Solicitud Soporte" (`estadoInicialDelAlta`, `@ambientalia/shared`): la fila y
+ * la foto #1 salen de la MISMA constante local `estadoInicial`. Nunca en el 'OV asignada' de Zoho, que se
+ * conserva sólo para lo que llega por el sync (ver `STATUS_OV_ASIGNADA`). `modalidad` es columna propia,
+ * fuera de `TICKET_COLS`: el sync no la pisa.
  */
 export async function createTicket(db: Queryable, input: CreateTicketInput, opts: { transaccionAbierta?: boolean } = {}): Promise<string> {
   const id = `${PREFIJO_TICKET_APP}${randomUUID()}`
@@ -415,11 +415,11 @@ export async function createTicket(db: Queryable, input: CreateTicketInput, opts
   const run = async (q: Queryable): Promise<void> => {
     // parche-iv11-orden-venta (D6): `ov_elegida_en_app_at` sólo se marca si el alta trae orden de
     // venta; un alta sin ella no protege nada, porque no hay nada que proteger todavía.
-    const marcaOV = input.ordenVenta && input.ordenVenta.trim() !== '' ? new Date() : null
+    const marcaOV = input.ordenVenta && input.ordenVenta.trim() !== '' ? new Date() : null; const estadoInicial = estadoInicialDelAlta(input.classification)
     await q.query(
-      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,fecha_orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at,ov_elegida_en_app_at)
-       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$17,$13,$14,$15,true,'app',now(),now(),now(),$18)`,
-      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, STATUS_TICKET_CREADO, input.fechaOrdenVenta ?? null, marcaOV],
+      `INSERT INTO tickets (id,number,subject,status,status_type,priority,classification,tipo_servicio,equipo,marca,modelo,serial,codigo_servicio,orden_venta,fecha_orden_venta,client_id,salesorder_id,equipo_id,managed_by_app,source,created_time,modified_time,updated_at,ov_elegida_en_app_at,modalidad)
+       VALUES ($1,$2,$3,$16,'Open',$4,$5,$6,$7,$8,$9,$10,$11,$12,$17,$13,$14,$15,true,'app',now(),now(),now(),$18,$19)`,
+      [id, number, input.subject, input.priority, input.classification, input.tipoServicio, input.equipo, input.marca, input.modelo, input.serial, input.codigoServicio, input.ordenVenta, input.clientId, input.salesorderId, input.equipoId, estadoInicial, input.fechaOrdenVenta ?? null, marcaOV, input.modalidad ?? null],
     )
     // La foto de con qué nació el ticket. Las columnas de `tickets` son estado ACTUAL, así que la
     // historia no puede apoyarse en ellas para contar la creación: aquí queda congelado. Los tickets
@@ -431,8 +431,8 @@ export async function createTicket(db: Queryable, input: CreateTicketInput, opts
       [id, FROM_STATUS_CREACION, input.actor, JSON.stringify({
         orden_venta: input.ordenVenta, marca: input.marca, modelo: input.modelo, serial: input.serial,
         equipo: input.equipo, tipo_servicio: input.tipoServicio, clasificacion: input.classification,
-        prioridad: input.priority, codigo_servicio: input.codigoServicio, client_id: input.clientId,
-      }), STATUS_TICKET_CREADO],
+        prioridad: input.priority, codigo_servicio: input.codigoServicio, client_id: input.clientId, ...(input.modalidad ? { modalidad: input.modalidad } : {}),
+      }), estadoInicial],
     )
   }
   const pool = db as PoolLike

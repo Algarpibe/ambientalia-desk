@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Transition } from '@ambientalia/shared'
-import { TRANSITIONS_EQUIPO_NUEVO, areasSiguientes } from '@ambientalia/shared'
+import { TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, areasSiguientes } from '@ambientalia/shared'
 import { areasAAvisar, textoAvisoArea } from './avisoArea'
 
 describe('areasAAvisar', () => {
@@ -78,5 +78,20 @@ describe('Verificación gana salida sin generar aviso nuevo (F1A-03)', () => {
 
   it('areasAAvisar(Verificación, [Servicio Técnico], EN) no avisa a nadie', () => {
     expect(areasAAvisar('Verificación', ['Servicio Técnico'], TRANSITIONS_EQUIPO_NUEVO)).toEqual([])
+  })
+})
+
+/**
+ * F1B-06 (cambio 2) — `Solicitud Soporte` es el estado de nacimiento del soporte remoto y su única salida
+ * (`asignacion_soporte`) es de `Servicio Técnico`: quien la ejecuta es esa misma área, y `areasAAvisar` la resta.
+ */
+describe('Solicitud Soporte, primer estado del catálogo de soporte remoto (F1B-06, cambio 2)', () => {
+  it('areasSiguientes(Solicitud Soporte, SR) es Servicio Técnico', () => {
+    expect(areasSiguientes('Solicitud Soporte', TRANSITIONS_SOPORTE_REMOTO)).toEqual(['Servicio Técnico'])
+  })
+
+  it('areasAAvisar(Solicitud Soporte, [Servicio Técnico], SR) no avisa a nadie, y un usuario de Comercial sí avisaría a Servicio Técnico', () => {
+    expect(areasAAvisar('Solicitud Soporte', ['Servicio Técnico'], TRANSITIONS_SOPORTE_REMOTO)).toEqual([])
+    expect(areasAAvisar('Solicitud Soporte', ['Comercial'], TRANSITIONS_SOPORTE_REMOTO)).toEqual(['Servicio Técnico'])
   })
 })
