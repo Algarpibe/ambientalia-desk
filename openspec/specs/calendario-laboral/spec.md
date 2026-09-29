@@ -232,7 +232,7 @@ hábiles: toda pieza que necesite ese cómputo **MUST** consumir RQ-CL-07/RQ-CL-
 arquitectura de `decision/calendario-habil` («ninguna otra tanda construye su propio cálculo de horas
 hábiles»), verificado por barrido documental de cierre, no por detector automático por nombre
 (`design.md:21`, D7 — un detector por patrón sólo caza el nombre, no la noción, molde H5 de
-`CLAUDE.md`). `sla.ts:37-43` (reloj de SLA, horas de calendario) queda fuera de esta tanda a propósito y
+`CLAUDE.md`). `sla.ts:37-43` en `bb58e83` (reloj de SLA, horas de calendario) quedaba fuera de esta tanda a propósito y
 se reabre en F1B-08/F1C-06, que consumirán RQ-CL-07.
 
 #### Scenario: El barrido de cierre no encuentra una segunda implementación fuera del módulo

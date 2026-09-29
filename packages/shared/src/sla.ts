@@ -1,57 +1,57 @@
 import type { Estado } from './estados'
-import { CLAVE_DERIVACION, TRANSITIONS, type Transition } from './transitions'
+import { AREAS, CLAVE_DERIVACION, TRANSITIONS, type Transition } from './transitions'; import { horasHabilesEntre, type DiaCivil } from './calendarioLaboral'
 
 /**
- * EL RELOJ DEL SLA — corrección C11, punto abierto nº 40.
+ * EL RELOJ DEL SLA — corrección C11 (punto abierto nº 40), en horas HÁBILES desde F1B-08.
  *
- * El blueprint de Zoho Desk tiene un SLA de 1 día sobre `Notificado` —el estado en el que un
- * diagnóstico espera revisión— y la aplicación no lo trajo (M1.7, `R08.1.md:1570`). Importa porque
- * `Notificado` es la antesala de todo lo comercial: de ahí salen el reporte por garantía, el escalado
- * a comercial y la devolución a corrección, y un diagnóstico parado ahí retrasa la cotización, que es
- * el reloj que el cliente percibe (`:1571`).
+ * Hasta 6516e5f era un solo SLA de reloj: `Notificado`, 24 h (M1.7). `decision/anexo-3-alerta`
+ * (`openspec/config.yaml`) lo sustituye por TRES alarmas en horas hábiles: `Notificado` 9 h,
+ * `Remisión creada` 27 h y `Notificación cliente` 36 h (4 días hábiles de 9 h). Importan porque son
+ * las antesalas de la cotización, de la orden de venta y de la aprobación del cliente, que son los
+ * relojes que el cliente percibe.
  *
  * SE DECLARA COMO DATO, igual que `ESTADOS_SIN_SALIDA` y por la misma razón: es una decisión de
  * negocio, no una propiedad que el grafo pueda contestar. De las 34 transiciones no se deduce que
- * `Notificado` merezca un día y `Pendiente` no.
+ * `Notificado` merezca 9 h y `Pendiente` ninguna.
  *
- * LA UNIDAD ES LA HORA, no el día. El maestro deja abierto en «24/48 h» el plazo de la otra regla por
- * tiempo que tiene pensada (`:1586`), así que declarar días obligaría a cambiar la unidad —y todas
- * sus pruebas— el día que Gerencia elija 48.
+ * LA UNIDAD ES LA HORA HÁBIL, no el día ni la hora de reloj: jornada 08:00-17:00 en `ZONA_NEGOCIO`,
+ * sin fines de semana, festivos de Colombia ni cierres de empresa. NO se calcula aquí: se consume
+ * `horasHabilesEntre` (`calendarioLaboral.ts:174`), como manda `decision/calendario-habil`, y los
+ * cierres de `public.calendario_cierres` llegan por parámetro porque este paquete no lee la base.
  *
  * ⚠️ ESTE MÓDULO NO DISPARA NADA. Es la regla, y la regla es pura: recibe el instante en que el
- * ticket entró en el estado y el instante actual. Quién la consulta y cada cuánto es otra cosa, y hoy
- * NO EXISTE: `R08.1.md:1588` lo dice como `[ABIERTO — AS-BUILT]` —«no existe hoy ninguna transición
- * por tiempo en el blueprint implementado»— y sigue siendo cierto después de F1A-02. Ver la spec
- * `transitions-st` §3.10.
+ * ticket entró en el estado, el instante actual y los cierres. Quién la consulta y cada cuánto es el
+ * servidor (`apps/desk/server/db/sla.ts`), no este paquete.
  *
- * ⚠️ Y ESTE MÓDULO NO ESCALA POR SÍ SOLO, pero SÍ SABE A QUIÉN: `destinatarioDelEscalado`, más
- * abajo, lo deriva de la tabla de derivación por cargo, que es lo que el maestro manda hacer en la
- * línea siguiente a pedir el escalado (`:1575`). Lo que falta para que el escalado ocurra es el
- * planificador, no el destinatario.
+ * ⚠️ Y A QUIÉN SE AVISA ES DATO, NO GRAFO (S-8): `ALARMAS_SLA`, al final del fichero, declara el
+ * cargo, el área de respaldo y qué más hace cada alarma. `destinatarioDelEscalado`, más abajo, se
+ * conserva como comprobación de coherencia: si el grafo propone un cargo para un estado con alarma,
+ * tiene que ser el mismo (`sla.test.ts`, «todo estado con alarma declara cargo»).
+ *
  */
 export const SLA_HORAS_POR_ESTADO: Partial<Record<Estado, number>> = {
-  // El único que el maestro decidió. Un día = 24 h.
-  'Notificado': 24,
+  // Horas HÁBILES (decision/anexo-3-alerta). Hasta 6516e5f: { 'Notificado': 24 } de reloj.
+  'Notificado': 9, 'Remisión creada': 27, 'Notificación cliente': 36,
 }
 
 const HORA_EN_MS = 60 * 60 * 1000
 
-/** Cuándo vence el SLA de un ticket que entró en `estado` en `desde`. `null` si ese estado no tiene. */
-export function venceSlaEn(estado: Estado, desde: Date): Date | null {
-  const horas = SLA_HORAS_POR_ESTADO[estado]
-  if (horas === undefined) return null
-  return new Date(desde.getTime() + horas * HORA_EN_MS)
-}
+// RETIRADA (F1B-08): aquí vivía `venceSlaEn`, que devolvía `desde + horas` de RELOJ. Con horas
+// hábiles esa fecha sería falsa, y nadie la necesita: ni el aviso ni el tablero enseñan una hora
+// de vencimiento, sólo si ya venció. Si una tanda futura la pide, se construye `sumarHorasHabiles`
+// en `calendarioLaboral.ts` (decision/calendario-habil), no aquí. Estas seis líneas conservan su
+// sitio para no desplazar las citas `sla.ts:NN` del repositorio (regla de mutación 4).
+// Ver `design.md` D-2 de `alarmas-horas-habiles`.
 
 /**
- * ¿Se pasó el plazo?
+ * ¿Se pasó el plazo? En horas HÁBILES (`horasHabilesEntre`), con los cierres de empresa.
  *
- * En el instante EXACTO del vencimiento todavía no: un SLA de «un día» que saltara a las 23:59:59.999
- * no sería un día. La comparación es estricta a propósito.
+ * En el instante EXACTO del umbral todavía no: la comparación es estricta a propósito. Se compara en
+ * milisegundos redondeados porque sumar tramos fraccionarios de hora arrastra error de coma flotante.
  */
-export function slaVencido(estado: Estado, desde: Date, ahora: Date): boolean {
-  const vence = venceSlaEn(estado, desde)
-  return vence !== null && ahora.getTime() > vence.getTime()
+export function slaVencido(estado: Estado, desde: Date, ahora: Date, cierres: ReadonlySet<DiaCivil>): boolean {
+  const horas = SLA_HORAS_POR_ESTADO[estado]
+  return horas !== undefined && Math.round(horasHabilesEntre(desde, ahora, cierres) * HORA_EN_MS) > horas * HORA_EN_MS
 }
 
 /**
@@ -66,8 +66,8 @@ export function slaVencido(estado: Estado, desde: Date, ahora: Date): boolean {
  * (`transitions.ts:268`).
  *
  * LA REGLA: el destinatario del escalado de un estado es **el cargo que proponen sus transiciones
- * salientes**. Para `Notificado` —el único con SLA— es `escalado_a_comercial` → `Coordinador
- * Comercial` (`transitions.ts:220`, `:271`).
+ * salientes**. Para `Notificado` —de las tres alarmas, la única cuyo grafo propone cargo— es `escalado_a_comercial` → `Coordinador
+ * Comercial` (`transitions.ts:220`, `:271`), el mismo que declara `ALARMAS_SLA`.
  *
  * TRES CASOS, y ninguno se resuelve inventando:
  *
@@ -106,4 +106,41 @@ export function destinatarioDelEscalado(
   if (cargos.size === 0) return { hay: false, motivo: 'ningun_cargo' }
   if (cargos.size > 1) return { hay: false, motivo: 'ambiguo' }
   return { hay: true, cargo: [...cargos][0]!, via }
+}
+
+/**
+ * F1B-08 — QUÉ SE HACE CUANDO VENCE CADA ALARMA (`alarmas-horas-habiles`, RQ-TS-16).
+ *
+ * El destinatario es DATO de esta tabla, no se deriva del grafo (S-8). Las tres van al cargo
+ * `Coordinador Comercial`: `Remisión creada` lo fijan `decision/escalado-remision-creada` y
+ * `decision/escalado-destinatario-doble`; `Notificación cliente`, `decision/anexo-3-alerta`;
+ * `Notificado` es supuesto (S-3, pregunta P.4 a Gerencia) y coincide con lo que propone su grafo.
+ *
+ * `areaRespaldo` existe porque `users.cargo` es texto libre que se escribe para FIRMAR la remisión,
+ * no para repartir avisos: un «Coord. Comercial» no casa con el cargo. Si nadie lo tiene, el servidor
+ * avisa al área (S-4, segunda revisión) en vez de dejar la alarma muda.
+ *
+ * Las claves son EXACTAMENTE las de `SLA_HORAS_POR_ESTADO`: una alarma sin umbral o un umbral sin
+ * alarma se ponen rojos en `sla.test.ts`.
+ */
+export interface AlarmaSla {
+  /** Cargo que recibe el aviso (`users.cargo`, comparado sin mayúsculas ni espacios en los extremos). */
+  cargo: string
+  /** Área que recibe el aviso si nadie tiene el cargo. */
+  areaRespaldo: (typeof AREAS)[number]
+  /** Sólo avisa si el ticket no tiene orden de venta por ninguna vía (`decision/escalado-remision-creada`). */
+  soloSinOrdenVenta?: boolean
+  /** Al vencer, el tablero señala el ticket «esperando aprobación del cliente»: marca de vista, no estado. */
+  marcaTablero?: boolean
+}
+
+export const ALARMAS_SLA: Partial<Record<Estado, AlarmaSla>> = {
+  'Notificado': { cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial' },
+  'Remisión creada': { cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial', soloSinOrdenVenta: true },
+  'Notificación cliente': { cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial', marcaTablero: true },
+}
+
+/** Estados con alarma cuyo cargo está vacío o es sólo espacios. Vacío es lo correcto. */
+export function estadosConAlarmaSinCargo(alarmas: Partial<Record<Estado, AlarmaSla>> = ALARMAS_SLA): Estado[] {
+  return (Object.keys(alarmas) as Estado[]).filter((e) => !alarmas[e]?.cargo?.trim())
 }

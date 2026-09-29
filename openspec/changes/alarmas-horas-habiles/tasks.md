@@ -11,7 +11,7 @@ Las citas se leyeron el 2026-09-29 contra el árbol de `6516e5f` por lectura dir
 
 ## Alineación de planificación (antes del lote 1)
 
-- [ ] A.1 **Hallazgo al planificar: el lote 1 solo rompe el servidor.** `apps/desk/server/db/sla.ts:58` llama `slaVencido(estado, desde, ahora)` y la firma nueva exige `cierres`; sin puente, `npm run typecheck` (`tsc -p apps/desk/tsconfig.server.json`) falla al integrar el lote 1 (stacked-to-main: cada lote va verde a `main`).
+- [x] A.1 **Hallazgo al planificar: el lote 1 solo rompe el servidor.** `apps/desk/server/db/sla.ts:58` llama `slaVencido(estado, desde, ahora)` y la firma nueva exige `cierres`; sin puente, `npm run typecheck` (`tsc -p apps/desk/tsconfig.server.json`) falla al integrar el lote 1 (stacked-to-main: cada lote va verde a `main`).
   Solución: tarea 1.6, un puente EN SITIO (`slaVencido(estado, desde, ahora, [])`, mismas 63 líneas), que el lote 2 reemplaza por los cierres reales. Con cierres `[]` y `AHORA = 2026-09-10T12:00Z`, las siete pruebas de `db/sla.test.ts` siguen dando el mismo resultado (hipótesis: `t1` lleva dos días hábiles, `t2` cero; se confirma corriéndolas en 1.6).
   `venceSlaEn` y `destinatarioDelEscalado` no tienen otro consumidor: `Grep` sobre `apps/` y `packages/` (2026-09-29) sólo halla `db/sla.ts:2`/`:58`/`:59`, `sla.test.ts` y comentarios (`bodegaje.ts:27`, `bodegaje.test.ts:37`, `transitions.ts:340`).
 - [ ] A.2 **Recuento de escenarios: 46** (`transitions-st` 12 + 3 + 6 = 21; `derivacion-avisos` 6 + 8 + 4 = 18; `vistas-tablero` 6 + 1 = 7). Numerados S1-S46 en la matriz de abajo; S46 (el corte no se mueve con un reinicio) entró con la revisión de S-13 y va al final para no renumerar.
@@ -127,33 +127,33 @@ Chain strategy: stacked-to-main
 
 ### Bloque A · RED
 
-- [ ] 1.1 RED — `sla.test.ts` **en su sitio**: `:2` quita `venceSlaEn` y añade `ALARMAS_SLA`; `:33` afirma el objeto entero `{ 'Notificado': 9, 'Remisión creada': 27, 'Notificación cliente': 36 }` (S1);
+- [x] 1.1 RED — `sla.test.ts` **en su sitio**: `:2` quita `venceSlaEn` y añade `ALARMAS_SLA`; `:33` afirma el objeto entero `{ 'Notificado': 9, 'Remisión creada': 27, 'Notificación cliente': 36 }` (S1);
   `:51-55` pasa de «exclusión» a **independencia**: al menos un estado con alarma dentro de `ESTADOS_EN_ESPERA` (`Remisión creada`, `Notificación cliente`) y al menos uno de `ESTADOS_EN_ESPERA` sin alarma (S11); `:57-81` deja de probar `venceSlaEn` (`:62`, `:66` se retiran) y pasa a probar `slaVencido` con cierres;
   `:129-130` reescribe el comentario («no cambia nada para C11 — `Notificación cliente` no tiene SLA»: falso desde hoy; caso B, se nombra la revisión `6516e5f`); `:188-191` → «todo estado con alarma tiene cargo no vacío y, si el grafo propone cargo, coincide con el declarado» (`destinatarioDelEscalado` se conserva como comprobación de coherencia, D-1; S-3 pasa a hecho probado).
-- [ ] 1.2 RED — `sla.test.ts` **al final** (fixtures en `ZONA_NEGOCIO`, reutilizando las de `calendarioLaboral.test.ts`; las fechas son propuesta, se confirman contra ese fichero): `slaVencido(estado, desde, ahora, cierres)` estricta.
+- [x] 1.2 RED — `sla.test.ts` **al final** (fixtures en `ZONA_NEGOCIO`, reutilizando las de `calendarioLaboral.test.ts`; las fechas son propuesta, se confirman contra ese fichero): `slaVencido(estado, desde, ahora, cierres)` estricta.
   `Notificado` entrado lunes 8:00: no vencido el lunes 17:00 ni el lunes 23:00 (9 h hábiles exactas, fuera de jornada no suma) y vencido el martes 8:00:00.001 (S2, S3);
   viernes 16:00 → lunes 16:00 no, lunes 16:00:00.001 sí (S4); viernes 8:00 con lunes festivo → martes 8:00 no, 8:00:00.001 sí (festivo Colombia: hipótesis de fecha, `2026-10-09` → lunes `2026-10-12`) (S5); lunes 8:00 con cierre el martes → miércoles 8:00 no, 8:00:00.001 sí (S6);
   `Remisión creada` lunes 8:00 → miércoles 17:00 no (27 h exactas), jueves 8:00:00.001 sí (S7); `Notificación cliente` lunes 8:00 → jueves 17:00 no (36 h exactas), viernes 8:00:00.001 sí (S8); estado sin alarma (`En Proceso`) nunca vence;
   **borde fraccionario** (entra 8:20, evalúa al día siguiente 8:20 = 9 h exactas sumando tramos de 0,333… h: no vencido; +1 ms sí) que es lo único que distingue el `Math.round` de D-1 (hipótesis de coma flotante, `calendarioLaboral.ts:185`).
-- [ ] 1.3 RED — `sla.test.ts` **al final**, invariantes de `ALARMAS_SLA`: mismas claves que `SLA_HORAS_POR_ESTADO`; las tres con `cargo: 'Coordinador Comercial'` (S13) y `areaRespaldo: 'Comercial'`, dentro de `AREAS` (`transitions.ts:310`; S-4 segunda revisión); sólo `Remisión creada` con `soloSinOrdenVenta` y sólo `Notificación cliente` con `marcaTablero`;
+- [x] 1.3 RED — `sla.test.ts` **al final**, invariantes de `ALARMAS_SLA`: mismas claves que `SLA_HORAS_POR_ESTADO`; las tres con `cargo: 'Coordinador Comercial'` (S13) y `areaRespaldo: 'Comercial'`, dentro de `AREAS` (`transitions.ts:310`; S-4 segunda revisión); sólo `Remisión creada` con `soloSinOrdenVenta` y sólo `Notificación cliente` con `marcaTablero`;
   `estadosConAlarmaSinCargo(tablaSintetica)` con una entrada de cargo vacío o sólo espacios devuelve ese estado y el mensaje lo nombra (S14).
-- [ ] 1.4 Confirmar rojo natural: `ALARMAS_SLA`/`estadosConAlarmaSinCargo` no existen; `:33` da `{ Notificado: 24 }`; `slaVencido` ignora `cierres`. **Nacen verdes y se declaran:** `packages/shared/src/sla.test.ts:106-182` (`destinatarioDelEscalado` no se toca) y `:194-209` (guardián de ambigüedad).
+- [x] 1.4 Confirmar rojo natural: `ALARMAS_SLA`/`estadosConAlarmaSinCargo` no existen; `:33` da `{ Notificado: 24 }`; `slaVencido` ignora `cierres`. **Nacen verdes y se declaran:** `packages/shared/src/sla.test.ts:106-182` (`destinatarioDelEscalado` no se toca) y `:194-209` (guardián de ambigüedad).
 
 ### Bloque B · GREEN
 
-- [ ] 1.5 GREEN — `sla.ts` en sitio (`:2`, `:4-31`, `:32-35`, `:39-44`, `:46-55`, `:68-70`) y al final: `ALARMAS_SLA: Partial<Record<Estado, { cargo: string; areaRespaldo: (typeof AREAS)[number]; soloSinOrdenVenta?: boolean; marcaTablero?: boolean }>>` y `estadosConAlarmaSinCargo(alarmas = ALARMAS_SLA)`.
+- [x] 1.5 GREEN — `sla.ts` en sitio (`:2`, `:4-31`, `:32-35`, `:39-44`, `:46-55`, `:68-70`) y al final: `ALARMAS_SLA: Partial<Record<Estado, { cargo: string; areaRespaldo: (typeof AREAS)[number]; soloSinOrdenVenta?: boolean; marcaTablero?: boolean }>>` y `estadosConAlarmaSinCargo(alarmas = ALARMAS_SLA)`.
   `slaVencido` = `Math.round(horasHabilesEntre(desde, ahora, cierres) * HORA_EN_MS) > horas * HORA_EN_MS` (`HORA_EN_MS` `:37` se reutiliza; estricta). `:39-44` deja un comentario de retirada de 6 líneas que dice por qué no hay fecha de vencimiento (D-2: `sumarHorasHabiles` no se construye).
   Confirmar que la importación no crea ciclo con `calendarioLaboral.ts` (`npm test` sin `ReferenceError`).
-- [ ] 1.6 **Puente** — `apps/desk/server/db/sla.ts:58` en sitio: `slaVencido(estado, desde, ahora, [])`, con comentario de una línea «puente; el lote 2 pasa los cierres de `listarCierres`» en la MISMA línea. `wc -l` sigue en 63. Correr `db/sla.test.ts` en verde (A.1).
-- [ ] 1.7 Confirmar 1.1-1.3 en verde y `npm run typecheck` limpio; `git diff --numstat -- packages/shared/src/sla.ts` = `+n −n` en sitio y sólo `+` al final; `sla.test.ts` 210 → 210+N con `−` sólo en las líneas de sitio.
+- [x] 1.6 **Puente** — `apps/desk/server/db/sla.ts:58` en sitio: `slaVencido(estado, desde, ahora, [])`, con comentario de una línea «puente; el lote 2 pasa los cierres de `listarCierres`» en la MISMA línea. `wc -l` sigue en 63. Correr `db/sla.test.ts` en verde (A.1).
+- [x] 1.7 Confirmar 1.1-1.3 en verde y `npm run typecheck` limpio; `git diff --numstat -- packages/shared/src/sla.ts` = `+n −n` en sitio y sólo `+` al final; `sla.test.ts` 210 → 210+N con `−` sólo en las líneas de sitio.
 
 ### Bloque C · Mutaciones (regla 2: se ensucia lo vigilado)
 
-- [ ] 1.8 MUTACIÓN — `>` → `>=` en `slaVencido`: ROJO en 1.2 (el borde exacto de S2, S7 y S8); revertir.
-- [ ] 1.9 MUTACIÓN — quitar `Math.round`: ROJO en el borde fraccionario de 1.2. **Si nace verde, se declara** en `apply-progress.md` («la hipótesis de coma flotante no se reproduce con estos fixtures; el redondeo se conserva por seguridad») y no se maquilla; revertir.
-- [ ] 1.10 MUTACIÓN — `slaVencido` devuelve `false` si `estado ∈ ESTADOS_EN_ESPERA`: ROJO en S7, S8 y en la independencia de `:51-55` (S11); revertir.
-- [ ] 1.11 MUTACIÓN — (a) cargo `''` en una entrada de `ALARMAS_SLA`: ROJO en 1.3 (S13, S14); (b) `marcaTablero: true` en `Notificado`: ROJO en 1.3; (c) borrar la clave `Notificado` de `ALARMAS_SLA`: ROJO en «mismas claves»; (d) añadir una clave fuera de `SLA_HORAS_POR_ESTADO` (`'En Proceso'` con cargo): ROJO en «mismas claves»; (e) `areaRespaldo` fuera de `AREAS` (con `as never` para pasar el tipo): ROJO en 1.3; revertir todas.
-- [ ] 1.12 Cierre del lote 1: comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`; medir (sin ficheros nuevos); recuentos `sla.ts` 109 → 109+N, `sla.test.ts` 210 → 210+N, `db/sla.ts` 63 sin cambio;
+- [x] 1.8 MUTACIÓN — `>` → `>=` en `slaVencido`: ROJO en 1.2 (el borde exacto de S2, S7 y S8); revertir.
+- [x] 1.9 MUTACIÓN — quitar `Math.round`: ROJO en el borde fraccionario de 1.2. **Si nace verde, se declara** en `apply-progress.md` («la hipótesis de coma flotante no se reproduce con estos fixtures; el redondeo se conserva por seguridad») y no se maquilla; revertir.
+- [x] 1.10 MUTACIÓN — `slaVencido` devuelve `false` si `estado ∈ ESTADOS_EN_ESPERA`: ROJO en S7, S8 y en la independencia de `:51-55` (S11); revertir.
+- [x] 1.11 MUTACIÓN — (a) cargo `''` en una entrada de `ALARMAS_SLA`: ROJO en 1.3 (S13, S14); (b) `marcaTablero: true` en `Notificado`: ROJO en 1.3; (c) borrar la clave `Notificado` de `ALARMAS_SLA`: ROJO en «mismas claves»; (d) añadir una clave fuera de `SLA_HORAS_POR_ESTADO` (`'En Proceso'` con cargo): ROJO en «mismas claves»; (e) `areaRespaldo` fuera de `AREAS` (con `as never` para pasar el tipo): ROJO en 1.3; revertir todas.
+- [x] 1.12 Cierre del lote 1: comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`; medir (sin ficheros nuevos); recuentos `sla.ts` 109 → 109+N, `sla.test.ts` 210 → 210+N, `db/sla.ts` 63 sin cambio;
   barrido de citas sobre `sla.ts` y `sla.test.ts` (relee las que cambian de contenido: `sla.ts:32-35`, `:39-44`, `:52-55` —caso B si alguna afirma «24 h de reloj»—, `:69-70`, `sla.test.ts:33`, `:51-55`, `:57-81`, `:188-191`; las de `bodegaje.ts:27` y `openspec/config.yaml` a `sla.ts:32` siguen en caso A) y `db/sla.ts:58`; `apply-progress.md` (~60 líneas, con el puente declarado).
 
 ---

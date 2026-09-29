@@ -216,7 +216,7 @@ retirarla de la fila con fecha. Devuelta al panel como pregunta nueva, `e013b-co
 2. **`Director Comercial` no existe como cargo en el código.** Comando: `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` → 0 aciertos. Los declarados son `Director Técnico` y `Coordinador Comercial` (`packages/shared/src/transitions.ts:276-281`).
 3. **Dar entrada a `habilitar_servicio` en `DERIVACION_POR_DEFECTO` cambia un requisito vivo:** `RQ-AV-02` (`openspec/specs/derivacion-avisos/spec.md:67-70`) declara con SHALL **exactamente tres** entradas, y el recuento 34 − 3 = 31 de `:287` cuelga de ahí.
 
-**Lo que la decisión NO desbloquea todavía:** la alarma en sí. `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35`) tiene una sola entrada, `'Notificado': 24`; `Remisión creada` no está. F1B-08 sigue parcial y el numerador no se mueve.
+**Lo que la decisión NO desbloquea todavía:** la alarma en sí. `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35` en `bb58e83`) tenía una sola entrada, `'Notificado': 24`; `Remisión creada` no está. F1B-08 sigue parcial y el numerador no se mueve.
 **Clave Engram a cargar:** `decision/escalado-remision-creada`.
 
 
@@ -1007,7 +1007,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 ## E-061 · 2026-09-24 · hallazgo · **CERRADA el 24/09 (segundo corte)**
 **Qué:** Contar en DÍAS HÁBILES exige un calendario laboral —L-V de 8 a 17, festivos de Colombia— que la aplicación no tiene, y de él dependen las tres alarmas de `SLA_HORAS_POR_ESTADO`, el escalado de C11 y el reloj del SLA de `c7`.
 **De dónde viene:** consecuencia no prevista de `decision/anexo-3-alerta` (24/09), que fija las tres alarmas en 9, 27 y 36 horas **hábiles**.
-**Afecta a:** `packages/shared/src/sla.ts:32-35` (hoy una sola entrada, `'Notificado': 24`, y son horas de reloj, no hábiles) · F1A-02 (cerrada) · F1B-08 (S44) · F1C-06 (S45)
+**Afecta a:** `packages/shared/src/sla.ts:32-35` en `bb58e83` (entonces una sola entrada, `'Notificado': 24`, y son horas de reloj, no hábiles) · F1A-02 (cerrada) · F1B-08 (S44) · F1C-06 (S45)
 **Estado:** triada
 **Destino:** ~~sin destino~~ → **fila nueva propia, talla S** (Gerencia, 24/09, `decision/calendario-habil`, E-063), que **precede** a las alarmas y al reloj del SLA. La fila **no está escrita en el §5**.
 **Medido el 2026-09-24 sobre `3f30710`:** ~~`grep -rniE "festivo|habil|holiday" packages/ apps/ --include=*.ts` = **0 aciertos**~~ — **CITA CORREGIDA el 24/09 en el segundo corte: ese comando da 126, no 0**, porque `habil` acierta dentro de `habilitar`/`habilitarServicio` (125 de los 126). El comando que sostiene la afirmación es `grep -rniE "festivo|holiday" packages/ apps/ --include=*.ts` = **0 aciertos**. La conclusión no cambia; la cita no era reproducible, y se conserva tachada porque el registro no se borra. No es cambiar un número: es una pieza nueva de la que cuelgan tres alarmas y un reloj.

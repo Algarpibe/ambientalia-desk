@@ -55,7 +55,7 @@ export async function ticketsConSlaVencido(db: Queryable, ahora: Date): Promise<
     const ultima = (t.rows[0] as { performed_at: Date } | undefined)?.performed_at
     if (!ultima) continue
     const desde = new Date(ultima)
-    if (slaVencido(estado, desde, ahora)) {
+    if (slaVencido(estado, desde, ahora, new Set())) { // puente del lote 1; el lote 2 pasa los cierres de `listarCierres`
       vencidos.push({ id: fila.id, number: Number(fila.number), estado, desde, escalarA: destinatarioDelEscalado(estado) })
     }
   }

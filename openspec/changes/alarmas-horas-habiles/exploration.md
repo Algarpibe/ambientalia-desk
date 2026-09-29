@@ -15,8 +15,8 @@ Día hábil: L-V 8-17 h, sin festivos de Colombia; independiente del reloj del S
 
 ## Lo que ya existe
 
-- ✔ `SLA_HORAS_POR_ESTADO` = `{ 'Notificado': 24 }` de reloj (`packages/shared/src/sla.ts:32-35`), fijado por `sla.test.ts:33`; el invariante
-  `sla.test.ts:188-191` (y `RQ-TS-16`) exige destinatario derivado para todo estado con SLA. `destinatarioDelEscalado` (`sla.ts:92-109`) es de UN cargo.
+- ✔ `SLA_HORAS_POR_ESTADO` = `{ 'Notificado': 24 }` de reloj (`packages/shared/src/sla.ts:32-35` en `4796aad`), fijado por `sla.test.ts:33` en `4796aad`; el invariante
+  `sla.test.ts:188-191` en `4796aad` (y `RQ-TS-16`) exigía destinatario derivado para todo estado con SLA. `destinatarioDelEscalado` (`sla.ts:92-109`) es de UN cargo.
 - `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40`) existe y **no la llama nadie**; filtra `flujoDelTicket === 'servicio'` (`:49`), lee la
   entrada al estado del último `to_status` de `ticket_transitions` (`:51-56`) y omite los tickets de Zoho sin foto (`:28-33`). Hoy no hay ningún aviso
   ni marca visual al vencer el SLA.
@@ -36,5 +36,5 @@ Día hábil: L-V 8-17 h, sin festivos de Colombia; independiente del reloj del S
 
 ## Riesgos que la propuesta tiene que resolver
 
-Choque con `RQ-TS-16` y `sla.test.ts:33`/`:188-191`; destinatario de un solo cargo; dependencia de E-087; `Coordinador Comercial` como cargo real en
+Choque con `RQ-TS-16` y `sla.test.ts:33` en `4796aad` (y su `:188-191`); destinatario de un solo cargo; dependencia de E-087; `Coordinador Comercial` como cargo real en
 producción sin verificar; tickets de Zoho sin foto no se miden; `Notificado` cambia de 24 h de reloj a 9 hábiles.

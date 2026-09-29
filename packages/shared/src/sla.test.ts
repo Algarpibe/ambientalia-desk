@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { SLA_HORAS_POR_ESTADO, destinatarioDelEscalado, slaVencido, venceSlaEn } from './sla'
+import { ALARMAS_SLA, SLA_HORAS_POR_ESTADO, destinatarioDelEscalado, estadosConAlarmaSinCargo, slaVencido } from './sla'
 import { ESTADOS, ESTADOS_EN_ESPERA, ESTADOS_SIN_SALIDA } from './estados'
-import { CLAVE_DERIVACION, type DerivacionPorDefecto, type Transition } from './transitions'
+import { AREAS, CLAVE_DERIVACION, type DerivacionPorDefecto, type Transition } from './transitions'
 import { CATALOGO_POR_FLUJO } from './flujos'
 
 /** Una transición mínima con su casilla de derivación, para los grafos sintéticos de más abajo. */
@@ -27,10 +27,10 @@ const trans = (id: string, from: string, porDefecto: DerivacionPorDefecto): Tran
  * las pruebas— el día que Gerencia elija 48.
  */
 describe('C11 · el reloj del SLA', () => {
-  it('declara UN solo SLA, y es el único que el maestro decidió', () => {
-    // Se afirma el objeto entero, no `Notificado` suelto: añadir un estado con SLA es una decisión de
-    // Gerencia, y así aparece aquí en rojo en vez de colarse.
-    expect(SLA_HORAS_POR_ESTADO).toEqual({ 'Notificado': 24 })
+  it('declara las TRES alarmas de decision/anexo-3-alerta, en horas HÁBILES, y ninguna más', () => {
+    // Se afirma el objeto entero, no un estado suelto: añadir o quitar una alarma es decisión de
+    // Gerencia, y así aparece aquí en rojo en vez de colarse. Hasta 6516e5f era `{ 'Notificado': 24 }` de reloj.
+    expect(SLA_HORAS_POR_ESTADO).toEqual({ 'Notificado': 9, 'Remisión creada': 27, 'Notificación cliente': 36 })
   })
 
   it('todo estado con SLA es un estado declarado del registro', () => {
@@ -40,44 +40,44 @@ describe('C11 · el reloj del SLA', () => {
   })
 
   /**
-   * LA COHERENCIA QUE §3.7 DE `transitions-st` PEDÍA, Y QUE HASTA HOY ERA HIPOTÉTICA.
+   * LA COHERENCIA QUE §3.7 DE `transitions-st` PEDÍA — y desde F1B-08 se prueba por INDEPENDENCIA.
    *
    * `estados.ts:28` avisa: «La vista muestra las once. El reloj del SLA NO lee esta clasificación.»
-   * Era una advertencia sin caso que la demostrase. Ya lo hay: el ÚNICO estado con SLA está
-   * clasificado `ninguna` (`estados.ts:91`), así que no es ninguno de los once de la vista ni de los
-   * cuatro sin salida. Si alguien «arreglara» el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, esta
-   * prueba se pone roja.
+   * En 6516e5f se probaba con exclusión (el único estado con SLA, `Notificado`, estaba fuera de las
+   * once). Con tres alarmas eso ya no vale: `Remisión creada` y `Notificación cliente` SÍ están en la
+   * vista. Lo que se prueba es que ninguna lista sale de la otra: hay alarmas dentro y fuera de las
+   * once, y estados de espera sin alarma. Si el reloj leyera `ESTADOS_EN_ESPERA`, se pone roja.
    */
-  it('el reloj y la vista no leen la misma lista: el único estado con SLA no está en las once', () => {
-    const conSla = Object.keys(SLA_HORAS_POR_ESTADO)
-    expect(conSla.filter((e) => (ESTADOS_EN_ESPERA as string[]).includes(e))).toEqual([])
-    expect(conSla.filter((e) => (ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([])
+  it('el reloj y la vista no leen la misma lista: hay alarmas dentro y fuera de las once', () => {
+    const conSla = Object.keys(SLA_HORAS_POR_ESTADO), espera = ESTADOS_EN_ESPERA as string[]
+    expect([conSla.some((e) => espera.includes(e)), conSla.some((e) => !espera.includes(e))]).toEqual([true, true])
+    expect(espera.some((e) => !conSla.includes(e)), 'algún estado de espera sin alarma').toBe(true)
   })
 
-  // ── El cálculo ───────────────────────────────────────────────────────────────────────────────
+  // ── El cálculo, en horas HÁBILES: jornada 08:00-17:00 en ZONA_NEGOCIO (`calendarioLaboral.ts:174`) ──
 
-  const entro = new Date('2026-09-01T10:00:00.000Z')
+  const sinCierres: ReadonlySet<string> = new Set()
+  const lunes8 = new Date('2026-09-14T13:00:00.000Z') // lunes 14/09/2026, 08:00 en Bogotá (UTC-5)
 
-  it('vence exactamente 24 h después de entrar en el estado', () => {
-    expect(venceSlaEn('Notificado', entro)).toEqual(new Date('2026-09-02T10:00:00.000Z'))
+  it('Notificado: 9 h hábiles exactas no vencen, ni fuera de jornada; el milisegundo siguiente sí', () => {
+    expect(slaVencido('Notificado', lunes8, new Date('2026-09-14T22:00:00.000Z'), sinCierres)).toBe(false) // lunes 17:00
+    expect(slaVencido('Notificado', lunes8, new Date('2026-09-15T04:00:00.000Z'), sinCierres)).toBe(false) // lunes 23:00
+    expect(slaVencido('Notificado', lunes8, new Date('2026-09-15T13:00:00.000Z'), sinCierres)).toBe(false) // martes 08:00
+    expect(slaVencido('Notificado', lunes8, new Date('2026-09-15T13:00:00.001Z'), sinCierres)).toBe(true)
   })
 
-  it('un estado sin SLA no vence nunca', () => {
-    expect(venceSlaEn('En Proceso', entro)).toBeNull()
-    expect(slaVencido('En Proceso', entro, new Date('2027-01-01T00:00:00.000Z'))).toBe(false)
+  it('un estado sin alarma no vence nunca', () => {
+    expect(slaVencido('En Proceso', lunes8, new Date('2027-01-01T00:00:00.000Z'), sinCierres)).toBe(false)
   })
 
   /**
-   * EL BORDE, y va en positivo y en negativo. Justo en el vencimiento NO está vencido: un SLA de «un
-   * día» que salta a las 23:59:59.999 no es un día. El milisegundo siguiente sí.
+   * EL BORDE, y va en positivo y en negativo. Justo en el umbral NO está vencido: la comparación es
+   * estricta. Antes del umbral tampoco, por mucho que se acerque.
    */
-  it('en el instante exacto del vencimiento todavía no está vencido', () => {
-    expect(slaVencido('Notificado', entro, new Date('2026-09-02T10:00:00.000Z'))).toBe(false)
-    expect(slaVencido('Notificado', entro, new Date('2026-09-02T10:00:00.001Z'))).toBe(true)
-  })
-
-  it('antes del vencimiento no está vencido, por mucho que se acerque', () => {
-    expect(slaVencido('Notificado', entro, new Date('2026-09-02T09:59:59.999Z'))).toBe(false)
+  it('antes del umbral no está vencido, por mucho que se acerque', () => {
+    expect(slaVencido('Notificado', lunes8, new Date('2026-09-14T21:59:59.999Z'), sinCierres)).toBe(false)
+    expect(slaVencido('Remisión creada', lunes8, new Date('2026-09-16T21:59:59.999Z'), sinCierres)).toBe(false)
+    expect(slaVencido('Notificación cliente', lunes8, new Date('2026-09-17T21:59:59.999Z'), sinCierres)).toBe(false)
   })
 })
 
@@ -126,8 +126,8 @@ describe('C11 · a quién se escala', () => {
    * CONTRARIO de escalar. Una implementación que leyera la tabla sin mirar el `tipo` devolvería un
    * destinatario donde no lo hay.
    *
-   * Y no cambia nada para C11 —`Notificación cliente` no tiene SLA—, así que sin esta prueba el
-   * error viviría escondido hasta que alguien declarara un SLA sobre ese estado.
+   * En 6516e5f `Notificación cliente` no tenía SLA; desde F1B-08 tiene alarma con cargo DECLARADO, y
+   * esta prueba impide que el grafo le invente un destinatario que la contradiga (ver `:189`).
    */
   it('primerDerivado no es un cargo: no sirve para escalar', () => {
     expect(destinatarioDelEscalado('Notificación cliente')).toEqual({ hay: false, motivo: 'ningun_cargo' })
@@ -182,13 +182,13 @@ describe('C11 · a quién se escala', () => {
   })
 
   /**
-   * LA CONEXIÓN CON EL RELOJ: el único estado con SLA tiene destinatario. Si mañana se declara un
-   * SLA sobre un estado sin escalado saliente, esta prueba lo dice — el reloj mediría un retraso que
-   * no se le puede comunicar a nadie.
+   * LA CONEXIÓN CON LA ALARMA (S-8): el cargo es DATO de `ALARMAS_SLA`, no sale del grafo. Pero si el
+   * grafo propone un cargo para un estado con alarma, tiene que ser el mismo: dos fuentes que discrepan
+   * sobre a quién se escala son el molde de H5. Hasta 6516e5f exigía «destinatario derivado del grafo».
    */
-  it('todo estado con SLA declarado tiene a quién escalar', () => {
-    const mudos = Object.keys(SLA_HORAS_POR_ESTADO).filter((e) => !destinatarioDelEscalado(e as never).hay)
-    expect(mudos, 'estados con SLA y sin destinatario de escalado').toEqual([])
+  it('todo estado con alarma declara cargo, y coincide con el del grafo si el grafo propone uno', () => {
+    const choques = Object.keys(SLA_HORAS_POR_ESTADO).filter((e) => chocaConElGrafo(e as never))
+    expect(choques, 'estados con alarma sin cargo, o con un cargo distinto del que propone el grafo').toEqual([])
   })
 
   /**
@@ -206,5 +206,117 @@ describe('C11 · a quién se escala', () => {
         expect(!d.hay && d.motivo === 'ambiguo', `${estado} tiene un escalado ambiguo`).toBe(false)
       }
     }
+  })
+})
+
+/** Un estado con alarma choca si no declara cargo, o si el grafo propone un cargo distinto (`:189`). */
+function chocaConElGrafo(estado: Parameters<typeof destinatarioDelEscalado>[0]): boolean {
+  const cargo = ALARMAS_SLA[estado]?.cargo.trim()
+  const grafo = destinatarioDelEscalado(estado)
+  return !cargo || (grafo.hay && grafo.cargo !== cargo)
+}
+
+/**
+ * F1B-08 — LAS TRES ALARMAS EN HORAS HÁBILES (`alarmas-horas-habiles`, RQ-TS-15 y RQ-TS-16).
+ *
+ * El umbral se mide con `horasHabilesEntre` (`calendarioLaboral.ts:174`), no con un cálculo propio
+ * (`decision/calendario-habil`): jornada 08:00-17:00 en `ZONA_NEGOCIO`, sin fines de semana, sin
+ * festivos de Colombia y sin los cierres de `public.calendario_cierres`, que llegan por parámetro.
+ * Todas las fechas son de 2026 en Bogotá (UTC-5, sin horario de verano), escritas en UTC.
+ */
+describe('F1B-08 · alarmas de SLA en horas hábiles', () => {
+  const sinCierres: ReadonlySet<string> = new Set()
+
+  /**
+   * EL BORDE EXACTO CRUZANDO UN FIN DE SEMANA Y UN CIERRE. Entra el viernes 18/09 a las 14:00: 3 h
+   * ese viernes; sábado y domingo no cuentan; el lunes 21/09 es cierre de empresa y no cuenta; el
+   * martes 22/09 faltan 6 h, así que las 9 h hábiles se cumplen EXACTAMENTE el martes a las 14:00.
+   * Sin el cierre, habrían vencido el lunes a las 14:00: la última aserción prueba que el cierre pesa.
+   */
+  it('9 h hábiles cruzando un fin de semana y un cierre: el martes 14:00 no vence, +1 ms sí', () => {
+    const viernes14 = new Date('2026-09-18T19:00:00.000Z')
+    const cierreLunes: ReadonlySet<string> = new Set(['2026-09-21'])
+    expect(slaVencido('Notificado', viernes14, new Date('2026-09-22T19:00:00.000Z'), cierreLunes)).toBe(false)
+    expect(slaVencido('Notificado', viernes14, new Date('2026-09-22T19:00:00.001Z'), cierreLunes)).toBe(true)
+    expect(slaVencido('Notificado', viernes14, new Date('2026-09-21T19:00:00.001Z'), cierreLunes)).toBe(false)
+    expect(slaVencido('Notificado', viernes14, new Date('2026-09-21T19:00:00.001Z'), sinCierres)).toBe(true)
+  })
+
+  it('el fin de semana no cuenta: viernes 16:00 → lunes 16:00 no vence, +1 ms sí', () => {
+    const viernes16 = new Date('2026-09-18T21:00:00.000Z')
+    expect(slaVencido('Notificado', viernes16, new Date('2026-09-21T21:00:00.000Z'), sinCierres)).toBe(false)
+    expect(slaVencido('Notificado', viernes16, new Date('2026-09-21T21:00:00.001Z'), sinCierres)).toBe(true)
+  })
+
+  it('un festivo no cuenta: viernes 09/10 12:00, lunes 12/10 festivo → martes 12:00 no vence, +1 ms sí', () => {
+    const viernes12 = new Date('2026-10-09T17:00:00.000Z')
+    expect(slaVencido('Notificado', viernes12, new Date('2026-10-12T22:00:00.000Z'), sinCierres)).toBe(false)
+    expect(slaVencido('Notificado', viernes12, new Date('2026-10-13T17:00:00.000Z'), sinCierres)).toBe(false)
+    expect(slaVencido('Notificado', viernes12, new Date('2026-10-13T17:00:00.001Z'), sinCierres)).toBe(true)
+  })
+
+  it('un cierre de empresa no cuenta: lunes 12:00, martes cerrado → miércoles 12:00 no vence, +1 ms sí', () => {
+    const lunes12 = new Date('2026-09-14T17:00:00.000Z')
+    const cierreMartes: ReadonlySet<string> = new Set(['2026-09-15'])
+    expect(slaVencido('Notificado', lunes12, new Date('2026-09-16T17:00:00.000Z'), cierreMartes)).toBe(false)
+    expect(slaVencido('Notificado', lunes12, new Date('2026-09-16T17:00:00.001Z'), cierreMartes)).toBe(true)
+  })
+
+  it('Remisión creada vence pasadas 27 h hábiles exactas; Notificación cliente, 36', () => {
+    const lunes8 = new Date('2026-09-14T13:00:00.000Z')
+    expect(slaVencido('Remisión creada', lunes8, new Date('2026-09-16T22:00:00.000Z'), sinCierres)).toBe(false) // miércoles 17:00
+    expect(slaVencido('Remisión creada', lunes8, new Date('2026-09-17T13:00:00.001Z'), sinCierres)).toBe(true) // jueves 08:00
+    expect(slaVencido('Notificación cliente', lunes8, new Date('2026-09-17T22:00:00.000Z'), sinCierres)).toBe(false) // jueves 17:00
+    expect(slaVencido('Notificación cliente', lunes8, new Date('2026-09-18T13:00:00.001Z'), sinCierres)).toBe(true) // viernes 08:00
+  })
+
+  /**
+   * EL BORDE FRACCIONARIO, medido y no supuesto. `Remisión creada` entra el lunes a las 08:02 y se
+   * evalúa el jueves a las 08:02: son 27 h hábiles exactas, pero `horasHabilesEntre` las suma en
+   * tramos fraccionarios y devuelve 27,000000000000004 (sondeo del 2026-09-29 sobre 9.720 entradas
+   * de los tres umbrales: 220 casos por encima del umbral exacto). Sin el redondeo a milisegundo de `slaVencido` vencería EN el umbral. Con 9 h y
+   * entrada a las 08:20 no pasa, y por eso no sirve de fixture.
+   */
+  it('borde fraccionario: Remisión creada lunes 08:02 → jueves 08:02 son 27 h exactas y no vencen', () => {
+    const lunes0802 = new Date('2026-09-14T13:02:00.000Z')
+    expect(slaVencido('Remisión creada', lunes0802, new Date('2026-09-17T13:02:00.000Z'), sinCierres)).toBe(false)
+    expect(slaVencido('Remisión creada', lunes0802, new Date('2026-09-17T13:02:00.001Z'), sinCierres)).toBe(true)
+  })
+
+  it('ninguna alarma está en un estado sin salida', () => {
+    const conSla = Object.keys(SLA_HORAS_POR_ESTADO)
+    expect(conSla.filter((e) => (ESTADOS_SIN_SALIDA as string[]).includes(e))).toEqual([])
+  })
+
+  // ── ALARMAS_SLA: qué se hace al vencer (RQ-TS-16, S-4 y S-8) ────────────────────────────────
+
+  it('ALARMAS_SLA y SLA_HORAS_POR_ESTADO tienen exactamente las mismas claves', () => {
+    expect(Object.keys(ALARMAS_SLA).sort()).toEqual(Object.keys(SLA_HORAS_POR_ESTADO).sort())
+  })
+
+  it('las tres escalan al Coordinador Comercial, con el área Comercial de respaldo', () => {
+    for (const alarma of Object.values(ALARMAS_SLA)) {
+      expect(alarma).toMatchObject({ cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial' })
+      expect(AREAS as readonly string[]).toContain(alarma!.areaRespaldo)
+    }
+  })
+
+  it('sólo Remisión creada mira la orden de venta y sólo Notificación cliente marca el tablero', () => {
+    const conOv = Object.entries(ALARMAS_SLA).filter(([, a]) => a?.soloSinOrdenVenta).map(([e]) => e)
+    const conMarca = Object.entries(ALARMAS_SLA).filter(([, a]) => a?.marcaTablero).map(([e]) => e)
+    expect([conOv, conMarca]).toEqual([['Remisión creada'], ['Notificación cliente']])
+  })
+
+  it('ninguna alarma real está sin cargo', () => {
+    expect(estadosConAlarmaSinCargo(), 'alarmas sin cargo declarado').toEqual([])
+  })
+
+  it('una alarma con el cargo vacío o sólo espacios se detecta y se nombra', () => {
+    const sintetica = {
+      'Notificado': { cargo: 'Coordinador Comercial', areaRespaldo: 'Comercial' as const },
+      'Remisión creada': { cargo: '   ', areaRespaldo: 'Comercial' as const },
+      'Notificación cliente': { cargo: '', areaRespaldo: 'Comercial' as const },
+    }
+    expect(estadosConAlarmaSinCargo(sintetica)).toEqual(['Remisión creada', 'Notificación cliente'])
   })
 })

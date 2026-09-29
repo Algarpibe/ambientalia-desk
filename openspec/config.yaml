@@ -1442,7 +1442,7 @@ decisiones_de_gerencia:
       `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` da 0 aciertos. Los dos cargos
       declarados son `Director Técnico` y `Coordinador Comercial` (`transitions.ts:276-281`).
       (3) LA ALARMA DE 72 H SIGUE SIN CONSTRUIR. `SLA_HORAS_POR_ESTADO`
-      (`packages/shared/src/sla.ts:32-35`) tiene una sola entrada, `'Notificado': 24`; `Remisión creada`
+      (`packages/shared/src/sla.ts:32-35` en `bb58e83`) tenía una sola entrada, `'Notificado': 24`; `Remisión creada`
       no está. La decisión desbloquea el trabajo, no lo sustituye.
       (4) DAR ENTRADA A `habilitar_servicio` EN `DERIVACION_POR_DEFECTO` CAMBIA UN REQUISITO VIVO:
       `RQ-AV-02` (`openspec/specs/derivacion-avisos/spec.md:67-70`) declara con SHALL que la tabla lleva
@@ -1511,7 +1511,7 @@ decisiones_de_gerencia:
       21/09: `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` = 0. La supervisión no ve
       la base: ni lo confirma ni lo refuta. No cambia nada, porque el aviso no va a ese cargo.
       (4) SIGUE EN PIE: la alarma de 72 h no está construida (`SLA_HORAS_POR_ESTADO`,
-      `packages/shared/src/sla.ts:32-35`, sólo lleva `'Notificado': 24`), y darle entrada a
+      `packages/shared/src/sla.ts:32-35` en `bb58e83`, sólo llevaba `'Notificado': 24`), y darle entrada a
       `habilitar_servicio` en `DERIVACION_POR_DEFECTO` cambia `RQ-AV-02`
       (`openspec/specs/derivacion-avisos/spec.md:67-70`), que declara exactamente tres entradas.
     registro: "docs/sdd/ENTRADA.md → E-014 (adenda 21/09) · plan §4.5, fila `decision/escalado-remision-creada`"
@@ -2329,7 +2329,7 @@ decisiones_de_gerencia:
       «4 días hábiles, para todos los clientes. Cuando un ticket lleva 4 días hábiles en Notificación cliente sin aprobación ni rechazo, se avisa al Coordinador Comercial para que haga seguimiento, y el ticket se señala en el tablero como «esperando aprobación del cliente»; no se crea un estado nuevo. Un día hábil va de lunes a viernes, de 8 a 17 h (9 horas), sin festivos de Colombia; el tiempo fuera de ese horario no cuenta. El mismo criterio se aplica a las tres alarmas de SLA_HORAS_POR_ESTADO, expresadas en días hábiles: Notificado, 1 día hábil (9 horas hábiles); Remisión creada, 3 días hábiles (27 horas hábiles); Notificación cliente, 4 días hábiles (36 horas hábiles). Esta alerta es independiente del reloj del SLA de c7: el reloj se para en Notificación cliente porque la espera es del cliente, y la alerta mide precisamente esa espera. Cierra el punto abierto nº 3.»
     consecuencias: |
       (1) NINGUNA DE LAS DOS OPCIONES DE LA PREGUNTA: la respuesta es 4 días hábiles, no 24 ni 48 horas de reloj.
-      (2) LAS TRES ENTRADAS DE `SLA_HORAS_POR_ESTADO` QUEDAN FIJADAS, y hoy hay UNA. Medido el 2026-09-24 sobre `3f30710`: `packages/shared/src/sla.ts:32-35` declara `{'Notificado': 24}` y nada más. La respuesta pide 9, 27 y 36 horas HÁBILES. El 'Notificado: 24' de hoy no es el de la respuesta: 24 horas de reloj no son 9 hábiles.
+      (2) LAS TRES ENTRADAS DE `SLA_HORAS_POR_ESTADO` QUEDAN FIJADAS, y hoy hay UNA. Medido el 2026-09-24 sobre `3f30710`: `packages/shared/src/sla.ts:32-35` en `3f30710` declara `{'Notificado': 24}` y nada más. La respuesta pide 9, 27 y 36 horas HÁBILES. El 'Notificado: 24' de hoy no es el de la respuesta: 24 horas de reloj no son 9 hábiles.
       (3) CONSECUENCIA QUE LA PREGUNTA NO ANTICIPABA — EL CALENDARIO HÁBIL NO EXISTE Y NO TIENE FILA. Contar en horas hábiles exige horario (L-V 8-17) y festivos de Colombia. Medido: `grep -rniE "festivo|habil|holiday" packages/ apps/ --include=*.ts` = 0 aciertos. No es un número que se cambie: es una pieza nueva de la que dependen las tres alarmas, el escalado de C11 y el reloj del SLA de `c7`. Sin fila y sin dueño. Devuelto como pregunta `calendario-habil`.
       (4) NO CREA ESTADO NUEVO: la señal del tablero es una marca de vista, no un estado, así que la cifra anclada de 21 estados no se mueve.
     registro: "docs/sdd/ENTRADA.md → E-033 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 3)"
@@ -2556,7 +2556,7 @@ decisiones_de_gerencia:
     consecuencias: |
       (1) FILA NUEVA DECIDIDA, talla S, y esta supervisión NO escribe en el §5: la escribe quien fije el alcance. DENOMINADOR: 52 hoy; 53 cuando se escriba ésta, 54 con F0-06 (`barrido-comprobaciones-nuevas`, mismo corte). El porcentaje baja el día que se escriban, por alcance y no por trabajo.
       (2) MEDIDO EL 2026-09-24 SOBRE `3f30710`: `grep -rniE "festivo|holiday" packages/ apps/ --include=*.ts` = **0 aciertos**. La pieza no existe en ninguna forma. ⚠️ El comando que el corte anterior citó para esto —`grep -rniE "festivo|habil|holiday"`— NO da 0 sino **126**, porque `habil` acierta dentro de `habilitar`/`habilitarServicio` (125 de los 126). La conclusión no cambia; la cita sí, y queda corregida aquí y en E-061.
-      (3) TOCA UN VALOR YA CONSTRUIDO, no sólo trabajo nuevo: `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35`) tiene hoy una sola entrada, `'Notificado': 24`, comentada como «Un día = 24 h» y en horas de reloj. La decisión la convierte en **9 horas hábiles**. F1A-02 está CERRADA: es reapertura de contenido de una tanda cerrada, y hay que decir en qué fila entra.
+      (3) TOCA UN VALOR YA CONSTRUIDO, no sólo trabajo nuevo: `SLA_HORAS_POR_ESTADO` (`packages/shared/src/sla.ts:32-35` en `bb58e83`) tenía una sola entrada, `'Notificado': 24`, comentada como «Un día = 24 h» y en horas de reloj. La decisión la convierte en **9 horas hábiles**. F1A-02 está CERRADA: es reapertura de contenido de una tanda cerrada, y hay que decir en qué fila entra.
       (4) ES UNA PRECEDENCIA, y ahí está el riesgo de calendario: «ninguna otra tanda construye su propio cálculo» pone por delante de F1B-08 (S44, alarma de 72 h), F1C-06 (S45, reloj del SLA), la fecha prevista de facturación del Anexo D nº 33 y los indicadores de `e009b-lista-indicadores` a una pieza **que hoy no tiene semana**. Si se escribe tarde, o bloquea a las cuatro o las cuatro la incumplen.
       (5) CIERRA E-061, que nació como consecuencia no prevista de `decision/anexo-3-alerta` en este mismo día.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-063 y E-061 (cerrada) · docs/sdd/Parte_2026-09-24.md §9"

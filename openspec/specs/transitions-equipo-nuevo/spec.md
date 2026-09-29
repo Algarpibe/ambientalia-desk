@@ -231,7 +231,7 @@ la guarda 2.
 - **Avisos por área**: `areasSiguientes`/`areasAAvisar` (`avisoArea.ts`, vía `transitions.ts:327`)
   **SHALL** calcularse sobre el catálogo del flujo del ticket que ejecutó la transición, no siempre
   sobre `TRANSITIONS`. Delta en `derivacion-avisos` RQ-AV-04.
-- **SLA de `Notificado`**: el reloj de 24 h (`sla.ts:32-35`; `apps/desk/server/db/sla.ts:40-45`)
+- **SLA de `Notificado`**: el reloj de 24 h (`sla.ts:32-35` en `bb58e83`; `apps/desk/server/db/sla.ts:40-45`)
   **MUST NOT** aplicarse a un ticket `Equipo nuevo` en `Notificado`, aunque el nombre del estado
   coincida con el de servicio — es del blueprint de servicio (s6). Delta en `transitions-st` RQ-TS-15.
 
