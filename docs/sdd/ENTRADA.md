@@ -1257,3 +1257,11 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** fila F1B-06 del §5 del plan · capacidad `transitions-soporte-remoto` (RQ-SR-02).
 **Estado:** nueva
 **Destino propuesto:** `openspec/config.yaml` → `decisiones_de_gerencia`. **Dueño propuesto:** Gerencia / Servicio Técnico. **Qué desbloquea:** cerrar S-1 como decisión y no como supuesto; si la respuesta es Comercial para alguna, se cambia UN dato por transición y la matriz de `permisos.test.ts`, sin tocar el flujo. No bloquea el archive ni el despliegue: con la respuesta pendiente, el sistema funciona con Servicio Técnico.
+
+## E-091 · 2026-09-29 · hallazgo · **NUEVA**
+**Qué:** En una pasada completa de `npm test` (archive de `blueprint-soporte-remoto`, 2026-09-29) la prueba `apps/desk/server/auth/routes.test.ts:116` («el PATCH cambia el correo…») dio *timeout*: **5411 ms contra 5000** (el valor por defecto de vitest; `vitest.config.ts` no fija `testTimeout`). Aislada pasó 14/14 y la pasada completa siguiente salió verde.
+**Medido (5 pasadas completas seguidas, reporter JSON, 2026-09-29):** esa prueba tardó 657, 373, 430, 1013 y 796 ms (mediana 657); la más lenta del fichero, 578-1574 ms; el fichero entero, 5,5-9,9 s; la suite, 144-174 s; **0 rojos** en las cinco. Los 5411 ms fueron un pico de 5 a 14 veces lo habitual, no una prueba lenta.
+**Qué arriesga:** un CI rojo intermitente sin causa de código, que se lee como regresión o se «arregla» a ciegas. No hay rojo de CI registrado por esto a hoy.
+**Lo que NO se hace:** subir el *timeout*. Con la medida no hay base: la prueba va a un 20 % del límite en el peor caso medido, y subirlo ocultaría el pico en vez de explicarlo. Si vuelve a pasar, anotar aquí la fecha y la carga de la máquina antes de tocar nada.
+**Estado:** nueva
+**Destino:** **SIN DESTINO ASIGNADO**, a propósito: no hay fila del §5 de fiabilidad de la suite. **Dueño propuesto:** quien mantenga el CI.
