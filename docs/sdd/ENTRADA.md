@@ -1249,3 +1249,11 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** fila F1B-05 del §5 del plan (mitad de visibilidad) · capacidad `permissions`.
 **Estado:** nueva
 **Destino propuesto:** `openspec/config.yaml` → `decisiones_de_gerencia`; si la respuesta es segmentar, contenido de F1B-05. **Dueño propuesto:** Gerencia. **Qué desbloquea:** el cierre de F1B-05, que sin esta respuesta puede construir el resto de su contenido pero no cerrarse.
+
+## E-090 · 2026-09-29 · pregunta · **NUEVA**
+**Qué:** ¿De qué área son las cuatro transiciones del flujo de soporte remoto —«Asignación», «Ejecutar», «Soporte pendiente» y «Continuación soporte»—? Hoy las cuatro son de **Servicio Técnico** por supuesto (S-1 de `blueprint-soporte-remoto`), no por decisión: la hoja `docs/analisis-tickets/DF-soporte-remoto-030226.xlsx` trae el área responsable vacía y M1.5 no la dice (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1551-1568`). La duda concreta es «Asignación», que podría ser de Comercial, el área que recibe la solicitud.
+**Qué decide:** quién puede ejecutar cada una de las cuatro. Hoy un usuario sólo de Comercial recibe `403` en las cuatro (`apps/desk/server/permisos.test.ts:306`); el dato vive en el catálogo (`packages/shared/src/transitions.ts:389`, una propiedad `area` por transición).
+**De dónde viene:** tarea de persona P.3 de `openspec/changes/blueprint-soporte-remoto/tasks.md` (F1B-06, cambio 2 de 2), y aviso W2 de su `verify-report.md`.
+**Afecta a:** fila F1B-06 del §5 del plan · capacidad `transitions-soporte-remoto` (RQ-SR-02).
+**Estado:** nueva
+**Destino propuesto:** `openspec/config.yaml` → `decisiones_de_gerencia`. **Dueño propuesto:** Gerencia / Servicio Técnico. **Qué desbloquea:** cerrar S-1 como decisión y no como supuesto; si la respuesta es Comercial para alguna, se cambia UN dato por transición y la matriz de `permisos.test.ts`, sin tocar el flujo. No bloquea el archive ni el despliegue: con la respuesta pendiente, el sistema funciona con Servicio Técnico.
