@@ -184,7 +184,7 @@ La tercera vía vive en un solo sitio, `repo.ts:362-379` (`ticketConOrdenVenta`:
 
 Cada una activa las dos guardas a la vez y contrasta con la población de control (regla de mutación 1). Las tres mutaciones de posición (`apply-progress.md:379-381`) las reproduce el orquestador.
 
-**IV-12, registrado y no corregido.** La cuarentena de la remisión (`remision.ts:220`) corre detrás del 409 de remisión pendiente (`remision.ts:177`, escalón D también): una subOV en cuarentena sobre un ticket con remisión sin desenlace ve el 409 de la pendiente y no el 422 de cuarentena. Ninguna prueba fija ese par, a propósito: fijarlo lo declararía correcto. Está escrito en `REM:1249-1254`, en `apply-progress.md:388` y en la fila IV-12 de `CLAUDE.md`. Mismo molde que IV-12 (`:127` antes que `:155`). No es un defecto de este cambio.
+**IV-12, registrado y no corregido.** La cuarentena de la remisión (`remision.ts:220`) corre detrás del 409 de remisión pendiente (`remision.ts:177`, escalón D también): una subOV en cuarentena sobre un ticket con remisión sin desenlace ve el 409 de la pendiente y no el 422 de cuarentena. Ninguna prueba fija ese par, a propósito: fijarlo lo declararía correcto. Está escrito en `REM:1249-1254`, en `apply-progress.md:388` y en la fila IV-12 de `CLAUDE.md`. Mismo molde que IV-12 (`remision.ts:127` antes que `:155`). No es un defecto de este cambio.
 
 ---
 
