@@ -190,3 +190,59 @@ sigue siendo la pasada de ritmo y sigue antes de `sync.syncRecent()`—. `db/sla
 todas; ninguna anclada.
 **Medida** (`git add -N` de `alarmasSla.ts` y `alarmasSla.test.ts`, luego `git diff --shortstat --no-renames HEAD`): 7 ficheros,
 +497 −33 = **530** frente a ~620 estimadas, techo 800 y umbral 720. Por debajo: pruebas 257 (~310) y `design`/`tasks` 57 (~70).
+
+## Lote 4 · tablero y cierre (2026-09-29, base `ad2b97b`)
+
+Ledger: intento 1 del objetivo nuevo, techo 800. **Estimación previa ~380** (marca en servidor ~40 y su prueba ~110,
+ruta ~40, `types`/`tickets.ts`/`TicketCard` ~14, E-087 ~8, R08.3 ~30, `tasks.md` ~46, barrido ~20, este fichero ~70).
+
+**RED → GREEN.** Rojo natural: `db/alarmasAvisadas.ts` no existía (6 pruebas) y la ruta devolvía el campo `undefined`.
+**Nacen verdes y se declaran:** «el listado de cerrados no lleva el campo» (ya no lo llevaba) y S30/S31 en
+`alarmasSla.test.ts` (reentrar u otro estado = alarma nueva), un hueco del lote 3 que se ve al repasar los criterios de
+éxito; su detector es la mutación de la clave primaria. GREEN: `db/alarmasAvisadas.ts` (35), `types.ts:37`,
+`routes/tickets.ts:9` y `:115` en sitio (810 y 223 líneas), `TicketCard.tsx` +7 tras `:96`. Suite: 159 ficheros, 1.990
+verdes, 2 omitidas; typecheck limpio; build correcto; eslint 0 errores y 165 avisos (una línea nueva con `any` en
+`tickets.test.ts` lo subía a 166; tipada).
+
+**Regla de mutación 3 — la regla 13, decisión a decisión de `TicketCard.tsx`** (fichero leído entero, 109 líneas):
+
+| Decisión del cliente | Clase | Línea del servidor que la impone | Prueba |
+|---|---|---|---|
+| Pintar «Esperando aprobación del cliente» sólo si `esperandoAprobacionCliente === true` (`:98`) | avisa | `apps/desk/server/db/alarmasAvisadas.ts:28` (estado actual + entrada actual + marca) y `apps/desk/server/routes/tickets.ts:115` | `alarmasAvisadas.test.ts` S39-S43 y estado cruzado; `tickets.test.ts` (ruta) |
+| El bloque no bloquea ni cambia de estado (sin `onClick`) | — | ninguna ruta escribe por la marca; leerla no toca el historial (`alarmasAvisadas.test.ts:33-35`) | S39 |
+| El cliente no calcula vencimiento, calendario ni cierres | — | `apps/desk/server/db/sla.ts:58` (`slaVencido` con cierres reales) y `services/alarmasSla.ts` | `grep -nE "horasHabiles|calendario|cierres|venc|slaVencido"` sobre `TicketCard.tsx`: 0 |
+| Marcar leído / no leído (`:87`) | acción | `apps/desk/server/routes/tickets.ts:118-119` (`setTicketRead` por usuario) | `tickets.test.ts:28` |
+| Color del estado (`:26`, `statusColorMap`) y responsable visible (`:27`) | presentación | no deciden nada de dominio: pintan campos que manda el servidor | — |
+| Abrir el ticket o el cliente (`:31`, `:52-54`) | navegación | — | — |
+
+Sin decisión huérfana: ninguna es la guarda.
+
+**Mutaciones reproducidas por el orquestador** (sha256 de los tres ficheros idéntico antes y después): 4.6a marca sin
+comparar `entrada_at` → S42; 4.6b sin exigir el estado actual → **nacía verde** con un solo estado que marca (los dos
+`IN` la cubrían); se añadió «con dos estados que marcan…» y pasó a rojo; 4.6c `marcaTablero` en `Notificado` → S43;
+4.6d sin `try/catch` → «nunca lanza»; ruta con el campo fijo a `false` → la prueba de ruta; clave primaria sin
+`entrada_at` → S30/S31.
+
+**Barrido de la regla 4 de los cuatro lotes** (recuento mecánico de citas a líneas cuyo CONTENIDO cambió, fuera de
+`archive/`, y lectura de cada una):
+
+| Fichero | Citas | Caso B/C ancladas | Caso A |
+|---|---|---|---|
+| `packages/shared/src/sla.ts` | 34 | 17 (15 de lotes previos + `Plan R01.1:396` y `proposal.md:19`, en `4796aad`) | 17 |
+| `apps/desk/server/db/sla.ts` | 23 | 11 (7 previas + `proposal:20`, `exploration:20`, `transitions-equipo-nuevo:234` y **C** `transitions-st:582` en `0ca870b`, cerrada por `1b90a80`) | 12 |
+| `apps/desk/server/index.ts` | 26 | 0 | 26 (incluida la de la adenda a E-087; `:88` sigue siendo la pasada de ritmo antes de la sincronización; `:15`, el import) |
+| `packages/zoho-sync/src/db/migrate.ts` | 12 | 0 | 12 (`:70-73` sigue siendo `PUBLIC_TABLES`) |
+| `packages/zoho-sync/src/db/schema.sql` | — | 0 | sólo se añadió al final (576 → 596); `:576` sigue siendo la `ALTER` de `modalidad` |
+| `apps/desk/server/db/avisos.ts` | — | 0 | sólo al final (93 → 113); `:74-93` sigue siendo `destinatariosDeArea` |
+| `packages/shared/src/types.ts`, `routes/tickets.ts` | 2 + 3 | 0 | 5 (la carpeta del cambio, que describe esas mismas líneas) |
+| `apps/desk/src/components/TicketCard.tsx` | 1 | 0 | 1 (`:96-102` de `tasks.md`, la instrucción; ninguna cita pasa de `:83` fuera de la carpeta) |
+
+**Cierre.** Adenda a E-087 al final de `docs/sdd/ENTRADA.md`; nota del paquete de despliegue reescrita en su sitio en
+`tasks.md` (tablas, cambio visible de `Notificado`, las dos alarmas nuevas, el corte del día del despliegue, P.1, P.3 y
+P.4); texto para el expediente en `docs/sdd/R08.3_Expediente_de_cambios.md` §14, con las líneas de la R08.2 releídas
+(`:1647-1648`, `:1650-1654`, `:4010-4012`, `:3744`). `git diff HEAD -- CLAUDE.md openspec/config.yaml` vacío en este
+lote (4.12). Los ocho criterios de éxito de `proposal.md:164-173` tienen prueba: `sla.test.ts` (borde y cierres),
+`db/sla.test.ts` (OV por las tres vías), `alarmasSla.test.ts` (duplicados, reentrada, S-4, corte, correo) y
+`alarmasAvisadas.test.ts` (marca y salida del estado).
+**Medida** (`git add -N` de los dos ficheros nuevos, luego `git diff --shortstat --no-renames HEAD`): 16 ficheros,
++272 −25 = **297** frente a ~380 estimadas y techo 800. Por debajo: pruebas 116 (~150) y barrido 12 líneas (~20).

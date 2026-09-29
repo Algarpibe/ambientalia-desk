@@ -34,7 +34,7 @@ export interface Ticket {
   contactName?: string | null
   contactId?: string | null
   accountId?: string | null
-  read?: boolean
+  read?: boolean; esperandoAprobacionCliente?: boolean // marca de vista calculada por el servidor (RQ-VT-07)
 }
 
 /** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */

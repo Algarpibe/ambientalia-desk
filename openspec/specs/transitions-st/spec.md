@@ -579,7 +579,7 @@ El SLA **SHALL** declararse como **dato**, no derivarse del grafo
 - **El reloj MUST NOT aplicarse a un ticket cuyo flujo aplicable no es el de servicio, aunque su
   estado actual coincida en NOMBRE con `Notificado`.** Desde `blueprint-equipo-nuevo` (F1B-06),
   `Notificado` también existe en el catálogo de `Equipo nuevo` (`transitions-equipo-nuevo` RQ-EN-01):
-  la consulta de `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40-45`) filtra hoy sólo por
+  la consulta de `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40-45` en `0ca870b`; cerrado por `1b90a80`, que añadió el filtro de flujo) filtraba sólo por
   `status`, sin distinguir catálogo, así que **SHALL** excluir los tickets cuyo flujo aplicable
   (`transitions-equipo-nuevo` RQ-EN-04) no sea `servicio` — supuesto s6 de la propuesta.
 

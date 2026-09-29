@@ -16,8 +16,8 @@ Mitad de alarma de F1B-08. Base `4796aad`. Exploración en `openspec/changes/ala
 
 - `decision/anexo-3-alerta` (`openspec/config.yaml:2329`) fija tres alarmas en horas HÁBILES: `Notificado` 9 h,
   `Remisión creada` 27 h, `Notificación cliente` 36 h. Hoy hay una sola entrada, de reloj:
-  `SLA_HORAS_POR_ESTADO = { 'Notificado': 24 }` (`packages/shared/src/sla.ts:32-35`).
-- Nada dispara hoy: `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40`) no tiene llamador y ningún ticket vencido
+  `SLA_HORAS_POR_ESTADO = { 'Notificado': 24 }` (`packages/shared/src/sla.ts:32-35` en `4796aad`).
+- Nada dispara hoy: `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40` en `4796aad`) no tiene llamador y ningún ticket vencido
   genera aviso ni marca.
 - `decision/calendario-habil` (`openspec/config.yaml:2555`) prohíbe un cálculo propio: se usa `horasHabilesEntre`
   (`packages/shared/src/calendarioLaboral.ts:174`) con los cierres de `listarCierres`

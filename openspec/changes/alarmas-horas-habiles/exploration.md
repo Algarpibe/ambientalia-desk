@@ -17,7 +17,7 @@ Día hábil: L-V 8-17 h, sin festivos de Colombia; independiente del reloj del S
 
 - ✔ `SLA_HORAS_POR_ESTADO` = `{ 'Notificado': 24 }` de reloj (`packages/shared/src/sla.ts:32-35` en `4796aad`), fijado por `sla.test.ts:33` en `4796aad`; el invariante
   `sla.test.ts:188-191` en `4796aad` (y `RQ-TS-16`) exigía destinatario derivado para todo estado con SLA. `destinatarioDelEscalado` (`sla.ts:92-109`) es de UN cargo.
-- `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40`) existe y **no la llama nadie**; filtra `flujoDelTicket === 'servicio'` (`:49`), lee la
+- `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40` en `4796aad`) existe y **no la llama nadie**; filtra `flujoDelTicket === 'servicio'` (`:49`), lee la
   entrada al estado del último `to_status` de `ticket_transitions` (`:51-56` en `4796aad`) y omite los tickets de Zoho sin foto (`:28-33`). Hoy no hay ningún aviso
   ni marca visual al vencer el SLA.
 - ✔ `calendarioLaboral` (F1B-12) es puro: `horasHabilesEntre(desde, hasta, cierres)` (`packages/shared/src/calendarioLaboral.ts:174`); los cierres

@@ -94,6 +94,13 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
                     </button>
                 </div>
             </div>
+            {/* RQ-VT-07: la decide el servidor (`db/alarmasAvisadas.ts`); aquí sólo se pinta. */}
+            {ticket.esperandoAprobacionCliente === true && (
+                <div className="flex items-center gap-1 text-[10px] font-bold text-[#D97706]">
+                    <span className="material-symbols-outlined text-[14px]">hourglass_top</span>
+                    Esperando aprobación del cliente
+                </div>
+            )}
 
             {/* Hover actions seen in the image (like common in Kanban boards) */}
             <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 pointer-events-none transition-colors rounded"></div>

@@ -79,6 +79,13 @@ describe('marcarYAvisarAlarma · la marca va PRIMERO y la unicidad la da la clav
     expect(await marcas()).toEqual([{ ticket_id: 't1', estado: 'Notificado', avisos_creados: 2 }])
   })
 
+  it('S30/S31: reentrar (otro instante) o vencer en otro estado es otra alarma, con marca y avisos nuevos', async () => {
+    expect(await marcarYAvisarAlarma(db, v, dos, 'texto')).toHaveLength(2)
+    expect(await marcarYAvisarAlarma(db, { ...v, desde: new Date(v.desde.getTime() + 86_400_000) }, dos, 'texto')).toHaveLength(2)
+    expect(await marcarYAvisarAlarma(db, { ...v, estado: 'Remisión creada' }, dos, 'texto')).toHaveLength(2)
+    expect(await marcas()).toHaveLength(3)
+  })
+
   it('(b) con la marca ya presente: cero avisos y ningún error hacia fuera', async () => {
     await db.query('INSERT INTO public.alarmas_avisadas (ticket_id, estado, entrada_at, avisos_creados) VALUES ($1,$2,$3,0)', ['t1', 'Notificado', v.desde])
     await expect(marcarYAvisarAlarma(db, v, dos, 'texto')).resolves.toBeNull()

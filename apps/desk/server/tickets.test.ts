@@ -564,3 +564,30 @@ describe('DELETE /api/tickets/:id (admin)', () => {
  * conteo responde esperando y el barrido no, que es la diferencia que evita una petición colgada
  * varios minutos.
  */
+
+/**
+ * alarmas-horas-habiles (F1B-08, lote 4) · RQ-VT-07 a nivel de ruta: el listado activo trae
+ * `esperandoAprobacionCliente`, calculado por el servidor (`db/alarmasAvisadas.ts`); el cliente sólo lo pinta.
+ * El listado de cerrados no lo lleva.
+ */
+describe('GET /api/tickets · marca «esperando aprobación del cliente»', () => {
+  it('true para el ticket con la alarma de Notificación cliente marcada, false para los demás', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('nc',70,'NC','Notificación cliente','Open','2026-06-01T00:00:00Z')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('ot',71,'OT','Notificado','Open','2026-06-02T00:00:00Z')")
+    await db.query("INSERT INTO ticket_transitions (ticket_id, transition_id, to_status, performed_at) VALUES ('nc','x','Notificación cliente','2026-09-09T13:00:00Z')")
+    await db.query("INSERT INTO public.alarmas_avisadas (ticket_id, estado, entrada_at, avisos_creados) VALUES ('nc','Notificación cliente','2026-09-09T13:00:00Z',1)")
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets').set('Cookie', cookie)
+    const porNumero = Object.fromEntries(res.body.map((t: { number: string; esperandoAprobacionCliente?: boolean }) => [t.number, t.esperandoAprobacionCliente]))
+    expect(porNumero).toEqual({ '#70': true, '#71': false })
+  })
+
+  it('el listado de cerrados no lleva el campo', async () => {
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,created_time) VALUES ('c1',1,'C1','Finalizado','Closed','2026-01-01T00:00:00Z')")
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const res = await request(app).get('/api/tickets?scope=closed').set('Cookie', cookie)
+    expect(res.body.items[0]).not.toHaveProperty('esperandoAprobacionCliente')
+  })
+})

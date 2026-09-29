@@ -1265,3 +1265,8 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Lo que NO se hace:** subir el *timeout*. Con la medida no hay base: la prueba va a un 20 % del límite en el peor caso medido, y subirlo ocultaría el pico en vez de explicarlo. Si vuelve a pasar, anotar aquí la fecha y la carga de la máquina antes de tocar nada.
 **Estado:** nueva
 **Destino:** **SIN DESTINO ASIGNADO**, a propósito: no hay fila del §5 de fiabilidad de la suite. **Dueño propuesto:** quien mantenga el CI.
+
+## Adenda a E-087 · 2026-09-29 · segundo dependiente de la pasada de Zoho
+**Qué:** Las alarmas de SLA en horas hábiles (`alarmas-horas-habiles`, F1B-08, lote 3) se evalúan en la MISMA pasada periódica de la sincronización con Zoho que el aviso de ritmo: `apps/desk/server/index.ts:88` encadena `pasadaAlarmas` → `pasadaRitmoContratos` → `sync.syncRecent()` dentro del único `setInterval` del proceso. Si esa pasada se retira con la independencia de Zoho, las alarmas dejan de evaluarse **sin que nada falle**: `pasadaAlarmas` nunca lanza (`apps/desk/server/services/alarmasSla.ts:141-145`).
+**Nota para quien retire la sincronización:** hay que trasladar las DOS llamadas a otra pasada periódica propia. Los guardianes que leen `index.ts` (`apps/desk/server/services/alarmasSla.test.ts:246` y `apps/desk/server/services/avisoRitmoContrato.test.ts:185`) se pondrán rojos si se quitan sin moverlas: esa es la alarma, no un obstáculo que sortear.
+**Estado y destino:** los de E-087 — sin destino asignado, a propósito; dueño propuesto: Gerencia.

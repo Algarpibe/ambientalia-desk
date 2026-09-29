@@ -282,22 +282,22 @@ Ficheros nuevos: `apps/desk/server/db/alarmasAvisadas.ts` y `apps/desk/server/db
 
 ### Bloque A · Marca de tablero (servidor)
 
-- [ ] 4.1 RED — `alarmasAvisadas.test.ts` (nuevo): `ticketsEsperandoAprobacionCliente(db)` devuelve el ticket en `Notificación cliente` con marca de su entrada actual (S39, y sin escribir en `ticket_transitions`: conteo antes y después); sin marca (36 h hábiles exactas) → no (S40); tras ejecutar una transición y salir, con la fila de marca intacta → no (S41);
+- [x] 4.1 RED — `alarmasAvisadas.test.ts` (nuevo): `ticketsEsperandoAprobacionCliente(db)` devuelve el ticket en `Notificación cliente` con marca de su entrada actual (S39, y sin escribir en `ticket_transitions`: conteo antes y después); sin marca (36 h hábiles exactas) → no (S40); tras ejecutar una transición y salir, con la fila de marca intacta → no (S41);
   reentra y aún no vence → no, la marca es de la entrada anterior (S42, comparación por `getTime()`); ticket marcado en `Notificado` o `Remisión creada` → no (S43, el estado sin `marcaTablero`); ante un `db` que lanza → `logger.warn` y conjunto vacío, nunca lanza.
-- [ ] 4.2 RED — `tickets.test.ts` al final (`appHarness`): `GET` del listado trae `esperandoAprobacionCliente: true` para el ticket marcado y `false` para los demás (S39, nivel ruta); el listado de cerrados no trae el campo.
-- [ ] 4.3 Confirmar rojo natural (módulo y campo no existen). **Nacen verdes y se declaran:** «el listado de cerrados no lleva el campo» (`undefined` hoy) y S43 a nivel ruta si el conjunto vacío ya lo produce.
-- [ ] 4.4 GREEN — `db/alarmasAvisadas.ts`: `ticketsEsperandoAprobacionCliente(db)` cruza `entradasActuales` (de `db/sla.ts`, lote 2) de los estados con `marcaTablero` con sus marcas por `getTime()`; `try/catch` con `logger.warn` y `new Set()`.
-- [ ] 4.5 GREEN — `types.ts:37`, `routes/tickets.ts:9` y `:115` en sitio (D-8). Confirmar 4.1-4.2 en verde; `git diff --numstat` de `types.ts` y `routes/tickets.ts` = `+n −n` con 810 y 223 sin cambio.
-- [ ] 4.6 MUTACIÓN — (a) comparar la marca sólo por `(ticket_id, estado)` sin `entrada_at`: ROJO en S42; (b) no exigir que el estado actual sea `Notificación cliente`: ROJO en S41; (c) `marcaTablero: true` en `Notificado` de `ALARMAS_SLA`: ROJO en S43 (y en 1.3); (d) quitar el `try/catch`: ROJO en «nunca lanza»; revertir.
+- [x] 4.2 RED — `tickets.test.ts` al final (`appHarness`): `GET` del listado trae `esperandoAprobacionCliente: true` para el ticket marcado y `false` para los demás (S39, nivel ruta); el listado de cerrados no trae el campo.
+- [x] 4.3 Confirmar rojo natural (módulo y campo no existen). **Nacen verdes y se declaran:** «el listado de cerrados no lleva el campo» (`undefined` hoy) y S43 a nivel ruta si el conjunto vacío ya lo produce.
+- [x] 4.4 GREEN — `db/alarmasAvisadas.ts`: `ticketsEsperandoAprobacionCliente(db)` cruza `entradasActuales` (de `db/sla.ts`, lote 2) de los estados con `marcaTablero` con sus marcas por `getTime()`; `try/catch` con `logger.warn` y `new Set()`.
+- [x] 4.5 GREEN — `types.ts:37`, `routes/tickets.ts:9` y `:115` en sitio (D-8). Confirmar 4.1-4.2 en verde; `git diff --numstat` de `types.ts` y `routes/tickets.ts` = `+n −n` con 810 y 223 sin cambio.
+- [x] 4.6 MUTACIÓN — (a) comparar la marca sólo por `(ticket_id, estado)` sin `entrada_at`: ROJO en S42; (b) no exigir que el estado actual sea `Notificación cliente`: ROJO en S41; (c) `marcaTablero: true` en `Notificado` de `ALARMAS_SLA`: ROJO en S43 (y en 1.3); (d) quitar el `try/catch`: ROJO en «nunca lanza»; revertir.
 
 ### Bloque B · Cliente
 
-- [ ] 4.7 `TicketCard.tsx`: bloque tras `:96` con el texto «Esperando aprobación del cliente» (español, capa de presentación) sólo si `ticket.esperandoAprobacionCliente === true`. El cliente no lee calendario, no compara horas, no calcula vencimiento (RQ-VT-08).
-- [ ] 4.8 Sin prueba posible (F0-00): `npm run typecheck`, `npm run build` y `npx eslint . --max-warnings 165` en verde. La imposición está probada en node: 4.1-4.2.
+- [x] 4.7 `TicketCard.tsx`: bloque tras `:96` con el texto «Esperando aprobación del cliente» (español, capa de presentación) sólo si `ticket.esperandoAprobacionCliente === true`. El cliente no lee calendario, no compara horas, no calcula vencimiento (RQ-VT-08).
+- [x] 4.8 Sin prueba posible (F0-00): `npm run typecheck`, `npm run build` y `npx eslint . --max-warnings 165` en verde. La imposición está probada en node: 4.1-4.2.
 
 ### Bloque C · Cierre
 
-- [ ] 4.9 **Regla de mutación 3 — casilla de la regla 13, decisión a decisión de `TicketCard.tsx`** (se escribe en `apply-progress.md`, con la línea REAL leída al cerrar, no la del diseño). Se lee el fichero entero (102 líneas) y se enumera lo que el cliente bloquea, rellena solo o avisa:
+- [x] 4.9 **Regla de mutación 3 — casilla de la regla 13, decisión a decisión de `TicketCard.tsx`** (se escribe en `apply-progress.md`, con la línea REAL leída al cerrar, no la del diseño). Se lee el fichero entero (102 líneas) y se enumera lo que el cliente bloquea, rellena solo o avisa:
   | Decisión del cliente | Línea del servidor que la impone (a confirmar) |
   |---|---|
   | Pintar la marca sólo si el campo es `true` | `db/alarmasAvisadas.ts` (línea real) y `routes/tickets.ts:115`; pruebas S39-S43 |
@@ -305,25 +305,32 @@ Ficheros nuevos: `apps/desk/server/db/alarmasAvisadas.ts` y `apps/desk/server/db
   | No calcular el vencimiento ni el calendario | `db/sla.ts` (`slaVencido` con cierres) y `alarmasSla.ts`; S1-S8 |
   | Cualquier otra decisión que aparezca al leer el fichero | — |
   Sin línea, la decisión es la guarda: se para y se declara. S44 se verifica por lectura: `grep -nE "horasHabiles|calendario|cierres|venc" apps/desk/src/components/TicketCard.tsx` sin resultados y el campo consumido sólo en el bloque de 4.7.
-- [ ] 4.10 **Barrido de la regla de mutación 4 sobre CADA fichero muy citado tocado** (`sla.ts`, `sla.test.ts`, `db/sla.ts`, `db/sla.test.ts`, `avisos.ts`, `index.ts`, `schema.sql`, `migrate.ts`, `migrate.test.ts`, `types.ts`, `routes/tickets.ts`, `TicketCard.tsx`, y los `*.test.ts` ampliados al final).
+- [x] 4.10 **Barrido de la regla de mutación 4 sobre CADA fichero muy citado tocado** (`sla.ts`, `sla.test.ts`, `db/sla.ts`, `db/sla.test.ts`, `avisos.ts`, `index.ts`, `schema.sql`, `migrate.ts`, `migrate.test.ts`, `types.ts`, `routes/tickets.ts`, `TicketCard.tsx`, y los `*.test.ts` ampliados al final).
   Comando por fichero: `grep -rnoE "<fichero>\.(ts|tsx|sql):[0-9]+(-[0-9]+)?" . --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=archive`, y un segundo pase con la forma abreviada (`` `:NN` ``) en los ficheros que ya citan el módulo.
   Tres reglas: los DOS extremos de cada rango; lo que AFIRMA la frase y no sólo que la línea exista; A/B/C para reparar. Como ninguna edición desplaza líneas, es verificación de contenido. Se releen a mano las que cambian de contenido:
   `sla.ts:32-35`, `:39-44`, `:52-55`, `:69-70`; `sla.test.ts:33`, `:51-55`, `:57-81`, `:188-191`; `db/sla.ts:40-63` (en particular `:49` y `:58`, que citan las specs vivas de `transitions-st` y `transitions-equipo-nuevo`); `index.ts:88`; `TicketCard.tsx:96-102`.
   Después, el detector de `hook-citas-pre-push` sobre el diff: 0 rotas nuevas (no se salta con `--no-verify`).
-- [ ] 4.11 Texto para el expediente R08.3, AL FINAL de `docs/sdd/R08.3_Expediente_de_cambios.md` (~30 líneas, sin tocar el `.docx`): Anexo D nº 3 y M1.7 construidos (tres alarmas en horas hábiles: 9, 27 y 36); el maestro sigue diciendo «24 o 48 h» (`R08.2.md:3744`, `:4011`) y «SLA de 1 día» (`:1648`): esas líneas se RELEEN contra `R08.2.md` antes de citarlas;
+- [x] 4.11 Texto para el expediente R08.3, AL FINAL de `docs/sdd/R08.3_Expediente_de_cambios.md` (~30 líneas, sin tocar el `.docx`): Anexo D nº 3 y M1.7 construidos (tres alarmas en horas hábiles: 9, 27 y 36); el maestro sigue diciendo «24 o 48 h» (`R08.2.md:3744`, `:4011`) y «SLA de 1 día» (`:1648`): esas líneas se RELEEN contra `R08.2.md` antes de citarlas;
   el destinatario de `Notificado` es un supuesto (S-3, P.4); la marca de tablero es de vista, no un estado (`decision/anexo-3-alerta`, `openspec/config.yaml:2329`, consecuencia 4); las «vistas equivalentes a Zoho» (`docs/sdd/Preguntas_Gerencia_2026-09-29.md:93-111`) siguen abiertas.
-- [ ] 4.12 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío (R-2 no aplica: no hay capacidad nueva).
-- [ ] 4.13 **Para el `archive-report`** (se redacta aquí, en `apply-progress.md`; lo inserta el archive, no este apply): (a) **adenda a E-087** — las alarmas son el segundo dependiente de la pasada que hoy es la de la sincronización con Zoho; al retirarla sin trasladar la llamada, callarían sin que nada se ponga rojo (RQ-AV-17);
+- [x] 4.12 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío (R-2 no aplica: no hay capacidad nueva).
+- [x] 4.13 **Para el `archive-report`** (se redacta aquí, en `apply-progress.md`; lo inserta el archive, no este apply): (a) **adenda a E-087** — las alarmas son el segundo dependiente de la pasada que hoy es la de la sincronización con Zoho; al retirarla sin trasladar la llamada, callarían sin que nada se ponga rojo (RQ-AV-17);
   (b) una línea con qué parte de la fila F1B-08 cubre (alarma en horas hábiles, aviso y marca) y qué deja fuera (vistas equivalentes a Zoho, pregunta 4; `cierra: no`); (c) corrección documental de §3.7 y §3.10 de la spec viva `transitions-st` («no hay planificador», «destinatario derivado del grafo»); (d) resultado de P.1 y P.3 si ya existe; (e) la nota de despliegue literal de abajo.
-- [ ] 4.14 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (nuevos: `alarmasAvisadas.ts`, `alarmasAvisadas.test.ts`); confirmar uno a uno los siete criterios de éxito de `proposal.md:148-155`; `apply-progress.md` (~60 líneas, con la casilla de 4.9).
+- [x] 4.14 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (nuevos: `alarmasAvisadas.ts`, `alarmasAvisadas.test.ts`); confirmar uno a uno los siete criterios de éxito de `proposal.md:148-155`; `apply-progress.md` (~60 líneas, con la casilla de 4.9).
 
 ---
 
 ## Nota para el cierre — paquete de despliegue (literal)
 
-Antes de desplegar hace falta un paquete de despliegue NUEVO que recoja `tickets.modalidad` (`packages/zoho-sync/src/db/schema.sql:576`), S-6 de `blueprint-soporte-remoto` con el recuento de su P.1 (o «sin medir»), y lo que traiga esta tanda: las tablas `public.alarmas_avisadas` y `public.alarmas_corte`, `Notificado` de 24 h de reloj a 9 h hábiles, las alarmas de `Remisión creada` (27 h) y `Notificación cliente` (36 h), que lo vencido antes de la primera pasada se marca SIN avisar (S-13; encender la ráfaga es P.3), el respaldo al área Comercial cuando nadie tiene el cargo (S-4) y la marca de tablero. `docs/sdd/Paquete_de_Despliegue_2026-09-29.md` es un registro fechado y no se edita.
+Antes de desplegar hace falta un paquete de despliegue NUEVO (`docs/sdd/Paquete_de_Despliegue_2026-09-29.md` es un registro fechado y no se edita). Recoge `tickets.modalidad` (`packages/zoho-sync/src/db/schema.sql:576`) y S-6 de `blueprint-soporte-remoto` con el recuento de su P.1 (o «sin medir»), y de esta tanda:
 
-Se despliegan los cuatro lotes juntos. Rollback: revertir; las tablas son nuevas y sólo las lee este código (el corte ya escrito no se reescribe al volver a desplegar), y sin la llamada en `index.ts:88` no hay avisos ni marca. Cambio visible: en días laborables `Notificado` avisa antes (9 h hábiles frente a 24 de reloj) y en fin de semana más tarde.
+1. **Dos tablas nuevas**, sin relleno: `public.alarmas_avisadas` (marca anti-duplicado; clave primaria ticket, estado, instante de entrada) y `public.alarmas_corte` (una fila: el corte de la primera pasada).
+2. **Cambio visible de `Notificado`:** pasa de 24 h de reloj a 9 h HÁBILES (jornada 08:00-17:00, sin fines de semana, festivos ni cierres). En días laborables avisa antes; en fin de semana, más tarde.
+3. **Dos alarmas nuevas:** `Remisión creada` a las 27 h hábiles (sólo si el ticket no tiene orden de venta por ninguna vía) y `Notificación cliente` a las 36 h hábiles (además, marca el ticket en el tablero «Esperando aprobación del cliente»).
+4. **El día del despliegue (corte de S-13):** la primera pasada fija el corte; lo que YA estaba vencido se marca y NO se avisa (sale la marca del tablero, no el correo). Lo que venza después avisa normal. Un reinicio o un redespliegue no mueven el corte.
+5. **A quién:** al usuario activo con cargo `Coordinador Comercial`; si no hay ninguno, al área Comercial, con un `warn` «Alarma de SLA sin Coordinador Comercial» en el log.
+6. **Pendientes de persona que acompañan al paquete:** P.1 (que exista en producción el cargo `Coordinador Comercial`; no bloquea); P.3 (Gerencia: si quiere la ráfaga de lo vencido antes del despliegue; por defecto, apagada); P.4 (Gerencia: confirmar que `Notificado` escala al Coordinador Comercial).
+
+Se despliegan los cuatro lotes juntos. Rollback: revertir; las tablas son nuevas y sólo las lee este código (el corte ya escrito no se reescribe al volver a desplegar), y sin la llamada en `index.ts:88` no hay avisos ni marca. La pasada de alarmas depende de la sincronización con Zoho (adenda a E-087).
 
 ---
 
