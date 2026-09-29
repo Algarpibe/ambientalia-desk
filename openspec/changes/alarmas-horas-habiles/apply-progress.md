@@ -228,8 +228,8 @@ comparar `entrada_at` → S42; 4.6b sin exigir el estado actual → **nacía ver
 
 | Fichero | Citas | Caso B/C ancladas | Caso A |
 |---|---|---|---|
-| `packages/shared/src/sla.ts` | 34 | 17 (15 de lotes previos + `Plan R01.1:396` y `proposal.md:19`, en `4796aad`) | 17 |
-| `apps/desk/server/db/sla.ts` | 23 | 11 (7 previas + `proposal:20`, `exploration:20`, `transitions-equipo-nuevo:234` y **C** `transitions-st:582` en `0ca870b`, cerrada por `1b90a80`) | 12 |
+| `packages/shared/src/sla.ts` | 34 | 17 (15 de lotes previos + `Plan R01.1:396` y la línea 19 de `proposal.md`, anclada a la revisión `4796aad`) | 17 |
+| `apps/desk/server/db/sla.ts` | 23 | 11 (7 previas + `proposal:20`, `exploration:20`, `transitions-equipo-nuevo:234` y **C**: la línea 582 de la spec viva `transitions-st`, anclada a la revisión `0ca870b` y cerrada por `1b90a80`) | 12 |
 | `apps/desk/server/index.ts` | 26 | 0 | 26 (incluida la de la adenda a E-087; `:88` sigue siendo la pasada de ritmo antes de la sincronización; `:15`, el import) |
 | `packages/zoho-sync/src/db/migrate.ts` | 12 | 0 | 12 (`:70-73` sigue siendo `PUBLIC_TABLES`) |
 | `packages/zoho-sync/src/db/schema.sql` | — | 0 | sólo se añadió al final (576 → 596); `:576` sigue siendo la `ALTER` de `modalidad` |
