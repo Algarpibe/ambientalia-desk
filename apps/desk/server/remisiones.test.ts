@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import { upsertEquipo } from './db/equipos'
 import type { RemisionListado } from '@ambientalia/shared'
-import { db, instalarArnes, equipoRow, appWith, adminCookie, userCookie } from './testing/appHarness'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
+import { db, instalarArnes, equipoRow, appWith, adminCookie, userCookie } from './testing/appHarness'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { crearContrato } from './db/contratos'; import { hoyEnZona, sumarDias } from '@ambientalia/shared'
 
 instalarArnes()
 
@@ -1286,4 +1286,75 @@ describe('asociacion-ov-ticket · remisión de entrada · cuarentena de subOV', 
     expect(res.status).toBe(422)
     expect(res.body.error).toBe('Orden de venta no encontrada')
   })
+})
+
+// registro-contrato · lote 2 · remisión de entrada: subOV de un contrato vencido (RQ-RE-16, RQ-TC-25). Escalón C: tras la
+// existencia y la cuarentena de la OV (`remision.ts:220`) y antes de la unicidad (D). IV-12 intacto: el 409 de la
+// remisión pendiente (`:177`) y los ítems fuera del checklist (`:197`) siguen corriendo antes.
+describe('registro-contrato · remisión de entrada · subOV de un contrato vencido', () => {
+  const dias = (n: number): string => sumarDias(hoyEnZona(), n)
+  const contrato = (ini: number, fin: number) =>
+    crearContrato(db, { clientId: 'cli-rc', lote: 'OV-2026-170', fechaInicio: dias(ini), fechaFin: dias(fin), creadoPor: 'Comercial' })
+  const sembrar = async (opts: { dueno?: boolean } = {}) => {
+    await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli-rc','Gecelca S.A. E.S.P.')")
+    await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,customer_name,date) VALUES ('so-rc','OV-2026-170-01','cli-rc','Gecelca S.A. E.S.P.','2026-07-15')")
+    await upsertEquipo(db, equipoRow('eq-rc', '18A20070'))
+    await db.query("INSERT INTO tickets (id,number,subject,status,client_id,equipo_id) VALUES ('t-dest-rc',7901,'La quiere','Ticket creado','cli-rc','eq-rc')")
+    if (opts.dueno) {
+      await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-dueno-rc',7900,'Ya la tiene','Ingresado')")
+      await asociarOV(db, { ticketId: 't-dueno-rc', numero: 'OV-2026-170-01', salesorderId: 'so-rc', origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+    }
+  }
+  const cuerpo = { ticketId: 't-dest-rc', fecha: '2026-08-03', incluye: [] as string[], salesOrderId: 'so-rc' }
+  let cookie = ''
+  const enviar = async (extra: Record<string, unknown> = {}) => {
+    cookie ||= await adminCookie() // una sesión por prueba: dos altas del admin chocan en `users`
+    return request(appWith().app).post('/api/remisiones').set('Cookie', cookie).send({ ...cuerpo, ...extra })
+  }
+  beforeEach(() => { cookie = '' })
+  const nada = async () => ({
+    columnas: (await db.query("SELECT orden_venta, fecha_orden_venta, salesorder_id FROM tickets WHERE id='t-dest-rc'")).rows[0],
+    asociaciones: (await db.query("SELECT COUNT(*)::int AS n FROM ov_asociaciones WHERE ticket_id='t-dest-rc'")).rows[0].n,
+    remisiones: (await db.query("SELECT COUNT(*)::int AS n FROM remisiones WHERE ticket_id='t-dest-rc'")).rows[0].n,
+  })
+
+  it('subOV vencida con destino con serial y sin pendiente → 422, sin columnas, sin asociación y sin remisión', async () => {
+    await sembrar(); await contrato(-100, -1)
+    const res = await enviar()
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatch(/OV-2026-170-01.*venció/)
+    expect(await nada()).toEqual({ columnas: { orden_venta: null, fecha_orden_venta: null, salesorder_id: null }, asociaciones: 0, remisiones: 0 })
+  })
+
+  it('POSICIÓN C < D · la subOV vencida YA está asociada a otro ticket → 422, no 409', async () => {
+    await sembrar({ dueno: true }); await contrato(-100, -1)
+    expect((await enviar()).status).toBe(422)
+    await db.query('DELETE FROM contratos') // control de población: sin contrato, la misma OV contesta 409
+    expect((await enviar()).status).toBe(409)
+  })
+
+  it('POSICIÓN IV-12 · remisión pendiente + subOV vencida → el 409 de la pendiente (:177 sigue ganando)', async () => {
+    await sembrar(); await contrato(-100, -1)
+    await db.query(
+      `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, origen)
+       VALUES ('rem-pend-rc', 't-dest-rc', 'entrada', '2026-08-01', 'Mantenimiento', 'grimm_edm180', NULL, NULL, '[]'::jsonb, NULL, 'Admin', 'pendiente', 'Gecelca S.A. E.S.P.', NULL, 'app')`,
+    )
+    const res = await enviar()
+    expect(res.status).toBe(409)
+    expect(res.body.remisionId).toBe('rem-pend-rc')
+  })
+
+  it('POSICIÓN · ítems fuera del checklist + subOV vencida → el 422 de los ítems (:197)', async () => {
+    await sembrar(); await contrato(-100, -1)
+    const res = await enviar({ incluye: ['Ítem inventado'] })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatch(/^Ítems fuera del checklist/)
+  })
+
+  it.each<[string, [number, number] | null]>([['lote sin contrato', null], ['contrato que empieza mañana', [1, 100]]])(
+    '%s → 201 como hoy', async (_, vigencia) => {
+      await sembrar()
+      if (vigencia) await contrato(...vigencia)
+      expect((await enviar()).status).toBe(201)
+    })
 })

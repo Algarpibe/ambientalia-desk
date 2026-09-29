@@ -23,7 +23,7 @@ El cambio 2 lo daba por el que cerraba la fila; **ya no la cierra**: la ampliaci
 - El código no guarda ni inicio ni fin de contrato (`config.yaml:1620-1623`; maestro `:2185`, «[ABIERTO] … no tiene
   dónde guardar un fin de contrato»). Sin eso no se puede aplicar `decision/vigencia-contrato` (`config.yaml:1609-1612`):
   una subOV libre de un contrato vencido «en teoría no» se consume.
-- La prioridad al nacer es hoy la que traiga el cuerpo, o nada: `apps/desk/server/services/ticketService.ts:106`
+- La prioridad al nacer es hoy la que traiga el cuerpo, o nada: `apps/desk/server/services/ticketService.ts:106` en `9288779`
   (`b.prioridad`), que el formulario deja opcional (`apps/desk/src/components/CreateTicket.tsx:426-429`).
 - Comercial hace a mano la correlación subOV ↔ servicio para el informe al cliente (maestro `:2147`).
 

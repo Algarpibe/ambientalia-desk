@@ -62,3 +62,41 @@ Bogotá del 31-dic (04:30Z del 1-ene) frente a 00:00 (05:00Z), cambio de trimest
 `npm test` 1683 verdes (2 omitidas); `npm run typecheck` limpio; `npm run lint` 165 avisos, los mismos de antes.
 Barrido de citas: sin desplazamientos (todo en sitio o al final); `migrate.ts:70-73` sigue definiendo `PUBLIC_TABLES`;
 las menciones de «19» y «32» son de planificación o históricas (caso B).
+
+## Lote 2 · Prioridad y guarda en las tres puertas — 2026-09-28
+
+**Ledger:** objetivo generación 2, techo 800, 2 intentos. **Estimado antes de escribir:** ~530.
+
+**Escalón elegido: C, no B.** Justificación escrita en su sitio en `design.md` §4 (`:88`): B es estado y permiso
+**del sujeto** (el ticket, `transitions-st/spec.md:835`); el contrato entra por un valor aportado (la subOV), que es C
+(`:836`), con el precedente exacto de la persona derivada dada de baja (`:198`, `:843-844`). Dentro de C, el último.
+
+| Fichero | Edición | Forma |
+|---|---|---|
+| `ticketService.ts` `:5`, `:6`, `:96`, `:106`, `:143-147` | imports; vencido tras la cuarentena en el alta; `prioridadAlNacer`; comentario 5 → 4 y guarda en `:147` | EN SITIO, 234 → 234 (+9 −9) |
+| `remision.ts` `:5`, `:220` | import; vencido tras A/cuarentena y antes de D | EN SITIO, 397 → 397 (+2 −2) |
+| `db/contratos.ts` | `hayContratoVigente`, `motivoContratoVencido`, `erroresContratoVencido` (deciden en `shared`) | AL FINAL |
+| `ticketService.test.ts`, `remisiones.test.ts`, `db/contratos.test.ts` | pruebas nuevas; imports en sitio | AL FINAL; `remisiones.test.ts:988` intacta |
+| `repo.ts` | **no se toca**: `ticketConOrdenVenta` sirve tal cual | — |
+
+**Rojos previos:** 2.1 → 7 fallos `is not a function`. 2.5 → 3 (`expected 'Low'/null to be 'High'`); los 5 restantes nacen
+verdes (regresión). 2.10 → 2 (`no lanzó ninguno`, `expected 409 to be 422`); vecinas verdes. 2.15 → 4 (dos de ellos
+`expected 409 to be 422`). 2.20 → 2 (`expected 201 to be 422`, `expected 409 to be 422`). Tras el GREEN de la remisión
+falló la segunda petición de la prueba de posición por el ARNÉS (dos `adminCookie()` → `users_pkey`), no por la guarda: se
+corrigió la prueba (una sesión por prueba).
+
+**Mutaciones reproducidas (todas revertidas con `cmp`):**
+
+| Puerta | Mutación | Rojas |
+|---|---|---|
+| prioridad | argumento `false` / `true` | 3 / 5 |
+| alta | vencido tras D · antes de faltantes · antes de cliente · antes de equipo nuevo | 1 · 3 · 2 · 1 |
+| transición | vencido tras D · antes de la persona · antes de obligatorios | 2 · 1 · 2 |
+| remisión | vencido tras D · antes de ítems · antes de la pendiente (IV-12) | 1 · 1 · 2 |
+
+**Cuarentena + vencido:** inobservable como posición (excluyentes para un mismo número); la prueba escrita discrimina
+sacar el lote por prefijo (`OV-2026-170-X9` → mensaje de cuarentena, sin «contrato»).
+
+**Cierre:** `npm test` 1722 verdes; typecheck limpio; lint 165. Barrido: cinco citas a `ticketService.ts:106` que describían
+la regla anterior (proposal `:26`, design `:65`, delta `tickets-core :229`, `contratos.ts:65`, `contratos.test.ts:75`) son
+caso B y quedan ancladas `en 9288779`; las de `:96`, `:143-152` y `remision.ts:220` siguen ciertas.

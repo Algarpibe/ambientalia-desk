@@ -176,46 +176,46 @@ Ficheros sin cita previa: `db/contratos.ts` (gana `hayContratoVigente`, `motivoC
 Citas a releer en el cierre (el contenido cambia, el número no): `tickets-core :306, :647`, `config.yaml:1132`, `ordenVentaUnTicket.test.ts:19` (`:96`);
 `proposal.md:26` (`:106`); `CLAUDE.md:349` ×2, `transitions-st :914`, `config.yaml:1204`, `remisiones.test.ts:1246` (`remision.ts:220`: sigue diciendo «Orden de venta no encontrada»).
 
-- [ ] 2.1 RED — `db/contratos.test.ts` (al final): `hayContratoVigente(db, clientId)` (vigente, vencido, no iniciado, fin = hoy, contrato de otro cliente);
+- [x] 2.1 RED — `db/contratos.test.ts` (al final): `hayContratoVigente(db, clientId)` (vigente, vencido, no iniciado, fin = hoy, contrato de otro cliente);
   `motivoContratoVencido(db, numero, hoy?)` (subOV de lote vencido → texto; sin contrato, ordinaria, `OVI-`, cuarentena, no iniciado, fin = hoy → `null`);
   `erroresContratoVencido(db, [a, b])` → un texto por número vencido. RQ: RQ-TC-25.
-- [ ] 2.2 Confirmar rojo natural.
-- [ ] 2.3 GREEN — los tres ayudantes en `db/contratos.ts`.
-- [ ] 2.4 Confirmar 2.1 en verde.
-- [ ] 2.5 RED — `ticketService.test.ts` (al final), prioridad al nacer: cliente con contrato vigente y cuerpo `Low` → `High`; vigente y sin prioridad → `High`;
+- [x] 2.2 Confirmar rojo natural.
+- [x] 2.3 GREEN — los tres ayudantes en `db/contratos.ts`.
+- [x] 2.4 Confirmar 2.1 en verde.
+- [x] 2.5 RED — `ticketService.test.ts` (al final), prioridad al nacer: cliente con contrato vigente y cuerpo `Low` → `High`; vigente y sin prioridad → `High`;
   sin contrato: `Low` → `Low` y sin prioridad → `null`; contrato vencido y contrato que empieza mañana, con `Low` → `Low`; fin = hoy → `High`; contrato vigente del
   cliente A y alta para el cliente B con subOV del lote de A → sin `High`. RQ: RQ-TC-24 (6 escenarios).
-- [ ] 2.6 Confirmar rojo natural: rojos los tres que esperan `High`; los otros tres **nacen verdes** (guardas de regresión, se declara en `apply-progress.md`).
-- [ ] 2.7 GREEN — `ticketService.ts:5`, `:6` y `:106` en su sitio.
-- [ ] 2.8 Confirmar 2.5 en verde.
-- [ ] 2.9 MUTACIÓN (prioridad, dos direcciones) — sustituir el argumento de `:106` por `false` (2.5 rojo en `High`) y por `true` (2.5 rojo en «sin contrato»); revertir; `git diff` limpio.
-- [ ] 2.10 RED — alta. `ordenVentaUnTicket.test.ts` (al final) y `ticketService.test.ts` (al final): subOV `OV-2026-170-01` con contrato vencido → `422` de vencido, sin ticket ni asociación;
+- [x] 2.6 Confirmar rojo natural: rojos los tres que esperan `High`; los otros tres **nacen verdes** (guardas de regresión, se declara en `apply-progress.md`).
+- [x] 2.7 GREEN — `ticketService.ts:5`, `:6` y `:106` en su sitio.
+- [x] 2.8 Confirmar 2.5 en verde.
+- [x] 2.9 MUTACIÓN (prioridad, dos direcciones) — sustituir el argumento de `:106` por `false` (2.5 rojo en `High`) y por `true` (2.5 rojo en «sin contrato»); revertir; `git diff` limpio.
+- [x] 2.10 RED — alta. `ticketService.test.ts` (al final; `ordenVentaUnTicket.test.ts` no hizo falta: la unidad cubre los mismos casos y no se toca): subOV `OV-2026-170-01` con contrato vencido → `422` de vencido, sin ticket ni asociación;
   **subOV vencida que además tiene asociación vigente a otro ticket → `422`, no `409`** (posición D); faltantes (sin tipo de servicio) + vencido → «Faltan campos obligatorios»; cliente
   inexistente + vencido → «Cliente no encontrado»; campos del equipo nuevo inválidos + vencido → el error del equipo nuevo; lote sin contrato, contrato que empieza mañana, fin = hoy y
   la madre ordinaria `OV-2026-170` de un lote vencido → `201`; `OV-2026-170-X9` con contrato vencido en `OV-2026-170` → `422` de **cuarentena** y el motivo no dice «contrato»
   (discrimina sacar el lote por prefijo). RQ: RQ-TC-08 (vencido, vencido gana al 409, faltantes ganan), RQ-TC-25 (alta, sin contrato, no iniciado, último día, ordinaria, unicidad, excluyentes).
-- [ ] 2.11 Confirmar rojo natural: rojos los dos que esperan `422` de vencido (incluida la de posición); los demás nacen verdes (regresión de guardas vecinas) y los prueba la mutación 2.14.
-- [ ] 2.12 GREEN — `ticketService.ts:5` y `:96` en su sitio (vencido tras la cuarentena, antes de `ticketConOrdenVenta`).
-- [ ] 2.13 Confirmar 2.10 en verde.
-- [ ] 2.14 MUTACIÓN (regla 1, posición) — en `ticketService.ts` mover la guarda de vencido (a) DESPUÉS de `ticketConOrdenVenta` (`:97`): debe ponerse ROJA la de vencido+`409`; (b) ANTES de `missing` (`:83`):
+- [x] 2.11 Confirmar rojo natural: rojos los dos que esperan `422` de vencido (incluida la de posición); los demás nacen verdes (regresión de guardas vecinas) y los prueba la mutación 2.14.
+- [x] 2.12 GREEN — `ticketService.ts:5` y `:96` en su sitio (vencido tras la cuarentena, antes de `ticketConOrdenVenta`).
+- [x] 2.13 Confirmar 2.10 en verde.
+- [x] 2.14 MUTACIÓN (regla 1, posición) — en `ticketService.ts` mover la guarda de vencido (a) DESPUÉS de `ticketConOrdenVenta` (`:97`): debe ponerse ROJA la de vencido+`409`; (b) ANTES de `missing` (`:83`):
   la de faltantes; (c) ANTES de `getClient` (`:89`): la de cliente inexistente; (d) ANTES de `validarCamposEquipoNuevo` (`:91`): la del equipo nuevo. Revertir cada una; `git diff` limpio.
-- [ ] 2.15 RED — transición. `ticketService.test.ts` (al final): `habilitar_servicio` con subOV de lote vencido → `422 { errors }` sin escribir `orden_venta` ni asociación; **vencido + asociación vigente a otro ticket → `422`, no `409`**;
+- [x] 2.15 RED — transición. `ticketService.test.ts` (al final): `habilitar_servicio` con subOV de lote vencido → `422 { errors }` sin escribir `orden_venta` ni asociación; **vencido + asociación vigente a otro ticket → `422`, no `409`**;
   obligatorios faltantes + vencido → `422` de obligatorios; persona derivada dada de baja + vencido → `422` de persona; lote sin contrato y lote que empieza mañana → `200`; `Aprobación` con `ovAdicional` de lote vencido → `422` y sin asociación;
   `Aprobación y S. Repuestos` con `ovAdicional` vencida y ya asociada a otro ticket → `422`, no `409`. Si ninguna transición del catálogo real lleva a la vez OV y `derivado_a`, la prueba de persona usa un `Transition` sintético
   inyectado (patrón de las pruebas que ya fabrican catálogos); si tampoco cabe, se declara esa posición inobservable, como con cuarentena+vencido (hipótesis). RQ: RQ-TS-14 (3 nuevos + sin contrato), RQ-TS-18 (2 nuevos), RQ-TS-06 fila 9, RQ-TC-25.
-- [ ] 2.16 Confirmar rojo natural: rojos los `422` de vencido; obligatorios, persona y `200` sin contrato nacen verdes.
-- [ ] 2.17 GREEN — `ticketService.ts:143-147` en su sitio (comentario 5 → 4 líneas; `:147` = guarda de vencido). Sigue `:148` `const nuevaOrdenVenta` y `:148-152` (D) sin tocar.
-- [ ] 2.18 Confirmar 2.15 en verde.
-- [ ] 2.19 MUTACIÓN (regla 1) — mover la guarda de vencido (a) DESPUÉS del bloque D (`:149-152`): rojas las de vencido+`409` (`habilitar_servicio` y `Aprobación y S. Repuestos`); (b) ANTES de la persona derivada (`:138`): la de persona; (c) ANTES de `:134`: la de obligatorios. Revertir cada una.
-- [ ] 2.20 RED — remisión. `remisiones.test.ts` (al final, SIN tocar `:988`): subOV vencida con ticket destino con serial y sin remisión pendiente → `422`, sin las tres columnas, sin asociación y sin remisión; **vencida + asociación vigente a otro ticket → `422`, no `409`**;
+- [x] 2.16 Confirmar rojo natural: rojos los `422` de vencido; obligatorios, persona y `200` sin contrato nacen verdes.
+- [x] 2.17 GREEN — `ticketService.ts:143-147` en su sitio (comentario 5 → 4 líneas; `:147` = guarda de vencido). Sigue `:148` `const nuevaOrdenVenta` y `:148-152` (D) sin tocar.
+- [x] 2.18 Confirmar 2.15 en verde.
+- [x] 2.19 MUTACIÓN (regla 1) — mover la guarda de vencido (a) DESPUÉS del bloque D (`:149-152`): rojas las de vencido+`409` (`habilitar_servicio` y `Aprobación y S. Repuestos`); (b) ANTES de la persona derivada (`:138`): la de persona; (c) ANTES de `:134`: la de obligatorios. Revertir cada una.
+- [x] 2.20 RED — remisión. `remisiones.test.ts` (al final, SIN tocar `:988`): subOV vencida con ticket destino con serial y sin remisión pendiente → `422`, sin las tres columnas, sin asociación y sin remisión; **vencida + asociación vigente a otro ticket → `422`, no `409`**;
   remisión pendiente + vencida → `409` de pendiente (`:177`, IV-12); ítems `incluye` fuera del checklist + vencida → `422` de ítems (`:197`); lote sin contrato y lote que empieza mañana → `201`. RQ: RQ-RE-16 (5 escenarios nuevos), RQ-TC-25.
-- [ ] 2.21 Confirmar rojo natural: rojos los dos `422` de vencido; pendiente, ítems y `201` nacen verdes.
-- [ ] 2.22 GREEN — `remision.ts:5` y `:220` en su sitio.
-- [ ] 2.23 Confirmar 2.20 en verde.
-- [ ] 2.24 MUTACIÓN (regla 1) — mover la guarda de vencido (a) DESPUÉS de `ticketConOrdenVenta` (`:230`): roja la de vencido+`409`; (b) ANTES del control de ítems (`:197`): la de ítems; (c) ANTES de la remisión pendiente (`:177`): la de pendiente. Para (b) y (c) se copia el bloque con su propio `getSalesOrder`, porque `ov` se lee en `:219`. Revertir; `git diff` limpio.
-- [ ] 2.25 Verificación de regresión (sin RED nuevo) — `remisiones.test.ts:988` y todo `ordenVentaUnTicket.test.ts` en verde con `git diff` que muestre sólo inserciones al final de esos ficheros. RQ: RQ-TC-08 «Las pruebas de posición existentes no cambian».
-- [ ] 2.26 Verificación de regresión — `npx vitest run apps/desk/server/services/ticketService.test.ts apps/desk/server/ordenVentaUnTicket.test.ts apps/desk/server/remisiones.test.ts apps/desk/server/transitionExec.test.ts`: los 15 escenarios heredados del cambio 2 (matriz, «regresión») siguen en verde sin cambiar aserciones.
-- [ ] 2.27 Cierre del lote 2: `npm test`; `npm run typecheck`; `eslint`; medir (nuevo: ninguno de código; `db/contratos.ts` ya medido en el lote 1); recuentos `ticketService.ts` 234 y `remision.ts` 397 **sin cambio** (`+n −n`); barrido de citas sobre `ticketService.ts` (151: las 5 de la tabla de arriba, y `transitions-st :902-903` «C antes que D» sigue cierto) y `remision.ts` (114: `CLAUDE.md:349` ×2, IV-12 `:220`); `apply-progress.md`.
+- [x] 2.21 Confirmar rojo natural: rojos los dos `422` de vencido; pendiente, ítems y `201` nacen verdes.
+- [x] 2.22 GREEN — `remision.ts:5` y `:220` en su sitio.
+- [x] 2.23 Confirmar 2.20 en verde.
+- [x] 2.24 MUTACIÓN (regla 1) — mover la guarda de vencido (a) DESPUÉS de `ticketConOrdenVenta` (`:230`): roja la de vencido+`409`; (b) ANTES del control de ítems (`:197`): la de ítems; (c) ANTES de la remisión pendiente (`:177`): la de pendiente. Para (b) y (c) se copia el bloque con su propio `getSalesOrder`, porque `ov` se lee en `:219`. Revertir; `git diff` limpio.
+- [x] 2.25 Verificación de regresión (sin RED nuevo) — `remisiones.test.ts:988` y todo `ordenVentaUnTicket.test.ts` en verde con `git diff` que muestre sólo inserciones al final de esos ficheros. RQ: RQ-TC-08 «Las pruebas de posición existentes no cambian».
+- [x] 2.26 Verificación de regresión — `npx vitest run apps/desk/server/services/ticketService.test.ts apps/desk/server/ordenVentaUnTicket.test.ts apps/desk/server/remisiones.test.ts apps/desk/server/transitionExec.test.ts`: los 15 escenarios heredados del cambio 2 (matriz, «regresión») siguen en verde sin cambiar aserciones.
+- [x] 2.27 Cierre del lote 2: `npm test`; `npm run typecheck`; `eslint`; medir (nuevo: ninguno de código; `db/contratos.ts` ya medido en el lote 1); recuentos `ticketService.ts` 234 y `remision.ts` 397 **sin cambio** (`+n −n`); barrido de citas sobre `ticketService.ts` (151: las 5 de la tabla de arriba, y `transitions-st :902-903` «C antes que D» sigue cierto) y `remision.ts` (114: `CLAUDE.md:349` ×2, IV-12 `:220`); `apply-progress.md`.
 
 ---
 

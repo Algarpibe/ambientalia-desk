@@ -62,7 +62,7 @@ Exportado con una línea **al final** de `packages/shared/src/index.ts` (hoy ter
 | `LOTE_OV` | `/^OV-\d{4}-\d{3,4}$/`, el mismo que `apps/desk/server/routes/ovAsociaciones.ts:21`, que pasa a consumirlo en sitio |
 | `estadoContrato(c, hoy)` | `no_iniciado` si `hoy < inicio`; `vencido` si `fin < hoy`; si no, `vigente` (extremos incluidos, S-4/S-5). Comparación de cadenas `YYYY-MM-DD` |
 | `motivoVencido(numero, contrato, hoy)` | Sólo si `clasificarOV(numero)` es `subov` (`subOV.ts:32-36`) y el contrato del lote está `vencido`: texto con lote, contrato y fin |
-| `prioridadAlNacer(pedida, conContratoVigente)` | `'High'` si hay contrato vigente; si no, **exactamente** lo de hoy: `pedida ? String(pedida) : null` (`ticketService.ts:106`) |
+| `prioridadAlNacer(pedida, conContratoVigente)` | `'High'` si hay contrato vigente; si no, **exactamente** lo de hoy: `pedida ? String(pedida) : null` (`ticketService.ts:106` en `9288779`) |
 | `trimestresDelContrato(inicio, fin)` | Trimestre k empieza en `inicio + 3(k-1)` meses, **calculado siempre desde el inicio** y con el día recortado al fin de mes (31-ene → 30-abr → 31-jul); termina el día antes del siguiente o en `fin`. **S-12** |
 | `diasEntre(a, b)` | Aritmética `Date.UTC` sobre días civiles, como `calendarioLaboral.ts:10`, `:54-57` |
 | `estadoSubOV(ticketStatus \| null)` | `libre` (sin asociación vigente) / `en_curso` / `ejecutada` (`status = 'Finalizado'`, S-6) |
@@ -85,7 +85,7 @@ No es una guarda (no rechaza nada); corre después de todas. `equipoNuevo.ts` no
 
 Ayudantes de servidor en `apps/desk/server/db/contratos.ts` (nuevo): `motivoContratoVencido(db, numero, hoy?)` y
 `erroresContratoVencido(db, numeros, hoy?)` leen el contrato del lote y **delegan la decisión** en
-`motivoVencido` de `shared` (la vigencia no se reescribe en SQL: se lee la fila y decide TS).
+`motivoVencido` de `shared` (la vigencia no se reescribe en SQL: se lee la fila y decide TS). **Escalón: C, no B — decidido y justificado el 2026-09-28 (lote 2), a pregunta de la supervisión**, que planteaba B porque «vencido» es un estado. Lo es, pero **del contrato, no del sujeto de la operación**: F1B-10 define B como «estado y permiso **del sujeto** — ¿puede esta operación ocurrir sobre **este sujeto** ahora?» (`openspec/specs/transitions-st/spec.md:835`, estado de origen y área del usuario), y el sujeto es el ticket, que no cambia por el contrato. El contrato llega a la petición **a través de un valor aportado**, la subOV, y C es «¿es válido y coherente lo que la petición aporta como contenido?» (`:836`). El precedente es exacto y ya está decidido: la persona derivada **que existe pero está dada de baja** —también un estado de la entidad referida— es **C** (`:198`, fila 8; `:843-844`). Y el criterio de fondo de F1B-10 (`:846-847`) empuja al mismo sitio: el usuario lo arregla **cambiando el valor** (otra OV), que es lo propio de C. Clasificarlo B obligaría además a evaluarlo antes que los faltantes, el cliente, los obligatorios, la persona y los ítems —es decir, a leer la OV antes de validar el resto— y a reordenar la remisión, contra IV-12 y contra la edición en sitio. Dentro de C va el **último**, tras la cuarentena (excluyentes para un mismo número, `subOV.ts:32-41`); lo fijan las pruebas de posición del lote 2 frente a cada vecina y frente a D.
 
 | Puerta | Edición en sitio | Orden resultante |
 |---|---|---|

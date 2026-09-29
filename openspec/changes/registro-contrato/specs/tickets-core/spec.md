@@ -226,7 +226,7 @@ Cuando el **cliente del ticket** —ya resuelto en el alta (`ticketService.ts:89
 (supuesto S-4: «Alta» del maestro ≡ el literal `High` de `packages/shared/src/transitions.ts:84`), **aunque
 el cuerpo traiga otra prioridad** y también para correctivos cotizados aparte. Si el cliente no tiene
 ningún contrato vigente, la prioridad **SHALL** ser la que hoy resulte del cuerpo, o ninguna
-(`ticketService.ts:106`). La imposición **SHALL** ser del servidor (regla invariable 13): que el formulario
+(`ticketService.ts:106` en `9288779`). La imposición **SHALL** ser del servidor (regla invariable 13): que el formulario
 la muestre o no es comodidad.
 
 La prioridad se toma del cliente del **ticket**, no de la subOV ni del cliente del contrato (supuesto S-9).

@@ -6,6 +6,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { comoDiaCivil } from './calendarioCierres'
 import {
   crearContrato, listarContratos, contratoPorId, contratoDelLote, contratosDelCliente, ContratoDuplicadoError,
+  hayContratoVigente, motivoContratoVencido, erroresContratoVencido,
 } from './contratos'
 
 let db: Queryable
@@ -58,5 +59,49 @@ describe('la base impone lo que la ruta también comprueba (defensa en profundid
     )).rejects.toThrow()
     await db.query(
       "INSERT INTO contratos (client_id, lote, fecha_inicio, fecha_fin, creado_por) VALUES ('C-1', 'OV-2026-171', '2026-10-01', '2026-10-01', 'x')")
+  })
+})
+
+// lote 2 — los ayudantes de las tres puertas leen la fila y DELEGAN la decisión en `shared` (design.md §4).
+describe('hayContratoVigente, motivoContratoVencido y erroresContratoVencido', () => {
+  const HOY = '2026-07-01'
+  const contrato = (lote: string, fechaInicio: string, fechaFin: string, clientId = 'C-1') =>
+    crearContrato(db, { clientId, lote, fechaInicio, fechaFin, creadoPor: 'x' })
+
+  it.each<[string, string, string, boolean]>([
+    ['vigente', '2026-01-01', '2026-12-31', true],
+    ['fin = hoy', '2026-01-01', HOY, true],
+    ['vencido ayer', '2026-01-01', '2026-06-30', false],
+    ['empieza mañana', '2026-07-02', '2026-12-31', false],
+  ])('hayContratoVigente · %s → %s', async (_, inicio, fin, esperado) => {
+    await contrato('OV-2026-170', inicio, fin)
+    expect(await hayContratoVigente(db, 'C-1', HOY)).toBe(esperado)
+  })
+
+  it('hayContratoVigente · un contrato vigente de OTRO cliente no cuenta; uno vigente entre varios basta', async () => {
+    await contrato('OV-2026-170', '2026-01-01', '2026-12-31', 'C-2')
+    expect(await hayContratoVigente(db, 'C-1', HOY)).toBe(false)
+    await contrato('OV-2026-171', '2025-01-01', '2025-12-31')
+    await contrato('OV-2026-172', '2026-01-01', '2026-12-31')
+    expect(await hayContratoVigente(db, 'C-1', HOY)).toBe(true)
+  })
+
+  it('motivoContratoVencido · subOV de lote vencido → texto; sin contrato, ordinaria, OVI, cuarentena, no iniciado y fin = hoy → null', async () => {
+    const vencido = await contrato('OV-2026-170', '2026-01-01', '2026-06-30')
+    await contrato('OV-2026-171', '2026-07-02', '2026-12-31')
+    await contrato('OV-2026-172', '2026-01-01', HOY)
+    expect(await motivoContratoVencido(db, 'OV-2026-170-01', HOY)).toContain(`contrato nº ${vencido.id}`)
+    for (const n of ['OV-2026-999-01', 'OV-2026-170', 'OVI-2026-170', 'OV-2026-170-X9', 'OV-2026-171-01', 'OV-2026-172-01', null, '']) {
+      expect(await motivoContratoVencido(db, n, HOY), String(n)).toBeNull()
+    }
+  })
+
+  it('erroresContratoVencido · un texto por número vencido, en orden; los demás no dicen nada', async () => {
+    await contrato('OV-2026-170', '2026-01-01', '2026-06-30')
+    await contrato('OV-2026-180', '2026-01-01', '2026-05-31')
+    const e = await erroresContratoVencido(db, ['OV-2026-170-01', undefined, 'OV-2026-999-01', 'OV-2026-180-02'], HOY)
+    expect(e).toHaveLength(2)
+    expect(e[0]).toContain('OV-2026-170-01')
+    expect(e[1]).toContain('OV-2026-180-02')
   })
 })

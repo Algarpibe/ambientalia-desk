@@ -2,8 +2,8 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
-import { getEquipo } from '../db/equipos'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, motivoCuarentena, erroresCuarentena, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
+import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -93,7 +93,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   // de la primera escritura (sea el equipo o el ticket) — el mismo lugar que ocupa el `409`
   // equivalente de `executeTransition` (`transitions-st` §3.8: existencia < estado/permiso <
   // contenido < unicidad). Sin esta comprobación bastaría con mandar el id a mano para duplicarla.
-  if (motivoCuarentena(ordenVenta)) throw new HttpError(422, { error: motivoCuarentena(ordenVenta) }); /* C antes que D */ const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
+  if (motivoCuarentena(ordenVenta)) throw new HttpError(422, { error: motivoCuarentena(ordenVenta) }); const vencido = await motivoContratoVencido(db, ordenVenta); if (vencido) throw new HttpError(422, { error: vencido }); /* C (cuarentena, vencido) antes que D */ const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta })
   if (enUso) {
     const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
     throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${enUso.number}` })
@@ -103,7 +103,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   const id = await crearTicketConEquipo(db, nuevo, cliente.name, {
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
-    ordenVenta, fechaOrdenVenta, priority: b.prioridad ? String(b.prioridad) : null,
+    ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!)),
     clientId: clientId!, salesorderId, equipoId: equipo.id, actor: actorName,
   })
   const created = await getTicketWithRefs(db, id)
@@ -140,11 +140,11 @@ export async function executeTransition(
     const persona = await getUserById(db, derivadoA)
     if (!persona?.active) throw new HttpError(422, { errors: ['La persona a la que se deriva no existe o está dada de baja'] })
   }
-  // La OV ya asociada a otro ticket, la segunda puerta de «una OV, un ticket» (Habilitar Servicio).
-  // Escalón **D** —unicidad— de la escalera de precedencia (`transitions-st` §3.8): va al FINAL, como
-  // última guarda antes de `applyTransition` — el mismo lugar que ocupa el `409` equivalente del alta
-  // (`createManagedTicket`). Se excluye el propio ticket, porque reconfirmar la OV que ya tiene no es
-  // duplicarla.
+  // Escalón C, la ÚLTIMA guarda de contenido (registro-contrato, RQ-TC-25): la subOV de un contrato vencido, tras la persona
+  // derivada y antes de D. Después, D (`transitions-st` §3.8): la OV ya asociada a otro ticket, segunda puerta de «una OV,
+  // un ticket», al FINAL, como última guarda antes de `applyTransition` —el mismo lugar que el `409` del alta—. Se excluye
+  // el propio ticket, porque reconfirmar la OV que ya tiene no es duplicarla.
+  const errVencido = await erroresContratoVencido(db, [plan.columns.orden_venta, plan.ovAdicional]); if (errVencido.length) throw new HttpError(422, { errors: errVencido })
   const nuevaOrdenVenta = plan.columns.orden_venta ?? plan.ovAdicional
   if (typeof nuevaOrdenVenta === 'string' && nuevaOrdenVenta) {
     const enUso = await ticketConOrdenVenta(db, { numero: nuevaOrdenVenta }, id)

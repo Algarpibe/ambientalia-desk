@@ -72,7 +72,7 @@ describe('hoyEnZona · el día en Bogotá, nunca el del proceso (S-11)', () => {
   })
 })
 
-describe('prioridadAlNacer · High con contrato vigente; si no, exactamente lo de hoy (ticketService.ts:106)', () => {
+describe('prioridadAlNacer · High con contrato vigente; si no, exactamente lo de antes (ticketService.ts:106 en 9288779)', () => {
   it.each<[unknown, string]>([['Low', 'High'], [undefined, 'High'], ['', 'High'], ['High', 'High']])(
     'con contrato vigente, pedida %j → %s', (pedida, esperada) => expect(prioridadAlNacer(pedida, true)).toBe(esperada))
   it.each<[unknown, string | null]>([['Low', 'Low'], ['Medium', 'Medium'], [undefined, null], ['', null], [null, null]])(

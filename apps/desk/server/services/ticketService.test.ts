@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { STATUS_TICKET_CREADO, transicionPorId } from '@ambientalia/shared'
+import { STATUS_TICKET_CREADO, transicionPorId, hoyEnZona, sumarDias } from '@ambientalia/shared'
 import { HttpError } from '../util/httpError'
-import { createManagedTicket, executeTransition } from './ticketService'
+import { createManagedTicket, executeTransition } from './ticketService'; import { crearContrato } from '../db/contratos'
 
 /**
  * `executeTransition` y `createManagedTicket` A NIVEL DE UNIDAD (§9 del proposal F0-04).
@@ -939,5 +939,171 @@ describe('asociacion-ov-ticket · cuarentena de subOV en el alta y en habilitar_
     const r = await fallo(() => executeTransition(db, 't-q5', { transitionId: 'aprobacion', values: { 'OV adicional': EN_CUARENTENA } }, ADMIN))
     expect(r.status).toBe(422)
     expect(JSON.stringify(r.body.errors)).toContain(EN_CUARENTENA)
+  })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// registro-contrato · lote 2 · prioridad al nacer (RQ-TC-24) y guarda de contrato vencido (RQ-TC-25)
+// Fechas relativas a `hoyEnZona()`: la guarda decide contra el día de hoy en Bogotá, no contra un fijo.
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+
+const dias = (n: number): string => sumarDias(hoyEnZona(), n)
+const VIGENTE: [number, number] = [-10, 100]
+const VENCIDO: [number, number] = [-100, -1] // fin = ayer
+const EMPIEZA_MANANA: [number, number] = [1, 100]
+const ACABA_HOY: [number, number] = [-10, 0]
+
+async function contratoDe(lote: string, [ini, fin]: [number, number], clientId = 'cli-1'): Promise<void> {
+  await crearContrato(db, { clientId, lote, fechaInicio: dias(ini), fechaFin: dias(fin), creadoPor: 'Comercial' })
+}
+const prioridad = async (): Promise<unknown> => (await db.query('SELECT priority FROM tickets')).rows[0].priority
+
+describe('registro-contrato · prioridad al nacer: Alta IMPUESTA por el servidor con contrato vigente (RQ-TC-24)', () => {
+  it.each<[string, [number, number] | null, string | undefined, string | null]>([
+    ['contrato vigente y el cuerpo pide Low → High', VIGENTE, 'Low', 'High'],
+    ['contrato vigente y sin prioridad → High', VIGENTE, undefined, 'High'],
+    ['contrato que acaba hoy y Low → High', ACABA_HOY, 'Low', 'High'],
+    ['sin contrato y Low → Low (regresión)', null, 'Low', 'Low'],
+    ['sin contrato y sin prioridad → null (regresión)', null, undefined, null],
+    ['contrato vencido y Low → Low', VENCIDO, 'Low', 'Low'],
+    ['contrato que empieza mañana y Low → Low', EMPIEZA_MANANA, 'Low', 'Low'],
+  ])('%s', async (_, vigencia, pedida, esperada) => {
+    await equipo(); await cliente('cli-1')
+    if (vigencia) await contratoDe('OV-2026-170', vigencia)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: pedida }, 'Admin')
+    expect(await prioridad()).toBe(esperada)
+  })
+
+  it('el contrato vigente es del cliente A y el alta es del cliente B con una subOV del lote de A → sin High', async () => {
+    await equipo(); await cliente('cli-A'); await cliente('cli-B')
+    await contratoDe('OV-2026-170', VIGENTE, 'cli-A')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, clientId: 'cli-B', ordenVenta: 'OV-2026-170-01', prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe('Low')
+  })
+})
+
+describe('registro-contrato · alta: subOV de un contrato vencido → 422 (escalón C, antes de D)', () => {
+  const alta = (extra: Record<string, unknown> = {}) => createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, ordenVenta: 'OV-2026-170-01', ...extra }, 'Admin')
+  const contar = async (tabla: string): Promise<number> => (await db.query(`SELECT COUNT(*)::int AS n FROM ${tabla}`)).rows[0].n
+
+  it('subOV de lote vencido → 422 con el motivo, sin ticket ni asociación', async () => {
+    await equipo(); await cliente('cli-1'); await contratoDe('OV-2026-170', VENCIDO)
+    const r = await fallo(() => alta())
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/OV-2026-170-01.*lote OV-2026-170.*contrato nº \d+ venció el /)
+    expect([await contar('tickets'), await contar('ov_asociaciones')]).toEqual([0, 0])
+  })
+
+  it.each<[string, [number, number] | null, string]>([
+    ['lote sin contrato', null, 'OV-2026-170-01'],
+    ['contrato que empieza mañana', EMPIEZA_MANANA, 'OV-2026-170-01'],
+    ['contrato que acaba hoy', ACABA_HOY, 'OV-2026-170-01'],
+    ['la madre ordinaria de un lote vencido', VENCIDO, 'OV-2026-170'],
+  ])('%s → el alta se crea como hoy', async (_, vigencia, ov) => {
+    await equipo(); await cliente('cli-1')
+    if (vigencia) await contratoDe('OV-2026-170', vigencia)
+    await alta({ ordenVenta: ov })
+    expect(await contar('tickets')).toBe(1)
+  })
+
+  it('cuarentena con contrato vencido en su base → 422 de CUARENTENA, que no habla de contrato (el lote no se saca por prefijo)', async () => {
+    await equipo(); await cliente('cli-1'); await contratoDe('OV-2026-170', VENCIDO)
+    const r = await fallo(() => alta({ ordenVenta: 'OV-2026-170-X9' }))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain('sufijo')
+    expect(r.body.error).not.toMatch(/contrato/)
+  })
+
+  it('POSICIÓN C < D · la subOV vencida YA está asociada a otro ticket: gana el 422 de vencido, no el 409', async () => {
+    await equipo(); await cliente('cli-1'); await contratoDe('OV-2026-170', VENCIDO)
+    await ticket('t-dueno-v', 'Ingresado', 8601, { orden_venta: 'OV-2026-170-01' })
+    const r = await fallo(() => alta())
+    expect(r.status).toBe(422)
+    expect(r.body.error).toContain('venció')
+    await db.query("DELETE FROM contratos") // control de población: sin contrato, la misma OV contesta 409
+    expect((await fallo(() => alta())).status).toBe(409)
+  })
+
+  it('POSICIÓN · faltan obligatorios + vencido → «Faltan campos obligatorios»', async () => {
+    await equipo(); await cliente('cli-1'); await contratoDe('OV-2026-170', VENCIDO)
+    const r = await fallo(() => alta({ tipoServicio: undefined }))
+    expect(r.body.error).toMatch(/^Faltan campos obligatorios/)
+  })
+
+  it('POSICIÓN · cliente inexistente + vencido → «Cliente no encontrado»', async () => {
+    await equipo(); await contratoDe('OV-2026-170', VENCIDO)
+    const r = await fallo(() => alta({ clientId: 'no-existe' }))
+    expect(r.body.error).toBe('Cliente no encontrado')
+  })
+
+  it('POSICIÓN · equipo nuevo con Drive inválido + vencido → el error del equipo nuevo', async () => {
+    await modeloCatalogo('mo-v', 'Grimm', 'EDM180C'); await cliente('cli-1'); await contratoDe('OV-2026-170', VENCIDO)
+    const r = await fallo(() => createManagedTicket(db, {
+      clasificaciones: 'Equipo nuevo', clientId: 'cli-1', tipoServicio: 'Mantenimiento', prefijo: 'MT', ordenVenta: 'OV-2026-170-01',
+      equipoNuevo: { serial: 'SN-V', modeloId: 'mo-v', fechaFacturaCompra: '2026-01-15', driveUrl: 'http://no-seguro' },
+    }, 'Admin'))
+    expect(r.body.error).toBe('El enlace de Drive debe empezar por https:// y no llevar comillas')
+  })
+})
+
+describe('registro-contrato · transición: subOV de un contrato vencido → 422 (escalón C, tras la persona y antes de D)', () => {
+  const habilitar = (id: string, values: Record<string, unknown>) =>
+    executeTransition(db, id, { transitionId: 'habilitar_servicio', values: { Serial: '18A20070', ...values } }, ADMIN)
+  const asociaciones = async (): Promise<number> => (await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones')).rows[0].n
+
+  it('habilitar_servicio con subOV de lote vencido → 422 en errors, sin escribir orden_venta ni asociación', async () => {
+    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v1', STATUS_TICKET_CREADO, 8611)
+    const r = await fallo(() => habilitar('t-v1', { 'Orden de Venta': 'OV-2026-170-01' }))
+    expect(r.status).toBe(422)
+    expect(JSON.stringify(r.body.errors)).toMatch(/OV-2026-170-01.*venció/)
+    expect((await db.query("SELECT orden_venta, status FROM tickets WHERE id = 't-v1'")).rows[0]).toEqual({ orden_venta: null, status: STATUS_TICKET_CREADO })
+    expect(await asociaciones()).toBe(0)
+  })
+
+  it.each<[string, [number, number] | null]>([['lote sin contrato', null], ['contrato que empieza mañana', EMPIEZA_MANANA]])(
+    '%s → la transición pasa como hoy', async (_, vigencia) => {
+      if (vigencia) await contratoDe('OV-2026-170', vigencia)
+      await ticket('t-v2', STATUS_TICKET_CREADO, 8612)
+      await habilitar('t-v2', { 'Orden de Venta': 'OV-2026-170-01' })
+      expect((await db.query("SELECT orden_venta FROM tickets WHERE id = 't-v2'")).rows[0].orden_venta).toBe('OV-2026-170-01')
+    })
+
+  it('POSICIÓN C < D · habilitar_servicio: la subOV vencida YA está asociada a otro ticket → 422, no 409', async () => {
+    await contratoDe('OV-2026-170', VENCIDO)
+    await ticket('t-dueno-v3', 'Ingresado', 8613, { orden_venta: 'OV-2026-170-01' }); await ticket('t-v3', STATUS_TICKET_CREADO, 8614)
+    const r = await fallo(() => habilitar('t-v3', { 'Orden de Venta': 'OV-2026-170-01' }))
+    expect(r.status).toBe(422)
+    await db.query('DELETE FROM contratos') // control de población
+    expect((await fallo(() => habilitar('t-v3', { 'Orden de Venta': 'OV-2026-170-01' }))).status).toBe(409)
+  })
+
+  it('POSICIÓN · falta un obligatorio + vencido → el 422 de obligatorios', async () => {
+    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v4', STATUS_TICKET_CREADO, 8615)
+    const r = await fallo(() => executeTransition(db, 't-v4', { transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-170-01' } }, ADMIN))
+    expect(r.body.errors).toEqual(['Falta el campo obligatorio: Serial'])
+  })
+
+  it('POSICIÓN · persona derivada inexistente + vencido → el 422 de la persona', async () => {
+    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v5', STATUS_TICKET_CREADO, 8616)
+    const r = await fallo(() => habilitar('t-v5', { 'Orden de Venta': 'OV-2026-170-01', derivado_a: 'u-no-existe' }))
+    expect(r.body.errors).toEqual(['La persona a la que se deriva no existe o está dada de baja'])
+  })
+
+  it('aprobacion con OV adicional de lote vencido → 422 y sin asociación nueva', async () => {
+    await contratoDe('OV-2026-170', VENCIDO); await ticketConOVDeEntrada('t-v6', 8617, 'OV-2026-ENTRADA-V6')
+    const r = await fallo(() => executeTransition(db, 't-v6', { transitionId: 'aprobacion', values: { 'OV adicional': 'OV-2026-170-02' } }, ADMIN))
+    expect(r.status).toBe(422)
+    expect(JSON.stringify(r.body.errors)).toContain('OV-2026-170-02')
+    expect(await asociaciones()).toBe(1) // sólo la de entrada
+  })
+
+  it('POSICIÓN C < D · aprobacion_y_repuestos: OV adicional vencida y ya asociada a otro ticket → 422, no 409', async () => {
+    await contratoDe('OV-2026-170', VENCIDO); await ticketConOVDeEntrada('t-v7', 8618, 'OV-2026-ENTRADA-V7')
+    await ticket('t-dueno-v7', 'Ingresado', 8619, { orden_venta: 'OV-2026-170-03' })
+    const valores = { 'OV adicional': 'OV-2026-170-03', 'Fecha Orden de Compra': '2026-06-01', 'Fecha Orden De Venta': '2026-06-10' }
+    const r = await fallo(() => executeTransition(db, 't-v7', { transitionId: 'aprobacion_y_repuestos', values: valores }, ADMIN))
+    expect(r.status).toBe(422)
+    await db.query('DELETE FROM contratos') // control de población
+    expect((await fallo(() => executeTransition(db, 't-v7', { transitionId: 'aprobacion_y_repuestos', values: valores }, ADMIN))).status).toBe(409)
   })
 })

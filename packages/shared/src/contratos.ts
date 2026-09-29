@@ -62,7 +62,7 @@ export function hoyEnZona(ahora: Date = new Date()): DiaCivil {
   return diaEnZona(ahora)!
 }
 
-/** `'High'` si el lote tiene contrato vigente; si no, exactamente la regla de hoy (`ticketService.ts:106`). */
+/** `'High'` si el lote tiene contrato vigente; si no, exactamente la regla de hoy (`ticketService.ts:106` en `9288779`). */
 export function prioridadAlNacer(pedida: unknown, conContratoVigente: boolean): string | null {
   if (conContratoVigente) return 'High'
   return pedida ? String(pedida) : null

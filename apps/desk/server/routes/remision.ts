@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist, faltaFotoPorNovedad, motivoCuarentena } from '@ambientalia/shared'
-import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'
+import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'
 import { checklistDeRemision } from '../db/checklistRemision'
@@ -217,7 +217,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
      */
     if (b.salesOrderId) {
       const ov = await getSalesOrder(db, String(b.salesOrderId))
-      if (!ov || motivoCuarentena(ov.number)) { res.status(422).json({ error: !ov ? 'Orden de venta no encontrada' : motivoCuarentena(ov.number) }); return } // A y luego C, antes de la unicidad (D)
+      if (!ov || motivoCuarentena(ov.number)) { res.status(422).json({ error: !ov ? 'Orden de venta no encontrada' : motivoCuarentena(ov.number) }); return }; const vencido = await motivoContratoVencido(db, ov.number); if (vencido) { res.status(422).json({ error: vencido }); return } // A y luego C (cuarentena, vencido), antes de la unicidad (D)
       /*
        * TERCERA PUERTA de «una OV, un ticket» (IV-4, RQ-RE-16). Transitoria: se retira el día en que
        * los índices únicos parciales de `ov_asociaciones` (`numero` y `salesorder_id`, los dos con

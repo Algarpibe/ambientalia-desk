@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Contrato } from '@ambientalia/shared'
+import { clasificarOV, estadoContrato, hoyEnZona, motivoVencido, type Contrato } from '@ambientalia/shared'
 import { comoDiaCivil } from './calendarioCierres'
 
 /**
@@ -67,4 +67,32 @@ export async function contratoDelLote(db: Queryable, lote: string): Promise<Cont
 
 export async function contratosDelCliente(db: Queryable, clientId: string): Promise<Contrato[]> {
   return filas((await db.query(`SELECT ${COLUMNAS} FROM contratos WHERE client_id = $1 ORDER BY id`, [clientId])).rows)
+}
+
+/*
+ * Lote 2 — lo que consultan las puertas. Leen la fila y DELEGAN la decisión en `shared` (`estadoContrato`,
+ * `motivoVencido`): la vigencia no se reescribe en SQL (design.md §4). `hoy` es inyectable para las pruebas; por
+ * defecto, el día en la zona de negocio (S-11).
+ */
+
+/** Si el cliente tiene algún contrato vigente hoy (prioridad al nacer, RQ-TC-24). */
+export async function hayContratoVigente(db: Queryable, clientId: string, hoy: string = hoyEnZona()): Promise<boolean> {
+  return (await contratosDelCliente(db, clientId)).some((c) => estadoContrato(c, hoy) === 'vigente')
+}
+
+/** El motivo del `422` si `numero` es una subOV de un lote con contrato vencido, o `null` (RQ-TC-25). */
+export async function motivoContratoVencido(db: Queryable, numero: unknown, hoy: string = hoyEnZona()): Promise<string | null> {
+  const c = clasificarOV(numero)
+  if (c.tipo !== 'subov') return null
+  return motivoVencido(numero, await contratoDelLote(db, c.lote), hoy)
+}
+
+/** Un motivo por cada número vencido, en su orden; los que no lo están no aportan nada (transición). */
+export async function erroresContratoVencido(db: Queryable, numeros: unknown[], hoy: string = hoyEnZona()): Promise<string[]> {
+  const errores: string[] = []
+  for (const n of numeros) {
+    const m = await motivoContratoVencido(db, n, hoy)
+    if (m) errores.push(m)
+  }
+  return errores
 }
