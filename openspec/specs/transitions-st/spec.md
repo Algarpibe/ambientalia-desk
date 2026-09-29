@@ -29,8 +29,8 @@ septiembre, manda el código y la discrepancia se escribe (§4).
 | Catálogo de transiciones | «`shared/transitions.ts` (34 transiciones + campos obligatorios)» (`design:27`) | «34 transiciones y 21 estados» (`:360`, `:889`) | 34 entradas en `TRANSICIONES_BASE` (`packages/shared/src/transitions.ts:171-256`), fijadas por prueba (`invariantesGrafo.test.ts:50-54`) |
 | Registro de estados | No existe en el diseño | «21 estados» (`:391`) | `estados.ts:59-112`. **No existía hasta F0-04**: se derivaban de los `from`/`to` (`estados.ts:3-4`) |
 | Destino de escritura | «**Postgres** (no Zoho)» (`design:19`) | — | `packages/zoho-sync/src/db/repo.ts:276-319`. Ninguna llamada a Zoho |
-| Actor | Constante `'Equipo Técnico'`, «el login/roles reales son el Subsistema H» (`design:20`) | M1.10: «toda etapa y toda transición deben registrar fecha, hora y persona» (`:1677`) | Usuario de la sesión, con la constante como respaldo (`ticketService.ts:145`, `transitionActor.ts:3`) |
-| Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:123-125`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110`) |
+| Actor | Constante `'Equipo Técnico'`, «el login/roles reales son el Subsistema H» (`design:20`) | M1.10: «toda etapa y toda transición deben registrar fecha, hora y persona» (`:1677`) | Usuario de la sesión, con la constante como respaldo (`ticketService.ts:153`, `transitionActor.ts:3`) |
+| Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:129-131`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110`) |
 | Endpoint | «Rewrite endpoint … en `server/app.ts`» (`design:88`) | — | `apps/desk/server/routes/tickets.ts:192-194` |
 
 ---
@@ -196,9 +196,13 @@ unicidad (D).
 | 6 | Los campos obligatorios están presentes | C | `422 { errors: plan.errors }` | `:134` |
 | 7 | Una fecha derivada tecleada sin fuente no es una fecha real | C | `422 { errors }` | `:134` (fijada por el diseño; ver `RQ-TS-08`) |
 | 8 | La persona a la que se deriva existe y está activa | C | `422 'La persona a la que se deriva no existe o está dada de baja'` | `:138-142` |
-| 9 | La orden de venta no está ya asociada a otro ticket | D | `409 '…ya está asociada al ticket #…'` | `:148-152` |
+| 9 | La subOV aportada no es de un lote con contrato vencido | C | `422`, motivo de contrato vencido | `:147`, tras la persona derivada y antes de la unicidad (`tickets-core` RQ-TC-25) |
+| 10 | La orden de venta no está ya asociada a otro ticket | D | `409 '…ya está asociada al ticket #…'` | `:148-152` |
 
-(Previously: ocho filas, sin la guarda 3 de flujo. La añade `blueprint-equipo-nuevo` (F1B-06) al
+(Previously: nueve filas, sin la guarda de contrato vencido. La 9 antigua (OV ya asociada) pasa a ser la
+10. La cuarentena de OV va dentro de la fila 6, en la misma sentencia, `:134`.)
+
+(Previously, antes de esa: ocho filas, sin la guarda 3 de flujo. La añade `blueprint-equipo-nuevo` (F1B-06) al
 entrar en juego un segundo catálogo (`transitions-equipo-nuevo`): hasta entonces todo ticket tenía un
 único flujo posible y la comprobación no hacía falta. Las guardas 3-7 antiguas pasan a ser 4-8, y la 8
 antigua pasa a ser 9.)
@@ -227,6 +231,12 @@ origen inválido comprueba el `409` de la guarda 4 y cree comprobar el `403` de 
 - WHEN se ejecuta `Ingreso equipo nuevo` (catálogo `transitions-equipo-nuevo`, `from: [Ingresado]`)
 - THEN responde `409` con el mensaje de flujo, no con «no aplica desde el estado» — invertir el orden
   de las guardas 3 y 4 debe poner esta prueba en rojo (regla de mutación 1 de `CLAUDE.md`)
+
+#### Scenario: El vencido (9) queda detrás de los obligatorios (6) y delante de la unicidad (10)
+- GIVEN una transición con una subOV de un lote vencido que además falta un campo obligatorio, y otra
+  con la subOV de un lote vencido ya asociada a otro ticket
+- WHEN se ejecutan las dos
+- THEN la primera responde el `422` de obligatorios y la segunda el `422` de vencido, no `409`
 
 ### RQ-TS-07 · Permisos por área
 
@@ -392,35 +402,39 @@ El destinatario **SHALL** calcularse desde el **estado de llegada** y **MUST NOT
   (`avisoArea.ts:11-13`; maestro `:1672`).
 - Los avisos **SHALL** escribirse **después** de la transición y **fuera de su transacción**, porque
   `avisos` es tabla de la aplicación y `applyTransition` vive en el paquete de sincronización
-  (`ticketService.ts:115-122`; maestro `:1673`).
+  (`ticketService.ts:157-164`; maestro `:1673`).
 - La contrapartida **SHALL** quedar escrita y aceptada: una caída entre las dos escrituras pierde el
-  aviso (`ticketService.ts:119-121`; maestro `:1674`, punto abierto nº 36).
+  aviso (`ticketService.ts:161-163`; maestro `:1674`, punto abierto nº 36).
 - Los avisos de una misma transición **SHALL** deduplicarse por persona antes de escribir
-  (`ticketService.ts:151-152`, `:156-159`) y **SHALL** mandarse en **una** sola llamada a n8n
-  (`:123-125`).
+  (`ticketService.ts:193-194`, `:198-201`) y **SHALL** mandarse en **una** sola llamada a n8n
+  (`:165-167`).
 - El correo **MUST NOT** poder tumbar la transición; lo que no se sella queda en `NULL`, que es la cola
-  de reintento (`ticketService.ts:167-177`).
+  de reintento (`ticketService.ts:209-219`).
 
 ### RQ-TS-14 · Una orden de venta, un ticket — en la puerta de la transición
 
 `habilitar_servicio` es la segunda de las tres puertas por las que una OV entra en un ticket. Al
 escribir `orden_venta`, la transición **SHALL** rechazar con `409` una orden ya asociada a otro
-ticket, mirando ahora **tres vías** —`salesorder_id`, `orden_venta` y la asociación vigente de
+ticket, mirando **tres vías** —`salesorder_id`, `orden_venta` y la asociación vigente de
 `public.ov_asociaciones` (`tickets-core` RQ-TC-17)—, excluyendo el propio ticket
 (`ticketService.ts:148-152`, con `ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:362-379`,
 ampliado con la tercera vía).
 
 Antes de esta comprobación de unicidad (escalón D), `habilitar_servicio` **SHALL** aplicar la misma
 guarda de cuarentena que el alta (`tickets-core` RQ-TC-18, escalón C) cuando la OV recibida lleve
-sufijo. La transición **SHALL** escribir la asociación (`tickets-core` RQ-TC-17) en la misma
+sufijo (`ticketService.ts:134`), y **a continuación** la guarda de contrato vencido (`tickets-core`
+RQ-TC-25, escalón C): una subOV de un lote cuyo contrato venció se rechaza con `422` sin llegar a
+comprobar unicidad. La guarda de vencido **SHALL** ser la **última** guarda de contenido de la
+transición: los obligatorios y la fecha derivada (`:134`) y la persona derivada (`:138-142`) **SHALL**
+seguir ganándole. La transición **SHALL** escribir la asociación (`tickets-core` RQ-TC-17) en la misma
 transacción que escribe `orden_venta`.
 
 La tercera puerta —el alta de remisión— está construida (`remisiones` RQ-RE-16,
-`tercera-puerta-orden-venta`) y gana aquí la misma tercera vía y la misma cuarentena. Las otras dos
-puertas y la regla completa pertenecen a las specs `tickets-core` y `remisiones`.
+`tercera-puerta-orden-venta`) y comparte la misma tercera vía, la misma cuarentena y la misma guarda de
+vencido. Las otras dos puertas y la regla completa pertenecen a las specs `tickets-core` y `remisiones`.
 
-(Previously: dos vías, sin cuarentena ni escritura de asociación; y describía la tercera puerta como
-no construida, lo que §3.4 de esta misma spec ya había corregido por separado.)
+(Previously: tres vías, cuarentena y escritura de asociación, sin guarda de contrato vencido; la última
+guarda de contenido antes de la unicidad era la persona derivada.)
 
 #### Scenario: `habilitar_servicio` sin OV en cuarentena sigue igual
 
@@ -434,6 +448,31 @@ no construida, lo que §3.4 de esta misma spec ya había corregido por separado.
 - WHEN se ejecuta `habilitar_servicio` con esa OV
 - THEN responde `422` de cuarentena, no `409` de unicidad
 
+#### Scenario: Una subOV de contrato vencido bloquea `habilitar_servicio`
+
+- GIVEN una subOV libre de un lote con contrato cuya fecha de fin es anterior a hoy
+- WHEN se ejecuta `habilitar_servicio` con esa OV
+- THEN responde `422` de contrato vencido y no se escribe `orden_venta` ni asociación
+
+#### Scenario: El vencido gana al 409 de unicidad — posición fijada por prueba
+
+- GIVEN una subOV de un lote vencido con asociación vigente a otro ticket
+- WHEN se ejecuta `habilitar_servicio` con esa OV
+- THEN responde `422` de vencido, no `409`; invertir el orden de las dos guardas debe poner esta prueba
+  en rojo (regla de mutación 1 de `CLAUDE.md`)
+
+#### Scenario: La persona derivada inválida gana al vencido
+
+- GIVEN una subOV de un lote vencido y una derivación a una persona dada de baja
+- WHEN se ejecuta la transición
+- THEN responde `422` «La persona a la que se deriva no existe o está dada de baja», no el de vencido
+
+#### Scenario: Un lote sin contrato o con contrato aún no iniciado no bloquea
+
+- GIVEN una subOV libre de un lote sin contrato, y otra de un lote cuyo contrato empieza mañana
+- WHEN se ejecuta `habilitar_servicio` con cada una
+- THEN ambas responden `200`, igual que hoy
+
 ### RQ-TS-18 · `Aprobación` y `Aprobación y S. Repuestos` añaden una OV, no la sustituyen
 
 Las transiciones `Aprobación` y `Aprobación y S. Repuestos` **SHALL** poder recibir una OV nueva y
@@ -443,7 +482,11 @@ RQ-ZS-01, sin cambios en este delta)—. La fecha de orden de compra (OC) que ac
 **SHALL** guardarse en la propia asociación (S-5) y **MUST NOT** escribirse sobre `orden_venta` ni
 `fecha_orden_venta`. La única columna de fecha de OC que el ticket sigue recibiendo es
 `fecha_orden_compra_final` en `aprobacion`, por su campo propio y como hoy (comportamiento vigente, sin
-cambios en este delta). Las dos transiciones **SHALL** aplicar las mismas guardas de cuarentena y unicidad que `RQ-TS-14`.
+cambios en este delta). Las dos transiciones **SHALL** aplicar las mismas guardas de cuarentena,
+**contrato vencido** (`tickets-core` RQ-TC-25, escalón C, después de la cuarentena y antes de la
+unicidad) y unicidad que `RQ-TS-14`: una OV adicional de un lote vencido se rechaza con `422`.
+
+(Previously: las mismas guardas de cuarentena y unicidad que `RQ-TS-14`, sin la de contrato vencido.)
 
 #### Scenario: Tras `Aprobación` con OV nueva, la de entrada no cambia
 
@@ -458,6 +501,18 @@ cambios en este delta). Las dos transiciones **SHALL** aplicar las mismas guarda
 - WHEN se consulta la asociación creada por `Aprobación`
 - THEN tiene la fecha de OC; en `aprobacion` el ticket conserva además `fecha_orden_compra_final`
   (comportamiento vigente), y `orden_venta`/`fecha_orden_venta` no la reciben
+
+#### Scenario: Una OV adicional de contrato vencido se rechaza en `Aprobación`
+
+- GIVEN un ticket en `Notificación cliente` y una subOV libre de un lote con contrato vencido
+- WHEN se ejecuta `Aprobación` con esa OV como adicional
+- THEN responde `422` de contrato vencido y no se crea asociación
+
+#### Scenario: El vencido gana al 409 también en `Aprobación y S. Repuestos`
+
+- GIVEN una subOV de un lote vencido ya asociada a otro ticket
+- WHEN se ejecuta `Aprobación y S. Repuestos` con esa OV como adicional
+- THEN responde `422` de vencido, no `409`
 
 ---
 
@@ -700,7 +755,7 @@ primeras la comprueban, y ahora **en el mismo orden** entre sí:
 
 | Puerta | Comprueba | Precedencia del `409` frente al `422` de obligatorios | Evidencia |
 |---|---|---|---|
-| Creación de ticket | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:45-49` (movida detrás de la guarda de cliente, `:94`) |
+| Creación de ticket | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:96-100` (movida detrás de la guarda de cliente, `:61-79`) |
 | Transición `habilitar_servicio` | Sí, `409` | El **`422` de obligatorios gana** | `ticketService.ts:148-152` (detrás de la guarda de derivación, `:138-142`; hoy `:134` es el `422` de las fechas derivadas de `fechas-derivadas-servidor`, no el bloque de la OV) |
 | **Alta de remisión** | **No** | — | `apps/desk/server/routes/remision.ts:218-244` |
 
@@ -833,7 +888,7 @@ por grupo, no se enuncia como «precedencia observable» y no admite excepción 
 |---|---|---|
 | **A · existencia** | ¿está presente y existe lo que la petición direcciona, o aporta por identificador? | `:123` transición desconocida · `:125` ticket no encontrado · `:24` falta el equipo · `:27` equipo no registrado · `:39` OV no encontrada |
 | **B · estado y permiso del sujeto** | ¿puede esta operación ocurrir sobre este sujeto ahora? | `:126-128` estado de origen · `:129-131` área |
-| **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:61-79` equipo↔cliente · `:88` obligatorios · `:90` cliente no encontrado · `:134` obligatorios del plan · **`:134` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:138-142` derivación |
+| **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:61-79` equipo↔cliente · `:88` obligatorios · `:90` cliente no encontrado · `:134` obligatorios del plan · **`:134` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:138-142` derivación · **`:96` contrato vencido en el alta (misma sentencia que la cuarentena, antes de D) · `:147` contrato vencido en `habilitar_servicio`, última de C (`registro-contrato`, `tickets-core` RQ-TC-25)** |
 | **D · unicidad sobre un valor aportado** | ¿el valor aportado choca con otro registro? | `:96-100` OV ya usada en el alta (bloque que `orden-precedencia-guardas` movió detrás de `:90`) · `:148-152` OV ya usada en `habilitar_servicio` (bloque que `orden-precedencia-guardas` movió detrás de `:142`) |
 
 **La frontera A/C.**
@@ -856,13 +911,17 @@ se rellena antes de contarlo (`:61-79` antes de `:88`, porque la rama (i) de `:6
 
 | Puerta | Orden declarado (guardas reales, tras esta tanda) | Quién gana ante el error doble (obligatorios / OV ya usada) |
 |---|---|---|
-| `createManagedTicket` | `:24` A · `:27` A · `:39` A · `:61-79` C · `:88` C · `:90` C · `:96-100` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
-| `executeTransition` | `:123` A · `:125` A · `:126-128` B · `:129-131` B · `:134` C · fecha derivada C (nueva) · `:138-142` C · `:148-152` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:195`) |
+| `createManagedTicket` | `:24` A · `:27` A · `:39` A · `:61-79` C · `:88` C · `:90` C · `:96` C (contrato vencido) · `:96-100` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
+| `executeTransition` | `:123` A · `:125` A · `:126-128` B · `:129-131` B · `:134` C · fecha derivada C (nueva) · `:138-142` C · `:147` C (contrato vencido) · `:148-152` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:195`) |
 
 Cero inversión: las dos puertas evalúan la misma pareja en el mismo orden.
 
-(Previously: la tabla citaba `createManagedTicket` en `ticketService.ts:22-60` y `executeTransition`
-en `:82-110`, con **cinco** guardas cada uno —los dos rangos se cortaban justo donde empieza la guarda
+(Previously: sin la guarda de contrato vencido en ninguna de las dos filas ni en el escalón C; la añade
+`registro-contrato` (F1B-11, cambio 3 de 3) como última guarda de contenido de cada puerta, y el delta de
+`RQ-TS-06` dejó este arreglo documental para el archivo.)
+
+(Previously: la tabla citaba `createManagedTicket` en `ticketService.ts:22-60` en `38bd062` y `executeTransition`
+en `:82-110` en `38bd062`, con **cinco** guardas cada uno —los dos rangos se cortaban justo donde empieza la guarda
 equipo↔cliente— y las pruebas contradictorias citadas eran `ticketService.test.ts:295` y `:176`. Tras
 `orden-precedencia-guardas` las evidencias pasaron a `:327`/`:336` y `:194`, y esta tanda —
 `fechas-derivadas-servidor` — las reancla otra vez contra `4976787`: `:345`/`:352` y `:195`, más la
@@ -897,11 +956,12 @@ en cada caso, correr el guión, confirmar el rojo, revertir con `git diff`.
 
 | Puerta | Secuencia de escalones tras esta tanda | Veredicto |
 |---|---|---|
-| `createManagedTicket` | A A A C C C D | **cumple** |
-| `executeTransition` | A A B B C C C D | **cumple** — la C añadida es la fecha derivada de `fechas-derivadas-servidor` |
+| `createManagedTicket` | A A A C C C C D | **cumple** — la última C es el contrato vencido de `registro-contrato` (`:96`) |
+| `executeTransition` | A A B B C C C C D | **cumple** — la C añadida es la fecha derivada de `fechas-derivadas-servidor`; la última, el contrato vencido de `registro-contrato` (`:147`) |
 | Alta de remisión (`remision.ts`, no se toca) | A A C A D C A D | **incumple, en dos puntos → IV-12** |
 
-(Previously: `executeTransition` | A A B B C C D — seis escalones, sin la fecha derivada.)
+(Previously: `createManagedTicket` | A A A C C C D y `executeTransition` | A A B B C C C D, sin el contrato
+vencido; antes de esa, `executeTransition` | A A B B C C D — seis escalones, sin la fecha derivada.)
 
 **El precedente de F1B-01 es consecuencia del orden, no una excepción.** `remision.ts:155` —el `422`
 del serial, escalón A— gana al `409` de remisión pendiente (`:177`, escalón D) porque A precede a D. La
@@ -1022,7 +1082,7 @@ hoy no la llama nadie.
 
 **La primera de las dos piezas de la ampliación YA ESTABA CONSTRUIDA.** «Aviso redundante por correo
 cuando una transición cambia de área» (`:1573`) es lo que el motor hace desde antes de esta tanda
-(`ticketService.ts:162-185`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
+(`ticketService.ts:187-219`; spec `derivacion-avisos` RQ-AV-04 y RQ-AV-09), y **el propio maestro lo
 dice nueve líneas más abajo de pedirlo**: «`[AS-BUILT]` Al ejecutarse cualquier transición, el sistema
 calcula el área destinataria del aviso a partir del estado de llegada y notifica en la aplicación **y
 por correo**» (`:1582`). Lo que faltaba en ese canal era poder encenderlo sin romper la regla de
@@ -1049,7 +1109,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 
 | # | Dice el diseño | Dice el código | Lectura |
 |---|---|---|---|
-| D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:123-125`), matriz de 102 casos probada (`permisos.test.ts:77-82`), y el actor es el usuario de la sesión (`ticketService.ts:145`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
+| D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:129-131`), matriz de 102 casos probada (`permisos.test.ts:77-82`), y el actor es el usuario de la sesión (`ticketService.ts:153`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
 | D-2 | «Rewrite endpoint `POST /api/tickets/:id/transition` en `server/app.ts`» (`design:88`) | Vive en `apps/desk/server/routes/tickets.ts:192-194` | Movido. Cualquier cita del diseño a `app.ts` apunta a un fichero que ya no lo contiene |
 | D-3 | `applyTransition(db, ticketId, fromStatus, transition, plan, actor)` — seis parámetros (`design:85`) | Siete: añade `values` al final (`repo.ts:322-330`) | El séptimo es lo que hace posible RQ-TS-11 y la salida de C4: sin `values` en el historial, `ticket_transitions` no guardaría «todos» los valores |
 | D-4 | «El mapeo usa el inverso de `PROMOTED_COLUMNS` (ya existe en `server/db/rows.ts`)» (`design:56`) | Vive en `packages/zoho-sync/src/db/rows.ts`, importado como `@ambientalia/zoho-sync/db/rows` (`transitionExec.ts:2`) | Movido al paquete al extraerse la sincronización |
