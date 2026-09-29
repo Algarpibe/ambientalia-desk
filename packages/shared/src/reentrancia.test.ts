@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, transitionById } from './transitions'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, transitionById } from './transitions'
 import {
   INDICADORES_G6, camposFechaReentrantes, camposFechaReentrantesObligatorios,
   componenteQueContiene, tablaDeReentrancia,
@@ -196,5 +196,23 @@ describe('reentrancia del catálogo equipo-nuevo (F1B-06)', () => {
 
   it('el ciclo EN no tiene ningún campo de fecha reentrante', () => {
     expect(camposFechaReentrantes(TRANSITIONS_EQUIPO_NUEVO)).toEqual([])
+  })
+})
+
+/**
+ * F1B-06 · EL CATÁLOGO `TRANSITIONS_SOPORTE_REMOTO` TIENE SU PROPIO CICLO (RQ-SR-01).
+ * `soporte_pendiente` y `continuacion_soporte` cierran `En Proceso ↔ Pendiente`, y ninguna escribe fecha: el
+ * ciclo mide la espera del cliente (`R08.2.md:1568`) sin campo reentrante alguno. Molde: el bloque de equipo-nuevo.
+ */
+describe('reentrancia del catálogo soporte-remoto (F1B-06)', () => {
+  it('el catálogo SR tiene exactamente un ciclo: En Proceso ↔ Pendiente', () => {
+    expect(tablaDeReentrancia(TRANSITIONS_SOPORTE_REMOTO).map((c) => c.estados)).toEqual([
+      ['En Proceso', 'Pendiente'],
+    ])
+  })
+
+  it('el ciclo SR no tiene ningún campo de fecha reentrante', () => {
+    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(4)
+    expect(camposFechaReentrantes(TRANSITIONS_SOPORTE_REMOTO)).toEqual([])
   })
 })

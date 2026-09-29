@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  CLASIFICACION_EN_ESPERA, ESTADOS, ESTADOS_EN_ESPERA, ESTADOS_SIN_SALIDA, enEsperaDe, type EnEspera,
+  CLASIFICACION_EN_ESPERA, ESTADOS, ESTADOS_EN_ESPERA, ESTADOS_SIN_SALIDA, ESTADOS_SERVICIO, ESTADOS_SOLO_SOPORTE_REMOTO, enEsperaDe, type EnEspera,
 } from './estados'
 import {
   TRANSITIONS, STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
@@ -12,9 +12,9 @@ import {
  * CLASIFICACIÓN, que es decisión de Gerencia y no se deriva de nada.
  */
 describe('registro de estados', () => {
-  it('declara 22 estados, sin repetidos', () => {
-    expect(ESTADOS).toHaveLength(22)
-    expect(new Set(ESTADOS).size).toBe(22)
+  it('declara 23 estados, sin repetidos', () => {
+    expect(ESTADOS).toHaveLength(23)
+    expect(new Set(ESTADOS).size).toBe(23)
   })
 
   /**
@@ -63,13 +63,13 @@ describe('registro de estados', () => {
    * obligara a clasificarlo forzaría a inventar la respuesta, y la vista enseñaría una promesa que
    * nadie ha hecho.
    */
-  it('sin_clasificar es valor válido, y hoy lo llevan Pendiente y Verificación', () => {
-    expect(estadosCon('sin_clasificar')).toEqual(['Pendiente', 'Verificación'])
-    expect(enEsperaDe('Pendiente')).toBe('sin_clasificar')
+  it('sin_clasificar es valor válido, y hoy lo llevan Pendiente, Verificación y Solicitud Soporte', () => {
+    expect(estadosCon('sin_clasificar')).toEqual(['Pendiente', 'Verificación', 'Solicitud Soporte'])
+    expect(enEsperaDe('Pendiente')).toBe('sin_clasificar'); expect(enEsperaDe('Solicitud Soporte')).toBe('sin_clasificar')
     expect(enEsperaDe('Verificación')).toBe('sin_clasificar')
   })
 
-  it('5 + 6 + 9 + 2 = 22, y no hay ningún estado fuera de las cuatro clases', () => {
+  it('5 + 6 + 9 + 3 = 23, y no hay ningún estado fuera de las cuatro clases', () => {
     const total = estadosCon('externa').length + estadosCon('interna').length
       + estadosCon('ninguna').length + estadosCon('sin_clasificar').length
     expect(total).toBe(ESTADOS.length)
@@ -211,3 +211,25 @@ function conUnaSolaSalida(): string[] {
 function estadosCon(clase: EnEspera): string[] {
   return ESTADOS.filter((e) => CLASIFICACION_EN_ESPERA[e] === clase)
 }
+
+/**
+ * `Solicitud Soporte` (F1B-06, `blueprint-soporte-remoto`, RQ-SR-03): estado sólo del flujo `soporte-remoto`.
+ * Se registra en `ESTADOS` pero no en `ESTADOS_SERVICIO`, y el estado nuevo es el ÚLTIMO del registro, así que
+ * los 21 de servicio conservan el orden (alias `e01…e21` del mapa sin regenerar).
+ */
+describe('Solicitud Soporte (RQ-SR-03)', () => {
+  it('su clase de espera es sin_clasificar (S-2)', () => {
+    expect(CLASIFICACION_EN_ESPERA['Solicitud Soporte']).toBe('sin_clasificar')
+  })
+
+  it('ESTADOS_SERVICIO sigue en 21, en el mismo orden, y no contiene Solicitud Soporte', () => {
+    expect(ESTADOS_SERVICIO).toHaveLength(21)
+    expect(ESTADOS_SERVICIO.includes('Solicitud Soporte' as never)).toBe(false)
+    expect(ESTADOS_SERVICIO).toEqual(ESTADOS.filter((e) => e !== 'Verificación' && e !== 'Solicitud Soporte'))
+    expect(ESTADOS[ESTADOS.length - 1]).toBe('Solicitud Soporte')
+  })
+
+  it('ESTADOS_SOLO_SOPORTE_REMOTO es exactamente Solicitud Soporte', () => {
+    expect([...ESTADOS_SOLO_SOPORTE_REMOTO]).toEqual(['Solicitud Soporte'])
+  })
+})

@@ -363,7 +363,7 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
 ]
 
 /**
- * Buscador de una OV ADICIONAL (asociacion-ov-ticket, lote 3, S-10: opcional). Va al FINAL del fichero y como
+ * Buscador de una OV ADICIONAL (asociacion-ov-ticket, lote 3, S-10: opcional). Va detrás de `TRANSICIONES_BASE` y como
  * `function` —se eleva— porque `TRANSICIONES_BASE` se evalúa al cargar el módulo: un `const` aquí daría error
  * de zona muerta, y insertarlo junto a `cfOrdenVenta` desplazaría las 217 citas de este fichero.
  *
@@ -374,3 +374,24 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
 function cfOvAdicional(campoFecha?: string, required = false): TransitionField {
   return { key: 'OV adicional', label: 'OV adicional', kind: 'ordenVenta', required, target: 'ovAdicional', campoFecha }
 }
+
+/**
+ * Catálogo del flujo `soporte-remoto` (F1B-06, cambio 2 de 2, M1.5 del maestro, `R08.2.md:1556-1567`, RQ-SR-01).
+ * Registro SEPARADO como `TRANSITIONS_EQUIPO_NUEVO`: `En Proceso`, `Pendiente` y `Finalizado` son homónimos de
+ * servicio y fundirlos mezclaría los grafos en `transitionsForStatus` y `areasSiguientes` (`design.md` D1). Va
+ * tras `cfOvAdicional` y no junto al de equipo nuevo para no desplazar las citas de `:365-376` (regla de mutación 4).
+ *
+ * Área: las cuatro son `Servicio Técnico` por equivalencia (S-1): la columna `ÁREA_RESPONSABLE` de la hoja de
+ * mapeo está vacía. Campos: sólo `comment()` y `derivacion()` (S-3); ninguno lleva `modalidad` (RQ-SR-10) ni fecha.
+ * El id de `soporte_pendiente` NO reutiliza `marcar_pendiente` (`:206`): buscar por id da un único catálogo (S-8).
+ */
+export const TRANSITIONS_SOPORTE_REMOTO: Transition[] = [
+  { id: 'asignacion_soporte', name: 'Asignación', from: ['Solicitud Soporte'], to: 'En Proceso', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'ejecutar_soporte', name: 'Ejecutar', from: ['En Proceso'], to: 'Finalizado', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'soporte_pendiente', name: 'Soporte pendiente', from: ['En Proceso'], to: 'Pendiente', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+  { id: 'continuacion_soporte', name: 'Continuación soporte', from: ['Pendiente'], to: 'En Proceso', area: 'Servicio Técnico',
+    fields: [comment(), derivacion()] },
+]

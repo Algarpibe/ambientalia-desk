@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
+  TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
 } from './transitions'
-import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO } from './estados'
-import { camposFechaReentrantes } from './reentrancia'
+import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO, ESTADOS_SOLO_SOPORTE_REMOTO } from './estados'
+import { camposFechaReentrantes } from './reentrancia'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'
 
 /**
  * LOS SIETE INVARIANTES DEL GRAFO (§2 del proposal F0-04).
@@ -151,16 +151,16 @@ describe('invariantes del grafo de transiciones', () => {
 })
 
 /**
- * INVARIANTES DE LA UNIÓN (F1B-06). `TRANSITIONS_EQUIPO_NUEVO` es catálogo SEPARADO (D1 de
+ * INVARIANTES DE LA UNIÓN (F1B-06). `TRANSITIONS_EQUIPO_NUEVO` y `TRANSITIONS_SOPORTE_REMOTO` son catálogos SEPARADOS (D1 de
  * `design.md`): los siete invariantes de arriba siguen hablando sólo del flujo de servicio
- * (`ESTADOS_SERVICIO`). Éstos comprueban la red completa — la unión de los dos catálogos — para que
- * un estado nuevo sin registrar, un `from`/`to` fuera de sitio o un id repetido entre los dos flujos
+ * (`ESTADOS_SERVICIO`). Éstos comprueban la red completa — la unión de los tres catálogos — para que
+ * un estado nuevo sin registrar, un `from`/`to` fuera de sitio o un id repetido entre los tres flujos
  * no se cuele sin que nada dé rojo.
  */
 describe('invariantes de la unión de catálogos (F1B-06)', () => {
-  const UNION = [...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO]
+  const UNION = [...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO]
 
-  it('1 · los estados derivados de la unión son exactamente ESTADOS (22)', () => {
+  it('1 · los estados derivados de la unión son exactamente ESTADOS (23)', () => {
     const derivados = new Set<string>()
     for (const t of UNION) {
       for (const f of t.from) derivados.add(f)
@@ -169,9 +169,9 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 40 entradas (34 + 6), con ids únicos', () => {
-    expect(UNION).toHaveLength(40)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los dos catálogos').toBe(40)
+  it('la unión tiene 44 entradas (34 + 6 + 4), con ids únicos', () => {
+    expect(UNION).toHaveLength(44)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(44)
   })
 
   it('3 · sin salida en la unión es exactamente Finalizado', () => {
@@ -215,5 +215,73 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
       expect(t.area, `${t.id} no es de Servicio Técnico (s2)`).toBe('Servicio Técnico')
       expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(['comment', 'derivado_a'])
     }
+  })
+})
+
+/**
+ * INVARIANTES DEL CATÁLOGO `TRANSITIONS_SOPORTE_REMOTO` (F1B-06, `blueprint-soporte-remoto`, D7 de `design.md`).
+ * La unión de arriba ya suma el tercer catálogo; aquí se fija lo que sólo el catálogo nuevo aporta: el estado
+ * exclusivo, los pares de RQ-SR-01 y la ausencia de una salida de anulación desde `Solicitud Soporte` (S-5).
+ */
+describe('invariantes del catálogo soporte-remoto (F1B-06)', () => {
+  const derivados = (catalogo: readonly { from: string[]; to: string }[]) => {
+    const s = new Set<string>()
+    for (const t of catalogo) { for (const f of t.from) s.add(f); s.add(t.to) }
+    return s
+  }
+
+  it('ESTADOS_SOLO_SOPORTE_REMOTO es exactamente derivados(SR) − derivados(servicio ∪ EN)', () => {
+    const ajenos = derivados([...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO])
+    const diferencia = [...derivados(TRANSITIONS_SOPORTE_REMOTO)].filter((e) => !ajenos.has(e))
+    expect(diferencia).toEqual([...ESTADOS_SOLO_SOPORTE_REMOTO])
+    expect(diferencia).toEqual(['Solicitud Soporte'])
+  })
+
+  it('RQ-SR-01 · las cuatro cubren exactamente los pares del catálogo', () => {
+    expect(TRANSITIONS_SOPORTE_REMOTO.map((t) => [t.id, t.from, t.to])).toEqual([
+      ['asignacion_soporte', ['Solicitud Soporte'], 'En Proceso'],
+      ['ejecutar_soporte', ['En Proceso'], 'Finalizado'],
+      ['soporte_pendiente', ['En Proceso'], 'Pendiente'],
+      ['continuacion_soporte', ['Pendiente'], 'En Proceso'],
+    ])
+  })
+
+  it('S-5 · las salidas de Solicitud Soporte son exactamente asignacion_soporte', () => {
+    const salidas = TRANSITIONS_SOPORTE_REMOTO.filter((t) => t.from.includes('Solicitud Soporte')).map((t) => t.id)
+    expect(salidas).toEqual(['asignacion_soporte'])
+  })
+
+  it('corrección (b) · las cuatro declaran exactamente comentario y derivación, y son de Servicio Técnico', () => {
+    expect(TRANSITIONS_SOPORTE_REMOTO).toHaveLength(4)
+    for (const t of TRANSITIONS_SOPORTE_REMOTO) {
+      expect(t.area, `${t.id} no es de Servicio Técnico (S-1)`).toBe('Servicio Técnico')
+      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(['comment', 'derivado_a'])
+    }
+  })
+})
+
+/**
+ * LOS ESTADOS DE ENTRADA (F1B-06, D7 de `design.md`, RQ-TC-07). No existía un invariante de alcanzabilidad: el 1
+ * deriva estados de `from`/`to`, y un estado que sólo figura como `from` pasa igual. Este fija cuáles no tienen
+ * transición de entrada en la unión y por qué: `Remisión creada` la aplica n8n, `OV asignada` la pone Zoho, y
+ * `Ticket creado` y `Solicitud Soporte` son los dos estados de NACIMIENTO que decide `estadoInicialDelAlta`.
+ */
+describe('estados de entrada de la unión (F1B-06, D7)', () => {
+  const UNION = [...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO]
+
+  it('los estados sin transición de entrada son exactamente Remisión creada, OV asignada, Ticket creado y Solicitud Soporte', () => {
+    const conEntrada = new Set(UNION.map((t) => t.to))
+    const sinEntrada = ESTADOS.filter((e) => !conEntrada.has(e))
+    expect(sinEntrada.sort()).toEqual(['OV asignada', 'Remisión creada', 'Solicitud Soporte', 'Ticket creado'])
+  })
+
+  it('cada clasificación nace en un estado declarado, con salida, y los de nacimiento son exactamente Ticket creado y Solicitud Soporte', () => {
+    expect(CLASIFICACIONES).toHaveLength(3)
+    for (const c of CLASIFICACIONES) {
+      const inicial = estadoInicialDelAlta(c)
+      expect(ESTADOS.includes(inicial as never), `«${c}» nace en «${inicial}», que no es un estado declarado`).toBe(true)
+      expect(transicionesDelTicket({ classification: c, status: inicial }).length, `«${c}» nace en «${inicial}» sin ninguna transición de salida`).toBeGreaterThan(0)
+    }
+    expect([...new Set(CLASIFICACIONES.map((c) => estadoInicialDelAlta(c)))].sort()).toEqual(['Solicitud Soporte', 'Ticket creado'])
   })
 })

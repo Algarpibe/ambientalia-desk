@@ -143,36 +143,36 @@ Módulo nuevo: `packages/shared/src/transitionsSoporteRemoto.test.ts`. `packages
 
 ### Bloque A · Estado
 
-- [ ] 1.1 RED — `estados.test.ts` en su sitio: `:15-17` 22→23; `:66-69` título y lista `['Pendiente', 'Verificación', 'Solicitud Soporte']` (la aserción nueva en la misma línea `:69`); `:72` «5 + 6 + 9 + 3 = 23».
+- [x] 1.1 RED — `estados.test.ts` en su sitio: `:15-17` 22→23; `:66-69` título y lista `['Pendiente', 'Verificación', 'Solicitud Soporte']` (la aserción nueva en la misma línea `:69`); `:72` «5 + 6 + 9 + 3 = 23».
   Al final: `CLASIFICACION_EN_ESPERA['Solicitud Soporte'] === 'sin_clasificar'`; `ESTADOS_SERVICIO` sigue en 21, en el MISMO orden y sin `Solicitud Soporte`; `ESTADOS_SOLO_SOPORTE_REMOTO` = `['Solicitud Soporte']`.
   RQ: RQ-SR-03 (escenarios «Solicitud Soporte no es un estado de servicio» y «Clase de espera»).
-- [ ] 1.2 Confirmar rojo natural (`ESTADOS` tiene 22; la constante no existe).
-- [ ] 1.3 GREEN — `estados.ts` en su sitio (`:101`, `:105`, `:111`, `:182`, `:184-185`, `:189`). `ESTADOS_SOLO_SOPORTE_REMOTO` va en `:182` y no al final porque `:188` evalúa `ESTADOS_SERVICIO` al cargar (`ReferenceError` si va después).
-- [ ] 1.4 Confirmar 1.1 en verde; `npm run typecheck` (`fasesBlueprint.ts:68` sigue compilando por la exclusión); `git diff --numstat -- packages/shared/src/estados.ts` = `n n` (190 líneas sin cambio).
-- [ ] 1.5 MUTACIÓN (M9) — quitar `Solicitud Soporte` de la lista de `:182`: ROJO en 1.1 y en `tsc` de `fasesBlueprint.ts:68`; revertir; `git diff` limpio.
+- [x] 1.2 Confirmar rojo natural (`ESTADOS` tiene 22; la constante no existe).
+- [x] 1.3 GREEN — `estados.ts` en su sitio (`:101`, `:105`, `:111`, `:182`, `:184-185`, `:189`). `ESTADOS_SOLO_SOPORTE_REMOTO` va en `:182` y no al final porque `:188` evalúa `ESTADOS_SERVICIO` al cargar (`ReferenceError` si va después).
+- [x] 1.4 Confirmar 1.1 en verde; `npm run typecheck` (`fasesBlueprint.ts:68` sigue compilando por la exclusión); `git diff --numstat -- packages/shared/src/estados.ts` = `n n` (190 líneas sin cambio).
+- [x] 1.5 MUTACIÓN (M9) — quitar `Solicitud Soporte` de la lista de `:182`: ROJO en 1.1 y en `tsc` de `fasesBlueprint.ts:68`; revertir; `git diff` limpio.
 
 ### Bloque B · Catálogo y grafo
 
-- [ ] 1.6 RED — `transitionsSoporteRemoto.test.ts` (nuevo): (a) los cuatro pares exactos `from→to` y ninguno más; (b) salidas de `Solicitud Soporte` = `['asignacion_soporte']` (S-5); (c) `fields` de cada una = `['comment', 'derivado_a']`, sin `modalidad`
+- [x] 1.6 RED — `transitionsSoporteRemoto.test.ts` (nuevo): (a) los cuatro pares exactos `from→to` y ninguno más; (b) salidas de `Solicitud Soporte` = `['asignacion_soporte']` (S-5); (c) `fields` de cada una = `['comment', 'derivado_a']`, sin `modalidad`
   (RQ-SR-10) y sin campo de fecha ni motivo obligatorio; (d) `area` = `'Servicio Técnico'` en las cuatro (S-1); (e) ids únicos entre los tres catálogos y `marcar_pendiente` resuelve a servicio (`transicionPorId`/`flujoDeTransicion`);
   (f) entradas y salidas por estado: `Finalizado` recibe sólo `ejecutar_soporte` de este catálogo (la prueba de pares que distingue una entrada retirada, aunque `sinSalida` no cambie).
   RQ: RQ-SR-01 (3 escenarios), RQ-SR-02 (área), RQ-SR-03 («Quitar `Ejecutar`»), RQ-SR-06 (2), RQ-SR-10 (1).
-- [ ] 1.7 RED — `reentrancia.test.ts` (al final, molde `:182-198`): `camposFechaReentrantes(TRANSITIONS_SOPORTE_REMOTO)` = `[]` y `tablaDeReentrancia` da un único ciclo `En Proceso ↔ Pendiente` (la forma exacta se fija en el rojo: hipótesis). RQ: RQ-SR-01 («cero campos de fecha reentrantes»).
-- [ ] 1.8 RED — `invariantesGrafo.test.ts` en su sitio: `:3` y `:5` importan `TRANSITIONS_SOPORTE_REMOTO`; `:161` la unión lo suma; `:154-158` comentario; `:163` «(23)»; `:172-174` 44 = 34 + 6 + 4; y sin cambio `sinSalida = ['Finalizado']` (`:177-180`).
+- [x] 1.7 RED — `reentrancia.test.ts` (al final, molde `:182-198`): `camposFechaReentrantes(TRANSITIONS_SOPORTE_REMOTO)` = `[]` y `tablaDeReentrancia` da un único ciclo `En Proceso ↔ Pendiente` (la forma exacta se fija en el rojo: hipótesis). RQ: RQ-SR-01 («cero campos de fecha reentrantes»).
+- [x] 1.8 RED — `invariantesGrafo.test.ts` en su sitio: `:3` y `:5` importan `TRANSITIONS_SOPORTE_REMOTO`; `:161` la unión lo suma; `:154-158` comentario; `:163` «(23)»; `:172-174` 44 = 34 + 6 + 4; y sin cambio `sinSalida = ['Finalizado']` (`:177-180`).
   Al final (parte catálogo): `ESTADOS_SOLO_SOPORTE_REMOTO` = derivados(SR) − derivados(servicio ∪ EN); pares de RQ-SR-01; salidas de `Solicitud Soporte` = `['asignacion_soporte']`; campos = `['comment', 'derivado_a']`.
   RQ: RQ-SR-03 («La unión deriva exactamente ESTADOS», «Finalizado sigue siendo el único sin salida»).
-- [ ] 1.9 Confirmar rojo natural de 1.6-1.8 (el export no existe → `undefined`). Declarar los que nacen verdes: `sinSalida = ['Finalizado']` y «`marcar_pendiente` es de servicio» (regresión de guardas vecinas; su rojo lo dan 1.12-1.14).
-- [ ] 1.10 GREEN — `transitions.ts`: reescribir `:366` en su sitio y añadir `TRANSITIONS_SOPORTE_REMOTO` tras `:376` con `asignacion_soporte`, `ejecutar_soporte`, `soporte_pendiente`, `continuacion_soporte`
+- [x] 1.9 Confirmar rojo natural de 1.6-1.8 (el export no existe → `undefined`). Declarar los que nacen verdes: `sinSalida = ['Finalizado']` y «`marcar_pendiente` es de servicio» (regresión de guardas vecinas; su rojo lo dan 1.12-1.14).
+- [x] 1.10 GREEN — `transitions.ts`: reescribir `:366` en su sitio y añadir `TRANSITIONS_SOPORTE_REMOTO` tras `:376` con `asignacion_soporte`, `ejecutar_soporte`, `soporte_pendiente`, `continuacion_soporte`
   (`comment()` de `:73-74` y `derivacion()` de `:97-98`, ya evaluadas; área `Servicio Técnico`).
-- [ ] 1.11 Confirmar 1.6-1.8 en verde; `git diff --numstat -- packages/shared/src/transitions.ts` = inserciones al final más `+n −n` de `:366` (n ≤ 2); confirmar que `index.ts` reexporta el catálogo (si no, una línea al final, `−0`).
-- [ ] 1.12 MUTACIÓN — añadir una entrada con `from: ['Solicitud Soporte']` y `to: 'Finalizado'`: ROJO en 1.6(b) y 1.8; revertir.
-- [ ] 1.13 MUTACIÓN — borrar `ejecutar_soporte`: ROJO en 1.6(f) aunque `sinSalida` siga en `['Finalizado']`; revertir.
-- [ ] 1.14 MUTACIÓN — `soporte_pendiente` → id `marcar_pendiente` (`transitions.ts:206`): ROJO en 1.6(e); revertir.
-- [ ] 1.15 MUTACIÓN (M7) — `from: ['Solicitud soporte']` (grafía de la hoja): ROJO en 1.6(a) y en los invariantes 1 y 4 de la unión (`invariantesGrafo.test.ts`); revertir.
+- [x] 1.11 Confirmar 1.6-1.8 en verde; `git diff --numstat -- packages/shared/src/transitions.ts` = inserciones al final más `+n −n` de `:366` (n ≤ 2); confirmar que `index.ts` reexporta el catálogo (si no, una línea al final, `−0`).
+- [x] 1.12 MUTACIÓN — añadir una entrada con `from: ['Solicitud Soporte']` y `to: 'Finalizado'`: ROJO en 1.6(b) y 1.8; revertir.
+- [x] 1.13 MUTACIÓN — borrar `ejecutar_soporte`: ROJO en 1.6(f) aunque `sinSalida` siga en `['Finalizado']`; revertir.
+- [x] 1.14 MUTACIÓN — `soporte_pendiente` → id `marcar_pendiente` (`transitions.ts:206`): ROJO en 1.6(e); revertir.
+- [x] 1.15 MUTACIÓN (M7) — `from: ['Solicitud soporte']` (grafía de la hoja): ROJO en 1.6(a) y en los invariantes 1 y 4 de la unión (`invariantesGrafo.test.ts`); revertir.
 
 ### Bloque C · Registro de flujos y nacimiento
 
-- [ ] 1.16 RED — `flujos.test.ts` en su sitio: `:3-6` imports (`esClasificacionSoporteRemoto`, `estadoInicialDelAlta`, `modalidadDelAlta`, `MODALIDADES`, `TRANSITIONS_SOPORTE_REMOTO`); `:42-45` invertida:
+- [x] 1.16 RED — `flujos.test.ts` en su sitio: `:3-6` imports (`esClasificacionSoporteRemoto`, `estadoInicialDelAlta`, `modalidadDelAlta`, `MODALIDADES`, `TRANSITIONS_SOPORTE_REMOTO`); `:42-45` invertida:
   SR en `Solicitud Soporte`, `En Proceso`, `Pendiente`, `Finalizado` → `soporte-remoto`; SR en `Ticket creado`, `Rev./Diagnostico`, `Ingresado` → `servicio`; `:136-138` título «tres entradas» y tercera aserción.
   Al final: normalización de `esClasificacionSoporteRemoto` (molde `:14-31`: «Soporte Remoto», «soporte remoto», no «Soporte remoto extra», `null`/`undefined`); `En Proceso` desambigua entre `equipo-nuevo`, `soporte-remoto` y `servicio`;
   SR heredado en `Rev./Diagnostico` y `Ticket creado` ve las de `TRANSITIONS` desde ese estado; SR en `Solicitud Soporte` ve sólo `asignacion_soporte`; `catalogoDelTicket` SR = `TRANSITIONS_SOPORTE_REMOTO`; `flujoDeTransicion('soporte_pendiente')` = `soporte-remoto`;
@@ -181,19 +181,19 @@ Módulo nuevo: `packages/shared/src/transitionsSoporteRemoto.test.ts`. `packages
   `MODALIDADES` = `['remoto', 'en sitio']` y `modalidadDelAlta` en tabla de las 10 filas de D5 (SR ausente → `remoto`; `remoto`/`en sitio` exactos; `''`, `null`, `'Remoto'`, `'presencial'` → error que nombra `modalidad`; otra clasificación ausente → `null`; con cualquier valor → error).
   La forma del retorno se fija en el rojo (hipótesis: `{ valor } | { error }`).
   RQ: RQ-EN-04 (5 escenarios), RQ-SR-05, RQ-SR-06, RQ-SR-07, RQ-SR-08, RQ-SR-09, RQ-TC-07, RQ-TC-10 (3 escenarios), RQ-SR-03 (tablero).
-- [ ] 1.17 RED — `invariantesGrafo.test.ts` al final (parte entrada, D7): los estados sin transición de entrada en la unión son exactamente `Remisión creada`, `OV asignada`, `Ticket creado` y `Solicitud Soporte` (hipótesis, se fija en el rojo);
+- [x] 1.17 RED — `invariantesGrafo.test.ts` al final (parte entrada, D7): los estados sin transición de entrada en la unión son exactamente `Remisión creada`, `OV asignada`, `Ticket creado` y `Solicitud Soporte` (hipótesis, se fija en el rojo);
   para cada una de las tres `CLASIFICACIONES`, `estadoInicialDelAlta` está declarado y `transicionesDelTicket` desde él no es vacío. RQ: RQ-TC-07.
-- [ ] 1.18 Confirmar rojo natural (las funciones no existen). Nacen verdes y se declaran: SR en `Ticket creado`/`Rev./Diagnostico` → `servicio`, `esClasificacionEquipoNuevo` y los tres tests de EN heredados (`flujos.test.ts:34-36`, `:47-49`), `columnForStatus('Solicitud Soporte')`
+- [x] 1.18 Confirmar rojo natural (las funciones no existen). Nacen verdes y se declaran: SR en `Ticket creado`/`Rev./Diagnostico` → `servicio`, `esClasificacionEquipoNuevo` y los tres tests de EN heredados (`flujos.test.ts:34-36`, `:47-49`), `columnForStatus('Solicitud Soporte')`
   si el fallback ya lo resuelve (S-10 *verificado*: `columns.ts:15`, `:38`, `:45-46`).
-- [ ] 1.19 GREEN — `flujos.ts`: `:7`, `:9-10`, `:21`, `:57`, `:91` en su sitio; tras `:106`: `CLASIFICACION_SOPORTE_REMOTO` (`(typeof CLASIFICACIONES)[number]`), `esClasificacionSoporteRemoto` (misma `normalizar`, `:32-34`),
+- [x] 1.19 GREEN — `flujos.ts`: `:7`, `:9-10`, `:21`, `:57`, `:91` en su sitio; tras `:106`: `CLASIFICACION_SOPORTE_REMOTO` (`(typeof CLASIFICACIONES)[number]`), `esClasificacionSoporteRemoto` (misma `normalizar`, `:32-34`),
   `ESTADOS_DEL_CATALOGO_SOPORTE_REMOTO`, `NOMBRE_FLUJO: Record<Flujo, string>` (`soporte remoto`), `estadoInicialDelAlta`, `MODALIDADES`/`Modalidad`/`modalidadDelAlta`.
   `estadoInicialDelAlta` usa el MISMO predicado que `flujoDelTicket` (H5: nacimiento y enrutado no pueden divergir).
-- [ ] 1.20 Confirmar 1.16-1.17 en verde; `flujos.ts` 106→106+N con `+n −n` en las cinco líneas de sitio; confirmar la hipótesis de carga de 0.5(a) (`npm test` sin `ReferenceError`).
-- [ ] 1.21 MUTACIÓN (M11) — quitar la condición de estado en `:57`: ROJO (SR heredado en `Rev./Diagnostico` ve `[]`, 1.16); revertir.
-- [ ] 1.22 MUTACIÓN (M10) — `estadoInicialDelAlta` siempre `Ticket creado`: ROJO (1.16 y el invariante de entrada 1.17); revertir.
-- [ ] 1.23 MUTACIÓN (molde H5) — `estadoInicialDelAlta` compara con el literal `'Soporte remoto'` en vez de `esClasificacionSoporteRemoto`: ROJO en «soporte remoto» normalizado (nacimiento y enrutado divergen); revertir.
-- [ ] 1.24 MUTACIÓN — `modalidadDelAlta` acepta `'Remoto'` (normaliza a minúsculas): ROJO en la tabla de 1.16; revertir.
-- [ ] 1.25 Cierre del lote 1: `npx vitest run` con el comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`. **Todo rojo fuera de `shared` se lee**: sólo se admite lo deliberado de D3
+- [x] 1.20 Confirmar 1.16-1.17 en verde; `flujos.ts` 106→106+N con `+n −n` en las cinco líneas de sitio; confirmar la hipótesis de carga de 0.5(a) (`npm test` sin `ReferenceError`).
+- [x] 1.21 MUTACIÓN (M11) — quitar la condición de estado en `:57`: ROJO (SR heredado en `Rev./Diagnostico` ve `[]`, 1.16); revertir.
+- [x] 1.22 MUTACIÓN (M10) — `estadoInicialDelAlta` siempre `Ticket creado`: ROJO (1.16 y el invariante de entrada 1.17); revertir.
+- [x] 1.23 MUTACIÓN (molde H5) — `estadoInicialDelAlta` compara con el literal `'Soporte remoto'` en vez de `esClasificacionSoporteRemoto`: ROJO en «soporte remoto» normalizado (nacimiento y enrutado divergen); revertir.
+- [x] 1.24 MUTACIÓN — `modalidadDelAlta` acepta `'Remoto'` (normaliza a minúsculas): ROJO en la tabla de 1.16; revertir.
+- [x] 1.25 Cierre del lote 1: `npx vitest run` con el comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`. **Todo rojo fuera de `shared` se lee**: sólo se admite lo deliberado de D3
   (`estados.test.ts`, `invariantesGrafo.test.ts`, `flujos.test.ts:42-45`); cualquier otro (`permisos`, `sla.test.ts:202`, `transicionesEjecucion`) es hallazgo y se declara antes de seguir.
   Medir (nuevo: `transitionsSoporteRemoto.test.ts`); recuentos: `estados.ts` 190 sin cambio, `transitions.ts` 376→376+N con `−≤2`, `flujos.ts` 106→106+N; barrido de citas sobre los siete ficheros (relee las cuyo contenido cambia:
   `estados.ts:101-111`, `:182-189`; `flujos.ts:56-61`, `:90-92`; `transitions.ts:365-376`; `invariantesGrafo.test.ts:163`, `:172`); `apply-progress.md` (~60 líneas).
@@ -314,6 +314,7 @@ añadir la de `modalidad` lo pone rojo por diseño (40 y 21, conjunto igual porq
 - [ ] 3.9 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío (`transitions-soporte-remoto` ya está en `capabilities`, `openspec/config.yaml:123-127`; R-2 se cumple con la spec).
 - [ ] 3.10 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (sin ficheros nuevos de código); confirmar uno a uno los cuatro criterios de éxito de `proposal.md:160-163`;
   `apply-progress.md` (~60 líneas, con la casilla de 3.5). **Para el `archive-report`:** una línea con qué parte del contenido de la fila F1B-06 cubre (soporte remoto y Modalidad, `cierra: si`; equipo nuevo lo hizo `blueprint-equipo-nuevo`; «hereda C12» satisfecho sin trabajo aquí).
+- [ ] 3.11 **Para el paquete de despliegue (anotado el 2026-09-29 por encargo de supervisión):** el supuesto S-6 entra en el paquete como **cambio visible**, no sólo como riesgo. El día del despliegue, los tickets de soporte remoto que estén en `Pendiente` en producción cambian de salidas: dejan de ver las de servicio y sólo les queda «Continuación soporte». Se escribe con el recuento de P.1 (tickets SR por estado). Sin ese recuento, el paquete lo dice como «sin medir», no lo omite.
 
 ---
 

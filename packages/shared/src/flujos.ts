@@ -4,10 +4,10 @@
 // `transitions.ts` desplazaría sus 334 líneas ya citadas (regla de mutación 4 de `CLAUDE.md`).
 
 import { CLASIFICACIONES } from './ticketCreate'
-import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, type Transition } from './transitions'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, type Transition } from './transitions'
 
-/** Los dos flujos que puede seguir un ticket. `servicio` es el histórico; `equipo-nuevo` es F1B-06. */
-export type Flujo = 'servicio' | 'equipo-nuevo'
+/** Los flujos que puede seguir un ticket. `servicio` es el histórico; `equipo-nuevo` y `soporte-remoto` son F1B-06. */
+export type Flujo = 'servicio' | 'equipo-nuevo' | 'soporte-remoto'
 
 /** Datos mínimos de un ticket que el registro necesita para decidir su flujo. */
 export interface TicketDeFlujo {
@@ -18,7 +18,7 @@ export interface TicketDeFlujo {
 /** El catálogo de cada flujo, por nombre. Único punto que enumera «todos los catálogos». */
 export const CATALOGO_POR_FLUJO: Record<Flujo, readonly Transition[]> = {
   servicio: TRANSITIONS,
-  'equipo-nuevo': TRANSITIONS_EQUIPO_NUEVO,
+  'equipo-nuevo': TRANSITIONS_EQUIPO_NUEVO, 'soporte-remoto': TRANSITIONS_SOPORTE_REMOTO,
 }
 
 /**
@@ -54,7 +54,7 @@ const ESTADOS_DEL_CATALOGO_EQUIPO_NUEVO = new Set<string>(
  * las transiciones de `servicio`.
  */
 export function flujoDelTicket(ticket: TicketDeFlujo): Flujo {
-  if (esClasificacionEquipoNuevo(ticket.classification) && ESTADOS_DEL_CATALOGO_EQUIPO_NUEVO.has(ticket.status)) {
+  if (esClasificacionSoporteRemoto(ticket.classification) && ESTADOS_DEL_CATALOGO_SOPORTE_REMOTO.has(ticket.status)) return 'soporte-remoto'; if (esClasificacionEquipoNuevo(ticket.classification) && ESTADOS_DEL_CATALOGO_EQUIPO_NUEVO.has(ticket.status)) {
     return 'equipo-nuevo'
   }
   return 'servicio'
@@ -88,7 +88,7 @@ export function flujoDeTransicion(id: string): Flujo | undefined {
 }
 
 function nombreFlujo(flujo: Flujo): string {
-  return flujo === 'equipo-nuevo' ? 'equipo nuevo' : 'servicio técnico'
+  return NOMBRE_FLUJO[flujo]
 }
 
 /**
@@ -103,4 +103,61 @@ export function fueraDeFlujo(t: Transition, ticket: TicketDeFlujo): string | nul
   const flujoDelTicketActual = flujoDelTicket(ticket)
   if (flujoDeLaTransicion === undefined || flujoDeLaTransicion === flujoDelTicketActual) return null
   return `La transición "${t.name}" es del flujo de ${nombreFlujo(flujoDeLaTransicion)} y este ticket sigue el flujo de ${nombreFlujo(flujoDelTicketActual)}`
+}
+
+// ── F1B-06, cambio 2 de 2 (`blueprint-soporte-remoto`): `soporte-remoto`, nacimiento y Modalidad ──────────────
+// Todo lo de abajo se declara DESPUÉS de `flujoDelTicket` y sólo se LEE al llamarla: ningún módulo de `shared`
+// la invoca al cargar (hipótesis de `design.md` D2, confirmada por el orden de carga de la suite).
+
+/** Como `CLASIFICACION_EQUIPO_NUEVO`: tipada contra `CLASIFICACIONES` para que `tsc` rompa si el texto cambia. */
+const CLASIFICACION_SOPORTE_REMOTO: (typeof CLASIFICACIONES)[number] = 'Soporte remoto'
+
+/** ¿Esta clasificación (con la mayúscula variable de Zoho) es «Soporte remoto»? Igualdad, no `includes`. */
+export function esClasificacionSoporteRemoto(clasificacion: string | null | undefined): boolean {
+  if (!clasificacion) return false
+  return normalizar(clasificacion) === normalizar(CLASIFICACION_SOPORTE_REMOTO)
+}
+
+/** Los estados que aparecen en el catálogo de soporte remoto, como `from` o como `to` (los 4, RQ-SR-01). */
+const ESTADOS_DEL_CATALOGO_SOPORTE_REMOTO = new Set<string>(
+  TRANSITIONS_SOPORTE_REMOTO.flatMap((t) => [...t.from, t.to]),
+)
+
+/** El nombre humano de cada flujo, para el `409` de la guarda 3. Un cuarto flujo sin nombre rompe `tsc`. */
+const NOMBRE_FLUJO: Record<Flujo, string> = {
+  servicio: 'servicio técnico',
+  'equipo-nuevo': 'equipo nuevo',
+  'soporte-remoto': 'soporte remoto',
+}
+
+/**
+ * El estado en que NACE un ticket según su clasificación (D4, RQ-SR-04). Usa el MISMO predicado que
+ * `flujoDelTicket`, así que el nacimiento y el enrutado no pueden divergir (molde H5): un soporte remoto
+ * nace en `Solicitud Soporte`, el primero de su catálogo; cualquier otro, en `Ticket creado`.
+ */
+export function estadoInicialDelAlta(clasificacion: string | null | undefined): string {
+  return esClasificacionSoporteRemoto(clasificacion) ? 'Solicitud Soporte' : 'Ticket creado'
+}
+
+/** El dominio de Modalidad (S-4, `decision/anexo-43-en-sitio`). Sin `CHECK` en la columna: la lista blanca vive aquí. */
+export const MODALIDADES = ['remoto', 'en sitio'] as const
+export type Modalidad = (typeof MODALIDADES)[number]
+
+/**
+ * La modalidad con que se guarda el alta (D5, RQ-SR-07/08/09). Soporte remoto: ausente (`undefined`) → `remoto`;
+ * `remoto`/`en sitio` exactos → ese valor; cualquier otro (incluidos `''`, `null`, `'Remoto'`) → error. Otra
+ * clasificación: ausente → `null`; cualquier valor, incluso válido, → error. El error nombra `modalidad`.
+ */
+export function modalidadDelAlta(
+  clasificacion: string | null | undefined,
+  valor: string | null | undefined,
+): { valor: Modalidad | null } | { error: string } {
+  if (esClasificacionSoporteRemoto(clasificacion)) {
+    if (valor === undefined) return { valor: 'remoto' }
+    const valida = MODALIDADES.find((m) => m === valor)
+    if (valida) return { valor: valida }
+    return { error: `La modalidad ${JSON.stringify(valor)} no es válida: debe ser «remoto» o «en sitio»` }
+  }
+  if (valor === undefined) return { valor: null }
+  return { error: 'La modalidad sólo aplica a los tickets de soporte remoto' }
 }
