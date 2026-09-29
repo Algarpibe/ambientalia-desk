@@ -66,12 +66,12 @@ Rutas relativas a `apps/desk/server/` salvo `shared` (= `packages/shared/src/con
 | 8 | Sin Comercial, 403 | `routes/contratos.test.ts:35` (ST, Compras) y `:49` (403 con cuerpo inválido) | PASS |
 | 9 | Administrador puede crear | `routes/contratos.test.ts:35` (fila `administrador sin área`) | PASS |
 | 10 | Segundo del mismo lote, 409 | `routes/contratos.test.ts:117`, `:126` (carrera 23505); base: `db/contratos.test.ts:44`, `:49` | PASS |
-| 11 | Contenido inválido, 422 | `routes/contratos.test.ts:99-116` (8 casos); `CHECK`: `db/contratos.test.ts:56` | PASS |
+| 11 | Contenido inválido, 422 | `routes/contratos.test.ts:100-115` (8 casos); `CHECK`: `db/contratos.test.ts:56` | PASS |
 | 12 | Permiso > contenido > unicidad | `routes/contratos.test.ts:141`, `:147` | PASS |
 | 13 | Lectura abierta a sesión | `routes/contratos.test.ts:57-67` (3 rutas por 6 roles), `:80` | PASS |
 | 14-16 | Fin incluido / día siguiente / inicio y víspera | `shared:24-38` (`estadoContrato`), `:62-72` (`hoyEnZona`) | PASS |
 | 17-21 | Ticket de contrato: vigente, vencido sin escribir, liberada, ordinaria o sin contrato, clientes distintos | `db/contratos.test.ts:126`, `:132`, `:140`, `:147`, `:154` | PASS |
-| 22-27 | Prioridad `High` (Low a High, sin prioridad, sin contrato, vencido o no iniciado, fin = hoy, cliente del ticket) | `services/ticketService.test.ts:962-976` (`it.each`, 7 casos) y `:977`; `shared:75-80` | PASS |
+| 22-27 | Prioridad `High` (Low a High, sin prioridad, sin contrato, vencido o no iniciado, fin = hoy, cliente del ticket) | `services/ticketService.test.ts:962-975` (`it.each`, 7 casos) y `:977`; `shared:75-80` | PASS |
 | 28-32 | Vencido en cada puerta / sin contrato / no iniciado / último día / ordinaria y `OVI-` | `services/ticketService.test.ts:989`, `:997-1008`, `:1054`, `:1063`; `remisiones.test.ts:1321`, `:1354`; `db/contratos.test.ts:89`; `shared:40-60` | PASS |
 | 33 | Vencido y unicidad, gana el vencido | `services/ticketService.test.ts:1017`, `:1071`, `:1100`; `remisiones.test.ts:1329` | PASS |
 | 34 | Cuarentena y vencido, excluyentes | `services/ticketService.test.ts:1009` | PASS |
@@ -118,7 +118,7 @@ Rutas relativas a `apps/desk/server/` salvo `shared` (= `packages/shared/src/con
 | 68 | Ritmo insuficiente avisa a Comercial | `services/avisoRitmoContrato.test.ts:60`; regla `shared:168` | PASS |
 | 69 | Segunda evaluación no repite | `services/avisoRitmoContrato.test.ts:71`, `:80` | PASS |
 | 70 | Trimestre siguiente avisa de nuevo | `services/avisoRitmoContrato.test.ts:88` | PASS |
-| 71-73 | Ritmo suficiente / dentro de t1 / sin creadas o vencido | `services/avisoRitmoContrato.test.ts:96-107` (`it.each`); `shared:168-173` | PASS |
+| 71-73 | Ritmo suficiente / dentro de t1 / sin creadas o vencido | `services/avisoRitmoContrato.test.ts:97-108` (`it.each`); `shared:168-173` | PASS |
 | 74 | El aviso no dispara correo | `services/avisoRitmoContrato.test.ts:60` (sólo bandeja) | PASS |
 
 ### Criterios de éxito de `proposal.md:166-172`
@@ -142,7 +142,7 @@ Rutas relativas a `apps/desk/server/` salvo `shared` (= `packages/shared/src/con
 | Marca derivada `routes/contratos.ts:36` hacia `db/contratos.ts:106` | idénticas | correcta |
 | Estado y saldo `routes/contratos.ts:28`; informe `:65` | `:28` abre la ruta (estado y saldo en `:33`); `:65` abre la del informe | correcta |
 | `High` `ticketService.ts:106` | `prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!))` | correcta |
-| `celdaCSV` `shared/contratos.ts:219`, `csvDelInforme` `:233` | idénticas | correcta |
+| `celdaCSV` `packages/shared/src/contratos.ts:219`, `csvDelInforme` `:233` | idénticas | correcta |
 | Sólo `GET` y `POST` | cinco rutas: `:24`, `:28`, `:36`, `:40`, `:65`; ningún `PUT`, `PATCH` ni `DELETE` | correcta |
 
 Ninguna decisión del cliente queda sin línea del servidor. El CSV es la excepción declarada: lo genera el navegador y la regla vive en `shared`, probada en node.
