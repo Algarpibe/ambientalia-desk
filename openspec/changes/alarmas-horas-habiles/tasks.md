@@ -14,15 +14,15 @@ Las citas se leyeron el 2026-09-29 contra el árbol de `6516e5f` por lectura dir
 - [x] A.1 **Hallazgo al planificar: el lote 1 solo rompe el servidor.** `apps/desk/server/db/sla.ts:58` en `6516e5f` llama `slaVencido(estado, desde, ahora)` y la firma nueva exige `cierres`; sin puente, `npm run typecheck` (`tsc -p apps/desk/tsconfig.server.json`) falla al integrar el lote 1 (stacked-to-main: cada lote va verde a `main`).
   Solución: tarea 1.6, un puente EN SITIO (`slaVencido(estado, desde, ahora, [])`, mismas 63 líneas), que el lote 2 reemplaza por los cierres reales. Con cierres `[]` y `AHORA = 2026-09-10T12:00Z`, las siete pruebas de `db/sla.test.ts` siguen dando el mismo resultado (hipótesis: `t1` lleva dos días hábiles, `t2` cero; se confirma corriéndolas en 1.6).
   `venceSlaEn` y `destinatarioDelEscalado` no tienen otro consumidor: `Grep` sobre `apps/` y `packages/` (2026-09-29) sólo halla `db/sla.ts:2` en `6516e5f` (y su `:58`/`:59`), `sla.test.ts` y comentarios (`bodegaje.ts:27`, `bodegaje.test.ts:37`, `transitions.ts:340`).
-- [ ] A.2 **Recuento de escenarios: 46** (`transitions-st` 12 + 3 + 6 = 21; `derivacion-avisos` 6 + 8 + 4 = 18; `vistas-tablero` 6 + 1 = 7). Numerados S1-S46 en la matriz de abajo; S46 (el corte no se mueve con un reinicio) entró con la revisión de S-13 y va al final para no renumerar.
-- [ ] A.3 **Reparto en CUATRO lotes, no tres.** El encargo pedía tres; mi estimación del lote «servidor y BD» sale a ~1.100 (código ~320, pruebas ~720, `apply-progress` ~60), por encima de 800. Se parte en el lote 2 (BD y consulta, ~475) y el lote 3 (servicio y cableado, ~625).
+- [x] A.2 **Recuento de escenarios: 46** (`transitions-st` 12 + 3 + 6 = 21; `derivacion-avisos` 6 + 8 + 4 = 18; `vistas-tablero` 6 + 1 = 7). Numerados S1-S46 en la matriz de abajo; S46 (el corte no se mueve con un reinicio) entró con la revisión de S-13 y va al final para no renumerar.
+- [x] A.3 **Reparto en CUATRO lotes, no tres.** El encargo pedía tres; mi estimación del lote «servidor y BD» sale a ~1.100 (código ~320, pruebas ~720, `apply-progress` ~60), por encima de 800. Se parte en el lote 2 (BD y consulta, ~475) y el lote 3 (servicio y cableado, ~625).
   El lote 4 es «tablero y cierre» (~375). Cada uno cabe en 800 con margen.
 
 ## Fase 0 · Preparación (orquestador; sin código)
 
-- [ ] 0.1 `git rev-parse HEAD` (esperado `6516e5f`) y `git status --short` (sólo los sin trackear de la cabecera de sesión y `openspec/changes/alarmas-horas-habiles/`). `git diff --stat 4796aad HEAD -- apps packages` debe salir vacío: los commits posteriores a la medición de `design.md` son sólo de `docs/`.
-- [ ] 0.2 Línea base verde: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`. Anotar nº de ficheros y de tests en `apply-progress.md` (si `auth/routes.test.ts` da timeout intermitente, es E-091: se relanza y se anota, no se corrige aquí).
-- [ ] 0.3 **Re-medir puntos de inserción y citas** en el HEAD de arranque (los valores entre paréntesis son los de `design.md` §9, contados con ripgrep e incluyen sin trackear; `git grep` sólo cuenta lo trackeado y puede salir MENOR). Regla: si un fichero sale **mayor**, alguien añadió citas: se leen.
+- [x] 0.1 `git rev-parse HEAD` (esperado `6516e5f`) y `git status --short` (sólo los sin trackear de la cabecera de sesión y `openspec/changes/alarmas-horas-habiles/`). `git diff --stat 4796aad HEAD -- apps packages` debe salir vacío: los commits posteriores a la medición de `design.md` son sólo de `docs/`.
+- [x] 0.2 Línea base verde: (hecha DESPUÉS del GREEN del lote 1, no antes: desviación declarada en `apply-progress.md`, lote 1) `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`. Anotar nº de ficheros y de tests en `apply-progress.md` (si `auth/routes.test.ts` da timeout intermitente, es E-091: se relanza y se anota, no se corrige aquí).
+- [x] 0.3 **Re-medir puntos de inserción y citas** en el HEAD de arranque (los valores entre paréntesis son los de `design.md` §9, contados con ripgrep e incluyen sin trackear; `git grep` sólo cuenta lo trackeado y puede salir MENOR). Regla: si un fichero sale **mayor**, alguien añadió citas: se leen.
   ```bash
   wc -l packages/shared/src/sla.ts packages/shared/src/sla.test.ts apps/desk/server/db/sla.ts apps/desk/server/db/sla.test.ts apps/desk/server/db/avisos.ts apps/desk/server/index.ts \
         packages/zoho-sync/src/db/schema.sql packages/zoho-sync/src/db/migrate.ts packages/zoho-sync/src/db/migrate.test.ts packages/shared/src/types.ts \
@@ -40,10 +40,10 @@ Las citas se leyeron el 2026-09-29 contra el árbol de `6516e5f` por lectura dir
   git grep -nE "TicketCard\.tsx:[0-9]+" | wc -l  # 49 (la más alta :83)
   ```
   Si algún `wc -l` difiere de su valor, los puntos de inserción se han movido: se para y se declara. Copiar la tabla de puntos de cada lote al `apply-progress.md` con los valores medidos.
-- [ ] 0.4 Confirmar que `schema.sql:576` es hoy la `ALTER` de `tickets.modalidad` y que el fichero termina ahí (la tabla nueva empieza en `:577`); es lo que cita la nota de despliegue.
-- [ ] 0.5 Leer antes de escribir código lo que el diseño da por sabido: `calendarioLaboral.ts:174-190` (firma de `horasHabilesEntre` y forma de `cierres`; ¿`DiaCivil` se exporta?), `calendarioLaboral.test.ts` (fixtures de festivo y de zona `ZONA_NEGOCIO` para reutilizarlos en 1.2),
+- [x] 0.4 Confirmar que `schema.sql:576` es hoy la `ALTER` de `tickets.modalidad` y que el fichero termina ahí (la tabla nueva empieza en `:577`); es lo que cita la nota de despliegue.
+- [x] 0.5 Leer antes de escribir código lo que el diseño da por sabido: `calendarioLaboral.ts:174-190` (firma de `horasHabilesEntre` y forma de `cierres`; ¿`DiaCivil` se exporta?), `calendarioLaboral.test.ts` (fixtures de festivo y de zona `ZONA_NEGOCIO` para reutilizarlos en 1.2),
   `db/transaccion.ts:13` (`enTransaccion`), `avisoRitmoContrato.ts:25-75` y `:185-195` de su prueba (molde y guardián de `index.ts`), `repo.ts:362-379` (`ticketConOrdenVenta`).
-- [ ] 0.6 Ledger: un intento de `gentle-ai sdd-attempt` por lote, **en serie** (regla del ciclo 2), cuatro en total. `verify` y `archive` son intentos aparte. Nada en paralelo sobre este árbol.
+- [x] 0.6 Ledger: un intento de `gentle-ai sdd-attempt` por lote, **en serie** (regla del ciclo 2), cuatro en total. `verify` y `archive` son intentos aparte. Nada en paralelo sobre este árbol.
 
 ## Review Workload Forecast
 
