@@ -318,7 +318,7 @@ export interface CreateTicketPayload {
   clientId?: string
   equipoId: string
   tipoServicio: string
-  clasificaciones: string
+  clasificaciones: string; modalidad?: string // sólo con «Soporte remoto» (RQ-SR-07/09)
   prefijo: string
   ordenVenta?: string
   prioridad?: string

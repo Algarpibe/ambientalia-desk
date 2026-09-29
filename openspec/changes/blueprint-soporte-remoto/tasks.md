@@ -16,13 +16,13 @@ hostil que sí hay (modalidad `''`, `null`, `'Remoto'`, `'presencial'`, modalida
 - [x] A.1 `specs/transitions-soporte-remoto/spec.md`, RQ-SR-05 (`:172-174`) y el escenario de `:195-198`: «nombre el flujo `soporte-remoto`» → «nombre el flujo
   (`soporte remoto`, con espacio, como `equipo nuevo` y `servicio técnico` en `flujos.ts:91`)». El id del flujo es `soporte-remoto`; el TEXTO del `409` es humano.
   Mismo número de líneas. Sin esto la prueba 1.16 y la spec discrepan (**hallazgo al planificar**). Documental, directo.
-- [ ] A.2 Recuento de escenarios: el encargo hablaba de 20 en `tickets-core`; la spec tiene **19** `#### Scenario` y **un** bloque `Given/When/Then` heredado en RQ-TC-06
+- [x] A.2 Recuento de escenarios: el encargo hablaba de 20 en `tickets-core`; la spec tiene **19** `#### Scenario` y **un** bloque `Given/When/Then` heredado en RQ-TC-06
   (`specs/tickets-core/spec.md:157-160`). Se cuenta como el 20.º (regresión). Total de la matriz: **56** (55 con encabezado + 1).
 
 ## Fase 0 · Preparación (orquestador; sin código)
 
-- [ ] 0.1 `git rev-parse HEAD` (esperado `66ab783`) y `git status --short` (sólo los sin trackear de la cabecera de sesión y `openspec/changes/blueprint-soporte-remoto/`).
-- [ ] 0.2 Línea base verde: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`. Anotar nº de ficheros y de tests en `apply-progress.md`.
+- [x] 0.1 `git rev-parse HEAD` (esperado `66ab783`) y `git status --short` (sólo los sin trackear de la cabecera de sesión y `openspec/changes/blueprint-soporte-remoto/`).
+- [x] 0.2 Línea base verde: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`. Anotar nº de ficheros y de tests en `apply-progress.md`.
 - [x] 0.3 **Re-medir citas** (esta sesión no tuvo Bash; los valores entre paréntesis son los provisionales de `design.md` §8, contados con ripgrep e incluyen sin trackear;
   `git grep` sólo cuenta lo trackeado, así que puede salir MENOR por las citas de esta carpeta). Regla de decisión: si un fichero sale **mayor** que su provisional, alguien añadió citas: se leen.
   **Medido por el orquestador el 2026-09-29 sobre `66ab783` (sólo trackeado), ninguno sale mayor que su provisional:** `transitions.ts` 374 · `estados.ts` 253 · `flujos.ts` 12 · `ticketService.ts` 486 · `schema.sql` 199 · `db/repo.ts` 91 con ruta (más 159 `repo.ts` sin ruta, ambiguos entre `db/` y `books/`) · `rows.ts` 42 · `mappers.ts` 9 · `migrate.test.ts` 55 · `invariantesGrafo.test.ts` 62 · `estados.test.ts` 72 · `flujos.test.ts` 0 · `CreateTicket.tsx` 31 · `equipoNuevo.ts` 40.
@@ -48,13 +48,13 @@ hostil que sí hay (modalidad `''`, `null`, `'Remoto'`, `'presencial'`, modalida
   for f in permisos transicionesEjecucion avisoArea reentrancia; do echo $f; git grep -nE "$f\.test\.ts:[0-9]+" | wc -l; done   # a medir
   git grep -nE "repo\.test\.ts:[0-9]+" -- packages/zoho-sync/src/db | wc -l   # a medir
   ```
-- [ ] 0.4 Confirmar largos de fichero (`wc -l`) contra `design.md` §8: `transitions.ts` 376, `estados.ts` 190, `flujos.ts` 106, `ticketService.ts` 234-235, `schema.sql` 573, `db/repo.ts` 452,
+- [x] 0.4 Confirmar largos de fichero (`wc -l`) contra `design.md` §8: `transitions.ts` 376, `estados.ts` 190, `flujos.ts` 106, `ticketService.ts` 234-235, `schema.sql` 573, `db/repo.ts` 452,
   `rows.ts` 132, `mappers.ts` 261, `types.ts` 810, `migrate.test.ts` 444, `invariantesGrafo.test.ts` 219, `flujos.test.ts` 140 (leído hoy: 140), `CreateTicket.tsx` 455.
   Si alguno difiere, los puntos de inserción se han movido: se para y se declara.
-- [ ] 0.5 Dos hipótesis de `design.md` que se comprueban antes de escribir código: (a) `git grep -nE "flujoDelTicket|catalogoDelTicket|transicionesDelTicket" -- packages/shared/src ':!*.test.ts'`
+- [x] 0.5 Dos hipótesis de `design.md` que se comprueban antes de escribir código: (a) `git grep -nE "flujoDelTicket|catalogoDelTicket|transicionesDelTicket" -- packages/shared/src ':!*.test.ts'`
   sólo en cuerpos de función (ningún módulo de `shared` lo llama al cargar, D2); (b) `git grep -nE "\bcreateTicket\(" -- . ':!*.test.ts'` = sólo `equipoNuevo.ts:90` (D4); y leer
   `equipoNuevo.ts:80-99` para confirmar que `crearTicketConEquipo` reenvía `modalidad` sin construir un objeto nuevo (si lo construye, el ajuste va en línea en ese fichero).
-- [ ] 0.6 Ledger: un intento de `gentle-ai sdd-attempt` por lote, **en serie** (regla del ciclo 2). `verify` y `archive` son intentos aparte.
+- [x] 0.6 Ledger: un intento de `gentle-ai sdd-attempt` por lote, **en serie** (regla del ciclo 2). `verify` y `archive` son intentos aparte.
 
 ## Review Workload Forecast
 
@@ -286,12 +286,12 @@ añadir la de `modalidad` lo pone rojo por diseño (40 y 21, conjunto igual porq
 | `apps/desk/server/services/equipoNuevo.ts` (a medir) | `:65-66` reparación de deriva previa | EN SU SITIO |
 | `docs/sdd/R08.3_Expediente_de_cambios.md` (~657) | texto para el expediente (`toca_maestro: si`, sin tocar el `.docx`) | FINAL |
 
-- [ ] 3.1 `client.ts` en línea: el tipo del cuerpo del alta gana `modalidad?: string`. `types.ts:131` ya lo trae del lote 2.
-- [ ] 3.2 `CreateTicket.tsx` `:3`, `:45`, `:230`, `:422` en su sitio: estado inicial `remoto`; selector de dos opciones (`MODALIDADES`) visible sólo si `esClasificacionSoporteRemoto(clasificaciones)`, con etiquetas en español («Remoto», «En sitio») en la capa de presentación;
+- [x] 3.1 `client.ts` en línea: el tipo del cuerpo del alta gana `modalidad?: string`. `types.ts:131` ya lo trae del lote 2. **Hecho en `types.ts:321`** (`CreateTicketPayload`, en `shared`): `client.ts:286` sólo lo importa, así que no se toca.
+- [x] 3.2 `CreateTicket.tsx` `:3`, `:45`, `:230`, `:422` en su sitio: estado inicial `remoto`; selector de dos opciones (`MODALIDADES`) visible sólo si `esClasificacionSoporteRemoto(clasificaciones)`, con etiquetas en español («Remoto», «En sitio») en la capa de presentación;
   el payload OMITE la clave en cualquier otra clasificación. El cliente no reescribe el predicado (regla 13, punto 1).
-- [ ] 3.3 `TicketProperties.tsx` `:141-144`: mostrar `modalidad` en sólo lectura junto a la clasificación cuando no es `null`.
-- [ ] 3.4 Sin prueba posible (F0-00): `npm run typecheck`, `npm run build` y `npx eslint . --max-warnings 165` en verde. La imposición está probada en node: 2.13 (A1-A10) y 1.16.
-- [ ] 3.5 **Regla de mutación 3 — casilla de la regla 13, decisión a decisión de `CreateTicket.tsx`** (se escribe en `apply-progress.md`, dentro de las ~60 líneas; con la línea REAL leída al cerrar, no la del diseño). Se lee el fichero entero y se enumera todo lo que el cliente bloquea, rellena solo o avisa:
+- [x] 3.3 `TicketProperties.tsx` `:141-144`: mostrar `modalidad` en sólo lectura junto a la clasificación cuando no es `null`.
+- [x] 3.4 Sin prueba posible (F0-00): `npm run typecheck`, `npm run build` y `npx eslint . --max-warnings 165` en verde. La imposición está probada en node: 2.13 (A1-A10) y 1.16.
+- [x] 3.5 **Regla de mutación 3 — casilla de la regla 13, decisión a decisión de `CreateTicket.tsx`** (se escribe en `apply-progress.md`, dentro de las ~60 líneas; con la línea REAL leída al cerrar, no la del diseño). Se lee el fichero entero y se enumera todo lo que el cliente bloquea, rellena solo o avisa:
   | Decisión del cliente | Línea del servidor que la impone (a confirmar) |
   |---|---|
   | Mostrar el selector sólo en SR y omitir la clave en otra clasificación | `ticketService.ts:91` (guarda en línea sobre `modalidadDelAlta`, 422 si llega fuera de SR); prueba A5 |
@@ -302,19 +302,19 @@ añadir la de `modalidad` lo pone rojo por diseño (40 y 21, conjunto igual porq
   | Exigir equipo en SR (preexistente, contigua al cambio) | `ticketService.ts:24`; prueba A6 |
   | Cualquier otra decisión que aparezca al leer el fichero | — |
   Sin línea, la decisión es la guarda: se para y se declara. **Heredado, no nuevo:** ocultar «Crear remisión» fuera de la fase inicial (`transitions.ts:163-165`) no tiene contrapartida en `routes/remision.ts` (0 usos de `puedeCrearRemisionDeEntrada`); el SR lo hereda y es F1B-03.
-- [ ] 3.6 **Deriva previa, caso A:** `apps/desk/server/services/equipoNuevo.ts:65-66` cita `ticketService.ts:89` para `validarCamposEquipoNuevo`, que está en `:91` (leído hoy), y lo llama «la última guarda del escalón C», **falso ya hoy** por `:96` (cuarentena y vencido, C, que corre después) y falso a fortiori con la modalidad en `:91`.
+- [x] 3.6 **Deriva previa, caso A:** `apps/desk/server/services/equipoNuevo.ts:65-66` cita `ticketService.ts:89` para `validarCamposEquipoNuevo`, que está en `:91` (leído hoy), y lo llama «la última guarda del escalón C», **falso ya hoy** por `:96` (cuarentena y vencido, C, que corre después) y falso a fortiori con la modalidad en `:91`.
   Reescribir en su sitio, mismas dos líneas: «`ticketService.ts:91`, tras los obligatorios y el cliente, antes de la cuarentena y el vencido de `:96` y del `409` de unicidad (escalón D)». Lo que afirma la cita se comprueba contra el árbol de ese momento (regla 4: LEER, no renumerar).
-- [ ] 3.7 **Barrido de la regla de mutación 4 sobre CADA fichero muy citado tocado** (`transitions.ts`, `estados.ts`, `flujos.ts`, `ticketService.ts`, `schema.sql`, `db/repo.ts`, `rows.ts`, `mappers.ts`, `types.ts`, `migrate.test.ts`, `invariantesGrafo.test.ts`, `estados.test.ts`, `flujos.test.ts`, `CreateTicket.tsx`,
+- [x] 3.7 **Barrido de la regla de mutación 4 sobre CADA fichero muy citado tocado** (`transitions.ts`, `estados.ts`, `flujos.ts`, `ticketService.ts`, `schema.sql`, `db/repo.ts`, `rows.ts`, `mappers.ts`, `types.ts`, `migrate.test.ts`, `invariantesGrafo.test.ts`, `estados.test.ts`, `flujos.test.ts`, `CreateTicket.tsx`,
   `TicketProperties.tsx`, `api/client.ts`, `equipoNuevo.ts`, y los `*.test.ts` ampliados al final). Comando por fichero: `grep -rnoE "<fichero>\.(ts|tsx|sql):[0-9]+(-[0-9]+)?" . --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=archive`, y un segundo pase con la forma abreviada (`` `:NN` ``) en los ficheros que ya citan el módulo.
   Tres reglas: los DOS extremos de cada rango; lo que AFIRMA la frase y no sólo que la línea exista; y A/B/C para reparar. Como ninguna edición desplaza líneas, es verificación de contenido. Se releen a mano las que cambian de contenido:
   `ticketService.ts:91`, `:107`, `:20`; `repo.ts:405-411`, `:418-422`, `:434-435`; `estados.ts:101-111`, `:182-189`; `flujos.ts:56-61`, `:90-92`; `transitions.ts:365-376`; `invariantesGrafo.test.ts:163`, `:172`; `flujos.test.ts:42-45` (citada por la spec como prueba invertida: pasa a Caso B, se nombra la revisión `66ab783`).
   Después, el detector de `hook-citas-pre-push` sobre el diff: 0 rotas nuevas (no se salta con `--no-verify`).
-- [ ] 3.8 Texto para el expediente R08.3, AL FINAL de `docs/sdd/R08.3_Expediente_de_cambios.md` (~30 líneas, sin tocar el `.docx`): M1.5 (`R08.2.md:1551-1568`) construido con los supuestos S-1 a S-10; el Anexo H (`R08.2.md:4642-4645`) deja de decir «No construido»;
+- [x] 3.8 Texto para el expediente R08.3, AL FINAL de `docs/sdd/R08.3_Expediente_de_cambios.md` (~30 líneas, sin tocar el `.docx`): M1.5 (`R08.2.md:1551-1568`) construido con los supuestos S-1 a S-10; el Anexo H (`R08.2.md:4642-4645`) deja de decir «No construido»;
   el campo «Modalidad» viene de `decision/anexo-43-en-sitio` (`openspec/config.yaml:2413`, `:2416`) y no de M1.5; el área de las cuatro transiciones es un supuesto abierto (P.3).
-- [ ] 3.9 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío (`transitions-soporte-remoto` ya está en `capabilities`, `openspec/config.yaml:123-127`; R-2 se cumple con la spec).
-- [ ] 3.10 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (sin ficheros nuevos de código); confirmar uno a uno los cuatro criterios de éxito de `proposal.md:160-163`;
+- [x] 3.9 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío (`transitions-soporte-remoto` ya está en `capabilities`, `openspec/config.yaml:123-127`; R-2 se cumple con la spec).
+- [x] 3.10 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (sin ficheros nuevos de código); confirmar uno a uno los cuatro criterios de éxito de `proposal.md:160-163`;
   `apply-progress.md` (~60 líneas, con la casilla de 3.5). **Para el `archive-report`:** una línea con qué parte del contenido de la fila F1B-06 cubre (soporte remoto y Modalidad, `cierra: si`; equipo nuevo lo hizo `blueprint-equipo-nuevo`; «hereda C12» satisfecho sin trabajo aquí).
-- [ ] 3.11 **Para el paquete de despliegue (anotado el 2026-09-29 por encargo de supervisión):** el supuesto S-6 entra en el paquete como **cambio visible**, no sólo como riesgo. El día del despliegue, los tickets de soporte remoto que estén en `Pendiente` en producción cambian de salidas: dejan de ver las de servicio y sólo les queda «Continuación soporte». Se escribe con el recuento de P.1 (tickets SR por estado). Sin ese recuento, el paquete lo dice como «sin medir», no lo omite.
+- [x] 3.11 **Para el paquete de despliegue (anotado el 2026-09-29 por encargo de supervisión):** el supuesto S-6 entra en el paquete como **cambio visible**, no sólo como riesgo. El día del despliegue, los tickets de soporte remoto que estén en `Pendiente` en producción cambian de salidas: dejan de ver las de servicio y sólo les queda «Continuación soporte». Se escribe con el recuento de P.1 (tickets SR por estado). Sin ese recuento, el paquete lo dice como «sin medir», no lo omite. **Precisión de supervisión (29/09, lote 3):** NO se edita `docs/sdd/Paquete_de_Despliegue_2026-09-29.md`, que es un registro fechado de `ae5aaf4..3f9d23b`. S-6 va al `archive-report` como cambio visible, y el **SIGUIENTE** paquete de despliegue TIENE QUE llevarlo —con el recuento de P.1 o, si no lo hay, «sin medir»— junto con la columna nueva `tickets.modalidad` (`packages/zoho-sync/src/db/schema.sql:576`, `ALTER` aditiva y nullable, sin relleno).
 
 ---
 

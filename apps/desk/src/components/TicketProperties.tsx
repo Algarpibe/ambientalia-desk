@@ -141,7 +141,7 @@ export function TicketProperties({ detail, width = 300 }: { detail: TicketDetail
         {detail.classification && (
           <div>
             <div className="text-[11px] text-slate-400 mb-0.5">Clasificaciones</div>
-            <span className="text-[11px] text-orange-600 px-2 py-0.5 bg-orange-50 rounded-full font-bold">{detail.classification}</span>
+            <span className="text-[11px] text-orange-600 px-2 py-0.5 bg-orange-50 rounded-full font-bold">{detail.classification}</span>{detail.modalidad && <span className="text-[11px] text-slate-600 ml-1">· Modalidad: {detail.modalidad.charAt(0).toUpperCase() + detail.modalidad.slice(1)}</span>}
           </div>
         )}
       </Section>

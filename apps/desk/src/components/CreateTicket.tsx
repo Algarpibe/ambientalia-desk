@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite, Catalogo } from '@ambientalia/shared'
-import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
+import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
 import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo } from '../api/client'
 import { CrearRemision } from './CrearRemision'
 
@@ -42,7 +42,7 @@ export function CreateTicket({ onClose, onCreated }: {
   const equiposAcotados = !!clientId
 
   const [tipoServicio, setTipoServicio] = useState('')
-  const [clasificaciones, setClasificaciones] = useState('')
+  const [clasificaciones, setClasificaciones] = useState(''); const [modalidad, setModalidad] = useState<string>('remoto'); const modalidadVisible = esClasificacionSoporteRemoto(clasificaciones) // F1B-06: sólo soporte remoto; el predicado es el de `shared`
   const [prefijo, setPrefijo] = useState('MT')
   const [prioridad, setPrioridad] = useState('')
 
@@ -153,7 +153,7 @@ export function CreateTicket({ onClose, onCreated }: {
 
   // Comodidad de vista previa (design.md §5): con el equipo nuevo, la serie y el modelo elegidos ya
   // alcanzan para anticipar el código y el asunto. El servidor no deriva de aquí: acepta el valor
-  // recibido igual que hoy (`ticketService.ts:99-100`).
+  // recibido igual que hoy (`ticketService.ts:101-102`).
   const codigo = codigoOverride ?? buildCodigoServicio({
     prefijo, serie: equipo?.serial ?? serialNuevo.trim(), modelo: equipo?.modelo ?? modeloNuevoElegido?.nombre ?? '', fecha: new Date(),
   })
@@ -181,7 +181,7 @@ export function CreateTicket({ onClose, onCreated }: {
     /*
      * F1B-01 · EL SERIAL COMO LLAVE (`R08.1.md:1048`). Elegido el equipo, el cliente se resuelve POR
      * IDENTIDAD si el equipo la trae. Y con el cliente puesto, el efecto de las órdenes de venta
-     * (`:83-93`) se dispara solo y ofrece las ACTIVAS y LIBRES de ese cliente: ésa es la mitad de la
+     * (`CreateTicket.tsx:117-127`) se dispara solo y ofrece las ACTIVAS y LIBRES de ese cliente: ésa es la mitad de la
      * decisión del 21/08 que faltaba, y no necesitaba endpoint nuevo sino este campo.
      */
     if (e.clientId) {
@@ -227,7 +227,7 @@ export function CreateTicket({ onClose, onCreated }: {
         salesOrderId: salesOrderId ?? undefined,
         clientId: clientId ?? undefined,
         equipoId: equipo?.id ?? '',
-        tipoServicio, clasificaciones, prefijo,
+        tipoServicio, clasificaciones, prefijo, ...(modalidadVisible ? { modalidad } : {}),
         prioridad: prioridad || undefined,
         subject, codigoServicio: codigo,
         ...(equipoNuevoCompleto ? { equipoNuevo: {
@@ -419,7 +419,7 @@ export function CreateTicket({ onClose, onCreated }: {
           <select className={field} value={clasificaciones} onChange={(e) => setClasificaciones(e.target.value)} required>
             <option value="">Clasificaciones *</option>
             {CLASIFICACIONES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          </select>{modalidadVisible && (<select className={field} value={modalidad} onChange={(e) => setModalidad(e.target.value)} aria-label="Modalidad">{MODALIDADES.map((m) => <option key={m} value={m}>Modalidad: {m.charAt(0).toUpperCase() + m.slice(1)}</option>)}</select>)}
           <select className={field} value={prefijo} onChange={(e) => setPrefijo(e.target.value)}>
             {PREFIJOS.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>

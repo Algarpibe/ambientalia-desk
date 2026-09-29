@@ -112,3 +112,48 @@ Barrido de `UPDATE tickets` en `apps/` y `packages/`: transición (`applyTransit
 | Rollback | `git revert` del commit del lote 2; la columna `modalidad` queda (aditiva); SR nacidos en `Solicitud Soporte` quedan sin transiciones con el código viejo |
 
 **Medida del lote 2:** `git diff --shortstat --no-renames HEAD` (con `flujoSoporteRemoto.test.ts` tras `add -N`, y con las dos ediciones del orquestador, `tasks.md` 25 y este fichero) = 16 ficheros, 644+ / 53− = **~697** ≪ 800; la válvula de 2.14 (640 tras 2.13) no se activó: tras 2.13 el acumulado era 472.
+
+---
+
+# Lote 3 · Cliente y cierre · sin código probable
+
+Base `93e8b15` (lote 2 commiteado). Tareas 3.1–3.11 hechas, y A.2, 0.1, 0.2, 0.4, 0.5, 0.6 marcadas con la evidencia de los lotes 1-2 (arriba). Lo hizo el orquestador en línea, sin subagente.
+**Sin RED:** lo que cambia de código es `.tsx` (fuera de la red, F0-00), un tipo (`types.ts:321`) y un comentario (`equipoNuevo.ts:65-66`). La imposición está probada en node en los lotes 1-2.
+Estimado **~150**; medido: ver «Medida». Suite: **158 ficheros · 1938 tests (+2 omitidos)**, igual que al cerrar el lote 2 (sin pruebas nuevas). `npm run typecheck` limpio; `npx eslint . --max-warnings 165` 165 avisos, 0 errores; `npm run build` verde.
+
+## Regla 13, decisión a decisión de `CreateTicket.tsx` (leído entero; líneas de hoy)
+| Decisión del cliente | Línea del servidor que la impone | Prueba |
+|---|---|---|
+| Enseñar el selector sólo en SR (`:45`, predicado de `shared`) y omitir la clave fuera (`:230`) | `ticketService.ts:91` → `modalidadDelAlta` 422 fuera de SR (`flujos.ts:161-162`) | `flujoSoporteRemoto.test.ts:180` (A5) |
+| Preseleccionar `remoto` (`:45`) | `flujos.ts:156`: ausente → `remoto` | `:150` (A2) |
+| Ofrecer sólo dos valores (`:422`, `MODALIDADES`) | `flujos.ts:157-159` + 422 en `ticketService.ts:91` | `:157` (A3, `'presencial'`, `''`, `'Remoto'`, `null`) |
+| No dejar editar tras el alta (ficha en sólo lectura, `TicketProperties.tsx:144`) | ninguna ruta la escribe: fuera de `TICKET_COLS` (`repo.ts:44-54`) y de los `fields` de las cuatro (`transitions.ts:389-396`) | `:117` (P9), `:258`/`:273`/`:282`/`:294` (R1-R4), `repo.test.ts:506`, `:513` |
+| No elegir el estado inicial | `repo.ts:418` (`estadoInicialDelAlta`), `:422`, `:435` | `repo.test.ts:456`, `flujoSoporteRemoto.test.ts:142` (A1) |
+| Exigir equipo registrado salvo EN (`:222-224`, `:332`), preexistente | `ticketService.ts:24`, `:27` | `:194` (A6) |
+| Datos obligatorios del equipo nuevo (`:81`, `:223`), preexistente | `equipoNuevo.ts:41` (`exigirEquipoNuevo`) | `flujoEquipoNuevo.test.ts` |
+| Bloquear el cliente y acotar equipos a su cliente (`:42`, `:152`), preexistente | `ticketService.ts:61-79` (equipo↔cliente) | `ticketService.test.ts:238`, `:306-321` (H1, `9ed5635`) |
+| Ofrecer sólo OV libres (`:122`), preexistente | `ticketService.ts:96-100` (409) | `ordenVentaUnTicket.test.ts` |
+| `required` en tipo y clasificación (`:415`, `:419`), preexistente | `ticketService.ts:83-88` | `ticketService.test.ts:103` |
+| Rellenar solo prefijo, código y asunto (`:415`, `:157-163`): sugerencia editable, no guarda | dominio del prefijo en `ticketService.ts:87`; código y asunto se aceptan o se derivan en `:101-102` | — |
+Ninguna decisión queda sin línea: el cliente no es la guarda en ninguna. Heredado y fuera: «Crear remisión» (F1B-03, `tasks.md` 3.5).
+
+## Barrido de la regla 4 (líneas cuyo CONTENIDO cambió en los tres lotes; ninguna se desplazó)
+Detector propio: citas completas (`git grep`) cuyo rango toca una línea cambiada o el final del fichero, más las abreviadas ancladas: **130** resultados, 44 fuera de esta carpeta. Leída cada frase:
+| Fichero citado | Caso A (reparada en su sitio) | Caso A que repara la fusión del delta | Caso B (registro fechado/anclado, no se toca) | Siguen ciertas |
+|---|---|---|---|---|
+| `repo.ts` | `tickets-core/spec.md:28` y `:1001` (nace en `Solicitud Soporte` si SR); `:1005`, `trazas/spec.md:31`, `:473` («diez claves» + `modalidad`) | `tickets-core/spec.md:231`, `:233`, `:239`, `:297` (RQ-TC-06/07) | paquete 09-10 (`17ddfec`) | `:229`, `:531`, `zoho-sync/spec.md:79`, paquete 09-29 `:169`, `:453` |
+| `ticketService.ts` | `permissions/spec.md:301` (`:89-91`→`:129-130`, el 403; deriva previa) | `tickets-core/spec.md:129` (RQ-TC-05) | `Decisiones_Gerencia_2026-09-10.md:312`, F0-00 `:175`, plan 08-12, maestro R08.2 | — |
+| `equipoNuevo.ts` / `CreateTicket.tsx` | `equipoNuevo.ts:65-66` (`:89`→`:91`, «la última de C» era falso); `CreateTicket.tsx:156` (`:99-100`→`:101-102`) y `:184` (`:83-93` se anclaba a `R08.1.md`) | — | — | `equipoNuevo.ts:80-99` (`config.yaml:3151`, `hojas-vida`) |
+| `flujos.test.ts` | — | — | delta `tickets-core/spec.md:233` → «en `66ab783`» | — |
+| `estados.ts` | — | — | `CLAUDE.md:265`, `config.yaml:429`, `transitions-st/spec.md:806`, Parte 09-21 | `:59-106` ×3, `:59-112`, `:101-105`, `:59-160`, paquetes `:105` |
+| `flujos.ts` | — | — | paquetes 09-27/09-29 `:56-61` (ciertos, incompletos: no nombran SR) | — |
+| `schema.sql`, `transitions.ts`, `rows`/`mappers`/`types`, pruebas | — | — | — | paquete 09-29 `:98` (`:573`); sin citas externas a las líneas cambiadas |
+Las 86 de esta carpeta: `proposal`, `design`, `tasks` y `exploration` planifican contra `66ab783` (`tasks.md:7`, `design.md:3`) y este fichero registra cada lote contra su base: Caso B por ancla de documento.
+
+## Medida
+`git diff --shortstat --no-renames HEAD` = 11 ficheros, **105+ / 34− = 139** (estimado ~150; techo 800). Sin ficheros nuevos (no hay `add -N`). Código 9+/9− (`CreateTicket.tsx` `6 6` con 455 líneas, `TicketProperties.tsx` `1 1`, `types.ts` `1 1`, `equipoNuevo.ts` `2 2`: todo en su sitio, 0 desplazadas); specs 7/7; R08.3 +26; `tasks.md` `17 17`; esta adenda +45.
+
+## Desviaciones
+1. 3.1 se hizo en `types.ts:321` y no en `client.ts`: `CreateTicketPayload` vive en `shared`.
+2. Tres derivas previas reparadas por estar en ficheros del lote o en líneas cambiadas: `permissions/spec.md:301`, `CreateTicket.tsx:156` y `:184`.
+3. El selector es un quinto elemento de la rejilla de dos columnas: prefijo y prioridad bajan una celda. Sin prueba posible (F0-00); P.2 lo mira.

@@ -230,7 +230,7 @@ cayendo en el grafo de servicio técnico.»)
 - THEN son las del catálogo `transitions-soporte-remoto` (`Asignación`), nunca las de `TRANSITIONS`
 
 #### Scenario: La prueba que fijaba «soporte remoto siempre enruta a servicio» se invierte
-- GIVEN `packages/shared/src/flujos.test.ts:42-45`
+- GIVEN la prueba de `packages/shared/src/flujos.test.ts:42-45` en `66ab783` («SIEMPRE servicio»)
 - WHEN se calcula `flujoDelTicket` para `Soporte remoto` en `Solicitud Soporte`
 - THEN devuelve `soporte-remoto`; y para `Soporte remoto` en `Ticket creado` devuelve `servicio`
 
