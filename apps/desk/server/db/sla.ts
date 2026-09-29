@@ -8,7 +8,7 @@ export interface TicketConSlaVencido {
   /** El instante en que el ticket entró en ese estado por ÚLTIMA vez. */
   desde: Date
   horas: number // el umbral en horas HÁBILES que se pasó (`SLA_HORAS_POR_ESTADO`)
-  alarma: AlarmaSla // qué hacer al vencer: cargo, área de respaldo, orden de venta, tablero (`ALARMAS_SLA`, S-8)
+  alarma: AlarmaSla; vencidoEnCorte?: boolean // qué hacer al vencer (`ALARMAS_SLA`, S-8); y si ya vencía en el corte de S-13
 }
 
 /**
@@ -37,7 +37,7 @@ export interface TicketConSlaVencido {
  * cuatro consultas fijas —tickets, cierres, historial y asociaciones— repartidas en TS, como hace
  * `informeContrato.ts`. Los filtros por estado van con marcadores generados, nunca interpolados.
  */
-export async function ticketsConSlaVencido(db: Queryable, ahora: Date): Promise<TicketConSlaVencido[]> {
+export async function ticketsConSlaVencido(db: Queryable, ahora: Date, corte?: Date): Promise<TicketConSlaVencido[]> {
   const conSla = Object.keys(SLA_HORAS_POR_ESTADO)
   if (conSla.length === 0) return []
 
@@ -56,7 +56,7 @@ export async function ticketsConSlaVencido(db: Queryable, ahora: Date): Promise<
     if (!desde || !alarma || horas === undefined) continue // sin foto de entrada no se mide (ver arriba)
     if (alarma.soloSinOrdenVenta && tieneOrdenVenta(fila, conAsociacion.has(String(fila.id)))) continue
     if (slaVencido(estado, desde, ahora, cierres)) {
-      vencidos.push({ id: fila.id, number: Number(fila.number), estado, desde, horas, alarma })
+      vencidos.push({ id: fila.id, number: Number(fila.number), estado, desde, horas, alarma, ...(corte && { vencidoEnCorte: slaVencido(estado, desde, corte, cierres) }) })
     }
   }
   return vencidos

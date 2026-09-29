@@ -131,3 +131,62 @@ Declarado: el desempate por `id` con `performed_at` idéntico (S9 con empate) no
 `6516e5f`: 5 en `tasks.md`, 1 en `proposal.md` y 1 en este fichero) y `:51-56` de `exploration.md` (`4796aad`).
 **Medida** (`git diff --shortstat --no-renames HEAD`; ningún fichero nuevo, así que `git add -N` no hizo falta): 11 ficheros,
 +443 −64 = **507** frente a ~570 estimadas y techo 800. Por debajo: `db/sla.test.ts` salió en +135 −8 (estimado ~200).
+
+## Lote 3 · servicio y cableado (2026-09-29, base `c84f875`)
+
+Ledger: intento 1 del objetivo nuevo, techo 800, umbral de parada 720. **Estimación previa ~620** con la corrección de
+H1 dentro (`design.md`/`tasks.md` ~70, `alarmasSla.ts` ~150, pruebas ~310, `db/sla.ts` ±6, `index.ts` ±4, barrido
+~10, este fichero ~60): por debajo de 720, no se partió.
+
+**H1, corregida ANTES de escribir** (`design.md` D-6 y tarea 3.1, en su sitio). Dentro de `enTransaccion`, la PRIMERA
+sentencia es el `INSERT` de la marca SIN `ON CONFLICT`; si lanza `23505`, la transacción se revierte y el caso es «ya
+avisado» (`null`, sin avisos, sin error hacia fuera); si entra, los avisos van en la misma transacción. Sondeo previo:
+pg-mem devuelve `code = '23505'` igual que Postgres, así que la forma se comporta igual en los dos. Pruebas: (a) dos
+llamadas seguidas → una marca y un juego de avisos; (b) marca ya presente → 0 avisos y `resolves`; (E) estructura
+`BEGIN → marca → aviso → aviso → COMMIT` y, en el duplicado, `BEGIN → marca → ROLLBACK`; y un error que no es 23505 sí
+sale, con `ROLLBACK` y sin `COMMIT`. Se añadió una prueba de DOS PASADAS CONCURRENTES (un juego de avisos y un warn).
+
+**RED.** Natural: el módulo no existía y las 16 pruebas del fichero nuevo fallaban. **Nace verde y se declara:** la de
+pasadas concurrentes, añadida tras el GREEN; su discriminación la dan las mutaciones «SELECT previo» y «warn antes de
+la marca». El guardián de orden de `avisoRitmoContrato.test.ts:185-195` sigue verde SIN tocarlo.
+Arnés: pg-mem reutiliza el mismo objeto cliente, así que el registro de eventos se envuelve una sola vez por cliente
+(la primera versión registraba doble y ponía roja la prueba estructural sin fallo en el código).
+
+**GREEN.** `services/alarmasSla.ts` (147): `marcarYAvisarAlarma`, corte de `public.alarmas_corte` (`INSERT … ON
+CONFLICT (id) DO NOTHING` + `SELECT`: no depende de `RETURNING`), prefiltro de marcas en una consulta, destinatarios
+por alarma (cargo o, vacío, `destinatariosDeArea(areaRespaldo)` con `warn` «Alarma de SLA sin Coordinador
+Comercial: aviso al área Comercial» sólo tras marcar), `try/catch` por ticket, correo en un lote tras todas las
+transacciones (`dispararAvisos`, `marcarEnviados` si `disparado`) y `pasadaAlarmas` que nunca lanza.
+`db/sla.ts` en sitio (`:11`, `:40`, `:59`, 125 líneas): `ticketsConSlaVencido(db, ahora, corte?)` añade
+`vencidoEnCorte`, medido con los MISMOS cierres. `index.ts` en sitio (`:15`, `:88`, 99 líneas). Suite: 158 ficheros,
+1.979 verdes, 2 omitidas; typecheck limpio; eslint 0 errores, 165 avisos.
+
+**Mutaciones reproducidas por el orquestador** (script que muta, corre `alarmasSla.test.ts` y
+`avisoRitmoContrato.test.ts` y restaura; sha256 de los tres ficheros idéntico antes y después):
+
+| Mutación | Rojas | Cuáles |
+|---|---|---|
+| Avisos ANTES del `INSERT` de la marca (la pedida) | 4 | (a), (b), (E) y concurrentes |
+| Forma vieja: `ON CONFLICT DO NOTHING` sin mirar nada | 4 | (a), (b), (E) y concurrentes |
+| Plan B viejo: `SELECT` previo + `ON CONFLICT` | 2 | (E) y **concurrentes**: la ventana existe |
+| Todo error es «ya avisado» | 1 | el error que no es 23505 |
+| Corte = `ahora` de cada pasada / sin `ON CONFLICT (id)` en el corte | 10 / 10 | S-13, S46 y toda la serie P |
+| Ignorar `vencidoEnCorte` / medirlo contra `ahora` | 1 / 10 | S-13; y todo lo que vence |
+| Sumar cargo y área / área antes que cargo | 1 / 3 | S25; S25, S24 y concurrentes |
+| `warn` antes de la marca | 1 | concurrentes |
+| Cargo literal en el servicio | 1 | S15 |
+| Correo por ticket, dentro del bucle | 1 | «un lote, después de todos los COMMIT» |
+| Sin `try/catch` por ticket | 1 | «un fallo en un ticket…» |
+| `index.ts` sin `pasadaAlarmas` | 1 | guardián nuevo (el de ritmo sigue verde) |
+| `index.ts` forma plana `….then(ritmo).then(sync)` | 1 | sólo el de ritmo: el nuevo fija orden, y el orden se mantiene |
+| `index.ts` ritmo → alarmas → sync | 2 | los dos guardianes |
+
+**Fuera de este lote, declarado:** S27 (config de correo vacía) es comportamiento de `dispararAvisos`
+(`avisosWebhook.ts:58`), no se reprueba aquí; S34 (OV perdida después) y S37/S38 (cierres releídos, sin foto) se
+prueban a nivel de consulta en el lote 2; quitar el prefiltro de marcas NO pone nada rojo —la PK sigue impidiendo el
+duplicado— y sólo cuesta consultas a `users`: sin prueba de coste.
+**Barrido de la regla 4.** `index.ts:15`, `:84-93`, `:85`, `:88` (24 citas, 11 fuera de la carpeta del cambio): siguen ciertas —`:88`
+sigue siendo la pasada de ritmo y sigue antes de `sync.syncRecent()`—. `db/sla.ts:40` sigue siendo la firma. Caso A
+todas; ninguna anclada.
+**Medida** (`git add -N` de `alarmasSla.ts` y `alarmasSla.test.ts`, luego `git diff --shortstat --no-renames HEAD`): 7 ficheros,
++497 −33 = **530** frente a ~620 estimadas, techo 800 y umbral 720. Por debajo: pruebas 257 (~310) y `design`/`tasks` 57 (~70).

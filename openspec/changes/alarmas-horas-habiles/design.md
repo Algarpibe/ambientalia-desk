@@ -109,15 +109,16 @@ nadie: marca con `avisos_creados = 0` y el mismo `warn`. Con alguien en el cargo
 **D-6 · Transacción, correo y tolerancia.** Nuevo `apps/desk/server/services/alarmasSla.ts`, molde de
 `avisoRitmoContrato.ts:25-75`:
 
-- `marcarYAvisarAlarma(db, v, destinatarios, texto)` dentro de `enTransaccion` (`db/transaccion.ts:13`):
-  `INSERT … ON CONFLICT (ticket_id, estado, entrada_at) DO NOTHING RETURNING ticket_id` con
-  `avisos_creados = destinatarios.length`; sin fila → `null` y nada más; con fila → `crearAviso` por destinatario.
-  **Hipótesis:** que pg-mem devuelva cero filas en el conflicto; el primer RED lo ejecuta. Si no, se sustituye
-  por `SELECT` previo dentro de la misma transacción (patrón de `catalogo.ts:157-159`) y la clave primaria
-  queda de cinturón.
-- `avisarAlarmasVencidas(db, config, ahora)`: `listarCierres` → `ticketsConSlaVencido` → marcas existentes en
-  una consulta (prefiltro) → por vencido nuevo, `try/catch` propio (RQ-AV-17). Destinatarios resueltos antes
-  de la transacción, memorizados por cargo dentro de la pasada.
+- `marcarYAvisarAlarma(db, v, destinatarios, texto)` dentro de `enTransaccion` (`db/transaccion.ts:13`). **Corregido
+  el 2026-09-29, antes del lote 3:** la PRIMERA sentencia es el `INSERT` de la marca SIN `ON CONFLICT`, con
+  `avisos_creados = destinatarios.length`; si entra, `crearAviso` por destinatario en la misma transacción; si lanza
+  `23505` (la clave ya existe), la transacción se revierte y el caso es «ya avisado»: `null`, sin avisos y sin
+  error hacia fuera. La unicidad la garantiza la PK. Se descartan las dos formas anteriores: `ON CONFLICT … DO
+  NOTHING RETURNING` porque pg-mem y Postgres difieren (H1, comprobado en el lote 2), y el `SELECT` previo porque
+  deja una ventana (dos evaluaciones leen «sin marca» y avisan las dos). pg-mem también devuelve `23505`.
+- `avisarAlarmasVencidas(db, config, ahora)`: el corte (S-13) → `ticketsConSlaVencido(db, ahora, corte)`, que lee
+  los cierres (lote 2) → marcas existentes en una consulta (prefiltro) → por vencido nuevo, `try/catch` propio
+  (RQ-AV-17). Destinatarios resueltos antes de la transacción, memorizados por alarma dentro de la pasada.
 - Correo **después** de todas las transacciones, en un solo lote: `dispararAvisos` (`avisosWebhook.ts:53`, nunca
   lanza) y `marcarEnviados` si `disparado`, envuelto en `try/catch`; si no, `logger.warn` y `enviado_at` queda
   `NULL` (molde `ticketService.ts:215-219`). `conCopia: true` (la copia es un correo, no una fila).
