@@ -20,10 +20,14 @@ uno por destinatario y por alarma.
   fallo del correo (config vacía, `fetch` caído, tiempo agotado) **MUST NOT** deshacer la marca ni el aviso,
   **MUST NOT** hacer fallar la pasada ni la sincronización, y **SHALL** dejar `enviado_at` en `NULL`.
   A diferencia de `RQ-AV-14`, este aviso **SÍ** usa el canal de correo.
-- **Sin nadie con el cargo:** si `destinatariosDeCargo` devuelve vacío, el sistema **SHALL** escribir la marca
-  (RQ-AV-16) con cero avisos, **MUST NOT** crear aviso y **SHALL** emitir un único `logger.warn` que nombre el
-  cargo y el estado; la marca impide repetirlo en las pasadas siguientes (S-4 revisado). Coste aceptado: si el
-  cargo se da de alta después, esa entrada ya no avisa. Que el cargo exista en producción es la tarea P.1.
+- **Sin nadie con el cargo (S-4, segunda revisión, 2026-09-29):** `users.cargo` es texto libre que existe para
+  FIRMAR la remisión (`apps/desk/server/auth/routes.ts:67-68`), no para repartir avisos; un «Coord. Comercial»
+  no casa. Si `destinatariosDeCargo` devuelve vacío, el sistema **SHALL** avisar al **área de respaldo**
+  declarada en la alarma (hoy `Comercial`, `transitions-st` RQ-TS-16) con `destinatariosDeArea`
+  (`apps/desk/server/db/avisos.ts:74`, sin actor) y **SHALL** emitir un único `logger.warn` que diga «sin
+  Coordinador Comercial» (el cargo), el estado y el ticket. Si tampoco el área da nadie, **SHALL** escribir la
+  marca con cero avisos y el mismo `warn`. Con alguien en el cargo, el área **MUST NOT** recibir el aviso. Que
+  el cargo exista en producción es la tarea P.1, y deja de ser bloqueante.
 - El aviso **SHALL** originarse únicamente en el proceso `ambientalia-desk`, no en `apps/hub-sync`.
 
 #### Scenario: un aviso por cada usuario con el cargo
@@ -36,15 +40,15 @@ uno por destinatario y por alarma.
 - WHEN se crea el aviso
 - THEN su texto contiene el identificador del ticket, `Notificado` y las 9 horas hábiles
 
-#### Scenario: sin nadie con el cargo, marca sin aviso y un warn
-- GIVEN una alarma vencida y ningún usuario activo con el cargo
+#### Scenario: sin nadie con el cargo, el aviso va al área de respaldo con un warn
+- GIVEN una alarma vencida, ningún usuario activo con el cargo y un usuario con un rol receptor del área `Comercial`
 - WHEN corre la pasada
-- THEN no se crea aviso, se escribe la marca con cero avisos, y se emite un `logger.warn` con el cargo y el estado
+- THEN se crea un aviso por cada destinatario de `destinatariosDeArea('Comercial')`, se escribe la marca con ese número de avisos, y se emite un único `logger.warn` que dice «sin Coordinador Comercial» con el estado; si el área tampoco da nadie, marca con cero avisos y el mismo warn
 
-#### Scenario: la pasada siguiente no repite el warn
-- GIVEN el escenario anterior y, después, un usuario activo con el cargo
-- WHEN corre la siguiente pasada
-- THEN no se crea aviso ni se emite otro warn para esa entrada: ya está marcada (coste aceptado de S-4)
+#### Scenario: con alguien en el cargo, el área no recibe el aviso
+- GIVEN una alarma vencida, un usuario activo con el cargo y otro con un rol receptor del área `Comercial`
+- WHEN corre la pasada
+- THEN sólo el usuario con el cargo recibe aviso y no se emite ningún warn
 
 #### Scenario: un fallo del correo no tumba nada
 - GIVEN una alarma vencida y un canal de correo que falla o agota su tiempo
@@ -69,10 +73,13 @@ crearse ningún aviso.
 - **Reentrar** en el estado es una **entrada nueva** (otro instante) y **SHALL** poder generar una alarma
   nueva cuando vuelva a vencer.
 - Si la transacción falla, no queda marca sin aviso ni aviso sin marca.
-- **Primera pasada tras el despliegue (S-13):** las entradas que ya estaban vencidas **SHALL** avisarse
-  también, una vez por entrada por la misma marca; **MUST NOT** haber corte por fecha de despliegue. Es una
-  ráfaga esperada y se anuncia en la nota de despliegue.
-- Una entrada de `Remisión creada` con orden de venta no vence, así que **MUST NOT** dejar marca; una entrada vencida sin nadie con el cargo **SHALL** dejarla (S-4 revisado).
+- **Primera pasada tras el despliegue (S-13, revisado 2026-09-29):** el correo enviado no se recupera, así que
+  el valor por defecto es el que no hace daño. La primera pasada **SHALL** fijar un **corte** persistente
+  (`public.alarmas_corte`, una fila, escrita una sola vez con el instante de esa pasada). Toda entrada que ya
+  estuviera vencida en el corte **SHALL** marcarse con cero avisos y **MUST NOT** avisar (la marca del tablero
+  sí sale; el correo, no). Las que venzan después del corte avisan normal. El corte **MUST NOT** moverse con
+  un reinicio del proceso. Encender la ráfaga es decisión de Gerencia (P.3).
+- Una entrada de `Remisión creada` con orden de venta no vence, así que **MUST NOT** dejar marca; una entrada vencida sin nadie ni en el cargo ni en el área **SHALL** dejarla con cero avisos.
 
 #### Scenario: dos pasadas no duplican
 - GIVEN un ticket vencido en `Notificado` y un usuario con el cargo
@@ -99,10 +106,15 @@ crearse ningún aviso.
 - WHEN corre la pasada
 - THEN no queda marca escrita, y la pasada siguiente reintenta el aviso
 
-#### Scenario: la primera pasada avisa también lo ya vencido
-- GIVEN tickets que vencieron antes del despliegue, sin ninguna marca
-- WHEN corre la primera pasada
-- THEN cada entrada vencida recibe su aviso y su marca una vez, sin corte por fecha
+#### Scenario: lo vencido antes del corte se marca sin avisar; lo posterior avisa
+- GIVEN un ticket que ya estaba vencido cuando corrió la primera pasada, y otro que vence después
+- WHEN corren la primera pasada y una posterior
+- THEN el primero queda marcado con cero avisos, sin correo y con la marca de tablero si su alarma la lleva; el segundo recibe su aviso normal
+
+#### Scenario: el corte no se mueve con un reinicio
+- GIVEN un corte ya fijado y un ticket que venció después del corte, sin marca todavía
+- WHEN el proceso se reinicia y corre la pasada
+- THEN el corte sigue siendo el primero y el ticket recibe su aviso
 
 #### Scenario: `Remisión creada` con orden de venta no deja marca
 - GIVEN un ticket vencido en `Remisión creada` con orden de venta

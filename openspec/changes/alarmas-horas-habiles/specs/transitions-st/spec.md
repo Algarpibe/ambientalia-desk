@@ -125,6 +125,9 @@ tres alarmas de `RQ-TS-15` **SHALL** declarar el cargo `Coordinador Comercial`.
 - `Remisión creada` → `Coordinador Comercial` lo fija `decision/escalado-remision-creada`
   (`openspec/config.yaml:1429-1431`) y `decision/escalado-destinatario-doble`
   (`openspec/config.yaml:1499-1500`); `Notificación cliente`, `decision/anexo-3-alerta`.
+- Toda alarma **SHALL** declarar además un **área de respaldo** (`areaRespaldo`, una de `AREAS`,
+  `packages/shared/src/transitions.ts:310`), hoy `Comercial` en las tres: es a quién va el aviso si el cargo
+  no encuentra a nadie (`derivacion-avisos` RQ-AV-15, S-4 segunda revisión).
 - La resolución del cargo a personas concretas la hace el servidor (`derivacion-avisos` RQ-AV-15).
 - Qué se hace con `destinatarioDelEscalado` y con el caso `Rev./Diagnostico` → Director Técnico, que no tiene
   alarma, lo decide el diseño; esta spec **no** exige conservarlos ni retirarlos.

@@ -1,7 +1,7 @@
 # Diseño: alarmas de SLA en horas hábiles
 
 F1B-08, `cierra: no`. Entrada: `proposal.md` (S-1..S-12), S-13 de la instrucción de la fase, la corrección del
-orquestador a S-4 (prevalece sobre la propuesta) y los tres deltas de `specs/`. Líneas leídas contra el árbol de
+orquestador a S-4 (prevalece sobre la propuesta; S-4 y S-13 revisados otra vez el 2026-09-29: D-5 y D-6) y los tres deltas de `specs/`. Líneas leídas contra el árbol de
 `4796aad` el 2026-09-29; lo no ejecutado va marcado **«hipótesis»**. No se ha corrido la suite.
 
 ## Enfoque técnico
@@ -19,7 +19,7 @@ ediciones **en sitio** o **al final** (§9).
 | Pieza | Decisión | Rechazado | Por qué |
 |---|---|---|---|
 | `SLA_HORAS_POR_ESTADO` (`sla.ts:32-35`) | Se queda, en sitio, con `{ 'Notificado': 9, 'Remisión creada': 27, 'Notificación cliente': 36 }` en horas **hábiles** (4 líneas → 4) | Renombrar o fundir en una tabla nueva | 21 citas `sla.ts:32` fuera del archivo (4 en `openspec/config.yaml`, 2 specs, `bodegaje.ts:27`) la nombran como «la declaración del SLA»; siguen apuntando a ella |
-| `ALARMAS_SLA` (nuevo, al final de `sla.ts`) | `Partial<Record<Estado, { cargo; soloSinOrdenVenta; marcaTablero }>>`, las tres con `cargo: 'Coordinador Comercial'`; sólo `Remisión creada` con `soloSinOrdenVenta` y sólo `Notificación cliente` con `marcaTablero` | Derivar el cargo del grafo | S-8 y RQ-TS-16 del delta: el cargo es dato |
+| `ALARMAS_SLA` (nuevo, al final de `sla.ts`) | `Partial<Record<Estado, { cargo; areaRespaldo; soloSinOrdenVenta; marcaTablero }>>`, las tres con `cargo: 'Coordinador Comercial'` y `areaRespaldo: 'Comercial'` (tipo `(typeof AREAS)[number]`, `transitions.ts:310`); sólo `Remisión creada` con `soloSinOrdenVenta` y sólo `Notificación cliente` con `marcaTablero` | Derivar el cargo del grafo; área de respaldo como constante del servicio | S-8 y RQ-TS-16 del delta: cargo y respaldo son dato, y el invariante los prueba en `shared` |
 | `venceSlaEn` (`sla.ts:39-44`) | **Se retira.** Sus 6 líneas pasan a un comentario de retirada de 6 líneas | Reescribirla con `sumarHorasHabiles` | Nadie necesita la fecha de vencimiento (D-2); dejarla daría una fecha de reloj falsa |
 | `slaVencido` (`sla.ts:52-55`) | Firma `(estado, desde, ahora, cierres)`; cuerpo `Math.round(horasHabilesEntre(desde, ahora, cierres) * HORA_EN_MS) > horas * HORA_EN_MS`. `HORA_EN_MS` (`:37`) se reutiliza | Comparar el `number` de horas tal cual | Estricta como hoy; el redondeo a milisegundo quita el error de coma flotante de sumar tramos fraccionarios (`calendarioLaboral.ts:185`) en el borde exacto |
 | `destinatarioDelEscalado` (`sla.ts:88-109`) | **Se conserva sin tocar**, degradada a comprobación de coherencia | Retirarla | Mantiene vivos los guardianes de ambigüedad de `sla.test.ts:165-209`, y convierte S-3 en hecho probado |
@@ -30,7 +30,7 @@ Rojos deliberados en `packages/shared/src/sla.test.ts`, los cuatro reescritos **
 `ESTADOS_EN_ESPERA` sin alarma), `:57-81` (reloj → borde hábil) y `:188-191` (todo estado con alarma tiene cargo
 no vacío y, si el grafo propone cargo, coincide con el declarado). `:2` cambia la importación. El resto de
 escenarios de RQ-TS-15 y los invariantes de `ALARMAS_SLA` (mismas claves que `SLA_HORAS_POR_ESTADO`; cargo vacío
-en una tabla sintética detectado por `estadosConAlarmaSinCargo`) van **al final** del fichero.
+en una tabla sintética detectado por `estadosConAlarmaSinCargo`; `areaRespaldo` dentro de `AREAS`) van **al final** del fichero.
 
 **D-2 · `sumarHorasHabiles` no se construye.** Vencer es «horas hábiles transcurridas > umbral», y eso ya lo
 da `horasHabilesEntre` (`calendarioLaboral.ts:174-190`). Ni el aviso ni el tablero enseñan una hora de
@@ -79,10 +79,17 @@ CREATE TABLE IF NOT EXISTS public.alarmas_avisadas (
   avisos_creados integer NOT NULL,
   PRIMARY KEY (ticket_id, estado, entrada_at)
 );
+-- alarmas-horas-habiles (F1B-08, S-13 revisado): corte de la primera pasada. Una sola fila (id = 1),
+-- escrita UNA vez con ON CONFLICT DO NOTHING: lo vencido antes del corte se marca sin avisar, y un
+-- reinicio no lo mueve. Nunca hay UPDATE ni DELETE
+CREATE TABLE IF NOT EXISTS public.alarmas_corte (
+  id integer PRIMARY KEY,
+  corte_at timestamptz NOT NULL
+);
 ```
 
-`alarmas_avisadas` se añade al final de `migrate.ts:73` (`PUBLIC_TABLES`), en sitio. Cambian, en sitio,
-`migrate.test.ts:282` (título: 34 tablas, 21 de la app), `:283` (`[10, 21, 3]`) y `:284-286` (`33` → `34`). Los
+`alarmas_avisadas` y `alarmas_corte` se añaden al final de `migrate.ts:73` (`PUBLIC_TABLES`), en sitio. Cambian, en sitio,
+`migrate.test.ts:282` (título: 35 tablas, 22 de la app), `:283` (`[10, 22, 3]`) y `:284-286` (`33` → `35`). Los
 recuentos de `ALTER` (`:376-378`, 40/19/21) **no** cambian: no hay `ALTER`. `entrada_at` se escribe con el `Date`
 leído en D-3 y se compara **en TS por `getTime()`**, nunca en SQL contra `performed_at`: **hipótesis** de que
 `performed_at` guarda microsegundos y el `Date` de JS los trunca, así que una igualdad en SQL fallaría.
@@ -91,9 +98,13 @@ leído en D-3 y se compara **en TS por `getTime()`**, nunca en SQL contra `perfo
 `SELECT id, email, name FROM users WHERE active = true AND lower(trim(cargo)) = lower(trim($1))`. Sin
 administradores de oficio (a diferencia de `destinatariosDeArea`, `avisos.ts:74-93`): RQ-AV-15 pide
 exactamente los usuarios con el cargo. **Hipótesis:** que pg-mem resuelva `lower(trim(...))`; si no, el filtro
-se hace en TS. **Nadie con el cargo (S-4 revisado):** marca escrita con `avisos_creados = 0`, cero avisos y **un**
-`logger.warn({ cargo, estado, ticketId })` emitido sólo cuando la marca devolvió fila. La marca impide repetirlo:
-una pasada cada 180 s no inunda el log. Coste aceptado: si el cargo se da de alta después, esa entrada no avisa.
+se hace en TS. **Nadie con el cargo (S-4, segunda revisión 2026-09-29):** `users.cargo` es texto libre de firma de
+la remisión (`auth/routes.ts:67-68`), así que vacío es un caso esperable y no puede dejar la entrada muda. El
+servicio resuelve `destinatariosDeArea(db, alarma.areaRespaldo, '')` (sin actor; incluye administradores de
+oficio, `avisos.ts:74-93`), marca con `avisos_creados` = los del área y emite **un**
+`logger.warn({ cargo, estado, ticketId }, 'Alarma de SLA sin Coordinador Comercial: aviso al área Comercial')`
+(el texto se arma con el cargo y el área de la alarma) sólo cuando la marca devolvió fila. Si el área tampoco da
+nadie: marca con `avisos_creados = 0` y el mismo `warn`. Con alguien en el cargo, el área no se consulta.
 
 **D-6 · Transacción, correo y tolerancia.** Nuevo `apps/desk/server/services/alarmasSla.ts`, molde de
 `avisoRitmoContrato.ts:25-75`:
@@ -111,7 +122,13 @@ una pasada cada 180 s no inunda el log. Coste aceptado: si el cargo se da de alt
   lanza) y `marcarEnviados` si `disparado`, envuelto en `try/catch`; si no, `logger.warn` y `enviado_at` queda
   `NULL` (molde `ticketService.ts:215-219`). `conCopia: true` (la copia es un correo, no una fila).
 - `pasadaAlarmas(db, config, ahora = new Date())` **nunca lanza**. Sin memoria por día: las alarmas son horarias.
-- **S-13:** sin corte por fecha; la primera pasada avisa cada entrada ya vencida una vez. Ráfaga a la nota de despliegue.
+- **S-13 (revisado 2026-09-29): corte persistente, sin ráfaga.** Al empezar cada pasada:
+  `INSERT INTO public.alarmas_corte (id, corte_at) VALUES (1, $ahora) ON CONFLICT (id) DO NOTHING` y
+  `SELECT corte_at`: la primera pasada fija el corte y ningún reinicio lo mueve (un corte por arranque callaría lo
+  vencido durante cada redespliegue). Por vencido nuevo, si `slaVencido(estado, desde, corte, cierres)` —ya estaba
+  vencido en el corte— se marca con `avisos_creados = 0`, sin resolver destinatarios, sin aviso ni `warn`; la marca
+  de tablero sale porque D-8 lee la marca. Una sola `logger.info` por pasada con el recuento de marcados en
+  silencio, si hay alguno. Sin interruptor (S-13 de la propuesta): encender la ráfaga es P.3.
 - Texto: `El ticket #N lleva más de H horas hábiles en «Estado» (entró el <fecha en ZONA_NEGOCIO>).`, más «y sigue
   sin orden de venta» o «esperando aprobación del cliente» según la alarma.
 
@@ -171,6 +188,10 @@ Ficheros nuevos: `apps/desk/server/services/alarmasSla.ts` (+ `.test.ts`), `apps
 | 2 · vigilado | Quitar `public.` de la tabla en `schema.sql`, o `alarmas_avisadas` de `migrate.ts:73` | Guardián de `migrate.test.ts:266-275` |
 | 2 · vigilado | Quitar `pasadaAlarmas(pool, config)` de `index.ts:88` | Guardián nuevo que lee `index.ts` (molde `avisoRitmoContrato.test.ts:185-195`); y el de ritmo sigue verde con la línea nueva |
 | — | Una vía de OV distinta en `tieneOrdenVenta` | La prueba que la enfrenta a `ticketConOrdenVenta` |
+| 1 · posición | Consultar el área ANTES del cargo, o sumar las dos listas | «Con alguien en el cargo, el área no recibe el aviso» |
+| — | Corte = `ahora` de cada pasada (sin tabla) | «El corte no se mueve con un reinicio» |
+| — | Comparar el vencimiento contra `ahora` en vez de contra el corte | «Lo vencido antes del corte se marca sin avisar» (el anterior avisaría) |
+| 2 · vigilado | Quitar `ON CONFLICT (id) DO NOTHING` de la escritura del corte | Segunda pasada: el `INSERT` choca con la clave y la pasada registra error; la prueba del reinicio se pone roja |
 
 La atomicidad marca+aviso se prueba **por estructura** (mismo cliente entre `BEGIN` y `COMMIT`), porque pg-mem no
 honra el `ROLLBACK` (según `avisoRitmoContrato.ts:18`, cita de segunda mano: **hipótesis**).
@@ -187,8 +208,10 @@ la pasada es una promesa más dentro del `setInterval` existente del mismo proce
 
 ## Migración y despliegue
 
-Tabla nueva sin relleno. Nota de despliegue: `public.alarmas_avisadas`; `Notificado` de 24 h de reloj a 9 h
-hábiles; ráfaga de avisos en la primera pasada (S-13); P.1. Rollback: revertir; la tabla sólo la lee este código.
+Tablas nuevas sin relleno. Nota de despliegue: `public.alarmas_avisadas` y `public.alarmas_corte`; `Notificado` de
+24 h de reloj a 9 h hábiles; lo vencido antes de la primera pasada se marca sin avisar (S-13, P.3); sin Coordinador
+Comercial, avisa al área Comercial (S-4, P.1). Rollback: revertir; las tablas sólo las lee este código. Un rollback
+seguido de redespliegue NO vuelve a cortar: el corte ya está escrito (se borra a mano si Gerencia quiere otro).
 
 ## Preguntas abiertas y riesgos
 
@@ -197,5 +220,5 @@ hábiles; ráfaga de avisos en la primera pasada (S-13); P.1. Rollback: revertir
   el orquestador conservando el filtro de servicio. No hace falta delta de `transitions-equipo-nuevo`.
 
 
-- Hipótesis de pg-mem (`ON CONFLICT … RETURNING` vacío, `lower(trim())`), de microsegundos en `performed_at` y
-  el tamaño de la ráfaga de S-13 (sin acceso a producción).
+- Hipótesis de pg-mem (`ON CONFLICT … RETURNING` vacío, `lower(trim())`) y de microsegundos en `performed_at`.
+  El tamaño de lo que S-13 marca en silencio no se conoce (sin acceso a producción); ya no es riesgo de ráfaga.

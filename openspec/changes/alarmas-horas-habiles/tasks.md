@@ -2,8 +2,8 @@
 
 **Entradas:** `proposal.md`, `exploration.md`, `design.md`, `specs/{transitions-st,derivacion-avisos,vistas-tablero}/spec.md` de esta carpeta. Preflight: `auto · hybrid · ask-on-risk · 800 líneas · strict_tdd`.
 `strict_tdd` activo: cada tarea de implementación va precedida de su prueba en rojo y de un «confirmar rojo natural»; lo que nace verde se declara en `apply-progress.md`.
-Correcciones del orquestador que prevalecen sobre `proposal.md`: S-4 revisado (la marca se escribe SIEMPRE al vencer; avisos sólo si hay destinatarios; sin nadie, marca con `avisos_creados = 0` y un único `warn`), S-9 revisado
-(se CONSERVA el filtro de flujo servicio de `apps/desk/server/db/sla.ts:49`; `sla.test.ts:141-145` no se invierte; no hay delta de `transitions-equipo-nuevo`), S-13 (la primera pasada avisa lo ya vencido) y RQ-TS-19 («la misma definición de tres vías, enfrentada por prueba con `ticketConOrdenVenta`»).
+Correcciones del orquestador que prevalecen sobre `proposal.md`: S-4 en su segunda revisión (2026-09-29: la marca se escribe SIEMPRE al vencer; sin nadie con el cargo, el aviso va al `areaRespaldo` de la alarma, `Comercial`, con `destinatariosDeArea` y un único `warn` «sin Coordinador Comercial»; sólo si tampoco el área da nadie, `avisos_creados = 0`), S-9 revisado
+(se CONSERVA el filtro de flujo servicio de `apps/desk/server/db/sla.ts:49`; `sla.test.ts:141-145` no se invierte; no hay delta de `transitions-equipo-nuevo`), S-13 revisado el 2026-09-29 (corte persistente `public.alarmas_corte`: lo vencido en el corte se marca SIN avisar; lo posterior avisa) y RQ-TS-19 («la misma definición de tres vías, enfrentada por prueba con `ticketConOrdenVenta`»).
 
 Las citas se leyeron el 2026-09-29 contra el árbol de `6516e5f` por lectura directa en `sla.ts` (`:1-109`), `sla.test.ts` (`:1-209`), `db/sla.ts` (`:1-63`), `db/sla.test.ts` (`:1-146`) e `index.ts` (`:10-99`). El resto viene de `design.md` §9 (medido en `4796aad`) y lo re-mide la tarea 0.3 (hipótesis hasta entonces).
 
@@ -14,7 +14,7 @@ Las citas se leyeron el 2026-09-29 contra el árbol de `6516e5f` por lectura dir
 - [ ] A.1 **Hallazgo al planificar: el lote 1 solo rompe el servidor.** `apps/desk/server/db/sla.ts:58` llama `slaVencido(estado, desde, ahora)` y la firma nueva exige `cierres`; sin puente, `npm run typecheck` (`tsc -p apps/desk/tsconfig.server.json`) falla al integrar el lote 1 (stacked-to-main: cada lote va verde a `main`).
   Solución: tarea 1.6, un puente EN SITIO (`slaVencido(estado, desde, ahora, [])`, mismas 63 líneas), que el lote 2 reemplaza por los cierres reales. Con cierres `[]` y `AHORA = 2026-09-10T12:00Z`, las siete pruebas de `db/sla.test.ts` siguen dando el mismo resultado (hipótesis: `t1` lleva dos días hábiles, `t2` cero; se confirma corriéndolas en 1.6).
   `venceSlaEn` y `destinatarioDelEscalado` no tienen otro consumidor: `Grep` sobre `apps/` y `packages/` (2026-09-29) sólo halla `db/sla.ts:2`/`:58`/`:59`, `sla.test.ts` y comentarios (`bodegaje.ts:27`, `bodegaje.test.ts:37`, `transitions.ts:340`).
-- [ ] A.2 **Recuento de escenarios: 45** (`transitions-st` 12 + 3 + 6 = 21; `derivacion-avisos` 6 + 7 + 4 = 17; `vistas-tablero` 6 + 1 = 7). Numerados S1-S45 en la matriz de abajo.
+- [ ] A.2 **Recuento de escenarios: 46** (`transitions-st` 12 + 3 + 6 = 21; `derivacion-avisos` 6 + 8 + 4 = 18; `vistas-tablero` 6 + 1 = 7). Numerados S1-S46 en la matriz de abajo; S46 (el corte no se mueve con un reinicio) entró con la revisión de S-13 y va al final para no renumerar.
 - [ ] A.3 **Reparto en CUATRO lotes, no tres.** El encargo pedía tres; mi estimación del lote «servidor y BD» sale a ~1.100 (código ~320, pruebas ~720, `apply-progress` ~60), por encima de 800. Se parte en el lote 2 (BD y consulta, ~475) y el lote 3 (servicio y cableado, ~625).
   El lote 4 es «tablero y cierre» (~375). Cada uno cabe en 800 con margen.
 
@@ -73,6 +73,8 @@ Chain strategy: stacked-to-main
 | 3 · Servicio y cableado | ~165 (`alarmasSla.ts` ~160, `index.ts` ±4) | ~400 (`alarmasSla.test.ts` nuevo: series M, P, correo y guardián de `index.ts`) | ~60 | **~625** | ~175 | 2 |
 | 4 · Tablero y cierre | ~65 (`alarmasAvisadas.ts` ~45, `types.ts` ±2, `tickets.ts` ±4, `TicketCard.tsx` +9) + ~30 de texto para R08.3 | ~220 (`alarmasAvisadas.test.ts` ~150, `tickets.test.ts` +70) | ~60 (incluye la casilla de la regla 13) | **~375** | ~425 | 3 |
 | **Total** | | | | **~1.845** | | |
+
+*Revisión de S-4 y S-13 (2026-09-29), sobre la tabla de arriba, que se conserva como la estimación de partida:* lote 1 +~10 (`areaRespaldo` y su invariante) → **~380**; lote 2 +~20 (`public.alarmas_corte` y su clave) → **~495**; lote 3 +~80 (corte, reinicio y los dos caminos del destinatario) → **~705**, con **~95** de margen y rozando la válvula de 720: si el lote 3 la pasa, se para y se declara. Total **~1.955**.
 
 **Válvula:** si tras el GREEN de un lote el acumulado medido (`git diff --shortstat --no-renames HEAD` + nuevos sin trackear) supera **90 % del techo (720)**, se para y se declara antes de las mutaciones; las mutaciones no añaden líneas (se revierten), pero `apply-progress.md` sí.
 
@@ -133,13 +135,13 @@ Chain strategy: stacked-to-main
   viernes 16:00 → lunes 16:00 no, lunes 16:00:00.001 sí (S4); viernes 8:00 con lunes festivo → martes 8:00 no, 8:00:00.001 sí (festivo Colombia: hipótesis de fecha, `2026-10-09` → lunes `2026-10-12`) (S5); lunes 8:00 con cierre el martes → miércoles 8:00 no, 8:00:00.001 sí (S6);
   `Remisión creada` lunes 8:00 → miércoles 17:00 no (27 h exactas), jueves 8:00:00.001 sí (S7); `Notificación cliente` lunes 8:00 → jueves 17:00 no (36 h exactas), viernes 8:00:00.001 sí (S8); estado sin alarma (`En Proceso`) nunca vence;
   **borde fraccionario** (entra 8:20, evalúa al día siguiente 8:20 = 9 h exactas sumando tramos de 0,333… h: no vencido; +1 ms sí) que es lo único que distingue el `Math.round` de D-1 (hipótesis de coma flotante, `calendarioLaboral.ts:185`).
-- [ ] 1.3 RED — `sla.test.ts` **al final**, invariantes de `ALARMAS_SLA`: mismas claves que `SLA_HORAS_POR_ESTADO`; las tres con `cargo: 'Coordinador Comercial'` (S13); sólo `Remisión creada` con `soloSinOrdenVenta` y sólo `Notificación cliente` con `marcaTablero`;
+- [ ] 1.3 RED — `sla.test.ts` **al final**, invariantes de `ALARMAS_SLA`: mismas claves que `SLA_HORAS_POR_ESTADO`; las tres con `cargo: 'Coordinador Comercial'` (S13) y `areaRespaldo: 'Comercial'`, dentro de `AREAS` (`transitions.ts:310`; S-4 segunda revisión); sólo `Remisión creada` con `soloSinOrdenVenta` y sólo `Notificación cliente` con `marcaTablero`;
   `estadosConAlarmaSinCargo(tablaSintetica)` con una entrada de cargo vacío o sólo espacios devuelve ese estado y el mensaje lo nombra (S14).
 - [ ] 1.4 Confirmar rojo natural: `ALARMAS_SLA`/`estadosConAlarmaSinCargo` no existen; `:33` da `{ Notificado: 24 }`; `slaVencido` ignora `cierres`. **Nacen verdes y se declaran:** `packages/shared/src/sla.test.ts:106-182` (`destinatarioDelEscalado` no se toca) y `:194-209` (guardián de ambigüedad).
 
 ### Bloque B · GREEN
 
-- [ ] 1.5 GREEN — `sla.ts` en sitio (`:2`, `:4-31`, `:32-35`, `:39-44`, `:46-55`, `:68-70`) y al final: `ALARMAS_SLA: Partial<Record<Estado, { cargo: string; soloSinOrdenVenta?: boolean; marcaTablero?: boolean }>>` y `estadosConAlarmaSinCargo(alarmas = ALARMAS_SLA)`.
+- [ ] 1.5 GREEN — `sla.ts` en sitio (`:2`, `:4-31`, `:32-35`, `:39-44`, `:46-55`, `:68-70`) y al final: `ALARMAS_SLA: Partial<Record<Estado, { cargo: string; areaRespaldo: (typeof AREAS)[number]; soloSinOrdenVenta?: boolean; marcaTablero?: boolean }>>` y `estadosConAlarmaSinCargo(alarmas = ALARMAS_SLA)`.
   `slaVencido` = `Math.round(horasHabilesEntre(desde, ahora, cierres) * HORA_EN_MS) > horas * HORA_EN_MS` (`HORA_EN_MS` `:37` se reutiliza; estricta). `:39-44` deja un comentario de retirada de 6 líneas que dice por qué no hay fecha de vencimiento (D-2: `sumarHorasHabiles` no se construye).
   Confirmar que la importación no crea ciclo con `calendarioLaboral.ts` (`npm test` sin `ReferenceError`).
 - [ ] 1.6 **Puente** — `apps/desk/server/db/sla.ts:58` en sitio: `slaVencido(estado, desde, ahora, [])`, con comentario de una línea «puente; el lote 2 pasa los cierres de `listarCierres`» en la MISMA línea. `wc -l` sigue en 63. Correr `db/sla.test.ts` en verde (A.1).
@@ -150,7 +152,7 @@ Chain strategy: stacked-to-main
 - [ ] 1.8 MUTACIÓN — `>` → `>=` en `slaVencido`: ROJO en 1.2 (el borde exacto de S2, S7 y S8); revertir.
 - [ ] 1.9 MUTACIÓN — quitar `Math.round`: ROJO en el borde fraccionario de 1.2. **Si nace verde, se declara** en `apply-progress.md` («la hipótesis de coma flotante no se reproduce con estos fixtures; el redondeo se conserva por seguridad») y no se maquilla; revertir.
 - [ ] 1.10 MUTACIÓN — `slaVencido` devuelve `false` si `estado ∈ ESTADOS_EN_ESPERA`: ROJO en S7, S8 y en la independencia de `:51-55` (S11); revertir.
-- [ ] 1.11 MUTACIÓN — (a) cargo `''` en una entrada de `ALARMAS_SLA`: ROJO en 1.3 (S13, S14); (b) `marcaTablero: true` en `Notificado`: ROJO en 1.3; (c) borrar la clave `Notificado` de `ALARMAS_SLA`: ROJO en «mismas claves»; revertir las tres.
+- [ ] 1.11 MUTACIÓN — (a) cargo `''` en una entrada de `ALARMAS_SLA`: ROJO en 1.3 (S13, S14); (b) `marcaTablero: true` en `Notificado`: ROJO en 1.3; (c) borrar la clave `Notificado` de `ALARMAS_SLA`: ROJO en «mismas claves»; (d) añadir una clave fuera de `SLA_HORAS_POR_ESTADO` (`'En Proceso'` con cargo): ROJO en «mismas claves»; (e) `areaRespaldo` fuera de `AREAS` (con `as never` para pasar el tipo): ROJO en 1.3; revertir todas.
 - [ ] 1.12 Cierre del lote 1: comando enfocado de la tabla; `npm test`; `npm run typecheck`; `eslint`; medir (sin ficheros nuevos); recuentos `sla.ts` 109 → 109+N, `sla.test.ts` 210 → 210+N, `db/sla.ts` 63 sin cambio;
   barrido de citas sobre `sla.ts` y `sla.test.ts` (relee las que cambian de contenido: `sla.ts:32-35`, `:39-44`, `:52-55` —caso B si alguna afirma «24 h de reloj»—, `:69-70`, `sla.test.ts:33`, `:51-55`, `:57-81`, `:188-191`; las de `bodegaje.ts:27` y `openspec/config.yaml` a `sla.ts:32` siguen en caso A) y `db/sla.ts:58`; `apply-progress.md` (~60 líneas, con el puente declarado).
 
@@ -174,12 +176,12 @@ Chain strategy: stacked-to-main
 
 ### Bloque A · Tabla (regla de mutación 2: se ensucia el fichero vigilado)
 
-- [ ] 2.1 RED — `migrate.test.ts`: en sitio `:282-286` (34 tablas, 21 de la app, `[10, 21, 3]`, `33` → `34`); al final, `describe` de la clave primaria: una segunda inserción de la misma terna `(ticket_id, estado, entrada_at)` es rechazada, y otra `entrada_at` o otro `estado` para el mismo ticket entran (`avisos_creados` 0 y 2).
-- [ ] 2.2 Confirmar rojo natural (hay 33 tablas y la tabla no existe). El guardián `:266-275` (todo `CREATE TABLE` califica esquema) nace verde y se declara.
-- [ ] 2.3 GREEN — `schema.sql` tras `:576` (comentario sin `;` + `CREATE TABLE`) y `migrate.ts:73` en sitio.
+- [ ] 2.1 RED — `migrate.test.ts`: en sitio `:282-286` (35 tablas, 22 de la app, `[10, 22, 3]`, `33` → `35`: `alarmas_avisadas` y `alarmas_corte`); al final, `describe` de la clave primaria de `alarmas_corte` (un segundo `id = 1` rechazado) y de la de `alarmas_avisadas`: una segunda inserción de la misma terna `(ticket_id, estado, entrada_at)` es rechazada, y otra `entrada_at` o otro `estado` para el mismo ticket entran (`avisos_creados` 0 y 2).
+- [ ] 2.2 Confirmar rojo natural (hay 33 tablas y las tablas no existen). El guardián `:266-275` (todo `CREATE TABLE` califica esquema) nace verde y se declara.
+- [ ] 2.3 GREEN — `schema.sql` tras `:576` (dos comentarios sin `;` + dos `CREATE TABLE`, `design.md` D-4) y `migrate.ts:73` en sitio.
 - [ ] 2.4 Confirmar 2.1 en verde y `migrate.integration.test.ts` sin cambios; `schema.sql` 576 → 576+N con `−0`; `migrate.ts` 131 sin cambio de largo.
 - [ ] 2.5 MUTACIÓN (regla 2) — escribir `public.` fuera del nombre: `CREATE TABLE IF NOT EXISTS alarmas_avisadas (…`: ROJO en el guardián `migrate.test.ts:266-275`; revertir; `git diff` limpio.
-- [ ] 2.6 MUTACIÓN (regla 2) — quitar `alarmas_avisadas` de `migrate.ts:73`: ROJO en `:282-286`; revertir.
+- [ ] 2.6 MUTACIÓN (regla 2) — quitar `alarmas_avisadas` (y, aparte, `alarmas_corte`) de `migrate.ts:73`: ROJO en `:282-286`; revertir.
 - [ ] 2.7 MUTACIÓN (regla 2) — quitar `PRIMARY KEY (…)` de `schema.sql`: ROJO en el `describe` final de 2.1 (dos inserciones, una fila); revertir.
 
 ### Bloque B · `destinatariosDeCargo`
@@ -227,10 +229,11 @@ Ficheros nuevos: `apps/desk/server/services/alarmasSla.ts` y `apps/desk/server/s
 - [ ] 3.1 **Comprobación de hipótesis H1 antes de escribir código:** sondeo (queda como prueba en `alarmasSla.test.ts`): `INSERT INTO public.alarmas_avisadas (…) VALUES (…) ON CONFLICT (ticket_id, estado, entrada_at) DO NOTHING RETURNING ticket_id` dos veces con la misma terna → 1 fila y luego 0.
   **Plan B escrito:** si pg-mem devuelve fila en el conflicto, `marcarYAvisarAlarma` hace `SELECT` previo dentro de la MISMA transacción (patrón de `catalogo.ts:157-159`) y la clave primaria queda de cinturón; se declara en `apply-progress.md`.
 - [ ] 3.2 RED — `alarmasSla.test.ts` (nuevo), **serie M** (`marcarYAvisarAlarma(db, v, destinatarios, texto)` llamada directa): doble llamada saltando el prefiltro → un aviso por destinatario y la segunda devuelve `null` (S28); dos llamadas en `Promise.all` → una gana, la otra no crea nada (S29);
-  reentrar (otro `entrada_at`, mismo ticket y estado) → marca y aviso nuevos (S30); mismo ticket avisado en `Notificado` y luego vencido en `Remisión creada` → aviso nuevo (S31); sin destinatarios → marca con `avisos_creados = 0`, cero avisos y un solo `logger.warn` con cargo y estado incluso con dos llamadas directas (S24);
+  reentrar (otro `entrada_at`, mismo ticket y estado) → marca y aviso nuevos (S30); mismo ticket avisado en `Notificado` y luego vencido en `Remisión creada` → aviso nuevo (S31); sin destinatarios → marca con `avisos_creados = 0`, cero avisos, y la segunda llamada directa no crea nada (la marca devolvió fila una sola vez);
   **atomicidad por estructura (E):** el registro de consultas del cliente muestra `BEGIN` → `INSERT` marca → `INSERT` aviso → `COMMIT` sobre el MISMO cliente, y un `crearAviso` que lanza produce `ROLLBACK` sin `COMMIT` (S32; pg-mem no honra el `ROLLBACK`: **hipótesis** H4, según `avisoRitmoContrato.ts:18`, cita de segunda mano); texto con `#N`, el estado y las horas hábiles (S23).
-- [ ] 3.3 RED — `alarmasSla.test.ts`, **serie P** (`pasadaAlarmas(db, config, ahora)`): dos usuarios con el cargo → un aviso por usuario (S22); primera pasada sobre tickets ya vencidos, sin ninguna marca → cada entrada avisa y marca una vez, sin corte por fecha (S33); segunda pasada → cero consultas a `users` (espía) y ningún aviso nuevo;
-  sin nadie con el cargo y luego alguien: la segunda pasada no crea aviso ni otro `warn` (S25); `Remisión creada` con OV por cada vía → sin aviso ni marca (S17-S19, nivel pasada); con asociación liberada o sin OV → aviso y marca (S16, S20); `Notificado` y `Notificación cliente` con OV → avisan (S21);
+- [ ] 3.3 RED — `alarmasSla.test.ts`, **serie P** (`pasadaAlarmas(db, config, ahora)`): dos usuarios con el cargo → un aviso por usuario (S22); **corte (S-13 revisado):** primera pasada con un ticket ya vencido → marca con `avisos_creados = 0`, cero avisos, cero `fetch`, fila en `alarmas_corte` con ese `ahora`; un ticket que vence DESPUÉS del corte → aviso normal en la pasada siguiente (S33);
+  reinicio simulado (el corte ya escrito, `ahora` posterior) → el corte no cambia y un vencido posterior sin marca avisa (S46); segunda pasada → cero consultas a `users` (espía) y ningún aviso nuevo;
+  **los dos caminos del destinatario (S-4 segunda revisión):** sin nadie con el cargo y un receptor del área `Comercial` → aviso a los de `destinatariosDeArea` (incluye administradores de oficio), marca con ese recuento y UN `logger.warn` que contiene «sin Coordinador Comercial», aun con una segunda pasada (S24); con alguien en el cargo y un receptor del área → sólo el del cargo, sin `warn` (S25); sin cargo ni área (sin administradores) → marca con `avisos_creados = 0` y el mismo `warn`; `Remisión creada` con OV por cada vía → sin aviso ni marca (S17-S19, nivel pasada); con asociación liberada o sin OV → aviso y marca (S16, S20); `Notificado` y `Notificación cliente` con OV → avisan (S21);
   con OV que luego se pierde y sigue vencido → la pasada siguiente avisa (S34); un error de lectura en el primer ticket no impide el segundo (S35); un fallo global (`listarCierres` lanza) → `pasadaAlarmas` devuelve sin lanzar y queda `logger.error` (S36);
   un cierre añadido entre dos pasadas se descuenta en la segunda (S37); ticket sin foto → sin marca ni aviso (S38); **cargo declarado como dato (S15):** se cambia el cargo de `ALARMAS_SLA['Remisión creada']` dentro de `try/finally` y sólo reciben aviso los usuarios de ese cargo, no los de `Coordinador Comercial`
   (si el tipo hace la tabla de sólo lectura, `avisarAlarmasVencidas` gana un último parámetro `alarmas = ALARMAS_SLA`; decisión del apply, se declara).
@@ -251,12 +254,12 @@ Ficheros nuevos: `apps/desk/server/services/alarmasSla.ts` y `apps/desk/server/s
 
 - [ ] 3.10 MUTACIÓN (regla 1) — `crearAviso` ANTES del `INSERT` de la marca: ROJO en S28 (dos avisos en vez de uno con la doble llamada directa); revertir.
 - [ ] 3.11 MUTACIÓN (regla 1) — `dispararAvisos` DENTRO de la transacción: ROJO en el registro de eventos de 3.4 (el `fetch` debe ir detrás del `COMMIT`); revertir.
-- [ ] 3.12 MUTACIÓN (regla 1) — `logger.warn` ANTES del `INSERT`: ROJO en S24 (dos llamadas directas sin destinatarios: un solo `warn`); revertir.
+- [ ] 3.12 MUTACIÓN (regla 1) — (a) `logger.warn` ANTES del `INSERT` de la marca: ROJO en S24 (dos pasadas sin nadie en el cargo: un solo `warn`); (b) consultar el área antes del cargo o sumar las dos listas: ROJO en S25; revertir.
 - [ ] 3.13 MUTACIÓN (regla 1) — quitar el prefiltro de marcas: ROJO en 3.3 (la segunda pasada consulta `users`, el espía cuenta una); revertir.
 - [ ] 3.14 MUTACIÓN (regla 1) — condición de OV antes o después del vencimiento: **nada rojo, declarado** (intersección; ya cubierto en 2.18-f); no se repite aquí.
 - [ ] 3.15 MUTACIÓN (regla 2) — quitar `pasadaAlarmas(pool, config)` de `index.ts:88`: ROJO en el guardián de 3.5 (S36); y el de ritmo `:194` sigue VERDE (demuestra que el guardián nuevo discrimina y que el viejo no lo hacía por la nueva línea); revertir.
 - [ ] 3.16 MUTACIÓN (regla 2) — forma plana `pasadaAlarmas(pool, config).then(() => pasadaRitmoContratos(pool)).then(() => sync.syncRecent())`: ROJO en `avisoRitmoContrato.test.ts:194` (prueba que el anidamiento no es estético); revertir.
-- [ ] 3.17 MUTACIONES — (a) cargo `'Coordinador Comercial'` literal en la pasada en vez de `alarma.cargo`: ROJO en S15; (b) quitar el `try/catch` por ticket: ROJO en S35; (c) leer los cierres una sola vez (variable de módulo): ROJO en S37; revertir.
+- [ ] 3.17 MUTACIONES — (a) cargo `'Coordinador Comercial'` literal en la pasada en vez de `alarma.cargo`: ROJO en S15; (b) quitar el `try/catch` por ticket: ROJO en S35; (c) leer los cierres una sola vez (variable de módulo): ROJO en S37; (d) corte = `ahora` de cada pasada, sin leer la tabla: ROJO en S46; (e) comparar el vencimiento contra `ahora` en vez de contra el corte: ROJO en S33; (f) quitar `ON CONFLICT (id) DO NOTHING` de la escritura del corte: ROJO en S46; revertir.
 - [ ] 3.18 Cierre del lote 3: comando enfocado; `npm test`; `npm run typecheck`; `eslint`; medir (nuevos: `alarmasSla.ts`, `alarmasSla.test.ts`); recuentos `index.ts` 99 sin cambio; barrido de citas sobre `index.ts` (69; las 29 a `:84-99`: `:88` cambia de contenido → caso B para las que afirmen «`pasadaRitmoContratos` es lo primero» o «`:88`» como línea del ritmo);
   `apply-progress.md` (~60 líneas, con H1 y H4 y la lista de nacidos verdes).
 
@@ -318,15 +321,15 @@ Ficheros nuevos: `apps/desk/server/db/alarmasAvisadas.ts` y `apps/desk/server/db
 
 ## Nota para el cierre — paquete de despliegue (literal)
 
-Antes de desplegar hace falta un paquete de despliegue NUEVO que recoja `tickets.modalidad` (`packages/zoho-sync/src/db/schema.sql:576`), S-6 de `blueprint-soporte-remoto` con el recuento de su P.1 (o «sin medir»), y lo que traiga esta tanda: la tabla `public.alarmas_avisadas`, `Notificado` de 24 h de reloj a 9 h hábiles, las alarmas de `Remisión creada` (27 h) y `Notificación cliente` (36 h), la ráfaga de la primera pasada (S-13) y la marca de tablero. `docs/sdd/Paquete_de_Despliegue_2026-09-29.md` es un registro fechado y no se edita.
+Antes de desplegar hace falta un paquete de despliegue NUEVO que recoja `tickets.modalidad` (`packages/zoho-sync/src/db/schema.sql:576`), S-6 de `blueprint-soporte-remoto` con el recuento de su P.1 (o «sin medir»), y lo que traiga esta tanda: las tablas `public.alarmas_avisadas` y `public.alarmas_corte`, `Notificado` de 24 h de reloj a 9 h hábiles, las alarmas de `Remisión creada` (27 h) y `Notificación cliente` (36 h), que lo vencido antes de la primera pasada se marca SIN avisar (S-13; encender la ráfaga es P.3), el respaldo al área Comercial cuando nadie tiene el cargo (S-4) y la marca de tablero. `docs/sdd/Paquete_de_Despliegue_2026-09-29.md` es un registro fechado y no se edita.
 
-Se despliegan los cuatro lotes juntos. Rollback: revertir; la tabla es nueva y sólo la lee este código, y sin la llamada en `index.ts:88` no hay avisos ni marca. Cambio visible: en días laborables `Notificado` avisa antes (9 h hábiles frente a 24 de reloj) y en fin de semana más tarde.
+Se despliegan los cuatro lotes juntos. Rollback: revertir; las tablas son nuevas y sólo las lee este código (el corte ya escrito no se reescribe al volver a desplegar), y sin la llamada en `index.ts:88` no hay avisos ni marca. Cambio visible: en días laborables `Notificado` avisa antes (9 h hábiles frente a 24 de reloj) y en fin de semana más tarde.
 
 ---
 
-## Matriz de cobertura de escenarios (45/45)
+## Matriz de cobertura de escenarios (46/46)
 
-21 en `transitions-st` (S1-S21: RQ-TS-15 S1-S12, RQ-TS-16 S13-S15, RQ-TS-19 S16-S21), 17 en `derivacion-avisos` (S22-S38: RQ-AV-15 S22-S27, RQ-AV-16 S28-S34, RQ-AV-17 S35-S38), 7 en `vistas-tablero` (S39-S45: RQ-VT-07 S39-S44, RQ-VT-08 S45). **Total 45.**
+21 en `transitions-st` (S1-S21: RQ-TS-15 S1-S12, RQ-TS-16 S13-S15, RQ-TS-19 S16-S21), 18 en `derivacion-avisos` (S22-S38 y S46: RQ-AV-15 S22-S27, RQ-AV-16 S28-S34 y S46, RQ-AV-17 S35-S38), 7 en `vistas-tablero` (S39-S45: RQ-VT-07 S39-S44, RQ-VT-08 S45). **Total 46.**
 `(V)` = nace VERDE y se prueba su discriminación por mutación o como regresión; `(E)` = probado por estructura porque pg-mem no honra `ROLLBACK`; `(M)` = manual. Todo se declara en `apply-progress.md`.
 
 | # | Requisito | Escenario | Lote | Tarea(s) |
@@ -354,8 +357,8 @@ Se despliegan los cuatro lotes juntos. Rollback: revertir; la tabla es nueva y s
 | S21 | RQ-TS-19 | Las otras dos alarmas no miran la OV | 2, 3 | 2.13, 3.3 |
 | S22 | RQ-AV-15 | Un aviso por cada usuario con el cargo | 2, 3 | 2.8, 2.10-2.11, 3.3 |
 | S23 | RQ-AV-15 | El texto nombra ticket, estado y plazo | 3 | 3.2 |
-| S24 | RQ-AV-15 | Sin nadie con el cargo, marca sin aviso y un warn | 3 | 3.2, 3.12 |
-| S25 | RQ-AV-15 | La pasada siguiente no repite el warn | 3 | 3.3, 3.13 |
+| S24 | RQ-AV-15 | Sin nadie con el cargo, el aviso va al área de respaldo con un warn | 3 | 3.3, 3.12-a |
+| S25 | RQ-AV-15 | Con alguien en el cargo, el área no recibe el aviso | 3 | 3.3, 3.12-b |
 | S26 | RQ-AV-15 | Un fallo del correo no tumba nada | 3 | 3.4 |
 | S27 | RQ-AV-15 | Config de correo vacía es un no-op explícito | 3 | 3.4 (V) |
 | S28 | RQ-AV-16 | Dos pasadas no duplican | 3 | 3.2, 3.10, 3.13 |
@@ -363,7 +366,7 @@ Se despliegan los cuatro lotes juntos. Rollback: revertir; la tabla es nueva y s
 | S30 | RQ-AV-16 | Reentrar vuelve a avisar | 3 | 3.2 |
 | S31 | RQ-AV-16 | La marca distingue estados | 3 | 3.2 |
 | S32 | RQ-AV-16 | Marca y aviso van en la misma transacción | 3 | 3.2 (E), 3.11 |
-| S33 | RQ-AV-16 | La primera pasada avisa también lo ya vencido | 3 | 3.3 |
+| S33 | RQ-AV-16 | Lo vencido antes del corte se marca sin avisar; lo posterior avisa | 3 | 3.3, 3.17-e |
 | S34 | RQ-AV-16 | `Remisión creada` con OV no deja marca | 2, 3 | 2.13, 3.3 |
 | S35 | RQ-AV-17 | Un error en un ticket no detiene el resto | 3 | 3.3, 3.17-b |
 | S36 | RQ-AV-17 | La pasada no bloquea la sincronización | 3 | 3.3, 3.5, 3.15-3.16 |
@@ -376,30 +379,31 @@ Se despliegan los cuatro lotes juntos. Rollback: revertir; la tabla es nueva y s
 | S43 | RQ-VT-07 | Otro estado vencido no produce la marca | 4 | 4.1, 4.6-c |
 | S44 | RQ-VT-07 | El cliente no decide | 4 | 4.9 (lectura del `.tsx`) |
 | S45 | RQ-VT-08 | Manual: la tarjeta muestra la marca | 4 | 4.7, P.2 (M) |
+| S46 | RQ-AV-16 | El corte no se mueve con un reinicio | 3 | 3.3, 3.17-d, 3.17-f |
 
-**45/45 escenarios cubiertos.** Los `(V)` nacen verdes porque el comportamiento ya existe (`db/sla.test.ts:95-104`, `:141-145`) o porque el lote anterior lo entrega; su rojo lo dan las mutaciones 2.18, 3.10-3.17 y 4.6, no un RED natural.
+**46/46 escenarios cubiertos.** Los `(V)` nacen verdes porque el comportamiento ya existe (`db/sla.test.ts:95-104`, `:141-145`) o porque el lote anterior lo entrega; su rojo lo dan las mutaciones 2.18, 3.10-3.17 y 4.6, no un RED natural.
 `.tsx` (tarjeta): sin escenario automatizable (F0-00); cubierto por la casilla de la regla 13 (4.9) y por P.2.
 
 ## Tareas de persona — fuera del recuento (regla del ciclo 1)
 
 Cada una con dueño, destino y dónde queda escrita. **Archivar este cambio NO las da por hechas.** Ninguna describe trabajo que una tanda pueda hacer en este repositorio (se comprobó al sacarlas: el apply no puede consultar producción ni desplegar).
 
-- **P.1 · Alfonso / administración — cargo `Coordinador Comercial` activo en producción, ANTES de desplegar.** Verificar que al menos un usuario activo tiene `cargo = 'Coordinador Comercial'`. Por S-4 revisado, si el cargo se da de alta DESPUÉS de la primera pasada, las entradas ya marcadas (con `avisos_creados = 0`) no avisan nunca.
-  Destino: sin él, las tres alarmas sólo dejan `logger.warn`. Escrita en: este documento, `proposal.md` (§Tareas de persona) y el `archive-report`. Consulta de sólo lectura (hipótesis de nombres de tabla: `public.users`):
+- **P.1 · Alfonso / administración — cargo `Coordinador Comercial` activo en producción (NO bloqueante desde la segunda revisión de S-4, 2026-09-29).** Verificar que al menos un usuario activo tiene `cargo = 'Coordinador Comercial'` (texto libre de firma de la remisión, `apps/desk/server/auth/routes.ts:67-68`; un «Coord. Comercial» no casa).
+  Destino: sin él, las tres alarmas avisan al área Comercial (`destinatariosDeArea`) y dejan un `logger.warn` «sin Coordinador Comercial»; nada queda mudo. Escrita en: este documento, `proposal.md` (§Tareas de persona) y el `archive-report`. Consulta de sólo lectura (hipótesis de nombres de tabla: `public.users`):
   ```sql
   SELECT id, email, active FROM public.users WHERE lower(trim(cargo)) = 'coordinador comercial';
   ```
   Resultado (a rellenar): `_________`.
 - **P.2 · Alfonso / Comercial — verificación en la app tras desplegar los cuatro lotes**, en `ambientalia-desk.ambientalia.cloud`: (1) el Coordinador Comercial ve en la campana el aviso de un ticket vencido en `Notificado`; (2) un ticket vencido en `Notificación cliente` muestra «Esperando aprobación del cliente» en su tarjeta y uno no vencido no la muestra;
   (3) un ticket en `Remisión creada` con orden de venta no genera aviso; (4) al sacar el ticket de `Notificación cliente`, la marca desaparece; (5) el correo llega o, si no, `enviado_at` queda vacío sin romper nada. Destino: verificación en la app (S45). Escrita en: este documento, `proposal.md` y el `archive-report`.
-- **P.3 · Gerencia — aceptar o acotar la ráfaga de la primera pasada (S-13), ANTES de desplegar.** La primera pasada avisa cada entrada ya vencida, una vez, a cada Coordinador Comercial. Antes de desplegar, medir la cota superior con esta consulta de sólo lectura (no aplica horas hábiles ni la condición de OV, así que sobreestima):
+- **P.3 · Gerencia — ¿se enciende la ráfaga de lo vencido antes del despliegue? (S-13 revisado, 2026-09-29; NO bloqueante).** Por defecto está APAGADA: la primera pasada fija el corte y marca SIN avisar lo que ya estaba vencido (sale la marca de tablero, no el correo), porque el correo enviado no se recupera. Si Gerencia la quiere encendida, se cambia en código ANTES de desplegar (sólo tiene efecto en la primera pasada; si hiciera falta un interruptor, nace cerrado, `=== 'true'`, en `.env.example` y `DEPLOY.md` con sus dos frases). Tamaño de lo que se marca en silencio, cota superior de sólo lectura (no aplica horas hábiles ni la condición de OV, así que sobreestima):
   ```sql
   SELECT t.status, count(*) FROM desk.tickets t
   WHERE t.status IN ('Notificado', 'Remisión creada', 'Notificación cliente')
     AND EXISTS (SELECT 1 FROM desk.ticket_transitions tt WHERE tt.ticket_id = t.id AND tt.to_status = t.status)
   GROUP BY t.status;
   ```
-  Destino: si el número es inaceptable, es un cambio de alcance (corte por fecha) que el apply NO decide; se devuelve a Gerencia. Escrita en: la nota de despliegue, el `archive-report` y este documento. Sin medir, el paquete dice «sin medir».
+  Destino: la respuesta de Gerencia (encender o no) se registra en `openspec/config.yaml` → `decisiones_de_gerencia`; sin respuesta, se despliega apagada. Escrita en: la nota de despliegue, el `archive-report` y este documento. Sin medir, el paquete dice «sin medir».
 - **P.4 · Gerencia — confirmar que `Notificado` escala al `Coordinador Comercial` (S-3).** Ninguna decisión lo nombra; coincide con la derivación viva. Destino: si la respuesta es otro cargo, se cambia UN literal de `ALARMAS_SLA` y su prueba (1.3). La PREGUNTA se registra en la bandeja al cerrar (documentación directa del orquestador, no cuenta); la RESPUESTA es de Gerencia.
 
 ## Dependencias entre lotes
