@@ -539,3 +539,14 @@ B (históricas, no se tocan): citas datadas de `docs/sdd/F0-00*`, `F0-01`, `F1A-
 ### Status
 
 Lote 6 completo: 6.0a, 6.0b y 6.1-6.8. Todas las tareas del cambio completas (salvo las tareas de persona P.1-P.4, fuera del recuento). Siguiente: `sdd-verify`.
+
+## Remediación del verify
+
+RED capturado antes de tocar producción (`routes/ovAsociaciones.test.ts`): puertas 1/2/3 → `expected 409 to be 201/200/201` con `La orden de venta OV-2026-300 ya está asociada al ticket #8001`; buscador → `expected [] to deeply equal [ 'soX' ]`; estructurales → `actual value must be number or bigint, received "undefined"` (no había cliente de transacción); carrera → `expected 500 to be 409` (`Error interno`); unitaria de `asociarOV` → `Right-hand side of 'instanceof' is not an object`. GREEN: 45/45 y 11/11; suite completa 1622 verdes, typecheck, eslint (165 avisos, 0 errores) y build limpios.
+
+- **R2.** `liberarAsociacion(q, …)` (`ovAsociaciones.ts`) hace tras el `UPDATE … RETURNING` un solo `UPDATE tickets` con `CASE` (pg-mem lo acepta). Cada columna se limpia sólo si contiene esa OV; `fecha_orden_venta` va con `orden_venta` (es la fecha de esa orden; si sólo casa `salesorder_id` no se toca). Siempre pone `ov_elegida_en_app_at`. `liberarAsociacionesDeTicket` no limpia: el ticket se borra. El caso «columnas con OTRA OV» queda intacto (prueba propia).
+- **R3.** `OvYaAsociadaError` (409, `body.error`) sale de `asociarOV` ante `23505`; `app.ts:79` lo responde junto a `HttpError`. **Mensaje: «La orden de venta X ya está asociada a otro ticket», SIN el número del ticket**: tras un `23505` la transacción real de Postgres queda abortada y la consulta que lo buscaría fallaría; SAVEPOINT no se probó (hipótesis: pg-mem no lo garantiza) y se descartó por complejidad. La carrera se simula inyectando un INSERT rival justo antes del de la remisión.
+- **R4.** `remision.ts:239-243` (397 líneas) va en `enTransaccion(db, async (q) => { … })`: `UPDATE` y `asociarOV` con el mismo cliente. Lo probado es ESTRUCTURAL: un pool grabador registra (cliente, sql) y se afirma que ambas sentencias comparten cliente entre `BEGIN` (primera) y `COMMIT` (última). Lo mismo para liberar (`UPDATE ov_asociaciones` + `UPDATE tickets`). **La atomicidad en sí no es demostrable en pg-mem** (no honra ROLLBACK); sólo se prueba que comparten cliente entre BEGIN/COMMIT.
+- **R5.** RQ-TS-18 corregido (la fecha de OC va a la asociación; `fecha_orden_compra_final` de `aprobacion` sigue en columna, vigente); RQ-TS-14 cita `ticketService.ts:148-152`; nota F1A-04 de RQ-TS-09 restaurada (`PROMOTED_COLUMNS` tiene 40 entradas, `rows.ts:85`, contadas).
+- **R6 mutación.** `if (liberada)` → `if (liberada && false)`: 5 rojos (tres puertas `409`, buscador `[]`, estructural `/UPDATE tickets/`); revertido y `cmp` idéntico.
+- **Desviación.** `appWith(overrides, dbPropia?)` (`testing/appHarness.ts`) admite un pool propio para el grabador.

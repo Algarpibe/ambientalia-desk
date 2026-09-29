@@ -13,7 +13,7 @@ fecha de OC guardada en la asociación.
 escribir `orden_venta`, la transición **SHALL** rechazar con `409` una orden ya asociada a otro
 ticket, mirando ahora **tres vías** —`salesorder_id`, `orden_venta` y la asociación vigente de
 `public.ov_asociaciones` (`tickets-core` RQ-TC-17)—, excluyendo el propio ticket
-(`ticketService.ts:95-102`, con `ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:362-379`,
+(`ticketService.ts:148-152`, con `ticketConOrdenVenta` en `packages/zoho-sync/src/db/repo.ts:362-379`,
 ampliado con la tercera vía).
 
 Antes de esta comprobación de unicidad (escalón D), `habilitar_servicio` **SHALL** aplicar la misma
@@ -54,7 +54,10 @@ El destino de cada valor **SHALL** derivarse de su `target` (`transitions.ts:17`
 
 **Verificado en esta tanda:** las **27** etiquetas de campo distintas que declaran las 34 transiciones
 —contando el `campoFecha` que arrastra el buscador de órdenes de venta— están **todas** en
-`PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts`), de las 39 que ese mapa declara,
+`PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts`), de las 39 que ese mapa declara
+*(**F1A-04**: 28 de 40. El campo nuevo, «Fecha de aviso al cliente», es además el ÚNICO de
+`PROMOTED_COLUMNS` que no viene de Zoho — ver `rows.ts` y la guarda de `repo.test.ts`; hoy el mapa tiene 40
+entradas, `rows.ts:85`)*,
 **salvo la clave `OV adicional`** del campo nuevo de las dos aprobaciones: no es una etiqueta de Zoho,
 NO está en `PROMOTED_COLUMNS` (lo fija el guardián de `transitionExec.test.ts`) y tampoco cae al cajón
 `custom_fields`, porque su destino es `ovAdicional` y no `customField`. **Ninguna cae al cajón
@@ -77,8 +80,10 @@ Las transiciones `Aprobación` y `Aprobación y S. Repuestos` **SHALL** poder re
 **SHALL** crear una asociación adicional (`tickets-core` RQ-TC-17) sin tocar la OV de entrada —
 `orden_venta`/`fecha_orden_venta` del ticket, protegidas por `ov_elegida_en_app_at` (`zoho-sync`
 RQ-ZS-01, sin cambios en este delta)—. La fecha de orden de compra (OC) que acompañe a esta OV
-**SHALL** guardarse en la propia asociación y **MUST NOT** escribirse sobre columnas del ticket. Las
-dos transiciones **SHALL** aplicar las mismas guardas de cuarentena y unicidad que `RQ-TS-14`.
+**SHALL** guardarse en la propia asociación (S-5) y **MUST NOT** escribirse sobre `orden_venta` ni
+`fecha_orden_venta`. La única columna de fecha de OC que el ticket sigue recibiendo es
+`fecha_orden_compra_final` en `aprobacion`, por su campo propio y como hoy (comportamiento vigente, sin
+cambios en este delta). Las dos transiciones **SHALL** aplicar las mismas guardas de cuarentena y unicidad que `RQ-TS-14`.
 
 #### Scenario: Tras `Aprobación` con OV nueva, la de entrada no cambia
 
@@ -91,7 +96,8 @@ dos transiciones **SHALL** aplicar las mismas guardas de cuarentena y unicidad q
 
 - GIVEN la ejecución del escenario anterior
 - WHEN se consulta la asociación creada por `Aprobación`
-- THEN tiene la fecha de OC, y ninguna columna del ticket la guarda
+- THEN tiene la fecha de OC; en `aprobacion` el ticket conserva además `fecha_orden_compra_final`
+  (comportamiento vigente), y `orden_venta`/`fecha_orden_venta` no la reciben
 
 ## Fuera de alcance de este delta
 

@@ -1,23 +1,23 @@
 ```yaml
 schema: gentle-ai.verify-result/v1
-evidence_revision: sha256:e3d4ca40f81785716e648e4d6e48565c80f74e12ad2cd34c52cf8aac4c8457f7  # sha256 de la salida de npm test + npm run build, re-ejecutados por el orquestador sobre 2c43e5c
-verdict: fail
-blockers: 1
-critical_findings: 1
-requirements: 7/10
-scenarios: 21/24
+evidence_revision: sha256:2630e7af043f0daf26aa7169f25fc0d65d9c4f6b326d515227281ed59c8e8b4b  # sha256 de npm test + npm run build, re-ejecutados por el orquestador tras la remediación (el primer verify, sobre 2c43e5c, dio sha256:e3d4ca40…57f7 y FAIL)
+verdict: pass_with_warnings
+blockers: 0
+critical_findings: 0
+requirements: 10/10
+scenarios: 24/24
 test_command: npm test
 test_exit_code: 0
-test_output_hash: sha256:ad0df75b0e8a6cd850bb89bdd0ffc6041444a07cc0e7366f7e0723c42f639ef5
+test_output_hash: sha256:0c79b2a8ae253498dc397581cdab0e2e93b42cd5b4833da6abf7ce6fcef3b9b1
 build_command: npm run build
 build_exit_code: 0
-build_output_hash: sha256:0282654e20bfcf899616405edc43d7e430674ae341b807a081430d01446c74dd
+build_output_hash: sha256:53de2702aee467ce190029a171185e05c2f3152382780c9d1a995a9bae9cf2bf
 ```
 
 ## Verification Report
 
 **Change**: `asociacion-ov-ticket` (F1B-11, cambio 2 de 3, `cierra: no`)
-**Versión**: HEAD `2c43e5c`, seis lotes: `4501784`, `2fca58c`, `f3e8bdc`, `0537b3f`, `1c1b5d7`, `2c43e5c`
+**Versión**: primer verify sobre `2c43e5c` (FAIL, commit `d9f51ae`); re-verify sobre la remediación, que se commitea junto a este informe. Seis lotes: `4501784`, `2fca58c`, `f3e8bdc`, `0537b3f`, `1c1b5d7`, `2c43e5c`
 **Modo**: Strict TDD, almacén hybrid
 **Único cambio sin commitear**: `design.md:112` (nota de comodidad declarada, del orquestador). No se toca.
 
@@ -66,6 +66,8 @@ no los repite.
 | `npx eslint . --max-warnings 165` | 165 avisos, 0 errores |
 | `npm run build` | salida 0 |
 
+**Re-verify, tras la remediación:** `npm test` 150 ficheros y 1.622 pruebas en verde (1 y 2 omitidos, los de siempre); `typecheck` salida 0; `eslint --max-warnings 165` 165 avisos, 0 errores; `build` salida 0. Hashes en la cabecera.
+
 ### Mutaciones reproducidas por el orquestador
 Todas revertidas y comprobadas con `cmp`.
 
@@ -76,7 +78,14 @@ Todas revertidas y comprobadas con `cmp`.
 | Puerta 3, remisión: la cuarentena de `remision.ts:220` movida DETRÁS del `409` de la tercera puerta | 1 roja: «4.13 · OV en cuarentena y YA usada por otro ticket: 422 de cuarentena, no 409…» |
 | **Sonda del CRITICAL 1** (prueba temporal, borrada tras ejecutarla): ticket con `orden_venta`/`salesorder_id` = OV-2026-900, asociación vigente, `liberarAsociacion`, y `ticketConOrdenVenta` desde otro ticket | `expected { id: 't-a', number: 9001 } to be null`: **tras liberar, la puerta sigue encontrando la OV en las columnas del ticket que la liberó**. Confirma el CRITICAL por ejecución, no sólo por lectura |
 
-La mutación que el CRITICAL echa en falta —quitar la limpieza de columnas de `liberarAsociacion` y exigir rojo— no se puede hacer hoy porque esa limpieza no existe: es la prueba que tiene que escribir la remediación, en rojo antes del arreglo.
+La mutación que el CRITICAL echaba en falta, **reproducida en el re-verify**:
+
+| Mutación (remediación) | Resultado |
+|---|---|
+| Quitar la limpieza de columnas de `liberarAsociacion` (`if (liberada && false)`) | 5 rojas: las tres puertas (`RUT:181-183`), el buscador (`RUT:193`) y la estructural de liberar (`RUT:241`) |
+| Remisión: `asociarOV(db, …)` en vez del cliente de la transacción `q` | 1 roja: `RUT:248`, las dos sentencias ya no comparten cliente |
+
+Ambas revertidas y comprobadas con `cmp`. **Límite declarado:** pg-mem no deshace un `ROLLBACK`, así que la atomicidad no se prueba; lo que se prueba es que las dos sentencias de liberar y las dos de la remisión van por el MISMO cliente entre `BEGIN` y `COMMIT` (`RUT:240-254`, pool envoltorio que registra cliente y sentencia).
 
 ---
 
@@ -97,12 +106,12 @@ abreviadas: `TS` = `apps/desk/server/services/ticketService.test.ts`; `OVU` = `a
 | RQ-TC-08 | La asociación vigente por la tercera vía bloquea el alta | `OVU:233` «2.9 · la asociación vigente sin coincidencia por columna bloquea el alta con 409 y no escribe nada» (409, texto con `7001`, 1 ticket, 1 fila vigente) | PASS |
 | RQ-TC-08 | Las pruebas de posición existentes no cambian | `git diff 8a46998^ HEAD` sobre `OVU` y `REM`: 268 inserciones y **2 borrados, los dos son la línea `import`** (se añade `asociarOV`); ningún `it` ni `expect` previo cambia. `REM:988` sigue siendo «serial vacío y remisión pendiente a la vez: 422 por el serial, no 409 por la pendiente». Corrida verde | PASS |
 | RQ-TC-17 | Escribir la OV crea la asociación en la misma transacción | `TS:681` (alta: `ticket_id`, `numero`, `salesorder_id`, origen alta, `asociada_por` Admin, `liberada_at` nulo), `TS:693` (rama «Equipo nuevo», transacción propia), `TS:705` (sin OV no asocia, S-4) | PASS (ver SUGGESTION 1) |
-| RQ-TC-17 | Segunda asociación vigente rechazada por la base | `OA:33` «una segunda asociación vigente … es rechazada por la base (23505)». La mitad «la aplicación traduce el conflicto a la misma respuesta» no la afirma ninguna prueba: ver WARNING 1 | PARTIAL |
+| RQ-TC-17 | Segunda asociación vigente rechazada por la base | `OA:33` (23505 → `OvYaAsociadaError`, status 409) y `RUT:256` «carrera en la remisión: otro commit se cuela entre la guarda y el INSERT → 409 …, no 500». *Primer verify: PARTIAL (salía 500).* | PASS |
 | RQ-TC-18 | subOV con sufijo no canónico rechazada antes de la unicidad | Las tres puertas: alta `TS:887` y posición `TS:896`; transición `TS:910` y posición `TS:920` (más OV adicional `TS:933`); remisión `REM:1260`, con control de población `REM:1273` y A antes que C `REM:1281`. Cada posición activa las dos guardas a la vez y contrasta con el 409 de la subOV canónica | PASS |
 | RQ-TC-18 | OV simple y OVI no entran en cuarentena | `SO:31` `it.each(ordinarias)`, que incluye `OV-2026-001` y `OVI-2026-001` (`SO:29-30`); `esCuarentena` es falso | PASS |
 | RQ-TC-19 | Liberar conserva la fila con su motivo | `OA:64` (fecha, persona, motivo, `liberada_at`), `RUT:80` «liberar conserva la fila (el recuento no cambia) y guarda quién y por qué» | PASS |
 | RQ-TC-19 | Sin rol Comercial, la liberación se rechaza | `RUT:31` matriz por área: Servicio Técnico y Compras sola dan 403 y la fila queda con `liberada_at` y `motivo_liberacion` en NULL (`RUT:47-51`); `RUT:98` «sin Comercial Y motivo vacío → 403, no 422» | PASS |
-| RQ-TC-19 | Tras liberar, la OV es reasociable | `OA:86` afirma sólo que `asociarOV` no lanza 23505. La segunda mitad del THEN (ninguna de las tres vías la encuentra ya en el ticket que la liberó, S-7: liberar limpia sus columnas) la contradice el código: ver CRITICAL 1 | **FAIL** |
+| RQ-TC-19 | Tras liberar, la OV es reasociable | `RUT:179-191` con un ticket que TIENE la OV en columnas y asociación: tras liberar por la ruta, las tres puertas la aceptan (alta 201, `habilitar_servicio` 200, remisión 201); `RUT:193` `soloLibres` la vuelve a ofrecer, el ticket liberador queda sin OV y con `ov_elegida_en_app_at`, y un ticket con OTRA OV no se limpia. *Primer verify: FAIL (CRITICAL 1).* | PASS |
 | RQ-TC-20 | La ficha devuelve las dos listas | `RUT:63` «devuelve las vigentes y las liberadas, distinguibles por liberada_at» (2 filas, `liberada_at` nulo y no nulo, la del otro ticket fuera) | PASS |
 
 ### transitions-st
@@ -112,7 +121,7 @@ abreviadas: `TS` = `apps/desk/server/services/ticketService.test.ts`; `OVU` = `a
 | RQ-TS-14 | `habilitar_servicio` sin cuarentena sigue igual | Asociación escrita: `TS:711` (por número, `salesorder_id` resuelto), `TS:722` (S-12, NULL), `TS:732` (idempotente). 200 «igual que hoy»: `OVU:291` «excluye al propio ticket» (status 200) | PASS |
 | RQ-TS-14 | OV en cuarentena bloquea antes de la unicidad | `TS:910` (422 en `errors`, `orden_venta` sigue NULL) y `TS:920` POSICIÓN (dueño con la OV por columna y asociación: 422; con subOV canónica, 409) | PASS |
 | RQ-TS-18 | Tras `Aprobación` con OV nueva, la de entrada no cambia | `TS:766` (dos vigentes exactas, `orden_venta`/`fecha_orden_venta` intactas, jsonb sin la OV), `TS:787` (`aprobacion_y_repuestos`), `TS:819` S-10; guardianes del catálogo `TX:193`, `TX:244`, `TX:267`, `TX:271` | PASS |
-| RQ-TS-18 | La fecha de OC vive en la asociación nueva | `TS:804`: la asociación guarda `fecha_orden_compra` 2026-07-01. Pero la prueba sólo afirma que `tickets.fecha_orden_compra` sigue NULL: la misma fecha SÍ queda en `fecha_orden_compra_final` del ticket (lo admite el comentario de `TS:812-813`). Ver WARNING 4 | PARTIAL |
+| RQ-TS-18 | La fecha de OC vive en la asociación nueva | THEN corregido en la spec (S-5): `TS:804` afirma la fecha en la asociación, `fecha_orden_compra` del ticket NULL, `fecha_orden_compra_final` conservada y `orden_venta`/`fecha_orden_venta` de entrada intactas (las dos últimas aserciones las añadió el orquestador en el re-verify; nacen verdes porque afirman el comportamiento vigente). *Primer verify: PARTIAL.* | PASS |
 
 **RQ-TS-09 (MODIFIED en el lote 6, sin escenarios).** Sus afirmaciones, una a una:
 - Fila `ovAdicional` a `plan.ovAdicional`, nunca columna ni `custom_fields`: `transitionExec.ts:88` la contiene; `TX:193` (`columns` y `customFields` vacíos) y `TX:200` la fijan. PASS.
@@ -143,12 +152,11 @@ abreviadas: `TS` = `apps/desk/server/services/ticketService.test.ts`; `OVU` = `a
 
 | Estado | N | Escenarios |
 |---|---|---|
-| PASS | 21 | todos los demás |
-| PARTIAL | 2 | RQ-TC-17 «Segunda asociación vigente rechazada por la base»; RQ-TS-18 «La fecha de OC vive en la asociación nueva» |
-| FAIL | 1 | RQ-TC-19 «Tras liberar, la OV es reasociable» |
+| PASS | 24 | todos |
+| PARTIAL | 0 | — (en el primer verify: RQ-TC-17 y RQ-TS-18, resueltos por la remediación) |
+| FAIL | 0 | — (en el primer verify: RQ-TC-19, resuelto por la remediación) |
 
-Requisitos: 10. Sin reservas, 7 (RQ-TC-08, RQ-TC-18, RQ-TC-20, RQ-TS-14, RQ-TS-09 con WARNING 3, RQ-RE-16, RQ-ZS-14).
-Con un escenario PARTIAL, 2 (RQ-TC-17, RQ-TS-18). Con un escenario FAIL, 1 (RQ-TC-19).
+Requisitos: 10, los 10 sin escenario PARTIAL ni FAIL.
 
 ---
 
@@ -208,7 +216,7 @@ Lo que el cliente da a entender y el servidor no cumple: el panel ofrece «Liber
 |---|---|---|---|
 | 1 | Un ticket con dos OV vigentes; la de entrada no cambia tras `Aprobación` | PASS | `TS:766`, `TS:787` |
 | 2 | Segunda asociación vigente de la misma OV, 409 en las tres puertas y rojo en la base | PASS | base `OA:33`; puertas `OVU:233`, `OVU:275`, `REM:1199` |
-| 3 | Liberar: fila conservada con motivo; la OV vuelve al desplegable y es reasociable; sólo Comercial | **FAIL** en «vuelve al desplegable y es reasociable» (fila conservada y sólo Comercial: PASS, `OA:64`, `RUT:31`) | ver CRITICAL 1 |
+| 3 | Liberar: fila conservada con motivo; la OV vuelve al desplegable y es reasociable; sólo Comercial | PASS (primer verify: FAIL) | `OA:64`, `RUT:31`, `RUT:179-193` |
 | 4 | OV con sufijo no canónico fuera del desplegable y del saldo, en la lista; `OV-AAAA-NNN` y `OVI-` intactas | PASS | `BS:79`, `BR:119`, `SO:31`, `SO:56` |
 | 5 | Saldo por lote correcto con subOV libres, consumidas y en cuarentena | PASS | `BS:46` (5/2/3/40) |
 | 6 | `remisiones.test.ts:988` y `ordenVentaUnTicket.test.ts` en verde sin cambios en sus casos | PASS | diff con sólo la línea `import` (ver RQ-TC-08); corrida verde |
@@ -259,7 +267,9 @@ IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` re
 
 ### CRITICAL
 
-**1. RQ-TC-19, escenario «Tras liberar, la OV es reasociable», y criterio de éxito 3: liberar NO deja la OV libre.**
+Ninguno tras la remediación. El del primer verify, conservado como historia:
+
+**1. [RESUELTO por la remediación] RQ-TC-19, escenario «Tras liberar, la OV es reasociable», y criterio de éxito 3: liberar NO deja la OV libre.**
 - **Qué exige la spec** (`specs/tickets-core/spec.md:142-143`): tras liberar, la asociación se crea sin que el índice único parcial la rechace, «y ninguna de las tres vías de las puertas la encuentra ya en el ticket que la liberó (S-7: liberar limpia sus columnas)». El diseño (`design.md:89-97`, `:213`) precisa que `liberarAsociacion` hace el `UPDATE` de la fila y además pone a NULL `orden_venta`, `salesorder_id` y `fecha_orden_venta` del ticket si guardan esa OV, con `ov_elegida_en_app_at = now()`. `design.md:184` lo repite («`liberarAsociacion` con limpieza de columna»).
 - **Qué hace el código** (lectura, sin ejecutar una sonda): `packages/zoho-sync/src/db/ovAsociaciones.ts:74-86` ejecuta un único `UPDATE ov_asociaciones`; la ruta que lo llama, `apps/desk/server/routes/ovAsociaciones.ts:52`, no toca `tickets`. La tarea 1.10 (`tasks.md:81-83`) ya omitió la limpieza y ninguna tarea posterior la recoge.
 - **Por qué es real:** los tres escritores dejan la OV también en las columnas del ticket (alta con `ordenVenta`/`salesorderId`; `repo.ts:311`; `remision.ts:240`). Tras liberar, `ticketConOrdenVenta` (`repo.ts:366-372`) sigue encontrando ese ticket por `salesorder_id` y por `orden_venta`, así que un ticket nuevo con esa OV recibe el 409 de las tres puertas; y `libresFilter` (`books/repo.ts:159-162`) sigue excluyéndola del desplegable por las columnas de `tickets`. La OV liberada de un ticket real no vuelve.
@@ -269,12 +279,14 @@ IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` re
 
 ### WARNING
 
-1. **RQ-TC-17 «Segunda asociación vigente rechazada» (PARTIAL).** La base rechaza (`OA:33`) y en el camino normal las guardas dan 409 (`OVU:233`, `OVU:275`, `REM:1199`). Falta la traducción del 23505: en una carrera puerta/`INSERT` sale como 500. El diseño lo declara en «Riesgos» y lo acepta; la spec dice que «la aplicación traduce el conflicto». O se implementa el `catch` o se suaviza el THEN antes de archivar.
-2. **La remisión no escribe la asociación en la misma transacción.** `remision.ts:239-243` hace el `UPDATE` de `tickets` y después `asociarOV`, dos sentencias sueltas sobre `db` (el pool), sin `BEGIN`; y `createRemision` va aparte. La spec exige lo contrario (`specs/tickets-core/spec.md:69-71`; `specs/remisiones/spec.md:37-38`). Si `asociarOV` falla tras el `UPDATE`, el ticket queda con la OV en columna y sin fila de asociación. El escenario pasa (`REM:1168`) porque sólo mira el caso feliz. Alta y transición sí van en transacción (`equipoNuevo.ts:86-99`, `repo.ts:338`).
-3. **RQ-TS-09: la frase de las «27 etiquetas de las 39» es rancia.** El delta la reescribe sin el paréntesis «F1A-04: 28 de 40» de la spec viva (`openspec/specs/transitions-st/spec.md:306-307`), y `rows.ts` declara hoy 40 entradas. Al fusionar en el archive, el requisito vigente pierde una afirmación actual y recupera una caducada. Ninguna prueba cuenta esas etiquetas.
-4. **RQ-TS-18 «La fecha de OC vive en la asociación nueva» (PARTIAL).** El THEN dice «ninguna columna del ticket la guarda»; en `aprobacion` la fecha se guarda además en `fecha_orden_compra_final` (campo preexistente; lo admite `TS:812-813`), y la prueba sólo afirma que `fecha_orden_compra` sigue NULL. S-5 (`proposal.md:104`) dice lo correcto; la spec sobreafirma. Conviene reescribir el THEN a «la asociación tiene la fecha y la columna de entrada no se toca».
-5. **Cita defectuosa en el delta de `transitions-st`.** RQ-TS-14 cita `ticketService.ts:95-102` para el 409 de la transición; esas líneas son el alta. La guarda de la transición está en `:148-152` (caso A de la regla de mutación 4).
-6. **La cuarentena de la remisión queda detrás del 409 de remisión pendiente (`remision.ts:177`).** IV-12, registrado y no corregido (ver b). No bloquea.
+1. **[RESUELTO: `OvYaAsociadaError` → 409, `OA:33`, `RUT:256`] RQ-TC-17 «Segunda asociación vigente rechazada» (PARTIAL en el primer verify).** La base rechaza (`OA:33`) y en el camino normal las guardas dan 409 (`OVU:233`, `OVU:275`, `REM:1199`). Falta la traducción del 23505: en una carrera puerta/`INSERT` sale como 500. El diseño lo declara en «Riesgos» y lo acepta; la spec dice que «la aplicación traduce el conflicto». O se implementa el `catch` o se suaviza el THEN antes de archivar.
+2. **[RESUELTO: `remision.ts:239-243` dentro de `enTransaccion`, prueba estructural `RUT:248`] La remisión no escribía la asociación en la misma transacción.** `remision.ts:239-243` hace el `UPDATE` de `tickets` y después `asociarOV`, dos sentencias sueltas sobre `db` (el pool), sin `BEGIN`; y `createRemision` va aparte. La spec exige lo contrario (`specs/tickets-core/spec.md:69-71`; `specs/remisiones/spec.md:37-38`). Si `asociarOV` falla tras el `UPDATE`, el ticket queda con la OV en columna y sin fila de asociación. El escenario pasa (`REM:1168`) porque sólo mira el caso feliz. Alta y transición sí van en transacción (`equipoNuevo.ts:86-99`, `repo.ts:338`).
+3. **[RESUELTO: nota «F1A-04: 28 de 40» restituida en el delta] RQ-TS-09: la frase de las «27 etiquetas de las 39» era rancia.** El delta la reescribe sin el paréntesis «F1A-04: 28 de 40» de la spec viva (`openspec/specs/transitions-st/spec.md:306-307`), y `rows.ts` declara hoy 40 entradas. Al fusionar en el archive, el requisito vigente pierde una afirmación actual y recupera una caducada. Ninguna prueba cuenta esas etiquetas.
+4. **[RESUELTO: THEN corregido según S-5 y aserción completa en `TS:804`] RQ-TS-18 «La fecha de OC vive en la asociación nueva» (PARTIAL en el primer verify).** El THEN dice «ninguna columna del ticket la guarda»; en `aprobacion` la fecha se guarda además en `fecha_orden_compra_final` (campo preexistente; lo admite `TS:812-813`), y la prueba sólo afirma que `fecha_orden_compra` sigue NULL. S-5 (`proposal.md:104`) dice lo correcto; la spec sobreafirma. Conviene reescribir el THEN a «la asociación tiene la fecha y la columna de entrada no se toca».
+5. **[RESUELTO: cita a `:148-152`] Cita defectuosa en el delta de `transitions-st`.** RQ-TS-14 cita `ticketService.ts:95-102` para el 409 de la transición; esas líneas son el alta. La guarda de la transición está en `:148-152` (caso A de la regla de mutación 4).
+6. **La cuarentena de la remisión queda detrás del 409 de remisión pendiente (`remision.ts:177`).** IV-12, registrado y no corregido (ver b). No bloquea. **Sigue vivo.**
+7. **NUEVO, de la remediación: el 409 de la carrera dice «ya está asociada a otro ticket», sin el número.** Tras un `23505` la transacción real de Postgres queda abortada y la consulta del ticket dueño fallaría; con SAVEPOINT se podría, pero no se verificó en pg-mem (hipótesis). Diferencia de texto con las puertas, declarada; el código (409) es el mismo. No bloquea.
+8. **NUEVO, límite de prueba: la atomicidad es estructural.** pg-mem no deshace `ROLLBACK`; se prueba el cliente compartido entre `BEGIN`/`COMMIT`, no la reversión. No bloquea.
 
 ### SUGGESTION
 
@@ -289,13 +301,14 @@ IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` re
 | Check | Resultado | Detalle |
 |---|---|---|
 | Evidencia TDD reportada | OK | Tablas por lote en `apply-progress.md` (`:8-17`, `:235-246`, `:297-306`, `:359-371`, `:465-470`) |
-| RED capturado | OK, salvo CRITICAL 1 | El RED de 1.8 se escribió contra la mitad fácil del escenario |
+| RED capturado | OK | El RED de 1.8 se escribió contra la mitad fácil del escenario; la remediación capturó el RED completo (`expected 409 to be 201` en las tres puertas) antes del arreglo |
 | GREEN | OK | 299/299 en la corrida focalizada de este verify |
 | Nacidas verdes | OK | Cada lote las enumera y justifica como control de población o regresión |
-| Mutaciones declaradas | Pendiente de reproducir | Sección «Mutaciones reproducidas por el orquestador» |
+| Mutaciones declaradas | Reproducidas | Sección «Mutaciones reproducidas por el orquestador»: tres de posición (una por puerta) y dos de la remediación |
 | Desviación de proceso | Declarada | Lote 1: `liberarAsociacion` escrita antes de su RED y corregida en el mismo turno (`apply-progress.md:19-29`) |
 
 ## Verdict
 
-**FAIL** — 10 requisitos y 24 escenarios: **21 PASS, 2 PARTIAL, 1 FAIL**; 1 CRITICAL, 6 WARNING, 4 SUGGESTION.
-El CRITICAL 1 (RQ-TC-19, S-7 sin implementar y sin prueba que lo vea) bloquea el archive: un ticket real no libera la OV que la ficha promete liberar. Por lo demás, los seis lotes cumplen sus escenarios con pruebas que afirman el THEN, y las tres puertas mantienen su orden de guardas con pruebas de posición. Camino a `PASS WITH WARNINGS`: un `apply` corto que implemente la limpieza de columnas de `design.md` §3 con su RED, más decisión sobre WARNING 1 y 2 (implementar o suavizar la spec).
+**PASS WITH WARNINGS** — re-verify tras la remediación: 10 requisitos y 24 escenarios, **24 PASS, 0 PARTIAL, 0 FAIL**; 0 CRITICAL, 3 WARNING vivos (6, 7 y 8), 4 SUGGESTION. El primer verify (`d9f51ae`) dio **FAIL** —21 PASS, 2 PARTIAL, 1 FAIL— por el CRITICAL 1, que la remediación cierra con RED previo (la puerta seguía dando 409 tras liberar) y con la mutación de la limpieza reproducida en rojo por el orquestador.
+
+El archive queda desbloqueado por este verify; su techo lo aprueba Gerencia aparte.

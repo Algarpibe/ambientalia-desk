@@ -478,6 +478,15 @@ pruebas (F0-00, `vitest.config.ts:16-20`): sin tareas RED/GREEN para `.tsx`.
 
 ---
 
+## Remediación del verify (FAIL de `verify-report.md`, commit d9f51ae)
+
+- [x] R1 RED primero: RQ-TC-19 «Tras liberar, la OV es reasociable» extremo a extremo (`routes/ovAsociaciones.test.ts`, final del fichero)
+- [x] R2 GREEN: `liberarAsociacion` limpia `orden_venta`/`fecha_orden_venta`/`salesorder_id` del ticket si son esa OV y marca `ov_elegida_en_app_at`; la ruta la envuelve en `enTransaccion`
+- [x] R3 `23505` de `asociarOV` → `OvYaAsociadaError` (409), traducido en `app.ts` (no 500)
+- [x] R4 Remisión de entrada: el `UPDATE` del ticket y `asociarOV` en una transacción; prueba estructural (mismo cliente entre BEGIN y COMMIT) para remisión y liberar
+- [x] R5 Delta de `transitions-st`: RQ-TS-18 (fecha de OC), cita de RQ-TS-14 (`ticketService.ts:148-152`) y nota F1A-04 de RQ-TS-09 restaurada
+- [x] R6 Mutación: quitar la limpieza de columnas pone rojo R1 (5 pruebas)
+
 ## Tareas de persona — fuera del recuento (regla del ciclo 1)
 
 Dueño, destino y registro en cada una. **Archivar este cambio NO las da por hechas.**

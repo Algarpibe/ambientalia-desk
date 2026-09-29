@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { asociarOV, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
+import { STATUS_TICKET_CREADO } from '@ambientalia/shared'; import { searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
 import { db, instalarArnes, appWith, adminCookie, userCookie } from '../testing/appHarness'
 
 instalarArnes()
@@ -153,5 +154,115 @@ describe('GET /api/ov-asociaciones/cuarentena y /saldo/:lote', () => {
     const { app } = appWith()
     const res = await request(app).get('/api/ov-asociaciones/saldo/OV-2026-170-01').set('Cookie', await userCookie(['Comercial']))
     expect(res.status).toBe(422)
+  })
+})
+
+/**
+ * RQ-TC-19 «Tras liberar, la OV es reasociable» (remediación del verify): liberar limpia las columnas
+ * `orden_venta`/`salesorder_id`/`fecha_orden_venta` del ticket, que son la vía que las tres puertas y el
+ * buscador leen ADEMÁS de la asociación. Sin limpiarlas la OV seguía «ocupada» por su antiguo ticket.
+ */
+async function ovLiberada(ticketColumnas = "'OV-2026-300','soX','2026-07-15'"): Promise<void> {
+  await db.query("INSERT INTO books.contacts (contact_id,contact_name) VALUES ('cli1','Gecelca S.A. E.S.P.')")
+  await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date,status,raw) VALUES ('soX','OV-2026-300','cli1','2026-07-15','open','{\"order_status\":\"open\"}')")
+  await db.query("INSERT INTO equipos (id, serial, marca, modelo, tipo) VALUES ('eq-1','18A20070','Grimm','EDM180C','Monitor')")
+  await db.query(`INSERT INTO tickets (id,number,subject,status,orden_venta,salesorder_id,fecha_orden_venta) VALUES ('t-lib',8001,'El que libera','Ingresado',${ticketColumnas})`)
+  await db.query("INSERT INTO tickets (id,number,subject,status,equipo_id,client_id) VALUES ('t-nuevo',8002,'El que la quiere',$1,'eq-1','cli1')", [STATUS_TICKET_CREADO])
+  await asociarOV(db, { ticketId: 't-lib', numero: 'OV-2026-300', salesorderId: 'soX', origen: 'alta', actor: 't', fechaOrdenCompra: null })
+}
+type AppHttp = ReturnType<typeof appWith>['app']
+const liberarPorRuta = async (app: AppHttp) => {
+  const id = (await db.query("SELECT id FROM ov_asociaciones WHERE numero = 'OV-2026-300'")).rows[0].id
+  return request(app).put(`/api/ov-asociaciones/${id}/liberar`).set('Cookie', await userCookie(['Comercial'])).send({ motivo: 'error de tecleo' })
+}
+
+describe('RQ-TC-19 · tras liberar, la OV es reasociable por las tres puertas y el buscador', () => {
+  const PUERTAS: [string, (a: AppHttp, c: string) => request.Test, number][] = [
+    ['puerta 1 · alta', (a, c) => request(a).post('/api/tickets').set('Cookie', c).send({ equipoId: 'eq-1', salesOrderId: 'soX', tipoServicio: 'Mantenimiento', clasificaciones: 'Equipo nuevo', prefijo: 'MT' }), 201],
+    ['puerta 2 · habilitar_servicio', (a, c) => request(a).post('/api/tickets/t-nuevo/transition').set('Cookie', c).send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-300', Serial: '18A20070' } }), 200],
+    ['puerta 3 · remisión de entrada', (a, c) => request(a).post('/api/remisiones').set('Cookie', c).send({ ticketId: 't-nuevo', fecha: '2026-08-03', incluye: [], salesOrderId: 'soX' }), 201],
+  ]
+  it.each(PUERTAS)('%s', async (_n, puerta, esperado) => {
+    await ovLiberada()
+    const { app } = appWith()
+    expect((await liberarPorRuta(app)).status).toBe(200)
+    const res = await puerta(app, await adminCookie())
+    expect(res.status, JSON.stringify(res.body)).toBe(esperado)
+  })
+
+  it('el buscador soloLibres la vuelve a ofrecer y el ticket liberador queda sin OV y con la marca de fila', async () => {
+    await ovLiberada()
+    expect((await searchSalesOrders(db, 'OV-2026', null, 20, true)).map((s) => s.id)).toEqual([]) // control: antes de liberar, ocupada...
+    expect((await searchSalesOrders(db, 'OV-2026', null, 20, false)).map((s) => s.id)).toEqual(['soX']) // ...y sin soloLibres sí existe
+    expect((await liberarPorRuta(appWith().app)).status).toBe(200)
+    expect((await searchSalesOrders(db, 'OV-2026', null, 20, true)).map((s) => s.id)).toEqual(['soX'])
+    const t = (await db.query("SELECT orden_venta, salesorder_id, fecha_orden_venta, ov_elegida_en_app_at FROM tickets WHERE id='t-lib'")).rows[0]
+    expect([t.orden_venta, t.salesorder_id, t.fecha_orden_venta]).toEqual([null, null, null])
+    expect(t.ov_elegida_en_app_at).toBeTruthy()
+  })
+
+  it('un ticket cuyas columnas guardan OTRA OV no se limpia al liberar una adicional', async () => {
+    await ovLiberada("'OV-2026-999','soY','2026-06-01'")
+    expect((await liberarPorRuta(appWith().app)).status).toBe(200)
+    const t = (await db.query("SELECT orden_venta, salesorder_id FROM tickets WHERE id='t-lib'")).rows[0]
+    expect([t.orden_venta, t.salesorder_id]).toEqual(['OV-2026-999', 'soY'])
+  })
+})
+
+/**
+ * Prueba ESTRUCTURAL de las transacciones (pg-mem no honra el ROLLBACK, así que la atomicidad en sí no se
+ * puede probar aquí): lo que se prueba es que las dos sentencias comparten UN cliente entre BEGIN y COMMIT.
+ */
+type Reg = { c: number; sql: string }
+function grabador(antesDe?: (sql: string) => Promise<void>) {
+  const log: Reg[] = []
+  let n = 0
+  const raw = db as unknown as { connect: () => Promise<{ query: (s: string, p?: unknown[]) => Promise<unknown>; release: () => void }> }
+  const reg = (c: number, s: string) => { log.push({ c, sql: s }); return antesDe ? antesDe(s) : Promise.resolve() }
+  const proxy = {
+    query: async (s: string, p?: unknown[]) => { await reg(0, s); return db.query(s, p) },
+    connect: async () => {
+      const cl = await raw.connect(); const c = ++n
+      return { query: async (s: string, p?: unknown[]) => { await reg(c, s); return cl.query(s, p) }, release: () => cl.release() }
+    },
+  }
+  return { log, proxy: proxy as unknown as typeof db }
+}
+function mismoClienteEntreBeginYCommit(log: Reg[], patrones: RegExp[]) {
+  const c = log.find((e) => e.c > 0 && patrones[0].test(e.sql))?.c
+  expect(c, 'la primera sentencia debe ir por un cliente de transacción').toBeGreaterThan(0)
+  const propias = log.filter((e) => e.c === c).map((e) => e.sql)
+  expect(propias[0]).toBe('BEGIN')
+  expect(propias.at(-1)).toBe('COMMIT')
+  for (const p of patrones) expect(propias.some((s) => p.test(s)), String(p)).toBe(true)
+}
+
+describe('transacciones: las dos sentencias comparten cliente entre BEGIN y COMMIT', () => {
+  it('liberar: UPDATE ov_asociaciones y UPDATE tickets', async () => {
+    await ovLiberada()
+    const { log, proxy } = grabador()
+    expect((await liberarPorRuta(appWith({}, proxy).app)).status).toBe(200)
+    mismoClienteEntreBeginYCommit(log, [/UPDATE ov_asociaciones/, /UPDATE tickets/])
+  })
+
+  it('remisión de entrada: UPDATE tickets SET orden_venta e INSERT INTO ov_asociaciones', async () => {
+    await ovLiberada(); await db.query('UPDATE ov_asociaciones SET liberada_at = now()'); await db.query('UPDATE tickets SET orden_venta = NULL, salesorder_id = NULL')
+    const { log, proxy } = grabador()
+    const res = await request(appWith({}, proxy).app).post('/api/remisiones').set('Cookie', await adminCookie()).send({ ticketId: 't-nuevo', fecha: '2026-08-03', incluye: [], salesOrderId: 'soX' })
+    expect(res.status).toBe(201)
+    mismoClienteEntreBeginYCommit(log, [/UPDATE tickets SET orden_venta/, /INSERT INTO ov_asociaciones/])
+  })
+
+  it('carrera en la remisión: otro commit se cuela entre la guarda y el INSERT → 409 con el mensaje de las puertas, no 500', async () => {
+    await ovLiberada(); await db.query('UPDATE ov_asociaciones SET liberada_at = now()'); await db.query('UPDATE tickets SET orden_venta = NULL, salesorder_id = NULL')
+    let colado = false
+    const { proxy } = grabador(async (s) => {
+      if (colado || !/INSERT INTO ov_asociaciones/.test(s)) return
+      colado = true
+      await db.query("INSERT INTO ov_asociaciones (ticket_id, numero, salesorder_id, origen) VALUES ('t-rival','OV-2026-300','soX','alta')")
+    })
+    const res = await request(appWith({}, proxy).app).post('/api/remisiones').set('Cookie', await adminCookie()).send({ ticketId: 't-nuevo', fecha: '2026-08-03', incluye: [], salesOrderId: 'soX' })
+    expect(res.status, JSON.stringify(res.body)).toBe(409)
+    expect(res.body.error).toBe('La orden de venta OV-2026-300 ya está asociada a otro ticket')
   })
 })

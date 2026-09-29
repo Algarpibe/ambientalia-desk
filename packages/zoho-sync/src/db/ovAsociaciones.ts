@@ -41,9 +41,21 @@ export interface OvAsociacionRow {
  * indice no distingue "el mismo ticket otra vez" de "otro ticket duplicando la OV".
  *
  * Una segunda asociacion VIGENTE de la misma OV para OTRO ticket SI debe fallar: eso lo impone el
- * indice unico parcial de la base con el codigo `23505` (`RQ-TC-17`), y esta funcion no lo atrapa —
- * la traduccion a la respuesta HTTP de cada puerta es responsabilidad de quien llama (lote 2).
+ * indice unico parcial de la base con el codigo `23505` (`RQ-TC-17`). Se traduce a `OvYaAsociadaError` (409): es
+ * la carrera que la guarda previa (`ticketConOrdenVenta`) no vio. El mensaje NO lleva el numero del ticket
+ * duelo: tras un `23505` la transaccion de Postgres queda abortada y la consulta que lo buscaria fallaria
+ * (`current transaction is aborted`); el manejador central de `app.ts` lo responde tal cual.
  */
+export class OvYaAsociadaError extends Error {
+  readonly status = 409
+  readonly body: { error: string }
+  constructor(readonly numero: string) {
+    super(`La orden de venta ${numero} ya está asociada a otro ticket`)
+    this.name = 'OvYaAsociadaError'
+    this.body = { error: this.message }
+  }
+}
+
 export async function asociarOV(q: Queryable, input: AsociarOVInput): Promise<OvAsociacionRow> {
   const existente = await q.query(
     'SELECT * FROM ov_asociaciones WHERE ticket_id = $1 AND numero = $2 AND liberada_at IS NULL',
@@ -51,13 +63,18 @@ export async function asociarOV(q: Queryable, input: AsociarOVInput): Promise<Ov
   )
   if (existente.rows[0]) return existente.rows[0] as OvAsociacionRow
 
-  const r = await q.query(
-    `INSERT INTO ov_asociaciones (ticket_id, numero, salesorder_id, origen, asociada_por, fecha_orden_compra)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
-    [input.ticketId, input.numero, input.salesorderId ?? null, input.origen, input.actor ?? null, input.fechaOrdenCompra ?? null],
-  )
-  return r.rows[0] as OvAsociacionRow
+  try {
+    const r = await q.query(
+      `INSERT INTO ov_asociaciones (ticket_id, numero, salesorder_id, origen, asociada_por, fecha_orden_compra)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [input.ticketId, input.numero, input.salesorderId ?? null, input.origen, input.actor ?? null, input.fechaOrdenCompra ?? null],
+    )
+    return r.rows[0] as OvAsociacionRow
+  } catch (e) {
+    if ((e as { code?: string })?.code === '23505') throw new OvYaAsociadaError(input.numero)
+    throw e
+  }
 }
 
 /** Todas las asociaciones de un ticket (vigentes y liberadas), de la mas antigua a la mas reciente. */
@@ -70,6 +87,14 @@ export async function listarAsociaciones(db: Queryable, ticketId: string): Promi
  * Libera una asociacion VIGENTE: conserva la fila y pone fecha, persona y motivo de liberacion
  * (`RQ-TC-19`). `MUST NOT` borrar la fila. Devuelve `null` si el `id` no existe o ya estaba
  * liberada (nada que actualizar) — la traduccion a `404`/`409` es responsabilidad de la ruta (lote 5).
+ *
+ * TAMBIEN limpia las columnas del ticket que son ESA OV (remediacion del verify; `RQ-TC-19`, `design.md` §3
+ * S-7): las tres puertas y el buscador leen `orden_venta`/`salesorder_id` ademas de la asociacion, y sin
+ * limpiarlas la OV seguia ocupada por su antiguo ticket. Cada columna se limpia SOLO si contiene esta OV
+ * (un ticket cuyas columnas guardan otra —la de entrada, con esta como adicional— no se toca), y
+ * `fecha_orden_venta` va con `orden_venta` (es la fecha de ESA orden). Marca `ov_elegida_en_app_at` para que el
+ * sincronizador no repinte lo limpiado. Va en el mismo cliente que el UPDATE anterior: la ruta las envuelve en
+ * `enTransaccion`. `liberarAsociacionesDeTicket` no lo necesita: el ticket se borra.
  */
 export async function liberarAsociacion(
   q: Queryable,
@@ -83,7 +108,19 @@ export async function liberarAsociacion(
      RETURNING *`,
     [id, actor, motivo],
   )
-  return (r.rows[0] as OvAsociacionRow | undefined) ?? null
+  const liberada = (r.rows[0] as OvAsociacionRow | undefined) ?? null
+  if (liberada) {
+    await q.query(
+      `UPDATE tickets SET
+         fecha_orden_venta = CASE WHEN orden_venta = $2 THEN NULL ELSE fecha_orden_venta END,
+         orden_venta = CASE WHEN orden_venta = $2 THEN NULL ELSE orden_venta END,
+         salesorder_id = CASE WHEN salesorder_id = $3 THEN NULL ELSE salesorder_id END,
+         ov_elegida_en_app_at = now()
+       WHERE id = $1 AND (orden_venta = $2 OR salesorder_id = $3)`,
+      [liberada.ticket_id, liberada.numero, liberada.salesorder_id],
+    )
+  }
+  return liberada
 }
 
 /**

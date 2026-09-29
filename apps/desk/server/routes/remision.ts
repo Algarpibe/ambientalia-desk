@@ -2,7 +2,7 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist, faltaFotoPorNovedad, motivoCuarentena } from '@ambientalia/shared'
-import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
+import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'
 import { checklistDeRemision } from '../db/checklistRemision'
@@ -236,11 +236,11 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       // protege estas dos columnas de la siguiente pasada del sincronizador (`zoho-sync` RQ-ZS-01
       // modificado). Si el WHERE no casa (ya tenía OV), la marca tampoco se pone: no hay nada nuevo
       // que proteger.
-      const fijada = await db.query(
+      await enTransaccion(db, async (q) => { const fijada = await q.query(
         `UPDATE tickets SET orden_venta = $2, fecha_orden_venta = $3, salesorder_id = $4, ov_elegida_en_app_at = now(), updated_at = now()
           WHERE id = $1 AND COALESCE(orden_venta, '') = '' RETURNING id`,
         [ticketId, ov.number, ov.date ?? null, ov.id],
-      ); if (fijada.rows.length) await asociarOV(db, { ticketId, numero: ov.number, salesorderId: ov.id, origen: 'remision', actor: req.user?.name ?? TRANSITION_ACTOR, fechaOrdenCompra: null })
+      ); if (fijada.rows.length) await asociarOV(q, { ticketId, numero: ov.number, salesorderId: ov.id, origen: 'remision', actor: req.user?.name ?? TRANSITION_ACTOR, fechaOrdenCompra: null }) })
     }
 
     const id = await createRemision(db, {

@@ -4,6 +4,7 @@ import { listarAsociaciones, liberarAsociacion } from '@ambientalia/zoho-sync/db
 import { listarCuarentena, saldoPorLote } from '@ambientalia/zoho-sync/books/subOV'
 import { canExecuteTransition } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
+import { enTransaccion } from '../db/transaccion'
 import { asyncHandler } from '../util/asyncHandler'
 
 /**
@@ -49,7 +50,7 @@ export function registerOvAsociacionesRoutes(app: Express, deps: { db: Queryable
     const motivo = typeof (req.body as { motivo?: unknown })?.motivo === 'string' ? (req.body as { motivo: string }).motivo.trim() : ''
     if (motivo === '') { res.status(422).json({ error: 'El motivo de la liberación es obligatorio' }); return }
 
-    const liberada = await liberarAsociacion(db, Number(id), user.name, motivo)
+    const liberada = await enTransaccion(db, (q) => liberarAsociacion(q, Number(id), user.name, motivo))
     if (!liberada) { res.status(409).json({ error: 'La asociación ya estaba liberada' }); return }
     res.json(liberada)
   }))

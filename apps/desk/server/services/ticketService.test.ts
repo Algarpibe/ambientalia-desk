@@ -812,8 +812,12 @@ describe('asociacion-ov-ticket · Aprobación añade una OV sin tocar la de entr
     expect(dia(a.fecha_orden_compra)).toBe('2026-07-01')
     // La fecha de OC de la transición sí queda en su columna propia (`fecha_orden_compra_final`); lo que
     // no puede pasar es que la OV adicional pise la `fecha_orden_compra` de entrada del ticket.
-    const t = (await db.query("SELECT fecha_orden_compra FROM tickets WHERE id = 't-a3'")).rows[0]
+    const t = (await db.query("SELECT fecha_orden_compra, fecha_orden_compra_final, orden_venta, fecha_orden_venta FROM tickets WHERE id = 't-a3'")).rows[0]
     expect(t.fecha_orden_compra).toBeNull()
+    // THEN de RQ-TS-18 escenario 2, corregido en la remediación: en `aprobacion` el ticket conserva además
+    // `fecha_orden_compra_final` (comportamiento vigente), y la OV de entrada no recibe la fecha de OC.
+    expect(dia(t.fecha_orden_compra_final)).toBe('2026-07-01')
+    expect([t.orden_venta, dia(t.fecha_orden_venta)]).toEqual(['OV-2026-ENTRADA3', '2026-01-10'])
   })
 
   it('S-10 · sin el campo opcional, Aprobación y Aprobación y S. Repuestos funcionan como hoy: sin asociación nueva y columnas intactas', async () => {

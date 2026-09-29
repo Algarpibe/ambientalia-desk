@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from './migrate'
-import { asociarOV, asociarDesdeTransicion, listarAsociaciones, liberarAsociacion, liberarAsociacionesDeTicket } from './ovAsociaciones'
+import { OvYaAsociadaError, asociarOV, asociarDesdeTransicion, listarAsociaciones, liberarAsociacion, liberarAsociacionesDeTicket } from './ovAsociaciones'
 import { ticketConOrdenVenta } from './repo'
 
 /**
@@ -30,7 +30,7 @@ describe('asociarOV', () => {
   })
 
   // RQ-TC-17, escenario "Segunda asociación vigente sobre la misma OV es rechazada por la base".
-  it('una segunda asociación vigente con el mismo numero/salesorderId para otro ticket es rechazada por la base (23505)', async () => {
+  it('una segunda asociación vigente con el mismo numero/salesorderId para otro ticket es rechazada por la base (23505) y sale como OvYaAsociadaError 409', async () => {
     await asociarOV(db, {
       ticketId: 't1', numero: 'OV-2026-002', salesorderId: 'so-2',
       origen: 'alta', actor: 'tester', fechaOrdenCompra: null,
@@ -42,7 +42,7 @@ describe('asociarOV', () => {
       }),
       // pg-mem etiqueta mal la restricción violada como `_pkey` en el mensaje: se comprueba el
       // código 23505, nunca el nombre de la restricción.
-    ).rejects.toMatchObject({ code: '23505' })
+    ).rejects.toSatisfy((e: unknown) => e instanceof OvYaAsociadaError && e.status === 409 && e.numero === 'OV-2026-002' && (e.body as { error: string }).error === 'La orden de venta OV-2026-002 ya está asociada a otro ticket')
   })
 
   it('es idempotente: repetir el mismo numero/ticketId no crea una segunda fila', async () => {

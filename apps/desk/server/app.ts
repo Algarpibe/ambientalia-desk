@@ -19,7 +19,7 @@ import { registerAnalisisRoutes } from './routes/analisis'
 import { registerAdminRoutes } from './routes/admin'
 import { registerAttachmentRoutes } from './routes/attachment'
 import { registerRemisionRoutes } from './routes/remision'
-import { registerAvisosRoutes } from './routes/avisos'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'
+import { registerAvisosRoutes } from './routes/avisos'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'; import { OvYaAsociadaError } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import { HttpError } from './util/httpError'
 import multer from 'multer'
 import { LIMITE_SUBIDA_MB } from './util/subida'
@@ -76,7 +76,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   // (Express identifica los error-handlers por su aridad de 4 args; `_next` debe existir.)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    if (err instanceof HttpError) { res.status(err.status).json(err.body); return }
+    if (err instanceof HttpError || err instanceof OvYaAsociadaError) { res.status(err.status).json(err.body); return }
     // Un fichero rechazado por multer es culpa de quien sube, no del servidor: sin esta rama caía en el
     // 500 genérico de abajo, que ni dice el límite ni distingue el fallo real de Postgres en el log.
     // No se hace un `switch` exhaustivo sobre `err.code` a propósito: @types/multer declara 7 códigos y
