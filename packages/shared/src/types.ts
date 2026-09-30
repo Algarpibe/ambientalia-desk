@@ -1,4 +1,4 @@
-import type { PerfilChecklist } from './remision'
+import type { PerfilChecklist } from './remision'; import type { Cargo } from './cargos'
 
 /** Shape consumido por el frontend (tarjeta y tablero). */
 export interface Ticket {
@@ -217,9 +217,9 @@ export interface UserPublic {
   roleId?: string | null
   roleName?: string | null
   areas: string[]
-  /** Cargo y empresa del técnico: los imprime el documento de remisión. */
+  /** Cargo de firma y empresa del técnico (texto libre): los imprime el documento de remisión. NO da permiso: el permiso es `cargoPermiso`. */
   cargo?: string | null
-  empresa?: string | null
+  empresa?: string | null; cargoPermiso?: Cargo | null
 }
 
 /**

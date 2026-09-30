@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
-import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition } from '@ambientalia/shared'
+import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition, puedeEjecutarTransicion, CARGOS, EXCEPCIONES_POR_CARGO } from '@ambientalia/shared'
 import { requireAuth, requireAdmin, requireArea } from './auth/middleware'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
@@ -330,5 +330,55 @@ describe('matriz 4×3 · área × transición de Soporte remoto, contra el servi
     expect(casos).toHaveLength(12)
     expect(casos.filter((permitido) => !permitido)).toHaveLength(8)
     expect(casos.filter((permitido) => permitido)).toHaveLength(4)
+  })
+})
+
+/**
+ * F1C-05, nivel CARGO, parte pura: el cargo SÓLO restringe (RQ-PM-03, RQ-PM-21). Van al final del
+ * fichero y no tocan la matriz HTTP de arriba, cuyo suelo (102 = 60/42, sólo área) sigue intacto.
+ */
+describe('cargo · la compuesta contra el área (puro)', () => {
+  it('exactamente un caso difiere del área: liberacion_sin_factura × Comercial (S21)', () => {
+    const difieren = TRANSITIONS.flatMap((t) => AREAS.flatMap((area) => {
+      const conCompuesta = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: null }, t)
+      return conCompuesta === canExecuteTransition([area], false, t.area) ? [] : [{ transicion: t.id, area }]
+    }))
+    expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
+  })
+
+  it('con la compuesta y sin cargo, la matriz son 102 casos: 61 prohibidos y 41 permitidos', () => {
+    const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
+    expect(casos).toHaveLength(102)
+    expect(casos.filter((p) => !p)).toHaveLength(61)
+    expect(casos.filter((p) => p)).toHaveLength(41)
+  })
+
+  it('cargo × área × transición: 816 casos, ninguno concede lo que el área niega (S17)', () => {
+    const cargos = [...CARGOS, null]
+    let casos = 0
+    for (const t of TRANSITIONS) {
+      for (const area of AREAS) {
+        for (const cargoPermiso of cargos) {
+          casos += 1
+          const compuesta = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso }, t)
+          if (compuesta) expect(canExecuteTransition([area], false, t.area)).toBe(true)
+        }
+      }
+    }
+    expect(casos).toBe(816) // 34 transiciones × 3 áreas × (7 cargos + sin cargo), a mano
+  })
+
+  it('con Director Comercial la compuesta coincide con el área en las 102 celdas', () => {
+    for (const t of TRANSITIONS) {
+      for (const area of AREAS) {
+        expect(puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: 'Director Comercial' }, t))
+          .toBe(canExecuteTransition([area], false, t.area))
+      }
+    }
+  })
+
+  it('la tabla de excepciones no toca las otras dos matrices: sus claves no están en sus catálogos', () => {
+    const ids = [...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO].map((t) => t.id)
+    for (const id of Object.keys(EXCEPCIONES_POR_CARGO.transiciones)) expect(ids).not.toContain(id)
   })
 })

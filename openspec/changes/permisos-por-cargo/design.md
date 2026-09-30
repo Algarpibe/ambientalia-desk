@@ -51,6 +51,8 @@ export function puedeFijarPrioridadTop5(s: Pick<SujetoDePermiso, 'isAdmin' | 'ca
 export function cargoPermisoDelCuerpo(v: unknown): { ok: true; cargo: Cargo | null } | { ok: false; error: string }
 ```
 
+**Corrección C-8 y supuesto S-9 (2026-09-30, prevalecen sobre el bloque de arriba):** las tres primitivas se llaman `puedeLiberarSinFactura`, `puedeCrearOVIGarantia` y `puedeFijarPrioridadTop5`, reciben el `SujetoDePermiso` completo y exigen área Y cargo (el admin pasa). S-9, reversible: el área de los dos actos sin llamador es Servicio Técnico (OVI de garantía) y Comercial (Top 5); lo fijan F1B-03 y F1B-07.
+
 `packages/shared/src/index.ts`: `export * from './cargos'` **al final** (línea 26 nueva). Sin ciclo en tiempo de
 ejecución: `types.ts` y `transitions.ts` importan sólo el TIPO.
 

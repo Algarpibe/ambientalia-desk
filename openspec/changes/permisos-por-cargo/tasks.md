@@ -64,10 +64,10 @@ Chain strategy: stacked-to-main
 
 ## Fase 0 · Preparación (orquestador; sin código)
 
-- [ ] 0.1 `git rev-parse --short HEAD` (esperado `e591454`) y `git status --short` (sólo los sin trackear de la cabecera de sesión y `openspec/changes/permisos-por-cargo/`). `git diff --stat e591454 HEAD -- apps packages` vacío.
-- [ ] 0.2 Línea base verde: `npm test`, `npm run typecheck`, `npm run lint`. Anotar en `apply-progress.md` nº de ficheros de prueba, de pruebas y de **avisos de eslint** (techo 165).
-- [ ] 0.3 Re-medir largos y citas antes de escribir (valores leídos hoy entre paréntesis; si un fichero sale MAYOR, alguien añadió citas: se leen). `wc -l` sobre `packages/shared/src/{types,index,transitions,permissions}.ts` (`index.ts` **24**), `packages/zoho-sync/src/db/schema.sql` (**596**), `migrate.test.ts`, `apps/desk/server/auth/{routes,users,sessions}.ts`, `services/ticketService.ts`, `permisos.test.ts` (**335**), `testing/appHarness.ts` (**96**), `TransitionPanel.tsx`, `UsersAdmin.tsx`, `api/client.ts`. Copiar la tabla de puntos de cada lote a su `apply-progress.md` con los valores medidos.
-- [ ] 0.4 `Grep "cargo_permiso|cargoPermiso"` sobre `apps/` y `packages/` = 0 (nada preexistente) y `Director Comercial` = 0 en `*.ts`/`*.tsx`.
+- [x] 0.1 `git rev-parse --short HEAD` (esperado `e591454`) y `git status --short` (sólo los sin trackear de la cabecera de sesión y `openspec/changes/permisos-por-cargo/`). `git diff --stat e591454 HEAD -- apps packages` vacío.
+- [x] 0.2 Línea base verde: `npm test`, `npm run typecheck`, `npm run lint`. Anotar en `apply-progress.md` nº de ficheros de prueba, de pruebas y de **avisos de eslint** (techo 165).
+- [x] 0.3 Re-medir largos y citas antes de escribir (valores leídos hoy entre paréntesis; si un fichero sale MAYOR, alguien añadió citas: se leen). `wc -l` sobre `packages/shared/src/{types,index,transitions,permissions}.ts` (`index.ts` **24**), `packages/zoho-sync/src/db/schema.sql` (**596**), `migrate.test.ts`, `apps/desk/server/auth/{routes,users,sessions}.ts`, `services/ticketService.ts`, `permisos.test.ts` (**335**), `testing/appHarness.ts` (**96**), `TransitionPanel.tsx`, `UsersAdmin.tsx`, `api/client.ts`. Copiar la tabla de puntos de cada lote a su `apply-progress.md` con los valores medidos.
+- [x] 0.4 `Grep "cargo_permiso|cargoPermiso"` sobre `apps/` y `packages/` = 0 (nada preexistente) y `Director Comercial` = 0 en `*.ts`/`*.tsx`.
 
 ---
 
@@ -90,32 +90,32 @@ Chain strategy: stacked-to-main
 
 ### Bloque A · RED
 
-- [ ] 1.1 RED — `packages/shared/src/cargos.test.ts` (nuevo), comando `npx vitest run packages/shared/src/cargos.test.ts`:
+- [x] 1.1 RED — `packages/shared/src/cargos.test.ts` (nuevo), comando `npx vitest run packages/shared/src/cargos.test.ts`:
   - **S1** la lista literal de siete, escrita a mano y EN ORDEN (`Director Técnico`, `Coordinador Técnico`, `Técnico`, `Técnico de campo`, `Director Comercial`, `Coordinador Comercial`, `Asistente Comercial`); «Gerente comercial» no está; `esCargo` exacto, sin plegar (`'director comercial'`, `' Director Comercial'` y `7` → `false`).
   - Tabla: toda clave de `EXCEPCIONES_POR_CARGO.transiciones` existe en `TRANSITIONS` y **en ningún otro catálogo** (`TRANSITIONS_EQUIPO_NUEVO`, `TRANSITIONS_SOPORTE_REMOTO`); su valor es un `Cargo`; contenido exacto `{ liberacion_sin_factura: 'Director Comercial' }`, `crearOVIGarantia: 'Director Técnico'`, `fijarPrioridadTop5: 'Director Comercial'`.
   - `cargoQueFaltaParaTransicion`: admin → `null`; sin excepción → `null`; con el cargo → `null`; sin cargo, con otro cargo y con `cargoPermiso: undefined` → `'Director Comercial'`.
   - `puedeEjecutarTransicion`: nunca concede lo que el área niega; admin pasa; `Comercial` + `Director Comercial` → sí; `Comercial` sin cargo → no.
   - **S16** `puedeCrearOVIGarantia` y `puedeFijarPrioridadTop5` por cada uno de los siete cargos, «sin cargo» y admin; el nombre de la prueba dice que **hoy no las llama nadie** (F1B-03 y F1B-07, RQ-PM-20).
   - `cargoPermisoDelCuerpo`: `null`, `''`, `undefined` → `{ ok: true, cargo: null }` (C-5); `'  Director Comercial '` recortado → cargo; `'Gerente comercial'`, `5`, `{}` → `{ ok: false, error }`.
-- [ ] 1.2 RED — `permisos.test.ts` **al final**, nuevas, puras (sobre `TRANSITIONS × AREAS`), comando `npx vitest run apps/desk/server/permisos.test.ts -t "cargo"`:
+- [x] 1.2 RED — `permisos.test.ts` **al final**, nuevas, puras (sobre `TRANSITIONS × AREAS`), comando `npx vitest run apps/desk/server/permisos.test.ts -t "cargo"`:
   - **S21 (nivel puro)** la lista de casos donde `puedeEjecutarTransicion` sin cargo difiere de `canExecuteTransition` es, escrita a mano, exactamente `[{ transicion: 'liberacion_sin_factura', area: 'Comercial' }]`; con la compuesta el total es 102 = **61 / 41**.
   - Matriz con cargo `AREAS × (CARGOS ∪ {null}) × TRANSITIONS` = 3 × 8 × 34 = **816** casos (total escrito a mano): ningún caso con la compuesta verdadera y el área falsa (**S17**, nivel puro); con `Director Comercial` la compuesta coincide con el área en los 102.
-- [ ] 1.3 Confirmar rojo natural: `./cargos` no existe (todo rojo por importación) y `puedeEjecutarTransicion` no está exportada. **Nacen verdes y se declaran:** `permisos.test.ts:77-81` (102 = 60/42, sólo área; **S19**, es el suelo) y todo el resto del fichero, que no se toca.
+- [x] 1.3 Confirmar rojo natural: `./cargos` no existe (todo rojo por importación) y `puedeEjecutarTransicion` no está exportada. **Nacen verdes y se declaran:** `permisos.test.ts:77-81` (102 = 60/42, sólo área; **S19**, es el suelo) y todo el resto del fichero, que no se toca.
 
 ### Bloque B · GREEN
 
-- [ ] 1.4 GREEN — `cargos.ts` (nuevo) con la API de `design.md` §1: `CARGOS` (`as const`), `Cargo`, `esCargo`, `EXCEPCIONES_POR_CARGO`, `SujetoDePermiso`, `cargoQueFaltaParaTransicion` (admin → `null` **antes** de mirar la tabla), `puedeEjecutarTransicion` = `canExecuteTransition(s.areas, s.isAdmin, t.area) && cargoQueFalta === null` (importa `canExecuteTransition` de `./permissions`), `puedeCrearOVIGarantia`, `puedeFijarPrioridadTop5` (docstring: sin llamador hasta F1B-03/F1B-07; el área la pone el acto), `cargoPermisoDelCuerpo`. Sin `any`.
-- [ ] 1.5 GREEN — `index.ts:25` al final; `types.ts:1`, `:220`, `:222` en sitio; `transitions.ts:52` en sitio. **Hipótesis a comprobar:** los literales `'Director Técnico'` (`transitions.ts:276`) y `'Coordinador Comercial'` (`:278`) tipan contra `Cargo` sin cambio; si `npm run typecheck` rechaza alguno por no estar el objeto contextualmente tipado, se declara y se ajusta la anotación EN SITIO, sin insertar línea.
-- [ ] 1.6 Confirmar 1.1-1.2 en verde y `npm run typecheck` limpio. `git diff --numstat` de `types.ts` y `transitions.ts` = `+n −n`; `index.ts` 24 → 25 con `−0`; `permisos.test.ts` 335 → 335+N con `−` sólo en `:5`.
+- [x] 1.4 GREEN — `cargos.ts` (nuevo) con la API de `design.md` §1: `CARGOS` (`as const`), `Cargo`, `esCargo`, `EXCEPCIONES_POR_CARGO`, `SujetoDePermiso`, `cargoQueFaltaParaTransicion` (admin → `null` **antes** de mirar la tabla), `puedeEjecutarTransicion` = `canExecuteTransition(s.areas, s.isAdmin, t.area) && cargoQueFalta === null` (importa `canExecuteTransition` de `./permissions`), `puedeCrearOVIGarantia`, `puedeFijarPrioridadTop5` (docstring: sin llamador hasta F1B-03/F1B-07; el área la pone el acto), `cargoPermisoDelCuerpo`. Sin `any`.
+- [x] 1.5 GREEN — `index.ts:25` al final; `types.ts:1`, `:220`, `:222` en sitio; `transitions.ts:52` en sitio. **Hipótesis a comprobar:** los literales `'Director Técnico'` (`transitions.ts:276`) y `'Coordinador Comercial'` (`:278`) tipan contra `Cargo` sin cambio; si `npm run typecheck` rechaza alguno por no estar el objeto contextualmente tipado, se declara y se ajusta la anotación EN SITIO, sin insertar línea.
+- [x] 1.6 Confirmar 1.1-1.2 en verde y `npm run typecheck` limpio. `git diff --numstat` de `types.ts` y `transitions.ts` = `+n −n`; `index.ts` 24 → 25 con `−0`; `permisos.test.ts` 335 → 335+N con `−` sólo en `:5`.
 
 ### Bloque C · Mutaciones (reglas 1 y 2)
 
-- [ ] 1.7 MUTACIÓN **(g)** — `'Director comercial'` en `CARGOS`: ROJO en la lista literal de siete (S1); revertir.
-- [ ] 1.8 MUTACIÓN **(f)** — clave `liberacion_sin_facturaX` en `EXCEPCIONES_POR_CARGO.transiciones`: ROJO en «toda clave existe en `TRANSITIONS`» y en «exactamente un caso difiere»; revertir.
-- [ ] 1.9 MUTACIÓN **(l)** — `&&` → `||` en `puedeEjecutarTransicion`: ROJO en la matriz de 816 «nunca amplía» (S17); revertir.
-- [ ] 1.10 MUTACIÓN **(i), mitad pura** — quitar la salida del admin en `cargoQueFaltaParaTransicion`: ROJO en la prueba de admin de 1.1 (la mitad HTTP, contra `permisos.test.ts:89-109`, es la 2.22); revertir.
-- [ ] 1.11 MUTACIÓN **(m, extra de este plan)** — cambiar el literal de `transitions.ts:276` a `'Director técnico'`: ROJO en `npm run typecheck` (prueba que S-7 tipa de verdad); revertir.
-- [ ] 1.12 Cierre del lote 1: comandos enfocados de la tabla; `npm test`; `npm run typecheck`; `npm run lint` (≤ 165); medir (nuevos: `cargos.ts`, `cargos.test.ts`); barrido de citas sobre `types.ts` (`:211-223`, `:220-222`), `transitions.ts` (`:52`, `:246`, `:276`, `:278`), `index.ts` y `permisos.test.ts`; `apply-progress.md` (~60 líneas, con los nacidos verdes y el resultado de la hipótesis de 1.5).
+- [x] 1.7 MUTACIÓN **(g)** — `'Director comercial'` en `CARGOS`: ROJO en la lista literal de siete (S1); revertir.
+- [x] 1.8 MUTACIÓN **(f)** — clave `liberacion_sin_facturaX` en `EXCEPCIONES_POR_CARGO.transiciones`: ROJO en «toda clave existe en `TRANSITIONS`» y en «exactamente un caso difiere»; revertir.
+- [x] 1.9 MUTACIÓN **(l)** — `&&` → `||` en `puedeEjecutarTransicion`: ROJO en la matriz de 816 «nunca amplía» (S17); revertir.
+- [x] 1.10 MUTACIÓN **(i), mitad pura** — quitar la salida del admin en `cargoQueFaltaParaTransicion`: ROJO en la prueba de admin de 1.1 (la mitad HTTP, contra `permisos.test.ts:89-109`, es la 2.22); revertir.
+- [x] 1.11 MUTACIÓN **(m, extra de este plan)** — cambiar el literal de `transitions.ts:276` a `'Director técnico'`: ROJO en `npm run typecheck` (prueba que S-7 tipa de verdad); revertir.
+- [x] 1.12 Cierre del lote 1: comandos enfocados de la tabla; `npm test`; `npm run typecheck`; `npm run lint` (≤ 165); medir (nuevos: `cargos.ts`, `cargos.test.ts`); barrido de citas sobre `types.ts` (`:211-223`, `:220-222`), `transitions.ts` (`:52`, `:246`, `:276`, `:278`), `index.ts` y `permisos.test.ts`; `apply-progress.md` (~60 líneas, con los nacidos verdes y el resultado de la hipótesis de 1.5).
 
 ---
 
@@ -237,6 +237,7 @@ Antes de desplegar hace falta un paquete de despliegue NUEVO (los `Paquete_de_De
 3. **Las otras dos restricciones** (crear OVI de garantía → Director Técnico; prioridad Top 5 → Director Comercial) no tienen llamador hasta F1B-03 y F1B-07: hoy no cambia nada observable.
 4. **Precondición (P.1):** nombrar quién asigna `Director Comercial` a quién justo tras desplegar y aceptar ese intervalo por escrito.
 5. Rollback: revertir los commits; la columna es aditiva y sólo la lee este código. Sin desplegar el código, `UPDATE public.users SET cargo_permiso = NULL` retira las asignaciones; vaciar `EXCEPCIONES_POR_CARGO.transiciones` devuelve exactamente la matriz de área.
+6. **CAMBIO VISIBLE (S-1, aceptado por el usuario el 2026-09-30): desde el despliegue, un Comercial que no sea administrador NO puede hacer la Liberación sin factura hasta que se asignen los cargos. P.1 es tarea del MISMO DÍA del despliegue: la hace un administrador de la aplicación desde la consola de usuarios (dueño: Gerencia o administración); el paquete nombra a la persona concreta — hipótesis: quien administra hoy los usuarios de la aplicación.**
 
 ---
 

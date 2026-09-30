@@ -49,7 +49,7 @@ export interface TransitionField {
  *   donde el destinatario no es un puesto fijo sino alguien de la historia de ESE ticket.
  */
 export type DerivacionPorDefecto =
-  | { tipo: 'cargo'; cargo: string }
+  | { tipo: 'cargo'; cargo: import('./cargos').Cargo }
   | { tipo: 'primerDerivado' }
 
 export interface Transition {
