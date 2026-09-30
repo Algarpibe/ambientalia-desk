@@ -197,8 +197,8 @@ inserta líneas (dos `select`); no tiene citas con número fuera de este cambio.
   `schema.sql` (247), `permisos.test.ts` (57), `types.ts`, `users.ts`, `sessions.ts`, `appHarness.ts`, `migrate.test.ts`,
   `index.ts`, `client.ts`, `TransitionPanel.tsx`. `permissions.ts` no se toca.
 - Con inserción: `auth/routes.ts` (+4). Barrido `grep -rnoE "routes\.ts:[0-9]+(-[0-9]+)?"` y pase de abreviadas.
-  Medido hoy fuera del archivo: `auth/routes.ts:129` (`docs/sdd/F0-00_Baseline_as-built.md:405`), y las líneas 121-124 y
-  74-105 del mismo fichero (dos planes fechados del 2026-08-12). Los tres son caso B.
+  Medido hoy fuera del archivo: `auth/routes.ts:129` en `e591454` (`docs/sdd/F0-00_Baseline_as-built.md:405`), y las líneas 121-124 (en `847965e`) y
+  74-105 (en `e591454`) del mismo fichero (dos planes fechados del 2026-08-12). Los tres son caso B.
 - El barrido cubre también las citas NUEVAS de este cambio (`:131`, `:374-377`, `:64`) y `permisos.test.ts:53`,
   que hoy cita `ticketService.ts:86` como el 409 de estado cuando éste está en `:126-128`. Se reapunta en sitio,
   caso A, porque la tanda ya edita ese fichero.

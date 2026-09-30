@@ -561,7 +561,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 5: la casilla en la pantalla de Roles
 
 **Files:**
-- Modify: `apps/desk/server/auth/routes.ts:121-124` (el PATCH de roles)
+- Modify: `apps/desk/server/auth/routes.ts:121-124` en `847965e` (el PATCH de roles)
 - Modify: `apps/desk/src/api/client.ts:129` (tipo `Role`) y `:148` (`updateRole`)
 - Modify: `apps/desk/src/components/RolesAdmin.tsx` (columna nueva y pie explicativo)
 

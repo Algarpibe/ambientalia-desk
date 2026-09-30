@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { UserPublic } from '@ambientalia/shared'
+import { CARGOS, type UserPublic } from '@ambientalia/shared'
 import { listUsers, createUser, updateUser, deleteUser as eliminarUsuarioApi, listRoles, type Role } from '../api/client'
 
 export function UsersAdmin({ onClose }: { onClose: () => void }) {
@@ -96,6 +96,7 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
   const [password, setPassword] = useState('')
   // Empresa prellenada: casi todos los usuarios son personal de Ambientalia; quien no, la sobreescribe.
   const [cargo, setCargo] = useState('')
+  const [cargoPermiso, setCargoPermiso] = useState('')
   const [empresa, setEmpresa] = useState('Ambientalia S.A.S.')
   const [isAdmin, setIsAdmin] = useState(false)
   const [roleId, setRoleId] = useState('')
@@ -105,7 +106,7 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
     // Un admin nunca lleva rol (lo cortocircuita): se descarta aunque se hubiera elegido antes de marcar la casilla.
-    try { await createUser({ email, name, password, isAdmin, roleId: isAdmin ? null : roleId || null, cargo, empresa }); onCreated() }
+    try { await createUser({ email, name, password, isAdmin, roleId: isAdmin ? null : roleId || null, cargo, empresa, cargoPermiso }); onCreated() }
     catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
@@ -117,6 +118,14 @@ function CreateUser({ roles, onClose, onCreated }: { roles: Role[]; onClose: () 
         <input type="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="text" placeholder="Cargo (opcional)" value={cargo} onChange={(e) => setCargo(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
+        <p className="text-[11px] text-slate-400 -mt-2">El cargo aparece en la remisión; no da permisos.</p>
+        <label className="text-[11px] text-slate-500">Cargo de permiso
+          <select value={cargoPermiso} onChange={(e) => setCargoPermiso(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px] w-full text-slate-800">
+            <option value="">Sin cargo</option>
+            {CARGOS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <span className="block text-[11px] text-slate-400">Restringe acciones: hoy, sólo Director Comercial ejecuta Liberación sin factura.</span>
+        </label>
         <input type="text" placeholder="Empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="password" placeholder="Contraseña inicial (mín. 8)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="border border-slate-200 rounded p-2 text-[13px]" />
         {isAdmin ? (
@@ -150,13 +159,14 @@ function EditarUsuario({ usuario, onClose, onGuardado }: { usuario: UserPublic; 
   const [email, setEmail] = useState(usuario.email)
   const [name, setName] = useState(usuario.name)
   const [cargo, setCargo] = useState(usuario.cargo ?? '')
+  const [cargoPermiso, setCargoPermiso] = useState(usuario.cargoPermiso ?? '')
   const [empresa, setEmpresa] = useState(usuario.empresa ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
-    try { await updateUser(usuario.id, { email, name, cargo, empresa }); onGuardado() }
+    try { await updateUser(usuario.id, { email, name, cargo, empresa, cargoPermiso }); onGuardado() }
     catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
@@ -168,6 +178,14 @@ function EditarUsuario({ usuario, onClose, onGuardado }: { usuario: UserPublic; 
         <input type="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="text" placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required className="border border-slate-200 rounded p-2 text-[13px]" />
         <input type="text" placeholder="Cargo (opcional)" value={cargo} onChange={(e) => setCargo(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
+        <p className="text-[11px] text-slate-400 -mt-2">El cargo aparece en la remisión; no da permisos.</p>
+        <label className="text-[11px] text-slate-500">Cargo de permiso
+          <select value={cargoPermiso} onChange={(e) => setCargoPermiso(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px] w-full text-slate-800">
+            <option value="">Sin cargo</option>
+            {CARGOS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <span className="block text-[11px] text-slate-400">Restringe acciones: hoy, sólo Director Comercial ejecuta Liberación sin factura.</span>
+        </label>
         <input type="text" placeholder="Empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="border border-slate-200 rounded p-2 text-[13px]" />
         {/* Cambiar el correo no cierra su sesión —van por id— pero a partir de ahora entra con el nuevo. */}
         <p className="text-[11px] text-slate-400">Si cambias el correo, avísale: es con el que iniciará sesión.</p>

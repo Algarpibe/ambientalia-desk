@@ -101,10 +101,10 @@ Aproximación 1.
 | Lista + excepciones + primitivas + pruebas | `packages/shared/src/cargos.ts` (nuevo) + test; `packages/shared/src/index.ts:3,8` | ~60 + ~130 |
 | Migración | `schema.sql`, al final (hoy `:596`); guardián `migrate.test.ts:322-350` | ~8 + ~15 |
 | Datos de usuario | `users.ts:14`, `:19-32`, `:34-45`, `:83-100`; `sessions.ts:17`; `types.ts:211-223` | ~25 + ~60 |
-| Rutas y validación | `auth/routes.ts:55-72`, `:74-114` | ~20 + ~70 |
+| Rutas y validación | `auth/routes.ts:55-72`, `:74-114` en `e591454` | ~20 + ~70 |
 | Guarda | `ticketService.ts:129-131` en sitio + firma `:118` | ~6 + ~80 |
 | Regresión | `permisos.test.ts:41-110`; `:77-81` | ~100 |
-| UI | `UsersAdmin.tsx:119,170`, `client.ts:107,121`, `TransitionPanel.tsx:57` | ~45 (sin red, F0-00) |
+| UI | `UsersAdmin.tsx:119,170` en `e591454`, `client.ts:107,121`, `TransitionPanel.tsx:57` | ~45 (sin red, F0-00) |
 
 Total ~600-700 líneas, 1-2 lotes ≤800; el ledger mide sin renombrado y `verify-report`/`archive-report` suman.
 

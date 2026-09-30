@@ -14,7 +14,7 @@
 
 **Files:**
 - Modify: `apps/desk/src/api/client.ts:107` (interfaz `NewUser`)
-- Modify: `apps/desk/src/components/UsersAdmin.tsx:93` (paso de prop) y `:98-129` (componente `CreateUser`)
+- Modify: `apps/desk/src/components/UsersAdmin.tsx:93` (paso de prop) y `:98-129` (componente `CreateUser`) en `6037141`
 
 - [ ] **Step 1: añadir `roleId` a la interfaz `NewUser`**
 

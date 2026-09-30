@@ -37,7 +37,7 @@ S-1…S-8 son la superficie revisable.
 3. Lectura del campo en `USER_SELECT` (`apps/desk/server/auth/users.ts:14`), `rowToPublicUser` (`:19`),
    `getSessionUser` (`sessions.ts:17`) y `UserPublic` (`packages/shared/src/types.ts:211-223`), con prueba que
    falle si la sesión no lo trae.
-4. Alta y edición (`routes.ts:55-72`, `:74-114`): validación contra la lista en servidor (422 si no está); sólo
+4. Alta y edición (`routes.ts:55-72`, `:74-114` en `e591454`): validación contra la lista en servidor (422 si no está); sólo
    admin (ya `requireAdmin`, `:55`, `:74`; se prueba el 403 de un no-admin).
 5. Tres restricciones con matriz probada:
    - (a) `liberacion_sin_factura` → Director Comercial, impuesta en `apps/desk/server/services/ticketService.ts:129-131`.

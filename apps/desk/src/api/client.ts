@@ -104,7 +104,7 @@ export function listUsers(): Promise<UserPublic[]> {
   return fetch('/api/users', { credentials: 'include' }).then((r) => json<UserPublic[]>(r))
 }
 
-export interface NewUser { email: string; name: string; password: string; isAdmin: boolean; roleId: string | null; cargo: string; empresa: string }
+export interface NewUser { email: string; name: string; password: string; isAdmin: boolean; roleId: string | null; cargo: string; empresa: string; cargoPermiso: string }
 export async function createUser(input: NewUser): Promise<UserPublic> {
   const res = await fetch('/api/users', {
     method: 'POST', credentials: 'include',
@@ -118,7 +118,7 @@ export async function createUser(input: NewUser): Promise<UserPublic> {
   return res.json() as Promise<UserPublic>
 }
 
-export function updateUser(id: string, patch: Partial<{ name: string; email: string; isAdmin: boolean; active: boolean; password: string; roleId: string | null; cargo: string | null; empresa: string | null }>): Promise<UserPublic> {
+export function updateUser(id: string, patch: Partial<{ name: string; email: string; isAdmin: boolean; active: boolean; password: string; roleId: string | null; cargo: string | null; empresa: string | null; cargoPermiso: string | null }>): Promise<UserPublic> {
   return fetch(`/api/users/${id}`, {
     method: 'PATCH', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

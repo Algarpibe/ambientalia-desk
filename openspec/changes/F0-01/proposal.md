@@ -126,7 +126,7 @@ No se corrigen aquí. Se anotan para que no se pierdan.
 |---|---|---|
 | 1 | `boardView.ts:35` clasifica esperas por regex sobre el nombre del estado y **diverge del grafo** | F1A, consumiendo el registro de estados de F0-04 |
 | 1 | `valoresTransicion.ts` — regla de dominio sólo en cliente. **Se citan las dos mitades, porque una sola cuenta media historia:** `:3-17` es el JSDoc de cabecera que **declara** el incumplimiento —vale como evidencia de que está reconocido, no como implementación— y `:49-79` (`valoresConocidos`) es la **regla ejecutable**, que es lo que hay que mover a `packages/shared` | F1A o F1C, decisión de alcance |
-| 13 | `TransitionPanel.tsx:56-57` — espejo de `canExecuteTransition`. **Se queda** en cuanto F0-04 pruebe la matriz área × transición; hasta entonces es un espejo sin comprobar | F0-04 lo habilita |
+| 13 | `TransitionPanel.tsx:56-57` en `a3a8f03` — espejo de `canExecuteTransition`. **Se queda** en cuanto F0-04 pruebe la matriz área × transición; hasta entonces es un espejo sin comprobar | F0-04 lo habilita |
 | — | **`remision.ts:189-197` escribe `salesorder_id` sin llamar a `ticketConOrdenVenta`** — la regla «una OV, un ticket» tiene tres puertas y sólo dos la comprueban. *Evidencia:* `ticketConOrdenVenta` sólo se llama en `ticketService.ts:45` y `:100`; el `UPDATE` de esta tercera puerta está en `remision.ts:192-196` | F1A, tras la consulta 4.1 del runbook |
 | — | `TicketCard.tsx:14-23` — mapa de colores muerto, claves en mayúsculas que nunca casan | F1A, cosmético |
 

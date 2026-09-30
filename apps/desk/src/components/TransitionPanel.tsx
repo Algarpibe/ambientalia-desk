@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { canExecuteTransition } from '@ambientalia/shared'
+import { puedeEjecutarTransicion } from '@ambientalia/shared'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -54,7 +54,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
   const boton = botonRemision(status, remisiones ?? null)
   const { user } = useAuth()
   const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(
-    (t) => !!user && canExecuteTransition(user.areas, user.isAdmin, t.area),
+    (t) => !!user && puedeEjecutarTransicion(user, t),
   )
   const [active, setActive] = useState<Transition | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});
