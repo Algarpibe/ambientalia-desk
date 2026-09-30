@@ -3,7 +3,7 @@ import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambien
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -115,7 +115,7 @@ export async function executeTransition(
   db: Queryable,
   id: string,
   body: unknown,
-  user: { areas: string[]; isAdmin: boolean; name?: string; id?: string },
+  user: { areas: string[]; isAdmin: boolean; cargoPermiso?: Cargo | null; name?: string; id?: string },
   config?: AppConfig,
 ): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
@@ -128,7 +128,7 @@ export async function executeTransition(
   }
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-  }
+  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }) // Escalón B (F1C-05): tras el área, antes de todo 422
   const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, b.values)
   const plan = buildTransitionPlan(t, values)
   const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ if (plan.errors.length || erroresFecha.length || errCuarentena.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena] })

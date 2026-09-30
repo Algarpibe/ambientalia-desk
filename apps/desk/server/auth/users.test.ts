@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countUsers, usosDeUsuario, borrarUsuario, UsuarioEnUso } from './users'
+import { createUser, rowToPublicUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countUsers, usosDeUsuario, borrarUsuario, UsuarioEnUso } from './users'
 import { createRole } from './roles'
 
 let db: Queryable
@@ -134,5 +134,30 @@ describe('borrado de usuarios', () => {
 
     await expect(borrarUsuario(db, u.id)).rejects.toThrow(UsuarioEnUso)
     expect(await getUserById(db, u.id)).not.toBeNull()
+  })
+})
+
+// permisos-por-cargo (F1C-05): `cargo_permiso` es la lista cerrada de permiso, DISTINTA de `cargo` (la firma).
+describe('users repo · cargo de permiso', () => {
+  it('S4 · un valor fuera de la lista escrito por SQL se lee como sin cargo (falla cerrado), y uno de la lista se conserva', async () => {
+    const u = await createUser(db, { email: 'c@x.co', name: 'C', passwordHash: 'h' })
+    await db.query("UPDATE users SET cargo_permiso = 'Gerente comercial' WHERE id = $1", [u.id])
+    expect((await getUserById(db, u.id))!.cargoPermiso).toBeNull()
+    await db.query("UPDATE users SET cargo_permiso = 'Director Comercial' WHERE id = $1", [u.id])
+    expect((await getUserById(db, u.id))!.cargoPermiso).toBe('Director Comercial')
+    // Sin la columna en la fila (una consulta que no la selecciona) tampoco concede nada.
+    expect(rowToPublicUser({ id: 'x', email: 'x@x.co', name: 'X', is_admin: false, active: true }).cargoPermiso).toBeNull()
+  })
+
+  it('createUser lo persiste, updateUser lo cambia y con null lo vacía, listUsers lo trae, y no toca el cargo de firma', async () => {
+    const u = await createUser(db, { email: 'd@x.co', name: 'D', passwordHash: 'h', cargo: 'Gerente comercial', cargoPermiso: 'Director Comercial' })
+    expect(u).toMatchObject({ cargo: 'Gerente comercial', cargoPermiso: 'Director Comercial' })
+    await updateUser(db, u.id, { cargoPermiso: 'Coordinador Comercial' })
+    expect(await getUserById(db, u.id)).toMatchObject({ cargo: 'Gerente comercial', cargoPermiso: 'Coordinador Comercial' })
+    expect((await listUsers(db)).find((x) => x.id === u.id)!.cargoPermiso).toBe('Coordinador Comercial')
+    await updateUser(db, u.id, { name: 'D2' }) // un parche que no lo menciona no lo borra
+    expect((await getUserById(db, u.id))!.cargoPermiso).toBe('Coordinador Comercial')
+    await updateUser(db, u.id, { cargoPermiso: null })
+    expect((await getUserById(db, u.id))!.cargoPermiso).toBeNull()
   })
 })

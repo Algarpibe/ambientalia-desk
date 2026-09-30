@@ -594,3 +594,8 @@ CREATE TABLE IF NOT EXISTS public.alarmas_corte (
   id integer PRIMARY KEY,
   corte_at timestamptz NOT NULL
 );
+
+-- permisos-por-cargo (F1C-05, nivel CARGO): cargo de PERMISO del usuario, distinto de users.cargo (la
+-- firma de la remision, texto libre). Aditiva, sin relleno y sin CHECK a proposito: la lista cerrada vive
+-- en packages/shared/src/cargos.ts, y un valor fuera de ella se lee como sin cargo
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS cargo_permiso text;

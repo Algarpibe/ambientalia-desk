@@ -2,7 +2,7 @@ import { beforeEach, vi } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
-import type { Transition } from '@ambientalia/shared'
+import type { Transition, Cargo } from '@ambientalia/shared'
 import type { EquipoRow } from '../db/equipos'
 import { createApp } from '../app'
 import { createUser } from '../auth/users'
@@ -88,8 +88,8 @@ export async function adminCookie(): Promise<string> {
   return `sid=${await createSession(db, u.id)}`
 }
 
-export async function userCookie(areas: string[]): Promise<string> {
+export async function userCookie(areas: string[], cargoPermiso?: Cargo | null): Promise<string> {
   const role = await createRole(db, { name: 'Rol-' + areas.join('-'), areas })
-  const u = await createUser(db, { email: 'op@x.co', name: 'Op', passwordHash: await hashPassword('password123'), roleId: role.id })
+  const u = await createUser(db, { email: 'op@x.co', name: 'Op', passwordHash: await hashPassword('password123'), roleId: role.id, cargoPermiso })
   return `sid=${await createSession(db, u.id)}`
 }

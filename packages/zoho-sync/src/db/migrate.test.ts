@@ -371,10 +371,10 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 40 ALTER: 19 calificadas (14 de public + 5 de books) y 21 sin calificar, todas de Desk (la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar, conjunto sin cambios)', () => {
+  it('son 41 ALTER: 20 calificadas (15 de public + 5 de books) y 21 sin calificar, todas de Desk (la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(40)
-    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(19)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(41)
+    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(20)
     expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(21)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
@@ -509,5 +509,17 @@ describe('alarmas-horas-habiles · la clave de no duplicado es de la base', () =
     await db.query('INSERT INTO public.alarmas_corte (id, corte_at) VALUES (1, $1) ON CONFLICT (id) DO NOTHING', [new Date()])
     const r = await db.query('SELECT corte_at FROM public.alarmas_corte')
     expect(r.rows.map((x: { corte_at: Date }) => new Date(x.corte_at).getTime())).toEqual([entrada.getTime()])
+  })
+})
+
+describe('permisos-por-cargo · la columna cargo_permiso cierra el esquema', () => {
+  // RQ-PM-13, escenario «la migración está calificada y al final» (S3): la última sentencia de
+  // `schema.sql` es la `ALTER` calificada de `public.users`, sin `CHECK` (D-4: la lista cerrada vive en
+  // `shared`, no en la base; una segunda copia exigiría migración por cada cargo nuevo).
+  it('la última sentencia de schema.sql es ALTER TABLE public.users ... cargo_permiso, calificada y sin CHECK', () => {
+    const todas = schemaStatements()
+    const ultima = todas[todas.length - 1].replace(/^(?:\s*--[^\n]*\n)+/, '').trim()
+    expect(ultima).toMatch(/^ALTER TABLE public\.users ADD COLUMN IF NOT EXISTS cargo_permiso text$/)
+    expect(ultima).not.toMatch(/CHECK/i)
   })
 })

@@ -14,7 +14,7 @@ export async function createSession(db: Queryable, userId: string): Promise<stri
 
 export async function getSessionUser(db: Queryable, token: string): Promise<UserPublic | null> {
   const r = await db.query(
-    `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,
+    `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,u.cargo_permiso,
             ro.name AS role_name, ro.areas AS role_areas, ro.active AS role_active
      FROM sessions s JOIN users u ON s.user_id = u.id
      LEFT JOIN roles ro ON u.role_id = ro.id

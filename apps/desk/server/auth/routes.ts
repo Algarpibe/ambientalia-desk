@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword } from './passwords'
 import { createUser, getUserByEmail, getUserById, listUsers, updateUser, setPassword, countActiveAdmins, borrarUsuario, UsuarioEnUso } from './users'
 import { createRole, listRoles, getRole, updateRole } from './roles'
 import { createSession, deleteSession, deleteUserSessions } from './sessions'
-import { requireAuth, requireAdmin } from './middleware'
+import { requireAuth, requireAdmin } from './middleware'; import { cargoPermisoDelCuerpo } from '@ambientalia/shared'
 
 const COOKIE = 'sid'
 const SECURE = process.env.NODE_ENV === 'production' // cookie solo por HTTPS en producción
@@ -67,13 +67,15 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
     // Cargo y empresa firman el documento de remisión: vacío se guarda como NULL, no como cadena en blanco.
     const cargo = String(req.body.cargo ?? '').trim() || null
     const empresa = String(req.body.empresa ?? '').trim() || null
-    const created = await createUser(db, { email, name, passwordHash: await hashPassword(password), isAdmin: Boolean(req.body.isAdmin), roleId, cargo, empresa })
+    const cargoPermiso = cargoPermisoDelCuerpo(req.body.cargoPermiso) // el de PERMISO (lista cerrada); `cargo`, la firma, sigue libre
+    if (!cargoPermiso.ok) { res.status(422).json({ error: cargoPermiso.error }); return }
+    const created = await createUser(db, { email, name, passwordHash: await hashPassword(password), isAdmin: Boolean(req.body.isAdmin), roleId, cargo, empresa, cargoPermiso: cargoPermiso.cargo })
     res.status(201).json(created)
   })
 
   app.patch('/api/users/:id', auth, requireAdmin, async (req, res) => {
     const id = String(req.params.id)
-    const patch: { name?: string; email?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null } = {}
+    const patch: { name?: string; email?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null; cargoPermiso?: import('@ambientalia/shared').Cargo | null } = {}
     if (req.body.name !== undefined) patch.name = String(req.body.name)
     if (req.body.email !== undefined) {
       const email = String(req.body.email).trim().toLowerCase()
@@ -94,6 +96,8 @@ export function registerAuthRoutes(app: Express, db: Queryable): void {
       if (roleId !== null && !(await getRole(db, roleId))) { res.status(422).json({ error: 'Rol no encontrado' }); return }
       patch.roleId = roleId
     }
+    const cargoPermiso = req.body.cargoPermiso === undefined ? null : cargoPermisoDelCuerpo(req.body.cargoPermiso) // sólo si viene: guardar otros datos no borra el cargo
+    if (cargoPermiso) { if (!cargoPermiso.ok) { res.status(422).json({ error: cargoPermiso.error }); return } patch.cargoPermiso = cargoPermiso.cargo } // 422 ANTES de escribir
     // Protección: no dejar el sistema sin administradores activos.
     if (patch.isAdmin === false || patch.active === false) {
       const target = await getUserById(db, id)

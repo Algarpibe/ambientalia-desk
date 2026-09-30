@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { UserPublic, PersonaLite } from '@ambientalia/shared'
-import { AREAS } from '@ambientalia/shared'
+import type { UserPublic, PersonaLite, Cargo } from '@ambientalia/shared'
+import { AREAS, esCargo } from '@ambientalia/shared'
 
 /** Tipo interno para verificar credenciales (incluye el hash); NO se devuelve al cliente. */
 export interface UserWithHash {
@@ -11,7 +11,7 @@ export interface UserWithHash {
 const normalize = (email: string) => email.trim().toLowerCase()
 
 // SELECT con LEFT JOIN al rol para resolver áreas.
-const USER_SELECT = `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,u.cargo,u.empresa,
+const USER_SELECT = `SELECT u.id,u.email,u.name,u.is_admin,u.active,u.role_id,u.cargo,u.empresa,u.cargo_permiso,
   r.name AS role_name, r.areas AS role_areas, r.active AS role_active
   FROM users u LEFT JOIN roles r ON u.role_id = r.id`
 
@@ -27,19 +27,19 @@ export function rowToPublicUser(row: any): UserPublic {
     areas: isAdmin ? [...AREAS] : (roleActive ? roleAreas : []),
     // Datos del técnico que imprime el documento de remisión (antes salían de la hoja `credenciales`).
     cargo: row.cargo ?? null,
-    empresa: row.empresa ?? null,
+    empresa: row.empresa ?? null, cargoPermiso: esCargo(row.cargo_permiso) ? row.cargo_permiso : null, // el de PERMISO (lista cerrada), no la firma: fuera de la lista es sin cargo
   }
 }
 
 export async function createUser(
   db: Queryable,
-  input: { email: string; name: string; passwordHash: string; isAdmin?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null },
+  input: { email: string; name: string; passwordHash: string; isAdmin?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null; cargoPermiso?: Cargo | null },
 ): Promise<UserPublic> {
   const id = randomUUID()
   await db.query(
-    `INSERT INTO users (id,email,name,password_hash,is_admin,active,role_id,cargo,empresa,updated_at)
-     VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,now())`,
-    [id, normalize(input.email), input.name, input.passwordHash, input.isAdmin ?? false, input.roleId ?? null, input.cargo ?? null, input.empresa ?? null],
+    `INSERT INTO users (id,email,name,password_hash,is_admin,active,role_id,cargo,empresa,cargo_permiso,updated_at)
+     VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,$9,now())`,
+    [id, normalize(input.email), input.name, input.passwordHash, input.isAdmin ?? false, input.roleId ?? null, input.cargo ?? null, input.empresa ?? null, input.cargoPermiso ?? null],
   )
   return (await getUserById(db, id))!
 }
@@ -83,7 +83,7 @@ export async function listPersonas(db: Queryable): Promise<PersonaLite[]> {
 export async function updateUser(
   db: Queryable,
   id: string,
-  patch: { name?: string; email?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null },
+  patch: { name?: string; email?: string; isAdmin?: boolean; active?: boolean; roleId?: string | null; cargo?: string | null; empresa?: string | null; cargoPermiso?: Cargo | null },
 ): Promise<void> {
   const sets: string[] = ['updated_at=now()']
   const params: unknown[] = [id]
@@ -95,7 +95,7 @@ export async function updateUser(
   if (patch.active !== undefined) { params.push(patch.active); sets.push(`active=$${params.length}`) }
   if (patch.roleId !== undefined) { params.push(patch.roleId); sets.push(`role_id=$${params.length}`) }
   if (patch.cargo !== undefined) { params.push(patch.cargo); sets.push(`cargo=$${params.length}`) }
-  if (patch.empresa !== undefined) { params.push(patch.empresa); sets.push(`empresa=$${params.length}`) }
+  if (patch.empresa !== undefined) { params.push(patch.empresa); sets.push(`empresa=$${params.length}`) }; if (patch.cargoPermiso !== undefined) { params.push(patch.cargoPermiso); sets.push(`cargo_permiso=$${params.length}`) }
   await db.query(`UPDATE users SET ${sets.join(',')} WHERE id=$1`, params)
 }
 

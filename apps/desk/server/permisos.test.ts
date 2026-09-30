@@ -50,7 +50,7 @@ describe('matriz área × transición, contra el servidor', () => {
         n += 1
         const id = `mtx-${n}`
         // El estado de origen: el primero de los `from` de ESTA transición. Con cualquier otro, el
-        // 409 de `ticketService.ts:86` contesta antes y la casilla no llega a probar permisos.
+        // 409 de `ticketService.ts:126-128` contesta antes y la casilla no llega a probar permisos.
         await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
           [id, 90000 + n, 'Matriz de permisos', t.from[0]])
         const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
@@ -61,7 +61,7 @@ describe('matriz área × transición, contra el servidor', () => {
       // El esperado sale de la regla, no de una lista copiada: el área del usuario cubre —o no— el
       // área de la transición. Un 404 o un 409 colado aquí revienta la comparación y se ve cuál.
       const esperado: Record<string, number> = {}
-      for (const t of TRANSITIONS) esperado[t.id] = canExecuteTransition([area], false, t.area) ? 200 : 403
+      for (const t of TRANSITIONS) esperado[t.id] = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: null }, t) ? 200 : 403
       expect(observado).toEqual(esperado)
     }, 60_000)
   }

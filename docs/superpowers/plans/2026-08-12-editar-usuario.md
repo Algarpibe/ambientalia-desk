@@ -81,7 +81,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 2: la ruta, con la unicidad que excluye al propio usuario
 
 **Files:**
-- Modify: `apps/desk/server/auth/routes.ts:74-105` (el PATCH)
+- Modify: `apps/desk/server/auth/routes.ts:74-105` en `e591454` (el PATCH)
 - Test: `apps/desk/server/auth/routes.test.ts` (test nuevo)
 
 - [ ] **Step 1: escribir el test que falla**

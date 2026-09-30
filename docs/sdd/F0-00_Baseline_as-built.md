@@ -402,7 +402,7 @@ Los conteos llevan «~» porque algunas entradas de `debt.md` son compuestas (un
 | 2026-08-12 | `mano-de-obra-por-modelo-design.md` | Nueva clase `mano_obra` en el catálogo de artículos | hojas-vida | SÍ (`packages/shared/src/types.ts:239`) |
 | 2026-08-12 | `avisos-por-correo-design.md` | Avisos por cambio de área + canal de correo (n8n) | derivacion-avisos | SÍ (auditado a fondo, `avisosWebhook.ts`) |
 | 2026-08-12 | `editar-usuario-design.md` | Editar nombre, correo, cargo y empresa | permissions | SUPERFICIAL |
-| 2026-08-12 | `eliminar-usuario-design.md` | Borrado físico de usuario (sin FKs) | permissions / trazas | SÍ (`auth/routes.ts:129`) |
+| 2026-08-12 | `eliminar-usuario-design.md` | Borrado físico de usuario (sin FKs) | permissions / trazas | SÍ (`auth/routes.ts:129` en `e591454`) |
 
 «SUPERFICIAL» significa que los ficheros y símbolos existen pero no se verificaron línea a línea en esta tanda; no es un veredicto de coincidencia ni de desvío.
 
