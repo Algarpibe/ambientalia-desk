@@ -58,7 +58,7 @@ cubiertas por este documento o por tareas de persona que no lo bloquean:
 Las migraciones son todas aditivas e idempotentes (§2), no hay ninguna variable de entorno nueva (§3), no
 queda ningún «no se despliega sin X» pendiente fuera de este documento (§7), y build, tipos y pruebas están
 en verde. **Hay una incoherencia de documentación que no bloquea pero hay que conocer** (§3): las alarmas
-mandan copia a `AVISOS_COPIA_EMAIL`, y `DEPLOY.md:159-160` dice que esa variable sólo copia los avisos de
+mandan copia a `AVISOS_COPIA_EMAIL`, y `DEPLOY.md:159-160` en `c2b2888` dice que esa variable sólo copia los avisos de
 derivación.
 
 **Lo que puede sorprender al equipo, por orden de impacto.**
@@ -178,7 +178,7 @@ suscriptor— **no aplica a este paquete**.
   (`apps/desk/server/index.ts:49`, `:57`). Ninguna petición llega antes de que la migración haya terminado.
 - **Idempotencia, sentencia a sentencia:** las veintitrés llevan `IF NOT EXISTS` (§2.1). **No hay ninguna
   que no lo sea.** Cada Deploy vuelve a pasar el fichero entero, y en el segundo arranque cada sentencia es
-  una operación vacía (`DEPLOY.md:224`, cierto para este rango).
+  una operación vacía (`DEPLOY.md:224` en `c2b2888`, cierto para este rango).
 - **Worker `hub-sync`:** `hubBootstrap` llama a `migrate(db)` sobre el hub con **el mismo** `schema.sql`
   (`apps/hub-sync/src/hubSync.ts:13`). Las seis tablas `public.*` nuevas y las columnas nuevas de `tickets`,
   `modalidad` incluida, **también se crean en `zoho-hub`** cuando se redespliegue el worker. Es inocuo: el
@@ -236,7 +236,7 @@ silencio) no viven en ficheros `.sql`: están en los `tasks.md` archivados y se 
   packages/zoho-sync/src/config.ts` → vacío).
 - `DEPLOY.md` no cambia después de `3f9d23b`. `.env.example` y `apps/desk/.env.example` no aparecen en
   `git diff --stat ae5aaf4..b1347e0 -- '*.env.example'` (salida vacía); **su contenido no se ha leído desde
-  esta sesión**, igual que advierte `DEPLOY.md:169-172`.
+  esta sesión**, igual que advierte `DEPLOY.md:169-172` en `c2b2888`.
 
 **El escritor nuevo de F1B-08 SÍ manda correo, y no tiene interruptor propio: usa el que ya existe.** Las
 alarmas crean avisos en la campana y, **después** de todas las transacciones, los mandan por el canal de
@@ -250,11 +250,11 @@ avisa igual. **Por eso no es un interruptor sin documentar.** Si el canal está 
 ⚠️ **Lo que sí queda mal documentado — `AVISOS_COPIA_EMAIL`.** Cada aviso de alarma sale marcado
 `conCopia: true` (`apps/desk/server/services/alarmasSla.ts:118`), y `dispararAvisos` manda copia a
 `AVISOS_COPIA_EMAIL` de todo aviso con esa marca (`apps/desk/server/avisosWebhook.ts:71-75`).
-`DEPLOY.md:159-160` dice que esa variable recibe copia «de los avisos de derivación dirigidos a otras
+`DEPLOY.md:159-160` en `c2b2888` dice que esa variable recibe copia «de los avisos de derivación dirigidos a otras
 personas». **Desde `ad2b97b` recibe también la copia de todas las alarmas de SLA.** No se ha añadido
 ninguna variable, así que no es un interruptor nuevo sin documentar; es el **alcance** de uno documentado
 el que creció sin que `DEPLOY.md` lo diga. No bloquea: la variable «vacía —lo normal— no copia nada»
-(`DEPLOY.md:161-162`). Acción de persona antes del Deploy: §6.1.7. Corregir `DEPLOY.md` queda fuera de este
+(`DEPLOY.md:161-162` en `c2b2888`). Acción de persona antes del Deploy: §6.1.7. Corregir `DEPLOY.md` queda fuera de este
 documento.
 
 **Los escritores de F1B-11 siguen sin interruptor, y sigue sin ser un defecto:** el aviso de discrepancia de
@@ -276,7 +276,7 @@ bandeja: «`crearAviso` no rellena `enviado_at` ni llama al canal de correo»
   jornada L-V 08:00-17:00 en `packages/shared/src/calendarioLaboral.ts:13-14`). Es la misma que usan las
   fechas derivadas y la vigencia de contratos; su resolución dentro del contenedor está sin comprobar
   (§6.3.7, tarea de F1A-07).
-- Las funciones nuevas del worker cuelgan de credenciales y flags **que ya existían** (`DEPLOY.md:189-198`).
+- Las funciones nuevas del worker cuelgan de credenciales y flags **que ya existían** (`DEPLOY.md:189-198` en `c2b2888`).
 
 ---
 
@@ -316,14 +316,14 @@ esa copia nocturna esté funcionando.
 
 **`DEPLOY.md` ya cubre el mecanismo. No se repite aquí.**
 
-- **App:** `DEPLOY.md` §5 «Desplegar» (`DEPLOY.md:174-177`) — botón **Deploy** en EasyPanel; el server corre
+- **App:** `DEPLOY.md` §5 «Desplegar» (`DEPLOY.md:174-177` en `c2b2888`) — botón **Deploy** en EasyPanel; el server corre
   `migrate` en el arranque; luego se abre el dominio.
-- **Worker `hub-sync`:** `DEPLOY.md` §7 (`DEPLOY.md:183-202`). Mismo repositorio y misma imagen, arranque
+- **Worker `hub-sync`:** `DEPLOY.md` §7 (`DEPLOY.md:183-202` en `c2b2888`). Mismo repositorio y misma imagen, arranque
   `npm run start:hub-sync`. Desde `3f9d23b` sólo le llega código compartido que no usa (el nacimiento de
   soporte remoto en `createTicket` y las columnas de la migración). Conviene redesplegarlo, pero es
   **independiente** de la App. Qué versión corre hoy el worker **no está verificado** en ningún documento
   del repositorio (hipótesis: la misma época que la App).
-- **Idempotencia de la migración:** `DEPLOY.md:224`. Cierta para este rango (§2.2), con la salvedad de la
+- **Idempotencia de la migración:** `DEPLOY.md:224` en `c2b2888`. Cierta para este rango (§2.2), con la salvedad de la
   tolerancia por sentencia.
 - **Orden con la replicación lógica:** no aplica (§2.1).
 - **Publicar `b1347e0` entero, no un commit intermedio** (§7). Las dos tandas nuevas lo piden por escrito:
@@ -756,7 +756,7 @@ extremos). El respaldo reutiliza `destinatariosDeArea`, que incluye a los admini
 Lo comprueba la P.1 de `alarmas-horas-habiles` (§6.1.3).
 
 **R21 · Las alarmas copian a `AVISOS_COPIA_EMAIL` y `DEPLOY.md` no lo dice** (§3). Si esa variable estuviera
-puesta en producción —es una «muleta de pruebas», `DEPLOY.md:157`—, esa dirección recibiría copia de **todas**
+puesta en producción —es una «muleta de pruebas», `DEPLOY.md:157` en `c2b2888`—, esa dirección recibiría copia de **todas**
 las alarmas. §6.1.7.
 
 **R22 · Dos escenarios de las alarmas quedan PARTIAL y uno MANUAL**
@@ -1061,7 +1061,7 @@ No viene de ningún archivo: la añade este documento por lo que se midió en §
 2. **Vacía o ausente:** nada que hacer.
 3. **Con valor:** esa dirección recibirá copia de **todas** las alarmas de SLA además de las derivaciones
    (`apps/desk/server/services/alarmasSla.ts:118`, `apps/desk/server/avisosWebhook.ts:71-75`). Decidir antes
-   del Deploy si se deja; `DEPLOY.md:161-162` dice cómo se apaga: borrando la variable, sin tocar código.
+   del Deploy si se deja; `DEPLOY.md:161-162` en `c2b2888` dice cómo se apaga: borrando la variable, sin tocar código.
 4. Anotar de paso **si `N8N_AVISOS_WEBHOOK_URL` tiene valor** (sin copiarlo): dice si las alarmas saldrán por
    correo o sólo en la campana (§3).
 
@@ -1280,7 +1280,7 @@ porque **sí tiene orden**: antes del Deploy (§6.1.4).
 |---|---|---|
 | Una migración no idempotente | **No hay.** Las veintitrés sentencias nuevas llevan `IF NOT EXISTS` | §2.1, §2.2 |
 | Una restricción nueva que rompa datos existentes o los `INSERT` de `ae5aaf4` | **No hay.** Las restricciones (incluidas las dos claves primarias nuevas) son de tablas nuevas y vacías; las once columnas nuevas son anulables y sin `DEFAULT`; `modalidad` no lleva `CHECK` | §2.1, §4.5 |
-| Un interruptor de escritor sin documentar | **No hay variable nueva** (0 líneas añadidas con `process.env` en `3f9d23b..b1347e0`). El único escritor nuevo hacia fuera, el correo de las alarmas, va por `N8N_AVISOS_WEBHOOK_URL`, que nace apagada y está documentada (`DEPLOY.md:131-140`). **Pero** `AVISOS_COPIA_EMAIL` amplió su alcance y `DEPLOY.md:159-160` no lo dice: incoherencia documental, **no bloquea** (§3, §6.1.7) | §3 |
+| Un interruptor de escritor sin documentar | **No hay variable nueva** (0 líneas añadidas con `process.env` en `3f9d23b..b1347e0`). El único escritor nuevo hacia fuera, el correo de las alarmas, va por `N8N_AVISOS_WEBHOOK_URL`, que nace apagada y está documentada (`DEPLOY.md:131-140`). **Pero** `AVISOS_COPIA_EMAIL` amplió su alcance y `DEPLOY.md:159-160` en `c2b2888` no lo dice: incoherencia documental, **no bloquea** (§3, §6.1.7) | §3 |
 | Un estado sin salida en cualquiera de los TRES flujos | **No hay.** En la unión de los tres catálogos (servicio, equipo nuevo y soporte remoto: 44 transiciones, `packages/shared/src/invariantesGrafo.test.ts:172`) el único estado sin salida es `Finalizado` (`packages/shared/src/invariantesGrafo.test.ts:177-181`); la salida de `Solicitud Soporte` es exactamente «Asignación» (`:249-251`). Y la prueba pasa en la ejecución de la cabecera | `packages/shared/src/invariantesGrafo.test.ts:160-181`, `:226-251` |
 | Un build, un typecheck o una suite en rojo | **No.** Build y typecheck exit 0; 1.990 pruebas en verde, 2 omitidas | Cabecera |
 | Un cambio archivado «no se despliega sin X» con X fuera de `main` o fuera del paquete | **No.** F1B-06 cambio 1 («no se despliega sin F1A-03», `openspec/changes/archive/2026-09-25-blueprint-equipo-nuevo/archive-report.md:32`): F1A-03 es `c373bcc`, en `main`. **`blueprint-soporte-remoto`** («S-6 bloquea el DESPLIEGUE», `openspec/changes/archive/2026-09-29-blueprint-soporte-remoto/archive-report.md:32-39`): lo que pide es que el paquete lleve S-6 con el recuento o «sin medir», y la columna `modalidad` — está en §5.1 y §2.1. **`alarmas-horas-habiles`** («Antes de desplegar hace falta un paquete de despliegue NUEVO», `openspec/changes/archive/2026-09-29-alarmas-horas-habiles/archive-report.md:114`): es este documento, con los seis puntos (§5.1). Los tres de F1B-11 no ponen condición | Barrido de «no se despliega», «bloquea el despliegue» y «antes de desplegar» en los 21 `archive-report.md` del rango |

@@ -93,7 +93,7 @@ debajo se pegaría a ésta y **las dos fallarían**. No bloquea este despliegue.
 ### 2.2 · Dónde se aplican: al arrancar, y en silencio si algo falla
 
 - **App:** `main()` llama a `migrate(pool)` en el arranque (`apps/desk/server/index.ts:24` en `dcb5c99`), sobre `desk`.
-  Es lo que `DEPLOY.md:175` describe como «el server corre `migrate`».
+  Es lo que `DEPLOY.md:175` en `c2b2888` describe como «el server corre `migrate`».
 - **Worker `hub-sync`:** `hubBootstrap` llama a `migrate(db)` sobre el hub (`apps/hub-sync/src/hubSync.ts:13`),
   con **el mismo** `schema.sql`. Así que las dos tablas `public.*` nuevas y las columnas nuevas **también
   se crean en `zoho-hub`** cuando se redespliegue el worker. Es inocuo: allí nadie las usa, igual que
@@ -130,7 +130,7 @@ falta crearla en `desk`.
 - Ningún `=== 'true'` nuevo fuera de pruebas: la única coincidencia añadida es un valor de formulario en
   una prueba (`hayNovedad: 'true'`).
 - `.env.example` **no cambia** en el rango (`git diff --name-only ae5aaf4..HEAD` no lo lista). Su
-  contenido queda fuera del alcance de lectura de esta sesión, igual que le pasó a `DEPLOY.md:169-172`:
+  contenido queda fuera del alcance de lectura de esta sesión, igual que le pasó a `DEPLOY.md:169-172` en `c2b2888`:
   no se afirma nada más sobre él.
 
 **Consecuencia:** no hay que tocar la pestaña Environment de ningún servicio. No hay interruptor nuevo
@@ -141,7 +141,7 @@ defecto») **no encuentra defecto en este rango**.
 
 - `APP_ENTRYPOINT` elige qué proceso arranca la imagen (`Dockerfile:27-29`). Ya estaba en `ae5aaf4`.
 - Las funciones nuevas del worker (historia de tickets, fases de CRM, facturas de anticipo) cuelgan de
-  credenciales y flags **que ya existían** (`DEPLOY.md:189-198`). Detalle en §5.2.
+  credenciales y flags **que ya existían** (`DEPLOY.md:189-198` en `c2b2888`). Detalle en §5.2.
 
 ---
 
@@ -176,14 +176,14 @@ y todo su contenido se puede volver a traer de Zoho. Hipótesis: rehacerlo cuest
 
 **`DEPLOY.md` ya cubre el mecanismo. No se repite aquí.**
 
-- **App:** `DEPLOY.md` §5 «Desplegar» (`DEPLOY.md:174-177`) — botón **Deploy** en EasyPanel; el server corre
+- **App:** `DEPLOY.md` §5 «Desplegar» (`DEPLOY.md:174-177` en `c2b2888`) — botón **Deploy** en EasyPanel; el server corre
   `migrate` en el arranque; luego se abre el dominio.
-- **Worker `hub-sync`:** `DEPLOY.md` §7 (`DEPLOY.md:183-202`). Mismo repositorio y misma imagen, arranque
+- **Worker `hub-sync`:** `DEPLOY.md` §7 (`DEPLOY.md:183-202` en `c2b2888`). Mismo repositorio y misma imagen, arranque
   `npm run start:hub-sync`. **Esta vez sí trae cambios** (§5.2) y conviene redesplegarlo, pero es
   **independiente** de la App: la App no lee nada de lo que añade el worker en este rango. Qué versión
   corre hoy el worker **no está verificado** en ningún documento del repositorio (hipótesis: la misma
   época que la App).
-- **Idempotencia de la migración:** `DEPLOY.md:224`. Cierta para este rango (§2.1), con la salvedad de la
+- **Idempotencia de la migración:** `DEPLOY.md:224` en `c2b2888`. Cierta para este rango (§2.1), con la salvedad de la
   tolerancia por sentencia (§2.2).
 - **Orden con la replicación lógica:** no aplica (§2.1).
 

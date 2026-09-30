@@ -124,7 +124,7 @@ ahí** sin calificar. Mismo destino, ahora explícito. Es el cierre del incumpli
 > `ADD COLUMN IF NOT EXISTS`». Es falso — la de `:306` no lo es. La conclusión (la migración es
 > segura) sobrevive, pero por las dos razones de arriba, no por aquélla.
 
-`DEPLOY.md:224` ya declara que `migrate` es idempotente y que cada deploy es seguro. Este paquete no
+`DEPLOY.md:224` en `c2b2888` ya declara que `migrate` es idempotente y que cada deploy es seguro. Este paquete no
 lo cambia.
 
 ---

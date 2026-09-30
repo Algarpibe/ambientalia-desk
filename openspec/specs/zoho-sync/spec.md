@@ -30,7 +30,7 @@ sostiene. Toda cifra de aquí la produjo un comando, y el comando queda escrito 
 Los tres diseños de procedencia son de junio. Lo que describen ya corre:
 
 - El worker `hub-sync` existe, es un servicio aparte del mismo repositorio y su `DATABASE_URL` apunta
-  al hub (`apps/hub-sync/src/hub-sync.ts`; `DEPLOY.md:183-189`).
+  al hub (`apps/hub-sync/src/hub-sync.ts`; `DEPLOY.md:186-192`).
 - La replicación lógica hub → desk lleva **cuatro** tablas, verificadas en producción el 2026-08-10
   con `pg_subscription_rel` en estado `r`: `desk.activities`, `books.contacts`,
   `books.sales_orders` y `books.items` (`DEPLOY.md:38-42`, que cita `debt.md:298-301`).

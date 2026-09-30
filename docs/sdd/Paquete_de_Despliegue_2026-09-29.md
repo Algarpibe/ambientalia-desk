@@ -145,11 +145,11 @@ carácter a ciegas (`packages/zoho-sync/src/db/migrate.ts:19-21`).
 
 - **App:** `main()` corre `reorgToDesk` si el esquema es `desk` y luego `await migrate(pool)`
   (`apps/desk/server/index.ts:26-27`), **antes** de sembrar el administrador, de montar la API y de
-  escuchar en el puerto (`apps/desk/server/index.ts:49`, `:57`). Es lo que `DEPLOY.md:175` describe como «el
+  escuchar en el puerto (`apps/desk/server/index.ts:49`, `:57`). Es lo que `DEPLOY.md:175` en `c2b2888` describe como «el
   server corre `migrate`». Ninguna petición llega antes de que la migración haya terminado.
 - **Idempotencia, sentencia a sentencia:** las veinte llevan `IF NOT EXISTS` (§2.1, columna
   «¿Idempotente?»). **No hay ninguna que no lo sea.** Cada Deploy vuelve a pasar el fichero entero, y
-  en el segundo arranque cada sentencia es una operación vacía. Es lo que afirma `DEPLOY.md:224`, y para
+  en el segundo arranque cada sentencia es una operación vacía. Es lo que afirma `DEPLOY.md:224` en `c2b2888`, y para
   este rango es cierto.
 - **Worker `hub-sync`:** `hubBootstrap` llama a `migrate(db)` sobre el hub con **el mismo** `schema.sql`
   (`apps/hub-sync/src/hubSync.ts:13`). Así que las cuatro tablas `public.*` nuevas y las columnas nuevas de
@@ -232,7 +232,7 @@ necesitan interruptor cerrado y documentado.
   (`apps/desk/server/index.ts:88`), como mucho una vez por día y proceso
   (`apps/desk/server/services/avisoRitmoContrato.ts:67-69`).
 - Las funciones nuevas del worker (historia de tickets, fases de CRM, facturas de anticipo) cuelgan de
-  credenciales y flags **que ya existían** (`DEPLOY.md:189-198`). Detalle en §5.2.
+  credenciales y flags **que ya existían** (`DEPLOY.md:189-198` en `c2b2888`). Detalle en §5.2.
 
 ---
 
@@ -272,15 +272,15 @@ documento del repositorio registra que esa copia nocturna esté ya funcionando.
 
 **`DEPLOY.md` ya cubre el mecanismo. No se repite aquí.**
 
-- **App:** `DEPLOY.md` §5 «Desplegar» (`DEPLOY.md:174-177`) — botón **Deploy** en EasyPanel; el server corre
+- **App:** `DEPLOY.md` §5 «Desplegar» (`DEPLOY.md:174-177` en `c2b2888`) — botón **Deploy** en EasyPanel; el server corre
   `migrate` en el arranque; luego se abre el dominio.
-- **Worker `hub-sync`:** `DEPLOY.md` §7 (`DEPLOY.md:183-202`). Mismo repositorio y misma imagen, arranque
+- **Worker `hub-sync`:** `DEPLOY.md` §7 (`DEPLOY.md:183-202` en `c2b2888`). Mismo repositorio y misma imagen, arranque
   `npm run start:hub-sync`. Trae los cambios del worker de §5.2 y, desde `dcb5c99`, sólo un cambio más en
   código compartido: la devolución opcional del aviso de discrepancia en `packages/zoho-sync/src/sync.ts`,
   que el worker no usa. Conviene redesplegarlo, pero es **independiente** de la App. Qué versión corre hoy
   el worker **no está verificado** en ningún documento del repositorio (hipótesis: la misma época que la
   App).
-- **Idempotencia de la migración:** `DEPLOY.md:224`. Cierta para este rango (§2.2), con la salvedad de la
+- **Idempotencia de la migración:** `DEPLOY.md:224` en `c2b2888`. Cierta para este rango (§2.2), con la salvedad de la
   tolerancia por sentencia.
 - **Orden con la replicación lógica:** no aplica (§2.1).
 - **Publicar `3f9d23b` entero, no un commit intermedio** (§7).
