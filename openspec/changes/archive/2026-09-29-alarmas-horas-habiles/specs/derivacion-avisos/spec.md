@@ -64,9 +64,9 @@ uno por destinatario y por alarma.
 
 El sistema **SHALL** avisar **una sola vez por entrada**: la identidad de una alarma es la terna
 **(ticket, estado, instante de entrada)** (supuesto S-2). El sistema **SHALL** registrar la marca y crear los
-avisos de esa alarma en la **misma transacción**, con una escritura idempotente sobre la terna
-(`public.alarmas_avisadas`, `INSERT … ON CONFLICT DO NOTHING RETURNING`): si no hay fila devuelta, **MUST NOT**
-crearse ningún aviso.
+avisos de esa alarma en la **misma transacción**. La clave primaria de `public.alarmas_avisadas` es la terna.
+La **primera sentencia** de la transacción es un `INSERT` **sin `ON CONFLICT`**; un error `23505` (clave duplicada)
+significa «ya avisado» y entonces **MUST NOT** crearse ningún aviso; cualquier otro error sale hacia fuera.
 
 - Dos pasadas seguidas, o dos pasadas concurrentes, sobre la misma entrada vencida **MUST NOT** producir más
   de un aviso por destinatario.

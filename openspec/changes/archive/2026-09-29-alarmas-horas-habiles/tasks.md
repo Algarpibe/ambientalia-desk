@@ -315,7 +315,7 @@ Ficheros nuevos: `apps/desk/server/db/alarmasAvisadas.ts` y `apps/desk/server/db
 - [x] 4.12 Comprobar que `git diff --stat HEAD -- CLAUDE.md openspec/config.yaml` está vacío (R-2 no aplica: no hay capacidad nueva).
 - [x] 4.13 **Para el `archive-report`** (se redacta aquí, en `apply-progress.md`; lo inserta el archive, no este apply): (a) **adenda a E-087** — las alarmas son el segundo dependiente de la pasada que hoy es la de la sincronización con Zoho; al retirarla sin trasladar la llamada, callarían sin que nada se ponga rojo (RQ-AV-17);
   (b) una línea con qué parte de la fila F1B-08 cubre (alarma en horas hábiles, aviso y marca) y qué deja fuera (vistas equivalentes a Zoho, pregunta 4; `cierra: no`); (c) corrección documental de §3.7 y §3.10 de la spec viva `transitions-st` («no hay planificador», «destinatario derivado del grafo»); (d) resultado de P.1 y P.3 si ya existe; (e) la nota de despliegue literal de abajo.
-- [x] 4.14 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (nuevos: `alarmasAvisadas.ts`, `alarmasAvisadas.test.ts`); confirmar uno a uno los siete criterios de éxito de `proposal.md:148-155`; `apply-progress.md` (~60 líneas, con la casilla de 4.9).
+- [x] 4.14 Cierre general: `npm test`; `npm run typecheck`; `npm run lint`; `npm run build`; medir el lote (nuevos: `alarmasAvisadas.ts`, `alarmasAvisadas.test.ts`); confirmar uno a uno los ocho criterios de éxito de `proposal.md:164-173`; `apply-progress.md` (~60 líneas, con la casilla de 4.9).
 
 ---
 

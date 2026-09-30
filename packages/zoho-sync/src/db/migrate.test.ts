@@ -475,7 +475,7 @@ describe('blueprint-soporte-remoto · la ALTER de modalidad no rellena filas pre
  * Hipótesis H1 de `design.md`, comprobada por ejecución el 2026-09-29: pg-mem NO cumple
  * `ON CONFLICT … DO NOTHING RETURNING` —devuelve la fila también en el conflicto—, aunque sí deja
  * de insertar. Por eso la prueba cuenta filas y no confía en el `RETURNING`; el servicio (lote 3)
- * usa el plan B: `SELECT` previo dentro de la misma transacción, con la clave de cinturón.
+ * usa `INSERT` sin `ON CONFLICT` como primera sentencia y trata el `23505` como «ya avisado» (`alarmasSla.ts`).
  */
 describe('alarmas-horas-habiles · la clave de no duplicado es de la base', () => {
   const entrada = new Date('2026-09-14T13:00:00.000Z')

@@ -6,7 +6,7 @@
 | Estado | **as-built completo**, contrastado contra el código. **§3.1 (C1) cerrada por F1A-01** y **C11 cerrada en su regla y en su destinatario de escalado por F1A-02** (RQ-TS-15 y RQ-TS-16), las dos el 2026-09-09; el resto del §3 sigue abierto, y §3.10 dice qué falta de C11 |
 | Base verificada | commit `ad1875b`, rama `main`. `npm test`: 110 ficheros / 931 pruebas, 109 ficheros y 929 pruebas en verde, 1 fichero y 2 pruebas saltados, 29,44 s. **Re-verificada en F1A-01** sobre `3aaa0f1`: las mismas cifras. **Ampliada en F1A-02** sobre `ec0ed1f`: 112 ficheros / 953 pruebas, 951 en verde y 2 saltadas |
 | Tanda que la escribe | F0-02 |
-| Contenido | **16** requisitos (`RQ-TS-01`…`RQ-TS-16`) · **10** entradas de comportamiento actual (§3.1–§3.10), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
+| Contenido | **19** requisitos (`RQ-TS-01`…`RQ-TS-19`) · **10** entradas de comportamiento actual (§3.1–§3.10), de ellas **§3.1 ya CERRADA** por F1A-01 · **9** discrepancias maestro↔código (M-1…M-9) y **8** diseño↔código (D-1…D-8) |
 | Diseño de procedencia | `docs/superpowers/specs/2026-06-04-subsistema-b-transiciones-postgres-design.md` (124 líneas, «Aprobado para planificación»). **Histórico congelado: materia prima, no autoridad** (plan R01.1:382) |
 | Apartados del maestro | M1.3 (`R08.1.md:1106-1443`) · M1.9.1 (`:1614-1650`) · M1.9.2 (`:1651-1666`) · M1.9.3 (`:1667-1674`) · M1.10 (`:1675-1677`) · Anexo H.2 (`:4488-4496`) |
 | Tandas que la tocan | **F1A-01** (C1 — **hecha**, 2026-09-09) · **F1A-02** (C11: la regla y el destinatario del escalado, **hechos**; el disparo, §3.10) · **F1B-06** (dos grafos nuevos) · **F1C-02** (C4) · **F1C-03** (C3) · **F1C-04** (C7) · **F1C-05** (permisos finos) · **F1C-06** y **C9** (tiempos). Origen: `openspec/changes/F0-04/proposal.md:30-36` |
@@ -552,90 +552,193 @@ un requisito formal sobre la composición de `CLASIFICACION_EN_ESPERA`; sólo la
 
 ### RQ-TS-15 · El reloj del SLA — corrección C11, cerrada en F1A-02
 
-El SLA **SHALL** declararse como **dato**, no derivarse del grafo
-(`packages/shared/src/sla.ts`, `SLA_HORAS_POR_ESTADO`). De las 34 transiciones no se deduce que
-`Notificado` merezca un día y `Pendiente` no: es una decisión de negocio, igual que
-`ESTADOS_SIN_SALIDA`.
+El SLA **SHALL** seguir declarándose como **dato**, no derivarse del grafo, y **SHALL** medirse en **horas
+HÁBILES**, no de reloj. La tabla de alarmas (`packages/shared/src/sla.ts`) **SHALL** tener exactamente
+**tres** entradas:
 
-- Hoy **SHALL** haber exactamente **uno**: `Notificado`, 24 h. Es el único que el maestro decidió
-  (M1.7, `R08.1.md:1570`; punto abierto nº 40), y venía del blueprint de Zoho, que sí lo tiene.
-- La unidad **SHALL** ser la **hora**, no el día: el maestro deja abierto en «24/48 h» el plazo de la
-  otra regla por tiempo que tiene pensada (`:1586`), y declarar días obligaría a cambiar la unidad el
-  día que Gerencia elija 48.
-- En el instante **exacto** del vencimiento el SLA **MUST NOT** estar vencido: un plazo de «un día»
-  que saltara a las 23:59:59.999 no sería un día. La comparación es estricta
-  (`sla.ts`, `slaVencido`; probado en `packages/shared/src/sla.test.ts`).
+| Estado | Umbral (horas hábiles) | Equivale a |
+|---|---|---|
+| `Notificado` | 9 | 1 día hábil |
+| `Remisión creada` | 27 | 3 días hábiles |
+| `Notificación cliente` | 36 | 4 días hábiles |
+
+- El cómputo **SHALL** usar la función compartida `horasHabilesEntre` (`packages/shared/src/calendarioLaboral.ts:174`)
+  con los cierres de `public.calendario_cierres`, y **MUST NOT** reimplementar el calendario (jornada L-V
+  8-17 h, festivos de Colombia y cierres declarados): el tiempo fuera de jornada, en fin de semana, en
+  festivo o en un cierre **MUST NOT** contar.
+- La unidad **SHALL** seguir siendo la **hora**, no el día.
+- En el instante **exacto** del vencimiento la alarma **MUST NOT** estar vencida: la comparación es
+  **estricta** (`horas hábiles transcurridas > umbral`). Un plazo de nueve horas hábiles que saltara en la
+  hora nueve exacta no sería un plazo de nueve horas.
 - El origen del plazo **SHALL** ser la **ÚLTIMA** entrada del ticket a su estado actual, leída de
-  `ticket_transitions` (`apps/desk/server/db/sla.ts`). No la primera: `Notificado` está en un ciclo
-  con `Rev./Diagnostico` —componente C3 de la tabla de reentrancia— y con la primera, un ticket que
-  acaba de volver saldría vencido por una espera que ya terminó.
-- Un ticket **sin ninguna fila** en `ticket_transitions` **MUST NOT** reportarse como vencido: no se
-  sabe cuándo entró en su estado, y un SLA sobre una fecha desconocida no es un SLA.
-  `tickets.created_time` dice cuándo nació el ticket, que es otra cosa. **Esto acota la regla a los
-  tickets que la aplicación ha movido**, y en producción los replicados de Zoho no lo están.
-- El reloj **MUST NOT** leer `ESTADOS_EN_ESPERA`. El único estado con SLA está clasificado `ninguna`
-  (`estados.ts:91`), así que no es ninguno de los **once** de la vista ni de los cuatro sin salida.
-  Probado.
-- **El reloj MUST NOT aplicarse a un ticket cuyo flujo aplicable no es el de servicio, aunque su
-  estado actual coincida en NOMBRE con `Notificado`.** Desde `blueprint-equipo-nuevo` (F1B-06),
-  `Notificado` también existe en el catálogo de `Equipo nuevo` (`transitions-equipo-nuevo` RQ-EN-01):
-  la consulta de `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts:40-45` en `0ca870b`; cerrado por `1b90a80`, que añadió el filtro de flujo) filtraba sólo por
-  `status`, sin distinguir catálogo, así que **SHALL** excluir los tickets cuyo flujo aplicable
-  (`transitions-equipo-nuevo` RQ-EN-04) no sea `servicio` — supuesto s6 de la propuesta.
+  `ticket_transitions` (`apps/desk/server/db/sla.ts`). Reentrar en el estado abre una entrada nueva y
+  reinicia el reloj.
+- Un ticket **sin ninguna fila** en `ticket_transitions` **MUST NOT** medirse ni reportarse como vencido
+  (supuesto S-10): no se sabe cuándo entró en su estado. Se documenta, no se inventa un origen; `created_time`
+  dice cuándo nació el ticket, que es otra cosa. Esto acota la regla a los tickets que la aplicación ha movido.
+- Un estado **sin entrada** en la tabla **MUST NOT** vencer nunca.
+- El reloj **MUST NOT** leer `ESTADOS_EN_ESPERA` ni la clasificación de espera. `Remisión creada` (`interna`) y
+  `Notificación cliente` (`externa`) están en la vista de esperas y a la vez tienen alarma: la vista y la
+  alarma son criterios independientes (`transitions-st` §3.7).
+- La alarma **SHALL** ser independiente del reloj del SLA de `c7`: **MUST NOT** detenerse porque el ticket
+  esté en `Notificación cliente`, y el reloj de `c7` (F1C-06) queda fuera de este requisito.
+- La alarma **SHALL** aplicarse sólo a tickets cuyo flujo aplicable es `servicio` (supuesto S-9 revisado): un
+  ticket `Equipo nuevo` en `Notificado` **MUST NOT** medirse, como ya fija `transitions-equipo-nuevo` RQ-EN-06
+  (supuesto s6 de `blueprint-equipo-nuevo`), que este cambio no toca. Los tres estados con alarma son del
+  catálogo de servicio; el único que se cruza con otro flujo es `Notificado`.
+- Quien **dispara** la evaluación es la pasada periódica del servidor (`derivacion-avisos` RQ-AV-17); este
+  requisito sólo fija la regla de vencimiento.
 
-**Lo que este requisito NO incluye, y sigue abierto — ver §3.10.** Nada de esto **dispara**: no hay
-planificador. El destinatario del escalado sí está resuelto, y es `RQ-TS-16`.
+(Previously: «Hoy **SHALL** haber exactamente **uno**: `Notificado`, 24 h» de reloj, comparación estricta sobre
+horas naturales, y «El reloj **MUST NOT** aplicarse a un ticket cuyo flujo aplicable no es el de servicio».
+La última viñeta decía que nada dispara y que no hay planificador; el disparo lo fija ahora RQ-AV-17. Las
+sustituciones de las cifras de `ESTADOS_EN_ESPERA` de las notas históricas no cambian.)
 
-*(Previously, hasta el archivado de `vista-todos-y-estados-en-espera` el 2026-09-10: la última viñeta
-decía «no es ninguno de los **ocho** de la vista». `ESTADOS_EN_ESPERA` pasa de 8 a 9 con
-`Remisión creada` reclasificada a `interna`; `Notificado` no cambia de clase, sigue fuera de las dos
-listas.)*
+#### Scenario: la tabla tiene exactamente tres alarmas, en horas hábiles
+- GIVEN la tabla de alarmas de `packages/shared/src/sla.ts`
+- WHEN se inspeccionan sus entradas
+- THEN son exactamente `Notificado` 9, `Remisión creada` 27 y `Notificación cliente` 36, todas en horas hábiles
 
-*(Previously, hasta el archivado de `por-entregar-es-espera` el 2026-09-12: el escenario hablaba del
-reparto a **9** —la cifra aparecía en su título, en el GIVEN y en el THEN— y nombraba `Remisión creada`
-como la entrada que lo llevaba ahí. `ESTADOS_EN_ESPERA` pasa de 9 a 11 con `Por Entregar` y
-`Por Entregar / Sin facturar` reclasificados a `externa`; `Notificado` no cambia de clase, sigue fuera
-de las dos listas. Las aserciones de `sla.test.ts` no cambian: sólo su título y su comentario pasan de
-«nueve» a «once».)*
+#### Scenario: exactamente en el umbral no vence, ni siquiera fuera de jornada
+- GIVEN un ticket que entró en `Notificado` el lunes a las 8:00
+- WHEN se evalúa el lunes a las 17:00 (9 h hábiles exactas) y el lunes a las 23:00 (fuera de jornada, sin horas nuevas)
+- THEN en ninguno de los dos instantes está vencido
 
-#### Scenario: el estado con SLA sigue fuera de las dos clasificaciones tras el reparto a once
-- GIVEN que `ESTADOS_EN_ESPERA` pasa a tener once entradas (`Por Entregar` y
-  `Por Entregar / Sin facturar` incluidas)
-- WHEN se comprueba la clasificación de `Notificado`, el único estado con SLA declarado
-- THEN sigue siendo `'ninguna'` y no pertenece ni a las once de la vista ni a las cuatro de
-  `ESTADOS_SIN_SALIDA` — `packages/shared/src/sla.test.ts:51-55` en `bb58e83` sigue verde sin tocar sus aserciones
+#### Scenario: un milisegundo después del umbral, vence
+- GIVEN el mismo ticket, entrado en `Notificado` el lunes a las 8:00
+- WHEN se evalúa el martes a las 8:00:00.001
+- THEN está vencido (9 h hábiles y un milisegundo > 9)
+
+#### Scenario: el fin de semana no cuenta
+- GIVEN un ticket que entró en `Notificado` el viernes a las 16:00 (1 h hábil ese día)
+- WHEN se evalúa el lunes a las 16:00 (1 + 8 = 9 h hábiles) y el lunes a las 16:00:00.001
+- THEN en el primer instante no está vencido y en el segundo sí; el sábado y el domingo no sumaron nada
+
+#### Scenario: un festivo no cuenta
+- GIVEN un ticket que entró en `Notificado` el viernes a las 8:00 y un lunes festivo de Colombia siguiente
+- WHEN se evalúa el martes a las 8:00 (9 h hábiles: sólo las del viernes) y el martes a las 8:00:00.001
+- THEN en el primer instante no está vencido y en el segundo sí; sin el festivo habría vencido el lunes
+
+#### Scenario: un cierre de `public.calendario_cierres` no cuenta
+- GIVEN un ticket que entró en `Notificado` el lunes a las 8:00 y un cierre declarado el martes
+- WHEN se evalúa el miércoles a las 8:00 y el miércoles a las 8:00:00.001
+- THEN en el primer instante no está vencido (9 h hábiles exactas, las del lunes) y en el segundo sí
+
+#### Scenario: `Remisión creada` vence pasadas 27 horas hábiles exactas
+- GIVEN un ticket que entró en `Remisión creada` un lunes a las 8:00, sin festivos ni cierres esa semana
+- WHEN se evalúa el miércoles a las 17:00 (27 h hábiles exactas) y el jueves a las 8:00:00.001
+- THEN en el primer instante no está vencido y en el segundo sí
+
+#### Scenario: `Notificación cliente` vence pasadas 36 horas hábiles exactas
+- GIVEN un ticket que entró en `Notificación cliente` un lunes a las 8:00, sin festivos ni cierres esa semana
+- WHEN se evalúa el jueves a las 17:00 (36 h hábiles exactas) y el viernes a las 8:00:00.001
+- THEN en el primer instante no está vencido y en el segundo sí
+
+#### Scenario: reentrar reinicia el reloj, se mide desde la última entrada
+- GIVEN un ticket que entró en `Notificado` hace muchas horas hábiles, salió, y volvió a entrar hace 2 h hábiles
+- WHEN se evalúa
+- THEN no está vencido: el origen es la última entrada, no la primera
+
+#### Scenario: un ticket sin foto de entrada no se mide
+- GIVEN un ticket replicado de Zoho en `Notificado` sin ninguna fila en `ticket_transitions`
+- WHEN se evalúa la alarma
+- THEN no se reporta vencido, por muchas horas que hayan pasado desde `created_time`
+
+#### Scenario: la alarma no lee la clasificación de espera
+- GIVEN `Remisión creada` y `Notificación cliente`, que pertenecen a `ESTADOS_EN_ESPERA`, y con alarma declarada
+- WHEN se calcula el vencimiento de cada uno
+- THEN el resultado no cambia si se altera la clasificación de espera, y la aserción antigua «ningún estado con SLA está en `ESTADOS_EN_ESPERA`» (`packages/shared/src/sla.test.ts:51-55`) se reformula a propósito por «la alarma no lee `ESTADOS_EN_ESPERA`»
+
+#### Scenario: el estado `Notificado` del catálogo `Equipo nuevo` no se mide
+- GIVEN un ticket cuyo flujo aplicable es `Equipo nuevo`, en `Notificado`, con más de 9 h hábiles desde su entrada
+- WHEN se evalúa la alarma
+- THEN no está entre los vencidos (RQ-EN-06)
 
 ### RQ-TS-16 · A quién se escala — la segunda pieza de C11, cerrada en F1A-02
 
-El destinatario del escalado **SHALL** derivarse de la tabla de derivación por cargo que ya existe,
-**no** de una jerarquía aparte. Lo manda el maestro en la línea siguiente a pedir el escalado:
-«Encaja con la derivación de M1.9.2, que ya sabe a qué cargo corresponde cada etapa: el escalado
-puede apoyarse en esa misma tabla en lugar de mantener una jerarquía aparte» (`R08.1.md:1575`). Y esa
-tabla ya traía el concepto con las mismas palabras: `DERIVACION_POR_DEFECTO` abre con «escalar una
-revisión es **subirla al inmediato superior**» (`transitions.ts:268`).
+El destinatario de cada alarma **SHALL** ser un **cargo declarado como dato en la propia tabla de alarmas**
+(`packages/shared/src/sla.ts`), no derivado de las transiciones salientes del estado (supuesto S-8). Las
+tres alarmas de `RQ-TS-15` **SHALL** declarar el cargo `Coordinador Comercial`.
 
-`destinatarioDelEscalado(estado)` (`packages/shared/src/sla.ts`) **SHALL** devolver **el cargo que
-proponen las transiciones salientes de ese estado**, con estos tres casos y ninguno resuelto
-inventando:
+- Todo estado con alarma **SHALL** tener cargo declarado y no vacío; declarar una alarma sin cargo **MUST**
+  ponerse en rojo en una prueba antes de llegar a producción (sustituye al invariante «todo estado con SLA
+  tiene destinatario derivado», `packages/shared/src/sla.test.ts:188-191`).
+- El cargo de `Notificado` coincide hoy con el que proponen sus transiciones salientes
+  (`escalado_a_comercial`), pero esa coincidencia **MUST NOT** ser la fuente: `Notificado` → `Coordinador
+  Comercial` es un supuesto (S-3; ninguna decisión lo nombra) y se revierte cambiando un literal de la tabla.
+- `Remisión creada` → `Coordinador Comercial` lo fija `decision/escalado-remision-creada`
+  (`openspec/config.yaml:1429-1431`) y `decision/escalado-destinatario-doble`
+  (`openspec/config.yaml:1499-1500`); `Notificación cliente`, `decision/anexo-3-alerta`.
+- Toda alarma **SHALL** declarar además un **área de respaldo** (`areaRespaldo`, una de `AREAS`,
+  `packages/shared/src/transitions.ts:310`), hoy `Comercial` en las tres: es a quién va el aviso si el cargo
+  no encuentra a nadie (`derivacion-avisos` RQ-AV-15, S-4 segunda revisión).
+- La resolución del cargo a personas concretas la hace el servidor (`derivacion-avisos` RQ-AV-15).
+- Qué se hace con `destinatarioDelEscalado` y con el caso `Rev./Diagnostico` → Director Técnico, que no tiene
+  alarma, lo decide el diseño; esta spec **no** exige conservarlos ni retirarlos.
 
-| Caso | Devuelve | Por qué |
-|---|---|---|
-| Un cargo, por una o varias vías | `{ hay: true, cargo, via[] }` | Dos caminos al mismo puesto no son ambigüedad: el destinatario es uno, y se dicen las dos vías |
-| Ninguna saliente propone cargo | `{ hay: false, motivo: 'ningun_cargo' }` | La función **MUST NOT** mentir sobre los estados que no tienen a quién escalar |
-| Dos cargos distintos | `{ hay: false, motivo: 'ambiguo' }` | Elegir el primero sería inventar un orden entre dos puestos — la misma clase de regla que `DerivacionPorDefecto` evita al ser una unión (`transitions.ts:38-43`) |
+(Previously: «El destinatario del escalado SHALL derivarse de la tabla de derivación por cargo que ya existe,
+no de una jerarquía aparte», con los tres casos `{hay: true}` / `ningun_cargo` / `ambiguo`, «exactamente dos
+estados con destinatario» y `ticketsConSlaVencido` devolviéndolo junto al ticket. Sustituido porque `R08.1.md:1575`
+lo proponía como camino, no como mandato, y las decisiones de Gerencia nombran el cargo directamente.)
 
-- `primerDerivado` **MUST NOT** contar como destinatario de escalado, aunque esté en la misma tabla:
-  devuelve el trabajo a quien tomó el ticket, que es lo **contrario** de escalar. Es lo que hace
-  `Notificación cliente` con `aprobacion`, y sin la comprobación del `tipo` colaría como cargo.
-- Hoy **SHALL** haber exactamente **dos** estados con destinatario: `Rev./Diagnostico` → Director
-  Técnico (`escalado_a_revision`) y `Notificado` → Coordinador Comercial (`escalado_a_comercial`,
-  `transitions.ts:220`, `:271`). Y **ninguno ambiguo**: hay una prueba que lo vigila para cuando
-  F1B-06 añada dos grafos enteros.
-- Todo estado con SLA declarado **SHALL** tener destinatario. Si mañana se declara un SLA sobre un
-  estado sin escalado saliente, el reloj mediría un retraso que no se le puede comunicar a nadie, y
-  la prueba lo dice antes.
-- `ticketsConSlaVencido` (`apps/desk/server/db/sla.ts`) **SHALL** devolverlo junto al ticket y al
-  «desde»: un retraso sin destinatario no es accionable, y es justo lo que la R08 pedía arreglar.
+#### Scenario: toda alarma declara un cargo
+- GIVEN la tabla de alarmas
+- WHEN se recorren sus tres entradas
+- THEN cada una tiene el cargo `Coordinador Comercial`
+
+#### Scenario: una alarma sin cargo pone en rojo la prueba
+- GIVEN una entrada de alarma de prueba con el cargo vacío
+- WHEN corre la prueba de invariantes de la tabla
+- THEN falla, nombrando el estado
+
+#### Scenario: cambiar el cargo no depende del grafo
+- GIVEN la alarma de `Remisión creada` con otro cargo declarado en la tabla
+- WHEN se resuelve su destinatario
+- THEN se resuelve el cargo declarado, sin consultar `TRANSITIONS` ni `DERIVACION_POR_DEFECTO`
+
+### RQ-TS-19 · `Remisión creada` sólo alarma si el ticket no tiene orden de venta
+
+La alarma de `Remisión creada` **SHALL** disparar sólo cuando el ticket **no tiene orden de venta por ninguna
+vía**, conforme a `decision/escalado-remision-creada` (`openspec/config.yaml:1429-1431`) y al supuesto S-6:
+
+- ni `orden_venta` con valor,
+- ni `salesorder_id` con valor,
+- ni una asociación **vigente** (`liberada_at IS NULL`) en `public.ov_asociaciones` (`packages/zoho-sync/src/db/schema.sql:539`).
+
+El predicado **SHALL** usar la MISMA definición de tres vías que `ticketConOrdenVenta` (las tres puertas de la
+OV), que responde la pregunta inversa y no se puede llamar tal cual; una prueba **SHALL** enfrentar los dos. Un ticket con
+orden de venta vencido en `Remisión creada` **MUST NOT** generar aviso **ni** marca de alarma. La condición
+se evalúa en cada pasada: si más adelante pierde toda orden y sigue en el estado y vencido, alarma entonces.
+
+#### Scenario: sin orden de venta por ninguna vía y vencido, alarma
+- GIVEN un ticket en `Remisión creada`, con más de 27 h hábiles, sin `orden_venta`, sin `salesorder_id` y sin asociación vigente
+- WHEN corre la pasada
+- THEN dispara la alarma
+
+#### Scenario: con `orden_venta`, sin alarma
+- GIVEN el mismo ticket, con `orden_venta` informada y 28 h hábiles
+- WHEN corre la pasada
+- THEN no hay aviso ni marca
+
+#### Scenario: con `salesorder_id`, sin alarma
+- GIVEN el mismo ticket, sólo con `salesorder_id` informado (sin `orden_venta`) y 28 h hábiles
+- WHEN corre la pasada
+- THEN no hay aviso ni marca
+
+#### Scenario: con asociación vigente, sin alarma
+- GIVEN el mismo ticket, sólo con una fila vigente en `public.ov_asociaciones`, y 28 h hábiles
+- WHEN corre la pasada
+- THEN no hay aviso ni marca
+
+#### Scenario: una asociación liberada no cuenta como orden de venta
+- GIVEN el mismo ticket, sólo con una fila de `public.ov_asociaciones` con `liberada_at` informado, y 28 h hábiles
+- WHEN corre la pasada
+- THEN dispara la alarma
+
+#### Scenario: las otras dos alarmas no miran la orden de venta
+- GIVEN un ticket en `Notificado` vencido y con orden de venta
+- WHEN corre la pasada
+- THEN dispara la alarma: la condición de orden de venta es sólo de `Remisión creada`
 
 ---
 
@@ -854,6 +957,11 @@ código tiene lee una lista **distinta** de la que enseña el tablero, exactamen
 cuando todavía era hipótesis. Probado en `packages/shared/src/sla.test.ts` — si alguien «arreglara»
 el reloj haciéndolo leer `ESTADOS_EN_ESPERA`, se pone rojo. Ver `RQ-TS-15`.
 
+**Actualizado el 2026-09-29 por `alarmas-horas-habiles` (F1B-08).** Desde entonces hay TRES estados con alarma
+(RQ-TS-15; umbrales en `packages/shared/src/sla.ts:32-35`, alarmas en `sla.ts:137-141`): `Notificado` (9 h, `ninguna`, `estados.ts:91`), `Remisión creada` (27 h, `interna`, `estados.ts:86`) y `Notificación cliente` (36 h, `externa`, `estados.ts:65`). El reloj sigue sin leer
+`ESTADOS_EN_ESPERA` (escenario S11 de la propuesta, RQ-TS-15): dos de los tres estados con alarma están en la
+clasificación de espera, pero la alarma y la vista siguen siendo criterios independientes.
+
 `Pendiente` **SHALL** quedar como `sin_clasificar`, que es valor válido y no un hueco: obligar a
 clasificar forzaría a inventar la respuesta (`estados.ts:53-54`, `:101-105`). Lo decide Servicio
 Técnico.
@@ -1055,6 +1163,8 @@ F0-02 **MUST NOT** corregirlo: es código, y esta tanda no toca código.
 
 ### 3.10 · C11 — lo único que falta es el planificador · **destino: sesión de trabajo**
 
+> **CERRADO el 2026-09-29 por `alarmas-horas-habiles` (F1B-08).** El disparo existe —`pasadaAlarmas` encadenada en `apps/desk/server/index.ts:88` antes del ritmo de contratos y de la sincronización—; el destinatario ya no se deriva del grafo sino que lo declara `ALARMAS_SLA` (cargo y área de respaldo), con `destinatarioDelEscalado` como comprobación de coherencia (`sla.ts:26-29`). «No hay planificador» y la tabla de abajo quedan como registro de lo que era cierto al escribirse.
+
 **Cerrado en F1A-02: la regla Y el destinatario del escalado** (`RQ-TS-15`, `RQ-TS-16`). **Abierto:
 el disparo.** Es una cosa, no dos, y la lista se acortó al releer el maestro una línea más allá.
 
@@ -1095,8 +1205,8 @@ secretos: cerrado en `DEPLOY.md` §4.2.
 | La regla del reloj | **Hecha** (`RQ-TS-15`) | — |
 | El destinatario del escalado | **Hecho** (`RQ-TS-16`) | — |
 | El correo al cambiar de área | **Ya estaba**, y ahora documentado en `DEPLOY.md` §4.2 | — |
-| **El disparo** | **Falta.** Un planificador, un barrido al arrancar o una llamada desde el tablero | Diseño, no negocio |
-| Si el SLA se extiende a otros estados | Abierto (`R08.1.md:4011` lo pregunta) | **Gerencia** |
+| **El disparo** | **Hecho** en F1B-08 (`index.ts:88`) | — |
+| Si el SLA se extiende a otros estados | **Extendido** a tres estados en F1B-08 (`RQ-TS-15`) | — |
 | Qué hacer con los tickets replicados, que no tienen traza | Abierto (`RQ-TS-15`) | Diseño + Gerencia |
 
 ---
