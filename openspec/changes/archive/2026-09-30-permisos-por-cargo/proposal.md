@@ -145,12 +145,12 @@ Revertir los commits del lote. La columna es aditiva y sólo la lee este código
 
 ## Criterios de éxito
 
-- [ ] Comercial sin cargo → 403 en `liberacion_sin_factura` que nombra Director Comercial; con el cargo → 200; admin → 200.
-- [ ] Matriz HTTP: exactamente un caso difiere de la de área; `:77-81` sigue 60/42.
-- [ ] Director Comercial de área técnica → 403 fuera de su área (el cargo nunca amplía).
-- [ ] Cargo fuera de la lista → 422 en alta y edición; no admin → 403.
-- [ ] Mover el 403 de cargo delante del 409 de estado o detrás del 422 pone la suite en rojo.
-- [ ] `puedeCrearOVIGarantia` y `puedeFijarPrioridadTop5` probadas por cargo y admin.
+- [x] Comercial sin cargo → 403 en `liberacion_sin_factura` que nombra Director Comercial; con el cargo → 200; admin → 200.
+- [x] Matriz HTTP: exactamente un caso difiere de la de área; `:77-81` sigue 60/42.
+- [x] Director Comercial de área técnica → 403 fuera de su área (el cargo nunca amplía).
+- [x] Cargo fuera de la lista → 422 en alta y edición; no admin → 403.
+- [x] Mover el 403 de cargo delante del 409 de estado o detrás del 422 pone la suite en rojo.
+- [x] `puedeCrearOVIGarantia` y `puedeFijarPrioridadTop5` probadas por cargo y admin.
 
 ## Cierre esperado
 

@@ -1245,7 +1245,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 
 ## E-089 · 2026-09-29 · pregunta · **NUEVA**
 **Qué:** Qué estados ve cada área. El maestro lo da por decidido («Cada usuario ve solo los estados y transiciones de su rol», M1.9.1, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1693`) y el código decidió lo contrario, por escrito y a propósito: todo el personal con sesión ve todos los tickets (`docs/modelo-autorizacion.md:14`); sólo las transiciones se filtran por área.
-**De dónde viene:** hasta hoy la pregunta sólo estaba escrita en una spec (`openspec/specs/permissions/spec.md:253-265`), que ninguna sesión carga al arrancar. Se reunió con las demás en `docs/sdd/Preguntas_Gerencia_2026-09-29.md`, pregunta 2, con sus tres opciones y su consecuencia.
+**De dónde viene:** hasta hoy la pregunta sólo estaba escrita en una spec (`openspec/specs/permissions/spec.md:425-437`), que ninguna sesión carga al arrancar. Se reunió con las demás en `docs/sdd/Preguntas_Gerencia_2026-09-29.md`, pregunta 2, con sus tres opciones y su consecuencia.
 **Afecta a:** fila F1B-05 del §5 del plan (mitad de visibilidad) · capacidad `permissions`.
 **Estado:** nueva
 **Destino propuesto:** `openspec/config.yaml` → `decisiones_de_gerencia`; si la respuesta es segmentar, contenido de F1B-05. **Dueño propuesto:** Gerencia. **Qué desbloquea:** el cierre de F1B-05, que sin esta respuesta puede construir el resto de su contenido pero no cerrarse.
@@ -1274,7 +1274,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 ## E-092 · 2026-09-30 · hallazgo · **NUEVA**
 **Qué:** Conviven dos «cargo» en `public.users` y ninguna regla dice cuál manda para qué. `users.cargo` es texto libre, es el que firma la remisión y el que leen las alarmas (`apps/desk/server/db/avisos.ts:106-111`, que lo compara recortado y en minúsculas) y la derivación de personas (`apps/desk/src/lib/personas.ts:74-78`). `users.cargo_permiso` es una lista cerrada de siete y es el que restringe acciones (`packages/shared/src/cargos.ts`, `apps/desk/server/auth/users.ts:30`). Una persona puede ser «Coordinador Comercial» en uno y otro cargo (o ninguno) en el otro, sin aviso.
 **Qué decide:** si los dos deben unificarse (el de firma pasa a salir de la lista cerrada, o el de permiso se deriva del de firma), o si se quedan separados a propósito y basta con la ayuda escrita en la consola de usuarios.
-**De dónde viene:** riesgo H5 de `openspec/changes/permisos-por-cargo/design.md` §11 y tarea de persona P.3 de su `tasks.md`; molde H5 (dos implementaciones de la misma noción, ninguna rota por separado), que las cuatro reglas de mutación no cazan.
+**De dónde viene:** riesgo H5 de `openspec/changes/archive/2026-09-30-permisos-por-cargo/design.md` §11 y tarea de persona P.3 de su `tasks.md`; molde H5 (dos implementaciones de la misma noción, ninguna rota por separado), que las cuatro reglas de mutación no cazan.
 **Afecta a:** fila F1C-05 del §5 del plan · capacidades `permissions` y `derivacion-avisos`.
 **Estado:** nueva
 **Destino:** **SIN DESTINO ASIGNADO**, a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. **Dueño propuesto:** Gerencia. **Qué desbloquea:** que la derivación y las alarmas dejen de depender de un texto libre, y que un cambio del cargo de firma no pueda parecer un cambio de permiso.

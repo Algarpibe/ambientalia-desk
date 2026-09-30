@@ -40,9 +40,9 @@ Y aparte del año: **cuál es el tope de la nueva fecha de fin** (¿el 31/12 de 
 **Qué decide.** Si la visibilidad de tickets y estados se segmenta por área y, si se segmenta, qué estados ve cada una. Hay dos textos que dicen cosas opuestas:
 
 - El maestro lo da por decidido: «Cada usuario ve solo los estados y transiciones de su rol» (`R08.2.md:1693`, M1.9.1 `[DECIDIDO]`). La fila del plan lo recoge como «permisos y vistas por rol (área)» con gate «Ninguno» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:160`); su procedencia es el ítem 5 del §3.2 (`R08.2.md:2988-2989`), que está en revisión.
-- El código decidió lo contrario, por escrito y razonado: «Todo el staff con sesión puede ver y editar todos los tickets […] No hay propiedad por-ticket ni segmentación por área en la visibilidad. Es deliberado» (`docs/modelo-autorizacion.md:14`, desarrollado en `:29`), y el tablero lo repite (`apps/desk/src/lib/boardView.ts:33-36`). Las **transiciones** sí se filtran por área (`apps/desk/src/components/TransitionPanel.tsx:56-58`, con `packages/shared/src/permissions.ts:4`). La spec viva lo deja como «Punto a resolver por Gerencia, no por una tanda» (`openspec/specs/permissions/spec.md:253-265`).
+- El código decidió lo contrario, por escrito y razonado: «Todo el staff con sesión puede ver y editar todos los tickets […] No hay propiedad por-ticket ni segmentación por área en la visibilidad. Es deliberado» (`docs/modelo-autorizacion.md:14`, desarrollado en `:29`), y el tablero lo repite (`apps/desk/src/lib/boardView.ts:33-36`). Las **transiciones** sí se filtran por área (`apps/desk/src/components/TransitionPanel.tsx:56-58`, con `packages/shared/src/permissions.ts:4`). La spec viva lo deja como «Punto a resolver por Gerencia, no por una tanda» (`openspec/specs/permissions/spec.md:253-265` en `53dd0ed`).
 
-**A quién corresponde.** Gerencia (`openspec/specs/permissions/spec.md:265`).
+**A quién corresponde.** Gerencia (`openspec/specs/permissions/spec.md:265` en `53dd0ed`).
 
 **Qué desbloquea.** La mitad de visibilidad de F1B-05 (S42 en `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.2.md:125`). Sin respuesta, F1B-05 puede construir el resto de su contenido pero no cerrarse.
 
@@ -51,12 +51,12 @@ Y aparte del año: **cuál es el tope de la nueva fecha de fin** (¿el 31/12 de 
 | Opción | Consecuencia |
 |---|---|
 | **(a) Mantener lo construido:** todos ven todos los tickets; sólo se filtran las transiciones | F1B-05 no construye segmentación. La frase del maestro de `R08.2.md:1693` pasa a ser corrección para el expediente R08.x (el maestro no se edita desde el repositorio). Coherente con `decision/c10-permisos-cargo`: «La base sigue siendo el área, como hoy» (`openspec/config.yaml:1932`), que habla de ejecutar, no de ver |
-| **(b) Vista por área, sin restricción:** cada área abre por defecto un filtro con «sus» estados, pero puede ver el resto | Es un filtro de vista en el cliente, como el que ya existe (`openspec/specs/permissions/spec.md:267-271`), y no contradice `docs/modelo-autorizacion.md:14`. Exige la lista de estados por área, que hoy no existe en ningún fichero |
+| **(b) Vista por área, sin restricción:** cada área abre por defecto un filtro con «sus» estados, pero puede ver el resto | Es un filtro de vista en el cliente, como el que ya existe (`openspec/specs/permissions/spec.md:267-271` en `53dd0ed`), y no contradice `docs/modelo-autorizacion.md:14`. Exige la lista de estados por área, que hoy no existe en ningún fichero |
 | **(c) Segmentación real en el servidor** | Revierte `docs/modelo-autorizacion.md:14`. Exige la misma lista de estados por área y, además, una guarda en el servidor (regla invariable 13). Es la lectura literal de `R08.2.md:1693` |
 
 Para (b) y (c) hace falta **la matriz estado × área**. Una fuente posible, sin inventarla, es lo que Zoho Desk hace hoy: «Agentes, Roles y Perfiles, contra el modelo de permisos de Desk 2.0» está en la lista de lo que el inventario de configuración de Zoho **aún no ha revisado** (`docs/sdd/Inventario_ZohoDesk_Configuracion.md:107`).
 
-**Referencia.** Sin clave en `openspec/config.yaml` ni entrada en `docs/sdd/ENTRADA.md`: la pregunta sólo está escrita en `openspec/specs/permissions/spec.md:253-265`. Hasta que se registre, no consta en ningún fichero que la sesión cargue.
+**Referencia.** Sin clave en `openspec/config.yaml` ni entrada en `docs/sdd/ENTRADA.md`: la pregunta sólo está escrita en `openspec/specs/permissions/spec.md:253-265` en `53dd0ed`. Hasta que se registre, no consta en ningún fichero que la sesión cargue.
 
 ---
 
