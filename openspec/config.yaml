@@ -3280,3 +3280,45 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "M1.9.1 («FIFO inteligente por fecha promesa», R08.2.md:1711)"
     maestro_revision: "pendiente"
     tanda_que_abre: "F1B-07 — no abre fila nueva; entra en `prioridad-top5-cliente` (lote 2b)"
+
+  - clave: "decision/maestro-r08-3-publicada"
+    fecha: "2026-10-01"
+    pregunta: |
+      Si la R08.3 del documento maestro que apareció en disco el 30/09 es la revisión publicada —y
+      por tanto las correcciones del 30/09 van a la siguiente—, o si no lo es y el expediente abierto
+      como R08.4 es en realidad el §16 del expediente de la R08.3. Lo preguntaba el §0 de
+      `docs/sdd/R08.4_Expediente_de_cambios.md`, que declaraba su propia premisa como «medida pero no
+      confirmada».
+    respuesta_textual: |
+      «Sí, la R08.3 es la línea buena del maestro, pero está en construcción y revisión: todavía no es
+      la versión vigente. Mientras tanto se guarda en el control de versiones como borrador, con una
+      primera línea «R08.3 · BORRADOR en revisión, no vigente», para que no se pierda y deje de
+      aparecer como fichero sin registrar; no se saca copia citable ni se marca ninguna decisión como
+      incorporada. La versión vigente sigue siendo la R08.2. Cuando Gerencia entregue la R08.3
+      definitiva, se revisa, se versiona como vigente, se saca su copia citable y se marcan una a una
+      las decisiones que incorpora. El objetivo es tenerla antes del 17/10, para cumplir el plazo de
+      un mes fijado el 24/09.»
+    consecuencias: |
+      (1) LA VIGENTE SIGUE SIENDO LA R08.2, y con ella toda cita `:NNNN` al maestro: no hay que
+      reapuntar ninguna. La R08.3 es borrador y NO se cita.
+      (2) NINGUNA DECISIÓN SE MARCA COMO INCORPORADA: las 74 entradas con `maestro_revision:
+      "pendiente"` se quedan pendientes a propósito, y el plazo del 17/10 de
+      `decision/barrido-comprobaciones-nuevas` sigue vivo y sin holgura (las 16 más antiguas, del
+      17/09, vencen ese mismo día).
+      (3) VERSIONAR EL BORRADOR ES TAREA DE GERENCIA, no de esta supervisión: trackear
+      `docs/Manifesto/` es la tarea 9 de F0-05 y está asignada a Gerencia. Esta supervisión no ejecuta
+      `git add` por regla.
+      (4) EL EXPEDIENTE R08.4 CONSERVA SU NOMBRE: la respuesta confirma que la R08.3 es «la línea
+      buena», así que lo que venga después de ella es la siguiente revisión. El §0 del expediente deja
+      de ser premisa y pasa a ser decisión registrada.
+      (5) CONSECUENCIA QUE LA RESPUESTA NO PREVIÓ, Y SE SEÑALA: la respuesta se escribió a las 16:00
+      UTC de hoy; a las 20:43 UTC apareció en disco
+      `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.docx` **y su `.md`**, que
+      en su cabecera se declara «documento definitivo del plan de desarrollo» e incorpora las
+      decisiones del 17/09 al 01/10. Si esa R08.4 es la entrega definitiva que la respuesta anuncia,
+      llegó cuatro horas después de la respuesta y con otro número; si no lo es, hay dos borradores en
+      disco y ninguno trackeado. Devuelto como pregunta `maestro-cual-es-la-vigente`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/maestro-r08-3-publicada) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-111 · docs/sdd/R08.4_Expediente_de_cambios.md §0 (premisa resuelta) y §5 · docs/sdd/Parte_2026-10-01b.md"
+    maestro_pasaje: "ninguno — decide sobre el propio maestro, no sobre su contenido"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna — tarea de persona (Gerencia): versionar el borrador y entregar la definitiva antes del 17/10"

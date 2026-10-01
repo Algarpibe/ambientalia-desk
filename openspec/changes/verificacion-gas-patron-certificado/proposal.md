@@ -19,7 +19,7 @@ superficie revisable y ninguno es PARADA (se razona en «Supuestos»).
 | Fuente | Qué pide | Estado tras este cambio |
 |---|---|---|
 | Fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:142` | Salidas aprobada/rechazada de `Verificación` + «la GUARDA de obligatoriedad por familia» | Salidas: hechas (E1/E2). Guarda: este cambio |
-| Catálogo `R01.1.md:490` | F1A-03 · `transitions-equipo-nuevo` · P38 · talla S | Misma capacidad, modificada aquí |
+| Catálogo `R01.1.md:491` | F1A-03 · `transitions-equipo-nuevo` · P38 · talla S | Misma capacidad, modificada aquí |
 | `R01.2.md:60` | Gate P38 desbloqueado: «la Verificación es obligatoria por tipo de equipo» | Este cambio |
 | `openspec/changes/archive/2026-09-27-salidas-verificacion/archive-report.md:9-18` | Construyó E1+E2; dejó fuera E3+E4 (→ E-082) y E5 (→ E-083); por eso `cierra: no` | E3+E4+E5: este cambio |
 | `docs/sdd/ENTRADA.md:1312`, `:1316` | E-082 y E-083 cerradas por Gerencia el 28/09 | Base de este cambio |
@@ -215,5 +215,5 @@ devuelve `liberacion` a su comportamiento de hoy. La siembra no se revierte: dej
   del compuesto desde la hoja de vida (F1B-02).»
 - `toca_maestro: si`: `R08.2.md:1492` aún dice «La rama aún no está implementada», `:1520` mantiene abierto lo que ya
   está decidido y `:1548` da la regla «como observada, no como norma». El texto ya está entregado en
-  `docs/sdd/R08.4_Expediente_de_cambios.md:35-36` (1.1 y 1.2); el archive sólo añade, si falta, que la guarda queda
+  `docs/sdd/R08.4_Expediente_de_cambios.md:66-67` (1.1 y 1.2); el archive sólo añade, si falta, que la guarda queda
   construida. Sin tocar el `.docx`.

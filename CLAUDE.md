@@ -619,3 +619,19 @@ aprobación entre fases**. Por eso `session_preflight.execution_mode` es `auto` 
 `gentle-ai sdd-attempt` con sus intentos y su techo, la regla del ciclo 2 (una tanda SDD por árbol), el
 barrido de citas de la regla de mutación 4 al cerrar, y el contraste dato a dato de los informes de los
 subagentes antes de cada `settle`. Encadenar no es saltarse comprobaciones: es no pedir permiso entre ellas.
+
+---
+
+## Regla de dominio — la calibración se aprueba por los lineamientos del fabricante
+
+Gerencia, 2026-10-01, panel. **No uses la linealidad (R²) entre el candidato y el patrón como
+criterio de aprobación de una calibración.** Aprueba por los lineamientos del fabricante de cada
+marca y modelo, que en Desk 2.0 **son** los valores esperados y las tolerancias que lleva cada ítem
+de calibración en el catálogo del equipo (campos de valor con rango); el técnico no aprueba fuera de
+ellos. La R² se puede **registrar como dato informativo** si el equipo la calcula, pero no decide.
+
+*Por qué está aquí y no sólo en el maestro:* Gerencia la escribió en el panel marcada como **regla**,
+y el aterrizaje de una regla es este fichero, que se carga entero en cada sesión. Su contenido es de
+negocio, no de método: queda también registrada en `docs/sdd/ENTRADA.md` → **E-112** y anotada para el
+expediente del maestro (M2.7, punto abierto nº 46). Si alguna sesión futura la considera fuera de
+sitio aquí, es Gerencia quien lo decide, no quien edite el fichero.
