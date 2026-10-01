@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `e3d5e90` · **Fecha del commit:** 2026-10-01
+**Commit medido:** `e12da6d` · **Fecha del commit:** 2026-10-01
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -63,7 +63,7 @@ Hallazgos (informativos, no bloquean):
   - `docs/sdd/Parte_2026-09-22.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-09-24.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-09-28.md` — en disco y fuera del índice
-  - `docs/sdd/R08.4_Expediente_de_cambios.md` — en disco y fuera del índice
+  - `docs/sdd/Parte_2026-10-01.md` — en disco y fuera del índice
 
 ---
 
