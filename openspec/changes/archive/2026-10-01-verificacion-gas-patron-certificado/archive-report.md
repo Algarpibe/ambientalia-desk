@@ -64,9 +64,9 @@ Este archivo no toca `openspec/config.yaml`: `gases-patron` entró en `capabilit
 `git diff --shortstat --no-renames` del commit de archivo:
 
 - **Parte con carga de revisión** (fusión de las tres specs + este informe): 650 de specs (641 / 9) más este
-  informe (~150) más las tres anclas de las notas (3 / 3): unas 806. Por debajo de 850.
-- **Total que ve el registro:** unas 4.850 (≈ 2.830 inserciones / 2.020 borrados en el commit de archivo, más
-  este informe corregido), por debajo del techo de 6.000.
+  informe (112) y las tres anclas de las notas (3 / 3): **762** (753 / 9). Por debajo de 850.
+- **Total que ve el registro:** **4.784** (2.764 inserciones / 2.020 borrados, `28167e8..` los dos commits de archivo,
+  medido con `git diff --shortstat --no-renames`), por debajo del techo de 6.000.
   El `git mv` de la carpeta cuenta dos veces (regla del ciclo 2, desvío 3) y no tiene carga de revisión.
 
 *Nota de procedencia:* el primer commit de archivo que preparó el agente de fase incluía, por error, todos los
