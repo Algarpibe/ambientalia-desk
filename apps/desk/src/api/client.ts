@@ -702,3 +702,56 @@ export function informeDeContrato(id: number): Promise<InformeContrato> {
 export function contratoDelTicket(ticketId: string): Promise<TicketDeContrato> {
   return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/contrato`, { credentials: 'include' }).then((r) => json<TicketDeContrato>(r))
 }
+
+/*
+ * Prioridad del cliente, Top 5 y ajuste por ticket (prioridad-top5-cliente, F1B-07; `tickets-core` RQ-TC-27, RQ-TC-29).
+ * El cliente sólo pide y enseña: el permiso (403), el estado (409) y el contenido (422) los decide el servidor
+ * (`routes/prioridad.ts`) y se enseñan con `mensajeDelServidor`. «Mis tickets» llega ordenado del servidor.
+ */
+type PrioridadAsignable = import('@ambientalia/shared').PrioridadAsignable
+
+export interface PrioridadDelCliente { clientId: string; top5: boolean; prioridad: string | null; actualizadoPor: string | null; actualizadoAt: string | null }
+export interface ClienteTop5 extends PrioridadDelCliente { name: string }
+export interface AjusteDePrioridad { de: string | null; a: string; motivo: string; ajustadoPor: string; ajustadoAt: string }
+export interface PrioridadDelTicket { ticketId: string; prioridad: string | null; clientId: string | null; top5: boolean; prioridadTop5: string | null; ajustes: AjusteDePrioridad[] }
+
+export function listarTop5(): Promise<ClienteTop5[]> {
+  return fetch('/api/top5', { credentials: 'include' }).then((r) => json<ClienteTop5[]>(r))
+}
+
+export function prioridadDelCliente(clientId: string): Promise<PrioridadDelCliente> {
+  return fetch(`/api/clients/${encodeURIComponent(clientId)}/prioridad`, { credentials: 'include' }).then((r) => json<PrioridadDelCliente>(r))
+}
+
+export function fijarPrioridadDelCliente(clientId: string, cuerpo: { top5: boolean; prioridad: PrioridadAsignable | null }): Promise<PrioridadDelCliente> {
+  return fetch(`/api/clients/${encodeURIComponent(clientId)}/prioridad`, {
+    method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo),
+  }).then((r) => json<PrioridadDelCliente>(r))
+}
+
+export function prioridadDelTicket(ticketId: string): Promise<PrioridadDelTicket> {
+  return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/prioridad`, { credentials: 'include' }).then((r) => json<PrioridadDelTicket>(r))
+}
+
+export function ajustarPrioridadDelTicket(ticketId: string, cuerpo: { prioridad: string; motivo: string }): Promise<PrioridadDelTicket> {
+  return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/prioridad`, {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo),
+  }).then((r) => json<PrioridadDelTicket>(r))
+}
+
+/** «Mis tickets»: los abiertos derivados al usuario, en el orden de la cola del taller que fija el servidor. */
+export function fetchMisTickets(): Promise<Ticket[]> {
+  return fetch('/api/mis-tickets', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
+}
+
+/** Todos los errores del servidor (`errors[]` del 422); si no vienen, el mensaje único. No decide nada: sólo los separa para enseñarlos. */
+export function erroresDelServidor(e: unknown): string[] {
+  const m = /^HTTP \d+: ([\s\S]*)$/.exec(e instanceof Error ? e.message : String(e))
+  if (m) {
+    try {
+      const cuerpo = JSON.parse(m[1]) as { errors?: unknown }
+      if (Array.isArray(cuerpo.errors) && cuerpo.errors.length > 0 && cuerpo.errors.every((x) => typeof x === 'string')) return cuerpo.errors as string[]
+    } catch { /* cae al mensaje único */ }
+  }
+  return [mensajeDelServidor(e)]
+}

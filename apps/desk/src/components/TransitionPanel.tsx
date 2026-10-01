@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicion } from '@ambientalia/shared'
+import { puedeEjecutarTransicion, puedeFijarPrioridadTop5 } from '@ambientalia/shared'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -157,7 +157,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
               <h3 className="text-[15px] font-bold text-slate-800">{active.name}</h3>
               <p className="text-[12px] text-slate-500">Estado destino: <span className="font-bold">{active.to}</span> · Área: {active.area}</p>
             </div>
-            {active.fields.map((f) => (
+            {active.fields.filter((f) => f.target !== 'priority' || (!!user && puedeFijarPrioridadTop5(user))).map((f) => (
               <Field
                 key={f.key}
                 f={f}
