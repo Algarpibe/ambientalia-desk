@@ -134,3 +134,12 @@ describe('viewLabel / FUNCTIONAL_BY_LABEL', () => {
     expect(FUNCTIONAL_BY_LABEL['Mis Tickets']).toBe('mios')
   })
 })
+
+/** La vista NO reordena (VT09-10): `mios` conserva el orden de entrada, que es el que impone el servidor. */
+describe('applyBoardView · mis tickets conserva el orden de entrada', () => {
+  const d = { id: 'yo', nombre: 'Yo', cargo: null, initials: 'YO' }
+  it('devuelve los del usuario en el orden recibido, sin reordenar por fecha ni por id', () => {
+    const lista = [T({ id: 'z', derivado: d, createdAt: '2026-01-01T00:00:00Z' }), T({ id: 'a', derivado: d, createdAt: '2026-09-01T00:00:00Z' }), T({ id: 'otro', derivado: null }), T({ id: 'm', derivado: d, createdAt: '2026-05-01T00:00:00Z' })]
+    expect(applyBoardView(lista, 'mios', now, 'yo').map((t) => t.id)).toEqual(['z', 'a', 'm'])
+  })
+})

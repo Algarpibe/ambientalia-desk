@@ -84,3 +84,31 @@ export function cambiaPrioridadSinPermiso(t: Pick<Transition, 'fields'>, valores
   if (pedida === undefined || pedida === null || pedida === '') return false
   return pedida !== actual && !puedeFijarPrioridadTop5(s)
 }
+
+/**
+ * La cola del taller (F1B-07, lote 2b; `vistas-tablero` RQ-VT-09, `decision/e099-orden-cola-taller`).
+ *
+ * UNA sola función de orden: la consumen `GET /api/tickets` y `GET /api/mis-tickets` (el cliente no ordena, regla 13).
+ * `habilitadoAt` es la ÚLTIMA habilitación del ticket (S-10a); sin ella cuenta `createdAt`, que es `created_time` de la
+ * base tal como lo expone `Ticket` (S-10b). Sin ninguna de las dos fechas válidas, el ticket va al final de su rango.
+ */
+export function instanteDeCola(t: { habilitadoAt?: string | null; createdAt?: string | null }): number | null {
+  const ms = Date.parse(t.habilitadoAt ?? t.createdAt ?? '')
+  return Number.isNaN(ms) ? null : ms
+}
+
+/** Copia ordenada, estable, sin mutar la entrada: rango de prioridad descendente; empate → instante ascendente. */
+export function ordenarColaTaller<T extends { priority?: string | null; habilitadoAt?: string | null; createdAt?: string | null }>(xs: readonly T[]): T[] {
+  return [...xs].sort((a, b) => {
+    const r = rangoDe(b.priority ?? null) - rangoDe(a.priority ?? null)
+    if (r !== 0) return r
+    const ia = instanteDeCola(a), ib = instanteDeCola(b)
+    if (ia === null || ib === null) return ia === ib ? 0 : ia === null ? 1 : -1
+    return ia - ib
+  })
+}
+
+/** «Mis tickets»: abiertos y derivados al usuario. El MISMO predicado que usa el filtro de la vista (H5). */
+export function esDeMisTickets(t: { statusType?: string | null; derivado?: { id: string } | null }, userId: string): boolean {
+  return t.statusType !== 'Closed' && t.derivado?.id === userId
+}

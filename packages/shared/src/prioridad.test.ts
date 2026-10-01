@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   PRIORIDADES_ASIGNABLES, esPrioridadAsignable, prioridadMasAlta, prioridadTop5, prioridadClienteDelCuerpo,
-  ajusteDelCuerpo, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA,
+  ajusteDelCuerpo, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, ordenarColaTaller, esDeMisTickets,
 } from './prioridad'
 import { TRANSITIONS, transitionById } from './transitions'
 
@@ -168,5 +168,57 @@ describe('cambiaPrioridadSinPermiso · la guarda del técnico (RQ-TS-21)', () =>
     expect(cambiaPrioridadSinPermiso(ESCALADO, { priority: 'High' }, 'Low', { areas: [], isAdmin: true })).toBe(false)
     expect(cambiaPrioridadSinPermiso(ESCALADO, { priority: 'High' }, 'Low', { areas: ['Servicio Técnico', 'Comercial'], isAdmin: false, cargoPermiso: 'Director Comercial' })).toBe(false)
     expect(cambiaPrioridadSinPermiso(ESCALADO, { priority: 'High' }, 'Low', { areas: ['Servicio Técnico'], isAdmin: false, cargoPermiso: 'Director Comercial' })).toBe(true)
+  })
+})
+
+describe('ordenarColaTaller · la cola del taller (RQ-VT-09, E-099)', () => {
+  const t = (id: string, priority: string | null, habilitadoAt?: string | null, createdAt?: string | null) => ({ id, priority, habilitadoAt, createdAt })
+  const ids = (xs: Array<{ id: string }>) => xs.map((x) => x.id)
+
+  it('VT09-1 · las cinco prioridades en orden: Urgent, High, Medium, Low, null', () => {
+    const r = ordenarColaTaller([t('low', 'Low'), t('nul', null), t('urg', 'Urgent'), t('med', 'Medium'), t('hig', 'High')])
+    expect(ids(r)).toEqual(['urg', 'hig', 'med', 'low', 'nul'])
+  })
+  it('VT09-2 · en la misma prioridad manda la habilitación ascendente aunque createdAt diga lo contrario', () => {
+    const r = ordenarColaTaller([
+      t('viejoCreadoPeroHabilitadoDespues', 'High', '2026-09-20T10:00:00Z', '2026-08-01T00:00:00Z'),
+      t('nuevoCreadoPeroHabilitadoAntes', 'High', '2026-09-01T10:00:00Z', '2026-09-30T00:00:00Z'),
+    ])
+    expect(ids(r)).toEqual(['nuevoCreadoPeroHabilitadoAntes', 'viejoCreadoPeroHabilitadoDespues'])
+  })
+  it('VT09-4 · sin habilitadoAt cuenta createdAt (S-10b)', () => {
+    const r = ordenarColaTaller([t('b', 'Medium', null, '2026-09-10T00:00:00Z'), t('a', 'Medium', null, '2026-09-01T00:00:00Z')])
+    expect(ids(r)).toEqual(['a', 'b'])
+  })
+  it('sin ninguna de las dos fechas, al final de su rango y antes del rango siguiente', () => {
+    const r = ordenarColaTaller([t('sinFecha', 'High'), t('baja', 'Low', '2026-01-01T00:00:00Z'), t('conFecha', 'High', '2026-09-01T00:00:00Z'), t('basura', 'High', 'no es fecha')])
+    expect(ids(r)).toEqual(['conFecha', 'sinFecha', 'basura', 'baja'])
+  })
+  it('VT09-5 · Low habilitado antes que High: High va delante (la urgencia manda)', () => {
+    const r = ordenarColaTaller([t('low', 'Low', '2026-01-01T00:00:00Z'), t('high', 'High', '2026-09-01T00:00:00Z')])
+    expect(ids(r)).toEqual(['high', 'low'])
+  })
+  it('VT09-6 · «Alta», vacío y null van al final', () => {
+    const r = ordenarColaTaller([t('alta', 'Alta'), t('vacia', ''), t('nul', null), t('low', 'Low')])
+    expect(ids(r)).toEqual(['low', 'alta', 'vacia', 'nul'])
+  })
+  it('estable con instantes iguales y no muta la entrada', () => {
+    const entrada = [t('x', 'High', '2026-09-01T00:00:00Z'), t('y', 'High', '2026-09-01T00:00:00Z'), t('z', 'Urgent')]
+    const copia = [...entrada]
+    const r = ordenarColaTaller(entrada)
+    expect(ids(r)).toEqual(['z', 'x', 'y'])
+    expect(entrada).toEqual(copia)
+    expect(r).not.toBe(entrada)
+  })
+})
+
+describe('esDeMisTickets · el predicado de «Mis tickets» (RQ-VT-09)', () => {
+  const yo = { id: 'u1' }
+  it('abierto derivado al usuario → true', () => { expect(esDeMisTickets({ statusType: 'Open', derivado: yo }, 'u1')).toBe(true) })
+  it('cerrado → false', () => { expect(esDeMisTickets({ statusType: 'Closed', derivado: yo }, 'u1')).toBe(false) })
+  it('derivado a otro → false', () => { expect(esDeMisTickets({ statusType: 'Open', derivado: { id: 'u2' } }, 'u1')).toBe(false) })
+  it('derivado null o ausente → false', () => {
+    expect(esDeMisTickets({ statusType: 'Open', derivado: null }, 'u1')).toBe(false)
+    expect(esDeMisTickets({ statusType: 'Open' }, 'u1')).toBe(false)
   })
 })

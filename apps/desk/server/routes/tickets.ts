@@ -6,7 +6,7 @@ import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, 
 import { rowToTicket, rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getHistorialTicket } from '../db/historial'
 import { instanteUltimaTransicion } from '../db/fechasTicket'
-import { primerDerivado } from '../db/primerDerivado'; import { ticketsEsperandoAprobacionCliente } from '../db/alarmasAvisadas'
+import { primerDerivado } from '../db/primerDerivado'; import { colaDelTaller } from '../db/colaTaller'
 import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
@@ -112,7 +112,7 @@ export function registerTicketRoutes(
     }
     // scope=all (compat, sin uso en el front) o default (active)
     const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id) : await getActiveTickets(db, req.user!.id)
-    const marcados = await ticketsEsperandoAprobacionCliente(db); res.json(list.map(({ row, refs }) => ({ ...rowToTicket(row, refs), esperandoAprobacionCliente: marcados.has(String(row.id)) })))
+    res.json(await colaDelTaller(db, list))
   }))
 
   app.post('/api/tickets/:id/read', asyncHandler(async (req, res) => {

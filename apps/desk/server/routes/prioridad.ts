@@ -1,10 +1,12 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
-import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, prioridadTop5 } from '@ambientalia/shared'
+import { getActiveTickets } from '@ambientalia/zoho-sync/db/repo'
+import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, prioridadTop5, esDeMisTickets } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { filaPrioridadCliente, listarTop5, fijarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
+import { colaDelTaller } from '../db/colaTaller'
 
 /**
  * API de la prioridad del cliente y el Top 5 (prioridad-top5-cliente, F1B-07; `tickets-core` RQ-TC-27).
@@ -72,5 +74,14 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
     if (!cuerpo.ok) { res.status(422).json({ error: cuerpo.errors[0], errors: cuerpo.errors }); return }
     await ajustarPrioridad(db, { ticketId: t.id, de: t.prioridad, prioridad: cuerpo.prioridad, motivo: cuerpo.motivo, por: user.name })
     res.json(await resumenDelTicket({ ...t, prioridad: cuerpo.prioridad }))
+  }))
+
+  /**
+   * «Mis tickets» (RQ-VT-09, E-099): los abiertos derivados al usuario, en el orden de la cola del taller. Lo ordena
+   * `colaDelTaller` (la MISMA función que el tablero) y `filter` conserva ese orden; el cliente no reordena (regla 13).
+   */
+  app.get('/api/mis-tickets', requireAuth(db), asyncHandler(async (req, res) => {
+    const yo = req.user!.id
+    res.json((await colaDelTaller(db, await getActiveTickets(db, yo))).filter((t) => esDeMisTickets(t, yo)))
   }))
 }

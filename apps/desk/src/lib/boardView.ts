@@ -1,4 +1,4 @@
-import type { Ticket } from '@ambientalia/shared'
+import { esDeMisTickets, type Ticket } from '@ambientalia/shared'
 import { esEstadoEnEspera } from './enEspera'
 
 export interface BoardViewDef { key: string; label: string }
@@ -42,7 +42,7 @@ export function applyBoardView(tickets: Ticket[], key: VistaKey, now: Date, user
     // Sin usuario devuelve VACÍO, no todo: enseñar el tablero entero bajo el rótulo «Mis Tickets»
     // haría creer que todo eso es suyo, que es la peor de las dos mentiras posibles.
     case 'mios': return userId
-      ? tickets.filter((t) => t.statusType !== 'Closed' && t.derivado?.id === userId)
+      ? tickets.filter((t) => esDeMisTickets(t, userId))
       : []
     case 'abiertos': return tickets.filter((t) => t.statusType !== 'Closed' && !enEspera(t))
     case 'espera': return tickets.filter((t) => t.statusType !== 'Closed' && enEspera(t))
