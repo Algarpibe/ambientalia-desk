@@ -3322,3 +3322,187 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno — decide sobre el propio maestro, no sobre su contenido"
     maestro_revision: "pendiente"
     tanda_que_abre: "ninguna — tarea de persona (Gerencia): versionar el borrador y entregar la definitiva antes del 17/10"
+    precisada_por: "decision/maestro-cual-es-la-vigente (01/10/2026, noche) y corrección del panel `maestro-vigente-r08-4` (E-136): lo de esta entrada sigue valiendo para la R08.3 (borrador, no vigente); la vigente deja de ser la R08.2 y pasa a ser la R08.4. Las consecuencias (1) y (2) de arriba quedan SUPERADAS en lo que dicen de la R08.2; se conservan como histórico."
+
+  # ── Corte extraordinario del 01/10/2026 (noche) — 8 respuestas y 1 corrección del panel ──
+  - clave: "decision/avance-cuenta-lo-planificado"
+    fecha: "2026-10-01"
+    pregunta: |
+      El avance del plan subió el 01/10 porque se commiteó el PLAN de una tanda (F1A-03,
+      `verificacion-gas-patron-certificado`, `cierra: si`, sin archivar), no porque se construyera.
+      ¿Qué cuenta como tanda hecha?
+    respuesta_textual: |
+      «[Gerencia, 01/10/2026] El avance del plan cuenta una tanda solo cuando el cambio que la cierra está construido, verificado (verify PASS), archivado y declarado como cierre de su fila. Un plan commiteado, una propuesta o un código en curso no suman al avance. Lo que está en marcha se publica aparte como cifra de «en curso». La subida del 01/10 por el plan de F1A-03 (guarda del gas patrón) se corrige en el próximo recuento, y F1A-03 cuenta cuando su código quede verificado y archivado. Si el barrido de reconciliación cuenta cabeceras de cambios no archivados, se ajusta para que solo cuente los archivados con cierre declarado.»
+    consecuencias: |
+      (1) ES UNA REGLA DE MÉTODO y aterriza en `CLAUDE.md` («Regla de avance — sólo cuenta lo archivado»).
+      (2) EL BARRIDO TIENE QUE CAMBIAR: la comprobación 2 lista `openspec/changes/` entero
+      (`apps/desk/server/reconciliacion/comprobaciones.ts:49` y `:124`, sin filtrar `archive/`). Es código
+      y no tiene fila propia: lo hace la próxima sesión de construcción que toque el barrido.
+      (3) CONSECUENCIA QUE LA RESPUESTA NO PREVIÓ: F0-01, F0-02 y F0-03 declaran `cierra: si` en
+      `openspec/changes/F0-01/`, `F0-02/` y `F0-03/`, FUERA de `archive/`. Con la regla aplicada a la
+      letra, el numerador derivable bajaría de 12 a 9. Fase 0 está cerrada; lo razonable es archivarlas
+      o declararlas excepción, y eso lo decide quien ajuste el barrido. Se señala, no se fuerza.
+      (4) F1A-03 se publica como «en curso», no en el numerador.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/avance-cuenta-lo-planificado) · CLAUDE.md, sección «Regla de avance — sólo cuenta lo archivado» · docs/sdd/ENTRADA.md → E-137 · docs/sdd/Parte_2026-10-01c.md"
+    maestro_pasaje: "ninguno — regla de método del plan, no del producto"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — ajuste de la comprobación 2 de `npm run reconcile`, sin fila"
+
+  - clave: "decision/maestro-cual-es-la-vigente"
+    fecha: "2026-10-01"
+    pregunta: |
+      Hay una R08.3 declarada borrador por Gerencia a las 16:00 y una R08.4 en disco (20:43) que se
+      declara «documento definitivo». ¿Cuál es el maestro vigente?
+    respuesta_textual: |
+      «La versión vigente es la R08.4. Las dos cosas son ciertas porque hablan de documentos distintos:
+
+      R08.3: es el borrador de revisión que GN hizo sobre la R08.2. Lo dicho a las cuatro sigue valiendo para ella: no es vigente, se guarda como borrador y no se marca ninguna decisión como incorporada.
+      R08.4: la generé después, cuando me pediste que, partiendo de esa R08.3, preparara la versión definitiva del plan de desarrollo con todo lo decidido. Por eso dice «documento definitivo» y ya incluye las 24 notas de hoy. Sustituye a la R08.2 como vigente.»
+    consecuencias: |
+      (1) EL MAESTRO VIGENTE ES LA R08.4 desde el 01/10/2026. Precisa —no anula— `decision/maestro-r08-3-publicada`,
+      que sigue valiendo para la R08.3. Lo confirma la corrección del panel `maestro-vigente-r08-4` (E-136).
+      (2) VERSIONARLA NO LO HACE ESTA SUPERVISIÓN: por encargo de Gerencia lo hace la sesión de
+      construcción —`git add` de `docs/Manifesto/…R08.4.docx` y `.md`, R08.3 como borrador, la tabla de
+      «El documento maestro citable» de `CLAUDE.md` y el marcado `maestro_revision: "R08.4"`—.
+      (3) LAS CITAS `R08.2.md:NNNN` NO SE RENUMERAN: es el caso B de la regla de mutación 4. Las nuevas
+      citarán la R08.4.md cuando esté versionada.
+      (4) CONSECUENCIA MEDIDA QUE LA RESPUESTA NO NOMBRA: el Anexo D de la R08.4 tiene 50 puntos ABIERTOS
+      frente a 27 del vigente anterior (Parte_2026-10-01b.md §9). Pasan a ser los puntos abiertos oficiales.
+      (5) EL EXPEDIENTE `R08.4_Expediente_de_cambios.md` queda absorbido por la R08.4; lo que llegue
+      después va a un expediente R08.5.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/maestro-cual-es-la-vigente y precisión en decision/maestro-r08-3-publicada) · CLAUDE.md, tabla «El documento maestro citable» y sección «Corrección de Gerencia — el maestro vigente es la R08.4» · docs/sdd/ENTRADA.md → E-136 y E-138 · docs/sdd/R08.4_Expediente_de_cambios.md §8"
+    maestro_pasaje: "el propio maestro (revisión vigente)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "ninguna — versionar el documento y marcar decisiones, encargado a la sesión de construcción"
+
+  - clave: "decision/cola-del-taller-los-tres-cabos"
+    fecha: "2026-10-01"
+    pregunta: |
+      Cuatro cabos de la cola del taller que `decision/e099-orden-cola-taller` no cerró y F1B-07 resolvió
+      como supuestos: tickets sin habilitación (S-10b), qué habilitación cuenta (S-10a), propagar Top 5 a
+      los tickets abiertos (E-109) y la lista de «Remisión creada» para Comercial (E-108).
+    respuesta_textual: |
+      «(1) Se confirma. Los tickets que nunca pasaron por «Habilitar Servicio» (traídos de Zoho o sin espera de orden de venta) se ordenan por su fecha de creación dentro de su prioridad, y los que no tienen ninguna fecha van al final. No se mandan siempre detrás de los habilitados, para no castigar a los tickets migrados el día del corte.
+      (2) Se confirma. Cuenta cualquier «Habilitar Servicio», venga del estado que venga, y si hubo varias, la última.
+      (3) Se cambia. Al marcar un cliente como Top 5, sus tickets abiertos toman la nueva prioridad, cada uno con su traza; al desmarcarlo, vuelven a la prioridad calculada. En ningún caso se tocan los tickets con un ajuste manual con motivo, que mantienen el suyo.
+      (4) Se construye. La lista de equipos en «Remisión creada» para Comercial se ordena por el tiempo transcurrido desde que el ticket entró en ese estado, que es el mismo reloj de la alarma de 3 días hábiles. Va antes del corte del 14/12.»
+    consecuencias: |
+      (1) y (2) CONVIERTEN S-10b y S-10a EN DECISIÓN: lo construido en `prioridad-top5-cliente`
+      (`packages/shared/src/prioridad.ts:95-98`, `apps/desk/server/db/colaTaller.ts:14`) queda como está.
+      (3) CAMBIA LO CONSTRUIDO: hoy `fijarPrioridadCliente` (`apps/desk/server/db/prioridadCliente.ts`) no
+      toca `tickets.priority`, y las pruebas TC24-14/TC24-15 fijan lo contrario. Propagar al marcar y
+      revertir al desmarcar, con traza por ticket en `prioridad_ajustes`, respetando los ajustes manuales.
+      (4) TRABAJO NUEVO ANTES DEL 14/12 en `vistas-tablero`. F1B-07 está archivada con `cierra: no`: (3) y (4)
+      son contenido de F1B-07 y la siguen dejando abierta. No se reparte en otra fila sin medir
+      (`decision/trabajo-del-01-10-antes-del-corte-sin-fila`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/cola-del-taller-los-tres-cabos) · docs/sdd/ENTRADA.md → E-139, que cierra E-108, E-109 y E-110"
+    maestro_pasaje: "M1.9.1 («FIFO inteligente por fecha promesa»)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-07 (archivada `cierra: no`) — (3) y (4) son su contenido pendiente"
+
+  - clave: "decision/tres-transiciones-y-la-cifra-anclada"
+    fecha: "2026-10-01"
+    pregunta: |
+      E-103 y E-106 retiran tres transiciones y mueven la cifra anclada `transiciones` de 34 (la única
+      que cuadra) a 31. ¿Cuándo y cómo se hace el cambio en el programa y en la cifra?
+    respuesta_textual: |
+      «A la vez, en una sola entrega. Se registra la R08.4 como maestro vigente (ya dice 31 caminos y 35 pasos). En el mismo cambio se quitan del programa «Marcar como pendiente» y las dos «Servicio externo» hacia Por Facturar, «Diagnóstico complementario» pasa a salir de En Proceso, se regenera el mapa y la cifra vigilada pasa de 34 a 31 caminos (y de 38 a 35 pasos). Los tickets de servicio técnico que estén en «Pendiente» pasan a En Proceso, y el historial se conserva sin reescribir. Va antes del corte del 14/12.»
+    consecuencias: |
+      (1) UN SOLO CAMBIO, antes del 14/12: `packages/shared/src/transitions.ts` (−3, y «Diagnóstico
+      complementario» con origen En Proceso), mapa del blueprint regenerado y `cifras_ancladas` →
+      `transiciones` 34 → 31 y pasos 38 → 35 EN EL MISMO COMMIT. Esta supervisión NO toca `cifras_ancladas`
+      ahora: hacerlo antes que el código abriría un desvío de la cifra que hoy cuadra.
+      (2) MEDIDO: la R08.4 ya dice 31 y 35 (`docs/Manifesto/…R08.4.md:5167`, «31 transiciones y 35 pasos
+      del mapa»). El código sigue en 34 base / 46 en el fichero (`grep -c "{ id: '" packages/shared/src/transitions.ts`).
+      (3) DATOS DE PRODUCCIÓN: los tickets de servicio técnico en «Pendiente» pasan a En Proceso, sin
+      reescribir el historial. Es una migración que toca producción; la ejecuta quien construya el cambio.
+      (4) NO TIENE FILA en el §5: cae bajo `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (fila propia
+      con talla en la R01.4).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/tres-transiciones-y-la-cifra-anclada) · docs/sdd/ENTRADA.md → E-140, que cierra E-103, E-106, E-116, E-118 y E-119 · docs/sdd/R08.4_Expediente_de_cambios.md §8"
+    maestro_pasaje: "M1.3 y M1.3.7 (R08.4.md:5167)"
+    maestro_revision: "R08.4 (ya lo recoge; la marca la confirma la sesión de construcción al versionar)"
+    tanda_que_abre: "fila nueva con talla en la R01.4 del plan — antes del 14/12"
+
+  - clave: "decision/salida-emergencia-quien-la-ejecuta"
+    fecha: "2026-10-01"
+    pregunta: |
+      E-101 dice que la salida de emergencia de una espera la ejecuta sólo la persona a cargo del ticket.
+      Eso adelanta el nivel «propietario del registro» que `c10-permisos-cargo` aplazó. ¿Dónde se construye?
+    respuesta_textual: |
+      «Se construye dentro de F1C-03 (salidas de emergencia de las esperas, C3), no reabriendo la tanda de permisos. La regla aplica solo a esas salidas: las ejecuta la persona a quien está derivado el ticket en ese momento; en las dos esperas externas, esa persona es de Comercial. Si no está disponible, la ejecuta el Director o el Coordinador de su área, y queda registrado quién lo hizo y por qué. El nivel general de «propietario del registro» para el resto de transiciones sigue pendiente en la fila de permisos. F1C-03 va después del corte del 14/12, como ya estaba previsto.»
+    consecuencias: |
+      (1) DESTINO: F1C-03, después del 14/12. F1C-05 (permisos, archivada 30/09) NO se reabre.
+      (2) El respaldo «Director o Coordinador de su área» exige registrar quién y por qué: un campo de motivo en esas salidas.
+      (3) Precisa `decision/c3-salida-esperas` y cierra el punto abierto nº 31 del Anexo D en lo que toca a quién ejecuta.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/salida-emergencia-quien-la-ejecuta) · docs/sdd/ENTRADA.md → E-141, que cierra E-101 · docs/sdd/R08.4_Expediente_de_cambios.md §8"
+    maestro_pasaje: "M1.3 · C3 · Anexo D nº 31"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1C-03 (existente), después del 14/12"
+
+  - clave: "decision/trabajo-del-30-09-sin-fila"
+    fecha: "2026-10-01"
+    pregunta: |
+      Siete piezas anotadas el 30/09 con fecha y sin fila: remisiones sin ticket (E-104), aviso «En
+      garantía» (E-105), encuesta en tableta (E-096), cumplimiento global (E-095), disponibilidad por
+      persona (E-098), número de pieza con aviso al técnico (E-107) y salida de emergencia por la persona a
+      cargo (E-101). ¿Dónde va cada una?
+    respuesta_textual: |
+      «Mismo criterio que para las piezas del 01/10: antes del 14/12 solo entra lo que hace falta para no perder nada de lo que hoy da Zoho, y cada pieza tiene fila propia con talla. (1) Remisiones sin ticket: fila propia antes del corte, si se confirma que hoy se hacen en la hoja de Google de remisiones, que se cierra el 14/12; si no, 2027. (2) Aviso «En garantía» y (6) registro del número de pieza con aviso al técnico: filas propias pequeñas en una lista de reserva, en ese orden; entran antes del corte solo si el margen recalculado deja más de una semana, y si no, después del corte. (3) Encuesta en tableta, (4) indicador de cumplimiento global y (5) disponibilidad por persona: filas propias en 2027, en sus fases. (7) Salida de emergencia por la persona a cargo: dentro de F1C-03. Se adelanta a esta semana la averiguación de quién rellena la hoja de Google de remisiones y para qué, porque decide esta pieza (1) y la remisión de salida del 01/10.»
+    consecuencias: |
+      (1) E-104 queda CONDICIONADA a una averiguación de persona: quién rellena la hoja de Google de
+      remisiones y para qué. Su plazo pasa del 31/10 (`decision/p14b-hoja-google`) a ESTA SEMANA (antes del 04/10).
+      (2) E-105 y E-107 → lista de reserva, en ese orden, condicionadas al margen de la R01.4 (> 1 semana).
+      (3) E-096, E-095 y E-098 → filas propias en 2027.
+      (4) E-101 → F1C-03 (`decision/salida-emergencia-quien-la-ejecuta`).
+      (5) Las filas las escribe la R01.4 del plan, no esta supervisión.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/trabajo-del-30-09-sin-fila) · docs/sdd/ENTRADA.md → E-142, que cierra E-095, E-096, E-098, E-101, E-104, E-105 y E-107"
+    maestro_pasaje: "varios (M1.3, M3, M4.4, M6, M7, Anexo G)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "filas nuevas con talla en la R01.4 del plan (una antes del corte condicionada, dos en reserva, tres en 2027)"
+
+  - clave: "decision/trabajo-del-01-10-antes-del-corte-sin-fila"
+    fecha: "2026-10-01"
+    pregunta: |
+      Diez piezas con fecha anterior al 14/12 y sin fila (del 30/09 y el 01/10), más una capacidad nueva
+      entera (hojas de vida de los equipos propios). ¿Qué criterio decide qué entra antes del corte?
+    respuesta_textual: |
+      «Criterio para todo lo anotado con fecha y sin fila (las diez piezas del 30/09 y el 01/10): antes del corte del 14/12 solo entra lo que hace falta para no perder nada de lo que hoy da Zoho (paridad), y cada pieza que entra lleva fila propia con talla. Lo que no es paridad se declara para 2027 por escrito. No se reparten piezas en filas existentes sin medirlas. Aplicado a las de hoy: (1) la búsqueda por número de ticket y serial entra en F1B-08, antes del corte; (2) el alta a mano de equipo y cliente desconocidos entra en F1B-14, que se escribe ya en el plan junto con las otras tres filas decididas el 24/09; (3) la remisión de salida desde la entrega, con su guarda y sus fotos, tiene fila propia antes del corte si se confirma que hoy las remisiones de salida se hacen en la hoja de Google o en Zoho, que dejan de estar disponibles el 14/12, y si no, pasa a 2027; (4) las hojas de vida de los equipos propios, con el cargo Especialista técnico, son capacidad nueva: fila propia en 2027, junto con la preparación para la 17025. Las demás piezas se clasifican con la misma regla en la R01.4 del plan, que rehace la cuenta del margen; si queda por debajo de una semana, se para y decide Gerencia.»
+    consecuencias: |
+      (1) CRITERIO GENERAL: antes del 14/12 sólo paridad con Zoho, y con fila propia y talla. Lo demás, 2027 por escrito.
+      (2) E-133 → F1B-08. E-129 → F1B-14.
+      (3) ⚠️ CONSECUENCIA QUE LA RESPUESTA NO PREVIÓ, MEDIDA: F1B-14 YA SE CUENTA COMO CERRADA. Dos cambios
+      archivados la declaran —`2026-09-24-alta-equipo-nuevo-en-ticket` (`cierra: no`) y
+      `2026-09-25-edicion-comercial-equipo` (`cierra: si`)— y el barrido la incluye entre las 12 derivables
+      (`docs/sdd/RECONCILIACION.md:19`), aunque la fila no está escrita en el §5. Meter ahí el alta a mano de
+      E-129 REABRE una fila que el numerador ya suma: o sale del numerador hasta que se construya, o el alta a
+      mano va con otro ID. Lo decide la R01.4 del plan al escribir la fila; se señala para que no se haga a ciegas.
+      (4) E-120, E-122 y la mitad de salida de E-123 → fila propia antes del corte CONDICIONADA a la
+      averiguación de la hoja de Google (la misma de `decision/trabajo-del-30-09-sin-fila`).
+      (5) E-127 → fila propia en 2027, con el cargo Especialista técnico (`decision/cargo-encargado-de-inventario`).
+      (6) La R01.4 del plan rehace la cuenta del margen; si queda por debajo de una semana, se para y decide Gerencia.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/trabajo-del-01-10-antes-del-corte-sin-fila) · docs/sdd/ENTRADA.md → E-143, que cierra E-120, E-122, E-123 (mitad de salida), E-127, E-129 y E-133"
+    maestro_pasaje: "varios (M3, M7, recepción y entrega)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-08 (búsqueda) · fila de «Alta y edición del equipo» (Gerencia la llama F1B-14) · fila condicionada de remisión de salida · fila 2027 de equipos propios — las escribe la R01.4"
+
+  - clave: "decision/cargo-encargado-de-inventario"
+    fecha: "2026-10-01"
+    pregunta: |
+      E-115 deja entre corchetes a quién deriva «Solicitud repuestos»: «[cargo «Encargado de inventario» /
+      persona: ___]», y ese cargo no está entre los siete declarados.
+    respuesta_textual: |
+      «El encargado del inventario es el Director Técnico. No se crea un cargo nuevo: «Solicitud repuestos» deriva el ticket a quien tenga el cargo Director Técnico, que entrega las piezas y ejecuta «Entrega de Repuestos», devolviendo el ticket al técnico que lo tenía. Cuando el Director Técnico está ausente (ausencia registrada con fechas, como en la validación de informes), se deriva al especialista técnico Johny Luna. Nota para quien lo registre: «Especialista técnico» no está entre los siete cargos decididos el 24/09; es el mismo cargo que necesitan las hojas de vida de los equipos propios (01/10). Hay que darlo de alta como cargo y asignárselo a Johny Luna, de modo que la derivación de respaldo vaya al cargo y no al nombre.»
+    consecuencias: |
+      (1) CIERRA EL CORCHETE DE E-115/E-117 y el punto nº 76 del Anexo D de la R08.4 («ABIERTO — R08.4», `R08.4.md:1035`).
+      (2) LOS CARGOS PASAN DE SIETE A OCHO: «Especialista técnico» se suma a los de `decision/c10b-gerente-director`
+      (`openspec/config.yaml:1933`). F1C-05 está archivada: el alta del cargo es trabajo sobre una tanda cerrada
+      y no tiene fila; lo recoge la R01.4.
+      (3) EL RESPALDO DEPENDE DE «AUSENCIA REGISTRADA CON FECHAS», y Gerencia remite a la de la validación de
+      informes: es el registro de ausencias que fijó `decision/roles-validacion-informe` («entidad nueva … que hoy
+      no existe en ninguna tanda»). MEDIDO: no hay tabla ni tipo de ausencias en `packages/` ni `apps/` (los
+      aciertos de `grep -rli ausencia` son comentarios y pruebas ajenas). Si la derivación se construye antes que
+      ese registro, el respaldo no tiene de dónde leer la ausencia. Se señala, no se resuelve: lo ordena la R01.4.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/cargo-encargado-de-inventario) · docs/sdd/ENTRADA.md → E-144, que cierra E-115 y E-117 · docs/sdd/R08.4_Expediente_de_cambios.md §8 (Anexo D nº 76)"
+    maestro_pasaje: "M1.3 y M1.9.2 · Anexo D nº 76 de la R08.4"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna nueva — derivación con el bloque de correcciones del blueprint; alta del cargo, sin fila"

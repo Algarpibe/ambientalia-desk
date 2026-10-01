@@ -45,7 +45,7 @@ verificables.** Las dos copias conviven y cada una tiene un oficio:
 
 | Copia | Líneas | Para qué |
 |---|---|---|
-| `…R08.2.md` | 5.167 | **Toda cita NUEVA.** Es el maestro vigente |
+| `…R08.2.md` | 5.167 | Vigente hasta el 01/10/2026. **Desde entonces la vigente es la R08.4** (ver «Corrección de Gerencia — el maestro vigente es la R08.4», al final). Toda cita nueva va aquí sólo mientras la R08.4.md no esté versionada |
 | `…R08.1.md` | 4.935 | **Sólo para leer las 147 citas `R08.1.md:NNNN` que ya existen.** No se cita desde hoy |
 
 > ⚠️ **Las 147 citas viejas NO se renumeran a la R08.2.** Es el **caso B** de la regla de mutación 4:
@@ -635,3 +635,20 @@ y el aterrizaje de una regla es este fichero, que se carga entero en cada sesió
 negocio, no de método: queda también registrada en `docs/sdd/ENTRADA.md` → **E-112** y anotada para el
 expediente del maestro (M2.7, punto abierto nº 46). Si alguna sesión futura la considera fuera de
 sitio aquí, es Gerencia quien lo decide, no quien edite el fichero.
+
+---
+
+## Regla de avance — sólo cuenta lo archivado
+
+Gerencia, 2026-10-01, panel (`decision/avance-cuenta-lo-planificado`). **Cuenta una tanda en el avance
+sólo cuando el cambio que la cierra está construido, con verify PASS, archivado y con `cierra: si`.** Un
+plan commiteado, una propuesta o código en curso no suman: publícalos aparte como «en curso». Si el
+barrido cuenta cambios fuera de `openspec/changes/archive/`, ajústalo para que no lo haga.
+
+## Corrección de Gerencia — el maestro vigente es la R08.4
+
+Gerencia, 2026-10-01, panel (`decision/maestro-cual-es-la-vigente`, E-136). **El maestro vigente es la
+R08.4** (`docs/Manifesto/…R08.4.docx` y su `.md`), y su `.md` pasa a ser la copia citable. La R08.3 queda
+como borrador de GN, no vigente. Lo hace la sesión de construcción, no la de supervisión: versionar los dos
+ficheros, rehacer la tabla de «El documento maestro citable» y marcar `maestro_revision: "R08.4"` en las
+decisiones que recoge (sus Anexos C.12 e I.3). **No renumeres las citas `R08.2.md:NNNN`** (caso B, regla de mutación 4).
