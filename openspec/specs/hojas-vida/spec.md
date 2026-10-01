@@ -182,7 +182,7 @@ siquiera los tres campos libres (`fechaAdquisicion`, `codigoInterno`, `driveUrl`
 `PATCH`. Si ninguno de los tres restringidos cambia, la sesión **SHALL** poder escribir los tres campos
 libres sin calificar por área.
 
-**Orden**, contra la tabla canónica de escalones (`openspec/specs/transitions-st/spec.md:995-1000`): esta
+**Orden**, contra la tabla canónica de escalones (`openspec/specs/transitions-st/spec.md:1106-1111`): esta
 guarda ocupa el escalón **B** (estado y permiso). `clientId`, `modeloId` y `mantenedorId` llegan al `PATCH`
 como identificadores tal cual —no resueltos previamente—, así que sus `422` (`Cliente no encontrado`,
 `:79-83`; `El modelo es obligatorio`/`Modelo no encontrado`, `:89-95`; `Mantenedor no encontrado`, dentro de

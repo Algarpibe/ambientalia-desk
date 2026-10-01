@@ -222,7 +222,7 @@ Revertir los commits del lote. Las dos tablas son aditivas y sólo las lee este 
 - [ ] Técnico que cambia la prioridad en las dos transiciones → 403; sin `priority` → la transición pasa.
 - [ ] Mover la guarda delante del 403 de área o detrás del 422 pone la suite en rojo.
 - [ ] `GET /api/mis-tickets` devuelve los tickets abiertos derivados al usuario en orden `Urgent > High > Medium > Low >
-  sin prioridad`, y dentro de una prioridad en el orden de hoy; anular el orden pone la suite en rojo.
+  sin prioridad`, y dentro de una prioridad por la fecha y hora de «Habilitar Servicio» (S-10); anular el orden pone la suite en rojo.
 
 ## Cierre esperado
 
