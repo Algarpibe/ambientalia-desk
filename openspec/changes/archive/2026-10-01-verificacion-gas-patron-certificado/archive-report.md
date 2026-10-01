@@ -41,7 +41,7 @@ Las tres desviaciones declaradas por el apply y juzgadas conformes por el verify
 
 1. El número del certificado vive sólo en la traza de la transición (`ticket_transitions.values`, RQ-EN-10); no se
    copia a `tickets.custom_fields` (`apps/desk/server/services/ticketService.ts:133`).
-2. El PDF se sirve con tipo fijo, `attachment` y `nosniff` (`apps/desk/server/routes/certificadoFabrica.ts:57-59`).
+2. El PDF se sirve con tipo fijo, `attachment` y `nosniff` (`apps/desk/server/routes/certificadoFabrica.ts:52-54`).
 3. Un veredicto que bloquea también exige el certificado (`packages/shared/src/gasPatron.ts:83`); no es observable
    porque el 409 sale antes que el 422.
 
