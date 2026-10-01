@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'; import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import {
@@ -114,7 +114,7 @@ describe('puedeEjecutarTransicion · la compuesta', () => {
   })
 })
 
-describe('primitivas por cargo · HOY NO LAS LLAMA NADIE (F1B-03 y F1B-07, RQ-PM-20)', () => {
+describe('primitivas por cargo · la de Top 5 ya la llama el PUT (F1B-07); la de la OVI aún no (F1B-03, RQ-PM-20)', () => {
   it('puedeCrearOVIGarantia: área Servicio Técnico Y Director Técnico', () => {
     for (const c of CARGOS) expect(puedeCrearOVIGarantia(sujeto(['Servicio Técnico'], c))).toBe(c === 'Director Técnico')
     expect(puedeCrearOVIGarantia(sujeto(['Servicio Técnico'], null))).toBe(false)
@@ -204,5 +204,27 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
     // 5 subconjuntos × 10 valores de cargo × (34 transiciones + 3 primitivas) = 1.850, a mano.
     expect(casos).toBe(1850)
     expect(concedidos).toBeGreaterThan(0) // no pasa en vacío
+  })
+})
+
+describe('RQ-PM-20 · quién llama a las primitivas por cargo (hipótesis de 1.12: node:fs funciona en environment node)', () => {
+  const RAIZ = fileURLToPath(new URL('../../../', import.meta.url))
+  /** Todos los .ts y .tsx de apps/ y packages/ que no son pruebas, sin node_modules ni dist. */
+  function fuentes(dir: string): string[] {
+    const salida: string[] = []
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const ruta = join(dir, e.name)
+      if (e.isDirectory()) { if (e.name !== 'node_modules' && e.name !== 'dist' && e.name !== '.git') salida.push(...fuentes(ruta)) }
+      else if (/\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name)) salida.push(ruta)
+    }
+    return salida
+  }
+  /** Ficheros, distintos de cargos.ts, que contienen una llamada a `nombre(`. */
+  const llamadores = (nombre: string): string[] =>
+    [...fuentes(join(RAIZ, 'apps')), ...fuentes(join(RAIZ, 'packages'))]
+      .filter((f) => !f.endsWith(join('shared', 'src', 'cargos.ts')) && readFileSync(f, 'utf8').includes(`${nombre}(`))
+  it('PM20-2 · puedeFijarPrioridadTop5 tiene al menos un llamador fuera de cargos.ts; puedeCrearOVIGarantia, ninguno', () => {
+    expect(llamadores('puedeFijarPrioridadTop5').length).toBeGreaterThanOrEqual(1)
+    expect(llamadores('puedeCrearOVIGarantia')).toEqual([])
   })
 })

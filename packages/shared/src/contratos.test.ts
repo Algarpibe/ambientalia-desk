@@ -74,9 +74,9 @@ describe('hoyEnZona · el día en Bogotá, nunca el del proceso (S-11)', () => {
 
 describe('prioridadAlNacer · High con contrato vigente; si no, exactamente lo de antes (ticketService.ts:106 en 9288779)', () => {
   it.each<[unknown, string]>([['Low', 'High'], [undefined, 'High'], ['', 'High'], ['High', 'High']])(
-    'con contrato vigente, pedida %j → %s', (pedida, esperada) => expect(prioridadAlNacer(pedida, true)).toBe(esperada))
+    'con contrato vigente, pedida %j → %s', (pedida, esperada) => expect(prioridadAlNacer(pedida, true, null)).toBe(esperada))
   it.each<[unknown, string | null]>([['Low', 'Low'], ['Medium', 'Medium'], [undefined, null], ['', null], [null, null]])(
-    'sin contrato vigente, pedida %j → %j', (pedida, esperada) => expect(prioridadAlNacer(pedida, false)).toBe(esperada))
+    'sin contrato vigente, pedida %j → %j', (pedida, esperada) => expect(prioridadAlNacer(pedida, false, null)).toBe(esperada))
 })
 
 describe('trimestresDelContrato · desde el inicio, con recorte a fin de mes; el último acaba en el fin (S-12)', () => {
@@ -213,5 +213,24 @@ describe('csvDelInforme · una fila por trimestre y por servicio (S-23)', () => 
     expect(lineas[2]).toBe('Servicio,1,,,,,,OV-2026-170-01,12,"\'=HYPERLINK(""x"")",S1,Mantenimiento,2026-02-10,No disponible en los datos')
     expect(lineas[3]).toBe('Trimestre,2,2026-04-01,2026-06-30,20,4,-5,,,,,,,')
     expect(lineas).toHaveLength(4)
+  })
+})
+
+describe('prioridadAlNacer · manda la más alta entre contrato y Top 5 (RQ-TC-24, cuatro combinaciones)', () => {
+  const sinContrato = false
+  const conContrato = true
+  // contrato {no, sí} × Top 5 {null, Low, Medium, High} × pedida {Low, undefined, Urgent}
+  it.each<[boolean, string | null, unknown, string | null]>([
+    // 1 · ni contrato ni Top 5: exactamente la regla de hoy
+    [sinContrato, null, 'Low', 'Low'], [sinContrato, null, undefined, null], [sinContrato, null, 'Urgent', 'Urgent'],
+    // 2 · sólo contrato: High
+    [conContrato, null, 'Low', 'High'], [conContrato, null, undefined, 'High'], [conContrato, null, 'Urgent', 'High'],
+    // 3 · sólo Top 5: el del Top 5, la pedida se ignora
+    [sinContrato, 'Low', 'High', 'Low'], [sinContrato, 'Medium', 'Low', 'Medium'], [sinContrato, 'High', undefined, 'High'],
+    [sinContrato, 'Medium', 'Urgent', 'Medium'], [sinContrato, 'Low', 'Urgent', 'Low'],
+    // 4 · los dos: la más alta
+    [conContrato, 'Low', 'Low', 'High'], [conContrato, 'Medium', undefined, 'High'], [conContrato, 'High', 'Urgent', 'High'],
+  ])('contrato %j · Top 5 %j · pedida %j → %j', (contrato, top5, pedida, esperada) => {
+    expect(prioridadAlNacer(pedida, contrato, top5)).toBe(esperada)
   })
 })

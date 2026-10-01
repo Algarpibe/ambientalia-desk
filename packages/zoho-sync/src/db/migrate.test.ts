@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 35 tablas: 10 de Desk, 22 de la app en public (alarmas_avisadas y alarmas_corte, F1B-08) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 22, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(35)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(35)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(35)
+  it('son 37 tablas: 10 de Desk, 24 de la app en public (alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 24, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(37)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(37)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(37)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -513,13 +513,56 @@ describe('alarmas-horas-habiles · la clave de no duplicado es de la base', () =
 })
 
 describe('permisos-por-cargo · la columna cargo_permiso cierra el esquema', () => {
-  // RQ-PM-13, escenario «la migración está calificada y al final» (S3): la última sentencia de
-  // `schema.sql` es la `ALTER` calificada de `public.users`, sin `CHECK` (D-4: la lista cerrada vive en
-  // `shared`, no en la base; una segunda copia exigiría migración por cada cargo nuevo).
-  it('la última sentencia de schema.sql es ALTER TABLE public.users ... cargo_permiso, calificada y sin CHECK', () => {
-    const todas = schemaStatements()
-    const ultima = todas[todas.length - 1].replace(/^(?:\s*--[^\n]*\n)+/, '').trim()
-    expect(ultima).toMatch(/^ALTER TABLE public\.users ADD COLUMN IF NOT EXISTS cargo_permiso text$/)
-    expect(ultima).not.toMatch(/CHECK/i)
+  // RQ-PM-13 (modificado por prioridad-top5-cliente, C-1): la ALTER de cargo_permiso sigue siendo UNA, calificada y sin
+  // CHECK (D-4), y ocupa la posición N-1 = 116 de las 117 sentencias que había en 29f65d1: nada se insertó por delante.
+  // Las tablas de F1B-07 van DETRÁS (regla de mutación 1: la posición se prueba, no se declara).
+  it('la ALTER de cargo_permiso es una sola, calificada, sin CHECK, y está en la posición 116 (nada insertado delante)', () => {
+    const limpias = schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
+    const idx = limpias.map((s, i) => (/cargo_permiso/.test(s) ? i : -1)).filter((i) => i >= 0)
+    expect(idx, 'sentencias que mencionan cargo_permiso').toEqual([116])
+    expect(limpias[116]).toMatch(/^ALTER TABLE public\.users ADD COLUMN IF NOT EXISTS cargo_permiso text$/); expect(limpias[116]).not.toMatch(/CHECK/i)
+  })
+})
+
+describe('prioridad-top5-cliente · cliente_prioridad y prioridad_ajustes cierran el esquema (F1B-07, RQ-TC-26, RQ-TC-29)', () => {
+  const limpias = () => schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
+  const posicion = (re: RegExp) => limpias().findIndex((s) => re.test(s))
+
+  it('las dos tablas existen tras migrate, en public (TC26-1, TC29-14)', async () => {
+    const db = await freshDb()
+    const r = await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('cliente_prioridad','prioridad_ajustes')")
+    expect(r.rows.map((x: { table_name: string }) => x.table_name).sort()).toEqual(['cliente_prioridad', 'prioridad_ajustes'])
+  })
+
+  it('ambas CREATE TABLE van calificadas con public., DETRÁS de la ALTER de cargo_permiso, en ese orden, y prioridad_ajustes es la última', () => {
+    const alter = posicion(/cargo_permiso/)
+    const cliente = posicion(/^CREATE TABLE IF NOT EXISTS public\.cliente_prioridad\b/)
+    const ajustes = posicion(/^CREATE TABLE IF NOT EXISTS public\.prioridad_ajustes\b/)
+    expect(alter).toBeGreaterThan(0)
+    expect(cliente, 'cliente_prioridad calificada').toBeGreaterThan(alter)
+    expect(ajustes, 'prioridad_ajustes calificada').toBeGreaterThan(cliente)
+    const creates = limpias().filter((s) => /^CREATE TABLE/i.test(s))
+    expect(creates[creates.length - 1]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.prioridad_ajustes\b/)
+  })
+
+  it('el comentario que precede a las tablas no lleva punto y coma (el troceo es por ;): ninguna sentencia queda partida', () => {
+    expect(limpias().filter((s) => /idx_prioridad_ajustes_ticket/.test(s))).toHaveLength(1)
+    expect(limpias()[posicion(/idx_prioridad_ajustes_ticket/)]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_prioridad_ajustes_ticket ON public\.prioridad_ajustes \(ticket_id\)$/)
+  })
+
+  it('el CHECK rechaza un motivo vacío con un INSERT directo (D-7) y acepta uno con texto', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.prioridad_ajustes (ticket_id, a, motivo, ajustado_por) VALUES ('t1','High','','ana')")).rejects.toThrow()
+    await db.query("INSERT INTO public.prioridad_ajustes (ticket_id, a, motivo, ajustado_por) VALUES ('t1','High','cliente crítico','ana')")
+    expect((await db.query('SELECT * FROM public.prioridad_ajustes')).rows).toHaveLength(1)
+  })
+
+  it('un INSERT ... ON CONFLICT (client_id) DO UPDATE repetido deja UNA fila con el último valor', async () => {
+    const db = await freshDb()
+    const upsert = 'INSERT INTO public.cliente_prioridad (client_id, top5, prioridad, actualizado_por) VALUES ($1,$2,$3,$4) ON CONFLICT (client_id) DO UPDATE SET top5=EXCLUDED.top5, prioridad=EXCLUDED.prioridad, actualizado_por=EXCLUDED.actualizado_por, actualizado_at=now()'
+    await db.query(upsert, ['c1', true, 'Low', 'ana'])
+    await db.query(upsert, ['c1', true, 'High', 'luis'])
+    const r = await db.query('SELECT client_id, top5, prioridad, actualizado_por FROM public.cliente_prioridad')
+    expect(r.rows).toEqual([{ client_id: 'c1', top5: true, prioridad: 'High', actualizado_por: 'luis' }])
   })
 })

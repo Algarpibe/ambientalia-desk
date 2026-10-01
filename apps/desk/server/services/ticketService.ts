@@ -2,7 +2,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
-import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'
+import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'
 import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
@@ -103,7 +103,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   const id = await crearTicketConEquipo(db, nuevo, cliente.name, {
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
-    ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!)),
+    ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!), await prioridadTop5DelCliente(db, clientId!)),
     clientId: clientId!, salesorderId, equipoId: equipo.id, modalidad, actor: actorName,
   })
   const created = await getTicketWithRefs(db, id)

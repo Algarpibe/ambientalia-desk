@@ -75,7 +75,7 @@ export function puedeCrearOVIGarantia(s: SujetoDePermiso): boolean {
 
 /**
  * Fijar la prioridad de los Top 5: área Comercial Y cargo Director Comercial; el admin pasa.
- * HOY NO LA LLAMA NADIE: la construye F1B-07. Supuesto S-9 (reversible): el área del acto es Comercial.
+ * La llama el PUT de la prioridad del cliente (F1B-07). Supuesto S-9 (reversible): el área del acto es Comercial.
  */
 export function puedeFijarPrioridadTop5(s: SujetoDePermiso): boolean {
   return canExecuteTransition(s.areas, s.isAdmin, 'Comercial')

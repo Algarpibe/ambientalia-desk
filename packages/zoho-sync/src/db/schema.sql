@@ -599,3 +599,24 @@ CREATE TABLE IF NOT EXISTS public.alarmas_corte (
 -- firma de la remision, texto libre). Aditiva, sin relleno y sin CHECK a proposito: la lista cerrada vive
 -- en packages/shared/src/cargos.ts, y un valor fuera de ella se lee como sin cargo
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS cargo_permiso text;
+
+-- prioridad-top5-cliente (F1B-07): prioridad de los clientes Top 5 y traza de los ajustes por ticket.
+-- AL FINAL del fichero para no desplazar citas (regla de mutacion 4). Calificadas public.: un CREATE sin
+-- calificar aterriza en desk por el search_path. Sin CHECK sobre la lista de prioridades (vive en shared)
+CREATE TABLE IF NOT EXISTS public.cliente_prioridad (
+  client_id text PRIMARY KEY,               -- clients.id (contact_id de Books), sin FK como public.contratos
+  top5 boolean NOT NULL DEFAULT false,
+  prioridad text,                           -- lista blanca en packages/shared/src/prioridad.ts
+  actualizado_por text NOT NULL,
+  actualizado_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS public.prioridad_ajustes (
+  id bigserial PRIMARY KEY,
+  ticket_id text NOT NULL,                  -- sin FK, mismo caso que public.ov_asociaciones
+  de text,
+  a text NOT NULL,
+  motivo text NOT NULL CONSTRAINT prioridad_ajustes_motivo CHECK (motivo <> ''),
+  ajustado_por text NOT NULL,
+  ajustado_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_prioridad_ajustes_ticket ON public.prioridad_ajustes (ticket_id);

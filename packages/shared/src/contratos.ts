@@ -7,7 +7,7 @@
  */
 import { diaEnZona } from './fechasDerivadas'
 import { sumarDias, type DiaCivil } from './calendarioLaboral'
-import { clasificarOV } from './subOV'
+import { clasificarOV } from './subOV'; import { prioridadMasAlta } from './prioridad'
 
 // El lote es la OV madre `OV-AAAA-NNN(N)`, sin sufijo: nunca una subOV ni una OVI. Lo decide `esLote` (al final).
 // Aquí vivía `LOTE_OV`, una regex paralela a la de `clasificarOV`: retirada en el lote 4 (limpieza H5).
@@ -62,10 +62,10 @@ export function hoyEnZona(ahora: Date = new Date()): DiaCivil {
   return diaEnZona(ahora)!
 }
 
-/** `'High'` si el lote tiene contrato vigente; si no, exactamente la regla de hoy (`ticketService.ts:106` en `9288779`). */
-export function prioridadAlNacer(pedida: unknown, conContratoVigente: boolean): string | null {
-  if (conContratoVigente) return 'High'
-  return pedida ? String(pedida) : null
+/** La más alta entre `'High'` por contrato vigente y la del Top 5 del cliente; sin ninguna, exactamente la regla de hoy (`ticketService.ts:106` en `9288779`). */
+export function prioridadAlNacer(pedida: unknown, conContratoVigente: boolean, top5: string | null): string | null {
+  const delCliente = prioridadMasAlta(conContratoVigente ? 'High' : null, top5)
+  return delCliente ?? (pedida ? String(pedida) : null)
 }
 
 export interface Trimestre { k: number; inicio: DiaCivil; fin: DiaCivil }

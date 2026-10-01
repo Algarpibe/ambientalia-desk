@@ -3,7 +3,7 @@ import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { STATUS_TICKET_CREADO, transicionPorId, hoyEnZona, sumarDias } from '@ambientalia/shared'
 import { HttpError } from '../util/httpError'
-import { createManagedTicket, executeTransition } from './ticketService'; import { crearContrato } from '../db/contratos'
+import { createManagedTicket, executeTransition } from './ticketService'; import { crearContrato } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'
 
 /**
  * `executeTransition` y `createManagedTicket` A NIVEL DE UNIDAD (§9 del proposal F0-04).
@@ -1105,5 +1105,78 @@ describe('registro-contrato · transición: subOV de un contrato vencido → 422
     expect(r.status).toBe(422)
     await db.query('DELETE FROM contratos') // control de población
     expect((await fallo(() => executeTransition(db, 't-v7', { transitionId: 'aprobacion_y_repuestos', values: valores }, ADMIN))).status).toBe(409)
+  })
+})
+
+// ═════════════════════════════════════════════════════════════════════════════════════
+// prioridad-top5-cliente · lote 1 · herencia al nacer (RQ-TC-24, RQ-TC-28): contrato × Top 5, manda la más alta.
+// El Top 5 se siembra por SQL en `public.cliente_prioridad`: estas pruebas sólo dependen del esquema (C-8).
+// ═════════════════════════════════════════════════════════════════════════════════════
+
+async function top5De(clientId: string, prioridadTop: string | null, top5 = true): Promise<void> {
+  await db.query("INSERT INTO public.cliente_prioridad (client_id, top5, prioridad, actualizado_por) VALUES ($1,$2,$3,'Comercial')", [clientId, top5, prioridadTop])
+}
+
+describe('prioridad-top5-cliente · prioridad al nacer con Top 5 (RQ-TC-24)', () => {
+  it('TC24-5 · Comb. 3 · Top 5 Medium y el cuerpo pide Low → Medium', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Medium')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe('Medium')
+  })
+
+  it.each<[string, string]>([['Low', 'High'], ['High', 'High']])('TC24-6 · Comb. 4 · contrato vigente y Top 5 %s → %s', async (top5, esperada) => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', top5); await contratoDe('OV-2026-170', VIGENTE)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe(esperada)
+  })
+
+  it('TC24-8 · Urgent del cuerpo pierde ante el Top 5 y ante el contrato', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Urgent' }, 'Admin')
+    expect(await prioridad()).toBe('Low')
+    await db.query('DELETE FROM tickets'); await db.query('DELETE FROM public.cliente_prioridad'); await contratoDe('OV-2026-170', VIGENTE)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Urgent' }, 'Admin')
+    expect(await prioridad()).toBe('High')
+  })
+
+  it('TC24-9 · Urgent sin contrato ni Top 5 se conserva (regla de hoy)', async () => {
+    await equipo(); await cliente('cli-1')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Urgent' }, 'Admin')
+    expect(await prioridad()).toBe('Urgent')
+  })
+
+  it('TC24-13 · el Top 5 es del cliente A y el alta es del cliente B con una subOV de A → sin herencia', async () => {
+    await equipo(); await cliente('cli-A'); await cliente('cli-B'); await top5De('cli-A', 'Medium')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, clientId: 'cli-B', ordenVenta: 'OV-2026-170-01', prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe('Low')
+  })
+
+  it('TC24-14 · un ticket creado DESPUÉS de marcar el Top 5 High nace High aunque el cuerpo pida Low', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'High')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe('High')
+  })
+
+  it('TC24-15 · tras desmarcar el Top 5, un alta sin contrato toma la prioridad del cuerpo', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', null, false)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe('Low')
+  })
+
+  it('TC28-2 · sin ninguna fila en cliente_prioridad, el alta es la de hoy', async () => {
+    await equipo(); await cliente('cli-1')
+    expect((await db.query('SELECT 1 FROM public.cliente_prioridad')).rows).toEqual([])
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
+    expect(await prioridad()).toBe('Low')
+  })
+})
+
+describe('prioridad-top5-cliente · TC24-16 · un ticket sin client_id no hereda nada', () => {
+  it('prioridadTop5DelCliente(db, null) → null, y marcar un cliente no toca un ticket sin client_id', async () => {
+    expect(await prioridadTop5DelCliente(db, null)).toBeNull()
+    await db.query("INSERT INTO tickets (id, number, subject, status, priority) VALUES ('t-sin-cliente', 9301, 'Sin cliente', 'Ingresado', 'Low')")
+    await top5De('cli-1', 'High')
+    expect(await prioridadTop5DelCliente(db, 'cli-1')).toBe('High')
+    expect((await db.query("SELECT priority FROM tickets WHERE id='t-sin-cliente'")).rows[0].priority).toBe('Low')
   })
 })
