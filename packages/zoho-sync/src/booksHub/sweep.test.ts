@@ -93,4 +93,48 @@ describe('booksHub sweep', () => {
     expect(ant).toMatchObject({ live: 1, replica: 2, orphans: 1, confirmed: 1, deleted: 1 })
     expect((await db.query('SELECT retainerinvoice_id FROM books.retainer_invoices')).rows.map((r: any) => r.retainerinvoice_id)).toEqual(['R1'])
   })
+
+  // Pagos de clientes: P2 se borró en Zoho (caso real PC-2026-276) y seguía inflando los reportes.
+  const seedPayments = async () => {
+    for (const id of ['P1', 'P2']) {
+      await db.query('INSERT INTO books.customer_payments (payment_id) VALUES ($1)', [id])
+      await db.query('INSERT INTO books.customer_payment_invoices (invoice_payment_id, payment_id) VALUES ($1,$2)', [id + '-I', id])
+    }
+  }
+  const invoicesAlive = (path: string): Response | null =>
+    path.startsWith('/invoices') ? new Response(JSON.stringify({ invoices: [{ invoice_id: 'A' }, { invoice_id: 'B' }, { invoice_id: 'C' }] }), { status: 200 }) : null
+
+  it('pagos: borra el huérfano confirmado ausente y sus aplicaciones a facturas; deja el vivo', async () => {
+    await seedPayments()
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      const other = emptyOthers(path) ?? invoicesAlive(path)
+      if (other) return Promise.resolve(other)
+      if (path.startsWith('/customerpayments/P2')) return Promise.resolve(new Response(JSON.stringify({ code: 1002, message: 'El recurso no existe.' }), { status: 404 }))
+      if (path.startsWith('/customerpayments')) return Promise.resolve(new Response(JSON.stringify({ customerpayments: [{ payment_id: 'P1' }] }), { status: 200 }))
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    const reports = await sync.sweep({ dryRun: false, guard })
+    const pay = reports.find((r) => r.table === 'books.customer_payments')!
+    expect(pay).toMatchObject({ live: 1, replica: 2, orphans: 1, confirmed: 1, deleted: 1 })
+    expect((await db.query('SELECT payment_id FROM books.customer_payments')).rows.map((r: any) => r.payment_id)).toEqual(['P1'])
+    expect((await db.query('SELECT invoice_payment_id FROM books.customer_payment_invoices')).rows.map((r: any) => r.invoice_payment_id)).toEqual(['P1-I'])
+  })
+
+  it('pagos: lista vacía de Zoho → el tope frena el barrido y no borra nada', async () => {
+    await seedPayments()
+    const booksFetch = vi.fn().mockImplementation((path: string) => {
+      const other = emptyOthers(path) ?? invoicesAlive(path)
+      if (other) return Promise.resolve(other)
+      if (path.startsWith('/customerpayments')) return Promise.resolve(new Response(JSON.stringify({ customerpayments: [] }), { status: 200 }))
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
+    })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    const reports = await sync.sweep({ dryRun: false, guard })
+    const pay = reports.find((r) => r.table === 'books.customer_payments')!
+    expect(pay.skipped).toBeTruthy()
+    expect(pay.deleted).toBe(0)
+    expect((await db.query('SELECT count(*)::int AS c FROM books.customer_payments')).rows[0].c).toBe(2)
+    expect((await db.query('SELECT count(*)::int AS c FROM books.customer_payment_invoices')).rows[0].c).toBe(2)
+  })
 })

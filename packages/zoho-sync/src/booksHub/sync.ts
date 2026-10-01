@@ -187,6 +187,9 @@ export function createBooksHubSync({ booksFetch, db, config }: Deps): BooksHubSy
         // Anticipos: sin tabla hija, las líneas viven en raw. Un anticipo borrado en Zoho que
         // siguiera en la réplica dispararía en el portal un aviso falso de «sin aplicar».
         { schema: 'books', table: 'retainer_invoices', pk: 'retainerinvoice_id', collectLive: () => collectLiveIds('retainerinvoices', 'retainerinvoices', 'retainerinvoice_id'), confirmDeleted: (id) => verifyDeleted('retainerinvoices', id) },
+        // Pagos de clientes: un pago borrado en Zoho que siguiera en la réplica inflaría los
+        // recaudos. Se limpian también sus aplicaciones a facturas (customer_payment_invoices).
+        { schema: 'books', table: 'customer_payments', pk: 'payment_id', childTable: 'customer_payment_invoices', childFk: 'payment_id', collectLive: () => collectLiveIds('customerpayments', 'customerpayments', 'payment_id'), confirmDeleted: (id) => verifyDeleted('customerpayments', id) },
       ]
       const reports: SweepReport[] = []
       for (const e of entities) {
