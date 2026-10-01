@@ -3412,14 +3412,14 @@ decisiones_de_gerencia_adenda:
       complementario» con origen En Proceso), mapa del blueprint regenerado y `cifras_ancladas` →
       `transiciones` 34 → 31 y pasos 38 → 35 EN EL MISMO COMMIT. Esta supervisión NO toca `cifras_ancladas`
       ahora: hacerlo antes que el código abriría un desvío de la cifra que hoy cuadra.
-      (2) MEDIDO: la R08.4 ya dice 31 y 35 (`docs/Manifesto/…R08.4.md:5167`, «31 transiciones y 35 pasos
+      (2) MEDIDO: la R08.4 ya dice 31 y 35 (`docs/Manifesto/…R08.4.md:6454`, «31 transiciones y 35 pasos
       del mapa»). El código sigue en 34 base / 46 en el fichero (`grep -c "{ id: '" packages/shared/src/transitions.ts`).
       (3) DATOS DE PRODUCCIÓN: los tickets de servicio técnico en «Pendiente» pasan a En Proceso, sin
       reescribir el historial. Es una migración que toca producción; la ejecuta quien construya el cambio.
       (4) NO TIENE FILA en el §5: cae bajo `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (fila propia
       con talla en la R01.4).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/tres-transiciones-y-la-cifra-anclada) · docs/sdd/ENTRADA.md → E-140, que cierra E-103, E-106, E-116, E-118 y E-119 · docs/sdd/R08.4_Expediente_de_cambios.md §8"
-    maestro_pasaje: "M1.3 y M1.3.7 (R08.4.md:5167)"
+    maestro_pasaje: "M1.3 y M1.3.7 (R08.4.md:6454)"
     maestro_revision: "R08.4 (ya lo recoge; la marca la confirma la sesión de construcción al versionar)"
     tanda_que_abre: "fila nueva con talla en la R01.4 del plan — antes del 14/12"
 
@@ -3493,7 +3493,7 @@ decisiones_de_gerencia_adenda:
     respuesta_textual: |
       «El encargado del inventario es el Director Técnico. No se crea un cargo nuevo: «Solicitud repuestos» deriva el ticket a quien tenga el cargo Director Técnico, que entrega las piezas y ejecuta «Entrega de Repuestos», devolviendo el ticket al técnico que lo tenía. Cuando el Director Técnico está ausente (ausencia registrada con fechas, como en la validación de informes), se deriva al especialista técnico Johny Luna. Nota para quien lo registre: «Especialista técnico» no está entre los siete cargos decididos el 24/09; es el mismo cargo que necesitan las hojas de vida de los equipos propios (01/10). Hay que darlo de alta como cargo y asignárselo a Johny Luna, de modo que la derivación de respaldo vaya al cargo y no al nombre.»
     consecuencias: |
-      (1) CIERRA EL CORCHETE DE E-115/E-117 y el punto nº 76 del Anexo D de la R08.4 («ABIERTO — R08.4», `R08.4.md:1035`).
+      (1) CIERRA EL CORCHETE DE E-115/E-117 y el punto nº 76 del Anexo D de la R08.4 («[ABIERTO] Falta fijar si…», `R08.4.md:1618`).
       (2) LOS CARGOS PASAN DE SIETE A OCHO: «Especialista técnico» se suma a los de `decision/c10b-gerente-director`
       (`openspec/config.yaml:1933`). F1C-05 está archivada: el alta del cargo es trabajo sobre una tanda cerrada
       y no tiene fila; lo recoge la R01.4.

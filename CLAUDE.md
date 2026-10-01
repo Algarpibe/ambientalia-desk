@@ -34,20 +34,20 @@ npm run build    # build del cliente
 
 El maestro es un `.docx` y **no se edita desde el repositorio**. La copia citable por línea es:
 
-    docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md   (5.167 líneas)
+    docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md   (7.161 líneas; vigente desde el 01/10/2026)
 
 Se regenera con `scripts/docx2md.sh <entrada.docx> [salida.md]`. No hay `pandoc` en las máquinas del
 equipo: el script son veinte líneas sobre `unzip` y `sed`. Cada revisión del maestro se vuelve a
 exportar; el `.docx` sigue siendo el original editable.
 
 **Y la R08.1.md SE CONSERVA trackeada, a propósito: es la única forma de que 147 citas sigan siendo
-verificables.** Las dos copias conviven y cada una tiene un oficio:
+verificables.** Las tres copias conviven y cada una tiene un oficio:
 
 | Copia | Líneas | Para qué |
 |---|---|---|
-| `…R08.2.md` | 5.167 | Vigente hasta el 01/10/2026. **Desde entonces la vigente es la R08.4** (ver «Corrección de Gerencia — el maestro vigente es la R08.4», al final). Toda cita nueva va aquí sólo mientras la R08.4.md no esté versionada |
+| `…R08.4.md` | 7.161 | **Toda cita NUEVA desde el 01/10/2026.** Es el maestro vigente (`decision/maestro-cual-es-la-vigente`, E-138). La R08.3 (`…R08.3.docx`) se versiona como **borrador de revisión, NO vigente**, sin `.md` citable |
+| `…R08.2.md` | 5.167 | Vigente del 17/09 al 01/10/2026. **Sólo para leer las citas `R08.2.md:NNNN` que ya existen**; no se renumeran a la R08.4 (caso B) |
 | `…R08.1.md` | 4.935 | **Sólo para leer las 147 citas `R08.1.md:NNNN` que ya existen.** No se cita desde hoy |
-
 > ⚠️ **Las 147 citas viejas NO se renumeran a la R08.2.** Es el **caso B** de la regla de mutación 4:
 > afirman algo que era cierto de la R08.1, y su revisión va en la propia cita. Renumerarlas a ciegas
 > las volvería falsas, y encima **parecería** reparado — que es exactamente el fallo que esa regla
@@ -670,3 +670,11 @@ CodeGraph: nunca bajo `/tmp`, con su propio `.codegraph/`); el intento se abre a
 `gentle-ai sdd-attempt handoff`). Al cerrar, se fusiona a `main`; los conflictos previsibles están en
 `openspec/config.yaml` y `docs/sdd/ENTRADA.md`, que se escriben al final, y se resuelven conservando las dos
 partes. **No se rebasa la rama sobre `main` con el intento abierto:** volvería a meter lo ajeno en su medida.
+
+*Hecho el 2026-10-01 por la sesión de construcción* (`decision/archivo-f1a03-y-worktrees-01-10`, punto 5): versionados
+el `.docx` y el `.md` de la R08.4 y el `.docx` de la R08.3 como borrador; tabla de «El documento maestro citable»
+rehecha en sitio, sin mover líneas. **El `.md` versionado es el que genera `scripts/docx2md.sh` (7.161 líneas)**, no
+el que había en disco (5.472 líneas, otro formato, que el script no reproduce): el script reproduce byte a byte la
+R08.2.md versionada, así que es la exportación canónica. Las seis citas `R08.4.md:NNNN` escritas antes contra la
+copia no canónica se reapuntaron por CONTENIDO a la línea que dice lo mismo (1035→1618, 2064→2420, 4772→5719,
+5167→6454), no por resta.
