@@ -1278,3 +1278,12 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 **Afecta a:** fila F1C-05 del §5 del plan · capacidades `permissions` y `derivacion-avisos`.
 **Estado:** nueva
 **Destino:** **SIN DESTINO ASIGNADO**, a propósito: asignar una épica de memoria es lo que dejó cuatro desvíos huérfanos al cerrar F1A. **Dueño propuesto:** Gerencia. **Qué desbloquea:** que la derivación y las alarmas dejen de depender de un texto libre, y que un cambio del cargo de firma no pueda parecer un cambio de permiso.
+
+## E-093 · 2026-10-01 · pregunta · **NUEVA**
+**Qué:** Qué es la «fecha promesa» y de dónde sale. El maestro dice que el sistema ordena «Mis Tickets» de más a menos urgente — «FIFO inteligente por fecha promesa» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1711`, M1.9.1), pero no define el término en ningún sitio.
+**Medido el 2026-10-01 sobre `e27f9da`:** `git grep -n "fecha promesa\|fechaPromesa\|fecha_promesa" -- apps packages` = **0**. Lo más cercano que existe es el indicador «Cumplimiento promesa» (`apps/desk/src/components/Analisis.tsx:95`), que toma como promesa los **Días de entrega** contados desde la creación del ticket (`packages/shared/src/analisis.ts:66`). Hipótesis, sin confirmar: la fecha promesa sería la fecha de creación más los Días de entrega; pero un ticket no tiene Días de entrega hasta el escalado, así que tampoco ordenaría los tickets que aún no los tienen.
+**Qué decide:** el desempate dentro de una misma prioridad en «Mis Tickets». `prioridad-top5-cliente` (F1B-07) ordena por prioridad en el servidor y, dentro de la misma prioridad, deja el orden de hoy (supuesto S-10 de su `proposal.md`).
+**Apéndice de** la pregunta 3 de `docs/sdd/Preguntas_Gerencia_2026-09-29.md` (§3.b, `:69-89`), que ya nombraba el orden de «Mis tickets» como algo que la calificación desbloquea (`:81`). Ese documento es un registro fechado y no se edita: esta entrada lo completa.
+**Afecta a:** fila F1B-07 del §5 del plan · capacidad `vistas-tablero`.
+**Estado:** nueva
+**Destino:** **SIN DESTINO ASIGNADO**, a propósito. **Dueño:** Gerencia. **Qué desbloquea:** el desempate por fecha promesa de «Mis Tickets»; sin respuesta, el orden dentro de una prioridad sigue siendo el de hoy.

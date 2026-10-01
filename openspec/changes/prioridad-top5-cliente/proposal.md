@@ -1,8 +1,8 @@
 ---
 tanda: F1B-07
 motivo: ""
-capacidad: [tickets-core, transitions-st, permissions]
-maestro: ["M1.9.1", "Anexo D nº 53"]
+capacidad: [tickets-core, transitions-st, permissions, vistas-tablero]
+maestro: ["M1.9.1", "§1.8", "Anexo D nº 53"]
 cierra: no
 toca_maestro: si
 origen_cabecera: declarada
@@ -52,13 +52,24 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
 6. **UI** (fuera de la red de pruebas, F0-00; no se propone `jsdom`): marcar Top 5 y fijar su prioridad desde el
    cliente; ajuste por ticket con motivo; `TransitionPanel` deja de exigir prioridad. Regla 13 / mutación 3: cada
    decisión del cliente con su línea de servidor, por escrito, en el cierre.
+7. **«Mis tickets» ordenado de más a menos urgente, en el SERVIDOR** (corrección de lectura del 2026-10-01). Está
+   decidido en lo que dice: M1.9.1 lo recoge en `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1711`, fuera del único apartado
+   marcado en revisión (el §3.2, `:2946-3122`), y el §1.8 «Decisiones estructurales ya tomadas» («cerradas en actas»,
+   `:760`) lo da como implicación de la decisión del 14/08 en `:781`. Orden `Urgent > High > Medium > Low > sin
+   prioridad`, con prueba. Hoy el servidor no ordena por prioridad (`packages/zoho-sync/src/db/repo.ts:151`, `ORDER BY
+   t.created_time DESC NULLS LAST`) y la vista sólo filtra (`apps/desk/src/lib/boardView.ts:44-46`). Ruta propia y
+   predicado compartido: `design.md` §12. Dentro de la misma prioridad, el orden de hoy (S-10).
 
 **Fuera**
 - Calificación de los clientes sin contrato ni Top 5, número de niveles y quién ajusta fuera de Top 5: pregunta 3.b
-  abierta (`docs/sdd/Preguntas_Gerencia_2026-09-29.md:69-89`). Por eso `cierra: no`.
-- **Orden de «Mis tickets»** (`apps/desk/src/lib/boardView.ts:15`, filtro `:44-46`, sin orden): 0 aciertos en
-  `decision/*`; `R08.2.md:1711` está en M1.9.1 y no es acuerdo. «Ordenado sólo en lo decidido» = **no se ordena**; no se
-  toca `boardView.ts`.
+  abierta (`docs/sdd/Preguntas_Gerencia_2026-09-29.md:69-89`; quién ajusta, `:87`). El modelo de prioridad del maestro
+  ocupa `R08.2.md:1696-1710` y su regla manual («sólo por superadministrador o Director Técnico») está en `:1709`, pero
+  no es respuesta de Gerencia, y `decision/c10-permisos-cargo` cierra la lista de excepciones por cargo en tres
+  (`openspec/config.yaml:1932-1934`): esta tanda **no** construye una excepción para el Director Técnico. Por eso
+  `cierra: no`.
+- **El desempate «FIFO inteligente por fecha promesa»** (`R08.2.md:1711`): el término no está definido y no existe en
+  el código (`git grep -n "fecha promesa\|fechaPromesa\|fecha_promesa" -- apps packages` = 0). Pregunta a Gerencia en
+  `docs/sdd/ENTRADA.md`, E-093, como apéndice de la pregunta 3 de `Preguntas_Gerencia_2026-09-29.md`.
 - Propagación a los tickets abiertos que ya existan (S-1): punto abierto con dueño Gerencia, sin destino.
 - Tope numérico de la lista (S-7).
 - Tickets sin `client_id` (tickets de Zoho no enlazados): no heredan.
@@ -67,7 +78,8 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
 ## Capacidades
 
 **Nueva:** ninguna; R-2 no aplica y `config.yaml` no se toca. Justificación: la fila del plan asigna F1B-07 a
-`tickets-core` (`plan:499`), y las otras dos ya existen.
+`tickets-core` (`plan:499`), y las otras tres ya existen (`vistas-tablero` está en `capabilities`,
+`openspec/config.yaml:280`).
 **Modificadas:**
 - `tickets-core`: RQ-TC-24 (`openspec/specs/tickets-core/spec.md:856-868`, que deja fuera «la más alta de las dos» para
   F1B-07 en `:868`) pasa a combinar contrato y Top 5; requisitos nuevos de prioridad del cliente, lista Top 5 y ajuste
@@ -76,6 +88,8 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
   campos en `openspec/specs/transitions-st/spec.md:310`).
 - `permissions`: RQ-PM-20 (`permissions/spec.md:359-362`, «hoy no las llama nadie») — `puedeFijarPrioridadTop5` pasa a
   tener llamadores.
+- `vistas-tablero`: requisito nuevo RQ-VT-09, «Mis tickets» ordenado por urgencia en el servidor (la capacidad acaba hoy
+  en RQ-VT-08).
 
 ## Enfoque
 
@@ -110,6 +124,10 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
 - **S-7 · Sin tope.** «Top 5» se toma como nombre, no como número (hipótesis); la UI muestra el recuento.
 - **S-8 · Ajuste sólo en tickets de cliente Top 5** (fuera de Top 5 es la 3.b) → 409 en otro caso.
 - **S-9 · Desmarcar Top 5** no toca los tickets ya creados.
+- **S-10 · Desempate de «Mis tickets».** Dentro de una misma prioridad se mantiene el orden de hoy, el de
+  `repo.ts:151` (`created_time` descendente, sin fecha al final). Un valor que no sea `Urgent`, `High`, `Medium` ni
+  `Low` (vacío, `null` o desconocido) cuenta como «sin prioridad» y va al final. El «FIFO por fecha promesa» queda
+  fuera hasta que Gerencia responda E-093.
 
 ## Nadie con cargo (S-1 de F1C-05) y cambio visible
 
@@ -123,8 +141,11 @@ prioridad y cuyo cliente no es Top 5 ni tiene contrato **se queda sin prioridad 
 fijaba en ese paso (`priority()` obligatorio, `transitions.ts:83-84`) y desde el despliegue ya no puede. En «Modo de
 prioridad» del tablero esos tickets caen al grupo «Otra prioridad» (`apps/desk/src/board.ts:35` la declara y `:45`
 reparte a ella todo lo que no es `High`, `Urgent`, `Medium` ni `Low`; el diseño citaba `board.ts:41`, que es la lectura
-`const p = t.priority`). Es consecuencia de S-2 y no se corrige aquí: calificar a los clientes sin contrato ni Top 5 es la
-pregunta 3.b. Va en el paquete de despliegue junto al cambio anterior.
+`const p = t.priority`). Es consecuencia de S-2 **mientras la pregunta 3.b.3 siga pendiente**
+(`Preguntas_Gerencia_2026-09-29.md:87`, quién ajusta a mano fuera de los Top 5) y no se corrige aquí: con esa respuesta
+habría alguien con permiso para fijar la prioridad de esos tickets, y calificar a los clientes sin contrato ni Top 5 es
+el resto de la 3.b. Va en el paquete de despliegue como cambio visible, junto al anterior. Y desde que «Mis tickets» se
+ordena (alcance 7), esos tickets van **al final** de la lista de su técnico.
 
 ## Pruebas que hoy fijan la prioridad obligatoria y se revisan
 
@@ -153,12 +174,14 @@ Archivar no las da por hechas.
 ## Previsión de tamaño
 
 Medida: `git diff --shortstat --no-renames` + nuevo sin trackear. La exploración estima ~700-950 de código y pruebas.
+**Re-estimado el 2026-10-01** con la corrección de «Mis tickets»; manda la tabla de `tasks.md` («Review Workload
+Forecast»), que ya había subido el lote 1 a ~600 al meter en él las dos tablas.
 
 | Lote | Contenido | Estimación (incl. apply-progress ~60) |
 |---|---|---|
-| 1 · Modelo y alta | `shared` (la más alta, lista blanca), tabla, `db`, rutas del cliente, `ticketService.ts:106`, cuatro combinaciones | ~520 |
-| 2 · Ajuste y guarda | `prioridad_ajustes`, ruta de ajuste, `transitions.ts:84`, guarda con prueba de posición, fixtures | ~420 |
-| 3 · UI y cierre | panel Top 5, ajuste en ficha, `TransitionPanel`, regla 13 por escrito, barrido regla 4 | ~260 |
+| 1 · Modelo y alta | `shared` (la más alta, lista blanca), las dos tablas, `db`, rutas del cliente, `ticketService.ts:106`, cuatro combinaciones | ~600 (sin cambio) |
+| 2 · Ajuste, guarda y «Mis tickets» | ruta de ajuste, `transitions.ts:84`, guarda con prueba de posición, fixtures; orden por urgencia y `GET /api/mis-tickets` | ~570 (era ~410; +~160) |
+| 3 · UI y cierre | panel Top 5, ajuste en ficha, `TransitionPanel`, «Mis tickets» consume el servidor, regla 13 por escrito, barrido regla 4 | ~400 (era ~380) |
 
 Verify (informe ~300-360) y archive (dos veces la carpeta por el `git mv`, más fusión del delta y `archive-report`) son
 intentos aparte; el archive supera 800.
@@ -175,15 +198,19 @@ Revertir los commits del lote. Las dos tablas son aditivas y sólo las lee este 
 - [ ] El ajuste no escribe en `ticket_transitions` y no reinicia el SLA.
 - [ ] Técnico que cambia la prioridad en las dos transiciones → 403; sin `priority` → la transición pasa.
 - [ ] Mover la guarda delante del 403 de área o detrás del 422 pone la suite en rojo.
+- [ ] `GET /api/mis-tickets` devuelve los tickets abiertos derivados al usuario en orden `Urgent > High > Medium > Low >
+  sin prioridad`, y dentro de una prioridad en el orden de hoy; anular el orden pone la suite en rojo.
 
 ## Cierre esperado
 
 - Línea del `archive-report`: «Cubre de F1B-07 la prioridad del cliente Top 5 (lista, prioridad y ajuste con motivo
-  por el Director Comercial), "manda la más alta" con el contrato al nacer y el bloqueo de la prioridad para el
-  técnico; deja fuera la calificación automática de los clientes sin contrato ni Top 5 (3.b), el orden de "Mis
-  tickets" y la propagación a los tickets abiertos existentes.»
+  por el Director Comercial), "manda la más alta" con el contrato al nacer, el bloqueo de la prioridad para el
+  técnico y el orden de "Mis tickets" de más a menos urgente en el servidor; deja fuera la calificación automática de
+  los clientes sin contrato ni Top 5 y quién ajusta fuera de los Top 5 (3.b), el desempate por fecha promesa (E-093)
+  y la propagación a los tickets abiertos existentes.»
 - `toca_maestro: si`: el maestro da el encaje del Top 5 por pendiente (`R08.2.md:5022-5023`); M1.9.1 (`:1692`) no
   conoce el Top 5 como dato del cliente y atribuye el ajuste manual a superadministrador o Director Técnico
-  (`:1709`); el Anexo D nº 53 (`:4198-4199`) queda cerrado por
+  (`:1709`), cosa que la tanda no construye porque es la pregunta 3.b.3; el orden de «Mis Tickets» (`:1711`) queda
+  construido salvo el desempate por fecha promesa, que el maestro no define (E-093); el Anexo D nº 53 (`:4198-4199`) queda cerrado por
   `anexo-53-contratos` (`config.yaml:2459`). Texto para el expediente R08.3, sin tocar el `.docx`.
 - Barrido de citas de la regla de mutación 4 sobre los ficheros muy citados que se toquen.

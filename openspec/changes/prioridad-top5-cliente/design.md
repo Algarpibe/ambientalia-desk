@@ -161,8 +161,19 @@ Pruebas de posición (fichero nuevo `apps/desk/server/services/guardaPrioridad.t
 **Cambio visible desde el primer minuto, independiente de P.1:** en `Escalado a Revisión` y `Devolución a corrección`
 el técnico deja de ver el campo Prioridad (§8) y ya no es obligatorio; por API recibe 403 si manda una distinta. El
 admin lo sigue viendo, opcional. Consecuencia que va al paquete de despliegue: los tickets que nacen sin prioridad y
-no son Top 5 ni de contrato **se quedan sin prioridad** al escalar, y en «Modo de prioridad» (`board.ts:41`) caen al
-grupo sin prioridad, cosa que hoy el escalado corregía.
+no son Top 5 ni de contrato **se quedan sin prioridad** al escalar, y en «Modo de prioridad» caen al grupo «Otra
+prioridad» (`apps/desk/src/board.ts:35` lo declara y `:45` le reparte todo lo que no es `High`, `Urgent`, `Medium` ni
+`Low`; la cita anterior a `board.ts:41` era la lectura `const p = t.priority`, corrección C-6 de `tasks.md`), cosa que
+hoy el escalado corregía. Con el orden de §12, además, van al final de «Mis tickets».
+
+**Por qué queda el hueco (2026-10-01): es consecuencia de la pregunta 3.b.3, pendiente.** Quién ajusta a mano la
+prioridad fuera de los Top 5 está preguntado a Gerencia (`docs/sdd/Preguntas_Gerencia_2026-09-29.md:87`). El maestro
+lo atribuye a «superadministrador o Director Técnico» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1709`, dentro del modelo
+de prioridad de `:1696-1710`), pero no es respuesta de Gerencia, y `decision/c10-permisos-cargo` cierra la lista de
+excepciones por cargo en tres (`openspec/config.yaml:1932-1934`, «lo que no está en la lista no cambia»). Construir
+aquí una excepción para el Director Técnico sería una cuarta excepción no dada: no se construye. Con la respuesta, el
+hueco se cierra con un predicado más en `cargos.ts` (área Servicio Técnico Y el cargo que diga Gerencia) consumido
+por la misma guarda de §5; hasta entonces, sólo el admin fija la prioridad de esos tickets.
 
 ## 7 · S-1: herencia al nacer
 
@@ -211,6 +222,7 @@ componente nuevo `Top5Panel.tsx`, buscador de Books (`searchClients`, `client.ts
 | l | 422 del ajuste antes del 403 | sin cargo y sin motivo → 403 |
 | m | 404 del `PUT` detrás del 403 | cliente inexistente + sin cargo → 404 |
 | n | `'Alta'` en `PRIORIDADES_ASIGNABLES` | igualdad con `transitions.ts:84` |
+| u, v, w, x, y | «Mis tickets» (§12) | ver §12 |
 
 ## 10 · Ficheros muy citados y barrido del cierre
 
@@ -231,15 +243,64 @@ Medida: `git diff --shortstat --no-renames` + `wc -l` de lo nuevo sin trackear.
 | Lote | Contenido | Código | Pruebas | apply-progress | Total |
 |---|---|---|---|---|---|
 | 1 · Dominio, esquema, datos del cliente, alta | `prioridad.ts`, `contratos.ts`, `schema.sql`, `migrate.*`, `db/prioridadCliente.ts` (cliente), rutas GET/PUT, `:106` | ~200 | ~330 | ~60 | ~590 |
-| 2 · Ajuste y guarda | `db` y ruta del ajuste, `transitions.ts:84`, `:131`, `cargos.ts:78`, fixtures | ~90 | ~260 | ~60 | ~410 |
-| 3 · Interfaz y cierre | `Top5Panel`, `PanelPrioridad`, `TransitionPanel`, `Configuracion`, `client.ts`, tabla de §8 con líneas | ~270 | 0 | ~60 | ~330 |
+| 2 · Ajuste, guarda y «Mis tickets» | `db` y ruta del ajuste, `transitions.ts:84`, `:131`, fixtures; §12 (`ordenarPorUrgencia`, `esDeMisTickets`, `GET /api/mis-tickets`, `boardView.ts:1`, `:45`) | ~125 | ~385 | ~60 | ~570 |
+| 3 · Interfaz y cierre | `Top5Panel`, `PanelPrioridad`, `TransitionPanel`, `Configuracion`, `client.ts`, `App.tsx` (§12), tabla de §8 con líneas | ~280 | 0 | ~60 | ~340 |
 
+Re-estimado el 2026-10-01: §12 suma ~160 al lote 2 y ~10 al 3; el lote 1 no cambia. Manda la tabla de `tasks.md`.
 Verify y archive son intentos aparte; el archive supera 800 por el `git mv`.
 
 **Fuera**, con fuente: calificación de clientes sin contrato ni Top 5, niveles y ajuste fuera de Top 5
-(`Preguntas_Gerencia_2026-09-29.md:69-89`); orden de «Mis tickets» (`boardView.ts:15`, `:44-46`; 0 aciertos en
-`decision/*`); propagación a abiertos (S-1); tope de la lista (S-7); tickets sin `client_id` (409); sincronizador,
-`upsertTicket`, `TICKET_COLS` (IV-11) y `remision.ts` (IV-12); mostrar los ajustes en el Historial.
+(`Preguntas_Gerencia_2026-09-29.md:69-89`; el ajuste, `:87`, y su consecuencia en §6); el desempate por fecha promesa
+de «Mis tickets» (`R08.2.md:1711`, sin definir; E-093); ordenar por prioridad las demás vistas; propagación a abiertos
+(S-1); tope de la lista (S-7); tickets sin `client_id` (409); sincronizador, `upsertTicket`, `TICKET_COLS` (IV-11) y
+`remision.ts` (IV-12); mostrar los ajustes en el Historial.
+
+## 12 · «Mis tickets» ordenado en el servidor (añadido el 2026-10-01)
+
+Corrección de lectura: el orden está decidido (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1711`, M1.9.1, y `:781`, §1.8, decisión del
+14/08); el desempate por fecha promesa no (S-10, E-093). Hoy: el servidor sirve los activos por `created_time`
+descendente (`packages/zoho-sync/src/db/repo.ts:151`) y «Mis tickets» es un filtro de vista en el cliente
+(`apps/desk/src/lib/boardView.ts:44-46`), sin orden.
+
+**Dominio** (`prioridad.ts`, parte 3, AL FINAL, lote 2):
+
+```ts
+export function ordenarPorUrgencia<T extends { priority: string | null }>(xs: readonly T[]): T[]
+  // copia + sort estable por RANGO descendente; lo que no está en RANGO (null, '', 'Alta') vale 0 y va al final
+export function esDeMisTickets(t: Pick<Ticket, 'statusType' | 'derivado'>, userId: string): boolean
+  // t.statusType !== 'Closed' && t.derivado?.id === userId — el MISMO predicado que hoy está en boardView.ts:45
+```
+
+Reutiliza `RANGO` del lote 1 (`Urgent 4 > High 3 > Medium 2 > Low 1`); `Array.prototype.sort` es estable desde
+ES2019, así que dentro de un rango se conserva el orden de entrada, que es el de `repo.ts:151`.
+
+**Servidor** (`routes/prioridad.ts`, AL FINAL, lote 2): `GET /api/mis-tickets`, con sesión. Reproduce la forma de
+`GET /api/tickets` (`apps/desk/server/routes/tickets.ts:114-115`: `getActiveTickets` + `rowToTicket` +
+`esperandoAprobacionCliente`), filtra con `esDeMisTickets(t, req.user!.id)` y ordena con `ordenarPorUrgencia`. Ruta
+propia y no `?scope=mios`: meter la rama en el manejador de `tickets.ts:104-116` desplazaría todas las líneas
+siguientes de un fichero citado, y una ruta `/api/tickets/mios` la capturaría antes `/api/tickets/:id`
+(`tickets.ts:128`, registrada en `app.ts:52`, antes que las de esta tanda en `:61`). El listado general no se toca: su
+orden sigue siendo el de hoy (RQ-VT-09, escenario propio).
+
+**Vista** (`boardView.ts`, en sitio, lote 2, con prueba porque es `.ts`): `:1` pasa a
+`import { esDeMisTickets, type Ticket } from '@ambientalia/shared'` y `:45` a
+`? tickets.filter((t) => esDeMisTickets(t, userId))`. Mismo número de líneas; una sola implementación del predicado
+(H5). `filter` conserva el orden, así que aplicada a la lista del servidor no la reordena.
+
+**Cliente** (lote 3, `.tsx` fuera de la red): `client.ts` gana `fetchMisTickets()` al final; `App.tsx` usa esa lista
+cuando la vista es `mios` en vez de `tickets` (`App.tsx:75`, `:78`; punto exacto, **hipótesis** hasta leerlo entero
+en el lote 3). Regla 13: el cliente no ordena; la decisión «qué orden» la impone `routes/prioridad.ts` (línea real al
+cierre). En «Modo de prioridad» las columnas ya agrupan por prioridad (`board.ts:38-45`) y el orden de §12 sólo se ve
+dentro de cada columna de estado.
+
+**Pruebas y mutaciones.** `prioridad.test.ts` (al final): los cinco rangos en orden, desconocidos al final, estable,
+no muta la entrada; `esDeMisTickets` (cerrado, de otro, sin derivar → `false`). `apps/desk/server/misTickets.test.ts`
+(nuevo, pg-mem + supertest): los seis escenarios de RQ-VT-09. `boardView.test.ts` (al final): `mios` conserva el orden
+de entrada. Mutaciones: **(u)** `ordenarPorUrgencia` devuelve la copia sin ordenar → rojo en «de más a menos urgente»;
+**(v)** `Urgent` por debajo de `High` en `RANGO` → rojo en el primer escenario (y en «`Urgent` gana a `High`» del lote
+1); **(w)** quitar el filtro de la ruta → rojo en «sólo los suyos»; **(x)** desempate invertido (ordenar por
+`created_time` ascendente dentro del rango) → rojo en «el orden de hoy»; **(y)** la ruta ordena también el listado
+general (`ORDER BY` en `repo.ts:151`) → rojo en «el listado general no cambia».
 
 ## Estrategia de pruebas
 
@@ -247,7 +308,8 @@ Verify y archive son intentos aparte; el archive supera 800 por el `git mv`.
 |---|---|---|
 | Pura | lista, orden, más alta, tabla de verdad, validadores, `cambiaPrioridadSinPermiso` | `packages/shared/src/prioridad.test.ts` (nuevo), final de `contratos.test.ts` |
 | Esquema | recuento, `CHECK`, upsert | `migrate.test.ts` |
-| Servidor | alta Top 5, rutas y escaleras, transacción del ajuste, guarda y posiciones | `apps/desk/server/prioridadTop5.test.ts` y `services/guardaPrioridad.test.ts` (nuevos) |
+| Servidor | alta Top 5, rutas y escaleras, transacción del ajuste, guarda y posiciones; orden de «Mis tickets» | `apps/desk/server/prioridadTop5.test.ts`, `services/guardaPrioridad.test.ts` y `misTickets.test.ts` (nuevos) |
+| Vista (`.ts`) | `mios` consume el predicado compartido y no reordena | final de `apps/desk/src/lib/boardView.test.ts` |
 | Interfaz | — | excluida (F0-00) |
 
 `strict_tdd`: cada prueba nace roja. Sin `any` nuevos (techo de ESLint).
