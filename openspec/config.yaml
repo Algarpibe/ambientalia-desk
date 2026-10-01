@@ -3559,6 +3559,11 @@ decisiones_de_gerencia_adenda:
         aa11b1c  supervisión 01/10 noche ............... 319  (294 / 25)
         ee9989f  registro de E-145 .....................  36  (36 / 0)      → supervisión 429 + 355
         TOTAL que ve el registro (árbol b85cdcc → HEAD)  1.579
+    medida_real_del_registro: |
+      El `settle` registró 1.651, no 1.579: los 72 de más son el propio commit de este registro (`f6f1b5b`,
+      E-146 y E-147), hecho ANTES del `settle` como se ordenó. Mismo fenómeno que E-147, una vez más.
+      Reset hecho el 01/10 sobre la revisión `sha256:4bdf3898…`; los lotes 2 (`f644027`, 594) y 3
+      (`5251896`, 535) y el verify (`15e7bce`, 149) cerraron cada uno en su intento, bajo 800.
     consecuencias: |
       (1) Sigue el PRECEDENTE DEL 10/09 de la regla del ciclo 2 (`CLAUDE.md`, «Regla del ciclo 2»: 1.718 imputadas
       frente a 73 propias de `mensaje-422-cliente-duplicado`) y el reset de mantenedor de
