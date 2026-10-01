@@ -6,6 +6,9 @@
  * la usa para decidir la prioridad de un ticket recién nacido.
  */
 
+import type { Transition } from './transitions'
+import { puedeFijarPrioridadTop5, type SujetoDePermiso } from './cargos'
+
 /** Lo que se puede FIJAR. Igual a las opciones del campo `priority` de `transitions.ts:84` (una prueba lo vigila, D-2). */
 export const PRIORIDADES_ASIGNABLES = ['High', 'Medium', 'Low'] as const
 export type PrioridadAsignable = (typeof PRIORIDADES_ASIGNABLES)[number]
@@ -47,4 +50,37 @@ export function prioridadClienteDelCuerpo(v: unknown): CuerpoPrioridadCliente {
   if (!top5) return { ok: true, top5: false, prioridad: null }
   if (!esPrioridadAsignable(prioridad)) return { ok: false, errors: [`La prioridad debe ser una de: ${PRIORIDADES_ASIGNABLES.join(', ')}`] }
   return { ok: true, top5: true, prioridad }
+}
+
+export const MENSAJE_PRIORIDAD_BLOQUEADA = 'La prioridad del ticket la fija el Director Comercial: tu cargo no puede cambiarla en esta etapa'
+
+export type CuerpoAjuste =
+  | { ok: true; prioridad: PrioridadAsignable; motivo: string }
+  | { ok: false; errors: string[] }
+
+/**
+ * Valida el cuerpo del `POST` de ajuste por ticket (RQ-TC-29). Acumula TODOS los errores: la prioridad ha de ser
+ * asignable y distinta de la actual (D-9: una traza sin cambio no dice nada) y el motivo no puede quedar vacío tras `trim`.
+ */
+export function ajusteDelCuerpo(v: unknown, actual: string | null): CuerpoAjuste {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return { ok: false, errors: ['El cuerpo debe ser un objeto con prioridad y motivo'] }
+  const { prioridad, motivo } = v as Record<string, unknown>
+  const errors: string[] = []
+  const m = typeof motivo === 'string' ? motivo.trim() : ''
+  if (!esPrioridadAsignable(prioridad)) errors.push(`La prioridad debe ser una de: ${PRIORIDADES_ASIGNABLES.join(', ')}`)
+  else if (prioridad === actual) errors.push('La prioridad nueva es igual a la actual')
+  if (m === '') errors.push('El motivo es obligatorio')
+  return errors.length || !esPrioridadAsignable(prioridad) ? { ok: false, errors } : { ok: true, prioridad, motivo: m }
+}
+
+/**
+ * La guarda del técnico (RQ-TS-21): verdadero si la transición declara un campo `target: 'priority'` (D-8), el cuerpo trae
+ * una prioridad no vacía, distinta de la actual, y el sujeto NO cumple `puedeFijarPrioridadTop5` (se CONSUME de `cargos.ts`;
+ * el admin pasa ahí). Sin excepción para el Director Técnico: la pregunta 3.b.3 sigue abierta.
+ */
+export function cambiaPrioridadSinPermiso(t: Pick<Transition, 'fields'>, valores: unknown, actual: string | null, s: SujetoDePermiso): boolean {
+  if (!t.fields.some((f) => f.target === 'priority')) return false
+  const pedida = typeof valores === 'object' && valores !== null ? (valores as Record<string, unknown>).priority : undefined
+  if (pedida === undefined || pedida === null || pedida === '') return false
+  return pedida !== actual && !puedeFijarPrioridadTop5(s)
 }

@@ -272,3 +272,9 @@ describe('asociacion-ov-ticket · lo que TransitionPanel da por supuesto del cat
     expect(campoFechas('aprobacion')).toEqual(['Fecha Orden de Venta Final'])
   })
 })
+
+describe('buildTransitionPlan · priority opcional (RQ-TS-20)', () => {
+  it('TS20-1 · escalado_a_revision sin prioridad no da error', () => {
+    expect(buildTransitionPlan(transitionById('escalado_a_revision')!, { comment: 'x', 'Días de entrega': '20' }).errors).toEqual([])
+  })
+})

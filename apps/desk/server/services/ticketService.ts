@@ -3,7 +3,7 @@ import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambien
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -128,7 +128,7 @@ export async function executeTransition(
   }
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }) // Escalón B (F1C-05): tras el área, antes de todo 422
+  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }) // Escalón B (F1C-05): tras el área, antes de todo 422
   const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, b.values)
   const plan = buildTransitionPlan(t, values)
   const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ if (plan.errors.length || erroresFecha.length || errCuarentena.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena] })

@@ -61,7 +61,7 @@ async function ticket(id: string, estado: string, numero = 8200): Promise<void> 
 
 /**
  * `escalado_a_revision`: `Rev./Diagnostico` → `Notificado`, área **Servicio Técnico** (`ADMIN` la
- * salta), con `Prioridad` y `Días de entrega` como únicos obligatorios. Deja pasar las guardas A y B
+ * salta), con `Días de entrega` como único obligatorio (`priority` es opcional desde F1B-07). Deja pasar las guardas A y B
  * sin rozarlas, para que N4 llegue limpia hasta la guarda de derivación.
  */
 const ESCALADO = 'escalado_a_revision'

@@ -117,6 +117,13 @@ tablas existen tras `migrate`, el `CHECK` del motivo rechaza `''`, y un upsert r
 | `GET /api/tickets/:id/prioridad` | cualquier sesión | A 404 ticket; devuelve prioridad, `top5` del cliente y ajustes |
 | `POST /api/tickets/:id/prioridad` | ídem PUT | A 404 ticket < B₁ 409 cliente no Top 5 o ticket sin `client_id` (S-8) < B₂ 403 < C 422 (`ajusteDelCuerpo`: asignable, motivo recortado no vacío, distinta de la actual; todos en `errors[]`) |
 
+**Detalles de forma (medidos contra el código el 2026-10-01, lotes 1 y 2a):**
+- El `404` del cliente inexistente lleva `{ error: 'Cliente no encontrado' }` (`routes/prioridad.ts:28` en el `GET`, `:36` en el `PUT`); el del ticket, `{ error: 'Ticket no encontrado' }` (`:56` en el `GET`, `:64` en el `POST`). El comodín de `app.ts:73` también da `404`, de ahí que las pruebas comparen el cuerpo.
+- El cuerpo del `422` es `{ error: errors[0], errors }` (`routes/prioridad.ts:41` en el `PUT`, `:72` en el `POST`): `error` repite el primero para quien sólo lee un mensaje; `errors[]` los trae todos.
+- `listarTop5` usa `LEFT JOIN` con `clients` (`db/prioridadCliente.ts:49`) y, si el cliente no tiene nombre, enseña el id (`:51`): un Top 5 cuyo cliente no está en `clients` no desaparece de la lista.
+- Un cliente sin fila en `cliente_prioridad` se lee como `{ clientId, top5: false, prioridad: null, actualizadoPor: null, actualizadoAt: null }` (`routes/prioridad.ts:29`): no es Top 5.
+- El `409` del ajuste (B₁) lleva `{ error }` y dos mensajes: ticket sin `client_id` (`:66`) y cliente que no es Top 5 (`:67`). El `403` (B₂) es `:69`. `GET` y `POST` del ticket devuelven la misma forma `{ ticketId, prioridad, clientId, top5, prioridadTop5, ajustes[] }` (`resumenDelTicket`, `:48-51`).
+
 B₁ antes que B₂ sigue el precedente «estado antes que permiso» (`ticketService.test.ts:137-141`). No filtra nada:
 `GET /api/top5` es público para la sesión. No hay escalón D. `req.user` ya trae `cargoPermiso` (F1C-05).
 

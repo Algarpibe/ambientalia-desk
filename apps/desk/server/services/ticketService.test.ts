@@ -67,8 +67,8 @@ async function ticket(id: string, estado: string, numero = 8100, extra: Record<s
 // ══════════════════════════════════════════════════════════════════════════════════════════════════
 
 /**
- * `escalado_a_revision`: `Rev./Diagnostico` → `Notificado`, área **Servicio Técnico**, con dos campos
- * obligatorios (`Prioridad` y `Días de entrega`). Sirve para las tres guardas de golpe.
+ * `escalado_a_revision`: `Rev./Diagnostico` → `Notificado`, área **Servicio Técnico**, con un campo
+ * obligatorio (`Días de entrega`; `priority` es opcional desde F1B-07). Sirve para las tres guardas de golpe.
  */
 const ESCALADO = 'escalado_a_revision'
 const VALORES_ESCALADO = { priority: 'High', 'Días de entrega': 5 }
@@ -101,12 +101,12 @@ describe('executeTransition · cada guarda por separado', () => {
   })
 
   it('los obligatorios que faltan son 422, y vienen TODOS en una lista, no de uno en uno', async () => {
-    await ticket('t1', 'Rev./Diagnostico')
-    const r = await fallo(() => executeTransition(db, 't1', { transitionId: ESCALADO, values: {} }, ADMIN))
+    await ticket('t1', STATUS_TICKET_CREADO)
+    const r = await fallo(() => executeTransition(db, 't1', { transitionId: 'habilitar_servicio', values: {} }, ADMIN))
     expect(r.status).toBe(422)
     // Los dos a la vez: un 422 que sólo dijera el primero obligaría a descubrir el segundo enviando
     // otra vez, y `buildTransitionPlan` los acumula precisamente para no hacer eso.
-    expect(r.body.errors).toEqual(['Falta el campo obligatorio: Prioridad', 'Falta el campo obligatorio: Días de entrega'])
+    expect(r.body.errors).toEqual(['Falta el campo obligatorio: Orden de Venta', 'Falta el campo obligatorio: Serial'])
   })
 
   it('el administrador pasa la guarda de área sin tener ninguna', async () => {
@@ -117,7 +117,7 @@ describe('executeTransition · cada guarda por separado', () => {
 
   it('con el área correcta la transición se ejecuta y deja traza a nombre de quien la hizo', async () => {
     await ticket('t1', 'Rev./Diagnostico')
-    await executeTransition(db, 't1', { transitionId: ESCALADO, values: VALORES_ESCALADO }, SERVICIO)
+    await executeTransition(db, 't1', { transitionId: ESCALADO, values: { 'Días de entrega': 5 } }, SERVICIO)
     const t = await db.query('SELECT transition_id, from_status, to_status, area, performed_by FROM ticket_transitions WHERE ticket_id=$1', ['t1'])
     expect(t.rows).toEqual([{ transition_id: ESCALADO, from_status: 'Rev./Diagnostico', to_status: 'Notificado', area: 'Servicio Técnico', performed_by: 'Tec' }])
   })
