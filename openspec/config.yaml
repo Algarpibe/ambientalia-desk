@@ -1451,7 +1451,7 @@ decisiones_de_gerencia:
       cerrada desde el 10/09.
     registro: "docs/sdd/ENTRADA.md → E-014 (cerrada) · plan §4.5, fila `decision/escalado-remision-creada`"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     precisada_por: "decision/escalado-destinatario-doble (17/09, posterior): el aviso va sólo al Coordinador Comercial"
 
   - clave: "decision/veto-plan-r01-1"
@@ -1516,7 +1516,7 @@ decisiones_de_gerencia:
       (`openspec/specs/derivacion-avisos/spec.md:67-70`), que declara exactamente tres entradas.
     registro: "docs/sdd/ENTRADA.md → E-014 (adenda 21/09) · plan §4.5, fila `decision/escalado-remision-creada`"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/e013-staging-f0-04"
     fecha: "2026-09-17"
@@ -1538,7 +1538,7 @@ decisiones_de_gerencia:
       migración de F1F-01— se prueba sobre la aplicación que usa la gente.
     registro: "docs/sdd/ENTRADA.md → E-013 (adenda 21/09, sigue abierta por la pregunta nueva)"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/ovi-garantia-autor"
     fecha: "2026-09-17"
@@ -1557,7 +1557,7 @@ decisiones_de_gerencia:
       cargo sin la matriz.
     registro: "docs/sdd/ENTRADA.md → E-017 (cerrada) · plan §4.5, fila `decision/ovi-garantia-autor`"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/p44-escritura-zoho"
     fecha: "2026-09-17"
@@ -1579,7 +1579,7 @@ decisiones_de_gerencia:
       (4) Anexo D nº 44 → resuelto, para el expediente R08.x.
     registro: "docs/sdd/ENTRADA.md → E-018 (cerrada) · plan §4.5, fila `decision/p44-escritura-zoho` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/titularidad-ov-equipo"
     fecha: "2026-09-17"
@@ -1600,7 +1600,7 @@ decisiones_de_gerencia:
       que se responda la pregunta del mantenedor.
     registro: "docs/sdd/ENTRADA.md → E-019 (cerrada) · plan §4.5, fila `decision/titularidad-ov-equipo` · `incumplimientos_vivos` → IV-8"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/vigencia-contrato"
     fecha: "2026-09-17"
@@ -1623,7 +1623,7 @@ decisiones_de_gerencia:
       modelar las dos cosas o recibirlas de Zoho.
     registro: "docs/sdd/ENTRADA.md → E-020 (cerrada) · plan §4.5, fila `decision/vigencia-contrato`"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/e003c-recuento-modelos"
     fecha: "2026-09-17"
@@ -1640,7 +1640,7 @@ decisiones_de_gerencia:
       (3) No responde a `e003-catalogo-equipos` ni a `e003b-registro-equipos`, que siguen abiertas.
     registro: "docs/sdd/ENTRADA.md → E-003 (adenda 21/09)"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/e005-iv4-iv11"
     fecha: "2026-09-21"
@@ -1681,7 +1681,7 @@ decisiones_de_gerencia:
       cuánta discrepancia enseñará el espejo el día que exista.
     registro: "docs/sdd/ENTRADA.md → E-005 (adenda 22/09) · `incumplimientos_vivos` → IV-11 · `CLAUDE.md` (fila de IV-11)"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/e013b-copia-pruebas"
     fecha: "2026-09-21"
@@ -1707,7 +1707,7 @@ decisiones_de_gerencia:
       (F1F-02, S51) y sigue pendiente: OBSERVACIÓN, no medición.
     registro: "docs/sdd/ENTRADA.md → E-013 (adenda 22/09, cerrada) · plan §5, fila F0-04"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/p8-p54-drive"
     fecha: "2026-09-21"
@@ -1730,7 +1730,7 @@ decisiones_de_gerencia:
       (5) Anexo D nº 8 y nº 54 → resueltos, para el expediente R08.x.
     registro: "docs/sdd/ENTRADA.md → E-024 (cerrada) · plan §4.5, fila `decision/p8-p54-drive` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/flujos-comercial-posible-cliente"
     fecha: "2026-09-21"
@@ -1750,7 +1750,7 @@ decisiones_de_gerencia:
       se construye queda sin responder. Se anota para el expediente; no se inventa destino.
     registro: "docs/sdd/ENTRADA.md → E-025 (cerrada) · plan §4.5, fila `decision/flujos-comercial-posible-cliente` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/top5-prioridad"
     fecha: "2026-09-21"
@@ -1773,7 +1773,7 @@ decisiones_de_gerencia:
       (5) Devuelto como pregunta, `top5-manual`.
     registro: "docs/sdd/ENTRADA.md → E-026 (triada, sigue abierta) · plan §4.5, fila `decision/top5-prioridad`"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
   - clave: "decision/titularidad-mantenedor"
     fecha: "2026-09-21"
@@ -1799,7 +1799,7 @@ decisiones_de_gerencia:
       vida. Tarea de persona, no cuenta como tanda.
     registro: "docs/sdd/ENTRADA.md → E-019 (adenda 22/09) · `incumplimientos_vivos` → IV-8 · `CLAUDE.md` (fila de IV-8) · plan §4.5, fila `decision/titularidad-ov-equipo` · docs/sdd/R08.3_Expediente_de_cambios.md §11"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
 
 
   # ── CORTE DEL 2026-09-24 · 36 respuestas de Gerencia (23 y 24/09) ──────────────────
@@ -1822,7 +1822,7 @@ decisiones_de_gerencia:
       (5) LAS TRES MÉTRICAS EXCLUYEN LOS MARCADOS: eso cambia el cálculo, no sólo el dato. Quien construya F1C-01 tiene que tocar las tres, no sólo añadir el estado.
     registro: "docs/sdd/ENTRADA.md → E-043 · plan §4.5, fila decision/c2-anulado · openspec/config.yaml → cifras_ancladas (estados) · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 32)"
     maestro_pasaje: "Anexo D nº 32"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-01 · S40"
 
   - clave: "decision/c3-salida-esperas"
@@ -1843,7 +1843,7 @@ decisiones_de_gerencia:
       (5) DEPENDE DE `c2-anulado` (mismo día): «Anulado con motivo repuesto no disponible o sin solución técnica» son dos de los cinco motivos que allí se fijaron. Las dos van juntas, y F1C-01 (S40) va antes que F1C-03 (S42), que es el orden correcto.
     registro: "docs/sdd/ENTRADA.md → E-044 · plan §4.5, fila decision/c3-salida-esperas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 31)"
     maestro_pasaje: "Anexo D nº 31"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-03 · S42"
 
   - clave: "decision/c4-dos-ramas"
@@ -1860,7 +1860,7 @@ decisiones_de_gerencia:
       (5) LA ANTIGÜEDAD DE `Pendiente de facturar` SE MIDE, y de ahí cuelga la alarma por fecha prevista de facturación de `anexo-33-checkbox` (24/09). Las dos respuestas construyen la misma pieza desde dos lados.
     registro: "docs/sdd/ENTRADA.md → E-045 · plan §4.5, fila decision/c4-dos-ramas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 34)"
     maestro_pasaje: "Anexo D nº 34"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-02 · S41"
 
   - clave: "decision/c5-tipo-evento"
@@ -1878,7 +1878,7 @@ decisiones_de_gerencia:
       (5) M7.3 (análisis de tiempos por tipo de evento) deja de depender de esta decisión y pasa a depender sólo de que F1C-04 se construya.
     registro: "docs/sdd/ENTRADA.md → E-046 · plan §4.5, fila decision/c5-tipo-evento · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 35)"
     maestro_pasaje: "Anexo D nº 35"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-04 · S43"
 
   - clave: "decision/c6-qa-liberacion"
@@ -1899,7 +1899,7 @@ decisiones_de_gerencia:
       (5) EL RETRABAJO SE REGISTRA PARA MEDIRLO: indicador nuevo que hoy no existe, y que encaja con la tanda de `kpis` decidida el 24/09 (`e009-kpis`).
     registro: "docs/sdd/ENTRADA.md → E-047 · plan §4.5, fila decision/c6-qa-liberacion · openspec/config.yaml → cifras_ancladas (estados) · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-07 · S47"
 
   - clave: "decision/c7-reloj-sla"
@@ -1921,7 +1921,7 @@ decisiones_de_gerencia:
       (5) CONFIRMA `e001-por-entregar` (24/09) DESDE EL OTRO LADO: `Por Entregar` para el reloj por ser espera del cliente, pero eso no convierte el cambio `por-entregar-es-espera` en contenido de F1C-06. Las dos respuestas lo dicen igual.
     registro: "docs/sdd/ENTRADA.md → E-048 · plan §4.5, fila decision/c7-reloj-sla · openspec/config.yaml → cifras_ancladas (esperas) · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-06 · S45"
 
   - clave: "decision/c10-permisos-cargo"
@@ -1943,7 +1943,7 @@ decisiones_de_gerencia:
       (6) RECOGE TRES RESTRICCIONES YA DECIDIDAS en otras respuestas —`anexo-33-checkbox`, `ovi-garantia-autor` (17/09) y `top5-manual`— y las convierte en la lista corta. No son nuevas: quedan reunidas.
     registro: "docs/sdd/ENTRADA.md → E-049 · plan §4.5, fila decision/c10-permisos-cargo · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 39)"
     maestro_pasaje: "Anexo D nº 39"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-05 · S44"
 
   - clave: "decision/top5-manual"
@@ -1961,7 +1961,7 @@ decisiones_de_gerencia:
       (6) MEDIDO EL 22/09 Y NO CAMBIADO: la noción de Top 5 no existe en el código. No hay nada que desactivar; hay lista de Top 5, prioridad en el cliente y ajuste por ticket con motivo que construir.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/top5-manual) · plan §4.5, fila decision/top5-prioridad, ahora cerrada · docs/sdd/ENTRADA.md → E-026, cerrada"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-07 · S43"
 
   - clave: "decision/p38-verificacion-calidad"
@@ -1982,7 +1982,7 @@ decisiones_de_gerencia:
       (6) «RESPONDO POR GERENCIA; CALIDAD LO HA VALIDADO» — la fila del plan decía «pendiente · Gustavo / Calidad». Queda cerrada por Gerencia con Calidad validando.
     registro: "docs/sdd/ENTRADA.md → E-052 · plan §4.5, fila decision/p38-verificacion-calidad · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 38, pasa de parcial a resuelto)"
     maestro_pasaje: "Anexo D nº 38"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1A-03 · F1B-06 · F1C-07"
 
   - clave: "decision/p45-macro-fases"
@@ -2000,7 +2000,7 @@ decisiones_de_gerencia:
       (6) CIFRAS CITABLES QUE EL REPOSITORIO NO TENÍA: Grimm EDM180, 8 N1; Horiba, 10 N1 válidos para los cuatro AP-370.
     registro: "docs/sdd/ENTRADA.md → E-053 · plan §4.5, fila decision/p45-macro-fases · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 45, y corrección del maestro)"
     maestro_pasaje: "Anexo D nº 45"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1D-03 · S44"
 
   - clave: "decision/p14-remisiones-entrada"
@@ -2017,7 +2017,7 @@ decisiones_de_gerencia:
       (5) PARCIAL: si la hoja de Google se sigue usando en paralelo o ya no, queda entre corchetes sin elegir. Importa porque, si alguien la sigue rellenando, hay dos registros de remisiones y sólo uno es el bueno. Devuelto como pregunta `p14b-hoja-google`.
     registro: "docs/sdd/ENTRADA.md → E-050 · plan §4.5, fila decision/p14-remisiones-entrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 14)"
     maestro_pasaje: "Anexo D nº 14"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1E-01 · S46"
 
   - clave: "decision/p15-p59-rutas"
@@ -2035,7 +2035,7 @@ decisiones_de_gerencia:
       (5) DEPENDE DEL CHECKLIST DINÁMICO (épica F1D, S42–S47) para que «equipo sin novedad pase rápido». F1D-01 y siguientes van DESPUÉS de F1B-03: mientras no exista el checklist dinámico, equipo sin novedad recorre las macro sin el atajo de marcarlas de golpe.
     registro: "docs/sdd/ENTRADA.md → E-051 · plan §4.5, fila decision/p15-p59-rutas · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 15 y 59, y la decisión del 03/09 no registrada)"
     maestro_pasaje: "Anexo D nº 15 y 59"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-08 · S48 · y F1B-03"
 
   - clave: "decision/falla-nueva-bloqueante"
@@ -2053,7 +2053,7 @@ decisiones_de_gerencia:
       (6) «PARA QUE NO DESANIME A REPORTAR» es criterio de diseño explícito, no adorno: cuatro campos y foto. Conviene que quede escrito, porque un formulario que crece es la forma habitual de que nadie reporte.
     registro: "docs/sdd/ENTRADA.md → E-054 · plan §4.5, fila decision/falla-nueva-bloqueante · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1D-07 · S47"
 
   - clave: "decision/e003-catalogo-equipos"
@@ -2070,7 +2070,7 @@ decisiones_de_gerencia:
       (5) `F1D` SON NUEVE TANDAS ENTRE S42 Y S47 y se apoyan en este catálogo: la respuesta las desbloquea por el lado del código y las deja colgando por el lado de los datos.
     registro: "openspec/config.yaml → capabilities (catalogo-equipos) · docs/sdd/ENTRADA.md → E-003, cerrada"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1D-01 · S42"
 
   - clave: "decision/e003b-registro-equipos"
@@ -2087,7 +2087,7 @@ decisiones_de_gerencia:
       (5) `catalogo-equipos`, EN SU PARTE DE REGISTRO DE EQUIPOS, QUEDA CUBIERTA POR F1B-02 — que además estrenó su propia capacidad, `hojas-vida`, con spec (`openspec/specs/hojas-vida/spec.md`). La capacidad `catalogo-equipos` sigue sin spec por su otra mitad, la de modelos (`e003`).
     registro: "openspec/config.yaml → capabilities (catalogo-equipos) · docs/sdd/ENTRADA.md → E-003b, cerrada"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-02 · cerrada el 23/09"
 
   - clave: "decision/e005b-parche-vehiculo"
@@ -2104,7 +2104,7 @@ decisiones_de_gerencia:
       (5) QUEDAN DOS INCUMPLIMIENTOS VIVOS SIN DESTINO —IV-9 (dos predicados de color divergentes) e IV-12 (orden de guardas en el alta)—. No se les inventa destino.
     registro: "openspec/config.yaml → incumplimientos_vivos (IV-11, destino F1B-11) · docs/sdd/ENTRADA.md → E-005, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-11 · S41"
 
   - clave: "decision/e005c-discrepancia-sin-espejo"
@@ -2121,7 +2121,7 @@ decisiones_de_gerencia:
       (5) EL PARCHE CRECE, Y ESO TOCA A `e005b`: con el aviso dentro, el parche deja de ser mínimo. Sigue siendo `tanda: F1B-11, cierra: no` y sigue sin mover el avance, pero su tamaño real es mayor que el que se supuso al preguntar.
     registro: "openspec/config.yaml → incumplimientos_vivos (IV-11) · docs/sdd/ENTRADA.md → E-005, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.1 (corregido el 2026-09-27: la fila vive en §11.1, no en §11.2, que no tiene fila para IV-11)"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-11 · S41"
 
   - clave: "decision/mantenedor-campo-cuando"
@@ -2138,7 +2138,7 @@ decisiones_de_gerencia:
       (5) EL CONTROL SIGUE EN F1B-11 (S41), SIN CAMBIOS, y ahí es donde IV-8 se cierra.
     registro: "openspec/config.yaml → incumplimientos_vivos (IV-8) · docs/sdd/ENTRADA.md → E-019, adenda · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-02 · F1B-11"
 
   - clave: "decision/trabajo-sin-ficha"
@@ -2155,7 +2155,7 @@ decisiones_de_gerencia:
       (5) GERENCIA ASUME EL RIESGO POR ESCRITO: «si nadie la lee, volvemos al punto de partida». La lista entra en el parte de cada corte, que es quien la lee.
     registro: "CLAUDE.md → R-5 · docs/sdd/ENTRADA.md → E-027, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "el propio mecanismo · sin fila"
 
   - clave: "decision/fecha-corte"
@@ -2173,7 +2173,7 @@ decisiones_de_gerencia:
       (6) EL TOPE ES DURO: el 21/12 es la última fecha posible por la renovación de licencias de Zoho, con una semana de funcionamiento sin Zoho antes de darlo de baja.
     registro: "docs/sdd/ENTRADA.md → E-055 · plan §4.5, fila decision/fecha-corte · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1F-01 · S50"
     corregida_por: |
       CORRECCIÓN DE GERENCIA, 24/09/2026, panel (opción B). NO SUSTITUYE lo de arriba: lo precisa, y lo de arriba
@@ -2265,7 +2265,7 @@ decisiones_de_gerencia:
       (5) «EL RESULTADO QUEDA ANOTADO EN EL PARTE» asigna trabajo recurrente a esta supervisión: la prueba de restauración mensual entra en el parte. Se recoge.
     registro: "docs/sdd/ENTRADA.md → E-056 · plan §4.5, fila decision/p55-backup · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 55)"
     maestro_pasaje: "Anexo D nº 55"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1F-02 · S51 · con adelanto inmediato"
 
   - clave: "decision/p62-capa-as-built"
@@ -2282,7 +2282,7 @@ decisiones_de_gerencia:
       (5) «DONDE DECÍA DEMOSTRADOR, SE ACTUALIZA: LA APLICACIÓN YA ESTÁ EN USO». Es un cambio de estatus del proyecto entero, no una errata, y toca todo el maestro.
     registro: "docs/sdd/ENTRADA.md → E-057 · plan §4.5, fila decision/p62-capa-as-built · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 62)"
     maestro_pasaje: "Anexo D nº 62"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "premisa de F0-02 · sin tanda"
 
   - clave: "decision/p64-historico-c1"
@@ -2299,7 +2299,7 @@ decisiones_de_gerencia:
       (5) LA FILA DE LA TABLA §4.5 DECÍA «Por asignar. Contar primero contra producción»: el criterio ya no está por asignar. Lo que queda es el recuento, y es tarea de persona, no tanda.
     registro: "docs/sdd/ENTRADA.md → E-058 · plan §4.5, fila decision/p64-historico-c1 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 64)"
     maestro_pasaje: "Anexo D nº 64"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "sin tanda · dato de producción"
 
   - clave: "decision/roles-validacion-informe"
@@ -2318,7 +2318,7 @@ decisiones_de_gerencia:
       (6) LA FIRMA SE CARGA AUTOMÁTICAMENTE CON LA IMAGEN DEL RESPONSABLE, como se acordó el 27/08: se reutiliza, no se reinventa.
     registro: "docs/sdd/ENTRADA.md → E-059 · plan §4.5, fila decision/roles-validacion-informe · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 10)"
     maestro_pasaje: "Anexo D nº 10"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1E-04 · S49"
 
   - clave: "decision/anexo-3-alerta"
@@ -2334,7 +2334,7 @@ decisiones_de_gerencia:
       (4) NO CREA ESTADO NUEVO: la señal del tablero es una marca de vista, no un estado, así que la cifra anclada de 21 estados no se mueve.
     registro: "docs/sdd/ENTRADA.md → E-033 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 3)"
     maestro_pasaje: "Anexo D nº 3"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1A-02 · F1B-08"
 
   - clave: "decision/anexo-7-garantia-proveedor"
@@ -2351,7 +2351,7 @@ decisiones_de_gerencia:
       (5) ALIMENTA LA TAXONOMÍA de `anexo-56-taxonomia` (ISO 14224), decidida el mismo día: las piezas con fallas repetidas son entrada de esa taxonomía.
     registro: "docs/sdd/ENTRADA.md → E-034 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 7)"
     maestro_pasaje: "Anexo D nº 7"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "fila nueva junto a F1B-03"
 
   - clave: "decision/anexo-9-comentarios"
@@ -2367,7 +2367,7 @@ decisiones_de_gerencia:
       (4) VERSIONADO DE CATÁLOGO: «la siguiente versión del catálogo» presupone que los catálogos se versionan (Grimm v1.8, Horiba v1.4). Hoy eso vive en ficheros de datos, no en la aplicación: quien construya F1D-04 tiene que decir dónde vive el número de versión.
     registro: "docs/sdd/ENTRADA.md → E-035 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 9)"
     maestro_pasaje: "Anexo D nº 9"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1D-04"
 
   - clave: "decision/anexo-33-checkbox"
@@ -2384,7 +2384,7 @@ decisiones_de_gerencia:
       (5) «Director Comercial» SIGUE SIN EXISTIR COMO CARGO EN EL CÓDIGO (medido el 18/09 y no cambiado: `grep -rn "Director Comercial" packages/ apps/ --include=*.ts` = 0). Lo crea `c10-permisos-cargo`.
     registro: "docs/sdd/ENTRADA.md → E-036 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 33)"
     maestro_pasaje: "Anexo D nº 33"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-02 · F1C-05"
 
   - clave: "decision/anexo-36-aviso"
@@ -2402,7 +2402,7 @@ decisiones_de_gerencia:
       (5) NO REABRE M11.4: la respuesta declara el borrado compatible con la auditoría inmutable, con el registro de borrados como contrapartida.
     registro: "docs/sdd/ENTRADA.md → E-037 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 36)"
     maestro_pasaje: "Anexo D nº 36"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "sin fila · dueño Gerencia"
 
   - clave: "decision/anexo-43-en-sitio"
@@ -2419,7 +2419,7 @@ decisiones_de_gerencia:
       (5) LAS VISITAS DE 2026 NO SE MIGRAN a la rama nueva: quedan en soporte remoto. Evita una migración de datos en 2027.
     registro: "docs/sdd/ENTRADA.md → E-038 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 43) · openspec/config.yaml → premisas_falsas_corregidas (PF-2)"
     maestro_pasaje: "Anexo D nº 43"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-06 (campo) · rama en 2027 T2"
 
   - clave: "decision/anexo-47-repuestos"
@@ -2442,7 +2442,7 @@ decisiones_de_gerencia:
       (5) EL SISTEMA NO COMPRA, GENERA LA SOLICITUD. Eso acota el alcance y evita una integración con Compras que nadie ha dimensionado.
     registro: "docs/sdd/ENTRADA.md → E-039 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 47)"
     maestro_pasaje: "Anexo D nº 47"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1D-06 · S46"
 
   - clave: "decision/anexo-53-contratos"
@@ -2465,7 +2465,7 @@ decisiones_de_gerencia:
       (5) «Contado desde su fecha de inicio» — el trimestre es del contrato, no natural. Detalle pequeño y caro de descubrir tarde.
     registro: "docs/sdd/ENTRADA.md → E-040 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 53)"
     maestro_pasaje: "Anexo D nº 53"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-11 · S41"
 
   - clave: "decision/anexo-56-taxonomia"
@@ -2482,7 +2482,7 @@ decisiones_de_gerencia:
       (5) ENGANCHA CON M3.2 (jerarquía de equipos), que ya usaba la misma norma: deja de haber dos taxonomías posibles en el proyecto.
     registro: "docs/sdd/ENTRADA.md → E-041 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 56, y clase C: errata 14224/14024 de la R08.2)"
     maestro_pasaje: "Anexo D nº 56"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1D-07 · S47"
 
   - clave: "decision/anexo-61-incorporacion"
@@ -2499,7 +2499,7 @@ decisiones_de_gerencia:
       (5) NO SUSTITUYE A `ENTRADA.md`: la respuesta lo dice expresamente —la bandeja recoge lo que entra, la comprobación garantiza que llega al maestro—. Son las dos mitades, y la que faltaba es ésta.
     registro: "openspec/config.yaml → decisiones_de_gerencia (campos maestro_pasaje y maestro_revision) · docs/sdd/ENTRADA.md → E-042 · docs/sdd/R08.3_Expediente_de_cambios.md §11.2 (Anexo D nº 61)"
     maestro_pasaje: "Anexo D nº 61"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "sin fila · devuelto como pregunta"
 
   - clave: "decision/e001-por-entregar"
@@ -2516,7 +2516,7 @@ decisiones_de_gerencia:
       (5) CONFIRMA `c7-reloj-sla` POR EL OTRO EXTREMO: la lista del reloj es propia y no se deriva de la del tablero. Las dos respuestas dicen lo mismo desde sitios distintos.
     registro: "openspec/config.yaml → unidad_de_avance (regla e) · CLAUDE.md → R-4 · docs/sdd/ENTRADA.md → E-001 (cerrada) · docs/sdd/Parte_2026-09-24.md"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "fuera-del-plan"
 
   - clave: "decision/e009-kpis"
@@ -2533,7 +2533,7 @@ decisiones_de_gerencia:
       (5) SE APOYA EN F1A-04, CERRADA (commit `e8c5e90`): los tres bodegajes ya se calculan sobre `ticket_transitions` y no sobre la fecha de creación. Esa es la base que la respuesta da por hecha, y lo está.
     registro: "openspec/config.yaml → capabilities (kpis) · docs/sdd/ENTRADA.md → E-009, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.2"
     maestro_pasaje: "sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "fila nueva en 1F"
     precisada_por: |
       PRECISIÓN DE GERENCIA, 24/09/2026, recogida en el corte del 28/09 —
@@ -2561,7 +2561,7 @@ decisiones_de_gerencia:
       (5) CIERRA E-061, que nació como consecuencia no prevista de `decision/anexo-3-alerta` en este mismo día.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-063 y E-061 (cerrada) · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo D nº 3 (las tres alarmas, en días hábiles) — por dependencia"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "fila nueva, talla S · sin escribir en el §5"
 
   - clave: "decision/barrido-comprobaciones-nuevas"
@@ -2578,7 +2578,7 @@ decisiones_de_gerencia:
       (5) NO REABRE F0-05, archivada el 20/09: es fila nueva, no ampliación de una cerrada. Es la lectura contraria a la de `calendario-habil`, que sí toca contenido de una tanda cerrada (F1A-02), y conviene ver las dos juntas.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-064 y E-060 (cerrada) · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo D nº 61 (incorporación de lo decidido) — por dependencia"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F0-06 · fila nueva, talla S · sin escribir en el §5"
 
   - clave: "decision/c10b-gerente-director"
@@ -2594,7 +2594,7 @@ decisiones_de_gerencia:
       (4) DEJA UNA SOLA NOMENCLATURA para todo el proyecto, que es lo que valía la pregunta: siete cargos, con esos nombres exactos, y cualquier otro nombre es informal.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:178 y §4.5 (fila c10-permisos-cargo) · docs/sdd/ENTRADA.md → E-065 · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo D nº 39 (permisos por cargo)"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1C-05 (ya abierta por c10-permisos-cargo)"
 
   - clave: "decision/p14b-hoja-google"
@@ -2610,7 +2610,7 @@ decisiones_de_gerencia:
       (4) ES LA SEGUNDA FUENTE VIVA FUERA DE ZOHO que aparece en dos días, tras la carpeta de Drive de `p55b-destino-copia`. La independencia comprometida es de Zoho Desk; las hojas y carpetas de Google son un frente aparte y hoy sin dueño escrito.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/ENTRADA.md → E-066 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo D nº 14) · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo D nº 14 (remisiones_entrada)"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1E-01 y F1F-01 (contenido nuevo, no escrito) · dos tareas de persona con fecha"
 
   - clave: "decision/p55b-destino-copia"
@@ -2627,7 +2627,7 @@ decisiones_de_gerencia:
       (5) CONFIRMA QUE LA COPIA DE DRIVE NO PASA POR EL SERVIDOR: es una transferencia directa entre dos servicios, y por tanto no consume el disco de Hostinger cuya capacidad motivó `p8-p54-drive`.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5 (fila p55-backup) · docs/sdd/ENTRADA.md → E-067 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo D nº 55) · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo D nº 55 (respaldo)"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1F-02 (crece) · adelanto inmediato sin fila"
 
   - clave: "decision/p64b-quien-ejecuta"
@@ -2644,7 +2644,7 @@ decisiones_de_gerencia:
       (5) LAS CIFRAS SE PEGAN EN EL PANEL, no en un correo: el panel pasa a ser también entrada de datos medidos, y no sólo de decisiones. El corte siguiente las recoge por la misma vía que las respuestas.
     registro: "openspec/config.yaml → decisiones_de_gerencia · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5 (fila p64-historico-c1) · docs/sdd/ENTRADA.md → E-068 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo D nº 64) · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo D nº 64 (histórico de C1)"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "— (tarea de persona, con fecha) · prepara consultas: sin fila, vence hoy"
 
   - clave: "decision/e009b-lista-indicadores"
@@ -2661,7 +2661,7 @@ decisiones_de_gerencia:
       (5) CLÁUSULA DE ESCAPE ESCRITA: si a la aplicación le falta un hito para calcular alguno, se dice **antes** de construir y se decide aparte. Es la primera vez que una respuesta prevé su propio descubrimiento y fija qué hacer con él.
     registro: "openspec/config.yaml → decisiones_de_gerencia (junto a e009-kpis) · docs/sdd/ENTRADA.md → E-069 · docs/sdd/R08.3_Expediente_de_cambios.md §11.3 (Anexo G) · docs/sdd/Parte_2026-09-24.md §9"
     maestro_pasaje: "Anexo G (indicadores) · capacidad kpis"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "fila nueva en 1F (ya decidida por e009-kpis) · ahora dimensionable"
 
   # ---------------------------------------------------------------------------
@@ -2789,7 +2789,7 @@ decisiones_de_gerencia:
       (5) CRUCE MEDIDO CON F1B-02 (hoja de vida, archivada el 23/09): los campos opcionales que enumera —adquisición, fin de garantía, código interno, Drive y mantenedor— son los que F1B-02 acaba de construir. El alta escribe en la estructura ya construida; no la amplía.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/equipo-nuevo-alta-en-ticket) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-070, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.4"
     maestro_pasaje: "M1.4 (rama de equipo nuevo) — sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "Fila nueva «Alta y edición del equipo», talla S–M, antes de S42 — sin escribir en el §5"
 
   - clave: "decision/edicion-datos-comerciales-equipo"
@@ -2806,7 +2806,7 @@ decisiones_de_gerencia:
       (5) LOS SEIS CAMPOS QUEDAN PARTIDOS EN DOS CLASES, y conviene que esté escrito: tres comerciales restringidos (factura, fin de garantía, mantenedor) y tres libres (adquisición, código interno, Drive). El mantenedor entra en la clase restringida, que es lo coherente con `decision/titularidad-mantenedor` (21/09): sólo el mantenedor puede pagar órdenes de ese equipo, luego quien lo edita decide quién puede pagar.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/edicion-datos-comerciales-equipo) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-071, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.4"
     maestro_pasaje: "M3.2 (registro de equipos) y M11.4 (auditoría) — sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "Misma fila que decision/equipo-nuevo-alta-en-ticket: «Alta y edición del equipo», S–M"
 
   - clave: "decision/mapa-en-la-app"
@@ -2823,7 +2823,7 @@ decisiones_de_gerencia:
       (5) CRUCE CON EL CRITERIO DE CORTE: la R01.3 sitúa «el mapa en la aplicación» DESPUÉS del corte del 14/12 (§C). Esta decisión lo pone ANTES de F1B-06, que está antes del corte. Las dos afirmaciones no pueden ser ciertas a la vez, y la contradicción se señala sin resolverla: no es de esta supervisión decidir cuál manda.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/mapa-en-la-app) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-072, cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.4"
     maestro_pasaje: "Anexo F (mapa del blueprint) — sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "Fila nueva «Mapa del blueprint en la aplicación», talla XS–S por medir, antes de F1B-06 — sin escribir en el §5"
     aclarada_por: |
       ACLARACIÓN DE GERENCIA, 24/09/2026, la misma que precisa `decision/fecha-corte` → `aclarada_por`:
@@ -2847,7 +2847,7 @@ decisiones_de_gerencia:
       (5) NO MUEVE CIFRAS DEL AVANCE: no abre fila en el §5 y el denominador no se toca. Lo que mueve es el calendario: con el margen de +1,9 a +2,2 semanas que la R01.3 §D midió tras la aclaración, el plan A no se activa, y esta respuesta cubre el caso en que se active.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/corte-licencias-plan-a) y decision/fecha-corte → precisada_por · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila decision/fecha-corte, precisada · docs/sdd/ENTRADA.md → E-084, cerrada, y E-073/E-074 con su pregunta cerrada · docs/sdd/R08.3_Expediente_de_cambios.md §11.5 · docs/sdd/Parte_2026-09-28.md"
     maestro_pasaje: "sin punto del Anexo D asignado — acompaña a F1F-01 y al corte en dos tiempos"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "Ninguna. Tarea de persona con fecha límite 21/12/2026 (Gerencia): revisar la suscripción y renovar 2 licencias mensuales de solo lectura"
 
   - clave: "decision/encuesta-entre-corte-e-independencia"
@@ -2864,7 +2864,7 @@ decisiones_de_gerencia:
       (5) LO QUE NO RESUELVE, y conviene que esté escrito: mientras las respuestas vivan en el formulario y no en la aplicación, el indicador 55 no se puede calcular en la aplicación en esas semanas. No rompe la comprobación del ≥ 95 % de `e009b-lista-indicadores`, porque ésa se hace en las CUATRO SEMANAS PREVIAS al corte, con Zoho vivo. El hueco es del periodo 14/12 → enero y lo tapa la carga del punto (2).
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/encuesta-entre-corte-e-independencia) y decision/e009-kpis → precisada_por · docs/sdd/ENTRADA.md → E-085, cerrada (con la carga de enero anotada SIN DESTINO) · docs/sdd/R08.3_Expediente_de_cambios.md §11.5 (Anexo G, indicador 55) · docs/sdd/Parte_2026-09-28.md"
     maestro_pasaje: "Anexo G, indicador 55 (satisfacción del cliente) — sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "Ninguna todavía. La carga de enero queda SIN DESTINO, a la espera de decisión de alcance"
 
   - clave: "decision/mapa-antes-o-despues-del-corte"
@@ -2881,7 +2881,7 @@ decisiones_de_gerencia:
       (5) NO MUEVE CIFRAS. La fila «Mapa del blueprint en la aplicación» sigue decidida y sin escribir en el §5, con su talla XS–S por medir.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/mapa-antes-o-despues-del-corte), y ya antes en decision/fecha-corte → aclarada_por y decision/mapa-en-la-app → aclarada_por · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, filas decision/fecha-corte y decision/mapa-en-la-app · docs/sdd/ENTRADA.md → E-074, adenda del 28/09 con la respuesta textual · docs/sdd/R08.3_Expediente_de_cambios.md §11.5 · docs/sdd/Parte_2026-09-28.md"
     maestro_pasaje: "Anexo F (mapa del blueprint) — sin punto del Anexo D asignado"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "Ninguna nueva: reordena la fila «Mapa del blueprint en la aplicación», que pasa a DESPUÉS del corte del 14/12"
 
   - clave: "decision/f1a03-familia-y-gas-patron"
@@ -2898,7 +2898,7 @@ decisiones_de_gerencia:
       (5) LA EXCEPCIÓN CONOCIDA ESTÁ ACOTADA Y CONTADA: el lote AP-370 de 2024, tickets #601–#622 y #653–#654, son 24 tickets. Todo lo demás se rellena por herencia del modelo.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1a03-familia-y-gas-patron) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1a03-familia-y-gas-patron · docs/sdd/ENTRADA.md → E-082, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
     maestro_pasaje: "M1.4 y Anexo D nº 38 — precisa el origen del dato de la guarda de Verificación"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1A-03 (segunda parte: la guarda por familia) · dato heredado por F1B-02 (hoja de vida) y por el catálogo de modelos de F1D-01"
 
   - clave: "decision/f1a03-certificado-liberacion"
@@ -2914,7 +2914,7 @@ decisiones_de_gerencia:
       (4) NO AÑADE DEPENDENCIA CON 2027: el certificado propio de Ambientalia y sus tres firmas siguen en el módulo de informes (F1E), fuera del corte del 14/12.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1a03-certificado-liberacion) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1a03-certificado-liberacion · docs/sdd/ENTRADA.md → E-083, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
     maestro_pasaje: "M1.4 (R08.2:1520) — precisa que el certificado exigido es el de fábrica; Anexo D nº 38"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1A-03 — no abre fila nueva"
 
   - clave: "decision/f1b04-rotulacion"
@@ -2930,7 +2930,7 @@ decisiones_de_gerencia:
       (4) M5.3 SIGUE APLAZADO Y AHORA TIENE CONDICIÓN DE ENTRADA: las ubicaciones de almacén entran después del corte y con actualización en cada movimiento. Antes era un aplazamiento sin criterio de reapertura.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1b04-rotulacion) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1b04-rotulacion · docs/sdd/ENTRADA.md → E-079, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
     maestro_pasaje: "M5.3 (ubicaciones de almacén, aplazado en la R08) y la recepción unificada del registro del 03/09"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-04 — no abre fila nueva; las ubicaciones de almacén quedan DESPUÉS del corte, sin fila"
 
   - clave: "decision/f1b04-desplegables"
@@ -2947,7 +2947,7 @@ decisiones_de_gerencia:
       (5) MANTENIMIENTO DE LA LISTA CON DUEÑO Y DOS TIEMPOS: Servicio Técnico antes de construir, Director Técnico después. Es dato mantenible, no constante del código.
     registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1b04-desplegables) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1b04-desplegables · docs/sdd/ENTRADA.md → E-080, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
     maestro_pasaje: "M1.2 / recepción unificada (ítems 4 y 10) y Anexo D — fin del texto libre en la observación de entrada"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-04 — no abre fila nueva"
 
   - clave: "decision/ledger-ficheros-nuevos"
@@ -3278,7 +3278,7 @@ decisiones_de_gerencia_adenda:
       (3) LOS BODEGAJES DE F1A-04 QUEDAN PARA F1A-04: la frase sobre días naturales los afecta a ellos, no a la cola de F1B-07.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e099-orden-cola-taller) · docs/sdd/ENTRADA.md → E-099"
     maestro_pasaje: "M1.9.1 («FIFO inteligente por fecha promesa», R08.2.md:1711)"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "F1B-07 — no abre fila nueva; entra en `prioridad-top5-cliente` (lote 2b)"
 
   - clave: "decision/maestro-r08-3-publicada"
@@ -3320,7 +3320,7 @@ decisiones_de_gerencia_adenda:
       disco y ninguno trackeado. Devuelto como pregunta `maestro-cual-es-la-vigente`.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/maestro-r08-3-publicada) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva · docs/sdd/ENTRADA.md → E-111 · docs/sdd/R08.4_Expediente_de_cambios.md §0 (premisa resuelta) y §5 · docs/sdd/Parte_2026-10-01b.md"
     maestro_pasaje: "ninguno — decide sobre el propio maestro, no sobre su contenido"
-    maestro_revision: "pendiente"
+    maestro_revision: "R08.4"
     tanda_que_abre: "ninguna — tarea de persona (Gerencia): versionar el borrador y entregar la definitiva antes del 17/10"
     precisada_por: "decision/maestro-cual-es-la-vigente (01/10/2026, noche) y corrección del panel `maestro-vigente-r08-4` (E-136): lo de esta entrada sigue valiendo para la R08.3 (borrador, no vigente); la vigente deja de ser la R08.2 y pasa a ser la R08.4. Las consecuencias (1) y (2) de arriba quedan SUPERADAS en lo que dicen de la R08.2; se conservan como histórico."
 
@@ -3420,7 +3420,7 @@ decisiones_de_gerencia_adenda:
       con talla en la R01.4).
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/tres-transiciones-y-la-cifra-anclada) · docs/sdd/ENTRADA.md → E-140, que cierra E-103, E-106, E-116, E-118 y E-119 · docs/sdd/R08.4_Expediente_de_cambios.md §8"
     maestro_pasaje: "M1.3 y M1.3.7 (R08.4.md:6454)"
-    maestro_revision: "R08.4 (ya lo recoge; la marca la confirma la sesión de construcción al versionar)"
+    maestro_revision: "R08.4"
     tanda_que_abre: "fila nueva con talla en la R01.4 del plan — antes del 14/12"
 
   - clave: "decision/salida-emergencia-quien-la-ejecuta"
