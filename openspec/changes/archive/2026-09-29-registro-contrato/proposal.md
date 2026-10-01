@@ -139,7 +139,7 @@ modelo de asociación (RQ-TC-17); el informe trimestral, en `zoho-sync`, junto a
 | Un técnico baja la prioridad de un ticket de contrato (`transitions.ts:193`, `:195`) | Media | Declarado; es F1B-07 |
 | Contratos vivos sin registrar el día uno: prioridad y bloqueo no actúan | Alta | P.7; el informe lo hace visible |
 | La guarda de vencido en posición equivocada pasa en verde | Media | Regla de mutación 1: pruebas de vencido frente a la guarda C anterior y frente al 409 (D); cuarentena y vencido son excluyentes por construcción (`subOV.ts:36`) |
-| Tamaño: el cambio 1 estimó ~350 y midió 1.178 (`config.yaml:3128`) | Alta | Seis lotes, cada uno bajo 800 |
+| Tamaño: el cambio 1 estimó ~350 y midió 1.178 (`config.yaml:3128` en `e3d5e90`) | Alta | Seis lotes, cada uno bajo 800 |
 
 ## Previsión de tamaño
 

@@ -550,7 +550,7 @@ Consecuencias concretas: (a) el sincronizador puede seguir dejando esas filas a 
 (b) mientras la columna conserve la OV, las puertas y el buscador la ven, porque leen también las
 columnas (`packages/zoho-sync/src/db/repo.ts:369-371`); si el sincronizador la vacía, esa OV **vuelve a
 aparecer como libre**. Registro: `openspec/config.yaml` → `adenda_iv11_asociacion_ov_ticket`
-(`openspec/config.yaml:3141-3160`). Lo decide Gerencia (P.2, §6.5).
+(`openspec/config.yaml:3141-3160` en `e3d5e90`). Lo decide Gerencia (P.2, §6.5).
 
 **R7 · IV-12 sigue vivo, y F1B-11 le añade un caso del mismo molde.** El alta de remisión no cumple el
 orden total de precedencia: «Fecha inválida» (`apps/desk/server/routes/remision.ts:127`, escalón C) antes
@@ -705,7 +705,7 @@ esa vista). Qué forma tiene la tabla en producción **no se ha podido comprobar
 **Cómo se verifica:** la salida se devuelve; la decide quien construye. P.1 confirma el clasificador de
 subOV (`packages/shared/src/subOV.ts:32-41`); P.4 confirma S-11, los literales de R12. Registro:
 `openspec/config.yaml` → `adenda_iv11_asociacion_ov_ticket` → `P4_estados_de_books`
-(`openspec/config.yaml:3161-3168`).
+(`openspec/config.yaml:3161-3168` en `e3d5e90`).
 
 ### 6.2 · P.7 de `registro-contrato`: dar de alta los contratos vigentes hoy — Comercial
 
@@ -805,7 +805,7 @@ misma pregunta vista desde dos cambios.
 | Tarea | Qué decide | Qué desbloquea | Dónde está escrita |
 |---|---|---|---|
 | **P.2 de `parche-iv11-orden-venta`** | Si se rellena la **marca** `ov_elegida_en_app_at` en las filas cuya orden se eligió en la app antes del Deploy | Proteger del sincronizador esas filas (R6) | `openspec/changes/archive/2026-09-28-parche-iv11-orden-venta/tasks.md:168-169` |
-| **P.2 de `asociacion-ov-ticket`** | Si se rellenan las **asociaciones** de los tickets y OV anteriores | Que las tres puertas y el buscador no dependan de las columnas que el sincronizador puede vaciar (R6) | `openspec/changes/archive/2026-09-28-asociacion-ov-ticket/tasks.md:497-500`; `openspec/config.yaml:3156-3160` |
+| **P.2 de `asociacion-ov-ticket`** | Si se rellenan las **asociaciones** de los tickets y OV anteriores | Que las tres puertas y el buscador no dependan de las columnas que el sincronizador puede vaciar (R6) | `openspec/changes/archive/2026-09-28-asociacion-ov-ticket/tasks.md:497-500`; `openspec/config.yaml:3156-3160` en `e3d5e90` |
 | **P.5 de `registro-contrato`** | E-086: año y tope de la ampliación de contrato | La ampliación, que es lo único que falta para cerrar F1B-11 | `docs/sdd/ENTRADA.md:1222`; `openspec/changes/archive/2026-09-29-registro-contrato/tasks.md:451` |
 
 Cualquiera de los dos rellenos toca **datos de producción**: es una de las cinco razones para parar y

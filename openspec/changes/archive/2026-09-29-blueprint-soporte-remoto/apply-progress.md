@@ -143,7 +143,7 @@ Detector propio: citas completas (`git grep`) cuyo rango toca una línea cambiad
 |---|---|---|---|---|
 | `repo.ts` | `tickets-core/spec.md:28` y `:1001` (nace en `Solicitud Soporte` si SR); `:1005`, `trazas/spec.md:31`, `:473` («diez claves» + `modalidad`) | `tickets-core/spec.md:231`, `:233`, `:239`, `:297` (RQ-TC-06/07) | paquete 09-10 (`17ddfec`) | `:229`, `:531`, `zoho-sync/spec.md:79`, paquete 09-29 `:169`, `:453` |
 | `ticketService.ts` | `permissions/spec.md:301` (`:89-91`→`:129-130`, el 403; deriva previa) | `tickets-core/spec.md:129` (RQ-TC-05) | `Decisiones_Gerencia_2026-09-10.md:312`, F0-00 `:175`, plan 08-12, maestro R08.2 | — |
-| `equipoNuevo.ts` / `CreateTicket.tsx` | `equipoNuevo.ts:65-66` (`:89`→`:91`, «la última de C» era falso); `CreateTicket.tsx:156` (`:99-100`→`:101-102`) y `:184` (`:83-93` se anclaba a `R08.1.md`) | — | — | `equipoNuevo.ts:80-99` (`config.yaml:3151`, `hojas-vida`) |
+| `equipoNuevo.ts` / `CreateTicket.tsx` | `equipoNuevo.ts:65-66` (`:89`→`:91`, «la última de C» era falso); `CreateTicket.tsx:156` (`:99-100`→`:101-102`) y `:184` (`:83-93` se anclaba a `R08.1.md`) | — | — | `equipoNuevo.ts:80-99` (`config.yaml:3151` en `e3d5e90`, `hojas-vida`) |
 | `flujos.test.ts` | — | — | delta `tickets-core/spec.md:233` → «en `66ab783`» | — |
 | `estados.ts` | — | — | `CLAUDE.md:265`, `config.yaml:429`, `transitions-st/spec.md:806`, Parte 09-21 | `:59-106` ×3, `:59-112`, `:101-105`, `:59-160`, paquetes `:105` |
 | `flujos.ts` | — | — | paquetes 09-27/09-29 `:56-61` (ciertos, incompletos: no nombran SR) | — |

@@ -41,7 +41,7 @@ cumple en el código, o ninguna prueba lo afirma y la lectura muestra que no se 
 | P.1 | Alfonso | Ejecutar `docs/sdd/Consulta_SubOV_formato_2026-09-27.sql` (sólo lectura), devolver la salida: cuántas OV caen en cuarentena el día uno | `tasks.md:485-488` y `openspec/config.yaml` |
 | P.2 | Gerencia | Relleno retroactivo de asociaciones para tickets/OV existentes (dato de producción) | `tasks.md:489-493`; P.2 del cambio 1, `archive-report.md:78` |
 | P.3 | Comercial | Verificar en la app, tras el despliegue del lote 6: lista de OV en la ficha, «liberar» con rol y motivo, cuarentena y saldo | `tasks.md:494-496` |
-| P.4 | Alfonso | Consulta 5 del `.sql`: valores distintos de `order_status`/`status` de `books.sales_orders`; confirma los literales `draft`/`void` (S-11) | `tasks.md:498`; `config.yaml` → `adenda_iv11_asociacion_ov_ticket` (`:3141`) |
+| P.4 | Alfonso | Consulta 5 del `.sql`: valores distintos de `order_status`/`status` de `books.sales_orders`; confirma los literales `draft`/`void` (S-11) | `tasks.md:498`; `config.yaml` → `adenda_iv11_asociacion_ov_ticket` (`:3141` en `e3d5e90`) |
 
 Reverso de la regla del ciclo 1: ninguna describe trabajo que una tanda pueda hacer en el repositorio
 (las cuatro dependen de datos de producción o de la app desplegada). Sacarlas del recuento no maquilla el contador.
@@ -227,7 +227,7 @@ Lo que el cliente da a entender y el servidor no cumple: el panel ofrece «Liber
 
 **R-1 (una línea, para el `archive-report.md`):** este cambio cubre de F1B-11 (cambio 2 de 3) la asociación 1:N propia (`public.ov_asociaciones` con índices únicos parciales), la subOV con su cuarentena, la liberación con motivo y el saldo por lote con `consumido`, y deja al cambio 3 el registro de contrato, la prioridad por contrato y el «% ejecutado» de `decision/anexo-53-contratos` (`proposal.md:49`; cabecera `cierra: no`, `proposal.md:6`); la fila del plan no se cierra.
 
-IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` remite a `adenda_iv11_asociacion_ov_ticket`, `:3141`). Expuestas quedan las filas previas sin marca ni asociación (P.2 de Gerencia) y, por el CRITICAL 1, las que sí tienen asociación pero no recuperan la OV al liberarla.
+IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` remite a `adenda_iv11_asociacion_ov_ticket`, `:3141` en `e3d5e90`). Expuestas quedan las filas previas sin marca ni asociación (P.2 de Gerencia) y, por el CRITICAL 1, las que sí tienen asociación pero no recuperan la OV al liberarla.
 
 ---
 
@@ -245,7 +245,7 @@ IV-11 sigue **REDUCIDO, no cerrado** (`proposal.md:76-78`; `config.yaml:1100` re
 | `consumido` | `ejecutado` renombrado (`books/subOV.ts:22`, `:47`); el «% ejecutado» de `decision/anexo-53-contratos` es del cambio 3 | `BS:46`, `RUT:144` |
 | Mayúsculas | `ov-2026-001-X9` en minúsculas cae como ordinaria | Aceptado (`design.md:135`), `SO:29` |
 | Remisión, OC | `fecha_orden_compra` de la asociación de remisión queda NULL, no `ov.date` (`apply-progress.md:283`) | Declarado, reversible (S-5) |
-| IV-11 | REDUCIDO, no cerrado | `CLAUDE.md` en sitio, `config.yaml:3141` |
+| IV-11 | REDUCIDO, no cerrado | `CLAUDE.md` en sitio, `config.yaml:3141` en `e3d5e90` |
 
 ---
 

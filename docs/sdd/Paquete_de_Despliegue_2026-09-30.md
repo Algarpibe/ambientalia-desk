@@ -804,7 +804,7 @@ pendiente con novedad y sin fotos sólo sale reintentando o con anulación de un
 
 **R6 · IV-11 queda REDUCIDO, no cerrado. SIGUE VIVO.** Las filas cuya orden se eligió antes del Deploy no
 tienen ni marca ni asociación; si el sincronizador vacía la columna, esa OV vuelve a aparecer como libre
-(`packages/zoho-sync/src/db/repo.ts:369-371`). Registro: `openspec/config.yaml:3141-3160`. Lo decide Gerencia
+(`packages/zoho-sync/src/db/repo.ts:369-371`). Registro: `openspec/config.yaml:3141-3160` en `e3d5e90`. Lo decide Gerencia
 (las dos P.2, §6.4). **Añadido en este rango:** la alarma de `Remisión creada` usa la misma definición de «tiene
 OV» por las tres vías (`apps/desk/server/db/sla.ts:112-125`), así que una fila a medias por IV-11 puede **no
 dar alarma** mientras conserve `salesorder_id`.
@@ -1050,7 +1050,7 @@ se dice así en el resultado.
    podido comprobar desde aquí** (hipótesis): si el bloque 5 da error de columna, devolver el error tal cual.
 
 Registro: `openspec/config.yaml` → `adenda_iv11_asociacion_ov_ticket` → `P4_estados_de_books`
-(`openspec/config.yaml:3161-3168`).
+(`openspec/config.yaml:3161-3168` en `e3d5e90`).
 
 #### 6.1.7 · Mirar `AVISOS_COPIA_EMAIL` — quien administre EasyPanel (añadida por este paquete)
 
@@ -1260,7 +1260,7 @@ No bloquean el Deploy. Sin ellas, lo publicado queda a medias o apoyado en supue
 | Tarea | Qué decide | Qué desbloquea | Dónde está escrita |
 |---|---|---|---|
 | **P.2 de `parche-iv11-orden-venta`** | Si se rellena la **marca** `ov_elegida_en_app_at` en las filas anteriores al Deploy | Proteger esas filas del sincronizador (R6) | `openspec/changes/archive/2026-09-28-parche-iv11-orden-venta/tasks.md:168-169` |
-| **P.2 de `asociacion-ov-ticket`** | Si se rellenan las **asociaciones** anteriores | Que las puertas, el buscador y la alarma de `Remisión creada` no dependan de columnas que el sincronizador puede vaciar (R6) | `openspec/changes/archive/2026-09-28-asociacion-ov-ticket/tasks.md:497-500`; `openspec/config.yaml:3156-3160` |
+| **P.2 de `asociacion-ov-ticket`** | Si se rellenan las **asociaciones** anteriores | Que las puertas, el buscador y la alarma de `Remisión creada` no dependan de columnas que el sincronizador puede vaciar (R6) | `openspec/changes/archive/2026-09-28-asociacion-ov-ticket/tasks.md:497-500`; `openspec/config.yaml:3156-3160` en `e3d5e90` |
 | **P.5 de `registro-contrato`** | E-086: año y tope de la ampliación | La ampliación, lo único que falta para cerrar F1B-11 | `docs/sdd/ENTRADA.md:1222`; `openspec/changes/archive/2026-09-29-registro-contrato/tasks.md:451`; `docs/sdd/Preguntas_Gerencia_2026-09-29.md:16` |
 | **P.3 de `blueprint-soporte-remoto`** | E-090: área de «Asignación», «Ejecutar», «Soporte pendiente» y «Continuación soporte» | Cerrar S-1 como decisión (R15); si alguna es de Comercial, se cambia un dato por transición y la matriz de `apps/desk/server/permisos.test.ts` | `docs/sdd/ENTRADA.md:1253`; `openspec/changes/archive/2026-09-29-blueprint-soporte-remoto/tasks.md:408-409` |
 | **P.4 de `alarmas-horas-habiles`** | Si `Notificado` escala al `Coordinador Comercial` (S-3) | Si es otro cargo, se cambia un literal de `ALARMAS_SLA` (`packages/shared/src/sla.ts:138`) y su prueba | `openspec/changes/archive/2026-09-29-alarmas-horas-habiles/tasks.md:414`; `openspec/changes/archive/2026-09-29-alarmas-horas-habiles/archive-report.md:135` |

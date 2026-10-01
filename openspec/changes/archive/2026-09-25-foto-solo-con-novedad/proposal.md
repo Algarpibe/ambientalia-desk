@@ -146,7 +146,7 @@ se entiende.
 
 M2.1 y C.9 ya enuncian la regla, y nada de lo que dicen se vuelve falso. H.4 del Anexo H va por módulo
 (`R08.2.md:4709-4721`) y no menciona fotos de recepción. Hipótesis a confirmar en el archive
-(`openspec/config.yaml:2991`): no hay fila del Anexo H que actualizar.
+(`openspec/config.yaml:2991` en `d5d66a1`): no hay fila del Anexo H que actualizar.
 
 ## Ronda de preguntas de la propuesta (no bloqueante, modo `auto`)
 

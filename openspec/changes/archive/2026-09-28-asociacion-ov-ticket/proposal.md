@@ -134,7 +134,7 @@ expuestas las filas previas sin marca ni asociación; su relleno es la misma dec
 | Una OV liberada sigue bloqueada por las vías de columna | Alta | S-7 y prueba explícita de reasociación |
 | El campo «añade OV» reescribe `orden_venta` por el motor (`transitions.ts:9`) | Media | Prueba: tras `Aprobación`, la OV de entrada no cambia |
 | Desfase de citas en `repo.ts`, `remision.ts`, `schema.sql` | Alta | Sólo en sitio o al final; barrido de la regla de mutación 4 al cerrar |
-| Tamaño: el cambio 1 estimó ~350 y midió 1.178 (`config.yaml:3125-3128`) | Alta | Tres lotes |
+| Tamaño: el cambio 1 estimó ~350 y midió 1.178 (`config.yaml:3125-3128` en `e3d5e90`) | Alta | Tres lotes |
 
 ## Previsión de tamaño
 

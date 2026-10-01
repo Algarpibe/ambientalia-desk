@@ -169,7 +169,7 @@ C motivo vacío `422`.
 | `apps/desk/src/components/TicketDetailView.tsx` | 10 | import en una línea existente de `:7-24`; montaje **después de `:245`** | EN SITIO + MITAD | **0** vivas en o tras la línea de inserción (todas citan `:245`, `:208` o `:37`) |
 | `apps/desk/server/app.ts` | 0 sin ancla | registro tras `:60` + import | MITAD | **0** vivas (las halladas llevan ancla `1d030d5`; las tres de `Triaje_Linea_Base_Citas_2026-09-15.md:71-73` se leen al cerrar — hipótesis: ancladas) |
 | `CLAUDE.md` | — | fila IV-11 (una línea física); fila IV-12 si se amplía (R-3) | EN SITIO | la propia fila |
-| `openspec/config.yaml` | — | adenda nueva **AL FINAL del fichero** (clave propia), remitida por clave desde la línea `estado:` de la ficha de IV-11 en su sitio — corrección del orquestador: `config.yaml` no admite inserción en mitad (convención de edición de los ficheros muy citados: en su sitio o al final) | FINAL | **0**: al ir al final no desplaza ninguna cita (`proposal.md:137` de este cambio, que cita `config.yaml:3125-3128`, sigue valiendo) |
+| `openspec/config.yaml` | — | adenda nueva **AL FINAL del fichero** (clave propia), remitida por clave desde la línea `estado:` de la ficha de IV-11 en su sitio — corrección del orquestador: `config.yaml` no admite inserción en mitad (convención de edición de los ficheros muy citados: en su sitio o al final) | FINAL | **0**: al ir al final no desplaza ninguna cita (`proposal.md:137` de este cambio, que cita `config.yaml:3125-3128` en `e3d5e90`, sigue valiendo) |
 
 Reglas para `apply`: nada de líneas de import nuevas en cabecera de estos ficheros (se añade el nombre a una línea de
 import existente, o una segunda sentencia en esa línea); `transitions.ts` nunca gana líneas antes de `:295`.

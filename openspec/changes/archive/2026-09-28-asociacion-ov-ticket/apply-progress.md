@@ -498,7 +498,7 @@ Sólo dos filas sin línea de servidor —autofill/bloqueo de la fecha final y f
 ### 6.5-6.6 · Documentos en su sitio
 
 - `CLAUDE.md`: fila de IV-11 (misma línea física) con la actualización del 2026-09-28: `ov_asociaciones` escrita por los tres escritores, tercera vía en las tres puertas, liberación con motivo; **REDUCIDO, no cerrado**: las filas elegidas antes de `parche-iv11-orden-venta` o de este cambio no tienen ni marca ni asociación (sin relleno, P.2 de Gerencia, dato de producción). Fila de IV-12: nota de que la cuarentena (`remision.ts:220`) queda detrás del `409` (`:177`), mismo molde. Sin líneas nuevas en la tabla (`@@ -348,2 +348,2`).
-- `openspec/config.yaml`: `adendas_incumplimientos_vivos` NO está al final (`:3099`); precedente de «al final con clave propia»: `aprobaciones_de_techo_del_ledger`. Se añade la clave `adenda_iv11_asociacion_ov_ticket` al final (con `P4_estados_de_books`) y la ficha de IV-11 la remite por clave en su sitio (`:1100`, comentario de `estado`).
+- `openspec/config.yaml`: `adendas_incumplimientos_vivos` NO está al final (`:3099` en `e3d5e90`); precedente de «al final con clave propia»: `aprobaciones_de_techo_del_ledger`. Se añade la clave `adenda_iv11_asociacion_ov_ticket` al final (con `P4_estados_de_books`) y la ficha de IV-11 la remite por clave en su sitio (`:1100`, comentario de `estado`).
 
 ### 6.7 · Barrido de citas (regla de mutación 4)
 

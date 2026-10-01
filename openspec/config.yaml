@@ -2884,6 +2884,88 @@ decisiones_de_gerencia:
     maestro_revision: "pendiente"
     tanda_que_abre: "Ninguna nueva: reordena la fila «Mapa del blueprint en la aplicación», que pasa a DESPUÉS del corte del 14/12"
 
+  - clave: "decision/f1a03-familia-y-gas-patron"
+    fecha: "2026-09-28"
+    pregunta: |
+      De dónde sale la familia y el compuesto que mide cada equipo, y dónde vive la lista de gases patrón disponibles, para que la guarda de Verificación se pueda exigir por tipo de equipo (devuelta como pregunta el 28/09, E-082, segunda parte de F1A-03).
+    respuesta_textual: |
+      «Opción 1 con valor heredado del modelo. El compuesto medido vive en cada equipo (hoja de vida) y se hereda del modelo al darlo de alta: cada modelo del catálogo lleva su compuesto por defecto (APSA-370 SO₂, APNA-370 NOₓ, APMA-370 CO, APOA-370 O₃, y los convertidores el compuesto que convierten). Cuando un equipo mide otra cosa, como los AP-370 configurados para H₂S, TRS o NH₃, se corrige en su hoja de vida. Los equipos existentes se rellenan con el valor de su modelo, y a mano solo se corrigen las excepciones conocidas (lote de 2024, tickets #601–#622 y #653–#654). La lista de gases patrón es una tabla en la base con compuesto, disponibilidad y fecha de vencimiento del certificado del cilindro; la mantiene el Director Técnico, al principio por alta directa. La guarda: un analizador de gases o un convertidor no se libera sin Verificación si existe un patrón vigente de su compuesto; si no existe, se libera y queda registrado el motivo. Claude Code prepara el script de siembra (compuestos por modelo, excepciones y gases patrón actuales) y Alfonso lo ejecuta en producción.»
+    consecuencias: |
+      (1) CIERRA LA SEGUNDA PARTE DE F1A-03, que `decision/p38-verificacion-calidad` (23/09) dejó abierta: aquel dictamen fijó QUÉ exige la guarda y este fija DE DÓNDE saca el dato para exigirla. Sin él la guarda no era construible.
+      (2) DOS DATOS NUEVOS, NINGUNO EXISTE HOY. Medido el 2026-10-01 sobre `1550b07`: `grep -rniE "gas.?patron|compuesto" packages/shared/src --include=*.ts` = 0, y la tabla `equipos` (`packages/zoho-sync/src/db/schema.sql:189-208`) no tiene columna de compuesto. Son un campo heredado del modelo en el catálogo y una tabla propia de gases patrón mantenida por el Director Técnico.
+      (3) EL CRITERIO DE LA GUARDA PASA DE «TIPO DE EQUIPO» A «TIPO DE EQUIPO Y PATRÓN VIGENTE», con la disponibilidad leída de la tabla y no de una lista en el código: si se consigue gas de H₂S, TRS o NH₃, la guarda empieza a exigir Verificación a esos analizadores sin tocar una línea.
+      (4) TAREA DE PERSONA, NO DE TANDA: la siembra la ejecuta Alfonso en producción. Claude Code prepara el script; archivar la tanda NO da la siembra por hecha (regla del ciclo 1 de CLAUDE.md).
+      (5) LA EXCEPCIÓN CONOCIDA ESTÁ ACOTADA Y CONTADA: el lote AP-370 de 2024, tickets #601–#622 y #653–#654, son 24 tickets. Todo lo demás se rellena por herencia del modelo.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1a03-familia-y-gas-patron) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1a03-familia-y-gas-patron · docs/sdd/ENTRADA.md → E-082, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
+    maestro_pasaje: "M1.4 y Anexo D nº 38 — precisa el origen del dato de la guarda de Verificación"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1A-03 (segunda parte: la guarda por familia) · dato heredado por F1B-02 (hoja de vida) y por el catálogo de modelos de F1D-01"
+
+  - clave: "decision/f1a03-certificado-liberacion"
+    fecha: "2026-09-28"
+    pregunta: |
+      Si la transición Liberación desde Verificación exige el certificado de calibración, o si se retira esa exigencia del maestro (devuelta como pregunta el 28/09, E-083).
+    respuesta_textual: |
+      «Sí, con la forma más ligera. La transición «Liberación» desde Verificación exige el número del certificado de calibración de fábrica del equipo (campo de texto obligatorio), con opción de adjuntar el PDF. Se aplica tanto si el equipo pasó por Verificación como si se liberó sin ella por falta de patrón vigente. No se exige el certificado propio de Ambientalia, que llegará con el módulo de informes y sus tres firmas en 2027. No es retroactiva: los equipos liberados antes de construirla no se marcan ni se corrigen. La frase del maestro (R08.2:1520) se mantiene, precisando que se refiere al certificado de fábrica.»
+    consecuencias: |
+      (1) LA FRASE DEL MAESTRO NO SE RETIRA, SE PRECISA. `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1520` deja de ser una exigencia sin dueño: se refiere al certificado DE FÁBRICA, que el equipo ya trae. Material de clase A para la revisión siguiente del maestro.
+      (2) UN CAMPO OBLIGATORIO Y UN ADJUNTO OPCIONAL en la transición `Liberación`, aplicables también a la liberación sin Verificación por falta de patrón — que es la salida que `decision/f1a03-familia-y-gas-patron` acaba de crear el mismo día. Las dos respuestas se leen juntas.
+      (3) NO ES RETROACTIVA, y es la cuarta aplicación de la misma doctrina del proyecto: lo anterior no se reescribe. A diferencia de `c2` y `p64-historico-c1`, aquí tampoco se MARCA: no hay nada que medir sobre lo liberado antes.
+      (4) NO AÑADE DEPENDENCIA CON 2027: el certificado propio de Ambientalia y sus tres firmas siguen en el módulo de informes (F1E), fuera del corte del 14/12.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1a03-certificado-liberacion) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1a03-certificado-liberacion · docs/sdd/ENTRADA.md → E-083, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
+    maestro_pasaje: "M1.4 (R08.2:1520) — precisa que el certificado exigido es el de fábrica; Anexo D nº 38"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1A-03 — no abre fila nueva"
+
+  - clave: "decision/f1b04-rotulacion"
+    fecha: "2026-09-28"
+    pregunta: |
+      Qué se registra de la rotulación y el almacenamiento del equipo en la recepción (devuelta como pregunta el 28/09, E-079, elemento de F1B-04).
+    respuesta_textual: |
+      «Opción 1. La recepción registra una confirmación «Rotulado y guardado» con persona, fecha y hora; es obligatoria para completar la recepción. La etiqueta física lleva el código del ticket, para que cualquier equipo en la estantería se pueda buscar en la aplicación. La ubicación no se registra antes del corte: una ubicación que solo se apunta al recibir queda desactualizada en cuanto el equipo se mueve. Entra después del corte junto con las ubicaciones de almacén (maestro M5.3, aplazado en la R08), con actualización en cada movimiento. Con esto, el elemento de rotulación y almacenamiento de F1B-04 queda definido y la fila se puede cerrar.»
+    consecuencias: |
+      (1) DESBLOQUEA UNO DE LOS DOS ELEMENTOS QUE IMPEDÍAN CERRAR F1B-04. La fila es talla L y lleva desde S40 con dos elementos sin definir; con esta respuesta y `decision/f1b04-desplegables` del mismo día, los dos quedan definidos.
+      (2) UNA CONFIRMACIÓN, NO UNA UBICACIÓN, y la razón está escrita: «una ubicación que solo se apunta al recibir queda desactualizada en cuanto el equipo se mueve». Es la misma doctrina que el proyecto ya aplicó al mantenedor (23/09): el dato entra cuando alguien lo mantiene, no cuando se puede teclear.
+      (3) LA BÚSQUEDA FÍSICA SE RESUELVE POR EL CÓDIGO DEL TICKET, que ya existe, y no por un identificador nuevo de estantería.
+      (4) M5.3 SIGUE APLAZADO Y AHORA TIENE CONDICIÓN DE ENTRADA: las ubicaciones de almacén entran después del corte y con actualización en cada movimiento. Antes era un aplazamiento sin criterio de reapertura.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1b04-rotulacion) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1b04-rotulacion · docs/sdd/ENTRADA.md → E-079, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
+    maestro_pasaje: "M5.3 (ubicaciones de almacén, aplazado en la R08) y la recepción unificada del registro del 03/09"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-04 — no abre fila nueva; las ubicaciones de almacén quedan DESPUÉS del corte, sin fila"
+
+  - clave: "decision/f1b04-desplegables"
+    fecha: "2026-09-28"
+    pregunta: |
+      Qué etapas de la recepción son críticas y qué lista cerrada sustituye al texto libre en cada una (devuelta como pregunta el 28/09, E-080, elemento de F1B-04).
+    respuesta_textual: |
+      «Opción 1, y no es un recorte: las demás etapas críticas ya tienen lista cerrada por decisiones anteriores (comentarios del catálogo en diagnóstico, falla nueva, motivos de Anulado, motivos de liberación sin factura, motivos del informe de salida, lista de accesorios y motivos de no reclamar al fabricante). La observación de la remisión de entrada pasa a una lista de tipos de novedad, con selección múltiple: Sin novedad · Golpe o abolladura en la carcasa · Rayón o daño estético · Pantalla o display dañado · Conector o puerto dañado · Falta un accesorio · Embalaje inadecuado o dañado · Humedad, suciedad o contaminación visible · Sello o precinto roto · Otro (texto obligatorio). La foto es obligatoria cuando se marca cualquier novedad distinta de «Sin novedad», como ya estaba decidido. Servicio Técnico puede ajustar la lista antes de construirla; después, los cambios los hace el Director Técnico.»
+    consecuencias: |
+      (1) CIERRA EL SEGUNDO ELEMENTO DE F1B-04 y, con `decision/f1b04-rotulacion`, deja la fila construible entera.
+      (2) LA RESPUESTA DEMUESTRA SU PROPIA ACOTACIÓN: enumera las siete listas cerradas que decisiones anteriores ya fijaron, así que «una sola lista nueva» no es un recorte sino el resto. Es la primera vez que una respuesta del panel se justifica citando el acumulado de las anteriores.
+      (3) SELECCIÓN MÚLTIPLE, NO UN VALOR: una recepción puede traer varias novedades a la vez. La foto se exige por «cualquier novedad distinta de Sin novedad», que es compatible con lo ya construido en `foto-solo-con-novedad` (F1B-04, `cierra: no`, archivada el 25/09).
+      (4) OJO AL HALLAZGO VIVO QUE ESTO NO ARREGLA: E-081 mide que el servidor no exige contestar «¿llega con novedad?» (`apps/desk/server/routes/remision.ts:250` guarda `null`, y con `null` no se pide foto, `packages/shared/src/remision.ts:110-111`). Con una lista de selección múltiple, «ninguna marcada» y «sin contestar» siguen siendo distinguibles sólo si alguien lo exige: queda apuntado como IV-12.
+      (5) MANTENIMIENTO DE LA LISTA CON DUEÑO Y DOS TIEMPOS: Servicio Técnico antes de construir, Director Técnico después. Es dato mantenible, no constante del código.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/f1b04-desplegables) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md §4.5, fila nueva decision/f1b04-desplegables · docs/sdd/ENTRADA.md → E-080, cerrada con la respuesta textual · docs/sdd/R08.4_Expediente_de_cambios.md §1 · docs/sdd/Parte_2026-10-01.md"
+    maestro_pasaje: "M1.2 / recepción unificada (ítems 4 y 10) y Anexo D — fin del texto libre en la observación de entrada"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-04 — no abre fila nueva"
+
+  - clave: "decision/ledger-ficheros-nuevos"
+    fecha: "2026-09-28"
+    pregunta: |
+      Qué se hace con el desvío medido del contador del ledger, que no cuenta los ficheros nuevos sin trackear y por eso dejó pasar dos intentos por encima del techo de 800 líneas (devuelta como pregunta el 28/09, E-078).
+    respuesta_textual: |
+      «Opción 1: se arregla la cuenta. Antes de cerrar cada intento se ejecuta la orden de git ya probada, para que el contador incluya los ficheros nuevos y registre lo mismo que mide git. Los ficheros binarios no cuentan líneas: quedan fuera del tope y se anotan aparte en el intento. El tope sigue en 800 líneas; el intento que lo supere se parte. Se aplica a partir del próximo intento, sin rehacer los ya cerrados, y el alta del equipo (1.110 líneas) y la edición comercial (926) quedan anotadas en el ledger como intentos que superaron el tope sin detectarse.»
+    consecuencias: |
+      (1) ARREGLA LA CUENTA, NO EL TECHO. El tope sigue en 800 y lo que cambia es que el contador mida lo que mide git: `git diff --shortstat --no-renames` contra el commit de partida MÁS `wc -l` de lo nuevo sin trackear, ejecutado ANTES de cerrar el intento. La medida ya estaba escrita en `presupuesto_del_ledger → medida`; lo que faltaba era la obligación de ejecutarla.
+      (2) LOS BINARIOS SALEN DEL TOPE POR DECISIÓN, no por defecto del contador: se anotan aparte en el intento. Cierra el desvío (2) de los tres medidos, que hacía contar 0 a un fichero binario en el árbol de partida.
+      (3) DOS INTENTOS QUEDAN ANOTADOS COMO EXCEDIDOS SIN DETECTAR, con sus cifras: el alta del equipo 1.110 y la edición comercial 926, las dos contra un techo de 800. No se rehacen. Es lo que convierte el desvío en registro en vez de en anécdota.
+      (4) NO ES RETROACTIVA Y SE APLICA DESDE EL PRÓXIMO INTENTO. El primer intento al que alcanza es el que esté abierto cuando esta entrada se cargue.
+    registro: "openspec/config.yaml → decisiones_de_gerencia (decision/ledger-ficheros-nuevos) y → presupuesto_del_ledger → obligacion_antes_de_cerrar (clave nueva) · CLAUDE.md → regla del ciclo 2, adenda de Gerencia del 28/09 · docs/sdd/ENTRADA.md → E-078, cerrada con la respuesta textual · docs/sdd/Parte_2026-10-01.md"
+    maestro_pasaje: "no aplica — regla de método, no de producto"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "Ninguna: es regla del ciclo SDD, la aplica cada intento"
+
 # Cómo se mide el avance del proyecto (proposal F0-01 §1.1). La unidad se fija
 # aquí para que el porcentaje no sea una opinión con decimales.
 unidad_de_avance:
@@ -3095,6 +3177,17 @@ presupuesto_del_ledger:
     delta NO se estima, se mide: por tamaño de bloque daba 436 y el coste real
     fue 176, porque git casa las líneas idénticas entre el requisito vivo y su
     versión del delta.
+  obligacion_antes_de_cerrar: >
+    GERENCIA, 2026-09-28, panel (decision/ledger-ficheros-nuevos). ANTES de cerrar
+    cada intento se EJECUTA la medida de arriba, para que el contador registre lo
+    mismo que mide git y no se vuelva a dejar pasar un intento por encima del
+    techo. Los ficheros BINARIOS no cuentan líneas: quedan fuera del tope y se
+    anotan APARTE en el intento. El tope sigue en 800 y el intento que lo supere
+    se parte. Se aplica desde el próximo intento, sin rehacer los cerrados.
+  excedidos_sin_detectar: >
+    Anotados por decisión de Gerencia el 2026-09-28, y no se rehacen: el alta del
+    equipo midió 1110 líneas y la edición comercial 926, las dos contra un techo
+    de 800, y el ledger no lo vio porque no contaba lo nuevo sin trackear.
 
 adendas_incumplimientos_vivos:
   # Adendas que no caben en su ficha sin desplazar las líneas citadas de este

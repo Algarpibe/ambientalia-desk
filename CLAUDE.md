@@ -590,6 +590,13 @@ herramienta **reserva a un mantenedor y nunca hace sola**. O sea que un descuido
 agente **para la tanda y necesita a una persona** para arrancar otra vez. Ganar diez minutos de reloj
 cuesta un turno entero.
 
+**Obligación añadida — Gerencia, 2026-09-28, panel (`decision/ledger-ficheros-nuevos`).** Antes de
+cerrar cada intento, **ejecuta la medida** —`git diff --shortstat --no-renames` contra el commit de
+partida más `wc -l` de lo nuevo sin trackear— y registra ESO. Los ficheros **binarios** no cuentan
+líneas: quedan fuera del tope y se anotan aparte en el intento. El tope sigue en **800**; el intento
+que lo supere **se parte**. Desde el próximo intento, sin rehacer los cerrados. Quedan anotados como
+excedidos sin detectar el alta del equipo (**1.110**) y la edición comercial (**926**).
+
 ---
 
 ## Regla de ejecución — modo producción
