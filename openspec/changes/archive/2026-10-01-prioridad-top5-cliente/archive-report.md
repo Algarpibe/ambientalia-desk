@@ -85,10 +85,10 @@ Para el próximo paquete (los `Paquete_de_Despliegue_*` son registros fechados y
 ## Barrido de citas (regla de mutación 4)
 
 La fusión desplaza líneas de tres specs vivas: `tickets-core` desde la 859, `transitions-st` desde la 745 y
-`permissions` desde la 253. Hay 21 citas completas a esas specs detrás de esos puntos, y cada una se leyó:
+`permissions` desde la 253. Hay 22 citas a esas specs detrás de esos puntos, y cada una se leyó:
 - **Caso A, reparadas en sitio:** `docs/sdd/ENTRADA.md:1146` y `openspec/specs/hojas-vida/spec.md:185`
   (`transitions-st/spec.md:995-1000` → `:1106-1111`, la tabla canónica de escalones); `docs/sdd/ENTRADA.md:1248`
-  (`permissions/spec.md:425-437` → `:463-475`, §4.3).
+  (`permissions/spec.md:425-437` → `:463-475`, §4.3); y `openspec/specs/hojas-vida/spec.md:190`, en forma corta sin `specs/` delante (`transitions-st/spec.md:1003-1005` → `:1114-1116`, la excepción A/C). Esta última no la cazó el primer barrido, que exigía el prefijo `specs/`, y la bloqueó el detector en `pre-push`; se reparó en `d1592b5`.
 - **Caso B, sin tocar:** las cuatro de `docs/sdd/Preguntas_Gerencia_2026-09-29.md` llevan ancla `en 53dd0ed`; las 14
   de carpetas archivadas y paquetes de despliegue son registros fechados.
 - **Movimiento:** la única referencia viva a la ruta vieja de la carpeta (`docs/sdd/ENTRADA.md:1424`) apunta ya a la
