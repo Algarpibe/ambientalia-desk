@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { transicionesDelTicket, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
-import { executeTransition, getPersonas } from '../api/client';
+import { executeTransition, getPersonas, subirCertificadoFabrica } from '../api/client';
 import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/personas';
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicion, puedeFijarPrioridadTop5 } from '@ambientalia/shared'
+import { puedeEjecutarTransicion, puedeFijarPrioridadTop5 } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -59,7 +59,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
   const [active, setActive] = useState<Transition | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); const [pdf, setPdf] = useState<File | null>(null);
 
   /** Las fechas que rellena una OV: se muestran, pero no se teclean. */
   const fechasDeOV = (t: Transition) =>
@@ -95,7 +95,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
     }
     setActive(t);
     setValues(previos);
-    setError(null);
+    setError(null); setPdf(null);
   }
 
   /** Al elegir una OV se arrastra su fecha: es un dato de Books, no algo que se teclee aquí. */
@@ -108,7 +108,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
     setBusy(true);
     setError(null);
     try {
-      await executeTransition(ticketId, active.id, values);
+      await executeTransition(ticketId, active.id, values); if (active.id === 'liberacion' && pdf) { try { await subirCertificadoFabrica(ticketId, pdf) } catch (e) { setError(`La liberación quedó registrada, pero el PDF no se adjuntó: ${e instanceof Error ? e.message : String(e)}`); onDone(); return } }
       setActive(null);
       setValues({});
       onDone();
@@ -176,7 +176,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
                 opciones={opciones}
                 onElegirOrdenVenta={(n, fecha) => elegirOrdenVenta(f, n, fecha)}
               />
-            ))}
+            ))}{active.id === 'liberacion' && <CertificadoFabricaPdf archivo={pdf} onChange={setPdf} />}
             {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
             <div className="flex justify-end gap-2 mt-1">
               <button onClick={() => setActive(null)} className="px-3 py-1.5 text-[13px] text-slate-600">Cancelar</button>

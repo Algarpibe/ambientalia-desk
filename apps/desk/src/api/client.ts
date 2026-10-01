@@ -755,3 +755,17 @@ export function erroresDelServidor(e: unknown): string[] {
   }
   return [mensajeDelServidor(e)]
 }
+
+/** PDF del certificado de fábrica de una liberación (F1A-03, RQ-EN-11). Sólo comodidad: el servidor decide tipo, tamaño y estado. */
+export interface CertificadoFabricaMeta { id: string; filename: string; size: number; transicionId: number }
+export async function subirCertificadoFabrica(ticketId: string, file: File): Promise<CertificadoFabricaMeta> {
+  const fd = new FormData(); fd.append('file', file)
+  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/certificado-fabrica`, { method: 'POST', credentials: 'include', body: fd })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+  return res.json() as Promise<CertificadoFabricaMeta>
+}
+export function listarCertificadosFabrica(ticketId: string): Promise<CertificadoFabricaMeta[]> {
+  return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/certificado-fabrica`, { credentials: 'include' }).then((r) => json<CertificadoFabricaMeta[]>(r))
+}
+export const urlCertificadoFabrica = (ticketId: string, pdfId: string): string =>
+  `/api/tickets/${encodeURIComponent(ticketId)}/certificado-fabrica/${encodeURIComponent(pdfId)}`
