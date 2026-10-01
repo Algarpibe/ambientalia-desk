@@ -3576,6 +3576,31 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna"
 
+  - clave: "decision/archivo-f1a03-y-worktrees-01-10"
+    fecha: "2026-10-01"
+    pregunta: |
+      ¿Se aprueba un techo de 6.000 para archivar `verificacion-gas-patron-certificado` (F1A-03)? Y, con el verify
+      PASS WITH WARNINGS (`15e7bce`): ¿qué se hace con las tres desviaciones del diseño, con la salida de E-147 y con P.1?
+    respuesta_textual: |
+      «1. APROBADO un techo de 6.000 líneas para el archivo de verificacion-gas-patron-certificado. Regístralo en aprobaciones_de_techo_del_ledger con fecha y motivo (mudanza de carpetas sin carga de revisión). Condición: el agente de archivo mide antes de aplicar la parte con carga de revisión (fusión de las tres specs en las vivas + archive-report). Si esa parte supera 850 líneas, PARA y avísame. Después cierra F1A-03.
+      2. Las tres desviaciones del diseño se ACEPTAN y se registran como decisiones de diseño: número de certificado solo en la traza de la transición; PDF servido con tipo fijo; el veredicto bloqueante también exige certificado.
+      3. E-147: se adopta la OPCIÓN 1. Cada intento SDD trabaja en su propio worktree y se fusiona a main al cerrar. Aplica desde la próxima tanda y anótalo en CLAUDE.md como regla del ciclo, con fecha.
+      4. P.1: anota como pendiente de persona, con dueño Director Técnico, la entrega de la lista de gases patrón (compuesto, disponibilidad, vencimiento del certificado del cilindro). El script de siembra no se ejecuta hasta tenerla.
+      5. Sigue con el orden: versionar la R08.4 (con eso se desbloquea el hook de citas), memoria Engram y R01.4. Avísame cuando la R08.4 esté versionada y el hook pase, y hago yo el push.»
+    consecuencias: |
+      (1) Techo en `aprobaciones_de_techo_del_ledger_adenda` (al final del fichero, para no desplazar `config.yaml:3269`).
+      (2) Decisiones de diseño de F1A-03, aceptadas: (a) el número del certificado vive sólo en `ticket_transitions.values`
+      (`apps/desk/server/services/ticketService.ts:133`); (b) el PDF se sirve con `Content-Type` fijo, `attachment` y
+      `nosniff` (`apps/desk/server/routes/certificadoFabrica.ts:57-59`); (c) un veredicto que bloquea también exige
+      certificado (`packages/shared/src/gasPatron.ts:83`). Escritas al final del `design.md` del cambio.
+      (3) E-147 CERRADA con la opción 1: regla del ciclo 3 en `CLAUDE.md` (al final), desde la próxima tanda.
+      (4) P.1 sigue pendiente de persona, dueño Director Técnico; el script `docs/sdd/Siembra_Compuestos_y_Gases_Patron_2026-10-01.sql`
+      no se ejecuta hasta tenerla. Archivar no la da por hecha.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/archivo-f1a03-y-worktrees-01-10) y aprobaciones_de_techo_del_ledger_adenda · docs/sdd/ENTRADA.md → E-148 · CLAUDE.md → «Regla del ciclo 3»"
+    maestro_pasaje: "ninguno (método)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
@@ -3591,3 +3616,22 @@ trabajo_sin_ficha_declarado:
       (`packages/zoho-sync/src/booksHub/sync.ts`, `afa4252`); `a1cfe07` sólo tipa sus pruebas por los
       avisos de lint. No realiza contenido de ninguna fila del §5.
     declarado_por: "decision/reset-intento-f1a03-01-10, punto 4"
+
+aprobaciones_de_techo_del_ledger_adenda:
+  # Continuación de `aprobaciones_de_techo_del_ledger`, al final del fichero: insertar dentro de aquel
+  # bloque desplazaría `config.yaml:3269`, que cita el verify-report archivado de `prioridad-top5-cliente`.
+  - cambio: verificacion-gas-patron-certificado
+    fase: archive
+    techo: 6000
+    medido: "pendiente — lo mide el agente de archivo antes de aplicar"
+    fecha: 2026-10-01
+    quien: Gerencia (mantenedor), en la conversación de la sesión de construcción
+    motivo: >
+      Mudanza de carpetas sin carga de revisión: el `git mv` de la carpeta del cambio (1.999 líneas)
+      cuenta dos veces en el registro, que mide sin detección de renombrado (regla del ciclo 2, desvío 3).
+      Lo revisable es la fusión de las tres specs en las vivas y el `archive-report`.
+    condicion: >
+      «el agente de archivo mide antes de aplicar la parte con carga de revisión (fusión de las tres specs
+      en las vivas + archive-report). Si esa parte supera 850 líneas, PARA y avísame.»
+    registro: "decision/archivo-f1a03-y-worktrees-01-10"
+

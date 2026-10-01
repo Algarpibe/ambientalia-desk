@@ -357,3 +357,15 @@ por escrito, barrido ~580. Manda `tasks.md`.
 - **Quién corrige el compuesto:** la propuesta no lo dice; se elige administrador (D-8, supuesto reversible d-1). Si
   Gerencia quiere al Director Técnico, es una decisión de cargo nueva.
 - **Traza del cambio de compuesto** en `equipos_cambios`: fuera (punto abierto para F1B-02). Ninguna bloquea.
+
+## Decisiones de diseño aceptadas tras el verify (Gerencia, 01/10, `decision/archivo-f1a03-y-worktrees-01-10`)
+
+Las tres desviaciones que el apply declaró y el verify (`15e7bce`) juzgó conformes con los specs pasan a ser
+decisiones de diseño, y prevalecen sobre lo escrito arriba:
+
+1. **El número del certificado vive sólo en la traza de la transición** (`ticket_transitions.values`, RQ-EN-10); no
+   se copia a `tickets.custom_fields` (`apps/desk/server/services/ticketService.ts:133`).
+2. **El PDF se sirve con tipo fijo** (`application/pdf`, `attachment`, `nosniff`;
+   `apps/desk/server/routes/certificadoFabrica.ts:57-59`): la tabla no guarda el tipo declarado.
+3. **Un veredicto que bloquea también exige el certificado** (`packages/shared/src/gasPatron.ts:83`): el 409 sale
+   antes que el 422, así que no es observable, y permite que la prueba de posición active las dos guardas.

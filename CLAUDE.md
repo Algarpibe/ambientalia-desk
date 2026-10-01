@@ -652,3 +652,21 @@ R08.4** (`docs/Manifesto/…R08.4.docx` y su `.md`), y su `.md` pasa a ser la co
 como borrador de GN, no vigente. Lo hace la sesión de construcción, no la de supervisión: versionar los dos
 ficheros, rehacer la tabla de «El documento maestro citable» y marcar `maestro_revision: "R08.4"` en las
 decisiones que recoge (sus Anexos C.12 e I.3). **No renumeres las citas `R08.2.md:NNNN`** (caso B, regla de mutación 4).
+
+## Regla del ciclo 3 — cada intento SDD en su propio worktree
+
+Gerencia, 2026-10-01 (`decision/archivo-f1a03-y-worktrees-01-10`, E-148, que cierra el hallazgo E-147).
+**Desde la tanda siguiente a F1A-03, cada intento SDD trabaja en su propio worktree y se fusiona a `main` al
+cerrar** —después del `settle`, nunca durante—. La supervisión y los commits directos (R-5) siguen en `main`.
+
+*Por qué existe:* el registro de intentos mide el diff del ÁRBOL entre el principio y el final del intento, así
+que todo lo que entra en `main` mientras el intento está abierto se le carga a la tanda. Pasó tres veces
+(10/09, 28/09 y 01/10), y la tercera el lote 1 de F1A-03 midió 772 propias y el registro le imputó **1.651**
+(E-146), con reset de mantenedor. En un worktree propio la rama sólo recibe los commits de la tanda: el registro
+mide bien por construcción, sin cambiar la herramienta ni frenar a la supervisión.
+
+*Cómo:* el worktree va como hermano del repositorio (`C:\dev\Desk_2_R1.023-worktrees\<cambio>`, regla de
+CodeGraph: nunca bajo `/tmp`, con su propio `.codegraph/`); el intento se abre allí (o se mueve con
+`gentle-ai sdd-attempt handoff`). Al cerrar, se fusiona a `main`; los conflictos previsibles están en
+`openspec/config.yaml` y `docs/sdd/ENTRADA.md`, que se escriben al final, y se resuelven conservando las dos
+partes. **No se rebasa la rama sobre `main` con el intento abierto:** volvería a meter lo ajeno en su medida.
