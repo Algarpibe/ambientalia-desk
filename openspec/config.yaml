@@ -3259,3 +3259,24 @@ adenda_iv11_asociacion_ov_ticket:
       Qué literales de `order_status`/`status` de `books.sales_orders` significan borrador y anulada.
       Hoy `saldoPorLote` (`packages/zoho-sync/src/books/subOV.ts:18`) asume `draft` y `void`: es
       hipótesis. Desbloquea confirmar S-11 del diseño.
+
+decisiones_de_gerencia_adenda:
+  # Decisiones de Gerencia que llegan DESPUÉS del corte del 01/10. Como
+  # `adendas_incumplimientos_vivos`, van al final del fichero: insertarlas al final de
+  # `decisiones_de_gerencia` desplazaría las líneas citadas de `unidad_de_avance` en adelante
+  # (p. ej. `config.yaml:3141`, `:3156` y `:3161` en los paquetes de despliegue). Mismo formato
+  # que `decisiones_de_gerencia`; se remiten SIEMPRE por su clave, nunca por número de línea.
+  - clave: "decision/e099-orden-cola-taller"
+    fecha: "2026-09-30"
+    pregunta: |
+      En qué orden se presentan los tickets de la cola de trabajo del taller («Mis tickets» y el tablero) dentro de un mismo nivel de prioridad (implícita en E-099; es además la pregunta E-093 sobre el desempate de «Mis Tickets»).
+    respuesta_textual: |
+      «Orden de la cola del taller según la habilitación comercial. El equipo que llega sin orden de venta se recibe, se hace su remisión de entrada, queda físicamente en el almacén y en el sistema permanece en «Remisión creada», el estado de espera decidido el 10/09 (área Comercial, alarma a los 3 días hábiles). Mientras está ahí no puede iniciarse el servicio. Nuevo: cuando varios equipos salen de esa espera, la cola de trabajo del taller («Mis tickets» y el tablero) los ordena por la fecha y hora en que Comercial los habilitó («Habilitar Servicio»), no por la fecha de llegada. Este orden se aplica dentro de cada nivel de prioridad: primero la prioridad (contrato, Top 5, valoración del cliente) y, entre tickets de la misma prioridad, el orden de habilitación comercial. La lista de equipos en «Remisión creada» se muestra a Comercial ordenada por antigüedad, para que habilite primero los que más llevan esperando. Se confirma también que el bodegaje se mide en días naturales, no hábiles.»
+    consecuencias: |
+      (1) EL DESEMPATE DENTRO DE UNA MISMA PRIORIDAD ES LA FECHA Y HORA DE «HABILITAR SERVICIO», y vale para «Mis tickets» Y para el tablero: los dos nombrados en la respuesta.
+      (2) PRIMERO LA PRIORIDAD, LUEGO LA HABILITACIÓN: el orden de habilitación nunca adelanta a un ticket de prioridad mayor.
+      (3) LOS BODEGAJES DE F1A-04 QUEDAN PARA F1A-04: la frase sobre días naturales los afecta a ellos, no a la cola de F1B-07.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e099-orden-cola-taller) · docs/sdd/ENTRADA.md → E-099"
+    maestro_pasaje: "M1.9.1 («FIFO inteligente por fecha promesa», R08.2.md:1711)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-07 — no abre fila nueva; entra en `prioridad-top5-cliente` (lote 2b)"

@@ -58,7 +58,15 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
    `:760`) lo da como implicación de la decisión del 14/08 en `:781`. Orden `Urgent > High > Medium > Low > sin
    prioridad`, con prueba. Hoy el servidor no ordena por prioridad (`packages/zoho-sync/src/db/repo.ts:151`, `ORDER BY
    t.created_time DESC NULLS LAST`) y la vista sólo filtra (`apps/desk/src/lib/boardView.ts:44-46`). Ruta propia y
-   predicado compartido: `design.md` §12. Dentro de la misma prioridad, el orden de hoy (S-10).
+   predicado compartido: `design.md` §12. **Dentro de la misma prioridad, la fecha y hora de «Habilitar Servicio»**
+   (S-10, rehecho el 2026-10-01).
+8. **El tablero se ordena igual** (añadido el 2026-10-01). Fuente: `decision/e099-orden-cola-taller`
+   (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`, respuesta literal de E-099 en `docs/sdd/ENTRADA.md`):
+   «la cola de trabajo del taller («Mis tickets» y el tablero) los ordena por la fecha y hora en que Comercial los
+   habilitó («Habilitar Servicio») […] primero la prioridad […] y, entre tickets de la misma prioridad, el orden de
+   habilitación comercial». **Una sola función de orden** en `packages/shared`, que consumen en el servidor
+   `GET /api/mis-tickets` y el listado de activos que pinta el tablero (`GET /api/tickets`); dos implementaciones
+   serían el molde H5. Los bodegajes en días naturales de la misma respuesta son de F1A-04 y no entran aquí.
 
 **Fuera**
 - Calificación de los clientes sin contrato ni Top 5, número de niveles y quién ajusta fuera de Top 5: pregunta 3.b
@@ -67,9 +75,12 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
   no es respuesta de Gerencia, y `decision/c10-permisos-cargo` cierra la lista de excepciones por cargo en tres
   (`openspec/config.yaml:1932-1934`): esta tanda **no** construye una excepción para el Director Técnico. Por eso
   `cierra: no`.
-- **El desempate «FIFO inteligente por fecha promesa»** (`R08.2.md:1711`): el término no está definido y no existe en
-  el código (`git grep -n "fecha promesa\|fechaPromesa\|fecha_promesa" -- apps packages` = 0). Pregunta a Gerencia en
-  `docs/sdd/ENTRADA.md`, E-093, como apéndice de la pregunta 3 de `Preguntas_Gerencia_2026-09-29.md`.
+- **La «fecha promesa» del maestro** (`R08.2.md:1711`). El desempate ya no depende de ella: lo fija E-099
+  (alcance 8). Lo que E-093 deja abierto —si esa «fecha promesa» es el tiempo promesa global de E-095, que va después
+  del corte— no lo construye esta tanda.
+- **La lista de «Remisión creada» para Comercial ordenada por antigüedad** (misma respuesta de E-099): es otra vista,
+  no la cola del taller; queda fuera de este lote y sin destino escrito aquí (hipótesis: cabe en F1B-07 lote 3 o en
+  otra fila; lo decide quien cierre F1B-07).
 - Propagación a los tickets abiertos que ya existan (S-1): punto abierto con dueño Gerencia, sin destino.
 - Tope numérico de la lista (S-7).
 - Tickets sin `client_id` (tickets de Zoho no enlazados): no heredan.
@@ -88,8 +99,8 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
   campos en `openspec/specs/transitions-st/spec.md:310`).
 - `permissions`: RQ-PM-20 (`permissions/spec.md:359-362`, «hoy no las llama nadie») — `puedeFijarPrioridadTop5` pasa a
   tener llamadores.
-- `vistas-tablero`: requisito nuevo RQ-VT-09, «Mis tickets» ordenado por urgencia en el servidor (la capacidad acaba hoy
-  en RQ-VT-08).
+- `vistas-tablero`: requisito nuevo RQ-VT-09, «Mis tickets» y el tablero ordenados en el servidor por urgencia y, dentro
+  de ella, por la habilitación comercial (la capacidad acaba hoy en RQ-VT-08).
 
 ## Enfoque
 
@@ -124,10 +135,19 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
 - **S-7 · Sin tope.** «Top 5» se toma como nombre, no como número (hipótesis); la UI muestra el recuento.
 - **S-8 · Ajuste sólo en tickets de cliente Top 5** (fuera de Top 5 es la 3.b) → 409 en otro caso.
 - **S-9 · Desmarcar Top 5** no toca los tickets ya creados.
-- **S-10 · Desempate de «Mis tickets».** Dentro de una misma prioridad se mantiene el orden de hoy, el de
-  `repo.ts:151` (`created_time` descendente, sin fecha al final). Un valor que no sea `Urgent`, `High`, `Medium` ni
-  `Low` (vacío, `null` o desconocido) cuenta como «sin prioridad» y va al final. El «FIFO por fecha promesa» queda
-  fuera hasta que Gerencia responda E-093.
+- **S-10 · Desempate de la cola del taller («Mis tickets» y tablero). REHECHO el 2026-10-01** con
+  `decision/e099-orden-cola-taller`: dentro de una misma prioridad, el que Comercial habilitó antes va delante (la
+  fecha y hora de la transición `habilitar_servicio` en `ticket_transitions`, ascendente). Un valor que no sea
+  `Urgent`, `High`, `Medium` ni `Low` (vacío, `null` o desconocido) cuenta como «sin prioridad» y va al final. Lo que
+  E-099 NO dice, y por eso son supuestos:
+  - **S-10a · Si se habilitó dos veces, cuenta la ÚLTIMA.** La respuesta habla de cuándo un equipo «sale de esa
+    espera»; si volvió a ella y salió otra vez, la salida que lo puso en la cola actual es la última. Se prueba con
+    un ticket que la ejecutó dos veces.
+  - **S-10b · Sin fila de habilitación, cuenta su creación** (`created_time`). Los tickets traídos de Zoho, y los
+    que nunca pasaron por la espera comercial, no tienen esa fila. Sin ninguna de las dos fechas, van al final de su
+    prioridad. Se prueba con un ticket sin fila.
+  - Antes del 2026-10-01 S-10 mantenía el orden de hoy (`repo.ts:151`, `created_time` descendente) a la espera de
+    E-093; ese texto queda superado.
 
 ## Nadie con cargo (S-1 de F1C-05) y cambio visible
 
@@ -146,6 +166,9 @@ reparte a ella todo lo que no es `High`, `Urgent`, `Medium` ni `Low`; el diseño
 habría alguien con permiso para fijar la prioridad de esos tickets, y calificar a los clientes sin contrato ni Top 5 es
 el resto de la 3.b. Va en el paquete de despliegue como cambio visible, junto al anterior. Y desde que «Mis tickets» se
 ordena (alcance 7), esos tickets van **al final** de la lista de su técnico.
+
+**Tercer cambio visible (alcance 8, E-099):** el tablero deja de listar los tickets del más nuevo al más viejo; dentro
+de cada columna aparecen por prioridad y, en la misma prioridad, por quién habilitó Comercial antes.
 
 ## Pruebas que hoy fijan la prioridad obligatoria y se revisan
 
