@@ -529,11 +529,11 @@ esquema y del cambio **MUST NOT** modificar, marcar ni rellenar ninguna fila exi
 
 ## Notas fuera de bloques Requirement
 
-- La sección «Fuera de alcance de esta spec» de la spec viva (`openspec/specs/transitions-equipo-nuevo/spec.md:263-271`)
-  **se actualiza al fusionar**: se retiran sus viñetas **E3/E4** y **E5** (`:266-269`), porque este cambio las construye;
+- La sección «Fuera de alcance de esta spec» de la spec viva (`openspec/specs/transitions-equipo-nuevo/spec.md:263-271` en `28167e8`, antes de esta fusión)
+  **se actualiza al fusionar**: se retiran sus viñetas **E3/E4** y **E5** (`:266-269` en `28167e8`), porque este cambio las construye;
   se conservan las demás (Soporte remoto → `blueprint-soporte-remoto`; guarda de `habilitar_servicio` → F1B-03; columna
   propia de tablero para `Verificación` y mapa de los tres flujos → F1B-09).
-- La tabla de guardas de RQ-EN-05 (`openspec/specs/transitions-equipo-nuevo/spec.md:201-209`) no se reescribe: ya omite
+- La tabla de guardas de RQ-EN-05 (`openspec/specs/transitions-equipo-nuevo/spec.md:201-209` en `28167e8`) no se reescribe: ya omite
   las guardas de cargo y prioridad de F1C-05. La posición exacta de la guarda de compuesto es la que fija RQ-EN-08, tras
   la guarda 5 (área) y antes de las de contenido (6-8).
 - Comprobaciones de persona, NO escenarios automáticos (los `.tsx` están fuera de la red de pruebas por decisión de
