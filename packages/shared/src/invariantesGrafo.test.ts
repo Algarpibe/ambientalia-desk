@@ -3,7 +3,7 @@ import {
   TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, TRANSICION_REMISION_CONFIRMADA, TRANSICION_REMISION_RETIRADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
 } from './transitions'
 import { ESTADOS, ESTADOS_SERVICIO, ESTADOS_SOLO_EQUIPO_NUEVO, ESTADOS_SOLO_SOPORTE_REMOTO } from './estados'
-import { camposFechaReentrantes } from './reentrancia'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'
+import { camposFechaReentrantes } from './reentrancia'; import { estadoInicialDelAlta, transicionesDelTicket } from './flujos'; import { CLASIFICACIONES } from './ticketCreate'; import { CLAVE_CERTIFICADO_FABRICA } from './gasPatron'
 
 /**
  * LOS SIETE INVARIANTES DEL GRAFO (§2 del proposal F0-04).
@@ -210,10 +210,10 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect(salidasDeVerificacion).toEqual(['liberacion', 'rechazo_verificacion'])
   })
 
-  it('corrección (b) · las seis entradas de Equipo nuevo declaran exactamente comentario y derivación', () => {
+  it('corrección (b) · las seis entradas de Equipo nuevo declaran comentario y derivación (liberacion, además, el certificado)', () => {
     for (const t of TRANSITIONS_EQUIPO_NUEVO) {
       expect(t.area, `${t.id} no es de Servicio Técnico (s2)`).toBe('Servicio Técnico')
-      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(['comment', 'derivado_a'])
+      expect(t.fields.map((f) => f.key), `${t.id} declara campos de negocio de más`).toEqual(t.id === 'liberacion' ? ['comment', 'certificado_fabrica', 'derivado_a'] : ['comment', 'derivado_a'])
     }
   })
 })
@@ -283,5 +283,23 @@ describe('estados de entrada de la unión (F1B-06, D7)', () => {
       expect(transicionesDelTicket({ classification: c, status: inicial }).length, `«${c}» nace en «${inicial}» sin ninguna transición de salida`).toBeGreaterThan(0)
     }
     expect([...new Set(CLASIFICACIONES.map((c) => estadoInicialDelAlta(c)))].sort()).toEqual(['Solicitud Soporte', 'Ticket creado'])
+  })
+})
+
+/**
+ * El campo `certificado_fabrica` de `liberacion` (F1A-03, RQ-EN-10): la obligatoriedad es contextual y la impone el
+ * servidor (`erroresCertificado`), no el catálogo. Marcarlo `required` rompería la liberación sin equipo.
+ */
+describe('liberacion · el campo del certificado de fábrica', () => {
+  const campo = TRANSITIONS_EQUIPO_NUEVO.find((t) => t.id === 'liberacion')!.fields.find((f) => f.key === 'certificado_fabrica')
+  it('EN10-6 · es de texto, no obligatorio y se guarda como campo propio', () => {
+    expect(campo).toBeDefined()
+    expect(campo).toMatchObject({ kind: 'text', required: false, target: 'customField' })
+  })
+  it('su clave es la de shared: dos copias vigiladas', () => {
+    expect(campo?.key).toBe(CLAVE_CERTIFICADO_FABRICA)
+  })
+  it('EN01-8, EN08-10 · liberacion sigue saliendo de En Proceso y Verificación, y Finalizado es el único sin salida', () => {
+    expect(TRANSITIONS_EQUIPO_NUEVO.find((t) => t.id === 'liberacion')!.from).toEqual(['En Proceso', 'Verificación'])
   })
 })

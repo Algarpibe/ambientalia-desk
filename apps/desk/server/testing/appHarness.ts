@@ -2,7 +2,7 @@ import { beforeEach, vi } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
-import type { Transition, Cargo } from '@ambientalia/shared'
+import { CLAVE_CERTIFICADO_FABRICA, type Transition, type Cargo } from '@ambientalia/shared'
 import type { EquipoRow } from '../db/equipos'
 import { createApp } from '../app'
 import { createUser } from '../auth/users'
@@ -71,7 +71,7 @@ export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCall
 export function valoresValidos(t: Transition, n: number): Record<string, unknown> {
   const values: Record<string, unknown> = { comment: 'valores mínimos del arnés' }
   for (const f of t.fields) {
-    if (!f.required) continue
+    if (!f.required && f.key !== CLAVE_CERTIFICADO_FABRICA) continue
     if (f.kind === 'date') values[f.key] = '2026-01-15'
     else if (f.kind === 'number') values[f.key] = 3
     else if (f.kind === 'checkbox') values[f.key] = true

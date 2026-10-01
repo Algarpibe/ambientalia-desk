@@ -54,3 +54,46 @@ export const ETIQUETA_CLAVE_PROPIA: Record<string, string> = {
   [CLAVE_CERTIFICADO_FABRICA]: 'Número del certificado de fábrica',
   [CLAVE_MOTIVO_SIN_VERIFICACION]: 'Liberado sin Verificación',
 }
+
+// ── Parte 2 (F1A-03, lote 2): el veredicto de `liberacion`, el certificado y el saneado de `values` ─────────────
+
+/** Lo que el servidor decide de una `liberacion`: bloquear (409), o dejarla pasar con su exigencia y su motivo. */
+export type VeredictoLiberacion = { bloquea: true; mensaje: string } | { bloquea: false; motivo: string | null; exigeCertificado: boolean }
+
+/**
+ * Veredicto de `liberacion` (RQ-EN-08, RQ-EN-09, RQ-EN-10). `familia` = el equipo tiene compuesto escrito, aunque no
+ * resuelva a la lista (RQ-EN-09: «no reconocido» falla hacia visible, no hacia silencio). Desde `Verificación` no hay
+ * guarda ni motivo y el certificado siempre se exige; desde otro origen, con compuesto y patrón vigente se bloquea, y
+ * sin él se deja pasar con el motivo y el certificado exigido. Sin compuesto no se bloquea ni se exige nada.
+ */
+export function veredictoLiberacion(c: { origen: string; compuestoEquipo: string | null; gases: readonly GasPatronLeido[]; hoy: DiaCivil }): VeredictoLiberacion {
+  const desdeVerificacion = c.origen === 'Verificación'
+  const crudo = c.compuestoEquipo?.trim() ?? ''
+  const familia = crudo !== ''
+  const exigeCertificado = desdeVerificacion || familia
+  if (desdeVerificacion || !familia) return { bloquea: false, motivo: null, exigeCertificado }
+  if (tienePatronVigente(c.compuestoEquipo, c.gases, c.hoy)) {
+    return { bloquea: true, mensaje: 'Este equipo tiene compuesto con gas patrón vigente: debe pasar por Verificación antes de liberarse' }
+  }
+  return { bloquea: false, motivo: `Sin gas patrón vigente de ${compuestoCanonico(crudo) ?? crudo}`, exigeCertificado }
+}
+
+/** Escalón C (RQ-EN-10): si el veredicto exige el certificado, falta o sólo trae espacios, un error que lo nombra. Un veredicto que BLOQUEA también lo exige (es de un equipo con compuesto): así la prueba de posición del 409 contra este 422 activa las DOS guardas a la vez (regla de mutación 1). */
+export function erroresCertificado(v: VeredictoLiberacion | null, values: Record<string, unknown>): string[] {
+  if (!v || !(v.bloquea || v.exigeCertificado)) return []
+  const n = values[CLAVE_CERTIFICADO_FABRICA]
+  return typeof n === 'string' && n.trim() !== '' ? [] : ['Falta el número del certificado de fábrica']
+}
+
+/** El número llega recortado al plan, al `422` y a la traza (RQ-EN-10). Lo que no es un objeto con texto se deja igual. */
+export function recortarCertificado(recibidos: unknown): unknown {
+  if (typeof recibidos !== 'object' || recibidos === null || Array.isArray(recibidos)) return recibidos
+  const n = (recibidos as Record<string, unknown>)[CLAVE_CERTIFICADO_FABRICA]
+  return typeof n === 'string' ? { ...recibidos, [CLAVE_CERTIFICADO_FABRICA]: n.trim() } : recibidos
+}
+
+/** El motivo es un hecho derivado (D-5): se borra el del cuerpo y sólo se pone el del servidor, si lo hay. */
+export function valoresConMotivo(values: Record<string, unknown>, v: VeredictoLiberacion | null): Record<string, unknown> {
+  const resto = { ...values }; delete resto[CLAVE_MOTIVO_SIN_VERIFICACION]
+  return v && !v.bloquea && v.motivo ? { ...resto, [CLAVE_MOTIVO_SIN_VERIFICACION]: v.motivo } : resto
+}

@@ -2,8 +2,8 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
-import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -128,10 +128,10 @@ export async function executeTransition(
   }
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }) // Escalón B (F1C-05): tras el área, antes de todo 422
-  const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, b.values)
-  const plan = buildTransitionPlan(t, values)
-  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ if (plan.errors.length || erroresFecha.length || errCuarentena.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena] })
+  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422
+  const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, recortarCertificado(b.values))
+  const plan = buildTransitionPlan(t, values); delete plan.customFields[CLAVE_CERTIFICADO_FABRICA] /* F1A-03 (C-8): el número es de ESA liberación y vive en la traza; no se duplica en tickets.custom_fields, que el sync pisa */
+  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ const errCertificado = erroresCertificado(gas, values); if (plan.errors.length || erroresFecha.length || errCuarentena.length || errCertificado.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena, ...errCertificado] })
   // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
   // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
   // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.
@@ -152,7 +152,7 @@ export async function executeTransition(
   }
   const actor = user.name ?? TRANSITION_ACTOR
   const derivadoAntes = current.row.derivado_a ?? null
-  await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, values)
+  await applyTransition(db, id, current.row.status, { id: t.id, name: t.name, area: t.area }, plan, actor, valoresConMotivo(values, gas))
 
   /*
    * El aviso va DESPUÉS de la transición y fuera de su transacción, a propósito.
@@ -231,4 +231,20 @@ export async function executeTransition(
 function exigirMismoFlujo(t: Transition, row: TicketDeFlujo): void {
   const motivo = fueraDeFlujo(t, row)
   if (motivo) throw new HttpError(409, { error: motivo })
+}
+
+/**
+ * F1A-03 (RQ-EN-08, RQ-EN-09, RQ-EN-10): el veredicto de `liberacion`, que mira el compuesto del equipo y los gases
+ * patrón. Sólo `liberacion` lo calcula: en las otras 43 transiciones devuelve `null` SIN consultar nada. Al FINAL del
+ * fichero, como `exigirMismoFlujo`, para no desplazar las citas vivas a `ticketService.ts`. «Hoy» es el día de Bogotá.
+ */
+async function veredictoDeLiberacion(db: Queryable, t: Transition, row: { status: string; equipo_id?: string | null }): Promise<VeredictoLiberacion | null> {
+  if (t.id !== 'liberacion') return null
+  const { compuestoEquipo, gases } = await leerContextoGas(db, row.equipo_id)
+  return veredictoLiberacion({ origen: row.status, compuestoEquipo, gases, hoy: hoyEnZona() })
+}
+
+/** Escalón B: el equipo con compuesto y patrón vigente no se libera desde `En Proceso`; falta pasar por Verificación. */
+function exigirVerificacion(v: VeredictoLiberacion | null): void {
+  if (v?.bloquea) throw new HttpError(409, { error: v.mensaje })
 }

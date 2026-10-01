@@ -10,7 +10,7 @@
  * del equipo (`equipos.ts`), que compone su cronología con las mismas reglas de orden y de jsonb.
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { FROM_STATUS_CREACION, CLAVE_DERIVACION, PREFIJO_TICKET_APP } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, CLAVE_DERIVACION, PREFIJO_TICKET_APP, ETIQUETA_CLAVE_PROPIA } from '@ambientalia/shared'
 
 /** Qué hacer con Zoho antes de responder. */
 export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
@@ -80,7 +80,7 @@ export function lectorCreacion(values: unknown, ticket: Record<string, unknown>)
  * quedaría desactualizado en silencio el día que alguien añada uno.
  */
 export function etiquetaCampo(clave: string): string {
-  const t = clave.replace(/_/g, ' ')
+  const t = Object.hasOwn(ETIQUETA_CLAVE_PROPIA, clave) ? ETIQUETA_CLAVE_PROPIA[clave] : clave.replace(/_/g, ' ')
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 

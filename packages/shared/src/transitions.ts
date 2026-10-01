@@ -357,7 +357,7 @@ export const TRANSITIONS_EQUIPO_NUEVO: Transition[] = [
   { id: 'verificacion', name: 'Verificación', from: ['En Proceso'], to: 'Verificación', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
   { id: 'liberacion', name: 'Liberación', from: ['En Proceso', 'Verificación'], to: 'Finalizado', area: 'Servicio Técnico',
-    fields: [comment(), derivacion()] },
+    fields: [comment(), { key: 'certificado_fabrica', label: 'Número del certificado de fábrica', kind: 'text', required: false, target: 'customField' }, derivacion()] },
   { id: 'rechazo_verificacion', name: 'Rechazo de verificación', from: ['Verificación'], to: 'Notificado', area: 'Servicio Técnico',
     fields: [comment(), derivacion()] },
 ]

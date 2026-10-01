@@ -189,3 +189,31 @@ describe('getHistorialTicket', () => {
     expect(eventos.map((e) => e.title)).toEqual(['Transición: Habilitar', 'Ana ha publicado un comentario'])
   })
 })
+
+// F1A-03 (lote 2, D-6): las dos claves propias de la liberación salen con su etiqueta en español, no con `_` → espacio.
+describe('getHistorialTicket · etiquetas de la liberación (F1A-03)', () => {
+  it('«Número del certificado de fábrica» y «Liberado sin Verificación»; una clave ajena conserva su forma', async () => {
+    const pg = newDb().adapters.createPg()
+    const bd: Queryable = new pg.Pool()
+    await migrate(bd)
+    await bd.query("INSERT INTO tickets (id,number,subject,status,managed_by_app,source) VALUES ('t-lib',12,'A','Finalizado',true,'app')")
+    await bd.query(
+      "INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at,values) VALUES ('t-lib','Liberación','En Proceso','Finalizado','Admin','2026-10-01T10:00:00Z',$1)",
+      [JSON.stringify({ certificado_fabrica: 'CF-1', motivo_sin_verificacion: 'Sin gas patrón vigente de SO₂', otra_clave: 'x' })],
+    )
+    const { eventos } = await getHistorialTicket(bd, 't-lib')
+    const detalles = eventos.flatMap((e) => e.details ?? []).map((d) => `${d.label}: ${d.value}`)
+    expect(detalles).toContain('Número del certificado de fábrica: CF-1')
+    expect(detalles).toContain('Liberado sin Verificación: Sin gas patrón vigente de SO₂')
+    expect(detalles).toContain('Otra clave: x')
+  })
+})
+
+// Una clave con nombre de propiedad heredada de `Object` no puede romper la etiqueta del historial.
+describe('etiquetaCampo · claves que son propiedades de Object', () => {
+  it('«constructor» se trata como una clave cualquiera', async () => {
+    const { etiquetaCampo } = await import('./ticketFuentes')
+    expect(etiquetaCampo('constructor')).toBe('Constructor')
+    expect(etiquetaCampo('certificado_fabrica')).toBe('Número del certificado de fábrica')
+  })
+})

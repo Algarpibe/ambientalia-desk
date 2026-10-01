@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   COMPUESTOS, compuestoCanonico, compuestoDelCuerpo, patronVigente, tienePatronVigente,
   CLAVE_CERTIFICADO_FABRICA, CLAVE_MOTIVO_SIN_VERIFICACION, ETIQUETA_CLAVE_PROPIA, type GasPatronLeido,
+  veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, type VeredictoLiberacion,
 } from './gasPatron'
 import { hoyEnZona } from './contratos'
 
@@ -106,5 +107,86 @@ describe('claves propias del campo y del motivo', () => {
       certificado_fabrica: 'Número del certificado de fábrica',
       motivo_sin_verificacion: 'Liberado sin Verificación',
     })
+  })
+})
+
+/**
+ * Parte 2 del dominio (F1A-03, lote 2): el veredicto de `liberacion`, la exigencia del certificado y el saneado de
+ * `values`. Pura: «hoy» entra como parámetro.
+ */
+describe('RQ-EN-08, RQ-EN-09 · veredictoLiberacion', () => {
+  const v = (origen: string, compuestoEquipo: string | null, gases: GasPatronLeido[]) =>
+    veredictoLiberacion({ origen, compuestoEquipo, gases, hoy: HOY })
+
+  it('desde Verificación nunca bloquea, siempre exige certificado y no lleva motivo', () => {
+    for (const equipo of [null, 'SO₂', 'XYZ']) {
+      expect(v('Verificación', equipo, [gas('SO₂')])).toEqual({ bloquea: false, motivo: null, exigeCertificado: true })
+    }
+  })
+  it('En Proceso sin equipo, null o sólo espacios: no bloquea, no exige y no lleva motivo', () => {
+    for (const equipo of [null, '', '  ']) {
+      expect(v('En Proceso', equipo, [gas('SO₂')])).toEqual({ bloquea: false, motivo: null, exigeCertificado: false })
+    }
+  })
+  it('con compuesto y patrón vigente bloquea, y el mensaje nombra Verificación', () => {
+    const r = v('En Proceso', 'SO₂', [gas('SO₂')])
+    expect(r.bloquea).toBe(true)
+    expect((r as { mensaje: string }).mensaje).toContain('Verificación')
+  })
+  it('el patrón vigente de otro compuesto no bloquea: pasa con motivo y exige certificado', () => {
+    expect(v('En Proceso', 'CO', [gas('SO₂')])).toEqual({ bloquea: false, motivo: 'Sin gas patrón vigente de CO', exigeCertificado: true })
+  })
+  it.each<[string, GasPatronLeido[]]>([
+    ['tabla vacía', []], ['vencido', [gas('SO₂', { vence: '2026-09-30' })]], ['no disponible', [gas('SO₂', { disponible: false })]],
+  ])('EN09 · %s → pasa con el motivo del compuesto canónico', (_c, gases) => {
+    expect(v('En Proceso', 'SO₂', gases)).toEqual({ bloquea: false, motivo: 'Sin gas patrón vigente de SO₂', exigeCertificado: true })
+  })
+  it('m-4 en el servidor · «SO2» en el equipo frente a «SO₂» y «so 2» en la tabla bloquea', () => {
+    expect(v('En Proceso', 'SO2', [gas('SO₂')]).bloquea).toBe(true)
+    expect(v('En Proceso', 'SO2', [gas('so 2')]).bloquea).toBe(true)
+  })
+  it('un compuesto fuera de la lista no bloquea, exige certificado y el motivo lo nombra', () => {
+    expect(v('En Proceso', 'XYZ', [gas('SO₂'), gas('XYZ')])).toEqual({ bloquea: false, motivo: 'Sin gas patrón vigente de XYZ', exigeCertificado: true })
+  })
+})
+
+describe('RQ-EN-10 · erroresCertificado y recortarCertificado', () => {
+  const exige: VeredictoLiberacion = { bloquea: false, motivo: null, exigeCertificado: true }
+  const noExige: VeredictoLiberacion = { bloquea: false, motivo: null, exigeCertificado: false }
+  it('sin veredicto no hay error', () => {
+    expect(erroresCertificado(null, {})).toEqual([])
+  })
+  it.each<[string, Record<string, unknown>]>([
+    ['falta', {}], ['vacío', { certificado_fabrica: '' }], ['sólo espacios', { certificado_fabrica: '   ' }], ['no es texto', { certificado_fabrica: 42 }],
+  ])('si lo exige y %s: un error que nombra el certificado', (_c, values) => {
+    const e = erroresCertificado(exige, values)
+    expect(e).toHaveLength(1)
+    expect(e[0]).toContain('certificado')
+  })
+  it('un veredicto que bloquea también lo exige: así el 409 y el 422 se activan juntos (posición)', () => {
+    expect(erroresCertificado({ bloquea: true, mensaje: 'x' }, {})).toHaveLength(1)
+    expect(erroresCertificado({ bloquea: true, mensaje: 'x' }, { certificado_fabrica: 'CF-1' })).toEqual([])
+  })
+  it('si lo exige y lo trae, o no lo exige, no hay error', () => {
+    expect(erroresCertificado(exige, { certificado_fabrica: 'CF-1' })).toEqual([])
+    expect(erroresCertificado(noExige, {})).toEqual([])
+  })
+  it('recortarCertificado recorta el texto y deja igual lo que no lo es', () => {
+    expect(recortarCertificado({ certificado_fabrica: ' CF-1 ', otro: ' x ' })).toEqual({ certificado_fabrica: 'CF-1', otro: ' x ' })
+    expect(recortarCertificado({ certificado_fabrica: 7 })).toEqual({ certificado_fabrica: 7 })
+    expect(recortarCertificado(undefined)).toBeUndefined()
+    expect(recortarCertificado('texto')).toBe('texto')
+  })
+})
+
+describe('RQ-EN-09 · valoresConMotivo', () => {
+  const conMotivo: VeredictoLiberacion = { bloquea: false, motivo: 'Sin gas patrón vigente de SO₂', exigeCertificado: true }
+  const sinMotivo: VeredictoLiberacion = { bloquea: false, motivo: null, exigeCertificado: false }
+  it('borra siempre la clave del cuerpo y la pone sólo si hay motivo', () => {
+    const cuerpo = { comment: 'x', motivo_sin_verificacion: 'forjado' }
+    expect(valoresConMotivo(cuerpo, conMotivo)).toEqual({ comment: 'x', motivo_sin_verificacion: 'Sin gas patrón vigente de SO₂' })
+    expect(valoresConMotivo(cuerpo, sinMotivo)).toEqual({ comment: 'x' })
+    expect(valoresConMotivo(cuerpo, null)).toEqual({ comment: 'x' })
+    expect(cuerpo.motivo_sin_verificacion).toBe('forjado')
   })
 })
