@@ -3506,3 +3506,34 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "M1.3 y M1.9.2 · Anexo D nº 76 de la R08.4"
     maestro_revision: "pendiente"
     tanda_que_abre: "ninguna nueva — derivación con el bloque de correcciones del blueprint; alta del cargo, sin fila"
+
+  - clave: "decision/orden-ejecucion-encargo-01-10"
+    fecha: "2026-10-01"
+    pregunta: |
+      Antes de ejecutar el encargo del 01/10 (R08.4, memoria, regla de avance, plan R01.4 y cambios en lo
+      construido): ¿se commitean primero las 294 líneas de la supervisión y se termina F1A-03 antes de abrir
+      tandas nuevas? ¿Y qué se hace con las dos consecuencias del parte 01/10c (numerador 12 → 9 y F1B-14
+      reabierta por E-129)?
+    respuesta_textual: |
+      «ORDEN DE EJECUCIÓN — sí, así:
+      1. Commitea primero las 294 líneas de la supervisión, como commit documental aparte. No cuentan contra el tope de 800 de ninguna tanda.
+      2. Termina F1A-03 (verificación del gas patrón) antes de abrir cualquier tanda nueva, respetando la regla del ciclo 2.
+      3. Después, los puntos 1, 2 y 4 del encargo (versionar la R08.4, memoria Engram, plan R01.4 con el margen). Son trabajo documental; si alguno exige tocar código, va como tanda propia.
+      4. El punto 3 (corregir el barrido de reconciliación) va como cambio pequeño propio, después de la R01.4.
+      5. Luego, las tandas en el orden que fije la R01.4.
+      LAS DOS CONSECUENCIAS DEL PARTE:
+      a) Numerador 12 → 9. La regla de avance pide que el trabajo esté TERMINADO y verificado, no que esté dentro de archive/. F0-01, F0-02 y F0-03 son trabajo terminado anterior a la convención de archivo: regístralas en cierres_declarados_por_commit, con el commit que las cierra y la prueba de que están hechas. Publica siempre las dos cifras (por archivo y por commit declarado), como hasta ahora. Lo que la regla excluye es lo planificado o a medias, no lo terminado antes de que existiera archive/.
+      b) E-129 (alta manual de equipo y cliente desconocidos): NO reabras F1B-14. Una fila cerrada se queda cerrada. Crea una fila nueva, F1B-15 «Alta manual de equipo y cliente desconocidos», antes del corte (es paridad con Zoho), con su talla. Es el mismo criterio de fila propia por pieza decidido hoy.
+      La ubicación en decisiones_de_gerencia_adenda está bien; no muevas nada.»
+    consecuencias: |
+      (1) El commit documental de la supervisión es `aa11b1c`; queda fuera del ledger de toda tanda.
+      (2) PRECISA `decision/avance-cuenta-lo-planificado`: «archivado» se lee como «terminado y verificado»
+      para el trabajo anterior a la convención de `archive/`. F0-01, F0-02 y F0-03 pasan a
+      `cierres_declarados_por_commit` (lista que hoy NO existe en este fichero: la crea el cambio del barrido,
+      punto 4 del orden, para que entrar en una lista y salir de la otra ocurra en el mismo commit).
+      (3) PRECISA `decision/trabajo-del-01-10-antes-del-corte-sin-fila`: E-129 NO va a F1B-14, va a una fila
+      nueva F1B-15 «Alta manual de equipo y cliente desconocidos», antes del corte, con talla. F1B-14 sigue cerrada.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-ejecucion-encargo-01-10) · docs/sdd/ENTRADA.md → E-145"
+    maestro_pasaje: "ninguno (orden de trabajo y regla de avance)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-15 (fila nueva, la escribe la R01.4) · cambio pequeño del barrido de reconciliación"
