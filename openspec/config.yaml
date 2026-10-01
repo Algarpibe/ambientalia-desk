@@ -3537,3 +3537,52 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (orden de trabajo y regla de avance)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-15 (fila nueva, la escribe la R01.4) · cambio pequeño del barrido de reconciliación"
+
+  - clave: "decision/reset-intento-f1a03-01-10"
+    fecha: "2026-10-01"
+    pregunta: |
+      El intento 1 de `verificacion-gas-patron-certificado` (F1A-03, lote 1) arrancó en `b85cdcc` y sigue
+      `running`. Su trabajo propio (`084875c`) mide 772, bajo el techo de 800, pero el registro de intentos
+      mide el árbol entero desde `b85cdcc` y verá 1.579. ¿Se cierra declarando 772 y se hace reset de
+      mantenedor cuando quede `blocked(maintainer_decision)`?
+    respuesta_textual: |
+      «1. AUTORIZADO. Cierra el intento del lote 1 de F1A-03 declarando la medida real: 772 líneas (084875c), por debajo del techo de 800. Cuando el registro lo deje en blocked(maintainer_decision), ejecuta tú gentle-ai sdd-attempt reset con esta autorización expresa de Gerencia como mantenedor, y sigue con los lotes 2 y siguientes de F1A-03.
+      2. Regístralo antes del reset: una decisión en decisiones_de_gerencia_adenda (decision/reset-intento-f1a03-01-10); su entrada en ENTRADA.md; la tabla de medida: 772 de la tanda; 55 de booksHub; 429 + 355 de supervisión; 1.579 que ve el registro. Indica que sigue el precedente del 10/09 de la regla del ciclo 2.
+      3. Hallazgo a registrar (sin destino; lo decido después de ver tu propuesta): el registro de intentos mide el árbol entero desde que arranca el intento, así que los commits de supervisión y los ajenos a la tanda se le cargan. Propón cómo evitarlo, por ejemplo midiendo solo los commits con la cabecera de la tanda, o que la supervisión no commitee en main mientras haya un intento abierto. No lo apliques todavía.
+      4. Los dos commits de booksHub sin ficha (afa4252, a1cfe07): decláralos fuera-del-plan con su motivo, si no lo están ya.»
+    tabla_de_medida: |
+      Medida con `git show --shortstat --no-renames <commit>` (inserciones + borrados), ventana `b85cdcc..ee9989f`:
+        084875c  lote 1 de F1A-03 (la tanda) ........... 772  (715 / 57)
+        afa4252  booksHub, sin ficha ...................  47  (47 / 0)
+        a1cfe07  booksHub, sin ficha ...................   8  (4 / 4)      → booksHub 55
+        bff215a  supervisión 01/10 ..................... 429  (424 / 5)
+        aa11b1c  supervisión 01/10 noche ............... 319  (294 / 25)
+        ee9989f  registro de E-145 .....................  36  (36 / 0)      → supervisión 429 + 355
+        TOTAL que ve el registro (árbol b85cdcc → HEAD)  1.579
+    consecuencias: |
+      (1) Sigue el PRECEDENTE DEL 10/09 de la regla del ciclo 2 (`CLAUDE.md`, «Regla del ciclo 2»: 1.718 imputadas
+      frente a 73 propias de `mensaje-422-cliente-duplicado`) y el reset de mantenedor de
+      `aprobaciones_de_techo_del_ledger` (`parche-iv11-orden-venta`, 28/09). No es una aprobación de techo: la
+      tanda está bajo 800; lo que se aprueba es descontar lo ajeno.
+      (2) Los 55 de booksHub quedan declarados `fuera-del-plan` en `trabajo_sin_ficha_declarado` (al final del fichero).
+      (3) El defecto de fondo queda como hallazgo SIN DESTINO: `docs/sdd/ENTRADA.md` → E-147.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/reset-intento-f1a03-01-10) · trabajo_sin_ficha_declarado · docs/sdd/ENTRADA.md → E-146 y E-147"
+    maestro_pasaje: "ninguno (método)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+
+trabajo_sin_ficha_declarado:
+  # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
+  # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
+  # del fichero para no desplazar líneas citadas.
+  - commits: [afa4252, a1cfe07]
+    fecha: 2026-10-01
+    tanda: fuera-del-plan
+    toca_specs: no
+    motivo: >
+      Mantenimiento de la réplica de Zoho Books en el hub: el barrido de borrados se extiende a
+      `books.customer_payments` y a sus aplicaciones (`customer_payment_invoices`), porque un pago
+      borrado en Zoho que siguiera en la réplica inflaría los recaudos
+      (`packages/zoho-sync/src/booksHub/sync.ts`, `afa4252`); `a1cfe07` sólo tipa sus pruebas por los
+      avisos de lint. No realiza contenido de ninguna fila del §5.
+    declarado_por: "decision/reset-intento-f1a03-01-10, punto 4"
