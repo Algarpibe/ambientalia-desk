@@ -113,12 +113,12 @@ describe('booksHub sweep', () => {
       if (path.startsWith('/customerpayments')) return Promise.resolve(new Response(JSON.stringify({ customerpayments: [{ payment_id: 'P1' }] }), { status: 200 }))
       return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
     })
-    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as unknown as Parameters<typeof createBooksHubSync>[0]['booksFetch'], db, config })
     const reports = await sync.sweep({ dryRun: false, guard })
     const pay = reports.find((r) => r.table === 'books.customer_payments')!
     expect(pay).toMatchObject({ live: 1, replica: 2, orphans: 1, confirmed: 1, deleted: 1 })
-    expect((await db.query('SELECT payment_id FROM books.customer_payments')).rows.map((r: any) => r.payment_id)).toEqual(['P1'])
-    expect((await db.query('SELECT invoice_payment_id FROM books.customer_payment_invoices')).rows.map((r: any) => r.invoice_payment_id)).toEqual(['P1-I'])
+    expect((await db.query('SELECT payment_id FROM books.customer_payments')).rows.map((r: { payment_id: string }) => r.payment_id)).toEqual(['P1'])
+    expect((await db.query('SELECT invoice_payment_id FROM books.customer_payment_invoices')).rows.map((r: { invoice_payment_id: string }) => r.invoice_payment_id)).toEqual(['P1-I'])
   })
 
   it('pagos: lista vacía de Zoho → el tope frena el barrido y no borra nada', async () => {
@@ -129,7 +129,7 @@ describe('booksHub sweep', () => {
       if (path.startsWith('/customerpayments')) return Promise.resolve(new Response(JSON.stringify({ customerpayments: [] }), { status: 200 }))
       return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }))
     })
-    const sync = createBooksHubSync({ booksFetch: booksFetch as any, db, config })
+    const sync = createBooksHubSync({ booksFetch: booksFetch as unknown as Parameters<typeof createBooksHubSync>[0]['booksFetch'], db, config })
     const reports = await sync.sweep({ dryRun: false, guard })
     const pay = reports.find((r) => r.table === 'books.customer_payments')!
     expect(pay.skipped).toBeTruthy()
