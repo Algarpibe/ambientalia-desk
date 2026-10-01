@@ -79,8 +79,8 @@ Base `6055c4d`. Exploración en `openspec/changes/prioridad-top5-cliente/explora
   (alcance 8). Lo que E-093 deja abierto —si esa «fecha promesa» es el tiempo promesa global de E-095, que va después
   del corte— no lo construye esta tanda.
 - **La lista de «Remisión creada» para Comercial ordenada por antigüedad** (misma respuesta de E-099): es otra vista,
-  no la cola del taller; queda fuera de este lote y sin destino escrito aquí (hipótesis: cabe en F1B-07 lote 3 o en
-  otra fila; lo decide quien cierre F1B-07).
+  no la cola del taller; queda fuera de esta tanda. Registrada como **E-108** en `docs/sdd/ENTRADA.md`, sin destino
+  y con dueño propuesto (R-3).
 - Propagación a los tickets abiertos que ya existan (S-1): punto abierto con dueño Gerencia, sin destino.
 - Tope numérico de la lista (S-7).
 - Tickets sin `client_id` (tickets de Zoho no enlazados): no heredan.
