@@ -3,7 +3,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { fechaSolo } from '@ambientalia/zoho-sync/books/repo'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition, PasoHojaDeVida } from '@ambientalia/shared'
-import { etapasDesdeHistoria, ticketDeRemision } from '@ambientalia/shared'
+import { etapasDesdeHistoria, ticketDeRemision, compuestoCanonico } from '@ambientalia/shared'
 import { esCreacion, iso, json, porFechaDesc } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
@@ -101,7 +101,7 @@ export interface EquipoInput {
   finGarantia?: string | null
   codigoInterno?: string | null
   mantenedorId?: string | null
-  driveUrl?: string | null
+  driveUrl?: string | null; compuesto?: string | null
 }
 
 function toFull(r: any): EquipoFull {
@@ -112,20 +112,20 @@ function toFull(r: any): EquipoFull {
     codigoInterno: r.codigo_interno ?? undefined,
     fechaAdquisicion: fechaSolo(r.fecha_adquisicion), fechaFacturaCompra: fechaSolo(r.fecha_factura_compra),
     finGarantia: fechaSolo(r.fin_garantia), mantenedorId: r.mantenedor_id ?? undefined,
-    mantenedorNombre: r.mantenedor_nombre ?? undefined, driveUrl: r.drive_url ?? undefined,
+    mantenedorNombre: r.mantenedor_nombre ?? undefined, driveUrl: r.drive_url ?? undefined, compuesto: r.compuesto ?? undefined,
   }
 }
 
 export async function createEquipo(db: Queryable, input: EquipoInput): Promise<string> {
-  const id = 'eq-' + randomUUID()
+  const id = 'eq-' + randomUUID(); const compuesto = input.compuesto !== undefined ? input.compuesto : await compuestoDelModelo(db, input.modeloId)
   await db.query(
     `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,
-       fecha_adquisicion,fecha_factura_compra,fin_garantia,codigo_interno,mantenedor_id,drive_url,
+       fecha_adquisicion,fecha_factura_compra,fin_garantia,codigo_interno,mantenedor_id,drive_url,compuesto,
        source,active,updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'app',true,now())`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'app',true,now())`,
     [id, input.serial, input.marca, input.modelo, input.tipo, input.clienteNombre, input.clientId, input.modeloId,
       input.fechaAdquisicion ?? null, input.fechaFacturaCompra ?? null, input.finGarantia ?? null,
-      input.codigoInterno ?? null, input.mantenedorId ?? null, input.driveUrl ?? null],
+      input.codigoInterno ?? null, input.mantenedorId ?? null, input.driveUrl ?? null, compuesto],
   )
   return id
 }
@@ -146,7 +146,7 @@ export async function updateEquipo(db: Queryable, id: string, patch: Partial<Equ
   if (patch.finGarantia !== undefined) add('fin_garantia', patch.finGarantia)
   if (patch.codigoInterno !== undefined) add('codigo_interno', patch.codigoInterno)
   if (patch.mantenedorId !== undefined) add('mantenedor_id', patch.mantenedorId)
-  if (patch.driveUrl !== undefined) add('drive_url', patch.driveUrl)
+  if (patch.driveUrl !== undefined) add('drive_url', patch.driveUrl); if (patch.compuesto !== undefined) add('compuesto', patch.compuesto)
   await db.query(`UPDATE equipos SET ${sets.join(',')} WHERE id=$1`, params)
 }
 
@@ -162,7 +162,7 @@ export async function deleteEquipo(db: Queryable, id: string): Promise<void> {
 /** Columnas + JOIN comunes a `getEquipoFull` y `listEquiposManage`: sin séptima columna propia,
  *  el nombre del mantenedor se deriva de `clients` (precedente: `analisis.ts:16`). */
 const SELECT_EQUIPO_FULL = `SELECT e.id,e.serial,e.marca,e.modelo,e.tipo,e.cliente_nombre,e.client_id,e.active,e.modelo_id,
-       e.fecha_adquisicion,e.fecha_factura_compra,e.fin_garantia,e.codigo_interno,e.mantenedor_id,e.drive_url,
+       e.fecha_adquisicion,e.fecha_factura_compra,e.fin_garantia,e.codigo_interno,e.mantenedor_id,e.drive_url,e.compuesto,
        cl.name AS mantenedor_nombre
      FROM equipos e LEFT JOIN clients cl ON e.mantenedor_id = cl.id`
 
@@ -407,3 +407,14 @@ export async function getEquipoBySerial(db: Queryable, serial: string): Promise<
 // ninguna de las citas que ya apuntan a las líneas de arriba (regla de mutación 4). El módulo de
 // origen vive aparte para no crear un ciclo: sólo importa `enTransaccion`.
 export { registrarEdicion, listarCambiosEquipo } from './equiposCambios'
+
+/**
+ * El compuesto por defecto del modelo, en forma canónica (RQ-HV-14), o `null` si no hay modelo, el modelo no
+ * tiene o lo que trae no está en la lista cerrada. Es una COPIA en el momento del alta: `createEquipo` la
+ * guarda y nada la vuelve a leer, así que cambiar el modelo después no reescribe equipos existentes.
+ */
+async function compuestoDelModelo(db: Queryable, modeloId: string | null | undefined): Promise<string | null> {
+  if (!modeloId) return null
+  const r = await db.query('SELECT compuesto FROM catalogo_modelos WHERE id=$1', [modeloId])
+  return compuestoCanonico(r.rows[0]?.compuesto)
+}

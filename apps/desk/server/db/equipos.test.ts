@@ -542,3 +542,63 @@ describe('getEquipoBySerial', () => {
     expect(e?.id).toBe(primero)
   })
 })
+
+/**
+ * verificacion-gas-patron-certificado (F1A-03, lote 1 · `hojas-vida` RQ-HV-14): `createEquipo` hereda el
+ * compuesto del modelo en el momento del alta —una copia, en forma canónica—, y un compuesto explícito
+ * sólo lo pasa un llamador del servidor. El alta HTTP nunca lo toma del cuerpo (`routes/equipos.ts`).
+ */
+describe('createEquipo · herencia del compuesto del modelo (RQ-HV-14)', () => {
+  async function modelo(id: string, compuesto: string | null): Promise<void> {
+    await db.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [`${id}-marca`, `Horiba ${id}`])
+    await db.query('INSERT INTO catalogo_modelos (id,marca_id,nombre,compuesto) VALUES ($1,$2,$3,$4)', [id, `${id}-marca`, 'APSA-370', compuesto])
+  }
+  const alta = (serial: string, modeloId: string | null, extra: { compuesto?: string | null } = {}) =>
+    createEquipo(db, { serial, marca: 'Horiba', modelo: 'APSA-370', tipo: 'Analizador', clienteNombre: 'ACME', clientId: 'c1', modeloId, ...extra })
+  const compuestoDe = async (id: string) => (await getEquipoFull(db, id))?.compuesto
+
+  it('hereda el compuesto del modelo y lo guarda canónico («so2» → «SO₂»)', async () => {
+    await modelo('mo-h1', 'so2')
+    const id = await alta('H1', 'mo-h1')
+    expect((await db.query('SELECT compuesto FROM equipos WHERE id=$1', [id])).rows).toEqual([{ compuesto: 'SO₂' }])
+    expect(await compuestoDe(id)).toBe('SO₂')
+  })
+
+  it('un modelo con otro compuesto da otro (triangula la herencia): NOₓ', async () => {
+    await modelo('mo-h2', 'NOx')
+    expect(await compuestoDe(await alta('H2', 'mo-h2'))).toBe('NOₓ')
+  })
+
+  it('modelo sin compuesto, modelo con un valor fuera de la lista o sin modeloId → nulo', async () => {
+    await modelo('mo-h3', null)
+    await modelo('mo-h4', 'metano')
+    for (const [serial, modeloId] of [['H3', 'mo-h3'], ['H4', 'mo-h4'], ['H5', null]] as const) {
+      const id = await alta(serial, modeloId)
+      expect((await db.query('SELECT compuesto FROM equipos WHERE id=$1', [id])).rows).toEqual([{ compuesto: null }])
+      expect(await compuestoDe(id)).toBeUndefined()
+    }
+  })
+
+  it('un compuesto explícito del llamador del servidor gana al del modelo', async () => {
+    await modelo('mo-h6', 'SO₂')
+    expect(await compuestoDe(await alta('H6', 'mo-h6', { compuesto: 'H₂S' }))).toBe('H₂S')
+  })
+
+  it('HV14-5 · cambiar después el compuesto del modelo no reescribe al equipo', async () => {
+    await modelo('mo-h7', 'CO')
+    const id = await alta('H7', 'mo-h7')
+    await db.query("UPDATE catalogo_modelos SET compuesto='O₃' WHERE id='mo-h7'")
+    expect(await compuestoDe(id)).toBe('CO')
+  })
+
+  it('updateEquipo escribe el compuesto sólo si viene en el parche', async () => {
+    await modelo('mo-h8', 'CO')
+    const id = await alta('H8', 'mo-h8')
+    await updateEquipo(db, id, { codigoInterno: 'INT-1' })
+    expect(await compuestoDe(id)).toBe('CO')
+    await updateEquipo(db, id, { compuesto: 'TRS' })
+    expect(await compuestoDe(id)).toBe('TRS')
+    await updateEquipo(db, id, { compuesto: null })
+    expect(await compuestoDe(id)).toBeUndefined()
+  })
+})

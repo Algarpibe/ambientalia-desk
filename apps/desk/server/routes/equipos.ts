@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
-import { urlSegura, cambiosComerciales, CAMPOS_COMERCIALES_RESTRINGIDOS, puedeEditarCamposRestringidos } from '@ambientalia/shared'
+import { urlSegura, compuestoDelCuerpo, cambiosComerciales, CAMPOS_COMERCIALES_RESTRINGIDOS, puedeEditarCamposRestringidos } from '@ambientalia/shared'
 import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull, deleteEquipo, getEquipoHistorial, registrarEdicion, listarCambiosEquipo } from '../db/equipos'
 import { getModelo } from '../db/catalogo'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
@@ -94,7 +94,7 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
         if (!modelo) { res.status(422).json({ error: 'Modelo no encontrado' }); return }
         patch.modeloId = modeloId; patch.marca = modelo.marca; patch.modelo = modelo.nombre; patch.tipo = modelo.tipo
       }
-      const camposResult = await camposHojaDeVida(db, b)
+      const rc = b.compuesto === undefined ? null : compuestoDelCuerpo(b.compuesto); const camposResult = await camposHojaDeVida(db, b)
       // Escalón A (mantenedor inexistente): gana a la guarda de área de abajo. Escalón C (fechas,
       // Drive) se retiene y se responde DESPUÉS del 403 (D8, RQ-HV-09 «El escalón B gana al 422 de
       // contenido cuando compiten»).
@@ -107,9 +107,9 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
       if (cambiosRestringidos.length && !puedeEditarCamposRestringidos(req.user!.areas, req.user!.isAdmin)) {
         res.status(403).json({ error: 'Sólo el área Comercial o un administrador puede cambiar fecha de factura, fin de garantía o mantenedor' })
         return
-      }
-      if ('error' in camposResult) { res.status(422).json({ error: camposResult.error }); return }
-      Object.assign(patch, camposResult.campos)
+      } if (rc && !req.user!.isAdmin) { res.status(403).json({ error: 'Sólo un administrador puede cambiar el compuesto del equipo' }); return }
+      if ('error' in camposResult) { res.status(422).json({ error: camposResult.error }); return } if (rc && !rc.ok) { res.status(422).json({ error: rc.error }); return }
+      Object.assign(patch, camposResult.campos); if (rc?.ok) patch.compuesto = rc.valor
       if (Object.keys(patch).length) {
         if (cambios.length) {
           await registrarEdicion(db, id, cambios, { id: req.user!.id, nombre: req.user!.name }, (q) => updateEquipo(q, id, patch))

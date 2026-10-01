@@ -372,7 +372,7 @@ export interface EquipoFull extends EquipoLite {
   mantenedorId?: string
   /** Derivado por `LEFT JOIN clients`, no persistido. */
   mantenedorNombre?: string
-  driveUrl?: string
+  driveUrl?: string; compuesto?: string
 }
 
 export interface CatalogoTipo { id: string; nombre: string; activo: boolean }

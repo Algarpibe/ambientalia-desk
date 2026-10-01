@@ -620,3 +620,35 @@ CREATE TABLE IF NOT EXISTS public.prioridad_ajustes (
   ajustado_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_prioridad_ajustes_ticket ON public.prioridad_ajustes (ticket_id);
+
+-- verificacion-gas-patron-certificado (F1A-03): compuesto que mide el equipo y el que trae por defecto su
+-- modelo del catalogo. Lista cerrada en packages/shared/src/gasPatron.ts, sin CHECK de lista (pg-mem).
+-- Sin relleno en el esquema: lo hace el script de siembra de docs/sdd. equipos SIN CALIFICAR porque es de
+-- DESK_TABLES (migrate.ts:63-64), catalogo_modelos CALIFICADA. AL FINAL para no desplazar citas
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto text;
+ALTER TABLE public.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto text;
+-- Gases patron: una fila por cilindro, alta directa del Director Tecnico (sin pantalla). Vigente =
+-- disponible y vence no anterior a hoy en Bogota, lo decide shared y no la base. CALIFICADA (public)
+CREATE TABLE IF NOT EXISTS public.gases_patron (
+  id bigserial PRIMARY KEY,
+  cilindro text NOT NULL,
+  compuesto text NOT NULL,
+  disponible boolean NOT NULL DEFAULT true,
+  vence date NOT NULL,
+  registrado_por text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_gases_patron_cilindro ON public.gases_patron (cilindro);
+-- PDF del certificado de fabrica de una liberacion (opcional). Base64 como resolution_attachments.
+-- transicion_id es ticket_transitions.id de la liberacion, sin FK como public.ov_asociaciones
+CREATE TABLE IF NOT EXISTS public.certificados_fabrica (
+  id text PRIMARY KEY,
+  ticket_id text NOT NULL,
+  transicion_id bigint NOT NULL,
+  filename text,
+  content_b64 text NOT NULL,
+  size integer NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by text
+);
+CREATE INDEX IF NOT EXISTS idx_certificados_fabrica_ticket ON public.certificados_fabrica (ticket_id);

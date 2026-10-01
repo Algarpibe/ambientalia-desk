@@ -105,7 +105,7 @@ describe('registro · RQ-RC-01 y RQ-RC-09: ninguna spec de disco queda fuera de 
 describe('registro · el barrido real destapa lo que un árbol sintético no puede (R2.3.3)', () => {
   it('cuenta las capacidades UNA vez: `- name: X` no es además un elemento de lista plana', () => {
     const c = capacidades(configReal(), specsEnDisco())
-    expect(c?.cifras[0]).toBe('20 declaradas') // F1B-12: alta de `calendario-laboral` en capabilities (R-2, RQ-CL-12)
+    expect(c?.cifras[0]).toBe('21 declaradas') // F1B-12: alta de `calendario-laboral` (R-2, RQ-CL-12); F1A-03: alta de `gases-patron`
   })
 
   it('sin lectura de código no hay divergencia que reportar: decirla sería inventar el hallazgo', () => {

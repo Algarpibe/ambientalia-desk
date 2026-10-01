@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, reseedTicketNumber, reorgToDeskStatements, schemaStatements, DESK_TABLES, PUBLIC_TABLES, BOOKS_TABLES, APP_TICKET_NUMBER_BASE, nombresAmbiguos, altersAmbiguas, type Queryable } from './migrate'
 import { nextTicketNumber } from './repo'
@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 37 tablas: 10 de Desk, 24 de la app en public (alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 24, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(37)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(37)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(37)
+  it('son 39 tablas: 10 de Desk, 26 de la app en public (alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 26, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(39)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(39)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(39)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -371,11 +371,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 41 ALTER: 20 calificadas (15 de public + 5 de books) y 21 sin calificar, todas de Desk (la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada)', () => {
+  it('son 43 ALTER: 21 calificadas (16 de public + 5 de books) y 22 sin calificar, todas de Desk (la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(41)
-    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(20)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(21)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(43)
+    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(21)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(22)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.
@@ -534,7 +534,7 @@ describe('prioridad-top5-cliente · cliente_prioridad y prioridad_ajustes cierra
     expect(r.rows.map((x: { table_name: string }) => x.table_name).sort()).toEqual(['cliente_prioridad', 'prioridad_ajustes'])
   })
 
-  it('ambas CREATE TABLE van calificadas con public., DETRÁS de la ALTER de cargo_permiso, en ese orden, y prioridad_ajustes es la última', () => {
+  it('ambas CREATE TABLE van calificadas con public., DETRÁS de la ALTER de cargo_permiso, en ese orden, y prioridad_ajustes es la 37.ª (nada insertado delante)', () => {
     const alter = posicion(/cargo_permiso/)
     const cliente = posicion(/^CREATE TABLE IF NOT EXISTS public\.cliente_prioridad\b/)
     const ajustes = posicion(/^CREATE TABLE IF NOT EXISTS public\.prioridad_ajustes\b/)
@@ -542,7 +542,7 @@ describe('prioridad-top5-cliente · cliente_prioridad y prioridad_ajustes cierra
     expect(cliente, 'cliente_prioridad calificada').toBeGreaterThan(alter)
     expect(ajustes, 'prioridad_ajustes calificada').toBeGreaterThan(cliente)
     const creates = limpias().filter((s) => /^CREATE TABLE/i.test(s))
-    expect(creates[creates.length - 1]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.prioridad_ajustes\b/)
+    expect(creates[36]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.prioridad_ajustes\b/)
   })
 
   it('el comentario que precede a las tablas no lleva punto y coma (el troceo es por ;): ninguna sentencia queda partida', () => {
@@ -564,5 +564,125 @@ describe('prioridad-top5-cliente · cliente_prioridad y prioridad_ajustes cierra
     await db.query(upsert, ['c1', true, 'High', 'luis'])
     const r = await db.query('SELECT client_id, top5, prioridad, actualizado_por FROM public.cliente_prioridad')
     expect(r.rows).toEqual([{ client_id: 'c1', top5: true, prioridad: 'High', actualizado_por: 'luis' }])
+  })
+})
+
+/**
+ * verificacion-gas-patron-certificado (F1A-03, lote 1 · `gases-patron` RQ-GP-02, RQ-GP-06; EN12-2) · el
+ * esquema aditivo cierra `schema.sql`: dos `ALTER` de `compuesto` y dos tablas CALIFICADAS en `public`,
+ * sin relleno. Regla de mutación 2: lo vigilado es `schema.sql`, y las sentencias se leen de él.
+ */
+describe('verificacion-gas-patron-certificado · gases_patron y certificados_fabrica (F1A-03)', () => {
+  const crudas = () => schemaStatements()
+  const sinComentario = (s: string) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim()
+  const limpias = () => crudas().map(sinComentario)
+  const posicion = (re: RegExp) => limpias().findIndex((s) => re.test(s))
+  // Un segundo `migrate` sobre pg-mem salta las sentencias que ya existen con un `console.error`: se silencia aquí.
+  const migrarOtraVez = async (db: Queryable) => {
+    const aviso = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try { await migrate(db) } finally { aviso.mockRestore() }
+  }
+  const tablaEn = async (db: Queryable, esquema: string, tabla: string) =>
+    (await db.query('SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name=$2', [esquema, tabla])).rows
+
+  it('GP02-1 · tras migrar existe public.gases_patron y no existe desk.gases_patron', async () => {
+    const db = await freshDb()
+    expect(await tablaEn(db, 'public', 'gases_patron')).toHaveLength(1)
+    expect(await tablaEn(db, 'desk', 'gases_patron')).toHaveLength(0)
+    expect(await tablaEn(db, 'public', 'certificados_fabrica')).toHaveLength(1)
+  })
+
+  it('GP02-2 · migrar dos veces con una fila en gases_patron deja una sola', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO public.gases_patron (cilindro, compuesto, vence, registrado_por) VALUES ('CIL-1','SO₂','2027-01-31','ana')")
+    await migrarOtraVez(db)
+    const r = await db.query('SELECT cilindro, compuesto, disponible FROM public.gases_patron')
+    expect(r.rows).toEqual([{ cilindro: 'CIL-1', compuesto: 'SO₂', disponible: true }])
+  })
+
+  it('GP02-3 · sin vence, sin compuesto o con disponible nulo, la fila no entra', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.gases_patron (cilindro, compuesto, registrado_por) VALUES ('C1','CO','ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.gases_patron (cilindro, vence, registrado_por) VALUES ('C2','2027-01-31','ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.gases_patron (cilindro, compuesto, disponible, vence, registrado_por) VALUES ('C3','CO',NULL,'2027-01-31','ana')")).rejects.toThrow()
+    expect((await db.query('SELECT * FROM public.gases_patron')).rows).toEqual([])
+    await db.query("INSERT INTO public.gases_patron (cilindro, compuesto, vence, registrado_por) VALUES ('C4','CO','2027-01-31','ana')")
+    expect((await db.query('SELECT * FROM public.gases_patron')).rows).toHaveLength(1)
+  })
+
+  it('GP02-4 · PUBLIC_TABLES incluye las dos tablas nuevas', () => {
+    expect(PUBLIC_TABLES).toContain('gases_patron')
+    expect(PUBLIC_TABLES).toContain('certificados_fabrica')
+  })
+
+  it('GP06-1 · la columna compuesto existe en equipos y en catalogo_modelos, nula en las filas previas', async () => {
+    const pg = newDb().adapters.createPg()
+    const db = new pg.Pool()
+    await db.query('CREATE TABLE equipos (id text PRIMARY KEY, serial text)')
+    await db.query('CREATE TABLE public.catalogo_modelos (id text PRIMARY KEY, nombre text)')
+    await db.query("INSERT INTO equipos (id, serial) VALUES ('e1','S1')")
+    await db.query("INSERT INTO public.catalogo_modelos (id, nombre) VALUES ('m1','APSA-370')")
+    const altas = crudas().filter((s) => /^ALTER TABLE[^\n]*compuesto/i.test(sinComentario(s)))
+    expect(altas, 'las ALTER de compuesto en schema.sql').toHaveLength(2)
+    for (const s of altas) await db.query(s)
+    expect((await db.query('SELECT compuesto FROM equipos')).rows).toEqual([{ compuesto: null }])
+    expect((await db.query('SELECT compuesto FROM public.catalogo_modelos')).rows).toEqual([{ compuesto: null }])
+  })
+
+  it('GP06-2 · un compuesto ya escrito en un equipo sobrevive a un segundo migrate', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO equipos (id, serial, compuesto) VALUES ('e1','S1','CO')")
+    await migrarOtraVez(db)
+    expect((await db.query('SELECT compuesto FROM equipos')).rows).toEqual([{ compuesto: 'CO' }])
+  })
+
+  it('sin relleno: las sentencias que mencionan compuesto son exactamente tres, las dos ALTER y el CREATE de gases_patron', () => {
+    const q = crudas().filter((s) => /compuesto/i.test(s))
+    expect(q, 'sentencias de schema.sql que mencionan compuesto').toHaveLength(3)
+    const sql = q.map(sinComentario)
+    expect(sql[0]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto text$/)
+    expect(sql[1]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto text$/)
+    expect(sql[2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron \(/)
+  })
+
+  it('las seis sentencias nuevas van DETRÁS de prioridad_ajustes, y son las últimas, en el orden del diseño', () => {
+    const l = limpias()
+    const ultima = posicion(/idx_prioridad_ajustes_ticket/)
+    expect(ultima).toBeGreaterThan(0)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes').toBe(ultima + 1 + 6)
+    expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
+    expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
+    expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
+    expect(l[ultima + 4]).toMatch(/^CREATE UNIQUE INDEX IF NOT EXISTS idx_gases_patron_cilindro\b/)
+    expect(l[ultima + 5]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.certificados_fabrica\b/)
+    expect(l[ultima + 6]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_certificados_fabrica_ticket\b/)
+  })
+
+  it('el índice único rechaza un cilindro repetido y ON CONFLICT (cilindro) DO NOTHING deja una fila', async () => {
+    const db = await freshDb()
+    const alta = "INSERT INTO public.gases_patron (cilindro, compuesto, vence, registrado_por) VALUES ('CIL-9',$1,'2027-01-31','ana')"
+    await db.query(alta, ['CO'])
+    await expect(db.query(alta, ['SO₂'])).rejects.toThrow(/duplicate key|unique/i)
+    await db.query(`${alta} ON CONFLICT (cilindro) DO NOTHING`, ['H₂S'])
+    expect((await db.query('SELECT cilindro, compuesto FROM public.gases_patron')).rows).toEqual([{ cilindro: 'CIL-9', compuesto: 'CO' }])
+  })
+
+  it('ninguna sentencia nueva queda partida: cada índice es una sola, tal cual', () => {
+    expect(limpias().filter((s) => /idx_gases_patron_cilindro/.test(s))).toHaveLength(1)
+    expect(limpias()[posicion(/idx_gases_patron_cilindro/)]).toMatch(/^CREATE UNIQUE INDEX IF NOT EXISTS idx_gases_patron_cilindro ON public\.gases_patron \(cilindro\)$/)
+    expect(limpias().filter((s) => /idx_certificados_fabrica_ticket/.test(s))).toHaveLength(1)
+    expect(limpias()[posicion(/idx_certificados_fabrica_ticket/)]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_certificados_fabrica_ticket ON public\.certificados_fabrica \(ticket_id\)$/)
+  })
+
+  it('EN12-2 · un ticket Finalizado con su fila de liberacion queda idéntico tras un segundo migrate', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO tickets (id, number, status) VALUES ('t1','1','Finalizado')")
+    await db.query("INSERT INTO ticket_transitions (ticket_id, transition_id, from_status, to_status, performed_by, values) VALUES ('t1','liberacion','En Proceso','Finalizado','ana',$1)", [JSON.stringify({ comment: 'ok' })])
+    const antes = [(await db.query('SELECT * FROM tickets')).rows, (await db.query('SELECT * FROM ticket_transitions')).rows]
+    await migrarOtraVez(db)
+    const despues = [(await db.query('SELECT * FROM tickets')).rows, (await db.query('SELECT * FROM ticket_transitions')).rows]
+    expect(antes[0]).toHaveLength(1)
+    expect(antes[1]).toHaveLength(1)
+    expect(despues).toEqual(antes)
   })
 })

@@ -91,3 +91,61 @@ describe('crearTicketConEquipo', () => {
     expect(releases()).toBe(1)
   })
 })
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+// verificacion-gas-patron-certificado (F1A-03, lote 1 · `hojas-vida` RQ-HV-13, RQ-HV-14): el equipo
+// provisional del ticket «Equipo nuevo» hereda el compuesto del modelo y NUNCA lo toma del cuerpo. A
+// diferencia de las de arriba, éstas corren sobre pg-mem de verdad: lo que se mira son filas.
+// ══════════════════════════════════════════════════════════════════════════════════════════════════
+import { beforeEach } from 'vitest'
+import { newDb } from 'pg-mem'
+import { migrate } from '@ambientalia/zoho-sync/db/migrate'
+import { createManagedTicket } from './ticketService'
+
+describe('alta con «Equipo nuevo» · compuesto del equipo (F1A-03)', () => {
+  let real: Queryable
+  beforeEach(async () => {
+    const pg = newDb().adapters.createPg()
+    real = new pg.Pool()
+    await migrate(real)
+    await real.query("INSERT INTO books.contacts (contact_id, contact_name) VALUES ('cli-c','Cliente C')")
+  })
+
+  async function modelo(id: string, compuesto: string | null): Promise<void> {
+    await real.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [`${id}-marca`, 'Horiba'])
+    await real.query('INSERT INTO catalogo_tipos (id,nombre) VALUES ($1,$2)', [`${id}-tipo`, 'Analizador'])
+    await real.query('INSERT INTO catalogo_modelos (id,marca_id,nombre,tipo_id,compuesto) VALUES ($1,$2,$3,$4,$5)', [id, `${id}-marca`, 'APSA-370', `${id}-tipo`, compuesto])
+  }
+  const alta = (serial: string, modeloId: string, extra: Record<string, unknown> = {}) =>
+    createManagedTicket(real, {
+      clasificaciones: 'Equipo nuevo', tipoServicio: 'Mantenimiento', prefijo: 'MT', clientId: 'cli-c',
+      equipoNuevo: { serial, modeloId, fechaFacturaCompra: '2026-01-15', ...extra },
+    }, 'Admin')
+  const compuestoDe = async (serial: string) => (await real.query('SELECT compuesto FROM equipos WHERE serial=$1', [serial])).rows
+
+  it('HV14-3 · el equipo provisional hereda NOₓ del modelo, canónico', async () => {
+    await modelo('mo-c1', 'NOx')
+    await alta('SN-C1', 'mo-c1')
+    expect(await compuestoDe('SN-C1')).toEqual([{ compuesto: 'NOₓ' }])
+  })
+
+  it('HV13-3 · equipoNuevo.compuesto («metano») se ignora sin error: el alta resuelve y el compuesto queda nulo', async () => {
+    await modelo('mo-c2', null)
+    await expect(alta('SN-C2', 'mo-c2', { compuesto: 'metano' })).resolves.toBeDefined()
+    expect(await compuestoDe('SN-C2')).toEqual([{ compuesto: null }])
+  })
+
+  it('HV14-2 en el ticket · un equipoNuevo.compuesto válido (H₂S) tampoco gana al del modelo (SO₂)', async () => {
+    await modelo('mo-c3', 'SO₂')
+    await alta('SN-C3', 'mo-c3', { compuesto: 'H₂S' })
+    expect(await compuestoDe('SN-C3')).toEqual([{ compuesto: 'SO₂' }])
+  })
+
+  it('HV14-7 · reutilizar un serial ya registrado con H₂S y un modelo SO₂ no toca el compuesto ni crea otro equipo', async () => {
+    await modelo('mo-c4', 'SO₂')
+    await real.query("INSERT INTO equipos (id, serial, marca, modelo, tipo, compuesto) VALUES ('eq-c4','SN-C4','Horiba','APSA-370','Analizador','H₂S')")
+    await alta('SN-C4', 'mo-c4')
+    expect(await compuestoDe('SN-C4')).toEqual([{ compuesto: 'H₂S' }])
+    expect((await real.query('SELECT COUNT(*)::int AS n FROM equipos')).rows[0].n).toBe(1)
+  })
+})

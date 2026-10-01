@@ -581,3 +581,174 @@ describe('Hoja de vida — F1B-14: guarda de área y registro de cambios', () =>
     expect(await filasDeCambios(id)).toEqual(['codigoInterno'])
   })
 })
+
+/**
+ * verificacion-gas-patron-certificado (F1A-03, lote 1 · `hojas-vida` RQ-HV-13, RQ-HV-14, RQ-HV-15).
+ * El alta hereda el compuesto del modelo e IGNORA el del cuerpo (C-5: un compuesto tecleado al alta sería
+ * la vía corta para esquivar la guarda); el `PATCH` lo corrige sólo un administrador (C-1), con lista
+ * blanca. Escalera: el `403` (escalón B) gana al `422` de la lista (escalón C).
+ */
+describe('Hoja de vida — compuesto del equipo (F1A-03)', () => {
+  /** Cliente y modelo del catálogo; `compuestoModelo` se escribe en bruto para ver la forma canónica. */
+  async function preparar(sufijo: string, compuestoModelo: string | null = null): Promise<{ clientId: string; modeloId: string }> {
+    const clientId = `cli-gp-${sufijo}`
+    const modeloId = `mo-gp-${sufijo}`
+    await db.query('INSERT INTO books.contacts (contact_id,contact_name) VALUES ($1,$2)', [clientId, `Cliente ${sufijo}`])
+    await db.query('INSERT INTO catalogo_marcas (id,nombre) VALUES ($1,$2)', [`m-gp-${sufijo}`, `Horiba ${sufijo}`])
+    await db.query('INSERT INTO catalogo_modelos (id,marca_id,nombre,compuesto) VALUES ($1,$2,$3,$4)', [modeloId, `m-gp-${sufijo}`, 'APSA-370', compuestoModelo])
+    return { clientId, modeloId }
+  }
+  const compuestoEnBase = async (id: string) => (await db.query('SELECT compuesto FROM equipos WHERE id=$1', [id])).rows[0]?.compuesto
+  const codigoEnBase = async (id: string) => (await db.query('SELECT codigo_interno FROM equipos WHERE id=$1', [id])).rows[0]?.codigo_interno
+
+  /** Un equipo dado de alta por el admin con el compuesto heredado del modelo. */
+  async function equipoConCompuesto(admin: string, sufijo: string, compuestoModelo: string | null) {
+    const { app } = appWith()
+    const { clientId, modeloId } = await preparar(sufijo, compuestoModelo)
+    const alta = await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: `SN-GP-${sufijo}`, clientId, modeloId, codigoInterno: 'INT-ORIG' })
+    expect(alta.status).toBe(201)
+    return { app, id: alta.body.id as string, clientId, modeloId }
+  }
+
+  /** Igual, pero con el compuesto escrito por SQL: las pruebas del PATCH no dependen de la herencia. */
+  async function equipoDirecto(admin: string, sufijo: string, compuesto: string) {
+    const e = await equipoConCompuesto(admin, sufijo, null)
+    await db.query('UPDATE equipos SET compuesto=$1 WHERE id=$2', [compuesto, e.id])
+    return e
+  }
+
+  describe('alta: RQ-HV-13 y RQ-HV-14', () => {
+    it('HV13-1 · HV14-4 · sin compuesto en el cuerpo ni en el modelo queda nulo, sin error', async () => {
+      const admin = await adminCookie()
+      const { app } = appWith()
+      const { clientId, modeloId } = await preparar('a1')
+      const r = await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: 'SN-A1', clientId, modeloId })
+      expect(r.status).toBe(201)
+      expect(r.body.compuesto).toBeUndefined()
+      expect(await compuestoEnBase(r.body.id)).toBeNull()
+    })
+
+    it('HV13-2 · el alta ignora un compuesto del cuerpo aunque el modelo no tenga: nulo', async () => {
+      const admin = await adminCookie()
+      const { app } = appWith()
+      const { clientId, modeloId } = await preparar('a2')
+      const r = await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: 'SN-A2', clientId, modeloId, compuesto: 'H₂S' })
+      expect(r.status).toBe(201)
+      expect(await compuestoEnBase(r.body.id)).toBeNull()
+    })
+
+    it('HV14-1 · hereda el compuesto del modelo y la respuesta lo trae', async () => {
+      const admin = await adminCookie()
+      const { app } = appWith()
+      const { clientId, modeloId } = await preparar('a3', 'CO')
+      const r = await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: 'SN-A3', clientId, modeloId })
+      expect(r.status).toBe(201)
+      expect(r.body.compuesto).toBe('CO')
+      expect(await compuestoEnBase(r.body.id)).toBe('CO')
+    })
+
+    it('HV14-2 · un compuesto del cuerpo (H₂S) no gana al del modelo (SO₂)', async () => {
+      const admin = await adminCookie()
+      const { app } = appWith()
+      const { clientId, modeloId } = await preparar('a4', 'so2')
+      const r = await request(app).post('/api/equipos').set('Cookie', admin).send({ serial: 'SN-A4', clientId, modeloId, compuesto: 'H₂S' })
+      expect(r.status).toBe(201)
+      expect(await compuestoEnBase(r.body.id)).toBe('SO₂')
+    })
+
+    it('HV14-6 · un PATCH que sólo cambia modeloId no re-hereda el compuesto', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoConCompuesto(admin, 'a5', 'CO')
+      const otro = await preparar('a5b', 'O₃')
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ modeloId: otro.modeloId })
+      expect(r.status).toBe(200)
+      expect(r.body.compuesto).toBe('CO')
+      expect(await compuestoEnBase(id)).toBe('CO')
+    })
+
+    it('HV13-4 · la hoja de vida (historial) y la ficha traen el compuesto', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoConCompuesto(admin, 'a6', 'CO')
+      const hist = await request(app).get(`/api/equipos/${id}/historial`).set('Cookie', admin)
+      expect(hist.status).toBe(200)
+      expect(hist.body.equipo.compuesto).toBe('CO')
+    })
+  })
+
+  describe('PATCH: RQ-HV-15, sólo el administrador corrige el compuesto', () => {
+    it('HV15-1 · un administrador corrige el compuesto y no se toca nada más', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b1', 'SO₂')
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ compuesto: 'H₂S' })
+      expect(r.status).toBe(200)
+      expect(r.body.compuesto).toBe('H₂S')
+      expect(await codigoEnBase(id)).toBe('INT-ORIG')
+    })
+
+    it('HV15-2 · una grafía equivalente («so2») se guarda canónica', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b2', 'CO')
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ compuesto: 'so2' })
+      expect(r.status).toBe(200)
+      expect(await compuestoEnBase(id)).toBe('SO₂')
+    })
+
+    it('HV15-3 · fuera de lista («xyz») con un codigoInterno nuevo → 422 y no se escribe nada', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b3', 'SO₂')
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ compuesto: 'xyz', codigoInterno: 'INT-NUEVO' })
+      expect(r.status).toBe(422)
+      expect(await compuestoEnBase(id)).toBe('SO₂')
+      expect(await codigoEnBase(id)).toBe('INT-ORIG')
+    })
+
+    it('HV15-4 · la clave ausente no toca el compuesto y «» lo deja nulo', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b4', 'CO')
+      const sin = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ codigoInterno: 'INT-2' })
+      expect(sin.status).toBe(200)
+      expect(await compuestoEnBase(id)).toBe('CO')
+      const vacio = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ compuesto: '' })
+      expect(vacio.status).toBe(200)
+      expect(await compuestoEnBase(id)).toBeNull()
+    })
+
+    it.each([['Comercial', 'c1'], ['Servicio Técnico', 'c2']])('HV15-5 · quien no es administrador (área %s) → 403 y no se escribe nada', async (area, sufijo) => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, sufijo, 'SO₂')
+      const op = await userCookie([area])
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ compuesto: 'H₂S', codigoInterno: 'INT-NUEVO' })
+      expect(r.status).toBe(403)
+      expect(r.body.error).toContain('administrador')
+      expect(await compuestoEnBase(id)).toBe('SO₂')
+      expect(await codigoEnBase(id)).toBe('INT-ORIG')
+    })
+
+    it('HV15-6 · posición: un no administrador con «xyz» recibe 403, no 422', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b6', 'SO₂')
+      const op = await userCookie(['Comercial'])
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ compuesto: 'xyz' })
+      expect(r.status).toBe(403)
+    })
+
+    it('HV15-7 · un PATCH sin la clave desde Servicio Técnico (no administrador) → 200 y el compuesto sigue', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b7', 'CO')
+      const op = await userCookie(['Servicio Técnico'])
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', op).send({ codigoInterno: 'INT-OP' })
+      expect(r.status).toBe(200)
+      expect(await codigoEnBase(id)).toBe('INT-OP')
+      expect(await compuestoEnBase(id)).toBe('CO')
+    })
+
+    it('HV15-8 · corregir el compuesto no deja fila en equipos_cambios', async () => {
+      const admin = await adminCookie()
+      const { app, id } = await equipoDirecto(admin, 'b8', 'SO₂')
+      const r = await request(app).patch(`/api/equipos/${id}`).set('Cookie', admin).send({ compuesto: 'H₂S' })
+      expect(r.status).toBe(200)
+      expect(await compuestoEnBase(id)).toBe('H₂S')
+      expect((await db.query('SELECT campo FROM public.equipos_cambios WHERE equipo_id=$1', [id])).rows).toEqual([])
+    })
+  })
+})
