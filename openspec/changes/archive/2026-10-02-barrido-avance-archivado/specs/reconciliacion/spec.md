@@ -1,44 +1,25 @@
 # Delta for reconciliacion
 
-Capacidad **NUEVA**. Esta delta es **R2 «el barrido»** entera. R1 escribe el contrato —la cabecera
-R-1 y su comprobación de forma, en `citas-verificables`—; **R2 lo mide**, y no puede medir cabeceras
-que R1 todavía no ha escrito. Por eso el corte entre las dos rebanadas es la dependencia real del
-trabajo y no el presupuesto.
+Capacidad **EXISTENTE** (`openspec/specs/reconciliacion/spec.md`). Este delta ajusta la comprobación 2
+del barrido: cuenta sólo lo archivado, publica «en curso» aparte y lee el denominador de la R01.4.
+**No añade comprobaciones ni cambia el código de salida** (RQ-RC-03 queda intacto): sigue siendo un
+barrido que hace visibles los desvíos y no los corrige.
 
-> **Anclaje: cada cita de este documento lleva su propia revisión INLINE, en su misma línea física.**
-> El detector sólo reconoce el ancla pegada a su cita
-> (`apps/desk/server/citas/cosecha.ts:63` en `ce93480`, constante `REVISION_RE`);
-> una declaración de anclaje en cabecera **no ancla nada**.
+> **Anclaje y citas.** Este delta nombra secciones del plan («§C», «§B», «§F.3») y ficheros por ruta,
+> **sin número de línea**: una cita de línea sin su revisión inline en su misma línea física no es
+> verificable (regla de mutación 4). Las líneas concretas las fija el `design.md` contra el árbol de
+> trabajo, no este documento.
 
 | Dato | Valor |
 |---|---|
-| Capacidad | `reconciliacion` (nueva) |
-| Cubre | `npm run reconcile` y su fichero `docs/sdd/RECONCILIACION.md`, las **seis** comprobaciones, la regla (d) de `unidad_de_avance`, las **dos guardas del autocertificado** y el campo `estado` de `incumplimientos_vivos` |
-| Tanda que la escribe | `F0-05` |
-| Depende de | `citas-verificables`, y sólo para la comprobación 2: sin las cabeceras de R1, el numerador no tiene de dónde derivarse |
-| Fuente en el maestro | **No aplica, y se dice en vez de forzarla.** Sale de `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md` y de `decision/tanda-por-contenido` (Gerencia, 2026-09-17, obs. #737). Presentar el maestro como fuente aquí sería la cita estirada que la regla de método castiga |
-
-## Purpose
-
-Hay cinco sitios donde vive la verdad de este proyecto —código, `openspec/`, plan, maestro y las
-decisiones que se toman en conversación— y corren a velocidades distintas. El desvío no se ve en un
-commit: se ve en el agregado. El principio ya estaba escrito en
-`openspec/config.yaml:1259` en `ce93480` (`unidad_de_avance.trazabilidad`):
-*«el as-built no se recuerda: se verifica»*. Lo que faltaba era **quién lo ejecuta y cada cuánto**.
-
-**Límite explícito, y gobierna toda la capacidad: este barrido NO arregla ningún desvío. Los hace
-visibles.** Un barrido que además corrige es un barrido en el que nadie puede confiar, porque ya no se
-sabe si el número bajó porque el problema se fue o porque el barrido lo tapó.
-
-**Por qué es capacidad propia y no parte de `citas-verificables`:** el `covers` de aquélla dice «línea
-base de citas verificables, detector y hook de pre-push» (`openspec/config.yaml:208-211` en `ce93480`)
-y su spec fija un límite explícito —«esta capacidad no cubre lo semántico»—. La comprobación 5 de aquí
-compara cifras del maestro contra `packages/shared`, que es exactamente lo semántico. Estirarla haría
-que significase «todo el utillaje de método», y una capacidad que significa eso no significa nada.
+| Capacidad | `reconciliacion` (modificada, ya declarada en `capabilities`) |
+| Cambio | `barrido-avance-archivado` (`tanda: fuera-del-plan`, `cierra: no`) |
+| Requisitos | MODIFICADOS: RQ-RC-01, RQ-RC-05, RQ-RC-06 · AÑADIDOS: RQ-RC-10, RQ-RC-11, RQ-RC-12 · ELIMINADOS: ninguno |
+| Respaldo | `decision/avance-cuenta-lo-planificado`, `decision/orden-ejecucion-encargo-01-10`, `decision/escenario-a-festivos-plan-a-01-10` (`openspec/config.yaml` → `decisiones_de_gerencia`) |
 
 ---
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: RQ-RC-01 · `npm run reconcile` escribe UN solo fichero, con su fecha y su commit, y seis comprobaciones
 
@@ -76,82 +57,6 @@ ahora lee el §C de la R01.4 y añade `cierres_declarados_por_commit` como segun
 - WHEN corre `npm run reconcile`
 - THEN las secciones de las comprobaciones 1, 3, 4, 5 y 6 son idénticas byte a byte y el código de
   salida sigue la regla de `RQ-RC-03`
-
----
-
-### Requirement: RQ-RC-02 · Dos pasadas sin cambios producen un fichero IDÉNTICO
-
-Dos ejecuciones seguidas sobre un árbol sin cambios **SHALL** producir un `docs/sdd/RECONCILIACION.md`
-**idéntico**, de modo que su `git diff` **sea** la lista de desvíos nuevos desde la pasada anterior.
-La salida **SHALL** ser ordenada y estable: mismo orden de comprobaciones, mismo orden dentro de cada
-lista, sin marcas de tiempo fuera de la cabecera de fecha y commit.
-
-**Es requisito, no comodidad.** Sin determinismo la pieza no sirve: un fichero que cambia solo
-convierte el diff en ruido y obliga a releerlo entero cada vez, que es exactamente lo que el mecanismo
-existe para evitar.
-
-#### Scenario: idempotencia sobre árbol quieto
-- GIVEN un árbol sin cambios entre dos ejecuciones
-- WHEN se corre `npm run reconcile` dos veces
-- THEN `git diff` sobre `docs/sdd/RECONCILIACION.md` no reporta nada
-
-#### Scenario: el diff es la lista de desvíos nuevos
-- GIVEN una ejecución previa registrada y una capacidad huérfana nueva
-- WHEN se vuelve a correr
-- THEN el `git diff` del fichero contiene esa huérfana y nada más
-
----
-
-### Requirement: RQ-RC-03 · Exit code ≠ 0 SÓLO por la 1 o la 3
-
-El comando **SHALL** salir con código **distinto de 0** si y sólo si la comprobación **1** encuentra
-una capacidad huérfana o la **3** encuentra un cambio `fuera-del-plan` sin motivo escrito. Las
-comprobaciones **2, 4, 5 y 6 SHALL** informar **sin** alterar el código de salida.
-
-**Por qué sólo esas dos:** son las que significan **trabajo huérfano** —algo construido que el
-registro no conoce—. Las otras cuatro reportan divergencias que pueden ser legítimas: la 5 lo es hoy
-mismo (`esperas 4/11`), y un barrido que bloquea por una divergencia legítima enseña a saltárselo. Un
-barrido que se salta no existe.
-
-#### Scenario: divergencia legítima no rompe el comando
-- GIVEN el árbol de hoy, con `esperas` en 4 frente a 11 y cinco incumplimientos vivos
-- WHEN corre `npm run reconcile`
-- THEN el código de salida es **0**, y las dos cifras aparecen en el fichero
-
-#### Scenario: una capacidad huérfana rompe el comando
-- GIVEN una spec en disco no declarada en `capabilities`
-- WHEN corre `npm run reconcile`
-- THEN el código de salida es distinto de 0
-
-#### Scenario: un fuera-del-plan sin motivo rompe el comando
-- GIVEN un `proposal.md` con `tanda: fuera-del-plan` y `motivo: ""`
-- WHEN corre `npm run reconcile`
-- THEN el código de salida es distinto de 0
-
----
-
-### Requirement: RQ-RC-04 · La comprobación 5 lee `packages/shared`, NUNCA la documentación
-
-La comprobación 5 **SHALL** obtener la cifra del código leyendo `packages/shared` —`estados.ts` y
-`transitions.ts`— y compararla contra `cifras_ancladas` (`openspec/config.yaml:1197` en `ce93480`).
-**MUST NOT** derivar la cifra del código de ningún documento, incluido el propio `config.yaml`.
-
-Cada entrada de `cifras_ancladas` **SHALL** declarar si divergir es un **error** o una **diferencia
-legítima de criterio**, y el barrido **SHALL** reproducir esa clasificación sin reinterpretarla.
-
-**Por qué está escrito como requisito y no como nota de diseño:** el 2026-09-17 un hallazgo del informe
-de brechas salió **falso** por leer `config.yaml` en vez del código, y la propia entrada `esperas` lo
-deja escrito. Leer el registro para comprobar el registro es el molde del fallo.
-
-#### Scenario: la cifra sale del código
-- GIVEN `ESTADOS_EN_ESPERA` con once entradas en `packages/shared/src/estados.ts`
-- WHEN corre la comprobación 5
-- THEN reporta 11 frente a los 4 del maestro, leídos del código y no de `config.yaml`
-
-#### Scenario: la divergencia legítima se reporta como tal
-- GIVEN la entrada `esperas`, cuya clave `divergencia` la declara legítima
-- WHEN corre la comprobación 5
-- THEN el fichero la presenta como divergencia legítima y no como error, y el código de salida no cambia
 
 ---
 
@@ -268,6 +173,8 @@ plan; ahora fija la R01.1 como fuente única de esa columna y excluye las filas 
 - THEN `M9.9` no se toma como fuente del maestro de esa fila
 
 ---
+
+## ADDED Requirements
 
 ### Requirement: RQ-RC-10 · `cierres_declarados_por_commit` son bloques con `id`, `commit` y `prueba`; una entrada incompleta es defecto y no cuenta
 
@@ -425,99 +332,3 @@ alterar el código de salida (`RQ-RC-03`), y **MUST NOT** caer en silencio a otr
 - GIVEN una fila `F1A-99` escrita sólo en el §G de la R01.4 sintética
 - WHEN corre la comprobación 2
 - THEN `F1A-99` no cuenta en el denominador
-
----
-
-### Requirement: RQ-RC-07 · Regla (d) de `unidad_de_avance`: el numerador se publica con el motivo de su cambio
-
-`openspec/config.yaml` **SHALL** declarar **CINCO** reglas de lectura en
-`unidad_de_avance.reglas_de_lectura` (`openspec/config.yaml:1243` en `ce93480`), con ids `a`, `b`,
-`c`, `d` y `e`, en ese orden. Las tres primeras —`openspec/config.yaml:1245` en `ce93480`,
-`openspec/config.yaml:1250` en `ce93480` y `openspec/config.yaml:1255` en `ce93480`— **MUST NOT**
-tocarse.
-
-La regla **(d)** **SHALL** seguir publicando el numerador con el **motivo** de su cambio, `por
-trabajo` o `por dictamen`.
-
-**Por qué (d):** el 2026-09-17 el numerador pasó de 10 a 11 **sin que nadie escribiera código** —lo
-movió un dictamen—. Es correcto, pero un lector que vea la serie sin más creerá que fue un día
-productivo. El denominador ya va fechado por la regla (a); el numerador necesita lo simétrico.
-
-La regla **(e)** **SHALL** declarar: «Un cambio lleva UN SOLO `tanda:`. No existe «cuenta en
-parte»». Su origen es la decisión de Gerencia `decision/e001-por-entregar` (`openspec/config.yaml` →
-`decisiones_de_gerencia` → `decision/e001-por-entregar`, 2026-09-24): `cierra:` dice si la fila
-TERMINA; la (e) dice que el `tanda:` es ÚNICO y excluyente, y un `cierra: no` **MUST NOT** leerse
-como «contar en parte».
-
-(Previously: RQ-RC-07 sólo exigía la **cuarta** regla (d) y que las tres primeras no se tocaran;
-ahora exige **CINCO** reglas (a-e), conserva (d) íntegra con su «Por qué» y su escenario, y añade el
-origen y el alcance de (e).)
-
-#### Scenario: un cierre por dictamen se distingue de uno por trabajo
-
-- GIVEN un corte en el que el numerador sube por una decisión y no por una tanda
-- WHEN se publica
-- THEN lleva el motivo `por dictamen`, y la serie no se lee como productividad
-
-#### Scenario: un cambio que realiza contenido de dos filas lleva un único `tanda:`
-
-- GIVEN un cambio cuyo trabajo realiza contenido de dos filas del §5 del plan
-- WHEN se declara su cabecera
-- THEN lleva un único `tanda:` con el ID de UNA fila, o `fuera-del-plan` con motivo escrito — nunca
-  las dos filas a la vez ni «cuenta en parte»
-
-#### Scenario: el guardián discrimina la (e) sin arrastrar la (d)
-
-- GIVEN una copia del registro a la que se le borra sólo la regla (d)
-- WHEN la comprobación lee `reglas_de_lectura`
-- THEN los ids que ve son `a`, `b`, `c` y `e` — la ausencia de (d) no borra ni desordena la (e)
----
-
-### Requirement: RQ-RC-08 · El campo `estado` va en las DOCE entradas de `incumplimientos_vivos`, vivas incluidas
-
-Las **doce** entradas de `incumplimientos_vivos` (`openspec/config.yaml:307` en `ce93480`) **SHALL**
-llevar el campo `estado`, **las vivas también**, de modo que «vivo» quede **escrito y no deducido de
-que falte una línea**. Un barrido que cuenta ausencias miente en cuanto alguien añade una entrada y se
-olvida del campo.
-
-Distribución medida en `ce93480`:
-
-| Situación | Entradas | Dónde |
-|---|---|---|
-| `estado: CERRADO` | IV-1, IV-3, IV-4, IV-5, IV-7, IV-10 (**seis**) | `openspec/config.yaml:312` en `ce93480`, `:434`, `:474`, `:554`, `:675`, `:874` |
-| `estado` en **prosa** | IV-6 (**uno**) | `openspec/config.yaml:652` en `ce93480` |
-| **sin el campo** | IV-2, IV-8, IV-9, IV-11, IV-12 (**cinco**, los vivos) | `openspec/config.yaml:376` en `ce93480`, `:733`, `:783`, `:978`, `:1057` |
-
-- **IV-6 es el único no mecánico**: su `estado` es hoy prosa. El valor **SHALL** pasar a `CERRADO` y
-  **la prosa SHALL conservarse en una clave propia**. **MUST NOT** borrarse: este fichero tiene por
-  cultura conservar el registro.
-- La comprobación 4 **SHALL** contar los vivos por el campo `estado`, nunca por ausencia de línea.
-
-#### Scenario: los vivos se cuentan por el campo, no por la ausencia
-- GIVEN las doce entradas con `estado` escrito
-- WHEN corre la comprobación 4
-- THEN reporta cinco vivos, y una entrada nueva sin `estado` se reporta como **defecto de registro**,
-  no como vivo
-
-#### Scenario: la prosa de IV-6 sobrevive
-- GIVEN IV-6, cuyo `estado` era prosa
-- WHEN se escribe `estado: CERRADO`
-- THEN la prosa anterior sigue en el fichero, en una clave propia
-
----
-
-### Requirement: RQ-RC-09 · La capacidad se declara a sí misma en `capabilities` (R-2)
-
-`reconciliacion` **SHALL** añadirse a `openspec/config.yaml → capabilities`
-(`openspec/config.yaml:104` en `ce93480`) **en el mismo cambio** que crea
-`openspec/specs/reconciliacion/spec.md`, según R-2 (`CLAUDE.md:467-469`).
-
-**No es formalismo: es la comprobación 1 aplicada a esta misma capacidad.** Una spec que no está en
-`capabilities` no la carga el preflight — existe y es invisible. Crear esta capacidad sin declararla
-haría que `npm run reconcile` saliera con código ≠ 0 en su primera ejecución **por su propia culpa**,
-y la capacidad nacería siendo el desvío que existe para cazar.
-
-#### Scenario: la capacidad nace declarada
-- GIVEN el cambio que crea `openspec/specs/reconciliacion/spec.md`
-- WHEN corre `npm run reconcile` por primera vez
-- THEN la comprobación 1 reporta **0 huérfanas** y el código de salida es 0

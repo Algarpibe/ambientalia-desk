@@ -155,3 +155,94 @@ describe('registro · RQ-RC-07: el TEXTO de las reglas (d) y (e) está en el reg
     expect(bloqueE).not.toContain('cuenta en parte')
   })
 })
+
+const RUTA_R14 = 'docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md'
+const r14Real = (): string => readFileSync(path.join(RAIZ, RUTA_R14), 'utf8')
+
+/** Todos los `proposal.md` bajo `openspec/changes/`, con la ruta relativa y de barras normales. */
+function proposalsReales(dir = 'openspec/changes'): Record<string, string> {
+  const salida: Record<string, string> = {}
+  for (const e of readdirSync(path.join(RAIZ, dir), { withFileTypes: true })) {
+    const ruta = dir + '/' + e.name
+    if (e.isDirectory()) Object.assign(salida, proposalsReales(ruta))
+    else if (e.name === 'proposal.md') salida[ruta] = readFileSync(path.join(RAIZ, ruta), 'utf8')
+  }
+  return salida
+}
+
+/** La comprobación 2 del núcleo sobre un `config.yaml` y una R01.4 cualesquiera, con los proposals reales. */
+const numeradorSobre = (textoConfig: string, plan: string) => {
+  const ficheros = { ...proposalsReales(), [RUTA_CONFIG]: textoConfig, [RUTA_R14]: plan }
+  return reconciliar(arbolEnMemoria({ ficheros })).find((x) => x.id === 2)!
+}
+
+const tandas = (c: { cifras: readonly string[] }, etiqueta: string): string[] => {
+  const texto = c.cifras.find((x) => x.includes(etiqueta))
+  if (texto === undefined) throw new Error('falta la cifra «' + etiqueta + '»')
+  const resto = texto.slice(texto.indexOf(': ') + 2)
+  return resto === '—' ? [] : resto.split(', ')
+}
+
+/** La R01.4 con una fila de ID NUEVO, dentro del §C (antes de su `---`) o justo después de él. */
+function conFilaNueva(plan: string, dentro: boolean): string {
+  const lineas = plan.split(SALTO)
+  const inicio = lineas.findIndex((l) => l.startsWith('## C · '))
+  const fin = inicio + 1 + lineas.slice(inicio + 1).findIndex((l) => /^---\s*$/.test(l.replace(/\r$/, '')))
+  lineas.splice(dentro ? fin : fin + 1, 0, '| F2-09 | fila de prueba | S | 2027 | pendiente | — |')
+  return lineas.join(SALTO)
+}
+
+describe('registro · RQ-RC-10: el árbol real registra NUEVE cierres por commit, sin defectos', () => {
+  it('10e · F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05 y F1B-01 cuentan por commit, y la comprobación 2 no trae ningún defecto de registro', () => {
+    const c = numeradorSobre(configReal(), r14Real())
+    expect(tandas(c, 'cerradas por commit declarado')).toEqual(['F0-00', 'F0-01', 'F0-02', 'F0-03', 'F1A-01', 'F1A-02', 'F1A-04', 'F1A-05', 'F1B-01'])
+    expect(c.hallazgos.filter((h) => h.detalle.includes('defecto de registro'))).toEqual([])
+  })
+
+  it('mutación 2 · quitando el `prueba:` de F0-02 de una COPIA del config, cuentan 8 y el defecto nombra F0-02 y `prueba`', () => {
+    const sucio = configReal().replace(/^ {4}prueba: "openspec\/changes\/F0-03\/proposal\.md:21[^\r\n]*\r?\n/m, '')
+    expect(sucio).not.toBe(configReal())
+    const c = numeradorSobre(sucio, r14Real())
+    expect(tandas(c, 'cerradas por commit declarado')).toEqual(['F0-00', 'F0-01', 'F0-03', 'F1A-01', 'F1A-02', 'F1A-04', 'F1A-05', 'F1B-01'])
+    const h = c.hallazgos.find((x) => x.detalle.includes('defecto de registro'))
+    expect(h?.clave).toBe('F0-02')
+    expect(h?.detalle).toContain('`prueba`')
+  })
+})
+
+describe('registro · RQ-RC-11 y RQ-RC-12 sobre la R01.4 real y los proposals reales', () => {
+  it('12a · el denominador es 78', () => {
+    expect(numeradorSobre(configReal(), r14Real()).cifras.find((x) => x.startsWith('denominador'))).toBe('denominador: 78 tandas del §C de la R01.4')
+  })
+
+  it('11f/05g · «en curso» son exactamente SEIS, con F0-04, y F0-04 no cuenta por commit', () => {
+    const c = numeradorSobre(configReal(), r14Real())
+    expect(tandas(c, 'en curso, aparte y sin sumar')).toEqual(['F0-04', 'F1B-04', 'F1B-07', 'F1B-08', 'F1B-11', 'F1C-05'])
+    expect(tandas(c, 'cerradas por commit declarado')).not.toContain('F0-04')
+  })
+
+  it('una cabecera de F0-01..03 fuera de `archive/` no las mete «en curso»: las cuenta el commit (P1 sobre ficheros reales)', () => {
+    const c = numeradorSobre(configReal(), r14Real())
+    for (const t of ['F0-01', 'F0-02', 'F0-03']) expect(tandas(c, 'en curso, aparte y sin sumar')).not.toContain(t)
+  })
+
+  it('mutación 2 · una fila de ID NUEVO tras el `---` que cierra el §C NO mueve el denominador: sigue 78', () => {
+    const sucio = conFilaNueva(r14Real(), false)
+    expect(sucio).not.toBe(r14Real())
+    expect(numeradorSobre(configReal(), sucio).cifras.find((x) => x.startsWith('denominador'))).toBe('denominador: 78 tandas del §C de la R01.4')
+  })
+
+  it('mutación 2 · la misma fila DENTRO del §C sí lo mueve: 79', () => {
+    expect(numeradorSobre(configReal(), conFilaNueva(r14Real(), true)).cifras.find((x) => x.startsWith('denominador'))).toBe(
+      'denominador: 79 tandas del §C de la R01.4',
+    )
+  })
+
+  it('12d · mutación 2 · con `## C ·` renombrado, el barrido lo dice y NO publica 78', () => {
+    const sucio = r14Real().replace('## C · ', '## Z · ')
+    const c = numeradorSobre(configReal(), sucio)
+    expect(c.cifras.find((x) => x.startsWith('denominador'))).toContain('sin leer')
+    expect(c.hallazgos.some((h) => h.detalle.includes('§C'))).toBe(true)
+    expect(c.bloqueante).toBe(false)
+  })
+})

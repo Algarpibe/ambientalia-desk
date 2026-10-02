@@ -3336,7 +3336,7 @@ decisiones_de_gerencia_adenda:
     consecuencias: |
       (1) ES UNA REGLA DE MÉTODO y aterriza en `CLAUDE.md` («Regla de avance — sólo cuenta lo archivado»).
       (2) EL BARRIDO TIENE QUE CAMBIAR: la comprobación 2 lista `openspec/changes/` entero
-      (`apps/desk/server/reconciliacion/comprobaciones.ts:49` y `:124`, sin filtrar `archive/`). Es código
+      (`apps/desk/server/reconciliacion/comprobaciones.ts:49` en `840a353` y `:124`, sin filtrar `archive/`; lo cierra `barrido-avance-archivado`). Es código
       y no tiene fila propia: lo hace la próxima sesión de construcción que toque el barrido.
       (3) CONSECUENCIA QUE LA RESPUESTA NO PREVIÓ: F0-01, F0-02 y F0-03 declaran `cierra: si` en
       `openspec/changes/F0-01/`, `F0-02/` y `F0-03/`, FUERA de `archive/`. Con la regla aplicada a la
@@ -3694,7 +3694,7 @@ aprobaciones_de_techo_del_ledger_adenda:
   - cambio: barrido-avance-archivado
     fase: archive
     techo: 3000
-    medido: "pendiente — lo mide el agente de archivo antes de aplicar"
+    medido: "revisable 416 (281/75 spec + 60 informe), total 2.328 (1.297/1.031), commit 048fcf0"
     fecha: 2026-10-01
     quien: Gerencia (mantenedor), en la conversación de la sesión de construcción
     motivo: Mudanza de carpetas sin carga de revisión (la carpeta del cambio cuenta dos veces).
@@ -3709,3 +3709,59 @@ aprobaciones_de_techo_del_ledger_adenda:
       la parte con carga de revisión no supere 800. Se mide antes de aplicar; si la supera, PARA y consulta. Revisa siempre
       que el commit de archivo contenga solo el cambio archivado.»
     registro: "decision/archivo-barrido-y-regla-del-archivo-01-10 · CLAUDE.md → «Regla del archivo»"
+
+cierres_declarados_por_commit:
+  # Tandas terminadas ANTES de la convención de `openspec/changes/archive/`. Cuentan en la cifra «por
+  # commit declarado» y nunca en «por archivo» (decision/orden-ejecucion-encargo-01-10, punto (a)).
+  # Cada entrada lleva `commit:` y `prueba:` en UNA línea: si falta alguno, o va vacío o plegado, la
+  # comprobación 2 la da por DEFECTO DE REGISTRO y no la cuenta (molde de RQ-RC-08). Va al final del
+  # fichero para no desplazar líneas citadas. La crea `barrido-avance-archivado`.
+  - id: F0-01
+    commit: 3d44e1e
+    asunto: "feat(sdd): inicializar contexto SDD, CLAUDE.md y el maestro citable"
+    prueba: "docs/sdd/Estado_As-Built_2026-09-09.md:20"
+    declarado_por: "decision/orden-ejecucion-encargo-01-10, punto (a)"
+  - id: F0-02
+    commit: fa445ac
+    asunto: "docs(specs): specs as-built de remisiones, derivacion-avisos y zoho-sync"
+    nota: "749d205 añade después dos entradas a zoho-sync; no cambia el número de specs"
+    prueba: "openspec/changes/F0-03/proposal.md:21 · docs/sdd/Estado_As-Built_2026-09-09.md:21"
+    declarado_por: "decision/orden-ejecucion-encargo-01-10, punto (a)"
+  - id: F0-03
+    commit: 3aaa0f1
+    asunto: "docs(sdd): cerrar F0-03 con la carga en Engram y la convencion de topic_key"
+    prueba: "docs/sdd/Estado_As-Built_2026-09-09.md:22"
+    declarado_por: "decision/orden-ejecucion-encargo-01-10, punto (a)"
+  - id: F0-00
+    commit: 0e8f581
+    asunto: "docs(sdd): baseline verificado del as-built (tanda F0-00)"
+    nota: "a3a8f03 es el código AUDITADO (config.yaml:18), no el commit que cierra la tanda"
+    prueba: "docs/sdd/F0-00_Baseline_as-built.md:33 · docs/sdd/Estado_As-Built_2026-09-09.md:19"
+    declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+  - id: F1A-01
+    commit: ec0ed1f
+    asunto: "fix(transiciones): C1 — un checkbox obligatorio sin marcar frena la transicion"
+    prueba: "apps/desk/server/transicionesEjecucion.test.ts:41 · apps/desk/server/transitionExec.test.ts:90"
+    declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+  - id: F1A-02
+    commit: 5218d11
+    asunto: "feat(sla): el escalado de C11 si era construible — sale de la tabla de cargos"
+    nota: "6ea3ca8 construye antes el SLA de un día sobre Notificado; 5218d11 cierra el escalado"
+    prueba: "packages/shared/src/sla.test.ts:29 · packages/shared/src/sla.test.ts:105 · apps/desk/server/db/sla.test.ts"
+    declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+  - id: F1A-04
+    commit: e8c5e90
+    asunto: "feat(kpis): C9 — los tres bodegajes salen del historial, no de las columnas"
+    nota: "Estado_As-Built_2026-09-09.md:26 la da «Reubicada» y es de ANTES de este commit (se escribió en 3aaa0f1); la reubicación a F1C la deshizo e8c5e90"
+    prueba: "packages/shared/src/bodegaje.test.ts:29 · packages/shared/src/bodegaje.test.ts:318 · apps/desk/server/transitionExec.test.ts:163"
+    declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+  - id: F1A-05
+    commit: 43821b8
+    asunto: "docs(sdd): F1A-05 — la auditoria de blueprint sobre las tres correcciones cerradas"
+    prueba: "docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:1 · packages/shared/src/bodegaje.test.ts:377"
+    declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"
+  - id: F1B-01
+    commit: 607e26a
+    asunto: "feat(tickets): F1B-01 — el serial es la llave: obligatorio en la remision y abre las OV"
+    prueba: "apps/desk/server/remisiones.test.ts:913 · docs/sdd/F1B-01_Serial_llave_de_entrada.md:1"
+    declarado_por: "decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4"

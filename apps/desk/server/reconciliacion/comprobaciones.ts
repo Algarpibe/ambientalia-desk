@@ -43,7 +43,7 @@ export interface Arbol {
 }
 
 const RUTA_CONFIG = 'openspec/config.yaml'
-const RUTA_PLAN = 'docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md'
+const RUTA_PLAN = 'docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md'
 const RUTA_ESTADOS = 'packages/shared/src/estados.ts'
 const PREFIJO_SPECS = 'openspec/specs/'
 const PREFIJO_CHANGES = 'openspec/changes/'
@@ -52,6 +52,9 @@ const SUFIJO_SPEC = '/spec.md'
 const SUFIJO_PROPOSAL = '/proposal.md'
 const FUERA_DEL_PLAN = 'fuera-del' + '-plan'
 const ESTADO_CERRADO = 'CERRADO'
+/** La R01.1 ya no es el plan del denominador: sólo sigue siendo la fuente de la guarda (b) de RQ-RC-06. */
+const RUTA_PLAN_FUENTES = 'docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md'
+const PREFIJO_ARCHIVO = PREFIJO_CHANGES + 'archive/'
 
 const ordenar = (xs: readonly string[]): string[] => [...xs].sort()
 
@@ -190,42 +193,68 @@ function capacidades(arbol: Arbol): Comprobacion {
 }
 
 /**
- * 2 · Numerador del avance, SIEMPRE en dos cifras separadas (RQ-RC-05): nunca sumadas sin desglose,
- * y nunca con cabecera retroactiva — inventarla sería fabricar evidencia, y contarlos sin decirlo
- * sería esconder de dónde sale el número. Si la lista de cierres por commit no está declarada, el
- * barrido lo DICE en vez de deducirla.
+ * 2 · Numerador del avance en CIFRAS SEPARADAS por origen (RQ-RC-05): por archivo, por commit
+ * declarado y «en curso». Nunca se suman, y nunca hay cabecera retroactiva — inventarla sería fabricar
+ * evidencia. Sólo cuenta lo ARCHIVADO (`decision/avance-cuenta-lo-planificado`): un plan commiteado,
+ * una propuesta o código en curso no suman. El denominador sale del §C de la R01.4 (RQ-RC-12).
  */
 function numerador(arbol: Arbol): Comprobacion {
   const config = arbol.leer(RUTA_CONFIG) ?? ''
-  const filas = filasDelPlan(arbol.leer(RUTA_PLAN) ?? '')
+  const idsC = tandasDelPlan(arbol.leer(RUTA_PLAN) ?? '')
+  const filas = filasDelPlan(arbol.leer(RUTA_PLAN_FUENTES) ?? '')
   const ficheros = proposals(arbol)
   const invalidas = new Set(comprobarCabeceras(ficheros).invalidas.map((i) => i.fichero))
-  const cerradas = ficheros
-    .filter((f) => !invalidas.has(f.ruta) && campo(bloque(f.texto), 'cierra') === 'si')
-    .map((f) => ({ tanda: campo(bloque(f.texto), 'tanda') ?? '', maestro: listaMaestro(bloque(f.texto)) }))
+  const cambios = ficheros
+    .filter((f) => !invalidas.has(f.ruta))
+    .map((f) => ({
+      archivada: f.ruta.startsWith(PREFIJO_ARCHIVO),
+      cierra: campo(bloque(f.texto), 'cierra') === 'si',
+      tanda: campo(bloque(f.texto), 'tanda') ?? '',
+      maestro: listaMaestro(bloque(f.texto)),
+    }))
     .filter((x) => x.tanda !== '' && x.tanda !== FUERA_DEL_PLAN)
-  const derivables = ordenar(cerradas.map((x) => x.tanda))
-  const porCommit = ordenar(listaYaml(config, 'cierres_declarados_por_commit'))
-  const hallazgos: Hallazgo[] = [...cerradas]
-    .sort((a, b) => (a.tanda < b.tanda ? -1 : 1))
-    .flatMap(({ tanda, maestro }) => {
-      const fuente = filas.get(tanda)
-      // Sin fila, o con una fila que no declara fuentes, no hay nada que cruzar y marcar sería ruido.
-      if (fuente === undefined || fuente === '' || fuente === '—') return []
-      if (maestro.some((m) => fuente.includes(m))) return []
-      return [{ clave: tanda, detalle: 'sin verificar: su `maestro:` no cita ninguna fuente de su fila del apartado 5 (' + fuente + ')' }]
-    })
-  if (porCommit.length === 0) {
-    hallazgos.push({ clave: 'cierres_declarados_por_commit', detalle: 'sin declarar en config.yaml: el barrido no lo inventa' })
+  const delPlan = cambios.filter((x) => idsC.has(x.tanda))
+  const archivo = new Set(delPlan.filter((x) => x.archivada && x.cierra).map((x) => x.tanda))
+  const { completas, defectos } = cierresPorCommit(config)
+  const commit = new Set(completas)
+  // La resta va DESPUÉS de filtrar los defectos: `commit` sólo trae entradas completas. Restar antes
+  // dejaría fuera de «en curso» a una tanda cuyo bloque no cuenta (P2).
+  const enCurso = ordenar([...new Set(delPlan.filter((x) => !(x.archivada && x.cierra)).map((x) => x.tanda))]).filter(
+    (t) => !archivo.has(t) && !commit.has(t),
+  )
+  const cerradas = ordenar([...new Set([...archivo, ...commit])])
+  const hallazgos: Hallazgo[] = []
+  const sinFuente: string[] = []
+  for (const tanda of cerradas) {
+    const fuente = filas.get(tanda)
+    // Sin fila en la R01.1, o con una fila que no declara fuentes, no hay nada que cruzar y marcar sería ruido.
+    if (fuente === undefined || fuente === '' || fuente === '—') {
+      sinFuente.push(tanda)
+      continue
+    }
+    // El `maestro:` se toma de las cabeceras válidas `cierra: si` de la tanda, archivadas o no; sin ninguna
+    // (una cerrada por commit sin cabecera), no hay con qué contrastar y no se marca.
+    const declaradas = cambios.filter((x) => x.tanda === tanda && x.cierra)
+    if (declaradas.length === 0 || declaradas.some((x) => x.maestro.some((m) => fuente.includes(m)))) continue
+    hallazgos.push({ clave: tanda, detalle: 'sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (' + fuente + ')' })
+  }
+  hallazgos.push(...defectos)
+  for (const t of ordenar([...archivo].filter((x) => commit.has(x)))) {
+    hallazgos.push({ clave: t, detalle: 'está en las dos poblaciones: un `proposal.md` en archive/ con `cierra: si` y `cierres_declarados_por_commit`; deben ser disjuntas' })
+  }
+  if (idsC.size === 0) {
+    hallazgos.push({ clave: '§C', detalle: 'denominador sin leer: el §C (encabezado `## C ·` con filas de tanda) no está en ' + RUTA_PLAN + '; el barrido no cae a otra sección ni a otro plan' })
   }
   return {
     id: 2,
-    titulo: 'Numerador del avance — dos cifras, nunca una suma',
+    titulo: 'Numerador del avance (§C de la R01.4) — cifras separadas, nunca una suma',
     bloqueante: false,
     cifras: [
-      String(derivables.length) + ' derivables de cabecera: ' + (derivables.join(', ') || '—'),
-      String(porCommit.length) + ' declarados por commit: ' + (porCommit.join(', ') || '—'),
-      'denominador ' + String(filas.size) + ' tandas del apartado 5 del plan',
+      String(archivo.size) + ' cerradas por archivo: ' + (ordenar([...archivo]).join(', ') || '—'),
+      String(commit.size) + ' cerradas por commit declarado: ' + (ordenar([...commit]).join(', ') || '—'),
+      String(enCurso.length) + ' en curso, aparte y sin sumar: ' + (enCurso.join(', ') || '—'),
+      idsC.size === 0 ? 'denominador: sin leer (§C no encontrado)' : 'denominador: ' + String(idsC.size) + ' tandas del §C de la R01.4',
+      String(sinFuente.length) + ' cerradas sin fuente declarada en la R01.1: ' + (sinFuente.join(', ') || '—'),
       String(hallazgos.filter((h) => h.detalle.startsWith('sin verificar')).length) + ' marcadas sin verificar',
     ],
     hallazgos,
@@ -342,6 +371,54 @@ function sinTrackear(arbol: Arbol): Comprobacion {
     cifras: [String(rutas.length) + ' sin trackear'],
     hallazgos: rutas.map((r) => ({ clave: r, detalle: 'en disco y fuera del índice' })),
   }
+}
+
+/**
+ * El tramo de un plan que sigue a un encabezado: las líneas hasta el primer separador `---` suelto.
+ * El separador de columnas de una tabla empieza por barra vertical y no casa. Sin encabezado, tramo vacío:
+ * nunca se cae a otra sección (RQ-RC-12).
+ */
+function tramoDelPlan(texto: string, encabezado: RegExp): string[] {
+  const lineas = texto.split(SALTO).map(sinRetorno)
+  const inicio = lineas.findIndex((l) => encabezado.test(l))
+  if (inicio === -1) return []
+  const resto = lineas.slice(inicio + 1)
+  const fin = resto.findIndex((l) => /^---\s*$/.test(l))
+  return fin === -1 ? resto : resto.slice(0, fin)
+}
+
+/** Los IDs de tanda del §C, con o sin negrita, en las cinco familias del plan; cada uno cuenta una vez. */
+function tandasDelPlan(plan: string): Set<string> {
+  const ids = new Set<string>()
+  for (const linea of tramoDelPlan(plan, /^## C · /)) {
+    const m = /^\| \*{0,2}((?:F0|F1[A-F]|1[GH]|F[2-5])-\d\d)\*{0,2} \|/.exec(linea)
+    if (m) ids.add(m[1]!)
+  }
+  return ids
+}
+
+/**
+ * `cierres_declarados_por_commit`: bloques `- id:` con `commit:` y `prueba:` en UNA línea (RQ-RC-10). Una
+ * entrada a la que falte uno, o vacío, o plegado (`prueba: >` se lee vacío), es DEFECTO y no cuenta. Un
+ * elemento de la lista plana antigua (`- F0-01`) es defecto «sin forma de bloque». Lectura con el mismo par
+ * que `capacidades`: `entradasYaml` más `listaYaml`, sin parser nuevo.
+ */
+function cierresPorCommit(config: string): { completas: string[]; defectos: Hallazgo[] } {
+  const clave = 'cierres_declarados_por_commit'
+  const completas: string[] = []
+  const defectos: Hallazgo[] = []
+  for (const e of entradasYaml(config, clave)) {
+    const faltan = ['commit', 'prueba'].filter((k) => (campo(e.cuerpo, k) ?? '') === '')
+    if (faltan.length === 0) {
+      completas.push(e.id)
+      continue
+    }
+    defectos.push({ clave: e.id, detalle: 'defecto de registro: la entrada no declara ' + faltan.map((k) => '`' + k + '`').join(' ni ') + ' (falta, va vacío o plegado)' })
+  }
+  for (const suelto of listaYaml(config, clave).filter((v) => !v.startsWith('id:'))) {
+    defectos.push({ clave: suelto, detalle: 'defecto de registro: elemento sin forma de bloque `- id:` con `commit` y `prueba`' })
+  }
+  return { completas, defectos }
 }
 
 /** Las seis, en orden fijo. El orden es parte del contrato de determinismo (RQ-RC-02). */

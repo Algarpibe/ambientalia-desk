@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `e12da6d` · **Fecha del commit:** 2026-10-01
+**Commit medido:** `33e6f81` · **Fecha del commit:** 2026-10-01
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -10,27 +10,29 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
 ## 1 · Capacidades declaradas frente a specs en disco
 
-  20 declaradas
-  15 ficheros
+  21 declaradas
+  16 ficheros
   0 huérfanas
 
-## 2 · Numerador del avance — dos cifras, nunca una suma
+## 2 · Numerador del avance (§C de la R01.4) — cifras separadas, nunca una suma
 
-  12 derivables de cabecera ..................... F0-01, F0-02, F0-03, F0-05, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14
-  0 declarados por commit ....................... —
-  denominador 52 tandas del apartado 5 del plan
-  4 marcadas sin verificar
+  10 cerradas por archivo ....................... F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14
+  9 cerradas por commit declarado ............... F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01
+  6 en curso, aparte y sin sumar ................ F0-04, F1B-04, F1B-07, F1B-08, F1B-11, F1C-05
+  denominador ................................... 78 tandas del §C de la R01.4
+  2 cerradas sin fuente declarada en la R01.1 ... F1B-12, F1B-14
+  5 marcadas sin verificar
 
 Hallazgos (informativos, no bloquean):
-  - `F0-02` — sin verificar: su `maestro:` no cita ninguna fuente de su fila del apartado 5 (M1.3, M1.9, Anexo G)
-  - `F0-05` — sin verificar: su `maestro:` no cita ninguna fuente de su fila del apartado 5 (Brecha 17/09 · E-001 · `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`)
-  - `F1A-06` — sin verificar: su `maestro:` no cita ninguna fuente de su fila del apartado 5 (Anexo F (R08.2), Decisiones 10/09 §9, entrada 4)
-  - `F1B-10` — sin verificar: su `maestro:` no cita ninguna fuente de su fila del apartado 5 (transitions-st §3.8 (a) y (b), tickets-core §4.1; entrada 5.a de F0-01)
-  - `cierres_declarados_por_commit` — sin declarar en config.yaml: el barrido no lo inventa
+  - `F0-02` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (M1.3, M1.9, Anexo G)
+  - `F0-05` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (Brecha 17/09 · E-001 · `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`)
+  - `F1A-03` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (P38)
+  - `F1A-06` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (Anexo F (R08.2), Decisiones 10/09 §9, entrada 4)
+  - `F1B-10` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (transitions-st §3.8 (a) y (b), tickets-core §4.1; entrada 5.a de F0-01)
 
 ## 3 · Cambios fuera del plan, con su motivo
 
-  6 fuera del plan
+  7 fuera del plan
   0 sin motivo
 
 ## 4 · Incumplimientos vivos, gates y claves de decisión
@@ -55,15 +57,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  6 sin trackear
-
-Hallazgos (informativos, no bloquean):
-  - `docs/sdd/Evidencia_Transporte_Tarea_Programada_2026-09-18.txt` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-18.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-22.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-24.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-09-28.md` — en disco y fuera del índice
-  - `docs/sdd/Parte_2026-10-01.md` — en disco y fuera del índice
+  0 sin trackear
 
 ---
 
