@@ -113,11 +113,12 @@ cuyo NIT no casa con ninguno de Books sigue. El formulario (lote 4) sólo muestr
 
 ## Lote 4 — interfaz (`.tsx` fuera de la red, F0-00: sin rojo previo)
 
-- [ ] 4.1 `CreateTicket.tsx`: buscador con `provisionales=1` y etiqueta «provisional»; modo manual de cliente y equipo; serial doble con aviso; ocultar los tres campos comerciales salvo la fecha de factura en «Equipo nuevo» (C-1).
-- [ ] 4.2 `HojaDeVida.tsx`: aviso de pendiente y acciones «Enlazar»/«Validar» sólo a Comercial o admin; `TransitionPanel.tsx` desactiva «Habilitar Servicio»; `TicketCard.tsx` marca el cliente provisional; `src/api/client.ts` (al final).
-- [ ] 4.3 **Casilla regla 13** por escrito, decisión por decisión, con la línea del servidor de `design.md` §6 fijada contra el árbol de ese día.
-- [ ] 4.4 Barrido de citas y detector `--sha HEAD` con 0 bloqueantes; `registro.test.ts:220`.
-- [ ] 4.5 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
+- [x] 4.0 Prueba de POSICIÓN (regla 1): el `422` de datos que faltan del provisional (A, `ticketService.ts:28`) gana al serial ≠ confirmación (C, `:91`), par que coincide en una petición real; nace verde, su rojo es mover `:28` detrás de `:91` (reproducido y revertido). Además, hallazgo: `getEquipoFull` no devolvía `pendienteValidar`; RED→GREEN en `db/equipos.ts` (`:115`, `:165`).
+- [x] 4.1 `CreateTicket.tsx`: buscador con `provisionales=1` y etiqueta «provisional»; modo manual de cliente y equipo; serial doble con aviso; ocultar los tres campos comerciales salvo la fecha de factura en «Equipo nuevo» (C-1).
+- [x] 4.2 `HojaDeVida.tsx`: aviso de pendiente y acciones «Enlazar»/«Validar» sólo a Comercial o admin; `TransitionPanel.tsx` desactiva «Habilitar Servicio»; `TicketCard.tsx` marca el cliente provisional; `src/api/client.ts` (al final).
+- [x] 4.3 **Casilla regla 13** por escrito, decisión por decisión, con la línea del servidor de `design.md` §6 fijada contra el árbol de ese día.
+- [x] 4.4 Barrido de citas y detector `--sha HEAD` con 0 bloqueantes; `registro.test.ts:220`.
+- [x] 4.5 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
 
 **Instrucción para `archive` (SIN casilla):** quitar `F1B-15` de «en curso» en `registro.test.ts:220`, y registrar
 P-A (`design.md` §4.6) como entrada de `docs/sdd/ENTRADA.md`. Archivar no la da por hecha.

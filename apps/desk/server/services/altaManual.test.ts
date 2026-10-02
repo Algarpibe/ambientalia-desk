@@ -381,3 +381,16 @@ describe('P-B · RQ-TC-30 «El NIT ya está en Books»: 409 con los candidatos (
     expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 1 })
   })
 })
+
+describe('POSICIÓN (regla de mutación 1) · el 422 de datos que faltan del provisional (A) gana al contenido del equipo (C)', () => {
+  // Las dos guardas pueden activarse a la vez en una petición real: el formulario manda cliente y equipo manuales
+  // juntos, y quien lo rellena a prisa deja un dato del cliente en blanco Y se equivoca al repetir el serial.
+  it('cliente manual sin NIT + serial distinto de su confirmación → 422 de los datos que faltan, no el del serial, y nada escrito', async () => {
+    const sinNit = { ...CLIENTE, nit: '' }
+    const res = await alta(await adminCookie(), { clienteManual: sinNit, equipoManual: { ...EQUIPO, serial: 'ABC123', confirmacionSerial: 'ABC124' } })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('Faltan datos del cliente provisional')
+    expect(res.body.error).not.toContain('serial')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+})

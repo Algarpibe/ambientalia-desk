@@ -332,7 +332,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               delTicket={valoresConocidos(ticket, remisiones)}
                               // Quien tomó el ticket: es a quien «Aprobación» le devuelve el trabajo.
                               primerDerivado={ticket.primerDerivado}
-                              clientId={ticket.clientId}
+                              clientId={ticket.clientId} equipoId={ticket.equipoId} clienteProvisional={ticket.clienteProvisional}
                               // Para que el desplegable conserve al derivado actual aunque ya no esté
                               // activo: si desapareciera, confirmar la etapa lo borraría en silencio.
                               derivadoActual={ticket.derivado ?? null}

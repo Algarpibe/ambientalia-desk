@@ -261,3 +261,18 @@ describe('D12 · un id provisional lo rechazan contratos, Top 5, mantenedor y al
     expect(res.body.error).toBe('Mantenedor no encontrado')
   })
 })
+
+describe('Lote 4 · la ficha y la hoja de vida dicen si el equipo está pendiente de validar', () => {
+  beforeEach(sembrar)
+
+  it('GET /api/equipos/:id y /historial llevan pendienteValidar:true en el pendiente y nada en el validado', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const ficha = (id: string) => request(app).get(`/api/equipos/${id}`).set('Cookie', cookie)
+    const hoja = (id: string) => request(app).get(`/api/equipos/${id}/historial`).set('Cookie', cookie)
+    expect((await ficha('eq-1')).body.pendienteValidar).toBe(true)
+    expect((await hoja('eq-1')).body.equipo.pendienteValidar).toBe(true)
+    expect((await ficha('eq-2')).body.pendienteValidar).toBeUndefined()
+    expect((await hoja('eq-2')).body.equipo.pendienteValidar).toBeUndefined()
+  })
+})

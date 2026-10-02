@@ -149,3 +149,63 @@ El lote 3 no toca `.tsx`: hoy el cliente no toma ninguna de estas decisiones. Pa
 
 ## Frontera de reversión
 `git revert` del lote 3: «Habilitar Servicio» vuelve a no mirar lo pendiente y desaparecen las dos rutas; las funciones de enlace y `motivoAltaPendiente` quedan sin uso.
+
+# Lote 4 — interfaz (tareas 4.0-4.5 `[x]`)
+
+Strict TDD en el servidor, `.tsx` fuera de la red de pruebas (F0-00, sin rojo previo) · partida `8bd4121` · sin `acquire`/`settle`, commit ni merge. El orquestador commitea y mide.
+
+## Ciclo TDD
+| Tarea | Prueba | Rojo | Verde |
+|---|---|---|---|
+| 4.0 | `services/altaManual.test.ts`, al final (+1: POSICIÓN A frente a C) | **Nace verde** (fija un orden que ya existía); su rojo es la mutación de abajo | 40/40 (era 39/39) |
+| 4.1-4.2, hallazgo | `routes/altaManual.test.ts`, al final (+1: `GET /api/equipos/:id` y `/historial` con `pendienteValidar`) | 1 roja: «expected undefined to be true». `getEquipoFull` no leía `pendiente_validar` | 28/28 (era 27/27) |
+
+## Hallazgo del lote: el cliente no podía saber que el equipo está pendiente
+`SELECT_EQUIPO_FULL` y `toFull` (`apps/desk/server/db/equipos.ts:165`, `:115`) no llevaban `pendiente_validar`, así que ni `GET /api/equipos/:id` ni `/historial` lo devolvían: el botón «Validar» de la hoja de vida y el «Habilitar Servicio» desactivado por equipo pendiente no habrían visto nunca la marca. Corregido EN SITIO (una columna y una propiedad, sin insertar líneas) con la prueba de arriba. **Supuesto reversible:** es alcance mínimo del lote 4 (sin él la tarea 4.2 no funciona); `git revert` lo deshace junto con el resto.
+
+## Prueba de posición (4.0, regla de mutación 1)
+- **Par elegido:** el `422` de «Faltan datos del cliente provisional» (`exigirClienteProvisional`, escalón A, `ticketService.ts:28`) frente al `422` «El serial y su confirmación no coinciden» (`validarContenidoAltaManual`, escalón C, `:91`).
+- **Por qué pueden coincidir en una petición real:** el formulario manda `clienteManual` y `equipoManual` juntos. Quien lo rellena a prisa deja un dato del cliente en blanco (el NIT) Y se equivoca al repetir el serial: las dos guardas se activan a la vez en la misma petición. Es el único par donde el orden se ve: las otras guardas de C del provisional (con `clientId`, con OV) excluyen por construcción el modo manual de cliente, y los obligatorios de `:88` no se activan con un cliente manual (el `prov` aporta el `clientId`).
+- **Prueba:** `altaManual.test.ts` (último `describe`): cuerpo con `clienteManual` sin NIT y serial `ABC123` / confirmación `ABC124` → `422`, el texto contiene «Faltan datos del cliente provisional» y NO «serial», y `nada()` queda en `{ prov: 0, equipos: 0, tickets: 0 }`. Distingue por el texto porque los dos son `422`.
+- **Mutación de posición:** `ticketService.ts:28` pasó a capturar el error de `exigirClienteProvisional` (con un `prov` ficticio para conservar el tipado y la semántica) y a relanzarlo DETRÁS de `validarContenidoAltaManual` (`:91`). **Rojo: sólo esa prueba** («Received: "El serial y su confirmación no coinciden"»), 39 verdes. Revertida con copia previa: `cmp` idéntico y `git diff -- ticketService.ts` vacío; la suite vuelve a 40/40. Sin líneas insertadas en `ticketService.ts`.
+
+## Interfaz (4.1, 4.2): qué se hizo y dónde
+- **Fichero nuevo `components/AltaManual.tsx`** (campos del cliente provisional y del equipo manual, `CandidatosNit`, `AccionesAltaPendiente`) y **`lib/altaManualEstado.ts`** (estado, `cuerpoAltaManual`, `modeloManual`; fuera del `.tsx` por `react-refresh/only-export-components`). Todo lo nuevo vive ahí para no desplazar las citas a `CreateTicket.tsx`, `TransitionPanel.tsx`, `TicketCard.tsx` ni `HojaDeVida.tsx`: en los ficheros editados **todos los hunks tienen el mismo número de líneas antes y después** (código añadido al final de líneas existentes, como ya hace el proyecto).
+- `CreateTicket.tsx`: buscador con `provisionales=1` y etiqueta «provisional»; enlaces «El cliente no está en la lista…» y «El equipo no está registrado…» que abren los bloques manuales; serial doble con aviso ámbar (consume `serialesCoinciden` de shared); sin los tres campos comerciales y con la fecha de factura sólo en «Equipo nuevo»; el 409 de P-B enseña el mensaje y ofrece los `candidatos` (al elegir uno, el formulario pasa a cliente de Books con ese id). El 422 se muestra tal cual.
+- `HojaDeVida.tsx`: aviso de pendiente y «Enlazar»/«Validar equipo», sólo con `puedeEditarCamposRestringidos` de shared. `TransitionPanel.tsx`: «Habilitar Servicio» desactivado con `motivoAltaPendiente` de shared (recibe `equipoId` y `clienteProvisional` de `TicketDetailView.tsx:335`; consulta el equipo sólo con ese botón a la vista). `TicketCard.tsx:54`: marca «provisional». `api/client.ts`: `searchClients(q, provisionales)` y `createTicket` en sitio; tipos, `candidatosDelError`, `enlazarClienteProvisional` y `validarEquipoManual` al final.
+
+## Decisiones y supuestos (reversibles)
+- Los bloques manuales sólo se muestran, y sólo se mandan, si siguen siendo válidos: el de cliente se oculta en cuanto hay un `clientId` (elegido, de la OV o del equipo) y el de equipo en cuanto hay un equipo elegido. Así el formulario nunca manda un cuerpo que el servidor ignoraría en silencio (`equipoId` gana a `equipoManual`); el rechazo de combinaciones sigue siendo del servidor.
+- El serial doble avisa pero **no bloquea** el envío: bloquear es del servidor (`422` en C).
+- La búsqueda del contacto para «Enlazar» NO pide provisionales: un provisional no es destino válido de un enlace (`routes/altaManual.ts:34`).
+- Un provisional sin enlazar elegido en el buscador funciona como cliente de Books para el alta (se manda su id en `clientId`; `obtenerCliente` lo resuelve).
+
+## Casilla de la regla 13 (4.3) — decisión a decisión, contra el árbol de hoy
+| Decisión que toma el cliente | Línea del servidor que la impone |
+|---|---|
+| **Bloquea** con `required` los cinco datos del cliente provisional y su motivo | `exigirClienteProvisional`, `services/altaManual.ts:45` (llamada en `ticketService.ts:28`, A) |
+| **Bloquea** con `required` serie, repetición, modelo (catálogo o marca+texto+tipo) y motivo del equipo manual | `exigirEquipoManual`, `altaManual.ts:63-70` (A) |
+| **Avisa** (ámbar) si la serie y su repetición difieren | `validarContenidoAltaManual`, `altaManual.ts:104`, llamada en `ticketService.ts:91` (C) |
+| **Oculta** fin de garantía y mantenedor; la fecha de factura sólo en «Equipo nuevo» (C-1) | `altaManual.ts:106` (`CAMPOS_COMERCIALES_RESTRINGIDOS`) y `:72` (la fecha obligatoria en «Equipo nuevo») |
+| **Oculta** el bloque de cliente manual con un cliente elegido y **no manda** `clienteManual` | `altaManual.ts:115` (`422` provisional + `clientId`) |
+| **No decide** nada sobre la OV con un provisional (no oculta ni bloquea el buscador de OV) | `altaManual.ts:116` (`422`), el servidor rechaza solo |
+| **Ofrece** los candidatos del `409` y, al elegir, pasa a cliente de Books | `409` en `ticketService.ts:96` con `errorNitEnBooks`, `altaManual.ts:158`; el cliente elegido lo resuelve `ticketService.ts:90` |
+| **Informa** de que, si la serie ya existe, se reutiliza ese equipo (texto fijo, no decide) | `exigirEquipoManual`, `altaManual.ts:78` |
+| **Ofrece** provisionales en el buscador del alta (`provisionales=1`) | No es guarda: lo atiende `routes/directory.ts:16`; los demás selectores los rechazan (D12) |
+| **Muestra** «Enlazar» y «Validar equipo» sólo a Comercial o admin | `403` de `routes/altaManual.ts:31` (enlace) y `:47` (validación) |
+| **Muestra** «Validar» sólo con el equipo pendiente; «Enlazar» sólo con cliente provisional | `409` «no está pendiente» `routes/altaManual.ts:48`; `404`/`422` del enlace `:27`, `:34` |
+| **Desactiva** «Habilitar Servicio» con cliente provisional o equipo pendiente | `exigirAltaValidada`, `ticketService.ts:258`, llamada en la cola de `:131` (B) |
+| Marca «provisional» en buscador, tarjeta y ficha; vista previa del código y del asunto | Sin imposición: presentación. El servidor acepta el código y el asunto recibidos (`ticketService.ts:101-102`) |
+
+**Ninguna decisión se queda sin línea de servidor.** Una dependencia que sí faltaba y se cerró en este lote: «Validar» y el «Habilitar» por equipo leen `pendienteValidar` de `GET /api/equipos/:id` y `/historial`, y el servidor no lo devolvía (`db/equipos.ts:115`, `:165`, arriba).
+
+## Barrido de citas (4.4)
+- Hunks de `CreateTicket.tsx` (21 líneas), `TransitionPanel.tsx` (8), `HojaDeVida.tsx` (3), `TicketCard.tsx` (1), `TicketDetailView.tsx` (1), `client.ts` (`:185-186`, `:286`, `:293-294`, más el final) y `db/equipos.ts` (`:115`, `:165`): **cero líneas insertadas o borradas antes de lo citado**. Cruzadas por script las citas `fichero.ts(x):N(-M)` del repositorio con las líneas EDITADAS: salen `CreateTicket.tsx:83-93` y `:139-174` (`tickets-core/spec.md:1341`, `F1B-01_Serial_llave_de_entrada.md:79`), que **ya estaban desfasadas antes del lote** (a `HEAD`, `:83-93` es el bloque de `busy` y del número previsto, no el efecto de las OV; es el Caso B de la regla de mutación 4, no se renumera) y las de los Paquetes de despliegue (`CreateTicket.tsx:55`, `TransitionPanel.tsx:38` de la línea base, históricas y fechadas: la línea sigue siendo la que declara lo citado). Las de `equipos.ts:164-211`, `:113-119`, `:73-119` y `:144-189` son de `routes/equipos.ts`, no de `db/equipos.ts`; las de `db/equipos.ts:` no incluyen `:115` ni `:165`.
+- `registro.test.ts:220` no hizo falta tocarlo. Detector sobre instantánea del árbol (`git stash create`): exit 0, 0 bloqueantes; 13 abreviadas rotas informativas, las mismas que en 3.
+
+## Cierre (4.5)
+- `npm test`: 176 ficheros pasan (1 omitido), 2543 pruebas pasan (+2), 2 omitidas, 0 rojas. `typecheck` limpio. `lint`: 165 avisos, 0 errores (techo 165, 0 nuevos; un primer intento dio 4 errores —`_nit` sin usar y `react-refresh/only-export-components`—, reparados). `build` verde.
+- Medida contra `8bd4121`: `git diff --shortstat --no-renames` 160 inserciones y 46 borrados (206, con este informe y tasks.md), más `wc -l` de los dos ficheros nuevos (`AltaManual.tsx` 165, `altaManualEstado.ts` 38) = 409; sin binarios.
+
+## Frontera de reversión
+`git revert` del lote 4: vuelve el formulario de alta anterior y «Habilitar Servicio» sin aviso en pantalla; la ficha y la hoja de vida dejan de devolver `pendienteValidar` (el servidor sigue imponiendo todo).
