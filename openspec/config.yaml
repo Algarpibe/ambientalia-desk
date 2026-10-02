@@ -1445,7 +1445,7 @@ decisiones_de_gerencia:
       (`packages/shared/src/sla.ts:32-35` en `bb58e83`) tenía una sola entrada, `'Notificado': 24`; `Remisión creada`
       no está. La decisión desbloquea el trabajo, no lo sustituye.
       (4) DAR ENTRADA A `habilitar_servicio` EN `DERIVACION_POR_DEFECTO` CAMBIA UN REQUISITO VIVO:
-      `RQ-AV-02` (`openspec/specs/derivacion-avisos/spec.md:67-70`) declara con SHALL que la tabla lleva
+      `RQ-AV-02` (`openspec/specs/derivacion-avisos/spec.md:67-70` en `011f6ea`) declara con SHALL que la tabla lleva
       EXACTAMENTE TRES entradas, y el recuento 34 − 3 = 31 de `:287` cuelga de ahí.
       (5) NO MUEVE EL NUMERADOR DEL AVANCE: F1B-08 sigue parcial, y su parte de tablero ya estaba
       cerrada desde el 10/09.
@@ -1513,7 +1513,7 @@ decisiones_de_gerencia:
       (4) SIGUE EN PIE: la alarma de 72 h no está construida (`SLA_HORAS_POR_ESTADO`,
       `packages/shared/src/sla.ts:32-35` en `bb58e83`, sólo llevaba `'Notificado': 24`), y darle entrada a
       `habilitar_servicio` en `DERIVACION_POR_DEFECTO` cambia `RQ-AV-02`
-      (`openspec/specs/derivacion-avisos/spec.md:67-70`), que declara exactamente tres entradas.
+      (`openspec/specs/derivacion-avisos/spec.md:67-70` en `011f6ea`), que declara exactamente tres entradas.
     registro: "docs/sdd/ENTRADA.md → E-014 (adenda 21/09) · plan §4.5, fila `decision/escalado-remision-creada`"
     maestro_pasaje: "sin asignar — se asigna al redactar la R08.3"
     maestro_revision: "R08.4"
