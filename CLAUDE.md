@@ -367,7 +367,7 @@ como vivo.
 
 **IV-3 está CERRADO y ya no cuenta.** Era el espejo de `canExecuteTransition` en
 `apps/desk/src/components/TransitionPanel.tsx:56-58`. F0-04 lo cerró:
-`apps/desk/server/permisos.test.ts:41-110` barre las 34 transiciones × 3 áreas contra el servidor, y
+`apps/desk/server/permisos.test.ts:41-110` en `fd253aa` barre las 34 transiciones × 3 áreas contra el servidor, y
 `:35-39` declara el efecto —el filtro del navegador pasa a ser **comodidad legítima** bajo la regla
 invariable 13, porque la imposición del servidor está probada—. Se deja escrito aquí para que nadie lo
 vuelva a anotar como vivo.

@@ -99,9 +99,9 @@ export const CLASIFICACION_EN_ESPERA = {
   'Ticket creado': 'ninguna',
 
   // ── sin clasificar (3) ───────────────────────────────────────────────────────────────────────
-  // Pendiente de Servicio Técnico (11/09). Sale por `servicio_externo_pendiente` y por
-  // `diagnostico_complementario`, las dos suyas, lo que apunta a `ninguna` — pero apuntar no es
-  // decidir, y quien decide es Servicio Técnico.
+  // Pendiente de Servicio Técnico (11/09). Desde F1C-09 no es estado de servicio: sólo existe en soporte
+  // remoto (`soporte_pendiente` y `continuacion_soporte`). Su clase de espera sigue sin decidir, y quien
+  // decide es Servicio Técnico: apuntar a `ninguna` no es decidir.
   'Pendiente': 'sin_clasificar', 'Verificación': 'sin_clasificar', 'Solicitud Soporte': 'sin_clasificar', // Verificación: equipo-nuevo (RQ-EN-07); Solicitud Soporte: soporte-remoto (RQ-SR-03); sin fuente que clasifique su espera
 } as const satisfies Record<string, EnEspera>
 
@@ -179,12 +179,12 @@ export function enEsperaDe(estado: string): EnEspera | undefined {
  * `flujos.ts` porque `fasesBlueprint.ts`/`mapaBlueprint.ts` no dependen de ese fichero (D1 de
  * `design.md`).
  */
-export const ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies readonly Estado[]; export const ESTADOS_SOLO_SOPORTE_REMOTO = ['Solicitud Soporte'] as const satisfies readonly Estado[] // va aquí y no al final: la línea 188 evalúa ESTADOS_SERVICIO al cargar
+export const ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies readonly Estado[]; export const ESTADOS_SOLO_SOPORTE_REMOTO = ['Solicitud Soporte', 'Pendiente'] as const satisfies readonly Estado[] // va aquí y no al final: la línea 188 evalúa ESTADOS_SERVICIO al cargar
 
 /** Un estado del Blueprint de Servicio Técnico: todos menos los exclusivos de `equipo-nuevo` y de `soporte-remoto`. */
 export type EstadoServicio = Exclude<Estado, (typeof ESTADOS_SOLO_EQUIPO_NUEVO)[number] | (typeof ESTADOS_SOLO_SOPORTE_REMOTO)[number]>
 
-/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 21 de siempre. */
+/** `ESTADOS` menos `ESTADOS_SOLO_EQUIPO_NUEVO`, en el mismo orden — los 20 desde F1C-09. */
 export const ESTADOS_SERVICIO: EstadoServicio[] = ESTADOS.filter(
   (e): e is EstadoServicio => !(ESTADOS_SOLO_EQUIPO_NUEVO as readonly string[]).includes(e) && !(ESTADOS_SOLO_SOPORTE_REMOTO as readonly string[]).includes(e),
 )

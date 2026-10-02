@@ -13,9 +13,9 @@ import { camposFechaReentrantes } from './reentrancia'; import { estadoInicialDe
  * puede romper el de servicio técnico sin que nada dé rojo. Esto es esa red.
  *
  * ⚠️ SE AFIRMA SOBRE `TRANSITIONS`, NUNCA SOBRE `TRANSICIONES_BASE`.
- * `TRANSITIONS = TRANSICIONES_BASE.map(...)` (`transitions.ts:288-291`) y es lo que consumen
- * `transitionsForStatus` y `transitionById` (`:293-300`), o sea lo que ejecuta el servidor por
- * `ticketService`. Hoy las dos listas son idénticas, pero el comentario de `transitions.ts:286` ya
+ * `TRANSITIONS = TRANSICIONES_BASE.map(...)` (`transitions.ts:295-298`) y es lo que consumen
+ * `transitionsForStatus` y `transitionById` (`:301-307`), o sea lo que ejecuta el servidor por
+ * `ticketService`. Hoy las dos listas son idénticas, pero el comentario de `transitions.ts:292-293` ya
  * contempla que ese `map` lleve algún día un `Set` de excepciones: la divergencia no es hipotética,
  * y el día que llegue el invariante tiene que hablar de lo que se ejecuta, no de la declaración.
  * (`TRANSICIONES_BASE` no se exporta, así que además no hay forma de equivocarse desde fuera.)
@@ -42,15 +42,15 @@ describe('invariantes del grafo de transiciones', () => {
   })
 
   /**
-   * INVARIANTE 2 — el recuento. Atrapa la transición perdida al editar un array de 34 entradas.
+   * INVARIANTE 2 — el recuento. Atrapa la transición perdida al editar un array de 31 entradas.
    *
    * Vale menos que los demás y por eso va acompañado: un número solo no dice QUÉ se perdió. Va con
    * el conjunto de ids, que sí lo dice.
    */
-  it('2 · 34 transiciones sobre 21 estados', () => {
-    expect(TRANSITIONS).toHaveLength(34)
-    expect(ESTADOS_SERVICIO).toHaveLength(21)
-    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(34)
+  it('2 · 31 transiciones sobre 20 estados', () => {
+    expect(TRANSITIONS).toHaveLength(31)
+    expect(ESTADOS_SERVICIO).toHaveLength(20)
+    expect(new Set(TRANSITIONS.map((t) => t.id)).size, 'hay ids repetidos').toBe(31)
   })
 
   /**
@@ -114,7 +114,7 @@ describe('invariantes del grafo de transiciones', () => {
    * botones — las aplica el servidor solo cuando n8n confirma o anula el documento.
    *
    * El discriminador de «no es botón» ya no puede ser `from`/`to` ausente: pasa a ser `fields`
-   * ausente, porque las 34 de `TRANSITIONS` siempre lo llevan. Ninguna de las dos mueve el ocho
+   * ausente, porque las 31 de `TRANSITIONS` siempre lo llevan. Ninguna de las dos mueve el ocho
    * del invariante 5: las dos siguen siendo de `Servicio Técnico` a secas.
    */
   it('5b · las dos sin botón declaran su par exacto y siguen fuera de TRANSITIONS', () => {
@@ -169,9 +169,9 @@ describe('invariantes de la unión de catálogos (F1B-06)', () => {
     expect([...derivados].sort()).toEqual([...ESTADOS].sort())
   })
 
-  it('la unión tiene 44 entradas (34 + 6 + 4), con ids únicos', () => {
-    expect(UNION).toHaveLength(44)
-    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(44)
+  it('la unión tiene 41 entradas (31 + 6 + 4), con ids únicos', () => {
+    expect(UNION).toHaveLength(41)
+    expect(new Set(UNION.map((t) => t.id)).size, 'hay ids repetidos entre los tres catálogos').toBe(41)
   })
 
   it('3 · sin salida en la unión es exactamente Finalizado', () => {
@@ -234,7 +234,7 @@ describe('invariantes del catálogo soporte-remoto (F1B-06)', () => {
     const ajenos = derivados([...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO])
     const diferencia = [...derivados(TRANSITIONS_SOPORTE_REMOTO)].filter((e) => !ajenos.has(e))
     expect(diferencia).toEqual([...ESTADOS_SOLO_SOPORTE_REMOTO])
-    expect(diferencia).toEqual(['Solicitud Soporte'])
+    expect(diferencia).toEqual(['Solicitud Soporte', 'Pendiente'])
   })
 
   it('RQ-SR-01 · las cuatro cubren exactamente los pares del catálogo', () => {
@@ -301,5 +301,29 @@ describe('liberacion · el campo del certificado de fábrica', () => {
   })
   it('EN01-8, EN08-10 · liberacion sigue saliendo de En Proceso y Verificación, y Finalizado es el único sin salida', () => {
     expect(TRANSITIONS_EQUIPO_NUEVO.find((t) => t.id === 'liberacion')!.from).toEqual(['En Proceso', 'Verificación'])
+  })
+})
+
+/**
+ * F1C-09 (E-103, E-106, E-119, E-140): tres transiciones salen del catálogo de servicio y
+ * `diagnostico_complementario` pasa a salir de `En Proceso`. Se afirma por ids y no sólo por recuento.
+ */
+describe('F1C-09 · tres transiciones retiradas y el diagnóstico complementario', () => {
+  it('ninguna de las tres ids retiradas sigue en los tres catálogos', () => {
+    const ids = new Set([...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO].map((t) => t.id))
+    for (const retirada of ['marcar_pendiente', 'servicio_externo_pendiente', 'servicio_externo_notificado']) {
+      expect(ids.has(retirada), retirada).toBe(false)
+    }
+  })
+
+  it('diagnostico_complementario sale sólo de En Proceso y sigue yendo a Continuación del proceso', () => {
+    const t = TRANSITIONS.find((x) => x.id === 'diagnostico_complementario')!
+    expect(t.from).toEqual(['En Proceso'])
+    expect(t.to).toBe('Continuación del proceso')
+  })
+
+  it('Pendiente ya no es estado de servicio y sólo lo declara soporte remoto', () => {
+    expect((ESTADOS_SERVICIO as readonly string[]).includes('Pendiente')).toBe(false)
+    expect((ESTADOS_SOLO_SOPORTE_REMOTO as readonly string[]).includes('Pendiente')).toBe(true)
   })
 })

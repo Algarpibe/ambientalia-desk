@@ -79,7 +79,7 @@ describe('fuentesQueNecesita', () => {
     expect(fuentesQueNecesita(t)).toEqual(new Set(['createdAt', 'remisionEntrada']))
   })
 
-  it('una transición sin ninguna de las tres etiquetas no pide nada (P-2, las 31 restantes)', () => {
+  it('una transición sin ninguna de las tres etiquetas no pide nada (P-2, las 28 restantes)', () => {
     expect(fuentesQueNecesita({ fields: [campo('Prioridad')] })).toEqual(new Set())
   })
 })

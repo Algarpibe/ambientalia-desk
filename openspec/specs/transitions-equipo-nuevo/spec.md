@@ -287,7 +287,7 @@ está en `En Proceso`, cuando su equipo **tiene compuesto** y existe **patrón v
   otra transición del catálogo cambia de comportamiento.
 - **El servidor decide** (regla invariable 13, punto 2): no hay contrapartida en el cliente que sea la guarda. Cualquier
   mensaje o bloqueo del navegador es comodidad, legítima sólo porque este requisito está probado en el servidor.
-- **Posición, escalón B de `transitions-st` §3.8** (`openspec/specs/transitions-st/spec.md:1106-1111`). La guarda
+- **Posición, escalón B de `transitions-st` §3.8** (`openspec/specs/transitions-st/spec.md:1106-1111` en `011f6ea`). La guarda
   **SHALL** ejecutarse **después** de los `409` de flujo y de estado de origen (`ticketService.ts:125-128`) y de los
   `403` de área, cargo y prioridad (`:129-131`), y **antes** de toda guarda de contenido, escalón C: valores
   derivados, obligatorios y `422` del certificado (`:132-134`). Por qué es B y no C: decide si la operación puede

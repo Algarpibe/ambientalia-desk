@@ -138,7 +138,7 @@ export function componentesFuertementeConexos(transiciones: Transition[] = TRANS
     }
   }
 
-  // Tarjan iterativo: 21 nodos caben de sobra en la pila del intérprete, pero un grafo lo recorre
+  // Tarjan iterativo: 20 nodos caben de sobra en la pila del intérprete, pero un grafo lo recorre
   // quien no sabe cuánto va a crecer —el registro de flujos (`flujos.ts`) puede sumar catálogos— y la versión iterativa no tiene ese techo.
   const indice = new Map<string, number>()
   const bajo = new Map<string, number>()

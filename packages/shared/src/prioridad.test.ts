@@ -89,7 +89,7 @@ const OBLIGATORIOS_ANTES: Record<string, string[]> = {
   devolucion_a_correccion: ['priority'],
   llegada_repuestos: ['Fecha Recepción de repuestos'],
   aprobacion_y_repuestos: ['Fecha Orden de Compra', 'Fecha Orden De Venta'],
-  solicitud_repuestos: [], aprobacion: [], entrega_repuestos: [], marcar_pendiente: [],
+  solicitud_repuestos: [], aprobacion: [], entrega_repuestos: [],
   notif_por_garantia: ['Fecha Notificación por garantía'],
   notif_cliente_comercial: ['Fecha de Cotización'],
   notif_cliente_sku: ['Fecha de Cotización'],
@@ -101,7 +101,7 @@ const OBLIGATORIOS_ANTES: Record<string, string[]> = {
   cal_sensores_proceso: ['Fecha Salida Servicio externo'],
   cal_sensores_revision: ['Fecha Salida Servicio externo'],
   retorno_servicio_externo: ['Fecha Entrada de servicio externo', 'Conformidad'],
-  servicio_externo_pendiente: [], servicio_externo_notificado: [], rechazo_comercial: [], rechazo_cliente: [], rechazo_revision: [],
+  rechazo_comercial: [], rechazo_cliente: [], rechazo_revision: [],
   facturado: ['Fecha De Factura'], facturado_cierre: ['Fecha De Factura'], diagnostico_complementario: [],
   liberacion_sin_factura: ['Liberación del ticket sin facturar'],
   entrega_sin_factura: ['Fecha Remisión de Salida'], entrega_al_cliente: ['Fecha Remisión de Salida'],
@@ -115,8 +115,8 @@ describe('priority deja de ser obligatorio (RQ-TS-20, S-2)', () => {
       expect(campo, id).toMatchObject({ key: 'priority', kind: 'select', required: false, options: ['High', 'Medium', 'Low'] })
     }
   })
-  it('TS20-4 · los obligatorios de las 34 son los de antes SALVO priority en esas dos', () => {
-    expect(TRANSITIONS).toHaveLength(34)
+  it('TS20-4 · los obligatorios de las 31 son los de antes SALVO priority en esas dos', () => {
+    expect(TRANSITIONS).toHaveLength(31)
     const esperado = Object.fromEntries(Object.entries(OBLIGATORIOS_ANTES).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
     const hoy = Object.fromEntries(TRANSITIONS.map((t) => [t.id, t.fields.filter((f) => f.required).map((f) => f.key)]))
     expect(hoy).toEqual(esperado)

@@ -26,11 +26,11 @@ septiembre, manda el código y la discrepancia se escribe (§4).
 
 | Concepto | Diseño (02/06–12/08) | Maestro R08.1 | Código (`ad1875b`) |
 |---|---|---|---|
-| Catálogo de transiciones | «`shared/transitions.ts` (34 transiciones + campos obligatorios)» (`design:27`) | «34 transiciones y 21 estados» (`:360`, `:889`) | 34 entradas en `TRANSICIONES_BASE` (`packages/shared/src/transitions.ts:171-256`), fijadas por prueba (`invariantesGrafo.test.ts:50-54`) |
+| Catálogo de transiciones | «`shared/transitions.ts` (34 transiciones + campos obligatorios)» (`design:27`) | «34 transiciones y 21 estados» (`:360`, `:889`) | 34 entradas en `TRANSICIONES_BASE` (`packages/shared/src/transitions.ts:171-256` en `fd253aa`), fijadas por prueba (`invariantesGrafo.test.ts:50-54` en `fd253aa`) |
 | Registro de estados | No existe en el diseño | «21 estados» (`:391`) | `estados.ts:59-112`. **No existía hasta F0-04**: se derivaban de los `from`/`to` (`estados.ts:3-4`) |
 | Destino de escritura | «**Postgres** (no Zoho)» (`design:19`) | — | `packages/zoho-sync/src/db/repo.ts:276-319`. Ninguna llamada a Zoho |
 | Actor | Constante `'Equipo Técnico'`, «el login/roles reales son el Subsistema H» (`design:20`) | M1.10: «toda etapa y toda transición deben registrar fecha, hora y persona» (`:1677`) | Usuario de la sesión, con la constante como respaldo (`ticketService.ts:153`, `transitionActor.ts:3`) |
-| Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:129-131`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110`) |
+| Permisos | «Mientras tanto **cualquiera puede ejecutar cualquier transición**» (`design:121`) | M1.9.1: «los permisos por área viven en `packages/shared/src/permissions.ts`» (`:1636`) | Impuesto en servidor (`ticketService.ts:129-131`) y probado en las 34 × 3 áreas (`permisos.test.ts:41-110` en `fd253aa`) |
 | Endpoint | «Rewrite endpoint … en `server/app.ts`» (`design:88`) | — | `apps/desk/server/routes/tickets.ts:192-194` |
 
 ---
@@ -40,25 +40,24 @@ septiembre, manda el código y la discrepancia se escribe (§4).
 ### RQ-TS-01 · El catálogo de transiciones es la única fuente
 
 El catálogo de transiciones del flujo de servicio técnico **SHALL** vivir en
-`packages/shared/src/transitions.ts` y **SHALL** ser exactamente **34** entradas sobre **21** estados
-(`transitions.ts:171-256`; recuento fijado en `invariantesGrafo.test.ts:50-54`).
+`packages/shared/src/transitions.ts` y **SHALL** ser exactamente **31** entradas sobre **20** estados
+(recuento fijado en `invariantesGrafo.test.ts:50-54`).
+(Previously: 34 entradas sobre 21 estados.)
 
 - El cliente **MUST** consumir ese catálogo; **MUST NOT** reescribirlo. Es la regla invariable 1 de
   `CLAUDE.md`.
-- Lo que la aplicación ejecuta **SHALL** ser `TRANSITIONS` (`transitions.ts:288-291`), no
-  `TRANSICIONES_BASE`: la segunda no se exporta, y la primera es la que añade la casilla de derivación
-  a todas. Los invariantes **MUST** afirmarse sobre `TRANSITIONS`
-  (`invariantesGrafo.test.ts:15-21`).
-- Las transiciones aplicables a un estado se obtienen por `transitionsForStatus`
-  (`transitions.ts:294-296`) y una transición por su id con `transitionById`
-  (`transitions.ts:298-300`).
+- Lo que la aplicación ejecuta **SHALL** ser `TRANSITIONS`, no `TRANSICIONES_BASE`: la segunda no se
+  exporta, y la primera es la que añade la casilla de derivación a todas. Los invariantes **MUST**
+  afirmarse sobre `TRANSITIONS` (`invariantesGrafo.test.ts:15-21`).
+- Las transiciones aplicables a un estado se obtienen por `transitionsForStatus` y una transición por su id
+  con `transitionById`.
 
 **Los siete invariantes del grafo** (F0-04) **SHALL** permanecer en verde:
 
 | # | Invariante | Prueba |
 |---|---|---|
 | 1 | Los estados declarados son exactamente los derivados de los `from`/`to` | `invariantesGrafo.test.ts:35-42` |
-| 2 | 34 transiciones, 21 estados, 34 ids distintos | `:50-54` |
+| 2 | 31 transiciones, 20 estados, 31 ids distintos (antes 34, 21, 34) | `:50-54` |
 | 3 | `Finalizado` es el único estado sin transición de salida | `:62-66` |
 | 4 | Ningún `from` ni `to` apunta fuera del registro | `:76-82` |
 | 5 | Las ocho transiciones compartidas son ésas, cada una con su pareja de áreas | `:91-106` |
@@ -147,32 +146,54 @@ tanda. La corrección va como entrada 17 de `F0-01_Correcciones_para_el_maestro.
 ### RQ-TS-04 · `Finalizado` es el único estado terminal
 
 `Finalizado` **SHALL** ser el único estado sin transición de salida
-(`invariantesGrafo.test.ts:62-66`; maestro M1.3.8, `:1414`), y **SHALL** ser el único estado que
-produce `statusType: 'Closed'` (`transitionExec.ts:5`, `:39`). Todos los demás producen `'Open'`.
+(`invariantesGrafo.test.ts:62-66`; maestro M1.3.8), y **SHALL** ser el único estado que produce
+`statusType: 'Closed'` (`transitionExec.ts:5`, `:39`). Todos los demás producen `'Open'`. Retirar las tres
+transiciones y sacar `Pendiente` del catálogo de servicio **SHALL NOT** crear ningún otro terminal.
+(Previously: sin la cláusula sobre la retirada; el requisito no tenía escenarios.)
 
 `areasSiguientes` **SHALL** devolver lista vacía para un estado terminal: no hay a quién pasarle el
 testigo (`packages/shared/src/transitions.ts:325-334`).
 
-### RQ-TS-05 · Alcanzabilidad de los 21 estados
+#### Scenario: `Finalizado` sigue siendo el único sin salida
+- GIVEN los 20 estados de `ESTADOS_SERVICIO`
+- WHEN se calculan las transiciones salientes de cada uno
+- THEN sólo `Finalizado` no tiene ninguna, y `Notificado` conserva sus tres salidas
 
-**Verificado en esta tanda** por cierre transitivo sobre `TRANSITIONS` (`transitions.ts:171-256`):
+#### Scenario: en la unión, `Pendiente` sigue teniendo salida
+- GIVEN la unión de los tres catálogos
+- WHEN se calculan las salidas de `Pendiente`
+- THEN tiene `continuacion_soporte` y no es terminal
+
+### RQ-TS-05 · Alcanzabilidad de los 20 estados de servicio
+
+**Verificado por cierre transitivo** sobre `TRANSITIONS` (la cifra se fija en la prueba; la tabla es la
+derivación):
 
 | Desde | Estados alcanzados, contando el origen | No alcanzados |
 |---|---|---|
-| `OV asignada` | 19 | `Ticket creado`, `Remisión creada` |
-| `Ticket creado`, sólo por botones | 19 | `OV asignada`, `Remisión creada` |
-| `Ticket creado`, sumando el paso sin botón de RQ-TS-03 | 20 | `OV asignada` |
+| `OV asignada` | 18 | `Ticket creado`, `Remisión creada` |
+| `Ticket creado`, sólo por botones | 18 | `OV asignada`, `Remisión creada` |
+| `Ticket creado`, sumando el paso sin botón de RQ-TS-03 | 19 | `OV asignada` |
 
-Es decir: `Remisión creada` **MUST NOT** ser alcanzable por ninguna transición con botón; su única
-entrada es el paso sin botón de `estadoPorRemision.ts:52-60`. No hay estados huérfanos y no hay
-callejones sin salida más allá de `Finalizado`.
+(Previously: 19, 19 y 20 sobre 21 estados; la diferencia es `Pendiente`, que sale del catálogo de servicio.)
 
-**Discrepancia con el maestro.** M1.3.8 (`:1413`) dice «18 desde `OV asignada`, y desde
-`Ticket creado` los otros 20 —todos menos `OV asignada`—». Las dos cifras son correctas pero **no
-sobre la misma base**: la de 18 excluye el estado de origen (19 contándolo) y la de 20 lo incluye.
-Además, la de 20 sólo se alcanza contando el paso sin botón; por botones y en la misma base que la
-primera cifra son 18 también. La conclusión del maestro —«no hay estados huérfanos»— se sostiene; su
-aritmética mezcla dos convenciones.
+`Remisión creada` **MUST NOT** ser alcanzable por ninguna transición con botón; su única entrada es el paso
+sin botón de `estadoPorRemision.ts`. No hay estados huérfanos y no hay callejones sin salida más allá de
+`Finalizado`.
+
+**Discrepancia con el maestro (R08.1, histórica).** M1.3.8 (`R08.1.md:1413`) decía «18 desde `OV asignada`,
+y desde `Ticket creado` los otros 20». Las dos cifras eran correctas pero no sobre la misma base. Con 20
+estados de servicio la conclusión —«no hay estados huérfanos»— se sostiene.
+
+#### Scenario: alcanzabilidad desde `OV asignada`
+- GIVEN `TRANSITIONS` tras el cambio
+- WHEN se calcula el cierre transitivo desde `OV asignada`
+- THEN alcanza 18 estados y no alcanza `Ticket creado` ni `Remisión creada`
+
+#### Scenario: no hay huérfanos con el paso sin botón
+- GIVEN `TRANSITIONS` y el paso `TRANSICION_REMISION_CONFIRMADA`
+- WHEN se calcula el cierre desde `Ticket creado`
+- THEN alcanza 19 estados, todos menos `OV asignada`
 
 ---
 
@@ -243,27 +264,35 @@ origen inválido comprueba el `409` de la guarda 4 y cree comprobar el `403` de 
 El permiso **SHALL** calcularse con `canExecuteTransition(userAreas, isAdmin, transitionArea)`
 (`packages/shared/src/permissions.ts:4-6`), que es siete líneas y el único sitio de la regla.
 
-- Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`, `Compras`
-  (`packages/shared/src/transitions.ts:310`).
+- Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`, `Compras`.
 - Un área compuesta se descompone por el separador `' / '` (`packages/shared/src/transitions.ts:313-315`).
-- **Ocho** de las 34 transiciones **SHALL** ser compartidas por dos áreas: cinco
-  `Comercial / Compras` y tres `Comercial / Servicio Técnico`. El emparejamiento id → área está
-  fijado, no sólo el número (`invariantesGrafo.test.ts:91-106`).
-- Un administrador **MAY** ejecutar las 34 sin que su área importe
-  (`permissions.ts:5`; probado contra el servidor en `permisos.test.ts:89-109`).
-- La matriz completa **SHALL** ser 34 × 3 = **102 casos: 60 prohibidos y 42 permitidos**
-  (26 transiciones de área simple × 2 áreas prohibidas + 8 compartidas × 1)
-  (`permisos.test.ts:77-82`, derivación en `:41-67`).
+- **Ocho** de las **31** transiciones **SHALL** ser compartidas por dos áreas: cinco `Comercial / Compras` y
+  tres `Comercial / Servicio Técnico`. El emparejamiento id → área está fijado
+  (`invariantesGrafo.test.ts:91-106`).
+- Un administrador **MAY** ejecutar las 31 sin que su área importe (`permissions.ts:5`; probado contra el
+  servidor en `permisos.test.ts:89-109`).
+- La matriz completa **SHALL** ser 31 × 3 = **93 casos: 54 prohibidos y 39 permitidos**
+  (23 transiciones de área simple × 2 áreas prohibidas + 8 compartidas × 1 prohibida).
+(Previously: 34 × 3 = 102 casos, 60 prohibidos y 42 permitidos, con 26 de área simple.)
 
-**El espejo del cliente es legítimo desde F0-04.** `TransitionPanel.tsx:56-58` filtra los botones por
-área en el navegador. Con la matriz de `permisos.test.ts:41-110` probada contra el servidor, la
-frontera **está** impuesta y probada donde se puede confiar en ella, y la pantalla sólo evita ofrecer
-lo que iba a ser rechazado: cumple el punto 3 de la regla invariable 13
-(`permisos.test.ts:35-39`). Antes de F0-04 no lo cumplía.
+**El espejo del cliente es legítimo desde F0-04.** `TransitionPanel.tsx:56-58` filtra los botones por área
+en el navegador; con la matriz probada contra el servidor cumple el punto 3 de la regla invariable 13
+(`permisos.test.ts:35-39`).
 
-> **Given** un usuario cuyo rol sólo tiene el área `Servicio Técnico`
-> **When** intenta ejecutar `facturado`, de área `Comercial`, desde un estado de origen válido
-> **Then** el servidor responde `403` y el ticket no se mueve.
+#### Scenario: la matriz tiene 93 casos
+- GIVEN la matriz derivada del grafo
+- WHEN se cuenta
+- THEN son 93 casos, 54 prohibidos y 39 permitidos, y el total va escrito a mano en la prueba
+
+#### Scenario: prohibición por área
+- GIVEN un usuario cuyo rol sólo tiene el área `Servicio Técnico`
+- WHEN intenta ejecutar `facturado`, de área `Comercial`, desde un estado de origen válido
+- THEN el servidor responde `403` y el ticket no se mueve
+
+#### Scenario: el administrador ejecuta las 31
+- GIVEN un administrador con un rol que no cubre ninguna transición
+- WHEN ejecuta cada una de las 31 desde un estado válido
+- THEN todas responden `200`
 
 ### RQ-TS-08 · Campos y validación de obligatorios
 
@@ -352,43 +381,50 @@ de fuera (`repo.ts:296-297`; la columna de derivación es constante del código,
 
 ### RQ-TS-11 · La traza: fecha, hora y persona, sin excepciones
 
-Toda transición **SHALL** dejar fila en `ticket_transitions` con su origen, su destino, su área y
-**quién la ejecutó** (`repo.ts:314-318`). Es M1.10 del maestro, `[DECIDIDO — R08]`, «no admite
-excepciones» (`:1677`).
+Toda transición **SHALL** dejar fila en `ticket_transitions` con su origen, su destino, su área y **quién la
+ejecutó** (`repo.ts:314-318`). Es M1.10 del maestro, `[DECIDIDO — R08]`, «no admite excepciones».
 
-- El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a la constante `TRANSITION_ACTOR`
-  sólo si la sesión no trae nombre (`ticketService.ts:153` en el árbol de hoy; la cita venía de
-  `:145`, ya rota antes de este cambio —apuntaba a un comentario, no a la asignación—, corregida al
-  verificarla aquí, `transitionActor.ts:3`).
-- La cobertura **SHALL** ser de las 34: el barrido ejercita **todos** los `from` de cada transición
-  —`habilitar_servicio` tiene tres—, o sea **36 ejecuciones**, y comprueba en cada una el estado
-  destino y la fila del historial (`transicionesEjecucion.test.ts:105-117`, `:272-285`).
+- El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a la constante `TRANSITION_ACTOR` sólo si
+  la sesión no trae nombre (`ticketService.ts:153`, `transitionActor.ts:3`).
+- La cobertura **SHALL** ser de las **31**: el barrido ejercita **todos** los `from` de cada transición
+  —`habilitar_servicio` tiene tres—, o sea **33 ejecuciones**, y comprueba en cada una el estado destino y la
+  fila del historial (`transicionesEjecucion.test.ts:105-117`, `:272-285`).
+  (Previously: 34 transiciones, 36 ejecuciones.)
 - La fila de la creación del ticket **SHALL** llevar `from_status = '(creación)'`
-  (`transitions.ts:100-110`), que no es un estado de Zoho sino la marca de que esa fila es la foto del
-  nacimiento (maestro M1.3.8, `:1417`).
+  (`transitions.ts:100-110`).
+- La fila que añade la migración de `RQ-TS-28` **SHALL** cumplir esta traza (origen, destino, actor que
+  nombra la migración, fecha y hora) sin ser una transición del catálogo.
+
+#### Scenario: el barrido ejercita 31 transiciones en 33 ejecuciones
+- GIVEN el barrido de `transicionesEjecucion.test.ts`
+- WHEN se ejecuta
+- THEN hace 33 ejecuciones, con `diagnostico_complementario` desde `En Proceso`, y cada una deja su fila con destino correcto
+
+#### Scenario: la fila de migración lleva fecha, hora y actor
+- GIVEN un ticket migrado
+- WHEN se lee su fila añadida en `ticket_transitions`
+- THEN tiene `performed_at` no nulo y un `performed_by` que nombra la migración
 
 ### RQ-TS-12 · Derivación: de quién es el trabajo a partir de aquí
 
-Las **34** transiciones **SHALL** terminar en una casilla «Derivado a», y **ninguna MAY** exigirla:
-derivar no puede frenar un ticket (`transitions.ts:96-98`, `:277-291`; maestro M1.9.2, `:1653`).
+Las **31** transiciones **SHALL** terminar en una casilla «Derivado a», y **ninguna MAY** exigirla: derivar
+no puede frenar un ticket (`transitions.ts:96-98`; maestro M1.9.2).
+(Previously: las 34 transiciones.)
 
 - La clave y el nombre de columna **SHALL** ser `derivado_a` (`transitions.ts:89-94`).
-- **Tres** etapas proponen destinatario y **31** heredan el que el ticket ya traía
-  (`transitions.ts:267-275`):
-
-| Etapa | Propone | Por qué |
-|---|---|---|
-| `escalado_a_revision` | Cargo · `Director Técnico` | Escalar una revisión es subirla al inmediato superior |
-| `escalado_a_comercial` | Cargo · `Coordinador Comercial` | El ticket sale de Servicio Técnico y pasa a Comercial |
-| `aprobacion` | `primerDerivado` | El trabajo vuelve al taller: hay que devolvérselo a quien lo diagnosticó |
-
-- Las dos primeras **SHALL** nombrar un **cargo y no una persona**: un id ataría el blueprint a que ese
-  empleado siga en la empresa (`transitions.ts:44-46`; maestro `:1666`).
-- El motor **SHALL** distinguir dos silencios que ningún otro campo distingue
-  (`transitionExec.ts:48-61`): la clave **ausente** no toca lo que hubiera; la clave **vacía** borra
-  la derivación. Sin esa distinción, vaciar la casilla no haría nada.
+- **Tres** etapas proponen destinatario y **28** heredan el que el ticket ya traía
+  (antes 31): `escalado_a_revision` (Cargo · `Director Técnico`), `escalado_a_comercial`
+  (Cargo · `Coordinador Comercial`) y `aprobacion` (`primerDerivado`).
+- Las dos primeras **SHALL** nombrar un **cargo y no una persona** (`transitions.ts:44-46`).
+- El motor **SHALL** distinguir dos silencios (`transitionExec.ts:48-61`): la clave **ausente** no toca lo
+  que hubiera; la clave **vacía** borra la derivación.
 - Un id de persona recibido **MUST** comprobarse: inexistente o dada de baja produce `422`
   (`ticketService.ts:138-142`).
+
+#### Scenario: las 31 llevan la casilla y ninguna la exige
+- GIVEN `TRANSITIONS`
+- WHEN se inspeccionan los campos de las 31
+- THEN todas terminan en `derivado_a` y ninguna lo declara `required`
 
 ### RQ-TS-13 · Avisos: se calculan desde el estado de llegada
 
@@ -744,10 +780,10 @@ se evalúa en cada pasada: si más adelante pierde toda orden y sigue en el esta
 
 ### RQ-TS-20 · `priority` deja de ser obligatorio en `escalado_a_revision` y `devolucion_a_correccion`
 
-En `escalado_a_revision` y `devolucion_a_correccion` (las dos de área Servicio Técnico), el campo `priority` SHALL ser
-**opcional**: una transición SHALL pasar la validación de campos obligatorios sin él. El campo SHALL seguir declarado
-con sus opciones `High | Medium | Low` y con destino `priority`, de modo que, si viene, se aplica como hoy
-(`RQ-TS-09`) sujeto a la guarda de `RQ-TS-21`.
+En `escalado_a_revision` y `devolucion_a_correccion` (las dos de área Servicio Técnico), el campo `priority`
+SHALL ser **opcional**: una transición SHALL pasar la validación de campos obligatorios sin él. El campo SHALL
+seguir declarado con sus opciones `High | Medium | Low` y con destino `priority`, de modo que, si viene, se
+aplica como hoy (`RQ-TS-09`) sujeto a la guarda de `RQ-TS-21`.
 
 #### Scenario: sin `priority` la transición pasa
 - GIVEN un ticket en un estado válido de origen de `escalado_a_revision` y un usuario del área `Servicio Técnico`
@@ -765,9 +801,12 @@ con sus opciones `High | Medium | Low` y con destino `priority`, de modo que, si
 - THEN `priority` figura con `target: 'priority'`, opciones `High`, `Medium`, `Low` y no obligatorio
 
 #### Scenario: las demás transiciones no cambian
-- GIVEN las 34 transiciones
+- GIVEN las 31 transiciones
 - WHEN se comparan los campos obligatorios con los de antes de este cambio
 - THEN sólo difiere `priority` en esas dos
+(Previously: «las 34 transiciones».)
+
+
 
 ### RQ-TS-21 · Guarda de servidor: sólo admin o `puedeFijarPrioridadTop5` cambian la prioridad en una transición
 
@@ -1264,7 +1303,7 @@ juntos:
 | `transitions.ts:265` | «en **35** declaraciones no» | **34** |
 
 Es defecto de **comentario, no de comportamiento**: el mapa tiene tres entradas y `TRANSITIONS`
-tiene 34, y las dos cosas están probadas (`invariantesGrafo.test.ts:50-54`). Aquí el maestro tiene
+tiene 34, y las dos cosas están probadas (`invariantesGrafo.test.ts:50-54` en `fd253aa`). Aquí el maestro tiene
 razón y el código no: M1.9.2 (`R08.1.md:1653`) dice «treinta y una», que es la cifra correcta. Ver
 M-5 en §4.2.
 
@@ -1330,7 +1369,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 
 | # | Dice el diseño | Dice el código | Lectura |
 |---|---|---|---|
-| D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:129-131`), matriz de 102 casos probada (`permisos.test.ts:77-82`), y el actor es el usuario de la sesión (`ticketService.ts:153`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
+| D-1 | «Mientras tanto **cualquiera puede ejecutar cualquier transición**; el actor es la constante temporal» (`design:121`) | Permiso por área impuesto en servidor (`ticketService.ts:129-131`), matriz de 102 casos probada (`permisos.test.ts:77-82` en `fd253aa`), y el actor es el usuario de la sesión (`ticketService.ts:153`) | **Superado.** El Subsistema H llegó. El diseño describe un estado del proyecto que ya no existe |
 | D-2 | «Rewrite endpoint `POST /api/tickets/:id/transition` en `server/app.ts`» (`design:88`) | Vive en `apps/desk/server/routes/tickets.ts:192-194` | Movido. Cualquier cita del diseño a `app.ts` apunta a un fichero que ya no lo contiene |
 | D-3 | `applyTransition(db, ticketId, fromStatus, transition, plan, actor)` — seis parámetros (`design:85`) | Siete: añade `values` al final (`repo.ts:322-330`) | El séptimo es lo que hace posible RQ-TS-11 y la salida de C4: sin `values` en el historial, `ticket_transitions` no guardaría «todos» los valores |
 | D-4 | «El mapeo usa el inverso de `PROMOTED_COLUMNS` (ya existe en `server/db/rows.ts`)» (`design:56`) | Vive en `packages/zoho-sync/src/db/rows.ts`, importado como `@ambientalia/zoho-sync/db/rows` (`transitionExec.ts:2`) | Movido al paquete al extraerse la sincronización |
@@ -1343,12 +1382,12 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 
 | # | Dice el maestro | Dice el código | Lectura |
 |---|---|---|---|
-| M-1 | M1.9.1 (`:1636`): «**Diez** de las 34 transiciones son compartidas por dos áreas» | **Ocho**: cinco `Comercial / Compras` y tres `Comercial / Servicio Técnico` (`transitions.ts:171-256`, emparejamiento fijado en `invariantesGrafo.test.ts:91-106`, y el reparto 26 simples / 8 compartidas en `permisos.test.ts:72-73`) | **Ya registrada en F0-01, re-confirmada aquí.** Está en `docs/sdd/F0-01_Correcciones_para_el_maestro.md:129` (entrada 1 del Anexo I) y desarrollada en `:142-167`, commiteada en `3d44e1e`. F0-02 no la descubre: la re-confirma por otra ruta —el emparejamiento de los invariantes y el reparto 26/8 de la matriz de permisos, que F0-01 no usó—. No es cosmética: la matriz de F1C-05 se dimensiona con esa cifra, y con diez saldrían 58 prohibidos y 44 permitidos en vez de 60 y 42 |
+| M-1 | M1.9.1 (`:1636`): «**Diez** de las 34 transiciones son compartidas por dos áreas» | **Ocho**: cinco `Comercial / Compras` y tres `Comercial / Servicio Técnico` (`transitions.ts:171-256` en `fd253aa`, emparejamiento fijado en `invariantesGrafo.test.ts:91-106`, y el reparto 26 simples / 8 compartidas en `permisos.test.ts:72-73` en `fd253aa`) | **Ya registrada en F0-01, re-confirmada aquí.** Está en `docs/sdd/F0-01_Correcciones_para_el_maestro.md:129` (entrada 1 del Anexo I) y desarrollada en `:142-167`, commiteada en `3d44e1e`. F0-02 no la descubre: la re-confirma por otra ruta —el emparejamiento de los invariantes y el reparto 26/8 de la matriz de permisos, que F0-01 no usó—. No es cosmética: la matriz de F1C-05 se dimensiona con esa cifra, y con diez saldrían 58 prohibidos y 44 permitidos en vez de 60 y 42 |
 | M-2 | M1.9.2 (`:1665`), fila `Aprobación`: «Quien tomó el ticket … **+ Director Técnico**» | `aprobacion: { tipo: 'primerDerivado' }` y nada más (`transitions.ts:274`) | El «+ Director Técnico» **no está implementado**. Por su posición al final de una celda de tabla parece resto de edición del `.docx`; si es una decisión, no llegó al código. **Punto a aclarar antes de F1C-05** |
 | M-3 | M1.3.8 (`:1413`): «18 desde `OV asignada`, y desde `Ticket creado` los otros 20» | 19 y 19 contando el origen; 20 desde `Ticket creado` sólo sumando el paso sin botón (RQ-TS-05) | Las cifras mezclan dos convenciones de recuento. La conclusión —sin huérfanos— se sostiene. **Corrección menor para el maestro** |
 | M-4 | M1.3.3 (`:1151`): los dos pasos sin botón «viven en `estadoPorRemision.ts`, **no en el archivo de transiciones**» | Sus constantes están en `transitions.ts:150-151`; `estadoPorRemision.ts:9-12` las importa | Exacto para la aplicación, falso para la declaración. **Corrección menor para el maestro** |
 | M-5 | M1.9.2 (`:1653`): «Treinta y una heredan al responsable que el ticket ya traía» | 34 − 3 = **31** ✓. El docblock del código tiene **dos** cuentas mal, y van juntas: `transitions.ts:262` dice «las otras **32**» (son 31) y `:265` dice «en **35** declaraciones» (son 34) | **El maestro tiene razón y el comentario del código no, dos veces.** Defecto de comentario, no de comportamiento. Registrado como comportamiento actual en §3.9, destino F1B-06. F0-02 no lo corrige: es código |
-| M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:314-318`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:272-285`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
+| M-6 | M1.10 (`:1677`): «el as-built ya escribe la marca de tiempo de cada transición; **lo que falta por confirmar** es que registre siempre el usuario que la ejecutó» | Confirmado: `performed_by` se escribe en las tres escrituras (`repo.ts:314-318`) y se comprueba en las 36 ejecuciones del barrido (`transicionesEjecucion.test.ts:272-285` en `fd253aa`) | **El pendiente del maestro está cerrado.** F0-04 lo cerró. **Actualización para el Anexo H** |
 | M-7 | M1.9.1 (`:1615`) `[DECIDIDO]`: «Cada usuario ve **solo los estados y transiciones** de su rol» | Las **transiciones** sí se filtran (`TransitionPanel.tsx:56-58`). Los **tickets** no: el servidor los devuelve todos a todo el mundo, por decisión escrita en `docs/modelo-autorizacion.md` (`boardView.ts:29-32`) | Las dos mitades de la decisión tienen destinos distintos. La de visibilidad se decidió en contra a propósito. **Punto a aclarar** |
 | M-8 | M1.3.8 (`:1415`): «Las 27 etiquetas de campo mapean a columnas reales. Ninguna cae al cajón `custom_fields`» | **Verificado cierto** en esta tanda: 27 etiquetas distintas, las 27 en `PROMOTED_COLUMNS`. **F1A-04: 28 de 40** | Sin discrepancia. Se anota porque es una de las afirmaciones as-built que sí resiste |
 | M-9 | Anexo H.2 (`:1495`): servicio técnico «construido y verificado … coincide con el código en las 38 filas del mapa» | 34 transiciones + 2 pasos sin botón + las 2 salidas extra de `habilitar_servicio` = 38 (`transitions.ts:178`; maestro `:388` explica el recuento) | Sin discrepancia, pero el 38 **no** es un número de transiciones: son filas de mapa. Conviene no citarlo como tal |
@@ -1357,7 +1396,7 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 
 | Registro | Dice | Estado real | Lectura |
 |---|---|---|---|
-| IV-3 (`config.yaml`, `incumplimientos_vivos`) | «Hoy es un espejo **SIN COMPROBAR**: no hay prueba de que el servidor imponga la misma matriz» | La hay: `permisos.test.ts:41-110` prueba las 34 × 3 contra el servidor, y `:35-39` declara explícitamente el efecto | **F0-04 cerró IV-3.** El espejo de `TransitionPanel.tsx:56-58` pasó a comodidad legítima. `config.yaml` y la tabla de `CLAUDE.md` lo daban por vivo; **corregidos en esta tanda**, en commit aparte, porque un registro caduco sí es una corrección. Los vivos son **cuatro** |
+| IV-3 (`config.yaml`, `incumplimientos_vivos`) | «Hoy es un espejo **SIN COMPROBAR**: no hay prueba de que el servidor imponga la misma matriz» | La hay: `permisos.test.ts:41-110` en `fd253aa` prueba las 34 × 3 contra el servidor, y `:35-39` declara explícitamente el efecto | **F0-04 cerró IV-3.** El espejo de `TransitionPanel.tsx:56-58` pasó a comodidad legítima. `config.yaml` y la tabla de `CLAUDE.md` lo daban por vivo; **corregidos en esta tanda**, en commit aparte, porque un registro caduco sí es una corrección. Los vivos son **cuatro** |
 | IV-3, ubicación | `TransitionPanel.tsx:56-57` | El filtro se cierra en `:58` | Cita corta por una línea, en **tres** sitios: `config.yaml` y `CLAUDE.md`, corregidos aquí, y **`permisos.test.ts:36`**, que es código y por tanto queda pendiente — destino **F1C-05** |
 | IV-1 (`config.yaml`, `incumplimientos_vivos`) | «un estado de espera que no lleve "espera" en el nombre no se cuenta, **y uno que la lleve sin serlo sí**» | La segunda mitad no tiene ningún caso vivo: cero falsos positivos entre los 21 estados | Describía el riesgo del criterio, no un hecho. **Cuantificado en esta tanda**: 2 aciertos de 8, 0 falsos positivos. Ver §3.6 |
 | `estado_al_baseline` (`config.yaml:72-77`) | 96 ficheros, 830 pruebas: 828 pasan / 2 saltadas (base `a3a8f03`) | 110 ficheros, 931 pruebas: 929 pasan / 2 saltadas (base `ad1875b`) | F0-04 añadió la red. Cifra de baseline, no error |
@@ -1389,3 +1428,203 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
   pruebas por decisión de Gerencia (F0-00, 2026-09-08; `vitest.config.ts:16-20`). Todo requisito de
   esta spec que cite un `.tsx` describe código **no cubierto por pruebas**, y lo dice aquí una vez en
   lugar de repetirlo en cada línea.
+### RQ-TS-23 · Se retiran tres transiciones del catálogo de servicio
+
+`TRANSITIONS` **SHALL NOT** contener las ids `marcar_pendiente`, `servicio_externo_pendiente` ni
+`servicio_externo_notificado` (retiradas por E-103/E-106). Las tres eran de área `Servicio Técnico` simple y
+sin campo de fecha, así que **SHALL** conservarse sin cambio el emparejamiento de las ocho compartidas y los
+diez campos de fecha reentrantes. Una id retirada **SHALL** rechazarse en el servidor como transición
+desconocida y no escribir nada. Una prueba **SHALL** fijar la ausencia por id, no sólo por recuento.
+
+#### Scenario: el catálogo tiene 31 entradas y ninguna es una retirada
+- GIVEN `TRANSITIONS` tras el cambio
+- WHEN se cuentan sus entradas y se buscan las tres ids
+- THEN hay 31 entradas con 31 ids distintas y ninguna de las tres figura
+
+#### Scenario: una id retirada se rechaza y no escribe
+- GIVEN un cliente con la lista vieja y un ticket en `En Proceso`
+- WHEN envía `marcar_pendiente` al endpoint de transición
+- THEN el servidor responde `400 'Transición desconocida'` (guarda 1, escalón A) y no cambia estado ni inserta fila en `ticket_transitions`
+
+#### Scenario: un ticket de servicio que quedó en `Pendiente` no ofrece transiciones
+- GIVEN un ticket de flujo `servicio` en `Pendiente` (aún sin migrar)
+- WHEN se listan las transiciones aplicables a ese estado
+- THEN la lista es vacía y cualquier transición de servicio ejecutada sobre él responde `409`
+
+#### Scenario: mutación — reponer una retirada pone dos pruebas en rojo
+- GIVEN una de las tres entradas repuesta en el catálogo
+- WHEN corre la suite
+- THEN falla el recuento de 31 y falla la prueba de lista de ids retiradas
+
+### RQ-TS-24 · `diagnostico_complementario` sale de `En Proceso`
+
+`diagnostico_complementario` **SHALL** declarar `from: ['En Proceso']` y seguir llevando a
+`Continuación del proceso` (E-119). Su área y sus campos **SHALL** quedar como estaban. **SHALL NOT** ser
+ejecutable desde `Pendiente` en el flujo de servicio.
+
+#### Scenario: origen y destino exactos
+- GIVEN `TRANSITIONS`
+- WHEN se lee la entrada `diagnostico_complementario`
+- THEN `from` es exactamente `['En Proceso']` y `to` es `Continuación del proceso`
+
+#### Scenario: ejecución desde `En Proceso`
+- GIVEN un ticket de servicio en `En Proceso` y un usuario con el área de la transición
+- WHEN ejecuta `diagnostico_complementario`
+- THEN responde `200`, el ticket pasa a `Continuación del proceso` y queda su fila en `ticket_transitions`
+
+#### Scenario: desde `Pendiente` de servicio responde 409
+- GIVEN un ticket de servicio en `Pendiente`
+- WHEN se ejecuta `diagnostico_complementario`
+- THEN responde `409` («no aplica desde el estado») y no escribe nada
+
+#### Scenario: mutación — devolver el origen a `Pendiente` pone en rojo el invariante 1
+- GIVEN `from: ['Pendiente']` restaurado
+- WHEN corre `invariantesGrafo.test.ts`
+- THEN falla el invariante 1 (declarados ≠ derivados), porque `Pendiente` volvería a ser estado de servicio
+
+### RQ-TS-25 · `Pendiente` pasa a ser estado sólo de soporte remoto
+
+`Pendiente` **SHALL** figurar en `ESTADOS_SOLO_SOPORTE_REMOTO` y **SHALL NOT** figurar en
+`ESTADOS_SERVICIO`, que **SHALL** tener exactamente **20** estados (supuesto S-1; antes 21). `ESTADOS`
+**SHALL** seguir en **23** y `Pendiente` **SHALL** seguir clasificado `sin_clasificar` en
+`CLASIFICACION_EN_ESPERA`, porque `soporte_pendiente` y `continuacion_soporte` lo usan.
+`FASE_POR_ESTADO` **SHALL NOT** contener `Pendiente` y el reparto de fases **SHALL** pasar de 4·12·5 a
+4·11·5. `ESTADOS_SIN_SALIDA`, `ESTADOS_EN_ESPERA` y la columna de tablero `pendiente` **SHALL** quedar sin
+cambio. Ninguna lista del reloj del SLA **SHALL** contener `Pendiente` (supuesto S-4: si el diseño encuentra
+una, se quita en esta tanda).
+
+#### Scenario: los registros dicen 20 / 23 y `Pendiente` es sólo de soporte remoto
+- GIVEN el registro de estados tras el cambio
+- WHEN se leen `ESTADOS_SERVICIO`, `ESTADOS` y `ESTADOS_SOLO_SOPORTE_REMOTO`
+- THEN `ESTADOS_SERVICIO` tiene 20 sin `Pendiente`, `ESTADOS` tiene 23 y `ESTADOS_SOLO_SOPORTE_REMOTO` incluye `Pendiente`
+
+#### Scenario: el bucle de soporte remoto no se ve afectado
+- GIVEN un ticket `Soporte remoto` en `En Proceso`
+- WHEN ejecuta `Soporte pendiente` y `Continuación soporte`
+- THEN pasa por `Pendiente` y vuelve a `En Proceso`, con `200` las dos veces
+
+#### Scenario: mutación sobre el registro vigilado — `Pendiente` fuera de la lista sólo-SR
+- GIVEN `Pendiente` quitado de `ESTADOS_SOLO_SOPORTE_REMOTO` y fuera del catálogo de servicio
+- WHEN corre `invariantesGrafo.test.ts`
+- THEN falla el invariante 1 (regla de mutación 2)
+
+#### Scenario: el reloj del SLA no nombra `Pendiente`
+- GIVEN la tabla de alarmas de `packages/shared/src/sla.ts`
+- WHEN se inspeccionan sus claves
+- THEN son exactamente `Notificado`, `Remisión creada` y `Notificación cliente`
+
+### RQ-TS-26 · La cifra anclada del maestro dice 31 / 35 / 20 en el mismo commit que el código
+
+`openspec/config.yaml` **SHALL** declarar en `cifras_ancladas` `transiciones` = 31, `pasos_del_mapa` = 35 y
+`estados` = 20 de servicio, y **SHALL** cerrar la `divergencia` caducada de `pasos_del_mapa`. La descripción
+de la capacidad `transitions-st` en `capabilities` **SHALL** decir «31 transiciones y 20 estados». Estos
+valores **SHALL** coincidir con `TRANSITIONS.length`, con las aristas del diagrama completo y con
+`ESTADOS_SERVICIO.length`, y **SHALL** cambiar en el mismo commit que el código.
+
+#### Scenario: las tres cifras coinciden con el código
+- GIVEN `cifras_ancladas` y el código tras el cambio
+- WHEN se comparan
+- THEN 31 = `TRANSITIONS.length`, 35 = aristas del diagrama completo y 20 = `ESTADOS_SERVICIO.length`
+
+#### Scenario: la mención a `Pendiente` de `esperas` queda coherente
+- GIVEN la entrada `esperas` de `cifras_ancladas`
+- WHEN se lee su recuento de estados de servicio
+- THEN no cuenta `Pendiente` entre los 20 y sigue diciendo 11 estados en espera
+
+### RQ-TS-27 · Los guardianes numéricos llevan las cifras nuevas
+
+Cada prueba que fija una cifra derivada del catálogo **SHALL** afirmar la nueva y ninguna **SHALL** quedar
+con la antigua. Las pruebas que usaban `marcar_pendiente` como «transición de servicio sobre un ticket de
+soporte remoto» **SHALL** usar `diagnostico_complementario`, y la posición del `409` de flujo **SHALL**
+seguir fijada (regla de mutación 1).
+
+| Guardián | Antes → después |
+|---|---|
+| Invariante 2 (`invariantesGrafo.test.ts`) | 34 transiciones, 21 estados → 31, 20 |
+| Unión de ids de los tres catálogos | 44 → 41 |
+| Permisos por área | 102 (60/42) → 93 (54/39); barrido de cargo 816 → 744 |
+| Ejecución (`transicionesEjecucion.test.ts`) | 34 transiciones en 36 ejecuciones → 31 en 33 |
+| Cargos por transición (`cargos.test.ts`) | 5×10×(34+3)=1.850 → 5×10×(31+3)=1.700 |
+| Fechas derivadas (`fechasDerivadas.test.ts`) | «31 restantes» → 28 |
+| Reentrancia C2 | nueve estados → ocho (sale `Pendiente`) |
+| Fases del mapa | 4·12·5 → 4·11·5 |
+
+#### Scenario: ninguna cifra antigua sobrevive en las aserciones
+- GIVEN los ficheros de prueba de la tabla
+- WHEN se busca la cifra antigua como aserción
+- THEN no aparece y todas las pruebas pasan con la nueva
+
+#### Scenario: la guarda de flujo sigue ganando a la de estado con el ejemplo nuevo
+- GIVEN un ticket `Soporte remoto` en `En Proceso`
+- WHEN se ejecuta `diagnostico_complementario` (de servicio, mismo estado origen)
+- THEN responde `409` con el mensaje de flujo; invertir las guardas 3 y 4 lo pone en rojo
+
+### RQ-TS-28 · Existe un script de migración de los tickets de servicio en `Pendiente`
+
+Existirá `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql`, verificable por una prueba sobre pg-mem
+(si pg-mem no admite una sentencia, el diseño declara qué parte se revisa por lectura). El script **SHALL**:
+(1) calificar por esquema toda tabla; (2) abrir con un recuento previo de sólo lectura en tres grupos:
+servicio con `managed_by_app = true`, servicio con `managed_by_app = false` (listado por número) y soporte
+remoto, donde «servicio» es toda clasificación normalizada distinta de «Soporte remoto» (criterio de
+`packages/shared/src/flujos.ts:116-119`); (3) dentro de una transacción, insertar en `desk.ticket_transitions`
+**una fila nueva** por ticket del primer grupo (`from_status` `Pendiente`, `to_status` `En Proceso`,
+`performed_by` que nombra la migración, `transition_id` marcador que no es id del catálogo) y pasar su
+`status` a `En Proceso`; (4) ser idempotente (filtro `status = 'Pendiente'`); (5) **SHALL NOT** modificar ni
+borrar ninguna fila existente de `ticket_transitions`; (6) **SHALL NOT** tocar los otros dos grupos,
+porque el sincronizador devolvería al segundo a `Pendiente` (`packages/zoho-sync/src/db/repo.ts:71`; S-3, P-1);
+(7) cerrar con un recuento posterior; (8) llevar la reversión comentada.
+
+#### Scenario: tres tickets, tres desenlaces
+- GIVEN tres tickets en `Pendiente`: servicio con `managed_by_app = true`, servicio con `false` y soporte remoto
+- WHEN se ejecuta el script
+- THEN el primero queda en `En Proceso` con una fila nueva de traza y los otros dos conservan `Pendiente` y no ganan fila
+
+#### Scenario: el recuento previo no escribe y lista los gobernados por Zoho
+- GIVEN el mismo estado de datos
+- WHEN se ejecuta sólo la sección de recuento previo
+- THEN devuelve 1 / 1 / 1, lista por número el ticket gobernado por Zoho y no modifica ninguna tabla
+
+#### Scenario: segunda ejecución sin efectos
+- GIVEN el script ya ejecutado una vez
+- WHEN se ejecuta otra vez
+- THEN no cambia ningún ticket ni inserta ninguna fila
+
+#### Scenario: el historial existente no se reescribe
+- GIVEN un ticket con filas previas, entre ellas `marcar_pendiente`
+- WHEN se ejecuta el script
+- THEN las filas previas quedan byte a byte iguales y la fila añadida es identificable por su marcador
+
+#### Scenario: atomicidad
+- GIVEN un fallo forzado entre el `INSERT` y el `UPDATE`
+- WHEN se ejecuta el script
+- THEN el `ROLLBACK` deja tickets y trazas como estaban (si pg-mem no lo admite, se declara en el diseño y se revisa por lectura)
+
+#### Scenario: todo va calificado por esquema
+- GIVEN el texto del script
+- WHEN se buscan tablas sin calificar
+- THEN toda referencia a `tickets` y `ticket_transitions` va como `desk.tickets` y `desk.ticket_transitions`
+
+### RQ-TS-29 · La migración no se ejecuta sola; ejecutarla en producción es tarea de persona
+
+Ni el arranque de la aplicación, ni `migrate.ts`, ni `schema.sql`, ni ninguna ruta **SHALL** ejecutar el
+script de `RQ-TS-28`. Su ejecución en producción (recuento previo, migración, recuento posterior) es tarea de
+Alfonso, fuera del recuento de tareas (regla del ciclo 1); **archivar el cambio no la da por hecha**.
+
+#### Scenario: nada del código invoca el script
+- GIVEN el árbol del repositorio
+- WHEN se busca una referencia al fichero del script fuera de `docs/` y de su propia prueba
+- THEN no hay ninguna
+
+## Escenarios de RQ-TS-01 añadidos por F1C-09
+
+Van al final, y no dentro del bloque de RQ-TS-01, para no desplazar las citas a este fichero (regla de mutación 4). Son escenarios de RQ-TS-01.
+
+#### Scenario: el invariante 2 fija 31, 20 y 31 ids
+- GIVEN `TRANSITIONS` y `ESTADOS_SERVICIO` tras el cambio
+- WHEN corre el invariante 2
+- THEN afirma 31 transiciones, 20 estados y 31 ids distintas
+
+#### Scenario: los invariantes 5 y 6 no cambian
+- GIVEN el catálogo sin las tres retiradas
+- WHEN corren los invariantes 5 y 6
+- THEN siguen en ocho compartidas y diez campos de fecha reentrantes

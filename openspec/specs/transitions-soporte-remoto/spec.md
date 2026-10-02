@@ -194,8 +194,10 @@ independencia del estado. No requiere código nuevo en panel, avisos ni SLA: son
 
 #### Scenario: Una transición de servicio sobre soporte remoto da 409 con el flujo
 - GIVEN un ticket `Soporte remoto` en `En Proceso`
-- WHEN se ejecuta `marcar_pendiente` (servicio, mismo estado origen)
+- WHEN se ejecuta `diagnostico_complementario` (servicio, mismo estado origen, `from: ['En Proceso']`)
 - THEN responde `409` con el mensaje de flujo que nombra «soporte remoto»
+(Previously: el ejemplo era `marcar_pendiente`, retirada por F1C-09; `diagnostico_complementario` sale ahora
+del mismo estado origen, así que el escenario conserva su sentido.)
 
 #### Scenario: La guarda de flujo gana a la de estado (posición, mutación 1)
 - GIVEN un ticket de servicio en `Rev./Diagnostico` (estado ausente del catálogo de soporte remoto)
@@ -214,15 +216,22 @@ independencia del estado. No requiere código nuevo en panel, avisos ni SLA: son
 
 Los cuatro ids **SHALL** ser distintos entre sí y **MUST NOT** coincidir con ningún id de `TRANSITIONS`
 ni de `TRANSITIONS_EQUIPO_NUEVO`. En particular, `Soporte pendiente` **MUST NOT** reutilizar el id
-`marcar_pendiente` (`transitions.ts:206`): buscar una transición por id **SHALL** dar un único catálogo.
+`marcar_pendiente`, aunque esa id esté retirada de `TRANSITIONS` desde F1C-09: las filas históricas de
+`ticket_transitions` la conservan y buscar una transición por id **SHALL** dar un único catálogo o ninguno.
+(Previously: `marcar_pendiente` era una transición vigente de `TRANSITIONS` (`transitions.ts:206` en `fd253aa`).)
 
 #### Scenario: Ninguna colisión de ids
 - GIVEN los tres catálogos
 - WHEN se reúnen todos sus ids
 - THEN no hay ningún duplicado
 
-#### Scenario: `marcar_pendiente` sigue siendo de servicio
+#### Scenario: `marcar_pendiente` no pertenece a ningún catálogo
 - GIVEN el id `marcar_pendiente`
+- WHEN se resuelve a su catálogo
+- THEN no se resuelve a ninguno (retirada), y el id de `Soporte pendiente` es distinto de ella
+
+#### Scenario: `diagnostico_complementario` sigue siendo de servicio
+- GIVEN el id `diagnostico_complementario`
 - WHEN se resuelve a su catálogo
 - THEN es `TRANSITIONS` (servicio), no el de soporte remoto
 
@@ -315,3 +324,26 @@ la sincronización con Zoho no la pise. Los tickets heredados quedan con `NULL` 
 - **Selector en `CreateTicket.tsx` y lectura en la ficha:** `.tsx`, fuera de la red de pruebas (F0-00);
   sin `jsdom`. La imposición está probada en el servidor (RQ-SR-07 a RQ-SR-10).
 - **Transición de anulación** (S-5) y confirmación del área (P.3).
+### Requirement: RQ-SR-12 · `Pendiente` es estado sólo de soporte remoto
+
+La lista de estados sólo de soporte remoto (`ESTADOS_SOLO_SOPORTE_REMOTO`) **SHALL** ser exactamente
+`Solicitud Soporte` y `Pendiente`. `Pendiente` **SHALL** seguir en `ESTADOS` y en `CLASIFICACION_EN_ESPERA`
+con clase `sin_clasificar`, y **SHALL** quedar excluido de `ESTADOS_SERVICIO`. El bucle
+`En Proceso ↔ Pendiente` de `RQ-SR-01` **SHALL** funcionar sin cambio, y los cuatro estados del catálogo de
+`Soporte remoto` **SHALL** seguir siendo `Solicitud Soporte`, `En Proceso`, `Pendiente` y `Finalizado`. La
+prueba de estados sólo de soporte remoto (`invariantesGrafo.test.ts`) **SHALL** fijar la lista de dos.
+
+#### Scenario: la lista sólo-SR tiene exactamente dos estados
+- GIVEN `ESTADOS_SOLO_SOPORTE_REMOTO` tras el cambio
+- WHEN se lee
+- THEN es exactamente `['Solicitud Soporte', 'Pendiente']` (en el orden que fija el registro)
+
+#### Scenario: `Pendiente` no está en el catálogo de servicio
+- GIVEN `ESTADOS_SERVICIO` y `TRANSITIONS`
+- WHEN se busca `Pendiente` como `from`, `to` o miembro
+- THEN no aparece, y el catálogo de `Soporte remoto` sigue cubriendo sus cuatro estados
+
+#### Scenario: un `Soporte remoto` heredado en `Pendiente` sigue en su flujo
+- GIVEN un ticket `Soporte remoto` en `Pendiente`
+- WHEN se listan sus transiciones ejecutables
+- THEN es exactamente `Continuación soporte` y el flujo aplicable es `soporte-remoto`

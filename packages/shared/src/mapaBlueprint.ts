@@ -60,7 +60,7 @@ const CABECERA_GENERADO = [
   '',
 ].join('\n')
 
-/** Cadena determinista para el alias Mermaid de un estado: `e01`..`e21`, por posición en ESTADOS. */
+/** Cadena determinista para el alias Mermaid de un estado: `e01`..`e20`, por posición en ESTADOS. */
 function aliasDe(indicePorEstado: Map<string, string>, estado: string): string {
   const alias = indicePorEstado.get(estado)
   if (!alias) throw new Error(`mapaBlueprint: estado sin alias asignado: "${estado}"`)
@@ -136,7 +136,7 @@ function lineaArista(aliasFrom: string, aliasTo: string, etiqueta: string): stri
   return `    ${aliasFrom} --> ${aliasTo} : ${etiqueta}`
 }
 
-/** El diagrama completo: los 21 estados y las 38 aristas, sin partición por fase. */
+/** El diagrama completo: los 20 estados y las 35 aristas, sin partición por fase. */
 function generarCompleto(entrada: EntradaMapa, alias: Map<string, string>, aristas: Arista[], sinSalida: ReadonlySet<string>): string {
   const lineas = ['```mermaid', 'stateDiagram-v2']
   for (const estado of entrada.estados) {

@@ -222,14 +222,14 @@ describe('Solicitud Soporte (RQ-SR-03)', () => {
     expect(CLASIFICACION_EN_ESPERA['Solicitud Soporte']).toBe('sin_clasificar')
   })
 
-  it('ESTADOS_SERVICIO sigue en 21, en el mismo orden, y no contiene Solicitud Soporte', () => {
-    expect(ESTADOS_SERVICIO).toHaveLength(21)
-    expect(ESTADOS_SERVICIO.includes('Solicitud Soporte' as never)).toBe(false)
-    expect(ESTADOS_SERVICIO).toEqual(ESTADOS.filter((e) => e !== 'Verificación' && e !== 'Solicitud Soporte'))
+  it('ESTADOS_SERVICIO baja a 20 desde F1C-09, en el mismo orden, y no contiene Solicitud Soporte ni Pendiente', () => {
+    expect(ESTADOS_SERVICIO).toHaveLength(20)
+    expect(ESTADOS_SERVICIO.includes('Solicitud Soporte' as never) || ESTADOS_SERVICIO.includes('Pendiente' as never)).toBe(false)
+    expect(ESTADOS_SERVICIO).toEqual(ESTADOS.filter((e) => e !== 'Verificación' && e !== 'Solicitud Soporte' && e !== 'Pendiente'))
     expect(ESTADOS[ESTADOS.length - 1]).toBe('Solicitud Soporte')
   })
 
-  it('ESTADOS_SOLO_SOPORTE_REMOTO es exactamente Solicitud Soporte', () => {
-    expect([...ESTADOS_SOLO_SOPORTE_REMOTO]).toEqual(['Solicitud Soporte'])
+  it('ESTADOS_SOLO_SOPORTE_REMOTO son Solicitud Soporte y Pendiente (F1C-09)', () => {
+    expect([...ESTADOS_SOLO_SOPORTE_REMOTO]).toEqual(['Solicitud Soporte', 'Pendiente'])
   })
 })

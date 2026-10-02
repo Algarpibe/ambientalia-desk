@@ -247,7 +247,7 @@ describe('liberacion_sin_factura: orden de las guardas', () => {
 })
 
 describe('la matriz HTTP de área, con la compuesta', () => {
-  it('S21 · de las 102 celdas (34 transiciones × 3 áreas) difiere de la de área UNA sola: Comercial sin cargo × liberacion_sin_factura (200 → 403)', async () => {
+  it('S21 · de las 93 celdas (31 transiciones × 3 áreas) difiere de la de área UNA sola: Comercial sin cargo × liberacion_sin_factura (200 → 403)', async () => {
     const { app } = appWith()
     const diferencias: Array<{ area: string; transitionId: string; observado: number }> = []
     let n = 0
@@ -263,7 +263,7 @@ describe('la matriz HTTP de área, con la compuesta', () => {
         if (res.status !== (canExecuteTransition([area], false, t.area) ? 200 : 403)) diferencias.push({ area, transitionId: t.id, observado: res.status })
       }
     }
-    expect(n).toBe(102)
+    expect(n).toBe(93)
     expect(diferencias).toEqual([{ area: 'Comercial', transitionId: 'liberacion_sin_factura', observado: 403 }])
   }, 90_000)
 })

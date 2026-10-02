@@ -103,9 +103,9 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
 })
 
 /**
- * LAS 34 TRANSICIONES, EJECUTADAS CONTRA EL SERVIDOR (§5 del proposal F0-04).
+ * LAS 31 TRANSICIONES, EJECUTADAS CONTRA EL SERVIDOR (§5 del proposal F0-04).
  *
- * QUÉ HABÍA Y QUÉ FALTABA. La matriz de `permisos.test.ts` (§4) ya barre las 34 contra el servidor,
+ * QUÉ HABÍA Y QUÉ FALTABA. La matriz de `permisos.test.ts` (§4) ya barre las 31 contra el servidor,
  * pero sólo mira el CÓDIGO HTTP: comprueba quién puede pulsar el botón, no adónde lleva. Nadie
  * comprobaba que el ticket acabe en el estado declarado ni que quede constancia de la etapa. La
  * traza sólo se verificaba en UNA transición (`remisiones.test.ts:387`), y M1.10 `[DECIDIDO — R08]`
@@ -114,7 +114,7 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
  * ⚠️ CUIDADO CON EL MONTAJE, que es lo que demostró la matriz de permisos: con el ticket en un
  * estado de origen INVÁLIDO el servidor contesta 409 (`ticketService.ts:86`) y la prueba no
  * comprueba nada de lo que cree comprobar. Por eso cada caso declara su origen y se ejercitan TODOS
- * los `from` de cada transición —`habilitar_servicio` tiene tres—: 34 transiciones, 36 ejecuciones.
+ * los `from` de cada transición —`habilitar_servicio` tiene tres—: 31 transiciones, 33 ejecuciones.
  *
  * ⚠️ POR QUÉ HAY UNA TABLA ESCRITA A MANO Y NO SÓLO UN BARRIDO DERIVADO DEL GRAFO. Un barrido
  * derivado se adapta solo a lo que `transitions.ts` diga, así que un `to` cambiado por descuido
@@ -129,8 +129,8 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
  * tabla de reentrancia, el registro de estados y la matriz de permisos —§§1-4, escritas antes en
  * esta misma tanda— ya habían nombrado 13 por el camino.
  *
- * Pero MENCIONAR NO ES CUBRIR: `reentrancia.test.ts` nombra diez ids sin ejecutar ninguno, y las 34
- * que barre `permisos.test.ts` sólo se comprueban por su código HTTP. Por eso las 34 tienen caso
+ * Pero MENCIONAR NO ES CUBRIR: `reentrancia.test.ts` nombra diez ids sin ejecutar ninguno, y las 31
+ * que barre `permisos.test.ts` sólo se comprueban por su código HTTP. Por eso las 31 tienen caso
  * aquí y no sólo las 9 que quedaban sueltas: la cobertura que §5 pide es la ejecutada. El guardián
  * de más abajo compara la tabla con el grafo, así que una transición nueva de cualquier catálogo se
  * pone roja el día que llegue sin caso.
@@ -162,7 +162,7 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   aprobacion_y_repuestos: { desde: ['Notificación cliente'], a: 'En Espera de Repuestos' },
   solicitud_repuestos: { desde: ['En Proceso'], a: 'Solicitado' },
   aprobacion: { desde: ['Notificación cliente'], a: 'En Proceso' },
-  marcar_pendiente: { desde: ['En Proceso'], a: 'Pendiente' },
+  // marcar_pendiente: retirada por F1C-09 (E-103); «Pendiente» ya sólo existe en soporte remoto.
   notif_por_garantia: { desde: ['Notificación a Compras'], a: 'En Espera de Repuestos' },
   notif_cliente_comercial: { desde: ['Notificación Comercial'], a: 'Notificación cliente' },
   rechazo_garantia: { desde: ['Notificación a Compras'], a: 'Notificación Comercial' },
@@ -172,20 +172,20 @@ const CASOS: Record<string, { desde: string[]; a: string }> = {
   finalizacion_servicio: { desde: ['En Proceso'], a: 'Por Facturar' },
   cal_sensores_proceso: { desde: ['En Proceso'], a: 'Servicio externo' },
   cal_sensores_revision: { desde: ['Rev./Diagnostico'], a: 'Servicio externo' },
-  servicio_externo_pendiente: { desde: ['Pendiente'], a: 'Por Facturar' },
-  servicio_externo_notificado: { desde: ['Notificado'], a: 'Por Facturar' },
+  // servicio_externo_pendiente: retirada por F1C-09 (E-106); «Servicio externo» queda como ida y vuelta.
+  // servicio_externo_notificado: retirada por F1C-09 (E-106); Notificado conserva sus tres salidas.
   rechazo_comercial: { desde: ['Notificación Comercial'], a: 'Por Facturar' },
   rechazo_cliente: { desde: ['Notificación cliente'], a: 'Por Facturar' },
   rechazo_revision: { desde: ['Rev./Diagnostico'], a: 'Por Facturar' },
   facturado: { desde: ['Por Facturar'], a: 'Liberación Comercial' },
   facturado_cierre: { desde: ['Por Facturar'], a: 'Finalizado' },
-  diagnostico_complementario: { desde: ['Pendiente'], a: 'Continuación del proceso' },
+  diagnostico_complementario: { desde: ['En Proceso'], a: 'Continuación del proceso' },
   entrega_al_cliente: { desde: ['Por Entregar'], a: 'Finalizado' },
   habilitado_para_entrega: { desde: ['Liberación Comercial'], a: 'Por Entregar' },
   notif_recotizacion: { desde: ['Continuación del proceso'], a: 'Notificación Comercial' },
 }
 
-describe('las 34 transiciones, ejecutadas contra el servidor', () => {
+describe('las 31 transiciones, ejecutadas contra el servidor', () => {
   /**
    * EL GUARDIÁN DE COBERTURA: el conjunto de huérfanas tiene que estar VACÍO.
    *
@@ -235,7 +235,7 @@ describe('las 34 transiciones, ejecutadas contra el servidor', () => {
   })
 
   /**
-   * EL BARRIDO: las 36 ejecuciones, cada una desde un origen VÁLIDO, contra el servidor de verdad.
+   * EL BARRIDO: las 33 ejecuciones, cada una desde un origen VÁLIDO, contra el servidor de verdad.
    *
    * Se comprueban las tres cosas de un tirón y en una sola comparación —código HTTP, estado final
    * del ticket y fila de `ticket_transitions`— porque separarlas multiplicaría por tres las bases
@@ -247,7 +247,7 @@ describe('las 34 transiciones, ejecutadas contra el servidor', () => {
    * lo que la decisión dice. Se afirma que hay UNA fila —ni cero ni dos— con su id, sus dos
    * extremos, su área y su actor.
    */
-  it('las 34 salen de su origen, llegan a su destino y dejan traza', async () => {
+  it('las 31 salen de su origen, llegan a su destino y dejan traza', async () => {
     const cookie = await adminCookie()
     const { app } = appWith()
 
@@ -280,17 +280,17 @@ describe('las 34 transiciones, ejecutadas contra el servidor', () => {
     }
 
     expect(observado).toEqual(esperado)
-    // Y que el barrido no se haya quedado corto: 34 transiciones y 36 ejecuciones, porque
+    // Y que el barrido no se haya quedado corto: 31 transiciones y 33 ejecuciones, porque
     // `habilitar_servicio` sale de tres estados. Un barrido sobre un grafo vacío también daría verde.
-    expect(n, 'ejecuciones del barrido').toBe(36)
+    expect(n, 'ejecuciones del barrido').toBe(33)
   }, 60_000)
 })
 
 /**
  * F1B-06 — LAS CINCO TRANSICIONES DE `TRANSITIONS_EQUIPO_NUEVO`, EJECUTADAS CONTRA EL SERVIDOR.
  *
- * Mismo molde que el barrido de las 34 de arriba, escrita a mano y NO derivada — con cinco casos la
- * derivación no aporta la segunda opinión que sí aporta con 34, y el guardián de huérfanas es el que
+ * Mismo molde que el barrido de las 31 de arriba, escrita a mano y NO derivada — con cinco casos la
+ * derivación no aporta la segunda opinión que sí aporta con 31, y el guardián de huérfanas es el que
  * cuida que ninguna quede sin caso.
  *
  * ⚠️ CORRECCIÓN (c), OBLIGATORIA. Cada ticket sembrado lleva `classification: 'Equipo nuevo'`
@@ -417,5 +417,37 @@ describe('las cuatro transiciones de Soporte remoto, ejecutadas contra el servid
     }
     expect(observado).toEqual(esperado)
     expect(n, 'ejecuciones del barrido SR').toBe(4)
+  })
+})
+
+/**
+ * F1C-09 (E-103, E-106) — LAS TRES ETAPAS RETIRADAS YA NO EXISTEN PARA EL SERVIDOR.
+ *
+ * Los ids se buscan en los tres catálogos (`transicionPorId`) y los tres desaparecieron: el servidor
+ * contesta 400 «Transición desconocida» antes de mirar el estado, el área o el flujo del ticket. Se
+ * ejercita con un ticket en el estado de origen que tenían, para que un 409 de estado no pueda
+ * hacerse pasar por el rechazo.
+ */
+describe('F1C-09 · las tres ids retiradas dan 400 «Transición desconocida»', () => {
+  const RETIRADAS: Record<string, string> = {
+    marcar_pendiente: 'En Proceso',
+    servicio_externo_pendiente: 'Pendiente',
+    servicio_externo_notificado: 'Notificado',
+  }
+  it('las tres, desde el estado que tenían de origen, y sin tocar el ticket', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    let n = 0
+    for (const [transitionId, origen] of Object.entries(RETIRADAS)) {
+      n += 1
+      const id = `ret-${n}`
+      await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)', [id, 73000 + n, 'Id retirada', origen])
+      const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie).send({ transitionId, values: {} })
+      expect(res.status, transitionId).toBe(400)
+      expect(res.body.error, transitionId).toBe('Transición desconocida')
+      const fila = await db.query('SELECT status FROM tickets WHERE id = $1', [id])
+      expect((fila.rows[0] as { status: string }).status, transitionId).toBe(origen)
+    }
+    expect(n, 'ids recorridas').toBe(3)
   })
 })
