@@ -19,7 +19,7 @@ const trans = (id: string, from: string, porDefecto: DerivacionPorDefecto): Tran
  * AS-BUILT]`, «no existe hoy ninguna transición por tiempo en el blueprint implementado».
  *
  * SE DECLARA COMO DATO, igual que `ESTADOS_SIN_SALIDA` y por la misma razón: es una decisión de
- * negocio y no una propiedad que el grafo pueda contestar. Nadie puede deducir de las 34 transiciones
+ * negocio y no una propiedad que el grafo pueda contestar. Nadie puede deducir de las 31 transiciones
  * que `Notificado` merece un día y `Pendiente` no.
  *
  * LA UNIDAD ES LA HORA, no el día, y no es cosmético: el propio maestro deja abierto el plazo de la

@@ -539,10 +539,10 @@ incumplimientos_vivos:
       COMPROBAR, porque entonces no había prueba de que el servidor impusiera la
       misma matriz.
     por_que_esta_cerrado: >
-      La prueba existe: `apps/desk/server/permisos.test.ts:41-110` barre las 34
+      La prueba existe: `apps/desk/server/permisos.test.ts:41-110` en `fd253aa` barre las 34
       transiciones × 3 áreas CONTRA EL SERVIDOR, con el total escrito a mano en
-      :77-82 (102 casos, 60 prohibidos, 42 permitidos) y el administrador en
-      :89-109. El 403 lo lanza `ticketService.ts:89`. La propia prueba declara el
+      :77-82 en `fd253aa` (102 casos, 60 prohibidos, 42 permitidos) y el administrador en
+      :89-109 en `fd253aa`. El 403 lo lanza `ticketService.ts:89`. La propia prueba declara el
       efecto de segundo orden en :35-39: con la matriz probada, el filtro del
       navegador «deja de ser un espejo sin comprobar y pasa a ser COMODIDAD
       LEGÍTIMA bajo la regla invariable 13».

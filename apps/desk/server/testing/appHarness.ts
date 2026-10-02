@@ -58,7 +58,7 @@ export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCall
  * transición cualquiera.
  *
  * Se derivan del `kind` de cada campo, no de una tabla por transición: las dos baterías que barren
- * las 34 —la matriz de permisos (`permisos.test.ts`) y la de ejecución
+ * las 31 —la matriz de permisos (`permisos.test.ts`) y la de ejecución
  * (`transicionesEjecucion.test.ts`)— tienen que seguir funcionando cuando el registro de flujos (`flujos.ts`) gane catálogos con
  * campos nuevos. Sin esto, las transiciones permitidas contestarían 422 —que llega DESPUÉS del 403 y
  * del cambio de estado— y las dos matrices parecerían correctas enseñando el color equivocado.

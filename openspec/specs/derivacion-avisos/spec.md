@@ -584,7 +584,7 @@ transiciones; el bloque `DERIVACION_POR_DEFECTO` (`:267-276`) declara **3** entr
 El maestro dice 31 en M1.9.2 (`:1653`), así que aquí el equivocado es el código.
 
 El comentario no cambia ningún comportamiento —el mapa se lee por clave, no por longitud
-(`transitions.ts:290`)— y por eso nada falla. Es la misma clase de defecto que M-5 de `transitions-st`
+(`transitions.ts:290` en `fd253aa`)— y por eso nada falla. Es la misma clase de defecto que M-5 de `transitions-st`
 y §4.5 de `tickets-core`: **una cuenta escrita a mano que envejeció**. F0-02 no lo corrige: es código.
 Destino F1C-05, que es la tanda que toca la matriz de cargos por transición y por tanto abrirá este
 fichero con un motivo propio.
@@ -628,7 +628,7 @@ entrada arrastraba la cifra vieja.
 |---|---|---|---|
 | M-1 | M1.9.3 (`:1667-1674`) describe el cálculo del destinatario, la resta de áreas, el caso del administrador y la escritura fuera de la transacción | Los cuatro, exactos: `avisoArea.ts:15-17`, `:11-13`, `ticketService.ts:113` frente a `:127-165` | **Sin discrepancia.** Se anota porque es una de las afirmaciones as-built del maestro que **sí** resiste el contraste completo, y conviene que su verificación quede reproducible. La única sombra es la de M-2 |
 | M-2 | M1.9.3 no nombra en ningún punto **cómo se elige a un rol receptor**. `grep -ni "recibe_avisos\|recibe los avisos\|receptor de avisos"` sobre el `.md` no devuelve **ninguna** línea | La casilla existe, es del **rol** y no del usuario, y decide quién recibe: `roles.recibe_avisos` (`schema.sql:143`), leída en `db/avisos.ts:81`, con la pantalla en `apps/desk/src/components/RolesAdmin.tsx` | **Hueco del maestro, no discrepancia.** M1.9.3 dice a qué **área** se avisa y se salta a qué **persona** de esa área. El mecanismo lo eligió el diseño (`:76-78`) frente a deducirlo del nombre del rol, «que se rompe en silencio en cuanto alguien renombra "Coordinador Comercial"». El motivo de que sea del rol y no del usuario está en el esquema: «el destinatario es el cargo, y así sobrevive al cambio de persona» (`schema.sql:141-142`). **Corrección para el maestro**: M1.9.3 necesita el párrafo del rol receptor, y M1.9.1 necesita saber que `roles` tiene esa columna. Importa para F1C-05, que redefine la matriz de cargos |
-| M-3 | M1.9.2 (`:1653`): «**Treinta y una** heredan al responsable que el ticket ya traía; **tres** proponen a otro» | 34 transiciones (`grep -cE "^  \{ id: '"`) menos 3 entradas de `DERIVACION_POR_DEFECTO` (`transitions.ts:267-276`) = **31** | **El maestro tiene razón y el código no.** El comentario de `transitions.ts:262` dice «las otras 32». Registrado en §4.2 como comportamiento actual, con destino F1C-05. Es la única de las tres cifras de este apartado que no coincide, y la que falla es la del código |
+| M-3 | M1.9.2 (`:1653`): «**Treinta y una** heredan al responsable que el ticket ya traía; **tres** proponen a otro» | 34 transiciones (`grep -cE "^  \{ id: '"`) menos 3 entradas de `DERIVACION_POR_DEFECTO` (`transitions.ts:267-276` en `fd253aa`) = **31** | **El maestro tiene razón y el código no.** El comentario de `transitions.ts:262` dice «las otras 32». Registrado en §4.2 como comportamiento actual, con destino F1C-05. Es la única de las tres cifras de este apartado que no coincide, y la que falla es la del código |
 
 ---
 

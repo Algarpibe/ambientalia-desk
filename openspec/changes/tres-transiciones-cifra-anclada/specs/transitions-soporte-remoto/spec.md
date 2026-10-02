@@ -80,7 +80,7 @@ Los cuatro ids **SHALL** ser distintos entre sí y **MUST NOT** coincidir con ni
 ni de `TRANSITIONS_EQUIPO_NUEVO`. En particular, `Soporte pendiente` **MUST NOT** reutilizar el id
 `marcar_pendiente`, aunque esa id esté retirada de `TRANSITIONS` desde F1C-09: las filas históricas de
 `ticket_transitions` la conservan y buscar una transición por id **SHALL** dar un único catálogo o ninguno.
-(Previously: `marcar_pendiente` era una transición vigente de `TRANSITIONS` (`transitions.ts:206`).)
+(Previously: `marcar_pendiente` era una transición vigente de `TRANSITIONS` (`transitions.ts:206` en `fd253aa`).)
 
 #### Scenario: Ninguna colisión de ids
 - GIVEN los tres catálogos

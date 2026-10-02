@@ -9,7 +9,7 @@ import { createManagedTicket, executeTransition } from './ticketService'; import
  * `executeTransition` y `createManagedTicket` A NIVEL DE UNIDAD (§9 del proposal F0-04).
  *
  * QUÉ HABÍA. Las dos sólo se probaban por HTTP. Eso basta para saber QUÉ código devuelve cada caso
- * por separado, y es lo que ya barren `permisos.test.ts` (403/200 por área en las 34) y
+ * por separado, y es lo que ya barren `permisos.test.ts` (403/200 por área en las 31) y
  * `transicionesEjecucion.test.ts` (409 por origen inválido, 422 por obligatorio).
  *
  * QUÉ NO SE VEÍA ASÍ, Y ES LO QUE ESTAS PRUEBAS FIJAN: **el ORDEN en que se evalúan las guardas**.

@@ -73,35 +73,35 @@ aplica: se commitea a `main` por lote, regla del repositorio.)
 
 ### Fase 5 · ROJO
 
-- [ ] 5.1 Crear `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts`: fixture derivado de `schema.sql` (`:20-43`, `:57-61`) calificando `desk.` (D8); cinco tickets (servicio-app con traza previa; servicio-app `classification` NULL; servicio-Zoho; SR en Pendiente; control En Proceso).
-- [ ] 5.2 Casos: (a) desenlace por grupo y una fila marcador por movido, traza previa intacta; (b) segunda ejecución sin cambios; (c) reversión quitando `-- REV ` restaura; (d) estático: toda tabla tras `FROM|INTO|UPDATE|JOIN` calificada; (e) recuento previo no escribe y lista número de los gobernados por Zoho; (f) atomicidad por lectura estática (`BEGIN`/`COMMIT`). Rojo: el script no existe. Si pg-mem no admite `BEGIN`, `CASE` o `GROUP BY 1`, ejecutar por sentencias y anotar la decisión.
+- [x] 5.1 Crear `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts`: fixture derivado de `schema.sql` (`:20-43`, `:57-61`) calificando `desk.` (D8); cinco tickets (servicio-app con traza previa; servicio-app `classification` NULL; servicio-Zoho; SR en Pendiente; control En Proceso).
+- [x] 5.2 Casos: (a) desenlace por grupo y una fila marcador por movido, traza previa intacta; (b) segunda ejecución sin cambios; (c) reversión quitando `-- REV ` restaura; (d) estático: toda tabla tras `FROM|INTO|UPDATE|JOIN` calificada; (e) recuento previo no escribe y lista número de los gobernados por Zoho; (f) atomicidad por lectura estática (`BEGIN`/`COMMIT`). Rojo: el script no existe. Si pg-mem no admite `BEGIN`, `CASE` o `GROUP BY 1`, ejecutar por sentencias y anotar la decisión.
 
 ### Fase 6 · VERDE
 
-- [ ] 6.1 Crear `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql` según D6/D7 y el SQL del diseño: cabecera de `Siembra_Compuestos_y_Gases_Patron_2026-10-01.sql:1-27` («lo ejecuta Alfonso; NO ejecutado»), recuento previo, `BEGIN`, INSERT **antes** del UPDATE, sin `status_type` ni `managed_by_app`, REVERSIÓN con prefijo `-- REV `. Sin metacomandos de psql.
-- [ ] 6.2 `npx vitest run packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts` en verde.
+- [x] 6.1 Crear `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql` según D6/D7 y el SQL del diseño: cabecera de `Siembra_Compuestos_y_Gases_Patron_2026-10-01.sql:1-27` («lo ejecuta Alfonso; NO ejecutado»), recuento previo, `BEGIN`, INSERT **antes** del UPDATE, sin `status_type` ni `managed_by_app`, REVERSIÓN con prefijo `-- REV `. Sin metacomandos de psql.
+- [x] 6.2 `npx vitest run packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts` en verde.
 
 ### Fase 7 · Mutaciones del lote B
 
-- [ ] 7.1 Regla 2: quitar `managed_by_app` del filtro del `.sql` → rojo caso (a); escribir `UPDATE tickets` sin calificar → rojo caso (d).
-- [ ] 7.2 Regla 1: UPDATE antes del INSERT en el `.sql` → rojo caso (a) (faltan filas marcador).
+- [x] 7.1 Regla 2: quitar `managed_by_app` del filtro del `.sql` → rojo caso (a); escribir `UPDATE tickets` sin calificar → rojo caso (d).
+- [x] 7.2 Regla 1: UPDATE antes del INSERT en el `.sql` → rojo caso (a) (faltan filas marcador).
 
 ### Fase 8 · Comentarios «34» fuera de guardianes
 
-- [ ] 8.1 Presentes → caso A (31/20/35); fechados → caso B (se quedan, p. ej. `estados.ts:3-4`, `transitions.ts:368`), según `exploration.md` §3, último párrafo.
+- [x] 8.1 Presentes → caso A (31/20/35); fechados → caso B (se quedan, p. ej. `estados.ts:3-4`, `transitions.ts:368`), según `exploration.md` §3, último párrafo.
 
 ### Fase 9 · Barrido de citas (regla de mutación 4)
 
-- [ ] 9.1 Pase 1, forma completa: `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` para `transitions.ts`, `estados.ts`, `fasesBlueprint.ts`, `mapaBlueprint.ts`, `reentrancia.ts`, `invariantesGrafo.test.ts`, `transicionesEjecucion.test.ts`, `permisos.test.ts`; quedarse con rangos que tocan las líneas sustituidas (lista en `design.md` §Barrido), comprobando principio y final por separado.
-- [ ] 9.2 Pase 2, forma abreviada (`:NNN`) en los ficheros que citan esos módulos, incluidos `openspec/specs/**` (forma corta de specs), `openspec/config.yaml`, `CLAUDE.md`. Leer qué AFIRMA cada frase, no sólo que la línea exista.
-- [ ] 9.3 Clasificar cada resultado A/B/C y repararlo; las rotas ajenas a esta tanda en ficheros que no se editan, listarlas sin corregir. Anotar el barrido en `apply-progress.md`.
+- [x] 9.1 Pase 1, forma completa: `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` para `transitions.ts`, `estados.ts`, `fasesBlueprint.ts`, `mapaBlueprint.ts`, `reentrancia.ts`, `invariantesGrafo.test.ts`, `transicionesEjecucion.test.ts`, `permisos.test.ts`; quedarse con rangos que tocan las líneas sustituidas (lista en `design.md` §Barrido), comprobando principio y final por separado.
+- [x] 9.2 Pase 2, forma abreviada (`:NNN`) en los ficheros que citan esos módulos, incluidos `openspec/specs/**` (forma corta de specs), `openspec/config.yaml`, `CLAUDE.md`. Leer qué AFIRMA cada frase, no sólo que la línea exista.
+- [x] 9.3 Clasificar cada resultado A/B/C y repararlo; las rotas ajenas a esta tanda en ficheros que no se editan, listarlas sin corregir. Anotar el barrido en `apply-progress.md`.
 
 ### Fase 10 · Cierre del lote B
 
-- [ ] 10.1 `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con 0 bloqueantes.
-- [ ] 10.2 `npm test`, `npm run typecheck`, `npm run lint` (techo 165), `npm run build`.
-- [ ] 10.3 TS-29: `Grep` de `Migracion_Pendiente_a_En_Proceso` en `apps/` y `packages/` (sólo la prueba lo nombra); anotarlo.
-- [ ] 10.4 Medir líneas del lote B y totales; completar `apply-progress.md`.
+- [x] 10.1 `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con 0 bloqueantes.
+- [x] 10.2 `npm test`, `npm run typecheck`, `npm run lint` (techo 165), `npm run build`.
+- [x] 10.3 TS-29: `Grep` de `Migracion_Pendiente_a_En_Proceso` en `apps/` y `packages/` (sólo la prueba lo nombra); anotarlo.
+- [x] 10.4 Medir líneas del lote B y totales; completar `apply-progress.md`.
 
 ## Tareas de persona (fuera del recuento; archivar NO las da por hechas)
 
