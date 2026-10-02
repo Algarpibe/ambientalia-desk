@@ -1566,7 +1566,7 @@ Existirá `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql`, verificable po
 (1) calificar por esquema toda tabla; (2) abrir con un recuento previo de sólo lectura en tres grupos:
 servicio con `managed_by_app = true`, servicio con `managed_by_app = false` (listado por número) y soporte
 remoto, donde «servicio» es toda clasificación normalizada distinta de «Soporte remoto» (criterio de
-`packages/shared/src/flujos.ts:56-60`); (3) dentro de una transacción, insertar en `desk.ticket_transitions`
+`packages/shared/src/flujos.ts:116-119`); (3) dentro de una transacción, insertar en `desk.ticket_transitions`
 **una fila nueva** por ticket del primer grupo (`from_status` `Pendiente`, `to_status` `En Proceso`,
 `performed_by` que nombra la migración, `transition_id` marcador que no es id del catálogo) y pasar su
 `status` a `En Proceso`; (4) ser idempotente (filtro `status = 'Pendiente'`); (5) **SHALL NOT** modificar ni
@@ -1614,3 +1614,17 @@ Alfonso, fuera del recuento de tareas (regla del ciclo 1); **archivar el cambio 
 - GIVEN el árbol del repositorio
 - WHEN se busca una referencia al fichero del script fuera de `docs/` y de su propia prueba
 - THEN no hay ninguna
+
+## Escenarios de RQ-TS-01 añadidos por F1C-09
+
+Van al final, y no dentro del bloque de RQ-TS-01, para no desplazar las citas a este fichero (regla de mutación 4). Son escenarios de RQ-TS-01.
+
+#### Scenario: el invariante 2 fija 31, 20 y 31 ids
+- GIVEN `TRANSITIONS` y `ESTADOS_SERVICIO` tras el cambio
+- WHEN corre el invariante 2
+- THEN afirma 31 transiciones, 20 estados y 31 ids distintas
+
+#### Scenario: los invariantes 5 y 6 no cambian
+- GIVEN el catálogo sin las tres retiradas
+- WHEN corren los invariantes 5 y 6
+- THEN siguen en ocho compartidas y diez campos de fecha reentrantes

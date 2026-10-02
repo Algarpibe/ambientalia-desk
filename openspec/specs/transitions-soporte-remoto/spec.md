@@ -324,5 +324,26 @@ la sincronización con Zoho no la pise. Los tickets heredados quedan con `NULL` 
 - **Selector en `CreateTicket.tsx` y lectura en la ficha:** `.tsx`, fuera de la red de pruebas (F0-00);
   sin `jsdom`. La imposición está probada en el servidor (RQ-SR-07 a RQ-SR-10).
 - **Transición de anulación** (S-5) y confirmación del área (P.3).
-### RQ-SR-12 · `Pendiente` es estado sólo de soporte remoto
+### Requirement: RQ-SR-12 · `Pendiente` es estado sólo de soporte remoto
 
+La lista de estados sólo de soporte remoto (`ESTADOS_SOLO_SOPORTE_REMOTO`) **SHALL** ser exactamente
+`Solicitud Soporte` y `Pendiente`. `Pendiente` **SHALL** seguir en `ESTADOS` y en `CLASIFICACION_EN_ESPERA`
+con clase `sin_clasificar`, y **SHALL** quedar excluido de `ESTADOS_SERVICIO`. El bucle
+`En Proceso ↔ Pendiente` de `RQ-SR-01` **SHALL** funcionar sin cambio, y los cuatro estados del catálogo de
+`Soporte remoto` **SHALL** seguir siendo `Solicitud Soporte`, `En Proceso`, `Pendiente` y `Finalizado`. La
+prueba de estados sólo de soporte remoto (`invariantesGrafo.test.ts`) **SHALL** fijar la lista de dos.
+
+#### Scenario: la lista sólo-SR tiene exactamente dos estados
+- GIVEN `ESTADOS_SOLO_SOPORTE_REMOTO` tras el cambio
+- WHEN se lee
+- THEN es exactamente `['Solicitud Soporte', 'Pendiente']` (en el orden que fija el registro)
+
+#### Scenario: `Pendiente` no está en el catálogo de servicio
+- GIVEN `ESTADOS_SERVICIO` y `TRANSITIONS`
+- WHEN se busca `Pendiente` como `from`, `to` o miembro
+- THEN no aparece, y el catálogo de `Soporte remoto` sigue cubriendo sus cuatro estados
+
+#### Scenario: un `Soporte remoto` heredado en `Pendiente` sigue en su flujo
+- GIVEN un ticket `Soporte remoto` en `Pendiente`
+- WHEN se listan sus transiciones ejecutables
+- THEN es exactamente `Continuación soporte` y el flujo aplicable es `soporte-remoto`
