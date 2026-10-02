@@ -1,4 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { nitCoincide } from '@ambientalia/shared'
 
 /**
  * Lecturas de `public.clientes_provisionales` (F1B-15, D1, RQ-TC-34). Es la SEGUNDA consulta con la que
@@ -52,4 +53,22 @@ export async function nombresProvisionales(db: Queryable, ids: string[]): Promis
     distintos,
   )
   return new Map(r.rows.map((x: { id: string; razon_social: string }) => [x.id, x.razon_social]))
+}
+
+/** Contacto de Books que casa con un NIT: lo que el `409` de P-B ofrece para usar en vez del provisional. */
+export interface ClienteBooksPorNit { id: string; name: string }
+
+/**
+ * Contactos de Books cuyo NIT casa con `nit` (P-B, RQ-TC-30), todos y en orden determinista: nombre y luego id.
+ * Lee la vista `public.clients` como `getClient` (`packages/zoho-sync/src/books/repo.ts:127-130`) y decide en JS con
+ * `nitCoincide`, no en SQL: la guarda del vacío vive en esa función pura y el SQL no filtra nada por NIT (ni
+ * siquiera los nulos), así que no puede esconderla. Hipótesis: recorrer los contactos es aceptable en un alta manual,
+ * que es excepcional.
+ */
+export async function clientesBooksPorNit(db: Queryable, nit: string): Promise<ClienteBooksPorNit[]> {
+  const r = await db.query('SELECT id, name, nit FROM clients')
+  return (r.rows as Array<{ id: string; name: string | null; nit: string | null }>)
+    .filter((c) => nitCoincide(nit, c.nit))
+    .map((c) => ({ id: c.id, name: c.name ?? c.id }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 }

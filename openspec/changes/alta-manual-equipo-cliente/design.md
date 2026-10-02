@@ -31,7 +31,7 @@ Cuatro piezas, cada una en módulo propio; en los ficheros muy citados sólo **e
 | D4 | Identificador del provisional | `prov-` + `randomUUID()` (`PREFIJO_PROVISIONAL` en `packages/shared/src/altaManual.ts`). El prefijo es lo que distingue un id provisional; un id de Books se resuelve por Books **antes** de mirar el prefijo, así que su camino no cambia (hipótesis: los `contact_id` de Books son numéricos y nunca empiezan por `prov-`) | Secuencia numérica: colisión posible con Books |
 | D5 | Columnas de `equipos` | `ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean`, **sin calificar** (`equipos` está en `DESK_TABLES`, `migrate.ts:63-64`), sin relleno, `NULL` ≡ no pendiente. «No catalogado» = `modelo_id IS NULL` con `modelo` en texto | Columnas de traza en `equipos`: duplican `public.equipos_cambios` (`schema.sql:485-506`) |
 | D6 | Traza | Equipo: filas en `equipos_cambios` con `campo` `altaManual`, `validacion` y `clientId`. Cliente: columnas de su tabla. `CambioEquipo['campo']` se amplía en sitio (`packages/shared/src/types.ts:555`) | Tabla de traza nueva |
-| D7 | Escalones del alta manual | **A** en `ticketService.ts:25` y en `:28`, que era una línea vacía y hoy lleva `exigirClienteProvisional`: presencia de serial, confirmación, modelo o (marca, texto, tipo), motivo y los cinco datos; `modeloId` existente. **C** en `:91`, junto a `validarCamposEquipoNuevo`: serial ≠ confirmación, reservados presentes (salvo C-1), provisional junto con `clientId` u orden de venta. **D** en `:96`, junto a la unicidad de la OV: NIT del provisional ya en Books → `409` con el existente (P-B, §4.6) | Comparar el serial en `:25`: C antes que el A de `:39`. NIT en Books como `422` de C: es unicidad, no contenido (orden total de F1B-10) |
+| D7 | Escalones del alta manual | **A** en `ticketService.ts:25` y en `:28`, que era una línea vacía y hoy lleva `exigirClienteProvisional`: presencia de serial, confirmación, modelo o (marca, texto, tipo), motivo y los cinco datos; `modeloId` existente. **C** en `:91`, junto a `validarCamposEquipoNuevo`: serial ≠ confirmación, reservados presentes (salvo C-1), provisional junto con `clientId` u orden de venta. **D** en `:96`, junto a la unicidad de la OV: NIT del provisional ya en Books → `409` con los candidatos (P-B, §4.6) | Comparar el serial en `:25`: C antes que el A de `:39`. NIT en Books como `422` de C: es unicidad, no contenido (orden total de F1B-10) |
 | D8 | Clasificación (**corregida por C-1**) | `b.equipoManual` activa el modo manual en cualquier clasificación. En «Equipo nuevo» la **fecha de factura sigue obligatoria** (F1B-14, `equipoNuevo.ts:40`) y el modo manual sólo relaja el modelo de catálogo; fuera de «Equipo nuevo» se rechazan fecha de factura, fin de garantía y mantenedor (RQ-HV-17) | Relajar también la fecha en «Equipo nuevo»: contradice `decision/equipo-nuevo-alta-en-ticket` |
 | D9 | Guarda de «Habilitar Servicio» | Escalón **B**, `422`, al final de la cadena de `ticketService.ts:131`, tras `exigirVerificacion(gas)` y antes de `:132`. Predicado puro `motivoAltaPendiente` en `packages/shared/src/altaManual.ts`; la lectura usa `obtenerCliente` (campo `provisional`) y `getEquipo`, en función al final de `ticketService.ts`, sin consultar si `t.id !== 'habilitar_servicio'` | Escalón C (`transitions-st/spec.md:1156`). `409`: el `422` lo fija el criterio 5 |
 | D10 | Enlace del cliente (alineado con RQ-TC-32) | `POST /api/clientes-provisionales/:id/enlace {contactId}`. Orden: A `404` provisional · A `404` contacto inexistente en Books (`getClient` de Books, que no ve provisionales) · B `403` sin Comercial ni admin (`equipoComercial.ts:31-33`) · B `409` ya enlazado · C `422` `contactId` ausente o con prefijo provisional. Una `enTransaccion`: `UPDATE clientes_provisionales … WHERE id=$1 AND enlazado_a IS NULL RETURNING id` (vacío → `409`), `UPDATE tickets SET client_id`, `UPDATE equipos SET client_id, cliente_nombre`, una fila `clientId` por equipo | Sin transacción: tickets y equipos repartidos. `SELECT … FOR UPDATE`: hipótesis de que pg-mem no lo soporta |
@@ -150,10 +150,18 @@ la parte anterior al primer guion, sólo dígitos —«900.123.456-7» ≡ «900
 («9001234567») sólo casa si es exactamente base + DV del NIT de Books (`nitCoincide`, tarea 2.7b). **Orden dentro
 de D:** NIT antes que OV, para que el `409` de la OV siga siendo el último (RQ-TC-31), fijado en
 `primerConflictoUnicidad` (P6, §7). **Lectura**: `SELECT id, name, nit
-FROM clients WHERE nit IS NOT NULL` y comparación en JS, en `db/clientesProvisionales.ts`; no usa `regexp_replace`
+FROM clients` (sin filtrar por NIT, ni siquiera los nulos) y comparación en JS, en `db/clientesProvisionales.ts`; no usa `regexp_replace`
 para que lo probado en pg-mem sea lo que corre (hipótesis: el coste de recorrer los contactos es aceptable para un alta
 manual, que es excepcional). Sin NIT casado, el alta sigue. No cubre el caso de P-A: un contacto que **llega después**
 a Books.
+
+**P-B · Candidatos múltiples y NIT vacío (supuestos reversibles, lote 2b).** (a) Si varios contactos de Books comparten el NIT
+normalizado (sucursales o un NIT genérico como el de consumidor final; hipótesis sobre datos reales, sin verificar), el
+`409` devuelve **todos** en `{ error, candidatos: [{ id, name }] }`, ordenados por nombre y luego por id, y el
+formulario deja elegir uno. No hay lista de NIT genéricos exentos: decidirla es de Gerencia (E-154), y hoy bloquean con
+`409`. (b) La guarda del vacío vive en `nitCoincide`: una base sin dígitos, **tecleada o de Books** (`---`, vacío, nulo,
+«N/A»), nunca casa; sin ella dos vacíos serían «iguales» y bloquearían el alta. El NIT sigue siendo obligatorio
+(`exigirClienteProvisional`, `422` de A): «sin coincidencia» es lo único que deja seguir.
 
 **Lo que este cambio NO resuelve — pendiente con fila** (en «Tareas de persona» de `tasks.md`, y en
 `docs/sdd/ENTRADA.md` al archivar, R-3):
@@ -188,7 +196,7 @@ a Books.
 | Oculta fin de garantía y mantenedor (y la fecha de factura fuera de «Equipo nuevo», C-1) | El mismo validador (`CAMPOS_COMERCIALES_RESTRINGIDOS`, `equipoComercial.ts:14`) |
 | Exige los cinco datos y el motivo | `exigirClienteProvisional`, `ticketService.ts`, en `:28`, que era una línea vacía (A) |
 | Ofrece el equipo existente si el serial ya está | `exigirEquipoManual` con `getEquipoBySerial` (gesto de `equipoNuevo.ts:46-47`) |
-| Ofrece el cliente de Books si el NIT ya está (P-B) | `409` del escalón D, `ticketService.ts:96` |
+| Ofrece los clientes de Books si el NIT ya está (P-B) | `409` del escalón D, `ticketService.ts:96` |
 | No combina provisional con OV o cliente existente | `validarContenidoAltaManual`, `:91` (C) |
 | Sólo el buscador del alta ofrece provisionales | No es la guarda: `getClient` de Books los rechaza en `contratos.ts:52`, `prioridad.ts:30`/`:38`, `equipos.ts:56`/`:171` (D12) |
 | No deja reasignar un equipo a otro provisional | `clienteParaEquipo`, `routes/equipos.ts:81` |

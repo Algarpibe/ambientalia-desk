@@ -24,3 +24,44 @@ export function serialesCoinciden(serial: unknown, confirmacion: unknown): boole
   const a = serial.trim()
   return a !== '' && a === confirmacion.trim()
 }
+
+/**
+ * Base de un NIT para compararlo (P-B, RQ-TC-30): lo anterior al primer guion, sólo dígitos. Quita puntos,
+ * espacios y el dígito de verificación escrito tras el guion: «900.123.456-7» ≡ «900123456». Sin dígitos da `''`.
+ */
+export function normalizarNit(nit: unknown): string {
+  if (typeof nit !== 'string') return ''
+  return nit.split('-')[0]!.replace(/\D/g, '')
+}
+
+/**
+ * ¿El NIT tecleado en el alta es el de este contacto de Books? (P-B, supuesto reversible). Casa si la base del
+ * tecleado es la base de Books, o si es exactamente base + DV del NIT de Books escrito con guion
+ * («9001234567» casa con «900.123.456-7», y no con «900123456» ni con «900.123.456-3»: sin guion no se distingue
+ * de una cédula de diez dígitos).
+ *
+ * LA GUARDA DEL VACÍO VIVE AQUÍ: una base vacía, de cualquiera de los dos lados, NUNCA casa. Sin ella dos NIT sin
+ * dígitos («---» tecleado, o un contacto de Books sin NIT) serían «iguales» y bloquearían el alta con un `409`.
+ */
+export function nitCoincide(tecleado: unknown, books: unknown): boolean {
+  const base = normalizarNit(tecleado)
+  const baseBooks = normalizarNit(books)
+  if (base === '' || baseBooks === '') return false
+  if (base === baseBooks) return true
+  const dv = typeof books === 'string' && books.includes('-') ? books.slice(books.indexOf('-') + 1).replace(/\D/g, '') : ''
+  return dv !== '' && base === baseBooks + dv && typeof tecleado === 'string' && !tecleado.includes('-')
+}
+
+/** Primer conflicto de unicidad del alta (escalón D): el del NIT en Books, o el de la orden de venta, o `null`. */
+export type ConflictoUnicidad<C, T> = { tipo: 'nit'; candidatos: C[] } | { tipo: 'ov'; ticket: T }
+
+/**
+ * Orden dentro del escalón D (P6): **gana el NIT y la OV va la última**, porque el `409` de la orden de venta
+ * ha de seguir siendo la última guarda antes de la primera escritura (RQ-TC-31, RQ-TC-05). Pura, para que el orden
+ * sea una prueba y no un comentario (regla de mutación 1). `nitEnBooks` vacío = sin coincidencia.
+ */
+export function primerConflictoUnicidad<C, T>(c: { nitEnBooks: C[]; ovEnUso: T | null | undefined }): ConflictoUnicidad<C, T> | null {
+  if (c.nitEnBooks.length > 0) return { tipo: 'nit', candidatos: c.nitEnBooks }
+  if (c.ovEnUso) return { tipo: 'ov', ticket: c.ovEnUso }
+  return null
+}

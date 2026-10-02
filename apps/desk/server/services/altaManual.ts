@@ -149,3 +149,13 @@ export async function escribirAltaManual(
   }
   return equipoId
 }
+
+/**
+ * `409` de P-B (RQ-TC-30, escalón D): el NIT del provisional ya está en Books. El cuerpo lleva el `error` en
+ * español, como los demás `409`, y TODOS los candidatos `{ id, name }` para que el formulario deje elegir uno
+ * (supuesto reversible: no se inventa una lista de NIT genéricos exentos, eso es decisión de Gerencia, E-154).
+ */
+export function errorNitEnBooks(nit: string, candidatos: Array<{ id: string; name: string }>): HttpError {
+  const quien = candidatos.length === 1 ? `al cliente «${candidatos[0]!.name}»` : `a ${candidatos.length} clientes (${candidatos.map((c) => `«${c.name}»`).join(', ')})`
+  return new HttpError(409, { error: `El NIT ${nit} ya está en Books y pertenece ${quien}. Usa ${candidatos.length === 1 ? 'ese cliente' : 'uno de ellos'} en vez de crear uno provisional.`, candidatos })
+}

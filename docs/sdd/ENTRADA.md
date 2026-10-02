@@ -1757,3 +1757,8 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** si el pendiente P-B de `alta-manual-equipo-cliente` (`design.md` §4.6) entra en la tanda: comprobar el NIT del cliente provisional contra Books en el alta.
 **Respuesta textual:** «2. Sí, que entre»
 **Estado:** cerrada · **Destino:** lote 2 de `alta-manual-equipo-cliente` (F1B-15) · `openspec/config.yaml` → `decisiones_de_gerencia_adenda` (`decision/f1b15-p-b-nit-en-books`). P-A queda pendiente en `tasks.md`. **Engram:** `decision/f1b15-p-b-nit-en-books`.
+
+## E-154 · 2026-10-02 · pendiente · **ABIERTA** — F1B-15: NIT genéricos que no deben bloquear el alta manual
+**Qué:** el alta manual compara el NIT del cliente provisional con los de Books y, si casa, responde `409` con los candidatos (E-153). Si varios contactos comparten el NIT normalizado (sucursales, o un NIT genérico como el de consumidor final `222222222222`; hipótesis sobre datos reales, sin verificar), el `409` los devuelve todos y el técnico tiene que elegir uno. **¿Hay NIT genéricos que NO deban bloquear el alta manual?** Hoy bloquean todos: el código no lleva ninguna lista de NIT exentos, porque inventarla sería una decisión de alcance.
+**Dueño:** Gerencia. **Qué desbloquea:** decidir si el servidor exime una lista cerrada de NIT genéricos (y cuáles) o si el `409` con candidatos basta; hasta entonces un cliente nuevo sin NIT propio no puede darse de alta como provisional con un NIT genérico.
+**Estado:** abierta · **Destino:** `openspec/changes/alta-manual-equipo-cliente/design.md` §4.6 (supuesto reversible de los candidatos múltiples) · se resuelve en una fila del §5 del plan o en un punto abierto del Anexo D, según el alcance que decida Gerencia.

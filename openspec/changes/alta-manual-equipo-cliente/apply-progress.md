@@ -64,3 +64,46 @@ El servidor impone: serial≠confirmación, reservados y provisional+OV/cliente 
 - `ticketService.ts:108` y no `:107`: la llamada a `crearTicketConEquipo` cierra en `:108` (`}, altaManualDe(…))`). `:2` cambia el import de `getTicketWithRefs` al envoltorio de provisionales (respuestas del alta y de la transición con el nombre del provisional).
 - Forma del cuerpo, no fijada en el diseño: `clienteManual {razonSocial,nit,contacto,telefono,correo,motivo}` y `equipoManual {serial,confirmacionSerial,modeloId | marca+modeloTexto+tipo,motivo,fechaFacturaCompra?}`. Con `equipoId` presente el `equipoManual` se ignora.
 - Los `422` de faltantes del cliente provisional van en A (`:28`), como dice D7, aunque el texto de RQ-TC-30 los llama C.
+
+# Lote 2b — P-B: NIT ya en Books (tareas 2.7b-2.7e, 2.8b, 2.9b `[x]`)
+
+Strict TDD · partida `9e0f468` · sin tocar la vista, `books/repo.ts`, el hub ni `.tsx`; el `422` de NIT obligatorio (`altaManual.ts:42`) no cambia. El orquestador commitea y mide.
+
+## Ciclo TDD
+| Tarea | Prueba | Rojo | Verde |
+|---|---|---|---|
+| 2.7b, 2.7d, añadido A | `shared/altaManual.test.ts` (+8: normalización, cuatro pares del DV pegado, vacío por lado, `primerConflictoUnicidad`) | 8 rojas: «(0 , primerConflictoUnicidad) is not a function» (y `normalizarNit`, `nitCoincide`) | 12/12 |
+| 2.7b, 2.7c, añadidos A y B | `services/altaManual.test.ts` (+8, por HTTP) | 2 rojas: «expected 201 to be 409» (el `409` simple y el de tres candidatos en orden inverso). Las otras seis **nacen verdes** (son negativas: 201 sin coincidencia, `422` del NIT obligatorio, vacío por los dos lados, P5 y `422` de C antes que D) y las prueban las mutaciones de abajo | 39+8 = 47/47 en el fichero |
+
+## Mutaciones (aplicada → rojo → revertida con copia previa, `cmp` idéntico y `git diff` sin restos)
+- **P5 (2.7c):** comprobación del NIT delante de `validarContenidoAltaManual` (`ticketService.ts:91`): 2 rojas en HTTP, «serial distinto + NIT en Books → 422, no 409» y «provisional + OV usada + NIT en Books → 422 de C».
+- **P6 (2.7b):** invertido el orden dentro de `primerConflictoUnicidad` (OV antes que NIT): 1 roja en shared («con los dos conflictos a la vez devuelve el del NIT»). Por HTTP no compiten (provisional + OV es `422` de C), como dice `tasks.md:94`.
+- **NIT sin normalizar (2.7d, regla 2):** `nitCoincide` compara el texto crudo: 6 rojas (3 en shared, 3 en HTTP: el `409` simple, el de candidatos múltiples y la guarda del «---»).
+- **Guarda del vacío (añadido A):** quitada la línea `if (base === '' || baseBooks === '') return false`: 3 rojas, 1 en shared («lado tecleado») y 2 por HTTP («---» contra Books «---», y «---» contra Books vacío, nulo y «N/A»). Hallazgo: con **una sola** de las dos mitades de la guarda quitada, la otra basta (dos vacíos sólo son iguales si ambos lo son), así que la prueba por lado es de intención; añadí `('---', null)` y `('abc', 'N/A')` a shared para que el lado de Books se vea con un tecleado también vacío.
+
+## Decisiones y supuestos (reversibles)
+- **Lectura:** `clientesBooksPorNit` (`db/clientesProvisionales.ts`, plural) hace `SELECT id, name, nit FROM clients` sin `WHERE` por NIT y decide en JS con `nitCoincide`; así el SQL no puede excluir vacíos ni nulos y la guarda queda mutable. Lee la vista `public.clients` como `getClient` (`books/repo.ts:127-130`). Hipótesis: el recorrido completo es aceptable en un alta manual. Comprobado en pg-mem con las pruebas HTTP (NIT nulo incluido).
+- **`409`:** `{ error, candidatos: [{ id, name }] }`, con `error` en español (`errorNitEnBooks`, `services/altaManual.ts`); orden por nombre (`localeCompare('es')`) y luego por id, fijado con tres candidatos insertados en orden inverso. Sin lista de NIT genéricos: pendiente de Gerencia como **E-154**.
+- **Posición:** la comprobación va en `ticketService.ts:96`, tras todo C (`:91`, cuarentena y vencido en la propia línea) y antes de la OV, que sigue siendo la última guarda (`:97-100`, ahora `conflicto?.tipo === 'ov'`). El `422` del NIT obligatorio no se toca.
+
+## Casilla de la regla 13 (2.7e) — decisión a decisión
+**El formulario es del lote 4 y aún no existe: hoy el cliente no toma ninguna de estas decisiones; se escribe la comparación para que el lote 4 no nazca sin ella.**
+| Decisión futura del cliente | Línea del servidor que la impone | ¿Espejo legítimo? |
+|---|---|---|
+| Mostrar el `409` del NIT en Books | `ticketService.ts:96` (`errorNitEnBooks`, `services/altaManual.ts`) | Sí: probado por `services/altaManual.test.ts` («P-B») |
+| Ofrecer los candidatos y dejar elegir uno | el cuerpo `candidatos` del mismo `409` (`ticketService.ts:96`); ordenados en `clientesBooksPorNit` | Sí: el servidor decide quién es candidato |
+| No dejar seguir con un NIT vacío o sin dígitos | `exigirClienteProvisional` (NIT obligatorio, `altaManual.ts:42`); «---» pasa ese escalón y no casa por la guarda de `nitCoincide` | El bloqueo del vacío es del servidor; el cliente sólo puede avisar |
+| Normalizar el NIT para avisar antes de enviar | no hay decisión: el cliente consumirá `normalizarNit`/`nitCoincide` de `@ambientalia/shared` (punto 1), sin reescribirlas | Consume, no reescribe |
+Sin línea de servidor que lo imponga, la decisión sería la guarda: aquí las cuatro tienen línea.
+
+## Barrido de citas (2.8b)
+- `ticketService.ts` no insertó ni borró líneas (edición en la misma línea, 250 antes y después): ninguna cita a ese fichero se desplaza. Releído lo que AFIRMAN: `:96` (cuarentena, vencido y ahora el `409` del NIT y de la OV; cierto), `:96-100` en `ordenVentaUnTicket.test.ts:19` (la puerta de creación de la OV: sigue cierta), `:91` en `altaManual.ts:95` y `equipoNuevo.ts:65`, `:97-100` en `equipoNuevo.ts:66` (el `409` de la OV: cierto).
+- `clientesProvisionales.ts` y `altaManual.ts` sólo ganaron líneas al final; sin citas `ruta:línea` a esos dos ficheros en el repositorio. `design.md` gana +8 líneas en §4.6: las citas `design.md:NNN` de este cambio apuntan antes de §4.6 (`:34`, `:92`, `:99`).
+- Detector sobre instantánea del árbol (`git stash create`): exit 0, 0 bloqueantes; 13 abreviadas rotas informativas, las mismas que en 2a.
+
+## Cierre (2.9b)
+- `npm test`: 175 ficheros pasan (1 omitido), 2502 pruebas pasan (+16), 2 omitidas, 0 rojas. `typecheck` limpio (un primer intento falló por `enUso` posiblemente nulo en `ticketService.ts:99`; reparado leyendo `conflicto.ticket.number`). `lint`: 165 avisos, 0 errores (techo 165, 0 nuevos). `build` verde.
+- Medida contra `9e0f468`: `git diff --shortstat --no-renames` 261 inserciones y 15 borrados (276), sin ficheros sin trackear ni binarios; incluye este informe.
+
+## Frontera de reversión
+`git revert` del lote 2b: el alta manual vuelve a no comprobar el NIT; `normalizarNit`, `nitCoincide` y `primerConflictoUnicidad` quedan sin uso.

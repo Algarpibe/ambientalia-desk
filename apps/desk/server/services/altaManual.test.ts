@@ -318,3 +318,66 @@ describe('RQ-TC-33 · nada se escribe en Zoho ni en books.*', () => {
     for (const f of Object.values(sync)) expect(f).toHaveBeenCalledTimes(0)
   })
 })
+
+describe('P-B · RQ-TC-30 «El NIT ya está en Books»: 409 con los candidatos (escalón D)', () => {
+  const conNit = (nit: string, extra: Record<string, unknown> = {}) => alta(adminCookiePromesa, { clienteManual: { ...CLIENTE, nit }, equipoManual: EQUIPO, ...extra })
+  let adminCookiePromesa = ''
+  beforeEach(async () => { adminCookiePromesa = await adminCookie() })
+
+  it('NIT tecleado «900123456» y Books «900.123.456-7»: 409 con { id, name } del contacto y nada escrito', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-nit','Laboratorio Existente','900.123.456-7')")
+    const res = await conNit('900123456')
+    expect(res.status).toBe(409)
+    expect(res.body.candidatos).toEqual([{ id: 'c-nit', name: 'Laboratorio Existente' }])
+    expect(res.body.error).toContain('Laboratorio Existente')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('un NIT que no casa con ninguno de Books: el alta sigue (201)', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-nit','Laboratorio Existente','900.123.456-7')")
+    expect((await conNit('800555666')).status).toBe(201)
+  })
+
+  it('el NIT sigue siendo obligatorio: sin NIT, 422 y no 409', async () => {
+    const res = await conNit('')
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('NIT')
+  })
+
+  it('varios contactos con el mismo NIT: el 409 devuelve TODOS, por nombre y luego por id, sea cual sea el orden de inserción', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-9','Zeta Sucursal','900123456'), ('c-2','Alfa Sucursal','900.123.456-7'), ('c-1','Alfa Sucursal','900 123 456')")
+    const res = await conNit('900123456')
+    expect(res.status).toBe(409)
+    expect(res.body.candidatos).toEqual([
+      { id: 'c-1', name: 'Alfa Sucursal' }, { id: 'c-2', name: 'Alfa Sucursal' }, { id: 'c-9', name: 'Zeta Sucursal' },
+    ])
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('guarda del vacío, lado tecleado: «---» con un contacto de Books de NIT «---» NO casa (201)', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-g','Guion','---')")
+    expect((await conNit('---')).status).toBe(201)
+  })
+
+  it('guarda del vacío, lado de Books: contactos con NIT vacío, nulo o sin dígitos NO bloquean un alta «---» (201)', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-v','Vacio',''), ('c-n','Nulo',NULL), ('c-s','Sin digitos','N/A')")
+    expect((await conNit('---')).status).toBe(201)
+  })
+
+  it('P5 · posición frente al último guardia de C: serial distinto + NIT ya en Books → 422 del serial, no 409', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-nit','Laboratorio Existente','900.123.456-7')")
+    const res = await conNit('900123456', { equipoManual: { ...EQUIPO, serial: 'ABC123', confirmacionSerial: 'ABC124' } })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('serial')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('un provisional con orden de venta ya usada y NIT en Books: 422 de C (no combina provisional con OV) y nada escrito', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-nit','Laboratorio Existente','900.123.456-7')")
+    await db.query("INSERT INTO tickets (id, number, subject, status, orden_venta) VALUES ('t-ov', 95001, 'Otro', 'Ticket creado', 'OV-777')")
+    const res = await conNit('900123456', { ordenVenta: 'OV-777' })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('orden de venta')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 1 })
+  })
+})
