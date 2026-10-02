@@ -109,3 +109,50 @@ El único destino de escritura **SHALL** ser `public.clientes_provisionales`, `d
 - GIVEN un alta manual, un enlace y una validación ejecutados con los clientes de escritura de Zoho y de `books.*` sustituidos por espías
 - WHEN terminan los tres flujos
 - THEN los espías registran cero llamadas
+
+### RQ-TC-34 · El servidor de la app resuelve también los clientes provisionales, sin tocar la vista `public.clients`
+
+La capa de servicio de `apps/desk/server` **SHALL** consultar `public.clientes_provisionales` con una **segunda
+consulta**, además de la de Books (`public.clients`, que no cambia: RQ-ZS-16), en tres puntos: (1) la **búsqueda de
+clientes**, (2) la **ficha de cliente** y (3) el **nombre del cliente en los listados** de tickets. En los tres, los
+provisionales **no enlazados** **SHALL** aparecer **marcados como provisionales** (campo `provisional: true`); los
+clientes de Books **SHALL** resolverse **exactamente igual que antes**, con `provisional: false`. Un provisional ya
+enlazado **MUST NOT** aparecer como provisional: sus tickets y equipos llevan ya el `client_id` de Books y se
+resuelven por el contacto (RQ-TC-32). Un identificador que exista en Books **MUST** tener prioridad y resolverse por
+Books (los ids de ambos orígenes no coinciden: RQ-TC-30). Esta resolución **MUST NOT** modificar
+`packages/zoho-sync/src/books/repo.ts`, la vista ni el worker del hub, y **MUST NOT** escribir en `books.*`.
+
+#### Scenario: La búsqueda devuelve provisionales marcados
+- GIVEN un provisional no enlazado con razón social «Acme Provisional» y un cliente de Books «Acme SAS»
+- WHEN se busca «Acme»
+- THEN la respuesta incluye ambos, el de Books con `provisional: false` y el provisional con `provisional: true`
+
+#### Scenario: Un provisional enlazado no se lista como provisional
+- GIVEN un provisional ya enlazado a un contacto de Books
+- WHEN se busca por su razón social provisional
+- THEN no aparece como provisional, y el cliente se resuelve únicamente por el contacto de Books
+
+#### Scenario: La ficha de un provisional
+- GIVEN un provisional no enlazado
+- WHEN se pide la ficha de cliente con su id
+- THEN responde `200` con razón social, NIT, contacto, teléfono, correo y `provisional: true`
+
+#### Scenario: La ficha de un id de Books no cambia
+- GIVEN un contacto de Books existente
+- WHEN se pide su ficha de cliente
+- THEN devuelve los mismos valores que antes del cambio y `provisional: false`
+
+#### Scenario: Un id inexistente sigue siendo 404
+- GIVEN un id que no está en Books ni en `clientes_provisionales`
+- WHEN se pide la ficha de cliente
+- THEN responde `404`, como antes
+
+#### Scenario: El listado de tickets muestra el nombre del provisional
+- GIVEN un ticket con `client_id` de un provisional no enlazado y otro con `client_id` de Books
+- WHEN se consulta el listado de tickets
+- THEN ambos muestran el nombre de su cliente, y el del provisional va marcado como provisional
+
+#### Scenario: Prioridad de Books
+- GIVEN un id presente en Books
+- WHEN el servicio resuelve el nombre del cliente
+- THEN usa el valor de Books y no consulta la tabla de provisionales para ese id
