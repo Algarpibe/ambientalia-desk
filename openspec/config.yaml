@@ -3656,6 +3656,29 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna"
 
+  - clave: "decision/f1c09-copia-antes-de-desplegar"
+    fecha: "2026-10-02"
+    pregunta: |
+      F1C-09 (`0070ef1`) retira tres transiciones y deja un script de migración de los tickets de servicio en
+      «Pendiente» que se ejecuta a mano sobre producción. ¿Hay condición previa para desplegarla?
+    respuesta_textual: |
+      «No despliegues F1C-09 sin copia previa de la base.»
+    consecuencias: |
+      (1) CONDICIÓN DE DESPLIEGUE de F1C-09: antes de desplegar y de ejecutar
+      `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql` se hace una copia de la base `desk` y se comprueba que
+      existe. Es tarea de persona (Alfonso, dueño de `decision/p55-backup`); la sesión de construcción no despliega
+      (el CI no despliega, sólo verifica).
+      (2) Es coherente con `decision/e013b-copia-pruebas` (no hay copia de pruebas: la única red es la copia de la base)
+      y con la migración, que modifica estados en producción y sólo tiene reversión comentada.
+      (3) MEDIDO el 02/10 en Zoho Desk (API, 250 tickets no archivados): **0** tickets en «Pendiente». Los de
+      «Pendiente» gobernados por la aplicación (`managed_by_app = true`) sólo se cuentan contra la base con el paso 1
+      del script, que es de sólo lectura; no hay acceso local a la base. Con 0 en Zoho, P-1 de F1C-09 no tiene hoy
+      población (hipótesis: la API no listó archivados).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1c09-copia-antes-de-desplegar) · docs/sdd/ENTRADA.md → E-151"
+    maestro_pasaje: "ninguno (despliegue)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna; condición de despliegue de F1C-09"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
