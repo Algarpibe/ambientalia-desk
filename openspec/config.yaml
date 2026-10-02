@@ -3701,6 +3701,29 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna; replanifica F1B-15"
 
+  - clave: "decision/f1b15-p-b-nit-en-books"
+    fecha: "2026-10-02"
+    pregunta: |
+      F1B-15 (`alta-manual-equipo-cliente`), pendiente P-B de `design.md` §4.6: el alta manual no comprueba si el NIT del
+      cliente provisional ya existe en Books, así que un técnico puede crear un duplicado desde el primer minuto. ¿Entra
+      en esta tanda (cambia el formulario de campo y suma unas 40 líneas al lote 2) o queda como pendiente?
+    respuesta_textual: |
+      «2. Sí, que entre»
+    consecuencias: |
+      (1) El alta manual responde `409` en el escalón D (unicidad), junto a la unicidad de la orden de venta
+      (`apps/desk/server/services/ticketService.ts:96` en `132d25f`), con el `id` y el nombre del cliente de Books, sin escribir nada; el
+      formulario lo ofrece para usarlo. RQ-TC-30 gana el escenario «El NIT ya está en Books».
+      (2) Normalización, supuesto reversible: se compara la parte anterior al primer guion, sólo dígitos
+      («900.123.456-7» ≡ «900123456»); el caso del dígito de verificación pegado sin guion lo fija la tarea 2.7b.
+      (3) Si el NIT no casa con ninguno de Books, el alta sigue; el NIT sigue siendo uno de los cinco datos obligatorios
+      (RQ-TC-30), así que no hay alta manual sin NIT.
+      (4) P-A —avisar cuando el contacto llega a Books DESPUÉS del alta— queda fuera, como pendiente con fila en
+      `tasks.md` y dueño Gerencia.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b15-p-b-nit-en-books) · docs/sdd/ENTRADA.md → E-153"
+    maestro_pasaje: "ninguno (diseño)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna; amplía F1B-15 (lote 2)"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
