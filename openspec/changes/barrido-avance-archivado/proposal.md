@@ -17,9 +17,9 @@ origen_cabecera: declarada
 
 El numerador del avance subió el 01/10 por un plan commiteado, no por trabajo. Hoy la comprobación 2:
 
-- cuenta todo `proposal.md` con `cierra: si`, archivado o no (`apps/desk/server/reconciliacion/comprobaciones.ts:122-128`, `:203-206`);
-- lee el §5 de la R01.1 (`apps/desk/server/reconciliacion/comprobaciones.ts:46`) y sólo reconoce `F0`/`F1x` sin negrita (`:133`): imprime 52 tandas frente a las 78 de la R01.4 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:143`);
-- lee `cierres_declarados_por_commit` como lista plana (`apps/desk/server/reconciliacion/comprobaciones.ts:208`), que no existe, y lo dice (`docs/sdd/RECONCILIACION.md:29`).
+- cuenta todo `proposal.md` con `cierra: si`, archivado o no (`apps/desk/server/reconciliacion/comprobaciones.ts:122-128` en `840a353`, `:203-206`);
+- lee el §5 de la R01.1 (`apps/desk/server/reconciliacion/comprobaciones.ts:46` en `840a353`) y sólo reconoce `F0`/`F1x` sin negrita (`:133`): imprime 52 tandas frente a las 78 de la R01.4 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:143`);
+- lee `cierres_declarados_por_commit` como lista plana (`apps/desk/server/reconciliacion/comprobaciones.ts:208` en `840a353`), que no existe, y lo dice (`docs/sdd/RECONCILIACION.md:29`).
 
 Éxito: el barrido publica las cifras de la R01.4 §B (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:48-50`) sin que nadie las cuente a mano.
 
@@ -51,13 +51,13 @@ El numerador del avance subió el 01/10 por un plan commiteado, no por trabajo. 
 
 ## Decisión sobre F2-01..03 y F4-01
 
-**Se reconocen.** El §C las incluye en sus 78 filas (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:143`) y §G publica «Sobre el proyecto (78 tandas)» (`:284`). Si el barrido excluye filas, decide alcance por su cuenta, en contra de su límite: hace visibles los desvíos, no los corrige (`apps/desk/server/reconciliacion/comprobaciones.ts:11-13`).
+**Se reconocen.** El §C las incluye en sus 78 filas (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:143`) y §G publica «Sobre el proyecto (78 tandas)» (`:284`). Si el barrido excluye filas, decide alcance por su cuenta, en contra de su límite: hace visibles los desvíos, no los corrige (`apps/desk/server/reconciliacion/comprobaciones.ts:11-13` en `840a353`).
 
 ## Enfoque
 
 - `RUTA_PLAN` pasa a la R01.4. Las filas se leen sólo entre `## C ·` y el `---` siguiente: §F.3 repite IDs en su primera columna (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:210-226`), y `Map.set` las pisaría. Hipótesis: el mismo defecto existe hoy con la R01.1 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:140` y `:481`) y no se nota porque gana la última tabla.
-- **Guarda (b) de RQ-RC-06:** la R01.4 no tiene columna de fuentes del maestro. La columna 4 es la ventana (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:62`) y la 6 son claves `decision/*`. Supuesto reversible: la fuente se sigue leyendo de la R01.1 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:481`) sólo para las filas que existan allí. Las filas nuevas no tienen fuente, así que no se marcan (como `apps/desk/server/reconciliacion/comprobaciones.ts:214`).
-- `cierres_declarados_por_commit` se lee con `entradasYaml` (`apps/desk/server/reconciliacion/comprobaciones.ts:85`), sin escribir un parser nuevo.
+- **Guarda (b) de RQ-RC-06:** la R01.4 no tiene columna de fuentes del maestro. La columna 4 es la ventana (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:62`) y la 6 son claves `decision/*`. Supuesto reversible: la fuente se sigue leyendo de la R01.1 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:481`) sólo para las filas que existan allí. Las filas nuevas no tienen fuente, así que no se marcan (como `apps/desk/server/reconciliacion/comprobaciones.ts:214` en `840a353`).
+- `cierres_declarados_por_commit` se lee con `entradasYaml` (`apps/desk/server/reconciliacion/comprobaciones.ts:85` en `840a353`), sin escribir un parser nuevo.
 - `strict_tdd`: primero, en rojo, las pruebas de árbol sintético. Las de `apps/desk/server/reconciliacion/comprobaciones.test.ts:145-156` pasan sus proposals a `archive/`.
 
 ## Capacidades
@@ -94,7 +94,7 @@ Los «sin verificar» se vuelven a medir; no se estiman.
 
 | Riesgo | Prob. | Mitigación |
 |---|---|---|
-| Regla de mutación 4 sobre `comprobaciones.ts` (citado en `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:294` y en `openspec/config.yaml:3339`), `config.yaml` y la spec | Alta | Editar en sitio, sin insertar antes de líneas citadas, con la constante de `apps/desk/server/reconciliacion/comprobaciones.ts:46` en su misma línea. Barrido `grep -rnoE` al cierre. Las citas viejas son caso B y se anclan con su revisión |
+| Regla de mutación 4 sobre `comprobaciones.ts` (citado en `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:294` y en `openspec/config.yaml:3339`), `config.yaml` y la spec | Alta | Editar en sitio, sin insertar antes de líneas citadas, con la constante de `apps/desk/server/reconciliacion/comprobaciones.ts:46` en `840a353` en su misma línea. Barrido `grep -rnoE` al cierre. Las citas viejas son caso B y se anclan con su revisión |
 | La R01.4 §G publica 9 por commit y el barrido publicará 3 | Segura | Se dice en el parte. Lo resuelve la decisión pendiente |
 | Cambia el formato de la R01.4 §C | Baja | Prueba que muta el fichero vigilado (regla de mutación 2) |
 

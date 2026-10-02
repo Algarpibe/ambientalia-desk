@@ -3336,7 +3336,7 @@ decisiones_de_gerencia_adenda:
     consecuencias: |
       (1) ES UNA REGLA DE MÉTODO y aterriza en `CLAUDE.md` («Regla de avance — sólo cuenta lo archivado»).
       (2) EL BARRIDO TIENE QUE CAMBIAR: la comprobación 2 lista `openspec/changes/` entero
-      (`apps/desk/server/reconciliacion/comprobaciones.ts:49` y `:124`, sin filtrar `archive/`). Es código
+      (`apps/desk/server/reconciliacion/comprobaciones.ts:49` en `840a353` y `:124`, sin filtrar `archive/`; lo cierra `barrido-avance-archivado`). Es código
       y no tiene fila propia: lo hace la próxima sesión de construcción que toque el barrido.
       (3) CONSECUENCIA QUE LA RESPUESTA NO PREVIÓ: F0-01, F0-02 y F0-03 declaran `cierra: si` en
       `openspec/changes/F0-01/`, `F0-02/` y `F0-03/`, FUERA de `archive/`. Con la regla aplicada a la
@@ -3664,3 +3664,25 @@ aprobaciones_de_techo_del_ledger_adenda:
       en las vivas + archive-report). Si esa parte supera 850 líneas, PARA y avísame.»
     registro: "decision/archivo-f1a03-y-worktrees-01-10"
 
+cierres_declarados_por_commit:
+  # Tandas terminadas ANTES de la convención de `openspec/changes/archive/`. Cuentan en la cifra «por
+  # commit declarado» y nunca en «por archivo» (decision/orden-ejecucion-encargo-01-10, punto (a)).
+  # Cada entrada lleva `commit:` y `prueba:` en UNA línea: si falta alguno, o va vacío o plegado, la
+  # comprobación 2 la da por DEFECTO DE REGISTRO y no la cuenta (molde de RQ-RC-08). Va al final del
+  # fichero para no desplazar líneas citadas. La crea `barrido-avance-archivado`.
+  - id: F0-01
+    commit: 3d44e1e
+    asunto: "feat(sdd): inicializar contexto SDD, CLAUDE.md y el maestro citable"
+    prueba: "docs/sdd/Estado_As-Built_2026-09-09.md:20"
+    declarado_por: "decision/orden-ejecucion-encargo-01-10, punto (a)"
+  - id: F0-02
+    commit: fa445ac
+    asunto: "docs(specs): specs as-built de remisiones, derivacion-avisos y zoho-sync"
+    nota: "749d205 añade después dos entradas a zoho-sync; no cambia el número de specs"
+    prueba: "openspec/changes/F0-03/proposal.md:21 · docs/sdd/Estado_As-Built_2026-09-09.md:21"
+    declarado_por: "decision/orden-ejecucion-encargo-01-10, punto (a)"
+  - id: F0-03
+    commit: 3aaa0f1
+    asunto: "docs(sdd): cerrar F0-03 con la carga en Engram y la convencion de topic_key"
+    prueba: "docs/sdd/Estado_As-Built_2026-09-09.md:22"
+    declarado_por: "decision/orden-ejecucion-encargo-01-10, punto (a)"

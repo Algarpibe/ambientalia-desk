@@ -297,8 +297,8 @@ La publicación **SHALL** fechar el denominador y nombrar el plan (R01.4) y su c
 (a) de `unidad_de_avance`. El barrido **MUST NOT** excluir filas por familia: excluir F2/F4 sería
 decidir alcance por su cuenta.
 
-Si el §C no se encuentra o no produce ninguna fila, el barrido **SHALL** fallar con mensaje explícito y
-**MUST NOT** caer en silencio a otra sección u otro plan.
+Si el §C no se encuentra o no produce ninguna fila, el barrido **SHALL** informar con hallazgo explícito, sin
+alterar el código de salida (`RQ-RC-03`), y **MUST NOT** caer en silencio a otra sección u otro plan.
 
 #### Scenario: el denominador es 78
 - GIVEN la R01.4 real
@@ -319,7 +319,8 @@ Si el §C no se encuentra o no produce ninguna fila, el barrido **SHALL** fallar
 #### Scenario: mutar el fichero vigilado
 - GIVEN la R01.4 sintética con el encabezado `## C ·` renombrado (regla de mutación 2)
 - WHEN corre la comprobación 2
-- THEN el barrido falla con mensaje que nombra el §C, y no publica un denominador de otra sección
+- THEN el barrido informa con hallazgo que nombra el §C, no altera el código de salida y no publica un
+  denominador de otra sección
 
 #### Scenario: una fila fuera del §C no entra
 - GIVEN una fila `F1A-99` escrita sólo en el §G de la R01.4 sintética
