@@ -75,7 +75,7 @@ trackear, y registrar ESO.
 
 - [x] 6.1 En `openspec/specs/transitions-st/spec.md`, fila 5 de la tabla de invariantes (`:63`): «Las ocho transiciones compartidas…» pasa a siete, con `(Previously: ocho, hasta F1C-10)`, sin desplazar líneas. (Notas de fusión, RQ-TS-07)
 - [x] 6.2 Mismo fichero, escenario «los invariantes 5 y 6 no cambian» (`:1627-1630`): conservar con revisión nombrada («en F1C-09, siguen en ocho compartidas y diez campos reentrantes») y añadir que RQ-TS-30 los lleva a siete. `:1545` y `archive/**` no se tocan.
-- [ ] 6.3 Tras la fusión de los dos deltas con `sdd-archive`, repetir 4.1-4.3 sobre las specs vivas.
+- **Para `sdd-archive` (no es casilla del apply; la ejecuta el archivo y la comprueba el orquestador):** tras la fusión de los dos deltas con `sdd-archive`, repetir 4.1-4.3 sobre las specs vivas.
 
 ## Fuera del recuento (regla del ciclo 1): tareas de persona
 
