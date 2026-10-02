@@ -1747,3 +1747,8 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** condición previa para desplegar F1C-09 (`0070ef1`) y ejecutar su migración de los tickets en «Pendiente».
 **Respuesta textual de Gerencia:** «No despliegues F1C-09 sin copia previa de la base.»
 **Estado:** cerrada · **Destino:** `openspec/config.yaml` → `decisiones_de_gerencia_adenda` (`decision/f1c09-copia-antes-de-desplegar`) · tarea de persona de Alfonso antes del despliegue. **Medido el 02/10:** 0 tickets en «Pendiente» entre los 250 no archivados de Zoho Desk. **Engram:** `decision/f1c09-copia-antes-de-desplegar`.
+
+## E-152 · 2026-10-02 · decision · **CERRADA 02/10** — F1B-15: clientes provisionales sin tocar la vista
+**Qué:** cómo aparecen los clientes provisionales de F1B-15 junto a los de Books, tras fallar el sondeo de pg-mem sobre `CREATE OR REPLACE VIEW` en una vista existente.
+**Respuesta de Gerencia (opción elegida):** «Sin tocar la vista (Recomendado)»: la vista `public.clients` no cambia; el servidor de la app consulta también la tabla de provisionales, sin tocar el worker del hub.
+**Estado:** cerrada · **Destino:** replanificación de `alta-manual-equipo-cliente` (F1B-15) · `openspec/config.yaml` → `decisiones_de_gerencia_adenda`. **Engram:** `decision/f1b15-clientes-provisionales-sin-tocar-la-vista`.
