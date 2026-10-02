@@ -3601,6 +3601,35 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna"
 
+  - clave: "decision/escenario-a-festivos-plan-a-01-10"
+    fecha: "2026-10-01"
+    pregunta: |
+      La R01.4 (`3c89d1f`) da dos escenarios al 14/12: A, con F1B-16 y F1B-17 fuera, margen +1,3 a +1,9; B, con
+      ellas dentro, −0,1 a +0,5. Sin descontar cuatro festivos. ¿Qué escenario rige mientras se hace la averiguación de
+      la hoja de Google, qué se hace con los festivos y con el plan A, y qué con las contradicciones de su §J?
+    respuesta_textual: |
+      «1. ESCENARIO A. F1B-16 y F1B-17 quedan fuera hasta la comprobación de la hoja de Google. Si la comprobación confirma que hoy se hacen ahí, la salida NO es construirlas antes del corte: la hoja de Google sigue abierta después del 14/12 SOLO para remisiones de salida y remisiones sin ticket, hasta que esas filas se construyan (2027). Es una excepción acotada a decision/p14b-hoja-google. Regístralo como decisión.
+      2. FESTIVOS: se descuentan siempre (12/10, 02/11, 16/11 y 08/12 no se trabajan). Corrige la cuenta de la R01.4 con ellos. «En garantía» queda fuera de la reserva hasta que el margen real lo permita.
+      3. PLAN A: no se activa ahora. Fecha de decisión: lunes 09/11/2026. Ese día se rehace el margen con el ritmo real de las tandas cerradas desde hoy. Si no queda al menos una semana, se pasa al corte único del 01/02/2027. Anótalo en la R01.4 y en decisiones.
+      4. CONTRADICCIONES DE §J: «En garantía» y SKU: manda la decisión (reserva). Anótalo para corregir el maestro en la R08.5. F1C-11: la derivación al Director Técnico se construye ya. El respaldo al Especialista técnico espera al registro de ausencias (llega con la validación de informes, 1E). Mientras tanto, reasignación manual por un administrador. Barrido: el cambio pequeño debe leer el §5 de la R01.4 y reconocer los ID 1G, 1H y F1A-10.
+      5. ORDEN APROBADO: cambio del barrido (fuera-del-plan) → F1C-09 → F1C-10 → F1B-15. Cada uno en su propio worktree (regla del ciclo 3). Sigue en modo producción.
+      6. Las otras nueve contradicciones de §J: déjalas registradas; las reviso en la próxima revisión del maestro.»
+    consecuencias: |
+      (1) PRECISA `decision/p14b-hoja-google`: excepción acotada. Si la averiguación confirma la hoja, sigue abierta tras el
+      14/12 sólo para remisiones de salida y sin ticket, hasta que F1B-16 y F1B-17 se construyan en 2027. ⚠️ No cubre el
+      caso de que hoy se hagan en Zoho (sólo lectura desde el 14/12): anotado sin resolver en la R01.4 §K.1.
+      (2) CUENTA VIGENTE (R01.4 §K.2): disponible 8,9 semanas (9,7 − 0,8 de festivos); necesario 7,8 a 8,1; margen
+      +0,8 a +1,1. EL EXTREMO BAJO NO CUMPLE LA SEMANA; por el punto 3 no se para: se decide el 09/11. F1B-18 fuera.
+      (3) PRECISA `decision/fecha-corte`: el plan A (corte único 01/02/2027) se decide el lunes 09/11/2026 con el ritmo
+      real desde el 01/10.
+      (4) PRECISA `decision/cargo-encargado-de-inventario`: F1C-11 baja a S (sólo derivación); el respaldo espera a 1E;
+      mientras, reasignación manual por un administrador.
+      (5) Para la R08.5: «En garantía» y SKU van a reserva (corregir `…R08.4.md:1628`). Anotado en el expediente §10.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/escenario-a-festivos-plan-a-01-10) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md §K · docs/sdd/ENTRADA.md → E-149 · docs/sdd/R08.4_Expediente_de_cambios.md §10"
+    maestro_pasaje: "M3 (corte) · nº 33 · …R08.4.md:1628"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna nueva; fija el orden: barrido (fuera-del-plan) → F1C-09 → F1C-10 → F1B-15"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final

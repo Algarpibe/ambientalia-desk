@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-10-01 · **Base:** R01.3 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md`, 227 líneas), R01.2 (250 líneas, borrador) y R01.1 (628 líneas). **Ninguna se borra ni se modifica**: las tres siguen siendo el lugar de las citas `plan:NNN` existentes, y regenerarlas desplazaría medio repositorio (regla de mutación 4 de `CLAUDE.md`).
 
-**Estado de esta revisión: PENDIENTE DE DECISIÓN DE GERENCIA: PLAN A — en el escenario con las dos filas condicionadas dentro.** El veredicto depende de una averiguación de persona que todavía no se ha hecho (§F.4).
+**Estado de esta revisión: VIGENTE, ESCENARIO A, con la decisión del plan A aplazada al lunes 09/11/2026** (Gerencia, 01/10, `decision/escenario-a-festivos-plan-a-01-10`; §K). La primera redacción dejaba el veredicto pendiente de la averiguación de la hoja de Google; Gerencia eligió el escenario A sin esperarla.
 
 **Qué corrige respecto de la R01.3.**
 
@@ -11,7 +11,9 @@
 3. Rehace la cuenta del margen con el método de la R01.3 §D, con lo cerrado desde el 24/09 y con el trabajo nuevo (§F).
 4. Publica el avance con la regla de `decision/avance-cuenta-lo-planificado`, precisada por `decision/orden-ejecucion-encargo-01-10`: dos cifras, por archivo y por commit declarado, nunca sumadas (§G).
 
-**Veredicto, por delante.** Disponible: **9,7 semanas** (68 días, del 02/10 al examen del miércoles 09/12).
+**Veredicto, por delante — corregido el 01/10 con los festivos descontados (§K).** Disponible: **8,9 semanas** (68 días, del 02/10 al examen del miércoles 09/12, menos los cuatro festivos que no se trabajan). Escenario A, sin reserva, con F1C-11 reducida a la derivación: necesario **7,8 a 8,1 semanas**, margen **+0,8 a +1,1**. **El extremo bajo queda por debajo de la semana exigida**; Gerencia no activa el plan A ahora y lo decide el **09/11** con el ritmo real (§K). «En garantía» queda fuera de la reserva.
+
+*La tabla siguiente es la primera redacción, sin festivos, y se conserva porque la corrección la cita:*
 
 | Escenario | Necesario | Margen | ¿Cumple la semana que exige Gerencia? |
 |---|---|---|---|
@@ -93,7 +95,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | **F1B-15** | **Alta manual de equipo y cliente desconocidos** (§D) | M | antes del 14/12 | pendiente | `decision/orden-ejecucion-encargo-01-10` (b) |
 | **F1B-16** | **Remisiones sin ticket** (§D) | L | antes del 14/12 si se confirma; si no, 2027 | condicionada | `decision/trabajo-del-30-09-sin-fila` (1) |
 | **F1B-17** | **Remisión de salida en la entrega, con su guarda y sus fotos** (§D) | M | antes del 14/12 si se confirma; si no, 2027 | condicionada | `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (3) |
-| **F1B-18** | **Aviso «En garantía»** calculado, y «Garantía sin dato» | S | reserva 1 — antes del 14/12 sólo en el escenario A (§F.4) | reserva | `decision/trabajo-del-30-09-sin-fila` (2) |
+| **F1B-18** | **Aviso «En garantía»** calculado, y «Garantía sin dato» | S | reserva 1 — **fuera hasta que el margen real lo permita** (§K) | reserva | `decision/trabajo-del-30-09-sin-fila` (2) |
 | F1C-01 | C2 estado `Anulado` con motivo | S–M | después del corte | pendiente | `decision/c2-anulado` |
 | F1C-02 | C4 facturar ↔ entregar en dos ramas, y alarma de la fecha prevista de facturación (E-102) | S–M | después del corte | pendiente | `decision/c4-dos-ramas` · `decision/anexo-33-checkbox` |
 | F1C-03 | C3 salidas de las esperas, ejecutadas por la persona a cargo (§D) | S–M | después del corte | pendiente | `decision/c3-salida-esperas` · `decision/salida-emergencia-quien-la-ejecuta` |
@@ -104,7 +106,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1C-08 | Rutas abreviadas | S–M | después del corte | pendiente | `decision/p15-p59-rutas` |
 | **F1C-09** | **Tres transiciones y la cifra anclada** (§E) | M | antes del 14/12 | pendiente | `decision/tres-transiciones-y-la-cifra-anclada` |
 | **F1C-10** | **«Rechazo» desde Notificación cliente sólo para Comercial** (§E) | XS | antes del 14/12 | pendiente | E-114 · `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1616` |
-| **F1C-11** | **Derivación de «Solicitud repuestos» al Director Técnico, con respaldo al cargo nuevo «Especialista técnico»** (§E) | S–M | antes del 14/12 | pendiente | `decision/cargo-encargado-de-inventario` |
+| **F1C-11** | **Derivación de «Solicitud repuestos» al Director Técnico**; el respaldo al «Especialista técnico» espera al registro de ausencias (1E) y, mientras, reasigna a mano un administrador (§K) | S | antes del 14/12 | pendiente | `decision/cargo-encargado-de-inventario` |
 | **F1C-12** | **Registro del SKU por Comercial/Compras con aviso al técnico** | S | reserva 2 — no cabe en ningún escenario (§F.4): después del corte | reserva | `decision/trabajo-del-30-09-sin-fila` (2) |
 | F1D-01 | Modelo de datos del catálogo | M | después del corte | pendiente | plan R01.1 §5 |
 | F1D-02 | Importador desde Excel | M | después del corte | pendiente | plan R01.1 §5 |
@@ -218,15 +220,17 @@ Del **viernes 02/10/2026** al examen del **miércoles 09/12/2026**: **68 días =
 | F1C-05 | Parte de paridad: motivo y fecha prevista (S). El cargo ya está (`openspec/changes/archive/2026-09-30-permisos-por-cargo/archive-report.md:17-21`) | 1,0 |
 | F1C-09 | Tres transiciones y cifra anclada (M) | 2,5 |
 | F1C-10 | «Rechazo» sólo Comercial (XS) | 0,5 |
-| F1C-11 | Derivación, cargo y registro mínimo de ausencias (S–M) | 1,0 a 2,5 |
-| **Subtotal 1C** | | **5,0 a 6,5** |
+| F1C-11 | Sólo la derivación al Director Técnico (S): el respaldo espera a 1E (§K) | 1,0 |
+| **Subtotal 1C** | | **5,0** (era 5,0 a 6,5 con F1C-11 en S–M) |
 | 1F | F1F-01..05, la cifra de bloque de la R01.3 §D.3 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:111`), sin descontar la encuesta automática que salió de la cuenta | 12,5 |
 | F0-04 · F1A-09 | Nada que construir (§J, notas 2 y 3) | 0 |
-| **Total, escenario A sin reserva** | | **39,0 a 42,0 d = 7,8 a 8,4 semanas** |
+| **Total, escenario A sin reserva** | | **39,0 a 40,5 d = 7,8 a 8,1 semanas** (era 39,0 a 42,0 = 7,8 a 8,4) |
 | F1B-16 Remisiones sin ticket (L) + F1B-17 Remisión de salida (M) | | +7,0 |
-| **Total, escenario B** | | **46,0 a 49,0 d = 9,2 a 9,8 semanas** |
+| **Total, escenario B** (no rige: Gerencia eligió el A) | | **46,0 a 47,5 d = 9,2 a 9,5 semanas** (era 46,0 a 49,0) |
 
 ### F.4 · El veredicto, con el número delante
+
+> **Primera redacción, sin festivos y con F1C-11 en S–M.** Se conserva porque la corrección del 01/10 la cita; **la cuenta vigente está en §K.2**.
 
 ```
 Disponible:   9,7 semanas (68 días, 02/10 → examen del miércoles 09/12)
@@ -316,10 +320,10 @@ Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semana
 | F1B-15 · Alta manual de equipo y cliente desconocidos | M | antes del 14/12 |
 | F1B-16 · Remisiones sin ticket | L | antes del 14/12, condicionada; si no, 2027 |
 | F1B-17 · Remisión de salida en la entrega, con guarda y fotos | M | antes del 14/12, condicionada; si no, 2027 |
-| F1B-18 · Aviso «En garantía» | S | reserva 1: antes del 14/12 sólo en el escenario A |
+| F1B-18 · Aviso «En garantía» | S | reserva 1: fuera hasta que el margen real lo permita (§K) |
 | F1C-09 · Tres transiciones y la cifra anclada | M | antes del 14/12 |
 | F1C-10 · «Rechazo» desde Notificación cliente sólo Comercial | XS | antes del 14/12 |
-| F1C-11 · Derivación de «Solicitud repuestos» con respaldo al Especialista técnico | S–M | antes del 14/12 |
+| F1C-11 · Derivación de «Solicitud repuestos» al Director Técnico (respaldo, con 1E) | S | antes del 14/12 |
 | F1C-12 · Registro del SKU con aviso al técnico | S | reserva 2: después del corte |
 | F2-01 · Encuesta en tableta en la entrega | M | 2027 · Fase 2 |
 | F2-02 · Indicador de cumplimiento global ante el cliente | L | 2027 · Fase 2 |
@@ -352,3 +356,53 @@ Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semana
 6. **El alta del cargo Especialista técnico «no tiene fila»** según su decisión, y esta revisión la mete en F1C-11 (supuesto reversible), porque sin el cargo el respaldo no tiene a quién derivar.
 7. **E-100 (accesorios desde el catálogo de artículos)** se cuenta en F1B-04 con talla S porque el maestro vigente lo pone ahí antes del corte (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4130-4132`), pero **no tiene clave `decision/…`**: está triada en la bandeja. Si Gerencia la saca, F1B-04 baja un día.
 8. **La discrepancia de la fuente de 1G y 1H sigue abierta**: «tres son L» frente a las dos de sus tablas (`docs/sdd/Plan_Independencia_Zoho_Desk_31-12-2026.md:109`), como ya anotó la R01.3.
+
+---
+
+## K · Decisión de Gerencia sobre esta revisión (01/10/2026) y cuenta vigente
+
+Respuesta registrada en `openspec/config.yaml` → `decisiones_de_gerencia_adenda` → `decision/escenario-a-festivos-plan-a-01-10` (E-149). **Prevalece sobre lo escrito arriba**, que se conserva como primera redacción.
+
+### K.1 · Escenario A, y la hoja de Google como salida si se confirma
+
+**Rige el escenario A**: F1B-16 (remisiones sin ticket) y F1B-17 (remisión de salida) quedan **fuera del corte** hasta la averiguación de la hoja de Google. **Si la averiguación confirma que hoy se hacen en la hoja, la salida NO es construirlas antes del corte**: la hoja de Google **sigue abierta después del 14/12 sólo para remisiones de salida y remisiones sin ticket**, hasta que esas dos filas se construyan en 2027. Es una **excepción acotada** a `decision/p14b-hoja-google`, que fijaba su cierre el día del corte. Las dos filas pasan a ventana **2027**.
+
+⚠️ *Lo que la respuesta no cubre, anotado sin resolver:* si la averiguación encuentra que esas remisiones se hacen hoy **en Zoho** (que queda en sólo lectura el 14/12) y no en la hoja, la excepción no las alcanza.
+
+### K.2 · Cuenta vigente, con los festivos descontados
+
+Gerencia: los cuatro festivos (**12/10, 02/11, 16/11 y 08/12**) **no se trabajan y se descuentan siempre**. Y F1C-11 queda reducida a la derivación (S), §K.4.
+
+```
+Disponible:   9,7 semanas (68 días, 02/10 → examen del 09/12)
+              − 0,8 (cuatro festivos)
+            = 8,9 semanas
+Necesario (escenario A, sin reserva):  39,0 a 40,5 días = 7,8 a 8,1 semanas
+MARGEN:      +0,8 a +1,1 semanas
+Margen exigido: 1 semana  →  el extremo bajo NO lo cumple
+Con F1B-18 «En garantía»:  +0,6 a +0,9  →  no entra
+```
+
+**«En garantía» (F1B-18) queda fuera de la reserva hasta que el margen real lo permita.** El SKU (F1C-12), también.
+
+### K.3 · Plan A: decisión aplazada al lunes 09/11/2026
+
+**El plan A no se activa ahora.** El **lunes 09/11/2026** se rehace el margen con el **ritmo real de las tandas cerradas desde el 01/10**. Si ese día no queda **al menos una semana**, se pasa al **corte único del 01/02/2027** (`decision/fecha-corte` → `corregida_por`).
+
+### K.4 · F1C-11: la derivación ya; el respaldo, con el registro de ausencias
+
+La derivación de «Solicitud repuestos» al cargo **Director Técnico** se construye ya. El respaldo al **Especialista técnico** espera al registro de ausencias, que llega con la validación de informes (**1E**). **Mientras tanto, la reasignación la hace a mano un administrador.** Talla S.
+
+### K.5 · Las demás contradicciones de §J
+
+- **«En garantía» y SKU** (§J, contradicción 2): **manda la decisión** (reserva). Anotado para corregir el maestro en la **R08.5** (`docs/sdd/R08.4_Expediente_de_cambios.md`).
+- **Barrido** (§G, último párrafo): el cambio pequeño debe **leer el §5 de esta R01.4** y reconocer los ID **1G**, **1H** y **F1A-10**.
+- **Las otras nueve** quedan registradas tal cual; Gerencia las revisa en la próxima revisión del maestro.
+
+### K.6 · Orden aprobado
+
+Cambio del barrido (`fuera-del-plan`) → **F1C-09** → **F1C-10** → **F1B-15**. Cada uno en su propio worktree (`CLAUDE.md`, «Regla del ciclo 3»), en modo producción.
+
+### K.7 · Avance con la cuenta vigente
+
+Antes del corte, escenario A, sin reserva: **39** filas (40 − F1B-18). **Por archivo 10/39 = 25,6 %** · **por commit declarado 9/39 = 23,1 %**, publicadas por separado. Sobre el proyecto, sin cambio: 10/78 y 9/78.
