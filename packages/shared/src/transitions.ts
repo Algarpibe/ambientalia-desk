@@ -64,7 +64,7 @@ export interface Transition {
 // Helpers para declarar campos de forma compacta.
 /**
  * El comentario de la etapa. NUNCA obligatorio, y por eso no admite parámetro: contar lo que se hizo
- * es lo que da valor al historial, pero exigirlo en las 35 etapas lo convierte en un peaje que se paga
+ * es lo que da valor al historial, pero exigirlo en las 32 etapas lo convierte en un peaje que se paga
  * escribiendo «ok» —y entonces el historial dice menos que si estuviera vacío—.
  *
  * Sin parámetro a propósito: mientras no se pueda declarar obligatorio, el asterisco de la pantalla no
@@ -164,7 +164,7 @@ export function puedeCrearRemisionDeEntrada(status: string): boolean {
   return status === STATUS_OV_ASIGNADA || status === STATUS_TICKET_CREADO
 }
 
-// Transiciones 2–35 del Blueprint (la 1 es creación de ticket, se maneja aparte).
+// Transiciones 2–32 del Blueprint (la 1 es creación de ticket, se maneja aparte); F1C-09 retiró tres.
 // Nota: campos de tipo "Adjuntar archivos" se omiten en v1 (subida de archivos = deuda).
 // ⚠️ Esta lista NO es la que consume la app: la de verdad es `TRANSITIONS`, al final del fichero, que
 // le añade la casilla de derivación a todas. Declarar los campos propios de cada etapa aquí.
@@ -203,8 +203,8 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment(), cfDate('Fecha Orden de Compra Final', false), cfDate('Fecha Orden de Venta Final', false), cfOvAdicional('Fecha Orden de Venta Final', false)] },
   { id: 'entrega_repuestos', name: 'Entrega de Repuestos', from: ['Solicitado'], to: 'En Proceso', area: 'Servicio Técnico',
     fields: [comment()] },
-  { id: 'marcar_pendiente', name: 'Marcar como pendiente', from: ['En Proceso'], to: 'Pendiente', area: 'Servicio Técnico',
-    fields: [comment()] },
+  // Retirada por F1C-09 (E-103, E-140): «Marcar como pendiente» ya no existe en servicio; «Pendiente» sólo vive en soporte remoto.
+  // Esta línea y la anterior hacen de relleno a propósito: borrarlas desplazaría las citas que apuntan más abajo.
   { id: 'notif_por_garantia', name: 'Notificación por garantía', from: ['Notificación a Compras'], to: 'En Espera de Repuestos', area: 'Comercial / Compras',
     fields: [comment(), cfDate('Fecha Notificación por garantía')] },
   { id: 'notif_cliente_comercial', name: 'Notificación cliente', from: ['Notificación Comercial'], to: 'Notificación cliente', area: 'Comercial',
@@ -227,10 +227,10 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment(), cfDate('Fecha Salida Servicio externo')] },
   { id: 'retorno_servicio_externo', name: 'Retorno de servicios externos', from: ['Servicio externo'], to: 'En Proceso', area: 'Servicio Técnico',
     fields: [comment(), cfDate('Fecha Entrada de servicio externo'), cfText('Conformidad')] },
-  { id: 'servicio_externo_pendiente', name: 'Servicio externo', from: ['Pendiente'], to: 'Por Facturar', area: 'Servicio Técnico',
-    fields: [comment()] },
-  { id: 'servicio_externo_notificado', name: 'Servicio externo', from: ['Notificado'], to: 'Por Facturar', area: 'Servicio Técnico',
-    fields: [comment()] },
+  // Retirada por F1C-09 (E-106, E-140): «Servicio externo» desde Pendiente; el estado Pendiente dejó de ser de servicio.
+  // «Servicio externo» queda como ida y vuelta por la calibración de sensores y el retorno de servicios externos.
+  // Retirada por F1C-09 (E-106, E-140): «Servicio externo» desde Notificado, por la misma razón que la anterior.
+  // Notificado conserva sus tres salidas: devolución a corrección, reporte por garantía y escalado a comercial.
   { id: 'rechazo_comercial', name: 'Rechazo', from: ['Notificación Comercial'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
     fields: [comment()] },
   { id: 'rechazo_cliente', name: 'Rechazo', from: ['Notificación cliente'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
@@ -241,7 +241,7 @@ const TRANSICIONES_BASE: Transition[] = [
     fields: [comment(), cfDate('Fecha De Factura')] },
   { id: 'facturado_cierre', name: 'facturado y cierre de TK', from: ['Por Facturar'], to: 'Finalizado', area: 'Comercial',
     fields: [comment(), cfDate('Fecha De Factura')] },
-  { id: 'diagnostico_complementario', name: 'Diagnóstico complementario', from: ['Pendiente'], to: 'Continuación del proceso', area: 'Servicio Técnico',
+  { id: 'diagnostico_complementario', name: 'Diagnóstico complementario', from: ['En Proceso'], to: 'Continuación del proceso', area: 'Servicio Técnico',
     fields: [comment()] },
   { id: 'liberacion_sin_factura', name: 'Liberación sin factura', from: ['Por Facturar'], to: 'Por Entregar / Sin facturar', area: 'Comercial',
     fields: [comment(), cfCheck('Liberación del ticket sin facturar', true)] },
@@ -266,10 +266,10 @@ const TRANSICIONES_BASE: Transition[] = [
  * Etapas que ya saben a quién le pasan el trabajo, para proponerlo en la casilla de derivación.
  *
  * Solo caben aquí las que cambian el trabajo de manos de forma predecible. Heredar al derivado
- * anterior —lo que hacen las otras 32— lo dejaría justo en manos de quien deja de tocarle.
+ * anterior —lo que hacen las otras 28— lo dejaría justo en manos de quien deja de tocarle.
  *
  * Es un mapa y no un campo suelto en cada entrada porque proponer es la EXCEPCIÓN: en una lista de
- * tres líneas se ve de un vistazo cuáles pisan lo heredado, y en 35 declaraciones no.
+ * tres líneas se ve de un vistazo cuáles pisan lo heredado, y en 31 declaraciones no.
  */
 const DERIVACION_POR_DEFECTO: Record<string, DerivacionPorDefecto> = {
   // Rev./Diagnostico → Notificado: escalar una revisión es subirla al inmediato superior.
@@ -286,11 +286,11 @@ const DERIVACION_POR_DEFECTO: Record<string, DerivacionPorDefecto> = {
  *
  * Se añade aquí y no una a una porque el usuario la quiere en todas: si en «Habilitar Servicio» se
  * deja vacía, tiene que poder rellenarse más adelante, y «Revisión diagnóstico» ni siquiera es una
- * transición —es un estado al que se llega por `ingreso_a_servicio`—. Repetirla en las 34 entradas
- * garantizaría olvidarla en la 35.ª.
+ * transición —es un estado al que se llega por `ingreso_a_servicio`—. Repetirla en las 31 entradas
+ * garantizaría olvidarla en la 32.ª.
  *
  * Va la ÚLTIMA para no colarse entre los campos de negocio del formulario. Si algún día una etapa no
- * debe ofrecerla, la salida es un `Set` de excepciones aquí, nunca volver a las 34 copias.
+ * debe ofrecerla, la salida es un `Set` de excepciones aquí, nunca volver a las 31 copias.
  */
 export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({
   ...t,
@@ -383,7 +383,7 @@ function cfOvAdicional(campoFecha?: string, required = false): TransitionField {
  *
  * Área: las cuatro son `Servicio Técnico` por equivalencia (S-1): la columna `ÁREA_RESPONSABLE` de la hoja de
  * mapeo está vacía. Campos: sólo `comment()` y `derivacion()` (S-3); ninguno lleva `modalidad` (RQ-SR-10) ni fecha.
- * El id de `soporte_pendiente` NO reutiliza `marcar_pendiente` (`:206`): buscar por id da un único catálogo (S-8).
+ * El id de `soporte_pendiente` NO reutiliza `marcar_pendiente` (`:206`, retirada por F1C-09): buscar por id da un único catálogo (S-8).
  */
 export const TRANSITIONS_SOPORTE_REMOTO: Transition[] = [
   { id: 'asignacion_soporte', name: 'Asignación', from: ['Solicitud Soporte'], to: 'En Proceso', area: 'Servicio Técnico',

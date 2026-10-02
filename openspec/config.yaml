@@ -107,7 +107,7 @@ capabilities:
     status_at_start: "as-built parcial"
 
   - name: transitions-st
-    covers: "Las 34 transiciones y 21 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
+    covers: "Las 31 transiciones y 20 estados del flujo de servicio técnico (transitions.ts, transitionExec.ts)"
     status_at_start: "as-built completo"
 
   - name: transitions-equipo-nuevo
@@ -1341,7 +1341,7 @@ cifras_ancladas:
       maestro. Material de CLASE A para la R08.4; NO es un hueco de planificación.
       LO QUE SÍ SIGUE ABIERTO: `decision/c7-reloj-sla` (F1C-06) no puede adoptar ninguno de los dos
       registros —el comentario de ESTADOS_EN_ESPERA avisa de que «es la lista de la VISTA; el reloj
-      del SLA no la lee»— y tiene que decidir el suyo. Y `Pendiente` es el único de los 21 estados
+      del SLA no la lee»— y tiene que decidir el suyo. Y `Pendiente` es el único de los 21 estados de entonces (desde F1C-09 sólo existe en soporte remoto)
       bajo «sin clasificar», esperando a Servicio Técnico desde el 11/09.
       POR QUÉ ESTA ENTRADA EXISTE, aunque su divergencia sea legítima: la primera redacción del
       informe de brechas afirmó que nadie había escrito la distinción, y el error salió de leer
@@ -1356,26 +1356,26 @@ cifras_ancladas:
       6 `interna`, 9 `ninguna`, 1 `sin_clasificar`. Los cardinales COINCIDEN hoy con `externa` e
       `interna`; como la decisión prohíbe derivarla, una prueba tiene que impedir que se importe
       la de la vista. `Pendiente` sigue `sin_clasificar` y ya tiene regla provisional escrita: el
-      reloj CORRE, hasta que Servicio Técnico diga qué espera.
+      reloj CORRE, hasta que Servicio Técnico diga qué espera. Desde F1C-09 `Pendiente` es de soporte remoto.
   - id: pasos_del_mapa
-    maestro: "38 — M1.3, ya marcado «en revisión» en la R08.2 con su hipótesis escrita"
-    codigo: "transiciones con botón de transitions.ts + las 2 sin botón de estadoPorRemision.ts — 36 el 2026-09-08"
+    maestro: "35 — M1.3.7 de la R08.4 («los 35 pasos»); la R08.2 decía 38 y caducó con F1C-09"
+    codigo: "aristas del diagrama completo de mapaBlueprint.ts: las 31 transiciones con botón (habilitar_servicio sale de tres estados) + las 2 sin botón de estadoPorRemision.ts — 35 desde F1C-09, eran 38"
     divergencia: >
-      ERROR PENDIENTE. La R08.2 ya lo declara y aventura que el mapa cuenta CAMINOS y no
-      transiciones. Lo cierra F1A-06 al generar el mapa desde el código: es lo único que lo zanja
-      con un número en vez de con una hipótesis.
+      CONVERGE desde F1C-09: el código cuenta 35 aristas y la R08.4 dice 35 pasos. ERROR si difiere.
+      La R08.2 aventuró que el mapa cuenta CAMINOS y no transiciones, y la R08.4 lo confirma; lo vigila
+      cifrasAncladas.test.ts, que lee este registro y lo compara con el diagrama generado.
   - id: transiciones
-    maestro: "34"
+    maestro: "31"
     codigo: "cuenta de transiciones en packages/shared/src/transitions.ts"
     divergencia: "ERROR si difiere. No hay criterio alternativo que lo justifique."
   - id: estados
-    maestro: "21"
-    codigo: "cuenta de estados en packages/shared/src/estados.ts (claves de CLASIFICACION_EN_ESPERA)"
+    maestro: "20"
+    codigo: "cuenta de estados de servicio en packages/shared/src/estados.ts (ESTADOS_SERVICIO, 20 desde F1C-09; antes, claves de CLASIFICACION_EN_ESPERA)"
     divergencia: >
       ERROR si difiere. No hay criterio alternativo que lo justifique.
       AVISO DE MOVIMIENTO PREVISTO POR DECISIÓN, no por error — anotado el 2026-09-24. Tres
       respuestas de Gerencia del 23 y 24/09 añaden estados nuevos, y cuando se construyan esta
-      cifra dejará de ser 21 sin que nadie se haya equivocado: `Anulado` (`decision/c2-anulado`,
+      cifra dejará de ser 20 (era 21 hasta F1C-09) sin que nadie se haya equivocado: `Anulado` (`decision/c2-anulado`,
       F1C-01), `Pendiente de facturar` como estado de la rama sin factura (`decision/c4-dos-ramas`,
       F1C-02) y `Control de calidad` entre `En Proceso` y `Por Facturar` (`decision/c6-qa-liberacion`,
       F1C-07). NO hay estado `Facturado`: `c4` lo declara atributo del ticket, en `fecha_factura`.

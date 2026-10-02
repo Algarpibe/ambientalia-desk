@@ -109,7 +109,7 @@ describe('puedeEjecutarTransicion · la compuesta', () => {
   it('el cargo sin el área no concede (Servicio Técnico + Director Comercial)', () => {
     expect(puedeEjecutarTransicion(sujeto(['Servicio Técnico'], 'Director Comercial'), LIBERACION)).toBe(false)
   })
-  it('el administrador pasa por las 34, con o sin cargo', () => {
+  it('el administrador pasa por las 31, con o sin cargo', () => {
     for (const t of TRANSITIONS) expect(puedeEjecutarTransicion(sujeto([], null, true), t)).toBe(true)
   })
 })
@@ -201,8 +201,8 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
       }
     }
     expect(violaciones).toEqual([])
-    // 5 subconjuntos × 10 valores de cargo × (34 transiciones + 3 primitivas) = 1.850, a mano.
-    expect(casos).toBe(1850)
+    // 5 subconjuntos × 10 valores de cargo × (31 transiciones + 3 primitivas) = 1.700, a mano.
+    expect(casos).toBe(1700)
     expect(concedidos).toBeGreaterThan(0) // no pasa en vacío
   })
 })

@@ -8,7 +8,7 @@ import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
 // `valoresValidos` vive en el arnés: esta matriz y la de ejecución (`transicionesEjecucion.test.ts`)
-// barren las mismas 34 transiciones, y dos copias del derivador de valores habrían divergido en la
+// barren las mismas 31 transiciones, y dos copias del derivador de valores habrían divergido en la
 // primera etapa con un `kind` nuevo.
 import { db, instalarArnes, appWith, userCookie, valoresValidos } from './testing/appHarness'
 
@@ -21,10 +21,10 @@ instalarArnes()
  * servidor probando UNA sola transición real (`transiciones.test.ts`, `aprobacion`). Cinco tandas de
  * la Fase 1 tocan `permissions.ts` y `transitions.ts` sin más red que ésa.
  *
- * ⚠️ LA MATRIZ SE DERIVA DEL GRAFO, no se escriben 34 casos a mano. Escritos a mano, una transición
+ * ⚠️ LA MATRIZ SE DERIVA DEL GRAFO, no se escriben 31 casos a mano. Escritos a mano, una transición
  * nueva de cualquier catálogo del registro no tendría fila y nadie se enteraría; derivada, aparece
- * servidor tiene que contestarle. Lo que sí va escrito a mano es el TOTAL —102 casos, 60 prohibidos y
- * 42 permitidos—, porque una matriz derivada de un grafo vacío también daría verde.
+ * servidor tiene que contestarle. Lo que sí va escrito a mano es el TOTAL —93 casos, 54 prohibidos y
+ * 39 permitidos—, porque una matriz derivada de un grafo vacío también daría verde.
  *
  * ⚠️ Y SE PRUEBA CONTRA EL SERVIDOR, no contra `canExecuteTransition`. El 403 lo lanza
  * `ticketService.ts:130`, con TRES guardas por delante —404 si el ticket no existe, 409 de flujo
@@ -40,7 +40,7 @@ instalarArnes()
  */
 describe('matriz área × transición, contra el servidor', () => {
   for (const area of AREAS) {
-    it(`las 34 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
+    it(`las 31 transiciones contestan lo mismo a un usuario de ${area}`, async () => {
       const cookie = await userCookie([area])
       const { app } = appWith()
 
@@ -69,25 +69,25 @@ describe('matriz área × transición, contra el servidor', () => {
   /**
    * EL TOTAL, escrito a mano, porque es lo único que la derivación no puede vigilarse a sí misma.
    *
-   * 34 transiciones × 3 áreas = 102 casos. Las 26 de área simple prohíben a 2 áreas cada una y las 8
-   * compartidas a 1: 26×2 + 8×1 = 60 prohibidos, y 42 permitidos. Si mañana una transición pasa de
+   * 31 transiciones × 3 áreas = 93 casos. Las 23 de área simple prohíben a 2 áreas cada una y las 8
+   * compartidas a 1: 23×2 + 8×1 = 54 prohibidos, y 39 permitidos. Si mañana una transición pasa de
    * simple a compartida —que es exactamente lo que F1C-05 va a tocar—, estos números se mueven y hay
    * que moverlos a propósito.
    */
-  it('la matriz son 102 casos: 60 prohibidos y 42 permitidos', () => {
+  it('la matriz son 93 casos: 54 prohibidos y 39 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
-    expect(casos).toHaveLength(102)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(60)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(42)
+    expect(casos).toHaveLength(93)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(54)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(39)
   })
 
   /**
-   * Y el admin, que es la otra mitad de `canExecuteTransition`: pasa por las 34 sin mirar el área.
+   * Y el admin, que es la otra mitad de `canExecuteTransition`: pasa por las 31 sin mirar el área.
    * Va contra el servidor por lo mismo que la matriz — el `isAdmin` que decide es el de la sesión,
    * no el del argumento.
    */
-  it('un administrador pasa por las 34 sin que su área importe', async () => {
-    // Su rol NO cubre ninguna transición: lo único que le abre las 34 es ser administrador.
+  it('un administrador pasa por las 31 sin que su área importe', async () => {
+    // Su rol NO cubre ninguna transición: lo único que le abre las 31 es ser administrador.
     const u = await createUser(db, { email: 'jefa@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
     const cookie = `sid=${await createSession(db, u.id)}`
     const { app } = appWith()
@@ -335,7 +335,7 @@ describe('matriz 4×3 · área × transición de Soporte remoto, contra el servi
 
 /**
  * F1C-05, nivel CARGO, parte pura: el cargo SÓLO restringe (RQ-PM-03, RQ-PM-21). Van al final del
- * fichero y no tocan la matriz HTTP de arriba, cuyo suelo (102 = 60/42, sólo área) sigue intacto.
+ * fichero y no tocan la matriz HTTP de arriba, cuyo suelo (93 = 54/39, sólo área) sigue intacto.
  */
 describe('cargo · la compuesta contra el área (puro)', () => {
   it('exactamente un caso difiere del área: liberacion_sin_factura × Comercial (S21)', () => {
@@ -346,14 +346,14 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 
-  it('con la compuesta y sin cargo, la matriz son 102 casos: 61 prohibidos y 41 permitidos', () => {
+  it('con la compuesta y sin cargo, la matriz son 93 casos: 55 prohibidos y 38 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
-    expect(casos).toHaveLength(102)
-    expect(casos.filter((p) => !p)).toHaveLength(61)
-    expect(casos.filter((p) => p)).toHaveLength(41)
+    expect(casos).toHaveLength(93)
+    expect(casos.filter((p) => !p)).toHaveLength(55)
+    expect(casos.filter((p) => p)).toHaveLength(38)
   })
 
-  it('cargo × área × transición: 816 casos, ninguno concede lo que el área niega (S17)', () => {
+  it('cargo × área × transición: 744 casos, ninguno concede lo que el área niega (S17)', () => {
     const cargos = [...CARGOS, null]
     let casos = 0
     for (const t of TRANSITIONS) {
@@ -365,10 +365,10 @@ describe('cargo · la compuesta contra el área (puro)', () => {
         }
       }
     }
-    expect(casos).toBe(816) // 34 transiciones × 3 áreas × (7 cargos + sin cargo), a mano
+    expect(casos).toBe(744) // 31 transiciones × 3 áreas × (7 cargos + sin cargo), a mano
   })
 
-  it('con Director Comercial la compuesta coincide con el área en las 102 celdas', () => {
+  it('con Director Comercial la compuesta coincide con el área en las 93 celdas', () => {
     for (const t of TRANSITIONS) {
       for (const area of AREAS) {
         expect(puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso: 'Director Comercial' }, t))

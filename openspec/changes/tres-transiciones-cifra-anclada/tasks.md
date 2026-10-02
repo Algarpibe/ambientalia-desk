@@ -35,39 +35,39 @@ aplica: se commitea a `main` por lote, regla del repositorio.)
 
 ### Fase 1 · ROJO (todo antes de `transitions.ts`)
 
-- [ ] 1.1 Crear `packages/shared/src/cifrasAncladas.test.ts` (D5): lee `openspec/config.yaml` (molde `mapaBlueprint.test.ts:156`); exige `transiciones` = 31 = `TRANSITIONS.length`, `estados` = 20 = `ESTADOS_SERVICIO.length`, `pasos_del_mapa` = 35 = aristas del completo. Rojo natural: config dice 34/21/38.
-- [ ] 1.2 `invariantesGrafo.test.ts`: `:45`, `:50-53` 34/21→31/20; `:117`; `:172-174` 44→41; `:237` `['Solicitud Soporte','Pendiente']`; citas `:16-18` caso A. Añadir ids retiradas ausentes y `diagnostico_complementario.from=['En Proceso']`. Rojo: invariantes 1 y 2.
-- [ ] 1.3 `estados.test.ts`: `:225-228` 21→20 (filtro excluye `Pendiente`); `:232-233` lista SR de dos. Rojo: recuentos.
-- [ ] 1.4 `mapaBlueprint.test.ts`: `:46`, `:52` 38→35; `:65-70` D-1 usa `'Continuación del proceso'`; `:111` 20. Añadir: ninguna arista toca `Pendiente`. Rojo: 38≠35.
-- [ ] 1.5 `fasesBlueprint.test.ts`: `:8`, `:17`, `:20` 4·11·5; `:28-30` invertido. Rojo.
-- [ ] 1.6 `reentrancia.test.ts` (`:29`, `:31`, `:54`, `:57`), `prioridad.test.ts` (`:92`, `:104-105`, `:118-119`), `cargos.test.ts` (`:112`, `:204-205` 1.850→1.700), `fechasDerivadas.test.ts:82` (28). Rojo en recuentos.
-- [ ] 1.7 `transitionsSoporteRemoto.test.ts` (`:57-58` 41; `:61-66` a `diagnostico_complementario`) y `flujos.test.ts:186-196` (D9). Añadir caso: las tres ids retiradas → 400 «Transición desconocida». Rojo: id aún existe.
-- [ ] 1.8 `permisos.test.ts` (`:26-27`, `:43`, `:72-90`, `:338`, `:349-353`, `:368` 744, `:371`) → 93 = 54/39 y 55/38; `cargoPermiso.test.ts:250`, `:266` → 93. Rojo.
-- [ ] 1.9 `transicionesEjecucion.test.ts` (`:165`, `:175-176` a comentario de una línea, `:182` `['En Proceso']`, cifras 31/33) y `flujoSoporteRemoto.test.ts` (`:73-76` P5, `:112` 41). Rojo.
-- [ ] 1.10 Correr `npm test`; anotar en `apply-progress.md` qué da rojo y por qué es el rojo esperado (cada archivo de 1.1–1.9). Un guardián que ya salga verde es falso verde: investigarlo.
+- [x] 1.1 Crear `packages/shared/src/cifrasAncladas.test.ts` (D5): lee `openspec/config.yaml` (molde `mapaBlueprint.test.ts:156`); exige `transiciones` = 31 = `TRANSITIONS.length`, `estados` = 20 = `ESTADOS_SERVICIO.length`, `pasos_del_mapa` = 35 = aristas del completo. Rojo natural: config dice 34/21/38.
+- [x] 1.2 `invariantesGrafo.test.ts`: `:45`, `:50-53` 34/21→31/20; `:117`; `:172-174` 44→41; `:237` `['Solicitud Soporte','Pendiente']`; citas `:16-18` caso A. Añadir ids retiradas ausentes y `diagnostico_complementario.from=['En Proceso']`. Rojo: invariantes 1 y 2.
+- [x] 1.3 `estados.test.ts`: `:225-228` 21→20 (filtro excluye `Pendiente`); `:232-233` lista SR de dos. Rojo: recuentos.
+- [x] 1.4 `mapaBlueprint.test.ts`: `:46`, `:52` 38→35; `:65-70` D-1 usa `'Continuación del proceso'`; `:111` 20. Añadir: ninguna arista toca `Pendiente`. Rojo: 38≠35.
+- [x] 1.5 `fasesBlueprint.test.ts`: `:8`, `:17`, `:20` 4·11·5; `:28-30` invertido. Rojo.
+- [x] 1.6 `reentrancia.test.ts` (`:29`, `:31`, `:54`, `:57`), `prioridad.test.ts` (`:92`, `:104-105`, `:118-119`), `cargos.test.ts` (`:112`, `:204-205` 1.850→1.700), `fechasDerivadas.test.ts:82` (28). Rojo en recuentos.
+- [x] 1.7 `transitionsSoporteRemoto.test.ts` (`:57-58` 41; `:61-66` a `diagnostico_complementario`) y `flujos.test.ts:186-196` (D9). Añadir caso: las tres ids retiradas → 400 «Transición desconocida». Rojo: id aún existe.
+- [x] 1.8 `permisos.test.ts` (`:26-27`, `:43`, `:72-90`, `:338`, `:349-353`, `:368` 744, `:371`) → 93 = 54/39 y 55/38; `cargoPermiso.test.ts:250`, `:266` → 93. Rojo.
+- [x] 1.9 `transicionesEjecucion.test.ts` (`:165`, `:175-176` a comentario de una línea, `:182` `['En Proceso']`, cifras 31/33) y `flujoSoporteRemoto.test.ts` (`:73-76` P5, `:112` 41). Rojo.
+- [x] 1.10 Correr `npm test`; anotar en `apply-progress.md` qué da rojo y por qué es el rojo esperado (cada archivo de 1.1–1.9). Un guardián que ya salga verde es falso verde: investigarlo.
 
 ### Fase 2 · VERDE
 
-- [ ] 2.1 `transitions.ts` (D1): `:206-207`, `:230-231`, `:232-233` → 2 comentarios no vacíos y sin cita `ruta:línea` cada uno; `:244` `from:['En Proceso']`; comentarios `:67`, `:167`, `:269`, `:272`, `:289-290`, `:293`, `:386` (caso C).
-- [ ] 2.2 `estados.ts`: `:102-104` reescritas (3 líneas); `:182` `['Solicitud Soporte', 'Pendiente']` en la misma línea; `:187` «20 desde F1C-09».
-- [ ] 2.3 `fasesBlueprint.ts`: `:57` → comentario; `:29`, `:35`, `:39-40` en su sitio. `mapaBlueprint.ts:63` `e20`, `:139` 20/35. `reentrancia.ts:141` 20 nodos.
-- [ ] 2.4 `npm run generar-mapa-blueprint`; revisar que el diff sólo quita líneas de `e21` y mueve una arista a `e15 --> e16` (D4); no editar los `.md` a mano.
-- [ ] 2.5 `openspec/config.yaml`: `:1360-1370` (35, 31, `codigo`, `divergencia`), `:1371-1375` (20, `ESTADOS_SERVICIO`), `:1344-1345`, `:1355-1359` (caso B + frase de F1C-09), `:110`.
-- [ ] 2.6 `npm test` y `npm run typecheck` en verde. Sin REFACTOR previsto: sólo datos y comentarios.
+- [x] 2.1 `transitions.ts` (D1): `:206-207`, `:230-231`, `:232-233` → 2 comentarios no vacíos y sin cita `ruta:línea` cada uno; `:244` `from:['En Proceso']`; comentarios `:67`, `:167`, `:269`, `:272`, `:289-290`, `:293`, `:386` (caso C).
+- [x] 2.2 `estados.ts`: `:102-104` reescritas (3 líneas); `:182` `['Solicitud Soporte', 'Pendiente']` en la misma línea; `:187` «20 desde F1C-09».
+- [x] 2.3 `fasesBlueprint.ts`: `:57` → comentario; `:29`, `:35`, `:39-40` en su sitio. `mapaBlueprint.ts:63` `e20`, `:139` 20/35. `reentrancia.ts:141` 20 nodos.
+- [x] 2.4 `npm run generar-mapa-blueprint`; revisar que el diff sólo quita líneas de `e21` y mueve una arista a `e15 --> e16` (D4); no editar los `.md` a mano.
+- [x] 2.5 `openspec/config.yaml`: `:1360-1370` (35, 31, `codigo`, `divergencia`), `:1371-1375` (20, `ESTADOS_SERVICIO`), `:1344-1345`, `:1355-1359` (caso B + frase de F1C-09), `:110`.
+- [x] 2.6 `npm test` y `npm run typecheck` en verde. Sin REFACTOR previsto: sólo datos y comentarios.
 
 ### Fase 3 · Mutaciones del lote A (cada una se revierte y se anota)
 
-- [ ] 3.1 Reponer `marcar_pendiente` en `transitions.ts:206-207` → rojo: invariantes 1 y 2, huérfanas de `transicionesEjecucion`, caso 400.
-- [ ] 3.2 `diagnostico_complementario.from` vuelve a `['Pendiente']` → rojo: invariante 1 y `CASOS` contra el grafo.
-- [ ] 3.3 Regla 2: quitar `'Pendiente'` de `estados.ts:182` → rojo: `tsc` en `fasesBlueprint.ts:68`, invariante 1, `estados.test.ts`.
-- [ ] 3.4 Regla 2: ensuciar `cifras_ancladas` en `config.yaml` (`maestro: "34"`, `"38"`, `"21"`, una por una) → rojo en `cifrasAncladas.test.ts`.
-- [ ] 3.5 Regla 2: reponer `e15 --> e21 : Marcar como pendiente [ST]` en `docs/artefactos/blueprint-completo.md` → rojo anti-desfase; y reponer la clave `Pendiente` en `fasesBlueprint.ts` → rojo `tsc`.
-- [ ] 3.6 Regla 1: no hay guarda del servidor que cambie de sitio; confirmar que P6 (`flujoSoporteRemoto.test.ts:82-90`) sigue fijando flujo→estado y que quitar la guarda de flujo con P5 reapuntado da 200 y rojo. Anotarlo.
+- [x] 3.1 Reponer `marcar_pendiente` en `transitions.ts:206-207` → rojo: invariantes 1 y 2, huérfanas de `transicionesEjecucion`, caso 400.
+- [x] 3.2 `diagnostico_complementario.from` vuelve a `['Pendiente']` → rojo: invariante 1 y `CASOS` contra el grafo.
+- [x] 3.3 Regla 2: quitar `'Pendiente'` de `estados.ts:182` → rojo: `tsc` en `fasesBlueprint.ts:68`, invariante 1, `estados.test.ts`.
+- [x] 3.4 Regla 2: ensuciar `cifras_ancladas` en `config.yaml` (`maestro: "34"`, `"38"`, `"21"`, una por una) → rojo en `cifrasAncladas.test.ts`.
+- [x] 3.5 Regla 2: reponer `e15 --> e21 : Marcar como pendiente [ST]` en `docs/artefactos/blueprint-completo.md` → rojo anti-desfase; y reponer la clave `Pendiente` en `fasesBlueprint.ts` → rojo `tsc`.
+- [x] 3.6 Regla 1: no hay guarda del servidor que cambie de sitio; confirmar que P6 (`flujoSoporteRemoto.test.ts:82-90`) sigue fijando flujo→estado y que quitar la guarda de flujo con P5 reapuntado da 200 y rojo. Anotarlo.
 
 ### Fase 4 · Cierre del lote A
 
-- [ ] 4.1 `npm test`, `npm run typecheck`, `npm run lint` (techo 165 avisos, sin subir).
-- [ ] 4.2 Medir líneas (`--shortstat --no-renames` + `wc -l`); si >720, partir según el forecast. Crear `apply-progress.md` (rojos, mutaciones, medida, anotar `blueprintserviciotecnico.html:765`, `:770-771` fuera de alcance).
+- [x] 4.1 `npm test`, `npm run typecheck`, `npm run lint` (techo 165 avisos, sin subir).
+- [x] 4.2 Medir líneas (`--shortstat --no-renames` + `wc -l`); si >720, partir según el forecast. Crear `apply-progress.md` (rojos, mutaciones, medida, anotar `blueprintserviciotecnico.html:765`, `:770-771` fuera de alcance).
 
 ## Lote B (apply 2)
 

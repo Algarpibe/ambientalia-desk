@@ -43,13 +43,13 @@ describe('mapaBlueprint — motor puro', () => {
     }
   })
 
-  it('RQ-MB-02 · el diagrama completo tiene 38 aristas, 3 con origen en Habilitar Servicio', () => {
+  it('RQ-MB-02 · el diagrama completo tiene 35 aristas, 3 con origen en Habilitar Servicio', () => {
     const salida = generarMapaBlueprint(entradaReal())
     const completo = salida['blueprint-completo.md']
     // El patrón exige alias `eNN` a los dos lados: la cabecera HTML cierra con un `-->` suelto
     // (`<!-- ... -->`) que un patrón desnudo `/-->/ ` contaría como arista fantasma.
     const aristas = completo.match(/e\d{2} --> e\d{2}/g) ?? []
-    expect(aristas).toHaveLength(38)
+    expect(aristas).toHaveLength(35)
     const desdeHabilitar = completo.match(/: Habilitar Servicio/g) ?? []
     expect(desdeHabilitar).toHaveLength(3)
   })
@@ -64,10 +64,10 @@ describe('mapaBlueprint — motor puro', () => {
 
   it('RQ-MB-04 · guarda de EJECUCIÓN (D-1) · un estado sin fase asignada hace fallar la generación', () => {
     const entrada = entradaReal()
-    const sinPendiente = Object.fromEntries(
-      Object.entries(entrada.fasePorEstado).filter(([estado]) => estado !== 'Pendiente'),
+    const sinContinuacion = Object.fromEntries(
+      Object.entries(entrada.fasePorEstado).filter(([estado]) => estado !== 'Continuación del proceso'),
     ) as typeof entrada.fasePorEstado
-    expect(() => generarMapaBlueprint({ ...entrada, fasePorEstado: sinPendiente })).toThrow(/Pendiente/)
+    expect(() => generarMapaBlueprint({ ...entrada, fasePorEstado: sinContinuacion })).toThrow(/Continuación del proceso/)
   })
 
   it('guarda de alias · un estado referenciado por una arista pero AUSENTE de `estados` hace fallar la generación', () => {
@@ -108,7 +108,7 @@ describe('mapaBlueprint — motor puro', () => {
 
   it('RQ-MB-04 · las claves del mapa de fases usadas son exactamente ESTADOS (cobertura completa)', () => {
     const salida = generarMapaBlueprint(entradaReal())
-    // Los 21 estados aparecen entre las cuatro vistas (cada uno en su fase nativa al menos).
+    // Los 20 estados aparecen entre las cuatro vistas (cada uno en su fase nativa al menos).
     const completo = salida['blueprint-completo.md']
     for (const estado of ESTADOS_SERVICIO) expect(completo).toContain(estado)
   })
@@ -174,5 +174,15 @@ describe('mapaBlueprint — RQ-MB-06 · anti-desfase contra docs/artefactos/', (
       expect(regenerado[nombre], `${nombre}: el generador no produjo este fichero`).toBeDefined()
       expect(regenerado[nombre]).toBe(enDisco)
     }
+  })
+})
+
+// F1C-09 (E-140): `Pendiente` sale del catálogo de servicio y ninguna arista del mapa lo toca.
+describe('mapaBlueprint — F1C-09 · Pendiente fuera del mapa de servicio', () => {
+  it('ninguna arista ni estado del diagrama completo menciona Pendiente, y quedan 35 aristas', () => {
+    const completo = generarMapaBlueprint(entradaReal())['blueprint-completo.md']
+    expect(completo.match(/e\d{2} --> e\d{2}/g) ?? []).toHaveLength(35)
+    expect(completo).not.toContain('Pendiente')
+    expect(completo).not.toContain('Marcar como pendiente')
   })
 })

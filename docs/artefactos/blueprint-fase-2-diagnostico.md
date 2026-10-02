@@ -21,7 +21,6 @@ stateDiagram-v2
     state "En Proceso" as e15
     state "Continuación del proceso" as e16
     state "Por Facturar →cierre" as e17
-    state "Pendiente" as e21
     e12 --> e13 : Ingreso a Servicio [frontera] [ST]
     e13 --> e14 : Escalado a Revisión [ST]
     e14 --> e13 : Devolución a corrección [ST]
@@ -30,7 +29,6 @@ stateDiagram-v2
     e15 --> e09 : Solicitud repuestos [ST]
     e03 --> e15 : Aprobación [C]
     e09 --> e15 : Entrega de Repuestos [ST]
-    e15 --> e21 : Marcar como pendiente [ST]
     e06 --> e01 : Notificación por garantía [C][CO]
     e07 --> e03 : Notificación cliente [C]
     e08 --> e03 : Notificación cliente (SKU) [C]
@@ -42,11 +40,9 @@ stateDiagram-v2
     e15 --> e02 : Calibración de sensores ext. [ST]
     e13 --> e02 : Calibración de sensores ext. [ST]
     e02 --> e15 : Retorno de servicios externos [ST]
-    e21 --> e17 : Servicio externo [frontera] [ST]
-    e14 --> e17 : Servicio externo [frontera] [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
     e03 --> e17 : Rechazo [frontera] [C][ST]
     e13 --> e17 : Rechazo [frontera] [C][ST]
-    e21 --> e16 : Diagnóstico complementario [ST]
+    e15 --> e16 : Diagnóstico complementario [ST]
     e16 --> e07 : Notificación re cotización [C]
 ```

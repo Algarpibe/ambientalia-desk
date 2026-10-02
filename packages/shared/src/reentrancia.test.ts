@@ -26,9 +26,9 @@ describe('tabla de reentrancia', () => {
    */
   it('el grafo tiene exactamente tres ciclos, y son estos', () => {
     expect(tablaDeReentrancia().map((c) => c.estados)).toEqual([
-      // C2 — diagnóstico / cotización / repuestos / servicio externo. Nueve estados.
+      // C2 — diagnóstico / cotización / repuestos / servicio externo. Ocho estados (sin Pendiente desde F1C-09).
       [
-        'En Espera de Repuestos', 'En Proceso', 'Notificación cliente', 'Solicitado', 'Pendiente',
+        'En Espera de Repuestos', 'En Proceso', 'Notificación cliente', 'Solicitado',
         'Notificación Comercial', 'En espera de SKU inventario', 'Servicio externo',
         'Continuación del proceso',
       ],
@@ -51,10 +51,10 @@ describe('tabla de reentrancia', () => {
     expect(transitionById('liberacion_sin_factura')!.fields.some((f) => f.kind === 'date')).toBe(false)
   })
 
-  /** C2 — el grande: nueve estados y OCHO transiciones reentrantes con fecha. */
+  /** C2 — el grande: ocho estados y OCHO transiciones reentrantes con fecha. */
   it('C2 · diagnóstico / cotización / repuestos / servicio externo: ocho reentrantes con fecha', () => {
     const c2 = componenteQueContiene('En Proceso')!
-    expect(c2.estados).toHaveLength(9)
+    expect(c2.estados).toHaveLength(8)
     expect(c2.transiciones).toEqual([
       { id: 'llegada_repuestos', from: 'En Espera de Repuestos', to: 'En Proceso', campos: ['Fecha Recepción de repuestos'] },
       { id: 'aprobacion_y_repuestos', from: 'Notificación cliente', to: 'En Espera de Repuestos', campos: ['Fecha Orden de Compra', 'Fecha Orden De Venta'] },

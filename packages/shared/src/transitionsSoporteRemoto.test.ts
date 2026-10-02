@@ -54,13 +54,13 @@ describe('TRANSITIONS_SOPORTE_REMOTO — catálogo (RQ-SR-01)', () => {
 describe('TRANSITIONS_SOPORTE_REMOTO — ids únicos entre los tres catálogos (RQ-SR-06, S-8)', () => {
   it('(e) ningún id se repite entre TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO y el catálogo de soporte remoto', () => {
     const ids = [...TRANSITIONS, ...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO].map((t) => t.id)
-    expect(ids).toHaveLength(34 + 6 + 4)
-    expect(new Set(ids).size, 'hay ids repetidos entre catálogos').toBe(44)
+    expect(ids).toHaveLength(31 + 6 + 4)
+    expect(new Set(ids).size, 'hay ids repetidos entre catálogos').toBe(41)
   })
 
-  it('(e) marcar_pendiente sigue resolviendo a servicio y soporte_pendiente a soporte-remoto', () => {
-    expect(flujoDeTransicion('marcar_pendiente')).toBe('servicio')
-    expect(transicionPorId('marcar_pendiente')).toBe(TRANSITIONS.find((t) => t.id === 'marcar_pendiente'))
+  it('(e) diagnostico_complementario sigue resolviendo a servicio y soporte_pendiente a soporte-remoto', () => {
+    expect(flujoDeTransicion('diagnostico_complementario')).toBe('servicio')
+    expect(transicionPorId('diagnostico_complementario')).toBe(TRANSITIONS.find((t) => t.id === 'diagnostico_complementario'))
     expect(flujoDeTransicion('soporte_pendiente')).toBe('soporte-remoto')
     expect(transicionPorId('soporte_pendiente')?.to).toBe('Pendiente')
   })

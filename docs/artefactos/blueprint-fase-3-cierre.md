@@ -14,14 +14,10 @@ stateDiagram-v2
     state "Notificación Comercial ←diagnostico" as e07
     state "Liberación Comercial" as e10
     state "Rev./Diagnostico ←diagnostico" as e13
-    state "Notificado ←diagnostico" as e14
     state "En Proceso ←diagnostico" as e15
     state "Por Facturar" as e17
     state "Finalizado" as e18
-    state "Pendiente ←diagnostico" as e21
     e15 --> e17 : finalización de servicio [frontera] [ST]
-    e21 --> e17 : Servicio externo [frontera] [ST]
-    e14 --> e17 : Servicio externo [frontera] [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
     e03 --> e17 : Rechazo [frontera] [C][ST]
     e13 --> e17 : Rechazo [frontera] [C][ST]

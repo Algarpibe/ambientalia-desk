@@ -26,18 +26,18 @@ export const FASES: Fase[] = [
 ]
 
 /**
- * La fase de cada uno de los 21 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
+ * La fase de cada uno de los 20 estados. `satisfies Record<EstadoServicio, FaseId>` es la guarda de
  * COMPILACIÓN de las dos que pide D-1 del diseño: una clave que falte o que sobre es error de
  * `tsc` en esta misma declaración, antes de que el generador (Unidad B) llegue a ejecutarse. La
  * otra guarda —el `throw` de `mapaBlueprint.ts` ante una tabla inyectada e incompleta— es la que
  * una prueba puede poner en rojo, y vive en la Unidad B: las dos hacen falta y no son la misma.
  *
- * Tres asignaciones NO son mecánicas y se citan aparte:
+ * Tres notas sobre asignaciones que NO son mecánicas, citadas aparte:
  * - `Ingresado` → `entrada`: `R08.2.md:1188` lo nombra en la fase 1 («… convergen en Ingresado»);
  *   no aparece en `:1190`, que arranca en Rev./Diagnostico. `ingreso_a_servicio` es la frontera
  *   1→2.
- * - `Pendiente` → `diagnostico`: no está en M1.3.1 (nació el 11/09, posterior a esa redacción);
- *   deriva de sus dos únicas salidas EN EL CATÁLOGO DE SERVICIO, las dos de Servicio Técnico (`transitions.ts:230`, `:244`).
+ * - `Pendiente` ya no tiene fase: desde F1C-09 no es estado de servicio, sólo de soporte remoto
+ *   (`soporte_pendiente`); `satisfies` rechazaría que su clave volviera a esta tabla.
  * - Los cuatro de `ESTADOS_SIN_SALIDA` (`estados.ts:151-160`) → `diagnostico`: `R08.2.md:1190` los
  *   nombra en bloque como «los cuatro estados de espera» de esa fase.
  */
@@ -54,7 +54,7 @@ export const FASE_POR_ESTADO = {
   'Notificación cliente': 'diagnostico',
   'En Proceso': 'diagnostico',
   'Continuación del proceso': 'diagnostico',
-  'Pendiente': 'diagnostico',
+  // Pendiente: sin clave desde F1C-09. No es estado de servicio, sólo existe en soporte remoto.
   'En Espera de Repuestos': 'diagnostico',
   'Solicitado': 'diagnostico',
   'Servicio externo': 'diagnostico',

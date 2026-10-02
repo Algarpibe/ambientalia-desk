@@ -186,11 +186,11 @@ describe('flujo soporte-remoto — enrutado, catálogo y guarda de flujo (RQ-SR-
   it('el catálogo de un SR en En Proceso es TRANSITIONS_SOPORTE_REMOTO, y flujoDeTransicion(soporte_pendiente) es soporte-remoto', () => {
     expect(catalogoDelTicket({ classification: 'Soporte remoto', status: 'En Proceso' })).toBe(TRANSITIONS_SOPORTE_REMOTO)
     expect(flujoDeTransicion('soporte_pendiente')).toBe('soporte-remoto')
-    expect(flujoDeTransicion('marcar_pendiente')).toBe('servicio')
+    expect(flujoDeTransicion('diagnostico_complementario')).toBe('servicio')
   })
 
-  it('fueraDeFlujo: marcar_pendiente sobre un SR en En Proceso nombra «soporte remoto» y «servicio técnico»', () => {
-    const mensaje = fueraDeFlujo(transicionPorId('marcar_pendiente')!, { classification: 'Soporte remoto', status: 'En Proceso' })
+  it('fueraDeFlujo: diagnostico_complementario sobre un SR en En Proceso nombra «soporte remoto» y «servicio técnico»', () => {
+    const mensaje = fueraDeFlujo(transicionPorId('diagnostico_complementario')!, { classification: 'Soporte remoto', status: 'En Proceso' })
     expect(mensaje).toContain('soporte remoto')
     expect(mensaje).toContain('servicio técnico')
   })

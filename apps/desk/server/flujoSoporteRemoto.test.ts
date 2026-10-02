@@ -70,10 +70,10 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
     expect(otra.body.error).toContain('no aplica desde el estado')
   })
 
-  it('P5 · marcar_pendiente (de servicio) sobre un SR en En Proceso → 409 que nombra «soporte remoto»', async () => {
+  it('P5 · diagnostico_complementario (de servicio) sobre un SR en En Proceso → 409 que nombra «soporte remoto»', async () => {
     await ticket('sr-5', 92005, 'En Proceso', 'Soporte remoto')
     const { app } = appWith()
-    const res = await ejecutar(app, await userCookie(SERVICIO), 'sr-5', 'marcar_pendiente', 5)
+    const res = await ejecutar(app, await userCookie(SERVICIO), 'sr-5', 'diagnostico_complementario', 5)
     expect(res.status).toBe(409)
     expect(res.body.error).toContain('soporte remoto')
     expect((await fila('sr-5')).status).toBe('En Proceso')
@@ -109,7 +109,7 @@ describe('serie P · ejecución del flujo de soporte remoto (guarda 3, estado y 
       if (res.status === 200) ok.push(t.id)
       else expect(res.status, `${t.id} desde Solicitud Soporte`).toBe(409)
     }
-    expect(n, 'transiciones recorridas (34 + 6 + 4 = 44)').toBe(44)
+    expect(n, 'transiciones recorridas (31 + 6 + 4 = 41)').toBe(41)
     expect(ok).toEqual(['asignacion_soporte'])
   }, 60_000)
 
