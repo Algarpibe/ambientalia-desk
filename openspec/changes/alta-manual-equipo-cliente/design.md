@@ -191,7 +191,7 @@ formulario deja elegir uno. No hay lista de NIT genéricos exentos: decidirla es
 | `packages/zoho-sync/src/db/schema.sql` | Sólo **al final**: `CREATE TABLE public.clientes_provisionales` y el `ALTER` de `equipos`. `:169-173` intacta | 1 |
 | `packages/zoho-sync/src/db/migrate.ts` | `clientes_provisionales` al final de `:73` | 1 |
 | `packages/zoho-sync/src/db/migrate.test.ts` | En sitio: `:284`, `:285`, `:286` 39→40; `:376` 43→44; `:378` 22→23 (`:377` sigue en 21). Al final: prueba de la vista intacta | 1 |
-| `packages/shared/src/types.ts`, `altaManual.ts`, `index.ts` | `provisional?` en `:301`; `clienteProvisional?` en `:99`; `pendienteValidar?`; `:555`. `PREFIJO_PROVISIONAL`, `serialesCoinciden`; export al final | 1 |
+| `packages/shared/src/types.ts`, `altaManual.ts`, `index.ts` | `provisional?` en `:301`; `clienteProvisional?` en `:8`; `pendienteValidar?`; `:555`. `PREFIJO_PROVISIONAL`, `serialesCoinciden`; export al final | 1 |
 | `apps/desk/server/db/clientesProvisionales.ts`, `services/clientes.ts`, `db/ticketsConCliente.ts` | Nuevos: lecturas, `obtenerCliente`, `buscarClientes`, `clienteParaEquipo`, envoltorio de listados | 1 |
 | `routes/directory.ts:3`, `:16`, `:26`; `routes/remision.ts:5`, `:10`, `:203`, `:307`; `routes/tickets.ts:5`; `routes/prioridad.ts:4`; `routes/equipos.ts:81`; `db/ticketFuentes.ts:172-174`; `analisis.ts`; `mappers.ts:185`, `:199`, `:246` | En sitio (salvo `analisis.ts`, poco citado) | 1 |
 | `services/altaManual.ts` (nuevo), `ticketService.ts` (`:21`, `:24`, `:25`, `:28`, `:89`, `:91`, `:107`, imports), `equipoNuevo.ts:80-99`, `db/equipos.ts`, `routes/tickets.ts:125` | Alta manual | 2 |

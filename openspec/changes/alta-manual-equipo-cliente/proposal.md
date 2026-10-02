@@ -105,3 +105,18 @@ deben llegar al expediente R08.5. `zoho-sync` entra por `RQ-ZS-09` (la vista).
 
 `git revert` de los lotes. La tabla y las columnas nuevas son aditivas, y la vista vuelve a su definición de
 `schema.sql:169-173`.
+
+## Supuestos reversibles aplicados durante la construcción (añadidos tras el verify, W-4)
+
+Además de Q1-Q4, la construcción aplicó estos siete supuestos («Regla de ejecución» de `CLAUDE.md`). Todos son
+reversibles: ninguno cambia el alcance de la fila ni toca datos de producción.
+
+| Supuesto | Dónde está escrito | Reversible |
+|---|---|---|
+| **Orden del enlace:** un `contactId` ausente o con prefijo provisional no se busca en Books; su `422` queda en C, detrás de B | `apps/desk/server/routes/altaManual.ts:24-25`; `apply-progress.md:131` | Sí: mover la guarda y su prueba de posición |
+| **Validar escribe `false`**, no `NULL`: distingue «validado» de «nunca pendiente» | `apps/desk/server/routes/altaManual.ts:50`; `apply-progress.md:133` | Sí: el lector sólo mira `=== true` (`apps/desk/server/db/equipos.ts:115`) |
+| **Todos los candidatos** en el `409` de NIT ya en Books, sin NIT genérico exento | `design.md:159-162`; `apps/desk/server/services/altaManual.ts:156`; la exención es E-154 (Gerencia) | Sí: una lista de exentos se añade sin tocar el contrato del `409` |
+| **DV pegado:** «9001234567» sólo casa si es exactamente base + DV del NIT de Books | `design.md:149-150`; `tasks.md:93`; `packages/shared/src/altaManual.ts:38-42` | Sí: regla local de `nitCoincide` |
+| **Lectura de todo Books:** se recorren todos los contactos de `clients` y se decide en JS; el coste es hipótesis sin medir hasta **F1F-03** | `design.md:152-156`; `apply-progress.md:85`; `apps/desk/server/db/clientesProvisionales.ts:66` | Sí: filtrar en SQL si F1F-03 lo pide |
+| **NIT vacío tras normalizar** nunca casa, ni tecleado ni de Books | `design.md:163-165`; `apply-progress.md:82` | Sí: guarda única en `nitCoincide` |
+| **`pendienteValidar` en la ficha** (alcance añadido en el lote 4): la interfaz lo necesitaba y el servidor no lo devolvía | `apply-progress.md:164`; requisito RQ-HV-19 en `specs/hojas-vida/spec.md` (W-3); pruebas `apps/desk/server/routes/altaManual.test.ts:268` y `:280` | Sí: `git revert` del lote 4 deja de devolverlo |

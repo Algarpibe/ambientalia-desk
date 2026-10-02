@@ -284,3 +284,28 @@ El detector sobre `HEAD` da 0 bloqueantes (arriba). Esta verificación no insert
 ### Medida del intento de verify
 
 Medida al escribir el informe, contra `ba7547e`: `git diff --shortstat --no-renames` sin cambios en seguimiento (vacío) y un solo fichero nuevo sin trackear, este `verify-report.md`, de 286 líneas con `wc -l`. Total del intento: 286 líneas, sin binarios. Verify no modifica ningún otro fichero.
+
+## Adenda del 2026-10-02 — lo que se cerró después del verify (el veredicto de arriba no cambia)
+
+Registro fechado: el veredicto, los hallazgos y las cifras de arriba son los de `51157f2` y no se reescriben.
+
+**Cerrado después del verify**
+
+| Hallazgo | Cómo se cerró | Commit |
+|---|---|---|
+| W-3 | La prueba de `:268` sólo sembraba `null`; la mutación `?? undefined` en `apps/desk/server/db/equipos.ts:115` sobrevivía (28/28). Prueba nueva por el flujo real (validar y releer), `apps/desk/server/routes/altaManual.test.ts:280`: nace verde, declarado, y la mutación la pone roja en la ficha y en el historial. Intento 8 del registro, 19 líneas | `099d11f` |
+| W-3 | Requisito RQ-HV-19 con tres escenarios en `specs/hojas-vida/spec.md`: el campo sólo viene cuando vale `true`; validado o nunca pendiente, **ausente**, no `false` | commit documental de esta adenda |
+| W-4 | Sección «Supuestos reversibles aplicados durante la construcción» al final de `proposal.md`: siete supuestos, con dónde están escritos y si son reversibles | commit documental de esta adenda |
+| W-5 | Destino de la verificación en la app (`tasks.md:132`): «§6 (tareas de persona) del próximo paquete de despliegue que incluya F1B-15; hasta entonces, queda escrita en esta tabla». No se abre entrada en `docs/sdd/ENTRADA.md`; E-154 sigue aparte, porque es decisión de Gerencia y no una verificación | commit documental de esta adenda |
+| W-1 | Matriz de `tasks.md:134`: 45 escenarios y 11 requisitos (44 y 10 verificados aquí, más RQ-HV-19) | commit documental de esta adenda |
+| W-7 | `design.md:194`: `clienteProvisional?` apunta a `:8` de `packages/shared/src/types.ts` (caso A de la regla de mutación 4) | commit documental de esta adenda |
+
+**Queda anotado para el `archive-report`**
+
+| Punto | Qué tiene que recoger |
+|---|---|
+| W-2 | Los dos «fallo a mitad» (TC-31 y TC-32) se prueban por la secuencia de verbos, no por el estado final, porque pg-mem no revierte un `ROLLBACK` |
+| W-6 | Formato TDD incompleto en `apply-progress.md` y siete pruebas que nacen verdes, todas con mutación |
+| §3.8 de `transitions-st` | Añadir las guardas nuevas a la tabla de escalones y a la fila `createManagedTicket` de la tabla de puertas, como pide el delta (`specs/transitions-st/spec.md:51-63`) |
+| F1F-03 | La lectura de todo Books es hipótesis sin medir y se mide con el volumen real en F1F-03 (`design.md:152-156`) |
+| E-154 | NIT genéricos exentos: abierta, es decisión de Gerencia (`docs/sdd/ENTRADA.md:1761`) |

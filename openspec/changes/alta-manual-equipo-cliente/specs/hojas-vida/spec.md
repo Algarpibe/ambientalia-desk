@@ -82,3 +82,26 @@ el aviso de pendiente mientras dure la marca y la acción de validar sólo a qui
 - GIVEN un equipo sin marca de pendiente
 - WHEN se valida
 - THEN responde `409` sin insertar traza
+
+### Requirement: RQ-HV-19 · La ficha y la hoja de vida devuelven `pendienteValidar` sólo cuando vale `true`
+
+`GET /api/equipos/:id` (la ficha) y `GET /api/equipos/:id/historial` (la hoja de vida, en `equipo`) **SHALL** llevar
+`pendienteValidar: true` mientras el equipo tenga la marca «pendiente de validar». Un equipo validado (la validación
+deja la columna en `false`, `apps/desk/server/routes/altaManual.ts:50`) o que nunca estuvo pendiente (`null`) **MUST NOT**
+llevar el campo: viene **ausente**, no `false`. Es la lectura del servidor de la que dependen el aviso y la acción de
+validar de RQ-HV-18 y la guarda de «Habilitar Servicio» en la interfaz (alcance añadido en el lote 4, `ba7547e`).
+
+#### Scenario: Equipo pendiente
+- GIVEN un equipo con la marca de pendiente
+- WHEN se piden su ficha y su hoja de vida
+- THEN las dos llevan `pendienteValidar: true` (`apps/desk/server/routes/altaManual.test.ts:268`)
+
+#### Scenario: Equipo validado por la ruta real
+- GIVEN un equipo pendiente que Comercial valida por `POST /api/equipos/:id/validacion` (la columna queda en `false`)
+- WHEN se piden su ficha y su hoja de vida
+- THEN responden `200` y ninguna de las dos lleva la propiedad `pendienteValidar` (`apps/desk/server/routes/altaManual.test.ts:280`)
+
+#### Scenario: Equipo que nunca estuvo pendiente
+- GIVEN un equipo con la columna en `null`
+- WHEN se piden su ficha y su hoja de vida
+- THEN ninguna de las dos lleva `pendienteValidar` (`apps/desk/server/routes/altaManual.test.ts:268`)

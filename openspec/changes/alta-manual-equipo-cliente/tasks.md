@@ -129,9 +129,9 @@ P-A (`design.md` §4.6) como entrada de `docs/sdd/ENTRADA.md`. Archivar no la da
 |---|---|---|
 | Q1/Q2 (Anexo D nº 83): quién hace el alta manual y si los cinco datos son el mínimo | Gerencia | `openspec/config.yaml` → `decisiones_de_gerencia` |
 | **P-A** · Aviso a Comercial cuando un contacto de Books comparta NIT con un provisional sin enlazar (hoy el enlace depende de que alguien se acuerde) | Gerencia (alcance y destino) | `design.md` §4.6 → `docs/sdd/ENTRADA.md` al archivar |
-| Verificación en la app tras desplegar (alta manual, enlace, validación, «Habilitar Servicio») | Persona de Comercial | `docs/sdd/` parte de verificación |
+| Verificación en la app tras desplegar (alta manual, enlace, validación, «Habilitar Servicio») | Persona de Comercial | §6 (tareas de persona) del próximo paquete de despliegue que incluya F1B-15; hasta entonces, queda escrita en esta tabla |
 
-## Matriz de cobertura (43 escenarios, 10 requisitos)
+## Matriz de cobertura (45 escenarios, 11 requisitos: 44 y 10 verificados; RQ-HV-19 añadido por W-3)
 
 | Requisito | Escenarios → tareas |
 |---|---|
@@ -145,3 +145,4 @@ P-A (`design.md` §4.6) como entrada de `docs/sdd/ENTRADA.md`. Archivar no la da
 | RQ-HV-17 | reservados, Comercial tampoco 2.1-2.2 (con C-1) · PATCH después 2.1 |
 | RQ-HV-18 | correcta, sin permiso, no catalogado, ya validada 3.6-3.7 |
 | RQ-TS-32 | provisional, equipo, ambos, tras enlazar, soporte remoto 3.2, 3.4 · posición 3.3, 3.5 |
+| RQ-HV-19 | pendiente, validado por la ruta real, nunca pendiente: `apps/desk/server/routes/altaManual.test.ts:268` y `:280` (W-3 del verify, `099d11f`) |
