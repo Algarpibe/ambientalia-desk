@@ -1,5 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { nitCoincide } from '@ambientalia/shared'
+import { enTransaccion } from './transaccion'
 
 /**
  * Lecturas de `public.clientes_provisionales` (F1B-15, D1, RQ-TC-34). Es la SEGUNDA consulta con la que
@@ -71,4 +72,39 @@ export async function clientesBooksPorNit(db: Queryable, nit: string): Promise<C
     .filter((c) => nitCoincide(nit, c.nit))
     .map((c) => ({ id: c.id, name: c.name ?? c.id }))
     .sort((a, b) => a.name.localeCompare(b.name, 'es') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+}
+
+/** Quién enlaza: id y nombre de la sesión, que quedan en el provisional (RQ-TC-32). */
+export interface PersonaEnlace { id: string; nombre: string }
+
+/**
+ * Enlace del provisional con un contacto de Books (D10, RQ-TC-32), en UNA transacción: marca el provisional (sólo si sigue
+ * sin enlazar: `WHERE enlazado_a IS NULL … RETURNING`, que cierra la carrera del doble enlace), reescribe `client_id` de
+ * todos sus tickets y de todos sus equipos (con `cliente_nombre`) y deja una fila `clientId` por equipo en
+ * `public.equipos_cambios`. Devuelve `null` si otro enlace se adelantó (la ruta responde `409`); nada queda a medias si
+ * cualquier escritura falla. No escribe en `books.*` ni en Zoho.
+ */
+export async function enlazarProvisional(
+  db: Queryable, id: string, contacto: { id: string; name: string }, persona: PersonaEnlace,
+): Promise<{ tickets: number; equipos: number } | null> {
+  return enTransaccion(db, async (q) => {
+    const marcado = await q.query(
+      `UPDATE public.clientes_provisionales
+          SET enlazado_a = $2, enlazado_por_id = $3, enlazado_por_nombre = $4, enlazado_at = now()
+        WHERE id = $1 AND enlazado_a IS NULL RETURNING id`,
+      [id, contacto.id, persona.id, persona.nombre],
+    )
+    if (!marcado.rows[0]) return null
+    const tickets = await q.query('UPDATE tickets SET client_id = $2 WHERE client_id = $1 RETURNING id', [id, contacto.id])
+    const propios = await q.query('SELECT id FROM equipos WHERE client_id = $1', [id])
+    await q.query('UPDATE equipos SET client_id = $2, cliente_nombre = $3 WHERE client_id = $1', [id, contacto.id, contacto.name])
+    for (const e of propios.rows as Array<{ id: string }>) {
+      await q.query(
+        `INSERT INTO public.equipos_cambios (equipo_id, campo, valor_anterior, valor_nuevo, usuario_id, usuario_nombre)
+         VALUES ($1, 'clientId', $2, $3, $4, $5)`,
+        [e.id, id, contacto.id, persona.id, persona.nombre],
+      )
+    }
+    return { tickets: tickets.rows.length, equipos: propios.rows.length }
+  })
 }

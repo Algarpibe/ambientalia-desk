@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PREFIJO_PROVISIONAL, esIdProvisional, serialesCoinciden, normalizarNit, nitCoincide, primerConflictoUnicidad } from './altaManual'
+import { PREFIJO_PROVISIONAL, esIdProvisional, serialesCoinciden, normalizarNit, nitCoincide, primerConflictoUnicidad, motivoAltaPendiente } from './altaManual'
 
 describe('PREFIJO_PROVISIONAL / esIdProvisional (D4, RQ-TC-30)', () => {
   it('el prefijo es «prov-» y distingue un id provisional de uno de Books', () => {
@@ -81,5 +81,26 @@ describe('primerConflictoUnicidad (escalón D, P6: gana el NIT y la OV va la úl
     expect(primerConflictoUnicidad({ nitEnBooks: [], ovEnUso: { number: 9 } })).toEqual({ tipo: 'ov', ticket: { number: 9 } })
     expect(primerConflictoUnicidad({ nitEnBooks: candidatos, ovEnUso: null })).toEqual({ tipo: 'nit', candidatos })
     expect(primerConflictoUnicidad({ nitEnBooks: [], ovEnUso: null })).toBeNull()
+  })
+})
+
+describe('motivoAltaPendiente (RQ-TS-32, escalón B de «Habilitar Servicio»)', () => {
+  it('ninguno pendiente → null', () => {
+    expect(motivoAltaPendiente({ clienteProvisional: false, equipoPendiente: false })).toBeNull()
+  })
+  it('sólo el cliente provisional nombra el cliente y no el equipo', () => {
+    const m = motivoAltaPendiente({ clienteProvisional: true, equipoPendiente: false })!
+    expect(m).toContain('cliente')
+    expect(m).not.toContain('equipo')
+  })
+  it('sólo el equipo pendiente nombra el equipo y no el cliente', () => {
+    const m = motivoAltaPendiente({ clienteProvisional: false, equipoPendiente: true })!
+    expect(m).toContain('equipo')
+    expect(m).not.toContain('cliente')
+  })
+  it('los dos a la vez se nombran juntos, en un solo mensaje', () => {
+    const m = motivoAltaPendiente({ clienteProvisional: true, equipoPendiente: true })!
+    expect(m).toContain('cliente')
+    expect(m).toContain('equipo')
   })
 })

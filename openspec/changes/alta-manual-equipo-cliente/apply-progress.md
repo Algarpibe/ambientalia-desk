@@ -107,3 +107,45 @@ Sin línea de servidor que lo imponga, la decisión sería la guarda: aquí las 
 
 ## Frontera de reversión
 `git revert` del lote 2b: el alta manual vuelve a no comprobar el NIT; `normalizarNit`, `nitCoincide` y `primerConflictoUnicidad` quedan sin uso.
+
+# Lote 3 — enlace, validación, guarda B y D12 (tareas 3.1-3.10 `[x]`)
+
+Strict TDD · partida `8cb209a` · sin tocar la vista, `books/repo.ts`, el hub ni `.tsx`. El orquestador commitea y mide.
+
+## Ciclo TDD
+| Tarea | Prueba | Rojo | Verde |
+|---|---|---|---|
+| 3.1 | `shared/altaManual.test.ts` (+4: `motivoAltaPendiente`) | 4 rojas: «motivoAltaPendiente is not a function» | 16/16 |
+| 3.2, 3.3 | `ticketService.test.ts`, al final (+8: provisional, equipo, ambos, tras enlazar, soporte remoto, sin consultas extra, P1, P2) | 4 rojas: `habilitar_servicio` pasaba (provisional, equipo, ambos, P2). Las otras cuatro **nacen verdes** (negativas: tras enlazar, soporte remoto, sin consultas extra, P1) y las prueban las mutaciones de abajo | 110/110 |
+| 3.6 | `routes/altaManual.test.ts` (nuevo, 27: enlace 14, validación 8, D12 4, más TC-33) | 17 rojas (ruta inexistente: «Ruta de API no encontrada»). **Seis nacen verdes por la razón equivocada y no cuentan como rojo (con las 4 de D12, 10 verdes de 27):** las que esperan `404`/`422` coinciden con el `404` genérico de `/api`; su rojo real son las mutaciones de orden de abajo. Las 4 de D12 nacen verdes por diseño (caracterización) | 27/27 |
+
+## Mutaciones (aplicada → rojo observado → revertida con copia previa, `cmp` idéntico y `git diff` sin restos)
+- **P1 (3.5):** `exigirAltaValidada` antes del permiso de área (`ticketService.ts:129`) → roja sólo «POSICIÓN (P1)» (esperaba 403).
+- **P2 (3.5):** la guarda detrás del `422` de obligatorios (`:134`) → roja sólo «POSICIÓN (P2)».
+- **Atajo `t.id !== 'habilitar_servicio'` (sin consultas extra):** quitado → rojas «soporte remoto no bloquea» y «sin consultas extra».
+- **Enlace M1:** `403` antes de los `404` → rojas las dos de «A antes que B». **M2:** `409` antes que `403` → roja «B permiso antes que B estado». **M3:** `422` de contactId antes que `403` → rojas «B antes que C» (las dos).
+- **Validación:** `409` antes que `403` → roja «orden: A antes que B … validado y sin permiso → 403».
+- **D12 (3.8):** `getClient` → `obtenerCliente` en `contratos.ts:52` (con su import) → roja la de contratos («El cliente no existe» ya no se devuelve). Las líneas de `design.md` D12 siguen siendo las de hoy: `contratos.ts:52`, `prioridad.ts:30` y `:38`, `equipos.ts:56` y `:171`. Sin mutar (sólo caracterización): prioridad y equipos.
+
+## Decisiones y supuestos (reversibles)
+- **Orden de guardas del enlace (D10 contra la escalera A<B<C<D de `transitions-st` §3.8).** El diseño pone el `422` de contactId «ausente o con prefijo» en C y la búsqueda del contacto en A; sin contactId no hay qué buscar, y un id con prefijo `prov-` nunca es de Books. **Supuesto:** la búsqueda del contacto en Books (`404`, A) sólo corre si hay un contactId bien formado (no vacío y sin prefijo provisional); el ausente o con prefijo salta A y cae en C, tras el `403` y el `409`. Resultado: `404` provisional · `404` contacto · `403` · `409` · `422`. Cumple A<B<C sin alcance nuevo; seis pruebas lo fijan y tres mutaciones lo muerden.
+- Cierre de la carrera del doble enlace: `UPDATE … WHERE id=$1 AND enlazado_a IS NULL RETURNING id` dentro de la transacción; vacío → `409` (el mismo del chequeo previo).
+- La validación deja `pendiente_validar = false` (no `NULL`): distingue «validado» de «nunca pendiente». `getEquipo` sólo lee `=== true`, así que el efecto es igual. Responde `{ id, pendienteValidar: false }`; el enlace, `{ id, enlazadoA, tickets, equipos }`.
+- `exigirAltaValidada` lee `obtenerCliente` (campo `provisional`) y `getEquipo`; un provisional ya enlazado se resuelve por Books y no bloquea (riesgo aceptado de D10).
+- Rutas montadas en sitio en `app.ts:22` (import) y `:61` (registro), mismo `requireAuth(db)` que las demás.
+
+## Casilla de la regla 13
+El lote 3 no toca `.tsx`: hoy el cliente no toma ninguna de estas decisiones. Para el lote 4, la línea del servidor de cada una: desactivar «Habilitar Servicio» con algo pendiente → `exigirAltaValidada`, cola de `ticketService.ts:131` (función al final del fichero); «Enlazar» y «Validar» sólo a Comercial o admin → `403` de `routes/altaManual.ts`; el predicado `motivoAltaPendiente` lo consume el cliente de `@ambientalia/shared`, sin reescribirlo. Las tres tienen línea.
+
+## Barrido de citas (3.9)
+- `ticketService.ts` pasó de 250 a 264 líneas: **sólo se añadió al final** (`exigirAltaValidada`, `:251-264`) y se editaron `:6` (import) y `:131` en sitio. Cero desplazamientos. `grep -rnoE "(ticketService|contratos|prioridad|equipos|clientesProvisionales|altaManual|app)\.ts:N(-N)?"` más el pase abreviado: ninguna cita se mueve; `contratos.ts`, `prioridad.ts` y `equipos.ts` no cambian (la mutación se revirtió).
+- Releído lo que AFIRMAN las citas a `ticketService.ts:131` (`cargoPermiso.test.ts:17`, `permissions/spec.md:362`, `:486`, `transitions-st/spec.md:33`, `transitions-equipo-nuevo/spec.md:339`, `design.md:36`, `:198`, `:215`): el cargo, la prioridad y la verificación de Verificación siguen en esa línea; ahora la cierra además `exigirAltaValidada`, que es lo que dicen `design.md` y `tasks.md`. `app.ts:61` (Paquetes de despliegue): sigue siendo la línea que monta las rutas; ahora monta también las de alta manual (Caso A, la frase sigue cierta).
+- `registro.test.ts:220` no hizo falta tocarlo (F1B-15 ya está en «en curso»).
+- Detector sobre instantánea del árbol (`git stash create`): exit 0, 0 bloqueantes; 13 abreviadas rotas informativas, las mismas que en 2b.
+
+## Cierre (3.10)
+- `npm test`: 176 ficheros pasan (1 omitido), 2541 pruebas pasan (+39), 2 omitidas, 0 rojas. `typecheck` limpio. `lint`: 165 avisos, 0 errores (techo 165, 0 nuevos). `build` verde.
+- Medida contra `8cb209a`: `git diff --shortstat --no-renames` 170 inserciones y 5 borrados en seguimiento, más 316 líneas en los dos ficheros nuevos (`routes/altaManual.ts` 53, `routes/altaManual.test.ts` 263); con `apply-progress.md` y `tasks.md`: 237 + 316 = 553.
+
+## Frontera de reversión
+`git revert` del lote 3: «Habilitar Servicio» vuelve a no mirar lo pendiente y desaparecen las dos rutas; las funciones de enlace y `motivoAltaPendiente` quedan sin uso.

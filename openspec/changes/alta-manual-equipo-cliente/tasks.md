@@ -100,16 +100,16 @@ cuyo NIT no casa con ninguno de Books sigue. El formulario (lote 4) sólo muestr
 
 ## Lote 3 — enlace, validación, guarda B y D12 (RQ-TC-32, RQ-HV-18, RQ-TS-32)
 
-- [ ] 3.1 RED→GREEN `shared/altaManual.ts`: `motivoAltaPendiente` (provisional, equipo pendiente, ambos nombrados juntos; ninguno → `null`).
-- [ ] 3.2 RED `ticketService.test.ts` (al final): TS-32 provisional, equipo, ambos, tras enlazar, soporte remoto. Rojo: `habilitar_servicio` pasa hoy.
-- [ ] 3.3 RED P1 (pendiente + sin Comercial → `403`) y P2 (pendiente + Comercial sin OV obligatoria → `422` de pendiente, no el de `:134`).
-- [ ] 3.4 GREEN cola de `ticketService.ts:131`: `exigirAltaValidada` tras `exigirVerificacion(gas)` y antes de `:132`; lectura en función nueva **al final**; sin consultas si `t.id !== 'habilitar_servicio'`.
-- [ ] 3.5 Mutaciones P1 (guarda antes de `:129`) y P2 (guarda detrás de `:134`): rojo; revertir.
-- [ ] 3.6 RED `routes/altaManual.test.ts`: enlace TC-32 (correcto, sin permiso, fallo a mitad, contacto inexistente, doble enlace; orden `404`·`403`·`409`·`422`), validación HV-18 a-d, espías TC-33.
-- [ ] 3.7 GREEN `db/clientesProvisionales.ts` (enlace) y `routes/altaManual.ts` (nuevo): enlace en una `enTransaccion` (`UPDATE … WHERE enlazado_a IS NULL RETURNING`; `tickets.client_id`; `equipos.client_id` y `cliente_nombre`; fila `clientId` por equipo), validación con `registrarEdicion`; montar la ruta.
-- [ ] 3.8 Caracterización D12 (nacen verdes): un id provisional rechazado en `contratos.ts:52` (`422`), `prioridad.ts:30`/`:38` (`404`), `equipos.ts:56` y `:171` (`422`). Rojo previo por mutación: `getClient` → `obtenerCliente` en `contratos.ts:52`; revertir.
-- [ ] 3.9 Barrido de citas (`ticketService|contratos|prioridad|equipos`) + pase abreviado; releer `ticketService.ts:131`; detector con 0 bloqueantes. `registro.test.ts:220`.
-- [ ] 3.10 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
+- [x] 3.1 RED→GREEN `shared/altaManual.ts`: `motivoAltaPendiente` (provisional, equipo pendiente, ambos nombrados juntos; ninguno → `null`).
+- [x] 3.2 RED `ticketService.test.ts` (al final): TS-32 provisional, equipo, ambos, tras enlazar, soporte remoto. Rojo: `habilitar_servicio` pasa hoy.
+- [x] 3.3 RED P1 (pendiente + sin Comercial → `403`) y P2 (pendiente + Comercial sin OV obligatoria → `422` de pendiente, no el de `:134`).
+- [x] 3.4 GREEN cola de `ticketService.ts:131`: `exigirAltaValidada` tras `exigirVerificacion(gas)` y antes de `:132`; lectura en función nueva **al final**; sin consultas si `t.id !== 'habilitar_servicio'`.
+- [x] 3.5 Mutaciones P1 (guarda antes de `:129`) y P2 (guarda detrás de `:134`): rojo; revertir.
+- [x] 3.6 RED `routes/altaManual.test.ts`: enlace TC-32 (correcto, sin permiso, fallo a mitad, contacto inexistente, doble enlace; orden `404`·`403`·`409`·`422`), validación HV-18 a-d, espías TC-33.
+- [x] 3.7 GREEN `db/clientesProvisionales.ts` (enlace) y `routes/altaManual.ts` (nuevo): enlace en una `enTransaccion` (`UPDATE … WHERE enlazado_a IS NULL RETURNING`; `tickets.client_id`; `equipos.client_id` y `cliente_nombre`; fila `clientId` por equipo), validación con `registrarEdicion`; montar la ruta.
+- [x] 3.8 Caracterización D12 (nacen verdes): un id provisional rechazado en `contratos.ts:52` (`422`), `prioridad.ts:30`/`:38` (`404`), `equipos.ts:56` y `:171` (`422`). Rojo previo por mutación: `getClient` → `obtenerCliente` en `contratos.ts:52`; revertir.
+- [x] 3.9 Barrido de citas (`ticketService|contratos|prioridad|equipos`) + pase abreviado; releer `ticketService.ts:131`; detector con 0 bloqueantes. `registro.test.ts:220`.
+- [x] 3.10 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
 
 ## Lote 4 — interfaz (`.tsx` fuera de la red, F0-00: sin rojo previo)
 

@@ -65,3 +65,15 @@ export function primerConflictoUnicidad<C, T>(c: { nitEnBooks: C[]; ovEnUso: T |
   if (c.ovEnUso) return { tipo: 'ov', ticket: c.ovEnUso }
   return null
 }
+
+/**
+ * Motivo por el que «Habilitar Servicio» no pasa (RQ-TS-32, escalón B): el cliente del ticket sigue siendo provisional
+ * y/o su equipo sigue pendiente de validar. Nombra juntos lo que falte; `null` si no falta nada. Pura: el servidor la
+ * aplica en `exigirAltaValidada` y el cliente sólo la consume para desactivar el botón (regla invariable 13).
+ */
+export function motivoAltaPendiente(p: { clienteProvisional: boolean; equipoPendiente: boolean }): string | null {
+  const faltan: string[] = []
+  if (p.clienteProvisional) faltan.push('el cliente es provisional y falta enlazarlo con un contacto de Books')
+  if (p.equipoPendiente) faltan.push('el equipo está pendiente de validar')
+  return faltan.length ? `No se puede habilitar el servicio: ${faltan.join(' y ')}` : null
+}

@@ -3,7 +3,7 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, primerConflictoUnicidad, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, primerConflictoUnicidad, motivoAltaPendiente, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -128,7 +128,7 @@ export async function executeTransition(
   }
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422
+  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422
   const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, recortarCertificado(b.values))
   const plan = buildTransitionPlan(t, values); delete plan.customFields[CLAVE_CERTIFICADO_FABRICA] /* F1A-03 (C-8): el número es de ESA liberación y vive en la traza; no se duplica en tickets.custom_fields, que el sync pisa */
   const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ const errCertificado = erroresCertificado(gas, values); if (plan.errors.length || erroresFecha.length || errCuarentena.length || errCertificado.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena, ...errCertificado] })
@@ -247,4 +247,18 @@ async function veredictoDeLiberacion(db: Queryable, t: Transition, row: { status
 /** Escalón B: el equipo con compuesto y patrón vigente no se libera desde `En Proceso`; falta pasar por Verificación. */
 function exigirVerificacion(v: VeredictoLiberacion | null): void {
   if (v?.bloquea) throw new HttpError(409, { error: v.mensaje })
+}
+
+/**
+ * F1B-15 (RQ-TS-32): «Habilitar Servicio» no pasa mientras el cliente del ticket sea provisional o su equipo siga pendiente
+ * de validar; `422` del escalón B, tras el área y antes de los obligatorios (`:131`). Sólo `habilitar_servicio` lo calcula: en
+ * las demás transiciones —y en el flujo de soporte remoto, que no la contiene— sale SIN consultar nada. Al FINAL del fichero,
+ * como `exigirMismoFlujo`, para no desplazar las citas vivas a `ticketService.ts`. El predicado es de `@ambientalia/shared`.
+ */
+async function exigirAltaValidada(db: Queryable, t: Transition, row: { client_id?: string | null; equipo_id?: string | null }): Promise<void> {
+  if (t.id !== 'habilitar_servicio') return
+  const cliente = row.client_id ? await obtenerCliente(db, row.client_id) : null
+  const equipo = row.equipo_id ? await getEquipo(db, row.equipo_id) : null
+  const motivo = motivoAltaPendiente({ clienteProvisional: cliente?.provisional === true, equipoPendiente: equipo?.pendienteValidar === true })
+  if (motivo) throw new HttpError(422, { error: motivo })
 }
