@@ -31,7 +31,7 @@ Cuatro piezas, cada una en módulo propio; en los ficheros muy citados sólo **e
 | D4 | Identificador del provisional | `prov-` + `randomUUID()` (`PREFIJO_PROVISIONAL` en `packages/shared/src/altaManual.ts`). El prefijo es lo que distingue un id provisional; un id de Books se resuelve por Books **antes** de mirar el prefijo, así que su camino no cambia (hipótesis: los `contact_id` de Books son numéricos y nunca empiezan por `prov-`) | Secuencia numérica: colisión posible con Books |
 | D5 | Columnas de `equipos` | `ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean`, **sin calificar** (`equipos` está en `DESK_TABLES`, `migrate.ts:63-64`), sin relleno, `NULL` ≡ no pendiente. «No catalogado» = `modelo_id IS NULL` con `modelo` en texto | Columnas de traza en `equipos`: duplican `public.equipos_cambios` (`schema.sql:485-506`) |
 | D6 | Traza | Equipo: filas en `equipos_cambios` con `campo` `altaManual`, `validacion` y `clientId`. Cliente: columnas de su tabla. `CambioEquipo['campo']` se amplía en sitio (`packages/shared/src/types.ts:555`) | Tabla de traza nueva |
-| D7 | Escalones del alta manual | **A** en `ticketService.ts:25` y en la línea vacía `:28`: presencia de serial, confirmación, modelo o (marca, texto, tipo), motivo y los cinco datos; `modeloId` existente. **C** en `:91`, junto a `validarCamposEquipoNuevo`: serial ≠ confirmación, reservados presentes (salvo C-1), provisional junto con `clientId` u orden de venta | Comparar el serial en `:25`: C antes que el A de `:39` |
+| D7 | Escalones del alta manual | **A** en `ticketService.ts:25` y en la línea vacía `:28`: presencia de serial, confirmación, modelo o (marca, texto, tipo), motivo y los cinco datos; `modeloId` existente. **C** en `:91`, junto a `validarCamposEquipoNuevo`: serial ≠ confirmación, reservados presentes (salvo C-1), provisional junto con `clientId` u orden de venta. **D** en `:96`, junto a la unicidad de la OV: NIT del provisional ya en Books → `409` con el existente (P-B, §4.6) | Comparar el serial en `:25`: C antes que el A de `:39`. NIT en Books como `422` de C: es unicidad, no contenido (orden total de F1B-10) |
 | D8 | Clasificación (**corregida por C-1**) | `b.equipoManual` activa el modo manual en cualquier clasificación. En «Equipo nuevo» la **fecha de factura sigue obligatoria** (F1B-14, `equipoNuevo.ts:40`) y el modo manual sólo relaja el modelo de catálogo; fuera de «Equipo nuevo» se rechazan fecha de factura, fin de garantía y mantenedor (RQ-HV-17) | Relajar también la fecha en «Equipo nuevo»: contradice `decision/equipo-nuevo-alta-en-ticket` |
 | D9 | Guarda de «Habilitar Servicio» | Escalón **B**, `422`, al final de la cadena de `ticketService.ts:131`, tras `exigirVerificacion(gas)` y antes de `:132`. Predicado puro `motivoAltaPendiente` en `packages/shared/src/altaManual.ts`; la lectura usa `obtenerCliente` (campo `provisional`) y `getEquipo`, en función al final de `ticketService.ts`, sin consultar si `t.id !== 'habilitar_servicio'` | Escalón C (`transitions-st/spec.md:1156`). `409`: el `422` lo fija el criterio 5 |
 | D10 | Enlace del cliente (alineado con RQ-TC-32) | `POST /api/clientes-provisionales/:id/enlace {contactId}`. Orden: A `404` provisional · A `404` contacto inexistente en Books (`getClient` de Books, que no ve provisionales) · B `403` sin Comercial ni admin (`equipoComercial.ts:31-33`) · B `409` ya enlazado · C `422` `contactId` ausente o con prefijo provisional. Una `enTransaccion`: `UPDATE clientes_provisionales … WHERE id=$1 AND enlazado_a IS NULL RETURNING id` (vacío → `409`), `UPDATE tickets SET client_id`, `UPDATE equipos SET client_id, cliente_nombre`, una fila `clientId` por equipo | Sin transacción: tickets y equipos repartidos. `SELECT … FOR UPDATE`: hipótesis de que pg-mem no lo soporta |
@@ -142,16 +142,24 @@ Contratos, prioridad y mantenedor no hay que reescribirlos: nunca pudieron apunt
 **Lo que queda a propósito con el nombre provisional:** la remisión ya emitida conserva su `empresa` copiada
 (`routes/remision.ts:203`, comentario de `:201`): es un documento, y no puede desdecir lo que dijo. Caso histórico.
 
-**Lo que este cambio NO resuelve — pendientes con fila** (en «Tareas de persona» de `tasks.md`, y en
+**P-B · Lo que SÍ resuelve: no se crea un provisional de un cliente que ya está en Books.** Decidido por el usuario el
+2026-10-02, dentro de esta tanda. El alta manual compara el NIT del provisional con los de la vista y, si casa,
+responde `409` (escalón D, junto a la unicidad de la OV en `ticketService.ts:96`) con el `id` y el nombre del cliente
+existente, sin escribir nada; el formulario lo ofrece para usarlo. **Normalización** (supuesto reversible): se compara
+la parte anterior al primer guion, sólo dígitos —«900.123.456-7» ≡ «900123456»—. **Lectura**: `SELECT id, name, nit
+FROM clients WHERE nit IS NOT NULL` y comparación en JS, en `db/clientesProvisionales.ts`; no usa `regexp_replace`
+para que lo probado en pg-mem sea lo que corre (hipótesis: el coste de recorrer los contactos es aceptable para un alta
+manual, que es excepcional). Sin NIT casado, el alta sigue. No cubre el caso de P-A: un contacto que **llega después**
+a Books.
+
+**Lo que este cambio NO resuelve — pendiente con fila** (en «Tareas de persona» de `tasks.md`, y en
 `docs/sdd/ENTRADA.md` al archivar, R-3):
 
 - **P-A · Nadie avisa de que el contacto ya está en Books.** El enlace es manual; si Comercial no lo hace, conviven
-  los dos y los tickets nuevos pueden seguir yendo al provisional. Salida posible: un aviso a Comercial cuando un
-  contacto de Books comparta NIT con un provisional sin enlazar. Decide alcance y destino Gerencia.
-- **P-B · El alta no comprueba si el NIT ya existe en Books.** Hoy un técnico puede crear un provisional de un
-  cliente que sí está en Books (duplicado desde el primer minuto). Salida posible: `422` en el escalón C cuando el
-  NIT del provisional case con uno de la vista, ofreciendo el existente. Cambia la conducta del formulario de campo,
-  así que no se aplica como supuesto: decide Gerencia.
+  los dos y los tickets nuevos pueden seguir yendo al provisional (P-B no lo impide: el NIT entró en Books después del
+  alta, y el alta de un ticket nuevo elige el cliente en el buscador, no crea otro provisional). Salida posible: un
+  aviso a Comercial cuando un contacto de Books comparta NIT con un provisional sin enlazar. Decide alcance y destino
+  Gerencia.
 
 ## 5. Ficheros y lotes
 
@@ -177,6 +185,7 @@ Contratos, prioridad y mantenedor no hay que reescribirlos: nunca pudieron apunt
 | Oculta fin de garantía y mantenedor (y la fecha de factura fuera de «Equipo nuevo», C-1) | El mismo validador (`CAMPOS_COMERCIALES_RESTRINGIDOS`, `equipoComercial.ts:14`) |
 | Exige los cinco datos y el motivo | `exigirClienteProvisional`, `ticketService.ts:28` (A) |
 | Ofrece el equipo existente si el serial ya está | `exigirEquipoManual` con `getEquipoBySerial` (gesto de `equipoNuevo.ts:46-47`) |
+| Ofrece el cliente de Books si el NIT ya está (P-B) | `409` del escalón D, `ticketService.ts:96` |
 | No combina provisional con OV o cliente existente | `validarContenidoAltaManual`, `:91` (C) |
 | Sólo el buscador del alta ofrece provisionales | No es la guarda: `getClient` de Books los rechaza en `contratos.ts:52`, `prioridad.ts:30`/`:38`, `equipos.ts:56`/`:171` (D12) |
 | No deja reasignar un equipo a otro provisional | `clienteParaEquipo`, `routes/equipos.ts:81` |
@@ -202,7 +211,8 @@ Las de D12 nacen **verdes** (caracterización): su rojo previo se obtiene por mu
 **Regla 1, posición:** (P1) pendiente + sin Comercial → `403`; mover la guarda antes de `:129` → rojo. (P2)
 pendiente + Comercial sin OV obligatoria → `422` de pendiente, no el de `:134`. (P3) serial distinto + OV usada →
 `422`, no `409`; mover la comparación detrás de `:96` → rojo. (P4) en `obtenerCliente`, poner la consulta de
-provisionales antes que Books → rojo la prueba de prioridad.
+provisionales antes que Books → rojo la prueba de prioridad. (P5) serial distinto (C) + NIT ya en Books (D) → `422`,
+no `409`; mover la comprobación del NIT delante de `:91` → rojo.
 
 **Regla 2, ensuciar lo vigilado:** (m1) quitar `public.` del `CREATE TABLE` nuevo; (m2) `ALTER TABLE public.equipos`;
 (m3) añadir `clientes_provisionales` o una columna `provisional` a `:169-173`; (m4) quitar la entrada de
@@ -222,13 +232,13 @@ el commit de partida más `wc -l` de lo nuevo sin trackear.
 | Intento | Contenido | Estimación |
 |---|---|---|
 | Lote 1 | Esquema, tipos, resolución de provisionales (RQ-ZS-16, RQ-TC-34) | ~340 (código ~140, pruebas ~200) |
-| Lote 2 | Alta manual y traza (RQ-TC-30/31/33, RQ-HV-16/17, C-1) | ~360 (código ~140, pruebas ~220) |
+| Lote 2 | Alta manual y traza (RQ-TC-30/31/33, RQ-HV-16/17, C-1, P-B) | ~400 (código ~160, pruebas ~240) |
 | Lote 3 | Enlace, validación, guarda B, caracterización de D12 | ~320 (código ~110, pruebas ~210) |
 | Lote 4 | Interfaz (`.tsx` fuera de la red, F0-00) | ~270 |
 
-Total ~1.290 frente a ~1.085 del diseño anterior: +205, por encima de las 100-150 de la decisión. La diferencia son
-las pruebas de RQ-TC-34 (siete escenarios) y la caracterización de D12; la vista retirada ahorra ~70. Ningún lote
-pasa de 400.
+Total ~1.330 frente a ~1.085 del diseño anterior: +245, por encima de las 100-150 de la decisión. La diferencia son
+las pruebas de RQ-TC-34 (siete escenarios), la caracterización de D12 y P-B (~40); la vista retirada ahorra ~70.
+Ningún lote pasa de 400.
 
 ## 10. Matriz de amenazas
 
@@ -242,5 +252,5 @@ y la columna quedan sin uso (borrarlas toca producción y lo decide una persona)
 ## 12. Preguntas abiertas
 
 Ninguna bloquea. Q1-Q4 siguen como supuestos de la propuesta. Supuestos nuevos, reversibles: D13 (parámetro
-`provisionales=1`) y la marca en `mappers.ts` (§4.2). Quedan fuera, como pendientes con fila y dueño Gerencia, P-A
-(aviso cuando el contacto aparece en Books) y P-B (comprobar el NIT contra Books en el alta), §4.6.
+`provisionales=1`), la marca en `mappers.ts` (§4.2) y la normalización del NIT de P-B (§4.6). Queda fuera, como
+pendiente con fila y dueño Gerencia, P-A (aviso cuando el contacto aparece en Books después), §4.6.

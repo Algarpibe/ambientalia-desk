@@ -22,7 +22,7 @@ Books» están en `design.md` §4.
 
 | Campo | Valor |
 |---|---|
-| Líneas estimadas | Lote 1 ~340 · Lote 2 ~360 · Lote 3 ~320 · Lote 4 ~270 (total ~1.290 en cuatro intentos) |
+| Líneas estimadas | Lote 1 ~340 · Lote 2 ~400 (con P-B) · Lote 3 ~320 · Lote 4 ~270 (total ~1.330 en cuatro intentos) |
 | Riesgo sobre 800 | Bajo en los cuatro; válvula 720 por intento |
 | Estrategia de entrega | ask-on-risk |
 | Medida | `git diff --shortstat --no-renames` contra el commit de partida del intento más `wc -l` de lo nuevo sin trackear; binarios aparte |
@@ -57,7 +57,7 @@ Chain strategy: pending
 - [ ] 1.12 Si `registro.test.ts:220` se pone roja, añadir `F1B-15` a «en curso» (orden alfabético, tras `F1B-11`).
 - [ ] 1.13 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (techo 165), `npm run build`; medir y registrar.
 
-## Lote 2 — alta manual y traza (RQ-TC-30, RQ-TC-31, RQ-TC-33, RQ-HV-16, RQ-HV-17, C-1)
+## Lote 2 — alta manual y traza (RQ-TC-30, RQ-TC-31, RQ-TC-33, RQ-HV-16, RQ-HV-17, C-1, P-B)
 
 - [ ] 2.1 RED `services/altaManual.test.ts`: criterios 1-4 y escenarios TC-30/31, HV-16/17; **C-1:** alta manual en «Equipo nuevo» sin fecha de factura → `422`. Rojo: módulo inexistente.
 - [ ] 2.2 GREEN `services/altaManual.ts` (nuevo): `exigirEquipoManual` (A), `exigirClienteProvisional` (A), `validarContenidoAltaManual` (C; respeta C-1), `escribirAltaManual(q, …)`.
@@ -66,6 +66,8 @@ Chain strategy: pending
 - [ ] 2.5 GREEN `equipoNuevo.ts` (`crearTicketConEquipo`, final) llama a `escribirAltaManual`; `db/equipos.ts` (`pendiente_validar` en `createEquipo` y `getEquipo`); `routes/tickets.ts:125` pasa `req.user?.id`.
 - [ ] 2.6 RED→GREEN atomicidad: fallo del `INSERT` del ticket no deja `clientes_provisionales`, `equipos` ni `tickets` (TC-31c); espías de Zoho/`books.*` en cero (TC-33).
 - [ ] 2.7 Mutación P3: mover la comparación del serial detrás de `ticketService.ts:96` → rojo; revertir.
+- [ ] 2.7b RED→GREEN P-B (RQ-TC-30 «El NIT ya está en Books»): `normalizarNit` puro en `packages/shared/src/altaManual.ts` («900.123.456-7» ≡ «900123456»), `clientePorNit` en `db/clientesProvisionales.ts`, `409` con `{ id, name }` en el escalón D, en sitio en `ticketService.ts:96`; nada escrito.
+- [ ] 2.7c Mutación P5: serial distinto (C) + NIT ya en Books (D) → `422`; mover la comprobación del NIT delante de `:91` → rojo; revertir.
 - [ ] 2.8 Barrido de citas (`ticketService|equipoNuevo|equipos|tickets`) + pase abreviado; releer `ticketService.ts:89`, `:91`; detector con 0 bloqueantes. `registro.test.ts:220` si hace falta.
 - [ ] 2.9 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
 
@@ -91,7 +93,7 @@ Chain strategy: pending
 - [ ] 4.5 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
 
 **Instrucción para `archive` (SIN casilla):** quitar `F1B-15` de «en curso» en `registro.test.ts:220`, y registrar
-P-A y P-B (`design.md` §4.6) como entradas de `docs/sdd/ENTRADA.md`. Archivar no los da por hechos.
+P-A (`design.md` §4.6) como entrada de `docs/sdd/ENTRADA.md`. Archivar no la da por hecha.
 
 ## Tareas de persona y pendientes (fuera del recuento; archivar no las da por hechas)
 
@@ -99,16 +101,15 @@ P-A y P-B (`design.md` §4.6) como entradas de `docs/sdd/ENTRADA.md`. Archivar n
 |---|---|---|
 | Q1/Q2 (Anexo D nº 83): quién hace el alta manual y si los cinco datos son el mínimo | Gerencia | `openspec/config.yaml` → `decisiones_de_gerencia` |
 | **P-A** · Aviso a Comercial cuando un contacto de Books comparta NIT con un provisional sin enlazar (hoy el enlace depende de que alguien se acuerde) | Gerencia (alcance y destino) | `design.md` §4.6 → `docs/sdd/ENTRADA.md` al archivar |
-| **P-B** · Rechazar en el alta un provisional cuyo NIT ya está en Books, ofreciendo el existente (cambia el formulario de campo) | Gerencia (alcance y destino) | `design.md` §4.6 → `docs/sdd/ENTRADA.md` al archivar |
 | Verificación en la app tras desplegar (alta manual, enlace, validación, «Habilitar Servicio») | Persona de Comercial | `docs/sdd/` parte de verificación |
 
-## Matriz de cobertura (42 escenarios, 10 requisitos)
+## Matriz de cobertura (43 escenarios, 10 requisitos)
 
 | Requisito | Escenarios → tareas |
 |---|---|
 | RQ-ZS-16 | guardianes en verde 1.1-1.2 · `CREATE` sin calificar 1.3 (m1, m2) · vista intacta 1.1, 1.3 (m3) |
 | RQ-TC-34 | búsqueda, enlazado no listado, ficha provisional, ficha de Books, `404`, prioridad 1.5-1.7 · listado 1.8 |
-| RQ-TC-30 | alta, faltan datos, motivo vacío 2.1-2.2 · id no se confunde 1.4, 2.1 |
+| RQ-TC-30 | alta, faltan datos, motivo vacío 2.1-2.2 · NIT ya en Books 2.7b-2.7c · id no se confunde 1.4, 2.1 |
 | RQ-TC-31 | dos marcas, soporte remoto 2.1-2.5 · fallo 2.6 · posición OV 2.3, 2.7 |
 | RQ-TC-32 | enlace, sin permiso, fallo a mitad, inexistente, doble 3.6-3.7 |
 | RQ-TC-33 | espías 2.6 y 3.6 |

@@ -12,6 +12,9 @@ quién la creó, cuándo y el **motivo escrito obligatorio** de por qué no se u
 coincidir con el de ningún contacto de Books. Los cinco datos y el motivo son obligatorios (supuesto Q2); si falta
 alguno el alta responde `422` listando **todos** los que faltan (escalón C) sin escribir nada. Puede hacer el alta
 manual quien hoy puede crear tickets (supuesto Q1). El alta manual **MUST NOT** escribir en `books.*` ni hacia Zoho.
+Si el NIT del provisional ya pertenece a un cliente de Books (comparado sin puntos, espacios ni dígito de
+verificación), el alta **SHALL** responder `409` (escalón D, unicidad) con el cliente existente (`id` y nombre) para
+que se use ése, sin escribir nada (P-B, decidido por el usuario el 2026-10-02).
 
 #### Scenario: Alta con cliente provisional
 - GIVEN una sesión que puede crear tickets y los cinco datos y el motivo completos
@@ -27,6 +30,11 @@ manual quien hoy puede crear tickets (supuesto Q1). El alta manual **MUST NOT** 
 - GIVEN un cuerpo manual con los cinco datos y un motivo de sólo espacios
 - WHEN se envía el alta
 - THEN responde `422` y no se escribe nada
+
+#### Scenario: El NIT ya está en Books
+- GIVEN un cliente de Books con NIT «900.123.456-7» y un alta manual con NIT «900123456»
+- WHEN se envía el alta
+- THEN responde `409` con el `id` y el nombre del cliente de Books, y no queda ningún ticket, equipo ni provisional escrito
 
 #### Scenario: El id provisional no se confunde con uno de Books
 - GIVEN un cliente provisional creado
