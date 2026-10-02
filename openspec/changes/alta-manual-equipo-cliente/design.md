@@ -146,7 +146,10 @@ Contratos, prioridad y mantenedor no hay que reescribirlos: nunca pudieron apunt
 2026-10-02, dentro de esta tanda. El alta manual compara el NIT del provisional con los de la vista y, si casa,
 responde `409` (escalón D, junto a la unicidad de la OV en `ticketService.ts:96`) con el `id` y el nombre del cliente
 existente, sin escribir nada; el formulario lo ofrece para usarlo. **Normalización** (supuesto reversible): se compara
-la parte anterior al primer guion, sólo dígitos —«900.123.456-7» ≡ «900123456»—. **Lectura**: `SELECT id, name, nit
+la parte anterior al primer guion, sólo dígitos —«900.123.456-7» ≡ «900123456»—; un DV pegado sin guion
+(«9001234567») sólo casa si es exactamente base + DV del NIT de Books (`nitCoincide`, tarea 2.7b). **Orden dentro
+de D:** NIT antes que OV, para que el `409` de la OV siga siendo el último (RQ-TC-31), fijado en
+`primerConflictoUnicidad` (P6, §7). **Lectura**: `SELECT id, name, nit
 FROM clients WHERE nit IS NOT NULL` y comparación en JS, en `db/clientesProvisionales.ts`; no usa `regexp_replace`
 para que lo probado en pg-mem sea lo que corre (hipótesis: el coste de recorrer los contactos es aceptable para un alta
 manual, que es excepcional). Sin NIT casado, el alta sigue. No cubre el caso de P-A: un contacto que **llega después**
@@ -212,7 +215,8 @@ Las de D12 nacen **verdes** (caracterización): su rojo previo se obtiene por mu
 pendiente + Comercial sin OV obligatoria → `422` de pendiente, no el de `:134`. (P3) serial distinto + OV usada →
 `422`, no `409`; mover la comparación detrás de `:96` → rojo. (P4) en `obtenerCliente`, poner la consulta de
 provisionales antes que Books → rojo la prueba de prioridad. (P5) serial distinto (C) + NIT ya en Books (D) → `422`,
-no `409`; mover la comprobación del NIT delante de `:91` → rojo.
+no `409`; mover la comprobación del NIT delante de `:91` → rojo. (P6) NIT en Books y OV ya usada a la vez en
+`primerConflictoUnicidad` → gana el NIT; invertir el orden → rojo. Por la API no compiten (provisional + OV es C).
 
 **Regla 2, ensuciar lo vigilado:** (m1) quitar `public.` del `CREATE TABLE` nuevo; (m2) `ALTER TABLE public.equipos`;
 (m3) añadir `clientes_provisionales` o una columna `provisional` a `:169-173`; (m4) quitar la entrada de
