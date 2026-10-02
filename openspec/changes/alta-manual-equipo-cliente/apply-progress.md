@@ -33,3 +33,34 @@ Strict TDD · partida `cc76d98` · tareas 1.1-1.13 `[x]`. El orquestador commite
 
 ## Frontera de reversión
 `git revert` del lote 1: la tabla y la columna quedan sin uso. Arnés real: `GET /api/clients`, `/api/clients/:id`, `POST /api/remisiones`, `PATCH /api/equipos/:id` contra pg-mem.
+
+# Lote 2a — alta manual y traza (tareas 2.1-2.7, 2.8a, 2.9a `[x]`)
+
+Strict TDD · partida `9910430` · sin tocar la vista, `books/repo.ts`, el hub ni `.tsx`. El orquestador commitea y mide.
+
+## Ciclo TDD
+| Tarea | Prueba | Rojo | Verde |
+|---|---|---|---|
+| Red de seguridad | 6 ficheros de `ticketService`/`equipoNuevo`/`tickets`/`flujoEquipoNuevo`/`equipos`/`ordenVentaUnTicket` | — | 224/224 antes de tocar |
+| 2.1, 2.3, 2.6 | `services/altaManual.test.ts` (31 pruebas: TC-30/31/33, HV-16/17, C-1, P3, atomicidad, espías) | «Failed to load url ./altaManual» | 31/31 (una corrección propia de la prueba: la fecha llega como `Date` en pg-mem) |
+| 2.2, 2.4, 2.5 | ídem + red de seguridad + `lectoresProvisionales.test.ts` | — | 259/259 |
+
+## Mutación P3 (2.7, la reproduje yo)
+Quité `validarContenidoAltaManual` de `ticketService.ts:91` y la puse tras el bloque del `409` de la OV (`:100`): roja sólo la prueba de posición («expected 409 to be 422»), 30 verdes. Revertida con copia previa: 259/259.
+
+## Casilla de la regla 13 (decisiones del cliente de este lote: ninguna; `.tsx` es del lote 4)
+El servidor impone: serial≠confirmación, reservados y provisional+OV/cliente en `validarContenidoAltaManual` (`ticketService.ts:91`); los cinco datos y el motivo en `exigirClienteProvisional` (`:28`); equipo manual en `exigirEquipoManual` (`:25`).
+
+## Cierre (2.9a)
+- `npm test`: 175 ficheros pasan (1 omitido), 2486 pruebas pasan (+31), 2 omitidas, 0 rojas. `typecheck` limpio. `lint`: 165 avisos, 0 errores (techo 165, 0 nuevos). `build` verde.
+
+## Barrido de citas (2.8a)
+- Cero desplazamientos: todo en `ticketService.ts`, `equipoNuevo.ts`, `db/equipos.ts` y `routes/tickets.ts` es edición en la misma línea (`:2`, `:4`, `:18`, `:21`, `:24`, `:25`, `:28`, `:29`, `:73`, `:89`, `:91`, `:108`; `equipoNuevo.ts` `:8`, `:84`, `:87`; `db/equipos.ts` `:42`, `:78`, `:104`, `:123`, `:125`, `:128`).
+- Releído lo que AFIRMAN: `ticketService.ts:89` (el cliente del ticket resuelto en el alta; sigue cierto, ahora por `obtenerCliente` o el provisional nuevo), `:91` (contenido tras obligatorios y antes de la modalidad; cierto), `:24` y `:29` (cierto). Caso A en `design.md:34` y `:189`: `:28` «era una línea vacía» y hoy lleva `exigirClienteProvisional`.
+- Detector sobre instantánea del árbol (`--sha` de un commit temporal): exit 0, 0 bloqueantes; 13 abreviadas rotas informativas, las mismas que en `9910430`.
+- Medida contra `9910430` (con `git add -N`): 524 inserciones y 28 borrados, sin binarios; incluye +29/-4 de `tasks.md` de la partición, previos al intento.
+
+## Desviaciones
+- `ticketService.ts:108` y no `:107`: la llamada a `crearTicketConEquipo` cierra en `:108` (`}, altaManualDe(…))`). `:2` cambia el import de `getTicketWithRefs` al envoltorio de provisionales (respuestas del alta y de la transición con el nombre del provisional).
+- Forma del cuerpo, no fijada en el diseño: `clienteManual {razonSocial,nit,contacto,telefono,correo,motivo}` y `equipoManual {serial,confirmacionSerial,modeloId | marca+modeloTexto+tipo,motivo,fechaFacturaCompra?}`. Con `equipoId` presente el `equipoManual` se ignora.
+- Los `422` de faltantes del cliente provisional van en A (`:28`), como dice D7, aunque el texto de RQ-TC-30 los llama C.

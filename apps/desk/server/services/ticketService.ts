@@ -1,7 +1,7 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { getTicketWithRefs, applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'
+import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
-import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
+import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
 import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
@@ -15,18 +15,18 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
-import { exigirEquipoNuevo, validarCamposEquipoNuevo, crearTicketConEquipo } from './equipoNuevo'
+import { exigirEquipoNuevo, validarCamposEquipoNuevo, crearTicketConEquipo } from './equipoNuevo'; import { obtenerCliente } from './clientes'; import { exigirEquipoManual, exigirClienteProvisional, validarContenidoAltaManual, altaManualDe, type EquipoAResolverManual } from './altaManual'
 
 // Crea un ticket gestionado por la app (Subsistema C): nace en "Ticket creado", o en "Solicitud Soporte" si es soporte remoto. Pivota opcionalmente en una OV de Books.
-export async function createManagedTicket(db: Queryable, body: unknown, actorName: string): Promise<unknown> {
+export async function createManagedTicket(db: Queryable, body: unknown, actorName: string, actorId?: string): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const equipoId = b.equipoId ? String(b.equipoId) : ''
-  if (!equipoId && b.clasificaciones !== 'Equipo nuevo') throw new HttpError(422, { error: 'Falta el equipo' })
-  const nuevo = !equipoId && b.clasificaciones === 'Equipo nuevo' ? await exigirEquipoNuevo(db, b) : null
+  if (!equipoId && b.clasificaciones !== 'Equipo nuevo' && !b.equipoManual) throw new HttpError(422, { error: 'Falta el equipo' })
+  const nuevo: EquipoAResolverManual | null = !equipoId && b.equipoManual ? await exigirEquipoManual(db, b) : !equipoId && b.clasificaciones === 'Equipo nuevo' ? await exigirEquipoNuevo(db, b) : null
   const equipo = nuevo ? nuevo.equipo : await getEquipo(db, equipoId)
   if (!equipo) throw new HttpError(422, { error: 'Equipo no registrado' })
-
-  let clientId: string | null = b.clientId ? String(b.clientId) : null
+  const prov = exigirClienteProvisional(b) // A: los cinco datos y el motivo del cliente manual
+  let clientId: string | null = b.clientId ? String(b.clientId) : (prov?.id ?? null)
   let ordenVenta: string | null = b.ordenVenta ? String(b.ordenVenta) : null
   let salesorderId: string | null = null
   // La FECHA de la orden viaja con su número. Es el mismo gesto que ya hace el alta de remisión
@@ -70,7 +70,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     logger.warn({ equipoId: equipo.id, equipoClientId: equipo.clientId, clientId }, 'alta de ticket: el cliente no corresponde al equipo')
     // La consulta va DENTRO de la rama y DESPUÉS del warn: sólo se paga en el camino de error, y si
     // fallara, la señal ya está emitida. El ayudante vive aquí a propósito (design §2, §6).
-    const destino = await getClient(db, clientId)
+    const destino = await obtenerCliente(db, clientId)
     const lado = (nombre: string | null | undefined, id: string, nota: string) =>
       nombre ? `«${nombre}» (${id})` : `${id} (${nota})`
     const deQuien = lado(equipo.clienteNombre, equipo.clientId, 'sin nombre en el equipo')
@@ -86,9 +86,9 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   if (!clasificaciones) missing.push('clasificaciones')
   if (!prefijo || !(PREFIJOS as readonly string[]).includes(prefijo)) missing.push('prefijo')
   if (missing.length) throw new HttpError(422, { error: `Faltan campos obligatorios: ${missing.join(', ')}` })
-  const cliente = await getClient(db, clientId!)
+  const cliente = prov ? { name: prov.razonSocial } : await obtenerCliente(db, clientId!)
   if (!cliente) throw new HttpError(422, { error: 'Cliente no encontrado' })
-  if (nuevo) await validarCamposEquipoNuevo(db, b); const rm = modalidadDelAlta(clasificaciones, b.modalidad === undefined || b.modalidad === null || typeof b.modalidad === 'string' ? b.modalidad : JSON.stringify(b.modalidad)); if ('error' in rm) throw new HttpError(422, { error: rm.error }); const modalidad = rm.valor /* C: tras los opcionales de equipo nuevo y antes de cuarentena/vencido (:96) y del 409 (D) */
+  await validarContenidoAltaManual(db, b, prov, nuevo, clasificaciones); if (nuevo) await validarCamposEquipoNuevo(db, b); const rm = modalidadDelAlta(clasificaciones, b.modalidad === undefined || b.modalidad === null || typeof b.modalidad === 'string' ? b.modalidad : JSON.stringify(b.modalidad)); if ('error' in rm) throw new HttpError(422, { error: rm.error }); const modalidad = rm.valor /* C: tras los opcionales de equipo nuevo y antes de cuarentena/vencido (:96) y del 409 (D) */
   // La OV ya asociada a otro ticket. Escalón **D** —unicidad—: va al FINAL, como última guarda antes
   // de la primera escritura (sea el equipo o el ticket) — el mismo lugar que ocupa el `409`
   // equivalente de `executeTransition` (`transitions-st` §3.8: existencia < estado/permiso <
@@ -105,7 +105,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
     ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!), await prioridadTop5DelCliente(db, clientId!)),
     clientId: clientId!, salesorderId, equipoId: equipo.id, modalidad, actor: actorName,
-  })
+  }, altaManualDe(prov, nuevo, actorId, actorName))
   const created = await getTicketWithRefs(db, id)
   return created ? rowToTicketDetail(created.row, created.refs) : {}
 }

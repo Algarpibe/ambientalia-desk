@@ -22,7 +22,7 @@ Books» están en `design.md` §4.
 
 | Campo | Valor |
 |---|---|
-| Líneas estimadas | Lote 1 ~340 · Lote 2 ~400 (con P-B) · Lote 3 ~320 · Lote 4 ~270 (total ~1.330 en cuatro intentos) |
+| Líneas estimadas | Lote 1 684 medidas · Lote 2a ~690 · Lote 2b ~310 (corregidas con el factor del lote 1) · Lote 3 ~320 · Lote 4 ~270 |
 | Riesgo sobre 800 | Bajo en los cuatro; válvula 720 por intento |
 | Estrategia de entrega | ask-on-risk |
 | Medida | `git diff --shortstat --no-renames` contra el commit de partida del intento más `wc -l` de lo nuevo sin trackear; binarios aparte |
@@ -59,19 +59,44 @@ Chain strategy: pending
 
 ## Lote 2 — alta manual y traza (RQ-TC-30, RQ-TC-31, RQ-TC-33, RQ-HV-16, RQ-HV-17, C-1, P-B)
 
-- [ ] 2.1 RED `services/altaManual.test.ts`: criterios 1-4 y escenarios TC-30/31, HV-16/17; **C-1:** alta manual en «Equipo nuevo» sin fecha de factura → `422`. Rojo: módulo inexistente.
-- [ ] 2.2 GREEN `services/altaManual.ts` (nuevo): `exigirEquipoManual` (A), `exigirClienteProvisional` (A), `validarContenidoAltaManual` (C; respeta C-1), `escribirAltaManual(q, …)`.
-- [ ] 2.3 RED P3 (regla 1): serial que no coincide + OV ya usada → `422` y no `409`.
-- [ ] 2.4 GREEN `ticketService.ts` en sitio: `:21` (`actorId`), `:24`, `:25`, `:28` (línea vacía), `:73` y `:89` (`obtenerCliente`), `:91`, `:107`, imports; sin insertar líneas.
-- [ ] 2.5 GREEN `equipoNuevo.ts` (`crearTicketConEquipo`, final) llama a `escribirAltaManual`; `db/equipos.ts` (`pendiente_validar` en `createEquipo` y `getEquipo`); `routes/tickets.ts:125` pasa `req.user?.id`.
-- [ ] 2.6 RED→GREEN atomicidad: fallo del `INSERT` del ticket no deja `clientes_provisionales`, `equipos` ni `tickets` (TC-31c); espías de Zoho/`books.*` en cero (TC-33).
-- [ ] 2.7 Mutación P3: mover la comparación del serial detrás de `ticketService.ts:96` → rojo; revertir.
+**PARTIDO en 2a y 2b el 2026-10-02, antes de escribir código.** Calibración con el lote 1 (`9910430`, medido con
+`git show --numstat`): pruebas 358 frente a ~200 (+79 %), código 255 frente a ~140 (+82 %), documentos 71 → factor
+~1,8 sobre código **y** pruebas. Lote 2 entero: código ~190 → ~340, pruebas ~280 → ~500, documentos ~60 → **~900**,
+por encima de la válvula de 720. Cada sublote cierra solo, con su prueba, su barrido y su medida:
+
+| Sublote | Tareas | Estimación corregida |
+|---|---|---|
+| **2a** · alta manual y traza | 2.1-2.7, 2.8a, 2.9a | código ~140 → ~250 · pruebas ~220 → ~400 · documentos ~40 → **~690** |
+| **2b** · P-B con su posición y su normalización | 2.7b-2.7e, 2.8b, 2.9b | código ~50 → ~90 · pruebas ~100 → ~180 · documentos ~40 → **~310** |
+
+Si 2a cruza 720 durante el trabajo, se para tras la tarea en curso y se informa parcial. 2b arranca desde el commit
+de 2a, en su propio intento.
+
+### 2a — alta manual y traza
+
+- [x] 2.1 RED `services/altaManual.test.ts`: criterios 1-4 y escenarios TC-30/31, HV-16/17; **C-1:** alta manual en «Equipo nuevo» sin fecha de factura → `422`. Rojo: módulo inexistente.
+- [x] 2.2 GREEN `services/altaManual.ts` (nuevo): `exigirEquipoManual` (A), `exigirClienteProvisional` (A), `validarContenidoAltaManual` (C; respeta C-1), `escribirAltaManual(q, …)`.
+- [x] 2.3 RED P3 (regla 1): serial que no coincide + OV ya usada → `422` y no `409`.
+- [x] 2.4 GREEN `ticketService.ts` en sitio: `:21` (`actorId`), `:24`, `:25`, `:28` (línea vacía), `:73` y `:89` (`obtenerCliente`), `:91`, `:108` (la llamada cierra ahí, no en `:107`), `:2`, `:4`, `:18` y `:29` (imports y valor por omisión); sin insertar líneas.
+- [x] 2.5 GREEN `equipoNuevo.ts` (`crearTicketConEquipo`, final) llama a `escribirAltaManual`; `db/equipos.ts` (`pendiente_validar` en `createEquipo` y `getEquipo`); `routes/tickets.ts:125` pasa `req.user?.id`.
+- [x] 2.6 RED→GREEN atomicidad: fallo del `INSERT` del ticket no deja `clientes_provisionales`, `equipos` ni `tickets` (TC-31c); espías de Zoho/`books.*` en cero (TC-33).
+- [x] 2.7 Mutación P3: mover la comparación del serial detrás de `ticketService.ts:96` → rojo; revertir.
+- [x] 2.8a Barrido de citas (`ticketService|equipoNuevo|equipos|tickets`) + pase abreviado; releer `ticketService.ts:89`, `:91`; detector con 0 bloqueantes. `registro.test.ts:220` si hace falta.
+- [x] 2.9a Cierre de 2a: `npm test`, `typecheck`, `lint` (165, 0 nuevos), `build`; medir y registrar.
+
+### 2b — P-B: NIT ya en Books (`decision/f1b15-p-b-nit-en-books`)
+
+La guarda vive en el **servidor**: `409` con `{ id, name }`, escalón D, **después de todo el escalón C**. Un alta
+cuyo NIT no casa con ninguno de Books sigue. El formulario (lote 4) sólo muestra el `409` y ofrece el existente.
+
 - [ ] 2.7b RED→GREEN P-B (RQ-TC-30 «El NIT ya está en Books»): `normalizarNit` puro en `packages/shared/src/altaManual.ts` («900.123.456-7» ≡ «900123456»), `clientePorNit` en `db/clientesProvisionales.ts`, `409` con `{ id, name }` en el escalón D, en sitio en `ticketService.ts:96`; nada escrito. Clave: `decision/f1b15-p-b-nit-en-books`.
   - **Dígito de verificación pegado (SUPUESTO REVERSIBLE).** «9001234567» (sin guion) **NO** se trata en general como «900123456» + DV: sin guion no se distingue de una cédula de diez dígitos, y un falso positivo bloquearía con `409` un alta legítima y ofrecería el cliente equivocado; un falso negativo sólo deja pasar un duplicado que el enlace (RQ-TC-32) repara. **Excepción precisa:** casa cuando Books trae el NIT con su DV explícito y el número tecleado es exactamente base + DV de Books: «9001234567» casa con «900.123.456-7» y **no** con «900123456» ni con «900.123.456-3». Se implementa como `nitCoincide(tecleado, books)` puro: casa si la base del tecleado (antes del primer guion, sólo dígitos) es igual a la base de Books o a base + DV de Books. Pruebas en `shared/altaManual.test.ts` con los cuatro pares de arriba, más «900 123 456» ≡ «900123456».
   - **POSICIÓN entre las dos guardas de D (NIT en Books y OV ya usada).** Por la API no compiten: un provisional con orden de venta es `422` de C (D7, `design.md` §6, «No combina provisional con OV»). Aun así el orden se fija: **gana el NIT, y la OV va la última**, porque RQ-TC-31 (`specs/tickets-core/spec.md:48-49`) exige que el `409` de unicidad de la OV siga siendo «la última guarda antes de la primera escritura». Para que el orden sea comprobable y no sólo un comentario (regla de mutación 1), las dos comprobaciones de D se resuelven en una función pura `primerConflictoUnicidad({ nitEnBooks, ovEnUso })` en `packages/shared/src/altaManual.ts`, que devuelve el del NIT si existen los dos. Pruebas: (i) en shared, con los dos conflictos a la vez → el del NIT; (ii) por HTTP, alta manual con provisional + OV ya usada + NIT en Books → `422` de C y nada escrito (fija que C precede a los dos D). **Mutación P6, la reproduce el agente:** invertir el orden dentro de `primerConflictoUnicidad` → (i) rojo; revertir con `git diff`.
-- [ ] 2.7c Mutación P5: serial distinto (C) + NIT ya en Books (D) → `422`; mover la comprobación del NIT delante de `:91` → rojo; revertir.
-- [ ] 2.8 Barrido de citas (`ticketService|equipoNuevo|equipos|tickets`) + pase abreviado; releer `ticketService.ts:89`, `:91`; detector con 0 bloqueantes. `registro.test.ts:220` si hace falta.
-- [ ] 2.9 Cierre: `npm test`, `typecheck`, `lint` (165), `build`; medir y registrar.
+- [ ] 2.7c Mutación P5 (posición frente al **último guardia del escalón C** del alta manual, `validarContenidoAltaManual` en `ticketService.ts:91`): serial distinto (C) + NIT ya en Books (D) → `422`; mover la comprobación del NIT delante de `:91` → rojo; revertir.
+- [ ] 2.7d Mutación del dato vigilado (regla 2): con un cliente de Books cuyo NIT está escrito «900.123.456-7» y un alta con «900123456», quitar la normalización (comparar el texto crudo) → la prueba del `409` se pone roja; revertir.
+- [ ] 2.7e Casilla de la regla 13 de P-B, por escrito en `apply-progress.md`: cada decisión del cliente (mostrar el `409`, ofrecer el existente) con la línea del servidor que la impone.
+- [ ] 2.8b Barrido de citas (`ticketService|clientesProvisionales|altaManual`) + pase abreviado; releer `ticketService.ts:96`; detector con 0 bloqueantes.
+- [ ] 2.9b Cierre de 2b: `npm test`, `typecheck`, `lint` (165, 0 nuevos), `build`; medir y registrar.
 
 ## Lote 3 — enlace, validación, guarda B y D12 (RQ-TC-32, RQ-HV-18, RQ-TS-32)
 

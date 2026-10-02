@@ -5,7 +5,7 @@ import { getModelo } from '../db/catalogo'
 import { getEquipoBySerial, createEquipo, type EquipoInput } from '../db/equipos'
 import { camposHojaDeVida } from '../routes/equipos'
 import { enTransaccion } from '../db/transaccion'
-import { HttpError } from '../util/httpError'
+import { HttpError } from '../util/httpError'; import { escribirAltaManual, type AltaManual } from './altaManual'
 
 /** Los campos que el cuerpo del alta trae bajo `equipoNuevo` (RQ-TC-15). Sin tipar sus valores: se
  *  normalizan aquí, igual que el resto de `createManagedTicket` normaliza `body`. */
@@ -81,10 +81,10 @@ export async function crearTicketConEquipo(
   db: Queryable,
   nuevo: EquipoAResolver | null,
   clienteNombre: string | null,
-  input: CreateTicketInput,
+  input: CreateTicketInput, manual?: AltaManual | null,
 ): Promise<string> {
   return enTransaccion(db, async (q) => {
-    const equipoId = nuevo && !nuevo.equipo.id
+    const equipoId = manual ? await escribirAltaManual(q, manual, nuevo, clienteNombre, input.clientId, input.equipoId) : nuevo && !nuevo.equipo.id
       ? await createEquipo(q, { ...nuevo.datos!, clienteNombre, clientId: input.clientId })
       : input.equipoId
     const id = await createTicket(q, { ...input, equipoId }, { transaccionAbierta: true })
