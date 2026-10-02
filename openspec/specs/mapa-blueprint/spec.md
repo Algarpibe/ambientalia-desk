@@ -43,24 +43,30 @@ contener lógica de grafo.
 
 ### Requirement: RQ-MB-02 · Una arista por origen, no una por transición declarada
 
-El diagrama **SHALL** dibujar una arista de estado a estado por **cada elemento** del array `from` de
-cada transición, no una arista por entrada del catálogo. Una transición con `from` de varios
-elementos **SHALL** producir tantas aristas como orígenes.
+El diagrama **SHALL** dibujar una arista de estado a estado por **cada elemento** del array `from` de cada
+transición, no una arista por entrada del catálogo. Una transición con `from` de varios elementos **SHALL**
+producir tantas aristas como orígenes.
 
-El diagrama completo **SHALL** tener exactamente **38** aristas: las **36** que produce recorrer los
-`from` de las 34 transiciones de `TRANSITIONS` —de ellas 3 nacen en `habilitar_servicio`, cuyo `from`
-tiene tres elementos (`transitions.ts:178`)— más las **2** de los pasos sin botón. La cifra **SHALL**
-fijarse por aserción, no por comentario (maestro M1.3.7, `:1301-1458`).
+El diagrama completo **SHALL** tener exactamente **35** aristas: las **33** que produce recorrer los `from`
+de las 31 transiciones de `TRANSITIONS` —de ellas 3 nacen en `habilitar_servicio`, cuyo `from` tiene tres
+elementos (`transitions.ts:178`)— más las **2** de los pasos sin botón. La cifra **SHALL** fijarse por
+aserción, no por comentario (maestro M1.3.7).
+(Previously: 38 aristas = 36 de las 34 transiciones + 2.)
 
 #### Scenario: `habilitar_servicio` dibuja tres aristas
 - GIVEN la transición `habilitar_servicio`, cuyo `from` tiene tres estados
 - WHEN se genera el diagrama
 - THEN aparecen tres aristas distintas hacia `Ingresado`, una por cada origen
 
-#### Scenario: el diagrama completo tiene 38 aristas
+#### Scenario: el diagrama completo tiene 35 aristas
 - GIVEN el grafo generado desde `TRANSITIONS` más las dos transiciones sin botón
 - WHEN se cuentan las aristas del diagrama completo
-- THEN el total es exactamente 38, fijado por una aserción de la prueba
+- THEN el total es exactamente 35, fijado por una aserción de la prueba (`mapaBlueprint.test.ts`)
+
+#### Scenario: el diagrama no dibuja ninguna arista que toque `Pendiente`
+- GIVEN el diagrama completo generado
+- WHEN se buscan aristas con origen o destino `Pendiente`
+- THEN no hay ninguna, porque `Pendiente` ya no es estado de servicio
 
 ### Requirement: RQ-MB-03 · Cuatro ficheros Mermaid, generados y marcados como tales
 
@@ -147,3 +153,5 @@ Una transición añadida al grafo sin regenerar los ficheros **SHALL** producir 
   `.md`
 - WHEN corre la prueba anti-desfase
 - THEN falla, porque lo commiteado ya no coincide con lo que produce el import real
+### RQ-MB-07 · Las fases del mapa cubren los 20 estados de servicio y el mapa regenerado coincide con el generador
+

@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `33e6f81` · **Fecha del commit:** 2026-10-01
+**Commit medido:** `011f6ea` · **Fecha del commit:** 2026-10-01
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -16,11 +16,11 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
 ## 2 · Numerador del avance (§C de la R01.4) — cifras separadas, nunca una suma
 
-  10 cerradas por archivo ....................... F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14
+  11 cerradas por archivo ....................... F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14, F1C-09
   9 cerradas por commit declarado ............... F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01
   6 en curso, aparte y sin sumar ................ F0-04, F1B-04, F1B-07, F1B-08, F1B-11, F1C-05
   denominador ................................... 78 tandas del §C de la R01.4
-  2 cerradas sin fuente declarada en la R01.1 ... F1B-12, F1B-14
+  3 cerradas sin fuente declarada en la R01.1 ... F1B-12, F1B-14, F1C-09
   5 marcadas sin verificar
 
 Hallazgos (informativos, no bloquean):
@@ -51,9 +51,9 @@ Hallazgos (informativos, no bloquean):
 ## 5 · Cifras ancladas — leídas del código, no del registro
 
   esperas ....................................... código 11 · maestro 4
-  pasos_del_mapa ................................ maestro 38 · sin lectura de código
-  transiciones .................................. maestro 34 · sin lectura de código
-  estados ....................................... maestro 21 · sin lectura de código
+  pasos_del_mapa ................................ maestro 35 · sin lectura de código
+  transiciones .................................. maestro 31 · sin lectura de código
+  estados ....................................... maestro 20 · sin lectura de código
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
