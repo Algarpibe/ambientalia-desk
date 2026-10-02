@@ -116,3 +116,19 @@ Coherente: D1 (`startsWith(PREFIJO_ARCHIVO)`, `comprobaciones.ts:210`), D4/D5 (`
 
 `git diff --shortstat --no-renames HEAD`: vacío (0 líneas rastreadas, árbol limpio) · sin trackear: este
 `verify-report.md` = **118** líneas (`wc -l`). Binarios: ninguno. Total del intento = **118** de 800.
+
+## Lote 2 · Seis cierres declarados por commit (`51ae313`) — verificado el 01/10 por el orquestador
+
+Encargo: `decision/archivo-barrido-y-regla-del-archivo-01-10`, punto 4. **Veredicto del lote: PASS.**
+
+| Comprobación | Resultado |
+|---|---|
+| `npm test` (desde la raíz del worktree) | 168 ficheros + 1 omitido · **2.401** pruebas en verde + 2 omitidas |
+| `npx vitest run apps/desk/server/reconciliacion` | **73/73** |
+| `npm run typecheck` | limpio |
+| `npm run lint` | 0 errores · **165** avisos (techo, ninguno nuevo) |
+| `npm run reconcile` | **10** por archivo · **9** por commit declarado (F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01) · **6** en curso · denominador **78**; ninguna tanda en las dos poblaciones; el informe se devolvió a HEAD con `git checkout` |
+| Comprobación propia de dos de las seis | `e8c5e90` (F1A-04, 09/09, «C9 — los tres bodegajes salen del historial») y `0e8f581` (F0-00, `F0-00_Baseline_as-built.md` +622) existen y hacen lo que su fila pide (`git show --stat`) |
+| Mutación de regla 2 (del apply) | sin `prueba:` de F1A-04 en el `config.yaml` real → 2 rojos en `registro.test.ts`; revertida |
+
+**Nota sobre F1A-04:** `docs/sdd/Estado_As-Built_2026-09-09.md:26` la daba «Reubicada»; ese estado es anterior a `e8c5e90` (el documento se escribió en `3aaa0f1`), así que no contradice el cierre. **Spec:** el delta de RQ-RC-10 pasa de «exactamente F0-01..03» a los nueve registrados. **Medida del lote 2:** 104 (88 / 16). **Medida de este apartado:** las líneas que añade al informe.
