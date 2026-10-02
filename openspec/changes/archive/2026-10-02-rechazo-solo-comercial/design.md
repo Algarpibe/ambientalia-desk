@@ -82,7 +82,7 @@ Regla de mutación 1 (posición): **no aplica**; no se añade ni se mueve ningun
 - Abreviadas (`:NNN`) en los ficheros que ya citan esos módulos, y la forma corta de specs (`RQ-TS-07`, `RQ-PM-03`, «ocho
   compartidas», `54/39`).
 - Casos: **A** las que afirman el presente («ocho», 54/39 en specs vivas) se corrigen vía delta; **B** las fechadas
-  (`transitions-st/spec.md:1545`, `archive/**`, `docs/sdd/Estado_As-Built_2026-09-09.md`) no se tocan; **C** ninguna
+  (`transitions-st/spec.md:1545` en `4984c3b`, `archive/**`, `docs/sdd/Estado_As-Built_2026-09-09.md`) no se tocan; **C** ninguna
   esperada. Como no se mueve ninguna línea, se espera cero desfases por número; lo que hay que leer es lo que **afirman**.
 
 ## Estimación (medida `git diff --shortstat --no-renames` + nuevos sin trackear; hipótesis)

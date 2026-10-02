@@ -206,5 +206,5 @@ editan por RQ-TS-30; se anotan con su revisión (caso B), sin renumerar y sin de
 - Escenario «los invariantes 5 y 6 no cambian» (`:1627-1630`, bajo «Escenarios de RQ-TS-01 añadidos por
   F1C-09»): cierto de la revisión `011f6ea`. Se conserva con su revisión nombrada («en F1C-09, siguen en
   ocho compartidas y diez campos reentrantes») y se añade que RQ-TS-30 los lleva a siete.
-- `openspec/specs/transitions-st/spec.md:1545` y todo `openspec/changes/archive/**` son citas fechadas: no
+- `openspec/specs/transitions-st/spec.md:1545` en `4984c3b` y todo `openspec/changes/archive/**` son citas fechadas: no
   se tocan.

@@ -149,7 +149,7 @@ Las áreas siguientes de «Notificación cliente» son exactamente Comercial y C
 
 ### Barrido de citas (regla de mutación 4)
 
-Ninguna línea de `transitions.ts`, `invariantesGrafo.test.ts`, `permisos.test.ts` ni `avisoArea.test.ts` se movió (hunks `-U0` simétricos; lo nuevo, al final). Las ediciones en sitio (`permisos.test.ts:26-27`, `:72-73`, `:77`, `:80-81`, `:338`, `:349`, `:352-353`; `invariantesGrafo.test.ts:85`, `:88`, `:91`, `:103`; `transitions-st/spec.md:63`, `:1630`) conservan el número de línea. Detector en `HEAD`: exit 0 y 0 bloqueantes. El barrido completo de 372 citas lo hizo el apply; yo repetí detector y comprobación de hunks, no releí las 372.
+Ninguna línea de `transitions.ts`, `invariantesGrafo.test.ts`, `permisos.test.ts` ni `avisoArea.test.ts` se movió (hunks `-U0` simétricos; lo nuevo, al final). Las ediciones en sitio (`permisos.test.ts:26-27`, `:72-73`, `:77`, `:80-81`, `:338`, `:349`, `:352-353`; `invariantesGrafo.test.ts:85`, `:88`, `:91`, `:103`; `transitions-st/spec.md:63` en `4984c3b`, `:1630`) conservan el número de línea. Detector en `HEAD`: exit 0 y 0 bloqueantes. El barrido completo de 372 citas lo hizo el apply; yo repetí detector y comprobación de hunks, no releí las 372.
 
 ### Medida del intento de verify
 

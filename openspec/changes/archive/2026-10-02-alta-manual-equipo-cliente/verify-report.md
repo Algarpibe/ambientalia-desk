@@ -297,7 +297,7 @@ Registro fechado: el veredicto, los hallazgos y las cifras de arriba son los de 
 | W-3 | Requisito RQ-HV-19 con tres escenarios en `specs/hojas-vida/spec.md`: el campo sólo viene cuando vale `true`; validado o nunca pendiente, **ausente**, no `false` | commit documental de esta adenda |
 | W-4 | Sección «Supuestos reversibles aplicados durante la construcción» al final de `proposal.md`: siete supuestos, con dónde están escritos y si son reversibles | commit documental de esta adenda |
 | W-5 | Destino de la verificación en la app (`tasks.md:132`): «§6 (tareas de persona) del próximo paquete de despliegue que incluya F1B-15; hasta entonces, queda escrita en esta tabla». No se abre entrada en `docs/sdd/ENTRADA.md`; E-154 sigue aparte, porque es decisión de Gerencia y no una verificación | commit documental de esta adenda |
-| W-1 | Matriz de `tasks.md:134`: 45 escenarios y 11 requisitos (44 y 10 verificados aquí, más RQ-HV-19) | commit documental de esta adenda |
+| W-1 | Matriz de `tasks.md:134`: 47 escenarios y 11 requisitos (44 y 10 verificados aquí, más los tres de RQ-HV-19; `91e4924` escribió 45 por error, corregido al archivar) | commit documental de esta adenda |
 | W-7 | `design.md:194`: `clienteProvisional?` apunta a `:8` de `packages/shared/src/types.ts` (caso A de la regla de mutación 4) | commit documental de esta adenda |
 
 **Queda anotado para el `archive-report`**

@@ -47,7 +47,7 @@ Ninguna línea se movió (todos los hunks de `-U0` tienen el mismo número de l�
 (`transitions|invariantesGrafo.test|permisos.test|avisoArea.test .ts:NNN`, 372 citas fuera de `archive/**`): las 25 que tocan rangos editados se leyeron una a
 una: histórico/fechado (caso B, ancladas a `fd253aa` o paquetes fechados, no se tocan) o presente y aún cierto (`permisos.test.ts:26-27`, `:24-27`;
 `invariantesGrafo.test.ts:91-106` sigue siendo el emparejamiento). Abreviadas y forma corta («ocho compartidas», `54/39`): las vivas se corrigen por delta en el archive;
-`transitions-st/spec.md:63` y `:1630` se editaron en sitio (6.1, 6.2), `:1545` y `Estado_As-Built_2026-09-09.md:40` son caso B. Casos C: ninguno.
+`transitions-st/spec.md:63` en `4984c3b` y `:1630` se editaron en sitio (6.1, 6.2), `:1545` y `Estado_As-Built_2026-09-09.md:40` son caso B. Casos C: ninguno.
 Detector `cli.ts --sha HEAD` en `9aed944`: salida 0, 0 bloqueantes, línea base 0, cabeceras R-1 inválidas 0, 10 abreviadas rotas informativas ajenas.
 
 ## Cierre

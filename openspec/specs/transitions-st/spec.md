@@ -1152,10 +1152,10 @@ por grupo, no se enuncia como «precedencia observable» y no admite excepción 
 
 | Escalón | Qué clase de cosa comprueba | Guardas verificadas |
 |---|---|---|
-| **A · existencia** | ¿está presente y existe lo que la petición direcciona, o aporta por identificador? | `:123` transición desconocida · `:125` ticket no encontrado · `:24` falta el equipo · `:27` equipo no registrado · `:39` OV no encontrada |
+| **A · existencia** | ¿está presente y existe lo que la petición direcciona, o aporta por identificador? | `:123` transición desconocida · `:125` ticket no encontrado · `:24` falta el equipo · `:25` equipo manual o equipo nuevo (F1B-15) · `:28` cliente provisional (F1B-15) · `:27` equipo no registrado · `:39` OV no encontrada |
 | **B · estado y permiso del sujeto** | ¿puede esta operación ocurrir sobre este sujeto ahora? | `:126-128` estado de origen · `:129-131` área |
-| **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:61-79` equipo↔cliente · `:88` obligatorios · `:90` cliente no encontrado · `:134` obligatorios del plan · **`:134` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:138-142` derivación · **`:96` contrato vencido en el alta (misma sentencia que la cuarentena, antes de D) · `:147` contrato vencido en `habilitar_servicio`, última de C (`registro-contrato`, `tickets-core` RQ-TC-25)** |
-| **D · unicidad sobre un valor aportado** | ¿el valor aportado choca con otro registro? | `:96-100` OV ya usada en el alta (bloque que `orden-precedencia-guardas` movió detrás de `:90`) · `:148-152` OV ya usada en `habilitar_servicio` (bloque que `orden-precedencia-guardas` movió detrás de `:142`) |
+| **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:61-79` equipo↔cliente · `:88` obligatorios · `:90` cliente no encontrado · `:91` contenido del alta manual (F1B-15) · `:134` obligatorios del plan · **`:134` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:138-142` derivación · **`:96` contrato vencido en el alta (misma sentencia que la cuarentena, antes de D) · `:147` contrato vencido en `habilitar_servicio`, última de C (`registro-contrato`, `tickets-core` RQ-TC-25)** |
+| **D · unicidad sobre un valor aportado** | ¿el valor aportado choca con otro registro? | `:96` NIT del provisional ya en Books, 409 con candidatos (F1B-15, P-B) · `:96-100` OV ya usada en el alta (bloque que `orden-precedencia-guardas` movió detrás de `:90`) · `:148-152` OV ya usada en `habilitar_servicio` (bloque que `orden-precedencia-guardas` movió detrás de `:142`) |
 
 **La frontera A/C.**
 - `:90` «Cliente no encontrado» es **C**, no A: no comprueba una entidad aportada tal cual, comprueba
@@ -1177,7 +1177,7 @@ se rellena antes de contarlo (`:61-79` antes de `:88`, porque la rama (i) de `:6
 
 | Puerta | Orden declarado (guardas reales, tras esta tanda) | Quién gana ante el error doble (obligatorios / OV ya usada) |
 |---|---|---|
-| `createManagedTicket` | `:24` A · `:27` A · `:39` A · `:61-79` C · `:88` C · `:90` C · `:96` C (contrato vencido) · `:96-100` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
+| `createManagedTicket` | `:24` A · `:25` A · `:27` A · `:28` A · `:39` A · `:61-79` C · `:88` C · `:90` C · `:91` C · `:96` C (contrato vencido) · `:96` D (NIT en Books, P-B) · `:96-100` D (OV, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
 | `executeTransition` | `:123` A · `:125` A · `:126-128` B · `:129-131` B · `:134` C · fecha derivada C (nueva) · `:138-142` C · `:147` C (contrato vencido) · `:148-152` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:195`) |
 
 Cero inversión: las dos puertas evalúan la misma pareja en el mismo orden.
@@ -1222,7 +1222,7 @@ en cada caso, correr el guión, confirmar el rojo, revertir con `git diff`.
 
 | Puerta | Secuencia de escalones tras esta tanda | Veredicto |
 |---|---|---|
-| `createManagedTicket` | A A A C C C C D | **cumple** — la última C es el contrato vencido de `registro-contrato` (`:96`) |
+| `createManagedTicket` | A A A A A C C C C C D D | **cumple** — la quinta C, la última, es el contrato vencido de `registro-contrato` (`:96`); la primera D es el NIT en Books de F1B-15 (`:96`) |
 | `executeTransition` | A A B B C C C C D | **cumple** — la C añadida es la fecha derivada de `fechas-derivadas-servidor`; la última, el contrato vencido de `registro-contrato` (`:147`) |
 | Alta de remisión (`remision.ts`, no se toca) | A A C A D C A D | **incumple, en dos puntos → IV-12** |
 
@@ -1410,6 +1410,54 @@ El diseño es del 04/06/2026 y el código de septiembre. Manda el código.
 | `estado_al_baseline` (`config.yaml:72-77`) | 96 ficheros, 830 pruebas: 828 pasan / 2 saltadas (base `a3a8f03`) | 110 ficheros, 931 pruebas: 929 pasan / 2 saltadas (base `ad1875b`) | F0-04 añadió la red. Cifra de baseline, no error |
 
 ---
+
+
+
+### RQ-TS-32 · «Habilitar Servicio» no pasa mientras el cliente sea provisional o el equipo esté pendiente
+
+`habilitar_servicio` **SHALL** responder `422` mientras el cliente del ticket siga siendo provisional (no enlazado con
+Books) o su equipo siga pendiente de validar. El predicado **SHALL** vivir en `packages/shared` y el servidor **SHALL**
+imponerlo; el botón del cliente es sólo comodidad (regla 13). La guarda es de **estado del sujeto** (escalón B): se
+evalúa **después** del permiso de área (RQ-TS-06, guarda 5) y **antes** de los obligatorios (guarda 6), de modo que un
+usuario sin permiso recibe `403` y no `422`. El mensaje **SHALL** nombrar qué falta (cliente, equipo o ambos). Tras
+el enlace y la validación, la misma transición **SHALL** pasar. Sólo se aplica a esta transición: el flujo de
+soporte remoto no la contiene (`transitions.ts:388-397`) y en él la marca se ve pero **no bloquea** (supuesto Q3).
+Los demás pasos del ticket no se ven afectados por las marcas.
+
+#### Scenario: Cliente provisional bloquea
+- GIVEN un ticket en `Ticket creado` con cliente provisional y equipo validado, y Comercial
+- WHEN ejecuta `habilitar_servicio`
+- THEN responde `422` nombrando el cliente y el ticket no cambia de estado
+
+#### Scenario: Equipo pendiente bloquea
+- GIVEN un ticket con cliente de Books y equipo pendiente
+- WHEN Comercial ejecuta `habilitar_servicio`
+- THEN responde `422` nombrando el equipo
+
+#### Scenario: Ambos pendientes se nombran juntos
+- GIVEN cliente provisional y equipo pendiente
+- WHEN se ejecuta la transición
+- THEN el `422` nombra los dos
+
+#### Scenario: Tras enlazar y validar, pasa
+- GIVEN un ticket antes bloqueado, ya con el cliente enlazado y el equipo validado
+- WHEN Comercial ejecuta `habilitar_servicio`
+- THEN responde `200` y el ticket avanza
+
+#### Scenario: Posición de la guarda
+- GIVEN un ticket con algo pendiente y un usuario sin el área de la transición
+- WHEN ejecuta `habilitar_servicio`
+- THEN responde `403`, no `422` (mover la guarda antes del permiso pone la prueba en rojo)
+
+#### Scenario: Posición frente a los obligatorios
+- GIVEN un ticket con algo pendiente, un usuario de Comercial y un campo obligatorio de la transición ausente
+- WHEN ejecuta `habilitar_servicio`
+- THEN el `422` que contesta es el de lo pendiente, no el de obligatorios
+
+#### Scenario: Soporte remoto no se bloquea
+- GIVEN un ticket de `Soporte remoto` con cliente provisional
+- WHEN avanza por las transiciones de su flujo
+- THEN ninguna responde `422` por la marca, y la marca sigue visible
 
 ## 5 · Fuera de alcance de esta spec
 

@@ -131,7 +131,7 @@ P-A (`design.md` §4.6) como entrada de `docs/sdd/ENTRADA.md`. Archivar no la da
 | **P-A** · Aviso a Comercial cuando un contacto de Books comparta NIT con un provisional sin enlazar (hoy el enlace depende de que alguien se acuerde) | Gerencia (alcance y destino) | `design.md` §4.6 → `docs/sdd/ENTRADA.md` al archivar |
 | Verificación en la app tras desplegar (alta manual, enlace, validación, «Habilitar Servicio») | Persona de Comercial | §6 (tareas de persona) del próximo paquete de despliegue que incluya F1B-15; hasta entonces, queda escrita en esta tabla |
 
-## Matriz de cobertura (45 escenarios, 11 requisitos: 44 y 10 verificados; RQ-HV-19 añadido por W-3)
+## Matriz de cobertura (47 escenarios, 11 requisitos: 44 y 10 verificados; RQ-HV-19 y sus tres escenarios, añadidos por W-3)
 
 | Requisito | Escenarios → tareas |
 |---|---|

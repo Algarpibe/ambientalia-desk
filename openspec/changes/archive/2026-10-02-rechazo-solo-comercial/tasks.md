@@ -60,7 +60,7 @@ trackear, y registrar ESO.
 ## Fase 4 · Barrido de citas (regla de mutación 4) y detector
 
 - [x] 4.1 Completas, fuera de `openspec/changes/archive/**`: `grep -rnoE "(transitions|invariantesGrafo\.test|permisos\.test|avisoArea\.test)\.ts:[0-9]+(-[0-9]+)?"` y `blueprint-(completo|fase-[123]-[a-z]+)\.md:[0-9]+`. Comprobar CADA resultado contra el fichero, inicio y final por separado y leyendo lo que afirma.
-- [x] 4.2 Abreviadas (`:NNN`) en los ficheros que ya citan esos módulos, y forma corta de specs: `RQ-TS-07`, `RQ-PM-03`, «ocho compartidas», `54/39`, `55/38`. Casos: A (presente, se corrige vía delta), B (fechadas: `transitions-st/spec.md:1545`, `archive/**`, `docs/sdd/Estado_As-Built_2026-09-09.md`, no se tocan), C (ninguno esperado).
+- [x] 4.2 Abreviadas (`:NNN`) en los ficheros que ya citan esos módulos, y forma corta de specs: `RQ-TS-07`, `RQ-PM-03`, «ocho compartidas», `54/39`, `55/38`. Casos: A (presente, se corrige vía delta), B (fechadas: `transitions-st/spec.md:1545` en `4984c3b`, `archive/**`, `docs/sdd/Estado_As-Built_2026-09-09.md`, no se tocan), C (ninguno esperado).
 - [x] 4.3 `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`: 0 bloqueantes. Anotar el informe y el barrido en `apply-progress.md`.
 
 ## Fase 5 · Verificación completa
