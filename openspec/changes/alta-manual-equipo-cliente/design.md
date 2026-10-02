@@ -6,7 +6,7 @@ se leyó en el worktree. Lo que no lleva ruta y línea lleva «hipótesis».
 **Revisión del 2026-10-02** (`decision/f1b15-clientes-provisionales-sin-tocar-la-vista`, `openspec/config.yaml` →
 `decisiones_de_gerencia_adenda`): la vista `public.clients` (`schema.sql:169-173`) **no cambia**. El sondeo 1.0
 demostró que pg-mem no admite `CREATE OR REPLACE VIEW` sobre una vista existente (`View.drop` → «Method not
-implemented», `node_modules/pg-mem/src/schema/view.ts:48`) ni parsea `DROP VIEW`. Se retira D3, se rehace D2 y
+implemented», `view.ts` de pg-mem, línea 48 de `src/schema`) ni parsea `DROP VIEW`. Se retira D3, se rehace D2 y
 D12, y los provisionales se resuelven con una **segunda consulta** en `apps/desk/server` (RQ-TC-34, RQ-ZS-16).
 `packages/zoho-sync/src/books/repo.ts` y el worker del hub no se tocan.
 
@@ -89,14 +89,14 @@ ya lo lleva**, y no entra donde se **elige un cliente para un contrato, una prio
 `refs.clienteProvisional = true`. Los llamadores sólo cambian su línea de import: `routes/tickets.ts:5`,
 `routes/prioridad.ts:4`, `services/ticketService.ts:2`, `routes/remision.ts:5`. La marca viaja por
 `TicketRefs` (`packages/zoho-sync/src/db/mappers.ts:185`) y el mapeo (`:199` listado, `:246` ficha), en sitio, y el
-tipo `Ticket` de `packages/shared/src/types.ts:99`. Supuesto reversible: `mappers.ts` no es `books/repo.ts` ni el
+tipo `Ticket` de `packages/shared/src/types.ts:8` (corregido al aplicar: `:99` era `accountName` del ticket crudo de Zoho). Supuesto reversible: `mappers.ts` no es `books/repo.ts` ni el
 worker, y el cambio es un campo opcional.
 
 ### 4.3 Informes
 
 | Sitio | Qué hace | ¿Provisional? | Cómo |
 |---|---|---|---|
-| `analisis.ts:16` · `GET /api/analisis` | Cliente por ticket en el análisis | **Sí, sin marca** | Segunda consulta tras el `SELECT`, en `analisis.ts` (poco citado) |
+| `analisis.ts:17` · `GET /api/analisis` | Cliente por ticket en el análisis | **Sí, sin marca** | Segunda consulta tras el `SELECT`, en `analisis.ts` (poco citado) |
 | `db/prioridadCliente.ts:49` · `GET /api/top5` | Nombre en el Top 5 | **No, a propósito**: un provisional no puede entrar en el Top 5 (`routes/prioridad.ts:38`, D12) | Sin cambios |
 | `db/informeContrato.ts` · `GET /api/contratos/:id/informe` | Informe de contrato | **No**: no lee cliente; y un provisional no puede tener contrato (`routes/contratos.ts:52`) | Sin cambios |
 
@@ -186,7 +186,7 @@ a Books.
 |---|---|
 | Pide el serial dos veces y avisa si difieren | `validarContenidoAltaManual`, `ticketService.ts:91` (C) |
 | Oculta fin de garantía y mantenedor (y la fecha de factura fuera de «Equipo nuevo», C-1) | El mismo validador (`CAMPOS_COMERCIALES_RESTRINGIDOS`, `equipoComercial.ts:14`) |
-| Exige los cinco datos y el motivo | `exigirClienteProvisional`, `ticketService.ts:28` (A) |
+| Exige los cinco datos y el motivo | `exigirClienteProvisional`, `ticketService.ts`, en la línea vacía 28 (A) |
 | Ofrece el equipo existente si el serial ya está | `exigirEquipoManual` con `getEquipoBySerial` (gesto de `equipoNuevo.ts:46-47`) |
 | Ofrece el cliente de Books si el NIT ya está (P-B) | `409` del escalón D, `ticketService.ts:96` |
 | No combina provisional con OV o cliente existente | `validarContenidoAltaManual`, `:91` (C) |

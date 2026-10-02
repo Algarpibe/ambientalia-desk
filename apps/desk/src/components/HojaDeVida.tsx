@@ -150,7 +150,7 @@ function FilaCambio({ c }: { c: CambioEquipo }) {
   const nuevo = c.nuevoTexto ?? c.nuevo ?? '—'
   return (
     <li className="text-[12px] text-slate-600 py-2 border-b border-slate-100 last:border-0">
-      <span className="font-bold text-slate-700">{ETIQUETA_CAMPO_COMERCIAL[c.campo]}</span>
+      <span className="font-bold text-slate-700">{(ETIQUETA_CAMPO_COMERCIAL as Record<string, string>)[c.campo] ?? c.campo}</span>
       <span className="text-slate-400"> · {c.usuarioNombre} · {fmtFechaHora(c.fecha)}</span>
       <div className="mt-0.5">{anterior} → {nuevo}</div>
     </li>

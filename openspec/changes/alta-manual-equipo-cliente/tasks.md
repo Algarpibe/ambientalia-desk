@@ -43,19 +43,19 @@ Chain strategy: pending
 
 ## Lote 1 — esquema y resolución de provisionales (RQ-ZS-16, RQ-TC-34)
 
-- [ ] 1.1 RED `migrate.test.ts`: cifras en sitio (`:284`, `:285`, `:286` 39→40; `:376` 43→44; `:378` 22→23) y, al final, prueba de la **vista intacta**: el texto de `schema.sql:169-173` es el de `132d25f` y no contiene `clientes_provisionales` ni `provisional`. Rojo: sin tabla.
-- [ ] 1.2 GREEN `schema.sql` **sólo al final**: `CREATE TABLE public.clientes_provisionales` (columnas de D1) y `ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean` (sin calificar). Comentarios sin punto y coma. `migrate.ts:73`: `clientes_provisionales` al final de la línea.
-- [ ] 1.3 Mutaciones regla 2, una a una, revertidas con `git diff`: (m1) quitar `public.` del `CREATE TABLE`; (m2) `ALTER TABLE public.equipos`; (m3) añadir `clientes_provisionales` o `provisional` a `:169-173`; (m4) quitar la entrada de `PUBLIC_TABLES`. Cada una pone rojo un guardián.
-- [ ] 1.4 RED→GREEN `packages/shared/src/altaManual.ts` (nuevo, export al final de `index.ts`): `PREFIJO_PROVISIONAL`, `serialesCoinciden`. Tipos en sitio: `provisional?` (`types.ts:301`), `clienteProvisional?` (`:99`), `pendienteValidar?`, `CambioEquipo['campo']` (`:555`).
-- [ ] 1.5 RED `services/clientes.test.ts`: los siete escenarios de RQ-TC-34 —búsqueda con ambos y marcas; enlazado no listado; ficha provisional; ficha de Books idéntica con `provisional:false`; inexistente `404`; prioridad de Books con espía (cero consultas a `clientes_provisionales` para un id de Books)—. Rojo: módulo inexistente.
-- [ ] 1.6 GREEN `db/clientesProvisionales.ts` (lecturas) y `services/clientes.ts`: `obtenerCliente`, `buscarClientes`, `clienteParaEquipo`.
-- [ ] 1.7 Mutación P4: consulta de provisionales antes que Books en `obtenerCliente` → rojo la prueba de prioridad; revertir.
-- [ ] 1.8 RED→GREEN `db/ticketsConCliente.test.ts` + `db/ticketsConCliente.ts`: escenario «listado muestra el nombre del provisional» en los cuatro envoltorios; marca por `mappers.ts:185`, `:199`, `:246`.
-- [ ] 1.9 GREEN lectores del §4 de `design.md`, en sitio: `routes/directory.ts:3`, `:16` (`provisionales=1`), `:26`; imports de `routes/tickets.ts:5`, `routes/prioridad.ts:4`, `routes/remision.ts:5`; `routes/remision.ts:10`, `:203`, `:307`; `routes/equipos.ts:81` (`clienteParaEquipo`); `db/ticketFuentes.ts:172-174`; `analisis.ts` (segunda consulta).
-- [ ] 1.10 RED→GREEN de los lectores que no cubre 1.5/1.8: historial con el nombre del provisional (`ticketFuentes`), análisis con el nombre (`analisis.ts`), remisión con `empresa` del provisional (`remision.ts:203`), `PATCH` de equipo con otro provisional → `422`.
-- [ ] 1.11 Barrido de citas (regla 4): `grep -rnoE "(schema|migrate|types|directory|remision|tickets|prioridad|ticketFuentes|analisis|mappers|equipos)\.(ts|sql):[0-9]+(-[0-9]+)?"` + pase abreviado; releer lo que AFIRMAN `remision.ts:203`/`:307` y `directory.ts:16`/`:26`; reparar por caso A/B/C. `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con 0 bloqueantes.
-- [ ] 1.12 Si `registro.test.ts:220` se pone roja, añadir `F1B-15` a «en curso» (orden alfabético, tras `F1B-11`).
-- [ ] 1.13 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (techo 165), `npm run build`; medir y registrar.
+- [x] 1.1 RED `migrate.test.ts`: cifras en sitio (`:284`, `:285`, `:286` 39→40; `:376` 43→44; `:378` 22→23) y, al final, prueba de la **vista intacta**: el texto de `schema.sql:169-173` es el de `132d25f` y no contiene `clientes_provisionales` ni `provisional`. Rojo: sin tabla.
+- [x] 1.2 GREEN `schema.sql` **sólo al final**: `CREATE TABLE public.clientes_provisionales` (columnas de D1) y `ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean` (sin calificar). Comentarios sin punto y coma. `migrate.ts:73`: `clientes_provisionales` al final de la línea.
+- [x] 1.3 Mutaciones regla 2, una a una, revertidas con `git diff`: (m1) quitar `public.` del `CREATE TABLE`; (m2) `ALTER TABLE public.equipos`; (m3) añadir `clientes_provisionales` o `provisional` a `:169-173`; (m4) quitar la entrada de `PUBLIC_TABLES`. Cada una pone rojo un guardián.
+- [x] 1.4 RED→GREEN `packages/shared/src/altaManual.ts` (nuevo, export al final de `index.ts`): `PREFIJO_PROVISIONAL`, `serialesCoinciden`. Tipos en sitio: `provisional?` (`types.ts:301`), `clienteProvisional?` (`:8`, en `Ticket`), `pendienteValidar?`, `CambioEquipo['campo']` (`:555`).
+- [x] 1.5 RED `services/clientes.test.ts`: los siete escenarios de RQ-TC-34 —búsqueda con ambos y marcas; enlazado no listado; ficha provisional; ficha de Books idéntica con `provisional:false`; inexistente `404`; prioridad de Books con espía (cero consultas a `clientes_provisionales` para un id de Books)—. Rojo: módulo inexistente.
+- [x] 1.6 GREEN `db/clientesProvisionales.ts` (lecturas) y `services/clientes.ts`: `obtenerCliente`, `buscarClientes`, `clienteParaEquipo`.
+- [x] 1.7 Mutación P4: consulta de provisionales antes que Books en `obtenerCliente` → rojo la prueba de prioridad; revertir.
+- [x] 1.8 RED→GREEN `db/ticketsConCliente.test.ts` + `db/ticketsConCliente.ts`: escenario «listado muestra el nombre del provisional» en los cuatro envoltorios; marca por `mappers.ts:185`, `:199`, `:246`.
+- [x] 1.9 GREEN lectores del §4 de `design.md`, en sitio: `routes/directory.ts:3`, `:16` (`provisionales=1`), `:26`; imports de `routes/tickets.ts:5`, `routes/prioridad.ts:4`, `routes/remision.ts:5`; `routes/remision.ts:10`, `:203`, `:307`; `routes/equipos.ts:81` (`clienteParaEquipo`); `db/ticketFuentes.ts:172-174`; `analisis.ts` (segunda consulta).
+- [x] 1.10 RED→GREEN de los lectores que no cubre 1.5/1.8: historial con el nombre del provisional (`ticketFuentes`), análisis con el nombre (`analisis.ts`), remisión con `empresa` del provisional (`remision.ts:203`), `PATCH` de equipo con otro provisional → `422`.
+- [x] 1.11 Barrido de citas (regla 4): `grep -rnoE "(schema|migrate|types|directory|remision|tickets|prioridad|ticketFuentes|analisis|mappers|equipos)\.(ts|sql):[0-9]+(-[0-9]+)?"` + pase abreviado; releer lo que AFIRMAN `remision.ts:203`/`:307` y `directory.ts:16`/`:26`; reparar por caso A/B/C. `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con 0 bloqueantes.
+- [x] 1.12 Si `registro.test.ts:220` se pone roja, añadir `F1B-15` a «en curso» (orden alfabético, tras `F1B-11`).
+- [x] 1.13 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (techo 165), `npm run build`; medir y registrar.
 
 ## Lote 2 — alta manual y traza (RQ-TC-30, RQ-TC-31, RQ-TC-33, RQ-HV-16, RQ-HV-17, C-1, P-B)
 

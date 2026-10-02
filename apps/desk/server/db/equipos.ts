@@ -160,7 +160,7 @@ export async function deleteEquipo(db: Queryable, id: string): Promise<void> {
 }
 
 /** Columnas + JOIN comunes a `getEquipoFull` y `listEquiposManage`: sin séptima columna propia,
- *  el nombre del mantenedor se deriva de `clients` (precedente: `analisis.ts:16`). */
+ *  el nombre del mantenedor se deriva de `clients` (precedente: `analisis.ts:17`). */
 const SELECT_EQUIPO_FULL = `SELECT e.id,e.serial,e.marca,e.modelo,e.tipo,e.cliente_nombre,e.client_id,e.active,e.modelo_id,
        e.fecha_adquisicion,e.fecha_factura_compra,e.fin_garantia,e.codigo_interno,e.mantenedor_id,e.drive_url,e.compuesto,
        cl.name AS mantenedor_nombre
