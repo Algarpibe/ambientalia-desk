@@ -23,8 +23,8 @@ instalarArnes()
  *
  * ⚠️ LA MATRIZ SE DERIVA DEL GRAFO, no se escriben 31 casos a mano. Escritos a mano, una transición
  * nueva de cualquier catálogo del registro no tendría fila y nadie se enteraría; derivada, aparece
- * servidor tiene que contestarle. Lo que sí va escrito a mano es el TOTAL —93 casos, 54 prohibidos y
- * 39 permitidos—, porque una matriz derivada de un grafo vacío también daría verde.
+ * servidor tiene que contestarle. Lo que sí va escrito a mano es el TOTAL —93 casos, 55 prohibidos y
+ * 38 permitidos—, porque una matriz derivada de un grafo vacío también daría verde.
  *
  * ⚠️ Y SE PRUEBA CONTRA EL SERVIDOR, no contra `canExecuteTransition`. El 403 lo lanza
  * `ticketService.ts:130`, con TRES guardas por delante —404 si el ticket no existe, 409 de flujo
@@ -69,16 +69,16 @@ describe('matriz área × transición, contra el servidor', () => {
   /**
    * EL TOTAL, escrito a mano, porque es lo único que la derivación no puede vigilarse a sí misma.
    *
-   * 31 transiciones × 3 áreas = 93 casos. Las 23 de área simple prohíben a 2 áreas cada una y las 8
-   * compartidas a 1: 23×2 + 8×1 = 54 prohibidos, y 39 permitidos. Si mañana una transición pasa de
+   * 31 transiciones × 3 áreas = 93 casos. Las 24 de área simple prohíben a 2 áreas cada una y las 7
+   * compartidas a 1: 24×2 + 7×1 = 55 prohibidos, y 38 permitidos. Si mañana una transición pasa de
    * simple a compartida —que es exactamente lo que F1C-05 va a tocar—, estos números se mueven y hay
    * que moverlos a propósito.
    */
-  it('la matriz son 93 casos: 54 prohibidos y 39 permitidos', () => {
+  it('la matriz son 93 casos: 55 prohibidos y 38 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => canExecuteTransition([a], false, t.area)))
     expect(casos).toHaveLength(93)
-    expect(casos.filter((permitido) => !permitido)).toHaveLength(54)
-    expect(casos.filter((permitido) => permitido)).toHaveLength(39)
+    expect(casos.filter((permitido) => !permitido)).toHaveLength(55)
+    expect(casos.filter((permitido) => permitido)).toHaveLength(38)
   })
 
   /**
@@ -335,7 +335,7 @@ describe('matriz 4×3 · área × transición de Soporte remoto, contra el servi
 
 /**
  * F1C-05, nivel CARGO, parte pura: el cargo SÓLO restringe (RQ-PM-03, RQ-PM-21). Van al final del
- * fichero y no tocan la matriz HTTP de arriba, cuyo suelo (93 = 54/39, sólo área) sigue intacto.
+ * fichero y no tocan la matriz HTTP de arriba, cuyo suelo (93 = 55/38, sólo área) sigue intacto.
  */
 describe('cargo · la compuesta contra el área (puro)', () => {
   it('exactamente un caso difiere del área: liberacion_sin_factura × Comercial (S21)', () => {
@@ -346,11 +346,11 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 
-  it('con la compuesta y sin cargo, la matriz son 93 casos: 55 prohibidos y 38 permitidos', () => {
+  it('con la compuesta y sin cargo, la matriz son 93 casos: 56 prohibidos y 37 permitidos', () => {
     const casos = TRANSITIONS.flatMap((t) => AREAS.map((a) => puedeEjecutarTransicion({ areas: [a], isAdmin: false, cargoPermiso: null }, t)))
     expect(casos).toHaveLength(93)
-    expect(casos.filter((p) => !p)).toHaveLength(55)
-    expect(casos.filter((p) => p)).toHaveLength(38)
+    expect(casos.filter((p) => !p)).toHaveLength(56)
+    expect(casos.filter((p) => p)).toHaveLength(37)
   })
 
   it('cargo × área × transición: 744 casos, ninguno concede lo que el área niega (S17)', () => {
@@ -380,5 +380,82 @@ describe('cargo · la compuesta contra el área (puro)', () => {
   it('la tabla de excepciones no toca las otras dos matrices: sus claves no están en sus catálogos', () => {
     const ids = [...TRANSITIONS_EQUIPO_NUEVO, ...TRANSITIONS_SOPORTE_REMOTO].map((t) => t.id)
     for (const id of Object.keys(EXCEPCIONES_POR_CARGO.transiciones)) expect(ids).not.toContain(id)
+  })
+})
+
+/**
+ * F1C-10 (E-114) — «Rechazo» desde Notificación cliente la ejecuta sólo Comercial.
+ *
+ * ⚠️ EL RESULTADO VA ESCRITO A MANO. La matriz HTTP de arriba deriva el esperado de
+ * `puedeEjecutarTransicion` (D-5): con `rechazo_cliente` devuelto a `Comercial / Servicio Técnico` seguiría
+ * verde, porque catálogo y esperado se moverían juntos. Aquí el 403 y los 200 no salen del catálogo.
+ * Las otras dos «Rechazo» (`rechazo_comercial`, `rechazo_revision`) siguen admitiendo a Servicio Técnico.
+ */
+describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
+  const porId = (id: string) => TRANSITIONS.find((t) => t.id === id)!
+  const ticket = async (id: string, numero: number, estado: string) =>
+    db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)', [id, numero, 'Rechazo F1C-10', estado])
+  const ejecutar = (app: ReturnType<typeof appWith>['app'], cookie: string, id: string, transicion: string) =>
+    request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
+      .send({ transitionId: transicion, values: valoresValidos(porId(transicion), 1) })
+
+  it('el catálogo declara las tres «Rechazo», cada una con su área y su destino, escritos a mano', () => {
+    expect(['rechazo_comercial', 'rechazo_cliente', 'rechazo_revision'].map((id) => [id, porId(id).area, porId(id).to])).toEqual([
+      ['rechazo_comercial', 'Comercial / Servicio Técnico', 'Por Facturar'],
+      ['rechazo_cliente', 'Comercial', 'Por Facturar'],
+      ['rechazo_revision', 'Comercial / Servicio Técnico', 'Por Facturar'],
+    ])
+  })
+
+  it('un usuario sólo de Servicio Técnico recibe 403 en rechazo_cliente, sin cambio de estado ni traza', async () => {
+    await ticket('rc-st', 96001, 'Notificación cliente')
+    const { app } = appWith()
+    const res = await ejecutar(app, await userCookie(['Servicio Técnico']), 'rc-st', 'rechazo_cliente')
+    expect(res.status).toBe(403)
+    expect((await db.query('SELECT status FROM tickets WHERE id = $1', ['rc-st'])).rows[0].status).toBe('Notificación cliente')
+    expect((await db.query('SELECT 1 FROM ticket_transitions WHERE ticket_id = $1', ['rc-st'])).rows).toHaveLength(0)
+  }, 60_000)
+
+  it('Comercial rechaza con 200 y el ticket pasa a Por Facturar; la traza guarda el área Comercial', async () => {
+    await ticket('rc-co', 96002, 'Notificación cliente')
+    const { app } = appWith()
+    const res = await ejecutar(app, await userCookie(['Comercial']), 'rc-co', 'rechazo_cliente')
+    expect(res.status).toBe(200)
+    expect((await db.query('SELECT status FROM tickets WHERE id = $1', ['rc-co'])).rows[0].status).toBe('Por Facturar')
+    expect((await db.query('SELECT area FROM ticket_transitions WHERE ticket_id = $1', ['rc-co'])).rows).toEqual([{ area: 'Comercial' }])
+  }, 60_000)
+
+  it('un administrador rechaza con 200', async () => {
+    await ticket('rc-ad', 96003, 'Notificación cliente')
+    const u = await createUser(db, { email: 'jefa-rc@x.co', name: 'Jefa', passwordHash: await hashPassword('password123'), isAdmin: true })
+    const { app } = appWith()
+    const res = await ejecutar(app, `sid=${await createSession(db, u.id)}`, 'rc-ad', 'rechazo_cliente')
+    expect(res.status).toBe(200)
+    expect((await db.query('SELECT status FROM tickets WHERE id = $1', ['rc-ad'])).rows[0].status).toBe('Por Facturar')
+  }, 60_000)
+
+  it('las otras dos «Rechazo» siguen admitiendo a Servicio Técnico con 200 (guardián de M-2)', async () => {
+    await ticket('rc-cm', 96004, porId('rechazo_comercial').from[0])
+    await ticket('rc-rv', 96005, porId('rechazo_revision').from[0])
+    const { app } = appWith()
+    const cookie = await userCookie(['Servicio Técnico'])
+    expect((await ejecutar(app, cookie, 'rc-cm', 'rechazo_comercial')).status).toBe(200)
+    expect((await ejecutar(app, cookie, 'rc-rv', 'rechazo_revision')).status).toBe(200)
+  }, 60_000)
+
+  it('el barrido de cargo sigue en 744 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
+    let casos = 0
+    const difieren: Array<{ transicion: string; area: string }> = []
+    for (const t of TRANSITIONS) {
+      for (const area of AREAS) {
+        for (const cargoPermiso of [...CARGOS, null]) {
+          casos += 1
+          const compuesta = puedeEjecutarTransicion({ areas: [area], isAdmin: false, cargoPermiso }, t)
+          if (cargoPermiso === null && compuesta !== canExecuteTransition([area], false, t.area)) difieren.push({ transicion: t.id, area })
+        }
+      }
+    }
+    expect(casos).toBe(744)
+    expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 })

@@ -19,7 +19,7 @@ stateDiagram-v2
     state "Finalizado" as e18
     e15 --> e17 : finalización de servicio [frontera] [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
-    e03 --> e17 : Rechazo [frontera] [C][ST]
+    e03 --> e17 : Rechazo [frontera] [C]
     e13 --> e17 : Rechazo [frontera] [C][ST]
     e17 --> e10 : Facturado [C]
     e17 --> e18 : facturado y cierre de TK [C]
