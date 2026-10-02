@@ -233,7 +233,7 @@ const TRANSICIONES_BASE: Transition[] = [
   // Notificado conserva sus tres salidas: devolución a corrección, reporte por garantía y escalado a comercial.
   { id: 'rechazo_comercial', name: 'Rechazo', from: ['Notificación Comercial'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
     fields: [comment()] },
-  { id: 'rechazo_cliente', name: 'Rechazo', from: ['Notificación cliente'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
+  { id: 'rechazo_cliente', name: 'Rechazo', from: ['Notificación cliente'], to: 'Por Facturar', area: 'Comercial',
     fields: [comment()] },
   { id: 'rechazo_revision', name: 'Rechazo', from: ['Rev./Diagnostico'], to: 'Por Facturar', area: 'Comercial / Servicio Técnico',
     fields: [comment()] },

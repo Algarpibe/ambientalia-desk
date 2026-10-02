@@ -60,7 +60,7 @@ El catálogo de transiciones del flujo de servicio técnico **SHALL** vivir en
 | 2 | 31 transiciones, 20 estados, 31 ids distintos (antes 34, 21, 34) | `:50-54` |
 | 3 | `Finalizado` es el único estado sin transición de salida | `:62-66` |
 | 4 | Ningún `from` ni `to` apunta fuera del registro | `:76-82` |
-| 5 | Las ocho transiciones compartidas son ésas, cada una con su pareja de áreas | `:91-106` |
+| 5 | Las siete transiciones compartidas son ésas, cada una con su pareja de áreas (Previously: ocho, hasta F1C-10) | `:91-106` |
 | 6 | Los campos de fecha reentrantes son exactamente diez | `:137-150` |
 | 7 | La superficie HTTP saliente es la declarada | `apps/desk/server/superficieSaliente.test.ts` |
 
@@ -1627,4 +1627,4 @@ Van al final, y no dentro del bloque de RQ-TS-01, para no desplazar las citas a 
 #### Scenario: los invariantes 5 y 6 no cambian
 - GIVEN el catálogo sin las tres retiradas
 - WHEN corren los invariantes 5 y 6
-- THEN siguen en ocho compartidas y diez campos de fecha reentrantes
+- THEN siguen en ocho compartidas y diez campos de fecha reentrantes (en F1C-09; RQ-TS-30 lleva las compartidas a siete en F1C-10, y el invariante 6 sigue en diez)

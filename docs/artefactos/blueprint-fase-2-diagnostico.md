@@ -41,7 +41,7 @@ stateDiagram-v2
     e13 --> e02 : Calibración de sensores ext. [ST]
     e02 --> e15 : Retorno de servicios externos [ST]
     e07 --> e17 : Rechazo [frontera] [C][ST]
-    e03 --> e17 : Rechazo [frontera] [C][ST]
+    e03 --> e17 : Rechazo [frontera] [C]
     e13 --> e17 : Rechazo [frontera] [C][ST]
     e15 --> e16 : Diagnóstico complementario [ST]
     e16 --> e07 : Notificación re cotización [C]

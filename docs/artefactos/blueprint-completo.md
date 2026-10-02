@@ -51,7 +51,7 @@ stateDiagram-v2
     e13 --> e02 : Calibración de sensores ext. [ST]
     e02 --> e15 : Retorno de servicios externos [ST]
     e07 --> e17 : Rechazo [C][ST]
-    e03 --> e17 : Rechazo [C][ST]
+    e03 --> e17 : Rechazo [C]
     e13 --> e17 : Rechazo [C][ST]
     e17 --> e10 : Facturado [C]
     e17 --> e18 : facturado y cierre de TK [C]

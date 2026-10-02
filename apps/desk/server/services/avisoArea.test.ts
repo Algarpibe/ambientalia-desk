@@ -95,3 +95,17 @@ describe('Solicitud Soporte, primer estado del catálogo de soporte remoto (F1B-
     expect(areasAAvisar('Solicitud Soporte', ['Comercial'], TRANSITIONS_SOPORTE_REMOTO)).toEqual(['Servicio Técnico'])
   })
 })
+
+/**
+ * F1C-10 (E-114) — `rechazo_cliente` pasa a `Comercial`: desde `Notificación cliente` ya no le toca a Servicio
+ * Técnico (no tiene salida allí), y `areasAAvisar` resta las áreas de quien actúa (`avisoArea.ts:16`).
+ */
+describe('Notificación cliente deja de avisar a Servicio Técnico (F1C-10)', () => {
+  it('areasSiguientes(Notificación cliente) son Comercial y Compras', () => {
+    expect([...areasSiguientes('Notificación cliente')].sort()).toEqual(['Comercial', 'Compras'])
+  })
+
+  it('areasAAvisar(Notificación cliente, [Comercial]) avisa sólo a Compras', () => {
+    expect(areasAAvisar('Notificación cliente', ['Comercial'])).toEqual(['Compras'])
+  })
+})

@@ -82,13 +82,13 @@ describe('invariantes del grafo de transiciones', () => {
   })
 
   /**
-   * INVARIANTE 5 — el CONJUNTO de las ocho compartidas, emparejado id → área. Fija M1.9.1.
+   * INVARIANTE 5 — el CONJUNTO de las siete compartidas, emparejado id → área. Fija M1.9.1.
    *
-   * ⚠️ Se afirma el emparejamiento, NO el número. «Exactamente 8» pasa igual si alguien cambia
-   * `rechazo_cliente` de `Comercial / Servicio Técnico` a `Comercial / Compras`: siguen siendo ocho,
+   * ⚠️ Se afirma el emparejamiento, NO el número. «Exactamente 7» pasa igual si alguien cambia
+   * `rechazo_comercial` de `Comercial / Servicio Técnico` a `Comercial / Compras`: siguen siendo siete,
    * con otro significado, y la matriz de F1C-05 se construye mal sin que nada dé rojo.
    */
-  it('5 · las ocho compartidas son estas, cada una con su pareja de áreas', () => {
+  it('5 · las siete compartidas son estas, cada una con su pareja de áreas', () => {
     const compartidas: Record<string, string> = {}
     for (const t of TRANSITIONS) {
       if (t.area.includes(' / ')) compartidas[t.id] = t.area
@@ -100,7 +100,7 @@ describe('invariantes del grafo de transiciones', () => {
       rechazo_garantia: 'Comercial / Compras',
       solicitud_sku: 'Comercial / Compras',
       rechazo_comercial: 'Comercial / Servicio Técnico',
-      rechazo_cliente: 'Comercial / Servicio Técnico',
+      // rechazo_cliente: 'Comercial' desde F1C-10 (E-114); ya no es compartida.
       rechazo_revision: 'Comercial / Servicio Técnico',
     })
   })
