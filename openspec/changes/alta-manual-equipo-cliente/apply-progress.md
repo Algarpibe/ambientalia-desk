@@ -209,3 +209,9 @@ Strict TDD en el servidor, `.tsx` fuera de la red de pruebas (F0-00, sin rojo pr
 
 ## Frontera de reversión
 `git revert` del lote 4: vuelve el formulario de alta anterior y «Habilitar Servicio» sin aviso en pantalla; la ficha y la hoja de vida dejan de devolver `pendienteValidar` (el servidor sigue imponiendo todo).
+
+## W-3 del verify — prueba del equipo validado (intento propio, 2026-10-02)
+- **Hueco:** `apps/desk/server/routes/altaManual.test.ts:268` sólo sembraba `pendiente_validar = null` para el no pendiente (`:25`), mientras que validar escribe `false` (`apps/desk/server/routes/altaManual.ts:50`). La mutación de `apps/desk/server/db/equipos.ts:115` de `=== true ? true : undefined` a `?? undefined` dejaba la suite en verde (28/28).
+- **Contrato fijado:** `pendienteValidar` aparece sólo cuando vale `true`; validado (`false`) o nunca pendiente (`null`), el campo NO viene, ni en la ficha ni en la hoja de vida.
+- **Prueba:** `apps/desk/server/routes/altaManual.test.ts:280`, por el flujo real: `POST /api/equipos/eq-1/validacion` como Comercial → la columna queda en `false` → `GET` de la ficha y del historial con `200` y `id` correcto, sin la propiedad `pendienteValidar`.
+- **Nace verde, declarado:** el código ya cumplía. Lo que demuestra que discrimina es la mutación de `:115`: roja (1 fallida, 28 pasan) en la aserción de la ficha y, con ésa anulada, también en la del historial. Revertida; `git diff` de `db/equipos.ts` vacío.

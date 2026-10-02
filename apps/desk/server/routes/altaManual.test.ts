@@ -275,4 +275,17 @@ describe('Lote 4 · la ficha y la hoja de vida dicen si el equipo está pendient
     expect((await ficha('eq-2')).body.pendienteValidar).toBeUndefined()
     expect((await hoja('eq-2')).body.equipo.pendienteValidar).toBeUndefined()
   })
+
+  // W-3 del verify: validar escribe `false` (`routes/altaManual.ts:50`), no `null`; la prueba de arriba sólo siembra `null`.
+  it('tras validar por la ruta real, la ficha y la hoja de vida ya no llevan pendienteValidar (ausente, no false)', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    expect((await request(app).post('/api/equipos/eq-1/validacion').set('Cookie', await userCookie(COMERCIAL)).send({})).status).toBe(200)
+    expect((await db.query("SELECT pendiente_validar FROM equipos WHERE id='eq-1'")).rows[0].pendiente_validar).toBe(false)
+    const ficha = await request(app).get('/api/equipos/eq-1').set('Cookie', cookie)
+    const hoja = await request(app).get('/api/equipos/eq-1/historial').set('Cookie', cookie)
+    expect([ficha.status, ficha.body.id, hoja.status, hoja.body.equipo.id]).toEqual([200, 'eq-1', 200, 'eq-1'])
+    expect(ficha.body).not.toHaveProperty('pendienteValidar')
+    expect(hoja.body.equipo).not.toHaveProperty('pendienteValidar')
+  })
 })
