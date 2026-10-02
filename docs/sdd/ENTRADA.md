@@ -1752,3 +1752,8 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** cómo aparecen los clientes provisionales de F1B-15 junto a los de Books, tras fallar el sondeo de pg-mem sobre `CREATE OR REPLACE VIEW` en una vista existente.
 **Respuesta de Gerencia (opción elegida):** «Sin tocar la vista (Recomendado)»: la vista `public.clients` no cambia; el servidor de la app consulta también la tabla de provisionales, sin tocar el worker del hub.
 **Estado:** cerrada · **Destino:** replanificación de `alta-manual-equipo-cliente` (F1B-15) · `openspec/config.yaml` → `decisiones_de_gerencia_adenda`. **Engram:** `decision/f1b15-clientes-provisionales-sin-tocar-la-vista`.
+
+## E-153 · 2026-10-02 · decision · **CERRADA 02/10** — F1B-15: el alta manual rechaza un NIT que ya está en Books (P-B)
+**Qué:** si el pendiente P-B de `alta-manual-equipo-cliente` (`design.md` §4.6) entra en la tanda: comprobar el NIT del cliente provisional contra Books en el alta.
+**Respuesta textual:** «2. Sí, que entre»
+**Estado:** cerrada · **Destino:** lote 2 de `alta-manual-equipo-cliente` (F1B-15) · `openspec/config.yaml` → `decisiones_de_gerencia_adenda` (`decision/f1b15-p-b-nit-en-books`). P-A queda pendiente en `tasks.md`. **Engram:** `decision/f1b15-p-b-nit-en-books`.
