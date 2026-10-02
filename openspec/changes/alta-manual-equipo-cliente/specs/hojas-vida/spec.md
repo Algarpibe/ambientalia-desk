@@ -34,7 +34,8 @@ Con «no catalogado», el texto **SHALL** ser obligatorio y conservarse tal cual
 ### Requirement: RQ-HV-17 · El alta manual rechaza los tres campos reservados a Comercial
 
 El alta manual **MUST NOT** aceptar `fechaFacturaCompra`, `finGarantia` ni `mantenedorId` (los tres restringidos de
-RQ-HV-09): si el cuerpo trae cualquiera, el servidor **SHALL** responder `422` (escalón C) sin escribir nada. Esos
+RQ-HV-09): si el cuerpo trae cualquiera, el servidor **SHALL** responder `422` (escalón C) sin escribir nada,
+**salvo la fecha de factura en «Equipo nuevo», que sigue obligatoria** (F1B-14, `decision/equipo-nuevo-alta-en-ticket`). Esos
 campos los completa después Comercial por el `PATCH` ya restringido (`routes/equipos.ts:73`). Esta es una tercera vía
 de alta, distinta de las dos de RQ-HV-11, que no se modifican.
 

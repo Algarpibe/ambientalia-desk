@@ -27,7 +27,8 @@ Fuentes: E-129 (`docs/sdd/ENTRADA.md:1555`), `decision/orden-ejecucion-encargo-0
   servidor**; modelo del catálogo o «modelo no catalogado» con texto; tipo. Si el serial existe, se ofrece el
   existente (reutiliza `equipoNuevo.ts:46-47`). Sin los tres campos comerciales reservados.
 - **Cliente provisional** en tabla propia `public.clientes_provisionales` (razón social, NIT, contacto,
-  teléfono, correo), visible por la vista `public.clients` con `UNION ALL` y una columna `provisional` al final.
+  teléfono, correo). La vista `public.clients` **no cambia**: el servidor de la app consulta también esa tabla
+  (`decision/f1b15-clientes-provisionales-sin-tocar-la-vista`, E-152; `design.md` §4).
 - **Marca «pendiente de validar»** en equipo y cliente, y **traza**: quién, cuándo y motivo escrito obligatorio.
 - **Validación por Comercial (o administrador)**: enlazar el provisional con su contacto de Books, reescribiendo
   `client_id` de tickets y equipos en una transacción; y validar el equipo, con registro en `equipos_cambios`.
@@ -43,8 +44,8 @@ Fuentes: E-129 (`docs/sdd/ENTRADA.md:1555`), `decision/orden-ejecucion-encargo-0
 
 ## Enfoque
 
-Lote 1, servidor del alta: esquema, cliente provisional, alta manual y traza. Lote 2: enlace, validación y
-guarda. Lote 3: interfaz. Lógica nueva en módulos propios. En `ticketService.ts` sólo llamadas en líneas
+Lote 1: esquema y resolución de provisionales. Lote 2: alta manual y traza. Lote 3: enlace, validación y
+guarda. Lote 4: interfaz (replanificado tras E-152, `design.md` §9). Lógica nueva en módulos propios. En `ticketService.ts` sólo llamadas en líneas
 existentes, como ya se hace en `:91`, `:96` y `:131`, para no desplazar citas.
 
 ## Riesgos
@@ -52,7 +53,7 @@ existentes, como ya se hace en `:91`, `:96` y `:131`, para no desplazar citas.
 | Riesgo | Mitigación |
 |---|---|
 | Regla 13. El cliente decide tres cosas: el serial doble, ocultar los campos comerciales y desactivar «Habilitar» | El servidor impone las tres: comparación del serial, rechazo de los campos restringidos (`apps/desk/server/routes/equipos.ts:73`, misma regla) y la guarda nueva. Cada línea se nombra en `verify` |
-| El cambio de vista toca a los 24 llamadores de `getClient` y a `RQ-ZS-09` | Columnas idénticas y `provisional` al final. Prueba de que un id de Books se resuelve igual |
+| Los lectores de clientes (E-152: sin tocar la vista) | Inventario completo en `design.md` §4, con en cuál entra el provisional y en cuál no. Prueba de que un id de Books se resuelve igual y sin consultar los provisionales |
 | Regla de mutación 4 sobre `ticketService.ts`, `schema.sql` y `transitions.ts` | Sin insertar líneas antes de las citadas. Barrido de citas al cierre |
 | Esquemas | `CREATE TABLE public.…` al final. Las `ALTER` de `equipos` sin calificar (`DESK_TABLES`). Entrada en `PUBLIC_TABLES` |
 | Regla de mutación 1: la posición de la guarda | Prueba que active a la vez la guarda nueva y una vecina del escalón B |
@@ -78,7 +79,7 @@ Ninguna cambia el alcance de la fila ni bloquea.
 1. El alta con cliente provisional y equipo manual crea un ticket en `Ticket creado` (o en `Solicitud Soporte` si es soporte remoto) con los dos marcados.
 2. Un serial que no coincide con su confirmación da 422 sin escribir nada.
 3. Un serial existente reutiliza el equipo y no crea otro.
-4. Un alta manual con fecha de factura, fin de garantía o mantenedor da 422.
+4. Un alta manual con fin de garantía o mantenedor da 422; con fecha de factura también, salvo en «Equipo nuevo», donde sigue obligatoria (C-1).
 5. «Habilitar Servicio» con algo pendiente da 422. Tras el enlace y la validación, pasa.
 6. El enlace reescribe `client_id` en tickets y equipos en una transacción. Un fallo no deja nada a medias.
 7. Un usuario fuera de Comercial y no administrador recibe 403 al enlazar o validar.

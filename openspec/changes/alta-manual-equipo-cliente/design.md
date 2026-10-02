@@ -55,25 +55,32 @@ HojaDeVida ─POST …/enlace─▶ enTransaccion · ─POST /api/equipos/:id/va
 TransitionPanel ─habilitar_servicio─▶ :131 … exigirVerificacion → exigirAltaValidada (B, 422)
 ```
 
-## 4. Llamadores: quién necesita los provisionales
+## 4. Lectores de clientes: en cuál entra el provisional y en cuál no
 
-Medido hoy: **12 llamadas** a `getClient` en `apps/desk/server` sin pruebas; la cifra de 24 de `proposal.md:55` no
-se reproduce (hipótesis: contaba importaciones, comentarios y pruebas).
+Inventario medido el 2026-10-02 en este worktree, tras fusionar `ad0f7a6`; cada línea se leyó en el árbol. Hay **dos
+puntos de paso** en Books —`searchClients` (`books/repo.ts:117`) y `getClient` (`books/repo.ts:129`)—, **siete
+lecturas SQL directas** de la vista y **ninguna clave foránea**: `tickets.client_id` (`schema.sql:185`) y
+`equipos.client_id` (`schema.sql:208`) son `text`. Lo que no se cambia, se deja como está **a propósito** y con su
+razón; nada queda «sin mirar». La regla general: el provisional entra donde un usuario **ve un ticket o un equipo que
+ya lo lleva**, y no entra donde se **elige un cliente para un contrato, una prioridad o un mantenedor**, ni donde se
+**valida que un cliente exista** en Books.
 
-| Llamador | ¿Provisionales? | Cómo |
-|---|---|---|
-| `services/ticketService.ts:89` | Sí: un ticket de un equipo manual o un provisional reutilizado | `obtenerCliente`, en sitio; import `:4` en sitio |
-| `services/ticketService.ts:73` | Sí, sólo el nombre del mensaje `422` | `obtenerCliente`, en sitio |
-| `routes/directory.ts:26` (ficha) | Sí | `obtenerCliente`; `404` si no está en ninguno |
-| `routes/directory.ts:16` (búsqueda) | Sí, con `provisionales=1` | `buscarClientes`; import `:3` en sitio |
-| `routes/remision.ts:203`, `:307` | Sí: documento de remisión | `obtenerCliente`, en sitio; import `:10` en sitio |
-| `routes/equipos.ts:81` (`PATCH`) | Sólo si es el **mismo** cliente que ya tiene el equipo | `clienteParaEquipo(db, id, actual.clientId)`, en sitio: un provisional distinto → `null` → `422` |
-| `routes/equipos.ts:56`, `:171`; `routes/contratos.ts:52`; `routes/prioridad.ts:30`, `:38`; `services/avisoRitmoContrato.ts:40` | No | Sin cambios (D12) |
+### 4.1 Búsqueda y ficha
 
-Otras lecturas de la vista: `db/ticketFuentes.ts:172-174` (nombre para historial y conversación) → `obtenerCliente`,
-en sitio, sí. `analisis.ts:12-16` → `t.client_id` en `:12` y nombres provisionales con una segunda consulta tras
-`:18`, sí, sin marca. `db/equipos.ts:167`, `db/equiposCambios.ts:50-51` (mantenedor) y `db/prioridadCliente.ts:49`
-(Top 5) → no: allí nunca hay provisional.
+| Sitio | Qué hace | ¿Provisional? | Cómo |
+|---|---|---|---|
+| `routes/directory.ts:16` · `GET /api/clients?search=` | Buscador de clientes (alta de ticket, contratos, Top 5, mantenedor, equipos) | **Sí, sólo con `provisionales=1`** (D13): lo pide el alta de ticket | `buscarClientes`; sin el parámetro, la respuesta de hoy más `provisional:false` |
+| `routes/directory.ts:26` · `GET /api/clients/:id` | Ficha de cliente | **Sí** | `obtenerCliente`; `404` si no está en ninguno |
+| `db/directory.ts:16-62` · `/api/accounts`, `/api/contacts` (`ClientesPage`, `ClienteDetalle`) | Directorio de cuentas de Zoho Desk | **No, a propósito**: lee `desk.accounts`/`desk.contacts`, no Books; el provisional no es una cuenta de Desk | Sin cambios |
+
+### 4.2 Listados y detalle de tickets
+
+| Sitio | Qué hace | ¿Provisional? | Cómo |
+|---|---|---|---|
+| `packages/zoho-sync/src/db/repo.ts:147`, `:162`, `:182`, `:202` (`getActiveTickets`, `getClosedTickets`, `getAllTickets`, `getTicketWithRefs`) → tablero, `/api/mis-tickets` (`routes/prioridad.ts:85`), cerrados, todos, ficha del ticket (`routes/tickets.ts:130`), respuestas de alta y transición, `GET /api/remisiones/nueva` (`routes/remision.ts:62`) | Nombre del cliente por `LEFT JOIN clients` | **Sí, con marca** | `db/ticketsConCliente.ts` (envoltorio, detalle abajo); los `JOIN` no se tocan |
+| `db/ticketFuentes.ts:172` → historial (`db/historial.ts:134`) y conversación (`db/conversacion.ts:149`) | Campo «Cliente» y «Ticket creado para X» | **Sí, sin marca** | `obtenerCliente`, en sitio |
+| `db/equipos.ts:59` · `GET /api/equipos?clientId=` | Equipos de un cliente | **Sí, ya funciona**: filtra por `client_id` y enseña `cliente_nombre` copiado | Sin cambios |
+| `HojaDeVida.tsx` (`eq.clienteNombre`) | Nombre del cliente en la hoja de vida | **Sí, ya funciona** por la copia de `cliente_nombre` que escribe el alta | Sin cambios; la marca de «pendiente» la pone el lote 4 |
 
 **Nombre en los listados.** Los cuatro `LEFT JOIN clients` de `packages/zoho-sync/src/db/repo.ts:147`, `:162`,
 `:182`, `:202` no se tocan. `apps/desk/server/db/ticketsConCliente.ts` (nuevo) envuelve `getActiveTickets`,
@@ -84,6 +91,67 @@ en sitio, sí. `analisis.ts:12-16` → `t.client_id` en `:12` y nombres provisio
 `TicketRefs` (`packages/zoho-sync/src/db/mappers.ts:185`) y el mapeo (`:199` listado, `:246` ficha), en sitio, y el
 tipo `Ticket` de `packages/shared/src/types.ts:99`. Supuesto reversible: `mappers.ts` no es `books/repo.ts` ni el
 worker, y el cambio es un campo opcional.
+
+### 4.3 Informes
+
+| Sitio | Qué hace | ¿Provisional? | Cómo |
+|---|---|---|---|
+| `analisis.ts:16` · `GET /api/analisis` | Cliente por ticket en el análisis | **Sí, sin marca** | Segunda consulta tras el `SELECT`, en `analisis.ts` (poco citado) |
+| `db/prioridadCliente.ts:49` · `GET /api/top5` | Nombre en el Top 5 | **No, a propósito**: un provisional no puede entrar en el Top 5 (`routes/prioridad.ts:38`, D12) | Sin cambios |
+| `db/informeContrato.ts` · `GET /api/contratos/:id/informe` | Informe de contrato | **No**: no lee cliente; y un provisional no puede tener contrato (`routes/contratos.ts:52`) | Sin cambios |
+
+### 4.4 Avisos y documentos que salen de la app
+
+| Sitio | Qué hace | ¿Provisional? | Cómo |
+|---|---|---|---|
+| `services/avisoRitmoContrato.ts:40` | Nombre en el aviso de ritmo de contrato | **No, a propósito**: sólo hay avisos de contratos, y un provisional no tiene contrato | Sin cambios |
+| `services/avisoDiscrepanciaOV.ts`, `avisoArea.ts`, `avisoDerivacion.ts`, `alarmasSla.ts`, `avisosWebhook.ts` | Avisos | **No aplica**: no leen cliente | Sin cambios |
+| `routes/remision.ts:203` · `POST /api/remisiones` | Copia `empresa` y `persona_contacto` en la remisión (`:258`) | **Sí** | `obtenerCliente`, en sitio |
+| `routes/remision.ts:307` + `remisionWebhook.ts:31` · `POST /api/remisiones/:id/enviar` (carga a n8n) | Nombre, dirección, teléfono, NIT, correo del documento | **Sí** | `obtenerCliente`, en sitio; el provisional no tiene dirección: la carga la lleva vacía |
+| `db/remisiones.ts:95` | Listado de remisiones | **Ya funciona**: lee la copia `r.empresa` | Sin cambios |
+
+### 4.5 Validaciones de existencia y selectores de contrato, prioridad y mantenedor
+
+| Sitio | ¿Provisional? | Por qué |
+|---|---|---|
+| `services/ticketService.ts:89` (alta) y `:73` (mensaje `422`) | **Sí** | Un ticket de un provisional reutilizado; `obtenerCliente`, en sitio |
+| `routes/equipos.ts:81` (`PATCH`) | **Sólo el mismo** que ya tiene el equipo | `clienteParaEquipo`: un provisional distinto → `422` |
+| `routes/equipos.ts:56` (`POST`), `:171` (mantenedor), `routes/contratos.ts:52`, `routes/prioridad.ts:30`, `:38` | **No, a propósito** (D12) | Contrato, prioridad, mantenedor y alta de equipo fuera del ticket exigen cliente de Books; `getClient` ya los rechaza |
+| `db/equipos.ts:167`, `db/equiposCambios.ts:50-51` | **No, a propósito** | Nombre del **mantenedor**, que nunca es provisional (`routes/equipos.ts:171`) |
+| `backfillClientId.ts:103`, `:115` | **No, a propósito** | Sólo reconcilia equipos con `client_id IS NULL`; un equipo provisional lleva `prov-…` y no entra |
+| `books/repo.ts:145-181` (órdenes de venta) | **No aplica** | Un provisional no lleva orden de venta (C, `validarContenidoAltaManual`) |
+| `apps/hub-sync` | **No aplica** | Escribe `books.contacts`, no lo lee |
+
+### 4.6 Cuando el cliente se da de alta después en Books
+
+**Cómo se une.** Comercial crea el contacto a mano en Books (RQ-TC-33: la app no escribe en Zoho); el hub lo replica
+a `books.contacts` y aparece en la vista. Desde ese momento, y **hasta que alguien enlace**, el buscador del alta
+enseña los dos —el de Books con `provisional:false` y el provisional marcado—. La unión es el **enlace** (D10,
+RQ-TC-32), que en una sola transacción:
+
+1. marca el provisional como enlazado (`enlazado_a`, quién, cuándo), así que **deja de listarse** (RQ-TC-34);
+2. reescribe `tickets.client_id` y `equipos.client_id` + `equipos.cliente_nombre` de **todos** sus tickets y equipos
+   al id de Books, con una fila `clientId` por equipo en `equipos_cambios`.
+
+**Por qué no se pierden tickets.** No hay clave foránea que romper (`schema.sql:185`, `:208`); la reescritura es una
+`enTransaccion` (todo o nada, escenario «fallo a mitad»); el sincronizador **no pisa** `client_id`, porque no está en
+`TICKET_COLS` (`packages/zoho-sync/src/db/repo.ts:43-54`); `backfillClientId.ts:115` sólo toca `client_id IS NULL`; y
+un id provisional que se quede suelto (riesgo aceptado de D10) lo sigue resolviendo `obtenerCliente` por `enlazado_a`.
+Contratos, prioridad y mantenedor no hay que reescribirlos: nunca pudieron apuntar a un provisional (D12).
+
+**Lo que queda a propósito con el nombre provisional:** la remisión ya emitida conserva su `empresa` copiada
+(`routes/remision.ts:203`, comentario de `:201`): es un documento, y no puede desdecir lo que dijo. Caso histórico.
+
+**Lo que este cambio NO resuelve — pendientes con fila** (en «Tareas de persona» de `tasks.md`, y en
+`docs/sdd/ENTRADA.md` al archivar, R-3):
+
+- **P-A · Nadie avisa de que el contacto ya está en Books.** El enlace es manual; si Comercial no lo hace, conviven
+  los dos y los tickets nuevos pueden seguir yendo al provisional. Salida posible: un aviso a Comercial cuando un
+  contacto de Books comparta NIT con un provisional sin enlazar. Decide alcance y destino Gerencia.
+- **P-B · El alta no comprueba si el NIT ya existe en Books.** Hoy un técnico puede crear un provisional de un
+  cliente que sí está en Books (duplicado desde el primer minuto). Salida posible: `422` en el escalón C cuando el
+  NIT del provisional case con uno de la vista, ofreciendo el existente. Cambia la conducta del formulario de campo,
+  así que no se aplica como supuesto: decide Gerencia.
 
 ## 5. Ficheros y lotes
 
@@ -174,4 +242,5 @@ y la columna quedan sin uso (borrarlas toca producción y lo decide una persona)
 ## 12. Preguntas abiertas
 
 Ninguna bloquea. Q1-Q4 siguen como supuestos de la propuesta. Supuestos nuevos, reversibles: D13 (parámetro
-`provisionales=1`) y la marca en `mappers.ts` (§4).
+`provisionales=1`) y la marca en `mappers.ts` (§4.2). Quedan fuera, como pendientes con fila y dueño Gerencia, P-A
+(aviso cuando el contacto aparece en Books) y P-B (comprobar el NIT contra Books en el alta), §4.6.
