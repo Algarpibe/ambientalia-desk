@@ -3679,6 +3679,28 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna; condición de despliegue de F1C-09"
 
+  - clave: "decision/f1b15-clientes-provisionales-sin-tocar-la-vista"
+    fecha: "2026-10-02"
+    pregunta: |
+      F1B-15 (`alta-manual-equipo-cliente`): ¿cómo aparecen los clientes provisionales junto a los de Books, ahora que
+      el emulador de pruebas (pg-mem) no admite `CREATE OR REPLACE VIEW` sobre una vista existente (sondeo 1.0,
+      `View.drop` → «Method not implemented»)? Opciones: (a) no tocar la vista y resolverlos en la capa de servicio de la
+      app; (b) mantener el diseño y sustituir la definición sólo en pruebas; (c) una sola definición de la vista.
+    respuesta_textual: |
+      «Sin tocar la vista (Recomendado)»: la vista public.clients no cambia; el servidor de la app consulta también la
+      tabla de provisionales (una segunda consulta en su capa de servicio, sin tocar el worker del hub).
+    consecuencias: |
+      (1) Se retira la decisión D3 del diseño de F1B-15 (vista en dos sentencias) y el MODIFIED de RQ-ZS-09 del delta de
+      `zoho-sync`: `public.clients` y `packages/zoho-sync/src/books/repo.ts` quedan intactos, y no hay migración de vista
+      en producción ni `DROP VIEW` de reversión.
+      (2) Los provisionales se resuelven en `apps/desk/server` (búsqueda, ficha y nombre en listados); el coste estimado es
+      de 100 a 150 líneas más, a repartir entre los lotes.
+      (3) Lo que se prueba en pg-mem es lo que corre en producción.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b15-clientes-provisionales-sin-tocar-la-vista) · docs/sdd/ENTRADA.md → E-152"
+    maestro_pasaje: "ninguno (diseño)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna; replanifica F1B-15"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
