@@ -192,18 +192,18 @@ function conFilaNueva(plan: string, dentro: boolean): string {
   return lineas.join(SALTO)
 }
 
-describe('registro · RQ-RC-10: el árbol real registra TRES cierres por commit, sin defectos', () => {
-  it('10e · F0-01, F0-02 y F0-03 cuentan por commit, y la comprobación 2 no trae ningún defecto de registro', () => {
+describe('registro · RQ-RC-10: el árbol real registra NUEVE cierres por commit, sin defectos', () => {
+  it('10e · F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05 y F1B-01 cuentan por commit, y la comprobación 2 no trae ningún defecto de registro', () => {
     const c = numeradorSobre(configReal(), r14Real())
-    expect(tandas(c, 'cerradas por commit declarado')).toEqual(['F0-01', 'F0-02', 'F0-03'])
+    expect(tandas(c, 'cerradas por commit declarado')).toEqual(['F0-00', 'F0-01', 'F0-02', 'F0-03', 'F1A-01', 'F1A-02', 'F1A-04', 'F1A-05', 'F1B-01'])
     expect(c.hallazgos.filter((h) => h.detalle.includes('defecto de registro'))).toEqual([])
   })
 
-  it('mutación 2 · quitando el `prueba:` de F0-02 de una COPIA del config, cuentan 2 y el defecto nombra F0-02 y `prueba`', () => {
+  it('mutación 2 · quitando el `prueba:` de F0-02 de una COPIA del config, cuentan 8 y el defecto nombra F0-02 y `prueba`', () => {
     const sucio = configReal().replace(/^ {4}prueba: "openspec\/changes\/F0-03\/proposal\.md:21[^\r\n]*\r?\n/m, '')
     expect(sucio).not.toBe(configReal())
     const c = numeradorSobre(sucio, r14Real())
-    expect(tandas(c, 'cerradas por commit declarado')).toEqual(['F0-01', 'F0-03'])
+    expect(tandas(c, 'cerradas por commit declarado')).toEqual(['F0-00', 'F0-01', 'F0-03', 'F1A-01', 'F1A-02', 'F1A-04', 'F1A-05', 'F1B-01'])
     const h = c.hallazgos.find((x) => x.detalle.includes('defecto de registro'))
     expect(h?.clave).toBe('F0-02')
     expect(h?.detalle).toContain('`prueba`')

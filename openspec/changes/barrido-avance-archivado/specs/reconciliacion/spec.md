@@ -87,7 +87,7 @@ alterar el código de salida.
 - El numerador **SHALL** seguir publicándose con el **motivo** de su cambio, `por trabajo` o
   `por dictamen`, según `RQ-RC-07`.
 - La cifra por commit **SHALL** ser el número de entradas **completas** de `cierres_declarados_por_commit`;
-  con las tres entradas que registra este cambio (F0-01, F0-02, F0-03) es **3**.
+  con las nueve entradas que registra este cambio (F0-01, F0-02, F0-03 y, en el lote 2, F0-00, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01) es **9**.
 
 (Previously: el numerador eran dos cifras, «derivables de cabecera» —todo `proposal.md` con `cierra: si`,
 archivado o no— y «declarados por commit» —lista plana—, con F0-04 declarada por commit pese a tener
@@ -191,7 +191,7 @@ de salida.
 La clave **SHALL** admitir ausencia o lista vacía: el barrido publica entonces «0 por commit» sin
 defecto.
 
-Este cambio **SHALL** registrar exactamente tres bloques, F0-01, F0-02 y F0-03, **al final** de
+Este cambio **SHALL** registrar exactamente nueve bloques, **al final** de
 `openspec/config.yaml` (sin desplazar líneas citadas):
 
 | `id` | `commit` | `prueba` |
@@ -199,9 +199,15 @@ Este cambio **SHALL** registrar exactamente tres bloques, F0-01, F0-02 y F0-03, 
 | F0-01 | `3d44e1e` | `docs/sdd/Estado_As-Built_2026-09-09.md:20` |
 | F0-02 | `fa445ac` | `openspec/changes/F0-03/proposal.md:21` · `docs/sdd/Estado_As-Built_2026-09-09.md:21` |
 | F0-03 | `3aaa0f1` | `docs/sdd/Estado_As-Built_2026-09-09.md:22` |
+| F0-00 | `0e8f581` | `docs/sdd/F0-00_Baseline_as-built.md:33` · `docs/sdd/Estado_As-Built_2026-09-09.md:19` |
+| F1A-01 | `ec0ed1f` | `apps/desk/server/transicionesEjecucion.test.ts:41` · `apps/desk/server/transitionExec.test.ts:90` |
+| F1A-02 | `5218d11` | `packages/shared/src/sla.test.ts:29` · `:105` · `apps/desk/server/db/sla.test.ts` |
+| F1A-04 | `e8c5e90` | `packages/shared/src/bodegaje.test.ts:29` · `:318` · `apps/desk/server/transitionExec.test.ts:163` |
+| F1A-05 | `43821b8` | `docs/sdd/F1A-05_Auditoria_blueprint_audit-F1A.md:1` · `packages/shared/src/bodegaje.test.ts:377` |
+| F1B-01 | `607e26a` | `apps/desk/server/remisiones.test.ts:913` · `docs/sdd/F1B-01_Serial_llave_de_entrada.md:1` |
 
-Las otras seis que la R01.4 declara por commit (F0-00, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01)
-**MUST NOT** registrarse en este cambio: quedan fuera de alcance, y añadirlas después es aditivo.
+Los tres primeros los registró el lote 1; los otros seis, el lote 2, por encargo de Gerencia
+(`decision/archivo-barrido-y-regla-del-archivo-01-10`, punto 4) y verificados uno a uno. Ninguno queda fuera.
 
 #### Scenario: una entrada completa cuenta
 - GIVEN una entrada `- id: F0-01` con `commit: 3d44e1e` y `prueba:` no vacía
@@ -224,11 +230,11 @@ Las otras seis que la R01.4 declara por commit (F0-00, F1A-01, F1A-02, F1A-04, F
 - WHEN corre la comprobación 2
 - THEN ninguna de esas tandas cuenta, y cada una se reporta como entrada incompleta
 
-#### Scenario: el árbol real registra tres
-- GIVEN `openspec/config.yaml` con los tres bloques de la tabla
+#### Scenario: el árbol real registra nueve
+- GIVEN `openspec/config.yaml` con los nueve bloques de la tabla
 - WHEN corre `npm run reconcile`
-- THEN «cierres declarados por commit» contiene exactamente `F0-01`, `F0-02` y `F0-03`, con cero
-  defectos de registro
+- THEN «cierres declarados por commit» contiene exactamente `F0-00`, `F0-01`, `F0-02`, `F0-03`, `F1A-01`,
+  `F1A-02`, `F1A-04`, `F1A-05` y `F1B-01`, con cero defectos de registro
 
 ---
 

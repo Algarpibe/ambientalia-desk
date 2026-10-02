@@ -113,5 +113,14 @@ Chain strategy: pending
 | Tarea | Dueño | Destino |
 |---|---|---|
 | Techo ≈3.000 para el `sdd-archive` (precedente `openspec/config.yaml:3585`; medir antes la parte revisable) | Gerencia | Panel, antes de archivar |
-| ¿Registrar también F0-00, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01? Aditivo | Gerencia | `proposal.md` «Decisión pendiente»; no bloquea |
+| ~~¿Registrar también F0-00, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01?~~ Resuelto: Gerencia lo mandó y el lote 2 las registró | Gerencia | `decision/archivo-barrido-y-regla-del-archivo-01-10`, punto 4 |
 | Revisar los supuestos: F2/F4 dentro del 78, fuente de (b) en la R01.1, F0-02 con `fa445ac`, D8 informativo | Gerencia | `proposal.md` «Ronda de preguntas» |
+
+## Lote 2 · seis cierres declarados por commit (decision/archivo-barrido-y-regla-del-archivo-01-10, punto 4)
+
+- [x] L2.1 Localizar y verificar commit y prueba de F0-00, F1A-01, F1A-02, F1A-04, F1A-05 y F1B-01 (`git show --stat`, `npx vitest run` de sus ficheros de prueba, lectura de ruta:línea). Las seis tienen prueba; ninguna queda fuera.
+- [x] L2.2 RED: `registro.test.ts` (10e y la mutación 2) espera los nueve; rojo natural (2 fallos).
+- [x] L2.3 GREEN: seis bloques al FINAL de `openspec/config.yaml` (sin desplazar líneas anteriores).
+- [x] L2.4 Corregir RQ-RC-10, su tabla y el escenario del árbol real en el delta de `specs/reconciliacion/spec.md`.
+- [x] L2.5 `npm run reconcile`: 9 por commit, 10 por archivo, 6 en curso, denominador 78, sin tanda en las dos poblaciones.
+- [x] L2.6 Mutación 2 sobre el `config.yaml` real: borrar el `prueba:` de F1A-04, rojo, revertir.
