@@ -47,3 +47,17 @@ Los demás pasos del ticket no se ven afectados por las marcas.
 - GIVEN un ticket de `Soporte remoto` con cliente provisional
 - WHEN avanza por las transiciones de su flujo
 - THEN ninguna responde `422` por la marca, y la marca sigue visible
+
+## Fuera de alcance — para el `archive-report`
+
+**§3.8 no es un requisito**, así que este delta no la modifica: es el mismo trato que le dio `registro-contrato`
+(su delta de `transitions-st`, «Fuera de alcance»), y el arreglo de la tabla lo hace el archivo. Al archivar F1B-15, la
+tabla de escalones de §3.8 y la fila `createManagedTicket` de su tabla de puertas (§3.8 a) **SHALL** ganar las guardas
+del alta manual, contra `ticketService.ts` en el árbol de ese día (hoy, en `96ec938`):
+
+- **A** `:25` —`exigirEquipoManual` / `exigirEquipoNuevo`: faltan datos del equipo que se va a crear; `exigirEquipoNuevo`
+  es de F1B-14 y tampoco está en la tabla— y **A** `:28` —`exigirClienteProvisional`: faltan los cinco datos o el motivo
+  del cliente provisional (RQ-TC-30)—. Se distinguen de los obligatorios de C (`:88`), que son los del cuerpo del ticket.
+- **C** `:91` —`validarContenidoAltaManual`: serial ≠ confirmación, reservados, provisional junto con `clientId` u OV—.
+- **D** `:96` —NIT del provisional ya en Books, `409` con candidatos (P-B)—, **antes** de la OV ya usada, que sigue
+  siendo la última (`primerConflictoUnicidad`).

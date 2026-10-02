@@ -144,15 +144,16 @@ Contratos, prioridad y mantenedor no hay que reescribirlos: nunca pudieron apunt
 
 **P-B · Lo que SÍ resuelve: no se crea un provisional de un cliente que ya está en Books.** Decidido por el usuario el
 2026-10-02, dentro de esta tanda. El alta manual compara el NIT del provisional con los de la vista y, si casa,
-responde `409` (escalón D, junto a la unicidad de la OV en `ticketService.ts:96`) con el `id` y el nombre del cliente
-existente, sin escribir nada; el formulario lo ofrece para usarlo. **Normalización** (supuesto reversible): se compara
+responde `409` (escalón D, junto a la unicidad de la OV en `ticketService.ts:96`) con el o los candidatos de Books
+(forma abajo), sin escribir nada; el formulario los ofrece para usar uno. **Normalización** (supuesto reversible): se compara
 la parte anterior al primer guion, sólo dígitos —«900.123.456-7» ≡ «900123456»—; un DV pegado sin guion
 («9001234567») sólo casa si es exactamente base + DV del NIT de Books (`nitCoincide`, tarea 2.7b). **Orden dentro
 de D:** NIT antes que OV, para que el `409` de la OV siga siendo el último (RQ-TC-31), fijado en
 `primerConflictoUnicidad` (P6, §7). **Lectura**: `SELECT id, name, nit
 FROM clients` (sin filtrar por NIT, ni siquiera los nulos) y comparación en JS, en `db/clientesProvisionales.ts`; no usa `regexp_replace`
-para que lo probado en pg-mem sea lo que corre (hipótesis: el coste de recorrer los contactos es aceptable para un alta
-manual, que es excepcional). Sin NIT casado, el alta sigue. No cubre el caso de P-A: un contacto que **llega después**
+para que lo probado en pg-mem sea lo que corre. **Hipótesis SIN MEDIR:** que el coste de recorrer todos los contactos
+de Books en cada alta manual es aceptable, porque el alta manual es excepcional; se mide con el volumen real en
+**F1F-03** (aceptación con servicios reales). Sin NIT casado, el alta sigue. No cubre el caso de P-A: un contacto que **llega después**
 a Books.
 
 **P-B · Candidatos múltiples y NIT vacío (supuestos reversibles, lote 2b).** (a) Si varios contactos de Books comparten el NIT
@@ -162,6 +163,17 @@ formulario deja elegir uno. No hay lista de NIT genéricos exentos: decidirla es
 `409`. (b) La guarda del vacío vive en `nitCoincide`: una base sin dígitos, **tecleada o de Books** (`---`, vacío, nulo,
 «N/A»), nunca casa; sin ella dos vacíos serían «iguales» y bloquearían el alta. El NIT sigue siendo obligatorio
 (`exigirClienteProvisional`, `422` de A): «sin coincidencia» es lo único que deja seguir.
+
+**Contrato del cuerpo del alta manual (fijado por `9e0f468`, lote 2a) y del `409` de P-B (`96ec938`, lote 2b).**
+`POST /api/tickets` admite, además de los campos de hoy:
+
+- `clienteManual: { razonSocial, nit, contacto, telefono, correo, motivo }` — los seis obligatorios; si falta alguno,
+  `422` de A que los lista todos (`exigirClienteProvisional`). Excluye `clientId` y `ordenVenta` (`422` de C).
+- `equipoManual: { serial, confirmacionSerial, modeloId | (marca + modeloTexto + tipo), motivo, fechaFacturaCompra? }`
+  — `fechaFacturaCompra` sólo es obligatoria en «Equipo nuevo» (C-1); si falta algo, `422` de A que lo lista todo
+  (`exigirEquipoManual`); serial ≠ confirmación es `422` de C.
+- `409` de P-B: `{ error: string, candidatos: Array<{ id: string, name: string }> }`, con **uno o más** candidatos
+  ordenados por nombre (`localeCompare('es')`) y después por id; `error` en español, como los demás `409`.
 
 **Lo que este cambio NO resuelve — pendiente con fila** (en «Tareas de persona» de `tasks.md`, y en
 `docs/sdd/ENTRADA.md` al archivar, R-3):

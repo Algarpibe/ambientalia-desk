@@ -10,11 +10,18 @@ razón social, NIT, contacto, teléfono y correo, y el servidor crea una fila en
 quién la creó, cuándo y el **motivo escrito obligatorio** de por qué no se usó el cliente de Books. El ticket
 **SHALL** quedar con el identificador del provisional como `client_id`, y ese identificador **MUST NOT** poder
 coincidir con el de ningún contacto de Books. Los cinco datos y el motivo son obligatorios (supuesto Q2); si falta
-alguno el alta responde `422` listando **todos** los que faltan (escalón C) sin escribir nada. Puede hacer el alta
-manual quien hoy puede crear tickets (supuesto Q1). El alta manual **MUST NOT** escribir en `books.*` ni hacia Zoho.
-Si el NIT del provisional ya pertenece a un cliente de Books (comparado sin puntos, espacios ni dígito de
-verificación), el alta **SHALL** responder `409` (escalón D, unicidad) con el cliente existente (`id` y nombre) para
-que se use ése, sin escribir nada (P-B, decidido por el usuario el 2026-10-02).
+alguno el alta responde `422` listando **todos** los que faltan (**escalón A**) sin escribir nada. Es A y no C por la
+misma razón que `exigirEquipoNuevo` (`apps/desk/server/services/equipoNuevo.ts:32-44`, A, en `ticketService.ts:25`):
+faltan datos del **sujeto que el alta va a crear**, no contenido del ticket. La **validez** de esos datos —provisional
+junto con `clientId` u orden de venta— sigue en C. No son los «obligatorios» de C del cuadro de `transitions-st` §3.8
+(`:88`), que son los del cuerpo del ticket. Puede hacer el alta manual quien hoy puede crear tickets (supuesto Q1). El
+alta manual **MUST NOT** escribir en `books.*` ni hacia Zoho.
+Si el NIT del provisional ya pertenece a uno o más clientes de Books (comparado sin puntos, espacios ni dígito de
+verificación), el alta **SHALL** responder `409` (escalón D, unicidad) con el cuerpo
+`{ error, candidatos: [{ id, name }] }`: **uno o más** candidatos, ordenados por nombre y después por id, para que se
+use uno de ellos, sin escribir nada (P-B, decidido por el usuario el 2026-10-02). Que se devuelvan todos y que ningún
+NIT genérico quede exento es un supuesto reversible (`design.md` §4.6); la lista de exentos, si la hay, la decide
+Gerencia (E-154).
 
 #### Scenario: Alta con cliente provisional
 - GIVEN una sesión que puede crear tickets y los cinco datos y el motivo completos
@@ -34,7 +41,12 @@ que se use ése, sin escribir nada (P-B, decidido por el usuario el 2026-10-02).
 #### Scenario: El NIT ya está en Books
 - GIVEN un cliente de Books con NIT «900.123.456-7» y un alta manual con NIT «900123456»
 - WHEN se envía el alta
-- THEN responde `409` con el `id` y el nombre del cliente de Books, y no queda ningún ticket, equipo ni provisional escrito
+- THEN responde `409` con `candidatos: [{ id, name }]` del cliente de Books (uno), y no queda ningún ticket, equipo ni provisional escrito
+
+#### Scenario: Dos contactos de Books comparten el NIT
+- GIVEN dos contactos de Books cuyo NIT normalizado es «900123456» (p. ej. dos sucursales), insertados en orden inverso al alfabético
+- WHEN se envía un alta manual con NIT «900123456»
+- THEN responde `409` con los dos en `candidatos`, ordenados por nombre y después por id, y no queda nada escrito
 
 #### Scenario: El id provisional no se confunde con uno de Books
 - GIVEN un cliente provisional creado
