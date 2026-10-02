@@ -3630,6 +3630,32 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "pendiente"
     tanda_que_abre: "ninguna nueva; fija el orden: barrido (fuera-del-plan) → F1C-09 → F1C-10 → F1B-15"
 
+  - clave: "decision/archivo-barrido-y-regla-del-archivo-01-10"
+    fecha: "2026-10-01"
+    pregunta: |
+      ¿Se aprueba un techo de 3.000 para archivar `barrido-avance-archivado`? Y, de paso: el hueco de Zoho que dejaba la
+      excepción de la hoja de Google (R01.4 §K.1) y las seis tandas «declaradas por commit» que el barrido dejó fuera.
+    respuesta_textual: |
+      «1. APROBADO techo de 3.000 líneas para el archivo de barrido-avance-archivado, con la condición de que la parte con carga de revisión (fusión en la spec de reconciliación + informe) no supere 600. Si la supera, PARA. Después fusiona la rama en main y sigue con F1C-09.
+      2. REGLA PERMANENTE (anótala en CLAUDE.md y en aprobaciones_de_techo_del_ledger_adenda): el archivo de cualquier cambio puede superar 800 líneas por la mudanza de carpetas, sin pedir aprobación, siempre que la parte con carga de revisión no supere 800. Se mide antes de aplicar; si la supera, PARA y consulta. Revisa siempre que el commit de archivo contenga solo el cambio archivado.
+      3. HUECO DE ZOHO (R01.4 §K.1): si la comprobación encuentra que las remisiones de salida o sin ticket se hacen hoy en Zoho, desde el 14/12 se registran en la hoja de Google, que sigue abierta para esos dos usos hasta que se construyan F1B-16 y F1B-17. Amplía así la excepción de decision/escenario-a-festivos-plan-a-01-10.
+      4. CIERRES POR COMMIT: registra F0-00, F1A-01, F1A-02, F1A-04, F1A-05 y F1B-01 en cierres_declarados_por_commit, cada una con el commit que la cierra y la prueba (verificación o test que lo demuestra), como ya se hizo en el expediente R08.3 (6ea3ca8, 5218d11, e8c5e90, 43821b8, 607e26a y los que correspondan). Verifica cada una antes de registrarla; si alguna no tiene prueba, déjala fuera y dímelo.»
+    consecuencias: |
+      (1) Techo de 3.000 en `aprobaciones_de_techo_del_ledger_adenda`, con condición de 600 para la parte revisable.
+      (2) REGLA PERMANENTE en `CLAUDE.md` («Regla del archivo») y en `aprobaciones_de_techo_del_ledger_adenda`: el archivo
+      no pide techo mientras lo revisable (fusión del delta + archive-report) no pase de 800; se mide ANTES de aplicar; y el
+      commit de archivo se revisa para que lleve sólo el cambio archivado (el 01/10 un agente de archivo metió +6.450 líneas
+      ajenas en el de F1A-03).
+      (3) AMPLÍA `decision/escenario-a-festivos-plan-a-01-10` (1): la hoja de Google sigue abierta tras el 14/12 para remisiones
+      de salida y sin ticket, se hagan hoy en la hoja o en Zoho. Cierra el hueco anotado en la R01.4 §K.1.
+      (4) Las seis se registran DENTRO de `barrido-avance-archivado`, antes de archivarlo: su delta (RQ-RC-10) y su prueba sobre
+      el `config.yaml` real fijan hoy «exactamente F0-01..03», y registrarlas después contradiría la spec archivada. Cada una
+      con commit y prueba verificados; la que no tenga prueba queda fuera y se informa.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/archivo-barrido-y-regla-del-archivo-01-10) y aprobaciones_de_techo_del_ledger_adenda · CLAUDE.md → «Regla del archivo» · R01.4 §K.1 · docs/sdd/ENTRADA.md → E-150"
+    maestro_pasaje: "ninguno (método y alcance del corte)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
@@ -3664,3 +3690,22 @@ aprobaciones_de_techo_del_ledger_adenda:
       en las vivas + archive-report). Si esa parte supera 850 líneas, PARA y avísame.»
     registro: "decision/archivo-f1a03-y-worktrees-01-10"
 
+
+  - cambio: barrido-avance-archivado
+    fase: archive
+    techo: 3000
+    medido: "pendiente — lo mide el agente de archivo antes de aplicar"
+    fecha: 2026-10-01
+    quien: Gerencia (mantenedor), en la conversación de la sesión de construcción
+    motivo: Mudanza de carpetas sin carga de revisión (la carpeta del cambio cuenta dos veces).
+    condicion: "La parte con carga de revisión (fusión en la spec de reconciliación + informe) no supera 600; si la supera, PARA."
+    registro: "decision/archivo-barrido-y-regla-del-archivo-01-10"
+
+  - regla_permanente: archivo-sin-techo-por-mudanza
+    desde: 2026-10-01
+    quien: Gerencia (mantenedor)
+    texto: >
+      «el archivo de cualquier cambio puede superar 800 líneas por la mudanza de carpetas, sin pedir aprobación, siempre que
+      la parte con carga de revisión no supere 800. Se mide antes de aplicar; si la supera, PARA y consulta. Revisa siempre
+      que el commit de archivo contenga solo el cambio archivado.»
+    registro: "decision/archivo-barrido-y-regla-del-archivo-01-10 · CLAUDE.md → «Regla del archivo»"

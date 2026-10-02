@@ -367,7 +367,9 @@ Respuesta registrada en `openspec/config.yaml` → `decisiones_de_gerencia_adend
 
 **Rige el escenario A**: F1B-16 (remisiones sin ticket) y F1B-17 (remisión de salida) quedan **fuera del corte** hasta la averiguación de la hoja de Google. **Si la averiguación confirma que hoy se hacen en la hoja, la salida NO es construirlas antes del corte**: la hoja de Google **sigue abierta después del 14/12 sólo para remisiones de salida y remisiones sin ticket**, hasta que esas dos filas se construyan en 2027. Es una **excepción acotada** a `decision/p14b-hoja-google`, que fijaba su cierre el día del corte. Las dos filas pasan a ventana **2027**.
 
-⚠️ *Lo que la respuesta no cubre, anotado sin resolver:* si la averiguación encuentra que esas remisiones se hacen hoy **en Zoho** (que queda en sólo lectura el 14/12) y no en la hoja, la excepción no las alcanza.
+⚠️ *Lo que la respuesta no cubría, anotado sin resolver:* si la averiguación encuentra que esas remisiones se hacen hoy **en Zoho** (que queda en sólo lectura el 14/12) y no en la hoja, la excepción no las alcanza.
+
+**Resuelto el mismo día** (`decision/archivo-barrido-y-regla-del-archivo-01-10`, punto 3, E-150): si se hacen hoy en Zoho, **desde el 14/12 se registran en la hoja de Google**, que sigue abierta para esos dos usos hasta que se construyan F1B-16 y F1B-17. La excepción vale, pues, en los dos casos.
 
 ### K.2 · Cuenta vigente, con los festivos descontados
 

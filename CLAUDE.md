@@ -678,3 +678,12 @@ el que había en disco (5.472 líneas, otro formato, que el script no reproduce)
 R08.2.md versionada, así que es la exportación canónica. Las seis citas `R08.4.md:NNNN` escritas antes contra la
 copia no canónica se reapuntaron por CONTENIDO a la línea que dice lo mismo (1035→1618, 2064→2420, 4772→5719,
 5167→6454), no por resta.
+
+## Regla del archivo — la mudanza de carpetas no pide techo; lo revisable, sí
+
+Gerencia, 2026-10-01 (`decision/archivo-barrido-y-regla-del-archivo-01-10`, E-150). **El `sdd-archive` de cualquier
+cambio puede superar las 800 líneas del registro de intentos por la mudanza de carpetas, sin pedir aprobación, siempre
+que la parte con carga de revisión —la fusión del delta en las specs vivas más el `archive-report.md`— no supere 800.**
+Se mide **antes de aplicar** (`git diff --shortstat --no-renames` de esa parte); si la supera, **se para y se consulta**.
+Y **se revisa siempre que el commit de archivo contenga sólo el cambio archivado** (`git show --numstat`): el 01/10 un
+agente de archivo metió en el de F1A-03 todos los ficheros sin trackear del repositorio, +6.450 líneas ajenas.
