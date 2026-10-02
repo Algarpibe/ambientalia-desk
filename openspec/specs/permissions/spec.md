@@ -59,11 +59,12 @@ Las áreas base **SHALL** ser exactamente tres: `Comercial`, `Servicio Técnico`
 
 ### RQ-PM-03 · La matriz completa, probada contra el servidor
 
-La matriz de área × transición **SHALL** ser **31 × 3 = 93 casos: 54 prohibidos y 39 permitidos**
-(23 transiciones de área simple × 2 áreas prohibidas + 8 compartidas × 1)
-(`apps/desk/server/permisos.test.ts`). La función pura de área conserva el mismo reparto 54/39.
-(Previously: 34 × 3 = 102 casos, 60 prohibidos y 42 permitidos, con 26 de área simple; el barrido de cargo
-pasa de 816 a 744 combinaciones.)
+La matriz de área × transición **SHALL** ser **31 × 3 = 93 casos: 55 prohibidos y 38 permitidos**
+(24 transiciones de área simple × 2 áreas prohibidas + 7 compartidas × 1)
+(`apps/desk/server/permisos.test.ts`). La función pura de área conserva el mismo reparto 55/38.
+(Previously, tras F1C-09 y hasta F1C-10: 31 × 3 = 93 casos, 54 prohibidos y 39 permitidos, con 23 de área
+simple y 8 compartidas. Antes de F1C-09: 34 × 3 = 102 casos, 60 prohibidos y 42 permitidos, con 26 de área
+simple; el barrido de cargo pasa de 816 a 744 combinaciones y **no** cambia en F1C-10.)
 
 - La matriz **MUST** derivarse del grafo y no escribirse a mano: escrita a mano, la transición que añada una
   tanda futura no tendría fila y nadie se enteraría (`permisos.test.ts:24-27`).
@@ -77,16 +78,24 @@ pasa de 816 a 744 combinaciones.)
   (Previously: las 34.)
 - La matriz HTTP con cargo **SHALL** diferir de la matriz de área en **exactamente UN** caso: Comercial sin
   cargo × `liberacion_sin_factura` (200 en área, 403 con cargo). Esa diferencia **MUST** estar afirmada, para
-  que el `esperado` no sea tautológico.
+  que el `esperado` no sea tautológico. El barrido cargo × área × transición **SHALL** seguir siendo de 744
+  combinaciones.
+- La matriz compuesta sin cargo (área y cargo a la vez) **SHALL** repartirse en **56 prohibidos y 37
+  permitidos** sobre las mismas 93 celdas. (Previously: 55 prohibidos y 38 permitidos.)
+- `rechazo_cliente` **SHALL** ser de área simple `Comercial`: un usuario cuyo rol sólo tenga `Servicio
+  Técnico` **MUST** recibir `403` al ejecutarla. `rechazo_comercial` y `rechazo_revision` **SHALL**
+  conservar `Comercial / Servicio Técnico`.
 
 **Y de aquí sale la legitimidad del espejo del cliente.** Con esta matriz probada,
 `apps/desk/src/components/TransitionPanel.tsx:56-58` es **comodidad legítima** bajo la regla invariable 13:
-la frontera está impuesta y probada en el servidor (`permisos.test.ts:35-39`).
+la frontera está impuesta y probada en el servidor (`permisos.test.ts:35-39`). F1C-10 no toca ningún `.tsx`:
+el panel consume `puedeEjecutarTransicion` de `@ambientalia/shared` y el cambio de área le llega por el
+catálogo.
 
 #### Scenario: la matriz de área tiene 93 casos
 - GIVEN la matriz de área sin cargo
 - WHEN se cuenta
-- THEN son 93 casos, 54 prohibidos y 39 permitidos
+- THEN son 93 casos, 55 prohibidos y 38 permitidos
 
 #### Scenario: prohibición por área
 - GIVEN un usuario cuyo rol sólo tiene el área `Compras`
@@ -98,15 +107,42 @@ la frontera está impuesta y probada en el servidor (`permisos.test.ts:35-39`).
 - WHEN se comparan las 93 celdas
 - THEN difiere una sola: Comercial sin cargo × `liberacion_sin_factura`, de 200 a 403
 
-#### Scenario: el reparto por área simple conserva ocho compartidas
+#### Scenario: el reparto por área simple tiene siete compartidas
 - GIVEN las 31 transiciones
 - WHEN se clasifican por área
-- THEN 23 son de área simple y 8 compartidas, y 23×2 + 8 = 54 prohibidos
+- THEN 24 son de área simple y 7 compartidas, y 24×2 + 7 = 55 prohibidos
+  (Previously: 23 de área simple y 8 compartidas, 23×2 + 8 = 54)
+
+#### Scenario: la matriz compuesta sin cargo reparte 56 y 37
+- GIVEN la matriz compuesta de área y cargo, con usuarios sin cargo
+- WHEN se cuentan sus 93 celdas
+- THEN son 56 prohibidos y 37 permitidos
+  (Previously: 55 prohibidos y 38 permitidos)
+
+#### Scenario: Servicio Técnico recibe 403 en rechazo_cliente
+- GIVEN un ticket en `Notificación cliente` y un usuario cuyo rol sólo tiene el área `Servicio Técnico`
+- WHEN ejecuta `rechazo_cliente`
+- THEN el servidor responde `403`, el ticket no cambia de estado y no se inserta fila en `ticket_transitions`
+
+#### Scenario: Comercial y administrador ejecutan rechazo_cliente
+- GIVEN un ticket en `Notificación cliente`
+- WHEN un usuario del área `Comercial`, y por separado un administrador, ejecutan `rechazo_cliente`
+- THEN ambos reciben `200` y el ticket pasa a `Por Facturar`
+
+#### Scenario: las otras dos Rechazo siguen admitiendo a Servicio Técnico
+- GIVEN un usuario cuyo rol sólo tiene el área `Servicio Técnico`
+- WHEN ejecuta `rechazo_comercial` desde `Notificación Comercial` y `rechazo_revision` desde `Rev./Diagnostico`
+- THEN las dos responden `200`
 
 #### Scenario: una de las tres retiradas ya no tiene fila de matriz
 - GIVEN la matriz derivada del grafo
 - WHEN se busca una fila de `marcar_pendiente`
 - THEN no existe, y la mutación de reponerla sube el total a 96 y pone el total escrito a mano en rojo
+
+#### Scenario: mutación — devolver rechazo_cliente a Comercial / Servicio Técnico pone la matriz en rojo
+- GIVEN `rechazo_cliente.area` devuelta a `Comercial / Servicio Técnico`
+- WHEN corre la suite
+- THEN fallan el total de la matriz de área (54/39 en lugar de 55/38), el de la matriz compuesta (55/38 en lugar de 56/37) y la prueba del `403`
 
 
 ---
