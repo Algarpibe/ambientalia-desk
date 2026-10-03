@@ -907,3 +907,19 @@ Todo lo que este documento afirma sin haberlo podido comprobar desde el reposito
     OV en cuarentena, literales de Books, tamaño de lo que se marca en silencio, cargo de firma
     `Coordinador Comercial`, liberaciones sin factura en el hueco sin cargo, forma de `books.sales_orders` en
     producción y zona horaria del contenedor.
+
+---
+
+## Anotado para el próximo paquete — no forma parte de éste
+
+**F1B-03 entra con CONDICIÓN DE PUBLICACIÓN.** La guarda de remisión de entrada vigente en «Habilitar Servicio»
+llegó a `main` el 2026-10-03 en la fusión `a4bfc85` (cambio `tipo-servicio-ticket-sin-ov`, `cierra: no`), después
+del rango que cubre este paquete. Antes de publicarla hacen falta dos cosas, y las dos son de personas:
+
+1. **La respuesta de Gerencia a E-158** —si la guarda alcanza a los tickets de «Equipo nuevo»—
+   (`docs/sdd/ENTRADA.md:1782`).
+2. **Las dos consultas de recuento ejecutadas en producción**, las de
+   `docs/sdd/Consulta_Recuento_Habilitables_sin_remision_2026-10-03.sql`.
+
+Sin eso, los tickets sin remisión en los tres orígenes quedan bloqueados el día del despliegue. Esto es una
+anotación, no la redacción del paquete: el próximo paquete la recoge y la desarrolla.
