@@ -674,3 +674,34 @@ CREATE TABLE IF NOT EXISTS public.clientes_provisionales (
 -- Equipo dado de alta a mano a la espera de validacion de Comercial. NULL equivale a no pendiente, sin relleno.
 -- equipos SIN CALIFICAR porque es de DESK_TABLES (migrate.ts:63-64)
 ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean;
+-- recepcion-rotulacion-foto-entrada (F1B-04): lista de tipos de novedad de la remision de entrada. Es DATO
+-- mantenible (decision/f1b04-desplegables, consecuencia 5), sin pantalla: se edita por SQL. Una novedad se
+-- RETIRA con activo = false y nunca borrando la fila, porque la siembra de abajo la volveria a insertar.
+-- excluye_demas y exige_texto son el comportamiento: el servidor decide por las marcas y no por la clave.
+-- CALIFICADA (public). AL FINAL para no desplazar citas
+CREATE TABLE IF NOT EXISTS public.catalogo_novedades (
+  clave text PRIMARY KEY,
+  etiqueta text NOT NULL,
+  orden integer NOT NULL,
+  activo boolean NOT NULL DEFAULT true,
+  excluye_demas boolean NOT NULL DEFAULT false,
+  exige_texto boolean NOT NULL DEFAULT false
+);
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('sin_novedad', 'Sin novedad', 10, true, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('golpe_carcasa', 'Golpe o abolladura en la carcasa', 20, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('rayon_estetico', 'Rayón o daño estético', 30, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('pantalla_danada', 'Pantalla o display dañado', 40, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('conector_danado', 'Conector o puerto dañado', 50, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('falta_accesorio', 'Falta un accesorio', 60, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('embalaje_inadecuado', 'Embalaje inadecuado o dañado', 70, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('humedad_suciedad', 'Humedad, suciedad o contaminación visible', 80, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('sello_roto', 'Sello o precinto roto', 90, false, false) ON CONFLICT (clave) DO NOTHING;
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('otro', 'Otro', 100, false, true) ON CONFLICT (clave) DO NOTHING;
+-- Columnas de la recepcion. Todas NULL-ables y SIN relleno: novedades NULL es la marca de remision de legado.
+-- remisiones y remision_fotos son de PUBLIC_TABLES, asi que las seis van CALIFICADAS
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS novedades jsonb;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS novedad_otro text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS rotulado_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS rotulado_por text;
+ALTER TABLE public.remision_fotos ADD COLUMN IF NOT EXISTS categoria text;
+ALTER TABLE public.remision_fotos ADD COLUMN IF NOT EXISTS novedad text;

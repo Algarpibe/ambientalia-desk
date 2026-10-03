@@ -371,6 +371,7 @@ Las dos hipótesis se comprueban **antes de escribir código** en los lotes 2 y 
 | M-P7 | guarda de categoría por encima del `415` | PS-1 |
 | M-F1 | quitar `public.` al `CREATE` de la tabla | «toda tabla del esquema está clasificada» (`packages/zoho-sync/src/db/migrate.test.ts:266`). Las funcionales siguen verdes en pg-mem: sólo la caza el guardián |
 | M-F2 | quitar `public.` a una `ALTER` de `remision_fotos` | «las ALTER sin calificar son exactamente las de DESK_TABLES» (`packages/zoho-sync/src/db/migrate.test.ts:345`) y el recuento |
+| M-F7 | quitar `catalogo_novedades` de `PUBLIC_TABLES` (`packages/zoho-sync/src/db/migrate.ts:73`) | «toda tabla del esquema está clasificada» (hueco de RQ-RE-21) |
 | M-F3 | borrar una fila de la siembra | siembra 1 y 5 |
 | M-F4 | cambiar una marca (`exige_texto` de `otro`, o `excluye_demas` de `sin_novedad`) | siembra 2 |
 | M-F5 | añadir un `UPDATE public.remisiones SET novedades = …` de relleno | siembra 6 |

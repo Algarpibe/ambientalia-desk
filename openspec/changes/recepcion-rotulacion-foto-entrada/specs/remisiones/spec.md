@@ -59,14 +59,15 @@ las columnas `clave` (llave primaria), `etiqueta`, `orden`, `activo`, `excluye_d
 
 El sistema **SHALL** exponer una ruta de lectura, accesible con sesión, que devuelva las novedades con
 `activo = true`, ordenadas por `orden`, cada una con su `clave`, su `etiqueta` y sus dos marcas
-(`excluye_demas`, `exige_texto`). La ruta **MUST NOT** devolver las novedades inactivas, y sin sesión **SHALL**
+(en la respuesta, en camelCase como el resto de la API: `excluyeDemas`, `exigeTexto`; las columnas de la tabla
+siguen en snake_case). La ruta **MUST NOT** devolver las novedades inactivas, y sin sesión **SHALL**
 responder `401`. El formulario **SHALL** pintar esa lista y **MUST NOT** llevar una copia propia de las etiquetas
 ni de las marcas.
 
 #### Scenario: La ruta devuelve las activas en orden con sus marcas
 - GIVEN la lista sembrada, con una novedad pasada a `activo = false`
 - WHEN un usuario con sesión pide la lista
-- THEN recibe sólo las activas, en orden de `orden`, con `clave`, `etiqueta`, `excluye_demas` y `exige_texto`
+- THEN recibe sólo las activas, en orden de `orden`, con `clave`, `etiqueta`, `excluyeDemas` y `exigeTexto`
 
 #### Scenario: Sin sesión no hay lista
 - GIVEN una petición sin sesión
