@@ -13,19 +13,32 @@ al código —no lista cargo, prioridad, verificación ni alta validada— se an
 entrada vigente**, y **SHALL** pasar en cuanto la tenga. La imposición **SHALL** ser del servidor; el botón del cliente es
 sólo comodidad (regla invariable 13, punto 3).
 
-**Definición de «vigente» (supuesto S-1, reversible; pregunta Q4 a Gerencia).** Una remisión de entrada vigente **SHALL**
-ser una fila de `public.remisiones` del ticket con `tipo = 'entrada'`, `anulada_at IS NULL` y `estado` igual a `ok` o
-`ok_con_avisos`. Es el recuento que ya define el estado `Remisión creada` (RQ-TS-03; `apps/desk/server/db/estadoPorRemision.ts:43-47`)
-más el filtro de `tipo`. Es **más estricta que la letra del maestro** («creada y no anulada»): una remisión `pendiente`
-o en `error` **MUST NOT** contar, porque no ha producido documento. Coste aceptado: si n8n no responde, Comercial no puede
-habilitar hasta que la remisión se confirme. Cambiarlo es una línea del predicado. Las remisiones históricas, importadas con
-estado `ok` (`apps/desk/server/db/remisionesHistoricas.ts:140`), **SHALL** contar (supuesto S-5). Una remisión anulada
-**MUST NOT** contar; una segunda remisión confirmada tras una anulada **SHALL** contar.
+**Definición de «vigente» (a la letra de Gerencia; no es un supuesto).** Una remisión de entrada vigente **SHALL** ser una
+fila de `public.remisiones` del ticket con `tipo = 'entrada'` y `anulada_at IS NULL`: **creada y no anulada**. El estado de
+envío **MUST NOT** entrar en la guarda: una remisión de entrada no anulada en `pendiente`, `error`, `ok` u `ok_con_avisos`
+**SHALL** contar por igual. Fuentes: «La guarda exigirá remisión de entrada vigente (no anulada) para los tres»
+(`docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`) y «remisión de entrada vigente (creada y no anulada)»
+(`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1230`). El supuesto S-1 de la primera versión de
+este delta —exigir `ok` u `ok_con_avisos`— queda **retirado** (revisión de la planificación, 2026-10-03): contradecía esa
+letra sin una decisión que lo respaldara y ataba «Habilitar Servicio» a que n8n responda. Las remisiones históricas
+(`apps/desk/server/db/remisionesHistoricas.ts:140`) **SHALL** contar (supuesto S-5). Una remisión anulada **MUST NOT**
+contar; una segunda remisión de entrada tras una anulada **SHALL** contar. Una fila de `tipo` distinto de `entrada`
+**MUST NOT** contar.
+
+**Consecuencia declarada — no es un defecto.** El estado `Remisión creada` se deriva **sólo de remisiones confirmadas**
+(RQ-TS-03, `openspec/specs/transitions-st/spec.md:98` y `openspec/specs/transitions-st/spec.md:101-103`; recuento en
+`apps/desk/server/db/estadoPorRemision.ts:43-47`). Por tanto un ticket **SHALL** poder seguir en `Ticket creado` con una
+remisión de entrada `pendiente` o en `error` y **aun así habilitarse desde ahí**, sin pasar por `Remisión creada`. La guarda
+y ese estado responden a preguntas distintas —«la remisión se creó y no se anuló» frente a «el documento de la remisión
+existe»— y este requisito **MUST NOT** alinearlas: RQ-TS-03 no se modifica. La divergencia se fija por prueba en
+`remisiones` RQ-RE-20. Es además lo que da uso al origen `Ticket creado` (supuesto S-4).
 
 **Escalón y código.** La guarda es de **estado del sujeto (escalón B)**: al ticket le falta un documento previo; no valida
 nada que el usuario haya enviado (no es C) y no hay conflicto de unicidad (no es D). El código es `422` y no `409`, para que
 las dos precondiciones de «Habilitar Servicio» contesten con la misma forma (supuesto S-2). El mensaje **SHALL** nombrar qué
-falta (una remisión de entrada vigente) de modo accionable.
+falta (una remisión de entrada vigente) de modo accionable, y **SHALL** ser **un solo texto**: «No se puede habilitar el
+servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.». No hay un segundo texto
+para la remisión sin confirmar, porque ese caso ya no se rechaza.
 
 **Posición exacta.** La guarda **SHALL** ser la décima del orden de `executeTransition`: se llama en la misma línea que
 `exigirAltaValidada` (`apps/desk/server/services/ticketService.ts:131`), **inmediatamente después** de ella, y **antes**
@@ -43,7 +56,7 @@ Tipo de servicio y OV no entran en la guarda (RQ-TS-33 no introduce ramificació
 
 **Una sola noción de «vigente».** El predicado puro **SHALL** vivir en `packages/shared` y lo **SHALL** consumir el servidor
 (la guarda) y el cliente (el botón). No habrá copia de la regla en `apps/desk/src`. El recuento de `estadoPorRemision.ts`
-**MUST NOT** reescribirse; su coincidencia con la guarda se fija en `remisiones` RQ-RE-20.
+**MUST NOT** reescribirse; en qué coincide con la guarda y en qué diverge a propósito se fija en `remisiones` RQ-RE-20.
 
 **Cliente (regla invariable 13, decisión a decisión).** «Habilitar Servicio» **SHALL** quedar desactivado, con el motivo a
 la vista, cuando el predicado compartido aplicado a las remisiones del ticket (prop `remisiones`,
@@ -52,6 +65,13 @@ imposición en el servidor: `exigirRemisionVigente`, llamada en `apps/desk/serve
 los escenarios de posición de este requisito; por eso el espejo es comodidad legítima. El cliente **MUST NOT** recalcular
 «vigente» por su cuenta. Si la carga de las remisiones falla, el botón **SHALL** quedar activo y decide el servidor. El
 espejo vive en `.tsx`, fuera de la red de pruebas por decisión de Gerencia (F0-00): su comprobación es de persona.
+
+**Aviso no bloqueante de «remisión sin confirmar» (cliente; presentación).** Cuando el ticket tenga al menos una remisión
+de entrada vigente y **ninguna** de las vigentes esté confirmada (`ok` u `ok_con_avisos`), el cliente **SHALL** mostrar
+junto al botón un aviso de «remisión sin confirmar», y **MUST NOT** desactivar «Habilitar Servicio» por ello. Ese aviso
+**no tiene imposición en el servidor y no la necesita**: no decide ni impide nada, y el servidor habilita igual. Es
+presentación, no un espejo (regla invariable 13). La noción de «confirmada» **SHALL** salir de un predicado de
+`packages/shared`, no de una condición propia del cliente. Con las remisiones sin cargar **MUST NOT** mostrarse aviso.
 
 #### Scenario: Sin remisión desde `OV asignada`
 - GIVEN un ticket en `OV asignada` sin ninguna remisión y un usuario de Comercial
@@ -73,30 +93,30 @@ espejo vive en `.tsx`, fuera de la red de pruebas por decisión de Gerencia (F0-
 - WHEN Comercial ejecuta `habilitar_servicio`
 - THEN responde `200` y el ticket llega a `Ingresado` en los tres casos
 
-#### Scenario: Una remisión `pendiente` no habilita
-- GIVEN un ticket cuya única remisión de entrada está en `pendiente` (n8n no ha respondido)
+#### Scenario: Una remisión `pendiente` habilita, y desde `Ticket creado` (consecuencia declarada)
+- GIVEN un ticket en `Ticket creado` cuya única remisión de entrada está en `pendiente` y no anulada (n8n no ha respondido, así que el servidor no lo ha pasado a `Remisión creada`)
 - WHEN Comercial ejecuta `habilitar_servicio`
-- THEN responde `422`
+- THEN responde `200` y el ticket llega a `Ingresado` sin haber pasado por `Remisión creada`
 
-#### Scenario: Una remisión con `error` no habilita
-- GIVEN un ticket cuya única remisión de entrada terminó en `error`
+#### Scenario: Una remisión con `error` habilita
+- GIVEN un ticket cuya única remisión de entrada terminó en `error` y no está anulada
 - WHEN Comercial ejecuta `habilitar_servicio`
-- THEN responde `422`
+- THEN responde `200`
 
 #### Scenario: Una remisión anulada no habilita
-- GIVEN un ticket cuya única remisión de entrada en `ok` tiene `anulada_at`
+- GIVEN un ticket cuyas remisiones de entrada, una o varias y en cualquier estado, tienen todas `anulada_at`
 - WHEN Comercial ejecuta `habilitar_servicio`
 - THEN responde `422`
 
 #### Scenario: Una segunda vigente tras una anulada sí habilita
-- GIVEN un ticket con una remisión anulada y otra posterior en `ok`
+- GIVEN un ticket con una remisión anulada y otra posterior de entrada, no anulada
 - WHEN Comercial ejecuta `habilitar_servicio`
 - THEN responde `200`
 
 #### Scenario: `ok_con_avisos` cuenta como vigente
 - GIVEN un ticket cuya remisión de entrada está en `ok_con_avisos`
 - WHEN Comercial ejecuta `habilitar_servicio`
-- THEN responde `200`
+- THEN responde `200`, como con cualquier otro estado de envío
 
 #### Scenario: La remisión histórica `ok` cuenta (supuesto S-5)
 - GIVEN un ticket cuya única remisión es histórica (`origen = 'historico'`, estado `ok`, no anulada)
@@ -166,12 +186,12 @@ espejo vive en `.tsx`, fuera de la red de pruebas por decisión de Gerencia (F0-
 #### Scenario: El predicado discrimina sobre datos sucios (regla de mutación 2)
 - GIVEN filas de `public.remisiones` con cada combinación de `tipo`, `estado` y `anulada_at`
 - WHEN se evalúa el predicado y la guarda
-- THEN sólo `tipo = 'entrada'`, no anulada y `estado` `ok` u `ok_con_avisos` cuenta, y la prueba se pone roja si se relaja cualquiera de las tres condiciones
+- THEN cuenta toda fila de `tipo = 'entrada'` no anulada, sea cual sea su `estado`, y sólo ésas; la prueba se pone roja si se quita cualquiera de las dos condiciones, y también si se **reintroduce** un filtro por `estado` (deja de pasar «`pendiente` habilita»)
 
 #### Scenario: El motivo es accionable y en español
 - GIVEN un rechazo de la guarda
 - WHEN se lee `error`
-- THEN está en español, nombra la remisión de entrada vigente como lo que falta y no menciona códigos internos
+- THEN es el texto único del requisito, en español, nombra la remisión de entrada vigente como lo que falta, dice qué hacer y no menciona códigos internos ni «cliente», «equipo» o «provisional»
 
 #### Scenario: El cliente desactiva el botón con el predicado compartido
 - GIVEN la ficha de un ticket en un estado de origen sin remisión vigente, y un usuario que puede ejecutar la transición
@@ -181,18 +201,23 @@ espejo vive en `.tsx`, fuera de la red de pruebas por decisión de Gerencia (F0-
 #### Scenario: Si la carga de remisiones falla, decide el servidor
 - GIVEN un ticket cuyas remisiones no llegaron al cliente
 - WHEN el usuario pulsa «Habilitar Servicio»
-- THEN el botón está activo y el servidor contesta `422` si no hay remisión vigente
+- THEN el botón está activo, no hay aviso, y el servidor contesta `422` si no hay remisión vigente
 
-## Supuestos reversibles que afectan a este requisito
+#### Scenario: Aviso no bloqueante de «remisión sin confirmar»
+- GIVEN la ficha de un ticket cuya única remisión de entrada vigente está en `pendiente` o en `error`, y un usuario que puede ejecutar la transición
+- WHEN se muestra el panel de transiciones
+- THEN «Habilitar Servicio» está **activo** y junto a él se lee el aviso de «remisión sin confirmar»; con alguna vigente confirmada no hay aviso; la decisión de cuándo avisar se prueba en `.ts` y su aparición en pantalla es comprobación de persona
+
+## Supuestos que afectan a este requisito
 
 | Supuesto | Qué dice | Pregunta |
 |---|---|---|
-| S-1 | «Vigente» exige confirmación (`ok` u `ok_con_avisos`) | Q4 |
+| S-1 | **RETIRADO** (revisión de la planificación, 2026-10-03). «Vigente» es la letra: entrada, creada y no anulada | Q4, resuelta por la letra |
 | S-2 | `422`, escalón B, detrás de `exigirAltaValidada` | — |
-| S-3 | Alcanza a equipo nuevo y a los tres orígenes | Q5 |
-| S-4 | Se conservan los tres `from`; RQ-TS-02 no cambia | Q3 |
-| S-5 | Las históricas `ok` cuentan | — |
-| S-6 | El cliente sólo desactiva el botón con el predicado compartido | — |
+| S-3 | Alcanza a equipo nuevo y a los tres orígenes | Q5: condición de publicación, E-158 de `docs/sdd/ENTRADA.md` |
+| S-4 | Se conservan los tres `from`; RQ-TS-02 no cambia | Q3: supuesto revisado y mantenido |
+| S-5 | Las históricas cuentan | — |
+| S-6 | El cliente desactiva el botón con el predicado compartido; el aviso de «sin confirmar» es presentación | — |
 
 Si Gerencia responde Q3 «sí» (retirar `Ticket creado`), es **otro cambio**: rompe el invariante 3, modifica RQ-TS-02 y mueve
 las cifras ancladas.
@@ -202,4 +227,5 @@ las cifras ancladas.
 - Tipo de servicio y ticket sin OV: ya construidos (propuesta §3.1); este delta no escribe requisitos nuevos para ellos.
 - Calibración directa (Q2) y cualquier cambio en `packages/shared/src/transitions.ts`, cifras ancladas o mapa.
 - Reparar el histórico de tickets que llegaron a `Ingresado` sin remisión.
-- **Lote 3 (OVI de garantía):** está bloqueado por Q1 y su borrador vive en el delta de `permissions` y `tickets-core`. Ninguna parte de RQ-TS-33 depende de él.
+- **Lote 3 (OVI de garantía):** está bloqueado por Q1 (E-157 de `docs/sdd/ENTRADA.md`) y su borrador vive en el delta de `permissions` y `tickets-core`. Si no hay respuesta registrada al terminar el lote 2, no entra en esta tanda y esos dos deltas salen del cambio antes de archivar. Ninguna parte de RQ-TS-33 depende de él.
+- Alinear la guarda con el estado `Remisión creada`, en cualquiera de los dos sentidos: la divergencia es una consecuencia declarada, y cambiarla pide una decisión.

@@ -12,9 +12,11 @@ origen_cabecera: declarada
 
 Worktree `tipo-servicio-ticket-sin-ov`, partida `5f68822`. Todas las rutas y líneas se citan contra ese árbol y las ha verificado quien escribe; lo que no se pudo verificar lleva «hipótesis» delante. Exploración: `openspec/changes/tipo-servicio-ticket-sin-ov/exploration.md`.
 
+**Revisada el 2026-10-03 (revisión de la planificación).** El supuesto S-1 —«vigente» exige remisión confirmada— queda **retirado**: contradecía la letra de Gerencia sin una decisión que lo respaldara. «Vigente» se construye a la letra: remisión de **entrada**, **creada** y **no anulada**, sea cual sea su estado de envío (§4.1). El resumen de lo que cambió está al final de `openspec/changes/tipo-servicio-ticket-sin-ov/design.md`.
+
 ## 0 · Por qué `cierra: no`, y por qué `toca_maestro: si`
 
-**No cierra.** La fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:83` tiene dos partes: la L (tipo de servicio y ticket sin OV, guarda de remisión vigente, OVI de garantía) y la XS (supresión de los prefijos, E-094). Este cambio hace sólo la L. La XS va en un **segundo cambio con el mismo `tanda: F1B-03`** (R-4: un cambio, un solo `tanda:`; no es «contar en parte»), y espera la comprobación de Google Drive y n8n sobre los prefijos, cuyo dueño es Gerencia (`decision/cuarta-tanda-f1b03-parte-l`; `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:177`). Además, dentro de la propia parte L, el lote de la OVI queda condicionado a una respuesta de Gerencia (Q1, §6): si no llega, este cambio se archiva sin él y lo dice en su `archive-report.md`.
+**No cierra.** La fila `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:83` tiene dos partes: la L (tipo de servicio y ticket sin OV, guarda de remisión vigente, OVI de garantía) y la XS (supresión de los prefijos, E-094). Este cambio hace sólo la L. La XS va en un **segundo cambio con el mismo `tanda: F1B-03`** (R-4: un cambio, un solo `tanda:`; no es «contar en parte»), y espera la comprobación de Google Drive y n8n sobre los prefijos, cuyo dueño es Gerencia (`decision/cuarta-tanda-f1b03-parte-l`; `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:177`). Además, dentro de la propia parte L, el lote de la OVI queda condicionado a una respuesta de Gerencia (Q1, §6; E-157 de `docs/sdd/ENTRADA.md`): si no hay respuesta registrada al terminar el lote 2, el lote 3 **no entra en esta tanda**, este cambio se archiva sin él y lo dice en su `archive-report.md` (§10).
 
 **Toca el maestro.** Al terminar, tres pasajes de la R08.4 quedan desactualizados: «La guarda está sin construir (F1B-03)» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1230`), «La de la OVI de garantía entra en uso con F1B-03» (`:1949`) y el Anexo H. Y uno ya lo está hoy: `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:3482` lista «crear la OVI de garantía, solo el Director Técnico» entre las «Excepciones construidas», cuando en el código la primitiva no tiene llamador (`packages/shared/src/cargos.ts:67-74`). Las correcciones se entregan como texto en `docs/sdd/F0-01_Correcciones_para_el_maestro.md`; el `.docx` no se toca.
 
@@ -22,7 +24,7 @@ Worktree `tipo-servicio-ticket-sin-ov`, partida `5f68822`. Todas las rutas y lí
 
 Hoy «Habilitar Servicio» lleva un ticket a `Ingresado` sin comprobar que exista remisión de entrada: `executeTransition` no consulta remisiones (`apps/desk/server/services/ticketService.ts:114-223`; el fichero no importa `db/remisiones`). El maestro lo da por decidido y sin excepciones desde el 10/09, reafirmado el 24/09 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1230`). Este cambio construye esa guarda en el servidor, con su posición probada frente a la de F1B-15, y deja la OVI de garantía en un lote propio que sólo se construye cuando Gerencia diga qué es «crear la OVI» dentro de Desk.
 
-Éxito: ningún ticket llega a `Ingresado` por la aplicación sin remisión de entrada vigente; el orden de guardas queda fijado por pruebas de posición; «vigente» tiene una sola definición o una prueba que enfrenta las que hay.
+Éxito: ningún ticket llega a `Ingresado` por la aplicación sin remisión de entrada vigente (creada y no anulada); el orden de guardas queda fijado por pruebas de posición; «vigente» tiene una sola definición, y una prueba **afirma** en qué se separa, a propósito, del recuento que mueve el estado `Remisión creada`.
 
 ## 2 · Decisiones de las que depende (respuesta textual; manda la respuesta, no las consecuencias)
 
@@ -37,9 +39,9 @@ Hoy «Habilitar Servicio» lleva un ticket a `Ingresado` sin comprobar que exist
 | `decision/anexo-7-garantia-proveedor` | `openspec/config.yaml:2340-2355` | «…Al crear la OVI de garantía, el Director Técnico responde «¿Se reclama al fabricante?»… Entra en Fase 1 junto a la OVI de garantía (F1B-03), como tanda pequeña.» | Es F1B-13, otra fila. Aquí sólo obliga a no cerrarle el paso: depende de la respuesta a Q1. |
 | `decision/titularidad-ov-equipo` | `openspec/config.yaml:1584-1603` | «Generalmente el titular del equipo es el que genera la orden de venta. Tenemos 1 solo caso donde el generador de la orden de venta no es el propietario del equipo es el mantenedor del equipo» | Contexto de IV-8. Sin trabajo aquí. |
 | `p21-ingreso-sin-ov` (**no existe en `openspec/config.yaml`**) | `docs/sdd/Decisiones_Gerencia_2026-09-10.md:300-314` | «Se deja como está: OV opcional en «Nuevo ticket», obligatoria en `Habilitar Servicio`.» | Confirma lo construido (§3.1). |
-| `habilitar-servicio-sin-remision` (**no existe en `openspec/config.yaml`**) | `docs/sdd/Decisiones_Gerencia_2026-09-10.md:353-377` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:386` | «Hoy sale de tres orígenes y uno —`Ticket creado`— lleva a `Ingresado` sin remisión de entrada. La guarda exigirá remisión de entrada vigente (no anulada) para los tres.» | La guarda. «Vigente» se define ahí como **no anulada**, y en el maestro como «creada y no anulada»: el supuesto S-1 es más estricto que esa letra y se declara (§4.1). Retirar el origen es consecuencia descrita, no mandato (Q3). |
+| `habilitar-servicio-sin-remision` (**no existe en `openspec/config.yaml`**) | `docs/sdd/Decisiones_Gerencia_2026-09-10.md:353-377` y `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:386` | «Hoy sale de tres orígenes y uno —`Ticket creado`— lleva a `Ingresado` sin remisión de entrada. La guarda exigirá remisión de entrada vigente (no anulada) para los tres.» | La guarda. «Vigente» se define ahí como **no anulada** (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`), y en el maestro como «creada y no anulada» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1230`): **es la definición que se construye, a la letra** (§4.1). El estado de envío no aparece en ninguna de las dos frases y no entra en la guarda. Retirar el origen es consecuencia descrita, no mandato (Q3). |
 
-Hallazgo de método: dos decisiones de las que depende esta tanda **no están en el fichero que la sesión carga** (`decisiones_de_gerencia`), sólo en el documento del 10/09 y en la R01.1. No se corrige aquí; se anota para la bandeja.
+Hallazgo de método: dos decisiones de las que depende esta tanda **no están en el fichero que la sesión carga** (`decisiones_de_gerencia`), sólo en el documento del 10/09 y en la R01.1. No se corrige aquí. La de `habilitar-servicio-sin-remision` queda en la bandeja como **E-159** de `docs/sdd/ENTRADA.md`; la de `p21-ingreso-sin-ov` se anota aquí y no tiene entrada propia.
 
 ## 3 · Los tres componentes de la fila, sin los prefijos
 
@@ -53,8 +55,8 @@ Hallazgo de método: dos decisiones de las que depende esta tanda **no están en
 
 ### 3.2 · Guarda de remisión vigente — **sin construir; es el núcleo (lotes 1 y 2)**
 
-- Hoy: ninguna guarda. Lo que existe alrededor: la guarda de alta validada de F1B-15 (`exigirAltaValidada`, `apps/desk/server/services/ticketService.ts:258-264`) y tres nociones de remisión «viva» (§4.1).
-- Construye: un predicado puro en `packages/shared`, una consulta única en `apps/desk/server/db/remisiones.ts`, la guarda `exigirRemisionVigente` en `ticketService.ts`, sus pruebas de posición, el espejo de comodidad en `apps/desk/src/components/TransitionPanel.tsx`, y los requisitos RQ-TS-33 y RQ-RE-20.
+- Hoy: ninguna guarda. Lo que existe alrededor: la guarda de alta validada de F1B-15 (`exigirAltaValidada`, `apps/desk/server/services/ticketService.ts:258-264`) y varias nociones de remisión «viva» (§4.1).
+- Construye: un predicado puro en `packages/shared`, una consulta única en `apps/desk/server/db/remisiones.ts`, la guarda `exigirRemisionVigente` en `ticketService.ts`, sus pruebas de posición, el espejo de comodidad y el aviso no bloqueante de «remisión sin confirmar» en `apps/desk/src/components/TransitionPanel.tsx`, y los requisitos RQ-TS-33 y RQ-RE-20.
 
 ### 3.3 · OVI de garantía — **sin construir; lote 3, condicionado a Q1**
 
@@ -63,20 +65,24 @@ Hallazgo de método: dos decisiones de las que depende esta tanda **no están en
 
 ## 4 · La guarda de remisión en «Habilitar Servicio»
 
-### 4.1 · Qué es «vigente» — tres implementaciones de la misma noción (molde H5)
+### 4.1 · Qué es «vigente» — varias implementaciones de nociones vecinas (molde H5)
 
 | Implementación | Dónde | `anulada_at IS NULL` | `estado` | `tipo` |
 |---|---|---|---|---|
+| filtro `vigentes` del botón de remisión (cliente) | `apps/desk/src/lib/botonRemision.ts:33` | sí | cualquiera | `entrada` |
+| «confirmada» del botón de remisión (cliente) | `apps/desk/src/lib/botonRemision.ts:39` | (sobre las de la línea 33) | `ok` u `ok_con_avisos` | (sobre las de la línea 33) |
 | `remisionPendienteDe` | `apps/desk/server/db/remisiones.ts:67-73` | sí | sólo `pendiente` | no filtra |
 | `listRemisionesByTicket` («Remisiones VIGENTES de un ticket») | `apps/desk/server/db/remisiones.ts:76-79` | sí | cualquiera | no filtra |
 | recuento de `sincronizarEstadoPorRemision` | `apps/desk/server/db/estadoPorRemision.ts:43-47` | sí | `ok` u `ok_con_avisos` | no filtra |
 | consulta del recuento de producción | `docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql` | sí | cualquiera | `entrada` |
 
-**Definición propuesta (supuesto S-1): una remisión de entrada vigente es una fila de `public.remisiones` del ticket con `tipo = 'entrada'`, `anulada_at IS NULL` y `estado` `ok` u `ok_con_avisos`.** Es la del recuento que define el estado `Remisión creada` (RQ-TS-03, `openspec/specs/transitions-st/spec.md:101-103`), más el filtro de tipo.
+**Definición (a la letra de Gerencia; no es un supuesto): una remisión de entrada vigente es una fila de `public.remisiones` del ticket con `tipo = 'entrada'` y `anulada_at IS NULL`.** «Creada» es que la fila exista; «no anulada», que `anulada_at` sea nulo. **El estado de envío (`pendiente`, `error`, `ok`, `ok_con_avisos`) NO entra en el predicado de bloqueo.** Fuentes, leídas: «La guarda exigirá remisión de entrada vigente (no anulada) para los tres» (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`, §7.3 en `docs/sdd/Decisiones_Gerencia_2026-09-10.md:353-377`) y «remisión de entrada vigente (creada y no anulada)» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1230`). Es, letra por letra, el filtro que el cliente ya llama `vigentes` (`apps/desk/src/lib/botonRemision.ts:33`) y el que usa la consulta del recuento de producción.
 
-⚠️ **S-1 es más estricto que la letra.** El maestro dice «vigente (creada y no anulada)» y §7.3 «vigente (no anulada)»: leídas al pie, una remisión `pendiente` o en `error` contaría. Se propone exigir confirmación porque una `pendiente` o `error` no ha producido documento (comentario de `apps/desk/server/db/estadoPorRemision.ts:23-25`) y porque, si no, la guarda y el estado `Remisión creada` dirían cosas distintas del mismo ticket. Coste del supuesto: si n8n no responde, Comercial no puede habilitar hasta que la remisión se confirme. Es reversible en una línea del predicado. Va a Gerencia como Q4.
+**S-1, retirado en la revisión de la planificación del 2026-10-03.** La primera versión de esta propuesta exigía además `estado` `ok` u `ok_con_avisos`. Se retira por dos razones: contradecía la letra **sin una decisión que lo respaldara**, y ataba «Habilitar Servicio» a que n8n responda (una remisión creada cuyo envío queda `pendiente` o en `error` habría dejado a Comercial sin poder habilitar). Por tanto **una remisión de entrada no anulada en estado `pendiente` o `error` HABILITA**. Lo que antes era bloqueo pasa a ser un **aviso no bloqueante** del cliente —«remisión sin confirmar»— cuando el ticket tiene remisión de entrada vigente y ninguna de las vigentes está confirmada (§5).
 
-**Una sola fuente, y una prueba que enfrenta lo que queda.** El predicado puro vive en `packages/shared` y lo consumen el servidor (la guarda) y el cliente (el botón). `estadoPorRemision.ts` no se reescribe (fichero citado; su recuento no filtra `tipo` y cambiarlo altera cuándo se mueve el estado): una prueba recorre la tabla de casos —`pendiente`, `error`, `ok`, `ok_con_avisos`, anulada, histórica— y exige que la guarda y el recuento coincidan en todos los de entrada; la única divergencia declarada es `tipo`, que hoy no se puede dar (`createRemision` escribe siempre `'entrada'`, `apps/desk/server/db/remisiones.ts:44-53`) y llegará con la remisión de salida (F1B-17). Las históricas, que se importan con estado `ok` (`apps/desk/server/db/remisionesHistoricas.ts:140`), cuentan (S-5).
+**CONSECUENCIA DECLARADA — no es un defecto: la guarda y el estado `Remisión creada` dicen cosas distintas, a propósito.** El estado `Remisión creada` se deriva **sólo de remisiones confirmadas**: RQ-TS-03 lo dispara con «al menos una remisión confirmada y vigente» (`openspec/specs/transitions-st/spec.md:98`, `openspec/specs/transitions-st/spec.md:101-103`) y el recuento cuenta `anulada_at IS NULL AND (estado = 'ok' OR estado = 'ok_con_avisos')` (`apps/desk/server/db/estadoPorRemision.ts:43-47`; su porqué, en el comentario de `apps/desk/server/db/estadoPorRemision.ts:23-25`). Con la definición a la letra, un ticket puede seguir en `Ticket creado` con una remisión de entrada `pendiente` y **aun así habilitarse desde ahí**, sin pasar por `Remisión creada`. Son dos preguntas distintas: el estado dice «existe el documento de la remisión»; la guarda dice «la remisión se creó y no se anuló». Este cambio no toca RQ-TS-03 ni el recuento.
+
+**Una sola fuente de «vigente», y una prueba que AFIRMA la divergencia con el recuento.** El predicado puro vive en `packages/shared` y lo consumen el servidor (la guarda) y el cliente (el botón). `estadoPorRemision.ts` no se reescribe (fichero citado; su recuento mueve el estado del ticket). Una prueba recorre la tabla de casos y fija, fila a fila, el veredicto de las dos: coinciden en `ok`, `ok_con_avisos`, anulada, histórica y vigente tras anulada; **divergen a propósito en `estado`** —con una remisión de entrada `pendiente` o en `error` la guarda habilita y el recuento no pasa el ticket a `Remisión creada`— y **siguen divergiendo en `tipo`** —el recuento no lo filtra; hoy no se puede dar, porque `createRemision` escribe siempre `'entrada'` (`apps/desk/server/db/remisiones.ts:44-53`), y llegará con la remisión de salida (F1B-17)—. Si alguien alinea una con otra sin una decisión, la prueba se pone roja. Las históricas, que se importan con estado `ok` (`apps/desk/server/db/remisionesHistoricas.ts:140`), cuentan por las dos (S-5).
 
 ### 4.2 · Escalón, código y posición
 
@@ -119,7 +125,7 @@ Sólo `habilitar_servicio` la calcula; en las demás transiciones sale sin consu
 
 Sin escenario posible, y se dice: **cargo** (6), porque `habilitar_servicio` no tiene excepción de cargo (`packages/shared/src/cargos.ts:32`); **verificación** (8), porque sólo la calcula `liberacion`; **prioridad** (7), hipótesis: la transición no lleva campo de prioridad (`packages/shared/src/transitions.ts:189`) y el diseño comprueba si aun así se puede activar.
 
-Además: los tres orígenes sin remisión (422) y con ella (200); `pendiente`, `error` y anulada no habilitan; una segunda vigente tras una anulada sí; y «sin consultas extra» (otra transición no lee `remisiones`), con el mismo espía que usa F1B-15. **Regla de mutación 2:** el predicado se prueba ensuciando los datos (filas de `remisiones`), no el predicado.
+Además: los tres orígenes sin remisión (422) y con ella (200); sin remisión, sólo anulada(s) o `tipo` distinto de entrada **no** habilitan; `pendiente` y `error` no anuladas **sí** habilitan (200), igual que una segunda vigente tras una anulada; y «sin consultas extra» (otra transición no lee `remisiones`), con el mismo espía que usa F1B-15. **Regla de mutación 2:** el predicado se prueba ensuciando los datos (filas de `remisiones`), no el predicado; y una mutación que **reintroduce** el filtro de estado debe poner roja la prueba de «`pendiente` habilita».
 
 ## 5 · Regla 13, decisión a decisión
 
@@ -127,70 +133,80 @@ Además: los tres orígenes sin remisión (422) y con ella (200); `pendiente`, `
 |---|---|---|
 | Ofrecer sólo las transiciones que el usuario puede ejecutar | `apps/desk/src/components/TransitionPanel.tsx:56-58` | Área y cargo en `executeTransition`, `apps/desk/server/services/ticketService.ts:129-131`. Espejo ya probado (IV-3 cerrado). Sin cambios. |
 | Desactivar «Habilitar Servicio» con alta pendiente | líneas 70, 130 y 137 de ese `.tsx` | `exigirAltaValidada`, `apps/desk/server/services/ticketService.ts:258-264`. Sin cambios. |
-| **Nuevo:** desactivar «Habilitar Servicio» y mostrar el motivo cuando no hay remisión vigente | mismas líneas 70, 130 y 137, con el predicado de `shared` sobre la prop `remisiones` (`apps/desk/src/components/TransitionPanel.tsx:50`) | **`exigirRemisionVigente`**, nueva, llamada en la línea 131 de `ticketService.ts`. La imposición queda probada por §4.3: el espejo es comodidad legítima (punto 3 de la regla). |
+| **Nuevo:** desactivar «Habilitar Servicio» y mostrar el motivo cuando no hay remisión de entrada vigente (creada y no anulada) | mismas líneas 70, 130 y 137, con el predicado de `shared` sobre la prop `remisiones` (`apps/desk/src/components/TransitionPanel.tsx:50`) | **`exigirRemisionVigente`**, nueva, llamada en la línea 131 de `ticketService.ts`. La imposición queda probada por §4.3: el espejo es comodidad legítima (punto 3 de la regla). |
+| **Nuevo:** avisar, **sin bloquear**, de «remisión sin confirmar» cuando el ticket tiene remisión de entrada vigente y ninguna de las vigentes está confirmada | línea 137 de ese `.tsx`, con la lógica en `apps/desk/src/lib/` | **Ninguna, y se dice así: es PRESENTACIÓN.** El servidor habilita igual con la remisión `pendiente` o en `error`; el aviso no decide ni impide nada, sólo informa de que el documento puede no existir todavía. No es un espejo y no necesita imposición. |
+| Qué remisiones mira el botón «Crear remisión» (`vigentes`: no anulada y de entrada) | `apps/desk/src/lib/botonRemision.ts:33` | Pasa a **consumir** el predicado compartido en el lote 2 (es la misma condición, letra por letra): punto 1 de la regla. Sin cambio de comportamiento. |
+| No ofrecer «Crear remisión» con una ya confirmada | `apps/desk/src/lib/botonRemision.ts:39` | **Sin imposición, y ya era así** (el servidor sólo rechaza con una `pendiente`, `apps/desk/server/routes/remision.ts:174-183`): presentación mientras la pantalla refresca. Su noción de «confirmada» pasa a un segundo predicado compartido, el mismo que alimenta el aviso; **no** es «vigente» y no entra en ninguna guarda. La línea 34 (la `pendiente` que reetiqueta el botón) se queda como está. |
 | OV opcional en «Nuevo ticket» | `apps/desk/src/components/CreateTicket.tsx:118-127` | `apps/desk/server/services/ticketService.ts:37-44`. Sin cambios. |
 | Tipo de servicio y clasificación obligatorios | `apps/desk/src/components/CreateTicket.tsx:415`, `apps/desk/src/components/CreateTicket.tsx:419` | `apps/desk/server/services/ticketService.ts:83-88`. Sin cambios. |
 | **Lote 3 (si Q1 = A):** no ofrecer u ocultar una `OVI-` a quien no puede asociarla | buscadores de orden de venta del alta, la transición y la remisión | Guarda nueva en las **tres** puertas. Sin ella en el servidor, el cliente sería la guarda. |
 
-Sólo presentación, sin regla: el texto del motivo junto al botón y el atributo `title`. El cliente **no** recalcula «vigente»: consume el predicado de `packages/shared` (punto 1). Advertencia: la prop `remisiones` trae las no anuladas de cualquier estado; el predicado filtra, y si la carga falla el botón queda activo y decide el servidor.
+Sólo presentación, sin regla: el texto del motivo junto al botón, el atributo `title` y el aviso de «remisión sin confirmar». El cliente **no** recalcula «vigente»: consume el predicado de `packages/shared` (punto 1). Advertencia: la prop `remisiones` trae las no anuladas de cualquier estado y de cualquier tipo; el predicado filtra, y si la carga falla el botón queda activo, no hay aviso y decide el servidor.
 
 Los `.tsx` están fuera de la red de pruebas por decisión de Gerencia (F0-00): el espejo no lleva prueba automática ni rojo previo, y **no se propone** jsdom ni testing-library. Su comprobación es de persona (§8).
 
 ## 6 · Preguntas que sólo Gerencia puede contestar
 
+Estado tras la revisión de la planificación del 2026-10-03: **Q1** abierta, bloquea el lote 3 (E-157) · **Q2** y **Q3** supuestos aplicados, revisados y mantenidos · **Q4** resuelta por la letra · **Q5** supuesto mantenido y **condición de publicación** (E-158). Los identificadores E-157, E-158 y E-159 son entradas de `docs/sdd/ENTRADA.md`.
+
 ### Bloquean un lote
 
-**Q1 · ¿Qué es «crear la OVI de garantía» dentro de Desk?**
+**Q1 · ¿Qué es «crear la OVI de garantía» dentro de Desk?** — abierta, **E-157** (junto con las cinco preguntas de OVI de `design.md` §10).
 - *Qué decide:* el contenido entero del lote 3. *A quién corresponde:* Gerencia, con el Director Técnico. *Qué desbloquea:* el lote 3 y, detrás, F1B-13 (la ficha de reclamación cuelga de ese acto).
+- *Qué pasa si no hay respuesta registrada al terminar el lote 2:* el lote 3 **no entra en esta tanda** y los deltas borrador de `permissions` y `tickets-core` salen del cambio antes de archivar (§10).
 - *Por qué hace falta:* las decisiones dicen quién la crea; Desk no escribe en Zoho (`decision/p44-escritura-zoho`) y hoy las OVI se crean en Books.
 - **(A) Restricción al asociar.** Las OVI se siguen creando en Books; en Desk sólo el Director Técnico o un administrador puede asociar una orden `OVI-` a un ticket, en las tres puertas. Barato (lote 3 tal como está estimado) y coherente con p44. ⚠️ Dos consecuencias que hay que aceptar a sabiendas: `puedeCrearOVIGarantia` exige el **área Servicio Técnico** y «Habilitar Servicio» es de **área Comercial**, así que un Director Técnico sin área Comercial sólo podría asociarla en el alta o en la remisión de entrada, y Comercial no podría teclear una OVI en la transición; y mientras nadie tenga `cargo_permiso` asignado, sólo un administrador pasa (RQ-PM-22).
 - **(B) Registro propio en Desk.** Un acto «crear OVI» con su tabla y su pregunta «¿se reclama al fabricante?». Cumple la letra de «crear», pero es alcance nuevo con migración: no cabe en este cambio; pediría cambio propio y talla.
 - **(C) Escribir en Books.** Contradice `decision/p44-escritura-zoho`. No se propone.
 - *Subpregunta ligada:* ¿un ticket con tipo de servicio «Garantía» debe llevar obligatoriamente una OVI, y una OVI sólo puede ir en tickets de garantía? Hoy no hay relación entre ambos datos.
 
-**Q2 · ¿La calibración directa entra en esta parte L?**
+**Q2 · ¿La calibración directa entra en esta parte L?** — supuesto aplicado (no entra), **revisado y mantenido** en la revisión de la planificación del 2026-10-03. No es una confirmación de Gerencia.
 - *Qué decide:* si este cambio toca el grafo. *A quién corresponde:* Gerencia. *Qué desbloquea:* nada de los lotes 1 a 3; decide si hay un lote más o si queda para F1C-08.
 - **(No, recomendado)** Queda en F1C-08, después del corte, y se anota en las dos filas del plan. La parte L no toca `transitions.ts`.
 - **(Sí)** Hace falta una transición de escape («si aparece una falla, sale a la ruta completa»), que mueve las cifras ancladas 31 y 35 (`openspec/config.yaml:1360-1366`), regenera el mapa y obliga a que `tipo_servicio` enrute por primera vez. Es talla M–L por sí sola: cambio aparte, no un lote de éste.
 
-### No bloquean la construcción: se aplica el supuesto y se confirma antes de desplegar
+### No bloquean la construcción
 
-**Q3 · ¿Se retira el origen `Ticket creado` de «Habilitar Servicio»?** Supuesto aplicado (S-4): **no**; se conservan los tres orígenes y sólo se añade la guarda. *Si Gerencia dice sí:* se rompe a propósito el invariante 3 (`packages/shared/src/invariantesGrafo.test.ts:56-66` y `packages/shared/src/invariantesGrafo.test.ts:177-181`), los pasos del mapa pasan de 35 a 34, se regenera el mapa, se modifica RQ-TS-02 (`openspec/specs/transitions-st/spec.md:71-88`) y cambia el maestro: cambio aparte. Nota: con S-1, un ticket de la app con remisión confirmada ya no está en `Ticket creado` (el servidor lo pasa a `Remisión creada`), así que ese origen queda en la práctica sin uso. Corresponde a Gerencia; desbloquea cerrar la predicción de `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:306`.
+**Q3 · ¿Se retira el origen `Ticket creado` de «Habilitar Servicio»?** Supuesto aplicado (S-4): **no**; se conservan los tres orígenes y sólo se añade la guarda. **Revisado y mantenido** en la revisión de la planificación del 2026-10-03; no es una confirmación de Gerencia. *Si Gerencia dice sí:* se rompe a propósito el invariante 3 (`packages/shared/src/invariantesGrafo.test.ts:56-66` y `packages/shared/src/invariantesGrafo.test.ts:177-181`), los pasos del mapa pasan de 35 a 34, se regenera el mapa, se modifica RQ-TS-02 (`openspec/specs/transitions-st/spec.md:71-88`) y cambia el maestro: cambio aparte. **Nota corregida:** la primera versión decía que, con S-1, ese origen quedaba en la práctica sin uso. Con la definición a la letra **sí tiene uso**: un ticket de la aplicación cuya remisión de entrada está creada y aún sin confirmar (`pendiente`) o cuyo envío falló (`error`) sigue en `Ticket creado` —el servidor sólo lo pasa a `Remisión creada` con una confirmada, `apps/desk/server/db/estadoPorRemision.ts:43-47`— y se habilita desde ahí. Retirar el origen dejaría sin salida justo ese caso. Corresponde a Gerencia; desbloquea cerrar la predicción de `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:306`.
 
-**Q4 · ¿«Vigente» exige que la remisión esté confirmada, o basta creada y no anulada?** Supuesto aplicado (S-1): confirmada. Consecuencias en §4.1. Corresponde a Gerencia con Servicio Técnico; cambiarlo es una línea.
+**Q4 · ¿«Vigente» exige que la remisión esté confirmada, o basta creada y no anulada?** **RESUELTA POR LA LETRA: basta creada y no anulada.** No es una respuesta nueva de Gerencia: es la aplicación de §7.3 (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`) y del maestro (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1230`), que ya lo decían. El supuesto S-1 se retira (§4.1). No queda pregunta abierta.
 
-**Q5 · ¿La guarda alcanza a los tickets de «Equipo nuevo»?** Supuesto aplicado (S-3): **sí**, «sin excepciones»: esos tickets nacen en `Ticket creado` y pasan por la misma transición. La respuesta textual habla de «un servicio técnico». Si un equipo nuevo no lleva remisión de entrada en la práctica, hay que decirlo antes de desplegar: quedarían bloqueados.
+**Q5 · ¿La guarda alcanza a los tickets de «Equipo nuevo»?** Supuesto aplicado y mantenido (S-3): **sí**, «sin excepciones»: esos tickets nacen en `Ticket creado` y pasan por la misma transición. La respuesta textual habla de «un servicio técnico». **Pasa a ser CONDICIÓN DE PUBLICACIÓN:** pregunta abierta **E-158** en `docs/sdd/ENTRADA.md`, con dueño Gerencia. No bloquea construir ni fusionar a `main`; bloquea publicar, porque si un equipo nuevo no lleva remisión de entrada en la práctica, esos tickets quedarían bloqueados.
 
 ## 7 · Supuestos razonables y reversibles (regla de ejecución)
 
-S-1 «vigente» = entrada, no anulada y confirmada (Q4) · S-2 422, escalón B, tras `exigirAltaValidada` · S-3 tres orígenes y todas las clasificaciones que pasan por la transición (Q5) · S-4 se conservan los tres `from` (Q3) · S-5 las remisiones históricas `ok` cuentan · S-6 el cliente sólo desactiva el botón con el predicado compartido · S-7 `estadoPorRemision.ts` no se reescribe: se enfrenta con una prueba · S-8 la tabla de RQ-TS-06 no se amplía (no lista hoy cargo, prioridad, verificación ni alta validada, `openspec/specs/transitions-st/spec.md:202-260`); la posición se fija en RQ-TS-33, como hizo RQ-TS-32. Que la tabla esté incompleta se anota como hallazgo, sin corregir.
+S-1 **RETIRADO** (revisión de la planificación, 2026-10-03): «vigente» ya no es un supuesto, es la letra —entrada, creada y no anulada, con cualquier estado de envío (§4.1)— · S-2 422, escalón B, tras `exigirAltaValidada` · S-3 tres orígenes y todas las clasificaciones que pasan por la transición (Q5; condición de publicación, E-158) · S-4 se conservan los tres `from` (Q3) · S-5 las remisiones históricas cuentan (son de entrada y no anuladas; que se importen con `ok` ya no es lo que las hace contar) · S-6 el cliente desactiva el botón con el predicado compartido, y el aviso de «sin confirmar» es presentación no bloqueante · S-7 `estadoPorRemision.ts` no se reescribe: una prueba afirma en qué coincide con la guarda y en qué diverge a propósito (`estado` y `tipo`) · S-8 la tabla de RQ-TS-06 no se amplía (no lista hoy cargo, prioridad, verificación ni alta validada, `openspec/specs/transitions-st/spec.md:202-260`); la posición se fija en RQ-TS-33, como hizo RQ-TS-32. Que la tabla esté incompleta se anota como hallazgo, sin corregir.
 
 ## 8 · De personas — NO son tareas de esta tanda; archivar no las da por hechas
 
 | Qué | Dueño | Destino | Dónde queda escrito |
 |---|---|---|---|
-| Ejecutar el recuento de tickets que llegaron a `Ingresado` sin remisión, contra producción. El maestro lo pide «antes de aplicarla» | Gerencia (la consulta nombra a quien la ejecuta) | **Condición de despliegue del lote 1**, no de construcción. Si Gerencia lee «aplicar» como «construir», bloquea el lote 1: se pregunta al entregar esta propuesta | `docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql`; resultado, al panel y a `docs/sdd/ENTRADA.md`. Hipótesis: no hay resultado registrado (no se encontró en `docs/sdd` ni en `openspec/config.yaml`) |
-| Contar los tickets hoy en `Ticket creado`, `OV asignada` o `Remisión creada` sin remisión vigente: quedarán bloqueados al desplegar | Gerencia | Condición de despliegue | Paquete de despliegue de la fecha |
-| Asignar `cargo_permiso` «Director Técnico» en producción | Gerencia / administrador | Condición de despliegue del lote 3 | `DEPLOY.md` y paquete de despliegue |
-| Comprobar en la aplicación el botón desactivado y su motivo | Gerencia | Verificación en la app tras el lote 2 | `archive-report.md` |
+| Ejecutar el recuento de tickets que llegaron a `Ingresado` sin remisión, contra producción. El maestro lo pide «antes de aplicarla» | Gerencia (la consulta nombra a quien la ejecuta) | **Condición de despliegue del lote 1**, no de construcción. Si Gerencia lee «aplicar» como «construir», bloquea el lote 1: se pregunta al entregar esta propuesta | `docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql`; resultado, al panel y a `docs/sdd/ENTRADA.md`. Hipótesis: no hay resultado registrado (no se encontró en `docs/sdd` ni en `openspec/config.yaml`). Con la definición a la letra, esa consulta mide **lo mismo** que la guarda (tipo `entrada` y `anulada_at IS NULL`, sin filtro de estado, `docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql:58-65`): su cifra ya no es una cota inferior |
+| Contar los tickets hoy en `Ticket creado`, `OV asignada` o `Remisión creada` sin remisión de entrada vigente (creada y no anulada): quedarán bloqueados al publicar. La consulta del 25/09 no lo mide: cuenta el histórico de llegadas, no los que hoy esperan | Gerencia | Condición de publicación | La consulta la escribe el lote 2; el resultado, al paquete de despliegue de la fecha |
+| Responder **Q5** (¿alcanza a «Equipo nuevo»?) | Gerencia | **Condición de publicación** | `docs/sdd/ENTRADA.md` → E-158; la respuesta, a `openspec/config.yaml` → `decisiones_de_gerencia` |
+| Responder **Q1** y las cinco preguntas de OVI de `design.md` §10 | Gerencia, con el Director Técnico | Bloquea el lote 3; sin respuesta registrada al terminar el lote 2, el lote 3 no entra en esta tanda | `docs/sdd/ENTRADA.md` → E-157; la respuesta, a `openspec/config.yaml` |
+| Registrar la decisión `habilitar-servicio-sin-remision` en `openspec/config.yaml` | Sesión de supervisión | Bandeja | `docs/sdd/ENTRADA.md` → E-159 |
+| Asignar `cargo_permiso` «Director Técnico» en producción | Gerencia / administrador | Condición de despliegue del lote 3, si llega a construirse | `DEPLOY.md` y paquete de despliegue |
+| Comprobar en la aplicación el botón desactivado con su motivo, y el aviso no bloqueante de «remisión sin confirmar» | Gerencia | Verificación en la app tras el lote 2 | `archive-report.md` |
 | Comprobación de Drive y n8n sobre los prefijos | Gerencia | Segundo cambio de F1B-03 | `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:177` |
-| Responder Q1 a Q5 | Gerencia | `openspec/config.yaml` → `decisiones_de_gerencia` | Panel |
+
+Q2 y Q3 no están en esta tabla como pendientes de respuesta: son supuestos aplicados, revisados y mantenidos (§6). Q4 no está porque quedó resuelta por la letra.
 
 ## 9 · Lotes y estimación
 
 Medida real de cada intento: `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear. Techo 800, válvula 720. Regla: pruebas ≥ 1,8 × código; cuando la enumeración de pruebas da más, se toma la enumeración.
 
-**Coste de las pruebas existentes (medido por búsqueda literal).** `habilitar_servicio` aparece 70 veces en 17 ficheros de prueba: 58 en 11 de `apps` y 12 en 6 de `packages`. **No todas se rompen:** las de `packages` no pasan por `executeTransition`; `transitionExec.test.ts` (6) prueba el plan puro; `misTickets.test.ts` y `prioridadTop5.test.ts` insertan filas a mano. Ejecutan la transición por el servidor, y necesitan remisión, unas 30 llamadas en 6 ficheros: `transiciones.test.ts` (12), `ticketService.test.ts` (unas 12, tres de ellas ayudantes), `ordenVentaUnTicket.test.ts` (2), `ovAsociaciones.test.ts` (1), `flujoEquipoNuevo.test.ts` (1) y el barrido de `transicionesEjecucion.test.ts` (un punto, tres ejecuciones). Hipótesis a medir en el apply: las suites que recorren el catálogo sin nombrar la transición (`permisos.test.ts`). **Ayudante compartido propuesto:** `conRemisionVigente(db, ticketId)`, un fichero de apoyo de pruebas de unas 15 líneas que inserta una remisión de entrada confirmada; coste de una línea por prueba o por ayudante. Estimación: 15 + 30 + 7 de imports, con margen, **80**.
+**Coste de las pruebas existentes (medido por búsqueda literal).** `habilitar_servicio` aparece 70 veces en 17 ficheros de prueba: 58 en 11 de `apps` y 12 en 6 de `packages`. **No todas se rompen:** las de `packages` no pasan por `executeTransition`; `transitionExec.test.ts` (6) prueba el plan puro; `misTickets.test.ts` y `prioridadTop5.test.ts` insertan filas a mano. Ejecutan la transición por el servidor, y necesitan remisión, unas 30 llamadas en 6 ficheros: `transiciones.test.ts` (12), `ticketService.test.ts` (unas 12, tres de ellas ayudantes), `ordenVentaUnTicket.test.ts` (2), `ovAsociaciones.test.ts` (1), `flujoEquipoNuevo.test.ts` (1) y el barrido de `transicionesEjecucion.test.ts` (un punto, tres ejecuciones). Hipótesis a medir en el apply: las suites que recorren el catálogo sin nombrar la transición (`permisos.test.ts`). **Ayudante compartido propuesto:** `conRemisionVigente(db, ticketId)`, un fichero de apoyo de pruebas de unas 15 líneas que inserta una remisión de entrada no anulada, en estado `ok` (el porqué del estado, en `design.md` §5); coste de una línea por prueba o por ayudante. Estimación: 15 + 30 + 7 de imports, con margen, **80**. **Las cifras de esta tabla son las de la propuesta; las medidas y vigentes son las de `design.md` §11** (lote 1 ≈ 376, lote 2 ≈ 241 tras la revisión de la planificación del 2026-10-03).
 
 | Lote | Contenido | Código | Pruebas (×1,8) | Pruebas por enumeración | Otros | **Total** | vs 720 |
 |---|---|---|---|---|---|---|---|
 | **1 · Guarda en servidor** | predicado en `shared` (15), consulta en `db/remisiones.ts` (12), `exigirRemisionVigente` al final de `ticketService.ts` (12), línea 131 (2) | 41 | 74 | 180: predicado 25, consulta y enfrentamiento H5 45, tres orígenes y P1-P7 110 | fixtures existentes 80 · `tasks.md` 10 | **≈ 311** | cabe; margen 409 |
-| **2 · Espejo cliente y cierre de la guarda** | `TransitionPanel.tsx` en sus líneas (10), sin pruebas de interfaz; casilla de la regla 13; barrido de citas | 10 | — | — | informe del barrido y correcciones 50 | **≈ 60** | cabe |
-| **3 · OVI (condicionado a Q1 = A)** | predicado `OVI-` y motivo en `shared` (20), guarda en alta, transición y remisión (35) | 55 | 99 | 200: tres puertas × cuatro sujetos, posición por puerta, inversión de la prueba «sin llamador» | `tasks.md` 10 | **≈ 265** | cabe; margen 455 |
+| **2 · Espejo cliente, aviso y cierre de la guarda** | `TransitionPanel.tsx` en sus líneas (10), sin pruebas de interfaz; aviso no bloqueante de «remisión sin confirmar»; `botonRemision.ts` consume los predicados compartidos; consulta de sólo lectura; casilla de la regla 13; barrido de citas | 10 | — | — | informe del barrido y correcciones 50 | **≈ 60 en la propuesta; ≈ 241 medido en `design.md` §11** | cabe |
+| **3 · OVI (condicionado a Q1 = A; no entra en esta tanda sin respuesta registrada al terminar el lote 2)** | predicado `OVI-` y motivo en `shared` (20), guarda en alta, transición y remisión (35) | 55 | 99 | 200: tres puertas × cuatro sujetos, posición por puerta, inversión de la prueba «sin llamador» | `tasks.md` 10 | **≈ 265** | cabe; margen 455 |
 | Verify | `verify-report.md` (precedentes: 358) | — | — | — | 300-360 | **≈ 360** | cabe, en intento propio |
 | Archive | mudanza de la carpeta (no computa para el techo, regla del archivo) + fusión del delta + `archive-report.md` (110-264) | — | — | — | parte revisable: hipótesis 350-600 | **se mide antes de aplicar** | si supera 800 se para y se consulta |
 
-Ningún lote se acerca a 720; no hace falta partir. Si las pruebas existentes afectadas resultan ser el doble de lo estimado, el lote 1 sube a ≈ 390. Los lotes 1 y 2 **no dependen de Q1**; el 3 sólo se abre con la respuesta. Un intento por lote, en este worktree, uno a la vez (reglas del ciclo 2 y 3).
+Ningún lote se acerca a 720; no hace falta partir. Si las pruebas existentes afectadas resultan ser el doble de lo estimado, el lote 1 sube a ≈ 390. Los lotes 1 y 2 **no dependen de Q1**; el 3 sólo se abre con la respuesta registrada, y si no la hay al terminar el lote 2 no entra en esta tanda. Un intento por lote, en este worktree, uno a la vez (reglas del ciclo 2 y 3).
 
 ## 10 · Capacidades (contrato con `sdd-spec`)
 
@@ -201,11 +217,11 @@ Ningún lote se acerca a 720; no hace falta partir. Si las pruebas existentes af
 | Spec | Requisito | Lote |
 |---|---|---|
 | `transitions-st` | **RQ-TS-33** (nuevo): «Habilitar Servicio» exige remisión de entrada vigente; escalón, código, posición y escenarios de §4.3. RQ-TS-02 **no** se modifica con S-4; RQ-TS-32 intacto | 1 |
-| `remisiones` | **RQ-RE-20** (nuevo): definición única de «remisión de entrada vigente» y su enfrentamiento con el recuento de RQ-RE-11 | 1 |
+| `remisiones` | **RQ-RE-20** (nuevo): definición única de «remisión de entrada vigente» (a la letra) y la prueba que afirma su divergencia declarada, en `estado` y en `tipo`, con el recuento de RQ-RE-11 | 1 |
 | `permissions` | RQ-PM-20 **modificado** (`puedeCrearOVIGarantia` gana llamador) y **RQ-PM-24** (nuevo): asociar una OVI exige el cargo | 3 |
 | `tickets-core` | **RQ-TC-35** (nuevo): la restricción de la OVI en la puerta del alta | 3 |
 
-Si Q1 no se responde o no es (A), `permissions` y `tickets-core` salen del cambio y la cabecera se corrige al archivar.
+**Lote 3: sigue BLOQUEADO.** Si al terminar el lote 2 no hay una respuesta de Gerencia a Q1 **registrada** (E-157), o la respuesta no es (A), el lote 3 **no entra en esta tanda**: los deltas borrador `openspec/changes/tipo-servicio-ticket-sin-ov/specs/permissions/spec.md` y `openspec/changes/tipo-servicio-ticket-sin-ov/specs/tickets-core/spec.md` **salen del cambio antes de archivar** (no se fusionan en las specs vivas y no viajan al archivo como si fueran contrato), la cabecera de esta propuesta pasa a `capacidad: [transitions-st, remisiones]`, y el `archive-report.md` dice que la OVI de garantía no se construyó y queda para un cambio propio cuando haya respuesta.
 
 ## 11 · Áreas afectadas
 
@@ -225,11 +241,13 @@ Sin migración ni tabla nueva en los lotes 1 a 3.
 
 | Riesgo | Prob. | Mitigación |
 |---|---|---|
-| Tickets en curso bloqueados al desplegar (sin remisión, o con una `pendiente` porque n8n no respondió) | Media | Recuentos de §8 antes de desplegar; mensaje que dice qué falta; Q4 |
-| Equipo nuevo bloqueado si en la práctica no lleva remisión | Media | Q5 antes de desplegar |
+| Tickets en curso bloqueados al publicar (sin remisión de entrada, o con todas anuladas). Una `pendiente` o en `error` **ya no bloquea** | Media | Recuentos de §8 antes de publicar; mensaje que dice qué falta |
+| Se habilita un ticket cuya remisión no llegó a producir documento (`pendiente` o `error`) | Media | Consecuencia declarada de la letra (§4.1), no defecto; el aviso no bloqueante del cliente lo hace visible |
+| Alguien «arregla» la diferencia entre la guarda y el estado `Remisión creada` alineando una con otra | Media | La prueba de divergencia de RQ-RE-20 se pone roja |
+| Equipo nuevo bloqueado si en la práctica no lleva remisión | Media | Q5 (E-158), condición de publicación |
 | Suites rojas por la guarda más allá de las contadas | Media | Ayudante compartido; se mide al empezar el lote 1 |
 | El orden de la línea 131 se altera en un cambio posterior | Baja | P1 a P7 |
-| Las dos nociones de «vigente» divergen cuando llegue la remisión de salida | Media | Prueba de enfrentamiento con la divergencia `tipo` declarada |
+| El recuento empieza a contar remisiones de salida cuando lleguen (F1B-17) | Media | La divergencia de `tipo` está afirmada en la misma prueba |
 | El lote 3 se construye sobre una lectura de «crear» que Gerencia no hizo | Alta sin Q1 | El lote no se abre sin respuesta |
 
 - **IV-12:** `apps/desk/server/routes/remision.ts` **no se reordena**. Si el lote 3 añade la guarda de la OVI en esa puerta, entra en el mismo `if` de la línea 220, sin mover las guardas de las líneas 127, 155, 177 y 197; queda por tanto detrás del 409 de remisión pendiente, que es el mismo molde ya registrado. Se anota en la ficha de IV-12; no se corrige.
@@ -256,11 +274,13 @@ Lotes independientes y sin migración: revertir el commit de fusión del lote de
 ## 15 · Criterios de aceptación
 
 - [ ] `habilitar_servicio` responde 422 sin remisión de entrada vigente desde `OV asignada`, `Ticket creado` y `Remisión creada`, y 200 con ella; el ticket no cambia de estado en el rechazo.
-- [ ] Una remisión `pendiente`, en `error` o anulada no habilita; una histórica `ok` sí.
+- [ ] Sin remisión, con sólo remisiones anuladas o con una de `tipo` distinto de entrada, no habilita. Una remisión de entrada no anulada habilita **en cualquier estado de envío**: `pendiente`, `error`, `ok`, `ok_con_avisos` e histórica.
+- [ ] El `422` de la guarda tiene **un solo** texto, y reintroducir el filtro de estado en el predicado pone roja la prueba de «`pendiente` habilita» (mutación ejecutada y anotada).
 - [ ] P1 a P7 en verde, y cada una se pone roja con el movimiento que declara (mutación ejecutada y anotada).
-- [ ] La prueba de enfrentamiento entre la guarda y el recuento de `estadoPorRemision.ts` existe y nombra su única divergencia.
+- [ ] La prueba que enfrenta la guarda con el recuento de `estadoPorRemision.ts` existe y **afirma** sus dos divergencias declaradas, `estado` y `tipo`: un ticket en `Ticket creado` con una remisión de entrada `pendiente` se habilita y el recuento no lo pasa a `Remisión creada`.
 - [ ] Ninguna otra transición consulta `remisiones`.
-- [ ] El cliente consume el predicado de `packages/shared`; ninguna copia de la regla en `apps/desk/src`.
+- [ ] El cliente consume los predicados de `packages/shared`; ninguna copia de la regla en `apps/desk/src`.
+- [ ] El aviso de «remisión sin confirmar» aparece cuando hay remisión de entrada vigente y ninguna confirmada, y **no** desactiva el botón.
 - [ ] `npm test`, `npm run typecheck` y `npm run lint` en verde; ninguna prueba existente se borra para pasar.
 - [ ] Barrido de citas hecho y anotado; cada intento medido por debajo de 800.
 - [ ] Lote 3, sólo si Q1 = A: las tres puertas rechazan una `OVI-` de quien no es Director Técnico ni administrador, con prueba de posición por puerta; `puedeCrearOVIGarantia` tiene llamador y RQ-PM-20 lo dice.
