@@ -340,7 +340,7 @@ describe('RQ-RE-25 · la subida valida la categoría', () => {
 
 describe('RQ-RE-26 · /enviar del formulario nuevo', () => {
   const conN8n = async (prueba: (fetchMock: ReturnType<typeof vi.fn>) => Promise<void>) => {
-    const fetchMock = vi.fn(async (...args: [string, RequestInit]) => (args, new Response('{}', { status: 202 })))
+    const fetchMock = vi.fn(async (...args: [string, RequestInit]) => { void args; return new Response('{}', { status: 202 }) })
     vi.stubGlobal('fetch', fetchMock)
     try { await prueba(fetchMock) } finally { vi.unstubAllGlobals() }
   }
