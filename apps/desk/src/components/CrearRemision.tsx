@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { RemisionNueva, SalesOrderLite } from '@ambientalia/shared'
-import { faltaFotoPorNovedad } from '@ambientalia/shared'
+import { type NovedadCatalogo } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
-import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, type RemisionConFotos } from '../api/client'
+import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, fetchNovedadesRemision, type RemisionConFotos } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
-import { ejecutarEnvio, type EstadoEnvio, type ResultadoEnvio } from '../lib/envioRemision'
+import { ejecutarEnvio, type EstadoEnvio, type ResultadoEnvio } from '../lib/envioRemision'; import { alternarNovedad, puedeContinuarSinPendientes, vistaDelFormulario, FOTOS_VACIAS, type FotosDelFormulario } from '../lib/recepcionForm'
 import { fmtFechaHora } from '../lib/remisionResultado'
 import { ResultadoRemision } from './ResultadoRemision'
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta'
@@ -48,17 +48,17 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   // fecha los resuelve el servidor contra Books, que es donde vive el dato.
   const [ordenVenta, setOrdenVenta] = useState<SalesOrderLite | null>(null)
   const [marcados, setMarcados] = useState<Record<string, boolean>>({})
-  const [observaciones, setObservaciones] = useState('')
-  const [fotos, setFotos] = useState<File[]>([])
+  const [novedadesSel, setNovedadesSel] = useState<string[]>([]); const [otro, setOtro] = useState('')
+  const [fotosForm, setFotosForm] = useState<FotosDelFormulario>(FOTOS_VACIAS)
   const [busy, setBusy] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   // Lo que sobrevive a un fallo a mitad: sin esto, el id de la remisión ya creada se perdía al volver
   // al formulario y el siguiente intento creaba una segunda.
   const [envio, setEnvio] = useState<EstadoEnvio>({ remisionId: null, fotosSubidas: 0 })
   const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
-  // RQ-RE-19. Sin valor por defecto a propósito: enviar `false` sin contestar y contestar `false` son
-  // elusiones equivalentes (regla 13, punto 2 — la obligación de contestar vive sólo aquí).
-  const [hayNovedad, setHayNovedad] = useState<boolean | null>(null)
+  // RQ-RE-24. Parte sin marcar a propósito: confirmarlo lo exige el servidor, pero sin valor previo se ve que se decidió.
+  const [rotulado, setRotulado] = useState(false)
+  const { data: catalogo, loading: cargandoLista, error: errLista } = useAsync<NovedadCatalogo[]>(fetchNovedadesRemision, [])
   // Qué es lo que está en vuelo, porque `busy` no lo distingue: crear una remisión nueva y reenviar la
   // que quedó pendiente lo encienden igual, y los avisos de salida dicen cosas distintas en cada caso.
   const [enviandoPrevia, setEnviandoPrevia] = useState(false)
@@ -73,13 +73,13 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   async function ejecutar(estado: EstadoEnvio, omitirFotosPendientes: boolean, permitirSegunda = false) {
     setErr(null)
     try {
-      const r = await ejecutarEnvio(estado, fotos.length, {
+      const r = await ejecutarEnvio(estado, vista.plan.length, {
         crear: async () => {
           const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
-          const rem = await crearRemision({ ticketId, fecha, incluye, observaciones: observaciones || undefined, permitirSegunda, salesOrderId: ordenVenta?.id, hayNovedad: hayNovedad ?? undefined })
+          const rem = await crearRemision({ ticketId, fecha, incluye, ...vista.cuerpo, permitirSegunda, salesOrderId: ordenVenta?.id })
           return rem.id
         },
-        subirFoto: async (id, i) => { await subirFotoRemision(id, await redimensionarImagen(fotos[i])) },
+        subirFoto: async (id, i) => { const p = vista.plan[i]; await subirFotoRemision(id, await redimensionarImagen(p.file), { categoria: p.categoria, novedad: p.novedad }) },
         enviar: (id) => enviarRemision(id),
         onAvance: setEnvio,
         onProgreso: setBusy,
@@ -94,11 +94,11 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    // RQ-RE-19: la obligación de contestar y la de traer foto con «Sí» viven sólo aquí (regla 13,
-    // punto 2) — el alta del servidor no las exige (IV-12 no toca el alta); la consecuencia sí la
-    // impone el servidor, más adelante, en `/enviar` (RQ-RE-08).
-    if (hayNovedad === null) { setErr('Indica si el equipo llega con novedad.'); return }
-    if (hayNovedad === true && fotos.length === 0) { setErr('El equipo llega con novedad: sube al menos una foto antes de crear la remisión.'); return }
+    // RQ-RE-19/23/24/25: lo que el formulario bloquea lo dice la MISMA lógica que el servidor ejecuta (regla 13:
+    // `validarRecepcion` en el alta y `motivoNoEnviable` en `/enviar`); aquí sólo se dice antes de pulsar. Las fotos no
+    // se pueden imponer en el alta —se suben después—: la comodidad es legítima porque la puerta de `/enviar` las
+    // impone (PE-2) y el servidor decide igual aunque este formulario no se consulte.
+    if (vista.motivo) { setErr(vista.motivo); return }
     // El cartel de abajo es solo un consejo, y sin esta pregunta ignorarlo cuesta un clic: se crearía
     // una SEGUNDA remisión pendiente, y la primera quedaría fuera de alcance para siempre (al crear,
     // `creada` esconde el cartel, y aunque se recargara solo se ofrece la más reciente). No se bloquea
@@ -113,7 +113,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   }
 
   const creada = envio.remisionId !== null
-  const fotosPendientes = fotos.length - envio.fotosSubidas
+  const vista = vistaDelFormulario(catalogo ?? [], novedadesSel, otro, rotulado, fotosForm); const fotosPendientes = vista.plan.length - envio.fotosSubidas
 
   /**
    * Marca la ventana en la que ya puede existir una remisión en la base: `creada` no se enciende hasta
@@ -268,34 +268,49 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
               )}
             </div>
 
+            {/* RQ-RE-19/22/23. La lista sale del servidor (no se escribe aquí) y las reglas —cuál excluye a las demás,
+                cuál exige texto— son las marcas del catálogo, las mismas que impone el alta. */}
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase">Observaciones</label>
-              <textarea className={`${campo} h-20 resize-none`} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} disabled={congelado} placeholder="Estado del equipo, golpes, faltantes…" />
-            </div>
-
-            {/* RQ-RE-19. Sin valor preseleccionado (Persona-1): ni "Sí" ni "No" parten marcados, para
-                que quien abre el formulario tenga que decidir. */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase">¿El equipo llega con novedad?</label>
-              <div className="flex gap-3 text-[13px]">
-                <label className={`flex items-center gap-1.5 ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
-                  <input type="radio" name="hayNovedad" className="accent-blue-600" checked={hayNovedad === true} onChange={() => setHayNovedad(true)} disabled={congelado} />
-                  Sí
-                </label>
-                <label className={`flex items-center gap-1.5 ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
-                  <input type="radio" name="hayNovedad" className="accent-blue-600" checked={hayNovedad === false} onChange={() => setHayNovedad(false)} disabled={congelado} />
-                  No
-                </label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Novedades</label>
+              {cargandoLista && <div className="text-[12px] text-slate-500">Cargando la lista de novedades…</div>}
+              {(errLista || (!cargandoLista && vista.lista.length === 0)) && (
+                <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">
+                  La lista de novedades no se pudo cargar: recarga la página o avisa a un administrador.
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                {vista.lista.map((n) => (
+                  <label key={n.clave} className={`flex items-start gap-2 text-[13px] ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
+                    <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={novedadesSel.includes(n.clave)}
+                      onChange={() => setNovedadesSel((m) => alternarNovedad(vista.lista, m, n.clave))} disabled={congelado} />
+                    <span>{n.etiqueta}</span>
+                  </label>
+                ))}
               </div>
+              {vista.lista.some((n) => n.exigeTexto && novedadesSel.includes(n.clave)) && (
+                <textarea className={`${campo} h-16 resize-none`} value={otro} onChange={(e) => setOtro(e.target.value)} disabled={congelado} placeholder="Describe la novedad" />
+              )}
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico</label>
-              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px] disabled:opacity-50 disabled:cursor-default" disabled={congelado}
-                onChange={(e) => setFotos(Array.from(e.target.files ?? []))} />
-              {fotos.length > 0 && (
+            {/* RQ-RE-24. La casilla parte sin marcar: confirmarla es una decisión de quien recibe el equipo, y el
+                servidor guarda quién y cuándo (no se manda desde aquí). */}
+            <label className={`flex items-start gap-2 text-[13px] ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
+              <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={rotulado} onChange={(e) => setRotulado(e.target.checked)} disabled={congelado} />
+              <span><b>Rotulado y guardado:</b> el equipo quedó rotulado con el código del ticket y guardado</span>
+            </label>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico (obligatorio)</label>
+              <SelectorFotos etiqueta="Foto del equipo" archivos={fotosForm.equipo} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, equipo: a }))} />
+              <SelectorFotos etiqueta="Foto de los accesorios" archivos={fotosForm.accesorios} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, accesorios: a }))} />
+              <SelectorFotos etiqueta="Foto del embalaje" archivos={fotosForm.embalaje} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, embalaje: a }))} />
+              {vista.marcadas.filter((m) => !vista.lista.find((n) => n.clave === m.clave)?.excluyeDemas).map((m) => (
+                <SelectorFotos key={m.clave} etiqueta={`Foto de: ${m.etiqueta}`} archivos={fotosForm.porNovedad[m.clave] ?? []} disabled={congelado}
+                  onChange={(a) => setFotosForm((f) => ({ ...f, porNovedad: { ...f.porNovedad, [m.clave]: a } }))} />
+              ))}
+              {vista.plan.length > 0 && (
                 <div className="text-[11px] text-slate-400">
-                  {fotos.length} {fotos.length === 1 ? 'foto' : 'fotos'} · se reducen a 1600 px antes de subirlas
+                  {vista.plan.length} {vista.plan.length === 1 ? 'foto' : 'fotos'} · se reducen a 1600 px antes de subirlas
                 </div>
               )}
             </div>
@@ -305,7 +320,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
         {creada && (
           <div className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
             La remisión ya se creó y no se va a duplicar: al reintentar se continúa con ella.
-            {fotos.length > 0 && ` Fotos subidas: ${envio.fotosSubidas} de ${fotos.length}.`}
+            {vista.plan.length > 0 && ` Fotos subidas: ${envio.fotosSubidas} de ${vista.plan.length}.`}
           </div>
         )}
         {/* Solo mientras no se haya creado nada en esta sesión: si ya hay una `creada`, el aviso de
@@ -350,7 +365,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
           {/* Salida para una foto que no sube nunca (corrupta, o demasiado pesada): sin esto el técnico
               se queda atrapado reintentando. Lo que ya subió sí viaja, y el flujo de n8n concilia
               contra lo que se mandó, así que una remisión con menos fotos no cuenta como error. */}
-          {creada && fotosPendientes > 0 && !busy && !faltaFotoPorNovedad(hayNovedad, envio.fotosSubidas) && (
+          {creada && fotosPendientes > 0 && !busy && vista.remision && puedeContinuarSinPendientes(vista.remision, vista.plan, catalogo ?? [], envio.fotosSubidas) && (
             <button type="button" onClick={() => void ejecutar(envio, true)} className="px-3 py-1.5 text-[13px] text-slate-600 underline">
               Continuar sin {fotosPendientes === 1 ? 'la foto que falta' : `las ${fotosPendientes} fotos que faltan`}
             </button>
@@ -364,5 +379,16 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
         </div>
       </form>
     </div>
+  )
+}
+
+/** Un selector de fotos con su rótulo y el conteo de lo elegido; elegir de nuevo reemplaza la selección. */
+function SelectorFotos({ etiqueta, archivos, disabled, onChange }: { etiqueta: string; archivos: File[]; disabled: boolean; onChange: (a: File[]) => void }) {
+  return (
+    <label className="flex flex-col gap-0.5 text-[12px] text-slate-600">
+      <span>{etiqueta}{archivos.length > 0 && ` · ${archivos.length} ${archivos.length === 1 ? 'elegida' : 'elegidas'}`}</span>
+      <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="text-[12px] disabled:opacity-50 disabled:cursor-default" disabled={disabled}
+        onChange={(e) => onChange(Array.from(e.target.files ?? []))} />
+    </label>
   )
 }

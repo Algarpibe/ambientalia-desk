@@ -229,3 +229,22 @@ Citas que se desplazan: **ninguna** (neto cero). Cambia el TEXTO de `:4`, `:7`, 
 ### Casillas del orquestador
 
 3.1 (abrir el intento) y el `settle` de 3.14: del orquestador.
+
+## Lote 4a — cliente (4.1-4.8)
+
+Intento abierto por el orquestador (4.1). Antes: `client.ts` 796, `CrearRemision.tsx` 368.
+
+**RED/GREEN.** `apps/desk/src/lib/recepcionForm.test.ts` se escribió primero y dio rojo por módulo inexistente; `recepcionForm.ts` lo puso en verde (19). Desviaciones del diseño §8.1: (1) `puedeContinuarSinPendientes` recibe `catalogo` (C5: las marcas se leen por clave); (2) `File` es un parámetro de tipo (las pruebas pasan objetos sin casts); (3) se añadió `vistaDelFormulario` (lista, marcadas, plan, cuerpo, `remision`, motivo en una llamada pura) porque el `.tsx` no admite líneas netas nuevas antes de la 271 y así NO hay decisión del cliente fuera del módulo probado; su prueba también nació roja («is not a function») → 23 verdes.
+
+**Mutaciones (4.4), reproducidas y revertidas** (módulo restaurado, `diff` vacío):
+
+| Mutación | Rojo |
+|---|---|
+| `alternarNovedad` por `clave === 'sin_novedad'` | 4 rojas: «expected [ 'golpe', 'falta', 'ninguna' ] to deeply equal [ 'ninguna' ]» |
+| permutar el orden de `planDeFotos` | «aplana en orden…» `expected [ [ 'm1', 'embalaje', null ], …(6) ] to deeply equal [ [ 'e1', 'equipo', null ], …(6) ]` |
+| `puedeContinuarSinPendientes` siempre `true` | 2 rojas: «prefijo insuficiente» `expected true to be false`, y la de legado |
+| `motivoNoCreable` sin mirar el plan | 2 rojas: «faltan las mínimas…» `expected null to be 'Faltan fotos obligatorias…'` y «falta la foto de una novedad» |
+
+**Cliente.** `client.ts`: `:1` (importación), `:534-535` y `:554-555` en sitio, `fetchNovedadesRemision` al final (12/5; 803 líneas = 796 + 7). `CrearRemision.tsx`: cero netas hasta la 270 (hunks `-3`, `-5`, `-7`, `-51,2`, `-59,3`, `-76`, `-79`, `-82`, `-97,5`, `-116`, todos del mismo tamaño); de la 271 en adelante cambia (394 líneas). `hayNovedad` ya no se manda. `envioRemision.ts` y su prueba, intactos. Sin prueba propia de `client.ts` ni del `.tsx` (F0-00).
+
+**Cierre.** build 0; typecheck 0 (código de salida comprobado); lint 165 avisos, 0 errores; `npm test` 182 ficheros / 2.758 verdes (2 omitidas) = 2.735 + 23.
