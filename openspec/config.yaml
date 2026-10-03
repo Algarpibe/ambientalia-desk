@@ -3746,6 +3746,27 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-03"
 
+  - clave: "decision/orden-tres-tandas-03-10"
+    fecha: "2026-10-03"
+    pregunta: |
+      Con F1B-03 parte L fusionada a `main` (`a4bfc85`), ¿cuáles son las tres tandas siguientes y en qué orden? El lector
+      de la R01.4 recomendaba F1C-11, F1F-05 y F1B-05; F1B-04 está en curso y su parte de accesorios (E-100) no tiene
+      clave de decisión (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:358`).
+    respuesta_textual: |
+      «Las tres siguientes tandas son F1C-11, F1B-04 sin accesorios y F1F-05, en ese orden. Ejecútalo.»
+    consecuencias: |
+      (1) El orden es F1C-11, F1B-04 y F1F-05, encadenadas sin consulta entre una y otra (modo producción).
+      (2) F1B-04 se construye SIN accesorios: rotulación, desplegables y foto obligatoria de entrada
+      (`decision/f1b04-rotulacion`, `decision/f1b04-desplegables`). Los accesorios (E-100) quedan fuera hasta que tengan
+      clave de decisión; si el cambio no termina la fila, lleva `cierra: no`.
+      (3) Cada tanda va en su propio worktree (regla del ciclo 3). Las ramas se dejan listas y no se rebasan sobre `main`;
+      la fusión de cada una la autoriza el usuario por separado.
+      (4) Si una tanda se bloquea, se deja anotada y se pasa a la siguiente.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-tres-tandas-03-10)"
+    maestro_pasaje: "ninguno (orden de ejecución)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1C-11, F1B-04, F1F-05"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
