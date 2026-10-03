@@ -188,25 +188,25 @@ export async function liberarEnvio(db: Queryable, id: string): Promise<void> {
 
 export async function addFoto(
   db: Queryable,
-  input: { remisionId: string; filename: string; contentType: string; contentB64: string; size: number },
+  input: { remisionId: string; filename: string; contentType: string; contentB64: string; size: number; categoria?: string | null; novedad?: string | null },
 ): Promise<RemisionFoto> {
   const id = `rf-${randomUUID()}`
   await db.query(
-    'INSERT INTO remision_fotos (id, remision_id, filename, content_type, content_b64, size) VALUES ($1,$2,$3,$4,$5,$6)',
-    [id, input.remisionId, input.filename, input.contentType, input.contentB64, input.size],
+    'INSERT INTO remision_fotos (id, remision_id, filename, content_type, content_b64, size, categoria, novedad) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [id, input.remisionId, input.filename, input.contentType, input.contentB64, input.size, input.categoria ?? null, input.novedad ?? null],
   )
-  return { id, filename: input.filename, contentType: input.contentType, size: input.size }
+  return { id, filename: input.filename, contentType: input.contentType, size: input.size, categoria: input.categoria ?? null, novedad: input.novedad ?? null }
 }
 
 /** Metadatos de las fotos, sin el base64: devolverlo en los listados dispararía el peso de la respuesta. */
 export async function listFotos(db: Queryable, remisionId: string): Promise<RemisionFoto[]> {
   const r = await db.query(
-    'SELECT id, filename, content_type, size FROM remision_fotos WHERE remision_id = $1 ORDER BY created_at',
+    'SELECT id, filename, content_type, size, categoria, novedad FROM remision_fotos WHERE remision_id = $1 ORDER BY created_at',
     [remisionId],
   )
   return r.rows.map((x: Record<string, unknown>) => ({
     id: String(x.id), filename: (x.filename as string) ?? '', contentType: (x.content_type as string) ?? '',
-    size: Number(x.size ?? 0),
+    size: Number(x.size ?? 0), categoria: (x.categoria as string | null) ?? null, novedad: (x.novedad as string | null) ?? null,
   }))
 }
 

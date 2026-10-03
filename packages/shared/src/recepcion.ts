@@ -1,3 +1,4 @@
+import { faltaFotoPorNovedad } from './remision'
 /**
  * Recepción de la remisión de entrada: lista de novedades como dato, y categorías de foto
  * (`recepcion-rotulacion-foto-entrada`, F1B-04; `remisiones` RQ-RE-21, RQ-RE-22).
@@ -109,4 +110,74 @@ export function validarRecepcion(
       observaciones: componerObservaciones(catalogo, novedades, novedadOtro),
     },
   }
+}
+
+/** Cómo se nombra cada categoría de foto en los motivos de rechazo («Faltan fotos obligatorias: del equipo…»). */
+export const ETIQUETA_CATEGORIA_FOTO: Record<CategoriaFoto, string> = {
+  equipo: 'del equipo', accesorios: 'de los accesorios', embalaje: 'del embalaje', novedad: 'de la novedad',
+}
+
+/** El motivo de la remisión de LEGADO (`novedades` NULL), letra por letra el de antes de este cambio (RQ-RE-27). */
+export const MOTIVO_FOTO_LEGADO = 'El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.'
+
+/** Lo mínimo de una remisión que las puertas de foto necesitan; `novedades` NULL = legado. */
+export interface RemisionRecepcion { hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; rotuladoAt: string | null }
+/** Lo mínimo de una foto: su etiqueta de categoría y de novedad (ambas pueden ser NULL: foto sin clasificar). */
+export interface FotoClasificada { categoria?: string | null; novedad?: string | null }
+
+/**
+ * Lo que falta para enviar una remisión del formulario nuevo: las categorías mínimas sin foto y las novedades
+ * marcadas sin la suya. Una foto cuenta sólo para su categoría (la de `equipo` no vale para `accesorios`) y una
+ * sin categoría no cuenta para ninguna. Las marcas se leen del catálogo POR CLAVE aunque la fila esté inactiva:
+ * retirar una novedad no relaja la exigencia de una remisión que ya la marcó (RQ-RE-26). Legado: nada.
+ */
+export function fotosQueFaltan(
+  rem: RemisionRecepcion, fotos: readonly FotoClasificada[], catalogo: readonly NovedadCatalogo[],
+): { categorias: CategoriaFoto[]; novedades: NovedadMarcada[] } {
+  if (!rem.novedades) return { categorias: [], novedades: [] }
+  return {
+    categorias: CATEGORIAS_FOTO_MINIMAS.filter((c) => !fotos.some((f) => f.categoria === c)),
+    novedades: rem.novedades.filter((n) =>
+      catalogo.find((c) => c.clave === n.clave)?.excluyeDemas !== true
+      && !fotos.some((f) => f.categoria === 'novedad' && f.novedad === n.clave)),
+  }
+}
+
+/**
+ * Motivo por el que la remisión NO se puede enviar, o `null`. Legado: la regla anterior. Formulario nuevo, en
+ * ORDEN FIJO (regla de mutación 1; PE-3): (a) rotulado, (b) fotos mínimas, (c) foto de cada novedad; cada motivo
+ * nombra TODO lo que falta de su paso.
+ */
+export function motivoNoEnviable(
+  rem: RemisionRecepcion, fotos: readonly FotoClasificada[], catalogo: readonly NovedadCatalogo[],
+): string | null {
+  if (!rem.novedades) return faltaFotoPorNovedad(rem.hayNovedad, fotos.length) ? MOTIVO_FOTO_LEGADO : null
+  if (!rem.rotuladoAt) return 'Falta confirmar que el equipo quedó rotulado y guardado.'
+  const falta = fotosQueFaltan(rem, fotos, catalogo)
+  if (falta.categorias.length) {
+    return `Faltan fotos obligatorias: ${falta.categorias.map((c) => ETIQUETA_CATEGORIA_FOTO[c]).join(', ')}.`
+  }
+  if (falta.novedades.length) return `Falta la foto de cada novedad marcada: ${falta.novedades.map((n) => n.etiqueta).join(', ')}.`
+  return null
+}
+
+/**
+ * Valida la categoría que trae la subida de una foto (RQ-RE-25; en legado también, C4). Sin `categoria` → `null`
+ * (la foto vieja: cuenta para la regla de legado y para ninguna categoría). `novedad` sólo vale con
+ * `categoria = 'novedad'` y debe ser la clave de una novedad MARCADA en la remisión; con otra categoría se descarta.
+ */
+export function categoriaDeFoto(
+  rem: RemisionRecepcion, cuerpo: { categoria?: unknown; novedad?: unknown },
+): { ok: true; categoria: CategoriaFoto | null; novedad: string | null } | { ok: false; error: string } {
+  const c = cuerpo.categoria
+  if (c === undefined || c === null) return { ok: true, categoria: null, novedad: null }
+  if (typeof c !== 'string' || !(CATEGORIAS_FOTO as readonly string[]).includes(c)) {
+    return { ok: false, error: `Categoría de foto no válida: usa ${CATEGORIAS_FOTO.join(', ')}.` }
+  }
+  if (c !== 'novedad') return { ok: true, categoria: c as CategoriaFoto, novedad: null }
+  const clave = cuerpo.novedad
+  if (typeof clave !== 'string' || !rem.novedades?.some((n) => n.clave === clave)) {
+    return { ok: false, error: 'La foto de novedad debe indicar una novedad marcada en esta remisión.' }
+  }
+  return { ok: true, categoria: 'novedad', novedad: clave }
 }

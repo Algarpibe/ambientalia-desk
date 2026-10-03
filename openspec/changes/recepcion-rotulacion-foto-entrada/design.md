@@ -124,8 +124,8 @@ export function componerObservaciones(catalogo: readonly NovedadCatalogo[], marc
 
 type RemisionRecepcion = { hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; rotuladoAt: string | null }
 type FotoClasificada = { categoria?: string | null; novedad?: string | null }
-export function fotosQueFaltan(rem: RemisionRecepcion, fotos: readonly FotoClasificada[]): { categorias: CategoriaFoto[]; novedades: NovedadMarcada[] }
-export function motivoNoEnviable(rem: RemisionRecepcion, fotos: readonly FotoClasificada[]): string | null
+export function fotosQueFaltan(rem: RemisionRecepcion, fotos: readonly FotoClasificada[], catalogo: readonly NovedadCatalogo[]): { categorias: CategoriaFoto[]; novedades: NovedadMarcada[] }
+export function motivoNoEnviable(rem: RemisionRecepcion, fotos: readonly FotoClasificada[], catalogo: readonly NovedadCatalogo[]): string | null
 export function categoriaDeFoto(
   rem: RemisionRecepcion, cuerpo: { categoria?: unknown; novedad?: unknown },
 ): { ok: true; categoria: CategoriaFoto | null; novedad: string | null } | { ok: false; error: string }
@@ -142,12 +142,12 @@ Reglas, en el **orden interno fijo** en que se evalúan:
 - `hayNovedad` = alguna marcada sin `excluyeDemas`. Como (4) impide la convivencia, `hayNovedad === true` implica
   que **todas** las marcadas piden foto; por eso la instantánea sólo guarda clave y etiqueta.
 - `componerObservaciones`: etiquetas unidas por `; ` (C2: manda la spec); la que exige texto se escribe «<etiqueta>: <texto>».
-- `motivoNoEnviable`: `novedades == null` → legado: `faltaFotoPorNovedad(hayNovedad, fotos.length)` con
+- `motivoNoEnviable` (recibe `catalogo`: las marcas se leen por clave aunque la fila esté inactiva, C5): `novedades == null` → legado: `faltaFotoPorNovedad(hayNovedad, fotos.length)` con
   `MOTIVO_FOTO_LEGADO`. Si no: (a) `rotuladoAt` nulo → «Falta confirmar que el equipo quedó rotulado y guardado.»;
   (b) falta alguna categoría mínima → «Faltan fotos obligatorias: …» nombrando **todas** las que faltan; (c) falta
   la foto de alguna novedad → «Falta la foto de cada novedad marcada: …» con todas las etiquetas.
-- `categoriaDeFoto`: legado → `{ categoria: null, novedad: null }` e ignora el cuerpo. Formulario nuevo: categoría
-  fuera de `CATEGORIAS_FOTO` → error; `novedad` exige que la clave esté en la instantánea de la remisión.
+- `categoriaDeFoto` (C3/C4, manda la spec; también en legado): sin categoría → `{ categoria: null, novedad: null }` (201 con NULL). Categoría
+  fuera de `CATEGORIAS_FOTO` → error; `novedad` exige que la clave esté en la instantánea de la remisión (en legado, sin instantánea: error).
 
 `packages/shared/src/remision.ts` **no se edita**: `faltaFotoPorNovedad` se importa desde el módulo nuevo.
 
@@ -178,7 +178,7 @@ Seis bloques, **0 líneas netas cada uno**. El fichero conserva sus 397 líneas.
 | # | Líneas | Hoy | Después | Neto |
 |---|---|---|---|---|
 | R1 | 4 | importa `faltaFotoPorNovedad` | importa `motivoNoEnviable` y `categoriaDeFoto` en su lugar | 0 |
-| R2 | 7 | una importación | se le añade `; import { resolverRecepcion } from '../services/recepcion'` | 0 |
+| R2 | 7 | una importación | se le añaden `; import { resolverRecepcion } from '../services/recepcion'; import { listNovedades } from '../db/novedades'` (C5: R5 pasa el catálogo) | 0 |
 | R3 | 158 (hoy vacía) | línea en blanco entre la guarda del serial y el comentario del `409` | la guarda del alta, en una línea | 0 |
 | R4 | 249-250 | `observaciones` y `hayNovedad` tomados del cuerpo | derivados cuando hay recepción; del cuerpo cuando no | 0 |
 | R5 | 287-291 | comentario, `listFotos`, `if (faltaFotoPorNovedad…)`, el `422` | comentario nuevo, `listFotos` + `motivoNoEnviable`, `if (motivo)`, el `422` con `motivo` | 0 |
@@ -202,7 +202,7 @@ decide y la 291 la que responde `422`; las 292-293 no cambian.
 ```ts
     // RQ-RE-08, sexta puerta: UNA sola, antes de reclamar. Legado (novedades NULL): la regla anterior, mismo texto.
     // Formulario nuevo, orden interno fijo en shared: rotulado, fotos mínimas, foto por cada novedad.
-    const fotos = await listFotos(db, id); const motivo = motivoNoEnviable(rem, fotos)
+    const fotos = await listFotos(db, id); const motivo = motivoNoEnviable(rem, fotos, await listNovedades(db))
     if (motivo) {
       res.status(422).json({ error: motivo })
 ```

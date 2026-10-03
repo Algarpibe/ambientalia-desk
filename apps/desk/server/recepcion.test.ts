@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import request from 'supertest'
 import { upsertEquipo } from './db/equipos'
 import { db, instalarArnes, equipoRow, appWith, adminCookie } from './testing/appHarness'
@@ -7,7 +7,7 @@ instalarArnes()
 
 /**
  * F1B-04 (`recepcion-rotulacion-foto-entrada`) · recepción con rotulado, novedades y foto por categoría.
- * Lote 1: lectura de la lista de novedades (RQ-RE-22). Lote 2: alta (RQ-RE-23, 24, 27, 17). El bloque de fotos entra en el lote 3.
+ * Lote 1: lectura de la lista de novedades (RQ-RE-22). Lote 2: alta (RQ-RE-23, 24, 27, 17). Lote 3: fotos por categoría, puertas de enviar y payload a n8n (RQ-RE-25, 26, 08, 13).
  */
 const ETIQUETAS = [
   'Sin novedad', 'Golpe o abolladura en la carcasa', 'Rayón o daño estético', 'Pantalla o display dañado',
@@ -277,4 +277,152 @@ describe('Posición · serial (A) < novedades (C) < remisión pendiente (D)', ()
     expect(r.status).toBe(422)
     expect(r.body.error).toMatch(/fuera de la lista/)
   })
+})
+
+/**
+ * Lote 3 · foto por categoría (RQ-RE-25) y puertas de `/enviar` (RQ-RE-26, RQ-RE-08). Manda la SPEC (C3-C5): sin
+ * categoría → 201 con NULL en cualquier remisión; categoría inválida, o `novedad` no marcada (también en legado) → 422.
+ */
+type App = import('express').Express
+const PNG = Buffer.from('89504e470d0a1a0a', 'hex')
+const subir = (app: App, cookie: string, id: string, campos: Record<string, string> = {}, tipo = 'image/png') => {
+  let r = request(app).post(`/api/remisiones/${id}/fotos`).set('Cookie', cookie)
+  for (const [k, v] of Object.entries(campos)) r = r.field(k, v)
+  return r.attach('file', PNG, { filename: 'f.png', contentType: tipo })
+}
+const nueva = async (app: App, cookie: string, novedades: string[] = ['rayon_estetico', 'golpe_carcasa']) =>
+  (await crear(app, cookie, { novedades, rotulado: true, permitirSegunda: true })).body.id as string
+const legado = async (app: App, cookie: string) =>
+  (await crear(app, cookie, { hayNovedad: true, permitirSegunda: true })).body.id as string
+const fotosEnBase = async () => Number((await db.query('SELECT count(*)::int AS n FROM remision_fotos')).rows[0].n)
+const MINIMAS_TXT = [{ categoria: 'equipo' }, { categoria: 'accesorios' }, { categoria: 'embalaje' }]
+const subirTodas = async (app: App, cookie: string, id: string, extra: Array<Record<string, string>> = []) => {
+  for (const c of [...MINIMAS_TXT, ...extra]) expect((await subir(app, cookie, id, c)).status).toBe(201)
+}
+
+describe('RQ-RE-25 · la subida valida la categoría', () => {
+  it.each([
+    ['categoría fuera de las cuatro (nuevo)', nueva, { categoria: 'otra' }],
+    ['categoría fuera de las cuatro (legado)', legado, { categoria: 'otra' }],
+    ['`novedad` sin clave (nuevo)', nueva, { categoria: 'novedad' }],
+    ['`novedad` con clave NO marcada (nuevo)', nueva, { categoria: 'novedad', novedad: 'sello_roto' }],
+    ['`novedad` con clave en una remisión de legado', legado, { categoria: 'novedad', novedad: 'rayon_estetico' }],
+  ])('%s → 422 y no se guarda la foto', async (_n, alta, campos) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith()
+    const r = await subir(app, cookie, await alta(app, cookie), campos)
+    expect(r.status).toBe(422)
+    expect(await fotosEnBase()).toBe(0)
+  })
+
+  it.each([['nuevo', nueva], ['legado', legado]])('sin categoría → 201 y NULL (%s)', async (_n, alta) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith()
+    const r = await subir(app, cookie, await alta(app, cookie))
+    expect(r.status).toBe(201)
+    expect((await db.query('SELECT categoria, novedad FROM remision_fotos')).rows).toEqual([{ categoria: null, novedad: null }])
+  })
+
+  it('categoría válida se guarda; `novedad` sólo con `novedad`; el GET la trae sin base64 (hipótesis 4: multer deja los campos en req.body)', async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith()
+    const id = await nueva(app, cookie)
+    expect((await subir(app, cookie, id, { categoria: 'embalaje', novedad: 'rayon_estetico' })).status).toBe(201)
+    expect((await subir(app, cookie, id, { categoria: 'novedad', novedad: 'rayon_estetico' })).status).toBe(201)
+    const get = await request(app).get(`/api/remisiones/${id}`).set('Cookie', cookie)
+    expect(get.body.fotos).toMatchObject([{ categoria: 'embalaje', novedad: null }, { categoria: 'novedad', novedad: 'rayon_estetico' }])
+    expect(JSON.stringify(get.body.fotos)).not.toMatch(/contentB64|content_b64|iVBOR/)
+  })
+
+  it('PS-1 · SVG y categoría inválida a la vez → 415, no 422 (nace verde; la detecta M-P7)', async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith()
+    const r = await subir(app, cookie, await nueva(app, cookie), { categoria: 'otra' }, 'image/svg+xml')
+    expect(r.status).toBe(415)
+  })
+})
+
+describe('RQ-RE-26 · /enviar del formulario nuevo', () => {
+  const conN8n = async (prueba: (fetchMock: ReturnType<typeof vi.fn>) => Promise<void>) => {
+    const fetchMock = vi.fn(async (...args: [string, RequestInit]) => (args, new Response('{}', { status: 202 })))
+    vi.stubGlobal('fetch', fetchMock)
+    try { await prueba(fetchMock) } finally { vi.unstubAllGlobals() }
+  }
+  const enviar = (app: App, cookie: string, id: string) => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+  const enviadoAt = async (id: string) => (await db.query('SELECT enviado_at FROM remisiones WHERE id = $1', [id])).rows[0].enviado_at
+  const URL_N8N = { remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' }
+
+  it('PE-1 · anulada o ya enviada con el formulario nuevo SIN fotos → 409, no el 422 (nace verde; la detecta M-P3)', async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const a = await nueva(app, cookie); const b = await nueva(app, cookie)
+    await db.query('UPDATE remisiones SET anulada_at = now() WHERE id = $1', [a])
+    await db.query("UPDATE remisiones SET estado = 'ok' WHERE id = $1", [b])
+    expect((await enviar(app, cookie, a)).status).toBe(409)
+    expect((await enviar(app, cookie, b)).status).toBe(409)
+  })
+
+  it('PE-2 · «Sin novedad» y sin fotos mínimas → 422 sin n8n y sin reclamar; se suben y se reenvía DE INMEDIATO → 200', () => conN8n(async (n8n) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['sin_novedad'])
+    expect((await enviar(app, cookie, id)).status).toBe(422)
+    expect(n8n).not.toHaveBeenCalled(); expect(await enviadoAt(id)).toBeNull()
+    await subirTodas(app, cookie, id)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    expect(n8n).toHaveBeenCalledTimes(1)
+  }))
+
+  it('rotulado_at anulado por SQL con todas las fotos → 422 de rotulado, sin n8n', () => conN8n(async (n8n) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['sin_novedad']); await subirTodas(app, cookie, id)
+    await db.query('UPDATE remisiones SET rotulado_at = NULL WHERE id = $1', [id])
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422); expect(r.body.error).toMatch(/rotulado y guardado/); expect(n8n).not.toHaveBeenCalled()
+  }))
+
+  it.each([
+    ['faltan mínimas: nombra las categorías', ['rayon_estetico'], [{ categoria: 'equipo' }], /Faltan fotos obligatorias: .*accesorios.*embalaje/],
+    ['falta la foto de una de dos novedades: la nombra', ['golpe_carcasa', 'rayon_estetico'],
+      [...MINIMAS_TXT, { categoria: 'novedad', novedad: 'golpe_carcasa' }], /cada novedad marcada: Rayón o daño estético/],
+    ['una foto SIN categoría no cuenta para la novedad', ['rayon_estetico'], [...MINIMAS_TXT, {}], /cada novedad marcada: Rayón/],
+  ])('%s → 422', (_n, novedades, fotos, texto) => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, novedades)
+    for (const c of fotos) expect((await subir(app, cookie, id, c)).status).toBe(201)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422); expect(r.body.error).toMatch(texto); expect(await enviadoAt(id)).toBeNull()
+  }))
+
+  it('una novedad retirada del catálogo DESPUÉS sigue exigiendo su foto', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['rayon_estetico']); await subirTodas(app, cookie, id)
+    await db.query("UPDATE public.catalogo_novedades SET activo = false WHERE clave = 'rayon_estetico'")
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422); expect(r.body.error).toMatch(/Rayón o daño estético/)
+  }))
+
+  it.each([
+    ['«Sin novedad» con las tres mínimas', ['sin_novedad'], [] as Array<Record<string, string>>],
+    ['completo, con la foto de cada novedad', ['golpe_carcasa', 'rayon_estetico'],
+      [{ categoria: 'novedad', novedad: 'golpe_carcasa' }, { categoria: 'novedad', novedad: 'rayon_estetico' }]],
+  ])('%s → 200', (_n, novedades, extra) => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, novedades); await subirTodas(app, cookie, id, extra)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('legado con hay_novedad y cero fotos → 422 con el texto literal de siempre; con una foto sin categoría → 200', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await legado(app, cookie)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe('El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.')
+    expect((await subir(app, cookie, id)).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('el payload a n8n NO cambia: las diez claves de siempre, sin categoría ni novedades (nace verde; la detecta M-N1)', () => conN8n(async (n8n) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['rayon_estetico']); await subirTodas(app, cookie, id, [{ categoria: 'novedad', novedad: 'rayon_estetico' }])
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    const cuerpo = JSON.parse(String(n8n.mock.calls[0][1].body))
+    expect(Object.keys(cuerpo).sort()).toEqual(['cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio'])
+    expect(Object.keys(cuerpo.fotos[0]).sort()).toEqual(['data', 'fileName', 'mimeType'])
+    expect(cuerpo.observaciones).toBe('Rayón o daño estético')
+  }))
 })

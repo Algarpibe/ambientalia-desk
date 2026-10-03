@@ -619,7 +619,7 @@ export interface AccountDetail { id: string; name: string; nit: string | null; e
 
 export interface ActivityListItem { id: string; subject: string; status: string; statusType: string | null; priority: string | null; dueDate: string | null; owner: string | null; ticketId: string | null; ticketNumber: string | null }
 
-export interface RemisionFoto { id: string; filename: string; contentType: string; size: number }
+export interface RemisionFoto { id: string; filename: string; contentType: string; size: number; categoria?: string | null; novedad?: string | null }
 
 /** Un paso del flujo de n8n que no salió bien, ya redactado para enseñárselo al técnico. */
 export interface RemisionPasoFallido { paso: string; mensaje?: string }

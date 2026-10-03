@@ -170,3 +170,62 @@ Ninguna de comportamiento. La guarda del serial está en `:154-157` (el diseño 
 ### Medida del lote (2.12)
 
 `git diff --shortstat --no-renames da9c740`: 8 ficheros, 439 inserciones, 28 borrados (467), más sin trackear `services/recepcion.ts` 19 y `shared/recepcion.test.ts` 218 = **704** antes de esta nota (válvula 720; techo 800). Sin binarios.
+
+## Lote 3 — foto por categoría y puertas de `/enviar` (RQ-RE-25, RQ-RE-26, RQ-RE-13, RQ-RE-08) — en curso
+
+Partida del lote: `231f7e3`. Intento 3 abierto y `settle` (3.1 parcial, 3.14): del orquestador.
+
+### 3.2 Alineaciones C3, C4, C5
+
+Manda la spec. `categoriaDeFoto` valida también en legado (categoría inválida o `novedad` sin marcar → `422`; sin categoría → 201 `NULL`); `fotosQueFaltan` y `motivoNoEnviable` reciben `catalogo` (marcas por clave, aunque inactiva); R2 importa también `listNovedades` y R5 lo pasa. Corregido `design.md` §2.1 y §3 (ver cierre).
+
+### 3.3-3.7 RED (antes de tocar servidor ni funciones)
+
+Shared (`recepcion.test.ts`, +19 nuevas): `Tests 19 failed | 31 passed (50)`; `TypeError: (0 , categoriaDeFoto) is not a function` (12), `fotosQueFaltan` (4), `motivoNoEnviable` (2).
+Servidor (`apps/desk/server/recepcion.test.ts`, +19 nuevas): `Tests 12 failed | 35 passed (47)`: `expected 201 to be 422` (cinco de subida), `expected 200 to be 422` (cuatro de `/enviar`: PE-2, rotulado, mínimas, sin categoría…), `expected [ {…(4)}, {…(4)} ] to match object [ …(2) ]` (el GET no trae `categoria`/`novedad`).
+
+Nacen verdes y se declaran (con la mutación que las detecta): **PS-1** (M-P7) · **PE-1** (M-P3) · payload a n8n (M-N1) · «sin categoría → 201 y NULL» nuevo/legado (hoy se guarda sin columnas: la detecta que `addFoto` escriba otro valor, p. ej. `''`) · los dos `200` (completo, «Sin novedad») y «legado sin fotos → 422 / con una → 200» (caracterización de la regla anterior).
+**Desviación del diseño en PE-2:** con `novedades: ['rayon_estetico']` y sin fotos la regla de legado ya daba `422` hoy, así que PE-2 habría nacido verde; se escribe con `['sin_novedad']` (`hayNovedad` false: hoy pasa sin fotos → RED real `expected 200 to be 422`).
+
+### 3.4 y 3.8 GREEN
+
+Shared: `fotosQueFaltan`, `motivoNoEnviable`, `categoriaDeFoto`, `ETIQUETA_CATEGORIA_FOTO`, `MOTIVO_FOTO_LEGADO` al final de `recepcion.ts` (la primera línea importa `faltaFotoPorNovedad` de `./remision`, que no se edita); `types.ts:622` en sitio (`RemisionFoto` gana `categoria?` y `novedad?`, opcionales para no romper a quien construya la forma vieja). Servidor, todo en sitio: `db/remisiones.ts` (`addFoto`, `listFotos`), `routes/remision.ts` R1 (`:4`), R2 (`:7`), R5 (`:287-291`) y R6 (`:380`, `:384-387`). Verdes: shared 50/50, servidor 47/47; `remisiones.test.ts` y `fotoNovedad.test.ts` verdes SIN editar (`git diff` vacío). Hipótesis 4 (multer deja los campos de texto en `req.body`): **cierta**, la prueba de «categoría válida se guarda» la ejercita con `.field()` antes del `.attach()`.
+
+### Mutaciones (aplicadas, ejecutadas, revertidas con `cmp` contra copia byte a byte; ninguna sobrevivió)
+
+| Id | Mutación | Prueba roja (mensaje) |
+|---|---|---|
+| M-P3 | puerta de `/enviar` (`:289-293`) por encima de «anulada» (`:277`) | PE-1 `expected 422 to be 409`; también `fotoNovedad.test.ts` P5 |
+| M-P4 | puerta por debajo de `reclamarEnvio` (antes de `:300`) | PE-2 `expected 2026-10-03T19:08:00.934Z to be null` (`enviado_at` fijado); «faltan mínimas» ídem; `fotoNovedad.test.ts` P3 y P4 (`expected 409 to be 200`) |
+| M-P5a | `motivoNoEnviable`: rotulado tras las mínimas | PE-3 (shared): `expected 'Faltan fotos obligatorias: del equipo…' to match /rotulado/` |
+| M-P5b | `motivoNoEnviable`: novedades antes que las mínimas | PE-3, «un motivo por rama» y la de servidor «faltan mínimas»: `expected 'Falta la foto de cada novedad marcada…' to match /Faltan fotos obligatorias…/` |
+| M-P7 | guarda de categoría (`:384`) por encima del `415` (`:383`) | PS-1: `expected 422 to be 415` |
+| M-N1 | `novedades: r.novedades` en `buildRemisionPayload` | payload: `expected [ 'cliente', 'equipo', 'fecha', …(8) ] to deeply equal [ …(7) ]`; `git diff -- remisionWebhook.ts` vacío tras revertir |
+
+### Cierre verde, `wc -l` y neto cero
+
+`npm test`: 181 ficheros / 2.735 pruebas verdes (2 omitidas) = 2.696 + 39 nuevas (19 shared + 20 servidor con las `it.each` expandidas). `npm run typecheck` limpio. `npm run lint`: 165 avisos, 0 errores (dos errores propios de `no-unused-vars` en un `vi.fn` se corrigieron antes).
+
+| Fichero | Antes | Después | Numstat |
+|---|---|---|---|
+| `routes/remision.ts` | 397 | 397 | 11/11 (R1, R2, R5 ×5, R6 ×4) |
+| `db/remisiones.ts` | 240 | 240 | 6/6 |
+| `types.ts` | 810 | 810 | 1/1 |
+| `remisionWebhook.ts`, `remisiones.test.ts`, `fotoNovedad.test.ts` | — | — | no tocados |
+
+Citas que se desplazan: **ninguna** (neto cero). Cambia el TEXTO de `:4`, `:7`, `:287-291`, `:380`, `:384-386`: la puerta de `/enviar` sigue con el `if` en la 290 y el `422` en la 291.
+
+### Orden final de puertas de `/enviar` y de la subida (`routes/remision.ts`)
+
+`:276` no encontrada (A) → `:279` anulada (B) → `:284` ya enviada (B) → `:289-293` sexta puerta única: legado, o rotulado → mínimas → una foto por novedad (C) → `:297` `reclamarEnvio` (D) → `:300` y siguientes, sin tocar. Subida: `:380` `404` (A) → `:382` `400` (C) → `:383` `415` (C) → `:384` categoría `422` (C, nueva).
+
+### Desviaciones del diseño
+
+1. **PE-2** se escribe con «Sin novedad» (diseño: con novedad): con novedad la regla de legado ya daba `422` y habría nacido verde.
+2. **R5** lee el catálogo en TODOS los envíos, también en legado (un `SELECT` extra que `motivoNoEnviable` ignora): el diseño no lo precisaba y mantener una sola línea evita una rama en la ruta.
+3. `RemisionFoto.categoria`/`novedad` opcionales (el diseño no precisaba).
+4. C3, C4, C5 alineadas en `design.md` §2.1 y §3 (firmas con `catalogo`, `categoriaDeFoto` también en legado, R2 con `listNovedades`).
+
+### Casillas del orquestador
+
+3.1 (abrir el intento) y el `settle` de 3.14: del orquestador.

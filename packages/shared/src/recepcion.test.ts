@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  novedadesActivas, validarRecepcion, componerObservaciones,
+  novedadesActivas, validarRecepcion, componerObservaciones, fotosQueFaltan, motivoNoEnviable, categoriaDeFoto, MOTIVO_FOTO_LEGADO,
   type NovedadCatalogo, type NovedadMarcada,
 } from './recepcion'
 
@@ -214,5 +214,86 @@ describe('RQ-RE-23 · componerObservaciones — separador `; ` (C2: manda la spe
   it('usa la etiqueta de la instantánea, no la del catálogo de hoy', () => {
     const renombrado = CATALOGO.map((n) => (n.clave === 'rayon_estetico' ? { ...n, etiqueta: 'Etiqueta nueva' } : n))
     expect(componerObservaciones(renombrado, [marcada('rayon_estetico')], null)).toBe('Rayón o daño estético')
+  })
+})
+
+/**
+ * Lote 3 · lo que falta para enviar y la categoría de la foto (RQ-RE-25, RQ-RE-26). Las marcas de cada novedad
+ * se leen del catálogo POR CLAVE aunque la fila esté inactiva (C5: manda la spec).
+ */
+describe('lote 3 · fotos por categoría y puertas de envío', () => {
+  const m = (...claves: string[]): NovedadMarcada[] => claves.map((c) => ({ clave: c, etiqueta: CATALOGO.find((n) => n.clave === c)!.etiqueta }))
+  const rem = (claves: string[] | null, extra: Record<string, unknown> = {}) =>
+    ({ hayNovedad: claves ? claves.some((c) => c !== 'sin_novedad') : null, novedades: claves ? m(...claves) : null, rotuladoAt: '2026-10-03T10:00:00Z', ...extra })
+  const f = (categoria: string | null, novedad: string | null = null) => ({ categoria, novedad })
+  const MINIMAS = [f('equipo'), f('accesorios'), f('embalaje')]
+
+  it('fotosQueFaltan: nombra todas las mínimas ausentes; una foto sólo cuenta para su categoría; sin categoría no cuenta', () => {
+    expect(fotosQueFaltan(rem(['sin_novedad']), [], CATALOGO).categorias).toEqual(['equipo', 'accesorios', 'embalaje'])
+    expect(fotosQueFaltan(rem(['sin_novedad']), [f('equipo'), f(null), f('novedad', 'sin_novedad')], CATALOGO).categorias).toEqual(['accesorios', 'embalaje'])
+    expect(fotosQueFaltan(rem(['sin_novedad']), MINIMAS, CATALOGO)).toEqual({ categorias: [], novedades: [] })
+  })
+
+  it('fotosQueFaltan: cada novedad con su foto, una foto no sirve para dos; la que excluye a las demás no exige', () => {
+    const r = rem(['golpe_carcasa', 'rayon_estetico'])
+    expect(fotosQueFaltan(r, [...MINIMAS, f('novedad', 'golpe_carcasa')], CATALOGO).novedades.map((n) => n.clave)).toEqual(['rayon_estetico'])
+    expect(fotosQueFaltan(r, [...MINIMAS, f('novedad', 'golpe_carcasa'), f('novedad', 'rayon_estetico')], CATALOGO).novedades).toEqual([])
+    expect(fotosQueFaltan(r, [...MINIMAS, f('equipo', 'golpe_carcasa')], CATALOGO).novedades).toHaveLength(2)
+    expect(fotosQueFaltan(rem(['sin_novedad']), MINIMAS, CATALOGO).novedades).toEqual([])
+  })
+
+  it('fotosQueFaltan: una novedad retirada del catálogo (inactiva) sigue exigiendo su foto (C5)', () => {
+    expect(fotosQueFaltan(rem(['sello_roto']), MINIMAS, CATALOGO).novedades.map((n) => n.clave)).toEqual(['sello_roto'])
+  })
+
+  it('fotosQueFaltan: la marca se lee del catálogo, no de la clave (la que excluye ya no es `sin_novedad`)', () => {
+    const otro = CATALOGO.map((n) => (n.clave === 'golpe_carcasa' ? { ...n, excluyeDemas: true } : n.clave === 'sin_novedad' ? { ...n, excluyeDemas: false } : n))
+    expect(fotosQueFaltan(rem(['golpe_carcasa']), MINIMAS, otro).novedades).toEqual([])
+    expect(fotosQueFaltan(rem(['sin_novedad']), MINIMAS, otro).novedades.map((n) => n.clave)).toEqual(['sin_novedad'])
+  })
+
+  it('motivoNoEnviable: legado = la regla anterior con el texto literal de hoy', () => {
+    expect(MOTIVO_FOTO_LEGADO).toBe('El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.')
+    expect(motivoNoEnviable(rem(null, { hayNovedad: true, rotuladoAt: null }), [], CATALOGO)).toBe(MOTIVO_FOTO_LEGADO)
+    expect(motivoNoEnviable(rem(null, { hayNovedad: true }), [f(null)], CATALOGO)).toBeNull()
+    expect(motivoNoEnviable(rem(null, { hayNovedad: false, rotuladoAt: null }), [], CATALOGO)).toBeNull()
+    expect(motivoNoEnviable(rem(null, { hayNovedad: null }), [], CATALOGO)).toBeNull()
+  })
+
+  it('motivoNoEnviable: formulario nuevo, un motivo por rama y nombra todo lo que falta', () => {
+    expect(motivoNoEnviable(rem(['rayon_estetico'], { rotuladoAt: null }), MINIMAS, CATALOGO)).toMatch(/rotulado y guardado/)
+    expect(motivoNoEnviable(rem(['rayon_estetico']), [f('equipo')], CATALOGO)).toMatch(/Faltan fotos obligatorias: .*accesorios.*embalaje/)
+    expect(motivoNoEnviable(rem(['golpe_carcasa', 'rayon_estetico']), MINIMAS, CATALOGO))
+      .toMatch(/Falta la foto de cada novedad marcada: Golpe o abolladura en la carcasa, Rayón o daño estético/)
+    expect(motivoNoEnviable(rem(['sin_novedad']), MINIMAS, CATALOGO)).toBeNull()
+    expect(motivoNoEnviable(rem(['rayon_estetico']), [...MINIMAS, f('novedad', 'rayon_estetico')], CATALOGO)).toBeNull()
+  })
+
+  it('PE-3 · el primer motivo del orden: rotulado antes que mínimas, mínimas antes que novedades', () => {
+    expect(motivoNoEnviable(rem(['rayon_estetico'], { rotuladoAt: null }), [], CATALOGO)).toMatch(/rotulado/)
+    expect(motivoNoEnviable(rem(['rayon_estetico']), [f('equipo'), f('accesorios')], CATALOGO)).toMatch(/Faltan fotos obligatorias: .*embalaje/)
+  })
+
+  const NUEVO = rem(['rayon_estetico'])
+  it.each([
+    ['legado, sin categoría', rem(null), {}, { ok: true, categoria: null, novedad: null }],
+    ['nuevo, sin categoría', NUEVO, {}, { ok: true, categoria: null, novedad: null }],
+    ['sin categoría y con `novedad`: se ignora', NUEVO, { novedad: 'rayon_estetico' }, { ok: true, categoria: null, novedad: null }],
+    ['categoría válida en legado', rem(null), { categoria: 'embalaje' }, { ok: true, categoria: 'embalaje', novedad: null }],
+    ['otra categoría descarta `novedad`', NUEVO, { categoria: 'equipo', novedad: 'rayon_estetico' }, { ok: true, categoria: 'equipo', novedad: null }],
+    ['novedad marcada', NUEVO, { categoria: 'novedad', novedad: 'rayon_estetico' }, { ok: true, categoria: 'novedad', novedad: 'rayon_estetico' }],
+  ])('categoriaDeFoto · %s', (_n, r, cuerpo, esperado) => {
+    expect(categoriaDeFoto(r, cuerpo)).toEqual(esperado)
+  })
+
+  it.each([
+    ['categoría inválida (nuevo)', NUEVO, { categoria: 'otra' }],
+    ['categoría inválida (legado)', rem(null), { categoria: 'otra' }],
+    ['categoría que no es texto', NUEVO, { categoria: 7 }],
+    ['`novedad` ausente', NUEVO, { categoria: 'novedad' }],
+    ['`novedad` no marcada', NUEVO, { categoria: 'novedad', novedad: 'golpe_carcasa' }],
+    ['`novedad` sobre legado', rem(null), { categoria: 'novedad', novedad: 'rayon_estetico' }],
+  ])('categoriaDeFoto · %s → error', (_n, r, cuerpo) => {
+    expect(categoriaDeFoto(r, cuerpo)).toMatchObject({ ok: false, error: expect.any(String) })
   })
 })
