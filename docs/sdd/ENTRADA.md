@@ -1768,3 +1768,8 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Origen:** `openspec/changes/archive/2026-10-02-alta-manual-equipo-cliente/design.md` §4.6 («Lo que este cambio NO resuelve», P-A), recogido como tarea de persona en el `tasks.md` y en el `archive-report.md` del mismo cambio, archivado en `c557273`.
 **Dueño:** Gerencia (alcance y destino). **Qué desbloquea:** decidir si el aviso se construye y en qué fila; hasta entonces el enlace depende de que alguien se acuerde.
 **Estado:** abierta · **Destino:** sin asignar — una fila del §5 del plan o un punto abierto del Anexo D, según el alcance que decida Gerencia (R-3).
+
+## E-156 · 2026-10-03 · decision · **CERRADA 03/10** — la cuarta tanda es F1B-03, por su parte L
+**Qué:** qué tanda sigue a F1B-15, una vez agotado el orden aprobado en E-149 (punto 5) y con la R01.4 §H fijando sólo tres filas.
+**Respuesta textual:** «sí, ejecútalo. la cuarta tanda es F1B-03 por su parte L; los prefijos van en un segundo cambio. Ejecútalo.»
+**Estado:** cerrada · **Destino:** fila F1B-03 del §C de la R01.4 (parte L, `cierra: no`) y fila 4 de su §H · `openspec/config.yaml` → `decisiones_de_gerencia_adenda` (`decision/cuarta-tanda-f1b03-parte-l`). Los prefijos (XS, E-094) quedan para un segundo cambio con el mismo `tanda:`, a la espera de la comprobación de Drive y n8n (dueño Gerencia).

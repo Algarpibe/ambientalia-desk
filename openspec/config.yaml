@@ -3724,6 +3724,28 @@ decisiones_de_gerencia_adenda:
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna; amplía F1B-15 (lote 2)"
 
+  - clave: "decision/cuarta-tanda-f1b03-parte-l"
+    fecha: "2026-10-03"
+    pregunta: |
+      El orden aprobado (`decision/escenario-a-festivos-plan-a-01-10`, punto 5) termina en F1B-15, ya archivada, y la R01.4
+      §H sólo fija tres filas. ¿Cuál es la cuarta tanda? La única que el plan nombra «tras» F1B-15 es F1B-03 (L + XS), cuya
+      parte XS —la supresión de los prefijos, E-094— espera una comprobación de persona sobre Google Drive y n8n que no
+      está hecha (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:177`, dueño Gerencia).
+    respuesta_textual: |
+      «sí, ejecútalo. la cuarta tanda es F1B-03 por su parte L; los prefijos van en un segundo cambio. Ejecútalo.»
+    consecuencias: |
+      (1) La cuarta tanda es F1B-03, y se construye su parte L: tipo de servicio y ticket sin OV, guarda de remisión
+      vigente y OVI de garantía (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:83`).
+      (2) Ese cambio lleva `tanda: F1B-03` y `cierra: no`: la fila no termina mientras falten los prefijos.
+      (3) La supresión de los prefijos (XS, E-094) va en un SEGUNDO cambio con el mismo `tanda: F1B-03` (R-4: un cambio,
+      un solo `tanda:`; no es «contar en parte»), a la espera de la comprobación de Drive y n8n, cuyo dueño es Gerencia.
+      (4) En su propio worktree (regla del ciclo 3) y en modo producción; el ciclo se detiene tras `tasks.md`, antes del
+      apply, para que se revise la planificación.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/cuarta-tanda-f1b03-parte-l) · docs/sdd/ENTRADA.md → E-156 · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md §H, fila 4"
+    maestro_pasaje: "ninguno (orden de ejecución)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-03"
+
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
   # no tocan `openspec/specs/`, así que pueden ir directos, pero no cuentan en el avance). Al final
