@@ -118,3 +118,16 @@ Cada mutación se revirtió restaurando los bytes y se volvió a ejecutar en ver
 ## De personas — no son tareas de esta tanda; archivar no las da por hechas
 
 Las cuatro de `tasks.md` (cargo a Johny Luna; `users.cargo` del Director Técnico; S-1 en E-160; HTML en E-161) quedan con su dueño y destino.
+
+## Remediación del verify
+
+Avisos W3 y S1 del `verify-report.md`. Sólo ficheros de prueba; sin código de producción ni specs. Son pruebas de caracterización (nacen verdes, sin rojo previo): su detector es la mutación, reproducida y revertida.
+
+- W3 (a): `transitions.test.ts`, al final, afirma por ejecución 5 transiciones con propuesta por defecto y 26 que heredan (cifras escritas a mano).
+- W3 (b): `sla.test.ts`, al final, afirma que ningún estado de `ALARMAS_SLA` es `En Proceso` ni `Solicitado`.
+- S1: N5 de `apps/desk/server/transiciones.test.ts` ahora la ejecuta `userCookie(['Servicio Técnico'])` (no administrador); sigue en verde.
+
+Mutaciones (todas revertidas con `git checkout --`):
+- Quitar `entrega_repuestos` de `transitions.ts:281`: ROJO la prueba de 5/26 (esperaba 5, obtuvo 4) y, además, el mapa de cinco existente.
+- Añadir `En Proceso` a `ALARMAS_SLA`: ROJO la prueba nueva de `sla.test.ts`.
+- M7 (rechazar en `ticketService.ts` un derivado de `solicitud_repuestos` que no sea Director Técnico): ROJO sólo N5 (1 de 28).

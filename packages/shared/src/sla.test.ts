@@ -320,3 +320,12 @@ describe('F1B-08 · alarmas de SLA en horas hábiles', () => {
     expect(estadosConAlarmaSinCargo(sintetica)).toEqual(['Remisión creada', 'Notificación cliente'])
   })
 })
+
+describe('ALARMAS_SLA de la derivación de repuestos', () => {
+  // Caracterización: ni «En Proceso» ni «Solicitado» tienen alarma de SLA.
+  it('ningún estado de ALARMAS_SLA es En Proceso ni Solicitado', () => {
+    const estados = Object.keys(ALARMAS_SLA)
+    expect(estados).not.toContain('En Proceso')
+    expect(estados).not.toContain('Solicitado')
+  })
+})

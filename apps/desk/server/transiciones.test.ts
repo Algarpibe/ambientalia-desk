@@ -513,7 +513,7 @@ describe('F1C-11 · derivación del taller en el servidor', () => {
 
   // N5 · CARACTERIZACIÓN, nace verde: el servidor no impone al Director Técnico. Su detector es la mutación M7.
   it('N5 · el servidor acepta a cualquier persona activa como derivado de «Solicitud repuestos» y rechaza a la dada de baja', async () => {
-    const admin = await adminCookie()
+    const admin = await userCookie(['Servicio Técnico']) // usuario del área, no administrador
     const otra = await createUser(db, { email: 'otra@x.co', name: 'Otra', passwordHash: await contrasena(), cargo: 'Técnico' })
     const baja = await createUser(db, { email: 'baja@x.co', name: 'Baja', passwordHash: await contrasena(), cargo: 'Director Técnico' })
     await db.query('UPDATE users SET active = false WHERE id = $1', [baja.id])
