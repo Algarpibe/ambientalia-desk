@@ -71,3 +71,102 @@ Citas que se desplazan: **ninguna** (todo en sitio con neto cero, o al final).
 ### Deuda declarada
 
 - `novedadesActivas` se prueba por la ruta (y mutación M-D2); su prueba unitaria directa entra en `packages/shared/src/recepcion.test.ts` del lote 2.
+
+## Lote 2 — alta: novedades y rotulado (RQ-RE-23, RQ-RE-24, RQ-RE-27, RQ-RE-17) — en curso
+
+Partida del lote: `da9c740`. Intento 2 abierto y `settle` (casillas 2.1 parcial y 2.13): del orquestador.
+
+### 2.1 Línea base y hipótesis 3
+
+`npm test -- apps/desk/server/remisiones.test.ts apps/desk/server/fotoNovedad.test.ts`: 2 ficheros, 77 pruebas verdes (71 + 6) **sin editarlos**. `routes/remision.ts` 397 líneas, `db/remisiones.ts` 240, `types.ts` 810. **Hipótesis 3: cierta** a la partida; se recomprueba al cierre.
+
+### 2.2 Alineación C2
+
+Manda la spec: `observaciones` une las etiquetas con `; ` y «Otro» va como `{etiqueta}: {texto}`. Corregido `design.md` §2.1 (línea 144: « · » → `; `).
+
+### 2.3 RED `packages/shared/src/recepcion.test.ts` (nuevo, 31 pruebas)
+
+Salida del rojo (antes de escribir `validarRecepcion` ni `componerObservaciones`):
+
+    Test Files  1 failed (1)
+         Tests  29 failed | 2 passed (31)
+    TypeError: (0 , componerObservaciones) is not a function
+    (y lo mismo con validarRecepcion: exports inexistentes)
+
+Las **2 que nacen verdes** son las de `novedadesActivas` (deuda declarada del lote 1: el código ya existía y sólo se probaba por la ruta). Son de caracterización; la mutación que las detecta es **M-D2** (no filtrar `activo`): la primera, «descarta las inactivas». Ya estaba cazada por la ruta en L1; ahora también unitariamente.
+
+Nota PA-3: el par (2,3) de `validarRecepcion` no se puede activar a la vez por construcción (una lista vacía no tiene claves desconocidas), así que permutarlos es mutación equivalente; se prueban los pares (1,2), (1,3), (3,4), (3,5), (4,5), (5,6), (2,6), (4,6), (3,6).
+
+### 2.4 GREEN shared
+
+`validarRecepcion`, `componerObservaciones`, `NovedadMarcada`, `RecepcionValidada` en `packages/shared/src/recepcion.ts`; `types.ts` en sitio (línea 1 gana el `import type`, línea 735 gana los cuatro campos; 810 líneas, neto cero). Verde: `recepcion.test.ts` 31/31.
+
+### 2.5-2.6 RED servidor (`apps/desk/server/recepcion.test.ts`, bloque de alta)
+
+Salida del rojo (antes de tocar `routes/remision.ts`, `db/remisiones.ts` ni el servicio):
+
+    Tests  22 failed | 6 passed (28)     (3 de lote 1 + 3 nacidas verdes)
+    AssertionError: expected 201 to be 422            (los seis 422, rotulado, D2, catálogo vacío)
+    AssertionError: expected undefined to deeply equal [ …(2) ]   (instantánea ausente)
+    AssertionError: expected { hay_novedad: null, …(2) } to deeply equal { hay_novedad: false, …(2) }
+    AssertionError: expected { …(20) } to match object { hayNovedad: true, …(5) }   (legado: faltan los cuatro campos)
+
+Nacen verdes y se declaran: **PA-1** (el serial ya gana hoy; su rojo es **M-P1**) y «con la remisión pendiente y novedades válidas el 409 sigue ganando» (caracterización: fija que la guarda nueva no desplaza al `409` cuando no hay nada que rechazar; sin mutación propia de posición, la protege PA-2). **PA-2** es rojo real.
+
+### 2.7 GREEN servidor
+
+Nuevo `apps/desk/server/services/recepcion.ts` (`resolverRecepcion`; `undefined` = legado sin leer la base). En sitio: `routes/remision.ts` R2 (línea 7), R3 (línea 158, antes vacía) y R4 (`:249-250`); `db/remisiones.ts` (`toRemision` `:25`, `CreateRemisionInput` `:40`, `INSERT` `:47-50`, `novedades` por `JSON.stringify`/`null` **sin `J`**, `rotulado_at = new Date()` sólo con recepción). Verdes 2.5 y 2.6; `remisiones.test.ts` y `fotoNovedad.test.ts` verdes sin editar.
+
+### Evidencia TDD
+
+| Casilla | Prueba | RED | GREEN |
+|---|---|---|---|
+| 2.3 | `shared/recepcion.test.ts` (31) | 29 rojas (`componerObservaciones is not a function`); 2 de `novedadesActivas` nacen verdes | 31/31 |
+| 2.5 | `server/recepcion.test.ts` alta (25 nuevas) | 22 rojas (`expected 201 to be 422`, `expected undefined to deeply equal …`) | 28/28 |
+| 2.6 | PA-1 / PA-2 | PA-1 nace verde (M-P1); PA-2 `expected 409 to be 422` | verdes |
+
+TRIANGULATE: D1-D3 en los dos sentidos (apagar la marca de la fila «obvia» y encender la de otra), seis rechazos más variantes (`null`, texto, `rotulado` `false`/`"true"`/`1`), legado con y sin `rotulado` en el cuerpo.
+
+### Mutaciones (aplicadas, ejecutadas, revertidas con `cmp` contra copia byte a byte; ninguna sobrevivió)
+
+| Id | Mutación | Prueba roja (mensaje) |
+|---|---|---|
+| M-P1 | línea 158 por encima de la guarda del serial (antes de `const eq`) | PA-1: `expected 'Marca al menos una novedad, o «Sin no…' to match /Falta el serial/` |
+| M-P2 | línea 158 por debajo del bloque del `409` (tras la 183) | PA-2: `expected 409 to be 422` |
+| M-P6 | permutar pasos 4↔5 de `validarRecepcion` | PA-3 (4,5): `expected '«Otro» exige describir la novedad.' to contain 'no se puede marcar junto con otra nov…'` |
+| M-P6b | permutar pasos 5↔6 | PA-3 (5,6): `expected 'Confirma que el equipo quedó rotulado…' to contain 'exige describir la novedad'` |
+| M-D1 | decidir por `clave === 'otro'` | D1a (`expected 422 to be 201`) y D1b (`expected 201 to be 422`) y sus dos unitarias |
+| M-D2 | `novedadesActivas` sin filtrar `activo` | D2 servidor, lectura «nueve», dos de `novedadesActivas` y dos de `validarRecepcion` |
+| M-D3 | decidir por `clave === 'sin_novedad'` | D3a, D3b, `hayNovedad` y tres unitarias |
+| M-D4 | lista constante en vez de leer la tabla | «catálogo vacío»: `expected 201 to be 422`; también D1 y D3 |
+| M-L1 | `novedades` con `J` | «legado deja `novedades IS NULL`»: `expected { n_nulo: false, … } to deeply equal { n_nulo: true, … }` |
+
+Pares de PA-3 no probados: (2,3) es equivalente por construcción (una lista vacía no tiene claves desconocidas).
+
+### Cierre verde, `wc -l` y neto cero
+
+`npm test`: 181 ficheros / 2.696 pruebas verdes (2 omitidas) = 2.641 + 55 nuevas. `npm run typecheck` limpio. `npm run lint`: 165 avisos, 0 errores. `git diff` de `remisiones.test.ts` y `fotoNovedad.test.ts` vacío.
+
+| Fichero | Antes | Después | Numstat |
+|---|---|---|---|
+| `routes/remision.ts` | 397 | 397 | 4/4 (R2, R3, R4 ×2) |
+| `db/remisiones.ts` | 240 | 240 | 6/6 |
+| `types.ts` | 810 | 810 | 2/2 |
+
+Citas que se desplazan: **ninguna** (neto cero). Las líneas 7, 158, 249 y 250 de `routes/remision.ts` cambian de TEXTO: la 158 no la cita nadie; la 249 y la 250 siguen asignando `observaciones` y `hayNovedad` (cierto de la vía de legado).
+
+### Orden final de guardas del alta (`routes/remision.ts`)
+
+123/125 ticket (A) → 127 fecha (C, IV-12 punto 1) → 154 serial (A) → **158 recepción (C, nueva)** → 174-183 `409` pendiente (D) → 197 ítems (C) → 220 OV (IV-12 punto 2) → 232 `409` OV (D). Intactas todas salvo la nueva.
+
+### Deviaciones del diseño
+
+Ninguna de comportamiento. La guarda del serial está en `:154-157` (el diseño decía 152/155); la 158 era, en efecto, la línea vacía siguiente. C2 alineada en `design.md` §2.1.
+
+### Casillas del orquestador
+
+2.1 (abrir el intento) y el `settle` de 2.13: del orquestador.
+
+### Medida del lote (2.12)
+
+`git diff --shortstat --no-renames da9c740`: 8 ficheros, 439 inserciones, 28 borrados (467), más sin trackear `services/recepcion.ts` 19 y `shared/recepcion.test.ts` 218 = **704** antes de esta nota (válvula 720; techo 800). Sin binarios.

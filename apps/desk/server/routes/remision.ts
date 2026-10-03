@@ -4,7 +4,7 @@ import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist, faltaFotoPorNovedad, motivoCuarentena } from '@ambientalia/shared'
 import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
-import { hayChecklist } from '../db/remisionChecklist'
+import { hayChecklist } from '../db/remisionChecklist'; import { resolverRecepcion } from '../services/recepcion'
 import { checklistDeRemision } from '../db/checklistRemision'
 import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'; import { obtenerCliente } from '../services/clientes'
@@ -155,7 +155,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       res.status(422).json({ error: 'Falta el serial del equipo: el ticket no tiene equipo del catálogo ni serial propio' })
       return
     }
-
+    const rec = await resolverRecepcion(db, b); if (rec && 'error' in rec) { res.status(422).json({ error: rec.error }); return } // escalon C: tras el serial (A) y antes del 409 (D)
     /*
      * Una sola remisión sin desenlace por ticket. Hasta ahora esto lo "defendía" un cartel del
      * formulario, que es un consejo y no una barrera: si la consulta que lo alimenta falla no
@@ -246,8 +246,8 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const id = await createRemision(db, {
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
-      incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
-      creadoPor: req.user?.name ?? null, hayNovedad: typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null,
+      incluye: pedidos, observaciones: rec ? rec.observaciones : (b.observaciones ? String(b.observaciones) : null),
+      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, rotuladoPor: req.user?.name ?? null } : null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
       // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
       // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos

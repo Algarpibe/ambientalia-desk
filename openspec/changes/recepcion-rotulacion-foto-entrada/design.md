@@ -141,7 +141,7 @@ Reglas, en el **orden interno fijo** en que se evalúan:
   guardado.». Duplicados se pliegan; la salida va por `orden`.
 - `hayNovedad` = alguna marcada sin `excluyeDemas`. Como (4) impide la convivencia, `hayNovedad === true` implica
   que **todas** las marcadas piden foto; por eso la instantánea sólo guarda clave y etiqueta.
-- `componerObservaciones`: etiquetas unidas por « · »; la que exige texto se escribe «<etiqueta>: <texto>».
+- `componerObservaciones`: etiquetas unidas por `; ` (C2: manda la spec); la que exige texto se escribe «<etiqueta>: <texto>».
 - `motivoNoEnviable`: `novedades == null` → legado: `faltaFotoPorNovedad(hayNovedad, fotos.length)` con
   `MOTIVO_FOTO_LEGADO`. Si no: (a) `rotuladoAt` nulo → «Falta confirmar que el equipo quedó rotulado y guardado.»;
   (b) falta alguna categoría mínima → «Faltan fotos obligatorias: …» nombrando **todas** las que faltan; (c) falta
