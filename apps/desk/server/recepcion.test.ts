@@ -426,3 +426,57 @@ describe('RQ-RE-26 · /enviar del formulario nuevo', () => {
     expect(cuerpo.observaciones).toBe('Rayón o daño estético')
   }))
 })
+
+/**
+ * Remediación del verify (W1, S3) · pruebas de caracterización POR LA RUTA `/enviar`; el código ya cumple.
+ * Detectores: M-W1 (`novedades` NULL tratado como formulario nuevo), M-S3a (permutar el orden de `motivoNoEnviable`),
+ * M-S3b (una foto sin categoría cuenta para las mínimas).
+ */
+describe('RQ-RE-27 · /enviar de una remisión de origen histórico (W1)', () => {
+  const conN8n = async (prueba: () => Promise<void>) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 202 })))
+    try { await prueba() } finally { vi.unstubAllGlobals() }
+  }
+  const enviar = (app: App, cookie: string, id: string) => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+
+  it('histórica con `novedades` NULL: sin rotulado ni mínimas; con hay_novedad y cero fotos rige la regla anterior, con una foto sin categoría → 200', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+    await db.query(
+      `INSERT INTO remisiones (id, ticket_id, tipo, fecha, creado_por, estado, origen, hay_novedad)
+       VALUES ('rem-h1', 't1', 'entrada', '2026-07-01', 'Ana Pérez', 'pendiente', 'historico', true)`)
+    const sin = await enviar(app, cookie, 'rem-h1')
+    expect(sin.status).toBe(422)
+    expect(sin.body.error, 'el texto de siempre: ni rotulado ni mínimas').toBe(
+      'El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.')
+    expect((await subir(app, cookie, 'rem-h1')).status).toBe(201)
+    expect((await enviar(app, cookie, 'rem-h1')).status).toBe(200)
+  }))
+})
+
+describe('RQ-RE-26 · orden interno y fotos sin categoría en /enviar (S3)', () => {
+  const conN8n = async (prueba: () => Promise<void>) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 202 })))
+    try { await prueba() } finally { vi.unstubAllGlobals() }
+  }
+  const enviar = (app: App, cookie: string, id: string) => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+
+  it('S3a · rotulado ausente y mínimas faltantes a la vez → gana el de rotulado; con rotulado y sin mínimas ni foto de novedad → gana el de mínimas', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+    const id = await nueva(app, cookie, ['rayon_estetico'])
+    await db.query('UPDATE remisiones SET rotulado_at = NULL WHERE id = $1', [id])
+    const a = await enviar(app, cookie, id)
+    expect(a.status).toBe(422); expect(a.body.error).toMatch(/rotulado y guardado/)
+    await db.query("UPDATE remisiones SET rotulado_at = now(), rotulado_por = 'Ana Pérez' WHERE id = $1", [id])
+    const b = await enviar(app, cookie, id)
+    expect(b.status).toBe(422); expect(b.body.error).toMatch(/Faltan fotos obligatorias/)
+    expect(b.body.error).not.toMatch(/cada novedad/)
+  }))
+
+  it('S3b · tres fotos subidas SIN categoría no satisfacen las mínimas → 422 «Faltan fotos obligatorias» con las tres', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
+    const id = await nueva(app, cookie, ['sin_novedad'])
+    for (let i = 0; i < 3; i++) expect((await subir(app, cookie, id)).status).toBe(201)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422); expect(r.body.error).toMatch(/Faltan fotos obligatorias: .*equipo.*accesorios.*embalaje/i)
+  }))
+})

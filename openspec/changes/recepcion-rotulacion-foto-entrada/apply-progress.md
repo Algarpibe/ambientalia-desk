@@ -314,3 +314,16 @@ Los nueve pasos de comprobación del formulario (RQ-RE-19; el informe del lote 4
 ### Medida del lote 4b (4.14)
 
 `git diff --shortstat --no-renames 1b289f3` antes de añadir esta nota: 5 ficheros, 183 inserciones, 6 borrados (189); sin ficheros nuevos sin trackear ni binarios; válvula 720. `npm test` 182 ficheros / 2.758 verdes (2 omitidas); `npm run typecheck` 0; `npm run lint` 165 avisos, 0 errores.
+
+## Remediación del verify
+
+Cambio de sólo pruebas, al final de `apps/desk/server/recepcion.test.ts` (sin tocar producción, specs ni otras pruebas). Caracterización: el código ya cumplía, sin rojo previo.
+
+- **W1 · RQ-RE-27, origen histórico:** fila `origen='historico'`, `novedades` NULL, `hay_novedad` true, insertada por SQL; por `/enviar`: 422 con el texto literal de siempre (ni rotulado ni mínimas) y, con una foto sin categoría, 200.
+- **S3a · orden interno por la ruta:** rotulado ausente + mínimas faltantes → gana rotulado; con rotulado y sin mínimas ni foto de novedad → gana mínimas, no el de novedad. La falta de rotulado se escribe en la base (`rotulado_at = NULL`), como la prueba existente.
+- **S3b:** tres fotos subidas sin categoría → 422 «Faltan fotos obligatorias» con las tres categorías.
+
+Mutaciones reproducidas y revertidas con `git checkout --`:
+- M-W1 (`novedades` NULL tratado como formulario nuevo): rojas la prueba W1 (y la de legado existente).
+- M-S3a (rotulado permutado tras mínimas y novedades): roja S3a.
+- M-S3b (foto sin categoría cuenta para las mínimas, `(f.categoria ?? c) === c`): roja S3b.
