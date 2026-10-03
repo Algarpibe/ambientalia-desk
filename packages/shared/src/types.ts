@@ -5,7 +5,7 @@ export interface Ticket {
   id: string
   number: string        // "#864"
   title: string
-  company: string
+  company: string; clienteProvisional?: boolean
   time: string          // texto ya formateado para mostrar
   status: string        // status crudo de Zoho, p.ej. "Notificación cliente"
   /** El propietario en ZOHO. Viene del sync y está vacío en todo ticket nacido en la app. */
@@ -298,7 +298,7 @@ export interface ClientLite {
   direccion?: string
   ciudad?: string
   telefono?: string
-  personaContacto?: string
+  personaContacto?: string; provisional?: boolean
 }
 
 export interface SalesOrderLite {
@@ -345,7 +345,7 @@ export interface EquipoLite {
   marca?: string
   modelo?: string
   tipo?: string
-  clienteNombre?: string
+  clienteNombre?: string; pendienteValidar?: boolean
   /**
    * FK al cliente de Books. Ausente —no vacía— en los equipos que el backfill no pudo casar: el
    * formulario necesita distinguir «no se sabe de quién es» de «es del cliente X» para avisar.
@@ -552,7 +552,7 @@ export type CampoComercial = 'fechaAdquisicion' | 'fechaFacturaCompra' | 'finGar
 
 /** Una fila del registro de cambios de un equipo (RQ-HV-10): quién cambió qué campo, y cuándo. */
 export interface CambioEquipo {
-  campo: CampoComercial
+  campo: CampoComercial | 'altaManual' | 'validacion' | 'clientId'
   anterior: string | null
   nuevo: string | null
   /** Nombre del mantenedor, sólo cuando `campo === 'mantenedorId'` (derivado al leer, no persistido). */

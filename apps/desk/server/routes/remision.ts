@@ -2,12 +2,12 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
 import { perfilChecklist, faltaFotoPorNovedad, motivoCuarentena } from '@ambientalia/shared'
-import { getTicketWithRefs, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
+import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'
 import { checklistDeRemision } from '../db/checklistRemision'
 import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
-import { getClient, getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
+import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'; import { obtenerCliente } from '../services/clientes'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth, requireAdmin } from '../auth/middleware'
@@ -200,7 +200,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // se muestra: la remisión es un documento, no una vista. Si el ticket cambia de cliente, o el
     // cliente se renombra en Books, la remisión debe seguir diciendo a qué empresa y a qué persona
     // correspondió cuando se hizo.
-    const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
+    const cliente = found.row.client_id ? await obtenerCliente(db, found.row.client_id) : null
 
     /*
      * La orden de venta se puede capturar aquí para no tener que hacerlo en Habilitar Servicio. Es
@@ -304,7 +304,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (!found) { res.status(422).json({ error: 'Ticket no encontrado' }); return }
 
     const eq = rem.equipoId ? await getEquipoFull(db, rem.equipoId) : null
-    const cliente = found.row.client_id ? await getClient(db, found.row.client_id) : null
+    const cliente = found.row.client_id ? await obtenerCliente(db, found.row.client_id) : null
     const payload = buildRemisionPayload({
       remision: rem, ticketNumero: String(found.row.number), cliente, equipo: eq,
       usuario: { name: req.user!.name, email: req.user!.email, cargo: req.user!.cargo ?? null },

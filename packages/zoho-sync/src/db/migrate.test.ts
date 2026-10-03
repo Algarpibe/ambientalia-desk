@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 39 tablas: 10 de Desk, 26 de la app en public (alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 26, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(39)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(39)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(39)
+  it('son 40 tablas: 10 de Desk, 27 de la app en public (clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 27, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(40)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(40)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(40)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -371,11 +371,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 43 ALTER: 21 calificadas (16 de public + 5 de books) y 22 sin calificar, todas de Desk (la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
+  it('son 44 ALTER: 21 calificadas (16 de public + 5 de books) y 23 sin calificar, todas de Desk (la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(43)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(44)
     expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(21)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(22)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(23)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.
@@ -645,11 +645,11 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     expect(sql[2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron \(/)
   })
 
-  it('las seis sentencias nuevas van DETRÁS de prioridad_ajustes, y son las últimas, en el orden del diseño', () => {
+  it('las seis sentencias nuevas van DETRÁS de prioridad_ajustes, y son las últimas salvo las dos de F1B-15 que las siguen, en el orden del diseño', () => {
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes').toBe(ultima + 1 + 6)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15)').toBe(ultima + 1 + 6 + 2)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -684,5 +684,63 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     expect(antes[0]).toHaveLength(1)
     expect(antes[1]).toHaveLength(1)
     expect(despues).toEqual(antes)
+  })
+})
+
+/**
+ * alta-manual-equipo-cliente (F1B-15, RQ-ZS-16) · la tabla de clientes provisionales es de la App y
+ * la vista `public.clients` NO cambia (`decision/f1b15-clientes-provisionales-sin-tocar-la-vista`).
+ * La vista se compara con su texto de `132d25f`: ensuciarla (regla de mutación 2) pone rojo este guardián.
+ */
+describe('alta-manual-equipo-cliente · clientes_provisionales y la vista intacta (F1B-15, RQ-ZS-16)', () => {
+  const limpias = () => schemaStatements().map((s) => s.replace(/\r\n/g, '\n').replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
+  const VISTA_CLIENTS_132D25F = `CREATE OR REPLACE VIEW public.clients AS
+  SELECT contact_id AS id, contact_name AS name, company_name, nit, email,
+         raw->>'contact_type' AS contact_type,
+         direccion, ciudad, departamento, telefono, persona_contacto
+  FROM books.contacts`
+
+  it('la tabla existe en public, calificada, y no en desk', async () => {
+    const db = await freshDb()
+    const en = async (esquema: string) => (await db.query('SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name=$2', [esquema, 'clientes_provisionales'])).rows
+    expect(await en('public')).toHaveLength(1)
+    expect(await en('desk')).toHaveLength(0)
+    expect(PUBLIC_TABLES).toContain('clientes_provisionales')
+    expect(DESK_TABLES).not.toContain('clientes_provisionales')
+  })
+
+  it('guarda los cinco datos, el motivo, la traza de alta y la del enlace (D1)', async () => {
+    const db = await freshDb()
+    await db.query(
+      `INSERT INTO public.clientes_provisionales (id, razon_social, nit, contacto, telefono, correo, motivo, creado_por_id, creado_por_nombre)
+       VALUES ('prov-1','Acme Provisional','900123456','Ana','3000000','a@acme.co','no está en Books','u1','Ana')`)
+    const r = await db.query('SELECT razon_social, nit, enlazado_a, created_at IS NOT NULL AS con_fecha FROM public.clientes_provisionales')
+    expect(r.rows).toEqual([{ razon_social: 'Acme Provisional', nit: '900123456', enlazado_a: null, con_fecha: true }])
+    await db.query("UPDATE public.clientes_provisionales SET enlazado_a='123', enlazado_por_id='u2', enlazado_por_nombre='Luis', enlazado_at=now() WHERE id='prov-1'")
+    expect((await db.query('SELECT enlazado_a FROM public.clientes_provisionales')).rows).toEqual([{ enlazado_a: '123' }])
+  })
+
+  it('equipos gana pendiente_validar, sin relleno: las filas previas quedan en NULL (D5)', async () => {
+    const db = await freshDb()
+    await db.query("INSERT INTO equipos (id, serial) VALUES ('e1','S-1')")
+    expect((await db.query('SELECT pendiente_validar FROM equipos')).rows).toEqual([{ pendiente_validar: null }])
+    await db.query("UPDATE equipos SET pendiente_validar = true WHERE id='e1'")
+    expect((await db.query('SELECT pendiente_validar FROM equipos')).rows).toEqual([{ pendiente_validar: true }])
+  })
+
+  it('la ALTER de equipos va sin calificar y el CREATE de la tabla nueva, calificado', () => {
+    const alter = limpias().filter((s) => /pendiente_validar/.test(s))
+    expect(alter).toHaveLength(1)
+    expect(alter[0]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean$/)
+    const create = limpias().filter((s) => /clientes_provisionales/.test(s) && /^CREATE TABLE/.test(s))
+    expect(create).toHaveLength(1)
+    expect(create[0]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.clientes_provisionales \(/)
+  })
+
+  it('la vista public.clients es idéntica a la de 132d25f y no menciona provisionales (RQ-ZS-16)', () => {
+    const vista = limpias().filter((s) => /^CREATE OR REPLACE VIEW public\.clients AS/.test(s))
+    expect(vista).toHaveLength(1)
+    expect(vista[0]).toBe(VISTA_CLIENTS_132D25F)
+    expect(vista[0]).not.toMatch(/clientes_provisionales|provisional/i)
   })
 })

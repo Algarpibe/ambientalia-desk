@@ -182,8 +182,8 @@ export function updateRole(id: string, patch: Partial<{ name: string; areas: str
   }).then((r) => json<Role>(r))
 }
 
-export function searchClients(q: string): Promise<ClientLite[]> {
-  return fetch(`/api/clients?search=${encodeURIComponent(q)}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
+export function searchClients(q: string, provisionales = false): Promise<ClientLite[]> {
+  return fetch(`/api/clients?search=${encodeURIComponent(q)}${provisionales ? '&provisionales=1' : ''}`, { credentials: 'include' }).then((r) => json<ClientLite[]>(r))
 }
 
 /**
@@ -283,15 +283,15 @@ export function searchEquipos(q: string, clientId?: string | null): Promise<Equi
   return fetch(`/api/equipos?${p.toString()}`, { credentials: 'include' }).then((r) => json<EquipoLite[]>(r))
 }
 
-export async function createTicket(payload: CreateTicketPayload): Promise<TicketDetail> {
+export async function createTicket(payload: CreateTicketPayload & CuerpoAltaManual): Promise<TicketDetail> {
   const res = await fetch('/api/tickets', {
     method: 'POST', credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string }
-    throw new Error(body.error || `HTTP ${res.status}`)
+    const body = (await res.json().catch(() => ({}))) as { error?: string; candidatos?: CandidatoNit[] }
+    throw Object.assign(new Error(body.error || `HTTP ${res.status}`), body.candidatos ? { candidatos: body.candidatos } : {}) // el 409 de P-B lleva los candidatos
   }
   return res.json() as Promise<TicketDetail>
 }
@@ -769,3 +769,28 @@ export function listarCertificadosFabrica(ticketId: string): Promise<Certificado
 }
 export const urlCertificadoFabrica = (ticketId: string, pdfId: string): string =>
   `/api/tickets/${encodeURIComponent(ticketId)}/certificado-fabrica/${encodeURIComponent(pdfId)}`
+
+/** Alta manual de equipo y cliente desconocidos (F1B-15). Sólo transporte: lo que se exige y se rechaza lo decide el servidor. */
+export interface CandidatoNit { id: string; name: string }
+export interface CuerpoAltaManual {
+  clienteManual?: { razonSocial: string; nit: string; contacto: string; telefono: string; correo: string; motivo: string }
+  equipoManual?: { serial: string; confirmacionSerial: string; modeloId?: string; marca?: string; modeloTexto?: string; tipo?: string; motivo: string; fechaFacturaCompra?: string }
+}
+
+/** Los candidatos de Books que el servidor adjunta al 409 de P-B (el NIT ya está en Books); vacío si el error no los trae. */
+export function candidatosDelError(e: unknown): CandidatoNit[] {
+  const c = (e as { candidatos?: unknown } | null)?.candidatos
+  return Array.isArray(c) ? (c as CandidatoNit[]) : []
+}
+
+/** Enlaza un cliente provisional con un contacto de Books (RQ-TC-32). El permiso lo impone el servidor. */
+export async function enlazarClienteProvisional(provisionalId: string, contactId: string): Promise<void> {
+  const res = await fetch(`/api/clientes-provisionales/${encodeURIComponent(provisionalId)}/enlace`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contactId }) })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+}
+
+/** Valida un equipo de alta manual (RQ-HV-18). El permiso lo impone el servidor. */
+export async function validarEquipoManual(equipoId: string): Promise<void> {
+  const res = await fetch(`/api/equipos/${encodeURIComponent(equipoId)}/validacion`, { method: 'POST', credentials: 'include' })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+}

@@ -10,7 +10,7 @@
  * del equipo (`equipos.ts`), que compone su cronología con las mismas reglas de orden y de jsonb.
  */
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { FROM_STATUS_CREACION, CLAVE_DERIVACION, PREFIJO_TICKET_APP, ETIQUETA_CLAVE_PROPIA } from '@ambientalia/shared'
+import { FROM_STATUS_CREACION, CLAVE_DERIVACION, PREFIJO_TICKET_APP, ETIQUETA_CLAVE_PROPIA } from '@ambientalia/shared'; import { obtenerCliente } from '../services/clientes'
 
 /** Qué hacer con Zoho antes de responder. */
 export type PlanSyncZoho = 'no' | 'ahora' | 'en-segundo-plano'
@@ -169,9 +169,9 @@ export async function datosTicket(db: Queryable, ticketId: string): Promise<Dato
 
   let cliente: string | null = null
   if (ticket.client_id) {
-    const c = await db.query('SELECT name, company_name FROM clients WHERE id = $1', [ticket.client_id])
-    const fila = c.rows[0] as Record<string, unknown> | undefined
-    cliente = (fila?.company_name as string) || (fila?.name as string) || null
+    const c = await obtenerCliente(db, String(ticket.client_id))
+    const fila = c ?? undefined
+    cliente = fila?.companyName || fila?.name || null
   }
 
   return { ticket, cliente }

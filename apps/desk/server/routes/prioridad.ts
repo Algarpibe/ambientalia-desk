@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
-import { getActiveTickets } from '@ambientalia/zoho-sync/db/repo'
+import { getActiveTickets } from '../db/ticketsConCliente'
 import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, prioridadTop5, esDeMisTickets } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'

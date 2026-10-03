@@ -1,5 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { AnalisisRow } from '@ambientalia/shared'
+import { esIdProvisional, type AnalisisRow } from '@ambientalia/shared'
+import { nombresProvisionales } from './db/clientesProvisionales'
 
 function toIso(v: unknown): string | null {
   if (v == null) return null
@@ -10,20 +11,23 @@ function toIso(v: unknown): string | null {
 export async function getAnalisisRows(db: Queryable): Promise<AnalisisRow[]> {
   const r = await db.query(
     `SELECT t.status, t.status_type, t.created_time, t.closed_time, t.fecha_finalizacion_st, t.dias_entrega, t.marca, t.tipo_servicio, t.classification,
-            COALESCE(a.name, cl.name) AS cliente, g.name AS tecnico
+            COALESCE(a.name, cl.name) AS cliente, t.client_id, g.name AS tecnico
      FROM tickets t
      LEFT JOIN accounts a ON t.account_id=a.id
      LEFT JOIN clients cl ON t.client_id=cl.id
      LEFT JOIN agents g ON t.assignee_id=g.id`,
   )
-  return (r.rows as any[]).map((x) => ({
+  const filas = r.rows as any[]
+  // Segunda consulta (F1B-15, RQ-TC-34): el cliente provisional no está en la vista `clients` del JOIN.
+  const provisionales = await nombresProvisionales(db, filas.filter((x) => !x.cliente && esIdProvisional(x.client_id)).map((x) => x.client_id))
+  return filas.map((x) => ({
     status: x.status, statusType: x.status_type ?? null,
     createdAt: toIso(x.created_time),
     finalizadoAt: toIso(x.fecha_finalizacion_st ?? x.closed_time),
     diasEntrega: x.dias_entrega != null && x.dias_entrega !== '' ? Number(x.dias_entrega) : null,
     marca: x.marca ?? null,
     tipoServicio: x.tipo_servicio ?? null, clasificaciones: x.classification ?? null,
-    cliente: x.cliente ?? null, tecnico: x.tecnico ?? null,
+    cliente: x.cliente ?? provisionales.get(x.client_id) ?? null, tecnico: x.tecnico ?? null,
   }))
 }
 

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import type { CambioEquipo, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition } from '@ambientalia/shared'
-import { ETIQUETA_CAMPO_COMERCIAL, urlSegura } from '@ambientalia/shared'
+import { ETIQUETA_CAMPO_COMERCIAL, urlSegura, puedeEditarCamposRestringidos } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchEquipoHistorial } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
 import { Adjuntos } from './Adjuntos'
 import { FichaTecnica } from './FichaTecnica'
-import { EquipoForm } from './EquiposAdmin'
+import { EquipoForm } from './EquiposAdmin'; import { AccionesAltaPendiente } from './AltaManual'
 
 function fmtFecha(s: string | null): string {
   if (!s) return ''
@@ -150,7 +150,7 @@ function FilaCambio({ c }: { c: CambioEquipo }) {
   const nuevo = c.nuevoTexto ?? c.nuevo ?? '—'
   return (
     <li className="text-[12px] text-slate-600 py-2 border-b border-slate-100 last:border-0">
-      <span className="font-bold text-slate-700">{ETIQUETA_CAMPO_COMERCIAL[c.campo]}</span>
+      <span className="font-bold text-slate-700">{(ETIQUETA_CAMPO_COMERCIAL as Record<string, string>)[c.campo] ?? c.campo}</span>
       <span className="text-slate-400"> · {c.usuarioNombre} · {fmtFechaHora(c.fecha)}</span>
       <div className="mt-0.5">{anterior} → {nuevo}</div>
     </li>
@@ -203,7 +203,7 @@ export function HojaDeVida({ equipoId, onClose }: { equipoId: string; onClose?: 
               <h2 className="text-[16px] font-bold text-slate-800">{eq.marca} {eq.modelo} <span className="text-slate-400 font-normal">· {eq.tipo}</span></h2>
               <button type="button" onClick={() => setEditando(true)} className="text-[12px] text-blue-600 shrink-0">Editar</button>
             </div>
-            <div className="text-[13px] text-slate-500 mt-1">Serie <b className="text-slate-700">{eq.serial}</b> · Cliente {eq.clienteNombre ?? '—'} · {eq.active ? 'Activo' : 'Inactivo'}</div>
+            <div className="text-[13px] text-slate-500 mt-1">Serie <b className="text-slate-700">{eq.serial}</b> · Cliente {eq.clienteNombre ?? '—'} · {eq.active ? 'Activo' : 'Inactivo'}</div>{/* F1B-15: aviso de alta manual pendiente; Enlazar y Validar sólo a Comercial o admin (el servidor impone el 403) */}<AccionesAltaPendiente equipo={eq} puede={!!user && puedeEditarCamposRestringidos(user.areas, user.isAdmin)} onHecho={reload} />
             {/* Los seis campos comerciales (F1B-02), con '—' explícito si están vacíos: no son
                 obligatorios (RQ-HV-01) y esta cabecera no puede fallar por su ausencia. Las fechas
                 se enseñan TAL CUAL (AAAA-MM-DD), sin `fmtFecha` — que desfasa un día en UTC-5. */}

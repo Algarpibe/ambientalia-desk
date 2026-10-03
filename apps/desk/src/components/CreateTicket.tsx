@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite, Catalogo } from '@ambientalia/shared'
 import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
-import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo } from '../api/client'
-import { CrearRemision } from './CrearRemision'
+import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo, candidatosDelError, type CandidatoNit } from '../api/client'
+import { CrearRemision } from './CrearRemision'; import { AltaManualCliente, AltaManualEquipo, CandidatosNit } from './AltaManual'; import { ALTA_MANUAL_VACIA, cuerpoAltaManual, modeloManual } from '../lib/altaManualEstado'
 
 export function CreateTicket({ onClose, onCreated }: {
   onClose: () => void
@@ -33,7 +33,7 @@ export function CreateTicket({ onClose, onCreated }: {
 
   const [equipoQuery, setEquipoQuery] = useState('')
   const [equipoResults, setEquipoResults] = useState<EquipoLite[]>([])
-  const [equipo, setEquipo] = useState<EquipoLite | null>(null)
+  const [equipo, setEquipo] = useState<EquipoLite | null>(null); const [manual, setManual] = useState(ALTA_MANUAL_VACIA) // alta manual (F1B-15): el servidor exige y rechaza, esto sólo lo muestra
   const [buscandoEquipo, setBuscandoEquipo] = useState(false)
   /** Con cliente elegido, el buscador se acota SIEMPRE a sus equipos: no hay forma de colar el de
    *  otra empresa. Y al ir acotada, la caja vacía ya es una consulta útil (basta abrir el campo);
@@ -52,7 +52,7 @@ export function CreateTicket({ onClose, onCreated }: {
    * servidor los exige igual (`exigirEquipoNuevo`, guarda 1)—; el resto, opcional, con la misma
    * validación que la hoja de vida (F1B-02, `camposHojaDeVida`).
    */
-  const equipoNuevoVisible = clasificaciones === 'Equipo nuevo' && !equipo
+  const equipoManualActivo = manual.equipo && !equipo; const clienteManualActivo = manual.cliente && !clientId; const equipoNuevoVisible = clasificaciones === 'Equipo nuevo' && !equipo && !equipoManualActivo
   const [serialNuevo, setSerialNuevo] = useState('')
   const [modeloNuevoId, setModeloNuevoId] = useState('')
   const [fechaFacturaCompra, setFechaFacturaCompra] = useState('')
@@ -65,11 +65,11 @@ export function CreateTicket({ onClose, onCreated }: {
   const [mantenedorId, setMantenedorId] = useState<string | null>(null)
   const [catalogo, setCatalogo] = useState<Catalogo | null>(null)
   useEffect(() => {
-    if (!equipoNuevoVisible || catalogo) return
+    if ((!equipoNuevoVisible && !equipoManualActivo) || catalogo) return
     let alive = true
     getCatalogo().then((c) => { if (alive) setCatalogo(c) }).catch(() => {})
     return () => { alive = false }
-  }, [equipoNuevoVisible, catalogo])
+  }, [equipoNuevoVisible, equipoManualActivo, catalogo])
   useEffect(() => {
     if (mantenedorId) { setMantenedorResults([]); return }
     if (mantenedorQuery.trim().length < 2) { setMantenedorResults([]); return }
@@ -83,7 +83,7 @@ export function CreateTicket({ onClose, onCreated }: {
   const [subjectOverride, setSubjectOverride] = useState<string | null>(null)
   const [codigoOverride, setCodigoOverride] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState(false); const [candidatos, setCandidatos] = useState<CandidatoNit[]>([])
   // Previsión, no reserva: el número definitivo lo asigna la secuencia al crear.
   const [numeroPrevisto, setNumeroPrevisto] = useState<number | null>(null)
   useEffect(() => {
@@ -129,7 +129,7 @@ export function CreateTicket({ onClose, onCreated }: {
     if (clientId) { setClientResults([]); return }
     if (clientQuery.trim().length < 2) { setClientResults([]); return }
     let alive = true
-    searchClients(clientQuery).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
+    searchClients(clientQuery, true).then((r) => { if (alive) setClientResults(r) }).catch(() => {})
     return () => { alive = false }
   }, [clientQuery, clientId])
   // `buscandoEquipo` evita anunciar "no hay coincidencias" mientras la búsqueda está en vuelo.
@@ -155,11 +155,11 @@ export function CreateTicket({ onClose, onCreated }: {
   // alcanzan para anticipar el código y el asunto. El servidor no deriva de aquí: acepta el valor
   // recibido igual que hoy (`ticketService.ts:101-102`).
   const codigo = codigoOverride ?? buildCodigoServicio({
-    prefijo, serie: equipo?.serial ?? serialNuevo.trim(), modelo: equipo?.modelo ?? modeloNuevoElegido?.nombre ?? '', fecha: new Date(),
+    prefijo, serie: equipo?.serial ?? (serialNuevo.trim() || (equipoManualActivo ? manual.e.serial.trim() : '')), modelo: equipo?.modelo ?? modeloNuevoElegido?.nombre ?? (equipoManualActivo ? modeloManual(manual, catalogo).nombre : ''), fecha: new Date(),
   })
   const subject = useMemo(
-    () => subjectOverride ?? buildSubject({ cliente: clientName, tipoEquipo: equipo?.tipo ?? modeloNuevoElegido?.tipoNombre ?? '', codigo }),
-    [subjectOverride, clientName, equipo, modeloNuevoElegido, codigo],
+    () => subjectOverride ?? buildSubject({ cliente: clientName || (clienteManualActivo ? manual.c.razonSocial.trim() : ''), tipoEquipo: equipo?.tipo ?? modeloNuevoElegido?.tipoNombre ?? (equipoManualActivo ? modeloManual(manual, catalogo).tipo : ''), codigo }),
+    [subjectOverride, clientName, equipo, modeloNuevoElegido, codigo, manual, catalogo, clienteManualActivo, equipoManualActivo],
   )
 
   function pickOv(ov: SalesOrderLite) {
@@ -217,9 +217,9 @@ export function CreateTicket({ onClose, onCreated }: {
   }
 
   async function submit(e: React.FormEvent) {
-    e.preventDefault(); setBusy(true); setError(null)
+    e.preventDefault(); setBusy(true); setError(null); setCandidatos([])
     try {
-      if (!equipo && !equipoNuevoCompleto) {
+      if (!equipo && !equipoManualActivo && !equipoNuevoCompleto) {
         setError(equipoNuevoVisible ? 'Completa serie, modelo y fecha de factura de compra del equipo nuevo' : 'Selecciona un equipo registrado')
         setBusy(false); return
       }
@@ -229,7 +229,7 @@ export function CreateTicket({ onClose, onCreated }: {
         equipoId: equipo?.id ?? '',
         tipoServicio, clasificaciones, prefijo, ...(modalidadVisible ? { modalidad } : {}),
         prioridad: prioridad || undefined,
-        subject, codigoServicio: codigo,
+        subject, codigoServicio: codigo, ...cuerpoAltaManual(manual, { cliente: clienteManualActivo, equipo: equipoManualActivo, enEquipoNuevo: clasificaciones === 'Equipo nuevo' }),
         ...(equipoNuevoCompleto ? { equipoNuevo: {
           serial: serialNuevo.trim(), modeloId: modeloNuevoId, fechaFacturaCompra,
           fechaAdquisicion: fechaAdquisicion || undefined, finGarantia: finGarantia || undefined,
@@ -240,7 +240,7 @@ export function CreateTicket({ onClose, onCreated }: {
       // Con remisión, la ventana NO se cierra: pasa al paso 2. Sin ella, termina aquí.
       if (conRemision) setCreado(creado.id)
       else onCreated(creado.id)
-    } catch (err) { setError(err instanceof Error ? err.message : String(err)) }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); setCandidatos(candidatosDelError(err)) }
     finally { setBusy(false) }
   }
 
@@ -305,7 +305,7 @@ export function CreateTicket({ onClose, onCreated }: {
           <input className={`${field} w-full ${clienteBloqueado ? 'bg-slate-50 text-slate-600 cursor-default' : ''}`}
             placeholder="Buscar cliente…" value={clientQuery} readOnly={clienteBloqueado}
             {...(clienteBloqueado ? {} : comboProps('cliente'))}
-            onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value); setOpenCombo('cliente') }} required={!clientId} />
+            onChange={(e) => { setClientQuery(e.target.value); setClientId(null); setClientName(e.target.value); setOpenCombo('cliente') }} required={!clientId && !clienteManualActivo} />
           {equipo && !clientId && (
             <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
               El equipo figura a nombre de <b>{equipo.clienteNombre}</b>, que no coincide con ningún cliente de Books.
@@ -316,12 +316,12 @@ export function CreateTicket({ onClose, onCreated }: {
             <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {clientResults.map((c) => (
                 <li key={c.id}><button type="button" onClick={() => pickClient(c)} className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-slate-100">
-                  {c.name} {c.nit ? `· NIT ${c.nit}` : ''}
+                  {c.name} {c.nit ? `· NIT ${c.nit}` : ''}{c.provisional ? <span className="ml-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1">provisional</span> : null}
                 </button></li>
               ))}
             </ul>
           )}
-        </div>
+        <AltaManualCliente m={manual} setM={setManual} visible={!clientId} /></div>
 
         <div className="relative">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Equipo * (por serie / cliente / modelo)</label>
@@ -329,7 +329,7 @@ export function CreateTicket({ onClose, onCreated }: {
               seleccionar uno del listado (el servidor exige `equipoId` y responde 422 si no). */}
           <input className={`${field} w-full ${equipoQuery.trim() && !equipo ? 'border-amber-400' : ''}`} placeholder="Buscar equipo registrado…" value={equipoQuery}
             {...comboProps('equipo')}
-            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null); setOpenCombo('equipo') }} required={!equipo && !equipoNuevoVisible} />
+            onChange={(e) => { setEquipoQuery(e.target.value); setEquipo(null); setOpenCombo('equipo') }} required={!equipo && !equipoNuevoVisible && !equipoManualActivo} />
           {openCombo === 'equipo' && equipoResults.length > 0 && (
             <ul {...keepFocus} className="absolute z-10 bg-white border border-slate-200 rounded w-full max-h-44 overflow-auto shadow">
               {equipoResults.map((e) => (
@@ -362,7 +362,7 @@ export function CreateTicket({ onClose, onCreated }: {
           {!equipo && !equiposAcotados && equipoQuery.trim().length === 1 && (
             <div className="mt-1 text-[12px] text-slate-400">Escribe al menos 2 caracteres para buscar.</div>
           )}
-        </div>
+        <AltaManualEquipo m={manual} setM={setManual} catalogo={catalogo} enEquipoNuevo={clasificaciones === 'Equipo nuevo'} visible={!equipo} /></div>
 
         {equipoNuevoVisible && (
           <div className="border border-slate-200 rounded p-3 flex flex-col gap-2">
@@ -436,7 +436,7 @@ export function CreateTicket({ onClose, onCreated }: {
           <input className={field} value={subject} onChange={(e) => setSubjectOverride(e.target.value)} />
         </div>
 
-        {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}
+        {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}<CandidatosNit candidatos={candidatos} onElegir={(c) => { pickClient({ id: c.id, name: c.name }); setManual((s) => ({ ...s, cliente: false })); setCandidatos([]); setError(null) }} />
 
         {/* El equipo suele llegar en el mismo acto de abrir el ticket. Sin esto había que crear el
             ticket, buscarlo y entrar en él para remisionar, justo en el momento de más prisa. */}

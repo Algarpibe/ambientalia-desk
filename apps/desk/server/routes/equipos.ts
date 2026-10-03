@@ -1,6 +1,6 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { getClient } from '@ambientalia/zoho-sync/books/repo'
+import { getClient } from '@ambientalia/zoho-sync/books/repo'; import { clienteParaEquipo } from '../services/clientes'
 import { urlSegura, compuestoDelCuerpo, cambiosComerciales, CAMPOS_COMERCIALES_RESTRINGIDOS, puedeEditarCamposRestringidos } from '@ambientalia/shared'
 import { searchEquipos, createEquipo, updateEquipo, setEquipoActive, listEquiposManage, getEquipoFull, deleteEquipo, getEquipoHistorial, registrarEdicion, listarCambiosEquipo } from '../db/equipos'
 import { getModelo } from '../db/catalogo'
@@ -78,7 +78,7 @@ export function registerEquipoRoutes(app: Express, deps: { db: Queryable }): voi
       const patch: Record<string, unknown> = {}
       if (b.serial !== undefined) patch.serial = String(b.serial).trim()
       if (b.clientId !== undefined && b.clientId) {
-        const cliente = await getClient(db, String(b.clientId))
+        const cliente = await clienteParaEquipo(db, String(b.clientId), actual.clientId)
         if (!cliente) { res.status(422).json({ error: 'Cliente no encontrado' }); return }
         patch.clientId = String(b.clientId); patch.clienteNombre = cliente.name
       }

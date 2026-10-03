@@ -1,6 +1,6 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { searchArticulos, categoriasDisponibles, searchClients, getClient, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
+import { searchArticulos, categoriasDisponibles, searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'; import { buscarClientes, obtenerCliente } from '../services/clientes'
 import { getContacts, getAccounts, getContactDetail, getAccountDetail } from '../db/directory'
 import { getAllActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth } from '../auth/middleware'
@@ -13,7 +13,7 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
   // Búsqueda de clientes/órdenes de venta (Books) para los selectores de creación de tickets.
   // Requieren sesión: son datos de negocio. Cada uno con su propio requireAuth (no van bajo /api/tickets).
   app.get('/api/clients', requireAuth(db), asyncHandler(async (req, res) => {
-    res.json(await searchClients(db, String(req.query.search ?? '')))
+    res.json(await buscarClientes(db, String(req.query.search ?? ''), req.query.provisionales === '1'))
   }))
 
   /**
@@ -23,7 +23,7 @@ export function registerDirectoryRoutes(app: Express, deps: { db: Queryable }): 
    * id (`books/repo.ts:115-116` documenta ese filtro como deliberado sólo en la búsqueda por texto).
    */
   app.get('/api/clients/:id', requireAuth(db), asyncHandler(async (req, res) => {
-    const c = await getClient(db, String(req.params.id))
+    const c = await obtenerCliente(db, String(req.params.id))
     if (!c) { res.status(404).json({ error: 'No encontrado' }); return }
     res.json(c)
   }))

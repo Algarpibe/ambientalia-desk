@@ -92,7 +92,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | **F1B-12** | **Calendario laboral** (jornada, festivos, día hábil) | S | antes del 14/12 | cerrada por archivo | `decision/calendario-habil` |
 | **F1B-13** | **Ficha de garantía con el proveedor** (reclamación al fabricante vinculada a ticket y OVI) | S | antes del 14/12 | pendiente | `decision/anexo-7-garantia-proveedor` |
 | **F1B-14** | **Alta y edición del equipo** | S–M | antes del 14/12 | cerrada por archivo | `decision/equipo-nuevo-alta-en-ticket` · `decision/edicion-datos-comerciales-equipo` |
-| **F1B-15** | **Alta manual de equipo y cliente desconocidos** (§D) | M | antes del 14/12 | pendiente | `decision/orden-ejecucion-encargo-01-10` (b) |
+| **F1B-15** | **Alta manual de equipo y cliente desconocidos** (§D) | M | antes del 14/12 | cerrada por archivo (`c557273`) | `decision/orden-ejecucion-encargo-01-10` (b) |
 | **F1B-16** | **Remisiones sin ticket** (§D) | L | antes del 14/12 si se confirma; si no, 2027 | condicionada | `decision/trabajo-del-30-09-sin-fila` (1) |
 | **F1B-17** | **Remisión de salida en la entrega, con su guarda y sus fotos** (§D) | M | antes del 14/12 si se confirma; si no, 2027 | condicionada | `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (3) |
 | **F1B-18** | **Aviso «En garantía»** calculado, y «Garantía sin dato» | S | reserva 1 — **fuera hasta que el margen real lo permita** (§K) | reserva | `decision/trabajo-del-30-09-sin-fila` (2) |

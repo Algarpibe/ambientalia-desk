@@ -84,7 +84,7 @@ pendiente»). Queda fuera.
 | `mapa-blueprint` | `openspec/specs/mapa-blueprint/spec.md:112-124` | genérico (leyenda por área); sin requisito que nombre la arista. **Sin delta** |
 | `derivacion-avisos` | `openspec/specs/derivacion-avisos/spec.md:134` (RQ-AV-04) | genérico; el requisito no cambia |
 
-Citas fechadas que NO se tocan (caso B): `openspec/specs/transitions-st/spec.md:1545`, todo
+Citas fechadas que NO se tocan (caso B): `openspec/specs/transitions-st/spec.md:1545` en `4984c3b`, todo
 `openspec/changes/archive/**`, `docs/sdd/Estado_As-Built_2026-09-09.md`.
 
 ## 7 · Maestro

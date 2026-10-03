@@ -39,7 +39,7 @@ export async function upsertEquipo(db: Queryable, r: EquipoRow): Promise<void> {
 function toLite(r: any): EquipoLite {
   return {
     id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined,
-    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined, codigoInterno: r.codigo_interno ?? undefined,
+    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined, codigoInterno: r.codigo_interno ?? undefined, pendienteValidar: r.pendiente_validar === true ? true : undefined,
   }
 }
 
@@ -75,7 +75,7 @@ export async function searchEquipos(db: Queryable, q: string, clientId?: string 
 }
 
 export async function getEquipo(db: Queryable, id: string): Promise<EquipoLite | null> {
-  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,codigo_interno FROM equipos WHERE id=$1', [id])
+  const r = await db.query('SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,codigo_interno,pendiente_validar FROM equipos WHERE id=$1', [id])
   return r.rows[0] ? toLite(r.rows[0]) : null
 }
 
@@ -101,7 +101,7 @@ export interface EquipoInput {
   finGarantia?: string | null
   codigoInterno?: string | null
   mantenedorId?: string | null
-  driveUrl?: string | null; compuesto?: string | null
+  driveUrl?: string | null; compuesto?: string | null; pendienteValidar?: boolean
 }
 
 function toFull(r: any): EquipoFull {
@@ -112,7 +112,7 @@ function toFull(r: any): EquipoFull {
     codigoInterno: r.codigo_interno ?? undefined,
     fechaAdquisicion: fechaSolo(r.fecha_adquisicion), fechaFacturaCompra: fechaSolo(r.fecha_factura_compra),
     finGarantia: fechaSolo(r.fin_garantia), mantenedorId: r.mantenedor_id ?? undefined,
-    mantenedorNombre: r.mantenedor_nombre ?? undefined, driveUrl: r.drive_url ?? undefined, compuesto: r.compuesto ?? undefined,
+    mantenedorNombre: r.mantenedor_nombre ?? undefined, driveUrl: r.drive_url ?? undefined, compuesto: r.compuesto ?? undefined, pendienteValidar: r.pendiente_validar === true ? true : undefined,
   }
 }
 
@@ -120,12 +120,12 @@ export async function createEquipo(db: Queryable, input: EquipoInput): Promise<s
   const id = 'eq-' + randomUUID(); const compuesto = input.compuesto !== undefined ? input.compuesto : await compuestoDelModelo(db, input.modeloId)
   await db.query(
     `INSERT INTO equipos (id,serial,marca,modelo,tipo,cliente_nombre,client_id,modelo_id,
-       fecha_adquisicion,fecha_factura_compra,fin_garantia,codigo_interno,mantenedor_id,drive_url,compuesto,
+       fecha_adquisicion,fecha_factura_compra,fin_garantia,codigo_interno,mantenedor_id,drive_url,compuesto,pendiente_validar,
        source,active,updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'app',true,now())`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'app',true,now())`,
     [id, input.serial, input.marca, input.modelo, input.tipo, input.clienteNombre, input.clientId, input.modeloId,
       input.fechaAdquisicion ?? null, input.fechaFacturaCompra ?? null, input.finGarantia ?? null,
-      input.codigoInterno ?? null, input.mantenedorId ?? null, input.driveUrl ?? null, compuesto],
+      input.codigoInterno ?? null, input.mantenedorId ?? null, input.driveUrl ?? null, compuesto, input.pendienteValidar ? true : null],
   )
   return id
 }
@@ -160,9 +160,9 @@ export async function deleteEquipo(db: Queryable, id: string): Promise<void> {
 }
 
 /** Columnas + JOIN comunes a `getEquipoFull` y `listEquiposManage`: sin séptima columna propia,
- *  el nombre del mantenedor se deriva de `clients` (precedente: `analisis.ts:16`). */
+ *  el nombre del mantenedor se deriva de `clients` (precedente: `analisis.ts:17`). */
 const SELECT_EQUIPO_FULL = `SELECT e.id,e.serial,e.marca,e.modelo,e.tipo,e.cliente_nombre,e.client_id,e.active,e.modelo_id,
-       e.fecha_adquisicion,e.fecha_factura_compra,e.fin_garantia,e.codigo_interno,e.mantenedor_id,e.drive_url,e.compuesto,
+       e.fecha_adquisicion,e.fecha_factura_compra,e.fin_garantia,e.codigo_interno,e.mantenedor_id,e.drive_url,e.compuesto,e.pendiente_validar,
        cl.name AS mantenedor_nombre
      FROM equipos e LEFT JOIN clients cl ON e.mantenedor_id = cl.id`
 

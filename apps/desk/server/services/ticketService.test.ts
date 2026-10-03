@@ -1180,3 +1180,85 @@ describe('prioridad-top5-cliente · TC24-16 · un ticket sin client_id no hereda
     expect((await db.query("SELECT priority FROM tickets WHERE id='t-sin-cliente'")).rows[0].priority).toBe('Low')
   })
 })
+
+/**
+ * F1B-15 · RQ-TS-32 · «Habilitar Servicio» no pasa con el cliente provisional o el equipo pendiente (escalón B).
+ * La guarda va tras el permiso de área y ANTES de los obligatorios (posición: P1 y P2, regla de mutación 1).
+ */
+describe('F1B-15 · RQ-TS-32 · guarda de alta pendiente en habilitar_servicio', () => {
+  const VALORES_OK = { 'Orden de Venta': 'OV-PEND-1', Serial: '18A20070' }
+  async function provisional(id = 'prov-1', enlazadoA: string | null = null): Promise<void> {
+    await db.query(
+      "INSERT INTO public.clientes_provisionales (id, razon_social, nit, contacto, telefono, correo, motivo, enlazado_a) VALUES ($1,'Acme Provisional','800555666','Ana','300','a@p.co','m',$2)",
+      [id, enlazadoA],
+    )
+  }
+  async function equipoPendiente(pendiente: boolean): Promise<void> {
+    await db.query("INSERT INTO equipos (id, serial, marca, modelo, tipo, pendiente_validar) VALUES ('eq-1','18A20070','Grimm','EDM180C','Monitor',$1)", [pendiente ? true : null])
+  }
+  const ticketDe = (clientId: string, estado = STATUS_TICKET_CREADO, extra: Record<string, string> = {}) =>
+    ticket('t-p', estado, 8200, { client_id: clientId, equipo_id: 'eq-1', ...extra })
+  const habilitar = (user: { areas: string[]; isAdmin: boolean; name: string; id: string }, values: Record<string, unknown> = VALORES_OK) =>
+    executeTransition(db, 't-p', { transitionId: 'habilitar_servicio', values }, user)
+  const estado = async () => (await db.query("SELECT status FROM tickets WHERE id='t-p'")).rows[0].status as string
+
+  it('TS-32 · cliente provisional con equipo validado: 422 que nombra el cliente y el ticket no cambia', async () => {
+    await provisional(); await equipoPendiente(false); await ticketDe('prov-1')
+    const r = await fallo(() => habilitar(ADMIN))
+    expect(r.status).toBe(422)
+    expect(String(r.body.error)).toContain('cliente')
+    expect(String(r.body.error)).not.toContain('equipo')
+    expect(await estado()).toBe(STATUS_TICKET_CREADO)
+  })
+
+  it('TS-32 · cliente de Books con equipo pendiente: 422 que nombra el equipo', async () => {
+    await cliente('cli-1'); await equipoPendiente(true); await ticketDe('cli-1')
+    const r = await fallo(() => habilitar(ADMIN))
+    expect(r.status).toBe(422)
+    expect(String(r.body.error)).toContain('equipo')
+    expect(String(r.body.error)).not.toContain('cliente')
+  })
+
+  it('TS-32 · los dos pendientes se nombran juntos en un solo 422', async () => {
+    await provisional(); await equipoPendiente(true); await ticketDe('prov-1')
+    const r = await fallo(() => habilitar(ADMIN))
+    expect(r.status).toBe(422)
+    expect(String(r.body.error)).toContain('cliente')
+    expect(String(r.body.error)).toContain('equipo')
+  })
+
+  it('TS-32 · tras enlazar el cliente y validar el equipo la misma transición pasa', async () => {
+    await cliente('cli-1'); await provisional('prov-1', 'cli-1'); await equipoPendiente(false); await ticketDe('prov-1')
+    await habilitar(ADMIN)
+    expect(await estado()).toBe('Ingresado')
+  })
+
+  it('TS-32 · el flujo de soporte remoto no contiene la transición: la marca se ve y no bloquea', async () => {
+    await provisional(); await equipoPendiente(true); await ticketDe('prov-1', 'Solicitud Soporte', { classification: 'Soporte remoto' })
+    await executeTransition(db, 't-p', { transitionId: 'asignacion_soporte', values: { comment: 'ok' } }, ADMIN)
+    expect(await estado()).toBe('En Proceso')
+  })
+
+  it('TS-32 · sin consultas extra: otra transición con el equipo pendiente no lee la marca ni la tabla de provisionales (cliente de Books, que el listado no resuelve aparte)', async () => {
+    await cliente('cli-1'); await equipoPendiente(true); await ticketDe('cli-1', 'Solicitud Soporte', { classification: 'Soporte remoto' })
+    const sqls: string[] = []
+    const espia = { query: (sql: string, p?: unknown[]) => { sqls.push(sql); return db.query(sql, p) } } as unknown as Queryable
+    await executeTransition(espia, 't-p', { transitionId: 'asignacion_soporte', values: { comment: 'ok' } }, ADMIN)
+    expect(sqls.filter((s) => /clientes_provisionales|pendiente_validar/.test(s))).toEqual([])
+  })
+
+  it('TS-32 · POSICIÓN (P1): pendiente y usuario sin el área de Comercial → 403 y no 422 (el permiso gana)', async () => {
+    await provisional(); await equipoPendiente(true); await ticketDe('prov-1')
+    const r = await fallo(() => habilitar(SERVICIO))
+    expect(r.status).toBe(403)
+    expect(String(r.body.error)).toContain('permiso')
+  })
+
+  it('TS-32 · POSICIÓN (P2): pendiente, Comercial y obligatorios ausentes → el 422 de lo pendiente, no el de los obligatorios', async () => {
+    await provisional(); await equipoPendiente(true); await ticketDe('prov-1')
+    const r = await fallo(() => habilitar(COMERCIAL, {}))
+    expect(r.status).toBe(422)
+    expect(r.body.errors).toBeUndefined()
+    expect(String(r.body.error)).toContain('provisional')
+  })
+})

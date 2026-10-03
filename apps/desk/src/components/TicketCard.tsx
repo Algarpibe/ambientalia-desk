@@ -51,7 +51,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
                         <div className="text-[10px] text-slate-400 font-medium truncate">
                             <ClienteLink label={ticket.contactName} kind="contacto" id={ticket.contactId} onOpen={onOpenCliente} />
                             {ticket.contactName && ticket.company ? ' · ' : ''}
-                            <ClienteLink label={ticket.company} kind="empresa" id={ticket.accountId} onOpen={onOpenCliente} />
+                            <ClienteLink label={ticket.company} kind="empresa" id={ticket.accountId} onOpen={onOpenCliente} />{ticket.clienteProvisional && <span className="ml-1 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1">provisional</span>}
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
                             <span className="material-symbols-outlined text-[14px] text-red-500">schedule</span>

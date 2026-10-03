@@ -182,7 +182,7 @@ function fmtSize(n?: number | null): string {
 }
 
 export interface TicketRefs {
-  accountName?: string | null
+  accountName?: string | null; clienteProvisional?: boolean
   /** El propietario en ZOHO (`assignee_id → agents`). Nada que ver con el derivado, que es de la app. */
   agentName?: string | null
   contactName?: string | null
@@ -196,7 +196,7 @@ export interface DetailRefs extends TicketRefs { contactPhone?: string | null; e
 export function rowToTicket(row: TicketRow, refs: TicketRefs = {}): Ticket {
   const assigneeName = refs.agentName || 'Sin asignar'
   return {
-    id: row.id, number: `#${row.number}`, title: row.subject ?? '', company: refs.accountName ?? '',
+    id: row.id, number: `#${row.number}`, title: row.subject ?? '', company: refs.accountName ?? '', ...(refs.clienteProvisional ? { clienteProvisional: true } : {}),
     time: fmtTime(row.created_time), status: row.status,
     assignee: { name: assigneeName, initials: initialsOf(assigneeName) },
     // A quién le toca el trabajo, si se derivó. `null` significa «sin derivar», y NO se rellena con

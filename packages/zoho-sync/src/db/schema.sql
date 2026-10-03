@@ -652,3 +652,25 @@ CREATE TABLE IF NOT EXISTS public.certificados_fabrica (
   created_by text
 );
 CREATE INDEX IF NOT EXISTS idx_certificados_fabrica_ticket ON public.certificados_fabrica (ticket_id);
+-- Cliente provisional de F1B-15 (alta manual de cliente que no esta en Books), tabla propia de la App y NO replicada del hub.
+-- CALIFICADA (public). id es prov- mas un uuid, nunca coincide con un contact_id de Books. Sin FK, como public.ov_asociaciones.
+-- La vista public.clients no se toca, los provisionales se resuelven en apps/desk/server. AL FINAL para no desplazar citas
+CREATE TABLE IF NOT EXISTS public.clientes_provisionales (
+  id text PRIMARY KEY,
+  razon_social text NOT NULL,
+  nit text NOT NULL,
+  contacto text NOT NULL,
+  telefono text NOT NULL,
+  correo text NOT NULL,
+  motivo text NOT NULL,
+  creado_por_id text,
+  creado_por_nombre text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  enlazado_a text,
+  enlazado_por_id text,
+  enlazado_por_nombre text,
+  enlazado_at timestamptz
+);
+-- Equipo dado de alta a mano a la espera de validacion de Comercial. NULL equivale a no pendiente, sin relleno.
+-- equipos SIN CALIFICAR porque es de DESK_TABLES (migrate.ts:63-64)
+ALTER TABLE equipos ADD COLUMN IF NOT EXISTS pendiente_validar boolean;

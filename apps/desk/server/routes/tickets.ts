@@ -2,7 +2,7 @@ import type { Express, Request, Response } from 'express'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
-import { getActiveTickets, getAllTickets, getClosedTickets, countClosedTickets, getTicketWithRefs, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'
+import { countClosedTickets, setTicketRead, previewTicketNumber } from '@ambientalia/zoho-sync/db/repo'; import { getActiveTickets, getAllTickets, getClosedTickets, getTicketWithRefs } from '../db/ticketsConCliente'
 import { rowToTicket, rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getHistorialTicket } from '../db/historial'
 import { instanteUltimaTransicion } from '../db/fechasTicket'
@@ -122,7 +122,7 @@ export function registerTicketRoutes(
 
   // Crea un ticket gestionado por la app en "Ticket creado" (Subsistema C). Pivota opcionalmente en una OV de Books.
   app.post('/api/tickets', asyncHandler(async (req, res) => {
-    res.status(201).json(await createManagedTicket(db, req.body, req.user?.name ?? 'App'))
+    res.status(201).json(await createManagedTicket(db, req.body, req.user?.name ?? 'App', req.user?.id))
   }))
 
   app.get('/api/tickets/:id', asyncHandler(async (req, res) => {
