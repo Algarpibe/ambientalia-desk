@@ -133,3 +133,14 @@ export function motivoSinRemisionVigente(remisiones: readonly RemisionParaVigenc
     ? null
     : 'No se puede habilitar el servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.'
 }
+
+/**
+ * RQ-TS-33. «Remisión confirmada» = n8n ya respondió y el documento existe (`ok` u `ok_con_avisos`). **Sólo
+ * presentación: ninguna guarda la llama.** La consumen el aviso de «remisión sin confirmar» y la línea que
+ * esconde «Crear remisión» en el cliente. Es la misma noción que cuenta el recuento de `Remisión creada` del
+ * servidor (`estadoPorRemision.ts`, que sigue en SQL: dos implementaciones declaradas, RQ-RE-20). Recibe
+ * `estado: string` y no la unión: la columna no tiene `CHECK`; un estado desconocido no cuenta como confirmada.
+ */
+export function esRemisionConfirmada(r: { estado: string }): boolean {
+  return r.estado === 'ok' || r.estado === 'ok_con_avisos'
+}

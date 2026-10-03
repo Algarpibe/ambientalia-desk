@@ -59,3 +59,10 @@ describe('botonRemision', () => {
     expect(botonRemision(STATUS_TICKET_CREADO, [R({ estado: 'ok' })]).visible).toBe(false)
   })
 })
+
+// F1B-03: la mutación `vigentes.some(() => true)` de la línea 39 no caía ninguna prueba: un `error` vigente NO es confirmada, así que el botón sigue ofreciendo crear.
+describe('botonRemision: una vigente en error no cuenta como confirmada', () => {
+  it('con una remisión en error sigue ofreciendo crear otra', () => {
+    expect(botonRemision(STATUS_TICKET_CREADO, [R({ estado: 'error' })])).toEqual({ visible: true, texto: 'Crear remisión', pendienteId: null })
+  })
+})

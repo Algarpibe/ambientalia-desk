@@ -13,7 +13,7 @@ separado):
 | Pendiente de una remisión nueva | `apps/desk/server/db/remisiones.ts:67-73` | sí | sólo `pendiente` | no filtra |
 | Remisiones del panel del ticket | `apps/desk/server/db/remisiones.ts:76-79` | sí | cualquiera | no filtra |
 | Recuento que mueve `Remisión creada` | `apps/desk/server/db/estadoPorRemision.ts:43-47` | sí | `ok` u `ok_con_avisos` | no filtra |
-| `vigentes` del botón de remisión (cliente) | `apps/desk/src/lib/botonRemision.ts:33` | sí | cualquiera | `entrada` |
+| `vigentes` del botón de remisión (cliente) | `apps/desk/src/lib/botonRemision.ts:33` en `a77ec68` | sí | cualquiera | `entrada` |
 
 **La definición (a la letra de Gerencia; no es un supuesto):** `tipo = 'entrada'` y `anulada_at IS NULL` —creada y no
 anulada—, **sea cual sea su estado de envío** (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`;

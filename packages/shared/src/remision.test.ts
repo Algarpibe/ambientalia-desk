@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { perfilChecklist, PERFILES_CHECKLIST, ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, faltaFotoPorNovedad, esRemisionEntradaVigente, motivoSinRemisionVigente } from './remision'
+import { perfilChecklist, PERFILES_CHECKLIST, ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, faltaFotoPorNovedad, esRemisionEntradaVigente, motivoSinRemisionVigente, esRemisionConfirmada } from './remision'
 
 describe('perfilChecklist', () => {
   it('resuelve por MODELO antes que por marca (igual que el Switch del flujo)', () => {
@@ -132,5 +132,18 @@ describe('motivoSinRemisionVigente', () => {
   it('el texto es accionable y no menciona cliente, equipo ni provisional (P2 discrimina con un solo texto)', () => {
     expect(motivoSinRemisionVigente([])).not.toMatch(/cliente|equipo|provisional/i)
     expect(motivoSinRemisionVigente([])).toContain('Crea la remisión de entrada')
+  })
+})
+
+describe('esRemisionConfirmada (RQ-TS-33: sólo presentación; ninguna guarda la llama)', () => {
+  it.each([
+    ['ok', true],
+    ['ok_con_avisos', true],
+    ['pendiente', false],
+    ['error', false],
+    ['algo_desconocido', false],
+    ['', false],
+  ])('estado %j → %s', (estado, esperado) => {
+    expect(esRemisionConfirmada({ estado })).toBe(esperado)
   })
 })

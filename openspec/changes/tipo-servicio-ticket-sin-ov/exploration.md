@@ -41,7 +41,7 @@ Todas las líneas de este apartado son de `docs/Manifesto/Desk2.0_Documento_Maes
 
 **«Invariante 3».** `packages/shared/src/invariantesGrafo.test.ts:56-66` («Finalizado es el único estado sin transición de salida», sobre `TRANSITIONS`); réplica sobre la unión en `packages/shared/src/invariantesGrafo.test.ts:177-181`. Sólo se rompería si se retira `Ticket creado` del `from` de `habilitar_servicio` (`packages/shared/src/transitions.ts:178`, con los tres orígenes).
 
-**«Habilitar Servicio» y guardas vecinas en orden de ejecución.** Todas en `executeTransition` (`apps/desk/server/services/ticketService.ts:114-223`):
+**«Habilitar Servicio» y guardas vecinas en orden de ejecución.** Todas en `executeTransition` (`apps/desk/server/services/ticketService.ts:114-223` en `a77ec68`):
 
 | # | Guarda | Línea | HTTP | Escalón |
 |---|---|---|---|---|

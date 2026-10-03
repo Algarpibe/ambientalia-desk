@@ -10,9 +10,9 @@ está en la última sección de este documento.
 
 **Tres correcciones a la propuesta, medidas al diseñar:**
 
-1. **Hay una CUARTA implementación de «vigente», y está en el cliente.** `apps/desk/src/lib/botonRemision.ts:33` filtra
+1. **Hay una CUARTA implementación de «vigente», y está en el cliente.** `apps/desk/src/lib/botonRemision.ts:33` en `a77ec68` filtra
    `!r.anuladaAt && r.tipo === 'entrada'` y llama `vigentes` al resultado: es, letra por letra, la definición que se
-   construye. `apps/desk/src/lib/botonRemision.ts:39` añade encima una noción distinta, «confirmada» (`ok` u
+   construye. `apps/desk/src/lib/botonRemision.ts:39` en `a77ec68` añade encima una noción distinta, «confirmada» (`ok` u
    `ok_con_avisos`), que **no** es «vigente». La propuesta contaba tres implementaciones. El lote 2 hace que la línea 33
    consuma el predicado y que la 39 consuma el de «confirmada» (D6).
 2. **Las pruebas afectadas no son «unas 30 en 6 ficheros»: son 31 puntos de edición en 8 ficheros** (§5). La búsqueda
@@ -162,8 +162,8 @@ transición y no se tocan.
 `403` o el `422` de alta pendiente.
 
 **Dos verdes por la razón equivocada, si se aplicara la guarda sin el ayudante:** la prueba de
-`apps/desk/server/transiciones.test.ts:230-234` sólo mira el código `422` (hoy por la persona derivada; pasaría a serlo
-por la remisión), y el primer aserto de `apps/desk/server/services/ticketService.test.ts:929-930`. El ayudante las
+`apps/desk/server/transiciones.test.ts:230-234` en `a77ec68` sólo mira el código `422` (hoy por la persona derivada; pasaría a serlo
+por la remisión), y el primer aserto de `apps/desk/server/services/ticketService.test.ts:929-930` en `a77ec68`. El ayudante las
 devuelve a lo que dicen probar; se comprueban a mano en el apply.
 
 **Hipótesis a comprobar en el apply:** (a) en `ovAsociaciones.test.ts`, la remisión `ok` añadida en `ovLiberada` no
@@ -261,8 +261,11 @@ corregir, y quien quiera cambiarla necesita una decisión.
 - **Verificación:** el veredicto es `null` salvo en `liberacion` (`apps/desk/server/services/ticketService.ts:242`).
 
 La prueba afirma los dos primeros hechos sobre el catálogo: si `habilitar_servicio` gana una excepción de cargo o un
-campo de prioridad, se pone roja y pide su prueba de posición. Mientras tanto, mover la guarda nueva delante de cargo,
-prioridad o verificación **dentro de la línea 131** es un mutante equivalente: no lo caza nada, y se declara.
+campo de prioridad, se pone roja y pide su prueba de posición. Mientras tanto, el mutante **equivalente** (no lo caza
+nada, y se declara) es mover **el PAR** `exigirAltaValidada` + `exigirRemisionVigente` delante de cargo, de prioridad o de
+verificación. **Corregido en el lote 2, medido en el lote 1:** mover SÓLO `exigirRemisionVigente` delante de ellos la deja
+delante de `exigirAltaValidada` y **P2 se pone roja** (5 rojas); mover el par entero deja 251 de 251 verdes en las seis
+suites que llegan. La primera redacción de este párrafo decía que bastaba mover la guarda sola: era falso.
 
 **Regla 2.** No hay guardián de fichero de datos en este cambio. Su equivalente es mutar el predicado con filas sucias,
 no retocar la guarda. Las pruebas ensucian los datos vigilados (filas de `remisiones`) y cada mutación del predicado

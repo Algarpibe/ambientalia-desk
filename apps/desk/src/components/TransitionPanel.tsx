@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicion, puedeFijarPrioridadTop5, motivoAltaPendiente } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'
+import { puedeEjecutarTransicion, puedeFijarPrioridadTop5, motivoAltaPendiente } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -67,7 +67,7 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
 
   // Las personas activas se piden UNA vez al montar: son pocas y no cambian mientras dura el panel.
   const [personas, setPersonas] = useState<PersonaLite[]>([])
-  useEffect(() => { getPersonas().then(setPersonas).catch(() => {}) }, []); const habilita = transitions.some((t) => t.id === 'habilitar_servicio'); const [equipoPendiente, setEquipoPendiente] = useState(false); useEffect(() => { if (!equipoId || !habilita) { setEquipoPendiente(false); return } let vivo = true; fetchEquipo(equipoId).then((e) => { if (vivo) setEquipoPendiente(e.pendienteValidar === true) }).catch(() => {}); return () => { vivo = false } }, [equipoId, habilita]); const motivoAlta = motivoAltaPendiente({ clienteProvisional: !!clienteProvisional, equipoPendiente }) // F1B-15: el equipo se consulta sólo con «Habilitar Servicio» a la vista; el predicado es el de shared
+  useEffect(() => { getPersonas().then(setPersonas).catch(() => {}) }, []); const habilita = transitions.some((t) => t.id === 'habilitar_servicio'); const [equipoPendiente, setEquipoPendiente] = useState(false); useEffect(() => { if (!equipoId || !habilita) { setEquipoPendiente(false); return } let vivo = true; fetchEquipo(equipoId).then((e) => { if (vivo) setEquipoPendiente(e.pendienteValidar === true) }).catch(() => {}); return () => { vivo = false } }, [equipoId, habilita]); const motivoAlta = motivoAltaPendiente({ clienteProvisional: !!clienteProvisional, equipoPendiente }); const motivoBloqueo = motivoNoHabilitar(motivoAlta, remisiones); const avisoSinConfirmar = avisoRemisionSinConfirmar(remisiones) // F1B-15: el equipo se consulta sólo con «Habilitar Servicio» a la vista; el predicado es el de shared
   // Al derivado actual se le conserva su opción aunque ya no esté activo: si no, el desplegable se
   // pintaría en blanco y confirmar la etapa borraría la derivación sin que nadie lo pidiera.
   const opciones = useMemo(() => opcionesPersona(personas, derivadoActual ?? null), [personas, derivadoActual])
@@ -127,14 +127,14 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
           <span className="text-[11px] text-slate-400">Sin transiciones disponibles para tu rol en el estado «{status}».</span>
         ) : transitions.map((t) => (
           <button
-            key={t.id} disabled={t.id === 'habilitar_servicio' && !!motivoAlta} title={t.id === 'habilitar_servicio' ? motivoAlta ?? undefined : undefined}
+            key={t.id} disabled={t.id === 'habilitar_servicio' && !!motivoBloqueo} title={t.id === 'habilitar_servicio' ? motivoBloqueo ?? undefined : undefined}
             type="button"
             onClick={() => open(t)}
             className="text-[12px] font-bold text-[#2C7BE5] border border-[#2C7BE5] px-3 py-1 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t.name} → {t.to}
           </button>
-        ))}{habilita && motivoAlta && <span className="text-[11px] text-amber-700">{motivoAlta}</span>}
+        ))}{habilita && motivoBloqueo && <span className="text-[11px] text-amber-700">{motivoBloqueo}</span>}{habilita && !motivoBloqueo && avisoSinConfirmar && <span className="text-[11px] text-amber-700">{avisoSinConfirmar}</span>}
         {/* Acción, no transición: en gris para que no se lea como un cambio de estado. Con una
             remisión ya creada y sin enviar, cambia de texto y lleva a ÉSA — el ticket no se mueve
             hasta que n8n confirma, así que sin esto seguía diciendo «Crear remisión» sobre un ticket
