@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { asociarOV, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import { STATUS_TICKET_CREADO } from '@ambientalia/shared'; import { searchSalesOrders } from '@ambientalia/zoho-sync/books/repo'
-import { db, instalarArnes, appWith, adminCookie, userCookie } from '../testing/appHarness'
+import { db, instalarArnes, appWith, adminCookie, userCookie } from '../testing/appHarness'; import { conRemisionVigente } from '../testing/remisionDePrueba'
 
 instalarArnes()
 
@@ -167,7 +167,7 @@ async function ovLiberada(ticketColumnas = "'OV-2026-300','soX','2026-07-15'"): 
   await db.query("INSERT INTO books.sales_orders (salesorder_id,salesorder_number,customer_id,date,status,raw) VALUES ('soX','OV-2026-300','cli1','2026-07-15','open','{\"order_status\":\"open\"}')")
   await db.query("INSERT INTO equipos (id, serial, marca, modelo, tipo) VALUES ('eq-1','18A20070','Grimm','EDM180C','Monitor')")
   await db.query(`INSERT INTO tickets (id,number,subject,status,orden_venta,salesorder_id,fecha_orden_venta) VALUES ('t-lib',8001,'El que libera','Ingresado',${ticketColumnas})`)
-  await db.query("INSERT INTO tickets (id,number,subject,status,equipo_id,client_id) VALUES ('t-nuevo',8002,'El que la quiere',$1,'eq-1','cli1')", [STATUS_TICKET_CREADO])
+  await db.query("INSERT INTO tickets (id,number,subject,status,equipo_id,client_id) VALUES ('t-nuevo',8002,'El que la quiere',$1,'eq-1','cli1')", [STATUS_TICKET_CREADO]); await conRemisionVigente(db, 't-nuevo')
   await asociarOV(db, { ticketId: 't-lib', numero: 'OV-2026-300', salesorderId: 'soX', origen: 'alta', actor: 't', fechaOrdenCompra: null })
 }
 type AppHttp = ReturnType<typeof appWith>['app']

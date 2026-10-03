@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { db, instalarArnes, appWith, adminCookie, userCookie, valoresValidos } from './testing/appHarness'
-import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, transicionPorId } from '@ambientalia/shared'
+import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, transicionPorId } from '@ambientalia/shared'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 const transitionsDeServicio = (id: string) => TRANSITIONS.find((t) => t.id === id)!
 
@@ -65,7 +65,7 @@ describe('guarda 3 · flujo aplicable del ticket', () => {
 
   // P4 — la entrada compartida: habilitar_servicio funciona igual para Equipo nuevo.
   it('P4 · habilitar_servicio lleva a un ticket Equipo nuevo de Ticket creado a Ingresado', async () => {
-    await ticket('en-4', 91004, 'Ticket creado', 'Equipo nuevo')
+    await ticket('en-4', 91004, 'Ticket creado', 'Equipo nuevo'); await conRemisionVigente(db, 'en-4')
     const cookie = await adminCookie()
     const { app } = appWith()
     const t = transitionsDeServicio('habilitar_servicio')

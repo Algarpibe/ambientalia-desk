@@ -3,7 +3,7 @@ import request from 'supertest'
 import type { Request, Response, NextFunction } from 'express'
 import type { UserPublic } from '@ambientalia/shared'
 import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, canExecuteTransition, puedeEjecutarTransicion, CARGOS, EXCEPCIONES_POR_CARGO } from '@ambientalia/shared'
-import { requireAuth, requireAdmin, requireArea } from './auth/middleware'
+import { requireAuth, requireAdmin, requireArea } from './auth/middleware'; import { conRemisionVigente } from './testing/remisionDePrueba'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
@@ -52,7 +52,7 @@ describe('matriz área × transición, contra el servidor', () => {
         // El estado de origen: el primero de los `from` de ESTA transición. Con cualquier otro, el
         // 409 de `ticketService.ts:126-128` contesta antes y la casilla no llega a probar permisos.
         await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
-          [id, 90000 + n, 'Matriz de permisos', t.from[0]])
+          [id, 90000 + n, 'Matriz de permisos', t.from[0]]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
         const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
         observado[t.id] = res.status
@@ -98,7 +98,7 @@ describe('matriz área × transición, contra el servidor', () => {
       n += 1
       const id = `adm-${n}`
       await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
-        [id, 80000 + n, 'Matriz de permisos', t.from[0]])
+        [id, 80000 + n, 'Matriz de permisos', t.from[0]]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
       const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
         .send({ transitionId: t.id, values: valoresValidos(t, n) })
       observado[t.id] = res.status

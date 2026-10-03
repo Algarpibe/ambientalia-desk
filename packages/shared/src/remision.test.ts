@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { perfilChecklist, PERFILES_CHECKLIST, ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, faltaFotoPorNovedad } from './remision'
+import { perfilChecklist, PERFILES_CHECKLIST, ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura, faltaFotoPorNovedad, esRemisionEntradaVigente, motivoSinRemisionVigente } from './remision'
 
 describe('perfilChecklist', () => {
   it('resuelve por MODELO antes que por marca (igual que el Switch del flujo)', () => {
@@ -80,5 +80,57 @@ describe('faltaFotoPorNovedad', () => {
     expect(faltaFotoPorNovedad(true, 1)).toBe(false)
     expect(faltaFotoPorNovedad(false, 0)).toBe(false)
     expect(faltaFotoPorNovedad(null, 0)).toBe(false)
+  })
+})
+
+// RQ-TS-33 / RQ-RE-20. «Vigente» = remisión de ENTRADA, creada y NO anulada, sea cual sea su estado de
+// envío (Gerencia, `docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`). El estado no entra: una `pendiente`
+// o en `error` habilita igual. Regla de mutación 2: la tabla ensucia los datos vigilados (tipo × anulada × estado).
+describe('esRemisionEntradaVigente: tipo × anulada × estado', () => {
+  const ESTADOS: (string | undefined)[] = ['ok', 'ok_con_avisos', 'pendiente', 'error', 'zzz_desconocido', undefined]
+  const fila = (tipo: string, anuladaAt: string | null, estado?: string) => ({ tipo, anuladaAt, ...(estado === undefined ? {} : { estado }) })
+
+  it.each(ESTADOS)('entrada NO anulada cuenta con estado %s', (estado) => {
+    expect(esRemisionEntradaVigente(fila('entrada', null, estado))).toBe(true)
+  })
+
+  it.each(ESTADOS)('entrada ANULADA no cuenta con estado %s', (estado) => {
+    expect(esRemisionEntradaVigente(fila('entrada', '2026-10-01T10:00:00Z', estado))).toBe(false)
+  })
+
+  it.each(ESTADOS)('tipo distinto de entrada no cuenta con estado %s, anulada o no', (estado) => {
+    expect(esRemisionEntradaVigente(fila('salida', null, estado))).toBe(false)
+    expect(esRemisionEntradaVigente(fila('salida', '2026-10-01T10:00:00Z', estado))).toBe(false)
+  })
+})
+
+describe('motivoSinRemisionVigente', () => {
+  const TEXTO = 'No se puede habilitar el servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.'
+  const ANULADA = '2026-10-01T10:00:00Z'
+
+  it('lista vacía → el texto único', () => {
+    expect(motivoSinRemisionVigente([])).toBe(TEXTO)
+  })
+
+  it('sólo anuladas → el texto', () => {
+    expect(motivoSinRemisionVigente([{ tipo: 'entrada', anuladaAt: ANULADA }, { tipo: 'entrada', anuladaAt: ANULADA }])).toBe(TEXTO)
+  })
+
+  it('sólo de tipo distinto de entrada → el texto', () => {
+    expect(motivoSinRemisionVigente([{ tipo: 'salida', anuladaAt: null }])).toBe(TEXTO)
+  })
+
+  it('con una vigente (aunque haya anuladas) → null', () => {
+    expect(motivoSinRemisionVigente([{ tipo: 'entrada', anuladaAt: ANULADA }, { tipo: 'entrada', anuladaAt: null }])).toBeNull()
+  })
+
+  it('con una vigente pendiente o en error (el estado no entra) → null', () => {
+    expect(motivoSinRemisionVigente([{ tipo: 'entrada', anuladaAt: null, estado: 'pendiente' } as never])).toBeNull()
+    expect(motivoSinRemisionVigente([{ tipo: 'entrada', anuladaAt: null, estado: 'error' } as never])).toBeNull()
+  })
+
+  it('el texto es accionable y no menciona cliente, equipo ni provisional (P2 discrimina con un solo texto)', () => {
+    expect(motivoSinRemisionVigente([])).not.toMatch(/cliente|equipo|provisional/i)
+    expect(motivoSinRemisionVigente([])).toContain('Crea la remisión de entrada')
   })
 })

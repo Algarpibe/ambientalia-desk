@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { STATUS_TICKET_CREADO } from '@ambientalia/shared'
-import { db, instalarArnes, appWith, adminCookie } from './testing/appHarness'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
+import { db, instalarArnes, appWith, adminCookie } from './testing/appHarness'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 instalarArnes()
 
@@ -136,7 +136,7 @@ describe('una OV, un ticket · puerta 2 · «Habilitar Servicio»', () => {
   it('rechaza con 409 una orden de venta que ya está en otro ticket', async () => {
     const cookie = await adminCookie()
     await ticketQueYaTieneLaOrden()
-    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO])
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO]); await conRemisionVigente(db, 't-nuevo')
     const { app } = appWith()
 
     const res = await request(app).post('/api/tickets/t-nuevo/transition').set('Cookie', cookie).send({
@@ -275,7 +275,7 @@ describe('una OV, un ticket · tercera vía · puerta 2 · «Habilitar Servicio�
   it('2.16 · la asociación vigente sin coincidencia por columna bloquea habilitar_servicio con 409 y el ticket no se mueve', async () => {
     const cookie = await adminCookie()
     await ticketSoloConAsociacion()
-    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO])
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO]); await conRemisionVigente(db, 't-nuevo')
     const { app } = appWith()
 
     const res = await request(app).post('/api/tickets/t-nuevo/transition').set('Cookie', cookie).send({
@@ -291,7 +291,7 @@ describe('una OV, un ticket · tercera vía · puerta 2 · «Habilitar Servicio�
   it('2.16 · excluye al propio ticket: reenviar la OV que YA tiene asociada no se bloquea a sí mismo', async () => {
     const cookie = await adminCookie()
     await ticketSoloConAsociacion()
-    await db.query("UPDATE tickets SET status = $1 WHERE id = 't-dueno'", [STATUS_TICKET_CREADO])
+    await db.query("UPDATE tickets SET status = $1 WHERE id = 't-dueno'", [STATUS_TICKET_CREADO]); await conRemisionVigente(db, 't-dueno')
     const { app } = appWith()
 
     const res = await request(app).post('/api/tickets/t-dueno/transition').set('Cookie', cookie).send({
@@ -305,7 +305,7 @@ describe('una OV, un ticket · tercera vía · puerta 2 · «Habilitar Servicio�
   it('POSICIÓN · falta un obligatorio (C) y la OV está asociada por tercera vía (D): gana el 422; completo, el 409', async () => {
     const cookie = await adminCookie()
     await ticketSoloConAsociacion()
-    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO])
+    await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t-nuevo',7002,'El que la quiere',$1)", [STATUS_TICKET_CREADO]); await conRemisionVigente(db, 't-nuevo')
     const { app } = appWith()
 
     const ambas = await request(app).post('/api/tickets/t-nuevo/transition').set('Cookie', cookie).send({
