@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Remision, RemisionFoto, RemisionListado } from '@ambientalia/shared'
+import type { Remision, RemisionFoto, RemisionListado, RemisionParaVigencia } from '@ambientalia/shared'
 import { VENTANA_REENVIO_SEGUNDOS } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
@@ -227,4 +227,14 @@ export async function getFotoContent(db: Queryable, remisionId: string, fotoId: 
   const r = await db.query('SELECT content_type, content_b64 FROM remision_fotos WHERE id = $1 AND remision_id = $2', [fotoId, remisionId])
   const x = r.rows[0]
   return x ? { contentType: x.content_type ?? 'application/octet-stream', contentB64: x.content_b64 } : null
+}
+
+/**
+ * RQ-TS-33 / RQ-RE-20. Lo que la guarda de `habilitar_servicio` lee del ticket: `tipo` y `anulada_at` de TODAS sus remisiones,
+ * SIN ningún filtro y SIN leer `estado` (nada del servidor lo usa: el estado de envío no entra en «vigente»). Las dos
+ * condiciones las aplica el predicado compartido `esRemisionEntradaVigente`, que así es la única fuente y se puede mutar por datos.
+ */
+export async function vigenciaDeRemisiones(db: Queryable, ticketId: string): Promise<RemisionParaVigencia[]> {
+  const r = await db.query('SELECT tipo, anulada_at FROM remisiones WHERE ticket_id = $1', [ticketId])
+  return r.rows.map((x: Record<string, unknown>) => ({ tipo: String(x.tipo), anuladaAt: isoOrNull(x.anulada_at) }))
 }

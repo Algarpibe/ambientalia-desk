@@ -7,13 +7,13 @@ import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
 import { createRole, actualizarRecibeAvisos } from './auth/roles'
 import { listarAvisos } from './db/avisos'
-import { db, instalarArnes, appWith, adminCookie, userCookie } from './testing/appHarness'
+import { db, instalarArnes, appWith, adminCookie, userCookie } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 instalarArnes()
 
 describe('derivación en las transiciones', () => {
   async function ticketEnFaseInicial() {
-    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)"); await conRemisionVigente(db, 't1')
   }
 
   it('guarda la derivación en su columna y en el histórico de la transición', async () => {
@@ -230,8 +230,8 @@ describe('derivación en las transiciones', () => {
     const enviar = (derivado_a: string) => request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
       .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-1', Serial: 'S1', derivado_a } })
 
-    expect((await enviar('no-existe')).status).toBe(422)
-    expect((await enviar(baja.id)).status).toBe(422)
+    { const r = await enviar('no-existe'); expect(r.status).toBe(422); expect(JSON.stringify(r.body)).toContain('La persona a la que se deriva') }
+    { const r = await enviar(baja.id); expect(r.status).toBe(422); expect(JSON.stringify(r.body)).toContain('La persona a la que se deriva') }
     // Y el ticket no se movió: la transición entera se rechaza, no a medias.
     const t = await db.query('SELECT status FROM tickets WHERE id = $1', ['t1'])
     expect((t.rows[0] as { status: string }).status).toBe('Ticket creado')
@@ -301,7 +301,7 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
   it('409 si Habilitar Servicio asigna una orden de venta que ya está en otro ticket', async () => {
     const cookie = await adminCookie()
     await db.query("INSERT INTO tickets (id,number,subject,status,orden_venta) VALUES ('t-dueno',900,'Ya','Ingresado','OV-YA')")
-    await db.query("INSERT INTO tickets (id,number,subject,status,status_type) VALUES ('2',906,'Sin OV','OV asignada','Open')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type) VALUES ('2',906,'Sin OV','OV asignada','Open')"); await conRemisionVigente(db, '2')
     const { app } = appWith()
     const res = await request(app).post('/api/tickets/2/transition').set('Cookie', cookie)
       .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-YA', Serial: '18A1' } })
@@ -313,7 +313,7 @@ describe('POST /api/tickets/:id/transition (Postgres)', () => {
   // Habilitar Servicio quedaría bloqueada justo para los tickets que llegan de Zoho con su OV puesta.
   it('Habilitar Servicio no bloquea la orden de venta que el propio ticket ya tiene', async () => {
     const cookie = await adminCookie()
-    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,orden_venta) VALUES ('3',907,'Con su OV','OV asignada','Open','OV-MIA')")
+    await db.query("INSERT INTO tickets (id,number,subject,status,status_type,orden_venta) VALUES ('3',907,'Con su OV','OV asignada','Open','OV-MIA')"); await conRemisionVigente(db, '3')
     const { app } = appWith()
     const res = await request(app).post('/api/tickets/3/transition').set('Cookie', cookie)
       .send({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-MIA', Serial: '18A1' } })
@@ -368,7 +368,7 @@ describe('avisos por correo', () => {
   it('la derivación manda el correo al derivado y sella enviado_at', async () => {
     const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
     const cookie = await adminCookie()
-    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)"); await conRemisionVigente(db, 't1')
 
     const fake = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
     vi.stubGlobal('fetch', fake)
@@ -395,7 +395,7 @@ describe('avisos por correo', () => {
   it('sin webhook configurado la transición funciona igual y el aviso queda sin sellar', async () => {
     const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
     const cookie = await adminCookie()
-    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)"); await conRemisionVigente(db, 't1')
     const { app } = appWith()
 
     const res = await request(app).post('/api/tickets/t1/transition').set('Cookie', cookie)
@@ -409,7 +409,7 @@ describe('avisos por correo', () => {
   it('un n8n caído no rompe la transición', async () => {
     const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
     const cookie = await adminCookie()
-    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)"); await conRemisionVigente(db, 't1')
 
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fetch failed')))
     try {
@@ -434,7 +434,7 @@ describe('avisos por correo', () => {
   it('con dirección de copia configurada, la derivación sale también para el administrador', async () => {
     const dest = await createUser(db, { email: 'dest@x.co', name: 'Destino', passwordHash: 'h' })
     const cookie = await adminCookie()
-    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)")
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('t1', 10000, 'Ticket creado', true)"); await conRemisionVigente(db, 't1')
 
     const fake = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
     vi.stubGlobal('fetch', fake)

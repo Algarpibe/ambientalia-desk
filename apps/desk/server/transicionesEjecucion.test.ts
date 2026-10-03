@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import { TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, ESTADOS_SIN_SALIDA } from '@ambientalia/shared'
-import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testing/appHarness'
+import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 instalarArnes()
 
@@ -261,7 +261,7 @@ describe('las 31 transiciones, ejecutadas contra el servidor', () => {
         n += 1
         const id = `eje-${n}`
         await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)',
-          [id, 70000 + n, 'Barrido de ejecución', origen])
+          [id, 70000 + n, 'Barrido de ejecución', origen]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, id)
 
         const res = await request(app).post(`/api/tickets/${id}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })

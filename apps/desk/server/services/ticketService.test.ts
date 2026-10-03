@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { STATUS_TICKET_CREADO, transicionPorId, hoyEnZona, sumarDias } from '@ambientalia/shared'
+import { STATUS_TICKET_CREADO, STATUS_OV_ASIGNADA, STATUS_REMISION_CREADA, EXCEPCIONES_POR_CARGO, transicionPorId, hoyEnZona, sumarDias } from '@ambientalia/shared'
 import { HttpError } from '../util/httpError'
-import { createManagedTicket, executeTransition } from './ticketService'; import { crearContrato } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'
+import { createManagedTicket, executeTransition } from './ticketService'; import { crearContrato } from '../db/contratos'; import { prioridadTop5DelCliente } from '../db/prioridadCliente'; import { remisionDePrueba, conRemisionVigente } from '../testing/remisionDePrueba'
 
 /**
  * `executeTransition` y `createManagedTicket` A NIVEL DE UNIDAD (§9 del proposal F0-04).
@@ -101,7 +101,7 @@ describe('executeTransition · cada guarda por separado', () => {
   })
 
   it('los obligatorios que faltan son 422, y vienen TODOS en una lista, no de uno en uno', async () => {
-    await ticket('t1', STATUS_TICKET_CREADO)
+    await ticket('t1', STATUS_TICKET_CREADO); await conRemisionVigente(db, 't1')
     const r = await fallo(() => executeTransition(db, 't1', { transitionId: 'habilitar_servicio', values: {} }, ADMIN))
     expect(r.status).toBe(422)
     // Los dos a la vez: un 422 que sólo dijera el primero obligaría a descubrir el segundo enviando
@@ -194,7 +194,7 @@ describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
    */
   it('los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409', async () => {
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
-    await ticket('t1', STATUS_TICKET_CREADO, 8102)
+    await ticket('t1', STATUS_TICKET_CREADO, 8102); await conRemisionVigente(db, 't1')
     const r = await fallo(() => executeTransition(db, 't1', {
       transitionId: 'habilitar_servicio',
       values: { 'Orden de Venta': 'OV-DUP' }, // sin `Serial`, que también es obligatorio
@@ -205,7 +205,7 @@ describe('executeTransition · el ORDEN en que se evalúan las guardas', () => {
 
   it('la persona de derivación inexistente gana a la orden de venta ya usada: 422, no 409', async () => {
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
-    await ticket('t1', STATUS_TICKET_CREADO, 8102)
+    await ticket('t1', STATUS_TICKET_CREADO, 8102); await conRemisionVigente(db, 't1')
     const r = await fallo(() => executeTransition(db, 't1', {
       transitionId: 'habilitar_servicio',
       values: { 'Orden de Venta': 'OV-DUP', Serial: '18A20070', derivado_a: 'no-existe' },
@@ -710,7 +710,7 @@ describe('asociacion-ov-ticket · escribir la OV crea la asociación en la misma
 
   it('2.12 · habilitar_servicio con una OV libre deja escrita la asociación tras la transición (salesorder_id resuelto por número)', async () => {
     await cliente('cli-1'); await ordenDeBooks('so-212', 'OV-2026-412')
-    await ticket('t-h', STATUS_TICKET_CREADO, 8112)
+    await ticket('t-h', STATUS_TICKET_CREADO, 8112); await conRemisionVigente(db, 't-h')
     await executeTransition(db, 't-h', {
       transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-412', Serial: '18A20070' },
     }, ADMIN)
@@ -720,7 +720,7 @@ describe('asociacion-ov-ticket · escribir la OV crea la asociación en la misma
   })
 
   it('2.12 · si el número no resuelve en Books (S-12) la asociación se escribe igual, con salesorder_id NULL', async () => {
-    await ticket('t-h2', STATUS_TICKET_CREADO, 8113)
+    await ticket('t-h2', STATUS_TICKET_CREADO, 8113); await conRemisionVigente(db, 't-h2')
     await executeTransition(db, 't-h2', {
       transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-SIN-BOOKS', Serial: '18A20070' },
     }, ADMIN)
@@ -730,7 +730,7 @@ describe('asociacion-ov-ticket · escribir la OV crea la asociación en la misma
   })
 
   it('2.12 · reenviar la misma OV al propio ticket es idempotente: sigue habiendo una sola fila vigente', async () => {
-    await ticket('t-h3', STATUS_TICKET_CREADO, 8114)
+    await ticket('t-h3', STATUS_TICKET_CREADO, 8114); await conRemisionVigente(db, 't-h3')
     await executeTransition(db, 't-h3', {
       transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-414', Serial: '18A20070' },
     }, ADMIN)
@@ -912,7 +912,7 @@ describe('asociacion-ov-ticket · cuarentena de subOV en el alta y en habilitar_
   })
 
   it('4.9 · habilitar_servicio con una OV en cuarentena responde 422 en errors, no 409 ni éxito', async () => {
-    await ticket('t-q3', STATUS_TICKET_CREADO, 8503)
+    await ticket('t-q3', STATUS_TICKET_CREADO, 8503); await conRemisionVigente(db, 't-q3')
     const r = await fallo(() => executeTransition(db, 't-q3', {
       transitionId: 'habilitar_servicio', values: { 'Orden de Venta': EN_CUARENTENA, Serial: '18A20070' },
     }, ADMIN))
@@ -924,10 +924,10 @@ describe('asociacion-ov-ticket · cuarentena de subOV en el alta y en habilitar_
   it('4.9 · POSICIÓN habilitar_servicio: la OV en cuarentena YA está en otro ticket: gana el 422 (C), no el 409 (D)', async () => {
     await ticket('t-dueno-q4', 'Ingresado', 8504, { orden_venta: EN_CUARENTENA })
     await db.query("INSERT INTO ov_asociaciones (ticket_id, numero, origen) VALUES ('t-dueno-q4', $1, 'habilitar_servicio')", [EN_CUARENTENA])
-    await ticket('t-q4', STATUS_TICKET_CREADO, 8505)
+    await ticket('t-q4', STATUS_TICKET_CREADO, 8505); await conRemisionVigente(db, 't-q4')
     const valores = (ov: string) => ({ transitionId: 'habilitar_servicio', values: { 'Orden de Venta': ov, Serial: '18A20070' } })
     const r = await fallo(() => executeTransition(db, 't-q4', valores(EN_CUARENTENA), ADMIN))
-    expect(r.status, 'la cuarentena (C) precede a la unicidad (D)').toBe(422)
+    expect(r.status, 'la cuarentena (C) precede a la unicidad (D)').toBe(422); expect(JSON.stringify(r.body.errors)).toContain(EN_CUARENTENA)
     // Control de población: con una subOV canónica y el mismo dueño, contesta 409.
     await db.query("UPDATE tickets SET orden_venta = 'OV-2026-990-05' WHERE id = 't-dueno-q4'")
     const c = await fallo(() => executeTransition(db, 't-q4', valores('OV-2026-990-05'), ADMIN))
@@ -1052,7 +1052,7 @@ describe('registro-contrato · transición: subOV de un contrato vencido → 422
   const asociaciones = async (): Promise<number> => (await db.query('SELECT COUNT(*)::int AS n FROM ov_asociaciones')).rows[0].n
 
   it('habilitar_servicio con subOV de lote vencido → 422 en errors, sin escribir orden_venta ni asociación', async () => {
-    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v1', STATUS_TICKET_CREADO, 8611)
+    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v1', STATUS_TICKET_CREADO, 8611); await conRemisionVigente(db, 't-v1')
     const r = await fallo(() => habilitar('t-v1', { 'Orden de Venta': 'OV-2026-170-01' }))
     expect(r.status).toBe(422)
     expect(JSON.stringify(r.body.errors)).toMatch(/OV-2026-170-01.*venció/)
@@ -1063,14 +1063,14 @@ describe('registro-contrato · transición: subOV de un contrato vencido → 422
   it.each<[string, [number, number] | null]>([['lote sin contrato', null], ['contrato que empieza mañana', EMPIEZA_MANANA]])(
     '%s → la transición pasa como hoy', async (_, vigencia) => {
       if (vigencia) await contratoDe('OV-2026-170', vigencia)
-      await ticket('t-v2', STATUS_TICKET_CREADO, 8612)
+      await ticket('t-v2', STATUS_TICKET_CREADO, 8612); await conRemisionVigente(db, 't-v2')
       await habilitar('t-v2', { 'Orden de Venta': 'OV-2026-170-01' })
       expect((await db.query("SELECT orden_venta FROM tickets WHERE id = 't-v2'")).rows[0].orden_venta).toBe('OV-2026-170-01')
     })
 
   it('POSICIÓN C < D · habilitar_servicio: la subOV vencida YA está asociada a otro ticket → 422, no 409', async () => {
     await contratoDe('OV-2026-170', VENCIDO)
-    await ticket('t-dueno-v3', 'Ingresado', 8613, { orden_venta: 'OV-2026-170-01' }); await ticket('t-v3', STATUS_TICKET_CREADO, 8614)
+    await ticket('t-dueno-v3', 'Ingresado', 8613, { orden_venta: 'OV-2026-170-01' }); await ticket('t-v3', STATUS_TICKET_CREADO, 8614); await conRemisionVigente(db, 't-v3')
     const r = await fallo(() => habilitar('t-v3', { 'Orden de Venta': 'OV-2026-170-01' }))
     expect(r.status).toBe(422)
     await db.query('DELETE FROM contratos') // control de población
@@ -1078,13 +1078,13 @@ describe('registro-contrato · transición: subOV de un contrato vencido → 422
   })
 
   it('POSICIÓN · falta un obligatorio + vencido → el 422 de obligatorios', async () => {
-    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v4', STATUS_TICKET_CREADO, 8615)
+    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v4', STATUS_TICKET_CREADO, 8615); await conRemisionVigente(db, 't-v4')
     const r = await fallo(() => executeTransition(db, 't-v4', { transitionId: 'habilitar_servicio', values: { 'Orden de Venta': 'OV-2026-170-01' } }, ADMIN))
     expect(r.body.errors).toEqual(['Falta el campo obligatorio: Serial'])
   })
 
   it('POSICIÓN · persona derivada inexistente + vencido → el 422 de la persona', async () => {
-    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v5', STATUS_TICKET_CREADO, 8616)
+    await contratoDe('OV-2026-170', VENCIDO); await ticket('t-v5', STATUS_TICKET_CREADO, 8616); await conRemisionVigente(db, 't-v5')
     const r = await fallo(() => habilitar('t-v5', { 'Orden de Venta': 'OV-2026-170-01', derivado_a: 'u-no-existe' }))
     expect(r.body.errors).toEqual(['La persona a la que se deriva no existe o está dada de baja'])
   })
@@ -1228,7 +1228,7 @@ describe('F1B-15 · RQ-TS-32 · guarda de alta pendiente en habilitar_servicio',
   })
 
   it('TS-32 · tras enlazar el cliente y validar el equipo la misma transición pasa', async () => {
-    await cliente('cli-1'); await provisional('prov-1', 'cli-1'); await equipoPendiente(false); await ticketDe('prov-1')
+    await cliente('cli-1'); await provisional('prov-1', 'cli-1'); await equipoPendiente(false); await ticketDe('prov-1'); await conRemisionVigente(db, 't-p')
     await habilitar(ADMIN)
     expect(await estado()).toBe('Ingresado')
   })
@@ -1260,5 +1260,210 @@ describe('F1B-15 · RQ-TS-32 · guarda de alta pendiente en habilitar_servicio',
     expect(r.status).toBe(422)
     expect(r.body.errors).toBeUndefined()
     expect(String(r.body.error)).toContain('provisional')
+  })
+})
+
+/**
+ * F1B-03 (parte L) · RQ-TS-33 · «Habilitar Servicio» exige una remisión de entrada VIGENTE (escalón B, `422`).
+ *
+ * «Vigente» = de `tipo` entrada, creada y NO anulada, SEA CUAL SEA su estado de envío (Gerencia,
+ * `docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`): una `pendiente` o en `error` HABILITA. Un solo texto de `422`.
+ * La guarda es la décima de `executeTransition` y se llama en la misma línea que `exigirAltaValidada`: va tras el área, el
+ * cargo, la prioridad, la verificación y el alta validada, y ANTES de los obligatorios, la cuarentena y la OV ya asociada.
+ * Cada prueba de POSICIÓN (P1 a P7) activa DOS guardas a la vez (regla de mutación 1).
+ *
+ * LO QUE NO TIENE ESCENARIO (hechos del catálogo, fijados abajo): cargo (`habilitar_servicio` no tiene excepción de cargo),
+ * prioridad (la transición no declara campo de prioridad) y verificación (sólo `liberacion` la calcula, y `exigirVerificacion`
+ * recibe `null` en las demás). Mover el PAR `exigirAltaValidada` + `exigirRemisionVigente` delante de cargo, prioridad o verificación
+ * es un mutante equivalente: 251/251 verdes. Mover SÓLO la guarda delante de `exigirAltaValidada` = P2 roja (5); no equivalente.
+ */
+describe('F1B-03 · RQ-TS-33 · guarda de remisión de entrada vigente en habilitar_servicio', () => {
+  const TEXTO = 'No se puede habilitar el servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.'
+  const VALORES_OK = { 'Orden de Venta': 'OV-RV-1', Serial: '18A20070' }
+  const ORIGENES = [['OV asignada', STATUS_OV_ASIGNADA], ['Ticket creado', STATUS_TICKET_CREADO], ['Remisión creada', STATUS_REMISION_CREADA]] as const
+  const habilitar = (id: string, user: { areas: string[]; isAdmin: boolean; name: string; id: string } = COMERCIAL, values: Record<string, unknown> = VALORES_OK) =>
+    executeTransition(db, id, { transitionId: 'habilitar_servicio', values }, user)
+  const estadoDe = async (id: string) => (await db.query('SELECT status FROM tickets WHERE id = $1', [id])).rows[0].status as string
+  const trazas = async (id: string) => (await db.query('SELECT COUNT(*)::int AS n FROM ticket_transitions WHERE ticket_id = $1', [id])).rows[0].n as number
+
+  it.each(ORIGENES)('sin remisión desde «%s»: 422 en español, sin cambio de estado y sin traza', async (_, origen) => {
+    await ticket('t-rv', origen, 8701)
+    const r = await fallo(() => habilitar('t-rv'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(TEXTO)
+    expect(await estadoDe('t-rv')).toBe(origen)
+    expect(await trazas('t-rv')).toBe(0)
+  })
+
+  it('desde «Remisión creada» con su única remisión ANULADA: 422 y el ticket no cambia', async () => {
+    await ticket('t-rv', STATUS_REMISION_CREADA, 8701); await remisionDePrueba(db, 't-rv', { anulada: true })
+    const r = await fallo(() => habilitar('t-rv'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(TEXTO)
+    expect(await estadoDe('t-rv')).toBe(STATUS_REMISION_CREADA)
+  })
+
+  it.each(ORIGENES)('con remisión vigente desde «%s»: 200 y llega a Ingresado', async (_, origen) => {
+    await ticket('t-rv', origen, 8701); await conRemisionVigente(db, 't-rv')
+    await habilitar('t-rv')
+    expect(await estadoDe('t-rv')).toBe('Ingresado')
+  })
+
+  describe('el predicado discrimina sobre datos sucios (regla de mutación 2)', () => {
+    type Over = NonNullable<Parameters<typeof remisionDePrueba>[2]>
+    const NO_HABILITAN: [string, Over[]][] = [
+      ['sólo una anulada (ok)', [{ anulada: true }]],
+      ['sólo una anulada (pendiente)', [{ anulada: true, estado: 'pendiente' }]],
+      ['dos anuladas (ok y pendiente)', [{ anulada: true }, { anulada: true, estado: 'pendiente' }]],
+      ['una fila de tipo distinto de entrada (ok, no anulada)', [{ tipo: 'salida' }]],
+    ]
+    const HABILITAN: [string, Over[]][] = [
+      ['entrada pendiente no anulada (el servidor no la pasó a «Remisión creada»)', [{ estado: 'pendiente' }]],
+      ['entrada en error no anulada', [{ estado: 'error' }]],
+      ['entrada ok_con_avisos', [{ estado: 'ok_con_avisos' }]],
+      ['histórica ok', [{ origen: 'historico' }]],
+      ['segunda de entrada tras una anulada', [{ anulada: true }, {}]],
+    ]
+
+    it.each(NO_HABILITAN)('NO habilita (422): %s', async (_, filas) => {
+      await ticket('t-rv', STATUS_TICKET_CREADO, 8701)
+      for (const f of filas) await remisionDePrueba(db, 't-rv', f)
+      const r = await fallo(() => habilitar('t-rv'))
+      expect(r.status).toBe(422)
+      expect(r.body.error).toBe(TEXTO)
+      expect(await estadoDe('t-rv')).toBe(STATUS_TICKET_CREADO)
+    })
+
+    it.each(HABILITAN)('habilita (200): %s', async (_, filas) => {
+      await ticket('t-rv', STATUS_TICKET_CREADO, 8701)
+      for (const f of filas) await remisionDePrueba(db, 't-rv', f)
+      await habilitar('t-rv')
+      expect(await estadoDe('t-rv')).toBe('Ingresado')
+    })
+
+    it('una pendiente habilita desde «Ticket creado» SIN haber pasado por «Remisión creada»: una sola fila de traza', async () => {
+      await ticket('t-rv', STATUS_TICKET_CREADO, 8701); await remisionDePrueba(db, 't-rv', { estado: 'pendiente' })
+      await habilitar('t-rv')
+      const t = await db.query('SELECT from_status, to_status FROM ticket_transitions WHERE ticket_id = $1', ['t-rv'])
+      expect(t.rows).toEqual([{ from_status: STATUS_TICKET_CREADO, to_status: 'Ingresado' }])
+    })
+  })
+
+  it('equipo nuevo: nacido en «Ticket creado» sin remisión → 422, y con remisión vigente → 200 (S-3, Q5)', async () => {
+    await ticket('t-en', STATUS_TICKET_CREADO, 8702, { classification: 'Equipo nuevo' })
+    const r = await fallo(() => habilitar('t-en'))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(TEXTO)
+    await conRemisionVigente(db, 't-en')
+    await habilitar('t-en')
+    expect(await estadoDe('t-en')).toBe('Ingresado')
+  })
+
+  it.each(ORIGENES)('el motivo es accionable, único y en español, también desde «%s»', async (_, origen) => {
+    await ticket('t-rv', origen, 8701)
+    const r = await fallo(() => habilitar('t-rv'))
+    expect(r.body.error).toBe(TEXTO)
+    expect(String(r.body.error)).toContain('Crea la remisión de entrada')
+    expect(String(r.body.error)).not.toMatch(/cliente|equipo|provisional|[a-z]+_[a-z]+|\b4\d\d\b/i)
+    await remisionDePrueba(db, 't-rv', { anulada: true })
+    expect((await fallo(() => habilitar('t-rv'))).body.error).toBe(TEXTO) // con sólo anuladas, el mismo texto
+  })
+
+  describe('sin consultas extra: la lectura nueva sólo la hace habilitar_servicio', () => {
+    const LECTURA_NUEVA = 'SELECT tipo, anulada_at FROM remisiones'
+    const espiar = () => {
+      const sqls: string[] = []
+      const espia = { query: (sql: string, p?: unknown[]) => { sqls.push(sql); return db.query(sql, p) } } as unknown as Queryable
+      return { sqls, espia }
+    }
+
+    it('control de población: habilitar_servicio SÍ ejecuta la lectura nueva, una vez', async () => {
+      await ticket('t-rv', STATUS_TICKET_CREADO, 8701); await conRemisionVigente(db, 't-rv')
+      const { sqls, espia } = espiar()
+      await executeTransition(espia, 't-rv', { transitionId: 'habilitar_servicio', values: VALORES_OK }, COMERCIAL)
+      expect(sqls.filter((s) => s.includes(LECTURA_NUEVA))).toHaveLength(1)
+    })
+
+    it('ingreso_a_servicio (que sí lee remisiones por la otra consulta) no ejecuta la lectura nueva', async () => {
+      await ticket('t-is', 'Ingresado', 8703); await conRemisionVigente(db, 't-is')
+      const { sqls, espia } = espiar()
+      await executeTransition(espia, 't-is', { transitionId: 'ingreso_a_servicio', values: { 'Código Servicio': 'CG_1', 'Fecha creación ticket': '2026-08-01', 'Fecha Remisión Entrada': '2026-08-02' } }, ADMIN)
+      expect(sqls.filter((s) => /FROM remisiones/.test(s)).length, 'la otra lectura de remisiones SÍ ocurre').toBeGreaterThan(0)
+      expect(sqls.filter((s) => s.includes(LECTURA_NUEVA))).toEqual([])
+    })
+
+    it('una transición de «Soporte remoto» no ejecuta la lectura nueva', async () => {
+      await ticket('t-sr', 'Solicitud Soporte', 8704, { classification: 'Soporte remoto' })
+      const { sqls, espia } = espiar()
+      await executeTransition(espia, 't-sr', { transitionId: 'asignacion_soporte', values: { comment: 'ok' } }, ADMIN)
+      expect(sqls.length, 'la transición sí consultó la base').toBeGreaterThan(0)
+      expect(sqls.filter((s) => s.includes(LECTURA_NUEVA))).toEqual([])
+    })
+  })
+
+  it('hechos estructurales: sin excepción de cargo ni campo de prioridad (si cambian, hay que escribir su prueba de posición)', () => {
+    expect(Object.hasOwn(EXCEPCIONES_POR_CARGO.transiciones, 'habilitar_servicio')).toBe(false)
+    const t = transicionPorId('habilitar_servicio')!
+    expect(t.fields.length).toBeGreaterThan(0)
+    expect(t.fields.some((f) => f.target === 'priority')).toBe(false)
+  })
+
+  // ── Posición (regla de mutación 1): cada escenario activa la guarda nueva Y su vecina ─────────────────────────────
+  async function provisionalYEquipoPendiente(): Promise<void> {
+    await db.query("INSERT INTO public.clientes_provisionales (id, razon_social, nit, contacto, telefono, correo, motivo) VALUES ('prov-rv','Acme Provisional','800555666','Ana','300','a@p.co','m')")
+    await db.query("INSERT INTO equipos (id, serial, marca, modelo, tipo, pendiente_validar) VALUES ('eq-rv','18A20070','Grimm','EDM180C','Monitor',true)")
+  }
+
+  it('P1 · el área gana: sin remisión y un usuario de Servicio Técnico → 403 de permiso, no 422', async () => {
+    await ticket('t-rv', STATUS_TICKET_CREADO, 8701)
+    const r = await fallo(() => habilitar('t-rv', SERVICIO))
+    expect(r.status).toBe(403)
+    expect(String(r.body.error)).toContain('permiso')
+  })
+
+  it('P2 · la alta validada gana: cliente provisional, equipo pendiente y sin remisión → el 422 de «provisional», no el de remisión', async () => {
+    await provisionalYEquipoPendiente(); await ticket('t-rv', STATUS_TICKET_CREADO, 8701, { client_id: 'prov-rv', equipo_id: 'eq-rv' })
+    const r = await fallo(() => habilitar('t-rv'))
+    expect(r.status).toBe(422)
+    expect(String(r.body.error)).toContain('provisional')
+    expect(String(r.body.error)).not.toContain('remisión de entrada')
+  })
+
+  it('P3 · la remisión gana a los obligatorios: sin remisión y `values` vacío → 422 con `error` de remisión y sin `errors`', async () => {
+    await ticket('t-rv', STATUS_TICKET_CREADO, 8701)
+    const r = await fallo(() => habilitar('t-rv', COMERCIAL, {}))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(TEXTO)
+    expect(r.body.errors).toBeUndefined()
+  })
+
+  it('P4 · la remisión gana a la cuarentena: sin remisión y una OV en cuarentena → 422 con `error`, sin `errors` (el mismo `throw` que P3: no añade discriminación)', async () => {
+    await ticket('t-rv', STATUS_TICKET_CREADO, 8701)
+    const r = await fallo(() => habilitar('t-rv', COMERCIAL, { 'Orden de Venta': 'OV-2026-990-X9', Serial: '18A20070' }))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(TEXTO)
+    expect(r.body.errors).toBeUndefined()
+  })
+
+  it('P5 · la remisión gana a la OV ya asociada: sin remisión y la orden en otro ticket → 422 de remisión, no 409', async () => {
+    await ticket('t-dueno', 'Ingresado', 8705, { orden_venta: 'OV-DUP-RV' })
+    await ticket('t-rv', STATUS_TICKET_CREADO, 8701)
+    const r = await fallo(() => habilitar('t-rv', COMERCIAL, { 'Orden de Venta': 'OV-DUP-RV', Serial: '18A20070' }))
+    expect(r.status).toBe(422)
+    expect(r.body.error).toBe(TEXTO)
+  })
+
+  it('P6 · el estado gana: ticket en «Ingresado» sin remisión → 409 «no aplica desde el estado», no 422', async () => {
+    await ticket('t-rv', 'Ingresado', 8701)
+    const r = await fallo(() => habilitar('t-rv'))
+    expect(r.status).toBe(409)
+    expect(String(r.body.error)).toContain('no aplica desde el estado')
+  })
+
+  it('P7 · el flujo gana: ticket de «Soporte remoto» en «Solicitud Soporte» sin remisión → 409 que nombra los dos flujos, no 422', async () => {
+    await ticket('t-rv', 'Solicitud Soporte', 8701, { classification: 'Soporte remoto' })
+    const r = await fallo(() => habilitar('t-rv'))
+    expect(r.status).toBe(409)
+    expect(String(r.body.error)).toMatch(/es del flujo de .+ y este ticket sigue el flujo de /)
   })
 })

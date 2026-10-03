@@ -1116,3 +1116,74 @@ conforme […]»
 - Los **cuatro incumplimientos vivos** del código no van aquí: van en `CLAUDE.md` y en
   `openspec/config.yaml` (`incumplimientos_vivos`), porque son deuda de código, no correcciones del
   maestro.
+
+---
+## La de F1B-03, parte L (20)
+
+> **Esta entrada cita la R08.4** (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`),
+> la copia citable vigente. Procede del cambio `tipo-servicio-ticket-sin-ov` (lote 2), `cierra: no`.
+
+### 20 · M1.3.7, M1.9 y Anexo H — la guarda de remisión vigente está construida; la OVI de garantía NO *(F1B-03)*
+
+**Qué cambió en el código.** «Habilitar Servicio» rechaza, desde sus tres orígenes (`Ticket creado`, `OV asignada` y
+`Remisión creada`), el ticket que **no tiene ninguna remisión de entrada creada y no anulada** (RQ-TS-33). «Vigente»
+se construyó **a la letra** de Gerencia (`docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356` y `R08.4.md:1230`):
+**cualquier estado de envío cuenta**, también `pendiente` y `error`. El cliente desactiva el botón con el mismo texto y,
+cuando la única remisión vigente está sin confirmar, muestra un **aviso no bloqueante**. La guarda **no está
+publicada**: hasta que una persona ejecute los dos recuentos contra producción (el del 25/09 y el del 03/10), es
+condición de publicación.
+
+**Parte (a) · `R08.4.md:1230`.** Tres frases. Texto propuesto en su lugar:
+
+> «La guarda está sin construir (F1B-03).» →
+> «[CONSTRUIDO] La guarda existe: Habilitar Servicio no se ejecuta si el ticket no tiene ninguna remisión de entrada
+> creada y no anulada, en cualquiera de sus tres orígenes. Cuenta como vigente la remisión creada aunque su envío esté
+> pendiente o haya fallado; en ese caso la pantalla avisa de que está sin confirmar, pero no impide habilitar.
+> Todavía no está publicada en producción.»
+
+> «Si al construir la guarda se retira el origen Ticket creado de Habilitar Servicio, el recuento de pasos del mapa
+> (M1.3.7) se mide de nuevo.» →
+> «El origen Ticket creado se conserva: con esta definición tiene uso (remisión creada y aún sin confirmar), así que el
+> recuento de pasos del mapa (M1.3.7) no cambia.» *(Supuesto aplicado por la tanda, no una confirmación de Gerencia:
+> Q3 del cambio. Si Gerencia decide retirar ese origen, esta frase vuelve a como estaba.)*
+
+«Antes de aplicarla hay que contar cuántos tickets llegaron a Ingresado sin remisión» **se conserva**: sigue siendo
+una tarea de persona y bloquea la publicación, no la construcción.
+
+**La consecuencia declarada, que el maestro debe decir en algún sitio.** Un ticket en `Ticket creado` con una remisión
+`pendiente` **se habilita desde ahí** y llega a `Ingresado` sin haber pasado por `Remisión creada`: ese estado sigue
+pidiendo que n8n **confirme** el documento (M1.3, RQ-TS-03), y la guarda no. Son dos nociones distintas a propósito
+—«creada y no anulada» frente a «confirmada»— y una prueba del repositorio fija las dos divergencias (por estado de
+envío y por tipo de remisión; RQ-RE-20). Texto propuesto, como párrafo nuevo detrás del anterior:
+
+> «Vigente no es lo mismo que confirmada. La guarda de Habilitar Servicio pide remisión creada y no anulada; el estado
+> Remisión creada sigue pidiendo que el documento esté generado. Un ticket puede, por tanto, habilitarse con la remisión
+> aún sin confirmar.»
+
+**Parte (b) · `R08.4.md:1949` y `:3482`: lo que NO se construyó.** La OVI de garantía **no se hizo** en este cambio: sigue
+bloqueada por Q1 («qué es crear la OVI en Desk», E-157 de `docs/sdd/ENTRADA.md`). Hoy existe la primitiva de cargo
+—`puedeCrearOVIGarantia` exige el cargo Director Técnico— pero **ninguna puerta de asociación de orden de venta la
+llama**. Texto propuesto:
+
+> `:1949` «La de la OVI de garantía entra en uso con F1B-03.» →
+> «La de la OVI de garantía está definida en el modelo de permisos, pero aún no actúa en ninguna puerta: queda pendiente
+> de la decisión de Gerencia sobre qué significa crear la OVI en la aplicación.»
+
+> `:3482` «Excepciones construidas: «Liberación sin factura», solo el Director Comercial; crear la OVI de garantía, solo
+> el Director Técnico; fijar la prioridad de los Top 5, solo el Director Comercial.» →
+> «Excepciones construidas: «Liberación sin factura», solo el Director Comercial; fijar la prioridad de los Top 5, solo
+> el Director Comercial. Definida y sin puerta que la use: crear la OVI de garantía, solo el Director Técnico.»
+
+**Parte (c) · Anexo H.** Dos sitios, y las cifras no cambian porque la tanda **no cierra**: (1) la fila F1B-03 de la tabla
+de tandas (`R08.4.md:3844-3850`) pasa de «Sin empezar» a **«En curso»**; (2) en H.1b (`R08.4.md:6406`), F1B-03 sale de
+«Sin empezar» y entra en «En curso o parciales», con la nota «guarda de remisión vigente construida, sin publicar; faltan
+la OVI de garantía y la supresión de prefijos». Tanda **cerrada** sigue sin serlo: `cierra: no`.
+
+**Lo que esta entrada NO pide.**
+
+- **No toca la tabla de `:1427` ni `:1432`** (las dos frases que ya dicen «con la guarda de F1B-03, también remisión de
+  entrada vigente»): siguen siendo ciertas, ahora de lo construido.
+- **No afirma que la guarda esté en producción.** Lo estará cuando se publique y las cifras de los dos recuentos estén
+  entregadas.
+- **No afirma nada sobre «Equipo nuevo»** (Q5, E-158): la guarda lo alcanza por supuesto aplicado (S-3) y Gerencia no lo ha
+  confirmado; es condición de publicación.

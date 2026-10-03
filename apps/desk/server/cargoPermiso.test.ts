@@ -5,7 +5,7 @@ import { createUser } from './auth/users'
 import { createRole } from './auth/roles'
 import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
-import { db, instalarArnes, appWith, adminCookie, userCookie, valoresValidos } from './testing/appHarness'
+import { db, instalarArnes, appWith, adminCookie, userCookie, valoresValidos } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'
 
 instalarArnes()
 
@@ -257,7 +257,7 @@ describe('la matriz HTTP de área, con la compuesta', () => {
       const cookie = `sid=${await createSession(db, u.id)}`
       for (const t of TRANSITIONS) {
         n += 1
-        await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)', [`s21-${n}`, 97000 + n, 'S21', t.from[0]])
+        await db.query('INSERT INTO tickets (id, number, subject, status) VALUES ($1,$2,$3,$4)', [`s21-${n}`, 97000 + n, 'S21', t.from[0]]); if (t.id === 'habilitar_servicio') await conRemisionVigente(db, `s21-${n}`)
         const res = await request(app).post(`/api/tickets/s21-${n}/transition`).set('Cookie', cookie)
           .send({ transitionId: t.id, values: valoresValidos(t, n) })
         if (res.status !== (canExecuteTransition([area], false, t.area) ? 200 : 403)) diferencias.push({ area, transitionId: t.id, observado: res.status })

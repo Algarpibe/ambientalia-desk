@@ -1,5 +1,5 @@
 import type { Remision } from '@ambientalia/shared'
-import { puedeCrearRemisionDeEntrada } from '@ambientalia/shared'
+import { puedeCrearRemisionDeEntrada, esRemisionEntradaVigente, esRemisionConfirmada } from '@ambientalia/shared'
 
 export interface BotonRemision {
   visible: boolean
@@ -30,13 +30,13 @@ export interface BotonRemision {
 export function botonRemision(status: string, remisiones: Remision[] | null): BotonRemision {
   if (!puedeCrearRemisionDeEntrada(status)) return { visible: false, texto: 'Crear remisión', pendienteId: null }
 
-  const vigentes = (remisiones ?? []).filter((r) => !r.anuladaAt && r.tipo === 'entrada')
+  const vigentes = (remisiones ?? []).filter(esRemisionEntradaVigente)
   const pendiente = vigentes.find((r) => r.estado === 'pendiente')
   if (pendiente) return { visible: true, texto: 'Remisión pendiente de envío', pendienteId: pendiente.id }
 
   // Ya confirmada: el ticket estará a punto de pasar a `Remisión creada`. No se ofrece crear otra
   // encima solo porque el estado aún no se haya refrescado en pantalla.
-  const confirmada = vigentes.some((r) => r.estado === 'ok' || r.estado === 'ok_con_avisos')
+  const confirmada = vigentes.some(esRemisionConfirmada)
   if (confirmada) return { visible: false, texto: 'Crear remisión', pendienteId: null }
 
   return { visible: true, texto: 'Crear remisión', pendienteId: null }

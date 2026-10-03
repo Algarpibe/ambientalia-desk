@@ -110,3 +110,37 @@ export function urlSegura(v: string | null | undefined): string | null {
 export function faltaFotoPorNovedad(hayNovedad: boolean | null | undefined, numFotos: number): boolean {
   return hayNovedad === true && numFotos < 1
 }
+
+/** Lo mínimo que hace falta de una remisión para saber si está vigente. SIN `estado`: no entra (RQ-TS-33). */
+export interface RemisionParaVigencia {
+  tipo: string
+  anuladaAt: string | null
+}
+
+/**
+ * RQ-TS-33 / RQ-RE-20. «Remisión de entrada vigente» = de `tipo` entrada, creada y NO anulada, sea cual sea
+ * su estado de envío (Gerencia: «vigente (no anulada)», `docs/sdd/Decisiones_Gerencia_2026-09-10.md:355-356`).
+ * El estado de envío NO entra: una `pendiente` o en `error` cuenta igual. Es la única definición; la guarda
+ * de `habilitar_servicio` (servidor) y el botón (cliente) la consumen — regla invariable 13, punto 1.
+ */
+export function esRemisionEntradaVigente(r: RemisionParaVigencia): boolean {
+  return r.tipo === 'entrada' && !r.anuladaAt
+}
+
+/** `null` si alguna remisión es vigente; si no, el ÚNICO texto del `422` de `habilitar_servicio` (RQ-TS-33). */
+export function motivoSinRemisionVigente(remisiones: readonly RemisionParaVigencia[]): string | null {
+  return remisiones.some(esRemisionEntradaVigente)
+    ? null
+    : 'No se puede habilitar el servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.'
+}
+
+/**
+ * RQ-TS-33. «Remisión confirmada» = n8n ya respondió y el documento existe (`ok` u `ok_con_avisos`). **Sólo
+ * presentación: ninguna guarda la llama.** La consumen el aviso de «remisión sin confirmar» y la línea que
+ * esconde «Crear remisión» en el cliente. Es la misma noción que cuenta el recuento de `Remisión creada` del
+ * servidor (`estadoPorRemision.ts`, que sigue en SQL: dos implementaciones declaradas, RQ-RE-20). Recibe
+ * `estado: string` y no la unión: la columna no tiene `CHECK`; un estado desconocido no cuenta como confirmada.
+ */
+export function esRemisionConfirmada(r: { estado: string }): boolean {
+  return r.estado === 'ok' || r.estado === 'ok_con_avisos'
+}
