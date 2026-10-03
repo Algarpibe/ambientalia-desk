@@ -266,19 +266,19 @@ const TRANSICIONES_BASE: Transition[] = [
  * Etapas que ya saben a quién le pasan el trabajo, para proponerlo en la casilla de derivación.
  *
  * Solo caben aquí las que cambian el trabajo de manos de forma predecible. Heredar al derivado
- * anterior —lo que hacen las otras 28— lo dejaría justo en manos de quien deja de tocarle.
+ * anterior —lo que hacen las otras 26— lo dejaría justo en manos de quien deja de tocarle.
  *
  * Es un mapa y no un campo suelto en cada entrada porque proponer es la EXCEPCIÓN: en una lista de
- * tres líneas se ve de un vistazo cuáles pisan lo heredado, y en 31 declaraciones no.
+ * cinco entradas se ve de un vistazo cuáles pisan lo heredado, y en 31 declaraciones no.
  */
 const DERIVACION_POR_DEFECTO: Record<string, DerivacionPorDefecto> = {
-  // Rev./Diagnostico → Notificado: escalar una revisión es subirla al inmediato superior.
-  escalado_a_revision: { tipo: 'cargo', cargo: 'Director Técnico' },
+  // Rev./Diagnostico → Notificado: escalar una revisión es subirla al inmediato superior. En Proceso → Solicitado: al encargado de inventario, que es ese mismo cargo.
+  escalado_a_revision: { tipo: 'cargo', cargo: 'Director Técnico' }, solicitud_repuestos: { tipo: 'cargo', cargo: 'Director Técnico' },
   // Notificado → Notificación Comercial: sale de Servicio Técnico y pasa a Comercial.
   escalado_a_comercial: { tipo: 'cargo', cargo: 'Coordinador Comercial' },
   // Notificación cliente → En Proceso: el cliente aprobó y el trabajo VUELVE al taller. No hay un
-  // puesto fijo al que mandarlo — hay que devolvérselo a quien tomó ese ticket.
-  aprobacion: { tipo: 'primerDerivado' },
+  // puesto fijo al que mandarlo — hay que devolvérselo a quien tomó ese ticket. Solicitado → En Proceso: entregadas las piezas, vuelve a ese mismo técnico.
+  aprobacion: { tipo: 'primerDerivado' }, entrega_repuestos: { tipo: 'primerDerivado' },
 }
 
 /**

@@ -70,13 +70,13 @@ describe('transitions', () => {
   })
 
   /**
-   * Las TRES etapas que cambian el trabajo de manos, y solo ellas, proponen a quién le toca después.
+   * Las CINCO etapas que cambian el trabajo de manos, y solo ellas, proponen a quién le toca después.
    *
    * Se fija el mapa entero y no cada una por su lado: proponer PISA lo que el ticket ya traía, así que
    * colarlo de más en una etapa cualquiera le quitaría el responsable a alguien sin que nadie lo
    * pidiera. Aquí eso se ve; comprobándolas de una en una, no.
    */
-  it('solo tres etapas proponen derivación, y estas', () => {
+  it('solo cinco etapas proponen derivación, y estas', () => {
     const propuestos: Record<string, unknown> = {}
     for (const t of TRANSITIONS) {
       const p = t.fields.find((f) => f.key === CLAVE_DERIVACION)!.porDefecto
@@ -84,11 +84,11 @@ describe('transitions', () => {
     }
     expect(propuestos).toEqual({
       // Rev./Diagnostico → Notificado: sube al inmediato superior.
-      escalado_a_revision: { tipo: 'cargo', cargo: 'Director Técnico' },
+      escalado_a_revision: { tipo: 'cargo', cargo: 'Director Técnico' }, solicitud_repuestos: { tipo: 'cargo', cargo: 'Director Técnico' },
       // Notificado → Notificación Comercial: sale de Servicio Técnico y pasa a Comercial.
       escalado_a_comercial: { tipo: 'cargo', cargo: 'Coordinador Comercial' },
       // Notificación cliente → En Proceso: el trabajo vuelve al taller, a quien tomó el ticket.
-      aprobacion: { tipo: 'primerDerivado' },
+      aprobacion: { tipo: 'primerDerivado' }, entrega_repuestos: { tipo: 'primerDerivado' },
     })
   })
 

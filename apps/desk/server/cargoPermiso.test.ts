@@ -267,3 +267,24 @@ describe('la matriz HTTP de área, con la compuesta', () => {
     expect(diferencias).toEqual([{ area: 'Comercial', transitionId: 'liberacion_sin_factura', observado: 403 }])
   }, 90_000)
 })
+
+describe('N3 · el octavo cargo «Especialista técnico» (F1C-11): la lista cerrada del servidor lo acepta', () => {
+  it('el alta lo guarda, y la edición lo fija; con otra grafía sigue el 422', async () => {
+    const admin = await adminCookie()
+    const { app } = appWith()
+    const alta = await request(app).post('/api/users').set('Cookie', admin)
+      .send({ email: 'esp@x.co', name: 'Esp', password: 'password123', cargoPermiso: ' Especialista técnico ' })
+    expect(alta.status).toBe(201)
+    expect(alta.body.cargoPermiso).toBe('Especialista técnico')
+    expect(await cargoEnBase('esp@x.co')).toBe('Especialista técnico')
+
+    const u = await createUser(db, { email: 'ed@x.co', name: 'Ed', passwordHash: 'h', cargoPermiso: 'Técnico' })
+    const edicion = await request(app).patch(`/api/users/${u.id}`).set('Cookie', admin).send({ cargoPermiso: 'Especialista técnico' })
+    expect(edicion.status).toBe(200)
+    expect(await cargoEnBase('ed@x.co')).toBe('Especialista técnico')
+
+    const otraGrafia = await request(app).patch(`/api/users/${u.id}`).set('Cookie', admin).send({ cargoPermiso: 'Especialista Técnico' })
+    expect(otraGrafia.status).toBe(422)
+    expect(await cargoEnBase('ed@x.co')).toBe('Especialista técnico')
+  })
+})

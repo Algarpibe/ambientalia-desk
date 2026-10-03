@@ -6,12 +6,12 @@ import { TRANSITIONS } from './transitions'
  * área (`canExecuteTransition`, intacta) Y, si el acto tiene excepción, el cargo; nunca amplía.
  *
  * `cargoPermiso` es la lista cerrada de `public.users.cargo_permiso`, distinta del `users.cargo` de
- * firma (texto libre, alarmas y derivación). La lista es la de `decision/c10b-gerente-director`
- * (`openspec/config.yaml`), y `cargos.test.ts` la lee para no divergir de ella.
+ * firma (texto libre, alarmas y derivación). Son los siete de `decision/c10b-gerente-director` más el de
+ * `decision/cargo-encargado-de-inventario` (`openspec/config.yaml`); `cargos.test.ts` lee las dos para no divergir.
  */
 export const CARGOS = [
   'Director Técnico', 'Coordinador Técnico', 'Técnico', 'Técnico de campo',
-  'Director Comercial', 'Coordinador Comercial', 'Asistente Comercial',
+  'Director Comercial', 'Coordinador Comercial', 'Asistente Comercial', 'Especialista técnico',
 ] as const
 
 export type Cargo = (typeof CARGOS)[number]
