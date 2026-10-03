@@ -230,3 +230,32 @@ detector de citas: repara la cita o añádela a mano a `apps/desk/server/citas/l
 - **Healthcheck (opcional):** puedes apuntar el healthcheck de EasyPanel a `/api/tickets`.
 - **tsx en runtime:** la imagen ejecuta el server TypeScript con `tsx` (no requiere paso de
   compilación del backend). Por eso el `Dockerfile` instala todas las dependencias.
+
+## Comprobación de lectura tras desplegar F1B-04 (recepción: rotulado, novedades y foto por categoría)
+
+Hazla **antes de dar el cambio por publicado**. Son dos consultas de sólo lectura, en la base `desk` (esquema `public`).
+La migración corre al arrancar y es tolerante por sentencia: un fallo se registra como «sentencia omitida» y **no**
+tumba el arranque, así que un despliegue puede quedar «verde» con una columna sin crear.
+
+```sql
+-- 1. La lista de novedades: diez filas.
+SELECT count(*) FROM public.catalogo_novedades;
+
+-- 2. Las seis columnas nuevas: seis filas.
+SELECT table_name, column_name
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND ((table_name = 'remisiones' AND column_name IN ('novedades', 'novedad_otro', 'rotulado_at', 'rotulado_por'))
+    OR (table_name = 'remision_fotos' AND column_name IN ('categoria', 'novedad')))
+ORDER BY table_name, column_name;
+```
+
+- **Qué se rompe si falta una columna de `public.remisiones`:** **toda** alta de remisión falla, también la de
+  legado, porque el `INSERT` de `createRemision` las nombra todas (`apps/desk/server/db/remisiones.ts:47`).
+- **Si falta una de `public.remision_fotos`:** falla la subida de fotos y la lectura de la remisión.
+- **Si la tabla tiene menos de diez filas:** el formulario muestra una lista incompleta; con cero filas el alta de
+  remisión responde `422` «La lista de novedades no está cargada».
+- **Sin interruptores nuevos:** `.env.example` no cambia. Para volver atrás basta revertir y redesplegar; tabla y
+  columnas quedan sin uso y no se borran.
+- **Condiciones de publicación que no son de este fichero** (de persona): que Servicio Técnico confirme la lista de
+  diez y que quien administra n8n compruebe que la etiqueta lleva el código del ticket (E-170 de `docs/sdd/ENTRADA.md`).

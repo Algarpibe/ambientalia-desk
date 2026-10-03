@@ -248,3 +248,69 @@ Intento abierto por el orquestador (4.1). Antes: `client.ts` 796, `CrearRemision
 **Cliente.** `client.ts`: `:1` (importación), `:534-535` y `:554-555` en sitio, `fetchNovedadesRemision` al final (12/5; 803 líneas = 796 + 7). `CrearRemision.tsx`: cero netas hasta la 270 (hunks `-3`, `-5`, `-7`, `-51,2`, `-59,3`, `-76`, `-79`, `-82`, `-97,5`, `-116`, todos del mismo tamaño); de la 271 en adelante cambia (394 líneas). `hayNovedad` ya no se manda. `envioRemision.ts` y su prueba, intactos. Sin prueba propia de `client.ts` ni del `.tsx` (F0-00).
 
 **Cierre.** build 0; typecheck 0 (código de salida comprobado); lint 165 avisos, 0 errores; `npm test` 182 ficheros / 2.758 verdes (2 omitidas) = 2.735 + 23.
+
+## Lote 4b — cierre documental (4.9-4.14)
+
+Partida: `1b289f3`. Intento del lote abierto por el orquestador; el `settle`, suyo. Sin código de producción.
+
+### 4.9 · Regla invariable 13, decisión a decisión (líneas REMEDIDAS contra el árbol de HEAD, no copiadas del diseño)
+
+Siglas: `R` = `apps/desk/server/routes/remision.ts`; `S` = `packages/shared/src/recepcion.ts`; `T` = `apps/desk/server/recepcion.test.ts`; `TS` = `packages/shared/src/recepcion.test.ts`. La guarda del alta es `R:158`: llama a `resolverRecepcion` (`apps/desk/server/services/recepcion.ts:13-19`), que ejecuta `validarRecepcion` (`S:75-113`).
+
+| # | Decisión del cliente (`CrearRemision.tsx`) | Clase | La impone el servidor en | La prueba |
+|---|---|---|---|---|
+| 1 | Pinta la lista servida, sólo activas | comodidad | `apps/desk/server/routes/novedades.ts:16-17` (sirve `novedadesActivas`, `S:29`) y `S:80`/`S:88` (rechaza claves inactivas) | `T:25`, `T:36`, `T:96` |
+| 2 | Marcar una excluyente desmarca las demás, y al revés | rellena | `R:158` → `S:93` | `TS:93` (PA-3), `T:221`, `T:230` |
+| 3 | No deja crear sin ninguna marcada | bloquea | `R:158` → `S:84` | `T:65` (los seis `422`), `TS:42` |
+| 4 | No deja crear con «Otro» sin texto | bloquea | `R:158` → `S:99` | `T:199`, `T:209`, `TS:93` |
+| 5 | No deja crear sin «Rotulado y guardado» | bloquea | `R:158` → `S:101`; y en `/enviar`, `R:289-293` → `S:155` | `T:86`, `T:370` |
+| 6 | No deja crear sin las tres fotos mínimas ni sin la de cada novedad | bloquea | `R:289-293` (antes de `reclamarEnvio`, `R:297`) → `S:151-162`. En el alta no puede imponerse: las fotos se suben después | PE-2 `T:360`, `T:378`, `T:391`, `T:399` |
+| 7 | Esconde «Continuar sin las fotos que faltan» si lo ya subido no cumple | bloquea | `R:289-293` | PE-2 `T:360` (el reintento inmediato sólo pasa con lo exigido) |
+| 8 | Etiqueta cada foto con su categoría y, si es de novedad, con su clave | rellena | `R:384` → `S:169-183` (`categoriaDeFoto`); `R:385-387` y `apps/desk/server/db/remisiones.ts:191-198` | `T:304`, `T:317`, `T:324`, PS-1 `T:334` |
+| 9 | No manda `observaciones` ni `hayNovedad` | no decide | `R:249-250` (derivados de `rec`; para el legado, ver abajo) | `T:119`, `T:144` |
+| 10 | No manda persona ni hora del rotulado | no decide | `R:250` (`rotuladoPor` = `req.user`) y `apps/desk/server/db/remisiones.ts:50` (`rotulado_at` = `new Date()`) | `T:144` (cuerpo falso ignorado) |
+| 11 | Avisa si la lista no carga o llega vacía | avisa | `R:158` → `S:80` (`422` con catálogo vacío) | `T:107` (M-D4) |
+
+Ninguna decisión queda sólo en el cliente: las filas 2-5 y 11 las ejecuta el cliente con la MISMA `validarRecepcion` (`apps/desk/src/lib/recepcionForm.ts`, probada en `apps/desk/src/lib/recepcionForm.test.ts`). Las filas 6 y 7 son comodidad legítima porque PE-2 prueba la imposición del servidor.
+
+**Corrección de lo que dice el diseño §7, fila 11:** el diseño decía «avisa y DESHABILITA "Crear"». **No se deshabilita**: `CrearRemision.tsx:376` sólo deshabilita con `!data || !!busy`. Con la lista sin cargar (`:275-278` muestra el aviso) el botón sigue activo; al pulsarlo, `:101` pone el motivo en `setErr` y no envía; y si la petición saliera igual, el servidor responde `422` (`S:80`, `T:107`). Es comodidad, no guarda: la imposición está probada.
+
+**Agujero conocido, declarado y NO corregido aquí.** Una petición que **omita** la clave `novedades` entra por la vía de legado (`apps/desk/server/services/recepcion.ts:16`: `cuerpo.novedades === undefined` → `null`) y evita las guardas nuevas del alta (`R:158`): sigue guardando `observaciones` y `hayNovedad` del cuerpo (`R:249-250`) y no pide rotulado. En `/enviar` la rige la regla de antes (`S:154`, `MOTIVO_FOTO_LEGADO`). Es E-081; la guarda nueva de recepción añade además un tercer punto a IV-12 (E-169 de `docs/sdd/ENTRADA.md`).
+
+### 4.10-4.11 · Barrido de citas (regla de mutación 4), sin excluir `archive/`
+
+Método: `git diff -U0 f55b7d9 HEAD` de cada fichero EDITADO (diez: `app.ts`, `db/remisiones.ts`, `routes/remision.ts`, `client.ts`, `CrearRemision.tsx`, `shared/index.ts`, `types.ts`, `migrate.test.ts`, `migrate.ts`, `schema.sql`). Una cita cuenta si su rango solapa una línea cuyo TEXTO cambió o una que se DESPLAZA (`CrearRemision.tsx` desde la 271, `shared/index.ts` desde la 29, `schema.sql` desde la 677; el resto, neto cero). Se barren todos los ficheros rastreados, casando el nombre con o sin ruta. Lo que ese patrón no ve: las listas con coma (`migrate.ts:63-64,70-73,80`, leída aparte) y las abreviadas sueltas (pase a mano en `CLAUDE.md` y en `openspec/specs/remisiones/spec.md`).
+
+**241 citas solapan.** Leída la frase de cada una en los ficheros vivos y en los documentos fechados; las 108 de `archive/` se clasifican por el patrón de su frase, sin tocarse:
+
+| Dónde | N | Caso | Resultado |
+|---|---|---|---|
+| `index.ts:NN` sin ruta | 31 | descartadas | Son del `index.ts` del servidor (`setInterval`, `ADMIN_EMAIL`), no del barril de `shared`; leídas por su frase |
+| Ficheros de esta tanda (`design`, `exploration`, `proposal`, `spec`, `tasks`, `apply-progress`) | 46 | B (registro de partida, describe `f55b7d9`) | Se archivan tal cual. Cuatro siguen ciertas hoy (`types.ts:622`, `types.ts:735`, `routes/remision.ts:291`, `migrate.ts:70-73`) |
+| `openspec/changes/archive/` | 108 | B/C | No se tocan |
+| `docs/sdd/Paquete_de_Despliegue_*.md` | 35 | B (describen su día) | No se tocan |
+| Otros `docs/` y `openspec/config.yaml` | 8 | B | `openspec/config.yaml:2946` y la R01.1 `:424` citan `remision.ts:250` («guarda `null`»): sigue cierta **de la vía de legado**; al supervisor, junto con E-169 |
+| `openspec/specs/` vivas | 13 | 11 A (siguen ciertas), 1 B, 1 previa | Ver abajo |
+| `CLAUDE.md` | 0 solapan | — | `migrate.ts:63-64,70-73,80` sigue definiendo las tres listas; las de IV-12 (`remision.ts:127`, `:155`, `:177`, `:197`, `:220`) caen en líneas sin cambio de texto y siguen diciendo lo mismo (medidas hoy); las cifras del guardián (`migrate.test.ts:327`, `:409-411`) no se mueven |
+
+**Reparadas: 0.** Ninguna cita de caso A de un fichero vivo quedó falsa por esta tanda (`routes/remision.ts`, `db/remisiones.ts` y `types.ts` quedaron en neto cero a propósito).
+
+**Lista para el `archive`** (specs vivas, que repara él vía delta):
+
+- `openspec/specs/remisiones/spec.md:226-227` (RQ-RE-08, fila 4 «Hay novedad declarada y cero fotos», `:289-293`): las líneas siguen bien, pero la fila describe sólo la regla de legado; **la sustituye el delta MODIFIED** (su tabla ya dice lo nuevo).
+- `openspec/specs/remisiones/spec.md:66-67`: cita `routes/remision.ts:155-160` y `:155-156` para el motivo «confiar en el cliente permitiría remisionar con la lista equivocada»; ese texto está hoy en `routes/remision.ts:185`. **Falsa desde ANTES de esta tanda** (la `155-160` sólo cambió de texto en la 158): no se repara aquí, se lista.
+- `openspec/specs/gases-patron/spec.md:198`: `migrate.test.ts:283` con «`[10, 24, 3]`», medido sobre `f5255d2` (B, nombra la revisión); hoy esa línea fija `[10, 28, 3]`.
+- Las otras once (`remisiones/spec.md:35`, `:36`, `:151`, `:590`, `:673`, `:742`; `gases-patron/spec.md:56`; `tickets-core/spec.md:1397`; `transitions-st/spec.md:1924`; `zoho-sync/spec.md:658`, `:678`): siguen ciertas, porque `db/remisiones.ts:48` conserva los literales `'entrada'` y `'pendiente'` y `migrate.ts:70-73` sigue definiendo `PUBLIC_TABLES`.
+- **Segundo barrido tras fusionar el delta**: el delta añade líneas a `remisiones/spec.md`; las citas a ese fichero desde otros ficheros hay que remedirlas.
+
+Hipótesis (no verificada): no hay citas a `schema.sql` desde la 677 en adelante (el barrido dio 0), así que el bloque de F1B-04 al final no desplazó nada.
+
+### 4.12-4.14 · Entradas, maestro, despliegue
+
+`docs/sdd/ENTRADA.md`: E-163 a E-170. `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: corrección nº 21. `DEPLOY.md`: sección final «Comprobación de lectura tras desplegar F1B-04», sin desplazar ninguna de sus 82 citas.
+
+Los nueve pasos de comprobación del formulario (RQ-RE-19; el informe del lote 4a no los traía, se derivan de Persona-1 a Persona-5 de la spec): (1) abrir el alta: diez novedades sin marcar, casilla de rotulado sin marcar y sin campo libre de observaciones; (2) marcar «Sin novedad» y luego otra: la primera se desmarca; y al revés; (3) marcar «Otro» sin texto: no deja crear; (4) no marcar la casilla de rotulado: no deja crear; (5) marcar una novedad sin su foto: no deja crear; (6) quitar una foto mínima: no deja crear; (7) con fotos que faltan, no ofrece «Continuar sin fotos»; (8) un envío bloqueado dice qué categoría o novedad falta; (9) alta completa: se crea, se envía y n8n imprime la etiqueta con el código del ticket.
+
+### Medida del lote 4b (4.14)
+
+`git diff --shortstat --no-renames 1b289f3` antes de añadir esta nota: 5 ficheros, 183 inserciones, 6 borrados (189); sin ficheros nuevos sin trackear ni binarios; válvula 720. `npm test` 182 ficheros / 2.758 verdes (2 omitidas); `npm run typecheck` 0; `npm run lint` 165 avisos, 0 errores.
