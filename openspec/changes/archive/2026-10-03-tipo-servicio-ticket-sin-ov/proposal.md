@@ -1,7 +1,7 @@
 ---
 tanda: F1B-03
 motivo: ""
-capacidad: [transitions-st, remisiones, permissions, tickets-core]
+capacidad: [transitions-st, remisiones]
 maestro: ["M1.2", "M1.9", "M4.4", "Anexo D nº 21", "Anexo D nº 43"]
 cierra: no
 toca_maestro: si

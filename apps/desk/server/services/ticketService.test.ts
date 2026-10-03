@@ -1274,8 +1274,8 @@ describe('F1B-15 · RQ-TS-32 · guarda de alta pendiente en habilitar_servicio',
  *
  * LO QUE NO TIENE ESCENARIO (hechos del catálogo, fijados abajo): cargo (`habilitar_servicio` no tiene excepción de cargo),
  * prioridad (la transición no declara campo de prioridad) y verificación (sólo `liberacion` la calcula, y `exigirVerificacion`
- * recibe `null` en las demás). Mover la guarda nueva delante de cargo, prioridad o verificación DENTRO de la línea 131 es un
- * mutante equivalente: no lo caza nada, y se declara aquí en vez de maquillarlo.
+ * recibe `null` en las demás). Mover el PAR `exigirAltaValidada` + `exigirRemisionVigente` delante de cargo, prioridad o verificación
+ * es un mutante equivalente: 251/251 verdes. Mover SÓLO la guarda delante de `exigirAltaValidada` = P2 roja (5); no equivalente.
  */
 describe('F1B-03 · RQ-TS-33 · guarda de remisión de entrada vigente en habilitar_servicio', () => {
   const TEXTO = 'No se puede habilitar el servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.'

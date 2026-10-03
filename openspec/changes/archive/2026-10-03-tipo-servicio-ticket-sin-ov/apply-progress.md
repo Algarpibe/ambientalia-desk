@@ -102,7 +102,7 @@ Guarda: `exigirRemisionVigente` (`apps/desk/server/services/ticketService.ts:273
 | **No ofrecer «Crear remisión» con una ya confirmada** (`botonRemision.ts:39`) | **NINGUNA, y ya era así.** El servidor sólo rechaza una segunda remisión con una `pendiente` (`apps/desk/server/routes/remision.ts:174-183`, el `409` de la 177), no con una confirmada | **Presentación mientras la pantalla refresca; no es una regla ni un espejo.** Este cambio sólo sustituye la condición por `esRemisionConfirmada` |
 | Reetiquetar el botón con una `pendiente` (`botonRemision.ts:34`, sin tocar) | `apps/desk/server/routes/remision.ts:174-183` | Imposición vecina existente |
 | Mostrar primero el motivo de alta y luego el de remisión (`habilitarServicio.ts`, `motivoNoHabilitar`) | El orden de las dos llamadas de la misma línea 131 del servidor, fijado por P2 (`ticketService.test.ts`, bloque RQ-TS-33) | Probado |
-| Con las remisiones sin cargar, botón activo y sin aviso (`TicketDetailView.tsx:53` pasa `null`) | No es decisión: se abstiene y contesta el servidor (`ticketService.ts:131`) | — |
+| Con las remisiones sin cargar, botón activo y sin aviso (`TicketDetailView.tsx:339` pasa `null`) | No es decisión: se abstiene y contesta el servidor (`ticketService.ts:131`) | — |
 | Desactivar con alta pendiente (`TransitionPanel.tsx:70`, `motivoAlta`) | `exigirAltaValidada`, `apps/desk/server/services/ticketService.ts:258-264`; sin cambios | F1B-15 |
 | Ofrecer sólo transiciones del área y cargo (`TransitionPanel.tsx:56-58`) | `apps/desk/server/services/ticketService.ts:129-131`; sin cambios | Espejo probado (IV-3 cerrado) |
 | Texto del motivo, `title` y texto del aviso | Presentación. El del motivo es el del servidor (misma función); el del aviso es sólo del cliente | — |
@@ -137,5 +137,5 @@ Comprobado en `openspec/config.yaml` (`decisiones_de_gerencia` y `decisiones_de_
 | Evidencia | Valor |
 |---|---|
 | Prueba focal | `npx vitest run packages/shared/src/remision.test.ts apps/desk/src/lib/habilitarServicio.test.ts apps/desk/src/lib/botonRemision.test.ts`: 3 ficheros, 63 pasan |
-| Arnés real | `npm run build` ✓ y comprobación de persona en la app (`.tsx` fuera de la red, F0-00): botón desactivado con el texto único sin remisión; activo con aviso con una `pendiente`; sin aviso con la confirmada |
+| Arnés real | `npm run build` ✓. Comprobación de persona en la app (`.tsx` fuera de la red, F0-00): pendiente de realizar tras publicar. Comportamiento esperado: botón desactivado con el texto único sin remisión; activo con aviso con una `pendiente`; sin aviso con la confirmada. |
 | Frontera de reversión | `git revert` del lote 2, **antes** que el 1 si ambos están publicados |

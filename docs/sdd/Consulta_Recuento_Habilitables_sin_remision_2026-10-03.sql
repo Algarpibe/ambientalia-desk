@@ -25,7 +25,7 @@
 --   · sin_remision_vigente: los que QUEDARÁN BLOQUEADOS al publicar (422; el botón sale desactivado).
 --   · vigente_con_alguna_confirmada: se habilitan, sin aviso.
 --   · vigente_sin_ninguna_confirmada: se habilitan, y verán el aviso «Remisión de entrada sin confirmar».
---   tickets = la suma de las tres. Al final, una fila de TOTAL (estado = '— total —').
+--   tickets = la suma de las tres. Al final, una fila de TOTAL donde estado = NULL (salida del ROLLUP).
 -- Hipótesis: que un ticket que ya llegó a «Ingresado» no vuelve a un estado de origen, con lo que esta
 --   población y la de la consulta del 25/09 no se solapan; esta consulta no depende de que sea cierto.
 -- Lo habilitado desde Zoho no pasa por la aplicación y la guarda no lo ve: no se mide aquí.
