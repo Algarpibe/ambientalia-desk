@@ -274,6 +274,8 @@ espera corta entre pulsaciones, y **SHALL** volver a la página 1 al cambiar el 
 requisito **no admite escenario automatizado**. **No** se propone `jsdom` ni `@testing-library`. Lo que sí es
 lógica se prueba en `.ts`: la construcción de la URL con `q` (`apps/desk/src/lib/`), cubierta por la prueba de
 `RQ-VT-11`. El `maxLength` de 64 es comodidad; el `422` de `RQ-VT-11` es la imposición.
+**[SUPUESTO S-7]** En la vista «Remisión creada» (`RQ-VT-10`) la caja **no se enseña** y el texto de búsqueda se
+vacía al entrar en ella: esa lista no admite `q`. Si la búsqueda debe cubrirla es pregunta abierta de la bandeja.
 
 Verificación por persona, dueño QA / quien despliegue, **tras el despliegue** y sin contar como tarea de la tanda
 (regla del ciclo 1): **archivar este cambio no la da por hecha.**

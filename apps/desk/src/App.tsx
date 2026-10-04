@@ -56,7 +56,7 @@ function App() {
   const [mode, setMode] = useViewMode()
   const [view, setView] = useState<VistaKey>('todos');
   const [closedPage, setClosedPage] = useState(1); const [q, setQ] = useState('')
-  useEffect(() => { setClosedPage(1) }, [view, q])
+  useEffect(() => { setClosedPage(1); if (view === 'remision_creada') setQ('') }, [view, q])
   const { data: resp, loading, error, reload } = useAsync<{ activos: Ticket[]; cerrados: ClosedPage | null }>(
     () => {
       if (view === 'cerrados') {
