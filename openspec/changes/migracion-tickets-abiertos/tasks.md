@@ -145,12 +145,12 @@ Archivos: `apps/desk/server/db/migracionTicketsAbiertos.ts`, `apps/desk/server/d
 `apps/desk/server/migracionTicketsAbiertosRuta.test.ts`, `apps/desk/server/migracionMarcadorLectores.test.ts` (nuevos);
 `apps/desk/server/routes/admin.ts` (sólo crece por el final).
 
-- [ ] 2.1 Anotar `git rev-parse HEAD` (partida del lote 2), comprobar el intento y medir `wc -l` de `routes/admin.ts` (213 líneas con
+- [x] 2.1 Anotar `git rev-parse HEAD` (partida del lote 2), comprobar el intento y medir `wc -l` de `routes/admin.ts` (213 líneas con
   contenido) y `packages/shared/src/index.ts`.
-- [ ] 2.2 Leer los moldes: `apps/desk/server/db/transaccion.ts:13-28`, `packages/zoho-sync/src/db/repo.ts:331-346`,
+- [x] 2.2 Leer los moldes: `apps/desk/server/db/transaccion.ts:13-28`, `packages/zoho-sync/src/db/repo.ts:331-346`,
   `apps/desk/server/routes/altaManual.test.ts:158`, `apps/desk/server/testing/appHarness.ts:34-40`,
   `apps/desk/server/db/clientesProvisionales.ts:94`.
-- [ ] 2.3 **BARRIDO de lectores de `ticket_transitions`** contra una fila marcador con `transition_id` desconocido y
+- [x] 2.3 **BARRIDO de lectores de `ticket_transitions`** contra una fila marcador con `transition_id` desconocido y
   `to_status = NULL`. El diseño sólo leyó `apps/desk/server/db/sla.ts:88-95` y `apps/desk/server/db/informeContrato.ts:34`.
   Leer, y escribir el resultado con ruta y línea en `apply-progress.md`: `apps/desk/server/indicadores.ts:76`,
   `apps/desk/server/db/fechasTicket.ts:28`, `apps/desk/server/db/primerDerivado.ts:26`,
@@ -163,77 +163,77 @@ Archivos: `apps/desk/server/db/migracionTicketsAbiertos.ts`, `apps/desk/server/d
   --include=*.ts` (sin pruebas) y `grep -rnE "to_status|transition_id" ...` por si hay lectores con otro alias, y anotar
   los que se añadan. Por lector: ¿trata el marcador como una entrada de estado, una transición del blueprint, una
   derivación, una liberación o una fecha de evento? Qué ve el usuario.
-- [ ] 2.4 **Rojo/caracterización del barrido** (`apps/desk/server/migracionMarcadorLectores.test.ts`, nuevo): sembrar un marcador
+- [x] 2.4 **Rojo/caracterización del barrido** (`apps/desk/server/migracionMarcadorLectores.test.ts`, nuevo): sembrar un marcador
   y llamar a cada lector del 2.3 que se pueda llamar sobre pg-mem. Un lector que se comporta mal es una prueba **roja**
   que se anota; uno que no, nace verde como caracterización. **No se arregla fuera de alcance:** todo lo no resuelto va a
   `apply-progress.md` como pregunta para la bandeja, sin tocar el lector.
-- [ ] 2.5 Rojo, ejecutor, seco (`apps/desk/server/db/migracionTicketsAbiertos.test.ts`, nuevo): con `aplicar` ausente y con
+- [x] 2.5 Rojo, ejecutor, seco (`apps/desk/server/db/migracionTicketsAbiertos.test.ts`, nuevo): con `aplicar` ausente y con
   `false` el espía de SQL no ve `BEGIN` ni escritura y las filas quedan idénticas; el informe trae todos sus campos.
-- [ ] 2.6 Rojo, ejecutor, aplicar: marcador y `UPDATE` por ticket dentro de una transacción y en ese orden (espía);
+- [x] 2.6 Rojo, ejecutor, aplicar: marcador y `UPDATE` por ticket dentro de una transacción y en ese orden (espía);
   `to_status` `NULL` en identidad con el destino en `"values"` y destino en las dos reglas de cambio; `status_type`
   `'Closed'` para «Entregado», `'Open'` para «Pendiente» de servicio, intacto en identidad; `managed_by_app = true`;
   `modified_time`, `source` y `closed_time` intactos; `updated_at` cambia.
-- [ ] 2.7 Rojo, ejecutor, negativa: con el sin equivalencia **último** de la lista y `aplicar=true`, el espía no registra
+- [x] 2.7 Rojo, ejecutor, negativa: con el sin equivalencia **último** de la lista y `aplicar=true`, el espía no registra
   `INSERT` ni `UPDATE`, ni siquiera sobre los que sí migraban; el informe lleva `negativa`; un sin equivalencia gobernado o
   posterior al corte no bloquea (D-8).
-- [ ] 2.8 Rojo, ejecutor, frontera: segunda pasada sin marcador ni `UPDATE` nuevos; `upsertTicket` posterior no altera la
+- [x] 2.8 Rojo, ejecutor, frontera: segunda pasada sin marcador ni `UPDATE` nuevos; `upsertTicket` posterior no altera la
   fila migrada y sí la de un ticket sin migrar; cerrados, posteriores al corte y gobernados quedan idénticos.
-- [ ] 2.9 Rojo, ejecutor, resto: el marcador de identidad no mueve `entradasActuales`; `sinRemisionVigente` con y sin remisión
+- [x] 2.9 Rojo, ejecutor, resto: el marcador de identidad no mueve `entradasActuales`; `sinRemisionVigente` con y sin remisión
   y sin crear ninguna; `numeracion.arrastra` falso en 9999 y verdadero en 10000; un `UPDATE` que no devuelve fila (la fila
   pasó a `managed_by_app = true` entre lectura y escritura) lanza y deja tablas intactas; fallo forzado en el segundo
   `UPDATE` deshace el primero (espía con `ROLLBACK`).
-- [ ] 2.10 Rojo, ruta (`apps/desk/server/migracionTicketsAbiertosRuta.test.ts`, nuevo): `401` sin sesión, `403` sin rol sin
+- [x] 2.10 Rojo, ruta (`apps/desk/server/migracionTicketsAbiertosRuta.test.ts`, nuevo): `401` sin sesión, `403` sin rol sin
   invocar al ejecutor; `400` sin `corte`, con fecha pelada y con `corte` sin desfase; `400` con `aplicar=1` y `aplicar=TRUE`,
   también en seco y sin leer nada.
-- [ ] 2.11 Rojo, ruta, respuestas y solapamientos: `200` en seco por defecto; `200` en seco con negativa rellena; `409` con el
+- [x] 2.11 Rojo, ruta, respuestas y solapamientos: `200` en seco por defecto; `200` en seco con negativa rellena; `409` con el
   informe completo al aplicar con negativa; `200` al aplicar; informe igual en seco y al aplicar; el informe va al log;
   solapamientos del §7: no administrador con `corte` inválido ve `403`; `corte` inválido con un sin equivalencia en la base
   ve `400`; un migrable y un sin equivalencia con `aplicar=true` no dejan ni `INSERT` ni `UPDATE`.
-- [ ] 2.12 **EJECUTAR** los cuatro ficheros y anotar el fallo literal de cada rojo en `apply-progress.md`.
+- [x] 2.12 **EJECUTAR** los cuatro ficheros y anotar el fallo literal de cada rojo en `apply-progress.md`.
 
 **Verde**
-- [ ] 2.13 Crear `apps/desk/server/db/migracionTicketsAbiertos.ts`: lectura única del §5 (sin `NOT EXISTS` ni `TRIM`),
+- [x] 2.13 Crear `apps/desk/server/db/migracionTicketsAbiertos.ts`: lectura única del §5 (sin `NOT EXISTS` ni `TRIM`),
   clasificación con el núcleo, `vigenciaDeRemisiones` y `motivoSinRemisionVigente` por ticket del subconjunto, `numeracion`
   (`base` de `APP_TICKET_NUMBER_BASE`), `avisos` e informe; el camino seco no abre transacción.
-- [ ] 2.14 En el mismo fichero, camino de aplicar: `enTransaccion`, lectura por el mismo cliente, negativa antes del primer
+- [x] 2.14 En el mismo fichero, camino de aplicar: `enTransaccion`, lectura por el mismo cliente, negativa antes del primer
   `INSERT`, por ticket marcador y luego `UPDATE … WHERE id=$1 AND managed_by_app = false RETURNING id` (sin `modified_time`,
   sin `source`; `status_type` según D-10).
-- [ ] 2.15 `routes/admin.ts`: ruta `POST /api/admin/migrar-tickets-abiertos` tras `apps/desk/server/routes/admin.ts:212`
+- [x] 2.15 `routes/admin.ts`: ruta `POST /api/admin/migrar-tickets-abiertos` tras `apps/desk/server/routes/admin.ts:212`
   con `requireAuth`, `requireSuperAdmin`, validación de `corte` y `aplicar` antes del ejecutor, `409` con el informe,
   `logger.info` del informe, y el `import` del ejecutor tras la llave de cierre.
-- [ ] 2.16 **EJECUTAR `npm run lint`** y confirmar que el `import` tardío de `admin.ts` se acepta. Si no, **plan B:** `import`
+- [x] 2.16 **EJECUTAR `npm run lint`** y confirmar que el `import` tardío de `admin.ts` se acepta. Si no, **plan B:** `import`
   arriba del fichero más el barrido de citas de la regla de mutación 4 sobre `admin.ts` (2.31). Anotarlo.
-- [ ] 2.17 **EJECUTAR** los cuatro ficheros: todo verde.
-- [ ] 2.18 `git diff --numstat` y `git diff` de `routes/admin.ts`: sin borrados salvo, si hizo falta, el plan B; las líneas 1 a 212 no se
+- [x] 2.17 **EJECUTAR** los cuatro ficheros: todo verde.
+- [x] 2.18 `git diff --numstat` y `git diff` de `routes/admin.ts`: sin borrados salvo, si hizo falta, el plan B; las líneas 1 a 212 no se
   mueven; `wc -l` antes y después.
 
 **Mutaciones (aplicar, anotar mensaje literal, REVERTIR)**
-- [ ] 2.19 **M1:** quitar el seco por defecto (`aplicar` ausente escribe). Cae «`200` en seco por defecto» (ruta) y «seco: ni
+- [x] 2.19 **M1:** quitar el seco por defecto (`aplicar` ausente escribe). Cae «`200` en seco por defecto» (ruta) y «seco: ni
   `BEGIN` ni escrituras» (ejecutor).
-- [ ] 2.20 **M2 (regla 1):** mover la negativa detrás de la primera escritura. Cae «negativa total» por el espía.
-- [ ] 2.21 **M3 (regla 1):** invertir marcador y `UPDATE`. Cae «orden por espía».
-- [ ] 2.22 **M4:** quitar `managed_by_app = true` del `UPDATE`. Cae «`upsertTicket` posterior no altera la fila».
-- [ ] 2.23 **M5:** quitar la rama `ya-gobernado`. Cae «segunda pasada sin cambios» (ejecutor) y la precedencia (núcleo).
-- [ ] 2.24 **M6:** quitar `requireSuperAdmin` de la ruta. Cae `403`.
-- [ ] 2.25 **M7 (D-6):** rellenar `to_status` en identidad. Cae «el marcador de identidad no mueve `entradasActuales`».
-- [ ] 2.26 **M8 (D-5):** añadir `modified_time = now()` al `UPDATE`. Cae «`modified_time` intacto».
-- [ ] 2.27 **M9 (regla 1, 2 y 3):** validar `corte` antes de `requireSuperAdmin`. Cae «no administrador con `corte` inválido ve
+- [x] 2.20 **M2 (regla 1):** mover la negativa detrás de la primera escritura. Cae «negativa total» por el espía.
+- [x] 2.21 **M3 (regla 1):** invertir marcador y `UPDATE`. Cae «orden por espía».
+- [x] 2.22 **M4:** quitar `managed_by_app = true` del `UPDATE`. Cae «`upsertTicket` posterior no altera la fila».
+- [x] 2.23 **M5:** quitar la rama `ya-gobernado`. Cae «segunda pasada sin cambios» (ejecutor) y la precedencia (núcleo).
+- [x] 2.24 **M6:** quitar `requireSuperAdmin` de la ruta. Cae `403`.
+- [x] 2.25 **M7 (D-6):** rellenar `to_status` en identidad. Cae «el marcador de identidad no mueve `entradasActuales`».
+- [x] 2.26 **M8 (D-5):** añadir `modified_time = now()` al `UPDATE`. Cae «`modified_time` intacto».
+- [x] 2.27 **M9 (regla 1, 2 y 3):** validar `corte` antes de `requireSuperAdmin`. Cae «no administrador con `corte` inválido ve
   `403`».
-- [ ] 2.28 **M10 (regla 1, 3 y 4):** llamar al ejecutor antes de validar `corte`. Cae «`corte` inválido con un sin equivalencia
+- [x] 2.28 **M10 (regla 1, 3 y 4):** llamar al ejecutor antes de validar `corte`. Cae «`corte` inválido con un sin equivalencia
   ve `400`».
-- [ ] 2.29 **M11 (D-12):** tratar `aplicar=1` como seco. Cae «`400` con `aplicar=1`».
-- [ ] 2.30 `git diff` de `routes/admin.ts`, `migracionTicketsAbiertos.ts` y `shared/`: no queda ninguna mutación.
+- [x] 2.29 **M11 (D-12):** tratar `aplicar=1` como seco. Cae «`400` con `aplicar=1`».
+- [x] 2.30 `git diff` de `routes/admin.ts`, `migracionTicketsAbiertos.ts` y `shared/`: no queda ninguna mutación.
 
 **Barrido de citas (regla de mutación 4)**
-- [ ] 2.31 `grep -rnoE "admin\.ts:[0-9]+(-[0-9]+)?"` y `grep -rnoE "index\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio, más
+- [x] 2.31 `grep -rnoE "admin\.ts:[0-9]+(-[0-9]+)?"` y `grep -rnoE "index\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio, más
   el segundo pase de abreviadas (`:NN`) en los ficheros que ya citan cada módulo. Comprobar CADA resultado contra el
   fichero, leyendo qué afirma la frase; clasificar A, B o C las que pasen a afirmar algo falso. No editar specs vivas ni
   documentos fechados; la lista va en `apply-progress.md`.
 
 **Cierre**
-- [ ] 2.32 **CIERRE LOTE 2:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` y
+- [x] 2.32 **CIERRE LOTE 2:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` y
   `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; anotar el CÓDIGO DE SALIDA de cada uno.
-- [ ] 2.33 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
+- [x] 2.33 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
   Si pasa de 720, parar y consultar.
 
 ---

@@ -55,7 +55,7 @@ POST /api/admin/migrar-tickets-abiertos?corte=…[&aplicar=true]
 | `packages/shared/src/index.ts` | Añadir al final | `export * from './migracionTickets'` como línea 36, tras `packages/shared/src/index.ts:35`. **No mueve ninguna línea** |
 | `apps/desk/server/db/migracionTicketsAbiertos.ts` | Nuevo | Ejecutor (§4) |
 | `apps/desk/server/db/migracionTicketsAbiertos.test.ts` | Nuevo | Pruebas del ejecutor |
-| `apps/desk/server/routes/admin.ts` | Añadir al final | Ruta nueva tras `apps/desk/server/routes/admin.ts:212` y el `import` del ejecutor DESPUÉS de la llave de cierre. **Sólo se desplaza la llave de `apps/desk/server/routes/admin.ts:213`**; las líneas 1 a 212 no se mueven. Un `import` a mitad de fichero ya existe en `packages/zoho-sync/src/db/repo.ts:129`. Hipótesis: `eslint` no lo rechaza; se comprueba con `npm run lint` |
+| `apps/desk/server/routes/admin.ts` | Añadir al final | Ruta nueva tras `apps/desk/server/routes/admin.ts:212` y el `import` del ejecutor DESPUÉS de la llave de cierre. **Sólo se desplaza la llave de `apps/desk/server/routes/admin.ts:213` en `d2e421f`**; las líneas 1 a 212 no se mueven. Un `import` a mitad de fichero ya existe en `packages/zoho-sync/src/db/repo.ts:129`. Hipótesis: `eslint` no lo rechaza; se comprueba con `npm run lint` |
 | `apps/desk/server/migracionTicketsAbiertosRuta.test.ts` | Nuevo | Pruebas HTTP, con el arnés (`apps/desk/server/testing/appHarness.ts:34-40`) |
 | `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql` | Nuevo | Procedimiento y reversión |
 | `packages/zoho-sync/src/db/migracionTicketsF1F01.test.ts` | Nuevo | Guardián del `.sql`, molde de `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts:29-34` |
