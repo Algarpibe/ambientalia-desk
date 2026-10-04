@@ -98,8 +98,11 @@ hito. La marca de tiempo de la transición se reduce a su día civil en `America
 Los **días naturales** **SHALL** ser la resta de días civiles de `America/Bogota`, `hasta − desde`, **con
 signo y sin tope** (S-7; el signo del 47 es SP-2). Los **días hábiles** **SHALL** salir de
 `diasHabilesEntre` con los cierres de empresa (`public.calendario_cierres`); **MUST NOT** existir otra
-aritmética hábil (RQ-CL-11 de `calendario-laboral`; letra: `openspec/config.yaml:2555`). Si `hasta` no es
-posterior a `desde`, `diasHabilesEntre` da 0 y así se queda.
+aritmética hábil (RQ-CL-11 de `calendario-laboral`; letra: `openspec/config.yaml:2555`): «hábil» con
+festivos sólo sale de `diasHabilesEntre`. La única otra cuenta de días es la de lunes a viernes sin festivos
+de la fórmula de Zoho, etiquetada como tal y propia de RQ-KP-11 (`diasLunesAViernesFormulaZoho`, en el módulo
+de indicadores, no en el calendario laboral). Si `hasta` no es posterior a `desde`, `diasHabilesEntre` da 0 y
+así se queda.
 
 #### Scenario: Naturales con signo
 - GIVEN desde `2026-12-10` y hasta `2026-12-08`

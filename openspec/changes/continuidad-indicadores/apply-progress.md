@@ -50,3 +50,55 @@ K14 nace roja por módulo inexistente (como todo el fichero); su discriminación
 
 ## Medida (1.10)
 `git diff --shortstat --no-renames 579eb5c`: 27 inserciones y 29 borrados (tracked) + `wc -l` de lo nuevo sin trackear: indicadores.ts 154, indicadores.test.ts 153, apply-progress.md 52 = 359. Total ≈ 415 frente a la válvula de 720.
+
+## Lote 2 — días hábiles, 54 y variante de Zoho (2.1 a 2.10). Partida `24e636a`. Strict TDD.
+
+**Hallazgo de partida (script del lote 1):** Zoho cuenta de lunes a viernes SIN festivos; el 54 de Zoho dice «Cumple» sin tiempo promesa y sin finalización. Resoluciones: R1 (49 sin marca = «sin dato»; la creación sólo vive en la variante; sin `fecha_creacion_ticket` la variante es «sin dato»), R2 (`diasLunesAViernesFormulaZoho` dentro de `indicadores.ts`; `calendarioLaboral.ts` sin tocar).
+
+**2.2–2.4 RED** (`indicadores.test.ts`: +~60 casos; el `calc` pasa a `calcularIndicadores`, que no existe; el test de unidades pasa a las nueve). Salida del rojo (`npx vitest run packages/shared/src/indicadores.test.ts`, salida 1): `→ (0 , calcularIndicadores) is not a function` en todas las pruebas que usan `calc` y en `diasLunesAViernesFormulaZoho`.
+
+**2.1 Alinear.** `design.md`: D2 y §3.2 (R2: `diasLunesAViernesFormulaZoho` dentro de `indicadores.ts`, `calendarioLaboral.ts` sin tocar; `diasNoHabilesDelIntervalo` = lista de días), §4 filas 47 (variante siempre «sin dato»), 49 y 50·53, K10, pruebas de la función y fila 2 de §11. `specs/kpis/spec.md` RQ-KP-03 (el «hábil» con festivos sólo sale de `diasHabilesEntre`; la cuenta de Zoho es de RQ-KP-11).
+
+**2.5 GREEN.** `indicadores.ts` (251 líneas): `calcularIndicadores` (los nueve, en orden RQ-KP-01; sustituye a `calcularIndicadoresNaturales`, que sólo existía en el lote 1), 49, 50·53, 54, variantes, `diasNoHabilesDelIntervalo`, `diasLunesAViernesFormulaZoho`. Primera ejecución: 86/88; las dos rojas eran **errores de mi esperado a mano, no de spec ni de código**, comprobados con el calendario real: (a) 49 con creación del historial 02/12 y revisión 10/12 en lunes a viernes = 3, 4, 7, 8, 9, 10 = **6** (puse 5 olvidando que Zoho cuenta el festivo 08/12); (b) K12 53 = 4 / 52 = 4: la variante de K2 vale 5 (festivo contado) y 5 > 4 = «No cumple» (puse «Cumple»). Todos los casos de la spec (RQ-KP-05 a -07, -11) y de K1–K12 cuadran con `diasHabilesEntre` sin tocar esperados de la spec. Final: 88/88.
+
+**2.6 Mutaciones** (aplicadas, ejecutadas, revertidas; `diff` contra la copia verde vacío; `calendarioLaboral.ts` también vuelve idéntico):
+
+| # | Mutación | Rojas (primera) |
+|---|---|---|
+| M5 | hábiles por naturales en el 50 | 12 («K1 fin de semana», «K2 festivo 12/10», K2b, K3…) |
+| M6 | quitar el 12/10 de `FESTIVOS_TRASLADABLES` (fichero de datos) | 9 («K2 festivo 12/10» y las del calendario) |
+| M6b | quitar el 01/01 de `FESTIVOS_FIJOS` | 6 («cierre de fin de año: 28, 29, 30, 31, 4 y 5») |
+| M8a | `[desde, hasta]` en `diasHabilesEntre` | 23 (K1, K2… y la del calendario) |
+| M8b | `[desde, hasta]` en la cuenta de Zoho | 23 («K1 fin de semana (2 a 6 de octubre)»…) |
+| M9 | orden de venta antes que repuestos | 4 («K6 los repuestos mandan», «spec: … 5 y no 11», K5, K7) |
+| M10 | el invertido no se marca | 2 («K5 invertido», «la marca orden_invertido del 53 viaja con el 54») |
+| M10b | sin tope: invertido con signo (naturales) | 13 |
+| M11 | primer valor en vez del último | 3 («vale el ÚLTIMO por performedAt…», «dos cotizaciones…», «K7 reentrante») |
+| M14 | variante del 47 cae en la remisión de salida | 3 («el 47 es sin dato aunque haya salida», y las dos de «con y sin entrada opcional») |
+| M15a | quitar `sin_finalizar` | 3 |
+| M15b | `Cumple` sin tiempo promesa en el valor | 1 («K12 sin tiempo promesa: valor sin dato (no Cumple)…») |
+| M15c | `≤` por `<` | 4 («K12 53 = 4 con 52 = 4 cumple (igual)…», «6 contra 6», promesa 0…) |
+| M15d | la variante del 54 sin promesa es «sin dato» | 1 (la misma de M15b) |
+| M15e | el 54 sin las marcas del 53 | 2 |
+| M19 | día UTC en vez de `diaEnZona` para la marca | 2 («K11 marca 06/10 02:30Z», «la marca 03/12 03:00Z es el día 2») |
+| R1 | el 49 sin marca arranca de la creación | 1 («R1: heredado sin marca es sin dato…») |
+| Z1 / Z2 | variante del 50 / del 49 con el calendario con festivos | 8 / 6 |
+| Z3 | la variante descuenta festivos y cierres | 24 |
+| H1 / H2 | hito invertido en el 49 / en el 50 | 5 / 14 |
+| P1 / P2 | tiempo promesa: primer valor / la columna gana al historial | 1 / 1 |
+| D1 | `diasNoHabilesDelIntervalo` sin filtrar fin de semana | 9 |
+| O1 | los nueve en otro orden | 6 |
+
+**Hallazgo de la mutación M10:** el «tope en 0» NO es discriminable por el valor: `diasHabilesEntre` ya devuelve 0 con `hasta ≤ desde` (RQ-KP-03), así que `invertido ? 0 : …` es redundante en el número; lo que sí está probado es la marca `orden_invertido` (M10) y que no se use una resta con signo (M10b). Una prueba «sin created_time» (49) no tiene mutación: el código no puede caer en `creadoEn` porque `diagnostico` ni lo recibe; la prueba guarda el contrato.
+
+**2.7** `git diff --stat -- calendarioLaboral.ts calendarioLaboral.test.ts`: vacío.
+**2.8 Cierre verde**: `npm test` 179 ficheros / 2720 pruebas verdes (2 omitidas), salida 0; `typecheck` 0; `build` 0; `lint` 165 avisos, 0 errores.
+
+## Desviaciones (lote 2)
+5. `calcularIndicadores` devuelve `Indicador[]` (no `FilaIndicadores` del diseño §3.1): la fila con `ticketId` es del serializador del lote 3. `calcularIndicadoresNaturales` se retira (sustituida).
+6. Motivo del 54 sin tiempo promesa: el texto exacto de la spec, «falta el tiempo promesa» (no lleva «pendiente de decisión»; la decisión pendiente va en `ENTRADA.md`, E-175).
+7. `Fecha creación ticket` entra como `EtiquetaHito` y como hito del 49 (sólo alimenta la variante); la marca de ingreso es un hito más del 49 con fuente `transicion` (no hay valor `marca` en `FuenteHito`).
+8. Sin finalización o sin inicio, `diasNoHabilesDelIntervalo` es `null`; con inicio y fin (también invertido), es lista (vacía si no hay descuentos).
+
+## Medida (2.9)
+`git diff --shortstat --no-renames 24e636a` (antes de este bloque de notas): 301 inserciones y 25 borrados en 5 ficheros; sin ficheros nuevos sin trackear. Total ≈ 326 + `tasks.md` y estas notas ≈ 400, frente a la válvula de 720.

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  HITOS_POR_COLUMNA, NOMBRES_ZOHO, calcularIndicadoresNaturales, resolverHito, valorDeZoho,
+  HITOS_POR_COLUMNA, NOMBRES_ZOHO, calcularIndicadores, diasLunesAViernesFormulaZoho, resolverHito, valorDeZoho,
   type ColumnaIndicador, type Indicador, type TicketParaIndicadores,
 } from './indicadores'
 import { INDICADORES_G6 } from './reentrancia'
@@ -16,7 +16,7 @@ const tk = (o: Partial<TicketParaIndicadores> = {}): TicketParaIndicadores => ({
 })
 const OPC = { cierres: new Set<string>() }
 const calc = (t: TicketParaIndicadores, h = [] as ReturnType<typeof paso>[], o: object = {}) =>
-  calcularIndicadoresNaturales(t, h, { ...OPC, ...o })
+  calcularIndicadores(t, h, { ...OPC, ...o })
 const de = (fila: Indicador[], c: ColumnaIndicador) => fila.find((i) => i.columna === c)!
 const dato = (i: Indicador) => (i.valor.tipo === 'valor' ? i.valor.valor : i.valor.motivo)
 
@@ -68,7 +68,8 @@ describe('naturales con signo: 47, 57, 58, 59 (RQ-KP-03, -04, -08)', () => {
   it('las unidades y el orden de las columnas', () => {
     const f = calc(K8)
     expect(f.map((i) => `${i.columna}:${i.unidad}`)).toEqual([
-      '47:dias_naturales', '51:dias_naturales', '55:calificacion', '57:dias_naturales', '58:dias_naturales', '59:dias_naturales',
+      '47:dias_naturales', '49:dias_habiles', '50_53:dias_habiles', '51:dias_naturales', '54:cumplimiento', '55:calificacion',
+      '57:dias_naturales', '58:dias_naturales', '59:dias_naturales',
     ])
   })
   it('la fórmula de Zoho: el 47 es sin dato aunque haya salida; el 57 es igual que la letra', () => {
@@ -150,4 +151,171 @@ describe('K14 guardián contra INDICADORES_G6', () => {
       expect(HITOS_POR_COLUMNA[col as ColumnaIndicador]).toContain(campo)
     },
   )
+})
+
+// ---- Lote 2: días hábiles (49, 50·53), 54 y variante de Zoho (RQ-KP-05 a -07, -11) ----
+// Calendario comprobado a mano: 01/10/2026 jueves; el lunes 12/10 es festivo; 01/11 domingo, Todos los Santos
+// pasa al lunes 02/11; 11/11 miércoles, Independencia de Cartagena pasa al lunes 16/11; 01/12/2026 martes,
+// 08/12 martes festivo, 25/12 viernes festivo; 01/01/2027 viernes festivo.
+const CRE = 'Fecha creación ticket', REP = 'Fecha Recepción de repuestos'
+const ingreso = (performedAt: string) => ({ transitionId: 'ingreso_a_servicio', performedAt, values: {} })
+const marcas = (i: Indicador) => i.marcas
+const variante = (i: Indicador) => (i.formulaZoho.tipo === 'valor' ? i.formulaZoho.valor : i.formulaZoho.motivo)
+const cierres = (...d: string[]) => ({ cierres: new Set(d) })
+
+describe('lunes a viernes, fórmula de Zoho: sin festivos (RQ-KP-11)', () => {
+  it.each([
+    ['K1 fin de semana (2 a 6 de octubre)', '2026-10-01', '2026-10-06', 3],
+    ['K2 con el festivo del 12/10 contado', '2026-10-08', '2026-10-15', 5],
+    ['K3 con los dos festivos de noviembre contados', '2026-10-30', '2026-11-17', 12],
+    ['fin de año: Navidad y Año Nuevo contados', '2026-12-24', '2027-01-05', 8],
+    ['mismo día', '2026-10-05', '2026-10-05', 0],
+    ['invertido', '2026-10-13', '2026-10-09', 0],
+  ])('%s', (_n, desde, hasta, esperado) => {
+    expect(diasLunesAViernesFormulaZoho(desde, hasta)).toBe(esperado)
+  })
+})
+
+describe('50·53 en días hábiles (RQ-KP-06)', () => {
+  const f = (fechas: TicketParaIndicadores['fechas'], o: object = {}) => de(calc(tk({ fechas }), [], o), '50_53')
+  it.each([
+    ['K1 fin de semana: 2, 5 y 6', { [OV]: '2026-10-01', [FIN]: '2026-10-06' }, {}, 3, 3, []],
+    ['K2 festivo 12/10', { [OV]: '2026-10-08', [FIN]: '2026-10-15' }, {}, 4, 5, ['2026-10-12']],
+    ['K2b cierre de empresa 14/10 además', { [OV]: '2026-10-08', [FIN]: '2026-10-15' }, cierres('2026-10-14'), 3, 5, ['2026-10-12', '2026-10-14']],
+    ['K3 dos festivos (02/11 y 16/11)', { [OV]: '2026-10-30', [FIN]: '2026-11-17' }, {}, 10, 12, ['2026-11-02', '2026-11-16']],
+    ['cierre de fin de año: 28, 29, 30, 31, 4 y 5', { [OV]: '2026-12-24', [FIN]: '2027-01-05' }, {}, 6, 8, ['2026-12-25', '2027-01-01']],
+    ['el mismo rango con el 31/12 de empresa', { [OV]: '2026-12-24', [FIN]: '2027-01-05' }, cierres('2026-12-31'), 5, 8, ['2026-12-25', '2026-12-31', '2027-01-01']],
+    ['K4 mismo día: 0', { [OV]: '2026-10-05', [FIN]: '2026-10-05' }, {}, 0, 0, []],
+    ['K4 un día después: 1', { [OV]: '2026-10-05', [FIN]: '2026-10-06' }, {}, 1, 1, []],
+    ['K6 los repuestos mandan sobre la OV', { [OV]: '2026-10-01', [REP]: '2026-10-08', [FIN]: '2026-10-15' }, {}, 4, 5, ['2026-10-12']],
+    ['spec: OV 01/12, repuestos 10/12, fin 17/12 → 5 y no 11', { [OV]: '2026-12-01', [REP]: '2026-12-10', [FIN]: '2026-12-17' }, {}, 5, 5, []],
+  ])('%s', (_n, fechas, o, esperado, zoho, descontados) => {
+    const i = f(fechas, o)
+    expect([dato(i), variante(i), i.diasNoHabilesDelIntervalo]).toEqual([esperado, zoho, descontados])
+  })
+  it('K5 invertido (repuestos 13/10, fin 09/10): 0 y orden_invertido; con la OV a 15/12 y fin 10/12, también', () => {
+    const a = f({ [OV]: '2026-10-01', [REP]: '2026-10-13', [FIN]: '2026-10-09' })
+    expect([dato(a), marcas(a)]).toEqual([0, ['orden_invertido']])
+    const b = f({ [OV]: '2026-12-15', [FIN]: '2026-12-10' })
+    expect([dato(b), variante(b), marcas(b)]).toEqual([0, 0, ['orden_invertido']])
+  })
+  it('K7 reentrante: dos llegadas de repuestos (05/10 y 13/10), fin 15/10 → 2 (14 y 15), reentrante y escrituras 2', () => {
+    const h = [paso(1, '2026-10-05T15:00:00Z', { [REP]: '2026-10-05' }), paso(2, '2026-10-13T15:00:00Z', { [REP]: '2026-10-13' })]
+    const i = de(calc(tk({ fechas: { [OV]: '2026-10-01', [FIN]: '2026-10-15' } }), h), '50_53')
+    expect([dato(i), i.reentrante, i.hitos[REP].escrituras]).toEqual([2, true, 2])
+  })
+  it.each([
+    ['con orden de venta', { [OV]: '2026-12-01' }],
+    ['y sin orden de venta tampoco', {}],
+  ])('sin finalización es 0 con sin_finalizar, %s', (_n, fechas) => {
+    const i = f(fechas)
+    expect([dato(i), variante(i), marcas(i)]).toEqual([0, 0, ['sin_finalizar']])
+  })
+  it('con finalización y sin ninguna fecha de inicio es sin dato', () => {
+    const i = f({ [FIN]: '2026-12-10' })
+    expect([dato(i), variante(i), marcas(i)]).toEqual(['falta el hito: orden de venta', 'falta el hito: orden de venta', []])
+  })
+  it('la finalización se lee en Bogotá: 2026-10-07T03:00:00Z es el 06/10 (22:00), no el 07', () => {
+    const h = [paso(1, '2026-10-07T15:00:00Z', { [FIN]: '2026-10-07T03:00:00Z' })]
+    expect(dato(de(calc(tk({ fechas: { [OV]: '2026-10-01' } }), h), '50_53'))).toBe(3)
+  })
+})
+
+describe('49 en días hábiles, con la marca de ingreso (RQ-KP-05)', () => {
+  const f = (fechas: TicketParaIndicadores['fechas'], h: ReturnType<typeof paso>[], t: Partial<TicketParaIndicadores> = {}) =>
+    de(calc(tk({ fechas, ...t }), h), '49')
+  it.each([
+    ['K11 marca 06/10 02:30Z (día 5 en Bogotá), revisión 13/10, creación 28/09', '2026-10-06T02:30:00Z', { [REV]: '2026-10-13', [CRE]: '2026-09-28' }, 5, 11],
+    ['spec: marca 02/12, revisión 10/12 (festivo 8/12), creación 01/12', '2026-12-02T15:00:00Z', { [REV]: '2026-12-10', [CRE]: '2026-12-01' }, 5, 7],
+    ['spec: la marca 03/12 03:00Z es el día 2', '2026-12-03T03:00:00Z', { [REV]: '2026-12-10', [CRE]: '2026-12-01' }, 5, 7],
+    ['mismo día de la marca y de la revisión: 0', '2026-12-02T15:00:00Z', { [REV]: '2026-12-02', [CRE]: '2026-12-02' }, 0, 0],
+  ])('%s', (_n, instante, fechas, esperado, zoho) => {
+    const i = f(fechas, [ingreso(instante)])
+    expect([dato(i), variante(i)]).toEqual([esperado, zoho])
+  })
+  it('R1: heredado sin marca es sin dato aunque haya creación; la variante sí se calcula desde la creación', () => {
+    const i = f({ [REV]: '2026-12-10', [CRE]: '2026-12-01' }, [])
+    expect([dato(i), variante(i)]).toEqual(['falta el hito: marca de ingreso a servicio', 7])
+  })
+  it('R1: sin Fecha creación ticket la variante es sin dato, y no cae en created_time', () => {
+    const i = f({ [REV]: '2026-12-10' }, [ingreso('2026-12-02T15:00:00Z')], { creadoEn: '2026-12-01T15:00:00Z' })
+    expect([dato(i), variante(i)]).toEqual([5, 'falta el hito: creación del ticket'])
+  })
+  it('la creación puede venir del historial (la escribe ingreso_a_servicio) y gana a la columna', () => {
+    const h = [{ transitionId: 'ingreso_a_servicio', performedAt: '2026-12-02T15:00:00Z', values: { [CRE]: '2026-12-02' } }]
+    expect(variante(f({ [REV]: '2026-12-10', [CRE]: '2026-12-01' }, h))).toBe(6) // (02/12, 10/12] de lunes a viernes: 3, 4, 7, 8, 9, 10; con la columna (01/12) serían 7
+  })
+  it('sin revisión del informe: sin dato y dice cuál falta', () => {
+    const i = f({ [CRE]: '2026-12-01' }, [ingreso('2026-12-02T15:00:00Z')])
+    expect([dato(i), variante(i)]).toEqual(['falta el hito: revisión del informe', 'falta el hito: revisión del informe'])
+  })
+  it('invertido: 0 y orden_invertido; el festivo del intervalo queda como día descontado', () => {
+    const a = f({ [REV]: '2026-12-02' }, [ingreso('2026-12-10T15:00:00Z')])
+    expect([dato(a), marcas(a), a.diasNoHabilesDelIntervalo]).toEqual([0, ['orden_invertido'], []])
+    const b = f({ [REV]: '2026-12-10' }, [ingreso('2026-12-02T15:00:00Z')])
+    expect(b.diasNoHabilesDelIntervalo).toEqual(['2026-12-08'])
+  })
+  it('un cierre de empresa resta su día del 49 pero no de la variante', () => {
+    const i = de(calcularIndicadores(tk({ fechas: { [REV]: '2026-12-10', [CRE]: '2026-12-01' } }), [ingreso('2026-12-02T15:00:00Z')], cierres('2026-12-04')), '49')
+    expect([dato(i), variante(i)]).toEqual([4, 7])
+  })
+  it('reentrante cuenta las escrituras de la marca; sin historial es null', () => {
+    const dos = f({ [REV]: '2026-12-10' }, [ingreso('2026-12-02T15:00:00Z'), ingreso('2026-12-04T15:00:00Z')])
+    expect(dos.reentrante).toBe(true)
+    expect(f({ [REV]: '2026-12-10' }, [ingreso('2026-12-02T15:00:00Z')]).reentrante).toBe(false)
+    expect(f({ [REV]: '2026-12-10' }, []).reentrante).toBeNull()
+  })
+})
+
+describe('54 cumplimiento del tiempo promesa (RQ-KP-07, -11)', () => {
+  const f = (fechas: TicketParaIndicadores['fechas'], diasEntrega: number | null, h: ReturnType<typeof paso>[] = []) =>
+    de(calc(tk({ fechas, diasEntrega }), h), '54')
+  const NAV = { [OV]: '2026-12-24', [FIN]: '2027-01-05' } // 53 = 6, variante 8
+  it.each([
+    ['K12 53 = 4 con 52 = 4 cumple (igual); la variante (5, con el festivo) no', { [OV]: '2026-10-08', [FIN]: '2026-10-15' }, 4, 'Cumple', 'No cumple'],
+    ['K12 53 = 4 con 52 = 3 no cumple', { [OV]: '2026-10-08', [FIN]: '2026-10-15' }, 3, 'No cumple', 'No cumple'],
+    ['spec: 6 contra 6 cumple, pero la variante (8) no', NAV, 6, 'Cumple', 'No cumple'],
+    ['spec: 6 contra 5 no cumple', NAV, 5, 'No cumple', 'No cumple'],
+    ['un tiempo promesa de 0 es un valor: 53 = 1 no cumple', { [OV]: '2026-10-05', [FIN]: '2026-10-06' }, 0, 'No cumple', 'No cumple'],
+    ['un tiempo promesa de 0 con 53 = 0 cumple', { [OV]: '2026-10-05', [FIN]: '2026-10-05' }, 0, 'Cumple', 'Cumple'],
+  ])('%s', (_n, fechas, promesa, esperado, zoho) => {
+    const i = f(fechas, promesa)
+    expect([dato(i), variante(i)]).toEqual([esperado, zoho])
+  })
+  it('K12 sin finalización y 52 = 5: Cumple con sin_finalizar (el 53 vale 0)', () => {
+    const i = f({ [OV]: '2026-12-01' }, 5)
+    expect([dato(i), variante(i), marcas(i)]).toEqual(['Cumple', 'Cumple', ['sin_finalizar']])
+  })
+  it('K12 sin tiempo promesa: valor sin dato (no Cumple) y la variante de Zoho Cumple', () => {
+    const i = f(NAV, null)
+    expect([i.valor, variante(i)]).toEqual([{ tipo: 'sin_dato', motivo: 'falta el tiempo promesa' }, 'Cumple'])
+  })
+  it('si el 53 es sin dato, el 54 también (con su motivo), con y sin tiempo promesa', () => {
+    expect(dato(f({ [FIN]: '2026-12-10' }, 5))).toBe('falta el hito: orden de venta')
+    expect(variante(f({ [FIN]: '2026-12-10' }, null))).toBe('falta el hito: orden de venta')
+  })
+  it('la marca orden_invertido del 53 viaja con el 54', () => {
+    expect(marcas(f({ [OV]: '2026-12-15', [FIN]: '2026-12-10' }, 3))).toEqual(['orden_invertido'])
+  })
+  it('el tiempo promesa del historial gana a la columna (último valor)', () => {
+    const h = [paso(1, '2026-10-05T15:00:00Z', { 'Días de entrega': 3 }), paso(2, '2026-10-06T15:00:00Z', { 'Días de entrega': 4 })]
+    expect(dato(f({ [OV]: '2026-10-08', [FIN]: '2026-10-15' }, 3, h))).toBe('Cumple') // 53 = 4 contra el último, 4
+  })
+})
+
+describe('47: la variante de Zoho es sin dato con y sin la entrada opcional (RQ-KP-11)', () => {
+  const PEND = { tipo: 'sin_dato', motivo: 'falta el hito: hora del último cambio de estado, pendiente de decisión' }
+  it.each([
+    ['sin entrada opcional', {}],
+    ['con horaActualizacionEstado', { horaActualizacionEstado: '2026-10-20T15:00:00Z' }],
+  ])('%s, con entrada y salida presentes', (_n, o) => {
+    const i = de(calc(tk({ fechas: { [ENT]: '2026-10-01', [SAL]: '2026-10-15' } }), [], o), '47')
+    expect([dato(i), i.formulaZoho]).toEqual([14, PEND])
+  })
+})
+
+describe('los nueve, en orden (RQ-KP-01)', () => {
+  it('un ticket vacío devuelve las nueve claves en orden, sin 48, 56 ni 16', () => {
+    expect(calc(tk()).map((i) => i.columna)).toEqual(['47', '49', '50_53', '51', '54', '55', '57', '58', '59'])
+  })
 })

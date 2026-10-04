@@ -26,7 +26,7 @@ sólo enlaza.
 | # | Decisión | Alternativa rechazada | Razón |
 |---|---|---|---|
 | D1 | Un módulo puro `packages/shared/src/indicadores.ts` (cálculo + lectura del valor de Zoho) y otro `packages/shared/src/indicadoresComparacion.ts` | Calcular en SQL | Regla 13; las fórmulas necesitan `diasHabilesEntre` (`packages/shared/src/calendarioLaboral.ts:196`), que no existe en SQL |
-| D2 | La variante «lunes a viernes sin festivos» se obtiene de una función NUEVA `diasDeJornadaEntre`, añadida **al final** de `calendarioLaboral.ts` | Contar días de semana dentro de `indicadores.ts` | `decision/calendario-habil`: ese módulo es la única fuente (`packages/shared/src/calendarioLaboral.ts:6-7`), y el día de la semana es privado (`:72`). La resta `diasDeJornadaEntre − diasHabilesEntre` es además el dato «festivos y cierres del intervalo» que explica cada diferencia. No cambia ningún requisito de `calendario-laboral`: el requisito nuevo va en `kpis` |
+| D2 | La variante «lunes a viernes sin festivos» se cuenta con `diasLunesAViernesFormulaZoho`, **dentro de `indicadores.ts`**, etiquetada como fórmula de Zoho (R2) | Función nueva en `calendarioLaboral.ts` | Esa cuenta NO es calendario laboral: Zoho no descuenta festivos (medido en el lote 1) y meterla en `packages/shared/src/calendarioLaboral.ts` la haría pasar por «hábil», contra `decision/calendario-habil` (RQ-CL-11). «Hábil» con festivos sólo sale de `diasHabilesEntre`; `calendarioLaboral.ts` no se edita. El dato «festivos y cierres del intervalo» sale de `diasNoHabilesDelIntervalo`: la lista de días de lunes a viernes que `esDiaHabil` descuenta |
 | D3 | Cada hito se resuelve con UNA función: último valor legible en el historial, y si no hay, la columna | Elegir fuente por ticket (`managed_by_app`) | Un ticket heredado que la aplicación continúa tiene hitos de las dos fuentes; decidir por hito es lo que manda `packages/shared/src/reentrancia.ts:24` |
 | D4 | Tres consultas; las transiciones se traen con `JOIN tickets` y el mismo predicado de periodo | `WHERE ticket_id = ANY($1)` | pg-mem no ejecuta arrays enlazados (`apps/desk/server/db/eliminarTicket.ts:65`, `apps/desk/server/db/ticketFuentes.ts:121`) |
 | D5 | El valor de Zoho se busca sólo en `custom_fields` | Leer `raw` entero o `raw->'customFields'` | `custom_fields` ya es `customFields` menos lo promovido (`packages/zoho-sync/src/db/mappers.ts:43-44`, `:55-60`); `raw` es la carga completa del ticket y ningún lector del servidor usa `->` hoy. Si P-1 dice que el dato está sólo en `raw`, se añade una «bolsa» más a la función (§5) sin tocar el cálculo |
@@ -98,12 +98,14 @@ tabla no se copia, se enfrenta.
 **Días naturales**: `diasNaturalesEntre(desde, hasta)` privada, resta de días civiles por `Date.UTC`, con
 signo. No es cálculo de hábiles.
 
-### 3.2 `packages/shared/src/calendarioLaboral.ts` (una función al final)
+### 3.2 La cuenta de lunes a viernes (R2): dentro de `indicadores.ts`, `calendarioLaboral.ts` sin tocar
 
 ```ts
-/** Días de lunes a viernes en `(desde, hasta]`, SIN descontar festivos ni cierres. No es «hábil». */
-export function diasDeJornadaEntre(desde: DiaCivil, hasta: DiaCivil): number
+/** FÓRMULA DE ZOHO, no el calendario laboral: lunes a viernes de `(desde, hasta]`, sin festivos ni cierres. */
+export function diasLunesAViernesFormulaZoho(desde: DiaCivil, hasta: DiaCivil): number
 ```
+
+`Indicador.diasNoHabilesDelIntervalo` es `DiaCivil[] | null`: los días de lunes a viernes del intervalo que `esDiaHabil` descuenta (festivos y cierres); `null` en los indicadores sin intervalo hábil. Lo consume RQ-KP-16 (lote 5a).
 
 ### 3.3 `packages/shared/src/indicadoresComparacion.ts` (nuevo)
 
@@ -170,9 +172,9 @@ final de la línea `:61`, que ya agrupan varios registros por línea. **Ninguna 
 
 | Col. | Letra: fórmula | Fuente primaria → respaldo | Unidad | Casos límite | Variante de Zoho | Define |
 |---|---|---|---|---|---|---|
-| 47 | `Fecha Remisión de Salida − Fecha Remisión Entrada` | historial (`packages/shared/src/transitions.ts:191`, `:249`, `:251`) → `fecha_remision_entrada`, `fecha_remision_salida` | naturales, con signo | Falta cualquiera (ticket abierto): `sin_dato/hito_ausente`. Mismo día: 0. Invertido: negativo + `orden_invertido`. Reentrante: última salida | `H-1 − Fecha Remisión Entrada`; con H-1 ausente, `sin_dato/falta_hito_pendiente`. **Nunca** cae en la remisión de salida | `R08.4.md:6287`; variante: Diccionario, línea 115, y exploración §4 |
-| 49 | `diasHabilesEntre(día de la marca de ingreso_a_servicio, Fecha Revisión Informe)` | marca `marcaIngresoAServicio` (`packages/shared/src/bodegaje.ts:225-227`); **R1: sin marca es «sin dato — falta el hito: marca de ingreso a servicio»**, la fecha de creación sólo vive en la variante (S-9 queda reducido a la variante) | hábiles (S-2) | Sin revisión: `sin_dato/hito_ausente`. Mismo día o invertido: 0, y si invertido `orden_invertido`. La marca se pasa a día con `diaEnZona` | `diasDeJornadaEntre(Fecha creación ticket ?? día de creadoEn, Fecha Revisión Informe)` | `R08.4.md:6293`; hasta: `transitions.ts:219`, `:221` |
-| 50·53 | `diasHabilesEntre(Fecha Recepción de repuestos si la hay, si no Fecha Orden De Venta; Fecha Finalización ST)`; 0 si negativo o sin finalización | historial (`transitions.ts:189`, `:197`, `:199`, `:223`) → `fecha_orden_venta`, `fecha_recepcion_repuestos`, `fecha_finalizacion_st` | hábiles | Sin finalización: **0** + `sin_finalizar` (letra). Con finalización y sin desde: `sin_dato/hito_ausente`. Invertido: 0 + `orden_invertido`. Reentrante: últimos repuestos | Lo mismo con `diasDeJornadaEntre` | `R08.4.md:6296`; Diccionario, línea 122 |
+| 47 | `Fecha Remisión de Salida − Fecha Remisión Entrada` | historial (`packages/shared/src/transitions.ts:191`, `:249`, `:251`) → `fecha_remision_entrada`, `fecha_remision_salida` | naturales, con signo | Falta cualquiera (ticket abierto): `sin_dato/hito_ausente`. Mismo día: 0. Invertido: negativo + `orden_invertido`. Reentrante: última salida | Siempre `sin_dato/falta_hito_pendiente` (RQ-KP-11), con y sin H-1. **Nunca** cae en la remisión de salida | `R08.4.md:6287`; variante: Diccionario, línea 115, y exploración §4 |
+| 49 | `diasHabilesEntre(día de la marca de ingreso_a_servicio, Fecha Revisión Informe)` | marca `marcaIngresoAServicio` (`packages/shared/src/bodegaje.ts:225-227`); **R1: sin marca es «sin dato — falta el hito: marca de ingreso a servicio»**, la fecha de creación sólo vive en la variante (S-9 queda reducido a la variante) | hábiles (S-2) | Sin revisión: `sin_dato/hito_ausente`. Mismo día o invertido: 0, y si invertido `orden_invertido`. La marca se pasa a día con `diaEnZona` | `diasLunesAViernesFormulaZoho(Fecha creación ticket, Fecha Revisión Informe)`; la creación es la del historial o `fecha_creacion_ticket`, **sin caer en `created_time`** (RQ-KP-11); sin ella, `sin_dato` | `R08.4.md:6293`; hasta: `transitions.ts:219`, `:221` |
+| 50·53 | `diasHabilesEntre(Fecha Recepción de repuestos si la hay, si no Fecha Orden De Venta; Fecha Finalización ST)`; 0 si negativo o sin finalización | historial (`transitions.ts:189`, `:197`, `:199`, `:223`) → `fecha_orden_venta`, `fecha_recepcion_repuestos`, `fecha_finalizacion_st` | hábiles | Sin finalización: **0** + `sin_finalizar` (letra). Con finalización y sin desde: `sin_dato/hito_ausente`. Invertido: 0 + `orden_invertido`. Reentrante: últimos repuestos | Lo mismo con `diasLunesAViernesFormulaZoho` | `R08.4.md:6296`; Diccionario, línea 122 |
 | 51 | — | — | — | Siempre `sin_dato/falta_hito_pendiente` mientras `horaActualizacionEstado` esté ausente. Si llega: `día(H-1) − Fecha Finalización ST`, naturales | Igual | `R08.4.md:6299`; `openspec/config.yaml:2654-2655` |
 | 54 | `Cumple` si `53 ≤ 52`, `No cumple` si no | 53 de esta tabla; 52 = `Días de entrega` | texto | 52 ausente: `sin_dato/sin_tiempo_promesa`. 53 `sin_dato`: `sin_dato/hito_ausente`. Sin finalización: `Cumple` + `sin_finalizar` | `Cumple` también sin 52; usa el 53 variante | `R08.4.md:6302`, `:6341` |
 | 55 | — | `valorDeZoho(55, …)` | calificacion | **R5:** `valor` siempre «sin dato» sin la entrada opcional; el 55 de Zoho va en `valorZoho`, nunca en `valor` | — | `R08.4.md:6345` |
@@ -260,15 +262,15 @@ los Santos pasa al lunes 02/11; el 11/11 es miércoles e Independencia de Cartag
 | K8 heredado | sin historial; columnas: revisión 2026-03-02, cotización 2026-03-05, OC 2026-03-09, OV 2026-03-10 | 57 = **3**, 58 = **4**, 59 = **5**; fuente `columna`; `reentrante: null` |
 | K8b signo | cotización 2026-03-05, OV 2026-03-04 | 59 = **−1** + `orden_invertido` |
 | K9 historial gana | K8 más un paso `notif_cliente_comercial` con cotización 2026-03-07 | 57 = **5**, fuente `transicion` |
-| K10 47 | entrada 2026-10-01, salida 2026-10-15 → **14**; sin salida → `sin_dato/hito_ausente`; variante siempre `sin_dato/falta_hito_pendiente`; con `horaActualizacionEstado` 2026-10-20 la variante da **19** | |
+| K10 47 | entrada 2026-10-01, salida 2026-10-15 → **14**; sin salida → `sin_dato/hito_ausente`; variante siempre `sin_dato/falta_hito_pendiente`, con y sin `horaActualizacionEstado` | |
 | K11 49 y zona | marca `ingreso_a_servicio` a `2026-10-06T02:30:00Z` (en Bogotá, día 5); revisión 2026-10-13; `Fecha creación ticket` 2026-09-28 | 49 = **5** (6, 7, 8, 9, 13), fuente `marca`; variante **11** |
 | K12 54 | 53 = 4 con 52 = 4 → `Cumple`; con 52 = 3 → `No cumple`; sin finalización y 52 = 5 → `Cumple` + `sin_finalizar`; 52 ausente → `sin_dato/sin_tiempo_promesa` y variante `Cumple` | |
 | K13 51 y 55 | sin entrada opcional → `sin_dato/falta_hito_pendiente`; finalización 2026-10-15 y `horaActualizacionEstado` 2026-10-18 → **3**; 55 con «Good» en `camposZoho` → `valor` «sin dato» y `valorZoho` «Good» (R5) | |
 | K14 guardián | todo campo de `INDICADORES_G6` es hito del indicador de su columna | |
 | K15 `valorDeZoho` | encuentra «Tiempo permanecia» y « tiempo de diagnostico »; `"12"` → 12; ausente → `null`; texto no numérico en columna numérica → `null` | |
 
-`packages/shared/src/calendarioLaboral.test.ts` (añadidas al final): `diasDeJornadaEntre` en K1 (3), K2
-(5) y K3 (12), y mismo día (0).
+Las pruebas de `diasLunesAViernesFormulaZoho` (K1 3, K2 5, K3 12, mismo día 0) van en `indicadores.test.ts`;
+`calendarioLaboral.test.ts` no se toca (R2).
 
 **`packages/shared/src/indicadoresComparacion.test.ts`**: C1 app 4 / Zoho 5 → coincide; C2 app 10 / Zoho
 12 → diferencia con causa `dias_no_habiles_en_intervalo`; C3 tres pares (uno coincide, uno difiere, uno
@@ -328,7 +330,7 @@ Estimación: código + pruebas ×1,8 + casillas y `apply-progress.md`, y despué
 | Lote | Contenido | Código | Pruebas | Casillas | Estimado | ×1,6 |
 |---|---|---|---|---|---|---|
 | 1 | Tipos, `resolverHito`, naturales (47, 57, 58, 59), reentrancia y guardián, 51 y 55 «sin dato», `valorDeZoho`; `export` en el índice | 125 | 225 | 25 | 375 | 600 |
-| 2 | `diasDeJornadaEntre`, 49, 50·53, 54, variantes | 120 | 215 | 25 | 360 | 576 |
+| 2 | `diasLunesAViernesFormulaZoho`, 49, 50·53, 54, variantes | 120 | 215 | 25 | 360 | 576 |
 | 3 | `validarPeriodo`, lectura, ruta JSON, registro en `app.ts`, PG-1 a PG-3 | 125 | 225 | 20 | 370 | 592 |
 | 4 | `aCsv`, salida CSV, `indicadoresUrl` y enlace | 100 | 180 | 20 | 300 | 480 |
 | 5 | `compararIndicadores` y resumen en la ruta | 115 | 205 | 20 | 340 | 544 |
