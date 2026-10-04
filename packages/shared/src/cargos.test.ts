@@ -19,13 +19,13 @@ const sujeto = (areas: string[], cargoPermiso?: unknown, isAdmin = false): Sujet
 
 const LIBERACION = TRANSITIONS.find((t) => t.id === 'liberacion_sin_factura')!
 
-describe('CARGOS · la lista cerrada de siete (RQ-PM-12, S1)', () => {
-  it('son siete, escritos a mano y EN ORDEN', () => {
+describe('CARGOS · la lista cerrada de ocho (RQ-PM-12, S1; el octavo, F1C-11)', () => {
+  it('son ocho, escritos a mano y EN ORDEN', () => {
     expect([...CARGOS]).toEqual([
       'Director Técnico', 'Coordinador Técnico', 'Técnico', 'Técnico de campo',
-      'Director Comercial', 'Coordinador Comercial', 'Asistente Comercial',
+      'Director Comercial', 'Coordinador Comercial', 'Asistente Comercial', 'Especialista técnico',
     ])
-    expect(CARGOS).toHaveLength(7)
+    expect(CARGOS).toHaveLength(8)
     expect(CARGOS as readonly string[]).not.toContain('Gerente comercial')
   })
 
@@ -54,9 +54,9 @@ describe('CARGOS · guardián contra la decisión de Gerencia (regla de mutació
     return m[1].split(/,\s*| y /).map((s) => s.trim()).filter(Boolean)
   }
 
-  it('la frase «Los cargos son siete: …» de decision/c10b-gerente-director coincide con CARGOS', () => {
-    const extraidos = cargosDeLaDecision()
-    expect(extraidos).toHaveLength(7)
+  it('los siete de decision/c10b-gerente-director y el octavo de decision/cargo-encargado-de-inventario coinciden con CARGOS', () => {
+    const extraidos = [...cargosDeLaDecision(), cargoDeRespaldoDeLaDecision()]
+    expect(extraidos).toHaveLength(8)
     expect(extraidos).toEqual([...CARGOS]) // mismo orden
     expect(new Set(extraidos)).toEqual(new Set(CARGOS)) // y mismo conjunto
   })
@@ -201,8 +201,8 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
       }
     }
     expect(violaciones).toEqual([])
-    // 5 subconjuntos × 10 valores de cargo × (31 transiciones + 3 primitivas) = 1.700, a mano.
-    expect(casos).toBe(1700)
+    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (31 transiciones + 3 primitivas) = 1.870, a mano.
+    expect(casos).toBe(1870)
     expect(concedidos).toBeGreaterThan(0) // no pasa en vacío
   })
 })
@@ -226,5 +226,48 @@ describe('RQ-PM-20 · quién llama a las primitivas por cargo (hipótesis de 1.1
   it('PM20-2 · puedeFijarPrioridadTop5 tiene al menos un llamador fuera de cargos.ts; puedeCrearOVIGarantia, ninguno', () => {
     expect(llamadores('puedeFijarPrioridadTop5').length).toBeGreaterThanOrEqual(1)
     expect(llamadores('puedeCrearOVIGarantia')).toEqual([])
+  })
+})
+
+/**
+ * El octavo cargo (F1C-11) no lo escribe c10b —«Los cargos son siete»— sino la decisión de respaldo, en la
+ * nota «X» no está entre los siete cargos decididos el 24/09. Se lee del fichero vigilado y SÓLO entre
+ * `respuesta_textual:` y `consecuencias:`, para no confundirlo con el «Especialista técnico» de las consecuencias.
+ */
+function cargoDeRespaldoDeLaDecision(): string {
+  const yaml = readFileSync(fileURLToPath(new URL('../../../openspec/config.yaml', import.meta.url)), 'utf8')
+  const clave = 'clave: "decision/cargo-encargado-de-inventario"'
+  const ini = yaml.indexOf(clave)
+  if (ini < 0) throw new Error(`Guardián sin objeto: no aparece ${clave} en openspec/config.yaml`)
+  const resto = yaml.slice(ini + clave.length)
+  const fin = resto.search(/\n {2}- clave:/)
+  const bloque = (fin < 0 ? resto : resto.slice(0, fin)).replace(/\s+/g, ' ')
+  const desde = bloque.indexOf('respuesta_textual:')
+  const hasta = bloque.indexOf('consecuencias:')
+  const respuesta = desde < 0 || hasta < desde ? '' : bloque.slice(desde, hasta)
+  const m = /«([^«»]+)» no está entre los siete cargos decididos el 24\/09/.exec(respuesta)
+  if (!m) throw new Error('Guardián sin objeto: no aparece «… no está entre los siete cargos decididos el 24/09» en la respuesta_textual de decision/cargo-encargado-de-inventario')
+  return m[1].trim()
+}
+
+describe('N2 · el octavo cargo «Especialista técnico» se comporta como «Técnico» (F1C-11)', () => {
+  it('esCargo y cargoPermisoDelCuerpo lo aceptan, con su minúscula exacta', () => {
+    expect(esCargo('Especialista técnico')).toBe(true)
+    expect(esCargo('Especialista Técnico')).toBe(false)
+    expect(cargoPermisoDelCuerpo('  Especialista técnico ')).toEqual({ ok: true, cargo: 'Especialista técnico' })
+  })
+
+  it('sus veredictos sobre las 31 transiciones y las tres primitivas son los de «Técnico»', () => {
+    let comparadas = 0
+    for (const areas of [[], ['Comercial'], ['Servicio Técnico'], [...AREAS]]) {
+      const esp = sujeto(areas, 'Especialista técnico')
+      const tec = sujeto(areas, 'Técnico')
+      for (const t of TRANSITIONS) { comparadas += 1; expect(puedeEjecutarTransicion(esp, t), `${t.id} · [${areas}]`).toBe(puedeEjecutarTransicion(tec, t)) }
+      expect(puedeLiberarSinFactura(esp)).toBe(puedeLiberarSinFactura(tec))
+      expect(puedeCrearOVIGarantia(esp)).toBe(puedeCrearOVIGarantia(tec))
+      expect(puedeFijarPrioridadTop5(esp)).toBe(puedeFijarPrioridadTop5(tec))
+    }
+    expect(comparadas).toBe(4 * TRANSITIONS.length)
+    expect(cargoQueFaltaParaTransicion('liberacion_sin_factura', { isAdmin: false, cargoPermiso: 'Especialista técnico' })).toBe('Director Comercial')
   })
 })

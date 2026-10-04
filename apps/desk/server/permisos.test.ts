@@ -353,7 +353,7 @@ describe('cargo · la compuesta contra el área (puro)', () => {
     expect(casos.filter((p) => p)).toHaveLength(37)
   })
 
-  it('cargo × área × transición: 744 casos, ninguno concede lo que el área niega (S17)', () => {
+  it('cargo × área × transición: 837 casos, ninguno concede lo que el área niega (S17)', () => {
     const cargos = [...CARGOS, null]
     let casos = 0
     for (const t of TRANSITIONS) {
@@ -365,7 +365,7 @@ describe('cargo · la compuesta contra el área (puro)', () => {
         }
       }
     }
-    expect(casos).toBe(744) // 31 transiciones × 3 áreas × (7 cargos + sin cargo), a mano
+    expect(casos).toBe(837) // 31 transiciones × 3 áreas × (8 cargos + sin cargo), a mano
   })
 
   it('con Director Comercial la compuesta coincide con el área en las 93 celdas', () => {
@@ -443,7 +443,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
     expect((await ejecutar(app, cookie, 'rc-rv', 'rechazo_revision')).status).toBe(200)
   }, 60_000)
 
-  it('el barrido de cargo sigue en 744 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
+  it('el barrido de cargo sube a 837 y la única diferencia cargo/área es liberacion_sin_factura × Comercial', () => {
     let casos = 0
     const difieren: Array<{ transicion: string; area: string }> = []
     for (const t of TRANSITIONS) {
@@ -455,7 +455,7 @@ describe('F1C-10 · rechazo_cliente sólo Comercial', () => {
         }
       }
     }
-    expect(casos).toBe(744)
+    expect(casos).toBe(837)
     expect(difieren).toEqual([{ transicion: 'liberacion_sin_factura', area: 'Comercial' }])
   })
 })

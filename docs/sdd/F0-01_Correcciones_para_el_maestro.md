@@ -1188,12 +1188,45 @@ la OVI de garantía y la supresión de prefijos». Tanda **cerrada** sigue sin s
 - **No afirma nada sobre «Equipo nuevo»** (Q5, E-158): la guarda lo alcanza por supuesto aplicado (S-3) y Gerencia no lo ha
   confirmado; es condición de publicación.
 
-## La de F1B-04, recepción (21)
+## La de F1C-11 (21)
+
+### 21 · M1.9.2 — «Tres proponen a otro» pasan a cinco: «Solicitud repuestos» y «Entrega de Repuestos» *(F1C-11)*
+
+**Qué cambió en el código.** `DERIVACION_POR_DEFECTO` (`packages/shared/src/transitions.ts:274-282`) tiene cinco
+entradas y no tres: se suman «Solicitud repuestos» (En Proceso → Solicitado), que propone el cargo **Director Técnico**
+—el encargado de inventario de `decision/cargo-encargado-de-inventario`—, y «Entrega de Repuestos» (Solicitado → En
+Proceso), que propone **quien tomó el ticket**. De las 31 transiciones, 26 heredan al responsable que el ticket ya traía
+(eran 28). Además la lista cerrada de cargos pasa de siete a ocho (`packages/shared/src/cargos.ts:12-15`): se suma
+«Especialista técnico», el respaldo del Director Técnico.
+
+**Texto actual, `R08.4.md:2005`:** «Herencia por defecto. La mayoría de transiciones heredan al responsable que el ticket
+ya traía. Tres proponen a otro:». **Texto propuesto:**
+
+> «Herencia por defecto. La mayoría de transiciones heredan al responsable que el ticket ya traía. Cinco proponen a otro:»
+
+**La tabla de `R08.4.md:2006-2017`** (cabecera y tres filas) gana **dos filas**, detrás de la de «Aprobación»
+(`R08.4.md:2015-2017`), con el mismo formato de tres celdas:
+
+> «Solicitud repuestos» · «Cargo · Director Técnico» · «Pasa el ticket al encargado de inventario, que es quien entrega las piezas.»
+> «Entrega de Repuestos» · «Quien tomó el ticket» · «Entregadas las piezas, el trabajo vuelve al técnico que lo tenía.»
+
+**`R08.4.md:2018`**, «Cargo, no persona. Las dos primeras nombran un cargo.», pasa a: «Cargo, no persona. Las tres que
+nombran un cargo —Escalado a Revisión, Escalado a comercial y Solicitud repuestos— no atan el blueprint a un empleado.»
+La `R08.4.md:2025-2026` (las reglas de destino) añade «Solicitud repuestos» a la de cargo y «Entrega de Repuestos» a la de
+«quien tomó el ticket»; con ello el cuarto punto de esa lista, `R08.4.md:2027`, deja de ser sólo propuesta para esas dos
+etapas. **Es la recolocación de las 26 que heredan:** la frase «la mayoría» de `R08.4.md:2005` sigue siendo cierta.
+
+**Lo que esta entrada NO pide.** No toca `R08.4.md:1264` ni `:1417`, que ya dicen cinco (la R08.4 las escribió
+anticipando la decisión). No afirma que la derivación al Director Técnico sea obligatoria: el servidor sólo exige persona
+activa y la propuesta la puede cambiar quien ejecuta (E-160). No afirma que Johny Luna tenga ya el cargo en producción: es
+condición de despliegue. El `.docx` no se toca desde el repositorio.
+
+## La de F1B-04, recepción (22)
 
 > **Esta entrada cita la R08.4** (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`),
 > la copia citable vigente. Procede del cambio `recepcion-rotulacion-foto-entrada`, `cierra: no`.
 
-### 21 · M1.2 y M2.1 — rotulado, novedades y foto obligatoria de la remisión de ENTRADA están construidos; la remisión de salida y los accesorios NO *(F1B-04)*
+### 22 · M1.2 y M2.1 — rotulado, novedades y foto obligatoria de la remisión de ENTRADA están construidos; la remisión de salida y los accesorios NO *(F1B-04)*
 
 **Qué cambió en el código.** El alta de la remisión de entrada pide ahora la lista de novedades (diez, de la base),
 el texto de «Otro» cuando se marca, y la confirmación «Rotulado y guardado»; el servidor guarda la persona y la hora

@@ -90,9 +90,9 @@ describe('C11 · el reloj del SLA', () => {
  *   `:1575` — «Encaja con la derivación de M1.9.2, que ya sabe a qué cargo corresponde cada etapa:
  *   el escalado puede apoyarse en esa misma tabla en lugar de mantener una jerarquía aparte.»
  *
- * Y la tabla ya lo trae. `DERIVACION_POR_DEFECTO` (`transitions.ts:267-276`) declara el cargo que
+ * Y la tabla ya lo trae. `DERIVACION_POR_DEFECTO` (`transitions.ts:274-282`) declara el cargo que
  * propone cada etapa, y su primera entrada lleva escrito el mismo concepto con las mismas palabras:
- * «escalar una revisión es **subirla al inmediato superior**» (`:268`).
+ * «escalar una revisión es **subirla al inmediato superior**» (`:275`).
  *
  * NO HACE FALTA UNA JERARQUÍA APARTE, y por eso este escalado se puede construir hoy: el
  * destinatario del escalado de un estado es **el cargo que proponen sus transiciones salientes**.
@@ -109,12 +109,12 @@ describe('C11 · a quién se escala', () => {
     })
   })
 
-  /**
-   * El caso que impide que la función mienta. `En Proceso` no tiene ninguna saliente que proponga
-   * cargo, así que no hay a quién escalar y hay que decirlo, no inventarlo.
-   */
-  it('un estado sin transición que proponga cargo no tiene destinatario', () => {
-    expect(destinatarioDelEscalado('En Proceso')).toEqual({ hay: false, motivo: 'ningun_cargo' })
+  // El caso que impide que la función mienta: `Solicitado` y `Por Facturar` no tienen ninguna saliente que proponga
+  // cargo, así que no hay a quién escalar y hay que decirlo, no inventarlo. `En Proceso` SÍ lo tiene desde F1C-11:
+  // su única saliente con propuesta de cargo es `solicitud_repuestos` (`transitions.ts:200`), al Director Técnico.
+  it('un estado sin transición que proponga cargo no tiene destinatario; En Proceso sí (F1C-11)', () => {
+    expect(destinatarioDelEscalado('En Proceso')).toEqual({ hay: true, cargo: 'Director Técnico', via: ['solicitud_repuestos'] })
+    expect(destinatarioDelEscalado('Solicitado')).toEqual({ hay: false, motivo: 'ningun_cargo' })
     expect(destinatarioDelEscalado('Por Facturar')).toEqual({ hay: false, motivo: 'ningun_cargo' })
   })
 
@@ -175,10 +175,10 @@ describe('C11 · a quién se escala', () => {
     expect(ambiguos, 'estados con dos cargos salientes distintos').toEqual([])
   })
 
-  /** Y los que SÍ tienen destinatario son exactamente estos dos. Se afirma la lista, no el número. */
-  it('sólo dos estados tienen a quién escalar, y son los que declaran cargo', () => {
+  /** Y los que SÍ tienen destinatario son exactamente estos tres. Se afirma la lista, no el número. */
+  it('sólo tres estados tienen a quién escalar, y son los que declaran cargo', () => {
     const conDestinatario = ESTADOS.filter((e) => destinatarioDelEscalado(e).hay)
-    expect(conDestinatario).toEqual(['Rev./Diagnostico', 'Notificado'])
+    expect(conDestinatario).toEqual(['Rev./Diagnostico', 'Notificado', 'En Proceso'])
   })
 
   /**
@@ -318,5 +318,14 @@ describe('F1B-08 · alarmas de SLA en horas hábiles', () => {
       'Notificación cliente': { cargo: '', areaRespaldo: 'Comercial' as const },
     }
     expect(estadosConAlarmaSinCargo(sintetica)).toEqual(['Remisión creada', 'Notificación cliente'])
+  })
+})
+
+describe('ALARMAS_SLA de la derivación de repuestos', () => {
+  // Caracterización: ni «En Proceso» ni «Solicitado» tienen alarma de SLA.
+  it('ningún estado de ALARMAS_SLA es En Proceso ni Solicitado', () => {
+    const estados = Object.keys(ALARMAS_SLA)
+    expect(estados).not.toContain('En Proceso')
+    expect(estados).not.toContain('Solicitado')
   })
 })

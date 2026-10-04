@@ -121,7 +121,7 @@ reescribe** ninguna regla: `apps/desk/src/lib/recepcionForm.ts` importa `validar
   `packages/shared/src/recepcion.ts:141` (la excluyente no exige foto) y por «Sin novedad → 200»
   (`apps/desk/server/recepcion.test.ts:399`).
 - **Agujero declarado (omitir `novedades` entra por legado y evita las guardas nuevas):** está **bien declarado**, en
-  `apply-progress.md` (4.9), en E-169 de `docs/sdd/ENTRADA.md` y en la corrección 21 de
+  `apply-progress.md` (4.9), en E-169 de `docs/sdd/ENTRADA.md` y en la corrección 22 de
   `docs/sdd/F0-01_Correcciones_para_el_maestro.md`, y es consecuencia buscada de RQ-RE-27 (compatibilidad con el
   cliente anterior), no un descuido. Lo que no se dice con igual claridad es el reverso para la letra (W3).
 
@@ -146,7 +146,7 @@ Ciertas: `openspec/specs/remisiones/spec.md:100` y `:104` (serial, `apps/desk/se
 como «guarda null»: cierta sólo de la vía de legado, ya señalada por el apply). Entradas nuevas de `docs/sdd/ENTRADA.md`:
 E-163 (`packages/shared/src/recepcion.ts:151`), E-164 (`packages/zoho-sync/src/db/schema.sql:677`), E-166
 (`packages/shared/src/recepcion.ts:26`), E-167 (`packages/shared/src/recepcion.ts:101`), E-169 (158, 197, 220, 154 y
-174 de `apps/desk/server/routes/remision.ts`), y la corrección 21 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`
+174 de `apps/desk/server/routes/remision.ts`), y la corrección 22 de `docs/sdd/F0-01_Correcciones_para_el_maestro.md`
 (158, 249, 289, 384, maestro `:1239`, `:2279`, `:2280`): **todas dicen lo que afirman**. E-168 es correcta:
 `openspec/config.yaml` sólo registra la mitad de salida de E-123 (`decision/trabajo-del-01-10-antes-del-corte-sin-fila`).
 `openspec/specs/remisiones/spec.md:66` y `:74` citan rangos cuyo texto hoy vive en otras líneas: **falsas desde antes de

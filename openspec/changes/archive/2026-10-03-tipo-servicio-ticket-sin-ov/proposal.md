@@ -60,7 +60,7 @@ Hallazgo de método: dos decisiones de las que depende esta tanda **no están en
 
 ### 3.3 · OVI de garantía — **sin construir; lote 3, condicionado a Q1**
 
-- Hoy: `puedeCrearOVIGarantia` existe sin llamador (`packages/shared/src/cargos.ts:67-74`; dato en `packages/shared/src/cargos.ts:33`), una prueba lo fija (`packages/shared/src/cargos.test.ts:117`) y RQ-PM-20 prohíbe construir el acto fuera de F1B-03 (`openspec/specs/permissions/spec.md:411-418`). El número `OVI-` se clasifica como orden ordinaria (`packages/shared/src/subOV.ts:10`, `packages/shared/src/subOV.ts:24`) y el buscador no la distingue (`packages/zoho-sync/src/books/repo.ts:145-177`). No hay en el código ningún acto de crear una OVI.
+- Hoy: `puedeCrearOVIGarantia` existe sin llamador (`packages/shared/src/cargos.ts:67-74`; dato en `packages/shared/src/cargos.ts:33`), una prueba lo fija (`packages/shared/src/cargos.test.ts:117`) y RQ-PM-20 prohíbe construir el acto fuera de F1B-03 (`openspec/specs/permissions/spec.md:411-418` en `f55b7d9`). El número `OVI-` se clasifica como orden ordinaria (`packages/shared/src/subOV.ts:10`, `packages/shared/src/subOV.ts:24`) y el buscador no la distingue (`packages/zoho-sync/src/books/repo.ts:145-177`). No hay en el código ningún acto de crear una OVI.
 - Construye: depende de Q1. Con la opción A, la restricción por cargo en las tres puertas que asocian una orden a un ticket (alta `apps/desk/server/services/ticketService.ts:37-44`; transición, línea 148 del mismo fichero; remisión `apps/desk/server/routes/remision.ts:218-244`).
 
 ## 4 · La guarda de remisión en «Habilitar Servicio»

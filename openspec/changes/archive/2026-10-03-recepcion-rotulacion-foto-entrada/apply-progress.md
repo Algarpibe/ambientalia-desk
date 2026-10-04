@@ -307,7 +307,7 @@ Hipótesis (no verificada): no hay citas a `schema.sql` desde la 677 en adelante
 
 ### 4.12-4.14 · Entradas, maestro, despliegue
 
-`docs/sdd/ENTRADA.md`: E-163 a E-170. `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: corrección nº 21. `DEPLOY.md`: sección final «Comprobación de lectura tras desplegar F1B-04», sin desplazar ninguna de sus 82 citas.
+`docs/sdd/ENTRADA.md`: E-163 a E-170. `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: corrección nº 22. `DEPLOY.md`: sección final «Comprobación de lectura tras desplegar F1B-04», sin desplazar ninguna de sus 82 citas.
 
 Los nueve pasos de comprobación del formulario (RQ-RE-19; el informe del lote 4a no los traía, se derivan de Persona-1 a Persona-5 de la spec): (1) abrir el alta: diez novedades sin marcar, casilla de rotulado sin marcar y sin campo libre de observaciones; (2) marcar «Sin novedad» y luego otra: la primera se desmarca; y al revés; (3) marcar «Otro» sin texto: no deja crear; (4) no marcar la casilla de rotulado: no deja crear; (5) marcar una novedad sin su foto: no deja crear; (6) quitar una foto mínima: no deja crear; (7) con fotos que faltan, no ofrece «Continuar sin fotos»; (8) un envío bloqueado dice qué categoría o novedad falta; (9) alta completa: se crea, se envía y n8n imprime la etiqueta con el código del ticket.
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { PersonaLite } from '@ambientalia/shared'
+import { TRANSITIONS, CLAVE_DERIVACION, type PersonaLite } from '@ambientalia/shared'
 import { opcionesPersona, derivacionInicial } from './personas'
 
 const activas = [
@@ -118,5 +118,35 @@ describe('derivacionInicial', () => {
   it('sin primer derivado, hereda', () => {
     expect(derivacionInicial(PRIMERO, ctx({ heredado: 'u-7' }))).toBe('u-7')
     expect(derivacionInicial(PRIMERO, ctx())).toBeNull()
+  })
+})
+
+/**
+ * F1C-11 · el `porDefecto` REAL de las dos etapas del taller, leído de `TRANSITIONS` y no reescrito aquí: lo que
+ * se prueba es el dato del catálogo pasando por `derivacionInicial`, no una copia suya.
+ */
+const porDefectoReal = (id: string) => TRANSITIONS.find((t) => t.id === id)!.fields.find((f) => f.key === CLAVE_DERIVACION)!.porDefecto
+
+describe('derivacionInicial con el porDefecto real de «Solicitud repuestos» y «Entrega de Repuestos» (F1C-11)', () => {
+  const tecnico = { id: 'u-t', nombre: 'Tito Técnico', cargo: 'Técnico' }
+  const directora = { id: 'u-d1', nombre: 'Ana Directora', cargo: '  director TECNICO ' }
+  const otroDirector = { id: 'u-d2', nombre: 'Zoe Directora', cargo: 'Director Técnico' }
+
+  it('«Solicitud repuestos» propone al Director Técnico (cargo plegado), el primero de dos, y sin titular cae al heredado', () => {
+    const pd = porDefectoReal('solicitud_repuestos')
+    expect(pd).toEqual({ tipo: 'cargo', cargo: 'Director Técnico' })
+    // Con titular: gana al heredado (el técnico que lo tenía) y, con dos, la primera de la lista.
+    expect(derivacionInicial(pd, ctx({ activas: [tecnico, directora, otroDirector], heredado: 'u-t' }))).toBe('u-d1')
+    // Sin nadie con ese cargo: cae al heredado, y sin heredado, a nadie.
+    expect(derivacionInicial(pd, ctx({ activas: [tecnico], heredado: 'u-t' }))).toBe('u-t')
+    expect(derivacionInicial(pd, ctx({ activas: [tecnico] }))).toBeNull()
+  })
+
+  it('«Entrega de Repuestos» devuelve al primer derivado, y cae al heredado si es nulo o está de baja', () => {
+    const pd = porDefectoReal('entrega_repuestos')
+    expect(pd).toEqual({ tipo: 'primerDerivado' })
+    expect(derivacionInicial(pd, ctx({ activas: [tecnico, directora], primerDerivado: 'u-t', heredado: 'u-d1' }))).toBe('u-t')
+    expect(derivacionInicial(pd, ctx({ activas: [tecnico, directora], primerDerivado: null, heredado: 'u-d1' }))).toBe('u-d1')
+    expect(derivacionInicial(pd, ctx({ activas: [directora], primerDerivado: 'u-t', heredado: 'u-d1' }))).toBe('u-d1')
   })
 })
