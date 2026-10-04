@@ -1967,3 +1967,33 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** hipótesis del verify (S-1), sin probar: un ajuste manual confirmado entre la lectura de las trazas y la escritura de la prioridad (`apps/desk/server/db/prioridadCliente.ts:111` y `apps/desk/server/db/prioridadCliente.ts:118`) podría perder su exención. Exige concurrencia real y Postgres de verdad. Va con el aviso W-1: la atomicidad está probada por secuencia, no por efecto sobre filas.
 **Dueño:** la sesión de supervisión. **Qué desbloquea:** que la aceptación con servicios reales lo incluya.
 **Estado:** abierta · **Destino:** donde volvería a verse es F1F-03; no es un destino asignado (R-3).
+
+## E-195 · 2026-10-04 · pregunta · **ABIERTA** — F1B-08: al cambiar de vista, ¿la búsqueda se conserva o se reinicia?
+**Qué:** aplicado (supuesto S-6): el texto se conserva entre «Todos», «Mis tickets» y cerrados, y la búsqueda actúa dentro de la vista activa. Excepción: al entrar en «Remisión creada» el texto se vacía (E-199).
+**Dueño:** Gerencia. **Qué desbloquea:** si se prefiere reiniciar, cambia el efecto de página de `apps/desk/src/App.tsx`.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-196 · 2026-10-04 · pregunta · **ABIERTA** — F1B-08: el número de ticket, ¿se busca exacto o también por trozo?
+**Qué:** aplicado (supuesto S-1): «864» encuentra el ticket 864 por número exacto, con o sin «#»; el mismo texto se busca además como trozo del serial. «86» no encuentra el 864 por número.
+**Dueño:** Gerencia. **Qué desbloquea:** si debe casar por prefijo o por trozo, cambia el predicado de `packages/zoho-sync/src/db/busquedaTickets.ts` y sus pruebas.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-197 · 2026-10-04 · pregunta · **ABIERTA** — F1B-08: los tickets antiguos sin copia del serial, ¿se rellenan?
+**Qué:** la búsqueda mira la copia del serial en el ticket y el serial del equipo enlazado. Un ticket histórico sin copia y sin equipo enlazado no se encuentra por serial. Hace falta medir antes en producción cuántos hay; rellenar es tocar datos de producción.
+**Dueño:** Gerencia, con la medición de quien despliegue. **Qué desbloquea:** un relleno aparte, si la medición lo justifica.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-198 · 2026-10-04 · pregunta · **ABIERTA** — F1B-08: ¿la búsqueda debe cubrir también asunto, cliente y contacto?
+**Qué:** aplicado: sólo número de ticket y serial, que es la letra de E-133. La paridad con el listado de Zoho en los demás campos queda sin decidir.
+**Dueño:** Gerencia. **Qué desbloquea:** el alcance de un cambio posterior dentro de F1B-08.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-199 · 2026-10-04 · pregunta · **ABIERTA** — F1B-08: ¿la búsqueda debe cubrir la lista de «Remisión creada»?
+**Qué:** aplicado (supuesto S-7, nacido al apilar F1B-07): en esa vista la caja no se enseña y el texto se vacía al entrar; su ruta no admite búsqueda. Está escrito en RQ-VT-13.
+**Dueño:** Gerencia. **Qué desbloquea:** si debe cubrirla, la ruta de la lista gana el mismo filtro y la caja se enseña también ahí.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-200 · 2026-10-04 · hallazgo · **ABIERTA** — F1B-08: la gestión de equipos busca el serial con su propio patrón
+**Qué:** `listEquiposManage` (`apps/desk/server/db/equipos.ts:175` en `a55326b`) arma su patrón de serial sin la pieza compartida y sin recortar los espacios de los lados. La búsqueda de tickets y el autocompletado de la recepción sí la comparten (RQ-VT-12). Es el molde H5: dos implementaciones de la misma noción.
+**Dueño:** quien decida el alcance. **Qué desbloquea:** unificarla es una línea más su prueba de confrontación.
+**Estado:** abierta · **Destino:** sin destino asignado, a propósito (R-3).
