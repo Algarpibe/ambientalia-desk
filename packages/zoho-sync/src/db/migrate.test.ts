@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 40 tablas: 10 de Desk, 27 de la app en public (clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 27, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(40)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(40)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(40)
+  it('son 41 tablas: 10 de Desk, 28 de la app en public (catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 28, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(41)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(41)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(41)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -371,10 +371,10 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 44 ALTER: 21 calificadas (16 de public + 5 de books) y 23 sin calificar, todas de Desk (la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
+  it('son 50 ALTER: 27 calificadas (22 de public + 5 de books) y 23 sin calificar, todas de Desk (de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(44)
-    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(21)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(50)
+    expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(27)
     expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(23)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
@@ -382,7 +382,7 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
     expect(new Set(alters.filter((a) => !a.calificada).map((a) => a.tabla)), 'tablas con ALTER sin calificar')
       .toEqual(new Set(['tickets', 'equipos', 'contacts']))
     expect(new Set(alters.filter((a) => a.calificada).map((a) => a.identidad)), 'identidades calificadas')
-      .toEqual(new Set(['books.contacts', 'public.users', 'public.roles', 'public.avisos', 'public.remisiones', 'public.catalogo_modelos']))
+      .toEqual(new Set(['books.contacts', 'public.users', 'public.roles', 'public.avisos', 'public.remisiones', 'public.catalogo_modelos', 'public.remision_fotos']))
   })
 })
 
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15)').toBe(ultima + 1 + 6 + 2)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER').toBe(ultima + 1 + 6 + 2 + 17)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)

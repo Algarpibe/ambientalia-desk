@@ -1,10 +1,10 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
-import { perfilChecklist, faltaFotoPorNovedad, motivoCuarentena } from '@ambientalia/shared'
+import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena } from '@ambientalia/shared'
 import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
-import { hayChecklist } from '../db/remisionChecklist'
+import { hayChecklist } from '../db/remisionChecklist'; import { resolverRecepcion } from '../services/recepcion'; import { listNovedades } from '../db/novedades'
 import { checklistDeRemision } from '../db/checklistRemision'
 import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'; import { obtenerCliente } from '../services/clientes'
@@ -155,7 +155,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       res.status(422).json({ error: 'Falta el serial del equipo: el ticket no tiene equipo del catálogo ni serial propio' })
       return
     }
-
+    const rec = await resolverRecepcion(db, b); if (rec && 'error' in rec) { res.status(422).json({ error: rec.error }); return } // escalon C: tras el serial (A) y antes del 409 (D)
     /*
      * Una sola remisión sin desenlace por ticket. Hasta ahora esto lo "defendía" un cartel del
      * formulario, que es un consejo y no una barrera: si la consulta que lo alimenta falla no
@@ -246,8 +246,8 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     const id = await createRemision(db, {
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
-      incluye: pedidos, observaciones: b.observaciones ? String(b.observaciones) : null,
-      creadoPor: req.user?.name ?? null, hayNovedad: typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null,
+      incluye: pedidos, observaciones: rec ? rec.observaciones : (b.observaciones ? String(b.observaciones) : null),
+      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, rotuladoPor: req.user?.name ?? null } : null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
       // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
       // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos
@@ -284,11 +284,11 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     if (rem.estado === 'ok' || rem.estado === 'ok_con_avisos') {
       res.status(409).json({ error: 'Esta remisión ya se envió' }); return
     }
-    // RQ-RE-08, orden 4 (F1B-04): con novedad declarada y cero fotos, no se deja enviar. Va ANTES de
-    // reclamar: un 422 posterior a la reclamación dejaría la remisión bloqueada la ventana entera.
-    const fotos = await listFotos(db, id)
-    if (faltaFotoPorNovedad(rem.hayNovedad, fotos.length)) {
-      res.status(422).json({ error: 'El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.' })
+    // RQ-RE-08, sexta puerta (F1B-04): UNA sola, antes de reclamar (un 422 posterior a la reclamación dejaría la remisión
+    // bloqueada la ventana entera). Legado (novedades NULL): la regla anterior; formulario nuevo: rotulado, mínimas, novedades.
+    const fotos = await listFotos(db, id); const motivo = motivoNoEnviable(rem, fotos, await listNovedades(db))
+    if (motivo) {
+      res.status(422).json({ error: motivo })
       return
     }
     // Reclamación atómica: cubre el reintento tras perder cobertura justo después de un disparo que
@@ -377,13 +377,13 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
 
   app.post('/api/remisiones/:id/fotos', requireAuth(db), upload.single('file'), asyncHandler(async (req, res) => {
     const id = String(req.params.id)
-    if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    const rem = await getRemision(db, id); if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
     const f = req.file
     if (!f) { res.status(400).json({ error: 'Falta el archivo' }); return }
     if (!TIPOS_FOTO.has(f.mimetype)) { res.status(415).json({ error: 'Tipo de imagen no permitido' }); return }
-    res.status(201).json(await addFoto(db, {
-      remisionId: id, filename: f.originalname, contentType: f.mimetype,
-      contentB64: f.buffer.toString('base64'), size: f.size,
+    const cat = categoriaDeFoto(rem, req.body ?? {}); if (!cat.ok) { res.status(422).json({ error: cat.error }); return }
+    res.status(201).json(await addFoto(db, { remisionId: id, filename: f.originalname, contentType: f.mimetype,
+      contentB64: f.buffer.toString('base64'), size: f.size, categoria: cat.categoria, novedad: cat.novedad,
     }))
   }))
 

@@ -1,4 +1,4 @@
-import type { PerfilChecklist } from './remision'; import type { Cargo } from './cargos'
+import type { PerfilChecklist } from './remision'; import type { Cargo } from './cargos'; import type { NovedadMarcada } from './recepcion'
 
 /** Shape consumido por el frontend (tarjeta y tablero). */
 export interface Ticket {
@@ -619,7 +619,7 @@ export interface AccountDetail { id: string; name: string; nit: string | null; e
 
 export interface ActivityListItem { id: string; subject: string; status: string; statusType: string | null; priority: string | null; dueDate: string | null; owner: string | null; ticketId: string | null; ticketNumber: string | null }
 
-export interface RemisionFoto { id: string; filename: string; contentType: string; size: number }
+export interface RemisionFoto { id: string; filename: string; contentType: string; size: number; categoria?: string | null; novedad?: string | null }
 
 /** Un paso del flujo de n8n que no salió bien, ya redactado para enseñárselo al técnico. */
 export interface RemisionPasoFallido { paso: string; mensaje?: string }
@@ -732,7 +732,7 @@ export interface Remision {
   anuladaPor: string | null
   /** F1B-04, RQ-RE-17. `true`/`false` si se declaró al crear; `null` en cualquier otro caso —no
    * contestada, o anterior a esta columna—: se lee como «sin declarar» y no exige foto. */
-  hayNovedad: boolean | null
+  hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; novedadOtro: string | null; rotuladoAt: string | null; rotuladoPor: string | null
 }
 
 /** Datos con los que el formulario de remisión de entrada llega prellenado desde el ticket. */
