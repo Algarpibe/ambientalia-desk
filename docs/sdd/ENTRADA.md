@@ -1791,13 +1791,13 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 
 ## E-171 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: ¿con qué hito se calcula el 51 (tiempo de recogida del equipo)?
 **Qué:** la letra define el 51 como «Hora de actualización del estado − Fecha Finalización ST» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6299`), y Desk 2.0 no guarda esa hora como columna (`packages/shared/src/transitions.ts:252-255`). La letra manda decir el hito que falta antes de construir y decidirlo aparte, así que el 51 sale «sin dato — falta el hito» y no se aplicó ningún supuesto. Opciones: la remisión de salida, la última transición registrada, o guardar la hora del cambio de estado (un escritor nuevo, en otro cambio).
-**Origen:** `openspec/changes/continuidad-indicadores/proposal.md` §4 y §15 (H-1).
+**Origen:** `openspec/changes/archive/2026-10-03-continuidad-indicadores/proposal.md` §4 y §15 (H-1).
 **Dueño:** Gerencia. **Qué desbloquea:** el 51, y con él que la fila F1F-05 pueda cerrarse (`cierra: si`).
 **Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4, en un cambio posterior con `tanda: F1F-05`; la respuesta, a `openspec/config.yaml` → `decisiones_de_gerencia`.
 
 ## E-172 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: fuente del 55 (satisfacción del cliente)
 **Qué:** la aplicación no guarda la calificación de satisfacción. La encuesta la envía Comercial a mano y sus respuestas se cargan sin fila (E-085, arriba en este fichero). El 55 sale «sin dato»; si el valor de Zoho llega ya sincronizado, va en la columna del valor de Zoho (`valorZoho`) y nunca en `valor`. ¿La fila espera a la carga de las respuestas, o se decide otra fuente?
-**Origen:** `openspec/changes/continuidad-indicadores/proposal.md` §4 y §15 (H-2).
+**Origen:** `openspec/changes/archive/2026-10-03-continuidad-indicadores/proposal.md` §4 y §15 (H-2).
 **Dueño:** Gerencia, con Comercial. **Qué desbloquea:** el 55 y el cierre de la fila F1F-05.
 **Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3).
 
@@ -1807,7 +1807,7 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3); depende del resultado de P-1.
 
 ## E-174 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: el 47 de Zoho mide hasta el último cambio de estado; el maestro, hasta la remisión de salida
-**Qué:** medido sobre el export de enero (`docs/analisis-tickets/Tickets.csv`), el 47 de Zoho cuadra con «hora del último cambio de estado − Fecha Remisión Entrada» en 201 de 202 filas comparables (`openspec/changes/continuidad-indicadores/apply-progress.md`, lote 1). La letra dice «entre remisión de entrada y remisión de salida» (`R08.4.md:6287`). La aplicación calcula la letra; la variante de Zoho es «sin dato» porque la hora no se guarda (E-171). ¿Se da por buena la diferencia, explicada una vez?
+**Qué:** medido sobre el export de enero (`docs/analisis-tickets/Tickets.csv`), el 47 de Zoho cuadra con «hora del último cambio de estado − Fecha Remisión Entrada» en 201 de 202 filas comparables (`openspec/changes/archive/2026-10-03-continuidad-indicadores/apply-progress.md`, lote 1). La letra dice «entre remisión de entrada y remisión de salida» (`R08.4.md:6287`). La aplicación calcula la letra; la variante de Zoho es «sin dato» porque la hora no se guarda (E-171). ¿Se da por buena la diferencia, explicada una vez?
 **Dueño:** Gerencia. **Qué desbloquea:** cómo se lee cada diferencia del 47 en la comprobación de las cuatro semanas.
 **Estado:** abierta · **Destino:** pasaje del expediente R08.x (G.6, fila 47) y contenido de la fila F1F-05 (R-3).
 
