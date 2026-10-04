@@ -3789,6 +3789,30 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (orden de ejecución)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-03, F1B-07, F1B-08, F1C-05"
+  - clave: "decision/orden-tres-tandas-04-10"
+    fecha: "2026-10-04"
+    pregunta: |
+      Con las cuatro tandas de `decision/orden-cuatro-tandas-04-10` fusionadas a `main` (`373401e`), el paquete de
+      despliegue del 04/10 (b) escrito (`c35dedd`) y la prueba de integración de E-206 en su rama a la espera del
+      analista, ¿cuáles son las tres tandas siguientes y en qué orden? La propuesta de la sesión era F1F-01, F1B-05 sin
+      la mitad de visibilidad (que espera a E-089) y F1B-09.
+    respuesta_textual: |
+      «Autorizado para esta sesión: fusiona la prueba de E-206 a main y empuja el trabajo documental. Las tres siguientes, en este orden: F1F-01, F1B-05 sin visibilidad y F1B-09 con cierra: no. No fusiones ninguna de las tres hasta que el analista la verifique.»
+    consecuencias: |
+      (1) El orden es F1F-01 (migración de tickets abiertos y fecha de corte), F1B-05 sin la mitad de visibilidad
+      (traspaso y trazas) y F1B-09 (auditoría de la épica 1B), encadenadas sin consulta entre una y otra (modo producción).
+      (2) F1B-05 lleva `cierra: no`: la mitad de visibilidad espera a la respuesta de E-089. F1B-09 lleva `cierra: no`
+      por respuesta textual: la épica 1B sigue abierta y la auditoría se repasa al cerrarla.
+      (3) Cada tanda va en su propio worktree (regla del ciclo 3). Ninguna de las tres se fusiona a `main` hasta que el
+      analista la verifique; las ramas se dejan listas y no se rebasan sobre `main`.
+      (4) La prueba de integración de E-206 (`prueba-integracion-mezcla-jsonb`, `fuera-del-plan`) se fusionó a `main` en
+      `07cf400` con el CI en verde, y el trabajo documental directo se empuja a `main`.
+      (5) Lo que en F1F-01 toque datos de producción no lo ejecuta ninguna sesión: se construye la herramienta, con su
+      pasada en seco, y la ejecución queda como tarea de persona (regla de ejecución, criterio 3).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-tres-tandas-04-10)"
+    maestro_pasaje: "ninguno (orden de ejecución)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01, F1B-05, F1B-09"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:

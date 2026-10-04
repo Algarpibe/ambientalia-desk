@@ -306,3 +306,38 @@ ROLLBACK;
   y E-172.
 - **Comprobar en la aplicación (P-4, de personas):** con un administrador, que el enlace descarga el CSV y que la hoja
   de cálculo lo abre sin asistente; con otro usuario, que el enlace no aparece. Detalle en `docs/sdd/ENTRADA.md` → E-181.
+
+## 10. `DB_SCHEMA`: en qué esquema viven las tablas de Zoho Desk
+
+Va al final para no desplazar las líneas ya citadas de este documento. Se documenta el 2026-10-04: el paquete de
+despliegue de ese día (`docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:1031`, riesgo R51) registró que la variable
+se lee y no estaba escrita aquí. No es un secreto ni un interruptor de escritor; es una variable de topología, y va
+en la App y en el worker `hub-sync` **con el mismo valor**.
+
+**Qué decide.** Con `DB_SCHEMA=desk`, el arranque mueve las diez tablas de Zoho Desk de `public` a `desk`
+(`apps/desk/server/index.ts:26`, `apps/hub-sync/src/hub-sync.ts:47`; las sentencias, en
+`packages/zoho-sync/src/db/migrate.ts:114-120`) y cada conexión fija `search_path=desk,public`
+(`packages/zoho-sync/src/db/pool.ts:5`), que es lo que hace que las consultas y las sentencias sin calificar
+aterricen en `desk`. Ausente, vale `public` (`packages/zoho-sync/src/config.ts:87`), y la comparación es exacta: cualquier
+valor que no sea literalmente `desk` se comporta como `public`. Así corren el desarrollo local y las pruebas.
+
+**Qué se rompe si se pone mal.** Si en producción falta, o no dice exactamente `desk`, en cualquiera de los dos
+servicios, ese servicio deja de ver `desk.tickets` y las otras nueve tablas: las consultas sin calificar resuelven
+contra `public`, y `migrate` crea ahí tablas nuevas y vacías (`packages/zoho-sync/src/db/schema.sql:20` no califica
+el esquema), con lo que el tablero arranca sin tickets y las `ALTER` sin calificar de cada despliegue aterrizan en el
+esquema equivocado. Hipótesis, no comprobada contra producción: que con esas tablas vacías se dispare además el
+backfill inicial del apartado 5. Quitar la variable **no** devuelve las tablas a `public`: la mudanza no se deshace sola.
+
+**El valor en producción es hipótesis.** Que los dos servicios tengan hoy `DB_SCHEMA=desk` lo afirman documentos del
+repositorio (`debt.md:824`, `docs/runbooks/verificaciones-pendientes-F0.md:9`), no una lectura del gestor de
+despliegue. Comprobarlo es tarea de persona: pestaña Environment de `ambientalia-desk` y de `zoho-hub-sync`.
+
+> **Lo que este apartado NO cubre.** La regla de secretos pide `.env.example` **y** `DEPLOY.md`. `.env.example` queda
+> fuera del alcance de lectura de toda sesión, así que no se afirma nada sobre él. Las líneas que hay que añadirle a
+> mano son estas tres (vacía a propósito: el desarrollo local corre en `public`):
+>
+> ```
+> # DB_SCHEMA: con `desk`, el arranque mueve las tablas de Zoho Desk de public a desk y fija search_path=desk,public; vacía o ausente, todo vive en public (desarrollo y pruebas).
+> # Si en producción falta o no dice exactamente `desk` en la App y en el worker, el servicio deja de ver desk.tickets y migrate crea tablas vacías en public.
+> DB_SCHEMA=
+> ```
