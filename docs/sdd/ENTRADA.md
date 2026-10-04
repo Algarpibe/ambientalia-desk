@@ -1281,7 +1281,7 @@ que es el fichero que las sesiones de construcción cargan. Esta bandeja guarda 
 
 ## E-093 · 2026-10-01 · pregunta · **RESUELTA EN PARTE 01/10** (E-099 y E-095)
 **Qué:** Qué es la «fecha promesa» y de dónde sale. El maestro dice que el sistema ordena «Mis Tickets» de más a menos urgente — «FIFO inteligente por fecha promesa» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.2.md:1711`, M1.9.1), pero no define el término en ningún sitio.
-**Medido el 2026-10-01 sobre `e27f9da`:** `git grep -n "fecha promesa\|fechaPromesa\|fecha_promesa" -- apps packages` = **0**. Lo más cercano que existe es el indicador «Cumplimiento promesa» (`apps/desk/src/components/Analisis.tsx:95`), que toma como promesa los **Días de entrega** contados desde la creación del ticket (`packages/shared/src/analisis.ts:66`). Hipótesis, sin confirmar: la fecha promesa sería la fecha de creación más los Días de entrega; pero un ticket no tiene Días de entrega hasta el escalado, así que tampoco ordenaría los tickets que aún no los tienen.
+**Medido el 2026-10-01 sobre `e27f9da`:** `git grep -n "fecha promesa\|fechaPromesa\|fecha_promesa" -- apps packages` = **0**. Lo más cercano que existe es el indicador «Cumplimiento promesa» (`apps/desk/src/components/Analisis.tsx:95` en `e27f9da`), que toma como promesa los **Días de entrega** contados desde la creación del ticket (`packages/shared/src/analisis.ts:66`). Hipótesis, sin confirmar: la fecha promesa sería la fecha de creación más los Días de entrega; pero un ticket no tiene Días de entrega hasta el escalado, así que tampoco ordenaría los tickets que aún no los tienen.
 **Qué decide:** el desempate dentro de una misma prioridad en «Mis Tickets». `prioridad-top5-cliente` (F1B-07) ordena por prioridad en el servidor y, dentro de la misma prioridad, deja el orden de hoy (supuesto S-10 de su `proposal.md`).
 **Apéndice de** la pregunta 3 de `docs/sdd/Preguntas_Gerencia_2026-09-29.md` (§3.b, `:69-89`), que ya nombraba el orden de «Mis tickets» como algo que la calificación desbloquea (`:81`). Ese documento es un registro fechado y no se edita: esta entrada lo completa.
 **Afecta a:** fila F1B-07 del §5 del plan · capacidad `vistas-tablero`.
@@ -1843,3 +1843,65 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** tres comprobaciones que ninguna prueba del repositorio puede hacer y que archivar el cambio **no da por hechas**: (1) **Servicio Técnico confirma la lista de diez novedades** antes de publicarla (condición de PUBLICACIÓN, no de construcción ni de fusión; ver E-164); (2) **quien administra n8n comprueba que la etiqueta que imprime lleva el código del ticket** (`…R08.4.md:1239`; condición de publicación; ver E-167); (3) **Servicio Técnico comprueba el formulario en la aplicación**, tras publicar, en los nueve pasos de RQ-RE-19 (el `.tsx` está fuera de la red de pruebas por decisión F0-00): abrir el alta con diez novedades y sin campo libre; «Sin novedad» excluyente en los dos sentidos; «Otro» sin texto no deja crear; sin rotulado no deja crear; novedad sin su foto no deja crear; sin una foto mínima no deja crear; no ofrece «Continuar sin fotos» si falta algo exigido; un envío bloqueado dice qué categoría o novedad falta; alta completa y etiqueta con el código del ticket.
 **Dueño:** (1) y (3) Servicio Técnico; (2) quien administra n8n. **Qué desbloquea:** (1) y (2) la publicación; (3) dar el formulario por comprobado. **Comprobación previa de lectura (la hace quien despliega):** `DEPLOY.md`, sección «Comprobación de lectura tras desplegar F1B-04».
 **Estado:** abierta · **Destino:** `archive-report.md` del cambio y paquete de despliegue; la sección de personas de `openspec/specs/remisiones/spec.md` tras fusionar.
+
+## E-171 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: ¿con qué hito se calcula el 51 (tiempo de recogida del equipo)?
+**Qué:** la letra define el 51 como «Hora de actualización del estado − Fecha Finalización ST» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6299`), y Desk 2.0 no guarda esa hora como columna (`packages/shared/src/transitions.ts:252-255`). La letra manda decir el hito que falta antes de construir y decidirlo aparte, así que el 51 sale «sin dato — falta el hito» y no se aplicó ningún supuesto. Opciones: la remisión de salida, la última transición registrada, o guardar la hora del cambio de estado (un escritor nuevo, en otro cambio).
+**Origen:** `openspec/changes/archive/2026-10-03-continuidad-indicadores/proposal.md` §4 y §15 (H-1).
+**Dueño:** Gerencia. **Qué desbloquea:** el 51, y con él que la fila F1F-05 pueda cerrarse (`cierra: si`).
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4, en un cambio posterior con `tanda: F1F-05`; la respuesta, a `openspec/config.yaml` → `decisiones_de_gerencia`.
+
+## E-172 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: fuente del 55 (satisfacción del cliente)
+**Qué:** la aplicación no guarda la calificación de satisfacción. La encuesta la envía Comercial a mano y sus respuestas se cargan sin fila (E-085, arriba en este fichero). El 55 sale «sin dato»; si el valor de Zoho llega ya sincronizado, va en la columna del valor de Zoho (`valorZoho`) y nunca en `valor`. ¿La fila espera a la carga de las respuestas, o se decide otra fuente?
+**Origen:** `openspec/changes/archive/2026-10-03-continuidad-indicadores/proposal.md` §4 y §15 (H-2).
+**Dueño:** Gerencia, con Comercial. **Qué desbloquea:** el 55 y el cierre de la fila F1F-05.
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3).
+
+## E-173 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: cómo se compara si los valores de Zoho no llegan por el sincronizador
+**Qué:** la comparación de las cuatro semanas lee el valor de Zoho de `custom_fields` de cada ticket. Si la consulta P-1 (E-181) dice que esos valores no llegan, el resumen dice «sin valor de Zoho con que comparar» y no da porcentaje. ¿Se compara cargando el export, o de otra forma?
+**Dueño:** Gerencia, con quien administra el despliegue. **Qué desbloquea:** que la comprobación del 95 % pueda hacerse con datos reales.
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3); depende del resultado de P-1.
+
+## E-174 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: el 47 de Zoho mide hasta el último cambio de estado; el maestro, hasta la remisión de salida
+**Qué:** medido sobre el export de enero (`docs/analisis-tickets/Tickets.csv`), el 47 de Zoho cuadra con «hora del último cambio de estado − Fecha Remisión Entrada» en 201 de 202 filas comparables (`openspec/changes/archive/2026-10-03-continuidad-indicadores/apply-progress.md`, lote 1). La letra dice «entre remisión de entrada y remisión de salida» (`R08.4.md:6287`). La aplicación calcula la letra; la variante de Zoho es «sin dato» porque la hora no se guarda (E-171). ¿Se da por buena la diferencia, explicada una vez?
+**Dueño:** Gerencia. **Qué desbloquea:** cómo se lee cada diferencia del 47 en la comprobación de las cuatro semanas.
+**Estado:** abierta · **Destino:** pasaje del expediente R08.x (G.6, fila 47) y contenido de la fila F1F-05 (R-3).
+
+## E-175 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: el 54 sin tiempo promesa
+**Qué:** la letra no dice qué es el 54 cuando el ticket no tiene tiempo promesa (columna 52). La aplicación dice «sin dato»; Zoho dice «Cumple» (268 de 268 filas del export sin 52, lote 1). La variante de Zoho de la aplicación también dice «Cumple». ¿Qué debe decir el valor de la aplicación?
+**Dueño:** Gerencia. **Qué desbloquea:** el 54 en esos tickets y el criterio de coincidencia.
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3).
+
+## E-176 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: el 54 sin finalización
+**Qué:** sin Fecha Finalización ST, el 50·53 vale 0 (`R08.4.md:6296`) y, a la letra, el 54 compara 0 contra el 52 y sale «Cumple»; la aplicación lo marca «sin finalizar». ¿Es lo que se quiere, o debe ser «sin dato»?
+**Dueño:** Gerencia. **Qué desbloquea:** el 54 en los tickets abiertos.
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3).
+
+## E-177 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: unidad del 49 (tiempo de diagnóstico)
+**Qué:** la letra del 49 no dice la unidad (`R08.4.md:6293`); sólo el 50·53 nombra «días hábiles». Se construyó en días hábiles del calendario laboral (supuesto S-2, reversible). Medido en el export: Zoho cuenta de lunes a viernes sin festivos (158 de 161 filas comparables); en días naturales cuadran 54 de 161. ¿El 49 va en días hábiles?
+**Dueño:** Gerencia. **Qué desbloquea:** la unidad del 49 y su comparación.
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3).
+
+## E-178 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: fórmula del 59 (tiempo de orden de venta)
+**Qué:** la letra dice sólo «lo que tarda en generarse la orden de venta» (`R08.4.md:6314`). Se construyó como orden de venta menos cotización, en días naturales con signo (S-1, reversible). Medido: cuadra en 180 de 180 filas del export de enero (`apply-progress.md`, lote 1). Hipótesis, sin confirmar: que sea la definición de Gerencia. ¿Lo es?
+**Dueño:** Gerencia. **Qué desbloquea:** el 59 como definición escrita en el maestro.
+**Estado:** abierta · **Destino:** pasaje del expediente R08.x (G.6, fila 59) y contenido de la fila F1F-05 (R-3).
+
+## E-179 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: cuál es «el 95 % de los tickets»
+**Qué:** la letra pide coincidir «en al menos el 95 % de los tickets» (`R08.4.md:6317`) sin decir si es por indicador o por ticket (todo lo comparable del ticket coincide). La aplicación publica los dos porcentajes y no pinta aprobado ni suspenso. ¿Cuál es el que decide?
+**Dueño:** Gerencia. **Qué desbloquea:** dar los nueve por buenos (P-3).
+**Estado:** abierta · **Destino:** pasaje del expediente R08.x (G.6, «Comprobación») y fila F1F-05 (R-3).
+
+## E-180 · 2026-10-03 · pregunta · **ABIERTA** — F1F-05: `Fecha Orden de Venta Final` no entra en el 50·53 ni en el 59
+**Qué:** la letra nombra «Fecha Orden De Venta» (`R08.4.md:6296`). La aplicación tiene además `Fecha Orden de Venta Final` (`packages/shared/src/transitions.ts:203`), y la spec nueva prohíbe usarla como hito. ¿Debe entrar en el 50·53 o en el 59, o se confirma que no?
+**Dueño:** Gerencia. **Qué desbloquea:** el hito exacto del 50·53 y del 59 en tickets con orden de venta adicional.
+**Estado:** abierta · **Destino:** contenido de la fila F1F-05 del §C de la R01.4 (R-3).
+
+## E-181 · 2026-10-03 · pendiente · **ABIERTA** — F1F-05: tareas de persona, condición de despliegue
+**Qué:** cuatro tareas que no son de la tanda y que archivar no da por hechas. **P-1:** ejecutar en producción la consulta de sólo lectura de `DEPLOY.md` (§9) y decir si los valores de las columnas 47 a 59 y la satisfacción llegan en `desk.tickets.custom_fields` (si no, E-173). **P-2:** desplegar **antes del viernes 13/11** para medir desde el 16/11; el CI no despliega, sólo verifica. **P-3:** comprobar las cuatro semanas y explicar por escrito cada diferencia mayor de un día. **P-4:** comprobar en la aplicación, con un administrador, que el enlace de descarga funciona y que la hoja de cálculo abre el CSV (`;`, BOM, fin de línea CRLF) sin asistente.
+**Dueño:** P-1 y P-2, quien administra el despliegue; P-3, Gerencia con Servicio Técnico y Comercial; P-4, quien verifica en la aplicación. **Qué desbloquea:** P-1, el resumen con valores de Zoho; P-2, la comprobación de cuatro semanas; P-3, dar los nueve por buenos; P-4, el cierre de la verificación en la aplicación.
+**Estado:** abierta · **Destino:** `DEPLOY.md` §9 (consulta y fecha límite) y condición previa del paquete de despliegue que incluya F1F-05 (R-3).
+
+## E-182 · 2026-10-03 · hallazgo · **ABIERTA** — F1F-05: Zoho no descuenta festivos, así que la medición a la letra quedará bajo el 95 % en esos tickets
+**Qué:** medido sobre el export de enero con el calendario laboral, las filas con un festivo dentro del intervalo no cuadran: 0 de 57 en el 49 y 1 de 33 en el 50·53, mientras que con lunes a viernes sin festivos cuadran 158 de 161 filas del 49 y 147 de 149 del 50·53 (`apply-progress.md`, lote 1). La aplicación mide la letra (calendario laboral, `decision/calendario-habil`) y publica aparte la variante de Zoho con su fórmula; en esos tickets la diferencia es de fórmula y no de error. Sin esa variante, el porcentaje a la letra quedaría por debajo del 95 % por una causa que no es un defecto.
+**Dueño:** Gerencia. **Qué desbloquea:** cómo se explica la diferencia en P-3 y si se acepta la variante de Zoho como lectura de comparación.
+**Estado:** abierta · **Destino:** pasaje del expediente R08.x (G.6, «Comprobación») y fila F1F-05 (R-3); texto en `docs/sdd/F0-01_Correcciones_para_el_maestro.md` (corrección 23).
