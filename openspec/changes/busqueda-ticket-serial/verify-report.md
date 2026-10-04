@@ -92,7 +92,7 @@ lista es `CLAUDE.md`, línea 349, sobre `recepcion.test.ts`).
 | 23 | mismo veredicto en los dos buscadores | `C:59` (11 casos; molde H5) | COMPLIANT |
 | 24 | el autocompletado recorta los extremos | `C:59`, casos «espacios a los lados» y «sólo espacios» | COMPLIANT |
 | 25 | `searchEquipos` conserva su comportamiento | `equipos.test.ts` verde sin tocarlo (suite completa) | COMPLIANT |
-| 26 | una sola función de patrón | lectura: `apps/desk/server/db/equipos.ts:60` y `packages/shared/src/busquedaTickets.ts:36` llaman a `patronSerial` (`:15`); el SQL de tickets no construye patrón (`packages/zoho-sync/src/db/busquedaTickets.ts:58`). Salvedad D12: `equipos.ts:178` (`listEquiposManage`) conserva el suyo, declarado | COMPLIANT |
+| 26 | una sola función de patrón | lectura: `apps/desk/server/db/equipos.ts:60` y `packages/shared/src/busquedaTickets.ts:36` llaman a `patronSerial` (`:15`); el SQL de tickets no construye patrón (`packages/zoho-sync/src/db/busquedaTickets.ts:21`). Salvedad D12: `equipos.ts:178` (`listEquiposManage`) conserva el suyo, declarado | COMPLIANT |
 | 27-30 | cuatro escenarios manuales de `RQ-VT-13` | **PERSONA** (`.tsx` fuera de la red por F0-00; no se registra como carencia) | PERSONA |
 
 **Escenarios sin prueba y sin motivo: ninguno.** Resumen: 26 de 26 automáticos o de lectura, 4 de persona.
@@ -103,8 +103,8 @@ Manda el diseño (`tasks.md:3`).
 
 | Diferencia | Detalle |
 |---|---|
-| Subconsulta en vez de `LEFT JOIN` | El delta habla sólo de «equipo enlazado»; el SQL real es `t.equipo_id IN (SELECT id FROM equipos WHERE LOWER(serial) LIKE $p)` (`packages/zoho-sync/src/db/busquedaTickets.ts:58`). H-1 se despejó con plan A. Sin contradicción con el delta |
-| Mutación de posición | El delta (escenario 14) admite «ponerlo antes del filtro de estado»; es un mutante equivalente (`design.md:255-258`). La posición real es la de los paréntesis (`busquedaTickets.ts:59`, MP-1). Manda el diseño |
+| Subconsulta en vez de `LEFT JOIN` | El delta habla sólo de «equipo enlazado»; el SQL real es `t.equipo_id IN (SELECT id FROM equipos WHERE LOWER(serial) LIKE $p)` (`packages/zoho-sync/src/db/busquedaTickets.ts:21`). H-1 se despejó con plan A. Sin contradicción con el delta |
+| Mutación de posición | El delta (escenario 14) admite «ponerlo antes del filtro de estado»; es un mutante equivalente (`design.md:255-258`). La posición real es la de los paréntesis (`packages/zoho-sync/src/db/busquedaTickets.ts:22`, MP-1). Manda el diseño |
 | **S-7 (lote 2): la caja no se enseña en `remision_creada`** | `apps/desk/src/App.tsx:107`: la caja va condicionada por `view !== 'remision_creada'`; `App.tsx:69` no pasa `q` a `fetchRemisionCreada()`; `routes/prioridad.ts:92-94` no lee `q`. **No contradice** `RQ-VT-11`, que enumera tres poblaciones (activos, cerrados, «Mis tickets»), ni los cuatro escenarios manuales. **Tensión con la letra de `RQ-VT-13`**: «la cabecera del listado SHALL tener una caja», sin excepción, y el delta no nombra S-7. Ver W1 |
 | `countClosedTickets` gana el alias `t` | Lo manda el diseño §4; su SQL sin filtro no es carácter a carácter el de hoy (`repo.ts:173`); el resultado es el mismo y lo fija `R:173`. Declarado en `apply-progress.md:84` |
 | MC-3 | El diseño preveía la confrontación verde; cae por exigir además el valor esperado (`apply-progress.md:44`). Desvío declarado, a favor |
@@ -164,7 +164,7 @@ Copia de seguridad fuera del repositorio, restauración con `cp`. Se corrieron s
 | **MA** | `packages/shared/src/busquedaTickets.ts:33`: medir la longitud sobre `q` crudo (`q.length`) en vez de `texto.length` (S-9) | **Cae:** `H` (64 con espacios a los lados) y `U:35`. No cae `S:133` (80 espacios): el vacío sale antes, en `:32` |
 | **MB** | `routes/tickets.ts:109`: `countClosedTickets(db, busquedaDe(res))` pasa a `countClosedTickets(db)` (regla 13 fila 6, nivel de ruta; `apply` sólo mutó el repositorio, MC-8) | **Cae:** `S:80` y `H` (scope=closed). Cubierto |
 | **MC** | `routes/prioridad.ts:85`: `getActiveTickets(db, yo, busquedaDe(res))` pasa a `getActiveTickets(db, yo)` | **Cae:** `S:106` («Mis tickets»). Cubierto |
-| **MD** | `packages/zoho-sync/src/db/busquedaTickets.ts:58`: la subconsulta pasa a `WHERE active = true AND LOWER(serial)` (contradice D8) | **SOBREVIVIÓ:** 103 de 103 verdes. D8 («un ticket existe aunque su equipo esté desactivado») no estaba fijado. **Cerrado** con la cuarta prueba de `H`: con la mutación cae `expected [] to deeply equal [ '#9' ]` |
+| **MD** | `packages/zoho-sync/src/db/busquedaTickets.ts:21`: la subconsulta pasa a `WHERE active = true AND LOWER(serial)` (contradice D8) | **SOBREVIVIÓ:** 103 de 103 verdes. D8 («un ticket existe aunque su equipo esté desactivado») no estaba fijado. **Cerrado** con la cuarta prueba de `H`: con la mutación cae `expected [] to deeply equal [ '#9' ]` |
 
 Estado final del árbol tras revertir: sólo este informe y `apps/desk/server/busquedaTicketsHuecos.test.ts`
 (`git status --short`).
@@ -183,10 +183,10 @@ Nacen verdes (CARACTERIZACIÓN de huecos); la de D8 se probó roja por mutación
 | Decisión | ¿Seguida? | Notas |
 |---|---|---|
 | D1 normalizador único en `packages/shared` | Sí | `busquedaTickets.ts:15`, `:28`; consumido por `equipos.ts:60` y `util/busquedaTickets.ts:9` |
-| D2 subconsulta `IN` | Sí | `packages/zoho-sync/src/db/busquedaTickets.ts:58` |
+| D2 subconsulta `IN` | Sí | `packages/zoho-sync/src/db/busquedaTickets.ts:21` |
 | D3 fragmento fuera de `repo.ts` | Sí | cero líneas netas en `repo.ts` (15/15) |
 | D4 validación en la ruta, detrás de `requireAuth` | Sí | `tickets.ts:35` y `:104`; `prioridad.ts:83`; `S:143` |
-| D5/D6 `q` repetido da 422; longitud sobre lo recortado | Sí | `shared/busquedaTickets.ts:30`, `:33` |
+| D5/D6 `q` repetido da 422; longitud sobre lo recortado | Sí | `packages/shared/src/busquedaTickets.ts:30`, `:33` |
 | D7 patrón con el texto entero, `#` incluido | Sí | `:36`; `U:50` |
 | D8 sin filtrar `equipos.active` en tickets | Sí (ahora fijado) | MD sobrevivía; cuarta prueba de `H` |
 | D9/D10 reinicio de página en `App.tsx`; `aplazar` en `.ts` | Sí | `App.tsx:59`; `src/lib/busquedaTickets.ts:14-16` |
