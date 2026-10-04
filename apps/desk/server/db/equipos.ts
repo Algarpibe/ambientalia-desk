@@ -3,7 +3,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { fechaSolo } from '@ambientalia/zoho-sync/books/repo'
 import type { EquipoLite, EquipoFull } from '@ambientalia/shared'
 import type { EntradaHojaDeVida, EquipoHistorial, HistorialRemision, HistorialTicket, HistorialTransition, PasoHojaDeVida } from '@ambientalia/shared'
-import { etapasDesdeHistoria, ticketDeRemision, compuestoCanonico } from '@ambientalia/shared'
+import { etapasDesdeHistoria, ticketDeRemision, compuestoCanonico, patronSerial } from '@ambientalia/shared'
 import { esCreacion, iso, json, porFechaDesc } from './ticketFuentes'
 import { adjuntosRemision, fotosPorRemision } from './remisionAdjuntos'
 
@@ -57,7 +57,7 @@ function toLite(r: any): EquipoLite {
  * a los que aún les falte el `client_id`.
  */
 export async function searchEquipos(db: Queryable, q: string, clientId?: string | null, limit = 20): Promise<EquipoLite[]> {
-  const like = `%${q.toLowerCase()}%`
+  const like = patronSerial(q)
   const params: unknown[] = [like]
   let clienteFilter = ''
   if (clientId) { params.push(clientId); clienteFilter = `AND client_id = $${params.length}` }

@@ -10,7 +10,7 @@ import { primerDerivado } from '../db/primerDerivado'; import { colaDelTaller } 
 import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'
+import { asyncHandler } from '../util/asyncHandler'; import { leerBusqueda, busquedaDe } from '../util/busquedaTickets'
 import { crearSubida } from '../util/subida'
 import { createManagedTicket, executeTransition } from '../services/ticketService'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from '../db/resolutions'
@@ -101,17 +101,17 @@ export function registerTicketRoutes(
     }
   }))
 
-  app.get('/api/tickets', asyncHandler(async (req, res) => {
+  app.get('/api/tickets', leerBusqueda, asyncHandler(async (req, res) => {
     if (req.query.scope === 'closed') {
       const pageSize = 50
       const page = Math.max(1, Number(req.query.page) || 1)
-      const items = await getClosedTickets(db, req.user!.id, pageSize, (page - 1) * pageSize)
-      const total = await countClosedTickets(db)
+      const items = await getClosedTickets(db, req.user!.id, pageSize, (page - 1) * pageSize, busquedaDe(res))
+      const total = await countClosedTickets(db, busquedaDe(res))
       res.json({ items: items.map(({ row, refs }) => rowToTicket(row, refs)), total, page, pageSize })
       return
     }
     // scope=all (compat, sin uso en el front) o default (active)
-    const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id) : await getActiveTickets(db, req.user!.id)
+    const list = req.query.scope === 'all' ? await getAllTickets(db, req.user!.id, busquedaDe(res)) : await getActiveTickets(db, req.user!.id, busquedaDe(res))
     res.json(await colaDelTaller(db, list))
   }))
 

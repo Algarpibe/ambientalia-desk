@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion, NovedadCatalogo } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion, NovedadCatalogo } from '@ambientalia/shared'; import { conBusqueda } from '../lib/busquedaTickets'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -16,14 +16,14 @@ export function fetchTickets(scope?: 'all'): Promise<Ticket[]> {
   return fetch(`/api/tickets${qs}`, { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
 
-export function fetchActiveTickets(): Promise<Ticket[]> {
-  return fetch('/api/tickets', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
+export function fetchActiveTickets(q = ''): Promise<Ticket[]> {
+  return fetch(conBusqueda('/api/tickets', q), { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
 
 export interface ClosedPage { items: Ticket[]; total: number; page: number; pageSize: number }
 
-export function fetchClosedTickets(page: number): Promise<ClosedPage> {
-  return fetch(`/api/tickets?scope=closed&page=${page}`, { credentials: 'include' }).then((r) => json<ClosedPage>(r))
+export function fetchClosedTickets(page: number, q = ''): Promise<ClosedPage> {
+  return fetch(conBusqueda(`/api/tickets?scope=closed&page=${page}`, q), { credentials: 'include' }).then((r) => json<ClosedPage>(r))
 }
 
 /** Previsión del número del próximo ticket (no lo reserva). */
@@ -740,8 +740,8 @@ export function ajustarPrioridadDelTicket(ticketId: string, cuerpo: { prioridad:
 }
 
 /** «Mis tickets»: los abiertos derivados al usuario, en el orden de la cola del taller que fija el servidor. */
-export function fetchMisTickets(): Promise<Ticket[]> {
-  return fetch('/api/mis-tickets', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
+export function fetchMisTickets(q = ''): Promise<Ticket[]> {
+  return fetch(conBusqueda('/api/mis-tickets', q), { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
 
 /** Todos los errores del servidor (`errors[]` del 422); si no vienen, el mensaje único. No decide nada: sólo los separa para enseñarlos. */
