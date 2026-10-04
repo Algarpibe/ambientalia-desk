@@ -121,7 +121,7 @@ describe('qué prioridad toma cada uno (cambioPorTop5 sobre prioridadAlNacer)', 
     expect(await trazas()).toMatchObject([{ de: null, a: 'High', origen: 'top5' }, { de: 'High', a: null, origen: 'top5_revertido' }])
   })
 
-  it('un ticket nacido bajo Top 5 sin traza no tiene base: al desmarcar no se toca (S-10; L2b lo invierte)', async () => {
+  it('un ticket sin traza (previo al despliegue) no tiene base: al desmarcar no se toca (S-10); con traza al nacer sí vuelve: trazaTop5AlNacer.test.ts', async () => {
     await cliente(); const { app } = appWith(); await ticket('t1', 1, 'cli-1', 'High')
     await db.query("INSERT INTO public.cliente_prioridad (client_id, top5, prioridad, actualizado_por) VALUES ('cli-1', true, 'High', 'seed')")
     await desmarcar(app)

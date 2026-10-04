@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { prioridadTop5, cambioPorTop5, MOTIVO_POR_ORIGEN, type PrioridadAsignable } from '@ambientalia/shared'
+import { prioridadTop5, cambioPorTop5, baseAlNacer, MOTIVO_POR_ORIGEN, type PrioridadAsignable } from '@ambientalia/shared'
 import { enTransaccion } from './transaccion'; import { hayContratoVigente } from './contratos'
 
 /**
@@ -73,12 +73,12 @@ export async function ticketParaAjuste(db: Queryable, ticketId: string): Promise
   return f ? { id: String(f.id), clientId: f.client_id == null ? null : String(f.client_id), prioridad: f.priority == null ? null : String(f.priority) } : null
 }
 
-export interface AjustePrioridad { de: string | null; a: string; motivo: string; ajustadoPor: string; ajustadoAt: string }
+export interface AjustePrioridad { de: string | null; a: string | null; motivo: string; ajustadoPor: string; ajustadoAt: string; origen: string | null }
 
 /** Los ajustes a mano de un ticket, del más antiguo al más reciente. */
 export async function ajustesDelTicket(db: Queryable, ticketId: string): Promise<AjustePrioridad[]> {
-  const r = await db.query('SELECT de, a, motivo, ajustado_por, ajustado_at FROM prioridad_ajustes WHERE ticket_id = $1 ORDER BY id', [ticketId])
-  return (r.rows as Array<Record<string, unknown>>).map((f) => ({ de: f.de == null ? null : String(f.de), a: String(f.a), motivo: String(f.motivo), ajustadoPor: String(f.ajustado_por), ajustadoAt: comoIso(f.ajustado_at) }))
+  const r = await db.query('SELECT de, a, motivo, ajustado_por, ajustado_at, origen FROM prioridad_ajustes WHERE ticket_id = $1 ORDER BY id', [ticketId])
+  return (r.rows as Array<Record<string, unknown>>).map((f) => ({ de: f.de == null ? null : String(f.de), a: f.a == null ? null : String(f.a), motivo: String(f.motivo), ajustadoPor: String(f.ajustado_por), ajustadoAt: comoIso(f.ajustado_at), origen: f.origen == null ? null : String(f.origen) }))
 }
 
 export interface AjustarPrioridad { ticketId: string; de: string | null; prioridad: PrioridadAsignable; motivo: string; por: string }
@@ -121,4 +121,12 @@ export async function fijarYPropagarPrioridadCliente(db: Queryable, a: FijarPrio
     }
     return { ...fila, ticketsCambiados }
   })
+}
+
+/**
+ * La base de un ticket que va a nacer bajo el Top 5 de su cliente (D-1 del orquestador): `{ de }` con la prioridad PEDIDA,
+ * o `null` si el cliente no es Top 5 (sin fila, `top5` falso o dato sucio). El alta la pasa a `crearTicketConEquipo`.
+ */
+export async function baseSiNaceBajoTop5(db: Queryable, clientId: string | null, pedida: unknown): Promise<{ de: string | null } | null> {
+  return (await prioridadTop5DelCliente(db, clientId)) ? { de: baseAlNacer(pedida) } : null
 }

@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createTicket, type CreateTicketInput } from '@ambientalia/zoho-sync/db/repo'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'
-import type { EquipoLite } from '@ambientalia/shared'
+import { MOTIVO_POR_ORIGEN, type EquipoLite } from '@ambientalia/shared'
 import { getModelo } from '../db/catalogo'
 import { getEquipoBySerial, createEquipo, type EquipoInput } from '../db/equipos'
 import { camposHojaDeVida } from '../routes/equipos'
@@ -81,13 +81,13 @@ export async function crearTicketConEquipo(
   db: Queryable,
   nuevo: EquipoAResolver | null,
   clienteNombre: string | null,
-  input: CreateTicketInput, manual?: AltaManual | null,
+  input: CreateTicketInput, manual?: AltaManual | null, alNacer?: { de: string | null } | null,
 ): Promise<string> {
   return enTransaccion(db, async (q) => {
     const equipoId = manual ? await escribirAltaManual(q, manual, nuevo, clienteNombre, input.clientId, input.equipoId) : nuevo && !nuevo.equipo.id
       ? await createEquipo(q, { ...nuevo.datos!, clienteNombre, clientId: input.clientId })
       : input.equipoId
-    const id = await createTicket(q, { ...input, equipoId }, { transaccionAbierta: true })
+    const id = await createTicket(q, { ...input, equipoId }, { transaccionAbierta: true }); if (alNacer && alNacer.de !== input.priority) await q.query('INSERT INTO public.prioridad_ajustes (ticket_id, de, a, motivo, ajustado_por, origen) VALUES ($1, $2, $3, $4, $5, $6)', [id, alNacer.de, input.priority, MOTIVO_POR_ORIGEN.top5_al_nacer, input.actor, 'top5_al_nacer']) /* L2b: la traza al nacer va en ESTA transacción, tras el ticket y antes de la OV */
     if (input.salesorderId && input.ordenVenta) {
       await asociarOV(q, {
         ticketId: id, numero: input.ordenVenta, salesorderId: input.salesorderId,

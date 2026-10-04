@@ -217,10 +217,14 @@ lista de orígenes **SHALL** vivir en `packages/shared` y **SHALL** distinguir t
 propagación, reversión y alta bajo Top 5. Un `origen` fuera de la lista **SHALL** tratarse como manual, esto es,
 protegiendo al ticket (supuesto SP-4 de la especificación, reversible).
 
-- **Alta bajo Top 5.** Cuando un ticket nace con un cliente Top 5 y el Top 5 cambia su resultado respecto al que
-  tendría sin él, el alta **SHALL** dejar, en la misma transacción que el ticket, una fila de origen alta con `de` =
-  la prioridad sin Top 5 (`prioridadAlNacer(pedida, contrato, null)`), `a` = la que nació, y el autor del alta
-  (supuesto SP-2: si no cambia el resultado, no hay fila). Un fallo posterior del alta **MUST NOT** dejar la fila.
+- **Alta bajo Top 5.** Cuando un ticket nace con un cliente Top 5 y la prioridad con la que nace difiere de la
+  PEDIDA en el cuerpo, el alta **SHALL** dejar, en la misma transacción que el ticket, una fila de origen alta con
+  `de` = la prioridad pedida sin contrato ni Top 5 (`prioridadAlNacer(pedida, false, null)`), `a` = la que nació, y el
+  autor del alta (supuesto SP-2: si nace con la pedida, no hay fila). Un fallo posterior del alta **MUST NOT** dejar
+  la fila. **Supuesto del orquestador (2026-10-04, `tasks.md` D-1), no letra de Gerencia:** la base es la pedida y no
+  el resultado con contrato, porque volver a «la calculada» recalcula con el contrato vigente el día de la reversión;
+  si la base llevara dentro el contrato del día del alta, un contrato vencido entre medias dejaría el ticket más alto
+  de lo que le corresponde. Reversible; queda como pregunta para la bandeja.
 - La lectura de la traza de un ticket (`GET /api/tickets/:id/prioridad`) **SHALL** devolver todas sus filas con su
   `origen` (supuesto SP-1 de la especificación).
 - Esquema: `ALTER TABLE public.prioridad_ajustes ADD COLUMN IF NOT EXISTS origen text;` y
@@ -249,10 +253,15 @@ protegiendo al ticket (supuesto SP-4 de la especificación, reversible).
 - WHEN se crea el ticket
 - THEN nace `High` y hay una fila de origen alta con `de` `Low` y `a` `High`
 
-#### Scenario: si el Top 5 no cambia el resultado, no hay fila
+#### Scenario: si nace con la prioridad pedida, no hay fila
 - GIVEN un cliente con contrato vigente y Top 5 `Low`
 - WHEN se crea un ticket con cuerpo `High`
 - THEN nace `High` y no se inserta ninguna fila
+
+#### Scenario: la base es la pedida aunque el salto lo cause el contrato
+- GIVEN un cliente con contrato vigente y Top 5 `Low`
+- WHEN se crea un ticket con cuerpo `Low`
+- THEN nace `High` y hay una fila de origen alta con `de` `Low` y `a` `High` (supuesto D-1 del orquestador)
 
 #### Scenario: sin Top 5, el alta no deja traza
 - GIVEN un cliente que no es Top 5

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ORIGENES_TOP5, MOTIVO_POR_ORIGEN, esAjusteManual, baseDeTop5, cambioPorTop5, type TrazaDePrioridad } from './prioridadPropagada'
+import { ORIGENES_TOP5, MOTIVO_POR_ORIGEN, esAjusteManual, baseDeTop5, baseAlNacer, cambioPorTop5, type TrazaDePrioridad } from './prioridadPropagada'
 import { prioridadAlNacer } from './contratos'
 
 /**
@@ -75,5 +75,14 @@ describe('cambioPorTop5 · manual, base, fórmula, igual', () => {
   it('ciclo marcar, desmarcar, transición a Medium, marcar, desmarcar: vuelve a Medium, no a Low (S-4)', () => {
     const filas = [f('Low', 'top5'), f('High', 'top5_revertido'), f('Medium', 'top5')]
     expect(cambioPorTop5({ actual: 'High', filas, ...base, top5: null })).toEqual({ de: 'High', a: 'Medium', origen: 'top5_revertido' })
+  })
+})
+
+describe('baseAlNacer · la prioridad PEDIDA sin contrato ni Top 5 (D-1 del orquestador, L2b)', () => {
+  it.each<[unknown, string | null]>([['Low', 'Low'], ['Medium', 'Medium'], ['High', 'High'], [undefined, null], [null, null], ['Alta', 'Alta'], ['Urgent', 'Urgent']])('pedida %j → %j', (pedida, esperada) => {
+    expect(baseAlNacer(pedida)).toBe(esperada)
+  })
+  it('es la misma fórmula del alta con contrato falso y sin Top 5: no hay una segunda implementación', () => {
+    for (const p of ['Low', 'Medium', 'High', 'Urgent', 'Alta', undefined, 7]) expect(baseAlNacer(p)).toBe(prioridadAlNacer(p, false, null))
   })
 })

@@ -207,17 +207,17 @@ Archivos: `schema.sql` (+4), `migrate.test.ts` (0), `shared/prioridadPropagada.t
 
 # LOTE L2a-bis — Atómica y recuento de lecturas (≈ 160) — SÓLO si se aplica el corte
 
-- [ ] L2abis.1 Anotar `git rev-parse HEAD` (partida), abrir el intento.
-- [ ] L2abis.2 Crear `apps/desk/server/propagarTop5Atomica.test.ts`, molde de `prioridadTop5.test.ts:333`: falla el
+- [x] L2abis.1 Anotar `git rev-parse HEAD` (partida), abrir el intento.
+- [x] L2abis.2 Crear `apps/desk/server/propagarTop5Atomica.test.ts`, molde de `prioridadTop5.test.ts:333`: falla el
   `INSERT` de la traza ⇒ `BEGIN, INSERT, SELECT, SELECT, SELECT, UPDATE, INSERT, ROLLBACK`, todo con prefijo `tx:`.
   **Nace verde** (el código existe desde L2a); su discriminación la prueba M4.
-- [ ] L2abis.3 En el mismo fichero: mismas lecturas con 1 y con 5 tickets (nace verde). Y: tras el fallo no cambian la
+- [x] L2abis.3 En el mismo fichero: mismas lecturas con 1 y con 5 tickets (nace verde). Y: tras el fallo no cambian la
   fila de `cliente_prioridad`, la prioridad de ningún ticket ni la traza.
-- [ ] L2abis.4 **EJECUTAR** y confirmar verde.
-- [ ] L2abis.5 **M4 (regla 1):** en `fijarYPropagarPrioridadCliente`, `fijarPrioridadCliente(q, …)` → `(db, …)` antes de
+- [x] L2abis.4 **EJECUTAR** y confirmar verde.
+- [x] L2abis.5 **M4 (regla 1):** en `fijarYPropagarPrioridadCliente`, `fijarPrioridadCliente(q, …)` → `(db, …)` antes de
   `enTransaccion`. Debe caer la atómica con `pool:INSERT`. Anotar el mensaje. REVERTIR y confirmar con `git diff`.
-- [ ] L2abis.6 Regla 13: nada nuevo (sólo pruebas); anotarlo.
-- [ ] L2abis.7 **CIERRE L2a-bis:** `npm test`, `npm run typecheck`, `npm run lint`, con CÓDIGO DE SALIDA; medida del intento.
+- [x] L2abis.6 Regla 13: nada nuevo (sólo pruebas); anotarlo.
+- [x] L2abis.7 **CIERRE L2a-bis:** `npm test`, `npm run typecheck`, `npm run lint`, con CÓDIGO DE SALIDA; medida del intento.
 - [ ] L2abis.8 **FIN DE L2a-bis.** Settle y fusión a `main`.
 
 ---
@@ -228,49 +228,49 @@ Archivos: `prioridadPropagada.ts` + prueba, `prioridadCliente.ts`, `services/equ
 `services/ticketService.ts` (0 netas, `:106` byte a byte), `trazaTop5AlNacer.test.ts` (nuevo), `src/api/client.ts`,
 `Top5Panel.tsx`, `PanelPrioridad.tsx`.
 
-- [ ] L2b.1 Anotar `git rev-parse HEAD` (partida) y abrir el intento; medir `wc -l` de `equipoNuevo.ts`, `ticketService.ts`,
+- [x] L2b.1 Anotar `git rev-parse HEAD` (partida) y abrir el intento; medir `wc -l` de `equipoNuevo.ts`, `ticketService.ts`,
   `prioridadCliente.ts`, `client.ts`. Guardar la línea 106 de `ticketService.ts` para compararla byte a byte.
-- [ ] L2b.2 ⚠ **Resolver antes de redactar las pruebas: D-1 (¿`de` lleva el contrato? ¿hay fila cuando el contrato ya
+- [x] L2b.2 ⚠ **Resolver antes de redactar las pruebas: D-1 (¿`de` lleva el contrato? ¿hay fila cuando el contrato ya
   daba `High`?) y D-2 (¿el `INSERT` de `equipoNuevo.ts:90` está en la misma transacción que las guardas posteriores?).**
   Las casillas L2b.4 a L2b.7 dependen de la respuesta; hasta entonces siguen el diseño.
 
 **Rojo**
-- [ ] L2b.3 En `prioridadPropagada.test.ts`: `baseAlNacer(pedida)` (+20). ⚠ diferencia spec/diseño D-1: si el
+- [x] L2b.3 En `prioridadPropagada.test.ts`: `baseAlNacer(pedida)` (+20). ⚠ diferencia spec/diseño D-1: si el
   orquestador decide la spec, la firma lleva el contrato.
-- [ ] L2b.4 Crear `apps/desk/server/trazaTop5AlNacer.test.ts`: nace bajo Top 5 con prioridad distinta de la pedida ⇒
+- [x] L2b.4 Crear `apps/desk/server/trazaTop5AlNacer.test.ts`: nace bajo Top 5 con prioridad distinta de la pedida ⇒
   fila `top5_al_nacer`, `de` = la pedida, `a` = la escrita, autor del alta; desmarcar al cliente la devuelve a su
   calculada (criterio 8). ⚠ D-1.
-- [ ] L2b.5 Mismo fichero: nace sin Top 5 ⇒ sin fila; nace con Top 5 igual a la pedida ⇒ sin fila; con contrato y
+- [x] L2b.5 Mismo fichero: nace sin Top 5 ⇒ sin fila; nace con Top 5 igual a la pedida ⇒ sin fila; con contrato y
   Top 5 `Low` y cuerpo `High` ⇒ sin fila (⚠ D-1: el caso cuerpo `Low` discrepa spec/diseño y queda sin escribir hasta
   decidir). `GET /api/tickets/:id/prioridad` trae `origen` en todas las filas, la manual con origen vacío.
-- [ ] L2b.6 Mismo fichero: un fallo posterior del alta (guarda posterior) no deja ticket ni traza (⚠ D-2).
-- [ ] L2b.7 **INVERTIR** la prueba de L2a «nacido bajo Top 5 sin base no se toca» al caso con traza (criterio 8); el
+- [x] L2b.6 Mismo fichero: un fallo posterior del alta (guarda posterior) no deja ticket ni traza (⚠ D-2).
+- [x] L2b.7 **INVERTIR** la prueba de L2a «nacido bajo Top 5 sin base no se toca» al caso con traza (criterio 8); el
   caso «sin traza» se conserva para los tickets previos al despliegue (S-10).
-- [ ] L2b.8 **EJECUTAR** y anotar el fallo literal (`equipoNuevo.ts:90` no escribe traza).
+- [x] L2b.8 **EJECUTAR** y anotar el fallo literal (`equipoNuevo.ts:90` no escribe traza).
 
 **Verde**
-- [ ] L2b.9 `prioridadPropagada.ts`: añadir `baseAlNacer` (+8). `prioridadCliente.ts`: añadir al final
+- [x] L2b.9 `prioridadPropagada.ts`: añadir `baseAlNacer` (+8). `prioridadCliente.ts`: añadir al final
   `baseSiNaceBajoTop5(db, clientId, pedida)`; en sitio `:76`, `:80`, `:81` (`a: string | null`, `origen`). (+12)
-- [ ] L2b.10 `equipoNuevo.ts`: `:84` añade `alNacer?` y `:90` el `INSERT` con `origen 'top5_al_nacer'`, `a = input.priority`,
+- [x] L2b.10 `equipoNuevo.ts`: `:84` añade `alNacer?` y `:90` el `INSERT` con `origen 'top5_al_nacer'`, `a = input.priority`,
   `ajustado_por = input.actor`; cero netas.
-- [ ] L2b.11 `ticketService.ts`: `:5` añade el import y `:108` el argumento; `:106` intacta; cero netas.
-- [ ] L2b.12 `client.ts`: `:713` `ticketsCambiados?: number`; `:715` `a: string | null; origen?: string | null`. En
+- [x] L2b.11 `ticketService.ts`: `:5` añade el import y `:108` el argumento; `:106` intacta; cero netas.
+- [x] L2b.12 `client.ts`: `:713` `ticketsCambiados?: number`; `:715` `a: string | null; origen?: string | null`. En
   `Top5Panel.tsx` (`:28`) enseñar el recuento y en `PanelPrioridad.tsx` (`:55`) `{a.a ?? 'sin prioridad'}` (~+3). Sin
   prueba (`.tsx` fuera de la red por decisión de Gerencia).
-- [ ] L2b.13 **EJECUTAR** los ficheros de L2b y `ticketService.test.ts`: verde; `:1154` y `:1160` intactas.
+- [x] L2b.13 **EJECUTAR** los ficheros de L2b y `ticketService.test.ts`: verde; `:1154` y `:1160` intactas.
 
 **Cero netas**
-- [ ] L2b.14 `git diff --numstat` de `equipoNuevo.ts` y `ticketService.ts`: inserciones = borrados. `git diff` de
+- [x] L2b.14 `git diff --numstat` de `equipoNuevo.ts` y `ticketService.ts`: inserciones = borrados. `git diff` de
   `ticketService.ts` muestra la línea 106 sin cambio byte a byte. `wc -l` antes/después.
 
 **Mutaciones**
-- [ ] L2b.15 **Posición (regla 1):** mover el `INSERT` de `equipoNuevo.ts:90` antes del `createTicket`. Debe caer la
+- [x] L2b.15 **Posición (regla 1):** mover el `INSERT` de `equipoNuevo.ts:90` antes del `createTicket`. Debe caer la
   prueba de fallo posterior o la de FK. Anotar y REVERTIR. `git diff`: ninguna mutación queda.
 
 **Regla 13 y cierre**
-- [ ] L2b.16 `apply-progress.md`: la traza al nacer la escribe el servidor (`equipoNuevo.ts:90`); el cliente sólo enseña
+- [x] L2b.16 `apply-progress.md`: la traza al nacer la escribe el servidor (`equipoNuevo.ts:90`); el cliente sólo enseña
   el recuento y el origen.
-- [ ] L2b.17 **CIERRE L2b:** `npm test`, `npm run typecheck`, `npm run lint`, con CÓDIGO DE SALIDA; medida del intento.
+- [x] L2b.17 **CIERRE L2b:** `npm test`, `npm run typecheck`, `npm run lint`, con CÓDIGO DE SALIDA; medida del intento.
 - [ ] L2b.18 **FIN DE L2b.** Settle y fusión a `main`.
 
 ---

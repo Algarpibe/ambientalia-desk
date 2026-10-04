@@ -191,3 +191,122 @@ Antes del lote: 2.962 y 2 omitidas en 189 + 1. Ahora +49 pruebas y +2 ficheros.
 - Sin trackear: `propagarTop5.test.ts` 225 + `prioridadPropagada.ts` 45 + `prioridadPropagada.test.ts` 79 = **349**.
 - Código y pruebas: **420**; con esta sección de `apply-progress.md` (~85) y las casillas de `tasks.md`: ~510 (techo 800, válvula 720).
 - Binarios: ninguno.
+
+## Lote L2a-bis — atómica y recuento de lecturas — COMPLETO (pendiente de commit, settle y fusión del orquestador)
+
+Commit de partida del intento (L2a-bis y L2b, un solo intento): `98e97f6`. Sólo pruebas: ningún fichero de producción tocado.
+
+### Pruebas nuevas, todas VERDES DESDE EL PRINCIPIO (caracterización, declarado)
+
+`apps/desk/server/propagarTop5Atomica.test.ts` (69 líneas, nuevo). El código de `fijarYPropagarPrioridadCliente` ya era transaccional desde L2a, así que **no hay rojo previo**: nacen verdes y su discriminación la prueba la mutación M4. pg-mem no revierte, por eso la atomicidad se observa con un pool falso que anota `pool:` o `tx:` por sentencia (molde de `apps/desk/server/prioridadTop5.test.ts:333`).
+- Falla el `INSERT` de la traza: `tx:BEGIN, tx:INSERT, tx:SELECT, tx:SELECT, tx:SELECT, tx:UPDATE, tx:INSERT, tx:ROLLBACK`.
+- Tras el fallo ninguna sentencia va por el pool, no hay `COMMIT` y la última es `ROLLBACK`: ni la fila del cliente ni ningún ticket ni ninguna traza llegan a quedar. **Límite honesto:** con un pool falso se prueba que las escrituras están dentro de la transacción y que ésta se revierte, no el efecto sobre filas reales (pg-mem no revierte).
+- Sin fallo cierra en `COMMIT`.
+- Recuento de lecturas: con 1 y con 5 tickets las lecturas son 3 y 3; las escrituras crecen (5 `UPDATE`, 6 `INSERT`).
+
+### Mutación M4 (copia de seguridad en el directorio temporal; restaurada con `cp` y `cmp`)
+
+| # | Cambio exacto | Qué cae (literal) |
+|---|---|---|
+| M4 (regla 1) | `apps/desk/server/db/prioridadCliente.ts`, dentro de `fijarYPropagarPrioridadCliente`: `const fila = await fijarPrioridadCliente(q, a)` → `const fila = await fijarPrioridadCliente(db, a)` | Las 3 pruebas de fondo: `expected [ 'tx:BEGIN', 'pool:INSERT', …(6) ] to deeply equal [ 'tx:BEGIN', 'tx:INSERT', …(6) ]`; `expected [ 'pool:INSERT' ] to deeply equal []`; y, en el recuento, `expected [ 'tx:INSERT', 'tx:INSERT', …(3) ] to have a length of 6 but got 5` |
+
+Prueba para reproducirla: `npx vitest run apps/desk/server/propagarTop5Atomica.test.ts`.
+
+### Regla 13 (L2a-bis)
+
+Nada nuevo: sólo pruebas. La atomicidad y el recuento de lecturas son del servidor y no tienen espejo en el cliente.
+
+## Lote L2b — traza al nacer bajo Top 5 y lo que se enseña — COMPLETO (pendiente de commit, settle y fusión del orquestador)
+
+### Resoluciones aplicadas
+
+- **D-1 (manda el diseño), delta alineado.** `specs/tickets-core/spec.md`, RQ-TC-38: la fila `top5_al_nacer` existe cuando el cliente es Top 5 y la prioridad con la que nace difiere de la PEDIDA; `de` = `prioridadAlNacer(pedida, false, null)` (sin contrato). El requisito lleva escrito, en el propio texto, que es un **supuesto del orquestador del 2026-10-04, no letra de Gerencia**. El escenario «si el Top 5 no cambia el resultado, no hay fila» pasa a «si nace con la prioridad pedida, no hay fila» (mismo caso) y se añade el escenario «la base es la pedida aunque el salto lo cause el contrato» (contrato vigente, Top 5 `Low`, cuerpo `Low`: nace `High`, fila con `de` `Low`). No se tocó ninguna otra línea del delta.
+- **D-2 (manda la spec).** El `INSERT` de la traza está en `crearTicketConEquipo`, sobre el `q` de la MISMA transacción del ticket, justo después de `createTicket` y ANTES de `asociarOV` (`apps/desk/server/services/equipoNuevo.ts:90`). El único paso posterior dentro de esa transacción es la asociación de la orden de venta; tras ella `createManagedTicket` ya no tiene más guardas (sólo lee el ticket creado), así que **no hizo falta cambiar ni una línea de `ticketService.ts` ni reordenar guardas**. Prueba: pool falso con la asociación de la OV caída: `tx:BEGIN, tx:SELECT, tx:INSERT tickets, tx:INSERT ticket_transitions, tx:INSERT public.prioridad_ajustes, tx:SELECT, tx:INSERT ov_asociaciones, tx:ROLLBACK`, sin `COMMIT` ni nada por el pool. **Límite:** pg-mem no revierte, así que el «no queda ni ticket ni traza» se demuestra por la secuencia, como en L2a-bis.
+
+### Líneas antes y después
+
+| Fichero | Antes | Después | Netas |
+|---|---|---|---|
+| `apps/desk/server/services/ticketService.ts` | 277 | 277 | **0** (`git diff --numstat`: 2 ins / 2 borr: el import de `:5` y el argumento de `:108`). `:106` **byte a byte** (`cmp` contra la línea guardada antes de empezar) |
+| `apps/desk/server/services/equipoNuevo.ts` | 99 | 99 | **0** (3 ins / 3 borr: import de `:3`, firma de `:84`, `:90`) |
+| `apps/desk/server/db/prioridadCliente.ts` | 124 | 132 | +8 al final (`baseSiNaceBajoTop5`) y 4 modificadas en sitio (import, tipo, `SELECT` y mapeo de `ajustesDelTicket`) |
+| `packages/shared/src/prioridadPropagada.ts` | 45 | 50 | +5 (`baseAlNacer`) |
+| `packages/shared/src/prioridadPropagada.test.ts` | 79 | 88 | +9 |
+| `apps/desk/src/api/client.ts` | 803 | 803 | 0 (2 ins / 2 borr) |
+| `apps/desk/src/components/Top5Panel.tsx` | 130 | 133 | +3 |
+| `apps/desk/src/components/PanelPrioridad.tsx` | 82 | 82 | 0 |
+| `apps/desk/server/propagarTop5.test.ts` | — | — | 0 (sólo el título de la prueba «sin traza», que ya no dice «L2b lo invierte») |
+| `apps/desk/server/trazaTop5AlNacer.test.ts` | — | 143 | nuevo |
+
+CRLF conservado en todo (`file`). Un `sed -i` mío convirtió `prioridadPropagada.test.ts` a LF; lo reconvertí y `file` lo confirma. En `client.ts` los tipos son los de `:713` (`PrioridadDelCliente`, gana `ticketsCambiados?`) y `:715` (`AjusteDePrioridad`, gana `a: string | null` y `origen?`).
+
+### Rojos observados (antes de tocar el código)
+
+`npx vitest run apps/desk/server/trazaTop5AlNacer.test.ts packages/shared/src/prioridadPropagada.test.ts`:
+
+- `baseAlNacer` (8 pruebas, nuevas): `(0 , baseAlNacer) is not a function`.
+- Servidor (`6 failed | 6 passed`):
+  - «nace bajo Top 5 con prioridad distinta de la pedida…» → `expected [] to match object [ { …(5) } ]`.
+  - «criterio 8 · desmarcar al cliente devuelve el ticket nacido bajo Top 5 a su calculada…» → `expected +0 to be 1 // Object.is equality` (`ticketsCambiados` 0: sin traza no hay base).
+  - «sin pedida: de es NULL…» → `expected [] to match object [ { de: null, a: 'Medium', …(1) } ]`.
+  - «con contrato vigente y Top 5 Low, cuerpo Low…» → `expected [] to match object [ { de: 'Low', a: 'High', …(1) } ]`.
+  - `GET` del ticket → `expected [ [ 'Low', undefined ], …(1) ] to deeply equal [ [ 'Medium', 'top5_al_nacer' ], …(2) ]`.
+  - atomicidad del alta → `expected [ 'tx:BEGIN', 'tx:SELECT', …(5) ] to deeply equal [ 'tx:BEGIN', 'tx:SELECT', …(6) ]` (falta la traza).
+- **Nacen verdes (caracterización), declarado:** nace sin Top 5; nace con Top 5 igual a la pedida; contrato vigente, Top 5 `Low` y cuerpo `High`; el ticket previo al despliegue sin traza no se toca (S-10); y las dos pruebas del pool falso que dicen que, sin base o con la misma prioridad, no se escribe traza.
+- **Error mío al redactar, corregido tras el primer verde:** esperaba `baseAlNacer('Alta')` igual a `null`; `prioridadAlNacer` deja pasar el valor del cuerpo cuando no aplica contrato ni Top 5 (`'Alta'`). La prueba dice ahora `'Alta'`.
+- **La prueba que L2a dejó verde por construcción y «se invierte»:** la de `propagarTop5.test.ts` («un ticket sin traza…») se conserva, con título nuevo, para los tickets previos al despliegue (`tasks.md` L2b.7); su inversión es «criterio 8» de `trazaTop5AlNacer.test.ts`: con la traza al nacer, el ticket SÍ vuelve a `Low`.
+
+### Verde
+
+- `baseAlNacer(pedida)` en `packages/shared/src/prioridadPropagada.ts` (misma fórmula del alta: `prioridadAlNacer(pedida, false, null)`).
+- `baseSiNaceBajoTop5(db, clientId, pedida)` al final de `apps/desk/server/db/prioridadCliente.ts:130`: `{ de }` si el cliente es Top 5 (`prioridadTop5` falla cerrado ante un dato sucio), `null` si no. En sitio: `AjustePrioridad.a: string | null`, `origen`, el `SELECT` y el mapeo (`apps/desk/server/db/prioridadCliente.ts:81`): `a` NULL sale `null`, no la cadena `"null"`.
+- `crearTicketConEquipo` gana el sexto argumento `alNacer?` y, tras `createTicket`, inserta la fila si `alNacer && alNacer.de !== input.priority`, con autor `input.actor`.
+- `ticketService.ts` importa `baseSiNaceBajoTop5` y lo pasa en `:108`; `:106` intacta.
+- Cliente: `ticketsCambiados?` y `origen?` en los tipos; `Top5Panel.tsx` enseña «N tickets abiertos actualizados» tras guardar; `PanelPrioridad.tsx` enseña «sin prioridad» cuando `a` es nulo. **Sin prueba por decisión de Gerencia** (`.tsx` fuera de la red).
+- `ticketService.test.ts` (con `:1154` y `:1160` intactas), `propagarTop5.test.ts`, `prioridadTop5.test.ts` y los ficheros de L2b y L2a-bis: verdes.
+
+### Mutaciones de L2b (copias en el directorio temporal; restauradas con `cp` y comprobadas con `cmp`)
+
+Prueba para reproducirlas: `npx vitest run apps/desk/server/trazaTop5AlNacer.test.ts packages/shared/src/prioridadPropagada.test.ts`.
+
+| # | Cambio exacto (fichero: original → mutado) | Qué cae (literal) |
+|---|---|---|
+| ML1 (regla 1, posición) | `services/equipoNuevo.ts`: la sentencia `; if (alNacer && alNacer.de !== input.priority) await q.query(…)` se quita de `:90` y se pega justo antes de `return id`, DESPUÉS de `asociarOV` | atomicidad del alta → `expected [ 'tx:BEGIN', 'tx:SELECT', …(5) ] to deeply equal [ 'tx:BEGIN', 'tx:SELECT', …(6) ]` (la asociación falla antes de llegar a la traza). **La mutación que nombraba `tasks.md` —mover el `INSERT` ANTES del `createTicket`— no se puede escribir tal cual: la traza necesita el `id` que devuelve `createTicket`; se probó la posición contraria.** No hay clave foránea entre `prioridad_ajustes.ticket_id` y `tickets`, así que la «prueba de FK» no existe; la secuencia es el único detector, y cae |
+| ML2 (D-2) | `equipoNuevo.ts:90`: `await q.query('INSERT INTO public.prioridad_ajustes` → `await db.query('INSERT INTO public.prioridad_ajustes` (fuera de la transacción) | atomicidad del alta → `expected [ 'tx:BEGIN', 'tx:SELECT', …(6) ] to deeply equal [ 'tx:BEGIN', 'tx:SELECT', …(6) ]` (en esa posición aparece `pool:INSERT public.prioridad_ajustes`) |
+| ML3 | `equipoNuevo.ts:90`: `alNacer && alNacer.de !== input.priority` → `alNacer` | `nace con Top 5 y la misma prioridad que la pedida: sin traza` y `con contrato vigente, Top 5 Low y cuerpo High…` → `expected [ { …(7) } ] to deeply equal []`; y `con la misma prioridad que la base no se escribe ninguna traza` → `expected [ Array(1) ] to deeply equal []` |
+| ML4 (D-1) | `prioridadPropagada.ts`, `baseAlNacer`: `prioridadAlNacer(pedida, false, null)` → `prioridadAlNacer(pedida, true, null)` | seis de las siete de `baseAlNacer`, p. ej. `pedida "Low" → "Low"`: `expected 'High' to be 'Low'`; `pedida undefined → null`: `expected 'High' to be null` |
+| ML5 | `prioridadCliente.ts`, `ajustesDelTicket`: `a: f.a == null ? null : String(f.a)` → `a: String(f.a)` | `GET` del ticket → `expected [ [ 'Medium', 'top5_al_nacer' ], …(2) ] to deeply equal [ [ 'Medium', 'top5_al_nacer' ], …(2) ]` (la cadena `"null"` frente a `null`) |
+| ML6 | `prioridadCliente.ts`, `ajustesDelTicket`: `origen: f.origen == null ? null : String(f.origen) }))` → `origen: null }))` | `GET` del ticket → `expected [ [ 'Medium', null ], …(2) ] to deeply equal [ [ 'Medium', 'top5_al_nacer' ], …(2) ]` |
+| ML7 | `prioridadCliente.ts`, `baseSiNaceBajoTop5`: `return (await prioridadTop5DelCliente(db, clientId)) ? { de: baseAlNacer(pedida) } : null` → `return { de: baseAlNacer(pedida) }` | **sobrevivió la primera vez** (47 de 47): ninguna prueba tenía un cliente sin Top 5 cuya prioridad final difiriera de la pedida. Se añadió «con contrato vigente y SIN Top 5, cuerpo Low: nace High por el contrato y NO hay traza» y cae: `expected [ { …(7) } ] to deeply equal []` |
+
+Tras la última, `cmp` de `equipoNuevo.ts`, `prioridadPropagada.ts` y `prioridadCliente.ts` contra las copias del verde da idéntico; `git status` sólo muestra el verde.
+
+### Regla 13 (L2b), decisión a decisión
+
+| Decisión | Quién la impone | Línea del servidor |
+|---|---|---|
+| Que un ticket nacido bajo Top 5 deja traza, y con qué base | Servidor, en la misma transacción del ticket | `apps/desk/server/services/equipoNuevo.ts:90` (la base la calcula `baseSiNaceBajoTop5`, `apps/desk/server/db/prioridadCliente.ts:130`, sobre `baseAlNacer` de `shared`) |
+| Que desmarcar lo devuelve a su calculada | Servidor, `shared` consumida | `cambioPorTop5` (L2a); probado por «criterio 8» |
+| Qué origen lleva cada fila de la lectura | Servidor | `ajustesDelTicket` (`apps/desk/server/db/prioridadCliente.ts:81`) |
+
+Comodidad del cliente: **sólo enseña** el recuento de tickets cambiados (`Top5Panel.tsx`) y «sin prioridad» para un `a` nulo (`PanelPrioridad.tsx`). Ninguna de las dos decide ni bloquea nada.
+
+### Cierre de los dos lotes (códigos de salida literales)
+
+```
+test exit=0
+typecheck exit=0
+lint exit=0
+Test Files  193 passed | 1 skipped (194)
+Tests  3036 passed | 2 skipped (3038)
+✖ 165 problems (0 errors, 165 warnings)
+```
+
+Antes: 3.011 y 2 omitidas en 191 + 1. Ahora +25 pruebas (4 de L2a-bis, 13 de `trazaTop5AlNacer.test.ts`, 8 de `baseAlNacer`) y +2 ficheros.
+
+### Medida del intento (L2a-bis y L2b, partida `98e97f6`)
+
+- `git diff --shortstat --no-renames 98e97f6`: 10 files changed, 54 insertions(+), 22 deletions(-) → **76**.
+- Sin trackear: `propagarTop5Atomica.test.ts` 69 + `trazaTop5AlNacer.test.ts` 143 = **212**.
+- Código y pruebas: **288**. Con esta parte de `apply-progress.md` (~75) y las casillas de `tasks.md` (~25): ~390 (techo 800, válvula 720). En el punto de decisión tras L2a-bis la suma proyectada era ~360.
+- Binarios: ninguno.
