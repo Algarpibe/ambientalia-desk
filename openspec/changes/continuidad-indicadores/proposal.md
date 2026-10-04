@@ -75,7 +75,7 @@ filas** hasta que el apply las verifique con un script.
 | 50·53 | `diasHabilesEntre` (`packages/shared/src/calendarioLaboral.ts:196`) desde la orden de venta —o la recepción de repuestos si la hay— hasta la finalización; 0 si es negativo o no hay finalización (`R08.4.md:6296`) | Lo mismo, lunes a viernes sin festivos | Calculable |
 | 51 | **«sin dato — falta el hito, pendiente de decisión»**. La letra lo define como hora de actualización del estado menos finalización (`R08.4.md:6299`) | «sin dato», por el mismo hito | **Falta el hito H-1; no se calcula** |
 | 54 | «Cumple» si el 53 no supera el 52, «No cumple» si lo supera (`R08.4.md:6302`, `R08.4.md:6341`). Sin finalización el 53 vale 0 por la letra (`R08.4.md:6296`), luego sale «Cumple», con la marca **«sin finalizar»** al lado. **Sin tiempo promesa la letra no dice nada: «sin dato — pendiente de decisión»** | «Cumple» también sin tiempo promesa | Calculable salvo sin tiempo promesa (pregunta, §15) |
-| 55 | **«sin dato»**, salvo que el valor de Zoho ya llegue sincronizado; entonces se copia y se dice de dónde sale | — | **Falta el hito H-2** |
+| 55 | **«sin dato»**; si el valor de Zoho ya llega sincronizado, va en la columna del valor de Zoho (`valorZoho`), nunca en `valor` | — | **Falta el hito H-2** |
 | 57 | Revisión del informe → cotización, días naturales con signo (`R08.4.md:6308`) | Igual | Calculable |
 | 58 | Cotización → orden de compra, días naturales con signo (`R08.4.md:6311`) | Igual | Calculable |
 | 59 | Cotización → orden de venta, días naturales con signo (S-1) | Igual | Calculable (S-1) |

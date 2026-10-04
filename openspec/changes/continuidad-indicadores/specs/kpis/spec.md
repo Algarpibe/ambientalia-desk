@@ -369,7 +369,7 @@ un `formato` distinto **SHALL** dar `400` con `{ error }` y sin consultar datos.
 llegar a la base como valores ligados, nunca concatenados. La respuesta JSON **SHALL** ser
 `{ periodo: { desde, hasta }, tickets: [...], comparacion }`. Cada ticket lleva `ticketId`, `codigoServicio`
 e `indicadores`, con las nueve claves de RQ-KP-01. Cada indicador lleva `columna`, `valor` (número, texto o
-`null`), `unidad` (`dias_naturales`, `dias_habiles` o `cumplimiento`), `estado` (`calculado` o `sin_dato`),
+`null`), `unidad` (`dias_naturales`, `dias_habiles`, `cumplimiento` o `calificacion`), `estado` (`calculado` o `sin_dato`),
 `motivo` (sólo en `sin_dato`), `hitos` (lista de `{ nombre, dia, fuente }`), `reentrante`, `sinFinalizar` (en
 50·53 y 54), `formulaZoho` y `valorZoho`.
 

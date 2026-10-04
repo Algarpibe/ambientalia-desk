@@ -40,31 +40,27 @@ sólo enlaza.
 ### 3.1 `packages/shared/src/indicadores.ts` (nuevo)
 
 ```ts
-export type FuenteHito = 'transicion' | 'marca' | 'columna' | 'entrada' | 'ausente'
+export type FuenteHito = 'transicion' | 'columna_heredada' | 'ausente'   // se serializa tal cual (lote 1)
 export interface Hito { dia: DiaCivil | null; fuente: FuenteHito; escrituras: number }
 
-export type MotivoSinDato =
-  | 'hito_ausente'            // falta una fecha del ticket (p. ej. sigue abierto)
-  | 'falta_hito_pendiente'    // H-1 o H-2: la aplicación no guarda el dato; pendiente de decisión
-  | 'sin_tiempo_promesa'      // 54 sin columna 52; pendiente de decisión
-
+// `motivo` es el TEXTO de la spec («falta el hito: remisión de salida»), no un código (lote 1).
 export type Valor<T> =
   | { tipo: 'valor'; valor: T }
-  | { tipo: 'sin_dato'; motivo: MotivoSinDato; falta: string }
+  | { tipo: 'sin_dato'; motivo: string }
 
 export interface Indicador<T = number> {
-  columna: ColumnaIndicador                 // 47 | 49 | 50 | 51 | 54 | 55 | 57 | 58 | 59
+  columna: ColumnaIndicador                 // '47' | '49' | '50_53' | '51' | '54' | '55' | '57' | '58' | '59'
   letra: Valor<T>
   varianteZoho: Valor<T>
-  unidad: 'dias_naturales' | 'dias_habiles' | 'texto'
+  unidad: 'dias_naturales' | 'dias_habiles' | 'cumplimiento' | 'calificacion'   // 54 → cumplimiento, 55 → calificacion
   hitos: Record<string, Hito>               // etiqueta del campo → de dónde salió
   reentrante: boolean | null                // null = ticket sin historial: no se puede saber
-  marcas: Array<'sin_finalizar' | 'orden_invertido' | 'copiado_de_zoho'>
+  marcas: Array<'sin_finalizar' | 'orden_invertido'>   // R5: no hay 'copiado_de_zoho'; el 55 de Zoho va en `valorZoho`
   diasNoHabilesDelIntervalo: number | null  // jornada − hábiles; sólo 49 y 50
 }
 
 export interface TicketParaIndicadores {
-  id: string; numero: number; estado: string
+  id: string; numero: number; estado: string; codigoServicio: string | null   // lo usa la ruta (lote 3)
   creadoEn: string | null                   // created_time, ISO con desplazamiento
   diasEntrega: number | null                // columna 52
   fechas: Partial<Record<EtiquetaHito, DiaCivil | null>>   // columnas fecha_*
@@ -74,6 +70,7 @@ export interface OpcionesIndicadores {
   cierres: ReadonlySet<DiaCivil>
   /** H-1. Hoy SIEMPRE ausente: el 51 y la variante del 47 se enchufan aquí cuando se decida. */
   horaActualizacionEstado?: string | null
+  calificacionSatisfaccion?: string | null   // H-2: el 55 la usa tal cual; la ruta nunca la aporta
 }
 export interface FilaIndicadores { ticketId: string; numero: number; estado: string; reentrante: boolean | null; indicadores: Indicador<number | string>[] }
 
@@ -174,11 +171,11 @@ final de la línea `:61`, que ya agrupan varios registros por línea. **Ninguna 
 | Col. | Letra: fórmula | Fuente primaria → respaldo | Unidad | Casos límite | Variante de Zoho | Define |
 |---|---|---|---|---|---|---|
 | 47 | `Fecha Remisión de Salida − Fecha Remisión Entrada` | historial (`packages/shared/src/transitions.ts:191`, `:249`, `:251`) → `fecha_remision_entrada`, `fecha_remision_salida` | naturales, con signo | Falta cualquiera (ticket abierto): `sin_dato/hito_ausente`. Mismo día: 0. Invertido: negativo + `orden_invertido`. Reentrante: última salida | `H-1 − Fecha Remisión Entrada`; con H-1 ausente, `sin_dato/falta_hito_pendiente`. **Nunca** cae en la remisión de salida | `R08.4.md:6287`; variante: Diccionario, línea 115, y exploración §4 |
-| 49 | `diasHabilesEntre(día de la marca de ingreso_a_servicio, Fecha Revisión Informe)` | marca `marcaIngresoAServicio` (`packages/shared/src/bodegaje.ts:225-227`), fuente `marca` → `fecha_creacion_ticket` (**supuesto S-9**: en heredados no hay marca y se usa lo que usaba Zoho, dicho en `fuente`) | hábiles (S-2) | Sin revisión: `sin_dato/hito_ausente`. Mismo día o invertido: 0, y si invertido `orden_invertido`. La marca se pasa a día con `diaEnZona` | `diasDeJornadaEntre(Fecha creación ticket ?? día de creadoEn, Fecha Revisión Informe)` | `R08.4.md:6293`; hasta: `transitions.ts:219`, `:221` |
+| 49 | `diasHabilesEntre(día de la marca de ingreso_a_servicio, Fecha Revisión Informe)` | marca `marcaIngresoAServicio` (`packages/shared/src/bodegaje.ts:225-227`); **R1: sin marca es «sin dato — falta el hito: marca de ingreso a servicio»**, la fecha de creación sólo vive en la variante (S-9 queda reducido a la variante) | hábiles (S-2) | Sin revisión: `sin_dato/hito_ausente`. Mismo día o invertido: 0, y si invertido `orden_invertido`. La marca se pasa a día con `diaEnZona` | `diasDeJornadaEntre(Fecha creación ticket ?? día de creadoEn, Fecha Revisión Informe)` | `R08.4.md:6293`; hasta: `transitions.ts:219`, `:221` |
 | 50·53 | `diasHabilesEntre(Fecha Recepción de repuestos si la hay, si no Fecha Orden De Venta; Fecha Finalización ST)`; 0 si negativo o sin finalización | historial (`transitions.ts:189`, `:197`, `:199`, `:223`) → `fecha_orden_venta`, `fecha_recepcion_repuestos`, `fecha_finalizacion_st` | hábiles | Sin finalización: **0** + `sin_finalizar` (letra). Con finalización y sin desde: `sin_dato/hito_ausente`. Invertido: 0 + `orden_invertido`. Reentrante: últimos repuestos | Lo mismo con `diasDeJornadaEntre` | `R08.4.md:6296`; Diccionario, línea 122 |
 | 51 | — | — | — | Siempre `sin_dato/falta_hito_pendiente` mientras `horaActualizacionEstado` esté ausente. Si llega: `día(H-1) − Fecha Finalización ST`, naturales | Igual | `R08.4.md:6299`; `openspec/config.yaml:2654-2655` |
 | 54 | `Cumple` si `53 ≤ 52`, `No cumple` si no | 53 de esta tabla; 52 = `Días de entrega` | texto | 52 ausente: `sin_dato/sin_tiempo_promesa`. 53 `sin_dato`: `sin_dato/hito_ausente`. Sin finalización: `Cumple` + `sin_finalizar` | `Cumple` también sin 52; usa el 53 variante | `R08.4.md:6302`, `:6341` |
-| 55 | — | `valorDeZoho(55, …)` | texto | Si Zoho lo trae: se copia + `copiado_de_zoho`; si no: `sin_dato/falta_hito_pendiente` | — | `R08.4.md:6345` |
+| 55 | — | `valorDeZoho(55, …)` | calificacion | **R5:** `valor` siempre «sin dato» sin la entrada opcional; el 55 de Zoho va en `valorZoho`, nunca en `valor` | — | `R08.4.md:6345` |
 | 57 | `Fecha de Cotización − Fecha Revisión Informe` | historial (`transitions.ts:211`, `:213`) → columnas | naturales, con signo | Falta uno: `sin_dato/hito_ausente`. Invertido: negativo. Reentrante: última cotización | Igual | `R08.4.md:6308` |
 | 58 | `Fecha Orden de Compra − Fecha de Cotización` | historial (`transitions.ts:199`) → columnas | naturales, con signo | Ídem | Igual | `R08.4.md:6311` |
 | 59 | `Fecha Orden De Venta − Fecha de Cotización` | historial → columnas | naturales, con signo | Ídem | Igual | Supuesto S-1 (`R08.4.md:6314` no da fórmula) |
@@ -266,7 +263,7 @@ los Santos pasa al lunes 02/11; el 11/11 es miércoles e Independencia de Cartag
 | K10 47 | entrada 2026-10-01, salida 2026-10-15 → **14**; sin salida → `sin_dato/hito_ausente`; variante siempre `sin_dato/falta_hito_pendiente`; con `horaActualizacionEstado` 2026-10-20 la variante da **19** | |
 | K11 49 y zona | marca `ingreso_a_servicio` a `2026-10-06T02:30:00Z` (en Bogotá, día 5); revisión 2026-10-13; `Fecha creación ticket` 2026-09-28 | 49 = **5** (6, 7, 8, 9, 13), fuente `marca`; variante **11** |
 | K12 54 | 53 = 4 con 52 = 4 → `Cumple`; con 52 = 3 → `No cumple`; sin finalización y 52 = 5 → `Cumple` + `sin_finalizar`; 52 ausente → `sin_dato/sin_tiempo_promesa` y variante `Cumple` | |
-| K13 51 y 55 | sin entrada opcional → `sin_dato/falta_hito_pendiente`; finalización 2026-10-15 y `horaActualizacionEstado` 2026-10-18 → **3**; 55 con «Good» en `camposZoho` → «Good» + `copiado_de_zoho` | |
+| K13 51 y 55 | sin entrada opcional → `sin_dato/falta_hito_pendiente`; finalización 2026-10-15 y `horaActualizacionEstado` 2026-10-18 → **3**; 55 con «Good» en `camposZoho` → `valor` «sin dato» y `valorZoho` «Good» (R5) | |
 | K14 guardián | todo campo de `INDICADORES_G6` es hito del indicador de su columna | |
 | K15 `valorDeZoho` | encuentra «Tiempo permanecia» y « tiempo de diagnostico »; `"12"` → 12; ausente → `null`; texto no numérico en columna numérica → `null` | |
 
