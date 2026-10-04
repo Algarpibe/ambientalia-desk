@@ -58,6 +58,13 @@ describe('leerEntradasIndicadores (RQ-KP-14)', () => {
     expect(textos).toHaveLength(3)
     expect(textos.every((s) => /^\s*SELECT/i.test(s))).toBe(true)
   })
+  it('un ticket sin created_time: sale sin periodo (RQ-KP-13, «todos») y no sale con periodo (no se puede situar)', async () => {
+    await ticket('sin', 1, '2026-10-02T15:00:00Z')
+    await db.query("UPDATE tickets SET created_time = NULL WHERE id = 'sin'")
+    expect((await leerEntradasIndicadores(db, sinPeriodo)).tickets.map((t) => t.id)).toEqual(['sin'])
+    expect((await leerEntradasIndicadores(db, { desde: '2026-10-01', hasta: null })).tickets).toEqual([])
+    expect((await leerEntradasIndicadores(db, { desde: null, hasta: '2026-10-31' })).tickets).toEqual([])
+  })
   it('el periodo se mide en Bogotá: 2026-10-01T03:00:00Z es el 30/09 y queda fuera con desde=2026-10-01', async () => {
     await ticket('fuera', 1, '2026-10-01T03:00:00Z'); await ticket('dentro', 2, '2026-10-01T05:00:00Z'); await ticket('tarde', 3, '2026-10-03T04:59:00Z')
     await paso('fuera', 'p', {}, '2026-10-05T10:00:00Z'); await paso('dentro', 'p', {}, '2026-10-05T10:00:00Z')

@@ -11,11 +11,13 @@ instalarArnes()
 
 const RUTA = '/api/indicadores'
 const DATOS = /ticket_transitions|calendario_cierres|FROM tickets/i
-function conEspia(): { app: ReturnType<typeof appWith>['app']; datos: () => string[] } {
+function conEspia(): { app: ReturnType<typeof appWith>['app']; datos: () => string[]; todas: string[] } {
   const vistas: string[] = []
   const q: Queryable = { query: ((sql: string, p?: unknown[]) => { vistas.push(sql); return db.query(sql, p) }) as Queryable['query'] }
-  return { app: appWith({}, q).app, datos: () => vistas.filter((s) => DATOS.test(s)) }
+  return { app: appWith({}, q).app, datos: () => vistas.filter((s) => DATOS.test(s)), todas: vistas }
 }
+/** KP-18: el verbo de CADA sentencia ejecutada (la comprobación de sesión incluida) es SELECT; un `UPDATE` o `INSERT` en la ruta lo rompe. */
+const noSelect = (sentencias: string[]): string[] => sentencias.filter((s) => !/^\s*SELECT\b/i.test(s))
 async function k2(): Promise<void> {
   await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, dias_entrega, fecha_orden_venta, fecha_finalizacion_st) VALUES ('a', 1, 's', 'Finalizado', '2026-10-02T15:00:00Z', 'ST-1', 4, '2026-10-08', '2026-10-15')")
 }
@@ -172,6 +174,14 @@ describe('RQ-KP-17 · resumen de comparación', () => {
     const c = await pedir()
     expect(en(c, '50_53')).toMatchObject({ comparados: 1, coincidentes: 1, porcentaje: 100 })
     expect(en(c, '50_53').variante).toMatchObject({ comparados: 1, coincidentes: 1, porcentaje: 100 })
+  })
+  it.each([['json', {}], ['csv', { formato: 'csv' }]])('KP-18 · sólo lectura en %s: toda sentencia de la petición es un SELECT', async (_n, q) => {
+    await ov('x', 1, '2026-12-01', '2026-12-04', '3')
+    const { app, todas } = conEspia()
+    const res = await request(app).get(RUTA).query(q).set('Cookie', await adminCookie())
+    expect(res.status).toBe(200)
+    expect(todas.length).toBeGreaterThan(3)
+    expect(noSelect(todas)).toEqual([])
   })
   it('sin veredicto en la respuesta y con las mismas tres lecturas: ningún fichero', async () => {
     await ov('x', 1, '2026-12-01', '2026-12-04', '3')

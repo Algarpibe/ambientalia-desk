@@ -12,9 +12,9 @@
 ## 0 · Procedencia y método
 
 Cada fórmula dice de dónde sale. **Letra** es lo que el maestro o una decisión de Gerencia escribe, con su
-línea. **SP-n** es un supuesto de esta spec o de la propuesta (`proposal.md`, S-n): se especifica tal cual
+línea. **SP-n** es un supuesto de esta spec o de la propuesta del cambio (S-n): se especifica tal cual
 para poder construirlo y probarlo, **pero no es letra de Gerencia** y está sujeto a las preguntas E-171 a
-E-178 de la bandeja.
+E-180 de la bandeja.
 
 | Id | Supuesto | Origen |
 |---|---|---|
@@ -32,7 +32,7 @@ E-178 de la bandeja.
 | SP-6 | Se publican DOS lecturas del porcentaje, y la letra no precisa cuál es «el 95 % de los tickets»: por indicador, y de tickets en que todo lo comparable coincide (R4) | Spec |
 | SP-7 | El CSV va en formato largo, separador `;` | Spec |
 | SP-8 | Con el hito opcional del 51 o del 55 presente, el módulo lo usa; la ruta nunca lo aporta | Spec |
-| SP-9 | El valor de Zoho se lee de los datos sincronizados del ticket; **dónde** viene queda pendiente de la tarea de persona P-1 de la propuesta | Spec |
+| SP-9 | El valor de Zoho se lee de los datos sincronizados del ticket; **dónde** viene queda pendiente de la tarea de persona P-1 (E-181 de la bandeja) | Spec |
 
 ## ADDED Requirements
 

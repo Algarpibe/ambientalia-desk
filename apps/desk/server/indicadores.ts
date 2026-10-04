@@ -66,7 +66,8 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
   for (const r of rt.rows) {
     const creadoEn = iso(r.created_time)
     const dia = diaEnZona(creadoEn)
-    if (dia === null || (p.desde && dia < p.desde) || (p.hasta && dia > p.hasta)) continue
+    // Sin periodo salen todos (RQ-KP-13), incluso sin `created_time`; con periodo, uno que no se puede situar no sale.
+    if (dia === null ? (p.desde || p.hasta) : (p.desde && dia < p.desde) || (p.hasta && dia > p.hasta)) continue
     const f: TicketParaIndicadores['fechas'] = {}
     for (const e of ETIQUETAS) { const v = r[COLUMNA_DE_HITO[e]]; f[e] = v == null ? null : comoDiaCivil(v) }
     tickets.push({ id: String(r.id), numero: Number(r.number), estado: String(r.status ?? ''), codigoServicio: r.codigo_servicio ?? null, creadoEn, diasEntrega: r.dias_entrega == null ? null : Number(r.dias_entrega), fechas: f, camposZoho: objeto(r.custom_fields) })

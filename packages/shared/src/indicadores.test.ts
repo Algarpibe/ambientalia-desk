@@ -319,3 +319,12 @@ describe('los nueve, en orden (RQ-KP-01)', () => {
     expect(calc(tk()).map((i) => i.columna)).toEqual(['47', '49', '50_53', '51', '54', '55', '57', '58', '59'])
   })
 })
+
+describe('57 y 58 con signo (RQ-KP-03, RQ-KP-18)', () => {
+  it('57: cotización dos días antes de la revisión del informe vale -2', () => {
+    expect(dato(de(calc(tk({ fechas: { [REV]: '2026-12-10', [COT]: '2026-12-08' } })), '57'))).toBe(-2)
+  })
+  it('58: orden de compra un día antes de la cotización vale -1', () => {
+    expect(dato(de(calc(tk({ fechas: { [COT]: '2026-12-10', [OC]: '2026-12-09' } })), '58'))).toBe(-1)
+  })
+})
