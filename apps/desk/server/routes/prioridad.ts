@@ -4,7 +4,7 @@ import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { getActiveTickets } from '../db/ticketsConCliente'
 import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, prioridadTop5, esDeMisTickets } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
-import { asyncHandler } from '../util/asyncHandler'
+import { asyncHandler } from '../util/asyncHandler'; import { leerBusqueda, busquedaDe } from '../util/busquedaTickets'
 import { filaPrioridadCliente, listarTop5, fijarYPropagarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
 import { colaDelTaller } from '../db/colaTaller'; import { listaRemisionCreada } from '../db/listaRemisionCreada'
 
@@ -80,9 +80,9 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
    * «Mis tickets» (RQ-VT-09, E-099): los abiertos derivados al usuario, en el orden de la cola del taller. Lo ordena
    * `colaDelTaller` (la MISMA función que el tablero) y `filter` conserva ese orden; el cliente no reordena (regla 13).
    */
-  app.get('/api/mis-tickets', requireAuth(db), asyncHandler(async (req, res) => {
+  app.get('/api/mis-tickets', requireAuth(db), leerBusqueda, asyncHandler(async (req, res) => {
     const yo = req.user!.id
-    res.json((await colaDelTaller(db, await getActiveTickets(db, yo))).filter((t) => esDeMisTickets(t, yo)))
+    res.json((await colaDelTaller(db, await getActiveTickets(db, yo, busquedaDe(res)))).filter((t) => esDeMisTickets(t, yo)))
   }))
   /**
    * La lista de «Remisión creada» (RQ-VT-10, `decision/cola-del-taller-los-tres-cabos` punto 4): TODOS los tickets en ese estado,

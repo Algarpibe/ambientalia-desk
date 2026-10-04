@@ -80,40 +80,40 @@ Chain strategy: pending
 
 ## 2A · Fase de partida
 
-- [ ] 2.1 Anotar el commit de partida del lote 2; abrir el intento 2; `wc -l` de `routes/tickets.ts`, `routes/prioridad.ts`, `db/ticketsConCliente.ts`, `src/api/client.ts` y `src/App.tsx`; línea base de `npm test`/`typecheck`/`lint` con códigos de salida.
-- [ ] 2.2 Remedir las líneas del diseño §5 lote 2 (`tickets.ts` 13, 35, 104, 108, 109, 114; `prioridad.ts` 7, 83, 85; `ticketsConCliente.ts` 6, 26-33; `client.ts` 1, 19-20, 25-26, 743-744; `App.tsx` 17, 58, 59, 63, 66, 69, 71, 107).
+- [x] 2.1 Anotar el commit de partida del lote 2; abrir el intento 2; `wc -l` de `routes/tickets.ts`, `routes/prioridad.ts`, `db/ticketsConCliente.ts`, `src/api/client.ts` y `src/App.tsx`; línea base de `npm test`/`typecheck`/`lint` con códigos de salida.
+- [x] 2.2 Remedir las líneas del diseño §5 lote 2 (`tickets.ts` 13, 35, 104, 108, 109, 114; `prioridad.ts` 7, 83, 85; `ticketsConCliente.ts` 6, 26-33; `client.ts` 1, 19-20, 25-26, 743-744; `App.tsx` 17, 58, 59, 63, 66, 69, 71, 107).
 
 ## 2B · Rojos
 
-- [ ] 2.3 Crear `apps/desk/src/lib/busquedaTickets.test.ts`: `conBusqueda` (`q === ''` devuelve la URL intacta; `?` o `&`; `encodeURIComponent`) y `aplazar` (temporizadores falsos: llama una vez pasados `ms`, cancelada no llama). EJECUTAR: ROJO (módulo no existe). Anotar fallo literal.
-- [ ] 2.4 Crear `apps/desk/server/busquedaTickets.test.ts` (arnés de `tickets.test.ts:6`): criterios 1 y 2 por HTTP (`?q=864`, `?q=%23864`, `?q=86`, últimos dígitos, espacios y mayúsculas); `scope=closed&q=` con `total` filtrado, página 2 y `page=9` vacía; `mis-tickets?q=` sólo los del usuario y en el orden de RQ-VT-09; 65 caracteres con sesión → `422` y 64 → `200`; 80 espacios → `200` igual que sin `q`; `?q=a&q=b` → `422`; `%23` → `200` vacío; la búsqueda no segmenta visibilidad (dos áreas). EJECUTAR: ROJAS (la ruta ignora `q`).
-- [ ] 2.5 En el mismo fichero, **posición (MP-2):** 65 caracteres SIN sesión → `401` en `/api/tickets` y en `/api/mis-tickets`; y `q` ausente, vacío y de espacios con cuerpo idéntico al de la misma petición sin `q` en activos, cerrados y «Mis tickets». **Nacen VERDES (CARACTERIZACIÓN)**; la 401 se vuelve guarda de posición. Anotar que nacen verdes.
+- [x] 2.3 Crear `apps/desk/src/lib/busquedaTickets.test.ts`: `conBusqueda` (`q === ''` devuelve la URL intacta; `?` o `&`; `encodeURIComponent`) y `aplazar` (temporizadores falsos: llama una vez pasados `ms`, cancelada no llama). EJECUTAR: ROJO (módulo no existe). Anotar fallo literal.
+- [x] 2.4 Crear `apps/desk/server/busquedaTickets.test.ts` (arnés de `tickets.test.ts:6`): criterios 1 y 2 por HTTP (`?q=864`, `?q=%23864`, `?q=86`, últimos dígitos, espacios y mayúsculas); `scope=closed&q=` con `total` filtrado, página 2 y `page=9` vacía; `mis-tickets?q=` sólo los del usuario y en el orden de RQ-VT-09; 65 caracteres con sesión → `422` y 64 → `200`; 80 espacios → `200` igual que sin `q`; `?q=a&q=b` → `422`; `%23` → `200` vacío; la búsqueda no segmenta visibilidad (dos áreas). EJECUTAR: ROJAS (la ruta ignora `q`).
+- [x] 2.5 En el mismo fichero, **posición (MP-2):** 65 caracteres SIN sesión → `401` en `/api/tickets` y en `/api/mis-tickets`; y `q` ausente, vacío y de espacios con cuerpo idéntico al de la misma petición sin `q` en activos, cerrados y «Mis tickets». **Nacen VERDES (CARACTERIZACIÓN)**; la 401 se vuelve guarda de posición. Anotar que nacen verdes.
 
 ## 2C · Verde
 
-- [ ] 2.6 Crear `apps/desk/src/lib/busquedaTickets.ts` (`ESPERA_BUSQUEDA_MS = 300`, `conBusqueda`, `aplazar`). Correr 2.3: verde.
-- [ ] 2.7 Crear `apps/desk/server/util/busquedaTickets.ts` (`leerBusqueda` con `res.locals.busqueda`, `422 { error }`; `busquedaDe(res)`).
-- [ ] 2.8 `apps/desk/server/db/ticketsConCliente.ts`, EN SU SITIO: `type BusquedaTickets` en la importación (línea 6) y parámetro opcional que pasa a `repo` (26-27, 29-30, 32-33).
-- [ ] 2.9 `apps/desk/server/routes/tickets.ts`, EN SU SITIO: importación unida en la 13; `leerBusqueda` en la 104 detrás de `requireAuth`; `busquedaDe(res)` último argumento en 108, 109 y 114 (items y total reciben el MISMO valor).
-- [ ] 2.10 `apps/desk/server/routes/prioridad.ts`, EN SU SITIO: importación unida en la 7; `requireAuth(db), leerBusqueda,` en la 83; `getActiveTickets(db, yo, busquedaDe(res))` en la 85. Correr 2.4 y 2.5: verde.
-- [ ] 2.11 `apps/desk/src/api/client.ts`, EN SU SITIO: importación unida en la 1; parámetro `q = ''` y `fetch(conBusqueda(<url de hoy>, q), …)` en 19-20, 25-26 y 743-744. No tocar `fetchTickets` (D11).
-- [ ] 2.12 Crear `apps/desk/src/components/BuscadorTickets.tsx` (`type="search"`, `maxLength={BUSQUEDA_MAX}`, estado local, `useEffect(() => aplazar(() => onBuscar(texto), ESPERA_BUSQUEDA_MS), [texto, onBuscar])`; textos en español; sin lógica de dominio).
-- [ ] 2.13 `apps/desk/src/App.tsx`, EN SU SITIO: importación unida en la 17; `; const [q, setQ] = useState('')` unido en la 58; `q` en las dependencias de 59 y 71 y como último argumento de 63, 66 y 69; `<BuscadorTickets onBuscar={setQ} />` delante de `<ViewModeMenu …/>` en la 107.
+- [x] 2.6 Crear `apps/desk/src/lib/busquedaTickets.ts` (`ESPERA_BUSQUEDA_MS = 300`, `conBusqueda`, `aplazar`). Correr 2.3: verde.
+- [x] 2.7 Crear `apps/desk/server/util/busquedaTickets.ts` (`leerBusqueda` con `res.locals.busqueda`, `422 { error }`; `busquedaDe(res)`).
+- [x] 2.8 `apps/desk/server/db/ticketsConCliente.ts`, EN SU SITIO: `type BusquedaTickets` en la importación (línea 6) y parámetro opcional que pasa a `repo` (26-27, 29-30, 32-33).
+- [x] 2.9 `apps/desk/server/routes/tickets.ts`, EN SU SITIO: importación unida en la 13; `leerBusqueda` en la 104 detrás de `requireAuth`; `busquedaDe(res)` último argumento en 108, 109 y 114 (items y total reciben el MISMO valor).
+- [x] 2.10 `apps/desk/server/routes/prioridad.ts`, EN SU SITIO: importación unida en la 7; `requireAuth(db), leerBusqueda,` en la 83; `getActiveTickets(db, yo, busquedaDe(res))` en la 85. Correr 2.4 y 2.5: verde.
+- [x] 2.11 `apps/desk/src/api/client.ts`, EN SU SITIO: importación unida en la 1; parámetro `q = ''` y `fetch(conBusqueda(<url de hoy>, q), …)` en 19-20, 25-26 y 743-744. No tocar `fetchTickets` (D11).
+- [x] 2.12 Crear `apps/desk/src/components/BuscadorTickets.tsx` (`type="search"`, `maxLength={BUSQUEDA_MAX}`, estado local, `useEffect(() => aplazar(() => onBuscar(texto), ESPERA_BUSQUEDA_MS), [texto, onBuscar])`; textos en español; sin lógica de dominio).
+- [x] 2.13 `apps/desk/src/App.tsx`, EN SU SITIO: importación unida en la 17; `; const [q, setQ] = useState('')` unido en la 58; `q` en las dependencias de 59 y 71 y como último argumento de 63, 66 y 69; `<BuscadorTickets onBuscar={setQ} />` delante de `<ViewModeMenu …/>` en la 107.
 
 ## 2D · Mutaciones
 
-- [ ] 2.14 **MP-2 (posición):** en `routes/tickets.ts` quitar `leerBusqueda` de la 104 y dejar la 35 como `app.use('/api/tickets', leerBusqueda, requireAuth(db))`; y en `prioridad.ts` línea 83 intercambiar `requireAuth(db)` y `leerBusqueda` → cae «65 caracteres sin sesión: llega 422, se esperaba 401». Revertir.
-- [ ] 2.15 **MC-9:** `leerBusquedaTickets` sin la comprobación de longitud → cae el `422` con sesión. Revertir.
-- [ ] 2.16 `git diff` de producción: comprobar que NO queda ninguna mutación en el árbol (orden de `requireAuth`/`leerBusqueda`, comprobación de longitud).
+- [x] 2.14 **MP-2 (posición):** en `routes/tickets.ts` quitar `leerBusqueda` de la 104 y dejar la 35 como `app.use('/api/tickets', leerBusqueda, requireAuth(db))`; y en `prioridad.ts` línea 83 intercambiar `requireAuth(db)` y `leerBusqueda` → cae «65 caracteres sin sesión: llega 422, se esperaba 401». Revertir.
+- [x] 2.15 **MC-9:** `leerBusquedaTickets` sin la comprobación de longitud → cae el `422` con sesión. Revertir.
+- [x] 2.16 `git diff` de producción: comprobar que NO queda ninguna mutación en el árbol (orden de `requireAuth`/`leerBusqueda`, comprobación de longitud).
 
 ## 2E · Cierre del lote 2
 
-- [ ] 2.17 `git diff --numstat` de `routes/tickets.ts`, `routes/prioridad.ts`, `db/ticketsConCliente.ts`, `src/api/client.ts` y `src/App.tsx` (y de `repo.ts` y `equipos.ts`, por si se tocaron): inserciones = borrados; `wc -l` antes y después. Si alguno no cuadra, barrido completo de la regla de mutación 4 sobre ese fichero.
-- [ ] 2.18 **Barrido de citas (regla de mutación 4):** `grep -rnoE "<fichero>\.tsx?:[0-9]+(-[0-9]+)?"` de los siete ficheros editados, SIN excluir `openspec/changes/archive/`; releer cada cita que AFIRMA lo que cambió en las líneas editadas y clasificar A (presente), B (histórico) o C (superado); sólo LISTAR en `apply-progress.md` (no editar specs vivas ni documentos fechados). Segundo pase para la forma abreviada en los ficheros que ya citan el módulo.
-- [ ] 2.19 Escribir en `apply-progress.md` la **regla 13 completa** (las nueve filas del diseño §9, con la línea del servidor de cada una remedida tras el cambio).
-- [ ] 2.20 Redactar en `apply-progress.md`, SIN número («a numerar por el orquestador»), las preguntas para la bandeja: las cuatro de la propuesta (S-6 vista activa; número exacto o parcial; relleno de `tickets.serial` en históricos, con medición previa; alcance de la paridad: asunto, cliente, contacto) y el hallazgo D12 (`listEquiposManage`, `equipos.ts:175`, tiene su propio patrón sin recortar; sin destino inventado).
-- [ ] 2.21 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con el CÓDIGO DE SALIDA de cada uno.
-- [ ] 2.22 Medida del intento: `git diff --shortstat --no-renames <commit de partida del lote 2>` + `wc -l` de lo nuevo sin trackear; registrar ESA cifra (tope 800).
+- [x] 2.17 `git diff --numstat` de `routes/tickets.ts`, `routes/prioridad.ts`, `db/ticketsConCliente.ts`, `src/api/client.ts` y `src/App.tsx` (y de `repo.ts` y `equipos.ts`, por si se tocaron): inserciones = borrados; `wc -l` antes y después. Si alguno no cuadra, barrido completo de la regla de mutación 4 sobre ese fichero.
+- [x] 2.18 **Barrido de citas (regla de mutación 4):** `grep -rnoE "<fichero>\.tsx?:[0-9]+(-[0-9]+)?"` de los siete ficheros editados, SIN excluir `openspec/changes/archive/`; releer cada cita que AFIRMA lo que cambió en las líneas editadas y clasificar A (presente), B (histórico) o C (superado); sólo LISTAR en `apply-progress.md` (no editar specs vivas ni documentos fechados). Segundo pase para la forma abreviada en los ficheros que ya citan el módulo.
+- [x] 2.19 Escribir en `apply-progress.md` la **regla 13 completa** (las nueve filas del diseño §9, con la línea del servidor de cada una remedida tras el cambio).
+- [x] 2.20 Redactar en `apply-progress.md`, SIN número («a numerar por el orquestador»), las preguntas para la bandeja: las cuatro de la propuesta (S-6 vista activa; número exacto o parcial; relleno de `tickets.serial` en históricos, con medición previa; alcance de la paridad: asunto, cliente, contacto) y el hallazgo D12 (`listEquiposManage`, `equipos.ts:175`, tiene su propio patrón sin recortar; sin destino inventado).
+- [x] 2.21 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con el CÓDIGO DE SALIDA de cada uno.
+- [x] 2.22 Medida del intento: `git diff --shortstat --no-renames <commit de partida del lote 2>` + `wc -l` de lo nuevo sin trackear; registrar ESA cifra (tope 800).
 
 ---
 

@@ -14,7 +14,7 @@ import { TicketTable } from './components/TicketTable';
 import { ViewModeMenu } from './components/ViewModeMenu';
 import { useAsync } from './hooks/useAsync';
 import { fetchActiveTickets, fetchClosedTickets, fetchMisTickets, fetchRemisionCreada, setTicketRead, type ClosedPage } from './api/client';
-import { Pagination } from './components/Pagination';
+import { Pagination } from './components/Pagination'; import { BuscadorTickets } from './components/BuscadorTickets';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
 
@@ -55,20 +55,20 @@ function App() {
   const hideEmpty = useHideEmptyColumns()
   const [mode, setMode] = useViewMode()
   const [view, setView] = useState<VistaKey>('todos');
-  const [closedPage, setClosedPage] = useState(1)
-  useEffect(() => { setClosedPage(1) }, [view])
+  const [closedPage, setClosedPage] = useState(1); const [q, setQ] = useState('')
+  useEffect(() => { setClosedPage(1) }, [view, q])
   const { data: resp, loading, error, reload } = useAsync<{ activos: Ticket[]; cerrados: ClosedPage | null }>(
     () => {
       if (view === 'cerrados') {
-        return fetchClosedTickets(closedPage).then((cerrados) => ({ activos: [], cerrados }))
+        return fetchClosedTickets(closedPage, q).then((cerrados) => ({ activos: [], cerrados }))
       }
       if (view === 'todos') {
-        return Promise.all([fetchActiveTickets(), fetchClosedTickets(closedPage)])
+        return Promise.all([fetchActiveTickets(q), fetchClosedTickets(closedPage, q)])
           .then(([activos, cerrados]) => ({ activos, cerrados }))
       }
-      return (view === 'mios' ? fetchMisTickets() : view === 'remision_creada' ? fetchRemisionCreada() : fetchActiveTickets()).then((activos) => ({ activos, cerrados: null }))
+      return (view === 'mios' ? fetchMisTickets(q) : view === 'remision_creada' ? fetchRemisionCreada() : fetchActiveTickets(q)).then((activos) => ({ activos, cerrados: null }))
     },
-    [user?.id, view, closedPage],
+    [user?.id, view, closedPage, q],
   );
   const closedMeta = resp?.cerrados ?? null;
   const tickets: Ticket[] = [...(resp?.activos ?? []), ...(closedMeta?.items ?? [])];
@@ -104,7 +104,7 @@ function App() {
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <ViewModeMenu mode={mode} onChange={setMode} />
+              {view !== 'remision_creada' && <BuscadorTickets onBuscar={setQ} />}<ViewModeMenu mode={mode} onChange={setMode} />
               <button onClick={() => setShowCreate(true)} className="bg-[#2C7BE5] text-white px-3 py-1.5 rounded text-[13px] font-bold">Nuevo ticket</button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import * as repo from '@ambientalia/zoho-sync/db/repo'
 import type { TicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import type { DetailRefs, TicketRefs } from '@ambientalia/zoho-sync/db/mappers'
 import type { TicketRow } from '@ambientalia/zoho-sync/db/rows'
-import { esIdProvisional } from '@ambientalia/shared'
+import { esIdProvisional, type BusquedaTickets } from '@ambientalia/shared'
 import { nombresProvisionales } from './clientesProvisionales'
 
 /**
@@ -23,14 +23,14 @@ async function conProvisionales<T extends { row: TicketRow; refs: TicketRefs }>(
   return items
 }
 
-export async function getActiveTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
-  return conProvisionales(db, await repo.getActiveTickets(db, userId))
+export async function getActiveTickets(db: Queryable, userId = '', busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
+  return conProvisionales(db, await repo.getActiveTickets(db, userId, busqueda))
 }
-export async function getClosedTickets(db: Queryable, userId = '', limit = 50, offset = 0): Promise<TicketWithRefs[]> {
-  return conProvisionales(db, await repo.getClosedTickets(db, userId, limit, offset))
+export async function getClosedTickets(db: Queryable, userId = '', limit = 50, offset = 0, busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
+  return conProvisionales(db, await repo.getClosedTickets(db, userId, limit, offset, busqueda))
 }
-export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
-  return conProvisionales(db, await repo.getAllTickets(db, userId))
+export async function getAllTickets(db: Queryable, userId = '', busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
+  return conProvisionales(db, await repo.getAllTickets(db, userId, busqueda))
 }
 export async function getTicketWithRefs(db: Queryable, id: string): Promise<{ row: TicketRow; refs: DetailRefs } | null> {
   const found = await repo.getTicketWithRefs(db, id)
