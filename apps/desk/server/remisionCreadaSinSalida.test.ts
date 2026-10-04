@@ -47,4 +47,14 @@ describe('sin entrada vigente, crear la remisión devuelve la salida (RQ-TS-33)'
     expect(r.estadoTrasAlta).toBe('Remisión creada')
     expect(r.salida.status).toBe(200)
   })
+
+  // El ticket atascado tal como lo deja una anulación: su única remisión de entrada está anulada (aviso W-1 del verify).
+  it('desde «Remisión creada» con sólo una remisión de entrada anulada, el mismo recorrido', async () => {
+    const r = await recorrer('Remisión creada', () => remisionDePrueba(db, 't1', { anulada: true }))
+    expect(r.sinSalida.status).toBe(422)
+    expect(JSON.stringify(r.sinSalida.body)).toContain(TEXTO_SIN_REMISION)
+    expect(r.alta.status).toBe(201)
+    expect(r.estadoTrasAlta).toBe('Remisión creada')
+    expect(r.salida.status).toBe(200)
+  })
 })
