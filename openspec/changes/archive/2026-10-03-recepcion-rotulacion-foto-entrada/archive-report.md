@@ -119,3 +119,59 @@ condición previa.
   rama de F1C-11: conflicto previsible, que se resuelve conservando las dos partes. Las dos ramas numeran su
   corrección del maestro como 21, así que una se renumera.
 - `CLAUDE.md` dice que IV-12 son dos puntos; con E-169 son tres. Lo corrige la supervisión.
+
+## Barrido de citas a specs vivas desplazadas por este archivo (2026-10-04, fuera de intento)
+
+La fusión de los requisitos de F1B-04 inserta líneas EN MEDIO de specs vivas ya citadas, así que la frase
+«citas sin desplazar» de este cierre no era correcta. Método: para cada cita completa a una spec viva que
+existe en `main` en `f55b7d9` —sin excluir `archive/`—, se comparó la línea citada en `f55b7d9` con la de
+esta rama. Las citas que ya nombraban su revisión no cuentan: se leen en su ancla y este archivo no las toca.
+Las tablas nombran fichero y línea en columnas separadas, a propósito, para que no tengan forma de cita.
+
+**Sin ancla y afectadas: 23.** Ancladas a `f55b7d9`: 1. Rotas de antes: 19. Registros fechados sin editar: 3.
+
+### Ancladas a `f55b7d9` (caso B): la línea de esa revisión dice lo que la frase afirma
+
+| Fichero que cita | Línea | Spec viva citada | Línea(s) citada(s) | Qué le hace este archivo |
+|---|---|---|---|---|
+| 2026-10-03-tipo-servicio-ticket-sin-ov · archive-report.md | 60 | remisiones | 708 | pasa a la 780 |
+
+### Rotas de antes: NO se anclan
+
+En `f55b7d9` la línea citada ya no decía lo que la frase afirma —la desplazó un archivo anterior a esta tanda—,
+así que anclarlas a esa revisión las volvería falsas con apariencia de reparadas. Quedan como estaban y se
+listan aquí; este archivo las mueve otra vez, pero no las rompe: ya lo estaban.
+
+| Fichero que cita | Línea | Spec viva citada | Línea(s) citada(s) | Qué le hace este archivo |
+|---|---|---|---|---|
+| 2026-09-10-reasignar-desvios-huerfanos · design.md | 58 | remisiones | 349 | modificada |
+| 2026-09-10-reasignar-desvios-huerfanos · design.md | 87 | remisiones | 356 | pasa a la 366 |
+| 2026-09-10-reasignar-desvios-huerfanos · design.md | 89 | remisiones | 362 | pasa a la 382 |
+| 2026-09-10-reasignar-desvios-huerfanos · design.md | 90 | remisiones | 438 | pasa a la 458 |
+| 2026-09-10-reasignar-desvios-huerfanos · tasks.md | 61 | remisiones | 349 a 369 | modificada; pasa a la 389 |
+| 2026-09-10-reasignar-desvios-huerfanos · verify-report.md | 153 | remisiones | 349 a 369 | modificada; pasa a la 389 |
+| 2026-09-17-tercera-puerta-orden-venta · apply-progress.md | 45 | remisiones | 368 | pasa a la 388 |
+| 2026-09-17-tercera-puerta-orden-venta · design.md | 384 | remisiones | 368 | pasa a la 388 |
+| 2026-09-21-orden-precedencia-guardas · design.md | 264 | remisiones | 330 | pasa a la 333 |
+| 2026-09-21-orden-precedencia-guardas/specs/transitions-st · spec.md | 32 | remisiones | 330 | pasa a la 333 |
+| 2026-09-21-orden-precedencia-guardas/specs/transitions-st · spec.md | 33 | remisiones | 342 | pasa a la 345 |
+| 2026-09-21-orden-precedencia-guardas · tasks.md | 156 | remisiones | 330 | pasa a la 333 |
+| 2026-09-22-generador-mapa-blueprint · apply-progress.md | 213 | remisiones | 277 | pasa a la 280 |
+| 2026-09-22-generador-mapa-blueprint · design.md | 168 | remisiones | 277 | pasa a la 280 |
+| 2026-09-22-generador-mapa-blueprint · proposal.md | 108 | remisiones | 285 a 286 | pasa a la 288; pasa a la 289 |
+| 2026-09-22-generador-mapa-blueprint · tasks.md | 223 | remisiones | 285 a 286 | pasa a la 288; pasa a la 289 |
+| 2026-09-23-hojas-vida · tasks.md | 90 | remisiones | 417 | pasa a la 437 |
+| 2026-09-23-hojas-vida · verify-report.md | 147 | remisiones | 417 | pasa a la 437 |
+| 2026-09-28-parche-iv11-orden-venta · proposal.md | 54 | remisiones | 376 a 378 | pasa a la 396; pasa a la 398 |
+
+### Registros fechados: NO se editan
+
+Los paquetes de despliegue son documentos fechados. Sus citas a la spec viva de `remisiones` llevan el ancla
+`ca56c62` en la línea física siguiente, y se leen contra esa revisión. El paquete del 27/09 lleva la misma ancla en la
+misma línea física en sus cuatro citas, y por eso no aparece en la tabla.
+
+| Fichero que cita | Línea | Spec viva citada | Línea(s) citada(s) | Qué le hace este archivo |
+|---|---|---|---|---|
+| Paquete_de_Despliegue_2026-09-29.md | 827 | remisiones | 476 a 485 | pasa a la 496; modificada |
+| Paquete_de_Despliegue_2026-09-30.md | 1205 | remisiones | 476 a 485 | pasa a la 496; modificada |
+| Paquete_de_Despliegue_2026-10-01.md | 1631 | remisiones | 476 a 485 | pasa a la 496; modificada |
