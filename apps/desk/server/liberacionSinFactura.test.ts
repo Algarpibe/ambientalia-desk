@@ -13,8 +13,8 @@ instalarArnes()
  * Orden de precedencia A < B < C < D: el 409 de estado y los 403 de área y de cargo (escalón B) van ANTES del 422
  * agregado (escalón C, `apps/desk/server/services/ticketService.ts:134`), y dentro del 422 la presencia va delante de
  * la lista y de la fecha. Las pruebas de POSICIÓN (PL-1 a PL-4) llevan las dos guardas activas a la vez: con una sola,
- * mover la guarda no rompería nada (regla de mutación 1). PL-3 (lista contra «persona derivada inexistente») NO
- * existe: esta transición no declara el campo de derivación, así que esa guarda no puede dispararse y no hay par.
+ * mover la guarda no rompería nada (regla de mutación 1). PL-3 (lista contra «persona derivada inexistente») SÍ
+ * existe: el catálogo añade «Derivado a» a toda transición. La añadió el verify, al final de este fichero.
  */
 const A = 'Fecha de corte de facturación del cliente'
 const B = 'Servicio incluido en contrato con facturación periódica'
@@ -142,5 +142,35 @@ describe('posición de las guardas (regla de mutación 1), con motivo y fecha pr
     const res = await liberar({ comment: 'x', [MOTIVO]: 'Otro motivo' })
     expect(res.status).toBe(422)
     expect(res.body.errors).toEqual([F_FECHA, M_LISTA])
+  })
+})
+
+describe('añadido por la verificación · lo que la spec pide y la tanda no fijaba', () => {
+  it('una segunda liberación sin motivo ni fecha vuelve a dar 422 de presencia: no hereda los valores de la anterior', async () => {
+    await ticket()
+    const admin = await adminCookie()
+    await liberar(buenos(), admin)
+    await db.query("UPDATE tickets SET status='Por Facturar' WHERE id='t1'")
+    const res = await liberar({ comment: 'x' }, admin)
+    expect(res.status).toBe(422)
+    expect(res.body.errors).toEqual([F_MOTIVO, F_FECHA])
+    expect((await fila()).liberacion_motivo).toBe(A)
+  })
+  it('el tercer motivo sin texto y sin fecha: un solo 422, la presencia de la fecha DELANTE del texto', async () => {
+    await ticket()
+    const res = await liberar({ comment: 'x', [MOTIVO]: C })
+    expect(res.status).toBe(422)
+    expect(res.body.errors).toEqual([F_FECHA, M_TEXTO])
+  })
+  it('PL-3 · la lista cerrada gana a la persona derivada inexistente (el catálogo añade "Derivado a" a TODA transición, packages/shared/src/transitions.ts:297)', async () => {
+    await ticket()
+    const PERSONA = 'La persona a la que se deriva no existe o está dada de baja'
+    const admin = await adminCookie()
+    const control = await liberar(buenos({ derivado_a: 'no-existe' }), admin)
+    expect(control.status).toBe(422)
+    expect(control.body.errors).toEqual([PERSONA])
+    const res = await liberar(buenos({ [MOTIVO]: 'Otro motivo', derivado_a: 'no-existe' }), admin)
+    expect(res.status).toBe(422)
+    expect(res.body.errors).toEqual([M_LISTA])
   })
 })
