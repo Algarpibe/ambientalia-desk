@@ -923,3 +923,30 @@ del rango que cubre este paquete. Antes de publicarla hacen falta dos cosas, y l
 
 Sin eso, los tickets sin remisión en los tres orígenes quedan bloqueados el día del despliegue. Esto es una
 anotación, no la redacción del paquete: el próximo paquete la recoge y la desarrolla.
+
+**Anotado el 2026-10-04, tras las fusiones `5797c65` (F1C-11, `cierra: si`), `4c35661` (F1B-04, `cierra: no`) y
+`85d6018` (F1F-05, `cierra: no`).** Tampoco forma parte de este paquete; el próximo lo recoge y lo desarrolla.
+
+**Esquema nuevo de F1B-04**, todo en `public`, calificado y al final de `packages/zoho-sync/src/db/schema.sql`:
+
+| Qué | Línea |
+|---|---|
+| Tabla `public.catalogo_novedades` | `packages/zoho-sync/src/db/schema.sql:682` |
+| Siembra de sus diez filas (`ON CONFLICT DO NOTHING`) | `packages/zoho-sync/src/db/schema.sql:690-699` |
+| `public.remisiones.novedades` (`jsonb`) | `packages/zoho-sync/src/db/schema.sql:702` |
+| `public.remisiones.novedad_otro` (`text`) | `packages/zoho-sync/src/db/schema.sql:703` |
+| `public.remisiones.rotulado_at` (`timestamptz`) | `packages/zoho-sync/src/db/schema.sql:704` |
+| `public.remisiones.rotulado_por` (`text`) | `packages/zoho-sync/src/db/schema.sql:705` |
+| `public.remision_fotos.categoria` (`text`) | `packages/zoho-sync/src/db/schema.sql:706` |
+| `public.remision_fotos.novedad` (`text`) | `packages/zoho-sync/src/db/schema.sql:707` |
+
+Las seis columnas son anulables y sin relleno. F1C-11 y F1F-05 no tocan `schema.sql`.
+
+**Condiciones de publicación, todas de personas:**
+
+1. **E-158** (F1B-03) — la de arriba (`docs/sdd/ENTRADA.md:1782`).
+2. **E-162** (F1C-11) — dos tareas de persona en producción (`docs/sdd/ENTRADA.md:1802`).
+3. **E-170** (F1B-04) — tareas de persona como condición de despliegue (`docs/sdd/ENTRADA.md:1842`), con la
+   comprobación de lectura de `DEPLOY.md`, sección «Comprobación de lectura tras desplegar F1B-04».
+4. **E-181** (F1F-05) — tareas de persona (`docs/sdd/ENTRADA.md:1899`). **Tiene fecha:** F1F-05 desplegada antes del
+   viernes 13/11/2026 para medir las cuatro semanas desde el 16/11 (`DEPLOY.md:270`).
