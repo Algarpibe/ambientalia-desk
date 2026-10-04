@@ -176,3 +176,42 @@ La posición de las guardas en la rama CSV la fijan las pruebas PG-1 a PG-3 del 
 
 ## Medida (4.9)
 `git diff --shortstat --no-renames d25ecda` (antes de esta nota): 138 inserciones y 18 borrados en 7 ficheros; sin trackear: csv.ts 21, csv.test.ts 36, indicadoresUrl.ts 18, indicadoresUrl.test.ts 20 = 95. Total 251 frente a la válvula de 720. Sin binarios.
+
+## Lote 5a — comparación por pares (5a.1 a 5a.9). Partida `d0a7c85`. Strict TDD.
+
+**5a.1 Alinear.** Spec RQ-KP-16 y SP-6 (R4: se publican DOS lecturas, por indicador y de tickets en que todo lo comparable coincide; la letra no precisa cuál es «el 95 % de los tickets»; `tickets` y `nota` en el resumen; diferencias de la variante en `variante.diferencias`). Diseño §3.3 reescrito a lo construido (`porcentaje` ×100 a un decimal, `diferentes`, `porColumna` siempre con los nueve, lista de días descontados y no un número, sin `causas`, mensajes del 17).
+
+**5a.2–5a.3 RED.** Salida guardada: `indicadoresComparacion.test.ts` → `Transform failed` / `Tests no tests` (módulo inexistente); `routes/indicadores.test.ts` → `expected null to match object { comparable: false, …}` en 5 de 21 (la ruta responde `comparacion: null`). **Desviación de proceso, declarada:** escribí `indicadoresComparacion.ts` ANTES de la prueba por descuido; lo aparté (`mv`) y confirmé el rojo del módulo inexistente, y lo restauré sólo después. El rojo de comportamiento de la prueba unitaria se vio al restaurar: 3 de 22 rojas por errores de MIS pruebas (helper con variante = letra duplicaba diferencias; «No  cumple» con doble espacio no es valor de Zoho en el 54), corregidas en la prueba, no en el código. Con el diseño de `variante.diferencias` salió una cuarta corrección del código (diferencias de la variante aparte): el escenario del 59 pide UNA diferencia.
+
+**5a.4 GREEN.** `indicadoresComparacion.ts` (129 líneas): `compararIndicadores`, `parDeIndicador`, `TOLERANCIA_DIAS`. Ruta: `comparacion: compararIndicadores(filas.flatMap(… parDeIndicador …))`, sólo con `custom_fields` ya leídos (las mismas tres consultas, ningún fichero). `index.ts`: `+1` línea al final.
+
+**5a.5 Mutaciones** (aplicadas por script, pruebas ejecutadas, revertidas; `cmp` con la copia verde: iguales). Rojas (de ambos ficheros) y primera:
+
+| # | Mutación | Rojas | Primera roja |
+|---|---|---|---|
+| M16 | tolerancia 2 | 7 | «la tolerancia de la letra es de un día»: `expected 2 to be 1` (C2: `(6,8)` coincidiría) |
+| M16b | `<` por `≤` | 7 | C1: `expected [2,0,2,2,0] to deeply equal [2,1,1,2,50]` |
+| M17a | par sin valor de Zoho coincide | 7 | C1: `[3,2,1,1,66.7] ≠ [2,1,1,2,50]` |
+| M17b | `sin_dato` de la app coincide | 8 | C1: igual |
+| M17c | `sin_dato` de la variante coincide | 4 | C5: `[1,1,0,0,100] ≠ [0,0,0,1,null]` |
+| P1 | porcentaje sin ×100 | 15 | C1: `0.5 ≠ 50` |
+| P2 / P2b | `null` por `0` / por `100` con `comparados = 0` | 8 / 8 | C4: `[0,0,0,1,0] ≠ […,null]` / `100 ≠ null` |
+| P3 | denominador con `sinComparar` | 11 | C1: `25 ≠ 50` |
+| T1 / T2 | texto sensible a mayúsculas / sin recortar espacios | 2 / 2 | C6 / C6b |
+| K1 | el ticket siempre coincide | 2 | C9 |
+| D1 | sin los días descontados | 1 | C8 |
+| V1 | variante contra la letra | 3 | C5 |
+| N1 | el mensaje «sin valor de Zoho» no sale | 3 | C12 |
+
+**5a.6** `numstat` de `index.ts`: `1 0`; `app.ts` sin diff. **5a.7 Cierre verde:** `npm test` salida 0 (184 ficheros pasan, 1 omitido; 2811 pruebas, 2 omitidas); `typecheck` 0; `build` 0; `lint` 165 avisos, 0 errores.
+
+## Desviaciones (lote 5a)
+17. La comparación textual NO es «sólo recortar espacios» sino recortar **y no distinguir mayúsculas**: lo exige el escenario de la spec (`No Cumple` = `No cumple`); la letra no dice nada al respecto.
+18. En el 54, un valor de Zoho que no sea Cumple/No cumple (tras recortar y minúsculas) es «sin valor de Zoho» (lo pide la spec).
+19. Un valor de Zoho numérico guardado como texto (`"5"`) cuenta como su número.
+20. `diferencias` de la letra y `variante.diferencias` van separadas (el diseño ponía una lista con `causas`; se retira `causas`: la spec pide los días descontados y los hitos, no atribuir causa).
+21. `tickets` sólo se calcula para la letra (no hay porcentaje de tickets de la variante: la spec no lo pide).
+22. Veredicto: la spec y el diseño NO piden pintar aprobado/no aprobado; no se construyó ninguno y la prueba C13 vigila que no haya claves de aprobado, semáforo, umbral ni meta.
+
+## Medida (5a.8)
+`git diff --shortstat --no-renames d0a7c85` (con lo nuevo marcado `add -N`, antes de esta nota): 411 inserciones y 29 borrados en 9 ficheros; total 440 frente a la válvula de 720. Sin binarios.

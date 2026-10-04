@@ -29,7 +29,7 @@ E-178 de la bandeja.
 | SP-3 | El 49 de la letra exige la marca de `ingreso_a_servicio`; sin ella es «sin dato», aunque el ticket tenga fecha de creación (`R08.4.md:2951`: el diagnóstico «se mide siempre desde las marcas de tiempo de las transiciones») | Spec |
 | SP-4 | «Reentrante» se define por conteo de escrituras del hito en el historial (RQ-KP-10) | Spec |
 | SP-5 | El periodo filtra por el día de creación del ticket en `America/Bogota` | Spec |
-| SP-6 | Los porcentajes se dan por indicador | Spec |
+| SP-6 | Se publican DOS lecturas del porcentaje, y la letra no precisa cuál es «el 95 % de los tickets»: por indicador, y de tickets en que todo lo comparable coincide (R4) | Spec |
 | SP-7 | El CSV va en formato largo, separador `;` | Spec |
 | SP-8 | Con el hito opcional del 51 o del 55 presente, el módulo lo usa; la ruta nunca lo aporta | Spec |
 | SP-9 | El valor de Zoho se lee de los datos sincronizados del ticket; **dónde** viene queda pendiente de la tarea de persona P-1 de la propuesta | Spec |
@@ -450,7 +450,12 @@ explicada por escrito (`openspec/config.yaml:2655`, `R08.4.md:2957`).
 - Cada **diferencia mayor** (diferencia de más de un día, o textos distintos) **SHALL** listarse con
   `ticketId`, `columna`, ambos valores, los hitos con su fuente, `reentrante` y, en 49 y 50·53, los días
   de lunes a viernes del intervalo que el calendario laboral descuenta (festivos y cierres).
-- El resumen **MUST NOT** llevar bandera de aprobado/suspenso, color ni meta.
+- Además del porcentaje por indicador, el resumen **SHALL** dar el de **tickets**: un ticket es comparado si tiene
+  al menos un par comparable de la letra y es coincidente si todos esos pares coinciden (`tickets`: `comparados`,
+  `coincidentes`, `porcentaje`, `null` sin tickets comparados). La letra no precisa cuál de las dos lecturas es
+  «el 95 % de los tickets» (R4, SP-6): se publican **las dos** y una `nota` lo dice.
+- Las diferencias mayores de la letra van en `diferencias`; las de la variante, en `variante.diferencias`.
+- El resumen **MUST NOT** llevar bandera de aprobado/suspenso, color ni meta: el 95 % lo juzgan las personas.
 
 #### Scenario: Cuatro pares del 50·53
 - GIVEN pares (app, Zoho): `(6, 7)`, `(6, 8)`, `(sin dato, 3)` y `(6, null)`

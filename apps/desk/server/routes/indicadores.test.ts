@@ -51,7 +51,7 @@ describe('RQ-KP-13 · la forma del JSON', () => {
     expect(res.status).toBe(200)
     expect(Object.keys(res.body).sort()).toEqual(['comparacion', 'periodo', 'tickets'])
     expect(res.body.periodo).toEqual({ desde: '2026-10-01', hasta: null })
-    expect(res.body.comparacion).toBeNull()
+    expect(res.body.comparacion).toMatchObject({ comparable: false, mensaje: 'sin valor de Zoho con que comparar' })
     expect(res.body.tickets).toHaveLength(1)
     expect(Object.keys(res.body.tickets[0]).sort()).toEqual(['codigoServicio', 'indicadores', 'ticketId'])
     expect(res.body.tickets[0]).toMatchObject({ ticketId: 'a', codigoServicio: 'ST-1' })
@@ -131,5 +131,53 @@ describe('RQ-KP-15 · formato=csv', () => {
   it('sin formato la respuesta sigue siendo JSON', async () => {
     const res = await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())
     expect(res.headers['content-type']).toMatch(/application\/json/)
+  })
+})
+
+describe('RQ-KP-17 · resumen de comparación', () => {
+  const pedir = async () => (await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())).body.comparacion
+  const en = (c: { porColumna: Array<{ columna: string }> }, columna: string) => c.porColumna.find((x) => x.columna === columna) as unknown as Record<string, unknown> & { variante: Record<string, unknown>; diferencias: Array<Record<string, unknown>> }
+  const ov = (id: string, n: number, cot: string, venta: string, zoho: string | null) =>
+    db.query("INSERT INTO tickets (id, number, subject, status, created_time, fecha_cotizacion, fecha_orden_venta, custom_fields) VALUES ($1, $2, 's', 'x', '2026-12-01T15:00:00Z', $3, $4, $5)", [id, n, cot, venta, zoho === null ? '{}' : `{"Tiempo de orden de Venta": ${zoho}}`])
+
+  it('sin valores de Zoho en los datos sincronizados: mensaje y porcentaje null en cada indicador', async () => {
+    await k2()
+    const c = await pedir()
+    expect(c).toMatchObject({ comparable: false, mensaje: 'sin valor de Zoho con que comparar', tolerancia: 1 })
+    expect(c.porColumna).toHaveLength(9)
+    expect(c.porColumna.every((x: { porcentaje: unknown; variante: { porcentaje: unknown } }) => x.porcentaje === null && x.variante.porcentaje === null)).toBe(true)
+    expect(c.tickets.porcentaje).toBeNull()
+  })
+  it('con valor de Zoho pero sin ningún par comparable: «sin pares comparables» y porcentaje null', async () => {
+    await db.query(`INSERT INTO tickets (id, number, subject, status, created_time, custom_fields) VALUES ('s', 7, 's', 'x', '2026-12-01T15:00:00Z', '{"Tiempo de orden de Venta": 3}')`)
+    const c = await pedir()
+    expect(c).toMatchObject({ comparable: false, mensaje: 'sin pares comparables' })
+    expect(en(c, '59')).toMatchObject({ comparados: 0, sinComparar: 1, porcentaje: null })
+  })
+  it('el escenario del 59: 3 comparados, 2 coincidentes, 66.7 y una diferencia mayor con sus hitos', async () => {
+    await ov('x', 1, '2026-12-01', '2026-12-04', '3')
+    await ov('y', 2, '2026-12-01', '2026-12-03', '3')
+    await ov('z', 3, '2026-12-01', '2026-12-03', '5')
+    const c = await pedir()
+    expect(c).toMatchObject({ comparable: true, mensaje: null })
+    expect(en(c, '59')).toMatchObject({ comparados: 3, coincidentes: 2, diferentes: 1, sinComparar: 0, porcentaje: 66.7 })
+    expect(en(c, '59').diferencias).toHaveLength(1)
+    expect(en(c, '59').diferencias[0]).toMatchObject({ ticketId: 'z', columna: '59', contra: 'valor', app: 2, zoho: 5, delta: 3, reentrante: null })
+    expect((en(c, '59').diferencias[0] as { hitos: unknown[] }).hitos).toHaveLength(2)
+    expect(c.tickets).toEqual({ comparados: 3, coincidentes: 2, porcentaje: 66.7 })
+  })
+  it('el 50·53 de Zoho se lee de «Tiempo de servicio»: letra 4 y variante 5 contra 5 coinciden dentro del día', async () => {
+    await k2()
+    await db.query(`UPDATE tickets SET custom_fields = '{"Tiempo de servicio": 5}' WHERE id = 'a'`)
+    const c = await pedir()
+    expect(en(c, '50_53')).toMatchObject({ comparados: 1, coincidentes: 1, porcentaje: 100 })
+    expect(en(c, '50_53').variante).toMatchObject({ comparados: 1, coincidentes: 1, porcentaje: 100 })
+  })
+  it('sin veredicto en la respuesta y con las mismas tres lecturas: ningún fichero', async () => {
+    await ov('x', 1, '2026-12-01', '2026-12-04', '3')
+    const { app, datos } = conEspia()
+    const res = await request(app).get(RUTA).set('Cookie', await adminCookie())
+    expect(datos()).toHaveLength(3)
+    expect(JSON.stringify(res.body.comparacion)).not.toMatch(/aprob|sem[aá]foro|umbral|veredicto/i)
   })
 })

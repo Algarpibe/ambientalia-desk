@@ -79,15 +79,15 @@ Chain strategy: no aplica (una rama, seis commits, fusión a `main` al cerrar ca
 
 ## Lote 5a — comparación (RQ-KP-16, -17)
 
-- [ ] 5a.1 **Alinear spec y diseño**: se corrige **`specs/kpis/spec.md`** RQ-KP-16 (R4: se publican **dos** lecturas, por indicador y de tickets en que todo lo comparable coincide, y se dice que la letra no precisa cuál es «el 95 % de los tickets»; SP-6 se ajusta). Y **`design.md`** §3.3 a la spec: `porcentaje` ×100 con un decimal, campo `diferentes`, mensajes «sin valor de Zoho con que comparar» y «sin pares comparables», `porColumna` presente con `porcentaje` `null` aun sin pares, la diferencia lleva la lista de días descontados y no un número, «sin comparar» incluye `sin_dato` de la variante, textos iguales sin mayúsculas ni espacios **laterales**.
-- [ ] 5a.2 RED `packages/shared/src/indicadoresComparacion.test.ts`: C1 a C8 y los escenarios de RQ-KP-16 (cuatro pares del 50·53, tolerancia, `sin dato` nunca coincide, textos del 54, diferencia con días `2026-12-25` y `2027-01-01`, letra contra variante).
-- [ ] 5a.3 RED `apps/desk/server/routes/indicadores.test.ts` (al final): sin valores de Zoho → «sin valor de Zoho con que comparar» y porcentaje `null` en cada indicador; con valores de Zoho pero ningún par comparable → «sin pares comparables»; con «Tiempo de servicio» en `custom_fields` y el escenario del 59 (3 comparados, 2 coincidentes, `66.7`, una diferencia). Confirmar el rojo.
-- [ ] 5a.4 GREEN `packages/shared/src/indicadoresComparacion.ts`, el `export` (después de lo añadido en el lote 1, sin desplazar líneas) y el resumen en la ruta (sólo con lo sincronizado; ningún fichero).
-- [ ] 5a.5 Mutaciones: **M16** tolerancia 2 → C2; **M17** contar como coincidente un par sin valor de Zoho, un `sin_dato` en la app y un `sin_dato` en la variante → C3, C4, C5 (una por cambio); porcentaje sin ×100 o con `0` en vez de `null` con `comparados = 0` → su prueba.
-- [ ] 5a.6 `git diff --numstat -- packages/shared/src/index.ts` sólo añade; `apps/desk/server/app.ts` sin diff en este lote.
-- [ ] 5a.7 Cierre verde del lote.
-- [ ] 5a.8 Medida; anotar la cifra.
-- [ ] 5a.9 Commit: `feat(kpis): comparación con Zoho por pares, con tolerancia de un día y explicación de diferencias (F1F-05, cierra: no)`; detector con salida 0.
+- [x] 5a.1 **Alinear spec y diseño**: se corrige **`specs/kpis/spec.md`** RQ-KP-16 (R4: se publican **dos** lecturas, por indicador y de tickets en que todo lo comparable coincide, y se dice que la letra no precisa cuál es «el 95 % de los tickets»; SP-6 se ajusta). Y **`design.md`** §3.3 a la spec: `porcentaje` ×100 con un decimal, campo `diferentes`, mensajes «sin valor de Zoho con que comparar» y «sin pares comparables», `porColumna` presente con `porcentaje` `null` aun sin pares, la diferencia lleva la lista de días descontados y no un número, «sin comparar» incluye `sin_dato` de la variante, textos iguales sin mayúsculas ni espacios **laterales**.
+- [x] 5a.2 RED `packages/shared/src/indicadoresComparacion.test.ts`: C1 a C8 y los escenarios de RQ-KP-16 (cuatro pares del 50·53, tolerancia, `sin dato` nunca coincide, textos del 54, diferencia con días `2026-12-25` y `2027-01-01`, letra contra variante).
+- [x] 5a.3 RED `apps/desk/server/routes/indicadores.test.ts` (al final): sin valores de Zoho → «sin valor de Zoho con que comparar» y porcentaje `null` en cada indicador; con valores de Zoho pero ningún par comparable → «sin pares comparables»; con «Tiempo de servicio» en `custom_fields` y el escenario del 59 (3 comparados, 2 coincidentes, `66.7`, una diferencia). Confirmar el rojo.
+- [x] 5a.4 GREEN `packages/shared/src/indicadoresComparacion.ts`, el `export` (después de lo añadido en el lote 1, sin desplazar líneas) y el resumen en la ruta (sólo con lo sincronizado; ningún fichero).
+- [x] 5a.5 Mutaciones: **M16** tolerancia 2 → C2; **M17** contar como coincidente un par sin valor de Zoho, un `sin_dato` en la app y un `sin_dato` en la variante → C3, C4, C5 (una por cambio); porcentaje sin ×100 o con `0` en vez de `null` con `comparados = 0` → su prueba.
+- [x] 5a.6 `git diff --numstat -- packages/shared/src/index.ts` sólo añade; `apps/desk/server/app.ts` sin diff en este lote.
+- [x] 5a.7 Cierre verde del lote.
+- [x] 5a.8 Medida; anotar la cifra.
+- [x] 5a.9 Commit: `feat(kpis): comparación con Zoho por pares, con tolerancia de un día y explicación de diferencias (F1F-05, cierra: no)`; detector con salida 0.
 
 ## Lote 5b — cierre documental y de citas
 

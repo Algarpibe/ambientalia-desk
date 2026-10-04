@@ -1,6 +1,6 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { diaEnZona, NOMBRES_ZOHO, type Indicador, type Valor } from '@ambientalia/shared'
+import { compararIndicadores, diaEnZona, NOMBRES_ZOHO, parDeIndicador, type Indicador, type Valor } from '@ambientalia/shared'
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { aCsv } from '../util/csv'
@@ -49,7 +49,7 @@ export function registerIndicadoresRoutes(app: Express, deps: { db: Queryable })
       res.send(aCsv(CABECERAS_CSV, filas.flatMap(filasCsv)))
       return
     }
-    // `comparacion` llega con el lote 5a; hasta entonces `null`, sin porcentajes inventados.
-    res.json({ periodo: { desde: p.desde, hasta: p.hasta }, tickets: filas.map(serializarFila), comparacion: null })
+    // Sólo con lo ya sincronizado (`custom_fields`): ningún fichero, ninguna escritura. Resumen sin veredicto (RQ-KP-16, -17).
+    res.json({ periodo: { desde: p.desde, hasta: p.hasta }, tickets: filas.map(serializarFila), comparacion: compararIndicadores(filas.flatMap((f) => f.indicadores.map((i) => parDeIndicador(f.ticketId, i)))) })
   }))
 }

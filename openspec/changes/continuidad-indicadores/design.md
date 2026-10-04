@@ -110,24 +110,27 @@ export function diasLunesAViernesFormulaZoho(desde: DiaCivil, hasta: DiaCivil): 
 ### 3.3 `packages/shared/src/indicadoresComparacion.ts` (nuevo)
 
 ```ts
-export interface ParComparacion { ticket: number; columna: ColumnaIndicador; app: Valor<number | string>; variante: Valor<number | string>; zoho: number | string | null; indicador: Indicador<number | string> }
-export type Causa = 'dias_no_habiles_en_intervalo' | 'hito_distinto' | 'fuente_transicion' | 'reentrante' | 'sin_causa_identificada'
-export interface Diferencia { ticket: number; columna: ColumnaIndicador; app: number | string; zoho: number | string; delta: number | null; causas: Causa[] }
-export interface ResumenColumna { columna: ColumnaIndicador; comparados: number; coincidentes: number; sinComparar: number; porcentaje: number | null; porcentajeVariante: number | null; diferencias: Diferencia[] }
-export type ResumenComparacion =
-  | { comparable: false; mensaje: 'sin valor de Zoho con que comparar' }
-  | { comparable: true; tolerancia: number; porColumna: ResumenColumna[]; ticketsComparados: number; ticketsCoincidentes: number; porcentajeTickets: number }
+export interface ParComparacion { ticketId: string; columna: ColumnaIndicador; app: Valor<number | string>; variante: Valor<number | string>; zoho: unknown; hitos: HitoComparado[]; reentrante: boolean | null; diasNoHabiles: DiaCivil[] | null }
+export interface Diferencia { ticketId: string; columna: ColumnaIndicador; contra: 'valor' | 'formula_zoho'; app: number | string; zoho: number | string; delta: number | null; hitos: HitoComparado[]; reentrante: boolean | null; diasNoHabiles: DiaCivil[] | null }
+export interface Conteo { comparados: number; coincidentes: number; diferentes: number; sinComparar: number; porcentaje: number | null }
+export interface ResumenColumna extends Conteo { columna: ColumnaIndicador; diferencias: Diferencia[]; variante: Conteo & { diferencias: Diferencia[] } }
+export interface ResumenComparacion { comparable: boolean; mensaje: string | null; tolerancia: number; porColumna: ResumenColumna[]; tickets: { comparados: number; coincidentes: number; porcentaje: number | null }; nota: string }
 export const TOLERANCIA_DIAS = 1
 export function compararIndicadores(pares: ParComparacion[], tolerancia?: number): ResumenComparacion
+export function parDeIndicador(ticketId: string, i: Indicador): ParComparacion
 ```
 
-Reglas: un par con `zoho === null` o con `sin_dato` en `app` va a `sinComparar` y **no entra en ningún
-denominador**. Numérico: coincide si `|app − zoho| ≤ tolerancia`. Texto (54, 55): coincide si son iguales
-sin distinguir mayúsculas ni espacios. `porcentaje = coincidentes / comparados`; `null` si
-`comparados = 0`. Si ningún par tiene valor de Zoho, `comparable: false` y ningún número.
-`porcentajeTickets` cuenta el ticket como coincidente si coinciden todos sus pares comparables
-(**supuesto S-12**: la letra dice «el 95 % de los tickets» sin decir si es por indicador; se publican las
-dos lecturas).
+Reglas: `porcentaje` = coincidentes ÷ comparados ×100 con **un decimal** (`null` con `comparados = 0`, nunca 0 ni
+100). Un par va a `sinComparar` y **no entra en ningún denominador** si no hay valor de Zoho usable (ausente, `null`,
+vacío, no numérico; en el 54, distinto de Cumple/No cumple) o si el lado comparado es `sin_dato` (en la variante, su
+propio `sin_dato`). Numérico: coincide si |app − zoho| ≤ tolerancia. Texto (54, 55): coincide si son iguales sin
+distinguir mayúsculas ni espacios **laterales**. `porColumna` trae siempre los nueve indicadores, también sin pares
+(con `porcentaje` `null`). La diferencia lleva la **lista** de días descontados (`diasNoHabiles`), no un número, y no
+atribuye causa. `mensaje`: «sin valor de Zoho con que comparar» si ningún par tiene valor de Zoho, «sin pares
+comparables» si lo hay pero ninguno se compara, `null` si se compara. `tickets` y la `nota` publican la segunda
+lectura de **R4**: la letra no precisa cuál es «el 95 % de los tickets», así que el supuesto S-12 pasa a publicar las
+dos (por indicador, y de tickets en que todo lo comparable coincide). No hay umbral, semáforo ni veredicto: el 95 % lo
+juzgan las personas.
 
 ### 3.4 Servidor
 
