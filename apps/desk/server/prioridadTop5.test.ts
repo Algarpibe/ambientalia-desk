@@ -147,14 +147,14 @@ describe('PUT /api/clients/:id/prioridad · sin nadie con cargo y matriz de suje
     expect((await fijar(app, admin, 'cli-1', { top5: true, prioridad: 'High' })).status).toBe(200)
   })
 
-  it('PM23-1 · nueve sujetos con área Comercial (siete cargos, sin cargo, admin): sólo Director Comercial y admin → 200', async () => {
+  it('PM23-1 · diez sujetos con área Comercial (ocho cargos, sin cargo, admin): sólo Director Comercial y admin → 200', async () => {
     await cliente(); const { app } = appWith()
     const sujetos: [string, string][] = []
     let n = 0
     for (const c of CARGOS) sujetos.push([c, await sujeto(++n, ['Comercial'], c)])
     sujetos.push(['sin cargo', await sujeto(++n, ['Comercial'], null)])
     sujetos.push(['admin', await adminCookie()])
-    expect(sujetos).toHaveLength(9)
+    expect(sujetos).toHaveLength(10)
     let aceptados = 0
     for (const [nombre, cookie] of sujetos) {
       const res = await fijar(app, cookie, 'cli-1', { top5: true, prioridad: 'Medium' })
@@ -356,14 +356,14 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect([await prioridadDe('t1'), await prioridadDe('t2')]).toEqual(['Medium', 'Low'])
   })
 
-  it('PM23-1 · nueve sujetos con área Comercial sobre el POST: sólo Director Comercial y admin → 200', async () => {
+  it('PM23-1 · diez sujetos con área Comercial sobre el POST: sólo Director Comercial y admin → 200', async () => {
     await cliente(); await marcarTop5('cli-1'); const { app } = appWith()
     const sujetos: [string, string][] = []
     let n = 100
     for (const c of CARGOS) sujetos.push([c, await sujeto(++n, ['Comercial'], c)])
     sujetos.push(['sin cargo', await sujeto(++n, ['Comercial'], null)])
     sujetos.push(['admin', await adminCookie()])
-    expect(sujetos).toHaveLength(9)
+    expect(sujetos).toHaveLength(10)
     let aceptados = 0
     for (const [i, [nombre, cookie]] of sujetos.entries()) {
       await ticketDe(`p${i}`, 9300 + i, 'cli-1', 'Low')

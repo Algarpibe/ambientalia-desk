@@ -63,11 +63,11 @@ export function slaVencido(estado: Estado, desde: Date, ahora: Date, cierres: Re
  * el escalado puede apoyarse en esa misma tabla en lugar de mantener una jerarquía aparte»
  * (`:1575`). Y esa tabla ya trae el concepto con las mismas palabras: la primera entrada de
  * `DERIVACION_POR_DEFECTO` lleva escrito «escalar una revisión es **subirla al inmediato superior**»
- * (`transitions.ts:268`).
+ * (`transitions.ts:275`).
  *
  * LA REGLA: el destinatario del escalado de un estado es **el cargo que proponen sus transiciones
  * salientes**. Para `Notificado` —de las tres alarmas, la única cuyo grafo propone cargo— es `escalado_a_comercial` → `Coordinador
- * Comercial` (`transitions.ts:220`, `:271`), el mismo que declara `ALARMAS_SLA`.
+ * Comercial` (`transitions.ts:220`, `:278`), el mismo que declara `ALARMAS_SLA`.
  *
  * TRES CASOS, y ninguno se resuelve inventando:
  *
