@@ -32,45 +32,45 @@ Chain strategy: pending
 
 ## 1A · Fase de partida
 
-- [ ] 1.1 Anotar el commit de partida (`git rev-parse HEAD`) en `apply-progress.md`; abrir el intento 1 en el registro; `wc -l` de `packages/zoho-sync/src/db/repo.ts`, `apps/desk/server/db/equipos.ts` y `packages/shared/src/index.ts` ANTES de editar.
-- [ ] 1.2 Línea base: correr `npm test`, `npm run typecheck`, `npm run lint` y anotar el CÓDIGO DE SALIDA de cada uno (`${PIPESTATUS[0]}` si se canaliza) y los 165 avisos. Remedir las líneas del diseño §5 lote 1 (`repo.ts` 129, 142-143, 151-152, 157-158, 166-167, 172-173, 177-178, 186-187; `equipos.ts` 6 y 60; `index.ts` 31).
+- [x] 1.1 Anotar el commit de partida (`git rev-parse HEAD`) en `apply-progress.md`; abrir el intento 1 en el registro; `wc -l` de `packages/zoho-sync/src/db/repo.ts`, `apps/desk/server/db/equipos.ts` y `packages/shared/src/index.ts` ANTES de editar.
+- [x] 1.2 Línea base: correr `npm test`, `npm run typecheck`, `npm run lint` y anotar el CÓDIGO DE SALIDA de cada uno (`${PIPESTATUS[0]}` si se canaliza) y los 165 avisos. Remedir las líneas del diseño §5 lote 1 (`repo.ts` 129, 142-143, 151-152, 157-158, 166-167, 172-173, 177-178, 186-187; `equipos.ts` 6 y 60; `index.ts` 31).
 
 ## 1B · Rojos (nada de producción todavía)
 
-- [ ] 1.3 Crear `packages/zoho-sync/src/db/busquedaTickets.test.ts` con SÓLO la prueba que despeja H-1: ticket enlazado a un equipo se encuentra por el serial del equipo, con `getActiveTickets(db, '', filtro)` en pg-mem.
-- [ ] 1.4 EJECUTARLA (`npx vitest run packages/zoho-sync/src/db/busquedaTickets.test.ts`): debe ponerse ROJA (módulo inexistente). Anotar el fallo literal.
-- [ ] 1.5 **Despejar H-1 antes de construir encima.** Mínimo: `sqlBusquedaTickets` con la subconsulta `t.equipo_id IN (SELECT id FROM equipos WHERE LOWER(serial) LIKE $n)` y cablear SÓLO `getActiveTickets`; correr la prueba. Si pg-mem la rechaza: plan B (`LEFT JOIN equipos e` + `LOWER(e.serial) LIKE`, campo `join` en el fragmento); si también falla, plan C (consulta previa de ids, `sqlBusquedaTickets` asíncrono con `db`). Anotar en `apply-progress.md` cuál plan quedó y el mensaje literal de cada fallo; con plan C, remedir el lote (§10) y revisar `apps/desk/server/misTickets.test.ts:121` (cuenta consultas).
-- [ ] 1.6 Crear `packages/shared/src/busquedaTickets.test.ts`: tabla del diseño §3 caso a caso (`undefined`, lista/objeto → `Búsqueda inválida`, `''`/`'   '`, >64 recortado, `'864'`, `' #864 '`, `'0864'`, `'# 864'`, `'86a'`, `'12345678901'`, `'22052 '`, `'85HHP'`; `patronSerial('')` = `'%%'`). EJECUTAR: ROJO (módulo no existe). Anotar fallo literal.
-- [ ] 1.7 Completar `busquedaTickets.test.ts` (zoho-sync): número exacto («864» sí, «86» no); dígitos que no caben en `integer` no rompen; últimos dígitos, centro y serial guardado en mayúsculas; serial corregido del equipo (nuevo y viejo, criterio 3); **posición** (un cerrado y un activo que casan, uno por `t.serial` y otro por el equipo: activos sólo el activo; cerrados y `countClosedTickets`, sólo el cerrado); recuento y página 2 filtrados (criterio 5); `getAllTickets` con filtro (rama `where`); sin filtro (`undefined` y `null`) **[nace verde: CARACTERIZACIÓN]**. EJECUTAR: todas ROJAS salvo la de sin filtro. Anotar fallos literales.
-- [ ] 1.8 Crear `apps/desk/server/db/busquedaConfrontacion.test.ts` (molde H5): por caso, equipo activo con serial `S` sin otro campo casable + ticket SIN equipo con `serial = S` y número alto; veredicto A = `searchEquipos(db, q)`, veredicto B = `getActiveTickets(db, '', leerBusquedaTickets(q).filtro)`; exigir A = B **y** el valor esperado. Casos: últimos dígitos, centro, mayúsculas/minúsculas en los dos sentidos, espacios a los lados, `%`, `_`, sin coincidencia, vacío. EJECUTAR: **sólo «espacios» nace ROJO; el resto nace verde (CARACTERIZACIÓN de `searchEquipos`)**; no disfrazarlo.
+- [x] 1.3 Crear `packages/zoho-sync/src/db/busquedaTickets.test.ts` con SÓLO la prueba que despeja H-1: ticket enlazado a un equipo se encuentra por el serial del equipo, con `getActiveTickets(db, '', filtro)` en pg-mem.
+- [x] 1.4 EJECUTARLA (`npx vitest run packages/zoho-sync/src/db/busquedaTickets.test.ts`): debe ponerse ROJA (módulo inexistente). Anotar el fallo literal.
+- [x] 1.5 **Despejar H-1 antes de construir encima.** Mínimo: `sqlBusquedaTickets` con la subconsulta `t.equipo_id IN (SELECT id FROM equipos WHERE LOWER(serial) LIKE $n)` y cablear SÓLO `getActiveTickets`; correr la prueba. Si pg-mem la rechaza: plan B (`LEFT JOIN equipos e` + `LOWER(e.serial) LIKE`, campo `join` en el fragmento); si también falla, plan C (consulta previa de ids, `sqlBusquedaTickets` asíncrono con `db`). Anotar en `apply-progress.md` cuál plan quedó y el mensaje literal de cada fallo; con plan C, remedir el lote (§10) y revisar `apps/desk/server/misTickets.test.ts:121` (cuenta consultas).
+- [x] 1.6 Crear `packages/shared/src/busquedaTickets.test.ts`: tabla del diseño §3 caso a caso (`undefined`, lista/objeto → `Búsqueda inválida`, `''`/`'   '`, >64 recortado, `'864'`, `' #864 '`, `'0864'`, `'# 864'`, `'86a'`, `'12345678901'`, `'22052 '`, `'85HHP'`; `patronSerial('')` = `'%%'`). EJECUTAR: ROJO (módulo no existe). Anotar fallo literal.
+- [x] 1.7 Completar `busquedaTickets.test.ts` (zoho-sync): número exacto («864» sí, «86» no); dígitos que no caben en `integer` no rompen; últimos dígitos, centro y serial guardado en mayúsculas; serial corregido del equipo (nuevo y viejo, criterio 3); **posición** (un cerrado y un activo que casan, uno por `t.serial` y otro por el equipo: activos sólo el activo; cerrados y `countClosedTickets`, sólo el cerrado); recuento y página 2 filtrados (criterio 5); `getAllTickets` con filtro (rama `where`); sin filtro (`undefined` y `null`) **[nace verde: CARACTERIZACIÓN]**. EJECUTAR: todas ROJAS salvo la de sin filtro. Anotar fallos literales.
+- [x] 1.8 Crear `apps/desk/server/db/busquedaConfrontacion.test.ts` (molde H5): por caso, equipo activo con serial `S` sin otro campo casable + ticket SIN equipo con `serial = S` y número alto; veredicto A = `searchEquipos(db, q)`, veredicto B = `getActiveTickets(db, '', leerBusquedaTickets(q).filtro)`; exigir A = B **y** el valor esperado. Casos: últimos dígitos, centro, mayúsculas/minúsculas en los dos sentidos, espacios a los lados, `%`, `_`, sin coincidencia, vacío. EJECUTAR: **sólo «espacios» nace ROJO; el resto nace verde (CARACTERIZACIÓN de `searchEquipos`)**; no disfrazarlo.
 
 ## 1C · Verde
 
-- [ ] 1.9 Crear `packages/shared/src/busquedaTickets.ts` (`BUSQUEDA_MAX = 64`, `patronSerial`, `BusquedaTickets`, `LecturaBusqueda`, `leerBusquedaTickets`) y añadir `export * from './busquedaTickets'` como ÚLTIMA línea de `packages/shared/src/index.ts`. Correr 1.6: verde.
-- [ ] 1.10 Completar `packages/zoho-sync/src/db/busquedaTickets.ts` (`sqlBusquedaTickets(f, desde)` → `{ and, where, params }`; con y sin número; paréntesis exteriores; sin filtro `'', '', []`) con el plan que dejó 1.5.
-- [ ] 1.11 `packages/zoho-sync/src/db/repo.ts`, EN SU SITIO: importaciones unidas con `;` en la 129; parámetro `busqueda?: BusquedaTickets | null` en las firmas de 142, 157, 172, 177; `const b = sqlBusquedaTickets(...)` unido a las líneas 143, 158, 173, 178; `${b.and}` en 151/166/173, `${b.where}` en 186, `...b.params` en 152/167/187. Ninguna línea nueva.
-- [ ] 1.12 `apps/desk/server/db/equipos.ts`, EN SU SITIO: `patronSerial` en la importación de la línea 6 y `const like = patronSerial(q)` en la 60. Correr 1.7 y 1.8: todo verde (incluido «espacios»).
-- [ ] 1.13 Correr `npx vitest run apps/desk/server/db/equipos.test.ts` (líneas 25-27, 64, 68, 77, 83, 467, 486, 503 siguen verdes sin tocarlas).
+- [x] 1.9 Crear `packages/shared/src/busquedaTickets.ts` (`BUSQUEDA_MAX = 64`, `patronSerial`, `BusquedaTickets`, `LecturaBusqueda`, `leerBusquedaTickets`) y añadir `export * from './busquedaTickets'` como ÚLTIMA línea de `packages/shared/src/index.ts`. Correr 1.6: verde.
+- [x] 1.10 Completar `packages/zoho-sync/src/db/busquedaTickets.ts` (`sqlBusquedaTickets(f, desde)` → `{ and, where, params }`; con y sin número; paréntesis exteriores; sin filtro `'', '', []`) con el plan que dejó 1.5.
+- [x] 1.11 `packages/zoho-sync/src/db/repo.ts`, EN SU SITIO: importaciones unidas con `;` en la 129; parámetro `busqueda?: BusquedaTickets | null` en las firmas de 142, 157, 172, 177; `const b = sqlBusquedaTickets(...)` unido a las líneas 143, 158, 173, 178; `${b.and}` en 151/166/173, `${b.where}` en 186, `...b.params` en 152/167/187. Ninguna línea nueva.
+- [x] 1.12 `apps/desk/server/db/equipos.ts`, EN SU SITIO: `patronSerial` en la importación de la línea 6 y `const like = patronSerial(q)` en la 60. Correr 1.7 y 1.8: todo verde (incluido «espacios»).
+- [x] 1.13 Correr `npx vitest run apps/desk/server/db/equipos.test.ts` (líneas 25-27, 64, 68, 77, 83, 467, 486, 503 siguen verdes sin tocarlas).
 
 ## 1D · Mutaciones (una casilla cada una: aplicar, ver qué cae, anotar mensaje literal, REVERTIR)
 
-- [ ] 1.14 **MP-1 (posición):** en `zoho-sync/db/busquedaTickets.ts` quitar los paréntesis EXTERIORES del predicado → debe caer «posición» (cerrado que casa por su equipo aparece en activos). NO usar «poner el predicado antes del filtro de estado»: es mutante equivalente. Revertir.
-- [ ] 1.15 **MC-1:** quitar `OR t.equipo_id IN (…)` → cae «serial corregido del equipo». Revertir.
-- [ ] 1.16 **MC-2:** `leerBusquedaTickets` devuelve siempre `numero: null` → cae «864 encuentra el ticket 864». Revertir.
-- [ ] 1.17 **MC-3:** `patronSerial` sin el `%` inicial → caen «últimos dígitos» (unitaria y de repositorio). **La confrontación sigue VERDE a propósito** (las dos búsquedas cambian juntas, lo que demuestra que comparten la pieza); anotarlo con las pruebas que sí la cazan. Revertir.
-- [ ] 1.18 **MC-4 (M-4):** `equipos.ts` línea 60 vuelve a `` `%${q.toLowerCase()}%` `` → cae la confrontación, caso «espacios». Revertir.
-- [ ] 1.19 **MC-5:** `leerBusquedaTickets` arma `patron` sin `patronSerial` (`` `%${t}%` ``) → cae la confrontación con `q` en mayúsculas y la unitaria. Revertir.
-- [ ] 1.20 **MC-6:** quitar `LOWER(` de `t.serial` → cae «serial guardado en mayúsculas». Revertir.
-- [ ] 1.21 **MC-7:** `t.number = $d` → `t.number >= $d` → cae «86 no devuelve el 864». Revertir.
-- [ ] 1.22 **MC-8:** `repo.ts` línea 173, quitar `${b.and}` → cae `total` filtrado. Revertir.
-- [ ] 1.23 `git diff` sobre los cinco ficheros de producción del lote: comprobar que NO queda ninguna mutación en el árbol (predicado, `patronSerial`, `leerBusquedaTickets`, `equipos.ts:60`, `repo.ts:173` íntegros).
+- [x] 1.14 **MP-1 (posición):** en `zoho-sync/db/busquedaTickets.ts` quitar los paréntesis EXTERIORES del predicado → debe caer «posición» (cerrado que casa por su equipo aparece en activos). NO usar «poner el predicado antes del filtro de estado»: es mutante equivalente. Revertir.
+- [x] 1.15 **MC-1:** quitar `OR t.equipo_id IN (…)` → cae «serial corregido del equipo». Revertir.
+- [x] 1.16 **MC-2:** `leerBusquedaTickets` devuelve siempre `numero: null` → cae «864 encuentra el ticket 864». Revertir.
+- [x] 1.17 **MC-3:** `patronSerial` sin el `%` inicial → caen «últimos dígitos» (unitaria y de repositorio). **La confrontación sigue VERDE a propósito** (las dos búsquedas cambian juntas, lo que demuestra que comparten la pieza); anotarlo con las pruebas que sí la cazan. Revertir.
+- [x] 1.18 **MC-4 (M-4):** `equipos.ts` línea 60 vuelve a `` `%${q.toLowerCase()}%` `` → cae la confrontación, caso «espacios». Revertir.
+- [x] 1.19 **MC-5:** `leerBusquedaTickets` arma `patron` sin `patronSerial` (`` `%${t}%` ``) → cae la confrontación con `q` en mayúsculas y la unitaria. Revertir.
+- [x] 1.20 **MC-6:** quitar `LOWER(` de `t.serial` → cae «serial guardado en mayúsculas». Revertir.
+- [x] 1.21 **MC-7:** `t.number = $d` → `t.number >= $d` → cae «86 no devuelve el 864». Revertir.
+- [x] 1.22 **MC-8:** `repo.ts` línea 173, quitar `${b.and}` → cae `total` filtrado. Revertir.
+- [x] 1.23 `git diff` sobre los cinco ficheros de producción del lote: comprobar que NO queda ninguna mutación en el árbol (predicado, `patronSerial`, `leerBusquedaTickets`, `equipos.ts:60`, `repo.ts:173` íntegros).
 
 ## 1E · Cierre del lote 1
 
-- [ ] 1.24 `git diff --numstat` de `packages/zoho-sync/src/db/repo.ts` y `apps/desk/server/db/equipos.ts`: inserciones = borrados en cada uno; `wc -l` antes y después idéntico. Si no cuadra, barrido completo de la regla de mutación 4 sobre ese fichero.
-- [ ] 1.25 Escribir en `apply-progress.md` la **regla 13 por escrito**, decisión a decisión (diseño §9, filas 2, 3 y 6 del lote 1: línea del servidor que impone cada una, remedida) y las mutaciones con su mensaje literal.
-- [ ] 1.26 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), anotando el CÓDIGO DE SALIDA de cada uno.
-- [ ] 1.27 Medida del intento: `git diff --shortstat --no-renames <commit de partida>` + `wc -l` de lo nuevo sin trackear; registrar ESA cifra (tope 800; si lo supera, el intento se parte).
+- [x] 1.24 `git diff --numstat` de `packages/zoho-sync/src/db/repo.ts` y `apps/desk/server/db/equipos.ts`: inserciones = borrados en cada uno; `wc -l` antes y después idéntico. Si no cuadra, barrido completo de la regla de mutación 4 sobre ese fichero.
+- [x] 1.25 Escribir en `apply-progress.md` la **regla 13 por escrito**, decisión a decisión (diseño §9, filas 2, 3 y 6 del lote 1: línea del servidor que impone cada una, remedida) y las mutaciones con su mensaje literal.
+- [x] 1.26 Cierre: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), anotando el CÓDIGO DE SALIDA de cada uno.
+- [x] 1.27 Medida del intento: `git diff --shortstat --no-renames <commit de partida>` + `wc -l` de lo nuevo sin trackear; registrar ESA cifra (tope 800; si lo supera, el intento se parte).
 
 **— FIN DEL LOTE 1. Cerrar el intento 1 (settle) antes de abrir el 2. —**
 

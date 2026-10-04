@@ -126,7 +126,7 @@ export async function countTickets(db: Queryable): Promise<number> {
   return res.rows[0].n as number
 }
 
-import type { TicketRefs, DetailRefs } from './mappers'
+import type { TicketRefs, DetailRefs } from './mappers'; import { sqlBusquedaTickets } from './busquedaTickets'; import type { BusquedaTickets } from '@ambientalia/shared'
 
 export interface TicketWithRefs { row: TicketRow; refs: TicketRefs }
 
@@ -139,8 +139,8 @@ function mapTicketRowWithRefs(row: any): TicketWithRefs {
   return { row: row as TicketRow, refs: { accountName: row.account_name, agentName: row.agent_name, contactName: [row.c_first, row.c_last].filter(Boolean).join(' ').trim() || null, read: row.read_at != null && (row.modified_time == null || new Date(row.read_at) >= new Date(row.modified_time)), derivadoNombre: row.derivado_nombre, derivadoCargo: row.derivado_cargo } }
 }
 
-export async function getActiveTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
-  const r = await db.query(
+export async function getActiveTickets(db: Queryable, userId = '', busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
+  const b = sqlBusquedaTickets(busqueda, 2); const r = await db.query(
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at,
             du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
@@ -148,14 +148,14 @@ export async function getActiveTickets(db: Queryable, userId = ''): Promise<Tick
      LEFT JOIN contacts c ON t.contact_id=c.id
      LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
-     WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL) ORDER BY t.created_time DESC NULLS LAST`,
-    [userId],
+     WHERE (t.status_type <> 'Closed' OR t.status_type IS NULL)${b.and} ORDER BY t.created_time DESC NULLS LAST`,
+    [userId, ...b.params],
   )
   return r.rows.map(mapTicketRowWithRefs)
 }
 
-export async function getClosedTickets(db: Queryable, userId = '', limit = 50, offset = 0): Promise<TicketWithRefs[]> {
-  const r = await db.query(
+export async function getClosedTickets(db: Queryable, userId = '', limit = 50, offset = 0, busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
+  const b = sqlBusquedaTickets(busqueda, 4); const r = await db.query(
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at,
             du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
@@ -163,19 +163,19 @@ export async function getClosedTickets(db: Queryable, userId = '', limit = 50, o
      LEFT JOIN contacts c ON t.contact_id=c.id
      LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
-     WHERE t.status_type = 'Closed' ORDER BY t.created_time DESC NULLS LAST LIMIT $2 OFFSET $3`,
-    [userId, limit, offset],
+     WHERE t.status_type = 'Closed'${b.and} ORDER BY t.created_time DESC NULLS LAST LIMIT $2 OFFSET $3`,
+    [userId, limit, offset, ...b.params],
   )
   return r.rows.map(mapTicketRowWithRefs)
 }
 
-export async function countClosedTickets(db: Queryable): Promise<number> {
-  const r = await db.query(`SELECT count(*)::int AS n FROM tickets WHERE status_type = 'Closed'`)
+export async function countClosedTickets(db: Queryable, busqueda?: BusquedaTickets | null): Promise<number> {
+  const b = sqlBusquedaTickets(busqueda, 1); const r = await db.query(`SELECT count(*)::int AS n FROM tickets t WHERE t.status_type = 'Closed'${b.and}`, b.params)
   return r.rows[0]?.n ?? 0
 }
 
-export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketWithRefs[]> {
-  const r = await db.query(
+export async function getAllTickets(db: Queryable, userId = '', busqueda?: BusquedaTickets | null): Promise<TicketWithRefs[]> {
+  const b = sqlBusquedaTickets(busqueda, 2); const r = await db.query(
     `SELECT t.*, COALESCE(a.name, cl.name) AS account_name, g.name AS agent_name, c.first_name AS c_first, c.last_name AS c_last, tr.read_at,
             du.name AS derivado_nombre, du.cargo AS derivado_cargo
      FROM tickets t LEFT JOIN accounts a ON t.account_id=a.id LEFT JOIN agents g ON t.assignee_id=g.id
@@ -183,8 +183,8 @@ export async function getAllTickets(db: Queryable, userId = ''): Promise<TicketW
      LEFT JOIN contacts c ON t.contact_id=c.id
      LEFT JOIN users du ON t.derivado_a=du.id
      LEFT JOIN ticket_reads tr ON tr.ticket_id=t.id AND tr.user_id=$1
-     ORDER BY t.created_time DESC NULLS LAST`,
-    [userId],
+    ${b.where} ORDER BY t.created_time DESC NULLS LAST`,
+    [userId, ...b.params],
   )
   return r.rows.map(mapTicketRowWithRefs)
 }
