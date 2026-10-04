@@ -47,7 +47,7 @@ export interface TicketRow {
   // Columnas añadidas después por ALTER (subsistemas C/E y resolución). Son OPCIONALES porque las
   // escribe la app, no el sync: `ticketRowFromZoho` construye filas sin ellas, mientras que un
   // `SELECT *` sí las trae.
-  client_id?: string | null; salesorder_id?: string | null; equipo_id?: string | null; modalidad?: string | null
+  client_id?: string | null; salesorder_id?: string | null; equipo_id?: string | null; modalidad?: string | null; liberacion_motivo?: string | null; fecha_prevista_facturacion?: string | null
   resolution_html?: string | null; resolution_at?: string | null; resolution_by?: string | null
   /** Usuario de la APP al que se derivó el trabajo. Nada que ver con `assignee_id`, que es de Zoho. */
   derivado_a?: string | null
@@ -116,7 +116,7 @@ export const PROMOTED_COLUMNS: Array<{ col: keyof TicketRow; label: string; kind
   { col: 'fecha_solicitud_sku', label: 'Fecha solicitud SKU', kind: 'date' },
   { col: 'fecha_orden_compra_final', label: 'Fecha Orden de Compra Final', kind: 'date' },
   { col: 'fecha_orden_venta_final', label: 'Fecha Orden de Venta Final', kind: 'date' },
-  // C9 · el ÚNICO de esta lista que NO viene de Zoho: lo crea la corrección C9 y lo escribe
+  // C9 · el PRIMERO de esta lista que NO viene de Zoho: lo crea la corrección C9 y lo escribe
   // `habilitado_para_entrega`. Está aquí porque `apps/desk/server/transitionExec.ts:90-92` usa esta lista para decidir
   // columna o `custom_fields`, y el jsonb NO SIRVE: `repo.ts:88` hace `custom_fields=EXCLUDED.custom_fields`
   // en cada upsert, así que el sync —cada 3 min— borraría la fecha de aviso de todo ticket que no sea
@@ -128,5 +128,5 @@ export const PROMOTED_COLUMNS: Array<{ col: keyof TicketRow; label: string; kind
   { col: 'doc_almacenada_drive', label: 'Documentacion Almacenada en el Drive?', kind: 'bool' },
   { col: 'hv_actualizada', label: 'H. V Actualizada?', kind: 'bool' },
   { col: 'liberacion_sin_facturar', label: 'Liberación del ticket sin facturar', kind: 'bool' },
-  { col: 'servicio_in_situ', label: 'Servicio ejecutado in Situ!', kind: 'bool' },
+  { col: 'servicio_in_situ', label: 'Servicio ejecutado in Situ!', kind: 'bool' }, { col: 'liberacion_motivo', label: 'Motivo de liberación sin factura', kind: 'text' }, { col: 'fecha_prevista_facturacion', label: 'Fecha prevista de facturación', kind: 'date' },
 ]

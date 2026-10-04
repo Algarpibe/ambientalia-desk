@@ -34,7 +34,7 @@ Chain strategy: pending
 
 ## L1·A Partida y documental
 
-- [ ] 1.1 (documental) Alinear los deltas con D2 y D7. Localizar y editar en `specs/transitions-st/spec.md`:
+- [x] 1.1 (documental) Alinear los deltas con D2 y D7. Localizar y editar en `specs/transitions-st/spec.md`:
   (a) `:153-156` y `:200`/`:305` — la etiqueta «Motivo» entra en `PROMOTED_COLUMNS` como CLAVE `Motivo de liberación sin factura` (etiqueta visible «Motivo»);
   (b) `:253-257` — "una liberación sin texto no borra el de una anterior" pasa a: el texto se escribe SIEMPRE en `custom_fields` (el de esta liberación o `null`, D7); la fuente de verdad sigue siendo la fila de traza;
   (c) `:440-444` — añadir escenario: segunda liberación por otro motivo sin texto deja `custom_fields` con `null`;
@@ -42,37 +42,37 @@ Chain strategy: pending
   (e) `:120-123` (escenario «`transitionExec.ts` no cambia») — diseño §5 edita el comentario de la línea 73: matizar a "sólo cambia un comentario";
   (f) `:227-229` — añadir que la fecha se evalúa tal como llega (AAAA-MM-DD estricto, ISO con hora rechazado, D8);
   (g) `:144` — "27 etiquetas" queda caduco: recontar. Anotar cada edición con su línea en `apply-progress.md`.
-- [ ] 1.2 REMEDIR en `apply-progress.md` (el orquestador fusiona antes ramas ajenas): commit de partida; última línea de `packages/zoho-sync/src/db/schema.sql` (previsto 707); recuentos del guardián de `packages/zoho-sync/src/db/migrate.test.ts` (previsto 50/27/23, `:374-378`); `wc -l` de `schema.sql`, `rows.ts`, `index.ts`, `fechasDerivadas.ts`, `transitionExec.ts`, `transitions.ts` (397), `repo.test.ts`, `migrate.test.ts`, `transitionExec.test.ts`; cifra verde de `npm test`. Recalcular sobre lo medido las líneas 710/711 y el recuento 52/27/25.
-- [ ] 1.3 Abrir el intento L1 y registrar el commit de partida y que no hay otro intento SDD abierto en el árbol.
+- [x] 1.2 REMEDIR en `apply-progress.md` (el orquestador fusiona antes ramas ajenas): commit de partida; última línea de `packages/zoho-sync/src/db/schema.sql` (previsto 707); recuentos del guardián de `packages/zoho-sync/src/db/migrate.test.ts` (previsto 50/27/23, `:374-378`); `wc -l` de `schema.sql`, `rows.ts`, `index.ts`, `fechasDerivadas.ts`, `transitionExec.ts`, `transitions.ts` (397), `repo.test.ts`, `migrate.test.ts`, `transitionExec.test.ts`; cifra verde de `npm test`. Recalcular sobre lo medido las líneas 710/711 y el recuento 52/27/25.
+- [x] 1.3 Abrir el intento L1 y registrar el commit de partida y que no hay otro intento SDD abierto en el árbol.
 
 ## L1·B Rojos (se EJECUTAN antes de tocar producción; anotar el fallo literal)
 
-- [ ] 1.4 ROJA: crear `packages/shared/src/liberacionSinFactura.test.ts` con transición SINTÉTICA (campo clave `Motivo de liberación sin factura` con las tres opciones): motivo fuera de lista; igualdad exacta (mayúsculas); fecha `2026-02-30`, `04/10/2026`, ISO con hora; tercer motivo sin texto, con `"   "` y con texto; primer y segundo motivo sin texto; vacíos (`undefined`, `null`, `''`) sin error; transición sin el campo → `[]`; orden de mensajes; `textoAutorizacionAGuardar` (`undefined`/recortado/`null`); `seVuelveAPedirEnCadaLiberacion` (las tres claves); `esFechaCalendarioReal` importable; mensajes exactos del diseño §4. Ejecutar y anotar el fallo (módulo inexistente).
-- [ ] 1.5 ROJAS al final de `packages/zoho-sync/src/db/repo.test.ts` (molde `:279-288` y `:513-519`): (a) las dos columnas fuera de `TICKET_COLS` y dentro de `PROMOTED_COLUMNS` con etiqueta y tipo; (b) fila NO gestionada con las dos columnas puestas, segunda pasada de `upsertTicket`: cambia el asunto, no las columnas. Ejecutar y anotar el fallo.
-- [ ] 1.6 ROJA: editar en su sitio el recuento de `migrate.test.ts:374-378` a 52/27/25 (título y cifras; conjuntos de `:382-385` y guardianes `:332-339`, `:345-352` intactos). Ejecutar: rojo hasta editar `schema.sql`.
-- [ ] 1.7 Al final de `apps/desk/server/transitionExec.test.ts`: (a) SINTÉTICA de casilla obligatoria (ausente, `false`, marcada) con transición fabricada en la prueba — **nace verde** (caracterización), se valida en la mutación M10; (b) ROJA de enrutado: las dos etiquetas van a columna (fecha recortada a día) y el texto a `customFields`. Ejecutar y anotar.
+- [x] 1.4 ROJA: crear `packages/shared/src/liberacionSinFactura.test.ts` con transición SINTÉTICA (campo clave `Motivo de liberación sin factura` con las tres opciones): motivo fuera de lista; igualdad exacta (mayúsculas); fecha `2026-02-30`, `04/10/2026`, ISO con hora; tercer motivo sin texto, con `"   "` y con texto; primer y segundo motivo sin texto; vacíos (`undefined`, `null`, `''`) sin error; transición sin el campo → `[]`; orden de mensajes; `textoAutorizacionAGuardar` (`undefined`/recortado/`null`); `seVuelveAPedirEnCadaLiberacion` (las tres claves); `esFechaCalendarioReal` importable; mensajes exactos del diseño §4. Ejecutar y anotar el fallo (módulo inexistente).
+- [x] 1.5 ROJAS al final de `packages/zoho-sync/src/db/repo.test.ts` (molde `:279-288` y `:513-519`): (a) las dos columnas fuera de `TICKET_COLS` y dentro de `PROMOTED_COLUMNS` con etiqueta y tipo; (b) fila NO gestionada con las dos columnas puestas, segunda pasada de `upsertTicket`: cambia el asunto, no las columnas. Ejecutar y anotar el fallo.
+- [x] 1.6 ROJA: editar en su sitio el recuento de `migrate.test.ts:374-378` a 52/27/25 (título y cifras; conjuntos de `:382-385` y guardianes `:332-339`, `:345-352` intactos). Ejecutar: rojo hasta editar `schema.sql`.
+- [x] 1.7 Al final de `apps/desk/server/transitionExec.test.ts`: (a) SINTÉTICA de casilla obligatoria (ausente, `false`, marcada) con transición fabricada en la prueba — **nace verde** (caracterización), se valida en la mutación M10; (b) ROJA de enrutado: las dos etiquetas van a columna (fecha recortada a día) y el texto a `customFields`. Ejecutar y anotar.
 
 ## L1·C Verde (producción, sin cambio de comportamiento)
 
-- [ ] 1.8 `packages/shared/src/fechasDerivadas.ts:37`: anteponer `export` a `esFechaCalendarioReal`. `git diff --numstat` = 1/1.
-- [ ] 1.9 Crear `packages/shared/src/liberacionSinFactura.ts` (≈ 50 líneas) con las cuatro constantes, `erroresLiberacionSinFactura`, `textoAutorizacionAGuardar`, `seVuelveAPedirEnCadaLiberacion`, activándose por el campo (D4), lista = `options` del propio campo (D5), mensajes exactos del diseño §4 en ese orden. Añadir en `packages/shared/src/index.ts` la línea nueva al final (línea 32 prevista).
-- [ ] 1.10 `packages/zoho-sync/src/db/schema.sql`: cuatro líneas al final (dos comentarios sin `;`, luego `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS liberacion_motivo text;` y `… fecha_prevista_facturacion date;`), SIN calificar.
-- [ ] 1.11 `packages/zoho-sync/src/db/rows.ts`: (a) línea 50, campos opcionales de `TicketRow`; (b) línea 131, las dos entradas de `PROMOTED_COLUMNS` (`liberacion_motivo` con clave `Motivo de liberación sin factura`, `fecha_prevista_facturacion` con `Fecha prevista de facturación`) en la misma línea; (c) línea 119, "el ÚNICO…" → "el PRIMERO…". Comprobar con `git diff --numstat` que inserciones = borrados.
-- [ ] 1.12 Ejecutar las pruebas de 1.4-1.7 en verde; la sintética 1.7(a) sigue verde.
+- [x] 1.8 `packages/shared/src/fechasDerivadas.ts:37`: anteponer `export` a `esFechaCalendarioReal`. `git diff --numstat` = 1/1.
+- [x] 1.9 Crear `packages/shared/src/liberacionSinFactura.ts` (≈ 50 líneas) con las cuatro constantes, `erroresLiberacionSinFactura`, `textoAutorizacionAGuardar`, `seVuelveAPedirEnCadaLiberacion`, activándose por el campo (D4), lista = `options` del propio campo (D5), mensajes exactos del diseño §4 en ese orden. Añadir en `packages/shared/src/index.ts` la línea nueva al final (línea 32 prevista).
+- [x] 1.10 `packages/zoho-sync/src/db/schema.sql`: cuatro líneas al final (dos comentarios sin `;`, luego `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS liberacion_motivo text;` y `… fecha_prevista_facturacion date;`), SIN calificar.
+- [x] 1.11 `packages/zoho-sync/src/db/rows.ts`: (a) línea 50, campos opcionales de `TicketRow`; (b) línea 131, las dos entradas de `PROMOTED_COLUMNS` (`liberacion_motivo` con clave `Motivo de liberación sin factura`, `fecha_prevista_facturacion` con `Fecha prevista de facturación`) en la misma línea; (c) línea 119, "el ÚNICO…" → "el PRIMERO…". Comprobar con `git diff --numstat` que inserciones = borrados.
+- [x] 1.12 Ejecutar las pruebas de 1.4-1.7 en verde; la sintética 1.7(a) sigue verde.
 
 ## L1·D Mutaciones del lote (aplicar, ver qué cae, anotar mensaje literal, REVERTIR)
 
-- [ ] 1.13 M5 (regla 2, fichero vigilado): escribir en `schema.sql` `ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS liberacion_motivo text;` → debe caer `migrate.test.ts:332-339` y el recuento de calificadas.
-- [ ] 1.14 M6: meter `'liberacion_motivo'` en `TICKET_COLS` (`repo.ts:44-54`) → deben caer las dos pruebas de 1.5.
-- [ ] 1.15 M9: en la guarda, uno a uno: quitar cada una de las tres comprobaciones; aceptar texto de sólo espacios; exigir texto con cualquier motivo → una prueba del módulo cae por cada una.
-- [ ] 1.16 M10: `transitionExec.ts:76` a `empty` para la casilla → cae la sintética vía `false`.
-- [ ] 1.17 `git diff` confirma que ninguna mutación quedó aplicada.
+- [x] 1.13 M5 (regla 2, fichero vigilado): escribir en `schema.sql` `ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS liberacion_motivo text;` → debe caer `migrate.test.ts:332-339` y el recuento de calificadas.
+- [x] 1.14 M6: meter `'liberacion_motivo'` en `TICKET_COLS` (`repo.ts:44-54`) → deben caer las dos pruebas de 1.5.
+- [x] 1.15 M9: en la guarda, uno a uno: quitar cada una de las tres comprobaciones; aceptar texto de sólo espacios; exigir texto con cualquier motivo → una prueba del módulo cae por cada una.
+- [x] 1.16 M10: `transitionExec.ts:76` a `empty` para la casilla → cae la sintética vía `false`.
+- [x] 1.17 `git diff` confirma que ninguna mutación quedó aplicada.
 
 ## L1·E Comprobaciones de citas y cierre
 
-- [ ] 1.18 `git diff --numstat` de `rows.ts`, `fechasDerivadas.ts` (inserciones = borrados); `wc -l` de `index.ts`, `schema.sql` frente a la medida de 1.2.
-- [ ] 1.19 CIERRE L1: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores); anotar el CÓDIGO DE SALIDA de cada uno (`${PIPESTATUS[0]}` si se canaliza). Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida + `wc -l` de lo nuevo sin trackear; binarios aparte. Si supera 720, partir.
-- [ ] 1.20 Regla 13 (las siete filas del diseño §11) escrita en `apply-progress.md` como "pendiente de L2"; cerrar el intento L1.
+- [x] 1.18 `git diff --numstat` de `rows.ts`, `fechasDerivadas.ts` (inserciones = borrados); `wc -l` de `index.ts`, `schema.sql` frente a la medida de 1.2.
+- [x] 1.19 CIERRE L1: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores); anotar el CÓDIGO DE SALIDA de cada uno (`${PIPESTATUS[0]}` si se canaliza). Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida + `wc -l` de lo nuevo sin trackear; binarios aparte. Si supera 720, partir.
+- [x] 1.20 Regla 13 (las siete filas del diseño §11) escrita en `apply-progress.md` como "pendiente de L2"; cerrar el intento L1.
 
 ---
 

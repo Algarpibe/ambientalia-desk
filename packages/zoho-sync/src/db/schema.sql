@@ -712,3 +712,7 @@ ALTER TABLE tickets ADD COLUMN IF NOT EXISTS prioridad_en_app_at timestamptz;
 -- a admite NULL para revertir a sin prioridad. Sin relleno ni CHECK de lista. Va CALIFICADA: prioridad_ajustes es de PUBLIC_TABLES
 ALTER TABLE public.prioridad_ajustes ADD COLUMN IF NOT EXISTS origen text;
 ALTER TABLE public.prioridad_ajustes ALTER COLUMN a DROP NOT NULL;
+-- Motivo y fecha prevista de la liberacion sin factura (liberacion-sin-factura-motivo-fecha, F1C-05). NULL = sin liberar por la via nueva. Los escribe la transicion, no el sync: fuera de TICKET_COLS
+-- Sin relleno ni CHECK de lista: la lista cerrada la impone el servidor. tickets es de DESK_TABLES y va sin calificar
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS liberacion_motivo text;
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_prevista_facturacion date;

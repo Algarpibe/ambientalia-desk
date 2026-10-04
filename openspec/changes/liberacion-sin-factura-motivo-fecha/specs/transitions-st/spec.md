@@ -117,10 +117,11 @@ comprobación es de la guarda de `RQ-TS-35`, no de `buildTransitionPlan`.
   (`transitionExec.ts:76-86`, fijado en `transitionExec.test.ts:89-111`).
 - Las etiquetas de campo son las **etiquetas exactas de Zoho** (`transitions.ts:20-21`).
 
-#### Scenario: `transitionExec.ts` no cambia
+#### Scenario: `transitionExec.ts` sólo cambia un comentario
 - GIVEN esta tanda completa
 - WHEN se compara `apps/desk/server/transitionExec.ts` antes y después
-- THEN no hay diferencia: la validación de contenido de las tres fechas vive en `ticketService.ts`
+- THEN sólo cambia un comentario (la línea 73, que deja de nombrar la casilla de `liberacion_sin_factura`, diseño §5): la
+  validación de contenido de las tres fechas vive en `ticketService.ts` y ninguna línea de lógica se toca
 
 #### Scenario: la casilla obligatoria sigue exigiéndose marcada, aunque el catálogo ya no tenga un caso vivo
 - GIVEN una transición **sintética** con un `checkbox` `required` (definida en la prueba, no en `TRANSITIONS`)
@@ -142,6 +143,9 @@ El destino de cada valor **SHALL** derivarse de su `target` (`transitions.ts:17`
 | `customField` | Columna promovida si la etiqueta está en `PROMOTED_COLUMNS`; si no, a `custom_fields` | `transitionExec.ts:4`, `:90-92` |
 
 **Verificado en esta tanda:** las **27** etiquetas de campo distintas que declaran las 34 transiciones
+*(cifra caduca, recontada el 2026-10-04 contra `8c182fb`: **28** claves `customField` distintas, contando el `campoFecha`;
+con este cambio salen la casilla histórica y entran tres claves, así que son **30**, de las cuales **29** están en
+`PROMOTED_COLUMNS` y sólo «Texto de la autorización» cae a `custom_fields`)*
 —contando el `campoFecha` que arrastra el buscador de órdenes de venta— están **todas** en
 `PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts`), de las 39 que ese mapa declara
 *(**F1A-04**: 28 de 40. El campo nuevo, «Fecha de aviso al cliente», es además el ÚNICO de
@@ -152,8 +156,8 @@ NO está en `PROMOTED_COLUMNS` (lo fija el guardián de `transitionExec.test.ts`
 `custom_fields`, porque su destino es `ovAdicional` y no `customField`. **Ninguna cae al cajón
 `custom_fields`, con UNA excepción desde `liberacion-sin-factura-motivo-fecha`** (`RQ-TS-35`): la etiqueta de texto de
 la autorización excepcional (supuesto S-2, «Texto de la autorización») NO está en `PROMOTED_COLUMNS` y **SÍ** cae a
-`custom_fields`, a propósito. Las otras dos etiquetas nuevas, «Motivo» y «Fecha prevista de facturación», **SÍ** están en
-`PROMOTED_COLUMNS` (dos entradas añadidas **al final** del mapa, que pasa de 40 a **42** sin mover las anteriores).
+`custom_fields`, a propósito. Las otras dos claves nuevas, `Motivo de liberación sin factura` (etiqueta visible «Motivo», diseño D2) y
+`Fecha prevista de facturación`, **SÍ** están en `PROMOTED_COLUMNS` (dos entradas añadidas **al final** del mapa, que pasa de 40 a **42** sin mover las anteriores).
 La entrada «Liberación del ticket sin facturar» **SE CONSERVA** en el mapa —es el histórico y la sigue escribiendo el
 sincronizador—, aunque ya ninguna transición del catálogo declare esa etiqueta. Confirma M1.3.8 del maestro (`:1415`).
 
@@ -197,7 +201,7 @@ de las 27 etiquetas no contemplaba la clave `OV adicional`, que no es etiqueta d
 | Pieza | Letra o supuesto | Contenido |
 |---|---|---|
 | La casilla desaparece | Letra («Deja de ser un checkbox») | `liberacion_sin_factura` **SHALL NOT** declarar ningún `checkbox`; la casilla no convive con los campos nuevos |
-| Campo Motivo | Letra | `select`, **obligatorio**, etiqueta «Motivo» |
+| Campo Motivo | Letra | `select`, **obligatorio**, clave `Motivo de liberación sin factura` y etiqueta visible «Motivo» (diseño D2) |
 | Campo Fecha | Letra | `date`, **obligatorio**, etiqueta «Fecha prevista de facturación» |
 | Lista cerrada de **tres** motivos | Letra (el texto) / **supuesto S-3** (la mayúscula inicial) | véase abajo |
 | Texto de la autorización | Letra en que existe un texto obligatorio; **supuesto S-1** en que sólo lo exige el tercer motivo; **supuesto S-2** en la etiqueta | campo `text`, `required` en el catálogo **falso**; lo exige la guarda del servidor |
@@ -225,8 +229,9 @@ Comprueba tres cosas, y sólo sobre lo que **llega**:
    **SHALL** producir un error de la guarda. Un motivo ausente **MUST NOT** producir error de la guarda: lo dice el
    obligatorio de presencia (`Falta el campo obligatorio: Motivo`, `RQ-TS-08`).
 2. **Fecha de calendario real.** Una fecha prevista presente que no sea un día real del calendario en formato
-   `YYYY-MM-DD` (p. ej. `2026-02-30`, o una fecha en otra forma) **SHALL** producir un error de la guarda. Una fecha
-   ausente la dice el obligatorio de presencia.
+   `YYYY-MM-DD` (p. ej. `2026-02-30`, o una fecha en otra forma) **SHALL** producir un error de la guarda. La fecha se
+   evalúa **tal como llega**: `AAAA-MM-DD` estricto, y un ISO con hora (`2026-10-04T10:00:00Z`) se rechaza (diseño D8; el
+   motor recortaría sin validar, `transitionExec.ts:33`). Una fecha ausente la dice el obligatorio de presencia.
 3. **Texto con la autorización excepcional (supuesto S-1).** Con el motivo «Autorización excepcional de Dirección
    Comercial», un texto ausente, vacío o **de sólo espacios** **SHALL** producir un error de la guarda que nombre el campo
    («Texto de la autorización», supuesto S-2). Con el primer o el segundo motivo el texto **MUST NOT** ser obligatorio.
@@ -250,17 +255,17 @@ posición y no se finge una.
 
 - el motivo **SHALL** quedar en una columna propia de `tickets` y la fecha prevista en otra, ambas anulables y fuera de
   `TICKET_COLS` (supuesto S-4: nombres `liberacion_motivo` y `fecha_prevista_facturacion`, `text` y `date`);
-- el texto **SHALL** quedar en `tickets.custom_fields` y los **tres** valores en `ticket_transitions.values`
-  (`packages/zoho-sync/src/db/repo.ts:314-318` guarda todos los valores). **La fuente de verdad de cada liberación es su
-  fila de traza**: `custom_fields` se fusiona (`custom_fields || …`, `repo.ts:307-310`), de modo que una liberación sin
-  texto no borra el de una anterior. El texto que cuenta para una liberación es el de **su** fila de traza, nunca el de
-  `custom_fields`;
+- el texto **SHALL** escribirse **siempre** en `tickets.custom_fields` —el de esta liberación o `null` (diseño D7)— y los
+  **tres** valores en `ticket_transitions.values` (`packages/zoho-sync/src/db/repo.ts:314-318` guarda todos los valores).
+  `custom_fields` se fusiona (`custom_fields || …`, `repo.ts:307-310`), pero como el texto se escribe siempre, una
+  liberación sin texto deja `null` y no hereda la autorización de una anterior. **La fuente de verdad de cada liberación
+  sigue siendo su fila de traza**: el texto que cuenta para una liberación es el de **su** fila de traza;
 - `liberacion_sin_facturar` **SHALL** quedar sin tocar por la transición (supuesto S-6);
 - las filas de `tickets` y de `ticket_transitions` que ya existen **MUST NOT** modificarse, marcarse ni rellenarse al
   aplicar el esquema o el cambio (el marcado del histórico es de `p64-historico-c1`).
 
 El esquema **SHALL** añadir las dos columnas con `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS` **sin calificar** (`tickets`
-es de `DESK_TABLES`), al final de `schema.sql`; el recuento de sentencias `ALTER` pasa de 50 / 27 / 23 a 52 / 27 / 25.
+es de `DESK_TABLES`), al final de `schema.sql`; el recuento de sentencias `ALTER` pasa de 53 / 29 / 24 a 55 / 29 / 26 (remedido el 2026-10-04 contra `8c182fb`).
 
 **La sincronización no pisa motivo ni fecha.** Las dos columnas **MUST NOT** estar en `TICKET_COLS`: `upsertTicket`
 construye su `SET` sólo con esa lista (`repo.ts:44-54`, `:76-91`), así que el sincronizador nunca las reescribe; y además
@@ -302,7 +307,7 @@ demás guardas de `executeTransition` (IV-12 incluido).
 #### Scenario: El catálogo declara motivo, fecha y texto, y ninguna casilla — ROJO
 - GIVEN `TRANSITIONS` tras el cambio
 - WHEN se lee `liberacion_sin_factura`
-- THEN declara el comentario, «Motivo» (`select`, obligatorio), «Fecha prevista de facturación» (`date`, obligatoria) y el
+- THEN declara el comentario, «Motivo» (clave `Motivo de liberación sin factura`, `select`, obligatorio), «Fecha prevista de facturación» (`date`, obligatoria) y el
   texto de la autorización (`text`, no obligatorio en el catálogo), y **no** declara ningún campo `checkbox`
 
 #### Scenario: Las tres opciones, a la letra y en orden — ROJO
@@ -330,7 +335,8 @@ demás guardas de `executeTransition` (IV-12 incluido).
 #### Scenario: Un motivo fuera de la lista se rechaza aunque lo envíe el cliente — ROJO
 - GIVEN un Director Comercial y un ticket en `Por Facturar`
 - WHEN ejecuta `liberacion_sin_factura` con una fecha válida y un motivo que no es ninguna de las tres opciones
-- THEN `422` con un error que nombra el campo «Motivo», sin cambio de estado ni fila de traza
+- THEN `422` con el error `El motivo debe ser uno de: …` (diseño §4, que lista las tres opciones y no contiene la palabra
+  «Motivo» con mayúscula), sin cambio de estado ni fila de traza
 
 #### Scenario: La igualdad con la lista es exacta — ROJO
 - GIVEN un Director Comercial y un ticket en `Por Facturar`
@@ -399,10 +405,10 @@ demás guardas de `executeTransition` (IV-12 incluido).
 - WHEN `upsertTicket` procesa ese ticket con una fila de Zoho distinta
 - THEN motivo y fecha conservan el valor escrito por la aplicación
 
-#### Scenario: El esquema añade las dos columnas sin calificar y el recuento es 52 / 27 / 25 — GUARDIÁN
+#### Scenario: El esquema añade las dos columnas sin calificar y el recuento es 55 / 29 / 26 — GUARDIÁN
 - GIVEN `schema.sql` tras el cambio
 - WHEN el guardián de `migrate.test.ts` recorre las sentencias `ALTER TABLE`
-- THEN hay 52 en total, 27 de `DESK_TABLES` y 25 de `public`, y las dos nuevas van sin calificar al final del fichero;
+- THEN hay 55 en total, 29 calificadas y 26 sin calificar, y las dos nuevas van sin calificar al final del fichero;
   escribir en el fichero vigilado la misma sentencia calificada como `public.tickets` debe poner en rojo el guardián
   (regla de mutación 2)
 
@@ -442,6 +448,12 @@ demás guardas de `executeTransition` (IV-12 incluido).
 - WHEN un Director Comercial ejecuta otra vez `liberacion_sin_factura` sin motivo ni fecha
 - THEN `422` de presencia; y con valores nuevos válidos responde `200`, las columnas pasan a los valores nuevos y la traza
   tiene dos filas de `liberacion_sin_factura` con sus valores distintos
+
+#### Scenario: Una segunda liberación por otro motivo y sin texto deja el texto en null — ROJO
+- GIVEN un ticket liberado con el tercer motivo y un texto, devuelto a `Por Facturar` por `entrega_sin_factura`
+- WHEN un Director Comercial ejecuta otra vez `liberacion_sin_factura` con el primer motivo, una fecha válida y sin texto
+- THEN responde `200` y `tickets.custom_fields` lleva `null` en «Texto de la autorización», no el de la primera liberación;
+  la fila de traza de la primera conserva su texto (diseño D7)
 
 #### Scenario: El cliente no bloquea ni prellena los campos de la liberación en una segunda vez — PERSONA
 - GIVEN un ticket que ya trae motivo y fecha de una liberación anterior y vuelve a estar en `Por Facturar`
