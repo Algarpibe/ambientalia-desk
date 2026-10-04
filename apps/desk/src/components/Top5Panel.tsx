@@ -18,14 +18,14 @@ export function Top5Panel({ onVolver }: { onVolver: () => void }) {
   const { user } = useAuth()
   const { data, loading, error, reload } = useAsync<ClienteTop5[]>(() => listarTop5(), [])
   const puedeEditar = !!user && puedeFijarPrioridadTop5(user)
-  const [errores, setErrores] = useState<string[]>([])
+  const [errores, setErrores] = useState<string[]>([]); const [aviso, setAviso] = useState('')
   const [enviando, setEnviando] = useState(false)
   const lista = data ?? []
 
   async function mandar(clientId: string, cuerpo: { top5: boolean; prioridad: PrioridadAsignable | null }) {
-    setEnviando(true); setErrores([])
+    setEnviando(true); setErrores([]); setAviso('')
     try {
-      await fijarPrioridadDelCliente(clientId, cuerpo)
+      const r = await fijarPrioridadDelCliente(clientId, cuerpo); const n = r.ticketsCambiados ?? 0; if (n > 0) setAviso(`${n} ${n === 1 ? 'ticket abierto actualizado' : 'tickets abiertos actualizados'}`)
       reload()
     } catch (e) {
       setErrores(erroresDelServidor(e))
@@ -49,6 +49,7 @@ export function Top5Panel({ onVolver }: { onVolver: () => void }) {
             {errores.map((m) => <li key={m}>{m}</li>)}
           </ul>
         )}
+        {aviso && <div className="max-w-[820px] text-[12px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded p-2">{aviso}</div>}
         <section className="max-w-[820px] bg-white border border-slate-200 rounded-md p-5">
           <h2 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2 mb-3">
             Clientes Top 5{!error && !loading && ` · ${lista.length} ${lista.length === 1 ? 'cliente' : 'clientes'}`}

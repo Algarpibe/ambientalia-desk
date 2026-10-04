@@ -153,15 +153,15 @@ export const TRANSICION_REMISION_RETIRADA = { id: 'remision_retirada', name: 'Re
 /**
  * Si en este estado todavía tiene sentido ofrecer "Crear remisión".
  *
- * La remisión de entrada documenta que el equipo ENTRA, así que solo cabe mientras el ticket sigue en
- * la fase inicial. En `Remisión creada` la etapa ya está hecha, y de `Ingresado` en adelante el
- * equipo lleva tiempo dentro: ahí el botón solo servía para crear un documento fuera de sitio.
+ * Cabe en los tres orígenes de `habilitar_servicio`: la fase inicial, en sus dos nombres, y `Remisión
+ * creada`, donde sirve al ticket que quedó sin entrada vigente (la anularon, o era de salida); con
+ * una confirmada, `botonRemision` lo esconde. De `Ingresado` en adelante el equipo lleva tiempo
+ * dentro: ahí el botón solo servía para crear un documento fuera de sitio.
  *
- * Es una lista de lo PERMITIDO y no de lo prohibido: con la lista negra, cada estado nuevo del
- * Blueprint —hay 20— aparecería con el botón por omisión, y nadie se enteraría.
+ * Lista de lo PERMITIDO, no de lo prohibido: con la negra, cada estado nuevo aparecería con el botón.
  */
 export function puedeCrearRemisionDeEntrada(status: string): boolean {
-  return status === STATUS_OV_ASIGNADA || status === STATUS_TICKET_CREADO
+  return status === STATUS_OV_ASIGNADA || status === STATUS_TICKET_CREADO || status === STATUS_REMISION_CREADA
 }
 
 // Transiciones 2–32 del Blueprint (la 1 es creación de ticket, se maneja aparte); F1C-09 retiró tres.

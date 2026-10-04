@@ -67,9 +67,9 @@ copiaron a la rama y su sha256 es idéntico al medido.
 | Spec | Numstat | Qué entra |
 |---|---|---|
 | `hojas-vida` | +105 / −0 | RQ-HV-16, RQ-HV-17, RQ-HV-18 y RQ-HV-19 (14 escenarios), desde `openspec/specs/hojas-vida/spec.md:453` |
-| `tickets-core` | +176 / −0 | RQ-TC-30 a RQ-TC-34 (23 escenarios), desde `openspec/specs/tickets-core/spec.md:1452` |
+| `tickets-core` | +176 / −0 | RQ-TC-30 a RQ-TC-34 (23 escenarios), desde `openspec/specs/tickets-core/spec.md:1452` en `c557273` |
 | `transitions-st` | +53 / −5 | RQ-TS-32 (7 escenarios) en `openspec/specs/transitions-st/spec.md:1416`, y cinco filas de §3.8 editadas en sitio |
-| `zoho-sync` | +27 / −0 | RQ-ZS-16 (3 escenarios) en `openspec/specs/zoho-sync/spec.md:675` |
+| `zoho-sync` | +27 / −0 | RQ-ZS-16 (3 escenarios) en `openspec/specs/zoho-sync/spec.md:675` en `c557273` |
 | **Total** | **366** | 11 requisitos, 47 escenarios |
 
 **§3.8 de `transitions-st`** (lo pedía la delta en su apartado «Fuera de alcance — para el `archive-report`»): las guardas

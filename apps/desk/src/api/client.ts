@@ -710,9 +710,9 @@ export function contratoDelTicket(ticketId: string): Promise<TicketDeContrato> {
  */
 type PrioridadAsignable = import('@ambientalia/shared').PrioridadAsignable
 
-export interface PrioridadDelCliente { clientId: string; top5: boolean; prioridad: string | null; actualizadoPor: string | null; actualizadoAt: string | null }
+export interface PrioridadDelCliente { clientId: string; top5: boolean; prioridad: string | null; actualizadoPor: string | null; actualizadoAt: string | null; ticketsCambiados?: number }
 export interface ClienteTop5 extends PrioridadDelCliente { name: string }
-export interface AjusteDePrioridad { de: string | null; a: string; motivo: string; ajustadoPor: string; ajustadoAt: string }
+export interface AjusteDePrioridad { de: string | null; a: string | null; motivo: string; ajustadoPor: string; ajustadoAt: string; origen?: string | null }
 export interface PrioridadDelTicket { ticketId: string; prioridad: string | null; clientId: string | null; top5: boolean; prioridadTop5: string | null; ajustes: AjusteDePrioridad[] }
 
 export function listarTop5(): Promise<ClienteTop5[]> {
@@ -800,4 +800,9 @@ export async function fetchNovedadesRemision(): Promise<NovedadCatalogo[]> {
   const res = await fetch('/api/novedades-remision', { credentials: 'include' })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<NovedadCatalogo[]>
+}
+
+/** La lista de «Remisión creada» (RQ-VT-10): el servidor la ordena y calcula `enEstadoDesde`; el cliente la enseña tal cual. */
+export function fetchRemisionCreada(): Promise<Ticket[]> {
+  return fetch('/api/remision-creada', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
