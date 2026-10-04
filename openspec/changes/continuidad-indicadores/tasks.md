@@ -66,16 +66,16 @@ Chain strategy: no aplica (una rama, seis commits, fusión a `main` al cerrar ca
 
 ## Lote 4 — CSV y enlace en el cliente (RQ-KP-15, -18)
 
-- [ ] 4.1 **Alinear spec y diseño**: se corrige **`specs/kpis/spec.md`** RQ-KP-15 (R3: separador `;`, fin de línea CRLF **y BOM UTF-8 al principio**, con su escenario) y **`design.md`** D7 y §3.4 (el CSV es el formato largo de la spec: una fila por ticket e indicador, las 13 columnas de RQ-KP-15; se retira la descripción de cinco columnas por indicador).
-- [ ] 4.2 RED `apps/desk/server/util/csv.test.ts`: casos del diseño §9 (comillas duplicadas, salto de línea, `;`, `=`, `+`, `-`, `@`, `=A"`, número −228 sin apóstrofo, texto `-228` con apóstrofo, `null`), BOM al principio y CRLF entre filas.
-- [ ] 4.3 RED `apps/desk/server/routes/indicadores.test.ts` (al final): `formato=csv` → `text/csv; charset=utf-8`, `Content-Disposition`, cabecera exacta de 13 columnas, una fila por ticket e indicador. RED `apps/desk/src/lib/indicadoresUrl.test.ts`: sin periodo, con periodo, codificación. Confirmar el rojo.
-- [ ] 4.4 GREEN `apps/desk/server/util/csv.ts`, la salida CSV de la ruta y `apps/desk/src/lib/indicadoresUrl.ts` (`URLSearchParams`).
-- [ ] 4.5 GREEN `apps/desk/src/components/Analisis.tsx`: `import` y un `<a href={urlIndicadores('csv')} download>` «Descargar indicadores (CSV)» en la barra `:78-84`, visible si `user?.isAdmin`. Sin rojo previo: `.tsx` fuera de la red de pruebas por decisión de Gerencia (F0-00); no se propone jsdom. `apps/desk/src/api/client.ts` **sin diff** (R7).
-- [ ] 4.6 Mutaciones **M18**: quitar el apóstrofo de `=`, de `+`, de `-` y de `@` (una a una), quitar el duplicado de comillas, aplicar el apóstrofo a los números, quitar el BOM, cambiar CRLF por LF → una prueba roja por cada una (nombrarla).
-- [ ] 4.7 Barrido dirigido de citas a `Analisis.tsx` (el `import` desplaza líneas): `grep -rnoE "Analisis\.tsx:[0-9]+(-[0-9]+)?"` sin excluir `openspec/changes/archive/`; cada resultado contra el fichero, principio y final del rango por separado; reparar lo roto para que el detector dé 0. El barrido completo es de 5b.
-- [ ] 4.8 Cierre verde del lote.
-- [ ] 4.9 Medida; anotar la cifra.
-- [ ] 4.10 Commit: `feat(kpis): salida CSV con escapado y enlace de descarga para administradores (F1F-05, cierra: no)`; detector con salida 0.
+- [x] 4.1 **Alinear spec y diseño**: se corrige **`specs/kpis/spec.md`** RQ-KP-15 (R3: separador `;`, fin de línea CRLF **y BOM UTF-8 al principio**, con su escenario) y **`design.md`** D7 y §3.4 (el CSV es el formato largo de la spec: una fila por ticket e indicador, las 13 columnas de RQ-KP-15; se retira la descripción de cinco columnas por indicador).
+- [x] 4.2 RED `apps/desk/server/util/csv.test.ts`: casos del diseño §9 (comillas duplicadas, salto de línea, `;`, `=`, `+`, `-`, `@`, `=A"`, número −228 sin apóstrofo, texto `-228` con apóstrofo, `null`), BOM al principio y CRLF entre filas.
+- [x] 4.3 RED `apps/desk/server/routes/indicadores.test.ts` (al final): `formato=csv` → `text/csv; charset=utf-8`, `Content-Disposition`, cabecera exacta de 13 columnas, una fila por ticket e indicador. RED `apps/desk/src/lib/indicadoresUrl.test.ts`: sin periodo, con periodo, codificación. Confirmar el rojo.
+- [x] 4.4 GREEN `apps/desk/server/util/csv.ts`, la salida CSV de la ruta y `apps/desk/src/lib/indicadoresUrl.ts` (`URLSearchParams`).
+- [x] 4.5 GREEN `apps/desk/src/components/Analisis.tsx`: `import` y un `<a href={urlIndicadores('csv')} download>` «Descargar indicadores (CSV)» en la barra `:81-88`, visible si `user?.isAdmin`. Sin rojo previo: `.tsx` fuera de la red de pruebas por decisión de Gerencia (F0-00); no se propone jsdom. `apps/desk/src/api/client.ts` **sin diff** (R7).
+- [x] 4.6 Mutaciones **M18**: quitar el apóstrofo de `=`, de `+`, de `-` y de `@` (una a una), quitar el duplicado de comillas, aplicar el apóstrofo a los números, quitar el BOM, cambiar CRLF por LF → una prueba roja por cada una (nombrarla).
+- [x] 4.7 Barrido dirigido de citas a `Analisis.tsx` (el `import` desplaza líneas): `grep -rnoE "Analisis\.tsx:[0-9]+(-[0-9]+)?"` sin excluir `openspec/changes/archive/`; cada resultado contra el fichero, principio y final del rango por separado; reparar lo roto para que el detector dé 0. El barrido completo es de 5b.
+- [x] 4.8 Cierre verde del lote.
+- [x] 4.9 Medida; anotar la cifra.
+- [x] 4.10 Commit: `feat(kpis): salida CSV con escapado y enlace de descarga para administradores (F1F-05, cierra: no)`; detector con salida 0.
 
 ## Lote 5a — comparación (RQ-KP-16, -17)
 

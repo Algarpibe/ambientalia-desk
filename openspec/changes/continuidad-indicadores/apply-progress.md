@@ -133,3 +133,46 @@ K14 nace roja por módulo inexistente (como todo el fichero); su discriminación
 12. Las consultas van sin calificar el esquema, como `listarCierres` y `analisis.ts` (`search_path=desk,public`).
 
 **3.8 Cierre verde**: `npm test` 181 ficheros / 2744 pruebas verdes (2 omitidas), salida 0; `typecheck` 0; `build` 0; `lint` 165 avisos, 0 errores.
+
+## Lote 4 — CSV y enlace en el cliente (4.1 a 4.10). Partida `d25ecda`. Strict TDD.
+
+**4.1 Alinear.** Spec RQ-KP-15: BOM UTF-8 al principio y escenario «BOM y fin de línea» (R3). Diseño §3.4: formato largo de 13 columnas (se retira el de cinco columnas por indicador); §3.5 (`mostrarDescargaIndicadores`) y la cita de la barra a las líneas 81-88.
+
+**4.2-4.3 RED** (`npx vitest run` de los tres ficheros): `csv.test.ts` → `Cannot find module './csv'`; `indicadoresUrl.test.ts` → `Cannot find module './indicadoresUrl'`; `routes/indicadores.test.ts` → 4 rojas nuevas, p. ej. `expected 'application/json; charset=utf-8' to be 'text/csv; charset=utf-8'` y `expected [ Array(1) ] to have a length of 19 but got 1`. **4.4 GREEN:** `util/csv.ts` (`aCsv`), rama CSV de la ruta (después de sesión, administrador, validación y lectura: mismas guardas, mismo orden) e `indicadoresUrl.ts` → 49/49.
+
+**4.5** `Analisis.tsx`: +4 líneas (2 `import` en `:5-6`, `const { user } = useAuth()` en `:76`, el `<a download>` en la línea 83); sin rojo previo (`.tsx` fuera de la red, F0-00). `api/client.ts`: sin diff.
+
+**4.6 Mutaciones** (aplicadas, probadas, revertidas; `cmp` con la copia verde: iguales). Pruebas rojas con su primer nombre:
+
+| # | Mutación | Rojas | Primera roja |
+|---|---|---|---|
+| M18a/b/c/d | quitar `=` / `+` / `-` / `@` del apóstrofo | 5 / 1 / 3 / 1 | «texto "=1+1" … apóstrofo delante» / «"+57"» / «"-x"» y «`-5 casos`» / «"@a"» |
+| M18e | quitar tabulador y CR del apóstrofo | 2 | «texto "\tx"…» y «empieza por retorno de carro» |
+| M18f | no duplicar comillas | 4 | «comillas dobles: se duplican y la celda va entrecomillada» |
+| M18g | apóstrofo a los números negativos | 2 | «el NÚMERO −228 sale como número, sin apóstrofo» |
+| M18h | sin BOM | 5 | «cabeceras de descarga y cuerpo con BOM, CRLF…» |
+| M18i | LF en vez de CRLF | 25 | idem (y todas las de fila) |
+| M18j/k/l | no entrecomillar `;` / LF / CR | 1 / 1 / 2 | «separador `;` dentro de la celda…» / «salto de línea LF…» / «retorno de carro…» |
+| M18m | separador `,` | 5 | «cabecera exacta de 13 columnas» |
+| U1 | URL sin codificar | 1 | «codifica los caracteres especiales» |
+| U2 | valores vacíos entran | 1 | «valores vacíos no entran» |
+| U3 | URL absoluta | 6 | «sin periodo: sólo el formato» |
+| U4 / U5 | enlace para todos / para cualquier truthy | 4 / 2 | «usuario {"isAdmin":false} → false» |
+| R2 | sin `Content-Disposition` | 1 | «cabeceras de descarga y cuerpo…» |
+| R3 | cabecera sin `valor_zoho` | 2 | «cabecera exacta de 13 columnas» |
+| R1 | `Content-Type` sin charset | **0 (sobrevive)** | **equivalente:** Express añade `; charset=utf-8` a `text/*` al enviar una cadena; el valor final es el mismo, no hay cambio observable que probar |
+
+La posición de las guardas en la rama CSV la fijan las pruebas PG-1 a PG-3 del lote 3 (M1 a M4, ya reproducidas) más la nueva «PG-2 en CSV» (403 y no 400) y «las guardas son las mismas».
+
+**4.7 Barrido de `Analisis.tsx:N`** (`git grep` sobre todo el árbol, `openspec/changes/archive/` incluido): **3 citas**. (1) `docs/sdd/ENTRADA.md:1284`, línea 95 del componente, → la tarjeta «Cumplimiento promesa»; hoy está en `:99`. Es caso **B** («Medido el 2026-10-01 sobre `e27f9da`», frase fechada y anclada): se deja; además `ENTRADA.md` no se toca en este lote. (2) la baseline F0-00 (línea 137), línea 70 del componente, → `export function Analisis`, as-built fechado: caso **B**, se deja (hoy `:72`). (3) la cita del diseño §3.5 a la barra superior (líneas 78 a 84 en la partida); caso **A** en fichero vivo: reapuntada a las líneas 81 a 88 (cabecera 81, cierre 88), y la abreviada de `tasks.md` (4.5) igual. Además la cita de la baseline pasa a nombrar su revisión (`en d25ecda`): caso **B**, porque la línea 70 ya no es la declaración. Reparadas: 3. Detector tras el commit: en el informe final.
+
+**4.8 Cierre verde**: ver informe final del lote (test, typecheck, build, lint).
+
+## Desviaciones (lote 4)
+13. `X-Content-Type-Options: nosniff` en la respuesta CSV (molde de `certificadoFabrica.ts`); el diseño sólo nombraba tipo y disposición.
+14. `fuente_hitos` se escribe `hito: fuente` (la spec dice «cada hito con su fuente» sin fijar el separador interno); `indicador` = primer nombre de `NOMBRES_ZOHO` (la spec no fija el texto).
+15. Cada fila, la cabecera incluida, termina en CRLF (también la última), no sólo «entre filas».
+16. `mostrarDescargaIndicadores` es un segundo export de `indicadoresUrl.ts` (el diseño sólo nombraba `urlIndicadores`): la decisión de mostrar el enlace es la otra lógica decidible del cliente.
+
+## Medida (4.9)
+`git diff --shortstat --no-renames d25ecda` (antes de esta nota): 138 inserciones y 18 borrados en 7 ficheros; sin trackear: csv.ts 21, csv.test.ts 36, indicadoresUrl.ts 18, indicadoresUrl.test.ts 20 = 95. Total 251 frente a la válvula de 720. Sin binarios.

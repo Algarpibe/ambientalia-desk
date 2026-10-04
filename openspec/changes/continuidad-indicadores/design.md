@@ -158,9 +158,7 @@ Bogotá. Las columnas `date` se normalizan con `comoDiaCivil` (`apps/desk/server
 `apps/desk/server/util/csv.ts`: `export function aCsv(cabeceras: string[], filas: Array<Array<string | number | null>>): string`.
 
 `apps/desk/server/routes/indicadores.ts`: `registerIndicadoresRoutes(app, { db })`, una ruta
-`GET /api/indicadores`. JSON (RQ-KP-13, lote 3): `{ periodo: { desde, hasta }, tickets, comparacion }`; por ticket `ticketId`, `codigoServicio`, `indicadores`; por indicador `columna`, `valor` (`null` si `sin_dato`), `unidad`, `estado`, `motivo` (sólo en `sin_dato`), `hitos` como lista `{ nombre, dia, fuente }`, `reentrante`, `sinFinalizar` (sólo 50·53 y 54), `formulaZoho` y `valorZoho` (`null` si no hay); `orden_invertido` queda en el dominio y no se serializa; `comparacion` es `null` hasta el lote 5a. CSV: una fila por ticket; por cada
-indicador las columnas `NN letra`, `NN variante Zoho`, `NN valor Zoho`, `NN fuente`, `NN motivo`; más
-`reentrante` y `marcas`; cabeceras `Content-Type: text/csv; charset=utf-8` y
+`GET /api/indicadores`. JSON (RQ-KP-13, lote 3): `{ periodo: { desde, hasta }, tickets, comparacion }`; por ticket `ticketId`, `codigoServicio`, `indicadores`; por indicador `columna`, `valor` (`null` si `sin_dato`), `unidad`, `estado`, `motivo` (sólo en `sin_dato`), `hitos` como lista `{ nombre, dia, fuente }`, `reentrante`, `sinFinalizar` (sólo 50·53 y 54), `formulaZoho` y `valorZoho` (`null` si no hay); `orden_invertido` queda en el dominio y no se serializa; `comparacion` es `null` hasta el lote 5a. CSV (RQ-KP-15, lote 4): formato LARGO, una cabecera y una fila por ticket e indicador, con las 13 columnas de la spec (`indicador` = primer nombre de `NOMBRES_ZOHO`; `fuente_hitos` = `hito: fuente` separados por `|`; `reentrante` y `sin_finalizar` como `true`/`false`, vacío si no aplica); cabeceras `Content-Type: text/csv; charset=utf-8`, `X-Content-Type-Options: nosniff` y
 `Content-Disposition: attachment; filename="indicadores-<hoy>.csv"` (molde
 `apps/desk/server/routes/certificadoFabrica.ts:54`).
 
@@ -238,8 +236,8 @@ El cliente no calcula, no filtra y no formatea ningún indicador.
 
 ## 8. Cliente
 
-- `apps/desk/src/lib/indicadoresUrl.ts` (nuevo, con `indicadoresUrl.test.ts`): `urlIndicadores(formato: 'json' | 'csv', periodo?: { desde?: string; hasta?: string }): string`, con `URLSearchParams`. Es lo único decidible y va en `.ts`, dentro del `include` de pruebas.
-- `apps/desk/src/components/Analisis.tsx`: en la barra superior (`apps/desk/src/components/Analisis.tsx:78-84`), un `<a href={urlIndicadores('csv')} download>` con el texto **«Descargar indicadores (CSV)»** y `title` «Tabla de los nueve indicadores por ticket», visible si `user?.isAdmin`. El `.tsx` sólo pinta.
+- `apps/desk/src/lib/indicadoresUrl.ts` (nuevo, con `indicadoresUrl.test.ts`): `urlIndicadores(formato: 'json' | 'csv', periodo?: { desde?: string; hasta?: string }): string`, con `URLSearchParams`, y `mostrarDescargaIndicadores(user)` (sólo `isAdmin === true`; comodidad, lo impone el 403). Es lo único decidible y va en `.ts`, dentro del `include` de pruebas.
+- `apps/desk/src/components/Analisis.tsx`: en la barra superior (`apps/desk/src/components/Analisis.tsx:81-88`, tras el lote 4), un `<a href={urlIndicadores('csv')} download>` con el texto **«Descargar indicadores (CSV)»** y `title` «Tabla de los nueve indicadores por ticket», visible si `user?.isAdmin`. El `.tsx` sólo pinta.
 - `apps/desk/src/api/client.ts`: **no se toca** (D8).
 
 ## 9. Pruebas

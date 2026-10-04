@@ -400,13 +400,18 @@ no sea de lectura, ni llamar a Zoho, ni leer ningún fichero.
 ### Requirement: RQ-KP-15 · CSV con escapado
 
 Con `formato=csv` la ruta **SHALL** responder `text/csv; charset=utf-8` como descarga. El CSV **SHALL** ir
-en formato largo (SP-7): una cabecera y una fila por ticket e indicador, separador `;`, fin de línea CRLF,
+en formato largo (SP-7): una cabecera y una fila por ticket e indicador, separador `;`, fin de línea CRLF y una marca de orden de bytes UTF-8 (BOM) al principio, para que Excel en español lo abra sin asistente,
 con estas columnas en este orden: `ticket_id;codigo_servicio;columna;indicador;unidad;valor;estado;motivo;fuente_hitos;reentrante;sin_finalizar;formula_zoho;valor_zoho`.
 `fuente_hitos` lleva cada hito con su fuente, separados por `|`. Reglas de celda, en este orden:
 1. Un **número** (`valor` numérico, incluidos los negativos del 47, 57, 58 y 59) se emite como número, sin
    apóstrofo.
 2. Una celda de **texto** que empiece por `=`, `+`, `-` o `@` **SHALL** llevar un apóstrofo delante.
 3. Una celda que contenga `;`, `"`, CR o LF **SHALL** ir entre comillas, con las comillas internas duplicadas.
+
+#### Scenario: BOM y fin de línea
+- GIVEN cualquier CSV generado
+- WHEN se leen sus primeros bytes y sus saltos de fila
+- THEN empieza por el BOM UTF-8 y cada fila, la cabecera incluida, termina en CRLF
 
 #### Scenario: Negativo como número
 - GIVEN un 57 de `-228`

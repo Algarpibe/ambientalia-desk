@@ -81,3 +81,55 @@ describe('RQ-KP-13 · la forma del JSON', () => {
     expect('orden_invertido' in i59 || 'marcas' in i59).toBe(false)
   })
 })
+
+describe('RQ-KP-15 · formato=csv', () => {
+  const CABECERA = 'ticket_id;codigo_servicio;columna;indicador;unidad;valor;estado;motivo;fuente_hitos;reentrante;sin_finalizar;formula_zoho;valor_zoho'
+  const pedir = async (q: Record<string, string> = { formato: 'csv' }) =>
+    request(appWith().app).get(RUTA).query(q).set('Cookie', await adminCookie())
+  it('cabeceras de descarga y cuerpo con BOM, CRLF y la cabecera exacta de 13 columnas', async () => {
+    await k2()
+    const res = await pedir()
+    expect(res.status).toBe(200)
+    expect(res.headers['content-type']).toBe('text/csv; charset=utf-8')
+    expect(res.headers['content-disposition']).toMatch(/^attachment; filename="indicadores-\d{4}-\d{2}-\d{2}\.csv"$/)
+    const cuerpo = res.text
+    expect(cuerpo.startsWith('﻿')).toBe(true)
+    const lineas = cuerpo.slice(1).split('\r\n')
+    expect(lineas[0]).toBe(CABECERA)
+    expect(lineas[lineas.length - 1]).toBe('')
+  })
+  it('una fila por ticket e indicador: 9 por ticket, en el orden de RQ-KP-01', async () => {
+    await k2()
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio) VALUES ('b', 2, 's', 'x', '2026-10-03T15:00:00Z', 'ST-2')")
+    const lineas = ((await pedir()).text).slice(1).split('\r\n').filter((l) => l !== '')
+    expect(lineas).toHaveLength(1 + 2 * 9)
+    expect(lineas.slice(1, 10).map((l) => l.split(';')[2])).toEqual(['47', '49', '50_53', '51', '54', '55', '57', '58', '59'])
+    expect(lineas[3]).toMatch(/^a;ST-1;50_53;[^;]+;dias_habiles;4;calculado;;/)
+    expect(lineas[3]!.split(';')[11]).toBe('5')
+    expect(lineas[10]).toMatch(/^b;ST-2;47;/)
+  })
+  it('una celda de texto con fórmula sale neutralizada y un negativo sale como número', async () => {
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time, codigo_servicio, fecha_cotizacion, fecha_orden_venta) VALUES ('c', 3, 's', 'x', '2026-12-01T15:00:00Z', '=HYPERLINK(\"x\")', '2026-12-10', '2026-12-09')")
+    const lineas = ((await pedir()).text).slice(1).split('\r\n')
+    expect(lineas[1]).toMatch(/^c;"'=HYPERLINK\(""x""\)";47;/)
+    expect(lineas.find((l) => l.split(';')[2] === '59')).toMatch(/;dias_naturales;-1;calculado;/)
+  })
+  it('sin tickets: sólo la cabecera', async () => {
+    expect(((await pedir()).text).slice(1)).toBe(`${CABECERA}\r\n`)
+  })
+  it('las guardas son las mismas: sin sesión 401, sin administrador 403 y parámetros inválidos 400, sin consulta de datos', async () => {
+    const { app, datos } = conEspia()
+    expect((await request(app).get(RUTA).query({ formato: 'csv' })).status).toBe(401)
+    expect((await request(app).get(RUTA).query({ formato: 'csv' }).set('Cookie', await userCookie(['Comercial']))).status).toBe(403)
+    expect((await request(app).get(RUTA).query({ formato: 'csv', desde: 'basura' }).set('Cookie', await adminCookie())).status).toBe(400)
+    expect(datos()).toEqual([])
+  })
+  it('PG-2 en CSV: un usuario sin administrador con parámetros inválidos recibe 403, no 400', async () => {
+    const res = await request(appWith().app).get(RUTA).query({ formato: 'csv', desde: 'basura' }).set('Cookie', await userCookie(['Comercial']))
+    expect(res.status).toBe(403)
+  })
+  it('sin formato la respuesta sigue siendo JSON', async () => {
+    const res = await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())
+    expect(res.headers['content-type']).toMatch(/application\/json/)
+  })
+})

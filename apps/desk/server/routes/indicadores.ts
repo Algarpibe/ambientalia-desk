@@ -1,8 +1,9 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Indicador, Valor } from '@ambientalia/shared'
+import { diaEnZona, NOMBRES_ZOHO, type Indicador, type Valor } from '@ambientalia/shared'
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
+import { aCsv } from '../util/csv'
 import { validarPeriodo, leerEntradasIndicadores, tablaIndicadores, type FilaIndicadores } from '../indicadores'
 
 const valorDe = <T,>(v: Valor<T>): T | null => (v.tipo === 'valor' ? v.valor : null)
@@ -21,6 +22,19 @@ function serializar(i: Indicador) {
 }
 const serializarFila = (f: FilaIndicadores) => ({ ticketId: f.ticketId, codigoServicio: f.codigoServicio, indicadores: f.indicadores.map(serializar) })
 
+/** RQ-KP-15: formato largo, una fila por ticket e indicador. */
+const CABECERAS_CSV = ['ticket_id', 'codigo_servicio', 'columna', 'indicador', 'unidad', 'valor', 'estado', 'motivo', 'fuente_hitos', 'reentrante', 'sin_finalizar', 'formula_zoho', 'valor_zoho']
+const siNo = (b: boolean | null): string => (b === null ? '' : b ? 'true' : 'false')
+function filasCsv(f: FilaIndicadores): Array<Array<string | number | null>> {
+  return f.indicadores.map((i) => [
+    f.ticketId, f.codigoServicio, i.columna, NOMBRES_ZOHO[i.columna][0] ?? i.columna, i.unidad,
+    valorDe(i.valor), i.valor.tipo === 'valor' ? 'calculado' : 'sin_dato', i.valor.tipo === 'sin_dato' ? i.valor.motivo : null,
+    Object.entries(i.hitos).map(([nombre, h]) => `${nombre}: ${h.fuente}`).join('|'),
+    siNo(i.reentrante), i.columna === '50_53' || i.columna === '54' ? siNo(i.marcas.includes('sin_finalizar')) : '',
+    valorDe(i.formulaZoho), i.valorZoho,
+  ])
+}
+
 export function registerIndicadoresRoutes(app: Express, deps: { db: Queryable }): void {
   const { db } = deps
   // Escalera: sesión (401) < administrador (403) < parámetros (400) < lectura. Molde de `analisis.ts`.
@@ -28,7 +42,14 @@ export function registerIndicadoresRoutes(app: Express, deps: { db: Queryable })
     const p = validarPeriodo(req.query)
     if (!p.ok) { res.status(400).json({ error: p.error }); return }
     const filas = tablaIndicadores(await leerEntradasIndicadores(db, p))
-    // `comparacion` llega con el lote 5a; hasta entonces `null`, sin porcentajes inventados. `formato=csv` es del lote 4.
+    if (p.formato === 'csv') {
+      res.set('Content-Type', 'text/csv; charset=utf-8')
+      res.set('X-Content-Type-Options', 'nosniff')
+      res.set('Content-Disposition', `attachment; filename="indicadores-${diaEnZona(new Date()) ?? 'hoy'}.csv"`)
+      res.send(aCsv(CABECERAS_CSV, filas.flatMap(filasCsv)))
+      return
+    }
+    // `comparacion` llega con el lote 5a; hasta entonces `null`, sin porcentajes inventados.
     res.json({ periodo: { desde: p.desde, hasta: p.hasta }, tickets: filas.map(serializarFila), comparacion: null })
   }))
 }
