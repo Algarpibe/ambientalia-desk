@@ -13,10 +13,10 @@ describe('botonRemision', () => {
   })
 
   // La remisión de entrada documenta que el equipo ENTRA: pasada esa fase, crear una sería fabricar
-  // un documento fuera de sitio. `Remisión creada` ya la tiene hecha.
+  // un documento fuera de sitio. (`Remisión creada` sin entrada vigente es la excepción: ver más abajo.)
   it('fuera de la fase inicial no se ofrece', () => {
     expect(botonRemision('Ingresado', []).visible).toBe(false)
-    expect(botonRemision(STATUS_REMISION_CREADA, []).visible).toBe(false)
+    expect(botonRemision('Rev./Diagnostico', []).visible).toBe(false)
   })
 
   /**
@@ -64,5 +64,39 @@ describe('botonRemision', () => {
 describe('botonRemision: una vigente en error no cuenta como confirmada', () => {
   it('con una remisión en error sigue ofreciendo crear otra', () => {
     expect(botonRemision(STATUS_TICKET_CREADO, [R({ estado: 'error' })])).toEqual({ visible: true, texto: 'Crear remisión', pendienteId: null })
+  })
+})
+
+// F1B-03 (remision-creada-sin-salida): en `Remisión creada` el botón sirve al ticket que quedó sin entrada vigente.
+describe('botonRemision: Remisión creada sin entrada vigente', () => {
+  const ofrece = { visible: true, texto: 'Crear remisión', pendienteId: null }
+  it('con la lista vacía ofrece crear una', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, [])).toEqual(ofrece)
+  })
+  it('con sólo una anulada ofrece crear una', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, [R({ estado: 'ok', anuladaAt: '2026-08-11T10:00:00Z' })])).toEqual(ofrece)
+  })
+  it('con sólo una confirmada de salida ofrece crear una (no es de entrada)', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, [R({ tipo: 'salida', estado: 'ok' })])).toEqual(ofrece)
+  })
+  it('con una pendiente se reetiqueta y lleva a la que hay', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, [R({ id: 'r7' })])).toEqual({ visible: true, texto: 'Remisión pendiente de envío', pendienteId: 'r7' })
+  })
+  it('con sólo una fallida ofrece crear otra', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, [R({ estado: 'error' })])).toEqual(ofrece)
+  })
+  // Caracterización (nacen verdes): el ticket sano no ofrece nada.
+  it('con una confirmada de entrada no se ofrece (ok y ok_con_avisos)', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, [R({ estado: 'ok' })]).visible).toBe(false)
+    expect(botonRemision(STATUS_REMISION_CREADA, [R({ estado: 'ok_con_avisos' })]).visible).toBe(false)
+  })
+  // Caracterización con rojo intermedio: mientras las remisiones cargan (`null`) no se ofrece, o parpadearía en un ticket sano.
+  it('mientras las remisiones no han cargado (null) no se ofrece', () => {
+    expect(botonRemision(STATUS_REMISION_CREADA, null).visible).toBe(false)
+  })
+  // Caracterización: en los dos orígenes de la fase inicial `null` sigue tratándose como lista vacía.
+  it('null en la fase inicial sigue ofreciendo crear', () => {
+    expect(botonRemision(STATUS_OV_ASIGNADA, null)).toEqual(ofrece)
+    expect(botonRemision(STATUS_TICKET_CREADO, null)).toEqual(ofrece)
   })
 })

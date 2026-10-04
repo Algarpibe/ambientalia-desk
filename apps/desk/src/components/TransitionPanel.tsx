@@ -15,9 +15,9 @@ import { puedeEjecutarTransicion, puedeFijarPrioridadTop5, motivoAltaPendiente }
  * moviéndose, pero más tarde y por otra vía — cuando n8n confirma el documento, el servidor lo lleva
  * a `Remisión creada` (ver `server/db/estadoPorRemision.ts`).
  *
- * Y el botón solo se ofrece mientras el ticket sigue en la fase inicial (`puedeCrearRemisionDeEntrada`):
- * la remisión de entrada documenta que el equipo ENTRA, así que a partir de `Ingresado` crear una
- * sería fabricar un documento fuera de sitio.
+ * Y el botón solo se ofrece en los tres orígenes de `habilitar_servicio` (`puedeCrearRemisionDeEntrada`): la
+ * fase inicial y `Remisión creada` sin entrada vigente; a partir de `Ingresado` crear una remisión de
+ * entrada sería fabricar un documento fuera de sitio. Con una confirmada, `botonRemision` lo esconde.
  */
 /**
  * Un dato que el ticket YA trae no se vuelve a pedir: se enseña bloqueado.

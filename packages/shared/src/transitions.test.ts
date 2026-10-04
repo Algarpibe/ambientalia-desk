@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   TRANSITIONS, transitionsForStatus, transitionById, puedeCrearRemisionDeEntrada, CLAVE_DERIVACION,
   STATUS_OV_ASIGNADA, STATUS_TICKET_CREADO, STATUS_REMISION_CREADA,
-} from './transitions'
+} from './transitions'; import { ESTADOS } from './estados'
 
 describe('transitions', () => {
   it('transitionsForStatus filtra por estado de origen real', () => {
@@ -92,14 +92,15 @@ describe('transitions', () => {
     })
   })
 
-  // "Crear remisión" solo cabe mientras el equipo todavía no ha entrado. Se comprueba la lista de
-  // estados y no solo un par: es una lista BLANCA a propósito, porque con una negra cada estado nuevo
-  // del Blueprint aparecería con el botón por omisión.
-  it('crear remisión solo se ofrece en la fase inicial, en ningún estado posterior', () => {
+  // "Crear remisión" cabe en los tres orígenes de `habilitar_servicio`: las dos formas de la fase inicial y
+  // `Remisión creada`, donde sirve al ticket que quedó sin entrada vigente. Se comprueba la lista de estados
+  // y no solo un par: es una lista BLANCA a propósito, porque con una negra cada estado nuevo del Blueprint
+  // aparecería con el botón por omisión.
+  it('crear remisión se ofrece en los tres orígenes de habilitar servicio, en ningún estado posterior', () => {
     expect(puedeCrearRemisionDeEntrada(STATUS_OV_ASIGNADA)).toBe(true)
     expect(puedeCrearRemisionDeEntrada(STATUS_TICKET_CREADO)).toBe(true)
-    // Ya se creó: la etapa está hecha.
-    expect(puedeCrearRemisionDeEntrada(STATUS_REMISION_CREADA)).toBe(false)
+    // Sin entrada vigente, de aquí sale el ticket: antes quedaba sin salida.
+    expect(puedeCrearRemisionDeEntrada(STATUS_REMISION_CREADA)).toBe(true)
     // Y de aquí en adelante el equipo lleva tiempo dentro. Se recorre TODO el resto del Blueprint.
     const posteriores = [...new Set(TRANSITIONS.map((t) => t.to))]
       .filter((s) => s !== STATUS_OV_ASIGNADA && s !== STATUS_TICKET_CREADO)
@@ -123,5 +124,19 @@ describe('derivación por defecto del catálogo', () => {
     const propone = TRANSITIONS.filter((t) => t.fields.some((f) => f.key === CLAVE_DERIVACION && f.porDefecto))
     expect(propone).toHaveLength(5)
     expect(TRANSITIONS.length - propone.length).toBe(26)
+  })
+})
+
+// F1B-03 (remision-creada-sin-salida): el predicado queda atado a los orígenes de `habilitar_servicio`; se recorre el catálogo, no una lista a mano.
+describe('puedeCrearRemisionDeEntrada: atado a los orígenes de habilitar_servicio', () => {
+  const origenes: string[] = transitionById('habilitar_servicio')!.from
+  for (const estado of ESTADOS) {
+    const debe = origenes.includes(estado)
+    it(`${estado}: ${debe ? 'ofrece' : 'no ofrece'} crear remisión`, () => {
+      expect(puedeCrearRemisionDeEntrada(estado), `${estado} ${debe ? 'es origen de habilitar_servicio' : 'no es origen'}`).toBe(debe)
+    })
+  }
+  it('cada origen de habilitar_servicio es un estado del registro', () => {
+    for (const o of origenes) expect(ESTADOS as string[], `${o} no está en ESTADOS`).toContain(o)
   })
 })
