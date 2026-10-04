@@ -118,7 +118,7 @@ Archivos: `schema.sql` (+3 al final), `repo.ts` (0 netas), `migrate.test.ts`, `r
   SALIDA de cada uno (`${PIPESTATUS[0]}` si se canaliza).
 - [x] L1.19 Medida del intento: `git diff --shortstat --no-renames <partida>` + `wc -l` de lo nuevo sin trackear;
   registrarla. Binarios, aparte. Si supera 720, parar.
-- [ ] L1.20 **FIN DE L1.** Settle y fusión a `main` antes de abrir L2a (sin rebasar con el intento abierto).
+- (fuera del recuento, regla del ciclo 1) L1.20 **FIN DE L1.** Settle y fusión a `main` antes de abrir L2a (sin rebasar con el intento abierto).
 
 ---
 
@@ -201,7 +201,7 @@ Archivos: `schema.sql` (+4), `migrate.test.ts` (0), `shared/prioridadPropagada.t
 - [x] L2a.26 **CIERRE L2a:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA.
 - [x] L2a.27 Medida: `git diff --shortstat --no-renames <partida L2a>` + `wc -l` de lo nuevo sin trackear. Si pasa de
   720, parar y consultar.
-- [ ] L2a.28 **FIN DE L2a.** Settle y fusión a `main`.
+- (fuera del recuento, regla del ciclo 1) L2a.28 **FIN DE L2a.** Settle y fusión a `main`.
 
 ---
 
@@ -218,7 +218,7 @@ Archivos: `schema.sql` (+4), `migrate.test.ts` (0), `shared/prioridadPropagada.t
   `enTransaccion`. Debe caer la atómica con `pool:INSERT`. Anotar el mensaje. REVERTIR y confirmar con `git diff`.
 - [x] L2abis.6 Regla 13: nada nuevo (sólo pruebas); anotarlo.
 - [x] L2abis.7 **CIERRE L2a-bis:** `npm test`, `npm run typecheck`, `npm run lint`, con CÓDIGO DE SALIDA; medida del intento.
-- [ ] L2abis.8 **FIN DE L2a-bis.** Settle y fusión a `main`.
+- (fuera del recuento, regla del ciclo 1) L2abis.8 **FIN DE L2a-bis.** Settle y fusión a `main`.
 
 ---
 
@@ -271,7 +271,7 @@ Archivos: `prioridadPropagada.ts` + prueba, `prioridadCliente.ts`, `services/equ
 - [x] L2b.16 `apply-progress.md`: la traza al nacer la escribe el servidor (`equipoNuevo.ts:90`); el cliente sólo enseña
   el recuento y el origen.
 - [x] L2b.17 **CIERRE L2b:** `npm test`, `npm run typecheck`, `npm run lint`, con CÓDIGO DE SALIDA; medida del intento.
-- [ ] L2b.18 **FIN DE L2b.** Settle y fusión a `main`.
+- (fuera del recuento, regla del ciclo 1) L2b.18 **FIN DE L2b.** Settle y fusión a `main`.
 
 ---
 
@@ -346,7 +346,7 @@ Archivos: `shared/listaPorEntrada.ts` + prueba (nuevos), `shared/index.ts` (+1),
   sin prueba por decisión de Gerencia). Si pasa de 720, parar.
 - [x] L3.24 `git diff --numstat` global: `repo.ts`, `boardView.ts`, `ticketService.ts`, `equipoNuevo.ts`, `App.tsx`,
   `Sidebar.tsx` con inserciones = borrados (cero netas acumuladas).
-- [ ] L3.25 **FIN DE L3.** Settle y fusión a `main`.
+- (fuera del recuento, regla del ciclo 1) L3.25 **FIN DE L3.** Settle y fusión a `main`.
 
 ---
 
@@ -367,6 +367,13 @@ Archivos: `shared/listaPorEntrada.ts` + prueba (nuevos), `shared/index.ts` (+1),
 
 Condición de despliegue (dato, no tarea): los Top 5 marcados antes del despliegue no se propagan solos; se propaga al
 volver a guardarlos. Sin relleno, sin escritura sobre datos de producción.
+
+**Las cinco líneas «FIN DE Lx. Settle y fusión a `main`» (L1.20, L2a.28, L2abis.8, L2b.18, L3.25) también están fuera
+del recuento** (2026-10-04, antes del verify). Comprobado antes de sacarlas: el asiento de cada lote ESTÁ hecho —los
+cuatro intentos constan como `passed` en el registro (248, 578, 455 y 480 líneas)— y lo único que les queda es la
+fusión a `main`, que no es trabajo de la tanda: la hace el orquestador sólo cuando el analista da la rama por
+verificada, una vez archivado el cambio. **Archivar este cambio no da la fusión por hecha.** Dueño: el analista
+(verificación) y el orquestador (fusión autorizada). Dónde queda escrito: aquí y en el `archive-report.md`.
 
 ---
 
