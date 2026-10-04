@@ -191,3 +191,93 @@ El servidor decide `aplicar` (`true`/`false`, otro valor `400`), `corte`, la neg
 Códigos de salida REALES: `npm test` **0** (210 ficheros pasan y 2 saltados; 3281 pruebas pasan y 7 saltadas; sin fallo de worker, corrido dos veces), `npm run typecheck` **0**, `npm run lint -- --max-warnings 165` **0** (165 avisos, 0 errores: no se añade ninguno). El detector de citas (`cli.ts --sha HEAD`) NO se corrió: es del orquestador (2.32 sin marcar).
 
 Medida (`git diff --shortstat --no-renames d2e421f`, antes de esta sección): 136 inserciones y 33 borrados en 4 ficheros seguidos (`admin.ts` +21; `tasks.md` 32 casillas = 32+32; `design.md` 1+1; `apply-progress.md` el resto) más `wc -l` de lo nuevo sin trackear: 177 + 95 + 78 + 119 = 469. **Total 644 con esta sección (142 + 33 + 469), por debajo de 720.**
+
+## Lote 3 — procedimiento `.sql`, su guardián y bloque documental
+
+Partida del lote: `b686bffa4a4f3fbb902d5a775658b0e2b7a9ff6b` (`git rev-parse HEAD`; intento abierto, token indicado por el orquestador). Moldes leídos: `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:57-65` y `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts:29-34`. Tareas 3.1 a 3.15 y 3.17 hechas; **3.16 queda sin marcar** (el detector de citas lo corre el orquestador). No se tocó producción ni `main`, y no se asentó nada.
+
+### Rojo (3.5), literal
+
+`npx vitest run apps/desk/server/db/migracionTicketsF1F01.test.ts` con la prueba escrita y sin `.sql`: 9 de 9 caen con `ENOENT: no such file or directory, open '…/docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql'`. Verde (3.7): `Tests 9 passed (9)`.
+
+Un primer verde falló por dos errores míos, corregidos antes de dar nada por bueno: el recuento de migrables del fixture (7, no 8: el gobernado y el cerrado quedan fuera) y un alias `AS tickets` que la prueba «ninguna tabla desnuda» cazó (renombrado a `cantidad`).
+
+### Qué prueba el guardián (`apps/desk/server/db/migracionTicketsF1F01.test.ts`)
+
+El marcador lo escribe el EJECUTOR real (`apps/desk/server/db/migracionTicketsAbiertos.ts`), importado por ruta relativa, sobre pg-mem con el esquema `desk` derivado de `schema.sql`; un envoltorio califica `tickets` y `ticket_transitions` con `desk.` porque el ejecutor corre con el `search_path` de la app y el `.sql`, no. Sembrado: dos «Entregado» (uno con `status_type` `Open` y `closed_time`, otro con `status_type` NULL), tres «Pendiente» (dos de servicio, uno de soporte remoto), dos «En Proceso» de identidad, un gobernado y un cerrado; tras migrar, la «app» mueve dos (un «Pendiente» de servicio y una identidad) y se corre el texto de la reversión.
+(a) restaura `status`, `status_type` y `managed_by_app` y deja `closed_time` y `modified_time` intactos; (b) borra sólo los siete marcadores restaurables y conserva los dos con transición posterior; (c) el `SELECT` del procedimiento lista esos dos; (d) una reversión repetida no cambia nada; (e) las lecturas activas sólo leen; (f) toda tabla calificada y ninguna desnuda; (g) un único `BEGIN`/`COMMIT` y nada que escriba fuera de `-- REV `; (h) una sentencia por regla que cambia el estado (las reglas se DERIVAN de `equivalenciaDeEstado`, no de una lista copiada) más una de identidad que sólo toca `managed_by_app`; (i) sin `closed_time`/`modified_time` ni secretos.
+
+### Lo que se probó y lo que no (pg-mem)
+
+- **La forma combinada SÍ corre en pg-mem:** `"values"->>'clave'` en el `SET` y en el `WHERE` junto con `id IN (SELECT max(id) … GROUP BY ticket_id)` y `UPDATE … FROM`. **Lo único que pg-mem rechazó** fue un alias en el objetivo del `UPDATE` (`UPDATE desk.tickets t … WHERE m.ticket_id = t.id` da `Unknown alias "tickets"`; medido con seis formas en un fichero provisional, ya retirado). La forma sin alias, con la columna como `desk.tickets.id`, corre y es PostgreSQL válido. No se debilitó la sentencia: se cambió el alias por el nombre calificado.
+- **Sigue sin probarse (hipótesis):** que PostgreSQL de producción acepte las mismas sentencias con el mismo resultado (no hay acceso; la primera lectura real es la de la persona); que el envoltorio de calificación `desk.` reproduzca el `search_path` real; el comportamiento transaccional (pg-mem no revierte de verdad; `BEGIN`/`COMMIT` se fijan por lectura estática). La cabecera del `.sql` lo dice como «Hipótesis».
+- La transición «posterior» del fixture (`transition_id = 'x'`) es sintética; los marcadores son los del ejecutor.
+
+### Mutaciones de la regla de mutación 2, sobre el FICHERO VIGILADO (reproducibles; se restauró el `.sql` tras cada una, `diff` limpio)
+
+Prueba: `npx vitest run apps/desk/server/db/migracionTicketsF1F01.test.ts`. S = `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`.
+
+| # | Edición exacta sobre S | Cae |
+|---|---|---|
+| M1 (una regla sin reversión) | Borrar las líneas 79-83 (la sentencia `-- REV UPDATE …` de `pendiente-servicio-a-en-proceso`) | 2: (a) y (h) «una sentencia de reversión por cada regla que cambia el estado» |
+| M2 (sentencia sin calificar) | Añadir al final la línea `UPDATE tickets SET status = 'x';` | 7: (a) a (g), entre ellas (f) «toda tabla va calificada…» y (g) «nada que escriba fuera del prefijo» |
+| M3a (segundo `COMMIT`) | Tras `-- REV COMMIT;` añadir otra línea `-- REV COMMIT;` | 1: (g) «un único BEGIN y un único COMMIT» |
+| M3b (sin prefijo) | `-- REV BEGIN;` → `BEGIN;` | 2: (e) «las lecturas activas sólo leen» y (g) |
+| M4 (no restaura `status_type`) | En la línea 74 quitar `status_type = m."values"->>'status_type_previo',` | 1: (a) «restaura status, status_type y managed_by_app» |
+
+Ninguna equivalente. M1 cae por la derivación de reglas desde el núcleo, no por una lista fija.
+
+### Para la bandeja — lista ÚNICA, «a numerar por el orquestador desde E-207»
+
+Once preguntas, sin número de bandeja. Fusionadas: la que halló el diseño (informe de contrato) y la B1 del lote 2 son la misma (N7); B2 a B5 del lote 2 son N8 a N11. Destino por R-3: una fila del §5, un punto abierto del Anexo D con dueño y fecha, o un pasaje del expediente R08.x; **el destino concreto lo asigna el orquestador, aquí se propone el tipo**.
+
+| N | Pregunta | Dueño | Qué desbloquea | Destino (R-3, propuesto) |
+|---|---|---|---|---|
+| N1 | ¿«Entregado» → «Finalizado» cierra el ticket (`status_type`) y qué `closed_time` lleva? El código pone `status_type` `Closed` y NO toca `closed_time` (supuesto del diseño, D-10) | Gerencia | La ejecución | Punto abierto del Anexo D |
+| N2 | ¿Quién lanza la última sincronización completa antes de marcar, y cuándo? | Gerencia (designa a la persona) | La ejecución | Punto abierto del Anexo D |
+| N3 | ¿Qué se hace con los tickets que nazcan en Zoho después del corte? | Gerencia | La ejecución y, si hay que migrarlos, una fila nueva | Fila del §5 si se decide migrarlos; si no, punto abierto del Anexo D |
+| N4 | ¿Debe apagarse la sincronización de tickets en el corte? Hoy no hay interruptor | Gerencia | La ejecución; si sí, una fila nueva | Fila del §5 si se decide; si no, punto abierto del Anexo D |
+| N5 | Los estados sin equivalencia que enseñe la pasada en seco: ¿a qué estado va cada uno? | Gerencia | Que `aplicar=true` deje de responder `409` | Punto abierto del Anexo D, tras la pasada en seco |
+| N6 | Los abiertos sin remisión de entrada vigente: ¿se les crea, o se quedan a la espera? | Gerencia | La ejecución | Punto abierto del Anexo D |
+| N7 | El informe de contrato toma como fecha de ejecución la primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34`): un «Entregado» migrado muestra la fecha de la migración. ¿Se acepta? | Gerencia | Un informe de contrato correcto para esos tickets | Punto abierto del Anexo D |
+| N8 | Los migrados sin otra historia pasan de `reentrante = null` a `false` (`packages/shared/src/indicadores.ts:134`). ¿Se acepta o se excluye el marcador de ese conteo? | Gerencia | Indicadores sin cambio de lectura | Punto abierto del Anexo D |
+| N9 | El historial y el hilo enseñan el marcador con etiquetas en crudo (`apps/desk/server/db/ticketFuentes.ts:82`, `etiquetaCampo`): «Status type previo», «Managed by app previo». ¿Etiquetas en español o ocultar el marcador? | Gerencia | Una vista presentable del historial | Punto abierto del Anexo D |
+| N10 | La hoja de vida del equipo lista el marcador como una etapa (`apps/desk/server/db/equipos.ts:275`). ¿Se deja como traza o se filtra? | Gerencia | La hoja de vida sin ruido | Punto abierto del Anexo D |
+| N11 | En «Pendiente» → «En Proceso» y «Entregado» → «Finalizado» el marcador lleva `to_status` y el reloj de la alarma (`apps/desk/server/db/sla.ts:88`) arranca el día de la migración. ¿Es lo deseado? | Gerencia | Alarmas con la antigüedad correcta | Punto abierto del Anexo D |
+
+Todas desbloquean la ejecución o la presentación, no la construcción. Fuera de la lista: la cifra de tandas «en curso» de `apps/desk/server/reconciliacion/registro.test.ts` ya la actualizó el orquestador al cerrar el lote 1.
+
+### Para el paquete de despliegue
+
+- **Esquema:** ninguno. `git diff --stat 18dc1f9 -- packages/zoho-sync/src/db/schema.sql` no devuelve nada.
+- **Variables de entorno nuevas:** ninguna. `git diff 894efd7 -- . ':(exclude)openspec' | grep -n "process.env"` devuelve **0 líneas** (salida vacía; `grep` sale con 1, «sin coincidencias»); los dos ficheros nuevos de este lote, sin trackear, tampoco contienen `process.env`.
+- **Ruta nueva:** `POST /api/admin/migrar-tickets-abiertos` (`apps/desk/server/routes/admin.ts:222`), con `requireAuth` y `requireAdmin` (importado como `requireSuperAdmin`, `apps/desk/server/routes/admin.ts:17`): sólo un usuario con `is_admin`, por la cookie `sid`. En seco por defecto; `aplicar=true` escribe.
+- **Procedimiento y reversión:** `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, para una persona; no se despliega.
+- **Tareas de persona** (tabla de `tasks.md`): copia de la base; pasada en seco y lectura del informe; sincronización completa reciente; comprobar `numeracion.arrastra` falso y `negativa` nula; aplicar el fin de semana del corte con la fecha de Gerencia. Archivar no las da por hechas.
+
+### Regla de mutación 3 y regla 13 (lote 3)
+
+Este cambio **no toca `apps/desk/src`**: no añade ninguna decisión de cliente que enumerar. En la ruta decide el servidor —`aplicar` (`true`/`false`, otro valor `400`), `corte`, la negativa (`409`) y el `403`—; el cliente no participa.
+
+### Línea para el `archive-report.md` (cobertura de F1F-01)
+
+F1F-01 cubre aquí la HERRAMIENTA (núcleo, ejecutor y ruta de migración en seco/aplicar), el INFORME y la REVERSIÓN documentada y probada sobre pg-mem; deja fuera el cotejo una a una de la hoja de Google y la EJECUCIÓN sobre producción (tareas de persona y respuestas de Gerencia), y por eso `cierra: no`.
+
+### Desviaciones del lote 3
+
+- El guardián importa el ejecutor de `apps/desk` desde `packages/zoho-sync` por ruta relativa (el molde de F1C-09 no ejecuta código de la app). **Supuesto reversible:** si no se quiere esa dependencia entre paquetes en pruebas, se siembran los marcadores a mano con la misma forma.
+- El diseño dice «filtro por `"values"->>'status_type_previo'`»; aquí ese valor se RESTAURA (en el `SET`) y el filtro de qué fila revertir es `"values"->>'regla'`. La subconsulta `max(id) … GROUP BY` no es correlacionada, que es lo que D-14 pide. **Supuesto reversible.**
+- El `SELECT` de los movidos después va dos veces en el bloque `-- REV` (antes del `BEGIN` y tras el `COMMIT`); la prueba usa el segundo.
+- Las lecturas activas del `.sql` son tres `SELECT` (estado, marcadores por regla, gobernados sin marcador).
+
+### Cierre y medida del lote 3 (3.16 parcial, 3.17)
+
+Ver el informe de retorno del apply (códigos de salida reales y medida final).
+
+Códigos de salida REALES: `npm test` **0** (211 ficheros pasan y 2 saltados; 3290 pruebas pasan y 7 saltadas), `npm run typecheck` **0**, `npm run lint -- --max-warnings 165` **0** (165 avisos, 0 errores). Detector de citas: del orquestador (3.16 sin marcar).
+
+Medida (`git diff --shortstat --no-renames b686bff`, antes de esta línea): 98 inserciones y 16 borrados en 2 ficheros seguidos (`tasks.md` 16+16 casillas; `apply-progress.md` el resto) más `wc -l` de lo nuevo sin trackear: 94 + 185 = 279. **Total 393 (98 + 16 + 279), por debajo de 720.**
+
+### Añadido por el orquestador al cerrar el lote 3
+
+- El guardián del procedimiento se mudó de `packages/zoho-sync/src/db/` a `apps/desk/server/db/migracionTicketsF1F01.test.ts` antes del commit. Motivo: importaba el ejecutor de `apps/desk` desde un paquete, y un paquete no importa de `apps/`; al revés sí. Es una desviación del diseño (que lo situaba en `zoho-sync` por el molde de F1C-09, cuyo guardián no necesita el ejecutor). El contenido de las nueve pruebas no cambia; sólo sus tres rutas de importación.

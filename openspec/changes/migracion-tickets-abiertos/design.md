@@ -58,7 +58,7 @@ POST /api/admin/migrar-tickets-abiertos?corte=…[&aplicar=true]
 | `apps/desk/server/routes/admin.ts` | Añadir al final | Ruta nueva tras `apps/desk/server/routes/admin.ts:212` y el `import` del ejecutor DESPUÉS de la llave de cierre. **Sólo se desplaza la llave de `apps/desk/server/routes/admin.ts:213` en `d2e421f`**; las líneas 1 a 212 no se mueven. Un `import` a mitad de fichero ya existe en `packages/zoho-sync/src/db/repo.ts:129`. Hipótesis: `eslint` no lo rechaza; se comprueba con `npm run lint` |
 | `apps/desk/server/migracionTicketsAbiertosRuta.test.ts` | Nuevo | Pruebas HTTP, con el arnés (`apps/desk/server/testing/appHarness.ts:34-40`) |
 | `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql` | Nuevo | Procedimiento y reversión |
-| `packages/zoho-sync/src/db/migracionTicketsF1F01.test.ts` | Nuevo | Guardián del `.sql`, molde de `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts:29-34` |
+| `apps/desk/server/db/migracionTicketsF1F01.test.ts` | Nuevo | Guardián del `.sql`, molde de `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts:29-34` |
 
 **Sin sentencias de esquema.** `packages/zoho-sync/src/db/schema.sql` no se toca y los recuentos del guardián de
 `migrate.test.ts` no cambian. Regla de mutación 4: el barrido del cierre es sobre `admin.ts` e `index.ts`; hoy
@@ -176,7 +176,7 @@ inválido con un estado sin equivalencia en la base ve `400`; (4 y 5) un migrabl
 | RQ-TC-41 | el mismo | Precedencia de `planDeTicket` con casos solapados (gobernado y sin equivalencia; tras el corte y sin equivalencia); corte en el instante exacto; `createdTime` nulo; `resumenDeMigracion` cuenta y lista; `masAltoAMarcar` sólo sobre los migrables |
 | RQ-ZS-17 | `apps/desk/server/db/migracionTicketsAbiertos.test.ts` | Seco: ni `BEGIN` ni escrituras, filas idénticas; aplicar: marcador y `UPDATE` por ticket, orden por espía; negativa total; segunda pasada sin cambios; `upsertTicket` posterior no altera la fila; `modified_time` y `source` intactos; marcador de identidad no mueve `entradasActuales`; `sinRemisionVigente` con y sin remisión; `numeracion.arrastra` a un lado y otro de 10000; `UPDATE` sin fila deshace todo |
 | RQ-ZS-17 | `apps/desk/server/migracionTicketsAbiertosRuta.test.ts` | `401`, `403`, `400` (sin `corte`, fecha pelada, `aplicar=1`), `200` en seco por defecto, `409` de negativa, `200` al aplicar; los tres solapamientos del §7 |
-| RQ-ZS-18 | `packages/zoho-sync/src/db/migracionTicketsF1F01.test.ts` | La reversión devuelve `status`, `status_type` y `managed_by_app`; no revierte donde el marcador ya no es la última transición; toda tabla calificada; una sentencia de reversión por cada regla del núcleo que cambia el estado |
+| RQ-ZS-18 | `apps/desk/server/db/migracionTicketsF1F01.test.ts` | La reversión devuelve `status`, `status_type` y `managed_by_app`; no revierte donde el marcador ya no es la última transición; toda tabla calificada; una sentencia de reversión por cada regla del núcleo que cambia el estado |
 
 **Mutaciones que reproduce el orquestador, y la prueba que debe ponerse roja:**
 

@@ -33,7 +33,7 @@ razonables y reversibles y no cambian el alcance de la fila.
 |---|---|---|---|---|
 | 1 | Núcleo puro (RQ-TC-40, RQ-TC-41) y deltas alineados | `npx vitest run packages/shared/src/migracionTickets.test.ts` | Ninguno: función pura | `git revert` del lote; sin esquema |
 | 2 | Ejecutor y ruta (RQ-ZS-17) y barrido de lectores | `npx vitest run apps/desk/server/db/migracionTicketsAbiertos.test.ts apps/desk/server/migracionTicketsAbiertosRuta.test.ts apps/desk/server/migracionMarcadorLectores.test.ts` | pg-mem con espía de SQL; sin servicios reales | `git revert`; la ruta y el ejecutor salen juntos |
-| 3 | Procedimiento y reversión (RQ-ZS-18) | `npx vitest run packages/zoho-sync/src/db/migracionTicketsF1F01.test.ts` | pg-mem ejecutando el texto del `.sql` | `git revert`; sólo documento y prueba |
+| 3 | Procedimiento y reversión (RQ-ZS-18) | `npx vitest run apps/desk/server/db/migracionTicketsF1F01.test.ts` | pg-mem ejecutando el texto del `.sql` | `git revert`; sólo documento y prueba |
 
 ---
 
@@ -240,54 +240,54 @@ Archivos: `apps/desk/server/db/migracionTicketsAbiertos.ts`, `apps/desk/server/d
 
 # LOTE 3 — Procedimiento `.sql`, su guardián y bloque documental (≈ 295)
 
-Archivos: `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, `packages/zoho-sync/src/db/migracionTicketsF1F01.test.ts` (nuevos);
+Archivos: `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, `apps/desk/server/db/migracionTicketsF1F01.test.ts` (nuevos);
 `apply-progress.md`.
 
-- [ ] 3.1 Anotar `git rev-parse HEAD` (partida del lote 3) y comprobar el intento.
-- [ ] 3.2 Leer los moldes: `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:57-65`,
+- [x] 3.1 Anotar `git rev-parse HEAD` (partida del lote 3) y comprobar el intento.
+- [x] 3.2 Leer los moldes: `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:57-65`,
   `packages/zoho-sync/src/db/migracionPendienteF1C09.test.ts:29-34`, `apps/desk/server/auth/users.ts:138`.
 
-**Rojo** (`packages/zoho-sync/src/db/migracionTicketsF1F01.test.ts`, nuevo)
-- [ ] 3.3 Comportamiento sobre pg-mem, ejecutando el texto de la reversión tras migrar con el ejecutor: restaura `status`,
+**Rojo** (`apps/desk/server/db/migracionTicketsF1F01.test.ts`, nuevo)
+- [x] 3.3 Comportamiento sobre pg-mem, ejecutando el texto de la reversión tras migrar con el ejecutor: restaura `status`,
   `status_type` y `managed_by_app` de «Entregado», «Pendiente» de servicio e identidad; borra sólo marcadores de lo
   restaurado; un ticket con transición posterior no se revierte, conserva su marcador y el procedimiento lo lista; reversión
   repetida sin cambios; `closed_time` intacto.
-- [ ] 3.4 Estructura: un único `BEGIN` y un único `COMMIT`; toda sentencia nombra `desk.tickets` o `desk.ticket_transitions`;
+- [x] 3.4 Estructura: un único `BEGIN` y un único `COMMIT`; toda sentencia nombra `desk.tickets` o `desk.ticket_transitions`;
   la reversión va prefijada `-- REV `; una sentencia por cada regla que cambia el estado más una de identidad.
-- [ ] 3.5 **EJECUTAR** y anotar el fallo literal (el `.sql` no existe).
+- [x] 3.5 **EJECUTAR** y anotar el fallo literal (el `.sql` no existe).
 
 **Verde**
-- [ ] 3.6 Crear `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`: cabecera con requisitos de persona (copia de la base,
+- [x] 3.6 Crear `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`: cabecera con requisitos de persona (copia de la base,
   sincronización completa reciente, pasada en seco, comprobar que `numeracion.arrastra` es `false`), pasos, bloque
   `-- REV ` con las tres sentencias, el `SELECT` de los movidos después y la nota de que revertir devuelve `managed_by_app`
   a `false` y el sincronizador vuelve a sobrescribir.
-- [ ] 3.7 **EJECUTAR** el fichero de pruebas: todo verde.
+- [x] 3.7 **EJECUTAR** el fichero de pruebas: todo verde.
 
 **Mutaciones (aplicar, anotar mensaje literal, REVERTIR)**
-- [ ] 3.8 **M1:** quitar del `.sql` la reversión de una regla. Debe caer «una sentencia por regla» (guardián).
-- [ ] 3.9 **Regla de mutación 2 (fichero vigilado):** escribir en el `.sql` `UPDATE tickets SET status = 'x';` sin calificar. Debe
+- [x] 3.8 **M1:** quitar del `.sql` la reversión de una regla. Debe caer «una sentencia por regla» (guardián).
+- [x] 3.9 **Regla de mutación 2 (fichero vigilado):** escribir en el `.sql` `UPDATE tickets SET status = 'x';` sin calificar. Debe
   caer «toda tabla calificada».
-- [ ] 3.10 **Regla de mutación 2:** añadir un segundo `COMMIT` y, aparte, quitar el prefijo `-- REV ` de una sentencia. Deben
+- [x] 3.10 **Regla de mutación 2:** añadir un segundo `COMMIT` y, aparte, quitar el prefijo `-- REV ` de una sentencia. Deben
   caer «un único `BEGIN`/`COMMIT`» y «reversión prefijada».
-- [ ] 3.11 `git diff` del `.sql` y de la prueba: no queda ninguna mutación.
+- [x] 3.11 `git diff` del `.sql` y de la prueba: no queda ninguna mutación.
 
 **Bloque documental final** (sólo en `apply-progress.md`; no se escribe en `docs/sdd/ENTRADA.md` ni en `openspec/config.yaml`)
-- [ ] 3.12 Redactar, sin número y marcadas «a numerar por el orquestador», las **siete** preguntas para la bandeja: las seis de la
+- [x] 3.12 Redactar, sin número y marcadas «a numerar por el orquestador», las **siete** preguntas para la bandeja: las seis de la
   propuesta (`proposal.md`, «Preguntas para la bandeja») y la que halló el diseño: el informe de contrato toma la
   primera fila con `to_status = 'Finalizado'` (`apps/desk/server/db/informeContrato.ts:34`), así que un «Entregado» migrado
   muestra la fecha de la migración como su fecha de finalización. Añadir las del barrido 2.3 que quedaron sin resolver.
-- [ ] 3.13 Redactar las notas «para el paquete de despliegue»: sin esquema (`packages/zoho-sync/src/db/schema.sql` no figura en
+- [x] 3.13 Redactar las notas «para el paquete de despliegue»: sin esquema (`packages/zoho-sync/src/db/schema.sql` no figura en
   `git diff --stat <partida lote 1>`) y sin variable de entorno nueva, **medido** con un `grep` de `process.env` sobre
   ese diff y dado el recuento; la ruta es sólo para superadministrador; el procedimiento va en el `.sql`.
-- [ ] 3.14 Escribir la línea de la regla de mutación 3 (este cambio no añade ninguna decisión de cliente: no toca `apps/desk/src`)
+- [x] 3.14 Escribir la línea de la regla de mutación 3 (este cambio no añade ninguna decisión de cliente: no toca `apps/desk/src`)
   y la regla 13 de la ruta: qué decide el servidor (`aplicar`, `corte`, negativa, `403`) y que el cliente no participa.
-- [ ] 3.15 Línea única de cobertura para el `archive-report.md`: qué parte de F1F-01 cubre el cambio (herramienta, informe,
+- [x] 3.15 Línea única de cobertura para el `archive-report.md`: qué parte de F1F-01 cubre el cambio (herramienta, informe,
   reversión) y qué deja fuera (cotejo de la hoja de Google y ejecución), que es lo que sostiene `cierra: no`.
 
 **Cierre**
-- [ ] 3.16 **CIERRE LOTE 3:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` y
+- [x] 3.16 **CIERRE LOTE 3:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` y
   `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; anotar el CÓDIGO DE SALIDA de cada uno.
-- [ ] 3.17 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
+- [x] 3.17 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
   Si pasa de 720, parar.
 
 ---
