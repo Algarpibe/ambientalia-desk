@@ -139,13 +139,14 @@ export function validarPeriodo(q: { desde?: unknown; hasta?: unknown; formato?: 
   | { ok: false; error: string }
 export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivil | null; hasta: DiaCivil | null }):
   Promise<{ tickets: TicketParaIndicadores[]; historial: Map<string, PasoDelHistorial[]>; cierres: Set<DiaCivil> }>
-export function tablaIndicadores(e: Awaited<ReturnType<typeof leerEntradasIndicadores>>): { filas: FilaIndicadores[]; comparacion: ResumenComparacion }
+// Lote 3: la tabla es una fila por ticket (`{ ticketId, codigoServicio, indicadores: Indicador[] }`); la `comparacion` es del lote 5a.
+export function tablaIndicadores(e: Awaited<ReturnType<typeof leerEntradasIndicadores>>): FilaIndicadores[]
 ```
 
 Las tres consultas, todas con parámetros ligados y sin calificar esquema, como el resto de lectores
 (`apps/desk/server/analisis.ts:13-18`):
 
-1. `SELECT id, number, status, created_time, dias_entrega, fecha_creacion_ticket, fecha_remision_entrada, fecha_revision_informe, fecha_cotizacion, fecha_orden_compra, fecha_orden_venta, fecha_recepcion_repuestos, fecha_finalizacion_st, fecha_remision_salida, custom_fields FROM tickets t [WHERE t.created_time >= $1 AND t.created_time < $2] ORDER BY number`
+1. `SELECT id, number, status, created_time, codigo_servicio, dias_entrega, fecha_creacion_ticket, fecha_remision_entrada, fecha_revision_informe, fecha_cotizacion, fecha_orden_compra, fecha_orden_venta, fecha_recepcion_repuestos, fecha_finalizacion_st, fecha_remision_salida, custom_fields FROM tickets t [WHERE t.created_time >= $1 AND t.created_time < $2] ORDER BY number`
 2. `SELECT tt.ticket_id, tt.transition_id, tt.values, tt.performed_at FROM ticket_transitions tt JOIN tickets t ON t.id = tt.ticket_id [mismo WHERE] ORDER BY tt.performed_at, tt.id` — se agrupa en memoria por `ticket_id` en un `Map`.
 3. `listarCierres(db)` (`apps/desk/server/db/calendarioCierres.ts:31-34`).
 
@@ -157,7 +158,7 @@ Bogotá. Las columnas `date` se normalizan con `comoDiaCivil` (`apps/desk/server
 `apps/desk/server/util/csv.ts`: `export function aCsv(cabeceras: string[], filas: Array<Array<string | number | null>>): string`.
 
 `apps/desk/server/routes/indicadores.ts`: `registerIndicadoresRoutes(app, { db })`, una ruta
-`GET /api/indicadores`. JSON: `{ periodo, filas, comparacion }`. CSV: una fila por ticket; por cada
+`GET /api/indicadores`. JSON (RQ-KP-13, lote 3): `{ periodo: { desde, hasta }, tickets, comparacion }`; por ticket `ticketId`, `codigoServicio`, `indicadores`; por indicador `columna`, `valor` (`null` si `sin_dato`), `unidad`, `estado`, `motivo` (sólo en `sin_dato`), `hitos` como lista `{ nombre, dia, fuente }`, `reentrante`, `sinFinalizar` (sólo 50·53 y 54), `formulaZoho` y `valorZoho` (`null` si no hay); `orden_invertido` queda en el dominio y no se serializa; `comparacion` es `null` hasta el lote 5a. CSV: una fila por ticket; por cada
 indicador las columnas `NN letra`, `NN variante Zoho`, `NN valor Zoho`, `NN fuente`, `NN motivo`; más
 `reentrante` y `marcas`; cabeceras `Content-Type: text/csv; charset=utf-8` y
 `Content-Disposition: attachment; filename="indicadores-<hoy>.csv"` (molde
@@ -223,7 +224,7 @@ Pruebas de **posición** (regla de mutación 1), con una base espía pasada por 
 (`apps/desk/server/testing/appHarness.ts:46`) que anota el texto de cada consulta:
 
 - **PG-1** sin sesión y con `?desde=basura` → 401 (no 400), y ninguna consulta nombra `ticket_transitions`.
-- **PG-2** usuario sin administrador y con `?desde=basura` → **403, no 400**, y ninguna consulta nombra `ticket_transitions` ni `calendario_cierres`. Activa a la vez la guarda de permiso y la de contenido.
+- **PG-2** usuario sin administrador, con `?desde=basura` y también sin parámetros → **403, no 400**, y ninguna consulta nombra `ticket_transitions` ni `calendario_cierres`. Activa a la vez la guarda de permiso y la de contenido.
 - **PG-3** administrador con `?desde=basura`, con `desde > hasta` o con `formato=xml` → 400 con mensaje en español, y ninguna consulta nombra `ticket_transitions`.
 
 ## 7. Regla 13

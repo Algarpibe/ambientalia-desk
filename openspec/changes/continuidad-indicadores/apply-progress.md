@@ -102,3 +102,34 @@ K14 nace roja por módulo inexistente (como todo el fichero); su discriminación
 
 ## Medida (2.9)
 `git diff --shortstat --no-renames 24e636a` (antes de este bloque de notas): 301 inserciones y 25 borrados en 5 ficheros; sin ficheros nuevos sin trackear. Total ≈ 326 + `tasks.md` y estas notas ≈ 400, frente a la válvula de 720.
+
+## Lote 3 — lectura, ruta JSON y permiso (3.1 a 3.10). Partida `e252518`. Strict TDD.
+
+**3.1 Alinear.** `design.md` §3.4 (`tablaIndicadores` devuelve una fila por ticket; consulta 1 con `codigo_servicio`; forma JSON de RQ-KP-13, `comparacion` `null` hasta 5a) y §6 (PG-2 también sin parámetros). La spec no cambia.
+
+**3.2-3.3 RED.** `npx vitest run` de los dos ficheros: `indicadores.test.ts` → `Cannot find module './indicadores'`; `routes/indicadores.test.ts` → 8 de 8 rojas, `expected 404 to be 401` (PG-1), `404 to be 403` (PG-2), `404 to be 400` (PG-3), `404 to be 200`.
+**3.4 GREEN.** `apps/desk/server/indicadores.ts` (92) y `routes/indicadores.ts` (34). Tras corregir mi siembra (`calendario_cierres` exige `motivo` y `registrado_por`): 24/24.
+**3.5** `app.ts`: `wc -l` 96 antes y después; numstat `2 2`; `git diff -U0` sólo las líneas 22 y 61, con el añadido al final.
+
+**3.6 Hipótesis (por ejecución).** (1) pg-mem ejecuta el `JOIN` y `values` llega como objeto: **se cumple** (la prueba de agrupación lee `values` con `toEqual`). (2) `date`: pg-mem entrega texto y `pg` un `Date` a medianoche UTC; `comoDiaCivil` (getters UTC) da el día en las dos formas (prueba con filas falsas de las dos formas): **se cumple** (la duda de `mappers.ts:26-28` queda sin fijar contra un `pg` real; no hay base real en este entorno). (3) Claves de `values`: el ESCRITOR (`ticketService.ts:155` → `valoresConMotivo` → `writeTransition`, `repo.ts:314-318`, `JSON.stringify(values)`) guarda la clave del campo del formulario, y `cfDate(label)` fija `key: label` (`transitions.ts:75-76`): son las etiquetas literales (`Fecha Remisión Entrada`, `Días de entrega`). **Se cumple**, ahora leído en el escritor.
+
+**3.7 Mutaciones** (aplicadas, probadas, revertidas; `cmp` con la copia verde: iguales):
+
+| # | Mutación | Prueba roja |
+|---|---|---|
+| M1 | `requireAdmin` tras `validarPeriodo` | PG-2 `{desde:'basura'}`: `expected 400 to be 403` |
+| M2 | `requireAdmin` tras la lectura | PG-2 `{}`: `expected [ …(3) ] to deeply equal []` (el espía ve las tres consultas) y PG-2 basura `400 ≠ 403` |
+| M3 | `requireAuth` tras `requireAdmin` | PG-1: `expected 403 to be 401` (y tres PG-3: `403 ≠ 400`) |
+| M4 | `validarPeriodo` tras la lectura | PG-3 ×3: `expected [ …(3) ] to deeply equal []` |
+| M20 | una consulta extra por ticket | recuento: `to have a length of 3 but got 5` (2 tickets) y `got 23` (20) |
+| M21 | corte por día UTC y no `diaEnZona` | Bogotá: `[ 'fuera', 'dentro' ] ≠ [ 'dentro', 'tarde' ]` |
+| M22 | límite superior sin ensanchar | Bogotá: `[ 'dentro' ] ≠ [ 'dentro', 'tarde' ]` |
+| M23 | transiciones sin filtrar por los tickets del periodo | Bogotá: `[ 'fuera', 'dentro' ] ≠ [ 'dentro' ]` |
+
+## Desviaciones (lote 3)
+9. `tablaIndicadores` devuelve `FilaIndicadores[]` (sin `comparacion`, que es del 5a); el tipo es del servidor (`{ ticketId, codigoServicio, indicadores }`), no el de §3.1.
+10. `formulaZoho` se serializa como valor o `null` (la spec no fija la forma del «sin dato» de la variante; se pierde su motivo en el JSON).
+11. `formato=csv` se valida pero este lote responde JSON; la rama CSV es del lote 4.
+12. Las consultas van sin calificar el esquema, como `listarCierres` y `analisis.ts` (`search_path=desk,public`).
+
+**3.8 Cierre verde**: `npm test` 181 ficheros / 2744 pruebas verdes (2 omitidas), salida 0; `typecheck` 0; `build` 0; `lint` 165 avisos, 0 errores.

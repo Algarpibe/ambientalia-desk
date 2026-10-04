@@ -53,16 +53,16 @@ Chain strategy: no aplica (una rama, seis commits, fusión a `main` al cerrar ca
 
 ## Lote 3 — lectura, ruta JSON y permiso (RQ-KP-12 a -14)
 
-- [ ] 3.1 **Alinear spec y diseño** — se corrige **`design.md`** §3.4 y §6: la respuesta JSON sigue RQ-KP-13 (`{ periodo, tickets, comparacion }`; por ticket `ticketId`, `codigoServicio`, `indicadores`; por indicador `columna`, `valor`, `unidad`, `estado`, `motivo`, `hitos` como lista `{ nombre, dia, fuente }`, `reentrante`, `sinFinalizar`, `formulaZoho`, `valorZoho`); `orden_invertido` queda en el dominio y no se serializa; la consulta 1 añade `codigo_servicio`. La spec no cambia.
-- [ ] 3.2 RED `apps/desk/server/indicadores.test.ts` (pg-mem): `validarPeriodo` (fechas inexistentes, orden, formato), lectura con dos tickets y cinco transiciones, espía que cuenta **exactamente tres** consultas con dos y con veinte tickets, periodo en Bogotá (`2026-10-01T03:00:00Z` fuera con `desde=2026-10-01`), columna `date` como `Date` y como texto, sin parámetros → todos (R6).
-- [ ] 3.3 RED `apps/desk/server/routes/indicadores.test.ts`: PG-1, PG-2, PG-3 con base espía por `appWith({}, espia)`; administrador → 200 con K2 sembrado (50 = 4, variante 5) y la forma de 3.1; `400` con `{ error }` en español. Confirmar el rojo.
-- [ ] 3.4 GREEN `apps/desk/server/indicadores.ts` (`validarPeriodo`, `leerEntradasIndicadores`, `tablaIndicadores`) y `apps/desk/server/routes/indicadores.ts` con el serializador a la forma de RQ-KP-13 (`requireAuth` → `requireAdmin` → `validarPeriodo` → lectura).
-- [ ] 3.5 `apps/desk/server/app.ts`: `import` al final de la línea `:22` y llamada al final de la `:61`, **ediciones en la misma línea**; `wc -l` del fichero antes y después **idéntico** y `git diff -U0` sólo toca esas dos líneas.
-- [ ] 3.6 Hipótesis del diseño §13.1 y §13.2 (JOIN en pg-mem, `date` con las dos formas): anotar en `apply-progress.md` si se cumplen. Regla 13 se escribe en el lote 5b.
-- [ ] 3.7 Mutaciones de **posición** (regla 1): **M1** `requireAdmin` detrás de `validarPeriodo` → PG-2 (400); **M2** detrás de la lectura → PG-2 (el espía ve `ticket_transitions`); **M3** `requireAuth` detrás de `requireAdmin` → PG-1 (403); **M4** `validarPeriodo` detrás de la lectura → PG-3; **M20** una consulta por ticket → la del recuento.
-- [ ] 3.8 Cierre verde del lote.
-- [ ] 3.9 Medida; anotar la cifra.
-- [ ] 3.10 Commit: `feat(kpis): ruta GET /api/indicadores de sólo lectura para administradores (F1F-05, cierra: no)`; detector con salida 0.
+- [x] 3.1 **Alinear spec y diseño** — se corrige **`design.md`** §3.4 y §6: la respuesta JSON sigue RQ-KP-13 (`{ periodo, tickets, comparacion }`; por ticket `ticketId`, `codigoServicio`, `indicadores`; por indicador `columna`, `valor`, `unidad`, `estado`, `motivo`, `hitos` como lista `{ nombre, dia, fuente }`, `reentrante`, `sinFinalizar`, `formulaZoho`, `valorZoho`); `orden_invertido` queda en el dominio y no se serializa; la consulta 1 añade `codigo_servicio`. La spec no cambia.
+- [x] 3.2 RED `apps/desk/server/indicadores.test.ts` (pg-mem): `validarPeriodo` (fechas inexistentes, orden, formato), lectura con dos tickets y cinco transiciones, espía que cuenta **exactamente tres** consultas con dos y con veinte tickets, periodo en Bogotá (`2026-10-01T03:00:00Z` fuera con `desde=2026-10-01`), columna `date` como `Date` y como texto, sin parámetros → todos (R6).
+- [x] 3.3 RED `apps/desk/server/routes/indicadores.test.ts`: PG-1, PG-2, PG-3 con base espía por `appWith({}, espia)`; administrador → 200 con K2 sembrado (50 = 4, variante 5) y la forma de 3.1; `400` con `{ error }` en español. Confirmar el rojo.
+- [x] 3.4 GREEN `apps/desk/server/indicadores.ts` (`validarPeriodo`, `leerEntradasIndicadores`, `tablaIndicadores`) y `apps/desk/server/routes/indicadores.ts` con el serializador a la forma de RQ-KP-13 (`requireAuth` → `requireAdmin` → `validarPeriodo` → lectura).
+- [x] 3.5 `apps/desk/server/app.ts`: `import` al final de la línea `:22` y llamada al final de la `:61`, **ediciones en la misma línea**; `wc -l` del fichero antes y después **idéntico** y `git diff -U0` sólo toca esas dos líneas.
+- [x] 3.6 Hipótesis del diseño §13.1 y §13.2 (JOIN en pg-mem, `date` con las dos formas): anotar en `apply-progress.md` si se cumplen. Regla 13 se escribe en el lote 5b.
+- [x] 3.7 Mutaciones de **posición** (regla 1): **M1** `requireAdmin` detrás de `validarPeriodo` → PG-2 (400); **M2** detrás de la lectura → PG-2 (el espía ve `ticket_transitions`); **M3** `requireAuth` detrás de `requireAdmin` → PG-1 (403); **M4** `validarPeriodo` detrás de la lectura → PG-3; **M20** una consulta por ticket → la del recuento.
+- [x] 3.8 Cierre verde del lote.
+- [x] 3.9 Medida; anotar la cifra.
+- [x] 3.10 Commit: `feat(kpis): ruta GET /api/indicadores de sólo lectura para administradores (F1F-05, cierra: no)`; detector con salida 0.
 
 ## Lote 4 — CSV y enlace en el cliente (RQ-KP-15, -18)
 
