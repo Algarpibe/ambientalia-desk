@@ -1,3 +1,19 @@
+```yaml
+schema: gentle-ai.verify-result/v1
+evidence_revision: sha256:54a47f9cd66fee1fab257e371147d7d7b8f5c44d1c72bfa5675e79f72e66449e
+verdict: pass_with_warnings
+blockers: 0
+critical_findings: 0
+requirements: 11/11
+scenarios: 118/118
+test_command: npm test
+test_exit_code: 0
+test_output_hash: sha256:54a47f9cd66fee1fab257e371147d7d7b8f5c44d1c72bfa5675e79f72e66449e
+build_command: npm run typecheck
+build_exit_code: 0
+build_output_hash: sha256:f9de8b15b07069fcbf31f4a415061f4b90d66551059b5518c6d53e721545e547
+```
+
 # Informe de verificación — propagar-top5-lista-remision-creada
 
 Cambio `propagar-top5-lista-remision-creada` (`tanda: F1B-07`, `cierra: no`). Modo: `strict_tdd`, `hybrid`.
