@@ -75,48 +75,48 @@ registro en el worktree, fusionado a `main` al cerrar.
 Archivos: `schema.sql` (+3 al final), `repo.ts` (0 netas), `migrate.test.ts`, `repoPrioridadEnApp.test.ts` (nuevo).
 
 **Fase de partida**
-- [ ] L1.1 Anotar `git rev-parse HEAD` del worktree (commit de partida de L1), abrir el intento del registro en el
+- [x] L1.1 Anotar `git rev-parse HEAD` del worktree (commit de partida de L1), abrir el intento del registro en el
   worktree, y medir `wc -l` de `repo.ts`, `schema.sql` (707), `migrate.test.ts`.
-- [ ] L1.2 Leer `repo.ts:64-95` y `migrate.test.ts:374-385`, `:432-443` para fijar los moldes.
+- [x] L1.2 Leer `repo.ts:64-95` y `migrate.test.ts:374-385`, `:432-443` para fijar los moldes.
 
 **Rojo**
-- [ ] L1.3 En `migrate.test.ts`, en sitio (`:374`, `:376`, `:378`, título incluido): recuento 51 / 27 / 24. Cero netas.
-- [ ] L1.4 Prueba «sin relleno» al final de `migrate.test.ts` (tras `:444`, molde de `:432-443`): la `ALTER` no rellena
+- [x] L1.3 En `migrate.test.ts`, en sitio (`:374`, `:376`, `:378`, título incluido): recuento 51 / 27 / 24. Cero netas.
+- [x] L1.4 Prueba «sin relleno» al final de `migrate.test.ts` (tras `:444`, molde de `:432-443`): la `ALTER` no rellena
   filas previas y es la única sentencia que nombra `prioridad_en_app_at`.
-- [ ] L1.5 Crear `packages/zoho-sync/src/db/repoPrioridadEnApp.test.ts` con: (a) con la marca, `upsertTicket` con otra
+- [x] L1.5 Crear `packages/zoho-sync/src/db/repoPrioridadEnApp.test.ts` con: (a) con la marca, `upsertTicket` con otra
   prioridad no la cambia, `subject` sí, `managed_by_app` sigue `false`; (b) las dos marcas a la vez protegen orden y
   prioridad y `subject` cambia; (c) una fila sólo con la de prioridad sí actualiza `orden_venta`.
-- [ ] L1.6 **Nacen verdes (caracterización):** sin marca manda Zoho; `managed_by_app = true` gana con la marca puesta
+- [x] L1.6 **Nacen verdes (caracterización):** sin marca manda Zoho; `managed_by_app = true` gana con la marca puesta
   (gemela de `repo.test.ts:318`); `upsertTicket` nunca escribe la marca; la marca no está en `TICKET_COLS`.
-- [ ] L1.7 **EJECUTAR** `npx vitest run` sobre los dos ficheros y anotar el fallo literal de cada rojo en
+- [x] L1.7 **EJECUTAR** `npx vitest run` sobre los dos ficheros y anotar el fallo literal de cada rojo en
   `apply-progress.md` (esperado: recuento 50≠51, columna inexistente, `priority` pisada).
 
 **Verde**
-- [ ] L1.8 Añadir al final de `schema.sql` (líneas 708-710) dos líneas de comentario SIN punto y coma y
+- [x] L1.8 Añadir al final de `schema.sql` (líneas 708-710) dos líneas de comentario SIN punto y coma y
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS prioridad_en_app_at timestamptz;` (sin calificar).
-- [ ] L1.9 Editar en sitio `repo.ts:67` (añade la columna al `SELECT`), `:70` (tipo) y `:76-78` (tres líneas, filtro
+- [x] L1.9 Editar en sitio `repo.ts:67` (añade la columna al `SELECT`), `:70` (tipo) y `:76-78` (tres líneas, filtro
   de `priority` con `prev?.prioridad_en_app_at != null`). `:71` no se toca y sigue primera.
-- [ ] L1.10 **EJECUTAR** los dos ficheros: todo verde.
+- [x] L1.10 **EJECUTAR** los dos ficheros: todo verde.
 
 **Comprobación de cero netas**
-- [ ] L1.11 `git diff --numstat` de `repo.ts`: inserciones = borrados; `wc -l` antes y después idéntico. Anotar.
+- [x] L1.11 `git diff --numstat` de `repo.ts`: inserciones = borrados; `wc -l` antes y después idéntico. Anotar.
 
 **Mutaciones (aplicar, ver qué cae, anotar mensaje literal, REVERTIR)**
-- [ ] L1.12 **M1 (regla 1, posición):** mover `repo.ts:71` debajo del `await db.query` de `:89-93`. Cae «`managed_by_app`
+- [x] L1.12 **M1 (regla 1, posición):** mover `repo.ts:71` debajo del `await db.query` de `:89-93`. Cae «`managed_by_app`
   gana con la marca de prioridad». Revertir.
-- [ ] L1.13 **M2:** en `repo.ts:78`, `c === 'priority'` → `c === 'prioridad'`. Caen las dos rojas de L1. Revertir.
-- [ ] L1.14 **M10 (regla 2, fichero vigilado):** añadir a `schema.sql` `UPDATE tickets SET prioridad_en_app_at = now();`.
+- [x] L1.13 **M2:** en `repo.ts:78`, `c === 'priority'` → `c === 'prioridad'`. Caen las dos rojas de L1. Revertir.
+- [x] L1.14 **M10 (regla 2, fichero vigilado):** añadir a `schema.sql` `UPDATE tickets SET prioridad_en_app_at = now();`.
   Cae «sin relleno» (dos sentencias en vez de una). Revertir.
-- [ ] L1.15 **M8/M9 de L1 (regla 2):** ensuciar `schema.sql` con `ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS x text;`
+- [x] L1.15 **M8/M9 de L1 (regla 2):** ensuciar `schema.sql` con `ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS x text;`
   (cae `migrate.test.ts:332`). Revertir.
-- [ ] L1.16 `git diff` sobre `repo.ts` y `schema.sql`: no queda ninguna mutación (sólo el verde de L1.8-L1.9).
+- [x] L1.16 `git diff` sobre `repo.ts` y `schema.sql`: no queda ninguna mutación (sólo el verde de L1.8-L1.9).
 
 **Regla 13 y cierre**
-- [ ] L1.17 Escribir en `apply-progress.md` la regla 13 de L1: «que el sincronizador no pise la prioridad» lo impone
+- [x] L1.17 Escribir en `apply-progress.md` la regla 13 de L1: «que el sincronizador no pise la prioridad» lo impone
   `upsertTicket` (`repo.ts:76-78`), servidor, única comprobación; el cliente no participa.
-- [ ] L1.18 **CIERRE L1:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores); anotar el CÓDIGO DE
+- [x] L1.18 **CIERRE L1:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores); anotar el CÓDIGO DE
   SALIDA de cada uno (`${PIPESTATUS[0]}` si se canaliza).
-- [ ] L1.19 Medida del intento: `git diff --shortstat --no-renames <partida>` + `wc -l` de lo nuevo sin trackear;
+- [x] L1.19 Medida del intento: `git diff --shortstat --no-renames <partida>` + `wc -l` de lo nuevo sin trackear;
   registrarla. Binarios, aparte. Si supera 720, parar.
 - [ ] L1.20 **FIN DE L1.** Settle y fusión a `main` antes de abrir L2a (sin rebasar con el intento abierto).
 

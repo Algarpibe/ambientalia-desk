@@ -705,3 +705,6 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS rotulado_at timestamptz;
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS rotulado_por text;
 ALTER TABLE public.remision_fotos ADD COLUMN IF NOT EXISTS categoria text;
 ALTER TABLE public.remision_fotos ADD COLUMN IF NOT EXISTS novedad text;
+-- Marca por fila de la prioridad escrita desde la app (propagar-top5-lista-remision-creada, L1). NULL = manda Zoho
+-- Con la marca puesta upsertTicket no sobrescribe priority. Sin relleno: tickets es de DESK_TABLES y va sin calificar
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS prioridad_en_app_at timestamptz;

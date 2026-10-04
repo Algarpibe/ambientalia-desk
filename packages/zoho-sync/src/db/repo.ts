@@ -64,18 +64,18 @@ export interface DiscrepanciaOV { ticketId: string; numero: number | null; ovApp
 export async function upsertTicket(db: Queryable, r: TicketRow): Promise<DiscrepanciaOV | null> {
   // pg-mem no soporta `WHERE` en `ON CONFLICT ... DO UPDATE`; usamos guarda con SELECT previo.
   const existing = await db.query(
-    'SELECT managed_by_app, ov_elegida_en_app_at, orden_venta, ov_zoho_avisada FROM tickets WHERE id=$1',
+    'SELECT managed_by_app, ov_elegida_en_app_at, prioridad_en_app_at, orden_venta, ov_zoho_avisada FROM tickets WHERE id=$1',
     [r.id],
   )
-  const prev = existing.rows[0] as { managed_by_app?: boolean; ov_elegida_en_app_at?: unknown; orden_venta?: string | null; ov_zoho_avisada?: string | null } | undefined
+  const prev = existing.rows[0] as { managed_by_app?: boolean; ov_elegida_en_app_at?: unknown; prioridad_en_app_at?: unknown; orden_venta?: string | null; ov_zoho_avisada?: string | null } | undefined
   if (prev?.managed_by_app === true) return null // no sobrescribir lo gestionado por la app (va PRIMERO, regla 13/D2)
 
   const marcada = prev?.ov_elegida_en_app_at != null
   const ovZoho = r.orden_venta?.trim() ?? ''
   let discrepancia: DiscrepanciaOV | null = null
-  const cols = marcada
-    ? TICKET_COLS.filter((c) => c !== 'orden_venta' && c !== 'fecha_orden_venta')
-    : TICKET_COLS
+  const cols = TICKET_COLS.filter((c) =>
+    !(marcada && (c === 'orden_venta' || c === 'fecha_orden_venta'))
+    && !(prev?.prioridad_en_app_at != null && c === 'priority'))
   if (marcada && ovZoho && ovZoho !== (prev?.orden_venta ?? '') && ovZoho !== (prev?.ov_zoho_avisada ?? '')) {
     discrepancia = { ticketId: r.id, numero: r.number ?? null, ovApp: prev?.orden_venta ?? '', ovZoho }
   }

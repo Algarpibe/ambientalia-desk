@@ -371,11 +371,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 50 ALTER: 27 calificadas (22 de public + 5 de books) y 23 sin calificar, todas de Desk (de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
+  it('son 51 ALTER: 27 calificadas (22 de public + 5 de books) y 24 sin calificar, todas de Desk (la 51.ª, prioridad_en_app_at de F1B-07: ALTER tickets sin calificar; de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(50)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(51)
     expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(27)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(23)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(24)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER').toBe(ultima + 1 + 6 + 2 + 17)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1)').toBe(ultima + 1 + 6 + 2 + 17 + 1)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -742,5 +742,24 @@ describe('alta-manual-equipo-cliente · clientes_provisionales y la vista intact
     expect(vista).toHaveLength(1)
     expect(vista[0]).toBe(VISTA_CLIENTS_132D25F)
     expect(vista[0]).not.toMatch(/clientes_provisionales|provisional/i)
+  })
+})
+
+/**
+ * propagar-top5-lista-remision-creada (F1B-07, L1) · la ALTER de prioridad_en_app_at no rellena filas
+ * previas. Regla de mutación 2: se ejercitan las sentencias REALES de `schema.sql` que mencionan la
+ * columna; un `UPDATE` de relleno junto a la `ALTER` cambia el recuento y pone esto en rojo.
+ */
+describe('propagar-top5 (L1) · la ALTER de prioridad_en_app_at no rellena filas previas (sin backfill)', () => {
+  it('sólo hay UNA sentencia relacionada (la ALTER), y una fila con priority previa queda con la marca en NULL', async () => {
+    const pg = newDb().adapters.createPg()
+    const db = new pg.Pool()
+    await db.query('CREATE TABLE tickets (id text PRIMARY KEY, priority text)')
+    await db.query("INSERT INTO tickets (id, priority) VALUES ('legacy-1', 'High')")
+    const relacionadas = schemaStatements().filter((s) => /prioridad_en_app_at/i.test(s))
+    expect(relacionadas, 'sentencias de schema.sql que mencionan prioridad_en_app_at').toHaveLength(1)
+    for (const s of relacionadas) await db.query(s)
+    const r = await db.query('SELECT prioridad_en_app_at FROM tickets WHERE id=$1', ['legacy-1'])
+    expect(r.rows[0].prioridad_en_app_at).toBeNull()
   })
 })
