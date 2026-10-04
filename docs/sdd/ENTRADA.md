@@ -1997,6 +1997,7 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** `listEquiposManage` (`apps/desk/server/db/equipos.ts:175` en `a55326b`) arma su patrón de serial sin la pieza compartida y sin recortar los espacios de los lados. La búsqueda de tickets y el autocompletado de la recepción sí la comparten (RQ-VT-12). Es el molde H5: dos implementaciones de la misma noción.
 **Dueño:** quien decida el alcance. **Qué desbloquea:** unificarla es una línea más su prueba de confrontación.
 **Estado:** abierta · **Destino:** sin destino asignado, a propósito (R-3).
+
 ## E-201 · 2026-10-04 · pregunta · **ABIERTA** — F1C-05: la fecha prevista de facturación, ¿debe ser futura?
 **Qué:** aplicado: la fecha sólo tiene que ser un día real; una fecha pasada se acepta y una prueba lo fija. Con una fecha pasada, la alarma por fecha vencida saltaría nada más liberar.
 **Dueño:** Gerencia. **Qué desbloquea:** si debe ser futura, la guarda gana una comprobación y la zona horaria de referencia hay que decidirla.

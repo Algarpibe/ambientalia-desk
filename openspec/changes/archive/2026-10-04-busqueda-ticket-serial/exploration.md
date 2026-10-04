@@ -86,7 +86,7 @@ el servidor no impone ese mínimo.
 
 ## 6 · Permisos
 
-Todos ven todos los tickets: `openspec/specs/permissions/spec.md:541` (§4.3) y `apps/desk/src/lib/boardView.ts:33-37`.
+Todos ven todos los tickets: `openspec/specs/permissions/spec.md:541` en `59d02da` (§4.3) y `apps/desk/src/lib/boardView.ts:33-37`.
 La búsqueda no segmenta; basta el `requireAuth` ya montado (`apps/desk/server/routes/tickets.ts:35`).
 
 ## 7 · Riesgos
