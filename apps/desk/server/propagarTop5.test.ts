@@ -223,3 +223,15 @@ describe('la respuesta y la escalera del PUT', () => {
     expect(await trazas()).toEqual([])
   })
 })
+
+describe('desmarcar a quien nunca fue Top 5 (RQ-TC-36; S-3 del verify)', () => {
+  // Caracterización: nace verde. El escenario de la spec no tenía prueba propia; lo más cercano eran la de «la misma prioridad» y la de S-10.
+  it('sin fila en cliente_prioridad, top5: false responde 200 y el ticket no cambia ni recibe traza ni marca', async () => {
+    await cliente(); const { app } = appWith(); await ticket('t1', 1, 'cli-1', 'Medium')
+    expect((await db.query("SELECT 1 FROM public.cliente_prioridad WHERE client_id = 'cli-1'")).rows).toEqual([])
+    expect((await desmarcar(app)).status).toBe(200)
+    expect(await prio('t1')).toBe('Medium')
+    expect((await fila('t1')).prioridad_en_app_at).toBeNull()
+    expect(await trazas()).toEqual([])
+  })
+})
