@@ -346,7 +346,7 @@ CRLF conservado en todo (`file`). Las ediciones en sitio se hicieron con un guio
 
 - `packages/shared/src/listaPorEntrada.ts:10-16`: `ordenarPorEntrada` — instante ascendente, sin entrada o ilegible al final, empate y tramo sin entrada por el número (acepta `#123`). Exportada al final de `index.ts`.
 - `apps/desk/server/db/listaRemisionCreada.ts:13-16`: `getActiveTickets` filtrado por `STATUS_REMISION_CREADA` más `entradasActuales` (`apps/desk/server/db/sla.ts:78-102`): dos lecturas fijas sea cual sea N; `enEstadoDesde` es el ISO de la última entrada o `null`.
-- `apps/desk/server/routes/prioridad.ts:93-95`: `GET /api/remision-creada` con `requireAuth`; cualquier área la lee.
+- `apps/desk/server/routes/prioridad.ts:92-94`: `GET /api/remision-creada` con `requireAuth`; cualquier área la lee.
 - Cliente: la clave en `apps/desk/src/lib/boardView.ts:15` y su `case` en `:53` (junto a `todos`, devuelve lo recibido); `App.tsx` la pide con `fetchRemisionCreada` y el Sidebar ofrece la etiqueta. **Sin tarjeta nueva ni tiempo pintado (D13).** `.tsx` sin prueba por decisión de Gerencia.
 - Los ficheros de L3 más `misTickets.test.ts`: `62 passed (62)`.
 
@@ -370,7 +370,7 @@ Tras la última, `cmp` de `listaPorEntrada.ts`, `boardView.ts` y `listaRemisionC
 | Qué tickets entran | Servidor | `apps/desk/server/db/listaRemisionCreada.ts:14` (estado actual igual a Remisión creada, abiertos; sin filtro de flujo ni de orden de venta, S-7) |
 | Desde cuándo está en el estado | Servidor, el MISMO reloj que la alarma | `entradasActuales` (`apps/desk/server/db/sla.ts:78-102`), enfrentado a `ticketsConSlaVencido` por RC-9 (H5) |
 | En qué orden se enseñan | Servidor, `shared` | `ordenarPorEntrada` (`packages/shared/src/listaPorEntrada.ts:10-16`) |
-| Quién la lee | Servidor | `apps/desk/server/routes/prioridad.ts:93-95` (`requireAuth`; cualquier área, `401` sin sesión) |
+| Quién la lee | Servidor | `apps/desk/server/routes/prioridad.ts:92-94` (`requireAuth`; cualquier área, `401` sin sesión) |
 | «Habilitar Servicio» desde la lista | Servidor, probado | `apps/desk/server/services/ticketService.ts:129-131` (área); RC-12 |
 
 **La lista es una VISTA, no una guarda:** no concede ni quita permiso. El cliente sólo enseña: `applyBoardView` devuelve lo recibido sin reordenar ni filtrar (precedente de `mios` en `apps/desk/src/lib/boardView.test.ts:138-145`, y las pruebas nuevas para esta vista). El tiempo transcurrido no se calcula ni se pinta en el cliente (D13, E-nueva-5).

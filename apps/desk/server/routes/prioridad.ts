@@ -84,7 +84,6 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
     const yo = req.user!.id
     res.json((await colaDelTaller(db, await getActiveTickets(db, yo))).filter((t) => esDeMisTickets(t, yo)))
   }))
-
   /**
    * La lista de «Remisión creada» (RQ-VT-10, `decision/cola-del-taller-los-tres-cabos` punto 4): TODOS los tickets en ese estado,
    * del que más tiempo lleva en él al que menos, con `enEstadoDesde` calculado aquí (regla 13). Una vista: no concede permiso;
