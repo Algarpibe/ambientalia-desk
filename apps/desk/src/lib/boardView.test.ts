@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Ticket } from '@ambientalia/shared'
-import { applyBoardView, viewLabel, FUNCTIONAL_BY_LABEL, type VistaKey } from './boardView'
+import { applyBoardView, viewLabel, FUNCTIONAL_BY_LABEL, FUNCTIONAL_VIEWS, type VistaKey } from './boardView'
 
 const BASE = { id: 'x', number: '#1', subject: 's', status: 'Ingresado', statusType: 'Open', dueDate: null }
 const T = (over: Partial<Ticket>): Ticket => ({ ...BASE, ...over } as Ticket)
@@ -142,4 +142,33 @@ describe('applyBoardView · mis tickets conserva el orden de entrada', () => {
     const lista = [T({ id: 'z', derivado: d, createdAt: '2026-01-01T00:00:00Z' }), T({ id: 'a', derivado: d, createdAt: '2026-09-01T00:00:00Z' }), T({ id: 'otro', derivado: null }), T({ id: 'm', derivado: d, createdAt: '2026-05-01T00:00:00Z' })]
     expect(applyBoardView(lista, 'mios', now, 'yo').map((t) => t.id)).toEqual(['z', 'a', 'm'])
   })
+})
+
+/**
+ * F1B-07, L3 (`vistas-tablero` RQ-VT-10 y RQ-VT-03): la lista de «Remisión creada» llega ORDENADA por el servidor y la
+ * vista no decide nada: devuelve lo recibido, sin filtrar ni reordenar (regla invariable 13).
+ */
+describe('applyBoardView · remision_creada devuelve la lista tal como llega (RQ-VT-10)', () => {
+  it('no filtra ni reordena, ni siquiera lo que otras vistas ocultarían', () => {
+    const lista = [T({ id: 'z', createdAt: '2026-01-01T00:00:00Z' }), T({ id: 'c', statusType: 'Closed' }), T({ id: 'a', createdAt: '2026-09-01T00:00:00Z', priority: 'Urgent' }), T({ id: 'm' })]
+    expect(applyBoardView(lista, 'remision_creada', now).map((t) => t.id)).toEqual(['z', 'c', 'a', 'm'])
+  })
+  it('la etiqueta es «Equipos en Remisión creada» y el Sidebar la reconoce como funcional', () => {
+    expect(viewLabel('remision_creada')).toBe('Equipos en Remisión creada')
+    expect(FUNCTIONAL_BY_LABEL['Equipos en Remisión creada']).toBe('remision_creada')
+  })
+})
+
+describe('RQ-VT-03 · las siete claves de FUNCTIONAL_VIEWS tienen su case y ninguna cae al respaldo', () => {
+  const d = { id: 'yo', nombre: 'Yo', cargo: null, initials: 'YO' }
+  const adecuado: Record<string, Ticket> = {
+    todos: T({ id: 'k' }), abiertos: T({ id: 'k' }), cerrados: T({ id: 'k', statusType: 'Closed' }), espera: T({ id: 'k', status: 'Solicitado' }),
+    vencidos: T({ id: 'k', dueDate: '2026-01-01T00:00:00Z' }), mios: T({ id: 'k', derivado: d }), remision_creada: T({ id: 'k', status: 'Remisión creada' }),
+  }
+  it('son siete', () => { expect(FUNCTIONAL_VIEWS.map((v) => v.key)).toEqual(['todos', 'abiertos', 'cerrados', 'espera', 'vencidos', 'mios', 'remision_creada']) })
+  for (const v of FUNCTIONAL_VIEWS) {
+    it(`${v.key}: con un ticket que esa vista enseña, no produce el vacío del respaldo`, () => {
+      expect(applyBoardView([adecuado[v.key]], v.key, now, 'yo').map((t) => t.id)).toEqual(['k'])
+    })
+  }
 })

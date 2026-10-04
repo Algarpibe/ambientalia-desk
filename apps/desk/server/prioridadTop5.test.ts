@@ -176,20 +176,20 @@ describe('PUT /api/clients/:id/prioridad · sin nadie con cargo y matriz de suje
   })
 })
 
-describe('marcar o desmarcar el Top 5 no reescribe tickets ya nacidos (RQ-TC-24, mitad de servidor)', () => {
-  it('TC24-14 · dos tickets abiertos Low del cliente conservan Low tras marcarlo Top 5 High', async () => {
-    await cliente(); const { app } = appWith()
-    await ticketDe('t1', 9101, 'cli-1', 'Low'); await ticketDe('t2', 9102, 'cli-1', 'Low')
+describe('marcar o desmarcar el Top 5 propaga a los tickets abiertos y lo revierte (RQ-TC-24, mitad de servidor)', () => {
+  it('TC24-14 · dos tickets abiertos Low del cliente quedan High tras marcarlo Top 5 High, con una fila top5 por ticket', async () => {
+    await cliente(); const { app } = appWith(); await ticketDe('t1', 9101, 'cli-1', 'Low'); await ticketDe('t2', 9102, 'cli-1', 'Low')
     expect((await fijar(app, await adminCookie(), 'cli-1', { top5: true, prioridad: 'High' })).status).toBe(200)
-    expect([await prioridadDe('t1'), await prioridadDe('t2')]).toEqual(['Low', 'Low'])
+    expect([await prioridadDe('t1'), await prioridadDe('t2')]).toEqual(['High', 'High'])
+    expect(await ajustes()).toMatchObject(['t1', 't2'].map((ticket_id) => ({ ticket_id, de: 'Low', a: 'High', origen: 'top5', ajustado_por: 'Admin', ajustado_at: expect.anything() })))
   })
 
-  it('TC24-15 · desmarcar no cambia un ticket que ya es High', async () => {
-    await cliente(); const { app } = appWith(); const admin = await adminCookie()
-    await ticketDe('t1', 9103, 'cli-1', 'High')
+  it('TC24-15 · desmarcar devuelve a Low un ticket que subió por el Top 5, con una fila top5_revertido', async () => {
+    await cliente(); const { app } = appWith(); const admin = await adminCookie(); await ticketDe('t1', 9103, 'cli-1', 'Low')
     await fijar(app, admin, 'cli-1', { top5: true, prioridad: 'High' })
     expect((await fijar(app, admin, 'cli-1', { top5: false })).status).toBe(200)
-    expect(await prioridadDe('t1')).toBe('High')
+    expect(await prioridadDe('t1')).toBe('Low')
+    expect((await ajustes()).map((f) => [f.de, f.a, f.origen])).toEqual([['Low', 'High', 'top5'], ['High', 'Low', 'top5_revertido']])
   })
 })
 
@@ -207,7 +207,7 @@ const ticketSinCliente = async (id: string, number: number, priority = 'Low') =>
 }
 const ajustar = (app: ReturnType<typeof appWith>['app'], cookie: string, id: string, cuerpo: unknown) =>
   request(app).post(`/api/tickets/${id}/prioridad`).set('Cookie', cookie).send(cuerpo as object)
-const ajustes = async () => (await db.query('SELECT ticket_id, de, a, motivo, ajustado_por, ajustado_at FROM public.prioridad_ajustes ORDER BY id')).rows as Record<string, unknown>[]
+const ajustes = async () => (await db.query('SELECT ticket_id, de, a, motivo, ajustado_por, ajustado_at, origen FROM public.prioridad_ajustes ORDER BY id')).rows as Record<string, unknown>[]
 const marcaApp = async (id: string) => ((await db.query('SELECT managed_by_app FROM tickets WHERE id=$1', [id])).rows[0] as { managed_by_app: boolean }).managed_by_app
 const OK = { prioridad: 'Medium', motivo: 'Cliente estratégico' }
 

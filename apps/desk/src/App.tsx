@@ -13,7 +13,7 @@ import { TicketList } from './components/TicketList';
 import { TicketTable } from './components/TicketTable';
 import { ViewModeMenu } from './components/ViewModeMenu';
 import { useAsync } from './hooks/useAsync';
-import { fetchActiveTickets, fetchClosedTickets, fetchMisTickets, setTicketRead, type ClosedPage } from './api/client';
+import { fetchActiveTickets, fetchClosedTickets, fetchMisTickets, fetchRemisionCreada, setTicketRead, type ClosedPage } from './api/client';
 import { Pagination } from './components/Pagination';
 import { useAuth } from './auth/AuthContext';
 import { Login } from './components/Login';
@@ -66,7 +66,7 @@ function App() {
         return Promise.all([fetchActiveTickets(), fetchClosedTickets(closedPage)])
           .then(([activos, cerrados]) => ({ activos, cerrados }))
       }
-      return (view === 'mios' ? fetchMisTickets() : fetchActiveTickets()).then((activos) => ({ activos, cerrados: null }))
+      return (view === 'mios' ? fetchMisTickets() : view === 'remision_creada' ? fetchRemisionCreada() : fetchActiveTickets()).then((activos) => ({ activos, cerrados: null }))
     },
     [user?.id, view, closedPage],
   );

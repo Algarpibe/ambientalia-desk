@@ -5,8 +5,8 @@ import { getActiveTickets } from '../db/ticketsConCliente'
 import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, prioridadTop5, esDeMisTickets } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
-import { filaPrioridadCliente, listarTop5, fijarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
-import { colaDelTaller } from '../db/colaTaller'
+import { filaPrioridadCliente, listarTop5, fijarYPropagarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
+import { colaDelTaller } from '../db/colaTaller'; import { listaRemisionCreada } from '../db/listaRemisionCreada'
 
 /**
  * API de la prioridad del cliente y el Top 5 (prioridad-top5-cliente, F1B-07; `tickets-core` RQ-TC-27).
@@ -41,7 +41,7 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
     // C · contenido
     const cuerpo = prioridadClienteDelCuerpo(req.body)
     if (!cuerpo.ok) { res.status(422).json({ error: cuerpo.errors[0], errors: cuerpo.errors }); return }
-    res.json(await fijarPrioridadCliente(db, { clientId, top5: cuerpo.top5, prioridad: cuerpo.prioridad, por: user.name }))
+    res.json(await fijarYPropagarPrioridadCliente(db, { clientId, top5: cuerpo.top5, prioridad: cuerpo.prioridad, por: user.name }))
   }))
 
   // AJUSTE POR TICKET (RQ-TC-29). Escalera: A el ticket no existe (404) < B1 el cliente no es Top 5 o el ticket no tiene
@@ -83,5 +83,13 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
   app.get('/api/mis-tickets', requireAuth(db), asyncHandler(async (req, res) => {
     const yo = req.user!.id
     res.json((await colaDelTaller(db, await getActiveTickets(db, yo))).filter((t) => esDeMisTickets(t, yo)))
+  }))
+  /**
+   * La lista de «Remisión creada» (RQ-VT-10, `decision/cola-del-taller-los-tres-cabos` punto 4): TODOS los tickets en ese estado,
+   * del que más tiempo lleva en él al que menos, con `enEstadoDesde` calculado aquí (regla 13). Una vista: no concede permiso;
+   * «Habilitar Servicio» lo sigue guardando `ticketService.ts` por estado y área. Cualquier sesión la lee, como el resto.
+   */
+  app.get('/api/remision-creada', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await listaRemisionCreada(db))
   }))
 }
