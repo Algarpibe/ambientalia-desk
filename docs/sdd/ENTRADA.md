@@ -1912,3 +1912,23 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Cómo se reparan:** es el caso B de la regla de mutación 4. Para cada una, `git blame` sobre la línea que cita da el commit que escribió la frase; se lee la línea citada de la spec en ESE commit y, si dice lo que la frase afirma, la cita se ancla a él en la misma línea física. Si tampoco lo decía entonces, la cita nació mal y se anota aparte, sin anclar. No se renumeran a la línea de hoy.
 **Dueño:** la sesión de supervisión, que dice quién las repara y cuándo. **Qué desbloquea:** que esas 48 citas vuelvan a ser verificables. **No se reparan aquí.**
 **Estado:** abierta · **Destino:** sin asignar, a la espera de la supervisión (R-3).
+
+## E-184 · 2026-10-04 · pregunta · **ABIERTA** — F1B-03: ¿debe el servidor impedir crear una remisión de entrada fuera de la fase inicial?
+**Qué:** el alta de remisión (`apps/desk/server/routes/remision.ts:120-264`) no lee el estado del ticket: acepta cualquier estado. «Sólo se crea remisión de entrada en los orígenes de Habilitar Servicio» lo sostiene únicamente el botón, que consume el predicado compartido `puedeCrearRemisionDeEntrada`. Es el punto 2 de la regla invariable 13: sin contrapartida en el servidor, el cliente es la guarda. El hueco es anterior a `remision-creada-sin-salida`, que lo declara y no lo corrige: añadir esa guarda al alta sumaría un punto a IV-12 y cambia alcance.
+**Dueño:** Gerencia. **Qué desbloquea:** si se abre un cambio que imponga el estado en el alta, y en qué escalón del orden de precedencia.
+**Estado:** abierta · **Destino:** punto abierto con dueño; cambio aparte dentro de F1B-03 si Gerencia lo pide (R-3).
+
+## E-185 · 2026-10-04 · pendiente · **ABIERTA** — F1B-03: recuento en producción de tickets en «Remisión creada» sin remisión de entrada vigente
+**Qué:** no se sabe si el caso sin salida existe hoy en producción. Por las rutas de la aplicación no se produce (anular la última remisión devuelve el ticket a «Ticket creado», y un ticket de Zoho no entra en esa fase); quedan tres orígenes hipotéticos. El recuento del 03/10 reparte por estado y lo diría. No cambia el arreglo, sólo su urgencia.
+**Dueño:** quien administra el despliegue (acceso a producción). **Qué desbloquea:** saber si al publicar hay tickets que usar el botón nuevo.
+**Estado:** abierta · **Destino:** condición informativa del paquete de despliegue que incluya `remision-creada-sin-salida` (R-3).
+
+## E-186 · 2026-10-04 · hallazgo · **ABIERTA** — anular una remisión y sincronizar el estado del ticket no comparten transacción
+**Qué:** la ruta de anulación escribe la anulación (`apps/desk/server/routes/remision.ts:333`) y después llama a la sincronización del estado (`apps/desk/server/routes/remision.ts:336`), sin transacción que las una. Una petición caída entre las dos deja un ticket en «Remisión creada» con su única remisión anulada: es uno de los tres orígenes del caso sin salida. Desde `remision-creada-sin-salida` ese ticket ya tiene salida, pero el hueco sigue ahí.
+**Dueño:** la sesión de supervisión. **Qué desbloquea:** decidir si se corrige y en qué tanda.
+**Estado:** abierta · **Destino:** sin asignar, a la espera de la supervisión (R-3).
+
+## E-187 · 2026-10-04 · hallazgo · **ABIERTA** — con la remisión de salida, «Remisión creada» sin entrada vigente deja de ser hipotético
+**Qué:** la sincronización cuenta remisiones confirmadas sin filtrar el tipo (`apps/desk/server/db/estadoPorRemision.ts:43-47`), y la guarda de «Habilitar Servicio» sí filtra por entrada. Hoy no existe otro tipo de remisión; cuando se construya la de salida, una salida confirmada sobre un ticket en fase inicial lo llevaría a «Remisión creada» sin entrada vigente. La prueba de servidor de `remision-creada-sin-salida` ya recorre ese caso y el ticket tiene salida.
+**Dueño:** la sesión de supervisión. **Qué desbloquea:** que la tanda de la remisión de salida lo tenga en cuenta.
+**Estado:** abierta · **Destino:** contenido de la fila de la remisión de salida, cuando se abra (R-3).
