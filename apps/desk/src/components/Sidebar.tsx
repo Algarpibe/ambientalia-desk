@@ -7,7 +7,7 @@ const TODAS_LAS_VISTAS = [
     'Tickets cerrados',
     'Tickets respondidos por mí',
     'Chats pendientes',
-    'Mis Tickets',
+    'Mis Tickets', 'Equipos en Remisión creada',
     'Mis Tickets en espera',
     'Mis Tickets abierto',
     'Mis Tickets vencidos',

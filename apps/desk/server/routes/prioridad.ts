@@ -6,7 +6,7 @@ import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, pr
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { filaPrioridadCliente, listarTop5, fijarYPropagarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
-import { colaDelTaller } from '../db/colaTaller'
+import { colaDelTaller } from '../db/colaTaller'; import { listaRemisionCreada } from '../db/listaRemisionCreada'
 
 /**
  * API de la prioridad del cliente y el Top 5 (prioridad-top5-cliente, F1B-07; `tickets-core` RQ-TC-27).
@@ -83,5 +83,14 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
   app.get('/api/mis-tickets', requireAuth(db), asyncHandler(async (req, res) => {
     const yo = req.user!.id
     res.json((await colaDelTaller(db, await getActiveTickets(db, yo))).filter((t) => esDeMisTickets(t, yo)))
+  }))
+
+  /**
+   * La lista de «Remisión creada» (RQ-VT-10, `decision/cola-del-taller-los-tres-cabos` punto 4): TODOS los tickets en ese estado,
+   * del que más tiempo lleva en él al que menos, con `enEstadoDesde` calculado aquí (regla 13). Una vista: no concede permiso;
+   * «Habilitar Servicio» lo sigue guardando `ticketService.ts` por estado y área. Cualquier sesión la lee, como el resto.
+   */
+  app.get('/api/remision-creada', requireAuth(db), asyncHandler(async (_req, res) => {
+    res.json(await listaRemisionCreada(db))
   }))
 }

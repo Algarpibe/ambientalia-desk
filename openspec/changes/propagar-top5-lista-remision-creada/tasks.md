@@ -281,70 +281,70 @@ Archivos: `shared/listaPorEntrada.ts` + prueba (nuevos), `shared/index.ts` (+1),
 `routes/prioridad.ts` (+8 al final), `listaRemisionCreada.test.ts` (nuevo), `boardView.ts` (0), `boardView.test.ts`
 (+18 al final), `App.tsx` (0), `Sidebar.tsx` (0), `client.ts` (+5 al final).
 
-- [ ] L3.1 Anotar `git rev-parse HEAD` (partida) y abrir el intento; `wc -l` de `boardView.ts`, `App.tsx`, `Sidebar.tsx`,
+- [x] L3.1 Anotar `git rev-parse HEAD` (partida) y abrir el intento; `wc -l` de `boardView.ts`, `App.tsx`, `Sidebar.tsx`,
   `routes/prioridad.ts`, `client.ts`.
 
 **Rojo**
-- [ ] L3.2 Crear `packages/shared/src/listaPorEntrada.test.ts`: `ordenarPorEntrada` ascendente; `null` al final; empate
+- [x] L3.2 Crear `packages/shared/src/listaPorEntrada.test.ts`: `ordenarPorEntrada` ascendente; `null` al final; empate
   y tramo sin entrada por `number` ascendente; no ordena por prioridad.
-- [ ] L3.3 Crear `apps/desk/server/listaRemisionCreada.test.ts`: orden del más antiguo al más reciente; cuenta la
+- [x] L3.3 Crear `apps/desk/server/listaRemisionCreada.test.ts`: orden del más antiguo al más reciente; cuenta la
   **última** entrada; una entrada posterior a otro estado no cuenta; sin entrada, al final y no se omite; con o sin
   orden de venta entran; sólo `Remisión creada` (no `Notificado`, no cerrado); la prioridad no cambia el orden; mismo
   instante que `ticketsConSlaVencido` (H5); `401` sin sesión y cualquier área lee; **sin N+1** con N y 2N.
-- [ ] L3.4 **Nace verde:** «Habilitar Servicio» desde la lista sigue rechazado por la guarda de `ticketService.ts:126-131`
+- [x] L3.4 **Nace verde:** «Habilitar Servicio» desde la lista sigue rechazado por la guarda de `ticketService.ts:126-131`
   para un usuario sin el área (caracterización, escenario de la spec).
-- [ ] L3.5 En `boardView.test.ts` (tras `:145`): `applyBoardView(…, 'remision_creada')` no filtra ni reordena; etiqueta
+- [x] L3.5 En `boardView.test.ts` (tras `:145`): `applyBoardView(…, 'remision_creada')` no filtra ni reordena; etiqueta
   y `FUNCTIONAL_BY_LABEL`; las siete claves tienen `case` y ninguna cae al `default`.
-- [ ] L3.6 **EJECUTAR** y anotar los fallos literales (ruta inexistente; la vista cae en `default`, `boardView.ts:54`).
+- [x] L3.6 **EJECUTAR** y anotar los fallos literales (ruta inexistente; la vista cae en `default`, `boardView.ts:54`).
 
 **Verde**
-- [ ] L3.7 `listaPorEntrada.ts` (~15) y un `export` al final de `shared/src/index.ts`.
-- [ ] L3.8 `db/listaRemisionCreada.ts` (~25): `getActiveTickets` filtrado por `STATUS_REMISION_CREADA` + `entradasActuales`
+- [x] L3.7 `listaPorEntrada.ts` (~15) y un `export` al final de `shared/src/index.ts`.
+- [x] L3.8 `db/listaRemisionCreada.ts` (~25): `getActiveTickets` filtrado por `STATUS_REMISION_CREADA` + `entradasActuales`
   (`db/sla.ts:78-102`), dos lecturas fijas, devuelve `enEstadoDesde`. `routes/prioridad.ts`: import en sitio en `:9` y
   `GET /api/remision-creada` al final tras `:86`, con `requireAuth`.
-- [ ] L3.9 Cliente, en sitio y con cero netas: `boardView.ts:15` (clave `remision_creada`, etiqueta «Equipos en Remisión
+- [x] L3.9 Cliente, en sitio y con cero netas: `boardView.ts:15` (clave `remision_creada`, etiqueta «Equipos en Remisión
   creada») y `:53` (`case 'todos': case 'remision_creada': return tickets`); `App.tsx:16` import y `:69` rama; `Sidebar.tsx:10`
   etiqueta. `client.ts`: `fetchRemisionCreada()` al final (+5). Sin tarjeta nueva ni tiempo pintado (D13).
-- [ ] L3.10 **EJECUTAR** los ficheros de L3: verde.
+- [x] L3.10 **EJECUTAR** los ficheros de L3: verde.
 
 **Cero netas**
-- [ ] L3.11 `git diff --numstat` de `boardView.ts`, `App.tsx` y `Sidebar.tsx`: inserciones = borrados. `wc -l` antes/después.
+- [x] L3.11 `git diff --numstat` de `boardView.ts`, `App.tsx` y `Sidebar.tsx`: inserciones = borrados. `wc -l` antes/después.
 
 **Mutaciones**
-- [ ] L3.12 **M11:** invertir el signo de `ordenarPorEntrada`. Cae el orden. Revertir.
-- [ ] L3.13 **M12:** quitar `case 'remision_creada':` de `boardView.ts:53`. Cae `tsc` en `:59` y la prueba de la vista. Revertir.
-- [ ] L3.14 **Posición (regla 1):** en la consulta de la lista, ordenar antes de filtrar por estado o filtrar después
+- [x] L3.12 **M11:** invertir el signo de `ordenarPorEntrada`. Cae el orden. Revertir.
+- [x] L3.13 **M12:** quitar `case 'remision_creada':` de `boardView.ts:53`. Cae `tsc` en `:59` y la prueba de la vista. Revertir.
+- [x] L3.14 **Posición (regla 1):** en la consulta de la lista, ordenar antes de filtrar por estado o filtrar después
   de `entradasActuales` con el estado erróneo; ver qué prueba cae y revertir.
-- [ ] L3.15 `git diff`: no queda ninguna mutación.
+- [x] L3.15 `git diff`: no queda ninguna mutación.
 
 **Regla 13**
-- [ ] L3.16 `apply-progress.md`: orden y contenido de la lista → `listaRemisionCreada` + `ordenarPorEntrada`; «Habilitar
+- [x] L3.16 `apply-progress.md`: orden y contenido de la lista → `listaRemisionCreada` + `ordenarPorEntrada`; «Habilitar
   Servicio» → `ticketService.ts:126-131`; el cliente enseña sin reordenar (`boardView.test.ts:138-143`).
 
 **Barrido de citas (regla de mutación 4) — sólo en L3**
-- [ ] L3.17 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` para `repo.ts`, `boardView.ts`, `prioridadCliente.ts`,
+- [x] L3.17 `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` para `repo.ts`, `boardView.ts`, `prioridadCliente.ts`,
   `routes/prioridad.ts`, `equipoNuevo.ts`, `ticketService.ts`, `App.tsx`, `Sidebar.tsx`, `client.ts`, más el segundo pase
   de abreviadas en los ficheros que ya citan cada módulo. Comprobar CADA resultado contra el fichero.
-- [ ] L3.18 LISTAR y clasificar A, B o C las citas que pasan a AFIRMAR algo falso: las que digan que `repo.ts:76-78` sólo
+- [x] L3.18 LISTAR y clasificar A, B o C las citas que pasan a AFIRMAR algo falso: las que digan que `repo.ts:76-78` sólo
   filtra la orden de venta, o que `FUNCTIONAL_VIEWS` tiene seis claves. NO editar specs vivas ni documentos fechados;
   la lista va en `apply-progress.md`.
 
 **Redacción para el orquestador (sólo en `apply-progress.md`)**
-- [ ] L3.19 Redactar el texto de la **corrección del maestro** (`toca_maestro: si`): M1.9.1 (`R08.4.md:1973`) sólo habla
+- [x] L3.19 Redactar el texto de la **corrección del maestro** (`toca_maestro: si`): M1.9.1 (`R08.4.md:1973`) sólo habla
   de la prioridad al nacer; ahora el Top 5 propaga a los abiertos con traza, revierte al desmarcar y no toca los
   ajustes manuales con motivo, y la lista de «Remisión creada» se ordena por la entrada al estado. Sin numerar: lo
   numera y lo pega el orquestador en `docs/sdd/F0-01_Correcciones_para_el_maestro.md`.
-- [ ] L3.20 Redactar sin número, marcadas «a numerar por el orquestador», las preguntas para la bandeja: E-nueva-1 a
+- [x] L3.20 Redactar sin número, marcadas «a numerar por el orquestador», las preguntas para la bandeja: E-nueva-1 a
   E-nueva-4 de la propuesta (§15) y E-nueva-5 y E-nueva-6 del diseño (§12), más la resolución de D-1 y D-2 si cambió algo.
   NO escribir en `docs/sdd/ENTRADA.md` ni en `openspec/config.yaml`.
-- [ ] L3.21 Línea única de cobertura para el `archive-report.md` (qué parte de F1B-07 cubre este cambio y qué deja fuera,
+- [x] L3.21 Línea única de cobertura para el `archive-report.md` (qué parte de F1B-07 cubre este cambio y qué deja fuera,
   la pregunta 3.b).
 
 **Cierre**
-- [ ] L3.22 **CIERRE L3:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA.
-- [ ] L3.23 Medida: `git diff --shortstat --no-renames <partida L3>` + `wc -l` de lo nuevo sin trackear (los `.tsx`,
+- [x] L3.22 **CIERRE L3:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA.
+- [x] L3.23 Medida: `git diff --shortstat --no-renames <partida L3>` + `wc -l` de lo nuevo sin trackear (los `.tsx`,
   sin prueba por decisión de Gerencia). Si pasa de 720, parar.
-- [ ] L3.24 `git diff --numstat` global: `repo.ts`, `boardView.ts`, `ticketService.ts`, `equipoNuevo.ts`, `App.tsx`,
+- [x] L3.24 `git diff --numstat` global: `repo.ts`, `boardView.ts`, `ticketService.ts`, `equipoNuevo.ts`, `App.tsx`,
   `Sidebar.tsx` con inserciones = borrados (cero netas acumuladas).
 - [ ] L3.25 **FIN DE L3.** Settle y fusión a `main`.
 

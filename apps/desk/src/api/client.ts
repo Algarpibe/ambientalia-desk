@@ -801,3 +801,8 @@ export async function fetchNovedadesRemision(): Promise<NovedadCatalogo[]> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<NovedadCatalogo[]>
 }
+
+/** La lista de «Remisión creada» (RQ-VT-10): el servidor la ordena y calcula `enEstadoDesde`; el cliente la enseña tal cual. */
+export function fetchRemisionCreada(): Promise<Ticket[]> {
+  return fetch('/api/remision-creada', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
+}

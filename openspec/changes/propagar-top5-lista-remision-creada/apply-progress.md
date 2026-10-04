@@ -310,3 +310,161 @@ Antes: 3.011 y 2 omitidas en 191 + 1. Ahora +25 pruebas (4 de L2a-bis, 13 de `tr
 - Sin trackear: `propagarTop5Atomica.test.ts` 69 + `trazaTop5AlNacer.test.ts` 143 = **212**.
 - Código y pruebas: **288**. Con esta parte de `apply-progress.md` (~75) y las casillas de `tasks.md` (~25): ~390 (techo 800, válvula 720). En el punto de decisión tras L2a-bis la suma proyectada era ~360.
 - Binarios: ninguno.
+
+## Lote L3 — lista de «Remisión creada» y cierre documental — COMPLETO (pendiente de commit, settle y fusión del orquestador)
+
+Commit de partida del intento: `74aadd5`. Independiente de L1 y L2.
+
+### Líneas antes y después
+
+| Fichero | Antes | Después | Netas |
+|---|---|---|---|
+| `apps/desk/src/lib/boardView.ts` | 59 | 59 | **0** (`git diff --numstat`: 2 ins / 2 borr: la fila de `FUNCTIONAL_VIEWS` y el `case` de `todos`) |
+| `apps/desk/src/App.tsx` | 183 | 183 | **0** (2 / 2: el import de `:16` y la rama de `:69`) |
+| `apps/desk/src/components/Sidebar.tsx` | 151 | 151 | **0** (1 / 1: la etiqueta de `:10`) |
+| `apps/desk/server/routes/prioridad.ts` | 87 | 96 | +9 al final (la ruta); el import de `:9` en sitio, en la misma línea. Nada por encima se mueve |
+| `apps/desk/src/api/client.ts` | 803 | 808 | +5 al final (`fetchRemisionCreada`); `:713` y `:715` siguen donde estaban |
+| `packages/shared/src/index.ts` | 32 | 33 | +1 al final |
+| `apps/desk/src/lib/boardView.test.ts` | 145 | 174 | +29 al final y el import de `:3` en sitio |
+| `packages/shared/src/listaPorEntrada.ts` | — | 16 | nuevo |
+| `packages/shared/src/listaPorEntrada.test.ts` | — | 36 | nuevo |
+| `apps/desk/server/db/listaRemisionCreada.ts` | — | 17 | nuevo |
+| `apps/desk/server/listaRemisionCreada.test.ts` | — | 148 | nuevo |
+
+CRLF conservado en todo (`file`). Las ediciones en sitio se hicieron con un guion de Node que sustituye cadenas únicas, no con `sed -i`; un `sed -i` mío sobre `boardView.test.ts` lo dejó en LF y lo reconvertí a CRLF. Literales de L3 tal como fija el diseño: clave `remision_creada`, ruta `/api/remision-creada`, campo `enEstadoDesde`, etiqueta «Equipos en Remisión creada».
+
+### Rojos observados (antes de escribir el código)
+
+`npx vitest run` de los tres ficheros de prueba de L3: `14 failed | 28 passed`, tres ficheros rojos.
+
+- `listaPorEntrada.test.ts` → `Error: Cannot find module './listaPorEntrada' imported from …/listaPorEntrada.test.ts` (la función no existe).
+- Servidor (RC-1 a RC-11): `AssertionError: expected 404 to be 200` (RC-10: `expected 404 to be 401`; la ruta no existe y cae en el comodín de `/api`), `TypeError: res.body.map is not a function` (x7) y `TypeError: Cannot read properties of undefined (reading 'enEstadoDesde')` (RC-9).
+- Cliente: «no filtra ni reordena…» → `AssertionError: expected [] to deeply equal [ 'z', 'c', 'a', 'm' ]` (la clave nueva cae en el `default` de `boardView.ts:54`); «la etiqueta es…» → `expected 'Vista no reconocida' to be 'Equipos en Remisión creada'`; «son siete» → `expected [ 'todos', 'abiertos', …(4) ] to deeply equal [ 'todos', 'abiertos', …(5) ]`.
+- **Nacen verdes (caracterización), declarado:** RC-12, «Habilitar Servicio» desde un ticket en «Remisión creada» con un usuario de Servicio Técnico → `403` y el ticket no se mueve (la guarda de `apps/desk/server/services/ticketService.ts:129-131` ya existía); y las pruebas por clave de RQ-VT-03 de las seis claves que ya tenían `case`.
+
+### Verde
+
+- `packages/shared/src/listaPorEntrada.ts:10-16`: `ordenarPorEntrada` — instante ascendente, sin entrada o ilegible al final, empate y tramo sin entrada por el número (acepta `#123`). Exportada al final de `index.ts`.
+- `apps/desk/server/db/listaRemisionCreada.ts:13-16`: `getActiveTickets` filtrado por `STATUS_REMISION_CREADA` más `entradasActuales` (`apps/desk/server/db/sla.ts:78-102`): dos lecturas fijas sea cual sea N; `enEstadoDesde` es el ISO de la última entrada o `null`.
+- `apps/desk/server/routes/prioridad.ts:93-95`: `GET /api/remision-creada` con `requireAuth`; cualquier área la lee.
+- Cliente: la clave en `apps/desk/src/lib/boardView.ts:15` y su `case` en `:53` (junto a `todos`, devuelve lo recibido); `App.tsx` la pide con `fetchRemisionCreada` y el Sidebar ofrece la etiqueta. **Sin tarjeta nueva ni tiempo pintado (D13).** `.tsx` sin prueba por decisión de Gerencia.
+- Los ficheros de L3 más `misTickets.test.ts`: `62 passed (62)`.
+
+### Mutaciones de L3 (copias en el directorio temporal; restauradas con `cp` y comprobadas con `cmp`, no con `git checkout`)
+
+Pruebas para reproducirlas: `npx vitest run packages/shared/src/listaPorEntrada.test.ts apps/desk/server/listaRemisionCreada.test.ts apps/desk/src/lib/boardView.test.ts`.
+
+| # | Cambio exacto (fichero: original → mutado) | Qué cae (literal) |
+|---|---|---|
+| M11 | `packages/shared/src/listaPorEntrada.ts`: `ia === null ? 1 : ib === null ? -1 : ia - ib` → `… : ib - ia` | 8 caídas: `expected [ 'c', 'b', 'a' ] to deeply equal [ 'a', 'b', 'c' ]`; `expected [ 'b', 'a' ] to deeply equal [ 'a', 'b' ]`; `expected [ 'a', 'b', 'sin' ] to deeply equal [ 'b', 'a', 'sin' ]`; y RC-1 (`expected [ 'd2', 'd5', 'd9' ] to deeply equal [ 'd9', 'd5', 'd2' ]`), RC-2, RC-3, RC-4, RC-6 |
+| M12 | `apps/desk/src/lib/boardView.ts`: `case 'todos': case 'remision_creada': return tickets` → `case 'todos': return tickets` | `tsc -b` → `apps/desk/src/lib/boardView.ts(54,39): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'`; en pruebas: «no filtra ni reordena…» → `expected [] to deeply equal [ 'z', 'c', 'a', 'm' ]` y «RQ-VT-03 … remision_creada» → `expected [] to deeply equal [ 'k' ]` |
+| P1 (posición, estado erróneo) | `apps/desk/server/db/listaRemisionCreada.ts`: en la llamada a `entradasActuales`, `status: String(row.status)` → `status: 'Notificado'` | 7 caídas: RC-1 (`expected [ 'd5', 'd2', 'd9' ] to deeply equal [ 'd9', 'd5', 'd2' ]`), RC-2, RC-3, RC-4, RC-5 (`expected [ 's5', 'v10', 'v20', 's30' ] to deeply equal [ 'v10', 'v20', 's5', 's30' ]`), RC-6 y RC-9 (H5) |
+| P2 (posición, ordenar antes de filtrar) | mismo fichero: quitar el `.filter` por estado de la primera línea del cuerpo y aplicarlo tras `ordenarPorEntrada` | **SOBREVIVE (49 de 49), y es un equivalente, no un hueco de prueba**: filtrar y ordenar conmutan. Se anota para que nadie lo busque como defecto |
+
+Tras la última, `cmp` de `listaPorEntrada.ts`, `boardView.ts` y `listaRemisionCreada.ts` contra las copias del verde da idéntico; `git status` sólo muestra el verde.
+
+### Regla 13 (L3), decisión a decisión
+
+| Decisión | Quién la impone | Línea |
+|---|---|---|
+| Qué tickets entran | Servidor | `apps/desk/server/db/listaRemisionCreada.ts:14` (estado actual igual a Remisión creada, abiertos; sin filtro de flujo ni de orden de venta, S-7) |
+| Desde cuándo está en el estado | Servidor, el MISMO reloj que la alarma | `entradasActuales` (`apps/desk/server/db/sla.ts:78-102`), enfrentado a `ticketsConSlaVencido` por RC-9 (H5) |
+| En qué orden se enseñan | Servidor, `shared` | `ordenarPorEntrada` (`packages/shared/src/listaPorEntrada.ts:10-16`) |
+| Quién la lee | Servidor | `apps/desk/server/routes/prioridad.ts:93-95` (`requireAuth`; cualquier área, `401` sin sesión) |
+| «Habilitar Servicio» desde la lista | Servidor, probado | `apps/desk/server/services/ticketService.ts:129-131` (área); RC-12 |
+
+**La lista es una VISTA, no una guarda:** no concede ni quita permiso. El cliente sólo enseña: `applyBoardView` devuelve lo recibido sin reordenar ni filtrar (precedente de `mios` en `apps/desk/src/lib/boardView.test.ts:138-145`, y las pruebas nuevas para esta vista). El tiempo transcurrido no se calcula ni se pinta en el cliente (D13, E-nueva-5).
+
+### Barrido de citas (regla de mutación 4), sobre todo el cambio (L1 a L3)
+
+Grep SIN excluir `openspec/changes/archive/`. **Los ficheros muy citados no cambiaron de tamaño** (`repo.ts` 452, `boardView.ts` 59, `ticketService.ts` 277, `equipoNuevo.ts` 99, `App.tsx` 183, `Sidebar.tsx` 151, `client.ts` 803 antes de L3), así que ninguna cita a ellos se desplaza por inserción; lo que cambia es qué AFIRMAN. Sólo se lista; no se edita nada fuera del cambio. Fichero y línea van en columnas separadas a propósito.
+
+| Fichero que cita | Línea | Qué afirma | Clase |
+|---|---|---|---|
+| `openspec/changes/archive/2026-09-28-asociacion-ov-ticket/design.md` | 94 | que las líneas 76 a 78 de `repo.ts` filtran la orden de venta | B: cierta entonces; hoy esas tres líneas filtran también `priority` |
+| `openspec/changes/archive/2026-09-28-parche-iv11-orden-venta/archive-report.md` | 14 | «frontera por columna para las dos columnas de la orden» (líneas 76 a 78 de `repo.ts`) | B |
+| `openspec/changes/archive/2026-09-28-asociacion-ov-ticket/proposal.md` | 71 | `ov_elegida_en_app_at` en las líneas 73 a 81 de `repo.ts` «se queda intacta» | A: el rango ahora incluye también la cláusula de prioridad |
+| `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/verify-report.md` | 240 | el sincronizador (línea 71 de `repo.ts`) pisa la prioridad: «fuera de alcance declarado» | C: superada por L1 (la marca `prioridad_en_app_at` la protege) |
+| `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/exploration.md` | 28 y 34 | «el sync pisa `priority` de tickets no gestionados» | C: superada por L1 |
+| `CLAUDE.md` | 348 (fila IV-11) | `repo.ts`, líneas 71 y 73 a 81 | A: habla de la orden de venta y sigue cierta; falta decir que la misma zona protege ya la prioridad (lo anota el orquestador al archivar) |
+| `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` | 604 y 951 | `repo.ts`, línea 71 (`managed_by_app`) | A: la línea 71 no se movió |
+| `openspec/specs/transitions-st/spec.md` y `openspec/config.yaml` | 1641 y 3198 | `repo.ts`, línea 71 | A |
+| `apps/desk/server/prioridadTop5.test.ts` | 180 y 187 | TC24-14 y TC24-15 | A: invertidas por L2a; son lo que hoy fijan |
+| `apps/desk/server/services/ticketService.test.ts` | 1154 y 1160 | otras dos pruebas con el mismo nombre (prioridad al nacer) | A: intactas |
+| `docs/sdd/ENTRADA.md` | 1426 | «ninguna consulta toca `tickets.priority`; lo fijan TC24-14 y TC24-15» | C: superada por este cambio (hoy sí la toca, con traza) |
+| `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/` (`apply-progress.md` 4 menciones, `tasks.md` 3, `verify-report.md` 2) | varias | TC24-14 y TC24-15 en su forma de entonces | B: fechadas |
+| `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md` | 174 | F1B-07 ampliación: describe (3) como trabajo por hacer | B (documento fechado); lo cierra la reconciliación |
+| `openspec/specs/tickets-core/spec.md` | 870 | «este requisito aplica sólo al nacer: no reevalúa tickets existentes» | C: superada por RQ-TC-36 a RQ-TC-38 del delta (lo reescribe el archivo) |
+| `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/specs/tickets-core/spec.md` y `2026-09-29-registro-contrato/specs/tickets-core/spec.md` | 120 y 233 | el mismo «sólo al nacer» | B: fechadas |
+| `openspec/changes/archive/2026-09-10-vista-todos-y-estados-en-espera/specs/vistas-tablero/spec.md` | 90 y 97 | `FUNCTIONAL_VIEWS` «con sus seis claves» | B: cierta entonces; hoy son siete. El vivo de `vistas-tablero` lo corrige el archivo con el delta de RQ-VT-03 |
+| `openspec/changes/archive/2026-09-10-vista-todos-y-estados-en-espera/` (`design.md` 183, `tasks.md` 203) | 183 y 203 | «las seis vistas» | B |
+
+**`Top5Panel.tsx` (+3 líneas netas declaradas en L2b):** los cambios en sitio son las líneas 21, 26 y 28 y la única inserción cae en la línea 52. Las citas a líneas anteriores no se mueven; las posteriores se desplazan en +1.
+
+| Fichero que cita | Línea | Cita a Top5Panel | Veredicto |
+|---|---|---|---|
+| `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` | 744 y 773 | línea 20 | A, por debajo de la inserción |
+| `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` | 1489 | línea 46 | A, por debajo de la inserción |
+| `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` | 1490 | líneas 60 a 68 (`tbody` y `lista.map`) | B: histórica; hoy el bloque está en 61 a 69 |
+| `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` | 774 | línea 86 (prioridades ofrecidas) | B: hoy es la 87 |
+| `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` | 1450 | línea 112 (buscador por nombre o NIT) | B: hoy es la 113 |
+| `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/verify-report.md` | 185 | línea 20 | A |
+
+Resumen: tabla principal **A 6, B 7, C 4**; `Top5Panel.tsx` **A 3, B 3** (6 filas, 7 citas). Las B de `Top5Panel.tsx` viven en un paquete fechado contra `ae5aaf4`: no hay que renumerarlas a ciegas.
+
+### Texto de la corrección del maestro (`toca_maestro: si`, M1.9.1) — sin número, lo numera y pega el orquestador
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1973`, párrafo «Prioridad.» de M1.9.1.
+
+**Texto actual:** «Prioridad. [DECIDIDO 21/09/2026 y 23/09/2026 — R08.4] La prioridad se fija en el cliente, no en cada ticket: se fija una vez y todos sus tickets la heredan. Al nacer un ticket manda la más alta entre la del contrato y la del Top 5; sin ninguna de las dos, se aplica la regla general.»
+
+**Texto propuesto:** «Prioridad. [DECIDIDO 21/09/2026, 23/09/2026 y 01/10/2026] La prioridad se fija en el cliente, no en cada ticket: se fija una vez y todos sus tickets la heredan. Al nacer un ticket manda la más alta entre la del contrato y la del Top 5; sin ninguna de las dos, se aplica la regla general. Al marcar un cliente como Top 5, o al cambiar su prioridad, sus tickets abiertos toman la nueva prioridad y cada cambio deja su traza; al desmarcarlo, vuelven a la prioridad calculada. Los tickets con un ajuste manual con motivo conservan el suyo en todo caso, y el sincronizador con Zoho no sobrescribe la prioridad que la aplicación ha fijado. La lista de equipos en «Remisión creada» para Comercial se ordena por el tiempo transcurrido desde que el ticket entró en ese estado, el más antiguo primero, que es el mismo reloj de la alarma de 3 días hábiles; los tickets sin entrada registrada van al final.»
+
+### Preguntas para la bandeja (a numerar por el orquestador; NO se escribe en `docs/sdd/ENTRADA.md` ni en `openspec/config.yaml`)
+
+| # | Qué se pregunta | Dueño | Qué desbloquea | Destino |
+|---|---|---|---|---|
+| E-nueva-1 (a numerar) | Sobre la prioridad propagada a un ticket venido de Zoho, ¿manda la aplicación (S-1)? Y tras desmarcar, ¿sigue mandando la aplicación o vuelve a mandar Zoho (S-2)? | Gerencia | Si no, la marca por fila `prioridad_en_app_at` se retira o se vacía al revertir | Punto abierto con dueño; supuesto aplicado: manda la aplicación y la marca se conserva |
+| E-nueva-2 (a numerar) | Una prioridad cambiada por el Director Comercial en una transición, sin motivo escrito, ¿cuenta como «ajuste manual con motivo» (S-4)? | Gerencia | Si cuenta, la transición pasa a eximir al ticket; hoy no exime | Punto abierto con dueño |
+| E-nueva-3 (a numerar) | Si el Top 5 es más bajo que la prioridad que el ticket ya tenía, ¿el ticket baja (S-5)? | Gerencia | Si el Top 5 sólo sube o también baja; hoy baja, a la letra de la decisión | Punto abierto con dueño |
+| E-nueva-4 (a numerar) | ¿La lista trae todos los equipos en «Remisión creada» o sólo los que no tienen orden de venta, como la alarma (S-7)? | Gerencia | El contenido de la lista; hoy trae todos | Punto abierto con dueño |
+| E-nueva-5 (a numerar) | ¿La lista debe enseñar el tiempo transcurrido en cada tarjeta (D13)? | Gerencia | Tocar `TicketCard.tsx` (citado y `.tsx` sin red de pruebas) y calcularlo en el servidor con el calendario de cierres; hoy no se pinta | Punto abierto con dueño |
+| E-nueva-6 (a numerar) | Una prioridad escrita por una transición entre marcar y desmarcar se pierde al revertir, que vuelve a la base (S-4, D5). ¿Es lo querido? | Gerencia | Si la reversión debe respetar lo escrito por transiciones | Punto abierto con dueño |
+| D-1 (a numerar) | Qué base se guarda al nacer bajo Top 5, y si la fila debe existir cuando el salto lo causa sólo el contrato. Aplicado: la base es la prioridad PEDIDA (sin contrato) y hay fila si la final difiere de ella; la spec original guardaba el resultado sin Top 5, contrato incluido | Gerencia | Si se prefiere la letra original, cambia `baseAlNacer` y un escenario de RQ-TC-38 | Punto abierto con dueño; supuesto reversible del orquestador del 2026-10-04 |
+
+(La resolución D-2, que la fila de alta no queda si el alta falla después, sigue la spec y no cambia nada; no necesita pregunta. Su verificación, por secuencia de transacción, está en el lote L2b.)
+
+### Cobertura de F1B-07 (línea única para el `archive-report.md`)
+
+Este cambio (`cierra: no`) cubre del contenido ampliado de F1B-07 los puntos (3) y (4) de `decision/cola-del-taller-los-tres-cabos` —propagar el Top 5 a los tickets abiertos con traza y revertirlo al desmarcar, sin tocar los ajustes manuales, y la lista de «Remisión creada» ordenada por la entrada al estado— y deja fuera la pregunta 3.b de `docs/sdd/Preguntas_Gerencia_2026-09-29.md` (calificación del cliente sin contrato ni Top 5 y quién ajusta a mano fuera de los Top 5), que es lo que mantiene la fila abierta.
+
+### Lo que este cambio añade al paquete de despliegue
+
+- **Esquema** (lo aplica la migración al arrancar; sin relleno ni escritura sobre datos de producción): `packages/zoho-sync/src/db/schema.sql:710` (`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS prioridad_en_app_at timestamptz;`), `:713` (`ALTER TABLE public.prioridad_ajustes ADD COLUMN IF NOT EXISTS origen text;`) y `:714` (`ALTER TABLE public.prioridad_ajustes ALTER COLUMN a DROP NOT NULL;`). L3 no añade ninguna.
+- **Variables de entorno: ninguna nueva.** El diff contra `2a74fdc` sobre `apps` y `packages` no añade ninguna línea con `process.env` (grep vacío).
+- **Condición (dato, no tarea):** los Top 5 marcados antes del despliegue no se propagan solos; se propaga al volver a guardarlos.
+- **Comprobaciones de persona en la aplicación** (dueño Comercial; fuera del recuento, archivar no las da por hechas): (1) marcar un cliente Top 5 y ver sus tickets abiertos con la prioridad nueva y su traza; (2) desmarcarlo y ver los tickets volver; (3) un ticket con ajuste manual no cambió; (4) tras una pasada del sincronizador (3 minutos), un ticket venido de Zoho conserva la prioridad propagada; (5) abrir la vista «Equipos en Remisión creada» y ver el más antiguo arriba; (6) un ticket creado para un cliente Top 5 vuelve a su prioridad al desmarcarlo; (7) tras propagar, los tickets del cliente NO aparecen como no leídos.
+
+### Cierre de L3 (códigos de salida literales)
+
+```
+test exit=0
+typecheck exit=0
+lint exit=0
+Test Files  195 passed | 1 skipped (196)
+Tests  3064 passed | 2 skipped (3066)
+✖ 165 problems (0 errors, 165 warnings)
+```
+
+Antes: 3.036 y 2 omitidas en 193 + 1. Ahora +28 pruebas y +2 ficheros. Sin `as any` en las pruebas nuevas.
+
+### Cero netas acumuladas (L1 a L3)
+
+`repo.ts`, `boardView.ts`, `ticketService.ts`, `equipoNuevo.ts`, `App.tsx` y `Sidebar.tsx`: inserciones iguales a borrados (tabla de cada lote y numstat de L3 arriba).
+
+### Medida del intento (L3, partida `74aadd5`)
+
+- `git diff --shortstat --no-renames 74aadd5`: 7 files changed, 51 insertions(+), 7 deletions(-) → **58** (antes de esta sección y de las casillas).
+- Sin trackear: `listaPorEntrada.ts` 16 + `listaPorEntrada.test.ts` 36 + `listaRemisionCreada.ts` 17 + `listaRemisionCreada.test.ts` 148 = **217**.
+- Código y pruebas: **275**. Con esta sección de `apply-progress.md` y las casillas: ~400 (techo 800, válvula 720).
+- Binarios: ninguno.

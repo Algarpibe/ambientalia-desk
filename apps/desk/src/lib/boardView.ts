@@ -12,7 +12,7 @@ export const FUNCTIONAL_VIEWS = [
   { key: 'vencidos', label: 'Tickets vencidos' },
   // Reutiliza la etiqueta que el Sidebar ya tenía como ítem decorativo: no aparece nada nuevo en el
   // menú, se enciende lo que ya estaba.
-  { key: 'mios', label: 'Mis Tickets' },
+  { key: 'mios', label: 'Mis Tickets' }, { key: 'remision_creada', label: 'Equipos en Remisión creada' },
 ] as const satisfies readonly BoardViewDef[]
 
 /** Las claves de vista funcional, derivadas del catálogo — no hay una segunda lista que mantener. */
@@ -50,7 +50,7 @@ export function applyBoardView(tickets: Ticket[], key: VistaKey, now: Date, user
       if (t.statusType === 'Closed' || !t.dueDate) return false
       const d = new Date(t.dueDate); return !isNaN(d.getTime()) && d.getTime() < now.getTime()
     })
-    case 'todos': return tickets
+    case 'todos': case 'remision_creada': return tickets
     default: return vistaNoReconocida(key)
   }
 }
