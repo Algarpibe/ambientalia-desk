@@ -63,7 +63,7 @@ El maestro R08.4 repite la decisión y añade el diccionario:
 **Lo que NO existe:** no hay módulo de indicadores ni `openspec/specs/kpis/spec.md` (el directorio
 `openspec/specs/` tiene dieciséis specs y ninguna es `kpis`). La capacidad sí está **declarada**:
 `openspec/config.yaml:240`, y su propio texto dice que «NO tiene spec y sigue debiéndose»
-(`openspec/config.yaml:263-265`). La regla R-2 queda cumplida sin tocar `capabilities`.
+(`openspec/config.yaml:263-265` en `f55b7d9`). La regla R-2 queda cumplida sin tocar `capabilities`.
 
 **Lo que se parece y no es:** `computeAnalisis` (`packages/shared/src/analisis.ts:17-95`) calcula días
 **naturales** de creación a cierre y un cumplimiento contra `diasEntrega` (`packages/shared/src/analisis.ts:62-67`).

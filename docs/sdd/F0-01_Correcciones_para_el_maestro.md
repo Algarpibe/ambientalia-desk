@@ -1187,3 +1187,55 @@ la OVI de garantía y la supresión de prefijos». Tanda **cerrada** sigue sin s
   entregadas.
 - **No afirma nada sobre «Equipo nuevo»** (Q5, E-158): la guarda lo alcanza por supuesto aplicado (S-3) y Gerencia no lo ha
   confirmado; es condición de publicación.
+
+## La de F1F-05, continuidad de los nueve indicadores (21)
+
+> **Esta entrada cita la R08.4** (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`),
+> la copia citable vigente. Procede del cambio `continuidad-indicadores`, `cierra: no`. Todo lo que afirma está
+> medido sobre el export de enero (`docs/analisis-tickets/Tickets.csv`, 640 filas) o leído en el código del cambio;
+> lo que no, lleva la palabra «hipótesis».
+
+### 21 · G.6, G.6b y Anexo H — qué calcula hoy Zoho frente a la letra, y el estado real de F1F-05 *(F1F-05)*
+
+**Qué cambió en el código.** Desk 2.0 calcula siete de los nueve indicadores sobre las marcas de tiempo de las
+transiciones (47, 49, 50·53, 54, 57, 58 y 59); el 51 y el 55 salen «sin dato» porque a la aplicación le falta el
+hito (E-171, E-172). Cada indicador va junto a la variante que daría la fórmula de Zoho, y un resumen compara por
+pares con tolerancia de un día. La tabla se descarga como CSV para administradores. No hay semáforos ni umbrales.
+
+**Parte (a) · Anexo H.** Dos sitios. (1) En `R08.4.md:6560`, «F1F-05, sin empezar» pasa a **«en curso»**: siete de los
+nueve calculados, 51 y 55 sin dato, comparación pendiente de despliegue. (2) La tanda **no cierra** (`cierra: no`), así
+que ninguna cifra de tandas cerradas cambia.
+
+**Parte (b) · G.6, lo que Zoho hace hoy, medido sobre el export.**
+
+- **Fila 47 (`:6287`).** «Entre remisión de entrada y remisión de salida» es la letra. Zoho calcula «hora del último
+  cambio de estado − Fecha Remisión Entrada» y cuadra en 201 de 202 filas comparables. Texto propuesto, a
+  continuación de la fórmula: «Zoho lo mide hasta el último cambio de estado, no hasta la remisión de salida;
+  en Desk 2.0 se mide hasta la remisión de salida.»
+- **Fila 49 (`:6293`).** Zoho cuenta de lunes a viernes **sin descontar festivos** (158 de 161 filas); en días
+  naturales cuadran 54 de 161. Texto propuesto: «En días hábiles; Zoho cuenta de lunes a viernes sin festivos.»
+- **Fila 50 · 53 (`:6296`).** Misma cuenta de Zoho: 147 de 149 filas. Sin finalización, el valor es 0 (478 de 478).
+  **Zoho no descuenta festivos:** con el calendario laboral no cuadran los intervalos que contienen un festivo (0 de 57
+  en el 49 y 1 de 33 en el 50·53), de modo que la medición a la letra queda por debajo del 95 % en esos tickets
+  por fórmula y no por error (E-182).
+- **Fila 51 (`:6299`).** Cuadra «hora del último cambio de estado − Fecha Finalización ST» en 162 de 162 filas
+  comparables. La aplicación no guarda esa hora (E-171).
+- **Fila 54 (`:6302`).** Cuadra «53 ≤ 52 → Cumple / No cumple» en 365 de 365 filas, y **sin tiempo promesa Zoho dice
+  «Cumple»** en 268 de 268. La letra no dice qué es el 54 sin tiempo promesa (E-175).
+- **Filas 57 y 58 (`:6308`, `:6311`).** Cuadran en 161 de 161 y 180 de 180.
+- **Fila 59 (`:6314`).** La letra no tiene fórmula escrita: «lo que tarda en generarse la orden de venta». Cuadra
+  **orden de venta − cotización**, días naturales, en 180 de 180 filas. Texto propuesto: «Orden de venta menos
+  cotización, en días naturales.» (hipótesis para el resto de los tickets; E-178).
+
+**Parte (c) · G.6b, «Comprobación» (`:6317`).** La letra pide el 95 % «de los tickets» sin decir si es por indicador o
+por ticket: la aplicación publica los dos y no decide (E-179). Y la comparación sólo existe si los valores de Zoho
+llegan en `desk.tickets.custom_fields`, lo que decide la consulta P-1 (E-181); si no llegan, hay que decir cómo se
+compara (E-173).
+
+**Lo que esta entrada NO pide.**
+
+- **No afirma que los indicadores estén en producción:** se despliegan antes del 13/11 para medir desde el 16/11,
+  y eso es de personas (E-181).
+- **No toca la lista cerrada de nueve** ni las columnas 48, 56 y 16.
+- **No fija la unidad del 49 ni la fórmula del 59** como definición: son supuestos reversibles hasta que Gerencia
+  responda E-177 y E-178.

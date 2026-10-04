@@ -57,7 +57,7 @@ encuesta · relleno de datos de producción · cambios al sincronizador · table
 ### Nuevas
 - `kpis`: crea `openspec/specs/kpis/spec.md`. **Ya está declarada** en `openspec/config.yaml:240`, así
   que R-2 se cumple sin tocar `capabilities`; el archivo deberá poner al día su texto de avance, que hoy
-  dice que la capacidad no tiene spec (`openspec/config.yaml:263-265`).
+  dice que la capacidad no tiene spec (`openspec/config.yaml:263-265` en `f55b7d9`).
 
 ### Modificadas
 - Ninguna. `calendario-laboral` y `permissions` se **consumen** sin cambiar sus requisitos.

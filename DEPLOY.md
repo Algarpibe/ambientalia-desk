@@ -230,3 +230,50 @@ detector de citas: repara la cita o añádela a mano a `apps/desk/server/citas/l
 - **Healthcheck (opcional):** puedes apuntar el healthcheck de EasyPanel a `/api/tickets`.
 - **tsx en runtime:** la imagen ejecuta el server TypeScript con `tsx` (no requiere paso de
   compilación del backend). Por eso el `Dockerfile` instala todas las dependencias.
+
+## 9. Continuidad de los nueve indicadores (F1F-05, `cierra: no`)
+
+- **Sin esquema y sin variables nuevas.** Ningún `CREATE` ni `ALTER`, ninguna clave en la configuración ni en
+  `.env.example`, ningún escritor: la ruta nueva `GET /api/indicadores` sólo lee. Reversión: quitar el registro de
+  la ruta en `apps/desk/server/app.ts` y el enlace de descarga de `apps/desk/src/components/Analisis.tsx`.
+- **Quién la usa.** Sólo administradores: sin sesión responde 401, sin ser administrador 403. En la pantalla
+  «Análisis» aparece el enlace «Descargar indicadores (CSV)» (CSV con `;`, BOM UTF-8 y fin de línea CRLF).
+- **Fecha límite: desplegar antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11. El CI
+  no despliega, sólo verifica.
+- **P-1 · consulta de SÓLO LECTURA, antes de fiarse de la comparación.** Base `desk`, tabla `desk.tickets`, columnas
+  `custom_fields` y `raw`. Sólo `SELECT`, dentro de una transacción de sólo lectura que se deshace. Dice si los valores
+  de Zoho de las columnas 47 a 59 y la calificación de satisfacción llegan sincronizados y dónde:
+
+```sql
+BEGIN TRANSACTION READ ONLY;
+-- 1. Campos de custom_fields y en cuántos tickets.
+SELECT k AS campo, count(*) AS tickets
+FROM desk.tickets t,
+     jsonb_object_keys(CASE WHEN jsonb_typeof(t.custom_fields) = 'object' THEN t.custom_fields ELSE '{}'::jsonb END) AS k
+GROUP BY k ORDER BY k;
+-- 2. Claves de primer nivel de la carga cruda, y las de su customFields.
+SELECT k AS clave_raw, count(*) AS tickets
+FROM desk.tickets t,
+     jsonb_object_keys(CASE WHEN jsonb_typeof(t.raw) = 'object' THEN t.raw ELSE '{}'::jsonb END) AS k
+GROUP BY k ORDER BY k;
+SELECT k AS campo_raw, count(*) AS tickets
+FROM desk.tickets t,
+     jsonb_object_keys(CASE WHEN jsonb_typeof(t.raw -> 'customFields') = 'object' THEN t.raw -> 'customFields' ELSE '{}'::jsonb END) AS k
+GROUP BY k ORDER BY k;
+-- 3. Recuento dirigido: ¿algún nombre de indicador o de satisfacción?
+SELECT count(*) AS tickets,
+       count(*) FILTER (WHERE custom_fields::text ~* 'tiempo|cumplimiento|calificaci|satisf') AS en_custom_fields,
+       count(*) FILTER (WHERE raw::text ~* 'tiempo permane|tiempo de servicio|cumplimiento del tiempo|calificaci|happiness') AS en_raw
+FROM desk.tickets;
+ROLLBACK;
+```
+
+  No se probó contra la versión de producción (hipótesis: `jsonb_object_keys` y `BEGIN TRANSACTION READ ONLY` son
+  estándar de PostgreSQL). Si ninguna de las consultas trae los nombres de los indicadores, el resumen no tiene con
+  qué comparar y se abre la pregunta E-173 de `docs/sdd/ENTRADA.md`.
+- **Qué se ve si los valores de Zoho no llegan.** Cada indicador dice «sin valor de Zoho con que comparar» y
+  no da porcentaje; si llegan pero ningún par es comparable, dice «sin pares comparables». Ninguno de los dos casos es
+  un fallo: la tabla de los nueve indicadores sale igual, con el 51 y el 55 «sin dato» hasta que Gerencia responda E-171
+  y E-172.
+- **Comprobar en la aplicación (P-4, de personas):** con un administrador, que el enlace descarga el CSV y que la hoja
+  de cálculo lo abre sin asistente; con otro usuario, que el enlace no aparece. Detalle en `docs/sdd/ENTRADA.md` → E-181.
