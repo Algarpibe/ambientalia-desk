@@ -144,7 +144,7 @@ CRLF conservado en todo el código y las pruebas (`file`). Un `sed -i` mío conv
 - Los cuatro ficheros de L2a: `140 passed (140)`.
 
 **Desviación menor del diseño:** `prioridadCliente.ts:3` lleva dos `import` en la misma línea (`import { enTransaccion } …; import { hayContratoVigente } …`) para no añadir una línea por encima de lo citado («nada por encima se mueve»).
-**Límite conocido que L2b debe cubrir:** `ajustesDelTicket` (`prioridadCliente.ts:81`) hace `String(f.a)`: con `a` NULL (reversión a «sin prioridad») el `GET` del ticket devolvería la cadena `"null"`. Es el cambio `:76/:80/:81` de L2b; no se toca en L2a.
+**Límite conocido que L2b debe cubrir:** `ajustesDelTicket` (`prioridadCliente.ts:81`) hace `String(f.a)`: con `a` NULL (reversión a «sin prioridad») el `GET` del ticket devolvería la cadena `"null"`. Es el cambio `:76`, `:80` y `:81` de L2b; no se toca en L2a.
 
 ### Mutaciones (copias de seguridad en el directorio temporal del agente; restauradas con `cp` y comprobadas con `cmp`, no con `git checkout`)
 
