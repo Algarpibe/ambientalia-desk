@@ -42,7 +42,7 @@ razonables y reversibles y no cambian el alcance de la fila.
 Archivos: `specs/tickets-core/spec.md`, `specs/zoho-sync/spec.md` (edición), `packages/shared/src/migracionTickets.ts` y
 su prueba (nuevos), `packages/shared/src/index.ts` (+1 línea).
 
-- [ ] 1.1 **Alinear los deltas con el diseño** (documental; antes de editar, anotar `git rev-parse HEAD` como partida del
+- [x] 1.1 **Alinear los deltas con el diseño** (documental; antes de editar, anotar `git rev-parse HEAD` como partida del
   lote 1 y comprobar que el intento está abierto en este worktree). Ediciones, una por una:
   - a. `tickets-core` RQ-TC-40 regla 1 contradice la regla 3: `Pendiente` **está** en `ESTADOS`. Escribir que «Pendiente» y
     «Entregado» se deciden **antes** que la identidad.
@@ -89,52 +89,52 @@ su prueba (nuevos), `packages/shared/src/index.ts` (+1 línea).
     (**hipótesis**; no hay tabla nueva).
   - o. Escribir en `apply-progress.md` la lista de estas ediciones (una línea cada una) y las dos referencias cruzadas del
     diseño que no cuadran (D-15 y el encargo hablan de «§7» y «§6», que son §9 y §8).
-- [ ] 1.2 Leer los moldes: `packages/shared/src/estados.ts:112`, `packages/shared/src/flujos.ts:116-119`,
+- [x] 1.2 Leer los moldes: `packages/shared/src/estados.ts:112`, `packages/shared/src/flujos.ts:116-119`,
   `packages/shared/src/transitions.ts:124`, `packages/shared/src/transitions.ts:142-143`; medir `wc -l` de
   `packages/shared/src/index.ts` (35 líneas con contenido).
 
 **Rojo** (`packages/shared/src/migracionTickets.test.ts`, nuevo)
-- [ ] 1.3 RQ-TC-40: los 23 de `ESTADOS` salvo «Pendiente» dan identidad con `statusTypeDestino` nulo; «Entregado» no está
+- [x] 1.3 RQ-TC-40: los 23 de `ESTADOS` salvo «Pendiente» dan identidad con `statusTypeDestino` nulo; «Entregado» no está
   en `ESTADOS` y va a «Finalizado» con `'Closed'`; «Pendiente» con clasificación «Reparación», `null` y vacía va a «En
   Proceso» con `'Open'`; con «Soporte remoto» y «soporte REMOTO» se conserva; con «Soporte remoto urgente» va a «En
   Proceso»; «En revisión externa», `entregado` y `Entregado ` dan `null`; el módulo no importa base, red, ficheros ni
   reloj (lectura de su fuente).
-- [ ] 1.4 RQ-TC-41, `planDeTicket`: precedencia con casos solapados (gobernado y sin equivalencia → `ya-gobernado`; tras el
+- [x] 1.4 RQ-TC-41, `planDeTicket`: precedencia con casos solapados (gobernado y sin equivalencia → `ya-gobernado`; tras el
   corte y sin equivalencia → `tras-el-corte`); `createdTime` igual al corte → `migrar`; `createdTime` nulo → `migrar`;
   `On Hold` migra; la lista de entrada no se muta (objetos congelados); `corte` inválido lanza `RangeError`.
-- [ ] 1.5 RQ-TC-41, `resumenDeMigracion` y `esperaRemisionDeEntrada`: cuenta por pareja y lista; `sinEquivalencia` agrupado;
+- [x] 1.5 RQ-TC-41, `resumenDeMigracion` y `esperaRemisionDeEntrada`: cuenta por pareja y lista; `sinEquivalencia` agrupado;
   `yaGobernados` partido por `PREFIJO_TICKET_APP`; `trasElCorte`; `pendientes` por ticket; `masAltoAMarcar` sólo sobre los
   que migran (4100 y 4300 con 9000 gobernado y 9500 posterior → 4300) y `null` si ninguno; sin equivalencia gobernado o
   posterior al corte no bloquea; «OV asignada» y «Ticket creado» esperan remisión, «En Proceso» no.
-- [ ] 1.6 **EJECUTAR** el fichero y anotar el fallo literal en `apply-progress.md` (el módulo no existe).
+- [x] 1.6 **EJECUTAR** el fichero y anotar el fallo literal en `apply-progress.md` (el módulo no existe).
 
 **Verde**
-- [ ] 1.7 Crear `packages/shared/src/migracionTickets.ts`: constantes `ID_TRANSICION_MIGRACION`, `NOMBRE_TRANSICION_MIGRACION`,
+- [x] 1.7 Crear `packages/shared/src/migracionTickets.ts`: constantes `ID_TRANSICION_MIGRACION`, `NOMBRE_TRANSICION_MIGRACION`,
   `ACTOR_MIGRACION`, tipos de §4 del diseño y `equivalenciaDeEstado` (Pendiente y Entregado antes que la identidad; consume
   `ESTADOS` y `esClasificacionSoporteRemoto`).
-- [ ] 1.8 En el mismo fichero: `planDeTicket` con la precedencia fija y `esperaRemisionDeEntrada` (con `STATUS_OV_ASIGNADA` y
+- [x] 1.8 En el mismo fichero: `planDeTicket` con la precedencia fija y `esperaRemisionDeEntrada` (con `STATUS_OV_ASIGNADA` y
   `STATUS_TICKET_CREADO`).
-- [ ] 1.9 En el mismo fichero: `ResumenMigracion` y `resumenDeMigracion` (sin `numeracion.arrastra` ni `base`: viven en el
+- [x] 1.9 En el mismo fichero: `ResumenMigracion` y `resumenDeMigracion` (sin `numeracion.arrastra` ni `base`: viven en el
   ejecutor, porque `APP_TICKET_NUMBER_BASE` es de `zoho-sync`).
-- [ ] 1.10 Añadir `export * from './migracionTickets'` como línea nueva tras `packages/shared/src/index.ts:35`.
-- [ ] 1.11 **EJECUTAR** el fichero de pruebas: todo verde.
+- [x] 1.10 Añadir `export * from './migracionTickets'` como línea nueva tras `packages/shared/src/index.ts:35`.
+- [x] 1.11 **EJECUTAR** el fichero de pruebas: todo verde.
 
 **Mutaciones (aplicar, anotar mensaje literal, REVERTIR)**
-- [ ] 1.12 **M1 (regla 1, posición):** en `equivalenciaDeEstado`, la identidad antes que «Pendiente». Debe caer «Pendiente de
+- [x] 1.12 **M1 (regla 1, posición):** en `equivalenciaDeEstado`, la identidad antes que «Pendiente». Debe caer «Pendiente de
   servicio va a En Proceso».
-- [ ] 1.13 **M2 (regla 1):** en `planDeTicket`, `sin-equivalencia` antes que `tras-el-corte`. Debe caer la precedencia
+- [x] 1.13 **M2 (regla 1):** en `planDeTicket`, `sin-equivalencia` antes que `tras-el-corte`. Debe caer la precedencia
   «tras el corte y sin equivalencia».
-- [ ] 1.14 **M3 (idempotencia, núcleo):** quitar la rama `ya-gobernado`. Debe caer la precedencia «gobernado y sin
+- [x] 1.14 **M3 (idempotencia, núcleo):** quitar la rama `ya-gobernado`. Debe caer la precedencia «gobernado y sin
   equivalencia».
-- [ ] 1.15 **M4:** `masAltoAMarcar` sobre todos los planes. Debe caer «sólo sobre los que migran».
-- [ ] 1.16 **M5:** `>` por `>=` en la comparación con el corte. Debe caer «corte en el instante exacto».
-- [ ] 1.17 `git diff` de `migracionTickets.ts` y `index.ts`: no queda ninguna mutación; `index.ts` con una inserción y cero
+- [x] 1.15 **M4:** `masAltoAMarcar` sobre todos los planes. Debe caer «sólo sobre los que migran».
+- [x] 1.16 **M5:** `>` por `>=` en la comparación con el corte. Debe caer «corte en el instante exacto».
+- [x] 1.17 `git diff` de `migracionTickets.ts` y `index.ts`: no queda ninguna mutación; `index.ts` con una inserción y cero
   borrados.
-- [ ] 1.18 Escribir en `apply-progress.md` la regla 13 del lote: tabla y plan viven en `packages/shared`, consumen `ESTADOS`;
+- [x] 1.18 Escribir en `apply-progress.md` la regla 13 del lote: tabla y plan viven en `packages/shared`, consumen `ESTADOS`;
   el cliente no participa.
-- [ ] 1.19 **CIERRE LOTE 1:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` y
+- [x] 1.19 **CIERRE LOTE 1:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` y
   `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; anotar el CÓDIGO DE SALIDA de cada uno.
-- [ ] 1.20 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
+- [x] 1.20 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
   Si pasa de 720, parar.
 
 ---

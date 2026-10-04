@@ -10,12 +10,14 @@ Un ejecutor (fichero nuevo bajo `apps/desk/server/db/`) **SHALL** aplicar el pla
 `aplicar`.
 
 **Seco por defecto.** El ejecutor **MUST** escribir sólo con `aplicar=true` explícito (el literal `'true'` en la
-petición, como los demás interruptores del proyecto). Cualquier otro valor, o su ausencia, **SHALL** ejecutar la pasada
-en seco: calcula el plan e informa, y **MUST NOT** escribir ninguna fila. Esto **invierte** el convenio de los
-endpoints actuales, donde lo opcional es `?dryRun=true` (`apps/desk/server/routes/admin.ts:83-84`).
+petición, como los demás interruptores del proyecto). `aplicar` ausente o `false` **SHALL** ejecutar la pasada en
+seco: calcula el plan e informa, no abre transacción (D-2) y **MUST NOT** escribir ninguna fila; **cualquier otro valor
+(`1`, `TRUE`…) es `400`** (D-12), también en seco y sin leer nada. Esto **invierte** el convenio de los endpoints
+actuales, donde lo opcional es `?dryRun=true` (`apps/desk/server/routes/admin.ts:83-84`).
 
-**Fecha de corte obligatoria.** Una petición sin fecha de corte o con una fecha inválida **SHALL** rechazarse con `400`
-antes de leer o escribir nada, también en seco.
+**Fecha de corte obligatoria.** El `corte` es un instante ISO **con desfase** (`2026-12-01T00:00:00-05:00`); una fecha
+pelada es `400` (D-11). Una petición sin `corte` o con un `corte` inválido **SHALL** rechazarse con `400` antes de
+leer o escribir nada, también en seco.
 
 **Sólo superadministrador.** El endpoint **SHALL** ir tras `requireAuth` y `requireSuperAdmin`, igual que sus
 vecinos (`apps/desk/server/routes/admin.ts:17`, `apps/desk/server/routes/admin.ts:83`; `requireSuperAdmin` es el
@@ -24,19 +26,26 @@ lectura del plan ni escritura; sin sesión, `401`. Lo impone el servidor: el cli
 
 **Negativa total.** Con `aplicar=true`, si el plan está bloqueado (algún ticket abierto, que se cambiaría, tiene un
 estado sin equivalencia, `tickets-core` RQ-TC-40), el ejecutor **SHALL** no escribir **nada** —ni un marcador ni un
-`UPDATE`—, responder con un error que nombre los tickets y estados sin equivalencia, y devolver el mismo informe. La
-comprobación **MUST** ir antes de cualquier escritura.
+`UPDATE`—, y responder `409` con el informe completo, cuyo campo `negativa` es
+`{ motivo: 'estados-sin-equivalencia', estados }` (D-13). En seco, los mismos estados salen con `200` y `negativa`
+rellena. La comprobación **MUST** ir antes de cualquier escritura.
 
 **Marcador antes del `UPDATE`, en una transacción.** Por cada ticket del plan, en la misma transacción, el ejecutor
 **SHALL**:
 
 1. insertar una fila en `ticket_transitions` (`packages/zoho-sync/src/db/schema.sql:57-61`) con
-   `transition_id = 'migracion_f1f01_abiertos'`, `from_status` el estado previo, `to_status` el estado destino y en
-   `"values"` los tres valores previos: estado, `status_type` y `managed_by_app`; y **después**
-2. hacer el `UPDATE` de `desk.tickets`: `status` al destino, `status_type` al destino del plan,
-   `managed_by_app = true`, `modified_time = now()`, `updated_at = now()`. **No** toca `closed_time` ni `source`.
+   `transition_id = 'migracion_f1f01_abiertos'`, `from_status` el estado previo, `area = 'Servicio Técnico'`,
+   `performed_by` el actor de la migración, `transition_name` y `to_status` según la regla (D-6): **`NULL` en las
+   reglas de identidad**, con el destino en `"values"`, y el destino en las dos reglas que cambian el estado.
+   `"values"` lleva `estado_previo`, `estado_destino`, `status_type_previo`, `managed_by_app_previo`, `regla`,
+   `corte` y `ejecutado_por`; y **después**
+2. hacer el `UPDATE` de `desk.tickets … WHERE id = $1 AND managed_by_app = false RETURNING id`: `status` al destino,
+   `status_type` sólo cuando D-10 lo cambia, `managed_by_app = true` y `updated_at = now()`. **No** toca
+   `modified_time` (D-5), `closed_time` ni `source` (D-4). Si el `UPDATE` no devuelve fila, se lanza error y se
+   deshace todo (D-3).
 
-El orden marcador → `UPDATE` es deliberado, como en el molde de
+En seco no se abre transacción (D-2); al aplicar, la lectura del plan va **dentro** de la transacción, por el mismo
+cliente (D-1). El orden marcador → `UPDATE` es deliberado, como en el molde de
 `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:45-53`, y **SHALL** quedar fijado por una prueba que ponga
 roja su inversión (regla de mutación 1). Si cualquier escritura falla, la transacción entera **SHALL** deshacerse:
 no puede quedar un ticket marcado sin cambiar, ni cambiado sin marcador. El ejecutor **MUST NOT** usar
@@ -55,15 +64,19 @@ ejecutor **MUST NOT** añadir ninguno, ni tabla, ni columna, ni flag.
 
 **El informe** es el mismo en seco y al aplicar, y **SHALL** contener:
 
-- el modo (`seco` o `aplicado`) y la fecha de corte recibida;
-- los totales por pareja (estado de origen, estado de destino);
-- los tickets sin equivalencia, con número y estado;
-- los ya gobernados por la aplicación, con número;
-- los nacidos tras el corte, con número y `created_time`;
-- los abiertos en `OV asignada` o `Ticket creado` sin remisión de entrada vigente, con número;
-- las clasificaciones distintas de los `Pendiente`;
-- el **número más alto que se marcaría**;
-- un recordatorio de que la sincronización completa y reciente antes de marcar es requisito de persona (S-7).
+- `corte`, `aplicar` y `aplicado` (no un «modo seco/aplicado»), y `negativa` (nula si no la hay);
+- `abiertos` y `migrables`;
+- `porEstado`: por pareja (estado de origen, estado de destino), con la regla, `cambiaEstado` y el recuento;
+- `sinEquivalencia`, agrupado por estado, con recuento y números;
+- `yaGobernados`, dos recuentos: `nacidosEnLaApp` y `deZoho`;
+- `trasElCorte`, con número, estado y `created_time`;
+- `sinRemisionVigente`: los que migran a `OV asignada` o `Ticket creado` sin remisión de entrada vigente, con número;
+- `pendientes`, por ticket: número, clasificación y destino;
+- `numeracion`: `masAltoAMarcar` (número más alto que se marcaría), `base` (`APP_TICKET_NUMBER_BASE`) y `arrastra`
+  (`masAltoAMarcar` ≥ `base`; se informa y no bloquea, D-7);
+- `avisos`, con el recordatorio de que la sincronización completa y reciente antes de marcar es requisito de persona
+  (S-7). La línea «en `avisos`» de D-7 se lee como este campo del informe, no como la tabla `avisos`
+  (**hipótesis**; no hay tabla nueva).
 
 El informe **SHALL** ir además al log, porque quien lo dispara desde una consola no siempre conserva el cuerpo
 (como `apps/desk/server/routes/admin.ts:88-92`).
@@ -75,13 +88,39 @@ producción**: lo hace una persona.
 #### Scenario: Sin `aplicar` no se escribe nada
 - GIVEN una base con tickets abiertos que tienen equivalencia y la petición no trae `aplicar`
 - WHEN corre el endpoint
-- THEN responde el informe con modo `seco`
-- AND `desk.tickets` y `desk.ticket_transitions` quedan idénticas a como estaban
+- THEN responde el informe con `aplicar` y `aplicado` en `false`
+- AND no se emite `BEGIN` y `desk.tickets` y `desk.ticket_transitions` quedan idénticas a como estaban
 
-#### Scenario: `aplicar` distinto de `true` también es seco
-- GIVEN la misma base y `aplicar=1`, `aplicar=TRUE` o `aplicar=false`
+#### Scenario: `aplicar=false` es seco y cualquier otro valor es `400`
+- GIVEN la misma base y `aplicar=false`, y por otro lado `aplicar=1` o `aplicar=TRUE`
 - WHEN corre el endpoint
-- THEN no se escribe nada y el modo es `seco`
+- THEN `aplicar=false` no escribe nada y responde en seco
+- AND `aplicar=1` y `aplicar=TRUE` responden `400`, también en seco y sin leer nada
+
+#### Scenario: Un `corte` sin desfase es `400`
+- GIVEN un `corte` `2026-12-01`, o `2026-12-01T00:00:00` sin desfase
+- WHEN corre el endpoint
+- THEN responde `400` y no se lee ni se escribe nada
+
+#### Scenario: `modified_time` y `source` intactos
+- GIVEN un ticket que se migra con `aplicar=true`
+- WHEN se compara la fila antes y después
+- THEN `modified_time`, `source` y `closed_time` son los mismos y `updated_at` cambia
+
+#### Scenario: El marcador de identidad no mueve `entradasActuales`
+- GIVEN un ticket migrado por una regla de identidad, con `to_status` nulo en su marcador y el destino en `"values"`
+- WHEN se calcula `entradasActuales` (`apps/desk/server/db/sla.ts:88-95`)
+- THEN el marcador no cuenta como entrada al estado actual
+
+#### Scenario: `numeracion.arrastra` a un lado y otro de 10000
+- GIVEN tickets a marcar cuyo número más alto es 9999, y otra base donde es 10000
+- WHEN corre el endpoint en seco
+- THEN `numeracion.arrastra` es `false` en la primera y `true` en la segunda, y ninguna bloquea
+
+#### Scenario: Un `UPDATE` sin fila deshace todo
+- GIVEN un ticket que pasó a `managed_by_app = true` entre la lectura y la escritura
+- WHEN se aplica la migración
+- THEN el `UPDATE … RETURNING id` no devuelve fila, se lanza error y la transacción entera se deshace
 
 #### Scenario: Con `aplicar=true` se marca y se cambia
 - GIVEN un ticket `Entregado` con `status_type` distinto de `Closed` y `managed_by_app = false`, y un `Pendiente` de servicio
@@ -93,12 +132,12 @@ producción**: lo hace una persona.
 #### Scenario: El marcador guarda los tres valores previos
 - GIVEN un ticket `Pendiente` con `status_type = 'On Hold'` y `managed_by_app = false`
 - WHEN se aplica la migración
-- THEN su marcador lleva `from_status = 'Pendiente'`, `to_status = 'En Proceso'` y en `"values"` el estado, el `status_type` y el `managed_by_app` previos
+- THEN su marcador lleva `from_status = 'Pendiente'`, `to_status = 'En Proceso'` y en `"values"` `estado_previo`, `status_type_previo` y `managed_by_app_previo`, además de `estado_destino`, `regla`, `corte` y `ejecutado_por`
 
 #### Scenario: Un solo estado sin equivalencia detiene todo
 - GIVEN diez tickets con equivalencia y uno abierto con estado «En revisión externa»
 - WHEN corre el endpoint con `aplicar=true`
-- THEN responde un error que nombra ese ticket y ese estado
+- THEN responde `409` con el informe completo, cuya `negativa` nombra ese estado y `sinEquivalencia` ese ticket
 - AND no se inserta ningún marcador y no se hace ningún `UPDATE`, ni siquiera sobre los diez que sí tenían equivalencia
 
 #### Scenario: La negativa va antes de cualquier escritura
@@ -176,8 +215,11 @@ producción**: lo hace una persona.
 
 ### RQ-ZS-18 · Reversión por marcador: sólo donde el marcador sigue siendo la última transición, restaurando los tres valores previos
 
-El cambio **SHALL** entregar un documento de procedimiento bajo `docs/sdd/` con la reversión de RQ-ZS-17, con las
-sentencias **calificadas por esquema** (`desk.tickets`, `desk.ticket_transitions`), porque en `psql` el `search_path`
+El cambio **SHALL** entregar el procedimiento `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql` con la reversión de
+RQ-ZS-17 prefijada `-- REV ` (D-14): una sentencia por cada regla que cambia el estado **más una para las filas de
+identidad**, que restaura sólo `managed_by_app`; el filtro es por `"values"->>'status_type_previo'`. El diseño §8 sólo
+nombra las reglas que cambian el estado: la de identidad es un **hueco del diseño** que se cierra aquí, porque sin
+ella los marcadores de identidad no se borrarían. Las sentencias van **calificadas por esquema** (`desk.tickets`, `desk.ticket_transitions`), porque en `psql` el `search_path`
 no es el de la aplicación, como en `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:57-65`. La reversión
 **SHALL**, en una sola transacción:
 
