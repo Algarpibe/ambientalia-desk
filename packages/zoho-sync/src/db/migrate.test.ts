@@ -371,11 +371,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * la orden de venta del sincronizador y su anti-ruido de aviso. Sube de 37 a 39 (sin calificar
    * 18→20, conjunto sin cambios: `tickets` ya estaba).
    */
-  it('son 53 ALTER: 29 calificadas (24 de public + 5 de books) y 24 sin calificar, todas de Desk (la 52.ª y la 53.ª, origen y DROP NOT NULL de public.prioridad_ajustes de F1B-07 L2a, calificadas; la 51.ª, prioridad_en_app_at de F1B-07: ALTER tickets sin calificar; de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
+  it('son 55 ALTER: 29 calificadas (24 de public + 5 de books) y 26 sin calificar, todas de Desk (la 54.ª y la 55.ª, liberacion_motivo y fecha_prevista_facturacion de F1C-05: ALTER tickets sin calificar; la 52.ª y la 53.ª, origen y DROP NOT NULL de public.prioridad_ajustes de F1B-07 L2a, calificadas; la 51.ª, prioridad_en_app_at de F1B-07: ALTER tickets sin calificar; de la 45.ª a la 50.ª, F1B-04: seis calificadas, cuatro sobre public.remisiones y dos sobre public.remision_fotos; la 44.ª, pendiente_validar de F1B-15, es equipos sin calificar; la 40.ª, modalidad, es de blueprint-soporte-remoto: ALTER tickets sin calificar; la 41.ª, cargo_permiso de permisos-por-cargo, es public.users calificada; la 42.ª y la 43.ª son de F1A-03: compuesto sobre equipos sin calificar y sobre public.catalogo_modelos calificada)', () => {
     const alters = altersDelEsquema()
-    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(53)
+    expect(alters.length, 'ALTER TABLE en schema.sql').toBe(55)
     expect(alters.filter((a) => a.calificada).length, 'ALTER calificadas').toBe(29)
-    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(24)
+    expect(alters.filter((a) => !a.calificada).length, 'ALTER sin calificar').toBe(26)
     // Las tablas que reciben ALTER sin calificar, y ninguna más. En positivo: si mañana alguien mete
     // una sobre otra tabla de Desk, esta prueba lo dice; si la mete sobre una de public, lo dicen las
     // dos de arriba.
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1) y las dos ALTER de prioridad_ajustes (F1B-07, L2a)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)

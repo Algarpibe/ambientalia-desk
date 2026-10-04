@@ -55,7 +55,7 @@ construye ya, con el respaldo aplazado a 1E (`openspec/config.yaml:3614`). El ma
   `permissions` (RQ-PM-12: ocho cargos, siete de `decision/c10b-gerente-director` más el de
   `decision/cargo-encargado-de-inventario`).
 - `transitions-st`: sin delta previsto; su mención de `destinatarioDelEscalado`
-  (`openspec/specs/transitions-st/spec.md:1324`) no fija la lista de estados. Lo confirma `sdd-spec`.
+  (`openspec/specs/transitions-st/spec.md:1324` en `870adb6`) no fija la lista de estados. Lo confirma `sdd-spec`.
 
 ## Enfoque
 

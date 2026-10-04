@@ -1342,3 +1342,26 @@ registrada van al final.»
 
 **Lo que esta entrada NO pide.** No da por decididos los supuestos del cambio: están como preguntas en E-188 a E-193.
 No afirma que esté en producción: los Top 5 marcados antes del despliegue se propagan al volver a guardarlos.
+
+## La de F1C-05, liberación sin factura con motivo y fecha (25)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `liberacion-sin-factura-motivo-fecha`,
+> `cierra: no`.
+
+### 25 · M1.3.5 y Anexo D nº 33 — la liberación sin factura pide motivo y fecha en lugar de la casilla *(F1C-05)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1842`, párrafo «Casillas
+obligatorias.».
+
+**Texto actual:** «El único caso afectado era «Liberación del ticket sin facturar», precisamente la que deja salir un
+equipo sin factura.»
+
+**Texto propuesto:** el mismo párrafo, y a continuación: «[CONSTRUIDO] La transición «Liberación sin factura» ya no
+lleva casilla. Exige Motivo, de una lista cerrada de tres —fecha de corte de facturación del cliente, servicio incluido
+en contrato con facturación periódica, autorización excepcional de Dirección Comercial—, y Fecha prevista de
+facturación; con el tercer motivo exige además el texto de la autorización. El servidor rechaza un motivo fuera de la
+lista y una fecha que no sea un día real. Las liberaciones anteriores conservan su casilla. La alarma por fecha vencida
+sigue pendiente (F1C-02).»
+
+**Lo que esta entrada NO pide.** No da por decididos los supuestos del cambio: están como preguntas en E-201 a E-205.
+No afirma que esté en producción.

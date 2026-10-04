@@ -127,7 +127,7 @@ objeto». Revertir y comprobar con `git diff --stat openspec/config.yaml` que la
 | «tres entradas», «28 heredan» | `openspec/specs/derivacion-avisos/spec.md:78-111` | A — lo corrige el delta al archivar |
 | «siete cargos» | `openspec/specs/permissions/spec.md:284`, `:422`, `:462` | A — delta |
 | «siete», «tres» en pruebas y comentarios | R1, R4, R8, `cargos.ts:9-10`, `transitions.ts:269-272` | A — esta tanda |
-| «tres entradas» de `transitions-st` | `openspec/specs/transitions-st/spec.md:1313` (apartado «a corregir en F1B-06», `:1304`) | C — superado, no se toca; `:730` (alarmas) y `:1516` (retiradas) hablan de otras «tres» |
+| «tres entradas» de `transitions-st` | `openspec/specs/transitions-st/spec.md:1313` en `870adb6` (apartado «a corregir en F1B-06», `:1304`) | C — superado, no se toca; `:730` (alarmas) y `:1516` (retiradas) hablan de otras «tres» |
 | «siete cargos» de la consecuencia de c10b | `openspec/config.yaml:2594` | B — fechada; la supera `:3497` |
 | «son tres», «siete cargos» en `docs/sdd/F0-*`, paquetes de despliegue y `archive/` | varios | B — registros fechados, no se editan |
 | «estas tres proponen a otro» | `docs/artefactos/blueprintserviciotecnico.html:390` | A, **fuera de alcance**: va a `docs/sdd/ENTRADA.md` |

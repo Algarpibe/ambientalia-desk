@@ -1997,3 +1997,32 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** `listEquiposManage` (`apps/desk/server/db/equipos.ts:175` en `a55326b`) arma su patrón de serial sin la pieza compartida y sin recortar los espacios de los lados. La búsqueda de tickets y el autocompletado de la recepción sí la comparten (RQ-VT-12). Es el molde H5: dos implementaciones de la misma noción.
 **Dueño:** quien decida el alcance. **Qué desbloquea:** unificarla es una línea más su prueba de confrontación.
 **Estado:** abierta · **Destino:** sin destino asignado, a propósito (R-3).
+## E-201 · 2026-10-04 · pregunta · **ABIERTA** — F1C-05: la fecha prevista de facturación, ¿debe ser futura?
+**Qué:** aplicado: la fecha sólo tiene que ser un día real; una fecha pasada se acepta y una prueba lo fija. Con una fecha pasada, la alarma por fecha vencida saltaría nada más liberar.
+**Dueño:** Gerencia. **Qué desbloquea:** si debe ser futura, la guarda gana una comprobación y la zona horaria de referencia hay que decidirla.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-202 · 2026-10-04 · pregunta · **ABIERTA** — F1C-05: ¿el texto es obligatorio sólo con la autorización excepcional?
+**Qué:** aplicado: sólo el tercer motivo exige el texto; con los otros dos es opcional.
+**Dueño:** Gerencia. **Qué desbloquea:** si los tres lo exigen, cambia una condición de la guarda y sus pruebas.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-203 · 2026-10-04 · pregunta · **ABIERTA** — F1C-05: quien cuente las liberaciones por la casilla verá vacío
+**Qué:** las liberaciones nuevas no marcan la casilla ni escriben la columna `liberacion_sin_facturar`; las anteriores la conservan. Un recuento hecho por esa columna deja de crecer tras el despliegue.
+**Dueño:** Gerencia. **Qué desbloquea:** si se cuenta desde ahora por el motivo, y si los indicadores que lean la casilla hay que cambiarlos.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-204 · 2026-10-04 · pregunta · **ABIERTA** — F1C-05: los tickets ya liberados no tienen motivo ni fecha
+**Qué:** los que estén en «Por Entregar / Sin facturar» al desplegar se liberaron con la casilla. Sin fecha prevista, la alarma por fecha vencida no tiene con qué medirlos. Sin relleno: es dato de producción.
+**Dueño:** Gerencia. **Qué desbloquea:** si se les pide el dato al construir la alarma o quedan fuera de ella.
+**Estado:** abierta · **Destino:** donde volvería a verse es F1C-02; no es un destino asignado (R-3).
+
+## E-205 · 2026-10-04 · pregunta · **ABIERTA** — F1C-05: una segunda liberación borra el texto de la primera en la ficha
+**Qué:** aplicado (resolución D7 del diseño): cada liberación escribe en el ticket el texto de ESA liberación, o vacío; así la segunda no hereda el de la primera. El historial conserva los tres valores de cada liberación. La columna de la fecha guarda la última; la fecha entra en los campos que una segunda pasada reescribe, que pasan de diez a once.
+**Dueño:** Gerencia. **Qué desbloquea:** si se prefiere conservar el último texto no vacío, cambia una línea del servicio.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-206 · 2026-10-04 · hallazgo · **ABIERTA** — F1C-05: la mezcla de campos libres sólo se prueba con una emulación
+**Qué:** el motor de base de datos de las pruebas no soporta la mezcla de `custom_fields` que usa `writeTransition` (`packages/zoho-sync/src/db/repo.ts:309` en `d044c35`), y con este cambio la liberación la usa siempre. El arnés la emula (`emularMezclaJsonb`, al final de `apps/desk/server/testing/appHarness.ts`). Que el operador real conserve la clave con valor vacío es hipótesis hasta verlo contra PostgreSQL.
+**Dueño:** la sesión de supervisión. **Qué desbloquea:** que la aceptación con servicios reales incluya una segunda liberación sin texto.
+**Estado:** abierta · **Destino:** donde volvería a verse es F1F-03; no es un destino asignado (R-3).

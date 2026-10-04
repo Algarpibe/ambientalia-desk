@@ -34,7 +34,7 @@ const FORMA_FECHA = /^\d{4}-\d{2}-\d{2}$/
 const CON_DESPLAZAMIENTO = /(?:Z|[+-]\d{2}:?\d{2})$/
 
 /** Si una `YYYY-MM-DD` describe un día real del calendario (rechaza p. ej. `2026-02-30`). */
-function esFechaCalendarioReal(texto: string): boolean {
+export function esFechaCalendarioReal(texto: string): boolean {
   if (!FORMA_FECHA.test(texto)) return false
   const [anio, mes, dia] = texto.split('-').map(Number)
   const fecha = new Date(Date.UTC(anio, mes - 1, dia))

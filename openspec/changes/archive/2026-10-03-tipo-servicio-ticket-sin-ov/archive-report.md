@@ -56,7 +56,7 @@ detector de citas con 0 bloqueantes. Los hallazgos están en
 
 | Spec | Numstat | Qué entra |
 |---|---|---|
-| `transitions-st` | +219 / −0 | RQ-TS-33 (27 escenarios) en `openspec/specs/transitions-st/spec.md:1807`, con sus supuestos como subapartado (`openspec/specs/transitions-st/spec.md:2008`) |
+| `transitions-st` | +219 / −0 | RQ-TS-33 (27 escenarios) en `openspec/specs/transitions-st/spec.md:1807` en `560f60f`, con sus supuestos como subapartado (`openspec/specs/transitions-st/spec.md:2008` en `560f60f`) |
 | `remisiones` | +76 / −0 | RQ-RE-20 (6 escenarios) en `openspec/specs/remisiones/spec.md:708` en `f55b7d9` |
 | **Total** | **295** | 2 requisitos, 33 escenarios |
 

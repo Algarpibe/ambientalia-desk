@@ -244,7 +244,7 @@ const TRANSICIONES_BASE: Transition[] = [
   { id: 'diagnostico_complementario', name: 'Diagnóstico complementario', from: ['En Proceso'], to: 'Continuación del proceso', area: 'Servicio Técnico',
     fields: [comment()] },
   { id: 'liberacion_sin_factura', name: 'Liberación sin factura', from: ['Por Facturar'], to: 'Por Entregar / Sin facturar', area: 'Comercial',
-    fields: [comment(), cfCheck('Liberación del ticket sin facturar', true)] },
+    fields: [comment(), { key: 'Motivo de liberación sin factura', label: 'Motivo', kind: 'select', required: true, target: 'customField', options: ['Fecha de corte de facturación del cliente', 'Servicio incluido en contrato con facturación periódica', 'Autorización excepcional de Dirección Comercial'] }, cfDate('Fecha prevista de facturación'), cfText('Texto de la autorización', false)] },
   { id: 'entrega_sin_factura', name: 'Entrega al cliente sin factura', from: ['Por Entregar / Sin facturar'], to: 'Por Facturar', area: 'Servicio Técnico',
     fields: [comment(), cfDate('Fecha Remisión de Salida')] },
   { id: 'entrega_al_cliente', name: 'Entrega al cliente', from: ['Por Entregar'], to: 'Finalizado', area: 'Servicio Técnico',

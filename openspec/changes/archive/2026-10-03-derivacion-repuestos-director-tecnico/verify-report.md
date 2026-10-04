@@ -148,7 +148,7 @@ Del `git grep` de citas completas a `transitions.ts` y `cargos.ts` en `f55b7d9` 
 | `openspec/config.yaml:1552` (`:276`) | la línea de `escalado_a_revision` | Cierto: el primer literal conserva su columna |
 | `openspec/config.yaml:1940` (`:276-281`, «sobre `3f30710`») | dos cargos declarados | Caso B anclado a su revisión |
 | `openspec/config.yaml:1443`, `:2593` (`:276-281`) | lo declarado en esas líneas | Cierto o histórico anclado |
-| `openspec/specs/transitions-st/spec.md:1394` (`transitions.ts:274`) | `aprobacion: { tipo: 'primerDerivado' }` | Falsa **desde antes** (`aprobacion` está en `:281`); ya lo era en `f55b7d9` (S3) |
+| `openspec/specs/transitions-st/spec.md:1394` en `79180e6` (`transitions.ts:274`) | `aprobacion: { tipo: 'primerDerivado' }` | Falsa **desde antes** (`aprobacion` está en `:281`); ya lo era en `f55b7d9` (S3) |
 | `openspec/specs/derivacion-avisos/spec.md:81`, `:656` (rango viejo 267-276) | el bloque del mapa | Desfasadas por una tanda anterior; las repara el archivo (W2) |
 | `docs/sdd/ENTRADA.md:216`, `:1044` (`:276-281`) | los dos cargos `Director Técnico` y `Coordinador Comercial` | Cierto: los literales siguen en esas líneas |
 | `Decisiones_Gerencia_2026-09-10.md:346`, `F0-00_Baseline_as-built.md:55`, `F0-03/decisiones-para-carga.md:113` | citas ya desfasadas o fechadas | Caso B, sin tocar (D-6) |
@@ -200,7 +200,7 @@ Ninguno.
   Técnico sería más fiel al escenario.
 - **S2 · La 2.ª `it` de N2 (`cargos.test.ts:260`) nace verde y no detecta la ausencia del literal** (la 1.ª sí). Declarado en el apply; sólo
   protege contra una futura excepción de cargo mal puesta.
-- **S3 · `openspec/specs/transitions-st/spec.md:1394` cita `transitions.ts:274` para `aprobacion`**; ya estaba desfasada en `f55b7d9`, dentro
+- **S3 · `openspec/specs/transitions-st/spec.md:1394` en `79180e6` cita `transitions.ts:274` para `aprobacion`**; ya estaba desfasada en `f55b7d9`, dentro
   de una fila histórica de F1B-06. Sin acción en esta tanda.
 
 ## Cabecera R-1 y fila del plan (punto 8)

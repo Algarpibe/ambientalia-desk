@@ -88,7 +88,7 @@ sin ella F1C-06 la pierde:
 > **Los KPIs de G.6 SHALL calcularse sobre `ticket_transitions.values`, no sobre `tickets.*`.**
 
 (`packages/shared/src/reentrancia.ts:14-32`, en especial `:19` y `:24`.) No se pierde ningún dato por
-reentrancia; lo que se pierde es el dato **si se lee por la columna**. El detalle de los diez campos
+reentrancia; lo que se pierde es el dato **si se lee por la columna**. El detalle de los once campos
 reentrantes es de `transitions-st` §3.3.
 (Previously: «con `JSON.stringify(values)` sobre lo que llegó del cliente», sin distinguir las tres
 fechas derivadas ni las transiciones que no las declaran.)
@@ -491,7 +491,7 @@ de aquí.
 
 ## 5 · Fuera de alcance de esta spec
 
-- **Las 34 transiciones, el grafo y los diez campos reentrantes** → `transitions-st`. Aquí sólo está la
+- **Las 34 transiciones, el grafo y los once campos reentrantes** → `transitions-st`. Aquí sólo está la
   fila que cada transición escribe (RQ-TZ-01) y la regla que de ella se deriva (RQ-TZ-03).
 - **El alta del ticket y el contenido de la foto de creación** → `tickets-core` RQ-TC-06. Aquí sólo
   está cómo se lee (RQ-TZ-02, RQ-TZ-07).

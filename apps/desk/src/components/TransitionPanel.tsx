@@ -5,7 +5,7 @@ import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/p
 import { botonRemision } from '../lib/botonRemision';
 import { BuscadorOrdenVenta } from './BuscadorOrdenVenta';
 import { useAuth } from '../auth/AuthContext'
-import { puedeEjecutarTransicion, puedeFijarPrioridadTop5, motivoAltaPendiente } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
+import { puedeEjecutarTransicion, puedeFijarPrioridadTop5, motivoAltaPendiente, seVuelveAPedirEnCadaLiberacion } from '@ambientalia/shared'; import { CertificadoFabricaPdf } from './CertificadoFabricaPdf'; import { motivoNoHabilitar, avisoRemisionSinConfirmar } from '../lib/habilitarServicio'
 
 /**
  * Renderiza los botones de transición válidos para el estado actual y su formulario.
@@ -25,12 +25,12 @@ import { puedeEjecutarTransicion, puedeFijarPrioridadTop5, motivoAltaPendiente }
  * Vale para las 35 transiciones porque `customFields` del ticket indexa las columnas promovidas por
  * la MISMA etiqueta que usa `key` en los campos — así que la correspondencia no hay que declararla.
  *
- * Quedan fuera tres clases, y por motivos distintos: el comentario y la prioridad son de la
- * transición y no del ticket, y el checkbox porque un `false` es indistinguible de "sin contestar"
- * y bloquearlo dejaría la casilla clavada en «no» para siempre.
+ * Quedan fuera cuatro clases: el comentario y la prioridad son de la transición y no del ticket; el checkbox
+ * porque un `false` es indistinguible de "sin contestar"; y los tres campos de la liberación sin factura, que se
+ * piden de nuevo en cada ciclo y no se heredan (`seVuelveAPedirEnCadaLiberacion`, F1C-05).
  */
 function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string | null>): boolean {
-  if (f.target !== 'customField' || f.kind === 'checkbox') return false
+  if (f.target !== 'customField' || f.kind === 'checkbox' || seVuelveAPedirEnCadaLiberacion(f.key)) return false
   const v = delTicket[f.key]
   return v != null && String(v).trim() !== ''
 }

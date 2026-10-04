@@ -73,7 +73,7 @@ El predicado de la guarda 9 es `motivoAltaPendiente`, `packages/shared/src/altaM
 
 ## 5. Specs vivas afectadas y siguiente ID libre
 
-- `transitions-st`: RQ-TS-02 (SHALL salir de tres fases, `openspec/specs/transitions-st/spec.md:71-88`) y RQ-TS-06 (tabla de guardas, `openspec/specs/transitions-st/spec.md:202-260`) son las vecinas declaradas; RQ-TS-32 (`openspec/specs/transitions-st/spec.md:1416`) es la vecina directa. Siguiente: **RQ-TS-33**.
+- `transitions-st`: RQ-TS-02 (SHALL salir de tres fases, `openspec/specs/transitions-st/spec.md:71-88`) y RQ-TS-06 (tabla de guardas, `openspec/specs/transitions-st/spec.md:202-260` en `ece1dea`) son las vecinas declaradas; RQ-TS-32 (`openspec/specs/transitions-st/spec.md:1416` en `ece1dea`) es la vecina directa. Siguiente: **RQ-TS-33**.
 - `tickets-core`: RQ-TC-05 (`openspec/specs/tickets-core/spec.md:126`) sólo si la OVI restringe en el alta. Siguiente: **RQ-TC-35**.
 - `remisiones`: nuevo predicado «vigente», o si se toca `remision.ts`. Siguiente: **RQ-RE-20** (el último es RQ-RE-19; RQ-RE-14 está al final del fichero).
 - `permissions`: RQ-PM-20 se modifica (ya no «sin llamador»). Siguiente: **RQ-PM-24**.

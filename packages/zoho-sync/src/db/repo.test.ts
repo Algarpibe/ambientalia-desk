@@ -518,3 +518,34 @@ describe('createTicket · nacimiento por clasificación y modalidad (F1B-06, cam
     expect(r).toEqual({ subject: 'Asunto de Zoho v2', modalidad: 'en sitio', managed_by_app: false })
   })
 })
+
+/**
+ * liberacion-sin-factura-motivo-fecha (F1C-05), lote 1 · motivo y fecha previstos de la liberación sin factura.
+ * Molde de la guarda de `fecha_aviso_cliente` (C9) y de la de `modalidad`: las dos columnas las escribe la
+ * transición, NO el sincronizador, así que viven fuera de `TICKET_COLS` y dentro de `PROMOTED_COLUMNS`
+ * (esa lista decide columna o jsonb: `apps/desk/server/transitionExec.ts:90-92`).
+ */
+describe('liberacion-sin-factura-motivo-fecha · motivo y fecha sobreviven al sync', () => {
+  it('liberacion_motivo y fecha_prevista_facturacion están fuera de TICKET_COLS y dentro de PROMOTED_COLUMNS, con su etiqueta y tipo', () => {
+    expect(TICKET_COLS as readonly string[]).not.toContain('liberacion_motivo')
+    expect(TICKET_COLS as readonly string[]).not.toContain('fecha_prevista_facturacion')
+    const cols = PROMOTED_COLUMNS.map((p) => p.col)
+    expect(cols).toContain('liberacion_motivo')
+    expect(cols).toContain('fecha_prevista_facturacion')
+    const motivo = PROMOTED_COLUMNS.find((p) => p.col === 'liberacion_motivo')!
+    const fecha = PROMOTED_COLUMNS.find((p) => p.col === 'fecha_prevista_facturacion')!
+    expect([motivo.label, motivo.kind]).toEqual(['Motivo de liberación sin factura', 'text'])
+    expect([fecha.label, fecha.kind]).toEqual(['Fecha prevista de facturación', 'date'])
+  })
+
+  // Fila NO gestionada: con una gestionada `upsertTicket` se abstiene entera y la prueba no probaría nada.
+  it('una pasada real del sync sobre una fila no gestionada reescribe el asunto y NO pisa el motivo ni la fecha', async () => {
+    await upsertTicket(db, { ...zTicket('z-lib', 970, 'Por Facturar'), subject: 'Asunto de Zoho v1' })
+    await db.query("UPDATE tickets SET liberacion_motivo = 'Fecha de corte de facturación del cliente', fecha_prevista_facturacion = '2026-10-04' WHERE id = 'z-lib'")
+    await upsertTicket(db, { ...zTicket('z-lib', 970, 'Por Facturar'), subject: 'Asunto de Zoho v2' })
+    const r = (await db.query("SELECT subject, liberacion_motivo, fecha_prevista_facturacion, managed_by_app FROM tickets WHERE id = 'z-lib'")).rows[0]
+    // pg-mem devuelve la columna date como Date (UTC): se compara el día, no el objeto.
+    const dia = new Date(r.fecha_prevista_facturacion).toISOString().slice(0, 10)
+    expect({ subject: r.subject, liberacion_motivo: r.liberacion_motivo, dia, managed_by_app: r.managed_by_app }).toEqual({ subject: 'Asunto de Zoho v2', liberacion_motivo: 'Fecha de corte de facturación del cliente', dia: '2026-10-04', managed_by_app: false })
+  })
+})

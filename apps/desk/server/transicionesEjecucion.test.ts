@@ -6,11 +6,11 @@ import { db, instalarArnes, appWith, adminCookie, valoresValidos } from './testi
 instalarArnes()
 
 /**
- * C1 — EL CHECKBOX OBLIGATORIO QUE AHORA SÍ FRENA. Cerrado en F1A-01.
+ * C1 — EL CHECKBOX OBLIGATORIO QUE AHORA SÍ FRENA. Cerrado en F1A-01; narración fechada en `2a74fdc`, el bloque de código es el de F1C-05.
  *
  * QUÉ ERA. `transitionExec.ts` procesaba la rama del `checkbox` y hacía `continue` ANTES del chequeo
  * genérico de obligatorio, así que un checkbox `required` no se validaba nunca: sin marcar se
- * guardaba como `false` y la transición seguía adelante. El único que existe es `transitions.ts:247`
+ * guardaba como `false` y la transición seguía adelante. El único que existía era `transitions.ts:247` en `2a74fdc`
  * —`cfCheck('Liberación del ticket sin facturar', true)` en `liberacion_sin_factura`, área
  * Comercial—, y era la única guarda de esa liberación.
  *
@@ -38,12 +38,14 @@ instalarArnes()
  * liberaciones sin factura sobre esos datos estará auditando un dato falso. Va al Anexo D como punto
  * nuevo, en la misma entrada que C1.
  */
-describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
+describe('C1 · «Liberación sin factura»: motivo y fecha obligatorios, sin casilla (F1C-05)', () => {
   async function ticketPorFacturar() {
     await db.query("INSERT INTO tickets (id, number, subject, status) VALUES ('t1', 4100, 'C1', 'Por Facturar')")
   }
 
-  const CASILLA = 'Liberación del ticket sin facturar'
+  const MOTIVO = 'Motivo de liberación sin factura'
+  const FECHA = 'Fecha prevista de facturación'
+  const A = 'Fecha de corte de facturación del cliente'
 
   /** Ejecuta la liberación con los `values` dados, sobre un ticket recién puesto en «Por Facturar». */
   async function liberar(values: Record<string, unknown>) {
@@ -54,33 +56,32 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
       .send({ transitionId: 'liberacion_sin_factura', values })
   }
 
-  /** El estado y la casilla como quedaron en la base. */
+  /** El estado y las dos columnas como quedaron en la base. */
   async function filaTicket() {
-    const t = await db.query('SELECT status, liberacion_sin_facturar FROM tickets WHERE id = $1', ['t1'])
-    return t.rows[0] as { status: string; liberacion_sin_facturar: boolean | null }
+    const t = await db.query('SELECT status, liberacion_motivo, fecha_prevista_facturacion FROM tickets WHERE id = $1', ['t1'])
+    return t.rows[0] as { status: string; liberacion_motivo: string | null; fecha_prevista_facturacion: Date | null }
   }
 
-  // ── VÍA 1 · el campo llega AUSENTE ───────────────────────────────────────────────────────────
-  // `raw` es `undefined`, luego `empty` es `true`: la vía que cierra la pieza (a).
+  // ── VÍA 1 · el motivo llega AUSENTE ──────────────────────────────────────────────────────────
+  // `raw` es `undefined`: lo dice `buildTransitionPlan` (presencia), no la guarda de contenido.
 
-  it('con el checkbox obligatorio AUSENTE, la liberación se rechaza con 422', async () => {
-    const res = await liberar({ comment: 'sin mandar la casilla' })
+  it('con el motivo AUSENTE, la liberación se rechaza con 422', async () => {
+    const res = await liberar({ comment: 'sin mandar el motivo', [FECHA]: '2026-10-10' })
 
     expect(res.status).toBe(422)
-    expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
+    expect(res.body.errors).toContain('Falta el campo obligatorio: Motivo')
     // Y el ticket NO se mueve: un 422 que ya hubiera transicionado no sería una validación.
     expect((await filaTicket()).status).toBe('Por Facturar')
   })
 
-  // ── VÍA 2 · el campo llega presente y en FALSE ───────────────────────────────────────────────
-  // `raw` es `false`, luego `empty` es FALSE. Es el camino NORMAL —un formulario con la casilla
-  // desmarcada manda `false`, no `undefined`— y sólo lo cierra la pieza (b).
+  // ── VÍA 2 · el motivo llega presente y VACÍO ─────────────────────────────────────────────────
+  // Es lo que manda un desplegable sin elegir: cadena vacía, que cuenta como ausente.
 
-  it('con el checkbox obligatorio en FALSE, la liberación se rechaza con 422', async () => {
-    const res = await liberar({ comment: 'casilla desmarcada', [CASILLA]: false })
+  it('con el motivo VACÍO, la liberación se rechaza con 422', async () => {
+    const res = await liberar({ comment: 'motivo vacío', [MOTIVO]: '', [FECHA]: '2026-10-10' })
 
     expect(res.status).toBe(422)
-    expect(res.body.errors).toContain(`Falta el campo obligatorio: ${CASILLA}`)
+    expect(res.body.errors).toContain('Falta el campo obligatorio: Motivo')
     expect((await filaTicket()).status).toBe('Por Facturar')
   })
 
@@ -88,17 +89,16 @@ describe('C1 · el checkbox obligatorio de «Liberación sin factura»', () => {
   // Sin esta prueba, un arreglo que rechazara SIEMPRE la liberación dejaría verdes las dos de
   // arriba. Es la mitad del requisito que las dos negativas no pueden afirmar.
 
-  it('con el checkbox MARCADO, la liberación se ejecuta y la casilla queda en true', async () => {
-    const res = await liberar({ comment: 'liberado sin factura', [CASILLA]: true })
+  it('con motivo y fecha válidos, la liberación se ejecuta y las dos columnas quedan escritas', async () => {
+    const res = await liberar({ comment: 'liberado sin factura', [MOTIVO]: A, [FECHA]: '2026-10-10' })
 
     expect(res.status).toBe(200)
     expect(res.body.errors).toBeUndefined()
 
     const fila = await filaTicket()
     expect(fila.status).toBe('Por Entregar / Sin facturar')
-    // La columna promovida guarda `true`: a partir de aquí, quien audite liberaciones sin factura
-    // lee un dato que se corresponde con el estado del ticket.
-    expect(fila.liberacion_sin_facturar).toBe(true)
+    expect(fila.liberacion_motivo).toBe(A)
+    expect(new Date(fila.fecha_prevista_facturacion as Date).toISOString().slice(0, 10)).toBe('2026-10-10')
   })
 })
 

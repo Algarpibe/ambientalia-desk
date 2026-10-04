@@ -649,7 +649,7 @@ y sondear hasta `done: true` (~8-12 min). Idempotente; re-ejecutable para refres
   `transicionesEjecucion.test.ts:41-103` y `transitionExec.test.ts:89-111`.
   **Corrección de esta misma entrada:** el ejemplo que traía —'Cumple condiciones comerciales'— no es
   obligatorio (`transitions.ts:189`, `cfCheck` sin segundo parámetro). El único `required` de las 34
-  etapas es 'Liberación del ticket sin facturar' (`transitions.ts:247`).
+  etapas era 'Liberación del ticket sin facturar' (`transitions.ts:247` en `2a74fdc`; hoy no hay casilla obligatoria).
   **Lo que NO repara:** las filas escritas antes de esa fecha. `liberacion_sin_facturar` es columna
   promovida, así que puede haber tickets en `Por Entregar / Sin facturar` con `false` en esa columna.
 

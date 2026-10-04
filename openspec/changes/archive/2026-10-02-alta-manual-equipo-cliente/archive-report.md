@@ -68,13 +68,13 @@ copiaron a la rama y su sha256 es idéntico al medido.
 |---|---|---|
 | `hojas-vida` | +105 / −0 | RQ-HV-16, RQ-HV-17, RQ-HV-18 y RQ-HV-19 (14 escenarios), desde `openspec/specs/hojas-vida/spec.md:453` |
 | `tickets-core` | +176 / −0 | RQ-TC-30 a RQ-TC-34 (23 escenarios), desde `openspec/specs/tickets-core/spec.md:1452` en `c557273` |
-| `transitions-st` | +53 / −5 | RQ-TS-32 (7 escenarios) en `openspec/specs/transitions-st/spec.md:1416`, y cinco filas de §3.8 editadas en sitio |
+| `transitions-st` | +53 / −5 | RQ-TS-32 (7 escenarios) en `openspec/specs/transitions-st/spec.md:1416` en `c557273`, y cinco filas de §3.8 editadas en sitio |
 | `zoho-sync` | +27 / −0 | RQ-ZS-16 (3 escenarios) en `openspec/specs/zoho-sync/spec.md:675` en `c557273` |
 | **Total** | **366** | 11 requisitos, 47 escenarios |
 
 **§3.8 de `transitions-st`** (lo pedía la delta en su apartado «Fuera de alcance — para el `archive-report`»): las guardas
 del alta manual, contrastadas con `apps/desk/server/services/ticketService.ts` en `91e4924`, entran en la tabla de
-escalones (`openspec/specs/transitions-st/spec.md:1155`, `:1157`, `:1158`): A `:25` equipo manual o nuevo y `:28` cliente
+escalones (`openspec/specs/transitions-st/spec.md:1155` en `c557273`, `:1157`, `:1158`): A `:25` equipo manual o nuevo y `:28` cliente
 provisional; C `:91` contenido del alta manual; D `:96` NIT ya en Books, antes de la OV ya usada, que sigue última. La
 fila `createManagedTicket` (`:1180`) las lista en el orden del código (`:24` · `:25` · `:27` · `:28` · `:39` · …), y la
 tabla de puertas (`:1225`) pasa a `A A A A A C C C C C D D`: la quinta C, la última, es el contrato vencido.
@@ -83,7 +83,7 @@ tabla de puertas (`:1225`) pasa a `A A A A A C C C C C D D`: la quinta C, la úl
 
 Las cuatro inserciones van en medio de cada spec. Barrido de la forma completa sobre todo el repositorio, **sin excluir
 `archive/`**, con umbral por fichero (`hojas-vida` > 450, `tickets-core` > 1449, `transitions-st` > 1413,
-`zoho-sync` > 672): sólo cuatro citas, todas `transitions-st/spec.md:1545`, en
+`zoho-sync` > 672): sólo cuatro citas, todas `transitions-st/spec.md:1545` en `c557273`, en
 `openspec/changes/archive/2026-10-02-rechazo-solo-comercial/` (`design.md:85`, `exploration.md:87`,
 `specs/transitions-st/spec.md:209`, `tasks.md:63`).
 

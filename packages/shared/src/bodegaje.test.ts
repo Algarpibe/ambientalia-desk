@@ -102,15 +102,15 @@ describe('C9 · los tres bodegajes de M1.10', () => {
    *
    * `habilitado_para_entrega` va de `Liberación Comercial` a `Por Entregar`, y ninguno de los dos
    * está en los tres ciclos del grafo (`reentrancia.ts:189`). Por eso el campo nuevo NO entra en los
-   * diez reentrantes del invariante 6 y `invariantesGrafo.test.ts:137-149` sigue verde sin tocarlo.
+   * reentrantes del invariante 6 (diez hasta F1C-05, once hoy) y `invariantesGrafo.test.ts:137-149` sigue verde sin tocarlo.
    *
    * Se afirma aquí porque el que añade un campo de fecha es esta tanda: si mañana alguien mueve esa
    * transición dentro de un ciclo, el rojo tiene que salir junto al campo, no a tres ficheros de
    * distancia.
    */
-  it('5 · el campo nuevo no entra en los diez reentrantes: su transición no está en ningún ciclo', () => {
+  it('5 · el campo nuevo no entra en los once reentrantes: su transición no está en ningún ciclo', () => {
     expect(camposFechaReentrantes()).not.toContain(CAMPO_AVISO_CLIENTE)
-    expect(camposFechaReentrantes()).toHaveLength(10)
+    expect(camposFechaReentrantes()).toHaveLength(11)
   })
 
   /**

@@ -39,16 +39,16 @@ describe('tabla de reentrancia', () => {
     ])
   })
 
-  /** C1 — ciclo de facturación: `Por Facturar` ⇄ `Por Entregar / Sin facturar`. Una reentrante. */
-  it('C1 · ciclo de facturación: una sola transición reentrante con fecha', () => {
+  /** C1 — ciclo de facturación: `Por Facturar` ⇄ `Por Entregar / Sin facturar`. Dos reentrantes (F1C-05). */
+  it('C1 · ciclo de facturación: dos transiciones reentrantes con fecha', () => {
     const c1 = componenteQueContiene('Por Facturar')!
     expect(c1.estados).toEqual(['Por Facturar', 'Por Entregar / Sin facturar'])
     expect(c1.transiciones).toEqual([
-      { id: 'entrega_sin_factura', from: 'Por Entregar / Sin facturar', to: 'Por Facturar', campos: ['Fecha Remisión de Salida'] },
+      { id: 'liberacion_sin_factura', from: 'Por Facturar', to: 'Por Entregar / Sin facturar', campos: ['Fecha prevista de facturación'] }, { id: 'entrega_sin_factura', from: 'Por Entregar / Sin facturar', to: 'Por Facturar', campos: ['Fecha Remisión de Salida'] },
     ])
-    // La otra rama del ciclo —`liberacion_sin_factura`— no escribe fecha: su único campo propio es
-    // el checkbox de liberación. Por eso el ciclo tiene dos transiciones y una sola reentrante.
-    expect(transitionById('liberacion_sin_factura')!.fields.some((f) => f.kind === 'date')).toBe(false)
+    // La liberación escribe la fecha prevista de facturación y es obligatoria, así que una segunda pasada por el
+    // ciclo la pisa siempre (la columna guarda el último valor; la traza, todos). Antes de F1C-05 era la casilla.
+    expect(transitionById('liberacion_sin_factura')!.fields.find((f) => f.kind === 'date')).toMatchObject({ label: 'Fecha prevista de facturación', required: true })
   })
 
   /** C2 — el grande: ocho estados y OCHO transiciones reentrantes con fecha. */
@@ -80,19 +80,19 @@ describe('tabla de reentrancia', () => {
     expect(c3.transiciones).toEqual([])
   })
 
-  it('nueve casos en total: 1 de C1 + 8 de C2 + 0 de C3', () => {
-    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(9)
+  it('diez casos en total: 2 de C1 + 8 de C2 + 0 de C3', () => {
+    expect(tablaDeReentrancia().flatMap((c) => c.transiciones)).toHaveLength(10)
   })
 
   /**
-   * Diez campos, OCHO obligatorios. `cfDate` es `required = true` por omisión
+   * Once campos, NUEVE obligatorios. `cfDate` es `required = true` por omisión
    * (`transitions.ts:75-76`), y en un campo obligatorio la segunda pasada por el ciclo no *puede*
    * dejar el valor anterior: pisa siempre. Los dos opcionales son los de `aprobacion`.
    */
-  it('diez campos de fecha reentrantes, de los que ocho son obligatorios', () => {
-    expect(camposFechaReentrantes()).toHaveLength(10)
+  it('once campos de fecha reentrantes, de los que nueve son obligatorios', () => {
+    expect(camposFechaReentrantes()).toHaveLength(11)
     const obligatorios = camposFechaReentrantesObligatorios()
-    expect(obligatorios).toHaveLength(8)
+    expect(obligatorios).toHaveLength(9)
     expect(camposFechaReentrantes().filter((c) => !obligatorios.includes(c))).toEqual([
       'Fecha Orden de Compra Final',
       'Fecha Orden de Venta Final',
