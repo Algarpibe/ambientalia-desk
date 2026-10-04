@@ -106,7 +106,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1C-08 | Rutas abreviadas | S–M | después del corte | pendiente | `decision/p15-p59-rutas` |
 | **F1C-09** | **Tres transiciones y la cifra anclada** (§E) | M | antes del 14/12 | cerrada por archivo (`c0d16f6`) | `decision/tres-transiciones-y-la-cifra-anclada` |
 | **F1C-10** | **«Rechazo» desde Notificación cliente sólo para Comercial** (§E) | XS | antes del 14/12 | cerrada por archivo (`b16cbb4`) | E-114 · `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1616` |
-| **F1C-11** | **Derivación de «Solicitud repuestos» al Director Técnico**; el respaldo al «Especialista técnico» espera al registro de ausencias (1E) y, mientras, reasigna a mano un administrador (§K) | S | antes del 14/12 | pendiente | `decision/cargo-encargado-de-inventario` |
+| **F1C-11** | **Derivación de «Solicitud repuestos» al Director Técnico**; el respaldo al «Especialista técnico» espera al registro de ausencias (1E) y, mientras, reasigna a mano un administrador (§K) | S | antes del 14/12 | cerrada por archivo (`920b304`) | `decision/cargo-encargado-de-inventario` |
 | **F1C-12** | **Registro del SKU por Comercial/Compras con aviso al técnico** | S | reserva 2 — no cabe en ningún escenario (§F.4): después del corte | reserva | `decision/trabajo-del-30-09-sin-fila` (2) |
 | F1D-01 | Modelo de datos del catálogo | M | después del corte | pendiente | plan R01.1 §5 |
 | F1D-02 | Importador desde Excel | M | después del corte | pendiente | plan R01.1 §5 |

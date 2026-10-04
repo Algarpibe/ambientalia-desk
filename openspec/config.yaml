@@ -261,8 +261,8 @@ capabilities:
       LA LISTA DE INDICADORES QUEDA ABIERTA: Gerencia la dio entre corchetes y terminada en puntos
       suspensivos. Devuelta como pregunta `e009b-lista-indicadores`.
       LO QUE SIGUE EN FASE 2: los indicadores en sí. La spec de la capacidad nace con el
-      cambio continuidad-indicadores (F1F-05, cierra: no) y se archiva como
-      openspec/specs/kpis/spec.md; hasta archivarlo la capacidad no tiene spec viva.
+      cambio continuidad-indicadores (F1F-05, cierra: no) y YA EXISTE como
+      openspec/specs/kpis/spec.md desde su archivo (c6d25ae, en main desde el 2026-10-04).
       OJO al citar el plan: plan:143 manda anclar el bodegaje de entrada «contra
       la marca de tiempo de Ingreso a Servicio», que es la prescripción de la R05
       (:1684) y la R08 la sustituyó por un par de campos de fecha (:1694).
