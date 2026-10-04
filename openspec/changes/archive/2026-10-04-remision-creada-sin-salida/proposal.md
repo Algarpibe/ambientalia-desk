@@ -134,7 +134,7 @@ Ninguna.
 
 - `transitions-st`: requisito **nuevo** RQ-TS-34 — desde cada origen de `habilitar_servicio`, un ticket sin remisión de
   entrada vigente tiene una acción que lo desbloquea; el predicado se ata a `transitionById('habilitar_servicio').from`.
-  RQ-TS-33 (`openspec/specs/transitions-st/spec.md:1807`) **no se modifica**: su escenario `:1883-1886` sigue siendo
+  RQ-TS-33 (`openspec/specs/transitions-st/spec.md:1807` en `6186c98`) **no se modifica**: su escenario `:1883-1886` sigue siendo
   cierto. RQ-TS-02 (`:71`) y RQ-TS-03 (`:90`) tampoco.
 - `remisiones`: requisito **nuevo** RQ-RE-28 — el alta responde `201` en los tres orígenes, y el botón en
   `Remisión creada` (tabla de §5). RQ-RE-06 (`openspec/specs/remisiones/spec.md:172`), RQ-RE-11 (`:304`) y RQ-RE-20

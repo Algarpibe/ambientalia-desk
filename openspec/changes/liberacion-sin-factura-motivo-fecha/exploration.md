@@ -80,8 +80,8 @@ el script no lee `fields`) y las matrices de permisos, que derivan valores del a
 
 Barrido `transitions\.ts:24[67]` fuera de `openspec/changes/archive/`: `apps/desk/server/transitionExec.ts:73`,
 `apps/desk/server/transicionesEjecucion.test.ts:13`, `debt.md:652`,
-`openspec/specs/transitions-st/spec.md:918`; y sobre la línea 246 (el id y el área, que no cambian)
-`openspec/specs/permissions/spec.md:518` y `openspec/specs/transitions-equipo-nuevo/spec.md:118` y `:516`.
+`openspec/specs/transitions-st/spec.md:918` en `ce4fead`; y sobre la línea 246 (el id y el área, que no cambian)
+`openspec/specs/permissions/spec.md:518` en `ce4fead` y `openspec/specs/transitions-equipo-nuevo/spec.md:118` y `:516`.
 **[corregido]** La exploración no listó los documentos fechados que también casan:
 `docs/sdd/Paquete_de_Despliegue_2026-10-01.md:743` y ocho líneas de `docs/sdd/F0-00_Baseline_as-built.md`
 (67, 69, 237, 238, 302, 481, 523 y 547; *hipótesis*: puede haber más en forma abreviada, que ese barrido

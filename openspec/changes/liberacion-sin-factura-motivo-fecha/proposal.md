@@ -82,12 +82,12 @@ sería la única guarda de la lista cerrada.
 | Capacidad | Qué cambia | Dónde |
 |---|---|---|
 | `transitions-st` | Requisito nuevo (siguiente libre: **RQ-TS-35**, el más alto hoy es el 33): los tres campos, la lista literal y la guarda | — |
-| `transitions-st` | RQ-TS-06: fila nueva en la tabla de guardas, escalón C, en la sentencia del `422` agregado | `openspec/specs/transitions-st/spec.md:210-221` |
+| `transitions-st` | RQ-TS-06: fila nueva en la tabla de guardas, escalón C, en la sentencia del `422` agregado | `openspec/specs/transitions-st/spec.md:210-221` en `ce4fead` |
 | `transitions-st` | RQ-TS-08: el `checkbox` obligatorio queda sin caso vivo en el catálogo (el motor lo sigue soportando); tercera validación de contenido | `:327-329`, `:311-318` |
 | `transitions-st` | RQ-TS-09: el mapa pasa de 40 a 42 entradas y «ninguna cae al cajón» deja de ser cierto para el texto | `:352-361` |
 | `transitions-st` | Invariante 6 y §3.3: de diez a once campos de fecha reentrantes | `:64`, `:981` |
 | `transitions-st` | §3.1: la cita de la casilla pasa a histórica (caso B) y se añade qué la sustituye | `:909-937` |
-| `permissions` | RQ-PM-18: escenario nuevo, el `403` de cargo gana al `422` de la guarda nueva | `openspec/specs/permissions/spec.md:410-429` |
+| `permissions` | RQ-PM-18: escenario nuevo, el `403` de cargo gana al `422` de la guarda nueva | `openspec/specs/permissions/spec.md:410-429` en `ce4fead` |
 | `trazas` | Dos menciones a «los diez campos» | `openspec/specs/trazas/spec.md:91`, `:494` |
 
 ## 5 · Enfoque
@@ -197,8 +197,8 @@ entero y el script no lee `fields`; el grafo (estados, origen, destino, área) q
 | `apps/desk/server/transitionExec.ts:73` | la casilla «es el único que hay» | **A**: falso tras el cambio; se reescribe el comentario en su sitio, sin mover líneas |
 | `apps/desk/server/transicionesEjecucion.test.ts:13` | «el único que existe» | **B**: el bloque se reescribe; la narración de C1 se ancla a `2a74fdc` |
 | `debt.md:652` | «el único `required` de las 34 etapas» | **B**: se nombra la revisión |
-| `openspec/specs/transitions-st/spec.md:918` | «el único caso vivo era» | **B/C**: revisión, más qué lo sustituyó |
-| `openspec/specs/permissions/spec.md:518`, `openspec/specs/transitions-equipo-nuevo/spec.md:118` y `:516` | citan la línea 246 (id y área) | **A**: siguen ciertas, sin cambio |
+| `openspec/specs/transitions-st/spec.md:918` en `ce4fead` | «el único caso vivo era» | **B/C**: revisión, más qué lo sustituyó |
+| `openspec/specs/permissions/spec.md:518` en `ce4fead`, `openspec/specs/transitions-equipo-nuevo/spec.md:118` y `:516` | citan la línea 246 (id y área) | **A**: siguen ciertas, sin cambio |
 | `docs/sdd/F0-00_Baseline_as-built.md` (ocho líneas) y `docs/sdd/Paquete_de_Despliegue_2026-10-01.md:743` | documentos fechados | **B**: no se renumeran |
 
 Queda además el segundo pase de formas abreviadas, que ese barrido no caza, y el barrido de `rows.ts`,
