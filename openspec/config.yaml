@@ -1185,7 +1185,7 @@ incumplimientos_vivos:
   # REGISTRA, NO SE CORRIGE. Es el mismo reparto que dejó vivo a IV-11.
   - id: IV-12
     regla: "— (orden único de precedencia declarado por F1B-10: A existencia < B estado y permiso < C contenido < D unicidad)"
-    ubicacion: "apps/desk/server/routes/remision.ts:127, :155, :197, :220"
+    ubicacion: "apps/desk/server/routes/remision.ts:127, :155, :158, :197, :220"
     verificado: true
     estado: VIVO
     encontrado_en: >
@@ -1194,7 +1194,7 @@ incumplimientos_vivos:
       remisión pendiente (obs. Engram #707), clasificando línea a línea las ocho
       guardas del alta. No salió de una prueba en rojo: salió de leer la lista.
     descripcion: >
-      EL ALTA DE REMISIÓN NO CUMPLE EL ORDEN TOTAL QUE F1B-10 DECLARA, EN DOS
+      EL ALTA DE REMISIÓN NO CUMPLE EL ORDEN TOTAL QUE F1B-10 DECLARA, EN TRES (eran dos hasta el 2026-10-03; el tercero es E-169)
       PUNTOS. No es una diferencia de criterio entre puertas: es la misma regla,
       incumplida en la única puerta que la tanda no toca.
     los_dos_incumplimientos: >
@@ -1203,7 +1203,7 @@ incumplimientos_vivos:
       serial del equipo», existencia del sujeto, escalón A).
       (2) A DESPUÉS DE C — `apps/desk/server/routes/remision.ts:220` («Orden de
       venta no encontrada», escalón A) corre DESPUÉS de `:127` y de `:197`
-      («Ítems fuera del checklist»), los dos escalón C.
+      («Ítems fuera del checklist»), los dos escalón C. (3) C ANTES QUE A, registrado el 2026-10-03 por `recepcion-rotulacion-foto-entrada` (F1B-04; E-169 de `docs/sdd/ENTRADA.md`) — la guarda de recepción (`apps/desk/server/routes/remision.ts:158`, validez del contenido, escalón C) corre ANTES de `:220` («Orden de venta no encontrada», A): unas novedades inválidas sobre una orden de venta inexistente dan el error de las novedades. Que corra antes de `:197` es aceptable, los dos son C; y frente al serial (`:155`, A, antes) y al `409` pendiente (`:177`, D, después) sí cumple su sitio, fijado por `apps/desk/server/recepcion.test.ts:245-273`. Quien reordene el alta mueve también esta guarda. La clave se sigue llamando `los_dos_incumplimientos` para no romper a quien la lea por nombre: son tres.
     son_observables: >
       LOS DOS SON OBSERVABLES, no teóricos. Una fecha mala sobre un ticket sin
       serial activa `:127` y `:155` a la vez, y el usuario ve la de C: se le pide
