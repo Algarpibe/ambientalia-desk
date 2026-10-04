@@ -233,7 +233,7 @@ La implementación compartida **SHALL**: recortar los extremos, pasar a minúscu
 ningún requisito vivo fija lo contrario: `RQ-HV-06` (`openspec/specs/hojas-vida/spec.md:125-134`) exige que
 `searchEquipos` encuentre por código interno «con el mismo criterio —insensible a mayúsculas, por coincidencia
 parcial— con el que ya busca por serial», y recortar los extremos no contradice nada de eso; los demás pasajes
-que nombran «Autocompletado» (`openspec/specs/tickets-core/spec.md:1341`) son filas de discrepancia con el
+que nombran «Autocompletado» (`openspec/specs/tickets-core/spec.md:1341` en `2a74fdc`) son filas de discrepancia con el
 maestro, no comportamiento. **No hay bloque MODIFIED:** ningún requisito vivo cambia de letra. Reversión: quitar
 el recorte del patrón compartido afecta a las dos búsquedas a la vez.
 
