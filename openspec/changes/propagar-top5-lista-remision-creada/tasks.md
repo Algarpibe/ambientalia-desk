@@ -128,78 +128,78 @@ Archivos: `schema.sql` (+4), `migrate.test.ts` (0), `shared/prioridadPropagada.t
 (+1), `prioridadCliente.ts` (al final), `routes/prioridad.ts` (0), `prioridadTop5.test.ts` (0), `propagarTop5.test.ts` (nuevo).
 
 **Fase de partida**
-- [ ] L2a.1 Anotar `git rev-parse HEAD` (partida de L2a), abrir el intento y medir `wc -l` de `routes/prioridad.ts`,
+- [x] L2a.1 Anotar `git rev-parse HEAD` (partida de L2a), abrir el intento y medir `wc -l` de `routes/prioridad.ts`,
   `prioridadCliente.ts`, `schema.sql`, `shared/src/index.ts`.
-- [ ] L2a.2 Leer `prioridadCliente.ts`, `routes/prioridad.ts:30-60`, `prioridadTop5.test.ts:170-200`, `:320-340`.
+- [x] L2a.2 Leer `prioridadCliente.ts`, `routes/prioridad.ts:30-60`, `prioridadTop5.test.ts:170-200`, `:320-340`.
 
 **Rojo (puro, `shared`)**
-- [ ] L2a.3 Crear `packages/shared/src/prioridadPropagada.test.ts`: tabla de `cambioPorTop5` (marcar, cambiar,
+- [x] L2a.3 Crear `packages/shared/src/prioridadPropagada.test.ts`: tabla de `cambioPorTop5` (marcar, cambiar,
   desmarcar, contrato + `Low` → `High`, exento antes y después, **origen desconocido exime**, sin base al desmarcar,
   ciclo marcar-desmarcar-transición-marcar-desmarcar, igual a la actual → `null`, revertir a `null`) y de
   `baseDeTop5` / `esAjusteManual`.
-- [ ] L2a.4 **EJECUTAR** y anotar el fallo literal (la función no existe).
+- [x] L2a.4 **EJECUTAR** y anotar el fallo literal (la función no existe).
 
 **Rojo (esquema y servidor)**
-- [ ] L2a.5 En `migrate.test.ts` en sitio (`:374`, `:376`, `:377`, `:385`, título): 53 / 29 (24 public + 5 books) / 24 /
+- [x] L2a.5 En `migrate.test.ts` en sitio (`:374`, `:376`, `:377`, `:385`, título): 53 / 29 (24 public + 5 books) / 24 /
   8 identidades (entra `public.prioridad_ajustes`). Cero netas. **EJECUTAR**: rojo (51≠53).
-- [ ] L2a.6 **Hipótesis `DROP NOT NULL`:** prueba que inserta en `prioridad_ajustes` una fila con `a` NULL y otra con
+- [x] L2a.6 **Hipótesis `DROP NOT NULL`:** prueba que inserta en `prioridad_ajustes` una fila con `a` NULL y otra con
   `origen` NULL tras `migrate`. Si pg-mem falla, aplicar el plan B del diseño (D9: `''` leído como `null` en
   `ajustesDelTicket`) y anotarlo.
-- [ ] L2a.7 Crear `apps/desk/server/propagarTop5.test.ts` (rojas): cerrados y cliente ajeno intactos; ticket sin
+- [x] L2a.7 Crear `apps/desk/server/propagarTop5.test.ts` (rojas): cerrados y cliente ajeno intactos; ticket sin
   `client_id` intacto; esperas y `status_type` nulo cuentan como abiertos; contrato + Top 5 `Low` → `High`; sin
   contrato, Top 5 más bajo baja (S-5); misma prioridad ⇒ ni escritura ni traza; reversión a NULL; `managed_by_app` no
   cambia; sobrevive a `upsertTicket`; la marca se conserva tras revertir; el exento no recibe la marca; ticket sin
   base no se toca (invertido luego por L2b); «abierto» enfrentado a `getActiveTickets` sobre el mismo juego de datos
   (H5); posición de la exención frente al filtro de abiertos (cerrado con ajuste, abierto con ajuste, abierto sin ajuste).
-- [ ] L2a.8 Añadir en el mismo fichero: respuesta del `PUT` con `ticketsCambiados` (2 de 3); el cuerpo con lista de
+- [x] L2a.8 Añadir en el mismo fichero: respuesta del `PUT` con `ticketsCambiados` (2 de 3); el cuerpo con lista de
   tickets o prioridad por ticket se ignora; `403` y `422` y `404` no propagan ni dejan traza (el `403` con tickets que
   propagar, caso de M3); no toca `ticket_transitions`, estado ni el instante del SLA; Top 5 previo no se propaga sin
   `PUT`; cambiar la prioridad de un Top 5 propaga (S-6); transición intermedia no exime (S-4).
-- [ ] L2a.9 **Nace verde (caracterización):** el ajuste manual (`ajustarPrioridad`) fija `managed_by_app = true`, NO
+- [x] L2a.9 **Nace verde (caracterización):** el ajuste manual (`ajustarPrioridad`) fija `managed_by_app = true`, NO
   pone `prioridad_en_app_at` y deja la fila con `origen` NULL.
-- [ ] L2a.10 **INVERTIR TC24-14** (`prioridadTop5.test.ts:180-185`): dos `Low` quedan `High`, una fila `top5` por ticket
+- [x] L2a.10 **INVERTIR TC24-14** (`prioridadTop5.test.ts:180-185`): dos `Low` quedan `High`, una fila `top5` por ticket
   con `de`, `a`, autor y fecha. Cambiar el título del `describe` de `:179`.
-- [ ] L2a.11 **INVERTIR TC24-15** (`:187-193`) cambiando de JUEGO DE DATOS: ticket `Low`, marcar `High`, desmarcar → `Low`
+- [x] L2a.11 **INVERTIR TC24-15** (`:187-193`) cambiando de JUEGO DE DATOS: ticket `Low`, marcar `High`, desmarcar → `Low`
   con fila `top5_revertido`. El caso de hoy (ya era `High`, sin cambio ni traza por D6) pasa a una prueba nueva en
   `propagarTop5.test.ts`. Conservar 16 líneas en `:179-194`, cero netas. NO tocar `ticketService.test.ts:1154` ni `:1160`.
-- [ ] L2a.12 **EJECUTAR** los tres ficheros y anotar el fallo literal de cada rojo, TC24-14/15 incluidos.
+- [x] L2a.12 **EJECUTAR** los tres ficheros y anotar el fallo literal de cada rojo, TC24-14/15 incluidos.
 
 **Verde**
-- [ ] L2a.13 Añadir al final de `schema.sql` (711-714): comentario sin punto y coma,
+- [x] L2a.13 Añadir al final de `schema.sql` (711-714): comentario sin punto y coma,
   `ALTER TABLE public.prioridad_ajustes ADD COLUMN IF NOT EXISTS origen text;` y
   `ALTER TABLE public.prioridad_ajustes ALTER COLUMN a DROP NOT NULL;`. Sin relleno.
-- [ ] L2a.14 Crear `packages/shared/src/prioridadPropagada.ts` (`ORIGENES_TOP5`, `MOTIVO_POR_ORIGEN`, `esAjusteManual`,
+- [x] L2a.14 Crear `packages/shared/src/prioridadPropagada.ts` (`ORIGENES_TOP5`, `MOTIVO_POR_ORIGEN`, `esAjusteManual`,
   `baseDeTop5`, `cambioPorTop5` en el orden (1) manual (2) base (3) fórmula (4) igual ⇒ `null`) y
   `export * from './prioridadPropagada'` al final de `shared/src/index.ts`.
-- [ ] L2a.15 Añadir **al final** de `apps/desk/server/db/prioridadCliente.ts` `fijarYPropagarPrioridadCliente(db, a, hoy?)`
+- [x] L2a.15 Añadir **al final** de `apps/desk/server/db/prioridadCliente.ts` `fijarYPropagarPrioridadCliente(db, a, hoy?)`
   con las cinco consultas del diseño §5 sobre el `q` de `enTransaccion`. Nada por encima se mueve.
-- [ ] L2a.16 `routes/prioridad.ts`: `:8` cambia el import; `:44` llama a `fijarYPropagarPrioridadCliente` y responde con
+- [x] L2a.16 `routes/prioridad.ts`: `:8` cambia el import; `:44` llama a `fijarYPropagarPrioridadCliente` y responde con
   `ticketsCambiados`. Cero netas; la guarda de `:40` sigue antes.
-- [ ] L2a.17 **EJECUTAR** los ficheros de L2a: todo verde, TC24-14/15 incluidos.
+- [x] L2a.17 **EJECUTAR** los ficheros de L2a: todo verde, TC24-14/15 incluidos.
 
 **Cero netas**
-- [ ] L2a.18 `git diff --numstat` de `routes/prioridad.ts`: inserciones = borrados; `prioridadCliente.ts` sólo crece al
+- [x] L2a.18 `git diff --numstat` de `routes/prioridad.ts`: inserciones = borrados; `prioridadCliente.ts` sólo crece al
   final; `schema.sql` sólo crece al final. `wc -l` antes/después de cada uno.
 
 **Mutaciones (aplicar, anotar mensaje literal, REVERTIR)**
-- [ ] L2a.19 **M3 (regla 1):** subir la llamada de `routes/prioridad.ts:44` encima de la guarda de `:40` con valores
+- [x] L2a.19 **M3 (regla 1):** subir la llamada de `routes/prioridad.ts:44` encima de la guarda de `:40` con valores
   fijos. Cae «403 con tickets que propagar» (dos condiciones a la vez). Revertir.
-- [ ] L2a.20 **M5 (regla 1):** en `baseDeTop5`, buscar en todas las filas en vez de tras la última reversión. Cae el
+- [x] L2a.20 **M5 (regla 1):** en `baseDeTop5`, buscar en todas las filas en vez de tras la última reversión. Cae el
   ciclo (da `Low` en vez de `Medium`). Revertir.
-- [ ] L2a.21 **M6:** quitar el paso (1) de `cambioPorTop5`. Caen la exención antes y después. Revertir.
-- [ ] L2a.22 **M7 (regla 2, datos):** insertar en `prioridad_ajustes` una fila con `origen` NULL y otra con
+- [x] L2a.21 **M6:** quitar el paso (1) de `cambioPorTop5`. Caen la exención antes y después. Revertir.
+- [x] L2a.22 **M7 (regla 2, datos):** insertar en `prioridad_ajustes` una fila con `origen` NULL y otra con
   `origen = 'otro'`: ambos tickets quedan exentos sin tocar código; mutar `esAjusteManual` a `origen == null` y ver
   caer el segundo. Revertir.
-- [ ] L2a.23 **M8 (regla 2):** ensuciar `schema.sql` con `ALTER TABLE prioridad_ajustes ADD COLUMN IF NOT EXISTS x text;`
+- [x] L2a.23 **M8 (regla 2):** ensuciar `schema.sql` con `ALTER TABLE prioridad_ajustes ADD COLUMN IF NOT EXISTS x text;`
   sin calificar. Caen `migrate.test.ts:332` y `:345`. Revertir.
-- [ ] L2a.24 `git diff` de `schema.sql`, `shared/`, `prioridadCliente.ts` y `routes/prioridad.ts`: no queda ninguna mutación.
+- [x] L2a.24 `git diff` de `schema.sql`, `shared/`, `prioridadCliente.ts` y `routes/prioridad.ts`: no queda ninguna mutación.
 
 **Regla 13 y cierre**
-- [ ] L2a.25 Escribir en `apply-progress.md` la regla 13 decisión a decisión (diseño §8): qué tickets se tocan →
+- [x] L2a.25 Escribir en `apply-progress.md` la regla 13 decisión a decisión (diseño §8): qué tickets se tocan →
   consultas 2 y 3; qué prioridad toma cada uno → `cambioPorTop5` → `contratos.ts:66-69`; quién marca → `routes/prioridad.ts:40`.
   Comodidad del cliente: sólo el recuento.
-- [ ] L2a.26 **CIERRE L2a:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA.
-- [ ] L2a.27 Medida: `git diff --shortstat --no-renames <partida L2a>` + `wc -l` de lo nuevo sin trackear. Si pasa de
+- [x] L2a.26 **CIERRE L2a:** `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA.
+- [x] L2a.27 Medida: `git diff --shortstat --no-renames <partida L2a>` + `wc -l` de lo nuevo sin trackear. Si pasa de
   720, parar y consultar.
 - [ ] L2a.28 **FIN DE L2a.** Settle y fusión a `main`.
 

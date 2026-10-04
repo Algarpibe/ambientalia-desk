@@ -708,3 +708,7 @@ ALTER TABLE public.remision_fotos ADD COLUMN IF NOT EXISTS novedad text;
 -- Marca por fila de la prioridad escrita desde la app (propagar-top5-lista-remision-creada, L1). NULL = manda Zoho
 -- Con la marca puesta upsertTicket no sobrescribe priority. Sin relleno: tickets es de DESK_TABLES y va sin calificar
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS prioridad_en_app_at timestamptz;
+-- Origen de cada fila de prioridad_ajustes (propagar-top5-lista-remision-creada, L2a). NULL = ajuste manual con motivo. Valores del Top 5 en packages/shared/src/prioridadPropagada.ts
+-- a admite NULL para revertir a sin prioridad. Sin relleno ni CHECK de lista. Va CALIFICADA: prioridad_ajustes es de PUBLIC_TABLES
+ALTER TABLE public.prioridad_ajustes ADD COLUMN IF NOT EXISTS origen text;
+ALTER TABLE public.prioridad_ajustes ALTER COLUMN a DROP NOT NULL;

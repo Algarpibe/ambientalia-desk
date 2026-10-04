@@ -5,7 +5,7 @@ import { getActiveTickets } from '../db/ticketsConCliente'
 import { puedeFijarPrioridadTop5, prioridadClienteDelCuerpo, ajusteDelCuerpo, prioridadTop5, esDeMisTickets } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
-import { filaPrioridadCliente, listarTop5, fijarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
+import { filaPrioridadCliente, listarTop5, fijarYPropagarPrioridadCliente, ticketParaAjuste, ajustesDelTicket, ajustarPrioridad } from '../db/prioridadCliente'
 import { colaDelTaller } from '../db/colaTaller'
 
 /**
@@ -41,7 +41,7 @@ export function registerPrioridadRoutes(app: Express, deps: { db: Queryable }): 
     // C · contenido
     const cuerpo = prioridadClienteDelCuerpo(req.body)
     if (!cuerpo.ok) { res.status(422).json({ error: cuerpo.errors[0], errors: cuerpo.errors }); return }
-    res.json(await fijarPrioridadCliente(db, { clientId, top5: cuerpo.top5, prioridad: cuerpo.prioridad, por: user.name }))
+    res.json(await fijarYPropagarPrioridadCliente(db, { clientId, top5: cuerpo.top5, prioridad: cuerpo.prioridad, por: user.name }))
   }))
 
   // AJUSTE POR TICKET (RQ-TC-29). Escalera: A el ticket no existe (404) < B1 el cliente no es Top 5 o el ticket no tiene
