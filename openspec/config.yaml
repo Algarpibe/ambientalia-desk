@@ -3766,6 +3766,29 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (orden de ejecución)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1C-11, F1B-04, F1F-05"
+  - clave: "decision/orden-cuatro-tandas-04-10"
+    fecha: "2026-10-04"
+    pregunta: |
+      Con F1C-11, F1B-04 (sin accesorios) y F1F-05 fusionadas a `main` (`5797c65`, `4c35661`, `85d6018`) y el paquete de
+      despliegue del 04/10 escrito (`2a74fdc`), ¿cuáles son las tandas siguientes y en qué orden? La propuesta era F1B-07,
+      F1B-08 (búsqueda) y F1C-05 (paridad); el paquete registró además que un ticket en «Remisión creada» sin remisión de
+      entrada vigente queda sin acción que lo desbloquee tras la guarda de F1B-03.
+    respuesta_textual: |
+      «Autorizado: empuja 24a14eb y 2a74fdc. Borra las tres carpetas huérfanas y el worktree f1b-02-r1; fusion.cjs no lo toques. Las cuatro siguientes, en este orden: el arreglo del caso sin salida de F1B-03, F1B-07, F1B-08 búsqueda y F1C-05 paridad. Ejecútalo.»
+    consecuencias: |
+      (1) El orden es: el caso sin salida de F1B-03, F1B-07 (propagar el Top 5 y la lista de «Remisión creada»), F1B-08
+      (búsqueda por número de ticket y serial) y F1C-05 (motivo de lista cerrada y fecha prevista en «Liberación sin
+      factura»), encadenadas sin consulta entre una y otra (modo producción).
+      (2) Las cuatro llevan `cierra: no`: ninguna termina su fila.
+      (3) Cada tanda va en su propio worktree (regla del ciclo 3). Las ramas se dejan listas y no se rebasan sobre `main`;
+      la fusión de cada una la autoriza el usuario por separado.
+      (4) Si una tanda se bloquea, se deja anotada y se pasa a la siguiente.
+      (5) Se borraron las tres carpetas huérfanas de worktrees ya dados de baja y el worktree `f1b-02-r1`; la rama
+      `f1b-02-r1` se conserva y `fusion.cjs` no se tocó.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-cuatro-tandas-04-10)"
+    maestro_pasaje: "ninguno (orden de ejecución)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-03, F1B-07, F1B-08, F1C-05"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
