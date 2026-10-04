@@ -24,8 +24,8 @@ emulación era hipótesis: `docs/sdd/ENTRADA.md:2026-2029` (E-206) y el aviso W2
 `packages/zoho-sync/src/db/migrate.integration.test.ts:5-6`, y crea su propia base de datos en el servidor para
 no cruzarse con el `DROP SCHEMA desk CASCADE` de ese fichero (`:13`).
 
-**Qué NO hace.** No toca código de producción, ni el arnés, ni specs, ni el CI: el CI no define
-`TEST_DATABASE_URL`, así que allí la prueba sigue omitida. No cierra E-206 por sí sola; eso lo decide su dueño.
+**Qué NO hace.** No toca código de producción, ni el arnés, ni specs, ni el CI: `.github/workflows/ci.yml:45-47`
+ya define `TEST_DATABASE_URL` en el paso de la suite, así que allí la prueba CORRE. No cierra E-206 por sí sola.
 
 **Resultado.** Sin defecto: el operador real coincide con la emulación en todo estado que el código produce.
 - Las claves previas se conservan y la del texto se sobrescribe.
