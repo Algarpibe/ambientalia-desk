@@ -145,7 +145,7 @@ Suite de referencia: `ticketService.test.ts` (142), salvo donde se indica.
 
 | # | Cita | Qué afirma | ¿Sigue diciéndolo? |
 |---|---|---|---|
-| 1 | `openspec/specs/permissions/spec.md:486` → `ticketService.ts:131` | `liberacion_sin_factura` exige Director Comercial | ✅ el cargo sigue en la `:131` |
+| 1 | `openspec/specs/permissions/spec.md:486` en `f55b7d9` → `ticketService.ts:131` | `liberacion_sin_factura` exige Director Comercial | ✅ el cargo sigue en la `:131` |
 | 2 | `openspec/specs/transitions-equipo-nuevo/spec.md:53` → `:125-131` | mismo catálogo compartido (flujo, estado, área, cargo) | ✅ |
 | 3 | `openspec/specs/transitions-equipo-nuevo/spec.md:201` → `:114-223` | alcance de `executeTransition` | ✅ |
 | 4 | `openspec/specs/transitions-st/spec.md:206` → `:114-223` | orden de las guardas de RQ-TS-06 | ✅ (la tabla no lista la guarda 10: ya declarado en el delta, S-4) |

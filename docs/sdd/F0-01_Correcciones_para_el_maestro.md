@@ -1188,14 +1188,93 @@ la OVI de garantía y la supresión de prefijos». Tanda **cerrada** sigue sin s
 - **No afirma nada sobre «Equipo nuevo»** (Q5, E-158): la guarda lo alcanza por supuesto aplicado (S-3) y Gerencia no lo ha
   confirmado; es condición de publicación.
 
-## La de F1F-05, continuidad de los nueve indicadores (21)
+## La de F1C-11 (21)
+
+### 21 · M1.9.2 — «Tres proponen a otro» pasan a cinco: «Solicitud repuestos» y «Entrega de Repuestos» *(F1C-11)*
+
+**Qué cambió en el código.** `DERIVACION_POR_DEFECTO` (`packages/shared/src/transitions.ts:274-282`) tiene cinco
+entradas y no tres: se suman «Solicitud repuestos» (En Proceso → Solicitado), que propone el cargo **Director Técnico**
+—el encargado de inventario de `decision/cargo-encargado-de-inventario`—, y «Entrega de Repuestos» (Solicitado → En
+Proceso), que propone **quien tomó el ticket**. De las 31 transiciones, 26 heredan al responsable que el ticket ya traía
+(eran 28). Además la lista cerrada de cargos pasa de siete a ocho (`packages/shared/src/cargos.ts:12-15`): se suma
+«Especialista técnico», el respaldo del Director Técnico.
+
+**Texto actual, `R08.4.md:2005`:** «Herencia por defecto. La mayoría de transiciones heredan al responsable que el ticket
+ya traía. Tres proponen a otro:». **Texto propuesto:**
+
+> «Herencia por defecto. La mayoría de transiciones heredan al responsable que el ticket ya traía. Cinco proponen a otro:»
+
+**La tabla de `R08.4.md:2006-2017`** (cabecera y tres filas) gana **dos filas**, detrás de la de «Aprobación»
+(`R08.4.md:2015-2017`), con el mismo formato de tres celdas:
+
+> «Solicitud repuestos» · «Cargo · Director Técnico» · «Pasa el ticket al encargado de inventario, que es quien entrega las piezas.»
+> «Entrega de Repuestos» · «Quien tomó el ticket» · «Entregadas las piezas, el trabajo vuelve al técnico que lo tenía.»
+
+**`R08.4.md:2018`**, «Cargo, no persona. Las dos primeras nombran un cargo.», pasa a: «Cargo, no persona. Las tres que
+nombran un cargo —Escalado a Revisión, Escalado a comercial y Solicitud repuestos— no atan el blueprint a un empleado.»
+La `R08.4.md:2025-2026` (las reglas de destino) añade «Solicitud repuestos» a la de cargo y «Entrega de Repuestos» a la de
+«quien tomó el ticket»; con ello el cuarto punto de esa lista, `R08.4.md:2027`, deja de ser sólo propuesta para esas dos
+etapas. **Es la recolocación de las 26 que heredan:** la frase «la mayoría» de `R08.4.md:2005` sigue siendo cierta.
+
+**Lo que esta entrada NO pide.** No toca `R08.4.md:1264` ni `:1417`, que ya dicen cinco (la R08.4 las escribió
+anticipando la decisión). No afirma que la derivación al Director Técnico sea obligatoria: el servidor sólo exige persona
+activa y la propuesta la puede cambiar quien ejecuta (E-160). No afirma que Johny Luna tenga ya el cargo en producción: es
+condición de despliegue. El `.docx` no se toca desde el repositorio.
+
+## La de F1B-04, recepción (22)
+
+> **Esta entrada cita la R08.4** (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`),
+> la copia citable vigente. Procede del cambio `recepcion-rotulacion-foto-entrada`, `cierra: no`.
+
+### 22 · M1.2 y M2.1 — rotulado, novedades y foto obligatoria de la remisión de ENTRADA están construidos; la remisión de salida y los accesorios NO *(F1B-04)*
+
+**Qué cambió en el código.** El alta de la remisión de entrada pide ahora la lista de novedades (diez, de la base),
+el texto de «Otro» cuando se marca, y la confirmación «Rotulado y guardado»; el servidor guarda la persona y la hora
+del rotulado y deriva las observaciones y el indicador de novedad (`apps/desk/server/routes/remision.ts:158`,
+`:249-250`). El envío exige, en este orden, el rotulado, las tres fotos mínimas (equipo, accesorios y embalaje) y la
+foto de **cada** novedad marcada (`:289-293`); cada foto lleva su categoría (`:384`). **Lo que no cubre:** una petición
+que omita la lista de novedades entra por la vía anterior y no pide nada de esto (E-081); la remisión de **salida** no
+existe todavía; los accesorios como lista por modelo (E-100) no se tocaron.
+
+**Parte (a) · `R08.4.md:1239`, rotulado y guardado.** Texto propuesto al final del párrafo:
+
+> «[CONSTRUIDO] La recepción registra la confirmación «Rotulado y guardado» con la persona y la hora, y no se puede
+> crear ni enviar la remisión de entrada sin ella. La ubicación no se registra.»
+
+**Lo que esta tanda NO verificó, y no se afirma:** que la etiqueta física lleve el código del ticket. La etiqueta la
+imprime el flujo de n8n y su comprobación es una tarea de persona (quien administra n8n; E-170 de `docs/sdd/ENTRADA.md`).
+
+**Parte (b) · `R08.4.md:1240`, novedades de entrada.** Texto propuesto al final del párrafo:
+
+> «[CONSTRUIDO] La lista de diez tipos de novedad está cargada tal cual en la base y el formulario la muestra con
+> selección múltiple; «Sin novedad» no se combina con otra y «Otro» exige texto. Hoy la lista sólo se cambia en la base:
+> no existe pantalla para que el Director Técnico la edite.»
+
+**Parte (c) · `R08.4.md:1241`, fotos de entrada.** La frase «Cambia lo construido en F1B-04 y se ajusta antes del corte»
+queda cumplida **para la remisión de entrada**. Texto propuesto en su lugar:
+
+> «[CONSTRUIDO para la remisión de entrada] El envío exige siempre al menos una foto del equipo, una de los accesorios y
+> una del embalaje, más la foto de cada novedad marcada. La remisión de salida está sin construir.»
+
+**Parte (d) · `R08.4.md:2279`, M2.1.** La frase de la remisión de entrada («Haya o no novedad, al menos una foto del
+equipo, una de los accesorios y una del embalaje […] Si se marca una novedad, se añade además su foto») pasa a estar
+construida; añadir `[CONSTRUIDO]` al final. La de la remisión de salida (`:2280`) **no** se marca.
+
+**Lo que esta entrada NO pide.**
+
+- **No afirma que esté en producción.** Lo estará cuando se publique y se cumplan las condiciones de E-170.
+- **No cierra la fila F1B-04** del plan: `cierra: no`; quedan los accesorios (E-100) y la mitad de salida de E-123.
+- **No resuelve** si una foto por cada novedad es lo querido (E-163), quién edita la lista (E-164), ni qué pasa con un
+  equipo sin accesorios o sin embalaje (E-165, E-166).
+
+## La de F1F-05, continuidad de los nueve indicadores (23)
 
 > **Esta entrada cita la R08.4** (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`),
 > la copia citable vigente. Procede del cambio `continuidad-indicadores`, `cierra: no`. Todo lo que afirma está
 > medido sobre el export de enero (`docs/analisis-tickets/Tickets.csv`, 640 filas) o leído en el código del cambio;
 > lo que no, lleva la palabra «hipótesis».
 
-### 21 · G.6, G.6b y Anexo H — qué calcula hoy Zoho frente a la letra, y el estado real de F1F-05 *(F1F-05)*
+### 23 · G.6, G.6b y Anexo H — qué calcula hoy Zoho frente a la letra, y el estado real de F1F-05 *(F1F-05)*
 
 **Qué cambió en el código.** Desk 2.0 calcula siete de los nueve indicadores sobre las marcas de tiempo de las
 transiciones (47, 49, 50·53, 54, 57, 58 y 59); el 51 y el 55 salen «sin dato» porque a la aplicación le falta el

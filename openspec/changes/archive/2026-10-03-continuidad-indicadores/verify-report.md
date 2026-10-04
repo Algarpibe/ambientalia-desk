@@ -180,11 +180,11 @@ Leí 14 citas que solapan líneas editadas y **todas siguen ciertas**:
 11. `packages/shared/src/reentrancia.ts:78-83`: es `INDICADORES_G6`.
 12. `apps/desk/server/auth/middleware.ts:26-29`: es `requireAdmin`.
 13. `packages/zoho-sync/src/db/schema.sql:57-61` y `:32-37`: `ticket_transitions` y las columnas `fecha_*`.
-14. `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6560`: «F1F-05, sin empezar», como dice la corrección 21.
+14. `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6560`: «F1F-05, sin empezar», como dice la corrección 23.
 
 `CLAUDE.md` no cambia en este cambio y ninguna de sus citas solapa líneas editadas.
 
-**Cifras de E-171 a E-182 y de la corrección 21**, contra la tabla 1.3 de `apply-progress.md`: 201 de 202 (47), 158 de
+**Cifras de E-171 a E-182 y de la corrección 23**, contra la tabla 1.3 de `apply-progress.md`: 201 de 202 (47), 158 de
 161 y 54 de 161 (49), 147 de 149 (50·53), 478 de 478 (sin finalización), 162 de 162 (51), 365 de 365 y 268 de 268 (54),
 161 de 161 (57), 180 de 180 (58 y 59), 0 de 57 y 1 de 33 con festivo: **todas coinciden**. Las líneas del maestro
 (`R08.4.md:6287`, `:6293`, `:6296`, `:6299`, `:6314`, `:6317`) y `packages/shared/src/transitions.ts:203` son ciertas.

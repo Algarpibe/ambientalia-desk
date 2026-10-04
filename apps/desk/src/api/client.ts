@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion } from '@ambientalia/shared'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion, NovedadCatalogo } from '@ambientalia/shared'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -531,8 +531,8 @@ export interface CrearRemisionPayload {
    * y no el número: el servidor resuelve número y fecha contra Books, que es donde vive el dato.
    */
   salesOrderId?: string
-  /** RQ-RE-17. Sin contestar viaja `undefined`, y el servidor lo guarda como `null` — sin declarar. */
-  hayNovedad?: boolean
+  /** RQ-RE-23/24. La lista marcada, el texto de la que lo exige y la casilla de rotulado: el servidor deriva el resto. */
+  novedades?: string[]; novedadOtro?: string; rotulado?: boolean
 }
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {
@@ -551,8 +551,8 @@ export async function enviarRemision(id: string): Promise<void> {
   if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string; detalle?: string }; throw new Error(b.detalle || b.error || `HTTP ${res.status}`) }
 }
 
-export async function subirFotoRemision(id: string, file: File): Promise<RemisionFoto> {
-  const fd = new FormData(); fd.append('file', file)
+export async function subirFotoRemision(id: string, file: File, meta?: { categoria: string; novedad?: string | null }): Promise<RemisionFoto> {
+  const fd = new FormData(); fd.append('file', file); if (meta) { fd.append('categoria', meta.categoria); if (meta.novedad) fd.append('novedad', meta.novedad) }
   const res = await fetch(`/api/remisiones/${id}/fotos`, { method: 'POST', credentials: 'include', body: fd })
   if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
   return res.json() as Promise<RemisionFoto>
@@ -793,4 +793,11 @@ export async function enlazarClienteProvisional(provisionalId: string, contactId
 export async function validarEquipoManual(equipoId: string): Promise<void> {
   const res = await fetch(`/api/equipos/${encodeURIComponent(equipoId)}/validacion`, { method: 'POST', credentials: 'include' })
   if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+}
+
+/** Lista de novedades de entrada (RQ-RE-22): sólo las activas, por orden, en camelCase tal cual la sirve la ruta. */
+export async function fetchNovedadesRemision(): Promise<NovedadCatalogo[]> {
+  const res = await fetch('/api/novedades-remision', { credentials: 'include' })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<NovedadCatalogo[]>
 }

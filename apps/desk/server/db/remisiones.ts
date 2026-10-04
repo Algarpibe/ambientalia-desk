@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Remision, RemisionFoto, RemisionListado, RemisionParaVigencia } from '@ambientalia/shared'
+import type { Remision, RemisionFoto, RemisionListado, RemisionParaVigencia, NovedadMarcada } from '@ambientalia/shared'
 import { VENTANA_REENVIO_SEGUNDOS } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
@@ -22,7 +22,7 @@ function toRemision(r: Record<string, unknown>): Remision {
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at ?? ''),
     empresa: (r.empresa as string) ?? null, personaContacto: (r.persona_contacto as string) ?? null,
     origen: String(r.origen ?? 'app'),
-    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null, hayNovedad: typeof r.hay_novedad === 'boolean' ? r.hay_novedad : null,
+    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null, hayNovedad: typeof r.hay_novedad === 'boolean' ? r.hay_novedad : null, novedades: typeof r.novedades === 'string' ? (JSON.parse(r.novedades) as NovedadMarcada[] | null) : ((r.novedades as NovedadMarcada[]) ?? null), novedadOtro: (r.novedad_otro as string) ?? null, rotuladoAt: isoOrNull(r.rotulado_at), rotuladoPor: (r.rotulado_por as string) ?? null,
   }
 }
 
@@ -37,17 +37,17 @@ export interface CreateRemisionInput {
   observaciones: string | null
   creadoPor: string | null
   empresa: string | null
-  personaContacto: string | null; hayNovedad: boolean | null
+  personaContacto: string | null; hayNovedad: boolean | null; recepcion: { novedades: NovedadMarcada[]; novedadOtro: string | null; rotuladoPor: string | null } | null
 }
 
 /** Crea la remisión en estado `pendiente`: el flujo de n8n aún no ha respondido. */
 export async function createRemision(db: Queryable, input: CreateRemisionInput): Promise<string> {
   const id = `rem-${randomUUID()}`
   await db.query(
-    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad)
-     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13)`,
+    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad, novedades, novedad_otro, rotulado_at, rotulado_por)
+     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13,$14,$15,$16,$17)`,
     [id, input.ticketId, input.fecha, input.tipoServicio, input.perfil, input.equipoId, input.serial,
-      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad],
+      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad, /* sin J: J(null) escribiria el JSON null y no el NULL de SQL (marcador de legado) */ input.recepcion ? JSON.stringify(input.recepcion.novedades) : null, input.recepcion?.novedadOtro ?? null, input.recepcion ? new Date() : null, input.recepcion?.rotuladoPor ?? null],
   )
   return id
 }
@@ -188,25 +188,25 @@ export async function liberarEnvio(db: Queryable, id: string): Promise<void> {
 
 export async function addFoto(
   db: Queryable,
-  input: { remisionId: string; filename: string; contentType: string; contentB64: string; size: number },
+  input: { remisionId: string; filename: string; contentType: string; contentB64: string; size: number; categoria?: string | null; novedad?: string | null },
 ): Promise<RemisionFoto> {
   const id = `rf-${randomUUID()}`
   await db.query(
-    'INSERT INTO remision_fotos (id, remision_id, filename, content_type, content_b64, size) VALUES ($1,$2,$3,$4,$5,$6)',
-    [id, input.remisionId, input.filename, input.contentType, input.contentB64, input.size],
+    'INSERT INTO remision_fotos (id, remision_id, filename, content_type, content_b64, size, categoria, novedad) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [id, input.remisionId, input.filename, input.contentType, input.contentB64, input.size, input.categoria ?? null, input.novedad ?? null],
   )
-  return { id, filename: input.filename, contentType: input.contentType, size: input.size }
+  return { id, filename: input.filename, contentType: input.contentType, size: input.size, categoria: input.categoria ?? null, novedad: input.novedad ?? null }
 }
 
 /** Metadatos de las fotos, sin el base64: devolverlo en los listados dispararía el peso de la respuesta. */
 export async function listFotos(db: Queryable, remisionId: string): Promise<RemisionFoto[]> {
   const r = await db.query(
-    'SELECT id, filename, content_type, size FROM remision_fotos WHERE remision_id = $1 ORDER BY created_at',
+    'SELECT id, filename, content_type, size, categoria, novedad FROM remision_fotos WHERE remision_id = $1 ORDER BY created_at',
     [remisionId],
   )
   return r.rows.map((x: Record<string, unknown>) => ({
     id: String(x.id), filename: (x.filename as string) ?? '', contentType: (x.content_type as string) ?? '',
-    size: Number(x.size ?? 0),
+    size: Number(x.size ?? 0), categoria: (x.categoria as string | null) ?? null, novedad: (x.novedad as string | null) ?? null,
   }))
 }
 

@@ -7,7 +7,7 @@ import { createSession } from './auth/sessions'
 import { hashPassword } from './auth/passwords'
 import { createRole, actualizarRecibeAvisos } from './auth/roles'
 import { listarAvisos } from './db/avisos'
-import { db, instalarArnes, appWith, adminCookie, userCookie } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'
+import { db, instalarArnes, appWith, adminCookie, userCookie } from './testing/appHarness'; import { conRemisionVigente } from './testing/remisionDePrueba'; import { TRANSITIONS } from '@ambientalia/shared'
 
 instalarArnes()
 
@@ -459,3 +459,75 @@ describe('avisos por correo', () => {
  * El borrado de un ticket desde la aplicación. Sustituye al runbook manual de nueve tablas.
  * `?dryRun=true` es la vista previa: mismos números, sin escribir.
  */
+
+/**
+ * F1C-11 · «Solicitud repuestos» deriva al Director Técnico y «Entrega de Repuestos» devuelve al técnico que lo tenía.
+ * El servidor NO impone ninguna de las dos: sólo exige persona activa (`ticketService.ts:138-142`); la propuesta es del
+ * cliente, que la lee del `porDefecto` del catálogo. Por eso N4 lee el cargo del catálogo y N5 caracteriza lo que el
+ * servidor acepta.
+ */
+describe('F1C-11 · derivación del taller en el servidor', () => {
+  const pdDe = (id: string) => TRANSITIONS.find((t) => t.id === id)!.fields.find((f) => f.key === 'derivado_a')!.porDefecto
+  const contrasena = () => hashPassword('password123')
+  const estadoDe = async () => ((await db.query('SELECT status FROM tickets WHERE id=$1', ['tr1'])).rows[0] as { status: string }).status
+  async function ticketEnProceso() {
+    await db.query("INSERT INTO tickets (id, number, subject, status) VALUES ('tr1', 11000, 'Repuestos', 'En Proceso')")
+  }
+
+  it('N4 · Solicitud repuestos al Director Técnico (200, Solicitado, aviso sólo a él) y Entrega con el primer derivado (200, En Proceso, aviso al técnico)', async () => {
+    const pd = pdDe('solicitud_repuestos')
+    expect(pd).toEqual({ tipo: 'cargo', cargo: 'Director Técnico' })
+    expect(pdDe('entrega_repuestos')).toEqual({ tipo: 'primerDerivado' })
+    const cargo = pd?.tipo === 'cargo' ? pd.cargo : ''
+    const admin = await adminCookie()
+    const tecnico = await createUser(db, { email: 'tec@x.co', name: 'Tito Técnico', passwordHash: await contrasena(), cargo: 'Técnico' })
+    const director = await createUser(db, { email: 'dir@x.co', name: 'Ana Directora', passwordHash: await contrasena(), cargo })
+    const cookieTec = `sid=${await createSession(db, tecnico.id)}`
+    const cookieDir = `sid=${await createSession(db, director.id)}`
+    await ticketEnProceso()
+    // Historial previo: el técnico fue el primer derivado, y el ticket sigue derivado a él.
+    await db.query('INSERT INTO ticket_transitions (ticket_id, values, performed_at) VALUES ($1,$2,$3)',
+      ['tr1', JSON.stringify({ derivado_a: tecnico.id }), new Date('2026-08-03T15:00:00.000Z')])
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [tecnico.id, 'tr1'])
+    const { app } = appWith()
+
+    const solicitud = await request(app).post('/api/tickets/tr1/transition').set('Cookie', admin)
+      .send({ transitionId: 'solicitud_repuestos', values: { comment: 'Falta una pieza', derivado_a: director.id } })
+    expect(solicitud.status).toBe(200)
+    expect(await estadoDe()).toBe('Solicitado')
+    const avisoDir = await request(app).get('/api/avisos').set('Cookie', cookieDir)
+    expect(avisoDir.body).toHaveLength(1)
+    expect(avisoDir.body[0].texto).toBe('Admin te derivó el ticket #11000 en «Solicitud repuestos»')
+    expect((await request(app).get('/api/avisos').set('Cookie', cookieTec)).body).toEqual([])
+
+    const detalle = await request(app).get('/api/tickets/tr1').set('Cookie', admin)
+    expect(detalle.body.primerDerivado).toBe(tecnico.id)
+    const entrega = await request(app).post('/api/tickets/tr1/transition').set('Cookie', admin)
+      .send({ transitionId: 'entrega_repuestos', values: { comment: 'Piezas entregadas', derivado_a: detalle.body.primerDerivado } })
+    expect(entrega.status).toBe(200)
+    expect(await estadoDe()).toBe('En Proceso')
+    const avisoTec = await request(app).get('/api/avisos').set('Cookie', cookieTec)
+    expect(avisoTec.body).toHaveLength(1)
+    expect(avisoTec.body[0].texto).toBe('Admin te derivó el ticket #11000 en «Entrega de Repuestos»')
+  }, 30_000)
+
+  // N5 · CARACTERIZACIÓN, nace verde: el servidor no impone al Director Técnico. Su detector es la mutación M7.
+  it('N5 · el servidor acepta a cualquier persona activa como derivado de «Solicitud repuestos» y rechaza a la dada de baja', async () => {
+    const admin = await userCookie(['Servicio Técnico']) // usuario del área, no administrador
+    const otra = await createUser(db, { email: 'otra@x.co', name: 'Otra', passwordHash: await contrasena(), cargo: 'Técnico' })
+    const baja = await createUser(db, { email: 'baja@x.co', name: 'Baja', passwordHash: await contrasena(), cargo: 'Director Técnico' })
+    await db.query('UPDATE users SET active = false WHERE id = $1', [baja.id])
+    await ticketEnProceso()
+    const { app } = appWith()
+
+    const deBaja = await request(app).post('/api/tickets/tr1/transition').set('Cookie', admin)
+      .send({ transitionId: 'solicitud_repuestos', values: { comment: 'x', derivado_a: baja.id } })
+    expect(deBaja.status).toBe(422)
+    expect(await estadoDe()).toBe('En Proceso')
+
+    const activa = await request(app).post('/api/tickets/tr1/transition').set('Cookie', admin)
+      .send({ transitionId: 'solicitud_repuestos', values: { comment: 'x', derivado_a: otra.id } })
+    expect(activa.status).toBe(200)
+    expect(((await db.query('SELECT derivado_a FROM tickets WHERE id=$1', ['tr1'])).rows[0] as { derivado_a: string }).derivado_a).toBe(otra.id)
+  }, 30_000)
+})
