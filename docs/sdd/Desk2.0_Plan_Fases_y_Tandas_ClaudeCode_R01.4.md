@@ -80,7 +80,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | **F1A-10** | **Mapa del blueprint en la aplicación** (SVG o dibujante bajo demanda, desde el generador de F1A-06) | XS–S por medir | después del corte | pendiente | `decision/mapa-en-la-app` · `decision/mapa-antes-o-despues-del-corte` |
 | F1B-01 | Serial único y autocompletado | M | antes del 14/12 | cerrada por commit declarado | plan R01.1 §5 |
 | F1B-02 | Hoja de vida, cuatro campos y enlace a Drive | M | antes del 14/12 | cerrada por archivo | `decision/p8-p54-drive` · `decision/e003b-registro-equipos` |
-| F1B-03 | Tipo de servicio y ticket sin OV, guarda de remisión vigente, OVI de garantía · **+ supresión de los prefijos en tickets nuevos** (E-094) | L + XS | antes del 14/12 | pendiente | `decision/ovi-garantia-autor` · prefijos: E-094 y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1170` |
+| F1B-03 | Tipo de servicio y ticket sin OV, guarda de remisión vigente, OVI de garantía · **+ supresión de los prefijos en tickets nuevos** (E-094) | L + XS | antes del 14/12 | en curso | `decision/ovi-garantia-autor` · prefijos: E-094 y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1170` |
 | F1B-04 | Recepción unificada: rotulación y desplegables · **+ foto obligatoria en la remisión de entrada** (E-123, mitad de entrada) · **+ accesorios desde el catálogo de artículos** (E-100) | L (resta M) + S + S | antes del 14/12 | en curso | `decision/f1b04-rotulacion` · `decision/f1b04-desplegables` · `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4130-4135` |
 | F1B-05 | Roles, traspaso, checkbox comercial, trazas | M | antes del 14/12 | pendiente | plan R01.1 §5 |
 | F1B-06 | Blueprints de equipo nuevo y soporte remoto (dos ramas) | L | antes del 14/12 | cerrada por archivo | `decision/flujos-comercial-posible-cliente` |
@@ -126,7 +126,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1F-02 | Respaldo y continuidad | M | antes del 14/12 | pendiente | `decision/p55-backup` · `decision/p55b-destino-copia` |
 | F1F-03 | Aceptación con servicios reales | sin talla (R01.1) | antes del 14/12 | pendiente | `decision/fecha-corte` |
 | F1F-04 | Formación, Zoho a solo lectura, audit-F1 | sin talla (R01.1) | antes del 14/12 | pendiente | `decision/fecha-corte` |
-| **F1F-05** | **Continuidad de los nueve indicadores de Zoho**, midiendo en paralelo desde el 16/11 | S–M | antes del 14/12 | pendiente | `decision/e009-kpis` · `decision/e009b-lista-indicadores` · `decision/encuesta-entre-corte-e-independencia` |
+| **F1F-05** | **Continuidad de los nueve indicadores de Zoho**, midiendo en paralelo desde el 16/11 | S–M | antes del 14/12 | en curso | `decision/e009-kpis` · `decision/e009b-lista-indicadores` · `decision/encuesta-entre-corte-e-independencia` |
 | **1G-01** | **Backfill completo de conversaciones** | M | enero de 2027 | pendiente | `decision/fecha-corte` → `aclarada_por` |
 | **1G-02** | **Persistencia de adjuntos** (gate M1) | M | enero de 2027 | pendiente | `decision/fecha-corte` → `aclarada_por` |
 | **1G-03** | **Verificación de completitud** | M | enero de 2027 | pendiente | `decision/fecha-corte` → `aclarada_por` |
