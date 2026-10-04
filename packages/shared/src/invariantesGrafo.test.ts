@@ -129,12 +129,12 @@ describe('invariantes del grafo de transiciones', () => {
   /**
    * INVARIANTE 6 — la lista de campos de fecha reentrantes no crece sin declararlo.
    *
-   * Los diez son la entrada de F1C-02, F1C-06, C9 y la spec `kpis`: cada uno es un campo que una
+   * Los once (diez hasta F1C-05) son la entrada de F1C-02, F1C-06, C9 y la spec `kpis`: cada uno es un campo que una
    * segunda pasada por su ciclo vuelve a escribir. La tabla completa —componente por componente y
    * cruzada con G.6— está en `reentrancia.test.ts`; aquí va sólo el conjunto, que es lo que no puede
    * crecer en silencio.
    */
-  it('6 · los campos de fecha reentrantes son exactamente estos diez', () => {
+  it('6 · los campos de fecha reentrantes son exactamente estos once', () => {
     expect(camposFechaReentrantes()).toEqual([
       'Fecha Recepción de repuestos',
       'Fecha Orden de Compra',
@@ -145,7 +145,7 @@ describe('invariantes del grafo de transiciones', () => {
       'Fecha solicitud SKU',
       'Fecha Salida Servicio externo',
       'Fecha Entrada de servicio externo',
-      'Fecha Remisión de Salida',
+      'Fecha prevista de facturación', 'Fecha Remisión de Salida',
     ])
   })
 })

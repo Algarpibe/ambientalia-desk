@@ -80,51 +80,51 @@ Chain strategy: pending
 
 ## L2·A Partida
 
-- [ ] 2.1 Abrir el intento L2 (nuevo commit de partida = cierre de L1). REMEDIR: `wc -l` de `transitions.ts` (397), `ticketService.ts`, `TransitionPanel.tsx`, `TicketProperties.tsx`, `transicionesEjecucion.test.ts`, `reentrancia.test.ts`, `invariantesGrafo.test.ts`, `bodegaje.test.ts`, `prioridad.test.ts`; líneas 6, 133, 134 de `ticketService.ts`; cifra verde de `npm test`.
+- [x] 2.1 Abrir el intento L2 (nuevo commit de partida = cierre de L1). REMEDIR: `wc -l` de `transitions.ts` (397), `ticketService.ts`, `TransitionPanel.tsx`, `TicketProperties.tsx`, `transicionesEjecucion.test.ts`, `reentrancia.test.ts`, `invariantesGrafo.test.ts`, `bodegaje.test.ts`, `prioridad.test.ts`; líneas 6, 133, 134 de `ticketService.ts`; cifra verde de `npm test`.
 
 ## L2·B Rojos (EJECUTAR y anotar el fallo literal)
 
-- [ ] 2.2 ROJA al final de `packages/shared/src/liberacionSinFactura.test.ts`: el catálogo declara exactamente las tres opciones en orden (literales en la prueba), `MOTIVO_QUE_EXIGE_TEXTO` es una de ellas, las tres claves son las de los campos `customField` de `liberacion_sin_factura`, ninguna casilla. Fallo esperado: la línea 247 aún declara la casilla.
-- [ ] 2.3 Crear `apps/desk/server/liberacionSinFactura.test.ts` (≈ 150 líneas): criterios 3 a 8 de la propuesta por HTTP (sin motivo, sin fecha, fuera de lista, mayúsculas, `2026-02-30`, `04/10/2026`, fecha pasada → 200, tercer motivo sin texto / `"   "` / con texto, primero y segundo sin texto, errores juntos con presencia delante, escritura de columnas/texto/traza y `liberacion_sin_facturar` intacta); segunda liberación sin texto deja `null` y con valores nuevos dos filas de traza; `upsertTicket` con `custom_fields` vacío no borra el texto. ROJAS.
-- [ ] 2.4 En el mismo fichero, pruebas de POSICIÓN con motivo y fecha presentes y `'Otro motivo'`: PL-1 (cargo gana; control con administrador: 422; ROJA por el control), PL-1 bis (⚠ diferencia spec/diseño: existe en la spec, no en el diseño; se incluye, 403 de área), PL-2 (409 gana; nace verde, caracterización), PL-3 (lista gana a persona inexistente; ROJA), PL-4 (sin fecha + fuera de lista: un solo 422, presencia delante; ROJA). Ejecutar y anotar.
-- [ ] 2.5 Reescribir en su sitio el bloque C1 de `apps/desk/server/transicionesEjecucion.test.ts:41-103` conservando sus 63 líneas (motivo ausente, motivo vacío, válidos con las dos columnas escritas); anclar la narración de `:8-40` a `2a74fdc` (caso B). Ejecutar: rojo.
-- [ ] 2.6 Editar a propósito las cinco de reentrancia: `reentrancia.test.ts:43-52`, `:83-85` (diez casos), `:87-100` (once campos, nueve obligatorios); `invariantesGrafo.test.ts:137-150` (once, la fecha nueva delante de «Fecha Remisión de Salida»); `bodegaje.test.ts:105-113` (once). Ejecutar: rojo.
-- [ ] 2.7 `prioridad.test.ts:106`: NO tocar el literal; declarar la excepción en el cálculo de `esperado` (`:120`) y en el título de `:118`. Ejecutar: rojo.
+- [x] 2.2 ROJA al final de `packages/shared/src/liberacionSinFactura.test.ts`: el catálogo declara exactamente las tres opciones en orden (literales en la prueba), `MOTIVO_QUE_EXIGE_TEXTO` es una de ellas, las tres claves son las de los campos `customField` de `liberacion_sin_factura`, ninguna casilla. Fallo esperado: la línea 247 aún declara la casilla.
+- [x] 2.3 Crear `apps/desk/server/liberacionSinFactura.test.ts` (≈ 150 líneas): criterios 3 a 8 de la propuesta por HTTP (sin motivo, sin fecha, fuera de lista, mayúsculas, `2026-02-30`, `04/10/2026`, fecha pasada → 200, tercer motivo sin texto / `"   "` / con texto, primero y segundo sin texto, errores juntos con presencia delante, escritura de columnas/texto/traza y `liberacion_sin_facturar` intacta); segunda liberación sin texto deja `null` y con valores nuevos dos filas de traza; `upsertTicket` con `custom_fields` vacío no borra el texto. ROJAS.
+- [x] 2.4 En el mismo fichero, pruebas de POSICIÓN con motivo y fecha presentes y `'Otro motivo'`: PL-1 (cargo gana; control con administrador: 422; ROJA por el control), PL-1 bis (⚠ diferencia spec/diseño: existe en la spec, no en el diseño; se incluye, 403 de área), PL-2 (409 gana; nace verde, caracterización), PL-3 (lista gana a persona inexistente; ROJA), PL-4 (sin fecha + fuera de lista: un solo 422, presencia delante; ROJA). Ejecutar y anotar.
+- [x] 2.5 Reescribir en su sitio el bloque C1 de `apps/desk/server/transicionesEjecucion.test.ts:41-103` conservando sus 63 líneas (motivo ausente, motivo vacío, válidos con las dos columnas escritas); anclar la narración de `:8-40` a `2a74fdc` (caso B). Ejecutar: rojo.
+- [x] 2.6 Editar a propósito las cinco de reentrancia: `reentrancia.test.ts:43-52`, `:83-85` (diez casos), `:87-100` (once campos, nueve obligatorios); `invariantesGrafo.test.ts:137-150` (once, la fecha nueva delante de «Fecha Remisión de Salida»); `bodegaje.test.ts:105-113` (once). Ejecutar: rojo.
+- [x] 2.7 `prioridad.test.ts:106`: NO tocar el literal; declarar la excepción en el cálculo de `esperado` (`:120`) y en el título de `:118`. Ejecutar: rojo.
 
 ## L2·C Verde
 
-- [ ] 2.8 `packages/shared/src/transitions.ts`: SOLO la línea 247, con el texto exacto del diseño §3. `wc -l` antes y después = 397; `git diff --numstat` = 1/1.
-- [ ] 2.9 `apps/desk/server/services/ticketService.ts`: línea 6 (tres símbolos en el `import`), línea 133 (`txtLib` → `plan.customFields[CLAVE_TEXTO_AUTORIZACION]`, D7), línea 134 (`errLiberacion` tras `errCertificado`, en la condición y al final del array). Inserciones = borrados.
-- [ ] 2.10 `apps/desk/server/transitionExec.ts:73`: comentario en su sitio (caso B, `2a74fdc`). `git diff --numstat` 1/1.
-- [ ] 2.11 `apps/desk/src/components/TransitionPanel.tsx`: líneas 8, 33 y 28-30 como el diseño §7. `TicketProperties.tsx`: líneas 76 y 184 en su sitio. Sin cambio de nº de líneas (`git diff --numstat`).
-- [ ] 2.12 `debt.md:652` ("el único `required`…"): nombrar la revisión `2a74fdc` (caso B).
-- [ ] 2.13 Todo lo de 2.2-2.7 en verde.
+- [x] 2.8 `packages/shared/src/transitions.ts`: SOLO la línea 247, con el texto exacto del diseño §3. `wc -l` antes y después = 397; `git diff --numstat` = 1/1.
+- [x] 2.9 `apps/desk/server/services/ticketService.ts`: línea 6 (tres símbolos en el `import`), línea 133 (`txtLib` → `plan.customFields[CLAVE_TEXTO_AUTORIZACION]`, D7), línea 134 (`errLiberacion` tras `errCertificado`, en la condición y al final del array). Inserciones = borrados.
+- [x] 2.10 `apps/desk/server/transitionExec.ts:73`: comentario en su sitio (caso B, `2a74fdc`). `git diff --numstat` 1/1.
+- [x] 2.11 `apps/desk/src/components/TransitionPanel.tsx`: líneas 8, 33 y 28-30 como el diseño §7. `TicketProperties.tsx`: líneas 76 y 184 en su sitio. Sin cambio de nº de líneas (`git diff --numstat`).
+- [x] 2.12 `debt.md:652` ("el único `required`…"): nombrar la revisión `2a74fdc` (caso B).
+- [x] 2.13 Todo lo de 2.2-2.7 en verde.
 
 ## L2·D Mutaciones (aplicar, anotar mensaje literal, REVERTIR)
 
-- [ ] 2.14 M1 (posición): bloque `erroresLiberacionSinFactura` al principio de `ticketService.ts:131` → cae PL-1.
-- [ ] 2.15 M2: el mismo bloque antes de la línea 126 → cae PL-2.
-- [ ] 2.16 M3: quitar `errLiberacion` de condición y array de la 134 y lanzarlo tras la 142 → caen PL-3 y PL-4.
-- [ ] 2.17 M4: `...errLiberacion` delante de `...plan.errors` → cae PL-4.
-- [ ] 2.18 M7 (fichero vigilado, línea 247): añadir una cuarta opción; luego quitar una → cae la prueba del literal de tres opciones.
-- [ ] 2.19 M8: cambiar una letra del tercer motivo → cae la prueba que ata `MOTIVO_QUE_EXIGE_TEXTO` a las opciones.
-- [ ] 2.20 `git diff` confirma que no queda ninguna mutación (M1-M4, M7, M8; M5, M6, M9, M10 fueron de L1).
+- [x] 2.14 M1 (posición): bloque `erroresLiberacionSinFactura` al principio de `ticketService.ts:131` → cae PL-1.
+- [x] 2.15 M2: el mismo bloque antes de la línea 126 → cae PL-2.
+- [x] 2.16 M3: quitar `errLiberacion` de condición y array de la 134 y lanzarlo tras la 142 → caen PL-3 y PL-4.
+- [x] 2.17 M4: `...errLiberacion` delante de `...plan.errors` → cae PL-4.
+- [x] 2.18 M7 (fichero vigilado, línea 247): añadir una cuarta opción; luego quitar una → cae la prueba del literal de tres opciones.
+- [x] 2.19 M8: cambiar una letra del tercer motivo → cae la prueba que ata `MOTIVO_QUE_EXIGE_TEXTO` a las opciones.
+- [x] 2.20 `git diff` confirma que no queda ninguna mutación (M1-M4, M7, M8; M5, M6, M9, M10 fueron de L1).
 
 ## L2·E Regla 13, citas y comprobaciones de línea
 
-- [ ] 2.21 Regla 13 por escrito en `apply-progress.md`: las siete filas del diseño §11, cada decisión del cliente con la línea final del servidor que la impone.
-- [ ] 2.22 `git diff --numstat` de `ticketService.ts` (6, 133, 134), `transitionExec.ts` (73), `rows.ts`, `TransitionPanel.tsx`, `TicketProperties.tsx`: inserciones = borrados; `wc -l` de `transitions.ts` = 397.
+- [x] 2.21 Regla 13 por escrito en `apply-progress.md`: las siete filas del diseño §11, cada decisión del cliente con la línea final del servidor que la impone.
+- [x] 2.22 `git diff --numstat` de `ticketService.ts` (6, 133, 134), `transitionExec.ts` (73), `rows.ts`, `TransitionPanel.tsx`, `TicketProperties.tsx`: inserciones = borrados; `wc -l` de `transitions.ts` = 397.
 
 ## L2·F Barrido y textos para el orquestador (en `apply-progress.md`)
 
-- [ ] 2.23 Barrido de citas, regla de mutación 4, sin excluir `openspec/changes/archive/`: `grep -rnoE "transitions\.ts:[0-9]+(-[0-9]+)?"` y releer las que AFIRMAN la casilla en `transitions.ts:247` (`transitionExec.ts:73`, `transicionesEjecucion.test.ts:13`, `debt.md:652`, `spec.md:918`, `F0-00_Baseline_as_built.md`, `Paquete_de_Despliegue_2026-10-01.md:743`) y las que afirman «diez campos reentrantes» (`transitions-st/spec.md:64`, `:981`, `trazas/spec.md:91`, `:494`, las pruebas de 2.6). LISTAR y clasificar A/B/C. Segundo pase de formas abreviadas en los ficheros que citan el módulo. Las specs vivas y los documentos fechados NO se editan: las once "ediciones en sitio al archivar" las aplica el orquestador.
-- [ ] 2.24 Redactar en `apply-progress.md` (sin numerar) el texto de corrección del maestro (`toca_maestro: si`, diseño §12) y la sección de `F0-01_Correcciones_para_el_maestro.md`, añadida al final solo si el diseño lo fija así (≈ 30 líneas, número lo pone el orquestador).
-- [ ] 2.25 Redactar, sin número, las preguntas para la bandeja: E-nueva-1 (¿fecha futura?), E-nueva-2 (¿texto para los tres motivos?), E-nueva-3 (recuentos por `liberacion_sin_facturar`), E-nueva-4 (tickets liberados con casilla al desplegar), más la que añade el diseño: D7 (el texto se sobrescribe a `null` en cada liberación) y la reentrancia (la columna guarda el último valor; la traza, todos).
-- [ ] 2.26 Paquete de despliegue: dejar anotadas en `apply-progress.md` las dos `ALTER` (líneas realmente medidas) y las comprobaciones de persona de §P.
+- [x] 2.23 Barrido de citas, regla de mutación 4, sin excluir `openspec/changes/archive/`: `grep -rnoE "transitions\.ts:[0-9]+(-[0-9]+)?"` y releer las que AFIRMAN la casilla en `transitions.ts:247` (`transitionExec.ts:73`, `transicionesEjecucion.test.ts:13`, `debt.md:652`, `spec.md:918`, `F0-00_Baseline_as_built.md`, `Paquete_de_Despliegue_2026-10-01.md:743`) y las que afirman «diez campos reentrantes» (`transitions-st/spec.md:64`, `:981`, `trazas/spec.md:91`, `:494`, las pruebas de 2.6). LISTAR y clasificar A/B/C. Segundo pase de formas abreviadas en los ficheros que citan el módulo. Las specs vivas y los documentos fechados NO se editan: las once "ediciones en sitio al archivar" las aplica el orquestador.
+- [x] 2.24 Redactar en `apply-progress.md` (sin numerar) el texto de corrección del maestro (`toca_maestro: si`, diseño §12) y la sección de `F0-01_Correcciones_para_el_maestro.md`, añadida al final solo si el diseño lo fija así (≈ 30 líneas, número lo pone el orquestador).
+- [x] 2.25 Redactar, sin número, las preguntas para la bandeja: E-nueva-1 (¿fecha futura?), E-nueva-2 (¿texto para los tres motivos?), E-nueva-3 (recuentos por `liberacion_sin_facturar`), E-nueva-4 (tickets liberados con casilla al desplegar), más la que añade el diseño: D7 (el texto se sobrescribe a `null` en cada liberación) y la reentrancia (la columna guarda el último valor; la traza, todos).
+- [x] 2.26 Paquete de despliegue: dejar anotadas en `apply-progress.md` las dos `ALTER` (líneas realmente medidas) y las comprobaciones de persona de §P.
 
 ## L2·G Cierre
 
-- [ ] 2.27 CIERRE L2: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA de cada uno. Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida de L2 + `wc -l` de lo nuevo sin trackear. Si pasa de ~620 en la medición intermedia (tras 2.13), parar y proponer corte: sacar 2.24 y la sección de `F0-01` a un lote documental L3.
+- [x] 2.27 CIERRE L2: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), con CÓDIGO DE SALIDA de cada uno. Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida de L2 + `wc -l` de lo nuevo sin trackear. Si pasa de ~620 en la medición intermedia (tras 2.13), parar y proponer corte: sacar 2.24 y la sección de `F0-01` a un lote documental L3.
 
 ---
 

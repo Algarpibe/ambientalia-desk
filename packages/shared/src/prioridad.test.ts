@@ -115,9 +115,9 @@ describe('priority deja de ser obligatorio (RQ-TS-20, S-2)', () => {
       expect(campo, id).toMatchObject({ key: 'priority', kind: 'select', required: false, options: ['High', 'Medium', 'Low'] })
     }
   })
-  it('TS20-4 · los obligatorios de las 31 son los de antes SALVO priority en esas dos', () => {
+  it('TS20-4 · los obligatorios de las 31 son los de antes SALVO priority en esas dos y la liberación sin factura (F1C-05: ya no hay casilla)', () => {
     expect(TRANSITIONS).toHaveLength(31)
-    const esperado = Object.fromEntries(Object.entries(OBLIGATORIOS_ANTES).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
+    const esperado = Object.fromEntries(Object.entries({ ...OBLIGATORIOS_ANTES, liberacion_sin_factura: ['Motivo de liberación sin factura', 'Fecha prevista de facturación'] }).map(([id, ks]) => [id, ks.filter((k) => k !== 'priority')]))
     const hoy = Object.fromEntries(TRANSITIONS.map((t) => [t.id, t.fields.filter((f) => f.required).map((f) => f.key)]))
     expect(hoy).toEqual(esperado)
   })

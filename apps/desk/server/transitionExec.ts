@@ -70,7 +70,7 @@ export function buildTransitionPlan(t: Transition, values: Record<string, unknow
      *     existe y está sin marcar. Con sólo (a), la vía normal del formulario seguía pasando.
      *
      * La semántica de un checkbox obligatorio sólo puede ser DEBE ESTAR MARCADO: es la confirmación
-     * de un acto —«Liberación del ticket sin facturar» (`transitions.ts:247`) es el único que hay—, y
+     * de un acto —«Liberación del ticket sin facturar» (`transitions.ts:247` en `2a74fdc`) fue el único; hoy no hay ninguno—, y
      * un obligatorio que acepta `false` no es una guarda.
      */
     const faltaObligatorio = f.kind === 'checkbox' ? asBool(raw) !== true : empty

@@ -73,7 +73,7 @@ const TIME_FIELDS: Array<[string, string]> = [
   ['Fecha Notificación por garantía', 'Fecha Notificación por garantía'],
   ['Fecha solicitud SKU', 'Fecha solicitud SKU'],
   ['Fecha Orden de Compra Final', 'Fecha Orden de Compra Final'],
-  ['Fecha Orden de Venta Final', 'Fecha Orden de Venta Final'],
+  ['Fecha Orden de Venta Final', 'Fecha Orden de Venta Final'], ['Fecha prevista de facturación', 'Fecha prevista de facturación'],
 ];
 
 const PROCESS_FIELDS: Array<[string, string]> = [
@@ -181,7 +181,7 @@ export function TicketProperties({ detail, width = 300 }: { detail: TicketDetail
         <Field label="Días de entrega" value={cf(detail, 'Días de entrega')} />
         <Field label="Conformidad" value={cf(detail, 'Conformidad')} />
         <Field label="ID Remisión Creator" value={cf(detail, 'ID Remisión Creator')} />
-        <CheckField detail={detail} label="Cumple condiciones comerciales" fieldKey="Cumple condiciones comerciales" />
+        <CheckField detail={detail} label="Cumple condiciones comerciales" fieldKey="Cumple condiciones comerciales" /><Field label="Motivo de liberación sin factura" value={cf(detail, 'Motivo de liberación sin factura')} />
       </Section>
 
       <Section title="Verificación de procesos" defaultOpen={false}>

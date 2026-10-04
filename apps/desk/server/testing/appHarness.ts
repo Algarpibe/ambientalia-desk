@@ -35,8 +35,31 @@ export function instalarArnes(): void {
   beforeEach(async () => {
     const pg = newDb().adapters.createPg()
     db = new pg.Pool()
+    emularMezclaJsonb(db as unknown as ConPool)
     await migrate(db)
   })
+}
+
+type ConsultaFn = Queryable['query']
+type ConPool = { query: ConsultaFn; connect: () => Promise<{ query: ConsultaFn }> }
+/**
+ * pg-mem no sabe `jsonb || jsonb`: lo trata como concatenación de TEXTO y revienta al volver a convertir
+ * (`{}{"k":1}`). `writeTransition` (`packages/zoho-sync/src/db/repo.ts:309`) mezcla así `custom_fields`, y
+ * hasta F1C-05 ninguna prueba HTTP escribía una clave fuera de `PROMOTED_COLUMNS`. Aquí se emula la MISMA mezcla
+ * (`{...actual, ...nuevo}`: la clave nueva gana, `null` incluido) leyendo antes la fila. Sólo toca esa sentencia.
+ */
+function emularMezclaJsonb(pool: ConPool): void {
+  const envolver = (q: ConsultaFn): ConsultaFn => async (sql, params) => {
+    const m = /custom_fields = custom_fields \|\| \$(\d+)::jsonb/.exec(sql)
+    if (!m || !params) return q(sql, params)
+    const i = Number(m[1]) - 1
+    const actual = (await q('SELECT custom_fields FROM tickets WHERE id=$1', [params[0]])).rows[0]?.custom_fields ?? {}
+    const nuevos = [...params]; nuevos[i] = JSON.stringify({ ...actual, ...JSON.parse(String(params[i])) })
+    return q(sql.replace(m[0], `custom_fields = $${m[1]}::jsonb`), nuevos)
+  }
+  const q0 = pool.query.bind(pool); pool.query = envolver(q0)
+  const c0 = pool.connect.bind(pool)
+  pool.connect = async () => { const c = await c0(); c.query = envolver(c.query.bind(c)); return c }
 }
 
 /** Equipo al estilo de la carga inicial: `client_id` NULL y cliente solo como texto libre. */

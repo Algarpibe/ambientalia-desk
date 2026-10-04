@@ -5,11 +5,12 @@ import {
 } from './liberacionSinFactura'
 import { esFechaCalendarioReal } from './fechasDerivadas'
 import type { Transition } from './transitions'
+import { transicionPorId } from './flujos'
 
 /**
  * liberacion-sin-factura-motivo-fecha (F1C-05), lote 1 · la guarda de contenido, sobre una transición SINTÉTICA.
  *
- * El catálogo real todavía declara la casilla (`transitions.ts:247`): la guarda se activa por el CAMPO y no por el id
+ * El catálogo real todavía declaraba la casilla (`transitions.ts:247` en `0f3cafc`): la guarda se activa por el CAMPO y no por el id
  * (diseño D4), así que en este lote es inerte y se prueba con una transición fabricada aquí. Los mensajes son los
  * del diseño §4, en ese orden.
  */
@@ -133,5 +134,27 @@ describe('seVuelveAPedirEnCadaLiberacion', () => {
     expect(seVuelveAPedirEnCadaLiberacion(CLAVE_TEXTO_AUTORIZACION)).toBe(true)
     expect(seVuelveAPedirEnCadaLiberacion('Serial')).toBe(false)
     expect(seVuelveAPedirEnCadaLiberacion('Motivo')).toBe(false)
+  })
+})
+
+describe('el catálogo real declara los tres campos (lote 2)', () => {
+  const real = transicionPorId('liberacion_sin_factura')!
+  it('el motivo lleva exactamente las tres opciones, en orden, y ninguna casilla', () => {
+    const motivo = real.fields.find((f) => f.key === CLAVE_MOTIVO_LIBERACION)!
+    expect(motivo).toMatchObject({ label: 'Motivo', kind: 'select', required: true, target: 'customField' })
+    expect(motivo.options).toEqual([
+      'Fecha de corte de facturación del cliente',
+      'Servicio incluido en contrato con facturación periódica',
+      'Autorización excepcional de Dirección Comercial',
+    ])
+    expect(real.fields.some((f) => f.kind === 'checkbox')).toBe(false)
+  })
+  it('el motivo que exige texto es una de las opciones del catálogo', () => {
+    expect(real.fields.find((f) => f.key === CLAVE_MOTIVO_LIBERACION)!.options).toContain(MOTIVO_QUE_EXIGE_TEXTO)
+  })
+  it('las tres claves de re-liberación son exactamente las de los campos customField de la transición', () => {
+    const claves = real.fields.filter((f) => f.target === 'customField').map((f) => f.key)
+    expect(claves).toEqual([CLAVE_MOTIVO_LIBERACION, CLAVE_FECHA_PREVISTA_FACTURACION, CLAVE_TEXTO_AUTORIZACION])
+    expect(claves.every(seVuelveAPedirEnCadaLiberacion)).toBe(true)
   })
 })
