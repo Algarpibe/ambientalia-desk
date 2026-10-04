@@ -82,7 +82,7 @@ pendiente»). Queda fuera.
 | `transitions-st` | `openspec/specs/transitions-st/spec.md:63` (tabla de invariantes), `:269-275`, `:285` (RQ-TS-07) | ocho compartidas: cinco C/Compras y **tres** C/ST; 54/39 |
 | `transitions-st` | `:1431-1437` (RQ-TS-23) y `:1627-1630` (escenario de F1C-09) | «se conserva sin cambio el emparejamiento de las ocho compartidas»: cierto de F1C-09, falso tras F1C-10 |
 | `mapa-blueprint` | `openspec/specs/mapa-blueprint/spec.md:112-124` | genérico (leyenda por área); sin requisito que nombre la arista. **Sin delta** |
-| `derivacion-avisos` | `openspec/specs/derivacion-avisos/spec.md:134` (RQ-AV-04) | genérico; el requisito no cambia |
+| `derivacion-avisos` | `openspec/specs/derivacion-avisos/spec.md:134` en `f55b7d9` (RQ-AV-04) | genérico; el requisito no cambia |
 
 Citas fechadas que NO se tocan (caso B): `openspec/specs/transitions-st/spec.md:1545` en `4984c3b`, todo
 `openspec/changes/archive/**`, `docs/sdd/Estado_As-Built_2026-09-09.md`.
