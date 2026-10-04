@@ -99,6 +99,37 @@ frontera por columna, así que una fila con `managed_by_app=false` perdía `orde
 `fecha_orden_venta` en cada pasada del sync aunque un escritor de la app las hubiera fijado — es el
 desvío registrado como IV-11.)
 
+**Y una segunda frontera por columna, para la prioridad** (`propagar-top5-lista-remision-creada`,
+F1B-07). Cuando la fila lleva la marca de fila `prioridad_en_app_at timestamptz` puesta (**supuesto S-1
+de ese cambio**, reversible: columna de `tickets` que admite NULL, fuera de `TICKET_COLS`, sin relleno de
+filas previas; vaciarla devuelve el mando sobre `priority` a Zoho), `priority` **MUST NOT** ser
+sobrescrita por `upsertTicket`, aunque `managed_by_app` sea `false` en esa misma fila. Aplica a la
+prioridad la misma regla que Gerencia dio para la orden de venta: si se eligió en la aplicación manda la
+aplicación; si no, manda Zoho (`decision/e005-iv4-iv11`).
+
+- La marca **SHALL** ponerla, en la misma escritura que cambia `tickets.priority`, la propagación y la
+  reversión del Top 5 (`tickets-core` RQ-TC-35 y RQ-TC-36), sobre cada ticket cuya prioridad escriban.
+  Tras una reversión la marca **SHALL** conservarse (supuesto S-2 de ese cambio): la prioridad calculada
+  la eligió la aplicación y se mantiene frente a Zoho.
+- `upsertTicket` **MUST NOT** ponerla ni quitarla nunca.
+- Sin la marca, la fila **SHALL** seguir la regla de hoy sin cambios: `priority` se sobrescribe con lo
+  que traiga Zoho.
+- La guarda de fila entera por `managed_by_app` **SHALL** seguir siendo la primera: con
+  `managed_by_app = true` el `upsertTicket` sale antes de escribir nada, marcas puestas o no.
+- Las dos marcas **SHALL** ser independientes: `ov_elegida_en_app_at` protege `orden_venta` y
+  `fecha_orden_venta`; `prioridad_en_app_at` protege sólo `priority`. Una fila con las dos puestas
+  conserva las tres columnas y actualiza el resto de `TICKET_COLS`.
+- El ajuste manual de la prioridad de un ticket (`tickets-core` RQ-TC-29) **SHALL** seguir marcando
+  `managed_by_app`; no se migra a la marca nueva.
+- Sobre la prioridad **no** hay aviso de discrepancia con Zoho: el aviso de la orden de venta no se replica.
+- Una fila cuya prioridad ya se hubiera fijado en la aplicación **antes** de este cambio **MUST NOT**
+  recibir la marca de forma retroactiva: no hay relleno.
+- La columna se crea con `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS prioridad_en_app_at timestamptz`,
+  **sin calificar** (`tickets` es de `desk`, ver la topología de dos esquemas), al **final** de
+  `packages/zoho-sync/src/db/schema.sql`, sin mover ninguna línea anterior.
+- **Regla invariable 13:** que el sincronizador no pise la prioridad lo impone `upsertTicket` en el servidor
+  y es la única comprobación que hay; el cliente no participa.
+
 #### Scenario: Los tres escritores de la app ponen la marca al fijar la orden de venta
 - GIVEN un alta de ticket con orden de venta, una transición cuyo `plan.columns` incluye
   `orden_venta` (p. ej. `habilitar_servicio`), o el `UPDATE` de una remisión de entrada que captura
@@ -133,6 +164,62 @@ desvío registrado como IV-11.)
 - WHEN se despliega el cambio
 - THEN esa fila no recibe la marca de forma retroactiva y sigue expuesta al sync hasta el siguiente
   escritor de la app que vuelva a fijar su orden de venta
+
+#### Scenario: Con `prioridad_en_app_at` puesta, una pasada del sync no pisa `priority` y sí el resto
+- GIVEN un ticket de Zoho con `managed_by_app = false` y la marca de prioridad puesta, con `priority`
+  `High` en la base y `Low` en lo que trae Zoho, y otra columna de `TICKET_COLS` (p. ej. `subject`)
+  distinta
+- WHEN `upsertTicket` procesa la fila
+- THEN `priority` sigue `High`
+- AND `subject` y el resto de columnas de `TICKET_COLS` se actualizan con normalidad
+- AND `managed_by_app` sigue `false`
+
+#### Scenario: Sin `prioridad_en_app_at`, Zoho sigue mandando sobre `priority`
+- GIVEN un ticket sin la marca de prioridad y con `priority` distinta a la que trae Zoho
+- WHEN `upsertTicket` procesa la fila
+- THEN `priority` se sobrescribe con la de Zoho, igual que hoy
+
+#### Scenario: Una prioridad propagada sobrevive a la pasada siguiente del sync
+- GIVEN un ticket de Zoho al que la propagación del Top 5 (`tickets-core` RQ-TC-35) cambió la prioridad
+- WHEN corre `upsertTicket` con otra prioridad en el payload
+- THEN `tickets.priority` conserva la propagada
+- AND `managed_by_app` sigue `false`
+
+#### Scenario: Tras revertir, la prioridad calculada también sobrevive al sync (S-2)
+- GIVEN un ticket de Zoho propagado y luego revertido por la desmarcación del cliente
+- WHEN corre `upsertTicket` con otra prioridad en el payload
+- THEN `tickets.priority` conserva la calculada y la marca sigue puesta
+
+#### Scenario: `upsertTicket` nunca escribe `prioridad_en_app_at`
+- GIVEN una fila con la marca de prioridad y otra sin ella
+- WHEN `upsertTicket` procesa las dos
+- THEN la marca de ninguna cambia por esa pasada
+
+#### Scenario: La guarda de `managed_by_app` sigue primera
+- GIVEN una fila con `managed_by_app = true` y con las dos marcas (`ov_elegida_en_app_at` y
+  `prioridad_en_app_at`) puestas
+- WHEN `upsertTicket` procesa un payload con valores distintos en todo
+- THEN no se escribe ninguna columna y no se avisa ninguna discrepancia
+
+#### Scenario: Las dos marcas son independientes
+- GIVEN una fila con las dos marcas puestas, `managed_by_app = false`, y un payload distinto en
+  `orden_venta`, `fecha_orden_venta`, `priority` y `subject`
+- WHEN `upsertTicket` procesa la fila
+- THEN `orden_venta`, `fecha_orden_venta` y `priority` conservan lo guardado
+- AND `subject` se actualiza
+- AND una fila con sólo la marca de prioridad sí actualiza `orden_venta` y `fecha_orden_venta`
+
+#### Scenario: El ajuste manual de prioridad sigue usando `managed_by_app`
+- GIVEN un ticket al que un usuario con permiso ajusta la prioridad a mano (`tickets-core` RQ-TC-29)
+- WHEN termina el ajuste
+- THEN `managed_by_app` es `true` y la marca `prioridad_en_app_at` no se ha puesto por esa vía
+
+#### Scenario: La columna nueva es sin calificar, va al final y no entra en `TICKET_COLS`
+- GIVEN `schema.sql` y `TICKET_COLS`
+- WHEN se recorren sus sentencias `ALTER TABLE` y la lista de columnas
+- THEN la de `prioridad_en_app_at` es `ALTER TABLE tickets ...` sin calificar, va detrás de todas las anteriores,
+  y `prioridad_en_app_at` no está en `TICKET_COLS`
+- AND el guardián de calificación de `migrate.test.ts` sigue en verde
 
 ### RQ-ZS-02 · Un ticket venido de Zoho no entra en las fases propias de la app
 

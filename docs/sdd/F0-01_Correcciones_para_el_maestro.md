@@ -1318,3 +1318,27 @@ compara (E-173).
 - **No toca la lista cerrada de nueve** ni las columnas 48, 56 y 16.
 - **No fija la unidad del 49 ni la fórmula del 59** como definición: son supuestos reversibles hasta que Gerencia
   responda E-177 y E-178.
+
+## La de F1B-07, propagación del Top 5 y lista de «Remisión creada» (24)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `propagar-top5-lista-remision-creada`,
+> `cierra: no`.
+
+### 24 · M1.9.1 — el Top 5 se propaga a los tickets abiertos y la lista de «Remisión creada» tiene orden *(F1B-07)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1973`, párrafo «Prioridad.».
+
+**Texto actual:** «Prioridad. [DECIDIDO 21/09/2026 y 23/09/2026 — R08.4] La prioridad se fija en el cliente, no en cada
+ticket: se fija una vez y todos sus tickets la heredan. Al nacer un ticket manda la más alta entre la del contrato y la
+del Top 5; sin ninguna de las dos, se aplica la regla general.»
+
+**Texto propuesto:** el mismo párrafo, con la marca «[DECIDIDO 21/09/2026, 23/09/2026 y 01/10/2026]», y a continuación:
+«Al marcar un cliente como Top 5, o al cambiar su prioridad, sus tickets abiertos toman la nueva prioridad y cada cambio
+deja su traza; al desmarcarlo, vuelven a la prioridad calculada. Los tickets con un ajuste manual con motivo conservan el
+suyo en todo caso, y el sincronizador con Zoho no sobrescribe la prioridad que la aplicación ha fijado. La lista de
+equipos en «Remisión creada» para Comercial se ordena por el tiempo transcurrido desde que el ticket entró en ese
+estado, el más antiguo primero, que es el mismo reloj de la alarma de 3 días hábiles; los tickets sin entrada
+registrada van al final.»
+
+**Lo que esta entrada NO pide.** No da por decididos los supuestos del cambio: están como preguntas en E-188 a E-193.
+No afirma que esté en producción: los Top 5 marcados antes del despliegue se propagan al volver a guardarlos.

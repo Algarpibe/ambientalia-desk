@@ -52,7 +52,7 @@ export function PanelPrioridad({ ticketId, onCambio }: { ticketId: string; onCam
             : (
               <ul className="flex flex-col gap-0.5">
                 {data.ajustes.map((a) => (
-                  <li key={`${a.ajustadoAt}|${a.a}`}>{a.ajustadoAt.slice(0, 10)} · {a.ajustadoPor}: {a.de ?? 'sin prioridad'} → {a.a} — {a.motivo}</li>
+                  <li key={`${a.ajustadoAt}|${a.a}`}>{a.ajustadoAt.slice(0, 10)} · {a.ajustadoPor}: {a.de ?? 'sin prioridad'} → {a.a ?? 'sin prioridad'} — {a.motivo}</li>
                 ))}
               </ul>
             )}

@@ -32,7 +32,7 @@ se leyó en el worktree.
 ## 3. Dónde vive hoy un cliente y quién puede crearlo
 
 - `public.clients` es una **vista** sobre `books.contacts` (`packages/zoho-sync/src/db/schema.sql:169-173`);
-  `RQ-ZS-09` lo exige (`openspec/specs/zoho-sync/spec.md:246-254`).
+  `RQ-ZS-09` lo exige (`openspec/specs/zoho-sync/spec.md:246-254` en `05ef26e`).
 - `books.contacts` llega por **replicación lógica** desde `zoho-hub` (`DEPLOY.md:38-42`), y «la App escribe
   **sólo** en `desk`» (`DEPLOY.md:33-36`). Escribir en `books.contacts` desde la App rompería la réplica y
   sería escribir datos de Zoho.
@@ -71,7 +71,7 @@ se leyó en el worktree.
   (`packages/zoho-sync/src/db/migrate.ts:63-64`), así que sus `ALTER` van sin calificar, como las de `:466-471`.
   La tabla nueva entra en `PUBLIC_TABLES` (`migrate.ts:70-73`).
 - Hallazgo lateral, sin destino: `RQ-ZS-10` dice que `PUBLIC_TABLES` tiene 16 tablas
-  (`openspec/specs/zoho-sync/spec.md:258-260`) y hoy la lista tiene 26 (`migrate.ts:70-73`). Hipótesis: es un
+  (`openspec/specs/zoho-sync/spec.md:258-260` en `05ef26e`) y hoy la lista tiene 26 (`migrate.ts:70-73`). Hipótesis: es un
   recuento fechado (caso B). Se anota, no se toca.
 
 ## 7. Estimación
