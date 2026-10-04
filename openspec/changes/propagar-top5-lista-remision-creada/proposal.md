@@ -61,7 +61,7 @@ Hoy ocurre lo contrario de (3): el `PUT` del cliente sólo escribe `public.clien
 
 | Capacidad | Requisito | Qué cambia |
 |---|---|---|
-| `tickets-core` | RQ-TC-24, `openspec/specs/tickets-core/spec.md:856-872` | Cae el «sólo al nacer» de `:870-871`. Los escenarios S-1 (`:953-958`) y S-9 (`:960-965`) se invierten |
+| `tickets-core` | RQ-TC-24, `openspec/specs/tickets-core/spec.md:856-872` en `27379a0` | Cae el «sólo al nacer» de `:870-871`. Los escenarios S-1 (`:953-958`) y S-9 (`:960-965`) se invierten |
 | `tickets-core` | RQ-TC-27, `:1061` | El `PUT` propaga o revierte en la misma transacción |
 | `tickets-core` | RQ-TC-29, `:1135-1146` | La traza gana origen; un ajuste manual exime al ticket de la propagación |
 | `tickets-core` | nuevos | Propagación, reversión, exención, traza al nacer |

@@ -1932,3 +1932,38 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** la sincronización cuenta remisiones confirmadas sin filtrar el tipo (`apps/desk/server/db/estadoPorRemision.ts:43-47`), y la guarda de «Habilitar Servicio» sí filtra por entrada. Hoy no existe otro tipo de remisión; cuando se construya la de salida, una salida confirmada sobre un ticket en fase inicial lo llevaría a «Remisión creada» sin entrada vigente. La prueba de servidor de `remision-creada-sin-salida` ya recorre ese caso y el ticket tiene salida.
 **Dueño:** la sesión de supervisión. **Qué desbloquea:** que la tanda de la remisión de salida lo tenga en cuenta.
 **Estado:** abierta · **Destino:** contenido de la fila de la remisión de salida, cuando se abra (R-3).
+
+## E-188 · 2026-10-04 · pregunta · **ABIERTA** — F1B-07: sobre la prioridad propagada por el Top 5 a un ticket venido de Zoho, ¿manda la aplicación?
+**Qué:** al propagar, el ticket recibe la marca por fila `prioridad_en_app_at` y desde entonces el sincronizador no sobrescribe su prioridad (`packages/zoho-sync/src/db/repo.ts:78`). Tras desmarcar al cliente la marca se conserva, así que sigue mandando la aplicación. Supuesto aplicado (S-1 y S-2 de `propagar-top5-lista-remision-creada`); `decision/e005-iv4-iv11` lo resolvió para la orden de venta, no para la prioridad.
+**Dueño:** Gerencia. **Qué desbloquea:** si no, la marca se retira o se vacía al revertir.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-189 · 2026-10-04 · pregunta · **ABIERTA** — F1B-07: una prioridad cambiada en una transición, sin motivo escrito, ¿cuenta como ajuste manual con motivo?
+**Qué:** hoy no cuenta: sólo exime al ticket una fila manual de la traza. Por eso una prioridad escrita por una transición entre marcar y desmarcar se pierde al revertir, que vuelve a la base (supuesto S-4).
+**Dueño:** Gerencia. **Qué desbloquea:** si la transición pasa a eximir al ticket, y si la reversión debe respetar lo que escribió.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-190 · 2026-10-04 · pregunta · **ABIERTA** — F1B-07: si el Top 5 es más bajo que la prioridad que el ticket ya tenía, ¿el ticket baja?
+**Qué:** hoy baja, a la letra de `decision/cola-del-taller-los-tres-cabos`, salvo que el cliente tenga contrato vigente (supuesto S-5).
+**Dueño:** Gerencia. **Qué desbloquea:** si el Top 5 sólo sube o también baja.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-191 · 2026-10-04 · pregunta · **ABIERTA** — F1B-07: la lista de «Remisión creada», ¿trae todos los equipos o sólo los que no tienen orden de venta?
+**Qué:** hoy trae todos los tickets activos en ese estado (supuesto S-7); la alarma de 3 días hábiles mira sólo los que no tienen orden de venta.
+**Dueño:** Gerencia. **Qué desbloquea:** el contenido de la lista.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-192 · 2026-10-04 · pregunta · **ABIERTA** — F1B-07: ¿la lista de «Remisión creada» debe enseñar el tiempo transcurrido en cada tarjeta?
+**Qué:** hoy la lista se ordena por ese tiempo pero no lo pinta. Pintarlo exige calcularlo en el servidor con el calendario de cierres y tocar la tarjeta, que es `.tsx` y queda fuera de la red de pruebas.
+**Dueño:** Gerencia. **Qué desbloquea:** un cambio aparte dentro de F1B-07.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-193 · 2026-10-04 · pregunta · **ABIERTA** — F1B-07: qué prioridad se guarda como base cuando un ticket nace bajo Top 5
+**Qué:** aplicado (resolución D-1 del orquestador): la base es la prioridad PEDIDA en el alta, sin el contrato, y hay fila de traza cuando la final difiere de ella. La letra original del delta guardaba el resultado sin Top 5, contrato incluido; con ella, un contrato vencido entre el alta y la reversión dejaría el ticket más alto de lo que le corresponde.
+**Dueño:** Gerencia. **Qué desbloquea:** si se prefiere la letra original, cambia `baseAlNacer` y un escenario de RQ-TC-38.
+**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+
+## E-194 · 2026-10-04 · hallazgo · **ABIERTA** — F1B-07: la propagación lee tickets y trazas sin bloquear las filas
+**Qué:** hipótesis del verify (S-1), sin probar: un ajuste manual confirmado entre la lectura de las trazas y la escritura de la prioridad (`apps/desk/server/db/prioridadCliente.ts:111` y `apps/desk/server/db/prioridadCliente.ts:118`) podría perder su exención. Exige concurrencia real y Postgres de verdad. Va con el aviso W-1: la atomicidad está probada por secuencia, no por efecto sobre filas.
+**Dueño:** la sesión de supervisión. **Qué desbloquea:** que la aceptación con servicios reales lo incluya.
+**Estado:** abierta · **Destino:** donde volvería a verse es F1F-03; no es un destino asignado (R-3).

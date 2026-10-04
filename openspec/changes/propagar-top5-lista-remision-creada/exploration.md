@@ -31,7 +31,7 @@ Fila del plan: `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:87`, `:
 | «Abierto» en el servidor = `status_type <> 'Closed' OR status_type IS NULL` | `packages/zoho-sync/src/db/repo.ts:151`. Ojo: la vista «abiertos» del cliente (`apps/desk/src/lib/boardView.ts:47`) excluye además las esperas y **no** es esta noción |
 | Una transición también puede escribir `priority`, sin traza en `prioridad_ajustes` | `repo.ts:300`; guarda del técnico en `packages/shared/src/prioridad.ts:81-86`, aplicada en `ticketService.ts:131` |
 | Pruebas que fijan lo contrario de la decisión | `apps/desk/server/prioridadTop5.test.ts:179-194` (TC24-14 y TC24-15). Las homónimas de `apps/desk/server/services/ticketService.test.ts:1154` y `:1160` son del **alta** y siguen ciertas |
-| Requisito vivo a reescribir | `openspec/specs/tickets-core/spec.md:856-872` (RQ-TC-24; el «sólo al nacer» está en `:870-871`) y los escenarios S-1 y S-9 de `:953-965` |
+| Requisito vivo a reescribir | `openspec/specs/tickets-core/spec.md:856-872` en `27379a0` (RQ-TC-24; el «sólo al nacer» está en `:870-871`) y los escenarios S-1 y S-9 de `:953-965` |
 
 ### Hallazgo clave (D-1)
 
