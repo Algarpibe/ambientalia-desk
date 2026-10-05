@@ -154,88 +154,88 @@ Archivos nuevos: `apps/desk/server/db/traspaso.ts`, `apps/desk/server/db/traspas
 `docs/sdd/F0-01_Correcciones_para_el_maestro.md`, `docs/sdd/ENTRADA.md`; `apply-progress.md`.
 
 **Preparación**
-- [ ] 2.1 Anotar `git rev-parse HEAD` (partida del lote 2), comprobar el intento y medir `wc -l` de `historial.ts` y de los dos
+- [x] 2.1 Anotar `git rev-parse HEAD` (partida del lote 2), comprobar el intento y medir `wc -l` de `historial.ts` y de los dos
   ficheros de documentos.
-- [ ] 2.2 Leer los moldes: `packages/shared/src/transitions.ts:327-334` (`areasSiguientes`), `packages/shared/src/flujos.ts:64-66`
+- [x] 2.2 Leer los moldes: `packages/shared/src/transitions.ts:327-334` (`areasSiguientes`), `packages/shared/src/flujos.ts:64-66`
   (`catalogoDelTicket`), `apps/desk/server/services/avisoArea.ts:15-17`, `apps/desk/server/db/ticketFuentes.ts:25-27`, `:105-125`,
   `:139-148` y `:165`, `apps/desk/server/db/historial.ts:136-144`, `packages/shared/src/migracionTickets.ts:14`,
   `apps/desk/server/migracionMarcadorLectores.test.ts:62-71`.
-- [ ] 2.3 Comprobar la hipótesis de `design.md` §7: que «Ingresado» tiene área siguiente en el catálogo de servicio, ejecutando
+- [x] 2.3 Comprobar la hipótesis de `design.md` §7: que «Ingresado» tiene área siguiente en el catálogo de servicio, ejecutando
   `areasSiguientes` sobre el estado; anotar el resultado, porque decide cuáles de las pruebas existentes se ponen rojas.
 
 **Rojo — traspaso (RQ-TZ-18, RQ-AV-18)**
-- [ ] 2.4 `apps/desk/server/db/traspaso.test.ts` (nuevo), con persona: transición de «Ana» con `derivado_a` = id de «Beto»
+- [x] 2.4 `apps/desk/server/db/traspaso.test.ts` (nuevo), con persona: transición de «Ana» con `derivado_a` = id de «Beto»
   → una línea `Traspaso: Ana → Beto` con `De`, `A`, `Por la etapa` y la hora de la transición.
-- [ ] 2.5 Sin persona, destino por área: igual a `areasSiguientes(to_status, catalogoDelTicket(...))` y a `areasAAvisar` con un
+- [x] 2.5 Sin persona, destino por área: igual a `areasSiguientes(to_status, catalogoDelTicket(...))` y a `areasAAvisar` con un
   actor sin áreas, **llamadas en la propia prueba**; clave `derivado_a` vacía → por área; id que no resuelve → crudo; persona
   igual al origen → hay línea (S-4); misma área que la siguiente → hay línea («Comercial → Comercial»).
-- [ ] 2.6 Estado terminal sin persona → `[]`; catálogo de `Equipo nuevo` usa el suyo y no `TRANSITIONS`; etiquetas «De» y «A», y
+- [x] 2.6 Estado terminal sin persona → `[]`; catálogo de `Equipo nuevo` usa el suyo y no `TRANSITIONS`; etiquetas «De» y «A», y
   nunca «Derivado a» (`apps/desk/server/db/historial.test.ts:173-174` filtra por esa etiqueta).
-- [ ] 2.7 Orden de emisión (D-13): con la misma hora el traspaso queda en el índice anterior al de su transición. Abrir el
+- [x] 2.7 Orden de emisión (D-13): con la misma hora el traspaso queda en el índice anterior al de su transición. Abrir el
   historial dos veces no emite `INSERT`, `UPDATE` ni `DELETE` (espía) ni crea avisos (RQ-AV-18).
 
 **Rojo — exclusiones (RQ-TZ-19)**
-- [ ] 2.8 En el mismo fichero: la creación con derivación no produce línea; marcador con `to_status` nulo, ninguna; marcador con
+- [x] 2.8 En el mismo fichero: la creación con derivación no produce línea; marcador con `to_status` nulo, ninguna; marcador con
   destino relleno y área siguiente, ninguna; otra transición con `to_status` nulo y persona derivada sí da línea (el criterio
   es el identificador `ID_TRANSICION_MIGRACION`, no el destino vacío).
 
 **Rojo — excepciones de traza (RQ-TZ-17, ~15 líneas)**
-- [ ] 2.9 En el mismo fichero: con un ajuste en `prioridad_ajustes` ningún evento del historial procede de él; y, leídos como
+- [x] 2.9 En el mismo fichero: con un ajuste en `prioridad_ajustes` ningún evento del historial procede de él; y, leídos como
   texto, `historial.ts`, `ticketFuentes.ts`, `remisionRestaurada.ts` y `traspaso.ts` no nombran `prioridad_ajustes`,
   `ov_asociaciones` ni `equipos_cambios`. La descripción declara el límite: mira esos cuatro ficheros, no lo que importan.
-- [ ] 2.10 **EJECUTAR** el fichero y anotar el fallo literal (el módulo no existe).
+- [x] 2.10 **EJECUTAR** el fichero y anotar el fallo literal (el módulo no existe).
 
 **Pruebas existentes que se ponen rojas y se actualizan** (en sitio; el traspaso va ENCIMA de su transición)
-- [ ] 2.11 `apps/desk/server/db/historial.test.ts:23-26` (orden y títulos con «Transición: Habilitar Servicio»): añadir el título
+- [x] 2.11 `apps/desk/server/db/historial.test.ts:23-26` (orden y títulos con «Transición: Habilitar Servicio»): añadir el título
   de traspaso donde el catálogo lo produzca.
-- [ ] 2.12 `apps/desk/server/db/historial.test.ts:69` (`eventos[0]`, lee los detalles de la transición «Diagnosticar»): buscar por título.
-- [ ] 2.13 `apps/desk/server/db/historial.test.ts:189` (`['Transición: Habilitar', 'Ana ha publicado un comentario']`): añadir el
+- [x] 2.12 `apps/desk/server/db/historial.test.ts:69` (`eventos[0]`, lee los detalles de la transición «Diagnosticar»): buscar por título.
+- [x] 2.13 `apps/desk/server/db/historial.test.ts:189` (`['Transición: Habilitar', 'Ana ha publicado un comentario']`): añadir el
   traspaso de «Habilitar» si la comprobación de 2.3 lo da.
-- [ ] 2.14 `apps/desk/server/tickets.test.ts:118` y `:133-136`: ídem. Si 2.3 muestra que «Ingresado» no tiene área siguiente,
+- [x] 2.14 `apps/desk/server/tickets.test.ts:118` y `:133-136`: ídem. Si 2.3 muestra que «Ingresado» no tiene área siguiente,
   las que no cambian se anotan como verdes sin editar. `apps/desk/server/migracionMarcadorLectores.test.ts:62-71` sigue verde
   **sin editarse**. **EJECUTAR** los dos ficheros ANTES de tocarlos y anotar qué cae (el rojo es el que nombra el diseño).
 
 **Verde**
-- [ ] 2.15 Crear `apps/desk/server/db/traspaso.ts` con `lineaTraspaso(fila, nombres, ticket)`: exclusiones en este orden
+- [x] 2.15 Crear `apps/desk/server/db/traspaso.ts` con `lineaTraspaso(fila, nombres, ticket)`: exclusiones en este orden
   (`esCreacion` → marcador por `transition_id` → destino), persona (`nombres.get(id) ?? id`) o `areasSiguientes(to_status,
   catalogoDelTicket({ classification, status: to_status }))` sin restar nada, evento `'AppTraspaso'` con `actor = performed_by ??
   'App'` y `HistoryEvent` sin cambios.
-- [ ] 2.16 `apps/desk/server/db/historial.ts`: unir el `import` con `;`, añadir `transition_id` al `SELECT` de la línea 137 y emitir
+- [x] 2.16 `apps/desk/server/db/historial.ts`: unir el `import` con `;`, añadir `transition_id` al `SELECT` de la línea 137 y emitir
   `[traspaso, transición]` con el `flatMap` de `:142-144`, en sitio; `classification` sale de `datosTicket` (sin consulta nueva).
   `apps/desk/server/db/conversacion.ts` no se toca.
-- [ ] 2.17 **EJECUTAR** `traspaso.test.ts`, `historial.test.ts`, `tickets.test.ts` y `migracionMarcadorLectores.test.ts`: todo verde.
+- [x] 2.17 **EJECUTAR** `traspaso.test.ts`, `historial.test.ts`, `tickets.test.ts` y `migracionMarcadorLectores.test.ts`: todo verde.
 
 **Mutaciones (aplicar, anotar mensaje literal, REVERTIR)**
-- [ ] 2.18 **M1:** quitar la exclusión del marcador. Debe caer «marcador con destino».
-- [ ] 2.19 **M2 (regla 1, posición):** mover la exclusión del marcador detrás del cálculo del destino y devolver por destino vacío.
+- [x] 2.18 **M1:** quitar la exclusión del marcador. Debe caer «marcador con destino».
+- [x] 2.19 **M2 (regla 1, posición):** mover la exclusión del marcador detrás del cálculo del destino y devolver por destino vacío.
   Debe caer «marcador con destino».
-- [ ] 2.20 **M3 (regla 1, posición):** invertir el orden de emisión a `[transición, traspaso]`. Debe caer «misma hora».
-- [ ] 2.21 **M4:** sustituir `areasSiguientes` por una lista fija. Debe caer «catálogo de equipo nuevo».
-- [ ] 2.22 **M5 (regla 2):** añadir al compositor una consulta a `prioridad_ajustes`. Debe caer la prueba de RQ-TZ-17.
-- [ ] 2.23 `git diff` de `traspaso.ts`, `historial.ts` y pruebas: no queda ninguna mutación; `historial.ts` conserva su `wc -l` de 2.1.
+- [x] 2.20 **M3 (regla 1, posición):** invertir el orden de emisión a `[transición, traspaso]`. Debe caer «misma hora».
+- [x] 2.21 **M4:** sustituir `areasSiguientes` por una lista fija. Debe caer «catálogo de equipo nuevo».
+- [x] 2.22 **M5 (regla 2):** añadir al compositor una consulta a `prioridad_ajustes`. Debe caer la prueba de RQ-TZ-17.
+- [x] 2.23 `git diff` de `traspaso.ts`, `historial.ts` y pruebas: no queda ninguna mutación; `historial.ts` conserva su `wc -l` de 2.1.
 
 **Bloque documental** (después del verde; sin menciones a reuniones)
-- [ ] 2.24 `docs/sdd/ENTRADA.md`: añadir al final E-219 (actor que no es persona; límite: un respaldo no se distingue de una
+- [x] 2.24 `docs/sdd/ENTRADA.md`: añadir al final E-219 (actor que no es persona; límite: un respaldo no se distingue de una
   persona), E-220 (protocolo de traspaso sin aprobar: reasignación con motivo, aviso personal, propietario del registro) y E-221
   (excepciones de traza y límite de S-2). Las tres con dueño Gerencia, formato de E-210…E-218.
-- [ ] 2.25 `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: añadir al final la corrección 26 (la línea de traspaso del
+- [x] 2.25 `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: añadir al final la corrección 26 (la línea de traspaso del
   maestro como «Propuesto R08.4» y la fila «sin empezar» quedan desactualizadas; cita `R08.4.md:2060-2062`, verificada), a
   continuación de la 25.
-- [ ] 2.26 En `apply-progress.md`: (a) casilla de la regla de mutación 3: el cambio no añade decisiones de cliente ni toca
+- [x] 2.26 En `apply-progress.md`: (a) casilla de la regla de mutación 3: el cambio no añade decisiones de cliente ni toca
   `apps/desk/src`, con la tabla decisión del cliente ↔ línea del servidor de `proposal.md`; (b) nota para el paquete de despliegue:
   cuatro columnas anulables en `public.remisiones` aplicadas por `migrate` al arrancar, sin variables ni flag ni relleno, comprobar
   las cuatro columnas tras el arranque (S-3); (c) línea única de cobertura para el `archive-report.md` (R-1): qué parte de F1B-05
   cubre (trazas y línea de traspaso) y qué deja fuera (visibilidad por área, protocolo sin aprobar), lo que sostiene `cierra: no`.
 
 **Cierre del lote 2**
-- [ ] 2.27 **Barrido de citas (regla de mutación 4):** `grep -rnoE "historial\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio (sin
+- [x] 2.27 **Barrido de citas (regla de mutación 4):** `grep -rnoE "historial\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio (sin
   `openspec/changes/archive/` ni este cambio) y segundo pase de la forma abreviada en los ficheros que ya citan el módulo;
   más el barrido de `ENTRADA.md` y `F0-01_Correcciones_para_el_maestro.md` por si algún texto añadido cita líneas. Comprobar
   CADA resultado contra el fichero, leyendo qué afirma la frase. Comprobar que el diseño acierta al afirmar cero
   desplazamientos. La lista va en `apply-progress.md`.
-- [ ] 2.28 **CIERRE LOTE 2:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` (avisos: no suben de 165) y, tras
+- [x] 2.28 **CIERRE LOTE 2:** `npm test`, `npm run typecheck`, `npm run lint -- --max-warnings 165` (avisos: no suben de 165) y, tras
   el commit del lote, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; anotar el CÓDIGO DE SALIDA de cada uno.
-- [ ] 2.29 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
+- [x] 2.29 Medida del intento: `git diff --shortstat --no-renames <partida>` más `wc -l` de lo nuevo sin trackear; registrarla.
   Si pasa de 720, parar y consultar.
 
 ---

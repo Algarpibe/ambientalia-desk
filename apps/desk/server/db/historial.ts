@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
-import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'
+import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
@@ -134,13 +134,13 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
   const { ticket, cliente } = await datosTicket(db, ticketId)
 
   const tr = await db.query(
-    'SELECT transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
+    'SELECT transition_id, transition_name, from_status, to_status, area, performed_by, performed_at, values FROM ticket_transitions WHERE ticket_id = $1',
     [ticketId],
   )
   const filasTr = tr.rows as Record<string, unknown>[]
   const nombres = await nombresDerivados(db, filasTr)
-  const transiciones = filasTr.map((f) =>
-    esCreacion(f) ? eventoCreacion(f, ticket, cliente) : eventoTransicion(f, nombres),
+  const transiciones = filasTr.flatMap((f) =>
+    esCreacion(f) ? [eventoCreacion(f, ticket, cliente)] : [...lineaTraspaso(f, nombres, ticket), eventoTransicion(f, nombres)],
   )
 
   // Consulta propia y no `listRemisionesByTicket`: aquélla filtra `anulada_at IS NULL` porque el

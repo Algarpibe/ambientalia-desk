@@ -115,7 +115,7 @@ describe('GET /api/tickets/:id/history', () => {
     await db.query("INSERT INTO tickets (id,number,subject,status) VALUES ('t2',2,'B','Ingresado')")
     await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at) VALUES ('t2','Habilitar','OV asignada','Ingresado','Admin',now())")
     const f = await request(app).get('/api/tickets/t2/history').set('Cookie', cookie)
-    expect(f.body[0]).toMatchObject({ title: 'Transición: Habilitar' })
+    expect(f.body.map((e: { title: string }) => e.title)).toEqual(['Traspaso: Admin → Servicio Técnico', 'Transición: Habilitar'])
     expect((await request(app).get('/api/tickets/t1/history')).status).toBe(401)
   })
 
@@ -132,7 +132,7 @@ describe('GET /api/tickets/:id/history', () => {
     expect(res.status).toBe(200)
     expect(res.body.map((e: { title: string }) => e.title)).toEqual([
       'Remisión de entrada creada',
-      'Transición: Habilitar',
+      'Traspaso: Admin → Servicio Técnico', 'Transición: Habilitar',
       'Ana ha publicado un comentario',
     ])
     expect((await request(app).get('/api/tickets/t1/history')).status).toBe(401)

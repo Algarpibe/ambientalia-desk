@@ -49,5 +49,77 @@ Método: `git grep -noE` con la ruta completa de las siete formas de `.ts` y de 
 ### Medida (1.34), sin commitear, partida `540f31c`
 `git diff --shortstat --no-renames 540f31c`: 12 ficheros, 130 inserciones y 62 borrados (192); más `wc -l` de lo nuevo sin trackear: 436 (cinco ficheros de código y prueba, 383, y este fichero, 53). **Total 628** (techo 800, objetivo 720). Ficheros binarios: ninguno.
 
-## Lote 2
-Pendiente.
+## Lote 2 — hecho (2.1 a 2.29; 2.28 a falta del detector de citas, que corre el orquestador tras el commit)
+
+Partida del lote 2: `4d88bd8`. Intento abierto por el orquestador; el apply no lo asienta ni commitea. Medidas previas (2.1): `historial.ts` 162 líneas, `ENTRADA.md` 2100, `F0-01_Correcciones_para_el_maestro.md` 1367.
+
+### Hipótesis de `design.md` §7 (2.3), ejecutada
+`areasSiguientes('Ingresado', catalogoDelTicket(...))` = `['Servicio Técnico']`: **se cumple**, «Ingresado» tiene área siguiente. Por eso se ponen rojas las pruebas existentes de 2.11-2.14. Además: `OV asignada` → `['Comercial']`, `Finalizado` → `[]`. Para la prueba de «Equipo nuevo» se buscó un estado donde los dos catálogos difieran: `Verificación` da `['Servicio Técnico']` con `TRANSITIONS_EQUIPO_NUEVO` y `[]` con `TRANSITIONS`.
+
+### Rojos observados
+| Tarea | Rojo literal |
+|---|---|
+| 2.4-2.10 | `Error: Cannot find module './traspaso' imported from '…/apps/desk/server/db/traspaso.test.ts'` (el módulo no existía; las pruebas del fichero no llegan a correr) |
+| 2.11 (`historial.test.ts:23-26`) | `expected [ …(3) ] to deeply equal [ …(2) ]` |
+| 2.12 (`historial.test.ts:69`) | `expected [ Array(3) ] to deep equally contain { label: 'Estado', …(1) }` (`eventos[0]` pasa a ser el traspaso) |
+| 2.13 (`historial.test.ts:189`) | `expected [ …(3) ] to deeply equal [ 'Transición: Habilitar', …(1) ]` |
+| 2.14 (`tickets.test.ts:118`) | `expected { eventName: 'AppTraspaso', …(4) } to match object { title: 'Transición: Habilitar' }` |
+| 2.14 (`tickets.test.ts:133-136`) | `expected [ 'Remisión de entrada creada', …(3) ] to deeply equal [ 'Remisión de entrada creada', …(2) ]` |
+
+Orden real: el rojo de las cinco pruebas existentes sólo existe una vez escrito el código (`traspaso.ts` y `historial.ts`), así que se ejecutaron DESPUÉS de 2.15-2.16 y ANTES de editarlas (sin ese código no hay nada que las ponga rojas); antes de tocar producción estaban verdes (57/57). `migracionMarcadorLectores.test.ts:62-71` sigue verde **sin editarse**; `historial.test.ts:161-176` (la cadena de derivaciones, filtra por «Derivado a») también, por D-16. Las pruebas del propio `traspaso.test.ts` salieron verdes a la primera tras escribir el módulo (20/20).
+
+### Pruebas existentes actualizadas (en sitio, sin cambiar su número de líneas)
+`historial.test.ts`: `:24` y `:189` ganan `'Traspaso: Admin → Servicio Técnico'` encima de su transición; `:68-71` busca la transición por título (`find`) y no por `eventos[0]`. `tickets.test.ts`: `:118` pasa a comparar los dos títulos y `:135` gana el traspaso.
+### Mutaciones (aplicadas, revertidas, y comprobado que no queda ninguna)
+| # | Mutación | Resultado |
+|---|---|---|
+| M1 | Quitar la exclusión del marcador (`traspaso.ts`) | Rojo, 2: «marcador con destino relleno y área siguiente: ninguna» → `expected [ { eventName: 'AppTraspaso', …(4) } ] to deeply equal []`, y «el marcador de F1F-01 no da traspaso…» → `expected [ Array(3) ] to deeply equal [ 'AppTransition', 'AppTransition' ]` |
+| M2 | Posición: exclusión del marcador detrás del cálculo del destino y por destino vacío (`!destino \|\| (marcador && to_status == null)`) | Rojo, las mismas 2 que M1. **Nota:** el diseño decía «mover y devolver por destino vacío»; mover la comprobación por identificador detrás del destino, sin cambiar su criterio, queda **verde** (mutación equivalente, la comprobé primero por error), así que la que discrimina es la que cambia el criterio |
+| M3 | Posición: emisión `[transición, traspaso]` (`historial.ts`) | Rojo, 2: «con la misma hora, el traspaso queda en el índice anterior al de su transición (D-13)» → `expected [ …(2) ] to deeply equal [ …(2) ]` y «resuelve el nombre de la persona derivada…» |
+| M4 | `areasSiguientes` sustituida por la lista fija `['Servicio Técnico']` | Rojo, 3: «varias áreas se unen…» (`expected 'Traspaso: Luz → Servicio Técnico' to be 'Traspaso: Luz → Comercial'`), «estado terminal sin persona…» y **«“Equipo nuevo” usa su catálogo y no TRANSITIONS»** → `expected [ { eventName: 'AppTraspaso', …(4) } ] to deeply equal []`. Cae el caso nombrado y dos más |
+| M5 | Regla 2: consulta a `prioridad_ajustes` en el compositor (`historial.ts`) | Rojo, 1: «historial.ts, ticketFuentes.ts, remisionRestaurada.ts y traspaso.ts no nombran esos registros» → `historial.ts nombra prioridad_ajustes: expected '…' not to contain 'prioridad_ajustes'`. La prueba de eventos NO cae (la consulta no emitía nada): lo que caza una consulta es la de texto; lo que caza un evento es la otra. Cada una vigila una cosa |
+
+Tras cada mutación se restauró desde una copia y se comprobó con `diff` que `traspaso.ts` e `historial.ts` quedaban idénticos; `git diff` de `historial.ts` sólo muestra los cuatro cambios del verde (consulta con `transition_id`, `flatMap`, y el `import` unido con `;` de la línea 3). `historial.ts` conserva 162 líneas.
+
+### Ejemplo literal de la línea (formato real, sin tocar `HistoryEvent`)
+Con persona (Ana deriva a Beto, etapa «Habilitar Servicio»):
+`title: "Traspaso: Ana → Beto"`, `details: [{ label: "De", value: "Ana" }, { label: "A", value: "Beto" }, { label: "Por la etapa", value: "Habilitar Servicio" }]`.
+Con área (Luz ejecuta una transición que deja el ticket en «Ingresado», sin `derivado_a`):
+`title: "Traspaso: Luz → Servicio Técnico"`, `details: [{ label: "De", value: "Luz" }, { label: "A", value: "Servicio Técnico" }, { label: "Por la etapa", value: "Habilitar Servicio" }]`. Varias áreas se unen con coma. `eventName: "AppTraspaso"`, `time` = el de la transición.
+
+### Bloque documental
+- 2.24 `docs/sdd/ENTRADA.md`: E-219 (actor que no es persona), E-220 (protocolo sin aprobar) y E-221 (excepciones de traza y límite de S-2/S-3) al final, tras E-218 (comprobado que era la última), dueño Gerencia, destino punto abierto (R-3). El hallazgo del lote 1 (el diseño omitía la prueba de `migrate.test.ts` que cuenta las sentencias tras `idx_prioridad_ajustes`, ajustada en sitio) **no va a la bandeja**: ya está resuelto y no tiene destino que decidir; queda como nota de este fichero (lote 1, «Hallazgos») y como lección de diseño: al añadir sentencias a `schema.sql`, buscar TODOS los recuentos de `migrate.test.ts`, no sólo el de `:376-377`.
+- 2.25 `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: corrección 26 al final, tras la 25; citas contra `…R08.4.md` verificadas por `grep -n`: `:2060-2062` (fila, estado y recomendación «sin empezar»), `:2029-2033` (registro del traspaso), `:2085` (actor de respaldo).
+- Ambos ficheros usan fin de línea CRLF; lo añadido también.
+
+### 2.26 (a) Casilla de la regla de mutación 3
+El cambio **no añade decisiones de cliente ni toca `apps/desk/src`** (ningún `.tsx`; la forma de `HistoryEvent` no cambia y el panel pinta hora, título y detalles). Decisión del cliente ↔ línea del servidor (de `proposal.md`):
+
+| Decisión del cliente | Línea del servidor que la impone |
+|---|---|
+| Con quién abre «Derivado a» | Ninguna: es una propuesta, no una guarda; el servidor sólo comprueba que la persona existe y está activa (`apps/desk/server/services/ticketService.ts:138-142`). Se declara y no se cambia |
+| Qué personas ofrece el desplegable | `apps/desk/server/services/ticketService.ts:138-142` |
+| La casilla comercial no es obligatoria | Catálogo compartido (`packages/shared/src/transitions.ts:189`), probado en `apps/desk/server/transitionExec.test.ts:101-111` |
+| Anular y restaurar sólo para administradores | `apps/desk/server/routes/remision.ts:329`, `apps/desk/server/routes/remision.ts:341` |
+
+### 2.26 (b) Nota para el paquete de despliegue
+Cuatro columnas anulables en `public.remisiones` (`restaurada_at`, `restaurada_por`, `anulacion_previa_at`, `anulacion_previa_por`), aplicadas por `migrate` al arrancar, idempotentes. **Sin variables de entorno, sin flag y sin relleno.** Tras el arranque, comprobar que las cuatro columnas existen (S-3). Las restauraciones y liberaciones anteriores al despliegue siguen sin rastro. Reversión: revertir la rama; las columnas quedan sin uso.
+
+### 2.26 (c) Línea de cobertura para el `archive-report.md` (R-1)
+`traspaso-y-trazas` cubre de F1B-05 las **trazas que faltaban** (restauración de remisión con rastro, actor en la liberación por borrado, barrido de escritores de `ticket_transitions`) y la **línea de traspaso derivada al leer** del historial; deja fuera la **visibilidad por área** (E-089) y el **protocolo de traspaso sin aprobar** (reasignación con motivo, aviso personal, propietario del registro; E-220), y por eso `cierra: no`.
+
+### Barrido de citas (regla de mutación 4, tarea 2.27)
+Método: `git grep -noE "historial\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio, sin `openspec/changes/archive/` ni este cambio, 15 citas; segundo pase de la forma abreviada en `openspec/specs/trazas/spec.md` (único fichero que las usa para este módulo) y barrido de lo añadido a `ENTRADA.md` y a las correcciones, leído contra el fichero.
+- **Desplazamiento: cero, confirmado.** `historial.ts` mide 162 líneas, igual que en 2.1. El diseño (§9) acierta.
+- **Líneas cuyo texto cambió** (`:3` import, `:137` consulta, `:142-143` composición): sólo se cita `:137`, en `migracionMarcadorLectores.test.ts:62` («lo enseñan como «Transición»»): sigue siendo la consulta de `ticket_transitions`. **Caso A, cierta.** La spec `trazas` cita `:136-144` (fuente de transiciones) y `:141` (`nombresDerivados`, sin cambio): ciertas.
+- **El resto** (`:157` unión, `:126-132`, `:131-161`, `:146-148`, `:27-31`, `:18-23`, `:66-121`, `:5-8`, `:44`, `:79`): líneas sin tocar, afirmación comprobada línea a línea. Caso A.
+- **Textos añadidos:** E-219 a E-221 citan `transitionActor.ts:3`, `remision.ts:344`, `tickets.ts:91` y las líneas `:2035`, `:2037`, `:2085` del maestro; la corrección 26, `:2060-2062`, `:2029-2033` y `:2085`. Todas verificadas contra el fichero.
+
+### Cierre (códigos de salida literales)
+- `npm test`: **exit 0** — 215 ficheros pasan, 2 saltados; 3345 pruebas pasan, 7 saltadas (lote 1: 3325; +20 de `traspaso.test.ts`).
+- `npm run typecheck`: **exit 0**.
+- `npm run lint -- --max-warnings 165`: **exit 0** — 0 errores, 165 avisos (no suben).
+- Detector de citas tras el commit: lo corre el orquestador.
+
+### Medida (2.29), sin commitear, partida `4d88bd8`
+`git diff --shortstat --no-renames 4d88bd8`: 7 ficheros, 157 inserciones y 43 borrados (200); más `wc -l` de lo nuevo sin trackear: 221 (`traspaso.ts` 46, `traspaso.test.ts` 175). **Total 421** (techo 800, objetivo 720), medido con este fichero ya escrito; la cifra cambia en pocas líneas al añadir esta. Ficheros binarios: ninguno.

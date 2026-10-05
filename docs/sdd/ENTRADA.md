@@ -2098,3 +2098,18 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué:** `decision/trabajo-del-30-09-sin-fila` adelantó a antes del 04/10 la averiguación de quién rellena la hoja de Google de remisiones y para qué (`decision/p14b-hoja-google`). No hay constancia de que se hiciera ni en esta bandeja, ni en los partes, ni en `openspec/config.yaml`, y ningún código lee hojas de Google. Por eso `migracion-tickets-abiertos` no construye el cotejo una a una del día del corte y lleva `cierra: no`.
 **Dueño:** Gerencia. **Qué desbloquea:** el cotejo de la hoja, que es lo que le falta a F1F-01 para cerrarse, y la decisión sobre F1B-16 y F1B-17.
 **Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-219 · 2026-10-05 · pregunta · **ABIERTA** — F1B-05: el actor que no es una persona no se distingue de una persona en el historial
+**Qué:** cuando no hay usuario identificado, los escritores usan un respaldo configurable por entorno (`apps/desk/server/transitionActor.ts:3`, valor por defecto «Equipo Técnico»), y desde `traspaso-y-trazas` también `restaurada_por` (`apps/desk/server/routes/remision.ts:344`) y `liberada_por` del borrado (`apps/desk/server/routes/tickets.ts:91`). Quedan escritos como un nombre más. No se marca al leer: el respaldo se compararía por nombre, así que una persona que se llame igual quedaría marcada y un valor antiguo distinto no. El maestro lo deja por decidir (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2085`).
+**Dueño:** Gerencia. **Qué desbloquea:** distinguir persona de proceso en el historial y en la línea de traspaso.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+
+## E-220 · 2026-10-05 · pregunta · **ABIERTA** — F1B-05: ¿se aprueba el protocolo de traspaso (reasignación con motivo, aviso personal, propietario del registro)?
+**Qué:** `traspaso-y-trazas` construye sólo la presentación derivada de la línea de traspaso (S-1): no aprueba el protocolo. Siguen sin construir la reasignación sin cambio de estado con motivo (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035`), el aviso personal adicional y la restricción por propietario del registro, aplazada por el propio maestro (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2037`). Hipótesis: el maestro no dice qué aviso personal pide además del que ya recibe la persona derivada.
+**Dueño:** Gerencia. **Qué desbloquea:** cerrar F1B-05 en esa parte (junto con E-089) y las filas que salgan de la decisión.
+**Estado:** abierta · **Destino:** punto abierto con dueño; si se aprueba, fila del §5 (R-3).
+
+## E-221 · 2026-10-05 · hallazgo · **ABIERTA** — F1B-05: excepciones de traza declaradas y límite de S-2/S-3 en la restauración
+**Qué:** sin fila en `ticket_transitions` y fuera del historial del ticket quedan los ajustes de prioridad y Top 5 (`prioridad_ajustes`), las asociaciones de orden de venta (`ov_asociaciones`) y los cambios del equipo (`equipos_cambios`), que tienen registro propio; sin registro por evento, la resolución del ticket (guarda sólo la última; hipótesis, no releída), los rellenos de datos, la sincronización de Zoho y el borrado de administrador. Una prueba fija que el historial no incorpora los tres registros propios (límite: mira cuatro ficheros, no lo que importan). La restauración guarda sólo el último ciclo anular→restaurar (S-2), y las restauraciones y liberaciones anteriores al despliegue siguen sin rastro (S-3); rellenarlas toca datos de producción.
+**Dueño:** Gerencia. **Qué desbloquea:** decidir si hace falta una tabla de eventos de remisión y si se rellena el rastro retroactivo.
+**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).

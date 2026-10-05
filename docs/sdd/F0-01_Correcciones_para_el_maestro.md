@@ -1365,3 +1365,30 @@ sigue pendiente (F1C-02).»
 
 **Lo que esta entrada NO pide.** No da por decididos los supuestos del cambio: están como preguntas en E-201 a E-205.
 No afirma que esté en producción.
+
+## La de F1B-05, línea de traspaso y trazas que faltan (26)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `traspaso-y-trazas`, `cierra: no`.
+
+### 26 · M1.9.2 y Anexo D — la línea de traspaso del historial está construida; el resto del protocolo sigue propuesto *(F1B-05)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2060-2062`, fila «Línea de traspaso en el
+historial, aviso personal y reasignación con motivo», con estado «Propuesto R08.4» y la recomendación de la fila F1B-05 «(sin empezar)».
+La descripción de la línea está en `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2029-2033`.
+
+**Texto actual:** «Línea de traspaso en el historial, aviso personal y reasignación con motivo» / «Propuesto R08.4» /
+«Recomendación: en la fila F1B-05, que el plan ya reserva para el «traspaso formal entre agentes al cambiar de fase» (sin empezar);
+queda por confirmar si entra antes del corte».
+
+**Texto propuesto:** separar la fila en dos. «Línea de traspaso en el historial» pasa a «[CONSTRUIDO]»: cada transición de la
+aplicación con destino resoluble deja en el historial una línea «Traspaso: origen → destino», con las etiquetas De, A y Por la etapa y la
+hora de la transición; el destino es la persona derivada o, si no la hay, las áreas siguientes del estado de llegada (las mismas que
+usa el aviso, sin restar las del actor), de modo que también sale cuando el área no cambia; la creación y el marcador de la migración no
+generan línea, y se compone al leer, sin escribir nada. «Aviso personal y reasignación con motivo» sigue «Propuesto R08.4», y la fila F1B-05
+pasa de «sin empezar» a «parcial»: falta la visibilidad por área (Anexo D, pendiente de respuesta) y la aprobación del protocolo. Y a
+continuación de M1.10 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2085`): «[CONSTRUIDO] Restaurar una remisión
+anulada deja quién y cuándo, y la anulación que deshace; borrar un ticket deja quién libera sus asociaciones de orden de venta; una
+prueba vigila que todo escritor del historial nombre al actor.»
+
+**Lo que esta entrada NO pide.** No da por aprobado el protocolo de traspaso: están como preguntas en E-219 a E-221. No afirma que esté en
+producción: las restauraciones anteriores al despliegue siguen sin rastro.
