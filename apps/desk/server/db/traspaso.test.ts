@@ -37,7 +37,7 @@ describe('lineaTraspaso · destino (RQ-TZ-18)', () => {
     expect(ev.title).toBe(`Traspaso: Ana → ${esperado.join(', ')}`)
   })
 
-  it('varias áreas se unen con coma, sin restar nada: «Comercial → Comercial» también sale (S-4)', () => {
+  it('una sola área, sin restar nada: «Comercial → Comercial» también sale (S-4)', () => {
     const [ev] = linea({ from_status: 'Ticket creado', to_status: 'OV asignada', performed_by: 'Luz' })
     expect(ev.title).toBe('Traspaso: Luz → Comercial')
     expect(areasSiguientes('OV asignada', catalogoDelTicket({ classification: 'Servicio', status: 'OV asignada' }))).toEqual(['Comercial'])
@@ -170,6 +170,29 @@ describe('excepciones de traza (RQ-TZ-17) · los registros propios no entran en 
     for (const f of ['historial', 'ticketFuentes', 'remisionRestaurada', 'traspaso']) {
       const texto = readFileSync(fileURLToPath(new URL(`./${f}.ts`, import.meta.url)), 'utf8')
       for (const tabla of ['prioridad_ajustes', 'ov_asociaciones', 'equipos_cambios']) expect(texto, `${f}.ts nombra ${tabla}`).not.toContain(tabla)
+    }
+  })
+})
+
+describe('lineaTraspaso · el destino por área sigue al catálogo (W-1 y W-2 del verify)', () => {
+  const areasDe = (estado: string) => areasSiguientes(estado, catalogoDelTicket({ classification: 'Servicio', status: estado }))
+
+  it('varias áreas: «En Espera de Repuestos» da más de una y salen todas, unidas con coma', () => {
+    const areas = areasDe('En Espera de Repuestos')
+    expect(areas.length).toBeGreaterThan(1)
+    const [ev] = linea({ to_status: 'En Espera de Repuestos' })
+    expect(ev.details).toContainEqual({ label: 'A', value: areas.join(', ') })
+    expect(ev.title).toBe(`Traspaso: Ana → ${areas.join(', ')}`)
+  })
+
+  it('para cada estado de llegada del catálogo, el destino es lo que da `areasSiguientes`: un área nueva llega sola', () => {
+    const estados = [...new Set(TRANSITIONS.map((t) => t.to))]
+    expect(estados.length).toBeGreaterThan(5)
+    for (const estado of estados) {
+      const areas = areasDe(estado)
+      const eventos = linea({ to_status: estado })
+      if (areas.length === 0) expect(eventos, estado).toEqual([])
+      else expect(eventos[0].details, estado).toContainEqual({ label: 'A', value: areas.join(', ') })
     }
   })
 })

@@ -89,7 +89,7 @@ Con área (Luz ejecuta una transición que deja el ticket en «Ingresado», sin 
 
 ### Bloque documental
 - 2.24 `docs/sdd/ENTRADA.md`: E-219 (actor que no es persona), E-220 (protocolo sin aprobar) y E-221 (excepciones de traza y límite de S-2/S-3) al final, tras E-218 (comprobado que era la última), dueño Gerencia, destino punto abierto (R-3). El hallazgo del lote 1 (el diseño omitía la prueba de `migrate.test.ts` que cuenta las sentencias tras `idx_prioridad_ajustes`, ajustada en sitio) **no va a la bandeja**: ya está resuelto y no tiene destino que decidir; queda como nota de este fichero (lote 1, «Hallazgos») y como lección de diseño: al añadir sentencias a `schema.sql`, buscar TODOS los recuentos de `migrate.test.ts`, no sólo el de `:376-377`.
-- 2.25 `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: corrección 26 al final, tras la 25; citas contra `…R08.4.md` verificadas por `grep -n`: `:2060-2062` (fila, estado y recomendación «sin empezar»), `:2029-2033` (registro del traspaso), `:2085` (actor de respaldo).
+- 2.25 `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: corrección 26 al final, tras la 25; citas contra el maestro verificadas por `grep -n`: `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2060-2062` (fila, estado y recomendación «sin empezar»), `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2029-2033` (registro del traspaso), `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2085` (actor de respaldo).
 - Ambos ficheros usan fin de línea CRLF; lo añadido también.
 
 ### 2.26 (a) Casilla de la regla de mutación 3
