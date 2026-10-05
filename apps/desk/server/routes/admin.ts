@@ -210,4 +210,34 @@ export function registerAdminRoutes(
       .catch((err) => logger.error({ err }, 'Backfill archivados falló'))
     res.json({ started: true })
   })
+
+  /**
+   * Migración de los tickets abiertos de Zoho Desk (F1F-01, `zoho-sync` RQ-ZS-17). SOLO super administrador.
+   *
+   * `corte` (instante ISO con desfase, D-11) es obligatorio y `aplicar` sólo admite `true`/`false` (D-12): se validan AQUÍ,
+   * antes de tocar la base, y detrás de `requireSuperAdmin`. Sin `aplicar=true` es una pasada en seco. Con una negativa
+   * —estados sin equivalencia entre lo que se migraría— responde `409` con el informe completo y sin escribir (D-13).
+   * La decisión es del servidor; el cliente no participa (regla invariable 13).
+   */
+  app.post('/api/admin/migrar-tickets-abiertos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+    const { corte: crudo, aplicar: pedido } = req.query
+    const corte = typeof crudo === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(crudo) ? new Date(crudo) : null
+    if (corte === null || Number.isNaN(corte.getTime()) || !corteSinDesbordar(crudo as string, corte)) { res.status(400).json({ error: 'Falta `corte`, o no es un instante ISO con desfase (p. ej. 2026-12-01T00:00:00-05:00)' }); return }
+    if (pedido !== undefined && pedido !== 'true' && pedido !== 'false') { res.status(400).json({ error: '`aplicar` sólo admite `true` o `false`' }); return }
+    const aplicar = pedido === 'true'
+    const informe = await migrarTicketsAbiertos(db, { corte, aplicar, actor: req.user?.name ?? 'desconocido' })
+    // El informe va al log además de a la respuesta: es la lista de trabajo de la pasada y quien la dispara desde una consola no siempre la conserva.
+    logger.info({ informe }, `Migración de tickets abiertos${aplicar ? '' : ' (en seco)'}: ${informe.migrables} migrables, ${informe.aplicado ? 'aplicada' : 'sin aplicar'}`)
+    res.status(aplicar && informe.negativa ? 409 : 200).json(informe)
+  }))
+}
+import { migrarTicketsAbiertos } from '../db/migracionTicketsAbiertos'
+
+/** V8 lleva `02-31` al 2 de marzo y `T24:00` al día siguiente sin error: el corte decide qué tickets de producción se tocan, así que un desplazamiento en silencio no vale. Los campos que escribió quien llama tienen que sobrevivir al viaje de ida y vuelta, en su mismo desfase. */
+function corteSinDesbordar(crudo: string, instante: Date): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.exec(crudo)
+  if (!m) return false
+  const desfaseMin = m[6] === 'Z' ? 0 : (m[6][0] === '-' ? -1 : 1) * (Number(m[6].slice(1, 3)) * 60 + Number(m[6].slice(4, 6)))
+  const local = new Date(instante.getTime() + desfaseMin * 60000)
+  return [local.getUTCFullYear(), local.getUTCMonth() + 1, local.getUTCDate(), local.getUTCHours(), local.getUTCMinutes()].join(',') === m.slice(1, 6).map(Number).join(',')
 }
