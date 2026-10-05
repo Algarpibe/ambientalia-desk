@@ -359,3 +359,58 @@ redespliegue en cada cambio. La línea que hay que añadir al fichero de ejemplo
 > # MIGRACION_TICKETS_HABILITADA: con `true`, la migración de tickets abiertos de F1F-01 acepta aplicar=true y escribe en producción; encender sólo el día del corte y apagar después. Ausente o con otro valor, sólo pasada en seco (403 al aplicar).
 > MIGRACION_TICKETS_HABILITADA=
 > ```
+
+## 12. Respaldo: la copia nocturna y la previa a cada cambio (F1F-02, `decision/p55-backup`)
+
+La App vuelca la base `desk` con `pg_dump`, la **cifra en el servidor** (AES-256-GCM) y la sube a un almacenamiento de
+objetos S3 compatible de un proveedor distinto de Google y de Hostinger (`decision/p55b-destino-copia`). Las fotos,
+adjuntos y firmas viven en la base (`packages/zoho-sync/src/db/schema.sql:293-294`), así que el volcado los incluye.
+Código: `apps/desk/server/respaldo/`.
+
+**`RESPALDO_HABILITADO`. Qué enciende:** con `true`, la App programa la copia nocturna a la hora `RESPALDO_HORA` y acepta
+`POST /api/admin/respaldo` para la copia previa; ausente o con cualquier otro valor, no se vuelca ni se sube nada y la ruta
+responde `403` (`apps/desk/server/respaldo/config.ts:31`). **Qué se rompe si se pone mal:** encendido sin el destino, las
+credenciales o la clave, cada copia falla y manda un correo al responsable nombrando la variable que falta; apagado por
+descuido, **no hay copia** y nadie recibe aviso, porque un respaldo apagado no es un fallo.
+
+| Variable | Qué es |
+|---|---|
+| `RESPALDO_HORA` | Hora de la copia nocturna, en la hora del contenedor (por defecto `3`) |
+| `RESPALDO_S3_ENDPOINT` | URL del almacenamiento, p. ej. `https://<cuenta>.r2.cloudflarestorage.com` o `https://s3.<región>.backblazeb2.com` |
+| `RESPALDO_S3_REGION` | Región que pide el proveedor (`auto` en R2) |
+| `RESPALDO_S3_BUCKET` | Nombre del almacenamiento |
+| `RESPALDO_S3_ACCESS_KEY_ID` / `RESPALDO_S3_SECRET_ACCESS_KEY` | Credenciales **propias del respaldo**, que no se usan para trabajar |
+| `RESPALDO_CLAVE_CIFRADO` | 32 bytes en base64 (`openssl rand -base64 32`). Sin ella **no se puede restaurar nada**: se guarda además fuera del gestor de secretos |
+| `RESPALDO_AVISO_EMAIL` | Correo del responsable (Gerencia). El aviso sale por `N8N_AVISOS_WEBHOOK_URL` |
+
+Las líneas que hay que añadir al fichero de ejemplo de entorno, tal cual:
+
+> ```
+> # RESPALDO_HABILITADO: con `true`, la App vuelca la base cada noche y antes de cada cambio, la cifra y la sube al almacenamiento S3; ausente u otro valor, no se copia nada. Sin destino, credenciales o clave, cada copia falla y avisa por correo.
+> RESPALDO_HABILITADO=
+> RESPALDO_HORA=3
+> RESPALDO_S3_ENDPOINT=
+> RESPALDO_S3_REGION=
+> RESPALDO_S3_BUCKET=
+> RESPALDO_S3_ACCESS_KEY_ID=
+> RESPALDO_S3_SECRET_ACCESS_KEY=
+> RESPALDO_CLAVE_CIFRADO=
+> RESPALDO_AVISO_EMAIL=
+> ```
+
+**Retención (7 diarias, 4 semanales, 12 mensuales).** La copia nocturna del día 1 va a `mensual/`, la del domingo a
+`semanal/` y el resto a `diaria/`; la previa, a `previa/` (`apps/desk/server/respaldo/respaldo.ts:29-33`). La aplicación
+**no borra nada**: en el almacenamiento se configuran el bloqueo de borrado y una regla de ciclo de vida por prefijo
+(`diaria/` 7 días, `semanal/` 28, `mensual/` 365; `previa/`, a decidir).
+
+**La copia previa, antes de cada publicación:** con sesión de administrador, desde la consola del navegador en la
+aplicación, `fetch('/api/admin/respaldo', { method: 'POST' })`. Responde `202` al arrancar; si falla, llega el correo.
+
+**Prueba de restauración:** bajar un objeto, descifrarlo con
+`RESPALDO_CLAVE_CIFRADO=… npx tsx apps/desk/server/respaldo/descifrarCli.ts <objeto> <salida.dump>` y restaurarlo con
+`pg_restore` en una base **aparte**, nunca sobre `desk`.
+
+**Pendiente de persona, y ninguna sesión lo hace:** elegir el proveedor (cuesta dinero); crear el almacenamiento con el
+bloqueo de borrado y las reglas por prefijo; guardar credenciales y clave en el gestor de secretos; comprobar que la
+versión de `pg_dump` de la imagen (`Dockerfile:34`) es igual o mayor que la del servidor (`SELECT version();`); encender;
+lanzar la primera copia y hacer la primera prueba de restauración.

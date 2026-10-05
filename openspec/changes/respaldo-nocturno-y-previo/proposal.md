@@ -29,8 +29,8 @@ de borrado durante la retención. El proveedor sigue entre corchetes, y elegirlo
 - Retención 7 diarias, 4 semanales y 12 mensuales por **prefijo**: la copia nocturna del día 1 va a `mensual/`, la del
   domingo a `semanal/` y el resto a `diaria/`; la previa, a `previa/`. Borrar lo caducado lo hacen las reglas de ciclo de
   vida del almacenamiento, que configura la persona junto con el bloqueo de borrado.
-- `Dockerfile`: instala `postgresql-client` en la imagen de ejecución, en la misma línea del `npm ci` para no mover las
-  líneas citadas. `DEPLOY.md` documenta las variables.
+- `Dockerfile`: instala `postgresql-client` con un `RUN` propio al final del fichero, detrás del `CMD`, para no mover
+  las líneas citadas; dentro de la línea del `npm ci` rompía el guardián de `apps/desk/server/citas/guardianes.test.ts`. `DEPLOY.md` documenta las variables.
 
 ## Diseño
 

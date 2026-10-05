@@ -10,9 +10,10 @@
 - [x] 2.2b `dependencias.ts`: `pg_dump`, `PUT` firmado con `Content-MD5` y aviso por el webhook de n8n.
 
 ## Lote 3 · cableado (intento 3)
-- [ ] 2.3 `POST /api/admin/respaldo`: 401, 403 de rol, 403 de interruptor, 409 en curso, 202.
-- [ ] 2.4 Copia nocturna en `apps/desk/server/index.ts` con `scheduleDailyAt`.
-- [ ] 2.5 `Dockerfile` con `postgresql-client`; `DEPLOY.md` con las variables, sus dos frases y las líneas del fichero de ejemplo.
+- [x] 2.3 `POST /api/admin/respaldo`: 401, 403 de rol, 403 de interruptor, 409 en curso, 202.
+- [x] 2.4 Copia nocturna en `apps/desk/server/index.ts` con `scheduleDailyAt`.
+- [x] 2.6 `descifrarCli.ts` para la prueba de restauración (la clave llega por entorno).
+- [x] 2.5 `Dockerfile` con `postgresql-client`; `DEPLOY.md` con las variables, sus dos frases y las líneas del fichero de ejemplo.
 
 ## Tareas de persona — archivar no las da por hechas
 Dueño: la persona con acceso a producción y Gerencia (proveedor). Destino: `archive-report.md` y el paquete de

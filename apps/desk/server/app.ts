@@ -16,7 +16,7 @@ import { registerDirectoryRoutes } from './routes/directory'
 import { registerCatalogoRoutes } from './routes/catalogo'
 import { registerEquipoRoutes } from './routes/equipos'
 import { registerAnalisisRoutes } from './routes/analisis'
-import { registerAdminRoutes } from './routes/admin'
+import { registerAdminRoutes } from './routes/admin'; import { registerRespaldoRoutes, type RespaldadorRuta } from './routes/respaldo'
 import { registerAttachmentRoutes } from './routes/attachment'
 import { registerRemisionRoutes } from './routes/remision'
 import { registerAvisosRoutes } from './routes/avisos'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'; import { OvYaAsociadaError } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { registerContratosRoutes } from './routes/contratos'; import { registerPrioridadRoutes } from './routes/prioridad'; import { registerCertificadoFabricaRoutes } from './routes/certificadoFabrica'; import { registerAltaManualRoutes } from './routes/altaManual'; import { registerNovedadesRoutes } from './routes/novedades'; import { registerIndicadoresRoutes } from './routes/indicadores'
@@ -28,10 +28,10 @@ interface Deps {
   db: Queryable
   zohoFetch: (path: string, init?: RequestInit) => Promise<globalThis.Response>
   sync: Sync
-  config: AppConfig
+  config: AppConfig; respaldador?: RespaldadorRuta   // F1F-02: sin él, la ruta del respaldo no se registra
 }
 
-export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
+export function createApp({ db, zohoFetch, sync, config, respaldador }: Deps): Express {
   const app = express()
   app.set('trust proxy', 1) // detrás del proxy de EasyPanel → IP real para el rate-limit
   app.use(helmet({ contentSecurityPolicy: false })) // CSP afinada = deuda (no romper el SPA)
@@ -54,7 +54,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   registerCatalogoRoutes(app, { db })
   registerEquipoRoutes(app, { db })
   registerAnalisisRoutes(app, { db })
-  registerAdminRoutes(app, { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada: config.migracionTicketsHabilitada })
+  registerAdminRoutes(app, { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada: config.migracionTicketsHabilitada }); if (respaldador) registerRespaldoRoutes(app, { db, respaldador })
   registerAttachmentRoutes(app, { db, zohoFetch })
   registerRemisionRoutes(app, { db, config })
   registerAvisosRoutes(app, { db })

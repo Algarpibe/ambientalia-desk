@@ -27,3 +27,8 @@ EXPOSE 3001
 # El entrypoint se elige por APP_ENTRYPOINT (default = la app web/API en apps/desk).
 # El worker zoho-hub-sync usa la MISMA imagen con APP_ENTRYPOINT=apps/hub-sync/src/hub-sync.ts.
 CMD ["sh", "-c", "npx tsx \"${APP_ENTRYPOINT:-apps/desk/server/index.ts}\""]
+
+# F1F-02 (RQ-ZS-20): `pg_dump` para el respaldo de la App (`apps/desk/server/respaldo/`). Va al final, detrás del CMD, a
+# propósito: el orden de un RUN respecto al CMD no importa, y aquí no desplaza ninguna línea citada de este fichero. Su
+# versión tiene que ser igual o mayor que la del servidor Postgres (hipótesis H-1 de la propuesta; la comprueba la persona).
+RUN apk add --no-cache postgresql-client

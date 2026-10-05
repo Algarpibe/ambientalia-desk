@@ -74,7 +74,7 @@ export function crearRespaldador(cfg: ConfigRespaldo, deps: Dependencias) {
   }
 
   return {
-    enCurso: () => enCurso,
+    habilitado: cfg.habilitado, enCurso: () => enCurso,
     /** `'en-curso'` si ya hay una copia corriendo: dos `pg_dump` a la vez sólo duplican la carga. */
     async lanzar(motivo: Motivo): Promise<Resultado | 'en-curso'> {
       if (!cfg.habilitado) return { hecho: false, motivo: 'RESPALDO_HABILITADO apagado' }

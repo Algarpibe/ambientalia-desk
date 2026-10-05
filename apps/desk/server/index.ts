@@ -12,7 +12,7 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'
+import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -46,7 +46,7 @@ async function main() {
     }
   }
 
-  const app = createApp({ db: pool, zohoFetch, sync, config })
+  const app = createApp({ db: pool, zohoFetch, sync, config, respaldador })
 
   if (process.env.NODE_ENV === 'production') {
     const dist = path.resolve(process.cwd(), 'dist')
@@ -91,7 +91,17 @@ async function main() {
     p.catch((err) => logger.error({ err }, 'Sync incremental falló'))
       .finally(() => { syncing = false })
   }, config.syncIntervalMs)
+
+  // F1F-02 (RQ-ZS-20): la copia nocturna. Sólo se programa con el interruptor encendido; encenderlo pide reiniciar la App.
+  if (configRespaldo.habilitado) {
+    scheduleDailyAt(configRespaldo.hora, async () => { logger.info({ r: await respaldador.lanzar('nocturna') }, 'Respaldo nocturno terminado') })
+    logger.info(`Respaldo nocturno programado (diario ${configRespaldo.hora}:00, hora del contenedor)`)
+  }
 }
+
+// F1F-02 (RQ-ZS-20): un solo respaldador por proceso, para que la ruta y la copia nocturna compartan la guarda de «en curso».
+const configRespaldo = cargarConfigRespaldo()
+const respaldador = crearRespaldador(configRespaldo, dependenciasReales(configRespaldo, config))
 
 main().catch((err) => {
   logger.error({ err }, 'Fallo al arrancar el servidor')
