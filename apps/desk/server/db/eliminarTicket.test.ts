@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from './eliminarTicket'; import { asociarOV, listarAsociaciones } from '@ambientalia/zoho-sync/db/ovAsociaciones'
+import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from './eliminarTicket'; import { asociarOV, listarAsociaciones, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 
 let db: Queryable
 beforeEach(async () => {
@@ -60,7 +60,7 @@ describe('eliminarTicket', () => {
     await ticketCompleto('app-1', 10000, 'rem-1')
     await ticketCompleto('app-2', 10001, 'rem-2')
 
-    await eliminarTicket(db, 'app-1')
+    await eliminarTicket(db, 'app-1', { actor: 'Beto' })
 
     expect(await huellaDe('app-1', 'rem-1')).toBe(0)
     // 11 filas: 1 por hija + 2 lecturas + la cabecera.
@@ -81,7 +81,7 @@ describe('eliminarTicket', () => {
   it('el simulacro y la ejecución real devuelven lo mismo', async () => {
     await ticketCompleto('app-1', 10000, 'rem-1')
     const seco = await eliminarTicket(db, 'app-1', { dryRun: true })
-    const real = await eliminarTicket(db, 'app-1')
+    const real = await eliminarTicket(db, 'app-1', { actor: 'Beto' })
     expect(real).toEqual({ ...seco, dryRun: false })
   })
 
@@ -99,7 +99,7 @@ describe('eliminarTicket', () => {
     await ticketCompleto('app-1', 10000, 'rem-1')
     await ticketCompleto('app-2', 10001, 'rem-2')
 
-    await eliminarTicket(db, 'app-1')
+    await eliminarTicket(db, 'app-1', { actor: 'Beto' })
 
     expect(await contar('remision_fotos', 'remision_id', 'rem-1')).toBe(0)
     expect(await contar('remision_fotos', 'remision_id', 'rem-2')).toBe(1)
@@ -113,12 +113,12 @@ describe('eliminarTicket', () => {
   it('se niega a borrar un ticket de Zoho aunque tenga managed_by_app, y no borra nada', async () => {
     await ticketCompleto('12345', 987, 'rem-z')
 
-    await expect(eliminarTicket(db, '12345')).rejects.toThrow(TicketNoBorrable)
+    await expect(eliminarTicket(db, '12345', { actor: 'Beto' })).rejects.toThrow(TicketNoBorrable)
     expect(await huellaDe('12345', 'rem-z')).toBe(11)
   })
 
   it('un ticket que no existe lanza TicketNoEncontrado', async () => {
-    await expect(eliminarTicket(db, 'app-inventado')).rejects.toThrow(TicketNoEncontrado)
+    await expect(eliminarTicket(db, 'app-inventado', { actor: 'Beto' })).rejects.toThrow(TicketNoEncontrado)
   })
 
   it('una remisión histórica sin resultado no revienta y se cuenta aparte', async () => {
@@ -176,7 +176,7 @@ describe('eliminarTicket · asociaciones OV', () => {
     await asociar('app-1', 'OV-2026-601', 'so-601')
     await asociar('app-2', 'OV-2026-602', 'so-602')
 
-    await eliminarTicket(db, 'app-1')
+    await eliminarTicket(db, 'app-1', { actor: 'Beto' })
 
     const propia = await listarAsociaciones(db, 'app-1')
     expect(propia).toHaveLength(1) // la fila se conserva (RQ-TC-17: nunca hay DELETE)
@@ -189,7 +189,7 @@ describe('eliminarTicket · asociaciones OV', () => {
   it('tras eliminar, la OV es reasociable a otro ticket sin chocar con el índice único', async () => {
     await ticketCompleto('app-1', 10000, 'rem-1')
     await asociar('app-1', 'OV-2026-601', 'so-601')
-    await eliminarTicket(db, 'app-1')
+    await eliminarTicket(db, 'app-1', { actor: 'Beto' })
 
     await expect(asociar('app-3', 'OV-2026-601', 'so-601')).resolves.toMatchObject({ ticket_id: 'app-3', liberada_at: null })
   })
@@ -201,5 +201,36 @@ describe('eliminarTicket · asociaciones OV', () => {
     await eliminarTicket(db, 'app-1', { dryRun: true })
 
     expect((await listarAsociaciones(db, 'app-1'))[0].liberada_at).toBeNull()
+  })
+})
+
+/** RQ-TZ-15 · borrar un ticket libera sus asociaciones vigentes y deja escrito quién lo hizo. */
+describe('eliminarTicket · el actor llega a `liberada_por`', () => {
+  const asociar = (ticketId: string, numero: string, so: string) =>
+    asociarOV(db, { ticketId, numero, salesorderId: so, origen: 'alta', actor: 'test', fechaOrdenCompra: null })
+
+  it('con dos vigentes y una liberada por otra persona, las vigentes quedan con el actor y la ya liberada conserva el suyo', async () => {
+    await ticketCompleto('app-1', 10000, 'rem-1')
+    await asociar('app-1', 'OV-2026-701', 'so-701'); await asociar('app-1', 'OV-2026-702', 'so-702')
+    const previa = await asociar('app-1', 'OV-2026-703', 'so-703')
+    await liberarAsociacion(db, previa.id, 'Carla', 'Error de captura')
+
+    await eliminarTicket(db, 'app-1', { actor: 'Beto' })
+
+    const filas = await listarAsociaciones(db, 'app-1')
+    expect(filas).toHaveLength(3)
+    const porNumero = (n: string) => filas.find((f) => f.numero === n)!
+    expect(porNumero('OV-2026-701')).toMatchObject({ liberada_por: 'Beto', motivo_liberacion: 'Ticket eliminado' })
+    expect(porNumero('OV-2026-702')).toMatchObject({ liberada_por: 'Beto', motivo_liberacion: 'Ticket eliminado' })
+    expect(porNumero('OV-2026-703')).toMatchObject({ liberada_por: 'Carla', motivo_liberacion: 'Error de captura' })
+  })
+
+  it('el simulacro no escribe `liberada_por`', async () => {
+    await ticketCompleto('app-1', 10000, 'rem-1')
+    await asociar('app-1', 'OV-2026-701', 'so-701')
+
+    await eliminarTicket(db, 'app-1', { dryRun: true })
+
+    expect((await listarAsociaciones(db, 'app-1'))[0]).toMatchObject({ liberada_at: null, liberada_por: null })
   })
 })

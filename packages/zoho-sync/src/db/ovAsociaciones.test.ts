@@ -106,7 +106,7 @@ describe('liberarAsociacionesDeTicket', () => {
     await asociarOV(db, { ticketId: 't7', numero: 'OV-2026-006', salesorderId: 'so-6', origen: 'alta', actor: 'tester', fechaOrdenCompra: null })
     await asociarOV(db, { ticketId: 't7', numero: 'OV-2026-007', salesorderId: 'so-7', origen: 'remision', actor: 'tester', fechaOrdenCompra: null })
 
-    await liberarAsociacionesDeTicket(db, 't7', 'Ticket eliminado')
+    await liberarAsociacionesDeTicket(db, 't7', 'Ticket eliminado', 'Beto')
 
     const filas = await listarAsociaciones(db, 't7')
     expect(filas).toHaveLength(2)
@@ -171,5 +171,36 @@ describe('asociarDesdeTransicion · origen de la OV adicional', () => {
     const fila = (await listarAsociaciones(db, 't-o2'))[0]
     expect(fila.origen).toBe('aprobacion_y_repuestos')
     expect(String(fila.fecha_orden_compra)).toContain('2026')
+  })
+})
+
+/** RQ-TZ-15 · la liberación por borrado del ticket nombra a la persona que borra. */
+describe('liberarAsociacionesDeTicket · actor (RQ-TZ-15)', () => {
+  const asociar = (ticketId: string, numero: string, so: string) =>
+    asociarOV(db, { ticketId, numero, salesorderId: so, origen: 'alta', actor: 'tester', fechaOrdenCompra: null })
+
+  it('dos vigentes quedan con `liberada_por` y la ya liberada conserva el suyo y su instante', async () => {
+    await asociar('t-l1', 'OV-2026-801', 'so-801'); await asociar('t-l1', 'OV-2026-802', 'so-802')
+    const previa = await asociar('t-l1', 'OV-2026-803', 'so-803')
+    await liberarAsociacion(db, previa.id, 'Carla', 'Error de captura')
+    const antes = (await listarAsociaciones(db, 't-l1')).find((f) => f.numero === 'OV-2026-803')!
+
+    await liberarAsociacionesDeTicket(db, 't-l1', 'Ticket eliminado', 'Beto')
+
+    const filas = await listarAsociaciones(db, 't-l1')
+    const vigentes = filas.filter((f) => f.numero !== 'OV-2026-803')
+    expect(vigentes).toHaveLength(2)
+    expect(vigentes.map((f) => [f.liberada_por, f.motivo_liberacion])).toEqual([['Beto', 'Ticket eliminado'], ['Beto', 'Ticket eliminado']])
+    expect(vigentes.every((f) => f.liberada_at !== null)).toBe(true)
+    const despues = filas.find((f) => f.numero === 'OV-2026-803')!
+    expect(despues).toMatchObject({ liberada_por: 'Carla', motivo_liberacion: 'Error de captura' })
+    expect(despues.liberada_at).toEqual(antes.liberada_at)
+  })
+
+  it('un ticket sin vigentes no falla ni actualiza: la liberada de otro ticket no se toca', async () => {
+    await asociar('t-l2', 'OV-2026-811', 'so-811')
+    await expect(liberarAsociacionesDeTicket(db, 't-sin-ninguna', 'Ticket eliminado', 'Beto')).resolves.toBeUndefined()
+    expect(await listarAsociaciones(db, 't-sin-ninguna')).toEqual([])
+    expect((await listarAsociaciones(db, 't-l2'))[0]).toMatchObject({ liberada_at: null, liberada_por: null })
   })
 })

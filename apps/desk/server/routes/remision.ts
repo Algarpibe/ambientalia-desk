@@ -341,7 +341,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
   app.post('/api/remisiones/:id/restaurar', requireAuth(db), requireAdmin, asyncHandler(async (req, res) => {
     const id = String(req.params.id)
     if (!(await getRemision(db, id))) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
-    await restaurarRemision(db, id)
+    await restaurarRemision(db, id, req.user?.name ?? TRANSITION_ACTOR)
     const rem = await getRemision(db, id)
     await sincronizarEstadoPorRemision(db, rem!.ticketId, req.user?.name ?? TRANSITION_ACTOR)
     res.json(rem)

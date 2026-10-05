@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
-import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'
+import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
@@ -117,7 +117,7 @@ function eventosRemision(fila: Record<string, unknown>): HistoryEvent[] {
       details: detalles([['Anulada por', fila.anulada_por]]),
     })
   }
-  return out
+  return [...out, ...eventosRestauracion(fila)]
 }
 
 /** El orden que `HistoriaPanel` espera: lo más reciente arriba. */
@@ -148,7 +148,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
   // registra lo que PASÓ, y una remisión anulada pasó (y su anulación también).
   const rem = await db.query(
     `SELECT id, tipo, fecha, tipo_servicio, incluye, observaciones, creado_por, estado, resultado,
-            created_at, resuelto_at, anulada_at, anulada_por
+            created_at, resuelto_at, anulada_at, anulada_por, restaurada_at, restaurada_por, anulacion_previa_at, anulacion_previa_por
        FROM remisiones WHERE ticket_id = $1`,
     [ticketId],
   )

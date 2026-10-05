@@ -14,7 +14,7 @@ import { asyncHandler } from '../util/asyncHandler'; import { leerBusqueda, busq
 import { crearSubida } from '../util/subida'
 import { createManagedTicket, executeTransition } from '../services/ticketService'
 import { getResolution, saveResolution, addResolutionAttachment, getResolutionAttachmentContent, deleteResolutionAttachment, deleteResolution } from '../db/resolutions'
-import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from '../db/eliminarTicket'
+import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from '../db/eliminarTicket'; import { TRANSITION_ACTOR } from '../transitionActor'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'])
 
@@ -88,7 +88,7 @@ export function registerTicketRoutes(
   app.delete('/api/tickets/:id', requireSuperAdmin, asyncHandler(async (req, res) => {
     const id = String(req.params.id)
     try {
-      const resumen = await eliminarTicket(db, id, { dryRun: req.query.dryRun === 'true' })
+      const resumen = await eliminarTicket(db, id, req.query.dryRun === 'true' ? { dryRun: true } : { actor: req.user?.name ?? TRANSITION_ACTOR })
       if (!resumen.dryRun) req.log.warn({ resumen, actor: req.user?.name }, 'Ticket eliminado')
       res.json(resumen)
     } catch (e) {

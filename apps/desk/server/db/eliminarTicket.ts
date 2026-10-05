@@ -99,7 +99,7 @@ function rastroDe(remisionId: string, tipo: unknown, fecha: unknown, resultado: 
 export async function eliminarTicket(
   db: Queryable,
   ticketId: string,
-  opts: { dryRun?: boolean } = {},
+  opts: { dryRun: true } | { dryRun?: false; actor: string },
 ): Promise<ResumenEliminacion> {
   const t = await db.query('SELECT id, number, subject, status, managed_by_app FROM tickets WHERE id = $1', [ticketId])
   const fila = filas(t.rows)[0]
@@ -151,7 +151,7 @@ export async function eliminarTicket(
   }
   if (opts.dryRun) return resumen
 
-  await enTransaccion(db, async (q) => { await liberarAsociacionesDeTicket(q, ticketId, 'Ticket eliminado')
+  await enTransaccion(db, async (q) => { await liberarAsociacionesDeTicket(q, ticketId, 'Ticket eliminado', opts.actor)
     for (const { tabla, col } of TABLAS) {
       const valores = col === 'remision_id' ? remisionIds : [ticketId]
       if (valores.length === 0) continue

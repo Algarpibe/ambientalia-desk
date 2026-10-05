@@ -716,3 +716,9 @@ ALTER TABLE public.prioridad_ajustes ALTER COLUMN a DROP NOT NULL;
 -- Sin relleno ni CHECK de lista: la lista cerrada la impone el servidor. tickets es de DESK_TABLES y va sin calificar
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS liberacion_motivo text;
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS fecha_prevista_facturacion date;
+-- Rastro de la restauracion de una remision y de la anulacion que deshace (traspaso-y-trazas, F1B-05). Todas NULL-ables y SIN relleno: NULL = nunca restaurada, o restaurada antes de este cambio
+-- Quien restauro, cuando, y la persona y el instante de la anulacion previa. remisiones es de PUBLIC_TABLES: las cuatro van CALIFICADAS
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS restaurada_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS restaurada_por text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulacion_previa_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulacion_previa_por text;
