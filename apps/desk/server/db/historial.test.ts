@@ -21,7 +21,7 @@ describe('getHistorialTicket', () => {
     await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,area,performed_by,performed_at) VALUES ('t1','Habilitar Servicio','OV asignada','Ingresado','Comercial','Admin','2026-08-02T10:00:00Z')")
     const { eventos } = await getHistorialTicket(db, 't1')
     expect(eventos.map((e) => e.title)).toEqual([
-      'Transición: Habilitar Servicio',
+      'Traspaso: Admin → Servicio Técnico', 'Transición: Habilitar Servicio',
       'Ana ha publicado un comentario',
     ])
   })
@@ -65,10 +65,10 @@ describe('getHistorialTicket', () => {
     await insTicket('t4')
     await db.query("INSERT INTO ticket_transitions (ticket_id,transition_name,from_status,to_status,performed_by,performed_at,values) VALUES ('t4','Diagnosticar','Ingresado','En Proceso','Juan','2026-08-03T10:00:00Z',$1)",
       [JSON.stringify({ diagnostico: 'Sensor averiado', requiere_repuestos: 'Sí' })])
-    const { eventos } = await getHistorialTicket(db, 't4')
-    expect(eventos[0].details).toContainEqual({ label: 'Estado', value: 'Ingresado → En Proceso' })
-    expect(eventos[0].details).toContainEqual({ label: 'Diagnostico', value: 'Sensor averiado' })
-    expect(eventos[0].details).toContainEqual({ label: 'Requiere repuestos', value: 'Sí' })
+    const ev = (await getHistorialTicket(db, 't4')).eventos.find((e) => e.title === 'Transición: Diagnosticar')!
+    expect(ev.details).toContainEqual({ label: 'Estado', value: 'Ingresado → En Proceso' })
+    expect(ev.details).toContainEqual({ label: 'Diagnostico', value: 'Sensor averiado' })
+    expect(ev.details).toContainEqual({ label: 'Requiere repuestos', value: 'Sí' })
   })
 
   it('una remisión resuelta produce creada + desenlace, con el enlace a Drive', async () => {
@@ -186,7 +186,7 @@ describe('getHistorialTicket', () => {
     const { eventos, sincronizarConZoho } = await getHistorialTicket(db, '98765')
     expect(sincronizarConZoho).toBe('en-segundo-plano')
     // Y las dos fuentes salen juntas, que es el otro medio bug del mismo sitio.
-    expect(eventos.map((e) => e.title)).toEqual(['Transición: Habilitar', 'Ana ha publicado un comentario'])
+    expect(eventos.map((e) => e.title)).toEqual(['Traspaso: Admin → Servicio Técnico', 'Transición: Habilitar', 'Ana ha publicado un comentario'])
   })
 })
 

@@ -147,9 +147,9 @@ export async function anularRemision(db: Queryable, id: string, quien: string | 
   await db.query('UPDATE remisiones SET anulada_at = now(), anulada_por = $2 WHERE id = $1', [id, quien])
 }
 
-/** Deshace una anulación: la remisión vuelve a listarse en el panel del ticket y en el listado. */
-export async function restaurarRemision(db: Queryable, id: string): Promise<void> {
-  await db.query('UPDATE remisiones SET anulada_at = NULL, anulada_por = NULL WHERE id = $1', [id])
+/** Deshace una anulación y deja rastro (RQ-TZ-14): quién y cuándo, y la anulación que deshace, copiada ANTES de vaciarla. Vigente: no escribe. */
+export async function restaurarRemision(db: Queryable, id: string, quien: string): Promise<void> {
+  await db.query('UPDATE remisiones SET anulacion_previa_at = anulada_at, anulacion_previa_por = anulada_por, restaurada_at = now(), restaurada_por = $2, anulada_at = NULL, anulada_por = NULL WHERE id = $1 AND anulada_at IS NOT NULL', [id, quien])
 }
 
 /**

@@ -129,11 +129,11 @@ export async function liberarAsociacion(
  * bloquearia la OV en el indice para siempre, y ninguna de las tres puertas la veria libre (las tres
  * leen `tickets`, que ya no existiria).
  */
-export async function liberarAsociacionesDeTicket(q: Queryable, ticketId: string, motivo: string): Promise<void> {
+export async function liberarAsociacionesDeTicket(q: Queryable, ticketId: string, motivo: string, actor: string): Promise<void> {
   await q.query(
-    `UPDATE ov_asociaciones SET liberada_at = now(), motivo_liberacion = $2
+    `UPDATE ov_asociaciones SET liberada_at = now(), liberada_por = $3, motivo_liberacion = $2
      WHERE ticket_id = $1 AND liberada_at IS NULL`,
-    [ticketId, motivo],
+    [ticketId, motivo, actor],
   )
 }
 
