@@ -3813,6 +3813,35 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (orden de ejecución)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-01, F1B-05, F1B-09"
+  - clave: "decision/mapa-blueprint-generado"
+    fecha: "2026-09-10"
+    pregunta: |
+      ¿Se mantiene el mapa visual del blueprint (`docs/artefactos/blueprintserviciotecnico.html`), que F1A-05 y F1B-09
+      debían «regenerar» y para el que no hay generador en el repositorio (premisa falsa PF-1,
+      `openspec/config.yaml:1280-1285`)? Es la entrada 4 de las correcciones al plan.
+    respuesta_textual: |
+      «**Sí al mapa visual, sólo si se genera desde `transitions.ts`.** Un mapa hecho a mano —o regenerado
+      con IA leyendo el código— no se mantiene.
+
+      - `docs/artefactos/blueprintserviciotecnico.html` **se retira como histórico congelado en `a3a8f03`**,
+        precedente `docs/superpowers/`.
+      - Se sustituye por un diagrama derivado de `transitions.ts` mediante script, **con una prueba que
+        impide que quede desfasado**.»
+    consecuencias: |
+      (1) La cita de `respuesta_textual` es literal de `docs/sdd/Decisiones_Gerencia_2026-09-10.md:513-519`, el
+      documento donde la decisión quedó escrita con su clave (`:511`); no es una respuesta del panel.
+      (2) Supera el campo `correccion` de PF-1 (`openspec/config.yaml:1280-1285`): el generador ya no hay que
+      construirlo en F1A-05 ni en F1B-09. Existe (`packages/shared/src/mapaBlueprint.ts`,
+      `scripts/generar-mapa-blueprint.ts`), lo vigila una prueba (`packages/shared/src/mapaBlueprint.test.ts`) y lo
+      archivó `openspec/changes/archive/2026-09-22-generador-mapa-blueprint`. El campo de PF-1 no se reescribe: es
+      cierto de su fecha (caso B de la regla de mutación 4).
+      (3) Se registra el 2026-10-05 por E-229 (`docs/sdd/ENTRADA.md`), hallazgo B-8 de la auditoría de F1B-09: hasta
+      esa fecha la clave sólo vivía en el documento de decisiones del 10/09, que la sesión no carga, y aquí no existía.
+      La fecha de la decisión sigue siendo el 2026-09-10; va al final de la adenda por orden de registro, no de fecha.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/mapa-blueprint-generado) · docs/sdd/Decisiones_Gerencia_2026-09-10.md §9"
+    maestro_pasaje: "M11.6 (Herramientas de desarrollo y prototipado)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1A-06"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:

@@ -82,11 +82,11 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1B-02 | Hoja de vida, cuatro campos y enlace a Drive | M | antes del 14/12 | cerrada por archivo | `decision/p8-p54-drive` · `decision/e003b-registro-equipos` |
 | F1B-03 | Tipo de servicio y ticket sin OV, guarda de remisión vigente, OVI de garantía · **+ supresión de los prefijos en tickets nuevos** (E-094) | L + XS | antes del 14/12 | en curso | `decision/ovi-garantia-autor` · prefijos: E-094 y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1170` |
 | F1B-04 | Recepción unificada: rotulación y desplegables · **+ foto obligatoria en la remisión de entrada** (E-123, mitad de entrada) · **+ accesorios desde el catálogo de artículos** (E-100) | L (resta M) + S + S | antes del 14/12 | en curso | `decision/f1b04-rotulacion` · `decision/f1b04-desplegables` · `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4130-4135` |
-| F1B-05 | Roles, traspaso, checkbox comercial, trazas | M | antes del 14/12 | pendiente | plan R01.1 §5 |
+| F1B-05 | Roles, traspaso, checkbox comercial, trazas | M | antes del 14/12 | en curso | plan R01.1 §5 |
 | F1B-06 | Blueprints de equipo nuevo y soporte remoto (dos ramas) | L | antes del 14/12 | cerrada por archivo | `decision/flujos-comercial-posible-cliente` |
 | F1B-07 | Prioridad y «Mis tickets» · **+ propagar el Top 5 a los tickets abiertos** · **+ lista de «Remisión creada» para Comercial** | S + S + S | antes del 14/12 | en curso | `decision/top5-manual` · `decision/e099-orden-cola-taller` · `decision/cola-del-taller-los-tres-cabos` |
 | F1B-08 | Paridad de vistas con Zoho y tablero · **+ búsqueda por número de ticket y serial** | L (resta S–M) + S | antes del 14/12 | en curso | `decision/escalado-remision-creada` · `decision/p44-escritura-zoho` · `decision/anexo-3-alerta` · `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (1) |
-| F1B-09 | audit-F1B | S | antes del 14/12 | pendiente | plan R01.1 §5 |
+| F1B-09 | audit-F1B | S | antes del 14/12 | en curso | plan R01.1 §5 |
 | F1B-10 | Orden único de precedencia entre guardas | M | antes del 14/12 | cerrada por archivo | plan R01.1 §5 |
 | F1B-11 | OV ↔ ticket 1 : N, subOV de lote, registro de contrato, parche IV-11 | L (resta S) | antes del 14/12 | en curso | `decision/anexo-53-contratos` · `decision/e005b-parche-vehiculo` |
 | **F1B-12** | **Calendario laboral** (jornada, festivos, día hábil) | S | antes del 14/12 | cerrada por archivo | `decision/calendario-habil` |
@@ -122,7 +122,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1E-03 | Informe de salida con motivos tipificados | M | después del corte | pendiente | plan R01.1 §5 |
 | F1E-04 | Validación y firma (tres firmas) | M | después del corte | pendiente | `decision/roles-validacion-informe` |
 | F1E-05 | Flujo del informe en el maestro | doc | después del corte | pendiente | plan R01.1 §5 |
-| F1F-01 | Migración de tickets abiertos y fecha de corte | M | antes del 14/12 | pendiente | `decision/fecha-corte` · `decision/p14b-hoja-google` |
+| F1F-01 | Migración de tickets abiertos y fecha de corte | M | antes del 14/12 | en curso | `decision/fecha-corte` · `decision/p14b-hoja-google` |
 | F1F-02 | Respaldo y continuidad | M | antes del 14/12 | pendiente | `decision/p55-backup` · `decision/p55b-destino-copia` |
 | F1F-03 | Aceptación con servicios reales | sin talla (R01.1) | antes del 14/12 | pendiente | `decision/fecha-corte` |
 | F1F-04 | Formación, Zoho a solo lectura, audit-F1 | sin talla (R01.1) | antes del 14/12 | pendiente | `decision/fecha-corte` |
