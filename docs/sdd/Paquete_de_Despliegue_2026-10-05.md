@@ -57,6 +57,12 @@ no se repiten ni se han vuelto a leer; aquí sólo va lo nuevo. Cada dato lleva 
 > disponible. La pasada con `aplicar=true` toca datos de producción, necesita copia previa, sincronización reciente,
 > la aplicación en reposo y la fecha de corte que fije Gerencia (§5.1), y no la ejecuta ninguna sesión.
 
+> **Condición añadida el 2026-10-05 (E-231): encender `MIGRACION_TICKETS_HABILITADA` sólo el día del corte y apagarla
+> después.** La rama `interruptor-migracion-tickets` —pendiente de verificación del analista y **todavía no fusionada**,
+> así que no está en `64a3797`— añade esa variable, que nace cerrada: sin ella la ruta responde `403` a `aplicar=true` y
+> sólo deja la pasada en seco (`DEPLOY.md`, apartado 11). Si se publica `64a3797` **sin** esa rama, la ruta no tiene
+> interruptor y cualquier administrador puede aplicar (E-231): la condición de §5.1 entonces se cumple sólo por disciplina.
+
 ### 1.3 · F1B-05 · traspaso y trazas (`cierra: no`)
 
 - **Cuatro columnas nuevas en `public.remisiones`** (§2), que aplica la migración al arrancar la App.
@@ -111,6 +117,10 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulacion_previa_por text
 sólo devuelve `DEPLOY.md` fuera de `apps/`, `packages/`, `docs/` y `openspec/`), y el único `process.env` añadido
 en el código es `TEST_DATABASE_URL`, en una prueba (§1.1). Ningún interruptor de escritor nuevo: la migración de
 F1F-01 se gobierna con el parámetro `aplicar` de cada llamada, no con una variable.
+
+**Corrección del 2026-10-05 (E-231), válida sólo si se publica también la rama `interruptor-migracion-tickets`:** esa rama
+añade **una** variable nueva, `MIGRACION_TICKETS_HABILITADA`, que nace cerrada. **No se pone al publicar**: se enciende el
+día del corte y se apaga después (§5.1). La línea para el fichero de ejemplo de entorno está en `DEPLOY.md`, apartado 11.
 
 Pendiente de persona, heredado: añadir al fichero de ejemplo las tres líneas de `DB_SCHEMA`
 (`DEPLOY.md:335-343`) y comprobar su valor en los dos servicios (`DEPLOY.md:331-333`).
@@ -192,7 +202,9 @@ Tomadas de los tres informes de archivo. Archivar no las dio por hechas.
 | Copia de la base antes de aplicar | La persona con acceso a producción | Poder aplicar |
 | Sincronización completa y reciente justo antes | La que Gerencia designe (E-208) | Que no se congele un dato viejo |
 | Pasada en seco y lectura del informe | La persona con acceso a producción | Poder aplicar; si `arrastra` es verdadero, no aplicar y consultar |
+| Encender `MIGRACION_TICKETS_HABILITADA=true` y redesplegar, **sólo el día del corte** (E-231; si la rama del interruptor está publicada) | La persona con acceso a producción | Que `aplicar=true` no responda `403` |
 | Pasada con `aplicar=true`, con la aplicación en reposo y la fecha de corte que fije Gerencia | La persona con acceso a producción | La migración |
+| **Apagar** `MIGRACION_TICKETS_HABILITADA` y redesplegar en cuanto termine la pasada (E-231) | La persona con acceso a producción | Que ningún administrador pueda volver a aplicar |
 | Averiguación de la hoja de Google y cotejo una a una | Gerencia (E-218) | El cierre de F1F-01 |
 
 Además, E-207 a E-212 son seis preguntas a Gerencia que condicionan la ejecución

@@ -341,3 +341,21 @@ despliegue. Comprobarlo es tarea de persona: pestaña Environment de `ambientali
 > # Si en producción falta o no dice exactamente `desk` en la App y en el worker, el servicio deja de ver desk.tickets y migrate crea tablas vacías en public.
 > DB_SCHEMA=
 > ```
+
+## 11. `MIGRACION_TICKETS_HABILITADA`: el interruptor que deja APLICAR la migración de F1F-01 (E-231)
+
+**Qué enciende:** con `MIGRACION_TICKETS_HABILITADA=true` en el servicio App, `POST /api/admin/migrar-tickets-abiertos`
+acepta `aplicar=true` y migra de verdad todos los tickets abiertos de Zoho Desk; apagada —ausente o con cualquier otro
+valor— esa llamada responde `403` sin tocar la base, y la pasada en seco sigue disponible
+(`packages/zoho-sync/src/config.ts:123`, `apps/desk/server/routes/admin.ts:222`, `:250-255`). **Qué se rompe si se pone mal:**
+encendida fuera del día del corte, cualquier administrador —no sólo el superadministrador, que hoy es un alias
+(E-231)— puede pasar a gobierno de la aplicación todos los tickets abiertos con una sola llamada, y volver al código
+anterior no lo deshace; apagada el día del corte, la migración responde `403` y no se aplica.
+
+Se enciende **sólo el día del corte**, para la pasada con `aplicar=true`, y se **apaga** en cuanto termina, con un
+redespliegue en cada cambio. La línea que hay que añadir al fichero de ejemplo de entorno, tal cual:
+
+> ```
+> # MIGRACION_TICKETS_HABILITADA: con `true`, la migración de tickets abiertos de F1F-01 acepta aplicar=true y escribe en producción; encender sólo el día del corte y apagar después. Ausente o con otro valor, sólo pasada en seco (403 al aplicar).
+> MIGRACION_TICKETS_HABILITADA=
+> ```

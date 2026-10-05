@@ -54,7 +54,7 @@ export function createApp({ db, zohoFetch, sync, config }: Deps): Express {
   registerCatalogoRoutes(app, { db })
   registerEquipoRoutes(app, { db })
   registerAnalisisRoutes(app, { db })
-  registerAdminRoutes(app, { db, sync, measurer, detailBackfiller })
+  registerAdminRoutes(app, { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada: config.migracionTicketsHabilitada })
   registerAttachmentRoutes(app, { db, zohoFetch })
   registerRemisionRoutes(app, { db, config })
   registerAvisosRoutes(app, { db })

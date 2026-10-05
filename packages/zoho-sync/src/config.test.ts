@@ -29,6 +29,12 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...base, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/)
   })
 
+  it('MIGRACION_TICKETS_HABILITADA nace cerrada: sólo el literal "true" la enciende (E-231)', () => {
+    expect(loadConfig(base).migracionTicketsHabilitada).toBe(false)
+    for (const v of ['', 'false', 'TRUE', '1', 'yes']) expect(loadConfig({ ...base, MIGRACION_TICKETS_HABILITADA: v }).migracionTicketsHabilitada).toBe(false)
+    expect(loadConfig({ ...base, MIGRACION_TICKETS_HABILITADA: 'true' }).migracionTicketsHabilitada).toBe(true)
+  })
+
   it('lee ADMIN_EMAIL/ADMIN_PASSWORD (vacíos por defecto)', () => {
     // usa el env base del archivo (las variables Zoho requeridas)
     expect(loadConfig(base).adminEmail).toBe('')

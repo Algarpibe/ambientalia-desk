@@ -18,12 +18,12 @@ const SERVICIO = ['Servicio Técnico']
 async function tk(id: string, number: number, status: string): Promise<void> {
   await db.query("INSERT INTO tickets (id, number, subject, status, status_type, created_time) VALUES ($1,$2,'Asunto',$3,'Open','2026-10-01T10:00:00Z')", [id, number, status])
 }
-function espiar() {
+function espiar(habilitada = false) {
   const sqls: string[] = []
   const pool = db as unknown as { connect: () => Promise<{ query: Queryable['query']; release: () => void }> }
   const env = (q: Queryable['query']): Queryable['query'] => ((sql: string, p?: unknown[]) => { sqls.push(sql.replace(/\s+/g, ' ').trim()); return q(sql, p) }) as Queryable['query']
   const espia = { query: env(db.query.bind(db)), connect: async () => { const c = await pool.connect(); return { query: env(c.query.bind(c)), release: () => c.release() } } } as unknown as Queryable
-  return { app: appWith({}, espia).app, sqls }
+  return { app: appWith({ migracionTicketsHabilitada: habilitada }, espia).app, sqls }
 }
 const leyoTickets = (sqls: string[]) => sqls.some((s) => /FROM tickets WHERE \(status_type/i.test(s))
 const escribio = (sqls: string[]) => sqls.some((s) => /^(INSERT INTO ticket_transitions|UPDATE tickets)/i.test(s))
@@ -86,12 +86,12 @@ describe('guardas, en orden', () => {
 
   it('corte inválido con un sin equivalencia en la base ve 400, no 409', async () => {
     await tk('t9', 4900, 'Estado raro')
-    expect((await request(appWith().app).post(URL).set('Cookie', await adminCookie()).query({ corte: 'ayer', aplicar: 'true' })).status).toBe(400)
+    expect((await request(appWith({ migracionTicketsHabilitada: true }).app).post(URL).set('Cookie', await adminCookie()).query({ corte: 'ayer', aplicar: 'true' })).status).toBe(400)
   })
 
   it('un migrable y un sin equivalencia con aplicar=true no dejan ni INSERT ni UPDATE', async () => {
     await tk('t9', 4900, 'Estado raro')
-    const { app, sqls } = espiar()
+    const { app, sqls } = espiar(true)
     expect((await request(app).post(URL).set('Cookie', await adminCookie()).query({ corte: CORTE, aplicar: 'true' })).status).toBe(409)
     expect(escribio(sqls)).toBe(false)
   })
@@ -100,7 +100,7 @@ describe('guardas, en orden', () => {
 describe('respuestas', () => {
   let cookie = ''
   beforeEach(async () => { cookie = await adminCookie() })
-  const llamar = async (query: Record<string, string>, app = appWith().app) => request(app).post(URL).set('Cookie', cookie).query(query)
+  const llamar = async (query: Record<string, string>, app = appWith({ migracionTicketsHabilitada: true }).app) => request(app).post(URL).set('Cookie', cookie).query(query)
 
   it('200 en seco por defecto: sin aplicar no se escribe nada', async () => {
     await tk('t1', 4100, 'Entregado')
@@ -139,5 +139,58 @@ describe('respuestas', () => {
     expect(await estados()).toEqual([{ id: 't1', status: 'Finalizado', managed_by_app: true }])
     expect(info.mock.calls.some((c) => JSON.stringify(c).includes('"migrables":1'))).toBe(true)
     info.mockRestore()
+  })
+})
+
+describe('interruptor MIGRACION_TICKETS_HABILITADA (E-231): nace cerrado y sólo gobierna aplicar=true', () => {
+  let cookie = ''
+  beforeEach(async () => { cookie = await adminCookie(); await tk('t1', 4100, 'Entregado') })
+
+  it('apagado + aplicar=true: 403 con el nombre de la variable, sin leer ni escribir la base', async () => {
+    const { app, sqls } = espiar()
+    const res = await request(app).post(URL).set('Cookie', cookie).query({ corte: CORTE, aplicar: 'true' })
+    expect(res.status).toBe(403)
+    expect(res.body.error).toMatch(/MIGRACION_TICKETS_HABILITADA/)
+    expect(leyoTickets(sqls)).toBe(false)
+    expect(escribio(sqls)).toBe(false)
+    expect(await estados()).toEqual([{ id: 't1', status: 'Entregado', managed_by_app: false }])
+  })
+
+  it('apagado: la pasada en seco sigue respondiendo 200, sin aplicar y con aplicar=false', async () => {
+    for (const query of [{ corte: CORTE }, { corte: CORTE, aplicar: 'false' }]) {
+      const { app, sqls } = espiar()
+      const res = await request(app).post(URL).set('Cookie', cookie).query(query)
+      expect(res.status).toBe(200)
+      expect(res.body).toMatchObject({ aplicar: false, aplicado: false, migrables: 1 })
+      expect(escribio(sqls)).toBe(false)
+    }
+  })
+
+  it('posición: apagado + aplicar=true con un sin equivalencia en la base ve 403, no 409', async () => {
+    await tk('t9', 4900, 'Estado raro')
+    expect((await request(appWith().app).post(URL).set('Cookie', cookie).query({ corte: CORTE, aplicar: 'true' })).status).toBe(403)
+  })
+
+  it('posición: apagado + aplicar=true con corte inválido ve 403, no 400 (permiso B antes que contenido C, F1B-10)', async () => {
+    expect((await request(appWith().app).post(URL).set('Cookie', cookie).query({ corte: 'ayer', aplicar: 'true' })).status).toBe(403)
+  })
+
+  it('posición: un no administrador con el interruptor apagado ve el 403 del rol, no el del interruptor', async () => {
+    const res = await request(appWith().app).post(URL).set('Cookie', await userCookie(SERVICIO)).query({ corte: CORTE, aplicar: 'true' })
+    expect(res.status).toBe(403)
+    expect(JSON.stringify(res.body)).not.toMatch(/MIGRACION_TICKETS_HABILITADA/)
+  })
+
+  it('apagado + aplicar inválido sigue siendo 400: el interruptor sólo mira aplicar=true', async () => {
+    expect((await request(appWith().app).post(URL).set('Cookie', cookie).query({ corte: CORTE, aplicar: '1' })).status).toBe(400)
+  })
+
+  it('encendido + aplicar=true: el comportamiento de hoy, aplica y escribe', async () => {
+    const { app, sqls } = espiar(true)
+    const res = await request(app).post(URL).set('Cookie', cookie).query({ corte: CORTE, aplicar: 'true' })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ aplicar: true, aplicado: true })
+    expect(escribio(sqls)).toBe(true)
+    expect(await estados()).toEqual([{ id: 't1', status: 'Finalizado', managed_by_app: true }])
   })
 })
