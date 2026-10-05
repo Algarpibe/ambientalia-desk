@@ -3842,6 +3842,26 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "M11.6 (Herramientas de desarrollo y prototipado)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1A-06"
+  - clave: "decision/orden-tres-tandas-05-10"
+    fecha: "2026-10-05"
+    pregunta: |
+      Con E-231 archivado (`f01427f`) y fusionado a `main` (`c156403`, CI verde), ¿cuáles son las tres tandas
+      siguientes y en qué orden? La propuesta de la sesión era F1F-02 (sólo la copia nocturna y la previa a cada cambio,
+      con destino S3 compatible e interruptor cerrado), F1B-04 accesorios desde el catálogo (E-100) y F1B-04 pantalla
+      para mantener la lista de novedades.
+    respuesta_textual: |
+      «Las tres siguientes son F1F-02 respaldo, F1B-04 accesorios del catálogo y F1B-04 lista de novedades, en ese orden. Encadénalas y para antes de fusionar cada una.»
+    consecuencias: |
+      (1) El orden es F1F-02 (respaldo y continuidad: sólo la copia nocturna y la previa a cada cambio, que
+      `decision/p55-backup` adelanta), F1B-04 accesorios desde el catálogo de artículos (E-100) y F1B-04 pantalla para
+      mantener la lista de novedades, encadenadas sin consulta entre una y otra (modo producción).
+      (2) Ninguna se fusiona a `main`: cada una se para antes de fusionar, en su propio worktree (regla del ciclo 3).
+      (3) El proveedor del almacenamiento de F1F-02 sigue sin elegir (`decision/p55b-destino-copia`) y cuesta dinero: lo
+      decide el usuario. Ninguna copia se lanza contra producción desde una sesión (regla de ejecución, criterio 3).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-tres-tandas-05-10)"
+    maestro_pasaje: "ninguno (orden de ejecución)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-02, F1B-04, F1B-04"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
