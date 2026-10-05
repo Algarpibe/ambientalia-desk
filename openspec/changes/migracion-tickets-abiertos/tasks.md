@@ -81,7 +81,7 @@ su prueba (nuevos), `packages/shared/src/index.ts` (+1 línea).
     escenario.
   - m. RQ-ZS-18: el procedimiento es `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, reversión prefijada `-- REV `,
     una sentencia por regla que cambia el estado **más una para las filas de identidad** (restaura sólo
-    `managed_by_app`); filtro por `"values"->>'status_type_previo'` (D-14). El diseño §8 sólo nombra las reglas que cambian
+    `managed_by_app`); filtro por `"values"->>'regla'` y restauración de `status_type_previo` (D-14). El diseño §8 sólo nombra las reglas que cambian
     el estado: la de identidad es un **hueco del diseño** que se cierra aquí, porque sin ella los marcadores de
     identidad no se borrarían.
   - n. RQ-ZS-17: mantener lo que el diseño no contradice —el informe va también al log (como `apps/desk/server/routes/admin.ts:88-92`)—
@@ -304,7 +304,7 @@ Archivos: `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, `apps/desk/server/db
 | 4 | Ejecutar con `aplicar=true` el fin de semana del corte, con la fecha que confirme Gerencia | La persona con acceso a producción | El corte | Ídem |
 | 5 | Averiguar quién rellena la hoja de Google y para qué | Gerencia | El cotejo, y F1B-16 y F1B-17 | `openspec/config.yaml` → `decision/p14b-hoja-google` |
 | 6 | Cotejo una a una de la hoja de Google | Gerencia designa | Cerrar F1F-01 | La misma decisión |
-| 7 | Respuestas de Gerencia a las siete preguntas de la bandeja | Gerencia | La ejecución, no la construcción | `docs/sdd/ENTRADA.md` (lo escribe el orquestador, no el apply) |
+| 7 | Respuestas de Gerencia a las once preguntas de la bandeja | Gerencia | La ejecución, no la construcción | `docs/sdd/ENTRADA.md` (lo escribe el orquestador, no el apply) |
 
 La fusión de cada lote a `main` y el asiento del intento (settle) son del orquestador y del analista; no son casillas de
 este cambio y archivar no los da por hechos.

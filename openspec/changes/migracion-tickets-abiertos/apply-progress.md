@@ -281,3 +281,7 @@ Medida (`git diff --shortstat --no-renames b686bff`, antes de esta línea): 98 i
 ### Añadido por el orquestador al cerrar el lote 3
 
 - El guardián del procedimiento se mudó de `packages/zoho-sync/src/db/` a `apps/desk/server/db/migracionTicketsF1F01.test.ts` antes del commit. Motivo: importaba el ejecutor de `apps/desk` desde un paquete, y un paquete no importa de `apps/`; al revés sí. Es una desviación del diseño (que lo situaba en `zoho-sync` por el molde de F1C-09, cuyo guardián no necesita el ejecutor). El contenido de las nueve pruebas no cambia; sólo sus tres rutas de importación.
+
+### Remediación del verify (mismo intento, sobre `8d0cdd7`)
+
+W6 corregido con rojo previo: `apps/desk/server/routes/admin.ts:225` rechaza con 400 un `corte` cuyos campos no sobreviven al viaje de ida y vuelta (`apps/desk/server/routes/admin.ts:237`). Pruebas añadidas para W5 (`apps/desk/server/migracionTicketsAbiertosRuta.test.ts:77`, `apps/desk/server/migracionTicketsAbiertosRuta.test.ts:81`), W2 (`apps/desk/server/db/migracionTicketsAbiertos.test.ts:91`, `apps/desk/server/db/migracionTicketsF1F01.test.ts:108`) y W3 (`packages/shared/src/migracionTickets.test.ts:34`). Texto realineado para W4 y W7. W1 y S1 a S5 no se tocan: van al `archive-report.md`. El detalle por hallazgo está en `openspec/changes/migracion-tickets-abiertos/verify-report.md`.

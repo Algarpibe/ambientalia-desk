@@ -217,7 +217,7 @@ producción**: lo hace una persona.
 
 El cambio **SHALL** entregar el procedimiento `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql` con la reversión de
 RQ-ZS-17 prefijada `-- REV ` (D-14): una sentencia por cada regla que cambia el estado **más una para las filas de
-identidad**, que restaura sólo `managed_by_app`; el filtro es por `"values"->>'status_type_previo'`. El diseño §8 sólo
+identidad**, que restaura sólo `managed_by_app`; el filtro es por la clave `"values"->>'regla'` del marcador y `status_type_previo` se RESTAURA. El diseño §8 sólo
 nombra las reglas que cambian el estado: la de identidad es un **hueco del diseño** que se cierra aquí, porque sin
 ella los marcadores de identidad no se borrarían. Las sentencias van **calificadas por esquema** (`desk.tickets`, `desk.ticket_transitions`), porque en `psql` el `search_path`
 no es el de la aplicación, como en `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:57-65`. La reversión

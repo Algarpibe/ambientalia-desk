@@ -222,7 +222,7 @@ export function registerAdminRoutes(
   app.post('/api/admin/migrar-tickets-abiertos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
     const { corte: crudo, aplicar: pedido } = req.query
     const corte = typeof crudo === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(crudo) ? new Date(crudo) : null
-    if (corte === null || Number.isNaN(corte.getTime())) { res.status(400).json({ error: 'Falta `corte`, o no es un instante ISO con desfase (p. ej. 2026-12-01T00:00:00-05:00)' }); return }
+    if (corte === null || Number.isNaN(corte.getTime()) || !corteSinDesbordar(crudo as string, corte)) { res.status(400).json({ error: 'Falta `corte`, o no es un instante ISO con desfase (p. ej. 2026-12-01T00:00:00-05:00)' }); return }
     if (pedido !== undefined && pedido !== 'true' && pedido !== 'false') { res.status(400).json({ error: '`aplicar` sólo admite `true` o `false`' }); return }
     const aplicar = pedido === 'true'
     const informe = await migrarTicketsAbiertos(db, { corte, aplicar, actor: req.user?.name ?? 'desconocido' })
@@ -232,3 +232,12 @@ export function registerAdminRoutes(
   }))
 }
 import { migrarTicketsAbiertos } from '../db/migracionTicketsAbiertos'
+
+/** V8 lleva `02-31` al 2 de marzo y `T24:00` al día siguiente sin error: el corte decide qué tickets de producción se tocan, así que un desplazamiento en silencio no vale. Los campos que escribió quien llama tienen que sobrevivir al viaje de ida y vuelta, en su mismo desfase. */
+function corteSinDesbordar(crudo: string, instante: Date): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.exec(crudo)
+  if (!m) return false
+  const desfaseMin = m[6] === 'Z' ? 0 : (m[6][0] === '-' ? -1 : 1) * (Number(m[6].slice(1, 3)) * 60 + Number(m[6].slice(4, 6)))
+  const local = new Date(instante.getTime() + desfaseMin * 60000)
+  return [local.getUTCFullYear(), local.getUTCMonth() + 1, local.getUTCDate(), local.getUTCHours(), local.getUTCMinutes()].join(',') === m.slice(1, 6).map(Number).join(',')
+}

@@ -31,6 +31,15 @@ describe('equivalenciaDeEstado (RQ-TC-40)', () => {
     }
   })
 
+  it('la tabla no duplica el registro: la fuente no escribe entre comillas ningún nombre de ESTADOS salvo los dos casos especiales', () => {
+    const fuente = readFileSync(new URL('./migracionTickets.ts', import.meta.url), 'utf8')
+    const especiales = ['Pendiente', 'En Proceso', 'Finalizado']
+    for (const e of ESTADOS.filter((x) => !especiales.includes(x))) {
+      expect(fuente.includes(`'${e}'`) || fuente.includes(`"${e}"`), `copia literal de «${e}»`).toBe(false)
+    }
+    expect(fuente).toMatch(/new Set<string>\(ESTADOS\)/)
+  })
+
   it('«Entregado» no está en ESTADOS y va a «Finalizado» con status_type «Closed»', () => {
     expect((ESTADOS as string[]).includes('Entregado')).toBe(false)
     expect(equivalenciaDeEstado('Entregado', null)).toEqual({

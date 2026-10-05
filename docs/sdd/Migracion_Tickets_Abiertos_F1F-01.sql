@@ -28,6 +28,7 @@
 --     curl -X POST -b "sid=<sesion>" "https://<host>/api/admin/migrar-tickets-abiertos?corte=2026-12-01T00:00:00-05:00"
 --   aplicando (la misma llamada con aplicar=true; si hay negativa responde 409 con el informe y no escribe nada):
 --     curl -X POST -b "sid=<sesion>" "https://<host>/api/admin/migrar-tickets-abiertos?corte=2026-12-01T00:00:00-05:00&aplicar=true"
+-- En una URL un desfase `+hh:mm` se escribe `%2B` (p. ej. 2026-12-01T00:00:00%2B05:00): un `+` crudo llega como espacio y el endpoint responde 400. Una fecha imposible (31 de febrero, hora 24) tambien da 400.
 -- El informe es el mismo en seco y al aplicar (aplicado indica si se escribio) y tambien va al log del servidor.
 --
 -- ORDEN:

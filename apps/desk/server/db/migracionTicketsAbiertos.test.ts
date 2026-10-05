@@ -88,6 +88,16 @@ describe('aplicar', () => {
   })
 })
 
+describe('status_type previo On Hold', () => {
+  it('un «Pendiente» de servicio en On Hold deja el marcador con status_type_previo «On Hold» y la fila queda Open', async () => {
+    await tk('h1', 4150, 'Pendiente', { st: 'On Hold', cls: 'Reparación' })
+    await aplicar(db, { aplicar: true })
+    const m = (await db.query("SELECT \"values\" FROM ticket_transitions WHERE ticket_id = 'h1'")).rows as Array<{ values: unknown }>
+    expect(json(m[0].values)).toMatchObject({ estado_previo: 'Pendiente', status_type_previo: 'On Hold', regla: 'pendiente-servicio-a-en-proceso' })
+    expect((await db.query("SELECT status, status_type FROM tickets WHERE id = 'h1'")).rows).toEqual([{ status: 'En Proceso', status_type: 'Open' }])
+  })
+})
+
 describe('negativa', () => {
   it('con un sin equivalencia el ÚLTIMO de la lista y aplicar=true no se escribe nada, ni de los que sí migraban', async () => {
     await tk('t1', 4100, 'Entregado'); await tk('t2', 4200, 'OV asignada'); await tk('t9', 4900, 'Estado raro')

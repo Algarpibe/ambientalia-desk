@@ -60,6 +60,30 @@ describe('guardas, en orden', () => {
     expect(leyoTickets(sqls)).toBe(false)
   })
 
+  it.each([
+    ['día imposible (31 de febrero)', '2026-02-31T00:00:00Z'], ['hora 24', '2026-12-01T24:00:00Z'], ['minuto 60', '2026-12-01T10:60:00Z'], ['día 0', '2026-12-00T00:00:00Z'],
+  ])('400 con un corte que V8 desplazaría en silencio: %s', async (_n, corte) => {
+    const { app, sqls } = espiar()
+    expect((await request(app).post(URL).set('Cookie', await adminCookie()).query({ corte })).status).toBe(400)
+    expect(leyoTickets(sqls)).toBe(false)
+  })
+
+  it('control positivo: una fecha real con desfase distinto de cero pasa y se normaliza a UTC', async () => {
+    const res = await request(appWith().app).post(URL).set('Cookie', await adminCookie()).query({ corte: '2026-02-28T23:30:00+05:30' })
+    expect(res.status).toBe(200)
+    expect(res.body.corte).toBe('2026-02-28T18:00:00.000Z')
+  })
+
+  it('sin sesión y con corte inválido: 401, no 400 (la sesión va antes de validar)', async () => {
+    expect((await request(appWith().app).post(URL).query({ corte: 'ayer' })).status).toBe(401)
+  })
+
+  it('control positivo de leyoTickets: una petición que sí lee tickets lo vuelve verdadero', async () => {
+    const { app, sqls } = espiar()
+    expect((await request(app).post(URL).set('Cookie', await adminCookie()).query({ corte: CORTE })).status).toBe(200)
+    expect(leyoTickets(sqls)).toBe(true)
+  })
+
   it('corte inválido con un sin equivalencia en la base ve 400, no 409', async () => {
     await tk('t9', 4900, 'Estado raro')
     expect((await request(appWith().app).post(URL).set('Cookie', await adminCookie()).query({ corte: 'ayer', aplicar: 'true' })).status).toBe(400)

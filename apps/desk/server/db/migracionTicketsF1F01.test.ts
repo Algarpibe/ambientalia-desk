@@ -105,6 +105,16 @@ describe('Migracion_Tickets_Abiertos_F1F-01.sql (pg-mem, por sentencias)', () =>
     for (const id of ['p1', 'i2']) expect(despues.find((t) => t.id === id), `ticket ${id} sin revertir`).toEqual(migrado.find((t) => t.id === id))
   })
 
+  it('(a2) un «Pendiente» de servicio que estaba en On Hold vuelve a «Pendiente» y a «On Hold»', async () => {
+    await tk('h1', 4150, 'Pendiente', { st: 'On Hold', cls: 'Servicio Técnico' })
+    const antes = (await fotoTickets()).find((t) => t.id === 'h1')
+    await migrarTicketsAbiertos(ejecutor, { corte: CORTE, aplicar: true, actor: 'Admin' })
+    expect((await fotoTickets()).find((t) => t.id === 'h1')).toMatchObject({ status: 'En Proceso', status_type: 'Open', managed_by_app: true })
+    await sql(reversion())
+    expect((await fotoTickets()).find((t) => t.id === 'h1')).toEqual(antes)
+    expect(antes).toMatchObject({ status: 'Pendiente', status_type: 'On Hold' })
+  })
+
   it('(b) borra sólo los marcadores de lo restaurado y conserva el de quien tiene una transición posterior', async () => {
     await migrarYMoverDosDespues()
     expect(await idsMarcador()).toHaveLength(7)

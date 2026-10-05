@@ -217,7 +217,7 @@ control de versiones.
 Sin migración de esquema ni flag. La reversión de datos es el bloque `-- REV ` del procedimiento: restaura sólo
 donde el marcador sigue siendo la última transición del ticket (`id IN (SELECT max(id) … GROUP BY ticket_id)`,
 la forma que ya corre sobre pg-mem en `docs/sdd/Migracion_Pendiente_a_En_Proceso_F1C-09.sql:61-63`) y borra
-esos marcadores. El filtro por `"values"->>'status_type_previo'` usa el operador que ya corre sobre pg-mem en
+esos marcadores. El filtro por `"values"->>'regla'` (y la restauración de `status_type_previo`) usa el operador que ya corre sobre pg-mem en
 `apps/desk/server/auth/users.ts:138`.
 
 ## 12. Puntos abiertos
