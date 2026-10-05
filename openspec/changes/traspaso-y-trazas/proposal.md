@@ -76,7 +76,7 @@ situación queda desactualizada. Se entrega como texto la corrección 26 de
 
 6. Línea de traspaso en el historial, **compuesta al leer** desde `ticket_transitions`: origen (`performed_by`),
    destino (la persona de `values.derivado_a`; si no hay, el área del estado de llegada), fecha y hora. Sin
-   tabla, sin columna y sin escritura nuevas, como manda `openspec/specs/trazas/spec.md:149`.
+   tabla, sin columna y sin escritura nuevas, como manda `openspec/specs/trazas/spec.md:149` en `540f31c`.
 7. El destino por área sale del **mismo** cálculo que usa el aviso (`apps/desk/server/services/avisoArea.ts:15`),
    no de una segunda tabla de áreas (regla invariable 13, molde H5).
 8. La fila de creación y el marcador de la migración (`packages/shared/src/migracionTickets.ts:14-16`) **no**
@@ -110,7 +110,7 @@ administrador, que sigue sin fila y con dueño Gerencia (`openspec/config.yaml:2
 
 - `trazas`: RQ-TZ-06 gana la restauración entre los eventos de remisión; RQ-TZ-01 gana el barrido de escritores;
   requisitos nuevos desde **RQ-TZ-14** (restauración con rastro, liberación con actor, línea de traspaso derivada
-  y sus exclusiones). §3.1 (`openspec/specs/trazas/spec.md:373`) se actualiza: sigue a decidir.
+  y sus exclusiones). §3.1 (`openspec/specs/trazas/spec.md:373` en `540f31c`) se actualiza: sigue a decidir.
 - `derivacion-avisos`: requisito nuevo **RQ-AV-18** — el destino del traspaso y el del aviso salen de la misma
   derivación y del mismo cálculo de área.
 
