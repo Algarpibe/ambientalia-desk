@@ -1,4 +1,4 @@
-import type { Express } from 'express'
+import type { Express, RequestHandler } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { createMeasurer } from '../measure'
@@ -34,10 +34,10 @@ export function registerAdminRoutes(
     sync: Sync
     measurer: ReturnType<typeof createMeasurer>
     detailBackfiller: ReturnType<typeof createDetailBackfiller>
+    migracionTicketsHabilitada: boolean   // `MIGRACION_TICKETS_HABILITADA` (E-231)
   },
 ): void {
-  const { db, sync, measurer, detailBackfiller } = deps
-
+  const { db, sync, measurer, detailBackfiller, migracionTicketsHabilitada } = deps
   // Mide cantidad/tamaño total de adjuntos (sin descargarlos). Solo superadmin (sesión).
   // Llamar repetidamente para ver el progreso; ?restart=1 reinicia la medición.
   app.get('/api/admin/measure-attachments', requireAuth(db), requireSuperAdmin, (req, res) => {
@@ -215,11 +215,11 @@ export function registerAdminRoutes(
    * Migración de los tickets abiertos de Zoho Desk (F1F-01, `zoho-sync` RQ-ZS-17). SOLO super administrador.
    *
    * `corte` (instante ISO con desfase, D-11) es obligatorio y `aplicar` sólo admite `true`/`false` (D-12): se validan AQUÍ,
-   * antes de tocar la base, y detrás de `requireSuperAdmin`. Sin `aplicar=true` es una pasada en seco. Con una negativa
+   * antes de tocar la base, y detrás de `requireSuperAdmin` y del interruptor de E-231 (`interruptorMigracion`). Sin `aplicar=true` es una pasada en seco. Con una negativa
    * —estados sin equivalencia entre lo que se migraría— responde `409` con el informe completo y sin escribir (D-13).
    * La decisión es del servidor; el cliente no participa (regla invariable 13).
    */
-  app.post('/api/admin/migrar-tickets-abiertos', requireAuth(db), requireSuperAdmin, asyncHandler(async (req, res) => {
+  app.post('/api/admin/migrar-tickets-abiertos', requireAuth(db), requireSuperAdmin, interruptorMigracion(migracionTicketsHabilitada), asyncHandler(async (req, res) => {
     const { corte: crudo, aplicar: pedido } = req.query
     const corte = typeof crudo === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(crudo) ? new Date(crudo) : null
     if (corte === null || Number.isNaN(corte.getTime()) || !corteSinDesbordar(crudo as string, corte)) { res.status(400).json({ error: 'Falta `corte`, o no es un instante ISO con desfase (p. ej. 2026-12-01T00:00:00-05:00)' }); return }
@@ -240,4 +240,16 @@ function corteSinDesbordar(crudo: string, instante: Date): boolean {
   const desfaseMin = m[6] === 'Z' ? 0 : (m[6][0] === '-' ? -1 : 1) * (Number(m[6].slice(1, 3)) * 60 + Number(m[6].slice(4, 6)))
   const local = new Date(instante.getTime() + desfaseMin * 60000)
   return [local.getUTCFullYear(), local.getUTCMonth() + 1, local.getUTCDate(), local.getUTCHours(), local.getUTCMinutes()].join(',') === m.slice(1, 6).map(Number).join(',')
+}
+
+/**
+ * E-231 · `MIGRACION_TICKETS_HABILITADA`, que nace cerrada. Sólo gobierna `aplicar=true`: la pasada en seco no escribe y
+ * queda libre. Va en la cadena detrás del rol y delante del manejador, así que corre antes de validar `corte` y de leer la
+ * base: es escalón B (permiso) del orden total de F1B-10, y el contenido (C) va después.
+ */
+function interruptorMigracion(habilitada: boolean): RequestHandler {
+  return (req, res, next) => {
+    if (req.query.aplicar === 'true' && !habilitada) { res.status(403).json({ error: 'Aplicar la migración está deshabilitado en este entorno: hace falta MIGRACION_TICKETS_HABILITADA=true. La pasada en seco (sin aplicar) sigue disponible.' }); return }
+    next()
+  }
 }

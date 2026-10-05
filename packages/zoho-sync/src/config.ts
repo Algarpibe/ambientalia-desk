@@ -62,8 +62,8 @@ export interface AppConfig {
   sweepHour: number
   sweepMaxRows: number
   sweepMaxPct: number
+  migracionTicketsHabilitada: boolean   // E-231: permite APLICAR la migración de F1F-01 (`aplicar=true`); nace cerrada
 }
-
 type Env = Record<string, string | undefined>
 
 function required(env: Env, key: string): string {
@@ -120,5 +120,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     sweepHour: env.SWEEP_HOUR ? Number(env.SWEEP_HOUR) : 4,
     sweepMaxRows: env.SWEEP_MAX_ROWS ? Number(env.SWEEP_MAX_ROWS) : 200,
     sweepMaxPct: env.SWEEP_MAX_PCT ? Number(env.SWEEP_MAX_PCT) : 0.1,
+    migracionTicketsHabilitada: env.MIGRACION_TICKETS_HABILITADA === 'true',   // default OFF (E-231)
   }
 }
