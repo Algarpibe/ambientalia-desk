@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `f0cc676` · **Fecha del commit:** 2026-10-04
+**Commit medido:** `bb0a4eb` · **Fecha del commit:** 2026-10-05
 **Árbol de trabajo:** limpio
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -18,7 +18,7 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
   14 cerradas por archivo ....................... F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14, F1B-15, F1C-09, F1C-10, F1C-11
   9 cerradas por commit declarado ............... F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01
-  8 en curso, aparte y sin sumar ................ F0-04, F1B-03, F1B-04, F1B-07, F1B-08, F1B-11, F1C-05, F1F-05
+  11 en curso, aparte y sin sumar ............... F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1C-05, F1F-01, F1F-05
   denominador ................................... 78 tandas del §C de la R01.4
   6 cerradas sin fuente declarada en la R01.1 ... F1B-12, F1B-14, F1B-15, F1C-09, F1C-10, F1C-11
   5 marcadas sin verificar
