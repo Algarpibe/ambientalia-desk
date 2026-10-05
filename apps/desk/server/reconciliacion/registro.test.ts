@@ -215,9 +215,9 @@ describe('registro · RQ-RC-11 y RQ-RC-12 sobre la R01.4 real y los proposals re
     expect(numeradorSobre(configReal(), r14Real()).cifras.find((x) => x.startsWith('denominador'))).toBe('denominador: 78 tandas del §C de la R01.4')
   })
 
-  it('11f/05g · «en curso» son exactamente DIEZ, con F0-04, y F0-04 no cuenta por commit', () => {
+  it('11f/05g · «en curso» son exactamente ONCE, con F0-04, y F0-04 no cuenta por commit', () => {
     const c = numeradorSobre(configReal(), r14Real())
-    expect(tandas(c, 'en curso, aparte y sin sumar')).toEqual(['F0-04', 'F1B-03', 'F1B-04', 'F1B-05', 'F1B-07', 'F1B-08', 'F1B-11', 'F1C-05', 'F1F-01', 'F1F-05'])
+    expect(tandas(c, 'en curso, aparte y sin sumar')).toEqual(['F0-04', 'F1B-03', 'F1B-04', 'F1B-05', 'F1B-07', 'F1B-08', 'F1B-09', 'F1B-11', 'F1C-05', 'F1F-01', 'F1F-05'])
     expect(tandas(c, 'cerradas por commit declarado')).not.toContain('F0-04')
   })
 
