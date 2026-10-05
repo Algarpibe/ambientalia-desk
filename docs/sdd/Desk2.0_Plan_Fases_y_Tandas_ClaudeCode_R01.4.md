@@ -195,7 +195,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | Condicionadas que pasan a 2027 | −2 | — |
 | **Antes del corte** | **40** | **41** |
 | Cerradas (10 por archivo + 9 por commit declarado) | −19 | −19 |
-| **Pendientes antes del corte** | **21** (6 en curso) | **22** (6 en curso) |
+| **Pendientes antes del corte** | **21** (6 en curso), al 01/10 · *Recalculado el 2026-10-05 sobre la tabla del §5, con las once filas en curso (F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1C-05, F1F-01, F1F-05): **17** (11 en curso), porque las cerradas son ya **23** (14 por archivo + 9 por commit), no las 19 de la fila anterior* | **22** (6 en curso), al 01/10 · *2026-10-05: **18** (11 en curso)* |
 
 ### F.2 · Tiempo disponible, medido
 
@@ -209,10 +209,10 @@ Del **viernes 02/10/2026** al examen del **miércoles 09/12/2026**: **68 días =
 |---|---|---|
 | F1B-03 | Fila entera (L) + prefijos (XS) | 5,0 |
 | F1B-04 | Rotulación y desplegables (resto, M; hipótesis) + foto de entrada (S) + accesorios del catálogo (S). Lo construido, en `openspec/changes/archive/2026-09-25-foto-solo-con-novedad/archive-report.md:3-9` | 4,5 |
-| F1B-05 | Fila entera (M) | 2,5 |
+| F1B-05 | Fila entera (M) al 01/10 · *2026-10-05, en curso: falta la visibilidad por área, que espera E-089, y el protocolo de traspaso con motivo (S + XS; hipótesis), `openspec/changes/archive/2026-10-05-traspaso-y-trazas/archive-report.md:5`* | 2,5 → *1,5* |
 | F1B-07 | Propagar Top 5 (S) + lista de «Remisión creada» (S). Lo construido, en `openspec/changes/archive/2026-10-01-prioridad-top5-cliente/archive-report.md:9-17` | 2,0 |
 | F1B-08 | Mitad de paridad de vistas (S–M; hipótesis) + búsqueda (S). Las tres alarmas ya están, `openspec/changes/archive/2026-09-29-alarmas-horas-habiles/archive-report.md:16-20` | 2,0 a 3,5 |
-| F1B-09 | audit-F1B (S) | 1,0 |
+| F1B-09 | audit-F1B (S) al 01/10 · *2026-10-05, en curso: falta el repaso al cerrar la épica 1B y extender el mapa generado a los dos flujos nuevos, E-222 (XS + XS; hipótesis), `openspec/changes/archive/2026-10-05-audit-f1b/archive-report.md:5`* | 1,0 → *1,0* |
 | F1B-11 | Sólo la ampliación del contrato (S; hipótesis), esperando E-086 (`openspec/changes/archive/2026-09-29-registro-contrato/archive-report.md:15-23`) | 1,0 |
 | F1B-13 | Ficha de garantía (S) | 1,0 |
 | F1B-15 | Alta manual (M) | 2,5 |
@@ -222,7 +222,7 @@ Del **viernes 02/10/2026** al examen del **miércoles 09/12/2026**: **68 días =
 | F1C-10 | «Rechazo» sólo Comercial (XS) | 0,5 |
 | F1C-11 | Sólo la derivación al Director Técnico (S): el respaldo espera a 1E (§K) | 1,0 |
 | **Subtotal 1C** | | **5,0** (era 5,0 a 6,5 con F1C-11 en S–M) |
-| 1F | F1F-01..05, la cifra de bloque de la R01.3 §D.3 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:111`), sin descontar la encuesta automática que salió de la cuenta | 12,5 |
+| 1F | F1F-01..05, la cifra de bloque de la R01.3 §D.3 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:111`), sin descontar la encuesta automática que salió de la cuenta · *2026-10-05: F1F-01 y F1F-05 están en curso. A F1F-01 sólo le falta construir el interruptor de E-231 (XS; el cotejo y la ejecución son tareas de persona), `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive-report.md:5`; a F1F-05, los indicadores 51 y 55, que esperan hito y decisión (de S–M a S), `openspec/changes/archive/2026-10-03-continuidad-indicadores/archive-report.md:10-13`. Se descuentan 2,0 por F1F-01 y 0,5 a 1,0 por F1F-05 (hipótesis: el bloque de la R01.3 no desglosa por fila)* | 12,5 → *9,5 a 10,0* |
 | F0-04 · F1A-09 | Nada que construir (§J, notas 2 y 3) | 0 |
 | **Total, escenario A sin reserva** | | **39,0 a 40,5 d = 7,8 a 8,1 semanas** (era 39,0 a 42,0 = 7,8 a 8,4) |
 | F1B-16 Remisiones sin ticket (L) + F1B-17 Remisión de salida (M) | | +7,0 |
@@ -260,7 +260,7 @@ ESCENARIO B — condicionadas DENTRO
 
 Filas cerradas por archivo, por la fecha de su carpeta en `openspec/changes/archive/`: **10 entre el 09/09 y el 01/10** (17/09, 20/09, 21/09, 22/09 dos, 23/09, 24/09, 25/09, 29/09 y 01/10). Son 22 días: **3,2 filas por semana**. Desde la R01.3 (24/09) han sido 4 en 7 días. En el mismo periodo se archivaron 28 cambios, 22 de ellos de filas del plan.
 
-Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semanas** (margen +3,1); escenario B, 22 → **6,9 semanas** (margen +2,8). **El conteo por filas da más margen que la ponderación, y es la ponderación la que manda**, por tres razones medibles: dos de las pendientes pesan cero (F0-04, F1A-09) y engordan el divisor del ritmo; las que quedan incluyen las dos L más grandes del corte (F1B-03, F1B-16); y 1F son 12,5 días repartidos en cinco filas que todavía no han empezado. La R01.3 vio lo mismo y concluyó lo mismo (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:129`).
+Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semanas** (margen +3,1); escenario B, 22 → **6,9 semanas** (margen +2,8). **El conteo por filas da más margen que la ponderación, y es la ponderación la que manda**, por tres razones medibles: dos de las pendientes pesan cero (F0-04, F1A-09) y engordan el divisor del ritmo; las que quedan incluyen las dos L más grandes del corte (F1B-03, F1B-16); y 1F son 12,5 días repartidos en cinco filas que todavía no han empezado. La R01.3 vio lo mismo y concluyó lo mismo (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:129`). *Recalculado el 2026-10-05 con el mismo ritmo de 3,2 y el tiempo que queda del 05/10 al 09/12 (65 días = 9,3 semanas): escenario A, **17** pendientes (11 en curso) → **5,3 semanas** (margen +4,0); escenario B, **18** → **5,6 semanas** (margen +3,7). La conclusión no cambia: manda la ponderación, y los subtotales del §F.3 y el veredicto del §F.4 siguen siendo los del 01/10, sin recalcular aquí.*
 
 ### F.6 · Lo que esta cuenta no cubre, y puede comerse el margen
 
@@ -285,7 +285,7 @@ Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semana
 | **Sobre lo que entra antes del corte**, escenario A (40) | **10/40 = 25,0 %** | **9/40 = 22,5 %** |
 | **Sobre lo que entra antes del corte**, escenario B (41) | **10/41 = 24,4 %** | **9/41 = 22,0 %** |
 
-**En curso, aparte, sin sumar a ninguna cifra:** 6 filas — F0-04, F1B-04, F1B-07, F1B-08, F1B-11 y F1C-05.
+**En curso, aparte, sin sumar a ninguna cifra:** 6 filas — F0-04, F1B-04, F1B-07, F1B-08, F1B-11 y F1C-05. ⚠️ *Esta cifra es **falsa desde el 04/10**: `fed9532` pasó F1B-03 y F1F-05 a «en curso» en la tabla del §5 sin tocar esta línea, y `0095665` (05/10) añadió F1B-05, F1B-09 y F1F-01 sin tocarla tampoco. Recalculado el 2026-10-05: **11 filas** — F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1C-05, F1F-01 y F1F-05. Las cifras de cerradas de la tabla de arriba siguen siendo las del 01/10 (hoy son 14 por archivo).*
 
 **El resto de las poblaciones:** enero de 2027, **0/8** · después del corte sin fecha, **0/23** (más la reserva que no entre) · 2027 en su fase, **0/4**.
 
