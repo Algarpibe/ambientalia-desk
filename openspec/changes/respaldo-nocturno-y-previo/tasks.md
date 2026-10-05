@@ -4,9 +4,12 @@
 - [x] 1.1 Firma SigV4 (`apps/desk/server/respaldo/firmaS3.ts`), probada contra el vector público de AWS.
 - [x] 1.2 Cifrado AES-256-GCM en flujo (`apps/desk/server/respaldo/cifrado.ts`): ida y vuelta, clave mala, datos alterados.
 
-## Lote 2 · orquestación y cableado
-- [ ] 2.1 Variables en `packages/zoho-sync/src/config.ts`; `RESPALDO_HABILITADO` nace cerrado.
-- [ ] 2.2 `respaldo.ts`: clase por fecha, configuración incompleta, éxito, fallo con aviso, temporal siempre borrado.
+## Lote 2 · configuración y orquestación (intento 2; el lote se partió por la válvula de 720)
+- [x] 2.1 Variables en su propio cargador, `apps/desk/server/respaldo/config.ts` (no en `AppConfig`, cuyo cargador está citado por línea); `RESPALDO_HABILITADO` nace cerrado.
+- [x] 2.2 `respaldo.ts`: clase por fecha, configuración incompleta, éxito, fallo con aviso, temporal siempre borrado, una copia a la vez.
+- [x] 2.2b `dependencias.ts`: `pg_dump`, `PUT` firmado con `Content-MD5` y aviso por el webhook de n8n.
+
+## Lote 3 · cableado (intento 3)
 - [ ] 2.3 `POST /api/admin/respaldo`: 401, 403 de rol, 403 de interruptor, 409 en curso, 202.
 - [ ] 2.4 Copia nocturna en `apps/desk/server/index.ts` con `scheduleDailyAt`.
 - [ ] 2.5 `Dockerfile` con `postgresql-client`; `DEPLOY.md` con las variables, sus dos frases y las líneas del fichero de ejemplo.
