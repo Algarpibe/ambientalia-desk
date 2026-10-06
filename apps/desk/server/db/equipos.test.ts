@@ -533,13 +533,18 @@ describe('getEquipoBySerial', () => {
   })
 
   it('con duplicados TODOS inactivos, devuelve el INACTIVO más antiguo', async () => {
-    const primero = await createEquipo(db, { serial: 'SN-DUP2', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
-    await createEquipo(db, { serial: 'SN-DUP2', marca: 'Horiba', modelo: 'APMA-370', tipo: 'Analizador', clienteNombre: null, clientId: null, modeloId: null })
-    await setEquipoActive(db, primero, false)
-    const segundo = (await db.query('SELECT id FROM equipos WHERE serial=$1 AND id<>$2', ['SN-DUP2', primero])).rows[0].id as string
-    await setEquipoActive(db, segundo, false)
+    // E-233: dos altas seguidas pueden caer en el mismo milisegundo, y entonces desempata un `id`
+    // aleatorio (`equipos.ts:399`). Cada `created_at` se fija a mano, y el MÁS antiguo es el de `id`
+    // MAYOR: el desempate `id ASC` señalaría al otro, así que la prueba sólo pasa si decide la fecha.
+    const a = await createEquipo(db, { serial: 'SN-DUP2', marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: null, clientId: null, modeloId: null })
+    const b = await createEquipo(db, { serial: 'SN-DUP2', marca: 'Horiba', modelo: 'APMA-370', tipo: 'Analizador', clienteNombre: null, clientId: null, modeloId: null })
+    const [reciente, antiguo] = [a, b].sort()
+    await db.query('UPDATE equipos SET created_at=$2 WHERE id=$1', [reciente, '2026-02-01T00:00:00Z'])
+    await db.query('UPDATE equipos SET created_at=$2 WHERE id=$1', [antiguo, '2026-01-01T00:00:00Z'])
+    await setEquipoActive(db, reciente, false)
+    await setEquipoActive(db, antiguo, false)
     const e = await getEquipoBySerial(db, 'SN-DUP2')
-    expect(e?.id).toBe(primero)
+    expect(e?.id).toBe(antiguo)
   })
 })
 
