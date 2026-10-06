@@ -245,3 +245,38 @@ Todo lo de este apartado es **hipótesis**:
    y **que el worker no necesite redespliegue** (§4; no se inspeccionó su imagen).
 7. **La pasada en seco contra datos reales:** nunca se ha hecho; su primer informe es el de la persona.
 8. Las condiciones de parada y los riesgos del paquete del 04/10 (b) no se han vuelto a leer contra `64a3797`.
+
+## 6 · Adenda del 2026-10-05 (noche) · `64a3797..df52eab`
+
+Entraron en `main` el interruptor de E-231 (`c156403`, ya recogido arriba), **F1F-02 respaldo** (`38bc432`) y
+**F1B-04 lista de novedades** (`df52eab`). Las dos con CI verde (runs 37395760964 y 37396440871). Las dos llevan
+`cierra: no`.
+
+### 6.1 · F1F-02 · copia nocturna y previa a cada cambio (inerte hasta encenderla)
+
+- **Qué hace:** la App vuelca la base `desk` con `pg_dump`, la cifra en el servidor y la sube a un almacenamiento S3
+  compatible. Con `RESPALDO_HABILITADO` ausente no hace **nada**, y la ruta `POST /api/admin/respaldo` responde `403`
+  (`DEPLOY.md`, apartado 12).
+- **La imagen cambia:** el `Dockerfile` instala `postgresql-client` (`Dockerfile:34`). La imagen pesa algo más.
+- **La contraseña de la base no aparece en los argumentos de `pg_dump`:** va por el entorno del proceso hijo (`9d85aa7`).
+- **Variables nuevas:** las diez de `DEPLOY.md` §12. Las líneas exactas para el fichero de ejemplo de entorno están allí.
+
+**Tareas de persona, en este orden** (ninguna sesión las hace; ninguna copia se ha lanzado contra producción):
+
+1. **Elegir el proveedor** entre Backblaze B2, Cloudflare R2 y Amazon S3 (`decision/p55b-destino-copia`). Cuesta dinero: lo decide el usuario.
+2. **Crear el almacenamiento con bloqueo de borrado** durante la retención y una regla de ciclo de vida por prefijo (`diaria/` 7 días, `semanal/` 28, `mensual/` 365; `previa/`, a decidir).
+3. **Guardar credenciales y clave en el gestor de secretos:** las credenciales propias del respaldo y `RESPALDO_CLAVE_CIFRADO` (`openssl rand -base64 32`); la clave, además, fuera del gestor, porque sin ella no se restaura nada.
+4. **Comprobar las versiones:** `SELECT version();` en el servidor Postgres de producción frente a `pg_dump --version` dentro de la imagen publicada. La de `pg_dump` tiene que ser igual o mayor.
+5. **Encender:** `RESPALDO_HABILITADO=true` y redesplegar.
+6. **Primera copia:** con sesión de administrador, `fetch('/api/admin/respaldo', { method: 'POST' })` desde la consola del navegador; comprobar que el objeto aparece bajo `previa/`.
+7. **Primera restauración:** bajar el objeto, descifrarlo con `apps/desk/server/respaldo/descifrarCli.ts` y restaurarlo con `pg_restore` en una base **aparte**, nunca sobre `desk`.
+
+Desde entonces, la copia previa se lanza **antes de cada publicación** (paso 6).
+
+### 6.2 · F1B-04 · lista de novedades de entrada mantenible
+
+- **Qué hace:** Configuración → «Lista de novedades de entrada». Con área Servicio Técnico y cargo Director Técnico (o
+  administrador) se da de alta, se cambia y se retira una novedad; nada se borra. Las demás personas ven la entrada
+  del menú pero no los controles. Sin esquema nuevo: usa `public.catalogo_novedades`.
+- **Tarea de persona:** asignar el cargo de permiso «Director Técnico» a quien vaya a mantener la lista, y verificarlo
+  en la aplicación (alta, cambio y retirada; el formulario de la remisión de entrada deja de ofrecer lo retirado).

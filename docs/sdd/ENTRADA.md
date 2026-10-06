@@ -2170,3 +2170,22 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Qué arriesga:** con `aplicar=true` la ruta escribe sobre todos los tickets abiertos; hoy la puede ejecutar cualquier usuario con `isAdmin`, no una persona designada. En seco no escribe.
 **Afecta a:** fila F1F-01 del §5 del plan · capacidad `permissions`.
 **Estado:** abierta · **Destino propuesto:** punto abierto con dueño (R-3): decidir si la ejecución de la migración se restringe a una persona o cargo, o si basta con administrador. **Dueño propuesto:** Gerencia. **Qué desbloquea:** saber quién ejecuta la migración en el corte; no bloquea el despliegue.
+
+## E-232 · 2026-10-05 · pregunta · **NUEVA** — F1B-04: qué hace falta decidir para construir los accesorios desde el catálogo (E-100)
+**Qué:** la tanda «F1B-04 accesorios del catálogo» de `decision/orden-tres-tandas-05-10` se paró sin empezar, porque E-100 no tiene clave de decisión y `decision/orden-tres-tandas-03-10`, consecuencia (2), deja los accesorios «fuera hasta que tengan clave de decisión» (`openspec/config.yaml:3759-3761`). La fila del plan (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:84`) y su nota 7 (`:358`) no bastan como respaldo.
+**Pregunta para Gerencia, en cinco puntos (los que el maestro pone en `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4130-4132`):**
+1. ¿Los accesorios de la remisión salen del **catálogo de artículos de Zoho Books**, y no de una lista propia de Desk?
+2. ¿Se muestra el **nombre oficial** del artículo tal como está en Books?
+3. ¿Se muestra su **número de parte**, y de qué campo de Books sale?
+4. ¿Se ofrecen **sólo los accesorios del modelo** del equipo, y dónde queda escrita la relación modelo ↔ accesorio?
+5. ¿La **foto** de cada accesorio va con el ítem 21 (documentos del modelo), o es otra cosa?
+**De dónde viene:** parada de la tanda el 2026-10-05, criterio 4 de la regla de ejecución.
+**Afecta a:** fila **F1B-04** · capacidades `remisiones` y `catalogo-equipos`.
+**Estado:** nueva · **Destino propuesto:** una clave `decision/…` en `openspec/config.yaml` con la respuesta; entonces la tanda se construye como contenido de F1B-04. **Dueño propuesto:** Gerencia. **Qué desbloquea:** el último S de F1B-04 que no depende de E-123 (mitad de salida).
+
+## E-233 · 2026-10-05 · hallazgo · **ABIERTA** — una prueba de `equipos.test.ts` falla a veces por un empate de marca de tiempo
+**Qué:** «con duplicados TODOS inactivos, devuelve el INACTIVO más antiguo» (`apps/desk/server/db/equipos.test.ts:535-543`) crea dos equipos seguidos y espera el primero. `getEquipoBySerial` ordena por `active DESC, created_at ASC, id ASC` (`apps/desk/server/db/equipos.ts:399`): si las dos filas caen en el mismo milisegundo, desempata un `id` UUID aleatorio y la prueba falla, aproximadamente la mitad de esas veces.
+**De dónde viene:** falló una vez en local al fusionar `lista-novedades-mantenible` (`df52eab`); pasó en el CI y en cinco repeticiones locales. No la introdujo ninguna tanda de hoy (último cambio de la prueba: `084875c`).
+**Qué arriesga:** un rojo falso que puede parar un cierre; y la duda de qué «más antiguo» quiere decir con dos altas en el mismo instante, que es una pregunta del código de producción y no sólo de la prueba.
+**Afecta a:** capacidad `catalogo-equipos` (alta y búsqueda por serial).
+**Estado:** abierta · **Destino propuesto:** SIN DESTINO ASIGNADO; candidato natural, fijar en la prueba un `created_at` distinto para cada fila. **Dueño propuesto:** quien decida el alcance. **Qué desbloquea:** que el cierre de una tanda no dependa del azar.
