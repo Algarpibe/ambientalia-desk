@@ -37,6 +37,7 @@ Ninguna línea citada se desplazó: los cambios a `app.ts`, `index.ts` (hasta la
 | 2 · configuración, orquestación y dependencias | `81862b3` | 433 |
 | 3 · ruta, cableado, `Dockerfile` y `DEPLOY.md` | `bd87663` | 247 |
 | 4 · archivo | el de este informe | medida en el asiento |
+| 5 · la contraseña fuera de los argumentos de `pg_dump` (verificación del analista) | el commit del arreglo | medida en el asiento |
 
 El lote 2 se partió en dos intentos antes de empezar: la estimación con pruebas ×1,8 daba ~730, por encima de la válvula de 720.
 
@@ -56,3 +57,7 @@ El lote 2 se partió en dos intentos antes de empezar: la estimación con prueba
 | Guardar credenciales y clave de cifrado en el gestor de secretos, y la clave además fuera de él; añadir las líneas al fichero de ejemplo | La persona que publica | `DEPLOY.md` §12 |
 | Comprobar la versión del servidor Postgres frente a la de `pg_dump` de la imagen | La persona con acceso a producción | `DEPLOY.md` §12 |
 | Encender `RESPALDO_HABILITADO`, lanzar la primera copia y hacer la primera prueba de restauración en una base aparte | La persona con acceso a producción | `DEPLOY.md` §12 |
+
+## Arreglo posterior al archivo (intento 5)
+
+El analista vio que `argumentosPgDump` pasaba la URL con la contraseña en `--dbname=…`, visible en la lista de procesos del contenedor. Desde el intento 5 la conexión entera va por el entorno del hijo (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` y `PGSSLMODE` si la URL lo trae; `invocacionPgDump` y `opcionesHijoPgDump` en `apps/desk/server/respaldo/dependencias.ts`), los argumentos no llevan nada de la conexión, y el texto del aviso tapa la contraseña si `pg_dump` la repite (`textoFalloPgDump`). Cinco mutaciones en rojo: la URL de vuelta en los argumentos, sin `PGPASSWORD`, el aviso sin tapar, el hijo sin la conexión y sin `sslmode`.

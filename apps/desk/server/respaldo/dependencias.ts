@@ -11,15 +11,43 @@ import type { Dependencias } from './respaldo'
  * Las dependencias reales del respaldo (F1F-02, RQ-ZS-20). `pg_dump` necesita el cliente de Postgres en la imagen
  * (`Dockerfile`), y su versión tiene que ser igual o mayor que la del servidor (hipótesis H-1 de la propuesta).
  */
-export const argumentosPgDump = (databaseUrl: string): string[] => ['--format=custom', '--no-owner', '--no-privileges', `--dbname=${databaseUrl}`]
+/**
+ * La conexión va ENTERA por el entorno del hijo (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `PGSSLMODE`) y nunca
+ * por argumentos: los argumentos de un proceso los ve cualquiera que liste los procesos del contenedor.
+ */
+export function invocacionPgDump(databaseUrl: string): { argumentos: string[]; entorno: Record<string, string> } {
+  const u = new URL(databaseUrl)
+  const entorno: Record<string, string> = { PGHOST: decodeURIComponent(u.hostname) }
+  if (u.port) entorno.PGPORT = u.port
+  if (u.username) entorno.PGUSER = decodeURIComponent(u.username)
+  if (u.password) entorno.PGPASSWORD = decodeURIComponent(u.password)
+  entorno.PGDATABASE = decodeURIComponent(u.pathname.replace(/^\//, ''))
+  const sslmode = u.searchParams.get('sslmode')
+  if (sslmode) entorno.PGSSLMODE = sslmode
+  return { argumentos: ['--format=custom', '--no-owner', '--no-privileges'], entorno }
+}
+export const argumentosPgDump = (databaseUrl: string): string[] => invocacionPgDump(databaseUrl).argumentos
+export const entornoPgDump = (databaseUrl: string): Record<string, string> => invocacionPgDump(databaseUrl).entorno
+
+/** Las opciones del hijo: el entorno heredado MÁS la conexión, que es lo que `pg_dump` lee. */
+export function opcionesHijoPgDump(entorno: Record<string, string>, base: NodeJS.ProcessEnv = process.env) {
+  return { stdio: ['ignore', 'pipe', 'pipe'] as ['ignore', 'pipe', 'pipe'], env: { ...base, ...entorno } }
+}
+
+/** El texto que acaba en el correo del aviso: si `pg_dump` repite la contraseña en su error, se tapa. */
+export function textoFalloPgDump(codigo: number | null, errores: string, entorno: Record<string, string>): string {
+  const texto = `pg_dump salió con ${codigo}: ${errores.trim()}`
+  return entorno.PGPASSWORD ? texto.split(entorno.PGPASSWORD).join('***') : texto
+}
 
 function volcar(cfg: ConfigRespaldo): ReturnType<Dependencias['volcar']> {
-  const hijo = spawn('pg_dump', argumentosPgDump(cfg.databaseUrl), { stdio: ['ignore', 'pipe', 'pipe'] })
+  const { argumentos, entorno } = invocacionPgDump(cfg.databaseUrl)
+  const hijo = spawn('pg_dump', argumentos, opcionesHijoPgDump(entorno))
   let errores = ''
   hijo.stderr.on('data', (t: Buffer) => { errores = (errores + t.toString()).slice(-500) })
   const terminado = new Promise<void>((resolver, rechazar) => {
     hijo.on('error', (e) => rechazar(new Error(`no se pudo arrancar pg_dump: ${e.message}`)))
-    hijo.on('close', (codigo) => (codigo === 0 ? resolver() : rechazar(new Error(`pg_dump salió con ${codigo}: ${errores.trim()}`))))
+    hijo.on('close', (codigo) => (codigo === 0 ? resolver() : rechazar(new Error(textoFalloPgDump(codigo, errores, entorno)))))
   })
   return { flujo: hijo.stdout, terminado }
 }

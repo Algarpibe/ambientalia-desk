@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { cargarConfigRespaldo } from './config'
-import { argumentosPgDump, avisarFallo, subirObjeto } from './dependencias'
+import { argumentosPgDump, entornoPgDump, opcionesHijoPgDump, textoFalloPgDump, avisarFallo, subirObjeto } from './dependencias'
 
 /** F1F-02 (RQ-ZS-20): las piezas que tocan el mundo, con `fetch` inyectado. `pg_dump` sólo se prueba por sus argumentos. */
 const CFG = cargarConfigRespaldo({
@@ -55,8 +55,26 @@ describe('avisarFallo', () => {
   })
 })
 
-describe('argumentosPgDump', () => {
-  it('formato custom, sin dueños ni privilegios, y la URL de la base como último argumento', () => {
-    expect(argumentosPgDump('postgres://u:p@h:5432/desk')).toEqual(['--format=custom', '--no-owner', '--no-privileges', '--dbname=postgres://u:p@h:5432/desk'])
+describe('argumentosPgDump y entornoPgDump: la contraseña nunca en la línea de órdenes', () => {
+  const URL_BASE = 'postgres://desk_user:S3cr%40to%2Fx@desk-db:5433/desk?sslmode=require'
+  it('los argumentos no llevan la contraseña, ni el usuario, ni el host, ni la URL', () => {
+    const a = argumentosPgDump(URL_BASE)
+    expect(a).toEqual(['--format=custom', '--no-owner', '--no-privileges'])
+    for (const trozo of ['S3cr', 'desk_user', 'desk-db', 'postgres://']) expect(a.join(' ')).not.toContain(trozo)
+  })
+  it('el entorno del hijo lleva la conexión entera, con la contraseña decodificada y el sslmode', () => {
+    expect(entornoPgDump(URL_BASE)).toEqual({ PGHOST: 'desk-db', PGPORT: '5433', PGUSER: 'desk_user', PGPASSWORD: 'S3cr@to/x', PGDATABASE: 'desk', PGSSLMODE: 'require' })
+  })
+  it('sin puerto, sin contraseña ni sslmode en la URL, esas variables no se ponen', () => {
+    expect(entornoPgDump('postgres://u@h/desk')).toEqual({ PGHOST: 'h', PGUSER: 'u', PGDATABASE: 'desk' })
+  })
+  it('el hijo recibe la conexión en su entorno, encima del heredado', () => {
+    const o = opcionesHijoPgDump(entornoPgDump(URL_BASE), { PATH: '/usr/bin', PGPASSWORD: 'vieja' })
+    expect(o.env).toMatchObject({ PATH: '/usr/bin', PGPASSWORD: 'S3cr@to/x', PGHOST: 'desk-db' })
+  })
+  it('el texto del aviso de fallo nunca lleva la contraseña, aunque pg_dump la repita en su error', () => {
+    const t = textoFalloPgDump(1, 'FATAL: password authentication failed (S3cr@to/x)', entornoPgDump(URL_BASE))
+    expect(t).not.toContain('S3cr@to/x')
+    expect(t).toBe('pg_dump salió con 1: FATAL: password authentication failed (***)')
   })
 })
