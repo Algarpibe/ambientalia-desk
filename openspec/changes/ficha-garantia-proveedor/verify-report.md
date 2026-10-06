@@ -50,7 +50,7 @@ Pruebas: `R` = `apps/desk/server/routes/garantiaProveedor.test.ts` (37), `D` = `
 
 **RQ-TC-48 (7)** — R «sin cargo: 403 en las tres escrituras y 200 en la lectura»; R «sin sesión las cuatro rutas dan 401»; R «la lectura: OVI vigente sin respuesta pendiente, «no» no, OV- nunca, liberada sin respuesta fuera» (cubre 3); R «una OVI anterior al cambio sale pendiente sin fila»; R «liberar la asociación… deja la ficha intacta, editable y avanzable». **CUBIERTO (7/7).**
 
-**RQ-TC-49 (3)** — R «el servidor rechaza con 403 lo que el panel ocultaría y con 409 el paso que no ofrecería» (cubre 2). «`pendiente` no es dato del cliente»: por lectura, `PanelGarantiaProveedor.tsx:158,163,166,179` sólo consumen `o.pendiente` y `db/garantiaProveedor.ts:258` lo calcula. **CUBIERTO (2 por prueba, 1 por lectura).**
+**RQ-TC-49 (3)** — R «el servidor rechaza con 403 lo que el panel ocultaría y con 409 el paso que no ofrecería» (cubre 2). «`pendiente` no es dato del cliente»: por lectura, `PanelGarantiaProveedor.tsx:158,163,166,179` sólo consumen `o.pendiente` y `db/garantiaProveedor.ts:151` lo calcula. **CUBIERTO (2 por prueba, 1 por lectura).**
 
 **RQ-PM-26 (7)** — R «el Director Técnico con sólo el área Comercial y el administrador sin cargo pasan; el Director Comercial no» (el administrador sólo se prueba en responder, mismo predicado: parte de S-1); R «sin cargo: 403…»; R «sin sesión…»; R «sin cargo, avanzar y editar dan 403»; H «un sujeto ausente no puede» y «coincide con puedeCrearOVIGarantia para los ocho cargos»; C «PM20-2» (un solo predicado; la ruta no contiene el literal del cargo). **CUBIERTO (7/7).**
 
@@ -66,10 +66,10 @@ Leí el panel entero contra las rutas. Coincide con la tabla de `apply-progress.
 | 3 | Tres opciones del «no» de `MOTIVOS_NO_RECLAMA` | `PG:94` | `RT:51-52` → `packages/shared/src/garantiaProveedor.ts:146` |
 | 4 | Ofrece sólo `siguienteEstado` | `PG:111,125,126` | `RT:94-95` (G9) |
 | 5 | Fabricante propuesto = marca | `PG:84` | relleno; el servidor sólo exige no vacío `RT:52`, `RT:77` (`shared:132`) |
-| 6 | Pinta «Pendiente de respuesta» | `PG:158,163,179` | no decide; lo calcula `apps/desk/server/db/garantiaProveedor.ts:258` |
-| 7 | Oculta editar en ficha resuelta | `PG:122` | `RT:74` (G13) y el SQL `apps/desk/server/db/garantiaProveedor.ts:224` (carrera, `RT:80`) |
+| 6 | Pinta «Pendiente de respuesta» | `PG:158,163,179` | no decide; lo calcula `apps/desk/server/db/garantiaProveedor.ts:151` |
+| 7 | Oculta editar en ficha resuelta | `PG:122` | `RT:74` (G13) y el SQL `apps/desk/server/db/garantiaProveedor.ts:117` (carrera, `RT:80`) |
 | 8 | «rechazada» no pide valor recuperado | `PG:146-147` | `RT:97-98` → `shared:175-179` (G10) |
-| 9 | No pinta el panel sin OVI | `PG:178` | no decide; lista vacía de `apps/desk/server/db/garantiaProveedor.ts:250` |
+| 9 | No pinta el panel sin OVI | `PG:178` | no decide; lista vacía de `apps/desk/server/db/garantiaProveedor.ts:143` |
 | 10 | Campo numérico vacío viaja `null`, no numérico viaja texto sin validar | `PG:27` | `RT:52`, `RT:77`, `RT:98` rechazan con 422 y `PG:40` enseña el texto |
 
 Límite ya declarado, que no es hallazgo: liberar una orden no recarga el panel hasta reabrir el ticket (`apply-progress.md:194`).
@@ -86,7 +86,7 @@ Límite ya declarado, que no es hallazgo: liberar una orden no recarga el panel 
 | G6 ya respondida | 409 | D | `:55`, `:59` (23505) | índice único `schema.sql` (F-5 roja) |
 | G11 ficha existe (un «no» no es ficha) | 404 | A | `:69` | G11<G12 → POS-ED-1 (P-5) |
 | G12 cargo | 403 | B | `:71` | G12<G13 → POS-ED-2 (P-6) |
-| G13 resuelta | 409 | B | `:74` (+ SQL `db:224`, carrera `:80`) | G13<G14 → POS-ED-3 (P-7) |
+| G13 resuelta | 409 | B | `:74` (+ SQL `db:117`, carrera `:80`) | G13<G14 → POS-ED-3 (P-7) |
 | G14 contenido | 422 | C | `:76-77` | — |
 | G7 ficha existe | 404 | A | `:90` | G7<G8 → POS-AV-1 (P-8) |
 | G8 cargo | 403 | B | `:92` | G8<G9 → POS-AV-2 (P-9) |
@@ -163,7 +163,7 @@ Barrí todos los artefactos del cambio y los cinco ficheros de código con citas
 **SUGGESTION**
 - **S-1** `packages/shared/src/garantiaProveedor.ts:114,122,162` — validaciones que ninguna prueba ejerce: RMA o pieza que no son texto, y valor como cadena numérica (C-SH-13, -9 y -16). No son requisito de la spec; o se prueban o se quitan del código.
 - **S-2** `avisoReclamacionProveedor.ts:35` — el `AND estado <> 'resuelta'` del `UPDATE` de la marca es sólo guarda de carrera y ninguna prueba lo ejerce (C-SV-3).
-- **S-3** `apps/desk/server/db/garantiaProveedor.test.ts:51` — el título dice «queda null y sin origen» pero el código guarda `origen_valor_reclamado = 'manual'` con valor `null` (`db/garantiaProveedor.ts:206`) y la prueba no lo asserta. Cambiar el título o decidir si un valor vacío debe llevar origen.
+- **S-3** `apps/desk/server/db/garantiaProveedor.test.ts:51` — el título dice «queda null y sin origen» pero el código guarda `origen_valor_reclamado = 'manual'` con valor `null` (`db/garantiaProveedor.ts:99`) y la prueba no lo asserta. Cambiar el título o decidir si un valor vacío debe llevar origen.
 - **S-4** `tasks.md` 1a.9 dice «las nueve funciones»: la capa de datos exporta ocho funciones más la clase de error.
 - **S-5** Hipótesis, sin medir contra la zona de negocio: `PanelGarantiaProveedor.tsx:25` recorta el ISO UTC con `slice(0, 10)` para «Abierta el…», mientras el aviso usa `diaEnZona(respondidaAt)` (`avisoReclamacionProveedor.ts:56`); una respuesta dada de noche podría verse con un día de diferencia entre el panel y el aviso. Sólo presentación.
 - **S-6** `apply-progress.md:191` no recoge la medida del lote 2 («ver el informe de entrega»); la mía es 674 con `openspec`, bajo 720. El orden de la pasada respecto a las alarmas (`index.ts:88`) lo cuenta un comentario (`avisoReclamacionProveedor.ts:69`) pero no una prueba (C-IX-3, no exigido por la spec).

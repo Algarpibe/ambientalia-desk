@@ -259,3 +259,38 @@ describe('pasadaReclamaciones · una vez por día civil y proceso, y NUNCA lanza
     expect(conSync[0]!.indexOf('pasadaReclamaciones(pool)')).toBeLessThan(conSync[0]!.indexOf('sync.syncRecent()'))
   })
 })
+
+// ── Cierre del verify: W-2 (a cada destinatario) y S-2 (la guarda de estado del UPDATE de la marca) ──
+describe('cierre · a CADA destinatario y la guarda de carrera de la marca (W-2, S-2)', () => {
+  it('con dos usuarios en el cargo, la pasada avisa a los dos y marca la ficha una sola vez (W-2)', async () => {
+    const a = await director('dt1@x.co')
+    const b = await director('dt2@x.co')
+    const id = await ficha()
+    expect(await avisarReclamacionesVencidas(db, DIA_61)).toBe(1)
+    expect((await avisos()).map((x) => x.user_id).sort()).toEqual([a, b].sort())
+    expect(await marca(id)).not.toBeNull()
+    expect(await avisarReclamacionesVencidas(db, '2026-05-02')).toBe(0)
+    expect(await avisos()).toHaveLength(2)
+  })
+
+  it('en el respaldo, con dos usuarios del área Servicio Técnico, avisa a los dos y no al cargo ausente (W-2)', async () => {
+    const rol = await createRole(db, { name: 'ST2', areas: ['Servicio Técnico'] })
+    await actualizarRecibeAvisos(db, rol.id, true)
+    const u1 = (await createUser(db, { email: 'st1@x.co', name: 'st1', passwordHash: 'h', roleId: rol.id })).id
+    const u2 = (await createUser(db, { email: 'st2@x.co', name: 'st2', passwordHash: 'h', roleId: rol.id })).id
+    await ficha()
+    expect(await avisarReclamacionesVencidas(db, DIA_61)).toBe(1)
+    expect((await avisos()).map((x) => x.user_id).sort()).toEqual([u1, u2].sort())
+  })
+
+  it('una ficha que pasa a resuelta entre la selección y el UPDATE no se marca ni avisa (S-2)', async () => {
+    await director()
+    const id = await ficha()
+    const leida = (await reclamacionPorId(db, id))! // lo que la pasada habría seleccionado
+    await avanzarFicha(db, id, 'abierta', { a: 'enviada' })
+    await avanzarFicha(db, id, 'enviada', { a: 'resuelta', resultado: 'reposicion', valorRecuperado: 1 })
+    expect(await marcarYAvisarReclamacion(db, leida, 'tarde')).toBe(false)
+    expect(await marca(id)).toBeNull()
+    expect(await avisos()).toEqual([])
+  })
+})

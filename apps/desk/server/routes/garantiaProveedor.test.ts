@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import type { Cargo, RespuestaReclamacion } from '@ambientalia/shared'
-import { MENSAJE_SIN_CARGO_RECLAMACION } from '@ambientalia/shared'
+import { MENSAJE_SIN_CARGO_RECLAMACION, motivoPasoNoPermitido } from '@ambientalia/shared'
 import { asociarOV, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import { db, instalarArnes, appWith, adminCookie } from '../testing/appHarness'
 import { createUser } from '../auth/users'
@@ -362,5 +362,81 @@ describe('POSICIÓN de las guardas (regla de mutación 1)', () => {
   it('POS-ED-3 · G13 < G14: ficha resuelta y fabricante vacío → 409', async () => {
     const f = await sembrarFicha('resuelta')
     expect((await editar(await directorTecnico(), f.id, { ...datos, fabricante: '' })).status).toBe(409)
+  })
+})
+
+// ── Cierre del verify: W-1 (quién respondió), W-3 (las ramas de carrera) y S-7 (el rechazo no escribe nada) ──
+/** Cuántas filas hay en `garantia_proveedor`: la usan los 403 y 422 de responder para probar que no se escribió nada (S-7). */
+async function filasEscritas(): Promise<number> {
+  return (await db.query('SELECT COUNT(*)::int AS n FROM garantia_proveedor')).rows[0].n
+}
+
+/**
+ * Una base que, justo antes de la sentencia que casa con `patron`, hace que otra persona se adelante (`efecto`): así la
+ * ficha cambia de estado ENTRE la lectura de la ruta y su escritura. Con `descartar`, la escritura no encuentra fila.
+ */
+function conCarrera(patron: RegExp, efecto: () => Promise<unknown>, descartar = false): typeof db {
+  const base = db
+  return {
+    query: (async (sql: string, params?: unknown[]) => {
+      if (patron.test(sql)) {
+        await efecto()
+        if (descartar) return { rows: [] }
+      }
+      return base.query(sql, params)
+    }) as typeof db.query,
+  }
+}
+const appCon = (d: typeof db) => appWith({}, d).app
+
+describe('cierre · quién respondió y las carreras de editar y avanzar', () => {
+  it('«respondidaPor» guarda el nombre de quien responde, en la respuesta y en la lectura (W-1)', async () => {
+    const rol = await createRole(db, { name: 'Rol-w1', areas: ['Comercial'] })
+    const u = await createUser(db, { email: 'w1@x.co', name: 'Marta Pérez', passwordHash: 'h', roleId: rol.id, cargoPermiso: 'Director Técnico' })
+    const cookie = `sid=${await createSession(db, u.id)}`
+    const res = await responder(cookie, await asociar('OVI-1'), si)
+    expect(res.status).toBe(201)
+    expect(res.body.respondidaPor).toBe('Marta Pérez')
+    expect((await leer(cookie)).body.ovis[0].respuesta.respondidaPor).toBe('Marta Pérez')
+  })
+
+  it('editar: si la ficha se resuelve entre la lectura y la escritura, 409 con el texto de «resuelta» y la ficha no cambia (W-3)', async () => {
+    const f = await sembrarFicha('abierta')
+    const d = conCarrera(/UPDATE garantia_proveedor SET fabricante/, async () => {
+      await avanzarFicha(db, f.id, 'abierta', { a: 'enviada' })
+      await avanzarFicha(db, f.id, 'enviada', { a: 'resuelta', resultado: 'reposicion', valorRecuperado: 1 })
+    })
+    const res = await request(appCon(d)).put(`/api/garantia-proveedor/${f.id}`).set('Cookie', await directorTecnico()).send({ ...datos, fabricante: 'Otro' })
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('La reclamación está resuelta y ya no se edita')
+    expect((await reclamacionPorId(db, f.id))).toMatchObject({ estado: 'resuelta', fabricante: 'Acme' })
+  })
+
+  it('avanzar: si otra persona movió la ficha entre la lectura y la escritura, 409 con el texto del paso que ya no vale (W-3)', async () => {
+    const f = await sembrarFicha('abierta')
+    const d = conCarrera(/UPDATE garantia_proveedor SET estado = 'enviada'/, () => avanzarFicha(db, f.id, 'abierta', { a: 'enviada' }))
+    const res = await request(appCon(d)).post(`/api/garantia-proveedor/${f.id}/avanzar`).set('Cookie', await directorTecnico()).send({ a: 'enviada' })
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe(motivoPasoNoPermitido('enviada', 'enviada'))
+    expect((await reclamacionPorId(db, f.id))!.estado).toBe('enviada')
+  })
+
+  it('avanzar: si la escritura no encuentra fila y el estado releído sigue permitiendo el paso, 409 con el texto de recarga (W-3)', async () => {
+    const f = await sembrarFicha('abierta')
+    const d = conCarrera(/UPDATE garantia_proveedor SET estado = 'enviada'/, async () => undefined, true)
+    const res = await request(appCon(d)).post(`/api/garantia-proveedor/${f.id}/avanzar`).set('Cookie', await directorTecnico()).send({ a: 'enviada' })
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('La reclamación ya cambió de estado: recarga e inténtalo de nuevo')
+    expect((await reclamacionPorId(db, f.id))!.estado).toBe('abierta')
+  })
+
+  it('el 403, el 422 y el 404 de responder no escriben ninguna fila (S-7)', async () => {
+    const id = await asociar('OVI-1')
+    const c = await directorTecnico()
+    expect((await responder(await sinCargo(), id, si)).status).toBe(403)
+    expect((await responder(c, id, { reclama: true })).status).toBe(422)
+    expect((await responder(c, await asociar('OV-2026-5'), si)).status).toBe(422)
+    expect((await responder(c, 9999, si)).status).toBe(404)
+    expect(await filasEscritas()).toBe(0)
   })
 })

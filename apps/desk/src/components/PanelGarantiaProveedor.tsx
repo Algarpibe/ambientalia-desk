@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   MOTIVOS_NO_RECLAMA, RESULTADOS_RECLAMACION, ETIQUETA_MOTIVO_NO_RECLAMA, ETIQUETA_ESTADO_RECLAMACION, ETIQUETA_RESULTADO_RECLAMACION,
-  puedeGestionarReclamacion, siguienteEstado, type GarantiaProveedor,
+  puedeGestionarReclamacion, siguienteEstado, diaEnZona, type GarantiaProveedor,
 } from '@ambientalia/shared'
 import { useAuth } from '../auth/AuthContext'
 import { useAsync } from '../hooks/useAsync'
@@ -22,7 +22,7 @@ import {
  *  - Los `.tsx` de `apps/desk/src` están fuera de la red de pruebas por decisión de Gerencia (F0-00): este fichero no lleva rojo previo.
  */
 
-const fmtDia = (iso: string | null) => (iso ? iso.slice(0, 10) : '—')
+const fmtDia = (iso: string | null) => diaEnZona(iso) ?? '—' // mismo día civil que nombra el aviso de 60 días
 const fmtValor = (v: number | null) => (v == null ? '—' : v.toLocaleString('es-CO'))
 const numeroDelCampo = (t: string): number | string | null => (t.trim() === '' ? null : Number.isFinite(Number(t)) ? Number(t) : t)
 

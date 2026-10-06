@@ -192,3 +192,43 @@ Ninguna decisión queda sin línea de servidor salvo las de «no decide nada» y
 - Desvío 1: el texto del aviso usa `diaEnZona(respondidaAt)` para «se abrió el …» (día civil de negocio), igual que el cálculo del vencimiento.
 - Desvío 2: `numeroDelCampo` (decisión 10) no estaba en la tabla de §8 del diseño; se añade aquí con su línea.
 - Límite conocido (2.8): liberar una orden en `PanelOvAsociaciones` no recarga este panel hasta reabrir el ticket.
+
+## Medida de cada lote (registro = git, todos)
+
+`git diff --shortstat --no-renames` contra la partida del lote más `wc -l` de lo nuevo sin trackear; el registro de intentos coincide con git en los cuatro.
+Ninguno cruza la válvula de 720 ni el techo de 800.
+
+| Lote | Commit | Líneas |
+|---|---|---|
+| 1a (`shared`, esquema, guardián) | `42b5f20` | **514** |
+| 1a-2 (capa de datos y su prueba) | `5e1d9bc` | **340** |
+| 1b (rutas y su prueba) | `50aa56d` | **587** |
+| 2 (aviso de 60 días y panel) | `a4bb24d` | **674** |
+
+Corrige lo que decía el lote 2 más arriba («ver el informe de entrega»): su medida es 674, la que el verify también midió (S-6).
+
+## Cierre tras el verify (remediación de los avisos)
+
+Partida `4a69412`. Todas las pruebas van al final de su fichero, salvo S-3 (en sitio, sin desplazar líneas). Cada una se vio en rojo por la mutación
+que sobrevivió al verify, y todas se restauraron (el diff de cada fichero de producción quedó vacío).
+
+| Aviso | Prueba nueva | Mutación que la pone roja |
+|---|---|---|
+| W-1 | `routes/garantiaProveedor.test.ts` · «respondidaPor guarda el nombre…» | C-RT-17: `por: user.name` → literal. Roja 1 |
+| W-2 | `avisoReclamacionProveedor.test.ts` · dos usuarios en el cargo; dos en el área de respaldo | C-SV-11: `destinatarios.slice(0, 1)`. Rojas 2 |
+| W-3 | rutas · editar con carrera; avanzar con carrera (texto del paso); avanzar sin fila (texto de recarga) | C-RT-19 quitar el 409 de editar (roja 1); C-RT-20 quitar el de avanzar (rojas 2); C-RT-18 cambiar el texto de recarga (roja 1) y quitar el texto del paso releído (roja 1) |
+| S-1 | `shared/src/garantiaProveedor.test.ts` · RMA, pieza y valor como cadena (CARACTERIZACIÓN: la spec pide texto y número, y el código ya los exige) | C-SH-13 (roja 1), C-SH-9 (rojas 2), C-SH-16 (roja 1) |
+| S-2 | `avisoReclamacionProveedor.test.ts` · ficha resuelta entre la selección y el `UPDATE` | C-SV-3: quitar `AND estado <> 'resuelta'`. Roja 1 |
+| S-3 | `db/garantiaProveedor.test.ts:51-54`, título corregido y aserción del origen `manual`, en sitio | origen `null` si el valor es `null`. Roja 1 |
+| S-7 | rutas · «el 403, el 422 y el 404 de responder no escriben ninguna fila» | G2 sin `return` (roja 2) y G4 sin `return` (roja 1); G5 sin `return` NO la pone roja y no es una mutación válida: sin valor válido la ruta falla antes de escribir |
+
+Las carreras de W-3 se simulan envolviendo `db` (`conCarrera`): justo antes de la sentencia de escritura otra persona cambia la ficha, o la
+escritura no encuentra fila. No se retuerce el código de producción.
+
+**S-4**: `tasks.md` 1a.9 decía «las nueve funciones»; son ocho más la clase de error. Corregido en sitio.
+**S-5 (hipótesis del verify, leída)**: `fmtDia` (`PanelGarantiaProveedor.tsx:25`) recorta el ISO UTC con `slice(0, 10)` y el aviso usa `diaEnZona`
+(`avisoReclamacionProveedor.ts:56`): una respuesta dada entre las 19:00 y las 24:00 de Bogotá se ve con un día de más en el panel. **No se cambió**:
+ningún componente del cliente usa hoy un formateador de día en zona de negocio (`diaEnZona` de `shared` no se importa en `apps/desk/src`; los demás
+paneles usan `slice(0, 10)`, `toLocaleDateString` o `Intl.DateTimeFormat` sin zona fija), así que la edición no era «en sitio con uno ya usado».
+**Citas (regla de mutación 4)**: barrido de `verify-report.md`, `apply-progress.md`, `design.md` y `proposal.md` contra los cinco ficheros del cambio, en el
+árbol final. Rota: `verify-report.md` §3, G13, «`db:224`» (el fichero tiene 161 líneas; era la 117 + 107), reapuntada a `db:117`. El resto dice lo que afirma.

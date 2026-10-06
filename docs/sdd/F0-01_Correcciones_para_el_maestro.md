@@ -1447,3 +1447,40 @@ sin orden.»
 una OVI en un ticket que no es de garantía se admite con el cargo. No da por decididos los supuestos del cambio (el alcance de la regla
 de garantía sobre la orden adicional, y el reconocimiento de la OVI por su prefijo). No afirma que esté en producción, ni que los cargos
 estén asignados: sin ellos sólo pasa el administrador.
+
+## La de F1B-13, ficha de reclamación al fabricante (29)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `ficha-garantia-proveedor`, `cierra: no`, y
+> de `decision/anexo-7-garantia-proveedor` (Gerencia, 2026-09-24).
+
+### 29 · M4.4 y Anexo D nº 7 — la ficha de reclamación al fabricante está construida en parte; el punto 7 NO se cierra *(F1B-13)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2663` («Al crear la OVI de garantía…»),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2664` («valor reclamado (tomado del costo de la OVI)»),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2666-2667` (las mediciones y el envío por remisión) y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2668` («sin empezar a 01/10. Cierra el punto 7 del Anexo D»).
+
+**Texto actual:** «Al crear la OVI de garantía, el Director Técnico responde "¿Se reclama al fabricante?".» / «La ficha registra fabricante,
+pieza (referencia y serial), ticket y OVI de origen, número de caso del fabricante (RMA), valor reclamado (tomado del costo de la OVI),
+estado (abierta → enviada al fabricante → resuelta: reposición, nota crédito o rechazada) y valor recuperado.» / «Entra en Fase 1 junto
+a la OVI de garantía (F1B-03), como tanda pequeña; sin empezar a 01/10. Cierra el punto 7 del Anexo D.»
+
+**Texto propuesto:**
+
+1. En la línea 2663, sustituir «Al crear la OVI de garantía» por «Sobre cada OVI asociada a un ticket, como acto propio»: Desk 2.0 no
+   crea la OVI (se crea en Zoho Books), así que la pregunta no puede ir «al crear». Se responde por cada OVI asociada, y mientras no se
+   responde la OVI figura «Pendiente de respuesta». Responde quien tiene el cargo Director Técnico, o un administrador; basta el cargo,
+   sin exigir un área.
+2. En la línea 2664, sustituir «valor reclamado (tomado del costo de la OVI)» por «valor reclamado (se captura a mano por ahora, y
+   la ficha guarda que su origen es manual)». El valor automático queda pendiente de comprobar si las líneas de la OVI traen costo
+   (tarea de persona P-1 del cambio).
+3. En la línea 2668, sustituir «sin empezar a 01/10» por «[CONSTRUIDO EN PARTE] Construidas la ficha, sus tres estados y el aviso de
+   60 días. Quedan fuera: el valor reclamado automático, las mediciones de las líneas 2666 (valor recuperado frente al reclamado por marca
+   y piezas con fallas repetidas) y el envío físico por remisión sin ticket de la línea 2667». Y retirar de esa misma línea la
+   frase «Cierra el punto 7 del Anexo D».
+
+**Lo que esta entrada NO pide.** **No cierra el punto 7 del Anexo D**: lo construido es una parte, y quedan abiertos el valor
+automático, las dos mediciones y el envío por remisión (éste depende de F1B-16). No cambia la línea 2665 (el aviso a los 60
+días): lo construido avisa a quien lleva el cargo Director Técnico, o al área Servicio Técnico si nadie lo lleva, y cuenta días
+naturales con frontera estricta (el día 61 avisa); que sean naturales lo debe confirmar Gerencia (P-2 del cambio). Tampoco afirma que
+esté en producción ni que el cargo esté asignado: sin él sólo un administrador responde la pregunta.

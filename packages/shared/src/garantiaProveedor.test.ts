@@ -157,3 +157,22 @@ describe('puedeGestionarReclamacion (RQ-PM-26)', () => {
     expect(puedeGestionarReclamacion(null)).toBe(false)
   })
 })
+
+describe('textos y valor que no son del tipo esperado (S-1 del verify, CARACTERIZACIÓN de lo que el código hace)', () => {
+  it('RMA que no es texto es error y el RMA de texto se recorta', () => {
+    expect(validarDatosFicha({ fabricante: 'A', rma: 5 }).ok).toBe(false)
+    expect(validarDatosFicha({ fabricante: 'A', rma: ' R-2 ' })).toMatchObject({ ok: true, valor: { rma: 'R-2' } })
+  })
+
+  it('referencia o serial de pieza que no son texto son error, en la respuesta y en la edición', () => {
+    for (const campo of ['piezaReferencia', 'piezaSerial']) {
+      expect(validarRespuesta({ reclama: true, fabricante: 'A', [campo]: 5 }).ok, `respuesta ${campo}`).toBe(false)
+      expect(validarDatosFicha({ fabricante: 'A', [campo]: 5 }).ok, `edición ${campo}`).toBe(false)
+    }
+  })
+
+  it('un valor reclamado como cadena numérica es error: sólo vale un número', () => {
+    expect(validarRespuesta({ reclama: true, fabricante: 'A', valorReclamado: '800' }).ok).toBe(false)
+    expect(validarDatosFicha({ fabricante: 'A', valorReclamado: '800' }).ok).toBe(false)
+  })
+})

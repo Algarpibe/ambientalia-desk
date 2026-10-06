@@ -48,10 +48,10 @@ describe('registrarRespuesta y sus lecturas (RQ-TC-44, RQ-TC-45)', () => {
     expect(f).toMatchObject({ reclama: false, motivoNoReclama: 'mal_uso', estado: null, fabricante: null, valorReclamado: null, origenValorReclamado: null })
   })
 
-  it('valor reclamado vacío no se calcula: queda null y sin origen (CARACTERIZACIÓN)', async () => {
+  it('valor reclamado vacío no se calcula: queda null y el origen sigue siendo manual (CARACTERIZACIÓN)', async () => {
     await ticket()
     const f = await registrarRespuesta(db, { asociacion: await asociar('OVI-1'), respuesta: { ...si, valorReclamado: null }, por: 'dt@x' })
-    expect(f.valorReclamado).toBeNull()
+    expect(f).toMatchObject({ valorReclamado: null, origenValorReclamado: 'manual' })
     expect(await reclamacionPorId(db, 999)).toBeNull()
   })
 
