@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { Aviso } from '@ambientalia/shared'
+import type { Aviso, Cargo } from '@ambientalia/shared'
 
 const filas = (rows: unknown[]): Array<Record<string, unknown>> => rows as Array<Record<string, unknown>>
 
@@ -110,4 +110,18 @@ export async function destinatariosDeCargo(
   return filas(r.rows)
     .filter((x) => String(x.cargo).trim().toLowerCase() === objetivo)
     .map((x) => ({ id: String(x.id), email: String(x.email), name: String(x.name) }))
+}
+
+/**
+ * Quién recibe un aviso que se dirige a un CARGO DE PERMISO (F1B-13, RQ-AV-19): los usuarios ACTIVOS cuyo
+ * `users.cargo_permiso` es exactamente `cargo`. Igualdad en SQL: el cargo de permiso es una lista cerrada y no hay
+ * nada que plegar. No sustituye a `destinatariosDeCargo`, que compara la FIRMA (`users.cargo`, texto libre).
+ * Vacío si nadie lo tiene: el respaldo al área lo decide el servicio.
+ */
+export async function destinatariosDeCargoPermiso(
+  db: Queryable,
+  cargo: Cargo,
+): Promise<Array<{ id: string; email: string; name: string }>> {
+  const r = await db.query('SELECT id, email, name FROM users WHERE active = true AND cargo_permiso = $1', [cargo])
+  return filas(r.rows).map((x) => ({ id: String(x.id), email: String(x.email), name: String(x.name) }))
 }

@@ -119,3 +119,31 @@ otro ticket para el repuesto.
 (`packages/shared/src/subOV.ts:63-67`). **Un número tecleado a mano como «OVI 26-1» (con espacio) u «OVI–26-1» (con raya en vez de
 guion) NO cuenta como OVI**: no pide el cargo, y en un ticket de Garantía se rechaza como orden normal. El segundo efecto falla cerrado;
 el primero no. Hipótesis, no medida aquí: una orden elegida en el buscador llega con el número que le da Books, así que el límite afectaría sólo al texto libre.
+
+## 7 · Añadido por `ficha-garantia-proveedor` (F1B-13, `cierra: no`) — tabla nueva, sin interruptor y una condición de persona
+
+**Qué entra.** La ficha de reclamación de garantía al fabricante: sobre cada OVI asociada a un ticket, quien lleva el cargo Director Técnico
+(o un administrador) responde «¿Se reclama al fabricante?»; un «sí» abre una ficha que avanza abierta → enviada → resuelta, y un «no» guarda
+uno de tres motivos. Una ficha sin resolver a los 60 días naturales avisa una sola vez, a quien lleva el cargo o, si nadie lo lleva, al
+área Servicio Técnico. Añade **una tabla**, `public.garantia_proveedor` (`packages/zoho-sync/src/db/schema.sql`, al final), que `migrate`
+crea al arrancar; no toca la replicación ni el hub. **No hay variable de entorno ni interruptor**: está activa desde que se publica. La
+comprobación de lectura tras desplegar está en `DEPLOY.md`, apartado «Comprobación de lectura tras desplegar F1B-13».
+
+**Condición ya registrada: asignar el cargo Director Técnico antes de publicar** (la misma de §5, `decision/e157-ovi-garantia-por-cargo`,
+consecuencia 5). Sin él, **sólo un administrador responde la pregunta**, y el aviso de 60 días cae al área Servicio Técnico en lugar de ir
+al cargo. No hace falta una tarea nueva: si §5 ya se cumplió, ésta también.
+
+**Lo que se verá el día de publicar.** Toda OVI ya asociada a un ticket aparece como «Pendiente de respuesta», porque la tabla nace vacía
+y no hay relleno. Es seguro, y el volumen no está medido.
+
+Lo que NO hace esta pieza: no calcula el valor reclamado (se captura a mano), no mide el valor recuperado por marca ni las piezas con
+fallas repetidas, y no envía la pieza por remisión; el punto 7 del Anexo D sigue abierto.
+
+| # | Quién | Qué | Qué desbloquea |
+|---|---|---|---|
+| P-1 | Gerencia, con quien tenga acceso a la base de producción | Comprobar si las líneas de una OVI traen costo, dónde (el `raw` de `books.sales_orders`, o sólo el hub) y en qué moneda | El valor reclamado automático |
+| P-2 | Gerencia | Confirmar los 60 días y que sean naturales (hoy: el día 61 avisa) | Deja firme la frontera del aviso |
+| P-3 | Gerencia y un administrador | Asignar el cargo Director Técnico antes de publicar | Que alguien más que el administrador responda, y que el aviso vaya al cargo |
+| P-4 | Gerencia | Pegar en el maestro la corrección 29 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir «al crear» y «tomado del costo» |
+
+Archivar el cambio no da por hechas estas cuatro tareas.

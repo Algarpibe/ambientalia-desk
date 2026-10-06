@@ -722,3 +722,30 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS restaurada_at timestamptz
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS restaurada_por text;
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulacion_previa_at timestamptz;
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS anulacion_previa_por text;
+-- Reclamacion al fabricante sobre una OVI de garantia (ficha-garantia-proveedor, F1B-13). Una fila por asociacion respondida: un si abre la ficha y un no guarda su motivo
+-- Sin claves foraneas y sin CHECK de listas: las listas viven en shared. Sin relleno: las OVI previas quedan pendientes de respuesta. public.garantia_proveedor va CALIFICADA
+CREATE TABLE IF NOT EXISTS public.garantia_proveedor (
+  id bigserial PRIMARY KEY,
+  asociacion_id bigint NOT NULL,
+  ticket_id text NOT NULL,
+  ovi_numero text NOT NULL,
+  reclama boolean NOT NULL,
+  motivo_no_reclama text,
+  respondida_por text NOT NULL,
+  respondida_at timestamptz NOT NULL DEFAULT now(),
+  fabricante text,
+  pieza_referencia text,
+  pieza_serial text,
+  rma text,
+  valor_reclamado numeric,
+  origen_valor_reclamado text,
+  estado text,
+  resultado text,
+  valor_recuperado numeric,
+  enviada_at timestamptz,
+  resuelta_at timestamptz,
+  aviso_60_at timestamptz,
+  CONSTRAINT garantia_proveedor_si_o_no CHECK ((reclama AND estado IS NOT NULL AND motivo_no_reclama IS NULL) OR (NOT reclama AND estado IS NULL AND motivo_no_reclama IS NOT NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_garantia_proveedor_asociacion ON public.garantia_proveedor (asociacion_id);
+CREATE INDEX IF NOT EXISTS idx_garantia_proveedor_ticket ON public.garantia_proveedor (ticket_id);

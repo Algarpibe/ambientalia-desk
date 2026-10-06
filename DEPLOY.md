@@ -468,3 +468,27 @@ líneas de arriba al fichero de ejemplo de entorno; (5) elegir el proveedor (`p5
 restauración** incluye recuperar un documento de la carpeta con el procedimiento anterior, y es tarea de persona.
 
 **Sincronización de tickets por fecha de modificación** (`sync-tickets-por-modificacion`). `syncRecent` pide a `/tickets/search` los tickets modificados desde la marca de agua; el token de Zoho necesita permiso de búsqueda (`Desk.search.READ`). Si falta, el ciclo no se rompe: cae a la página 1 por `-recentThread` y deja en el log una línea `Zoho /tickets/search <estado>: el ciclo cae a la página 1 por -recentThread`; si la ves en cada ciclo, amplía el scope del token. Sin interruptor ni variable de entorno.
+
+## Comprobación de lectura tras desplegar F1B-13 (ficha de reclamación al fabricante)
+
+**Sin variables de entorno nuevas** (`.env.example` no cambia) y sin interruptor: la ficha y su aviso están activos desde que se
+publica. El cambio añade **una tabla**, `public.garantia_proveedor`, que `migrate` crea al arrancar. No toca la replicación ni el hub:
+la tabla no es de `books`.
+
+Hazla **antes de dar el cambio por publicado**. Es una consulta de sólo lectura, en la base `desk` (esquema `public`). La migración es
+tolerante por sentencia: un fallo se registra como «sentencia omitida» y **no** tumba el arranque, así que un despliegue puede quedar
+«verde» con la tabla sin crear.
+
+```sql
+-- La tabla existe: una fila. Con cero filas, la migración omitió la sentencia.
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name = 'garantia_proveedor';
+```
+
+- **Qué se rompe si la tabla falta:** responder, editar y avanzar una reclamación, y la lectura del panel de garantía de un ticket,
+  fallan, porque sus consultas nombran la tabla (`apps/desk/server/db/garantiaProveedor.ts:144`, la de la lectura).
+- **Condición de persona, antes de publicar:** asignar el cargo Director Técnico. Sin él, sólo un administrador responde la pregunta
+  y el aviso de 60 días cae al área Servicio Técnico.
+- **Lo que se verá el día de publicar:** toda OVI ya asociada a un ticket aparece «Pendiente de respuesta», porque no hay relleno.
+- **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra.

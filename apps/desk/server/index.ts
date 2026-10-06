@@ -12,7 +12,7 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'
+import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'; import { pasadaReclamaciones } from './services/avisoReclamacionProveedor'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -85,7 +85,7 @@ async function main() {
   setInterval(() => {
     if (syncing) return // evita solapar sincronizaciones si una tarda más que el intervalo
     syncing = true
-    let p: Promise<unknown> = pasadaAlarmas(pool, config).then(() => pasadaRitmoContratos(pool).then(() => sync.syncRecent()))
+    let p: Promise<unknown> = pasadaAlarmas(pool, config).then(() => pasadaReclamaciones(pool)).then(() => pasadaRitmoContratos(pool).then(() => sync.syncRecent()))
     if (config.syncActivities) p = p.then(() => sync.syncActivities())
     if (config.syncContacts) p = p.then(() => sync.syncContacts())
     p.catch((err) => logger.error({ err }, 'Sync incremental falló'))

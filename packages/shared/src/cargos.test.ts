@@ -223,9 +223,9 @@ describe('RQ-PM-20 · quién llama a las primitivas por cargo (hipótesis de 1.1
   const llamadores = (nombre: string): string[] =>
     [...fuentes(join(RAIZ, 'apps')), ...fuentes(join(RAIZ, 'packages'))]
       .filter((f) => !f.endsWith(join('shared', 'src', 'cargos.ts')) && readFileSync(f, 'utf8').includes(`${nombre}(`))
-  it('PM20-2 · las dos primitivas tienen llamador fuera de cargos.ts; el de puedeCrearOVIGarantia es ordenOVI.ts (una sola implementación)', () => {
+  it('PM20-2 · las dos primitivas tienen llamador fuera de cargos.ts; los de puedeCrearOVIGarantia son garantiaProveedor.ts (envoltorio) y ordenOVI.ts', () => {
     expect(llamadores('puedeFijarPrioridadTop5').length).toBeGreaterThanOrEqual(1)
-    expect(llamadores('puedeCrearOVIGarantia').map((r) => r.split(/[\\/]/).slice(-3).join('/'))).toEqual(['shared/src/ordenOVI.ts'])
+    expect(llamadores('puedeCrearOVIGarantia').map((r) => r.split(/[\\/]/).slice(-3).join('/'))).toEqual(['shared/src/garantiaProveedor.ts', 'shared/src/ordenOVI.ts'])
   })
 })
 
