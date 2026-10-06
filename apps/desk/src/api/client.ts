@@ -806,3 +806,20 @@ export async function fetchNovedadesRemision(): Promise<NovedadCatalogo[]> {
 export function fetchRemisionCreada(): Promise<Ticket[]> {
   return fetch('/api/remision-creada', { credentials: 'include' }).then((r) => json<Ticket[]>(r))
 }
+
+/** Mantenimiento de la lista de novedades (F1B-04, RQ-RE-29). Comodidad: quién puede y qué cambio vale lo decide el servidor. */
+export function listarNovedadesTodas(): Promise<NovedadCatalogo[]> {
+  return fetch('/api/novedades-remision/todas', { credentials: 'include' }).then((r) => json<NovedadCatalogo[]>(r))
+}
+
+export function crearNovedadRemision(cuerpo: { clave: string; etiqueta: string; orden?: number; exigeTexto?: boolean }): Promise<NovedadCatalogo> {
+  return fetch('/api/novedades-remision', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo),
+  }).then((r) => json<NovedadCatalogo>(r))
+}
+
+export function cambiarNovedadRemision(clave: string, cambios: { etiqueta?: string; orden?: number; activo?: boolean; exigeTexto?: boolean }): Promise<NovedadCatalogo> {
+  return fetch(`/api/novedades-remision/${encodeURIComponent(clave)}`, {
+    method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cambios),
+  }).then((r) => json<NovedadCatalogo>(r))
+}
