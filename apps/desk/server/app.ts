@@ -19,7 +19,7 @@ import { registerAnalisisRoutes } from './routes/analisis'
 import { registerAdminRoutes } from './routes/admin'; import { registerRespaldoRoutes, type RespaldadorRuta } from './routes/respaldo'
 import { registerAttachmentRoutes } from './routes/attachment'
 import { registerRemisionRoutes } from './routes/remision'
-import { registerAvisosRoutes } from './routes/avisos'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'; import { OvYaAsociadaError } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { registerContratosRoutes } from './routes/contratos'; import { registerPrioridadRoutes } from './routes/prioridad'; import { registerCertificadoFabricaRoutes } from './routes/certificadoFabrica'; import { registerAltaManualRoutes } from './routes/altaManual'; import { registerNovedadesRoutes } from './routes/novedades'; import { registerIndicadoresRoutes } from './routes/indicadores'
+import { registerAvisosRoutes } from './routes/avisos'; import { registerOvAsociacionesRoutes } from './routes/ovAsociaciones'; import { OvYaAsociadaError } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { registerContratosRoutes } from './routes/contratos'; import { registerPrioridadRoutes } from './routes/prioridad'; import { registerCertificadoFabricaRoutes } from './routes/certificadoFabrica'; import { registerAltaManualRoutes } from './routes/altaManual'; import { registerNovedadesRoutes } from './routes/novedades'; import { registerIndicadoresRoutes } from './routes/indicadores'; import { registerGarantiaProveedorRoutes } from './routes/garantiaProveedor'
 import { HttpError } from './util/httpError'
 import multer from 'multer'
 import { LIMITE_SUBIDA_MB } from './util/subida'
@@ -58,7 +58,7 @@ export function createApp({ db, zohoFetch, sync, config, respaldador }: Deps): E
   registerAttachmentRoutes(app, { db, zohoFetch })
   registerRemisionRoutes(app, { db, config })
   registerAvisosRoutes(app, { db })
-  registerOvAsociacionesRoutes(app, { db }); registerContratosRoutes(app, { db }); registerPrioridadRoutes(app, { db }); registerCertificadoFabricaRoutes(app, { db }); registerAltaManualRoutes(app, { db }); registerNovedadesRoutes(app, { db }); registerIndicadoresRoutes(app, { db })
+  registerOvAsociacionesRoutes(app, { db }); registerContratosRoutes(app, { db }); registerPrioridadRoutes(app, { db }); registerCertificadoFabricaRoutes(app, { db }); registerAltaManualRoutes(app, { db }); registerNovedadesRoutes(app, { db }); registerIndicadoresRoutes(app, { db }); registerGarantiaProveedorRoutes(app, { db })
 
   /*
    * Una ruta de `/api` que no existe se dice en JSON, y va AQUÍ —después de registrarlas todas— para

@@ -299,7 +299,7 @@ Una sola sesión por prueba HTTP: `userCookie` crea siempre el mismo correo (`ap
 | M-SH-4 | condición | `rechazada` admite valor recuperado positivo | caso de `validarPaso` |
 | M-DB-1 | condición | quitar la traducción del `23505` | prueba del error traducido |
 | M-DB-2 | condición | quitar `AND estado = $2` de `avanzarFicha` | avance con estado viejo |
-| M-DB-3 | condición | `pendiente` sin mirar `liberada` | liberada sin respuesta no sale |
+| M-DB-3 | condición | quitar el `continue` de «liberada sin respuesta» en `garantiaDelTicket` (la forma «`pendiente` sin mirar `liberada`» es equivalente: con el `continue` delante, una liberada que llega al cálculo siempre tiene respuesta y no se pone roja) | liberada sin respuesta no sale |
 | M-RT-1 | condición | G7 y G11 sin mirar `reclama` | una respuesta «no» da `404` |
 | M-AV-1 | condición | quitar `aviso_60_at IS NULL` del `UPDATE` | un solo aviso |
 | M-AV-2 | condición | marcar antes de buscar destinatarios | sin nadie no marca |

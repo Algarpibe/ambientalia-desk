@@ -79,3 +79,66 @@ siempre tiene respuesta y `pendiente` da lo mismo; la mutación que discrimina e
 `a64c6c8`: el commit de planificación metió el `proposal.md` de F1B-13 y la lista de tandas «en curso» pasó a trece
 (`F1B-13` entre `F1B-11` y `F1C-05`). No es del lote 1a; el precedente es el commit
 `8a9e742 test(reconciliacion): F1F-02 entra en curso`. Lo arregla quien commitea (título DOCE → TRECE y la lista).
+
+## Lote 1b (partida `5e1d9bc`) — rutas, registro y pendientes del 1a
+
+Medida: **587** (97 inserciones y 17 borrados en cinco ficheros, contra `5e1d9bc`, más 107 + 366 de las rutas y su prueba, nuevas sin trackear) (válvula 720, estimado 359). Cuatro códigos de cierre en 0 (ver la entrega del orquestador).
+
+### Tareas hechas
+
+| Tarea | Rojo (razón) | Verde |
+|---|---|---|
+| 1b.1 a 1b.4 | `routes/garantiaProveedor.test.ts` (37 pruebas): 33 rojas porque las rutas no existían (`404` «Ruta de API no encontrada» del comodín de `/api` frente a los `201/409/403/422` esperados); 4 nacían verdes por esperar `404` | — |
+| 1b.5 | — | 37/37 con `routes/garantiaProveedor.ts` (107 líneas); una prueba tenía una columna inexistente (`creada_at`) y se corrigió en la prueba |
+| 1b.6 | — | `app.ts:22` y `:61` en sitio: `--numstat` 2/2 (sin desplazar) |
+| 1b.7 | — | PM20-2 verde (dos llamadores de la primitiva); `ticketService.ts` y `remision.ts` sin cambios (`git diff --stat` vacío) |
+| 1a.8, 1a.9 | commit `5e1d9bc` | — |
+| 1a.11 | ver las dos tablas de abajo | — |
+
+### Mutaciones de posición y de condición del 1b (1b.8), cada una restaurada y verde después (37/37)
+
+| Id | Qué se movió | Prueba roja |
+|---|---|---|
+| M-POS-1 | G2 antes de G1 | POS-RS-1 |
+| M-POS-2 | G3 antes de G2 | POS-RS-2 |
+| M-POS-3 | G4 antes de G3 | POS-RS-3 |
+| M-POS-4 | G5 antes de G4 | POS-RS-4 |
+| M-POS-5 | G6 antes de G5 | POS-RS-5 |
+| M-POS-6 | G6 antes de G2 | POS-RS-5, POS-RS-6, POS-RS-7 (3 rojas) |
+| M-POS-7 | G6 antes de G3 | POS-RS-5, POS-RS-7 |
+| M-POS-8 | G8 antes de G7 | POS-AV-1 |
+| M-POS-9 | G9 antes de G8 | POS-AV-2 |
+| M-POS-10 | G10 antes de G9 | POS-AV-3 y «saltar, retroceder y avanzar una resuelta» |
+| M-POS-11 | G12 antes de G11 | POS-ED-1 |
+| M-POS-12 | G13 antes de G12 | POS-ED-2 |
+| M-POS-13 | G14 antes de G13 | POS-ED-3 |
+| M-RT-1 | G7 y G11 sin mirar `reclama` | «una ficha inexistente… respuesta no dan 404», POS-AV-1 y POS-ED-1 |
+| M-CARRERA | sin traducir `ReclamacionYaRespondidaError` | «la carrera de dos respuestas… nunca un 500» (la carrera SÍ llega al `23505` con pg-mem) |
+
+Las trece posiciones se hicieron con un script que mueve el bloque entero de cada guarda (no sólo la condición). Para que la
+mutación de G10 antes de G9 fallara por orden y no por una referencia sin declarar, `const a` (el destino del cuerpo) se lee al
+principio del manejador de avanzar.
+
+### Pendientes del lote 1a, hechos aquí
+
+| Id | Qué se movió en `apps/desk/server/db/garantiaProveedor.ts` | Prueba roja |
+|---|---|---|
+| M-DB-1 | quitar la traducción del `23505` | «una segunda respuesta… ReclamacionYaRespondidaError» |
+| M-DB-2 | quitar `AND estado = $2` de `avanzarFicha` (rama «enviada» y, aparte, rama «resuelta») | «con el estado viejo no toca nada y devuelve null» (las dos) |
+| M-DB-3 | quitar el `continue` de «liberada sin respuesta» | «liberada SIN respuesta no sale…» |
+| M-DB-3 (forma del diseño) | `pendiente: respuesta === null` (sin mirar `liberada`) | NO se pone roja: equivalente, 15/15 verde. `design.md` §9 y `tasks.md` 1a.11 corregidos |
+| H-2 | quitar el `Number()` del mapeador | la prueba nueva «el mapeador convierte a number los valores que la base entrega como texto» |
+
+H-2: prueba nueva en `db/garantiaProveedor.test.ts` con un `Queryable` falso que devuelve `valor_reclamado: '800000.50'` y
+`valor_recuperado: '300'` como texto; sale `number`. Todas restauradas y 15/15 verde.
+
+### Desvíos del diseño
+
+1. **Orden de los manejadores en el fichero:** responder, editar, avanzar (el diseño §6 lista avanzar antes que editar). No cambia
+   ninguna guarda.
+2. **Carrera de avanzar (`avanzarFicha` devuelve `null`):** el `409` lleva el texto de G9 calculado sobre el estado RE-LEÍDO
+   (`motivoPasoNoPermitido(actual.estado, a)`), porque con el estado ya leído G9 era `null` y no daba texto; sin fila vuelve a
+   un texto genérico. El diseño decía «el texto de G9».
+3. **Pruebas con usuarios de correo propio** (`usuario(areas, cargo)` como `oviGarantia.test.ts`) en vez de `userCookie`: permite
+   varios usuarios en una prueba (administrador, Director Comercial). La carrera de dos respuestas lleva una sola sesión.
+4. **`const a` hoisted** en el manejador de avanzar (ver arriba).

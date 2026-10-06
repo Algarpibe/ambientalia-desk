@@ -73,6 +73,23 @@ describe('registrarRespuesta y sus lecturas (RQ-TC-44, RQ-TC-45)', () => {
   })
 })
 
+describe('numeric de node-postgres llega como TEXTO (H-2)', () => {
+  it('el mapeador convierte a number los valores que la base entrega como texto', async () => {
+    const fila = {
+      id: '7', asociacion_id: '3', ticket_id: 't1', ovi_numero: 'OVI-1', reclama: true, motivo_no_reclama: null, respondida_por: 'x',
+      respondida_at: new Date('2026-10-01T10:00:00Z'), fabricante: 'Acme', pieza_referencia: null, pieza_serial: null, rma: null,
+      valor_reclamado: '800000.50', origen_valor_reclamado: 'manual', estado: 'resuelta', resultado: 'reposicion',
+      valor_recuperado: '300', enviada_at: null, resuelta_at: null, aviso_60_at: null,
+    }
+    const falsa = { query: async () => ({ rows: [fila] }) } as unknown as Queryable
+    const f = (await reclamacionPorId(falsa, 7))!
+    expect(f.valorReclamado).toBe(800000.5)
+    expect(f.valorRecuperado).toBe(300)
+    expect(typeof f.id).toBe('number')
+    expect(f.respondidaAt).toBe('2026-10-01T10:00:00.000Z')
+  })
+})
+
 describe('la base respalda la coherencia sí/no (CHECK, H-1)', () => {
   const base = "INSERT INTO public.garantia_proveedor (asociacion_id, ticket_id, ovi_numero, reclama, motivo_no_reclama, estado, fabricante, respondida_por)"
   it('«sí» con motivo, «no» sin motivo y «no» con estado se rechazan; «sí» abierta y «no» con motivo pasan', async () => {
