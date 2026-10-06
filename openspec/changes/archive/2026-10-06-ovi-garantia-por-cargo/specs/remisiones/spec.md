@@ -7,7 +7,7 @@ conservan su texto): IV-12 sigue sin destino. Supuestos S-1…S-10: los de `prop
 
 ## ADDED Requirements
 
-### Requirement: RQ-RE-30 · La remisión de entrada exige el cargo cuando la orden recibida es OVI (escalón B)
+### RQ-RE-30 · La remisión de entrada exige el cargo cuando la orden recibida es OVI (escalón B)
 
 En el bloque de la orden de venta (`apps/desk/server/routes/remision.ts:218-243`), una orden resuelta desde
 `salesOrderId` cuyo número es OVI y que **entra** (RQ-PM-25: no coincide con `orden_venta`, `salesorder_id` ni una
@@ -64,7 +64,7 @@ de IV-12** (B después de C y D), del mismo molde que los tres registrados: se a
 - WHEN crea la remisión
 - THEN responde el `422` de «Ítems fuera del checklist», no el `403`
 
-### Requirement: RQ-RE-31 · Un ticket de «Garantía» sólo admite una orden `OVI-` en la remisión de entrada (escalón C)
+### RQ-RE-31 · Un ticket de «Garantía» sólo admite una orden `OVI-` en la remisión de entrada (escalón C)
 
 Si `tipo_servicio` es exactamente «Garantía» (SUPUESTO S-7) y entra una orden que no es OVI, la remisión SHALL responder
 `422` con el texto de garantía de `tickets-core` RQ-TC-43. Cae **después** del contrato vencido (C, `:220`) y **antes** de

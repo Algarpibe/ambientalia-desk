@@ -137,7 +137,7 @@ En el alta gana el vencido (`ticketService.ts:96`, POS-AL-7); en la transición 
 **CRITICAL:** ninguno.
 
 **WARNING**
-- **W-1** `apps/desk/server/oviGarantia.test.ts:312-336`: el escenario de `specs/transitions-st` RQ-TS-37 «Garantía con `OV-` en cada transición… las dos aprobaciones» sólo se ejerce con `aprobacion` (GA-TR-2); `aprobacion_y_repuestos` + Garantía no tiene prueba. El código es el mismo (`ticketService.ts:134`, `plan.ovAdicional`), riesgo bajo; añadir un caso o acotar el escenario.
+- **W-1** `apps/desk/server/oviGarantia.test.ts:312-336` en `e4bdc6e` (superado: el cierre `1edae50` añadió la prueba GA-TR-2b que cubre este hallazgo): el escenario de `specs/transitions-st` RQ-TS-37 «Garantía con `OV-` en cada transición… las dos aprobaciones» sólo se ejerce con `aprobacion` (GA-TR-2); `aprobacion_y_repuestos` + Garantía no tiene prueba. El código es el mismo (`ticketService.ts:134`, `plan.ovAdicional`), riesgo bajo; añadir un caso o acotar el escenario.
 - **W-2** El detector de citas (salida 0, no bloquea) lista abreviadas rotas en `openspec/specs/permissions/spec.md:42`, `openspec/specs/transitions-st/spec.md:33` y `:484`. Esos ficheros no los toca el cambio (`git diff 215310d HEAD` sólo toca `openspec/changes/`), así que son previas; no las medí contra `215310d`. El barrido humano del cierre (regla de mutación 4) sigue pendiente: `ticketService.ts` `:21,:36,:43,:44,:96,:131,:134` y `remision.ts:220`.
 
 **SUGGESTION**

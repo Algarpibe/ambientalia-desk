@@ -7,7 +7,7 @@ y la posición se prueba moviendo la guarda (regla de mutación 1).
 
 ## ADDED Requirements
 
-### Requirement: RQ-TC-42 · El alta exige el cargo cuando la orden es OVI (escalón B)
+### RQ-TC-42 · El alta exige el cargo cuando la orden es OVI (escalón B)
 
 El alta SHALL juzgar con RQ-PM-24 y RQ-PM-25 las órdenes que traiga: el número final (`ordenVenta` tecleada, que gana al
 de Books) **y** el número de la orden resuelta desde `salesOrderId`. En el alta el ticket nace: toda orden entra. Sin
@@ -55,7 +55,7 @@ Si el servicio no recibe al sujeto, se trata como «sin cargo» (SUPUESTO S-10).
 - WHEN crea el ticket
 - THEN responde el `403`, no el `422` de «Faltan campos obligatorios»
 
-### Requirement: RQ-TC-43 · Un ticket de «Garantía» sólo admite una orden `OVI-` en el alta (escalón C)
+### RQ-TC-43 · Un ticket de «Garantía» sólo admite una orden `OVI-` en el alta (escalón C)
 
 Si `tipo_servicio` es exactamente «Garantía» (literal de `TIPOS_SERVICIO`, `packages/shared/src/ticketCreate.ts:4`;
 SUPUESTO S-7), el alta SHALL responder `422` cuando entre una orden que no es OVI, con el texto «El ticket es de tipo de

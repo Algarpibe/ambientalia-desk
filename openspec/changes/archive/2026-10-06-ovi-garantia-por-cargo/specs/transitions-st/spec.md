@@ -8,7 +8,7 @@ transición. Supuestos S-1…S-10: los de `proposal.md` §6, aceptados. Marcas: 
 
 ## ADDED Requirements
 
-### Requirement: RQ-TS-36 · Las transiciones con campo de orden exigen el cargo cuando entra una OVI (escalón B)
+### RQ-TS-36 · Las transiciones con campo de orden exigen el cargo cuando entra una OVI (escalón B)
 
 Para cada una de las tres transiciones, una orden OVI que **entra** (RQ-PM-25) SHALL exigir el cargo (RQ-PM-24); sin él
 responde `403` con el texto de cargo. La guarda cae **después** de los `403`/`409` de existencia, flujo, estado y área, y
@@ -57,7 +57,7 @@ lleva escenario.
 - WHEN la envía en cualquiera de las tres transiciones
 - THEN responde el `403`, no el `409` de «ya está asociada»
 
-### Requirement: RQ-TS-37 · Un ticket de «Garantía» sólo admite órdenes `OVI-` en las transiciones (escalón C)
+### RQ-TS-37 · Un ticket de «Garantía» sólo admite órdenes `OVI-` en las transiciones (escalón C)
 
 Para las tres transiciones, si `tipo_servicio` es exactamente «Garantía» (SUPUESTO S-7) y entra una orden que no es OVI,
 SHALL responder `422` con el texto de garantía de `tickets-core` RQ-TC-43. Alcanza también a la «OV adicional»: un ticket
@@ -81,7 +81,7 @@ transición trae una sola orden): sin escenario inventado.
 - WHEN la envía un usuario con el cargo
 - THEN responde el `422` de garantía, no el `409`
 
-### Requirement: RQ-TS-38 · Reconfirmar la orden del ticket en una transición no pide el cargo ni la garantía
+### RQ-TS-38 · Reconfirmar la orden del ticket en una transición no pide el cargo ni la garantía
 
 Cuando la orden enviada es la que el ticket ya tiene (RQ-PM-25), las guardas de OVI (cargo y garantía) **MUST NOT**
 actuar, en tickets de Zoho y de la aplicación. El panel reenvía siempre la orden que el ticket ya trae

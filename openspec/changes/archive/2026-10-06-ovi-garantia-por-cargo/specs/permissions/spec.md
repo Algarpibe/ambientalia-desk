@@ -9,16 +9,14 @@ Marcas bajo `strict_tdd`: **ROJO** = nace rojo; **CARACTERIZACIÓN** = nace verd
 
 ## MODIFIED Requirements
 
-### Requirement: RQ-PM-20 · Primitivas del cargo: OVI de garantía y Top 5, las dos con llamador
+### RQ-PM-20 · Primitivas del cargo: OVI de garantía y Top 5, las dos con llamador
 
 `shared` SHALL exportar `puedeCrearOVIGarantia` (Director Técnico o admin) y `puedeFijarPrioridadTop5` (Director
 Comercial o admin). `puedeFijarPrioridadTop5` **tiene llamadores** desde F1B-07: las rutas de prioridad del cliente y
 de ajuste por ticket (`tickets-core` RQ-TC-27 y RQ-TC-29) y la guarda de las transiciones (`transitions-st` RQ-TS-21).
-`puedeCrearOVIGarantia` **tiene llamadores** desde F1B-03: la guarda de cargo de las cuatro entradas de una orden
-(RQ-PM-24; `tickets-core` RQ-TC-42, `transitions-st` RQ-TS-36, `remisiones` RQ-RE-30). `puedeCrearOVIGarantia` **no
-exige área** (SUPUESTO S-4 en lo que toca al administrador): basta el cargo Director Técnico o ser administrador. La
-prueba de las primitivas SHALL decir que las dos tienen llamador. El acto que se construye es **asociar** una orden OVI
-a un ticket, no crear la OVI en Books.
+`puedeCrearOVIGarantia` **tiene llamadores** desde F1B-03: la guarda de cargo de las cuatro entradas de una orden (RQ-PM-24; `tickets-core` RQ-TC-42, `transitions-st` RQ-TS-36, `remisiones` RQ-RE-30).
+`puedeCrearOVIGarantia` **no exige área** (SUPUESTO S-4 en lo que toca al administrador): basta el cargo Director Técnico o ser administrador.
+La prueba de las primitivas SHALL decir que las dos tienen llamador. El acto que se construye es **asociar** una orden OVI a un ticket, no crear la OVI en Books.
 (Previously: `puedeCrearOVIGarantia` «sigue sin llamador», con el área Servicio Técnico dentro del predicado, y «Este
 cambio MUST NOT construir el acto de la OVI de garantía».)
 
@@ -34,7 +32,7 @@ cambio MUST NOT construir el acto de la OVI de garantía».)
 
 ## ADDED Requirements
 
-### Requirement: RQ-PM-24 · Asociar una orden OVI es un acto sin área: basta el cargo Director Técnico
+### RQ-PM-24 · Asociar una orden OVI es un acto sin área: basta el cargo Director Técnico
 
 Asociar una orden cuyo número es OVI (el número, **tras recortar y sin distinguir mayúsculas, EMPIEZA por `OVI-`**; no
 se exige la sintaxis completa, así que `OVI-26-1` también lo es; SUPUESTO S-6) a un ticket **SHALL** exigir el cargo Director Técnico o ser administrador, **entre por donde entre**:
@@ -76,7 +74,7 @@ servicio, se trata como «sin cargo» (SUPUESTO S-10, falla cerrado).
 - WHEN la asocia por cualquiera de las cuatro entradas
 - THEN la guarda de cargo no actúa
 
-### Requirement: RQ-PM-25 · Reconfirmar la orden que el ticket ya tiene no es asociar
+### RQ-PM-25 · Reconfirmar la orden que el ticket ya tiene no es asociar
 
 Una orden **entra** a un ticket cuando su número, recortado, no coincide con ninguna que el ticket ya tenga: la columna
 `orden_venta`, `salesorder_id` o una asociación vigente de `public.ov_asociaciones`. La guarda de cargo (RQ-PM-24) y la
