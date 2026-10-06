@@ -1,4 +1,4 @@
-import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion, NovedadCatalogo } from '@ambientalia/shared'; import { conBusqueda } from '../lib/busquedaTickets'
+import type { Ticket, TicketDetail, Message, UserPublic, ClientLite, SalesOrderLite, EquipoLite, EquipoFull, EquipoHistorial, CreateTicketPayload, Analisis, Activity, Resolution, ResolutionAttachment, HistoryEvent, ContactLite, AccountLite, ContactDetail, AccountDetail, ActivityListItem, RemisionNueva, Remision, RemisionFoto, RemisionListado, Catalogo, Conflictos, FichaModelo, TipoDocumento, ArticuloLite, ArticuloModelo, ClaseArticulo, CategoriaModelo, PersonaLite, Aviso, ResumenEliminacion, NovedadCatalogo, GarantiaProveedor } from '@ambientalia/shared'; import { conBusqueda } from '../lib/busquedaTickets'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -822,4 +822,43 @@ export function cambiarNovedadRemision(clave: string, cambios: { etiqueta?: stri
   return fetch(`/api/novedades-remision/${encodeURIComponent(clave)}`, {
     method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cambios),
   }).then((r) => json<NovedadCatalogo>(r))
+}
+
+/*
+ * Reclamación de garantía al fabricante (F1B-13, lote 2; `tickets-core` RQ-TC-44 a RQ-TC-49). El cliente sólo pide y
+ * enseña: el permiso (403), el estado (409) y el contenido (422) los decide el servidor, y los errores se enseñan con
+ * `mensajeDelServidor`. Aquí no se valida ningún número ni texto.
+ */
+export interface OviDelTicket {
+  asociacionId: number
+  numero: string
+  liberada: boolean
+  respuesta: GarantiaProveedor | null
+  /** Vigente y sin respuesta: la única fila que ofrece la pregunta. */
+  pendiente: boolean
+}
+export interface GarantiaDelTicket { fabricantePropuesto: string | null; ovis: OviDelTicket[] }
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' }
+
+export function garantiaDelTicket(ticketId: string): Promise<GarantiaDelTicket> {
+  return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/garantia-proveedor`, { credentials: 'include' }).then((r) => json<GarantiaDelTicket>(r))
+}
+
+export function responderReclamacion(asociacionId: number, cuerpo: { reclama: boolean; motivo?: string; fabricante?: string; piezaReferencia?: string | null; piezaSerial?: string | null; valorReclamado?: number | null }): Promise<GarantiaProveedor> {
+  return fetch(`/api/ov-asociaciones/${asociacionId}/garantia-proveedor`, {
+    method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
+  }).then((r) => json<GarantiaProveedor>(r))
+}
+
+export function editarReclamacion(id: number, cuerpo: { fabricante: string; piezaReferencia: string | null; piezaSerial: string | null; rma: string | null; valorReclamado: number | null }): Promise<GarantiaProveedor> {
+  return fetch(`/api/garantia-proveedor/${id}`, {
+    method: 'PUT', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
+  }).then((r) => json<GarantiaProveedor>(r))
+}
+
+export function avanzarReclamacion(id: number, cuerpo: { a: string; resultado?: string; valorRecuperado?: number }): Promise<GarantiaProveedor> {
+  return fetch(`/api/garantia-proveedor/${id}/avanzar`, {
+    method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
+  }).then((r) => json<GarantiaProveedor>(r))
 }

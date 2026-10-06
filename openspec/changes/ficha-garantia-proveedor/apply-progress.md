@@ -142,3 +142,53 @@ H-2: prueba nueva en `db/garantiaProveedor.test.ts` con un `Queryable` falso que
 3. **Pruebas con usuarios de correo propio** (`usuario(areas, cargo)` como `oviGarantia.test.ts`) en vez de `userCookie`: permite
    varios usuarios en una prueba (administrador, Director Comercial). La carrera de dos respuestas lleva una sola sesión.
 4. **`const a` hoisted** en el manejador de avanzar (ver arriba).
+
+## Lote 2 · aviso de 60 días + cliente
+
+Partida `50aa56d`. Servidor con rojo previo (la prueba nació roja: módulo inexistente; la de `index.ts` roja hasta cablear la línea).
+**Excepción declarada, no mía:** `PanelGarantiaProveedor.tsx`, el montaje en `TicketDetailView.tsx` y las llamadas de `client.ts` son
+`.tsx`/cliente fuera de la red de pruebas por decisión de Gerencia (`CLAUDE.md`, «Pruebas de interfaz»; `vitest.config.ts:16-20`): sin rojo previo,
+sin `jsdom` ni `@testing-library`; se verifican con `typecheck`, `lint` y `build`.
+
+### Mutaciones del lote (cada una vista en rojo y restaurada)
+
+| Id | Qué se movió | Prueba roja |
+|---|---|---|
+| M-AV-1 | quitar `AND aviso_60_at IS NULL` del `UPDATE` | «el UPDATE por sí solo: dos marcas…» y «dos pasadas concurrentes…» (la de pasadas secuenciales NO se pone roja: `fichasSinResolverNiAvisar` ya filtra por la marca; el `UPDATE` es la guarda de la carrera) |
+| M-AV-2a | `crearAviso(db, …)` en vez de `(q, …)` (aviso fuera de la transacción) | las dos de estructura y «la pasada no lanza aunque crearAviso falle» |
+| M-AV-2b | marcar sin crear el aviso | 13 rojas (todas las que miran avisos) |
+| M-AV-2c | marcar ANTES de buscar destinatarios (D-11) | «sin nadie… no se marca» y las dos de estructura (orden SELECT→UPDATE) |
+| M-AV-3 | `destinatariosDeCargoPermiso` filtra por `cargo` (firma) | 11 rojas, entre ellas «filtra por cargo_permiso…» |
+| M-AV-3b | no cortar si no hay destinatarios (marcar igual) | «sin nadie ni en el cargo ni en el área…» |
+| M-AV-5 | quitar el respaldo al área | «respaldo: si nadie lleva el cargo…» y «un usuario inactivo… avisa el área» |
+| M-AV-6 | la pasada relanza el error | «con la base caída, la pasada resuelve…» |
+| M-FV-5 | quitar `pasadaReclamaciones(pool)` de la línea de `index.ts:88` | «index.ts: la línea de la pasada periódica…» |
+
+`avisoRitmoContrato.test.ts` y `alarmasSla.test.ts` NO se tocaron y siguen verdes: la línea cumple el texto
+`pasadaRitmoContratos(pool).then(() => sync.syncRecent())` y el orden alarmas → ritmo → sincronización.
+
+### Tabla de la regla invariable 13 (regla de mutación 3), con líneas REALES del árbol construido
+
+Cliente: `apps/desk/src/components/PanelGarantiaProveedor.tsx` (`PG`). Servidor: `apps/desk/server/routes/garantiaProveedor.ts` (`RT`).
+
+| # | Decisión del cliente | Cliente | La impone en el servidor |
+|---|---|---|---|
+| 1 | Enseña la pregunta, el formulario de edición, el botón de paso y el de resolver sólo a quien `puedeGestionarReclamacion` | `PG:176` (predicado), `:166`, `:122`, `:129`, `:141` | responder `RT:43` (G2), avanzar `RT:92` (G8), editar `RT:71` (G12) |
+| 2 | Ofrece la pregunta «¿Se reclama?» sólo en la fila `pendiente` (vigente y sin respuesta) | `PG:166` | liberada `RT:45` (G3), no OVI `RT:47` (G4), ya respondida `RT:55` y `:59` (G6) |
+| 3 | Las tres opciones del «no» salen de `MOTIVOS_NO_RECLAMA` | `PG:94` | motivo fuera de lista `RT:51-52` (G5, `validarRespuesta`) |
+| 4 | Ofrece sólo el paso siguiente (`siguienteEstado`) | `PG:125`, `:126` | `RT:94-95` (G9) |
+| 5 | Rellena el fabricante con `fabricantePropuesto` | `PG:84` | nada: es relleno; el servidor sólo exige fabricante no vacío (`RT:51-52` G5, `RT:76-77` G14) |
+| 6 | Pinta «Pendiente de respuesta» | `PG:158` | no decide nada |
+| 7 | Oculta Editar y los pasos en una ficha resuelta | `PG:122` | `RT:74` (G13) |
+| 8 | Al resolver como «rechazada» no pide valor recuperado | `PG:146` | `RT:97-98` (G10, `validarPaso` acepta ausente y `0`) |
+| 9 | No pinta el panel si no hay OVI | `PG:178` | no decide nada |
+| 10 (no listada en el diseño) | Un campo numérico vacío viaja como `null`; uno no numérico viaja como texto, sin validar | `PG:27` (`numeroDelCampo`) | `RT:51-52` (G5), `RT:77` (G14), `RT:98` (G10): el servidor rechaza con `422` y el panel enseña su texto |
+
+Ninguna decisión queda sin línea de servidor salvo las de «no decide nada» y el relleno (5), que el diseño ya declaraba así.
+
+### Medida y desvíos
+
+- Medida (`git diff --shortstat --no-renames 50aa56d` más `wc -l` de lo nuevo): ver el informe de entrega; no hay binarios.
+- Desvío 1: el texto del aviso usa `diaEnZona(respondidaAt)` para «se abrió el …» (día civil de negocio), igual que el cálculo del vencimiento.
+- Desvío 2: `numeroDelCampo` (decisión 10) no estaba en la tabla de §8 del diseño; se añade aquí con su línea.
+- Límite conocido (2.8): liberar una orden en `PanelOvAsociaciones` no recarga este panel hasta reabrir el ticket.
