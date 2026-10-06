@@ -6,7 +6,7 @@
 
 ## Qué se entregó
 
-- `packages/zoho-sync/src/sync.ts`: `syncRecent` conserva sus cinco líneas (`:173-177`) y delega en `sincronizarModificados`, añadida al final del fichero (`:359-434`). `git diff 9822bd7 -U0` da dos hunks, `@@ -174,3 +174,3 @@` y `@@ -358,0 +359,76 @@`: ninguna línea existente se movió.
+- `packages/zoho-sync/src/sync.ts`: `syncRecent` conserva sus cinco líneas (`:173-177`) y delega en `sincronizarModificados`, añadida al final del fichero (`:360-434`). `git diff 9822bd7 -U0` da dos hunks, `@@ -174,3 +174,3 @@` y `@@ -358,0 +359,76 @@`: ninguna línea existente se movió.
   - Marca de agua: `max(modified_time)` de los tickets de origen Zoho, sin los nacidos en la app ni las filas con `managed_by_app` (`sync.ts:381`), menos un solape de 15 minutos (`:368`).
   - `/tickets/search` con `modifiedTimeRange` sirve sólo de índice de identificadores (`:396`); cada ticket se relee por detalle (`:415`) y se persiste por `persistTicket`, igual que `syncTicket`.
   - Sin marca, o si la búsqueda responde no-OK o lanza, el ciclo ejecuta la página 1 por `-recentThread` como antes; en el segundo caso con un `console.error` que nombra la búsqueda y el estado (`:404-407`).

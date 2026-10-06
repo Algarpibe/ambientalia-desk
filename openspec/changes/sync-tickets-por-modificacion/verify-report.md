@@ -84,7 +84,7 @@ Prueba = `packages/zoho-sync/src/sync.modificados.test.ts`, con la línea de su 
 | Regla invariable 13 | ✅ `git diff --stat 9822bd7` no toca `apps/desk/src` (9 ficheros: DEPLOY.md, ENTRADA.md, 5 artefactos SDD, `sync.ts`, test nuevo) |
 | Regla de mutación 4 | ✅ `docs/sdd/ENTRADA.md:2048` (caso C, anclada a `9822bd7` con lo que la superó), `proposal.md:15` y `:65`, `design.md:57` ancladas. Otras citas a `sync.ts` (`:190-192`, `:189`, `:125-133`) caen fuera de 174-176 y el fichero sólo ganó líneas tras la 358. `F0-00_Baseline_as-built.md:121` anclada a `17ddfec`. Ninguna abreviada afirma «sólo la primera página» |
 | Cabecera R-1 | ✅ siete campos; `tanda: fuera-del-plan`, `motivo` no vacío, `cierra: no` |
-| Marca, índice + detalle, caída, tope de 1.000, corte por 429/≥500 | ✅ diseño y código coinciden (`sync.ts:359-434`) |
+| Marca, índice + detalle, caída, tope de 1.000, corte por 429/≥500 | ✅ diseño y código coinciden (`packages/zoho-sync/src/sync.ts:360-434`) |
 | Medida | 773 inserciones + 4 borrados = 777 contra 800 (`--no-renames`, nada sin trackear) |
 | `DEPLOY.md` | ✅ una frase añadida al final, sin flag ni variable de entorno |
 
