@@ -7,21 +7,21 @@ worktree y sin rebasar con el intento abierto (regla del ciclo 3). Rutas bajo `a
 ## Intento 1 · (a) acceso a Drive, listado e incremental (≈ 483 líneas)
 
 ### Lote 1 · configuración
-- [ ] 1.1 RED→GREEN `configDrive.ts`: cargador (`=== 'true'`, `DIA` 0-6 por defecto 0, `HORA` 0-23 por defecto 5, `CARPETA_ID` `^[\w-]+$`, credencial base64 con `client_email` y `private_key`), `faltantesDrive` (reusa `config.ts:45-57` sin `DATABASE_URL`). Escenarios: Configuración incompleta, Interruptor apagado.
-- [ ] 1.2 RED→GREEN `tocaHoy(dia, fecha)` puro, `getDay()` local, tabla de casos.
+- [x] 1.1 RED→GREEN `configDrive.ts`: cargador (`=== 'true'`, `DIA` 0-6 por defecto 0, `HORA` 0-23 por defecto 5, `CARPETA_ID` `^[\w-]+$`, credencial base64 con `client_email` y `private_key`), `faltantesDrive` (reusa `config.ts:45-57` sin `DATABASE_URL`). Escenarios: Configuración incompleta, Interruptor apagado.
+- [x] 1.2 RED→GREEN `tocaHoy(dia, fecha)` puro, `getDay()` local, tabla de casos.
 
 ### Lote 2 · acceso a Drive
-- [ ] 2.1 RED→GREEN `driveAuth.ts`: JWT RS256 verificable con `generateKeyPairSync`, token con caché y renovación a < 5 min; apagado no pide token.
-- [ ] 2.2 RED→GREEN `driveApi.ts`: `files.get` de la raíz, listado recursivo paginado con conjunto de visitadas, sin seguir accesos directos. Escenario: Fuera de la carpeta raíz.
-- [ ] 2.3 RED→GREEN `driveApi.ts`: descarga `alt=media` y exportación como flujo (Docs/Sheets/Slides/Drawings); otros nativos y `403 exportSizeLimitExceeded` se omiten y se anotan.
+- [x] 2.1 RED→GREEN `driveAuth.ts`: JWT RS256 verificable con `generateKeyPairSync`, token con caché y renovación a < 5 min; apagado no pide token.
+- [x] 2.2 RED→GREEN `driveApi.ts`: `files.get` de la raíz, listado recursivo paginado con conjunto de visitadas, sin seguir accesos directos. Escenario: Fuera de la carpeta raíz.
+- [x] 2.3 RED→GREEN `driveApi.ts`: descarga `alt=media` y exportación como flujo (Docs/Sheets/Slides/Drawings); otros nativos y `403 exportSizeLimitExceeded` se omiten y se anotan.
 
 ### Lote 3 · incremental
-- [ ] 3.1 RED→GREEN `incremental.ts`: tipos del índice, `huella` (`md5Checksum` o `modifiedTime`), `planificar`, `aplicarCopia`. Escenarios: Primera pasada, Pasada incremental.
-- [ ] 3.2 RED→GREEN `marcarDesaparecidos` sólo con listado completo; el reaparecido pierde la marca. Escenario: Listado incompleto.
+- [x] 3.1 RED→GREEN `incremental.ts`: tipos del índice, `huella` (`md5Checksum` o `modifiedTime`), `planificar`, `aplicarCopia`. Escenarios: Primera pasada, Pasada incremental.
+- [x] 3.2 RED→GREEN `marcarDesaparecidos` sólo con listado completo; el reaparecido pierde la marca. Escenario: Listado incompleto.
 
 ### Cierre del intento 1
-- [ ] 4.1 `npm test`, `npm run typecheck`, `npx eslint .` (techo 165 avisos, 0 errores) y detector de citas: anotar los CUATRO códigos de salida.
-- [ ] 4.2 Medir: `git diff --shortstat --no-renames <base>` + `wc -l` de lo nuevo sin trackear; registrar eso en el ledger.
+- [x] 4.1 `npm test`, `npm run typecheck`, `npx eslint .` (techo 165 avisos, 0 errores) y detector de citas: anotar los CUATRO códigos de salida.
+- [x] 4.2 Medir: `git diff --shortstat --no-renames <base>` + `wc -l` de lo nuevo sin trackear; registrar eso en el ledger.
 
 ## Intento 2 · (b) subida, retención, cableado y DEPLOY.md (≈ 653 sin aviso · ≈ 716 con él)
 
