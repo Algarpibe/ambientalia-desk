@@ -4,7 +4,7 @@ import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { CLAVE_CERTIFICADO_FABRICA, type Transition, type Cargo } from '@ambientalia/shared'
 import type { EquipoRow } from '../db/equipos'
-import { createApp } from '../app'
+import { createApp } from '../app'; import type { RespaldadorRuta } from '../routes/respaldo'
 import { createUser } from '../auth/users'
 import { createSession } from '../auth/sessions'
 import { hashPassword } from '../auth/passwords'
@@ -43,13 +43,13 @@ export function instalarArnes(): void {
 export const equipoRow = (id: string, serial: string, cliente = 'Gecelca S.A. E.S.P.'): EquipoRow =>
   ({ id, serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor PM10/PM2.5', cliente_nombre: cliente, source: 'seed', raw: null })
 
-export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string; migracionTicketsHabilitada: boolean }> = {}, dbPropia?: Queryable) {
+export function appWith(overrides: Partial<{ enableWrites: boolean; remisionCallbackToken: string; remisionWebhookUrl: string; avisosWebhookUrl: string; appBaseUrl: string; avisosCopiaEmail: string; migracionTicketsHabilitada: boolean }> = {}, dbPropia?: Queryable, respaldador?: RespaldadorRuta) {
   // Los vacíos son los que devuelve `loadConfig` cuando la variable no está: dejar alguno `undefined`
   // probaría un config que en producción no existe.
   const config = { enableWrites: false, remisionWebhookUrl: '', remisionCallbackToken: '', avisosWebhookUrl: '', appBaseUrl: '', avisosCopiaEmail: '', migracionTicketsHabilitada: false, ...overrides } as AppConfig
   const sync = { backfillTickets: vi.fn(), backfillArchivedTickets: vi.fn().mockResolvedValue(0), syncRecent: vi.fn(), syncTicket: vi.fn().mockResolvedValue(undefined), syncConversations: vi.fn().mockResolvedValue(undefined), syncActivities: vi.fn(), syncTicketHistory: vi.fn().mockResolvedValue(undefined), backfillTicketHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0, restantes: 0 }), syncContacts: vi.fn(), syncPendingHistory: vi.fn().mockResolvedValue({ intentados: 0, poblados: 0, fallidos: 0 }) }
   const zohoFetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
-  const app = createApp({ db: dbPropia ?? db, zohoFetch, sync, config })
+  const app = createApp({ db: dbPropia ?? db, zohoFetch, sync, config, respaldador })
   return { app, sync, zohoFetch }
 }
 

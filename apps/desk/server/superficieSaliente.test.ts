@@ -41,7 +41,7 @@ import { escanearSuperficieHttp, escanearFetchDelNavegador } from './testing/sup
  * propio origen — el navegador no manda la cookie de sesión a Zoho, y Zoho la rechazaría.
  */
 describe('superficie HTTP saliente', () => {
-  it('las llamadas no-GET que salen de la casa son exactamente estas seis, cada una etiquetada', () => {
+  it('las llamadas no-GET que salen de la casa son exactamente estas ocho, cada una etiquetada', () => {
     const { salientes, mismoOrigen, verboDinamico } = escanearSuperficieHttp()
     const etiquetas: Record<string, string> = {
       // OAuth: refrescar el token contra Zoho. Una por cada uno de los tres productos.
@@ -53,6 +53,9 @@ describe('superficie HTTP saliente', () => {
       'apps/desk/server/remisionWebhook.ts · POST': 'n8n — disparo de remisión',
       // La única escritura hacia Zoho Desk desde la app, y va gateada.
       'apps/desk/server/routes/tickets.ts · POST': 'Zoho Desk — envío de la respuesta al cliente, gateado',
+      // F1F-02 (RQ-ZS-20): el respaldo. El PUT va firmado al almacenamiento elegido; el POST es el correo de fallo por el webhook de avisos.
+      'apps/desk/server/respaldo/dependencias.ts · PUT': 'Almacenamiento S3 compatible — subida del respaldo cifrado, gateada por RESPALDO_HABILITADO',
+      'apps/desk/server/respaldo/dependencias.ts · POST': 'n8n — aviso de fallo del respaldo',
     }
     const encontradas = salientes.map((l) => `${l.archivo} · ${l.verbo}`)
     expect(encontradas, mensaje(salientes)).toEqual(Object.keys(etiquetas).sort())
