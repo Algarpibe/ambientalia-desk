@@ -68,7 +68,7 @@ inserciones y 20 borrados (`git diff --shortstat --no-renames 77fb526 be306ac --
   `npm run build`.
 - **Un fallo de proceso, corregido:** el intento del verify se asentó sin mirar el código de salida del detector, que daba 1 en
   `4a69412` por cinco citas del informe a la capa de datos numeradas 107 líneas de más. Se reapuntaron por contenido, y una sexta
-  abreviada del mismo molde, en `be306ac`; desde ahí el detector da 0.
+  abreviada del mismo molde, en `be306ac`; desde ahí el detector da 0. **El registro de ese intento de verify dice «detector 0» y era 1**: el registro no se reescribe, y la cifra cierta es la de esta línea (añadido el 2026-10-06, tras la verificación del analista).
 
 ## Fusión de los deltas (por script, bloque a bloque)
 

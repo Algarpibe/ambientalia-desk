@@ -147,3 +147,32 @@ fallas repetidas, y no envía la pieza por remisión; el punto 7 del Anexo D sig
 | P-4 | Gerencia | Pegar en el maestro la corrección 29 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir «al crear» y «tomado del costo» |
 
 Archivar el cambio no da por hechas estas cuatro tareas.
+
+## 8 · Traspaso de `ficha-garantia-proveedor` y de `sync-tickets-por-modificacion` — para el Director Técnico y para Supervisión
+
+`ficha-garantia-proveedor` está fusionado a `main` en `9b48aa8`; `sync-tickets-por-modificacion`, en `f32f153`. Lo que sigue no es tarea
+de ninguna sesión de construcción. **No tiene entrada en `docs/sdd/ENTRADA.md`**: el fichero tenía cambios de Supervisión sin commitear
+cuando se escribió esto, así que la entrada la abre Supervisión.
+
+### 8.1 · Para el Director Técnico — dos confirmaciones sobre la ficha de reclamación
+
+| # | Qué confirmar | Qué hace hoy la aplicación | Qué cambia si la respuesta es «no» |
+|---|---|---|---|
+| a | **Que la respuesta a «¿Se reclama al fabricante?» no se cambia una vez dada** | Una segunda respuesta sobre la misma orden da `409` (`apps/desk/server/routes/garantiaProveedor.ts:55`, y la línea 59 de ese fichero para la carrera). No hay ruta para pasar de «no» a «sí» ni al revés: de una ficha abierta se editan sus cinco datos, no la respuesta (`apps/desk/server/db/garantiaProveedor.ts:116-117`) | Hace falta una vía para corregir la respuesta, y decidir quién puede usarla y si deja traza |
+| b | **Que el valor reclamado se escribe a mano** | Se captura en el formulario y se guarda con origen `manual` (`apps/desk/server/db/garantiaProveedor.ts:99`, `packages/shared/src/garantiaProveedor.ts:37`); admite quedar vacío y sólo se valida que sea un número mayor o igual a 0 (`packages/shared/src/garantiaProveedor.ts:137-138`). No se calcula desde el costo de la orden | El valor automático depende de la tarea P-1 de §7 (si las líneas de una OVI traen costo, dónde y en qué moneda) |
+
+### 8.2 · Para Supervisión — un hueco menor de `sync-tickets-por-modificacion` y su relleno pendiente
+
+**El hueco.** Al leer el detalle de cada ticket modificado, un error `429`, `≥ 500` o de red corta la pasada
+(`packages/zoho-sync/src/sync.ts:418`, `packages/zoho-sync/src/sync.ts:424`) y el ciclo siguiente continúa. **Un detalle que falla con
+otro código —un `403` o un `404`, por ejemplo— se salta y la pasada sigue** (`packages/zoho-sync/src/sync.ts:419`). La marca de agua es
+el mayor `modified_time` de los tickets ya guardados (`packages/zoho-sync/src/sync.ts:381`), así que al guardarse los tickets posteriores
+puede adelantar al que se saltó. Lo que lo acota: cada ciclo vuelve a pedir desde la marca menos un solape
+(`packages/zoho-sync/src/sync.ts:385`), de modo que el ticket saltado se reintenta mientras caiga dentro de ese solape; fuera de él, no
+vuelve a salir hasta que Zoho lo modifique otra vez. Queda registrado en la consola (`packages/zoho-sync/src/sync.ts:417`), sin aviso.
+Hipótesis, no medida: que un detalle dé `403` o `404` justo después de aparecer en la búsqueda es raro —un ticket borrado o movido entre
+las dos llamadas—.
+
+**El relleno en producción sigue pendiente.** Las tres tareas de persona del cambio (el relleno `backfillTickets`, el log del primer ciclo
+y comprobar que el ticket nº 884 figura cerrado) están en
+`openspec/changes/archive/2026-10-06-sync-tickets-por-modificacion/archive-report.md`, con su dueño. Archivar y fusionar no las da por hechas.
