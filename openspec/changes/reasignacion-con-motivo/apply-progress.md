@@ -110,3 +110,54 @@ Las cuatro cayeron donde se esperaba; ninguna quedó sin detector.
 2. El comentario de cabecera de `getHistorialTicket` y el de `eliminarTicket.ts:32` se reescribieron en sitio («y sus reasignaciones», «Las diez hijas»), porque dejaban de ser ciertos.
 3. El texto del aviso, que el diseño no fija, es `{actor} te reasignó el ticket #{n}. Motivo: {motivo}`.
 4. `LAS_DIEZ` pasó a `LAS_ONCE` en la prueba de `eliminarTicket` (renombre local, no cambia ninguna cita).
+
+## Lote 3 · ruta, registro y sincronizador
+
+Intento sobre el commit de partida `60a3ebd`, en el worktree `C:\dev\Desk_2_R1.023-worktrees\reasignacion-con-motivo`. Un solo ejecutor, strict TDD.
+
+### Qué se hizo por tarea
+
+- **3.2, 3.4, 3.6, 3.8, 3.10 (rojo)**: `apps/desk/server/routes/reasignacion.test.ts` (34 pruebas): escalones A y B (`:45`), C y los pares de posición (`:97`), éxito y D con el `409` determinista (`:180`), aviso y no interferencia (`:258`), barrido HTTP de estados por áreas (`:326`). Se escribió el fichero entero antes de la implementación y se vio en rojo entero.
+- **3.3, 3.5, 3.7, 3.9 (verde)**: `apps/desk/server/routes/reasignacion.ts` (44 líneas, `registerReasignacionRoutes`): guarda A en `apps/desk/server/routes/reasignacion.ts:26-27`, B en `:28-29`, C (validador de `shared`) en `:30-32`, C (destino activo) en `:33-35`, D en `:36-39`, aviso en `:41` y respuesta en `:42`. Registro en sitio en `apps/desk/server/app.ts:22` (`import`, unido con `;` a la línea ya existente) y `apps/desk/server/app.ts:61` (llamada con `{ db, config }`).
+- **3.11 (caracterización)**: `apps/desk/server/reasignacionSync.test.ts` (34 líneas): el ticket lo fabrica `upsertTicket`; precondición `managed_by_app === false`; `POST` `200`; segundo `upsertTicket` con `En Proceso`; `derivado_a` igual al destino y `managed_by_app` en `false`.
+- **3.12 a 3.18 (mutaciones)** y **3.20 (medida)**: abajo. **3.19**: `npm test`, `typecheck` y `lint` en 0; el detector de citas lo corre el orquestador.
+
+### Evidencia TDD (rojo → verde)
+
+| Prueba | Rojo visto (razón) | Verde |
+|---|---|---|
+| `reasignacion.test.ts` entera, con la ruta sin registrar | `expected 404 to be 200`, `expected 404 to be 422`, `expected 'Ruta de API no encontrada' to be 'El motivo es obligatorio'`: la ruta no existía. Nacieron verdes por la misma razón (404 y 401 coinciden) «sin sesión» y «par 1 y 2» | 34 de 34 con la ruta |
+| `reasignacionSync.test.ts` | caracterización de comportamiento ya cumplido por la ruta (diseño §6): nace verde; su detector es la mutación 3.16 | 1 de 1 |
+
+Pruebas nuevas: **35** (34 de la ruta, 1 de sincronizador). Criterios de la propuesta cubiertos por la ruta: 1 a 4, 7 a 13 y 16; el 13 (traza que falla, `derivado_a` intacto) sigue en la capa de datos del lote 1 (pg-mem no revierte un `ROLLBACK`).
+
+### Mutaciones (una a una, restauradas; verde confirmado)
+
+| # | Mutación | Prueba que se puso roja | Mensaje |
+|---|---|---|---|
+| 3.12 | `403` delante del `404` (posición, movida físicamente) | par 1 y 2 | `expected 403 to be 404` |
+| 3.13 | `422` delante del `403` (bloque C movido delante del B) | par 2 y 3 y el barrido HTTP | `expected 422 to be 403`; `servicio · OV asignada · Servicio Técnico: expected 422 to be 403` |
+| 3.14 | destino delante de motivo (en el validador de `packages/shared/src/reasignacion.ts`) | par 3 y 4 de la ruta | `expected 'Falta la persona a la que se reasigna' to be 'El motivo es obligatorio'` |
+| 3.15 | `puedeReasignar` siempre verdadero | 403 sin área, par 2 y 3, barrido HTTP y «Finalizado» | `expected 200 to be 403`; `expected 422 to be 403` |
+| 3.16 | `managed_by_app = true` en el `UPDATE` | `reasignacionSync.test.ts` | `expected { status: 'Ingresado', …(2) } to match object { …(3) }` |
+| 3.17 | quitar la supresión «a uno mismo» | «reasignarse a uno mismo no crea aviso» (ruta) | `expected 1 to be +0` |
+| 3.18 | quitar la condición sobre `derivado_a` del `UPDATE` | dos de dato viejo (`reasignaciones.test.ts`) y el `409` de la ruta | `expected true to be false` |
+| extra | guarda del destino (6) delante del validador | pares 3 y 4, 3 y 5/6, 4 y 5 y 5 y 6 | `expected 'La persona elegida no existe o está i…' to be 'El motivo es obligatorio'` |
+
+Ninguna quedó sin detector; no hizo falta prueba añadida.
+
+### Comandos finales (código de salida mirado)
+
+- `npm test`: 247 ficheros pasados, 2 saltados; 3.857 pruebas pasadas, 7 saltadas; salida **0**.
+- `npm run typecheck`: salida **0**. `npm run lint`: salida **0**, 165 avisos, 0 errores.
+- Detector de citas: no se corre aquí, es del orquestador.
+
+### Cifras medidas (3.20)
+
+`wc -l` de `apps/desk/server/app.ts`: 96 antes y 96 después (dos líneas modificadas, ninguna insertada); CRLF conservado. `git diff --shortstat --no-renames 60a3ebd`: 71 inserciones y 20 borrados (91, con este informe y `tasks.md`) más 439 sin trackear = **530** en total; sólo código y pruebas: 4 de diff más 439 sin trackear (`reasignacion.ts` 44, su prueba 361, `reasignacionSync.test.ts` 34), muy por debajo de 720.
+
+### Desviaciones del diseño
+
+1. La prueba de la ruta se escribió entera antes de la ruta (un solo rojo, un solo verde) y no por parejas 3.2/3.3, 3.4/3.5…; el rojo se vio por la razón correcta (ruta inexistente).
+2. «Fallo del aviso tras la transacción» devuelve `500` (límite declarado de `notificarReasignacion`: si falla el `INSERT` del aviso, lanza con la reasignación ya hecha); la prueba lo fija junto con `derivado_a` y traza intactos.
+3. Mutación extra (guarda 6 delante del validador) añadida a las del `tasks.md`.
