@@ -50,3 +50,11 @@ export async function descifrarFichero(entrada: string, salida: string, clave: B
   d.setAuthTag(etiqueta)
   await pipeline(createReadStream(entrada, { start: cab.length, end: size - ETIQUETA - 1 }), d, createWriteStream(salida))
 }
+
+/** Descifra en memoria (el índice de la copia de Drive). Mismo formato que `descifrarFichero`; lanza si no es un respaldo, la clave no es la buena o se alteró. */
+export function descifrarBuffer(datos: Buffer, clave: Buffer): Buffer {
+  if (datos.length < MAGIA.length + IV + ETIQUETA || !datos.subarray(0, MAGIA.length).equals(MAGIA)) throw new Error('No es un respaldo de Desk (cabecera)')
+  const d = createDecipheriv('aes-256-gcm', clave, datos.subarray(MAGIA.length, MAGIA.length + IV))
+  d.setAuthTag(datos.subarray(datos.length - ETIQUETA))
+  return Buffer.concat([d.update(datos.subarray(MAGIA.length + IV, datos.length - ETIQUETA)), d.final()])
+}

@@ -12,7 +12,7 @@ import { logger } from './util/logger'
 import { countTickets } from '@ambientalia/zoho-sync/db/repo'
 import { countUsers, createUser, getUserByEmail } from './auth/users'
 import { hashPassword } from './auth/passwords'
-import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'
+import { avisarDiscrepanciaOV } from './services/avisoDiscrepanciaOV'; import { pasadaRitmoContratos } from './services/avisoRitmoContrato'; import { pasadaAlarmas } from './services/alarmasSla'; import { scheduleDailyAt } from '@ambientalia/zoho-sync/booksHub/schedule'; import { cargarConfigRespaldo } from './respaldo/config'; import { crearRespaldador } from './respaldo/respaldo'; import { dependenciasReales } from './respaldo/dependencias'; import { cargarConfigDrive, tocaHoy } from './respaldo/configDrive'; import { crearCopiadorDrive, dependenciasRealesDrive } from './respaldo/copiaDrive'
 
 const config = loadConfig()
 const pool = createPool(config)
@@ -107,3 +107,12 @@ main().catch((err) => {
   logger.error({ err }, 'Fallo al arrancar el servidor')
   process.exit(1)
 })
+
+// F1F-02 (RQ-ZS-21): la copia semanal de la carpeta de Drive. Nace cerrada (RESPALDO_DRIVE_HABILITADO); apagada no programa nada y encenderla pide reiniciar la App.
+const configDrive = cargarConfigDrive()
+if (configDrive.habilitado) {
+  const equiposConDrive = async () => (await pool.query<{ drive_url: string }>('SELECT drive_url FROM desk.equipos WHERE drive_url IS NOT NULL')).rows.map((r) => r.drive_url)
+  const copiadorDrive = crearCopiadorDrive(configDrive, configRespaldo, dependenciasRealesDrive(configDrive, configRespaldo, config, equiposConDrive))
+  scheduleDailyAt(configDrive.hora, async () => { if (tocaHoy(configDrive.dia, new Date())) logger.info({ r: await copiadorDrive.lanzar() }, 'Copia semanal de Drive terminada') })
+  logger.info(`Copia semanal de Drive programada (día ${configDrive.dia}, ${configDrive.hora}:00, hora del contenedor)`)
+}

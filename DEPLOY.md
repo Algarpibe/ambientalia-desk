@@ -414,3 +414,55 @@ aplicación, `fetch('/api/admin/respaldo', { method: 'POST' })`. Responde `202` 
 bloqueo de borrado y las reglas por prefijo; guardar credenciales y clave en el gestor de secretos; comprobar que la
 versión de `pg_dump` de la imagen (`Dockerfile:34`) es igual o mayor que la del servidor (`SELECT version();`); encender;
 lanzar la primera copia y hacer la primera prueba de restauración.
+
+## 13. Respaldo: la copia semanal de la carpeta de Drive (F1F-02, `decision/p55b-destino-copia`)
+
+Una vez por semana la App copia la carpeta de Drive de documentación de servicio (y sus subcarpetas) al **mismo**
+almacenamiento S3 de la §12, cifrada con la misma clave y **sin pasar por el disco del servidor**; sólo sube lo nuevo o
+cambiado y aplica ella misma la retención de 12 meses. Código: `apps/desk/server/respaldo/` (`copiaDrive.ts`). Está
+**adelantada con el interruptor cerrado** (`decision/f1f02-copia-semanal-drive-adelantada`): encenderla espera a
+`p55c-proveedor-copia` (elegir el proveedor, que cuesta dinero).
+
+**`RESPALDO_DRIVE_HABILITADO`. Qué enciende:** con `true` exacto, la App programa la pasada semanal a la hora
+`RESPALDO_DRIVE_HORA` del día `RESPALDO_DRIVE_DIA`; ausente, vacío o con cualquier otro valor no se pide token a Google ni
+se lista, descarga o sube nada, y no hay aviso. **Qué se rompe si se pone mal:** encendido sin la credencial, la carpeta, el
+destino o la clave, cada pasada falla y manda un correo nombrando la variable que falta; apagado por descuido, **no hay
+copia de Drive** y nadie recibe aviso, porque un respaldo apagado no es un fallo.
+
+| Variable | Qué es |
+|---|---|
+| `RESPALDO_DRIVE_CREDENCIAL` | JSON de la cuenta de servicio de Google en **base64** (con `client_email` y `private_key`). Sólo en el gestor de secretos: **nunca en un chat, una captura o un prompt**; si aparece en uno, está quemada y se rota |
+| `RESPALDO_DRIVE_CARPETA_ID` | Id de la carpeta raíz de Drive (sólo letras, números, `_` y `-`). Lo de fuera de ella no se copia |
+| `RESPALDO_DRIVE_DIA` | Día de la semana, 0-6 (0 = domingo; por defecto `0`) |
+| `RESPALDO_DRIVE_HORA` | Hora de la pasada, 0-23, en la hora del contenedor (por defecto `5`, después de la nocturna) |
+
+Reutiliza, sin variables nuevas: `RESPALDO_S3_*` (destino), `RESPALDO_CLAVE_CIFRADO` (misma clave) y `RESPALDO_AVISO_EMAIL`
+(el responsable que recibe el correo). Las líneas que **añade el usuario** al fichero de ejemplo de entorno, tal cual:
+
+> ```
+> # RESPALDO_DRIVE_HABILITADO: con `true`, la App copia cada semana la carpeta de Drive configurada, cifrada, al almacenamiento S3 del respaldo; ausente u otro valor, no se pide token ni se copia nada. Sin credencial, carpeta, destino o clave, cada pasada falla y avisa por correo.
+> RESPALDO_DRIVE_HABILITADO=
+> RESPALDO_DRIVE_CREDENCIAL=
+> RESPALDO_DRIVE_CARPETA_ID=
+> RESPALDO_DRIVE_DIA=0
+> RESPALDO_DRIVE_HORA=5
+> ```
+
+**Dónde quedan los objetos.** `drive/archivos/<fileId>/<AAAA-MM-DDTHH-MM-SSZ>.enc` (una por versión; el nombre del
+documento va en el índice cifrado, no en la clave) y `drive/indice.json.enc` (el mapa nombre → objeto y la retención). Los
+documentos nativos de Google se exportan a Office (`.docx`, `.xlsx`, `.pptx`; Drawings a `.pdf`); los demás nativos y los
+accesos directos se omiten y se avisan.
+
+**Restaurar un documento.** Bajar el objeto de la versión que se quiera y descifrarlo con
+`RESPALDO_CLAVE_CIFRADO=… npx tsx apps/desk/server/respaldo/descifrarCli.ts <objeto> <salida>`. Sirve para cualquier objeto
+`DESKR1`, aunque su texto de uso hable de `.dump`. El índice (`drive/indice.json.enc`) se descifra del mismo modo: dice qué
+objeto es cada documento, con su nombre y su ruta. Si el índice no se puede leer, la pasada **se detiene y avisa** sin copiar ni borrar nada: hace falta una persona
+que restaure una versión anterior del índice del almacenamiento.
+
+**Pendiente de persona, y ninguna sesión lo hace:** (1) crear la cuenta de servicio de Google con **lectura** de la carpeta
+y guardar su credencial en el gestor de secretos; (2) el almacenamiento tiene que ser **VERSIONADO** y con **bloqueo de
+borrado de 12 meses**: la App borra por versión (`?versionId=`) sólo cuando el plazo vence, y un borrado denegado por el
+bloqueo se avisa y se reintenta la semana siguiente; (3) añadir al almacenamiento la regla de ciclo de vida
+`AbortIncompleteMultipartUpload` (p. ej. 7 días), para que una subida cortada no deje partes huérfanas; (4) añadir las
+líneas de arriba al fichero de ejemplo de entorno; (5) elegir el proveedor (`p55c`) y encender. **La prueba mensual de
+restauración** incluye recuperar un documento de la carpeta con el procedimiento anterior, y es tarea de persona.
