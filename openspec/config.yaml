@@ -4306,6 +4306,32 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (orden de ejecución)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-03, F1B-13, F1B-05, F1B-04, F1B-11, F1F-05, F1B-07, F1B-09"
+  - clave: "decision/f1b19-nit-exentos-y-aviso-provisional"
+    fecha: "2026-10-06"
+    pregunta: |
+      E-154 y E-155 quedaron decididas el mismo día (`decision/e154-nit-genericos-exentos`,
+      `decision/e155-aviso-provisional-en-books`) y sin destino: son trabajo nuevo sin fila, y F1B-15, la del alta
+      manual, está cerrada y no se reabre. La sesión propuso una fila nueva, F1B-19 «NIT genéricos exentos y aviso de
+      provisional ya en Books», talla S, antes del corte, frente a `fuera-del-plan` con motivo. ¿Se aprueba?
+    respuesta_textual: |
+      «Autorizo la tanda 1 (F1B-03, parte OVI de garantía) en su worktree, con parada antes de fusionar. Apruebo la fila F1B-19 para E-154 y E-155, talla S, antes del corte, al final de la cadena.»
+    consecuencias: |
+      (1) FILA NUEVA F1B-19 «NIT genéricos exentos y aviso de provisional ya en Books», talla S, antes del corte. E-154 y
+      E-155 dejan de estar sin destino (R-3).
+      (2) VA AL FINAL DE LA CADENA: es la TANDA 9 del orden de `decision/orden-ocho-tandas-06-10`, detrás de F1B-09.
+      (3) EL DENOMINADOR VUELVE A 78: 77 (sin F1A-09, `decision/f1a09-descartada-por-superada`) + F1B-19 = 78. La fila
+      se escribió en la línea que ocupaba F1A-09 en el §C de la R01.4, para no desplazar ninguna de las citas a ese
+      fichero; por eso va fuera de su bloque. `npm run reconcile` cuenta las filas de esa tabla y vuelve a coincidir con
+      el plan: la consecuencia (4) de `decision/f1a09-descartada-por-superada` queda SUPERADA, y el cambio
+      `fuera-del-plan` que anunciaba ya no hace falta.
+      (4) LA LISTA DE EXENTOS SIGUE DEPENDIENDO DE UNA PERSONA: el NIT de consumidor final está decidido; los demás los
+      confirma contabilidad sobre la lista de NIT repetidos en Books, que es dato de producción.
+      (5) La misma línea autoriza la tanda 1 (F1B-03, parte OVI de garantía) en su worktree, con parada antes de
+      fusionar: ya estaba en el orden del 06/10 y no lo cambia.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b19-nit-exentos-y-aviso-provisional) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md (§C, §F.1, §G, §I, §J nota 3, §K.7) · docs/sdd/ENTRADA.md → E-154, E-155"
+    maestro_pasaje: "ninguno (alta manual de cliente)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-19 (tanda 9 del orden del 06/10)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:

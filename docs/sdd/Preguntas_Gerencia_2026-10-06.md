@@ -262,7 +262,7 @@ Suma de las nueve primeras: **9,0 a 10,5 días**. Es suma de estimaciones: hipó
 - **Si no se responde antes del 09/11.** Sigue contando como una fila pendiente que pesa cero, y eso distorsiona la
   cuenta por filas (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:263`).
 - **Dónde se registra.** `openspec/config.yaml` → `decisiones_de_gerencia`, y la fila del plan
-  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:79`).
+  (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:79` en `bdbadee`).
 
 ---
 
