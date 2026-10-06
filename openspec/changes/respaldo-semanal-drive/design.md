@@ -137,7 +137,7 @@ Interfaces.
 La retención va en (b), como fija el encargo de la tanda («(b) subida en streaming, retención, cableado del
 programador, DEPLOY.md»); la primera redacción la adelantaba a (a) por ser pura. **Corte del último lote:** antes de
 empezar el aviso de `drive_url` se mide; si el intento ya pasa de **640**, se difiere como punto anotado en
-`docs/sdd/ENTRADA.md`, sin dueño inventado, y el escenario SHOULD de la spec queda sin construir y declarado.
+`docs/sdd/ENTRADA.md`, sin dueño inventado, y el escenario SHOULD de la spec queda sin construir y declarado. **Ejecutado en tres intentos** (2026-10-06): (a) midió 658 frente a 483 (×1,36), así que (b) se partió antes de escribir en (b1) = lotes 5-6 y (b2) = lotes 7-10.
 
 ## Supuestos (reversibles)
 

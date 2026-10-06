@@ -1,7 +1,7 @@
 # Tareas — respaldo-semanal-drive (F1F-02, `cierra: no`)
 
 Strict TDD en toda tarea de comportamiento: la prueba va primero, en rojo, con su salida literal anotada en
-`apply-progress`; después el código. Particion fijada en `design.md` §«Partición en dos intentos». Un intento por
+`apply-progress`; después el código. Particion de `design.md` §«Partición en dos intentos», EJECUTADA EN TRES (a, b1, b2): (a) midió ×1,36 sobre su estimación y (b) se partió antes de escribir (lotes 5-6 y 7-10). Un intento por
 worktree y sin rebasar con el intento abierto (regla del ciclo 3). Rutas bajo `apps/desk/server/respaldo/`.
 
 ## Intento 1 · (a) acceso a Drive, listado e incremental (≈ 483 líneas)
