@@ -53,3 +53,15 @@ export function motivoCuarentena(numero: unknown): string | null {
 export function erroresCuarentena(numeros: unknown[]): string[] {
   return numeros.flatMap((n) => motivoCuarentena(n) ?? [])
 }
+
+/**
+ * Prefijo de OVI (F1B-03, `permissions` RQ-PM-24), NO la sintaxis de subOV de `clasificarOV`: el número, recortado y
+ * sin distinguir mayúsculas, EMPIEZA por `OVI-`. El número es texto libre en el alta y en las transiciones, y exigir la
+ * sintaxis entera dejaría esquivar la guarda de cargo tecleando uno mal formado (`OVI-26-1`). Es la única noción de
+ * «es OVI» del repositorio: quien la necesite la importa de aquí.
+ */
+const PREFIJO_OVI = /^OVI-/i
+
+export function esOVI(numero: unknown): boolean {
+  return typeof numero === 'string' && PREFIJO_OVI.test(numero.trim())
+}

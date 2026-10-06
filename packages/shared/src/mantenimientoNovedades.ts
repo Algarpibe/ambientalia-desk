@@ -7,7 +7,7 @@ import type { NovedadCatalogo } from './recepcion'
  * «después, los cambios los hace el Director Técnico»). Regla pura: el servidor la impone y la pantalla la consume.
  *
  * El cargo no está en `EXCEPCIONES_POR_CARGO` de `cargos.ts`, que sería su sitio: añadirlo desplazaría ese fichero,
- * citado línea a línea en medio repositorio (regla de mutación 4). Tiene la misma forma que `puedeCrearOVIGarantia`.
+ * citado línea a línea en medio repositorio (regla de mutación 4). Tiene la misma forma que `puedeFijarPrioridadTop5` (área Y cargo); `puedeCrearOVIGarantia` dejó de llevar área en F1B-03.
  */
 export const CARGO_MANTIENE_NOVEDADES: Cargo = 'Director Técnico'
 

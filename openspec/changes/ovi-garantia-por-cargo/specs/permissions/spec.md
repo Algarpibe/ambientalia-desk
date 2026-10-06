@@ -59,7 +59,7 @@ servicio, se trata como «sin cargo» (SUPUESTO S-10, falla cerrado).
 #### Scenario: sin cargo y sin ser administrador — ROJO
 - GIVEN un usuario sin cargo, o con otro cargo, que no es administrador
 - WHEN asocia una orden OVI por cualquiera de las cuatro entradas
-- THEN responde `403` con el texto «Asociar una orden OVI a un ticket sólo lo hace el cargo Director Técnico»
+- THEN responde `403` con el texto «La orden de venta {número} es una OVI: asociarla a un ticket sólo lo hace el cargo Director Técnico»
 
 #### Scenario: minúsculas y espacios no esquivan la guarda (S-6) — ROJO
 - GIVEN un usuario sin cargo y el número `  ovi-2026-001 ` tecleado en una transición

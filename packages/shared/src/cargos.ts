@@ -65,12 +65,12 @@ export function puedeLiberarSinFactura(s: SujetoDePermiso): boolean {
 }
 
 /**
- * Crear una OVI de garantía: área Servicio Técnico Y cargo Director Técnico; el admin pasa.
- * HOY NO LA LLAMA NADIE: la construye F1B-03. Supuesto S-9 (reversible): el área del acto es Servicio Técnico.
+ * Asociar una OVI a un ticket (F1B-03, `decision/e157-ovi-garantia-por-cargo`): basta el cargo Director Técnico; el admin pasa.
+ * SIN área: el acto no tiene área propia y sólo AÑADE condición (RQ-PM-21). La llama `motivoCargoOVI` (`ordenOVI.ts`).
  */
-export function puedeCrearOVIGarantia(s: SujetoDePermiso): boolean {
-  return canExecuteTransition(s.areas, s.isAdmin, 'Servicio Técnico')
-    && (s.isAdmin || cargoEfectivo(s) === EXCEPCIONES_POR_CARGO.crearOVIGarantia)
+export function puedeCrearOVIGarantia(s: Pick<SujetoDePermiso, 'isAdmin' | 'cargoPermiso'>): boolean {
+  if (s.isAdmin) return true
+  return cargoEfectivo(s) === EXCEPCIONES_POR_CARGO.crearOVIGarantia
 }
 
 /**
