@@ -47,3 +47,8 @@ Barrido de citas a `sync.ts` (`git grep`, sin `archive/`): sólo caen sobre 173-
 `proposal.md:15` y `:65` (caso B, ancladas a `9822bd7`) y `design.md:57` (caso B, anclada igual: cita la frase de ENTRADA). `F0-00_Baseline_as-built.md:121`
 (`170-174`, ya anclada a `17ddfec`) no se toca. El resto de citas a `sync.ts` apunta a líneas que no se movieron. Segundo pase: `spec.md:743`, `spec.md:264-265`,
 `ENTRADA.md:1270` y el comentario de `hubSync.test.ts:154` siguen ciertos (no afirman «página 1»). `DEPLOY.md`: una frase añadida al final (tarea 5.4).
+
+## Medida del intento (tarea 5.5)
+
+`git diff --shortstat --no-renames ed113f9` (tras el commit de código): 8 ficheros, 390 inserciones y 30 borrados = 420 líneas; sin ficheros nuevos sin trackear ni binarios. Contra `9822bd7` (incluye la planificación): 768 inserciones y 4 borrados. Tope 800.
+Detector de citas (`cli.ts --sha HEAD`): salida 0, ninguna cita de `sync.ts` entre las rotas.
