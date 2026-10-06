@@ -466,3 +466,5 @@ bloqueo se avisa y se reintenta la semana siguiente; (3) añadir al almacenamien
 `AbortIncompleteMultipartUpload` (p. ej. 7 días), para que una subida cortada no deje partes huérfanas; (4) añadir las
 líneas de arriba al fichero de ejemplo de entorno; (5) elegir el proveedor (`p55c`) y encender. **La prueba mensual de
 restauración** incluye recuperar un documento de la carpeta con el procedimiento anterior, y es tarea de persona.
+
+**Sincronización de tickets por fecha de modificación** (`sync-tickets-por-modificacion`). `syncRecent` pide a `/tickets/search` los tickets modificados desde la marca de agua; el token de Zoho necesita permiso de búsqueda (`Desk.search.READ`). Si falta, el ciclo no se rompe: cae a la página 1 por `-recentThread` y deja en el log una línea `Zoho /tickets/search <estado>: el ciclo cae a la página 1 por -recentThread`; si la ves en cada ciclo, amplía el scope del token. Sin interruptor ni variable de entorno.
