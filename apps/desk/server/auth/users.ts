@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { UserPublic, PersonaLite, Cargo } from '@ambientalia/shared'
-import { AREAS, esCargo } from '@ambientalia/shared'
+import { AREAS, esCargo } from '@ambientalia/shared'; import { usosEnReasignaciones } from '../db/reasignaciones'
 
 /** Tipo interno para verificar credenciales (incluye el hash); NO se devuelve al cliente. */
 export interface UserWithHash {
@@ -125,18 +125,18 @@ export class UsuarioEnUso extends Error {
 /**
  * Cuántas referencias POR ID tiene esta persona, que son las que romperían al borrarla.
  *
- * Dos, y la segunda es la que importa: el id de la derivación viaja dentro del `values` de cada
+ * Tres (la tercera, origen o destino de una reasignación), y la segunda es la que importa: el id de la derivación viaja dentro del `values` de cada
  * transición, que es el rastro de auditoría que enseña el panel de Historia. Borrar a alguien
  * derivado alguna vez deja ese panel mostrando un UUID crudo para siempre, y reescribir el `values`
  * para evitarlo sería falsificar la auditoría.
  *
- * Lo que guarda el NOMBRE (quién ejecutó la transición, quién firmó la remisión) no se cuenta: es
+ * Lo que guarda el NOMBRE (quién ejecutó la transición, quién firmó la remisión, quién reasignó) no se cuenta: es
  * texto y sobrevive al borrado sin romperse.
  */
 export async function usosDeUsuario(db: Queryable, id: string): Promise<number> {
   const t = await db.query('SELECT COUNT(*)::int AS n FROM tickets WHERE derivado_a = $1', [id])
   const tr = await db.query("SELECT COUNT(*)::int AS n FROM ticket_transitions WHERE values->>'derivado_a' = $1", [id])
-  return Number((t.rows[0] as Record<string, unknown>).n) + Number((tr.rows[0] as Record<string, unknown>).n)
+  return Number((t.rows[0] as Record<string, unknown>).n) + Number((tr.rows[0] as Record<string, unknown>).n) + await usosEnReasignaciones(db, id)
 }
 
 /**

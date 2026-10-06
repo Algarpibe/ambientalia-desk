@@ -161,3 +161,45 @@ describe('users repo · cargo de permiso', () => {
     expect((await getUserById(db, u.id))!.cargoPermiso).toBeNull()
   })
 })
+
+// reasignacion-con-motivo (F1B-05, RQ-PM-11): `public.reasignaciones` es la tercera fuente de «en uso». El historial enseña
+// origen y destino traducidos por id, así que borrar a quien figura en una reasignación dejaría un id crudo para siempre.
+describe('users repo · uso en reasignaciones', () => {
+  async function conReasignacion(): Promise<{ ana: string; beto: string }> {
+    const ana = (await createUser(db, { email: 'ana@x.co', name: 'Ana', passwordHash: 'h' })).id
+    const beto = (await createUser(db, { email: 'beto@x.co', name: 'Beto', passwordHash: 'h' })).id
+    await db.query("INSERT INTO tickets (id, number, status) VALUES ('t1', 1, 'Ingresado')")
+    await db.query("INSERT INTO reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1', $1, $2, 'vacaciones', 'Carla')", [ana, beto])
+    return { ana, beto }
+  }
+
+  it('quien figura como origen de una reasignación no se puede borrar', async () => {
+    const { ana } = await conReasignacion()
+    await expect(borrarUsuario(db, ana)).rejects.toThrow(UsuarioEnUso)
+    expect(await getUserById(db, ana)).not.toBeNull()
+  })
+
+  it('quien figura como destino de una reasignación no se puede borrar', async () => {
+    const { beto } = await conReasignacion()
+    await expect(borrarUsuario(db, beto)).rejects.toThrow(UsuarioEnUso)
+    expect(await getUserById(db, beto)).not.toBeNull()
+  })
+
+  it('el recuento suma la tercera fuente a las dos de siempre', async () => {
+    const { beto } = await conReasignacion()
+    expect(await usosDeUsuario(db, beto)).toBe(1)
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [beto, 't1'])
+    await db.query("INSERT INTO ticket_transitions (ticket_id, transition_name, from_status, to_status, performed_by, values) VALUES ('t1','Habilitar','Ticket creado','Ingresado','Admin',$1)", [JSON.stringify({ derivado_a: beto })])
+    expect(await usosDeUsuario(db, beto)).toBe(3)
+    await expect(borrarUsuario(db, beto)).rejects.toMatchObject({ usos: 3 })
+  })
+
+  // `reasignado_por` guarda el NOMBRE de quien reasignó: texto que sobrevive al borrado, como el de la transición.
+  it('haber reasignado, sólo por nombre, no impide el borrado', async () => {
+    await conReasignacion()
+    const carla = (await createUser(db, { email: 'carla@x.co', name: 'Carla', passwordHash: 'h' })).id
+    expect(await usosDeUsuario(db, carla)).toBe(0)
+    await borrarUsuario(db, carla)
+    expect(await getUserById(db, carla)).toBeNull()
+  })
+})

@@ -29,7 +29,7 @@ export class TicketNoBorrable extends Error {
 }
 
 /**
- * Las nueve hijas más la cabecera, EN ORDEN DE BORRADO.
+ * Las diez hijas más la cabecera, EN ORDEN DE BORRADO.
  *
  * `remision_fotos` va primero y es la única que no enlaza con el ticket: cuelga de la remisión. Si se
  * borrara la remisión antes, sus fotos quedarían inalcanzables para siempre — no hay `CASCADE` que las
@@ -51,7 +51,7 @@ const TABLAS: ReadonlyArray<{ tabla: string; etiqueta: string; col: string }> = 
   { tabla: 'attachments', etiqueta: 'Adjuntos', col: 'ticket_id' },
   { tabla: 'conversations', etiqueta: 'Conversaciones', col: 'ticket_id' },
   { tabla: 'ticket_transitions', etiqueta: 'Transiciones', col: 'ticket_id' },
-  { tabla: 'ticket_history', etiqueta: 'Historial de Zoho', col: 'ticket_id' },
+  { tabla: 'ticket_history', etiqueta: 'Historial de Zoho', col: 'ticket_id' }, { tabla: 'reasignaciones', etiqueta: 'Reasignaciones', col: 'ticket_id' },
   { tabla: 'tickets', etiqueta: 'El ticket', col: 'id' },
 ]
 
