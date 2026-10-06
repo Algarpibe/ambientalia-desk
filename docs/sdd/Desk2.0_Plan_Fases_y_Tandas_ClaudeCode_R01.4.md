@@ -123,7 +123,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1E-04 | Validación y firma (tres firmas) | M | después del corte | pendiente | `decision/roles-validacion-informe` |
 | F1E-05 | Flujo del informe en el maestro | doc | después del corte | pendiente | plan R01.1 §5 |
 | F1F-01 | Migración de tickets abiertos y fecha de corte | M | antes del 14/12 | en curso | `decision/fecha-corte` · `decision/p14b-hoja-google` |
-| F1F-02 | Respaldo y continuidad | M | antes del 14/12 | en curso | `decision/p55-backup` · `decision/p55b-destino-copia` |
+| F1F-02 | Respaldo y continuidad | M | antes del 14/12 | en curso | `decision/p55-backup` · `decision/p55b-destino-copia` · `decision/f1f02-copia-semanal-drive-adelantada` · *2026-10-06: sigue en curso. Dos cambios archivados con `cierra: no`: `respaldo-nocturno-y-previo` (`38bc432`) y `respaldo-semanal-drive` (`cdfd0b0`, la copia semanal de Drive, con `RESPALDO_DRIVE_HABILITADO` cerrado). Falta lo que no hace ninguna sesión: elegir proveedor (`p55c-proveedor-copia`), encender los dos interruptores y la prueba mensual de restauración (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`)* |
 | F1F-03 | Aceptación con servicios reales | sin talla (R01.1) | antes del 14/12 | pendiente | `decision/fecha-corte` |
 | F1F-04 | Formación, Zoho a solo lectura, audit-F1 | sin talla (R01.1) | antes del 14/12 | pendiente | `decision/fecha-corte` |
 | **F1F-05** | **Continuidad de los nueve indicadores de Zoho**, midiendo en paralelo desde el 16/11 | S–M | antes del 14/12 | en curso | `decision/e009-kpis` · `decision/e009b-lista-indicadores` · `decision/encuesta-entre-corte-e-independencia` |
