@@ -9,6 +9,23 @@ contenido (`422`: primero el motivo; después, dentro del destino, ausente, igua
 unicidad de la carrera (`409`: la persona a cargo cambió entre la lectura y la escritura). Los
 escenarios de posición activan **dos guardas a la vez** (regla de mutación 1).
 
+## MODIFIED Requirements
+
+### RQ-TC-11 · Un ticket sólo se borra si nació aquí
+
+`eliminarTicket` **SHALL** rechazar con `409` cualquier ticket que no haya nacido en la app o que no
+esté `managed_by_app` (`apps/desk/server/db/eliminarTicket.ts:116`, con `TicketNoBorrable` en
+`:24-29`), y el mensaje **SHALL** decir por qué: borrarlo aquí sólo lo haría volver en la siguiente
+sincronización (`routes/tickets.ts:97`).
+
+Las dos puertas —`404` y `409`— **SHALL** vivir en la función y no en la ruta, «para que ningún
+llamador futuro pueda saltárselas y para que el simulacro las evalúe igual»
+(`eliminarTicket.ts:96-98`). El borrado **SHALL** ser en orden explícito de diez tablas hijas más la
+cabecera (`eliminarTicket.ts:31-33`).
+
+(Previously: nueve tablas hijas. La décima es `reasignaciones`, que F1B-05 añade al barrido para que las filas de un ticket
+borrado no sigan contando en «en uso» de RQ-PM-11; lo fija RQ-TC-51.)
+
 ## ADDED Requirements
 
 ### RQ-TC-50 · `POST /api/tickets/:id/reasignar`: cambiar la persona a cargo sin cambiar de estado, con la escalera A < B < C < D

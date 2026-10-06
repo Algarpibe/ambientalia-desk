@@ -161,3 +161,77 @@ Ninguna quedó sin detector; no hizo falta prueba añadida.
 1. La prueba de la ruta se escribió entera antes de la ruta (un solo rojo, un solo verde) y no por parejas 3.2/3.3, 3.4/3.5…; el rojo se vio por la razón correcta (ruta inexistente).
 2. «Fallo del aviso tras la transacción» devuelve `500` (límite declarado de `notificarReasignacion`: si falla el `INSERT` del aviso, lanza con la reasignación ya hecha); la prueba lo fija junto con `derivado_a` y traza intactos.
 3. Mutación extra (guarda 6 delante del validador) añadida a las del `tasks.md`.
+
+## Lote 4 · cliente y documentos
+
+Commit de partida del intento: `5d12bb9`. Modo: strict TDD; el rojo se exige sólo a `apps/desk/src/lib/reasignacion.test.ts` (los `.tsx` y `apps/desk/src/api/client.ts` están fuera de la red de pruebas por decisión de Gerencia, F0-00). No hay jsdom ni cambios en `vitest.config.ts`.
+
+### Qué se hizo por tarea
+
+- **4.2 / 4.3** `apps/desk/src/lib/reasignacion.test.ts` (8 pruebas) en rojo (`Failed to load url ./reasignacion`), luego `apps/desk/src/lib/reasignacion.ts`: `opcionesReasignacion` en `apps/desk/src/lib/reasignacion.ts:11` y `puedeEnviarReasignacion` en `apps/desk/src/lib/reasignacion.ts:19`, esta última es `reasignacionDelCuerpo(...).ok` de `shared`; 8 de 8 en verde. Una de las pruebas enfrenta ambas funciones con el validador de `shared` en cinco casos.
+- **4.4** `reasignarTicket` al final de `apps/desk/src/api/client.ts:867` (+7 líneas, sólo por el final; 864 a 871).
+- **4.5** `apps/desk/src/components/PanelReasignar.tsx` (70 líneas), con el molde y las clases de `apps/desk/src/components/PanelPrioridad.tsx`.
+- **4.6** Montaje en sitio en `apps/desk/src/components/TicketDetailView.tsx`: `import` unido con `;` a la línea 15, `versionHistoria` unido a la 72, `key` en la 291 (DD-7) y el panel unido a la 320. **`wc -l`: 420 antes y 420 después**; CRLF conservado; nada se desplaza.
+- **4.7** Tabla de la regla 13, abajo.
+- **4.8 / 4.9 / 4.10** corrección 30 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`, +36 al final; los dos rangos del maestro, `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035` y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2060-2062`, releídos contra el `.md` antes de citarlos), apartado nuevo al final de `DEPLOY.md` (+29) y §9 al final del paquete de despliegue (+52, tras el §8).
+- **4.11 NO HECHA, decide el orquestador.** `openspec/config.yaml` acaba en la lista `cierres_declarados_por_commit` (`openspec/config.yaml:4390`), que lee el barrido de cierres; la entrada de `decision/e089-e220-visibilidad-y-traspaso` está en `openspec/config.yaml:3992-4019`, en medio del fichero. No existe un patrón de «nota de aplicación» de una decisión que se anote al final (los bloques del final, `trabajo_sin_ficha_declarado` y `aprobaciones_de_techo_del_ledger_adenda`, son de otra clase), así que no se tocó el fichero.
+- **4.12** barrido de citas, abajo. **Comentario de `apps/desk/server/db/historial.ts:128`** corregido en la misma línea: decía «no se registran eventos nuevos» y las reasignaciones sí tienen tabla propia; ahora «salvo las reasignaciones». Sin cambiar el número de líneas (162).
+- **4.13** `npm test`, `typecheck`, `lint` y `build` abajo; el detector de citas es del orquestador. **4.14** medida abajo.
+
+### Evidencia TDD (rojo a verde)
+
+| Prueba | Rojo visto (razón) | Verde |
+|---|---|---|
+| `apps/desk/src/lib/reasignacion.test.ts`, `opcionesReasignacion` (3) y `puedeEnviarReasignacion` (5) | `Failed to load url ./reasignacion`: el módulo no existía | 8 de 8 |
+
+Triangulación: persona a cargo presente, ausente (`null`) y no activa; motivo vacío y de espacios; destino igual y vacío; cinco casos contra `reasignacionDelCuerpo`.
+
+### Tabla de la regla 13
+
+Cada decisión que el cliente toma de verdad, con la línea del servidor LEÍDA en `apps/desk/server/routes/reasignacion.ts` y la prueba de `apps/desk/server/routes/reasignacion.test.ts`.
+
+| Decisión del cliente (ruta:línea) | Qué la impone en el servidor | Prueba que lo fija |
+|---|---|---|
+| Muestra el panel sólo a quien `puedeReasignar` (`apps/desk/src/components/PanelReasignar.tsx:30`) | `apps/desk/server/routes/reasignacion.ts:29` (403 con el mismo predicado de `shared`) | `apps/desk/server/routes/reasignacion.test.ts:72`; barrido de estados por áreas `:330`; estado sin salida `:351` |
+| No lo pinta sin sesión (`apps/desk/src/components/PanelReasignar.tsx:30`) | `apps/desk/server/routes/reasignacion.ts:23` (`requireAuth`, 401) | `apps/desk/server/routes/reasignacion.test.ts:46` |
+| No ofrece a la persona a cargo (`apps/desk/src/lib/reasignacion.ts:12`) | `apps/desk/server/routes/reasignacion.ts:31-32` (422 «ya está a cargo», validador de `shared`) | `apps/desk/server/routes/reasignacion.test.ts:149`; par 5 y 6 `:141` |
+| Ofrece sólo personas activas (`apps/desk/src/components/PanelReasignar.tsx:57`, de `/api/personas`) | `apps/desk/server/routes/reasignacion.ts:34-35` (422 de inexistente o inactivo) | `apps/desk/server/routes/reasignacion.test.ts:169` |
+| No ofrece «Sin derivar» y desactiva el botón sin destino (`apps/desk/src/lib/reasignacion.ts:12`, `apps/desk/src/lib/reasignacion.ts:20`) | `apps/desk/server/routes/reasignacion.ts:31-32` (422 de destino obligatorio) | `apps/desk/server/routes/reasignacion.test.ts:155`; no vaciar `:163` |
+| Desactiva el botón con motivo vacío o de espacios (`apps/desk/src/lib/reasignacion.ts:20`, `apps/desk/src/components/PanelReasignar.tsx:63`) | `apps/desk/server/routes/reasignacion.ts:31-32` (422 de motivo, mismo validador) | `apps/desk/server/routes/reasignacion.test.ts:105`; par 3 y 4 `:115` |
+| Desactiva el botón con destino igual al actual (`apps/desk/src/lib/reasignacion.ts:20`) | `apps/desk/server/routes/reasignacion.ts:31-32` | `apps/desk/server/routes/reasignacion.test.ts:149` |
+| Compara contra la persona a cargo que trae el ticket, que puede estar vieja (`apps/desk/src/components/PanelReasignar.tsx:57`) | `apps/desk/server/routes/reasignacion.ts:37-39` (el `UPDATE` condicionado da 409 si cambió) | `apps/desk/server/routes/reasignacion.test.ts:232` |
+| Bloquea el botón mientras envía (`apps/desk/src/components/PanelReasignar.tsx:63`) | Comodidad contra el doble clic; la guarda real es el 409 de `apps/desk/server/routes/reasignacion.ts:37-39` | `apps/desk/server/routes/reasignacion.test.ts:232` |
+| Enseña el error que dice el servidor (`apps/desk/src/components/PanelReasignar.tsx:40`); recarga ticket e historial (`apps/desk/src/components/TicketDetailView.tsx:320`) | No decide nada | — |
+
+Ninguna decisión del cliente queda sin línea de servidor. Matiz sin maquillar: el 403 del panel y el de la ruta salen de la misma función de `shared` (`packages/shared/src/reasignacion.ts:24-27`); lo que el cliente NO puede saber es el estado de otra sesión, y eso lo cubre el 409.
+
+### Barrido de citas (4.12, regla de mutación 4)
+
+Se barrió TODO el repositorio (incluido `openspec/changes/archive/`) con la ruta o el nombre del fichero más `:NN` o `:NN-MM` para siete ficheros: 778 citas completas en total, y **250** caen en una línea editada o la abarcan. Ningún fichero cambió de número de líneas (`historial.ts` 162, `users.ts` 158, `eliminarTicket.ts` 189, `app.ts` 96, `TicketDetailView.tsx` 420), así que nada se desplaza. Reparto de las 250: 138 en 16 cambios archivados (no se tocan), 64 en los documentos del propio cambio, 17 en specs vivas y 31 en documentos de `docs/`. **Ninguna cita completa en código `.ts`/`.tsx`.**
+
+- **A, presente y cierta (no se toca):** las citas a `users.ts` en las líneas 137, 138, 128-131, 133-134 y 125-140 (de `openspec/changes/reasignacion-con-motivo/specs/permissions/spec.md` y de `openspec/specs/permissions/spec.md`; la línea dice lo mismo que antes); las dos de `docs/sdd/Paquete_de_Despliegue_2026-09-10.md` a la línea 138 de `users.ts`; las 11 citas a la línea 61 de `app.ts` de los paquetes de despliegue de `2026-09-29` a `2026-10-04b` y las de las líneas 22 y 61 del propio cambio (la línea sigue montando las rutas que decían, más una); las cuatro a la línea 320 de `TicketDetailView.tsx` de los paquetes `09-29`, `09-30` y `10-01` y la de `openspec/changes/reasignacion-con-motivo/proposal.md:181`; las de `migrate.ts` en las líneas 70-73 de `openspec/specs/gases-patron/spec.md`, `openspec/specs/remisiones/spec.md`, `openspec/specs/zoho-sync/spec.md` y la de las líneas 63-80; las de los documentos del cambio a `historial.ts` (3, 157), `users.ts` (4), `eliminarTicket.ts` (32, 54) y `migrate.test.ts` (282-286, 652).
+- **B, histórica o fechada (no se toca):** `openspec/changes/reasignacion-con-motivo/proposal.md:175` («hoy cuenta dos», líneas 136-139 de `users.ts`), `proposal.md:352`, `design.md:24` y `specs/tickets-core/spec.md:158` (`eliminarTicket.ts` 45-56 «no las incluye», descripción del estado de partida); `docs/sdd/F0-00_Baseline_as-built.md:73` y `:482` (`eliminarTicket.ts` 45-56, «nueve tablas hijas», baseline de 2026-09-08); los paquetes `2026-09-27:75`, `09-29:121`, `09-30:156` y `10-01:230` (`migrate.ts` 70-73), y `10-01:1749`, `10-03:241`, `10-04:313`, `10-04b:483` (`migrate.ts` línea 73, «al final de la línea»: hoy el final es otro); `docs/superpowers/plans/2026-06-19-hardening-fase-b.md:13` (`app.ts` 55-61 con revisión nombrada `1d030d5`); `openspec/specs/gases-patron/spec.md:198` (`migrate.test.ts` línea 283, «medidos sobre `f5255d2`»); `openspec/specs/tickets-core/spec.md:1441` (`migrate.ts` 70-73, recuento fechado de tablas).
+- **Dejan de ser ciertas hoy, y están en specs VIVAS (no se tocan; las corrige la fusión del delta en el archivo):**
+  1. `openspec/specs/trazas/spec.md:28` (línea 157 de `historial.ts`, «`[...zoho, ...transiciones, ...remisiones]` ordenado»): esa línea une ahora cuatro fuentes.
+  2. `openspec/specs/trazas/spec.md:484` (línea 157 de `historial.ts`, mismo literal de tres fuentes, en la tabla de contraste con el diseño de agosto).
+  3. `openspec/specs/trazas/spec.md:141` (líneas 131-161 de `historial.ts`, «la unión en `:157`»): la ubicación sigue siendo cierta, la frase que la rodea («tres fuentes», sin registro propio) no; la sustituye el delta de RQ-TZ-06. Las de `trazas/spec.md:29` y `:151` (líneas 126-131 y 126-129, «derivada al leer») siguen ciertas.
+  4. `openspec/specs/tickets-core/spec.md:601` (líneas 31-33 de `eliminarTicket.ts`, «nueve tablas hijas más la cabecera»): hoy son diez. El delta de `tickets-core` no modifica ese requisito vivo: **queda desfasada tras el archivo salvo que alguien la corrija**; se anota para el orquestador.
+  5. Las frases «dos referencias» de `openspec/specs/permissions/spec.md:257-266` (RQ-PM-11): la sustituye el delta de `permissions` en el archivo.
+- **Archivadas (138, no se tocan):** línea 22 de `app.ts` (16), línea 61 (11), `migrate.ts` 70-73 (22), línea 73 (40), 62-73 y 66-73 (3), `migrate.test.ts` en 282-287 y 266-287 (22), línea 283 (3), 648-652 y 652 (3), `TicketDetailView.tsx` líneas 15 (8) y 320 (4), `users.ts` línea 138 (4) y línea 4 (1), `historial.ts` (3), `eliminarTicket.ts` 45-56 (1). Clasificadas B o C por pertenecer a un cambio archivado; no se leyeron una a una.
+- **Segundo pase de las abreviadas (`:NN`):** no se hizo con herramienta; el detector de citas no las bloquea (regla de mutación 4, último guion) y ninguna edición de este lote movió una línea, por lo que ninguna abreviada puede haberse desplazado. Es una hipótesis, no una medición.
+
+### Comandos finales (código de salida mirado)
+
+- `npm test`: salida **0**; 248 ficheros pasados, 2 saltados; 3.865 pruebas pasadas, 7 saltadas.
+- `npm run typecheck`: salida **0**. `npm run lint`: salida **0**, 165 avisos, 0 errores. `npm run build`: salida **0** (`built`).
+- Detector de citas (`cli.ts --sha HEAD`): no se corre aquí, es del orquestador.
+
+### Cifras medidas (4.14)
+
+`git diff --shortstat --no-renames 5d12bb9`: 6 ficheros, 129 inserciones y 5 borrados (134). Sin trackear: `PanelReasignar.tsx` 70, `lib/reasignacion.ts` 21, `lib/reasignacion.test.ts` 61 (152). Total **286**, sin este informe ni `tasks.md`; con ellos queda muy por debajo de 720 (válvula no activada). Sin binarios. `docs/sdd/ENTRADA.md`, `CLAUDE.md`, `ticketService.ts` y `repo.ts` sin tocar.
+
+### Desviaciones del diseño
+
+1. 4.11 (`openspec/config.yaml`) no se hizo: ver arriba.
+2. Se corrigió el comentario de `apps/desk/server/db/historial.ts:128` (código del lote 2, no una cita), en la misma línea.
+3. El panel recibe `derivadoActual` como `PersonaLite | null` (como `TransitionPanel`) y no como id, para pintar «a cargo de» sin otra consulta; `actualId` se deriva dentro.

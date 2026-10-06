@@ -862,3 +862,10 @@ export function avanzarReclamacion(id: number, cuerpo: { a: string; resultado?: 
     method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
   }).then((r) => json<GarantiaProveedor>(r))
 }
+
+/** Reasigna la persona a cargo sin cambiar de estado (F1B-05, RQ-TC-50). Sólo manda y enseña: el permiso (403), el contenido (422) y la carrera (409) los decide el servidor (`routes/reasignacion.ts`) y se enseñan con `erroresDelServidor`. */
+export function reasignarTicket(ticketId: string, cuerpo: { destino: string; motivo: string }): Promise<{ ticketId: string; derivadoA: string }> {
+  return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/reasignar`, {
+    method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
+  }).then((r) => json<{ ticketId: string; derivadoA: string }>(r))
+}

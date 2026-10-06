@@ -125,7 +125,7 @@ const masRecientePrimero = porFechaDesc<HistoryEvent>((e) => e.time)
 
 /**
  * Toda la historia del ticket en una sola línea de tiempo: lo que vino de Zoho, las transiciones de
- * la app, sus remisiones y sus reasignaciones. Se DERIVA al leer y no se registran eventos nuevos, que es lo que hace
+ * la app, sus remisiones y sus reasignaciones. Se DERIVA al leer y, salvo las reasignaciones, no se registran eventos nuevos, que es lo que hace
  * que aparezca sola la historia ya existente —las 149 remisiones migradas incluidas—.
  */
 export async function getHistorialTicket(db: Queryable, ticketId: string): Promise<HistorialTicket> {

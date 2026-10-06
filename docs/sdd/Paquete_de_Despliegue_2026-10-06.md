@@ -176,3 +176,55 @@ las dos llamadas—.
 **El relleno en producción sigue pendiente.** Las tres tareas de persona del cambio (el relleno `backfillTickets`, el log del primer ciclo
 y comprobar que el ticket nº 884 figura cerrado) están en
 `openspec/changes/archive/2026-10-06-sync-tickets-por-modificacion/archive-report.md`, con su dueño. Archivar y fusionar no las da por hechas.
+
+## 9 · Añadido por `reasignacion-con-motivo` (F1B-05, `cierra: si`) — tabla nueva, sin interruptor, cinco supuestos para Gerencia y cuatro tareas de persona
+
+**Qué entra.** Reasignar la persona a cargo de un ticket **sin cambiar de estado**, con motivo obligatorio. Una ruta nueva,
+`POST /api/tickets/:id/reasignar` (`apps/desk/server/routes/reasignacion.ts:23`); una tabla nueva, `public.reasignaciones`
+(`packages/zoho-sync/src/db/schema.sql:756`), que `migrate` crea al arrancar; el aviso a la persona de destino, en la aplicación y por
+correo, con el motivo y el nombre de quien reasigna (`apps/desk/server/services/avisoReasignacion.ts:18`); un evento nuevo en el historial
+del ticket, con De, A, Motivo y Reasignado por; y el panel «Reasignar» en el detalle del ticket
+(`apps/desk/src/components/PanelReasignar.tsx`, montado en `apps/desk/src/components/TicketDetailView.tsx:320`). **No hay variable de
+entorno ni interruptor**: está activo desde que se publica. La comprobación de lectura tras desplegar está en `DEPLOY.md`, apartado
+«Comprobación de lectura tras desplegar F1B-05».
+
+**Quién puede reasignar hoy.** Un administrador, o quien tenga el área de alguna de las transiciones que salen del estado actual del
+ticket dentro de su flujo (`packages/shared/src/reasignacion.ts:24-27`). No hace falta ser la persona a cargo y el cargo no cuenta. El
+destino puede ser cualquier persona activa (`apps/desk/server/routes/reasignacion.ts:35`). El maestro dice «la persona a cargo y el
+Director o el Coordinador del área»; Gerencia aplazó esa restricción a F1C-05 (`decision/e089-e220-visibilidad-y-traspaso`) y se entrega
+como corrección 30 del maestro.
+
+### 9.1 · Para Gerencia — cinco supuestos reversibles, a confirmar o corregir
+
+| # | Qué confirmar | Qué hace hoy la aplicación | Qué cambia si la respuesta es «no» |
+|---|---|---|---|
+| S-2 | **En un estado sin transiciones de salida («Finalizado», por ejemplo), ¿sólo reasigna un administrador?** | La lista de áreas del estado queda vacía y sólo pasa el administrador (`packages/shared/src/reasignacion.ts:26`); a los demás la ruta les responde `403` (`apps/desk/server/routes/reasignacion.ts:29`) y el panel no se les enseña | Hay que decidir quién más puede reasignar en esos estados (el área del último estado, por ejemplo) y cambiar el predicado de `shared`, su barrido de pruebas y la prueba de la ruta |
+| S-4 | **Reasignar a la misma persona que ya lleva el ticket, ¿se rechaza?** | Da `422` «El ticket ya está a cargo de esa persona» (`packages/shared/src/reasignacion.ts:45`, devuelto por `apps/desk/server/routes/reasignacion.ts:32`), y el desplegable no la ofrece | Se permitiría, y quedaría una fila de traza con origen igual al destino y un aviso a quien ya lo llevaba: hay que quitar esa comparación del validador y decidir si ese caso avisa |
+| S-5 | **Reasignarse el ticket a uno mismo, ¿se permite y no avisa?** | Se permite: la ruta no compara el destino con quien reasigna (`apps/desk/server/routes/reasignacion.ts:31`) y deja la traza; el aviso se suprime porque quien actúa ya lo sabe (`apps/desk/server/services/avisoReasignacion.ts:17`) | Si debe prohibirse, hace falta una guarda nueva en la ruta que conozca al actor (el validador de `shared` hoy no lo recibe); si debe avisar, se quita la línea 17 de ese fichero |
+| S-6 | **El destino, ¿puede ser de cualquier área?** | Sí: sólo se exige que exista y esté activo (`apps/desk/server/routes/reasignacion.ts:35`), igual que la derivación al crear el ticket. El maestro habla de «técnicos de la misma área» | Hay que exigir el área del estado al destino en la ruta (otro `422` tras la línea 35) y filtrar el desplegable del panel con la misma regla, comprobando primero cuántas personas tienen áreas asignadas |
+| S-8 | **Eliminar un ticket, ¿borra también sus reasignaciones?** | Sí: la lista de tablas hijas incluye `reasignaciones` (`apps/desk/server/db/eliminarTicket.ts:54`), así que la persona de origen o de destino vuelve a poder darse de baja | Si se conservaran, esas filas seguirían contando como uso del usuario (`apps/desk/server/auth/users.ts:139`) y esa persona **no se podría borrar nunca**: habría que decidir cómo se liberan |
+
+### 9.2 · Límites declarados
+
+- **La suite no ejercita el bloqueo de fila de PostgreSQL.** La carrera entre dos reasignaciones simultáneas se resuelve con un `UPDATE`
+  condicionado a la persona a cargo leída (`apps/desk/server/db/reasignaciones.ts:34`): quien pierde recibe `409`, sin traza ni aviso. La
+  prueba del `409` es determinista, con una conexión que escribe otro valor justo antes del `UPDATE`
+  (`apps/desk/server/routes/reasignacion.test.ts:232`); lo que hace PostgreSQL con dos transacciones reales a la vez no lo cubre la suite
+  (pg-mem no simula concurrencia). Hipótesis: bajo el aislamiento por defecto de PostgreSQL la segunda reevalúa la condición tras el
+  bloqueo y no acierta fila; no medida aquí.
+- **Si falla el alta del aviso tras escribir, la respuesta es `500` con la reasignación ya hecha.** El aviso se escribe después de la
+  transacción (`apps/desk/server/routes/reasignacion.ts:41`); si su `INSERT` falla, la reasignación y su traza quedan, y quien reasignó ve un
+  error. El correo, en cambio, nunca tumba la respuesta: si no sale, el aviso queda sin sellar (`enviado_at` en `NULL`). Lo fija
+  `apps/desk/server/routes/reasignacion.test.ts:302`.
+
+### 9.3 · Tareas de persona — fuera del recuento de la tanda
+
+Sin casillas: son decisiones o comprobaciones de personas, no trabajo que una tanda pueda hacer en este repositorio. **Archivar el cambio no
+las da por hechas.** **No tienen entrada en `docs/sdd/ENTRADA.md`**: la entrada la abre Supervisión.
+
+| # | Quién | Qué | Qué desbloquea |
+|---|---|---|---|
+| P-1 | Analista | Tras el despliegue, verificar en la aplicación el panel, el aviso y la línea del historial | Da por comprobado lo que los `.tsx` no cubren (están fuera de la red de pruebas, F0-00) |
+| P-2 | Gerencia | Confirmar o corregir S-2, S-4, S-5 y S-6 (y S-8, §9.1) | Deja firme quién reasigna y a quién |
+| P-3 | Gerencia | Pegar en el maestro la corrección 30 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir que sólo reasignan la persona a cargo y la dirección del área |
+| P-4 | Mantenedor | Desplegar y comprobar que existe `public.reasignaciones` en producción (`DEPLOY.md`) | Que reasignar y el historial no fallen por tabla ausente |
