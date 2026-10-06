@@ -76,7 +76,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1A-06 | Generador del mapa del blueprint | por dimensionar (R01.1) | antes del 14/12 | cerrada por archivo | plan R01.1 §5 |
 | F1A-07 | IV-2 · fechas derivadas impuestas por el servidor | S | antes del 14/12 | cerrada por archivo | `decision/iv2-fechas-derivadas` |
 | F1A-08 | IV-4 · tercera puerta OV ↔ ticket | S | antes del 14/12 | cerrada por archivo | `decision/tanda-por-contenido` |
-| F1A-09 | Barrido de citas tras la R08.2 | S | antes del 14/12 | pendiente (§J, nota 3) | plan R01.1 §5 |
+| F1A-09 | Barrido de citas tras la R08.2 | S | antes del 14/12 | pendiente (§J, nota 3) · ***DESCARTADA el 2026-10-06 por superada: no cuenta en el denominador*** | plan R01.1 §5 · `decision/f1a09-descartada-por-superada` |
 | **F1A-10** | **Mapa del blueprint en la aplicación** (SVG o dibujante bajo demanda, desde el generador de F1A-06) | XS–S por medir | después del corte | pendiente | `decision/mapa-en-la-app` · `decision/mapa-antes-o-despues-del-corte` |
 | F1B-01 | Serial único y autocompletado | M | antes del 14/12 | cerrada por commit declarado | plan R01.1 §5 |
 | F1B-02 | Hoja de vida, cuatro campos y enlace a Drive | M | antes del 14/12 | cerrada por archivo | `decision/p8-p54-drive` · `decision/e003b-registro-equipos` |
@@ -140,7 +140,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | **F2-03** | **Hojas de vida de los equipos propios y preparación 17025**, administradas por el cargo Especialista técnico | L | 2027 · Fase 2 | pendiente | `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (4) · `decision/cargo-encargado-de-inventario` |
 | **F4-01** | **Disponibilidad por persona** (vacaciones y ausencias) sobre el calendario laboral | S–M | 2027 · Fase 4 | pendiente | `decision/trabajo-del-30-09-sin-fila` (3) |
 
-**78 filas, 78 tandas.** Reparto: F0 7 · F1A 10 · F1B 18 · F1C 12 · F1D 9 · F1E 5 · F1F 5 · 1G 4 · 1H 4 · Fases 2–4: 4. En negrita, las que se escriben por primera vez en un §5.
+**78 filas, 78 tandas.** *2026-10-06: **77 tandas**; F1A-09 se descarta por superada (`decision/f1a09-descartada-por-superada`) y su fila se conserva arriba, marcada, para no desplazar las citas a esta tabla. F1A pasa de 10 a 9.* Reparto: F0 7 · F1A 10 · F1B 18 · F1C 12 · F1D 9 · F1E 5 · F1F 5 · 1G 4 · 1H 4 · Fases 2–4: 4. En negrita, las que se escriben por primera vez en un §5.
 
 **Supuestos de nomenclatura, todos reversibles** (modo producción, `CLAUDE.md`, «Regla de ejecución»): los IDs F1A-10, F1B-15 a F1B-18, F1C-09 a F1C-12, F2-01 a F2-03 y F4-01 son los siguientes libres de su épica o fase; F1B-15 lo fija Gerencia. **F1B-13** conserva el ID que le propuso la R01.2 §A (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.2.md:25`), y F1B-12 y F1B-14 los de la R01.3 §G. El mapa va en 1A porque reutiliza el generador de F1A-06. Las correcciones del blueprint van en 1C porque son «correcciones que cambian el proceso», aunque su ventana sea anterior al corte. Las filas de 2027 usan el prefijo de su fase de la R01.1 §3, que hasta hoy no tenía IDs en este documento.
 
@@ -187,15 +187,15 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 |---|---|---|
 | Total R01.3 | 66 | 66 |
 | + filas nuevas de la R01.4 (§I) | +12 | +12 |
-| **Total R01.4** | **78** | **78** |
+| **Total R01.4** | **78** · *2026-10-06: **77** (F1A-09 descartada)* | **78** · *2026-10-06: **77*** |
 | Después del corte, sin fecha (F0-06 · F1A-10 · siete de 1C · 1D 9 · 1E 5) | −23 | −23 |
 | Enero de 2027 (1G 4 · 1H 4) | −8 | −8 |
 | 2027 en su fase (F2-01..03 · F4-01) | −4 | −4 |
 | Reserva que no entra | −1 (F1C-12) | −2 (F1B-18, F1C-12) |
 | Condicionadas que pasan a 2027 | −2 | — |
-| **Antes del corte** | **40** | **41** |
+| **Antes del corte** | **40** · *2026-10-06: **39*** | **41** · *2026-10-06: **40*** |
 | Cerradas (10 por archivo + 9 por commit declarado) · *2026-10-05, tras `36dc352`: 14 por archivo + 9 por commit declarado, según `npm run reconcile`* | −19 → *−23* | −19 → *−23* |
-| **Pendientes antes del corte** | **21** (6 en curso), al 01/10 · *Recalculado el 2026-10-05 sobre la tabla del §5, con las once filas en curso (F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1C-05, F1F-01, F1F-05): **17** (11 en curso), porque las cerradas son ya **23** (14 por archivo + 9 por commit), no las 19 de la fila anterior* · *tras `36dc352`: **17** (12 en curso: entra F1F-02)* | **22** (6 en curso), al 01/10 · *2026-10-05: **18** (11 en curso); tras `36dc352`, **18** (12 en curso)* |
+| **Pendientes antes del corte** | **21** (6 en curso), al 01/10 · *Recalculado el 2026-10-05 sobre la tabla del §5, con las once filas en curso (F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1C-05, F1F-01, F1F-05): **17** (11 en curso), porque las cerradas son ya **23** (14 por archivo + 9 por commit), no las 19 de la fila anterior* · *tras `36dc352`: **17** (12 en curso: entra F1F-02)* · *2026-10-06: **16** (12 en curso), sin F1A-09* | **22** (6 en curso), al 01/10 · *2026-10-05: **18** (11 en curso); tras `36dc352`, **18** (12 en curso)* · *2026-10-06: **17*** |
 
 ### F.2 · Tiempo disponible, medido
 
@@ -223,7 +223,7 @@ Del **viernes 02/10/2026** al examen del **miércoles 09/12/2026**: **68 días =
 | F1C-11 | Sólo la derivación al Director Técnico (S): el respaldo espera a 1E (§K) · *cerrada por archivo, `openspec/changes/archive/2026-10-03-derivacion-repuestos-director-tecnico/`* | 1,0 → *0* |
 | **Subtotal 1C** | | **5,0** (era 5,0 a 6,5 con F1C-11 en S–M) · *2026-10-05, tras `36dc352`: **0** antes del corte* |
 | 1F | F1F-01..05, la cifra de bloque de la R01.3 §D.3 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:111`), sin descontar la encuesta automática que salió de la cuenta · *2026-10-05: F1F-01 y F1F-05 están en curso. A F1F-01 sólo le falta construir el interruptor de E-231 (XS; el cotejo y la ejecución son tareas de persona), `openspec/changes/archive/2026-10-04-migracion-tickets-abiertos/archive-report.md:5`; a F1F-05, los indicadores 51 y 55, que esperan hito y decisión (de S–M a S), `openspec/changes/archive/2026-10-03-continuidad-indicadores/archive-report.md:10-13`. Se descuentan 2,0 por F1F-01 y 0,5 a 1,0 por F1F-05 (hipótesis: el bloque de la R01.3 no desglosa por fila)*  · *tras `36dc352`: F1F-01 tiene ya el interruptor (`c156403`) y no le queda construcción antes del corte; F1F-02 tiene la copia nocturna y la previa, y le falta la copia semanal de Drive y la prueba de restauración mensual (`openspec/changes/archive/2026-10-05-respaldo-nocturno-y-previo/archive-report.md:5`; queda S, hipótesis). Se descuentan 2,5 por F1F-01, 1,5 por F1F-02 y 0,5 a 1,0 por F1F-05* | 12,5 → *9,5 a 10,0* → ***7,5 a 8,0*** |
-| F0-04 · F1A-09 | Nada que construir (§J, notas 2 y 3) | 0 |
+| F0-04 · F1A-09 | Nada que construir (§J, notas 2 y 3) · *2026-10-06: F1A-09 descartada; no cambia los días* | 0 |
 | **Total, escenario A sin reserva** | | **39,0 a 40,5 d = 7,8 a 8,1 semanas** (era 39,0 a 42,0 = 7,8 a 8,4) · *2026-10-05, tras `36dc352`: **16,0 a 18,0 d = 3,2 a 3,6 semanas*** |
 | F1B-16 Remisiones sin ticket (L) + F1B-17 Remisión de salida (M) | | +7,0 |
 | **Total, escenario B** (no rige: Gerencia eligió el A) | | **46,0 a 47,5 d = 9,2 a 9,5 semanas** (era 46,0 a 49,0) · *2026-10-05, tras `36dc352`: **23,0 a 25,0 d = 4,6 a 5,0 semanas*** |
@@ -281,9 +281,9 @@ Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semana
 
 | | Por archivo | Por commit declarado |
 |---|---|---|
-| **Sobre el proyecto** (78 tandas) | **10/78 = 12,8 %** · *2026-10-05, tras `36dc352`: **14/78 = 17,9 %*** | **9/78 = 11,5 %** · *sin cambio* |
-| **Sobre lo que entra antes del corte**, escenario A (40) | **10/40 = 25,0 %** · *tras `36dc352`: **14/40 = 35,0 %*** | **9/40 = 22,5 %** · *sin cambio* |
-| **Sobre lo que entra antes del corte**, escenario B (41) | **10/41 = 24,4 %** · *tras `36dc352`: **14/41 = 34,1 %*** | **9/41 = 22,0 %** · *sin cambio* |
+| **Sobre el proyecto** (78 tandas; *77 desde el 2026-10-06*) | **10/78 = 12,8 %** · *2026-10-05, tras `36dc352`: **14/78 = 17,9 %*** · *2026-10-06: **14/77 = 18,2 %*** | **9/78 = 11,5 %** · *sin cambio* · *2026-10-06: **9/77 = 11,7 %*** |
+| **Sobre lo que entra antes del corte**, escenario A (40; *39 desde el 2026-10-06*) | **10/40 = 25,0 %** · *tras `36dc352`: **14/40 = 35,0 %*** · *2026-10-06: **14/39 = 35,9 %*** | **9/40 = 22,5 %** · *sin cambio* · *2026-10-06: **9/39 = 23,1 %*** |
+| **Sobre lo que entra antes del corte**, escenario B (41; *40 desde el 2026-10-06*) | **10/41 = 24,4 %** · *tras `36dc352`: **14/41 = 34,1 %*** · *2026-10-06: **14/40 = 35,0 %*** | **9/41 = 22,0 %** · *sin cambio* · *2026-10-06: **9/40 = 22,5 %*** |
 
 **En curso, aparte, sin sumar a ninguna cifra:** 6 filas — F0-04, F1B-04, F1B-07, F1B-08, F1B-11 y F1C-05. ⚠️ *Esta cifra es **falsa desde el 04/10**: `fed9532` pasó F1B-03 y F1F-05 a «en curso» en la tabla del §5 sin tocar esta línea, y `0095665` (05/10) añadió F1B-05, F1B-09 y F1F-01 sin tocarla tampoco. Recalculado el 2026-10-05: **11 filas** — F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1C-05, F1F-01 y F1F-05. Las cifras de cerradas de la tabla de arriba siguen siendo las del 01/10 (hoy son 14 por archivo).* *tras `36dc352`: **12 filas**, con F1F-02 (`respaldo-nocturno-y-previo`, fusionada en `38bc432`); las cerradas de la tabla de arriba ya están recalculadas en su sitio.*
 
@@ -345,7 +345,7 @@ Contado por filas, a 3,2 por semana: escenario A, 21 pendientes → **6,6 semana
 
 1. **Dos cifras, no una.** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:4273` habla de «19 filas cerradas» a 01/10: es la suma de las dos poblaciones de §B. Esta revisión no la publica sumada.
 2. **F0-04 está ejecutada y no cuenta en ninguna cifra.** Su proposal declara `cierra: no` y que le falta «constancia de staging» (`openspec/changes/F0-04/proposal.md:16`), y el staging lo retiró Gerencia el 21/09 (`decision/e013b-copia-pruebas`; `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:128`). Es candidata a `cierres_declarados_por_commit`; lo decide quien ajuste el barrido. Pesa 0 días en §F.
-3. **F1A-09: dos fuentes no coinciden.** La R01.3 §E la da por «construida y archivada sin cabecera» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:190`), pero la lista de commit declarado de los partes es F0-00, F1A-01, F1A-02, F1A-04, F1A-05 y F1B-01 —con F0-00 y sin F1A-09— (parte del 01/10, Parte_2026-10-01.md, §3, comprobación 2, sin trackear). Esta revisión sigue la lista de los partes: F1A-09 queda «pendiente» con 0 días hasta que alguien la declare o la descarte.
+3. **F1A-09: dos fuentes no coinciden.** La R01.3 §E la da por «construida y archivada sin cabecera» (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.3.md:190`), pero la lista de commit declarado de los partes es F0-00, F1A-01, F1A-02, F1A-04, F1A-05 y F1B-01 —con F0-00 y sin F1A-09— (parte del 01/10, Parte_2026-10-01.md, §3, comprobación 2, sin trackear). Esta revisión sigue la lista de los partes: F1A-09 queda «pendiente» con 0 días hasta que alguien la declare o la descarte. **Resuelto el 2026-10-06:** Gerencia la descarta por superada (`decision/f1a09-descartada-por-superada`); el denominador baja de 78 a 77. ⚠️ `npm run reconcile` sigue publicando 78: lo fijan `openspec/specs/reconciliacion/spec.md:393` y `apps/desk/server/reconciliacion/registro.test.ts:214`, y cambiarlo toca una spec, así que pide ficha (R-5).
 
 **Contradicciones:**
 
@@ -408,4 +408,4 @@ Cambio del barrido (`fuera-del-plan`) → **F1C-09** → **F1C-10** → **F1B-15
 
 ### K.7 · Avance con la cuenta vigente
 
-Antes del corte, escenario A, sin reserva: **39** filas (40 − F1B-18). **Por archivo 10/39 = 25,6 %** · **por commit declarado 9/39 = 23,1 %**, publicadas por separado. Sobre el proyecto, sin cambio: 10/78 y 9/78. *2026-10-05, tras `36dc352`: por archivo **14/39 = 35,9 %** · por commit declarado **9/39 = 23,1 %**; sobre el proyecto, 14/78 y 9/78.*
+Antes del corte, escenario A, sin reserva: **39** filas (40 − F1B-18). **Por archivo 10/39 = 25,6 %** · **por commit declarado 9/39 = 23,1 %**, publicadas por separado. Sobre el proyecto, sin cambio: 10/78 y 9/78. *2026-10-05, tras `36dc352`: por archivo **14/39 = 35,9 %** · por commit declarado **9/39 = 23,1 %**; sobre el proyecto, 14/78 y 9/78.* *2026-10-06, sin F1A-09: **38** filas antes del corte (39 − F1B-18); por archivo **14/38 = 36,8 %** · por commit declarado **9/38 = 23,7 %**; sobre el proyecto, 14/77 y 9/77.*

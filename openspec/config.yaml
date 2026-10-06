@@ -3882,6 +3882,430 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "Anexo D nº 55 (respaldo)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-02"
+  # ── Respuestas de Gerencia del 2026-10-06 a `docs/sdd/Preguntas_Gerencia_2026-10-06.md` ──
+  # Una clave por respuesta, en el orden en que llegaron (10, 11, 1 a 9, 12 a 16). Las tres que
+  # llevan `estado: PENDIENTE` NO son decisión: Gerencia las dejó entre corchetes. Las consecuencias
+  # están leídas contra el árbol de `c0008bf`.
+  - clave: "pendiente/e158-remision-equipo-nuevo"
+    fecha: "2026-10-06"
+    estado: "PENDIENTE — no es decisión. Sigue sujetando el despliegue"
+    pregunta: |
+      Pregunta 10 (E-158). Desde que se publique no se podrá habilitar un servicio sin remisión de entrada, sin
+      excepciones. Un ticket de «Equipo nuevo» pasa por ese mismo paso: ¿lleva remisión de entrada en la práctica, o hay
+      que exceptuarlo?
+    respuesta_textual: |
+      «[Pendiente de confirmar con Servicio Técnico.] Si equipo nuevo no lleva remisión de entrada: excepción por clasificación «Equipo nuevo», construida antes de publicar.»
+    consecuencias: |
+      (1) NO HAY DECISIÓN: lo que va entre corchetes es una confirmación que Gerencia tiene pendiente con Servicio Técnico.
+      La pregunta sigue abierta y SIGUE SIENDO CONDICIÓN DE PARADA DEL PAQUETE DE DESPLIEGUE: no se publica hasta tenerla.
+      (2) LO QUE SÍ ESTÁ DICHO ES LA SALIDA CONDICIONAL: si la confirmación es «no lleva remisión», se construye una excepción
+      por clasificación «Equipo nuevo» ANTES de publicar, en un cambio nuevo con `tanda: F1B-03` (destino que ya proponía
+      E-158). Si es «sí la lleva», se publica tal cual.
+      (3) NO SE CONSTRUYE NADA todavía: construir la excepción sin la confirmación sería decidir por Servicio Técnico. Y
+      `decision/anexo-43-en-sitio` sigue diciendo «sin excepciones»: la excepción, si llega, la precisa.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (pendiente/e158-remision-equipo-nuevo) · docs/sdd/ENTRADA.md → E-158"
+    maestro_pasaje: "Anexo D nº 43 (remisión obligatoria para habilitar)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna todavía — si la confirmación es «no», un cambio de F1B-03 antes de publicar"
+
+  - clave: "decision/p55c-proveedor-copia"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 11 (`p55c-proveedor-copia`, devuelta por `decision/p55b-destino-copia`). ¿Cuál de los tres proveedores
+      —Backblaze B2, Cloudflare R2 o Amazon S3— recibe las copias de seguridad?
+    respuesta_textual: |
+      «Backblaze B2, con bloqueo contra borrado. Compruebo precio y medio de pago al contratar.»
+    consecuencias: |
+      (1) EL PROVEEDOR ES BACKBLAZE B2, con bloqueo contra borrado, que es la condición que ya fijaba
+      `decision/p55b-destino-copia`. Deja de estar entre corchetes.
+      (2) NO QUEDA CONSTRUCCIÓN: las tres copias (nocturna, previa a cada cambio y semanal de Drive) están construidas con
+      destino S3 compatible y con sus interruptores cerrados. Lo que sigue son TAREAS DE PERSONA: contratar, crear el
+      depósito con el bloqueo, cargar las credenciales en el gestor de secretos del despliegue (regla de secretos: nunca en
+      un chat ni en una captura) y encender los interruptores. Ninguna sesión lanza una copia contra producción.
+      (3) CUESTA DINERO, y la comprobación de precio y medio de pago se la reserva Gerencia para el momento de contratar: la
+      contratación no la hace ninguna sesión.
+      (4) F1F-02 NO SE CIERRA CON ESTO: le sigue faltando encender y la prueba mensual de restauración, que es de persona.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/p55c-proveedor-copia) · precisa decision/p55b-destino-copia"
+    maestro_pasaje: "Anexo D nº 55 (respaldo)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "ninguna — tareas de persona de F1F-02 (contratar, credenciales, encender, prueba de restauración)"
+
+  - clave: "decision/p4-vistas-equivalentes-zoho"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 1 (pregunta 4 del 29/09; fila F1B-08). ¿Qué vistas de listado y qué campos de la ficha de Zoho Desk tiene
+      que igualar Desk 2.0 para dar la paridad por cumplida? Opciones: (a) que lo defina una medida con quien trabaja a
+      diario en Zoho; (b) darla por cumplida con lo construido; (c) que Gerencia enumere las vistas y los campos.
+    respuesta_textual: |
+      «Opción (a), por escrito: cada persona que usa Zoho Desk envía capturas de sus vistas semanales y lo que echa en falta, plazo 16/10. Sin respuestas ese día, se cierra con lo construido.»
+    consecuencias: |
+      (1) LA MEDIDA ES POR ESCRITO Y TIENE PLAZO: 2026-10-16. Cada persona que usa Zoho Desk envía capturas de sus vistas
+      semanales y lo que echa en falta. Es tarea de personas; ninguna sesión la hace.
+      (2) SALIDA POR DEFECTO: si el 16/10 no hay respuestas, la mitad de paridad de F1B-08 se cierra con lo construido, sin
+      construir nada más.
+      (3) HASTA EL 16/10 ESA MITAD NO SE CONSTRUYE: su contenido lo fijan las respuestas. Si llegan, lo que pidan se mide
+      contra el corte antes de entrar (`decision/trabajo-del-01-10-antes-del-corte-sin-fila`: sólo paridad, con talla).
+      (4) OJO CON LAS CAPTURAS: pueden traer datos de clientes. No se pegan en un chat ni se versionan sin revisar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/p4-vistas-equivalentes-zoho) · docs/sdd/Preguntas_Gerencia_2026-10-06.md §1"
+    maestro_pasaje: "ninguno (alcance de F1B-08)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-08 — sólo después del 16/10, con lo que pidan las respuestas; sin respuestas, la mitad se cierra"
+
+  - clave: "decision/e157-ovi-garantia-por-cargo"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 2 (E-157; filas F1B-03 y F1B-13). Desk no escribe en Zoho y las OVI se crean en Books: ¿qué acto es, dentro
+      de Desk, «crear la OVI de garantía»? Opciones: (A) que sólo el Director Técnico o un administrador puedan ASOCIAR una
+      orden `OVI-` a un ticket; (B) un registro propio de OVI; (C) escribir en Books. De (A) colgaban cinco preguntas: (1)
+      ¿se mantiene el área del acto o basta el cargo?; (2) ¿alcanza a la «OV adicional» de las dos aprobaciones?; (3) un
+      ticket venido de Zoho que ya trae la OVI, ¿reconfirmarla cuenta como asociar?; (4) sin cargos asignados sólo pasa el
+      administrador, ¿es aceptable el día de publicar?; (5) ¿un ticket de «Garantía» debe llevar OVI, y una OVI sólo puede
+      ir en tickets de garantía?
+    respuesta_textual: |
+      «(A). 1) Basta el cargo. 2) Sí, toda OVI entre por donde entre. 3) Un ticket venido de Zoho con OVI no se toca. 4) Los cargos se asignan antes de publicar. 5) Garantía lleva OVI; si la OVI es sólo para garantía lo confirma el Director Técnico.»
+    consecuencias: |
+      (1) EL ACTO ES ASOCIAR, NO CREAR: Desk sigue sin escribir en Zoho (`decision/p44-escritura-zoho`). Precisa
+      `decision/ovi-garantia-autor`.
+      (2) BASTA EL CARGO: `puedeCrearOVIGarantia` exige hoy área Servicio Técnico Y cargo
+      (`packages/shared/src/cargos.ts:71-74`) y no la llama nadie (`packages/shared/src/cargos.ts:69`). La condición de área
+      se quita: pasa quien tenga el cargo Director Técnico, o un administrador. Sin eso la OVI no entraría por «Habilitar
+      Servicio», que es de área Comercial.
+      (3) TODA ENTRADA DE UNA ORDEN: el alta, «Habilitar Servicio», la «OV adicional» de las dos aprobaciones y la remisión
+      de entrada. Son las vías que acaban en la asociación propia; la guarda va en cada una, con su escalón y su prueba de
+      posición (regla de mutación 1).
+      (4) UN TICKET VENIDO DE ZOHO CON OVI NO SE TOCA: reconfirmar en una transición la OVI que ya traía no cuenta como
+      asociar y no pide el cargo. El único distintivo fiable de «nacido en la aplicación» es el prefijo del id
+      (`packages/shared/src/transitions.ts:124`); `managed_by_app` no sirve, porque cualquier transición lo enciende.
+      (5) LOS CARGOS SE ASIGNAN ANTES DE PUBLICAR: es tarea de persona y condición del paquete de despliegue. Sin cargos
+      asignados sólo pasaría el administrador.
+      (6) GARANTÍA LLEVA OVI: un ticket con tipo de servicio «Garantía» no admite una orden que no sea `OVI-`. SUPUESTO
+      (reversible), porque la respuesta no lo dice: la guarda actúa cuando la orden ENTRA, no obliga a que el ticket de
+      garantía nazca con orden.
+      (7) LA MITAD CONTRARIA NO ESTÁ DECIDIDA Y NO SE CONSTRUYE: si una OVI sólo puede ir en tickets de garantía lo confirma
+      el Director Técnico. Mientras tanto, una OVI en un ticket que no es de garantía se admite con el cargo.
+      (8) DESBLOQUEA F1B-13, la ficha de garantía con el proveedor, que cuelga de la OVI.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e157-ovi-garantia-por-cargo) · precisa decision/ovi-garantia-autor · docs/sdd/ENTRADA.md → E-157"
+    maestro_pasaje: "M1.3.7 y M1.9 (OVI de garantía); Anexo D nº 7"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-03 (parte OVI, `cierra: no`: quedan los prefijos) y, detrás, F1B-13"
+
+  - clave: "decision/e089-e220-visibilidad-y-traspaso"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 3 (E-089 y E-220; fila F1B-05). E-089: ¿cada área ve sólo los tickets en «sus» estados, o todo el personal
+      sigue viendo todos? Opciones: (a) mantener lo construido; (b) vista por área sin restricción; (c) segmentación real
+      en el servidor. E-220: ¿se aprueba el protocolo de traspaso —reasignar un ticket sin cambiar su estado y con motivo,
+      avisar a la persona, y restringir por propietario del registro—, entero, en parte o no?
+    respuesta_textual: |
+      «Visibilidad (a): todos ven todo y se filtran los botones; se corrige el maestro. Traspaso en parte: reasignar sin cambiar estado, con motivo y aviso, ya; la restricción por propietario después del corte con F1C-05.»
+    consecuencias: |
+      (1) VISIBILIDAD: SE QUEDA LO CONSTRUIDO. Todo el personal ve todos los tickets y sólo se filtran las transiciones por
+      área. Esa mitad de F1B-05 se cierra SIN CONSTRUIR; no hace falta la matriz de estados por área.
+      (2) SE CORRIGE EL MAESTRO, que recomendaba la opción (b)
+      (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1967-1971`): corrección 27 de
+      `docs/sdd/F0-01_Correcciones_para_el_maestro.md`.
+      (3) TRASPASO, YA: reasignar la persona a cargo sin cambiar de estado, con motivo obligatorio, traza y aviso a la
+      persona. Hoy no existe: la persona a cargo sólo se escribe dentro de una transición
+      (`apps/desk/server/services/ticketService.ts:138-142`). El maestro lo describe en
+      `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035`.
+      (4) LA RESTRICCIÓN POR PROPIETARIO, DESPUÉS DEL CORTE, CON F1C-05
+      (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2037`). Hasta entonces la reasignación no
+      se limita a la persona a cargo. SUPUESTO (reversible) sobre quién reasigna mientras tanto: cualquiera del área del
+      estado, o un administrador, que es el mismo criterio con que hoy se ejecutan las transiciones.
+      (5) CON ESTO F1B-05 PUEDE CERRAR: lo que le faltaba era la visibilidad, que no se construye, y el traspaso con motivo.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e089-e220-visibilidad-y-traspaso) · docs/sdd/F0-01_Correcciones_para_el_maestro.md (27) · docs/sdd/ENTRADA.md → E-089, E-220"
+    maestro_pasaje: "M1.9.1 y M1.9.2 (visibilidad por área; reasignación entre técnicos)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-05 (traspaso con motivo y aviso) · la restricción por propietario, en F1C-05 después del corte"
+
+  - clave: "decision/e232-accesorios-lista-por-modelo"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 4 (E-232, que precisa E-100; fila F1B-04), en cinco puntos: (1) ¿los accesorios de la remisión salen del
+      catálogo de artículos de Zoho Books y no de una lista propia?; (2) ¿se muestra el nombre oficial tal como está en
+      Books?; (3) ¿se muestra el número de parte, y de qué campo de Books sale?; (4) ¿se ofrecen sólo los accesorios del
+      modelo del equipo, y dónde queda escrita esa relación?; (5) ¿la foto de cada accesorio va con los documentos del
+      modelo, o es otra cosa?
+    respuesta_textual: |
+      «Sí a los cinco. Los accesorios salen de la lista por modelo que ya existe en el catálogo de modelos, con nombre oficial y número de parte cuando lo haya. Contar antes del corte los modelos sin categoría de accesorios. Nada de texto libre: un accesorio fuera de lista es novedad y lo añade el Director Técnico.»
+    consecuencias: |
+      (1) LA LISTA YA EXISTE Y YA ES LA QUE USA LA REMISIÓN: `public.catalogo_articulos` con `clase = 'accesorio'` y su
+      `modelo_id` (`packages/zoho-sync/src/db/schema.sql:392-402`); el formulario de entrada la lee
+      (`apps/desk/server/db/checklistRemision.ts:31-43`). Los puntos (1) y (4) confirman lo construido.
+      (2) NOMBRE OFICIAL: un accesorio dado de alta desde Books guarda el nombre y el `sku` del artículo
+      (`apps/desk/server/routes/catalogo.ts:225-233`). El formulario hoy enseña sólo el nombre.
+      (3) NÚMERO DE PARTE — EL REPOSITORIO NO DICE DE QUÉ CAMPO SALE. La réplica de artículos sólo promueve `sku`
+      (`packages/zoho-sync/src/booksHub/mappers.ts:34-39`); lo demás queda en `raw`, y qué trae `raw` es dato de producción.
+      E-100 decía «nombre y SKU». Que el SKU de Books sea el «número de parte» es HIPÓTESIS, no decisión: se construye
+      enseñando el SKU con su nombre y este punto queda declarado sin resolver.
+      (4) FOTO POR ACCESORIO — NO HAY DÓNDE GUARDARLA. Los documentos del modelo cuelgan del modelo, no del artículo
+      (`packages/zoho-sync/src/db/schema.sql:359-361`), y la
+      réplica no trae imagen. Se construye SIN la foto y queda declarado.
+      (5) «CATEGORÍA DE ACCESORIOS» YA NO EXISTE COMO TAL: desde agosto los accesorios se añaden artículo a artículo y la
+      asignación por categoría está cerrada para ellos (`packages/shared/src/articulos.ts:36-38`,
+      `apps/desk/server/routes/catalogo.ts:176-179`). Leído al pie de la letra, el recuento daría todos los modelos. Se lee
+      como «modelos sin ningún accesorio activo en su lista»: SUPUESTO (reversible). El recuento es DATO DE PRODUCCIÓN: la
+      tanda entrega la consulta de sólo lectura y la ejecuta una persona antes del corte.
+      (6) NADA DE TEXTO LIBRE: el catálogo admite hoy un accesorio escrito a mano, sin artículo de Books
+      (`apps/desk/server/routes/catalogo.ts:229-233`). Qué pasa con los que ya existen así, y con la lista por perfil que
+      usan los tickets sin equipo enlazado, la respuesta no lo dice: se declara en la propuesta de la tanda.
+      (7) FUERA DE LISTA ES NOVEDAD, Y LO AÑADE EL DIRECTOR TÉCNICO: en la recepción no se escribe un accesorio; se anota
+      como novedad. Añadirlo a la lista del modelo pasa a poder hacerlo el cargo Director Técnico; hoy sólo escribe el
+      catálogo el super administrador (`apps/desk/server/routes/catalogo.ts:213`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e232-accesorios-lista-por-modelo) · docs/sdd/ENTRADA.md → E-232, E-100"
+    maestro_pasaje: "M1.2 y M2.1 (accesorios de la remisión de entrada)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-04 (accesorios; sin número de parte confirmado y sin foto por accesorio)"
+
+  - clave: "decision/e086-ampliacion-contrato"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 5 (E-086; fila F1B-11). Un contrato se puede ampliar «dentro del mismo año» para consumir lo que no se
+      ejecutó: ¿qué año cuenta —el natural, el de la fecha de inicio o el de la fecha de fin— y hasta qué fecha como máximo
+      se puede ampliar?
+    respuesta_textual: |
+      «Año natural del vencimiento. Ampliación hasta el 31/12 de ese año, porque el 1/1 cambia la lista de precios. La registra Comercial, con traza.»
+    consecuencias: |
+      (1) EL AÑO ES EL NATURAL DE LA FECHA DE VENCIMIENTO, y el tope de la ampliación es el 31/12 de ese año. Confirma la
+      lectura que `decision/vigencia-contrato` declaraba como interpretación, y la precisa.
+      (2) LA REGISTRA COMERCIAL: mismo permiso que el alta del contrato, que pide el área Comercial
+      (`apps/desk/server/routes/contratos.ts:43`). La respuesta no nombra un cargo.
+      (3) CON TRAZA: hoy un contrato no se puede modificar (`apps/desk/server/db/contratos.ts:8`) ni existe registro de sus cambios; la ampliación trae el suyo
+      (quién, cuándo, fecha anterior y fecha nueva).
+      (4) UN CONTRATO YA VENCIDO SE PUEDE AMPLIAR mientras no haya pasado el 31/12 del año de su vencimiento; pasado ese
+      día, no. Las guardas de contrato vencido de las tres puertas no cambian: leen la fecha de fin vigente.
+      (5) CON ESTO F1B-11 PUEDE CERRAR: la ampliación era lo único que le faltaba.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e086-ampliacion-contrato) · precisa decision/vigencia-contrato · docs/sdd/ENTRADA.md → E-086"
+    maestro_pasaje: "Anexo D nº 53 (contratos)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-11 (ampliación de contrato)"
+
+  - clave: "decision/e171-e172-e173-indicadores-51-55"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 6 (E-171, E-172 y E-173; fila F1F-05). E-171: el indicador 51, tiempo de recogida del equipo, se mide hasta
+      una hora que Desk no guarda como columna: ¿con qué hito se calcula? E-172: la aplicación no guarda la calificación
+      de satisfacción (indicador 55): ¿se espera a cargar las respuestas de la encuesta, o hay otra fuente? E-173: si los
+      valores de Zoho no llegan por la sincronización, ¿la comparación de las cuatro semanas se hace cargando la
+      exportación de Zoho?
+    respuesta_textual: |
+      «51: la transición de entrega. 55: las respuestas cargadas de la encuesta. Comparación: con la exportación de Zoho.»
+    consecuencias: |
+      (1) EL 51 SE CIERRA CON LA HORA DE LA TRANSICIÓN DE ENTREGA. Esa hora SÍ está guardada: cada transición hecha en la
+      aplicación deja la suya (`packages/zoho-sync/src/db/schema.sql:57-61`). Hoy el 51 sale «sin dato»
+      (`packages/shared/src/indicadores.ts:88-89`).
+      (2) «LA TRANSICIÓN DE ENTREGA» SON DOS EN EL CATÁLOGO: «Entrega al cliente» y «Entrega al cliente sin factura»
+      (`packages/shared/src/transitions.ts:248-251`). Las dos son la entrega física y las dos piden la fecha de la remisión
+      de salida. SUPUESTO (reversible): vale la que tenga el ticket.
+      (3) LÍMITE QUE LA RESPUESTA NO CUBRE: un ticket movido sólo en Zoho no tiene esa fila, y su 51 seguirá «sin dato».
+      (4) EL 55 SALE DE LAS RESPUESTAS CARGADAS DE LA ENCUESTA. Hoy no hay tabla ni cargador de respuestas; el indicador
+      no tiene fuente (`packages/shared/src/indicadores.ts:58`). El formato del fichero de respuestas no está en el
+      repositorio.
+      (5) LA COMPARACIÓN SE HACE CON LA EXPORTACIÓN DE ZOHO. Hoy la ruta compara sólo con lo ya sincronizado y no lee
+      ningún fichero (`apps/desk/server/routes/indicadores.ts:52`); tampoco hay cargador de la exportación, ni su formato
+      está en el repositorio.
+      (6) LA SPEC VIGENTE PROHÍBE HOY QUE LA RUTA APORTE ESAS ENTRADAS (`openspec/specs/kpis/spec.md:257`): la tanda la
+      modifica en su delta, con ficha.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e171-e172-e173-indicadores-51-55) · docs/sdd/ENTRADA.md → E-171, E-172, E-173"
+    maestro_pasaje: "Anexo G.6 (indicadores 51 y 55)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1F-05 (51, 55 y comparación)"
+
+  - clave: "pendiente/e094-comprobacion-prefijos"
+    fecha: "2026-10-06"
+    estado: "PENDIENTE — no es decisión: comprobación de persona sin hacer"
+    pregunta: |
+      Pregunta 7 (E-094; fila F1B-03). No es una decisión, es una comprobación: antes de suprimir los cinco prefijos en los
+      tickets nuevos, ¿depende de ellos algún nombre de carpeta de Drive o alguna automatización?
+    respuesta_textual: |
+      «[Comprobación mía: etiquetas en n8n y copia de informes a Drive.]»
+    consecuencias: |
+      (1) NO HAY RESULTADO: Gerencia se reserva la comprobación y dice dónde va a mirar —las etiquetas en n8n y la copia de
+      informes a Drive—. Hasta que diga «nada depende» o «depende esto», la supresión de los prefijos NO se construye.
+      (2) F1B-03 NO PUEDE CERRAR aunque la parte de la OVI esté resuelta: el alta sigue pidiendo el prefijo.
+      (3) Ninguna sesión hace la comprobación: es una medición fuera del repositorio.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (pendiente/e094-comprobacion-prefijos) · docs/sdd/ENTRADA.md → E-094"
+    maestro_pasaje: "M1.3 (prefijos del número de ticket)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna todavía — con el resultado, el segundo cambio de F1B-03 (prefijos, XS)"
+
+  - clave: "decision/p3b-prioridad-tres-niveles"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 8 (pregunta 3.b del 29/09; fila F1B-07), en tres puntos: (1) ¿se confirma el modelo de tres niveles de
+      prioridad, o se mantiene el de dos?; (2) ¿qué es «Valoración de Clientes» y cómo llega ese dato a Desk?; (3) ¿quién
+      ajusta a mano la prioridad fuera de los Top 5?
+    respuesta_textual: |
+      «1) Tres niveles: alta con contrato, Top 5 los que fijo yo, media el resto; sin «baja» por ahora. 2) [Lo que sea la valoración del portal; en Zoho CRM no hay ninguna utilizable.] 3) La prioridad del cliente, el Director Comercial; el ajuste puntual de un ticket, también el Director Técnico.»
+    consecuencias: |
+      (1) TRES NIVELES: alta para el cliente con contrato vigente; la del Top 5 para los clientes que fija Gerencia; media
+      para el resto.
+      (2) SIN «BAJA» POR AHORA: hoy la prioridad baja es asignable (`packages/shared/src/prioridad.ts:13`). Deja de
+      ofrecerse; los tickets que ya la tengan no se tocan (SUPUESTO, reversible).
+      (3) EL PUNTO 2 ES PENDIENTE, NO DECISIÓN: la valoración del cliente va entre corchetes. No hay dato utilizable en
+      Zoho CRM y «la valoración del portal» no está definida. NO SE CONSTRUYE ninguna regla con la valoración.
+      (4) LA PRIORIDAD DEL CLIENTE LA FIJA EL DIRECTOR COMERCIAL: es lo construido
+      (`packages/shared/src/cargos.ts:80-83`).
+      (5) EL AJUSTE PUNTUAL DE UN TICKET, TAMBIÉN EL DIRECTOR TÉCNICO: hoy no tiene excepción
+      (`packages/shared/src/prioridad.ts:79`) y la ruta exige área Comercial y cargo Director Comercial
+      (`apps/desk/server/routes/prioridad.ts:71`).
+      (6) LO QUE LA RESPUESTA NO DICE: hoy el ajuste a mano sólo se admite en clientes Top 5
+      (`apps/desk/server/routes/prioridad.ts:69`). Si «el ajuste puntual de un ticket» levanta ese límite no está dicho.
+      SUPUESTO (reversible) para la tanda: se levanta, porque la pregunta era quién ajusta «fuera de los Top 5».
+      (7) F1B-07 NO CIERRA con esto: el punto 2 sigue abierto.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/p3b-prioridad-tres-niveles) · docs/sdd/Preguntas_Gerencia_2026-10-06.md §8"
+    maestro_pasaje: "M1.9.1 (prioridad)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "F1B-07 (tres niveles y ajuste del Director Técnico, `cierra: no`: falta la valoración)"
+
+  - clave: "decision/e222-mapa-equipo-nuevo-soporte-remoto"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 9 (E-222; fila F1B-09). El mapa que se genera solo cubre el flujo de servicio técnico; los de equipo nuevo
+      y soporte remoto se siguen dibujando a mano. ¿Se extiende ahora, en el repaso de cierre de F1B-09, o después del
+      corte, con la fila del mapa en la aplicación?
+    respuesta_textual: |
+      «Ahora, en F1B-09.»
+    consecuencias: |
+      (1) EL MAPA GENERADO SE EXTIENDE YA a los flujos de equipo nuevo y soporte remoto, como contenido de F1B-09. E-222
+      deja de estar sin destino.
+      (2) HOY EL GUION SÓLO PASA EL CATÁLOGO DE SERVICIO TÉCNICO (`scripts/generar-mapa-blueprint.ts:28-31`). El generador
+      recibe el catálogo por parámetro, así que no hay que rehacerlo: se le dan los otros dos.
+      (3) LA PRUEBA QUE IMPIDE EL DESFASE SE EXTIENDE con los ficheros nuevos, como exige `decision/mapa-blueprint-generado`:
+      sin prueba, un mapa no se mantiene.
+      (4) F1A-10 (el mapa dentro de la aplicación) NO se adelanta: sigue después del corte.
+      (5) F1B-09 sigue con `cierra: no` mientras la épica 1B esté abierta (`decision/orden-tres-tandas-04-10`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e222-mapa-equipo-nuevo-soporte-remoto) · docs/sdd/ENTRADA.md → E-222"
+    maestro_pasaje: "M11.6 (Herramientas de desarrollo y prototipado)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-09 (mapa de los dos flujos)"
+
+  - clave: "decision/e225-columna-propia-dos-estados"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 12 (E-225). «Verificación» y «Solicitud Soporte» caen en la columna «Otros» del tablero: ¿se les da columna
+      propia, y dentro de qué fila?
+    respuesta_textual: |
+      «Columna propia dentro de F1B-08 si cuesta menos de medio día; si no, después del corte.»
+    consecuencias: |
+      (1) ESTIMACIÓN, leída contra el código: CABE EN MENOS DE MEDIO DÍA. Las columnas son una lista de datos y «Otros» es
+      su última entrada (`packages/shared/src/columns.ts:34`); el reparto se deriva de la lista. Son dos entradas, dos
+      pruebas que hoy afirman lo contrario (`packages/shared/src/flujos.test.ts:125-126` y
+      `packages/shared/src/flujos.test.ts:204-205`) y dos requisitos que hoy lo prohíben
+      (`openspec/specs/transitions-equipo-nuevo/spec.md:264-267`, `openspec/specs/transitions-soporte-remoto/spec.md:108-109`).
+      Es estimación, no medida.
+      (2) VA DENTRO DE F1B-08, como dice la respuesta, y no de F1B-09, que es la fila a la que remitían esas dos specs.
+      (3) ES UN CAMBIO PROPIO, con `tanda: F1B-08` y `cierra: no`, y con ficha porque toca specs (R-5). No se mete en el
+      cambio del mapa de F1B-09: un cambio lleva un solo `tanda:` (R-4).
+      (4) EL COLOR DE LA TARJETA de esos dos estados vive en un `.tsx`, fuera de la red de pruebas: si se toca, su
+      comprobación es manual.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e225-columna-propia-dos-estados) · docs/sdd/ENTRADA.md → E-225"
+    maestro_pasaje: "ninguno (tablero)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-08 (columnas de «Verificación» y «Solicitud Soporte»), en cambio propio"
+
+  - clave: "decision/e154-nit-genericos-exentos"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 13 (E-154). Al dar de alta un cliente a mano, si su NIT coincide con uno de Books el alta se detiene y
+      enseña los candidatos. ¿Hay NIT genéricos, como el de consumidor final, que no deban detenerla, y cuáles?
+    respuesta_textual: |
+      «Exentos el NIT de consumidor final (222222222222) y los genéricos que confirme contabilidad sobre la lista de NIT repetidos en Books.»
+    consecuencias: |
+      (1) HAY LISTA DE EXENTOS, y tiene un miembro seguro: el NIT de consumidor final, 222222222222. Hoy no existe ninguna
+      lista (`apps/desk/server/services/altaManual.ts:156`).
+      (2) EL RESTO DE LA LISTA ES TAREA DE PERSONA: contabilidad confirma los genéricos sobre la lista de NIT repetidos en
+      Books. Sacar esa lista es una consulta de sólo lectura sobre datos de producción; ninguna sesión la ejecuta.
+      (3) ES TRABAJO NUEVO SIN FILA: F1B-15, la fila del alta manual, está cerrada y no se reabre. NO SE CONSTRUYE hasta
+      que tenga destino (R-3): propuesto a Gerencia, fila nueva o `fuera-del-plan` con motivo.
+      (4) Como la lista crecerá con lo que confirme contabilidad, conviene que sea un dato mantenible y no una constante:
+      decisión de diseño de la tanda, no de esta clave.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e154-nit-genericos-exentos) · docs/sdd/ENTRADA.md → E-154"
+    maestro_pasaje: "ninguno (alta manual de cliente)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "SIN DESTINO — propuesto a Gerencia; no se construye hasta tenerlo"
+
+  - clave: "decision/e155-aviso-provisional-en-books"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 14 (E-155). Si el cliente provisional aparece después en Books y nadie los enlaza, conviven los dos. ¿Se
+      construye un aviso a Comercial cuando un contacto de Books comparta NIT con un provisional sin enlazar?
+    respuesta_textual: |
+      «Sí, el aviso a Comercial, sin bloquear.»
+    consecuencias: |
+      (1) SE CONSTRUYE EL AVISO a Comercial cuando un contacto de Books comparte NIT con un cliente provisional sin
+      enlazar.
+      (2) SIN BLOQUEAR: no detiene ningún alta ni ninguna transición; es un aviso, no una guarda.
+      (3) DEBE RESPETAR LOS EXENTOS de `decision/e154-nit-genericos-exentos`: un NIT genérico no avisa. Por eso las dos
+      piezas van juntas o en ese orden.
+      (4) ES TRABAJO NUEVO SIN FILA, igual que E-154. NO SE CONSTRUYE hasta que tenga destino.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e155-aviso-provisional-en-books) · docs/sdd/ENTRADA.md → E-155"
+    maestro_pasaje: "ninguno (alta manual de cliente)"
+    maestro_revision: "pendiente"
+    tanda_que_abre: "SIN DESTINO — propuesto a Gerencia junto con E-154; no se construye hasta tenerlo"
+
+  - clave: "decision/e160-derivacion-se-propone"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 15 (E-160). Al pedir repuestos, la aplicación propone derivar el ticket al Director Técnico, pero quien lo
+      ejecuta puede elegir a otra persona. ¿Tiene que rechazar el servidor cualquier otra?
+    respuesta_textual: |
+      «Se queda en propuesta.»
+    consecuencias: |
+      (1) LA DERIVACIÓN AL DIRECTOR TÉCNICO SE PROPONE, NO SE IMPONE: el servidor no rechaza a otra persona. Es lo
+      construido en F1C-11, que sigue cerrada.
+      (2) NO HAY CAMBIO QUE CONSTRUIR. E-160 se cierra con esta clave.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e160-derivacion-se-propone) · docs/sdd/ENTRADA.md → E-160"
+    maestro_pasaje: "M1.9.2 («Solicitud repuestos»)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+
+  - clave: "decision/f1a09-descartada-por-superada"
+    fecha: "2026-10-06"
+    pregunta: |
+      Pregunta 16 (fila F1A-09, «Barrido de citas tras la R08.2»). Figura como pendiente porque dos fuentes no coinciden:
+      una revisión anterior del plan la da por construida y la lista de los partes no la incluye. ¿Se declara hecha, se
+      descarta o se pide que se haga el barrido?
+    respuesta_textual: |
+      «Se descarta por superada (R08.4 vigente, citas antiguas no se renumeran, detector de citas en cada tanda). El denominador baja una fila.»
+    consecuencias: |
+      (1) F1A-09 QUEDA DESCARTADA, no hecha: no entra en ninguna población de cerradas ni en `cierres_declarados_por_commit`.
+      (2) EL DENOMINADOR BAJA DE 78 A 77. Editado en su sitio y con fecha en
+      `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md`; la fila se conserva en la tabla, marcada, para no
+      desplazar las citas a ese fichero.
+      (3) LAS TRES RAZONES SON REGLAS YA ESCRITAS en `CLAUDE.md`: la R08.4 es la vigente, las citas a la R08.1 y la R08.2
+      no se renumeran (caso B de la regla de mutación 4) y el detector de citas corre en cada tanda.
+      (4) ⚠️ EL BARRIDO SIGUE PUBLICANDO 78, y no se puede corregir como trabajo documental: el 78 lo fija un requisito
+      (`openspec/specs/reconciliacion/spec.md:393`) y su prueba (`apps/desk/server/reconciliacion/registro.test.ts:214`), y
+      el contador cuenta toda fila de la tabla. Enseñarle a no contar una fila descartada toca una spec: pide ficha (R-5),
+      con `tanda: fuera-del-plan` y motivo, como el cambio `barrido-avance-archivado`. Hasta entonces el plan dice 77 y
+      `npm run reconcile` dice 78, y esta clave es la que explica la diferencia.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1a09-descartada-por-superada) · docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md (§C, §F.1, §G, §J nota 3, §K.7)"
+    maestro_pasaje: "ninguno (denominador del avance)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — el ajuste del barrido es un cambio `fuera-del-plan` pendiente de autorizar"
+
+  - clave: "decision/orden-ocho-tandas-06-10"
+    fecha: "2026-10-06"
+    pregunta: |
+      Con las dieciséis respuestas del 06/10 registradas, ¿qué tandas se construyen y en qué orden?
+    respuesta_textual: |
+      «Las respuestas de Gerencia del 06/10 que pego debajo son mías y literales. Autorizo registrarlas en config.yaml con push y encadenar las tandas que desbloquean en el orden del encargo, parando antes de fusionar cada una.»
+    consecuencias: |
+      (1) EL ORDEN ES EL DEL ENCARGO: F1B-03 (parte OVI de garantía), F1B-13 (ficha de garantía), F1B-05 (traspaso),
+      F1B-04 (accesorios), F1B-11 (ampliación de contrato), F1F-05 (indicadores 51 y 55 y comparación), F1B-07 (tres
+      niveles de prioridad, sin la valoración) y F1B-09 (mapa de equipo nuevo y soporte remoto), con la columna de
+      `decision/e225-columna-propia-dos-estados` si cabe.
+      (2) Cada tanda va en su propio worktree, con su ciclo SDD completo, y UNA parada antes de fusionar. No se empieza la
+      siguiente hasta que se fusione la anterior.
+      (3) NO SE CONSTRUYE: la mitad «OVI sólo para garantía» (la confirma el Director Técnico), la restricción por
+      propietario (F1C-05, después del corte), la valoración del cliente, los prefijos, la excepción de «Equipo nuevo», ni
+      E-154 y E-155, que no tienen fila.
+      (4) Antes de construir se para sólo si se activa un criterio de parada de la regla de ejecución.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/orden-ocho-tandas-06-10)"
+    maestro_pasaje: "ninguno (orden de ejecución)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-03, F1B-13, F1B-05, F1B-04, F1B-11, F1F-05, F1B-07, F1B-09"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:

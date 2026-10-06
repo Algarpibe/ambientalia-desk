@@ -1392,3 +1392,30 @@ prueba vigila que todo escritor del historial nombre al actor.»
 
 **Lo que esta entrada NO pide.** No da por aprobado el protocolo de traspaso: están como preguntas en E-219 a E-221. No afirma que esté en
 producción: las restauraciones anteriores al despliegue siguen sin rastro.
+
+## La de la visibilidad por área, decidida el 06/10 (27)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. No procede de un cambio: procede de la respuesta de Gerencia
+> del 2026-10-06, `decision/e089-e220-visibilidad-y-traspaso` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`).
+
+### 27 · M1.9.1 y Anexo D — todo el personal ve todos los tickets; sólo se filtran las transiciones *(F1B-05)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1967-1971`, párrafo «Visibilidad de estados por
+área», marcado «[ABIERTO — R08.4]», con sus tres opciones y la recomendación.
+
+**Texto actual:** «Queda abierto qué estados ve cada área (Anexo D):» / «(a) Mantener lo construido: todos ven todo; solo se filtran
+las transiciones.» / «(b) Vista por área sin restricción: cada área abre por defecto un filtro con sus estados, pero puede ver el
+resto. Exige la lista de estados por área, que hoy no existe.» / «(c) Segmentación real en el servidor: cada área solo ve sus
+estados.» / «Recomendación: opción (b).»
+
+**Texto propuesto:** sustituir la marca «[ABIERTO — R08.4]» por «[DECIDIDO — 06/10/2026]» y las cinco líneas citadas por: «Todo el
+personal que entra en la aplicación ve todos los tickets, en cualquier estado; lo que se filtra por área son los botones de las
+transiciones. No hay vista por área ni segmentación en el servidor, y no hace falta la lista de estados por área. Gerencia eligió la
+opción (a) el 06/10/2026; la recomendación anterior, la (b), queda retirada.» Y en el Anexo D, la pregunta sobre qué estados ve cada
+área pasa de abierta a resuelta, con esa misma respuesta.
+
+**Lo que esta entrada NO pide.** No cambia el párrafo de la restricción por propietario del registro
+(`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2037`): sigue aplazada, y la misma respuesta la sitúa
+después del corte, con F1C-05. No da por construida la reasignación con motivo
+(`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035`): Gerencia la aprobó ese día y se construye en F1B-05;
+su corrección llegará con el cambio que la construya.
