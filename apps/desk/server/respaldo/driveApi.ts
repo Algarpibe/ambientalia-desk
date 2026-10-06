@@ -42,8 +42,8 @@ async function json<T>(url: URL, token: Token, fetchImpl: typeof fetch): Promise
   return (await res.json()) as T
 }
 
-/** `files.get` de la raíz (tiene que ser una carpeta) y listado recursivo y paginado. Devuelve también lo omitido, con motivo. */
-export async function listarCarpeta(raizId: string, token: Token, fetchImpl: typeof fetch = fetch): Promise<{ archivos: ArchivoDrive[]; omitidos: string[] }> {
+/** `files.get` de la raíz (tiene que ser una carpeta) y listado recursivo y paginado. Devuelve también lo omitido, con motivo, y las carpetas visitadas (para el aviso de `drive_url`). */
+export async function listarCarpeta(raizId: string, token: Token, fetchImpl: typeof fetch = fetch): Promise<{ archivos: ArchivoDrive[]; omitidos: string[]; carpetas: string[] }> {
   const raiz = new URL(`${API}/${encodeURIComponent(raizId)}`)
   raiz.search = new URLSearchParams({ fields: 'id,name,mimeType', supportsAllDrives: 'true' }).toString()
   if ((await json<Nodo>(raiz, token, fetchImpl)).mimeType !== `${NATIVO}folder`) throw new Error('RESPALDO_DRIVE_CARPETA_ID no es una carpeta de Drive')
@@ -72,7 +72,7 @@ export async function listarCarpeta(raizId: string, token: Token, fetchImpl: typ
       pagina = r.nextPageToken
     } while (pagina)
   }
-  return { archivos, omitidos }
+  return { archivos, omitidos, carpetas: [...visitadas] }
 }
 
 /** Contenido como flujo (`alt=media` o `export`). Un `403 exportSizeLimitExceeded` se omite; cualquier otro fallo lanza. */

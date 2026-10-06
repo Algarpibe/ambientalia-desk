@@ -36,24 +36,24 @@ worktree y sin rebasar con el intento abierto (regla del ciclo 3). Rutas bajo `a
 - [x] 6.3 RED→GREEN `indiceDrive.ts`: `404` = índice vacío (primera pasada); cualquier otro fallo o descifrado/JSON roto = aviso sin copiar ni borrar. Escenario: Índice ilegible.
 
 ### Lote 7 · orquestador y sin disco
-- [ ] 7.1 RED `copiaDrive.ts`: prueba de posición interruptor → en curso → faltantes; mutación (mover cada guarda) pone rojo, reproducida y restaurada (regla de mutación 1). Escenarios: Interruptor apagado, Pasada ya en curso, Configuración incompleta.
-- [ ] 7.2 GREEN `crearCopiadorDrive`: `pipeline` Drive → cifrador → troceador → UploadPart, un documento cada vez; fallo = Abort y anotar; escribe el índice; aviso único; nunca lanza. Escenarios: Pasada que falla, Restauración (ida y vuelta con `descifrarFichero`).
-- [ ] 7.3 `sinDisco.test.ts`: `vi.mock` de `node:fs`, `node:fs/promises` y `tmpdir` con espías que lanzan; pasada con 12 MiB y un nativo termina `hecho` con cero llamadas. Escenario: Sin escritura en disco.
-- [ ] 7.4 Guardián estático `escriturasEnDisco(fuente)` probado con fixture sintético con `createWriteStream(` que debe marcar (regla de mutación 2).
-- [ ] 7.5 Mutación literal: `createWriteStream(path.join(os.tmpdir(), 'parte')).write(parte)` en el bucle de subida de `multiparte.ts`; deben ponerse rojos 7.3 y 7.4; restaurar.
+- [x] 7.1 RED `copiaDrive.ts`: prueba de posición interruptor → en curso → faltantes; mutación (mover cada guarda) pone rojo, reproducida y restaurada (regla de mutación 1). Escenarios: Interruptor apagado, Pasada ya en curso, Configuración incompleta.
+- [x] 7.2 GREEN `crearCopiadorDrive`: `pipeline` Drive → cifrador → troceador → UploadPart, un documento cada vez; fallo = Abort y anotar; escribe el índice; aviso único; nunca lanza. Escenarios: Pasada que falla, Restauración (ida y vuelta con `descifrarFichero`).
+- [x] 7.3 `sinDisco.test.ts`: `vi.mock` de `node:fs`, `node:fs/promises` y `tmpdir` con espías que lanzan; pasada con 12 MiB y un nativo termina `hecho` con cero llamadas. Escenario: Sin escritura en disco.
+- [x] 7.4 Guardián estático `escriturasEnDisco(fuente)` probado con fixture sintético con `createWriteStream(` que debe marcar (regla de mutación 2).
+- [x] 7.5 Mutación literal: `createWriteStream(path.join(os.tmpdir(), 'parte')).write(parte)` en el bucle de subida de `multiparte.ts`; deben ponerse rojos 7.3 y 7.4; restaurar.
 
 ### Lote 8 · cableado y despliegue
-- [ ] 8.1 `index.ts`: imports en la línea 15 sin desplazar; bloque AL FINAL, tras `main().catch` de `:106-109`, con `scheduleDailyAt` + `tocaHoy`, cargando por su cuenta la configuración de avisos.
-- [ ] 8.2 `DEPLOY.md` §13 al final (tras `:416`): dos frases del interruptor (qué enciende, qué se rompe si se pone mal), variables, líneas para `.env.example` que añade el usuario, bloqueo de borrado y regla `AbortIncompleteMultipartUpload`, restauración con `descifrarCli.ts`.
+- [x] 8.1 `index.ts`: imports en la línea 15 sin desplazar; bloque AL FINAL, tras `main().catch` de `:106-109`, con `scheduleDailyAt` + `tocaHoy`, cargando por su cuenta la configuración de avisos.
+- [x] 8.2 `DEPLOY.md` §13 al final (tras `:416`): dos frases del interruptor (qué enciende, qué se rompe si se pone mal), variables, líneas para `.env.example` que añade el usuario, bloqueo de borrado y regla `AbortIncompleteMultipartUpload`, restauración con `descifrarCli.ts`.
 
 ### Lote 9 · aviso de `drive_url` fuera (último, CON CORTE)
-- [ ] 9.0 Medir antes: `git diff --shortstat --no-renames <base-del-intento>` + `wc -l` de lo nuevo sin trackear. Si pasa de 640, NO se construye 9.1-9.2 y se anota en `docs/sdd/ENTRADA.md` como entrada nueva sin dueño inventado; el escenario SHOULD queda declarado sin construir.
-- [ ] 9.1 RED→GREEN `driveUrlsFuera` puro (`/folders/`, `/file/d/`, `/document/d/`, `?id=`; no reconocida = aparte). Escenario: `drive_url` fuera de la raíz.
-- [ ] 9.2 `copiaDrive.ts`: `SELECT` de sólo lectura inyectado sobre `drive_url` (`equipos.ts:104`, `:115`) y aviso sin copiar.
+- [x] 9.0 Medir antes: `git diff --shortstat --no-renames <base-del-intento>` + `wc -l` de lo nuevo sin trackear. Si pasa de 640, NO se construye 9.1-9.2 y se anota en `docs/sdd/ENTRADA.md` como entrada nueva sin dueño inventado; el escenario SHOULD queda declarado sin construir.
+- [x] 9.1 RED→GREEN `driveUrlsFuera` puro (`/folders/`, `/file/d/`, `/document/d/`, `?id=`; no reconocida = aparte). Escenario: `drive_url` fuera de la raíz.
+- [x] 9.2 `copiaDrive.ts`: `SELECT` de sólo lectura inyectado sobre `drive_url` (`equipos.ts:104`, `:115`) y aviso sin copiar.
 
 ### Cierre del intento 2
-- [ ] 10.1 `npm test`, `npm run typecheck`, `npx eslint .` (165 avisos, 0 errores) y detector de citas: anotar los CUATRO códigos de salida.
-- [ ] 10.2 Medida real (`git diff --shortstat --no-renames <base>` + `wc -l` sin trackear; binarios aparte) y barrido de citas (regla de mutación 4) sobre `index.ts`, `cifrado.ts` y `DEPLOY.md`: cada resultado contra el fichero.
+- [x] 10.1 `npm test`, `npm run typecheck`, `npx eslint .` (165 avisos, 0 errores) y detector de citas: anotar los CUATRO códigos de salida.
+- [x] 10.2 Medida real (`git diff --shortstat --no-renames <base>` + `wc -l` sin trackear; binarios aparte) y barrido de citas (regla de mutación 4) sobre `index.ts`, `cifrado.ts` y `DEPLOY.md`: cada resultado contra el fichero.
 
 ## Tareas de persona — archivar no las da por hechas
 Archivar NO las da por hechas. Destino: `archive-report.md` y el paquete de despliegue.

@@ -75,6 +75,7 @@ describe('listarCarpeta', () => {
     const r = await listarCarpeta('R', token, fetchImpl)
     expect(r.archivos.map((a) => a.id)).toEqual(['a'])
     expect(consultas(urls)).toEqual(['R'])
+    expect(r.carpetas).toContain('R')
     expect(r.omitidos).toEqual(['atajo: acceso directo, no se sigue', 'Formulario: documento nativo de Google sin exportación (application/vnd.google-apps.form)'])
   })
 

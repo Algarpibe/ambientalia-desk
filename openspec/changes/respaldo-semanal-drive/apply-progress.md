@@ -111,3 +111,64 @@ Tareas marcadas en `tasks.md`: 5.1, 5.2, 5.3, 6.1, 6.2, 6.3.
 
 Nuevos (`apps/desk/server/respaldo/`): `retencion.ts`, `retencion.test.ts`, `multiparte.ts`, `multiparte.test.ts`, `indiceDrive.ts`, `indiceDrive.test.ts`.
 Modificados: `cifrado.ts` (al final), `cifrado.test.ts`, `apps/desk/server/superficieSaliente.test.ts` (+3 etiquetas, «nueve»→«doce»), `openspec/changes/respaldo-semanal-drive/tasks.md`, este `apply-progress.md`.
+
+---
+
+# Intento 3 · (b2) — lotes 7, 8, 9 y 10 (orquestador, sin disco, cableado, DEPLOY §13, aviso de `drive_url`)
+
+Strict TDD. Base `9289c49`. Tareas marcadas en `tasks.md`: 7.1-7.5, 8.1, 8.2, 9.0-9.2, 10.1, 10.2.
+
+## Rojos literales (vitest, antes del código)
+
+- 7.1/7.2 `copiaDrive.test.ts`: `Caused by: Error: Failed to load url ./copiaDrive (resolved id: ./copiaDrive) … Does the file exist?` · `Test Files  1 failed (1)` · `Tests  no tests`
+- 9.1/9.2 `driveUrlsFuera` (con el orquestador ya en verde): `TypeError: (0 , driveUrlsFuera) is not a function` · `AssertionError: expected "spy" to be called 1 times, but got 0 times` · `TypeError: Cannot read properties of undefined (reading 'join')` · `Tests  3 failed | 15 passed (18)`
+- 7.3/7.4 `sinDisco.test.ts`: sin rojo previo propio: es una prueba de PROPIEDAD sobre código que ya cumplía (sin `fs` ni `os`); su rojo es el de la mutación literal de abajo, que demuestra que discrimina. 1.ª ejecución: `ReferenceError: Cannot access 'sustitutos' before initialization` (error de la prueba: `vi.mock` se iza; se movió al `vi.hoisted`).
+- `carpetas` en `listarCarpeta` (`driveApi.ts`) y su aserción en `driveApi.test.ts` se añadieron JUNTAS, sin rojo previo propio (una línea que usa 9.2). Lo cubre el rojo de 9.1/9.2, que no pasaría sin ella.
+- Rojo de tipos tras el cierre: `copiaDrive.test.ts(82,38): error TS2322: Type 'Mock<() => Promise<unknown>>' is not assignable …` (dos `new Promise` sin tipar); corregido tipándolos.
+
+## Verdes
+
+`copiaDrive` 18 (15 del orquestador + 3 de `driveUrlsFuera`) · `sinDisco` 10 = **28 pruebas nuevas**; `driveApi.test.ts` +1 aserción.
+
+## Mutaciones
+
+1. **Posición de las guardas (regla de mutación 1)** sobre `lanzar` de `copiaDrive.ts`:
+   - M1 `enCurso` antes que el interruptor: `× … apagado Y pasada en curso a la vez: gana el interruptor (no dice «en-curso»)` · `Tests  1 failed | 14 passed (15)`.
+   - M2 `faltantes` antes que `enCurso`: `× … en curso Y configuración incompleta a la vez: gana «en-curso», sin aviso` y `× … configuración incompleta: un aviso que nombra la variable y NADA más` · `Tests  2 failed | 13 passed (15)`.
+   - M3 `faltantes` antes que el interruptor: 3 rojos (`apagado Y con configuración incompleta a la vez`, `en curso Y configuración incompleta`, `configuración incompleta`) · `Tests  3 failed | 12 passed (15)`.
+   - Restaurado: `Tests  15 passed (15)`. Cada prueba activa DOS guardas a la vez (mutando `cfg` con la pasada colgada en `listar`).
+2. **Escritura en disco literal (7.5)**, en el bucle de subida de `multiparte.ts` (con sus tres imports): `createWriteStream(path.join(os.tmpdir(), 'parte')).write(parte)`. Rojo de las DOS:
+   `× sin escritura en disco > una pasada con un documento de 12 MiB y un nativo exportado termina hecha con CERO llamadas a escritura` (`AssertionError: expected { hecho: false, copiados: +0, …(3) } to match object …`) y
+   `× guardián estático … > multiparte.ts no contiene ninguna escritura en disco` (`AssertionError: expected [ Array(3) ] to deeply equal []`) · `Tests  2 failed | 8 passed (10)`.
+   Restaurado con copia exacta: `git diff --stat apps/desk/server/respaldo/multiparte.ts` vuelve a vacío; `sinDisco` + `multiparte`: `Tests  19 passed (19)`.
+3. **Regla de mutación 2**: `escriturasEnDisco` se prueba con un fixture sintético que contiene `createWriteStream(` (y `node:fs`, `'fs'`, `writeFile`, `mkdtemp`), no sólo retocando el guardián.
+
+## Cierre (10.1) — cuatro códigos de salida
+
+| Comando | Código | Resultado |
+|---|---|---|
+| `npm test` (completo, solo) | **0** | `Test Files 233 passed | 2 skipped (235)`, `Tests 3520 passed | 7 skipped (3527)`; `superficieSaliente.test.ts` en verde SIN etiquetas nuevas (se reutilizan `avisarFallo` y `multiparte`) |
+| `npm run typecheck` | **0** | sin errores (tras tipar las dos promesas de la prueba) |
+| `npx eslint .` | **0** | `165 problems (0 errors, 165 warnings)`; los míos: 0 (`eslint apps/desk/server/respaldo apps/desk/server/index.ts` limpio) |
+| `npx tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null` | **0** | sobre HEAD (aún sin estos ficheros); el definitivo lo corre el orquestador tras commitear |
+
+## Barrido de citas (10.2, regla de mutación 4)
+
+`git diff -U0 9289c49 -- apps/desk/server/index.ts`: sólo cambia la línea 15 (dos imports añadidos al final) y se AÑADEN 9 líneas tras `:109`; ninguna otra se mueve. `git grep -nE "(index|cifrado)\.ts:[0-9]+|DEPLOY\.md:[0-9]+"`: las citas vivas a `index.ts` van de `:23` a `:88`, sobre líneas intactas; las de `index.ts:15` (sólo en `openspec/changes/archive/`) siguen apuntando a la línea de imports, que lo sigue siendo. `cifrado.ts`: SIN tocar en este intento. `DEPLOY.md`: sólo se AÑADE (+52, 0 borradas) tras el final, así que ninguna cita `DEPLOY.md:N` (≤ `:416`) cambia de contenido.
+
+## Medida (10.2)
+
+`git diff --shortstat --no-renames 9289c49` antes de esta sección y de `tasks.md`: 70 inserciones y 4 borradas (`DEPLOY.md` +52, `index.ts` +10/-1, `driveApi.ts` 3/3, `driveApi.test.ts` +1). Sin trackear (`wc -l`): copiaDrive 121+227, sinDisco 73 = **421**. Subtotal 495; la cifra final medida con esta sección y las 12 casillas de `tasks.md` va en la respuesta del intento. Sin binarios. Corte 9.0: medido **≈ 495 < 640**, así que 9.1 y 9.2 SE CONSTRUYERON; no hace falta entrada nueva en `ENTRADA.md`.
+
+## Ficheros
+
+Nuevos (`apps/desk/server/respaldo/`): `copiaDrive.ts`, `copiaDrive.test.ts`, `sinDisco.test.ts`.
+Modificados: `apps/desk/server/index.ts` (línea 15 + bloque al final), `DEPLOY.md` (§13 al final), `driveApi.ts` (+`carpetas` en el retorno de `listarCarpeta`), `driveApi.test.ts` (+1 aserción), `openspec/changes/respaldo-semanal-drive/tasks.md`, este `apply-progress.md`.
+
+## Decisiones menores (supuestos reversibles)
+
+- `crearCopiadorDrive(cfgDrive, cfgBase, deps)` lee `cfg` en cada `lanzar()` (no una copia), lo que permite a las pruebas de posición cambiar el interruptor con una pasada colgada. `hecho` = la pasada llegó al final y el índice se escribió, aunque haya fallos de documentos sueltos (van en `fallos` y en el aviso). `faltantesDrive` se evalúa DENTRO de la pasada, ya con `enCurso` puesto.
+- Los `drive_url` fuera de la raíz y los no reconocidos se anotan en `omitidos` (lo no copiado) con prefijo; un fallo al leerlos va a `fallos` y no corta la pasada. «Dentro» = el id de la URL es una carpeta visitada o un fichero listado.
+- `listarCarpeta` devuelve además `carpetas` (las visitadas, raíz incluida): cambio aditivo en (a).
+- `index.ts` reutiliza el `config` (AppConfig) y el `pool` ya existentes para `avisarFallo` y el `SELECT drive_url FROM desk.equipos WHERE drive_url IS NOT NULL` (sólo lectura); el bloque nuevo está al final, tras `main().catch`. Apagado no se construye nada ni se programa nada.
+- El guardián cubre ocho módulos de Drive; `cifrado.ts` queda fuera a propósito (es de la nocturna y usa `node:fs`).
