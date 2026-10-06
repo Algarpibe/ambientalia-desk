@@ -95,3 +95,27 @@ una OVI** en el alta, en «Habilitar Servicio», en la orden adicional de las ap
 Lo que NO cambia al publicar: un ticket que ya tiene su OVI (venido de Zoho o creado en la aplicación) la conserva y puede seguir su
 flujo; reconfirmarla no pide el cargo. Y un ticket con tipo de servicio «Garantía» deja de admitir una orden que no sea OVI cuando la
 orden entra; los que ya la tienen asociada no se tocan.
+
+## 6 · Traspaso de `ovi-garantia-por-cargo` — dos preguntas y un límite, para Supervisión y para el Director Técnico
+
+Fusionado a `main` en `9822bd7`. Lo que sigue no es tarea de ninguna sesión de construcción: son dos decisiones de negocio que la tanda
+dejó sin respuesta y un límite conocido de lo construido. **No tienen entrada en `docs/sdd/ENTRADA.md`**: el fichero tenía cambios de
+Supervisión sin commitear cuando se escribió esto, así que la entrada la abre Supervisión.
+
+### 6.1 · Las dos preguntas, que van juntas
+
+| # | Pregunta | Qué hace hoy la aplicación | Qué desbloquea la respuesta |
+|---|---|---|---|
+| a | **¿Una OVI sólo puede ir en tickets de garantía?** Pendiente desde la respuesta 2.5 de Gerencia del 06/10 | No lo impone: la guarda construida es la contraria —un ticket de Garantía sólo admite OVI (`packages/shared/src/ordenOVI.ts:61-64`)— y una OVI puede entrar en un ticket de cualquier tipo de servicio si quien la asocia tiene el cargo (`packages/shared/src/ordenOVI.ts:54-58`) | Si la respuesta es «sí», falta una guarda nueva (escalón C) en las mismas cuatro puertas |
+| b | **En un ticket de garantía, ¿se puede cobrar aparte un repuesto no cubierto con una orden normal?** | **Lo bloquea**: la orden adicional de las aprobaciones pasa por la misma regla, y en un ticket de Garantía toda orden que entra y no es OVI da `422` (`apps/desk/server/services/guardasOVI.ts:22`) | Si la respuesta es «sí», la orden adicional queda exenta de «Garantía sólo con OVI» y hay que decir si la exención vale también para la orden principal |
+
+Las dos son la misma frontera vista desde cada lado —qué órdenes caben en qué tickets— y conviene responderlas a la vez: una respuesta
+«sí» a (b) con un «sí» a (a) deja un ticket de garantía con una OVI y una orden normal, que es coherente; un «no» a (b) obliga a abrir
+otro ticket para el repuesto.
+
+### 6.2 · El límite del prefijo
+
+«Es OVI» se decide por el prefijo literal `OVI-`, sin distinguir mayúsculas y tras recortar espacios en los extremos
+(`packages/shared/src/subOV.ts:63-67`). **Un número tecleado a mano como «OVI 26-1» (con espacio) u «OVI–26-1» (con raya en vez de
+guion) NO cuenta como OVI**: no pide el cargo, y en un ticket de Garantía se rechaza como orden normal. El segundo efecto falla cerrado;
+el primero no. Hipótesis, no medida aquí: una orden elegida en el buscador llega con el número que le da Books, así que el límite afectaría sólo al texto libre.
