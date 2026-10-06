@@ -26,14 +26,14 @@ worktree y sin rebasar con el intento abierto (regla del ciclo 3). Rutas bajo `a
 ## Intento 2 · (b) subida, retención, cableado y DEPLOY.md (≈ 653 sin aviso · ≈ 716 con él)
 
 ### Lote 5 · retención y cifrado
-- [ ] 5.1 RED→GREEN `retencion.ts`: `aRetirar`/`quitarRetirados`, 12 meses de calendario UTC. Escenarios: Retención de versión superada, Documento desaparecido.
-- [ ] 5.2 Propiedad «nunca la última versión de un documento vivo» (Escenario: Última copia) y su mutación (retirar la última o ignorar `desaparecidoEn`) reproducida en rojo y restaurada.
-- [ ] 5.3 RED→GREEN `cifrado.ts`: `descifrarBuffer` AL FINAL del fichero, mismas constantes, sin desplazar `cifrado.ts:12`.
+- [x] 5.1 RED→GREEN `retencion.ts`: `aRetirar`/`quitarRetirados`, 12 meses de calendario UTC. Escenarios: Retención de versión superada, Documento desaparecido.
+- [x] 5.2 Propiedad «nunca la última versión de un documento vivo» (Escenario: Última copia) y su mutación (retirar la última o ignorar `desaparecidoEn`) reproducida en rojo y restaurada.
+- [x] 5.3 RED→GREEN `cifrado.ts`: `descifrarBuffer` AL FINAL del fichero, mismas constantes, sin desplazar `cifrado.ts:12`.
 
 ### Lote 6 · subida multiparte e índice
-- [ ] 6.1 RED→GREEN `multiparte.ts`: troceador de 8 MiB, Create/UploadPart (MD5 y SHA-256 por parte)/Complete, `200` con `<Error>` como fallo, Abort de mejor esfuerzo, `versionId`; 12 MiB = 2 partes.
-- [ ] 6.2 RED→GREEN `multiparte.ts`: `DELETE ?versionId=` y `GET`; `403` devuelve fallo sin lanzar. Escenario: Borrado que falla.
-- [ ] 6.3 RED→GREEN `indiceDrive.ts`: `404` = índice vacío (primera pasada); cualquier otro fallo o descifrado/JSON roto = aviso sin copiar ni borrar. Escenario: Índice ilegible.
+- [x] 6.1 RED→GREEN `multiparte.ts`: troceador de 8 MiB, Create/UploadPart (MD5 y SHA-256 por parte)/Complete, `200` con `<Error>` como fallo, Abort de mejor esfuerzo, `versionId`; 12 MiB = 2 partes.
+- [x] 6.2 RED→GREEN `multiparte.ts`: `DELETE ?versionId=` y `GET`; `403` devuelve fallo sin lanzar. Escenario: Borrado que falla.
+- [x] 6.3 RED→GREEN `indiceDrive.ts`: `404` = índice vacío (primera pasada); cualquier otro fallo o descifrado/JSON roto = aviso sin copiar ni borrar. Escenario: Índice ilegible.
 
 ### Lote 7 · orquestador y sin disco
 - [ ] 7.1 RED `copiaDrive.ts`: prueba de posición interruptor → en curso → faltantes; mutación (mover cada guarda) pone rojo, reproducida y restaurada (regla de mutación 1). Escenarios: Interruptor apagado, Pasada ya en curso, Configuración incompleta.

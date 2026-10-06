@@ -6,7 +6,7 @@ import path from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createWriteStream } from 'node:fs'
-import { claveDesdeBase64, cifrador, descifrarFichero, MAGIA } from './cifrado'
+import { claveDesdeBase64, cifrador, descifrarBuffer, descifrarFichero, MAGIA } from './cifrado'
 
 /** F1F-02 (RQ-ZS-20): el volcado sale cifrado del servidor (AES-256-GCM) y sólo se recupera con la clave. */
 const CLAVE = randomBytes(32)
@@ -52,4 +52,20 @@ describe('cifrado del respaldo', () => {
   })
 
   it('limpieza', () => { rmSync(dir, { recursive: true, force: true }) })
+})
+
+describe('descifrarBuffer (el índice de Drive, en memoria)', () => {
+  const cifrarEnMemoria = async (datos: Buffer, clave: Buffer) => { const c = cifrador(clave); c.end(datos); return Buffer.concat(await c.toArray()) }
+  it('ida y vuelta con cifrador; lanza con otra clave, con un byte alterado y con algo que no es un respaldo', async () => {
+    const datos = Buffer.from('{"formato":1}')
+    const enc = await cifrarEnMemoria(datos, CLAVE)
+    expect(descifrarBuffer(enc, CLAVE).equals(datos)).toBe(true)
+    expect(() => descifrarBuffer(enc, randomBytes(32))).toThrow()
+    expect(() => descifrarBuffer(Buffer.concat([enc.subarray(0, 20), Buffer.from([enc[20] ^ 1]), enc.subarray(21)]), CLAVE)).toThrow()
+    expect(() => descifrarBuffer(Buffer.from('no soy un respaldo, ni de lejos, de verdad'), CLAVE)).toThrow(/cabecera/)
+    expect(() => descifrarBuffer(Buffer.alloc(3), CLAVE)).toThrow(/cabecera/)
+  })
+  it('un documento vacío también vuelve', async () => {
+    expect(descifrarBuffer(await cifrarEnMemoria(Buffer.alloc(0), CLAVE), CLAVE)).toHaveLength(0)
+  })
 })

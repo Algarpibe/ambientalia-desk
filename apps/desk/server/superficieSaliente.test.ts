@@ -41,7 +41,7 @@ import { escanearSuperficieHttp, escanearFetchDelNavegador } from './testing/sup
  * propio origen — el navegador no manda la cookie de sesión a Zoho, y Zoho la rechazaría.
  */
 describe('superficie HTTP saliente', () => {
-  it('las llamadas no-GET que salen de la casa son exactamente estas nueve, cada una etiquetada', () => {
+  it('las llamadas no-GET que salen de la casa son exactamente estas doce, cada una etiquetada', () => {
     const { salientes, mismoOrigen, verboDinamico } = escanearSuperficieHttp()
     const etiquetas: Record<string, string> = {
       // OAuth: refrescar el token contra Zoho. Una por cada uno de los tres productos.
@@ -58,6 +58,10 @@ describe('superficie HTTP saliente', () => {
       'apps/desk/server/respaldo/dependencias.ts · POST': 'n8n — aviso de fallo del respaldo',
       // F1F-02 (RQ-ZS-21): la copia de Drive pide su token OAuth a Google (sólo lectura); apagada (RESPALDO_DRIVE_HABILITADO) no se llama.
       'apps/desk/server/respaldo/driveAuth.ts · POST': 'OAuth — token de Google Drive, gateado por RESPALDO_DRIVE_HABILITADO',
+      // F1F-02 (RQ-ZS-21): la subida multiparte de la copia de Drive va firmada al mismo almacenamiento; el DELETE lleva ?versionId= (retención) o ?uploadId= (Abort). Todo gateado por RESPALDO_DRIVE_HABILITADO.
+      'apps/desk/server/respaldo/multiparte.ts · POST': 'Almacenamiento S3 compatible — Create y Complete de la subida multiparte de Drive',
+      'apps/desk/server/respaldo/multiparte.ts · PUT': 'Almacenamiento S3 compatible — UploadPart de la copia de Drive',
+      'apps/desk/server/respaldo/multiparte.ts · DELETE': 'Almacenamiento S3 compatible — Abort y borrado por versión (retención de 12 meses) de la copia de Drive',
     }
     const encontradas = salientes.map((l) => `${l.archivo} · ${l.verbo}`)
     expect(encontradas, mensaje(salientes)).toEqual(Object.keys(etiquetas).sort())

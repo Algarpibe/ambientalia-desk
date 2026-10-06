@@ -58,3 +58,56 @@ Se quitó `if (!listadoCompleto) return indice` de `marcarDesaparecidos`: `× ma
 `npm test` dio 1 rojo a la primera: `apps/desk/server/superficieSaliente.test.ts` (`las llamadas no-GET que salen de la casa son exactamente estas ocho`),
 `AssertionError: salientes encontradas: … apps/desk/server/respaldo/driveAuth.ts:29 POST → TOKEN_URL … expected [ …(9) ] to deeply equal [ …(8) ]`.
 La invariante exige que cada saliente no-GET se añada a propósito con etiqueta. Se añadió la de `driveAuth.ts · POST` (+2 líneas tras `:58`, `ocho`→`nueve` en el título; 0 citas `superficieSaliente.test.ts:N` en el repo, regla de mutación 4 sin efecto). (b) añadirá aquí las de `multiparte.ts` (POST/PUT/DELETE).
+
+---
+
+# Intento 2 · (b1) — lotes 5 y 6 (retención, `descifrarBuffer`, multiparte, índice)
+
+Strict TDD. Base `288ae0d`. Lotes 7-10 (orquestador, `sinDisco.test.ts`, `index.ts`, `DEPLOY.md`, `drive_url`) NO empezados: van en un intento posterior.
+Tareas marcadas en `tasks.md`: 5.1, 5.2, 5.3, 6.1, 6.2, 6.3.
+
+## Rojos literales (vitest, antes del código)
+
+- 5.1/5.2 `retencion.test.ts`: `Caused by: Error: Failed to load url ./retencion (resolved id: ./retencion) … Does the file exist?` · `Test Files  1 failed (1)` · `Tests  no tests`
+- 5.3 `cifrado.test.ts`: `TypeError: (0 , descifrarBuffer) is not a function` (×2) · `Test Files  1 failed (1)` · `Tests  2 failed | 6 passed (8)`
+- 6.1/6.2 `multiparte.test.ts`: `Error: Cannot find module './multiparte' imported from '…/multiparte.test.ts'` · `Test Files  1 failed (1)` · `Tests  no tests`
+- 6.3 `indiceDrive.test.ts`: `Error: Cannot find module './indiceDrive' imported from '…/indiceDrive.test.ts'` · `Test Files  1 failed (1)` · `Tests  no tests`
+- Guardián de superficie (`superficieSaliente.test.ts`), tras `multiparte.ts`: `AssertionError: salientes encontradas: … multiparte.ts:33 POST → url.toString() … :38 PUT … :42 DELETE` (1 rojo). Se etiquetaron las tres y el título pasó de «nueve» a «doce».
+- Rojo de aserción propio: la 1.ª versión de `retencion.test.ts` tenía un dato mal puesto (una versión superada en 2024 dentro de un documento «desaparecido hace menos de 12 meses» sí es candidata por superada): `1 failed | 6 passed (7)`; se corrigió el dato de la prueba, no el código.
+- Tras el cableado, `npm test` dio 1 rojo: la lista de etiquetas se compara con los hallazgos en orden de línea y las claves van ordenadas por nombre (`DELETE, POST, PUT`); se reordenaron las tres funciones de `multiparte.ts` en ese orden.
+
+## Verdes
+
+`retencion` 7 · `cifrado` 8 (6 + 2 nuevas) · `multiparte` 9 · `indiceDrive` 3 = **21 pruebas nuevas** (19 en ficheros nuevos + 2 en `cifrado.test.ts`).
+
+## Mutaciones (regla de mutación 1/2)
+
+1. **Propiedad «nunca la última de un vivo»**: en `aRetirar` se quitó la guarda `!ultimaDeVivo &&` (la versión final quedaba candidata si el índice traía `superadaEn` en ella). Rojo: `× aRetirar > PROPIEDAD: la última versión de un documento vivo nunca es candidata…` · `Tests  1 failed | 6 passed (7)`. Se pone en rojo porque la prueba genera 300 índices con semilla fija e INCLUYE `superadaEn` en la última versión a propósito (dato absurdo que por construcción no existe): sin esa guarda explícita, sólo la construcción protegería a la última. Restaurado: `7 passed`.
+2. **Ignorar `desaparecidoEn`**: `if (desaparecido) return` → `if (false) return`. Rojo: `× aRetirar > documento desaparecido hace más de 12 meses…` · `Tests  1 failed | 6 passed (7)`. Restaurado: `7 passed`.
+
+## Decisiones menores (supuestos reversibles)
+
+- `subirMultiparte` y `escribirIndice` LANZAN si la subida falla (tras Abort de mejor esfuerzo); `borrarVersion` devuelve `{ ok:false, error }` sin lanzar; `leerObjeto` da `null` en `404`. `leerIndice` lanza `IndiceIlegible` (clase exportada de `indiceDrive.ts`) en cualquier otro fallo: red, estado ≠ 200/404, descifrado, JSON o forma (`formato !== 1`, `documentos` no objeto).
+- Interfaz: `AlmacenS3 { cfg, fetchImpl, ahora }`; `aRetirar(indice, ahora: Date | string)` devuelve `Retirada { id, clave, versionId?, motivo }`; `quitarRetirados(indice, [{clave}])` suelta el documento que se queda sin versiones. El orquestador debe pasarle sólo las que `borrarVersion` dio por `ok`.
+- Una fuente vacía sube UNA parte vacía (S3 no cierra sin partes). Una fuente de exactamente 8 MiB sube una sola parte (sin parte final vacía).
+- Un verbo literal por función (`borrar`, `post`, `put`), porque el barrido de superficie sólo lee `method: '…'` literal; `Create` y `Complete` comparten `post`, `Abort` y `DELETE ?versionId=` comparten `borrar`. `GET` no lleva `method`.
+- Ni `node:fs` ni `fs` ni `node:os` en ningún módulo nuevo (el guardián estático llega en el lote 7).
+- `cifrado.ts`: sólo +8 líneas AL FINAL (0 borradas; `cifrado.ts:12` y `:23-52` intactas). En `cifrado.test.ts` cambia 1 línea (el import) y se añaden 15 al final.
+
+## Cierre — cuatro códigos de salida
+
+| Comando | Código | Resultado |
+|---|---|---|
+| `npm test` (completo, solo) | **0** | `Test Files 231 passed | 2 skipped (233)`, `Tests 3492 passed | 7 skipped (3499)` (la 1.ª pasada dio 1 rojo, el del guardián de superficie, ver arriba) |
+| `npm run typecheck` | **0** | sin errores |
+| `npx eslint .` | **0** | `165 problems (0 errors, 165 warnings)`; los míos: 0 |
+| `npx tsx apps/desk/server/citas/cli.ts --sha HEAD < /dev/null` | **0** | sobre HEAD (aún sin estos ficheros); el definitivo lo corre el orquestador tras commitear |
+
+## Medida
+
+`git diff --shortstat --no-renames 288ae0d` (medido con esta sección ya escrita): 5 files changed, 89 insertions(+), 8 deletions(-) (`apply-progress.md` +53, `tasks.md` 6 casillas, `cifrado.ts` +8, `cifrado.test.ts` +15/-1, `superficieSaliente.test.ts` +5/-1 con la línea de comentario). Sin trackear (`wc -l`): indiceDrive 32+55, multiparte 103+109, retencion 36+65 = **400**. Total = 97 + 400 = **497**, bajo 680. Sin binarios.
+
+## Ficheros
+
+Nuevos (`apps/desk/server/respaldo/`): `retencion.ts`, `retencion.test.ts`, `multiparte.ts`, `multiparte.test.ts`, `indiceDrive.ts`, `indiceDrive.test.ts`.
+Modificados: `cifrado.ts` (al final), `cifrado.test.ts`, `apps/desk/server/superficieSaliente.test.ts` (+3 etiquetas, «nueve»→«doce»), `openspec/changes/respaldo-semanal-drive/tasks.md`, este `apply-progress.md`.
