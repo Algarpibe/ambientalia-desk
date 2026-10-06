@@ -79,3 +79,66 @@ Tareas 2.1-2.14 hechas. El lote 3 no se toca (`remision.ts` y `apps/desk/src` in
 2. `oviGarantia.test.ts` pesa 376 líneas contra 240 estimadas (51 pruebas, cuatro más que el diseño); `guardasOVI.ts` 41 contra 45. El lote queda holgado bajo 720.
 3. Al editar `ticketService.ts:131` la herramienta de edición recortó un espacio final; se detectó con M-TR-2a («ocurrencias: 0») y se restauró (`const gas = await`), con numstat 9/9 comprobado después.
 4. El texto del `403` es el de `ordenOVI.ts`, como decidió el orquestador.
+
+# Lote 3 · remisión de entrada, partida `81d8389`
+
+Tareas 3.1-3.9 hechas. `ticketService.ts` y `apps/desk/src` intactos. Sin commit.
+
+## Rojo → verde
+- 3.2-3.4 · `npx vitest run apps/desk/server/oviGarantiaRemision.test.ts` con sólo el fichero de pruebas: 6 rojas de 23, 17 verdes. Rojas: RE-1 y RE-6 («expected 201 to be 403»), POS-RE-1 («expected 422 to be 403»), POS-RE-2 («expected 409 to be 403»), GA-RE-1 («expected 201 to be 422»), POS-RE-5 («expected 409 to be 422»). Nacieron verdes: RE-2, RE-3, RE-7, GA-RE-2, GA-RE-5 (el servidor aún no impone nada) y las CARACTERIZACIÓN RE-4, RE-5, RE-5b, POS-RE-0, POS-RE-3, POS-RE-4, POS-RE-6, POS-RE-7, POS-RE-8, GA-RE-3, GA-RE-4.
+- 3.5 · código: `entrantesDeRemision` en `guardasOVI.ts` y la línea `remision.ts:220`. Verde: 73 pruebas con `oviGarantia.test.ts` (los lotes 2 y 3 juntos).
+- Pruebas nuevas: 22 en `oviGarantiaRemision.test.ts` (las 23 de la primera ejecución menos una, POS-RE-9, que se retiró por no probar nada de la guarda nueva).
+
+## remision.ts en sitio
+`git diff --numstat 81d8389 -- apps/desk/server/routes/remision.ts` = **3 / 3** (`:4`, `:7`, `:220`). `wc -l`: **397 antes y 397 después**. Ninguna guarda existente se movió; `remisiones.test.ts` (`:988`, `:1246`) y `recepcion.test.ts` (`:245-273`) siguen verdes sin tocarlos (corren enteros dentro de `npm test`).
+
+## ORDEN COMPLETO de las guardas del alta de remisión (`POST /api/remisiones`), como queda
+| Línea | Código | Mensaje | Escalón |
+|---|---|---|---|
+| `remision.ts:123` | 422 | Falta el ticket | A |
+| `remision.ts:125` | 422 | Ticket no encontrado | A |
+| `remision.ts:127` | 422 | Fecha inválida | C (IV-12 punto 1) |
+| `remision.ts:155` | 422 | Falta el serial del equipo… | A |
+| `remision.ts:158` | 422 | error de la recepción (novedades) | C (IV-12 punto 3) |
+| `remision.ts:177` | 409 | remisión sin desenlace (pendiente) | D |
+| `remision.ts:197` | 422 | Ítems fuera del checklist | C |
+| `remision.ts:220` | 422 | Orden de venta no encontrada | A |
+| **`remision.ts:220` (NUEVA)** | **403** | **La orden de venta … es una OVI: asociarla … sólo lo hace el cargo Director Técnico** | **B** |
+| `remision.ts:220` | 422 | cuarentena (sufijo no canónico) | C |
+| `remision.ts:220` | 422 | contrato vencido | C |
+| **`remision.ts:220` (NUEVA)** | **422** | **El ticket es de tipo de servicio Garantía y sólo admite una orden OVI…** | **C** |
+| `remision.ts:232` | 409 | La orden de venta … ya está asociada al ticket #… | D |
+
+**Dónde corre el `403` nuevo, dicho literalmente:** corre DETRÁS de las guardas de contenido de la fecha (`:127`, C), de la recepción (`:158`, C) y del checklist (`:197`, C), y DETRÁS de la guarda de unicidad de la remisión pendiente (`:177`, D); y corre DELANTE de la cuarentena, del contrato vencido, de la garantía (`:220`) y de la unicidad de la orden (`:232`, D). Es el **punto nuevo de IV-12** (el cuarto): B queda después de C y D porque el número de la orden sólo se conoce tras leer Books (`:219`). Se anota, no se corrige; POS-RE-3 (pendiente) y POS-RE-4 (checklist) lo caracterizan. La garantía (C) corre en su sitio: tras la existencia, el cargo, la cuarentena y el vencido, y antes de la unicidad (`:232`).
+
+## Mutaciones (cada una restaurada desde copia; `git diff` final sin restos: sólo las ediciones del lote)
+| Id | Qué cambié | Roja (nombre exacto, abreviado tras el id) |
+|---|---|---|
+| M-RE-1a | cargo de la remisión detrás de la cuarentena | POS-RE-1 |
+| M-RE-1a2 | cargo detrás del vencido (también detrás de la cuarentena) | POS-RE-1 |
+| M-RE-1b | cargo detrás del `409` de unicidad (`:232`) | RE-1, RE-6, POS-RE-1, POS-RE-2 |
+| M-RE-1c | cargo delante de «no encontrada» (con `ov ?` para no romper) | NADA ROJO, declarado abajo |
+| M-RE-1d | cargo delante de la remisión pendiente (`:177`) | POS-RE-3 y POS-RE-4 |
+| M-RE-1e | cargo delante del checklist (`:197`) | POS-RE-4 |
+| M-RE-2a | garantía detrás del `409` | GA-RE-1 y POS-RE-5 |
+| M-RE-2b | garantía delante de la cuarentena | POS-RE-6 y POS-RE-7 |
+| M-RE-2c | garantía delante del vencido | POS-RE-7 |
+| M-RC-1 | `entrantesDeRemision` sin «ya la traía» (listas vacías) | RE-4, RE-5, RE-5b y GA-RE-4 |
+
+Corridas contra `oviGarantiaRemision.test.ts`, `remisiones.test.ts` y `recepcion.test.ts` juntos: ninguna prueba existente de los dos últimos se puso roja en ninguna mutación que no fuera la del propio par.
+
+## Pares NO observables, declarados
+- **«No encontrada» frente a cargo:** si la orden no existe no hay número que juzgar, así que el cargo no tiene qué decir. M-RE-1c lo confirma (nada rojo); POS-RE-0 fija el comportamiento (CARACTERIZACIÓN).
+- **Cargo frente a contrato vencido:** el vencido sólo juzga subOV canónicas (`OV-AAAA-NNN-NN`, `subOV.ts:23`, `contratos.ts:85-86`) y una OVI nunca lo es (su sufijo va a cuarentena, `subOV.ts:11`); ninguna petición activa las dos. Lo sujeta indirectamente POS-RE-1 (cargo antes que la cuarentena, y la cuarentena antes que el vencido).
+- **Cargo frente a garantía:** como en los lotes 1-2, B y C no se cruzan con respuestas distintas útiles (una OVI cumple la garantía).
+- **Ruta de remisión y permisos:** `requireAuth` sólo pide sesión (`remision.ts:120`): no hay área ni cargo para entrar; un usuario con el cargo y sin Servicio Técnico pasa (RE-2) y no se cambió ese permiso.
+
+## Cuatro comandos (códigos de salida, sobre el árbol final)
+`npm test` = 0 (236 ficheros pasan, 2 saltados; 3.635 pruebas, 7 saltadas) · `npm run typecheck` = 0 · `npm run lint` = 0 · `npm run build` = 0.
+
+## Medida
+`git diff --shortstat --no-renames 81d8389`: 2 ficheros, 18 inserciones, 6 borrados = 24; más `wc -l` nuevo: `oviGarantiaRemision.test.ts` 206. Total **230** frente a 272 (×1,8) y 720. `numstat`: `remision.ts` 3/3, `guardasOVI.ts` 15/3 (`entrantesDeRemision` y el auxiliar `yaLoTiene`).
+
+## DESVIACIONES
+1. `guardasOVI.ts` se refactorizó mínimamente: un auxiliar privado `yaLoTiene` (lo que el ticket ya tiene) lo consumen `entrantesDeTransicion` y `entrantesDeRemision`, para no duplicar la noción de «ya la traía» (borra 3 líneas del lote 2). El diseño estimaba +10; son +15/-3.
+2. Mensajes y colocación como en `design.md` §5, salvo que la línea `:220` conserva el comentario final de escalón ampliado. Las pruebas añadidas fuera de la lista: POS-RE-0, POS-RE-7, POS-RE-8, RE-5b, RE-7, GA-RE-4, GA-RE-5.

@@ -28,14 +28,26 @@ export function entrantesDeAlta(ordenVenta: string | null, numeroBooks: string |
   return ordenesQueEntran([{ numero: ordenVenta }, { numero: numeroBooks }], { numeros: [], salesorderIds: [] })
 }
 
+type FilaConOrden = { orden_venta?: string | null; salesorder_id?: string | null }
+
+/** Lo que el ticket YA tiene: `orden_venta`, `salesorder_id` y las asociaciones VIGENTES (`liberada_at` nulo). Una sola noción de «ya la traía». */
+async function yaLoTiene(db: Queryable, ticketId: string, row: FilaConOrden) {
+  const vigentes = (await listarAsociaciones(db, ticketId)).filter((a) => !a.liberada_at)
+  return { numeros: [row.orden_venta, ...vigentes.map((a) => a.numero)], salesorderIds: [row.salesorder_id, ...vigentes.map((a) => a.salesorder_id)] }
+}
+
 /**
  * En una transición entra la orden que el ticket NO traía: ni en `orden_venta`, ni en `salesorder_id`, ni en una asociación
  * VIGENTE (`ov_asociaciones`, `liberada_at` nulo). Reconfirmar la que ya tenía no es asociar (E-157, pto. 3), tampoco en un
  * ticket venido de Zoho. Sale `[]` SIN consultar nada si la transición no lleva campo de orden.
  */
-export async function entrantesDeTransicion(db: Queryable, t: Transition, valores: unknown, ticketId: string, row: { orden_venta?: string | null; salesorder_id?: string | null }): Promise<string[]> {
+export async function entrantesDeTransicion(db: Queryable, t: Transition, valores: unknown, ticketId: string, row: FilaConOrden): Promise<string[]> {
   const recibidas = ordenesDeTransicion(t, valores)
   if (!recibidas.length) return []
-  const vigentes = (await listarAsociaciones(db, ticketId)).filter((a) => !a.liberada_at)
-  return ordenesQueEntran(recibidas.map((numero) => ({ numero })), { numeros: [row.orden_venta, ...vigentes.map((a) => a.numero)], salesorderIds: [row.salesorder_id, ...vigentes.map((a) => a.salesorder_id)] })
+  return ordenesQueEntran(recibidas.map((numero) => ({ numero })), await yaLoTiene(db, ticketId, row))
+}
+
+/** En la remisión la orden llega por `salesOrderId` y el número sale de Books (`ov`): entra si el ticket no la traía por número ni por id. */
+export async function entrantesDeRemision(db: Queryable, ov: { id: string; number?: string | null }, ticketId: string, row: FilaConOrden): Promise<string[]> {
+  return ordenesQueEntran([{ numero: ov.number, salesorderId: ov.id }], await yaLoTiene(db, ticketId, row))
 }
