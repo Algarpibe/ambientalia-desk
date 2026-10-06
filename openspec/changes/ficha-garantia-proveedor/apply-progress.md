@@ -1,0 +1,81 @@
+# Progreso de apply — `ficha-garantia-proveedor` (F1B-13, `cierra: no`)
+
+## Lote 1a (partida `a64c6c8`) — PARADO POR LA VÁLVULA, capa de datos pasa al lote 1b
+
+Medida con la capa de datos hecha y en verde: 61 (diff) + 690 (nuevos) = **751 > 720**. Se aplica la válvula del diseño
+(`design.md` §11): la capa de datos y su prueba (340 líneas medidas) salen del árbol y pasan a 1b. Medida final del lote:
+**411** (51 inserciones y 10 borrados en cinco ficheros, más 191 + 159 de los dos ficheros nuevos de `shared`).
+`apply-progress.md` no cuenta.
+
+### Tareas hechas
+
+| Tarea | Rojo (razón) | Verde |
+|---|---|---|
+| 1a.1 | `garantiaProveedor.test.ts`: «Failed to load url ./garantiaProveedor» (el módulo no existe) | — |
+| 1a.2 | — | 1a.1 en verde (todas las pruebas del fichero) |
+| 1a.3 | — | `index.ts:37` en sitio, 1 inserción y 1 borrado |
+| 1a.4 | PM20-2 roja al crear la llamada: recibido `[garantiaProveedor.ts, ordenOVI.ts]`, esperado `[ordenOVI.ts]` | edición en sitio de `cargos.test.ts:226-228`: `--numstat` 2/2; `packages/shared` 1058 verdes |
+| 1a.5 | `[10, 28, 3]` ≠ `[10, 29, 3]` y «tabla no existe» (`expected [] to have a length of 1`) | — |
+| 1a.6 | — | 51/51 en `migrate.test.ts` tras `schema.sql` (+27 al final) y `migrate.ts:73` (1/1) |
+| 1a.7 | **H-1: pg-mem ACEPTA el `CHECK` compuesto** (la tabla se crea y la prueba de la tabla pasa). Sin respaldo, sin cambios | — |
+| 1a.10 | ver abajo | restaurado y 51/51 |
+| 1a.12 | — | ver cierre |
+| 1a.13 | — | ver medida |
+
+**Tareas NO hechas (pasan a 1b): 1a.8, 1a.9** (prueba y código de la capa de datos), **1a.11 en lo que toca a M-DB-1…3**
+(las M-SH-1…4 sí están hechas). Los dos ficheros, completos, en verde (14 pruebas) y en CRLF, quedaron fuera del árbol
+(copia en el directorio temporal de la sesión de apply): `apps/desk/server/db/garantiaProveedor.ts` (161 líneas) y
+`apps/desk/server/db/garantiaProveedor.test.ts` (179). Cuando 1b los recupere, el orden TDD es: la prueba primero (roja
+por «Cannot find module ./garantiaProveedor»), el código después.
+
+### Desvíos del diseño
+
+1. **`migrate.test.ts`, una línea en sitio más** (`:652`): el guardián «las seis sentencias nuevas van DETRÁS de
+   prioridad_ajustes…» cuenta las sentencias del final de `schema.sql` y pasó de 154 a 157 con las tres de la tabla
+   nueva (un `CREATE`, un índice único, un índice). Se sumó `+ 3` y la frase «y las tres de public.garantia_proveedor
+   (F1B-13)» en la misma línea (1 inserción y 1 borrado, sin desplazar). El diseño §4 no la preveía; el cierre la añade
+   a la lista de líneas cuyo CONTENIDO cambia para el barrido de citas.
+2. **`GarantiaDelTicket` y `OviDelTicket`** viven (en la copia de la capa de datos) en el fichero de la capa de datos y no
+   en `shared`: `design.md` §3 no los lista en `shared` y §5 los usa en la firma de `garantiaDelTicket`.
+3. **`puedeGestionarReclamacion` acepta `null | undefined`** (devuelve `false`), como pide 1a.1 («sujeto ausente»).
+4. Comentarios del `CREATE` en `schema.sql`: dos líneas de comentario antes de la sentencia (no por columna) y ninguna
+   con punto y coma.
+
+### Regla de mutación 2 — fichero vigilado (`migrate.test.ts`, 51 pruebas), cada una restaurada
+
+| Qué se ensució en | Prueba roja | Restaurado |
+|---|---|---|
+| (a) `schema.sql`: `public.` fuera del `CREATE` | «toda tabla del esquema está clasificada, y en el esquema que su lista declara» | sí |
+| (b) `migrate.ts:73`: sin `'garantia_proveedor'` | la misma y el recuento «son 42 tablas» | sí |
+| (c) `schema.sql`: sin el `CREATE UNIQUE INDEX` | prueba del `23505` de la tabla nueva y el guardián de posición de las sentencias finales | sí |
+| (d) `schema.sql`: `-- a; b` en un comentario del `CREATE` | las mismas dos que (c) | sí |
+| (e) `schema.sql`: `CREATE TABLE garantia_x (id int)` SIN calificar, al final | guardián de clasificación, recuento de tablas y guardián de posición | sí; verde 51/51 |
+
+### Mutaciones del lote (1a.11), cada una restaurada
+
+| Id | Qué se movió | Prueba roja |
+|---|---|---|
+| M-SH-1 | `>` por `>=` en `reclamacionVencida` | «el día 59 no, el 60 no, el 61 sí» |
+| M-SH-2 | `siguienteEstado('abierta')` devuelve `resuelta` | las dos de `siguienteEstado` y `motivoPasoNoPermitido` |
+| M-SH-3 | quitar el recorte del fabricante | cuatro: «sí» recortado, sólo espacios (respuesta y ficha) |
+| M-SH-4 | «rechazada» deja de rechazar el valor positivo | «rechazada acepta ausente y 0 y guarda 0…» |
+
+Hechas también con la capa de datos (ya fuera del árbol, a repetir en 1b): **M-DB-1** quitar la traducción del `23505` →
+roja la del error traducido; **M-DB-2** quitar `AND estado = $2` de `avanzarFicha` (rama «enviada») → roja «con el estado
+viejo»; **M-DB-3** quitar el `continue` de «liberada sin respuesta» → roja esa prueba. ⚠️ La forma literal de M-DB-3 del
+diseño (`pendiente` sin mirar `liberada`) NO se pone roja: con el `continue` delante, una liberada que llega al cálculo
+siempre tiene respuesta y `pendiente` da lo mismo; la mutación que discrimina es la del `continue`.
+
+### H-1 y H-2
+
+- **H-1**: pg-mem acepta el `CHECK` compuesto, y lo impone (rechazó «sí» con motivo, «no» sin motivo y «no» con estado en
+  la prueba de la capa de datos, hoy fuera del árbol). Sin respaldo.
+- **H-2**: pg-mem devuelve `numeric` como NÚMERO (quitar el `Number()` del mapeador deja verde la prueba). El mapeador
+  sigue cubriendo el texto de node-postgres, pero esa rama no la prueba ninguna prueba con pg-mem. Hipótesis para 1b.
+
+### Gate pendiente fuera del lote
+
+`apps/desk/server/reconciliacion/registro.test.ts:218-221` («en curso son exactamente DOCE») está roja DESDE la partida
+`a64c6c8`: el commit de planificación metió el `proposal.md` de F1B-13 y la lista de tandas «en curso» pasó a trece
+(`F1B-13` entre `F1B-11` y `F1C-05`). No es del lote 1a; el precedente es el commit
+`8a9e742 test(reconciliacion): F1F-02 entra en curso`. Lo arregla quien commitea (título DOCE → TRECE y la lista).

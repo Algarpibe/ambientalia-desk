@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 41 tablas: 10 de Desk, 28 de la app en public (catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 28, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(41)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(41)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(41)
+  it('son 42 tablas: 10 de Desk, 29 de la app en public (garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 29, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(42)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(42)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(42)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -761,5 +761,19 @@ describe('propagar-top5 (L1) · la ALTER de prioridad_en_app_at no rellena filas
     for (const s of relacionadas) await db.query(s)
     const r = await db.query('SELECT prioridad_en_app_at FROM tickets WHERE id=$1', ['legacy-1'])
     expect(r.rows[0].prioridad_en_app_at).toBeNull()
+  })
+})
+
+/**
+ * ficha-garantia-proveedor (F1B-13, RQ-TC-45) · `public.garantia_proveedor` existe tras `migrate` y su índice único
+ * por `asociacion_id` rechaza una segunda respuesta (23505). Regla de mutación 2: se ensucia `schema.sql`, no esta prueba.
+ */
+describe('ficha-garantia-proveedor · public.garantia_proveedor', () => {
+  it('la tabla existe tras migrate y un segundo INSERT con el mismo asociacion_id da 23505', async () => {
+    const db = await freshDb()
+    expect((await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name='garantia_proveedor'")).rows).toHaveLength(1)
+    const insertar = () => db.query("INSERT INTO public.garantia_proveedor (asociacion_id, ticket_id, ovi_numero, reclama, motivo_no_reclama, respondida_por) VALUES (7, 'T-1', 'OVI-1', false, 'mal_uso', 'x')")
+    await insertar()
+    await expect(insertar()).rejects.toMatchObject({ code: '23505' })
   })
 })
