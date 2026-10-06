@@ -3862,6 +3862,26 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (orden de ejecución)"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-02, F1B-04, F1B-04"
+  - clave: "decision/f1f02-copia-semanal-drive-adelantada"
+    fecha: "2026-10-06"
+    pregunta: |
+      Tras el análisis de lo que se puede empezar sin respuesta pendiente de Gerencia, la única pieza construible antes
+      del corte es la copia semanal de la carpeta de Drive de F1F-02 (`decision/p55b-destino-copia`), que
+      `decision/p55-backup` deja «en su fecha». ¿Se adelanta, y con qué condición?
+    respuesta_textual: |
+      «Autorizo adelantar la copia semanal de Drive de F1F-02, construida con el interruptor cerrado; encenderla sigue esperando a p55c.»
+    consecuencias: |
+      (1) Se construye ya la copia semanal de la carpeta de documentación de servicio de Drive, con `tanda: F1F-02` y
+      `cierra: no`, en su propio worktree (regla del ciclo 3) y con una parada antes de fusionar.
+      (2) El interruptor nace cerrado (`=== 'true'`). Encenderla espera a `p55c-proveedor-copia`, que cuesta dinero y
+      sigue sin responder; ninguna sesión la lanza contra producción (regla de ejecución, criterio 3).
+      (3) Las condiciones de `decision/p55b-destino-copia` se aplican tal cual: de Drive al almacenamiento directamente,
+      sin pasar por el disco del servidor; semanal, incremental, 12 meses de retención y bloqueo de borrado. La prueba
+      mensual de restauración, que incluye recuperar un documento de esa carpeta, sigue siendo tarea de persona.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1f02-copia-semanal-drive-adelantada)"
+    maestro_pasaje: "Anexo D nº 55 (respaldo)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-02"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
