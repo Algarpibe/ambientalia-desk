@@ -12,7 +12,7 @@
 - `retencion.ts`: 12 meses de calendario en UTC. La última versión de un documento vivo no es candidata nunca, por una guarda explícita (`:22`, `:24`).
 - `multiparte.ts`: subida multiparte en memoria, partes de 8 MiB con `Content-MD5` y SHA-256 real. Un `200` con `<Error>` cuenta como fallo; Abort de mejor esfuerzo; `DELETE ?versionId=`. `indiceDrive.ts`: índice cifrado en `drive/indice.json.enc`; sólo un `404` equivale a primera pasada. `cifrado.ts`: `descifrarBuffer`, añadido al final.
 - `copiaDrive.ts`: el orquestador. Guardas en orden interruptor → en curso (`:102-103`) → faltantes. Un documento que falla no corta la pasada; sin `versionId` no se borra (`:84`); un solo aviso por pasada y nunca lanza.
-- `sinDisco.test.ts`: prueba con `fs`, `fs/promises` y `tmpdir` sustituidos por espías que lanzan, y guardián estático `escriturasEnDisco` (`:28`) probado con un fixture sintético.
+- `sinDisco.test.ts`: prueba con `fs`, `fs/promises` y `tmpdir` sustituidos por espías que lanzan, y guardián estático `escriturasEnDisco` (`sinDisco.test.ts:28` en `146b86f`) probado con un fixture sintético.
 - `apps/desk/server/index.ts`: dos imports al final de la línea 15 y un bloque de 9 líneas tras la 109. Apagado no programa nada.
 - `DEPLOY.md` §13 (`:418-468`): las dos frases del interruptor, las variables, las líneas para `.env.example` que añade el usuario, el bloqueo, `AbortIncompleteMultipartUpload` y cómo restaurar con `descifrarCli.ts`.
 - `apps/desk/server/superficieSaliente.test.ts`: etiqueta el `POST` del token de Google y el `POST`/`PUT`/`DELETE` de `multiparte.ts`, como pide su propio mecanismo.
@@ -31,6 +31,7 @@ Cada cifra es la del registro (`gentle-ai sdd-attempt status`) y coincide con `g
 | 4 · verify | `f3b1525`, `6f9159c` | 97 |
 | 5 · archivo, parte revisable (fusión de RQ-ZS-21 + este informe) | `b1cecf4` | 184 |
 | 6 · archivo, mudanza de la carpeta a `archive/` (renombrados al 100 %, sin carga de revisión) y esta tabla | el de la mudanza | medida en el asiento |
+| 7 · tras la verificación del analista, sólo pruebas: cierra la mutación que sobrevivía en `sinDisco.test.ts` (una escritura con `fs.promises.writeFile` llegada a través de `cifrado.ts` dejaba 10/10 en verde y el fichero escrito). La red en ejecución pasa a lista de permitidos (todo `node:fs` y `node:fs/promises` lanza, salvo `readFileSync`) y el guardián estático gana una lista cerrada de importaciones. Cuatro mutaciones en rojo, sin tocar producción | el de este intento | medida en el asiento |
 
 El archivo va en dos intentos, como `traspaso-y-trazas`: la parte revisable dentro del techo de 800 y la mudanza en un objetivo propio, con techo de 4.000. Es la regla del archivo de `CLAUDE.md` (E-150): la mudanza no pide techo; lo revisable, sí. Un primer commit que juntaba las dos cosas (`b425940`, local y sin empujar) se deshizo antes de asentar.
 
