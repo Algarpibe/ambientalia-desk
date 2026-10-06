@@ -1,10 +1,10 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
-import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena } from '@ambientalia/shared'
+import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena, motivoCargoOVI, motivoGarantiaSinOVI } from '@ambientalia/shared'
 import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
-import { hayChecklist } from '../db/remisionChecklist'; import { resolverRecepcion } from '../services/recepcion'; import { listNovedades } from '../db/novedades'
+import { hayChecklist } from '../db/remisionChecklist'; import { resolverRecepcion } from '../services/recepcion'; import { listNovedades } from '../db/novedades'; import { entrantesDeRemision } from '../services/guardasOVI'
 import { checklistDeRemision } from '../db/checklistRemision'
 import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'; import { obtenerCliente } from '../services/clientes'
@@ -217,7 +217,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
      */
     if (b.salesOrderId) {
       const ov = await getSalesOrder(db, String(b.salesOrderId))
-      if (!ov || motivoCuarentena(ov.number)) { res.status(422).json({ error: !ov ? 'Orden de venta no encontrada' : motivoCuarentena(ov.number) }); return }; const vencido = await motivoContratoVencido(db, ov.number); if (vencido) { res.status(422).json({ error: vencido }); return } // A y luego C (cuarentena, vencido), antes de la unicidad (D)
+      if (!ov) { res.status(422).json({ error: 'Orden de venta no encontrada' }); return }; const entran = await entrantesDeRemision(db, ov, ticketId, found.row); const sinCargo = motivoCargoOVI(entran, req.user); if (sinCargo) { res.status(403).json({ error: sinCargo }); return }; const cuarentena = motivoCuarentena(ov.number); if (cuarentena) { res.status(422).json({ error: cuarentena }); return }; const vencido = await motivoContratoVencido(db, ov.number); if (vencido) { res.status(422).json({ error: vencido }); return }; const sinOVI = motivoGarantiaSinOVI(found.row.tipo_servicio, entran); if (sinOVI) { res.status(422).json({ error: sinOVI }); return } // A, luego B (cargo de la OVI que entra, F1B-03), luego C (cuarentena, vencido, Garantía sólo con OVI), antes de la unicidad (D)
       /*
        * TERCERA PUERTA de «una OV, un ticket» (IV-4, RQ-RE-16). Transitoria: se retira el día en que
        * los índices únicos parciales de `ov_asociaciones` (`numero` y `salesorder_id`, los dos con

@@ -122,7 +122,7 @@ export function registerTicketRoutes(
 
   // Crea un ticket gestionado por la app en "Ticket creado" (Subsistema C). Pivota opcionalmente en una OV de Books.
   app.post('/api/tickets', asyncHandler(async (req, res) => {
-    res.status(201).json(await createManagedTicket(db, req.body, req.user?.name ?? 'App', req.user?.id))
+    res.status(201).json(await createManagedTicket(db, req.body, req.user?.name ?? 'App', req.user?.id, req.user))
   }))
 
   app.get('/api/tickets/:id', asyncHandler(async (req, res) => {

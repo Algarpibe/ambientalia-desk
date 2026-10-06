@@ -114,12 +114,12 @@ describe('puedeEjecutarTransicion · la compuesta', () => {
   })
 })
 
-describe('primitivas por cargo · la de Top 5 ya la llama el PUT (F1B-07); la de la OVI aún no (F1B-03, RQ-PM-20)', () => {
-  it('puedeCrearOVIGarantia: área Servicio Técnico Y Director Técnico', () => {
+describe('primitivas por cargo · la de Top 5 la llama el PUT (F1B-07); la de la OVI la llama ordenOVI.ts (F1B-03, RQ-PM-20)', () => {
+  it('puedeCrearOVIGarantia: sin área, basta el cargo Director Técnico (RQ-PM-24)', () => {
+    for (const areas of [[], ['Comercial'], ['Servicio Técnico']]) expect(puedeCrearOVIGarantia(sujeto(areas, 'Director Técnico'))).toBe(true)
     for (const c of CARGOS) expect(puedeCrearOVIGarantia(sujeto(['Servicio Técnico'], c))).toBe(c === 'Director Técnico')
-    expect(puedeCrearOVIGarantia(sujeto(['Servicio Técnico'], null))).toBe(false)
-    expect(puedeCrearOVIGarantia(sujeto(['Comercial'], 'Director Técnico'))).toBe(false) // cargo sin área
-    expect(puedeCrearOVIGarantia(sujeto([], null, true))).toBe(true)
+    expect(puedeCrearOVIGarantia(sujeto(['Servicio Técnico'], null))).toBe(false) // sin cargo: el área ya no concede
+    expect(puedeCrearOVIGarantia(sujeto([], null, true))).toBe(true) // el administrador pasa sin cargo
   })
   it('puedeFijarPrioridadTop5: área Comercial Y Director Comercial', () => {
     for (const c of CARGOS) expect(puedeFijarPrioridadTop5(sujeto(['Comercial'], c))).toBe(c === 'Director Comercial')
@@ -182,7 +182,7 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
   const ACCIONES: Accion[] = [
     ...TRANSITIONS.map((t) => ({ nombre: t.id, area: t.area, puede: (s: SujetoDePermiso) => puedeEjecutarTransicion(s, t) })),
     { nombre: 'puedeLiberarSinFactura', area: 'Comercial', puede: puedeLiberarSinFactura },
-    { nombre: 'puedeCrearOVIGarantia', area: 'Servicio Técnico', puede: puedeCrearOVIGarantia },
+    // puedeCrearOVIGarantia ya no lleva área (F1B-03, RQ-PM-24): sólo AÑADE condición y no entra en este barrido.
     { nombre: 'puedeFijarPrioridadTop5', area: 'Comercial', puede: puedeFijarPrioridadTop5 },
   ]
 
@@ -201,8 +201,8 @@ describe('el cargo SÓLO restringe · barrido área × cargo × acción (RQ-PM-2
       }
     }
     expect(violaciones).toEqual([])
-    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (31 transiciones + 3 primitivas) = 1.870, a mano.
-    expect(casos).toBe(1870)
+    // 5 subconjuntos × 11 valores de cargo (8 + 3) × (31 transiciones + 2 primitivas) = 1.815, a mano.
+    expect(casos).toBe(1815)
     expect(concedidos).toBeGreaterThan(0) // no pasa en vacío
   })
 })
@@ -223,9 +223,9 @@ describe('RQ-PM-20 · quién llama a las primitivas por cargo (hipótesis de 1.1
   const llamadores = (nombre: string): string[] =>
     [...fuentes(join(RAIZ, 'apps')), ...fuentes(join(RAIZ, 'packages'))]
       .filter((f) => !f.endsWith(join('shared', 'src', 'cargos.ts')) && readFileSync(f, 'utf8').includes(`${nombre}(`))
-  it('PM20-2 · puedeFijarPrioridadTop5 tiene al menos un llamador fuera de cargos.ts; puedeCrearOVIGarantia, ninguno', () => {
+  it('PM20-2 · las dos primitivas tienen llamador fuera de cargos.ts; el de puedeCrearOVIGarantia es ordenOVI.ts (una sola implementación)', () => {
     expect(llamadores('puedeFijarPrioridadTop5').length).toBeGreaterThanOrEqual(1)
-    expect(llamadores('puedeCrearOVIGarantia')).toEqual([])
+    expect(llamadores('puedeCrearOVIGarantia').map((r) => r.split(/[\\/]/).slice(-3).join('/'))).toEqual(['shared/src/ordenOVI.ts'])
   })
 })
 

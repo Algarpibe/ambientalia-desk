@@ -3,7 +3,7 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { vigenciaDeRemisiones } from '../db/remisiones'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente, baseSiNaceBajoTop5 } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, motivoAltaPendiente, motivoSinRemisionVigente, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -15,10 +15,10 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { buildTransitionPlan } from '../transitionExec'
 import { TRANSITION_ACTOR } from '../transitionActor'
 import { HttpError } from '../util/httpError'
-import { exigirEquipoNuevo, validarCamposEquipoNuevo, crearTicketConEquipo } from './equipoNuevo'; import { obtenerCliente } from './clientes'; import { exigirEquipoManual, exigirClienteProvisional, validarContenidoAltaManual, altaManualDe, errorNitEnBooks, type EquipoAResolverManual } from './altaManual'; import { clientesBooksPorNit } from '../db/clientesProvisionales'
+import { exigirEquipoNuevo, validarCamposEquipoNuevo, crearTicketConEquipo } from './equipoNuevo'; import { obtenerCliente } from './clientes'; import { exigirEquipoManual, exigirClienteProvisional, validarContenidoAltaManual, altaManualDe, errorNitEnBooks, type EquipoAResolverManual } from './altaManual'; import { clientesBooksPorNit } from '../db/clientesProvisionales'; import { entrantesDeAlta, entrantesDeTransicion, exigirCargoOVI, exigirGarantiaOVI, type SujetoOVI } from './guardasOVI'
 
 // Crea un ticket gestionado por la app (Subsistema C): nace en "Ticket creado", o en "Solicitud Soporte" si es soporte remoto. Pivota opcionalmente en una OV de Books.
-export async function createManagedTicket(db: Queryable, body: unknown, actorName: string, actorId?: string): Promise<unknown> {
+export async function createManagedTicket(db: Queryable, body: unknown, actorName: string, actorId?: string, sujeto?: SujetoOVI): Promise<unknown> {
   const b = (body ?? {}) as Record<string, unknown>
   const equipoId = b.equipoId ? String(b.equipoId) : ''
   if (!equipoId && b.clasificaciones !== 'Equipo nuevo' && !b.equipoManual) throw new HttpError(422, { error: 'Falta el equipo' })
@@ -33,15 +33,15 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   // (`routes/remision.ts:193`), y omitirlo dejaba «Habilitar Servicio» pidiendo una fecha que nadie
   // podía rellenar: allí el campo de la orden llega bloqueado, y con él bloqueado no se pinta el
   // buscador que la arrastra.
-  let fechaOrdenVenta: string | null = null
+  let fechaOrdenVenta: string | null = null; let numeroBooks: string | null = null // el número que Books da a salesOrderId: las guardas de OVI lo juzgan aunque el cuerpo traiga otro tecleado (:42)
   if (b.salesOrderId) {
     const ov = await getSalesOrder(db, String(b.salesOrderId))
     if (!ov) throw new HttpError(422, { error: 'Orden de venta no encontrada' })
     salesorderId = ov.id
     clientId = clientId ?? ov.clientId ?? null
     ordenVenta = ordenVenta ?? ov.number ?? null
-    fechaOrdenVenta = ov.date ?? null
-  }
+    fechaOrdenVenta = ov.date ?? null; numeroBooks = ov.number ?? null
+  } const entranAlta = entrantesDeAlta(ordenVenta, numeroBooks); exigirCargoOVI(entranAlta, sujeto) // B (F1B-03), la única guarda de permiso del alta: tras «Orden de venta no encontrada» (A, :39) y antes de equipo↔cliente (C, :65)
   /*
    * Hallazgo de la revisión adversaria de F1B-01 (P1) · la guarda equipo↔cliente. Escalón **C**
    * —contenido— de la escalera de precedencia (`transitions-st` §3.8), en la posición que fija
@@ -93,7 +93,7 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   // de la primera escritura (sea el equipo o el ticket) — el mismo lugar que ocupa el `409`
   // equivalente de `executeTransition` (`transitions-st` §3.8: existencia < estado/permiso <
   // contenido < unicidad). Sin esta comprobación bastaría con mandar el id a mano para duplicarla.
-  if (motivoCuarentena(ordenVenta)) throw new HttpError(422, { error: motivoCuarentena(ordenVenta) }); const vencido = await motivoContratoVencido(db, ordenVenta); if (vencido) throw new HttpError(422, { error: vencido }); /* C (cuarentena, vencido) antes que D */ const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta }); const conflicto = primerConflictoUnicidad({ nitEnBooks: prov ? await clientesBooksPorNit(db, prov.nit) : [], ovEnUso: enUso }); if (conflicto?.tipo === 'nit') throw errorNitEnBooks(prov!.nit, conflicto.candidatos) /* D: el NIT (P-B) gana a la OV, que va la última */
+  if (motivoCuarentena(ordenVenta)) throw new HttpError(422, { error: motivoCuarentena(ordenVenta) }); const vencido = await motivoContratoVencido(db, ordenVenta); if (vencido) throw new HttpError(422, { error: vencido }); exigirGarantiaOVI(tipoServicio, entranAlta); /* C (cuarentena, vencido, Garantía sólo con OVI) antes que D */ const enUso = await ticketConOrdenVenta(db, { salesorderId, numero: ordenVenta }); const conflicto = primerConflictoUnicidad({ nitEnBooks: prov ? await clientesBooksPorNit(db, prov.nit) : [], ovEnUso: enUso }); if (conflicto?.tipo === 'nit') throw errorNitEnBooks(prov!.nit, conflicto.candidatos) /* D: el NIT (P-B) gana a la OV, que va la última */
   if (conflicto?.tipo === 'ov') {
     const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
     throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${conflicto.ticket.number}` })
@@ -128,10 +128,10 @@ export async function executeTransition(
   }
   if (!canExecuteTransition(user.areas, user.isAdmin, t.area)) {
     throw new HttpError(403, { error: `Tu rol no tiene permiso para esta transición (área: ${t.area})` })
-  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row); await exigirRemisionVigente(db, t, id) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422
+  } const cargoFalta = cargoQueFaltaParaTransicion(t.id, user); if (cargoFalta) throw new HttpError(403, { error: `La transición "${t.name}" sólo la ejecuta el cargo ${cargoFalta}` }); if (cambiaPrioridadSinPermiso(t, b.values, current.row.priority ?? null, user)) throw new HttpError(403, { error: MENSAJE_PRIORIDAD_BLOQUEADA }); const entran = await entrantesDeTransicion(db, t, b.values, id, current.row); exigirCargoOVI(entran, user); const gas = await veredictoDeLiberacion(db, t, current.row); exigirVerificacion(gas); await exigirAltaValidada(db, t, current.row); await exigirRemisionVigente(db, t, id) // Escalón B (F1C-05, F1A-03: el 409 de Verificación va tras el área y antes de todo 422): tras el área, antes de todo 422; F1B-03: el cargo de la OVI que ENTRA, tras la prioridad y antes de la verificación
   const { values, erroresFecha } = await valoresConFechasDerivadas(db, current, t, recortarCertificado(b.values))
   const plan = buildTransitionPlan(t, values); delete plan.customFields[CLAVE_CERTIFICADO_FABRICA] /* F1A-03 (C-8): el número es de ESA liberación y vive en la traza; no se duplica en tickets.custom_fields, que el sync pisa */; const txtLib = textoAutorizacionAGuardar(t, values); if (txtLib !== undefined) plan.customFields[CLAVE_TEXTO_AUTORIZACION] = txtLib /* F1C-05 (D7): el texto es de ESTA liberación o null */
-  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ const errCertificado = erroresCertificado(gas, values); const errLiberacion = erroresLiberacionSinFactura(t, values); if (plan.errors.length || erroresFecha.length || errCuarentena.length || errCertificado.length || errLiberacion.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena, ...errCertificado, ...errLiberacion] })
+  const errCuarentena = erroresCuarentena([plan.columns.orden_venta, plan.ovAdicional]); /* C antes que D (:150) */ const errGarantia = erroresGarantiaSinOVI(current.row.tipo_servicio, entran); const errCertificado = erroresCertificado(gas, values); const errLiberacion = erroresLiberacionSinFactura(t, values); if (plan.errors.length || erroresFecha.length || errCuarentena.length || errGarantia.length || errCertificado.length || errLiberacion.length) throw new HttpError(422, { errors: [...plan.errors, ...erroresFecha, ...errCuarentena, ...errGarantia, ...errCertificado, ...errLiberacion] })
   // El navegador manda un id de persona, y un id sin comprobar es una FK rota: el ticket quedaría
   // apuntando a alguien que no existe y la ficha no sabría a quién enseñar. Se rechaza también a los
   // dados de baja, por lo mismo que no salen en el desplegable — nunca van a abrir ese ticket.

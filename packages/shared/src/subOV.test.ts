@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clasificarOV, motivoCuarentena, erroresCuarentena, esCuarentena } from './subOV'
+import { clasificarOV, motivoCuarentena, erroresCuarentena, esCuarentena, esOVI } from './subOV'
 
 /**
  * Clasificador de subOV (asociacion-ov-ticket, lote 4; RQ-TC-18). Regla, tras `trim`:
@@ -71,5 +71,19 @@ describe('erroresCuarentena', () => {
   it('sin nada en cuarentena, lista vacía', () => {
     expect(erroresCuarentena([])).toEqual([])
     expect(erroresCuarentena([undefined, 'OV-2026-001'])).toEqual([])
+  })
+})
+
+describe('esOVI · prefijo de OVI, no sintaxis de subOV (F1B-03, RQ-PM-24)', () => {
+  it.each(['OVI-2026-001', ' ovi-2026-001 ', 'OVI-2026-001-01', 'OVI-2026-00123', 'OVI-26-1'])('%j es OVI (también el mal formado OVI-26-1, A1)', (n) => {
+    expect(esOVI(n)).toBe(true)
+  })
+  it.each(['OV-2026-001', 'OV-2026-001-01', 'OVIEDO-1', 'SO-00123', '', null, undefined, 42])('%j no es OVI', (n) => {
+    expect(esOVI(n)).toBe(false)
+  })
+  it('CARACTERIZACIÓN: clasificarOV no cambia con esOVI', () => {
+    expect(clasificarOV('OVI-2026-001')).toEqual({ tipo: 'ordinaria' })
+    expect(clasificarOV('OVI-26-1')).toEqual({ tipo: 'ordinaria' })
+    expect(clasificarOV('OVI-2026-001-01').tipo).toBe('cuarentena')
   })
 })

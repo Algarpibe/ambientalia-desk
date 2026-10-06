@@ -29,7 +29,7 @@ discrepancia se escribe (§4).
 | Equipo | «Texto libre (**sin registro de equipos**; eso es Remisiones)» (`design C:26`, `:140`) | M1.1 `[DECIDIDO 21/08]`: el serial «pasa a ser la llave de entrada de todo el registro» (`:1048`) | **Obligatorio y por id de catálogo** (`apps/desk/server/services/ticketService.ts:22-25`) |
 | Numeración | «Continuar desde el máximo de Zoho (numeración continua)» (`design A:22`, `:107-113`) | — | **Espacio separado** con base 10.000 (`packages/zoho-sync/src/db/migrate.ts:38-43`) |
 | Almacenamiento de campos | «Híbrido: columnas tipadas + `custom_fields jsonb` para la cola larga» (`design A:21`) | Anexo G, 59 columnas (`:4291`) | Híbrido, tal cual (`packages/zoho-sync/src/db/schema.sql`, `db/rows.ts`) |
-| Quién puede crear | «Cualquier usuario autenticado (**sin gate por área**)» (`design C:20`) | — | Cualquier sesión válida (`apps/desk/server/routes/tickets.ts:35`, `:124-126`) |
+| Quién puede crear | «Cualquier usuario autenticado (**sin gate por área**)» (`design C:20`) | — | Cualquier sesión válida (`apps/desk/server/routes/tickets.ts:35`, `:124-126`); con una orden `OVI-` exige además el cargo (`RQ-TC-42`) |
 | Prefijos del Código Servicio | Cinco: MT · CG · HV · SR · PRO (`design C:33-34`) | M1.1 `[DECIDIDO]`: «se elimina la nomenclatura CG / MT» (`:1043`), **cerrado en R08**: el prefijo «puede derivarse automáticamente» (`:1067`) | Los cinco, y **derivados** del tipo de servicio (`packages/shared/src/ticketCreate.ts:1`, `:47-49`) |
 
 ---
@@ -127,7 +127,7 @@ código.)
 
 `POST /api/tickets` (`routes/tickets.ts:124-126`) **SHALL** exigir sesión (`:35`) y **SHALL** aplicar
 las guardas de `createManagedTicket` (`ticketService.ts:21-111`) **en este orden**, el que exige el
-orden total de precedencia (`transitions-st` §3.8):
+orden total de precedencia (`transitions-st` §3.8; entre la 3 y la 4 corre desde F1B-03 la guarda de cargo de la OVI, escalón B, `RQ-TC-42`, y antes de la 7 «Garantía sólo con OVI», escalón C, `RQ-TC-43`):
 
 | Orden | Guarda | Escalón | Respuesta | Evidencia |
 |---|---|---|---|---|
@@ -378,7 +378,7 @@ a otro ticket, mirando **tres vías** —`salesorder_id`, `orden_venta` y la aso
   cuarentena de `RQ-TC-18` (escalón C) cuando la OV recibida lleve sufijo: una subOV en cuarentena se
   rechaza con `422` sin llegar a comprobar unicidad.
 - Inmediatamente **después** de la cuarentena y **antes** de la unicidad, el alta **SHALL** aplicar la
-  guarda de contrato vencido de `RQ-TC-25` (escalón C, **última** guarda de contenido de la puerta): una
+  guarda de contrato vencido de `RQ-TC-25` (escalón C; **última** guarda de contenido de la puerta hasta F1B-03: desde `ovi-garantia-por-cargo` la sigue «Garantía sólo con OVI», `RQ-TC-43`): una
   subOV de un lote cuyo contrato venció se rechaza con `422` sin llegar a comprobar unicidad. Las guardas
   de contenido anteriores del alta —faltantes (`ticketService.ts:88`), cliente no encontrado (`:90`),
   campos del equipo nuevo (`:91`)— **SHALL** seguir ganándole.
@@ -989,7 +989,7 @@ comprobar sólo lotes con contrato registrado:
 
 **Precedencia (F1B-10).** La guarda es **escalón C** (contenido): se juzga un **valor aportado**, la subOV,
 no el estado del sujeto (`transitions-st` §3.8, escalón B); es el mismo caso que la persona derivada que
-existe pero está de baja. Dentro del escalón C es la **última** guarda de cada puerta —después de la
+existe pero está de baja. Dentro del escalón C es la **última** guarda de la transición; en el alta y en la remisión la sigue desde F1B-03 «Garantía sólo con OVI» (`RQ-TC-43`, `RQ-RE-31`) —después de la
 cuarentena y de cualquier otra guarda de contenido— y antes de la unicidad (D). Como una subOV en
 cuarentena no tiene lote canónico (`packages/shared/src/subOV.ts:36`), la cuarentena y el vencido **son
 excluyentes para un mismo número**: el orden entre ambas queda fijado por dependencia de datos, no
@@ -2217,3 +2217,90 @@ y lo impone el servidor (regla invariable 13).
 - GIVEN una lista de tickets
 - WHEN se calcula el plan
 - THEN la lista de entrada no se muta
+
+### RQ-TC-42 · El alta exige el cargo cuando la orden es OVI (escalón B)
+
+El alta SHALL juzgar con RQ-PM-24 y RQ-PM-25 las órdenes que traiga: el número final (`ordenVenta` tecleada, que gana al
+de Books) **y** el número de la orden resuelta desde `salesOrderId`. En el alta el ticket nace: toda orden entra. Sin
+cargo y sin ser administrador, responde `403`. La guarda cae **después** de «Orden de venta no encontrada» (A) y
+**antes** de la discrepancia equipo↔cliente y de los obligatorios (C): ante dos defectos se ve el del escalón anterior.
+Si el servicio no recibe al sujeto, se trata como «sin cargo» (SUPUESTO S-10).
+
+#### Scenario: OVI sin cargo — ROJO
+- GIVEN un usuario sin cargo ni admin y un cuerpo válido con `salesOrderId` de una orden `OVI-2026-001`
+- WHEN crea el ticket
+- THEN responde `403` y no se escribe el ticket
+
+#### Scenario: OVI tecleada sin id, y número tecleado distinto del de la orden resuelta — ROJO
+- GIVEN un usuario sin cargo y un cuerpo con `ordenVenta: 'OVI-2026-001'` y sin `salesOrderId`; y otro con `salesOrderId` de una orden `OV-` y `ordenVenta: 'ovi-2026-001'`
+- WHEN crea el ticket
+- THEN en los dos casos responde `403`
+
+#### Scenario: con cargo, y administrador sin cargo
+- GIVEN un Director Técnico sin el área Servicio Técnico; y un administrador sin cargo
+- WHEN cada uno crea un ticket con una OVI
+- THEN el alta no se detiene por el cargo
+
+#### Scenario: sujeto ausente falla cerrado (S-10) — ROJO
+- GIVEN una llamada al servicio de alta sin sujeto y con una OVI
+- WHEN se ejecuta
+- THEN responde `403`
+
+#### Scenario: posición, A «Equipo no registrado» < cargo — CARACTERIZACIÓN
+- GIVEN un cuerpo con equipo inexistente y una OVI, de un usuario sin cargo
+- WHEN crea el ticket
+- THEN responde el `422` «Equipo no registrado», no el `403`
+
+#### Scenario: posición, A «Orden de venta no encontrada» < cargo — CARACTERIZACIÓN
+- GIVEN `ordenVenta: 'OVI-2026-001'` tecleada, un `salesOrderId` inexistente y un usuario sin cargo
+- WHEN crea el ticket
+- THEN responde el `422` «Orden de venta no encontrada», no el `403`
+
+#### Scenario: posición, cargo < C equipo↔cliente — ROJO
+- GIVEN una OVI, un usuario sin cargo y un `clientId` que no es el del equipo
+- WHEN crea el ticket
+- THEN responde el `403` de cargo, no el `422` de la discrepancia
+
+#### Scenario: posición, cargo < C obligatorios — ROJO
+- GIVEN una OVI, un usuario sin cargo y faltan campos obligatorios
+- WHEN crea el ticket
+- THEN responde el `403`, no el `422` de «Faltan campos obligatorios»
+
+### RQ-TC-43 · Un ticket de «Garantía» sólo admite una orden `OVI-` en el alta (escalón C)
+
+Si `tipo_servicio` es exactamente «Garantía» (literal de `TIPOS_SERVICIO`, `packages/shared/src/ticketCreate.ts:4`;
+SUPUESTO S-7), el alta SHALL responder `422` cuando entre una orden que no es OVI, con el texto «El ticket es de tipo de
+servicio Garantía y sólo admite una orden OVI-: la orden {n} no lo es». Es escalón **C** (combina dos datos del
+contenido, como RQ-TC-05): va **después** de la cuarentena y del contrato vencido (SUPUESTO S-9) y **antes** de las
+guardas de unicidad (**D**, NIT y orden ya asociada). La guarda actúa cuando la orden ENTRA: un ticket de Garantía sin
+ninguna orden **nace** (SUPUESTO S-2) y no se revisan tickets ya asociados (SUPUESTO S-1). Una OVI en un ticket que **no**
+es de Garantía **se admite** con el cargo: «una OVI sólo va en garantía» está pendiente del Director Técnico y no se
+impone.
+
+**Pares no observables, dichos para que nadie los dé por probados:** cargo frente a garantía. La primera guarda salta con
+una OVI y la segunda con una orden que no lo es, y el alta trae una sola orden; ninguna prueba puede activar las dos.
+
+#### Scenario: Garantía con una orden `OV-` — ROJO
+- GIVEN un ticket con `tipo_servicio` «Garantía» y la orden `OV-2026-001`
+- WHEN se crea
+- THEN responde `422` con el texto de garantía y no se escribe
+
+#### Scenario: Garantía con OVI y cargo — ROJO
+- GIVEN un Director Técnico y un ticket de «Garantía» con `OVI-2026-001`
+- WHEN se crea
+- THEN se crea con la orden
+
+#### Scenario: Garantía sin orden nace (S-2) — CARACTERIZACIÓN
+- GIVEN un ticket de «Garantía» sin ninguna orden
+- WHEN se crea
+- THEN se crea
+
+#### Scenario: OVI en un ticket que no es de Garantía, con el cargo, se admite — CARACTERIZACIÓN
+- GIVEN un Director Técnico y un ticket con otro `tipo_servicio` y `OVI-2026-001`
+- WHEN se crea
+- THEN se crea con la orden
+
+#### Scenario: posición, C garantía < D orden ya asociada — ROJO
+- GIVEN un ticket de «Garantía» con una `OV-` ya asociada a otro ticket
+- WHEN se crea
+- THEN responde el `422` de garantía, no el `409` de «ya está asociada»
