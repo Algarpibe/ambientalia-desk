@@ -5,8 +5,8 @@
 - [x] 1.2 `altaNovedadDelCuerpo` y `cambioNovedadDelCuerpo`: clave inmutable y con forma, etiqueta y orden válidos, «Sin novedad» intocable, unicidad aparte.
 
 ## Lote 2 · el servidor
-- [ ] 2.1 Escritura en `apps/desk/server/db/novedades.ts`: alta y cambio, sin borrar nunca.
-- [ ] 2.2 Rutas: lista entera, alta y cambio, con el orden 404 → 403 → 422 → 409.
+- [x] 2.1 Escritura en `apps/desk/server/db/novedades.ts`: alta y cambio, sin borrar nunca.
+- [x] 2.2 Rutas: lista entera, alta y cambio, con el orden 404 → 403 → 422 → 409.
 
 ## Lote 3 · la pantalla
 - [ ] 3.1 Pantalla de mantenimiento (`.tsx`, fuera de la red de pruebas por F0-00).
