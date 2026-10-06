@@ -63,7 +63,7 @@ Cobertura: 16/16 escenarios con prueba verde en tiempo de ejecución; ninguno UN
 6. **Aviso sin lanzar / una pasada a la vez**: `copiaDrive.ts:47-50,105` (`catch` + `finally`), un solo aviso por pasada (`copiaDrive.ts:92-95`). OK.
 7. **`index.ts`**: `git diff -U0 a6e29d8` = `@@ -15 +15 @@` (sólo la línea 15, con imports añadidos al final) y `@@ -109,0 +110,9 @@` (bloque tras `main().catch`); ninguna otra línea se mueve. OK.
 8. **`cifrado.ts`**: `@@ -52,0 +53,8 @@`, +8 al final, 0 borradas. OK.
-9. **`DEPLOY.md` §13** (`:417-468`): las dos frases «Qué enciende» / «Qué se rompe si se pone mal» y las cinco líneas para `.env.example` están; `.env.example` no se toca (lo añade el usuario). OK.
+9. **`DEPLOY.md` §13** (`:418-468`): las dos frases «Qué enciende» / «Qué se rompe si se pone mal» y las cinco líneas para `.env.example` están; `.env.example` no se toca (lo añade el usuario). OK.
 10. **Dependencias**: `git diff a6e29d8 -- package.json package-lock.json` = 0 líneas. OK.
 11. **Secretos**: sólo aparece `-----BEGIN PRIVATE KEY-----` con cuerpo `x` como dato de prueba ficticio (`configDrive.test.ts`); sin claves reales. OK.
 12. **Regla invariable 13**: `git diff --stat a6e29d8 -- apps/desk/src` = vacío; el cambio es sólo de servidor. OK.
