@@ -12,7 +12,7 @@ origen_cabecera: declarada
 
 ## Intención
 
-`syncRecent` pide sólo la página 1 de `/tickets` ordenada por `-recentThread` (`packages/zoho-sync/src/sync.ts:173-177`, vía `fetchTicketPage`, `:138-143`), sin paginar y sin marca de agua. Lo llaman los dos ciclos: `apps/hub-sync/src/hubSync.ts:93` y `apps/desk/server/index.ts:88`. El baseline ya lo registró como c.5 (`docs/sdd/F0-00_Baseline_as-built.md:121`).
+`syncRecent` pide sólo la página 1 de `/tickets` ordenada por `-recentThread` (`packages/zoho-sync/src/sync.ts:173-177` en `9822bd7`, vía `fetchTicketPage`, `:138-143`), sin paginar y sin marca de agua. Lo llaman los dos ciclos: `apps/hub-sync/src/hubSync.ts:93` y `apps/desk/server/index.ts:88`. El baseline ya lo registró como c.5 (`docs/sdd/F0-00_Baseline_as-built.md:121`).
 
 Cerrar un ticket o cambiarle el estado en Zoho no genera conversación, así que el ticket no vuelve a esa ventana de 100 y la réplica no se entera. Caso medido: el ticket nº 884 se cerró en Zoho el 2026-10-02 (`modifiedTime` 2026-10-02T19:54:45Z, `statusType: Closed`, comprobado contra Zoho el 2026-10-06) y la réplica lo sigue mostrando abierto. El tablero enseña como pendiente trabajo que ya está cerrado.
 
@@ -62,7 +62,7 @@ Cerrar un ticket o cambiarle el estado en Zoho no genera conversación, así que
 | La búsqueda devuelve un ticket recortado y se vacían columnas | Media | Punto 6: se decide con una respuesta real antes de escribir código |
 | Un ticket falla al persistir (`persistEach` lo aísla, `sync.ts:126-136`) y la marca avanza por encima de él | Baja | El solape lo reintenta cinco ciclos y el fallo queda en el log (`sync.ts:132`); después sólo vuelve si Zoho lo modifica. Igual que hoy, no peor. Se acepta y se declara |
 | Releer por detalle tras una parada larga dispara muchas peticiones (`zohoFetch` no reintenta ante un 429) | Baja | Tope por ciclo; el orden ascendente permite continuar |
-| La cita `sync.ts:173-177` sigue existiendo pero deja de decir «sólo la página 1» | Alta | Barrido al cierre leyendo qué afirma cada frase (casos A, B y C) |
+| La cita `sync.ts:173-177` (en `9822bd7`) sigue existiendo pero deja de decir «sólo la página 1» | Alta | Barrido al cierre leyendo qué afirma cada frase (casos A, B y C) |
 
 ## Reversión
 

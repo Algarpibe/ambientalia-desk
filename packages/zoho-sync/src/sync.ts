@@ -171,9 +171,9 @@ export function createSync({ zohoFetch, db, config, alDiscrepanciaOV }: Deps): S
       return total
     },
     async syncRecent(): Promise<number> {
-      const pageItems = await fetchTicketPage(1, '-recentThread')
-      await persistEach(pageItems)
-      return pageItems.length
+      const paginaReciente = async () => { const p = await fetchTicketPage(1, '-recentThread'); await persistEach(p); return p.length }
+      // Por fecha de modificación; el cuerpo vive al final del fichero (RQ-ZS-22). Sin marca o si la búsqueda cae, la página 1 de hoy.
+      return sincronizarModificados({ zohoFetch, db, config, persistTicket, paginaReciente })
     },
     async syncTicket(id: string): Promise<void> {
       const res = await zohoFetch(`/tickets/${id}?include=contacts,assignee`)
@@ -356,3 +356,79 @@ export interface ResultadoHistoriaPendiente {
  * `apps/desk/server/index.ts`: el worker `apps/hub-sync` no crea este aviso (RQ-AV-13).
  */
 export interface AvisoOVDeps { alDiscrepanciaOV?: (d: DiscrepanciaOV) => Promise<unknown> }
+
+/**
+ * sync-tickets-por-modificacion (`fuera-del-plan`). `syncRecent` ya no lee sólo los cien más recientes
+ * por `-recentThread`: un ticket cerrado en Zoho pero poco tocado después se quedaba atrás para siempre.
+ * Aquí se piden a `/tickets/search` los modificados desde la marca de agua menos un solape, SÓLO como
+ * índice de ids; cada ticket se relee por detalle (la misma petición de `syncTicket`) y se persiste.
+ * Persistir la respuesta de búsqueda no es seguro: que traiga `customFields` completo es hipótesis, y
+ * sin él `ticketRowFromZoho` vaciaría las columnas promovidas.
+ */
+const SOLAPE_MODIFICADOS_MS = 15 * 60_000
+interface ModificadosDeps {
+  zohoFetch: Deps['zohoFetch']
+  db: Queryable
+  config: AppConfig
+  persistTicket: (t: ZohoRecord) => Promise<void>
+  /** El camino de siempre: página 1 por `-recentThread`, persistida. Devuelve cuántos trajo. */
+  paginaReciente: () => Promise<number>
+}
+async function sincronizarModificados(d: ModificadosDeps): Promise<number> {
+  const { zohoFetch, db, config, persistTicket, paginaReciente } = d
+  // Marca de agua: sólo filas de origen Zoho. Las que escribe la app con reloj propio (`app-…` y las
+  // `managed_by_app`) la adelantarían por encima de lo que Zoho aún no ha entregado.
+  const wm = await db.query('SELECT max(modified_time) AS m FROM tickets WHERE id NOT LIKE $1 AND managed_by_app = false', [`${PREFIJO_TICKET_APP}%`])
+  const m = wm.rows[0]?.m
+  if (!m) return paginaReciente() // réplica vacía o sin filas elegibles: como hoy, sin aviso
+  const marca = new Date(m).getTime()
+  const desde = new Date(marca - SOLAPE_MODIFICADOS_MS).toISOString()
+  const hasta = new Date(Math.max(Date.now(), marca)).toISOString()
+
+  // Primero se recogen TODOS los ids y sólo después se lee el detalle: si una página falla no se
+  // persiste nada de la búsqueda, y la marca no depende de que Zoho ordene ascendente.
+  const hallados = new Map<string, number>()
+  let fallo: string | null = null
+  for (let from = 0; from < 10 * PAGE_SIZE; from += PAGE_SIZE) {
+    let items: ZohoRecord[]
+    try {
+      const params = new URLSearchParams({ departmentId: config.departmentId, modifiedTimeRange: `${desde},${hasta}`, sortBy: 'modifiedTime', from: String(from), limit: String(PAGE_SIZE) })
+      const res = await zohoFetch(`/tickets/search?${params.toString()}`)
+      if (!res.ok) { fallo = String(res.status); break }
+      items = dataArray(await readData(res)) // 204 o cuerpo vacío: sin resultados, no es fallo
+    } catch (e) { fallo = e instanceof Error ? e.message : String(e); break }
+    for (const it of items) if (!hallados.has(String(it.id))) hallados.set(String(it.id), Date.parse(String(it.modifiedTime)))
+    if (items.length < PAGE_SIZE) break
+    if (from + PAGE_SIZE >= 10 * PAGE_SIZE) console.error(`Zoho /tickets/search: tope de ${10 * PAGE_SIZE} resultados; el ciclo siguiente continúa desde la marca`)
+  }
+  if (fallo !== null) {
+    console.error(`Zoho /tickets/search ${fallo}: el ciclo cae a la página 1 por -recentThread`)
+    return paginaReciente()
+  }
+
+  // Ascendente y estable por `modifiedTime`: si un corte deja lo persistido a medias, es un prefijo.
+  const ids = [...hallados.entries()].sort((a, b) => (Number.isNaN(a[1]) || Number.isNaN(b[1]) ? 0 : a[1] - b[1])).map(([id]) => id)
+  let leidos = 0
+  for (const id of ids) {
+    let t: ZohoRecord
+    try {
+      const res = await zohoFetch(`/tickets/${id}?include=contacts,assignee`)
+      if (!res.ok) {
+        console.error(`Zoho /tickets/${id} ${res.status}`)
+        if (res.status === 429 || res.status >= 500) break // corte: el ciclo siguiente continúa
+        continue
+      }
+      t = await readData(res)
+    } catch (e) {
+      console.error(`Zoho /tickets/${id} falló:`, e instanceof Error ? e.message : String(e))
+      break
+    }
+    leidos++
+    try { await persistTicket(t) }
+    catch (e) {
+      const err = e as { detail?: unknown; message?: unknown }
+      console.error(`persistTicket(${id}) falló:`, String(err?.detail ?? err?.message ?? e))
+    }
+  }
+  return leidos
+}

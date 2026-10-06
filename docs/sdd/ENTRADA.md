@@ -2045,7 +2045,7 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
 
 ## E-208 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: ¿quién lanza la última sincronización completa antes de migrar, y cuándo?
-**Qué:** marcar un ticket lo congela frente al sincronizador (`packages/zoho-sync/src/db/repo.ts:71`): lo que se edite en Zoho después ya no llega. La pasada incremental sólo trae los cien más recientes (`packages/zoho-sync/src/sync.ts:173-177`), así que hace falta una sincronización completa justo antes, y hoy no tiene dueño.
+**Qué:** marcar un ticket lo congela frente al sincronizador (`packages/zoho-sync/src/db/repo.ts:71`): lo que se edite en Zoho después ya no llega. La pasada incremental sólo traía los cien más recientes (`packages/zoho-sync/src/sync.ts:173-177` en `9822bd7`; lo superó `sync-tickets-por-modificacion`, que pide a `/tickets/search` los modificados desde la marca de agua), así que hace falta una sincronización completa justo antes, y hoy no tiene dueño.
 **Dueño:** Gerencia, que designa a la persona. **Qué desbloquea:** la ejecución de la migración.
 **Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
 
