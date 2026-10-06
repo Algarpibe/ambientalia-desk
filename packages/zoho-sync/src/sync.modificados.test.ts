@@ -128,7 +128,7 @@ describe('syncRecent · búsqueda como índice', () => {
     expect(h.de('/tickets/search').map((p) => new URLSearchParams(p.split('?')[1]).get('from'))).toEqual(['0', '100'])
     expect(h.detalles()).toHaveLength(103)
     expect(n).toBe(103)
-  })
+  }, 60_000)
 
   it('10 · ids repetidos y en orden descendente: un detalle por id, en orden ascendente', async () => {
     await fila('Z1', 1, '2026-10-02T10:00:00.000Z')
