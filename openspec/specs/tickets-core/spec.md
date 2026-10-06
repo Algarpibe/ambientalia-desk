@@ -29,7 +29,7 @@ discrepancia se escribe (§4).
 | Equipo | «Texto libre (**sin registro de equipos**; eso es Remisiones)» (`design C:26`, `:140`) | M1.1 `[DECIDIDO 21/08]`: el serial «pasa a ser la llave de entrada de todo el registro» (`:1048`) | **Obligatorio y por id de catálogo** (`apps/desk/server/services/ticketService.ts:22-25`) |
 | Numeración | «Continuar desde el máximo de Zoho (numeración continua)» (`design A:22`, `:107-113`) | — | **Espacio separado** con base 10.000 (`packages/zoho-sync/src/db/migrate.ts:38-43`) |
 | Almacenamiento de campos | «Híbrido: columnas tipadas + `custom_fields jsonb` para la cola larga» (`design A:21`) | Anexo G, 59 columnas (`:4291`) | Híbrido, tal cual (`packages/zoho-sync/src/db/schema.sql`, `db/rows.ts`) |
-| Quién puede crear | «Cualquier usuario autenticado (**sin gate por área**)» (`design C:20`) | — | Cualquier sesión válida (`apps/desk/server/routes/tickets.ts:35`, `:124-126`) |
+| Quién puede crear | «Cualquier usuario autenticado (**sin gate por área**)» (`design C:20`) | — | Cualquier sesión válida (`apps/desk/server/routes/tickets.ts:35`, `:124-126`); con una orden `OVI-` exige además el cargo (`RQ-TC-42`) |
 | Prefijos del Código Servicio | Cinco: MT · CG · HV · SR · PRO (`design C:33-34`) | M1.1 `[DECIDIDO]`: «se elimina la nomenclatura CG / MT» (`:1043`), **cerrado en R08**: el prefijo «puede derivarse automáticamente» (`:1067`) | Los cinco, y **derivados** del tipo de servicio (`packages/shared/src/ticketCreate.ts:1`, `:47-49`) |
 
 ---
@@ -127,7 +127,7 @@ código.)
 
 `POST /api/tickets` (`routes/tickets.ts:124-126`) **SHALL** exigir sesión (`:35`) y **SHALL** aplicar
 las guardas de `createManagedTicket` (`ticketService.ts:21-111`) **en este orden**, el que exige el
-orden total de precedencia (`transitions-st` §3.8):
+orden total de precedencia (`transitions-st` §3.8; entre la 3 y la 4 corre desde F1B-03 la guarda de cargo de la OVI, escalón B, `RQ-TC-42`, y antes de la 7 «Garantía sólo con OVI», escalón C, `RQ-TC-43`):
 
 | Orden | Guarda | Escalón | Respuesta | Evidencia |
 |---|---|---|---|---|
@@ -378,7 +378,7 @@ a otro ticket, mirando **tres vías** —`salesorder_id`, `orden_venta` y la aso
   cuarentena de `RQ-TC-18` (escalón C) cuando la OV recibida lleve sufijo: una subOV en cuarentena se
   rechaza con `422` sin llegar a comprobar unicidad.
 - Inmediatamente **después** de la cuarentena y **antes** de la unicidad, el alta **SHALL** aplicar la
-  guarda de contrato vencido de `RQ-TC-25` (escalón C, **última** guarda de contenido de la puerta): una
+  guarda de contrato vencido de `RQ-TC-25` (escalón C; **última** guarda de contenido de la puerta hasta F1B-03: desde `ovi-garantia-por-cargo` la sigue «Garantía sólo con OVI», `RQ-TC-43`): una
   subOV de un lote cuyo contrato venció se rechaza con `422` sin llegar a comprobar unicidad. Las guardas
   de contenido anteriores del alta —faltantes (`ticketService.ts:88`), cliente no encontrado (`:90`),
   campos del equipo nuevo (`:91`)— **SHALL** seguir ganándole.
@@ -989,7 +989,7 @@ comprobar sólo lotes con contrato registrado:
 
 **Precedencia (F1B-10).** La guarda es **escalón C** (contenido): se juzga un **valor aportado**, la subOV,
 no el estado del sujeto (`transitions-st` §3.8, escalón B); es el mismo caso que la persona derivada que
-existe pero está de baja. Dentro del escalón C es la **última** guarda de cada puerta —después de la
+existe pero está de baja. Dentro del escalón C es la **última** guarda de la transición; en el alta y en la remisión la sigue desde F1B-03 «Garantía sólo con OVI» (`RQ-TC-43`, `RQ-RE-31`) —después de la
 cuarentena y de cualquier otra guarda de contenido— y antes de la unicidad (D). Como una subOV en
 cuarentena no tiene lote canónico (`packages/shared/src/subOV.ts:36`), la cuarentena y el vencido **son
 excluyentes para un mismo número**: el orden entre ambas queda fijado por dependencia de datos, no

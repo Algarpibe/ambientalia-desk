@@ -1419,3 +1419,31 @@ opción (a) el 06/10/2026; la recomendación anterior, la (b), queda retirada.»
 después del corte, con F1C-05. No da por construida la reasignación con motivo
 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035`): Gerencia la aprobó ese día y se construye en F1B-05;
 su corrección llegará con el cambio que la construya.
+
+## La de F1B-03, parte OVI de garantía (28)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `ovi-garantia-por-cargo`, `cierra: no`, y
+> de `decision/e157-ovi-garantia-por-cargo` (Gerencia, 2026-10-06).
+
+### 28 · M1.9, M1.3.7 y Anexo D nº 7 — «crear la OVI de garantía» es ASOCIARLA, la pide el cargo y no el área *(F1B-03)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1941` («crear la OVI de garantía → Director Técnico;»), `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1949`
+(«La de la OVI de garantía entra en uso con F1B-03.») y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2661`, párrafo «OVI de garantía.».
+
+**Texto actual:** «crear la OVI de garantía → Director Técnico;» / «La de la OVI de garantía entra en uso con F1B-03.» / «OVI de
+garantía. La crea Servicio Técnico, en concreto el Director Técnico (ovi-garantia-autor). Es una de las excepciones por cargo del modelo
+de permisos (ver M1.9); la crea F1B-03.»
+
+**Texto propuesto:** en la lista de excepciones, «asociar una orden OVI a un ticket → Director Técnico;». En lugar de «entra en uso con
+F1B-03»: «[CONSTRUIDO] La de la OVI está en uso.» Y a continuación del párrafo «OVI de garantía.»: «[CONSTRUIDO] Desk 2.0 no crea la
+OVI: se crea en Zoho Books. El acto dentro de Desk es asociarla a un ticket, y sólo lo hace quien tiene el cargo Director Técnico, o un
+administrador; basta el cargo, sin exigir un área. La regla se aplica en toda entrada de una orden —el alta del ticket, «Habilitar
+Servicio», la orden adicional de las dos aprobaciones y la remisión de entrada— y a cualquier número que empiece por OVI-. Reconfirmar
+la orden que el ticket ya tenía no es asociarla y no pide el cargo: un ticket venido de Zoho con su OVI no se toca. Un ticket con tipo
+de servicio «Garantía» no admite una orden que no sea OVI; la regla actúa cuando la orden entra, y un ticket de garantía puede nacer
+sin orden.»
+
+**Lo que esta entrada NO pide.** No dice que una OVI sólo pueda ir en tickets de garantía: eso lo confirma el Director Técnico y hoy
+una OVI en un ticket que no es de garantía se admite con el cargo. No da por decididos los supuestos del cambio (el alcance de la regla
+de garantía sobre la orden adicional, y el reconocimiento de la OVI por su prefijo). No afirma que esté en producción, ni que los cargos
+estén asignados: sin ellos sólo pasa el administrador.

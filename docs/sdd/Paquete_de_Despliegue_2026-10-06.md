@@ -78,3 +78,20 @@ respaldo nocturno (`docs/sdd/Paquete_de_Despliegue_2026-10-05b.md:670`), porque 
    (`openspec/changes/archive/2026-10-06-respaldo-semanal-drive/archive-report.md:58`).
 2. Ninguna pasada real se ha ejecutado: las pruebas usan dobles de Drive y de S3. La primera copia real es la del paso 5.
 3. Límite conocido de la prueba «sin disco», sin efecto en lo que se publica: `docs/sdd/ENTRADA.md`, E-235.
+
+## 5 · Añadido por `ovi-garantia-por-cargo` (F1B-03, parte OVI) — condición previa de persona
+
+**Antes de publicar el commit que traiga este cambio, hay que asignar los cargos de permiso** (respuesta de Gerencia del 06/10,
+`decision/e157-ovi-garantia-por-cargo`, punto 4). Asociar una orden `OVI-` a un ticket lo hace sólo quien tiene el cargo Director Técnico,
+o un administrador (`packages/shared/src/cargos.ts:71-74`). **Si se publica sin cargos asignados, sólo un administrador podrá asociar
+una OVI** en el alta, en «Habilitar Servicio», en la orden adicional de las aprobaciones y en la remisión de entrada; los demás verán un
+`403`. No hay variable de entorno ni interruptor: la guarda está activa desde que se publica.
+
+| # | Quién | Qué | Cómo se comprueba |
+|---|---|---|---|
+| 1 | Gerencia | Decir qué persona lleva el cargo Director Técnico | — |
+| 2 | Un administrador | Asignarle el cargo en la pantalla de usuarios, antes de publicar | Esa persona asocia una OVI a un ticket de prueba y no ve el `403` |
+
+Lo que NO cambia al publicar: un ticket que ya tiene su OVI (venido de Zoho o creado en la aplicación) la conserva y puede seguir su
+flujo; reconfirmarla no pide el cargo. Y un ticket con tipo de servicio «Garantía» deja de admitir una orden que no sea OVI cuando la
+orden entra; los que ya la tienen asociada no se tocan.

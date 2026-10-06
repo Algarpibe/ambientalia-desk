@@ -1197,7 +1197,7 @@ por grupo, no se enuncia como «precedencia observable» y no admite excepción 
 | Escalón | Qué clase de cosa comprueba | Guardas verificadas |
 |---|---|---|
 | **A · existencia** | ¿está presente y existe lo que la petición direcciona, o aporta por identificador? | `:123` transición desconocida · `:125` ticket no encontrado · `:24` falta el equipo · `:25` equipo manual o equipo nuevo (F1B-15) · `:28` cliente provisional (F1B-15) · `:27` equipo no registrado · `:39` OV no encontrada |
-| **B · estado y permiso del sujeto** | ¿puede esta operación ocurrir sobre este sujeto ahora? | `:126-128` estado de origen · `:129-131` área |
+| **B · estado y permiso del sujeto** | ¿puede esta operación ocurrir sobre este sujeto ahora? | `:126-128` estado de origen · `:129-131` área · `:44` y `:131` cargo de la OVI que entra (F1B-03) |
 | **C · contenido** | ¿es válido y coherente lo que la petición aporta como contenido? | `:61-79` equipo↔cliente · `:88` obligatorios · `:90` cliente no encontrado · `:91` contenido del alta manual (F1B-15) · `:134` obligatorios del plan · **`:134` fecha derivada sin fuente inválida, fijada por el diseño (`fechas-derivadas-servidor`, nueva; ver `RQ-TS-08`)** · `:138-142` derivación · **`:96` contrato vencido en el alta (misma sentencia que la cuarentena, antes de D) · `:147` contrato vencido en `habilitar_servicio`, última de C (`registro-contrato`, `tickets-core` RQ-TC-25)** |
 | **D · unicidad sobre un valor aportado** | ¿el valor aportado choca con otro registro? | `:96` NIT del provisional ya en Books, 409 con candidatos (F1B-15, P-B) · `:96-100` OV ya usada en el alta (bloque que `orden-precedencia-guardas` movió detrás de `:90`) · `:148-152` OV ya usada en `habilitar_servicio` (bloque que `orden-precedencia-guardas` movió detrás de `:142`) |
 
@@ -1221,7 +1221,7 @@ se rellena antes de contarlo (`:61-79` antes de `:88`, porque la rama (i) de `:6
 
 | Puerta | Orden declarado (guardas reales, tras esta tanda) | Quién gana ante el error doble (obligatorios / OV ya usada) |
 |---|---|---|
-| `createManagedTicket` | `:24` A · `:25` A · `:27` A · `:28` A · `:39` A · `:61-79` C · `:88` C · `:90` C · `:91` C · `:96` C (contrato vencido) · `:96` D (NIT en Books, P-B) · `:96-100` D (OV, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
+| `createManagedTicket` | `:24` A · `:25` A · `:27` A · `:28` A · `:39` A · `:44` B (cargo de la OVI, F1B-03) · `:61-79` C · `:88` C · `:90` C · `:91` C · `:96` C (contrato vencido; Garantía sólo con OVI, F1B-03) · `:96` D (NIT en Books, P-B) · `:96-100` D (OV, última) | el **`422`** de obligatorios (`ticketService.test.ts:345`, `:352`) |
 | `executeTransition` | `:123` A · `:125` A · `:126-128` B · `:129-131` B · `:134` C · fecha derivada C (nueva) · `:138-142` C · `:147` C (contrato vencido) · `:148-152` D (movida, última) | el **`422`** de obligatorios (`ticketService.test.ts:195`) |
 
 Cero inversión: las dos puertas evalúan la misma pareja en el mismo orden.
@@ -1881,12 +1881,12 @@ falta (una remisión de entrada vigente) de modo accionable, y **SHALL** ser **u
 servicio: falta una remisión de entrada vigente. Crea la remisión de entrada desde el ticket.». No hay un segundo texto
 para la remisión sin confirmar, porque ese caso ya no se rechaza.
 
-**Posición exacta.** La guarda **SHALL** ser la décima del orden de `executeTransition`: se llama en la misma línea que
+**Posición exacta.** La guarda **SHALL** ser la undécima (décima hasta F1B-03) del orden de `executeTransition`: se llama en la misma línea que
 `exigirAltaValidada` (`apps/desk/server/services/ticketService.ts:131`), **inmediatamente después** de ella, y **antes**
 de los obligatorios, las fechas derivadas, la cuarentena y el certificado
 (`apps/desk/server/services/ticketService.ts:132-134`) y antes de la OV ya asociada
 (`apps/desk/server/services/ticketService.ts:148-152`). Queda **detrás** de: transición desconocida y ticket inexistente (A),
-fuera de flujo (B), estado fuera del `from` (B), área (B), cargo (B), prioridad (B), verificación (B) y alta validada (B, RQ-TS-32).
+fuera de flujo (B), estado fuera del `from` (B), área (B), cargo (B), prioridad (B), cargo de la OVI que entra (B, RQ-TS-36), verificación (B) y alta validada (B, RQ-TS-32).
 La función **SHALL** definirse al final del fichero, tras `exigirAltaValidada`
 (`apps/desk/server/services/ticketService.ts:258-264`), sin desplazar ninguna línea existente.
 

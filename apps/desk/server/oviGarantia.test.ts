@@ -327,6 +327,13 @@ describe('Garantía en las transiciones · sólo admite OVI (escalón C)', () =>
     expect(errores(res)).toHaveLength(1)
   })
 
+  it('GA-TR-2b · la «OV adicional» de aprobación y repuestos, en Garantía y con una OV, también da 422 (S-5; misma puerta, entrada propia)', async () => {
+    await sembrar(); await ticket(DE_LA_APP, { tipo: GARANTIA, estado: 'Notificación cliente' })
+    const res = await adicional(await sinCargo(), DE_LA_APP, 'aprobacion_y_repuestos', 'OV-2026-001')
+    expect(res.status).toBe(422)
+    expect(errores(res)).toEqual(['El ticket es de tipo de servicio Garantía y sólo admite una orden OVI: la orden de venta OV-2026-001 no lo es'])
+  })
+
   it('GA-TR-3 · CARACTERIZACIÓN · una Garantía que reconfirma su propia OV ordinaria no se bloquea (S-1): 200', async () => {
     await sembrar(); await ticket(ZOHO, { tipo: GARANTIA, orden: 'OV-2026-001' })
     expect((await hs(await sinCargo(), ZOHO, 'OV-2026-001')).status).toBe(200)
