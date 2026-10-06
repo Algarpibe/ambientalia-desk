@@ -29,7 +29,10 @@ Cada cifra es la del registro (`gentle-ai sdd-attempt status`) y coincide con `g
 | 2 · (b1) retención, multiparte, índice | `9289c49` | 497 |
 | 3 · (b2) orquestador, sin disco, cableado, `DEPLOY.md` | `3394e54` | 576 |
 | 4 · verify | `f3b1525`, `6f9159c` | 97 |
-| 5 · archivo | el de este informe | medida en el asiento |
+| 5 · archivo, parte revisable (fusión de RQ-ZS-21 + este informe) | `b1cecf4` | 184 |
+| 6 · archivo, mudanza de la carpeta a `archive/` (renombrados al 100 %, sin carga de revisión) y esta tabla | el de la mudanza | medida en el asiento |
+
+El archivo va en dos intentos, como `traspaso-y-trazas`: la parte revisable dentro del techo de 800 y la mudanza en un objetivo propio, con techo de 4.000. Es la regla del archivo de `CLAUDE.md` (E-150): la mudanza no pide techo; lo revisable, sí. Un primer commit que juntaba las dos cosas (`b425940`, local y sin empujar) se deshizo antes de asentar.
 
 **Partición ejecutada en tres intentos de construcción, no en dos.** (a) midió 658 frente a 483 estimadas (×1,36). Con esa razón, el (b) entero salía en torno a 890, por encima de la válvula de 720, así que se partió **antes de escribir** en (b1) = lotes 5-6 y (b2) = lotes 7-10. Ningún intento pasó de 720. El corte del aviso de `drive_url` midió 495 frente a 640 y se construyó.
 
