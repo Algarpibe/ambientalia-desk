@@ -262,9 +262,9 @@ ORDER BY table_name, column_name;
 
 ## 9. Continuidad de los nueve indicadores (F1F-05, `cierra: no`)
 
-- **Sin esquema y sin variables nuevas.** Ningún `CREATE` ni `ALTER`, ninguna clave en la configuración ni en
-  `.env.example`, ningún escritor: la ruta nueva `GET /api/indicadores` sólo lee. Reversión: quitar el registro de
-  la ruta en `apps/desk/server/app.ts` y el enlace de descarga de `apps/desk/src/components/Analisis.tsx`.
+- **Sin esquema y sin variables nuevas (estado de `2026-10-03-continuidad-indicadores`; HISTÓRICO).** Entonces no había
+  `CREATE`, `ALTER` ni escritor y `GET /api/indicadores` sólo lee. Hoy hay una tabla y una ruta de carga: ver la sección final
+  «Comprobación de lectura tras desplegar F1F-05». Reversión de la lectura: la ruta en `app.ts` y el enlace de `Analisis.tsx`.
 - **Quién la usa.** Sólo administradores: sin sesión responde 401, sin ser administrador 403. En la pantalla
   «Análisis» aparece el enlace «Descargar indicadores (CSV)» (CSV con `;`, BOM UTF-8 y fin de línea CRLF).
 - **Fecha límite: desplegar antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11. El CI
@@ -302,8 +302,8 @@ ROLLBACK;
   qué comparar y se abre la pregunta E-173 de `docs/sdd/ENTRADA.md`.
 - **Qué se ve si los valores de Zoho no llegan.** Cada indicador dice «sin valor de Zoho con que comparar» y
   no da porcentaje; si llegan pero ningún par es comparable, dice «sin pares comparables». Ninguno de los dos casos es
-  un fallo: la tabla de los nueve indicadores sale igual, con el 51 y el 55 «sin dato» hasta que Gerencia responda E-171
-  y E-172.
+  un fallo: la tabla de los nueve indicadores sale igual. Hasta F1F-05 el 51 y el 55 salían «sin dato» (E-171, E-172; HISTÓRICO):
+  hoy el 51 sale del historial y el 55 de las respuestas cargadas, ver la sección final «Comprobación … F1F-05».
 - **Comprobar en la aplicación (P-4, de personas):** con un administrador, que el enlace descarga el CSV y que la hoja
   de cálculo lo abre sin asistente; con otro usuario, que el enlace no aparece. Detalle en `docs/sdd/ENTRADA.md` → E-181.
 
@@ -591,3 +591,38 @@ SELECT COUNT(*) FROM public.contrato_ampliaciones;
 - **Nunca `DELETE` sobre `public.contrato_ampliaciones`:** la traza es el único registro de quién amplió, cuándo y por qué, y la fecha original se deriva de
   ella. No hay ruta ni sentencia de la aplicación que la borre.
 - **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra, y las fechas ya ampliadas siguen siendo válidas.
+
+## Comprobación de lectura tras desplegar F1F-05 (carga de las respuestas de la encuesta)
+
+**Sin variables de entorno nuevas** (`.env.example` no cambia) y sin interruptor: la ruta de carga está activa desde que se publica, y sólo la puede usar un
+administrador. El cambio añade **una tabla**, `public.encuesta_respuestas`, que `migrate` crea al arrancar
+(`packages/zoho-sync/src/db/schema.sql:787`, con su índice en `:796`). Nace vacía y no hay relleno. La migración es tolerante por sentencia: un fallo se
+registra como «sentencia omitida» y **no** tumba el arranque, así que un despliegue puede quedar «verde» con la tabla sin crear.
+
+Hazla **antes de dar el cambio por publicado** (tarea de persona P-3). Es una consulta de sólo lectura, en la base `desk` (esquema `public`).
+
+```sql
+-- La tabla existe: una fila. Con cero filas, la migración omitió la sentencia.
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name = 'encuesta_respuestas';
+
+-- Se puede leer: devuelve 0 el día de publicar, porque no hay relleno.
+SELECT COUNT(*) FROM public.encuesta_respuestas;
+```
+
+- **Qué se rompe si la tabla falta:** la lectura de los indicadores (`GET /api/indicadores`) falla entera, porque su cuarta consulta lee esa tabla
+  (`apps/desk/server/indicadores.ts:85`), y la carga también.
+- **Cómo se invoca la carga.** `POST /api/indicadores/encuesta` (`apps/desk/server/routes/encuestaRespuestas.ts:19`), `multipart/form-data` con el fichero
+  en el campo `file` y con la sesión de un administrador (sin sesión `401`, sin ser administrador `403`, y en ese caso el fichero ni se sube). No hay
+  pantalla: la carga es una ruta. Responde `200` con `{ leidas, insertadas, duplicadas, rechazadas }`, donde cada rechazada trae su número
+  de fila y su motivo; `400` si falta el fichero (`Falta el fichero de respuestas`), si no trae las columnas necesarias o está vacío; y `413` por encima de 10 MB
+  (`apps/desk/server/app.ts:86`). Una fila mala se rechaza sola y no impide cargar las demás.
+- **Volver a cargar el mismo fichero no duplica:** cada respuesta tiene una huella única (`packages/zoho-sync/src/db/schema.sql:792`) y la repetida cuenta como
+  `duplicadas`. Si un ticket tiene varias respuestas, vale la última por fecha de respuesta.
+- **Qué se ve hasta que se cargue la muestra (P-1, P-2):** el 55 de todos los tickets sale «sin dato — falta el hito: satisfacción del cliente». El 51 no depende de
+  la carga: sale ya para los tickets entregados por la aplicación; los movidos sólo en Zoho siguen «sin dato».
+- **El formato del fichero es un SUPUESTO.** El analizador (`apps/desk/server/encuesta/analizarRespuestas.ts`) lee un CSV tipo Google Forms con las columnas ticket,
+  marca de tiempo y calificación, y **no se ha probado con una exportación real** (no hay muestra). Antes de cargar las respuestas de enero hace falta P-1.
+- **Nunca `DELETE` ni `UPDATE` sobre `public.encuesta_respuestas`:** es el único registro de lo que respondió cada cliente. No hay ruta ni sentencia de la aplicación
+  que lo haga. Para volver atrás basta revertir y redesplegar; la tabla queda sin uso y no se borra.

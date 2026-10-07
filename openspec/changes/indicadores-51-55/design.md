@@ -10,7 +10,7 @@ Este diseño supera a propósito el tope de 800 palabras de la skill: el encargo
 ## 1. Enfoque técnico
 
 El 51 es dominio puro: una constante y una función al final de `packages/shared/src/indicadores.ts`, enchufadas donde
-el 49 enchufa su marca (`packages/shared/src/indicadores.ts:133`). El 55 son cuatro piezas que no se conocen entre sí
+el 49 enchufa su marca (`packages/shared/src/indicadores.ts:133` en `42a4828`). El 55 son cuatro piezas que no se conocen entre sí
 más que por un tipo: **formato** (analizador), **identidad** (huella), **almacén** (tabla y capa de datos) y **puerta**
 (ruta). La lectura suma una cuarta consulta y pasa la calificación al cálculo, que no cambia de forma. Ningún fichero
 muy citado gana líneas por dentro: lo nuevo va al final o en fichero nuevo, y lo que se modifica se edita **sobre la
@@ -20,7 +20,7 @@ línea que ya existe**.
 
 | # | Decisión | Alternativas descartadas | Por qué |
 |---|---|---|---|
-| DD-1 | El hito de entrega es una entrada más de `hitos` del 51, con clave `transición de entrega`, y **no** entra en `HITOS_POR_COLUMNA` | Añadirlo a la tabla de `packages/shared/src/indicadores.ts:52-62` | Molde del 49: su marca tampoco está en la tabla y se añade en `packages/shared/src/indicadores.ts:133`. La tabla es de etiquetas de campo y la recorre `resolverHito`, que buscaría una columna heredada que la spec prohíbe |
+| DD-1 | El hito de entrega es una entrada más de `hitos` del 51, con clave `transición de entrega`, y **no** entra en `HITOS_POR_COLUMNA` | Añadirlo a la tabla de `packages/shared/src/indicadores.ts:52-62` | Molde del 49: su marca tampoco está en la tabla y se añade en `packages/shared/src/indicadores.ts:133` en `42a4828`. La tabla es de etiquetas de campo y la recorre `resolverHito`, que buscaría una columna heredada que la spec prohíbe |
 | DD-2 | La clave del hito y el texto del motivo son **la misma constante** (`MARCA_ENTREGA`) | Dos literales | El motivo es «falta el hito: transición de entrega» (S-B); una sola cadena no puede desincronizarse |
 | DD-3 | El recuento de reentrante sale de `escrituras` del hito, sin código nuevo | Rama propia para el 51 | `packages/shared/src/indicadores.ts:134` ya mira `escrituras >= 2` de todos los hitos; las dos transiciones se cuentan juntas porque el hito es uno |
 | DD-4 | El guardián enfrenta la constante a `transicionesQueEscriben('Fecha Remisión de Salida')` por **igualdad de conjuntos**, además de exigir que cada id exista | Sólo «cada id existe» | La igualdad caza también la entrega nueva que nadie añadió a la constante. `packages/shared/src/bodegaje.ts:234-236` ya da esa lista desde el catálogo; hoy son las dos de `packages/shared/src/transitions.ts:248-251` |
@@ -42,11 +42,11 @@ Ediciones **en sitio** (misma cantidad de líneas) y un bloque al final:
 |---|---|
 | `packages/shared/src/indicadores.ts:2-3` | la cabecera deja de decir «51 y 55 sin dato»: «51 desde la transición de entrega; 55 desde la calificación que aporta la lectura» |
 | `packages/shared/src/indicadores.ts:45-48` | cuatro líneas por cuatro: desaparecen el comentario H-1 y `horaActualizacionEstado`; queda un comentario de tres líneas (`/**`, texto, `*/`) sobre `calificacionSatisfaccion?: string \| null`: «la última calificación cargada del ticket (RQ-KP-22); la aporta la lectura y se usa tal cual» |
-| `packages/shared/src/indicadores.ts:86` | `const MARCA_INGRESO = 'marca de ingreso a servicio', MARCA_ENTREGA = 'transición de entrega'` |
-| `packages/shared/src/indicadores.ts:133` | la línea gana `; if (columna === '51') hitos[MARCA_ENTREGA] = hitoEntrega(historial)` |
-| `packages/shared/src/indicadores.ts:228-232` | cinco líneas por cinco: el cierre `v51` de abajo |
-| `packages/shared/src/indicadores.ts:241` | `armar('51', 'dias_naturales', v51, sinDato(MOTIVO_H1)),` |
-| `packages/shared/src/indicadores.ts:246` | sin el cuarto argumento: `armar('55', 'calificacion', () => ({ valor: v55, marcas: [] })),` (DD-13) |
+| `packages/shared/src/indicadores.ts:86` en `42a4828` | `const MARCA_INGRESO = 'marca de ingreso a servicio', MARCA_ENTREGA = 'transición de entrega'` |
+| `packages/shared/src/indicadores.ts:133` en `42a4828` | la línea gana `; if (columna === '51') hitos[MARCA_ENTREGA] = hitoEntrega(historial)` |
+| `packages/shared/src/indicadores.ts:228-232` en `42a4828` | cinco líneas por cinco: el cierre `v51` de abajo |
+| `packages/shared/src/indicadores.ts:241` en `42a4828` | `armar('51', 'dias_naturales', v51, sinDato(MOTIVO_H1)),` |
+| `packages/shared/src/indicadores.ts:246` en `42a4828` | sin el cuarto argumento: `armar('55', 'calificacion', () => ({ valor: v55, marcas: [] })),` (DD-13) |
 
 `MOTIVO_H1` (`packages/shared/src/indicadores.ts:88`) **se conserva** con su texto: sigue siendo el motivo de la
 variante de Zoho del 47 (`packages/shared/src/indicadores.ts:238`) y del 51 (RQ-KP-11). `v55`
@@ -79,16 +79,16 @@ function hitoEntrega(historial: PasoDelHistorial[]): Hito {
   (`packages/shared/src/indicadores.ts:139-144`). La marca no se serializa.
 - **Hito en `hitos`:** `{ 'Fecha Finalización ST': …, 'transición de entrega': … }`, en ese orden. La ruta lo
   serializa sin cambios (`apps/desk/server/routes/indicadores.ts:41` no se toca).
-- En `apps/desk/server/indicadores.ts:90`, en sitio y en el **mismo lote**: el comentario deja de nombrar
+- En `apps/desk/server/indicadores.ts:90` en `42a4828`, en sitio y en el **mismo lote**: el comentario deja de nombrar
   `horaActualizacionEstado`, para que el criterio «no existe en el código» se cumpla al cerrar el lote 1.
 
 **Pruebas existentes que cambian** (`packages/shared/src/indicadores.test.ts`; ninguna cita viva apunta a sus líneas):
 
 | Dónde | Hoy | Queda |
 |---|---|---|
-| `packages/shared/src/indicadores.test.ts:76` | pasa `{ horaActualizacionEstado: … }` | sin tercer argumento; la aserción de `packages/shared/src/indicadores.test.ts:77` no cambia |
+| `packages/shared/src/indicadores.test.ts:76` en `42a4828` | pasa `{ horaActualizacionEstado: … }` | sin tercer argumento; la aserción de `packages/shared/src/indicadores.test.ts:77` no cambia |
 | `packages/shared/src/indicadores.test.ts:100-126` | «sin dato salvo entrada opcional» | bloque reescrito: K13 pasa a «con finalización y sin fila de entrega → falta el hito: transición de entrega»; el `it.each` de `packages/shared/src/indicadores.test.ts:106-111` conserva sus dos instantes (el segundo es el borde de las 22:00 de Bogotá) pero como **filas de entrega**; `packages/shared/src/indicadores.test.ts:112-114` pasa a «con entrega y sin finalización». Las del 55 (`packages/shared/src/indicadores.test.ts:115-125`) se conservan |
-| `packages/shared/src/indicadores.test.ts:306-315` | dos casos, uno «con horaActualizacionEstado» (`packages/shared/src/indicadores.test.ts:310`) | un solo caso; el título deja de nombrar la entrada opcional |
+| `packages/shared/src/indicadores.test.ts:306-315` en `42a4828` | dos casos, uno «con horaActualizacionEstado» (`packages/shared/src/indicadores.test.ts:310` en `42a4828`) | un solo caso; el título deja de nombrar la entrada opcional |
 
 **Guardián de la constante** (regla de mutación 2), junto a K14 (`packages/shared/src/indicadores.test.ts:146-151`):
 (a) cada id de `TRANSICIONES_DE_ENTREGA` resuelve con `transicionPorId` (`packages/shared/src/flujos.ts:74`);
@@ -134,16 +134,16 @@ de `packages/zoho-sync/src/db/schema.sql:773-782`; el `CHECK` con nombre es el d
 
 | Dónde | Hoy | Queda |
 |---|---|---|
-| `packages/zoho-sync/src/db/migrate.test.ts:282` | «son 44 tablas: 10 de Desk, 31 de la app en public (contrato_ampliaciones, F1B-11; …» | «son 45 tablas: 10 de Desk, 32 de la app en public (encuesta_respuestas, F1F-05; contrato_ampliaciones, F1B-11; …» |
-| `packages/zoho-sync/src/db/migrate.test.ts:283` | `toEqual([10, 31, 3])` | `toEqual([10, 32, 3])` |
-| `packages/zoho-sync/src/db/migrate.test.ts:284-286` | tres `toBe(44)` | tres `toBe(45)` |
-| `packages/zoho-sync/src/db/migrate.test.ts:652` | suma `… + 1 + 2` | `… + 1 + 2 + 2`, y el mensaje gana «y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55)» |
-| `packages/zoho-sync/src/db/migrate.test.ts:794` | título: quinta, cuarta y tercera por el final | séptima, sexta y quinta; las cuatro últimas son las de `contrato_ampliaciones` y `encuesta_respuestas` |
-| `packages/zoho-sync/src/db/migrate.test.ts:796` | `l[l.length - 5]` | `l[l.length - 7]` |
-| `packages/zoho-sync/src/db/migrate.test.ts:798` | `l[l.length - 4]` y `l[l.length - 3]` | `l[l.length - 6]` y `l[l.length - 5]` |
-| `packages/zoho-sync/src/db/migrate.test.ts:822` y `packages/zoho-sync/src/db/migrate.test.ts:825` | «cierran el esquema» / «cierra el esquema» | dejan de afirmarlo |
-| `packages/zoho-sync/src/db/migrate.test.ts:837` | título: penúltima y última | cuarta y tercera por el final |
-| `packages/zoho-sync/src/db/migrate.test.ts:839` y `packages/zoho-sync/src/db/migrate.test.ts:840` | `l.length - 2` y `l.length - 1` | `l.length - 4` y `l.length - 3` |
+| `packages/zoho-sync/src/db/migrate.test.ts:282` en `42a4828` | «son 44 tablas: 10 de Desk, 31 de la app en public (contrato_ampliaciones, F1B-11; …» | «son 45 tablas: 10 de Desk, 32 de la app en public (encuesta_respuestas, F1F-05; contrato_ampliaciones, F1B-11; …» |
+| `packages/zoho-sync/src/db/migrate.test.ts:283` en `42a4828` | `toEqual([10, 31, 3])` | `toEqual([10, 32, 3])` |
+| `packages/zoho-sync/src/db/migrate.test.ts:284-286` en `42a4828` | tres `toBe(44)` | tres `toBe(45)` |
+| `packages/zoho-sync/src/db/migrate.test.ts:652` en `42a4828` | suma `… + 1 + 2` | `… + 1 + 2 + 2`, y el mensaje gana «y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55)» |
+| `packages/zoho-sync/src/db/migrate.test.ts:794` en `42a4828` | título: quinta, cuarta y tercera por el final | séptima, sexta y quinta; las cuatro últimas son las de `contrato_ampliaciones` y `encuesta_respuestas` |
+| `packages/zoho-sync/src/db/migrate.test.ts:796` en `42a4828` | `l[l.length - 5]` | `l[l.length - 7]` |
+| `packages/zoho-sync/src/db/migrate.test.ts:798` en `42a4828` | `l[l.length - 4]` y `l[l.length - 3]` | `l[l.length - 6]` y `l[l.length - 5]` |
+| `packages/zoho-sync/src/db/migrate.test.ts:822` en `42a4828` y `packages/zoho-sync/src/db/migrate.test.ts:825` en `42a4828` | «cierran el esquema» / «cierra el esquema» | dejan de afirmarlo |
+| `packages/zoho-sync/src/db/migrate.test.ts:837` en `42a4828` | título: penúltima y última | cuarta y tercera por el final |
+| `packages/zoho-sync/src/db/migrate.test.ts:839` en `42a4828` y `packages/zoho-sync/src/db/migrate.test.ts:840` en `42a4828` | `l.length - 2` y `l.length - 1` | `l.length - 4` y `l.length - 3` |
 
 No se rompen `packages/zoho-sync/src/db/migrate.test.ts:799` ni `packages/zoho-sync/src/db/migrate.test.ts:841`
 (cuentan sentencias que nombran otra tabla). El guardián de clasificación
@@ -286,11 +286,11 @@ gana al final `; registerEncuestaRespuestasRoutes(app, { db })`. Sin interruptor
 
 | Dónde | Queda |
 |---|---|
-| `apps/desk/server/indicadores.ts:5` y `apps/desk/server/indicadores.ts:51-55` | en sitio: «tres» pasa a «cuatro» y se nombra la cuarta |
-| `apps/desk/server/indicadores.ts:43` | en sitio: `cierres: Set<DiaCivil>; calificaciones: Map<string, string>` |
+| `apps/desk/server/indicadores.ts:5` en `42a4828` y `apps/desk/server/indicadores.ts:51-55` | en sitio: «tres» pasa a «cuatro» y se nombra la cuarta |
+| `apps/desk/server/indicadores.ts:43` en `42a4828` | en sitio: `cierres: Set<DiaCivil>; calificaciones: Map<string, string>` |
 | tras `apps/desk/server/indicadores.ts:84` | **inserción** de la cuarta consulta (tres líneas) |
-| `apps/desk/server/indicadores.ts:85` | el `return` gana `calificaciones` |
-| `apps/desk/server/indicadores.ts:92` | las opciones ganan `calificacionSatisfaccion: e.calificaciones.get(t.id) ?? null` |
+| `apps/desk/server/indicadores.ts:85` en `42a4828` | el `return` gana `calificaciones` |
+| `apps/desk/server/indicadores.ts:92` en `42a4828` | las opciones ganan `calificacionSatisfaccion: e.calificaciones.get(t.id) ?? null` |
 
 ```ts
   const re = await db.query(`SELECT e.ticket_id, e.calificacion FROM public.encuesta_respuestas e JOIN tickets t ON t.id = e.ticket_id${donde} ORDER BY e.respondida_at, e.id`, params)
@@ -308,13 +308,13 @@ Acotada a los tickets del periodo por el mismo `JOIN` y el mismo `donde` que la 
 
 | Dónde | Hoy | Queda |
 |---|---|---|
-| `apps/desk/server/indicadores.test.ts:6` | «tres consultas» | «cuatro» |
-| `apps/desk/server/indicadores.test.ts:53` | título «EXACTAMENTE tres consultas» | «EXACTAMENTE cuatro» |
-| `apps/desk/server/indicadores.test.ts:58` | `toHaveLength(3)` | `toHaveLength(4)`; `apps/desk/server/indicadores.test.ts:59` (todas `SELECT`) no cambia |
-| `apps/desk/server/indicadores.test.ts:78` | el doble devuelve las filas de tickets a toda consulta que no reconoce | devuelve `[]` también a la que nombra `encuesta_respuestas` |
-| `apps/desk/server/routes/indicadores.test.ts:13` | `DATOS` no reconoce la consulta nueva (dice `JOIN tickets`, no `FROM tickets`) | la expresión gana `encuesta_respuestas` |
-| `apps/desk/server/routes/indicadores.test.ts:183` | `toBeGreaterThan(3)` | `toBeGreaterThan(4)` |
-| `apps/desk/server/routes/indicadores.test.ts:186` y `apps/desk/server/routes/indicadores.test.ts:190` | «las mismas tres lecturas», `toHaveLength(3)` | «cuatro», `toHaveLength(4)` |
+| `apps/desk/server/indicadores.test.ts:6` en `42a4828` | «tres consultas» | «cuatro» |
+| `apps/desk/server/indicadores.test.ts:53` en `42a4828` | título «EXACTAMENTE tres consultas» | «EXACTAMENTE cuatro» |
+| `apps/desk/server/indicadores.test.ts:58` en `42a4828` | `toHaveLength(3)` | `toHaveLength(4)`; `apps/desk/server/indicadores.test.ts:59` (todas `SELECT`) no cambia |
+| `apps/desk/server/indicadores.test.ts:78` en `42a4828` | el doble devuelve las filas de tickets a toda consulta que no reconoce | devuelve `[]` también a la que nombra `encuesta_respuestas` |
+| `apps/desk/server/routes/indicadores.test.ts:13` en `42a4828` | `DATOS` no reconoce la consulta nueva (dice `JOIN tickets`, no `FROM tickets`) | la expresión gana `encuesta_respuestas` |
+| `apps/desk/server/routes/indicadores.test.ts:183` en `42a4828` | `toBeGreaterThan(3)` | `toBeGreaterThan(4)` |
+| `apps/desk/server/routes/indicadores.test.ts:186` en `42a4828` y `apps/desk/server/routes/indicadores.test.ts:190` en `42a4828` | «las mismas tres lecturas», `toHaveLength(3)` | «cuatro», `toHaveLength(4)` |
 
 ## 9. D7 — Regla 13: decisiones del cliente
 
@@ -380,7 +380,7 @@ misma `respondida_at`; si las filas se insertan en orden de `id`, quitar `e.id` 
 | M7 | 2 | `schema.sql`: quitar `public.` del `CREATE` | guardián de clasificación y bloque nuevo |
 | M8 | 2 | `schema.sql`: quitar `UNIQUE` de `huella` | `23505` del bloque nuevo |
 | M9 | 2 | `schema.sql`: quitar un `NOT NULL`; quitar el `CHECK` | rechazos del bloque nuevo |
-| M10 | 2 | `schema.sql`: mover el `CREATE` nuevo delante del de `contrato_ampliaciones` | posiciones del bloque nuevo y de `packages/zoho-sync/src/db/migrate.test.ts:839` |
+| M10 | 2 | `schema.sql`: mover el `CREATE` nuevo delante del de `contrato_ampliaciones` | posiciones del bloque nuevo y de `packages/zoho-sync/src/db/migrate.test.ts:839` en `42a4828` |
 | M11 | 2 | Quitar `'encuesta_respuestas'` de `PUBLIC_TABLES` | guardián de clasificación y recuento |
 | M12 | 2 | Catálogo: renombrar `entrega_al_cliente`; dar `Fecha Remisión de Salida` a otra transición | guardián de la constante, parte (b) |
 | M13 | 2 | Constante: quitar un id; añadir uno inventado | guardián, partes (b) y (a); con un id menos, también el escenario de `entrega_sin_factura` |

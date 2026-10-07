@@ -20,12 +20,12 @@ está en §7.
 ## 2. Estado de partida del 51
 
 - Hoy sale «sin dato»: el motivo está en `packages/shared/src/indicadores.ts:88` y el cálculo en
-  `packages/shared/src/indicadores.ts:228-232`, que sólo da número si llega la entrada opcional
-  `horaActualizacionEstado` (`packages/shared/src/indicadores.ts:46`).
-- Nadie aporta esa entrada: `apps/desk/server/indicadores.ts:92` llama al cálculo sólo con los cierres.
+  `packages/shared/src/indicadores.ts:228-232` en `42a4828`, que sólo da número si llega la entrada opcional
+  `horaActualizacionEstado` (`packages/shared/src/indicadores.ts:46` en `42a4828`).
+- Nadie aporta esa entrada: `apps/desk/server/indicadores.ts:92` en `42a4828` llama al cálculo sólo con los cierres.
   Fuera de las pruebas, `horaActualizacionEstado` aparece únicamente en
-  `packages/shared/src/indicadores.ts:46` y `packages/shared/src/indicadores.ts:229`, y en el comentario
-  de `apps/desk/server/indicadores.ts:90`.
+  `packages/shared/src/indicadores.ts:46` en `42a4828` y `packages/shared/src/indicadores.ts:229` en `42a4828`, y en el comentario
+  de `apps/desk/server/indicadores.ts:90` en `42a4828`.
 - La letra del maestro: «Hora de actualización del estado − Fecha Finalización ST» (`R08.4.md:6299`).
 - «La transición de entrega» son dos en el catálogo: `entrega_sin_factura` y `entrega_al_cliente`
   (`packages/shared/src/transitions.ts:248-251`). Las dos piden `Fecha Remisión de Salida`.
@@ -34,7 +34,7 @@ está en §7.
   de todo el historial (`apps/desk/server/indicadores.ts:76`, `apps/desk/server/indicadores.ts:82`). No
   hace falta ninguna consulta nueva para el 51.
 - Molde a seguir: el 49 deriva su marca del historial dentro del módulo puro
-  (`packages/shared/src/indicadores.ts:123-128`, enchufada en `packages/shared/src/indicadores.ts:133`),
+  (`packages/shared/src/indicadores.ts:123-128`, enchufada en `packages/shared/src/indicadores.ts:133` en `42a4828`),
   apoyándose en `marcaIngresoAServicio` (`packages/shared/src/bodegaje.ts:225-226`).
 - Límite que la decisión declara (`openspec/config.yaml:4100`): un ticket movido sólo en Zoho no tiene
   fila de entrega y su 51 seguirá «sin dato».
@@ -68,8 +68,8 @@ está en §7.
 - `packages/shared/src/indicadores.ts`: opciones (`:46`, `:48` de ese fichero), hitos del 51
   (`packages/shared/src/indicadores.ts:56`), motivo (`packages/shared/src/indicadores.ts:88`), cálculo
   (`packages/shared/src/indicadores.ts:228-233`) y armado del 51 y del 55
-  (`packages/shared/src/indicadores.ts:241`, `packages/shared/src/indicadores.ts:246`).
-- `apps/desk/server/indicadores.ts:56-86`: la lectura pasa de tres a cuatro consultas. Lo fijan hoy en
+  (`packages/shared/src/indicadores.ts:241` en `42a4828`, `packages/shared/src/indicadores.ts:246` en `42a4828`).
+- `apps/desk/server/indicadores.ts:56-86` en `42a4828`: la lectura pasa de tres a cuatro consultas. Lo fijan hoy en
   tres `apps/desk/server/indicadores.test.ts:53-60` y `apps/desk/server/routes/indicadores.test.ts:186-192`.
 - `packages/zoho-sync/src/db/schema.sql`: tabla nueva **al final** (el fichero acaba en la línea 782; el
   último bloque es `packages/zoho-sync/src/db/schema.sql:773-782`), calificada `public`.

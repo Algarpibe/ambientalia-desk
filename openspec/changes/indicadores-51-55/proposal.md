@@ -41,7 +41,7 @@ deja fuera:** la comparación con la exportación de Zoho, que es la tercera par
    guardián que la enfrenta al catálogo. Con dos entregas vale la última por `performed_at` y sale la
    marca de reentrante. Un ticket sin fila de entrega da «sin dato — falta el hito: transición de
    entrega». Se retira la entrada opcional `horaActualizacionEstado`
-   (`packages/shared/src/indicadores.ts:46`). La variante «fórmula de Zoho» del 51 sigue «sin dato».
+   (`packages/shared/src/indicadores.ts:46` en `42a4828`). La variante «fórmula de Zoho» del 51 sigue «sin dato».
 2. **55 desde respuestas cargadas:**
    - Tabla `public.encuesta_respuestas`, calificada: `id`, `ticket_id`, `calificacion`, `respondida_at`,
      `huella` única, `cargado_por`, `cargado_at`; índice por `ticket_id`. Admite varias respuestas por
@@ -52,7 +52,7 @@ deja fuera:** la comparación con la exportación de Zoho, que es la tercera par
      (`apps/desk/server/util/subida.ts:10-11`), en un fichero de ruta nuevo. Escalera 401 < 403 < 400 <
      carga. Respuesta `{ leidas, insertadas, duplicadas, rechazadas: [{ fila, motivo }] }`. Idempotente
      por huella: cargar dos veces el mismo fichero no inserta nada la segunda.
-   - `leerEntradasIndicadores` (`apps/desk/server/indicadores.ts:56-86`) suma una **cuarta consulta de
+   - `leerEntradasIndicadores` (`apps/desk/server/indicadores.ts:56-86` en `42a4828`) suma una **cuarta consulta de
      lectura** y pasa la última calificación al cálculo. El `GET /api/indicadores` sigue siendo sólo
      lectura.
 3. **Delta de `kpis`** (§3).
@@ -99,7 +99,7 @@ alcance de la fila, cuesta dinero, toca datos de producción ni contradice una d
 | # | Supuesto | Por qué | Cómo se revierte |
 |---|---|---|---|
 | S-A | Con dos entregas, vale **la última** por `performed_at` | La decisión dice «vale la que tenga el ticket» (`openspec/config.yaml:4099`) y no cubre el caso de dos. Es la regla de reentrancia vigente (S-5 de la spec) | Una línea del módulo y su prueba |
-| S-B | Motivos del 51 y su orden: primero «falta el hito: transición de entrega»; con entrega y sin finalización, «falta el hito: finalización del servicio». Sin fila de entrega **no** se usa `Fecha Remisión de Salida` como sustituto | Es el orden que el cálculo ya tiene (`packages/shared/src/indicadores.ts:230-231`); la decisión nombra la transición, no la fecha de la remisión | Ídem |
+| S-B | Motivos del 51 y su orden: primero «falta el hito: transición de entrega»; con entrega y sin finalización, «falta el hito: finalización del servicio». Sin fila de entrega **no** se usa `Fecha Remisión de Salida` como sustituto | Es el orden que el cálculo ya tiene (`packages/shared/src/indicadores.ts:230-231` en `42a4828`); la decisión nombra la transición, no la fecha de la remisión | Ídem |
 | S-C | Tabla con huella única y varias respuestas por ticket; vale la última | Un cliente puede contestar dos veces; la huella hace la carga repetible | Cambiar la consulta de lectura |
 | S-D | El fichero identifica el ticket por su **número** (`packages/zoho-sync/src/db/schema.sql:22`) | Es el identificador que una persona puede escribir. Que el formulario lo recoja es **hipótesis** | Sustituir el analizador |
 | S-E | El fichero es un **CSV de exportación de Google Forms**: separador `,` o `;`, BOM tolerado, columnas reconocidas por nombre normalizado con sinónimos, marca de tiempo leída en `America/Bogota` | Es lo que nombra la decisión (`openspec/config.yaml:2858`). **El formato no está en el repositorio y no hay muestra** (`openspec/config.yaml:4102-4103`) | Sustituir sólo el analizador cuando llegue la muestra (P-1) |
