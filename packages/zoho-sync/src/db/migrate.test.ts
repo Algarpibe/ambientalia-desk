@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 44 tablas: 10 de Desk, 31 de la app en public (contrato_ampliaciones, F1B-11; reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 31, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(44)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(44)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(44)
+  it('son 45 tablas: 10 de Desk, 32 de la app en public (encuesta_respuestas, F1F-05; contrato_ampliaciones, F1B-11; reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 32, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(45)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(45)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(45)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato) y las dos de public.encuesta_respuestas (F1F-05, indicadores-51-55)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2 + 2)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -791,11 +791,11 @@ describe('reasignacion-con-motivo · public.reasignaciones (F1B-05, RQ-TZ-20)', 
     expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la QUINTA por el final; el índice, en una sola sentencia, la cuarta; la tercera es la siembra de accesorio_fuera_de_lista (F1B-04); las dos últimas son las de contrato_ampliaciones (F1B-11)', () => {
+  it('el CREATE va calificado con public. y es la SÉPTIMA por el final; el índice, en una sola sentencia, la sexta; la quinta es la siembra de accesorio_fuera_de_lista (F1B-04); las cuatro últimas son las de contrato_ampliaciones (F1B-11) y encuesta_respuestas (F1F-05)', () => {
     const l = limpias()
-    expect(l[l.length - 5]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
+    expect(l[l.length - 7]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
     expect(l.filter((s) => /idx_reasignaciones_ticket/.test(s))).toHaveLength(1)
-    expect(l[l.length - 4]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 3]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
+    expect(l[l.length - 6]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 5]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
     expect(l.filter((s) => /reasignaciones/.test(s)), 'sentencias que mencionan reasignaciones').toHaveLength(2)
   })
 
@@ -819,10 +819,10 @@ describe('reasignacion-con-motivo · public.reasignaciones (F1B-05, RQ-TZ-20)', 
 })
 
 /**
- * ampliacion-contrato (F1B-11, RQ-TC-54) · `public.contrato_ampliaciones` y su índice cierran el esquema. Regla de mutación 2:
+ * ampliacion-contrato (F1B-11, RQ-TC-54) · `public.contrato_ampliaciones` y su índice ya no cierran el esquema (siguen los de encuesta_respuestas, F1F-05). Regla de mutación 2:
  * se ensucia `schema.sql` (sin `public.`, sin un `NOT NULL`), no esta prueba.
  */
-describe('ampliacion-contrato · public.contrato_ampliaciones cierra el esquema (F1B-11, RQ-TC-54)', () => {
+describe('ampliacion-contrato · public.contrato_ampliaciones (F1B-11, RQ-TC-54)', () => {
   const limpias = () => schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
   const insertar = (db: Queryable, c: { contrato?: string; anterior?: string; nueva?: string; motivo?: string; por?: string }) =>
     db.query('INSERT INTO public.contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, motivo, ampliado_por) VALUES ($1, $2, $3, $4, $5)',
@@ -834,10 +834,10 @@ describe('ampliacion-contrato · public.contrato_ampliaciones cierra el esquema 
     expect((await db.query('SELECT * FROM public.contrato_ampliaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la PENÚLTIMA sentencia; el índice, la última; dos sentencias la mencionan', () => {
+  it('el CREATE va calificado con public. y es la CUARTA por el final; el índice, la tercera; dos sentencias la mencionan', () => {
     const l = limpias()
-    expect(l[l.length - 2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
-    expect(l[l.length - 1]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
+    expect(l[l.length - 4]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
+    expect(l[l.length - 3]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
     expect(l.filter((s) => /contrato_ampliaciones/.test(s)), 'sentencias que mencionan contrato_ampliaciones').toHaveLength(2)
   })
 
@@ -854,5 +854,58 @@ describe('ampliacion-contrato · public.contrato_ampliaciones cierra el esquema 
 
   it('PUBLIC_TABLES la contiene', () => {
     expect(PUBLIC_TABLES).toContain('contrato_ampliaciones')
+  })
+})
+
+/**
+ * indicadores-51-55 (F1F-05, RQ-KP-19) · `public.encuesta_respuestas` y su índice cierran el esquema. Regla de mutación 2:
+ * se ensucia `schema.sql` (sin `public.`, sin `UNIQUE`, sin un `NOT NULL`, sin el CHECK), no esta prueba.
+ */
+describe('indicadores-51-55 · public.encuesta_respuestas cierra el esquema (F1F-05, RQ-KP-19)', () => {
+  const limpias = () => schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
+  const SQL = 'INSERT INTO public.encuesta_respuestas (ticket_id, calificacion, respondida_at, huella, cargado_por) VALUES ($1, $2, $3, $4, $5)'
+  const insertar = (db: Queryable, f: { ticket?: string | null; calif?: string | null; at?: string | null; huella?: string | null; por?: string | null } = {}) =>
+    db.query(SQL, [f.ticket === undefined ? 't1' : f.ticket, f.calif === undefined ? 'Excelente' : f.calif, f.at === undefined ? '2027-01-12T13:00:00Z' : f.at,
+      f.huella === undefined ? 'h1' : f.huella, f.por === undefined ? 'ana' : f.por])
+
+  it('la tabla existe tras migrate, en public, y está vacía', async () => {
+    const db = await freshDb()
+    expect((await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name='encuesta_respuestas'")).rows).toHaveLength(1)
+    expect((await db.query('SELECT * FROM public.encuesta_respuestas')).rows).toEqual([])
+  })
+
+  it('el CREATE va calificado con public. y es la PENÚLTIMA sentencia; el índice, la última; dos sentencias la mencionan; trae las siete columnas y no trae canal', () => {
+    const l = limpias()
+    expect(l[l.length - 2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.encuesta_respuestas \(/)
+    expect(l[l.length - 1]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public\.encuesta_respuestas \(ticket_id\)$/)
+    expect(l.filter((s) => /encuesta_respuestas/.test(s)), 'sentencias que mencionan encuesta_respuestas').toHaveLength(2)
+    const crear = l[l.length - 2]
+    for (const col of ['id', 'ticket_id', 'calificacion', 'respondida_at', 'huella', 'cargado_por', 'cargado_at']) expect(crear, `columna ${col}`).toMatch(new RegExp(`\\b${col}\\b`))
+    expect(crear).not.toMatch(/\bcanal\b/)
+  })
+
+  it('la base rechaza ticket_id, calificacion, respondida_at, huella y cargado_por nulos, y una calificacion vacía', async () => {
+    const db = await freshDb()
+    await expect(insertar(db, { ticket: null })).rejects.toThrow()
+    await expect(insertar(db, { calif: null })).rejects.toThrow()
+    await expect(insertar(db, { at: null })).rejects.toThrow()
+    await expect(insertar(db, { huella: null })).rejects.toThrow()
+    await expect(insertar(db, { por: null })).rejects.toThrow()
+    await expect(insertar(db, { calif: '' })).rejects.toThrow()
+    expect((await db.query('SELECT * FROM public.encuesta_respuestas')).rows).toEqual([])
+    await insertar(db)
+    expect((await db.query('SELECT cargado_at FROM public.encuesta_respuestas')).rows[0].cargado_at).toBeInstanceOf(Date)
+  })
+
+  it('un segundo INSERT con la misma huella falla con 23505, y dos filas del mismo ticket con huellas distintas entran', async () => {
+    const db = await freshDb()
+    await insertar(db)
+    await expect(insertar(db, { calif: 'Regular' })).rejects.toMatchObject({ code: '23505' })
+    await insertar(db, { huella: 'h2', calif: 'Regular', at: '2027-01-10T13:00:00Z' })
+    expect((await db.query('SELECT ticket_id FROM public.encuesta_respuestas')).rows).toHaveLength(2)
+  })
+
+  it('PUBLIC_TABLES la contiene', () => {
+    expect(PUBLIC_TABLES).toContain('encuesta_respuestas')
   })
 })

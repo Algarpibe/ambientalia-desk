@@ -92,3 +92,105 @@ Ninguna sobrevivió; no hizo falta añadir pruebas.
 - Decisión «qué entrega cuenta para el 51» (fila 6): `TRANSICIONES_DE_ENTREGA` en `packages/shared/src/indicadores.ts:254` y `hitoEntrega` en `packages/shared/src/indicadores.ts:257`; el uso, en `packages/shared/src/indicadores.ts:133`.
 
 **Medida (casilla 1.19):** `git diff --shortstat --no-renames 4773b23` = 5 ficheros, 171 inserciones y 52 borrados (223), más `wc -l` del fichero nuevo sin trackear `openspec/changes/indicadores-51-55/apply-progress.md` (~94, con esta línea) = **~317 líneas**, bajo el techo de 800 (y bajo los 720 de aviso). Sin binarios. El `git diff` ya incluye las 40 líneas de `tasks.md`.
+
+---
+
+## Lote 2a · Almacén, huella y capa de datos — casillas 2.1 a 2.17 hechas; 2.18 a 2.20 (commit, detector de citas, asentar) las hace el orquestador
+
+Commit de partida del intento: `6fcf7e9` (cabeza de la rama con el lote 1 commiteado). Modo: Strict TDD (vitest). Sin `gentle-ai sdd-attempt`, sin commit, sin push.
+
+### Tamaños (`wc -l`, casillas 2.1 y 2.14)
+
+| Fichero | Antes | Después | Qué cambió |
+|---|---|---|---|
+| `packages/zoho-sync/src/db/schema.sql` | 782 | 796 | **+14 al final** (comentario de cuatro líneas, `CREATE TABLE` en la 787 e índice en la 796); ninguna línea existente se movió |
+| `packages/zoho-sync/src/db/migrate.ts` | 131 | 131 | sólo la línea 73, en sitio (`PUBLIC_TABLES` gana `'encuesta_respuestas'`) |
+| `packages/zoho-sync/src/db/migrate.test.ts` | 858 | 911 | **+53 al final** (bloque nuevo); guardianes editados en sitio (líneas 282-286, 652, 794, 796, 798, 822, 825, 837, 839 y 840) sin cambiar el número de líneas; las 799 y 841 intactas |
+| `apps/desk/server/encuesta/respuesta.ts` | — | 22 | nuevo |
+| `apps/desk/server/encuesta/respuesta.test.ts` | — | 47 | nuevo |
+| `apps/desk/server/db/encuestaRespuestas.ts` | — | 73 | nuevo |
+| `apps/desk/server/db/encuestaRespuestas.test.ts` | — | 148 | nuevo |
+
+Terminadores: todo en CRLF (comprobado contando `\r\n` frente a `\n` con node en los siete ficheros).
+
+### Pruebas añadidas y rojo previo observado (casillas 2.2 a 2.6)
+
+Corrida del rojo: `npx vitest run packages/zoho-sync/src/db/migrate.test.ts apps/desk/server/encuesta/respuesta.test.ts apps/desk/server/db/encuestaRespuestas.test.ts` con las pruebas escritas y los guardianes editados, antes de tocar `schema.sql`: **9 rojas de 64** en `migrate.test.ts` y **dos ficheros que no cargan** (los módulos no existían). Todas por el motivo esperado.
+
+| Prueba | Rojo observado |
+|---|---|
+| Guardián de recuento (`son 45 tablas …`) | `expected [ 10, 31, 3 ] to deeply equal [ 10, 32, 3 ]` |
+| Guardián de posición de F1A-03 (suma `… + 2 + 2`, línea 652) | la suma esperada pasa a tener dos sentencias más que el esquema |
+| `reasignaciones` séptima y sexta por el final (794-798) | `expected 'CREATE UNIQUE INDEX IF NOT EXISTS idx…' to match /^CREATE TABLE IF NOT EXISTS public\.r…/` |
+| `contrato_ampliaciones` cuarta y tercera por el final (837-840) | falla la posición (hoy es penúltima y última) |
+| Bloque nuevo (5 pruebas: tabla existe y vacía; `CREATE` penúltimo e índice último con las siete columnas y sin `canal`; rechazos de nulos y de calificación vacía; `23505` y dos filas del mismo ticket; `PUBLIC_TABLES` la contiene) | la tabla no existe / la sentencia no está / el nombre no está en la lista |
+| `respuesta.test.ts` (8) y `encuestaRespuestas.test.ts` (12) | `Failed to load url ./respuesta` y `./encuestaRespuestas` (los módulos no existían) |
+
+**Guardián de clasificación** (`packages/zoho-sync/src/db/migrate.test.ts:266-275`): con las pruebas editadas pasaba (la tabla aún no estaba en el `.sql`). Se vio **rojo** en el orden del diseño: después de añadir el `CREATE` a `schema.sql` y **antes** de tocar `PUBLIC_TABLES` (4 rojas: clasificación, recuento, el bloque nuevo —con un bug de escritura mío en una expresión regular, ver «Incidencias»— y `PUBLIC_TABLES la contiene`). Al añadir el nombre a `migrate.ts:73`: 64 de 64 verdes.
+
+Resultado verde de los tres ficheros: **84 pruebas pasan**, luego **85** al añadir la prueba de la red `ON CONFLICT` (abajo).
+
+### Hipótesis de pg-mem (casilla 2.11)
+
+1. **`ON CONFLICT (huella) DO NOTHING` sobre un `UNIQUE` que no es clave primaria: pg-mem lo acepta y lo cumple.** Prueba: `apps/desk/server/db/encuestaRespuestas.test.ts`, «la red de la base», un `INSERT` de dos filas con la misma huella deja **una** fila. Además, la mutación M8 (quitar `UNIQUE`) hace que pg-mem **rechace** el `ON CONFLICT (huella)` (11 rojas), lo que confirma que la cláusula depende de la restricción. Respaldo del diseño **no aplicado**.
+2. **`INSERT … VALUES (…),(…)` de varias filas con parámetros: pg-mem lo acepta** (20 filas en un solo `INSERT`, 100 parámetros; y 5 filas en tres bloques con `trozo = 2`). Respaldo **no aplicado**.
+3. **`IN ($1,…)` con marcadores en vez de `= ANY`: funciona** en las dos lecturas (tickets por número y huellas), con el molde de `sla.ts`. Sin tercer camino.
+
+La prueba de la red es **verde de nacimiento** (pasaba con la implementación ya escrita): su valor es documentar las hipótesis 1 y 2, no guiar el código.
+
+### Verde (casillas 2.7 a 2.10, 2.12)
+
+- `schema.sql`: comentario sin punto y coma ni tildes, `CREATE TABLE IF NOT EXISTS public.encuesta_respuestas` (`packages/zoho-sync/src/db/schema.sql:787`, `UNIQUE` de `huella` en la 792) e índice (la 796), literales del diseño §4.
+- `migrate.ts:73`: `'encuesta_respuestas'` detrás de `'contrato_ampliaciones'`; el fichero sigue en 131 líneas.
+- `apps/desk/server/encuesta/respuesta.ts`: `FilaEncuesta`, `FilaRechazada` y `huellaRespuesta` (línea 18).
+- `apps/desk/server/db/encuestaRespuestas.ts`: `MOTIVO_TICKET_INEXISTENTE`, `ResultadoCarga` y `cargarRespuestas` en `enTransaccion`, con `IN` por bloques, huellas presentes leídas antes e `insertadas` contada en memoria; `ON CONFLICT (huella) DO NOTHING` de red. Los pasos 2 y 3 (ticket inexistente y duplicada dentro del fichero) están en `apps/desk/server/db/encuestaRespuestas.ts:41-52`; el 4 (huellas presentes) en `:54-61`; el 5 (`INSERT`) desde `:63`.
+- Con `filas` vacío no abre transacción ni toca la base (la prueba lo exige: sin sentencias).
+
+### Mutaciones (casilla 2.13): todas rojas, restauradas
+
+Cada una se aplicó con un script que sustituye un fragmento único del fichero, corre los tres ficheros de prueba y **restaura el original** desde copia en memoria antes de salir (la restauración se comprobó después: `git status` sólo muestra los ficheros del lote y la corrida completa da `npm test` en 0).
+
+| Mutación | Rojas | La caza |
+|---|---|---|
+| M7 quitar `public.` del `CREATE` (fichero vigilado, regla 2) | 2 | guardián de clasificación (`toda tabla del esquema está clasificada…`) y el `CREATE` calificado del bloque nuevo |
+| M8 quitar `UNIQUE` de `huella` | 11 | el `23505` del bloque nuevo y diez de la capa de datos (pg-mem rechaza el `ON CONFLICT (huella)` sin la restricción) |
+| M9a-e quitar el `NOT NULL` de `ticket_id`, `calificacion`, `respondida_at`, `huella` y `cargado_por` (cinco mutaciones aparte) | 1 cada una | «la base rechaza … nulos» |
+| M9f quitar el `CHECK` de `calificacion` | 1 | la misma prueba (el caso `calificacion` vacía) |
+| M10 mover el bloque nuevo delante del de `contrato_ampliaciones` | 2 | posición de `contrato_ampliaciones` (cuarta y tercera por el final) y posición del bloque nuevo (penúltima y última). Las de `reasignaciones` (794-798) **no** se mueven con esa permutación (`reasignaciones` queda detrás de ambos): el diseño las nombraba de más |
+| M11 quitar `'encuesta_respuestas'` de `PUBLIC_TABLES` | 3 | clasificación, recuento (`32`) y `PUBLIC_TABLES la contiene` |
+| M14a quitar el ticket de la huella | 4 | «cada campo cuenta», la fórmula de la spec y las dos de 20 filas / `trozo = 2` (las huellas colisionan) |
+| M14b quitar la calificación | 3 | «cada campo cuenta», «no pliega mayúsculas» y la fórmula |
+| M14c quitar el instante | 2 | «cada campo cuenta» y la fórmula |
+| M15 meter `cargadoPor` y la fila en la huella | 2 | «no admite en su firma lo que no es contenido» y la fórmula |
+| M23 quitar el filtro de huellas ya presentes | 2 | la recarga (`insertadas` dejaría de ser 0) y la recarga por otra persona |
+| M24 una consulta de ticket por fila | 2 | el recuento de sentencias con 20 filas y el de `trozo = 2` |
+
+Supervivientes: **ninguno**. Dos precisiones: (a) la parte de M15 «la recarga con otro usuario» no se puede mutar en la capa de datos, porque la huella llega ya calculada en la fila y `cargarRespuestas` no la calcula; la caza M15 la hace la prueba de la firma, y la recarga por otra persona queda cubierta por M23; (b) para M9 se mutó cada `NOT NULL` por separado, porque una prueba que enumera los cinco rechazos no distingue cuál sostiene la mutación conjunta.
+
+### Incidencias de escritura (sin efecto en el código final)
+
+- Una expresión regular del bloque nuevo de `migrate.test.ts` (la que comprueba que cada columna está en el `CREATE`, dentro de una plantilla) se escribió con una sola barra invertida, que en una plantilla es el carácter de retroceso; la prueba salió roja por mi escritura, no por el esquema, y se corrigió antes del verde. No cambia el código final.
+
+### Cierre (casillas 2.14 a 2.16)
+
+- `npm test`: código de salida **0** — 256 ficheros pasan y 2 saltados; **4112 pruebas pasan, 7 saltadas** (4119); el lote 1 dejaba 4086, +26 de este lote (5 de `migrate.test.ts`, 8 de `respuesta.test.ts`, 13 de `encuestaRespuestas.test.ts`).
+- `npm run typecheck`: código de salida **0**.
+- `npm run lint`: código de salida **0** — 165 avisos, 0 errores (no sube).
+
+### Barrido de citas, regla de mutación 4 (casilla 2.17)
+
+Barrido de `schema.sql`, `migrate.ts` y `migrate.test.ts` con número de línea sobre todo el worktree (sin `node_modules`, `.git`, `.codegraph` ni `dist`): 1.061 resultados, filtrados por las líneas que tocó el lote.
+
+- **Ninguna línea se desplazó:** `schema.sql` sólo creció al final (las 782 anteriores son idénticas), `migrate.ts` conserva sus 131 líneas y `migrate.test.ts` sólo creció al final. No hay cita viva a un tramo movido.
+- **Cambia de contenido sin moverse:** la línea 73 de `migrate.ts` (las citas de `migrate.ts:70-73` de `openspec/specs/zoho-sync/spec.md:765`, `tickets-core/spec.md:1441`, `remisiones/spec.md:857` y `gases-patron/spec.md:56` apuntan a la lista de `PUBLIC_TABLES`, que sigue ahí: ciertas); y las líneas 282-286, 652, 794-798 y 837-840 de `migrate.test.ts` (las citas de `openspec/changes/archive/` a sus contadores y posiciones son de su momento: caso B/histórico, no se renumeran; `openspec/specs/gases-patron/spec.md:198` ya nombra su revisión `f5255d2`: caso B, no se reescribe).
+- `DEPLOY.md:530` cita la 768 de `schema.sql` (la siembra de `catalogo_novedades`) y `DEPLOY.md:566` la 773 (el `CREATE` de `contrato_ampliaciones`): las dos líneas son las mismas.
+- Las citas a la línea 782 de `schema.sql` (`archive-report.md` y `verify-report.md` de `ampliacion-contrato`) la describen como el índice de `contrato_ampliaciones`: sigue siéndolo; lo que cambia es que ya no es la última del fichero (afirmación histórica, no se toca).
+- Segundo pase de las abreviadas (sin nombre de fichero) en los ficheros que ya citan estos módulos: ninguna habla de las líneas tocadas.
+- Resultado: **sin citas rotas por este lote**. El detector `citas/cli.ts` lo corre el orquestador tras el commit (2.19).
+
+### Regla 13 · líneas reales de este lote (alimenta la tabla de `tasks.md`)
+
+- Fila 3 («qué fila se rechaza»), la parte de la base: `apps/desk/server/db/encuestaRespuestas.ts:41-52` (ticket inexistente y duplicada dentro del fichero) y la comprobación de huellas ya presentes en `apps/desk/server/db/encuestaRespuestas.ts:54-61`.
+- Fila 4 («qué cuenta como duplicado»): `huellaRespuesta` en `apps/desk/server/encuesta/respuesta.ts:18` y la restricción `UNIQUE` de `huella` en `packages/zoho-sync/src/db/schema.sql:792`.
+
+**Medida (casilla 2.16):** `git diff --shortstat --no-renames 6fcf7e9` = 5 ficheros, 200 inserciones y 32 borrados (232; ya incluye las 28 de `tasks.md` y las 101 de este apartado), más `wc -l` de los cuatro ficheros nuevos sin trackear (22 + 47 + 73 + 148 = 290) = **~522 líneas** (~526 con esta línea), bajo el techo de 800 y bajo los 720 de aviso. Sin binarios.
