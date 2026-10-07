@@ -515,7 +515,7 @@ SELECT COUNT(*) FROM public.reasignaciones;
 
 - **Qué se rompe si la tabla falta:** reasignar un ticket falla con `500` (el `INSERT` de la traza va dentro de la transacción y la revierte,
   `apps/desk/server/db/reasignaciones.ts:36`), y el historial de cualquier ticket falla al leerla
-  (`apps/desk/server/db/eventoReasignacion.ts:30`); también el borrado de un usuario, que la consulta para contar usos
+  (`apps/desk/server/db/reasignaciones.ts:45`); también el borrado de un usuario, que la consulta para contar usos
   (`apps/desk/server/db/reasignaciones.ts:51`).
 - **Lo que se verá el día de publicar:** el panel «Reasignar» aparece en el detalle de los tickets para quien tenga el área del estado o sea
   administrador; en un estado sin salida («Finalizado») sólo para un administrador. Los supuestos que Gerencia debe confirmar están en

@@ -359,3 +359,27 @@ describe('barrido HTTP de estados por áreas contra la guarda (RQ-PM-27, RQ-TC-5
     expect((await reasignar(app, await adminCookie(), 't1', { destino: beto.id, motivo: 'cobertura' })).status).toBe(200)
   })
 })
+
+// W-1 del verify (RQ-AV-20): «el aviso se escribe FUERA de la transacción». pg-mem no expone `connect`, así que con él
+// `enTransaccion` ejecuta sin transacción y el orden no se ve (`transaccion.ts:15`). Este pool falso SÍ lo expone y reparte
+// cada sentencia por su origen: `tx` es la conexión de la transacción, `pool` es el pool. Se registran sólo las tres
+// sentencias que importan; BEGIN, COMMIT y ROLLBACK los resuelve el falso, el resto va a la base real.
+describe('el aviso va DESPUÉS del COMMIT y por el pool, no por la transacción (RQ-AV-20)', () => {
+  it('secuencia: tx BEGIN, UPDATE, INSERT de la traza, COMMIT, y sólo entonces el INSERT del aviso por el pool', async () => {
+    const beto = await persona('Beto'); await ticketDe('t1', 9501, null)
+    const orden: string[] = []
+    const rastrear = (origen: string) => async (sql: string, params?: unknown[]) => {
+      const s = sql.trim()
+      const verbo = s.split(/\s+/)[0].toUpperCase()
+      if (verbo === 'BEGIN' || verbo === 'COMMIT' || verbo === 'ROLLBACK') { orden.push(`${origen}:${verbo}`); return { rows: [], rowCount: 0 } }
+      if (/^UPDATE tickets SET derivado_a/.test(s)) orden.push(`${origen}:UPDATE tickets`)
+      else if (/^INSERT INTO reasignaciones/.test(s)) orden.push(`${origen}:INSERT reasignaciones`)
+      else if (/^INSERT INTO avisos/.test(s)) orden.push(`${origen}:INSERT avisos`)
+      return db.query(s, params)
+    }
+    const falso = { query: rastrear('pool'), connect: async () => ({ query: rastrear('tx'), release: () => {} }) } as unknown as Queryable
+    const { app } = appWith({}, falso)
+    expect((await reasignar(app, await adminCookie(), 't1', { destino: beto.id, motivo: 'cobertura' })).status).toBe(200)
+    expect(orden).toEqual(['tx:BEGIN', 'tx:UPDATE tickets', 'tx:INSERT reasignaciones', 'tx:COMMIT', 'pool:INSERT avisos'])
+  })
+})

@@ -141,6 +141,17 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 - [x] 4.14 Medir: `git diff --shortstat --no-renames` contra el commit de 4.1 más `wc -l` de lo nuevo sin trackear (los binarios, si los hubiera, aparte); registrar la cifra. Si pasa de 720, partir según la cabecera.
 - [x] 4.15 Commit del lote 4 y asentar el intento. `docs/sdd/ENTRADA.md` queda sin tocar (comprobar con `git diff --stat`).
 
+## Lote 5 · cierre (remediación del verify)
+
+Hallazgos de `openspec/changes/reasignacion-con-motivo/verify-report.md` (`## Hallazgos`); sólo pruebas y documentos, sin código de producción.
+
+- [x] 5.1 **W-1** Prueba de ruta con un pool falso que SÍ expone `connect` (`apps/desk/server/routes/reasignacion.test.ts`, bloque nuevo al final): registra el orden y afirma `tx:BEGIN, tx:UPDATE tickets, tx:INSERT reasignaciones, tx:COMMIT, pool:INSERT avisos`. Mutación TX roja.
+- [x] 5.2 **W-2** Dos `INSERT` directos que la base rechaza, con `a` nulo y con `reasignado_por` nulo (`packages/zoho-sync/src/db/migrate.test.ts`, final del bloque de `public.reasignaciones`). Mutación S7 roja, quitando cada `NOT NULL` por separado.
+- [x] 5.3 **W-3** Misma comprobación de DD-2 con `de: null` (`apps/desk/server/db/reasignaciones.test.ts`, `describe` de `reasignar`): `status`, `managed_by_app` y `updated_at` iguales. Mutación D6b roja.
+- [x] 5.4 **S-3** Tres imprecisiones de `apply-progress.md` corregidas en sus líneas (cita de `avisoReasignacion.ts`, abreviada rota en prosa, delta de `tickets-core` que SÍ modifica RQ-TC-11).
+- [x] 5.5 **S-5** `docs/runbooks/borrar-tickets-de-prueba.md`: «diez tablas», `DELETE` de `public.reasignaciones` tras `ticket_history` (el orden de `apps/desk/server/db/eliminarTicket.ts:53-54`) y su fila en la comprobación del paso 3. `CreateTicket.tsx` no se toca.
+- [x] 5.6 **S-6** `DEPLOY.md`: «el historial falla al leerla» apunta a la consulta, `apps/desk/server/db/reasignaciones.ts:45`.
+
 ---
 
 ## En el archivo

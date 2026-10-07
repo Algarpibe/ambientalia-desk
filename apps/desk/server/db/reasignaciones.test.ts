@@ -110,6 +110,17 @@ describe('reasignar · la actualización y la traza van juntas (RQ-TC-51, RQ-TZ-
     expect(await reasignar(falso, pedido())).toBe(false)
     expect(calls).toEqual(['BEGIN', 'UPDATE', 'COMMIT'])
   })
+
+  // W-3 del verify: la misma comprobación de DD-2 que la de arriba, por la rama `IS NULL` del UPDATE (otro SQL, otra mutación).
+  it('el UPDATE de origen nulo también sólo toca derivado_a: status, managed_by_app y updated_at quedan como estaban (DD-2)', async () => {
+    await ticket('t1', null, 'En Proceso')
+    const leer = async () => (await db.query('SELECT status, managed_by_app, source, modified_time, updated_at FROM tickets WHERE id = $1', ['t1'])).rows[0]
+    const antes = await leer()
+    expect(antes.managed_by_app).toBe(false)
+    expect(await reasignar(db, pedido({ de: null }))).toBe(true)
+    expect(await derivadoDe()).toBe('beto')
+    expect(await leer()).toEqual(antes)
+  })
 })
 
 describe('reasignacionesDelTicket · lectura ordenada por id', () => {

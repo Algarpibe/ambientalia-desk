@@ -62,7 +62,7 @@ Commit de partida del intento: `289236b`. Modo: strict TDD, rojo visto antes de 
 ### Qué se hizo por tarea
 
 - **2.2** Lectura de `apps/desk/server/db/eliminarTicket.ts` y de lo que lo cubre. Las pruebas que llevaban recuentos de tablas eran DOS, no una: `apps/desk/server/db/eliminarTicket.test.ts` (`LAS_ONCE` en `:20`, las filas de la huella en `:68` y `:118`, la lista en `:93`) y `apps/desk/server/tickets.test.ts:521` (`filas` de la ruta `DELETE`, de 10 a 11), que el diseño no nombraba y que `npm test` destapó en rojo.
-- **2.3 / 2.4** `avisoReasignacion`: `apps/desk/server/services/avisoReasignacion.ts:16` (texto con nombre y motivo) y supresión «a uno mismo» en `apps/desk/server/services/avisoReasignacion.ts:17`. Reutiliza `AvisoNuevo` sin tocar `ticketService.ts`.
+- **2.3 / 2.4** `avisoReasignacion`: `apps/desk/server/services/avisoReasignacion.ts:18` (texto con nombre y motivo) y supresión «a uno mismo» en `apps/desk/server/services/avisoReasignacion.ts:17`. Reutiliza `AvisoNuevo` sin tocar `ticketService.ts`.
 - **2.5 / 2.6** `notificarReasignacion`: `apps/desk/server/services/avisoReasignacion.ts:28`; un solo elemento con `conCopia: true`, `dispararAvisos` en `apps/desk/server/services/avisoReasignacion.ts:38`, sellado sólo si salió y `logger.warn` si no. El administrador que es también destino no recibe dos: lo evita `dispararAvisos`, y una prueba lo fija.
 - **2.7 / 2.8** `usosDeUsuario`: `import` en `apps/desk/server/auth/users.ts:4`, comentario («Tres») en `apps/desk/server/auth/users.ts:128` y la suma en `apps/desk/server/auth/users.ts:139`. Sin cambiar el número de líneas (158).
 - **2.9 / 2.10** S-8: `reasignaciones` sobre la línea de `ticket_history`, `apps/desk/server/db/eliminarTicket.ts:54`, antes de `tickets`; el comentario «Las diez hijas» en `apps/desk/server/db/eliminarTicket.ts:32`. Sin cambiar el número de líneas (189).
@@ -214,8 +214,8 @@ Se barrió TODO el repositorio (incluido `openspec/changes/archive/`) con la rut
 - **Dejan de ser ciertas hoy, y están en specs VIVAS (no se tocan; las corrige la fusión del delta en el archivo):**
   1. `openspec/specs/trazas/spec.md:28` (línea 157 de `historial.ts`, «`[...zoho, ...transiciones, ...remisiones]` ordenado»): esa línea une ahora cuatro fuentes.
   2. `openspec/specs/trazas/spec.md:484` (línea 157 de `historial.ts`, mismo literal de tres fuentes, en la tabla de contraste con el diseño de agosto).
-  3. `openspec/specs/trazas/spec.md:141` (líneas 131-161 de `historial.ts`, «la unión en `:157`»): la ubicación sigue siendo cierta, la frase que la rodea («tres fuentes», sin registro propio) no; la sustituye el delta de RQ-TZ-06. Las de `trazas/spec.md:29` y `:151` (líneas 126-131 y 126-129, «derivada al leer») siguen ciertas.
-  4. `openspec/specs/tickets-core/spec.md:601` (líneas 31-33 de `eliminarTicket.ts`, «nueve tablas hijas más la cabecera»): hoy son diez. El delta de `tickets-core` no modifica ese requisito vivo: **queda desfasada tras el archivo salvo que alguien la corrija**; se anota para el orquestador.
+  3. `openspec/specs/trazas/spec.md:141` (líneas 131-161 de `historial.ts`, «la unión en la línea 157 de `historial.ts`»): la ubicación sigue siendo cierta, la frase que la rodea («tres fuentes», sin registro propio) no; la sustituye el delta de RQ-TZ-06. Las de `trazas/spec.md:29` y `:151` (líneas 126-131 y 126-129, «derivada al leer») siguen ciertas.
+  4. `openspec/specs/tickets-core/spec.md:601` (líneas 31-33 de `eliminarTicket.ts`, «nueve tablas hijas más la cabecera»): hoy son diez. El delta de `tickets-core` SÍ modifica ese requisito vivo (RQ-TC-11, `openspec/changes/reasignacion-con-motivo/specs/tickets-core/spec.md:12-27`: «diez tablas hijas más la cabecera»): el orquestador lo añadió al delta tras el lote 4, así que **tras el archivo la cita deja de estar desfasada** (corregido en el verify, S-3).
   5. Las frases «dos referencias» de `openspec/specs/permissions/spec.md:257-266` (RQ-PM-11): la sustituye el delta de `permissions` en el archivo.
 - **Archivadas (138, no se tocan):** línea 22 de `app.ts` (16), línea 61 (11), `migrate.ts` 70-73 (22), línea 73 (40), 62-73 y 66-73 (3), `migrate.test.ts` en 282-287 y 266-287 (22), línea 283 (3), 648-652 y 652 (3), `TicketDetailView.tsx` líneas 15 (8) y 320 (4), `users.ts` línea 138 (4) y línea 4 (1), `historial.ts` (3), `eliminarTicket.ts` 45-56 (1). Clasificadas B o C por pertenecer a un cambio archivado; no se leyeron una a una.
 - **Segundo pase de las abreviadas (`:NN`):** no se hizo con herramienta; el detector de citas no las bloquea (regla de mutación 4, último guion) y ninguna edición de este lote movió una línea, por lo que ninguna abreviada puede haberse desplazado. Es una hipótesis, no una medición.
@@ -235,3 +235,29 @@ Se barrió TODO el repositorio (incluido `openspec/changes/archive/`) con la rut
 1. 4.11 (`openspec/config.yaml`) no se hizo: ver arriba.
 2. Se corrigió el comentario de `apps/desk/server/db/historial.ts:128` (código del lote 2, no una cita), en la misma línea.
 3. El panel recibe `derivadoActual` como `PersonaLite | null` (como `TransitionPanel`) y no como id, para pintar «a cargo de» sin otra consulta; `actualId` se deriva dentro.
+
+## Cierre — remediación del verify
+
+Intento de cierre sobre el commit de partida `f908907`. Sólo pruebas y documentos; el código de producción queda como estaba (cada mutación se aplicó y se restauró, `git status` limpio de código tras cada una).
+
+### Lo hecho
+
+- **W-1** `apps/desk/server/routes/reasignacion.test.ts:363-385`, bloque «el aviso va DESPUÉS del COMMIT y por el pool»: pool falso con `connect`; registra `tx:` o `pool:` según la conexión y afirma `tx:BEGIN, tx:UPDATE tickets, tx:INSERT reasignaciones, tx:COMMIT, pool:INSERT avisos`.
+- **W-2** `packages/zoho-sync/src/db/migrate.test.ts:812-818`: dos `INSERT` directos que la base rechaza (`a` nulo y `reasignado_por` nulo).
+- **W-3** `apps/desk/server/db/reasignaciones.test.ts:114-123`: la comprobación de DD-2 con `de: null`.
+- **S-3, S-5, S-6**: ver `tasks.md` 5.4 a 5.6. El S-3 corrige este fichero: la cita de `avisoReasignacion.ts` apunta al texto (`:18`), la abreviada del punto 3 de las citas «dejan de ser ciertas» pasa a prosa, y el punto 4 dice que el delta de `tickets-core` SÍ modifica RQ-TC-11 (el orquestador lo añadió tras el lote 4).
+
+### Mutación → prueba roja
+
+| Mutación | Prueba que cae | Mensaje |
+|---|---|---|
+| TX: `notificarReasignacion` dentro de `enTransaccion` en `apps/desk/server/routes/reasignacion.ts` (la firma de `reasignar` no admite el parámetro `despues` del verify; se reproduce envolviendo en la ruta `reasignar(q, …)` y el aviso con la conexión `q`, y quitando la llamada original) | `reasignacion.test.ts` · «secuencia: tx BEGIN, UPDATE, INSERT de la traza, COMMIT, y sólo entonces el INSERT del aviso por el pool» | `+ "tx:INSERT avisos"` donde se esperaba `- "pool:INSERT avisos"`; 1 roja de 35, las otras 34 verdes (como en el verify) |
+| S7a: `a text NOT NULL` → `a text` (`schema.sql:756-764`) | `migrate.test.ts` · «la base rechaza un INSERT directo sin destino…» | la promesa se resuelve en vez de rechazarse; 1 roja de 55 |
+| S7b: `reasignado_por text NOT NULL` → `reasignado_por text` | la misma | ídem; 1 roja de 55 |
+| D6b: `updated_at = now()` en el `UPDATE … IS NULL` de `apps/desk/server/db/reasignaciones.ts:33` | `reasignaciones.test.ts` · «el UPDATE de origen nulo también sólo toca derivado_a…» | `expected { status: 'En Proceso', …(4) } to deeply equal { status: 'En Proceso', …(4) }`; 1 roja de 18 |
+
+### Cifras
+
+- `npm test`: salida 0 · 248 ficheros pasan, 2 saltados · 3.868 pruebas pasan, 7 saltadas.
+- `npm run typecheck`: salida 0. `npm run lint -- --max-warnings 165`: salida 0, 165 avisos y 0 errores.
+- Medida (`git diff --shortstat --no-renames f908907` más `wc -l` de lo nuevo sin trackear): 7 ficheros, 88 inserciones y 5 borrados (93 líneas) y 0 ficheros nuevos sin trackear; sin binarios. Bajo el tope de 800. (Esta línea se escribió después de medir; suma a lo medido unas tres líneas.)

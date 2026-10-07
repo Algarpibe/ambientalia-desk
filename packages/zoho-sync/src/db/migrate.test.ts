@@ -808,4 +808,12 @@ describe('reasignacion-con-motivo · public.reasignaciones cierra el esquema (F1
     expect(r.rows[0].de).toBeNull()
     expect(r.rows[0].reasignado_at).toBeInstanceOf(Date)
   })
+
+  // W-2 del verify (regla de mutación 2: se muta el fichero vigilado). RQ-TZ-20: destino y actor son obligatorios.
+  it('la base rechaza un INSERT directo sin destino (`a` nulo) y otro sin actor (`reasignado_por` nulo)', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1',NULL,'vacaciones','ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1','u2','vacaciones',NULL)")).rejects.toThrow()
+    expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
+  })
 })
