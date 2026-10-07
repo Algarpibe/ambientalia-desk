@@ -194,3 +194,78 @@ Barrido de `schema.sql`, `migrate.ts` y `migrate.test.ts` con número de línea 
 - Fila 4 («qué cuenta como duplicado»): `huellaRespuesta` en `apps/desk/server/encuesta/respuesta.ts:18` y la restricción `UNIQUE` de `huella` en `packages/zoho-sync/src/db/schema.sql:792`.
 
 **Medida (casilla 2.16):** `git diff --shortstat --no-renames 6fcf7e9` = 5 ficheros, 200 inserciones y 32 borrados (232; ya incluye las 28 de `tasks.md` y las 101 de este apartado), más `wc -l` de los cuatro ficheros nuevos sin trackear (22 + 47 + 73 + 148 = 290) = **~522 líneas** (~526 con esta línea), bajo el techo de 800 y bajo los 720 de aviso. Sin binarios.
+
+---
+
+## Lote 2b · Analizador del fichero — casillas 3.1 a 3.15 hechas; 3.16 a 3.18 (commit, detector de citas, asentar) las hace el orquestador
+
+Commit de partida del intento: `879d1d0` (cabeza de la rama con los lotes 1 y 2a commiteados). Modo: Strict TDD (vitest). Sin `gentle-ai sdd-attempt`, sin commit, sin push. Todo el formato es el SUPUESTO S-E; la cabecera del módulo lo dice.
+
+### Tamaños (`wc -l`, casillas 3.1 y 3.12)
+
+| Fichero | Antes | Después | Qué cambió |
+|---|---|---|---|
+| `packages/shared/src/calendarioLaboral.ts` | 204 | 204 | sólo la línea 155, en sitio (`export function instanteDeJornada`); el fichero conserva sus terminadores (LF) |
+| `apps/desk/server/encuesta/analizarRespuestas.ts` | — | 183 | nuevo |
+| `apps/desk/server/encuesta/analizarRespuestas.test.ts` | — | 276 | nuevo (37 pruebas) |
+
+Terminadores: los dos ficheros nuevos en CRLF (comprobado contando `\r\n` frente a `\n`: 183/183 y 276/276). `calendarioLaboral.ts` y `tasks.md` están en LF en esta copia de trabajo y se dejaron como estaban (la edición no cambia el terminador).
+
+### Pruebas añadidas y rojo previo observado (casillas 3.2 a 3.6)
+
+Rojo previo: con la prueba escrita y **antes** de crear el módulo, `npx vitest run apps/desk/server/encuesta/analizarRespuestas.test.ts` dio `Failed to load url ./analizarRespuestas` (el módulo no existía; ningún test llegó a correr), el mismo tipo de rojo que el lote 2a. Las 37 pruebas se agrupan en: formato del texto (8), cabecera (7), filas y motivos (9), marca de tiempo (7), `decodificarFichero` (4) y pureza (2).
+
+Primer verde: 41 de 45 en `apps/desk/server/encuesta` (4 rojas por una causa real, abajo, y por una prueba mal escrita mía: el encabezado de la prueba del BOM llevaba «GMT» y no se reconocía como marca; se reescribió con `"Marca; temporal"`, que además hace que el BOM sea **observable**: sin descartarlo, la comilla no abre y el separador de dentro parte la columna). Resultado final de los dos ficheros: **45 pruebas, todas verdes** (8 de `respuesta.test.ts` y 37 nuevas).
+
+### Hallazgo: `instanteDeJornada` se equivoca un día entero con las horas 0 a 4
+
+Visto en rojo por la prueba «fecha sin hora» (daba `2027-01-11T05:00Z` para el 12/01) y por la propiedad de `diaEnZona` (`2027-01-01 00:00` daba el 31/12). `packages/shared/src/calendarioLaboral.ts:155-166`: aproxima la hora deseada como UTC, la formatea en Bogotá y resta; para las horas 0 a 4 esa lectura cae el día anterior y la diferencia (`:164`) no contempla el cambio de día, así que el instante sale 24 h antes. Hoy nadie lo sufre porque sus llamadores usan 08:00 y 17:00. **Decisión (supuesto reversible):** no se toca la función (la tanda sólo la exporta); el analizador la usa para MEDIR el desplazamiento del día a mediodía (`instanteDeJornada(dia, 12)` menos el mediodía en UTC), donde no hay vuelta, y lo aplica a cualquier hora. Sigue siendo la misma noción de zona del dominio, sin desplazamiento escrito aparte. Queda anotado como hallazgo para quien decida el alcance (es un desvío de `calendarioLaboral.ts`, no de esta tanda).
+
+### Hipótesis 5 (`TextDecoder` con `windows-1252`): resuelta, sin respaldo
+
+La prueba «el TextDecoder del entorno conoce windows-1252» (`0x80, 0xf3` → `€ó`) pasa: el Node de esta máquina lo conoce. El respaldo `latin1` de `Buffer` **está escrito** en `decodificarFichero` (se usa si el constructor lanza) pero **no se ejercita**: no hay forma de probarlo sin simular un entorno sin ICU completo. Hipótesis (de despliegue): el Node del despliegue es el mismo; si no conociera la etiqueta, el respaldo cubre las letras con tilde pero no `€` ni las comillas tipográficas (0x80-0x9F).
+
+### Verde (casillas 3.7 a 3.10)
+
+- `calendarioLaboral.ts:155`: una palabra. El fichero sigue en 204 líneas.
+- `analizarRespuestas.ts`: `MOTIVOS_FILA`, `ERRORES_CABECERA`, `AnalisisEncuesta`, `decodificarFichero`, el lector RFC 4180 (`leerRegistros`), el separador (`elegirSeparador`), las columnas (`COLUMNAS`, `candidatas`), el ticket (`leerTicket`), la marca (`leerMarca`) y `analizarRespuestasEncuesta`.
+- Decisiones de lectura donde el diseño no decía: (a) la fila es el ordinal del registro **contando las líneas en blanco** (la primera de datos es la 2 si la cabecera es el primer registro), para que el número coincida con la posición en el fichero; las blancas no cuentan en `leidas`; (b) ticket `0` es «no reconocible» (entero positivo); (c) un sinónimo exacto gana a la coincidencia por palabra (una columna `Ticket` y otra `Comentario sobre la satisfacción` no son ambiguas); (d) se comprueban primero las que **faltan** y después la ambigüedad; (e) la validez de la fecha se comprueba por ida y vuelta de `Date.UTC` (el mes y el día desbordados cambian el mes), sin comprobar rangos aparte: dos comprobaciones redundantes se quitaron tras verse que su mutación sobrevivía.
+
+### Mutaciones (casilla 3.11): todas rojas, restauradas
+
+Cada una se aplicó con un script que sustituye un fragmento único, corre `analizarRespuestas.test.ts` y restaura el original (comprobado con `cmp`).
+
+| Mutación | Rojas | La caza |
+|---|---|---|
+| M6 calificación antes que el ticket | 1 | «un motivo por fila, en el orden ticket, marca, calificación» |
+| M6b (propia) calificación antes que la marca | 1 | la misma |
+| M25 marca sin zona leída como UTC | 7 | «sin zona es hora de pared de Bogotá», «DD/MM/AAAA», sufijos, «fecha sin hora», la propiedad de `diaEnZona`, la huella y «columnas por nombre» |
+| Mes primero en `DD/MM/AAAA` | 4 | «DD/MM/AAAA: el día va primero», sufijos, «fecha sin hora» y la propiedad |
+| No tolerar el BOM | 1 | «el BOM se descarta antes de leer» |
+| Contar la cabecera como fila 0 | 6 | «una fila mala… la 3», ticket, orden del motivo, marca ausente, fila corta y líneas en blanco |
+| Empate de separadores a favor de `;` | 1 | «empate de separadores: gana la coma» |
+| `p. m.` sin sumar 12 | 1 | «sufijos a. m. / p. m. / AM / PM» |
+| Ticket `0` válido | 1 | «ticket: vacío, no numérico, …» |
+| El sinónimo exacto deja de ganar a la palabra | 1 | «el sinónimo exacto gana a la palabra» |
+| `leidas` cuenta las líneas en blanco | 1 | «una línea en blanco… no cuenta» |
+| Signo de la zona escrita invertido | 1 | «con zona escrita se usa esa zona» |
+| No colapsar los espacios de la calificación | 2 | «comillas…» y «la calificación se guarda recortada» |
+| Aceptar fecha inexistente (quitar la ida y vuelta) | 1 | «ilegible: fecha inexistente…» (con la ida y vuelta quitada también falla «DD/MM/AAAA» por el mes 13) |
+
+Supervivientes: **ninguno**. Dos mutaciones se declararon **equivalentes** y se eliminó el código redundante en vez de añadir pruebas: comparar el día (`getUTCDate`) y comprobar el rango del mes sobraban, porque el desborde de cualquiera de los dos cambia el mes tras `Date.UTC`.
+
+### Cierre (casillas 3.13 y 3.14)
+
+- `npm test`: código de salida **0** — 257 ficheros pasan y 2 saltados; **4149 pruebas pasan, 7 saltadas** (4156); el lote 2a dejaba 4112, +37 de este lote.
+- `npm run typecheck`: código de salida **0**.
+- `npm run lint`: código de salida **0** — 165 avisos, 0 errores (no sube).
+
+### Barrido de citas, regla de mutación 4 (casilla 3.15)
+
+`grep -rnoE "calendarioLaboral(\.test)?\.ts:[0-9]+(-[0-9]+)?"` sobre todo el worktree: 42 resultados. Sólo cambió **una palabra** de la línea 155 y ningún fichero ganó ni perdió líneas, así que no se desplaza ninguna cita. Ninguna cita nombra la línea 155 salvo `design.md:222` de este cambio (la instrucción de la edición, cierta). Las del tramo `:147-149` (`design.md:31`, `tasks.md:121` y `:135`) siguen siendo ciertas: ese tramo no se tocó. Las demás son de paquetes y cambios archivados que apuntan a otras líneas del fichero (13-14, 66, 108, 134-137, 139, 150, 174, 185, 196) que no cambiaron. Segundo pase de las abreviadas (menciones de `instanteDeJornada`): sin citas con número de línea fuera de las ya dichas. Resultado: **sin citas rotas por este lote**.
+
+### Regla 13 · líneas reales de este lote (alimenta la tabla de `tasks.md`)
+
+- Fila 3 («qué fila se rechaza»), la parte del analizador: el orden ticket, marca, calificación está en `apps/desk/server/encuesta/analizarRespuestas.ts:173-179`, fijado por pares de posición en `apps/desk/server/encuesta/analizarRespuestas.test.ts` («un motivo por fila, en el orden…»).
+
+**Medida (casilla 3.14):** `git diff --shortstat --no-renames 879d1d0` = 3 ficheros, 91 inserciones y 16 borrados (107; ya incluye las 15 casillas de `tasks.md` y esta sección de `apply-progress.md`), más `wc -l` de los dos ficheros nuevos sin trackear (183 + 276 = 459) = **566 líneas**, bajo el techo de 800 y bajo los 720 de aviso. Sin binarios.

@@ -152,7 +152,7 @@ const FORMATEADOR_HORA_ZONA_NEGOCIO = new Intl.DateTimeFormat('en-US', {
 })
 
 /** El instante UTC que corresponde a `hora:minuto` del `dia` civil dado, en `ZONA_NEGOCIO`. */
-function instanteDeJornada(dia: DiaCivil, hora: number, minuto = 0): Date {
+export function instanteDeJornada(dia: DiaCivil, hora: number, minuto = 0): Date {
   const [anio, mes, d] = partesDe(dia)
   const aproximado = Date.UTC(anio, mes - 1, d, hora, minuto)
   // `aproximado` trata la hora deseada COMO SI fuera UTC. Formatearla en la zona de negocio enseña
