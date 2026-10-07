@@ -269,3 +269,106 @@ Supervivientes: **ninguno**. Dos mutaciones se declararon **equivalentes** y se 
 - Fila 3 («qué fila se rechaza»), la parte del analizador: el orden ticket, marca, calificación está en `apps/desk/server/encuesta/analizarRespuestas.ts:173-179`, fijado por pares de posición en `apps/desk/server/encuesta/analizarRespuestas.test.ts` («un motivo por fila, en el orden…»).
 
 **Medida (casilla 3.14):** `git diff --shortstat --no-renames 879d1d0` = 3 ficheros, 91 inserciones y 16 borrados (107; ya incluye las 15 casillas de `tasks.md` y esta sección de `apply-progress.md`), más `wc -l` de los dos ficheros nuevos sin trackear (183 + 276 = 459) = **566 líneas**, bajo el techo de 800 y bajo los 720 de aviso. Sin binarios.
+
+---
+
+## Lote 3 · Ruta de carga y cuarta consulta de la lectura — casillas 4.1 a 4.17 hechas; 4.18 a 4.20 (commit, detector de citas, asentar) las hace el orquestador
+
+Commit de partida del intento: `8abf407` (cabeza de la rama con los lotes 1, 2a y 2b commiteados). Modo: Strict TDD (vitest). Sin `gentle-ai sdd-attempt`, sin commit, sin push. Terminadores: los dos ficheros nuevos en CRLF y los editados conservan el CRLF que tenían (`file` los da con CRLF; el índice de git los normaliza a LF por `autocrlf`).
+
+### Tamaños (`wc -l`, casillas 4.1 y 4.14)
+
+| Fichero | Antes | Después | Qué cambió |
+|---|---|---|---|
+| `apps/desk/server/app.ts` | 96 | 96 | sólo las líneas 22 y 61, en sitio (`import` y registro de `registerEncuestaRespuestasRoutes`); **no se insertó ninguna línea** |
+| `apps/desk/server/indicadores.ts` | 93 | 96 | **+3** (la cuarta consulta, líneas 85-87, tras la 84); la línea 76 no se movió; ediciones en sitio en las líneas 5, 43 y 51-55 (el comentario sigue ocupando 51-55) y, ya desplazadas, la 88 (`return`) y la 93 y 95 (comentario y opción) |
+| `apps/desk/server/indicadores.test.ts` | 107 | 183 | ediciones en sitio (líneas 6, 53, 58 y 78) y bloque nuevo al final (+76) |
+| `apps/desk/server/routes/indicadores.test.ts` | 193 | 241 | ediciones en sitio (líneas 13, 183, 186 y 190) y bloque nuevo al final (+48) |
+| `apps/desk/server/routes/encuestaRespuestas.ts` | — | 28 | nuevo |
+| `apps/desk/server/routes/encuestaRespuestas.test.ts` | — | 262 | nuevo (26 pruebas) |
+
+No se tocó `apps/desk/src`, `ticketService.ts`, `remision.ts`, `transitions.ts` ni `bodegaje.ts` (`git status` sólo lista los seis ficheros de arriba más `tasks.md` y este documento).
+
+### Pruebas añadidas y rojo previo observado (casillas 4.2 a 4.6)
+
+Para ver el rojo POR COMPORTAMIENTO y no por «el módulo no carga», se creó antes un esqueleto de `apps/desk/server/routes/encuestaRespuestas.ts` (sólo `MENSAJE_SIN_FICHERO` y un registro vacío). Rojo: `npx vitest run apps/desk/server/routes/encuestaRespuestas.test.ts` dio **26 rojas de 26, todas `expected 404 to be …`** (la ruta no existía; el `/api` de respaldo de `app.ts` dice 404). Rojo de la lectura: `npx vitest run apps/desk/server/indicadores.test.ts apps/desk/server/routes/indicadores.test.ts` dio **8 rojas de 52**:
+
+| Prueba | Rojo observado |
+|---|---|
+| Ruta: las 26 (cuerpo de la carga, escalera con espía, RQ-KP-18) | `expected 404 to be 200/401/403/400/413` |
+| `indicadores.test.ts` · dos respuestas (Regular el 10, Excelente el 12) | `expected { tipo: 'sin_dato', … } to deeply equal { tipo: 'valor', valor: 'Excelente' }` |
+| · se carga primero la más reciente (la reciente con el `id` menor) | la misma |
+| · desempate por `id` (el 9 insertado antes que el 7, misma `respondida_at`) | la misma |
+| · ticket de otro periodo (dentro del margen de un día y lejos) | `TypeError: Cannot read properties of undefined (reading 'keys')` (aún no había `calificaciones`) |
+| · la cuarta consulta se acota por el periodo (mismo `JOIN`, mismos parámetros) | `expected [ …(3) ] to have a length of 4 but got 3` |
+| · veinte tickets, algunos con respuestas: cuatro consultas, todas `SELECT` | `TypeError: … (reading 'size')` |
+| `routes/indicadores.test.ts` · dos respuestas → el 55 vale `Excelente` | `expected { columna: '55', valor: null, … } to match object` |
+| · veinte tickets: cuatro lecturas de datos, en JSON y en CSV | `expected [ …(3) ] to have a length of 4 but got 3` |
+
+**Verdes de nacimiento** (con la implementación vieja ya pasaban; valor de regresión): sin respuesta → «falta el hito: satisfacción del cliente» (dos ficheros), el `GET` no escribe (filas antes y después iguales y toda sentencia `SELECT`) y el ticket fuera del periodo por la ruta. Después del verde quedaron rojas, **por contrato**, las que contaban tres: se editaron **en sitio y después** (casilla 4.10): `indicadores.test.ts:6`, `:53` («cuatro»), `:58` (`toHaveLength(4)`) y `:78` (el doble devuelve `[]` también a la consulta que nombra `encuesta_respuestas`); `routes/indicadores.test.ts:13` (la expresión `DATOS` gana `encuesta_respuestas`: la consulta nueva dice `JOIN tickets`, no `FROM tickets`), `:183` (`toBeGreaterThan(4)`), `:186` y `:190` (cuatro lecturas).
+
+### Hipótesis (casillas 4.3, 4.5 y 4.11)
+
+3. **Orden de filas empatadas en pg-mem: CONFIRMADA.** Con el `id` 9 insertado antes que el 7 y la misma `respondida_at`, pg-mem devuelve las empatadas en orden de inserción; quitar `e.id` del `ORDER BY` (M17) pone rojo el desempate. El respaldo del diseño **no hizo falta**.
+4. **Fichero de cero bytes: llega como `req.file` con tamaño 0**, no como fichero ausente. Lo demuestra M4a: quitar la guarda `!req.file` sólo pone roja la prueba «sin fichero» y la de cero bytes sigue verde, así que ésta no pasa por esa rama. La respuesta es `400` con `{ error }` (la del analizador).
+8. **Falla lo previsto, y el diseño no escribió respaldo:** con el fichero de más de 10 MB, el `401` y el `403` del servidor (que no lee el cuerpo) cierran el socket y **supertest da `ECONNRESET`** en vez de entregar la respuesta (dos pruebas rojas al primer verde). Se resolvió con un auxiliar de la prueba, `estadoSobreElLimite` (`apps/desk/server/routes/encuestaRespuestas.test.ts`), que hace el `POST` multipart con `node:http` y se queda con el estado de la respuesta, ignorando el error de socket que llega DESPUÉS de haberla recibido. Los ficheros pequeños y el `413` del administrador (que el servidor sí lee) pasan por supertest. Supuesto reversible, anotado: el 401/403 con fichero grande se prueba por `node:http`.
+
+### Verde (casillas 4.7 a 4.9, 4.11)
+
+- `apps/desk/server/routes/encuestaRespuestas.ts`: `requireAuth(db)` → `requireAdmin` → `subida.single('file')` → manejador, en una sola línea (la 19); el manejador comprueba `!req.file`, luego el analizador y luego `cargarRespuestas(db, a.filas, req.user!.name)`; `rechazadas` es la unión de las del analizador y las de la capa de datos, ordenada por `fila`; del cuerpo no se lee nada.
+- `apps/desk/server/app.ts`: la línea 22 gana al final el `import` y la 61 gana `; registerEncuestaRespuestasRoutes(app, { db })`. Sigue en 96 líneas. Sin interruptor: `.env.example` no cambia.
+- `apps/desk/server/indicadores.ts`: la cuarta consulta (líneas 85-87) con el mismo `JOIN` y `donde` que la del historial, `vistos.has` y `ORDER BY e.respondida_at, e.id`; `EntradasIndicadores` gana `calificaciones` y `tablaIndicadores` pasa `calificacionSatisfaccion: e.calificaciones.get(t.id) ?? null`. El comentario de la antigua línea 90 (hoy la 93) ya no dice que el 55 queda sin dato.
+- Resultado: `npx vitest run apps/desk/server/routes apps/desk/server/indicadores.test.ts apps/desk/server/encuesta apps/desk/server/db` dio **51 ficheros y 822 pruebas, todas verdes**.
+
+### Mutaciones (casilla 4.13): todas rojas salvo una declarada equivalente; restauradas
+
+Cada una se aplicó con un script que sustituye un fragmento único, corre los tres ficheros de prueba y restaura el original desde copia en memoria antes de salir.
+
+| Mutación | Rojas | La caza |
+|---|---|---|
+| M1 `subida.single` delante de `requireAdmin` | 2 | los pares «403 ↔ multer» (fichero en `intruso`) y «403 ↔ 413» |
+| M2 `subida.single` delante de `requireAuth` | 4 | los pares «401 ↔ multer» y «401 ↔ 413», y los dos de 403 (multer también corre antes de la sesión) |
+| M3 `requireAdmin` delante de `requireAuth` | 20 | todas las de 401 (daría `403`) y las de la carga (sin `req.user` ni administrador) |
+| M4a quitar la guarda `!req.file` | 1 | «administrador sin fichero: 400 con MENSAJE_SIN_FICHERO» |
+| M4b quitar la guarda `!a.ok` | 3 | cero bytes, cabecera irreconocible y «el fichero malo gana a la carga» |
+| M16 `ORDER BY … DESC` (toma la primera) | 3 | «dos respuestas» y «se carga primero la más reciente», y la de la ruta |
+| M17 quitar `e.id` del `ORDER BY` | 1 | «desempate por id» con inserción en orden inverso |
+| M18a quitar `if (vistos.has(id))` | 1 | «la respuesta de un ticket de otro periodo» (el ticket `borde`, dentro del margen de un día, entra en `calificaciones`) |
+| M18b quitar el `JOIN` con el periodo (y los parámetros) | 1 | «la cuarta consulta se acota por el periodo» (texto del `JOIN` y parámetros iguales a los del historial) |
+| M26 `cargado_por` leído del cuerpo | 1 | «el actor sale de la sesión» |
+
+- **M4c (cargar ANTES de comprobar `!req.file` o `!a.ok`): equivalente, no cazable por el espía.** Con un fichero ausente o rechazado no hay filas que cargar: `cargarRespuestas` con `filas` vacío no toca la base (`apps/desk/server/db/encuestaRespuestas.ts:32`), así que el orden entre la carga y esas dos guardas no deja rastro. Lo que sí protegen las pruebas son las guardas mismas (M4a y M4b) y que el fichero malo acabe en `400` y no en `500`. El diseño preveía que el espía viera la tabla; no la ve, porque no hay filas.
+- **M18b: el `JOIN` solo no se distingue por la salida**, porque `vistos.has` recorta igual; por eso la prueba compara el texto de la consulta y los parámetros. Es una prueba de forma, declarada como tal: la propiedad que protege (no traer de la base respuestas de todo el histórico) no se puede observar con pg-mem.
+- Supervivientes reales: **ninguno**.
+
+### Cierre (casillas 4.14 a 4.16)
+
+- `npm test`: código de salida **0**, 258 ficheros pasan y 2 saltados; **4187 pruebas pasan, 7 saltadas** (4194); el lote 2b dejaba 4149, +38 de este lote.
+- `npm run typecheck`: código de salida **0** (la primera pasada dio 2 errores de tipo en la prueba nueva, porque `sinPeriodo` infiere `null`; corregidos con el tipo del parámetro).
+- `npm run lint`: código de salida **0**, 165 avisos y 0 errores (no sube).
+- `grep` de `DELETE FROM` o `UPDATE` sobre `encuesta_respuestas` en `apps/` y `packages/` fuera de pruebas: **sin resultados** (RQ-KP-18).
+
+### Barrido de citas, regla de mutación 4 (casilla 4.17)
+
+`grep -rnoE` de `server/indicadores.ts:NN`, `server/app.ts:NN`, `routes/indicadores.ts:NN`, `routes/indicadores.test.ts:NN` y `server/indicadores.test.ts:NN` sobre todo el worktree (sin `node_modules`, `.git`, `.codegraph` ni `dist`).
+
+- **`apps/desk/server/app.ts`:** ninguna línea se movió (sigue en 96). Las citas a `:22` y `:61` (decenas, en `openspec/changes/archive/` y `docs/sdd/Paquete_de_Despliegue_*`) hablan de la línea de importación y de la de registro de rutas, que siguen siendo esas; las demás (`:38`, `:56`, `:57`, `:59`, `:73`, `:78`, `:79`, `:84-89`) caen antes o después sin moverse.
+- **`apps/desk/server/indicadores.ts`:** la cita viva `apps/desk/server/migracionMarcadorLectores.test.ts:54` a la línea 76 sigue siendo la consulta del historial (**cierta**); las de `:77` y `:82` también. Se desplazan sólo las posteriores a la 84. Las citas a `:90` y `:92` de `openspec/changes/indicadores-51-55/exploration.md:25` y `:28`, de `design.md:82`, `:292` y `:293` y la del lote 1 (`apply-progress.md:49`) describen el estado de PARTIDA (la 90 era el comentario de `tablaIndicadores`, hoy la 93; la 92, su `return`, hoy la 95): **caso B** dentro del propio cambio, no se renumeran. Las de `docs/sdd/Paquete_de_Despliegue_2026-10-04.md:586` y `:643` y `…04b.md:864` y `:978`: el `:51-55` (el comentario de la función) y `:61`/`:69` siguen ciertas; **`:56-86` ya no cierra donde cierra la función** (hoy `:56-89`): son paquetes fechados, **caso B**, no se tocan aquí.
+- **Pruebas:** las citas a `routes/indicadores.test.ts:26`, `:39` y `:176` y a `indicadores.test.ts:53` (todas de `openspec/changes/archive/2026-10-03-continuidad-indicadores/`) son del archivo y de su momento (**caso B**); las líneas editadas en sitio no se movieron. `routes/indicadores.ts` no se tocó y sus citas (`:41`, `:41-54`, `:42`) siguen ciertas.
+- Segundo pase de las abreviadas (sin nombre de fichero): sin citas con número de línea a las líneas desplazadas en los ficheros que ya citan estos módulos.
+- Resultado: **sin citas rotas por este lote** más allá de los casos B dichos. El detector `citas/cli.ts` lo corre el orquestador tras el commit (4.19).
+
+### Regla 13 · líneas reales de este lote (alimenta la tabla de `tasks.md`, casilla 4.12)
+
+| # | Decisión | Dónde la impone el servidor (leído del fichero ya editado) |
+|---|---|---|
+| 1 | Quién puede cargar | `apps/desk/server/routes/encuestaRespuestas.ts:19` (`requireAuth(db)` y `requireAdmin`, en esa línea y en ese orden) |
+| 2 | Qué fichero se rechaza entero | `apps/desk/server/routes/encuestaRespuestas.ts:20` (`!req.file`) y `:22` (analizador no `ok`; el análisis es la 21); el multer va en la misma línea 19, detrás de las dos guardas |
+| 3 | Qué fila se rechaza | `apps/desk/server/encuesta/analizarRespuestas.ts:173-179` (ticket, marca, calificación) y, en la base, `apps/desk/server/db/encuestaRespuestas.ts:48` (ticket inexistente; pasos 2 y 3 en `:41-52`); la llamada, `apps/desk/server/routes/encuestaRespuestas.ts:24` |
+| 4 | Qué cuenta como duplicado | `apps/desk/server/encuesta/respuesta.ts:18` (`huellaRespuesta`) y la restricción `UNIQUE` en `packages/zoho-sync/src/db/schema.sql:792` (más la lectura de huellas presentes en `apps/desk/server/db/encuestaRespuestas.ts:54-61`) |
+| 5 | Cuál respuesta vale | `apps/desk/server/indicadores.ts:85` (la consulta ordenada por `respondida_at, id`) y `:87` (el bucle que se queda con la última de los tickets del periodo) |
+| 6 | Qué entrega cuenta para el 51 | `packages/shared/src/indicadores.ts:254` (`TRANSICIONES_DE_ENTREGA`) y `:257` (`hitoEntrega`) |
+
+Decisiones del cliente en esta tanda: ninguna (no se tocó `apps/desk/src`).
+
+**Medida (casilla 4.16):** `git diff --shortstat --no-renames 8abf407` = 6 ficheros, 264 inserciones y 34 borrados (298; ya incluye las 17 casillas de `tasks.md` y esta sección), más `wc -l` de los dos ficheros nuevos sin trackear (28 + 262 = 290) = **~588 líneas** (~590 con esta línea), bajo el techo de 800 y bajo los 720 de aviso. Sin binarios. `tasks.md` está en LF en esta copia de trabajo y se dejó así; el resto de lo editado conserva su CRLF.
