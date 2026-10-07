@@ -365,3 +365,10 @@ describe('topeAmpliacion · independiente de la zona del proceso (M10)', () => {
     try { expect(topeAmpliacion('2026-01-01')).toBe('2026-12-31') } finally { if (previa === undefined) delete process.env.TZ; else process.env.TZ = previa }
   })
 })
+
+describe('ampliacionDelCuerpo · la fecha sale normalizada (S19)', () => {
+  it('con la fecha rodeada de espacios devuelve el día sin espacios', () => {
+    expect(ampliacionDelCuerpo({ fechaFin: ' 2026-09-30 ', motivo: 'm' }, { fechaFin: '2026-06-30' }, '2026-07-02'))
+      .toEqual({ ok: true, fechaFin: '2026-09-30', motivo: 'm' })
+  })
+})

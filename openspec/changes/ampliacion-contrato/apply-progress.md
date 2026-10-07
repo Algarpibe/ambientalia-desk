@@ -118,3 +118,22 @@ Dos matices SIN guarda propia, declarados: (a) `puedeAmpliar` usa `hoyEnZona()` 
 
 **Barrido (5.11).** Sólo `ContratoFicha.tsx` tiene inserciones en medio; `client.ts`, `DEPLOY.md`, la corrección y el paquete crecen al final, y `ContratosPanel.tsx` cambió una línea en sitio. Nueve citas completas a `ContratoFicha.tsx` en todo el repositorio: tres en el propio cambio (`design.md` reapuntada a la línea 21, caso A; `proposal.md` anclada a `351c046`, caso B; más la de `client.ts` de `design.md`, anclada también) y seis líneas de paquetes fechados, que no se editan (caso B). Las abreviadas de esas líneas: la 41 hoy es la 51, la 66 la 94, la 5 la 7, la 47 la 57, la 58 la 86 y la 10 la 12. Detalle completo en el informe del lote.
 `wc -l` contra 5.1: `client.ts` 878 → 885, `DEPLOY.md` 560 → 593, corrección 1560 → 1601, paquete 357 → 441; sólo crecieron al final. `git diff --stat 351c046`: ni `docs/sdd/ENTRADA.md`, ni `openspec/config.yaml`, ni el plan R01.4 (5.12).
+
+## Remediación del verify
+
+Sólo pruebas, sobre `b85990c`; producción intacta. Cada mutación se aplicó, se vio la prueba en rojo y se restauró con `git checkout -- <fichero>`.
+
+| Prueba nueva (al final de su fichero) | Mutación que caza | Rojo visto |
+|---|---|---|
+| `contratosAmpliar.test.ts` · W-1 motivo largo entero | D18 (`db/contratos.ts:139`, `slice(0, 200)`) | sí |
+| ídem W-1 | Q17 (`schema.sql:778`, `motivo varchar(100)`) | sí |
+| `contratosAmpliar.test.ts` · W-2 `hoy`/`contratoId`/`id` del cuerpo | R21 (`routes/contratos.ts:80`, `req.body?.hoy`) | sí |
+| ídem W-2 | R23 (`routes/contratos.ts:83`, `req.body?.contratoId`) | sí |
+| `contratosAmpliar.test.ts` · RQ-TC-53 200/200/422 por la ruta | (escenario de la spec; sin mutación propia en la tabla) | n/a |
+| `shared/contratos.test.ts` · fecha con espacios normalizada | S19 (`contratos.ts:289`, `as string`) | sí |
+| `db/contratos.test.ts` · D13 motivo nulo servido como null | D13 (`db/contratos.ts:154`, `String(f.motivo ?? '')`) | sí |
+| `db/contratos.test.ts` · Q18 texto no fecha rechazado | Q18 (`schema.sql:776`, `fecha_anterior text`; y `fecha_nueva text`) | sí, las dos |
+
+Límite: pg-mem sí distingue `date` de `text` (rechaza `'no-es-fecha'`, con un aviso de moment en stderr); no hizo falta `migrate.test.ts`.
+Documental: `Paquete_de_Despliegue_2026-10-06.md` §13, tres líneas en sitio (cita al `setError` `:130`, cita `routes/contratos.ts:83`, comprobación declarada del `git grep`).
+Ninguna mutación sigue sobreviviendo.

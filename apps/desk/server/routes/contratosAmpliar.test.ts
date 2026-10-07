@@ -207,3 +207,45 @@ describe('GET /api/contratos/:id · lectura ampliada', () => {
     expect((await request(appWith().app).get(`/api/contratos/${c.id}`)).status).toBe(401)
   })
 })
+
+describe('remediación del verify · motivo entero, campos extra ignorados y tope fijo', () => {
+  it('W-1: el motivo largo llega ENTERO a la base y a la ficha, recortado sólo en los extremos', async () => {
+    const c = await contrato()
+    const largo = 'Prórroga '.repeat(900).trim()
+    const cookie = await comercial()
+    const res = await ampliar(appHoy(HOY), c.id, cookie, { ...OK, motivo: `  ${largo}  ` })
+    expect(res.status).toBe(200)
+    expect(largo.length).toBeGreaterThan(5000)
+    expect((await trazas())[0].motivo).toBe(largo)
+    const ficha = await request(appWith().app).get(`/api/contratos/${c.id}`).set('Cookie', cookie)
+    expect(ficha.body.ampliaciones[0].motivo).toBe(largo)
+  })
+
+  it('W-2: `hoy`, `contratoId` e `id` del cuerpo se ignoran: se amplía el contrato de la URL con el reloj inyectado', async () => {
+    const c = await contrato()
+    const otro = await crearContrato(db, { clientId: 'C-1', lote: 'OV-2031-009', fechaInicio: '2031-01-01', fechaFin: VIGENTE, creadoPor: 'previo' })
+    // Con el `hoy` inyectado (2031-07-15) el plazo está abierto; con el del cuerpo (2032-06-01) estaría cerrado.
+    const res = await ampliar(appHoy(HOY), c.id, await comercial(), { ...OK, hoy: '2032-06-01', contratoId: otro.id, id: otro.id })
+    expect(res.status).toBe(200)
+    expect(await fechaDe(c.id)).toBe('2031-09-30')
+    expect(await fechaDe(otro.id)).toBe(VIGENTE)
+    const filas = await trazas()
+    expect(filas).toHaveLength(1)
+    expect(Number(filas[0].contrato_id)).toBe(c.id)
+  })
+
+  it('RQ-TC-53 por la ruta: varias veces, el tope no se mueve (200, 200, 422 «pasa del tope»)', async () => {
+    const c = await crearContrato(db, { clientId: 'C-1', lote: 'OV-2026-003', fechaInicio: '2026-01-01', fechaFin: '2026-03-31', creadoPor: 'previo' })
+    const cookie = await comercial()
+    const app = appHoy('2026-04-01')
+    expect((await ampliar(app, c.id, cookie, { fechaFin: '2026-06-30', motivo: 'uno' })).status).toBe(200)
+    expect((await ampliar(app, c.id, cookie, { fechaFin: '2026-12-31', motivo: 'dos' })).status).toBe(200)
+    const tercera = await ampliar(app, c.id, cookie, { fechaFin: '2027-01-01', motivo: 'tres' })
+    expect(tercera.status).toBe(422)
+    expect(tercera.body.error).toBe(MENSAJES_AMPLIACION.pasaDelTope)
+    expect(await fechaDe(c.id)).toBe('2026-12-31')
+    const ficha = await request(appWith().app).get(`/api/contratos/${c.id}`).set('Cookie', cookie)
+    expect(ficha.body.fechaFinOriginal).toBe('2026-03-31')
+    expect(await trazas()).toHaveLength(2)
+  })
+})

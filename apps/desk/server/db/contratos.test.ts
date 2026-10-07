@@ -242,3 +242,18 @@ describe('ampliarContrato · fecha vigente y traza', () => {
     expect(calls).toEqual(['tx:BEGIN', 'tx:UPDATE', 'tx:INSERT', 'tx:COMMIT'])
   })
 })
+
+describe('remediación del verify · lector del motivo nulo y tipo de las columnas de fecha', () => {
+  it('D13: una ampliación con motivo nulo se SIRVE con motivo null, no con cadena vacía', async () => {
+    const c = await crearContrato(db, { ...alta, fechaInicio: '2031-01-01', fechaFin: '2031-06-30' })
+    await ampliarContrato(db, { contratoId: c.id, fechaAnterior: '2031-06-30', fechaNueva: '2031-09-30', motivo: null, ampliadoPor: 'Ana' })
+    expect((await ampliacionesDelContrato(db, c.id))[0]!.motivo).toBeNull()
+  })
+
+  it('Q18: fecha_anterior y fecha_nueva son de tipo fecha: un texto que no es fecha se rechaza', async () => {
+    const insertar = (col: 'fecha_anterior' | 'fecha_nueva', v: string) => db.query(
+      `INSERT INTO contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, ampliado_por) VALUES (1, ${col === 'fecha_anterior' ? '$1' : "'2031-06-30'"}, ${col === 'fecha_nueva' ? '$1' : "'2031-06-30'"}, 'x')`, [v])
+    await expect(insertar('fecha_anterior', 'no-es-fecha')).rejects.toThrow()
+    await expect(insertar('fecha_nueva', 'no-es-fecha')).rejects.toThrow()
+  })
+})

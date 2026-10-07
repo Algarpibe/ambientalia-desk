@@ -368,15 +368,15 @@ comprobación de lectura tras desplegar está en `DEPLOY.md`, apartado «Comprob
   comodidad del cliente (`packages/shared/src/contratos.ts:275`).
 - **La ruta y su escalera.** `POST /api/contratos/:id/ampliar` (`apps/desk/server/routes/contratos.ts:74`): contrato inexistente `404`
   (`apps/desk/server/routes/contratos.ts:78`), sin el área Comercial `403` (`apps/desk/server/routes/contratos.ts:79`), contenido `422`
-  (`apps/desk/server/routes/contratos.ts:81`) y carrera `409` (`apps/desk/server/routes/contratos.ts:87`). Quien amplía es el de la sesión, nunca el del cuerpo.
+  (`apps/desk/server/routes/contratos.ts:81`) y carrera `409` (`apps/desk/server/routes/contratos.ts:87`). Quien amplía es el de la sesión (`apps/desk/server/routes/contratos.ts:83`), nunca el del cuerpo.
 - **La traza.** Una tabla nueva, `public.contrato_ampliaciones` (`packages/zoho-sync/src/db/schema.sql:773`), que `migrate` crea al arrancar y que nace vacía. El
   `UPDATE` de la fecha va condicionado a la fecha que leyó la ruta (`apps/desk/server/db/contratos.ts:133`) y la fila de traza se escribe en la misma
-  transacción (`apps/desk/server/db/contratos.ts:138`). No hay `DELETE` ni `UPDATE` sobre la tabla.
+  transacción (`apps/desk/server/db/contratos.ts:138`). Comprobación declarada: `git grep` sobre el repositorio no encuentra ninguna sentencia que borre o modifique filas de esa tabla.
 - **La lectura ampliada.** `GET /api/contratos/:id` sirve además `ampliaciones` y `fechaFinOriginal` (`apps/desk/server/routes/contratos.ts:33`); sin
   ampliaciones, la original es la vigente.
 - **La ficha.** Enseña «Vencimiento original» cuando difiere (`apps/desk/src/components/ContratoFicha.tsx:61`), el botón «Ampliar» a Comercial y
   administradores si queda sitio (`apps/desk/src/components/ContratoFicha.tsx:65`) y la lista de ampliaciones (`apps/desk/src/components/ContratoFicha.tsx:71`).
-  El formulario no valida nada y enseña el error del servidor tal cual (`apps/desk/src/components/ContratoFicha.tsx:118`).
+  El formulario no valida nada y enseña el error del servidor tal cual (`apps/desk/src/components/ContratoFicha.tsx:130`).
 - **Las tres puertas no cambian.** Las guardas de contrato vencido del alta, de la transición y de la remisión leen la fecha de fin vigente: una ampliación
   las desbloquea hasta la fecha nueva y vuelven a bloquear al pasarla. Lo fija `apps/desk/server/ampliacionContratoPuertas.test.ts`.
 
