@@ -434,3 +434,20 @@ Segundo pase (formas abreviadas, sin nombre de fichero) en los ficheros que ya c
 Códigos de salida MIRADOS: `npm test` **0** (258 ficheros pasan, 2 saltados; 4.187 pruebas pasan, 7 saltadas); `npm run typecheck` **0**; `npm run lint` **0** (165 avisos, 0 errores).
 
 **Medida (casilla 5.11):** `git diff --shortstat --no-renames cf004c4` = 11 ficheros, 247 inserciones y 74 borrados (**321**, y ya incluye esta sección y las 53+ anclas, que son sustituciones de una línea), más `wc -l` de lo nuevo sin trackear: **0** ficheros. Total **~321 líneas**, bajo el techo de 800 y bajo los 720 de aviso. Sin binarios.
+
+## Remediación del verify — W-1 a W-4 (sólo pruebas y documentación; sin código de producción)
+
+Cabeza de partida `8406926`. No se toca `apps/desk/server/encuesta/analizarRespuestas.ts` (`git status --short` no lo muestra).
+
+**Pruebas añadidas** (`apps/desk/server/encuesta/analizarRespuestas.test.ts`; sigue en 37 pruebas, se amplían dos existentes):
+- **W-1**, en «un motivo por fila, en el orden ticket, marca, calificación»: la fila `,abc,Bien` (ticket no numérico y marca VACÍA) espera `ticketNoNumerico` y la fila `,,Bien` (sin ticket y marca vacía) espera `sinTicket`.
+- **W-2**, en «ilegible…»: se añade `2027-01-12 24:00` a la lista, esperando `marcaIlegible`. Con el código actual sin mutar ya es verde (el código rechaza la hora 24: no es defecto de producción, era una prueba que faltaba).
+
+**Mutaciones reproducidas** (cada una restaurada con `git checkout -- apps/desk/server/encuesta/analizarRespuestas.ts`):
+- **W-1:** anteponer a la lectura del ticket una guarda «marca vacía → `sinMarca`». Con las pruebas de antes: 37 de 37 verdes (superviviente confirmada). Con las nuevas: **ROJA**, 1 fallo en «un motivo por fila…» (36 de 37).
+- **W-2:** `hora > 23` pasa a `hora > 24`. **ROJA**: `2027-01-12 24:00: expected undefined to be 'la marca de tiempo no es una fecha le…'` en «ilegible…» (36 de 37).
+
+**Cierres documentales:**
+- **W-3:** las cuatro citas de `packages/shared/src/indicadores.test.ts` de `design.md:90` (`:100-126`, `:106-111`, `:112-114`, `:115-125`) se comprobaron con `git show 42a4828:…`: en `42a4828` son el describe «51 y 55: sin dato salvo entrada opcional» (`:100`), su `it.each` (`:106-111`), «con la hora y sin finalización» (`:112-114`) y las del 55 (`:115-125`). La frase habla del estado de partida (caso B): cada una lleva ahora «en `42a4828`» en la misma línea física.
+- **W-4:** marcadas 1.21-1.23, 2.18-2.20, 3.16-3.18, 4.18-4.20 y 5.10-5.14 de `tasks.md` (commits `6fcf7e9`, `879d1d0`, `8abf407`, `cf004c4`, `e365c68` comprobados con `git log`). Nota junto a 4.19: el detector tras el commit del lote 3 salió con código 1 (cinco citas desplazadas) y el asiento se hizo sin mirarlo; lo corrigió el lote 4 (`e365c68`), cuyo detector sí sale con 0. El asiento de los lotes lo hace el orquestador; la casilla refleja lo que éste declaró.
+- `verify-report.md` no se edita (foto de su momento).

@@ -75,9 +75,9 @@ Dependencias: L1 independiente; L2a independiente de L1; L2b depende de L2a sól
 - [x] 1.18 **Cierre, códigos de salida 1 a 3:** `npm test`, `npm run typecheck` y `npm run lint` (165 avisos, 0 errores); los tres con código de salida MIRADO.
 - [x] 1.19 Medir: `git diff --shortstat --no-renames` contra el commit de 1.1 más `wc -l` de lo nuevo sin trackear (nada: los cuatro ficheros ya existían); registrar la cifra. Si pasa de 800, parar y partir.
 - [x] 1.20 **Barrido de citas, regla de mutación 4,** para `packages/shared/src/indicadores.ts`, `packages/shared/src/indicadores.test.ts`, `apps/desk/server/indicadores.ts` y `apps/desk/server/indicadores.test.ts`: `grep -rnoE "indicadores\.(test\.)?ts:[0-9]+(-[0-9]+)?"` sobre todo el repositorio (incluidos `apps/`, `openspec/changes/archive/` y `openspec/specs/`), CADA resultado leído contra el fichero y contra lo que la frase afirma (rangos por los dos extremos). Vigilar: la línea 134 de `packages/shared/src/indicadores.ts` (citada por `apps/desk/server/migracionMarcadorLectores.test.ts:58` y `docs/sdd/ENTRADA.md:2078`) no se mueve ni cambia; la línea 76 de `apps/desk/server/indicadores.ts` (`apps/desk/server/migracionMarcadorLectores.test.ts:54`) tampoco. Las citas de `openspec/config.yaml:4096-4107` a `indicadores.ts:88-89` y `:58` describen el estado de partida: caso B, se tratan en L4. Segundo pase de las abreviadas.
-- [ ] 1.21 Commit del lote 1 (conventional commit, sin atribución de IA; por ejemplo `feat(kpis): el 51 sale de la transicion de entrega (F1F-05, L1)`).
-- [ ] 1.22 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
-- [ ] 1.23 Asentar el intento.
+- [x] 1.21 Commit del lote 1 (conventional commit, sin atribución de IA; por ejemplo `feat(kpis): el 51 sale de la transicion de entrega (F1F-05, L1)`).
+- [x] 1.22 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
+- [x] 1.23 Asentar el intento.
 
 ---
 
@@ -105,9 +105,9 @@ Dependencias: L1 independiente; L2a independiente de L1; L2b depende de L2a sól
 - [x] 2.15 **Cierre, códigos de salida 1 a 3:** `npm test`, `npm run typecheck` y `npm run lint` (165 avisos, 0 errores); los tres con código de salida MIRADO.
 - [x] 2.16 Medir: `git diff --shortstat --no-renames` contra el commit de 2.1 más `wc -l` de los cuatro ficheros nuevos sin trackear; registrar la cifra. Si pasa de 800, parar y partir.
 - [x] 2.17 **Barrido de citas, regla de mutación 4,** `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` para `schema\.sql`, `migrate\.ts` y `migrate\.test\.ts` (incluidos `apps/`, `openspec/changes/archive/` y `DEPLOY.md`); CADA resultado leído contra el fichero. Atención a lo que cambia de **contenido** sin moverse: `migrate.test.ts` líneas 282-286, 652, 794-798 y 837-840 (la que cita `openspec/specs/gases-patron/spec.md:198` ya nombra su revisión: caso B, no se reescribe) y `DEPLOY.md:530` (cita la línea 768 por la siembra). Segundo pase de las abreviadas.
-- [ ] 2.18 Commit del lote 2a.
-- [ ] 2.19 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
-- [ ] 2.20 Asentar el intento.
+- [x] 2.18 Commit del lote 2a.
+- [x] 2.19 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
+- [x] 2.20 Asentar el intento.
 
 ---
 
@@ -133,9 +133,9 @@ Dependencias: L1 independiente; L2a independiente de L1; L2b depende de L2a sól
 - [x] 3.13 **Cierre, códigos de salida 1 a 3:** `npm test`, `npm run typecheck` y `npm run lint` (165 avisos, 0 errores); los tres con código de salida MIRADO.
 - [x] 3.14 Medir: `git diff --shortstat --no-renames` contra el commit de 3.1 más `wc -l` de los dos ficheros nuevos sin trackear; registrar la cifra. Si pasa de 800, parar y partir.
 - [x] 3.15 **Barrido de citas, regla de mutación 4,** para `calendarioLaboral\.ts` (incluidos `apps/`, `openspec/changes/archive/` y `openspec/specs/`): sólo cambió una palabra de la línea 155; CADA resultado leído (en especial los que citan `calendarioLaboral.ts:147-149`, que siguen ciertos); segundo pase de las abreviadas.
-- [ ] 3.16 Commit del lote 2b.
-- [ ] 3.17 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
-- [ ] 3.18 Asentar el intento.
+- [x] 3.16 Commit del lote 2b.
+- [x] 3.17 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
+- [x] 3.18 Asentar el intento.
 
 ---
 
@@ -163,9 +163,9 @@ Dependencias: L1 independiente; L2a independiente de L1; L2b depende de L2a sól
 - [x] 4.15 **Cierre, códigos de salida 1 a 3:** `npm test`, `npm run typecheck` y `npm run lint` (165 avisos, 0 errores); los tres con código de salida MIRADO.
 - [x] 4.16 Medir: `git diff --shortstat --no-renames` contra el commit de 4.1 más `wc -l` de los dos ficheros nuevos sin trackear; registrar la cifra. Si pasa de 800, parar y partir según la cabecera.
 - [x] 4.17 **Barrido de citas, regla de mutación 4,** para `apps/desk/server/app.ts`, `apps/desk/server/indicadores.ts` (inserción tras la 84: la línea 85 pasa a la 88 y las siguientes con ella; citas vivas a verificar una por una, empezando por `apps/desk/server/migracionMarcadorLectores.test.ts:54`), `apps/desk/server/routes/indicadores.ts` y las dos pruebas editadas: `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` sobre todo el repositorio, incluidos `apps/`, `openspec/changes/archive/` y `openspec/specs/`; CADA resultado leído contra el fichero; segundo pase de las abreviadas.
-- [ ] 4.18 Commit del lote 3.
-- [ ] 4.19 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
-- [ ] 4.20 Asentar el intento.
+- [x] 4.18 Commit del lote 3.
+- [x] 4.19 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO. **Nota, sin maquillar:** el detector tras el commit del lote 3 (`cf004c4`) salió con código 1 (cinco citas desplazadas) y el asiento se hizo sin mirarlo; lo corrigió el lote 4 (`e365c68`), cuyo detector sí sale con 0.
+- [x] 4.20 Asentar el intento.
 
 ---
 
@@ -186,11 +186,11 @@ Dependencias: L1 independiente; L2a independiente de L1; L2b depende de L2a sól
 - [x] 5.7 **Barrido de citas completo, regla de mutación 4,** por cada fichero editado en toda la rama (`git diff --name-only <commit de partida de la rama>..HEAD`) y por `DEPLOY\.md`, `ENTRADA\.md`, `F0-01_Correcciones_para_el_maestro\.md` y `config\.yaml`: `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` sobre todo el repositorio, **incluyendo `apps/`, `packages/` y `openspec/changes/archive/`**; CADA resultado comprobado contra el fichero y contra lo que **afirma** la frase (los rangos por los dos extremos); verificar cada `ruta:línea` escrita en 5.2 a 5.6 contra su fichero; segundo pase de las abreviadas en los ficheros que ya citan esos módulos; ningún ejemplo de cita rota con forma de cita. Anotar el resultado por fichero en `apply-progress.md`. **Hecho: tabla del barrido en `apply-progress.md`, lote 4. Las anclas a `42a4828` van en la misma línea física que su cita.**
 - [x] 5.8 Comprobar con `git diff --stat <commit de partida de la rama>..HEAD` que **no** tienen diff: `apps/desk/src`, `packages/shared/src/transitions.ts`, `packages/shared/src/bodegaje.ts`, `apps/desk/server/services/ticketService.ts`, `apps/desk/server/routes/remision.ts`, `.env.example` y el sincronizador (alcance «Fuera» de la propuesta). `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md` tampoco: la fila F1F-05 no se cierra (`cierra: no`). **Se comprueba con `git diff --stat cf004c4` (resultado en `apply-progress.md`); esta rama no toca `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md`.**
 - [x] 5.9 Recorrer los diez criterios de éxito de la propuesta §12 y anotar en `apply-progress.md`, uno por uno, la prueba o el comando que lo demuestra (incluidos las mutaciones M1 a M26 reproducidas en los lotes anteriores y que M27 no aplica). **Hecho: recorrido en `apply-progress.md`.**
-- [ ] 5.10 **Cierre, códigos de salida 1 a 3:** `npm test`, `npm run typecheck` y `npm run lint` (165 avisos, 0 errores); los tres con código de salida MIRADO.
-- [ ] 5.11 Medir: `git diff --shortstat --no-renames` contra el commit de 5.1 más `wc -l` de lo nuevo sin trackear; registrar la cifra. Si pasa de 800, partir.
-- [ ] 5.12 Commit del lote 4 (`docs(sdd): ...`, sin atribución de IA). Verificar con `git show --numstat` que contiene sólo lo del lote.
-- [ ] 5.13 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
-- [ ] 5.14 Asentar el intento.
+- [x] 5.10 **Cierre, códigos de salida 1 a 3:** `npm test`, `npm run typecheck` y `npm run lint` (165 avisos, 0 errores); los tres con código de salida MIRADO.
+- [x] 5.11 Medir: `git diff --shortstat --no-renames` contra el commit de 5.1 más `wc -l` de lo nuevo sin trackear; registrar la cifra. Si pasa de 800, partir.
+- [x] 5.12 Commit del lote 4 (`docs(sdd): ...`, sin atribución de IA). Verificar con `git show --numstat` que contiene sólo lo del lote.
+- [x] 5.13 **Cierre, código de salida 4:** `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` tras el commit; código de salida 0 MIRADO.
+- [x] 5.14 Asentar el intento.
 
 ---
 

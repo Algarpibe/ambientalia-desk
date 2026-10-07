@@ -142,10 +142,13 @@ describe('filas y motivos (RQ-KP-20)', () => {
       'no es fecha,12,', // marca y calificación fallan: manda la marca
       'no es fecha,abc,Bien', // ticket y marca fallan: manda el ticket
       ',,', // todos los campos vacíos: no es una fila
-      ',12,'))) // marca y calificación ausentes: manda la marca
+      ',12,', // marca y calificación ausentes: manda la marca
+      ',abc,Bien', // ticket malo y marca VACÍA: manda el ticket (W-1)
+      ',,Bien'))) // sin ticket y marca vacía: manda la falta de ticket (W-1)
     expect(a.rechazadas).toEqual([
       { fila: 2, motivo: MOTIVOS_FILA.ticketNoNumerico }, { fila: 3, motivo: MOTIVOS_FILA.marcaIlegible },
       { fila: 4, motivo: MOTIVOS_FILA.ticketNoNumerico }, { fila: 6, motivo: MOTIVOS_FILA.sinMarca },
+      { fila: 7, motivo: MOTIVOS_FILA.ticketNoNumerico }, { fila: 8, motivo: MOTIVOS_FILA.sinTicket },
     ])
   })
 
@@ -220,7 +223,7 @@ describe('marca de tiempo (RQ-KP-20)', () => {
   })
 
   it('ilegible: fecha inexistente, hora fuera de rango y cadenas que no son fecha', () => {
-    for (const t of ['31/02/2027 08:00', '2027-02-31', '2027-01-12 25:00', '2027-01-12 08:60', '2027-01-12 08:00:61', 'ayer', '12-01-2027', '2027-13-01']) {
+    for (const t of ['31/02/2027 08:00', '2027-02-31', '2027-01-12 24:00', '2027-01-12 25:00', '2027-01-12 08:60', '2027-01-12 08:00:61', 'ayer', '12-01-2027', '2027-13-01']) {
       expect(motivo(t), t).toBe(MOTIVOS_FILA.marcaIlegible)
     }
   })
