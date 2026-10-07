@@ -238,7 +238,7 @@ La migración corre al arrancar y es tolerante por sentencia: un fallo se regist
 tumba el arranque, así que un despliegue puede quedar «verde» con una columna sin crear.
 
 ```sql
--- 1. La lista de novedades: diez filas.
+-- 1. La lista de novedades: once filas.
 SELECT count(*) FROM public.catalogo_novedades;
 
 -- 2. Las seis columnas nuevas: seis filas.
@@ -253,12 +253,12 @@ ORDER BY table_name, column_name;
 - **Qué se rompe si falta una columna de `public.remisiones`:** **toda** alta de remisión falla, también la de
   legado, porque el `INSERT` de `createRemision` las nombra todas (`apps/desk/server/db/remisiones.ts:47`).
 - **Si falta una de `public.remision_fotos`:** falla la subida de fotos y la lectura de la remisión.
-- **Si la tabla tiene menos de diez filas:** el formulario muestra una lista incompleta; con cero filas el alta de
+- **Si la tabla tiene menos de once filas:** el formulario muestra una lista incompleta; con cero filas el alta de
   remisión responde `422` «La lista de novedades no está cargada».
 - **Sin interruptores nuevos:** `.env.example` no cambia. Para volver atrás basta revertir y redesplegar; tabla y
   columnas quedan sin uso y no se borran.
 - **Condiciones de publicación que no son de este fichero** (de persona): que Servicio Técnico confirme la lista de
-  diez y que quien administra n8n compruebe que la etiqueta lleva el código del ticket (E-170 de `docs/sdd/ENTRADA.md`).
+  once (las diez de la recepción más «Accesorio fuera de lista») y que quien administra n8n compruebe que la etiqueta lleva el código del ticket (E-170 de `docs/sdd/ENTRADA.md`).
 
 ## 9. Continuidad de los nueve indicadores (F1F-05, `cierra: no`)
 

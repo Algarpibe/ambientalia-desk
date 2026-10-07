@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { listarArticulosDeModelo } from './catalogoArticulos'
+import { listarArticulosDeModelo } from './catalogoArticulos'; import { detalleDeAccesorios, detalleSinSku, type ItemChecklist } from '@ambientalia/shared'
 import { getChecklist } from './remisionChecklist'
 
 export interface ChecklistRemision {
@@ -10,7 +10,7 @@ export interface ChecklistRemision {
    * lista» (accionable) no es lo mismo que «este tipo de equipo no lleva accesorios» (una afirmación
    * que nadie ha comprobado).
    */
-  origen: 'modelo' | 'perfil'
+  origen: 'modelo' | 'perfil'; detalle: ItemChecklist[]
 }
 
 /**
@@ -33,11 +33,11 @@ export async function checklistDeRemision(
   opts: { modeloId: string | null; perfil: string },
 ): Promise<ChecklistRemision> {
   if (!opts.modeloId) {
-    return { items: await getChecklist(db, opts.perfil), origen: 'perfil' }
+    const items = await getChecklist(db, opts.perfil); return { items, origen: 'perfil', detalle: detalleSinSku(items) }
   }
   const articulos = await listarArticulosDeModelo(db, opts.modeloId)
   return {
     items: articulos.filter((a) => a.clase === 'accesorio').map((a) => a.nombre),
-    origen: 'modelo',
+    origen: 'modelo', detalle: detalleDeAccesorios(articulos),
   }
 }

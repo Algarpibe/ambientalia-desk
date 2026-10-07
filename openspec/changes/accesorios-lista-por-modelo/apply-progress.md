@@ -69,3 +69,56 @@ Commit de partida: `42bcdf9`. `wc -l` antes -> después: `apps/desk/server/route
 ### Desviaciones respecto al diseño
 - M1 (a) y (b) como están escritas en `tasks.md` no ponen rojo el par (d) (ver tabla); el hueco está cubierto por la forma «guarda después de crear». Sin cambios de código por ello.
 - `wc -l` de `catalogo.ts` es 379, no 380: el diseño cuenta de otro modo; no se desplazó ninguna línea.
+
+## Lote 2 · detalle del checklist, novedad sembrada y compatibilidad (hecho; commit, detector y asiento los hace el orquestador)
+
+Commit de partida: `466be1d`. Reanudado tras un corte de red: antes de seguir se comprobó `git diff 466be1d` fichero a fichero y que los ficheros mutados (checklistRemision.ts, remision.ts, schema.sql, accesoriosLista.ts, remisionWebhook.ts) eran idénticos (`cmp`) a la copia verde: ninguna mutación quedó a medio restaurar. `accesoriosLista.ts` y `remisionWebhook.ts` no tienen diff contra 466be1d.
+
+### wc -l antes -> después (2.1, 2.15)
+checklistRemision.ts 43 -> 43; types.ts 810 -> 810 (el diseño decía 773); remision.ts 397 -> 397; schema.sql 765 -> 768 (+3 al final: dos comentarios y el INSERT); novedadesSiembra.test.ts 100 -> 100; migrate.test.ts 819 -> 819; recepcion.test.ts 482 -> 482; checklistRemision.test.ts 70 -> 70; DEPLOY.md 523 -> 523. Nuevo: accesoriosRemision.test.ts (195, CRLF).
+
+### Líneas reales para la tabla de la regla 13 (2.14)
+- `apps/desk/server/routes/remision.ts:68`: `incluye: checklist.items, incluyeDetalle: checklist.detalle,` (fila 2). Siguen igual `:58`, `:158` y `:194-197` (filas 1 y 3).
+- `packages/shared/src/types.ts:759`: `incluyeDetalle` obligatorio, tipo `import('./accesoriosLista').ItemChecklist[]` en la misma línea.
+- `apps/desk/server/db/checklistRemision.ts:2`, `:13`, `:36`, `:41` (el detalle); `:40` (items) intacta.
+- `packages/zoho-sync/src/db/schema.sql:768`: el INSERT de `accesorio_fuera_de_lista` (comentarios en :766-767).
+
+### Hipótesis DD-4 (2.8)
+Confirmada: `npm run lint` (0 errores, 165 avisos) y `npm run typecheck` (exit 0) admiten el tipo `import()` en línea. No hizo falta el respaldo ni la prueba de asignabilidad.
+
+### Rojo (2.2 a 2.6), antes de escribir el verde
+Con las pruebas editadas y nuevas y sin implementación: `checklistRemision.test.ts` 3 rojas (las tres de `toEqual` con `detalle`); `novedadesSiembra.test.ts` 5 rojas (pruebas 1 a 5; la 6 verde); `migrate.test.ts` 2 rojas (suma de :652 y las dos últimas sentencias); `recepcion.test.ts` 2 rojas (las de `/api/novedades-remision`); `accesoriosRemision.test.ts` 11 rojas de 13 (16 rojas en las tres suites medidas juntas). Nacen verdes y se declaran como caracterización: RQ-RE-36 (1) y (4). Dentro de las rojas, `incluye` y el alta 201 de RQ-RE-36 (2) y el `incluye` de las pruebas de RQ-RE-32 ya eran verdes; sólo caían por `incluyeDetalle`.
+
+### Verde (2.7, 2.9, 2.10)
+Con la implementación: las cinco suites tocadas pasan (129 pruebas); `accesoriosRemision.test.ts` 13 pasan. Un fallo propio de la prueba (dos `adminCookie` en la misma base por el correo repetido) se corrigió en la prueba. DEPLOY.md: líneas 241 y 256 «once»; la 261 se redactó «la lista de once (las diez de la recepción más «Accesorio fuera de lista»)» porque «la lista de» termina la línea 260 (desviación de forma, mismo número de líneas).
+
+### Mutaciones (cada una restaurada y comprobada con `cmp` contra la copia verde)
+| Mutación | Resultado |
+|---|---|
+| M10 quitar `incluyeDetalle` de remision.ts:68 | ROJO: 7 pruebas del GET; `typecheck` TS2741 en remision.ts:59 |
+| M9 servidor: quitar `vistos.has` en `detalleDeAccesorios` | ROJO: «dos artículos con el mismo nombre» e INVARIANTE |
+| M8a borrar la fila de schema.sql | ROJO: pruebas 1 a 5 de novedadesSiembra, migrate (últimas sentencias), 4 de RQ-RE-34 y 2 de recepcion.test.ts |
+| M8b quitar `ON CONFLICT` | ROJO: novedadesSiembra 3, 4 y 5 y migrate (últimas sentencias). No cae la suma de :652 (cuenta sentencias, no su contenido) |
+| M8c `exige_texto` en falso | ROJO: novedadesSiembra 2 y 3 pruebas de RQ-RE-34 |
+| M8d quitar `public.` | ROJO: novedadesSiembra 5 y migrate (últimas sentencias). Las pruebas 1 y 2 no caen: sin calificar, pg-mem resuelve igual por search_path; las caza el patrón `^INSERT INTO public` |
+| `incluye` invertido (caracterización) | ROJO: 3 (orden, perfil, invariante) |
+| RQ-RE-36 (1) revalidar `incluye` en /enviar | ROJO: (1) y (4) |
+| RQ-RE-36 (4) clave `incluyeDetalle` en el payload | ROJO: (4) |
+| RQ-RE-36 (2) filtrar `item_id` en el checklist | ROJO: 3 (sin SKU, invariante, (2)) |
+| `items` sin filtrar la clase (divergencia entre los dos filtros) | ROJO: INVARIANTE |
+| perfil con SKU inventado | ROJO: perfil de RQ-RE-32 y (3) |
+
+Ninguna sobrevivió. La suma de `migrate.test.ts:652` sólo se pone roja si cambia el número de sentencias (M8a); las otras variantes las cazan novedadesSiembra y la prueba de las últimas sentencias de :794-799.
+
+### Grep de recuentos «diez/nueve/10» (fuera de la lista del diseño)
+Pruebas: ninguna otra con recuento de novedades (`novedadesMantenimiento.test.ts` cuenta relativo y pasa). Documentos vivos que dicen «diez» y NO se tocaron: `docs/sdd/ENTRADA.md:1813,1843`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md:1231,1249`, `docs/sdd/Paquete_de_Despliegue_2026-10-04.md` y `2026-10-04b.md` (varias, históricos fechados: caso B), `Paquete_de_Despliegue_2026-10-05b.md:299,609`, `openspec/specs/remisiones/spec.md:875` (lo mueve el archivo). Ninguno es de este lote.
+
+### Cierre (2.16, 2.17)
+- `npm test`: exit 0, 251 ficheros pasan y 2 saltados, 3954 pruebas pasan y 7 saltadas. `npm run typecheck`: exit 0. `npm run lint`: exit 0, 165 problemas (0 errores, 165 avisos).
+- Medida: `git diff --shortstat --no-renames 466be1d` = 9 ficheros, 35 inserciones, 32 borrados (67); más `wc -l` de lo nuevo sin trackear (accesoriosRemision.test.ts) 195: total 262 (válvula 720). Sin binarios.
+- Barrido de citas (2.18): ninguna línea se movió (todos los editados conservan `wc -l`; schema.sql sólo crece al final); fuera de `openspec/changes/accesorios-lista-por-modelo/` no hay citas a `remision.ts:68`, `types.ts:759`, `migrate.test.ts:652/794-798` ni `DEPLOY.md:241/256/261`. `DEPLOY.md:500` cita `schema.sql:756`, sin afectar. Segundo pase de abreviadas NO hecho (queda para el cierre del orquestador).
+
+### Desviaciones respecto al diseño
+- types.ts mide 810 líneas y no 773; no afecta (línea 759 intacta).
+- DEPLOY.md:261: redacción ajustada por el salto de línea (ver arriba).
+- Se añadió a `migrate.test.ts:798` (en la misma línea) la comprobación de que la última sentencia es la siembra.

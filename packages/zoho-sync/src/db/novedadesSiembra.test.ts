@@ -24,7 +24,7 @@ const LISTA: [string, string, number][] = [
   ['rayon_estetico', 'Rayón o daño estético', 30],
   ['pantalla_danada', 'Pantalla o display dañado', 40],
   ['conector_danado', 'Conector o puerto dañado', 50],
-  ['falta_accesorio', 'Falta un accesorio', 60],
+  ['falta_accesorio', 'Falta un accesorio', 60], ['accesorio_fuera_de_lista', 'Accesorio fuera de lista', 65],
   ['embalaje_inadecuado', 'Embalaje inadecuado o dañado', 70],
   ['humedad_suciedad', 'Humedad, suciedad o contaminación visible', 80],
   ['sello_roto', 'Sello o precinto roto', 90],
@@ -37,28 +37,28 @@ const COLUMNAS_NUEVAS = [
 ] as const
 
 describe('F1B-04 · siembra de public.catalogo_novedades (RQ-RE-21)', () => {
-  it('1 · tras migrate hay diez filas, en el orden de la lista y con sus etiquetas', async () => {
+  it('1 · tras migrate hay once filas, en el orden de la lista y con sus etiquetas', async () => {
     const db = await freshDb()
     const r = await db.query('SELECT clave, etiqueta, orden FROM public.catalogo_novedades ORDER BY orden')
     expect(r.rows.map((f) => [f.clave, f.etiqueta, Number(f.orden)])).toEqual(LISTA)
   })
 
-  it('2 · las diez están activas y sólo sin_novedad excluye a las demás y sólo otro exige texto', async () => {
+  it('2 · las once están activas, sólo sin_novedad excluye a las demás y sólo accesorio_fuera_de_lista y otro exigen texto', async () => {
     const db = await freshDb()
     const r = await db.query('SELECT clave, activo, excluye_demas, exige_texto FROM public.catalogo_novedades ORDER BY orden')
-    expect(r.rows).toHaveLength(10)
+    expect(r.rows).toHaveLength(11)
     expect(r.rows.every((f) => f.activo === true)).toBe(true)
     expect(r.rows.filter((f) => f.excluye_demas === true).map((f) => f.clave)).toEqual(['sin_novedad'])
-    expect(r.rows.filter((f) => f.exige_texto === true).map((f) => f.clave)).toEqual(['otro'])
+    expect(r.rows.filter((f) => f.exige_texto === true).map((f) => f.clave)).toEqual(['accesorio_fuera_de_lista', 'otro'])
   })
 
-  it('3 · reejecutar las sentencias de siembra no lanza y deja diez filas', async () => {
+  it('3 · reejecutar las sentencias de siembra no lanza y deja once filas', async () => {
     const db = await freshDb()
     const siembra = sentenciasDeSiembra()
     expect(siembra.length).toBeGreaterThan(0)
     for (const s of siembra) await db.query(s)
     const r = await db.query('SELECT count(*) AS n FROM public.catalogo_novedades')
-    expect(Number(r.rows[0].n)).toBe(10)
+    expect(Number(r.rows[0].n)).toBe(11)
   })
 
   it('4 · reejecutar la siembra conserva lo editado (etiqueta, activo y marcas)', async () => {
@@ -68,16 +68,16 @@ describe('F1B-04 · siembra de public.catalogo_novedades (RQ-RE-21)', () => {
     await db.query("UPDATE public.catalogo_novedades SET excluye_demas = true, orden = 35 WHERE clave = 'pantalla_danada'")
     for (const s of sentenciasDeSiembra()) await db.query(s)
     const r = await db.query('SELECT clave, etiqueta, activo, excluye_demas, exige_texto, orden FROM public.catalogo_novedades')
-    expect(r.rows).toHaveLength(10)
+    expect(r.rows).toHaveLength(11)
     const por = (k: string) => r.rows.find((f) => f.clave === k)
     expect(por('rayon_estetico')).toMatchObject({ etiqueta: 'Rayón (editada)', activo: false })
     expect(por('otro')).toMatchObject({ exige_texto: false })
     expect(por('pantalla_danada')).toMatchObject({ excluye_demas: true, orden: 35 })
   })
 
-  it('5 · la siembra son exactamente diez sentencias, una por fila', () => {
+  it('5 · la siembra son exactamente once sentencias, una por fila', () => {
     const siembra = sentenciasDeSiembra()
-    expect(siembra).toHaveLength(10)
+    expect(siembra).toHaveLength(11)
     for (const s of siembra) expect(s, 'cada fila lleva su ON CONFLICT (clave) DO NOTHING').toMatch(/ON CONFLICT \(clave\) DO NOTHING$/i)
   })
 
