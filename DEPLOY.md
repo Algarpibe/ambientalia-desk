@@ -558,3 +558,36 @@ WHERE clave = 'accesorio_fuera_de_lista';
 - **Para volver atrás** basta revertir y redesplegar; la fila sembrada se queda y los accesorios que el Director Técnico haya añadido son
   filas normales del catálogo. Los supuestos que Gerencia debe confirmar están en
   `docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §11.
+
+## Comprobación de lectura tras desplegar F1B-11 (ampliación de contrato)
+
+**Sin variables de entorno nuevas** (`.env.example` no cambia) y sin interruptor: la ruta `POST /api/contratos/:id/ampliar` y el botón «Ampliar» de la ficha del
+contrato están activos desde que se publica. El cambio añade **una tabla**, `public.contrato_ampliaciones`, que `migrate` crea al arrancar
+(`packages/zoho-sync/src/db/schema.sql:773`). No toca la replicación ni el hub, y no hay relleno: la tabla nace vacía.
+
+Hazla **antes de dar el cambio por publicado** (tarea de persona P.8, del Mantenedor). Es una consulta de sólo lectura, en la base `desk`
+(esquema `public`). La migración es tolerante por sentencia: un fallo se registra como «sentencia omitida» y **no** tumba el arranque, así
+que un despliegue puede quedar «verde» con la tabla sin crear.
+
+```sql
+-- La tabla existe: una fila. Con cero filas, la migración omitió la sentencia.
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name = 'contrato_ampliaciones';
+
+-- Se puede leer: devuelve 0 el día de publicar, porque no hay relleno.
+SELECT COUNT(*) FROM public.contrato_ampliaciones;
+```
+
+- **Qué se rompe si la tabla falta:** ampliar un contrato falla con `500` (el `INSERT` de la traza va dentro de la transacción y revierte la fecha,
+  `apps/desk/server/db/contratos.ts:138`) y la ficha de cualquier contrato falla al leer la traza (`apps/desk/server/routes/contratos.ts:33`).
+  El alta de contratos, las tres puertas y el informe no la leen.
+- **Lo que se verá el día de publicar:** la ficha de un contrato enseña «Ampliar» a Comercial y administradores mientras quede sitio hasta el 31/12 del
+  año del vencimiento; tras ampliar, enseña «Vencimiento original» y la lista de ampliaciones. Los supuestos que Gerencia debe confirmar están en
+  `docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §13.
+- **Para restaurar una fecha ampliada** hay que hacerlo a mano: la fecha de fin original es la `fecha_anterior` de la **primera** fila de la traza del
+  contrato (`ORDER BY id`), y se vuelve a escribir en `public.contratos.fecha_fin`. Es un cambio de dato de producción: lo decide y lo ejecuta una persona,
+  y la fila de la traza se queda.
+- **Nunca `DELETE` sobre `public.contrato_ampliaciones`:** la traza es el único registro de quién amplió, cuándo y por qué, y la fecha original se deriva de
+  ella. No hay ruta ni sentencia de la aplicación que la borre.
+- **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra, y las fechas ya ampliadas siguen siendo válidas.

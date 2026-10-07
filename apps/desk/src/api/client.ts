@@ -677,7 +677,7 @@ export function mensajeDelServidor(e: unknown): string {
 type Contrato = import('@ambientalia/shared').Contrato
 type InformeContrato = import('@ambientalia/shared').InformeContrato
 
-export interface FichaContrato { contrato: Contrato; estado: InformeContrato['estado']; saldo: SaldoLote }
+export interface FichaContrato { contrato: Contrato; estado: InformeContrato['estado']; saldo: SaldoLote; ampliaciones: import('@ambientalia/shared').AmpliacionContrato[]; fechaFinOriginal: string }
 export interface TicketDeContrato { deContrato: boolean; contrato?: Contrato; subOV?: string }
 export interface AltaContrato { clientId: string; lote: string; fechaInicio: string; fechaFin: string }
 
@@ -875,4 +875,11 @@ export function anadirAccesorioModelo(modeloId: string, itemId: string): Promise
   return fetch(`/api/catalogo/modelos/${encodeURIComponent(modeloId)}/accesorios`, {
     method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify({ itemId }),
   }).then((r) => json<{ id: string }>(r))
+}
+
+/** Amplía la fecha de fin de un contrato (ampliacion-contrato, F1B-11, RQ-TC-54). Sólo manda `fechaFin` y `motivo`: el permiso (403), el contenido (422) y la carrera (409) los decide `routes/contratos.ts` y se enseñan con `mensajeDelServidor`. */
+export function ampliarContrato(id: number, cuerpo: { fechaFin: string; motivo: string }): Promise<{ contrato: Contrato; ampliaciones: import('@ambientalia/shared').AmpliacionContrato[]; fechaFinOriginal: string }> {
+  return fetch(`/api/contratos/${id}/ampliar`, {
+    method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
+  }).then((r) => json<{ contrato: Contrato; ampliaciones: import('@ambientalia/shared').AmpliacionContrato[]; fechaFinOriginal: string }>(r))
 }

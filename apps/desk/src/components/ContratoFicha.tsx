@@ -1,6 +1,8 @@
-import { csvDelInforme, type InformeContrato } from '@ambientalia/shared'
+import { useState } from 'react'
+import { cabeAmpliacion, canExecuteTransition, csvDelInforme, hoyEnZona, topeAmpliacion, type Contrato, type InformeContrato } from '@ambientalia/shared'
+import { useAuth } from '../auth/AuthContext'
 import { useAsync } from '../hooks/useAsync'
-import { contratoPorId, informeDeContrato, type FichaContrato } from '../api/client'
+import { ampliarContrato, contratoPorId, informeDeContrato, mensajeDelServidor, type FichaContrato } from '../api/client'
 
 const ESTADO: Record<string, string> = { no_iniciado: 'No iniciado', vigente: 'Vigente', vencido: 'Vencido' }
 
@@ -11,11 +13,19 @@ const ESTADO: Record<string, string> = { no_iniciado: 'No iniciado', vigente: 'V
  * trimestres y servicios vienen tal cual de `GET /api/contratos/:id` y `GET /api/contratos/:id/informe`. El CSV lo arma
  * `csvDelInforme` de `shared` (probado en node, `contratos.test.ts`); aquí sólo se le pone el BOM y se descarga, con el
  * patrón de `RemisionesPage.tsx:107-115`.
+ *
+ * AMPLIACIÓN (ampliacion-contrato, F1B-11; REGLA 13): el botón «Ampliar» se enseña a Comercial y administradores si
+ * `cabeAmpliacion` (de `shared`) lo permite, y el campo de fecha propone `topeAmpliacion`. Es comodidad: el formulario NO
+ * valida nada y el 403/422/409 de `POST /api/contratos/:id/ampliar` se ENSEÑA tal cual (`mensajeDelServidor`).
  */
 export function ContratoFicha({ id, onVolver }: { id: number; onVolver: () => void }) {
+  const { user } = useAuth()
   const ficha = useAsync<FichaContrato>(() => contratoPorId(id), [id])
   const informe = useAsync<InformeContrato>(() => informeDeContrato(id), [id])
   const c = ficha.data?.contrato
+  const [ampliando, setAmpliando] = useState(false)
+  const puedeAmpliar = !!user && canExecuteTransition(user.areas, user.isAdmin, 'Comercial') && !!c && cabeAmpliacion(c, hoyEnZona())
+  const recargar = () => { ficha.reload(); informe.reload() }
   const inf = informe.data
 
   function exportar(i: InformeContrato) {
@@ -48,9 +58,27 @@ export function ContratoFicha({ id, onVolver }: { id: number; onVolver: () => vo
             <dl className="grid grid-cols-4 gap-3 text-[13px]">
               {dato('Cliente', c.clientId)}{dato('Vigencia', `${c.fechaInicio} → ${c.fechaFin}`)}
               {dato('Estado', ESTADO[ficha.data.estado] ?? ficha.data.estado)}{dato('Registrado por', c.creadoPor)}
+              {ficha.data.fechaFinOriginal !== c.fechaFin && dato('Vencimiento original', ficha.data.fechaFinOriginal)}
               {dato('SubOV creadas', ficha.data.saldo.creadas)}{dato('Consumidas', ficha.data.saldo.consumidas)}
               {dato('Libres', ficha.data.saldo.libres)}{dato('% consumido', `${ficha.data.saldo.consumido} %`)}
             </dl>
+            {puedeAmpliar && !ampliando && (
+              <button onClick={() => setAmpliando(true)} className="mt-4 text-[12px] font-bold bg-blue-600 text-white px-3 py-1 rounded">Ampliar</button>
+            )}
+            {puedeAmpliar && ampliando && <AmpliarContrato contrato={c} onCancelar={() => setAmpliando(false)} onRecargar={recargar} onHecho={() => { setAmpliando(false); recargar() }} />}
+          </section>
+        )}
+        {ficha.data && ficha.data.ampliaciones.length > 0 && (
+          <section className="max-w-[900px] bg-white border border-slate-200 rounded-md p-5">
+            <h2 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-2 mb-3">Ampliaciones</h2>
+            <table className="w-full">
+              <thead className="text-slate-400 text-left"><tr><th>Cuándo</th><th>Quién</th><th>Fecha anterior</th><th>Fecha nueva</th><th>Motivo</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {ficha.data.ampliaciones.map((a, i) => (
+                  <tr key={i}><td>{a.ampliadoAt}</td><td>{a.ampliadoPor}</td><td>{a.fechaAnterior}</td><td>{a.fechaNueva}</td><td>{a.motivo ?? '—'}</td></tr>
+                ))}
+              </tbody>
+            </table>
           </section>
         )}
         {inf && (
@@ -82,6 +110,43 @@ export function ContratoFicha({ id, onVolver }: { id: number; onVolver: () => vo
             <ul className="mt-3 text-slate-400 list-disc pl-4">{inf.huecos.map((h) => <li key={h}>{h}</li>)}</ul>
           </section>
         )}
+      </div>
+    </div>
+  )
+}
+
+function AmpliarContrato({ contrato, onCancelar, onRecargar, onHecho }: { contrato: Contrato; onCancelar: () => void; onRecargar: () => void; onHecho: () => void }) {
+  const [fechaFin, setFin] = useState('')
+  const [motivo, setMotivo] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function ampliar() {
+    setEnviando(true); setError(null)
+    try {
+      await ampliarContrato(contrato.id, { fechaFin, motivo })
+      onHecho()
+    } catch (e) {
+      setError(mensajeDelServidor(e))
+      if (e instanceof Error && e.message.startsWith('HTTP 409')) onRecargar()
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const campo = 'border border-slate-200 rounded px-2 py-1 text-[13px]'
+  return (
+    <div className="mt-4 border-t border-slate-200 pt-4 flex flex-col gap-3 text-[12px]">
+      <label className="flex flex-col gap-1">Nueva fecha de fin
+        <input type="date" value={fechaFin} max={topeAmpliacion(contrato.fechaFin)} onChange={(e) => setFin(e.target.value)} className={`${campo} w-[180px]`} />
+      </label>
+      <label className="flex flex-col gap-1">Motivo
+        <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} className={`${campo} w-[420px]`} />
+      </label>
+      {error && <div className="text-red-600">{error}</div>}
+      <div className="flex gap-3">
+        <button disabled={enviando} onClick={() => void ampliar()} className="font-bold bg-blue-600 text-white px-3 py-1 rounded disabled:opacity-50">Ampliar contrato</button>
+        <button disabled={enviando} onClick={onCancelar} className="text-slate-500 hover:underline">Cancelar</button>
       </div>
     </div>
   )

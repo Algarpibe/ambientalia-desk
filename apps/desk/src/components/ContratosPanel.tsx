@@ -14,7 +14,7 @@ import { ContratoFicha } from './ContratoFicha'
  *  - El formulario NO valida nada: ni el formato del lote, ni las fechas, ni fin ≥ inicio, ni que el lote esté
  *    libre. Se manda y el 403/422/409 del servidor se ENSEÑA tal cual (`mensajeDelServidor`).
  *  - La lista no calcula el estado de ningún contrato: el estado lo trae la ficha, del servidor.
- *  - No hay edición ni borrado: el servidor no tiene esas rutas (la ampliación es E-086).
+ *  - No hay edición ni borrado. La fecha de fin se amplía desde la ficha (ampliacion-contrato).
  */
 export function ContratosPanel({ onVolver }: { onVolver: () => void }) {
   const { user } = useAuth()

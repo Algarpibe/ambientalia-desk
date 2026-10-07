@@ -97,3 +97,24 @@ Ningún superviviente. M1a y M1b caen igual porque la lectura es de la fecha vig
 Límite declarado: el «deja pasar» de la remisión exige 201 con fecha del día; si cambiara la forma de la respuesta de éxito la prueba pide `status < 300` y que el mensaje no diga «venció».
 
 **Desviación de la tasks.md:** años 2026 y no 2031 (orden del encargo); un único `describe.each` de tres puertas con cinco pruebas cada una, no cuatro pruebas separadas.
+
+## Lote 5 · cliente y cierre documental (tareas 5.2 a 5.12 hechas; 5.1 y 5.13 a 5.17 son del orquestador)
+
+Partida: `1b7c2a4`. Sin ficheros nuevos ni código de servidor. Los `.tsx` están fuera de la red de pruebas (F0-00): sin rojo previo, declarado; la comprobación es `npm run typecheck`, `npm run build` y la tabla de la regla 13.
+Comprobado por mí: `npm run typecheck` exit 0; `npm run build` exit 0; `npx eslint` de `ContratoFicha.tsx`, `client.ts` y `ContratosPanel.tsx` exit 0.
+
+**Cliente.** `client.ts`: `FichaContrato` gana los dos campos (en sitio, línea 680) y `ampliarContrato` va al final (línea 881). `ContratosPanel.tsx`: comentario de la línea 17 en sitio. `ContratoFicha.tsx` (88 → 153): `useAuth`, `puedeAmpliar`, «Vencimiento original» cuando difiere, sección «Ampliaciones» y el componente `AmpliarContrato` (fecha con `max`, motivo, error del servidor tal cual, recarga tras éxito o `409`).
+
+**Decisiones del cliente (5.5).** Releído el código; el cliente toma seis decisiones y las seis tienen línea de servidor (tabla cerrada en `tasks.md`, 5.7):
+1. Enseñar «Ampliar» sólo a Comercial o administrador (`apps/desk/src/components/ContratoFicha.tsx:27`) ← `403` en `apps/desk/server/routes/contratos.ts:79`.
+2. `max` del campo de fecha (`apps/desk/src/components/ContratoFicha.tsx:141`) ← `pasaDelTope` en `packages/shared/src/contratos.ts:269`.
+3. Ocultar «Ampliar» si no cabe (`apps/desk/src/components/ContratoFicha.tsx:27`, `cabeAmpliacion`) ← `plazoCerrado`/`pasaDelTope` en `packages/shared/src/contratos.ts:270`; espejo fijado por la propiedad de `packages/shared/src/contratos.test.ts:315`.
+4. Etiqueta «Motivo» (`apps/desk/src/components/ContratoFicha.tsx:143`): no valida ni es `required` ← `422` en `packages/shared/src/contratos.ts:288`.
+5. Recargar tras `409` (`apps/desk/src/components/ContratoFicha.tsx:131`) ← `UPDATE` condicionado en `apps/desk/server/db/contratos.ts:133`, `409` en `apps/desk/server/routes/contratos.ts:87`.
+6. Pintar traza y original (`apps/desk/src/components/ContratoFicha.tsx:61`, `:71`): no decide; llegan de `apps/desk/server/routes/contratos.ts:33`.
+Dos matices SIN guarda propia, declarados: (a) `puedeAmpliar` usa `hoyEnZona()` del navegador, y el servidor usa el suyo (`apps/desk/server/routes/contratos.ts:22`, `deps.hoy`): si difieren, el botón puede ofrecerse o esconderse un día de más y el servidor decide igual (comodidad, no guarda); (b) el condicional «Vencimiento original sólo si difiere» es presentación sobre un dato del servidor. Ninguna decisión sin línea.
+
+**Documentos (sólo al final).** `DEPLOY.md` +33; paquete de despliegue §13 (+84; el último era el §12); corrección 32 (+41; la última era la 31). Citas al maestro releídas contra el `.md` R08.4: líneas 2655, 2656, 5561 a 5563 (nº 70), 5824 (nº 53) y 2658 (E-088). Hallazgo: el pendiente que cierra la ampliación es el nº 70 del Anexo D (línea 5561), y el nº 53 (línea 5824) dice «salvo la ampliación (nº 70)»; la corrección 32 toca los dos.
+
+**Barrido (5.11).** Sólo `ContratoFicha.tsx` tiene inserciones en medio; `client.ts`, `DEPLOY.md`, la corrección y el paquete crecen al final, y `ContratosPanel.tsx` cambió una línea en sitio. Nueve citas completas a `ContratoFicha.tsx` en todo el repositorio: tres en el propio cambio (`design.md` reapuntada a la línea 21, caso A; `proposal.md` anclada a `351c046`, caso B; más la de `client.ts` de `design.md`, anclada también) y seis líneas de paquetes fechados, que no se editan (caso B). Las abreviadas de esas líneas: la 41 hoy es la 51, la 66 la 94, la 5 la 7, la 47 la 57, la 58 la 86 y la 10 la 12. Detalle completo en el informe del lote.
+`wc -l` contra 5.1: `client.ts` 878 → 885, `DEPLOY.md` 560 → 593, corrección 1560 → 1601, paquete 357 → 441; sólo crecieron al final. `git diff --stat 351c046`: ni `docs/sdd/ENTRADA.md`, ni `openspec/config.yaml`, ni el plan R01.4 (5.12).

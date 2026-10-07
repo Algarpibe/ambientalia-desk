@@ -305,7 +305,7 @@ reloj falso por si lo hiciera.
 | Fichero | Cambio |
 |---|---|
 | `apps/desk/src/api/client.ts:680` | en sitio: `FichaContrato` gana `ampliaciones: import('@ambientalia/shared').AmpliacionContrato[]; fechaFinOriginal: string` |
-| final de `apps/desk/src/api/client.ts` (hoy `apps/desk/src/api/client.ts:878`) | `export function ampliarContrato(id: number, cuerpo: { fechaFin: string; motivo: string }): Promise<{ contrato: Contrato; ampliaciones: FichaContrato['ampliaciones']; fechaFinOriginal: string }>`, molde `apps/desk/src/api/client.ts:867-871` |
+| final de `apps/desk/src/api/client.ts` (acababa en `apps/desk/src/api/client.ts:878` en `351c046`) | `export function ampliarContrato(id: number, cuerpo: { fechaFin: string; motivo: string }): Promise<{ contrato: Contrato; ampliaciones: FichaContrato['ampliaciones']; fechaFinOriginal: string }>`, molde `apps/desk/src/api/client.ts:867-871` |
 | `apps/desk/src/components/ContratosPanel.tsx:17` | en sitio: «No hay edición ni borrado. La fecha de fin se amplía desde la ficha (ampliacion-contrato).» |
 | `apps/desk/src/components/ContratoFicha.tsx` | inserciones por dentro (abajo) |
 
@@ -313,7 +313,7 @@ reloj falso por si lo hiciera.
 
 - Usuario de sesión: `const { user } = useAuth()`, de `../auth/AuthContext`, igual que
   `apps/desk/src/components/ContratosPanel.tsx:3` y `apps/desk/src/components/ContratosPanel.tsx:20`. La firma del
-  componente (`apps/desk/src/components/ContratoFicha.tsx:15`) no cambia.
+  componente (`apps/desk/src/components/ContratoFicha.tsx:21`) no cambia.
 - `puedeAmpliar = !!user && canExecuteTransition(user.areas, user.isAdmin, 'Comercial') && !!c && cabeAmpliacion(c, hoyEnZona())`.
 - «Vigencia» sigue enseñando la fecha vigente; un dato nuevo «Fecha de fin original» cuando difiere.
 - Botón «Ampliar» y formulario con fecha (`max={topeAmpliacion(c.fechaFin)}`) y motivo. No valida: envía, y el

@@ -65,7 +65,7 @@ Cerrar la fila **no cierra IV-11** (reducido, sin relleno retroactivo) ni las ta
 5. **Lectura.** `GET /api/contratos/:id` (`apps/desk/server/routes/contratos.ts:33`) añade `ampliaciones` (quién, cuándo,
    fecha anterior, fecha nueva, motivo) y `fechaFinOriginal`. Campos aditivos: `contrato`, `estado` y `saldo` no cambian.
 6. **Cliente.** `apps/desk/src/components/ContratoFicha.tsx` enseña la traza y la fecha original, y ofrece «Ampliar» a
-   Comercial y administradores. Hoy la ficha no conoce al usuario (`apps/desk/src/components/ContratoFicha.tsx:15`); lo
+   Comercial y administradores. Hoy la ficha no conoce al usuario (`apps/desk/src/components/ContratoFicha.tsx:15` en `351c046`); lo
    tomará del mismo contexto que el panel (`apps/desk/src/components/ContratosPanel.tsx:20`,
    `apps/desk/src/components/ContratosPanel.tsx:24`).
 
