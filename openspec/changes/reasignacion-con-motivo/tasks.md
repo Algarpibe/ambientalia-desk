@@ -44,7 +44,7 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 **Estimación:** 361 brutas (`shared/reasignacion.ts` 55, su prueba 95, `index.ts` 1, `schema.sql` 13, `migrate.ts` 2, `migrate.test.ts` 40, `db/reasignaciones.ts` 60, su prueba 95) × 1,8 = **650**.
 **Salida prevista si pasa de 720** (diseño §8): sacar `db/reasignaciones.ts` y su prueba al lote 2.
 
-- [ ] 1.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento del registro en el worktree.
+- [x] 1.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento del registro en el worktree.
 - [x] 1.2 **Rojo** `packages/shared/src/reasignacion.test.ts`, `puedeReasignar`: barrido de todos los estados de los tres catálogos (`packages/shared/src/flujos.ts:19-22`) por cada área, contra un esperado calculado en la prueba desde `from` y `area`; administrador pasa en cualquier estado; estado sin salida sólo administrador; cargo sin área no pasa; sujeto ausente da `false`. Fija RQ-PM-27: «barrido de estados por áreas contra la ruta» (mitad pura), «el administrador pasa en cualquier estado», «estado sin salida, sólo el administrador (S-2)», «el cargo no abre la puerta (S-3)», «sujeto ausente falla cerrado», «no hace falta ser la persona a cargo».
 - [x] 1.3 **Verde** crear `packages/shared/src/reasignacion.ts` con `MENSAJES_REASIGNACION` y `puedeReasignar` (consume `packages/shared/src/transitions.ts:327-334`, `packages/shared/src/flujos.ts:64-66`, `packages/shared/src/flujos.ts:13-16`, `packages/shared/src/cargos.ts:37`).
 - [x] 1.4 **Rojo** en la misma prueba, `reasignacionDelCuerpo`: devuelve un solo error, en el orden motivo, destino ausente, destino igual al actual; recorta motivo y destino; no cadena vale vacío; origen nulo se compara con `''`. Fija RQ-TC-50: «el motivo va antes que el destino», «el motivo va antes que cada falla del destino» (mitad pura), «destino ausente, 422», «destino igual a la persona a cargo actual, 422 (S-4)», «el motivo se guarda recortado», «no se puede vaciar por esta ruta», y RQ-TC-52 «un solo validador del motivo».
@@ -59,9 +59,9 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 - [x] 1.13 **Mutación** destino delante de motivo en `reasignacionDelCuerpo`: debe ponerse rojo el par 3 y 4 de `packages/shared/src/reasignacion.test.ts`. Restaurar.
 - [x] 1.14 **Mutación** `INSERT` de la traza fuera de la transacción en `reasignar`: debe ponerse roja la prueba de verbos de `apps/desk/server/db/reasignaciones.test.ts`. Restaurar.
 - [x] 1.15 **Mutación** quitar la condición sobre `derivado_a` del `UPDATE`: debe ponerse roja la prueba de dato viejo de `apps/desk/server/db/reasignaciones.test.ts`. Restaurar.
-- [ ] 1.16 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`: no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
+- [x] 1.16 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`: no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
 - [x] 1.17 Medir: `git diff --shortstat --no-renames` contra el commit de 1.1 más `wc -l` de lo nuevo sin trackear; registrar la cifra. Si pasa de 720, partir según la cabecera antes de asentar.
-- [ ] 1.18 Commit del lote 1 (conventional commit, sin atribución de IA) y asentar el intento.
+- [x] 1.18 Commit del lote 1 (conventional commit, sin atribución de IA) y asentar el intento.
 
 ---
 
@@ -70,7 +70,7 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 **Estimación:** 277 brutas (`avisoReasignacion.ts` 45, su prueba 70, `users.ts` 8, `users.test.ts` 18, `eliminarTicket.ts` 2 y su prueba 15 hipótesis, `eventoReasignacion.ts` 45, su prueba 70, `historial.ts` 4) × 1,8 = **499**.
 **Salida prevista si pasa de 720** (diseño §8 sólo fija la del lote 1; esta la propone `tasks`, no el diseño): el par `eventoReasignacion` y `historial.ts` pasa a un intento 2b.
 
-- [ ] 2.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento.
+- [x] 2.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento.
 - [x] 2.2 Leer `apps/desk/server/db/eliminarTicket.ts` y las pruebas que lo cubren: el diseño marca como hipótesis que llevan recuentos que habrá que mover y no se leyeron; anotar cuáles en `apply-progress.md`.
 - [x] 2.3 **Rojo** `apps/desk/server/services/avisoReasignacion.test.ts`, función pura `avisoReasignacion`: texto con motivo y nombre del actor; `null` si `nuevo === actorId`; sin red ni base. Fija RQ-AV-20: «la decisión del aviso es una función pura», «reasignarse a uno mismo no crea aviso» (mitad pura), «el destino recibe el aviso con el motivo y el nombre de quien reasigna».
 - [x] 2.4 **Verde** crear `apps/desk/server/services/avisoReasignacion.ts` con `avisoReasignacion`, reutilizando `AvisoNuevo` (`apps/desk/server/services/avisoDerivacion.ts:12-16`) sin tocar `ticketService.ts`.
@@ -84,9 +84,9 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 - [x] 2.12 **Verde** crear `apps/desk/server/db/eventoReasignacion.ts` (`eventoReasignacion`, `eventosReasignacion` con `SELECT id, name FROM users` sólo si hay filas; molde de `apps/desk/server/db/ticketFuentes.ts:101-105` y `apps/desk/server/db/ticketFuentes.ts:115-125`) y editar en sitio `apps/desk/server/db/historial.ts:3` (`import`) y `apps/desk/server/db/historial.ts:157` (unión a cuatro fuentes). No se inserta ninguna línea.
 - [x] 2.13 **Mutación** quitar la supresión «a uno mismo» en `avisoReasignacion`: debe ponerse roja la prueba pura de `apps/desk/server/services/avisoReasignacion.test.ts`. Restaurar.
 - [x] 2.14 **Mutación** quitar la tercera fuente de `usosDeUsuario`: debe ponerse rojo el bloque nuevo de `apps/desk/server/auth/users.test.ts`. Restaurar.
-- [ ] 2.15 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`, no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
+- [x] 2.15 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`, no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
 - [x] 2.16 Medir: `git diff --shortstat --no-renames` contra el commit de 2.1 más `wc -l` de lo nuevo sin trackear; registrar la cifra. Si pasa de 720, partir según la cabecera.
-- [ ] 2.17 Commit del lote 2 y asentar el intento.
+- [x] 2.17 Commit del lote 2 y asentar el intento.
 
 ---
 
@@ -95,7 +95,7 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 **Estimación:** 339 brutas (`routes/reasignacion.ts` 50, `app.ts` 4, prueba de la ruta 240, `reasignacionSync.test.ts` 45) × 1,8 = **610**.
 **Salida prevista si pasa de 720** (la propone `tasks`; el diseño §8 sólo da la del lote 1): sacar `reasignacionSync.test.ts` y su mutación a un intento 3b.
 
-- [ ] 3.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento.
+- [x] 3.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento.
 - [x] 3.2 **Rojo** `apps/desk/server/routes/reasignacion.test.ts`, escalón A y B con `appWith` (`apps/desk/server/testing/appHarness.ts:46-54`): sin sesión `401`; usuario del área reasigna (`200`, `derivado_a` cambia, `status` igual); ticket inexistente con usuario sin permiso y cuerpo vacío da `404`; ticket existente sin permiso y sin motivo da `403`; sin permiso con cuerpo válido `403` y nada cambia; administrador pasa; no hace falta ser la persona a cargo. Fija RQ-TC-50: «un usuario del área reasigna, el estado no cambia», «ticket inexistente, 404 antes que 403 y que 422», «403 antes que 422», «el permiso se evalúa aunque el cuerpo sea válido»; RQ-PM-27: «un usuario del área del estado reasigna», «sin el área y sin ser administrador, 403», «sin sesión, 401».
 - [x] 3.3 **Verde** crear `apps/desk/server/routes/reasignacion.ts` (`registerReasignacionRoutes`, molde de `apps/desk/server/routes/prioridad.ts:62-77`) con guardas A y B, y registrarlo en sitio en `apps/desk/server/app.ts:22` (`import`) y `apps/desk/server/app.ts:61` (llamada con `{ db, config }` como `apps/desk/server/app.ts:59`).
 - [x] 3.4 **Rojo** en la misma prueba, escalón C y pares de posición del diseño §5: motivo vacío, ausente y de espacios `422`; par 3 y 4 (motivo de espacios, sin destino, texto del motivo); par 3 y 5 y 3 y 6 (motivo vacío con destino igual, inexistente e inactivo, el texto del motivo las tres veces); par 4 y 5 (ticket sin persona a cargo, destino ausente, texto de destino ausente); par 5 y 6 (destino igual al actual e inactivo, texto de destino igual); destino ausente o vacío `422`; no vaciar por la ruta; destino inexistente o inactivo `422`; en todos `derivado_a` intacto y sin traza ni aviso. Fija RQ-TC-50: «sin motivo, 422», «el motivo va antes que el destino», «el motivo va antes que cada falla del destino», «destino ausente, 422», «destino igual a la persona a cargo actual, 422 (S-4)», «destino inexistente o inactivo, 422», «destino igual al actual antes que destino inexistente», «no se puede vaciar por esta ruta».
@@ -113,9 +113,9 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 - [x] 3.16 **Mutación** `managed_by_app = true` en el `UPDATE`: debe ponerse roja `apps/desk/server/reasignacionSync.test.ts` (el estado de Zoho no entra). Restaurar.
 - [x] 3.17 **Mutación** quitar la supresión «a uno mismo» en la ruta: debe ponerse roja la prueba de a-uno-mismo de la ruta. Restaurar.
 - [x] 3.18 **Mutación** quitar la condición sobre `derivado_a` del `UPDATE`: deben ponerse rojas la de dato viejo y el `409` de la ruta. Restaurar.
-- [ ] 3.19 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`, no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
+- [x] 3.19 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`, no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
 - [x] 3.20 Medir: `git diff --shortstat --no-renames` contra el commit de 3.1 más `wc -l` de lo nuevo sin trackear; registrar la cifra. Si pasa de 720, partir según la cabecera.
-- [ ] 3.21 Commit del lote 3 y asentar el intento.
+- [x] 3.21 Commit del lote 3 y asentar el intento.
 
 ---
 
@@ -125,7 +125,7 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 **Salida prevista si pasa de 720** (la propone `tasks`; el diseño §8 sólo da la del lote 1): sacar los documentos (corrección 30, `DEPLOY.md`, paquete, `config.yaml`) a un intento 4b.
 **Mutaciones del diseño §7 en este lote:** ninguna; las once caen en L1 a L3. Los `.tsx` no admiten rojo previo bajo `strict_tdd` (fuera de la red de pruebas, F0-00): el rojo se exige sólo a `lib/`.
 
-- [ ] 4.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento.
+- [x] 4.1 Anotar el commit de partida del intento (`git rev-parse HEAD`) y abrir el intento.
 - [x] 4.2 **Rojo** `apps/desk/src/lib/reasignacion.test.ts`: `opcionesReasignacion` no incluye a la persona a cargo ni «Sin derivar» (tipo de `apps/desk/src/lib/personas.ts:4`); `puedeEnviarReasignacion` es `reasignacionDelCuerpo(...).ok` (motivo vacío o de espacios desactiva, destino igual al actual desactiva). Fija RQ-TC-52: «la lógica de `lib/` no ofrece la persona a cargo ni “Sin derivar”», «un solo validador del motivo».
 - [x] 4.3 **Verde** crear `apps/desk/src/lib/reasignacion.ts` con ambas funciones, consumiendo el validador de `@ambientalia/shared`, sin reescribirlo.
 - [x] 4.4 Añadir al final de `apps/desk/src/api/client.ts` `reasignarTicket(ticketId, { destino, motivo })` (molde de `apps/desk/src/api/client.ts:736-740`; errores por `erroresDelServidor`, `apps/desk/src/api/client.ts:748-757`). `.tsx`/cliente fuera de la red: sin rojo previo.
@@ -137,9 +137,9 @@ Si al medir un lote pasa de 720, se parte antes de asentar (salida prevista en l
 - [x] 4.10 Añadir al final de `docs/sdd/Paquete_de_Despliegue_2026-10-06.md` un apartado nuevo (después del §8): qué entra (ruta, tabla, aviso, historial, panel), los supuestos S-2, S-4, S-5, S-6 y S-8 para confirmar por Gerencia, y las tareas de persona P-1 a P-4 sin casillas.
 - [x] 4.11 **RETIRADA por el orquestador, no hecha:** `openspec/config.yaml` no se toca — la entrada de la decisión está a mitad de un fichero citado por número de línea y no hay patrón de nota al final; el estado de aplicación queda en el paquete de despliegue (§9) y en el `archive-report.md`. Texto original: Registrar en `openspec/config.yaml` lo que pide el cierre: la nota de aplicación de `decision/e089-e220-visibilidad-y-traspaso` (reasignación construida, S-1 a S-8 pendientes de confirmación, traspaso en el paquete) junto a su entrada existente; leer primero la entrada vecina para copiar su forma y no citar líneas de memoria.
 - [x] 4.12 **Barrido de citas, regla de mutación 4:** correr `grep -rnoE "<fichero>\.ts:[0-9]+(-[0-9]+)?"` para `apps/desk/server/db/historial.ts` (31 citas), `apps/desk/server/auth/users.ts` (22), `apps/desk/server/app.ts` (42), `packages/zoho-sync/src/db/migrate.test.ts` y `apps/desk/src/components/TicketDetailView.tsx` (72), y comprobar CADA resultado contra el fichero. Diseño §9: no se desplaza ninguna línea porque no se inserta ninguna. Hay que RELEER por contenido las cuatro citas que abarcan la unión del historial (`openspec/specs/trazas/spec.md:28`, que es histórica y no se toca por caso B, y `openspec/specs/trazas/spec.md:141`) y las siete que caen en `usosDeUsuario` o su comentario. Segundo pase de las abreviadas (`:NN`) en los ficheros que ya citan esos módulos. Anotar el resultado en `apply-progress.md`.
-- [ ] 4.13 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`, no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
-- [ ] 4.14 Medir: `git diff --shortstat --no-renames` contra el commit de 4.1 más `wc -l` de lo nuevo sin trackear (los binarios, si los hubiera, aparte); registrar la cifra. Si pasa de 720, partir según la cabecera.
-- [ ] 4.15 Commit del lote 4 y asentar el intento. `docs/sdd/ENTRADA.md` queda sin tocar (comprobar con `git diff --stat`).
+- [x] 4.13 Correr `npm test`, `npm run typecheck`, `npm run lint` (`--max-warnings 165`, no pueden subir de 165 avisos) y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; los cuatro con código de salida 0 MIRADO.
+- [x] 4.14 Medir: `git diff --shortstat --no-renames` contra el commit de 4.1 más `wc -l` de lo nuevo sin trackear (los binarios, si los hubiera, aparte); registrar la cifra. Si pasa de 720, partir según la cabecera.
+- [x] 4.15 Commit del lote 4 y asentar el intento. `docs/sdd/ENTRADA.md` queda sin tocar (comprobar con `git diff --stat`).
 
 ---
 
