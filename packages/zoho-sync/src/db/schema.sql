@@ -749,3 +749,17 @@ CREATE TABLE IF NOT EXISTS public.garantia_proveedor (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_garantia_proveedor_asociacion ON public.garantia_proveedor (asociacion_id);
 CREATE INDEX IF NOT EXISTS idx_garantia_proveedor_ticket ON public.garantia_proveedor (ticket_id);
+
+-- reasignacion-con-motivo (F1B-05): traza de cada cambio de la persona a cargo de un ticket, con su motivo.
+-- AL FINAL del fichero para no desplazar citas (regla de mutacion 4). Calificada public.: un CREATE sin
+-- calificar aterriza en desk por el search_path. Sin FK a tickets ni a users, mismo caso que public.prioridad_ajustes
+CREATE TABLE IF NOT EXISTS public.reasignaciones (
+  id bigserial PRIMARY KEY,
+  ticket_id text NOT NULL,
+  de text,                                  -- persona a cargo antes del cambio, nula si el ticket no tenia
+  a text NOT NULL,
+  motivo text NOT NULL CONSTRAINT reasignaciones_motivo CHECK (motivo <> ''),
+  reasignado_por text NOT NULL,
+  reasignado_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public.reasignaciones (ticket_id);

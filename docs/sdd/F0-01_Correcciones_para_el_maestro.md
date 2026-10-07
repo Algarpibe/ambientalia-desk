@@ -1484,3 +1484,39 @@ automático, las dos mediciones y el envío por remisión (éste depende de F1B-
 días): lo construido avisa a quien lleva el cargo Director Técnico, o al área Servicio Técnico si nadie lo lleva, y cuenta días
 naturales con frontera estricta (el día 61 avisa); que sean naturales lo debe confirmar Gerencia (P-2 del cambio). Tampoco afirma que
 esté en producción ni que el cargo esté asignado: sin él sólo un administrador responde la pregunta.
+
+## La de F1B-05, reasignación con motivo (30)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `reasignacion-con-motivo`, `cierra: si`, y
+> de `decision/e089-e220-visibilidad-y-traspaso` (Gerencia, 2026-10-06).
+
+### 30 · M1.9.1 y M4 — la reasignación con motivo está construida, y la pueden hacer cuantos tengan el área del estado, no sólo la persona a cargo y la dirección *(F1B-05)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2035` (párrafo «Reasignación entre técnicos de la
+misma área.») y `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2060-2062` (fila «Línea de traspaso en el
+historial, aviso personal y reasignación con motivo», con su estado «Propuesto R08.4» y su recomendación).
+
+**Texto actual:** «Reasignación entre técnicos de la misma área. Cambiar la persona a cargo sin cambiar de estado exige un motivo y
+queda trazado con origen, destino, motivo, fecha y hora. La pueden hacer la persona a cargo y el Director o el Coordinador del área.» /
+«Propuesto R08.4» / «Recomendación: en la fila F1B-05, que el plan ya reserva para el «traspaso formal entre agentes al cambiar de fase»
+(sin empezar); queda por confirmar si entra antes del corte».
+
+**Texto propuesto:**
+
+1. En la línea 2035, sustituir la última frase («La pueden hacer la persona a cargo y el Director o el Coordinador del área.») por: «La
+   puede hacer cualquier persona que tenga el área de alguna de las transiciones que salen del estado actual del ticket, o un
+   administrador; no hace falta ser la persona a cargo ni tener un cargo determinado. En un estado sin transiciones de salida sólo la
+   hace un administrador. La restricción a la persona a cargo y a la dirección del área llega con el nivel «propietario del registro»
+   (F1C-05).» Y donde dice «técnicos de la misma área», añadir que el destino puede ser cualquier persona activa, sin exigir que sea del
+   área. La persona de destino recibe aviso en la aplicación y por correo, con el motivo y el nombre de quien reasigna; reasignarse a
+   uno mismo se permite y no genera aviso.
+2. En las líneas 2060-2062, sustituir «Propuesto R08.4» por «[CONSTRUIDO] Decidido por Gerencia el 06/10/2026» y la recomendación por:
+   «Construida en la fila F1B-05: el motivo es obligatorio, la reasignación no cambia de estado, queda en el historial del ticket con
+   De, A, Motivo y Reasignado por, y el destino recibe aviso». La fila F1B-05 deja de figurar «sin empezar».
+
+**Lo que esta entrada NO pide.** No toca el párrafo «Ausencias» de la línea 2036, que sigue pendiente de la disponibilidad por usuario
+(M6): la reasignación construida no distingue si la persona a cargo está o no ausente. No cambia el párrafo de la restricción por
+propietario (línea 2037), que sigue aplazada. No afirma que esté en producción: depende del despliegue de la tanda y de su comprobación
+en la aplicación. Los supuestos S-2 (estado sin salida, sólo administrador), S-4 (mismo destino, rechazado), S-5 (a uno mismo, permitido)
+y S-6 (destino de cualquier área) están pendientes de confirmación de Gerencia en el traspaso de la tanda
+(`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`).

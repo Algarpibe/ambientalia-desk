@@ -492,3 +492,32 @@ WHERE table_schema = 'public' AND table_name = 'garantia_proveedor';
   y el aviso de 60 días cae al área Servicio Técnico.
 - **Lo que se verá el día de publicar:** toda OVI ya asociada a un ticket aparece «Pendiente de respuesta», porque no hay relleno.
 - **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra.
+
+## Comprobación de lectura tras desplegar F1B-05 (reasignación con motivo)
+
+**Sin variables de entorno nuevas** (`.env.example` no cambia) y sin interruptor: la ruta `POST /api/tickets/:id/reasignar` y el panel
+«Reasignar» están activos desde que se publica. El cambio añade **una tabla**, `public.reasignaciones`, que `migrate` crea al arrancar
+(`packages/zoho-sync/src/db/schema.sql:756`). No toca la replicación ni el hub, y no hay relleno: la tabla nace vacía.
+
+Hazla **antes de dar el cambio por publicado** (tarea de persona P-4, del Mantenedor). Es una consulta de sólo lectura, en la base `desk`
+(esquema `public`). La migración es tolerante por sentencia: un fallo se registra como «sentencia omitida» y **no** tumba el arranque,
+así que un despliegue puede quedar «verde» con la tabla sin crear.
+
+```sql
+-- La tabla existe: una fila. Con cero filas, la migración omitió la sentencia.
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name = 'reasignaciones';
+
+-- Se puede leer: devuelve 0 el día de publicar, porque no hay relleno.
+SELECT COUNT(*) FROM public.reasignaciones;
+```
+
+- **Qué se rompe si la tabla falta:** reasignar un ticket falla con `500` (el `INSERT` de la traza va dentro de la transacción y la revierte,
+  `apps/desk/server/db/reasignaciones.ts:36`), y el historial de cualquier ticket falla al leerla
+  (`apps/desk/server/db/reasignaciones.ts:45`); también el borrado de un usuario, que la consulta para contar usos
+  (`apps/desk/server/db/reasignaciones.ts:51`).
+- **Lo que se verá el día de publicar:** el panel «Reasignar» aparece en el detalle de los tickets para quien tenga el área del estado o sea
+  administrador; en un estado sin salida («Finalizado») sólo para un administrador. Los supuestos que Gerencia debe confirmar están en
+  `docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §9.
+- **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra, y los `derivado_a` ya reasignados siguen siendo válidos.

@@ -196,7 +196,7 @@ Los `.tsx` están fuera de la red de pruebas por decisión de Gerencia: el panel
 | Capacidad | Qué cambia |
 |---|---|
 | `tickets-core` | Requisitos nuevos desde RQ-TC-44: la respuesta y la ficha, sus datos, sus estados, las catorce guardas con su escalón, la lectura por ticket y lo que ocurre al liberar |
-| `permissions` | Requisito nuevo desde RQ-PM-26: responder y gestionar la reclamación pide el mismo cargo que asociar la OVI; `puedeCrearOVIGarantia` gana llamadores (precisa RQ-PM-24, `openspec/specs/permissions/spec.md:635`) |
+| `permissions` | Requisito nuevo desde RQ-PM-26: responder y gestionar la reclamación pide el mismo cargo que asociar la OVI; `puedeCrearOVIGarantia` gana llamadores (precisa RQ-PM-24, `openspec/specs/permissions/spec.md:635` en `a64c6c8`) |
 | `derivacion-avisos` | Requisito nuevo desde RQ-AV-19: aviso de 60 días, destinatarios por cargo de permiso con respaldo al área, marca en la misma transacción, pasada |
 
 ## 9 · Áreas afectadas y lotes

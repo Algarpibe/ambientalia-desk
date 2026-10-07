@@ -1,6 +1,6 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { HistoryDetail, HistoryEvent, RemisionResultado } from '@ambientalia/shared'
-import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'
+import { ETIQUETA_ESTADO_REMISION, ETIQUETA_ESTADO_REMISION_DESCONOCIDA, urlSegura } from '@ambientalia/shared'; import { eventosRestauracion } from './remisionRestaurada'; import { lineaTraspaso } from './traspaso'; import { eventosReasignacion } from './eventoReasignacion'
 import { getZohoHistoryEvents } from '@ambientalia/zoho-sync/db/history'
 import {
   camposDiligenciados, datosTicket, esCreacion, iso, json, lectorCreacion, listaIncluye, planSyncZoho,
@@ -125,7 +125,7 @@ const masRecientePrimero = porFechaDesc<HistoryEvent>((e) => e.time)
 
 /**
  * Toda la historia del ticket en una sola línea de tiempo: lo que vino de Zoho, las transiciones de
- * la app y sus remisiones. Se DERIVA al leer y no se registran eventos nuevos, que es lo que hace
+ * la app, sus remisiones y sus reasignaciones. Se DERIVA al leer y, salvo las reasignaciones, no se registran eventos nuevos, que es lo que hace
  * que aparezca sola la historia ya existente —las 149 remisiones migradas incluidas—.
  */
 export async function getHistorialTicket(db: Queryable, ticketId: string): Promise<HistorialTicket> {
@@ -154,7 +154,7 @@ export async function getHistorialTicket(db: Queryable, ticketId: string): Promi
   )
   const remisiones = (rem.rows as Record<string, unknown>[]).flatMap(eventosRemision)
 
-  const eventos = [...zoho, ...transiciones, ...remisiones].sort(masRecientePrimero)
+  const eventos = [...zoho, ...transiciones, ...remisiones, ...(await eventosReasignacion(db, ticketId))].sort(masRecientePrimero)
 
   const sincronizarConZoho = planSyncZoho(ticketId, zoho.length > 0)
 

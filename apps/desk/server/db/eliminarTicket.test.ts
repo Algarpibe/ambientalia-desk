@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from './eliminarTicket'; import { asociarOV, listarAsociaciones, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
+import { eliminarTicket, TicketNoEncontrado, TicketNoBorrable } from './eliminarTicket'; import { asociarOV, listarAsociaciones, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { createUser, getUserById, usosDeUsuario, borrarUsuario, UsuarioEnUso } from '../auth/users'
 
 let db: Queryable
 beforeEach(async () => {
@@ -11,18 +11,18 @@ beforeEach(async () => {
 })
 
 /**
- * Las diez tablas, escritas A MANO y no importadas del módulo.
+ * Las once tablas, escritas A MANO y no importadas del módulo.
  *
  * Si se importaran, quitar una tabla de la implementación la borraría también de la expectativa y el
  * test seguiría verde mientras deja huérfanas en producción. Duplicarlas es justo lo que hace que la
  * mutación muerda.
  */
-const LAS_DIEZ = [
+const LAS_ONCE = [
   'remision_fotos', 'remisiones', 'avisos', 'ticket_reads', 'resolution_attachments',
-  'attachments', 'conversations', 'ticket_transitions', 'ticket_history', 'tickets',
+  'attachments', 'conversations', 'ticket_transitions', 'ticket_history', 'reasignaciones', 'tickets',
 ]
 
-/** Un ticket con AL MENOS una fila en cada una de las nueve hijas. */
+/** Un ticket con AL MENOS una fila en cada una de las diez hijas. */
 async function ticketCompleto(id: string, numero: number, remisionId: string): Promise<void> {
   await db.query('INSERT INTO tickets (id, number, status, subject, managed_by_app) VALUES ($1,$2,$3,$4,true)',
     [id, numero, 'Ingresado', `Asunto ${numero}`])
@@ -39,6 +39,7 @@ async function ticketCompleto(id: string, numero: number, remisionId: string): P
   await db.query('INSERT INTO ticket_transitions (ticket_id, transition_name, from_status, to_status, performed_by) VALUES ($1,$2,$3,$4,$5)',
     [id, 'Habilitar', 'Ticket creado', 'Ingresado', 'Admin'])
   await db.query('INSERT INTO ticket_history (id, ticket_id, actor_name) VALUES ($1,$2,$3)', [`his-${id}`, id, 'X'])
+  await db.query('INSERT INTO reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ($1,$2,$3,$4,$5)', [id, 'u-1', 'u-2', 'vacaciones', 'Carla'])
 }
 
 const contar = async (tabla: string, col: string, valor: string): Promise<number> => {
@@ -46,25 +47,25 @@ const contar = async (tabla: string, col: string, valor: string): Promise<number
   return Number((r.rows[0] as Record<string, unknown>).n)
 }
 
-/** Lo que queda de un ticket en las nueve hijas más la cabecera. */
+/** Lo que queda de un ticket en las diez hijas más la cabecera. */
 async function huellaDe(id: string, remisionId: string): Promise<number> {
   let n = await contar('remision_fotos', 'remision_id', remisionId)
-  for (const t of ['remisiones', 'avisos', 'ticket_reads', 'resolution_attachments', 'attachments', 'conversations', 'ticket_transitions', 'ticket_history']) {
+  for (const t of ['remisiones', 'avisos', 'ticket_reads', 'resolution_attachments', 'attachments', 'conversations', 'ticket_transitions', 'ticket_history', 'reasignaciones']) {
     n += await contar(t, 'ticket_id', id)
   }
   return n + (await contar('tickets', 'id', id))
 }
 
 describe('eliminarTicket', () => {
-  it('no deja huérfanas en ninguna de las nueve hijas, y no toca al ticket vecino', async () => {
+  it('no deja huérfanas en ninguna de las diez hijas, y no toca al ticket vecino', async () => {
     await ticketCompleto('app-1', 10000, 'rem-1')
     await ticketCompleto('app-2', 10001, 'rem-2')
 
     await eliminarTicket(db, 'app-1', { actor: 'Beto' })
 
     expect(await huellaDe('app-1', 'rem-1')).toBe(0)
-    // 11 filas: 1 por hija + 2 lecturas + la cabecera.
-    expect(await huellaDe('app-2', 'rem-2')).toBe(11)
+    // 12 filas: 1 por hija + 2 lecturas + la cabecera.
+    expect(await huellaDe('app-2', 'rem-2')).toBe(12)
   })
 
   it('el simulacro devuelve los números pero no escribe nada', async () => {
@@ -85,11 +86,11 @@ describe('eliminarTicket', () => {
     expect(real).toEqual({ ...seco, dryRun: false })
   })
 
-  it('lista las diez tablas en orden de borrado, aunque estén vacías', async () => {
+  it('lista las once tablas en orden de borrado, aunque estén vacías', async () => {
     await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('app-1', 10000, 'Ingresado', true)")
     const r = await eliminarTicket(db, 'app-1', { dryRun: true })
 
-    expect(r.filas.map((f) => f.tabla)).toEqual(LAS_DIEZ)
+    expect(r.filas.map((f) => f.tabla)).toEqual(LAS_ONCE)
     // Solo la cabecera: todo lo demás a cero, y aun así presente.
     expect(r.total).toBe(1)
     expect(r.filas.filter((f) => f.borradas > 0).map((f) => f.tabla)).toEqual(['tickets'])
@@ -114,7 +115,7 @@ describe('eliminarTicket', () => {
     await ticketCompleto('12345', 987, 'rem-z')
 
     await expect(eliminarTicket(db, '12345', { actor: 'Beto' })).rejects.toThrow(TicketNoBorrable)
-    expect(await huellaDe('12345', 'rem-z')).toBe(11)
+    expect(await huellaDe('12345', 'rem-z')).toBe(12)
   })
 
   it('un ticket que no existe lanza TicketNoEncontrado', async () => {
@@ -232,5 +233,36 @@ describe('eliminarTicket · el actor llega a `liberada_por`', () => {
     await eliminarTicket(db, 'app-1', { dryRun: true })
 
     expect((await listarAsociaciones(db, 'app-1'))[0]).toMatchObject({ liberada_at: null, liberada_por: null })
+  })
+})
+
+/**
+ * reasignacion-con-motivo · lote 2 (S-8, RQ-TC-51): las filas de `reasignaciones` de un ticket borrado se barren con él.
+ * Sin esto seguirían contando en `usosDeUsuario` y su destino no se podría borrar nunca.
+ */
+describe('eliminarTicket · reasignaciones (S-8)', () => {
+  it('eliminar un ticket reasignado a «Beto» deja sin filas suyas la tabla y libera a Beto para borrarse', async () => {
+    const beto = (await createUser(db, { email: 'beto@x.co', name: 'Beto', passwordHash: 'h' })).id
+    await db.query("INSERT INTO tickets (id, number, status, managed_by_app) VALUES ('app-1', 10000, 'Ingresado', true), ('app-2', 10001, 'Ingresado', true)")
+    await db.query("INSERT INTO reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('app-1', null, $1, 'vacaciones', 'Carla'), ('app-2', null, $1, 'carga', 'Carla')", [beto])
+    expect(await usosDeUsuario(db, beto)).toBe(2)
+
+    await eliminarTicket(db, 'app-1', { actor: 'Beto' })
+
+    expect(await contar('reasignaciones', 'ticket_id', 'app-1')).toBe(0)
+    expect(await contar('reasignaciones', 'ticket_id', 'app-2')).toBe(1) // el vecino no se toca
+    // Con la del vecino todavía figura; al borrar ese ticket también, queda libre.
+    await expect(borrarUsuario(db, beto)).rejects.toThrow(UsuarioEnUso)
+    await eliminarTicket(db, 'app-2', { actor: 'Beto' })
+    expect(await usosDeUsuario(db, beto)).toBe(0)
+    await borrarUsuario(db, beto)
+    expect(await getUserById(db, beto)).toBeNull()
+  })
+
+  it('el simulacro cuenta las reasignaciones y no las borra', async () => {
+    await ticketCompleto('app-1', 10000, 'rem-1')
+    const r = await eliminarTicket(db, 'app-1', { dryRun: true })
+    expect(r.filas.find((f) => f.tabla === 'reasignaciones')?.borradas).toBe(1)
+    expect(await contar('reasignaciones', 'ticket_id', 'app-1')).toBe(1)
   })
 })

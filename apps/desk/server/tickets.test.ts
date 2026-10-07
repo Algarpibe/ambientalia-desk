@@ -518,7 +518,7 @@ describe('DELETE /api/tickets/:id (admin)', () => {
     expect(seco.status).toBe(200)
     expect(seco.body.dryRun).toBe(true)
     expect(seco.body.ticket).toMatchObject({ numero: 10000 })
-    expect(seco.body.filas).toHaveLength(10)
+    expect(seco.body.filas).toHaveLength(11)
     expect(await existe('app-1')).toBe(true)
 
     const real = await request(app).delete('/api/tickets/app-1').set('Cookie', cookie)

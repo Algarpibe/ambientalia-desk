@@ -522,7 +522,7 @@ es «Todos» (`apps/desk/src/App.tsx:57`), así que por defecto es global. Los r
 que el listado ya tenía sin `q` (`RQ-VT-09` para activos y «Mis tickets»; `created_time DESC` para cerrados).
 «Mis tickets» con `q` **SHALL** aplicar la búsqueda y **después** el predicado `esDeMisTickets`, y devolver sólo los
 del usuario de la sesión, en el orden de la cola del taller. **La búsqueda no segmenta la visibilidad:** todo
-usuario autenticado ve todos los tickets (`openspec/specs/permissions/spec.md:550`); `q` sólo recorta, no concede ni
+usuario autenticado ve todos los tickets (`openspec/specs/permissions/spec.md:550` en `373401e`); `q` sólo recorta, no concede ni
 niega.
 
 **Posición de la validación:** la comprobación de `q` **SHALL** correr **después** de `requireAuth`

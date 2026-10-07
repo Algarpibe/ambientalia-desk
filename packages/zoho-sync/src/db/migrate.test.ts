@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 42 tablas: 10 de Desk, 29 de la app en public (garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 29, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(42)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(42)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(42)
+  it('son 43 tablas: 10 de Desk, 30 de la app en public (reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 30, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(43)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(43)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(43)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -775,5 +775,45 @@ describe('ficha-garantia-proveedor · public.garantia_proveedor', () => {
     const insertar = () => db.query("INSERT INTO public.garantia_proveedor (asociacion_id, ticket_id, ovi_numero, reclama, motivo_no_reclama, respondida_por) VALUES (7, 'T-1', 'OVI-1', false, 'mal_uso', 'x')")
     await insertar()
     await expect(insertar()).rejects.toMatchObject({ code: '23505' })
+  })
+})
+
+/**
+ * reasignacion-con-motivo (F1B-05, RQ-TZ-20) · `public.reasignaciones` y su índice cierran el esquema. Regla de mutación 2:
+ * se ensucia `schema.sql` (sin `public.`, sin el CHECK), no esta prueba.
+ */
+describe('reasignacion-con-motivo · public.reasignaciones cierra el esquema (F1B-05, RQ-TZ-20)', () => {
+  const limpias = () => schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
+
+  it('la tabla existe tras migrate, en public, y está vacía', async () => {
+    const db = await freshDb()
+    expect((await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name='reasignaciones'")).rows).toHaveLength(1)
+    expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
+  })
+
+  it('el CREATE va calificado con public. y es la PENÚLTIMA sentencia; el índice, en una sola sentencia, la última', () => {
+    const l = limpias()
+    expect(l[l.length - 2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
+    expect(l.filter((s) => /idx_reasignaciones_ticket/.test(s))).toHaveLength(1)
+    expect(l[l.length - 1]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/)
+    expect(l.filter((s) => /reasignaciones/.test(s)), 'sentencias que mencionan reasignaciones').toHaveLength(2)
+  })
+
+  it('el CHECK rechaza un motivo vacío con un INSERT directo y acepta uno con texto; el origen puede ser nulo', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1','u2','','ana')")).rejects.toThrow()
+    await db.query("INSERT INTO public.reasignaciones (ticket_id, a, motivo, reasignado_por) VALUES ('t1','u2','vacaciones','ana')")
+    const r = await db.query('SELECT de, a, motivo, reasignado_por, reasignado_at FROM public.reasignaciones')
+    expect(r.rows).toHaveLength(1)
+    expect(r.rows[0].de).toBeNull()
+    expect(r.rows[0].reasignado_at).toBeInstanceOf(Date)
+  })
+
+  // W-2 del verify (regla de mutación 2: se muta el fichero vigilado). RQ-TZ-20: destino y actor son obligatorios.
+  it('la base rechaza un INSERT directo sin destino (`a` nulo) y otro sin actor (`reasignado_por` nulo)', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1',NULL,'vacaciones','ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1','u2','vacaciones',NULL)")).rejects.toThrow()
+    expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
   })
 })

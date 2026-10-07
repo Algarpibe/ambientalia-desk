@@ -7,7 +7,7 @@
 
 **Por qué existe:** el esquema **no tiene claves foráneas**. `DELETE FROM tickets` siempre funciona y
 deja las filas hijas huérfanas en silencio. Ya ha mordido dos veces (`debt.md:421`). Este barrido son
-**nueve tablas** y el sistema no avisa si te dejas una.
+**diez tablas** y el sistema no avisa si te dejas una.
 
 **Dónde se corre:** EasyPanel → servicio `desk-db` → Postgres Client. ⚠️ El botón abre `psql` en la base
 `postgres`: hay que hacer `\c desk` antes de nada. Las tablas de Zoho Desk viven en el esquema `desk` y
@@ -89,6 +89,7 @@ DELETE FROM desk.attachments              WHERE ticket_id IN (SELECT id FROM _bo
 DELETE FROM desk.conversations            WHERE ticket_id IN (SELECT id FROM _borrar);
 DELETE FROM desk.ticket_transitions       WHERE ticket_id IN (SELECT id FROM _borrar);
 DELETE FROM desk.ticket_history           WHERE ticket_id IN (SELECT id FROM _borrar);
+DELETE FROM public.reasignaciones         WHERE ticket_id IN (SELECT id FROM _borrar);
 DELETE FROM desk.tickets                  WHERE id IN (SELECT id FROM _borrar);
 
 COMMIT;
@@ -118,6 +119,8 @@ UNION ALL SELECT 'conversations', count(*) FROM desk.conversations
 UNION ALL SELECT 'ticket_transitions', count(*) FROM desk.ticket_transitions
   WHERE ticket_id NOT IN (SELECT id FROM desk.tickets)
 UNION ALL SELECT 'ticket_history', count(*) FROM desk.ticket_history
+  WHERE ticket_id NOT IN (SELECT id FROM desk.tickets)
+UNION ALL SELECT 'reasignaciones', count(*) FROM public.reasignaciones
   WHERE ticket_id NOT IN (SELECT id FROM desk.tickets)
 UNION ALL SELECT 'remision_fotos', count(*) FROM public.remision_fotos
   WHERE remision_id NOT IN (SELECT id FROM public.remisiones);

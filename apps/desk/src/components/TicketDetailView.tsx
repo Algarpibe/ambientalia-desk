@@ -12,7 +12,7 @@ import { Adjuntos } from './Adjuntos';
 import { valoresConocidos } from '../lib/valoresTransicion';
 import { ActividadesPanel } from './ActividadesPanel';
 import { CrearRemision } from './CrearRemision';
-import { PanelRemisiones } from './PanelRemisiones'; import { PanelOvAsociaciones } from './PanelOvAsociaciones'; import { MarcaContrato } from './MarcaContrato'; import { PanelPrioridad } from './PanelPrioridad'; import { PanelGarantiaProveedor } from './PanelGarantiaProveedor';
+import { PanelRemisiones } from './PanelRemisiones'; import { PanelOvAsociaciones } from './PanelOvAsociaciones'; import { MarcaContrato } from './MarcaContrato'; import { PanelPrioridad } from './PanelPrioridad'; import { PanelGarantiaProveedor } from './PanelGarantiaProveedor'; import { PanelReasignar } from './PanelReasignar';
 
 /** Manija de arrastre entre columnas (reemplaza el borde). */
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
@@ -69,7 +69,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
     const [replyText, setReplyText] = useState('');
     const [confirmingReply, setConfirmingReply] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
-    const [showRemision, setShowRemision] = useState(false);
+    const [showRemision, setShowRemision] = useState(false); const [versionHistoria, setVersionHistoria] = useState(0);
 
     /**
      * Lo que hay que refrescar cuando una remisión se mueve, sea al crearla o al reenviar una que
@@ -288,7 +288,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         )}
                         {activeView === 'historia' && (
                             <div className="flex-1 overflow-y-auto bg-white">
-                                <HistoriaPanel ticketId={ticketId} />
+                                <HistoriaPanel key={versionHistoria} ticketId={ticketId} />
                             </div>
                         )}
                         {activeView === 'remisiones' && (
@@ -317,7 +317,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                         )}
 
                         {/* Órdenes de venta del ticket (asociacion-ov-ticket, lote 6): plegado por defecto, sobre la caja de transiciones. */}
-                        {ticket && <PanelOvAsociaciones ticketId={ticketId} />}{ticket && <PanelGarantiaProveedor ticketId={ticketId} />}{ticket && <MarcaContrato ticketId={ticketId} />}{ticket && <PanelPrioridad ticketId={ticketId} onCambio={onChanged} />}
+                        {ticket && <PanelOvAsociaciones ticketId={ticketId} />}{ticket && <PanelGarantiaProveedor ticketId={ticketId} />}{ticket && <MarcaContrato ticketId={ticketId} />}{ticket && <PanelPrioridad ticketId={ticketId} onCambio={onChanged} />}{ticket && <PanelReasignar ticketId={ticketId} status={ticket.status} clasificacion={ticket.classification ?? null} derivadoActual={ticket.derivado ?? null} onCambio={() => { setVersionHistoria((v) => v + 1); reloadTicket(); onChanged?.(); }} />}
 
                         {/* Caja de respuesta + transiciones — al pie del hilo, en el flujo (sin solapar) */}
                         <div className="border-t border-slate-200 bg-white p-3 flex flex-col gap-2 shrink-0">
