@@ -88,7 +88,7 @@ Una fila por tanda: la fila `F1C-01…08` de la R01.1 se despliega en ocho. Tall
 | F1B-08 | Paridad de vistas con Zoho y tablero · **+ búsqueda por número de ticket y serial** | L (resta S–M) + S | antes del 14/12 | en curso | `decision/escalado-remision-creada` · `decision/p44-escritura-zoho` · `decision/anexo-3-alerta` · `decision/trabajo-del-01-10-antes-del-corte-sin-fila` (1) |
 | F1B-09 | audit-F1B | S | antes del 14/12 | en curso | plan R01.1 §5 |
 | F1B-10 | Orden único de precedencia entre guardas | M | antes del 14/12 | cerrada por archivo | plan R01.1 §5 |
-| F1B-11 | OV ↔ ticket 1 : N, subOV de lote, registro de contrato, parche IV-11 | L (resta S) | antes del 14/12 | en curso | `decision/anexo-53-contratos` · `decision/e005b-parche-vehiculo` |
+| F1B-11 | OV ↔ ticket 1 : N, subOV de lote, registro de contrato, parche IV-11 | L (resta S) | antes del 14/12 | cerrada por archivo (`189ddf9`) | `decision/anexo-53-contratos` · `decision/e005b-parche-vehiculo` |
 | **F1B-12** | **Calendario laboral** (jornada, festivos, día hábil) | S | antes del 14/12 | cerrada por archivo | `decision/calendario-habil` |
 | **F1B-13** | **Ficha de garantía con el proveedor** (reclamación al fabricante vinculada a ticket y OVI) | S | antes del 14/12 | pendiente | `decision/anexo-7-garantia-proveedor` |
 | **F1B-14** | **Alta y edición del equipo** | S–M | antes del 14/12 | cerrada por archivo | `decision/equipo-nuevo-alta-en-ticket` · `decision/edicion-datos-comerciales-equipo` |
