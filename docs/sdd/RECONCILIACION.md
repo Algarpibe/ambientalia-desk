@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `1bf414a` · **Fecha del commit:** 2026-10-07
+**Commit medido:** `5ce4252` · **Fecha del commit:** 2026-10-07
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen

@@ -335,3 +335,23 @@ las da por hechas.** **No tienen entrada en `docs/sdd/ENTRADA.md`**: la entrada 
 | P-4 | Gerencia | Pegar en el maestro la corrección 31 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir que el accesorio se escribe y que sólo hay diez novedades |
 | P-5 | Quien verifica la aplicación | Tras desplegar: el formulario enseña nombre y SKU; la pantalla «Accesorios por modelo» sólo la ve quien puede; «Añadir a mano» ya no ofrece accesorio; «Accesorio fuera de lista» aparece como novedad y pide texto y foto | Da por comprobado lo que los `.tsx` no cubren (están fuera de la red de pruebas, F0-00) |
 | P-6 | Mantenedor | Desplegar y comprobar que la novedad `accesorio_fuera_de_lista` existe en producción tras el arranque (`DEPLOY.md`) | Que el técnico tenga la salida para el accesorio fuera de lista |
+
+## 12 · Traspaso de `accesorios-lista-por-modelo` — dos avisos para Gerencia y una hipótesis que sigue abierta
+
+`accesorios-lista-por-modelo` está fusionado a `main` en `5ce4252`. **F1B-04 no queda cerrada** (`cierra: no`): sigue en curso en
+`docs/sdd/RECONCILIACION.md`, y lo que queda de la fila está en el apartado 11. Lo que sigue no es tarea de ninguna sesión de construcción.
+**No tiene entrada en `docs/sdd/ENTRADA.md`**: el fichero tenía cambios de Supervisión sin commitear cuando se escribió esto, así que la
+entrada la abre Supervisión.
+
+### 12.1 · Para Gerencia — dos cosas que cambian en el uso
+
+| Qué cambia | Qué hace hoy la aplicación | Qué cambia si Gerencia no lo quiere así |
+|---|---|---|
+| **Un accesorio que no sea artículo de Books («Manuales», «Pletinas») ya no se puede añadir** | El alta a mano de un accesorio sin artículo de Books responde `422` (`apps/desk/server/routes/catalogo.ts:220`) y la ruta del Director Técnico sólo acepta artículos que existan en Books (`apps/desk/server/routes/accesoriosModelo.ts:29`). Los accesorios de texto libre que ya existían se conservan. Es el supuesto S-4 de §11.1 | Hay que decidir si esos accesorios se dan de alta en Books o si se admite una excepción, y quitar o acotar la guarda del alta |
+| **El buscador descarta los artículos de Books sin SKU** | La pantalla «Accesorios por modelo» sólo ofrece lo que devuelve el buscador de artículos, y su consulta exige SKU no vacío (`packages/zoho-sync/src/books/repo.ts:30`). El servidor sí aceptaría un artículo sin SKU; lo que no hay es forma de elegirlo desde la pantalla. Es el límite (d) de §11.2 | Hay que abrir el buscador a los artículos sin SKU, que es un cambio de la consulta compartida con los demás buscadores de artículos |
+
+### 12.2 · Hipótesis que sigue abierta — que el SKU sea el «número de parte»
+
+La aplicación enseña el SKU de Books junto al nombre del accesorio y nada más. **Que ese SKU sea el «número de parte» sigue siendo
+hipótesis**: ninguna fuente lo confirma y esta tanda no lo decide. Es el supuesto S-1 de §11.1 y la tarea P-3 de §11.3; hasta que Gerencia
+responda, ningún documento del repositorio debe darlo por cierto.
