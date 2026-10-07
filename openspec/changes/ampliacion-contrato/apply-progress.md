@@ -51,3 +51,23 @@ Ningún superviviente.
 **Líneas reales** (leídas de `apps/desk/server/db/contratos.ts` ya editado): el `UPDATE` condicionado en `:133` y `throw new ContratoCambiadoError` en `:136` (alimentan la fila 5 de la regla 13). `ampliarContrato` abre en `:130` y `ampliacionesDelContrato` en `:146`.
 
 **Desviaciones del diseño:** ninguna en SQL, firmas ni orden. Menores: (1) el comentario nuevo de `schema.sql` ocupa 14 líneas, no 16; (2) en `contratos.test.ts` el import de `@ambientalia/shared` va en la línea 5 tras `;` para no insertar líneas; (3) aviso de eslint heredado en `migrate.ts:6` (`any`), no es de este lote.
+
+## Lote 3 · ruta y lectura ampliada (tareas 3.1 a 3.10 hechas; 3.11 a 3.16 son del orquestador)
+
+Partida: `e75ed5c`. `wc -l` de `apps/desk/server/routes/contratos.ts`: 71 → 91 (+20, sólo la ruta nueva tras el informe; las líneas 5, 9, 21-22 y 33 en sitio, mismo número).
+Fichero nuevo `apps/desk/server/routes/contratosAmpliar.test.ts`: 209 líneas (sin trackear). Hunks: `-5`, `-9`, `-21,2`, `-33` y `+71,20`. `routes/contratos.test.ts` NO se tocó y sigue verde (la ficha usa `toMatchObject`; el espía no se rompe).
+
+**Rojo → verde (strict TDD).** Primero el fichero de pruebas completo (21 casos): `18 failed | 3 passed` (la ruta no existía; los 3 verdes son coincidencias de 401/404). Después el código: `21 passed`.
+Dos ajustes de la prueba, no del código: pg-mem devuelve `fecha_fin` como `Date` en SQL directo (se lee con `contratoPorId`) y el título de la matriz.
+
+**Mutaciones (3.8), cada una restaurada (`cmp` contra la copia; `git diff --stat` igual antes y después).**
+M1 el `403` antes del `404`: 2 rojas (A↔B e id no numérico). M2 el cuerpo antes del permiso: 1 roja (B↔C). M3 escribir antes de validar: 3 rojas (C↔D, fecha antes que motivo, bordes de año).
+Mperm sin permiso: 5 rojas. M14 `hoy` por defecto con `new Date().toISOString()`: 1 roja. M18 `ampliadoPor` del cuerpo: 1 roja. M20 sin `ampliaciones` o sin `fechaFinOriginal` en la ficha: 2 rojas cada una.
+Una primera M3 mal escrita (validaba ANTES de escribir) no era mutación y dio verde: se rehízo y quedó roja. Ningún superviviente.
+
+**Líneas reales** (`apps/desk/server/routes/contratos.ts` ya editado): `404` paso 1 en `:78`, `403` paso 2 en `:79`, `422` paso 3 en `:81` (guarda; la llamada a `ampliacionDelCuerpo` en `:80`),
+`409` paso 4 en `:87` (el `catch` de `ContratoCambiadoError`; el `ampliarContrato` en `:83`); la ficha en `:33`. La ruta abre en `:74` (comentario en `:72-73`).
+`DELETE` sobre `contrato_ampliaciones`: ninguna sentencia; sólo dos comentarios que dicen «sin DELETE» (`db/contratos.ts:8` y `:119`).
+
+**Desviaciones del diseño:** ninguna en escalera, mensajes ni éxito `200`. Menor: la ficha sirve las ampliaciones con una consulta más (`ampliacionesDelContrato`).
+Comprobado por mí: `npx vitest run apps/desk/server/routes` exit 0 (264 pruebas); `npm run typecheck` exit 0.
