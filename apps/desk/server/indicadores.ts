@@ -87,7 +87,7 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
 
 export interface FilaIndicadores { ticketId: string; codigoServicio: string | null; indicadores: Indicador[] }
 
-/** Los nueve indicadores de cada ticket. Sin `horaActualizacionEstado` ni calificación: la aplicación no las guarda (H-1, H-2). */
+/** Los nueve indicadores de cada ticket. El 51 sale del historial; el 55 queda sin dato mientras la lectura no aporte la calificación (RQ-KP-22). */
 export function tablaIndicadores(e: EntradasIndicadores): FilaIndicadores[] {
   return e.tickets.map((t) => ({ ticketId: t.id, codigoServicio: t.codigoServicio, indicadores: calcularIndicadores(t, e.historial.get(t.id) ?? [], { cierres: e.cierres }) }))
 }

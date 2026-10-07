@@ -94,3 +94,14 @@ describe('tablaIndicadores', () => {
     expect([c50.valor, c50.formulaZoho]).toEqual([{ tipo: 'valor', valor: 4 }, { tipo: 'valor', valor: 5 }])
   })
 })
+
+describe('el 51 desde el historial, de punta a punta (F1F-05 lote 1, RQ-KP-09)', () => {
+  it('una fila entrega_al_cliente en ticket_transitions más la finalización dan el 51 calculado por tablaIndicadores', async () => {
+    await ticket('a', 1, '2027-01-02T15:00:00Z', "fecha_finalizacion_st='2027-01-05'")
+    await paso('a', 'entrega_al_cliente', { 'Fecha Remisión de Salida': '2027-01-08' }, '2027-01-08T15:00:00Z')
+    const i51 = tablaIndicadores(await leerEntradasIndicadores(db, sinPeriodo))[0].indicadores.find((i) => i.columna === '51')!
+    expect(i51.valor).toEqual({ tipo: 'valor', valor: 3 })
+    expect(i51.hitos['transición de entrega']).toEqual({ dia: '2027-01-08', fuente: 'transicion', escrituras: 1 })
+    expect(i51.reentrante).toBe(false)
+  })
+})

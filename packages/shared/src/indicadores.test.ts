@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vitest'; import { readFileSync } from 'node:fs'; import { fileURLToPath } from 'node:url'
 import {
-  HITOS_POR_COLUMNA, NOMBRES_ZOHO, calcularIndicadores, diasLunesAViernesFormulaZoho, resolverHito, valorDeZoho,
+  HITOS_POR_COLUMNA, NOMBRES_ZOHO, TRANSICIONES_DE_ENTREGA, calcularIndicadores, diasLunesAViernesFormulaZoho, resolverHito, valorDeZoho,
   type ColumnaIndicador, type Indicador, type TicketParaIndicadores,
 } from './indicadores'
-import { INDICADORES_G6 } from './reentrancia'
+import { INDICADORES_G6 } from './reentrancia'; import { transicionPorId } from './flujos'; import { transicionesQueEscriben } from './bodegaje'
 
 // Etiquetas literales de PROMOTED_COLUMNS, las mismas con que se escribe `ticket_transitions.values`.
 const REV = 'Fecha Revisión Informe', COT = 'Fecha de Cotización', OC = 'Fecha Orden de Compra'
@@ -73,7 +73,7 @@ describe('naturales con signo: 47, 57, 58, 59 (RQ-KP-03, -04, -08)', () => {
     ])
   })
   it('la fórmula de Zoho: el 47 es sin dato aunque haya salida; el 57 es igual que la letra', () => {
-    const f = calc(tk({ fechas: { [ENT]: '2026-12-16', [SAL]: '2027-01-02', [REV]: '2026-12-10', [COT]: '2026-12-13' } }), [], { horaActualizacionEstado: '2027-01-10T15:00:00Z' })
+    const f = calc(tk({ fechas: { [ENT]: '2026-12-16', [SAL]: '2027-01-02', [REV]: '2026-12-10', [COT]: '2026-12-13' } }))
     expect(de(f, '47').formulaZoho).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: hora del último cambio de estado, pendiente de decisión' })
     expect(de(f, '57').formulaZoho).toEqual({ tipo: 'valor', valor: 3 })
   })
@@ -97,20 +97,20 @@ describe('reentrancia (RQ-KP-10)', () => {
   })
 })
 
-describe('51 y 55: sin dato salvo entrada opcional (RQ-KP-09)', () => {
+describe('51 y 55: el 51 sin fila de entrega y el 55 sin calificación (RQ-KP-09)', () => {
   const fin = tk({ fechas: { [FIN]: '2027-01-05' } })
-  const PEND = 'falta el hito: hora del último cambio de estado, pendiente de decisión'
-  it('K13 sin entrada opcional el 51 es sin dato con motivo en texto, aunque haya finalización', () => {
-    expect(dato(de(calc(fin), '51'))).toBe(PEND)
+  const entregaEl = (performedAt: string) => [{ transitionId: 'entrega_al_cliente', performedAt, values: {} }]
+  it('K13 con finalización y sin fila de entrega el 51 es sin dato: falta el hito de transición de entrega', () => {
+    expect(dato(de(calc(fin), '51'))).toBe('falta el hito: transición de entrega')
   })
   it.each([
     ['2027-01-08T15:00:00Z', 3],
     ['2027-01-09T03:00:00Z', 3], // 22:00 del día 8 en Bogotá: no es el 9
-  ])('con horaActualizacionEstado %s el 51 vale %i', (hora, esperado) => {
-    expect(dato(de(calc(fin, [], { horaActualizacionEstado: hora }), '51'))).toBe(esperado)
+  ])('con una fila de entrega el %s el 51 vale %i', (instante, esperado) => {
+    expect(dato(de(calc(fin, entregaEl(instante)), '51'))).toBe(esperado)
   })
-  it('con la hora y sin finalización, dice qué falta', () => {
-    expect(dato(de(calc(tk(), [], { horaActualizacionEstado: '2027-01-08T15:00:00Z' }), '51'))).toBe('falta el hito: finalización del servicio')
+  it('con la entrega y sin finalización, dice qué falta', () => {
+    expect(dato(de(calc(tk(), entregaEl('2027-01-08T15:00:00Z')), '51'))).toBe('falta el hito: finalización del servicio')
   })
   it('el 55 sin entrada es sin dato', () => {
     expect(dato(de(calc(tk()), '55'))).toBe('falta el hito: satisfacción del cliente')
@@ -303,13 +303,10 @@ describe('54 cumplimiento del tiempo promesa (RQ-KP-07, -11)', () => {
   })
 })
 
-describe('47: la variante de Zoho es sin dato con y sin la entrada opcional (RQ-KP-11)', () => {
+describe('47: la variante de Zoho es sin dato aunque haya entrada y salida (RQ-KP-11)', () => {
   const PEND = { tipo: 'sin_dato', motivo: 'falta el hito: hora del último cambio de estado, pendiente de decisión' }
-  it.each([
-    ['sin entrada opcional', {}],
-    ['con horaActualizacionEstado', { horaActualizacionEstado: '2026-10-20T15:00:00Z' }],
-  ])('%s, con entrada y salida presentes', (_n, o) => {
-    const i = de(calc(tk({ fechas: { [ENT]: '2026-10-01', [SAL]: '2026-10-15' } }), [], o), '47')
+  it('con entrada y salida presentes', () => {
+    const i = de(calc(tk({ fechas: { [ENT]: '2026-10-01', [SAL]: '2026-10-15' } })), '47')
     expect([dato(i), i.formulaZoho]).toEqual([14, PEND])
   })
 })
@@ -326,5 +323,105 @@ describe('57 y 58 con signo (RQ-KP-03, RQ-KP-18)', () => {
   })
   it('58: orden de compra un día antes de la cotización vale -1', () => {
     expect(dato(de(calc(tk({ fechas: { [COT]: '2026-12-10', [OC]: '2026-12-09' } })), '58'))).toBe(-1)
+  })
+})
+
+// ---- F1F-05 (indicadores-51-55), lote 1: el 51 sale de la transición de entrega (RQ-KP-02, -09, -10, -11) ----
+const MARCA_ENT = 'transición de entrega'
+const MOTIVO_SIN_ENTREGA = `falta el hito: ${MARCA_ENT}`, MOTIVO_SIN_FIN = 'falta el hito: finalización del servicio'
+const MOTIVO_ZOHO = 'falta el hito: hora del último cambio de estado, pendiente de decisión'
+const entregaDe = (transitionId: string, performedAt: string) => ({ transitionId, performedAt, values: {} })
+const AL_CLIENTE = 'entrega_al_cliente', SIN_FACTURA = 'entrega_sin_factura'
+const conFin = tk({ fechas: { [FIN]: '2027-01-05' } })
+
+describe('guardián de TRANSICIONES_DE_ENTREGA (RQ-KP-09, regla de mutación 2)', () => {
+  it('cada identificador de la constante existe en el catálogo de transiciones', () => {
+    expect(TRANSICIONES_DE_ENTREGA.length).toBeGreaterThan(0)
+    for (const id of TRANSICIONES_DE_ENTREGA) expect(transicionPorId(id), id).toBeDefined()
+  })
+  it('la constante es EXACTAMENTE el conjunto de transiciones que escriben «Fecha Remisión de Salida»', () => {
+    expect([...TRANSICIONES_DE_ENTREGA].sort()).toEqual(transicionesQueEscriben(SAL).sort())
+  })
+})
+
+describe('51 desde la transición de entrega (RQ-KP-02, -09)', () => {
+  it.each([
+    ['una entrega_al_cliente', [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z')], 3, '2027-01-08', []],
+    ['una entrega_sin_factura', [entregaDe(SIN_FACTURA, '2027-01-07T15:00:00Z')], 2, '2027-01-07', []],
+    ['dos entregas: vale la última por performedAt, no la primera', [entregaDe(SIN_FACTURA, '2027-01-07T15:00:00Z'), entregaDe(AL_CLIENTE, '2027-01-12T15:00:00Z')], 7, '2027-01-12', []],
+    ['filas desordenadas: vale la última por performedAt y no la última del arreglo', [entregaDe(AL_CLIENTE, '2027-01-12T15:00:00Z'), entregaDe(SIN_FACTURA, '2027-01-07T15:00:00Z')], 7, '2027-01-12', []],
+    ['entrega anterior a la finalización: con signo y la marca', [entregaDe(AL_CLIENTE, '2027-01-03T15:00:00Z')], -2, '2027-01-03', ['orden_invertido']],
+    ['borde de Bogotá: 2027-01-09T03:00:00Z es el día 8 a las 22:00, no el 9', [entregaDe(AL_CLIENTE, '2027-01-09T03:00:00Z')], 3, '2027-01-08', []],
+  ])('%s', (_n, historial, esperado, diaEntrega, marcasEsperadas) => {
+    const i = de(calc(conFin, historial), '51')
+    expect(dato(i)).toBe(esperado)
+    expect(i.marcas).toEqual(marcasEsperadas)
+    expect(i.hitos[MARCA_ENT].dia).toBe(diaEntrega)
+    expect(i.hitos[MARCA_ENT].fuente).toBe('transicion')
+    expect(i.hitos[FIN]).toEqual({ dia: '2027-01-05', fuente: 'columna_heredada', escrituras: 0 })
+  })
+  it('el hito de entrega va DESPUÉS de la finalización y su clave es la del motivo', () => {
+    const i = de(calc(conFin, [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z')]), '51')
+    expect(Object.keys(i.hitos)).toEqual([FIN, MARCA_ENT])
+    expect(MOTIVO_SIN_ENTREGA).toBe(`falta el hito: ${Object.keys(i.hitos)[1]}`)
+  })
+})
+
+describe('51 sin dato: motivos y orden (RQ-KP-02, -09; S-B)', () => {
+  it('con finalización y Fecha Remisión de Salida pero sin fila de entrega: falta la entrega y no usa la remisión', () => {
+    const t = tk({ fechas: { [FIN]: '2027-01-05', [SAL]: '2027-01-08' } })
+    const i = de(calc(t, [paso(1, '2027-01-08T15:00:00Z', { [SAL]: '2027-01-08' })]), '51')
+    expect(dato(i)).toBe(MOTIVO_SIN_ENTREGA)
+    expect(i.hitos[MARCA_ENT]).toEqual({ dia: null, fuente: 'ausente', escrituras: 0 })
+  })
+  it('con entrega y sin finalización: falta la finalización', () => {
+    expect(dato(de(calc(tk(), [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z')]), '51'))).toBe(MOTIVO_SIN_FIN)
+  })
+  it('sin entrega ni finalización manda el primer motivo (las dos condiciones activas a la vez)', () => {
+    expect(dato(de(calc(tk()), '51'))).toBe(MOTIVO_SIN_ENTREGA)
+    expect(dato(de(calc(tk(), [paso(1, '2027-01-08T15:00:00Z', {})]), '51'))).toBe(MOTIVO_SIN_ENTREGA)
+  })
+})
+
+describe('51 reentrante: las dos entregas se cuentan juntas (RQ-KP-10)', () => {
+  it.each([
+    ['dos filas con el mismo identificador', [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z'), entregaDe(AL_CLIENTE, '2027-01-12T15:00:00Z')], 7],
+    ['entrega_sin_factura y entrega_al_cliente', [entregaDe(SIN_FACTURA, '2027-01-07T15:00:00Z'), entregaDe(AL_CLIENTE, '2027-01-12T15:00:00Z')], 7],
+  ])('%s: true y vale la última', (_n, historial, esperado) => {
+    const i = de(calc(conFin, historial), '51')
+    expect([i.reentrante, dato(i), i.hitos[MARCA_ENT].escrituras]).toEqual([true, esperado, 2])
+  })
+  it('una sola fila de entrega: false; ticket sin historial: null', () => {
+    expect(de(calc(conFin, [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z')]), '51').reentrante).toBe(false)
+    expect(de(calc(conFin), '51').reentrante).toBeNull()
+  })
+})
+
+describe('51 y 55: variantes de Zoho (RQ-KP-09, -11)', () => {
+  it('el 51 calculado sigue sin variante de Zoho: formulaZoho es el motivo de MOTIVO_H1', () => {
+    const i = de(calc(conFin, [entregaDe(AL_CLIENTE, '2027-01-08T15:00:00Z')]), '51')
+    expect(i.valor).toEqual({ tipo: 'valor', valor: 3 })
+    expect(i.formulaZoho).toEqual({ tipo: 'sin_dato', motivo: MOTIVO_ZOHO })
+  })
+  it('el 55 con calificación Excelente: valor y variante son la misma letra', () => {
+    const i = de(calc(tk(), [], { calificacionSatisfaccion: 'Excelente' }), '55')
+    expect(i.valor).toEqual({ tipo: 'valor', valor: 'Excelente' })
+    expect(i.formulaZoho).toEqual({ tipo: 'valor', valor: 'Excelente' })
+  })
+  it('el 55 sin calificación y con Good de Zoho: valor sin dato y valorZoho Good', () => {
+    const i = de(calc(tk({ camposZoho: { 'Calificación de satisfacción': 'Good' } })), '55')
+    expect(i.valor).toEqual({ tipo: 'sin_dato', motivo: 'falta el hito: satisfacción del cliente' })
+    expect(i.valorZoho).toBe('Good')
+  })
+})
+
+describe('ya no existe la entrada de hora del último cambio de estado (RQ-KP-09)', () => {
+  // El literal se arma por concatenación para que esta prueba no se cace a sí misma.
+  const NOMBRE = 'hora' + 'ActualizacionEstado'
+  it.each([
+    ['packages/shared/src/indicadores.ts', new URL('./indicadores.ts', import.meta.url)],
+    ['apps/desk/server/indicadores.ts', new URL('../../../apps/desk/server/indicadores.ts', import.meta.url)],
+  ])('%s no nombra la entrada de hora del último cambio de estado', (_ruta, url) => {
+    expect(readFileSync(fileURLToPath(url), 'utf8')).not.toContain(NOMBRE)
   })
 })
