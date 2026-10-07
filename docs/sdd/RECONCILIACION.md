@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `9b48aa8` · **Fecha del commit:** 2026-10-06
+**Commit medido:** `1bf414a` · **Fecha del commit:** 2026-10-07
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -16,18 +16,19 @@ este fichero IDÉNTICO, y su `git diff` es la lista de desvíos nuevos desde la 
 
 ## 2 · Numerador del avance (§C de la R01.4) — cifras separadas, nunca una suma
 
-  14 cerradas por archivo ....................... F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-06, F1B-10, F1B-12, F1B-14, F1B-15, F1C-09, F1C-10, F1C-11
+  15 cerradas por archivo ....................... F0-05, F1A-03, F1A-06, F1A-07, F1A-08, F1B-02, F1B-05, F1B-06, F1B-10, F1B-12, F1B-14, F1B-15, F1C-09, F1C-10, F1C-11
   9 cerradas por commit declarado ............... F0-00, F0-01, F0-02, F0-03, F1A-01, F1A-02, F1A-04, F1A-05, F1B-01
-  13 en curso, aparte y sin sumar ............... F0-04, F1B-03, F1B-04, F1B-05, F1B-07, F1B-08, F1B-09, F1B-11, F1B-13, F1C-05, F1F-01, F1F-02, F1F-05
+  12 en curso, aparte y sin sumar ............... F0-04, F1B-03, F1B-04, F1B-07, F1B-08, F1B-09, F1B-11, F1B-13, F1C-05, F1F-01, F1F-02, F1F-05
   denominador ................................... 78 tandas del §C de la R01.4
   6 cerradas sin fuente declarada en la R01.1 ... F1B-12, F1B-14, F1B-15, F1C-09, F1C-10, F1C-11
-  5 marcadas sin verificar
+  6 marcadas sin verificar
 
 Hallazgos (informativos, no bloquean):
   - `F0-02` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (M1.3, M1.9, Anexo G)
   - `F0-05` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (Brecha 17/09 · E-001 · `docs/sdd/F0-05_Mecanismo_de_Reconciliacion.md`)
   - `F1A-03` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (P38)
   - `F1A-06` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (Anexo F (R08.2), Decisiones 10/09 §9, entrada 4)
+  - `F1B-05` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (ítems 5, 6, 7)
   - `F1B-10` — sin verificar: su `maestro:` no cita ninguna fuente de su fila de la R01.1 (transitions-st §3.8 (a) y (b), tickets-core §4.1; entrada 5.a de F0-01)
 
 ## 3 · Cambios fuera del plan, con su motivo

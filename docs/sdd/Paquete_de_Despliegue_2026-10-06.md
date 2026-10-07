@@ -228,3 +228,24 @@ las da por hechas.** **No tienen entrada en `docs/sdd/ENTRADA.md`**: la entrada 
 | P-2 | Gerencia | Confirmar o corregir S-2, S-4, S-5 y S-6 (y S-8, §9.1) | Deja firme quién reasigna y a quién |
 | P-3 | Gerencia | Pegar en el maestro la corrección 30 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir que sólo reasignan la persona a cargo y la dirección del área |
 | P-4 | Mantenedor | Desplegar y comprobar que existe `public.reasignaciones` en producción (`DEPLOY.md`) | Que reasignar y el historial no fallen por tabla ausente |
+
+## 10 · Traspaso de `reasignacion-con-motivo` — una confirmación para Gerencia y un límite
+
+`reasignacion-con-motivo` está fusionado a `main` en `1bf414a` y F1B-05 queda cerrada por archivo (`docs/sdd/RECONCILIACION.md`). Lo que
+sigue no es tarea de ninguna sesión de construcción. **No tiene entrada en `docs/sdd/ENTRADA.md`**: el fichero tenía cambios de Supervisión
+sin commitear cuando se escribió esto, así que la entrada la abre Supervisión.
+
+### 10.1 · Para Gerencia — confirmar quién puede reasignar
+
+| Qué confirmar | Qué hace hoy la aplicación | Qué dice el maestro | Qué cambia si la respuesta es «no» |
+|---|---|---|---|
+| **Que reasigna un administrador o quien tenga el área de alguna transición que sale del estado actual del ticket** | Es lo construido: el predicado está en `packages/shared/src/reasignacion.ts:24-27` y lo impone el servidor con un `403` (`apps/desk/server/routes/reasignacion.ts:29`). No hace falta ser la persona a cargo y el cargo no cuenta | «La persona a cargo y el Director o el Coordinador del área». La diferencia se entrega como corrección 30 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md:1493`) | Hay que cambiar el predicado de `shared` para que conozca a la persona a cargo y el cargo de quien reasigna, con su barrido de pruebas y la prueba de la ruta; el panel sigue al predicado, así que no decide nada por su cuenta |
+
+Va junto con los cinco supuestos de §9.1, que siguen pendientes de la misma confirmación (tarea P-2 de §9.3).
+
+### 10.2 · Límite — si falla el alta del aviso tras escribir, la respuesta es `500` con la reasignación hecha
+
+El aviso a la persona de destino se escribe después de la transacción y fuera de ella (`apps/desk/server/routes/reasignacion.ts:41`). Si su
+`INSERT` falla, la persona a cargo ya cambió y la traza ya está escrita, pero quien reasignó ve un error y la persona de destino no recibe
+aviso. Reintentar desde el panel da `422` «El ticket ya está a cargo de esa persona» (`packages/shared/src/reasignacion.ts:45`), que es la
+señal de que la primera vez sí se aplicó. Lo fija `apps/desk/server/routes/reasignacion.test.ts:302`. No se corrige en esta tanda.
