@@ -367,11 +367,10 @@ las columnas `clave` (llave primaria), `etiqueta`, `orden`, `activo`, `excluye_d
 (`packages/zoho-sync/src/db/migrate.ts:70-73`), de modo que el guardián de `migrate.test.ts` la reconozca.
 
 - Tras `migrate`, la tabla **SHALL** contener **once** filas activas, en este orden y con estas etiquetas: las diez de
-  `decision/f1b04-desplegables` (`openspec/config.yaml:2941`) —«Sin novedad» · «Golpe o abolladura en la carcasa» ·
-  «Rayón o daño estético» · «Pantalla o display dañado» · «Conector o puerto dañado» · «Falta un accesorio» ·
-  «Embalaje inadecuado o dañado» · «Humedad, suciedad o contaminación visible» · «Sello o precinto roto» · «Otro»— y
-  «Accesorio fuera de lista» (`accesorio_fuera_de_lista`, `orden` 65, de `decision/e232-accesorios-lista-por-modelo`),
-  que va entre «Falta un accesorio» y «Embalaje inadecuado o dañado».
+  `decision/f1b04-desplegables` (`openspec/config.yaml:2941`) —«Sin novedad» · «Golpe o abolladura en la carcasa» · «Rayón o
+  daño estético» · «Pantalla o display dañado» · «Conector o puerto dañado» · «Falta un accesorio» · «Embalaje inadecuado o
+  dañado» · «Humedad, suciedad o contaminación visible» · «Sello o precinto roto» · «Otro»— y «Accesorio fuera de lista»
+  (`accesorio_fuera_de_lista`, `orden` 65, de `decision/e232-accesorios-lista-por-modelo`), entre «Falta un accesorio» y «Embalaje inadecuado o dañado».
 - Las dos marcas **SHALL** ser el comportamiento: `excluye_demas` es verdadera sólo en «Sin novedad» y
   `exige_texto` es verdadera sólo en «Otro» y en «Accesorio fuera de lista». El servidor **SHALL** decidir leyendo las
   marcas y **MUST NOT** decidir por la `clave` ni por la `etiqueta`.

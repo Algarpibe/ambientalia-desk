@@ -185,3 +185,14 @@ describe('POST …/accesorios · el artículo añadido llega a la remisión de e
     expect(r.body.incluyeDetalle).toEqual([{ nombre: 'Cable USB', sku: 'CB-100' }])
   })
 })
+
+// Cierre tras el verify (W2). NACE VERDE: el código guarda `art.id` de Books, y esta prueba es la que lo ata.
+describe('POST …/accesorios · itemId con espacios (W2)', () => {
+  it('el item_id guardado es el de Books, recortado, y el 201 devuelve el id de esa fila', async () => {
+    const res = await post(await directorTecnico(), { itemId: '  i1  ' })
+    expect(res.status).toBe(201)
+    const r = await db.query('SELECT id, item_id FROM catalogo_articulos WHERE modelo_id = $1', [modelo])
+    expect(r.rows).toEqual([{ id: res.body.id, item_id: 'i1' }])
+    expect(await filas()).toMatchObject([{ item_id: 'i1', sku: 'CB-100', nombre: 'Cable USB' }])
+  })
+})

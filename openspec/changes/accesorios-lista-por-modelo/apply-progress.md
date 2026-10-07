@@ -238,3 +238,27 @@ Fila 1 `remision.ts:194-197`; 2 `remision.ts:68`; 3 `remision.ts:158` y `shared/
 ### Desviaciones respecto al diseño
 - La corrección 31 añade un tercer punto (la foto por accesorio no está construida; la línea 1237 no cambia) que `tasks.md` no pedía; es una aclaración, no un cambio de alcance.
 - En el §11 los supuestos a confirmar son S-1, S-2, S-3, S-4, S-5, S-7, S-9 y S-10 (ocho); S-6 y S-8 se declaran de implementación, sin respuesta de Gerencia.
+
+## Cierre tras el verify (remediación de W1 a W5 y S1)
+
+Commit de partida `47c3368`. Sólo pruebas y documentos: **ningún cambio de código de producción** (la herramienta de mutación restauró cada fichero, `restaurado=true` en las 7, y `git diff 47c3368` no toca nada fuera de pruebas, el paquete y este informe). Las pruebas nuevas **NACEN VERDES** porque el código ya era correcto: el rojo previo no existe como tal; lo que las acredita es que la mutación que antes sobrevivía ahora cae. Todas van AL FINAL de su fichero.
+
+| Hallazgo | Prueba añadida (fichero · nombre) | Mutación | Antes | Después |
+|---|---|---|---|---|
+| W1 | `apps/desk/server/accesoriosCatalogo.test.ts` · «alta con itemId vacío o nulo (RQ-RE-33, W1)» > «accesorio con itemId vacío o null, aun con nombre, da 422 con exigeBooks y no crea fila» | P-alta-6: `b.itemId !== undefined` en `apps/desk/server/routes/catalogo.ts:220` | superviviente (N=0) | ROJO (1 prueba cae) |
+| W2 | `apps/desk/server/accesoriosModelo.test.ts` · «POST …/accesorios · itemId con espacios (W2)» > «el item_id guardado es el de Books, recortado, y el 201 devuelve el id de esa fila» | CONT-5b: guardar `String(req.body.itemId)` en vez de `art.id` | superviviente (N=0) | ROJO (1 prueba cae) |
+| W2 (matiz) | la misma | CONT-5a: guardar `cuerpo.itemId` en vez de `art.id` | n/a | **VERDE: es EQUIVALENTE**, porque `accesorioDelCuerpo` ya devuelve el `itemId` recortado (`packages/shared/src/accesoriosLista.ts:56-60`); sólo el valor crudo del cuerpo es distinguible, y ése cae |
+| W4 | `packages/zoho-sync/src/db/novedadesSiembra.test.ts` · «F1B-04 · accesorio_fuera_de_lista tras migrar dos veces (RQ-RE-34)» > «7 · volver a migrar conserva la etiqueta, el activo y las marcas editadas de la fila nueva» (edita la fila en la base, vuelve a llamar a `migrate`, comprueba que la edición sobrevive y que siguen once filas) | SQL-7: `ON CONFLICT (clave) DO UPDATE SET …` en `packages/zoho-sync/src/db/schema.sql:768` | sólo caía por texto (N=2: la 5 y `migrate.test.ts`) | ROJO por comportamiento: cae la 7 nueva (y la 5 por texto) |
+| S1 reactivar | `accesoriosCatalogo.test.ts` · «gestión de una fila de legado item_id NULL (RQ-RE-36, S1)» > «reactivar: …» (con y sin repetir la clase) | `UPDATE … WHERE id=$1 AND item_id IS NOT NULL` en `actualizarArticulo` | sobrevivía | ROJO (2 caen: la nueva y la de desactivar) |
+| S1 reordenar | misma sección > «reordenar: la fila sin item_id entra en el orden pedido» | `reordenarArticulos` filtra las filas sin `itemId` | sobrevivía | ROJO (1) |
+| S1 borrar | misma sección > «borrar: la fila sin item_id se borra con 204 y deja las demás» | `DELETE … AND item_id IS NOT NULL` en `borrarArticulo` | sobrevivía | ROJO (1) |
+
+Mutaciones ejecutadas con `mut.mjs` y un JSON fuera del repositorio. La S1 se prueba por la capa de datos porque las rutas de reordenar y borrar no leen el `item_id`: la mutación plausible es un filtro futuro que proteja el legado.
+
+### Documentos
+`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §11.2: añadidos (d) (W3: el buscador descarta los artículos de Books sin SKU, `packages/zoho-sync/src/books/repo.ts:30` servido por `apps/desk/server/routes/directory.ts:33`; no se corrige en esta tanda) y (e) (W5: citas archivadas a `migrate.test.ts` cuyo contenido cambió en sitio, nombradas en prosa y sin forma de cita). +12 líneas, 0 borrados, CRLF. Antes de insertar se comprobó que ninguna cita del repositorio apunta al §11.3 ni a líneas de ese paquete mayores que 250 (el §11.3 se desplaza 12 líneas sin romper nada). El encabezado del §11 sigue diciendo «tres límites» y ahora son cinco; no se tocó porque la orden era sólo añadir (lo corrige quien archive).
+
+### Cierre
+- `npm test`: exit 0, 252 ficheros pasan y 2 saltados, 3977 pruebas pasan y 7 saltadas (+6 sobre las 3971 del verify). `npm run typecheck`: exit 0. `npm run lint`: exit 0, 165 problemas (0 errores, 165 avisos).
+- Detector de citas (`tsx apps/desk/server/citas/cli.ts --sha HEAD`): exit 0, 0 rotas bloqueantes. Las abreviadas rotas informativas son 14 y no 13: la nueva es la `:524` del propio `verify-report.md` (atribuida a `DEPLOY.md`, línea vacía), ajena a esta remediación.
+- Medida (`git diff --shortstat --no-renames 47c3368`): 5 ficheros, 93 inserciones y 5 borrados; de ellos, 4 inserciones y 5 borrados son de `specs/remisiones/spec.md`, que **no toqué yo** (aparecía modificado durante la sesión; lo ajeno a esta remediación lo asienta quien lo editó). Lo mío: 89 inserciones en tres ficheros de prueba y el paquete, más este informe. Sin binarios.

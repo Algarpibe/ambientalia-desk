@@ -176,3 +176,53 @@ describe('copia entre modelos (RQ-RE-33)', () => {
     expect(await filasDe('cmod-2')).toMatchObject([{ clase: 'consumible_repuesto', nombre: 'Filtro suelto' }])
   })
 })
+
+// Cierre tras el verify (W1, S1). Las pruebas de W1 y S1 NACEN VERDES: el código ya era correcto y lo que faltaba era la prueba.
+describe('alta con itemId vacío o nulo (RQ-RE-33, W1)', () => {
+  it('accesorio con itemId vacío o null, aun con nombre, da 422 con exigeBooks y no crea fila', async () => {
+    const cookie = await adminCookie()
+    for (const itemId of ['', null]) {
+      const res = await request(appWith().app).post(ALTA).set('Cookie', cookie).send({ clase: 'accesorio', itemId, nombre: 'Manuales' })
+      expect(res.status, JSON.stringify(itemId)).toBe(422)
+      expect(res.body.error).toBe(MENSAJES_ACCESORIOS.exigeBooks)
+    }
+    expect(await filasDe()).toEqual([])
+  })
+})
+
+describe('gestión de una fila de legado item_id NULL (RQ-RE-36, S1)', () => {
+  const ordenDe = async (id: string) => Number((await db.query('SELECT orden FROM catalogo_articulos WHERE id = $1', [id])).rows[0].orden)
+  const patch = (cookie: string, id: string, body: Record<string, unknown>) =>
+    request(appWith().app).patch(`/api/catalogo/articulos/${id}`).set('Cookie', cookie).send(body)
+
+  it('reactivar: una fila sin item_id desactivada vuelve a activo true, con y sin repetir la clase', async () => {
+    const cookie = await adminCookie()
+    await legado('art-leg', 'Manuales')
+    expect((await patch(cookie, 'art-leg', { activo: false })).status).toBe(200)
+    expect(await filasDe()).toMatchObject([{ activo: false }])
+    expect((await patch(cookie, 'art-leg', { activo: true })).status).toBe(200)
+    expect(await filasDe()).toMatchObject([{ item_id: null, activo: true }])
+    await patch(cookie, 'art-leg', { activo: false })
+    expect((await patch(cookie, 'art-leg', { clase: 'accesorio', activo: true })).status).toBe(200)
+    expect(await filasDe()).toMatchObject([{ item_id: null, activo: true }])
+  })
+
+  it('reordenar: la fila sin item_id entra en el orden pedido', async () => {
+    const cookie = await adminCookie()
+    await legado('art-l1', 'Manuales')
+    await legado('art-l2', 'Estuche')
+    const res = await request(appWith().app).put('/api/catalogo/modelos/cmod-1/articulos/orden').set('Cookie', cookie).send({ clase: 'accesorio', ids: ['art-l2', 'art-l1'] })
+    expect(res.status).toBe(204)
+    expect([await ordenDe('art-l2'), await ordenDe('art-l1')]).toEqual([0, 1])
+  })
+
+  it('borrar: la fila sin item_id se borra con 204 y deja las demás', async () => {
+    const cookie = await adminCookie()
+    await legado('art-leg', 'Manuales')
+    await db.query("INSERT INTO catalogo_articulos (id,modelo_id,clase,item_id,sku,nombre,orden) VALUES ('art-b','cmod-1','accesorio','i1','CB-100','Cable USB',1)")
+    const res = await request(appWith().app).delete('/api/catalogo/articulos/art-leg').set('Cookie', cookie)
+    expect(res.status).toBe(204)
+    expect(await filasDe()).toMatchObject([{ item_id: 'i1' }])
+    expect(await filasDe()).toHaveLength(1)
+  })
+})

@@ -250,7 +250,7 @@ El aviso a la persona de destino se escribe después de la transacción y fuera 
 aviso. Reintentar desde el panel da `422` «El ticket ya está a cargo de esa persona» (`packages/shared/src/reasignacion.ts:45`), que es la
 señal de que la primera vez sí se aplicó. Lo fija `apps/desk/server/routes/reasignacion.test.ts:302`. No se corrige en esta tanda.
 
-## 11 · Añadido por `accesorios-lista-por-modelo` (F1B-04, `cierra: no`) — sin interruptor, ocho supuestos para Gerencia, tres límites y seis tareas de persona
+## 11 · Añadido por `accesorios-lista-por-modelo` (F1B-04, `cierra: no`) — sin interruptor, ocho supuestos para Gerencia, cinco límites y seis tareas de persona
 
 **Qué entra.** Los accesorios de la remisión de entrada salen de la lista del modelo con nombre oficial y SKU, y no se puede escribir uno a
 mano en ninguna de las tres vías. Concretamente:
@@ -309,6 +309,18 @@ pantalla no ofrece los inactivos, pero la API aceptaría añadir a uno. Es inocu
 (c) **`PATCH` con un id inexistente responde `200`, como antes.** La guarda de clase lee la fila antes de escribir y, si no existe, deja
 pasar la petición hasta la escritura (`apps/desk/server/routes/catalogo.ts:298`, `apps/desk/server/routes/catalogo.ts:299`); no se introdujo
 un `404` porque el encargo prohibía cambiar el comportamiento de los demás casos.
+(d) **El buscador de artículos descarta los de Books sin SKU, así que el Director Técnico no puede añadirlos desde la pantalla.** La
+pantalla «Accesorios por modelo» sólo ofrece lo que devuelve `GET /api/articulos` (`apps/desk/server/routes/directory.ts:33`), y su consulta
+exige SKU no vacío (`packages/zoho-sync/src/books/repo.ts:30`). El servidor sí acepta un artículo sin SKU y lo guarda con `sku` nulo (prueba
+«un artículo de Books sin SKU entra con sku null» de `apps/desk/server/accesoriosModelo.test.ts`), y la lista del modelo prevé accesorios sin SKU
+(RQ-RE-32), pero ese caso sólo llega por categoría y no por la pantalla. Es una comodidad más estrecha que la regla, no una guarda que falte. **No
+se corrige en esta tanda**; queda a decisión de Gerencia si el buscador debe ofrecer también esos artículos.
+(e) **Citas archivadas a `packages/zoho-sync/src/db/migrate.test.ts` cuyo contenido cambió en sitio (caso B de la regla de mutación 4).** Esta
+tanda editó en el mismo sitio, sin mover líneas, la línea 652 de ese fichero (el recuento de sentencias de `schema.sql`, que ahora suma la siembra de
+`accesorio_fuera_de_lista`) y las líneas 794 a 798 (la posición de la última sentencia, que pasa de ser el índice de `public.reasignaciones` a ser
+esa siembra). Hay siete citas archivadas a la línea 652 en `openspec/changes/archive/` (una de ellas es el rango 648 a 652): afirman el recuento
+y la posición de su fecha, falsos hoy y ciertos entonces. **No se renumeran ni se editan**: son históricas. Además, el segundo pase de abreviadas
+no se hizo en los lotes de esta tanda; el detector sale en 0. De las 14 abreviadas rotas informativas, 13 son anteriores y ninguna cae en un fichero que esta rama toque; la decimocuarta es nueva y está en el `verify-report.md` de este cambio: nombra la primera línea añadida a `DEPLOY.md`, que es una línea en blanco.
 
 ### 11.3 · Tareas de persona — fuera del recuento de la tanda
 

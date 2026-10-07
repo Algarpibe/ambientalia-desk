@@ -98,3 +98,19 @@ describe('F1B-04 · siembra de public.catalogo_novedades (RQ-RE-21)', () => {
     for (const s of relacionadas) expect(s).toMatch(/^ALTER TABLE public\.(remisiones|remision_fotos) ADD COLUMN IF NOT EXISTS /i)
   })
 })
+
+// Cierre tras el verify (W4). NACE VERDE. «Migrar dos veces no pisa» para la fila de F1B-04, por COMPORTAMIENTO: se edita en la
+// base y se vuelve a migrar. La prueba 4 sólo editaba tres de las diez filas antiguas.
+describe('F1B-04 · accesorio_fuera_de_lista tras migrar dos veces (RQ-RE-34)', () => {
+  it('7 · volver a migrar conserva la etiqueta, el activo y las marcas editadas de la fila nueva', async () => {
+    const db = await freshDb()
+    await db.query("UPDATE public.catalogo_novedades SET etiqueta = 'Fuera de lista (editada)', activo = false, exige_texto = false, orden = 66 WHERE clave = 'accesorio_fuera_de_lista'")
+    await migrate(db)
+    const r = await db.query("SELECT etiqueta, activo, exige_texto, orden FROM public.catalogo_novedades WHERE clave = 'accesorio_fuera_de_lista'")
+    expect(r.rows).toHaveLength(1)
+    expect(r.rows[0]).toMatchObject({ etiqueta: 'Fuera de lista (editada)', activo: false, exige_texto: false })
+    expect(Number(r.rows[0].orden)).toBe(66)
+    const n = await db.query('SELECT count(*) AS n FROM public.catalogo_novedades')
+    expect(Number(n.rows[0].n)).toBe(11)
+  })
+})
