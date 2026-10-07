@@ -122,3 +122,50 @@ Pruebas: ninguna otra con recuento de novedades (`novedadesMantenimiento.test.ts
 - types.ts mide 810 líneas y no 773; no afecta (línea 759 intacta).
 - DEPLOY.md:261: redacción ajustada por el salto de línea (ver arriba).
 - Se añadió a `migrate.test.ts:798` (en la misma línea) la comprobación de que la última sentencia es la siembra.
+
+## Lote 3 · ruta del Director Técnico (hecho; commit, detector y asiento los hace el orquestador)
+
+Commit de partida `7cd4c15`. `wc -l apps/desk/server/app.ts`: 96 antes y 96 después.
+
+### Rojo y verde
+- Rojo (3.2 a 3.4): `apps/desk/server/accesoriosModelo.test.ts` con la ruta sin escribir: 17 pruebas, 17 en rojo (la ruta no existía).
+- Verde (3.5, 3.6): `apps/desk/server/routes/accesoriosModelo.ts` y registro en sitio en `app.ts` (`import` al final de la línea 22, llamada al final de la línea 61): 17 de 17 en verde.
+- Los fuentes son CRLF; los dos ficheros nuevos se normalizaron a CRLF.
+
+### Líneas reales de las guardas de `apps/desk/server/routes/accesoriosModelo.ts` (para la tabla de la regla 13, lote 5)
+| Paso | Escalón | Línea | Respuesta |
+|---|---|---|---|
+| 1 | A · modelo | `:24` | `404` |
+| 2 | B · permiso (`puedeAnadirAccesorios`) | `:25` | `403` |
+| 3 | C · falta el artículo (`accesorioDelCuerpo`) | `:26-27` (guarda en `:27`) | `422` |
+| 4 | C · no está en Books (`getArticuloPorId`) | `:28-29` (guarda en `:29`) | `422` |
+| 5 | D · repetido (`ArticuloRepetido`) | `:30-35` (`409` en `:33`) | `409` |
+| — | clase fijada por el servidor, nombre y SKU de Books | `:31` | `201 { id }` |
+Registro: `apps/desk/server/app.ts:22` (import) y `apps/desk/server/app.ts:61` (llamada), sin mover líneas.
+
+### Mutaciones (cada una restaurada y comprobada con `cmp` contra la copia verde; `git status` sin restos)
+| Mutación | Resultado |
+|---|---|
+| M5a pasos 1 y 2 (403 antes del 404) | ROJO: par A↔B |
+| M5b pasos 2 y 3 (403 detrás de la falta) | ROJO: par B↔C-falta |
+| M5c pasos 2 y 4 (Books en 2, 403 en 4) | ROJO: B↔C-falta, B↔C-no-en-Books y la de «cuerpo sin itemId» |
+| permiso detrás de todo el contenido (tras Books) | ROJO: B↔C-falta y B↔C-no-en-Books |
+| permiso detrás de la escritura (D antes que B) | ROJO: 5, entre ellas B↔D |
+| M6a sólo cargo (cualquier área) | ROJO: el cargo sin el área Servicio Técnico |
+| M6b sólo área (cualquier cargo) | ROJO: 4, entre ellas el técnico sin cargo y los tres pares B↔ |
+| M6c predicado `true` | ROJO: 5 |
+| M7a clase del cuerpo | ROJO: la del cuerpo con clase y nombre inventados |
+| M7b nombre del cuerpo | ROJO: la misma |
+| M7c SKU del cuerpo | ROJO: la misma y la del SKU null |
+| quitar la guarda de Books | ROJO: 5 |
+
+Ninguna sobrevivió. Se añadió M5f (404 detrás de la falta, con 403 y cuerpo delante): ROJO, pares A↔B y A↔C. El par B↔D sólo cae cuando el permiso va detrás de la escritura (las permutaciones M5a a M5c dejan el 403 delante de `crearArticulo`); por eso se añadió esa mutación. Los pares C-falta↔C-no-en-Books y C↔D no se activan a la vez y van declarados en el comentario de la prueba.
+
+### Cierre (3.11, 3.12, 3.13)
+- `npm test`: exit 0, 252 ficheros pasan y 2 saltados, 3971 pruebas pasan y 7 saltadas (+17 de este lote). `npm run typecheck`: exit 0. `npm run lint`: exit 0, 165 problemas (0 errores, 165 avisos).
+- Medida: `git diff --shortstat --no-renames 7cd4c15` = 3 ficheros, 62 inserciones, 15 borrados (77; incluye este informe y las 13 casillas de tasks.md); más `wc -l` de lo nuevo sin trackear: 187 + 37 = 224; total 301 (válvula 720). Sin binarios. (Ficheros de `openspec/` de este cambio se editaron además: `tasks.md` y este informe.)
+- Barrido de citas (3.13): `app.ts` conserva sus 96 líneas, ninguna se movió; sólo cambia el contenido de las líneas 22 y 61, por AÑADIDO al final (lo anterior sigue donde estaba). El grep `server/app.ts:NNN` da 56 resultados en el repositorio; las líneas 22 y 61 se citan como «el import / la llamada de …» de tandas anteriores y siguen siendo ciertas de lo que afirman. Sin renumeraciones.
+
+### Desviaciones respecto al diseño
+- Ninguna de comportamiento. La prueba del `GET /api/remisiones/nueva` se hizo con un ticket y un equipo del modelo (el arnés lo permitió con coste bajo).
+- Se añadió una prueba extra: `itemId` no cadena o sólo espacios también da `422 faltaArticulo`.
