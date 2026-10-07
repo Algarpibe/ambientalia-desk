@@ -169,3 +169,46 @@ Ninguna sobrevivió. Se añadió M5f (404 detrás de la falta, con 403 y cuerpo 
 ### Desviaciones respecto al diseño
 - Ninguna de comportamiento. La prueba del `GET /api/remisiones/nueva` se hizo con un ticket y un equipo del modelo (el arnés lo permitió con coste bajo).
 - Se añadió una prueba extra: `itemId` no cadena o sólo espacios también da `422 faltaArticulo`.
+
+## Lote 4 · cliente (hecho; commit, detector y asiento los hace el orquestador)
+
+Commit de partida `1867a22`. Intento abierto por el orquestador. `wc -l` antes -> después: `Configuracion.tsx` 244 -> 244, `CrearRemision.tsx` 394 -> 394, `CatalogoEquipos.tsx` 1271 -> 1271, `client.ts` 871 -> 878 (+7, sólo al final: línea en blanco, comentario y `anadirAccesorioModelo`). Nuevo: `AccesoriosModeloPanel.tsx` (128, CRLF como los vecinos).
+
+### Sin rojo previo, declarado
+Los `.tsx` están fuera de la red de pruebas (F0-00; `vitest.config.ts:16`, `:17-20`). No hay lógica pura nueva que justifique un `.ts` en `apps/desk/src/lib/`: el rótulo «SKU · nombre» y el filtro de accesorios activos son una expresión de JSX/una línea, y la regla (qué es accesorio, el permiso, la clase fijada) vive en `shared` y se consume. Por tanto, ninguna prueba nueva. Comprobación: `npm run build`.
+
+### Líneas cuyo CONTENIDO cambió (ninguna se movió)
+- `client.ts:590` (`sinBooks: number` en el tipo de la copia); añadido al final `:872-878`.
+- `CatalogoEquipos.tsx:3` (importa `CLASES_TEXTO_LIBRE`), `:561` (valor inicial `'consumible_repuesto'`), `:638` (el aviso suma «N sin artículo de Books no se copiaron»; `:639` intacta), `:1018` (el desplegable itera `CLASES_TEXTO_LIBRE`). Desviación de línea: tasks.md decía 638-639; sólo cambia la 638.
+- `Configuracion.tsx:2` (import), `:33` (unión), `:127` (entrada), `:165` (`if`), todas por AÑADIDO al final de la misma línea.
+- `CrearRemision.tsx:240` (texto de ayuda breve tras la etiqueta «Incluye»; desviación: la ayuda va en la línea de la etiqueta para no insertar líneas), `:246-247` (aviso de lista vacía), `:261` (itera `data.incluyeDetalle`), `:264` (SKU en gris si lo hay). La clave y `marcados[item]` siguen siendo el nombre; `incluye: string[]` de nombres no cambia.
+
+### Decisiones del cliente (regla de mutación 3, regla invariable 13)
+Líneas del servidor releídas en el fichero el 2026-10-07 (árbol del lote 4).
+| # | Decisión del cliente (qué bloquea, rellena, avisa u oculta) | Línea del servidor que la impone |
+|---|---|---|
+| 1 | BLOQUEA escribir un accesorio: sólo hay casillas de la lista, sin campo de texto (`CrearRemision.tsx:261`) | `apps/desk/server/routes/remision.ts:194` (la lista válida sale de `checklistDeRemision`), `:195-196` (pedidos y desconocidos) y `:197` (422 «Ítems fuera del checklist»); existe y está probada |
+| 2 | PINTA nombre y SKU (`CrearRemision.tsx:264`) | No decide. Llegan de `apps/desk/server/routes/remision.ts:68` (`incluyeDetalle: checklist.detalle`) |
+| 3 | AVISA que lo no listado se anota como novedad «Accesorio fuera de lista» (`CrearRemision.tsx:240`, `:246-247`) | Texto informativo, no decide. Que la novedad exija texto la impone `apps/desk/server/routes/remision.ts:158` (`resolverRecepcion`, 422) con `packages/shared/src/recepcion.ts:97-99` |
+| 4 | OCULTA la clase accesorio en «Añadir a mano» y RELLENA el valor inicial con `consumible_repuesto` (`CatalogoEquipos.tsx:561`, `:1018`) | `apps/desk/server/routes/catalogo.ts:220` (`motivoAltaAccesorio`, 422) |
+| 5 | La ficha del modelo no ofrece cambiar la clase de una fila (comentario `CatalogoEquipos.tsx:668-670`, sin selector por fila) | `apps/desk/server/routes/catalogo.ts:294` (`motivoCambioAAccesorio`, 422) |
+| 6 | AVISA cuántos no se copiaron por no tener artículo de Books (`CatalogoEquipos.tsx:638`) | No decide: lo calcula `apps/desk/server/db/catalogoArticulos.ts:166` (filtro) y lo devuelve `:190` (`sinBooks`) |
+| 7 | OCULTA los controles a quien no cumple `puedeAnadirAccesorios` (`AccesoriosModeloPanel.tsx:21`) | `apps/desk/server/routes/accesoriosModelo.ts:25` (403) |
+| 8 | OFRECE sólo artículos de Books y no pide clase ni nombre (`AccesoriosModeloPanel.tsx`, buscador y `anadir`) | `apps/desk/server/routes/accesoriosModelo.ts:27` (422 falta el artículo), `:29` (422 no está en Books) y `:31` (clase, nombre y SKU fijados desde Books) |
+| 9 | DESHABILITA lo que ya está en la lista (`AccesoriosModeloPanel.tsx`, `yaEnLista`) | `apps/desk/server/db/catalogoArticulos.ts:74` (`ArticuloRepetido`), traducido a 409 en `apps/desk/server/routes/accesoriosModelo.ts:33` |
+| 10 | (fuera de la tabla de D6) MUESTRA los errores del servidor tal cual (`erroresDelServidor`) | No decide nada; 403 `:25`, 422 `:27` y `:29`, 409 `:33` |
+| 11 | (fuera de la tabla de D6) OCULTA en el selector los modelos inactivos, y en la lista las filas que no son accesorio activo | Comodidad de lectura; no impone nada. HALLAZGO menor, no es guarda: el paso 1 (`accesoriosModelo.ts:24`, `getModelo`) NO rechaza un modelo inactivo, así que el servidor aceptaría añadir a uno que la pantalla no ofrece. No es riesgo (añadir a un modelo inactivo es inocuo); queda anotado, sin cambio |
+| 12 | (fuera de la tabla de D6) Busca desde 2 caracteres | Comodidad; la lectura es `GET /api/articulos`, sin regla de dominio |
+
+Ninguna decisión que BLOQUEE queda sin línea de servidor. Las filas 2, 3 (texto), 6, 10 y 12 no deciden.
+
+### Cierre
+- `npm run build`: exit 0. `npm run typecheck`: exit 0. `npm run lint`: exit 0, 165 problemas (0 errores, 165 avisos), ninguno del fichero nuevo. `npm test`: exit 0, 252 ficheros pasan y 2 saltados, 3971 pruebas pasan y 7 saltadas (sin cambios: este lote no añade pruebas).
+- Barrido de citas (4.12): ninguna línea se movió. Citas vivas que caen sobre líneas de contenido cambiado: `Configuracion.tsx:2`, `:33`, `:127`, `:165` (15 resultados entre Paquetes de despliegue y archivos archivados de `openspec/changes/archive/`): todas siguen ciertas, porque el cambio es un añadido al final de la misma línea y lo que afirman (entradas de menú y paneles, import, sección) se conserva. `CrearRemision.tsx:264` aparece en dos sitios (`2026-09-25-foto-solo-con-novedad/apply-progress.md:114` y `proposal.md:23`): afirman cosas sobre `observaciones`, ya falsas antes de este lote (caso B, histórico); no se tocan. Ninguna cita a `CatalogoEquipos.tsx` cae en `:3`, `:561`, `:638`, `:1018`; a `client.ts:590` ninguna; a `client.ts` más allá de `:871`, ninguna. La del CLAUDE.md `CrearRemision.tsx:204` sigue en su línea. Segundo pase de abreviadas NO hecho (queda para el cierre del orquestador).
+
+### Desviaciones respecto al diseño
+- `CatalogoEquipos.tsx:638` y no `638-639`; la ayuda de `CrearRemision.tsx` va en la línea 240 (no se añaden líneas).
+- El panel filtra `getArticulosModelo` en cliente a `clase === 'accesorio' && activo` (esa ruta devuelve todas las clases y las desactivadas).
+
+### Medida (4.11)
+`git diff --shortstat --no-renames 1867a22` = 6 ficheros, 73 inserciones, 26 borrados (99; incluye este informe y las casillas de tasks.md; el código de producción son 4 ficheros, 21 inserciones y 14 borrados = 35); más `wc -l` de lo nuevo sin trackear: `AccesoriosModeloPanel.tsx` 128. Total: 227 (válvula 720). Sin binarios.

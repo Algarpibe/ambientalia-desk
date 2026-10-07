@@ -237,14 +237,14 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-500 uppercase">Incluye</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Incluye</label><span className="ml-2 text-[11px] text-slate-400">Lo que llegue y no esté en la lista se anota en novedades («Accesorio fuera de lista»).</span>
               {data.origenChecklist === 'modelo' && data.incluye.length === 0 ? (
                 // «Cero» NUNCA significa «este equipo no lleva accesorios»: eso nadie lo ha comprobado.
                 // Significa que a ese modelo todavía no se le ha definido la lista, y el mensaje empuja
                 // a completarla en vez de dejar remisionar sin nada creyendo que está bien.
                 <div className="mt-1 text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
-                  Este modelo aún no tiene definida su lista de accesorios, así que no hay nada que
-                  verificar. Se da de alta en Catálogo de equipos → ficha del modelo → Accesorios.
+                  Este modelo aún no tiene lista de accesorios: la completa el Director Técnico en Configuración →
+                  Accesorios por modelo. Lo que llegue y no esté en la lista se anota en novedades («Accesorio fuera de lista»).
                 </div>
               ) : data.origenChecklist === 'perfil' && !data.catalogoCargado ? (
                 // El catálogo sin sembrar deja `incluye` vacío igual que Kunak. Decir aquí "este equipo
@@ -258,10 +258,10 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
                 <div className="text-[12px] text-slate-400 mt-1">Este tipo de equipo no tiene lista de elementos.</div>
               ) : (
                 <div className="mt-1 border border-slate-200 rounded p-2 max-h-52 overflow-auto grid grid-cols-2 gap-x-3 gap-y-1">
-                  {data.incluye.map((item) => (
+                  {data.incluyeDetalle.map(({ nombre: item, sku }) => (
                     <label key={item} className={`flex items-start gap-2 text-[12px] ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
                       <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={!!marcados[item]} onChange={() => alternar(item)} disabled={congelado} />
-                      <span>{item}</span>
+                      <span>{item}{sku ? <span className="text-slate-400"> · {sku}</span> : null}</span>
                     </label>
                   ))}
                 </div>

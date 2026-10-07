@@ -587,7 +587,7 @@ export async function reordenarArticulosModelo(
 export function copiarArticulosModelo(
   modeloId: string,
   body: { clase: ClaseArticulo; destinos: string[] },
-): Promise<{ copiados: number; omitidos: number; porModelo: Array<{ modeloId: string; copiados: number }> }> {
+): Promise<{ copiados: number; omitidos: number; sinBooks: number; porModelo: Array<{ modeloId: string; copiados: number }> }> {
   return fetch(`/api/catalogo/modelos/${modeloId}/copiar-articulos`, {
     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   }).then((r) => json(r))
@@ -868,4 +868,11 @@ export function reasignarTicket(ticketId: string, cuerpo: { destino: string; mot
   return fetch(`/api/tickets/${encodeURIComponent(ticketId)}/reasignar`, {
     method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
   }).then((r) => json<{ ticketId: string; derivadoA: string }>(r))
+}
+
+/** Añade un artículo de Books a la lista de accesorios del modelo (F1B-04, RQ-RE-33). Sólo manda `itemId`: clase, nombre y SKU los fija el servidor desde Books; el permiso (403), el contenido (422) y el repetido (409) los decide `routes/accesoriosModelo.ts` y se enseñan con `erroresDelServidor`. */
+export function anadirAccesorioModelo(modeloId: string, itemId: string): Promise<{ id: string }> {
+  return fetch(`/api/catalogo/modelos/${encodeURIComponent(modeloId)}/accesorios`, {
+    method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify({ itemId }),
+  }).then((r) => json<{ id: string }>(r))
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ArticuloLite, ArticuloModelo, CategoriaModelo, ClaseArticulo, Catalogo, CatalogoTipo, CatalogoMarca, CatalogoModelo, Conflictos, ConflictoModelo, FichaModelo, TipoDocumento } from '@ambientalia/shared'
-import { TIPOS_DOCUMENTO, CLASES_ARTICULO, admiteCategorias } from '@ambientalia/shared'
+import { TIPOS_DOCUMENTO, CLASES_ARTICULO, CLASES_TEXTO_LIBRE, admiteCategorias } from '@ambientalia/shared'
 import {
   ETIQUETA_COLUMNA, PREF_POR_DEFECTO, normalizarPref, moverColumna, columnasVisibles,
   type ColumnaCatalogo, type PrefColumnas,
@@ -558,7 +558,7 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
   const [categorias, setCategorias] = useState<CategoriaModelo[]>([])
   const [disponibles, setDisponibles] = useState<Array<{ categoria: string; articulos: number }>>([])
   const [libre, setLibre] = useState('')
-  const [claseLibre, setClaseLibre] = useState<ClaseArticulo>('accesorio')
+  const [claseLibre, setClaseLibre] = useState<ClaseArticulo>('consumible_repuesto')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -635,7 +635,7 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
     ejecutar(async () => {
       const r = await copiarArticulosModelo(modelo.id, { clase, destinos })
       setCopiando(null)
-      const omitidos = r.omitidos ? `, ${r.omitidos} ya estaban` : ''
+      const omitidos = (r.omitidos ? `, ${r.omitidos} ya estaban` : '') + (r.sinBooks > 0 ? `, ${r.sinBooks} sin artículo de Books no se copiaron` : '')
       setMensaje(`${r.copiados} artículo(s) copiado(s) a ${destinos.length} modelo(s)${omitidos}.`)
     })
 
@@ -1015,7 +1015,7 @@ function FichaModeloModal({ modelo, etiqueta, tipos, otrosModelos, onFijarTipo, 
                 <input className={`${field} flex-1`} placeholder="Añadir a mano lo que no exista en Books (p. ej. «Repuestos reemplazados»)" value={libre}
                   onChange={(e) => setLibre(e.target.value)} />
                 <select className={field} value={claseLibre} onChange={(e) => setClaseLibre(e.target.value as ClaseArticulo)}>
-                  {CLASES_ARTICULO.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
+                  {CLASES_TEXTO_LIBRE.map((c) => <option key={c} value={c}>{ETIQUETA_CLASE[c]}</option>)}
                 </select>
                 <button onClick={anadirLibre} disabled={busy || !libre.trim()} className="border border-slate-200 px-3 py-1.5 rounded text-[13px] font-bold disabled:opacity-50">Añadir</button>
               </div>
