@@ -290,4 +290,4 @@ comprueba que existe en producción.
 
 - [x] Resuelto (RQ-TC-50 lleva el escalón D y la adenda de la propuesta lo recoge). El `409` de carrera no figuraba en la propuesta ni en RQ-TC-50 ni RQ-TC-51: hace falta un escenario en el delta de `tickets-core`.
 - [x] Confirmado por el orquestador (adenda de la propuesta, RQ-TC-51). DD-6 (S-8) amplía los ficheros tocados a `eliminarTicket.ts`: confirmar o retirar; si se retira, queda como hallazgo.
-- [x] Resuelto de otro modo: `openspec/specs/trazas/spec.md:28` es un registro histórico anclado a una revisión y no se toca (caso B); lo que sí se modifica es RQ-TZ-06 (`openspec/specs/trazas/spec.md:139`), el requisito vivo que dice «tres fuentes».
+- [x] Resuelto de otro modo: `openspec/specs/trazas/spec.md:28` es un registro histórico anclado a una revisión y no se toca (caso B); lo que sí se modifica es RQ-TZ-06 (`openspec/specs/trazas/spec.md:139` en `821c348`), el requisito vivo que dice «tres fuentes».

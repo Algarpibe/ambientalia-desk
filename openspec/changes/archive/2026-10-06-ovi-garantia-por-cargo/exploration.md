@@ -120,7 +120,7 @@ El cliente no toma hoy ninguna decisión sobre órdenes OVI: ni bloquea, ni rell
   1.870; `:226-229` exige que NO tenga llamador.
 - `openspec/specs/permissions/spec.md:450-457` (RQ-PM-20): «sigue sin llamador» y «Este cambio MUST NOT construir
   el acto de la OVI de garantía»; su escenario de `:469` lo repite.
-- `openspec/specs/permissions/spec.md:471-474` (RQ-PM-21): «El cargo MUST NOT conceder lo que el área niega». NO
+- `openspec/specs/permissions/spec.md:471-474` en `38078cc` (RQ-PM-21): «El cargo MUST NOT conceder lo que el área niega». NO
   queda contradicho —ver §5—, pero su prueba de barrido deja de poder incluir esta primitiva con un área.
 - `packages/shared/src/mantenimientoNovedades.ts:10`: un comentario dice que su predicado «tiene la misma forma
   que `puedeCrearOVIGarantia`»; deja de ser cierto.

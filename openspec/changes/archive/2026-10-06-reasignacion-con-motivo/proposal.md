@@ -58,9 +58,9 @@ mueven.
 
 | Capacidad | Qué cambia |
 |---|---|
-| `trazas` | Requisito nuevo (siguiente libre tras RQ-TZ-19, `openspec/specs/trazas/spec.md:704`): la reasignación guarda registro propio y SÍ se lee en el historial. Toca RQ-TZ-17 (ver D1). |
+| `trazas` | Requisito nuevo (siguiente libre tras RQ-TZ-19, `openspec/specs/trazas/spec.md:704` en `821c348`): la reasignación guarda registro propio y SÍ se lee en el historial. Toca RQ-TZ-17 (ver D1). |
 | `derivacion-avisos` | Requisito nuevo (tras RQ-AV-18, `openspec/specs/derivacion-avisos/spec.md:753`): aviso de reasignación, con su supresión. |
-| `permissions` | Requisito nuevo (tras RQ-PM-26, `openspec/specs/permissions/spec.md:706`): quién reasigna. RQ-PM-11 (`openspec/specs/permissions/spec.md:251`) gana una fuente de «en uso». |
+| `permissions` | Requisito nuevo (tras RQ-PM-26, `openspec/specs/permissions/spec.md:706` en `821c348`): quién reasigna. RQ-PM-11 (`openspec/specs/permissions/spec.md:251`) gana una fuente de «en uso». |
 | `tickets-core` | Requisito nuevo: la ruta, su escalera de guardas y las reglas de contenido. |
 
 `zoho-sync` no lleva delta: la prueba de D5 fija comportamiento que ya existe
@@ -93,14 +93,14 @@ detalles De, A, Motivo y Reasignado por. El panel pinta hora, título y detalles
 (`apps/desk/server/db/traspaso.ts:9`).
 
 **Frente a RQ-TZ-17 y RQ-TZ-18.** RQ-TZ-17 exige declarar todo lo que cambia datos sin fila en
-`ticket_transitions` (`openspec/specs/trazas/spec.md:639`) y cierra con que el historial no incorpora «ninguno de
-esos registros propios» (`openspec/specs/trazas/spec.md:650`). La reasignación se declara ahí como registro propio
+`ticket_transitions` (`openspec/specs/trazas/spec.md:639` en `821c348`) y cierra con que el historial no incorpora «ninguno de
+esos registros propios» (`openspec/specs/trazas/spec.md:650` en `821c348`). La reasignación se declara ahí como registro propio
 que **sí** entra, y esa frase pasa a referirse a los tres que no entran. RQ-TZ-18 prohíbe tabla y escritura nuevas
-para la línea de traspaso **de una transición** (`openspec/specs/trazas/spec.md:659-661`): no cambia, porque la
+para la línea de traspaso **de una transición** (`openspec/specs/trazas/spec.md:659-661` en `821c348`): no cambia, porque la
 reasignación no es una transición.
 
 - **Supuesto reversible S-1:** `de` y `a` se guardan por id y se traducen al leer (mismo criterio que RQ-TZ-08,
-  `openspec/specs/trazas/spec.md:192`); el actor, por nombre, como `performed_by`.
+  `openspec/specs/trazas/spec.md:192` en `821c348`); el actor, por nombre, como `performed_by`.
 
 ### D2 · Quién puede
 
@@ -350,5 +350,5 @@ El diseño (`openspec/changes/reasignacion-con-motivo/design.md`) encontró cuat
 
 1. **Escalón D, `409`.** La carrera de dos reasignaciones simultáneas que D6 dejaba «para el diseño» se resuelve con un `UPDATE` condicionado a la persona a cargo leída: quien pierde recibe `409`, sin traza y sin aviso. La escalera de D6 pasa a A < B < C < D (RQ-TC-50).
 2. **Supuesto reversible S-8.** Eliminar un ticket borra también sus filas de `public.reasignaciones`. `apps/desk/server/db/eliminarTicket.ts:45-56` no las barre hoy, y las filas huérfanas seguirían contando en `usosDeUsuario`: esa persona no se podría borrar nunca. Amplía «Áreas afectadas» a `apps/desk/server/db/eliminarTicket.ts`.
-3. **RQ-TZ-06 también se modifica.** El requisito vivo dice que el historial combina tres fuentes y que no registra eventos en tabla propia (`openspec/specs/trazas/spec.md:139`, `openspec/specs/trazas/spec.md:149`); con este cambio son cuatro y la cuarta sí guarda registro propio. El delta de `trazas` lleva el bloque modificado.
+3. **RQ-TZ-06 también se modifica.** El requisito vivo dice que el historial combina tres fuentes y que no registra eventos en tabla propia (`openspec/specs/trazas/spec.md:139` en `821c348`, `openspec/specs/trazas/spec.md:149` en `821c348`); con este cambio son cuatro y la cuarta sí guarda registro propio. El delta de `trazas` lleva el bloque modificado.
 4. **Cuatro lotes de construcción, no tres.** Con la cuenta por fichero del diseño, los lotes 2 y 3 de la tabla de arriba salían en 736 líneas, por encima de la válvula de 720. Los lotes vigentes son los del diseño, §8: 650, 499, 610 y 540 estimadas, más el verify en intento propio.

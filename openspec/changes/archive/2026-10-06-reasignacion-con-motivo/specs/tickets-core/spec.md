@@ -23,9 +23,6 @@ llamador futuro pueda saltárselas y para que el simulacro las evalúe igual»
 (`eliminarTicket.ts:96-98`). El borrado **SHALL** ser en orden explícito de diez tablas hijas más la
 cabecera (`eliminarTicket.ts:31-33`).
 
-(Previously: nueve tablas hijas. La décima es `reasignaciones`, que F1B-05 añade al barrido para que las filas de un ticket
-borrado no sigan contando en «en uso» de RQ-PM-11; lo fija RQ-TC-51.)
-
 ## ADDED Requirements
 
 ### RQ-TC-50 · `POST /api/tickets/:id/reasignar`: cambiar la persona a cargo sin cambiar de estado, con la escalera A < B < C < D

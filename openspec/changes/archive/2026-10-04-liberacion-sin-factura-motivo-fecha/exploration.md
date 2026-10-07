@@ -25,7 +25,7 @@ que el agente de exploración no pudo escribir en fichero. **Cada cita se ha vue
   del escalón B (`:131`), `422` agregado del escalón C (`:134`), `422` de persona derivada (`:138-142`),
   `422` de contrato vencido (`:147`), `409` de orden de venta (`:148-152`).
 - **Cargo.** `packages/shared/src/cargos.ts:24` nombra la transición; la impone `ticketService.ts:131`
-  (`cargoQueFaltaParaTransicion`). Requisito vivo: `openspec/specs/permissions/spec.md:389` (RQ-PM-17).
+  (`cargoQueFaltaParaTransicion`). Requisito vivo: `openspec/specs/permissions/spec.md:389` en `ce4fead` (RQ-PM-17).
 - **Persistencia.** Etiqueta en `PROMOTED_COLUMNS` (`packages/zoho-sync/src/db/rows.ts:85-132`) → columna;
   si no → `tickets.custom_fields` (`transitionExec.ts:90-92`, `packages/zoho-sync/src/db/repo.ts:307-310`).
   Todos los valores van además a `ticket_transitions.values` (`repo.ts:314-318`). `writeTransition` pone

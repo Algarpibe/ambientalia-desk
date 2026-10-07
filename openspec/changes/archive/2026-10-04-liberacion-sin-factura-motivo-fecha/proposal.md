@@ -35,7 +35,7 @@ El maestro vigente la recoge en `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_
 | «dos campos obligatorios en su lugar» | `Motivo` (`select`, obligatorio) y `Fecha prevista de facturación` (`date`, obligatoria) |
 | «de una lista cerrada», tres motivos | Exactamente tres opciones, con el texto de la decisión |
 | «con texto obligatorio» | Un tercer campo de texto, exigido sólo con el tercer motivo (supuesto S-1) |
-| «que sólo ejecuta el Director Comercial» | Ya construido: RQ-PM-17 (`openspec/specs/permissions/spec.md:389`) |
+| «que sólo ejecuta el Director Comercial» | Ya construido: RQ-PM-17 (`openspec/specs/permissions/spec.md:389` en `ce4fead`) |
 | «el sistema avisa…», «Pendiente de facturar» | **Fuera**: F1C-02, después del corte (E-102) |
 | «se marcan… no se reescriben» | **Fuera**: `p64-historico-c1`; este cambio no toca filas viejas |
 
