@@ -279,11 +279,11 @@ describe('el esquema no crece sin que alguien clasifique lo que añade', () => {
    * declarado DOS veces —en dos listas, o repetido en la suya— pasaría las dos comprobaciones sin
    * que nadie lo notase. Aquí es donde se ve.
    */
-  it('son 43 tablas: 10 de Desk, 30 de la app en public (reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
-    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 30, 3])
-    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(43)
-    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(43)
-    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(43)
+  it('son 44 tablas: 10 de Desk, 31 de la app en public (contrato_ampliaciones, F1B-11; reasignaciones, F1B-05; garantia_proveedor, F1B-13; catalogo_novedades, F1B-04; clientes_provisionales, F1B-15; alarmas_avisadas y alarmas_corte, F1B-08; cliente_prioridad y prioridad_ajustes, F1B-07; gases_patron y certificados_fabrica, F1A-03) y 3 de books', () => {
+    expect([DESK_TABLES.length, PUBLIC_TABLES.length, BOOKS_TABLES.length]).toEqual([10, 31, 3])
+    expect(clasificadas().length, 'nombres clasificados, contando repetidos').toBe(44)
+    expect(new Set(clasificadas()).size, 'nombres clasificados distintos').toBe(44)
+    expect(tablasDelEsquema().length, 'CREATE TABLE en schema.sql').toBe(44)
   })
 
   // F1B-14 · RQ-HV-10: la tabla de registro de cambios de la hoja de vida existe tras `migrate`, con
@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo) y las dos de public.contrato_ampliaciones (F1B-11, ampliacion-contrato)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1 + 2)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -779,10 +779,10 @@ describe('ficha-garantia-proveedor · public.garantia_proveedor', () => {
 })
 
 /**
- * reasignacion-con-motivo (F1B-05, RQ-TZ-20) · `public.reasignaciones` y su índice cierran el esquema. Regla de mutación 2:
+ * reasignacion-con-motivo (F1B-05, RQ-TZ-20) · `public.reasignaciones` y su índice (ya no cierran el esquema: siguen la siembra de F1B-04 y contrato_ampliaciones). Regla de mutación 2:
  * se ensucia `schema.sql` (sin `public.`, sin el CHECK), no esta prueba.
  */
-describe('reasignacion-con-motivo · public.reasignaciones cierra el esquema (F1B-05, RQ-TZ-20)', () => {
+describe('reasignacion-con-motivo · public.reasignaciones (F1B-05, RQ-TZ-20)', () => {
   const limpias = () => schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
 
   it('la tabla existe tras migrate, en public, y está vacía', async () => {
@@ -791,11 +791,11 @@ describe('reasignacion-con-motivo · public.reasignaciones cierra el esquema (F1
     expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la ANTEPENÚLTIMA sentencia; el índice, en una sola sentencia, la penúltima; la última es la siembra de accesorio_fuera_de_lista (F1B-04)', () => {
+  it('el CREATE va calificado con public. y es la QUINTA por el final; el índice, en una sola sentencia, la cuarta; la tercera es la siembra de accesorio_fuera_de_lista (F1B-04); las dos últimas son las de contrato_ampliaciones (F1B-11)', () => {
     const l = limpias()
-    expect(l[l.length - 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
+    expect(l[l.length - 5]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
     expect(l.filter((s) => /idx_reasignaciones_ticket/.test(s))).toHaveLength(1)
-    expect(l[l.length - 2]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 1]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
+    expect(l[l.length - 4]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 3]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
     expect(l.filter((s) => /reasignaciones/.test(s)), 'sentencias que mencionan reasignaciones').toHaveLength(2)
   })
 
@@ -815,5 +815,44 @@ describe('reasignacion-con-motivo · public.reasignaciones cierra el esquema (F1
     await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1',NULL,'vacaciones','ana')")).rejects.toThrow()
     await expect(db.query("INSERT INTO public.reasignaciones (ticket_id, de, a, motivo, reasignado_por) VALUES ('t1','u1','u2','vacaciones',NULL)")).rejects.toThrow()
     expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
+  })
+})
+
+/**
+ * ampliacion-contrato (F1B-11, RQ-TC-54) · `public.contrato_ampliaciones` y su índice cierran el esquema. Regla de mutación 2:
+ * se ensucia `schema.sql` (sin `public.`, sin un `NOT NULL`), no esta prueba.
+ */
+describe('ampliacion-contrato · public.contrato_ampliaciones cierra el esquema (F1B-11, RQ-TC-54)', () => {
+  const limpias = () => schemaStatements().map((s) => s.replace(/^(?:\s*--[^\n]*\n)+/, '').trim())
+  const insertar = (db: Queryable, c: { contrato?: string; anterior?: string; nueva?: string; motivo?: string; por?: string }) =>
+    db.query('INSERT INTO public.contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, motivo, ampliado_por) VALUES ($1, $2, $3, $4, $5)',
+      [c.contrato ?? '1', c.anterior ?? '2031-06-30', c.nueva ?? '2031-09-30', c.motivo ?? null, c.por ?? 'ana'])
+
+  it('la tabla existe tras migrate, en public, y está vacía', async () => {
+    const db = await freshDb()
+    expect((await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name='contrato_ampliaciones'")).rows).toHaveLength(1)
+    expect((await db.query('SELECT * FROM public.contrato_ampliaciones')).rows).toEqual([])
+  })
+
+  it('el CREATE va calificado con public. y es la PENÚLTIMA sentencia; el índice, la última; dos sentencias la mencionan', () => {
+    const l = limpias()
+    expect(l[l.length - 2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.contrato_ampliaciones \(/)
+    expect(l[l.length - 1]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public\.contrato_ampliaciones \(contrato_id\)$/)
+    expect(l.filter((s) => /contrato_ampliaciones/.test(s)), 'sentencias que mencionan contrato_ampliaciones').toHaveLength(2)
+  })
+
+  it('la base rechaza fecha_anterior, fecha_nueva, contrato_id y ampliado_por nulos y acepta un motivo nulo', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, ampliado_por) VALUES (1, NULL, '2031-09-30', 'ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, ampliado_por) VALUES (1, '2031-06-30', NULL, 'ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, ampliado_por) VALUES (NULL, '2031-06-30', '2031-09-30', 'ana')")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, ampliado_por) VALUES (1, '2031-06-30', '2031-09-30', NULL)")).rejects.toThrow()
+    expect((await db.query('SELECT * FROM public.contrato_ampliaciones')).rows).toEqual([])
+    await insertar(db, { motivo: undefined })
+    expect((await db.query('SELECT motivo, ampliado_at FROM public.contrato_ampliaciones')).rows[0].motivo).toBeNull()
+  })
+
+  it('PUBLIC_TABLES la contiene', () => {
+    expect(PUBLIC_TABLES).toContain('contrato_ampliaciones')
   })
 })

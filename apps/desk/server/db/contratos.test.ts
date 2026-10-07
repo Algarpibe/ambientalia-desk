@@ -2,11 +2,11 @@
 // `CHECK` de fechas. Molde de `calendarioCierres.test.ts:1-9`.
 import { describe, it, expect, beforeEach } from 'vitest'
 import { newDb } from 'pg-mem'
-import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
+import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'; import { MENSAJES_AMPLIACION, fechaFinOriginal } from '@ambientalia/shared'
 import { comoDiaCivil } from './calendarioCierres'; import { asociarOV, liberarAsociacion } from '@ambientalia/zoho-sync/db/ovAsociaciones'
 import {
   crearContrato, listarContratos, contratoPorId, contratoDelLote, contratosDelCliente, ContratoDuplicadoError,
-  hayContratoVigente, motivoContratoVencido, erroresContratoVencido, contratoDelTicket,
+  hayContratoVigente, motivoContratoVencido, erroresContratoVencido, contratoDelTicket, ampliarContrato, ampliacionesDelContrato, ContratoCambiadoError,
 } from './contratos'
 
 let db: Queryable
@@ -159,5 +159,86 @@ describe('contratoDelTicket · derivado al leer, nunca guardado', () => {
 
   it('un ticket sin asociaciones no es de contrato', async () => {
     expect(await contratoDelTicket(db, 't1', HOY)).toEqual({ deContrato: false })
+  })
+})
+
+/*
+ * ampliacion-contrato (F1B-11, RQ-TC-54) — `ampliarContrato` amplía la fecha vigente y deja la traza en UNA transacción;
+ * `ampliacionesDelContrato` la lee de la más antigua a la más reciente. La atomicidad real no se prueba (sin pool no hay
+ * transacción): se prueba por estructura, con el doble de `reasignaciones.test.ts`.
+ */
+describe('ampliarContrato · fecha vigente y traza', () => {
+  const base = { clientId: 'C-1', lote: 'OV-2031-170', fechaInicio: '2030-07-01', fechaFin: '2031-06-30', creadoPor: 'c' }
+  const pedido = (id: number, extra: Partial<Parameters<typeof ampliarContrato>[1]> = {}) =>
+    ({ contratoId: id, fechaAnterior: '2031-06-30', fechaNueva: '2031-09-30', motivo: 'prórroga acordada', ampliadoPor: 'Ana', ...extra })
+  const traza = async () => (await db.query('SELECT * FROM contrato_ampliaciones ORDER BY id')).rows
+
+  it('escribe la fecha vigente y una fila con los cinco datos (anterior, nueva, motivo, quién y cuándo)', async () => {
+    const c = await crearContrato(db, base)
+    const r = await ampliarContrato(db, pedido(c.id))
+    expect(r).toEqual({ ...c, fechaFin: '2031-09-30' })
+    expect((await contratoPorId(db, c.id))!.fechaFin).toBe('2031-09-30')
+    const filas = await traza()
+    expect(filas).toHaveLength(1)
+    expect(filas[0]).toMatchObject({ contrato_id: c.id, motivo: 'prórroga acordada', ampliado_por: 'Ana' })
+    expect(comoDiaCivil(filas[0].fecha_anterior)).toBe('2031-06-30')
+    expect(comoDiaCivil(filas[0].fecha_nueva)).toBe('2031-09-30')
+    expect(filas[0].ampliado_at).toBeInstanceOf(Date)
+  })
+
+  it('dos ampliaciones encadenadas dejan dos filas en orden y la fecha original sigue siendo la del alta', async () => {
+    const c = await crearContrato(db, base)
+    await ampliarContrato(db, pedido(c.id))
+    await ampliarContrato(db, pedido(c.id, { fechaAnterior: '2031-09-30', fechaNueva: '2031-12-31', motivo: 'otra vez' }))
+    const lista = await ampliacionesDelContrato(db, c.id)
+    expect(lista.map((a) => [a.fechaAnterior, a.fechaNueva, a.motivo])).toEqual([['2031-06-30', '2031-09-30', 'prórroga acordada'], ['2031-09-30', '2031-12-31', 'otra vez']])
+    expect(fechaFinOriginal('2031-12-31', lista)).toBe('2031-06-30')
+    expect(lista[0]!.fechaAnterior).toBe(base.fechaFin)
+  })
+
+  it('con la fecha leída desfasada lanza ContratoCambiadoError y NO escribe ni la fecha ni la traza', async () => {
+    const c = await crearContrato(db, base)
+    const e = await ampliarContrato(db, pedido(c.id, { fechaAnterior: '2031-05-31' })).catch((x) => x)
+    expect(e).toBeInstanceOf(ContratoCambiadoError)
+    expect(e.message).toBe(MENSAJES_AMPLIACION.carrera)
+    expect(e.contratoId).toBe(c.id)
+    expect((await contratoPorId(db, c.id))!.fechaFin).toBe('2031-06-30')
+    expect(await traza()).toEqual([])
+  })
+
+  it('un motivo nulo se guarda como nulo', async () => {
+    const c = await crearContrato(db, base)
+    await ampliarContrato(db, pedido(c.id, { motivo: null }))
+    expect((await traza())[0].motivo).toBeNull()
+  })
+
+  it('ampliacionesDelContrato: de la más antigua a la más reciente, con ampliadoAt en ISO, y sólo las de ese contrato', async () => {
+    const a = await crearContrato(db, base)
+    const b = await crearContrato(db, { ...base, lote: 'OV-2031-171' })
+    await ampliarContrato(db, pedido(a.id))
+    await ampliarContrato(db, pedido(b.id))
+    await ampliarContrato(db, pedido(a.id, { fechaAnterior: '2031-09-30', fechaNueva: '2031-10-31', ampliadoPor: 'Beto' }))
+    const lista = await ampliacionesDelContrato(db, a.id)
+    expect(lista.map((x) => x.ampliadoPor)).toEqual(['Ana', 'Beto'])
+    expect(lista[0]!.ampliadoAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+    expect(await ampliacionesDelContrato(db, 9999)).toEqual([])
+  })
+
+  it('estructura de la transacción: BEGIN, UPDATE, ROLLBACK y NINGÚN INSERT cuando el UPDATE no acierta fila', async () => {
+    const calls: string[] = []
+    const cliente = { query: async (sql: string) => { calls.push(sql.trim()); return { rows: [] } }, release: () => {} }
+    const falso = { query: async () => ({ rows: [] }), connect: async () => cliente } as unknown as Queryable
+    await expect(ampliarContrato(falso, pedido(1))).rejects.toBeInstanceOf(ContratoCambiadoError)
+    expect(calls.map((s) => s.split(/\s+/)[0].toUpperCase())).toEqual(['BEGIN', 'UPDATE', 'ROLLBACK'])
+    expect(calls[1]).toMatch(/^UPDATE contratos SET fecha_fin/)
+  })
+
+  it('estructura de la transacción con éxito: BEGIN, UPDATE, INSERT, COMMIT, todo por la conexión de la transacción', async () => {
+    const calls: string[] = []
+    const fila = { id: 1, client_id: 'C-1', lote: 'L', fecha_inicio: '2030-07-01', fecha_fin: '2031-09-30', creado_por: 'c', created_at: new Date(), ritmo_avisado_trimestre: null }
+    const ejecutar = (origen: string) => async (sql: string) => { const v = sql.trim().split(/\s+/)[0].toUpperCase(); calls.push(`${origen}:${v}`); return { rows: v === 'UPDATE' ? [fila] : [] } }
+    const falso = { query: ejecutar('pool'), connect: async () => ({ query: ejecutar('tx'), release: () => {} }) } as unknown as Queryable
+    await ampliarContrato(falso, pedido(1))
+    expect(calls).toEqual(['tx:BEGIN', 'tx:UPDATE', 'tx:INSERT', 'tx:COMMIT'])
   })
 })

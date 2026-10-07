@@ -30,3 +30,24 @@ cambia `process.env.TZ` a `America/Bogota` y restaura; con ella M10b da 1 roja.
 **Desviaciones del diseño:** ninguna en firmas, mensajes u orden. Dos menores: (1) el segundo `import` de `@ambientalia/shared` va en el bloque
 final del fichero de pruebas (para no tocar la línea 2); (2) prueba extra de zona horaria (arriba), no listada en las tareas.
 Comprobado: `npx eslint` sobre los dos ficheros sin avisos.
+
+## Lote 2 · esquema, `PUBLIC_TABLES`, guardianes y capa de datos (tareas 2.1 a 2.11 hechas; 2.12 a 2.17 son del orquestador)
+
+Partida: `695ed23`. `wc -l` de partida y final: `schema.sql` 768 → 782 (+14, todo al final salvo la línea 559 en sitio); `migrate.ts` 131 → 131;
+`migrate.test.ts` 819 → 858 (+39, sólo el bloque nuevo al final); `db/contratos.ts` 115 → 158 (+43 al final; líneas 2, 3 y 8 en sitio); `db/contratos.test.ts` 163 → 244 (+81 al final; las líneas 5 y 9 ganan nombres de importación en sitio).
+Ninguna inserción en medio de `migrate.test.ts`: los hunks por encima de la línea 819 son todos de una línea (o cinco líneas sustituidas por cinco en 282-286).
+
+**Rojo → verde (strict TDD).** Primero 2.2 (bloque nuevo), 2.3 (guardianes en sitio) y 2.4 (pruebas de datos): `14 failed | 71 passed`
+(4 del bloque nuevo, 3 guardianes en sitio, 7 de la capa de datos con funciones inexistentes). Después `schema.sql`, `migrate.ts` y `db/contratos.ts`: `85 passed`
+(un ajuste de la prueba: pg-mem devuelve `contrato_id` como número, no cadena). El guardián de clasificación sólo se pone rojo por mutación (con la tabla aún sin crear nada la contradice).
+
+**Hipótesis pg-mem (2.8): confirmada.** `fecha_fin = $3` con texto `YYYY-MM-DD` funciona sin `::date`: el caso de carrera lanza el error y el normal escribe. No hizo falta el respaldo.
+
+**Mutaciones (2.9), cada una restaurada (`cmp` de los tres ficheros contra la copia).** M5 quitar `public.` del `CREATE` de `schema.sql`: 2 rojas (clasificación, posición del bloque nuevo).
+M6 mover el `CREATE` antes de la siembra de accesorios: 2 rojas (bloque nuevo y el guardián de las líneas 794-798 de `migrate.test.ts`). M7a sin `NOT NULL` en `fecha_anterior`: 1 roja. M7b sin `NOT NULL` en `ampliado_por`: 1 roja.
+M8 fuera de `PUBLIC_TABLES`: 3 rojas (clasificación, recuento, contiene). M15 sin `AND fecha_fin = $3`: 1 roja (carrera). M16a sin `INSERT`: 5 rojas. M16b `INSERT` antes del `UPDATE`: 3 rojas (carrera, estructura). M17 `ORDER BY id DESC`: 2 rojas.
+Ningún superviviente.
+
+**Líneas reales** (leídas de `apps/desk/server/db/contratos.ts` ya editado): el `UPDATE` condicionado en `:133` y `throw new ContratoCambiadoError` en `:136` (alimentan la fila 5 de la regla 13). `ampliarContrato` abre en `:130` y `ampliacionesDelContrato` en `:146`.
+
+**Desviaciones del diseño:** ninguna en SQL, firmas ni orden. Menores: (1) el comentario nuevo de `schema.sql` ocupa 14 líneas, no 16; (2) en `contratos.test.ts` el import de `@ambientalia/shared` va en la línea 5 tras `;` para no insertar líneas; (3) aviso de eslint heredado en `migrate.ts:6` (`any`), no es de este lote.

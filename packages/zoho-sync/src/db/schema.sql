@@ -556,7 +556,7 @@ CREATE INDEX IF NOT EXISTS idx_ov_asoc_ticket ON public.ov_asociaciones (ticket_
 -- registro-contrato (F1B-11, cambio 3 de 3), RQ-TC-21: un contrato por lote (la OV madre OV-AAAA-NNN(N)).
 -- client_id es clients.id (contact_id de Books), sin FK: la replica no garantiza orden. El indice unico por lote
 -- cierra la carrera de dos altas y el CHECK es defensa en la base ademas del 422 de la ruta.
--- ritmo_avisado_trimestre es la marca anti-ruido del aviso de ritmo (S-14). Sin DELETE ni UPDATE de datos (S-13)
+-- ritmo_avisado_trimestre es la marca anti-ruido del aviso de ritmo (S-14). Sin DELETE. El unico UPDATE de datos es la ampliacion de fecha_fin (ampliacion-contrato)
 -- AL FINAL del fichero para no desplazar citas (regla de mutacion 4)
 CREATE TABLE IF NOT EXISTS public.contratos (
   id bigserial PRIMARY KEY,
@@ -766,3 +766,17 @@ CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public.reasignaciones (t
 -- accesorios-lista-por-modelo (F1B-04): un accesorio que llega y no esta en la lista del modelo se anota como novedad, con texto
 -- Orden 65, tras falta_accesorio, sin renumerar. AL FINAL para no desplazar citas. CALIFICADA public. Se retira con activo = false
 INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('accesorio_fuera_de_lista', 'Accesorio fuera de lista', 65, false, true) ON CONFLICT (clave) DO NOTHING;
+-- ampliacion-contrato (F1B-11, decision e086): traza de cada ampliacion de la fecha de fin de un contrato
+-- contratos.fecha_fin pasa a ser la fecha VIGENTE y la original es la fecha_anterior de la primera fila
+-- Sin FK a contratos y sin DELETE ni UPDATE. motivo es anulable y sin CHECK (S-1, la obligacion la impone la ruta)
+-- AL FINAL del fichero para no desplazar citas (regla de mutacion 4). CALIFICADA public.
+CREATE TABLE IF NOT EXISTS public.contrato_ampliaciones (
+  id bigserial PRIMARY KEY,
+  contrato_id bigint NOT NULL,
+  fecha_anterior date NOT NULL,
+  fecha_nueva date NOT NULL,
+  motivo text,
+  ampliado_por text NOT NULL,
+  ampliado_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public.contrato_ampliaciones (contrato_id);
