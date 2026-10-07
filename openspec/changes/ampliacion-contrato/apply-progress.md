@@ -71,3 +71,29 @@ Una primera M3 mal escrita (validaba ANTES de escribir) no era mutación y dio v
 
 **Desviaciones del diseño:** ninguna en escalera, mensajes ni éxito `200`. Menor: la ficha sirve las ampliaciones con una consulta más (`ampliacionesDelContrato`).
 Comprobado por mí: `npx vitest run apps/desk/server/routes` exit 0 (264 pruebas); `npm run typecheck` exit 0.
+
+## Lote 4 · efecto en las tres puertas (tareas 4.1 a 4.9 hechas; 4.10 a 4.15 son del orquestador)
+
+Partida: `3a5a88b`. Fichero nuevo `apps/desk/server/ampliacionContratoPuertas.test.ts`: 147 líneas (sin trackear). Ningún fichero de producción ni prueba existente se tocó (`git diff --stat` de `services`, `routes` y `db`: vacío).
+Fechas: vencimiento 2026-06-30, ampliación a 2026-09-30 (reloj en 2026-07-15, dentro del tope del año). Instantes: antes 2026-09-15T15:00Z, mismo día 2026-09-30T15:00Z, zona 2026-10-01T03:00Z (UTC ya es el 1 de octubre; Bogotá, las 22:00 del 30), siguiente 2026-10-01T15:00Z.
+
+**Caracterización, no rojo previo (declarado).** Las 15 pruebas (5 por puerta) nacieron verdes: la ruta y las puertas ya existían. El rojo sale de MUTAR; la ampliación se hace siempre con la ruta real por HTTP y Comercial.
+
+**Hipótesis.** (a) supertest y pg-mem NO se cuelgan con `toFake: ['Date']`: confirmada, sin respaldo. (b) el `now()` de pg-mem sigue al reloj falso: no se pudo falsear (sesión nueva con `createSession` tras cada salto, desde el principio, como decía el respaldo). (c) el alta de remisión no compara su `fecha` con hoy: la prueba usa la fecha del reloj falso; sin conflicto. Ningún respaldo `vi.mock` hizo falta.
+
+**Mutaciones (cada una restaurada; `cmp` contra copia y `git status --short` final: sólo el fichero nuevo).**
+| Mutación | Rojas |
+|---|---|
+| M1a `UPDATE` de `fecha_fin` sin cambiar la fecha (sólo traza), `db/contratos.ts` | 12: «antes», «mismo día», «zona» y «pasada» en las tres puertas |
+| M1b `UPDATE` escribe `fecha_anterior` (fecha_nueva = anterior) | 12 (las mismas) |
+| M2 `estadoContrato` con `<=` (bloquea el día de fin) | 6: «mismo día» y «zona» en las tres puertas |
+| M3 `hoyEnZona` con el día UTC | 3: «zona» en las tres puertas |
+| M4a sin guarda de vencido en el alta (`ticketService.ts:96`) | 2: control y «pasada» de la alta, sólo ésa |
+| M4b sin guarda en la transición (`ticketService.ts:147`) | 2: control y «pasada» de la transición, sólo ésa |
+| M4c sin guarda en la remisión (`remision.ts:220`) | 2: control y «pasada» de la remisión, sólo ésa |
+Ningún superviviente. M1a y M1b caen igual porque la lectura es de la fecha vigente; la traza no cuenta para las puertas.
+
+**Comprobado por mí:** tres corridas seguidas del fichero, exit 0, 0, 0; `npm run typecheck` exit 0; eslint del fichero exit 0; `remisiones.test.ts` y `ordenVentaUnTicket.test.ts` exit 0 sin tocarse.
+Límite declarado: el «deja pasar» de la remisión exige 201 con fecha del día; si cambiara la forma de la respuesta de éxito la prueba pide `status < 300` y que el mensaje no diga «venció».
+
+**Desviación de la tasks.md:** años 2026 y no 2031 (orden del encargo); un único `describe.each` de tres puertas con cinco pruebas cada una, no cuatro pruebas separadas.
