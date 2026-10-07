@@ -240,3 +240,59 @@ export function csvDelInforme(inf: Pick<InformeContrato, 'libres' | 'diasHastaFi
   }
   return filas.map((f) => f.map(celdaCSV).join(',')).join('\r\n')
 }
+
+/* ampliacion-contrato (F1B-11; `decision/e086-ampliacion-contrato`; `tickets-core`). */
+
+/** Los textos de la ruta `POST /api/contratos/:id/ampliar`, en un solo sitio. */
+export const MENSAJES_AMPLIACION = {
+  inexistente: 'Contrato no encontrado',
+  permiso: 'Ampliar un contrato requiere el área Comercial',
+  fecha: 'La nueva fecha de fin es obligatoria, en formato AAAA-MM-DD',
+  noPosterior: 'La nueva fecha de fin tiene que ser posterior a la vigente',
+  pasaDelTope: 'Un contrato sólo se puede ampliar hasta el 31/12 del año de su vencimiento',
+  plazoCerrado: 'El plazo para ampliar este contrato terminó el 31/12 del año de su vencimiento',
+  motivo: 'El motivo es obligatorio',
+  carrera: 'La fecha de fin del contrato cambió mientras lo ampliabas: recarga la ficha y vuelve a decidir',
+}
+
+/** El 31/12 del año natural del vencimiento. El año son los cuatro primeros caracteres: NO se pasa por `Date`. */
+export function topeAmpliacion(fechaFin: DiaCivil): DiaCivil {
+  return `${fechaFin.slice(0, 4)}-12-31`
+}
+
+/** El mensaje del rechazo, o `null`. Orden fijo: fecha, noPosterior, pasaDelTope, plazoCerrado. */
+export function motivoNoAmpliable(contrato: Pick<Contrato, 'fechaFin'>, nuevaFecha: unknown, hoy: DiaCivil): string | null {
+  const nueva = fechaCalendario(nuevaFecha)
+  if (nueva === null) return MENSAJES_AMPLIACION.fecha
+  if (nueva <= contrato.fechaFin) return MENSAJES_AMPLIACION.noPosterior
+  const tope = topeAmpliacion(contrato.fechaFin)
+  if (nueva > tope) return MENSAJES_AMPLIACION.pasaDelTope
+  if (hoy > tope) return MENSAJES_AMPLIACION.plazoCerrado
+  return null
+}
+
+/** Si queda sitio para ampliar: `fechaFin < tope` y `hoy <= tope`. Comodidad del cliente (regla 13). */
+export function cabeAmpliacion(contrato: Pick<Contrato, 'fechaFin'>, hoy: DiaCivil): boolean {
+  const tope = topeAmpliacion(contrato.fechaFin)
+  return contrato.fechaFin < tope && hoy <= tope
+}
+
+export type CuerpoAmpliacion = { ok: true; fechaFin: DiaCivil; motivo: string } | { ok: false; error: string }
+
+/** Cuerpo HTTP → un solo error: primero el de `motivoNoAmpliable`, después `motivo` vacío tras recortar (S-1, S-9). */
+export function ampliacionDelCuerpo(v: unknown, contrato: Pick<Contrato, 'fechaFin'>, hoy: DiaCivil): CuerpoAmpliacion {
+  const cuerpo = typeof v === 'object' && v !== null ? (v as Record<string, unknown>) : {}
+  const error = motivoNoAmpliable(contrato, cuerpo.fechaFin, hoy)
+  if (error !== null) return { ok: false, error }
+  const motivo = typeof cuerpo.motivo === 'string' ? cuerpo.motivo.trim() : ''
+  if (motivo === '') return { ok: false, error: MENSAJES_AMPLIACION.motivo }
+  return { ok: true, fechaFin: fechaCalendario(cuerpo.fechaFin)!, motivo }
+}
+
+/** Una fila de la traza, tal como la sirve `GET /api/contratos/:id`. */
+export interface AmpliacionContrato { fechaAnterior: DiaCivil; fechaNueva: DiaCivil; motivo: string | null; ampliadoPor: string; ampliadoAt: string }
+
+/** La fecha de fin del alta: la `fechaAnterior` de la PRIMERA fila (orden ascendente); sin filas, la vigente (S-8). */
+export function fechaFinOriginal(vigente: DiaCivil, ampliaciones: readonly Pick<AmpliacionContrato, 'fechaAnterior'>[]): DiaCivil {
+  return ampliaciones[0]?.fechaAnterior ?? vigente
+}

@@ -355,3 +355,87 @@ entrada la abre Supervisión.
 La aplicación enseña el SKU de Books junto al nombre del accesorio y nada más. **Que ese SKU sea el «número de parte» sigue siendo
 hipótesis**: ninguna fuente lo confirma y esta tanda no lo decide. Es el supuesto S-1 de §11.1 y la tarea P-3 de §11.3; hasta que Gerencia
 responda, ningún documento del repositorio debe darlo por cierto.
+
+## 13 · Añadido por `ampliacion-contrato` (F1B-11, `cierra: si`) — tabla nueva, sin interruptor, supuestos para Gerencia y cuatro tareas de persona nuevas
+
+**Qué entra.** Un contrato se puede ampliar hasta el 31/12 del año de su vencimiento, lo registra Comercial y queda con traza
+(`decision/e086-ampliacion-contrato`, Gerencia, 2026-10-06). **No hay variable de entorno ni interruptor**: está activo desde que se publica. La
+comprobación de lectura tras desplegar está en `DEPLOY.md`, apartado «Comprobación de lectura tras desplegar F1B-11 (ampliación de contrato)».
+
+- **La regla, en `shared`.** El tope es el 31/12 del año del vencimiento y el año son los cuatro primeros caracteres de la fecha, sin pasarla por `Date`
+  (`packages/shared/src/contratos.ts:259`). El rechazo sale de `motivoNoAmpliable`, con orden fijo: fecha, posterior a la vigente, tope y plazo cerrado
+  (`packages/shared/src/contratos.ts:264`); el motivo vacío lo añade `ampliacionDelCuerpo` (`packages/shared/src/contratos.ts:283`); y `cabeAmpliacion` es la
+  comodidad del cliente (`packages/shared/src/contratos.ts:275`).
+- **La ruta y su escalera.** `POST /api/contratos/:id/ampliar` (`apps/desk/server/routes/contratos.ts:74`): contrato inexistente `404`
+  (`apps/desk/server/routes/contratos.ts:78`), sin el área Comercial `403` (`apps/desk/server/routes/contratos.ts:79`), contenido `422`
+  (`apps/desk/server/routes/contratos.ts:81`) y carrera `409` (`apps/desk/server/routes/contratos.ts:87`). Quien amplía es el de la sesión (`apps/desk/server/routes/contratos.ts:83`), nunca el del cuerpo.
+- **La traza.** Una tabla nueva, `public.contrato_ampliaciones` (`packages/zoho-sync/src/db/schema.sql:773`), que `migrate` crea al arrancar y que nace vacía. El
+  `UPDATE` de la fecha va condicionado a la fecha que leyó la ruta (`apps/desk/server/db/contratos.ts:133`) y la fila de traza se escribe en la misma
+  transacción (`apps/desk/server/db/contratos.ts:138`). Comprobación declarada: `git grep` sobre el repositorio no encuentra ninguna sentencia que borre o modifique filas de esa tabla.
+- **La lectura ampliada.** `GET /api/contratos/:id` sirve además `ampliaciones` y `fechaFinOriginal` (`apps/desk/server/routes/contratos.ts:33`); sin
+  ampliaciones, la original es la vigente.
+- **La ficha.** Enseña «Vencimiento original» cuando difiere (`apps/desk/src/components/ContratoFicha.tsx:61`), el botón «Ampliar» a Comercial y
+  administradores si queda sitio (`apps/desk/src/components/ContratoFicha.tsx:65`) y la lista de ampliaciones (`apps/desk/src/components/ContratoFicha.tsx:71`).
+  El formulario no valida nada y enseña el error del servidor tal cual (`apps/desk/src/components/ContratoFicha.tsx:130`).
+- **Las tres puertas no cambian.** Las guardas de contrato vencido del alta, de la transición y de la remisión leen la fecha de fin vigente: una ampliación
+  las desbloquea hasta la fecha nueva y vuelven a bloquear al pasarla. Lo fija `apps/desk/server/ampliacionContratoPuertas.test.ts`.
+
+**Qué NO se construye.** (1) **Editar o borrar un contrato** (E-088): la ampliación no corrige un lote o un cliente equivocados. (2) **Acortar o corregir una
+fecha de fin** (S-3). (3) **Avisar al ampliar** (S-5). (4) **Tocar la fila F1B-11 del plan** (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:91`): se
+marca cerrada después del archivo.
+
+**Qué queda de la fila F1B-11 tras esta tanda.** **Se cierra al archivarse** (`cierra: si`): la ampliación era lo único que le faltaba
+(`decision/e086-ampliacion-contrato`, consecuencia 5), y es el remanente que el plan declara en `docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:216`.
+IV-11 sigue reducido, no cerrado, y IV-12 queda intacto: `ticketService.ts` y `remision.ts` no tienen diff.
+
+### 13.1 · Para Gerencia — supuestos reversibles, a confirmar o corregir
+
+| # | Qué confirmar | Qué hace hoy la aplicación | Qué cambia si la respuesta es «no» |
+|---|---|---|---|
+| S-1 | **¿El motivo de la ampliación es obligatorio?** (pregunta 1) **La fuente no lo exige**: ni E-086 ni la decisión lo nombran; se pide por coherencia con liberar y reasignar | Un motivo vacío tras recortar da `422` «El motivo es obligatorio» (`packages/shared/src/contratos.ts:288`) | Se quita esa guarda; la columna ya es anulable y no hay `CHECK`, así que no hace falta migración |
+| S-2 | **¿Se puede ampliar el mismo contrato más de una vez?** (pregunta 2) | Sí, mientras cada fecha nueva sea posterior a la vigente (`packages/shared/src/contratos.ts:267`) y no pase del tope | Una guarda más en el escalón C, «ya ampliado», que lea la traza |
+| S-3 | **¿Una ampliación sólo alarga?** | Sí: una fecha igual o anterior a la vigente da `422` (`packages/shared/src/contratos.ts:267`) | Acortar o corregir es otra operación, con su propia regla y su propia traza |
+| S-4 | **Tras ampliar, ¿debe volver a evaluarse el aviso de ritmo del trimestre ya avisado?** (pregunta 3) | No: la marca sólo sube (`apps/desk/server/services/avisoRitmoContrato.ts:28`) y el último trimestre acaba en la fecha de fin (`packages/shared/src/contratos.ts:94`), así que **una ampliación corta alarga el trimestre ya avisado** y en ese tramo no habrá aviso nuevo | La ampliación pone la marca a nulo en la misma transacción; hay que decidir si se avisa de nuevo aunque el trimestre ya se avisara |
+| S-5 | **¿Ampliar genera un aviso a Comercial?** | No genera ninguno | Un aviso a Comercial escrito en la misma transacción de la ampliación |
+| S-6 | **¿La traza la puede leer cualquier usuario con sesión?** | Sí, como el resto de la ficha (`apps/desk/server/routes/contratos.ts:28`) | Se filtran los campos de la traza por área en la lectura |
+| S-7 | **¿Un contrato que aún no ha empezado también se puede ampliar?** | Sí: la regla no mira la fecha de inicio (`packages/shared/src/contratos.ts:264`) | Una guarda más en el escalón C |
+| S-10 | **¿El 31/12 entero se puede ampliar?** | Sí: el plazo se cierra por el día, no por la hora, y `hoy` igual al tope todavía amplía (`packages/shared/src/contratos.ts:270`) | Cambiar la comparación y decidir desde qué hora cierra el plazo |
+
+### 13.2 · Límites declarados
+
+- **La atomicidad no se prueba de verdad.** Sin pool no se abre transacción (`apps/desk/server/db/transaccion.ts:15`), y las pruebas corren sin pool; la
+  estructura (el `UPDATE` y el `INSERT` dentro de `enTransaccion`) está fijada por mutaciones, pero que PostgreSQL revierta de verdad si falla el `INSERT`
+  es hipótesis hasta que la tarea P.8 lo compruebe en producción.
+- **Por la API, con el plazo cerrado y una fecha inválida, se lee primero el error de la fecha.** El orden de `motivoNoAmpliable` pone la fecha antes que
+  el plazo (`packages/shared/src/contratos.ts:266`); quien manda una fecha mala a un contrato fuera de plazo oye la corrección de la fecha y no que el
+  plazo terminó. Es el orden de la escalera, no un descuido.
+- **La ficha no se refresca sola si otro usuario amplía.** La carga una vez (`apps/desk/src/components/ContratoFicha.tsx:23`); quien tenga la ficha
+  abierta ve la fecha vieja y, si amplía, recibe el `409` de la carrera (`apps/desk/server/routes/contratos.ts:87`), tras el cual la ficha se recarga.
+- **S-4 es un límite, no sólo una pregunta:** una ampliación corta no vuelve a avisar del ritmo en el trimestre ya avisado.
+- **E-088 sigue fuera de alcance:** un contrato mal dado de alta se sigue sin poder corregir. **IV-11 sigue reducido** y **IV-12 queda intacto.**
+
+### 13.3 · Tareas de persona — fuera del recuento de la tanda
+
+Sin casillas: son decisiones o comprobaciones de personas, no trabajo que una tanda pueda hacer en este repositorio. **Archivar el cambio no las da por
+hechas.** P.1, P.4, P.6 y P.7 se heredan de `registro-contrato` (`openspec/changes/archive/2026-09-29-registro-contrato/archive-report.md:110-120`).
+
+| # | Quién | Qué | Qué desbloquea |
+|---|---|---|---|
+| P.1 | Alfonso | Consulta de formato de subOV en producción (heredada) | Que Comercial y Supervisión sepan si el formato de lote asumido es el real |
+| P.4 | Alfonso | Literales de borrador y anulada en Books (heredada) | Que la cuenta de subOV excluya los estados correctos |
+| P.6 | Comercial | Tras el despliegue, verificar en la aplicación prioridad, bloqueo, informe, CSV y pasada de ritmo (heredada) | Da por comprobado lo que los `.tsx` no cubren (F0-00) |
+| P.7 | Comercial | Dar de alta los contratos vigentes en la pantalla de contratos (heredada) | Que haya contratos que ampliar |
+| P.8 | Comercial | Tras el despliegue, ampliar un contrato real y comprobar la traza, el desbloqueo y el rechazo fuera del tope; comprobar además la atomicidad real, que ninguna prueba cubre | Da por comprobada la atomicidad y la pantalla, que está fuera de la red de pruebas |
+| P.9 | Gerencia | Pegar en el maestro la corrección 32 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir que la ampliación está abierta y que la fila F1B-11 no se cierra |
+| P.10 | Supervisión | Actualizar E-086 y abrir las entradas nuevas con la redacción de abajo, en `docs/sdd/ENTRADA.md`, que esta rama no toca | Que la bandeja refleje la decisión y los hallazgos de la tanda |
+| P.11 | Gerencia | Responder las tres preguntas: motivo obligatorio (S-1), ampliar más de una vez (S-2) y reevaluar el aviso de ritmo del trimestre ya avisado (S-4); y confirmar S-3, S-5, S-6, S-7 y S-10 | Deja firme la regla de la ampliación |
+
+**Redacción propuesta para `docs/sdd/ENTRADA.md`** (la abre Supervisión; esta rama no toca ese fichero).
+
+- **Cambio de estado de E-086:** de **NUEVA** a **DECIDIDA** el 2026-10-06, con la respuesta textual «Año natural del vencimiento. Ampliación hasta el 31/12
+  de ese año, porque el 1/1 cambia la lista de precios. La registra Comercial, con traza.» (`decision/e086-ampliacion-contrato`). Construida en
+  `ampliacion-contrato`; desbloquea el cierre de la fila F1B-11.
+- **Entrada nueva (pregunta):** «¿El motivo de la ampliación es obligatorio, se puede ampliar más de una vez y debe reevaluarse el aviso de ritmo del
+  trimestre ya avisado?» Origen: S-1, S-2 y S-4 de `ampliacion-contrato`. Dueño propuesto: Gerencia. Qué desbloquea: dejar firme la regla de la ampliación.
+- **Entrada nueva (hallazgo):** «Una ampliación corta alarga el trimestre ya avisado y no genera aviso nuevo de ritmo en ese tramo.» Origen: S-4. Afecta a:
+  el aviso de ritmo del contrato. Destino: **sin destino asignado**, a propósito; que lo asigne quien decida el alcance.

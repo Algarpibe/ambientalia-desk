@@ -234,3 +234,141 @@ describe('prioridadAlNacer · manda la más alta entre contrato y Top 5 (RQ-TC-2
     expect(prioridadAlNacer(pedida, contrato, top5)).toBe(esperada)
   })
 })
+
+/*
+ * ampliacion-contrato (F1B-11, lote 1; `tickets-core` RQ-TC-53, RQ-TC-54). Regla pura: tope, motivos de rechazo en su
+ * orden, cuerpo y fecha original. Los textos se comparan contra `MENSAJES_AMPLIACION`, no contra literales.
+ */
+import { MENSAJES_AMPLIACION, topeAmpliacion, motivoNoAmpliable, cabeAmpliacion, ampliacionDelCuerpo, fechaFinOriginal } from '@ambientalia/shared'
+
+const M = MENSAJES_AMPLIACION
+
+describe('topeAmpliacion · el 31/12 del año del vencimiento, sin pasar por UTC', () => {
+  it.each([
+    ['2026-12-31', '2026-12-31'], // el tope es el propio día
+    ['2026-01-01', '2026-12-31'], // el 01/01 NO cuenta en el año anterior
+    ['2026-06-30', '2026-12-31'],
+    ['2031-06-30', '2031-12-31'],
+  ])('fin %s → tope %s', (fin, tope) => {
+    expect(topeAmpliacion(fin)).toBe(tope)
+  })
+})
+
+describe('motivoNoAmpliable · cada rechazo y el orden de la regla', () => {
+  const c = { fechaFin: '2026-06-30' }
+  const antes = '2026-07-02'
+  it.each<[string, unknown]>([
+    ['fecha inexistente', '2026-02-30'], ['texto libre', 'mañana'], ['sin fecha', undefined], ['no es cadena', 20261231],
+  ])('%s → fecha', (_n, v) => {
+    expect(motivoNoAmpliable(c, v, antes)).toBe(M.fecha)
+  })
+  it('la misma fecha y una anterior → noPosterior', () => {
+    expect(motivoNoAmpliable(c, '2026-06-30', antes)).toBe(M.noPosterior)
+    expect(motivoNoAmpliable(c, '2026-06-01', antes)).toBe(M.noPosterior)
+  })
+  it('01/01 del año siguiente → pasaDelTope; el 31/12 → null', () => {
+    expect(motivoNoAmpliable(c, '2027-01-01', antes)).toBe(M.pasaDelTope)
+    expect(motivoNoAmpliable(c, '2026-12-31', antes)).toBeNull()
+    expect(motivoNoAmpliable(c, '2026-07-31', antes)).toBeNull()
+  })
+  it('hoy posterior al tope con una fecha que cabría → plazoCerrado; hoy igual al tope todavía amplía', () => {
+    expect(motivoNoAmpliable(c, '2026-12-31', '2027-01-01')).toBe(M.plazoCerrado)
+    expect(motivoNoAmpliable(c, '2026-12-31', '2026-12-31')).toBeNull()
+  })
+  it('un contrato no iniciado y uno vencido son ampliables (S-7): la regla no mira el inicio', () => {
+    expect(motivoNoAmpliable({ fechaFin: '2026-06-30' }, '2026-09-30', '2026-01-01')).toBeNull()
+    expect(motivoNoAmpliable({ fechaFin: '2026-06-30' }, '2026-09-30', '2026-08-01')).toBeNull()
+  })
+  it('fin el 31/12: pedir el 01/01 → pasaDelTope; pedir el 31/12 → noPosterior', () => {
+    expect(motivoNoAmpliable({ fechaFin: '2026-12-31' }, '2027-01-01', '2026-12-15')).toBe(M.pasaDelTope)
+    expect(motivoNoAmpliable({ fechaFin: '2026-12-31' }, '2026-12-31', '2026-12-15')).toBe(M.noPosterior)
+  })
+  it('fin el 01/01: el 31/12 del mismo año se acepta y el 01/01 siguiente pasa del tope', () => {
+    expect(motivoNoAmpliable({ fechaFin: '2026-01-01' }, '2026-12-31', '2026-01-05')).toBeNull()
+    expect(motivoNoAmpliable({ fechaFin: '2026-01-01' }, '2027-01-01', '2026-01-05')).toBe(M.pasaDelTope)
+  })
+  it('reloj: 2027-01-01T03:00:00Z es aún 31/12 en la zona de negocio y deja ampliar; T05:00:00Z ya no', () => {
+    const c2 = { fechaFin: '2026-12-20' }
+    expect(hoyEnZona(new Date('2027-01-01T03:00:00Z'))).toBe('2026-12-31')
+    expect(motivoNoAmpliable(c2, '2026-12-31', hoyEnZona(new Date('2027-01-01T03:00:00Z')))).toBeNull()
+    expect(hoyEnZona(new Date('2027-01-01T05:00:00Z'))).toBe('2027-01-01')
+    expect(motivoNoAmpliable(c2, '2026-12-31', hoyEnZona(new Date('2027-01-01T05:00:00Z')))).toBe(M.plazoCerrado)
+  })
+})
+
+describe('orden de los motivos · pruebas de posición por pares (las dos condiciones activas a la vez)', () => {
+  const c = { fechaFin: '2026-06-30' }
+  const cerrado = '2027-01-01' // hoy posterior al tope: plazoCerrado siempre activo
+  it('fecha inválida ↔ plazo cerrado → fecha', () => { expect(motivoNoAmpliable(c, 'no-es-fecha', cerrado)).toBe(M.fecha) })
+  it('no posterior ↔ plazo cerrado → noPosterior', () => { expect(motivoNoAmpliable(c, '2026-06-30', cerrado)).toBe(M.noPosterior) })
+  it('pasa del tope ↔ plazo cerrado → pasaDelTope', () => { expect(motivoNoAmpliable(c, '2027-03-01', cerrado)).toBe(M.pasaDelTope) })
+  // Par NO activable: no posterior ↔ pasa del tope. Una fecha no puede ser a la vez `<=` la vigente y `>` el tope,
+  // porque la vigente es siempre `<=` el tope (mismo año): no hay prueba de posición posible para ese par.
+  it('en ampliacionDelCuerpo, cada motivo de la fecha gana al motivo vacío', () => {
+    expect(ampliacionDelCuerpo({ fechaFin: 'x', motivo: '' }, c, '2026-07-02')).toEqual({ ok: false, error: M.fecha })
+    expect(ampliacionDelCuerpo({ fechaFin: '2026-06-30', motivo: '  ' }, c, '2026-07-02')).toEqual({ ok: false, error: M.noPosterior })
+    expect(ampliacionDelCuerpo({ fechaFin: '2027-01-01', motivo: '' }, c, '2026-07-02')).toEqual({ ok: false, error: M.pasaDelTope })
+    expect(ampliacionDelCuerpo({ fechaFin: '2026-12-31', motivo: '' }, c, cerrado)).toEqual({ ok: false, error: M.plazoCerrado })
+  })
+})
+
+describe('cabeAmpliacion · comodidad del cliente, enfrentada a motivoNoAmpliable (DD-9)', () => {
+  it('cabe si fin < tope y hoy <= tope', () => {
+    expect(cabeAmpliacion({ fechaFin: '2026-06-30' }, '2026-07-02')).toBe(true)
+    expect(cabeAmpliacion({ fechaFin: '2026-06-30' }, '2026-12-31')).toBe(true)
+  })
+  it('no cabe con fin el 31/12 ni con hoy pasado el tope', () => {
+    expect(cabeAmpliacion({ fechaFin: '2026-12-31' }, '2026-12-15')).toBe(false)
+    expect(cabeAmpliacion({ fechaFin: '2026-06-30' }, '2027-01-01')).toBe(false)
+  })
+  it('propiedad: si no cabe, ninguna fecha de la rejilla es ampliable', () => {
+    const rejilla = ['2025-12-31', '2026-01-01', '2026-06-29', '2026-06-30', '2026-07-01', '2026-12-30', '2026-12-31', '2027-01-01', '2027-06-30']
+    const fines = ['2026-01-01', '2026-06-30', '2026-12-30', '2026-12-31']
+    const hoys = ['2026-01-05', '2026-12-31', '2027-01-01']
+    for (const fechaFin of fines) for (const hoy of hoys) {
+      if (cabeAmpliacion({ fechaFin }, hoy)) continue
+      for (const f of rejilla) expect(motivoNoAmpliable({ fechaFin }, f, hoy), `${fechaFin} ${hoy} ${f}`).not.toBeNull()
+    }
+  })
+})
+
+describe('ampliacionDelCuerpo · un solo error, y el motivo recortado sin truncar', () => {
+  const c = { fechaFin: '2026-06-30' }
+  const hoy = '2026-07-02'
+  it.each<unknown>([null, undefined, 'texto', 5, []])('cuerpo %j → el error de la fecha', (v) => {
+    expect(ampliacionDelCuerpo(v, c, hoy)).toEqual({ ok: false, error: M.fecha })
+  })
+  it.each<unknown>([undefined, '', '   \t ', null, 7])('motivo %j con fecha válida → motivo', (motivo) => {
+    expect(ampliacionDelCuerpo({ fechaFin: '2026-09-30', motivo }, c, hoy)).toEqual({ ok: false, error: M.motivo })
+  })
+  it('éxito: fecha y motivo recortado, sin truncar, ignorando campos extra', () => {
+    const largo = 'x'.repeat(5000)
+    expect(ampliacionDelCuerpo({ fechaFin: '2026-09-30', motivo: `  ${largo}  `, ampliadoPor: 'otro' }, c, hoy))
+      .toEqual({ ok: true, fechaFin: '2026-09-30', motivo: largo })
+  })
+})
+
+describe('fechaFinOriginal · la fecha anterior de la PRIMERA fila; sin filas, la vigente', () => {
+  it('sin ampliaciones devuelve la vigente, nunca nulo (S-8)', () => {
+    expect(fechaFinOriginal('2026-06-30', [])).toBe('2026-06-30')
+  })
+  it('con dos filas devuelve la de la primera, no la de la última', () => {
+    expect(fechaFinOriginal('2026-12-31', [{ fechaAnterior: '2026-06-30' }, { fechaAnterior: '2026-09-30' }])).toBe('2026-06-30')
+  })
+})
+
+describe('topeAmpliacion · independiente de la zona del proceso (M10)', () => {
+  it('con la zona del proceso al oeste de UTC, un fin el 01/01 sigue teniendo tope en su año', () => {
+    // vitest.config.ts fija TZ=UTC; aquí se cambia un momento para que `new Date(fin).getFullYear()` se delate.
+    const previa = process.env.TZ
+    process.env.TZ = 'America/Bogota'
+    try { expect(topeAmpliacion('2026-01-01')).toBe('2026-12-31') } finally { if (previa === undefined) delete process.env.TZ; else process.env.TZ = previa }
+  })
+})
+
+describe('ampliacionDelCuerpo · la fecha sale normalizada (S19)', () => {
+  it('con la fecha rodeada de espacios devuelve el día sin espacios', () => {
+    expect(ampliacionDelCuerpo({ fechaFin: ' 2026-09-30 ', motivo: 'm' }, { fechaFin: '2026-06-30' }, '2026-07-02'))
+      .toEqual({ ok: true, fechaFin: '2026-09-30', motivo: 'm' })
+  })
+})

@@ -2,11 +2,11 @@ import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { getClient } from '@ambientalia/zoho-sync/books/repo'
 import { saldoPorLote } from '@ambientalia/zoho-sync/books/subOV'
-import { canExecuteTransition, esLote, fechaCalendario, estadoContrato, hoyEnZona } from '@ambientalia/shared'
+import { canExecuteTransition, esLote, fechaCalendario, estadoContrato, hoyEnZona, MENSAJES_AMPLIACION, ampliacionDelCuerpo, fechaFinOriginal, type DiaCivil } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { informeContrato } from '../db/informeContrato'
-import { crearContrato, listarContratos, contratoPorId, contratoDelLote, contratoDelTicket, ContratoDuplicadoError } from '../db/contratos'
+import { crearContrato, listarContratos, contratoPorId, contratoDelLote, contratoDelTicket, ContratoDuplicadoError, ampliarContrato, ampliacionesDelContrato, ContratoCambiadoError } from '../db/contratos'
 
 /**
  * API de contratos (registro-contrato, lote 3; `tickets-core` RQ-TC-21 y RQ-TC-23).
@@ -18,8 +18,8 @@ import { crearContrato, listarContratos, contratoPorId, contratoDelLote, contrat
  * `clasificarOV` (vía `esLote`), no con una regex propia. De la petición sólo se leen cliente, lote y fechas:
  * `creado_por` es el de la sesión y el «ticket de contrato» no es un campo de nadie — se deriva al leer (RQ-TC-23).
  */
-export function registerContratosRoutes(app: Express, deps: { db: Queryable }): void {
-  const { db } = deps
+export function registerContratosRoutes(app: Express, deps: { db: Queryable; hoy?: () => DiaCivil }): void {
+  const { db } = deps; const hoy = deps.hoy ?? hoyEnZona
 
   app.get('/api/contratos', requireAuth(db), asyncHandler(async (_req, res) => {
     res.json(await listarContratos(db))
@@ -30,7 +30,7 @@ export function registerContratosRoutes(app: Express, deps: { db: Queryable }): 
     // A · existencia: un id no numérico no llega a la base
     const contrato = /^\d+$/.test(id) ? await contratoPorId(db, Number(id)) : null
     if (!contrato) { res.status(404).json({ error: 'Contrato no encontrado' }); return }
-    res.json({ contrato, estado: estadoContrato(contrato, hoyEnZona()), saldo: await saldoPorLote(db, contrato.lote) })
+    const ampliaciones = await ampliacionesDelContrato(db, contrato.id); res.json({ contrato, estado: estadoContrato(contrato, hoyEnZona()), saldo: await saldoPorLote(db, contrato.lote), ampliaciones, fechaFinOriginal: fechaFinOriginal(contrato.fechaFin, ampliaciones) })
   }))
 
   app.get('/api/tickets/:id/contrato', requireAuth(db), asyncHandler(async (req, res) => {
@@ -67,5 +67,25 @@ export function registerContratosRoutes(app: Express, deps: { db: Queryable }): 
     const contrato = /^\d+$/.test(id) ? await contratoPorId(db, Number(id)) : null
     if (!contrato) { res.status(404).json({ error: 'Contrato no encontrado' }); return }
     res.json(await informeContrato(db, contrato, hoyEnZona()))
+  }))
+
+  // ampliacion-contrato (F1B-11, RQ-TC-54) — escalera: A existencia `404` < B permiso `403` (antes de leer el cuerpo) < C contenido
+  // `422` (`ampliacionDelCuerpo`, de `shared`) < D carrera `409`. De la petición sólo se leen `fechaFin` y `motivo`: `ampliado_por` es la sesión.
+  app.post('/api/contratos/:id/ampliar', requireAuth(db), asyncHandler(async (req, res) => {
+    const user = req.user!
+    const id = String(req.params.id)
+    const contrato = /^\d+$/.test(id) ? await contratoPorId(db, Number(id)) : null
+    if (!contrato) { res.status(404).json({ error: MENSAJES_AMPLIACION.inexistente }); return }
+    if (!canExecuteTransition(user.areas, user.isAdmin, 'Comercial')) { res.status(403).json({ error: MENSAJES_AMPLIACION.permiso }); return }
+    const cuerpo = ampliacionDelCuerpo(req.body, contrato, hoy())
+    if (!cuerpo.ok) { res.status(422).json({ error: cuerpo.error }); return }
+    try {
+      const ampliado = await ampliarContrato(db, { contratoId: contrato.id, fechaAnterior: contrato.fechaFin, fechaNueva: cuerpo.fechaFin, motivo: cuerpo.motivo, ampliadoPor: user.name })
+      const ampliaciones = await ampliacionesDelContrato(db, contrato.id)
+      res.status(200).json({ contrato: ampliado, ampliaciones, fechaFinOriginal: fechaFinOriginal(ampliado.fechaFin, ampliaciones) })
+    } catch (e) {
+      if (e instanceof ContratoCambiadoError) { res.status(409).json({ error: e.message }); return }
+      throw e
+    }
   }))
 }

@@ -1,11 +1,11 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { clasificarOV, estadoContrato, hoyEnZona, motivoVencido, type Contrato } from '@ambientalia/shared'
-import { comoDiaCivil } from './calendarioCierres'
+import { clasificarOV, estadoContrato, hoyEnZona, motivoVencido, type Contrato, MENSAJES_AMPLIACION, type AmpliacionContrato } from '@ambientalia/shared'
+import { comoDiaCivil } from './calendarioCierres'; import { enTransaccion } from './transaccion'
 
 /**
  * Acceso a `public.contratos` (registro-contrato, RQ-TC-21). Consultas sin calificar, como `ov_asociaciones`: la
  * app conecta con `search_path=desk,public` y `contratos` sólo existe en `public`. Este cambio sólo CREA contratos:
- * no hay `DELETE` ni `UPDATE` de sus datos (S-13); el único `UPDATE` será la marca de ritmo (lote 5).
+ * no hay `DELETE`. `UPDATE` sólo hay dos: la marca de ritmo y la ampliación de `fecha_fin` (al final), siempre con traza.
  */
 
 /** Ya existe un contrato para ese lote: el `23505` del índice único `idx_contratos_lote`, traducido. */
@@ -112,4 +112,47 @@ export async function contratoDelTicket(db: Queryable, ticketId: string, hoy: st
     if (contrato && estadoContrato(contrato, hoy) === 'vigente') return { deContrato: true, contrato, subOV: numero.trim() }
   }
   return { deContrato: false }
+}
+
+/*
+ * ampliacion-contrato (F1B-11, RQ-TC-54) — la fecha de fin se amplía en UNA transacción: el `UPDATE` condicionado a la
+ * fecha que leyó la ruta y la fila de traza en `contrato_ampliaciones` (sin `DELETE` ni clave foránea).
+ */
+
+/** La fecha de fin ya no era la que la ruta leyó: otra ampliación se coló. No se escribió nada. */
+export class ContratoCambiadoError extends Error {
+  constructor(readonly contratoId: number) { super(MENSAJES_AMPLIACION.carrera) }
+}
+
+export interface Ampliar { contratoId: number; fechaAnterior: string; fechaNueva: string; motivo: string | null; ampliadoPor: string }
+
+/** Amplía y deja la traza en UNA transacción. Devuelve el contrato ya ampliado. */
+export async function ampliarContrato(db: Queryable, a: Ampliar): Promise<Contrato> {
+  return enTransaccion(db, async (q) => {
+    const r = await q.query(
+      `UPDATE contratos SET fecha_fin = $2 WHERE id = $1 AND fecha_fin = $3 RETURNING ${COLUMNAS}`,
+      [a.contratoId, a.fechaNueva, a.fechaAnterior],
+    )
+    if (r.rows.length === 0) throw new ContratoCambiadoError(a.contratoId)
+    await q.query(
+      'INSERT INTO contrato_ampliaciones (contrato_id, fecha_anterior, fecha_nueva, motivo, ampliado_por) VALUES ($1, $2, $3, $4, $5)',
+      [a.contratoId, a.fechaAnterior, a.fechaNueva, a.motivo, a.ampliadoPor],
+    )
+    return filas(r.rows)[0]!
+  })
+}
+
+/** La traza de un contrato, de la más antigua a la más reciente (`ORDER BY id`). */
+export async function ampliacionesDelContrato(db: Queryable, contratoId: number): Promise<AmpliacionContrato[]> {
+  const r = await db.query(
+    'SELECT fecha_anterior, fecha_nueva, motivo, ampliado_por, ampliado_at FROM contrato_ampliaciones WHERE contrato_id = $1 ORDER BY id',
+    [contratoId],
+  )
+  return (r.rows as Array<Record<string, unknown>>).map((f) => ({
+    fechaAnterior: comoDiaCivil(f.fecha_anterior),
+    fechaNueva: comoDiaCivil(f.fecha_nueva),
+    motivo: f.motivo == null ? null : String(f.motivo),
+    ampliadoPor: String(f.ampliado_por),
+    ampliadoAt: f.ampliado_at instanceof Date ? f.ampliado_at.toISOString() : String(f.ampliado_at),
+  }))
 }

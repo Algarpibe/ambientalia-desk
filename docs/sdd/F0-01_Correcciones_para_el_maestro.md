@@ -1558,3 +1558,44 @@ aplicación. Los supuestos S-3 (el Director Técnico sólo añade), S-4 (un acce
 (la copia a otros modelos omite los accesorios sin artículo de Books) y S-10 (un solo texto por remisión si se marcan «Otro» y «Accesorio
 fuera de lista» a la vez) están pendientes de confirmación de Gerencia en el traspaso de la tanda
 (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`).
+
+## La de F1B-11, ampliación de contrato (32)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `ampliacion-contrato`, `cierra: si`, y de
+> `decision/e086-ampliacion-contrato` (Gerencia, 2026-10-06).
+
+### 32 · M4.4 — el contrato se puede ampliar hasta el 31/12 del año de su vencimiento, lo registra Comercial con motivo y traza, y F1B-11 queda cerrada *(F1B-11)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2655` (párrafo «Vigencia (vigencia-contrato)…», con el
+[ABIERTO] del año y el tope), `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2656` (párrafo «Estado de
+construcción», «Falta la ampliación de contrato… la fila no se cierra»), `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5561-5563`
+(Anexo D, punto nº 70: «Año y tope de la ampliación de contrato (E-086)», «ABIERTO — R08.4… Es lo único que le falta a F1B-11») y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:5824` (Anexo D, punto nº 53: «Construido en F1B-11, salvo la ampliación (nº 70)»).
+
+**Texto actual:** «[ABIERTO] Qué año cuenta (el natural, el de inicio o el de fin del contrato) y cuál es el tope de la nueva fecha de fin (E-086; Anexo D).
+Mientras no se decida rige la regla estricta: contrato vencido, ninguna subOV de su lote se asocia.» (línea 2655) / «Falta la ampliación de contrato, a la
+espera de la respuesta anterior, y la fila no se cierra. Cierra el punto 53 del Anexo D.» (línea 2656) / «ABIERTO — R08.4. Mientras no se decida rige la regla
+estricta… Es lo único que le falta a F1B-11.» (línea 5563) / «Construido en F1B-11, salvo la ampliación (nº 70).» (línea 5824).
+
+**Texto propuesto:**
+
+1. En la línea 2655, sustituir desde «[ABIERTO] Qué año cuenta…» hasta «…ninguna subOV de su lote se asocia.» por: «[CONSTRUIDO] Decidido por Gerencia el
+   06/10/2026: el año que cuenta es el natural de la fecha de vencimiento, y la nueva fecha de fin puede ser, como máximo, el 31/12 de ese año. La registra
+   Comercial (o un administrador) desde la ficha del contrato, con la nueva fecha y un motivo obligatorio, y queda una traza con quién, cuándo, la fecha
+   anterior y la nueva. Un contrato ya vencido se puede ampliar mientras no haya pasado el 31/12 del año de su vencimiento; pasado ese día, no. Se puede ampliar
+   más de una vez, y cada ampliación sólo alarga: la fecha nueva ha de ser posterior a la vigente. La ficha enseña el vencimiento original y la lista de
+   ampliaciones, y las guardas de contrato vencido leen siempre la fecha de fin vigente.»
+2. En la línea 2656, sustituir «F1B-11 tiene construidos sus tres cambios» por «F1B-11 tiene construidos sus cuatro cambios», añadir «la ampliación de
+   contrato con su traza» a la lista que sigue, y sustituir «Falta la ampliación de contrato, a la espera de la respuesta anterior, y la fila no se cierra. Cierra
+   el punto 53 del Anexo D.» por «Con la ampliación, la fila F1B-11 queda cerrada. Cierra el punto 53 del Anexo D.»
+3. En las líneas 5561-5563 (punto nº 70), sustituir «ABIERTO — R08.4. Mientras no se decida rige la regla estricta: con el contrato vencido no se asocia ninguna
+   subOV de su lote. Es lo único que le falta a F1B-11.» por «RESUELTO 06/10 — R08.4: año natural del vencimiento; tope el 31/12 de ese año; la registra
+   Comercial, con motivo y traza. Construido en F1B-11.»
+4. En la línea 5824 (punto nº 53), sustituir «Construido en F1B-11, salvo la ampliación (nº 70).» por «Construido en F1B-11, incluida la ampliación (nº 70).»
+
+**Lo que esta entrada NO pide.** **Cierra la fila F1B-11**: la ampliación era lo único que le faltaba (`decision/e086-ampliacion-contrato`, consecuencia 5), pero sólo
+cuenta cuando el cambio esté archivado. No toca el párrafo de la línea 2658 («Corregir un contrato mal dado de alta», E-088): sigue pendiente, y la ampliación
+**no** es edición ni borrado. No cambia el aviso de ritmo de la línea 2654: una ampliación no reinicia su marca, así que una ampliación corta alarga el
+trimestre ya avisado sin aviso nuevo (S-4). No afirma que esté en producción: depende del despliegue y de su comprobación en la aplicación. Los supuestos S-1
+(el motivo es obligatorio; la fuente no lo exige), S-2 (se puede ampliar más de una vez) y S-4 están pendientes de confirmación de Gerencia en el traspaso de la
+tanda (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §13.1).
