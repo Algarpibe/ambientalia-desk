@@ -212,3 +212,29 @@ Ninguna decisión que BLOQUEE queda sin línea de servidor. Las filas 2, 3 (text
 
 ### Medida (4.11)
 `git diff --shortstat --no-renames 1867a22` = 6 ficheros, 73 inserciones, 26 borrados (99; incluye este informe y las casillas de tasks.md; el código de producción son 4 ficheros, 21 inserciones y 14 borrados = 35); más `wc -l` de lo nuevo sin trackear: `AccesoriosModeloPanel.tsx` 128. Total: 227 (válvula 720). Sin binarios.
+
+## Lote 5 · cierre documental (hecho; commit, detector y asiento los hace el orquestador)
+
+Commit de partida `3100093`. Sólo documentos: **no hay prueba posible en este lote** (strict TDD no aplica; no se escribió código de producción ni de prueba). Comprobación: citas verificadas línea a línea y la suite completa en verde, sin cambios.
+
+### `wc -l` antes -> después (5.1; los tres sólo crecen al final, `git diff --numstat` da 0 borrados en cada uno)
+`docs/sdd/F0-01_Correcciones_para_el_maestro.md` 1522 -> 1560 (+38, corrección 31); `DEPLOY.md` 523 -> 560 (+37); `docs/sdd/Paquete_de_Despliegue_2026-10-06.md` 251 -> 325 (+74, §11). Nuevo: `docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql` (96, CRLF). Todo con CRLF; sin `sed -i` sobre los tres.
+
+### Consulta (5.2): criterio contrastado
+Cada tabla y columna contra `packages/zoho-sync/src/db/schema.sql` (`catalogo_modelos` `:339-347`, `catalogo_marcas` `:330-335`, `catalogo_tipos` `:323-328`, `catalogo_articulos` `:392-402`, `catalogo_modelo_categorias` `:410-416`, `catalogo_articulos_ocultos` `:423-427`, `books.items` `:380-384`, `equipos.modelo_id` `:354`) y el criterio contra `apps/desk/server/db/catalogoArticulos.ts:307-314` (derivados), `:316-317` (ocultos) y `:348-356` (manuales activos). Dos consultas: modelos activos sin accesorio activo (texto de D8) y accesorios de legado con `item_id IS NULL`. Declarada como hipótesis que PostgreSQL de producción las acepte tal cual.
+
+### Tabla de la regla 13 (5.6), cerrada en `tasks.md` con líneas releídas en `3100093`
+Fila 1 `remision.ts:194-197`; 2 `remision.ts:68`; 3 `remision.ts:158` y `shared/src/recepcion.ts:97-99`; 4 `catalogo.ts:220`; 5 `catalogo.ts:294`; 6 `catalogoArticulos.ts:166` y `:190`; 7 `accesoriosModelo.ts:25`; 8 `accesoriosModelo.ts:27`, `:29` y `:31`; 9 `catalogoArticulos.ts:74` y `accesoriosModelo.ts:33`. Coinciden con lo anotado por 1b, 2, 3 y 4; sin desviaciones.
+
+### Barrido de citas (5.7)
+- Las 36 citas `ruta:línea` que escribió este lote: principio y final de cada rango comprobados por script contra su fichero, ninguno vacío ni fuera de rango.
+- `grep -rnoE "DEPLOY\.md:[0-9]+(-[0-9]+)?"`: 215 resultados; ninguno apunta más allá de la línea 523, y las líneas 241, 256 y 261 (únicas cuyo contenido cambió, lote 2) sólo las alcanzan citas de dos paquetes fechados y de este cambio: `Paquete_de_Despliegue_2026-10-04.md` (`:214`, `:338`, `:442`, `:684`) y `Paquete_de_Despliegue_2026-10-04b.md` (`:259`, `:514`, `:645`, `:1067`) afirman el estado «diez filas» de esa fecha (caso B, histórico: no se renumeran ni se editan aquí), y las de `proposal.md`, `design.md` y este informe describen el estado de partida. El resto no se movió. Segundo pase de abreviadas: no hay abreviadas que dependan de `DEPLOY.md`.
+- Los ficheros muy citados no ganaron ni perdieron líneas fuera del final.
+
+### Cierre (5.8 a 5.10)
+- `git diff --stat 3100093` sobre `docs/sdd/ENTRADA.md` y `openspec/config.yaml`: vacío (sin tocar).
+- `npm test`: exit 0, 252 ficheros pasan y 2 saltados, 3971 pruebas pasan y 7 saltadas (sin cambios). `npm run typecheck`: exit 0. `npm run lint`: exit 0, 165 problemas (0 errores, 165 avisos).
+
+### Desviaciones respecto al diseño
+- La corrección 31 añade un tercer punto (la foto por accesorio no está construida; la línea 1237 no cambia) que `tasks.md` no pedía; es una aclaración, no un cambio de alcance.
+- En el §11 los supuestos a confirmar son S-1, S-2, S-3, S-4, S-5, S-7, S-9 y S-10 (ocho); S-6 y S-8 se declaran de implementación, sin respuesta de Gerencia.

@@ -1520,3 +1520,41 @@ propietario (línea 2037), que sigue aplazada. No afirma que esté en producció
 en la aplicación. Los supuestos S-2 (estado sin salida, sólo administrador), S-4 (mismo destino, rechazado), S-5 (a uno mismo, permitido)
 y S-6 (destino de cualquier área) están pendientes de confirmación de Gerencia en el traspaso de la tanda
 (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`).
+
+## La de F1B-04, accesorios por modelo (31)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `accesorios-lista-por-modelo`, `cierra: no`, y de
+> `decision/e232-accesorios-lista-por-modelo` (Gerencia, 2026-10-06).
+
+### 31 · M1.2 — los accesorios salen de la lista del modelo con nombre oficial y SKU «cuando lo haya», no hay texto libre, y lo que llega fuera de lista es una novedad que añade el Director Técnico *(F1B-04)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1236-1237` (párrafo «Cada accesorio se muestra con su
+foto, su nombre oficial y su número de parte…» y la línea siguiente, «Antes del corte, la lista cerrada de F1B-04…») y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1240` (párrafo «Novedades de entrada», con la lista de tipos de
+novedad).
+
+**Texto actual:** «Solo se ofrecen los accesorios asociados al modelo del equipo en el catálogo de modelos.» (línea 1236) / la lista de
+novedades «Sin novedad · Golpe o abolladura en la carcasa · Rayón o daño estético · Pantalla o display dañado · Conector o puerto dañado ·
+Falta un accesorio · Embalaje inadecuado o dañado · Humedad, suciedad o contaminación visible · Sello o precinto roto · Otro (texto
+obligatorio)» (línea 1240).
+
+**Texto propuesto:**
+
+1. En la línea 1236, a continuación de «Solo se ofrecen los accesorios asociados al modelo del equipo en el catálogo de modelos.», añadir:
+   «Cada accesorio se enseña con su nombre oficial y, cuando el artículo de Zoho Books lo tiene, su SKU; no se escribe ningún accesorio a
+   mano. Un accesorio que llega y no está en la lista del modelo se marca como novedad «Accesorio fuera de lista», que exige describirlo.
+   Quien añade un accesorio a la lista del modelo es el Director Técnico, desde Configuración, «Accesorios por modelo», y sólo puede elegir
+   un artículo que exista en Zoho Books; retirar, reordenar y copiar listas siguen siendo del administrador.»
+2. En la línea 1240, entre «Falta un accesorio» y «Embalaje inadecuado o dañado», añadir «Accesorio fuera de lista (texto obligatorio)». La
+   lista pasa de diez a once tipos de novedad, y los cambios a la lista los sigue haciendo el Director Técnico.
+3. La línea 1237 no cambia, pero queda por decir que la foto del accesorio **no está construida**: los documentos cuelgan del modelo y no
+   del artículo, y la sincronización de artículos no trae imagen. Sigue dependiendo del ítem 21, como ya dice esa línea.
+
+**Lo que esta entrada NO pide.** No afirma que el SKU sea el «número de parte» que menciona el maestro: es una **hipótesis sin resolver**
+(S-1 del cambio) y la aplicación enseña el SKU de Books tal cual, o sólo el nombre si el artículo no lo tiene. No cierra la fila F1B-04
+(`cierra: no`): quedan la mitad de salida de E-123 (fotos obligatorias en la remisión de salida), la foto por accesorio, la confirmación del
+número de parte y las preguntas abiertas E-163 a E-167. No afirma que esté en producción: depende del despliegue y de su comprobación en la
+aplicación. Los supuestos S-3 (el Director Técnico sólo añade), S-4 (un accesorio que no es artículo de Books ya no se puede añadir), S-9
+(la copia a otros modelos omite los accesorios sin artículo de Books) y S-10 (un solo texto por remisión si se marcan «Otro» y «Accesorio
+fuera de lista» a la vez) están pendientes de confirmación de Gerencia en el traspaso de la tanda
+(`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`).
