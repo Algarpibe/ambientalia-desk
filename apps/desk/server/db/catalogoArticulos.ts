@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import type { ArticuloModelo, CategoriaModelo, ClaseArticulo } from '@ambientalia/shared'
+import { accesorioSinBooks, type ArticuloModelo, type CategoriaModelo, type ClaseArticulo } from '@ambientalia/shared'
 
 /** Las filas de pg como las trata este repo: `any` sube el lint por encima de la línea base. */
 const filas = (rows: unknown[]): Array<Record<string, unknown>> => rows as Array<Record<string, unknown>>
@@ -162,8 +162,8 @@ export async function copiarArticulos(
   origenId: string,
   destinos: string[],
   clase: ClaseArticulo,
-): Promise<{ copiados: number; omitidos: number; porModelo: Array<{ modeloId: string; copiados: number }> }> {
-  const fuente = (await listarArticulos(db, origenId, { soloActivos: true })).filter((a) => a.clase === clase)
+): Promise<{ copiados: number; omitidos: number; porModelo: Array<{ modeloId: string; copiados: number }>; sinBooks: number }> {
+  const todos = (await listarArticulos(db, origenId, { soloActivos: true })).filter((a) => a.clase === clase); const fuente = todos.filter((a) => !accesorioSinBooks(clase, a.itemId))
 
   let copiados = 0
   let omitidos = 0
@@ -187,7 +187,7 @@ export async function copiarArticulos(
     }
     porModelo.push({ modeloId: destino, copiados: aqui })
   }
-  return { copiados, omitidos, porModelo }
+  return { copiados, omitidos, porModelo, sinBooks: todos.length - fuente.length }
 }
 
 // ── Categorías de Books asignadas al modelo ────────────────────────────────────────────────────────
@@ -355,4 +355,10 @@ export async function listarArticulosDeModelo(
     out.push(m)
   }
   return out
+}
+
+/** Un artículo MANUAL por su id, o `null`. Los derivados no viven en esta tabla. */
+export async function getArticuloManual(db: Queryable, id: string): Promise<ArticuloModelo | null> {
+  const r = await db.query('SELECT id, clase, item_id, sku, nombre, orden, activo FROM catalogo_articulos WHERE id = $1', [id])
+  return r.rows.length ? aArticulo(filas(r.rows)[0]) : null
 }

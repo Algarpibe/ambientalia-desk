@@ -21,12 +21,12 @@ describe('checklistDeRemision', () => {
    * eligió pensando en cómo se recorre el equipo.
    */
   it('con modelo, devuelve sus accesorios activos en el orden de la ficha', async () => {
-    const a = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Manuales' })
+    const a = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Manuales', sku: 'MAN-1' })
     const b = await crearArticulo(db, 'cmod-1', { clase: 'accesorio', nombre: 'Cable RJ45' })
     await reordenarArticulos(db, 'cmod-1', 'accesorio', [b, a])
 
     expect(await checklistDeRemision(db, { modeloId: 'cmod-1', perfil: 'grimm_edm180' }))
-      .toEqual({ items: ['Cable RJ45', 'Manuales'], origen: 'modelo' })
+      .toEqual({ items: ['Cable RJ45', 'Manuales'], origen: 'modelo', detalle: [{ nombre: 'Cable RJ45', sku: null }, { nombre: 'Manuales', sku: 'MAN-1' }] })
   })
 
   // «Incluye» es lo que ACOMPAÑA al equipo cuando entra. Un filtro o una bomba de repuesto no vienen
@@ -55,7 +55,7 @@ describe('checklistDeRemision', () => {
    */
   it('un modelo sin accesorios devuelve vacío, no el checklist del perfil', async () => {
     expect(await checklistDeRemision(db, { modeloId: 'cmod-1', perfil: 'grimm_edm180' }))
-      .toEqual({ items: [], origen: 'modelo' })
+      .toEqual({ items: [], origen: 'modelo', detalle: [] })
   })
 
   /**
@@ -65,6 +65,6 @@ describe('checklistDeRemision', () => {
    */
   it('sin modelo cae al checklist del perfil', async () => {
     expect(await checklistDeRemision(db, { modeloId: null, perfil: 'grimm_edm180' }))
-      .toEqual({ items: ['Del perfil viejo'], origen: 'perfil' })
+      .toEqual({ items: ['Del perfil viejo'], origen: 'perfil', detalle: [{ nombre: 'Del perfil viejo', sku: null }] })
   })
 })

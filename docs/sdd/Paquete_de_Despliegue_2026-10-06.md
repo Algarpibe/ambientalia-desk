@@ -249,3 +249,89 @@ El aviso a la persona de destino se escribe después de la transacción y fuera 
 `INSERT` falla, la persona a cargo ya cambió y la traza ya está escrita, pero quien reasignó ve un error y la persona de destino no recibe
 aviso. Reintentar desde el panel da `422` «El ticket ya está a cargo de esa persona» (`packages/shared/src/reasignacion.ts:45`), que es la
 señal de que la primera vez sí se aplicó. Lo fija `apps/desk/server/routes/reasignacion.test.ts:302`. No se corrige en esta tanda.
+
+## 11 · Añadido por `accesorios-lista-por-modelo` (F1B-04, `cierra: no`) — sin interruptor, ocho supuestos para Gerencia, cinco límites y seis tareas de persona
+
+**Qué entra.** Los accesorios de la remisión de entrada salen de la lista del modelo con nombre oficial y SKU, y no se puede escribir uno a
+mano en ninguna de las tres vías. Concretamente:
+
+- **Nombre y SKU en el formulario.** `GET /api/remisiones/nueva` sirve además de `incluye` (que no cambia) el detalle de cada ítem
+  (`apps/desk/server/routes/remision.ts:68`, campo `incluyeDetalle`), y el formulario pinta el SKU en gris junto al nombre cuando lo hay
+  (`apps/desk/src/components/CrearRemision.tsx:261`, `apps/desk/src/components/CrearRemision.tsx:264`). Lo que se envía y lo que viaja a n8n
+  siguen siendo los nombres.
+- **Cierre del texto libre en el catálogo.** Un artículo de clase accesorio exige artículo de Books: el alta a mano responde `422`
+  (`apps/desk/server/routes/catalogo.ts:220`), el cambio de clase por `PATCH` de un artículo sin artículo de Books a accesorio también
+  (`apps/desk/server/routes/catalogo.ts:294`), y la copia a otros modelos omite los accesorios sin artículo de Books y los cuenta
+  (`apps/desk/server/db/catalogoArticulos.ts:166`, devueltos en `apps/desk/server/db/catalogoArticulos.ts:190`).
+- **Lo que llega fuera de lista es una novedad.** Fila nueva sembrada, `accesorio_fuera_de_lista`, que exige texto
+  (`packages/zoho-sync/src/db/schema.sql:768`). La lista de novedades pasa de diez a once.
+- **Ruta y pantalla del Director Técnico.** `POST /api/catalogo/modelos/:id/accesorios`
+  (`apps/desk/server/routes/accesoriosModelo.ts:22`), con el permiso `puedeAnadirAccesorios`
+  (`packages/shared/src/accesoriosLista.ts:46`) y la clase, el nombre y el SKU tomados de Books. La pantalla «Accesorios por modelo» está en
+  Configuración (`apps/desk/src/components/Configuracion.tsx:127` y `apps/desk/src/components/Configuracion.tsx:165`;
+  `apps/desk/src/components/AccesoriosModeloPanel.tsx`).
+- **Consulta de modelos sin accesorios**, de sólo lectura y para una persona: `docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql`.
+  La comprobación de lectura tras desplegar está en `DEPLOY.md`, apartado «Comprobación de lectura tras desplegar F1B-04 (accesorios por
+  modelo)». **No hay variable de entorno ni interruptor** y no hay tabla nueva.
+
+**Qué NO se construye.** (1) **La foto por accesorio:** los documentos cuelgan del modelo y no del artículo, y la sincronización de
+artículos no trae imagen; no hay dónde guardarla. (2) **La confirmación del «número de parte»:** la aplicación enseña el SKU de Books y
+nada más (S-1). Tampoco se toca el orden de guardas del alta de remisión (IV-12 no se amplía ni se corrige).
+
+**Qué queda de la fila F1B-04 tras esta tanda.** No se cierra (`cierra: no`). Quedan: la mitad de salida de E-123 (fotos obligatorias en la
+remisión de salida), la foto por accesorio, la confirmación del número de parte y las preguntas abiertas E-163 a E-167. **No tienen entrada
+nueva en `docs/sdd/ENTRADA.md`**: el fichero tenía cambios de Supervisión sin commitear cuando se escribió esto, así que la entrada la abre
+Supervisión.
+
+### 11.1 · Para Gerencia — ocho supuestos reversibles, a confirmar o corregir
+
+| # | Qué confirmar | Qué hace hoy la aplicación | Qué cambia si la respuesta es «no» |
+|---|---|---|---|
+| S-1 | **¿El SKU de Books es el «número de parte»?** | Se enseña el SKU tal cual, o sólo el nombre si el artículo no lo tiene (`apps/desk/src/components/CrearRemision.tsx:264`). El maestro los usa casi como equivalentes (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1236`, «nombre y SKU»), pero la decisión lo deja como hipótesis | Hay que decir de qué campo de Books sale el número de parte; cambiaría el origen del dato que arma el detalle (`packages/shared/src/accesoriosLista.ts`) y quizá hace falta traerlo en la réplica de artículos |
+| S-2 | **¿El permiso del Director Técnico es `puedeMantenerNovedades` (área Servicio Técnico y cargo Director Técnico; el administrador pasa)?** | La ruta responde `403` a cualquiera que no cumpla ese predicado (`apps/desk/server/routes/accesoriosModelo.ts:25`) y la pantalla no se le enseña | Habría que definir el permiso propio y cambiar `puedeAnadirAccesorios` y su matriz de pruebas |
+| S-3 | **¿El Director Técnico sólo añade?** | Sí: la ruta nueva sólo tiene alta. Retirar, reactivar, reordenar, copiar y borrar siguen siendo del administrador (`apps/desk/server/routes/catalogo.ts:288`, el `PATCH`, exige superadministrador) | Habría que abrir esas operaciones al Director Técnico con su propio permiso y su traza; ver también el límite 11.2 (a) |
+| S-4 | **Un accesorio real que no es artículo de Books («Manuales», «Pletinas»), ¿ya no se puede añadir?** | Es la lectura literal de «nada de texto libre»: el alta a mano responde `422` (`apps/desk/server/routes/catalogo.ts:220`) y la ruta del Director Técnico sólo acepta artículos de Books (`apps/desk/server/routes/accesoriosModelo.ts:29`). Los que ya existen se conservan | Hay que decidir si esos accesorios se dan de alta en Books o si se admite una excepción, y quitar o acotar la guarda del alta |
+| S-5 | **La novedad «Accesorio fuera de lista», ¿exige texto y, como toda novedad marcada, también su foto?** | Exige texto (`packages/shared/src/recepcion.ts:97-99`) y la foto de cada novedad marcada falta mientras no se suba (`packages/shared/src/recepcion.ts:140-142`). Va con orden 65, tras «Falta un accesorio» | Si no debe exigir texto, se cambia la marca de la fila sembrada; si no debe pedir foto, hay que tocar la regla de fotos por novedad, que es de todas las novedades |
+| S-7 | **«Modelos sin categoría de accesorios», ¿se lee como «sin ningún accesorio activo»?** | Sí: la consulta cuenta los manuales activos y los derivados no ocultos (`docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql`), porque la asignación por categoría está cerrada para accesorios | Habría que rehacer la consulta sobre `catalogo_modelo_categorias` solamente |
+| S-9 | **La copia de accesorios a otros modelos, ¿omite los que no tienen artículo de Books?** | Sí, y avisa cuántos no copió (`apps/desk/server/db/catalogoArticulos.ts:166`, `apps/desk/server/db/catalogoArticulos.ts:190`). No estaba en el encargo: es la tercera vía por la que nacía un accesorio de texto libre | Se retira el filtro de la copia y queda declarada abierta esa vía |
+| S-10 | **Si se marcan a la vez «Otro» y «Accesorio fuera de lista», ¿basta un solo texto?** | Sí: el texto es uno por remisión y los dos lo comparten (`packages/shared/src/recepcion.ts:97-99`) | Hay que cambiar `validarRecepcion` y la forma del cuerpo para llevar un texto por novedad |
+
+S-6 (legado y perfil intactos, sin migración ni relleno) y S-8 (el SKU no se guarda en la remisión, es dato de presentación) son de
+implementación y no piden respuesta de Gerencia.
+
+### 11.2 · Límites declarados
+
+(a) **El Director Técnico recibe `409` ante un accesorio desactivado y no puede reactivarlo.** La comprobación de repetido mira el nombre
+dentro de la clase **sin filtrar por activo** (`apps/desk/server/db/catalogoArticulos.ts:71-74`), así que un accesorio que el administrador
+desactivó sigue contando como «ya está en la lista». Reactivarlo es del administrador (`apps/desk/server/routes/catalogo.ts:288`).
+(b) **La ruta no rechaza un modelo inactivo.** Sólo comprueba que el modelo exista (`apps/desk/server/routes/accesoriosModelo.ts:24`); la
+pantalla no ofrece los inactivos, pero la API aceptaría añadir a uno. Es inocuo y no se corrige.
+(c) **`PATCH` con un id inexistente responde `200`, como antes.** La guarda de clase lee la fila antes de escribir y, si no existe, deja
+pasar la petición hasta la escritura (`apps/desk/server/routes/catalogo.ts:298`, `apps/desk/server/routes/catalogo.ts:299`); no se introdujo
+un `404` porque el encargo prohibía cambiar el comportamiento de los demás casos.
+(d) **El buscador de artículos descarta los de Books sin SKU, así que el Director Técnico no puede añadirlos desde la pantalla.** La
+pantalla «Accesorios por modelo» sólo ofrece lo que devuelve `GET /api/articulos` (`apps/desk/server/routes/directory.ts:33`), y su consulta
+exige SKU no vacío (`packages/zoho-sync/src/books/repo.ts:30`). El servidor sí acepta un artículo sin SKU y lo guarda con `sku` nulo (prueba
+«un artículo de Books sin SKU entra con sku null» de `apps/desk/server/accesoriosModelo.test.ts`), y la lista del modelo prevé accesorios sin SKU
+(RQ-RE-32), pero ese caso sólo llega por categoría y no por la pantalla. Es una comodidad más estrecha que la regla, no una guarda que falte. **No
+se corrige en esta tanda**; queda a decisión de Gerencia si el buscador debe ofrecer también esos artículos.
+(e) **Citas archivadas a `packages/zoho-sync/src/db/migrate.test.ts` cuyo contenido cambió en sitio (caso B de la regla de mutación 4).** Esta
+tanda editó en el mismo sitio, sin mover líneas, la línea 652 de ese fichero (el recuento de sentencias de `schema.sql`, que ahora suma la siembra de
+`accesorio_fuera_de_lista`) y las líneas 794 a 798 (la posición de la última sentencia, que pasa de ser el índice de `public.reasignaciones` a ser
+esa siembra). Hay siete citas archivadas a la línea 652 en `openspec/changes/archive/` (una de ellas es el rango 648 a 652): afirman el recuento
+y la posición de su fecha, falsos hoy y ciertos entonces. **No se renumeran ni se editan**: son históricas. Además, el segundo pase de abreviadas
+no se hizo en los lotes de esta tanda; el detector sale en 0. De las 14 abreviadas rotas informativas, 13 son anteriores y ninguna cae en un fichero que esta rama toque; la decimocuarta es nueva y está en el `verify-report.md` de este cambio: nombra la primera línea añadida a `DEPLOY.md`, que es una línea en blanco.
+
+### 11.3 · Tareas de persona — fuera del recuento de la tanda
+
+Sin casillas: son decisiones o comprobaciones de personas, no trabajo que una tanda pueda hacer en este repositorio. **Archivar el cambio no
+las da por hechas.** **No tienen entrada en `docs/sdd/ENTRADA.md`**: la entrada la abre Supervisión.
+
+| # | Quién | Qué | Qué desbloquea |
+|---|---|---|---|
+| P-1 | Quien tenga acceso a la base de producción | Ejecutar `docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql` **antes del corte** y llevar el resultado al Director Técnico | Saber cuántos modelos quedan sin lista y cuáles |
+| P-2 | Director Técnico | Completar la lista de los modelos que salgan vacíos de P-1, en Configuración, «Accesorios por modelo» | Que el técnico tenga casillas que marcar en la remisión de esos modelos |
+| P-3 | Gerencia | Confirmar o corregir S-1, S-3, S-4, S-9 y S-10 (y S-2, S-5 y S-7, §11.1) | Deja firme de dónde sale el número de parte, quién añade y qué pasa con los accesorios que no son de Books |
+| P-4 | Gerencia | Pegar en el maestro la corrección 31 (`docs/sdd/F0-01_Correcciones_para_el_maestro.md`) | El maestro deja de decir que el accesorio se escribe y que sólo hay diez novedades |
+| P-5 | Quien verifica la aplicación | Tras desplegar: el formulario enseña nombre y SKU; la pantalla «Accesorios por modelo» sólo la ve quien puede; «Añadir a mano» ya no ofrece accesorio; «Accesorio fuera de lista» aparece como novedad y pide texto y foto | Da por comprobado lo que los `.tsx` no cubren (están fuera de la red de pruebas, F0-00) |
+| P-6 | Mantenedor | Desplegar y comprobar que la novedad `accesorio_fuera_de_lista` existe en producción tras el arranque (`DEPLOY.md`) | Que el técnico tenga la salida para el accesorio fuera de lista |

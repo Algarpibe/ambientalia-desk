@@ -148,10 +148,10 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
     const { app } = appWith()
 
     expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
-      .send({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(201)
+      .send({ clase: 'consumible_repuesto', nombre: 'Manuales' })).status).toBe(201)
 
     const lista = await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie)
-    expect(lista.body[0]).toMatchObject({ clase: 'accesorio', nombre: 'Manuales' })
+    expect(lista.body[0]).toMatchObject({ clase: 'consumible_repuesto', nombre: 'Manuales' })
     expect(lista.body[0].itemId).toBeUndefined()
   })
 
@@ -163,10 +163,10 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
       request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', cookie).send(body)
 
     expect((await alta({ clase: 'inventada', nombre: 'X' })).status).toBe(422)
-    expect((await alta({ clase: 'accesorio', nombre: '   ' })).status).toBe(422)
+    expect((await alta({ clase: 'consumible_repuesto', nombre: '   ' })).status).toBe(422)
     expect((await alta({ clase: 'consumible_repuesto', itemId: 'no-existe' })).status).toBe(422)
-    expect((await alta({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(201)
-    expect((await alta({ clase: 'accesorio', nombre: 'Manuales' })).status).toBe(409)
+    expect((await alta({ clase: 'consumible_repuesto', nombre: 'Manuales' })).status).toBe(201)
+    expect((await alta({ clase: 'consumible_repuesto', nombre: 'Manuales' })).status).toBe(409)
   })
 
   it('mueve de clase, desactiva y borra; 404 si el modelo no existe', async () => {
@@ -197,7 +197,7 @@ describe('Artículos por modelo (accesorios / consumibles / repuestos)', () => {
     expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos')).status).toBe(401)
     expect((await request(app).get('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', op)).status).toBe(200)
     expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', op).send({ clase: 'accesorio', nombre: 'X' })).status).toBe(403)
-    expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', admin).send({ clase: 'accesorio', nombre: 'X' })).status).toBe(201)
+    expect((await request(app).post('/api/catalogo/modelos/cmod-1/articulos').set('Cookie', admin).send({ clase: 'consumible_repuesto', nombre: 'X' })).status).toBe(201)
   })
 })
 

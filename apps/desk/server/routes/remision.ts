@@ -65,7 +65,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       tipoServicio: row.tipo_servicio ?? null,
       ordenVenta: row.orden_venta ?? null,
       perfil,
-      incluye: checklist.items,
+      incluye: checklist.items, incluyeDetalle: checklist.detalle,
       origenChecklist: checklist.origen,
       catalogoCargado: await hayChecklist(db),
     }

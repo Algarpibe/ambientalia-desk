@@ -756,7 +756,7 @@ export interface RemisionNueva {
    */
   perfil: PerfilChecklist
   /** Ítems del checklist "Incluye". Vacío es legítimo, pero significa cosas distintas según `origenChecklist`. */
-  incluye: string[]
+  incluye: string[]; incluyeDetalle: import('./accesoriosLista').ItemChecklist[]
   /**
    * De dónde salió `incluye`: de la lista de accesorios del **modelo** del equipo, o del **perfil** de
    * siempre cuando el ticket no tiene equipo enlazado. La pantalla lo necesita para redactar el vacío:

@@ -7,9 +7,9 @@ import {
   NombreRepetido, EntradaEnUso,
 } from '../db/catalogo'
 import { leerFicha, crearEnlace, crearFichero, contenidoDocumento, borrarDocumento, DocumentoInvalido } from '../db/fichaModelo'
-import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo, copiarArticulos, reordenarArticulos } from '../db/catalogoArticulos'
+import { crearArticulo, actualizarArticulo, borrarArticulo, ArticuloRepetido, getArticuloManual, listarArticulosDeModelo, listarCategorias, asignarCategoria, quitarCategoria, CategoriaRepetida, ocultarArticulo, mostrarArticulo, copiarArticulos, reordenarArticulos } from '../db/catalogoArticulos'
 import { getArticuloPorSku, getArticuloPorId } from '@ambientalia/zoho-sync/books/repo'
-import { CLASES_ARTICULO, admiteCategorias, type ClaseArticulo } from '@ambientalia/shared'
+import { CLASES_ARTICULO, admiteCategorias, motivoAltaAccesorio, motivoCambioAAccesorio, type ClaseArticulo } from '@ambientalia/shared'
 import { requireAuth, requireAdmin as requireSuperAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
@@ -217,7 +217,7 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
 
     const clase = String(b.clase ?? '')
     if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
-
+    { const sinBooks = motivoAltaAccesorio(clase, b.itemId ? String(b.itemId) : null); if (sinBooks) { res.status(422).json({ error: sinBooks }); return } }
     // Con `itemId`, el artículo manda: sku y nombre los escribe el SERVIDOR leyéndolos de Books. Es la
     // misma regla que el alta de equipos desde el catálogo — si el nombre viniera del navegador, el
     // mismo artículo acabaría con dos grafías y volvería el problema que Books viene a resolver.
@@ -291,7 +291,7 @@ export function registerCatalogoRoutes(app: Express, deps: { db: Queryable }): v
     if (b.clase !== undefined) {
       const clase = String(b.clase)
       if (!esClaseArticulo(clase)) { res.status(422).json({ error: 'Clase de artículo desconocida' }); return }
-      patch.clase = clase
+      patch.clase = clase; const actual = await getArticuloManual(db, String(req.params.id)); const sinBooks = actual ? motivoCambioAAccesorio(actual, clase) : null; if (sinBooks) { res.status(422).json({ error: sinBooks }); return }
     }
     if (b.orden !== undefined) patch.orden = Number(b.orden)
     if (b.activo !== undefined) patch.activo = b.activo === true

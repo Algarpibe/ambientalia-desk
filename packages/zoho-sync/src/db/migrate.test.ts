@@ -649,7 +649,7 @@ describe('verificacion-gas-patron-certificado · gases_patron y certificados_fab
     const l = limpias()
     const ultima = posicion(/idx_prioridad_ajustes_ticket/)
     expect(ultima).toBeGreaterThan(0)
-    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2)
+    expect(l.length, 'seis sentencias después de la de prioridad_ajustes, más las dos de clientes_provisionales y pendiente_validar (F1B-15), más las 17 de F1B-04: un CREATE, diez INSERT y seis ALTER, más la de prioridad_en_app_at (F1B-07, L1), las dos ALTER de prioridad_ajustes (F1B-07, L2a) y las dos ALTER de tickets de la liberación sin factura (F1C-05: liberacion_motivo y fecha_prevista_facturacion) y las cuatro ALTER de public.remisiones de la restauración con rastro (F1B-05) y las tres de public.garantia_proveedor (F1B-13) y las dos de public.reasignaciones (F1B-05) y la siembra de accesorio_fuera_de_lista (F1B-04, accesorios-lista-por-modelo)').toBe(ultima + 1 + 6 + 2 + 17 + 1 + 2 + 2 + 4 + 3 + 2 + 1)
     expect(l[ultima + 1]).toMatch(/^ALTER TABLE equipos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 2]).toMatch(/^ALTER TABLE public\.catalogo_modelos ADD COLUMN IF NOT EXISTS compuesto\b/)
     expect(l[ultima + 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.gases_patron\b/)
@@ -791,11 +791,11 @@ describe('reasignacion-con-motivo · public.reasignaciones cierra el esquema (F1
     expect((await db.query('SELECT * FROM public.reasignaciones')).rows).toEqual([])
   })
 
-  it('el CREATE va calificado con public. y es la PENÚLTIMA sentencia; el índice, en una sola sentencia, la última', () => {
+  it('el CREATE va calificado con public. y es la ANTEPENÚLTIMA sentencia; el índice, en una sola sentencia, la penúltima; la última es la siembra de accesorio_fuera_de_lista (F1B-04)', () => {
     const l = limpias()
-    expect(l[l.length - 2]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
+    expect(l[l.length - 3]).toMatch(/^CREATE TABLE IF NOT EXISTS public\.reasignaciones \(/)
     expect(l.filter((s) => /idx_reasignaciones_ticket/.test(s))).toHaveLength(1)
-    expect(l[l.length - 1]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/)
+    expect(l[l.length - 2]).toMatch(/^CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public\.reasignaciones \(ticket_id\)$/); expect(l[l.length - 1]).toMatch(/^INSERT INTO public\.catalogo_novedades .*'accesorio_fuera_de_lista'.* ON CONFLICT \(clave\) DO NOTHING$/)
     expect(l.filter((s) => /reasignaciones/.test(s)), 'sentencias que mencionan reasignaciones').toHaveLength(2)
   })
 

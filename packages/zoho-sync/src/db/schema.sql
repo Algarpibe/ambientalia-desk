@@ -763,3 +763,6 @@ CREATE TABLE IF NOT EXISTS public.reasignaciones (
   reasignado_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_reasignaciones_ticket ON public.reasignaciones (ticket_id);
+-- accesorios-lista-por-modelo (F1B-04): un accesorio que llega y no esta en la lista del modelo se anota como novedad, con texto
+-- Orden 65, tras falta_accesorio, sin renumerar. AL FINAL para no desplazar citas. CALIFICADA public. Se retira con activo = false
+INSERT INTO public.catalogo_novedades (clave, etiqueta, orden, excluye_demas, exige_texto) VALUES ('accesorio_fuera_de_lista', 'Accesorio fuera de lista', 65, false, true) ON CONFLICT (clave) DO NOTHING;

@@ -238,7 +238,7 @@ La migración corre al arrancar y es tolerante por sentencia: un fallo se regist
 tumba el arranque, así que un despliegue puede quedar «verde» con una columna sin crear.
 
 ```sql
--- 1. La lista de novedades: diez filas.
+-- 1. La lista de novedades: once filas.
 SELECT count(*) FROM public.catalogo_novedades;
 
 -- 2. Las seis columnas nuevas: seis filas.
@@ -253,12 +253,12 @@ ORDER BY table_name, column_name;
 - **Qué se rompe si falta una columna de `public.remisiones`:** **toda** alta de remisión falla, también la de
   legado, porque el `INSERT` de `createRemision` las nombra todas (`apps/desk/server/db/remisiones.ts:47`).
 - **Si falta una de `public.remision_fotos`:** falla la subida de fotos y la lectura de la remisión.
-- **Si la tabla tiene menos de diez filas:** el formulario muestra una lista incompleta; con cero filas el alta de
+- **Si la tabla tiene menos de once filas:** el formulario muestra una lista incompleta; con cero filas el alta de
   remisión responde `422` «La lista de novedades no está cargada».
 - **Sin interruptores nuevos:** `.env.example` no cambia. Para volver atrás basta revertir y redesplegar; tabla y
   columnas quedan sin uso y no se borran.
 - **Condiciones de publicación que no son de este fichero** (de persona): que Servicio Técnico confirme la lista de
-  diez y que quien administra n8n compruebe que la etiqueta lleva el código del ticket (E-170 de `docs/sdd/ENTRADA.md`).
+  once (las diez de la recepción más «Accesorio fuera de lista») y que quien administra n8n compruebe que la etiqueta lleva el código del ticket (E-170 de `docs/sdd/ENTRADA.md`).
 
 ## 9. Continuidad de los nueve indicadores (F1F-05, `cierra: no`)
 
@@ -521,3 +521,40 @@ SELECT COUNT(*) FROM public.reasignaciones;
   administrador; en un estado sin salida («Finalizado») sólo para un administrador. Los supuestos que Gerencia debe confirmar están en
   `docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §9.
 - **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra, y los `derivado_a` ya reasignados siguen siendo válidos.
+
+## Comprobación de lectura tras desplegar F1B-04 (accesorios por modelo)
+
+**Sin variables de entorno nuevas** (`.env.example` no cambia) y sin interruptor: el formulario con SKU, el cierre del texto libre en el
+catálogo, la ruta `POST /api/catalogo/modelos/:id/accesorios` y la pantalla «Accesorios por modelo» están activos desde que se publica. El
+cambio **no añade tablas**; añade **una fila** al catálogo de novedades, `accesorio_fuera_de_lista`, que `migrate` inserta al arrancar
+(`packages/zoho-sync/src/db/schema.sql:768`, con `ON CONFLICT (clave) DO NOTHING`). No toca la replicación ni el hub.
+
+Hazla **antes de dar el cambio por publicado** (tarea de persona P-6, del Mantenedor). Es una consulta de sólo lectura, en la base `desk`
+(esquema `public`). La migración es tolerante por sentencia: un fallo se registra como «sentencia omitida» y **no** tumba el arranque, así
+que un despliegue puede quedar «verde» sin la fila sembrada.
+
+```sql
+-- La novedad existe y exige texto: una fila con activo = true, exige_texto = true y orden = 65.
+-- Con cero filas, la migración omitió la sentencia.
+SELECT clave, etiqueta, orden, activo, exige_texto
+FROM public.catalogo_novedades
+WHERE clave = 'accesorio_fuera_de_lista';
+```
+
+- **Qué se rompe si la fila falta:** nada falla, y por eso no se nota solo. `GET /api/novedades-remision` lee la tabla
+  (`apps/desk/server/db/novedades.ts:13`, servida en `apps/desk/server/routes/novedades.ts:16`), así que el formulario de entrada no ofrece
+  «Accesorio fuera de lista» y el técnico que recibe un accesorio que no está en la lista del modelo se queda sin la salida que decidió
+  Gerencia: sólo le quedan «Falta un accesorio» u «Otro», que no son lo mismo. Si la fila está pero con `exige_texto = false`, la novedad se
+  puede marcar sin describir el accesorio.
+- **Antes del corte, y la hace una persona (tarea P-1):** ejecutar `docs/sdd/Consulta_Modelos_Sin_Accesorios_2026-10-07.sql` en la base de
+  producción. Lista los modelos activos sin ningún accesorio activo y, en una segunda consulta, los accesorios de legado sin artículo de Books.
+  Un modelo con la lista vacía deja al técnico sin casillas que marcar. Ninguna sesión de construcción la ejecuta, y que PostgreSQL de
+  producción la acepte tal cual es hipótesis.
+- **Lo que se verá el día de publicar:** el formulario de entrada enseña el SKU en gris junto al nombre cuando el artículo lo tiene. La
+  pantalla «Accesorios por modelo» aparece en Configuración sólo para quien tenga el cargo Director Técnico en el área Servicio Técnico, y
+  para el administrador. «Añadir a mano» en el catálogo ya no ofrece la clase accesorio. Los accesorios de legado siguen en sus listas.
+- **Para retirar la novedad** hay que ponerla `activo = false` (desde la pantalla de novedades del Director Técnico), **nunca borrarla**: la
+  siembra de arranque volvería a insertarla.
+- **Para volver atrás** basta revertir y redesplegar; la fila sembrada se queda y los accesorios que el Director Técnico haya añadido son
+  filas normales del catálogo. Los supuestos que Gerencia debe confirmar están en
+  `docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §11.
