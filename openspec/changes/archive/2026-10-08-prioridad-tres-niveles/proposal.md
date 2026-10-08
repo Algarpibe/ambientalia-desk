@@ -69,13 +69,13 @@ Lo que hoy ocurre, y no coincide:
 
 | Capacidad | Requisito | Qué cambia |
 |---|---|---|
-| `tickets-core` | RQ-TC-24, `openspec/specs/tickets-core/spec.md:856` | Cae «la que hoy resulte del cuerpo, o ninguna» (`:864-865`): sin contrato ni Top 5 nace `Medium`, y el cuerpo no interviene nunca |
-| `tickets-core` | RQ-TC-29, `openspec/specs/tickets-core/spec.md:1165` | Cae el `409` de cliente no Top 5 (`:1169-1170`); el permiso pasa al predicado nuevo; la lista de `:1172` pierde `Low` |
+| `tickets-core` | RQ-TC-24, `openspec/specs/tickets-core/spec.md:856` en `6344b4a` | Cae «la que hoy resulte del cuerpo, o ninguna» (`:864-865`): sin contrato ni Top 5 nace `Medium`, y el cuerpo no interviene nunca |
+| `tickets-core` | RQ-TC-29, `openspec/specs/tickets-core/spec.md:1165` en `6344b4a` | Cae el `409` de cliente no Top 5 (`:1169-1170`); el permiso pasa al predicado nuevo; la lista de `:1172` pierde `Low` |
 | `tickets-core` | RQ-TC-27 y los que enumeren la lista | La prioridad de un Top 5 se elige entre `High` y `Medium` |
-| `transitions-st` | RQ-TS-20, `openspec/specs/transitions-st/spec.md:833` | Las opciones de `:837` pasan a `High` y `Medium` |
-| `transitions-st` | RQ-TS-21, `openspec/specs/transitions-st/spec.md:863` | El predicado de `:866-867` pasa al nuevo; cae la consecuencia de `:871-872` (el Director Técnico sí cambia ahí la prioridad) |
-| `permissions` | RQ-PM-20, `openspec/specs/permissions/spec.md:474` | Tercera primitiva de cargo, con llamador |
-| `permissions` | RQ-PM-23, `openspec/specs/permissions/spec.md:517` | Deja de ser «un solo predicado» (`:519-521`): dos actos del cliente con el de hoy, el ajuste por ticket con el nuevo |
+| `transitions-st` | RQ-TS-20, `openspec/specs/transitions-st/spec.md:833` en `6344b4a` | Las opciones de `:837` pasan a `High` y `Medium` |
+| `transitions-st` | RQ-TS-21, `openspec/specs/transitions-st/spec.md:863` en `6344b4a` | El predicado de `:866-867` pasa al nuevo; cae la consecuencia de `:871-872` (el Director Técnico sí cambia ahí la prioridad) |
+| `permissions` | RQ-PM-20, `openspec/specs/permissions/spec.md:474` en `6344b4a` | Tercera primitiva de cargo, con llamador |
+| `permissions` | RQ-PM-23, `openspec/specs/permissions/spec.md:517` en `6344b4a` | Deja de ser «un solo predicado» (`:519-521`): dos actos del cliente con el de hoy, el ajuste por ticket con el nuevo |
 
 ## 4 · Enfoque por pieza
 
@@ -92,7 +92,7 @@ Lo que hoy ocurre, y no coincide:
 tres llamadores, no uno: el alta, `baseAlNacer` (`packages/shared/src/prioridadPropagada.ts:36-38`) y la reversión del
 Top 5 (`packages/shared/src/prioridadPropagada.ts:47`), que le pasa como primer argumento **la base del ticket**, no una
 prioridad pedida. Si la función pasa a ignorar ese argumento, desmarcar un cliente devolvería a `Medium` un ticket que
-antes del Top 5 tenía `Low` o `Urgent`, y hoy la spec dice que vuelve a `Low` (`openspec/specs/tickets-core/spec.md:968`).
+antes del Top 5 tenía `Low` o `Urgent`, y hoy la spec dice que vuelve a `Low` (`openspec/specs/tickets-core/spec.md:968` en `6344b4a`).
 Supuesto S-I (§5): la reversión sigue devolviendo la base; lo que cambia es sólo el nacimiento. Cómo se separan las dos
 lecturas sin escribir una segunda fórmula es del diseño.
 

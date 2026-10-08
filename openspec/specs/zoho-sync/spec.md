@@ -108,7 +108,7 @@ prioridad la misma regla que Gerencia dio para la orden de venta: si se eligió 
 aplicación; si no, manda Zoho (`decision/e005-iv4-iv11`).
 
 - La marca **SHALL** ponerla, en la misma escritura que cambia `tickets.priority`, la propagación y la
-  reversión del Top 5 (`tickets-core` RQ-TC-35 y RQ-TC-36), sobre cada ticket cuya prioridad escriban.
+  reversión del Top 5 (`tickets-core` RQ-TC-35 y RQ-TC-36) y el ajuste manual (RQ-TC-29), sobre cada ticket cuya prioridad escriban.
   Tras una reversión la marca **SHALL** conservarse (supuesto S-2 de ese cambio): la prioridad calculada
   la eligió la aplicación y se mantiene frente a Zoho.
 - `upsertTicket` **MUST NOT** ponerla ni quitarla nunca.
@@ -119,8 +119,8 @@ aplicación; si no, manda Zoho (`decision/e005-iv4-iv11`).
 - Las dos marcas **SHALL** ser independientes: `ov_elegida_en_app_at` protege `orden_venta` y
   `fecha_orden_venta`; `prioridad_en_app_at` protege sólo `priority`. Una fila con las dos puestas
   conserva las tres columnas y actualiza el resto de `TICKET_COLS`.
-- El ajuste manual de la prioridad de un ticket (`tickets-core` RQ-TC-29) **SHALL** seguir marcando
-  `managed_by_app`; no se migra a la marca nueva.
+- El ajuste manual de la prioridad de un ticket (`tickets-core` RQ-TC-29) **SHALL** poner esa misma marca y **MUST NOT** cambiar `managed_by_app`,
+  `source` ni `modified_time` (`prioridad-tres-niveles`, supuesto S-J). (Previously: seguía marcando `managed_by_app`; no se migraba a la marca nueva.)
 - Sobre la prioridad **no** hay aviso de discrepancia con Zoho: el aviso de la orden de venta no se replica.
 - Una fila cuya prioridad ya se hubiera fijado en la aplicación **antes** de este cambio **MUST NOT**
   recibir la marca de forma retroactiva: no hay relleno.
@@ -209,10 +209,10 @@ aplicación; si no, manda Zoho (`decision/e005-iv4-iv11`).
 - AND `subject` se actualiza
 - AND una fila con sólo la marca de prioridad sí actualiza `orden_venta` y `fecha_orden_venta`
 
-#### Scenario: El ajuste manual de prioridad sigue usando `managed_by_app`
+#### Scenario: El ajuste manual de prioridad usa la marca por fila, no `managed_by_app`
 - GIVEN un ticket al que un usuario con permiso ajusta la prioridad a mano (`tickets-core` RQ-TC-29)
 - WHEN termina el ajuste
-- THEN `managed_by_app` es `true` y la marca `prioridad_en_app_at` no se ha puesto por esa vía
+- THEN `managed_by_app` conserva el valor que tenía y la marca `prioridad_en_app_at` queda puesta
 
 #### Scenario: La columna nueva es sin calificar, va al final y no entra en `TICKET_COLS`
 - GIVEN `schema.sql` y `TICKET_COLS`

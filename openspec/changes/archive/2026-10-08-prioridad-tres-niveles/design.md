@@ -245,10 +245,10 @@ condición (un Top 5 guardado con `Low` deja de imponer hasta volver a guardarlo
 
 ## 12 · Lo que la especificación tiene que recoger, además de la tabla de la propuesta
 
-- `tickets-core` RQ-TC-38 (`openspec/specs/tickets-core/spec.md:1905-1908`): la base al nacer deja de ser «la pedida»
+- `tickets-core` RQ-TC-38 (`openspec/specs/tickets-core/spec.md:1905-1908` en `6344b4a`): la base al nacer deja de ser «la pedida»
   y pasa a ser la prioridad por defecto.
 - `tickets-core` RQ-TC-36, escenario de `:1811` y `:1813`: un ticket nacido bajo Top 5 vuelve a `Medium`.
-- `permissions` RQ-PM-21 (`openspec/specs/permissions/spec.md:495-498`): el predicado nuevo es la segunda primitiva sin
+- `permissions` RQ-PM-21 (`openspec/specs/permissions/spec.md:495-498` en `6344b4a`): el predicado nuevo es la segunda primitiva sin
   área. Queda fuera del barrido «el cargo sólo restringe» (`packages/shared/src/cargos.test.ts:177-207`), como
   `puedeCrearOVIGarantia` (`:185`).
 - `transitions-st` RQ-TS-20: escenario nuevo de D9, si se mantiene.
