@@ -5,7 +5,7 @@ Delta sobre `openspec/specs/kpis/spec.md`. Tanda F1F-05 (`cierra: no`). Propuest
 `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`.
 
 **Nota de fusión — la tabla de supuestos no es un requisito.** La tabla «0 · Procedencia y método» de la
-spec viva (`openspec/specs/kpis/spec.md:19-35`) no lleva cabecera `### Requirement:`, así que un script que
+spec viva (`openspec/specs/kpis/spec.md:19-35` en `42a4828`) no lleva cabecera `### Requirement:`, así que un script que
 sustituya bloques por cabecera no la toca. Su fusión es aparte y explícita, sin cambiar el formato de
 tres columnas (`Id | Supuesto | Origen`):
 

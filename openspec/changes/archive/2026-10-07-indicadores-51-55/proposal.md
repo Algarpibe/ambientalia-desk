@@ -77,12 +77,12 @@ IV-12.
 | Requisito | Qué cambia |
 |---|---|
 | RQ-KP-02 | La tabla de hitos gana la fila del 51: marca de la transición de entrega y `Fecha Finalización ST` |
-| RQ-KP-09 | Deja de ser «sin dato — falta el hito». Cae la prohibición de `openspec/specs/kpis/spec.md:257` y la entrada opcional del 51 |
+| RQ-KP-09 | Deja de ser «sin dato — falta el hito». Cae la prohibición de `openspec/specs/kpis/spec.md:257` en `42a4828` y la entrada opcional del 51 |
 | RQ-KP-10 | Reentrante en el 51: dos o más filas de entrega |
 | RQ-KP-11 | La variante de Zoho del 51 sigue «sin dato»; la del 55 es igual a la letra |
-| RQ-KP-14 | Cuatro consultas constantes en vez de tres (escenario de `openspec/specs/kpis/spec.md:395`) |
-| RQ-KP-18 | «Sin migración, sin escritor» (`openspec/specs/kpis/spec.md:509`) se acota: el `GET` no escribe; el único escritor es la carga de la encuesta, sobre su tabla |
-| Tabla de supuestos | SP-8 (`openspec/specs/kpis/spec.md:34`) se retira; entran S-A a S-H |
+| RQ-KP-14 | Cuatro consultas constantes en vez de tres (escenario de `openspec/specs/kpis/spec.md:395` en `42a4828`) |
+| RQ-KP-18 | «Sin migración, sin escritor» (`openspec/specs/kpis/spec.md:509` en `42a4828`) se acota: el `GET` no escribe; el único escritor es la carga de la encuesta, sobre su tabla |
+| Tabla de supuestos | SP-8 (`openspec/specs/kpis/spec.md:34` en `42a4828`) se retira; entran S-A a S-H |
 
 | Requisito nuevo | Contenido |
 |---|---|

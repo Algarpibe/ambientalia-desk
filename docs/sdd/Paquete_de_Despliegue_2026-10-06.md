@@ -473,7 +473,7 @@ tras desplegar F1F-05». Fecha límite para medir las cuatro semanas: antes del 
 - **Entrada nueva (hallazgo):** «`supertest` corta la conexión cuando el servidor responde 401 o 403 sin leer un cuerpo de más de 10 MB; la prueba del límite de subida usa `node:http`.»
   Afecta a: las pruebas de la ruta de carga. Sin destino: es una nota para quien escriba pruebas de subida.
 - **Nota para Supervisión (`openspec/config.yaml`, que esta rama no toca):** las líneas 4096, 4102, 4105 y 4107 citan `packages/shared/src/indicadores.ts:88-89` y `:58`,
-  `apps/desk/server/routes/indicadores.ts:52` y `openspec/specs/kpis/spec.md:257` para describir el estado ANTERIOR a esta tanda («hoy el 51 sale sin dato», «no hay tabla ni cargador»).
+  `apps/desk/server/routes/indicadores.ts:52` y `openspec/specs/kpis/spec.md:257` en `42a4828` para describir el estado ANTERIOR a esta tanda («hoy el 51 sale sin dato», «no hay tabla ni cargador»).
   Son **caso B**: les corresponde nombrar la revisión `42a4828` en la misma línea, no renumerarse. Y la decisión `e171-e172-e173-indicadores-51-55` queda construida en su parte
   del 51 y del 55; la comparación con la exportación de Zoho sigue pendiente.
 

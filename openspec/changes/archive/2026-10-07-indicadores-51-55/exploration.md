@@ -77,9 +77,9 @@ está en §7.
   sin insertar líneas. El recuento de `packages/zoho-sync/src/db/migrate.test.ts:282-287` pasa de 44 a 45
   tablas y de 31 a 32 en `public`.
 - Spec viva `openspec/specs/kpis/spec.md`: hoy prohíbe que la ruta aporte esas entradas
-  (`openspec/specs/kpis/spec.md:257`) y que el módulo tenga migración o escritor
-  (`openspec/specs/kpis/spec.md:509`); el escenario «Diez tickets, tres consultas» es
-  `openspec/specs/kpis/spec.md:395`.
+  (`openspec/specs/kpis/spec.md:257` en `42a4828`) y que el módulo tenga migración o escritor
+  (`openspec/specs/kpis/spec.md:509` en `42a4828`); el escenario «Diez tickets, tres consultas» es
+  `openspec/specs/kpis/spec.md:395` en `42a4828`.
 
 ## 6. Riesgos vistos
 
