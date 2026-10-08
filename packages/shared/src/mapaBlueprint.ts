@@ -27,9 +27,16 @@ export interface EntradaMapa {
   sinSalida: readonly string[]
   fases: readonly Fase[]
   fasePorEstado: Record<string, FaseId>
+  // F1B-09: opcionales, para que un flujo distinto de servicio nombre su título, su fichero y sus fuentes.
+  // Sin ellos la salida es la de servicio de siempre, byte a byte.
+  nombreFlujo?: string
+  nombreFicheroCompleto?: string
+  fuentes?: string
 }
 
+const NOMBRE_FLUJO_POR_DEFECTO = 'Servicio Técnico'
 const NOMBRE_FICHERO_COMPLETO = 'blueprint-completo.md'
+const FUENTES_POR_DEFECTO = '`transitions.ts`, `estados.ts` y `fasesBlueprint.ts`'
 const NOMBRE_FICHERO_FASE: Record<FaseId, string> = {
   entrada: 'blueprint-fase-1-entrada.md',
   diagnostico: 'blueprint-fase-2-diagnostico.md',
@@ -51,14 +58,17 @@ interface Arista {
   conBoton: boolean
 }
 
-const CABECERA_GENERADO = [
-  '<!--',
-  '  GENERADO por `npm run generar-mapa-blueprint` (`scripts/generar-mapa-blueprint.ts`) a partir de',
-  '  `transitions.ts`, `estados.ts` y `fasesBlueprint.ts`. NO EDITAR A MANO: la prueba anti-desfase',
-  '  (`mapaBlueprint.test.ts`, RQ-MB-06) lo detecta.',
-  '-->',
-  '',
-].join('\n')
+/** Una sola plantilla para todos los flujos: sólo cambia la frase de fuentes. */
+function cabeceraGenerado(fuentes: string): string {
+  return [
+    '<!--',
+    '  GENERADO por `npm run generar-mapa-blueprint` (`scripts/generar-mapa-blueprint.ts`) a partir de',
+    `  ${fuentes}. NO EDITAR A MANO: la prueba anti-desfase`,
+    '  (`mapaBlueprint.test.ts`, RQ-MB-06) lo detecta.',
+    '-->',
+    '',
+  ].join('\n')
+}
 
 /** Cadena determinista para el alias Mermaid de un estado: `e01`..`e20`, por posición en ESTADOS. */
 function aliasDe(indicePorEstado: Map<string, string>, estado: string): string {
@@ -157,8 +167,8 @@ function generarCompleto(entrada: EntradaMapa, alias: Map<string, string>, arist
   ]
 
   return [
-    CABECERA_GENERADO,
-    '# Mapa del Blueprint de Servicio Técnico — diagrama completo',
+    cabeceraGenerado(entrada.fuentes ?? FUENTES_POR_DEFECTO),
+    `# Mapa del Blueprint de ${entrada.nombreFlujo ?? NOMBRE_FLUJO_POR_DEFECTO} — diagrama completo`,
     '',
     lineas.join('\n'),
     '',
@@ -205,8 +215,8 @@ function generarVistaFase(
   lineas.push('```')
 
   return [
-    CABECERA_GENERADO,
-    `# Mapa del Blueprint de Servicio Técnico — fase «${fase.nombre}»`,
+    cabeceraGenerado(entrada.fuentes ?? FUENTES_POR_DEFECTO),
+    `# Mapa del Blueprint de ${entrada.nombreFlujo ?? NOMBRE_FLUJO_POR_DEFECTO} — fase «${fase.nombre}»`,
     '',
     lineas.join('\n'),
     '',
@@ -216,13 +226,14 @@ function generarVistaFase(
 /** Devuelve nombre de fichero → contenido Markdown. Cuatro entradas, siempre las mismas. */
 export function generarMapaBlueprint(entrada: EntradaMapa): Record<string, string> {
   const aristas = construirAristas(entrada)
-  validarFasePorEstado(entrada, aristas)
+  // La guarda D-1 rige sólo si el flujo declara fases: las vistas por fase son lo único que lee `fasePorEstado`.
+  if (entrada.fases.length > 0) validarFasePorEstado(entrada, aristas)
 
   const alias = construirAlias(entrada.estados)
   const sinSalida = new Set(entrada.sinSalida)
 
   const salida: Record<string, string> = {
-    [NOMBRE_FICHERO_COMPLETO]: generarCompleto(entrada, alias, aristas, sinSalida),
+    [entrada.nombreFicheroCompleto ?? NOMBRE_FICHERO_COMPLETO]: generarCompleto(entrada, alias, aristas, sinSalida),
   }
   for (const fase of entrada.fases) {
     salida[NOMBRE_FICHERO_FASE[fase.id]] = generarVistaFase(fase, entrada, alias, aristas, sinSalida)

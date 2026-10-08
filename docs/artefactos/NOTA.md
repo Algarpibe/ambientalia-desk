@@ -132,11 +132,11 @@ es lo que hizo F1A-06.
 npm run generar-mapa-blueprint
 ```
 
-Regenera los cuatro ficheros de `docs/artefactos/blueprint-*.md` (el completo y las tres vistas por
-fase de M1.3.1) desde `TRANSITIONS`/`ESTADOS` en `packages/shared/src`, de forma determinista —dos
-ejecuciones seguidas producen bytes idénticos—. La prueba `mapaBlueprint.test.ts` compara la salida
-regenerada contra lo commiteado y falla si alguien edita uno de esos cuatro ficheros a mano o si el
-grafo cambia sin volver a correr el script: no hace falta acordarse de regenerar, el CI lo impone.
+Regenera los seis ficheros de `docs/artefactos/blueprint-*.md`: los cuatro de servicio (completo y tres
+vistas por fase de M1.3.1) y `blueprint-equipo-nuevo.md` y `blueprint-soporte-remoto.md`, desde
+`CATALOGO_POR_FLUJO` en `packages/shared/src`, de forma determinista (dos ejecuciones, mismos bytes).
+La prueba `mapaBlueprint.test.ts` compara lo regenerado con lo commiteado y falla si se edita uno de
+los seis a mano o si algún catálogo cambia sin volver a correr el script: el CI lo impone.
 El aviso de caducidad del `.html` (§7) sigue vigente y **no se retira** por esto: avisa de un
 fichero distinto, que sigue congelado.
 

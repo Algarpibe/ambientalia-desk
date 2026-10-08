@@ -174,10 +174,10 @@ export function enEsperaDe(estado: string): EnEspera | undefined {
 
 /**
  * `Verificación` (F1B-06) es del flujo `equipo-nuevo` y no del Blueprint de Servicio Técnico: no
- * debe aparecer en el mapa generado ni en la partición de fases (`fasesBlueprint.ts`), las dos
- * cosas que sólo conocen el flujo de servicio. Se declara aquí, junto al registro, y no en
- * `flujos.ts` porque `fasesBlueprint.ts`/`mapaBlueprint.ts` no dependen de ese fichero (D1 de
- * `design.md`).
+ * debe aparecer en el mapa generado de servicio ni en la partición de fases (`fasesBlueprint.ts`),
+ * las dos cosas que sólo conocen el flujo de servicio; `equipo-nuevo` tiene su mapa propio (F1B-09).
+ * Se declara aquí, junto al registro, y no en `flujos.ts` porque `fasesBlueprint.ts` y
+ * `mapaBlueprint.ts` no dependen de ese fichero (D1 de `design.md`).
  */
 export const ESTADOS_SOLO_EQUIPO_NUEVO = ['Verificación'] as const satisfies readonly Estado[]; export const ESTADOS_SOLO_SOPORTE_REMOTO = ['Solicitud Soporte', 'Pendiente'] as const satisfies readonly Estado[] // va aquí y no al final: la línea 188 evalúa ESTADOS_SERVICIO al cargar
 

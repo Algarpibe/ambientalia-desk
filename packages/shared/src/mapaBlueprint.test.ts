@@ -186,3 +186,240 @@ describe('mapaBlueprint — F1C-09 · Pendiente fuera del mapa de servicio', () 
     expect(completo).not.toContain('Marcar como pendiente')
   })
 })
+
+// F1B-09 (`mapa-blueprint-tres-flujos`), lote 1 · motor: tres campos opcionales, cabecera por plantilla y
+// guarda D-1 sólo con fases. Todo lo nuevo de este fichero va AQUÍ, al final, importaciones incluidas: las
+// líneas 46 y 168 están citadas por número desde otros ficheros (regla de mutación 4 de `CLAUDE.md`).
+describe('mapaBlueprint — F1B-09 · campos opcionales y guarda condicionada', () => {
+  const FUENTES_DE_SERVICIO = '`transitions.ts`, `estados.ts` y `fasesBlueprint.ts`'
+
+  // P1 · sin fases la guarda D-1 no rige: hoy lanza para el primer estado (RQ-MB-04, escenario nuevo).
+  it('P1 · RQ-MB-04 · con `fases` vacío y `fasePorEstado` vacío no lanza y devuelve un solo fichero', () => {
+    const entrada: EntradaMapa = {
+      transiciones: [
+        { id: 'a', name: 'Paso A', from: ['Uno'], to: 'Dos', area: 'Comercial', fields: [] },
+      ],
+      sinBoton: [],
+      estados: ['Uno', 'Dos'],
+      sinSalida: [],
+      fases: [],
+      fasePorEstado: {},
+    }
+    let salida: Record<string, string> = {}
+    expect(() => {
+      salida = generarMapaBlueprint(entrada)
+    }).not.toThrow()
+    expect(Object.keys(salida)).toEqual(['blueprint-completo.md'])
+  })
+
+  // P2 · los tres opcionales mandan sobre el valor por defecto en título, clave y cabecera (RQ-MB-03).
+  it('P2 · RQ-MB-03 · con nombre de flujo, de fichero y fuentes, la clave, el título y la cabecera son los pedidos', () => {
+    const salida = generarMapaBlueprint({
+      ...entradaReal(),
+      nombreFlujo: 'Flujo de prueba',
+      nombreFicheroCompleto: 'blueprint-prueba.md',
+      fuentes: '`una-fuente.ts` y `otra-fuente.ts`',
+    })
+    expect(Object.keys(salida)).toContain('blueprint-prueba.md')
+    expect(Object.keys(salida)).not.toContain('blueprint-completo.md')
+    const completo = salida['blueprint-prueba.md']
+    expect(completo).toContain('# Mapa del Blueprint de Flujo de prueba — diagrama completo')
+    expect(completo).not.toContain('Servicio Técnico — diagrama completo')
+    expect(completo).toContain('`una-fuente.ts` y `otra-fuente.ts`')
+    expect(completo).not.toContain(FUENTES_DE_SERVICIO)
+    // La vista por fase usa el mismo nombre de flujo en su título.
+    expect(salida['blueprint-fase-1-entrada.md']).toContain('# Mapa del Blueprint de Flujo de prueba — fase «')
+  })
+
+  // P3 · NACE VERDE a propósito: es la guarda de R3. Sin opcionales, o con los tres valores de hoy escritos a
+  // mano, la salida de servicio es la de siempre (las cuatro claves; los bytes los vigila la prueba de la línea 168).
+  it('P3 · R3 · sin opcionales la salida de servicio tiene las cuatro claves de hoy, y con los tres valores por defecto escritos es idéntica', () => {
+    const sinOpcionales = generarMapaBlueprint(entradaReal())
+    expect(Object.keys(sinOpcionales).sort()).toEqual([
+      'blueprint-completo.md',
+      'blueprint-fase-1-entrada.md',
+      'blueprint-fase-2-diagnostico.md',
+      'blueprint-fase-3-cierre.md',
+    ])
+    const conPorDefecto = generarMapaBlueprint({
+      ...entradaReal(),
+      nombreFlujo: 'Servicio Técnico',
+      nombreFicheroCompleto: 'blueprint-completo.md',
+      fuentes: FUENTES_DE_SERVICIO,
+    })
+    expect(conPorDefecto).toEqual(sinOpcionales)
+  })
+})
+
+// F1B-09, lote 2 · el registro por flujo (`mapaPorFlujo.ts`) y la prueba anti-desfase de los TRES flujos.
+// Las importaciones de este bloque van aquí, al final, por la misma razón que el bloque de arriba.
+import { readdirSync } from 'node:fs'
+import { CATALOGO_POR_FLUJO, flujoDelTicket, type Flujo } from './flujos'
+import { TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO, type Transition } from './transitions'
+import { ESTADOS } from './estados'
+import { entradaMapaDelFlujo, estadosDelCatalogo, ficherosDelMapa, mapasPorFlujo } from './mapaPorFlujo'
+
+const DIRECTORIO_ARTEFACTOS = new URL('../../../docs/artefactos/', import.meta.url)
+const FLUJOS = Object.keys(CATALOGO_POR_FLUJO) as Flujo[]
+const CLASIFICACION_DEL_FLUJO: Record<Flujo, string> = {
+  servicio: 'Servicio',
+  'equipo-nuevo': 'Equipo nuevo',
+  'soporte-remoto': 'Soporte remoto',
+}
+const ARISTA = /e\d{2} --> e\d{2}/g
+const NODO = /^ {4}state ".+" as e\d{2}$/gm
+
+/**
+ * Lo esperado frente a lo que hay en `docs/artefactos/` (D13): falta en disco, difiere, sobra en disco.
+ * Lee el directorio y filtra `blueprint-*.md`, así que un flujo nuevo no queda fuera sin que la prueba se entere.
+ */
+function desfases(ficheros: Record<string, string>, directorio: URL): string[] {
+  const resultado: string[] = []
+  const enDisco = readdirSync(directorio).filter((n) => /^blueprint-.*\.md$/.test(n))
+  for (const [nombre, contenido] of Object.entries(ficheros)) {
+    if (!enDisco.includes(nombre)) {
+      resultado.push(`${nombre}: falta en disco`)
+      continue
+    }
+    const actual = readFileSync(new URL(nombre, directorio), 'utf8').replace(/\r\n/g, '\n')
+    if (actual !== contenido) resultado.push(`${nombre}: difiere`)
+  }
+  for (const nombre of enDisco) {
+    if (!(nombre in ficheros)) resultado.push(`${nombre}: sobra en disco`)
+  }
+  return resultado
+}
+
+function transicionInyectada(desde: string, hasta: string): Transition {
+  return { id: 'inyectada_por_la_prueba', name: 'Transición inyectada por la prueba', from: [desde], to: hasta, area: 'Servicio Técnico', fields: [] }
+}
+
+describe('mapaPorFlujo — RQ-MB-08 · un mapa por flujo desde CATALOGO_POR_FLUJO', () => {
+  it('P4 · el registro tiene exactamente las claves de CATALOGO_POR_FLUJO y cada flujo aporta al menos un fichero', () => {
+    const mapas = mapasPorFlujo()
+    expect(Object.keys(mapas).sort()).toEqual([...FLUJOS].sort())
+    expect(FLUJOS.length, 'guarda contra el bucle fantasma').toBe(3)
+    for (const flujo of FLUJOS) expect(Object.keys(mapas[flujo]).length, flujo).toBeGreaterThanOrEqual(1)
+  })
+
+  it('P5 · equipo nuevo: 5 estados en su orden y 7 aristas; soporte remoto: 4 y 4; sin marcas de servicio y con la leyenda', () => {
+    const mapas = mapasPorFlujo()
+    const casos = [
+      { flujo: 'equipo-nuevo' as const, fichero: 'blueprint-equipo-nuevo.md', estados: ['Ingresado', 'En Proceso', 'Notificado', 'Verificación', 'Finalizado'], aristas: 7 },
+      { flujo: 'soporte-remoto' as const, fichero: 'blueprint-soporte-remoto.md', estados: ['Solicitud Soporte', 'En Proceso', 'Finalizado', 'Pendiente'], aristas: 4 },
+    ]
+    for (const c of casos) {
+      expect(Object.keys(mapas[c.flujo]), c.flujo).toEqual([c.fichero])
+      expect(entradaMapaDelFlujo(c.flujo).estados, c.flujo).toEqual(c.estados)
+      const contenido = mapas[c.flujo][c.fichero]
+      expect(contenido.match(ARISTA) ?? [], `${c.flujo}: aristas`).toHaveLength(c.aristas)
+      expect(contenido.match(NODO) ?? [], `${c.flujo}: estados`).toHaveLength(c.estados.length)
+      for (const marca of ['(sin botón)', '·espera·', '[frontera]']) expect(contenido, `${c.flujo}: ${marca}`).not.toContain(marca)
+      for (const area of ['Comercial', 'Servicio Técnico', 'Compras']) expect(contenido, `${c.flujo}: leyenda ${area}`).toContain(`— ${area}`)
+    }
+  })
+
+  it('P5b · cada estado derivado enruta a su flujo con flujoDelTicket, y ningún otro estado conocido enruta a él', () => {
+    const universo = new Set<string>(ESTADOS)
+    for (const catalogo of Object.values(CATALOGO_POR_FLUJO)) {
+      for (const t of catalogo) {
+        t.from.forEach((e) => universo.add(e))
+        universo.add(t.to)
+      }
+    }
+    for (const flujo of ['equipo-nuevo', 'soporte-remoto'] as const) {
+      const derivados = new Set(entradaMapaDelFlujo(flujo).estados)
+      const clasificacion = CLASIFICACION_DEL_FLUJO[flujo]
+      expect(derivados.size, flujo).toBeGreaterThan(0)
+      for (const estado of derivados) {
+        expect(flujoDelTicket({ classification: clasificacion, status: estado }), `${flujo}: ${estado}`).toBe(flujo)
+      }
+      const queEnrutan = [...universo].filter((estado) => flujoDelTicket({ classification: clasificacion, status: estado }) === flujo)
+      expect(new Set(queEnrutan), flujo).toEqual(derivados)
+    }
+  })
+
+  it('P5c · la entrada de servicio del registro lleva ESTADOS_SERVICIO (identidad) y genera lo mismo que la entrada escrita a mano', () => {
+    const entrada = entradaMapaDelFlujo('servicio')
+    expect(entrada.estados).toBe(ESTADOS_SERVICIO)
+    expect(generarMapaBlueprint(entrada)).toEqual(generarMapaBlueprint(entradaReal()))
+    expect(mapasPorFlujo().servicio).toEqual(generarMapaBlueprint(entradaReal()))
+  })
+
+  it('P9 · un estado nuevo en el catálogo de un flujo derivado aparece en `estados` y como nodo del mapa', () => {
+    for (const [flujo, base] of [
+      ['equipo-nuevo', TRANSITIONS_EQUIPO_NUEVO],
+      ['soporte-remoto', TRANSITIONS_SOPORTE_REMOTO],
+    ] as const) {
+      const catalogo = [...base, transicionInyectada(base[0].from[0], 'Estado Inventado')]
+      expect(estadosDelCatalogo(catalogo), flujo).toContain('Estado Inventado')
+      const entrada = entradaMapaDelFlujo(flujo, catalogo)
+      expect(entrada.estados, flujo).toContain('Estado Inventado')
+      const completo = Object.values(generarMapaBlueprint(entrada))[0]
+      expect(completo, flujo).toMatch(/state "Estado Inventado" as e\d{2}/)
+    }
+  })
+
+  it('P10 · ficherosDelMapa lanza si dos flujos producen el mismo nombre, y mapasPorFlujo lanza nombrando la clave de un flujo sin complemento', () => {
+    expect(() => ficherosDelMapa({ uno: { 'blueprint-x.md': 'a' }, dos: { 'blueprint-x.md': 'b' } })).toThrow(/blueprint-x\.md/)
+    const conCuarto = { ...CATALOGO_POR_FLUJO, 'cuarto-flujo': TRANSITIONS_EQUIPO_NUEVO } as unknown as Record<Flujo, readonly Transition[]>
+    expect(() => mapasPorFlujo(conCuarto)).toThrow(/cuarto-flujo/)
+  })
+})
+
+describe('mapaPorFlujo — RQ-MB-06 · anti-desfase de los tres flujos contra docs/artefactos/', () => {
+  it('P6 · lo generado por el registro es igual a lo commiteado, en los seis ficheros y sin ficheros de más', () => {
+    const ficheros = ficherosDelMapa()
+    // Primero las discrepancias, para que un flujo sin fichero en disco diga «falta en disco» y no sólo «hay siete».
+    expect(desfases(ficheros, DIRECTORIO_ARTEFACTOS)).toEqual([])
+    expect(Object.keys(ficheros), 'guarda contra el bucle fantasma').toHaveLength(6)
+  })
+
+  it('P7 · un fichero sintético añadido a lo esperado sale exactamente como «falta en disco»', () => {
+    const ficheros = { ...ficherosDelMapa(), 'blueprint-sintetico.md': 'contenido' }
+    expect(desfases(ficheros, DIRECTORIO_ARTEFACTOS)).toEqual(['blueprint-sintetico.md: falta en disco'])
+  })
+
+  it.each(FLUJOS)('P8 · %s · una transición inyectada en su catálogo, sin regenerar, sale como «difiere» en el fichero de ese flujo y en ningún otro', (flujo) => {
+    const primera = CATALOGO_POR_FLUJO[flujo][0]
+    const inyectada = transicionInyectada(primera.from[0], primera.to)
+    const mapas = mapasPorFlujo({ ...CATALOGO_POR_FLUJO, [flujo]: [...CATALOGO_POR_FLUJO[flujo], inyectada] })
+    const diferencias = desfases(ficherosDelMapa(mapas), DIRECTORIO_ARTEFACTOS)
+    const propios = Object.keys(mapas[flujo])
+    const completo = entradaMapaDelFlujo(flujo).nombreFicheroCompleto ?? 'blueprint-completo.md'
+    expect(diferencias, flujo).toContain(`${completo}: difiere`)
+    for (const d of diferencias) expect(propios.some((n) => d === `${n}: difiere`), `${flujo}: ${d}`).toBe(true)
+    expect(mapas[flujo][completo], flujo).toContain(inyectada.name)
+  })
+})
+
+// F1B-09 · remediación del verify (W1, W3, W4 y el escenario parcial de RQ-MB-05). Caracterización: nacen
+// verdes; cada una se demostró con la mutación que nombra, restaurada después.
+describe('mapaBlueprint — F1B-09 · supervivientes del verify', () => {
+  it('W1 · con fases declaradas y `fasePorEstado` VACÍO la guarda D-1 sigue lanzando: la condición es «hay fases», no «hay tabla»', () => {
+    expect(() => generarMapaBlueprint({ ...entradaReal(), fasePorEstado: {} })).toThrow(/fase/i)
+  })
+
+  it('W4 · las fuentes pedidas salen también en la cabecera de CADA vista por fase, no sólo en el diagrama completo', () => {
+    const salida = generarMapaBlueprint({ ...entradaReal(), fuentes: '`una-fuente.ts` y `otra-fuente.ts`' })
+    expect(Object.keys(salida), 'guarda contra el bucle fantasma').toHaveLength(4)
+    for (const [nombre, contenido] of Object.entries(salida)) {
+      expect(contenido, nombre).toContain('`una-fuente.ts` y `otra-fuente.ts`. NO EDITAR A MANO')
+      expect(contenido, nombre).not.toContain('`fasesBlueprint.ts`. NO EDITAR A MANO')
+    }
+  })
+
+  it.each(FLUJOS)('W3 · %s · un fichero de disco que el registro deja de generar sale exactamente como «sobra en disco»', (flujo) => {
+    const mapas = mapasPorFlujo()
+    const esperados = ficherosDelMapa(Object.fromEntries(Object.entries(mapas).filter(([clave]) => clave !== flujo)))
+    const sobran = Object.keys(mapas[flujo]).map((nombre) => `${nombre}: sobra en disco`)
+    expect(sobran.length, flujo).toBeGreaterThan(0)
+    expect(desfases(esperados, DIRECTORIO_ARTEFACTOS).sort()).toEqual(sobran.sort())
+  })
+
+  it('RQ-MB-05 · ninguno de los SEIS ficheros generados contiene fichas de hallazgos', () => {
+    const ficheros = Object.entries(ficherosDelMapa())
+    expect(ficheros, 'guarda contra el bucle fantasma').toHaveLength(6)
+    for (const [nombre, contenido] of ficheros) expect(contenido, nombre).not.toMatch(/hallazgo/i)
+  })
+})

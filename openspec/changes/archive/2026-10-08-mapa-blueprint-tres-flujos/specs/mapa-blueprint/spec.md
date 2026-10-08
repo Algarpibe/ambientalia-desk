@@ -1,22 +1,10 @@
-# Capacidad `mapa-blueprint` — generador determinista del mapa visual del flujo
+# Delta de `mapa-blueprint` — el mapa generado cubre los tres flujos (F1B-09, `cierra: no`)
 
-| Dato | Valor |
-|---|---|
-| Capacidad | `mapa-blueprint` (nueva) |
-| Cubre | Función pura grafo → Mermaid, CLI de escritura, el registro por flujo, los seis `.md` generados (cuatro de servicio, uno de equipo nuevo y uno de soporte remoto) y la guarda anti-desfase |
-| Tanda que la escribe | `generador-mapa-blueprint` (F1A-06); extendida a los tres flujos por `mapa-blueprint-tres-flujos` (F1B-09) |
-| Depende de | `transitions-st` (`TRANSITIONS`, `TRANSICION_REMISION_CONFIRMADA`/`RETIRADA`, `AREAS`, `areasForTransition`) `packages/shared/src/flujos.ts` (`CATALOGO_POR_FLUJO`) y `packages/shared/src/estados.ts` (`ESTADOS`, `ESTADOS_SIN_SALIDA`) |
-| Fuente en el maestro | Anexo F (`R08.2.md:4412-4413`), M1.3.1 (`:1187-1191`), M1.3.7 (`:1301-1458`), C.11 (`:3991-3993`) |
+Cambio `mapa-blueprint-tres-flujos`. Los flujos son las claves de `CATALOGO_POR_FLUJO` (`packages/shared/src/flujos.ts`, constante `CATALOGO_POR_FLUJO`): `servicio`, `equipo-nuevo` y `soporte-remoto`. Los supuestos S-A a S-J se nombran como en la propuesta.
 
-## Purpose
+Regla invariable 13: no aplica al cliente en este cambio, porque no se toca `apps/desk/src`; todo el comportamiento vive en `packages/shared` y en la CLI.
 
-El mapa visual del flujo de servicio técnico hoy no tiene generador: lo produjo una conversación de
-agente y nadie puede reproducirlo (`docs/artefactos/NOTA.md:32-46`). Esta capacidad convierte el mapa
-en una **proyección del código**, no en un entregable que alguien mantiene a mano: una función pura
-recorre el grafo declarado en `transitions-st` y produce Markdown con Mermaid, y una prueba se pone
-roja si el fichero commiteado y el grafo dejan de decir lo mismo.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: RQ-MB-01 · Función pura, sin `fs` ni `permissions.ts`
 
@@ -55,33 +43,6 @@ nada, si su salida difiere de la del registro.
 - GIVEN la llamada al generador con los seis campos actuales y sin parámetros opcionales
 - WHEN se compila y se ejecuta
 - THEN `npm run typecheck` pasa, la salida tiene las cuatro claves de servicio y `packages/shared/src/cifrasAncladas.test.ts` pasa sin haberse editado
-
-### Requirement: RQ-MB-02 · Una arista por origen, no una por transición declarada
-
-El diagrama **SHALL** dibujar una arista de estado a estado por **cada elemento** del array `from` de cada
-transición, no una arista por entrada del catálogo. Una transición con `from` de varios elementos **SHALL**
-producir tantas aristas como orígenes.
-
-El diagrama completo **SHALL** tener exactamente **35** aristas: las **33** que produce recorrer los `from`
-de las 31 transiciones de `TRANSITIONS` —de ellas 3 nacen en `habilitar_servicio`, cuyo `from` tiene tres
-elementos (`transitions.ts:178`)— más las **2** de los pasos sin botón. La cifra **SHALL** fijarse por
-aserción, no por comentario (maestro M1.3.7).
-(Previously: 38 aristas = 36 de las 34 transiciones + 2.)
-
-#### Scenario: `habilitar_servicio` dibuja tres aristas
-- GIVEN la transición `habilitar_servicio`, cuyo `from` tiene tres estados
-- WHEN se genera el diagrama
-- THEN aparecen tres aristas distintas hacia `Ingresado`, una por cada origen
-
-#### Scenario: el diagrama completo tiene 35 aristas
-- GIVEN el grafo generado desde `TRANSITIONS` más las dos transiciones sin botón
-- WHEN se cuentan las aristas del diagrama completo
-- THEN el total es exactamente 35, fijado por una aserción de la prueba (`mapaBlueprint.test.ts`)
-
-#### Scenario: el diagrama no dibuja ninguna arista que toque `Pendiente`
-- GIVEN el diagrama completo generado
-- WHEN se buscan aristas con origen o destino `Pendiente`
-- THEN no hay ninguna, porque `Pendiente` ya no es estado de servicio
 
 ### Requirement: RQ-MB-03 · Seis ficheros Mermaid, generados y marcados como tales
 
@@ -244,6 +205,7 @@ Los comandos de verificación del cambio son los de `CLAUDE.md`: `npm test`, `np
 - GIVEN un registro con un cuarto flujo sintético que no tiene fichero en disco
 - WHEN corre la prueba de exhaustividad
 - THEN falla, por el fichero sin pareja
+
 ### Requirement: RQ-MB-07 · Las fases del mapa de servicio cubren los 20 estados de servicio y el mapa regenerado coincide con el generador
 
 `FASE_POR_ESTADO` **SHALL** tener exactamente las claves de `ESTADOS_SERVICIO` (20) y **SHALL NOT** contener
@@ -273,6 +235,8 @@ sin fase bloquea la generación) **SHALL** seguir probándose con **otro** estad
 - GIVEN el catálogo nuevo y `blueprint-completo.md` de antes del cambio
 - WHEN corre la prueba anti-desfase
 - THEN falla (regla de mutación 2, fichero vigilado)
+
+## ADDED Requirements
 
 ### Requirement: RQ-MB-08 · Un mapa por flujo desde `CATALOGO_POR_FLUJO`, con los estados derivados del catálogo
 

@@ -34,11 +34,27 @@ const mapa = generarMapaBlueprint({
   fasePorEstado: FASE_POR_ESTADO,
 })
 
-const raiz = process.cwd()
+// F1B-09 (`mapa-blueprint-tres-flujos`): lo que se ESCRIBE sale del registro por flujo de
+// `packages/shared` (`mapaPorFlujo.ts`), el mismo que compara la prueba anti-desfase. Esta
+// importación va aquí, y no en el bloque de arriba, para no mover las líneas 26 a 35: están
+// citadas por número desde ficheros que esta tanda no edita (regla de mutación 4 de `CLAUDE.md`).
+import { ficherosDelMapa } from '@ambientalia/shared'
+
+const ficheros = ficherosDelMapa()
+
+// La llamada de servicio de arriba queda como contraste, no como fuente: si deja de decir lo
+// mismo que el registro, se para aquí, antes de escribir nada.
 for (const [nombre, contenido] of Object.entries(mapa)) {
+  if (ficheros[nombre] !== contenido) {
+    throw new Error(`generar-mapa-blueprint: ${nombre} difiere entre la llamada de servicio y el registro por flujo`)
+  }
+}
+
+const raiz = process.cwd()
+for (const [nombre, contenido] of Object.entries(ficheros)) {
   // Escrito directamente, nunca por redirección de shell: en PowerShell 5.1 la redirección
   // produce UTF-16 (mismo aviso que `reconciliacion/cli.ts:128`).
   writeFileSync(path.join(raiz, 'docs/artefactos', nombre), contenido, 'utf8')
 }
 
-process.stderr.write(`generar-mapa-blueprint: escritos ${String(Object.keys(mapa).length)} ficheros en docs/artefactos/\n`)
+process.stderr.write(`generar-mapa-blueprint: escritos ${String(Object.keys(ficheros).length)} ficheros en docs/artefactos/\n`)
