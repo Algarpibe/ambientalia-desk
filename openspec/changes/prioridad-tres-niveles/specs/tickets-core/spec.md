@@ -339,13 +339,13 @@ ticket no existe (A); `403` si el usuario no cumple el predicado (B), con el men
 espacios o si la prioridad no está en `High | Medium` (C), con el mensaje de lista `La prioridad debe ser una de: High, Medium`. Ya no hay `409` por «el cliente no es Top 5» ni por
 «ticket sin cliente» (supuestos S-D, S-G y S-H de la propuesta). Cuando el ajuste se aplique, el servidor SHALL, en una
 **misma transacción**: actualizar `tickets.priority`, insertar una fila en `public.prioridad_ajustes` (ticket,
-prioridad anterior, prioridad nueva, motivo, autor, fecha) y fijar `managed_by_app = true` (supuesto S-6; el ajuste
-manual sigue marcando la fila entera, supuesto S-J). El ajuste
+prioridad anterior, prioridad nueva, motivo, autor, fecha) y poner en ese ticket la marca `prioridad_en_app_at` (`zoho-sync` RQ-ZS-01), que protege SÓLO
+la prioridad frente al sincronizador. El ajuste MUST NOT cambiar `managed_by_app`, `source` ni `modified_time` (supuesto S-J, que sustituye al S-6): un ticket venido de Zoho sigue recibiendo de Zoho todo lo demás. El ajuste
 MUST NOT escribir en `ticket_transitions`, ni cambiar el estado, ni reiniciar el reloj de SLA. La sentencia
 `CREATE TABLE` de `public.prioridad_ajustes` SHALL llevar el esquema calificado y SHALL ir al final de `schema.sql`,
 después de la de `cliente_prioridad`. Sólo la prioridad de ese ticket cambia; los demás tickets del cliente no.
 (Previously: sólo un usuario con `puedeFijarPrioridadTop5` sobre tickets de clientes Top 5, con `409` para el cliente
-que no lo es y para el ticket sin `client_id`, y lista `High | Medium | Low`.)
+que no lo es y para el ticket sin `client_id`, lista `High | Medium | Low`, y el ajuste fijaba `managed_by_app = true`, que congelaba la fila entera.)
 
 La fila de traza de un ajuste manual SHALL llevar el origen vacío, que es lo que significa «manual» (`RQ-TC-38`), y
 desde ese momento el ticket queda **exento** de la propagación y de la reversión del Top 5 (`RQ-TC-37`): conserva el
@@ -432,17 +432,22 @@ valor que se le ajustó.
 - THEN `ticket_transitions` no gana ninguna fila
 - AND el instante de entrada al estado que lee el SLA es el mismo de antes
 
-#### Scenario: S-6 · el ajuste congela la fila frente al sincronizador
+#### Scenario: S-J · el ajuste protege sólo la prioridad frente al sincronizador
 - GIVEN un ticket de Zoho con `managed_by_app = false` de un cliente que NO es Top 5
 - WHEN el Director Técnico ajusta su prioridad
-- THEN `managed_by_app` pasa a `true` en la misma transacción
-- AND una pasada posterior de `upsertTicket` con otra prioridad no sobrescribe `priority`
+- THEN `managed_by_app`, `source` y `modified_time` no cambian, y la marca `prioridad_en_app_at` queda puesta en la misma transacción
+- AND una pasada posterior de `upsertTicket` con otro estado y otra prioridad actualiza el estado y no sobrescribe `priority`
 - AND un ticket de control de Zoho sin ajuste sí recibe la prioridad nueva de la pasada
+
+#### Scenario: un ticket que ya era de la aplicación lo sigue siendo
+- GIVEN un ticket con `managed_by_app = true`
+- WHEN se ajusta su prioridad
+- THEN `managed_by_app` sigue `true` y la marca `prioridad_en_app_at` queda puesta
 
 #### Scenario: atomicidad
 - GIVEN un ajuste cuya inserción en `prioridad_ajustes` falla
 - WHEN se ejecuta
-- THEN `tickets.priority` y `managed_by_app` conservan su valor anterior
+- THEN `tickets.priority` y `prioridad_en_app_at` conservan su valor anterior
 
 #### Scenario: sólo ese ticket cambia
 - GIVEN un cliente Top 5 con dos tickets abiertos
@@ -639,8 +644,8 @@ Gerencia, punto 3: «En ningún caso se tocan los tickets con un ajuste manual c
 
 Un ticket está **exento** cuando tiene **al menos una fila manual** en `public.prioridad_ajustes`, es decir, de origen
 vacío (`RQ-TC-38`), **antes o después** de cualquier propagación. Un ticket exento **MUST NOT** cambiar de prioridad,
-ganar traza ni recibir la marca `prioridad_en_app_at` al marcar al cliente, al cambiar su prioridad ni al
-desmarcarlo. Las filas que existen hoy son todas manuales y **SHALL** contar. La exención **SHALL** evaluarse dentro
+ganar traza ni ver escrita su marca `prioridad_en_app_at` por la propagación al marcar al cliente, al cambiar su prioridad ni al
+desmarcarlo: la marca que tenga es la de su propio ajuste (`RQ-TC-29`). Las filas que existen hoy son todas manuales y **SHALL** contar. La exención **SHALL** evaluarse dentro
 de la transacción de la propagación. El ajuste manual puede venir ahora del Director Comercial o del Director Técnico
 (`RQ-TC-29`), y la exención es la misma.
 
@@ -681,10 +686,10 @@ de la transacción de la propagación. El ajuste manual puede venir ahora del Di
 - WHEN se cambia la prioridad del cliente
 - THEN el ticket cambia
 
-#### Scenario: el exento no recibe la marca
+#### Scenario: la propagación no escribe la marca del exento
 - GIVEN un ticket de Zoho exento
 - WHEN se propaga o revierte
-- THEN su `prioridad_en_app_at` sigue vacía
+- THEN su `prioridad_en_app_at` queda como estaba: vacía si la exención viene de una traza anterior a la marca, o con el instante de su ajuste
 
 ### RQ-TC-38 · La traza gana origen; un ticket nacido bajo Top 5 deja traza; el esquema
 

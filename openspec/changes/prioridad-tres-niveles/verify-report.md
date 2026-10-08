@@ -259,3 +259,11 @@ Verify no cambia código ni pruebas. Este informe es el único fichero nuevo (me
 - **W3 cerrado:** alta con Top 5 `Low` y contrato (`apps/desk/server/services/ticketService.test.ts:1494`), «volver a guardar» desde una fila `Low` y los tres «conserva» (`apps/desk/server/propagarTop5.test.ts:239`), cada una con su mutación en rojo (ver `apply-progress.md`, «Remediación tras el verify»).
 - **W4 abierto:** divergencia declarada, sin destino a propósito.
 - **S1 aplicada** en `design.md` §7.
+
+## Adenda del 2026-10-08 — corrección del ajuste manual
+
+El veredicto de arriba es sobre `e47a3a0`. Después cambió una sentencia de producción: `ajustarPrioridad` (`apps/desk/server/db/prioridadCliente.ts:93`) protege sólo la prioridad con `prioridad_en_app_at`. No se repitió el verify entero; el orquestador comprobó lo que el cambio alcanza:
+
+- La fila «RQ-TC-29 · S-6, el ajuste congela la fila frente al sincronizador» de la matriz queda **superada**: el escenario es hoy «S-J · el ajuste protege sólo la prioridad», y lo prueban TC29-11, TC29-11b y la gemela del Director Técnico.
+- Cinco mutaciones nuevas sobre esa sentencia y una sobre `cambioPorTop5`, todas en rojo (tabla de `apply-progress.md`, «Corrección del ajuste manual»).
+- Las cinco mutaciones de la remediación, repetidas por el orquestador: mismos recuentos.

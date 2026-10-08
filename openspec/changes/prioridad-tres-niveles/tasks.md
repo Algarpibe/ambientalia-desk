@@ -268,6 +268,13 @@ las specs vivas.**
 - [x] L3.17 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
 - [x] L3.18 Escribir `apply-progress.md` de L3 (incluida la tabla de L3.7) y marcar casillas.
 
+## L4 · Corrección del ajuste manual, tras el verify (2026-10-08)
+
+- [x] L4.1 ROJO: `apps/desk/server/prioridadTop5.test.ts` (TC29-11, TC29-11b y la gemela del Director Técnico) y `apps/desk/server/propagarTop5.test.ts` (el ajuste por `POST`): el ajuste no toca `managed_by_app`, `source` ni `modified_time`, pone `prioridad_en_app_at` y deja traza; una pasada de `upsertTicket` actualiza el estado y conserva la prioridad.
+- [x] L4.2 VERDE: `ajustarPrioridad` (`apps/desk/server/db/prioridadCliente.ts:93`) escribe sólo `priority`, `prioridad_en_app_at` y `updated_at`. `repo.ts` sin tocar.
+- [x] L4.3 Mutaciones: `managed_by_app`, `source`, `modified_time`, sin marca y sin traza; más la salida «sin base» de `cambioPorTop5`, que sobrevivía.
+- [x] L4.4 Documentos al día: RQ-TC-29 y RQ-TC-37 del delta, `design.md` D8, S-J de la propuesta y el apartado 2 del paquete de despliegue. El delta de `zoho-sync` (RQ-ZS-01) va en intento propio.
+
 ---
 
 ## Tareas de personas — FUERA del recuento

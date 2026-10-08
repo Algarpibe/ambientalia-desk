@@ -183,12 +183,12 @@ describe('los ajustes manuales no se tocan, y la marca frente al sincronizador',
     expect((await fila('t1')).prioridad_en_app_at).not.toBeNull()
   })
 
-  it('CARACTERIZACIÓN · el ajuste manual (POST) fija managed_by_app, NO pone prioridad_en_app_at y deja origen NULL', async () => {
+  it('el ajuste manual (POST) pone prioridad_en_app_at, NO fija managed_by_app y deja origen NULL', async () => {
     await cliente(); const { app } = appWith(); await ticket('t1', 1, 'cli-1', 'Low')
     await db.query("INSERT INTO public.cliente_prioridad (client_id, top5, prioridad, actualizado_por) VALUES ('cli-1', true, 'High', 'seed')")
     const res = await request(app).post('/api/tickets/t1/prioridad').set('Cookie', await admin()).send({ prioridad: 'Medium', motivo: 'Cliente clave' })
     expect(res.status).toBe(200)
-    expect(await fila('t1')).toMatchObject({ priority: 'Medium', managed_by_app: true, prioridad_en_app_at: null })
+    expect(await fila('t1')).toMatchObject({ priority: 'Medium', managed_by_app: false }); expect((await fila('t1')).prioridad_en_app_at).not.toBeNull()
     expect(await trazas()).toMatchObject([{ origen: null }])
   })
 })

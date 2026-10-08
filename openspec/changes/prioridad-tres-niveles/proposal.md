@@ -1,7 +1,7 @@
 ---
 tanda: F1B-07
 motivo: ""
-capacidad: [tickets-core, transitions-st, permissions]
+capacidad: [tickets-core, transitions-st, permissions, zoho-sync]
 maestro: ["M1.9.1"]
 cierra: no
 toca_maestro: si
@@ -56,7 +56,7 @@ Lo que hoy ocurre, y no coincide:
 - Toda regla que dependa de una «valoración» del cliente: el punto 2 de la respuesta es pendiente, no decisión.
 - Un rango propio para Top 5 (enfoque B de la exploración, descartado).
 - Esquema, relleno de datos y `packages/zoho-sync/src/db/repo.ts`.
-- Migrar el ajuste manual de `managed_by_app` a la marca por fila (§5, S-J).
+- ~~Migrar el ajuste manual de `managed_by_app` a la marca por fila~~ — **hecho el 2026-10-08, tras el verify** (§5, S-J; `design.md` D8), sin tocar `repo.ts`.
 - La columna `Low` del tablero por prioridad y el rango de `Low` y `Urgent` al ordenar
   (`packages/shared/src/prioridad.ts:22-23`): siguen leyendo lo que ya existe.
 - IV-12 y los `.tsx` de color.
@@ -111,7 +111,7 @@ Todos razonables y reversibles. Se aplican, y se anotan en el parte.
 | S-G | El Director Técnico ajusta cualquier ticket | Se añade una guarda de estado o de área del ticket, escalón B |
 | S-H | Levantado el límite, un ticket sin cliente también se puede ajustar | Se repone el `409` de ticket sin cliente |
 | S-I | *(nuevo, de esta propuesta)* Desmarcar un Top 5 sigue devolviendo cada ticket a **su base**, como hoy; un ticket que nace desde ahora bajo Top 5 tiene base `Medium` | Si «la calculada» debe ser siempre la de tres niveles, la reversión sube a `Medium` los `Low` y baja los `Urgent`: toca tickets existentes |
-| S-J | *(nuevo, de esta propuesta)* El ajuste manual sigue marcando `managed_by_app` (`apps/desk/server/db/prioridadCliente.ts:93`), como fija RQ-TC-29 (`openspec/specs/tickets-core/spec.md:1174`) | Ver el riesgo 1 de §10: se cambiaría a la marca por fila `prioridad_en_app_at`, que protege sólo la prioridad |
+| S-J | *(nuevo, de esta propuesta; **cambiado el 2026-10-08**)* El ajuste manual protege SÓLO la prioridad con la marca `prioridad_en_app_at` (`apps/desk/server/db/prioridadCliente.ts:93`) y no escribe `managed_by_app`, `source` ni `modified_time`. Hasta `f08bed2` el supuesto era el contrario: seguía marcando `managed_by_app`, como fijaba RQ-TC-29 (`openspec/specs/tickets-core/spec.md:1174` en `6344b4a`) | Se vuelve a `managed_by_app`, que congela la fila entera frente a Zoho. Los ajustados antes del despliegue siguen congelados: liberarlos es un relleno |
 
 ## 6 · Regla invariable 13, decisión a decisión (regla de mutación 3)
 
@@ -209,7 +209,7 @@ Barrido de completas y abreviadas sobre cada fichero tocado, leyendo qué afirma
 
 | # | Riesgo | Prob. | Mitigación |
 |---|---|---|---|
-| 1 | **Levantar el límite extiende a cualquier ticket un efecto que hoy sólo alcanza a los Top 5:** el ajuste manual pone `managed_by_app` (`apps/desk/server/db/prioridadCliente.ts:93`) y con ella el sincronizador deja de escribir la fila **entera** (`packages/zoho-sync/src/db/repo.ts:71`). Para la orden de venta Gerencia descartó esa salida «porque congela el ticket entero» (`openspec/config.yaml:1654`); para la prioridad no hay decisión | Media | S-J, pregunta E-nueva-3. No se cambia aquí: el alcance dice «sincronizador, nada» |
+| 1 | **Levantar el límite extendía a cualquier ticket un efecto que sólo alcanzaba a los Top 5:** el ajuste manual ponía `managed_by_app` (`apps/desk/server/db/prioridadCliente.ts:93` en `f08bed2`) y con ella el sincronizador dejaba de escribir la fila **entera** (`packages/zoho-sync/src/db/repo.ts:71`). Para la orden de venta Gerencia descartó esa salida «porque congela el ticket entero» (`openspec/config.yaml:1654`) | Media | **Cerrado el 2026-10-08** por la corrección de S-J: el ajuste protege sólo la prioridad. Queda para Gerencia confirmar S-J y decidir sobre los ya ajustados |
 | 2 | La reversión del Top 5 cambia de resultado sin que nadie lo pida (§4) | Media | S-I; lo fija el diseño y lo prueban los escenarios de reversión existentes, que deben seguir verdes sin editarse |
 | 3 | El recambio de pruebas es mayor que el código: `Low` y la lista aparecen 202 veces en 16 ficheros de prueba (medido con búsqueda el 2026-10-07). Muchas son valores guardados y no cambian; las que asignan `Low` o esperan la pedida, sí | Alta | §11: `tasks` mide L1 antes de abrirlo y lo parte si pasa de la válvula |
 | 4 | S-A no es lo que Gerencia quiere | Media | Reversible; pregunta E-nueva-1 |
@@ -258,8 +258,8 @@ Archivar este cambio **no las da por hechas**.
 
 - **E-nueva-1** · ¿Top 5 y «alta» tienen un orden entre sí, o empatan (S-A)?
 - **E-nueva-2** · Al desmarcar un Top 5, ¿el ticket vuelve a lo que tenía (S-I) o a la prioridad de tres niveles?
-- **E-nueva-3** · Un ticket venido de Zoho al que se le ajusta la prioridad a mano deja de recibir **cualquier** cambio
-  de Zoho. Ahora que el ajuste alcanza a todos los tickets, ¿se mantiene (S-J) o se protege sólo la prioridad?
+- **E-nueva-3** · Un ticket venido de Zoho al que se le ajusta la prioridad a mano conserva esa prioridad y sigue recibiendo
+  de Zoho todo lo demás (S-J, corregido el 2026-10-08). ¿Se confirma, y qué se hace con los ajustados antes del despliegue?
 - **E-nueva-4** · ¿El Director Técnico ajusta cualquier ticket, también los que no tienen cliente (S-G, S-H)?
 
 ## 15 · Reversión

@@ -95,8 +95,8 @@ el servidor rechaza con `422` una prioridad fuera de la lista pedida en una tran
 - **`GET /api/top5` sigue listando a un cliente Top 5 guardado con `Low`**, aunque ya no imponga nada: la ruta (`apps/desk/server/routes/prioridad.ts:23-25`)
   devuelve `listarTop5`, cuya consulta filtra sólo por `top5 = true` (`apps/desk/server/db/prioridadCliente.ts:46-50`). Son dos lecturas de «es Top 5» que divergen
   para ese dato; va a la bandeja como hallazgo (apartado 2.5).
-- **El ajuste manual marca `managed_by_app`** (`apps/desk/server/db/prioridadCliente.ts:93`) y con ella el sincronizador deja de escribir la fila ENTERA
-  (`packages/zoho-sync/src/db/repo.ts:71`). Hasta ahora sólo alcanzaba a los tickets de clientes Top 5; al levantar el límite alcanza a cualquier ticket ajustado (S-J).
+- **El ajuste manual protege sólo la prioridad** (`apps/desk/server/db/prioridadCliente.ts:93`): pone la marca `prioridad_en_app_at` y el sincronizador sigue escribiendo el resto de la fila
+  (`packages/zoho-sync/src/db/repo.ts:78`). Ya no marca `managed_by_app` (S-J). Sin relleno: los tickets ajustados ANTES de este despliegue conservan `managed_by_app` y siguen congelados frente a Zoho.
 
 ### 2.3 · Consulta de sólo lectura — NO EJECUTADA
 
@@ -142,7 +142,7 @@ Todos son razonables y reversibles; se aplicaron y se anotan aquí. Ninguno est�
 | S-G | El Director Técnico ajusta cualquier ticket | Se añade una guarda de estado o de área del ticket |
 | S-H | Levantado el límite, un ticket sin cliente también se puede ajustar | Se repone el `409` de ticket sin cliente |
 | S-I | Desmarcar un Top 5 sigue devolviendo cada ticket a **su base**, como hoy; un ticket que nace desde ahora bajo Top 5 tiene base `Medium` | Si «la calculada» debe ser siempre la de tres niveles, la reversión sube a `Medium` los `Low` y baja los `Urgent`: toca tickets existentes |
-| **S-J** | **El ajuste manual marca `managed_by_app`**, como fija RQ-TC-29, y **esa marca congela la fila ENTERA frente a Zoho** (`packages/zoho-sync/src/db/repo.ts:71`), no sólo la prioridad. Al levantar el límite, **alcanza a cualquier ticket ajustado**, no sólo a los de clientes Top 5. Para la orden de venta Gerencia descartó esa salida «porque congela el ticket entero»; para la prioridad no hay decisión | Se cambia el ajuste a la marca por fila `prioridad_en_app_at`, que protege sólo la prioridad: otro cambio, que toca `repo.ts` |
+| **S-J** | **El ajuste manual protege SÓLO la prioridad**, con la marca por fila `prioridad_en_app_at` (`packages/zoho-sync/src/db/repo.ts:78`): un ticket venido de Zoho al que se le ajusta la prioridad sigue recibiendo de Zoho el estado y todo lo demás. No marca `managed_by_app`, ni `source`, ni `modified_time`; el que ya era de la aplicación lo sigue siendo. Corregido el 2026-10-08 por orden del analista: hasta entonces marcaba `managed_by_app` y congelaba la fila entera. Efecto lateral: el ajuste ya no marca el ticket como no leído | Si el ajuste debe congelar el ticket entero, se vuelve a `managed_by_app`. Los tickets ajustados antes del despliegue siguen congelados: liberarlos es un relleno, dato de producción |
 | S-K | Una prioridad pedida en una transición, no vacía, distinta de la actual y fuera de la lista, se rechaza con `422` (el servidor no validaba el valor). Reenviar la actual, aunque sea una `Low` heredada, pasa | Se retira la validación: la lista vuelve a depender sólo de lo que ofrezca el formulario, y quien tenga permiso puede escribir `Low` o `Urgent` con un cuerpo hecho a mano |
 
 ### 2.5 · Entradas propuestas para la bandeja — SIN número
@@ -151,8 +151,8 @@ Las numera Supervisión. **No se ha tocado `docs/sdd/ENTRADA.md`.**
 
 - *pregunta* — ¿Top 5 y «alta» tienen un orden entre sí, o empatan (S-A)?
 - *pregunta* — Al desmarcar un Top 5, ¿el ticket vuelve a lo que tenía (S-I) o a la prioridad de tres niveles?
-- *pregunta* — Un ticket venido de Zoho al que se le ajusta la prioridad a mano deja de recibir **cualquier** cambio de Zoho. Ahora que el ajuste alcanza a todos
-  los tickets, ¿se mantiene (S-J) o se protege sólo la prioridad?
+- *pregunta* — Un ticket venido de Zoho al que se le ajusta la prioridad a mano conserva esa prioridad y sigue recibiendo de Zoho todo lo demás (S-J). ¿Se confirma?
+  Y los ajustados antes del despliegue, que siguen congelados enteros (`managed_by_app`): ¿se liberan con un relleno o se dejan?
 - *pregunta* — ¿El Director Técnico ajusta cualquier ticket, también los que no tienen cliente (S-G, S-H)?
 - *pregunta* — Una prioridad pedida en una transición fuera de la lista se rechaza con `422` (S-K). ¿Se mantiene?
 - *hallazgo* — `GET /api/top5` sigue listando a un cliente Top 5 guardado con `Low`, aunque ya no imponga nada: dos lecturas de «es Top 5» que divergen para ese

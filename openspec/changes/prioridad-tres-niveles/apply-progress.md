@@ -238,3 +238,21 @@ Lote único de remediación de los avisos del verify (`verify-report.md`, W1 a W
 | W4 | No se toca: divergencia declarada, sin destino | — | — |
 
 **Hallazgo sobre los «conserva».** Un `PUT` que vuelve a guardar el Top 5 con `High` SÍ cambia un ticket abierto `Low` a `High` (propagación, RQ-TC-35): la regla "conserva" de RQ-TC-56 vale al entrar en vigor y frente a un alta o una desmarcación, no frente a un nuevo guardado con una prioridad de la lista. Por eso el escenario del delta y las pruebas se escribieron con el `PUT` que desmarca; el que guarda con `High` lo cubre W3b. El texto del delta ya dice «al entrar en vigor», no se modificó.
+
+## Corrección del ajuste manual (2026-10-08, tras el verify)
+
+Intento propio, techo 300. Corrige D8 y S-J: `ajustarPrioridad` (`apps/desk/server/db/prioridadCliente.ts:93`) pasa a proteger sólo la prioridad.
+
+- **De dónde salía S-6.** De un supuesto de tanda de `prioridad-top5-cliente` (su `proposal.md`, «S-6 · Ajuste y sync»), no de una decisión: `openspec/config.yaml` no fija `managed_by_app` para el ajuste en `decision/top5-manual`, `decision/cola-del-taller-los-tres-cabos` ni `decision/p3b-prioridad-tres-niveles`. El «no se migra» de `zoho-sync` RQ-ZS-01 es una exclusión de alcance de `propagar-top5-lista-remision-creada`.
+- **Lo que escribe ahora:** `priority`, `prioridad_en_app_at = now()` y `updated_at`. Lo que deja de escribir: `managed_by_app = true`, `source = 'app'` y `modified_time = now()`. Un ticket que ya era `managed_by_app` lo sigue siendo. Mismas líneas en el fichero: ninguna cita se desplaza; `packages/zoho-sync/src/db/repo.ts` no se toca.
+- **`modified_time` se quita, y no es opcional.** La marca de agua del sincronizador es `max(modified_time)` de las filas con `managed_by_app = false` (`packages/zoho-sync/src/sync.ts:381`). Mientras el ajuste ponía `managed_by_app`, su `now()` quedaba fuera de ese máximo; al dejar de ponerla entraría, y adelantaría la marca con el reloj local por encima de lo que Zoho aún no ha entregado. Consecuencia declarada: el ajuste ya no marca el ticket como no leído (`packages/zoho-sync/src/db/repo.ts:139` compara `read_at` con `modified_time`), tampoco en los tickets de la aplicación. Es lo mismo que hace la propagación (`apps/desk/server/db/prioridadCliente.ts:118`).
+- **Sin relleno.** Los tickets ajustados antes de este cambio conservan `managed_by_app`: dato de producción, decisión de persona.
+
+| Prueba | Qué fija | Mutación que la pone roja |
+|---|---|---|
+| TC29-11 (`apps/desk/server/prioridadTop5.test.ts:320`), invertida en sitio | (a) ticket de Zoho ajustado: `managed_by_app`, `source` y `modified_time` intactos; `upsertTicket` con otro estado y otra prioridad actualiza el estado y conserva la prioridad; (b) la traza se escribe con origen vacío | `managed_by_app = true`: 3 rojas (ella, la gemela y la de `propagarTop5.test.ts`). `source = 'app'`: 1. `modified_time = now()`: 1. Sin la marca: 4. Sin el `INSERT` de la traza: 8 |
+| TC29-11b (`apps/desk/server/prioridadTop5.test.ts:466`), nueva, al final del fichero | Un ticket que ya era `managed_by_app` lo sigue siendo y recibe la marca | Sin la marca: roja |
+| Gemela del Director Técnico (`apps/desk/server/prioridadTop5.test.ts:449`) y `apps/desk/server/propagarTop5.test.ts:186` | `managed_by_app` sigue falso tras el ajuste; la marca queda puesta | `managed_by_app = true`: rojas las dos |
+| `packages/shared/src/prioridadPropagada.test.ts:66`, una aserción añadida | Desmarcar sin base y CON contrato vigente no toca el ticket | Quitar la salida «sin base» de `cambioPorTop5` (`packages/shared/src/prioridadPropagada.ts:46`): sobrevivía a las 1.229 pruebas de `propagarTop5.test.ts` y `packages/shared`; ahora 1 roja |
+
+**Contraste de la remediación, por el orquestador.** Las cinco mutaciones de la tabla de «Remediación tras el verify» se repitieron una a una sobre `f08bed2` y dieron los mismos recuentos (2, 3, 14, 1 y 3 rojas), con el árbol restaurado después de cada una.

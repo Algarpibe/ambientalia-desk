@@ -84,13 +84,13 @@ export async function ajustesDelTicket(db: Queryable, ticketId: string): Promise
 export interface AjustarPrioridad { ticketId: string; de: string | null; prioridad: PrioridadAsignable; motivo: string; por: string }
 
 /**
- * Cambia la prioridad de UN ticket y deja la traza, en una sola transacción (S-6): `managed_by_app=true` para que el
- * sincronizador no la pise (`upsertTicket` sale en esa guarda). NO escribe en `ticket_transitions`: el reloj del SLA
- * (`db/sla.ts`) lee de ahí y un ajuste no es una etapa. No toca `upsertTicket` ni `TICKET_COLS` (IV-11).
+ * Cambia la prioridad de UN ticket y deja la traza, en una sola transacción. Protege SÓLO la prioridad, con `prioridad_en_app_at`
+ * (la marca de la propagación): no toca `managed_by_app` ni `source` (congelarían la fila entera) ni `modified_time` (adelantaría la
+ * marca de agua del sincronizador). NO escribe en `ticket_transitions`: el SLA (`db/sla.ts`) lee de ahí y un ajuste no es una etapa.
  */
 export async function ajustarPrioridad(db: Queryable, a: AjustarPrioridad): Promise<void> {
   await enTransaccion(db, async (q) => {
-    await q.query("UPDATE tickets SET priority = $2, managed_by_app = true, source = 'app', modified_time = now(), updated_at = now() WHERE id = $1", [a.ticketId, a.prioridad])
+    await q.query('UPDATE tickets SET priority = $2, prioridad_en_app_at = now(), updated_at = now() WHERE id = $1', [a.ticketId, a.prioridad])
     await q.query('INSERT INTO prioridad_ajustes (ticket_id, de, a, motivo, ajustado_por) VALUES ($1, $2, $3, $4, $5)', [a.ticketId, a.de, a.prioridad, a.motivo, a.por])
   })
 }

@@ -317,17 +317,17 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect({ n: await trazas(), entrada: await entrada() }).toEqual(antes)
   })
 
-  it('TC29-11 · el sync no pisa la prioridad ajustada: managed_by_app pasa a true y un upsertTicket con otra prioridad no la cambia', async () => {
-    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-1', 'Low'); const { app } = appWith()
-    const filaZoho = (id: string, n: string, priority: string) => ticketRowFromZoho({ id, ticketNumber: n, subject: 'Top 5', status: 'Ingresado', statusType: 'Open', priority, customFields: {} })
-    expect(await marcaApp('t1')).toBe(false)
+  it('TC29-11 · el ajuste protege SÓLO la prioridad: no toca managed_by_app, source ni modified_time, y un upsertTicket con otro estado y otra prioridad actualiza el estado y conserva la prioridad', async () => {
+    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-1', 'Low'); const { app } = appWith(); await db.query("UPDATE tickets SET modified_time = '2026-08-01T10:00:00Z' WHERE id = 't1'")
+    const filaZoho = (id: string, n: string, priority: string) => ticketRowFromZoho({ id, ticketNumber: n, subject: 'Top 5', status: 'En Espera de Repuestos', statusType: 'On Hold', priority, customFields: {} })
+    const frontera = async (id: string) => (await db.query('SELECT managed_by_app, source, modified_time, status, priority FROM tickets WHERE id=$1', [id])).rows[0] as Record<string, unknown>
+    const antes = await frontera('t1'); expect(antes).toMatchObject({ managed_by_app: false, source: 'zoho', status: 'Ingresado' })
     expect((await ajustar(app, await adminCookie(), 't1', { prioridad: 'High', motivo: 'Cliente clave' })).status).toBe(200)
-    expect(await marcaApp('t1')).toBe(true)
-    await upsertTicket(db, filaZoho('t1', '9201', 'Low'))
-    expect(await prioridadDe('t1')).toBe('High')
+    expect(await frontera('t1')).toEqual({ ...antes, priority: 'High' }) // sólo cambia la prioridad: la fila sigue siendo de Zoho y su marca de agua no se mueve
+    expect(await marcaPrioridad('t1')).not.toBeNull(); expect(await ajustes()).toMatchObject([{ ticket_id: 't1', de: 'Low', a: 'High', motivo: 'Cliente clave', origen: null }])
+    await upsertTicket(db, filaZoho('t1', '9201', 'Low')); expect(await frontera('t1')).toMatchObject({ status: 'En Espera de Repuestos', priority: 'High', managed_by_app: false })
     // Control: un ticket NO ajustado sí lo pisa el sincronizador, así que la prueba discrimina.
-    await upsertTicket(db, filaZoho('t2', '9202', 'Medium'))
-    expect(await prioridadDe('t2')).toBe('Medium')
+    await upsertTicket(db, filaZoho('t2', '9202', 'Medium')); expect(await frontera('t2')).toMatchObject({ status: 'En Espera de Repuestos', priority: 'Medium' }); expect(await marcaPrioridad('t2')).toBeNull()
   })
 
   it('TC29-12 · atómico (Plan B, pg-mem no revierte: transaccion.test.ts:25): si el INSERT de la traza falla, la secuencia es BEGIN, UPDATE, INSERT, ROLLBACK, sin COMMIT', async () => {
@@ -446,16 +446,29 @@ describe('POST /api/tickets/:id/prioridad · ajuste en cualquier ticket y por el
     expect((await ajustes())[0]).toMatchObject({ ticket_id: 't1', a: 'Medium', ajustado_por: 'Sujeto 1' })
   })
 
-  it('sincronizador · un ticket de Zoho de un cliente SIN fila Top 5, ajustado por el Director Técnico, no lo pisa la segunda pasada; el de control sí', async () => {
+  it('sincronizador · un ticket de Zoho de un cliente SIN fila Top 5, ajustado por el Director Técnico, conserva su prioridad en la segunda pasada sin dejar de ser de Zoho; el de control la pierde', async () => {
     await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-1', 'Low'); const { app } = appWith()
     expect((await db.query('SELECT 1 FROM public.cliente_prioridad')).rows).toEqual([])
     expect([await marcaApp('t1'), await marcaApp('t2')]).toEqual([false, false])
     expect((await ajustar(app, await sujeto(1, ['Servicio Técnico'], 'Director Técnico'), 't1', { prioridad: 'High', motivo: 'Cliente crítico' })).status).toBe(200)
-    expect(await marcaApp('t1')).toBe(true)
+    expect(await marcaApp('t1')).toBe(false)
     await upsertTicket(db, filaZoho('t1', '9201', 'Low'))
     expect(await prioridadDe('t1')).toBe('High')
     // Control: el ticket NO ajustado sí lo pisa el sincronizador, así que la prueba discrimina.
     await upsertTicket(db, filaZoho('t2', '9202', 'Medium'))
     expect(await prioridadDe('t2')).toBe('Medium')
+  })
+})
+
+// Corrección del ajuste manual (S-J): lo nuevo va al final para no desplazar las pruebas citadas por línea (D11).
+const marcaPrioridad = async (id: string) => ((await db.query('SELECT prioridad_en_app_at FROM tickets WHERE id=$1', [id])).rows[0] as { prioridad_en_app_at: unknown }).prioridad_en_app_at
+describe('POST /api/tickets/:id/prioridad · el ajuste y los tickets que ya eran de la aplicación (S-J)', () => {
+  it('TC29-11b · un ticket que ya era de la app (managed_by_app) lo sigue siendo tras el ajuste, y recibe la marca', async () => {
+    await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
+    await db.query("UPDATE tickets SET managed_by_app = true, source = 'app' WHERE id = 't1'")
+    expect((await ajustar(app, await adminCookie(), 't1', OK)).status).toBe(200)
+    expect(await marcaApp('t1')).toBe(true)
+    expect((await db.query("SELECT source FROM tickets WHERE id = 't1'")).rows[0]).toEqual({ source: 'app' })
+    expect(await marcaPrioridad('t1')).not.toBeNull()
   })
 })

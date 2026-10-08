@@ -64,7 +64,7 @@ describe('cambioPorTop5 · manual, base, fórmula, igual', () => {
     expect(cambioPorTop5({ actual: 'Low', filas: [f('Low', 'otro')], ...base, top5: 'High' })).toBeNull()
   })
   it('desmarcar sin base no toca el ticket (S-10)', () => {
-    expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: null })).toBeNull()
+    expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: null })).toBeNull(); expect(cambioPorTop5({ actual: 'Low', filas: [], contratoVigente: true, top5: null })).toBeNull()
   })
   it('igual a la actual: nada que hacer', () => {
     expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: 'High' })).toBeNull()
