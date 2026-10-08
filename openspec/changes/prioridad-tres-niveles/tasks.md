@@ -263,7 +263,7 @@ las specs vivas.**
 **Cierre**
 - [x] L3.15 `git diff --numstat <partida de L3>` por fichero: inserciones = borrados en los tres `.tsx`; confirmar
   además el estado final de L1 y L2 (`ticketService.ts`, `routes/prioridad.ts`, `transitions.ts`, `contratos.ts`).
-- [ ] L3.16 Los CUATRO códigos, uno a uno, más el build: `npm test`, `npm run typecheck`, `npm run lint`,
+- [x] L3.16 Los CUATRO códigos, uno a uno, más el build: `npm test`, `npm run typecheck`, `npm run lint`,
   `npm run build` y, tras commitear, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`. Anotar la salida.
 - [x] L3.17 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
 - [x] L3.18 Escribir `apply-progress.md` de L3 (incluida la tabla de L3.7) y marcar casillas.
