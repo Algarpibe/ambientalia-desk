@@ -353,3 +353,70 @@ Son registros fechados: lo que toca es anotar qué los cerró y en qué commit, 
 **Tarea de persona, tras publicar.** Con `ae2e522` desplegado, abrir el tablero y comprobar que un ticket en `Verificación` y otro en
 `Solicitud Soporte` aparecen cada uno en su columna, en la posición de S-1, y que `Otros` deja de enseñarlos. El CI verifica y no
 despliega: hasta que alguien publique, la aplicación en producción no enseña el cambio. No es una casilla de ninguna tanda.
+
+## 6 · Añadido por `nit-exentos-aviso-provisional` (F1B-19, `cierra: si`)
+
+Añadido el 2026-10-08, después de fusionar la tanda en `509b905`. Es la última tanda de la cadena autorizada el 2026-10-06
+(`decision/f1b19-nit-exentos-y-aviso-provisional`: «al final de la cadena»).
+
+### 6.1 · Qué entra
+
+- **NIT genéricos exentos.** El alta manual de un cliente provisional ya no se detiene con `409` si su NIT está en la lista de exentos
+  (`apps/desk/server/services/ticketService.ts:96`). La lista es la tabla `public.nit_exentos`, con UNA fila: `222222222222`, el de
+  consumidor final. Cualquier otro NIT que esté en Books sigue deteniendo el alta, como antes.
+- **Aviso de provisional ya en Books.** Cuando un contacto de Books comparte NIT con un cliente provisional sin enlazar, Comercial recibe
+  un aviso de bandeja, una sola vez por pareja (`apps/desk/server/services/avisoProvisionalEnBooks.ts`). No bloquea nada. Un NIT exento
+  no avisa. Al enlazar el provisional deja de avisar.
+
+### 6.2 · Qué SÍ hay esta vez: esquema
+
+**Dos tablas nuevas y una fila sembrada**, que `migrate` crea al arrancar: `public.nit_exentos` y `public.provisional_books_avisados`.
+**Sin variables de entorno, sin interruptor y sin relleno de datos.** Las dos piezas quedan activas al publicar. La comprobación de
+lectura tras desplegar está al final de `DEPLOY.md`, en el apartado de F1B-19: hay que hacerla, porque si falta `public.nit_exentos`
+toda alta con cliente manual falla.
+
+### 6.3 · Para Gerencia — seis supuestos aplicados, reversibles
+
+Lo que se responda va a `openspec/config.yaml` → `decisiones_de_gerencia`. **S-4 conviene responderla antes de publicar.**
+
+| | Supuesto aplicado | Pregunta |
+|---|---|---|
+| S-1 | La lista de exentos se mantiene por SQL, sin pantalla | ¿Basta así, o contabilidad necesita pantalla? |
+| S-2 | Dos provisionales distintos con el mismo NIT exento se permiten; hoy nada impide dos con el mismo NIT, exento o no | ¿Debe impedirse un segundo provisional con el mismo NIT? |
+| S-3 | Texto del aviso: nombra la razón social y el NIT del provisional y el contacto de Books, y dice que conviene enlazarlos. Sin ticket asociado | ¿Se quiere otro texto, o asociarlo a un ticket? |
+| S-4 | **Ráfaga al publicar:** la primera pasada avisa una vez cada pareja que ya exista. No hay corte | ¿Se acepta, o se prefiere silenciar las parejas anteriores al despliegue? |
+| S-5 | El aviso se evalúa en cada intervalo de sincronización, no una vez al día | ¿Es aceptable que llegue a los pocos minutos? |
+| S-6 | Basta que el NIT sea exento en uno de los dos lados de la pareja para no avisar | ¿De acuerdo? |
+
+### 6.4 · Para Supervisión — textos que dejan de ser ciertos
+
+Están en ficheros que la tanda no toca. Son registros fechados: se anota qué los cerró, no se reescriben.
+
+- `decision/e154-nit-genericos-exentos`, en `openspec/config.yaml`: su consecuencia (1) dice que hoy no existe ninguna lista, y su
+  `tanda_que_abre` sigue diciendo «SIN DESTINO». Lo mismo el `tanda_que_abre` de `decision/e155-aviso-provisional-en-books`.
+- Las entradas E-154 y E-155 de `docs/sdd/ENTRADA.md`.
+- La fila F1B-19 del §C del plan sigue diciendo «pendiente»: `RECONCILIACION.md` la cuenta ya como cerrada por archivo.
+
+### 6.5 · Tareas de personas
+
+No son casillas de ninguna tanda, y archivar no las da por hechas.
+
+| | Qué | Dueño |
+|---|---|---|
+| N-P1 | Ejecutar la consulta de sólo lectura que lista los NIT repetidos en Books y entregar el resultado a contabilidad. Está escrita al final de `openspec/changes/archive/2026-10-08-nit-exentos-aviso-provisional/proposal.md`. **Ninguna sesión la ha ejecutado** | Persona con acceso a producción |
+| N-P2 | Decidir qué NIT de esa lista son genéricos. Cada uno se añade por SQL, como explica `DEPLOY.md`; hasta entonces la lista tiene sólo el de consumidor final | Contabilidad |
+| N-P3 | Comprobación de lectura tras desplegar: las dos tablas existen y la fila sembrada está activa | Persona con acceso a producción |
+
+### 6.6 · Lo que queda declarado
+
+El detalle está en el `archive-report.md` del cambio. Lo que conviene saber antes de publicar: un NIT exento tecleado como base más
+dígito de verificación sin guion no se reconoce como exento; mientras haya un provisional sin enlazar y no exento, cada pasada lee todos
+los contactos de Books (cuántos hay: sin dato en el repositorio); y la cadena periódica de `apps/desk/server/index.ts` se prueba como
+texto, no ejecutándola.
+
+### 6.7 · Estado de `main` al cerrar la cadena
+
+Medido por `npm run reconcile` sobre `509b905`: **17** tandas cerradas por archivo, **9** por commit declarado y **11** en curso, sobre
+**78**. F1B-19 es la que entra hoy en las cerradas por archivo. Con `509b905`: `npm test` 0 (4.327 pasan, 7 saltadas), typecheck 0,
+lint 0 (165 avisos) y detector de citas 0. El CI verifica y no despliega: nada de lo de este paquete está en producción hasta que
+alguien publique.
