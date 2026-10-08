@@ -119,10 +119,15 @@ capacidad **MUST NOT** escribir en `books.*` ni hacia Zoho.
 - WHEN se envía el alta
 - THEN responde el `422` de A listando lo que falta y no queda nada escrito
 
-#### Scenario: La exención no salta la guarda de la orden de venta
-- GIVEN un NIT exento y una orden de venta ya asociada a otro ticket
-- WHEN se envía el alta
-- THEN responde el `409` de la orden de venta ya asociada y no queda nada escrito
+#### Scenario: Con cliente provisional y orden de venta responde el 422 de C, exento o no
+- GIVEN un cliente manual (exento o no) y una orden de venta, ya asociada a otro ticket o no (`apps/desk/server/services/altaManual.ts:116`)
+- WHEN se envía el alta; la exención no cambia la respuesta (`apps/desk/server/services/altaManual.test.ts:212`)
+- THEN responde el `422` de C («no se combina con una orden de venta») antes de llegar a D, y no queda nada escrito
+
+#### Scenario: La exención no salta el 403 de B (cargo de la OVI)
+- GIVEN un NIT exento, una orden OVI y un usuario sin el cargo que la asocia
+- WHEN se envía el alta (`apps/desk/server/services/altaManual.test.ts:511`)
+- THEN responde el `403` de B, no `201` ni el `422` de C, y no queda nada escrito
 
 #### Scenario: Fila inactiva, el 409 vuelve
 - GIVEN la fila `222222222222` con `activo = false` y un contacto de Books con ese NIT

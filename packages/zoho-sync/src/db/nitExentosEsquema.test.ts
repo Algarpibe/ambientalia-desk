@@ -26,6 +26,13 @@ describe('F1B-19 · public.nit_exentos (RQ-TC-57)', () => {
     expect(r.rows).toEqual([{ nit: '222222222222', motivo: 'Consumidor final', activo: true }])
   })
 
+  it('una fila sin motivo se rechaza (motivo NOT NULL)', async () => {
+    const db = await freshDb()
+    await expect(db.query("INSERT INTO public.nit_exentos (nit, motivo) VALUES ('800111222', NULL)")).rejects.toThrow()
+    await expect(db.query("INSERT INTO public.nit_exentos (nit) VALUES ('800111222')")).rejects.toThrow()
+    expect((await db.query('SELECT nit FROM public.nit_exentos')).rows).toEqual([{ nit: '222222222222' }])
+  })
+
   it('migrar dos veces conserva la fila retirada con activo = false', async () => {
     const db = await freshDb()
     await db.query("UPDATE public.nit_exentos SET activo = false WHERE nit = '222222222222'")

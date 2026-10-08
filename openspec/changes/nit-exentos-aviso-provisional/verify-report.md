@@ -122,3 +122,19 @@ Cumple: texto literal del aviso, `ticketId` nulo, `enviado_at` nulo, destinatari
 
 ## 9. Estado final
 `git status --short`: sólo `apply-progress.md` (retoque previo del orquestador) y este `verify-report.md`.
+
+## Adenda del orquestador — remediación posterior al verify
+
+Escrita tras el verify. **El verify formal sigue siendo sobre `596856e`:** después sólo cambiaron pruebas y un escenario del delta de
+spec; ningún fichero de producción.
+
+- **Cerrados con prueba nueva**, cada una en rojo con la mutación del verify y verde al restaurar: P10 (NIT exento con orden OVI y
+  usuario sin el cargo responde el `403` del escalón B), P16 (`motivo` sin valor se rechaza), Q6 (sin parejas no hay advertencia ni se
+  consultan destinatarios), Q9 (el valor devuelto cuenta sólo las parejas realmente avisadas) y el enlace tras un aviso (SUGGESTION 2).
+- **WARNING 1:** el escenario inalcanzable de RQ-TC-57 se reescribió en el delta: con cliente provisional y orden de venta responde el
+  `422` del escalón C, con NIT exento o sin él. Se añadió el escenario del `403` del escalón B.
+- **Siguen sin prueba, declarados:** R2 y R3 (la cadena de `apps/desk/server/index.ts` se prueba como texto: orden e import, no
+  ejecución) y «el aviso no bloquea ningún alta ni transición» (el servicio no tiene ninguna entrada desde las rutas; se sostiene por
+  estructura, no por prueba). P7, Q8 y Q10 son mutantes equivalentes.
+- Cuatro códigos tras la remediación: `npm test` 0 (4.327 pasan, 7 saltadas), `npm run typecheck` 0, `npm run lint` 0 (0 errores, 165
+  avisos), detector de citas 0.

@@ -505,4 +505,14 @@ describe('RQ-TC-57 · NIT exentos (public.nit_exentos): el 409 de NIT en Books n
     expect(sqls.filter((s) => /FROM public\.nit_exentos/.test(s))).toHaveLength(1)
     expect(sqls.filter((s) => /FROM clients\b/.test(s))).toHaveLength(1)
   })
+
+  // Posición frente a B (regla de mutación 1): el cargo de la OVI (`ticketService.ts:44`) corre antes que C (`:91`), y la exención no lo salta.
+  // El cuerpo activa a la vez B (OVI tecleada, usuario de Comercial SIN el cargo) y C (provisional + orden de venta, 422): debe ganar el 403.
+  it('posición · exento + orden OVI + usuario sin el cargo → 403 de B, no 201 ni el 422 de C', async () => {
+    const res = await request(appWith().app).post('/api/tickets').set('Cookie', await userCookie(['Comercial']))
+      .send({ ...BASE, clienteManual: { ...CLIENTE, nit: EXENTO }, ordenVenta: 'OVI-2026-001', equipoManual: EQUIPO })
+    expect(res.status).toBe(403)
+    expect(res.body.error).toContain('OVI-2026-001')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
 })

@@ -309,3 +309,41 @@ describe('pasadaProvisionalesEnBooks · la pasada del setInterval', () => {
     expect(new Set(pos).size).toBe(4)
   })
 })
+
+describe('avisarProvisionalesEnBooks · salida sin parejas, enlace tras el aviso y recuento', () => {
+  it('(Q6) un provisional sin pareja en Books y sin destinatarios en Comercial → 0, ningún warn y no se consultan los destinatarios', async () => {
+    const warn = vi.spyOn(logger, 'warn')
+    await provisional('p1', 'Acme SAS', '900123456'); await contacto('c1', 'Otro', '800111222')
+    const sqls: string[] = []
+    const contada: Queryable = { query: ((s: string, p?: unknown[]) => { sqls.push(s); return db.query(s, p) }) as Queryable['query'] }
+    expect(await avisarProvisionalesEnBooks(contada)).toBe(0)
+    expect(warn).not.toHaveBeenCalled()
+    expect(sqls.some((s) => /FROM users\b/i.test(s))).toBe(false)
+    expect(await marcas()).toEqual([])
+  })
+
+  it('(SUGGESTION 2) una pareja ya avisada, el provisional se enlaza y aparece un contacto NUEVO con el mismo NIT → 0, sin avisos ni marcas nuevos', async () => {
+    await comercial('ana@x.co')
+    await provisional('p1', 'Acme SAS', '900123456'); await contacto('c1', 'Acme Books', '900123456-7')
+    expect(await avisarProvisionalesEnBooks(db)).toBe(1)
+    await db.query("UPDATE public.clientes_provisionales SET enlazado_a = 'c1' WHERE id = 'p1'")
+    await contacto('c2', 'Sucursal nueva', '900123456')
+    expect(await avisarProvisionalesEnBooks(db)).toBe(0)
+    expect(await avisos()).toHaveLength(1)
+    expect(await marcas()).toEqual([{ provisional_id: 'p1', contacto_id: 'c1', avisos_creados: 1 }])
+  })
+
+  it('(Q9) el valor devuelto cuenta parejas REALMENTE avisadas: si la marca ya existía (carrera) no suma', async () => {
+    await comercial('ana@x.co')
+    await provisional('p1', 'Acme SAS', '900123456'); await contacto('c1', 'Acme Books', '900123456-7')
+    await db.query("INSERT INTO public.provisional_books_avisados (provisional_id, contacto_id, avisos_creados) VALUES ('p1','c1',1)")
+    // La consulta previa de marcas no ve la fila (la carrera: otra pasada marcó entre la lectura y la escritura); la clave primaria sí.
+    const pool = db as unknown as ConPool
+    const carrera: Queryable & ConPool = {
+      query: ((s: string, p?: unknown[]) => (/SELECT provisional_id, contacto_id FROM public\.provisional_books_avisados/.test(s) ? Promise.resolve({ rows: [] }) : db.query(s, p))) as Queryable['query'],
+      connect: () => pool.connect(),
+    }
+    expect(await avisarProvisionalesEnBooks(carrera)).toBe(0)
+    expect(await avisos()).toEqual([])
+  })
+})

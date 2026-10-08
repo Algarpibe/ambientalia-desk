@@ -113,3 +113,16 @@ Ninguna sobrevivió. Aviso: dos ediciones mías con `sed` salieron mal (una rees
 `npm run typecheck` 0; `npm run lint` 0 (0 errores, 165 avisos previos); `npm test`: 262 ficheros pasan, 2 omitidos; 4322 pasan, 7 omitidas, 0 fallan (el `registro.test.ts` del lote 1 ya no falla). Detector de citas y medida del intento: del orquestador. `git diff --shortstat --no-renames` del árbol (sin contar nada de lotes previos commiteados): 4 ficheros, 96 inserciones, 6 borrados.
 
 **Añadido por el orquestador al cerrar el lote 3.** Tres mutaciones propias, las tres en rojo y restauradas: la pasada nueva antes de la de reclamaciones en `index.ts`, la pasada sin esperar a la evaluación, y un cerrojo de una sola vez colado en la pasada.
+
+## Remediación tras el verify
+Sólo pruebas nuevas (`*.test.ts`) y el delta de spec; producción mutada y restaurada desde copia fuera del repositorio. Suite de los tres ficheros: 94 verdes.
+
+| Superviviente | Prueba nueva | Roja con la mutación | Restaurada |
+|---|---|---|---|
+| P10 (WARNING 2) | `altaManual.test.ts`: «posición · exento + orden OVI + usuario sin el cargo → 403 de B…» | exento omite `exigirCargoOVI` (`ticketService.ts` línea 44) | sí |
+| P16 (WARNING 3) | `nitExentosEsquema.test.ts`: «una fila sin motivo se rechaza» | `motivo` sin `NOT NULL` (`schema.sql` línea 803) | sí |
+| Q6 (WARNING 4) | `avisoProvisionalEnBooks.test.ts`: «(Q6) … sin pareja … 0, ningún warn…» | quitar `if (parejas.length === 0) return 0` | sí |
+| SUGGESTION 2 | mismo fichero: «(SUGGESTION 2) … se enlaza … contacto NUEVO …» | quitar `WHERE enlazado_a IS NULL` (también rompe (d)) | sí |
+| Q9 (SUGGESTION 3) | mismo fichero: «(Q9) … si la marca ya existía (carrera) no suma» | sumar siempre | sí |
+
+WARNING 1: escenario de OV reescrito en el delta de `tickets-core` (el 422 de C responde antes que D).
