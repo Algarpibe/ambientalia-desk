@@ -860,7 +860,7 @@ incumplimientos_vivos:
       plan, y es donde vive IV-8.
       NO usar nº 52 para justificar tocar la guarda equipo↔cliente
       (`ticketService.ts:61-79`).
-    destino: "F1B-11 — escrito el 2026-09-22 por `decision/titularidad-mantenedor`. Antes, y hasta esa respuesta: PUNTO ABIERTO, sin destino, a propósito (criterio nº 8)"
+    destino: "F1B-11 — escrito el 2026-09-22 por `decision/titularidad-mantenedor`. Antes, y hasta esa respuesta: PUNTO ABIERTO, sin destino, a propósito (criterio nº 8). Actualizado el 2026-10-07: F1B-11 se cerró ese día con `ampliacion-contrato` (`73a7a5f`) SIN resolver este desvío; desde ese día está SIN DESTINO ASIGNADO, pendiente de que Gerencia lo sitúe"
     por_que_sin_destino: >
       ACTUALIZADO EL 2026-09-10. Decía: «cerrarlo exige antes decidir la
       cardinalidad OV↔ticket (punto abierto nº 52)». Eso ya está decidido; lo que
@@ -1084,7 +1084,7 @@ incumplimientos_vivos:
   # estilo: es lo único que mantiene la guarda en pie mientras esto siga vivo.
   - id: IV-11
     regla: "—"
-    destino: "F1B-11 (S41), con un parche antes declarado `tanda: F1B-11, cierra: no`"
+    destino: "F1B-11 (S41), con un parche antes declarado `tanda: F1B-11, cierra: no`. Actualizado el 2026-10-07: F1B-11 se cerró ese día con `ampliacion-contrato` (`73a7a5f`) SIN resolver este desvío; desde ese día está SIN DESTINO ASIGNADO, pendiente de que Gerencia lo sitúe"
     destino_decidido: >
       GERENCIA, 2026-09-23, panel (`decision/e005b-parche-vehiculo` y `decision/e005c-discrepancia-sin-espejo`).
       El destino es F1B-11, «que es donde el problema desaparece de raíz al existir la tabla de
@@ -4070,7 +4070,7 @@ decisiones_de_gerencia_adenda:
       lectura que `decision/vigencia-contrato` declaraba como interpretación, y la precisa.
       (2) LA REGISTRA COMERCIAL: mismo permiso que el alta del contrato, que pide el área Comercial
       (`apps/desk/server/routes/contratos.ts:43`). La respuesta no nombra un cargo.
-      (3) CON TRAZA: hoy un contrato no se puede modificar (`apps/desk/server/db/contratos.ts:8`) ni existe registro de sus cambios; la ampliación trae el suyo
+      (3) CON TRAZA: hoy un contrato no se puede modificar (`apps/desk/server/db/contratos.ts:8` en `351c046`; superado el 2026-10-07 por `ampliacion-contrato`, `73a7a5f`, que añade la ampliación de `fecha_fin` con su traza) ni existe registro de sus cambios; la ampliación trae el suyo
       (quién, cuándo, fecha anterior y fecha nueva).
       (4) UN CONTRATO YA VENCIDO SE PUEDE AMPLIAR mientras no haya pasado el 31/12 del año de su vencimiento; pasado ese
       día, no. Las guardas de contrato vencido de las tres puertas no cambian: leen la fecha de fin vigente.
