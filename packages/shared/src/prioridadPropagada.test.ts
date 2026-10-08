@@ -43,15 +43,15 @@ describe('cambioPorTop5 · manual, base, fórmula, igual', () => {
     expect(cambioPorTop5({ actual: 'High', filas: [f('Low', 'top5')], ...base, top5: 'Medium' })).toEqual({ de: 'High', a: 'Medium', origen: 'top5' })
   })
   it('sin contrato, un Top 5 más bajo baja el ticket (S-5)', () => {
-    expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: 'Low' })).toEqual({ de: 'High', a: 'Low', origen: 'top5' })
+    expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: 'Medium' })).toEqual({ de: 'High', a: 'Medium', origen: 'top5' })
   })
   it('desmarcar: vuelve a la base', () => {
     expect(cambioPorTop5({ actual: 'High', filas: [f('Low', 'top5')], ...base, top5: null })).toEqual({ de: 'High', a: 'Low', origen: 'top5_revertido' })
   })
-  it('con contrato vigente y un Top 5 Low, el ticket queda High (la fórmula es prioridadAlNacer)', () => {
-    const r = cambioPorTop5({ actual: 'Low', filas: [], contratoVigente: true, top5: 'Low' })
+  it('con contrato vigente y un Top 5 Medium, el ticket queda High (la fórmula es prioridadAlNacer)', () => {
+    const r = cambioPorTop5({ actual: 'Low', filas: [], contratoVigente: true, top5: 'Medium' })
     expect(r).toEqual({ de: 'Low', a: 'High', origen: 'top5' })
-    expect(r!.a).toBe(prioridadAlNacer('Low', true, 'Low'))
+    expect(r!.a).toBe(prioridadAlNacer('Low', true, 'Medium'))
   })
   it('desmarcar con contrato vigente: «la calculada» sigue siendo High, así que un ticket High no cambia', () => {
     expect(cambioPorTop5({ actual: 'High', filas: [f('Low', 'top5')], contratoVigente: true, top5: null })).toBeNull()
@@ -64,7 +64,7 @@ describe('cambioPorTop5 · manual, base, fórmula, igual', () => {
     expect(cambioPorTop5({ actual: 'Low', filas: [f('Low', 'otro')], ...base, top5: 'High' })).toBeNull()
   })
   it('desmarcar sin base no toca el ticket (S-10)', () => {
-    expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: null })).toBeNull()
+    expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: null })).toBeNull(); expect(cambioPorTop5({ actual: 'Low', filas: [], contratoVigente: true, top5: null })).toBeNull()
   })
   it('igual a la actual: nada que hacer', () => {
     expect(cambioPorTop5({ actual: 'High', filas: [], ...base, top5: 'High' })).toBeNull()

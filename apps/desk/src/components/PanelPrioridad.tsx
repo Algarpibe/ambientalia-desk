@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PRIORIDADES_ASIGNABLES, puedeFijarPrioridadTop5 } from '@ambientalia/shared'
+import { PRIORIDADES_ASIGNABLES, puedeAjustarPrioridadTicket } from '@ambientalia/shared'
 import { useAuth } from '../auth/AuthContext'
 import { useAsync } from '../hooks/useAsync'
 import { ajustarPrioridadDelTicket, erroresDelServidor, prioridadDelTicket, type PrioridadDelTicket } from '../api/client'
@@ -8,8 +8,8 @@ import { ajustarPrioridadDelTicket, erroresDelServidor, prioridadDelTicket, type
  * Prioridad del ticket en su ficha (prioridad-top5-cliente, F1B-07; `tickets-core` RQ-TC-29). Plegado por defecto.
  *
  * REGLA 13 — qué es comodidad y qué es guarda:
- *  - «Ajustar» sólo se ENSEÑA si el cliente del ticket es Top 5 (dato del servidor, `top5`) y `puedeFijarPrioridadTop5(user)`,
- *    el MISMO predicado del servidor (consumido de `shared`). La guarda es el 409 y el 403 de `POST /api/tickets/:id/prioridad`.
+ *  - «Ajustar» se ENSEÑA a quien cumple `puedeAjustarPrioridadTicket(user)`, el MISMO predicado del servidor (de `shared`),
+ *    en cualquier ticket. La guarda es el 403 de `POST /api/tickets/:id/prioridad` (prioridad-tres-niveles).
  *  - NO valida el motivo ni que la prioridad cambie: manda y enseña los `errors[]` del 422 del servidor (`ajusteDelCuerpo`).
  *  - La prioridad, el Top 5 y los ajustes salen sólo de `GET /api/tickets/:id/prioridad`; aquí no se calcula nada.
  */
@@ -24,7 +24,7 @@ export function PanelPrioridad({ ticketId, onCambio }: { ticketId: string; onCam
   const [errores, setErrores] = useState<string[]>([])
 
   if (error || !data) return null
-  const puedeAjustar = data.top5 && !!user && puedeFijarPrioridadTop5(user)
+  const puedeAjustar = !!user && puedeAjustarPrioridadTicket(user)
 
   async function ajustar() {
     setEnviando(true); setErrores([])

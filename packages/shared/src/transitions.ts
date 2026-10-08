@@ -81,7 +81,7 @@ const cfNum = (label: string, required = true): TransitionField =>
 const cfCheck = (label: string, required = false): TransitionField =>
   ({ key: label, label, kind: 'checkbox', required, target: 'customField' })
 const priority = (): TransitionField =>
-  ({ key: 'priority', label: 'Prioridad', kind: 'select', required: false, target: 'priority', options: ['High', 'Medium', 'Low'] })
+  ({ key: 'priority', label: 'Prioridad', kind: 'select', required: false, target: 'priority', options: ['High', 'Medium'] })
 /** Buscador de órdenes de venta. `campoFecha` es la fecha que se rellena sola con la de la OV elegida. */
 const cfOrdenVenta = (label: string, campoFecha: string, required = true): TransitionField =>
   ({ key: label, label, kind: 'ordenVenta', required, target: 'customField', campoFecha })

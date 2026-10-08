@@ -27,11 +27,11 @@ const prio = async (id: string) => ((await db.query('SELECT priority FROM ticket
 const desmarcar = () => fijarYPropagarPrioridadCliente(db, { clientId: 'cli-1', top5: false, prioridad: null, por: 'Dir' })
 
 describe('la traza al nacer bajo Top 5 (D-1: la base es la pedida)', () => {
-  it('nace bajo Top 5 con prioridad distinta de la pedida: fila top5_al_nacer con de = pedida, a = la escrita y el autor del alta', async () => {
+  it('nace bajo Top 5 High: fila top5_al_nacer con de = Medium (la base por defecto, no la pedida), a = la escrita y el autor del alta', async () => {
     await cliente(); await equipo(); await top5('High')
     const t = await alta('Low')
     expect(await prio(t.id)).toBe('High')
-    expect(await trazas()).toMatchObject([{ ticket_id: t.id, de: 'Low', a: 'High', ajustado_por: 'Ana', origen: 'top5_al_nacer' }])
+    expect(await trazas()).toMatchObject([{ ticket_id: t.id, de: 'Medium', a: 'High', ajustado_por: 'Ana', origen: 'top5_al_nacer' }])
     expect((await trazas())[0].ajustado_at).toBeTruthy()
     expect((await trazas())[0].motivo).toBeTruthy()
   })
@@ -40,23 +40,23 @@ describe('la traza al nacer bajo Top 5 (D-1: la base es la pedida)', () => {
     await cliente(); await equipo(); await top5('High')
     const t = await alta('Low')
     expect((await desmarcar()).ticketsCambiados).toBe(1)
-    expect(await prio(t.id)).toBe('Low')
-    expect((await trazas()).map((x) => [x.de, x.a, x.origen])).toEqual([['Low', 'High', 'top5_al_nacer'], ['High', 'Low', 'top5_revertido']])
+    expect(await prio(t.id)).toBe('Medium')
+    expect((await trazas()).map((x) => [x.de, x.a, x.origen])).toEqual([['Medium', 'High', 'top5_al_nacer'], ['High', 'Medium', 'top5_revertido']])
   })
 
-  it('sin pedida: de es NULL y desmarcar lo devuelve a «sin prioridad»', async () => {
+  it('Top 5 Medium: nace Medium, igual a la base: sin traza, y desmarcar no lo toca', async () => {
     await cliente(); await equipo(); await top5('Medium')
     const t = await alta()
-    expect(await trazas()).toMatchObject([{ de: null, a: 'Medium', origen: 'top5_al_nacer' }])
+    expect(await trazas()).toEqual([])
     await desmarcar()
-    expect(await prio(t.id)).toBeNull()
+    expect(await prio(t.id)).toBe('Medium')
   })
 
-  it('con contrato vigente y Top 5 Low, cuerpo Low: nace High y SÍ hay fila, con de = Low (D-1: la base no lleva el contrato)', async () => {
-    await cliente(); await equipo(); await top5('Low'); await vigente()
+  it('con contrato vigente y Top 5 Medium, cuerpo Low: nace High y SÍ hay fila, con de = Medium (D-1: la base no lleva el contrato)', async () => {
+    await cliente(); await equipo(); await top5('Medium'); await vigente()
     const t = await alta('Low')
     expect(await prio(t.id)).toBe('High')
-    expect(await trazas()).toMatchObject([{ de: 'Low', a: 'High', origen: 'top5_al_nacer' }])
+    expect(await trazas()).toMatchObject([{ de: 'Medium', a: 'High', origen: 'top5_al_nacer' }])
   })
 
   it('nace sin Top 5 (sin fila de cliente, o con top5 falso): sin traza', async () => {
@@ -74,17 +74,17 @@ describe('la traza al nacer bajo Top 5 (D-1: la base es la pedida)', () => {
     expect(await trazas()).toEqual([])
   })
 
-  it('nace con Top 5 y la misma prioridad que la pedida: sin traza', async () => {
-    await cliente(); await equipo(); await top5('High')
+  it('nace con Top 5 Medium y se pide High: nace Medium, igual a la base: sin traza', async () => {
+    await cliente(); await equipo(); await top5('Medium')
     const t = await alta('High')
-    expect(await prio(t.id)).toBe('High')
+    expect(await prio(t.id)).toBe('Medium')
     expect(await trazas()).toEqual([])
   })
 
-  it('con contrato vigente, Top 5 Low y cuerpo High: nace High, igual a la pedida, sin traza', async () => {
-    await cliente(); await equipo(); await top5('Low'); await vigente()
+  it('con contrato vigente, Top 5 Medium y cuerpo High: nace High, distinta de la base Medium, y SÍ hay traza', async () => {
+    await cliente(); await equipo(); await top5('Medium'); await vigente()
     await alta('High')
-    expect(await trazas()).toEqual([])
+    expect(await trazas()).toMatchObject([{ de: 'Medium', a: 'High', origen: 'top5_al_nacer' }])
   })
 
   it('un ticket previo al despliegue, nacido bajo Top 5 SIN traza, no se toca al desmarcar (S-10)', async () => {
@@ -98,13 +98,13 @@ describe('la traza al nacer bajo Top 5 (D-1: la base es la pedida)', () => {
 
 describe('GET /api/tickets/:id/prioridad · lee el origen (RQ-TC-38)', () => {
   it('trae el origen de todas las filas: la manual con origen null y a NULL como null, no como la cadena «null»', async () => {
-    await cliente(); await equipo(); await top5('Medium')
+    await cliente(); await equipo(); await top5('High')
     const t = await alta('Low')
     await db.query("INSERT INTO public.prioridad_ajustes (ticket_id, de, a, motivo, ajustado_por) VALUES ($1,'Medium','Low','a mano','Dir')", [t.id])
     await db.query("INSERT INTO public.prioridad_ajustes (ticket_id, de, a, motivo, ajustado_por, origen) VALUES ($1,'Low',NULL,'revertido','Dir','top5_revertido')", [t.id])
     const res = await request(appWith().app).get(`/api/tickets/${t.id}/prioridad`).set('Cookie', await adminCookie())
     expect(res.status).toBe(200)
-    expect(res.body.ajustes.map((a: { a: unknown; origen: unknown }) => [a.a, a.origen])).toEqual([['Medium', 'top5_al_nacer'], ['Low', null], [null, 'top5_revertido']])
+    expect(res.body.ajustes.map((a: { a: unknown; origen: unknown }) => [a.a, a.origen])).toEqual([['High', 'top5_al_nacer'], ['Low', null], [null, 'top5_revertido']])
   })
 })
 

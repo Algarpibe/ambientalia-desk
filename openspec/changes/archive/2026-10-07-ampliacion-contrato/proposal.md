@@ -92,7 +92,7 @@ Cerrar la fila **no cierra IV-11** (reducido, sin relleno retroactivo) ni las ta
 - **Nueva:** ninguna. `openspec/config.yaml → capabilities` no se toca (R-2 no aplica).
 - **Modificada — `tickets-core`:** RQ-TC-21 (`openspec/specs/tickets-core/spec.md:716`) deja de decir que la ampliación
   queda fuera (línea 731 de esa spec) y que no hay escritura posterior; y entran requisitos nuevos a continuación de
-  RQ-TC-52 (`openspec/specs/tickets-core/spec.md:2911`): regla del tope, ruta con su escalera, traza y lectura, y el
+  RQ-TC-52 (`openspec/specs/tickets-core/spec.md:2911` en `6344b4a`): regla del tope, ruta con su escalera, traza y lectura, y el
   efecto sobre las tres puertas.
 - RQ-TC-25, `transitions-st`, `remisiones`, `zoho-sync` y `derivacion-avisos` **no cambian de requisito**: su texto ya
   habla de «la fecha de fin» y sigue siendo cierto. Si la fase de spec encuentra una frase que la ampliación vuelva

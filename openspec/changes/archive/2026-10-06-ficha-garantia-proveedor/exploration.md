@@ -142,7 +142,7 @@ coinciden; el «cuatro» no se sabe de dónde sale (hipótesis: cuenta «rechaza
 
 ## 8 · Últimos identificadores de requisito
 
-`tickets-core` llega a RQ-TC-43 (`openspec/specs/tickets-core/spec.md:2269`), `permissions` a RQ-PM-25
+`tickets-core` llega a RQ-TC-43 (`openspec/specs/tickets-core/spec.md:2269` en `6344b4a`), `permissions` a RQ-PM-25
 (`openspec/specs/permissions/spec.md:677` en `a64c6c8`) y `derivacion-avisos` a RQ-AV-18
 (`openspec/specs/derivacion-avisos/spec.md:753`).
 

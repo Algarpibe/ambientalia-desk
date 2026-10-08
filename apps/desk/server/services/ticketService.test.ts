@@ -963,10 +963,10 @@ describe('registro-contrato · prioridad al nacer: Alta IMPUESTA por el servidor
     ['contrato vigente y el cuerpo pide Low → High', VIGENTE, 'Low', 'High'],
     ['contrato vigente y sin prioridad → High', VIGENTE, undefined, 'High'],
     ['contrato que acaba hoy y Low → High', ACABA_HOY, 'Low', 'High'],
-    ['sin contrato y Low → Low (regresión)', null, 'Low', 'Low'],
-    ['sin contrato y sin prioridad → null (regresión)', null, undefined, null],
-    ['contrato vencido y Low → Low', VENCIDO, 'Low', 'Low'],
-    ['contrato que empieza mañana y Low → Low', EMPIEZA_MANANA, 'Low', 'Low'],
+    ['sin contrato y Low → Medium (nace Medium, pida lo que pida)', null, 'Low', 'Medium'],
+    ['sin contrato y sin prioridad → Medium', null, undefined, 'Medium'],
+    ['contrato vencido y Low → Medium', VENCIDO, 'Low', 'Medium'],
+    ['contrato que empieza mañana y Low → Medium', EMPIEZA_MANANA, 'Low', 'Medium'],
   ])('%s', async (_, vigencia, pedida, esperada) => {
     await equipo(); await cliente('cli-1')
     if (vigencia) await contratoDe('OV-2026-170', vigencia)
@@ -978,7 +978,7 @@ describe('registro-contrato · prioridad al nacer: Alta IMPUESTA por el servidor
     await equipo(); await cliente('cli-A'); await cliente('cli-B')
     await contratoDe('OV-2026-170', VIGENTE, 'cli-A')
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, clientId: 'cli-B', ordenVenta: 'OV-2026-170-01', prioridad: 'Low' }, 'Admin')
-    expect(await prioridad()).toBe('Low')
+    expect(await prioridad()).toBe('Medium')
   })
 })
 
@@ -1124,31 +1124,31 @@ describe('prioridad-top5-cliente · prioridad al nacer con Top 5 (RQ-TC-24)', ()
     expect(await prioridad()).toBe('Medium')
   })
 
-  it.each<[string, string]>([['Low', 'High'], ['High', 'High']])('TC24-6 · Comb. 4 · contrato vigente y Top 5 %s → %s', async (top5, esperada) => {
+  it.each<[string, string]>([['Medium', 'High'], ['High', 'High']])('TC24-6 · Comb. 4 · contrato vigente y Top 5 %s → %s', async (top5, esperada) => {
     await equipo(); await cliente('cli-1'); await top5De('cli-1', top5); await contratoDe('OV-2026-170', VIGENTE)
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
     expect(await prioridad()).toBe(esperada)
   })
 
   it('TC24-8 · Urgent del cuerpo pierde ante el Top 5 y ante el contrato', async () => {
-    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low')
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Medium')
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Urgent' }, 'Admin')
-    expect(await prioridad()).toBe('Low')
+    expect(await prioridad()).toBe('Medium')
     await db.query('DELETE FROM tickets'); await db.query('DELETE FROM public.cliente_prioridad'); await contratoDe('OV-2026-170', VIGENTE)
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Urgent' }, 'Admin')
     expect(await prioridad()).toBe('High')
   })
 
-  it('TC24-9 · Urgent sin contrato ni Top 5 se conserva (regla de hoy)', async () => {
+  it('TC24-9 · Urgent sin contrato ni Top 5 ya no se conserva: nace Medium', async () => {
     await equipo(); await cliente('cli-1')
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Urgent' }, 'Admin')
-    expect(await prioridad()).toBe('Urgent')
+    expect(await prioridad()).toBe('Medium')
   })
 
   it('TC24-13 · el Top 5 es del cliente A y el alta es del cliente B con una subOV de A → sin herencia', async () => {
-    await equipo(); await cliente('cli-A'); await cliente('cli-B'); await top5De('cli-A', 'Medium')
+    await equipo(); await cliente('cli-A'); await cliente('cli-B'); await top5De('cli-A', 'High')
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, clientId: 'cli-B', ordenVenta: 'OV-2026-170-01', prioridad: 'Low' }, 'Admin')
-    expect(await prioridad()).toBe('Low')
+    expect(await prioridad()).toBe('Medium')
   })
 
   it('TC24-14 · un ticket creado DESPUÉS de marcar el Top 5 High nace High aunque el cuerpo pida Low', async () => {
@@ -1157,17 +1157,17 @@ describe('prioridad-top5-cliente · prioridad al nacer con Top 5 (RQ-TC-24)', ()
     expect(await prioridad()).toBe('High')
   })
 
-  it('TC24-15 · tras desmarcar el Top 5, un alta sin contrato toma la prioridad del cuerpo', async () => {
+  it('TC24-15 · tras desmarcar el Top 5, un alta sin contrato nace Medium, no con la prioridad del cuerpo', async () => {
     await equipo(); await cliente('cli-1'); await top5De('cli-1', null, false)
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
-    expect(await prioridad()).toBe('Low')
+    expect(await prioridad()).toBe('Medium')
   })
 
-  it('TC28-2 · sin ninguna fila en cliente_prioridad, el alta es la de hoy', async () => {
+  it('TC28-2 · sin ninguna fila en cliente_prioridad, el alta nace Medium', async () => {
     await equipo(); await cliente('cli-1')
     expect((await db.query('SELECT 1 FROM public.cliente_prioridad')).rows).toEqual([])
     await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'Low' }, 'Admin')
-    expect(await prioridad()).toBe('Low')
+    expect(await prioridad()).toBe('Medium')
   })
 })
 
@@ -1465,5 +1465,47 @@ describe('F1B-03 · RQ-TS-33 · guarda de remisión de entrada vigente en habili
     const r = await fallo(() => habilitar('t-rv'))
     expect(r.status).toBe(409)
     expect(String(r.body.error)).toMatch(/es del flujo de .+ y este ticket sigue el flujo de /)
+  })
+})
+
+// prioridad-tres-niveles · L1 · el alta nace Medium pida lo que pida (el cuerpo ya no se lee).
+describe('prioridad-tres-niveles · prioridad al nacer', () => {
+  it.each<[string, unknown]>([['High', 'High'], ['Low', 'Low'], ['Urgent', 'Urgent'], ['nada', undefined]])(
+    'sin contrato ni Top 5 nace Medium pidiendo %s', async (_, pedida) => {
+      await equipo(); await cliente('cli-1')
+      await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: pedida }, 'Admin')
+      expect(await prioridad()).toBe('Medium')
+    })
+
+  it('Top 5 Medium con contrato vigente nace High', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Medium'); await contratoDe('OV-2026-170', VIGENTE)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    expect(await prioridad()).toBe('High')
+  })
+
+  it('Top 5 guardado con Low y sin contrato nace Medium (Low ya no impone)', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prioridad: 'High' }, 'Admin')
+    expect(await prioridad()).toBe('Medium')
+  })
+})
+
+// prioridad-tres-niveles · remediación del verify (W3) · RQ-TC-56 · caracterización: nacen verdes.
+describe('prioridad-tres-niveles · RQ-TC-56 · un Top 5 guardado con Low', () => {
+  it('con contrato vigente el alta nace High: el Low guardado no quita el contrato', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low'); await contratoDe('OV-2026-170', VIGENTE)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    expect(await prioridad()).toBe('High')
+  })
+
+  it('un alta nueva del mismo cliente no toca a los tickets que ya tenía (Low, Urgent y sin prioridad) ni escribe traza', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low')
+    for (const [id, n, p] of [['t-low', 9401, 'Low'], ['t-urg', 9402, 'Urgent'], ['t-nul', 9403, null]] as const) {
+      await db.query("INSERT INTO tickets (id, number, subject, status, status_type, client_id, priority) VALUES ($1,$2,'previo','Ingresado','Open','cli-1',$3)", [id, n, p])
+    }
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    const r = await db.query("SELECT id, priority FROM tickets WHERE id LIKE 't-%' ORDER BY id")
+    expect(r.rows).toEqual([{ id: 't-low', priority: 'Low' }, { id: 't-nul', priority: null }, { id: 't-urg', priority: 'Urgent' }])
+    expect((await db.query('SELECT 1 FROM public.prioridad_ajustes')).rows).toEqual([])
   })
 })

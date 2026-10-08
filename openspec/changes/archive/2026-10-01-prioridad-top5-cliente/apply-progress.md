@@ -33,7 +33,7 @@ pg-mem admite `CONSTRAINT <nombre> CHECK (motivo <> '')` a nivel de columna (rec
 - Ningún fichero muy citado perdió ni ganó líneas (`+n −n`); los añadidos de `schema.sql`, `index.ts` y las pruebas van al final. Sin desplazamientos: `migrate.ts:63-64`, `:70-73`, `migrate.test.ts` y `app.ts:61` siguen señalando lo mismo.
 - Caso A, reparadas: `contratos.ts:65` (comentario, «la más alta»), `cargos.ts:78` («la llama el PUT») y el título de `cargos.test.ts:117`.
 - Caso B, sin tocar: `Paquete_de_Despliegue_2026-09-29/30.md` (fechados). `Preguntas_Gerencia_2026-09-29.md:77` dice «`High` al nacer si el lote tiene contrato vigente»: sigue cierto.
-- `openspec/specs/tickets-core/spec.md:863-868` (`ticketService.ts:106` en `9288779`) queda para el delta de RQ-TC-24 al archivar. `contratos.test.ts:75` conserva «High con contrato vigente»: describe la fila con Top 5 `null`.
+- `openspec/specs/tickets-core/spec.md:863-868` en `6344b4a` (`ticketService.ts:106` en `9288779`) queda para el delta de RQ-TC-24 al archivar. `contratos.test.ts:75` conserva «High con contrato vigente»: describe la fila con Top 5 `null`.
 
 ## Lote 2a — `priority` opcional, guarda del técnico y ajuste por ticket (2.1 a 2.13; sin commit)
 - **Hecho:** 0.1-0.4, 1.1-1.20 (lote 1, `1550b07`) y 2.1-2.13 marcadas en `tasks.md`. NO hecho: bloque C (2.14-2.19) ni lote 3.

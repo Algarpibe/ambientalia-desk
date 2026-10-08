@@ -67,9 +67,9 @@ describe('PUT /api/clients/:id/prioridad · quién puede (RQ-TC-27)', () => {
     expect((await fijar(app, await userCookie(['Servicio Técnico'], 'Director Técnico'), 'cli-1', { top5: true, prioridad: 'High' })).status).toBe(403)
   })
 
-  it('TC27-5 · Urgent y Alta: 422 y sin fila', async () => {
+  it('TC27-5 · Urgent, Alta y Low: 422 y sin fila', async () => {
     await cliente(); const { app } = appWith(); const cookie = await userCookie(['Comercial'], 'Director Comercial')
-    for (const mala of ['Urgent', 'Alta']) {
+    for (const mala of ['Urgent', 'Alta', 'Low']) {
       const res = await fijar(app, cookie, 'cli-1', { top5: true, prioridad: mala })
       expect(res.status, mala).toBe(422)
       expect(Array.isArray(res.body.errors), mala).toBe(true)
@@ -112,14 +112,14 @@ describe('PUT /api/clients/:id/prioridad · quién puede (RQ-TC-27)', () => {
 
   it('TC27-9 · la lectura está abierta a una sesión sin cargo, y la lista Top 5 trae nombre y prioridad', async () => {
     await cliente(); const { app } = appWith()
-    await fijar(app, await adminCookie(), 'cli-1', { top5: true, prioridad: 'Low' })
+    await fijar(app, await adminCookie(), 'cli-1', { top5: true, prioridad: 'Medium' })
     const lector = await sujeto(1, ['Compras'], null)
     const uno = await request(app).get('/api/clients/cli-1/prioridad').set('Cookie', lector)
     expect(uno.status).toBe(200)
-    expect(uno.body).toMatchObject({ clientId: 'cli-1', top5: true, prioridad: 'Low' })
+    expect(uno.body).toMatchObject({ clientId: 'cli-1', top5: true, prioridad: 'Medium' })
     const lista = await request(app).get('/api/top5').set('Cookie', lector)
     expect(lista.status).toBe(200)
-    expect(lista.body).toMatchObject([{ clientId: 'cli-1', name: 'Gecelca S.A. E.S.P.', prioridad: 'Low' }])
+    expect(lista.body).toMatchObject([{ clientId: 'cli-1', name: 'Gecelca S.A. E.S.P.', prioridad: 'Medium' }])
   })
 
   it('TC27-9 · un cliente sin fila se lee como no Top 5; uno inexistente es 404 con el mensaje propio (no el comodín)', async () => {
@@ -196,8 +196,8 @@ describe('marcar o desmarcar el Top 5 propaga a los tickets abiertos y lo revier
 /**
  * AJUSTE POR TICKET (F1B-07, lote 2a; `tickets-core` RQ-TC-29, `permissions` RQ-PM-23 del `POST`).
  *
- * Escalera del `POST` (F1B-10): A el ticket no existe (404) < B1 el cliente no es Top 5 o el ticket no tiene cliente (409)
- * < B2 sin permiso (403) < C contenido (422). Las pruebas de POSICIÓN activan DOS guardas a la vez (regla de mutación 1).
+ * Escalera del `POST` (F1B-10): A el ticket no existe (404) < B sin permiso (403) < C contenido (422); el `409` de «no es Top 5»
+ * y «sin cliente» ya no existe (prioridad-tres-niveles). Las pruebas de POSICIÓN activan DOS guardas a la vez (regla de mutación 1).
  */
 const marcarTop5 = async (clientId: string, prioridad = 'High', top5 = true) => {
   await db.query('INSERT INTO public.cliente_prioridad (client_id, top5, prioridad, actualizado_por) VALUES ($1,$2,$3,$4)', [clientId, top5, prioridad, 'seed'])
@@ -234,9 +234,9 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect(await ajustes()).toEqual([])
   })
 
-  it('TC29-3 · Urgent y Alta no se asignan: 422 con errors[]', async () => {
-    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith(); const dc = await userCookie(['Comercial'], 'Director Comercial')
-    for (const mala of ['Urgent', 'Alta']) {
+  it('TC29-3 · Urgent, Alta y Low no se asignan: 422 con errors[]', async () => {
+    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Medium'); const { app } = appWith(); const dc = await userCookie(['Comercial'], 'Director Comercial')
+    for (const mala of ['Urgent', 'Alta', 'Low']) {
       const res = await ajustar(app, dc, 't1', { prioridad: mala, motivo: 'x' })
       expect(res.status, mala).toBe(422)
       expect(res.body.error).toBe(res.body.errors[0])
@@ -245,8 +245,8 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
   })
 
   it('TC29-3b · igual a la actual (D-9): 422', async () => {
-    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
-    expect((await ajustar(app, await adminCookie(), 't1', { prioridad: 'Low', motivo: 'x' })).status).toBe(422)
+    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'High'); const { app } = appWith()
+    expect((await ajustar(app, await adminCookie(), 't1', { prioridad: 'High', motivo: 'x' })).status).toBe(422)
     expect(await ajustes()).toEqual([])
   })
 
@@ -257,19 +257,19 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect(res.body.errors).toHaveLength(2)
   })
 
-  it('TC29-4 · cliente sin fila o con top5 falso: 409 y sin cambio', async () => {
+  it('TC29-4 · cliente sin fila o con top5 falso: SE AJUSTA, 200 y una traza por ticket', async () => {
     await cliente('cli-1'); await cliente('cli-2'); await marcarTop5('cli-2', 'High', false)
     await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-2', 'Low'); const { app } = appWith(); const admin = await adminCookie()
-    expect((await ajustar(app, admin, 't1', OK)).status).toBe(409)
-    expect((await ajustar(app, admin, 't2', OK)).status).toBe(409)
-    expect([await prioridadDe('t1'), await prioridadDe('t2')]).toEqual(['Low', 'Low'])
-    expect(await ajustes()).toEqual([])
+    expect((await ajustar(app, admin, 't1', OK)).status).toBe(200)
+    expect((await ajustar(app, admin, 't2', OK)).status).toBe(200)
+    expect([await prioridadDe('t1'), await prioridadDe('t2')]).toEqual(['Medium', 'Medium'])
+    expect((await ajustes()).map((f) => f.ticket_id)).toEqual(['t1', 't2'])
   })
 
-  it('TC29-5 · ticket sin client_id: 409', async () => {
+  it('TC29-5 · ticket sin client_id: SE AJUSTA, 200 (S-H)', async () => {
     await ticketSinCliente('t1', 9201); const { app } = appWith()
-    expect((await ajustar(app, await adminCookie(), 't1', OK)).status).toBe(409)
-    expect(await prioridadDe('t1')).toBe('Low')
+    expect((await ajustar(app, await adminCookie(), 't1', OK)).status).toBe(200)
+    expect(await prioridadDe('t1')).toBe('Medium')
   })
 
   it('TC29-6 · Coordinador Comercial: 403 y sin cambio', async () => {
@@ -279,14 +279,14 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect(await ajustes()).toEqual([])
   })
 
-  it('TC29-7 · POSICIÓN B1 < B2 · sin permiso Y cliente no Top 5 Y sin motivo: 409, no 403 ni 422', async () => {
+  it('TC29-7 · POSICIÓN B < C (P3) · Coordinador Comercial Y sin motivo, cliente NO Top 5: 403, no 422', async () => {
     await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
-    expect((await ajustar(app, await userCookie(['Comercial'], 'Coordinador Comercial'), 't1', { prioridad: 'Medium' })).status).toBe(409)
+    expect((await ajustar(app, await userCookie(['Comercial'], 'Coordinador Comercial'), 't1', { prioridad: 'Medium' })).status).toBe(403)
   })
 
-  it('TC29-8 · POSICIÓN B1 < C · con permiso Y cliente no Top 5 Y sin motivo: 409, no 422', async () => {
+  it('TC29-8 · POSICIÓN B < C (P4) · Director Técnico Y sin motivo, cliente NO Top 5: 422, no 403 ni 409', async () => {
     await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
-    expect((await ajustar(app, await userCookie(['Comercial'], 'Director Comercial'), 't1', { prioridad: 'Medium' })).status).toBe(409)
+    expect((await ajustar(app, await userCookie(['Compras'], 'Director Técnico'), 't1', { prioridad: 'Medium' })).status).toBe(422)
   })
 
   it('POSICIÓN B2 < C · sin permiso Y cliente Top 5 Y sin motivo: 403, no 422', async () => {
@@ -317,17 +317,17 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect({ n: await trazas(), entrada: await entrada() }).toEqual(antes)
   })
 
-  it('TC29-11 · el sync no pisa la prioridad ajustada: managed_by_app pasa a true y un upsertTicket con otra prioridad no la cambia', async () => {
-    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-1', 'Low'); const { app } = appWith()
-    const filaZoho = (id: string, n: string, priority: string) => ticketRowFromZoho({ id, ticketNumber: n, subject: 'Top 5', status: 'Ingresado', statusType: 'Open', priority, customFields: {} })
-    expect(await marcaApp('t1')).toBe(false)
+  it('TC29-11 · el ajuste protege SÓLO la prioridad: no toca managed_by_app, source ni modified_time, y un upsertTicket con otro estado y otra prioridad actualiza el estado y conserva la prioridad', async () => {
+    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-1', 'Low'); const { app } = appWith(); await db.query("UPDATE tickets SET modified_time = '2026-08-01T10:00:00Z' WHERE id = 't1'")
+    const filaZoho = (id: string, n: string, priority: string) => ticketRowFromZoho({ id, ticketNumber: n, subject: 'Top 5', status: 'En Espera de Repuestos', statusType: 'On Hold', priority, customFields: {} })
+    const frontera = async (id: string) => (await db.query('SELECT managed_by_app, source, modified_time, status, priority FROM tickets WHERE id=$1', [id])).rows[0] as Record<string, unknown>
+    const antes = await frontera('t1'); expect(antes).toMatchObject({ managed_by_app: false, source: 'zoho', status: 'Ingresado' })
     expect((await ajustar(app, await adminCookie(), 't1', { prioridad: 'High', motivo: 'Cliente clave' })).status).toBe(200)
-    expect(await marcaApp('t1')).toBe(true)
-    await upsertTicket(db, filaZoho('t1', '9201', 'Low'))
-    expect(await prioridadDe('t1')).toBe('High')
+    expect(await frontera('t1')).toEqual({ ...antes, priority: 'High' }) // sólo cambia la prioridad: la fila sigue siendo de Zoho y su marca de agua no se mueve
+    expect(await marcaPrioridad('t1')).not.toBeNull(); expect(await ajustes()).toMatchObject([{ ticket_id: 't1', de: 'Low', a: 'High', motivo: 'Cliente clave', origen: null }])
+    await upsertTicket(db, filaZoho('t1', '9201', 'Low')); expect(await frontera('t1')).toMatchObject({ status: 'En Espera de Repuestos', priority: 'High', managed_by_app: false })
     // Control: un ticket NO ajustado sí lo pisa el sincronizador, así que la prueba discrimina.
-    await upsertTicket(db, filaZoho('t2', '9202', 'Medium'))
-    expect(await prioridadDe('t2')).toBe('Medium')
+    await upsertTicket(db, filaZoho('t2', '9202', 'Medium')); expect(await frontera('t2')).toMatchObject({ status: 'En Espera de Repuestos', priority: 'Medium' }); expect(await marcaPrioridad('t2')).toBeNull()
   })
 
   it('TC29-12 · atómico (Plan B, pg-mem no revierte: transaccion.test.ts:25): si el INSERT de la traza falla, la secuencia es BEGIN, UPDATE, INSERT, ROLLBACK, sin COMMIT', async () => {
@@ -356,7 +356,7 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect([await prioridadDe('t1'), await prioridadDe('t2')]).toEqual(['Medium', 'Low'])
   })
 
-  it('PM23-1 · diez sujetos con área Comercial sobre el POST: sólo Director Comercial y admin → 200', async () => {
+  it('PM23-1 · diez sujetos con área Comercial sobre el POST: sólo Director Comercial, Director Técnico y admin → 200', async () => {
     await cliente(); await marcarTop5('cli-1'); const { app } = appWith()
     const sujetos: [string, string][] = []
     let n = 100
@@ -368,10 +368,10 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     for (const [i, [nombre, cookie]] of sujetos.entries()) {
       await ticketDe(`p${i}`, 9300 + i, 'cli-1', 'Low')
       const res = await ajustar(app, cookie, `p${i}`, OK)
-      expect(res.status, nombre).toBe(nombre === 'Director Comercial' || nombre === 'admin' ? 200 : 403)
+      expect(res.status, nombre).toBe(['Director Comercial', 'Director Técnico', 'admin'].includes(nombre) ? 200 : 403)
       if (res.status === 200) aceptados += 1
     }
-    expect(aceptados).toBe(2)
+    expect(aceptados).toBe(3)
   })
 
   it('PM23-2/3 · Director Comercial sin Comercial y Compras + Director Comercial: 403', async () => {
@@ -395,5 +395,80 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
   it('el ajuste sin sesión es 401', async () => {
     const { app } = appWith()
     expect((await request(app).post('/api/tickets/t1/prioridad').send(OK)).status).toBe(401)
+  })
+})
+
+describe('POST /api/tickets/:id/prioridad · ajuste en cualquier ticket y por el Director Técnico (prioridad-tres-niveles)', () => {
+  const filaZoho = (id: string, n: string, priority: string) => ticketRowFromZoho({ id, ticketNumber: n, subject: 'Sin Top 5', status: 'Ingresado', statusType: 'Open', priority, customFields: {} })
+
+  it('ticket sin cliente se ajusta con 200 y deja traza (D7)', async () => {
+    await ticketSinCliente('t1', 9201); const { app } = appWith()
+    const res = await ajustar(app, await adminCookie(), 't1', { prioridad: 'High', motivo: 'Urgente para planta' })
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ ticketId: 't1', prioridad: 'High', clientId: null, top5: false })
+    expect((await ajustes()).map((f) => [f.ticket_id, f.de, f.a])).toEqual([['t1', 'Low', 'High']])
+  })
+
+  it('el 403 lleva el texto nuevo, que nombra al Director Técnico', async () => {
+    await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
+    const res = await ajustar(app, await userCookie(['Comercial'], 'Coordinador Comercial'), 't1', OK)
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Ajustar la prioridad de un ticket requiere el cargo Director Comercial con el área Comercial, o el cargo Director Técnico')
+  })
+
+  it('P5 · POSICIÓN A < C · ticket inexistente Y cuerpo inválido, administrador: 404, no 422', async () => {
+    const { app } = appWith()
+    expect((await ajustar(app, await adminCookie(), 'no-existe', { prioridad: 'Urgent' })).status).toBe(404)
+  })
+
+  it('matriz de diez sujetos con área Comercial sobre un ticket de cliente que NO es Top 5: tres aceptados', async () => {
+    await cliente(); const { app } = appWith()
+    const sujetos: [string, string][] = []
+    let n = 200
+    for (const c of CARGOS) sujetos.push([c, await sujeto(++n, ['Comercial'], c)])
+    sujetos.push(['sin cargo', await sujeto(++n, ['Comercial'], null)])
+    sujetos.push(['admin', await adminCookie()])
+    expect(sujetos).toHaveLength(10)
+    const aceptados: string[] = []
+    for (const [i, [nombre, cookie]] of sujetos.entries()) {
+      await ticketDe(`m${i}`, 9400 + i, 'cli-1', 'Low')
+      const res = await ajustar(app, cookie, `m${i}`, OK)
+      expect(res.status, nombre).toBe(['Director Comercial', 'Director Técnico', 'admin'].includes(nombre) ? 200 : 403)
+      if (res.status === 200) aceptados.push(nombre)
+    }
+    expect(aceptados).toEqual(['Director Técnico', 'Director Comercial', 'admin'])
+  })
+
+  it('el Director Técnico SIN área alguna ajusta (S-F) y deja traza a su nombre', async () => {
+    await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
+    const res = await ajustar(app, await sujeto(1, [], 'Director Técnico'), 't1', OK)
+    expect(res.status).toBe(200)
+    expect((await ajustes())[0]).toMatchObject({ ticket_id: 't1', a: 'Medium', ajustado_por: 'Sujeto 1' })
+  })
+
+  it('sincronizador · un ticket de Zoho de un cliente SIN fila Top 5, ajustado por el Director Técnico, conserva su prioridad en la segunda pasada sin dejar de ser de Zoho; el de control la pierde', async () => {
+    await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); await ticketDe('t2', 9202, 'cli-1', 'Low'); const { app } = appWith()
+    expect((await db.query('SELECT 1 FROM public.cliente_prioridad')).rows).toEqual([])
+    expect([await marcaApp('t1'), await marcaApp('t2')]).toEqual([false, false])
+    expect((await ajustar(app, await sujeto(1, ['Servicio Técnico'], 'Director Técnico'), 't1', { prioridad: 'High', motivo: 'Cliente crítico' })).status).toBe(200)
+    expect(await marcaApp('t1')).toBe(false)
+    await upsertTicket(db, filaZoho('t1', '9201', 'Low'))
+    expect(await prioridadDe('t1')).toBe('High')
+    // Control: el ticket NO ajustado sí lo pisa el sincronizador, así que la prueba discrimina.
+    await upsertTicket(db, filaZoho('t2', '9202', 'Medium'))
+    expect(await prioridadDe('t2')).toBe('Medium')
+  })
+})
+
+// Corrección del ajuste manual (S-J): lo nuevo va al final para no desplazar las pruebas citadas por línea (D11).
+const marcaPrioridad = async (id: string) => ((await db.query('SELECT prioridad_en_app_at FROM tickets WHERE id=$1', [id])).rows[0] as { prioridad_en_app_at: unknown }).prioridad_en_app_at
+describe('POST /api/tickets/:id/prioridad · el ajuste y los tickets que ya eran de la aplicación (S-J)', () => {
+  it('TC29-11b · un ticket que ya era de la app (managed_by_app) lo sigue siendo tras el ajuste, y recibe la marca', async () => {
+    await cliente(); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
+    await db.query("UPDATE tickets SET managed_by_app = true, source = 'app' WHERE id = 't1'")
+    expect((await ajustar(app, await adminCookie(), 't1', OK)).status).toBe(200)
+    expect(await marcaApp('t1')).toBe(true)
+    expect((await db.query("SELECT source FROM tickets WHERE id = 't1'")).rows[0]).toEqual({ source: 'app' })
+    expect(await marcaPrioridad('t1')).not.toBeNull()
   })
 })

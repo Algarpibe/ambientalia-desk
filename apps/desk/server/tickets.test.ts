@@ -175,7 +175,7 @@ describe('GET /api/tickets/:id/conversations (hilo compuesto)', () => {
       'Equipo: Grimm EDM180C · serie 18A20070',
       'Tipo de servicio: Calibración',
       'Orden de venta: OV-2026-141',
-      'Clasificación: Equipo nuevo · Prioridad: Media',
+      'Clasificación: Equipo nuevo · Prioridad: Medium', // el alta ya no lee `prioridad` del cuerpo (la 'Media' enviada arriba se ignora): nace con la de por defecto
     ].join('\n'))
     // Lo que arregla esta ruta: un ticket nacido en la app no existe en Zoho y no se le pregunta por él.
     expect(sync.syncConversations).not.toHaveBeenCalled()

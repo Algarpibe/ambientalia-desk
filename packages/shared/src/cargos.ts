@@ -75,7 +75,7 @@ export function puedeCrearOVIGarantia(s: Pick<SujetoDePermiso, 'isAdmin' | 'carg
 
 /**
  * Fijar la prioridad de los Top 5: área Comercial Y cargo Director Comercial; el admin pasa.
- * La llaman el PUT de la prioridad del cliente, el POST de ajuste por ticket y la guarda del técnico de `ticketService.ts` (F1B-07). Supuesto S-9 (reversible): el área del acto es Comercial.
+ * La llama el PUT de la prioridad del cliente y, dentro de `puedeAjustarPrioridadTicket`, el POST de ajuste y la guarda del técnico (F1B-07). Supuesto S-9 (reversible): el área del acto es Comercial.
  */
 export function puedeFijarPrioridadTop5(s: SujetoDePermiso): boolean {
   return canExecuteTransition(s.areas, s.isAdmin, 'Comercial')
@@ -95,4 +95,13 @@ export function cargoPermisoDelCuerpo(v: unknown): { ok: true; cargo: Cargo | nu
     if (esCargo(recortado)) return { ok: true, cargo: recortado }
   }
   return { ok: false, error: `El cargo debe ser uno de: ${CARGOS.join(', ')}` }
+}
+
+/** Los cargos que ajustan la prioridad de UN ticket sin pasar por el área Comercial (prioridad-tres-niveles). Dato, no código. */
+export const CARGOS_AJUSTE_PRIORIDAD_TICKET: readonly Cargo[] = ['Director Técnico']
+
+/** Ajustar la prioridad de un ticket: quien fija un Top 5 (Director Comercial con Comercial; el admin pasa) o un cargo de la lista, SIN área (S-F). */
+export function puedeAjustarPrioridadTicket(s: SujetoDePermiso): boolean {
+  const cargo = cargoEfectivo(s)
+  return puedeFijarPrioridadTop5(s) || (cargo !== null && CARGOS_AJUSTE_PRIORIDAD_TICKET.includes(cargo))
 }

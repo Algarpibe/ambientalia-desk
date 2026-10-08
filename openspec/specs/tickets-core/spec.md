@@ -855,25 +855,31 @@ IV-8; supuesto S-9).
 
 ### RQ-TC-24 · Prioridad `High` al nacer, por el contrato del cliente, impuesta por el servidor
 
-Cuando el **cliente del ticket** —ya resuelto en el alta (`ticketService.ts:89`)— tenga un contrato
-**vigente** hoy (`RQ-TC-22`) **o** sea **Top 5** (`RQ-TC-26`), `createManagedTicket` **SHALL** crear el ticket con
+La prioridad con la que nace un ticket **SHALL** ser de tres niveles y la impone el servidor. Cuando el **cliente del
+ticket** —ya resuelto en el alta (`ticketService.ts:89`)— tenga un contrato **vigente** hoy (`RQ-TC-22`) **o** sea
+**Top 5** (`RQ-TC-26`) con una prioridad de la lista asignable, `createManagedTicket` **SHALL** crear el ticket con
 **la más alta** de las prioridades que apliquen, con el orden `Urgent > High > Medium > Low`: `High` por el contrato
 (supuesto S-4: «Alta» del maestro ≡ el literal `High` de `packages/shared/src/transitions.ts:84`) y la `prioridad` de
-`public.cliente_prioridad` por el Top 5. La prioridad del cuerpo **MUST NOT** intervenir cuando aplica al menos una de
-las dos, y también para correctivos cotizados aparte (`decision/anexo-53-contratos`, regla `:2456`: «manda la
-prioridad más alta de las dos»). Si el cliente no tiene contrato vigente ni es Top 5, la prioridad **SHALL** ser la
-que hoy resulte del cuerpo, o ninguna (`ticketService.ts:106` en `9288779`). La imposición **SHALL** ser del servidor
-(regla invariable 13): que el formulario la muestre o no es comodidad.
-(Previously: sólo combinaba el contrato; «manda la más alta de las dos» con Top 5 quedaba fuera, para F1B-07.)
+`public.cliente_prioridad` por el Top 5. Si el cliente no tiene contrato vigente ni es Top 5, el ticket **SHALL**
+nacer `Medium` («media el resto»). **La prioridad pedida en el cuerpo del alta MUST NOT intervenir nunca**, valga
+`High`, `Medium`, `Low`, `Urgent`, un valor desconocido o nada, también para correctivos cotizados aparte
+(`decision/anexo-53-contratos`, regla `:2456`: «manda la prioridad más alta de las dos»). La imposición **SHALL** ser
+del servidor (regla invariable 13): el formulario no ofrece prioridad en el alta, y si el cuerpo la trae, se ignora.
+(Previously: sin contrato ni Top 5 la prioridad era «la que hoy resulte del cuerpo, o ninguna», y el cuerpo sólo se
+ignoraba cuando aplicaba contrato o Top 5.)
+
+La vigencia es la de `RQ-TC-22`, evaluada en la zona horaria de la aplicación: el día del vencimiento el contrato
+sigue vigente y el ticket nace `High`; el día siguiente, `Medium`. Si el contrato se ha ampliado (`RQ-TC-53`), cuenta la
+fecha ampliada.
 
 La prioridad se toma del cliente del **ticket**, no de la subOV ni del cliente del contrato ni del de la OV (supuesto
 S-9 de F1B-06). Este requisito gobierna el **nacimiento**; lo que ocurre con los tickets **ya existentes** cuando
 cambia el Top 5 del cliente lo fijan `RQ-TC-35` (marcar o cambiar), `RQ-TC-36` (desmarcar) y `RQ-TC-37` (los
-exentos), con la misma fórmula, y un ticket que nace bajo Top 5 deja la traza de `RQ-TC-38` para poder volver a su
-calculada. Lo que una transición escriba después en `priority` no lo reevalúa este requisito (supuesto S-1 de F1B-07)
-ni lo trata la propagación como ajuste manual (supuesto S-4 de `propagar-top5-lista-remision-creada`). Un valor
-desconocido en el cuerpo **MUST** perder siempre frente al contrato y al Top 5 (supuesto S-3). Un ticket sin
-`client_id` no hereda de ningún cliente.
+exentos), y un ticket que nace bajo Top 5 deja la traza de `RQ-TC-38` para poder volver a su base, que es `Medium`
+(supuesto S-I de la propuesta). Lo que una transición escriba después en `priority` no lo reevalúa este requisito
+(supuesto S-1 de F1B-07) ni lo trata la propagación como ajuste manual (supuesto S-4 de
+`propagar-top5-lista-remision-creada`). Un ticket sin `client_id` (sólo llega por Zoho: el alta de la aplicación sin cliente responde `422`) no hereda de ningún cliente. Los
+tickets existentes con otro valor no se reescriben (`RQ-TC-56`).
 
 #### Scenario: Cliente con contrato vigente → el ticket nace `High` aunque el cuerpo traiga `Low`
 
@@ -883,15 +889,15 @@ desconocido en el cuerpo **MUST** perder siempre frente al contrato y al Top 5 (
 
 #### Scenario: Cliente con contrato vigente y cuerpo sin prioridad → `High`
 
-- GIVEN un cliente con contrato vigente, no Top 5, y un alta sin prioridad
+- GIVEN un cliente con un contrato vigente, no Top 5, y un alta sin prioridad
 - WHEN se crea el ticket
 - THEN el ticket queda con prioridad `High`
 
-#### Scenario: Combinación 1 · sin contrato y sin Top 5, todo queda como hoy
+#### Scenario: Combinación 1 · sin contrato y sin Top 5, nace `Medium` pida lo que pida el cuerpo
 
-- GIVEN un cliente sin contrato vigente y no Top 5, y dos altas: una con `prioridad: 'Low'` y otra sin prioridad
+- GIVEN un cliente sin contrato vigente y no Top 5, y tres altas: una con `prioridad: 'Low'`, una con `prioridad: 'High'` y otra sin prioridad
 - WHEN se crean los tickets
-- THEN el primero queda `Low` y el segundo sin prioridad, igual que antes de este cambio
+- THEN los tres quedan `Medium`
 
 #### Scenario: Combinación 2 · contrato vigente y sin Top 5 → `High`
 
@@ -901,18 +907,19 @@ desconocido en el cuerpo **MUST** perder siempre frente al contrato y al Top 5 (
 
 #### Scenario: Combinación 3 · Top 5 sin contrato → la del Top 5
 
-- GIVEN un cliente Top 5 con `prioridad: 'Medium'`, sin contrato vigente, y un alta con `prioridad: 'Low'`
+- GIVEN un cliente Top 5 con `prioridad: 'High'`, sin contrato vigente, y un alta con `prioridad: 'Low'`
 - WHEN se crea el ticket
-- THEN el ticket queda `Medium`
+- THEN el ticket queda `High`
+- AND con `prioridad: 'Medium'` en el Top 5 queda `Medium`, también con un cuerpo que pida `High`
 
 #### Scenario: Combinación 4 · contrato y Top 5 a la vez → manda la más alta
 
-- GIVEN un cliente con contrato vigente y Top 5 con `prioridad: 'Low'`
+- GIVEN un cliente con contrato vigente y Top 5 con `prioridad: 'Medium'`
 - WHEN se crea el ticket
 - THEN el ticket queda `High`
 - AND con `prioridad: 'High'` en el Top 5 también queda `High`
 
-#### Scenario: Top 5 más alta que el contrato no existe en la lista blanca, pero el orden se respeta
+#### Scenario: la función pura combina por orden, no por posición
 
 - GIVEN la función pura que combina las prioridades y las entradas `High` (contrato) y `Medium` (Top 5)
 - WHEN se evalúa, y luego con las entradas intercambiadas
@@ -924,17 +931,17 @@ desconocido en el cuerpo **MUST** perder siempre frente al contrato y al Top 5 (
 - WHEN se crean los tickets
 - THEN el primero queda `Medium` y el segundo `High`
 
-#### Scenario: `Urgent` del cuerpo sin contrato ni Top 5 se conserva como hoy
+#### Scenario: `Urgent` del cuerpo sin contrato ni Top 5 ya no se conserva
 
 - GIVEN un cliente sin contrato vigente ni Top 5 y un alta con `prioridad: 'Urgent'`
 - WHEN se crea el ticket
-- THEN el ticket queda `Urgent`, como antes de este cambio
+- THEN el ticket queda `Medium`
 
 #### Scenario: Un contrato vencido o aún no iniciado no da prioridad
 
 - GIVEN un cliente cuyo único contrato tiene fin anterior a hoy, y otro cuyo único contrato empieza mañana, ninguno Top 5
-- WHEN se crea un ticket con `prioridad: 'Low'` para cada uno
-- THEN ambos quedan `Low`
+- WHEN se crea un ticket con `prioridad: 'High'` para cada uno
+- THEN ambos quedan `Medium`
 
 #### Scenario: El día del fin todavía cuenta
 
@@ -942,11 +949,29 @@ desconocido en el cuerpo **MUST** perder siempre frente al contrato y al Top 5 (
 - WHEN el cliente crea un ticket sin prioridad
 - THEN el ticket nace `High`
 
+#### Scenario: El día siguiente al fin ya no cuenta
+
+- GIVEN un contrato cuyo fin fue ayer
+- WHEN el cliente crea un ticket sin prioridad
+- THEN el ticket nace `Medium`
+
+#### Scenario: la vigencia se mide en la zona de la aplicación, no en UTC
+
+- GIVEN un contrato cuyo fin es el día D, y un instante que en UTC ya es el día D+1 pero en la zona de la aplicación sigue siendo el día D
+- WHEN se crea un ticket en ese instante
+- THEN el ticket nace `High`
+
+#### Scenario: un contrato ampliado sigue dando `High` pasado el fin original
+
+- GIVEN un contrato ampliado (`RQ-TC-53`) cuya fecha de fin original fue ayer y cuya fecha ampliada es posterior a hoy
+- WHEN se crea un ticket para su cliente
+- THEN el ticket nace `High`
+
 #### Scenario: Manda el cliente del ticket, no el del contrato
 
 - GIVEN un contrato vigente del cliente A y un alta para el cliente B, que no tiene contrato ni es Top 5, con una subOV del lote de A
 - WHEN se crea el ticket
-- THEN la prioridad no se fuerza a `High` por el contrato de A
+- THEN la prioridad no se fuerza a `High` por el contrato de A y el ticket nace `Medium`
 
 #### Scenario: El Top 5 se toma del cliente del ticket, no del de la OV
 
@@ -956,17 +981,17 @@ desconocido en el cuerpo **MUST** perder siempre frente al contrato y al Top 5 (
 
 #### Scenario: S-1 (invertido) · marcar Top 5 cambia los tickets abiertos existentes
 
-- GIVEN un cliente con dos tickets abiertos de prioridad `Low` y un usuario con permiso
+- GIVEN un cliente con dos tickets abiertos de prioridad `Medium` y un usuario con permiso
 - WHEN marca al cliente como Top 5 con `prioridad: 'High'`
 - THEN los dos tickets abiertos quedan `High`, cada uno con su traza (`RQ-TC-35`)
 - AND un ticket creado después nace `High`
 
-#### Scenario: S-9 (invertido) · desmarcar el Top 5 devuelve los tickets a su prioridad calculada
+#### Scenario: S-9 (invertido) · desmarcar el Top 5 devuelve los tickets a su base
 
-- GIVEN un ticket nacido `High` por el Top 5 de su cliente, con cuerpo `Low` y sin contrato
+- GIVEN un ticket nacido `High` por el Top 5 de su cliente y sin contrato, con su traza de alta de `Medium` a `High`
 - WHEN se quita el Top 5 del cliente
-- THEN el ticket vuelve a `Low`, con su traza (`RQ-TC-36`)
-- AND un ticket nuevo de ese cliente, sin contrato, toma la prioridad del cuerpo
+- THEN el ticket vuelve a `Medium`, con su traza (`RQ-TC-36`)
+- AND un ticket nuevo de ese cliente, sin contrato, nace `Medium`
 
 #### Scenario: ticket sin `client_id` no hereda
 
@@ -1066,12 +1091,16 @@ final** de `packages/zoho-sync/src/db/schema.sql`, sin mover ninguna línea ante
 
 El servidor SHALL exponer la lectura y la escritura de `top5` y `prioridad` de un cliente. La escritura SHALL exigir
 `puedeFijarPrioridadTop5` (`packages/shared/src/cargos.ts:80-83`), que se CONSUME y MUST NOT reescribirse en el cliente
-ni en el servidor (regla invariable 13). Sin el permiso, el servidor SHALL responder `403` y no escribir nada. Un único
-predicado SHALL cubrir fijar la prioridad y mantener la lista (supuesto S-5). `prioridad` SHALL pertenecer a la lista
-blanca `High | Medium | Low`; cualquier otro valor, incluido `Urgent`, SHALL responder `422` (supuesto S-3). Cuando
-`top5` sea verdadero, `prioridad` SHALL ser obligatoria (hipótesis de esta especificación, ver riesgos). `top5` MUST
-ser booleano; otro tipo SHALL responder `422`. Cada escritura SHALL registrar `actualizado_por` y `actualizado_at`. La
-lectura SHALL estar disponible para cualquier usuario autenticado.
+ni en el servidor (regla invariable 13). Sin el permiso, el servidor SHALL responder `403` y no escribir nada. El
+Director Técnico no queda dentro de este permiso: la excepción del ajuste por ticket (`RQ-TC-29`) no alcanza a la
+prioridad del cliente (supuesto S-E de la propuesta). Un único predicado SHALL cubrir fijar la prioridad y mantener la
+lista (supuesto S-5). `prioridad` SHALL pertenecer a la lista blanca `High | Medium`, la misma lista asignable de
+`packages/shared` que usan las opciones del campo `priority` de las transiciones; cualquier otro valor, incluidos `Low`
+y `Urgent`, SHALL responder `422` (supuesto S-3). Cuando `top5` sea verdadero, `prioridad` SHALL ser obligatoria
+(hipótesis de esta especificación, ver riesgos). `top5` MUST ser booleano; otro tipo SHALL responder `422`. Cada
+escritura SHALL registrar `actualizado_por` y `actualizado_at`. La lectura SHALL estar disponible para cualquier
+usuario autenticado.
+(Previously: la lista blanca era `High | Medium | Low`.)
 
 La escritura SHALL respetar el orden de precedencia: `403` (B) antes de todo `422` (C).
 
@@ -1105,6 +1134,11 @@ invariable 13: qué tickets se tocan lo decide el servidor; el recuento que la p
 - GIVEN un usuario con permiso
 - WHEN envía `prioridad: 'Urgent'` o `prioridad: 'Alta'` para un Top 5
 - THEN responde `422` y no se escribe la fila
+
+#### Scenario: `Low` ya no es asignable
+- GIVEN un usuario con permiso
+- WHEN envía `top5: true` con `prioridad: 'Low'`
+- THEN responde `422` y no se escribe la fila ni se propaga nada
 
 #### Scenario: Top 5 sin prioridad
 - GIVEN un usuario con permiso
@@ -1150,31 +1184,42 @@ invariable 13: qué tickets se tocan lo decide el servidor; el recuento que la p
 
 Mientras ningún usuario tenga `cargo_permiso`, sólo un administrador SHALL poder fijar la prioridad de un cliente,
 mantener la lista Top 5 y ajustar la prioridad de un ticket. Sin lista, nadie es Top 5 y la prioridad al nacer SHALL
-ser la que resulta hoy (`RQ-TC-24` sin Top 5).
+ser la de `RQ-TC-24` sin Top 5: `Medium`, o `High` con contrato vigente.
+(Previously: «la que resulta hoy», que era la pedida en el cuerpo.)
 
 #### Scenario: nadie tiene cargo
 - GIVEN una base donde todos los `cargo_permiso` son nulos y ningún cliente es Top 5
 - WHEN un no admin de `Comercial` intenta marcar un Top 5, y luego un administrador lo marca
 - THEN el primero recibe `403` y el administrador `200`
 
-#### Scenario: sin lista, el alta es la de hoy
+#### Scenario: nadie tiene cargo, tampoco ajusta un ticket
+- GIVEN una base donde todos los `cargo_permiso` son nulos
+- WHEN un no admin intenta ajustar la prioridad de un ticket, y luego un administrador lo hace
+- THEN el primero recibe `403` y el administrador `200`
+
+#### Scenario: sin lista, el alta nace `Medium`
 - GIVEN una base sin ninguna fila en `cliente_prioridad`
 - WHEN se crea un ticket de un cliente sin contrato con `prioridad: 'Low'`
-- THEN el ticket queda `Low`, como antes de este cambio
+- THEN el ticket queda `Medium`
 
 ### RQ-TC-29 · Ajuste de la prioridad de un ticket de un cliente Top 5, con motivo y traza
 
-Un usuario con `puedeFijarPrioridadTop5` SHALL poder cambiar la prioridad de un ticket concreto cuyo cliente sea Top 5,
-aportando un **motivo escrito obligatorio**. Las respuestas SHALL seguir el orden de precedencia, sin solape de
-códigos: `404` si el ticket no existe (A); `409` si el cliente del ticket no es Top 5, incluido el ticket sin
-`client_id` (B, supuesto S-8: estado del sujeto, que precede al permiso como en `ticketService.ts:126-130`); `403` si
-el usuario no cumple el predicado (B); `422` si falta el motivo, si es sólo
-espacios o si la prioridad no está en `High | Medium | Low` (C). Cuando el ajuste se aplique, el servidor SHALL, en una
+Un Director Comercial (con su área `Comercial`), un Director Técnico (por cargo, sin exigirle área) o un administrador
+SHALL poder cambiar la prioridad de **cualquier** ticket, sea o no de un cliente Top 5 y tenga o no `client_id`,
+aportando un **motivo escrito obligatorio**. El permiso lo decide el predicado de ajuste por ticket de
+`packages/shared` (`permissions` RQ-PM-20 y RQ-PM-23), que se CONSUME y no se reescribe (regla invariable 13): es
+`puedeAjustarPrioridadTicket`. Las respuestas SHALL seguir el orden de precedencia, sin solape de códigos: `404` si el
+ticket no existe (A); `403` si el usuario no cumple el predicado (B), con el mensaje `Ajustar la prioridad de un ticket requiere el cargo Director Comercial con el área Comercial, o el cargo Director Técnico`; `422` si falta el motivo, si es sólo
+espacios o si la prioridad no está en `High | Medium` (C), con el mensaje de lista `La prioridad debe ser una de: High, Medium`. Ya no hay `409` por «el cliente no es Top 5» ni por
+«ticket sin cliente» (supuestos S-D, S-G y S-H de la propuesta). Cuando el ajuste se aplique, el servidor SHALL, en una
 **misma transacción**: actualizar `tickets.priority`, insertar una fila en `public.prioridad_ajustes` (ticket,
-prioridad anterior, prioridad nueva, motivo, autor, fecha) y fijar `managed_by_app = true` (supuesto S-6). El ajuste
+prioridad anterior, prioridad nueva, motivo, autor, fecha) y poner en ese ticket la marca `prioridad_en_app_at` (`zoho-sync` RQ-ZS-01), que protege SÓLO
+la prioridad frente al sincronizador. El ajuste MUST NOT cambiar `managed_by_app`, `source` ni `modified_time` (supuesto S-J, que sustituye al S-6): un ticket venido de Zoho sigue recibiendo de Zoho todo lo demás. El ajuste
 MUST NOT escribir en `ticket_transitions`, ni cambiar el estado, ni reiniciar el reloj de SLA. La sentencia
 `CREATE TABLE` de `public.prioridad_ajustes` SHALL llevar el esquema calificado y SHALL ir al final de `schema.sql`,
 después de la de `cliente_prioridad`. Sólo la prioridad de ese ticket cambia; los demás tickets del cliente no.
+(Previously: sólo un usuario con `puedeFijarPrioridadTop5` sobre tickets de clientes Top 5, con `409` para el cliente
+que no lo es y para el ticket sin `client_id`, lista `High | Medium | Low`, y el ajuste fijaba `managed_by_app = true`, que congelaba la fila entera.)
 
 La fila de traza de un ajuste manual SHALL llevar el origen vacío, que es lo que significa «manual» (`RQ-TC-38`), y
 desde ese momento el ticket queda **exento** de la propagación y de la reversión del Top 5 (`RQ-TC-37`): conserva el
@@ -1185,40 +1230,70 @@ valor que se le ajustó.
 - WHEN ajusta a `High` con motivo «Parada de planta»
 - THEN responde `200`, el ticket queda `High` y `public.prioridad_ajustes` tiene una fila con anterior `Medium`, nueva `High`, el motivo, el autor y la fecha
 
+#### Scenario: el Director Técnico ajusta un ticket de un cliente que no es Top 5
+- GIVEN un ticket de un cliente sin fila Top 5 y un usuario con cargo `Director Técnico`
+- WHEN ajusta a `High` con motivo
+- THEN responde `200`, el ticket queda `High` y hay una fila de traza con su motivo
+
+#### Scenario: el Director Técnico no necesita el área Comercial
+- GIVEN un usuario con cargo `Director Técnico` sin el área `Comercial`
+- WHEN ajusta la prioridad de un ticket con motivo
+- THEN responde `200`
+
+#### Scenario: administrador ajusta
+- GIVEN un administrador sin `cargo_permiso`
+- WHEN ajusta la prioridad de un ticket con motivo
+- THEN responde `200`
+
+#### Scenario: ticket sin `client_id`, se ajusta
+- GIVEN un ticket sin `client_id` y un usuario con permiso
+- WHEN envía el ajuste con motivo
+- THEN responde `200` y el ticket cambia
+
 #### Scenario: sin motivo, 422
-- GIVEN un ticket de un cliente Top 5 y un usuario con permiso
+- GIVEN un ticket de un cliente cualquiera y un usuario con permiso
 - WHEN envía el ajuste sin motivo, o con motivo de sólo espacios
 - THEN responde `422`, la prioridad no cambia y no se inserta traza
 
 #### Scenario: valor fuera de la lista blanca
-- GIVEN un ticket de un cliente Top 5 y un usuario con permiso
-- WHEN envía `prioridad: 'Urgent'` con motivo
+- GIVEN un ticket y un usuario con permiso
+- WHEN envía `prioridad: 'Urgent'` o `prioridad: 'Low'` con motivo
 - THEN responde `422`
 
-#### Scenario: cliente que no es Top 5, 409
-- GIVEN un ticket de un cliente sin fila Top 5 (o con `top5: false`) y un usuario con permiso
-- WHEN envía el ajuste con motivo
-- THEN responde `409` y no cambia nada
-
-#### Scenario: ticket sin `client_id`, 409
-- GIVEN un ticket sin `client_id` y un usuario con permiso
-- WHEN envía el ajuste con motivo
-- THEN responde `409`
-
 #### Scenario: sin el predicado, 403
-- GIVEN un ticket de un cliente Top 5 y un usuario de `Comercial` con cargo `Coordinador Comercial`
+- GIVEN un ticket y un usuario de `Comercial` con cargo `Coordinador Comercial`
 - WHEN envía el ajuste con motivo
 - THEN responde `403` y no cambia nada
 
-#### Scenario: 409 antes que 403 y que 422 (C-3)
-- GIVEN un usuario sin permiso, un ticket de un cliente que no es Top 5 y un cuerpo sin motivo
-- WHEN envía el ajuste
-- THEN responde `409`, no `403` ni `422`
+#### Scenario: un Director Comercial sin el área Comercial, 403
+- GIVEN un usuario con cargo `Director Comercial` y sólo el área `Servicio Técnico`
+- WHEN envía el ajuste con motivo
+- THEN responde `403` y no cambia nada
 
-#### Scenario: 409 antes que 422
+#### Scenario: un técnico sin cargo de dirección, 403
+- GIVEN un usuario del área `Servicio Técnico` sin cargo, o con un cargo que no es de dirección
+- WHEN envía el ajuste con motivo
+- THEN responde `403`
+
+#### Scenario: un cliente que no es Top 5 ya no da 409
+- GIVEN un ticket de un cliente sin fila Top 5 (o con `top5: false`) y un usuario con permiso
+- WHEN envía el ajuste con motivo
+- THEN responde `200`, no `409`
+
+#### Scenario: 404 antes que 403 (A antes que B)
+- GIVEN un identificador de ticket que no existe y un usuario sin permiso
+- WHEN envía el ajuste
+- THEN responde `404`, no `403`
+
+#### Scenario: 403 antes que 422 (B antes que C)
+- GIVEN un usuario `Coordinador Comercial` y un ticket existente, con un cuerpo sin motivo
+- WHEN envía el ajuste
+- THEN responde `403`, no `422`
+
+#### Scenario: con permiso y sin motivo sobre un cliente que no es Top 5, 422
 - GIVEN un usuario con permiso, un ticket de un cliente que no es Top 5 y un cuerpo sin motivo
 - WHEN envía el ajuste
-- THEN responde `409`, no `422`
+- THEN responde `422`, no `409`
 
 #### Scenario: ticket inexistente
 - GIVEN un identificador de ticket que no existe
@@ -1226,21 +1301,27 @@ valor que se le ajustó.
 - THEN responde `404`
 
 #### Scenario: el ajuste no toca `ticket_transitions` ni el SLA
-- GIVEN un ticket de un cliente Top 5 con una última transición de entrada al estado actual
+- GIVEN un ticket con una última transición de entrada al estado actual
 - WHEN se ajusta su prioridad
 - THEN `ticket_transitions` no gana ninguna fila
 - AND el instante de entrada al estado que lee el SLA es el mismo de antes
 
-#### Scenario: S-6 · el ajuste congela la fila frente al sincronizador
-- GIVEN un ticket de Zoho con `managed_by_app = false` de un cliente Top 5
+#### Scenario: S-J · el ajuste protege sólo la prioridad frente al sincronizador
+- GIVEN un ticket de Zoho con `managed_by_app = false` de un cliente que NO es Top 5
+- WHEN el Director Técnico ajusta su prioridad
+- THEN `managed_by_app`, `source` y `modified_time` no cambian, y la marca `prioridad_en_app_at` queda puesta en la misma transacción
+- AND una pasada posterior de `upsertTicket` con otro estado y otra prioridad actualiza el estado y no sobrescribe `priority`
+- AND un ticket de control de Zoho sin ajuste sí recibe la prioridad nueva de la pasada
+
+#### Scenario: un ticket que ya era de la aplicación lo sigue siendo
+- GIVEN un ticket con `managed_by_app = true`
 - WHEN se ajusta su prioridad
-- THEN `managed_by_app` pasa a `true` en la misma transacción
-- AND una pasada posterior de `upsertTicket` no sobrescribe `priority`
+- THEN `managed_by_app` sigue `true` y la marca `prioridad_en_app_at` queda puesta
 
 #### Scenario: atomicidad
 - GIVEN un ajuste cuya inserción en `prioridad_ajustes` falla
 - WHEN se ejecuta
-- THEN `tickets.priority` y `managed_by_app` conservan su valor anterior
+- THEN `tickets.priority` y `prioridad_en_app_at` conservan su valor anterior
 
 #### Scenario: sólo ese ticket cambia
 - GIVEN un cliente Top 5 con dos tickets abiertos
@@ -1696,7 +1777,8 @@ ningún caso se tocan los tickets con un ajuste manual con motivo, que mantienen
 Cuando la escritura de `RQ-TC-27` se acepta con `top5` verdadero, el servidor **SHALL**, en la MISMA transacción que
 escribe `public.cliente_prioridad`, hacer que cada ticket del cliente (`tickets.client_id`) que sea **abierto** y no
 esté **exento** (`RQ-TC-37`) tome la prioridad que resulta de la fórmula del alta (`RQ-TC-24`): la más alta entre
-`High` por contrato vigente hoy y la prioridad del Top 5; sin contrato vigente, la del Top 5.
+`High` por contrato vigente hoy y la prioridad del Top 5; sin contrato vigente, la del Top 5. La prioridad del Top 5
+es `High` o `Medium` (`RQ-TC-27`).
 
 - **Abierto** (supuesto S-3): `status_type <> 'Closed' OR status_type IS NULL` (el predicado de `repo.ts:151`). Los
   tickets en espera cuentan como abiertos. No es la noción de la vista «abiertos» del cliente, que excluye además las
@@ -1727,15 +1809,15 @@ esté **exento** (`RQ-TC-37`) tome la prioridad que resulta de la fórmula del a
 - WHEN se cambia su prioridad a `Medium`
 - THEN los tickets quedan `Medium`, cada uno con una fila nueva de traza `High` → `Medium`
 
-#### Scenario: contrato vigente y Top 5 `Low` dejan el ticket en `High`
+#### Scenario: contrato vigente y Top 5 `Medium` dejan el ticket en `High`
 - GIVEN un cliente con contrato vigente y un ticket abierto `Medium`
-- WHEN se marca al cliente como Top 5 con `prioridad: 'Low'`
+- WHEN se marca al cliente como Top 5 con `prioridad: 'Medium'`
 - THEN el ticket queda `High`
 
 #### Scenario: sin contrato, un Top 5 más bajo hace bajar al ticket (S-5)
 - GIVEN un cliente sin contrato con un ticket abierto `High`
-- WHEN se marca como Top 5 con `prioridad: 'Low'`
-- THEN el ticket queda `Low`, con su traza
+- WHEN se marca como Top 5 con `prioridad: 'Medium'`
+- THEN el ticket queda `Medium`, con su traza
 
 #### Scenario: si la prioridad ya es la resultante, no se escribe ni se traza
 - GIVEN un ticket abierto `High` de un cliente que se marca Top 5 `High`
@@ -1783,6 +1865,9 @@ cada ticket del cliente que sea abierto, no esté exento (`RQ-TC-37`) y **tenga 
 - **Base** (supuesto D-2 de la propuesta): la prioridad que el ticket tenía antes de que el Top 5 la tocara, es decir,
   el `de` de su primera fila de origen alta bajo Top 5 o propagación posterior a su última fila de reversión. Con
   varias propagaciones seguidas la base es la de la primera.
+- **La reversión sigue devolviendo cada ticket a su base** (supuesto S-I de la propuesta). La regla de tres niveles
+  gobierna sólo el nacimiento (`RQ-TC-24`): la reversión **MUST NOT** subir a `Medium` un ticket cuya base era `Low` ni
+  bajar un `Urgent`. Un ticket que nace bajo Top 5 desde este cambio tiene base `Medium`.
 - Un ticket **sin base** (sin ninguna fila de esos orígenes) **MUST NOT** tocarse (supuesto S-10: los nacidos bajo
   Top 5 antes de este cambio).
 - Cada ticket cuya prioridad cambia **SHALL** quedar con una fila de traza de origen reversión (`de` la actual, `a` la
@@ -1802,15 +1887,20 @@ cada ticket del cliente que sea abierto, no esté exento (`RQ-TC-37`) y **tenga 
 - WHEN se desmarca
 - THEN los dos vuelven a `Low`, cada uno con una fila de traza `High` → `Low` de origen reversión
 
+#### Scenario: la reversión no sube a `Medium` un ticket cuya base era `Low` (S-I)
+- GIVEN un cliente sin contrato con un ticket `Urgent` propagado a `High` y otro `Low` propagado a `High`
+- WHEN se desmarca
+- THEN el primero vuelve a `Urgent` y el segundo a `Low`, no a `Medium`
+
 #### Scenario: con contrato vigente, la calculada es `High`
 - GIVEN un cliente con contrato vigente, un ticket `Low` propagado por un Top 5 `Medium`, ahora `High`
 - WHEN se desmarca
 - THEN el ticket queda `High`, sin escritura ni traza si ya lo estaba
 
-#### Scenario: un ticket nacido bajo Top 5 vuelve a su calculada
-- GIVEN un ticket nacido `High` por el Top 5 de su cliente con cuerpo `Low`, con su traza de alta (`RQ-TC-38`)
+#### Scenario: un ticket nacido bajo Top 5 vuelve a su base `Medium`
+- GIVEN un ticket nacido `High` por el Top 5 de su cliente, con su traza de alta de `Medium` a `High` (`RQ-TC-38`)
 - WHEN se desmarca al cliente
-- THEN el ticket vuelve a `Low`, con traza
+- THEN el ticket vuelve a `Medium`, con traza
 
 #### Scenario: un ticket que no tenía prioridad vuelve a no tenerla
 - GIVEN un ticket abierto sin prioridad al que el Top 5 asignó `High`
@@ -1853,16 +1943,17 @@ Gerencia, punto 3: «En ningún caso se tocan los tickets con un ajuste manual c
 
 Un ticket está **exento** cuando tiene **al menos una fila manual** en `public.prioridad_ajustes`, es decir, de origen
 vacío (`RQ-TC-38`), **antes o después** de cualquier propagación. Un ticket exento **MUST NOT** cambiar de prioridad,
-ganar traza ni recibir la marca `prioridad_en_app_at` al marcar al cliente, al cambiar su prioridad ni al
-desmarcarlo. Las filas que existen hoy son todas manuales y **SHALL** contar. La exención **SHALL** evaluarse dentro
-de la transacción de la propagación.
+ganar traza ni ver escrita su marca `prioridad_en_app_at` por la propagación al marcar al cliente, al cambiar su prioridad ni al
+desmarcarlo: la marca que tenga es la de su propio ajuste (`RQ-TC-29`). Las filas que existen hoy son todas manuales y **SHALL** contar. La exención **SHALL** evaluarse dentro
+de la transacción de la propagación. El ajuste manual puede venir ahora del Director Comercial o del Director Técnico
+(`RQ-TC-29`), y la exención es la misma.
 
 - **Regla invariable 13.** La exención la impone el servidor; el cliente no la conoce ni la espeja.
 
 #### Scenario: ajuste manual antes de marcar
-- GIVEN un ticket `Medium` ajustado a mano a `Low` con motivo, y otro ticket `Medium` del mismo cliente sin ajuste
+- GIVEN un ticket `High` ajustado a mano a `Medium` con motivo, y otro ticket `Medium` del mismo cliente sin ajuste
 - WHEN se marca Top 5 `High`
-- THEN el ajustado conserva `Low`, sin traza nueva; el otro pasa a `High`
+- THEN el ajustado conserva `Medium`, sin traza nueva; el otro pasa a `High`
 
 #### Scenario: ajuste manual después de propagar
 - GIVEN un ticket propagado a `High` y luego ajustado a mano a `Medium` con motivo
@@ -1871,8 +1962,13 @@ de la transacción de la propagación.
 
 #### Scenario: cambiar la prioridad del Top 5 tampoco toca al exento
 - GIVEN un ticket con ajuste manual y un cliente Top 5 `High`
-- WHEN se cambia su prioridad a `Low`
+- WHEN se cambia su prioridad a `Medium`
 - THEN el ticket conserva su prioridad
+
+#### Scenario: el ajuste del Director Técnico también exime
+- GIVEN un ticket ajustado a mano por un Director Técnico, de un cliente que luego se marca Top 5 `High`
+- WHEN se propaga
+- THEN el ticket conserva la prioridad que se le ajustó
 
 #### Scenario: las filas anteriores al despliegue cuentan como manuales
 - GIVEN una fila de `prioridad_ajustes` creada antes de añadir la columna de origen, que quedó con origen vacío
@@ -1889,10 +1985,10 @@ de la transacción de la propagación.
 - WHEN se cambia la prioridad del cliente
 - THEN el ticket cambia
 
-#### Scenario: el exento no recibe la marca
+#### Scenario: la propagación no escribe la marca del exento
 - GIVEN un ticket de Zoho exento
 - WHEN se propaga o revierte
-- THEN su `prioridad_en_app_at` sigue vacía
+- THEN su `prioridad_en_app_at` queda como estaba: vacía si la exención viene de una traza anterior a la marca, o con el instante de su ajuste
 
 ### RQ-TC-38 · La traza gana origen; un ticket nacido bajo Top 5 deja traza; el esquema
 
@@ -1903,13 +1999,15 @@ propagación, reversión y alta bajo Top 5. Un `origen` fuera de la lista **SHAL
 protegiendo al ticket (supuesto SP-4 de la especificación, reversible).
 
 - **Alta bajo Top 5.** Cuando un ticket nace con un cliente Top 5 y la prioridad con la que nace difiere de la
-  PEDIDA en el cuerpo, el alta **SHALL** dejar, en la misma transacción que el ticket, una fila de origen alta con
-  `de` = la prioridad pedida sin contrato ni Top 5 (`prioridadAlNacer(pedida, false, null)`), `a` = la que nació, y el
-  autor del alta (supuesto SP-2: si nace con la pedida, no hay fila). Un fallo posterior del alta **MUST NOT** dejar
-  la fila. **Supuesto del orquestador (2026-10-04, `tasks.md` D-1), no letra de Gerencia:** la base es la pedida y no
-  el resultado con contrato, porque volver a «la calculada» recalcula con el contrato vigente el día de la reversión;
-  si la base llevara dentro el contrato del día del alta, un contrato vencido entre medias dejaría el ticket más alto
-  de lo que le corresponde. Reversible; queda como pregunta para la bandeja.
+  **base de nacimiento**, que es `Medium` porque la prioridad pedida en el cuerpo ya no interviene (`RQ-TC-24`), el
+  alta **SHALL** dejar, en la misma transacción que el ticket, una fila de origen alta con `de` = `Medium` (la que
+  nacería sin contrato ni Top 5), `a` = la que nació, y el autor del alta (supuesto SP-2: si nace `Medium`, no hay
+  fila). Un fallo posterior del alta **MUST NOT** dejar la fila. La base es la de nacimiento sin contrato ni Top 5, y
+  no el resultado con contrato, porque volver a «la calculada» recalcula con el contrato vigente el día de la
+  reversión; si la base llevara dentro el contrato del día del alta, un contrato vencido entre medias dejaría el
+  ticket más alto de lo que le corresponde (supuesto D-1 de `propagar-top5-lista-remision-creada`, vigente, y S-I de
+  la propuesta de `prioridad-tres-niveles`). Las filas de alta ya escritas con otra `de` no se reescriben
+  (`RQ-TC-56`).
 - La lectura de la traza de un ticket (`GET /api/tickets/:id/prioridad`) **SHALL** devolver todas sus filas con su
   `origen` (supuesto SP-1 de la especificación).
 - Esquema: `ALTER TABLE public.prioridad_ajustes ADD COLUMN IF NOT EXISTS origen text;` y
@@ -1917,6 +2015,8 @@ protegiendo al ticket (supuesto SP-4 de la especificación, reversible).
   `packages/zoho-sync/src/db/schema.sql`, sin relleno y sin mover ninguna línea anterior. Hipótesis: `pg-mem` admite
   `DROP NOT NULL`; la comprueba el diseño.
 - **Regla invariable 13.** El origen y la traza los escribe el servidor.
+(Previously: la fila de alta se dejaba cuando el ticket nacía con una prioridad distinta de la PEDIDA en el cuerpo, con
+`de` = la pedida.)
 
 #### Scenario: la columna nueva y las filas anteriores
 - GIVEN `schema.sql` aplicado sobre una base con filas previas en `prioridad_ajustes`
@@ -1936,17 +2036,17 @@ protegiendo al ticket (supuesto SP-4 de la especificación, reversible).
 #### Scenario: un ticket que nace bajo Top 5 deja traza
 - GIVEN un cliente Top 5 `High` sin contrato y un alta con cuerpo `Low`
 - WHEN se crea el ticket
-- THEN nace `High` y hay una fila de origen alta con `de` `Low` y `a` `High`
+- THEN nace `High` y hay una fila de origen alta con `de` `Medium` y `a` `High`
 
-#### Scenario: si nace con la prioridad pedida, no hay fila
-- GIVEN un cliente con contrato vigente y Top 5 `Low`
+#### Scenario: si nace `Medium`, no hay fila
+- GIVEN un cliente Top 5 `Medium` sin contrato
 - WHEN se crea un ticket con cuerpo `High`
-- THEN nace `High` y no se inserta ninguna fila
+- THEN nace `Medium` y no se inserta ninguna fila
 
-#### Scenario: la base es la pedida aunque el salto lo cause el contrato
-- GIVEN un cliente con contrato vigente y Top 5 `Low`
+#### Scenario: la base es `Medium` aunque el salto lo cause el contrato
+- GIVEN un cliente con contrato vigente y Top 5 `Medium`
 - WHEN se crea un ticket con cuerpo `Low`
-- THEN nace `High` y hay una fila de origen alta con `de` `Low` y `a` `High` (supuesto D-1 del orquestador)
+- THEN nace `High` y hay una fila de origen alta con `de` `Medium` y `a` `High`
 
 #### Scenario: sin Top 5, el alta no deja traza
 - GIVEN un cliente que no es Top 5
@@ -3205,3 +3305,66 @@ existentes —`apps/desk/server/remisiones.test.ts:988` y `ordenVentaUnTicket.te
 - GIVEN `apps/desk/server/remisiones.test.ts:988` y las pruebas de contratos tal como existen hoy
 - WHEN se ejecutan tras este cambio
 - THEN pasan sin modificar sus casos
+
+### RQ-TC-56 · Los valores ya guardados no se reescriben, y lo que la prioridad en tres niveles NO hace
+
+Gerencia, `decision/p3b-prioridad-tres-niveles` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`): «Tres
+niveles: alta con contrato, Top 5 los que fijo yo, media el resto; sin "baja" por ahora.»
+
+El cambio **MUST NOT** escribir ni esquema ni datos al desplegarse: ningún relleno, ninguna reescritura.
+
+- Un ticket que ya tiene `Low`, `Urgent`, otro valor o ninguna prioridad **SHALL** conservarlo (supuesto S-C de la
+  propuesta). Que `Low` deje de ser asignable no lo cambia en los tickets que ya lo llevan.
+- Una fila de `public.cliente_prioridad` guardada con `top5` verdadero y una prioridad fuera de `High | Medium`
+  (en particular `Low`) **SHALL** dejar de imponer prioridad alguna: el cliente se trata, al nacer un ticket, como si
+  no fuera Top 5 (falla cerrado). Sus tickets abiertos **SHALL** conservar la prioridad que ya recibieron. La fila
+  vuelve a imponer cuando el Director Comercial la guarda de nuevo con `High` o `Medium`, y entonces se propaga
+  (`RQ-TC-35`).
+- Top 5 **MUST NOT** tener rango propio: es una marca del cliente cuyo valor elige el Director Comercial entre `High` y
+  `Medium`. Un Top 5 `High` y un cliente con contrato vigente empatan en `High` (supuesto S-A de la propuesta).
+- La regla **MUST NOT** depender de ninguna «valoración» del cliente: ese nivel queda pendiente de Gerencia y no se
+  construye.
+- La reversión del Top 5 sigue devolviendo cada ticket a su base (`RQ-TC-36`, supuesto S-I): no recalcula con la regla
+  de tres niveles.
+- **Regla invariable 13.** Que un valor guardado no se reescriba y que una fila fuera de la lista no imponga nada son
+  decisiones del servidor sobre la lista de `packages/shared`; el cliente no las espeja.
+
+#### Scenario: un ticket con `Low` conserva `Low`
+- GIVEN un ticket abierto con prioridad `Low` y otro con `Urgent`, creados antes del cambio
+- WHEN el cambio entra en vigor
+- THEN los dos conservan su prioridad y `prioridad_ajustes` no gana ninguna fila
+
+#### Scenario: un ticket sin prioridad sigue sin ella
+- GIVEN un ticket abierto sin prioridad
+- WHEN el cambio entra en vigor
+- THEN su prioridad sigue vacía
+
+#### Scenario: un Top 5 guardado con `Low` no impone nada al nacer
+- GIVEN un cliente con fila `top5` verdadero y `prioridad: 'Low'`, sin contrato vigente
+- WHEN se crea un ticket para él
+- THEN el ticket nace `Medium`
+
+#### Scenario: un Top 5 guardado con `Low` no quita el contrato
+- GIVEN un cliente con fila `top5` verdadero y `prioridad: 'Low'`, con contrato vigente
+- WHEN se crea un ticket para él
+- THEN el ticket nace `High`
+
+#### Scenario: los tickets abiertos de un Top 5 guardado con `Low` conservan lo que tenían
+- GIVEN un cliente con fila `top5` verdadero y `prioridad: 'Low'` cuyos tickets abiertos ya están `Low`
+- WHEN el cambio entra en vigor
+- THEN los tickets siguen `Low` y no se escribe ninguna traza
+
+#### Scenario: volver a guardar el Top 5 con una prioridad de la lista vuelve a imponer
+- GIVEN el cliente anterior y un Director Comercial
+- WHEN guarda `top5: true` con `prioridad: 'High'`
+- THEN responde `200`, sus tickets abiertos pasan a `High` con su traza (`RQ-TC-35`) y los nuevos nacen `High`
+
+#### Scenario: Top 5 `High` y contrato vigente empatan
+- GIVEN un cliente Top 5 `High` con contrato vigente
+- WHEN se crea un ticket
+- THEN el ticket nace `High`, igual que con una sola de las dos condiciones
+
+#### Scenario: nada depende de una valoración del cliente
+- GIVEN dos clientes sin contrato ni Top 5, con datos de cliente distintos
+- WHEN se crea un ticket para cada uno
+- THEN los dos nacen `Medium`

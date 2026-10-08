@@ -44,7 +44,7 @@ export function CreateTicket({ onClose, onCreated }: {
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState(''); const [modalidad, setModalidad] = useState<string>('remoto'); const modalidadVisible = esClasificacionSoporteRemoto(clasificaciones) // F1B-06: sólo soporte remoto; el predicado es el de `shared`
   const [prefijo, setPrefijo] = useState('MT')
-  const [prioridad, setPrioridad] = useState('')
+  // La prioridad ya no se elige en el alta: la asigna el servidor al nacer (prioridad-tres-niveles).
 
   /**
    * Bloque «Equipo nuevo» (`alta-equipo-nuevo-en-ticket`, RQ-TC-15): sólo aparece con la
@@ -228,7 +228,7 @@ export function CreateTicket({ onClose, onCreated }: {
         clientId: clientId ?? undefined,
         equipoId: equipo?.id ?? '',
         tipoServicio, clasificaciones, prefijo, ...(modalidadVisible ? { modalidad } : {}),
-        prioridad: prioridad || undefined,
+        // Sin prioridad en el cuerpo: el servidor no la lee (prioridad-tres-niveles).
         subject, codigoServicio: codigo, ...cuerpoAltaManual(manual, { cliente: clienteManualActivo, equipo: equipoManualActivo, enEquipoNuevo: clasificaciones === 'Equipo nuevo' }),
         ...(equipoNuevoCompleto ? { equipoNuevo: {
           serial: serialNuevo.trim(), modeloId: modeloNuevoId, fechaFacturaCompra,
@@ -423,10 +423,10 @@ export function CreateTicket({ onClose, onCreated }: {
           <select className={field} value={prefijo} onChange={(e) => setPrefijo(e.target.value)}>
             {PREFIJOS.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
-          <select className={field} value={prioridad} onChange={(e) => setPrioridad(e.target.value)}>
-            <option value="">Prioridad (opcional)</option>
-            <option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
-          </select>
+          <span className={`${field} bg-slate-50 text-slate-500`}>
+            Prioridad: la asigna el sistema
+          </span>
+          {/* Texto estático, sin lógica: la prioridad nace en el servidor (prioridad-tres-niveles). */}
         </div>
 
         <div className="flex flex-col gap-1">

@@ -7,10 +7,10 @@
  */
 
 import type { Transition } from './transitions'
-import { puedeFijarPrioridadTop5, type SujetoDePermiso } from './cargos'
+import { puedeAjustarPrioridadTicket, type SujetoDePermiso } from './cargos'
 
-/** Lo que se puede FIJAR. Igual a las opciones del campo `priority` de `transitions.ts:84` (una prueba lo vigila, D-2). */
-export const PRIORIDADES_ASIGNABLES = ['High', 'Medium', 'Low'] as const
+/** Lo que se puede FIJAR: dos niveles. Igual a las opciones del campo `priority` de `transitions.ts:84` (una prueba lo vigila, D-2). */
+export const PRIORIDADES_ASIGNABLES = ['High', 'Medium'] as const
 export type PrioridadAsignable = (typeof PRIORIDADES_ASIGNABLES)[number]
 
 /** Igualdad exacta: no pliega mayúsculas ni idioma (`'high'`, `'Alta'` y `'Urgent'` no son asignables, S-3). */
@@ -52,7 +52,7 @@ export function prioridadClienteDelCuerpo(v: unknown): CuerpoPrioridadCliente {
   return { ok: true, top5: true, prioridad }
 }
 
-export const MENSAJE_PRIORIDAD_BLOQUEADA = 'La prioridad del ticket la fija el Director Comercial: tu cargo no puede cambiarla en esta etapa'
+export const MENSAJE_PRIORIDAD_BLOQUEADA = 'La prioridad del ticket la ajustan el Director Comercial o el Director Técnico: tu cargo no puede cambiarla en esta etapa'
 
 export type CuerpoAjuste =
   | { ok: true; prioridad: PrioridadAsignable; motivo: string }
@@ -75,14 +75,14 @@ export function ajusteDelCuerpo(v: unknown, actual: string | null): CuerpoAjuste
 
 /**
  * La guarda del técnico (RQ-TS-21): verdadero si la transición declara un campo `target: 'priority'` (D-8), el cuerpo trae
- * una prioridad no vacía, distinta de la actual, y el sujeto NO cumple `puedeFijarPrioridadTop5` (se CONSUME de `cargos.ts`;
- * el admin pasa ahí). Sin excepción para el Director Técnico: la pregunta 3.b.3 sigue abierta.
+ * una prioridad no vacía, distinta de la actual, y el sujeto NO cumple `puedeAjustarPrioridadTicket` (se CONSUME de `cargos.ts`;
+ * el admin pasa ahí). El Director Técnico ajusta, por cargo y sin área (prioridad-tres-niveles); el área de la transición la guarda aparte.
  */
 export function cambiaPrioridadSinPermiso(t: Pick<Transition, 'fields'>, valores: unknown, actual: string | null, s: SujetoDePermiso): boolean {
   if (!t.fields.some((f) => f.target === 'priority')) return false
   const pedida = typeof valores === 'object' && valores !== null ? (valores as Record<string, unknown>).priority : undefined
   if (pedida === undefined || pedida === null || pedida === '') return false
-  return pedida !== actual && !puedeFijarPrioridadTop5(s)
+  return pedida !== actual && !puedeAjustarPrioridadTicket(s)
 }
 
 /**
@@ -111,4 +111,15 @@ export function ordenarColaTaller<T extends { priority?: string | null; habilita
 /** «Mis tickets»: abiertos y derivados al usuario. El MISMO predicado que usa el filtro de la vista (H5). */
 export function esDeMisTickets(t: { statusType?: string | null; derivado?: { id: string } | null }, userId: string): boolean {
   return t.statusType !== 'Closed' && t.derivado?.id === userId
+}
+
+/** La prioridad con la que nace un ticket sin contrato vigente ni Top 5: el alta la pasa como respaldo, el cuerpo no se lee. */
+export const PRIORIDAD_POR_DEFECTO: PrioridadAsignable = 'Medium'
+
+/** D9 (S-K): una prioridad pedida en la transición, no vacía, distinta de la actual y fuera de la lista, es un error; reenviar la actual (aunque sea heredada) no. */
+export function erroresPrioridadPedida(t: Pick<Transition, 'fields'>, valores: unknown, actual: string | null): string[] {
+  if (!t.fields.some((f) => f.target === 'priority')) return []
+  const pedida = typeof valores === 'object' && valores !== null ? (valores as Record<string, unknown>).priority : undefined
+  if (pedida === undefined || pedida === null || pedida === '' || pedida === actual || esPrioridadAsignable(pedida)) return []
+  return [`La prioridad debe ser una de: ${PRIORIDADES_ASIGNABLES.join(', ')}`]
 }
