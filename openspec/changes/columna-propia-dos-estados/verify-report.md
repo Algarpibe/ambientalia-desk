@@ -81,3 +81,10 @@ Los siete campos están (`tanda: F1B-08`, `motivo: ""`, `capacidad`, `maestro: [
 - **S-2** Comprobación visual y S-1/S-2/S-3 de Gerencia siguen siendo tareas de personas fuera del recuento; archivar no las da por hechas.
 
 Medida del intento (3.9): no ejecutada por este verify; la mide el orquestador.
+
+## Adenda del 2026-10-08 — supervivientes cerrados después del veredicto
+
+El veredicto de arriba es sobre `61b251b`. Después se añadió UNA prueba, sin tocar producción: `(g)` en
+`packages/shared/src/columns.test.ts:57`, que fija la etiqueta de las dos columnas nuevas (supuesto S-2). El orquestador repitió
+N2 y N15 contra ella: las dos en rojo, sólo `(g)`, y `columns.ts` restaurado (comprobado con `cmp`). W-3 queda cerrado.
+W-1 lo resuelve el script de fusión, que casa por identificador; W-2 va al traspaso del paquete de despliegue.

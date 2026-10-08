@@ -54,4 +54,5 @@ describe('columna propia de Verificación y Solicitud Soporte (decision/e225-col
   it('(d) otros sigue siendo la última columna y no declara estados', () => { expect(COLUMNS[COLUMNS.length - 1]).toEqual({ id: 'otros', label: 'Otros', statuses: [] }) })
   it('(e) el único estado del registro que cae en otros es Finalizado', () => { expect(ESTADOS.filter((e) => columnForStatus(e) === 'otros')).toEqual(['Finalizado']) })
   it('(f) ningún estado está declarado en dos columnas', () => { const declarados = COLUMNS.flatMap((c) => c.statuses); expect(new Set(declarados).size).toBe(declarados.length) })
+  it('(g) la etiqueta de cada columna nueva es el nombre de su estado (supuesto S-2)', () => { expect(COLUMNS.filter((c) => c.id === 'verificacion' || c.id === 'solicitud_soporte').map((c) => c.label).sort()).toEqual(['Solicitud Soporte', 'Verificación']) })
 })
