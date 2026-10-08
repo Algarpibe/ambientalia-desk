@@ -9,8 +9,8 @@
 import type { Transition } from './transitions'
 import { puedeFijarPrioridadTop5, type SujetoDePermiso } from './cargos'
 
-/** Lo que se puede FIJAR. Igual a las opciones del campo `priority` de `transitions.ts:84` (una prueba lo vigila, D-2). */
-export const PRIORIDADES_ASIGNABLES = ['High', 'Medium', 'Low'] as const
+/** Lo que se puede FIJAR: dos niveles. Igual a las opciones del campo `priority` de `transitions.ts:84` (una prueba lo vigila, D-2). */
+export const PRIORIDADES_ASIGNABLES = ['High', 'Medium'] as const
 export type PrioridadAsignable = (typeof PRIORIDADES_ASIGNABLES)[number]
 
 /** Igualdad exacta: no pliega mayúsculas ni idioma (`'high'`, `'Alta'` y `'Urgent'` no son asignables, S-3). */
@@ -112,3 +112,6 @@ export function ordenarColaTaller<T extends { priority?: string | null; habilita
 export function esDeMisTickets(t: { statusType?: string | null; derivado?: { id: string } | null }, userId: string): boolean {
   return t.statusType !== 'Closed' && t.derivado?.id === userId
 }
+
+/** La prioridad con la que nace un ticket sin contrato vigente ni Top 5: el alta la pasa como respaldo, el cuerpo no se lee. */
+export const PRIORIDAD_POR_DEFECTO: PrioridadAsignable = 'Medium'

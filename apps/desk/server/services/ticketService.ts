@@ -3,7 +3,7 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { vigenciaDeRemisiones } from '../db/remisiones'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente, baseSiNaceBajoTop5 } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
-import { buildSubject, buildCodigoServicio, PREFIJOS, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, PREFIJOS, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -103,9 +103,9 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   const id = await crearTicketConEquipo(db, nuevo, cliente.name, {
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
-    ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(b.prioridad, await hayContratoVigente(db, clientId!), await prioridadTop5DelCliente(db, clientId!)),
+    ordenVenta, fechaOrdenVenta, priority: prioridadAlNacer(PRIORIDAD_POR_DEFECTO, await hayContratoVigente(db, clientId!), await prioridadTop5DelCliente(db, clientId!)),
     clientId: clientId!, salesorderId, equipoId: equipo.id, modalidad, actor: actorName,
-  }, altaManualDe(prov, nuevo, actorId, actorName), await baseSiNaceBajoTop5(db, clientId!, b.prioridad))
+  }, altaManualDe(prov, nuevo, actorId, actorName), await baseSiNaceBajoTop5(db, clientId!, PRIORIDAD_POR_DEFECTO))
   const created = await getTicketWithRefs(db, id)
   return created ? rowToTicketDetail(created.row, created.refs) : {}
 }

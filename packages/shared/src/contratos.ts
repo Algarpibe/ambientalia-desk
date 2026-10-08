@@ -62,10 +62,10 @@ export function hoyEnZona(ahora: Date = new Date()): DiaCivil {
   return diaEnZona(ahora)!
 }
 
-/** La más alta entre `'High'` por contrato vigente y la del Top 5 del cliente; sin ninguna, exactamente la regla de hoy (`ticketService.ts:106` en `9288779`). */
-export function prioridadAlNacer(pedida: unknown, conContratoVigente: boolean, top5: string | null): string | null {
+/** La más alta entre `'High'` por contrato vigente y la del Top 5 del cliente; sin ninguna, el respaldo (el alta pasa `PRIORIDAD_POR_DEFECTO`). */
+export function prioridadAlNacer(respaldo: unknown, conContratoVigente: boolean, top5: string | null): string | null {
   const delCliente = prioridadMasAlta(conContratoVigente ? 'High' : null, top5)
-  return delCliente ?? (pedida ? String(pedida) : null)
+  return delCliente ?? (respaldo ? String(respaldo) : null)
 }
 
 export interface Trimestre { k: number; inicio: DiaCivil; fin: DiaCivil }

@@ -112,14 +112,14 @@ describe('PUT /api/clients/:id/prioridad · quién puede (RQ-TC-27)', () => {
 
   it('TC27-9 · la lectura está abierta a una sesión sin cargo, y la lista Top 5 trae nombre y prioridad', async () => {
     await cliente(); const { app } = appWith()
-    await fijar(app, await adminCookie(), 'cli-1', { top5: true, prioridad: 'Low' })
+    await fijar(app, await adminCookie(), 'cli-1', { top5: true, prioridad: 'Medium' })
     const lector = await sujeto(1, ['Compras'], null)
     const uno = await request(app).get('/api/clients/cli-1/prioridad').set('Cookie', lector)
     expect(uno.status).toBe(200)
-    expect(uno.body).toMatchObject({ clientId: 'cli-1', top5: true, prioridad: 'Low' })
+    expect(uno.body).toMatchObject({ clientId: 'cli-1', top5: true, prioridad: 'Medium' })
     const lista = await request(app).get('/api/top5').set('Cookie', lector)
     expect(lista.status).toBe(200)
-    expect(lista.body).toMatchObject([{ clientId: 'cli-1', name: 'Gecelca S.A. E.S.P.', prioridad: 'Low' }])
+    expect(lista.body).toMatchObject([{ clientId: 'cli-1', name: 'Gecelca S.A. E.S.P.', prioridad: 'Medium' }])
   })
 
   it('TC27-9 · un cliente sin fila se lee como no Top 5; uno inexistente es 404 con el mensaje propio (no el comodín)', async () => {
@@ -245,8 +245,8 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
   })
 
   it('TC29-3b · igual a la actual (D-9): 422', async () => {
-    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith()
-    expect((await ajustar(app, await adminCookie(), 't1', { prioridad: 'Low', motivo: 'x' })).status).toBe(422)
+    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'High'); const { app } = appWith()
+    expect((await ajustar(app, await adminCookie(), 't1', { prioridad: 'High', motivo: 'x' })).status).toBe(422)
     expect(await ajustes()).toEqual([])
   })
 

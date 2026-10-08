@@ -32,7 +32,7 @@ export function baseDeTop5(filas: readonly TrazaDePrioridad[]): { de: string | n
   return primera ? { de: primera.de } : null
 }
 
-/** La base de un ticket que nace bajo Top 5: la prioridad PEDIDA, sin contrato ni Top 5 (D-1 del orquestador). Una sola fórmula. */
+/** La base de un ticket que nace bajo Top 5: el respaldo recibido (el alta pasa `PRIORIDAD_POR_DEFECTO`), sin contrato ni Top 5. Una sola fórmula. */
 export function baseAlNacer(pedida: unknown): string | null {
   return prioridadAlNacer(pedida, false, null)
 }

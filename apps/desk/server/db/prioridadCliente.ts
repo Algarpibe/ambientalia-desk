@@ -124,8 +124,8 @@ export async function fijarYPropagarPrioridadCliente(db: Queryable, a: FijarPrio
 }
 
 /**
- * La base de un ticket que va a nacer bajo el Top 5 de su cliente (D-1 del orquestador): `{ de }` con la prioridad PEDIDA,
- * o `null` si el cliente no es Top 5 (sin fila, `top5` falso o dato sucio). El alta la pasa a `crearTicketConEquipo`.
+ * La base de un ticket que va a nacer bajo el Top 5 de su cliente (D-1 del orquestador): `{ de }` con el respaldo recibido
+ * (el alta pasa `PRIORIDAD_POR_DEFECTO`), o `null` si el cliente no es Top 5 (sin fila, `top5` falso o dato sucio). El alta la pasa a `crearTicketConEquipo`.
  */
 export async function baseSiNaceBajoTop5(db: Queryable, clientId: string | null, pedida: unknown): Promise<{ de: string | null } | null> {
   return (await prioridadTop5DelCliente(db, clientId)) ? { de: baseAlNacer(pedida) } : null

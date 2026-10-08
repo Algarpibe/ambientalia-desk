@@ -372,3 +372,22 @@ describe('ampliacionDelCuerpo · la fecha sale normalizada (S19)', () => {
       .toEqual({ ok: true, fechaFin: '2026-09-30', motivo: 'm' })
   })
 })
+
+/*
+ * prioridad-tres-niveles (F1B-07, L1) · el borde de la vigencia en la prioridad al nacer, en la función pura. CARACTERIZACIÓN:
+ * nacen verdes porque la fórmula no cambia; sostienen que el día del fin sigue contando como vigente (`estadoContrato`, S-4)
+ * y que el día civil se cuenta en la zona de negocio, no en UTC (`fechasDerivadas.ts:13`). El respaldo es `Medium`.
+ */
+describe('prioridadAlNacer · borde de la vigencia, en el día civil de la zona de negocio', () => {
+  const nace = (instante: string, fin = '2026-06-30') =>
+    prioridadAlNacer('Medium', estadoContrato({ fechaInicio: '2026-01-01', fechaFin: fin }, hoyEnZona(new Date(instante))) === 'vigente', null)
+
+  it('el día del fin da High', () => expect(nace('2026-06-30T15:00:00Z')).toBe('High'))
+  it('el día siguiente da Medium', () => expect(nace('2026-07-01T15:00:00Z')).toBe('Medium'))
+  it('un instante que en UTC ya es el día siguiente y en la zona sigue siendo el del fin da High', () => {
+    expect(nace('2026-07-01T03:00:00Z')).toBe('High')
+  })
+  it('con el fin movido, el día siguiente al fin original da High', () => {
+    expect(nace('2026-07-01T15:00:00Z', '2026-09-30')).toBe('High')
+  })
+})

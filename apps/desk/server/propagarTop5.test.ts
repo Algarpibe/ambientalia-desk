@@ -73,18 +73,18 @@ describe('qué tickets se tocan (consultas 2 y 3)', () => {
 })
 
 describe('qué prioridad toma cada uno (cambioPorTop5 sobre prioridadAlNacer)', () => {
-  it('con contrato vigente y un Top 5 Low, el ticket Low queda High', async () => {
+  it('con contrato vigente y un Top 5 Medium, el ticket Low queda High', async () => {
     await cliente(); const { app } = appWith(); await ticket('t1', 1, 'cli-1', 'Low')
     await db.query("INSERT INTO contratos (client_id, lote, fecha_inicio, fecha_fin, creado_por) VALUES ('cli-1','OV-L2A','2020-01-01','2099-12-31','x')")
-    await marcar(app, 'Low')
+    await marcar(app, 'Medium')
     expect(await prio('t1')).toBe('High')
     expect(await trazas()).toMatchObject([{ de: 'Low', a: 'High', origen: 'top5' }])
   })
 
   it('sin contrato, un Top 5 más bajo baja el ticket (S-5)', async () => {
     await cliente(); const { app } = appWith(); await ticket('t1', 1, 'cli-1', 'High')
-    await marcar(app, 'Low')
-    expect(await prio('t1')).toBe('Low')
+    await marcar(app, 'Medium')
+    expect(await prio('t1')).toBe('Medium')
   })
 
   it('la misma prioridad: ni escritura, ni traza, ni marca; y desmarcar un ticket que ya era High lo deja como estaba', async () => {

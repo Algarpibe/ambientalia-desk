@@ -6,8 +6,8 @@ import {
 import { TRANSITIONS, transitionById } from './transitions'
 
 describe('PRIORIDADES_ASIGNABLES · la lista blanca es la de transitions.ts:84 (RQ-TC-24, D-2)', () => {
-  it('es literalmente High, Medium, Low', () => {
-    expect([...PRIORIDADES_ASIGNABLES]).toEqual(['High', 'Medium', 'Low'])
+  it('es literalmente High, Medium (la lista asignable es de dos niveles)', () => {
+    expect([...PRIORIDADES_ASIGNABLES]).toEqual(['High', 'Medium'])
   })
   it('es igual a las opciones del campo target priority de cada transición que lo declara (dos copias vigiladas por prueba)', () => {
     const conCampo = TRANSITIONS.filter((t) => t.fields.some((f) => f.target === 'priority'))
@@ -20,8 +20,8 @@ describe('PRIORIDADES_ASIGNABLES · la lista blanca es la de transitions.ts:84 (
 })
 
 describe('esPrioridadAsignable · igualdad exacta, sin plegar mayúsculas ni idioma (TC24-7)', () => {
-  it.each(['High', 'Medium', 'Low'])('%s es asignable', (v) => expect(esPrioridadAsignable(v)).toBe(true))
-  it.each<unknown>(['high', 'Alta', 'Urgent', '', ' High', 7, null, undefined, {}])('%j no lo es', (v) => expect(esPrioridadAsignable(v)).toBe(false))
+  it.each(['High', 'Medium'])('%s es asignable', (v) => expect(esPrioridadAsignable(v)).toBe(true))
+  it.each<unknown>(['Low', 'high', 'Alta', 'Urgent', '', ' High', 7, null, undefined, {}])('%j no lo es (Low ya no es asignable)', (v) => expect(esPrioridadAsignable(v)).toBe(false))
 })
 
 describe('prioridadMasAlta · manda la más alta; desconocida pierde; empate gana a (S-3)', () => {
@@ -48,8 +48,8 @@ describe('prioridadTop5 · lee la fila a prueba de fallos (D-6): lo que no es as
     expect(prioridadTop5({ top5: true, prioridad: 'Alta' })).toBeNull()
     expect(prioridadTop5({ top5: true, prioridad: null })).toBeNull()
   })
-  it('Top 5 con valor de la lista → ese valor', () => {
-    expect(prioridadTop5({ top5: true, prioridad: 'Low' })).toBe('Low')
+  it('un Top 5 guardado con Low no impone (Low ya no es de la lista; falla cerrado)', () => {
+    expect(prioridadTop5({ top5: true, prioridad: 'Low' })).toBeNull()
   })
 })
 
@@ -63,8 +63,8 @@ describe('prioridadClienteDelCuerpo · valida el PUT (TC27-5, TC27-6, S-9)', () 
   it('top5 verdadero sin prioridad → error', () => {
     expect(prioridadClienteDelCuerpo({ top5: true }).ok).toBe(false)
   })
-  it('top5 verdadero con Urgent o Alta → error', () => {
-    for (const mala of ['Urgent', 'Alta', 'high', '']) expect(prioridadClienteDelCuerpo({ top5: true, prioridad: mala }).ok, mala).toBe(false)
+  it('top5 verdadero con Low, Urgent o Alta → error (rechaza Low)', () => {
+    for (const mala of ['Low', 'Urgent', 'Alta', 'high', '']) expect(prioridadClienteDelCuerpo({ top5: true, prioridad: mala }).ok, mala).toBe(false)
   })
   it('top5 verdadero con valor de la lista → ok', () => {
     expect(prioridadClienteDelCuerpo({ top5: true, prioridad: 'Medium' })).toEqual({ ok: true, top5: true, prioridad: 'Medium' })
@@ -109,10 +109,10 @@ const OBLIGATORIOS_ANTES: Record<string, string[]> = {
 }
 
 describe('priority deja de ser obligatorio (RQ-TS-20, S-2)', () => {
-  it('TS20-3 · el campo sigue en las dos transiciones, con target priority, opciones High/Medium/Low y no obligatorio', () => {
+  it('TS20-3 · el campo sigue en las dos transiciones, con target priority, opciones High/Medium y no obligatorio', () => {
     for (const id of ['escalado_a_revision', 'devolucion_a_correccion']) {
       const campo = transitionById(id)!.fields.find((f) => f.target === 'priority')
-      expect(campo, id).toMatchObject({ key: 'priority', kind: 'select', required: false, options: ['High', 'Medium', 'Low'] })
+      expect(campo, id).toMatchObject({ key: 'priority', kind: 'select', required: false, options: ['High', 'Medium'] })
     }
   })
   it('TS20-4 · los obligatorios de las 31 son los de antes SALVO priority en esas dos y la liberación sin factura (F1C-05: ya no hay casilla)', () => {
@@ -130,11 +130,11 @@ describe('ajusteDelCuerpo · cuerpo del POST de ajuste (RQ-TC-29, D-9)', () => {
   it('motivo vacío o de sólo espacios → error', () => {
     for (const m of ['', '   ', undefined, 7]) expect(ajusteDelCuerpo({ prioridad: 'High', motivo: m }, 'Low').ok, String(m)).toBe(false)
   })
-  it('Urgent y Alta no son asignables', () => {
-    for (const p of ['Urgent', 'Alta', 'high', undefined]) expect(ajusteDelCuerpo({ prioridad: p, motivo: 'x' }, 'Low').ok, String(p)).toBe(false)
+  it('Low, Urgent y Alta no son asignables (rechaza Low)', () => {
+    for (const p of ['Low', 'Urgent', 'Alta', 'high', undefined]) expect(ajusteDelCuerpo({ prioridad: p, motivo: 'x' }, 'Low').ok, String(p)).toBe(false)
   })
   it('igual a la actual → error (D-9)', () => {
-    expect(ajusteDelCuerpo({ prioridad: 'Low', motivo: 'x' }, 'Low').ok).toBe(false)
+    expect(ajusteDelCuerpo({ prioridad: 'High', motivo: 'x' }, 'High').ok).toBe(false)
   })
   it('motivo Y prioridad malos a la vez → DOS errores en errors[]', () => {
     const r = ajusteDelCuerpo({ prioridad: 'Urgent', motivo: ' ' }, 'Low')

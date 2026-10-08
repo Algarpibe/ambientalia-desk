@@ -53,54 +53,54 @@ Archivos: `prioridad.ts` (+3 al final), `transitions.ts`, `contratos.ts`, `prior
 `prioridadCliente.ts` (comentarios), `ticketService.ts` (0 netas), y las pruebas de §6 y §9 del diseño.
 
 **Fase de partida**
-- [ ] L1.1 Anotar `git rev-parse HEAD` (debe ser `6344b4a` o su fusión) como commit de partida de L1 y abrir el intento
+- [x] L1.1 Anotar `git rev-parse HEAD` (debe ser `6344b4a` o su fusión) como commit de partida de L1 y abrir el intento
   del registro en el worktree. Medir `wc -l` de `prioridad.ts`, `contratos.ts`, `ticketService.ts` y `cargos.ts`.
-- [ ] L1.2 Correr `npm test`, `npm run typecheck`, `npm run lint` en la partida y anotar el recuento de pruebas.
+- [x] L1.2 Correr `npm test`, `npm run typecheck`, `npm run lint` en la partida y anotar el recuento de pruebas.
 
 **Rojo**
-- [ ] L1.3 `packages/shared/src/prioridad.test.ts`, en sitio (`:10`, `:23`, `:52`, `:112-116`, `:137`): «la lista
+- [x] L1.3 `packages/shared/src/prioridad.test.ts`, en sitio (`:10`, `:23`, `:52`, `:112-116`, `:137`): «la lista
   asignable es High, Medium», «Low no es asignable», «un Top 5 guardado con Low no impone» (`prioridadTop5` da
   `null`), «prioridadClienteDelCuerpo y ajusteDelCuerpo rechazan Low». ROJO.
-- [ ] L1.4 `packages/shared/src/prioridadPropagada.test.ts` `:45-47` y `:51-55`: los Top 5 que asignan `Low` pasan a
+- [x] L1.4 `packages/shared/src/prioridadPropagada.test.ts` `:45-47` y `:51-55`: los Top 5 que asignan `Low` pasan a
   `Medium` (si no, dejan de compilar). Las `:48-50` y `:81-88` quedan intactas y verdes (sostienen S-I).
-- [ ] L1.5 `apps/desk/server/services/ticketService.test.ts`, en sitio: filas `:962-970`, `:977-982`, `:1127-1131`,
+- [x] L1.5 `apps/desk/server/services/ticketService.test.ts`, en sitio: filas `:962-970`, `:977-982`, `:1127-1131`,
   `:1133-1140`, `:1142-1146`, `:1148-1152` (Top 5 del cliente A pasa a `High` para que discrimine), `:1160-1164`,
   `:1166-1171`. Al final, bloque nuevo: «sin contrato ni Top 5 nace Medium pidiendo High / Low / Urgent / nada»,
   «Top 5 Medium con contrato nace High», «Top 5 guardado con Low y sin contrato nace Medium». ROJO e INVERSIÓN.
-- [ ] L1.6 `apps/desk/server/trazaTop5AlNacer.test.ts` `:30-37`, `:39-45`, `:47-53`, `:55-60`, `:77-82`, `:84-88`,
+- [x] L1.6 `apps/desk/server/trazaTop5AlNacer.test.ts` `:30-37`, `:39-45`, `:47-53`, `:55-60`, `:77-82`, `:84-88`,
   `:100-108`: INVERSIÓN, nacer bajo Top 5 `High` da traza con `de` = `Medium`; desmarcar devuelve a `Medium`.
-- [ ] L1.7 `apps/desk/server/prioridadTop5.test.ts` `:113-123` y `:247-251`, y `apps/desk/server/propagarTop5.test.ts`
+- [x] L1.7 `apps/desk/server/prioridadTop5.test.ts` `:113-123` y `:247-251`, y `apps/desk/server/propagarTop5.test.ts`
   `:76-82` y `:84-88`: sustituir `Low` por `Medium` como valor de Top 5 (en L2 se editan el resto de `prioridadTop5.test.ts`).
-- [ ] L1.8 **Borde, función pura.** `packages/shared/src/contratos.test.ts`, bloque al final: «el día del fin da High»,
+- [x] L1.8 **Borde, función pura.** `packages/shared/src/contratos.test.ts`, bloque al final: «el día del fin da High»,
   «el día siguiente da Medium», «un instante que en UTC ya es el día siguiente y en la zona sigue siendo el del fin da
   High» (`fechasDerivadas.ts:13`), «con el fin movido, el día siguiente al fin original da High». CARACTERIZACIÓN: nace
   verde. Las `:75-80` y `:219-236` no se editan.
-- [ ] L1.9 **Borde, servicio.** Crear `apps/desk/server/prioridadAlNacerVigencia.test.ts`: los mismos cuatro casos por
+- [x] L1.9 **Borde, servicio.** Crear `apps/desk/server/prioridadAlNacerVigencia.test.ts`: los mismos cuatro casos por
   `createManagedTicket`, reloj falso sólo de `Date`, ampliación por la ruta real (molde
   `apps/desk/server/ampliacionContratoPuertas.test.ts:40-41`, `:59-63`, `:75-79`). ROJO en «el siguiente día da
   Medium». Hipótesis a confirmar: el alta sin orden de venta se comporta igual bajo ese reloj; si no, anotarlo.
-- [ ] L1.10 Correr las pruebas de L1.3 a L1.9 y anotar rojo/verde de cada una **y la razón del rojo**; una que nazca
+- [x] L1.10 Correr las pruebas de L1.3 a L1.9 y anotar rojo/verde de cada una **y la razón del rojo**; una que nazca
   verde sin ser caracterización es un detector que no existe: se arregla antes de seguir.
-- [ ] L1.11 **Válvula.** Medir lo escrito (`git diff --shortstat --no-renames` + `wc -l`), sumar código (~15),
+- [x] L1.11 **Válvula.** Medir lo escrito (`git diff --shortstat --no-renames` + `wc -l`), sumar código (~15),
   `apply-progress.md` (~45) y casillas (~40). Si pasa de 720, parar y partir en L1a (lista: L1.3, L1.4, L1.12, L1.13) y
   L1b (nacimiento: el resto) y avisar al orquestador.
 
 **Verde**
-- [ ] L1.12 `packages/shared/src/prioridad.ts` `:12-13` en sitio (lista `High`, `Medium`); al final,
+- [x] L1.12 `packages/shared/src/prioridad.ts` `:12-13` en sitio (lista `High`, `Medium`); al final,
   `export const PRIORIDAD_POR_DEFECTO: PrioridadAsignable = 'Medium'` (+3 netas, D1).
-- [ ] L1.13 `packages/shared/src/transitions.ts:84` en sitio: opciones `High`, `Medium` (cero netas). Paridad:
+- [x] L1.13 `packages/shared/src/transitions.ts:84` en sitio: opciones `High`, `Medium` (cero netas). Paridad:
   `prioridad.test.ts:12-19`.
-- [ ] L1.14 `packages/shared/src/contratos.ts` `:65`, `:66`, `:68`: parámetro `pedida` pasa a `respaldo` y su comentario
+- [x] L1.14 `packages/shared/src/contratos.ts` `:65`, `:66`, `:68`: parámetro `pedida` pasa a `respaldo` y su comentario
   se corrige en sitio (D2); mismos retoques de comentario en `packages/shared/src/prioridadPropagada.ts:35` y
   `apps/desk/server/db/prioridadCliente.ts:127-128`. La fórmula no cambia.
-- [ ] L1.15 `apps/desk/server/services/ticketService.ts` `:6` (import), `:106` y `:108` (la constante en lugar de
+- [x] L1.15 `apps/desk/server/services/ticketService.ts` `:6` (import), `:106` y `:108` (la constante en lugar de
   `b.prioridad`), en sitio. Comprobar por lectura que `b.prioridad` ya no se lee en todo el alta.
-- [ ] L1.16 Correr las pruebas de L1.3 a L1.9: todas verdes. Las verdes-sin-editar de §9 del diseño
+- [x] L1.16 Correr las pruebas de L1.3 a L1.9: todas verdes. Las verdes-sin-editar de §9 del diseño
   (`contratos.test.ts:75-80`, `:219-236`; `prioridadPropagada.test.ts:48-50`, `:81-88`; `prioridadTop5.test.ts:179-194`;
   `propagarTop5.test.ts:99-106`, `:108-114`, `:174-184`) siguen verdes **sin editarse**.
 
 **Mutaciones (regla 1, 2 y datos)**
-- [ ] L1.17 Ejecutar las mutaciones M1 a M9 que ya tienen objeto en este lote y anotar rojo/verde de cada una, y que
+- [x] L1.17 Ejecutar las mutaciones M1 a M9 que ya tienen objeto en este lote y anotar rojo/verde de cada una, y que
   tras revertirla vuelve el verde: **M5** (`Low` vuelve a una sola de las dos listas: cae la paridad
   `prioridad.test.ts:12-19`), **M6** (`ticketService.ts:106` vuelve a `b.prioridad`: cae «nace Medium pida lo que
   pida»), **M7** (`contratos.ts:43` `<` a `<=`: cae el borde, el día del fin, en las dos capas), **M9** (datos: fila de
@@ -108,15 +108,15 @@ Archivos: `prioridad.ts` (+3 al final), `transitions.ts`, `contratos.ts`, `prior
   aplican todavía** (su código nace en L2); se anota «n/a en L1».
 
 **Cierre**
-- [ ] L1.18 `git diff --numstat <partida>` por fichero: inserciones = borrados en `ticketService.ts`,
+- [x] L1.18 `git diff --numstat <partida>` por fichero: inserciones = borrados en `ticketService.ts`,
   `transitions.ts`, `contratos.ts`, `prioridadPropagada.ts` y `prioridadCliente.ts`; `prioridad.ts` sólo `+3`
   al final. Cualquier otra cifra, se corrige antes de cerrar.
 - [ ] L1.19 Los CUATRO códigos, uno a uno: `npm test` (verde), `npm run typecheck` (verde), `npm run lint` (verde) y,
   tras commitear el lote, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` (sin bloqueantes). Anotar
   la salida de cada uno.
-- [ ] L1.20 Ejecutar la medida del intento (`git diff --shortstat --no-renames` contra la partida más `wc -l` de lo
+- [x] L1.20 Ejecutar la medida del intento (`git diff --shortstat --no-renames` contra la partida más `wc -l` de lo
   nuevo sin trackear) y registrar ESA cifra; debe ser ≤ 800.
-- [ ] L1.21 Escribir `apply-progress.md` de L1 (rojos con su razón, mutaciones, medida) y marcar casillas.
+- [x] L1.21 Escribir `apply-progress.md` de L1 (rojos con su razón, mutaciones, medida) y marcar casillas.
 
 ---
 
