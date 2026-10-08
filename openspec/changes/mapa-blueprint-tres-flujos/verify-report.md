@@ -119,7 +119,7 @@ Barrido con `git grep` fuera de `openspec/changes/archive`:
 - `scripts/generar-mapa-blueprint.ts:14-24`, `:26-35`, `:28-31`, `:29`, `:31` (ENTRADA:2118, config.yaml:4172, auditoría, proposal, design): líneas sin cambio; 29 es `transiciones`, 31 es `estados`. Siguen siendo literalmente ciertas (ver W10).
 - `packages/shared/src/mapaBlueprint.ts` (sólo citada en `proposal.md` y `design.md`): contrastadas con `git show a26ed48:` las líneas 23-30, 32-37, 54, 61, 108, 122, 150, 157, 161, 209, 219 y 225; todas dicen lo que la frase afirma y llevan «en a26ed48».
 - `packages/shared/src/estados.ts:176-180` y `:182` (auditoría, design, proposal, cinco paquetes): comentario en 176-180, declaración en 182. OK.
-- `docs/artefactos/NOTA.md` `:32-46`, `:33-46`, `:34-46`, `:55-56`, `:135-139`: edición en sitio 5 por 5, sin desplazamiento.
+- `docs/artefactos/NOTA.md`, rangos de líneas 32 a 46, 33 a 46, 34 a 46, 55 a 56 y 135 a 139: edición en sitio 5 por 5, sin desplazamiento.
 - Auditoría F1B-09, línea 310: existe, es la fila de `clientId`; 358 líneas antes y después.
 - `packages/shared/src/index.ts:6` sigue siendo la exportación de `bodegaje`; la nueva exportación está en la línea 40.
 - Apartado 4 de `docs/sdd/Paquete_de_Despliegue_2026-10-08.md`: no escribe ninguna cita `fichero:NN`. OK.
@@ -158,3 +158,19 @@ Las casillas marcadas cuadran con lo comprobado: restricciones de §2, ficheros 
 - Que los rojos de apply fueran por la razón escrita: se leen en `apply-progress.md` y no se re-ejecutaron.
 - El detector de citas del hook `pre-push`: no lo ejecuté; el barrido de §7 es manual.
 - `C:\dev\Desk_2_R1.023` no se tocó.
+
+## Adenda — remediación de los supervivientes (2026-10-08)
+
+El veredicto de arriba es sobre `c58fa88`. Después sólo se añadieron pruebas, al final de `packages/shared/src/mapaBlueprint.test.ts`; **ningún fichero de producción cambió**, así que el verify sigue siendo posterior al último cambio de producción.
+
+| Aviso | Prueba nueva | Mutación que ahora cae |
+|---|---|---|
+| W1 (M7) | «W1 · con fases declaradas y fasePorEstado VACÍO la guarda D-1 sigue lanzando» | condicionar la guarda a la tabla y no a las fases: 1 roja de 1.224 |
+| W3 (M10) | «W3 · un fichero de disco que el registro deja de generar sale como sobra en disco», una por flujo | anular la rama «sobra en disco» de `desfases`: 3 rojas |
+| W4 (M19) | «W4 · las fuentes pedidas salen también en la cabecera de cada vista por fase» | la vista por fase ignora las fuentes: 1 roja |
+| W6, parcial | «RQ-MB-05 · ninguno de los SEIS ficheros generados contiene fichas de hallazgos» | — |
+
+- **W2 (M12), sin prueba, a propósito:** mover la guarda al final sólo cambia qué error sale primero.
+- **W5 (M22), sin prueba, declarado:** el guion queda fuera de `vitest`. Lo que impide que escriba menos ficheros es la prueba contra el desfase sobre lo commiteado, no una prueba del guion.
+- **W7, sin cambio:** un desfase en un flujo tira también P7 y P8 de los flujos sanos. Es ruido en el informe de fallos, no falta de discriminación.
+- **Abreviada reparada:** la línea de `docs/artefactos/NOTA.md` de este informe citaba un rango que empezaba en línea vacía; ahora va en prosa.

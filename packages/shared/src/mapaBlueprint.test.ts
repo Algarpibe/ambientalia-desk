@@ -392,3 +392,34 @@ describe('mapaPorFlujo — RQ-MB-06 · anti-desfase de los tres flujos contra do
     expect(mapas[flujo][completo], flujo).toContain(inyectada.name)
   })
 })
+
+// F1B-09 · remediación del verify (W1, W3, W4 y el escenario parcial de RQ-MB-05). Caracterización: nacen
+// verdes; cada una se demostró con la mutación que nombra, restaurada después.
+describe('mapaBlueprint — F1B-09 · supervivientes del verify', () => {
+  it('W1 · con fases declaradas y `fasePorEstado` VACÍO la guarda D-1 sigue lanzando: la condición es «hay fases», no «hay tabla»', () => {
+    expect(() => generarMapaBlueprint({ ...entradaReal(), fasePorEstado: {} })).toThrow(/fase/i)
+  })
+
+  it('W4 · las fuentes pedidas salen también en la cabecera de CADA vista por fase, no sólo en el diagrama completo', () => {
+    const salida = generarMapaBlueprint({ ...entradaReal(), fuentes: '`una-fuente.ts` y `otra-fuente.ts`' })
+    expect(Object.keys(salida), 'guarda contra el bucle fantasma').toHaveLength(4)
+    for (const [nombre, contenido] of Object.entries(salida)) {
+      expect(contenido, nombre).toContain('`una-fuente.ts` y `otra-fuente.ts`. NO EDITAR A MANO')
+      expect(contenido, nombre).not.toContain('`fasesBlueprint.ts`. NO EDITAR A MANO')
+    }
+  })
+
+  it.each(FLUJOS)('W3 · %s · un fichero de disco que el registro deja de generar sale exactamente como «sobra en disco»', (flujo) => {
+    const mapas = mapasPorFlujo()
+    const esperados = ficherosDelMapa(Object.fromEntries(Object.entries(mapas).filter(([clave]) => clave !== flujo)))
+    const sobran = Object.keys(mapas[flujo]).map((nombre) => `${nombre}: sobra en disco`)
+    expect(sobran.length, flujo).toBeGreaterThan(0)
+    expect(desfases(esperados, DIRECTORIO_ARTEFACTOS).sort()).toEqual(sobran.sort())
+  })
+
+  it('RQ-MB-05 · ninguno de los SEIS ficheros generados contiene fichas de hallazgos', () => {
+    const ficheros = Object.entries(ficherosDelMapa())
+    expect(ficheros, 'guarda contra el bucle fantasma').toHaveLength(6)
+    for (const [nombre, contenido] of ficheros) expect(contenido, nombre).not.toMatch(/hallazgo/i)
+  })
+})
