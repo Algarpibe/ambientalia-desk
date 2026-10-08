@@ -197,7 +197,7 @@ Archivos: `cargos.ts` (+~10 al final), `prioridad.ts` (+~8 al final), `routes/pr
 **Cierre**
 - [x] L2.21 `git diff --numstat <partida>`: inserciones = borrados en `routes/prioridad.ts` y `ticketService.ts`;
   `cargos.ts` y `prioridad.ts` sólo con adiciones al final (más las líneas en sitio de `prioridad.ts`).
-- [ ] L2.22 Los CUATRO códigos, uno a uno: `npm test`, `npm run typecheck`, `npm run lint` y, tras commitear,
+- [x] L2.22 Los CUATRO códigos, uno a uno: `npm test`, `npm run typecheck`, `npm run lint` y, tras commitear,
   `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`. Anotar la salida de cada uno.
 - [x] L2.23 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
 - [x] L2.24 Escribir `apply-progress.md` de L2 y marcar casillas.
