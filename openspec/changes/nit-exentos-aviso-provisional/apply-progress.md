@@ -48,3 +48,47 @@ La que falla es `registro.test.ts` («en curso» son ONCE): da DOCE porque el pr
 ## Para los lotes 2 y 3
 Lote 2: tabla `provisional_books_avisados`, lecturas y servicio sin cablear; renumerar de nuevo las siete aserciones y `:652` (`+ 1`); cifras `[10, 34, 3]` y `47`.
 Lote 3: pasada, `index.ts:15` y `:88`, `DEPLOY.md`, casos k y l. Decidir quién actualiza `registro.test.ts` («ONCE» a «DOCE») y la cita `altaManual.ts:156` de `openspec/config.yaml:4216`.
+
+## Lote 2 — aviso sin cablear, inerte (casillas 4.1 a 6.2; la 6.3 y la 6.4 las cierra el orquestador)
+Modo: strict TDD. `schema.sql` 807 a 818 (sólo por el final); `migrate.ts`, `migrate.test.ts` conservan 131 y 911 líneas (finales CRLF intactos).
+Nuevos: `db/provisionalEnBooks.ts` (29), `services/avisoProvisionalEnBooks.ts` (100), su prueba (a a j más cuatro casos de apoyo). Sin `pasadaProvisionalesEnBooks`, sin tocar `index.ts` ni `DEPLOY.md`.
+
+### Rojo → verde
+| Prueba | Rojo (motivo) | Verde |
+|---|---|---|
+| `avisoProvisionalEnBooks.test.ts` entero | módulo `./avisoProvisionalEnBooks` inexistente | sí |
+| `nitExentosEsquema.test.ts` (4 nuevas) | tabla inexistente; el `CREATE` no existe | sí |
+| `migrate.test.ts`: recuento `47` y `[10, 34, 3]`; `:652` (+1); las siete aserciones por distancia | 5 rojas (recuento, `:652`, `reasignaciones`, `contrato_ampliaciones`, `encuesta_respuestas`) | sí |
+Rojo medido: 9 pruebas rojas y 1 fichero sin cargar. Verde: 3 ficheros, 92 pasan.
+
+### Mutaciones (todas restauradas; `git status` sin restos)
+| Id | Qué se mutó | Prueba roja | Restaurada |
+|---|---|---|---|
+| N1 | quitar el `INSERT` de la marca | (a), (b), (c), (f), las tres (h), (i) dos seguidas y concurrentes, (j) | sí |
+| N2 interior | quitar `destinatarios.length === 0` de `marcarYAvisarPareja` | (i) «destinatarios vacíos → false, sin marca» | sí |
+| N2 exterior | `if (false)` en la guarda de `avisarProvisionalesEnBooks` | (f) «sin destinatarios … UN solo warn» | sí |
+| N3 | quitar `enlazado_a IS NULL` | (d) «provisional ya enlazado no avisa» | sí |
+| N5 (regla 1) | marca detrás de los avisos | las tres (h), (i) dos seguidas y concurrentes | sí |
+| N6 | `crearAviso(db, …)` en vez de `q` | (h) sin fallo y (h) falla un aviso | sí |
+| N7 provisional | no descartar provisionales exentos | (e) «sólo el provisional» y (g) «sólo provisionales exentos» | sí |
+| N7 contacto | no descartar contactos exentos | (e) «sólo el contacto» | sí |
+| N8 | quitar la consulta previa de marcas | (b), (c), (g) «parejas ya avisadas» | sí |
+| N9 sin provisionales | quitar su salida corta | (g) «sin provisionales: UNA consulta» | sí |
+| N9 todos exentos | quitar su salida corta | (g) «sólo provisionales exentos: dos consultas» | sí |
+| N9 sin parejas | quitar `parejas.length === 0` | NINGUNA: SOBREVIVE (ver abajo) | sí |
+| N10 PK | cambiar `PRIMARY KEY` por otra cosa | 18 rojas (todo el servicio y las cuatro de esquema) | sí |
+| N10 `public.` | quitar `public.` del `CREATE` | guardián «toda tabla … clasificada» y la de `CREATE` calificado | sí |
+**N9 sin parejas sobrevive y es EQUIVALENTE:** `parejasYaAvisadas` (`provisionalEnBooks.ts`) ya sale sin consultar con ids vacíos, así que la salida del servicio es redundante con esa. Se añadió la prueba «sin ninguna pareja: tres consultas y NINGUNA a la tabla de marcas»; quitar las DOS guardas a la vez la pone roja. N4 y N11 son del lote 3.
+
+### Desviaciones
+1. Cuatro pruebas de apoyo no pedidas por el diseño §7: el texto exacto, el orden por provisional y contacto con nombre nulo (`name ?? id`), la salida sin parejas y las marcas previas. Son baratas y cubren N9 y N8.
+2. `contactosDeBooks` aplica `name ?? id` en la lectura (el diseño lo decía para el texto); `ContactoConNit.name` queda `string`, como la firma del §5.
+3. El `describe` de `migrate.test.ts:864` ya decía «ya no cierra el esquema»: sin cambio. Se reescribieron los títulos de `:794`, `:837`, `:877` y la cabecera de `:861`.
+
+### Barrido de la regla de mutación 4
+El diff de `migrate.ts` y `migrate.test.ts` son hunks de sustitución en la misma línea (`:73`, `:282-286`, `:652`, `:794-798`, `:837-840`, `:861`, `:877-882`); `schema.sql` solo añade `808-818`. No se movió ninguna línea. Ninguna cita `schema.sql:NNN` apunta a `797` o más. Citas ajenas cuyo TEXTO deja de ser cierto sin moverse, no tocadas (caso B, históricas): las de `migrate.test.ts:282-286` en `openspec/changes/archive/` («46 tablas»).
+
+### Para el lote 3
+`pasadaProvisionalesEnBooks`, `index.ts:15` y `:88`, `DEPLOY.md`, casos k y l, N4 y N11. Sigue pendiente quién actualiza `registro.test.ts` («ONCE» a «DOCE») y la cita `altaManual.ts:156` de `openspec/config.yaml`.
+
+**Añadido por el orquestador al cerrar el lote 2.** Cuatro mutaciones propias sobre `avisoProvisionalEnBooks.ts`: clave de pareja distinta en el filtro, otra área destinataria y el `23505` relanzado, las tres en rojo; la cuarta, invertir los argumentos de `nitCoincide`, **sobrevivía**. La cierra la prueba «el provisional es el lado tecleado», al final de `avisoProvisionalEnBooks.test.ts`; repetida contra ella, en rojo. Todas restauradas.

@@ -31,22 +31,22 @@ Cada lote es una sola unidad de apply: rojo, verde y cierre. Las citas de `desig
 ## Lote 2 — aviso sin cablear, inerte (RQ-AV-21)
 
 ### 4. Rojo
-- [ ] 4.1 `packages/zoho-sync/src/db/nitExentosEsquema.test.ts`: la tabla `provisional_books_avisados` existe y nace vacía, pareja repetida da `23505`, `avisos_creados` nulo se rechaza, `CREATE` calificado y tras la siembra de `nit_exentos`.
-- [ ] 4.2 `packages/zoho-sync/src/db/migrate.test.ts`: cifras `[10, 34, 3]` y `47` y segunda renumeración en sitio de las siete aserciones (diseño §4, columna «Tras lote 2»).
-- [ ] 4.3 `apps/desk/server/services/avisoProvisionalEnBooks.test.ts` (nuevo): casos a a j del diseño §7 (una vez por pareja, no repite, enlazado no avisa, exento por lado, sin destinatarios no marca y reintenta, estructura de la transacción, un fallo en una pareja no para las demás).
-- [ ] 4.4 Correr `npx vitest run` sobre los tres ficheros y ANOTAR qué falla (módulos y tabla inexistentes, recuento). Si no coincide, parar y anotar.
+- [x] 4.1 `packages/zoho-sync/src/db/nitExentosEsquema.test.ts`: la tabla `provisional_books_avisados` existe y nace vacía, pareja repetida da `23505`, `avisos_creados` nulo se rechaza, `CREATE` calificado y tras la siembra de `nit_exentos`.
+- [x] 4.2 `packages/zoho-sync/src/db/migrate.test.ts`: cifras `[10, 34, 3]` y `47` y segunda renumeración en sitio de las siete aserciones (diseño §4, columna «Tras lote 2»).
+- [x] 4.3 `apps/desk/server/services/avisoProvisionalEnBooks.test.ts` (nuevo): casos a a j del diseño §7 (una vez por pareja, no repite, enlazado no avisa, exento por lado, sin destinatarios no marca y reintenta, estructura de la transacción, un fallo en una pareja no para las demás).
+- [x] 4.4 Correr `npx vitest run` sobre los tres ficheros y ANOTAR qué falla (módulos y tabla inexistentes, recuento). Si no coincide, parar y anotar.
 
 ### 5. Verde
-- [ ] 5.1 `schema.sql`: las once líneas de `public.provisional_books_avisados` (diseño §1) AL FINAL, de la 808 a la 818; `'provisional_books_avisados'` en `PUBLIC_TABLES` (`packages/zoho-sync/src/db/migrate.ts:73`).
-- [ ] 5.2 `apps/desk/server/db/provisionalEnBooks.ts` (nuevo): `provisionalesSinEnlazar`, `contactosDeBooks`, `parejasYaAvisadas`.
-- [ ] 5.3 `apps/desk/server/services/avisoProvisionalEnBooks.ts` (nuevo): `textoAvisoProvisionalEnBooks`, `parejasPorAvisar`, `marcarYAvisarPareja`, `avisarProvisionalesEnBooks`. SIN `pasadaProvisionalesEnBooks` y sin tocar `apps/desk/server/index.ts`.
-- [ ] 5.4 Repetir 4.4 en verde.
+- [x] 5.1 `schema.sql`: las once líneas de `public.provisional_books_avisados` (diseño §1) AL FINAL, de la 808 a la 818; `'provisional_books_avisados'` en `PUBLIC_TABLES` (`packages/zoho-sync/src/db/migrate.ts:73`).
+- [x] 5.2 `apps/desk/server/db/provisionalEnBooks.ts` (nuevo): `provisionalesSinEnlazar`, `contactosDeBooks`, `parejasYaAvisadas`.
+- [x] 5.3 `apps/desk/server/services/avisoProvisionalEnBooks.ts` (nuevo): `textoAvisoProvisionalEnBooks`, `parejasPorAvisar`, `marcarYAvisarPareja`, `avisarProvisionalesEnBooks`. SIN `pasadaProvisionalesEnBooks` y sin tocar `apps/desk/server/index.ts`.
+- [x] 5.4 Repetir 4.4 en verde.
 
 ### 6. Cierre del lote 2
-- [ ] 6.1 Mutaciones ejecutadas y RESTAURADAS: N1, N2 (las dos guardas), N3, N5 (regla 1), N6, N7 (cada lado), N8, N9 (cada salida corta), N10 (clave primaria y `public.`); N4 y la mitad de N11 (la del `try/catch` de la pasada) pasan al lote 3.
-- [ ] 6.2 Barrido de la regla de mutación 4 sobre `schema.sql`, `migrate.ts`, `migrate.test.ts` y `apps/desk/server/index.ts` (sin tocar), cada cita contrastada con el fichero.
-- [ ] 6.3 Los cuatro códigos (`npm test`, `npm run typecheck`, `npm run lint`, detector de citas) anotados.
-- [ ] 6.4 Medida del intento (`--no-renames` más `wc -l` de lo nuevo sin trackear) por debajo de 720; sin ningún fichero bajo `apps/desk/src`.
+- [x] 6.1 Mutaciones ejecutadas y RESTAURADAS: N1, N2 (las dos guardas), N3, N5 (regla 1), N6, N7 (cada lado), N8, N9 (cada salida corta), N10 (clave primaria y `public.`); N4 y la mitad de N11 (la del `try/catch` de la pasada) pasan al lote 3.
+- [x] 6.2 Barrido de la regla de mutación 4 sobre `schema.sql`, `migrate.ts`, `migrate.test.ts` y `apps/desk/server/index.ts` (sin tocar), cada cita contrastada con el fichero.
+- [x] 6.3 Los cuatro códigos (`npm test`, `npm run typecheck`, `npm run lint`, detector de citas) anotados.
+- [x] 6.4 Medida del intento (`--no-renames` más `wc -l` de lo nuevo sin trackear) por debajo de 720; sin ningún fichero bajo `apps/desk/src`.
 
 ## Lote 3 — pasada y despliegue (RQ-AV-21)
 
