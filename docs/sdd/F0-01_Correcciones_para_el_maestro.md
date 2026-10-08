@@ -1599,3 +1599,34 @@ cuenta cuando el cambio esté archivado. No toca el párrafo de la línea 2658 (
 trimestre ya avisado sin aviso nuevo (S-4). No afirma que esté en producción: depende del despliegue y de su comprobación en la aplicación. Los supuestos S-1
 (el motivo es obligatorio; la fuente no lo exige), S-2 (se puede ampliar más de una vez) y S-4 están pendientes de confirmación de Gerencia en el traspaso de la
 tanda (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §13.1).
+
+## La de F1F-05, indicadores 51 y 55 (33)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `indicadores-51-55`, `cierra: no`, y de
+> `decision/e171-e172-e173-indicadores-51-55`.
+
+### 33 · G.6 y M7.1 — el 51 se cierra con la transición de entrega, y las respuestas de la encuesta se cargan desde un fichero, sin canal todavía *(F1F-05)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6299` (Anexo G.6, definición del indicador 51),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2963` (carga de las respuestas en enero de 2027),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2969` (cada calificación guarda su canal) y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2970` (la versión integrada va después del corte). Contexto de la comprobación del 95 %:
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2957`.
+
+**Texto actual:** «Hora de actualización del estado − Fecha Finalización ST.» (línea 6299) / «En enero de 2027 las respuestas se cargan en Desk 2.0 asociadas a su
+ticket, para que el reporte trimestral no tenga hueco» (línea 2963) / «Cada calificación guarda su canal (correo o tableta) y queda asociada al ticket.» (línea 2969).
+
+**Texto propuesto:**
+
+1. En la línea 6299, sustituir la definición por: «[R08.4] Días naturales entre la Fecha Finalización ST y el día de la transición de entrega (Entrega al cliente o
+   Entrega al cliente sin factura), tomado de las marcas de tiempo de las transiciones. Si el ticket tiene varias entregas vale la última. Un ticket entregado sólo
+   en Zoho no tiene esa transición en la aplicación y su 51 sale «sin dato». Un resultado negativo se conserva con signo y se marca como orden invertido.»
+2. En la línea 2963, añadir al final: «[CONSTRUIDO] La carga existe: un administrador sube el fichero de respuestas por una ruta (sin pantalla); cada respuesta se
+   asocia al ticket por su número, volver a cargar el mismo fichero no duplica, y si un ticket tiene varias respuestas vale la última. El formato del fichero está
+   supuesto hasta que Comercial entregue una muestra de la exportación.»
+3. En la línea 2969, añadir: «[R08.4] Hoy la carga no guarda el canal: el indicador de satisfacción se calcula sobre la última respuesta de cada ticket, sin separar
+   correo y tableta. El canal entra con la integración de la tableta (línea 2970), con tanda propia.»
+
+**Lo que esta entrada NO pide.** No cierra la fila F1F-05 (`cierra: no`): quedan la comparación con la exportación de Zoho (el cargador de esa exportación y la
+decisión de su formato), el canal de la encuesta y cualquier pantalla de carga. No toca la regla de comparación del 95 % de la línea 2957. No afirma que esté en
+producción: depende del despliegue y de la tarea P-1 (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §14).

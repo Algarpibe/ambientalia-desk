@@ -439,3 +439,48 @@ hechas.** P.1, P.4, P.6 y P.7 se heredan de `registro-contrato` (`openspec/chang
   trimestre ya avisado?» Origen: S-1, S-2 y S-4 de `ampliacion-contrato`. Dueño propuesto: Gerencia. Qué desbloquea: dejar firme la regla de la ampliación.
 - **Entrada nueva (hallazgo):** «Una ampliación corta alarga el trimestre ya avisado y no genera aviso nuevo de ritmo en ese tramo.» Origen: S-4. Afecta a:
   el aviso de ritmo del contrato. Destino: **sin destino asignado**, a propósito; que lo asigne quien decida el alcance.
+
+## 14 · Añadido por `indicadores-51-55` (F1F-05, `cierra: no`) — tabla nueva, sin interruptor, tres preguntas, tres hallazgos y tres tareas de persona
+
+**Qué entra.** (1) **El 51 «Tiempo de recogida del equipo»** sale del historial: días naturales entre la finalización y el día de la transición de entrega
+(`entrega_al_cliente` o `entrega_sin_factura`; si hay varias, la última) — `packages/shared/src/indicadores.ts:254` y `:257`. (2) **Una tabla nueva,
+`public.encuesta_respuestas`** (`packages/zoho-sync/src/db/schema.sql:787`). (3) **`POST /api/indicadores/encuesta`**
+(`apps/desk/server/routes/encuestaRespuestas.ts:19`), sólo para administradores. (4) **Una cuarta consulta en `GET /api/indicadores`**
+(`apps/desk/server/indicadores.ts:85`) que alimenta el 55 con la última respuesta de cada ticket.
+
+**Qué NO entra.** La comparación con la exportación de Zoho (el cargador de esa exportación y su formato), la pantalla de carga (la spec la prohíbe, RQ-KP-18) y
+el canal de la encuesta (S-G). `cierra: no`: la fila F1F-05 del plan no se marca.
+
+**Despliegue.** La migración crea una tabla nueva y vacía; **no hay interruptor ni variable** y `.env.example` no cambia. La comprobación de lectura y la forma de invocar la
+carga (multipart, campo `file`, sesión de administrador, respuesta `{ leidas, insertadas, duplicadas, rechazadas }`) están en `DEPLOY.md`, apartado «Comprobación de lectura
+tras desplegar F1F-05». Fecha límite para medir las cuatro semanas: antes del viernes 13/11/2026 (`DEPLOY.md`, sección 9).
+
+**Redacción propuesta para `docs/sdd/ENTRADA.md`** (la abre Supervisión; esta rama no toca ese fichero y las entradas van **sin número**: en `main` la última es la E-235).
+
+- **Entrada nueva (pregunta, S-D):** «¿El formulario de la encuesta recoge el número de ticket, u otro dato con el que asociar cada respuesta a su servicio?» Dueño
+  propuesto: Comercial. Qué desbloquea: que el analizador deje de ser un supuesto (hoy lee el número de ticket).
+- **Entrada nueva (pregunta, S-E):** «¿La exportación es el CSV de Google Forms tal cual, con qué columnas, y la fecha viene `DD/MM/AAAA` con el día primero?» Dueño: Comercial,
+  que es quien la envía. Tarea de persona P-1: entregar una muestra real. Qué desbloquea: confirmar o sustituir sólo el analizador (`apps/desk/server/encuesta/analizarRespuestas.ts`).
+- **Entrada nueva (pregunta, S-G):** «¿Se acepta cargar las respuestas sin columna `canal` hasta la integración de la tableta?» Es un recorte frente a la letra del maestro:
+  «Cada calificación guarda su canal (correo o tableta)» (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2969`), cuya versión integrada va después del
+  corte (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2970`). Dueño: Gerencia. Si la respuesta es «no», hace falta un `ALTER TABLE` calificado, con tanda propia.
+- **Entrada nueva (hallazgo):** «`instanteDeJornada` (`packages/shared/src/calendarioLaboral.ts:155`) devuelve un instante 24 horas antes del debido para las horas 0 a 4.»
+  **Medido en esta tanda**, con un script temporal ejecutado con `node_modules/.bin/tsx` que importa la función y la llama con el día `2027-01-12` (borrado después): hora 0 →
+  `2027-01-11T05:00:00.000Z` (debería ser `2027-01-12T05:00:00.000Z`), hora 2 → `2027-01-11T07:00:00.000Z`, hora 4 → `2027-01-11T09:00:00.000Z`, y hora 8 →
+  `2027-01-12T13:00:00.000Z` (correcta). Causa probable (hipótesis, a partir de la lectura de `packages/shared/src/calendarioLaboral.ts:155-166`): la hora deseada se formatea en Bogotá, cae el día anterior y la
+  diferencia no contempla el cambio de día. Hoy nadie lo sufre porque sus llamadores usan las 08:00 y las 17:00; la tanda no la corrige y el analizador la usa sólo a mediodía. Destino: **sin destino asignado**, a propósito.
+- **Entrada nueva (hallazgo):** «El 51 calculado entra ahora en la comparación con el valor de Zoho del `GET`, donde antes no había par.» Es consecuencia de calcularlo.
+- **Entrada nueva (hallazgo):** «`supertest` corta la conexión cuando el servidor responde 401 o 403 sin leer un cuerpo de más de 10 MB; la prueba del límite de subida usa `node:http`.»
+  Afecta a: las pruebas de la ruta de carga. Sin destino: es una nota para quien escriba pruebas de subida.
+- **Nota para Supervisión (`openspec/config.yaml`, que esta rama no toca):** las líneas 4096, 4102, 4105 y 4107 citan `packages/shared/src/indicadores.ts:88-89` y `:58`,
+  `apps/desk/server/routes/indicadores.ts:52` y `openspec/specs/kpis/spec.md:257` en `42a4828` para describir el estado ANTERIOR a esta tanda («hoy el 51 sale sin dato», «no hay tabla ni cargador»).
+  Son **caso B**: les corresponde nombrar la revisión `42a4828` en la misma línea, no renumerarse. Y la decisión `e171-e172-e173-indicadores-51-55` queda construida en su parte
+  del 51 y del 55; la comparación con la exportación de Zoho sigue pendiente.
+
+**Tareas de persona — fuera del recuento. Archivar el cambio no las da por hechas.**
+
+| # | Quién | Qué | Qué desbloquea |
+|---|---|---|---|
+| P-1 | Comercial | Entregar una muestra real de la exportación del formulario de la encuesta | Confirmar o sustituir el analizador (S-D, S-E) y responder la lectura de `DD/MM/AAAA` |
+| P-2 | Un administrador de la aplicación | Cargar las respuestas de enero de 2027, tras desplegar y tras P-1 | Que el 55 tenga datos del periodo posterior al corte |
+| P-3 | Quien administra el despliegue | Desplegar antes del 13/11/2026 y hacer la comprobación de lectura (la tabla nace vacía y sin relleno) | Producción lista para medir las cuatro semanas |

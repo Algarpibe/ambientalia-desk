@@ -117,7 +117,7 @@ esperado equivocado.
 - `grep` sobre lo añadido en `apps/` y `packages/` (sin pruebas) de `insert`, `update`, `delete`, `create table`,
   `alter table`, `process.env`, `fetch(`, `zohoFetch`, `readFile`, `writeFile` y `fs.`: **0 resultados** (salida 1).
 - La ruta recibe sólo `{ db }` (`registerIndicadoresRoutes(app, { db })`): no tiene `zohoFetch` ni configuración.
-- Prueba por ejecución de que las tres consultas del módulo son `SELECT`: `apps/desk/server/indicadores.test.ts:53`.
+- Prueba por ejecución de que las tres consultas del módulo son `SELECT`: `apps/desk/server/indicadores.test.ts:53` en `42a4828`.
   **Lo que no se prueba:** que la ruta no ejecute otra sentencia (mutación 6, abajo).
 
 ## 5 · Mutaciones reproducidas (aplicadas, ejecutadas y revertidas; árbol limpio tras cada una)

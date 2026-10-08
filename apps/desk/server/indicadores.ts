@@ -2,7 +2,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { calcularIndicadores, diaEnZona, sumarDias, type DiaCivil, type EtiquetaHito, type Indicador, type PasoDelHistorial, type TicketParaIndicadores } from '@ambientalia/shared'
 import { comoDiaCivil, listarCierres } from './db/calendarioCierres'
 
-// Lectura de los indicadores (F1F-05, RQ-KP-13 y -14): SOLO lectura, tres consultas pase lo que pase con el número de tickets.
+// Lectura de los indicadores (F1F-05, RQ-KP-13 y -14): SOLO lectura, cuatro consultas pase lo que pase con el número de tickets.
 
 const FORMA_DIA = /^\d{4}-\d{2}-\d{2}$/
 const FORMATOS = ['json', 'csv'] as const
@@ -40,7 +40,7 @@ export function validarPeriodo(q: { desde?: unknown; hasta?: unknown; formato?: 
 export interface EntradasIndicadores {
   tickets: TicketParaIndicadores[]
   historial: Map<string, PasoDelHistorial[]>
-  cierres: Set<DiaCivil>
+  cierres: Set<DiaCivil>; calificaciones: Map<string, string>
 }
 const iso = (v: unknown): string | null => (v == null ? null : v instanceof Date ? v.toISOString() : String(v))
 const objeto = (v: unknown): Record<string, unknown> => {
@@ -49,8 +49,8 @@ const objeto = (v: unknown): Record<string, unknown> => {
 }
 
 /**
- * Tres consultas de lectura con parámetros ligados: tickets, TODAS sus transiciones (un `JOIN`, agrupadas en
- * memoria) y cierres. El periodo se ensancha un día por lado y el corte exacto, sobre el día de creación en
+ * Cuatro consultas de lectura con parámetros ligados: tickets, TODAS sus transiciones (un `JOIN`, agrupadas en
+ * memoria), las respuestas de la encuesta de esos tickets (el mismo `JOIN`; gana la última, RQ-KP-22) y cierres. El periodo se ensancha un día por lado y el corte exacto, sobre el día de creación en
  * Bogotá, se hace en memoria con `diaEnZona` (nunca se escribe el desplazamiento a mano).
  */
 export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivil | null; hasta: DiaCivil | null }): Promise<EntradasIndicadores> {
@@ -82,12 +82,15 @@ export async function leerEntradasIndicadores(db: Queryable, p: { desde: DiaCivi
     const paso: PasoDelHistorial = { transitionId: String(r.transition_id ?? ''), performedAt: iso(r.performed_at) ?? '', values: objeto(r.values) }
     historial.set(id, [...(historial.get(id) ?? []), paso])
   }
-  return { tickets, historial, cierres: new Set(await listarCierres(db)) }
+  const re = await db.query(`SELECT e.ticket_id, e.calificacion FROM public.encuesta_respuestas e JOIN tickets t ON t.id = e.ticket_id${donde} ORDER BY e.respondida_at, e.id`, params)
+  const calificaciones = new Map<string, string>()
+  for (const r of re.rows) { const id = String(r.ticket_id); if (vistos.has(id)) calificaciones.set(id, String(r.calificacion)) }
+  return { tickets, historial, calificaciones, cierres: new Set(await listarCierres(db)) }
 }
 
 export interface FilaIndicadores { ticketId: string; codigoServicio: string | null; indicadores: Indicador[] }
 
-/** Los nueve indicadores de cada ticket. Sin `horaActualizacionEstado` ni calificación: la aplicación no las guarda (H-1, H-2). */
+/** Los nueve indicadores de cada ticket. El 51 sale del historial y el 55 de la última respuesta de la encuesta de cada ticket (RQ-KP-22). */
 export function tablaIndicadores(e: EntradasIndicadores): FilaIndicadores[] {
-  return e.tickets.map((t) => ({ ticketId: t.id, codigoServicio: t.codigoServicio, indicadores: calcularIndicadores(t, e.historial.get(t.id) ?? [], { cierres: e.cierres }) }))
+  return e.tickets.map((t) => ({ ticketId: t.id, codigoServicio: t.codigoServicio, indicadores: calcularIndicadores(t, e.historial.get(t.id) ?? [], { cierres: e.cierres, calificacionSatisfaccion: e.calificaciones.get(t.id) ?? null }) }))
 }

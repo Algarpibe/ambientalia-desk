@@ -1,37 +1,30 @@
-# Especificación: KPIs — Continuidad de los nueve indicadores de Zoho
+# Delta: KPIs — los indicadores 51 y 55 dejan de salir «sin dato» (`indicadores-51-55`)
 
-| Dato | Valor |
-|---|---|
-| Capacidad | `kpis`, **nueva**. Declarada en `openspec/config.yaml:240`; sin spec viva hasta este cambio |
-| Tanda | F1F-05 (`cierra: no`) |
-| Procedencia | `decision/e009-kpis` (`openspec/config.yaml:2527`) · `decision/e009b-lista-indicadores` (`openspec/config.yaml:2655`) · `decision/encuesta-entre-corte-e-independencia` (`openspec/config.yaml:2858`) · `decision/calendario-habil` (`openspec/config.yaml:2555`) · maestro R08.4, Anexo G.6 (`R08.4.md:6285-6314`) y G.6b (`R08.4.md:6315-6364`) |
-| Depende de | `calendario-laboral` (`diasHabilesEntre`, `packages/shared/src/calendarioLaboral.ts:196-204`, intervalo `(desde, hasta]`), consumida sin cambiar sus requisitos |
+Delta sobre `openspec/specs/kpis/spec.md`. Tanda F1F-05 (`cierra: no`). Propuesta:
+`openspec/changes/indicadores-51-55/proposal.md`. `R08.4.md` es
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`.
 
-`R08.4.md` es `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md`.
+**Nota de fusión — la tabla de supuestos no es un requisito.** La tabla «0 · Procedencia y método» de la
+spec viva (`openspec/specs/kpis/spec.md:19-35` en `42a4828`) no lleva cabecera `### Requirement:`, así que un script que
+sustituya bloques por cabecera no la toca. Su fusión es aparte y explícita, sin cambiar el formato de
+tres columnas (`Id | Supuesto | Origen`):
 
-## 0 · Procedencia y método
+1. **Se retira** la fila `SP-8` («Con el hito opcional del 51 o del 55 presente, el módulo lo usa; la ruta
+   nunca lo aporta»): ya no hay entrada opcional.
+2. **Se añaden**, al final de la tabla y en este orden, las ocho filas de la sección «Filas que se añaden a la
+   tabla de supuestos» de más abajo (`S-A` a `S-H`). Sus identificadores son letras y no chocan con `S-n` ni
+   `SP-n`.
+3. **No se tocan** las demás filas. Los requisitos RQ-KP-09, RQ-KP-10, RQ-KP-11, RQ-KP-14 y RQ-KP-18
+   dejan de nombrar `SP-8`; el resto de referencias a `SP-n` y `S-n` sigue igual.
 
-Cada fórmula dice de dónde sale. **Letra** es lo que el maestro o una decisión de Gerencia escribe, con su
-línea. **SP-n** es un supuesto de esta spec o de la propuesta del cambio (S-n): se especifica tal cual
-para poder construirlo y probarlo, **pero no es letra de Gerencia** y está sujeto a las preguntas E-171 a
-E-180 de la bandeja.
+La fusión de requisitos: los seis bloques de `## MODIFIED Requirements` sustituyen **entero** el de la spec
+viva con la misma cabecera; los cuatro de `## ADDED Requirements` se añaden al final, tras RQ-KP-18, en el
+orden RQ-KP-19, 20, 21, 22.
+
+## Filas que se añaden a la tabla de supuestos
 
 | Id | Supuesto | Origen |
 |---|---|---|
-| SP-10 | El signo del 58 es orden de compra menos cotización; la letra dice «Entre …» sin signo (`R08.4.md:6311`) | Propuesta (§4) y export |
-| S-1 | El 59 es orden de venta menos cotización, días naturales con signo. La letra sólo dice «Lo que tarda en generarse la orden de venta» (`R08.4.md:6314`) | Propuesta |
-| S-2 | El 49 se mide en días hábiles del calendario laboral. La letra no da unidad (`R08.4.md:6293`) | Propuesta |
-| S-5 | Reentrancia: último valor escrito más marca. El punto 66 sigue abierto (`R08.4.md:2961`) | Propuesta |
-| S-7 | Unidades: naturales en 47, 57, 58 y 59; hábiles en 49 y 50·53 | Propuesta |
-| S-8 | La comparación publica dos porcentajes: letra contra Zoho y fórmula de Zoho contra Zoho | Propuesta |
-| SP-1 | Cada hito se toma del historial de la aplicación si lo tiene y, si no, de la columna heredada; la fuente se marca por hito | Spec |
-| SP-2 | El 47 es con signo y sin tope, como 57, 58 y 59 | Spec |
-| SP-3 | El 49 de la letra exige la marca de `ingreso_a_servicio`; sin ella es «sin dato», aunque el ticket tenga fecha de creación (`R08.4.md:2951`: el diagnóstico «se mide siempre desde las marcas de tiempo de las transiciones») | Spec |
-| SP-4 | «Reentrante» se define por conteo de escrituras del hito en el historial (RQ-KP-10) | Spec |
-| SP-5 | El periodo filtra por el día de creación del ticket en `America/Bogota` | Spec |
-| SP-6 | Se publican DOS lecturas del porcentaje, y la letra no precisa cuál es «el 95 % de los tickets»: por indicador, y de tickets en que todo lo comparable coincide (R4) | Spec |
-| SP-7 | El CSV va en formato largo, separador `;` | Spec |
-| SP-9 | El valor de Zoho se lee de los datos sincronizados del ticket; **dónde** viene queda pendiente de la tarea de persona P-1 (E-181 de la bandeja) | Spec |
 | S-A | Con dos entregas, el 51 usa **la última** por `performed_at`. La decisión dice «vale la que tenga el ticket» (`openspec/config.yaml:4099`) y no cubre el caso de dos | Propuesta (§4) |
 | S-B | Motivos del 51 y su orden: primero «falta el hito: transición de entrega»; con entrega y sin finalización, «falta el hito: finalización del servicio». Sin fila de entrega no se usa `Fecha Remisión de Salida` como sustituto | Propuesta (§4) |
 | S-C | Tabla de respuestas con huella única y varias respuestas por ticket; vale la última | Propuesta (§4) |
@@ -41,21 +34,7 @@ E-180 de la bandeja.
 | S-G | Sin columna `canal` en la tabla de respuestas | Propuesta (§4) |
 | S-H | El `GET /api/indicadores` sigue siendo sólo lectura, con cuatro consultas | Propuesta (§4) |
 
-## ADDED Requirements
-
-### Requirement: RQ-KP-01 · Lista cerrada de nueve indicadores, en un orden fijo
-
-El sistema **SHALL** calcular exactamente nueve indicadores, en este orden y con estas claves:
-`47` permanencia, `49` diagnóstico, `50_53` servicio, `51` recogida, `54` cumplimiento del tiempo promesa,
-`55` satisfacción, `57` cotización, `58` orden de compra y `59` orden de venta (letra:
-`openspec/config.yaml:2655`, `R08.4.md:2954`). **MUST NOT** calcular ni emitir las columnas 48, 56 ni 16, ni
-el décimo indicador de cumplimiento global (letra: `R08.4.md:2955`, `R08.4.md:2960`, `R08.4.md:6362`).
-
-#### Scenario: Un ticket devuelve los nueve y ninguno más
-- GIVEN cualquier ticket
-- WHEN se calculan sus indicadores
-- THEN el resultado trae las claves `47, 49, 50_53, 51, 54, 55, 57, 58, 59`, en ese orden
-- AND no trae `48`, `56`, `16` ni un cumplimiento global
+## MODIFIED Requirements
 
 ### Requirement: RQ-KP-02 · Cada hito dice de qué fuente salió
 
@@ -113,158 +92,6 @@ hito. La marca de tiempo de la transición se reduce a su día civil en `America
 - GIVEN un ticket con una fila `entrega_al_cliente` con `performed_at = 2027-01-08T15:00:00Z`
 - WHEN se resuelve el hito de entrega del 51
 - THEN vale `2027-01-08` con fuente `transicion`
-
-### Requirement: RQ-KP-03 · Unidades y signo
-
-Los **días naturales** **SHALL** ser la resta de días civiles de `America/Bogota`, `hasta − desde`, **con
-signo y sin tope** (S-7; el signo del 47 es SP-2). Los **días hábiles** **SHALL** salir de
-`diasHabilesEntre` con los cierres de empresa (`public.calendario_cierres`); **MUST NOT** existir otra
-aritmética hábil (RQ-CL-11 de `calendario-laboral`; letra: `openspec/config.yaml:2555`): «hábil» con
-festivos sólo sale de `diasHabilesEntre`. La única otra cuenta de días es la de lunes a viernes sin festivos
-de la fórmula de Zoho, etiquetada como tal y propia de RQ-KP-11 (`diasLunesAViernesFormulaZoho`, en el módulo
-de indicadores, no en el calendario laboral). Si `hasta` no es posterior a `desde`, `diasHabilesEntre` da 0 y
-así se queda.
-
-#### Scenario: Naturales con signo
-- GIVEN desde `2026-12-10` y hasta `2026-12-08`
-- WHEN se miden en días naturales
-- THEN el resultado es `-2`
-
-### Requirement: RQ-KP-04 · Indicador 47, tiempo de permanencia
-
-Letra: «Entre remisión de entrada y remisión de salida. Es el dock-to-dock» (`R08.4.md:6287`). El valor
-**SHALL** ser `Fecha Remisión de Salida − Fecha Remisión Entrada` en días naturales. Si falta cualquiera de
-los dos hitos, **SHALL** ser «sin dato» y decir cuál falta.
-
-#### Scenario: Remisión de entrada y de salida
-- GIVEN entrada `2026-12-16` y salida `2027-01-02`
-- WHEN se calcula el 47
-- THEN vale `17`
-
-#### Scenario: Falta la remisión de salida
-- GIVEN entrada `2026-12-16` y ninguna remisión de salida
-- WHEN se calcula el 47
-- THEN es «sin dato», con motivo «falta el hito: remisión de salida», y no usa ninguna otra fecha
-
-### Requirement: RQ-KP-05 · Indicador 49, tiempo de diagnóstico
-
-Letra: `Fecha Revisión Informe − Fecha creación ticket`, medido sobre las marcas de las transiciones
-(`R08.4.md:6293`, `R08.4.md:2951`). El valor **SHALL** ser los **días hábiles** (S-2) entre el día de la
-marca `ingreso_a_servicio` y `Fecha Revisión Informe`. Sin la marca (SP-3) o sin revisión del informe,
-**SHALL** ser «sin dato» con el hito que falta. **MUST NOT** sustituir la marca por la fecha de creación.
-
-#### Scenario: Hábiles con festivo
-- GIVEN marca `2026-12-02T15:00:00Z` (día `2026-12-02`) y revisión `2026-12-10`
-- WHEN se calcula el 49
-- THEN vale `5` (días 3, 4, 7, 9 y 10; el 8 es festivo)
-
-#### Scenario: La marca se lee en Bogotá
-- GIVEN marca `2026-12-03T03:00:00Z` y revisión `2026-12-10`
-- WHEN se calcula el 49
-- THEN vale `5`, porque el día de inicio es el `2026-12-02`
-
-#### Scenario: Ticket heredado sin marca
-- GIVEN un ticket sin historial, con `fecha_creacion_ticket` y `fecha_revision_informe`
-- WHEN se calcula el 49
-- THEN es «sin dato», con motivo «falta el hito: marca de ingreso a servicio»
-
-### Requirement: RQ-KP-06 · Indicador 50·53, tiempo de servicio
-
-Letra (`R08.4.md:6296`): días hábiles desde `Fecha Orden De Venta` —o desde `Fecha Recepción de repuestos` si
-la hubo— hasta `Fecha Finalización ST`; devuelve 0 si el resultado es negativo o falta la finalización. El
-valor **SHALL** seguir esas reglas con el calendario laboral. Sin finalización, **SHALL** ser `0` con la
-marca `sinFinalizar: true`, aunque falte también la orden de venta. Con finalización y sin ninguna fecha de
-inicio, **SHALL** ser «sin dato». Si hay repuestos, **MUST** contar desde ellos y no desde la orden de venta.
-El 50 y el 53 son un solo valor (`R08.4.md:6294`, `openspec/config.yaml:2655`).
-
-#### Scenario: Rango con dos festivos
-- GIVEN orden de venta `2026-12-24`, finalización `2027-01-05`, sin repuestos ni cierres
-- WHEN se calcula el 50·53
-- THEN vale `6` (28, 29, 30 y 31 de diciembre; 4 y 5 de enero; el 25 de diciembre y el 1 de enero son festivos)
-
-#### Scenario: Un cierre de empresa resta su día
-- GIVEN el caso anterior con un cierre el `2026-12-31`
-- WHEN se calcula el 50·53
-- THEN vale `5`
-
-#### Scenario: Los repuestos mandan sobre la orden de venta
-- GIVEN orden de venta `2026-12-01`, repuestos `2026-12-10`, finalización `2026-12-17`
-- WHEN se calcula el 50·53
-- THEN vale `5` (11, 14, 15, 16 y 17), no `11`
-
-#### Scenario: Resultado negativo
-- GIVEN orden de venta `2026-12-15` y finalización `2026-12-10`
-- WHEN se calcula el 50·53
-- THEN vale `0`
-
-#### Scenario: Sin finalización
-- GIVEN orden de venta `2026-12-01` y ninguna finalización
-- WHEN se calcula el 50·53
-- THEN vale `0` con `sinFinalizar: true`
-
-### Requirement: RQ-KP-07 · Indicador 54, cumplimiento del tiempo promesa
-
-Letra: «Cumple / No cumple» comparando el tiempo total de servicio (53) contra los días de entrega de la
-columna 52 (`R08.4.md:6302`, `R08.4.md:6341`; Diccionario de campos línea 131). El valor **SHALL** ser
-`Cumple` si 53 ≤ 52 y `No cumple` si 53 > 52. Un 52 de `0` es un valor. Sin finalización el 53 vale 0
-(RQ-KP-06), luego sale `Cumple` con `sinFinalizar: true` y esa marca **MUST** viajar con el valor. **Sin
-tiempo promesa** la letra no dice nada: el valor **SHALL** ser «sin dato» con motivo «falta el tiempo
-promesa», sin suponer `Cumple`. Si el 53 es «sin dato», el 54 también.
-
-#### Scenario: Igual al tiempo promesa cumple
-- GIVEN 53 = `6` y tiempo promesa `6`
-- WHEN se calcula el 54
-- THEN es `Cumple`
-
-#### Scenario: Por encima del tiempo promesa
-- GIVEN 53 = `6` y tiempo promesa `5`
-- WHEN se calcula el 54
-- THEN es `No cumple`
-
-#### Scenario: Sin finalización
-- GIVEN tiempo promesa `3` y ninguna finalización
-- WHEN se calcula el 54
-- THEN es `Cumple` con `sinFinalizar: true`
-
-#### Scenario: Sin tiempo promesa
-- GIVEN 53 = `6` y ningún tiempo promesa
-- WHEN se calcula el 54
-- THEN es «sin dato», no `Cumple`
-
-### Requirement: RQ-KP-08 · Indicadores 57, 58 y 59
-
-El valor **SHALL** ser, en días naturales con signo:
-- **57** `Fecha de Cotización − Fecha Revisión Informe` (letra: `R08.4.md:6308`).
-- **58** `Fecha Orden de Compra − Fecha de Cotización` (letra: «Entre Fecha Orden de Compra y Fecha de Cotización», `R08.4.md:6311`, que no fija el signo; el sentido es el de la propuesta y el del export, y el 58 es el aging de aprobación).
-- **59** `Fecha Orden De Venta − Fecha de Cotización` (**S-1**, no letra).
-
-Si falta un hito, **SHALL** ser «sin dato» con el hito que falta.
-
-#### Scenario: Cotización tras la revisión
-- GIVEN revisión `2026-12-10` y cotización `2026-12-13`
-- WHEN se calcula el 57
-- THEN vale `3`
-
-#### Scenario: Cotización antes de la revisión
-- GIVEN revisión `2026-12-10` y cotización `2026-12-08`
-- WHEN se calcula el 57
-- THEN vale `-2`
-
-#### Scenario: Orden de compra
-- GIVEN cotización `2026-12-10` y orden de compra `2026-12-14`
-- WHEN se calcula el 58
-- THEN vale `4`
-- AND con orden de compra `2026-12-09` vale `-1`
-
-#### Scenario: Orden de venta anterior a la cotización
-- GIVEN cotización `2026-12-10` y orden de venta `2026-12-09`
-- WHEN se calcula el 59
-- THEN vale `-1`
-
-#### Scenario: Falta la cotización
-- GIVEN revisión `2026-12-10` y ninguna cotización
-- WHEN se calcula el 57
-- THEN es «sin dato», con motivo «falta el hito: cotización»
 
 ### Requirement: RQ-KP-09 · Indicadores 51 y 55: del historial y de las respuestas cargadas
 
@@ -444,51 +271,6 @@ Donde la fórmula que Zoho calcula difiere de la letra, el sistema **SHALL** cal
 - WHEN se calcula el 55
 - THEN `valor` es `Excelente` y `formulaZoho` es `Excelente`
 
-### Requirement: RQ-KP-12 · Ruta de sólo lectura, sólo para administradores
-
-El sistema **SHALL** exponer `GET /api/indicadores`. **SHALL** exigir sesión y rol de administrador **antes**
-de leer ningún dato de tickets, transiciones o cierres: sin cookie `sid`, `401`
-(`apps/desk/server/auth/middleware.ts:14-23`); con sesión sin rol de administrador, `403`
-(`apps/desk/server/auth/middleware.ts:26-29`). En ninguno de los dos casos **MUST** consultarse esos datos.
-Mismo molde que `apps/desk/server/routes/analisis.ts:11`.
-
-#### Scenario: Sin sesión
-- GIVEN una petición sin cookie
-- WHEN llama a `GET /api/indicadores`
-- THEN responde `401` y ninguna consulta a tickets, transiciones o cierres se ejecutó
-
-#### Scenario: Con sesión y sin rol
-- GIVEN un usuario con sesión válida y sin `isAdmin`
-- WHEN llama a `GET /api/indicadores`
-- THEN responde `403` y ninguna consulta a tickets, transiciones o cierres se ejecutó
-
-#### Scenario: Administrador
-- GIVEN un administrador
-- WHEN llama a `GET /api/indicadores`
-- THEN responde `200` con JSON
-
-### Requirement: RQ-KP-13 · Parámetros y forma del JSON
-
-Parámetros: `desde` y `hasta` (`YYYY-MM-DD`, ambos opcionales e inclusivos, sobre el día de creación del
-ticket en Bogotá — SP-5) y `formato` (`json`, por defecto, o `csv`). Un valor mal formado, `desde > hasta` o
-un `formato` distinto **SHALL** dar `400` con `{ error }` y sin consultar datos. Los parámetros **MUST**
-llegar a la base como valores ligados, nunca concatenados. La respuesta JSON **SHALL** ser
-`{ periodo: { desde, hasta }, tickets: [...], comparacion }`. Cada ticket lleva `ticketId`, `codigoServicio`
-e `indicadores`, con las nueve claves de RQ-KP-01. Cada indicador lleva `columna`, `valor` (número, texto o
-`null`), `unidad` (`dias_naturales`, `dias_habiles`, `cumplimiento` o `calificacion`), `estado` (`calculado` o `sin_dato`),
-`motivo` (sólo en `sin_dato`), `hitos` (lista de `{ nombre, dia, fuente }`), `reentrante`, `sinFinalizar` (en
-50·53 y 54), `formulaZoho` y `valorZoho`.
-
-#### Scenario: Forma de un indicador calculado
-- GIVEN un ticket con cotización `2026-12-10` y orden de venta `2026-12-09`
-- WHEN responde la ruta
-- THEN el `59` trae `valor: -1`, `unidad: "dias_naturales"`, `estado: "calculado"` y dos `hitos` con su `fuente`
-
-#### Scenario: Periodo inválido
-- GIVEN `desde=2026-12-31` y `hasta=2026-12-01`
-- WHEN llama un administrador
-- THEN responde `400` y no se consultan tickets
-
 ### Requirement: RQ-KP-14 · La lectura no crece con el número de tickets y no escribe
 
 La ruta **SHALL** leer con un número constante de **cuatro** consultas, independiente del número de tickets:
@@ -505,113 +287,6 @@ a Zoho, ni leer ningún fichero.
 - GIVEN veinte tickets del periodo, algunos con respuestas de la encuesta y otros sin ellas
 - WHEN llama un administrador
 - THEN el número de consultas sigue siendo cuatro y todas son de lectura
-
-### Requirement: RQ-KP-15 · CSV con escapado
-
-Con `formato=csv` la ruta **SHALL** responder `text/csv; charset=utf-8` como descarga. El CSV **SHALL** ir
-en formato largo (SP-7): una cabecera y una fila por ticket e indicador, separador `;`, fin de línea CRLF y una marca de orden de bytes UTF-8 (BOM) al principio, para que Excel en español lo abra sin asistente,
-con estas columnas en este orden: `ticket_id;codigo_servicio;columna;indicador;unidad;valor;estado;motivo;fuente_hitos;reentrante;sin_finalizar;formula_zoho;valor_zoho`.
-`fuente_hitos` lleva cada hito con su fuente, separados por `|`. Reglas de celda, en este orden:
-1. Un **número** (`valor` numérico, incluidos los negativos del 47, 57, 58 y 59) se emite como número, sin
-   apóstrofo.
-2. Una celda de **texto** que empiece por `=`, `+`, `-` o `@` **SHALL** llevar un apóstrofo delante.
-3. Una celda que contenga `;`, `"`, CR o LF **SHALL** ir entre comillas, con las comillas internas duplicadas.
-
-#### Scenario: BOM y fin de línea
-- GIVEN cualquier CSV generado
-- WHEN se leen sus primeros bytes y sus saltos de fila
-- THEN empieza por el BOM UTF-8 y cada fila, la cabecera incluida, termina en CRLF
-
-#### Scenario: Negativo como número
-- GIVEN un 57 de `-228`
-- WHEN se genera el CSV
-- THEN la celda `valor` es `-228`, sin apóstrofo
-
-#### Scenario: Inyección de fórmula
-- GIVEN un `codigo_servicio` `=HYPERLINK("x")`
-- WHEN se genera el CSV
-- THEN la celda es `"'=HYPERLINK(""x"")"`
-
-#### Scenario: Los cuatro caracteres
-- GIVEN textos que empiezan por `=`, `+`, `-` y `@`, p. ej. `-5 casos`
-- WHEN se generan las celdas
-- THEN cada una lleva apóstrofo delante: `'-5 casos`
-
-#### Scenario: Separador y comillas
-- GIVEN un `motivo` `a;b` y otro `dijo "sí"`
-- WHEN se generan las celdas
-- THEN salen `"a;b"` y `"dijo ""sí"""`
-
-### Requirement: RQ-KP-16 · Comparación por pares con tolerancia de un día
-
-Una función pura **SHALL** recibir pares (valor de la aplicación, valor de Zoho) por ticket e indicador y
-devolver, **por indicador** (SP-6), `comparados`, `coincidentes`, `diferentes`, `sinComparar` y
-`porcentaje` (coincidentes entre comparados, ×100, un decimal), y lo mismo para la variante de la fórmula de
-Zoho contra Zoho (S-8). Letra: coincidencia con diferencia máxima de un día, cada diferencia mayor
-explicada por escrito (`openspec/config.yaml:2655`, `R08.4.md:2957`).
-- Dos números **coinciden** si `|a − b| ≤ 1`; con 2 de diferencia **no** coinciden.
-- Dos textos del 54 **coinciden** si son iguales sin distinguir mayúsculas ni espacios laterales
-  (`No Cumple` = `No cumple`).
-- Un par **sin comparar** es el que tiene «sin dato» en la aplicación o en la variante, o **no tiene valor
-  de Zoho**: ausente, `null`, vacío, o no numérico (no `Cumple`/`No cumple` en el 54). **MUST NOT** contarse
-  como coincidencia ni como diferencia.
-- Con `comparados = 0`, `porcentaje` **SHALL** ser `null`, nunca `0` ni `100`.
-- Cada **diferencia mayor** (diferencia de más de un día, o textos distintos) **SHALL** listarse con
-  `ticketId`, `columna`, ambos valores, los hitos con su fuente, `reentrante` y, en 49 y 50·53, los días
-  de lunes a viernes del intervalo que el calendario laboral descuenta (festivos y cierres).
-- Además del porcentaje por indicador, el resumen **SHALL** dar el de **tickets**: un ticket es comparado si tiene
-  al menos un par comparable de la letra y es coincidente si todos esos pares coinciden (`tickets`: `comparados`,
-  `coincidentes`, `porcentaje`, `null` sin tickets comparados). La letra no precisa cuál de las dos lecturas es
-  «el 95 % de los tickets» (R4, SP-6): se publican **las dos** y una `nota` lo dice.
-- Las diferencias mayores de la letra van en `diferencias`; las de la variante, en `variante.diferencias`.
-- El resumen **MUST NOT** llevar bandera de aprobado/suspenso, color ni meta: el 95 % lo juzgan las personas.
-
-#### Scenario: Cuatro pares del 50·53
-- GIVEN pares (app, Zoho): `(6, 7)`, `(6, 8)`, `(sin dato, 3)` y `(6, null)`
-- WHEN se comparan
-- THEN `comparados` es 2, `coincidentes` 1, `diferentes` 1, `sinComparar` 2 y `porcentaje` `50`
-
-#### Scenario: La tolerancia es de un día
-- GIVEN los pares `(6, 5)`, `(6, 7)` y `(6, 8)`
-- WHEN se comparan
-- THEN los dos primeros coinciden y el tercero es diferencia
-
-#### Scenario: Un «sin dato» no coincide con nada
-- GIVEN el par `(sin dato, 0)`
-- WHEN se compara
-- THEN cuenta como `sinComparar`, no como coincidente ni diferente
-
-#### Scenario: Textos del 54
-- GIVEN los pares `(Cumple, cumple)`, `(Cumple, No Cumple)` y `(sin dato, Cumple)`
-- WHEN se comparan
-- THEN hay 1 coincidente, 1 diferente y 1 sin comparar
-
-#### Scenario: La diferencia mayor lleva su causa
-- GIVEN el par del 50·53 `(6, 8)` de orden de venta `2026-12-24` a finalización `2027-01-05`
-- WHEN se comparan
-- THEN la diferencia lista los días `2026-12-25` y `2027-01-01`, ambos hitos con su fuente y `reentrante`
-
-#### Scenario: Letra contra Zoho y fórmula de Zoho contra Zoho
-- GIVEN el 50·53 con `valor 6`, `formulaZoho 8` y valor de Zoho `8`
-- WHEN se comparan
-- THEN la letra cuenta una diferencia y la variante, una coincidencia
-
-### Requirement: RQ-KP-17 · Resumen de comparación en la ruta
-
-La ruta **SHALL** armar los pares sólo con los valores de Zoho ya presentes en los datos sincronizados del
-ticket (SP-9) y **MUST NOT** leer ningún fichero ni cargar el export de Zoho. Si **ningún** par tiene valor de Zoho, `comparacion` **SHALL** decir `«sin valor de Zoho con que comparar»` y
-`porcentaje` **MUST** ser `null` en cada indicador. Si hay valores de Zoho pero ningún par comparable, el
-mensaje **SHALL** ser `«sin pares comparables»`, también con `porcentaje` `null`.
-
-#### Scenario: Los datos sincronizados no traen valores de Zoho
-- GIVEN tickets sin ningún valor de Zoho en sus datos sincronizados
-- WHEN responde la ruta
-- THEN `comparacion` dice «sin valor de Zoho con que comparar» y ningún indicador trae porcentaje
-
-#### Scenario: Con valores de Zoho
-- GIVEN dos tickets cuyo 59 de Zoho coincide con el de la aplicación y otro que difiere en 3 días
-- WHEN responde la ruta
-- THEN el 59 trae `comparados` 3, `coincidentes` 2 y `porcentaje` `66.7`, y lista una diferencia mayor
 
 ### Requirement: RQ-KP-18 · Lo que el módulo no hace
 
@@ -640,6 +315,8 @@ capacidad **MUST NOT** añadir pantalla de carga en el cliente.
 - GIVEN una carga válida de respuestas por RQ-KP-21
 - WHEN termina la petición
 - THEN las únicas sentencias de escritura se ejecutaron sobre `public.encuesta_respuestas` y ninguna sobre `tickets`, `ticket_transitions` ni otra tabla
+
+## ADDED Requirements
 
 ### Requirement: RQ-KP-19 · Almacén de respuestas de la encuesta
 

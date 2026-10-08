@@ -780,3 +780,17 @@ CREATE TABLE IF NOT EXISTS public.contrato_ampliaciones (
   ampliado_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_contrato_ampliaciones_contrato ON public.contrato_ampliaciones (contrato_id);
+-- indicadores-51-55 (F1F-05, decision e171-e172-e173): respuestas de la encuesta de satisfaccion cargadas desde fichero
+-- Varias por ticket. Vale la ultima por respondida_at y, a igualdad, por id. huella UNICA: cargar dos veces no duplica
+-- Sin FK a tickets (vive en desk), sin columna de canal (S-G) y sin DELETE ni UPDATE. Nace vacia, sin relleno
+-- AL FINAL del fichero para no desplazar citas (regla de mutacion 4). CALIFICADA public.
+CREATE TABLE IF NOT EXISTS public.encuesta_respuestas (
+  id bigserial PRIMARY KEY,
+  ticket_id text NOT NULL,
+  calificacion text NOT NULL CONSTRAINT encuesta_respuestas_calificacion CHECK (calificacion <> ''),
+  respondida_at timestamptz NOT NULL,
+  huella text NOT NULL UNIQUE,
+  cargado_por text NOT NULL,
+  cargado_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public.encuesta_respuestas (ticket_id);

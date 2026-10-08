@@ -1,5 +1,5 @@
 // Los nueve indicadores de Zoho (F1F-05, spec `kpis`). Módulo PURO: sin base, sin red, sin ficheros.
-// Lote 1: hitos con su fuente, tiempos naturales (47, 57, 58, 59), 51 y 55 «sin dato», y la lectura del
+// Lote 1: hitos con su fuente, tiempos naturales (47, 57, 58, 59), 51 desde la transición de entrega, 55 desde la calificación que aporta la lectura, y la lectura del
 // valor que Zoho ya calculó. Lote 2: días hábiles (49, 50·53), 54 y la variante «fórmula de Zoho».
 import { diasHabilesEntre, esDiaHabil, sumarDias, type DiaCivil } from './calendarioLaboral'
 import { diaEnZona } from './fechasDerivadas'
@@ -42,9 +42,9 @@ export interface TicketParaIndicadores {
 }
 export interface OpcionesIndicadores {
   cierres: ReadonlySet<DiaCivil>
-  /** H-1: hoy la aplicación no guarda la hora del último cambio de estado; la ruta nunca la aporta. */
-  horaActualizacionEstado?: string | null
-  /** H-2: ídem para la calificación de satisfacción. Se usa tal cual. */
+  /**
+   * La última calificación cargada del ticket (RQ-KP-22): la aporta la lectura y se usa tal cual.
+   */
   calificacionSatisfaccion?: string | null
 }
 
@@ -83,7 +83,7 @@ const NOMBRE_HITO: Record<EtiquetaHito, string> = {
   'Fecha creación ticket': 'creación del ticket',
 }
 /** La marca de la transición `ingreso_a_servicio`: hito del 49, sin columna heredada (RQ-KP-02). */
-const MARCA_INGRESO = 'marca de ingreso a servicio'
+const MARCA_INGRESO = 'marca de ingreso a servicio', MARCA_ENTREGA = 'transición de entrega'
 const MOTIVO_PROMESA = 'falta el tiempo promesa'
 const MOTIVO_H1 = 'falta el hito: hora del último cambio de estado, pendiente de decisión'
 const MOTIVO_H2 = 'falta el hito: satisfacción del cliente'
@@ -130,7 +130,7 @@ function hitoMarcaIngreso(historial: PasoDelHistorial[]): Hito {
 function hitosDe(columna: ColumnaIndicador, t: TicketParaIndicadores, historial: PasoDelHistorial[]) {
   const hitos: Record<string, Hito> = {}
   for (const e of HITOS_POR_COLUMNA[columna]) hitos[e] = resolverHito(e as EtiquetaHito, t, historial)
-  if (columna === '49') hitos[MARCA_INGRESO] = hitoMarcaIngreso(historial)
+  if (columna === '49') hitos[MARCA_INGRESO] = hitoMarcaIngreso(historial); if (columna === '51') hitos[MARCA_ENTREGA] = hitoEntrega(historial)
   const reentrante = historial.length === 0 ? null : Object.values(hitos).some((h) => h.escrituras >= 2)
   return { hitos, reentrante }
 }
@@ -225,11 +225,11 @@ export function calcularIndicadores(t: TicketParaIndicadores, historial: PasoDel
   }
   const natural = (columna: ColumnaIndicador, desde: EtiquetaHito, hasta: EtiquetaHito, formula?: Valor<number | string>) =>
     armar(columna, 'dias_naturales', (h) => naturales(desde, hasta, h), formula)
-  const fin = resolverHito('Fecha Finalización ST', t, historial).dia
-  const hora = o.horaActualizacionEstado ? diaEnZona(o.horaActualizacionEstado) : null
-  const v51: Valor<number> = hora === null ? sinDato(MOTIVO_H1)
-    : fin === null ? sinDato(`falta el hito: ${NOMBRE_HITO['Fecha Finalización ST']}`)
-      : { tipo: 'valor', valor: diasNaturalesEntre(fin, hora) }
+  const v51 = (h: Record<string, Hito>): Calculo => {
+    const entrega = h[MARCA_ENTREGA].dia, fin = h['Fecha Finalización ST'].dia
+    if (entrega === null) return { valor: sinDato(`falta el hito: ${MARCA_ENTREGA}`), marcas: [] }
+    if (fin === null) return { valor: sinDato(`falta el hito: ${NOMBRE_HITO['Fecha Finalización ST']}`), marcas: [] }
+    const n = diasNaturalesEntre(fin, entrega); return { valor: valorDe(n), marcas: n < 0 ? ['orden_invertido'] : [] } }
   const v55: Valor<string> = o.calificacionSatisfaccion ? { tipo: 'valor', valor: o.calificacionSatisfaccion } : sinDato(MOTIVO_H2)
   const promesa = tiempoPromesa(t, historial)
   const cumple = (v53: Valor<number>, sinPromesa: Valor<string>): Valor<string> =>
@@ -238,14 +238,25 @@ export function calcularIndicadores(t: TicketParaIndicadores, historial: PasoDel
     natural('47', 'Fecha Remisión Entrada', 'Fecha Remisión de Salida', sinDato(MOTIVO_H1)),
     armar('49', 'dias_habiles', (h) => { const d = diagnostico(h, o.cierres); return { valor: d.valor, formulaZoho: d.formula, marcas: d.marcas, diasNoHabilesDelIntervalo: d.descontados } }),
     armar('50_53', 'dias_habiles', (h) => { const s = servicio(h, o.cierres); return { valor: s.valor, formulaZoho: s.formula, marcas: s.marcas, diasNoHabilesDelIntervalo: s.descontados } }),
-    armar('51', 'dias_naturales', () => ({ valor: v51, marcas: [] }), sinDato(MOTIVO_H1)),
+    armar('51', 'dias_naturales', v51, sinDato(MOTIVO_H1)),
     armar('54', 'cumplimiento', (h) => {
       const s = servicio(h, o.cierres)
       return { valor: cumple(s.valor, sinDato(MOTIVO_PROMESA)), formulaZoho: cumple(s.formula, valorDe('Cumple')), marcas: s.marcas }
     }),
-    armar('55', 'calificacion', () => ({ valor: v55, marcas: [] }), sinDato(MOTIVO_H2)),
+    armar('55', 'calificacion', () => ({ valor: v55, marcas: [] })),
     natural('57', 'Fecha Revisión Informe', 'Fecha de Cotización'),
     natural('58', 'Fecha de Cotización', 'Fecha Orden de Compra'),
     natural('59', 'Fecha de Cotización', 'Fecha Orden De Venta'),
   ]
+}
+
+/** Las transiciones que entregan el equipo al cliente (RQ-KP-09). El guardián de la prueba las enfrenta al catálogo. */
+export const TRANSICIONES_DE_ENTREGA: readonly string[] = ['entrega_al_cliente', 'entrega_sin_factura']
+
+/** El día de Bogotá de la ÚLTIMA fila de entrega por `performedAt` (S-A) y cuántas filas de entrega hay (RQ-KP-02, -10). */
+function hitoEntrega(historial: PasoDelHistorial[]): Hito {
+  const entregas = historial.filter((p) => TRANSICIONES_DE_ENTREGA.includes(p.transitionId))
+    .sort((a, b) => Date.parse(a.performedAt) - Date.parse(b.performedAt))
+  const dia = diaEnZona(entregas[entregas.length - 1]?.performedAt ?? null)
+  return dia === null ? { dia: null, fuente: 'ausente', escrituras: 0 } : { dia, fuente: 'transicion', escrituras: entregas.length }
 }

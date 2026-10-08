@@ -10,7 +10,7 @@ import { db, instalarArnes, appWith, adminCookie, userCookie } from '../testing/
 instalarArnes()
 
 const RUTA = '/api/indicadores'
-const DATOS = /ticket_transitions|calendario_cierres|FROM tickets/i
+const DATOS = /ticket_transitions|calendario_cierres|encuesta_respuestas|FROM tickets/i
 function conEspia(): { app: ReturnType<typeof appWith>['app']; datos: () => string[]; todas: string[] } {
   const vistas: string[] = []
   const q: Queryable = { query: ((sql: string, p?: unknown[]) => { vistas.push(sql); return db.query(sql, p) }) as Queryable['query'] }
@@ -180,14 +180,62 @@ describe('RQ-KP-17 · resumen de comparación', () => {
     const { app, todas } = conEspia()
     const res = await request(app).get(RUTA).query(q).set('Cookie', await adminCookie())
     expect(res.status).toBe(200)
-    expect(todas.length).toBeGreaterThan(3)
+    expect(todas.length).toBeGreaterThan(4)
     expect(noSelect(todas)).toEqual([])
   })
-  it('sin veredicto en la respuesta y con las mismas tres lecturas: ningún fichero', async () => {
+  it('sin veredicto en la respuesta y con las mismas cuatro lecturas: ningún fichero', async () => {
     await ov('x', 1, '2026-12-01', '2026-12-04', '3')
     const { app, datos } = conEspia()
     const res = await request(app).get(RUTA).set('Cookie', await adminCookie())
-    expect(datos()).toHaveLength(3)
+    expect(datos()).toHaveLength(4)
     expect(JSON.stringify(res.body.comparacion)).not.toMatch(/aprob|sem[aá]foro|umbral|veredicto/i)
+  })
+})
+
+describe('RQ-KP-22 y RQ-KP-14 · el 55 por la ruta', () => {
+  let huellas = 0
+  const respuesta = async (ticketId: string, calificacion: string, cuando: string): Promise<void> => {
+    huellas++
+    await db.query("INSERT INTO public.encuesta_respuestas (ticket_id, calificacion, respondida_at, huella, cargado_por) VALUES ($1, $2, $3, $4, 'prueba')", [ticketId, calificacion, cuando, `h${huellas}`])
+  }
+  const i55 = (res: { body: { tickets: Array<{ ticketId: string; indicadores: Array<Record<string, unknown>> }> } }, id: string) =>
+    res.body.tickets.find((t) => t.ticketId === id)?.indicadores.find((i) => i.columna === '55')
+
+  it('dos respuestas del mismo ticket: el 55 sale calculado con la última (Excelente), con la forma de RQ-KP-13', async () => {
+    await k2()
+    await respuesta('a', 'Regular', '2027-01-10T15:00:00Z'); await respuesta('a', 'Excelente', '2027-01-12T15:00:00Z')
+    const res = await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())
+    expect(res.status).toBe(200)
+    expect(i55(res, 'a')).toMatchObject({ columna: '55', valor: 'Excelente', estado: 'calculado' })
+  })
+  it('un ticket sin respuesta: el 55 es sin dato con el motivo de la falta del hito', async () => {
+    await k2()
+    const res = await request(appWith().app).get(RUTA).set('Cookie', await adminCookie())
+    expect(i55(res, 'a')).toMatchObject({ columna: '55', valor: null, estado: 'sin_dato', motivo: 'falta el hito: satisfacción del cliente' })
+  })
+  it('una respuesta de un ticket fuera del periodo: el ticket no sale y su respuesta no afecta a otro', async () => {
+    await k2()
+    await db.query("INSERT INTO tickets (id, number, subject, status, created_time) VALUES ('f', 9, 's', 'x', '2026-06-02T15:00:00Z')")
+    await respuesta('f', 'Mala', '2026-10-05T15:00:00Z')
+    const res = await request(appWith().app).get(RUTA).query({ desde: '2026-10-01' }).set('Cookie', await adminCookie())
+    expect(res.body.tickets.map((t: { ticketId: string }) => t.ticketId)).toEqual(['a'])
+    expect(i55(res, 'a')).toMatchObject({ estado: 'sin_dato' })
+    expect(JSON.stringify(res.body)).not.toContain('Mala')
+  })
+  it('veinte tickets, algunos con respuestas: cuatro lecturas de datos y ninguna sentencia que no sea SELECT, en JSON y en CSV', async () => {
+    for (let i = 1; i <= 20; i++) {
+      await db.query("INSERT INTO tickets (id, number, subject, status, created_time) VALUES ($1, $2, 's', 'x', '2026-10-02T15:00:00Z')", [`t${i}`, i])
+      if (i % 2 === 0) await respuesta(`t${i}`, 'Bien', '2026-10-06T10:00:00Z')
+    }
+    const antes = (await db.query('SELECT id FROM public.encuesta_respuestas ORDER BY id')).rows
+    const cookie = await adminCookie()
+    for (const q of [{}, { formato: 'csv' }]) {
+      const { app, datos, todas } = conEspia()
+      const res = await request(app).get(RUTA).query(q).set('Cookie', cookie)
+      expect(res.status).toBe(200)
+      expect(datos()).toHaveLength(4)
+      expect(noSelect(todas)).toEqual([])
+    }
+    expect((await db.query('SELECT id FROM public.encuesta_respuestas ORDER BY id')).rows).toEqual(antes)
   })
 })
