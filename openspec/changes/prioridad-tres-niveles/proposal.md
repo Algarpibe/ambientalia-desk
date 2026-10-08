@@ -28,11 +28,11 @@ Gerencia, `decision/p3b-prioridad-tres-niveles` (`openspec/config.yaml:4132`), r
 
 Lo que hoy ocurre, y no coincide:
 
-- `Low` es asignable (`packages/shared/src/prioridad.ts:13`; `packages/shared/src/transitions.ts:84`).
+- `Low` era asignable (`packages/shared/src/prioridad.ts:13` en `6344b4a`; `packages/shared/src/transitions.ts:84` en `6344b4a`).
 - Sin contrato ni Top 5, el ticket nace con la prioridad pedida en el cuerpo o sin ninguna
-  (`packages/shared/src/contratos.ts:66-69`): no existe «media el resto».
-- El Director Técnico no puede ajustar (`packages/shared/src/prioridad.ts:79`; `apps/desk/server/routes/prioridad.ts:71`).
-- El ajuste por ticket sólo se admite en clientes Top 5 (`apps/desk/server/routes/prioridad.ts:67-69`).
+  (`packages/shared/src/contratos.ts:66-69` en `6344b4a`): no existía «media el resto».
+- El Director Técnico no podía ajustar (`packages/shared/src/prioridad.ts:79` en `6344b4a`; `apps/desk/server/routes/prioridad.ts:71` en `6344b4a`).
+- El ajuste por ticket sólo se admitía en clientes Top 5 (`apps/desk/server/routes/prioridad.ts:67-69` en `6344b4a`).
 
 ## 2 · Alcance
 
@@ -121,7 +121,7 @@ Todos razonables y reversibles. Se aplican, y se anotan en el parte.
 | 2 | Qué prioridades ofrece al ajustar un ticket | `apps/desk/src/components/PanelPrioridad.tsx:67` | `422` de `apps/desk/server/routes/prioridad.ts:73-74` |
 | 3 | A quién enseña «Ajustar» | `apps/desk/src/components/PanelPrioridad.tsx:27` (cae `data.top5 &&`; predicado nuevo) | `403` de `apps/desk/server/routes/prioridad.ts:71`, con el predicado nuevo |
 | 4 | A quién enseña el campo de prioridad en una transición | `apps/desk/src/components/TransitionPanel.tsx:160` (predicado nuevo) | `403` de `apps/desk/server/services/ticketService.ts:131`, vía `packages/shared/src/prioridad.ts:81-86` |
-| 5 | Ofrecer una prioridad en el alta | `apps/desk/src/components/CreateTicket.tsx:426-429`, lista escrita a mano; se envía en `:231` | `apps/desk/server/services/ticketService.ts:106`: el servidor deja de leerla. El desplegable se retira |
+| 5 | Ofrecer una prioridad en el alta | `apps/desk/src/components/CreateTicket.tsx:426-429` en `6344b4a`, lista escrita a mano; se enviaba en `:231` | `apps/desk/server/services/ticketService.ts:106`: el servidor deja de leerla. El desplegable se retira |
 | 6 | A quién enseña los controles del Top 5 | `apps/desk/src/components/Top5Panel.tsx:20` | `403` de `apps/desk/server/routes/prioridad.ts:40`. Sin cambio |
 
 Ninguna fila queda sin línea de servidor. La 5 es hoy una lista reescrita en el cliente (punto 1 de la regla): al

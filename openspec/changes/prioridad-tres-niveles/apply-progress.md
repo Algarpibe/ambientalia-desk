@@ -125,3 +125,100 @@ P1 (`POSICIÓN A < B2`): 403 sobre 404. P2 (`POSICIÓN B2 < C`) y P3 (`TC29-7`):
 - `npm run lint`: código 0; 165 avisos y 0 errores (la base).
 - Pendiente del orquestador: commit y detector de citas (`cli.ts --sha HEAD`), por eso L2.22 queda sin marcar.
 - Medida del intento: `git diff --shortstat --no-renames 605b9ab` = 321 inserciones + 60 borrados = 381 (antes de esta línea), sin ficheros nuevos sin trackear ni binarios; por debajo de 800.
+
+---
+
+# Apply-progress — prioridad-tres-niveles · Lote L3
+
+Partida `aed4aa4` (cierre de L2, intento abierto por el orquestador). Lote L3: cliente consumiendo `shared` y cierre documental. Modo `strict_tdd`; los `.tsx` están fuera de la red de pruebas por decisión de Gerencia, así que no hay rojo posible ahí y no se escribió ninguna prueba `.tsx`. Sin commit: el orquestador comprueba, commitea y corre el detector (L3.16, quinta parte, queda sin marcar).
+
+## Cliente (L3.2 a L3.6)
+- `PanelPrioridad.tsx`: import (`:2`), comentario (`:11-12`) y `:27` pasan a `!!user && puedeAjustarPrioridadTicket(user)`; cae `data.top5 &&`. 4 inserciones = 4 borradas.
+- `TransitionPanel.tsx`: import (`:8`) y filtro (`:160`) con el predicado nuevo. 2 = 2.
+- `CreateTicket.tsx` (D10): `:47` y `:231` pasan a comentario de una línea; `:426-429` pasa a un `<span>` estático de cuatro líneas, «Prioridad: la asigna el sistema», que conserva la celda de la rejilla. El estado `prioridad` y su `setPrioridad` desaparecen, y el cuerpo del alta ya no la envía. 6 = 6.
+- `Top5Panel.tsx` **no cambia** (ya consume la lista en `:87` y `:123` y el predicado del `PUT` en `:20`): confirmado por lectura.
+- Ningún `.tsx` gana lógica: cambian un predicado importado y un bloque estático.
+- `npm run build`, `npm run typecheck` y `npm run lint`: verdes (números en el cierre).
+
+## Regla de mutación 3 (L3.7) — tabla final, decisión a decisión
+Cada fila se verificó leyendo la línea del servidor en el árbol de hoy (worktree en `aed4aa4` más este lote). Las ediciones del servidor de L1 y L2 fueron en sitio, así que ninguna línea se desplazó.
+
+| # | Decisión del cliente | Línea del cliente de hoy | Línea del servidor de hoy que la impone | Prueba que la impone |
+|---|---|---|---|---|
+| 1 | Qué prioridades ofrece al fijar un Top 5 | `apps/desk/src/components/Top5Panel.tsx:87`, `:123` (`PRIORIDADES_ASIGNABLES`) | `422` de `apps/desk/server/routes/prioridad.ts:42-43` (`prioridadClienteDelCuerpo`, que rechaza lo que no esté en la lista) | `TC27-5` (`apps/desk/server/prioridadTop5.test.ts:70`) y la paridad de listas de `packages/shared/src/prioridad.test.ts` (M5) |
+| 2 | Qué prioridades ofrece al ajustar un ticket | `apps/desk/src/components/PanelPrioridad.tsx:67` | `422` de `apps/desk/server/routes/prioridad.ts:73-74` (`ajusteDelCuerpo`) | `TC29-3` (`apps/desk/server/prioridadTop5.test.ts:236`) y `TC29-3b` (`:247`) |
+| 3 | A quién enseña «Ajustar» (ya sin exigir Top 5) | `apps/desk/src/components/PanelPrioridad.tsx:27` | `403` de `apps/desk/server/routes/prioridad.ts:71`, con `puedeAjustarPrioridadTicket` | P3 `TC29-7` (`apps/desk/server/prioridadTop5.test.ts:282`), P4 `TC29-8` (`:287`), `PM23-1` (`:359`); M1 y M4 |
+| 4 | A quién enseña el campo de prioridad en una transición | `apps/desk/src/components/TransitionPanel.tsx:160` | `403` de `apps/desk/server/services/ticketService.ts:131` (`cambiaPrioridadSinPermiso`, `packages/shared/src/prioridad.ts:81-86`) | T4 (`apps/desk/server/services/guardaPrioridad.test.ts:165`), T5 (`:172`), `TS22-1` a `TS22-3` (`:123`, `:130`, `:137`); M2, M3, M4 |
+| 5 | No ofrecer prioridad en el alta | `apps/desk/src/components/CreateTicket.tsx:426-429` (texto estático) | `apps/desk/server/services/ticketService.ts:106`: usa la constante y no lee `prioridad` del cuerpo (tampoco `:108`) | `sin contrato ni Top 5 nace Medium pidiendo %s` (`apps/desk/server/services/ticketService.test.ts:1474`); M6 |
+| 6 | A quién enseña los controles del Top 5 | `apps/desk/src/components/Top5Panel.tsx:20` | `403` de `apps/desk/server/routes/prioridad.ts:40` (sin cambio) | `TC27-3` (`apps/desk/server/prioridadTop5.test.ts:58`) y `TC27-4` (`:65`) |
+| 7 | Qué prioridades ofrece el campo de una transición | `apps/desk/src/components/TransitionPanel.tsx:260` pinta `f.options`, que son las de `packages/shared/src/transitions.ts:84` (la hipótesis del diseño queda **confirmada por lectura**) | `422` de `apps/desk/server/services/ticketService.ts:134`, que suma `erroresPrioridadPedida` (`packages/shared/src/prioridad.ts:120`) | D9: `apps/desk/server/services/guardaPrioridad.test.ts:179` (`Low` y `Urgent`); M8 |
+
+**Resultado: ninguna fila queda sin línea de servidor.** No hay hallazgo nuevo en esta tabla. Tres precisiones que no cambian el resultado:
+- La fila 7 **no era** imponible antes de este cambio (`apps/desk/server/transitionExec.ts:88` escribe `String(raw)`); la impone D9 desde L2, y es el supuesto S-K.
+- La fila 5 no es «el servidor lo impone» sino «el servidor no lo lee»: el cliente ya no envía nada; si alguien lo enviara a mano, se ignora.
+- El texto de `PanelPrioridad.tsx` que enseña «cliente Top 5 (…)» en la cabecera es presentación de un dato del servidor (`top5`), no una decisión.
+
+## Mutaciones M1 a M9 sobre el árbol final (L3.8)
+Se corrió el conjunto `prioridad.test.ts`, `contratos.test.ts`, `cargos.test.ts`, `prioridadPropagada.test.ts`, `ticketService.test.ts`, `prioridadAlNacerVigencia.test.ts`, `prioridadTop5.test.ts`, `guardaPrioridad.test.ts`, `trazaTop5AlNacer.test.ts` y `propagarTop5.test.ts` (10 ficheros, 547 pruebas, verde en el árbol sin mutar). Cada mutación se hizo por script sobre el fichero, y se restauró con `git checkout` del fichero; tras cada una, `git diff --numstat` sobre `apps/desk/server`, `packages/shared` y `packages/zoho-sync` salió vacío.
+
+| Mutación | Cambio | Pruebas en rojo |
+|---|---|---|
+| M1 | el `403` de `routes/prioridad.ts:71` baja detrás de `:74` | 2: P2 (`POSICIÓN B2 < C`) y P3 (`TC29-7`) |
+| (P1) | el `403` sube por encima del `404` | 1: `POSICIÓN A < B2` |
+| M2 | la guarda de prioridad de `ticketService.ts:131` sube antes del área (`:129`) | 2: T1 (`TS22-1`) y la prueba del `403` que nombra el área de `ticketService.test.ts` |
+| M2 sobre T4 | **T4 no cae con M2** (el Director Técnico pasa el predicado, así que subir la guarda no cambia su veredicto): el diseño suponía lo contrario. T4 cae con «el cargo abre la transición» (`canExecuteTransition(...) \|\| puedeAjustarPrioridadTicket(user)` en `:129`) | 2: T4 y `TS21-8` |
+| M3 | la misma guarda baja detrás del `throw` de `:134` | 2: T2 (`TS22-2`) y la posición de D9 (permiso gana a lista) |
+| M4 | `CARGOS_AJUSTE_PRIORIDAD_TICKET` vacío | 11: P4 (`TC29-8`), T5, `PM23-1`, las dos matrices, el Director Técnico en las dos transiciones, sin área, el sincronizador y `cambiaPrioridadSinPermiso` |
+| M5 | `Low` vuelve a `PRIORIDADES_ASIGNABLES` (no a `transitions.ts`) | 9: lista literal, **paridad** de las dos copias, `Low` no asignable, Top 5 con `Low`, `prioridadClienteDelCuerpo`, D9 en `prioridad.test.ts` y en `guardaPrioridad.test.ts` (2) y «Top 5 guardado con `Low` nace `Medium`» |
+| M6 | `ticketService.ts:106` y `:108` vuelven a `b.prioridad` | 21 (tabla de «nace `Medium`», trazas, TC24-9, TC24-13, TC24-15, TC28-2, bloque nuevo, borde «el día siguiente») |
+| M7 | `contratos.ts:43` `<` a `<=` | 12, en las dos capas: pura y servicio (el día del fin y el instante de UTC siguiente), más los previos |
+| M8 | `erroresPrioridadPedida` retirada de `ticketService.ts:134` | 2: D9 `Low` y `Urgent` |
+| M9 | datos: fila `cliente_prioridad` con `top5` verdadero y `Low`, sin tocar código | la prueba «Top 5 guardado con `Low` y sin contrato nace `Medium`» está verde en el árbol final, y cae con M5 y con M6 |
+
+Ninguna mutación quedó verde.
+
+## Barrido de citas (regla de mutación 4) — L3.9
+**Medida real del desplazamiento.** `git diff 6344b4a -- packages/shared/src/prioridad.ts` muestra que **no se desplazó ninguna línea anterior a la 115**: las ediciones de L1 y L2 en ese fichero son todas en sitio (líneas 10, 12, 13, 55, 78, 79 y 85) y todo lo añadido (`PRIORIDAD_POR_DEFECTO`, `erroresPrioridadPedida`) cae al final. La premisa de que `PRIORIDAD_POR_DEFECTO` ganó 3 líneas tras la 13 no se sostiene contra el diff; por eso las citas con número ≥ 14 siguen apuntando a la misma línea que en `6344b4a`. `cargos.ts` sólo ganó 9 al final (más el comentario de la línea 78, en sitio). `git diff --numstat 6344b4a` confirma inserciones = borrados en `routes/prioridad.ts` (9/9), `ticketService.ts` (4/4), `contratos.ts` (3/3), `transitions.ts` (1/1), `prioridadPropagada.ts` (1/1), `prioridadCliente.ts` (2/2) y los tres `.tsx` (12/12).
+
+**Método.** Barrido de completas (`<fichero>:N(-M)`) sobre los ficheros de texto trackeados, para los 11 ficheros tocados, quedándose con las citas cuyo rango roza una línea modificada; segundo pase para las abreviadas (`:N`) en las líneas que mencionan `prioridad.ts`. 407 citas rozan una línea tocada: 237 en `openspec/changes/archive/` (excluido del detector y de este lote), 63 en `docs/sdd/` (paquetes y partes fechados), 79 en los artefactos de este cambio y 28 vivas.
+
+**Citas tocadas, con su caso** (todas EN SITIO, sin añadir ni quitar líneas):
+
+| Cita | Dónde | Caso | Qué se hizo |
+|---|---|---|---|
+| `packages/shared/src/prioridad.ts:13` | `openspec/config.yaml:4143` | **C** | anclada a `6344b4a`; añade que la retiró `prioridad-tres-niveles` |
+| `packages/shared/src/prioridad.ts:79` | `openspec/config.yaml:4150` | **C** | ídem; la levantó `prioridad-tres-niveles` |
+| `apps/desk/server/routes/prioridad.ts:71` | `openspec/config.yaml:4151` | **C** | ídem; el predicado nuevo lo cambió `prioridad-tres-niveles` |
+| `apps/desk/server/routes/prioridad.ts:69` | `openspec/config.yaml:4153` | **C** | ídem; el límite lo levantó `prioridad-tres-niveles` |
+| `prioridad.ts:13` y `transitions.ts:84` («Low era asignable») | `proposal.md:31` | **B** | anclada a `6344b4a` |
+| `contratos.ts:66-69` («no existía media el resto») | `proposal.md:33` | **B** | ídem |
+| `prioridad.ts:79` y `routes/prioridad.ts:71` («no podía ajustar») | `proposal.md:34` | **B** | ídem |
+| `routes/prioridad.ts:67-69` («sólo se admitía en Top 5») | `proposal.md:35` | **B** | ídem |
+| `CreateTicket.tsx:426-429` («lista escrita a mano») | `proposal.md:124` | **B** | ídem |
+| `routes/prioridad.ts:68-69` y `:67-69` (las dos guardas `409`) | `design.md:30` | **B** | ídem, con nombre de fichero completo |
+| abreviadas `:106` y `:108` (lecturas de `b.prioridad`) y «acababa en `:114`» | `design.md:25` | **B** | nombre de fichero completo y `6344b4a`; el detector dejó de atribuirlas a `prioridadPropagada.ts` (abreviadas rotas de 15 a 13, las 13 que quedan son anteriores a este cambio) |
+
+**Citas que rozan líneas tocadas y NO se tocan, con su caso:**
+- **A (siguen ciertas)**: `ticketService.ts:134` en `transitions-st/spec.md` (9), `transitions-equipo-nuevo/spec.md` (3), `config.yaml:579` y `fechasDerivadas.ts:106` (la línea 134 sigue siendo el `422` agregado; sólo ganó un término); `transitions.ts:84` en `prioridad.test.ts:8`, `:82`, `prioridad.ts:12` (sigue siendo la línea de la lista de opciones); `routes/prioridad.ts:71`, `:66`, `:73-74` y `ticketService.ts:106`, `:131`, `:134` en `design.md`, `proposal.md` y `tasks.md` cuando son el plan o la descripción de un cambio en sitio.
+- **Ya ancladas antes**: `contratos.test.ts:75` (`ticketService.ts:106 en 9288779`) y `tickets-core/spec.md:865` (`ticketService.ts:106 en 9288779`).
+- **Documentos fechados** (no se editan; son caso B de origen): `docs/sdd/Paquete_de_Despliegue_2026-10-01.md` (37, entre ellas `routes/prioridad.ts:47-49`, `:69`, `:71` y `PanelPrioridad.tsx:27`), `Paquete_de_Despliegue_2026-09-29/30/10-03/10-04b`, `Preguntas_Gerencia_2026-09-29.md`, `Brecha_Maestro_R08.2_2026-09-17.md`, `F0-00_Baseline_as-built.md`, `F1B-09_Auditoria_blueprint_audit-F1B.md` y 237 citas bajo `openspec/changes/archive/`. **Ninguna bloquea** (el detector las lee contra su propia revisión o la línea existe y no está vacía).
+- `exploration.md` de este cambio describe `6344b4a` («Hoy…») y no se edita.
+
+**Para el archivo (specs vivas, que este lote no toca):** `tickets-core/spec.md:865` (RQ-TC-24: «la que hoy resulte del cuerpo, o ninguna») y `:861` quedan sustituidos por el delta de este cambio; `transitions-st/spec.md` RQ-TS-20 (`:837`, opciones con `Low`) y RQ-TS-21 (`:866-867`, `:871-872`) y `permissions/spec.md` RQ-PM-20/23 los reescribe la fusión. Ninguna de sus citas con número a ficheros tocados queda desfasada fuera de esas frases.
+
+**Detector.** Ensayo antes de commitear: se construyó un commit suelto con el árbol de trabajo (sin mover ninguna referencia) y se corrió `cli.ts --sha` sobre él: sin citas bloqueantes; 13 abreviadas rotas informativas, todas anteriores a este cambio. La pasada oficial sobre el commit real es del orquestador.
+
+## Documentos (L3.10 a L3.14)
+- `openspec/config.yaml`: 4 líneas en sitio (`:4143`, `:4150`, `:4151`, `:4153`), 4 = 4. Cada ancla se comprobó contra `git show 6344b4a:<ruta>` (línea 13 de `prioridad.ts` con `Low`; 79 «Sin excepción para el Director Técnico»; 69 el `409` de no-Top-5; 71 el `403` del predicado viejo). Sin claves ni decisiones nuevas; `:4148` no se toca.
+- `docs/sdd/F0-01_Correcciones_para_el_maestro.md`: entrada **34** (el último número era 33), M1.9.1, sobre la R08.4: `…R08.4.md:1982`, `:1986-1987` y `:1990`, leídas por mí en el `.md` (1982 «La que fije el Director Comercial (Alta, Media o Baja)»; 1986 «Media o Baja» y 1987 su criterio; 1989 el `[ABIERTO]` que se conserva; 1990 el «Ajuste por ticket»). No da por decididos S-A a S-K.
+- `docs/sdd/Paquete_de_Despliegue_2026-10-08.md`: apartado 2 «Añadido por `prioridad-tres-niveles` (F1B-07, `cierra: no`)» al final: qué entra y qué no (sin esquema, sin variables, sin relleno), efectos al desplegar, la consulta de sólo lectura marcada «NO EJECUTADA» con las columnas confirmadas contra `schema.sql`, S-A a S-K (S-A y S-J subrayados), las siete entradas propuestas sin número, la tabla de personas P-1 a P-6 y por qué no cierra F1B-07. Confirmado con ruta y línea el hallazgo de `GET /api/top5` (`routes/prioridad.ts:23-25` y `prioridadCliente.ts:46-50`: filtra sólo por `top5 = true`).
+- L3.14: `git diff --name-only 6344b4a` no contiene `CLAUDE.md`, `docs/sdd/ENTRADA.md`, `openspec/specs/**`, `packages/zoho-sync/src/db/repo.ts`, `schema.sql`, `RECONCILIACION.md` ni el paquete del 06/10.
+
+## Cierre (L3.15 a L3.18)
+- `git diff --numstat aed4aa4`: ver la lista completa en el informe de fase. Inserciones = borrados en los tres `.tsx` (6/6, 4/4, 2/2), `design.md` (2/2), `proposal.md` (5/5) y `config.yaml` (4/4); los dos documentos `docs/sdd` sólo añaden (31 y 110). Estado final de L1 y L2 frente a `6344b4a`: `ticketService.ts` 4/4, `routes/prioridad.ts` 9/9, `transitions.ts` 1/1, `contratos.ts` 3/3.
+- `npm test`: código 0; 259 ficheros pasan y 2 saltados; 4226 pruebas pasan y 7 saltadas (la misma cifra que al cierre de L2: este lote no añade pruebas).
+- `npm run typecheck`: código 0.
+- `npm run lint`: código 0; 165 avisos y 0 errores (la base).
+- `npm run build`: código 0; el cliente compila (`CreateTicket`, `PanelPrioridad` y `TransitionPanel` incluidos).
+- Pendiente del orquestador: commit y detector de citas (`cli.ts --sha HEAD`), por eso L3.16 queda sin marcar.
+- Medida del intento: `git diff --shortstat --no-renames aed4aa4` = 278 inserciones + 40 borrados = 318, sin ficheros nuevos sin trackear ni binarios (se midió con este bloque ya escrito); por debajo de 800 y de la válvula de 720.

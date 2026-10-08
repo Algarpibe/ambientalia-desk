@@ -211,20 +211,20 @@ Gerencia: no se propone `jsdom`); documentos de §11 del diseño. **No se toca `
 las specs vivas.**
 
 **Fase de partida**
-- [ ] L3.1 Anotar `git rev-parse HEAD` (cierre de L2) como partida de L3 y abrir su intento.
+- [x] L3.1 Anotar `git rev-parse HEAD` (cierre de L2) como partida de L3 y abrir su intento.
 
 **Cliente** (el servidor ya impone cada decisión desde L1 y L2; no hay rojo posible en `.tsx`, y se dice)
-- [ ] L3.2 `apps/desk/src/components/PanelPrioridad.tsx`: `:2` import, `:11-12` comentario y `:27` pasa a
+- [x] L3.2 `apps/desk/src/components/PanelPrioridad.tsx`: `:2` import, `:11-12` comentario y `:27` pasa a
   `!!user && puedeAjustarPrioridadTicket(user)` (cae `data.top5 &&`). Cero netas.
-- [ ] L3.3 `apps/desk/src/components/TransitionPanel.tsx`: `:8` import y `:160` con el predicado nuevo. Cero netas.
-- [ ] L3.4 `apps/desk/src/components/CreateTicket.tsx` (D10): `:47` y `:231` a comentario de una línea; `:426-429` a un
+- [x] L3.3 `apps/desk/src/components/TransitionPanel.tsx`: `:8` import y `:160` con el predicado nuevo. Cero netas.
+- [x] L3.4 `apps/desk/src/components/CreateTicket.tsx` (D10): `:47` y `:231` a comentario de una línea; `:426-429` a un
   `<span>` estático de cuatro líneas («Prioridad: la asigna el sistema») que conserva la celda de la rejilla. Cero netas.
-- [ ] L3.5 Confirmar por lectura que `apps/desk/src/components/Top5Panel.tsx` **no cambia** (ya consume la lista, `:87`,
+- [x] L3.5 Confirmar por lectura que `apps/desk/src/components/Top5Panel.tsx` **no cambia** (ya consume la lista, `:87`,
   `:123`, y el predicado del `PUT`, `:20`).
-- [ ] L3.6 Correr `npm run build`, `npm run typecheck` y `npm run lint`: verdes (el único detector del cliente).
+- [x] L3.6 Correr `npm run build`, `npm run typecheck` y `npm run lint`: verdes (el único detector del cliente).
 
 **Regla de mutación 3 (tabla escrita, decisión a decisión)**
-- [ ] L3.7 Verificar cada fila del §8 del diseño contra el servidor, por escrito en `apply-progress.md` (decisión,
+- [x] L3.7 Verificar cada fila del §8 del diseño contra el servidor, por escrito en `apply-progress.md` (decisión,
   línea del cliente de hoy, línea del servidor de hoy y prueba que la impone): (1) `Top5Panel.tsx:87`, `:123` ↔ `422`
   `routes/prioridad.ts:42-43`; (2) `PanelPrioridad.tsx:67` ↔ `422` `routes/prioridad.ts:73-74`; (3) `PanelPrioridad.tsx:27`
   ↔ `403` `routes/prioridad.ts:71` (P3, P4); (4) `TransitionPanel.tsx:160` ↔ `403` `ticketService.ts:131` (T4, T5);
@@ -233,40 +233,40 @@ las specs vivas.**
   se marca «hipótesis»). Si alguna fila queda sin línea que la imponga, es un hallazgo y se registra, no se omite.
 
 **Mutaciones**
-- [ ] L3.8 Ejecutar las mutaciones M1 a M9 sobre el árbol final del cambio y anotar rojo/verde de cada una (las nueve
+- [x] L3.8 Ejecutar las mutaciones M1 a M9 sobre el árbol final del cambio y anotar rojo/verde de cada una (las nueve
   existen ya), confirmando el verde tras revertir cada una.
 
 **Cierre documental (D11)**
-- [ ] L3.9 **Barrido de citas (regla de mutación 4)** de los ficheros que hayan cambiado de líneas: `git diff --numstat`
+- [x] L3.9 **Barrido de citas (regla de mutación 4)** de los ficheros que hayan cambiado de líneas: `git diff --numstat`
   de los cuatro `.tsx`, `routes/prioridad.ts`, `ticketService.ts`, `contratos.ts` y `transitions.ts` (sin
   desplazamiento si inserciones = borrados); para cada uno, `grep -rnoE "<fichero>\.tsx?:[0-9]+(-[0-9]+)?"` y leer qué
   AFIRMA cada cita, con los dos extremos de cada rango; atención a `routes/prioridad.ts` `:67-71` y a `prioridad.ts`
   `:13`, `:55`, `:77-85`. Segundo pase para las abreviadas en los ficheros que ya citan el módulo. Registrar el
   resultado fila a fila.
-- [ ] L3.10 `openspec/config.yaml`, en sitio y sin mover líneas: anclar a `6344b4a` las cuatro citas que pasan a caso
+- [x] L3.10 `openspec/config.yaml`, en sitio y sin mover líneas: anclar a `6344b4a` las cuatro citas que pasan a caso
   C, con qué las cerró: `:4143` (`prioridad.ts:13`), `:4150` (`prioridad.ts:79`), `:4151` (`routes/prioridad.ts:71`) y
   `:4153` (`routes/prioridad.ts:69`). La de `:4148` sigue siendo cierta y no se toca.
-- [ ] L3.11 Añadir al final de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` la entrada M1.9.1 (molde de
+- [x] L3.11 Añadir al final de `docs/sdd/F0-01_Correcciones_para_el_maestro.md` la entrada M1.9.1 (molde de
   `:1322-1344`) sobre la R08.4: `…R08.4.md:1982` (Alta o Media), `:1986-1987` (Media, sin «baja», lo ligado a la
   valoración queda [ABIERTO]) y `:1990` (ajuste en cualquier ticket, con motivo, Director Comercial, Director Técnico o
   administrador). Decir que NO da por decididos S-A a S-K.
-- [ ] L3.12 Adenda al final de `docs/sdd/Paquete_de_Despliegue_2026-10-08.md`: qué entra (sin esquema, sin variables, sin
+- [x] L3.12 Adenda al final de `docs/sdd/Paquete_de_Despliegue_2026-10-08.md`: qué entra (sin esquema, sin variables, sin
   relleno); la consulta de sólo lectura del §8 de la propuesta, literal y marcada **«no ejecutada»**; la condición (un
   Top 5 guardado con `Low` deja de imponer hasta volver a guardarlo); y las tareas de persona P-1, P-2 y P-6.
-- [ ] L3.13 Dentro de esa misma adenda, redactar las entradas propuestas para la bandeja **SIN número** (las asigna
+- [x] L3.13 Dentro de esa misma adenda, redactar las entradas propuestas para la bandeja **SIN número** (las asigna
   Supervisión): las cuatro preguntas del §14 de la propuesta, más la pregunta de S-K (¿se mantiene el `422` de lista en
   la transición?) y los hallazgos de `GET /api/top5` (lecturas divergentes de «es Top 5» con `Low` guardado) y de la
   columna `Low` del tablero. No tocar `docs/sdd/ENTRADA.md`.
-- [ ] L3.14 Comprobar con `git diff --name-only <partida de L1>` que `CLAUDE.md`, `docs/sdd/ENTRADA.md`,
+- [x] L3.14 Comprobar con `git diff --name-only <partida de L1>` que `CLAUDE.md`, `docs/sdd/ENTRADA.md`,
   `openspec/specs/**` y `packages/zoho-sync/src/db/repo.ts` **no** aparecen.
 
 **Cierre**
-- [ ] L3.15 `git diff --numstat <partida de L3>` por fichero: inserciones = borrados en los tres `.tsx`; confirmar
+- [x] L3.15 `git diff --numstat <partida de L3>` por fichero: inserciones = borrados en los tres `.tsx`; confirmar
   además el estado final de L1 y L2 (`ticketService.ts`, `routes/prioridad.ts`, `transitions.ts`, `contratos.ts`).
 - [ ] L3.16 Los CUATRO códigos, uno a uno, más el build: `npm test`, `npm run typecheck`, `npm run lint`,
   `npm run build` y, tras commitear, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`. Anotar la salida.
-- [ ] L3.17 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
-- [ ] L3.18 Escribir `apply-progress.md` de L3 (incluida la tabla de L3.7) y marcar casillas.
+- [x] L3.17 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
+- [x] L3.18 Escribir `apply-progress.md` de L3 (incluida la tabla de L3.7) y marcar casillas.
 
 ---
 

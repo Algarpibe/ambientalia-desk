@@ -4140,17 +4140,17 @@ decisiones_de_gerencia_adenda:
     consecuencias: |
       (1) TRES NIVELES: alta para el cliente con contrato vigente; la del Top 5 para los clientes que fija Gerencia; media
       para el resto.
-      (2) SIN «BAJA» POR AHORA: hoy la prioridad baja es asignable (`packages/shared/src/prioridad.ts:13`). Deja de
+      (2) SIN «BAJA» POR AHORA: hoy la prioridad baja es asignable (`packages/shared/src/prioridad.ts:13` en `6344b4a`; la retiró `prioridad-tres-niveles`). Deja de
       ofrecerse; los tickets que ya la tengan no se tocan (SUPUESTO, reversible).
       (3) EL PUNTO 2 ES PENDIENTE, NO DECISIÓN: la valoración del cliente va entre corchetes. No hay dato utilizable en
       Zoho CRM y «la valoración del portal» no está definida. NO SE CONSTRUYE ninguna regla con la valoración.
       (4) LA PRIORIDAD DEL CLIENTE LA FIJA EL DIRECTOR COMERCIAL: es lo construido
       (`packages/shared/src/cargos.ts:80-83`).
       (5) EL AJUSTE PUNTUAL DE UN TICKET, TAMBIÉN EL DIRECTOR TÉCNICO: hoy no tiene excepción
-      (`packages/shared/src/prioridad.ts:79`) y la ruta exige área Comercial y cargo Director Comercial
-      (`apps/desk/server/routes/prioridad.ts:71`).
+      (`packages/shared/src/prioridad.ts:79` en `6344b4a`; la levantó `prioridad-tres-niveles`) y la ruta exige área Comercial y cargo Director Comercial
+      (`apps/desk/server/routes/prioridad.ts:71` en `6344b4a`; el predicado nuevo lo cambió `prioridad-tres-niveles`).
       (6) LO QUE LA RESPUESTA NO DICE: hoy el ajuste a mano sólo se admite en clientes Top 5
-      (`apps/desk/server/routes/prioridad.ts:69`). Si «el ajuste puntual de un ticket» levanta ese límite no está dicho.
+      (`apps/desk/server/routes/prioridad.ts:69` en `6344b4a`; el límite lo levantó `prioridad-tres-niveles`). Si «el ajuste puntual de un ticket» levanta ese límite no está dicho.
       SUPUESTO (reversible) para la tanda: se levanta, porque la pregunta era quién ajusta «fuera de los Top 5».
       (7) F1B-07 NO CIERRA con esto: el punto 2 sigue abierto.
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/p3b-prioridad-tres-niveles) · docs/sdd/Preguntas_Gerencia_2026-10-06.md §8"

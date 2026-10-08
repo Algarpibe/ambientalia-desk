@@ -1630,3 +1630,34 @@ ticket, para que el reporte trimestral no tenga hueco» (línea 2963) / «Cada c
 **Lo que esta entrada NO pide.** No cierra la fila F1F-05 (`cierra: no`): quedan la comparación con la exportación de Zoho (el cargador de esa exportación y la
 decisión de su formato), el canal de la encuesta y cualquier pantalla de carga. No toca la regla de comparación del 95 % de la línea 2957. No afirma que esté en
 producción: depende del despliegue y de la tarea P-1 (`docs/sdd/Paquete_de_Despliegue_2026-10-06.md`, §14).
+
+## La de F1B-07, prioridad en tres niveles y ajuste por ticket del Director Técnico (34)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `prioridad-tres-niveles`, `cierra: no`, y de la
+> respuesta de Gerencia del 2026-10-06, `decision/p3b-prioridad-tres-niveles` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`).
+
+### 34 · M1.9.1 — la prioridad asignable es Alta o Media, «media» es la del resto, y el Director Técnico ajusta en cualquier ticket *(F1B-07)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1982` (fila «Alta»: quién la fija),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1986-1987` (fila «Media o Baja») y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1990` (párrafo «Ajuste por ticket»), dentro del bloque «Prioridad.».
+
+**Texto actual:**
+
+- Línea 1982: «La que fije el Director Comercial (Alta, Media o Baja)».
+- Líneas 1986-1987: «Media o Baja» / «Cliente sin contrato ni Top 5, según su calificación («Portal Ambientalia · Valoración de Clientes», modelo de la R08)».
+- Línea 1990: «Ajuste por ticket: solo en tickets de clientes Top 5, con motivo obligatorio, por el Director Comercial o un administrador. Deja traza y
+  no mueve el reloj del SLA. [ABIERTO] Quién ajusta fuera de los Top 5; hoy solo puede un administrador (Anexo D).»
+
+**Texto propuesto:**
+
+1. En la línea 1982: «La que fije el Director Comercial (Alta o Media)».
+2. En las líneas 1986-1987: «Media» / «Cliente sin contrato ni Top 5. [DECIDIDO 06/10/2026] Sin «baja» por ahora. [ABIERTO] El nivel que dependa de la valoración
+   del cliente no está definido». La marca [ABIERTO] de la línea 1989 (de dónde sale la calificación) se conserva: sigue sin respuesta.
+3. En la línea 1990: «Ajuste por ticket: en cualquier ticket, con motivo obligatorio, por el Director Comercial, el Director Técnico o un administrador. Deja traza
+   y no mueve el reloj del SLA.», retirando el «[ABIERTO] Quién ajusta fuera de los Top 5».
+
+**Lo que esta entrada NO pide.** No da por decididos los supuestos S-A a S-K del cambio (el orden entre Top 5 y «alta», qué pasa al desmarcar un Top 5, que el
+ajuste manual congele la fila entera frente a Zoho, que una prioridad fuera de la lista se rechace en la transición, entre otros): están como preguntas propuestas en
+la adenda de `docs/sdd/Paquete_de_Despliegue_2026-10-08.md`, sin número hasta que Supervisión las asigne. No define la «valoración del cliente»: por eso F1B-07
+no se cierra. No afirma que esté en producción: depende del despliegue y de las tareas P-1, P-2 y P-6 de esa adenda.
