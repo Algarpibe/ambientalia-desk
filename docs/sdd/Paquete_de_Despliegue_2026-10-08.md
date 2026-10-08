@@ -274,3 +274,27 @@ SELECT t.id, t.number, t.status, t.priority, t.source,
 | T-P2 | Añadir a la corrección de M11.6 (E-230) que el mapa generado cubre los tres flujos | Gerencia | Expediente del maestro |
 
 Archivar el cambio no da por hechas estas dos tareas.
+
+### 4.4 · Traspaso tras la fusión — para Supervisión
+
+Añadido el 2026-10-08, después de fusionar la tanda en `60b171f`. F1B-09 **sigue en curso** (`cierra: no`).
+
+- **Marcar E-222.** El mapa generado cubre ya los tres flujos; la entrada de `docs/sdd/ENTRADA.md` sigue diciendo **ABIERTA**. Es T-P1
+  del apartado 4.3 y no la marca esta tanda: el fichero es de Supervisión.
+- **Citas antiguas sin anclar a `packages/shared/src/mapaBlueprint.ts`, que se suman a E-183.** Son siete ubicaciones en cuatro cambios
+  archivados, todas escritas contra el fichero de su fecha y sin revisión en la cita. La fusión insertó líneas en ese fichero desde la
+  línea 30 (25 añadidas y 14 quitadas, medido entre `a26ed48` y `60b171f`), así que hoy apuntan entre cinco y diez líneas más arriba de
+  lo que nombran. No se tocaron: son registros fechados (caso B de la regla de mutación 4) y piden el mismo barrido cita a cita que E-183.
+
+  | Cambio archivado | Fichero y línea de la cita | Rango que cita |
+  |---|---|---|
+  | `2026-09-22-generador-mapa-blueprint` | `verify-report.md`, línea 114 | líneas 108 a 122 |
+  | `2026-09-25-blueprint-equipo-nuevo` | `apply-progress.md`, línea 483 | línea 139 |
+  | `2026-10-01-tres-transiciones-cifra-anclada` | `design.md`, línea 22 | línea 72 |
+  | `2026-10-01-tres-transiciones-cifra-anclada` | `design.md`, línea 52, y `tasks.md`, línea 53 | línea 63 |
+  | `2026-10-02-rechazo-solo-comercial` | `design.md`, línea 29, y `exploration.md`, línea 66 | líneas 78 a 80 |
+
+  El detector no las bloquea: la línea existe y no está vacía. Que diga lo que la frase afirma es lectura humana.
+- **Nadie ha renderizado los dos diagramas nuevos.** `docs/artefactos/blueprint-equipo-nuevo.md` y `docs/artefactos/blueprint-soporte-remoto.md`
+  están probados como texto —contenido, orden y desfase contra el catálogo—, no como dibujo. **Tarea de persona:** abrirlos una vez en un
+  visor de Mermaid y comprobar que se pintan. No es una casilla de ninguna tanda.
