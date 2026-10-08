@@ -274,6 +274,7 @@ las specs vivas.**
 - [x] L4.2 VERDE: `ajustarPrioridad` (`apps/desk/server/db/prioridadCliente.ts:93`) escribe sólo `priority`, `prioridad_en_app_at` y `updated_at`. `repo.ts` sin tocar.
 - [x] L4.3 Mutaciones: `managed_by_app`, `source`, `modified_time`, sin marca y sin traza; más la salida «sin base» de `cambioPorTop5`, que sobrevivía.
 - [x] L4.4 Documentos al día: RQ-TC-29 y RQ-TC-37 del delta, `design.md` D8, S-J de la propuesta y el apartado 2 del paquete de despliegue. El delta de `zoho-sync` (RQ-ZS-01) va en intento propio.
+- [x] L4.5 Delta de `zoho-sync`: bloque `MODIFIED` de RQ-ZS-01 con tres sustituciones a cero líneas netas (el ajuste manual pone la marca por fila y no `managed_by_app`). Intento propio.
 
 ---
 
