@@ -104,11 +104,11 @@ Este cambio no cierra, ni toca, E-223 a E-230.
 
 Enfoque A de la exploración, sin cambios de fondo.
 
-- `EntradaMapa` (`packages/shared/src/mapaBlueprint.ts:23-30`) gana campos opcionales. Sin ellos, el
-  comportamiento es el de hoy: mismos nombres (`packages/shared/src/mapaBlueprint.ts:32-37`), mismos
-  títulos (`packages/shared/src/mapaBlueprint.ts:161`, `packages/shared/src/mapaBlueprint.ts:209`).
-- La guarda D-1 (`packages/shared/src/mapaBlueprint.ts:108-122`, llamada desde
-  `packages/shared/src/mapaBlueprint.ts:219`) se aplica **sólo si hay fases declaradas**. Leído el código:
+- `EntradaMapa` (`packages/shared/src/mapaBlueprint.ts:23-30` en `a26ed48`) gana campos opcionales. Sin ellos, el
+  comportamiento es el de hoy: mismos nombres (`packages/shared/src/mapaBlueprint.ts:32-37` en `a26ed48`), mismos
+  títulos (`packages/shared/src/mapaBlueprint.ts:161` en `a26ed48`, `packages/shared/src/mapaBlueprint.ts:209` en `a26ed48`).
+- La guarda D-1 (`packages/shared/src/mapaBlueprint.ts:108-122` en `a26ed48`, llamada desde
+  `packages/shared/src/mapaBlueprint.ts:219` en `a26ed48`) se aplica **sólo si hay fases declaradas**. Leído el código:
   hoy, con `fases: []` y `fasePorEstado: {}`, lanza para el primer estado; no se ha ejecutado.
 - El registro por flujo vive en `packages/shared` para que el guion y la prueba consuman **la misma**
   función: dos construcciones paralelas de la entrada serían el molde H5 de `CLAUDE.md`.
@@ -165,12 +165,12 @@ F1A-06; (a) lleva además, por flujo, una prueba permanente que inyecta un catá
 | Nº | Supuesto | Qué cambia si la respuesta es otra |
 |---|---|---|
 | S-A | Ficheros nuevos: `blueprint-equipo-nuevo.md` y `blueprint-soporte-remoto.md`, con el prefijo de RQ-MB-03 | Dos nombres en el registro por flujo y en la prueba; se regenera |
-| S-B | La leyenda lista las tres áreas de `AREAS` aunque el flujo sólo use una (`packages/shared/src/mapaBlueprint.ts:150-157` no cambia) | Filtrar por áreas usadas: unas 5 líneas y una prueba; cambia el fichero de los dos flujos nuevos, nunca los de servicio |
+| S-B | La leyenda lista las tres áreas de `AREAS` aunque el flujo sólo use una (`packages/shared/src/mapaBlueprint.ts:150-157` en `a26ed48` no cambia) | Filtrar por áreas usadas: unas 5 líneas y una prueba; cambia el fichero de los dos flujos nuevos, nunca los de servicio |
 | S-C | Un flujo sin fases lleva sólo el diagrama completo | Declarar fases para un flujo es dato de negocio: pide decisión y otro cambio |
 | S-D | Sin marca `·espera·` en los flujos nuevos: los cuatro `ESTADOS_SIN_SALIDA` son de servicio y la clase de `Pendiente` está sin decidir (`packages/shared/src/estados.ts:105`, E-226) | Se pasa la lista al registro por flujo y se regenera |
 | S-E | Orden de estados de un flujo nuevo: primera aparición en su catálogo, orígenes antes que destino | Cambian los alias `eNN` y el orden de nodos; se regenera |
 | S-F | Servicio no se deriva del catálogo: conserva `ESTADOS_SERVICIO` (`packages/shared/src/estados.ts:188`) | Derivarlo reordenaría los alias y rompería R3: no es reversible sin decisión |
-| S-G | La cabecera de «generado» de los flujos nuevos nombra sus fuentes reales y no `fasesBlueprint.ts` (`packages/shared/src/mapaBlueprint.ts:54-61`); la de servicio no cambia | Reutilizar la misma cabecera ahorra unas 10 líneas y deja una frase inexacta |
+| S-G | La cabecera de «generado» de los flujos nuevos nombra sus fuentes reales y no `fasesBlueprint.ts` (`packages/shared/src/mapaBlueprint.ts:54-61` en `a26ed48`); la de servicio no cambia | Reutilizar la misma cabecera ahorra unas 10 líneas y deja una frase inexacta |
 | S-H | El comentario de `packages/shared/src/estados.ts:176-180` («no debe aparecer en el mapa generado») se precisa en sitio —mapa de servicio—, sin cambiar el número de líneas | Dejarlo: queda una afirmación falsa en presente, del molde de E-228 |
 | S-I | El registro por flujo va en fichero nuevo de `packages/shared/src/` | Ponerlo en `mapaBlueprint.ts` obliga a importar `flujos.ts`, dependencia que hoy no existe |
 | S-J | `toca_maestro: si`. M11.6 dice hoy «F1B-09, sin empezar» y no dice qué flujos cubre el mapa: al terminar, la corrección pendiente (E-230) tiene que decir además que el mapa cubre los tres. La decisión lleva `maestro_revision: "no aplica"`, que se refiere a la decisión, no al pasaje | Con `no`, nada cambia en el código; sólo la cabecera y la tarea de persona T-P2 |

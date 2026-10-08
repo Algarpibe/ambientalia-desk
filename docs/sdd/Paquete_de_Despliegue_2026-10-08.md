@@ -247,3 +247,30 @@ SELECT t.id, t.number, t.status, t.priority, t.source,
   anterior a la tanda y su cuerpo ya decía lo construido.
 - Las entradas de bandeja del apartado 2.5 siguen sin número. La tercera cambia de sentido: ya no pregunta si se mantiene el
   congelado entero, sino si se confirma S-J y qué se hace con los ya ajustados (apartado 3.3).
+
+## 4 · Añadido por `mapa-blueprint-tres-flujos` (F1B-09, `cierra: no`)
+
+### 4.1 · Qué entra
+
+- **Motor** (`packages/shared/src/mapaBlueprint.ts`): tres campos opcionales en `EntradaMapa` (nombre del flujo, nombre del
+  fichero completo y fuentes), la cabecera de «generado» como plantilla y la guarda D-1 sólo cuando el flujo declara fases.
+- **Registro por flujo** (`packages/shared/src/mapaPorFlujo.ts`, fichero nuevo, exportado desde `packages/shared/src/index.ts`):
+  construye la entrada de cada clave de `CATALOGO_POR_FLUJO`. Los estados de equipo nuevo y soporte remoto se derivan del catálogo.
+- **Guion** (`scripts/generar-mapa-blueprint.ts`): escribe los seis ficheros desde ese registro.
+- **Dos mapas generados nuevos:** `docs/artefactos/blueprint-equipo-nuevo.md` y `docs/artefactos/blueprint-soporte-remoto.md`. Los cuatro
+  de servicio no cambian ni un byte.
+- **Pruebas** (al final de `packages/shared/src/mapaBlueprint.test.ts`): anti-desfase exhaustivo sobre las claves de `CATALOGO_POR_FLUJO`.
+
+### 4.2 · Qué NO hay
+
+**Ni esquema, ni variables de entorno, ni relleno de datos.** Es una herramienta de documentación que escribe Markdown en
+`docs/artefactos/`. No toca el servidor, el cliente, la base de datos ni el despliegue.
+
+### 4.3 · Lo que queda para Supervisión y Gerencia
+
+| | Qué | Dueño | Destino |
+|---|---|---|---|
+| T-P1 | Marcar E-222 como resuelta y anclar al guion y a la prueba las citas sin ancla de `openspec/config.yaml` y `docs/sdd/ENTRADA.md` | Supervisión | `docs/sdd/ENTRADA.md` y `openspec/config.yaml`, en `main` |
+| T-P2 | Añadir a la corrección de M11.6 (E-230) que el mapa generado cubre los tres flujos | Gerencia | Expediente del maestro |
+
+Archivar el cambio no da por hechas estas dos tareas.

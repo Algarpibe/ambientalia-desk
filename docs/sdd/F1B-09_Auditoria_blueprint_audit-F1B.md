@@ -27,12 +27,12 @@ los lectores comunes con los tres flujos (§3 a §6). (4) Cifras e invariantes (
 **La premisa del mapa, comprobada.** La fila del plan dice que la tanda «hereda el generador de
 diagramas» y que con él «la extensión de M11.6 deja de ser manual»
 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:166`). El generador **existe**
-(`scripts/generar-mapa-blueprint.ts:28-35`, construido por F1A-06) y **no está desfasado**: la prueba
-anti-desfase (`packages/shared/src/mapaBlueprint.test.ts:168`) pasó en la ejecución completa de esta
+(`scripts/generar-mapa-blueprint.ts:28-35` en `a26ed48`, construido por F1A-06) y **no está desfasado**: la prueba
+anti-desfase (`packages/shared/src/mapaBlueprint.test.ts:168` en `a26ed48`) pasó en la ejecución completa de esta
 tanda (§7). Pero **cubre un solo flujo**: recibe `TRANSITIONS` y `ESTADOS_SERVICIO`
-(`scripts/generar-mapa-blueprint.ts:29` y `scripts/generar-mapa-blueprint.ts:31`), y el registro de
+(`scripts/generar-mapa-blueprint.ts:29` y `scripts/generar-mapa-blueprint.ts:31`, las dos en `a26ed48`), y el registro de
 estados declara que `Verificación` «no debe aparecer en el mapa generado»
-(`packages/shared/src/estados.ts:176-180`). Para equipo nuevo y soporte remoto la extensión **sigue
+(`packages/shared/src/estados.ts:176-180` en `a26ed48`; superado por `mapa-blueprint-tres-flujos`). Para equipo nuevo y soporte remoto la extensión **sigue
 siendo manual**: es el hallazgo B-1, y esta auditoría los lee del catálogo, no de un mapa.
 
 **Cómo se reproduce la parte mecánica.** Un guion de `tsx` que importa `TRANSITIONS`,
@@ -246,7 +246,7 @@ La pregunta es del molde H5: ¿algún lector asume el catálogo de servicio y tr
 | Vistas del tablero y «Mis tickets» | No lo necesitan | `apps/desk/src/lib/boardView.ts:39` y `apps/desk/src/lib/boardView.ts:47-48` | Correcto, con el matiz de B-5 |
 | **Indicadores** | **No** | `apps/desk/server/indicadores.ts:57-64`: la consulta filtra sólo por periodo | **B-3** |
 | **Columnas del tablero** | **No** | `packages/shared/src/columns.ts:4-5` declara que son los estados de servicio | **B-4** |
-| **Mapa generado** | **No** | `scripts/generar-mapa-blueprint.ts:29` | **B-1** |
+| **Mapa generado** | **No** | `scripts/generar-mapa-blueprint.ts:29` en `a26ed48` | **B-1** |
 
 **B-3, con su límite.** Verificado: la consulta de entrada de los indicadores no mira la clasificación ni
 el flujo. Hipótesis, no ejecutada: un ticket de equipo nuevo o de soporte remoto creado en el periodo
@@ -280,7 +280,7 @@ en la bandeja (la de soporte remoto es E-090).
 | `npx vitest run`, árbol `0d1a40b` más los ficheros de esta tanda antes de editar la prueba de §7.2 | **verde** — 217 ficheros (215 pasan, 2 omitidos), **3.354 pruebas** (3.347 pasan, 7 omitidas) |
 | Transiciones por flujo | 31 + 6 + 4 = **41**; con las dos sin botón, 43 |
 | Estados | **23** en el registro; 20 de servicio, 5 de equipo nuevo, 4 de soporte remoto (comparten nombres) |
-| Aristas del mapa generado | **35**, sólo servicio (`packages/shared/src/mapaBlueprint.test.ts:46`) |
+| Aristas del mapa generado | **35**, sólo servicio (`packages/shared/src/mapaBlueprint.test.ts:46` en `a26ed48`) |
 | Estados `en_espera` | **11** (`packages/shared/src/estados.ts:120`) |
 | Campos de fecha reentrantes | **11** |
 
