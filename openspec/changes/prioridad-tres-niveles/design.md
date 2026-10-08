@@ -154,7 +154,7 @@ hipótesis hasta el primer rojo.
 | # | Regla | Qué se cambia | Qué cae |
 |---|---|---|---|
 | M1 | 1 | El `403` de `routes/prioridad.ts:71` se baja detrás de `:74` | P2 y P3 |
-| M2 | 1 | En `ticketService.ts:131`, la guarda de prioridad se sube antes de `:129` | T1 y T4 |
+| M2 | 1 | En `ticketService.ts:131`, la guarda de prioridad se sube antes de `:129` | T1 (verify: T4 no cae con M2, cae con «el cargo abre la transición») |
 | M3 | 1 | La misma guarda se baja detrás del `throw` de `:134` | T2 |
 | M4 | — | `CARGOS_AJUSTE_PRIORIDAD_TICKET` vacío | P4, T5, la matriz y el sincronizador |
 | M5 | 2 | `Low` vuelve a una sola de las dos listas | La paridad de `prioridad.test.ts:12-19` |

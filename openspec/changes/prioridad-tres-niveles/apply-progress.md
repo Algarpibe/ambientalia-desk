@@ -222,3 +222,19 @@ Ninguna mutación quedó verde.
 - `npm run build`: código 0; el cliente compila (`CreateTicket`, `PanelPrioridad` y `TransitionPanel` incluidos).
 - Pendiente del orquestador: commit y detector de citas (`cli.ts --sha HEAD`), por eso L3.16 queda sin marcar.
 - Medida del intento: `git diff --shortstat --no-renames aed4aa4` = 278 inserciones + 40 borrados = 318, sin ficheros nuevos sin trackear ni binarios (se midió con este bloque ya escrito); por debajo de 800 y de la válvula de 720.
+
+## Remediación tras el verify
+
+Lote único de remediación de los avisos del verify (`verify-report.md`, W1 a W4 y S1). Código de producción sin tocar (`git diff` sólo muestra pruebas y artefactos). Las pruebas son de caracterización: nacen verdes; cada una se demostró discriminante con una mutación del código de producción, restaurada con `git checkout` (sin rastro en `git diff`).
+
+| Aviso | Qué se hizo | Prueba | Mutación que la pone roja |
+|---|---|---|---|
+| W1 | `Low` añadido en sitio a los dos bucles de ruta (inserciones = borrados, 5/5 en el fichero). En TC29-3 el ticket sembrado pasó de `Low` a `Medium`: con `Low` actual, el `422` lo daba «igual a la actual» y no la lista, y la prueba no discriminaba | `apps/desk/server/prioridadTop5.test.ts:70` (TC27-5) y `apps/desk/server/prioridadTop5.test.ts:237` (TC29-3) | `PRIORIDADES_ASIGNABLES` de `packages/shared/src/prioridad.ts` con `Low` añadido: caen las dos (2 en rojo) |
+| W3a | Top 5 guardado con `Low` y contrato vigente: el alta nace `High` | `apps/desk/server/services/ticketService.test.ts:1494` (bloque nuevo, al final) | el alta ignora el contrato si el cliente tiene fila Top 5 (`ticketService.ts:106`): cae ella y otras dos (3 en rojo) |
+| W3b | Fila sembrada con `Low`, se vuelve a guardar con `High`: impone, propaga y deja traza `Low`→`High` | `apps/desk/server/propagarTop5.test.ts:239` (bloque nuevo, al final) | `cambioPorTop5` devuelve `null` si el actual es `Low`: cae ella (14 en rojo en total) |
+| W3c | Los tres «conserva»: tras un alta nueva del mismo cliente, `Low`, `Urgent` y sin prioridad quedan igual y sin traza; tras un `PUT` que desmarca la fila `Low`, igual | `apps/desk/server/services/ticketService.test.ts:1494` y `apps/desk/server/propagarTop5.test.ts:239` | alta que reescribe a `Medium` los tickets del cliente: cae la de alta (1); `cambioPorTop5` sin la salida «sin base» y con base `Medium`: cae la del `PUT` (3 en rojo) |
+| W2 | Retirado el escenario «un alta sin `client_id` nace `Medium`» y corregida la frase del cuerpo de RQ-TC-24: el alta sin cliente responde `422` (`apps/desk/server/services/ticketService.ts:84` y `apps/desk/server/services/ticketService.ts:88`) | — | — |
+| S1 | `design.md` §7, fila M2: sólo T1; T4 cae con «el cargo abre la transición» | — | — |
+| W4 | No se toca: divergencia declarada, sin destino | — | — |
+
+**Hallazgo sobre los «conserva».** Un `PUT` que vuelve a guardar el Top 5 con `High` SÍ cambia un ticket abierto `Low` a `High` (propagación, RQ-TC-35): la regla "conserva" de RQ-TC-56 vale al entrar en vigor y frente a un alta o una desmarcación, no frente a un nuevo guardado con una prioridad de la lista. Por eso el escenario del delta y las pruebas se escribieron con el `PUT` que desmarca; el que guarda con `High` lo cubre W3b. El texto del delta ya dice «al entrar en vigor», no se modificó.

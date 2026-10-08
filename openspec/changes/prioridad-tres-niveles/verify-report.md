@@ -251,3 +251,11 @@ Verify no cambia código ni pruebas. Este informe es el único fichero nuevo (me
 
 ### Verdict
 **PASS WITH WARNINGS** — los 14 requisitos están implementados (8 escenarios con evidencia parcial o estructural, ver §3) y probados en ejecución, los cinco comandos terminan en 0 con las cifras esperadas, el detector no tiene bloqueantes, y 22 mutaciones (seis de posición) no dejan superviviente. Quedan 4 advertencias de cobertura y de especificación que no bloquean el archivo (W1 a W4); W2 se resuelve al fusionar el delta.
+
+## Adenda tras la remediación
+
+- **W1 cerrado:** `Low` entra en los bucles de ruta de `apps/desk/server/prioridadTop5.test.ts:70` (PUT) y `apps/desk/server/prioridadTop5.test.ts:237` (POST); la mutación que añade `Low` a la lista asignable las pone en rojo.
+- **W2 cerrado:** escenario inalcanzable retirado del delta de tickets-core y frase del requisito corregida.
+- **W3 cerrado:** alta con Top 5 `Low` y contrato (`apps/desk/server/services/ticketService.test.ts:1494`), «volver a guardar» desde una fila `Low` y los tres «conserva» (`apps/desk/server/propagarTop5.test.ts:239`), cada una con su mutación en rojo (ver `apply-progress.md`, «Remediación tras el verify»).
+- **W4 abierto:** divergencia declarada, sin destino a propósito.
+- **S1 aplicada** en `design.md` §7.

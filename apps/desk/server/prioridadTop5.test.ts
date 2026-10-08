@@ -67,9 +67,9 @@ describe('PUT /api/clients/:id/prioridad · quién puede (RQ-TC-27)', () => {
     expect((await fijar(app, await userCookie(['Servicio Técnico'], 'Director Técnico'), 'cli-1', { top5: true, prioridad: 'High' })).status).toBe(403)
   })
 
-  it('TC27-5 · Urgent y Alta: 422 y sin fila', async () => {
+  it('TC27-5 · Urgent, Alta y Low: 422 y sin fila', async () => {
     await cliente(); const { app } = appWith(); const cookie = await userCookie(['Comercial'], 'Director Comercial')
-    for (const mala of ['Urgent', 'Alta']) {
+    for (const mala of ['Urgent', 'Alta', 'Low']) {
       const res = await fijar(app, cookie, 'cli-1', { top5: true, prioridad: mala })
       expect(res.status, mala).toBe(422)
       expect(Array.isArray(res.body.errors), mala).toBe(true)
@@ -234,9 +234,9 @@ describe('POST /api/tickets/:id/prioridad · el ajuste (RQ-TC-29)', () => {
     expect(await ajustes()).toEqual([])
   })
 
-  it('TC29-3 · Urgent y Alta no se asignan: 422 con errors[]', async () => {
-    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Low'); const { app } = appWith(); const dc = await userCookie(['Comercial'], 'Director Comercial')
-    for (const mala of ['Urgent', 'Alta']) {
+  it('TC29-3 · Urgent, Alta y Low no se asignan: 422 con errors[]', async () => {
+    await cliente(); await marcarTop5('cli-1'); await ticketDe('t1', 9201, 'cli-1', 'Medium'); const { app } = appWith(); const dc = await userCookie(['Comercial'], 'Director Comercial')
+    for (const mala of ['Urgent', 'Alta', 'Low']) {
       const res = await ajustar(app, dc, 't1', { prioridad: mala, motivo: 'x' })
       expect(res.status, mala).toBe(422)
       expect(res.body.error).toBe(res.body.errors[0])

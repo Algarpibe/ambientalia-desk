@@ -235,3 +235,23 @@ describe('desmarcar a quien nunca fue Top 5 (RQ-TC-36; S-3 del verify)', () => {
     expect(await trazas()).toEqual([])
   })
 })
+
+describe('RQ-TC-56 · una fila Top 5 guardada con Low (remediación del verify, W3; caracterización: nacen verdes)', () => {
+  const sembrarLow = () => db.query("INSERT INTO public.cliente_prioridad (client_id, top5, prioridad, actualizado_por) VALUES ('cli-1', true, 'Low', 'seed')")
+
+  it('volver a guardarla con High impone y propaga: el ticket Low pasa a High con traza y los nuevos nacerán High', async () => {
+    await cliente(); const { app } = appWith(); await ticket('t1', 1, 'cli-1', 'Low'); await sembrarLow()
+    expect(await prio('t1')).toBe('Low')
+    expect((await marcar(app, 'High')).status).toBe(200)
+    expect(await prio('t1')).toBe('High')
+    expect(await trazas()).toMatchObject([{ ticket_id: 't1', de: 'Low', a: 'High', origen: 'top5' }])
+  })
+
+  it('un PUT que la desmarca no alcanza a los tickets Low, Urgent ni sin prioridad: conservan su valor y no hay traza', async () => {
+    await cliente(); const { app } = appWith()
+    await ticket('t-low', 1, 'cli-1', 'Low'); await ticket('t-urg', 2, 'cli-1', 'Urgent'); await ticket('t-nul', 3, 'cli-1', null); await sembrarLow()
+    expect((await desmarcar(app)).status).toBe(200)
+    expect(await Promise.all(['t-low', 't-urg', 't-nul'].map(prio))).toEqual(['Low', 'Urgent', null])
+    expect(await trazas()).toEqual([])
+  })
+})

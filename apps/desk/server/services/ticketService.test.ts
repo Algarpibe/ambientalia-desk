@@ -1489,3 +1489,23 @@ describe('prioridad-tres-niveles · prioridad al nacer', () => {
     expect(await prioridad()).toBe('Medium')
   })
 })
+
+// prioridad-tres-niveles · remediación del verify (W3) · RQ-TC-56 · caracterización: nacen verdes.
+describe('prioridad-tres-niveles · RQ-TC-56 · un Top 5 guardado con Low', () => {
+  it('con contrato vigente el alta nace High: el Low guardado no quita el contrato', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low'); await contratoDe('OV-2026-170', VIGENTE)
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    expect(await prioridad()).toBe('High')
+  })
+
+  it('un alta nueva del mismo cliente no toca a los tickets que ya tenía (Low, Urgent y sin prioridad) ni escribe traza', async () => {
+    await equipo(); await cliente('cli-1'); await top5De('cli-1', 'Low')
+    for (const [id, n, p] of [['t-low', 9401, 'Low'], ['t-urg', 9402, 'Urgent'], ['t-nul', 9403, null]] as const) {
+      await db.query("INSERT INTO tickets (id, number, subject, status, status_type, client_id, priority) VALUES ($1,$2,'previo','Ingresado','Open','cli-1',$3)", [id, n, p])
+    }
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK }, 'Admin')
+    const r = await db.query("SELECT id, priority FROM tickets WHERE id LIKE 't-%' ORDER BY id")
+    expect(r.rows).toEqual([{ id: 't-low', priority: 'Low' }, { id: 't-nul', priority: null }, { id: 't-urg', priority: 'Urgent' }])
+    expect((await db.query('SELECT 1 FROM public.prioridad_ajustes')).rows).toEqual([])
+  })
+})

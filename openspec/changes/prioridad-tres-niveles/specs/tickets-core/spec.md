@@ -92,7 +92,7 @@ cambia el Top 5 del cliente lo fijan `RQ-TC-35` (marcar o cambiar), `RQ-TC-36` (
 exentos), y un ticket que nace bajo Top 5 deja la traza de `RQ-TC-38` para poder volver a su base, que es `Medium`
 (supuesto S-I de la propuesta). Lo que una transición escriba después en `priority` no lo reevalúa este requisito
 (supuesto S-1 de F1B-07) ni lo trata la propagación como ajuste manual (supuesto S-4 de
-`propagar-top5-lista-remision-creada`). Un ticket sin `client_id` no hereda de ningún cliente y nace `Medium`. Los
+`propagar-top5-lista-remision-creada`). Un ticket sin `client_id` (sólo llega por Zoho: el alta de la aplicación sin cliente responde `422`) no hereda de ningún cliente. Los
 tickets existentes con otro valor no se reescriben (`RQ-TC-56`).
 
 #### Scenario: Cliente con contrato vigente → el ticket nace `High` aunque el cuerpo traiga `Low`
@@ -212,12 +212,6 @@ tickets existentes con otro valor no se reescriben (`RQ-TC-56`).
 - GIVEN un ticket de Zoho sin `client_id`
 - WHEN se evalúa su prioridad
 - THEN ningún Top 5 ni contrato se le aplica
-
-#### Scenario: un alta sin `client_id` nace `Medium`
-
-- GIVEN un alta cuyo cliente no se resuelve a ningún `client_id`, con `prioridad: 'High'` en el cuerpo
-- WHEN se crea el ticket
-- THEN el ticket nace `Medium`
 
 ### RQ-TC-27 · Fijar o quitar el Top 5 y su prioridad sólo con `puedeFijarPrioridadTop5`
 
