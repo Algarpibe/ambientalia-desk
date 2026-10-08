@@ -105,8 +105,8 @@ catálogos **SHALL** ser exactamente `ESTADOS`.
 
 - `Finalizado` **SHALL** seguir siendo el **único** estado sin salida de la unión de los tres catálogos:
   `sinSalida = ['Finalizado']` exactamente (`packages/shared/src/invariantesGrafo.test.ts`).
-- El tablero **MUST NOT** ganar columna propia para `Solicitud Soporte`; *hipótesis* (S-10, se comprueba
-  en diseño): cae en la columna de seguridad `Otros` (`columns.ts:38`, `:45-46`). Columna propia es F1B-09.
+- El tablero **SHALL** tener columna propia `solicitud_soporte` para `Solicitud Soporte`, inmediatamente
+  después de `ticket_creado` (`columns.ts:15`), por `decision/e225-columna-propia-dos-estados`.
 
 #### Scenario: La unión de los tres catálogos deriva exactamente ESTADOS
 - GIVEN `TRANSITIONS`, `TRANSITIONS_EQUIPO_NUEVO` y el catálogo de soporte remoto
