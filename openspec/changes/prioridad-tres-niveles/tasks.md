@@ -111,7 +111,7 @@ Archivos: `prioridad.ts` (+3 al final), `transitions.ts`, `contratos.ts`, `prior
 - [x] L1.18 `git diff --numstat <partida>` por fichero: inserciones = borrados en `ticketService.ts`,
   `transitions.ts`, `contratos.ts`, `prioridadPropagada.ts` y `prioridadCliente.ts`; `prioridad.ts` sólo `+3`
   al final. Cualquier otra cifra, se corrige antes de cerrar.
-- [ ] L1.19 Los CUATRO códigos, uno a uno: `npm test` (verde), `npm run typecheck` (verde), `npm run lint` (verde) y,
+- [x] L1.19 Los CUATRO códigos, uno a uno: `npm test` (verde), `npm run typecheck` (verde), `npm run lint` (verde) y,
   tras commitear el lote, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` (sin bloqueantes). Anotar
   la salida de cada uno.
 - [x] L1.20 Ejecutar la medida del intento (`git diff --shortstat --no-renames` contra la partida más `wc -l` de lo
