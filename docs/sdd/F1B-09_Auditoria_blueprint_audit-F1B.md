@@ -305,7 +305,7 @@ comentario no es una aserción).
 | `packages/shared/src/transitions.ts:67` | «las 32 etapas» | Son 31 |
 | `packages/shared/src/transitions.ts:348` | Equipo nuevo: «Campos: sólo `comment()`» | `liberacion` declara además el certificado de fábrica (`packages/shared/src/transitions.ts:360`) |
 | `openspec/specs/trazas/spec.md:51` | La cobertura SHALL ser «de las 34 transiciones» | Es un requisito vivo con la cifra anterior a F1C-09 |
-| `openspec/specs/remisiones/spec.md:752`, `openspec/specs/tickets-core/spec.md:1672`, `openspec/specs/zoho-sync/spec.md:789`, `openspec/specs/derivacion-avisos/spec.md:732`, `openspec/specs/transitions-st/spec.md:1343` | «las 34 transiciones», en presente | 31 en servicio, 41 en la unión |
+| `openspec/specs/remisiones/spec.md:752`, `openspec/specs/tickets-core/spec.md:1672` en `6344b4a`, `openspec/specs/zoho-sync/spec.md:789`, `openspec/specs/derivacion-avisos/spec.md:732`, `openspec/specs/transitions-st/spec.md:1343` en `6344b4a` | «las 34 transiciones», en presente | 31 en servicio, 41 en la unión |
 | `CLAUDE.md`, «Pruebas de interfaz» | «Los 39 ficheros `.tsx` (6.329 líneas)» | **49** ficheros y **7.556** líneas (`find apps/desk/src -name "*.tsx"`). La decisión no cambia; la cifra sí |
 | `CLAUDE.md`, fila del `clientId` | La búsqueda de «mantenedor» en el código «da **0**» | Da **93** apariciones, 39 fuera de pruebas. El campo existe (`packages/shared/src/equipoComercial.ts:14`); lo que no existe es la guarda: `ticketService.ts` no lo nombra |
 | `CLAUDE.md`, cierre de IV-1 | La línea 2 de `boardView.ts` «importa `ESTADOS_EN_ESPERA` de `@ambientalia/shared`» | Importa `esEstadoEnEspera` de `./enEspera` (`apps/desk/src/lib/boardView.ts:2`). El fondo se mantiene: sigue leyendo el registro |
