@@ -324,3 +324,32 @@ consumía; no se tocó ningún fichero de `apps/desk/src` ni del servidor.
 | C-P3 | Poner al día tres textos que dejan de ser ciertos sin que su línea se mueva: la consecuencia (1) de `decision/e225-columna-propia-dos-estados` («dos pruebas que hoy afirman lo contrario», «dos requisitos que hoy lo prohíben»), la entrada E-225 de la bandeja y el hallazgo B-4 de la auditoría de F1B-09 | Supervisión | Los propios ficheros, en `main` |
 
 Archivar el cambio no da por hechas estas tres tareas. F1B-08 **sigue en curso**: queda la paridad de vistas, con plazo 2026-10-16.
+
+### 5.4 · Traspaso tras la fusión — para Gerencia y para Supervisión
+
+Añadido el 2026-10-08, después de fusionar la tanda en `ae2e522`. F1B-08 **sigue en curso** (`cierra: no`): queda la paridad de vistas.
+
+**Para Gerencia — tres supuestos aplicados, los tres reversibles.** La decisión `decision/e225-columna-propia-dos-estados` pide la
+columna y no dice cómo; la tanda eligió y lo anotó. Lo que se responda va a `openspec/config.yaml` → `decisiones_de_gerencia`.
+
+| | Supuesto aplicado | Pregunta | Qué cuesta cambiarlo |
+|---|---|---|---|
+| S-1 | `Solicitud Soporte` va junto a `Ticket creado`; `Verificación`, tras `En Proceso` | ¿Es esa la posición, o van en otro sitio? | Mover una entrada de la lista de `packages/shared/src/columns.ts` y la prueba de orden |
+| S-2 | La cabecera de cada columna lleva el nombre del estado | ¿Se quiere otro rótulo? | Un texto y su prueba |
+| S-3 | Si la persona desactiva «ocultar columnas vacías», las dos columnas nuevas se ven vacías, como las demás | ¿Es aceptable verlas vacías? | Tocar `apps/desk/src`, que está fuera de la red de pruebas |
+
+**Para Supervisión — tres textos que dejan de ser ciertos.** Ninguna de sus líneas se movió, así que el detector no los señala; los tres
+están en ficheros que la tanda no toca.
+
+- La consecuencia (1) de `decision/e225-columna-propia-dos-estados`, en `openspec/config.yaml`: habla de «dos pruebas que hoy afirman
+  lo contrario» y de «dos requisitos que hoy lo prohíben». Las dos pruebas están invertidas y los dos requisitos (RQ-EN-07 y RQ-SR-03),
+  reescritos. Además dice que es «estimación, no medida»: la medida existe, 109 líneas de apply.
+- La entrada E-225 de `docs/sdd/ENTRADA.md`, que sigue **ABIERTA** y dice que los dos estados caen en «Otros».
+- El hallazgo B-4 de `docs/sdd/F1B-09_Auditoria_blueprint_audit-F1B.md`, que afirma lo mismo. Su segunda mitad —`Pendiente` conserva
+  columna sin ser ya estado de servicio— **sigue siendo cierta**: la tanda no la tocó.
+
+Son registros fechados: lo que toca es anotar qué los cerró y en qué commit, no reescribirlos (casos B y C de la regla de mutación 4).
+
+**Tarea de persona, tras publicar.** Con `ae2e522` desplegado, abrir el tablero y comprobar que un ticket en `Verificación` y otro en
+`Solicitud Soporte` aparecen cada uno en su columna, en la posición de S-1, y que `Otros` deja de enseñarlos. El CI verifica y no
+despliega: hasta que alguien publique, la aplicación en producción no enseña el cambio. No es una casilla de ninguna tanda.
