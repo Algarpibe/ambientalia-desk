@@ -298,3 +298,29 @@ Añadido el 2026-10-08, después de fusionar la tanda en `60b171f`. F1B-09 **sig
 - **Nadie ha renderizado los dos diagramas nuevos.** `docs/artefactos/blueprint-equipo-nuevo.md` y `docs/artefactos/blueprint-soporte-remoto.md`
   están probados como texto —contenido, orden y desfase contra el catálogo—, no como dibujo. **Tarea de persona:** abrirlos una vez en un
   visor de Mermaid y comprobar que se pintan. No es una casilla de ninguna tanda.
+
+## 5 · Añadido por `columna-propia-dos-estados` (F1B-08, `cierra: no`)
+
+### 5.1 · Qué entra
+
+- `Verificación` y `Solicitud Soporte` tienen columna propia en el tablero y dejan de caer en `Otros`
+  (`packages/shared/src/columns.ts:15`, `packages/shared/src/columns.ts:20`). `Solicitud Soporte` va junto a `Ticket creado`;
+  `Verificación`, tras `En Proceso`. Ningún otro estado cambia de columna: lo fija una prueba sobre los 23 estados del registro.
+- El tablero oculta las columnas vacías por defecto (`apps/desk/src/boardSettings.ts:10`): las dos nuevas sólo se ven vacías si la
+  persona desactivó esa preferencia.
+- El color de la tarjeta de esos dos estados no cambia: sigue siendo el de respaldo.
+
+### 5.2 · Qué NO hay
+
+**Ni esquema, ni variables de entorno, ni relleno de datos.** Son dos entradas en una lista de `packages/shared` que el cliente ya
+consumía; no se tocó ningún fichero de `apps/desk/src` ni del servidor.
+
+### 5.3 · Lo que queda para personas
+
+| | Qué | Dueño | Destino |
+|---|---|---|---|
+| C-P1 | Comprobación visual: un ticket en `Verificación` y otro en `Solicitud Soporte` aparecen en su columna, y `Otros` deja de enseñarlos | Persona con acceso a la aplicación desplegada | Este apartado |
+| C-P2 | S-1: ¿la posición de las dos columnas es la buena? S-2: ¿la etiqueta es el nombre del estado? S-3: ¿es aceptable verlas vacías cuando no se ocultan las vacías? | Gerencia | `openspec/config.yaml` → `decisiones_de_gerencia` |
+| C-P3 | Poner al día tres textos que dejan de ser ciertos sin que su línea se mueva: la consecuencia (1) de `decision/e225-columna-propia-dos-estados` («dos pruebas que hoy afirman lo contrario», «dos requisitos que hoy lo prohíben»), la entrada E-225 de la bandeja y el hallazgo B-4 de la auditoría de F1B-09 | Supervisión | Los propios ficheros, en `main` |
+
+Archivar el cambio no da por hechas estas tres tareas. F1B-08 **sigue en curso**: queda la paridad de vistas, con plazo 2026-10-16.

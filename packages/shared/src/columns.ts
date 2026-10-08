@@ -12,12 +12,12 @@ export const COLUMNS: Column[] = [
   // así en todo lo que sincroniza; 'Ticket creado' es como nacen los tickets de la app. Conviven a
   // propósito y no se fusionan en una columna para que se vea de dónde viene cada ticket.
   { id: 'ov_asignada', label: 'OV asignada', statuses: [STATUS_OV_ASIGNADA] },
-  { id: 'ticket_creado', label: 'Ticket creado', statuses: [STATUS_TICKET_CREADO] },
+  { id: 'ticket_creado', label: 'Ticket creado', statuses: [STATUS_TICKET_CREADO] }, { id: 'solicitud_soporte', label: 'Solicitud Soporte', statuses: ['Solicitud Soporte'] }, // soporte-remoto: estado de nacimiento, junto a 'Ticket creado'; misma línea para no desplazar citas (decision/e225-columna-propia-dos-estados)
   { id: 'remision_creada', label: 'Remisión creada', statuses: [STATUS_REMISION_CREADA] },
   { id: 'ingresado', label: 'Ingresado', statuses: ['Ingresado'] },
   { id: 'revision', label: 'Rev./Diagnóstico', statuses: ['Rev./Diagnostico'] },
   { id: 'notificado', label: 'Notificado', statuses: ['Notificado'] },
-  { id: 'proceso', label: 'En Proceso', statuses: ['En Proceso'] },
+  { id: 'proceso', label: 'En Proceso', statuses: ['En Proceso'] }, { id: 'verificacion', label: 'Verificación', statuses: ['Verificación'] }, // equipo-nuevo: sólo se llega desde 'En Proceso'; misma línea para no desplazar citas (decision/e225-columna-propia-dos-estados)
   { id: 'solicitado', label: 'Solicitado', statuses: ['Solicitado'] },
   { id: 'espera_repuestos', label: 'En Espera de Repuestos', statuses: ['En Espera de Repuestos'] },
   { id: 'espera_sku', label: 'En espera de SKU inventario', statuses: ['En espera de SKU inventario'] },
