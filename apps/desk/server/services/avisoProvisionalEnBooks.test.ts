@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { newDb } from 'pg-mem'
 import { migrate, type Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
-  avisarProvisionalesEnBooks, marcarYAvisarPareja, parejasPorAvisar, textoAvisoProvisionalEnBooks, type ParejaProvisionalBooks,
+  avisarProvisionalesEnBooks, marcarYAvisarPareja, parejasPorAvisar, pasadaProvisionalesEnBooks, textoAvisoProvisionalEnBooks, type ParejaProvisionalBooks,
 } from './avisoProvisionalEnBooks'
 import { createRole, actualizarRecibeAvisos } from '../auth/roles'
 import { createUser } from '../auth/users'
@@ -262,5 +264,48 @@ describe('parejasPorAvisar · el provisional es el lado tecleado, como en el alt
     await provisional('p1', 'Acme SAS', '9001234567'); await contacto('c1', 'Acme Books', '900.123.456-7')
     await provisional('p2', 'Beta SAS', '800.111.222-3'); await contacto('c2', 'Beta Books', '8001112223')
     expect((await parejasPorAvisar(db)).map((p) => `${p.provisionalId}|${p.contactoId}`)).toEqual(['p1|c1'])
+  })
+})
+
+describe('pasadaProvisionalesEnBooks · la pasada del setInterval', () => {
+  it('(k) con la base caída resuelve y la sincronización encadenada con .then corre igual', async () => {
+    const error = vi.spyOn(logger, 'error').mockImplementation(() => undefined)
+    const rota: Queryable = { query: (() => { throw new Error('base caída') }) as Queryable['query'] }
+    const syncRecent = vi.fn().mockResolvedValue(undefined)
+    await expect(pasadaProvisionalesEnBooks(rota)).resolves.toBeUndefined()
+    await pasadaProvisionalesEnBooks(rota).then(() => syncRecent())
+    expect(syncRecent).toHaveBeenCalledTimes(1)
+    expect(error).toHaveBeenCalled()
+  })
+
+  it('(k) sin cerrojo diario: dos pasadas seguidas consultan las dos veces', async () => {
+    let consultas = 0
+    const contada: Queryable = { query: ((s: string, p?: unknown[]) => { consultas++; return db.query(s, p) }) as Queryable['query'] }
+    await pasadaProvisionalesEnBooks(contada)
+    const tras1 = consultas
+    expect(tras1).toBeGreaterThan(0)
+    await pasadaProvisionalesEnBooks(contada)
+    expect(consultas).toBe(tras1 * 2)
+  })
+
+  it('(k) con la base sana la pasada avisa', async () => {
+    await comercial('ana@x.co')
+    await provisional('p1', 'Acme SAS', '900123456'); await contacto('c1', 'Acme Books', '900123456-7')
+    await pasadaProvisionalesEnBooks(db)
+    expect(await avisos()).toHaveLength(1)
+    expect(await marcas()).toHaveLength(1)
+  })
+
+  it('(l) index.ts encadena la pasada entre reclamaciones y ritmo, ANTES de la sincronización (fichero vigilado; fija el ORDEN, no la línea)', () => {
+    const texto = readFileSync(fileURLToPath(new URL('../index.ts', import.meta.url)), 'utf8')
+    expect(texto).toMatch(/import\s*\{[^}]*\bpasadaProvisionalesEnBooks\b[^}]*\}\s*from\s*['"]\.\/services\/avisoProvisionalEnBooks['"]/)
+    const cuerpo = /setInterval\(\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*\},\s*config\.syncIntervalMs\s*\)/.exec(texto)?.[1]
+    expect(cuerpo, 'no se encuentra el setInterval de la sincronización').toBeDefined()
+    const conSync = cuerpo!.split(/\r?\n/).map((l) => l.replace(/\s+/g, ' ').trim()).filter((l) => l.includes('sync.syncRecent()'))
+    expect(conSync).toHaveLength(1)
+    const pos = ['pasadaReclamaciones(pool)', 'pasadaProvisionalesEnBooks(pool)', 'pasadaRitmoContratos(pool)', 'sync.syncRecent()'].map((t) => conSync[0]!.indexOf(t))
+    for (const x of pos) expect(x).toBeGreaterThanOrEqual(0)
+    expect(pos).toEqual([...pos].sort((a, b) => a - b))
+    expect(new Set(pos).size).toBe(4)
   })
 })

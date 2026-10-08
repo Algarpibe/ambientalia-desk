@@ -626,3 +626,36 @@ SELECT COUNT(*) FROM public.encuesta_respuestas;
   marca de tiempo y calificación, y **no se ha probado con una exportación real** (no hay muestra). Antes de cargar las respuestas de enero hace falta P-1.
 - **Nunca `DELETE` ni `UPDATE` sobre `public.encuesta_respuestas`:** es el único registro de lo que respondió cada cliente. No hay ruta ni sentencia de la aplicación
   que lo haga. Para volver atrás basta revertir y redesplegar; la tabla queda sin uso y no se borra.
+
+## Comprobación de lectura tras desplegar F1B-19 (NIT exentos y aviso de provisional ya en Books)
+
+**Sin variables de entorno nuevas** (`.env.example` no cambia) y sin interruptor: las dos piezas están activas desde que se publica. El cambio añade
+**dos tablas**, `public.nit_exentos` y `public.provisional_books_avisados`, que `migrate` crea al arrancar (`packages/zoho-sync/src/db/schema.sql:801` y
+`:812`), y **una fila sembrada**: el NIT `222222222222` (consumidor final, `:807`). La migración es tolerante por sentencia: un fallo se registra como
+«sentencia omitida» y **no** tumba el arranque, así que un despliegue puede quedar «verde» con una tabla sin crear.
+
+Hazla antes de dar el cambio por publicado. Son consultas de sólo lectura, en la base `desk` (esquema `public`).
+
+```sql
+-- Las dos tablas existen: dos filas. Con menos, la migración omitió la sentencia.
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name IN ('nit_exentos', 'provisional_books_avisados');
+
+-- La siembra: una fila activa con 222222222222.
+SELECT nit, motivo, activo FROM public.nit_exentos ORDER BY nit;
+
+-- Las parejas ya avisadas (vacía el día de publicar).
+SELECT COUNT(*) FROM public.provisional_books_avisados;
+```
+
+- **Añadir un exento** es un cambio de dato de producción que decide y ejecuta una persona, con el NIT que confirme contabilidad:
+  `INSERT INTO public.nit_exentos (nit, motivo) VALUES ('<NIT que confirme contabilidad>', '<motivo>');`
+- **Retirar un exento:** `UPDATE public.nit_exentos SET activo = false WHERE nit = '<NIT a retirar>';`. **Nunca `DELETE`:** la fila inactiva es el registro de que
+  alguna vez lo fue, y el servidor sólo lee las activas.
+- **Qué se rompe si falta `public.nit_exentos`:** toda alta con cliente manual falla, porque la guarda de NIT la lee en cada alta
+  (`apps/desk/server/services/ticketService.ts:96`).
+- **Qué se rompe si falta `public.provisional_books_avisados`:** la pasada registra un error por intervalo («pasadaProvisionalesEnBooks falló») y no avisa a
+  nadie; la sincronización sigue, porque la pasada nunca lanza.
+- **La primera pasada tras desplegar avisa una vez cada pareja (provisional sin enlazar, contacto de Books del mismo NIT) que ya exista** (supuesto S-4,
+  pendiente de respuesta de Gerencia): Comercial verá de golpe tantos avisos como parejas haya, y a partir de ahí sólo las nuevas.
+- **Para volver atrás** basta revertir y redesplegar; las tablas quedan sin uso y no se borran.

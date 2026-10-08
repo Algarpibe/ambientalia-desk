@@ -92,3 +92,24 @@ El diff de `migrate.ts` y `migrate.test.ts` son hunks de sustitución en la mism
 `pasadaProvisionalesEnBooks`, `index.ts:15` y `:88`, `DEPLOY.md`, casos k y l, N4 y N11. Sigue pendiente quién actualiza `registro.test.ts` («ONCE» a «DOCE») y la cita `altaManual.ts:156` de `openspec/config.yaml`.
 
 **Añadido por el orquestador al cerrar el lote 2.** Cuatro mutaciones propias sobre `avisoProvisionalEnBooks.ts`: clave de pareja distinta en el filtro, otra área destinataria y el `23505` relanzado, las tres en rojo; la cuarta, invertir los argumentos de `nitCoincide`, **sobrevivía**. La cierra la prueba «el provisional es el lado tecleado», al final de `avisoProvisionalEnBooks.test.ts`; repetida contra ella, en rojo. Todas restauradas.
+
+## Lote 3 — pasada y despliegue (casillas 7.1 a 9.2; la 9.3 y la 9.4 las cierra el orquestador)
+Modo: strict TDD. Rojo medido antes del verde: 4 pruebas rojas (las tres (k) y la (l)), a a j verdes. Verde: 26 pasan en el fichero; con las tres pruebas de texto vecinas (`avisoRitmoContrato.test.ts`, `avisoReclamacionProveedor.test.ts`, `alarmasSla.test.ts`), 4 ficheros y 82 pasan.
+Tocados: `avisoProvisionalEnBooks.ts` 100 a 112 (pasada sin cerrojo diario, cabecera actualizada); `avisoProvisionalEnBooks.test.ts` 266 a 316 (caso k en tres pruebas, caso l); `index.ts` 118 a 118 (edición dentro de las líneas 15 y 88, CRLF intacto); `DEPLOY.md` 628 a 661 (apartado al final, CRLF intacto). Sin NIT real ni inventado: el ejemplo de alta lleva el marcador `<NIT que confirme contabilidad>`.
+
+### Mutaciones (todas restauradas; contenido idéntico a la copia previa)
+| Id | Qué se mutó | Prueba roja | Restaurada |
+|---|---|---|---|
+| N4 quitar | quitar `.then(() => pasadaProvisionalesEnBooks(pool))` de `index.ts` | (l) | sí |
+| N4 posición (regla 1) | pasada DESPUÉS de `sync.syncRecent()` | (l) | sí |
+| N11 por pareja | quitar el `try/catch` de `avisarProvisionalesEnBooks` | (j) | sí |
+| N11 pasada | quitar el `try/catch` de `pasadaProvisionalesEnBooks` | (k) «con la base caída resuelve…» | sí |
+Ninguna sobrevivió. Aviso: dos ediciones mías con `sed` salieron mal (una reescribió líneas sueltas, otra sólo cambió LF por CRLF); se restauraron desde copia y se rehicieron con `Edit`; no queda resto.
+
+### Barrido de la regla de mutación 4
+`index.ts` conserva 118 líneas y `DEPLOY.md` sólo crece por el final (de `:629` en adelante): ninguna cita a `index.ts:NN` ni a `DEPLOY.md:NN` se desplaza. Las citas `index.ts:88` (`alarmasSla.ts:140`, `avisoReclamacionProveedor.ts:69`, `avisoRitmoContrato.ts:64`, `avisoRitmoContrato.test.ts:15` y `:177`) siguen apuntando a la cadena del `setInterval`; su texto, que habla de «antes de la sincronización», sigue siendo cierto. Citas a `index.ts:15`: sólo las de esta tanda. Históricas que no se tocan (caso B): las de `docs/sdd/Paquete_de_Despliegue_*` a `index.ts:88`, que describen la cadena sin la pasada nueva.
+
+### Códigos
+`npm run typecheck` 0; `npm run lint` 0 (0 errores, 165 avisos previos); `npm test`: 262 ficheros pasan, 2 omitidos; 4322 pasan, 7 omitidas, 0 fallan (el `registro.test.ts` del lote 1 ya no falla). Detector de citas y medida del intento: del orquestador. `git diff --shortstat --no-renames` del árbol (sin contar nada de lotes previos commiteados): 4 ficheros, 96 inserciones, 6 borrados.
+
+**Añadido por el orquestador al cerrar el lote 3.** Tres mutaciones propias, las tres en rojo y restauradas: la pasada nueva antes de la de reclamaciones en `index.ts`, la pasada sin esperar a la evaluación, y un cerrojo de una sola vez colado en la pasada.

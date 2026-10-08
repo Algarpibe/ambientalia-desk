@@ -7,9 +7,8 @@ import { enTransaccion } from '../db/transaccion'
 import { logger } from '../util/logger'
 
 /**
- * Aviso a Comercial de un cliente provisional cuyo NIT ya está en Books (F1B-19, lote 2; `derivacion-avisos` RQ-AV-21;
- * `design.md` §5 y §6). Molde de `alarmasSla.ts:37-57`. Este lote deja el servicio SIN cablear: la pasada y `index.ts`
- * son del lote 3.
+ * Aviso a Comercial de un cliente provisional cuyo NIT ya está en Books (F1B-19, lotes 2 y 3; `derivacion-avisos` RQ-AV-21;
+ * `design.md` §5 y §6). Molde de `alarmasSla.ts:37-57`. `pasadaProvisionalesEnBooks` lo cablea en `index.ts`.
  *
  * **Una vez por pareja (provisional, contacto), y la unicidad la da la base.** Dentro de la transacción la PRIMERA
  * sentencia es el `INSERT` de la marca SIN `ON CONFLICT`: si la clave ya existe lanza `23505`, la transacción se revierte
@@ -97,4 +96,17 @@ export async function avisarProvisionalesEnBooks(db: Queryable): Promise<number>
     }
   }
   return avisadas
+}
+
+/**
+ * La pasada periódica (`index.ts:88`, tras la de reclamaciones y antes de la de ritmo y de `sync.syncRecent()`): corre en
+ * CADA intervalo, SIN cerrojo diario (la unicidad la da la marca por pareja), y NUNCA lanza, para que un fallo aquí no
+ * impida la sincronización.
+ */
+export async function pasadaProvisionalesEnBooks(db: Queryable): Promise<void> {
+  try {
+    await avisarProvisionalesEnBooks(db)
+  } catch (e) {
+    logger.error({ err: e }, 'pasadaProvisionalesEnBooks falló')
+  }
 }

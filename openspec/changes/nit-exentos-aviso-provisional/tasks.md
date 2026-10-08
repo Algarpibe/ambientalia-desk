@@ -51,20 +51,20 @@ Cada lote es una sola unidad de apply: rojo, verde y cierre. Las citas de `desig
 ## Lote 3 — pasada y despliegue (RQ-AV-21)
 
 ### 7. Rojo
-- [ ] 7.1 `apps/desk/server/services/avisoProvisionalEnBooks.test.ts`: caso k (la pasada resuelve con la base caída y la sincronización encadenada corre; dos pasadas consultan las dos veces) y caso l (`index.ts` como fichero vigilado: `pasadaReclamaciones(pool)` < `pasadaProvisionalesEnBooks(pool)` < `pasadaRitmoContratos(pool)` < `sync.syncRecent()`).
-- [ ] 7.2 Correr `npx vitest run` sobre ese fichero y ANOTAR qué falla (k y l; a a j siguen verdes).
+- [x] 7.1 `apps/desk/server/services/avisoProvisionalEnBooks.test.ts`: caso k (la pasada resuelve con la base caída y la sincronización encadenada corre; dos pasadas consultan las dos veces) y caso l (`index.ts` como fichero vigilado: `pasadaReclamaciones(pool)` < `pasadaProvisionalesEnBooks(pool)` < `pasadaRitmoContratos(pool)` < `sync.syncRecent()`).
+- [x] 7.2 Correr `npx vitest run` sobre ese fichero y ANOTAR qué falla (k y l; a a j siguen verdes).
 
 ### 8. Verde
-- [ ] 8.1 `pasadaProvisionalesEnBooks` en `apps/desk/server/services/avisoProvisionalEnBooks.ts` (envuelta en `try/catch`, nunca lanza, sin cerrojo diario).
-- [ ] 8.2 `apps/desk/server/index.ts:15` y `:88` DENTRO de línea (diseño §6); el fichero conserva su número de líneas.
-- [ ] 8.3 `DEPLOY.md`: apartado «Comprobación de lectura tras desplegar F1B-19» tras `DEPLOY.md:628`, con lo que enumera el diseño §9, sin variables ni interruptor.
-- [ ] 8.4 Repetir 7.2 en verde y comprobar que siguen verdes las tres pruebas de texto: `apps/desk/server/services/avisoRitmoContrato.test.ts:194`, `apps/desk/server/services/avisoReclamacionProveedor.test.ts:258-259` y `apps/desk/server/services/alarmasSla.test.ts:260-262`.
+- [x] 8.1 `pasadaProvisionalesEnBooks` en `apps/desk/server/services/avisoProvisionalEnBooks.ts` (envuelta en `try/catch`, nunca lanza, sin cerrojo diario).
+- [x] 8.2 `apps/desk/server/index.ts:15` y `:88` DENTRO de línea (diseño §6); el fichero conserva su número de líneas.
+- [x] 8.3 `DEPLOY.md`: apartado «Comprobación de lectura tras desplegar F1B-19» tras `DEPLOY.md:628`, con lo que enumera el diseño §9, sin variables ni interruptor.
+- [x] 8.4 Repetir 7.2 en verde y comprobar que siguen verdes las tres pruebas de texto: `apps/desk/server/services/avisoRitmoContrato.test.ts:194`, `apps/desk/server/services/avisoReclamacionProveedor.test.ts:258-259` y `apps/desk/server/services/alarmasSla.test.ts:260-262`.
 
 ### 9. Cierre del lote 3
-- [ ] 9.1 Mutaciones ejecutadas y RESTAURADAS: N4 (quitar la pasada de `index.ts` → l) y N11 (quitar el `try/catch` por pareja → j, y el de la pasada → k).
-- [ ] 9.2 Barrido de la regla de mutación 4 sobre `apps/desk/server/index.ts`, `DEPLOY.md` y los ficheros del lote 2, cada cita contrastada con el fichero.
-- [ ] 9.3 Los cuatro códigos (`npm test`, `npm run typecheck`, `npm run lint`, detector de citas) anotados.
-- [ ] 9.4 Medida del intento (`--no-renames` más `wc -l` de lo nuevo sin trackear) por debajo de 720; `git diff --stat` de los tres lotes sin ningún fichero bajo `apps/desk/src` (criterio 10).
+- [x] 9.1 Mutaciones ejecutadas y RESTAURADAS: N4 (quitar la pasada de `index.ts` → l) y N11 (quitar el `try/catch` por pareja → j, y el de la pasada → k).
+- [x] 9.2 Barrido de la regla de mutación 4 sobre `apps/desk/server/index.ts`, `DEPLOY.md` y los ficheros del lote 2, cada cita contrastada con el fichero.
+- [x] 9.3 Los cuatro códigos (`npm test`, `npm run typecheck`, `npm run lint`, detector de citas) anotados.
+- [x] 9.4 Medida del intento (`--no-renames` más `wc -l` de lo nuevo sin trackear) por debajo de 720; `git diff --stat` de los tres lotes sin ningún fichero bajo `apps/desk/src` (criterio 10).
 
 ## Regla invariable 13
 
