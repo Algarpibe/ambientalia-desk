@@ -540,7 +540,7 @@ de asignar cargos, sólo los administradores liberan sin factura.
 
 ---
 
-### RQ-PM-23 · Un solo predicado para fijar prioridad, mantener la lista Top 5 y ajustar por ticket
+### RQ-PM-23 · Dos predicados: `puedeFijarPrioridadTop5` para los actos sobre el cliente y el de ajuste por ticket para el ticket
 
 Los dos actos del Top 5 sobre el **cliente** —fijar la prioridad de un cliente y marcar o desmarcar el Top 5— SHALL
 decidirse con `puedeFijarPrioridadTop5` (`packages/shared/src/cargos.ts:80-83`) y con nada más (supuesto S-5). El acto

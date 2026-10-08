@@ -882,7 +882,7 @@ sea `Low` o `Urgent` heredada. Lo decide una función pura de `packages/shared` 
 
 
 
-### RQ-TS-21 · Guarda de servidor: sólo admin o `puedeFijarPrioridadTop5` cambian la prioridad en una transición
+### RQ-TS-21 · Guarda de servidor: sólo admin o quien cumple el predicado de ajuste por ticket cambian la prioridad en una transición
 
 Al ejecutar `escalado_a_revision` o `devolucion_a_correccion`, si `values.priority` **viene** y es **distinta** de la
 prioridad actual del ticket, el servidor SHALL responder `403` salvo que el usuario sea administrador o cumpla el

@@ -81,9 +81,9 @@ Por script (`fusiona.mjs`, fuera del repositorio), bloque a bloque, con comproba
 | `zoho-sync` | RQ-ZS-01 | 1.366 → 1.366 | 5 / 5 |
 
 - **Tres títulos quedan desfasados respecto de su cuerpo**, porque el script exige la cabecera idéntica para casar el bloque:
-  RQ-TC-29 («…de un cliente Top 5…», `openspec/specs/tickets-core/spec.md:1205`), RQ-TS-21 («…sólo admin o
-  `puedeFijarPrioridadTop5`…», `openspec/specs/transitions-st/spec.md:885`) y RQ-PM-23 («Un solo predicado…»,
-  `openspec/specs/permissions/spec.md:543`). El cuerpo de cada uno dice lo construido. Corregir los títulos es un cambio aparte.
+  RQ-TC-29 («…de un cliente Top 5…», `openspec/specs/tickets-core/spec.md:1205` en `ce4498c`), RQ-TS-21 («…sólo admin o
+  `puedeFijarPrioridadTop5`…», `openspec/specs/transitions-st/spec.md:885` en `ce4498c`) y RQ-PM-23 («Un solo predicado…»,
+  `openspec/specs/permissions/spec.md:543` en `ce4498c`). El cuerpo de cada uno dice lo construido. Los títulos se corrigieron después, en `main` (caso C).
 - No hay capacidad nueva: `zoho-sync` ya estaba en `capabilities` (R-2). La cabecera de la propuesta gana esa cuarta capacidad.
 
 ## Citas (regla de mutación 4)

@@ -177,3 +177,73 @@ Regla del ciclo 1: no son casillas, no las marca ninguna tanda. **Archivar el ca
 La fila pide la prioridad automática completa, y falta el nivel que depende de la **valoración del cliente**: el punto 2 de la respuesta de Gerencia va entre
 corchetes, no hay dato utilizable en Zoho CRM y «la valoración del portal» no está definida (P-4). Aquí no se inventa ni el dato ni su formato: se deja fuera.
 El cambio lleva `cierra: no` y no cuenta en el numerador del avance.
+
+## 3 · Traspaso de `prioridad-tres-niveles` tras la fusión — para Gerencia y para Supervisión
+
+Añadido el 2026-10-08, después de fusionar la tanda en `ce4498c` (CI verde). El apartado 2 lo escribió la rama y sigue valiendo;
+aquí va lo que cambió después y lo que se pide a cada uno. F1B-07 **sigue en curso** (`cierra: no`).
+
+### 3.1 · El verify formal es anterior al último cambio de producción
+
+El `verify-report.md` del cambio da su veredicto sobre `e47a3a0`. Después cambió una sentencia de producción, en `a220757` (la del
+ajuste manual, apartado 3.3). **No se repitió el verify entero.** Lo que sí se comprobó tras ese cambio, por el orquestador y por el
+analista: los cuatro códigos en 0 sobre la rama y sobre `main` fusionado (4.231 pruebas pasan, 7 saltadas), seis mutaciones nuevas
+sobre esa sentencia en rojo, y las cinco de la remediación repetidas con los mismos recuentos. Quien lea el informe de verify tiene
+que leer también su adenda del 2026-10-08.
+
+### 3.2 · Supuestos que esperan respuesta de Gerencia
+
+| | Qué se supuso | Qué se pregunta |
+|---|---|---|
+| **S-A** | La fuente no dice cómo se ordenan «Top 5» y «alta» entre sí. Se supuso que empatan por rango y que desempata la habilitación (`packages/shared/src/prioridad.ts:101-109`) | ¿Top 5 va por encima de «alta», por debajo, o empatan? |
+| **S-C** | No se reescribe ningún ticket existente. Los que ya tienen `Low`, `Urgent` u otro valor lo conservan; un Top 5 guardado con `Low` deja de imponer hasta que se vuelva a guardar | ¿Se dejan así o se rellenan? Un relleno es dato de producción |
+| **S-K** | Una prioridad pedida en una transición, distinta de la actual y fuera de la lista, se rechaza con `422` (`packages/shared/src/prioridad.ts:120`). Antes el servidor no validaba el valor | ¿Se mantiene la validación? |
+| **S-J** | **Cambiado tras el verify.** El ajuste manual protege sólo la prioridad: el ticket venido de Zoho sigue recibiendo de Zoho el estado y todo lo demás (`apps/desk/server/db/prioridadCliente.ts:93`, `packages/zoho-sync/src/db/repo.ts:78`). Efecto lateral: el ajuste ya no marca el ticket como no leído | ¿Se confirma? Y la pregunta del apartado 3.3 |
+
+### 3.3 · Tarea de persona — los tickets ajustados ANTES del despliegue
+
+Hasta este despliegue el ajuste manual ponía `managed_by_app`, que hace que el sincronizador no escriba **nada** de la fila
+(`packages/zoho-sync/src/db/repo.ts:71`). **No hay relleno:** los tickets ajustados antes siguen así, congelados enteros frente a
+Zoho. Como entonces el ajuste sólo se admitía en clientes Top 5, son tickets de esos clientes. Hipótesis: son pocos; no se puede
+medir desde el repositorio.
+
+**Consulta de sólo lectura — NO EJECUTADA.** La corre una persona con acceso a la base de producción. Un `SELECT`; no escribe nada.
+
+```sql
+-- Tickets venidos de Zoho, con al menos un ajuste manual de prioridad, que hoy no reciben nada de Zoho
+SELECT t.id, t.number, t.status, t.priority, t.source,
+       t.prioridad_en_app_at,
+       MIN(a.ajustado_at) AS primer_ajuste,
+       COUNT(*)           AS ajustes_manuales,
+       EXISTS (SELECT 1 FROM desk.ticket_transitions x WHERE x.ticket_id = t.id) AS con_transiciones_en_la_app
+  FROM desk.tickets t
+  JOIN public.prioridad_ajustes a ON a.ticket_id = t.id
+ WHERE a.origen IS NULL
+   AND t.managed_by_app = true
+   AND t.id NOT LIKE 'app-%'
+ GROUP BY t.id, t.number, t.status, t.priority, t.source, t.prioridad_en_app_at
+ ORDER BY primer_ajuste;
+```
+
+- `origen IS NULL` es lo que significa «ajuste manual» (`packages/shared/src/prioridadPropagada.ts:24-26`); `'app-%'` es el prefijo
+  de los tickets nacidos en la aplicación (`packages/shared/src/transitions.ts:124`), que nunca vienen de Zoho.
+- **La columna `con_transiciones_en_la_app` decide la lectura.** Si es verdadera, el ticket ya estaba gobernado por la aplicación
+  por sus transiciones y el ajuste no le cambió nada. Si es falsa, lo único que lo congeló fue el ajuste: ésos son los afectados.
+- Nombres de tabla y columna tomados de `packages/zoho-sync/src/db/schema.sql:613` (`public.prioridad_ajustes`) y
+  `packages/zoho-sync/src/db/schema.sql:710` (`prioridad_en_app_at`). **Hipótesis:** la consulta no se ha corrido, ni contra una copia.
+
+| | Qué | Dueño | Destino |
+|---|---|---|---|
+| P-7 | Ejecutar la consulta de arriba y devolver el resultado | Persona con acceso a la base de producción | Este apartado |
+| P-8 | Decidir, con ese resultado, si los afectados se liberan (volver a `managed_by_app = false` y poner la marca de prioridad) o se dejan como están | Gerencia | `openspec/config.yaml` → `decisiones_de_gerencia` |
+
+### 3.4 · Para Supervisión
+
+- Las dos citas de `docs/sdd/ENTRADA.md` (línea 2148) que la fusión desplazaba quedaron ancladas a `6344b4a` en `0de13ac`. La línea
+  base del detector sigue en 0.
+- **24 citas de cambios archivados ya estaban rotas antes de esta tanda** y no se tocaron. La lista, por cambio, está en el
+  `archive-report.md` de `openspec/changes/archive/2026-10-08-prioridad-tres-niveles/`. Piden un barrido propio, cita a cita.
+- Los títulos de RQ-TC-29, RQ-TS-21 y RQ-PM-23 se corrigieron en las specs vivas en el mismo commit que este apartado: decían lo
+  anterior a la tanda y su cuerpo ya decía lo construido.
+- Las entradas de bandeja del apartado 2.5 siguen sin número. La tercera cambia de sentido: ya no pregunta si se mantiene el
+  congelado entero, sino si se confirma S-J y qué se hace con los ya ajustados (apartado 3.3).

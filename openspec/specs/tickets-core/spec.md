@@ -1202,7 +1202,7 @@ ser la de `RQ-TC-24` sin Top 5: `Medium`, o `High` con contrato vigente.
 - WHEN se crea un ticket de un cliente sin contrato con `prioridad: 'Low'`
 - THEN el ticket queda `Medium`
 
-### RQ-TC-29 · Ajuste de la prioridad de un ticket de un cliente Top 5, con motivo y traza
+### RQ-TC-29 · Ajuste de la prioridad de cualquier ticket por el Director Comercial o el Director Técnico, con motivo y traza
 
 Un Director Comercial (con su área `Comercial`), un Director Técnico (por cargo, sin exigirle área) o un administrador
 SHALL poder cambiar la prioridad de **cualquier** ticket, sea o no de un cliente Top 5 y tenga o no `client_id`,
