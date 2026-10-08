@@ -794,3 +794,14 @@ CREATE TABLE IF NOT EXISTS public.encuesta_respuestas (
   cargado_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_encuesta_respuestas_ticket ON public.encuesta_respuestas (ticket_id);
+-- nit-exentos-aviso-provisional (F1B-19, decision e154): NIT genericos que NO bloquean el alta manual aunque esten en Books
+-- Es DATO mantenible, sin pantalla: se edita por SQL. nit va como base normalizada, solo digitos y sin digito de verificacion
+-- Un exento se RETIRA con activo = false y nunca borrando la fila, porque la siembra de abajo la volveria a insertar
+-- Sin CHECK de formato, el servidor normaliza los dos lados al comparar. AL FINAL para no desplazar citas. CALIFICADA public.
+CREATE TABLE IF NOT EXISTS public.nit_exentos (
+  nit text PRIMARY KEY,
+  motivo text NOT NULL,
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO public.nit_exentos (nit, motivo) VALUES ('222222222222', 'Consumidor final') ON CONFLICT (nit) DO NOTHING;

@@ -7,26 +7,26 @@ Cada lote es una sola unidad de apply: rojo, verde y cierre. Las citas de `desig
 ## Lote 1 — exentos (RQ-TC-30, RQ-TC-57)
 
 ### 1. Rojo
-- [ ] 1.1 `packages/shared/src/nitExentos.test.ts` (nuevo): tabla de casos de `esNitExento` del diseño §7 (formatos, lista vacía, NIT sin dígitos, no texto, base más dígito sin guion). Rojo por módulo inexistente.
-- [ ] 1.2 `packages/zoho-sync/src/db/nitExentosEsquema.test.ts` (nuevo): fila `222222222222` activa tras `migrate`, migrar dos veces conserva `activo = false`, una sola siembra con `ON CONFLICT`, `CREATE` calificado y tras `idx_encuesta_respuestas_ticket` (orden relativo).
-- [ ] 1.3 `apps/desk/server/services/altaManual.test.ts`: `describe` nuevo AL FINAL con las `201` (sin formato y `it.each` de tres formatos), `409` no exento, fila inactiva, lista vacía, base más dígito sin guion, posición (serial `422`, A `422`, C `422`) y lectura (base espía propia).
-- [ ] 1.4 `packages/zoho-sync/src/db/migrate.test.ts`: cifras `[10, 33, 3]` y `46` (`:282-286`) y renumerar en sitio las siete aserciones por distancia (`:796`, `:798`, `:839`, `:840`, `:879`, `:880`, `:882`) con sus títulos (`:794`, `:837`, `:877`), el `describe` de `:864` y la cabecera de `:861` (diseño §4).
-- [ ] 1.5 Correr `npx vitest run` sobre los cuatro ficheros y ANOTAR en `apply-progress` qué falla: las `201`, las dos de «vuelve el `409`» (tabla inexistente), las de lectura, las de esquema y el recuento. Las tres de posición nacen verdes (son guardas). Si el fallo no coincide, parar y anotar.
+- [x] 1.1 `packages/shared/src/nitExentos.test.ts` (nuevo): tabla de casos de `esNitExento` del diseño §7 (formatos, lista vacía, NIT sin dígitos, no texto, base más dígito sin guion). Rojo por módulo inexistente.
+- [x] 1.2 `packages/zoho-sync/src/db/nitExentosEsquema.test.ts` (nuevo): fila `222222222222` activa tras `migrate`, migrar dos veces conserva `activo = false`, una sola siembra con `ON CONFLICT`, `CREATE` calificado y tras `idx_encuesta_respuestas_ticket` (orden relativo).
+- [x] 1.3 `apps/desk/server/services/altaManual.test.ts`: `describe` nuevo AL FINAL con las `201` (sin formato y `it.each` de tres formatos), `409` no exento, fila inactiva, lista vacía, base más dígito sin guion, posición (serial `422`, A `422`, C `422`) y lectura (base espía propia).
+- [x] 1.4 `packages/zoho-sync/src/db/migrate.test.ts`: cifras `[10, 33, 3]` y `46` (`:282-286`) y renumerar en sitio las siete aserciones por distancia (`:796`, `:798`, `:839`, `:840`, `:879`, `:880`, `:882`) con sus títulos (`:794`, `:837`, `:877`), el `describe` de `:864` y la cabecera de `:861` (diseño §4).
+- [x] 1.5 Correr `npx vitest run` sobre los cuatro ficheros y ANOTAR en `apply-progress` qué falla: las `201`, las dos de «vuelve el `409`» (tabla inexistente), las de lectura, las de esquema y el recuento. Las tres de posición nacen verdes (son guardas). Si el fallo no coincide, parar y anotar.
 
 ### 2. Verde
-- [ ] 2.1 `packages/zoho-sync/src/db/schema.sql`: las once líneas del diseño §1 (`public.nit_exentos` y siembra) AL FINAL, tras la 796.
-- [ ] 2.2 `packages/zoho-sync/src/db/migrate.ts:73`: `'nit_exentos'` dentro de `PUBLIC_TABLES`, en la misma línea.
-- [ ] 2.3 `packages/shared/src/nitExentos.ts` (nuevo, `esNitExento` sobre `nitCoincide`) y su export en `packages/shared/src/index.ts:28`.
-- [ ] 2.4 `apps/desk/server/db/nitExentos.ts` (nuevo, `nitExentosActivos`, `WHERE activo = true ORDER BY nit`).
-- [ ] 2.5 `apps/desk/server/services/ticketService.ts`: líneas 6, 18 y 96 DENTRO de línea (diseño §3); comentario de `apps/desk/server/services/altaManual.ts:155-156` reescrito sin mover líneas.
-- [ ] 2.6 Repetir 1.5 en verde.
+- [x] 2.1 `packages/zoho-sync/src/db/schema.sql`: las once líneas del diseño §1 (`public.nit_exentos` y siembra) AL FINAL, tras la 796.
+- [x] 2.2 `packages/zoho-sync/src/db/migrate.ts:73`: `'nit_exentos'` dentro de `PUBLIC_TABLES`, en la misma línea.
+- [x] 2.3 `packages/shared/src/nitExentos.ts` (nuevo, `esNitExento` sobre `nitCoincide`) y su export en `packages/shared/src/index.ts:28`.
+- [x] 2.4 `apps/desk/server/db/nitExentos.ts` (nuevo, `nitExentosActivos`, `WHERE activo = true ORDER BY nit`).
+- [x] 2.5 `apps/desk/server/services/ticketService.ts`: líneas 6, 18 y 96 DENTRO de línea (diseño §3); comentario de `apps/desk/server/services/altaManual.ts:155-156` reescrito sin mover líneas.
+- [x] 2.6 Repetir 1.5 en verde.
 
 ### 3. Cierre del lote 1
-- [ ] 3.1 Mutaciones ejecutadas y RESTAURADAS, con el rojo esperado anotado: M1 (quitar `!esNitExento(…)`), M2 (regla 1, exención antes de `validarContenidoAltaManual`), M3 (quitar `WHERE activo = true`), M4 (regla 2, borrar la siembra), M5 (quitar `public.` del `CREATE`), M6 (`some` por `every`), M7 (quitar `'nit_exentos'` de `PUBLIC_TABLES`).
-- [ ] 3.2 `wc -l`: `ticketService.ts`, `altaManual.ts`, `migrate.ts`, `migrate.test.ts` y `packages/shared/src/index.ts` conservan su número de líneas; `schema.sql` = 807.
-- [ ] 3.3 Barrido de la regla de mutación 4: `grep -rnoE "(ticketService|altaManual|migrate|migrate\.test|index)\.ts:[0-9]+(-[0-9]+)?"` y sobre `schema.sql`, cada cita contrastada con el fichero (qué AFIRMA, extremos inicial y final); segundo pase de abreviadas; incluir `openspec/specs/tickets-core/spec.md`.
-- [ ] 3.4 `npm test`, `npm run typecheck`, `npm run lint` en verde y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0; los cuatro códigos anotados.
-- [ ] 3.5 Medida: `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear, por debajo de 720; `git diff --stat` sin ningún fichero bajo `apps/desk/src`.
+- [x] 3.1 Mutaciones ejecutadas y RESTAURADAS, con el rojo esperado anotado: M1 (quitar `!esNitExento(…)`), M2 (regla 1, exención antes de `validarContenidoAltaManual`), M3 (quitar `WHERE activo = true`), M4 (regla 2, borrar la siembra), M5 (quitar `public.` del `CREATE`), M6 (`some` por `every`), M7 (quitar `'nit_exentos'` de `PUBLIC_TABLES`).
+- [x] 3.2 `wc -l`: `ticketService.ts`, `altaManual.ts`, `migrate.ts`, `migrate.test.ts` y `packages/shared/src/index.ts` conservan su número de líneas; `schema.sql` = 807.
+- [x] 3.3 Barrido de la regla de mutación 4: `grep -rnoE "(ticketService|altaManual|migrate|migrate\.test|index)\.ts:[0-9]+(-[0-9]+)?"` y sobre `schema.sql`, cada cita contrastada con el fichero (qué AFIRMA, extremos inicial y final); segundo pase de abreviadas; incluir `openspec/specs/tickets-core/spec.md`.
+- [x] 3.4 `npm test`, `npm run typecheck`, `npm run lint` en verde y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0; los cuatro códigos anotados.
+- [x] 3.5 Medida: `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear, por debajo de 720; `git diff --stat` sin ningún fichero bajo `apps/desk/src`.
 
 ## Lote 2 — aviso sin cablear, inerte (RQ-AV-21)
 

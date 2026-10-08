@@ -394,3 +394,115 @@ describe('POSICIÓN (regla de mutación 1) · el 422 de datos que faltan del pro
     expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
   })
 })
+
+describe('RQ-TC-57 · NIT exentos (public.nit_exentos): el 409 de NIT en Books no se aplica a la lista, y sólo a ella', () => {
+  const EXENTO = '222222222222'; let cookie = ''
+  const conNit = async (nit: string, extra: Record<string, unknown> = {}, opciones: Parameters<typeof appWith>[0] = {}, dbPropia?: Queryable) =>
+    request(appWith(opciones, dbPropia).app).post('/api/tickets').set('Cookie', cookie).send({ ...BASE, clienteManual: { ...CLIENTE, nit }, equipoManual: EQUIPO, ...extra })
+  beforeEach(async () => {
+    cookie = await adminCookie()
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-cf','Consumidor Final SA','222222222222'), ('c-nit','Laboratorio Existente','900.123.456-7')")
+  })
+
+  it('el NIT exento sin formato, con Books que lo tiene: 201 y existen el provisional y el ticket', async () => {
+    const res = await conNit(EXENTO)
+    expect(res.status).toBe(201)
+    expect(await contar('public.clientes_provisionales')).toBe(1)
+    expect(await contar('tickets')).toBe(1)
+  })
+
+  it.each([['222.222.222.222'], ['222 222 222 222'], ['222222222222-2']])('el NIT exento con formato «%s» también: 201', async (nit) => {
+    expect((await conNit(nit)).status).toBe(201)
+  })
+
+  it('dos provisionales con el mismo NIT exento se permiten (S-2)', async () => {
+    expect((await conNit(EXENTO)).status).toBe(201)
+    expect((await conNit(EXENTO, { equipoManual: { ...EQUIPO, serial: 'SN-M2', confirmacionSerial: 'SN-M2' } })).status).toBe(201)
+    expect(await contar('public.clientes_provisionales')).toBe(2)
+  })
+
+  it('un NIT no exento repetido en Books sigue dando 409 con candidatos y nada escrito', async () => {
+    const res = await conNit('900123456')
+    expect(res.status).toBe(409)
+    expect(res.body.candidatos).toEqual([{ id: 'c-nit', name: 'Laboratorio Existente' }])
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('fila inactiva: vuelve el 409 con candidatos', async () => {
+    await db.query("UPDATE public.nit_exentos SET activo = false WHERE nit = '222222222222'")
+    const res = await conNit(EXENTO)
+    expect(res.status).toBe(409)
+    expect(res.body.candidatos).toEqual([{ id: 'c-cf', name: 'Consumidor Final SA' }])
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('lista vacía: vuelve el 409 con candidatos', async () => {
+    await db.query('DELETE FROM public.nit_exentos')
+    const res = await conNit(EXENTO)
+    expect(res.status).toBe(409)
+    expect(res.body.candidatos).toEqual([{ id: 'c-cf', name: 'Consumidor Final SA' }])
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('base más dígito SIN guion contra Books con guion: sigue el 409 (comportamiento conocido, riesgo 1 de la propuesta)', async () => {
+    await db.query("INSERT INTO books.contacts (contact_id, contact_name, nit) VALUES ('c-dv','Con digito','222222222222-2')")
+    await db.query("DELETE FROM books.contacts WHERE contact_id = 'c-cf'")
+    const res = await conNit('2222222222222')
+    expect(res.status).toBe(409)
+    expect(res.body.candidatos).toEqual([{ id: 'c-dv', name: 'Con digito' }])
+  })
+
+  // Posición (regla de mutación 1): la exención vive en D y no salta ninguna guarda de A, B ni C. Nacen verdes: son guardas.
+  it('posición · exento + serial distinto de su confirmación → 422 del serial, no 201', async () => {
+    const res = await conNit(EXENTO, { equipoManual: { ...EQUIPO, serial: 'ABC123', confirmacionSerial: 'ABC124' } })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('serial')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('posición · exento sin correo → 422 de A (datos que faltan), no 201', async () => {
+    const res = await conNit(EXENTO, { clienteManual: { ...CLIENTE, nit: EXENTO, correo: undefined } })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('correo')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  it('posición · exento + clientId → 422 de C (un provisional no se combina con un cliente existente)', async () => {
+    const res = await conNit(EXENTO, { clientId: 'c1' })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toContain('cliente existente')
+    expect(await nada()).toEqual({ prov: 0, equipos: 0, tickets: 0 })
+  })
+
+  // Lectura: base espía propia que anota las sentencias (molde de RQ-TC-33, local a su describe).
+  function espiar(real: Queryable) {
+    const sqls: string[] = []
+    const envolver = (q: Queryable['query']): Queryable['query'] => ((sql: string, p?: unknown[]) => { sqls.push(sql.replace(/\s+/g, ' ')); return q.call(real, sql, p) }) as Queryable['query']
+    const pool = real as unknown as { connect: () => Promise<{ query: Queryable['query']; release: () => void }> }
+    const espia = { query: envolver(real.query.bind(real)), connect: async () => { const c = await pool.connect(); return { query: envolver(c.query.bind(c)), release: () => c.release() } } }
+    return { espia: espia as unknown as Queryable, sqls }
+  }
+
+  it('lectura · un alta sin cliente manual NO consulta public.nit_exentos', async () => {
+    const { espia, sqls } = espiar(db)
+    const res = await request(appWith({}, espia).app).post('/api/tickets').set('Cookie', cookie).send({ ...BASE, clientId: 'c1', equipoManual: { ...EQUIPO, serial: 'SN-M3', confirmacionSerial: 'SN-M3' } })
+    expect(res.status).toBe(201)
+    expect(sqls.filter((s) => /nit_exentos/.test(s))).toEqual([])
+  })
+
+  it('lectura · con NIT exento se lee la lista y NO se consultan los contactos de Books', async () => {
+    const { espia, sqls } = espiar(db)
+    const res = await conNit(EXENTO, {}, {}, espia)
+    expect(res.status).toBe(201)
+    expect(sqls.filter((s) => /FROM public\.nit_exentos/.test(s))).toHaveLength(1)
+    expect(sqls.filter((s) => /FROM clients\b/.test(s))).toEqual([])
+  })
+
+  it('lectura · con NIT no exento se lee la lista y después los contactos de Books', async () => {
+    const { espia, sqls } = espiar(db)
+    const res = await conNit('800555666', {}, {}, espia)
+    expect(res.status).toBe(201)
+    expect(sqls.filter((s) => /FROM public\.nit_exentos/.test(s))).toHaveLength(1)
+    expect(sqls.filter((s) => /FROM clients\b/.test(s))).toHaveLength(1)
+  })
+})
