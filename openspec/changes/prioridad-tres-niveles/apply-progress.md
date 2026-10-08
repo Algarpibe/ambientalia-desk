@@ -63,3 +63,65 @@ la presentación no es de este lote.
 - `git diff --numstat`: inserciones = borrados en `ticketService.ts` (3/3), `transitions.ts` (1/1), `contratos.ts` (3/3), `prioridadPropagada.ts` (1/1) y `prioridadCliente.ts` (2/2); `prioridad.ts` 5/2 (neto +3 al final).
 - Medida del intento: `git diff --shortstat --no-renames 742e365` = 137 inserciones + 93 borrados = 230, más `wc -l` de lo nuevo sin trackear (75 de la prueba y 65 de este fichero) = 140; total 370, por debajo de 800. Sin binarios.
 - Pendiente del orquestador: commit, detector de citas (`cli.ts --sha HEAD`) y asiento (L1.19, cuarta parte).
+
+---
+
+# Apply-progress — prioridad-tres-niveles · Lote L2
+
+Partida `605b9ab` (cierre de L1). Lote L2: predicado `puedeAjustarPrioridadTicket`, escalera del `POST` sin `409`, guarda de transición, D9 (S-K) y sincronizador. Modo `strict_tdd`. Sin commit: el orquestador comprueba, commitea y corre el detector.
+
+## Partida (L2.1)
+`wc -l` de partida: `cargos.ts` 98, `routes/prioridad.ts` 95, `guardaPrioridad.test.ts` 142.
+
+## Rojos (L2.2 a L2.14), con su razón
+| Prueba | Estado antes del código | Razón |
+|---|---|---|
+| `cargos.test.ts` · matriz del predicado (3 pruebas) y tercer llamador (`PM20-2`) | ROJO | el predicado no existía |
+| `prioridad.test.ts` · `cambiaPrioridadSinPermiso` con Director Técnico; mensaje con «Director Técnico»; `erroresPrioridadPedida` (3) | ROJO | ni predicado ni función ni texto nuevo |
+| `prioridadTop5.test.ts` · TC29-4, TC29-5 (inversión 409 a 200), TC29-7 (P3), TC29-8 (P4), PM23-1 (3 aceptados) | ROJO | el `POST` aún tenía B1 y el predicado del Director Comercial |
+| `prioridadTop5.test.ts` · bloque nuevo: sin cliente con traza, texto del 403, matriz de diez sujetos sobre cliente no Top 5, Director Técnico sin área, sincronizador | ROJO | mismas razones; el sincronizador cae por el `403` |
+| `prioridadTop5.test.ts` · P1 (`POSICIÓN A < B2`) y P2 (`POSICIÓN B2 < C`) | nacen verdes (existentes) | declaradas en el diseño |
+| `prioridadTop5.test.ts` · P5 (inexistente Y cuerpo inválido, admin) | nace verde (caracterización) | el `404` ya ganaba |
+| `guardaPrioridad.test.ts` · Director Técnico cambia en las dos transiciones (2), técnico con el texto nuevo, T5, D9 `Low` y `Urgent` (2) | ROJO | `403` por el predicado viejo; el servidor no validaba la lista |
+| `guardaPrioridad.test.ts` · T4 (Director Técnico sin Servicio Técnico: `403` de área), «reenviar la misma heredada `Low`/`Urgent` pasa», posición de D9 | nacen verdes (caracterización) | el área ya ganaba y D9 aún no existía; la tarea decía ROJO para T4, pero hoy el `403` de área ya se da. Se prueba que discrimina con la mutación «el cargo abre la transición» (abajo) |
+
+## Código (L2.15 a L2.18)
+- `cargos.ts`: `CARGOS_AJUSTE_PRIORIDAD_TICKET` y `puedeAjustarPrioridadTicket` al final (+8); comentario de `puedeFijarPrioridadTop5` en sitio. `EXCEPCIONES_POR_CARGO` y `:80-83` intactos.
+- `prioridad.ts`: import, `MENSAJE_PRIORIDAD_BLOQUEADA`, comentario `:78-79` y `:85` en sitio; `erroresPrioridadPedida` al final (+8).
+- `routes/prioridad.ts`: `:5`, `:47-49`, `:67-71` en sitio, 9 insertadas = 9 borradas. Las dos guardas `409` se retiraron y sus tres líneas pasan a un comentario de tres líneas (qué había, hasta `6344b4a`, qué decisión lo levantó: `p3b-prioridad-tres-niveles`). `:66`, `:73-74` no se movieron.
+- `ticketService.ts`: `:6` y `:134` en sitio (2/2). `:131` no se tocó. D9 pasa `b.values` y `current.row.priority`, como `:131`.
+
+## Mutaciones (L2.20)
+| Mutación | Cambio | Pruebas en rojo |
+|---|---|---|
+| M1 | `403` del `POST` detrás del `422` | P3 (`TC29-7`) y P2 (`POSICIÓN B2 < C`) |
+| P1 | `403` del `POST` por encima del `404` | `POSICIÓN A < B2` |
+| P4 (a) | reponer B1 (`409`) | `TC29-4`, `TC29-5`, P3, P4, D7, texto del `403`, matriz, Director Técnico sin área, sincronizador (9) |
+| P4 (b) | el `POST` vuelve a `puedeFijarPrioridadTop5` (quitar al Director Técnico) | P4 (`TC29-8`), `PM23-1`, matriz, sin área, sincronizador (5) |
+| P5 | validar el cuerpo antes de buscar el ticket | P5, `TC29-3`, P3, P2 (4) |
+| M2 | guarda de prioridad antes del área (`ticketService.ts:131`) | T1 (`TS22-1`) |
+| M2 sobre T4 | **T4 NO la cae**: el Director Técnico pasa el predicado, así que subir la guarda no cambia su veredicto (el diseño suponía T4 en M2). T4 se cae con otra mutación: «el cargo abre la transición» (`canExecuteTransition(...) \|\| cargo === 'Director Técnico'`) | T4 |
+| M3 | guarda de prioridad detrás del `throw` del `422` | T2 (`TS22-2`) |
+| T3 | guarda de prioridad antes del estado | `TS22-3` (y `TS22-1`) |
+| M4 | `CARGOS_AJUSTE_PRIORIDAD_TICKET` vacío | P4, T5, las dos matrices, Director Técnico en las dos transiciones, sin área, sincronizador, `cambiaPrioridadSinPermiso` (11) |
+| M8 | retirar `erroresPrioridadPedida` de `ticketService.ts:134` | D9 `Low` y `Urgent` (2) |
+| D9 posición | `erroresPrioridadPedida` antes de la guarda de permiso | posición de D9 y `TS22-2` |
+| M5 | `Low` vuelve a `transitions.ts:84` | paridad y `TS20-3` (2). Con `Low` en `PRIORIDADES_ASIGNABLES`: 7 (lista, paridad, `Low` no asignable, Top 5 con `Low`, `prioridadClienteDelCuerpo`, D9, «Top 5 guardado con `Low` nace `Medium`») |
+| M6 | `ticketService.ts:106` y `:108` vuelven a `b.prioridad` | 21 (tabla de «nace `Medium`», trazas, TC24-9, TC24-13, TC24-15, TC28-2, bloque nuevo) |
+| M7 | `contratos.ts:43` `<` a `<=` | 12, en las dos capas (pura y servicio) |
+| M9 | datos: fila `top5` verdadero con `Low`, sin tocar código | «Top 5 guardado con `Low` y sin contrato nace `Medium`» cae con M5 y con M6; verde con el código |
+
+Cada mutación se revirtió restaurando una copia y comprobando `git diff --numstat`: `contratos.ts` y `transitions.ts` sin diferencias frente a `605b9ab`, el resto con las cifras del cierre.
+
+## Sincronizador (L2.13)
+Ticket de un cliente SIN fila en `cliente_prioridad`, `managed_by_app` falso comprobado, ajustado por un Director Técnico con Servicio Técnico (200, marca `true`); la segunda pasada de `upsertTicket` con otra prioridad no lo cambia, y el de control sí. La sostiene `packages/zoho-sync/src/db/repo.ts:71`; no se tocó.
+
+## Pruebas de posición y mutación que cazó cada una
+P1 (`POSICIÓN A < B2`): 403 sobre 404. P2 (`POSICIÓN B2 < C`) y P3 (`TC29-7`): M1. P4 (`TC29-8`): reponer B1 y quitar al Director Técnico. P5: validar antes de buscar. T1 (`TS22-1`): M2. T2 (`TS22-2`): M3. T3 (`TS22-3`): guarda sobre el estado. T4: «el cargo abre la transición». T5: M4. D9: M8 y la posición de D9.
+
+## Cierre
+- `npm test`: código 0; 259 ficheros pasan y 2 saltados; 4226 pruebas pasan y 7 saltadas (4201 de partida + 25 nuevas).
+- `npm run typecheck`: código 0.
+- `npm run lint`: código 0; 165 avisos y 0 errores (la base).
+- Pendiente del orquestador: commit y detector de citas (`cli.ts --sha HEAD`), por eso L2.22 queda sin marcar.
+- Medida del intento: `git diff --shortstat --no-renames 605b9ab` = 321 inserciones + 60 borrados = 381 (antes de esta línea), sin ficheros nuevos sin trackear ni binarios; por debajo de 800.

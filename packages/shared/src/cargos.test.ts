@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import {
   CARGOS, EXCEPCIONES_POR_CARGO, esCargo, cargoQueFaltaParaTransicion, puedeEjecutarTransicion,
-  puedeLiberarSinFactura, puedeCrearOVIGarantia, puedeFijarPrioridadTop5, cargoPermisoDelCuerpo,
+  puedeLiberarSinFactura, puedeCrearOVIGarantia, puedeFijarPrioridadTop5, puedeAjustarPrioridadTicket, cargoPermisoDelCuerpo,
   type SujetoDePermiso,
 } from './cargos'
 import { AREAS, TRANSITIONS, TRANSITIONS_EQUIPO_NUEVO, TRANSITIONS_SOPORTE_REMOTO } from './transitions'
@@ -224,7 +224,7 @@ describe('RQ-PM-20 · quién llama a las primitivas por cargo (hipótesis de 1.1
     [...fuentes(join(RAIZ, 'apps')), ...fuentes(join(RAIZ, 'packages'))]
       .filter((f) => !f.endsWith(join('shared', 'src', 'cargos.ts')) && readFileSync(f, 'utf8').includes(`${nombre}(`))
   it('PM20-2 · las dos primitivas tienen llamador fuera de cargos.ts; los de puedeCrearOVIGarantia son garantiaProveedor.ts (envoltorio) y ordenOVI.ts', () => {
-    expect(llamadores('puedeFijarPrioridadTop5').length).toBeGreaterThanOrEqual(1)
+    expect(llamadores('puedeFijarPrioridadTop5').length).toBeGreaterThanOrEqual(1); expect(llamadores('puedeAjustarPrioridadTicket').length).toBeGreaterThanOrEqual(1) // tercer llamador
     expect(llamadores('puedeCrearOVIGarantia').map((r) => r.split(/[\\/]/).slice(-3).join('/'))).toEqual(['shared/src/garantiaProveedor.ts', 'shared/src/ordenOVI.ts'])
   })
 })
@@ -269,5 +269,32 @@ describe('N2 · el octavo cargo «Especialista técnico» se comporta como «Té
     }
     expect(comparadas).toBe(4 * TRANSITIONS.length)
     expect(cargoQueFaltaParaTransicion('liberacion_sin_factura', { isAdmin: false, cargoPermiso: 'Especialista técnico' })).toBe('Director Comercial')
+  })
+})
+
+describe('puedeAjustarPrioridadTicket · ajuste por ticket (F1B-07, prioridad-tres-niveles; RQ-PM-21)', () => {
+  // Segunda primitiva SIN área para el Director Técnico, como puedeCrearOVIGarantia: queda fuera del barrido «el cargo sólo restringe».
+  const AREAS_PROBADAS: string[][] = [['Comercial'], ['Servicio Técnico'], []]
+  it('matriz de los ocho cargos y «sin cargo», con Comercial, con Servicio Técnico y sin área (no admin)', () => {
+    let aceptados = 0
+    for (const areas of AREAS_PROBADAS) {
+      for (const cargo of [...CARGOS, null]) {
+        const esperado = cargo === 'Director Técnico' || (cargo === 'Director Comercial' && areas.includes('Comercial'))
+        expect(puedeAjustarPrioridadTicket(sujeto(areas, cargo)), `${areas} · ${cargo}`).toBe(esperado)
+        if (esperado) aceptados += 1
+      }
+    }
+    expect(aceptados).toBe(4) // Director Técnico en las tres áreas + Director Comercial con Comercial
+  })
+  it('el Director Técnico pasa SIN área alguna (S-F) y el Director Comercial sin Comercial no', () => {
+    expect(puedeAjustarPrioridadTicket(sujeto([], 'Director Técnico'))).toBe(true)
+    expect(puedeAjustarPrioridadTicket(sujeto(['Servicio Técnico'], 'Director Comercial'))).toBe(false)
+  })
+  it('el administrador pasa con o sin cargo; un cargo fuera de la lista no cuenta', () => {
+    expect(puedeAjustarPrioridadTicket(sujeto([], null, true))).toBe(true)
+    expect(puedeAjustarPrioridadTicket(sujeto(['Comercial'], 'Gerente comercial'))).toBe(false)
+  })
+  it('puedeFijarPrioridadTop5 NO cambia: el Director Técnico sigue sin poder fijar un Top 5', () => {
+    expect(puedeFijarPrioridadTop5(sujeto(['Servicio Técnico', 'Comercial'], 'Director Técnico'))).toBe(false)
   })
 })

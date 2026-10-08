@@ -140,3 +140,63 @@ describe('RQ-TS-22 · POSICIÓN de la guarda de prioridad: cada prueba activa DO
     expect(r.status).toBe(409)
   })
 })
+
+describe('prioridad-tres-niveles · el Director Técnico cambia la prioridad en la transición y la lista se impone (D9, S-K)', () => {
+  const DT_ST: Sujeto = { areas: ['Servicio Técnico'], isAdmin: false, cargoPermiso: 'Director Técnico', name: 'DT', id: 'u-dt' }
+  const DT_SIN_ST: Sujeto = { areas: ['Comercial'], isAdmin: false, cargoPermiso: 'Director Técnico', name: 'DTc', id: 'u-dtc' }
+  const TECNICO: Sujeto = { ...SERVICIO, cargoPermiso: 'Técnico' }
+  const LISTA = 'La prioridad debe ser una de: High, Medium'
+
+  it.each([[ESCALADO, 'Rev./Diagnostico', { 'Días de entrega': 5 }, 'Notificado'], [DEVOLUCION, 'Notificado', {}, 'Rev./Diagnostico']])(
+    'el Director Técnico (con Servicio Técnico) cambia la prioridad en %s', async (tid, desde, extra, hasta) => {
+      await ticket(desde, 'Medium')
+      await executeTransition(db, 't1', { transitionId: tid, values: { priority: 'High', ...extra } }, DT_ST)
+      expect(await estado()).toEqual({ status: hasta, priority: 'High' })
+    })
+
+  it('un técnico (cargo Técnico) recibe 403 con el mensaje nuevo y nada cambia', async () => {
+    await ticket('Rev./Diagnostico', 'Medium')
+    const r = await fallo(() => executeTransition(db, 't1', { transitionId: ESCALADO, values: { priority: 'High', 'Días de entrega': 5 } }, TECNICO))
+    expect(r.status).toBe(403)
+    expect(r.body.error).toBe('La prioridad del ticket la ajustan el Director Comercial o el Director Técnico: tu cargo no puede cambiarla en esta etapa')
+    expect(await estado()).toEqual({ status: 'Rev./Diagnostico', priority: 'Medium' })
+  })
+
+  it('T4 · POSICIÓN área < prioridad · Director Técnico SIN Servicio Técnico Y prioridad distinta: 403 que NOMBRA EL ÁREA', async () => {
+    await ticket('Rev./Diagnostico', 'Medium')
+    const r = await fallo(() => executeTransition(db, 't1', { transitionId: ESCALADO, values: { priority: 'High', 'Días de entrega': 5 } }, DT_SIN_ST))
+    expect(r.status).toBe(403)
+    expect(r.body.error).toBe(AREA_ST)
+  })
+
+  it('T5 · POSICIÓN prioridad < 422 · Director Técnico con prioridad distinta Y sin «Días de entrega»: 422, no 403', async () => {
+    await ticket('Rev./Diagnostico', 'Medium')
+    const r = await fallo(() => executeTransition(db, 't1', { transitionId: ESCALADO, values: { priority: 'High' } }, DT_ST))
+    expect(r.status).toBe(422)
+    expect(r.body.errors).toEqual(expect.any(Array)) // el 422 agregado, no el 403 de prioridad
+  })
+
+  it.each(['Low', 'Urgent'])('D9 · %s pedida por quien tiene permiso (administrador) es 422 con la lista, y nada cambia', async (mala) => {
+    await ticket('Rev./Diagnostico', 'High')
+    const r = await fallo(() => executeTransition(db, 't1', { transitionId: ESCALADO, values: { priority: mala, 'Días de entrega': 5 } }, ADMIN))
+    expect(r.status).toBe(422)
+    expect(r.body.errors).toContain(LISTA)
+    expect(await estado()).toEqual({ status: 'Rev./Diagnostico', priority: 'High' })
+    expect(await trazas()).toBe(0)
+  })
+
+  it.each(['Low', 'Urgent'])('D9 · reenviar la MISMA prioridad heredada %s pasa (el formulario la devuelve tal cual)', async (heredada) => {
+    await ticket('Rev./Diagnostico', heredada)
+    await executeTransition(db, 't1', { transitionId: ESCALADO, values: { priority: heredada, 'Días de entrega': 5 } }, ADMIN)
+    expect(await estado()).toEqual({ status: 'Notificado', priority: heredada })
+  })
+})
+
+describe('prioridad-tres-niveles · POSICIÓN de D9: el permiso (B) gana a la lista (C)', () => {
+  it('técnico sin permiso Y prioridad fuera de la lista: 403 de prioridad, no 422', async () => {
+    await ticket('Rev./Diagnostico', 'High')
+    const r = await fallo(() => executeTransition(db, 't1', { transitionId: ESCALADO, values: { priority: 'Low', 'Días de entrega': 5 } }, SERVICIO))
+    expect(r.status).toBe(403)
+    expect(r.body.error).toBe(MENSAJE_PRIORIDAD_BLOQUEADA)
+  })
+})

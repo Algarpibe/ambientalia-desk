@@ -126,68 +126,68 @@ Archivos: `cargos.ts` (+~10 al final), `prioridad.ts` (+~8 al final), `routes/pr
 `ticketService.ts` (0 netas), y las pruebas de §6 del diseño.
 
 **Fase de partida**
-- [ ] L2.1 Anotar `git rev-parse HEAD` (cierre de L1) como commit de partida de L2 y abrir su intento. Medir `wc -l` de
+- [x] L2.1 Anotar `git rev-parse HEAD` (cierre de L1) como commit de partida de L2 y abrir su intento. Medir `wc -l` de
   `cargos.ts` (98), `routes/prioridad.ts` y `guardaPrioridad.test.ts`.
 
 **Rojo**
-- [ ] L2.2 `packages/shared/src/cargos.test.ts`, al final: «`puedeAjustarPrioridadTicket`: matriz de los ocho cargos,
+- [x] L2.2 `packages/shared/src/cargos.test.ts`, al final: «`puedeAjustarPrioridadTicket`: matriz de los ocho cargos,
   sin cargo y administrador, con área Comercial, con Servicio Técnico y sin área» (sólo Director Comercial, Director
   Técnico y administrador pasan, el Director Técnico también sin área, S-F); y el tercer llamador en la prueba de
   llamadores (`:226-229`). ROJO. Queda fuera del barrido de `:177-207`, como `puedeCrearOVIGarantia` (`:185`).
-- [ ] L2.3 **Inversiones del `POST`.** `apps/desk/server/prioridadTop5.test.ts` en sitio: `:260-267` y `:269-273` de
+- [x] L2.3 **Inversiones del `POST`.** `apps/desk/server/prioridadTop5.test.ts` en sitio: `:260-267` y `:269-273` de
   `409` a `200`; `:359-375` (matriz de sujetos); el `403` con el texto nuevo del diseño §3. Al final: «ticket sin
   cliente se ajusta con `200` y traza» (D7) y «matriz de diez sujetos, tres aceptados». INVERSIÓN y ROJO.
-- [ ] L2.4 **P1** (A<B: ticket inexistente Y sin cargo, `404`): ya existe en `prioridadTop5.test.ts:304-307`, verde.
+- [x] L2.4 **P1** (A<B: ticket inexistente Y sin cargo, `404`): ya existe en `prioridadTop5.test.ts:304-307`, verde.
   Mutación que caza: subir el `403` por encima del `404`.
-- [ ] L2.5 **P2** (B<C: Coordinador Comercial Y sin motivo, cliente Top 5, `403`): ya existe en `:292-295`, verde.
+- [x] L2.5 **P2** (B<C: Coordinador Comercial Y sin motivo, cliente Top 5, `403`): ya existe en `:292-295`, verde.
   Mutación: bajar el `403` detrás del `422`.
-- [ ] L2.6 **P3**, en sitio sobre `:282-285`: Coordinador Comercial Y sin motivo, cliente **no** Top 5 → `403`. ROJO
+- [x] L2.6 **P3**, en sitio sobre `:282-285`: Coordinador Comercial Y sin motivo, cliente **no** Top 5 → `403`. ROJO
   (hoy daría `409`). Mutación: bajar el `403` detrás del `422`.
-- [ ] L2.7 **P4**, en sitio sobre `:287-290`: Director Técnico Y sin motivo, cliente no Top 5 → `422`. ROJO. Mutaciones:
+- [x] L2.7 **P4**, en sitio sobre `:287-290`: Director Técnico Y sin motivo, cliente no Top 5 → `422`. ROJO. Mutaciones:
   reponer B1 (daría `409`); quitar al Director Técnico (daría `403`).
-- [ ] L2.8 **P5**, nueva al final: ticket inexistente Y cuerpo inválido, administrador → `404`. Nace verde
+- [x] L2.8 **P5**, nueva al final: ticket inexistente Y cuerpo inválido, administrador → `404`. Nace verde
   (caracterización); mutación: validar el cuerpo antes de buscar el ticket.
-- [ ] L2.9 **Transición.** `apps/desk/server/services/guardaPrioridad.test.ts`, al final: «el Director Técnico cambia la
+- [x] L2.9 **Transición.** `apps/desk/server/services/guardaPrioridad.test.ts`, al final: «el Director Técnico cambia la
   prioridad en las dos transiciones que la llevan» y «un técnico recibe `403`». ROJO.
-- [ ] L2.10 **T1** (existe `:123-128`, verde): sin área Servicio Técnico Y prioridad distinta → `403` que nombra el
+- [x] L2.10 **T1** (existe `:123-128`, verde): sin área Servicio Técnico Y prioridad distinta → `403` que nombra el
   área; mutación: subir la guarda de prioridad por encima del área (M2). **T2** (existe `:130-135`, verde): técnico con
   prioridad distinta Y sin «Días de entrega» → `403` de prioridad; mutación: bajar la guarda detrás del primer `422`
   (M3). **T3** (existe `:137-141`, verde): estado que no aplica Y prioridad distinta → `409`; mutación: subir la guarda
   por encima del estado.
-- [ ] L2.11 **T4**, nueva: Director Técnico **sin** Servicio Técnico Y prioridad distinta → `403` que nombra el área.
+- [x] L2.11 **T4**, nueva: Director Técnico **sin** Servicio Técnico Y prioridad distinta → `403` que nombra el área.
   Mutación: que el cargo abra la transición. **T5**, nueva: Director Técnico con prioridad distinta Y sin «Días de
   entrega» → `422`, no `403`. ROJO. Mutación: quitar al Director Técnico del predicado.
-- [ ] L2.12 **D9 (S-K), las dos cosas.** `prioridad.test.ts`, al final, sobre `erroresPrioridadPedida`: (a) rechaza: la
+- [x] L2.12 **D9 (S-K), las dos cosas.** `prioridad.test.ts`, al final, sobre `erroresPrioridadPedida`: (a) rechaza: la
   transición declara el campo y la pedida es no vacía, distinta de la actual y no asignable (`Low`, `Urgent`) → un
   error con «La prioridad debe ser una de: High, Medium». (b) NO rechaza: reenviar la actual aunque sea `Low` o `Urgent`
   heredada, pedida vacía, valor asignable, y campo no declarado por la transición. En `guardaPrioridad.test.ts`:
   «`Low` pedida por quien tiene permiso es `422`» (ROJO) y «reenviar la MISMA prioridad heredada `Low` pasa»
   (caracterización, junto a `:60-64`). Mutación (M8): retirar la función de `ticketService.ts:134`.
-- [ ] L2.13 **Sincronizador.** `prioridadTop5.test.ts`, al final, gemela de `:320-331` con su arnés
+- [x] L2.13 **Sincronizador.** `prioridadTop5.test.ts`, al final, gemela de `:320-331` con su arnés
   (`ticketRowFromZoho`, `upsertTicket`; sujeto con `:34-38`): cliente **sin** fila en `cliente_prioridad`; dos tickets
   con `ticketDe`, `managed_by_app` falso comprobado; el Director Técnico (área Servicio Técnico) ajusta el primero y
   recibe `200`; `upsertTicket` con otra prioridad no lo cambia; el segundo, de control, sí cambia. ROJO hasta que
   L2.15 dé permiso. La sostiene `packages/zoho-sync/src/db/repo.ts:71`, no la marca de `:76-78`.
-- [ ] L2.14 Correr las pruebas nuevas y anotar rojo/verde de cada una con su razón (las existentes P1, P2, T1, T2, T3
+- [x] L2.14 Correr las pruebas nuevas y anotar rojo/verde de cada una con su razón (las existentes P1, P2, T1, T2, T3
   y las caracterizaciones nacen verdes y se declaran).
 
 **Verde**
-- [ ] L2.15 `packages/shared/src/cargos.ts`, al final (tras `:98`): `CARGOS_AJUSTE_PRIORIDAD_TICKET: readonly Cargo[] =
+- [x] L2.15 `packages/shared/src/cargos.ts`, al final (tras `:98`): `CARGOS_AJUSTE_PRIORIDAD_TICKET: readonly Cargo[] =
   ['Director Técnico']` y `puedeAjustarPrioridadTicket(s)` = `puedeFijarPrioridadTop5(s)` o cargo efectivo en la lista.
   Sin tocar `EXCEPCIONES_POR_CARGO` ni `:80-83`.
-- [ ] L2.16 `packages/shared/src/prioridad.ts`: `:10` (import), `:55` (texto de `MENSAJE_PRIORIDAD_BLOQUEADA`),
+- [x] L2.16 `packages/shared/src/prioridad.ts`: `:10` (import), `:55` (texto de `MENSAJE_PRIORIDAD_BLOQUEADA`),
   `:77-79` (comentario) y `:85` (`cambiaPrioridadSinPermiso` consume el predicado nuevo), en sitio; al final,
   `erroresPrioridadPedida(t, valores, actual): string[]` (D9).
-- [ ] L2.17 `apps/desk/server/routes/prioridad.ts`: `:5` (import), `:47-49` (comentario), `:67-71` en sitio: las dos
+- [x] L2.17 `apps/desk/server/routes/prioridad.ts`: `:5` (import), `:47-49` (comentario), `:67-71` en sitio: las dos
   guardas `409` se retiran y sus tres líneas se compensan con un comentario de tres líneas (qué había, hasta qué
   revisión, qué decisión lo levantó); `:70` queda «B · permiso» y `:71` el `403` con el predicado nuevo y el texto del
   diseño §3. `:66`, `:73-74` no se mueven. `:40` (el `PUT`) no se toca.
-- [ ] L2.18 `apps/desk/server/services/ticketService.ts`: `:6` y `:134` en sitio (suma `erroresPrioridadPedida` al
+- [x] L2.18 `apps/desk/server/services/ticketService.ts`: `:6` y `:134` en sitio (suma `erroresPrioridadPedida` al
   `422` agregado). `:131` **no se toca**.
-- [ ] L2.19 Correr todas las pruebas de L2: verdes; y las de L1 siguen verdes.
+- [x] L2.19 Correr todas las pruebas de L2: verdes; y las de L1 siguen verdes.
 
 **Mutaciones**
-- [ ] L2.20 Ejecutar las mutaciones M1 a M9 y anotar rojo/verde de cada una: **M1** (el `403` de `routes/prioridad.ts:71`
+- [x] L2.20 Ejecutar las mutaciones M1 a M9 y anotar rojo/verde de cada una: **M1** (el `403` de `routes/prioridad.ts:71`
   detrás de `:74`: caen P2 y P3), **M2** (`ticketService.ts:131`, guarda de prioridad antes de `:129`: caen T1 y T4),
   **M3** (la misma guarda detrás del `throw` de `:134`: cae T2), **M4** (`CARGOS_AJUSTE_PRIORIDAD_TICKET` vacío: caen
   P4, T5, la matriz y el sincronizador), **M8** (retirar `erroresPrioridadPedida` de `:134`: cae «`Low` pedida con
@@ -195,12 +195,12 @@ Archivos: `cargos.ts` (+~10 al final), `prioridad.ts` (+~8 al final), `routes/pr
   confirma el verde.
 
 **Cierre**
-- [ ] L2.21 `git diff --numstat <partida>`: inserciones = borrados en `routes/prioridad.ts` y `ticketService.ts`;
+- [x] L2.21 `git diff --numstat <partida>`: inserciones = borrados en `routes/prioridad.ts` y `ticketService.ts`;
   `cargos.ts` y `prioridad.ts` sólo con adiciones al final (más las líneas en sitio de `prioridad.ts`).
 - [ ] L2.22 Los CUATRO códigos, uno a uno: `npm test`, `npm run typecheck`, `npm run lint` y, tras commitear,
   `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`. Anotar la salida de cada uno.
-- [ ] L2.23 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
-- [ ] L2.24 Escribir `apply-progress.md` de L2 y marcar casillas.
+- [x] L2.23 Ejecutar la medida del intento y registrar ESA cifra (≤ 800).
+- [x] L2.24 Escribir `apply-progress.md` de L2 y marcar casillas.
 
 ---
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   PRIORIDADES_ASIGNABLES, esPrioridadAsignable, prioridadMasAlta, prioridadTop5, prioridadClienteDelCuerpo,
-  ajusteDelCuerpo, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, ordenarColaTaller, esDeMisTickets,
+  ajusteDelCuerpo, cambiaPrioridadSinPermiso, MENSAJE_PRIORIDAD_BLOQUEADA, ordenarColaTaller, esDeMisTickets, erroresPrioridadPedida,
 } from './prioridad'
 import { TRANSITIONS, transitionById } from './transitions'
 
@@ -220,5 +220,39 @@ describe('esDeMisTickets · el predicado de «Mis tickets» (RQ-VT-09)', () => {
   it('derivado null o ausente → false', () => {
     expect(esDeMisTickets({ statusType: 'Open', derivado: null }, 'u1')).toBe(false)
     expect(esDeMisTickets({ statusType: 'Open' }, 'u1')).toBe(false)
+  })
+})
+
+describe('cambiaPrioridadSinPermiso · el Director Técnico (prioridad-tres-niveles)', () => {
+  const ESCALADO = transitionById('escalado_a_revision')!
+  it('el Director Técnico NO es bloqueado, con o sin área; el Coordinador Comercial con Comercial sí', () => {
+    expect(cambiaPrioridadSinPermiso(ESCALADO, { priority: 'High' }, 'Medium', { areas: ['Servicio Técnico'], isAdmin: false, cargoPermiso: 'Director Técnico' })).toBe(false)
+    expect(cambiaPrioridadSinPermiso(ESCALADO, { priority: 'High' }, 'Medium', { areas: [], isAdmin: false, cargoPermiso: 'Director Técnico' })).toBe(false)
+    expect(cambiaPrioridadSinPermiso(ESCALADO, { priority: 'High' }, 'Medium', { areas: ['Comercial'], isAdmin: false, cargoPermiso: 'Coordinador Comercial' })).toBe(true)
+  })
+  it('el mensaje de bloqueo nombra a los dos directores', () => {
+    expect(MENSAJE_PRIORIDAD_BLOQUEADA).toContain('Director Comercial')
+    expect(MENSAJE_PRIORIDAD_BLOQUEADA).toContain('Director Técnico')
+  })
+})
+
+describe('erroresPrioridadPedida · la lista se impone en la transición (D9, S-K)', () => {
+  const ESCALADO = transitionById('escalado_a_revision')!
+  const SIN_CAMPO = transitionById('ingreso_a_servicio')!
+  const LISTA = 'La prioridad debe ser una de: High, Medium'
+  it('rechaza: campo declarado, pedida no vacía, distinta de la actual y no asignable', () => {
+    for (const mala of ['Low', 'Urgent', 'Alta', 'high']) expect(erroresPrioridadPedida(ESCALADO, { priority: mala }, 'High'), mala).toEqual([LISTA])
+    expect(erroresPrioridadPedida(ESCALADO, { priority: 'Low' }, null)).toEqual([LISTA])
+  })
+  it('NO rechaza: la misma que la actual aunque sea Low o Urgent heredada, vacía o ausente, y un valor asignable', () => {
+    expect(erroresPrioridadPedida(ESCALADO, { priority: 'Low' }, 'Low')).toEqual([])
+    expect(erroresPrioridadPedida(ESCALADO, { priority: 'Urgent' }, 'Urgent')).toEqual([])
+    for (const vacia of [undefined, null, '']) expect(erroresPrioridadPedida(ESCALADO, { priority: vacia }, 'High'), String(vacia)).toEqual([])
+    expect(erroresPrioridadPedida(ESCALADO, {}, 'High')).toEqual([])
+    expect(erroresPrioridadPedida(ESCALADO, { priority: 'Medium' }, 'Low')).toEqual([])
+    expect(erroresPrioridadPedida(ESCALADO, 'no es un objeto', 'Low')).toEqual([])
+  })
+  it('NO rechaza si la transición no declara el campo, aunque venga una prioridad mala', () => {
+    expect(erroresPrioridadPedida(SIN_CAMPO, { priority: 'Low' }, 'High')).toEqual([])
   })
 })
