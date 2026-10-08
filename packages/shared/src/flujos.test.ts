@@ -122,9 +122,9 @@ describe('fueraDeFlujo — mensaje del 409 (RQ-EN-05)', () => {
   })
 })
 
-describe('RQ-EN-07 (tablero) · Verificación cae en la columna Otros', () => {
-  it('columnForStatus("Verificación") es "otros" (FALLBACK_COLUMN_ID, sin columna propia)', () => {
-    expect(columnForStatus('Verificación')).toBe('otros')
+describe('RQ-EN-07 (tablero) · Verificación tiene columna propia', () => {
+  it('columnForStatus("Verificación") es "verificacion" (columna propia, ya no FALLBACK_COLUMN_ID; decision/e225-columna-propia-dos-estados)', () => {
+    expect(columnForStatus('Verificación')).toBe('verificacion')
   })
 
   it('contraste: un estado con columna propia NO cae en "otros"', () => {
@@ -201,8 +201,8 @@ describe('flujo soporte-remoto — enrutado, catálogo y guarda de flujo (RQ-SR-
     expect(mensaje).toContain('servicio técnico')
   })
 
-  it('S-10 · Solicitud Soporte cae en la columna Otros (sin columna propia; F1B-09)', () => {
-    expect(columnForStatus('Solicitud Soporte')).toBe('otros')
+  it('S-10 INVERTIDA · Solicitud Soporte tiene columna propia (decision/e225-columna-propia-dos-estados; antes caía en Otros)', () => {
+    expect(columnForStatus('Solicitud Soporte')).toBe('solicitud_soporte')
   })
 })
 

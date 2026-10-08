@@ -7,26 +7,26 @@ Verify y archive no son casillas de este fichero.
 ## Lote 1 — rojo, verde y cierre
 
 ### 1. Rojo (no se toca `columns.ts`) — RQ-EN-07, RQ-SR-03
-- [ ] 1.1 Invertir en sitio `packages/shared/src/flujos.test.ts:125-128` y `:204-206` (texto de D4); el fichero sigue en 258 líneas.
-- [ ] 1.2 `packages/shared/src/columns.test.ts`: reescribir `:2` con el import de `ESTADOS` en la misma línea e insertar `solicitud_soporte` y `verificacion` en la lista de ids de `:7-8` (D2), sin cambiar líneas; `:1-40` conservan su posición.
-- [ ] 1.3 Añadir al final de `columns.test.ts`, tras una línea vacía, `COLUMNA_ANTES` y el `describe` con las aserciones (a)-(f) (D3).
-- [ ] 1.4 Correr `npx vitest run packages/shared/src/columns.test.ts packages/shared/src/flujos.test.ts` y ANOTAR en `apply-progress` qué falla. Esperado: lista de ids (21 frente a 23); (b) recibe `[]`; (c) recibe `'otros'`; (e) recibe `['Finalizado','Verificación','Solicitud Soporte']`; las dos de `flujos.test.ts` reciben `'otros'`. (a), (d) y (f) nacen verdes: son guardas. Si el fallo no coincide, parar y anotar la diferencia.
+- [x] 1.1 Invertir en sitio `packages/shared/src/flujos.test.ts:125-128` y `:204-206` (texto de D4); el fichero sigue en 258 líneas.
+- [x] 1.2 `packages/shared/src/columns.test.ts`: reescribir `:2` con el import de `ESTADOS` en la misma línea e insertar `solicitud_soporte` y `verificacion` en la lista de ids de `:7-8` (D2), sin cambiar líneas; `:1-40` conservan su posición.
+- [x] 1.3 Añadir al final de `columns.test.ts`, tras una línea vacía, `COLUMNA_ANTES` y el `describe` con las aserciones (a)-(f) (D3).
+- [x] 1.4 Correr `npx vitest run packages/shared/src/columns.test.ts packages/shared/src/flujos.test.ts` y ANOTAR en `apply-progress` qué falla. Esperado: lista de ids (21 frente a 23); (b) recibe `[]`; (c) recibe `'otros'`; (e) recibe `['Finalizado','Verificación','Solicitud Soporte']`; las dos de `flujos.test.ts` reciben `'otros'`. (a), (d) y (f) nacen verdes: son guardas. Si el fallo no coincide, parar y anotar la diferencia.
 
 ### 2. Verde — RQ-EN-07, RQ-SR-03
-- [ ] 2.1 `packages/shared/src/columns.ts:15`: `solicitud_soporte` en la misma línea física que `ticket_creado`, con el texto exacto de D1.
-- [ ] 2.2 `packages/shared/src/columns.ts:20`: `verificacion` en la misma línea física que `proceso`, con el texto exacto de D1.
-- [ ] 2.3 Repetir 1.4 y comprobar que todo pasa en verde.
+- [x] 2.1 `packages/shared/src/columns.ts:15`: `solicitud_soporte` en la misma línea física que `ticket_creado`, con el texto exacto de D1.
+- [x] 2.2 `packages/shared/src/columns.ts:20`: `verificacion` en la misma línea física que `proceso`, con el texto exacto de D1.
+- [x] 2.3 Repetir 1.4 y comprobar que todo pasa en verde.
 
 ### 3. Comprobaciones de cierre del lote
-- [ ] 3.1 `wc -l`: `columns.ts` = 47; `flujos.test.ts` = 258; `columns.test.ts` conserva sus líneas 1-40 en posición (`git diff` sin desplazamientos antes de `:42`).
-- [ ] 3.2 M1 (quitar `verificacion`): rojo en (b), (c), lista de ids y `flujos.test.ts:126-128`; restaurar.
-- [ ] 3.3 M2 (quitar `solicitud_soporte`): rojo en (b), (c), lista de ids y `flujos.test.ts:204-206`; restaurar.
-- [ ] 3.4 M3 (mover una de las dos de posición): rojo SÓLO en la lista de ids (`columns.test.ts:6-11`), la exhaustiva sigue verde; restaurar.
-- [ ] 3.5 M4 (añadir `'Pendiente'` a los `statuses` de una): rojo en (c) y (f), y (b) NO; restaurar. Tras cada mutación, `git diff` limpio de rastro.
-- [ ] 3.6 `npm test`, `npm run typecheck` y `npm run lint` en verde (lint: 165 avisos, 0 errores; confirma la hipótesis de que no hay `max-len`, D1).
-- [ ] 3.7 Detector de citas: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` con código de salida 0.
-- [ ] 3.8 Barrido de la regla de mutación 4 (D8): `grep -rnoE "(columns|columns\.test|flujos\.test)\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio, cada cita contrastada con el fichero (qué AFIRMA, extremos inicial y final); segundo pase de abreviadas en los ficheros que ya citan el módulo.
-- [ ] 3.9 `git diff --stat` sin ningún fichero bajo `apps/desk/src` (criterio 11) y medida del intento: `git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear.
+- [x] 3.1 `wc -l`: `columns.ts` = 47; `flujos.test.ts` = 258; `columns.test.ts` conserva sus líneas 1-40 en posición (`git diff` sin desplazamientos antes de `:42`).
+- [x] 3.2 M1 (quitar `verificacion`): rojo en (b), (c), lista de ids y `flujos.test.ts:126-128`; restaurar.
+- [x] 3.3 M2 (quitar `solicitud_soporte`): rojo en (b), (c), lista de ids y `flujos.test.ts:204-206`; restaurar.
+- [x] 3.4 M3 (mover una de las dos de posición): rojo SÓLO en la lista de ids (`columns.test.ts:6-11`), la exhaustiva sigue verde; restaurar.
+- [x] 3.5 M4 (añadir `'Pendiente'` a los `statuses` de una): rojo en (c) y (f), y (b) NO; restaurar. Tras cada mutación, `git diff` limpio de rastro.
+- [x] 3.6 `npm test`, `npm run typecheck` y `npm run lint` en verde (lint: 165 avisos, 0 errores; confirma la hipótesis de que no hay `max-len`, D1).
+- [x] 3.7 Detector de citas: `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` con código de salida 0.
+- [x] 3.8 Barrido de la regla de mutación 4 (D8): `grep -rnoE "(columns|columns\.test|flujos\.test)\.ts:[0-9]+(-[0-9]+)?"` sobre el repositorio, cada cita contrastada con el fichero (qué AFIRMA, extremos inicial y final); segundo pase de abreviadas en los ficheros que ya citan el módulo.
+- [x] 3.9 `git diff --stat` sin ningún fichero bajo `apps/desk/src` (criterio 11) y medida del intento: `git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear.
 
 ## Tareas de personas — fuera del recuento
 
