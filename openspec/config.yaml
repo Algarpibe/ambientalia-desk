@@ -4510,6 +4510,29 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (permisos por cargo, F1C-05)"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna — deja una pregunta para F1C-07: quién firma el Control de calidad con el Coordinador Técnico vacante"
+  - clave: "decision/f1b18-entra-ya-confirmada-10-10"
+    fecha: "2026-10-10"
+    precisa: "decision/escenario-a-festivos-plan-a-01-10"
+    pregunta: |
+      Confirmación de Gerencia, tecleada por Alfonso en la sesión de construcción del 2026-10-10: ¿entra ya F1B-18
+      («Aviso "En garantía" y "Garantía sin dato"») antes del corte, y se autoriza construirla?
+    respuesta_textual: |
+      «Autorizo construir F1B-18 en su worktree con ciclo SDD completo, parando antes de fusionar»
+    consecuencias: |
+      (1) CONFIRMA LA «OPCIÓN 3» de `decision/reserva-con-el-margen-nuevo` (06/10), que Supervisión tiene registrada en
+      el árbol SIN VERSIONAR (`decisiones_de_gerencia_panel`; la «Opción 3» estaba en la línea 4647 de este fichero, en el árbol
+      de trabajo del 2026-10-10 y antes de insertar esta clave, no en ningún commit). Esta clave no copia aquel bloque:
+      lo versiona Supervisión.
+      (2) SUPERA el «F1B-18 fuera» de `decision/escenario-a-festivos-plan-a-01-10`, consecuencia (2) (`openspec/config.yaml:3622`),
+      y la fila del plan que la deja «fuera hasta que el margen real lo permita»
+      (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.4.md:98`). No los borra: los supera desde hoy.
+      (3) AUTORIZA LA CONSTRUCCIÓN: F1B-18, talla S, en su propio worktree (regla del ciclo 3), con ciclo SDD completo y
+      una sola parada, antes de fusionar a `main`.
+      (4) LA CUENTA OFICIAL NO SE MUEVE por esta clave: lo que dijera la «Opción 3» sobre el 09/11 lo registra Supervisión.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b18-entra-ya-confirmada-10-10)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-18 (antes del corte, talla S)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
