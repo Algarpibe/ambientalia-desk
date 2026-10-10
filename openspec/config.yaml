@@ -3888,7 +3888,7 @@ decisiones_de_gerencia_adenda:
   # están leídas contra el árbol de `c0008bf`.
   - clave: "pendiente/e158-remision-equipo-nuevo"
     fecha: "2026-10-06"
-    estado: "PENDIENTE — no es decisión. Sigue sujetando el despliegue"
+    estado: "CERRADA el 2026-10-09 por decision/e158-equipo-nuevo-lleva-remision («sí la lleva»: se publica sin excepción). Hasta ese día: PENDIENTE — no era decisión, y sujetaba el despliegue"
     pregunta: |
       Pregunta 10 (E-158). Desde que se publique no se podrá habilitar un servicio sin remisión de entrada, sin
       excepciones. Un ticket de «Equipo nuevo» pasa por ese mismo paso: ¿lleva remisión de entrada en la práctica, o hay
@@ -4332,6 +4332,104 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (alta manual de cliente)"
     maestro_revision: "pendiente"
     tanda_que_abre: "F1B-19 (tanda 9 del orden del 06/10)"
+  # ── Respuestas de Gerencia del 2026-10-09 a la parte A de `docs/sdd/Preguntas_Gerencia_2026-10-09.md` ──
+  # Las tres preguntas que sujetaban el despliegue (1 a 3), una clave por respuesta. Las consecuencias están
+  # leídas contra el árbol de `7b5edfd`, cuyo código es el de `509b905`. No se construye nada con ellas.
+  - clave: "decision/e158-equipo-nuevo-lleva-remision"
+    fecha: "2026-10-09"
+    pregunta: |
+      Pregunta 1 de la parte A (E-158). Desde que se publique no se podrá habilitar un servicio sin una remisión de
+      entrada, sin excepciones. Los tickets de «Equipo nuevo» pasan por ese mismo paso: ¿en la práctica llevan remisión
+      de entrada?
+    respuesta_textual: |
+      «sí, el equipo nuevo lleva remisión de entrada; se publica sin excepción.»
+    consecuencias: |
+      (1) CIERRA `pendiente/e158-remision-equipo-nuevo`, que desde el 06/10 era una confirmación pendiente y no una
+      decisión. Se anota también en sitio, en esa clave.
+      (2) E-158 DEJA DE SUJETAR EL DESPLIEGUE. Se cumple la rama «sí la lleva» de aquella clave: se publica el código tal
+      cual. La guarda se llama en `apps/desk/server/services/ticketService.ts:131`, está en
+      `apps/desk/server/services/ticketService.ts:273-277`, no distingue clasificación y no tiene interruptor.
+      (3) NO SE CONSTRUYE la excepción por clasificación «Equipo nuevo», ni hace falta otro commit ni otro paquete por
+      este motivo. `decision/anexo-43-en-sitio` sigue diciendo «sin excepciones» y no se precisa.
+      (4) LO QUE ESTA RESPUESTA NO RETIRA: los dos recuentos de sólo lectura de la condición (c) del paquete del 09/10
+      (`docs/sdd/Consulta_Recuento_Habilitables_sin_remision_2026-10-03.sql`,
+      `docs/sdd/Consulta_Recuento_Ingresado_sin_remision_2026-09-25.sql`). La respuesta no los nombra; siguen diciendo
+      cuántos tickets quedarán bloqueados hasta tener su remisión, y siguen siendo tarea de persona antes de publicar.
+      (5) La fecha de F1F-05 —en producción antes del viernes 13/11/2026— deja de estar atada a E-158.
+      (6) La entrada E-158 de `docs/sdd/ENTRADA.md` sigue rotulada como abierta: ese fichero tiene cambios sin commitear
+      de Supervisión y no se tocó. Cerrarla allí es de Supervisión.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e158-equipo-nuevo-lleva-remision) · cierra pendiente/e158-remision-equipo-nuevo · docs/sdd/Paquete_de_Despliegue_2026-10-09b.md §1"
+    maestro_pasaje: "Anexo D nº 43 (remisión obligatoria para habilitar)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
+  - clave: "decision/s4-f1b19-resumen-de-provisionales-no-se-construye"
+    fecha: "2026-10-09"
+    pregunta: |
+      Pregunta 2 de la parte A (S-4 de F1B-19). La aplicación avisará a Comercial cada vez que un cliente provisional
+      comparta NIT con un contacto de Books. El primer día avisaría, de una vez, de todas las coincidencias que ya
+      existan: ¿se acepta, o se prefiere que el aviso empiece sólo con las nuevas?
+    respuesta_textual: |
+      «al publicar, un único resumen a Comercial con las coincidencias de NIT que ya existían; después, un aviso por cada coincidencia nueva, una sola vez.»
+      Y, tras el contraste del analista:
+      «de acuerdo, no se construye el resumen. Registra mi respuesta literal y añade la condición de parada: antes de publicar se comprueba si la tabla de clientes provisionales existe y tiene filas; si las tiene, se para y se construye el resumen.»
+    consecuencias: |
+      (1) NO SE CONSTRUYE EL RESUMEN. Fundamento, leído en el repositorio: `public.clientes_provisionales` la crea este
+      mismo despliegue (`packages/zoho-sync/src/db/schema.sql:658`) y en `ae5aaf4` no existe —`git grep
+      clientes_provisionales ae5aaf4 -- apps packages` no devuelve nada—. Una tabla que nace con el despliegue nace
+      vacía: no hay coincidencias «que ya existían» que resumir.
+      (2) ESE FUNDAMENTO DEPENDE DE UNA HIPÓTESIS: que producción siga en `ae5aaf4` (hipótesis 1 del paquete del 09/10).
+      Por eso Gerencia añade la CONDICIÓN DE PARADA: antes de publicar se comprueba, en sólo lectura, si la tabla existe
+      y tiene filas. Si existe y tiene filas, SE PARA y se construye el resumen antes de publicar; si no existe o está
+      vacía, se publica. La consulta está escrita en `docs/sdd/Paquete_de_Despliegue_2026-10-09b.md` §2; ninguna sesión
+      la ejecuta. Sustituye a la condición (e) del paquete del 09/10, que contaba sólo los provisionales sin enlazar y
+      remitía a una respuesta de Gerencia que ya está dada: la de Gerencia dice «tiene filas», sin más filtro.
+      (3) LA SEGUNDA MITAD DE LA RESPUESTA YA ES LO CONSTRUIDO: cada pareja de provisional y contacto avisa una sola vez.
+      Lo impone la clave primaria de `public.provisional_books_avisados` (`packages/zoho-sync/src/db/schema.sql:817`):
+      la pareja se inserta en la misma transacción que sus avisos
+      (`apps/desk/server/services/avisoProvisionalEnBooks.ts:69`) y una pareja repetida no vuelve a avisar
+      (`apps/desk/server/services/avisoProvisionalEnBooks.ts:76`).
+      (4) MATIZ QUE LA RESPUESTA NO NOMBRA: «un aviso por coincidencia» es, en el código, un aviso de bandeja por pareja
+      Y POR DESTINATARIO (`apps/desk/server/services/avisoProvisionalEnBooks.ts:72`): lo recibe cada persona cuyo rol
+      tiene el área Comercial y cada administrador (`apps/desk/server/services/avisoProvisionalEnBooks.ts:85`,
+      `apps/desk/server/db/avisos.ts:89`). No se cambia.
+      (5) Si la condición de parada se activa, el resumen es código nuevo y todavía no tiene fila: F1B-19 está cerrada.
+      Su destino lo fija Gerencia en ese momento; aquí no se le asigna ninguno.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/s4-f1b19-resumen-de-provisionales-no-se-construye) · docs/sdd/Paquete_de_Despliegue_2026-10-09b.md §2"
+    maestro_pasaje: "ninguno (alta manual de cliente)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — si la condición de parada se activa, un cambio nuevo cuya fila fija Gerencia"
+  - clave: "decision/cargos-se-asignan-tras-publicar-fuera-de-horario"
+    fecha: "2026-10-09"
+    pregunta: |
+      Pregunta 3 de la parte A (cargos). Los cargos no se pueden asignar antes de publicar, porque el campo llega con el
+      propio despliegue. ¿Quién lleva cada cargo, y quién los asigna el día del corte? ¿Se acepta por escrito el
+      intervalo en que nadie los tiene, o se hace el corte con el administrador presente?
+    respuesta_textual: |
+      «Los cargos los asigno yo como administrador justo después de publicar y antes de abrir la aplicación al equipo. Se publica fuera del horario de trabajo y aviso al equipo cuando estén asignados y comprobados, en especial "Director Técnico" y "Especialista técnico".»
+    consecuencias: |
+      (1) QUIÉN ASIGNA Y CUÁNDO: Gerencia, como administrador, justo después de publicar y antes de abrir la aplicación
+      al equipo. Queda respondida la mitad «qué administrador los asigna» de la condición (d) del paquete del 09/10.
+      (2) POR QUÉ NO PUEDE SER ANTES: `public.users.cargo_permiso` la crea este despliegue
+      (`packages/zoho-sync/src/db/schema.sql:601`; en `ae5aaf4`, `git grep cargo_permiso ae5aaf4 -- apps packages` no
+      devuelve nada), y la ruta que lo escribe viene en el mismo código (`apps/desk/server/auth/routes.ts:99-100`).
+      (3) MIENTRAS NO ESTÉN ASIGNADOS SÓLO PASA EL ADMINISTRADOR en los actos con cargo: lo dicen
+      `packages/shared/src/cargos.ts:49`, `packages/shared/src/cargos.ts:72` y `packages/shared/src/cargos.ts:82`, y
+      `packages/shared/src/mantenimientoNovedades.ts:17`. Publicar fuera del horario de trabajo hace que ese intervalo
+      no lo viva el equipo: es la respuesta a la opción que planteaba la pregunta.
+      (4) «DIRECTOR TÉCNICO» es el cargo del que más depende el primer día: asocia la orden OVI
+      (`packages/shared/src/cargos.ts:71-74`), y un ticket de «Garantía» sólo admite OVI.
+      (5) «ESPECIALISTA TÉCNICO» NO ABRE HOY NINGÚN ACTO: en `apps` y `packages`, fuera de las pruebas, el texto sólo
+      aparece en la lista cerrada (`packages/shared/src/cargos.ts:14`). Comprobarlo es comprobar que quedó guardado con
+      el texto exacto de la lista —un texto distinto se lee como sin cargo, `packages/shared/src/cargos.ts:40-42`—; no
+      desbloquea ninguna operación, y nada falla si no está.
+      (6) LA TABLA DE CARGOS Y PERSONAS NO HA LLEGADO: es tarea de persona de Gerencia y no se ha inventado. Sin ella la
+      asignación no se puede preparar ni comprobar contra nada escrito.
+      (7) El orden del mismo día no cambia: primero los cargos, después el Top 5
+      (`apps/desk/server/routes/prioridad.ts:40`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/cargos-se-asignan-tras-publicar-fuera-de-horario) · docs/sdd/Paquete_de_Despliegue_2026-10-09b.md §3 y §4"
+    maestro_pasaje: "ninguno (permisos por cargo, F1C-05)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
