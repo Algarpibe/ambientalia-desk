@@ -7,7 +7,7 @@ import { useResizable } from '../hooks/useResizable';
 import { fetchTicket, fetchConversations, replyTicket, fetchActivities, fetchRemisiones, type RemisionConFotos } from '../api/client';
 import { TicketProperties } from './TicketProperties';
 import { TransitionPanel } from './TransitionPanel';
-import { HojaDeVida } from './HojaDeVida';
+import { HojaDeVida } from './HojaDeVida'; import { DistintivoGarantia } from './DistintivoGarantia';
 import { Adjuntos } from './Adjuntos';
 import { valoresConocidos } from '../lib/valoresTransicion';
 import { ActividadesPanel } from './ActividadesPanel';
@@ -180,7 +180,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                                           <button onClick={() => setShowHistorial(true)} className="text-[11px] text-blue-600 font-bold border border-blue-200 rounded px-2 py-0.5 hover:bg-blue-50 flex items-center gap-1">
                                             <span className="material-symbols-outlined text-[14px]">history</span> Hoja de vida del equipo
                                           </button>
-                                        )}
+                                        )}<DistintivoGarantia estado={ticket?.garantia} tamano="md" />
                                         <span className="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 font-bold flex items-center gap-1">
                                             <span className="material-symbols-outlined text-[16px]">psychology</span> Resumen
                                         </span>
@@ -332,7 +332,7 @@ export const TicketDetailView: React.FC<TicketDetailViewProps> = ({ ticketId, on
                               delTicket={valoresConocidos(ticket, remisiones)}
                               // Quien tomó el ticket: es a quien «Aprobación» le devuelve el trabajo.
                               primerDerivado={ticket.primerDerivado}
-                              clientId={ticket.clientId} equipoId={ticket.equipoId} clienteProvisional={ticket.clienteProvisional}
+                              clientId={ticket.clientId} equipoId={ticket.equipoId} clienteProvisional={ticket.clienteProvisional} garantia={ticket.garantia}
                               // Para que el desplegable conserve al derivado actual aunque ya no esté
                               // activo: si desapareciera, confirmar la etapa lo borraría en silencio.
                               derivadoActual={ticket.derivado ?? null}

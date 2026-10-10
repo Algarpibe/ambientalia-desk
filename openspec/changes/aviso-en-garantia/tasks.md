@@ -51,26 +51,26 @@ Rutas relativas al worktree `C:\dev\Desk_2_R1.023-worktrees\aviso-en-garantia`. 
 ## Lote 2 — cliente (RQ-VT-15, RQ-TC-60)
 
 ### 4. Rojo
-- [ ] 4.1 `apps/desk/src/lib/distintivoGarantia.test.ts` (nuevo): `en_garantia` → «En garantía» (clase verde, no ámbar); `sin_dato` → «Garantía sin dato», gris, título que remite a Comercial y a la hoja de vida; `vencida`, `undefined` y `null` → `null`. Rojo por módulo inexistente (`npx vitest run apps/desk/src/lib/distintivoGarantia.test.ts`; `apps/**/*.test.ts` entra en la red, los `.tsx` no).
-- [ ] 4.2 Anotar en `apply-progress` el fallo (módulo inexistente). Los `.tsx` NO admiten rojo previo bajo `strict_tdd` (fuera de la red por decisión de Gerencia, F0-00; `vitest.config.ts:16-20`); su lógica ya está probada en `garantia.test.ts` (`sugerenciaPorGarantia`) y aquí.
+- [x] 4.1 `apps/desk/src/lib/distintivoGarantia.test.ts` (nuevo): `en_garantia` → «En garantía» (clase verde, no ámbar); `sin_dato` → «Garantía sin dato», gris, título que remite a Comercial y a la hoja de vida; `vencida`, `undefined` y `null` → `null`. Rojo por módulo inexistente (`npx vitest run apps/desk/src/lib/distintivoGarantia.test.ts`; `apps/**/*.test.ts` entra en la red, los `.tsx` no).
+- [x] 4.2 Anotar en `apply-progress` el fallo (módulo inexistente). Los `.tsx` NO admiten rojo previo bajo `strict_tdd` (fuera de la red por decisión de Gerencia, F0-00; `vitest.config.ts:16-20`); su lógica ya está probada en `garantia.test.ts` (`sugerenciaPorGarantia`) y aquí.
 
 ### 5. Verde
-- [ ] 5.1 `apps/desk/src/lib/distintivoGarantia.ts` (nuevo): `distintivoGarantia(estado)` → `{ texto, clase, titulo } | null`. Repetir 4.1 en verde.
-- [ ] 5.2 `apps/desk/src/components/DistintivoGarantia.tsx` (nuevo, sin prueba: `.tsx`): pinta lo anterior, tamaños `sm`/`md`.
-- [ ] 5.3 `apps/desk/src/components/TicketDetailView.tsx:183` (cabecera, tras «Hoja de vida del equipo») y `:335` (`garantia={ticket.garantia}` al panel), EN SITIO (implementación sin prueba, `.tsx`).
-- [ ] 5.4 `apps/desk/src/components/TicketCard.tsx:103`, `TicketList.tsx:29` y `TicketTable.tsx:34`, EN SITIO (implementación sin prueba, `.tsx`).
-- [ ] 5.5 `apps/desk/src/components/CreateTicket.tsx:345`: aviso informativo con `estadoGarantia(new Date(), equipo.finGarantia)`, sólo `en_garantia` y `sin_dato`, sin bloquear ni rellenar; sin aviso para equipo nuevo (S5). Imports al final de una línea existente (implementación sin prueba, `.tsx`).
-- [ ] 5.6 `apps/desk/src/components/TransitionPanel.tsx:52` (prop `garantia`), `:133` (resaltado si `t.id === sugerenciaPorGarantia(status, garantia)`, sin `disabled`, sin ocultar ni preseleccionar), `:137` (línea «Equipo en garantía: se sugiere Reporte por garantía») (implementación sin prueba, `.tsx`).
+- [x] 5.1 `apps/desk/src/lib/distintivoGarantia.ts` (nuevo): `distintivoGarantia(estado)` → `{ texto, clase, titulo } | null`. Repetir 4.1 en verde.
+- [x] 5.2 `apps/desk/src/components/DistintivoGarantia.tsx` (nuevo, sin prueba: `.tsx`): pinta lo anterior, tamaños `sm`/`md`.
+- [x] 5.3 `apps/desk/src/components/TicketDetailView.tsx:183` (cabecera, tras «Hoja de vida del equipo») y `:335` (`garantia={ticket.garantia}` al panel), EN SITIO (implementación sin prueba, `.tsx`).
+- [x] 5.4 `apps/desk/src/components/TicketCard.tsx:103`, `TicketList.tsx:29` y `TicketTable.tsx:34`, EN SITIO (implementación sin prueba, `.tsx`).
+- [x] 5.5 `apps/desk/src/components/CreateTicket.tsx:345`: aviso informativo con `estadoGarantia(new Date(), equipo.finGarantia)`, sólo `en_garantia` y `sin_dato`, sin bloquear ni rellenar; sin aviso para equipo nuevo (S5). Imports al final de una línea existente (implementación sin prueba, `.tsx`).
+- [x] 5.6 `apps/desk/src/components/TransitionPanel.tsx:52` (prop `garantia`), `:133` (resaltado si `t.id === sugerenciaPorGarantia(status, garantia)`, sin `disabled`, sin ocultar ni preseleccionar), `:137` (línea «Equipo en garantía: se sugiere Reporte por garantía») (implementación sin prueba, `.tsx`).
 
 ### 6. Cierre del lote 2
-- [ ] 6.1 Mutaciones ejecutadas y RESTAURADAS, resultado en `apply-progress`: M11 `en_garantia` → `null` en `distintivoGarantia` (rojo en 4.1); M12 clase ámbar en `sin_dato` o `en_garantia` (rojo en 4.1, aserción de no ámbar). Las mutaciones sobre `.tsx` no son cazables por la red y se anotan como tales.
-- [ ] 6.2 Regla de mutación 3 en `apply-progress` para el cliente: cada decisión de `apps/desk/src` (distintivo, aviso, resaltado) con su línea real y «avisa / sin contrapartida a propósito»; confirmar que ninguna bloquea ni rellena y que el cliente no recalcula la marca del servidor (sólo `CreateTicket` usa el predicado compartido).
-- [ ] 6.3 Barrido de la regla de mutación 4 sobre `TicketCard.tsx`, `TicketDetailView.tsx`, `TransitionPanel.tsx`, `CreateTicket.tsx`, `TicketList.tsx`, `TicketTable.tsx`: `grep -rnoE "(TicketCard|TicketDetailView|TransitionPanel|CreateTicket|TicketList|TicketTable)\.tsx:[0-9]+(-[0-9]+)?"` sin excluir `openspec/changes/archive/` ni `openspec/specs/`, cada cita contrastada, más el pase de abreviadas; repetir el barrido de los `.ts` del lote 1 si el lote 2 los tocó.
-- [ ] 6.4 `npm test` (código MIRADO y anotado).
-- [ ] 6.5 `npm run typecheck` (código MIRADO y anotado).
-- [ ] 6.6 `npm run lint -- --max-warnings 165` (código MIRADO y anotado).
-- [ ] 6.7 `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` (código MIRADO, 0, y anotado).
-- [ ] 6.8 Medida del intento (`--no-renames` más `wc -l` de lo nuevo sin trackear) por debajo de 720; `git diff --stat` de los dos lotes sin `repo.ts`, `schema.sql`, `transitions.ts`, `estados.ts` ni `ticketService.ts`.
+- [x] 6.1 Mutaciones ejecutadas y RESTAURADAS, resultado en `apply-progress`: M11 `en_garantia` → `null` en `distintivoGarantia` (rojo en 4.1); M12 clase ámbar en `sin_dato` o `en_garantia` (rojo en 4.1, aserción de no ámbar). Las mutaciones sobre `.tsx` no son cazables por la red y se anotan como tales.
+- [x] 6.2 Regla de mutación 3 en `apply-progress` para el cliente: cada decisión de `apps/desk/src` (distintivo, aviso, resaltado) con su línea real y «avisa / sin contrapartida a propósito»; confirmar que ninguna bloquea ni rellena y que el cliente no recalcula la marca del servidor (sólo `CreateTicket` usa el predicado compartido).
+- [x] 6.3 Barrido de la regla de mutación 4 sobre `TicketCard.tsx`, `TicketDetailView.tsx`, `TransitionPanel.tsx`, `CreateTicket.tsx`, `TicketList.tsx`, `TicketTable.tsx`: `grep -rnoE "(TicketCard|TicketDetailView|TransitionPanel|CreateTicket|TicketList|TicketTable)\.tsx:[0-9]+(-[0-9]+)?"` sin excluir `openspec/changes/archive/` ni `openspec/specs/`, cada cita contrastada, más el pase de abreviadas; repetir el barrido de los `.ts` del lote 1 si el lote 2 los tocó.
+- [x] 6.4 `npm test` (código MIRADO y anotado).
+- [x] 6.5 `npm run typecheck` (código MIRADO y anotado).
+- [x] 6.6 `npm run lint -- --max-warnings 165` (código MIRADO y anotado).
+- [x] 6.7 `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` (código MIRADO, 0, y anotado).
+- [x] 6.8 Medida del intento (`--no-renames` más `wc -l` de lo nuevo sin trackear) por debajo de 720; `git diff --stat` de los dos lotes sin `repo.ts`, `schema.sql`, `transitions.ts`, `estados.ts` ni `ticketService.ts`.
 
 ## Ajuste final de `registro.test.ts` (en el archivo)
 

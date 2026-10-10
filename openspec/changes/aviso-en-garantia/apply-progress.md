@@ -69,3 +69,53 @@ Reglas de mutación 1 y 2: no aplican (sin guarda nueva ni fichero de datos vigi
 - 3.6 `npm run typecheck`: exit **0**.
 - 3.7 `npm run lint -- --max-warnings 165`: exit **0**, 165 avisos. La primera pasada dio exit 1 con 173: ocho `any` eran míos en `garantiaListas.test.ts`; los quité con un tipo `Fila`.
 - 3.8 detector `--sha HEAD`: la primera pasada dio exit **1** con UN bloqueante, mío: una cita ambigua en este mismo fichero (la forma completa del rango de `toLite`, rota en sus dos candidatas); reescrita en prosa. Segunda pasada tras el `amend`: exit **0** (ver el informe del lote).
+
+## Lote 2 — cliente (casillas 4.1 a 6.8)
+
+**Cómo se hizo, dicho tal cual.** El agente de apply del lote 2 escribió el código de los nueve ficheros y se colgó
+antes de dejar constancia: sin casillas marcadas, sin este apartado y sin commit. El orquestador revisó el diff,
+reprodujo a posteriori el rojo y las mutaciones, corrió los códigos y escribió este apartado. **El rojo de 4.1 no se
+observó ANTES de escribir el módulo, sino reproducido después** retirando el módulo: es evidencia de que la prueba
+discrimina, no del orden en que se escribió.
+
+- 4.1 / 4.2 `apps/desk/src/lib/distintivoGarantia.test.ts` (6 pruebas). Con el módulo retirado: FAIL «no tests» (no
+  resuelve el import). Con el módulo: 6 pasan.
+- 5.1 `apps/desk/src/lib/distintivoGarantia.ts`: `en_garantia` → «En garantía», verde; `sin_dato` → «Garantía sin dato»,
+  gris, con título que remite a Comercial y a la hoja de vida; `vencida`, `null` y `undefined` → nada.
+- 5.2 `apps/desk/src/components/DistintivoGarantia.tsx` (nuevo, sin prueba: `.tsx`).
+- 5.3 a 5.6, EN SITIO y sin líneas nuevas (`wc -l` igual antes y después en los seis: CreateTicket 455, TicketCard 109,
+  TicketDetailView 420, TicketList 37, TicketTable 51, TransitionPanel 267): cabecera del detalle, tarjeta del tablero,
+  lista, tabla, aviso del alta con el equipo elegido (`estadoGarantia(new Date(), equipo.finGarantia)`), y en
+  `TransitionPanel` el destacado de «Reporte por garantía» (anillo verde y «Sugerido: equipo en garantía»), sin quitar,
+  deshabilitar, reordenar ni preseleccionar ninguna salida.
+
+### 6.1 · Mutaciones
+
+| Mutación | Prueba | ¿Roja? | Restaurada |
+|---|---|---|---|
+| M11 · `en_garantia` → `null` en `distintivoGarantia` | 4.1, «en_garantia dice «En garantía»…» | Sí (1 de 6) | Sí |
+| M12 · clase verde → ámbar en `en_garantia` | 4.1, misma prueba (aserción de no ámbar) | Sí (1 de 6) | Sí |
+| Cualquier mutación sobre los `.tsx` | — | **No cazable**: fuera de la red por decisión de Gerencia (F0-00) | — |
+
+### 6.2 · Regla de mutación 3 — decisiones del cliente
+
+| Decisión de `apps/desk/src` | Tipo | Quién la impone |
+|---|---|---|
+| Distintivo en tarjeta, lista, tabla y cabecera | avisa | Lo calcula el servidor; el cliente sólo pinta `ticket.garantia`: `apps/desk/server/db/colaTaller.ts:23-24`, `apps/desk/server/routes/tickets.ts:110` y `:144`, `apps/desk/server/db/listaRemisionCreada.ts:15-16` |
+| Aviso al elegir el equipo en el alta | avisa | No bloquea ni rellena nada y no se guarda. Usa la fórmula de `shared` (`estadoGarantia`) sobre el `finGarantia` que sirve `apps/desk/server/db/equipos.ts:66` (y `:42`). La marca del ticket ya creado la calcula el servidor |
+| Destacado de «Reporte por garantía» en Notificado | avisa | No impone nada, así que no hay guarda que nombrar: la lista de salidas no cambia y la transición la valida el servidor como cualquier otra. La marca llega de `apps/desk/server/routes/tickets.ts:144` |
+
+Ninguna decisión del cliente bloquea ni rellena: no hay espejo sin servidor (regla invariable 13, punto 2).
+
+### 6.3 · Barrido de citas
+
+Los seis `.tsx` conservan su número de líneas y todas las ediciones son dentro de línea: ninguna cita `…tsx:NN` se
+desplaza. El detector da las mismas 13 abreviadas rotas que `main`.
+
+### 6.4 a 6.8 · Códigos y medida
+
+- 6.4 `npm test`: exit **0** (266 ficheros, 2 omitidos).
+- 6.5 `npm run typecheck`: exit **0**.
+- 6.6 `npm run lint -- --max-warnings 165`: exit **0**, 165 avisos.
+- 6.7 detector `--sha HEAD`: se corre tras el commit del lote; resultado en el informe del intento.
+- 6.8 Medida contra `df149e1` (inicio del intento): se anota en el informe del intento, con el commit.

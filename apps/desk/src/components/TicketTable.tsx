@@ -1,6 +1,6 @@
 import type { Ticket } from '@ambientalia/shared'
 import { ClienteLink, type ClienteKind } from './ClienteLink'
-import { ReadToggle } from './ReadToggle'
+import { ReadToggle } from './ReadToggle'; import { DistintivoGarantia } from './DistintivoGarantia'
 
 function fmtDate(iso?: string | null): string {
   if (!iso) return '—'
@@ -31,7 +31,7 @@ export function TicketTable({ tickets, onSelect, onOpenCliente, onToggleRead }: 
               </td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.company ? <ClienteLink label={t.company} kind="empresa" id={t.accountId} onOpen={onOpenCliente} /> : '—'}</td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{t.contactName ? <ClienteLink label={t.contactName} kind="contacto" id={t.contactId} onOpen={onOpenCliente} /> : '—'}</td>
-              <td className="px-3 py-2 whitespace-nowrap"><span className="text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{t.status}</span></td>
+              <td className="px-3 py-2 whitespace-nowrap"><span className="text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">{t.status}</span> <DistintivoGarantia estado={t.garantia} /></td>
               <td className="px-3 py-2 text-slate-600">{t.priority ?? '—'}</td>
               <td className="px-3 py-2 text-slate-600 whitespace-nowrap" title={t.derivado?.cargo ?? undefined}>{t.derivado?.nombre ?? '—'}</td>
               {/* El de Zoho tal cual, incluido su «Sin asignar»: aquí la columna declara su origen, así
