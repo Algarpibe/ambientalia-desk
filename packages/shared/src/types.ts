@@ -34,7 +34,7 @@ export interface Ticket {
   contactName?: string | null
   contactId?: string | null
   accountId?: string | null
-  read?: boolean; esperandoAprobacionCliente?: boolean // marca de vista calculada por el servidor (RQ-VT-07)
+  read?: boolean; esperandoAprobacionCliente?: boolean; garantia?: 'en_garantia' | 'sin_dato' | 'vencida' // marcas de vista calculadas por el servidor (RQ-VT-07, F1B-18)
 }
 
 /** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */
@@ -359,7 +359,7 @@ export interface EquipoLite {
   /** FK al catálogo maestro (`catalogo_modelos`); ausente en equipos que la siembra no pudo casar. */
   modeloId?: string
   /** Identificador secundario de búsqueda (F1B-02); `searchEquipos` también busca por él. */
-  codigoInterno?: string
+  codigoInterno?: string; finGarantia?: string
 }
 
 export interface EquipoFull extends EquipoLite {

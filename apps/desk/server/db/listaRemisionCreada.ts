@@ -2,7 +2,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { rowToTicket } from '@ambientalia/zoho-sync/db/mappers'
 import { ordenarPorEntrada, STATUS_REMISION_CREADA, type Ticket } from '@ambientalia/shared'
 import { getActiveTickets } from './ticketsConCliente'
-import { entradasActuales } from './sla'
+import { entradasActuales } from './sla'; import { marcasDeGarantia } from './garantiaTickets'
 
 /**
  * La lista de «Remisión creada» para Comercial (F1B-07, L3; `vistas-tablero` RQ-VT-10). Una vista: no escribe nada.
@@ -12,6 +12,6 @@ import { entradasActuales } from './sla'
  */
 export async function listaRemisionCreada(db: Queryable): Promise<Array<Ticket & { enEstadoDesde: string | null }>> {
   const enEstado = (await getActiveTickets(db)).filter(({ row }) => row.status === STATUS_REMISION_CREADA)
-  const entradas = await entradasActuales(db, enEstado.map(({ row }) => ({ id: String(row.id), status: String(row.status) })), [STATUS_REMISION_CREADA])
-  return ordenarPorEntrada(enEstado.map(({ row, refs }) => ({ ...rowToTicket(row, refs), enEstadoDesde: entradas.get(String(row.id))?.toISOString() ?? null })))
+  const entradas = await entradasActuales(db, enEstado.map(({ row }) => ({ id: String(row.id), status: String(row.status) })), [STATUS_REMISION_CREADA]); const garantias = await marcasDeGarantia(db, enEstado.map(({ row }) => row))
+  return ordenarPorEntrada(enEstado.map(({ row, refs }) => ({ ...rowToTicket(row, refs), garantia: garantias.get(String(row.id)), enEstadoDesde: entradas.get(String(row.id))?.toISOString() ?? null })))
 }

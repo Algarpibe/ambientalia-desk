@@ -39,7 +39,7 @@ export async function upsertEquipo(db: Queryable, r: EquipoRow): Promise<void> {
 function toLite(r: any): EquipoLite {
   return {
     id: r.id, serial: r.serial, marca: r.marca ?? undefined, modelo: r.modelo ?? undefined, tipo: r.tipo ?? undefined,
-    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined, codigoInterno: r.codigo_interno ?? undefined, pendienteValidar: r.pendiente_validar === true ? true : undefined,
+    clienteNombre: r.cliente_nombre ?? undefined, clientId: r.client_id ?? undefined, modeloId: r.modelo_id ?? undefined, codigoInterno: r.codigo_interno ?? undefined, pendienteValidar: r.pendiente_validar === true ? true : undefined, ...(r.fin_garantia ? { finGarantia: fechaSolo(r.fin_garantia) } : {}),
   }
 }
 
@@ -63,7 +63,7 @@ export async function searchEquipos(db: Queryable, q: string, clientId?: string 
   if (clientId) { params.push(clientId); clienteFilter = `AND client_id = $${params.length}` }
   params.push(limit)
   const r = await db.query(
-    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,codigo_interno FROM equipos
+    `SELECT id,serial,marca,modelo,tipo,cliente_nombre,client_id,codigo_interno,fin_garantia FROM equipos
      WHERE active = true AND (LOWER(serial) LIKE $1 OR LOWER(COALESCE(cliente_nombre,'')) LIKE $1
        OR LOWER(COALESCE(marca,'')) LIKE $1 OR LOWER(COALESCE(modelo,'')) LIKE $1 OR LOWER(COALESCE(tipo,'')) LIKE $1
        OR LOWER(COALESCE(codigo_interno,'')) LIKE $1)

@@ -607,3 +607,21 @@ describe('createEquipo · herencia del compuesto del modelo (RQ-HV-14)', () => {
     expect(await compuestoDe(id)).toBeUndefined()
   })
 })
+
+describe('searchEquipos · fin de garantía (F1B-18, RQ-TC-59)', () => {
+  const alta = (serial: string, finGarantia: string | null) =>
+    createEquipo(db, { serial, marca: 'Grimm', modelo: 'EDM180C', tipo: 'Monitor', clienteNombre: 'Gecelca', clientId: null, modeloId: null, finGarantia })
+
+  it('devuelve `finGarantia` como YYYY-MM-DD exacto para un equipo con fin', async () => {
+    await alta('FG-1', '2026-03-15')
+    const [e] = await searchEquipos(db, 'FG-1')
+    expect(e.finGarantia).toBe('2026-03-15')
+  })
+
+  it('para un equipo con `fin_garantia` NULL el campo está AUSENTE, no es null', async () => {
+    await alta('FG-2', null)
+    const [e] = await searchEquipos(db, 'FG-2')
+    expect(e.serial).toBe('FG-2')
+    expect('finGarantia' in e).toBe(false)
+  })
+})
