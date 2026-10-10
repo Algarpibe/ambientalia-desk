@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### RQ-VT-14 · Las listas de tickets traen la marca de garantía calculada por el servidor, por lote
+### Requirement: RQ-VT-14 · Las listas de tickets traen la marca de garantía calculada por el servidor, por lote
 
 Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`): distintivo «en cabecera, lista y tablero»; maestro R08.4 (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1611-1614`). Mismo molde que `RQ-VT-07`.
 
@@ -60,7 +60,7 @@ Toda lista de tickets que sirve el servidor **SHALL** traer, en cada ticket con 
 - WHEN corre la suite
 - THEN falla la prueba de ese productor
 
-### RQ-VT-15 · Tarjeta, lista, tabla y cabecera pintan «En garantía» y «Garantía sin dato», y se verifican a mano (`.tsx` fuera de la red)
+### Requirement: RQ-VT-15 · Tarjeta, lista, tabla y cabecera pintan «En garantía» y «Garantía sin dato», y se verifican a mano (`.tsx` fuera de la red)
 
 Fuente: E-105 (`docs/sdd/ENTRADA.md:1396-1400`); maestro R08.4 (`R08.4.md:1611-1614`). Precedente: `RQ-VT-08`, `RQ-VT-13`.
 
