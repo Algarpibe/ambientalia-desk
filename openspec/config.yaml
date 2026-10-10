@@ -4430,6 +4430,84 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (permisos por cargo, F1C-05)"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna"
+  # ── Respuesta de Gerencia del 2026-10-10: la tabla de cargos y personas ──
+  # Completa `decision/cargos-se-asignan-tras-publicar-fuera-de-horario`. Consecuencias leídas contra el árbol
+  # de `5ebc612`, cuyo código es el de `509b905`. No se construye nada con ella.
+  - clave: "decision/tabla-de-cargos-y-personas-10-10"
+    fecha: "2026-10-10"
+    precisa: "decision/cargos-se-asignan-tras-publicar-fuera-de-horario"
+    pregunta: |
+      La tabla de cargos y personas que faltaba para poder asignar los cargos tras publicar: quién lleva cada uno de los
+      ocho cargos de permiso de la aplicación.
+    respuesta_textual: |
+      «| Cargo en la aplicación | Persona |
+      |---|---|
+      | Director Técnico | Gustavo A. Novoa Guzmán |
+      | Especialista técnico | Johny A. Luna Roa |
+      | Coordinador Técnico | vacante |
+      | Técnico | N. Julián Maya González |
+      | Técnico | Miguel A. Gutiérrez Arandia |
+      | Técnico de campo | José Manuel Méndez Gutiérrez |
+      | Director Comercial | Alfonso García del Pino Beneitez |
+      | Coordinador Comercial | Ángela Mora Borja |
+      | Asistente Comercial | vacante |
+
+      Precisiones:
+      1. Julián Maya y Miguel Gutiérrez son «técnicos de mantenimiento»; en la aplicación los dos llevan el cargo «Técnico». No se crea un cargo nuevo.
+      2. La asignación se hace sobre la cuenta de usuario de cada persona en la aplicación. Ángela Mora Borja puede figurar como «Luz Ángela Mora Borja»; es la misma persona.
+      3. Coordinador Técnico y Asistente Comercial quedan vacantes. Anota como consecuencia para después del corte que la firma del Control de calidad (F1C-07) estaba decidida para el Coordinador Técnico: cuando llegue esa tanda tendré que nombrar a alguien o decidir quién firma mientras siga vacante.»
+    consecuencias: |
+      (1) LA TABLA ESTÁ ENTREGADA: se cumple la tarea de persona que quedaba de la condición (d) del paquete del 09/10.
+      Siete personas y dos cargos vacantes. El procedimiento de asignación, fila a fila, está en
+      `docs/sdd/Paquete_de_Despliegue_2026-10-10.md`.
+      (2) LOS OCHO TEXTOS DE LA TABLA COINCIDEN, letra a letra, con la lista cerrada (`packages/shared/src/cargos.ts:12-15`),
+      y la pantalla de usuarios los ofrece desde esa misma lista, en el alta y en la edición
+      (`apps/desk/src/components/UsersAdmin.tsx:125`, `apps/desk/src/components/UsersAdmin.tsx:185`). No hay que teclear
+      ninguno: se elige. «Técnico de mantenimiento» no es un cargo de la lista y no se crea (precisión 1).
+      (3) HAY DOS CAMPOS Y NO SON EL MISMO. El «cargo de permiso» (`users.cargo_permiso`, lista cerrada) decide permisos.
+      El «Cargo» (`users.cargo`, texto libre) es la firma de la remisión (`apps/desk/server/remisionWebhook.ts:47`,
+      `apps/desk/server/routes/remision.ts:310`) Y ADEMÁS lo leen dos mecanismos que no miran el cargo de permiso:
+      (3a) la derivación propuesta de «Escalado a Revisión» y de «Solicitud repuestos» busca «Director Técnico», y la de
+      «Escalado a comercial» busca «Coordinador Comercial» (`packages/shared/src/transitions.ts:276`,
+      `packages/shared/src/transitions.ts:278`); la comparación la hace el cliente sobre el texto libre
+      (`apps/desk/src/lib/personas.ts:74-79`);
+      (3b) las tres alarmas de plazo —`Notificado`, `Remisión creada` y `Notificación cliente`— avisan a quien tenga
+      «Coordinador Comercial» en el texto libre (`packages/shared/src/sla.ts:138-140`,
+      `apps/desk/server/db/avisos.ts:104-112`).
+      Por eso Gustavo A. Novoa Guzmán y Ángela Mora Borja necesitan LOS DOS campos. Si falta el texto libre no falla
+      nada: la derivación cae a la persona heredada (`apps/desk/src/lib/personas.ts:79`) y la alarma avisa a toda el área
+      Comercial (`apps/desk/server/services/alarmasSla.ts:74-76`). Se pierde la propuesta, no el aviso.
+      (4) EL AVISO DE 60 DÍAS DE LA FICHA DE GARANTÍA USA EL CARGO DE PERMISO, no el texto libre: va a quien tenga
+      «Director Técnico» como cargo de permiso (`apps/desk/server/services/avisoReclamacionProveedor.ts:28`,
+      `apps/desk/server/db/avisos.ts:121-127`) y, si nadie lo tiene, al área Servicio Técnico
+      (`apps/desk/server/services/avisoReclamacionProveedor.ts:29`).
+      (5) «ESPECIALISTA TÉCNICO» Y «COORDINADOR TÉCNICO» NO LOS CONSULTA NINGUNA REGLA DE LO QUE SE PUBLICA: en `apps` y
+      `packages`, fuera de las pruebas, los dos textos sólo aparecen en la lista (`packages/shared/src/cargos.ts:13-14`).
+      Lo mismo vale para «Técnico», «Técnico de campo» y «Asistente Comercial». Con Coordinador Técnico y Asistente
+      Comercial vacantes no se rompe nada. El papel que `decision/cargo-encargado-de-inventario` da al especialista
+      técnico —recibir «Solicitud repuestos» cuando el Director Técnico está ausente— no está construido: depende de un
+      registro de ausencias que no existe. La salida de emergencia de `decision/salida-emergencia-quien-la-ejecuta`
+      tampoco está construida: `git grep -i emergencia -- apps packages`, fuera de las pruebas, no devuelve nada.
+      (6) DIVERGENCIA QUE SE ANOTA Y NO SE CORRIGE: al comparar el texto libre, el cliente pliega mayúsculas, tildes y
+      espacios repetidos (`apps/desk/src/lib/personas.ts:37-38`); el servidor de las alarmas sólo recorta los extremos y
+      pasa a minúsculas (`apps/desk/server/db/avisos.ts:108`, `apps/desk/server/db/avisos.ts:111`). Un «Coordinador
+      Comercial» con dos espacios en medio recibiría la propuesta de «Escalado a comercial» y no las alarmas. Es el molde
+      de H5 de `CLAUDE.md`: dos implementaciones de la misma noción, ninguna rota por separado. SIN DESTINO. Hoy no
+      muerde si el texto se escribe tal cual: «Coordinador Comercial» no lleva tilde.
+      (7) F1C-07, PARA DESPUÉS DEL CORTE: la firma del Control de calidad está fijada para el Coordinador Técnico por dos
+      respuestas leídas juntas —`decision/c6-qa-liberacion`, que la dejó entre corchetes («[el Coordinador Técnico /
+      Calidad]»), y `decision/roles-validacion-informe`, que dice que la revisión del Coordinador es la misma firma del
+      Control de calidad—. La consecuencia (2) de la primera lo declaraba interpretación de Supervisión; la precisión 3
+      de hoy la confirma. Con el cargo vacante, F1C-07 no tiene quién firme: cuando llegue esa tanda, Gerencia nombra a
+      alguien o decide quién firma mientras siga vacante. Es pregunta de esa tanda, no de este despliegue. La misma
+      vacante alcanza a la firma «Revisó» de los informes, que `decision/roles-validacion-informe` da al mismo cargo.
+      (8) LA CUENTA DE CADA PERSONA SE IDENTIFICA POR SU NOMBRE EN LA PANTALLA DE USUARIOS (precisión 2). Que cada una
+      de las siete tenga cuenta activa en producción, y con qué nombre figura, es HIPÓTESIS: no se puede leer desde el
+      repositorio.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/tabla-de-cargos-y-personas-10-10) · precisa decision/cargos-se-asignan-tras-publicar-fuera-de-horario · docs/sdd/Paquete_de_Despliegue_2026-10-10.md"
+    maestro_pasaje: "ninguno (permisos por cargo, F1C-05)"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna — deja una pregunta para F1C-07: quién firma el Control de calidad con el Coordinador Técnico vacante"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
