@@ -200,9 +200,9 @@ programa los ciclos incrementales cada `SYNC_INTERVAL_MS`
 derivación de `sales_records` (requiere `SALES_TRACKER_DATABASE_URL`) y el *mark-and-sweep*
 (`SWEEP_ENABLED`, que **nace apagado**, y `SWEEP_DRY_RUN`, que **nace encendido**).
 
-**Pendiente:** el valor exacto de las variables de este servicio en producción no se ha verificado
-contra EasyPanel en esta revisión. Antes de recrearlo, cópialas de la pestaña Environment del
-servicio existente.
+**Verificado el 2026-10-10** en EasyPanel (dato de producción aportado por Alfonso): `DB_SCHEMA=desk`,
+`SWEEP_ENABLED=true` y `SWEEP_DRY_RUN=false` — **el barrido está activo y borra**, encendido a propósito.
+Antes de recrear el servicio, copia sus variables de la pestaña Environment del servicio existente.
 
 ## 8. El hook de citas (`pre-push`, capacidad `citas-verificables`)
 

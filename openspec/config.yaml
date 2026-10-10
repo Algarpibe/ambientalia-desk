@@ -4398,6 +4398,7 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (alta manual de cliente)"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna — si la condición de parada se activa, un cambio nuevo cuya fila fija Gerencia"
+    medicion_2026_10_10: "NOTA DE MEDICIÓN, posterior a la respuesta y que no la toca. La consecuencia (1) partía de que producción estaba en `ae5aaf4`: era falso. La mañana del 2026-10-10 producción estaba en `7a2b1c8`, cuyo esquema ya trae `public.clientes_provisionales`, así que la tabla NO nació con el despliegue del 10/10. La condición de parada de Gerencia se comprobó: la tabla se leyó con 0 filas (dato de producción aportado por Alfonso el 2026-10-10) y se publicó sin construir el resumen. Detalle en docs/sdd/Paquete_de_Despliegue_2026-10-10b.md"
   - clave: "decision/cargos-se-asignan-tras-publicar-fuera-de-horario"
     fecha: "2026-10-09"
     pregunta: |
@@ -4430,6 +4431,7 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno (permisos por cargo, F1C-05)"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna"
+    medicion_2026_10_10: "NOTA DE MEDICIÓN, posterior a la respuesta y que no la toca. La consecuencia (2) partía de que producción estaba en `ae5aaf4`: era falso. La mañana del 2026-10-10 producción estaba en `7a2b1c8`, cuyo esquema ya trae `public.users.cargo_permiso`, así que el campo existía antes del despliegue del 10/10 y los cargos se habrían podido asignar antes. De hecho se asignaron el 2026-10-10, tras publicar (dato de producción aportado por Alfonso el 2026-10-10). Detalle en docs/sdd/Paquete_de_Despliegue_2026-10-10b.md"
   # ── Respuesta de Gerencia del 2026-10-10: la tabla de cargos y personas ──
   # Completa `decision/cargos-se-asignan-tras-publicar-fuera-de-horario`. Consecuencias leídas contra el árbol
   # de `5ebc612`, cuyo código es el de `509b905`. No se construye nada con ella.
