@@ -681,7 +681,7 @@ Respaldo: `decision/quien-ejecuta-la-migracion-confirmada-11-10` (`openspec/conf
    `fetch('/api/admin/migrar-tickets-abiertos?corte=<instante ISO con desfase>&aplicar=true', { method: 'POST' }).then((r) => r.json())`.
    Se lanza una vez y se espera la respuesta; no se repite mientras no haya respondido.
 4. **Comprobar.** El informe devuelto trae `aplicado: true` (`apps/desk/server/db/migracionTicketsAbiertos.ts:21`). Después, una pasada en seco **con el mismo `corte`**
-   debe dar `migrables: 0`: lo ya gobernado no se vuelve a elegir (`packages/shared/src/migracionTickets.ts:64`, `:103-104`). Con un corte posterior podrían entrar tickets creados entre las dos llamadas.
+   debe dar `migrables: 0`: lo ya gobernado no se vuelve a elegir (`packages/shared/src/migracionTickets.ts:64`) y `migrables` cuenta sólo lo que se migraría (`packages/shared/src/migracionTickets.ts:103-104`). Con un corte posterior podrían entrar tickets creados entre las dos llamadas.
 5. **Volver a cerrar el interruptor.** Quitar el valor de `MIGRACION_TICKETS_HABILITADA` y redesplegar (§11).
 
 **Qué ve quien lance una segunda ejecución mientras la primera sigue en curso.** No escribe nada: la segunda espera el bloqueo de fila de la primera y, cuando ésta confirma, se rechaza y se deshace entera,
