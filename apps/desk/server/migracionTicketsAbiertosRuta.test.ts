@@ -194,3 +194,70 @@ describe('interruptor MIGRACION_TICKETS_HABILITADA (E-231): nace cerrado y sólo
     expect(await estados()).toEqual([{ id: 't1', status: 'Finalizado', managed_by_app: true }])
   })
 })
+
+/**
+ * rechazo-migracion-409 (F1F-01), `zoho-sync` RQ-ZS-23 · la ejecución a la que otra se adelantó responde `409` con mensaje claro y `motivo`.
+ * El ayudante interviene el `UPDATE` del ejecutor para reproducir el adelantamiento; el rechazo se distingue por tipo, nunca por texto.
+ */
+const mensajeRechazo = (n: number) => `Otra ejecución de la migración está en curso o acaba de confirmarse (o el ticket ${n} cambió en la aplicación mientras ésta escribía). Esta ejecución no escribió nada. Compruébalo con una pasada en seco —la misma llamada sin \`aplicar\`— antes de volver a lanzarla.`
+const esUpdate = (sql: string) => /^UPDATE tickets SET status/i.test(sql.trim())
+function conGancho(antes: (sql: string, p: unknown[]) => Promise<void> | void, habilitada = true) {
+  const pool = db as unknown as { connect: () => Promise<{ query: Queryable['query']; release: () => void }> }
+  const env = (q: Queryable['query']): Queryable['query'] => (async (sql: string, p: unknown[] = []) => { await antes(sql, p); return q(sql, p) }) as Queryable['query']
+  const espia = { query: env(db.query.bind(db)), connect: async () => { const c = await pool.connect(); return { query: env(c.query.bind(c)), release: () => c.release() } } } as unknown as Queryable
+  return appWith({ migracionTicketsHabilitada: habilitada }, espia).app
+}
+
+describe('rechazo de la ejecución adelantada (RQ-ZS-23): 409 con mensaje claro', () => {
+  let cookie = ''
+  let disparos = 0
+  beforeEach(async () => { cookie = await adminCookie(); disparos = 0; await tk('t1', 4100, 'Entregado') })
+  const adelantar = (id: string) => async (sql: string, p: unknown[]) => { if (esUpdate(sql) && p[0] === id) { disparos++; await db.query('UPDATE tickets SET managed_by_app = true WHERE id = $1', [id]) } }
+  const lanzar = (app: ReturnType<typeof conGancho>) => request(app).post(URL).set('Cookie', cookie).query({ corte: CORTE, aplicar: 'true' })
+
+  it('caso 1 · rechazo: 409 con el mensaje entero y motivo otra-ejecucion', async () => {
+    await tk('t2', 4200, 'OV asignada')
+    const res = await lanzar(conGancho(adelantar('t2')))
+    expect(res.status).toBe(409)
+    expect(res.body).toEqual({ error: mensajeRechazo(4200), motivo: 'otra-ejecucion' })
+    expect(res.body).not.toHaveProperty('aplicado')
+    expect(res.body).not.toHaveProperty('negativa')
+    expect(disparos).toBe(1)
+  })
+
+  it('caso 2 · otro error cualquiera sigue dando 500 «Error interno»', async () => {
+    const res = await lanzar(conGancho((sql) => { if (esUpdate(sql)) throw new Error('fallo forzado') }))
+    expect(res.status).toBe(500)
+    expect(res.body).toEqual({ error: 'Error interno' })
+  })
+
+  it('caso 3 · posición: con el interruptor apagado se ve el 403, no el rechazo', async () => {
+    const res = await lanzar(conGancho(adelantar('t1'), false))
+    expect(res.status).toBe(403)
+    expect(res.body.error).toMatch(/MIGRACION_TICKETS_HABILITADA/)
+    expect(res.body).not.toHaveProperty('motivo')
+    expect(disparos).toBe(0)
+  })
+
+  it('caso 4 · posición: con negativa se ve el 409 del informe, no el rechazo', async () => {
+    await tk('t9', 4900, 'Estado raro')
+    const res = await lanzar(conGancho(adelantar('t1')))
+    expect(res.status).toBe(409)
+    expect(res.body.negativa).toEqual({ motivo: 'estados-sin-equivalencia', estados: ['Estado raro'] })
+    expect(res.body).not.toHaveProperty('motivo')
+    expect(res.body).not.toHaveProperty('error')
+    expect(disparos).toBe(0)
+  })
+
+  it('caso 5 · registro: el rechazo va al registro como aviso, no como error', async () => {
+    await tk('t2', 4200, 'OV asignada')
+    const warn = vi.spyOn(logger, 'warn')
+    const error = vi.spyOn(logger, 'error')
+    await lanzar(conGancho(adelantar('t2')))
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toEqual({ numero: 4200 })
+    expect(String(warn.mock.calls[0][1])).toContain('pasó a estar gobernado')
+    expect(error).not.toHaveBeenCalled()
+    warn.mockRestore(); error.mockRestore()
+  })
+})

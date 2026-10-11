@@ -685,9 +685,9 @@ Respaldo: `decision/quien-ejecuta-la-migracion-confirmada-11-10` (`openspec/conf
 5. **Volver a cerrar el interruptor.** Quitar el valor de `MIGRACION_TICKETS_HABILITADA` y redesplegar (§11).
 
 **Qué ve quien lance una segunda ejecución mientras la primera sigue en curso.** No escribe nada: la segunda espera el bloqueo de fila de la primera y, cuando ésta confirma, se rechaza y se deshace entera,
-sin dejar marcadores (RQ-ZS-23; lo fija `apps/desk/server/db/migracionConcurrente.integration.test.ts`, que corre contra PostgreSQL real). **Lectura de código, no medido por HTTP:** el rechazo es un error genérico, y
-el manejador central responde `500` con «Error interno» a todo lo que no sea un error conocido (`apps/desk/server/app.ts:90-92`); el mensaje real («pasó a estar gobernado…») sólo queda en el registro del servidor.
-**Un `500` de la segunda ejecución no significa que la migración haya fallado**: se comprueba con el paso 4. Si la migración tenía una negativa, la respuesta es otra: `409` con el informe y sin escribir (`apps/desk/server/routes/admin.ts:231`).
-Si la ejecución llega después de otra ya confirmada, no se rechaza: no encuentra nada que migrar y no escribe. Si debe recibir un `409` con mensaje claro en vez del `500` es una pregunta abierta a Gerencia.
+sin dejar marcadores (RQ-ZS-23; lo fija `apps/desk/server/db/migracionConcurrente.integration.test.ts`, que corre contra PostgreSQL real). La ruta responde `409` con el cuerpo `{ error, motivo: 'otra-ejecucion' }`: `error` dice que otra ejecución
+está en curso o acaba de confirmarse y que ésta no escribió nada (lo fija una prueba de ruta, `apps/desk/server/migracionTicketsAbiertosRuta.test.ts`; `decision/migracion-rechazada-responde-409-11-10`). El mensaje interno («pasó a estar gobernado…») queda en el registro del servidor, como aviso.
+**Un `409` de éstos no significa que la migración haya fallado**: se comprueba con el paso 4. No es el `409` de la negativa, que trae el informe completo, con `negativa` rellena y `aplicado: false`, sin `error` ni `motivo`, y tampoco escribe (`apps/desk/server/routes/admin.ts:231`).
+Si la ejecución llega después de otra ya confirmada, no se rechaza: no encuentra nada que migrar y no escribe. Cualquier otro fallo de la ruta sigue respondiendo `500` con «Error interno» (`apps/desk/server/app.ts:90-92`).
 
 **Qué NO hace este procedimiento.** No lanza la sincronización completa previa; no revierte (la reversión es el procedimiento SQL de RQ-ZS-18, `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, que ejecuta una persona; volver al código anterior no deshace lo migrado, de ahí la copia previa); no nombra al suplente; y no sustituye al cotejo de la hoja de Google.
