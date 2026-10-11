@@ -3,7 +3,7 @@ import { Pool } from 'pg'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { reorgToDesk, migrate } from '@ambientalia/zoho-sync/db/migrate'
 import { ID_TRANSICION_MIGRACION } from '@ambientalia/shared'
-import { migrarTicketsAbiertos, type InformeMigracion } from './migracionTicketsAbiertos'
+import { migrarTicketsAbiertos, MigracionAdelantadaError, type InformeMigracion } from './migracionTicketsAbiertos'
 
 /**
  * migracion-una-sola-ejecucion (F1F-01), `zoho-sync` RQ-ZS-23 · dos ejecuciones simultáneas de la migración de tickets
@@ -159,7 +159,7 @@ d('migración de tickets abiertos · dos ejecuciones simultáneas en PostgreSQL 
     expect(ra.ok).toBe(true)
     if (ra.ok) expect(ra.valor).toMatchObject({ aplicado: true, migrables: 3 })
     expect(rb.ok).toBe(false)
-    if (!rb.ok) expect(rb.error.message).toContain(TEXTO_RECHAZO)
+    if (!rb.ok) { expect(rb.error).toBeInstanceOf(MigracionAdelantadaError); expect(rb.error.message).toContain(TEXTO_RECHAZO) }
 
     const ms = await marcadores(ids)
     expect(ms.map((m) => m.ticket_id)).toEqual(ids) // exactamente uno por ticket
@@ -182,7 +182,7 @@ d('migración de tickets abiertos · dos ejecuciones simultáneas en PostgreSQL 
       )
       const rechazadas = [ra, rb].filter((r): r is PromiseRejectedResult => r.status === 'rejected')
       const cumplidas = [ra, rb].filter((r): r is PromiseFulfilledResult<InformeMigracion> => r.status === 'fulfilled')
-      // Un rechazo sólo vale con el texto de la línea 90; cualquier otro error es rojo.
+      // Un rechazo sólo vale con el texto de `MigracionAdelantadaError`; cualquier otro error es rojo.
       for (const r of rechazadas) expect(String((r.reason as Error).message)).toContain(TEXTO_RECHAZO)
       // O una cumple y la otra se rechaza, o las dos cumplen y la segunda llegó cuando ya no había nada que migrar.
       expect(cumplidas.map((r) => r.value.migrables).sort()).toEqual(rechazadas.length === 1 ? [4] : [0, 4])

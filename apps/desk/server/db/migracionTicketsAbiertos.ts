@@ -87,9 +87,20 @@ export async function migrarTicketsAbiertos(
           WHERE id = $1 AND managed_by_app = false RETURNING id`,
         [t.id, eq.destino, eq.statusTypeDestino],
       )
-      if (r.rows.length === 0) throw new Error(`El ticket ${t.number} pasó a estar gobernado entre la lectura y la escritura: se deshace la migración entera`)
+      if (r.rows.length === 0) throw new MigracionAdelantadaError(t.number)
     }
     informe.aplicado = true
     return informe
   })
+}
+
+/**
+ * rechazo-migracion-409 (F1F-01), `zoho-sync` RQ-ZS-23 · el rechazo de la ejecución a la que otra se adelantó, con tipo propio: la ruta lo distingue por
+ * `instanceof`, nunca por el texto. El mensaje es el de siempre y va al registro, no a la respuesta. Va al final para no desplazar ninguna línea citada.
+ */
+export class MigracionAdelantadaError extends Error {
+  constructor(readonly numero: number) {
+    super(`El ticket ${numero} pasó a estar gobernado entre la lectura y la escritura: se deshace la migración entera`)
+    this.name = 'MigracionAdelantadaError'
+  }
 }

@@ -1,4 +1,4 @@
-import type { Express, RequestHandler } from 'express'
+import type { Express, RequestHandler, ErrorRequestHandler } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Sync } from '@ambientalia/zoho-sync/sync'
 import type { createMeasurer } from '../measure'
@@ -216,7 +216,7 @@ export function registerAdminRoutes(
    *
    * `corte` (instante ISO con desfase, D-11) es obligatorio y `aplicar` sólo admite `true`/`false` (D-12): se validan AQUÍ,
    * antes de tocar la base, y detrás de `requireSuperAdmin` y del interruptor de E-231 (`interruptorMigracion`). Sin `aplicar=true` es una pasada en seco. Con una negativa
-   * —estados sin equivalencia entre lo que se migraría— responde `409` con el informe completo y sin escribir (D-13).
+   * —estados sin equivalencia entre lo que se migraría— responde `409` con el informe completo y sin escribir (D-13); y `409` también si otra ejecución se le adelantó (`rechazoDeMigracionAdelantada`, RQ-ZS-23).
    * La decisión es del servidor; el cliente no participa (regla invariable 13).
    */
   app.post('/api/admin/migrar-tickets-abiertos', requireAuth(db), requireSuperAdmin, interruptorMigracion(migracionTicketsHabilitada), asyncHandler(async (req, res) => {
@@ -229,9 +229,9 @@ export function registerAdminRoutes(
     // El informe va al log además de a la respuesta: es la lista de trabajo de la pasada y quien la dispara desde una consola no siempre la conserva.
     logger.info({ informe }, `Migración de tickets abiertos${aplicar ? '' : ' (en seco)'}: ${informe.migrables} migrables, ${informe.aplicado ? 'aplicada' : 'sin aplicar'}`)
     res.status(aplicar && informe.negativa ? 409 : 200).json(informe)
-  }))
+  }), rechazoDeMigracionAdelantada)
 }
-import { migrarTicketsAbiertos } from '../db/migracionTicketsAbiertos'
+import { migrarTicketsAbiertos, MigracionAdelantadaError } from '../db/migracionTicketsAbiertos'
 
 /** V8 lleva `02-31` al 2 de marzo y `T24:00` al día siguiente sin error: el corte decide qué tickets de producción se tocan, así que un desplazamiento en silencio no vale. Los campos que escribió quien llama tienen que sobrevivir al viaje de ida y vuelta, en su mismo desfase. */
 function corteSinDesbordar(crudo: string, instante: Date): boolean {
@@ -252,4 +252,15 @@ function interruptorMigracion(habilitada: boolean): RequestHandler {
     if (req.query.aplicar === 'true' && !habilitada) { res.status(403).json({ error: 'Aplicar la migración está deshabilitado en este entorno: hace falta MIGRACION_TICKETS_HABILITADA=true. La pasada en seco (sin aplicar) sigue disponible.' }); return }
     next()
   }
+}
+
+/**
+ * rechazo-migracion-409 (F1F-01), `zoho-sync` RQ-ZS-23 · manejador de error PROPIO de la ruta de la migración, y su último eslabón: Express entrega el error a los
+ * eslabones posteriores, así que delante del manejador principal no caza nada. Sólo traduce `MigracionAdelantadaError` (por tipo, nunca por texto) a `409`; cualquier
+ * otro error sigue al manejador central. Es un aviso, no un fallo del servidor: como no llega al manejador central, sin esta línea de registro no quedaría rastro.
+ */
+const rechazoDeMigracionAdelantada: ErrorRequestHandler = (err, _req, res, next) => {
+  if (!(err instanceof MigracionAdelantadaError)) { next(err); return }
+  logger.warn({ numero: err.numero }, `Migración de tickets abiertos rechazada (409): ${err.message}`)
+  res.status(409).json({ error: `Otra ejecución de la migración está en curso o acaba de confirmarse (o el ticket ${err.numero} cambió en la aplicación mientras ésta escribía). Esta ejecución no escribió nada. Compruébalo con una pasada en seco —la misma llamada sin \`aplicar\`— antes de volver a lanzarla.`, motivo: 'otra-ejecucion' })
 }
