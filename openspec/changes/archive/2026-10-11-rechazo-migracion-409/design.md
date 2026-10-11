@@ -91,15 +91,15 @@ está en curso o acaba de confirmarse y que ésta no escribió nada (lo fija una
 Si la ejecución llega después de otra ya confirmada, no se rechaza: no encuentra nada que migrar y no escribe. Cualquier otro fallo de la ruta sigue respondiendo `500` con «Error interno» (`apps/desk/server/app.ts:90-92`).
 ```
 ### D-7 · Especificación
-RQ-ZS-23 MODIFIED sustituye el último bloque de la spec viva (`openspec/specs/zoho-sync/spec.md:1368-1419`) por el delta ya escrito (`openspec/changes/rechazo-migracion-409/specs/zoho-sync/spec.md`, 86 líneas): crece por el final y no desplaza a nadie. No hay capacidad nueva (R-2 no aplica). Los casos 1 a 4 de D-3 son sus cuatro escenarios nuevos.
+RQ-ZS-23 MODIFIED sustituye el último bloque de la spec viva (`openspec/specs/zoho-sync/spec.md:1368-1419` en `a1fb802`) por el delta ya escrito (`openspec/changes/rechazo-migracion-409/specs/zoho-sync/spec.md`, 86 líneas): crece por el final y no desplaza a nadie. No hay capacidad nueva (R-2 no aplica). Los casos 1 a 4 de D-3 son sus cuatro escenarios nuevos.
 ### D-8 · Reglas
 - **Regla 13 / mutación 3.** Decisiones del cliente: **ninguna**; `apps/desk/src` no llama a la ruta. El `409` lo impone el servidor en el último eslabón de `apps/desk/server/routes/admin.ts:232` y lo prueba D-3. **Mutación 1:** la posición del eslabón nuevo es M2.
 - **Mutación 4.** Cinco ficheros en el apply, todos en sitio o al final (tabla de estimación). Barrido hecho en el worktree por nombre completo, con un segundo pase de abreviadas y de «línea N» en prosa:
 
 | Cita | Dónde | Caso | ¿Sigue siendo cierto? |
 |---|---|---|---|
-| `apps/desk/server/db/migracionTicketsAbiertos.ts:90` | `openspec/specs/zoho-sync/spec.md:1371`, `:1399` (VIVO) | A | Sí: la línea 90 sigue lanzando ese error. **Matiz:** el texto ya no está escrito en la línea 90 sino en la clase del final; el delta conserva la redacción. Lo valora el verify |
-| `apps/desk/server/db/migracionTicketsAbiertos.ts:84-90` | `openspec/specs/zoho-sync/spec.md:1380` (VIVO) y el delta | A | Sí: `UPDATE` y comprobación siguen en 84 a 90 |
+| `apps/desk/server/db/migracionTicketsAbiertos.ts:90` | `openspec/specs/zoho-sync/spec.md:1371` en `a1fb802`, `:1399` (VIVO) | A | Sí: la línea 90 sigue lanzando ese error. **Matiz:** el texto ya no está escrito en la línea 90 sino en la clase del final; el delta conserva la redacción. Lo valora el verify |
+| `apps/desk/server/db/migracionTicketsAbiertos.ts:84-90` | `openspec/specs/zoho-sync/spec.md:1380` en `a1fb802` (VIVO) y el delta | A | Sí: `UPDATE` y comprobación siguen en 84 a 90 |
 | «la línea 90», en prosa | `apps/desk/server/db/migracionConcurrente.integration.test.ts:185` (VIVO, comentario) | A | Mismo matiz. No se edita: el encargo fija sólo las líneas 6 y 162 |
 | La línea 90, los rangos que acaban en ella o la cruzan (84 a 90, 63 a 95, 68 a 94) y «línea 90» en prosa | Archivo `2026-10-11-migracion-una-sola-ejecucion` (`proposal.md`, `design.md`, `tasks.md`, `apply-progress.md`, `archive-report.md`, su delta) y el `verify-report.md` de `2026-10-04-migracion-tickets-abiertos` | B | Ciertas de su fecha, incluida «M1 quitar el `throw`»; no se tocan |
 | `apps/desk/server/routes/admin.ts:222-232` | `DEPLOY.md:680` (VIVO) | A | Sí: la ruta sigue ocupando 222 a 232 |

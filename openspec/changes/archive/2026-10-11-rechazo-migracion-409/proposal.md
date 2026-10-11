@@ -37,7 +37,7 @@ Cuando `migrarTicketsAbiertos` se rechaza porque un ticket «pasó a estar gober
    - (b) De posición: con el interruptor apagado se ve su `403` (`apps/desk/server/routes/admin.ts:252`) y no el `409` nuevo; con una negativa se ve el `409` del informe y no el nuevo.
    - (c) En la integración con PostgreSQL real, dentro de `apps/desk/server/db/migracionConcurrente.integration.test.ts:162`, que el rechazo real es `instanceof MigracionAdelantadaError`.
 6. **`DEPLOY.md` §14.** El párrafo «Qué ve quien lance una segunda ejecución…» (`DEPLOY.md:687-691`) se reescribe en sitio, en sus mismas cinco líneas: describe el `409`, cómo distinguirlo del de la negativa, y retira la pregunta abierta de `DEPLOY.md:691`, que ya está respondida.
-7. **Delta de especificación.** RQ-ZS-23 MODIFIED (`openspec/specs/zoho-sync/spec.md:1368-1419`, último requisito de la spec: crecer no desplaza a nadie). La nota «Fuera de este requisito» (`openspec/specs/zoho-sync/spec.md:1391-1393`) pasa a ser requisito de la respuesta HTTP, con sus escenarios.
+7. **Delta de especificación.** RQ-ZS-23 MODIFIED (`openspec/specs/zoho-sync/spec.md:1368-1419` en `a1fb802`, último requisito de la spec: crecer no desplaza a nadie). La nota «Fuera de este requisito» (`openspec/specs/zoho-sync/spec.md:1391-1393`) pasa a ser requisito de la respuesta HTTP, con sus escenarios.
 
 ### Fuera
 
