@@ -38,3 +38,9 @@ Que B **espere** un bloqueo de fila (`pg_stat_activity.wait_event_type = 'Lock'`
 ## Códigos de salida y medida
 `npm test` exit 0 (266 ficheros pasan, 3 saltados; 4387 pruebas pasan, 11 saltadas) · `npm run typecheck` exit 0 · `npm run lint -- --max-warnings 165` exit 0 (165 avisos, 0 errores, ninguno mío).
 Medida: `git diff --shortstat --no-renames 3731e92` = 2 ficheros, +34 −2 (= 36); `wc -l` sin trackear: prueba de integración 243. Total ≈ **279**, más este informe y las casillas de `tasks.md`. Techo 800.
+
+## Contraste del orquestador, tras el commit `1ba5498`
+- Tarea 7 cerrada: detector `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` → exit 0 (13 abreviadas informativas, las mismas que `main`; 0 cabeceras inválidas).
+- Reproducido por el orquestador contra PostgreSQL 17.5 real: integración sin mutar 4/4; **M2** → rojos el caso 1 («expected true to be false»), el caso 2 («[4, 4]» frente a «[0, 4]») y la prueba de pg-mem de la línea 168; **M3** → rojos los casos 1, 2 y 4. Fichero restaurado, diff vacío.
+- Suite entera CON `TEST_DATABASE_URL` (nada saltado): `npm test` exit 0, 269 ficheros y 4398 pruebas; `npm run typecheck` exit 0; `npm run lint -- --max-warnings 165` exit 0 (165 avisos).
+- Un ajuste en `DEPLOY.md:665`: se quitó «hasta entonces nadie más lanza la ejecución», que la respuesta de Gerencia no dice.

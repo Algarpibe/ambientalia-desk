@@ -60,7 +60,7 @@ Ninguna tarea toca código de producto: ni el ejecutor, ni la ruta, ni el esquem
   `git grep -noE "migracionTicketsAbiertos\.test\.ts:[0-9]+(-[0-9]+)?"`; comprobar cada resultado contra el fichero y su
   frase, más el segundo pase de la forma abreviada en los ficheros que ya citan el módulo. Resultado esperado: ninguna cita
   desplazada; **se comprueba, no se afirma**.
-- [ ] 7. **Cierre del lote.** Correr y mirar el código de salida de cada uno: `npm test`; `npm run typecheck`;
+- [x] 7. **Cierre del lote.** Correr y mirar el código de salida de cada uno: `npm test`; `npm run typecheck`;
   `npm run lint -- --max-warnings 165`; `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`. Medida del ledger:
   `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear; registrar ESO
   (válvula 720, techo 800). Sin commit en esta fase.
