@@ -4533,6 +4533,30 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-18 (antes del corte, talla S)"
+  - clave: "decision/quien-ejecuta-la-migracion-confirmada-11-10"
+    fecha: "2026-10-11"
+    precisa: "decision/quien-ejecuta-la-migracion"
+    pregunta: |
+      Confirmación de Gerencia, tecleada por Alfonso en la sesión de construcción del 2026-10-11: ¿se mantiene la
+      respuesta del 06/10 sobre quién ejecuta la migración de tickets abiertos, y se autoriza construir lo que falta
+      de F1F-01?
+    respuesta_textual: |
+      «Confirmo como Gerencia mi respuesta del 06/10 sobre quien ejecuta la migracion y autorizo construir el remanente de F1F-01 en su worktree con ciclo SDD completo, parando antes de fusionar»
+    consecuencias: |
+      (1) CONFIRMA `decision/quien-ejecuta-la-migracion` (06/10), que Supervisión tiene registrada en el árbol SIN
+      VERSIONAR (`decisiones_de_gerencia_panel`; la clave estaba en la línea 4829 de este fichero y su respuesta en
+      la 4837, en el árbol de trabajo del 2026-10-11 y antes de insertar esta clave, no en ningún commit). Esta clave
+      no copia aquel bloque: lo versiona Supervisión.
+      (2) AUTORIZA LA CONSTRUCCIÓN del remanente de F1F-01 en su propio worktree (regla del ciclo 3), con ciclo SDD
+      completo y una sola parada, antes de fusionar a `main`.
+      (3) ALCANCE DEL REMANENTE, tal como lo encarga la sesión: medir si una segunda ejecución simultánea de la
+      migración se rechaza y, si no, construir ese bloqueo; y escribir en `DEPLOY.md` quién abre el interruptor
+      `MIGRACION_TICKETS_HABILITADA` y el orden de la ejecución. No se construye permiso nuevo.
+      (4) EL SUPLENTE SIGUE POR NOMBRAR: dato que debe Gerencia. Esta clave no lo nombra.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/quien-ejecuta-la-migracion-confirmada-11-10)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01 (remanente)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
