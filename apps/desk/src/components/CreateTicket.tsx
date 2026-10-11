@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite, Catalogo } from '@ambientalia/shared'
-import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor } from '@ambientalia/shared'
+import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor, estadoGarantia } from '@ambientalia/shared'
 import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo, candidatosDelError, type CandidatoNit } from '../api/client'
-import { CrearRemision } from './CrearRemision'; import { AltaManualCliente, AltaManualEquipo, CandidatosNit } from './AltaManual'; import { ALTA_MANUAL_VACIA, cuerpoAltaManual, modeloManual } from '../lib/altaManualEstado'
+import { CrearRemision } from './CrearRemision'; import { DistintivoGarantia } from './DistintivoGarantia'; import { AltaManualCliente, AltaManualEquipo, CandidatosNit } from './AltaManual'; import { ALTA_MANUAL_VACIA, cuerpoAltaManual, modeloManual } from '../lib/altaManualEstado'
 
 export function CreateTicket({ onClose, onCreated }: {
   onClose: () => void
@@ -342,7 +342,7 @@ export function CreateTicket({ onClose, onCreated }: {
           {equipo && (
             <div className="mt-1 text-[12px] text-slate-600 bg-slate-50 border border-slate-200 rounded p-2">
               <b>{equipo.marca} {equipo.modelo}</b> · {equipo.tipo} · serie {equipo.serial}
-              <span className="text-slate-400"> · dueño: {equipo.clienteNombre}</span>
+              <span className="text-slate-400"> · dueño: {equipo.clienteNombre}</span> <DistintivoGarantia estado={estadoGarantia(new Date(), equipo.finGarantia)} tamano="md" />{/* aviso informativo (F1B-18): no bloquea ni rellena nada */}
             </div>
           )}
           {!equipo && !buscandoEquipo && equipoResults.length === 0 && (equiposAcotados || equipoQuery.trim().length >= 2) && (

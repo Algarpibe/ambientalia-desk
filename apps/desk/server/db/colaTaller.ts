@@ -2,7 +2,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { TicketWithRefs } from '@ambientalia/zoho-sync/db/repo'
 import { rowToTicket } from '@ambientalia/zoho-sync/db/mappers'
 import { ordenarColaTaller, type Ticket } from '@ambientalia/shared'
-import { ticketsEsperandoAprobacionCliente } from './alarmasAvisadas'
+import { ticketsEsperandoAprobacionCliente } from './alarmasAvisadas'; import { marcasDeGarantia } from './garantiaTickets'
 
 /**
  * La cola del taller (F1B-07, lote 2b; `vistas-tablero` RQ-VT-09). Una vista: no escribe nada.
@@ -20,6 +20,6 @@ export async function fechasHabilitacion(db: Queryable): Promise<Map<string, str
 /** Los tickets en el orden de la cola, con la marca `esperandoAprobacionCliente` (RQ-VT-07) y `habilitadoAt`. */
 export async function colaDelTaller(db: Queryable, list: TicketWithRefs[]): Promise<Array<Ticket & { habilitadoAt: string | null }>> {
   const marcados = await ticketsEsperandoAprobacionCliente(db)
-  const habilitados = await fechasHabilitacion(db)
-  return ordenarColaTaller(list.map(({ row, refs }) => ({ ...rowToTicket(row, refs), esperandoAprobacionCliente: marcados.has(String(row.id)), habilitadoAt: habilitados.get(String(row.id)) ?? null })))
+  const habilitados = await fechasHabilitacion(db); const garantias = await marcasDeGarantia(db, list.map((x) => x.row))
+  return ordenarColaTaller(list.map(({ row, refs }) => ({ ...rowToTicket(row, refs), esperandoAprobacionCliente: marcados.has(String(row.id)), garantia: garantias.get(String(row.id)), habilitadoAt: habilitados.get(String(row.id)) ?? null })))
 }

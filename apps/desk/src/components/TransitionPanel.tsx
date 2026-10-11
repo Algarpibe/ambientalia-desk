@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { transicionesDelTicket, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
+import { transicionesDelTicket, sugerenciaPorGarantia, type EstadoGarantia, type Transition, type TransitionField, type PersonaLite, type Remision } from '@ambientalia/shared';
 import { executeTransition, getPersonas, subirCertificadoFabrica, fetchEquipo } from '../api/client';
 import { opcionesPersona, derivacionInicial, type OpcionPersona } from '../lib/personas';
 import { botonRemision } from '../lib/botonRemision';
@@ -35,7 +35,7 @@ function yaLoTraeElTicket(f: TransitionField, delTicket: Record<string, string |
   return v != null && String(v).trim() !== ''
 }
 
-export function TransitionPanel({ ticketId, status, clasificacion, delTicket, primerDerivado, clientId, derivadoActual, remisiones, onDone, onCrearRemision, equipoId, clienteProvisional }: {
+export function TransitionPanel({ ticketId, status, clasificacion, delTicket, primerDerivado, clientId, derivadoActual, remisiones, onDone, onCrearRemision, equipoId, clienteProvisional, garantia }: {
   ticketId: string
   status: string; clasificacion: string | null
   /** `customFields` del ticket: lo que ya se sabe, para prellenar y bloquear. */
@@ -49,9 +49,9 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
   /** Las remisiones vigentes del ticket: deciden si el botón ofrece crear una o abrir la que ya hay. */
   remisiones?: Remision[] | null
   onDone: () => void
-  onCrearRemision?: () => void; equipoId?: string | null; clienteProvisional?: boolean // F1B-15: con ellos «Habilitar Servicio» se desactiva mientras el alta siga pendiente (comodidad; la impone el servidor, `exigirAltaValidada`)
+  onCrearRemision?: () => void; equipoId?: string | null; clienteProvisional?: boolean; garantia?: EstadoGarantia | null // F1B-18: `garantia` sólo destaca «Reporte por garantía» en Notificado, no impone. F1B-15: con ellos «Habilitar Servicio» se desactiva mientras el alta siga pendiente (comodidad; la impone el servidor, `exigirAltaValidada`)
 }) {
-  const boton = botonRemision(status, remisiones ?? null)
+  const boton = botonRemision(status, remisiones ?? null); const sugerida = sugerenciaPorGarantia(status, garantia)
   const { user } = useAuth()
   const transitions = transicionesDelTicket({ classification: clasificacion, status }).filter(
     (t) => !!user && puedeEjecutarTransicion(user, t),
@@ -130,11 +130,11 @@ export function TransitionPanel({ ticketId, status, clasificacion, delTicket, pr
             key={t.id} disabled={t.id === 'habilitar_servicio' && !!motivoBloqueo} title={t.id === 'habilitar_servicio' ? motivoBloqueo ?? undefined : undefined}
             type="button"
             onClick={() => open(t)}
-            className="text-[12px] font-bold text-[#2C7BE5] border border-[#2C7BE5] px-3 py-1 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`text-[12px] font-bold text-[#2C7BE5] border border-[#2C7BE5] px-3 py-1 rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed${t.id === sugerida ? ' ring-2 ring-green-500 bg-green-50' : ''}`}
           >
-            {t.name} → {t.to}
+            {t.name} → {t.to}{t.id === sugerida && <span className="ml-1 text-[10px] text-green-700">Sugerido: equipo en garantía</span>}
           </button>
-        ))}{habilita && motivoBloqueo && <span className="text-[11px] text-amber-700">{motivoBloqueo}</span>}{habilita && !motivoBloqueo && avisoSinConfirmar && <span className="text-[11px] text-amber-700">{avisoSinConfirmar}</span>}
+        ))}{habilita && motivoBloqueo && <span className="text-[11px] text-amber-700">{motivoBloqueo}</span>}{habilita && !motivoBloqueo && avisoSinConfirmar && <span className="text-[11px] text-amber-700">{avisoSinConfirmar}</span>}{sugerida && transitions.some((t) => t.id === sugerida) && <span className="text-[11px] text-green-700">Equipo en garantía: se sugiere Reporte por garantía</span>}
         {/* Acción, no transición: en gris para que no se lea como un cambio de estado. Con una
             remisión ya creada y sin enviar, cambia de texto y lleva a ÉSA — el ticket no se mueve
             hasta que n8n confirma, así que sin esto seguía diciendo «Crear remisión» sobre un ticket

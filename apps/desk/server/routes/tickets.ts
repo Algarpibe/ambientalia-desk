@@ -6,7 +6,7 @@ import { countClosedTickets, setTicketRead, previewTicketNumber } from '@ambient
 import { rowToTicket, rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getHistorialTicket } from '../db/historial'
 import { instanteUltimaTransicion } from '../db/fechasTicket'
-import { primerDerivado } from '../db/primerDerivado'; import { colaDelTaller } from '../db/colaTaller'
+import { primerDerivado } from '../db/primerDerivado'; import { colaDelTaller } from '../db/colaTaller'; import { marcasDeGarantia } from '../db/garantiaTickets'
 import { getConversacionTicket } from '../db/conversacion'
 import { getActivities } from '@ambientalia/zoho-sync/db/activities'
 import { requireAuth, requireAdmin as requireSuperAdmin, requireArea } from '../auth/middleware'
@@ -107,7 +107,7 @@ export function registerTicketRoutes(
       const page = Math.max(1, Number(req.query.page) || 1)
       const items = await getClosedTickets(db, req.user!.id, pageSize, (page - 1) * pageSize, busquedaDe(res))
       const total = await countClosedTickets(db, busquedaDe(res))
-      res.json({ items: items.map(({ row, refs }) => rowToTicket(row, refs)), total, page, pageSize })
+      const marcas = await marcasDeGarantia(db, items.map((x) => x.row)); res.json({ items: items.map(({ row, refs }) => ({ ...rowToTicket(row, refs), garantia: marcas.get(String(row.id)) })), total, page, pageSize })
       return
     }
     // scope=all (compat, sin uso en el front) o default (active)
@@ -140,8 +140,8 @@ export function registerTicketRoutes(
     // son reglas del Blueprint, que es de la app. Consultas aparte y no un JOIN porque pg-mem —el
     // motor de los tests— no resuelve subconsultas correlacionadas.
     const escaladoARevisionAt = await instanteUltimaTransicion(db, id, 'escalado_a_revision')
-    const derivadoPrimero = await primerDerivado(db, id)
-    res.json({ ...rowToTicketDetail(found.row, found.refs), escaladoARevisionAt, primerDerivado: derivadoPrimero })
+    const derivadoPrimero = await primerDerivado(db, id); const garantia = (await marcasDeGarantia(db, [found.row])).get(id)
+    res.json({ ...rowToTicketDetail(found.row, found.refs), escaladoARevisionAt, primerDerivado: derivadoPrimero, garantia })
   }))
 
   app.get('/api/tickets/:id/conversations', asyncHandler(async (req, res) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Ticket } from '@ambientalia/shared';
 import { ClienteLink, type ClienteKind } from './ClienteLink'
-import { ReadToggle } from './ReadToggle'
+import { ReadToggle } from './ReadToggle'; import { DistintivoGarantia } from './DistintivoGarantia'
 import { responsableVisible } from '../lib/responsable'
 
 interface TicketCardProps {
@@ -100,7 +100,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onClick, onOpenC
                     <span className="material-symbols-outlined text-[14px]">hourglass_top</span>
                     Esperando aprobación del cliente
                 </div>
-            )}
+            )}<DistintivoGarantia estado={ticket.garantia} />
 
             {/* Hover actions seen in the image (like common in Kanban boards) */}
             <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 pointer-events-none transition-colors rounded"></div>
