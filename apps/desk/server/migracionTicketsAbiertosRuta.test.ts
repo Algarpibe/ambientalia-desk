@@ -261,3 +261,14 @@ describe('rechazo de la ejecución adelantada (RQ-ZS-23): 409 con mensaje claro'
     warn.mockRestore(); error.mockRestore()
   })
 })
+
+describe('rechazo de la ejecución adelantada (RQ-ZS-23): se distingue por tipo, no por texto', () => {
+  it('caso 6 · un error genérico con el MISMO texto del rechazo sigue dando 500, no 409', async () => {
+    const cookie = await adminCookie()
+    await tk('t1', 4100, 'Entregado')
+    const texto = 'El ticket 4100 pasó a estar gobernado entre la lectura y la escritura: se deshace la migración entera'
+    const res = await request(conGancho((sql) => { if (esUpdate(sql)) throw new Error(texto) })).post(URL).set('Cookie', cookie).query({ corte: CORTE, aplicar: 'true' })
+    expect(res.status).toBe(500)
+    expect(res.body).toEqual({ error: 'Error interno' })
+  })
+})
