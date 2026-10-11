@@ -54,3 +54,9 @@ Ninguna línea existente cambió de número.
 - Comentario de `admin.ts:219`: ampliado dentro de la línea («y `409` también si otra ejecución se le adelantó (`rechazoDeMigracionAdelantada`, RQ-ZS-23)»).
 - Python no está disponible en el equipo: las ediciones se hicieron con la herramienta de edición y `cat >>`. Los avisos «LF will be replaced by CRLF» son del `autocrlf` y no cambian el diff.
 - Pendiente para el verify: el comentario de `migracionConcurrente.integration.test.ts:185` (arriba). 7.4 (detector) es del orquestador.
+
+## Contraste del orquestador, tras el commit `fc908eb`
+- Casilla 7.4 cerrada: detector `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` → exit 0 (13 abreviadas informativas, las mismas que `main`; 0 cabeceras inválidas).
+- Reproducido por el orquestador: prueba de ruta e integración sin mutar, 39/39 con PostgreSQL 17.5 real; **M2 (posición)** → rojos los casos 1 («expected 500 to be 409») y 5; **M3 (sin `instanceof`)** → rojo el caso 2 («expected 409 to be 500»). `routes/admin.ts` restaurado, idéntico a la copia.
+- Suite entera CON `TEST_DATABASE_URL` (nada saltado): `npm test` exit 0, 269 ficheros y 4403 pruebas; `npm run typecheck` exit 0; `npm run lint -- --max-warnings 165` exit 0 (165 avisos).
+- Un ajuste: el comentario de `apps/desk/server/db/migracionConcurrente.integration.test.ts:185` decía «el texto de la línea 90»; ahora nombra `MigracionAdelantadaError`. En sitio, el fichero conserva 243 líneas.

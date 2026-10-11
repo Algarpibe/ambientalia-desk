@@ -52,7 +52,7 @@ Una a una. Se parte de una copia del fichero tras la tarea 2, hecha en un direct
 - [x] 7.1 `npm test` y `npm run typecheck` en verde.
 - [x] 7.2 `npm run lint -- --max-warnings 165` en verde (margen 0: un aviso nuevo lo rompe; hipótesis de `no-use-before-define` y de `_req` a confirmar).
 - [x] 7.3 Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear; registrar esa cifra (techo 800, válvula 720).
-- [ ] 7.4 Tras el commit del orquestador, ejecutar el detector de citas y anotar el resultado.
+- [x] 7.4 Tras el commit del orquestador, ejecutar el detector de citas y anotar el resultado.
 
 ## Mapa tarea → escenario de RQ-ZS-23 o decisión
 
