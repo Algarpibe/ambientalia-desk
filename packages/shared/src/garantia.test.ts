@@ -25,6 +25,9 @@ describe('estadoGarantia', () => {
   it.each([null, undefined, '', '  ', '2026-02-30'])('G5 · fin %j → sin_dato', (fin) => {
     expect(estadoGarantia(G1, fin)).toBe('sin_dato')
   })
+  it.each([' 2026-03-15', '2026-03-15 ', '  2026-03-15  '])('G5b · el fin entre espacios (%j) se recorta antes de decidir: en garantía, no sin_dato', (fin) => {
+    expect(estadoGarantia(G1, fin)).toBe('en_garantia')
+  })
   it('G6 · un ISO con hora no es fecha de calendario: sin_dato', () => {
     expect(estadoGarantia(G1, '2026-03-15T00:00:00.000Z')).toBe('sin_dato')
   })
