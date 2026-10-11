@@ -171,7 +171,7 @@ describe('el resto del informe y los fallos', () => {
     const { espia, sqls } = espiar(async (sql, p) => {
       if (!intervenido && /^UPDATE tickets SET status/i.test(sql.trim()) && p[0] === 't2') { intervenido = true; await db.query("UPDATE tickets SET managed_by_app = true WHERE id = 't2'") }
     })
-    await expect(aplicar(espia, { aplicar: true })).rejects.toThrow()
+    await expect(aplicar(espia, { aplicar: true })).rejects.toThrow('pasó a estar gobernado')
     expect(verbos(sqls).at(-1)).toBe('ROLLBACK')
     expect(verbos(sqls)).not.toContain('COMMIT')
   })

@@ -353,7 +353,7 @@ encendida fuera del día del corte, cualquier administrador —no sólo el super
 anterior no lo deshace; apagada el día del corte, la migración responde `403` y no se aplica.
 
 Se enciende **sólo el día del corte**, para la pasada con `aplicar=true`, y se **apaga** en cuanto termina, con un
-redespliegue en cada cambio. La línea que hay que añadir al fichero de ejemplo de entorno, tal cual:
+redespliegue en cada cambio; quién lo hace y en qué orden, en la §14. La línea que hay que añadir al fichero de ejemplo de entorno, tal cual:
 
 > ```
 > # MIGRACION_TICKETS_HABILITADA: con `true`, la migración de tickets abiertos de F1F-01 acepta aplicar=true y escribe en producción; encender sólo el día del corte y apagar después. Ausente o con otro valor, sólo pasada en seco (403 al aplicar).
@@ -659,3 +659,35 @@ SELECT COUNT(*) FROM public.provisional_books_avisados;
 - **La primera pasada tras desplegar avisa una vez cada pareja (provisional sin enlazar, contacto de Books del mismo NIT) que ya exista** (supuesto S-4,
   pendiente de respuesta de Gerencia): Comercial verá de golpe tantos avisos como parejas haya, y a partir de ahí sólo las nuevas.
 - **Para volver atrás** basta revertir y redesplegar; las tablas quedan sin uso y no se borran.
+
+## 14. Migración de tickets abiertos: quién la ejecuta y en qué orden (F1F-01)
+
+**Quién.** Gerencia abre el interruptor y lanza la ejecución. Suplente: **POR NOMBRAR** (lo nombra Gerencia).
+Respaldo: `decision/quien-ejecuta-la-migracion-confirmada-11-10` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`).
+
+**Antes de empezar:**
+
+- **Sesión de administrador** en la aplicación: la ruta exige rol de administrador y no hay permiso nuevo (`apps/desk/server/routes/admin.ts:222`).
+- **Sincronización completa previa: pendiente de respuesta de Gerencia** (E-208, `docs/sdd/ENTRADA.md:2047`). Este procedimiento no la lanza ni dice quién lo hace.
+- **Una pasada en seco**, que es la misma llamada sin `aplicar` y no escribe: el informe debe traer `negativa: null` y `numeracion.arrastra: false`
+  (`apps/desk/server/db/migracionTicketsAbiertos.ts:22`, `:24`). Con una negativa o con numeración que arrastra, **no se aplica**: se consulta a Gerencia.
+
+**Los cinco pasos, en este orden y sin saltarse ninguno:**
+
+1. **Copia previa.** El botón de copia de EasyPanel del servicio `desk-db`, con el nombre de base `desk` (`docs/sdd/Paquete_de_Despliegue_2026-10-10b.md:224-225`).
+2. **Abrir el interruptor.** `MIGRACION_TICKETS_HABILITADA=true` en el servicio App y redespliegue (§11).
+3. **UNA sola ejecución**, desde la consola del navegador en la aplicación, con la sesión de administrador
+   (`apps/desk/server/routes/admin.ts:222-232`):
+   `fetch('/api/admin/migrar-tickets-abiertos?corte=<instante ISO con desfase>&aplicar=true', { method: 'POST' }).then((r) => r.json())`.
+   Se lanza una vez y se espera la respuesta; no se repite mientras no haya respondido.
+4. **Comprobar.** El informe devuelto trae `aplicado: true` (`apps/desk/server/db/migracionTicketsAbiertos.ts:21`). Después, una pasada en seco **con el mismo `corte`**
+   debe dar `migrables: 0`: lo ya gobernado no se vuelve a elegir (`packages/shared/src/migracionTickets.ts:64`, `:103-104`). Con un corte posterior podrían entrar tickets creados entre las dos llamadas.
+5. **Volver a cerrar el interruptor.** Quitar el valor de `MIGRACION_TICKETS_HABILITADA` y redesplegar (§11).
+
+**Qué ve quien lance una segunda ejecución mientras la primera sigue en curso.** No escribe nada: la segunda espera el bloqueo de fila de la primera y, cuando ésta confirma, se rechaza y se deshace entera,
+sin dejar marcadores (RQ-ZS-23; lo fija `apps/desk/server/db/migracionConcurrente.integration.test.ts`, que corre contra PostgreSQL real). **Lectura de código, no medido por HTTP:** el rechazo es un error genérico, y
+el manejador central responde `500` con «Error interno» a todo lo que no sea un error conocido (`apps/desk/server/app.ts:90-92`); el mensaje real («pasó a estar gobernado…») sólo queda en el registro del servidor.
+**Un `500` de la segunda ejecución no significa que la migración haya fallado**: se comprueba con el paso 4. Si la migración tenía una negativa, la respuesta es otra: `409` con el informe y sin escribir (`apps/desk/server/routes/admin.ts:231`).
+Si la ejecución llega después de otra ya confirmada, no se rechaza: no encuentra nada que migrar y no escribe. Si debe recibir un `409` con mensaje claro en vez del `500` es una pregunta abierta a Gerencia.
+
+**Qué NO hace este procedimiento.** No lanza la sincronización completa previa; no revierte (la reversión es el procedimiento SQL de RQ-ZS-18, `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, que ejecuta una persona; volver al código anterior no deshace lo migrado, de ahí la copia previa); no nombra al suplente; y no sustituye al cotejo de la hoja de Google.
