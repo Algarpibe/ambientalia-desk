@@ -4557,6 +4557,28 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-01 (remanente)"
+  - clave: "decision/migracion-rechazada-responde-409-11-10"
+    fecha: "2026-10-11"
+    precisa: "decision/quien-ejecuta-la-migracion-confirmada-11-10"
+    pregunta: |
+      Pregunta de la construcción, en el informe del remanente de F1F-01 del 2026-10-11: la ejecución de la migración
+      de tickets abiertos que se rechaza porque otra se le adelantó recibe hoy un `500` «Error interno» (lectura de
+      `apps/desk/server/app.ts:90-92`, no medido por HTTP). ¿Debe recibir un `409` con mensaje claro?
+    respuesta_textual: |
+      «Autorizo fusionar migracion-una-sola-ejecucion a main con push, y decido como Gerencia que la ejecucion rechazada reciba un 409 con mensaje claro en vez del 500: construyelo en su worktree con ciclo SDD, parando antes de fusionar»
+    consecuencias: |
+      (1) LA EJECUCIÓN RECHAZADA RESPONDE `409` con un mensaje claro en español, en vez del `500` genérico. Sólo cambia
+      la respuesta: no cambia qué se escribe en la base, ni la transacción, ni el interruptor, ni el manejador
+      central de errores para los demás casos.
+      (2) SE CONSTRUYE en su propio worktree (regla del ciclo 3), con ciclo SDD completo, `tanda: F1F-01` y
+      `cierra: no`, con una sola parada antes de fusionar a `main`.
+      (3) AUTORIZA LA FUSIÓN de `migracion-una-sola-ejecucion` a `main`, hecha en `a57f093`.
+      (4) CIERRA la tarea de persona «decidir si la ejecución rechazada debe recibir un 409» que dejó abierta
+      `openspec/changes/archive/2026-10-11-migracion-una-sola-ejecucion/archive-report.md`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/migracion-rechazada-responde-409-11-10)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01 (respuesta de la ejecución rechazada)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
