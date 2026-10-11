@@ -1,6 +1,6 @@
 import type { Ticket } from '@ambientalia/shared'
 import { ClienteLink, type ClienteKind } from './ClienteLink'
-import { ReadToggle } from './ReadToggle'; import { DistintivoGarantia } from './DistintivoGarantia'
+import { ReadToggle } from './ReadToggle'; import { DistintivoGarantia } from './DistintivoGarantia'; import { DistintivoTiempoEnEstado } from './DistintivoTiempoEnEstado'
 import { responsableVisible } from '../lib/responsable'
 
 function StatusBadge({ status }: { status: string }) {
@@ -26,7 +26,7 @@ export function TicketList({ tickets, dense, onSelect, onOpenCliente, onToggleRe
               </div>
               {dense && <span className="text-[11px] text-slate-400 shrink-0">{t.number}</span>}
               <ReadToggle read={t.read} onToggle={(r) => onToggleRead?.(t.id, r)} className="text-[16px] shrink-0" />
-              <DistintivoGarantia estado={t.garantia} /><StatusBadge status={t.status} />
+              <DistintivoGarantia estado={t.garantia} /><DistintivoTiempoEnEstado dias={t.diasHabilesEnEstado} /><StatusBadge status={t.status} />
             </button>
           </li>
         ))}

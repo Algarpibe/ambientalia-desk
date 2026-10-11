@@ -4,7 +4,7 @@ import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import { createUser } from './auth/users'
 import { createSession } from './auth/sessions'
 import { createRole } from './auth/roles'
-import { ticketsConSlaVencido } from './db/sla'
+import { ticketsConSlaVencido } from './db/sla'; import { listaRemisionCreada } from './db/listaRemisionCreada'
 import { db, instalarArnes, appWith, userCookie } from './testing/appHarness'
 
 instalarArnes()
@@ -144,5 +144,78 @@ describe('«Habilitar Servicio» desde un ticket de la lista sigue guardado por 
     const res = await request(appWith().app).post('/api/tickets/rc/transition').set('Cookie', cookie).send({ transitionId: 'habilitar_servicio', values: {} })
     expect(res.status).toBe(403)
     expect(((await db.query("SELECT status FROM tickets WHERE id='rc'")).rows[0] as { status: string }).status).toBe(RC)
+  })
+})
+
+/**
+ * EL TIEMPO EN EL ESTADO (F1B-07, RQ-VT-16). Lo calcula el SERVIDOR (regla invariable 13) con `diasHabilesEnEstado` de `shared`
+ * y los cierres de `public.calendario_cierres`; el reloj se inyecta en la función, la ruta usa el de la máquina.
+ */
+describe('el tiempo en el estado (RQ-VT-16)', () => {
+  const cierre = (fecha: string) => db.query(`INSERT INTO calendario_cierres (fecha, motivo, registrado_por) VALUES ($1, 'inventario', 'prueba')`, [fecha])
+  const dias = (lista: Array<{ id: string; diasHabilesEnEstado?: number | null }>) => lista.map((t) => [t.id, t.diasHabilesEnEstado])
+
+  it('RC-13 · salta el festivo y el cierre sembrado', async () => {
+    await cierre('2026-03-11')
+    await ticket('c', 1); await entroEn('c', RC, '2026-03-09T15:00:00Z')
+    await ticket('f', 2); await entroEn('f', RC, '2026-03-20T15:00:00Z')
+    const lista = await listaRemisionCreada(db, new Date('2026-03-24T17:00:00Z'))
+    expect(dias(lista)).toEqual([['c', 9], ['f', 1]])
+  })
+
+  it('RC-14 · el día de entrada se toma en la zona de negocio, no en UTC', async () => {
+    await ticket('z', 1); await entroEn('z', RC, '2026-03-10T02:00:00Z')
+    const [z] = await listaRemisionCreada(db, new Date('2026-03-10T17:00:00Z'))
+    expect(z.diasHabilesEnEstado).toBe(1)
+  })
+
+  it('RC-15 · sin fila de entrada el campo está presente y es null, y el ticket va el último', async () => {
+    await ticket('s', 1); await ticket('x', 2); await entroEn('x', RC, '2026-03-09T15:00:00Z')
+    const lista = await listaRemisionCreada(db, new Date('2026-03-12T17:00:00Z'))
+    expect(lista.map((t) => t.id)).toEqual(['x', 's'])
+    expect(lista[1]).toHaveProperty('diasHabilesEnEstado')
+    expect(lista[1].diasHabilesEnEstado).toBeNull()
+    expect(lista[0].diasHabilesEnEstado).toBe(3)
+  })
+
+  it('RC-16 · la ruta trae el campo en todos: entero con entrada, null sin ella', async () => {
+    await ticket('con', 1, RC, { ov: 'OV-1' }); await entroEn('con', RC, '2026-01-05T15:00:00Z'); await ticket('sin', 2)
+    const res = await pedir(await sesion(1))
+    expect(res.status).toBe(200)
+    for (const t of res.body) expect(t).toHaveProperty('diasHabilesEnEstado')
+    const porId = Object.fromEntries(res.body.map((t: { id: string; diasHabilesEnEstado: number | null }) => [t.id, t.diasHabilesEnEstado]))
+    expect(Number.isInteger(porId.con)).toBe(true)
+    expect(porId.con).toBeGreaterThanOrEqual(1)
+    expect(porId.sin).toBeNull()
+  })
+
+  it('RC-17 · el listado de activos y «Mis tickets» no traen el campo (T5)', async () => {
+    const cookie = await sesion(1)
+    const yo = ((await db.query("SELECT id FROM users WHERE email='u1@x.co'")).rows[0] as { id: string }).id
+    await ticket('m', 1); await entroEn('m', RC, '2026-01-05T15:00:00Z')
+    await db.query('UPDATE tickets SET derivado_a = $1 WHERE id = $2', [yo, 'm'])
+    for (const ruta of ['/api/tickets', '/api/mis-tickets']) {
+      const res = await request(appWith({}).app).get(ruta).set('Cookie', cookie)
+      expect(res.status).toBe(200)
+      expect(res.body.length, ruta).toBeGreaterThan(0)
+      for (const t of res.body) expect(t, ruta).not.toHaveProperty('diasHabilesEnEstado')
+    }
+  })
+
+  it('RC-18 · una sola lectura de cierres con 3 y con 6 tickets', async () => {
+    const leerCierres = async () => {
+      const consultas: string[] = []
+      const espia: Queryable = { query: (t, p) => { consultas.push(t); return db.query(t, p) } }
+      await listaRemisionCreada(espia, new Date('2026-03-24T17:00:00Z'))
+      return consultas.filter((q) => q.includes('calendario_cierres')).length
+    }
+    const sembrar = async (desde: number, hasta: number) => {
+      for (let i = desde; i < hasta; i++) { await ticket(`k${i}`, 200 + i); await entroEn(`k${i}`, RC, '2026-03-09T15:00:00Z') }
+    }
+    await sembrar(0, 3)
+    const con3 = await leerCierres()
+    await sembrar(3, 6)
+    const con6 = await leerCierres()
+    expect([con3, con6]).toEqual([1, 1])
   })
 })
