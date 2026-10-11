@@ -4579,6 +4579,32 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-01 (respuesta de la ejecución rechazada)"
+  - clave: "decision/f1b07-tiempo-en-tarjeta-y-cierre-11-10"
+    fecha: "2026-10-11"
+    precisa: "decision/prioridad-clientes-sin-contrato"
+    pregunta: |
+      Dos preguntas del dictamen de F1B-07 (`docs/sdd/TRASPASO_2026-10-08.md`, sección final del 2026-10-11 (b)):
+      E-192, si la tarjeta de la lista de «Remisión creada» debe enseñar el tiempo transcurrido; y con qué vehículo
+      se declara el cierre de la fila, que no tenía ningún cambio archivado con `cierra: si`.
+    respuesta_textual: |
+      «F1B-07: si, la tarjeta de Remision creada muestra el tiempo transcurrido en dias habiles; con ese cambio, archivado, se declara el cierre de la fila. Autorizo construirlo en su worktree con ciclo SDD completo, parando antes de fusionar»
+    consecuencias: |
+      (1) RESPONDE E-192: SÍ. Cada tarjeta de la lista de «Remisión creada» muestra el tiempo que el ticket lleva en
+      ese estado, en DÍAS HÁBILES. El número lo calcula el servidor (regla invariable 13); el cliente sólo lo pinta.
+      (2) FIJA EL VEHÍCULO DE CIERRE DE F1B-07: ese cambio, con `tanda: F1B-07` y `cierra: si`, una vez archivado,
+      declara el cierre de la fila. Se construye en su propio worktree (regla del ciclo 3), con ciclo SDD completo y
+      una sola parada antes de fusionar a `main`.
+      (3) SE APOYA EN `decision/prioridad-clientes-sin-contrato`, que a 2026-10-11 está SIN VERSIONAR: vive en el
+      árbol de Supervisión, en `decisiones_de_gerencia_panel` de este fichero, y no se copia ni se commitea aquí. Lo
+      que de ella sostiene el cierre: no existe valoración legible del cliente y no hay nivel «baja» hasta después
+      del corte. Mientras ese bloque no se versione, este apoyo NO es verificable desde el repositorio.
+      (4) NO RESPONDE E-188, E-189, E-190, E-191 ni E-193: siguen abiertas con dueño Gerencia y el cambio las declara
+      como supuestos aplicados y reversibles, con su semana de plazo (regla de las preguntas a Gerencia, E-237).
+      E-194 no bloquea el cierre: donde volvería a verse es la aceptación con servicios reales.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b07-tiempo-en-tarjeta-y-cierre-11-10) · docs/sdd/ENTRADA.md → E-192"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-07 (tiempo en la tarjeta de «Remisión creada»; cierra la fila)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
