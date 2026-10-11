@@ -34,7 +34,7 @@ export interface Ticket {
   contactName?: string | null
   contactId?: string | null
   accountId?: string | null
-  read?: boolean; esperandoAprobacionCliente?: boolean; garantia?: 'en_garantia' | 'sin_dato' | 'vencida' // marcas de vista calculadas por el servidor (RQ-VT-07, F1B-18)
+  read?: boolean; esperandoAprobacionCliente?: boolean; diasHabilesEnEstado?: number | null; garantia?: 'en_garantia' | 'sin_dato' | 'vencida' // marcas de vista calculadas por el servidor (RQ-VT-07, F1B-18, RQ-VT-16)
 }
 
 /** Adjunto de una conversación. `path` se usa con el proxy /api/attachment. */
