@@ -46,8 +46,8 @@ Una a una. Se parte de una copia de los ficheros tras la fase 2 en un directorio
 - [x] 4.4 `npm test` en verde.
 - [x] 4.5 `npm run typecheck` en verde.
 - [x] 4.6 `npx eslint . --max-warnings 165` en verde (hipótesis de líneas largas a confirmar).
-- [ ] 4.7 Tras el commit del orquestador, `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`: anotar el resultado.
-- [ ] 4.8 Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear; registrar esa cifra (techo 800, válvula 720). Binarios aparte.
+- [x] 4.7 Tras el commit del orquestador, `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`: anotar el resultado. **Código 0** sobre el commit de cierre del apply.
+- [x] 4.8 Medida del intento: `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear; registrar esa cifra (techo 800, válvula 720). Binarios aparte. **307** (268 inserciones y 39 borrados, 12 ficheros, nada sin trackear, sin binarios) más esta línea de cierre.
 
 ## Mapa tarea → requisito o decisión
 
