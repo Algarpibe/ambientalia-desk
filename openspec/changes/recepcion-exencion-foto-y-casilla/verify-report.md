@@ -94,7 +94,7 @@ Tras cada una corrí `packages/shared/src/recepcion.test.ts`, `apps/desk/server/
 
 ## 6. Citas (regla de mutación 4)
 
-Barrido `grep -rnoE` fuera de `archive/` sobre `recepcionForm.ts` y `CrearRemision.tsx`: ninguna cita en código, `CLAUDE.md` ni `ENTRADA.md` apunta a líneas desplazadas (`CrearRemision.tsx` sólo mueve lo posterior a la 310, +2; de `recepcionForm.ts` sólo cita con línea este cambio). Los `Paquete_de_Despliegue_*` que citan `CrearRemision.tsx:61/:261/:264` son paquetes fechados: caso B, sin tocar. `schema.sql` y `shared/recepcion.ts` sólo crecen por el final; `recepcion.ts:102` ya no está vacía. `design.md` cita `recepcion.ts:77/137/139/141/154` y hoy dicen lo que afirma. `proposal.md:36` y `:72` (`recepcionForm.ts:54-63`, `:77-87`, `CrearRemision.tsx:304-307`) son caso B: medidas sobre `daea6d6` (`proposal.md:21`).
+Barrido `grep -rnoE` fuera de `archive/` sobre `recepcionForm.ts` y `CrearRemision.tsx`: ninguna cita en código, `CLAUDE.md` ni `ENTRADA.md` apunta a líneas desplazadas (`CrearRemision.tsx` sólo mueve lo posterior a la 310, +2; de `recepcionForm.ts` sólo cita con línea este cambio). Los `Paquete_de_Despliegue_*` que citan las líneas 61, 261 y 264 de `apps/desk/src/components/CrearRemision.tsx` son paquetes fechados: caso B, sin tocar. `schema.sql` y `shared/recepcion.ts` sólo crecen por el final; `recepcion.ts:102` ya no está vacía. `design.md` cita `recepcion.ts:77/137/139/141/154` y hoy dicen lo que afirma. `proposal.md:36` y `:72` (`recepcionForm.ts:54-63`, `:77-87`, `CrearRemision.tsx:304-307`) son caso B: medidas sobre `daea6d6` (`proposal.md:21`).
 
 ## 7. Cabecera R-1, tareas y medida
 
