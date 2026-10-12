@@ -1,5 +1,5 @@
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
-import type { Remision, ClientLite, EquipoFull, UserPublic } from '@ambientalia/shared'
+import { aplicaDeRemision, type Remision, type ClientLite, type EquipoFull, type UserPublic } from '@ambientalia/shared'
 
 /** Cuerpo que espera el nodo `Validar payload` del flujo `Remisiones_ST_3.13_Desk`. */
 export interface RemisionWebhookPayload {
@@ -8,7 +8,7 @@ export interface RemisionWebhookPayload {
   fecha: string
   tipoServicio: string | null
   observaciones: string | null
-  incluye: string[]
+  incluye: string[]; aplica?: boolean
   tecnico: { nombre: string; cargo: string | null; correo: string }
   cliente: {
     nombre: string; empresa: string | null; personaContacto: string | null
@@ -26,7 +26,7 @@ export interface RemisionWebhookPayload {
 /**
  * Arma el cuerpo del webhook. Los nombres de los campos son un CONTRATO con el flujo: `Validar payload`
  * exige remisionId, ticketNumero, fecha, cliente, tecnico, equipo.serial e incluye, y devuelve 400
- * enumerando los que falten.
+ * enumerando los que falten. `aplica` (RQ-RE-39) es opcional: va ya resuelto y en legado la clave se OMITE.
  */
 export function buildRemisionPayload(input: {
   remision: Remision
@@ -36,14 +36,14 @@ export function buildRemisionPayload(input: {
   usuario: Pick<UserPublic, 'name' | 'email' | 'cargo'>
   fotos?: Array<{ fileName: string; mimeType: string; data: string }>
 }): RemisionWebhookPayload {
-  const { remision: r, cliente: c, equipo: e, usuario: u } = input
+  const { remision: r, cliente: c, equipo: e, usuario: u } = input; const aplica = aplicaDeRemision(r)
   return {
     remisionId: r.id,
     ticketNumero: input.ticketNumero,
     fecha: r.fecha,
     tipoServicio: r.tipoServicio,
     observaciones: r.observaciones,
-    incluye: r.incluye,
+    incluye: r.incluye, ...(aplica === null ? {} : { aplica }),
     tecnico: { nombre: u.name, cargo: u.cargo ?? null, correo: u.email },
     cliente: {
       nombre: c?.name ?? '',

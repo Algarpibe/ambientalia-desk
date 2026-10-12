@@ -519,8 +519,8 @@ Las remisiones **anteriores** a esta columna y las de `origen: 'historico'` **SH
 `hay_novedad = null` —«sin declarar»— y **MUST NOT** quedar sujetas a la guarda de RQ-RE-08 que exige foto por
 novedad ni a las del formulario nuevo: la regla no es retroactiva.
 
-El envío a n8n (`remisionWebhook.ts:5-24`) **MUST NOT** ganar ningún campo nuevo: ni `hayNovedad`, ni
-`novedades`, ni `novedadOtro`, ni `rotulado*`. `observaciones` sigue viajando como hasta ahora; en el formulario
+El envío a n8n (`remisionWebhook.ts:5-24`) **MUST NOT** ganar ningún campo nuevo de la recepción: ni `hayNovedad`,
+ni `novedades`, ni `novedadOtro`, ni `rotulado*`. La única clave que gana sobre las de esta tanda es `aplica` (RQ-RE-39), ya resuelta por el servidor. `observaciones` sigue viajando como hasta ahora; en el formulario
 nuevo lleva el texto compuesto de RQ-RE-23.
 
 #### Scenario: El alta de legado persiste el valor declarado
@@ -538,10 +538,10 @@ nuevo lleva el texto compuesto de RQ-RE-23.
 - WHEN se crea
 - THEN la fila queda con `hay_novedad = true`
 
-#### Scenario: El payload a n8n no cambia
+#### Scenario: El payload a n8n sólo gana `aplica`
 - GIVEN una remisión del formulario nuevo, con novedades, rotulado y fotos categorizadas
 - WHEN se envía con `POST /:id/enviar`
-- THEN el payload que construye `buildRemisionPayload` tiene exactamente las mismas claves que sin este cambio: no incluye `hayNovedad`, `novedades`, `novedadOtro`, `rotuladoPor`, `rotuladoAt` ni la categoría de las fotos
+- THEN el payload que construye `buildRemisionPayload` tiene las mismas claves que sin esta tanda más `aplica` (RQ-RE-39): no incluye `hayNovedad`, `novedades`, `novedadOtro`, `rotuladoPor`, `rotuladoAt` ni la categoría de las fotos
 - AND `observaciones` lleva el texto compuesto
 
 ### Requirement: RQ-RE-18 · Predicados compartidos de exigencia de foto y de validación de novedades
@@ -1903,8 +1903,8 @@ con `ALTER` calificado con esquema (`public.`), y `NovedadCatalogo` **SHALL** ex
   columnas en `NULL`.
 - El cálculo de lo que falta para enviar (RQ-RE-18) **SHALL** recibir las dos casillas y las marcas
   `exentaDeFoto` de las novedades, y servidor y formulario **SHALL** consumir esa misma función.
-- El payload hacia n8n (RQ-RE-13) **MUST NOT** ganar ningún campo: las casillas llegan sólo como texto dentro de
-  `observaciones`, y las claves de `buildRemisionPayload` no cambian.
+- El payload hacia n8n (RQ-RE-13) **MUST NOT** ganar ninguna clave por las casillas: llegan como texto dentro de
+  `observaciones` y, resumidas, dentro de `aplica` (RQ-RE-39), que es la única clave que gana sobre las de esta tanda; no viajan como claves propias.
 
 #### Scenario: Cada casilla se guarda con su traza
 - GIVEN un usuario autenticado y un alta con `sinEmbalaje: true`, y `sinAccesorios` ausente
@@ -1937,7 +1937,98 @@ con `ALTER` calificado con esquema (`public.`), y `NovedadCatalogo` **SHALL** ex
 - WHEN se llama `POST /:id/enviar`
 - THEN responde `422` por `embalaje`
 
-#### Scenario: El payload conserva sus claves
+#### Scenario: El payload no gana claves por las casillas
 - GIVEN una remisión con las dos casillas marcadas
 - WHEN se arma el payload a n8n
-- THEN tiene exactamente las mismas claves que antes del cambio y las frases sólo aparecen en el valor de `observaciones`
+- THEN tiene las claves de antes más `aplica` (RQ-RE-39), sin `sinAccesorios` ni `sinEmbalaje`, y las frases sólo aparecen en el valor de `observaciones`
+
+### Requirement: RQ-RE-39 · «Aplica» se resuelve en la aplicación y viaja a n8n como un dato ya decidido
+
+«Aplica: Sí/No» del encabezado «OBSERVACIONES O NOVEDADES» del formato F-ST-010 **SHALL** significar que la
+remisión trae accesorios o una novedad real; «Sin novedad» por sí sola **MUST NOT** contar
+(`decision/aplica-si-no-remision-12-10`).
+
+`packages/shared` **SHALL** exportar una función pura que, desde lo guardado de la remisión, devuelva `true`,
+`false` o «no calculable». Es **`true`** si se cumple **alguna** de estas tres:
+
+1. `incluye` trae algún elemento no vacío tras recortar espacios; un elemento vacío o sólo de espacios
+   **MUST NOT** contar como accesorio.
+2. `hayNovedad` guardado es `true`. Ya viene decidido por la marca `excluyeDemas` al guardar
+   (`packages/shared/src/recepcion.ts:109`); la función **MUST NOT** comparar claves ni etiquetas de novedades.
+3. Hay traza de «Llegó sin accesorios» o de «Llegó sin embalaje» (`sinAccesoriosAt` o `sinEmbalajeAt` no nulos,
+   RQ-RE-38). Las casillas se validan aparte de `hayNovedad` (`packages/shared/src/recepcion.ts:102`), por eso se
+   suman aquí.
+
+Si ninguna se cumple, es `false`. Es **«no calculable»** cuando `novedades` es `NULL` **o la propiedad está
+ausente** (remisión de legado, `packages/shared/src/recepcion.ts:137`): su dato no pasó por el catálogo.
+
+- `buildRemisionPayload` (`apps/desk/server/remisionWebhook.ts:31-65`) **SHALL** añadir a su cuerpo la clave
+  `aplica`, booleana, con ese resultado. Con «no calculable» **SHALL** omitir la clave: **MUST NOT** mandar `null`
+  ni `false`.
+- El servidor **SHALL** mandar `aplica` ya resuelto y n8n **MUST NOT** recalcularlo (regla invariable 13). El
+  cálculo usa sólo lo **guardado** en la remisión, no el catálogo de hoy: un reenvío (RQ-RE-08) **SHALL** mandar el
+  mismo valor que el primer envío.
+- El cuerpo de una remisión del formulario nuevo **SHALL** tener exactamente once claves de primer nivel (las
+  diez de antes más `aplica`) y el de una de legado, diez.
+- Este requisito **MUST NOT** cambiar `hay_novedad`, ni nada de lo que se guarda, ni requerir migración, ni
+  tocar `apps/desk/src`: el técnico no ve ni marca nada distinto.
+
+#### Scenario: «Sin novedad» sola no aplica
+- GIVEN una remisión del formulario nuevo con sólo la novedad que excluye a las demás, `incluye` vacío y sin casillas
+- WHEN se calcula «Aplica»
+- THEN el resultado es `false`
+
+#### Scenario: Una novedad real sin accesorios aplica
+- GIVEN una remisión del formulario nuevo con una novedad real, `incluye` vacío y sin casillas
+- WHEN se calcula «Aplica»
+- THEN el resultado es `true`
+
+#### Scenario: «Sin novedad» con accesorios aplica
+- GIVEN una remisión del formulario nuevo con sólo «Sin novedad» y un accesorio en `incluye`
+- WHEN se calcula «Aplica»
+- THEN el resultado es `true`
+
+#### Scenario: «Llegó sin accesorios» aplica
+- GIVEN una remisión del formulario nuevo con sólo «Sin novedad», `incluye` vacío y `sinAccesoriosAt` no nulo
+- WHEN se calcula «Aplica»
+- THEN el resultado es `true`
+
+#### Scenario: «Llegó sin embalaje» aplica
+- GIVEN una remisión del formulario nuevo con sólo «Sin novedad», `incluye` vacío y `sinEmbalajeAt` no nulo
+- WHEN se calcula «Aplica»
+- THEN el resultado es `true`
+
+#### Scenario: Un «Incluye» de cadenas vacías o espacios no cuenta
+- GIVEN una remisión del formulario nuevo con sólo «Sin novedad» y `incluye` igual a `['', '   ']`
+- WHEN se calcula «Aplica»
+- THEN el resultado es `false`
+
+#### Scenario: Legado, la clave no está en el cuerpo
+- GIVEN una remisión de legado (`novedades` `NULL`), con `hayNovedad` `true`, `false` o `null`, y otra sin la propiedad `novedades`
+- WHEN se arma el payload a n8n
+- THEN el cuerpo no tiene la clave `aplica` (ni como `null` ni como `false`) y tiene diez claves
+
+#### Scenario: Un reenvío manda el mismo valor
+- GIVEN una remisión del formulario nuevo ya enviada, y después cambiada la marca de una de sus novedades en el catálogo
+- WHEN se reenvía y se arma el payload otra vez
+- THEN `aplica` es idéntico al del primer envío
+
+#### Scenario: El cuerpo del formulario nuevo tiene once claves
+- GIVEN una remisión del formulario nuevo
+- WHEN se arma el payload a n8n
+- THEN tiene exactamente las diez claves de antes más `aplica`, y `aplica` es booleano
+
+#### Scenario: Ni `hay_novedad` ni lo guardado cambian
+- GIVEN una remisión del formulario nuevo
+- WHEN se envía y se reenvía
+- THEN `hay_novedad` y el resto de sus columnas quedan como estaban y el payload sigue sin la clave `hayNovedad`
+
+#### Scenario (MANUAL, de persona) · El correo y el documento muestran «Aplica: Sí»
+- GIVEN publicados a la vez la aplicación y el nodo «Verifica Incluye Entrada» cambiado en n8n
+- WHEN se envía una remisión de prueba con una novedad real y sin accesorios
+- THEN el correo y el documento generado muestran «Aplica: Sí» (**hipótesis** sobre el documento: la plantilla no se pudo leer)
+
+#### Scenario (MANUAL, de persona) · Un solo lado publicado da el resultado de hoy
+- GIVEN el nodo nuevo con la aplicación vieja, o la aplicación nueva con el nodo viejo
+- WHEN se envía una remisión de prueba
+- THEN el resultado es el de hoy, decidido sólo por «Incluye», sin error de validación del payload

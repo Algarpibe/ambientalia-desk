@@ -192,3 +192,15 @@ export const ETIQUETA_CASILLA = { sinAccesorios: 'Llegó sin accesorios', sinEmb
 
 /** Paso (7) de `validarRecepcion`: «Llegó sin accesorios» y accesorios marcados en «Incluye» se contradicen (escalón C). */
 const ERR_SIN_ACCESORIOS_CON_INCLUYE = `«${ETIQUETA_CASILLA.sinAccesorios}» no admite accesorios marcados en «Incluye»: desmarca la casilla o la lista.`
+
+/** Lo mínimo de una remisión GUARDADA para resolver «Aplica» (RQ-RE-39). `novedades` NULL o AUSENTE = legado. */
+export interface RemisionAplica {
+  incluye?: readonly unknown[] | null; hayNovedad?: boolean | null; novedades?: readonly NovedadMarcada[] | null
+  sinAccesoriosAt?: string | null; sinEmbalajeAt?: string | null
+}
+/** «Aplica: Sí» = hay accesorios, o una novedad real, o una casilla marcada. `null` = legado: no se calcula y el payload omite la clave. */
+export function aplicaDeRemision(rem: RemisionAplica): boolean | null {
+  if (!rem.novedades) return null
+  const hayAccesorios = (rem.incluye ?? []).some((v) => typeof v === 'string' && v.trim() !== '')
+  return hayAccesorios || rem.hayNovedad === true || Boolean(rem.sinAccesoriosAt) || Boolean(rem.sinEmbalajeAt)
+}

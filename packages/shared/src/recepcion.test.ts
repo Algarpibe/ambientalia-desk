@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  novedadesActivas, validarRecepcion, componerObservaciones, fotosQueFaltan, motivoNoEnviable, categoriaDeFoto, MOTIVO_FOTO_LEGADO,
+  novedadesActivas, validarRecepcion, componerObservaciones, fotosQueFaltan, motivoNoEnviable, categoriaDeFoto, MOTIVO_FOTO_LEGADO, aplicaDeRemision,
   type NovedadCatalogo, type NovedadMarcada,
 } from './recepcion'
 
@@ -415,5 +415,42 @@ describe('PO · observaciones con la frase de cada casilla (RQ-RE-38)', () => {
     expect(componerObservaciones(CATALOGO, marcada, null)).toBe('Rayón o daño estético')
     expect(componerObservaciones(CATALOGO, marcada, null, {})).toBe('Rayón o daño estético')
     expect(componerObservaciones(CATALOGO, marcada, null, { sinAccesorios: false, sinEmbalaje: true })).toBe('Rayón o daño estético; Llegó sin embalaje')
+  })
+})
+
+describe('AP · «Aplica» resuelto desde lo guardado (RQ-RE-39)', () => {
+  const NUEVO = [{ clave: 'sin_novedad', etiqueta: 'Sin novedad' }]
+  const base = { novedades: NUEVO, hayNovedad: false, incluye: [] as string[], sinAccesoriosAt: null, sinEmbalajeAt: null }
+
+  it('AP-1 · «Sin novedad» sola, sin lista ni casillas → false', () => {
+    expect(aplicaDeRemision(base)).toBe(false)
+  })
+  it('AP-2 · una novedad real sin accesorios → true', () => {
+    expect(aplicaDeRemision({ ...base, hayNovedad: true })).toBe(true)
+  })
+  it('AP-3 · accesorios en «Incluye» con «Sin novedad» → true', () => {
+    expect(aplicaDeRemision({ ...base, incluye: ['Cable USB'] })).toBe(true)
+  })
+  it('AP-4 · sólo la casilla «Llegó sin accesorios» → true', () => {
+    expect(aplicaDeRemision({ ...base, sinAccesoriosAt: '2026-10-12T10:00:00Z' })).toBe(true)
+  })
+  it('AP-5 · sólo la casilla «Llegó sin embalaje» → true', () => {
+    expect(aplicaDeRemision({ ...base, sinEmbalajeAt: '2026-10-12T10:00:00Z' })).toBe(true)
+  })
+  it('AP-6 · «Incluye» de cadenas vacías o de espacios no cuenta como accesorios → false', () => {
+    expect(aplicaDeRemision({ ...base, incluye: ['', '  '] })).toBe(false)
+  })
+  it('AP-7 · legado (`novedades` NULL) no se calcula aunque haya novedad y accesorios → null', () => {
+    expect(aplicaDeRemision({ novedades: null, hayNovedad: true, incluye: ['Cable USB'] })).toBeNull()
+  })
+  it('AP-8 · `novedades` ausente cuenta como legado → null', () => {
+    expect(aplicaDeRemision({ hayNovedad: true, incluye: ['Cable USB'] })).toBeNull()
+  })
+  it('AP-9 · formulario nuevo con `hayNovedad` NULL y nada más → false, no null', () => {
+    expect(aplicaDeRemision({ ...base, hayNovedad: null })).toBe(false)
+  })
+  it('AP-10 · `incluye` ausente o NULL → false, sin lanzar', () => {
+    expect(aplicaDeRemision({ novedades: NUEVO, hayNovedad: false })).toBe(false)
+    expect(aplicaDeRemision({ novedades: NUEVO, hayNovedad: false, incluye: null })).toBe(false)
   })
 })
