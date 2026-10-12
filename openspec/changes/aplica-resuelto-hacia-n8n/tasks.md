@@ -41,7 +41,7 @@ Una a una. Copia previa de los ficheros en un directorio temporal fuera del repo
 
 ## 5. Cierre del lote
 
-- [ ] 5.1 Los cuatro códigos de salida, MIRADOS uno a uno y anotados: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165` y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` (código 0, tras el commit del orquestador).
+- [x] 5.1 Los cuatro códigos de salida, MIRADOS uno a uno y anotados: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165` y `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD` (código 0, tras el commit del orquestador).
 - [x] 5.2 Regla de mutación 4: barrido `grep -rnoE "(remisionWebhook|recepcion|accesoriosRemision)(\.test)?\.ts:[0-9]+(-[0-9]+)?"` sin excluir `openspec/changes/archive`, cada resultado leído contra el fichero; comprobar que ninguna cita cambió de línea (ediciones en sitio, adiciones al final). Segundo pase de abreviadas (`:NNN`) en los ficheros que citan esos módulos.
 - [x] 5.3 Regla de mutación 3 por escrito en `apply-progress.md`: decisiones que toma el cliente por este cambio, ninguna nueva (D3); repetir la búsqueda de «Aplica» como palabra en `apps/desk/src` y anotar que sigue en seis apariciones, todas el verbo en comentarios. Reglas de mutación 1 y 2: no aplican.
 - [x] 5.4 Comprobar que no se tocaron `apps/desk/server/routes/remision.ts`, `packages/zoho-sync/src/db/schema.sql`, `apps/desk/src`, `packages/shared/src/index.ts` ni `packages/shared/src/types.ts` (`git diff --stat`).
