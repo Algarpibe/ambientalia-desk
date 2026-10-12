@@ -86,3 +86,26 @@ describe('dispararRemision', () => {
     expect(r.motivo).toContain('ENOTFOUND') // el detalle útil vive en `cause`, no en el mensaje genérico
   })
 })
+
+describe('buildRemisionPayload · «Aplica» resuelto por la aplicación (RQ-RE-39)', () => {
+  const nuevo = (extra: Partial<Remision>) => ({
+    ...remision, incluye: [], novedades: [{ clave: 'sin_novedad', etiqueta: 'Sin novedad' }], hayNovedad: false,
+    sinAccesoriosAt: null, sinEmbalajeAt: null, ...extra,
+  }) as Remision
+
+  it('BP-1 · el dato de hoy (sin `novedades`) NO lleva la clave `aplica` (se mira por claves, no por valor; nace verde, la detecta M4b)', () => {
+    const p = buildRemisionPayload({ remision, ticketNumero: '10000', cliente, equipo, usuario })
+    expect(Object.keys(p)).not.toContain('aplica')
+  })
+
+  it('BP-2 · con `novedades` y todo vacío, `aplica` es false estricto y la clave existe', () => {
+    const p = buildRemisionPayload({ remision: nuevo({}), ticketNumero: '10000', cliente, equipo, usuario })
+    expect(Object.keys(p)).toContain('aplica')
+    expect(p.aplica).toBe(false)
+  })
+
+  it('BP-3 · con una casilla marcada, `aplica` es true', () => {
+    const p = buildRemisionPayload({ remision: nuevo({ sinAccesoriosAt: '2026-10-12T10:00:00Z' }), ticketNumero: '10000', cliente, equipo, usuario })
+    expect(p.aplica).toBe(true)
+  })
+})

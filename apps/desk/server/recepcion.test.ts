@@ -416,12 +416,12 @@ describe('RQ-RE-26 · /enviar del formulario nuevo', () => {
     expect((await enviar(app, cookie, id)).status).toBe(200)
   }))
 
-  it('el payload a n8n NO cambia: las diez claves de siempre, sin categoría ni novedades (nace verde; la detecta M-N1)', () => conN8n(async (n8n) => {
+  it('el payload a n8n NO cambia: las diez de siempre MÁS `aplica` (once, a propósito: RQ-RE-39), sin categoría ni novedades; `aplica` es true por `hayNovedad` (nace verde; la detecta M-N1)', () => conN8n(async (n8n) => {
     const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
     const id = await nueva(app, cookie, ['rayon_estetico']); await subirTodas(app, cookie, id, [{ categoria: 'novedad', novedad: 'rayon_estetico' }])
     expect((await enviar(app, cookie, id)).status).toBe(200)
     const cuerpo = JSON.parse(String(n8n.mock.calls[0][1].body))
-    expect(Object.keys(cuerpo).sort()).toEqual(['cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio'])
+    expect(Object.keys(cuerpo).sort()).toEqual(['aplica', 'cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio']); expect(cuerpo.aplica).toBe(true)
     expect(Object.keys(cuerpo.fotos[0]).sort()).toEqual(['data', 'fileName', 'mimeType'])
     expect(cuerpo.observaciones).toBe('Rayón o daño estético')
   }))
@@ -718,14 +718,56 @@ describe('PE · /enviar con novedad exenta y con cada casilla (RQ-RE-26 puntos 2
     expect(r.status).toBe(422); expect(r.body.error).toMatch(/Faltan fotos obligatorias: de los accesorios, del embalaje\./)
   }))
 
-  it('PW-1 · con las dos casillas el payload a n8n conserva sus diez claves; las frases sólo van dentro de `observaciones`', () => conN8n(async (n8n) => {
+  it('PW-1 · con las dos casillas el payload a n8n lleva once claves (las diez más `aplica`, true sólo por las casillas, a propósito: RQ-RE-39); las frases sólo van dentro de `observaciones`', () => conN8n(async (n8n) => {
     const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
     const id = await conCasillas(app, cookie, ['sin_novedad'], { sinAccesorios: true, sinEmbalaje: true })
     expect((await subir(app, cookie, id, { categoria: 'equipo' })).status).toBe(201)
     expect((await enviar(app, cookie, id)).status).toBe(200)
     const cuerpo = JSON.parse(String(n8n.mock.calls[0][1].body))
-    expect(Object.keys(cuerpo).sort()).toEqual(['cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio'])
+    expect(Object.keys(cuerpo).sort()).toEqual(['aplica', 'cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio']); expect(cuerpo.aplica).toBe(true)
     expect(cuerpo.observaciones).toBe('Sin novedad; Llegó sin accesorios; Llegó sin embalaje')
     expect(JSON.stringify(Object.keys(cuerpo))).not.toMatch(/sin_?[Aa]ccesorios|sin_?[Ee]mbalaje/)
+  }))
+})
+
+describe('PA-A · «Aplica» viaja resuelto en el cuerpo a n8n (RQ-RE-39)', () => {
+  const LLAVES_DIEZ = ['cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio']
+  const URL_N8N = { remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' }
+  const enviar = (app: App, cookie: string, id: string) => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+  const conRespuestas = async (estados: number[], prueba: (cuerpos: Array<Record<string, unknown>>) => Promise<void>) => {
+    const cuerpos: Array<Record<string, unknown>> = []
+    const fetchMock = vi.fn(async (...args: [string, RequestInit]) => {
+      cuerpos.push(JSON.parse(String(args[1].body)))
+      return new Response('{}', { status: estados[Math.min(cuerpos.length, estados.length) - 1] })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    try { await prueba(cuerpos) } finally { vi.unstubAllGlobals() }
+  }
+
+  it('PA-A1 · «Sin novedad» con las tres fotos y sin accesorios: once claves y `aplica` false', () => conRespuestas([202], async (cuerpos) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['sin_novedad']); await subirTodas(app, cookie, id)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    expect(Object.keys(cuerpos[0]).sort()).toEqual(['aplica', ...LLAVES_DIEZ])
+    expect(cuerpos[0].aplica).toBe(false)
+  }))
+
+  it('PA-A2 · legado con una foto: diez claves, sin `aplica` ni `hayNovedad` (nace verde; la detecta M4)', () => conRespuestas([202], async (cuerpos) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await legado(app, cookie)
+    expect((await subir(app, cookie, id)).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    expect(Object.keys(cuerpos[0]).sort()).toEqual(LLAVES_DIEZ)
+    expect(Object.keys(cuerpos[0])).not.toContain('hayNovedad')
+  }))
+
+  it('PA-A3 · n8n rechaza el primer envío y el reenvío lleva el MISMO `aplica`', () => conRespuestas([403, 202], async (cuerpos) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['sin_novedad']); await subirTodas(app, cookie, id)
+    expect((await enviar(app, cookie, id)).status).not.toBe(200)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    expect(cuerpos).toHaveLength(2)
+    expect(cuerpos[0].aplica).toBe(false)
+    expect(cuerpos[1].aplica).toBe(cuerpos[0].aplica)
   }))
 })

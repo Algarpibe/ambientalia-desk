@@ -181,14 +181,14 @@ describe('RQ-RE-36 · lo ya guardado y lo ya sembrado se sigue leyendo y aceptan
     expect(b).toMatchObject({ origenChecklist: 'perfil', incluye: ['Del perfil viejo'], incluyeDetalle: [{ nombre: 'Del perfil viejo', sku: null }] })
   })
 
-  it('(4) el payload a n8n conserva sus diez claves y no lleva incluyeDetalle ni SKU (nace verde: lo mata añadir la clave)', () => conN8n(async (n8n) => {
+  it('(4) el payload a n8n lleva once claves (las diez más `aplica`, true sólo por «Incluye», a propósito: RQ-RE-39) y no lleva incluyeDetalle ni SKU (nace verde: lo mata añadir la clave)', () => conN8n(async (n8n) => {
     const cookie = await adminCookie(); const { app } = appWith(URL_N8N)
     await crearArticulo(db, 'cmod-1', { clase: 'accesorio', itemId: 'i1', sku: 'CB-100', nombre: 'Cable USB' })
     const id = (await crear(app, cookie, { incluye: ['Cable USB'], novedades: ['sin_novedad'], rotulado: true })).body.id as string
     for (const categoria of ['equipo', 'accesorios', 'embalaje']) expect((await subir(app, cookie, id, { categoria })).status).toBe(201)
     expect((await enviar(app, cookie, id)).status).toBe(200)
     const texto = String(n8n.mock.calls[0][1].body)
-    expect(Object.keys(JSON.parse(texto)).sort()).toEqual(['cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio'])
+    expect(Object.keys(JSON.parse(texto)).sort()).toEqual(['aplica', 'cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio']); expect(JSON.parse(texto).aplica).toBe(true)
     expect(JSON.parse(texto).incluye).toEqual(['Cable USB'])
     expect(texto).not.toMatch(/incluyeDetalle|CB-100|"sku"/)
   }))
