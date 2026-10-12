@@ -115,8 +115,7 @@ Las remisiones **anteriores** a esta columna y las de `origen: 'historico'` **SH
 novedad ni a las del formulario nuevo: la regla no es retroactiva.
 
 El envío a n8n (`remisionWebhook.ts:5-24`) **MUST NOT** ganar ningún campo nuevo de la recepción: ni `hayNovedad`,
-ni `novedades`, ni `novedadOtro`, ni `rotulado*`. La única clave que gana sobre las de esta tanda es `aplica`
-(RQ-RE-39), ya resuelta por el servidor. `observaciones` sigue viajando como hasta ahora; en el formulario
+ni `novedades`, ni `novedadOtro`, ni `rotulado*`. La única clave que gana sobre las de esta tanda es `aplica` (RQ-RE-39), ya resuelta por el servidor. `observaciones` sigue viajando como hasta ahora; en el formulario
 nuevo lleva el texto compuesto de RQ-RE-23.
 
 #### Scenario: El alta de legado persiste el valor declarado
@@ -160,8 +159,7 @@ nuevo lleva el texto compuesto de RQ-RE-23.
 - El cálculo de lo que falta para enviar (RQ-RE-18) **SHALL** recibir las dos casillas y las marcas
   `exentaDeFoto` de las novedades, y servidor y formulario **SHALL** consumir esa misma función.
 - El payload hacia n8n (RQ-RE-13) **MUST NOT** ganar ninguna clave por las casillas: llegan como texto dentro de
-  `observaciones` y, resumidas, dentro de `aplica` (RQ-RE-39), que es la única clave que gana sobre las de esta
-  tanda; no viajan como claves propias.
+  `observaciones` y, resumidas, dentro de `aplica` (RQ-RE-39), que es la única clave que gana sobre las de esta tanda; no viajan como claves propias.
 
 #### Scenario: Cada casilla se guarda con su traza
 - GIVEN un usuario autenticado y un alta con `sinEmbalaje: true`, y `sinAccesorios` ausente
