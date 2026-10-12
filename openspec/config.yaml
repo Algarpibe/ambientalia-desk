@@ -4679,6 +4679,31 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-04 (dato «Aplica» resuelto hacia n8n; cierra la fila si no queda nada más)"
+  - clave: "decision/e167-rotulado-tras-enviar-12-10"
+    fecha: "2026-10-12"
+    pregunta: |
+      E-167: en qué momento se confirma que el equipo quedó rotulado y guardado, con qué etiqueta se rotula, si la
+      confirmación bloquea algo, y qué pasa si la etiqueta no se genera.
+    respuesta_textual: |
+      «E-167 cerrada: Servicio Tecnico rotula con la etiqueta DYMO tras enviar. El rotulado se confirma despues del envio, con traza, sin bloquear transiciones; si la etiqueta no se genera se avisa a quien envio y al Director Tecnico. Autorizo el encargo que pego»
+    consecuencias: |
+      (1) CIERRA E-167 (docs/sdd/ENTRADA.md), que estaba PARCIAL desde el 2026-10-09.
+      (2) CON QUÉ SE ROTULA: Servicio Técnico rotula con la etiqueta .dymo que el flujo de n8n deja en la carpeta de
+      la remisión en Drive; la imprime y la pega justo después de generada la remisión.
+      (3) CUÁNDO SE CONFIRMA: la confirmación de «Rotulado y guardado» pasa a DESPUÉS del envío, con traza de quién
+      y cuándo. Mientras no se confirme, la remisión se ve como «pendiente de rotular». NO BLOQUEA NINGUNA
+      TRANSICIÓN: informa, no impide.
+      (4) SI LA ETIQUETA NO SE GENERA: aviso a quien envió la remisión y al Director Técnico.
+      (5) EL NODO DE N8N NO SE CAMBIA, a petición de Servicio Técnico; la fecha de la etiqueta se queda como sale hoy.
+      (6) LO QUE MIDIÓ EL ANALISTA el 2026-10-12, leyendo el flujo en sólo lectura, y que esta sesión no ha
+      comprobado: la etiqueta lleva cliente, serie y «# ticket»; se genera dentro de la ejecución que dispara el
+      webhook, o sea después de enviar; no se imprime sola: es un fichero .dymo que queda en Drive.
+      (7) SE CONSTRUYE como siguiente tanda de F1B-04, con tanda: F1B-04 y ciclo SDD completo en su worktree,
+      parando antes de fusionar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e167-rotulado-tras-enviar-12-10) · docs/sdd/ENTRADA.md → E-167"
+    maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1239 (la confirmación «obligatoria para completar la recepción»)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1B-04 (E-167: el rotulado se confirma tras el envío, con traza y aviso si no hay etiqueta)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:

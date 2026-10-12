@@ -2,7 +2,7 @@
 
 Para quien edita el flujo de n8n y no programa. Frases cortas, pasos numerados. Cambio `aplica-resuelto-hacia-n8n` (F1B-04).
 
-> **De dónde sale cada dato.** El «código actual» del punto 4 es el que el analista copió del nodo el 2026-10-12, al leer el flujo en sólo lectura. Lo que hace el nodo anterior también lo leyó el analista. Esta tanda **no abrió n8n** y no comprobó ninguna de las dos cosas. Por eso el punto 3 empieza comparando.
+> **De dónde sale cada dato.** El «código actual» del punto 4 es el **texto literal del nodo**, leído por el analista en «Verifica Incluye Entrada» el 2026-10-12, en sólo lectura. Una versión anterior de este documento traía cuatro líneas que eran un resumen del analista, no el texto del nodo: quedan sustituidas. Lo que hace el nodo anterior también lo leyó el analista. La sesión que escribe este documento **no abrió n8n** y no comprobó ninguna de las dos cosas. Por eso el punto 3 empieza comparando.
 
 ## 1. Qué cambia y por qué
 
@@ -18,18 +18,30 @@ Para quien edita el flujo de n8n y no programa. Frases cortas, pasos numerados. 
 
 ## 3. Comprobaciones ANTES de pegar
 
-1. **El código del nodo coincide con el «código actual» del punto 4.** Abre el nodo y compáralo con el punto 4. Da igual que cambien espacios o saltos de línea. Si cambia otra cosa, **NO pegues nada** y avisa: el cambio se diseñó sobre otro código.
+1. **El código del nodo coincide con el «código actual» del punto 4.** Abre el nodo y compáralo con el punto 4, que es su texto literal, comentarios incluidos. Da igual que cambien espacios o saltos de línea. Si cambia otra cosa, **NO pegues nada** y avisa: el cambio se diseñó sobre otro código.
 2. **Guarda una copia propia.** Antes de borrar nada, copia lo que hoy tiene el nodo a un bloc de notas. Esa es la copia buena para volver atrás.
 3. **El dato llega al nodo.** Abre una ejecución de prueba y mira la salida del nodo «Remision-Entrada-Salida». Junto a `Incluye` deberían aparecer los demás campos con minúscula (`remisionId`, `observaciones`). Si están, `aplica` llegará igual. Si no están, anota dónde quedan y avisa; no pegues.
 4. **«Validar payload» no rechaza campos de más.** Si rechaza campos que no conoce, avisa antes de publicar la aplicación.
 
-## 4. Código actual (copiado del nodo por el analista; compáralo con el nodo)
+## 4. Código actual (texto literal del nodo, leído por el analista el 2026-10-12; compáralo con el nodo)
 
 ```js
+// Verifica si el campo "Incluye" existe y es un array
+// El Incluye ya no viene del formulario por marca (eliminado): lo manda la app en el webhook.
 const _src = $('Remision-Entrada-Salida').first().json.Incluye;
 const incluye = Array.isArray(_src) ? _src : [];
+
+// Filtra valores no vacíos (ni undefined, ni null, ni string vacío)
 const tieneValor = incluye.some(v => v && v.toString().trim() !== "");
-return [{ json: { resultado: tieneValor ? "Sí" : "No" } }];
+
+// Devuelve "Sí" si hay al menos un valor, "No" si todos están vacíos
+return [
+  {
+    json: {
+      resultado: tieneValor ? "Sí" : "No"
+    }
+  }
+];
 ```
 
 ## 5. Código nuevo (copiar y pegar completo)
