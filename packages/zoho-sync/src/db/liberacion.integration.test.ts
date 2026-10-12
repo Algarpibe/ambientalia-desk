@@ -66,7 +66,7 @@ d('liberación sin factura · la mezcla de custom_fields en PostgreSQL real (E-2
 
   afterAll(async () => {
     await pool?.end()
-    await admin?.query(`DROP DATABASE IF EXISTS ${base} WITH (FORCE)`)
+    if (admin) await sinSesiones(admin, base).finally(() => admin.query(`DROP DATABASE IF EXISTS ${base} WITH (FORCE)`))
     await admin?.end()
   }, 60_000)
 
@@ -153,3 +153,12 @@ d('liberación sin factura · la mezcla de custom_fields en PostgreSQL real (E-2
     expect(f.custom_fields).not.toEqual(emulacion(null, { [TEXTO]: 'ok' }))
   })
 })
+
+/** Espera ACOTADA a que el servidor no vea sesiones de `base`: pg-pool resuelve `end()` antes de que cierren sus sockets, y el DROP forzado mataría una sesión a medio despedirse (57P01). */
+async function sinSesiones(admin: Pool, base: string): Promise<void> {
+  const fin = Date.now() + 10_000
+  while (Number((await admin.query('SELECT count(*) AS n FROM pg_stat_activity WHERE datname = $1', [base])).rows[0].n) > 0) {
+    if (Date.now() > fin) throw new Error(`quedaron sesiones abiertas en ${base} tras cerrar el pool`)
+    await new Promise((r) => setTimeout(r, 50))
+  }
+}
