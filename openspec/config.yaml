@@ -4632,6 +4632,30 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-04 (remanente: exención de foto y casilla con traza)"
+  - clave: "decision/aplica-si-no-remision-12-10"
+    fecha: "2026-10-12"
+    pregunta: |
+      Qué significa «Sí» en el encabezado «OBSERVACIONES O NOVEDADES // Aplica: Sí/No» del formato F-ST-010 de la
+      remisión, si se cambia hoy el flujo de n8n que lo calcula, y dónde entra el arreglo.
+    respuesta_textual: |
+      «Aplica Si significa que hay accesorios o una novedad real; Sin novedad no cuenta. Por ahora queda como esta. El dato explicito a n8n entra en el remanente de F1B-04, app y flujo a la vez»
+    consecuencias: |
+      (1) DEFINICIÓN, que no estaba escrita en ningún sitio: en ese encabezado, «Sí» significa que el equipo trae
+      accesorios O que hay alguna novedad real. «Sin novedad» no cuenta como novedad.
+      (2) HOY NO SE CAMBIA NADA (opción C). El flujo sigue calculando «Aplica» sólo por la lista «Incluye», así que
+      una remisión con novedad y sin accesorios sigue saliendo con «Aplica: No» y con su texto de observaciones
+      debajo. Es incoherencia de rótulo conocida y aceptada hasta que se construya el punto (3).
+      (3) CONTENIDO NUEVO DEL REMANENTE DE F1B-04 (opción A): la aplicación manda a n8n un dato explícito de «hay
+      novedad» y el flujo lo usa para calcular «Aplica». La aplicación y el flujo se publican A LA VEZ. No lleva
+      fecha. Tocar el flujo sigue siendo tarea de persona sobre un flujo en uso real: esta decisión fija el
+      contenido, no autoriza a editarlo desde una sesión.
+      (4) DESCARTADAS, y por qué, en la sección final del 2026-10-12 (c) de docs/sdd/TRASPASO_2026-10-08.md:
+      decidir «Sí» porque hay texto de observaciones, y decidirlo en n8n comparando el texto con «Sin novedad»
+      (opción B).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/aplica-si-no-remision-12-10) · docs/sdd/TRASPASO_2026-10-08.md → sección final del 2026-10-12 (c)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "contenido de F1B-04 (remanente: dato explícito de «hay novedad» hacia n8n; aplicación y flujo a la vez)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
