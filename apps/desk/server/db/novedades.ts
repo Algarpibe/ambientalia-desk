@@ -10,7 +10,7 @@ import type { CambiosNovedad, NovedadCatalogo } from '@ambientalia/shared'
  */
 export async function listNovedades(db: Queryable): Promise<NovedadCatalogo[]> {
   const r = await db.query(
-    'SELECT clave, etiqueta, orden, activo, excluye_demas, exige_texto FROM public.catalogo_novedades ORDER BY orden, clave',
+    'SELECT clave, etiqueta, orden, activo, excluye_demas, exige_texto, exenta_de_foto FROM public.catalogo_novedades ORDER BY orden, clave',
   )
   return r.rows.map((f) => ({
     clave: String(f.clave),
@@ -18,7 +18,7 @@ export async function listNovedades(db: Queryable): Promise<NovedadCatalogo[]> {
     orden: Number(f.orden),
     activo: f.activo === true,
     excluyeDemas: f.excluye_demas === true,
-    exigeTexto: f.exige_texto === true,
+    exigeTexto: f.exige_texto === true, exentaDeFoto: f.exenta_de_foto === true,
   }))
 }
 

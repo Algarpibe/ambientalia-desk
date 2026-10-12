@@ -1,6 +1,6 @@
 import {
-  motivoNoEnviable, novedadesActivas, validarRecepcion,
-  type CategoriaFoto, type NovedadCatalogo, type NovedadMarcada, type RemisionRecepcion,
+  fotosQueFaltan, motivoNoEnviable, novedadesActivas, validarRecepcion,
+  type CategoriaFoto, type CuerpoRecepcion, type NovedadCatalogo, type NovedadMarcada, type RemisionRecepcion,
 } from '@ambientalia/shared'
 
 /**
@@ -45,6 +45,10 @@ export function planDeFotos<F>(fotos: FotosDelFormulario<F>, marcadas: readonly 
   ]
 }
 
+/** La traza de las casillas que `fotosQueFaltan` lee: el servidor pone la hora real; aquí basta una marca (RQ-RE-38). */
+const marcaCasillas = (c: { sinAccesorios: boolean; sinEmbalaje: boolean }) =>
+  ({ ...(c.sinAccesorios ? { sinAccesoriosAt: 'casilla' } : {}), ...(c.sinEmbalaje ? { sinEmbalajeAt: 'casilla' } : {}) })
+
 const clasificadas = (plan: readonly FotoPlan<unknown>[]) => plan.map((p) => ({ categoria: p.categoria, novedad: p.novedad }))
 
 /**
@@ -53,12 +57,12 @@ const clasificadas = (plan: readonly FotoPlan<unknown>[]) => plan.map((p) => ({ 
  */
 export function motivoNoCreable(
   catalogo: readonly NovedadCatalogo[],
-  cuerpo: { novedades: unknown; novedadOtro?: unknown; rotulado?: unknown },
+  cuerpo: CuerpoRecepcion,
   plan: readonly FotoPlan<unknown>[],
 ): string | null {
   const v = validarRecepcion(catalogo, cuerpo)
   if (!v.ok) return v.error
-  const rem: RemisionRecepcion = { hayNovedad: v.valor.hayNovedad, novedades: v.valor.novedades, rotuladoAt: 'rotulado' }
+  const rem: RemisionRecepcion = { hayNovedad: v.valor.hayNovedad, novedades: v.valor.novedades, rotuladoAt: 'rotulado', ...marcaCasillas(v.valor) }
   return motivoNoEnviable(rem, clasificadas(plan), catalogo)
 }
 
@@ -76,12 +80,27 @@ export function puedeContinuarSinPendientes(
  */
 export function vistaDelFormulario<F>(
   catalogo: readonly NovedadCatalogo[], seleccion: readonly string[], otro: string, rotulado: boolean, fotos: FotosDelFormulario<F>,
+  casillas: { sinAccesorios: boolean; sinEmbalaje: boolean; incluye: readonly string[] } = { sinAccesorios: false, sinEmbalaje: false, incluye: [] },
 ) {
   const lista = novedadesActivas(catalogo)
   const marcadas: NovedadMarcada[] = lista.filter((n) => seleccion.includes(n.clave)).map(({ clave, etiqueta }) => ({ clave, etiqueta }))
-  const plan = planDeFotos(fotos, marcadas)
-  const cuerpo = { novedades: [...seleccion], novedadOtro: otro, rotulado }
+  // Comodidad sin guarda (RF-2): una foto de más no falsea nada, así que el servidor no la rechaza; aquí no se sube.
+  const plan = planDeFotos(fotos, marcadas).filter((p) => !(p.categoria === 'accesorios' && casillas.sinAccesorios) && !(p.categoria === 'embalaje' && casillas.sinEmbalaje))
+  const cuerpo = {
+    novedades: [...seleccion], novedadOtro: otro, rotulado, sinAccesorios: casillas.sinAccesorios, sinEmbalaje: casillas.sinEmbalaje,
+    incluye: casillas.sinAccesorios ? [] : [...casillas.incluye],
+  }
   const v = validarRecepcion(catalogo, cuerpo)
-  const remision: RemisionRecepcion | null = v.ok ? { hayNovedad: v.valor.hayNovedad, novedades: v.valor.novedades, rotuladoAt: 'rotulado' } : null
-  return { lista, marcadas, plan, cuerpo, remision, motivo: motivoNoCreable(catalogo, cuerpo, plan) }
+  const remision: RemisionRecepcion | null = v.ok ? { hayNovedad: v.valor.hayNovedad, novedades: v.valor.novedades, rotuladoAt: 'rotulado', ...marcaCasillas(v.valor) } : null
+  return { lista, marcadas, plan, cuerpo, remision, motivo: motivoNoCreable(catalogo, cuerpo, plan), selectores: selectoresDeFoto(catalogo, marcadas, casillas) }
+}
+
+/**
+ * Qué selectores de foto se pintan: literalmente «qué fotos faltan con cero fotos» (`fotosQueFaltan`), así que la
+ * exención por marca y las casillas las decide la misma función que el servidor ejecuta en `/enviar` (regla 13).
+ */
+export function selectoresDeFoto(
+  catalogo: readonly NovedadCatalogo[], marcadas: readonly NovedadMarcada[], casillas: { sinAccesorios: boolean; sinEmbalaje: boolean },
+) {
+  return fotosQueFaltan({ hayNovedad: null, novedades: [...marcadas], rotuladoAt: null, ...marcaCasillas(casillas) }, [], catalogo)
 }

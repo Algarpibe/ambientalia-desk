@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { NovedadCatalogo } from '@ambientalia/shared'
 import { MOTIVO_FOTO_LEGADO } from '@ambientalia/shared'
-import { alternarNovedad, planDeFotos, motivoNoCreable, puedeContinuarSinPendientes, vistaDelFormulario, FOTOS_VACIAS } from './recepcionForm'
+import { alternarNovedad, planDeFotos, motivoNoCreable, puedeContinuarSinPendientes, vistaDelFormulario, selectoresDeFoto, FOTOS_VACIAS } from './recepcionForm'
 
 const nov = (clave: string, orden: number, over: Partial<NovedadCatalogo> = {}): NovedadCatalogo =>
   ({ clave, etiqueta: `Etiqueta ${clave}`, orden, activo: true, excluyeDemas: false, exigeTexto: false, ...over })
@@ -112,7 +112,7 @@ describe('vistaDelFormulario', () => {
     expect(v.lista.map((n) => n.clave)).toEqual(['ninguna', 'golpe', 'falta', 'libre'])
     expect(v.marcadas.map((m) => m.clave)).toEqual(['golpe', 'falta'])
     expect(v.plan.map((p) => p.file.name)).toEqual(['e', 'a', 'm', 'g'])
-    expect(v.cuerpo).toEqual({ novedades: ['falta', 'golpe'], novedadOtro: '', rotulado: true })
+    expect(v.cuerpo).toEqual({ novedades: ['falta', 'golpe'], novedadOtro: '', rotulado: true, sinAccesorios: false, sinEmbalaje: false, incluye: [] })
     expect(v.motivo).toBe('Falta la foto de cada novedad marcada: Etiqueta falta.')
   })
   it('sin marcar nada: motivo de la lista y sin remisión para continuar', () => {
@@ -127,5 +127,64 @@ describe('vistaDelFormulario', () => {
     const v = vistaDelFormulario(CAT, ['golpe'], '', true, { ...MIN, porNovedad: { golpe: [f('g')] } })
     expect(v.motivo).toBeNull()
     expect(v.remision).toEqual({ hayNovedad: true, novedades: [{ clave: 'golpe', etiqueta: 'Etiqueta golpe' }], rotuladoAt: 'rotulado' })
+  })
+})
+
+// RQ-RE-37 / RQ-RE-38 (recepcion-exencion-foto-y-casilla). La exención es una marca del dato, no una clave.
+const CAT2: NovedadCatalogo[] = [...CAT, nov('sinfoto', 5, { exentaDeFoto: true })]
+const SIN = { sinAccesorios: false, sinEmbalaje: false }
+
+describe('selectoresDeFoto', () => {
+  it('RF-1 sin casillas ni exentas: las tres mínimas y una por novedad marcada', () => {
+    const s = selectoresDeFoto(CAT2, [{ clave: 'golpe', etiqueta: 'G' }], SIN)
+    expect(s.categorias).toEqual(['equipo', 'accesorios', 'embalaje'])
+    expect(s.novedades.map((n) => n.clave)).toEqual(['golpe'])
+  })
+  it('RF-1 cada casilla quita sólo su categoría; equipo nunca se quita', () => {
+    expect(selectoresDeFoto(CAT2, [], { sinAccesorios: true, sinEmbalaje: false }).categorias).toEqual(['equipo', 'embalaje'])
+    expect(selectoresDeFoto(CAT2, [], { sinAccesorios: false, sinEmbalaje: true }).categorias).toEqual(['equipo', 'accesorios'])
+    expect(selectoresDeFoto(CAT2, [], { sinAccesorios: true, sinEmbalaje: true }).categorias).toEqual(['equipo'])
+  })
+  it('RF-1 la novedad exenta no pide selector, la que excluye a las demás tampoco, la normal sí', () => {
+    const marcadas = [{ clave: 'sinfoto', etiqueta: 'S' }, { clave: 'golpe', etiqueta: 'G' }]
+    expect(selectoresDeFoto(CAT2, marcadas, SIN).novedades.map((n) => n.clave)).toEqual(['golpe'])
+    expect(selectoresDeFoto(CAT2, [{ clave: 'ninguna', etiqueta: 'N' }], SIN).novedades).toEqual([])
+  })
+})
+
+describe('vistaDelFormulario con casillas', () => {
+  it('RF-2 el plan descarta las fotos de la categoría con casilla marcada', () => {
+    const v = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: true, sinEmbalaje: false, incluye: [] })
+    expect(v.plan.map((p) => p.file.name)).toEqual(['e', 'm'])
+    const w = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: false, sinEmbalaje: true, incluye: [] })
+    expect(w.plan.map((p) => p.file.name)).toEqual(['e', 'a'])
+  })
+  it('RF-3 con la casilla y sin esa foto no hay motivo; sin la casilla sí', () => {
+    const sinFotoAcc = { ...MIN, accesorios: [] }
+    expect(vistaDelFormulario(CAT2, ['ninguna'], '', true, sinFotoAcc, { sinAccesorios: true, sinEmbalaje: false, incluye: [] }).motivo).toBeNull()
+    expect(vistaDelFormulario(CAT2, ['ninguna'], '', true, sinFotoAcc).motivo).toBe('Faltan fotos obligatorias: de los accesorios.')
+    const sinFotoEmb = { ...MIN, embalaje: [] }
+    expect(vistaDelFormulario(CAT2, ['ninguna'], '', true, sinFotoEmb, { sinAccesorios: false, sinEmbalaje: true, incluye: [] }).motivo).toBeNull()
+  })
+  it('RF-3 la novedad exenta marcada sin foto no impide crear', () => {
+    expect(vistaDelFormulario(CAT2, ['sinfoto'], '', true, MIN).motivo).toBeNull()
+  })
+  it('RF-3 «Llegó sin accesorios» con accesorios en «Incluye»: el motivo es el de validarRecepcion', () => {
+    const m = motivoNoCreable(CAT2, { novedades: ['ninguna'], rotulado: true, sinAccesorios: true, incluye: ['Cable'] }, planDeFotos(MIN, []))
+    expect(m).toBe('«Llegó sin accesorios» no admite accesorios marcados en «Incluye»: desmarca la casilla o la lista.')
+  })
+  it('RF-3 motivoNoCreable pasa las casillas a la remisión evaluada', () => {
+    const plan = planDeFotos({ ...MIN, accesorios: [] }, [])
+    expect(motivoNoCreable(CAT2, { novedades: ['ninguna'], rotulado: true, sinAccesorios: true }, plan)).toBeNull()
+    expect(motivoNoCreable(CAT2, { novedades: ['ninguna'], rotulado: true, sinEmbalaje: true }, planDeFotos({ ...MIN, embalaje: [] }, []))).toBeNull()
+  })
+  it('RF-4 el cuerpo lleva las casillas y vacía «Incluye» con «Llegó sin accesorios»', () => {
+    const v = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: true, sinEmbalaje: true, incluye: ['Cable', 'Fuente'] })
+    expect(v.cuerpo.incluye).toEqual([])
+    expect(v.cuerpo.sinAccesorios).toBe(true)
+    expect(v.cuerpo.sinEmbalaje).toBe(true)
+    expect(v.motivo).toBeNull()
+    const w = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: false, sinEmbalaje: false, incluye: ['Cable'] })
+    expect(w.cuerpo.incluye).toEqual(['Cable'])
   })
 })

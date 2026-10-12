@@ -5,7 +5,7 @@ import { faltaFotoPorNovedad } from './remision'
  *
  * Puro, sin base ni red: el catálogo entra como ARGUMENTO. El servidor lo lee de `public.catalogo_novedades`
  * y el cliente de `GET /api/novedades-remision`; las reglas se deciden por las marcas (`excluyeDemas`,
- * `exigeTexto`, `activo`) y nunca por la clave ni por la etiqueta.
+ * `exigeTexto`, `exentaDeFoto`, `activo`) y nunca por la clave ni por la etiqueta.
  */
 
 /** Una fila del catálogo de novedades, tal como la sirve la ruta de lectura (camelCase, como el resto de la API). */
@@ -15,7 +15,7 @@ export interface NovedadCatalogo {
   orden: number
   activo: boolean
   excluyeDemas: boolean
-  exigeTexto: boolean
+  exigeTexto: boolean; exentaDeFoto?: boolean
 }
 
 /** Categorías con que se etiqueta cada foto de la remisión de entrada. */
@@ -42,7 +42,7 @@ export interface NovedadMarcada {
 export interface RecepcionValidada {
   novedades: NovedadMarcada[]
   novedadOtro: string | null
-  hayNovedad: boolean
+  hayNovedad: boolean; sinAccesorios: boolean; sinEmbalaje: boolean
   observaciones: string
 }
 
@@ -54,10 +54,10 @@ export type ResultadoRecepcion = { ok: true; valor: RecepcionValidada } | { ok: 
  * La etiqueta sale de la instantánea y no del catálogo de hoy: corregir una etiqueta después no reescribe nada.
  */
 export function componerObservaciones(
-  catalogo: readonly NovedadCatalogo[], marcadas: readonly NovedadMarcada[], otro: string | null,
+  catalogo: readonly NovedadCatalogo[], marcadas: readonly NovedadMarcada[], otro: string | null, casillas?: { sinAccesorios?: boolean; sinEmbalaje?: boolean },
 ): string {
   const exigen = new Set(catalogo.filter((n) => n.exigeTexto).map((n) => n.clave))
-  return marcadas.map((m) => (exigen.has(m.clave) && otro ? `${m.etiqueta}: ${otro}` : m.etiqueta)).join('; ')
+  return [...marcadas.map((m) => (exigen.has(m.clave) && otro ? `${m.etiqueta}: ${otro}` : m.etiqueta)), ...(['sinAccesorios', 'sinEmbalaje'] as const).filter((k) => casillas?.[k]).map((k) => ETIQUETA_CASILLA[k])].join('; ')
 }
 
 const ERR_SIN_CATALOGO = 'La lista de novedades no está cargada: avisa a un administrador.'
@@ -69,12 +69,12 @@ const ERR_SIN_ROTULADO = 'Confirma que el equipo quedó rotulado y guardado.'
  *
  * ORDEN INTERNO FIJO de los pasos (regla de mutación 1; la prueba PA-3 lo fija por pares): (1) catálogo sin
  * filas activas, (2) no es lista de textos o está vacía, (3) claves desconocidas o inactivas, (4) una que
- * excluye a las demás combinada con otra, (5) una que exige texto sin texto, (6) rotulado distinto de `true`.
+ * excluye a las demás combinada con otra, (5) una que exige texto sin texto, (6) rotulado distinto de `true`, (7) «sin accesorios» con accesorios en `incluye`.
  * Duplicados se pliegan; la salida va por `orden`. Se decide por las marcas del catálogo, nunca por la clave.
  */
 export function validarRecepcion(
   catalogo: readonly NovedadCatalogo[],
-  cuerpo: { novedades: unknown; novedadOtro?: unknown; rotulado?: unknown },
+  cuerpo: CuerpoRecepcion,
 ): ResultadoRecepcion {
   const activas = novedadesActivas(catalogo)
   if (activas.length === 0) return { ok: false, error: ERR_SIN_CATALOGO }
@@ -99,15 +99,15 @@ export function validarRecepcion(
   if (exigeTexto && !texto) return { ok: false, error: `«${exigeTexto.etiqueta}» exige describir la novedad.` }
 
   if (cuerpo.rotulado !== true) return { ok: false, error: ERR_SIN_ROTULADO }
-
+  const sinAccesorios = cuerpo.sinAccesorios === true, sinEmbalaje = cuerpo.sinEmbalaje === true; if (sinAccesorios && Array.isArray(cuerpo.incluye) && cuerpo.incluye.length > 0) return { ok: false, error: ERR_SIN_ACCESORIOS_CON_INCLUYE }
   const novedades = marcadas.map((n) => ({ clave: n.clave, etiqueta: n.etiqueta }))
   const novedadOtro = exigeTexto ? texto : null
   return {
     ok: true,
     valor: {
       novedades, novedadOtro,
-      hayNovedad: marcadas.some((n) => !n.excluyeDemas),
-      observaciones: componerObservaciones(catalogo, novedades, novedadOtro),
+      hayNovedad: marcadas.some((n) => !n.excluyeDemas), sinAccesorios, sinEmbalaje,
+      observaciones: componerObservaciones(catalogo, novedades, novedadOtro, { sinAccesorios, sinEmbalaje }),
     },
   }
 }
@@ -121,7 +121,7 @@ export const ETIQUETA_CATEGORIA_FOTO: Record<CategoriaFoto, string> = {
 export const MOTIVO_FOTO_LEGADO = 'El equipo llegó con novedad y la remisión no tiene fotos: sube al menos una antes de enviarla.'
 
 /** Lo mínimo de una remisión que las puertas de foto necesitan; `novedades` NULL = legado. */
-export interface RemisionRecepcion { hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; rotuladoAt: string | null }
+export interface RemisionRecepcion { hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; rotuladoAt: string | null; sinAccesoriosAt?: string | null; sinEmbalajeAt?: string | null }
 /** Lo mínimo de una foto: su etiqueta de categoría y de novedad (ambas pueden ser NULL: foto sin clasificar). */
 export interface FotoClasificada { categoria?: string | null; novedad?: string | null }
 
@@ -136,9 +136,9 @@ export function fotosQueFaltan(
 ): { categorias: CategoriaFoto[]; novedades: NovedadMarcada[] } {
   if (!rem.novedades) return { categorias: [], novedades: [] }
   return {
-    categorias: CATEGORIAS_FOTO_MINIMAS.filter((c) => !fotos.some((f) => f.categoria === c)),
+    categorias: CATEGORIAS_FOTO_MINIMAS.filter((c) => !(c === 'accesorios' && rem.sinAccesoriosAt) && !(c === 'embalaje' && rem.sinEmbalajeAt) && !fotos.some((f) => f.categoria === c)),
     novedades: rem.novedades.filter((n) =>
-      catalogo.find((c) => c.clave === n.clave)?.excluyeDemas !== true
+      ((m) => m?.excluyeDemas !== true && m?.exentaDeFoto !== true)(catalogo.find((c) => c.clave === n.clave))
       && !fotos.some((f) => f.categoria === 'novedad' && f.novedad === n.clave)),
   }
 }
@@ -181,3 +181,14 @@ export function categoriaDeFoto(
   }
   return { ok: true, categoria: 'novedad', novedad: clave }
 }
+
+/** Lo que el alta le pasa a `validarRecepcion`: las claves de la recepción más las casillas (`=== true` marca) y «Incluye», todas sin validar. */
+export interface CuerpoRecepcion {
+  novedades: unknown; novedadOtro?: unknown; rotulado?: unknown; sinAccesorios?: unknown; sinEmbalaje?: unknown; incluye?: unknown
+}
+
+/** Rótulo de cada casilla de la recepción; `componerObservaciones` lo añade tal cual, sin punto, a la lista separada por `; ` (RQ-RE-38). */
+export const ETIQUETA_CASILLA = { sinAccesorios: 'Llegó sin accesorios', sinEmbalaje: 'Llegó sin embalaje' } as const
+
+/** Paso (7) de `validarRecepcion`: «Llegó sin accesorios» y accesorios marcados en «Incluye» se contradicen (escalón C). */
+const ERR_SIN_ACCESORIOS_CON_INCLUYE = `«${ETIQUETA_CASILLA.sinAccesorios}» no admite accesorios marcados en «Incluye»: desmarca la casilla o la lista.`
