@@ -89,9 +89,9 @@ Modo: Strict TDD. Ficheros: `apps/desk/src/lib/recepcionForm.ts`, `recepcionForm
 | Decisión del cliente | Línea del servidor | Prueba |
 |---|---|---|
 | Casillas en el cuerpo del alta | las recibe `routes/remision.ts:158` (`resolverRecepcion`, cuerpo entero); la traza (quién y cuándo) la escribe el servidor en `db/remisiones.ts:50` | PT-1, PT-2 |
-| Desaparece el selector de accesorios o de embalaje con su casilla | `/enviar`: `routes/remision.ts:289` (`motivoNoEnviable` → `fotosQueFaltan`, `shared/recepcion.ts:139`) | PE-7, PE-8 |
-| Novedad exenta sin selector | la misma puerta `:289`, con la marca leída en `shared/recepcion.ts:141` | PE-5, PE-6 |
-| Bloquea «Crear» con «Llegó sin accesorios» y accesorios marcados (y vacía/bloquea la lista) | paso (7) de `validarRecepcion` (`shared/recepcion.ts:102`), ejecutado en la guarda del alta `routes/remision.ts:158` | PA-5, PA-6, PI-7 |
+| Desaparece el selector de accesorios o de embalaje con su casilla | `/enviar`: `routes/remision.ts:289` (`motivoNoEnviable` → `fotosQueFaltan`, `packages/shared/src/recepcion.ts:139`) | PE-7, PE-8 |
+| Novedad exenta sin selector | la misma puerta `:289`, con la marca leída en `packages/shared/src/recepcion.ts:141` | PE-5, PE-6 |
+| Bloquea «Crear» con «Llegó sin accesorios» y accesorios marcados (y vacía/bloquea la lista) | paso (7) de `validarRecepcion` (`packages/shared/src/recepcion.ts:102`), ejecutado en la guarda del alta `routes/remision.ts:158` | PA-5, PA-6, PI-7 |
 | Bloquea «Crear» mientras falte foto | espejo de `:289` con las mismas funciones; en el alta no se puede imponer (las fotos se suben después) | RF-3 |
 | Descarta del plan las fotos de la categoría con casilla | **Ninguna, a propósito**: `categoriaDeFoto` no mira casillas, una foto de más no falsea nada. Comodidad sin guarda | RF-2 |
 
