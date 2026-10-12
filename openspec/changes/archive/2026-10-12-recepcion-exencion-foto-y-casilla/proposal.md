@@ -20,7 +20,7 @@ origen_cabecera: declarada
 
 ## Problema — medido sobre `daea6d6`
 
-- **E-165 no cumple.** La única exención de foto por novedad es la marca `excluyeDemas` (`packages/shared/src/recepcion.ts:140-142`), y «Falta un accesorio» está sembrada sin ella (`packages/zoho-sync/src/db/schema.sql:695`). Esa marca no sirve para esto: además impide marcar otras novedades (`packages/shared/src/recepcion.ts:92-95`). La regla vigente es el punto 3 de RQ-RE-26 (`openspec/specs/remisiones/spec.md:1104-1107`). Lo que falta no se puede fotografiar, y hoy el técnico sube cualquier foto para poder enviar.
+- **E-165 no cumple.** La única exención de foto por novedad es la marca `excluyeDemas` (`packages/shared/src/recepcion.ts:140-142`), y «Falta un accesorio» está sembrada sin ella (`packages/zoho-sync/src/db/schema.sql:695`). Esa marca no sirve para esto: además impide marcar otras novedades (`packages/shared/src/recepcion.ts:92-95`). La regla vigente es el punto 3 de RQ-RE-26 (`openspec/specs/remisiones/spec.md:1104-1107` en `daea6d6`). Lo que falta no se puede fotografiar, y hoy el técnico sube cualquier foto para poder enviar.
 - **E-166 no cumple: no existe.** Las tres categorías mínimas (`packages/shared/src/recepcion.ts:26`) se exigen sin excepción (`packages/shared/src/recepcion.ts:139`); `RemisionRecepcion` sólo lleva `hayNovedad`, `novedades` y `rotuladoAt` (`packages/shared/src/recepcion.ts:124`), y no hay columnas. Los «sin embalaje» del repositorio son observaciones de remisiones históricas (`apps/desk/server/db/remisionesHistoricasSeed.ts:44-49`), no una casilla.
 - **Dónde se impone.** En un solo punto: la sexta puerta de `POST /api/remisiones/:id/enviar` (`apps/desk/server/routes/remision.ts:289-293`). El alta no valida fotos; valida novedades, texto y rotulado (`apps/desk/server/routes/remision.ts:158`, vía `apps/desk/server/services/recepcion.ts:13-19`).
 - **Lo que ya cumple y no se toca.** E-163 y E-164. Y el ítem libre de accesorios no existe: el servidor rechaza lo que no está en la lista (`apps/desk/server/routes/remision.ts:194-197`).
@@ -48,7 +48,7 @@ origen_cabecera: declarada
 ## Capacidades
 
 - **Nuevas:** ninguna (R-2 no aplica).
-- **Modificadas:** `remisiones`. RQ-RE-26 (`openspec/specs/remisiones/spec.md:1093`) cambia en sus puntos 2 y 3: la foto mínima de accesorios o de embalaje no se exige con su casilla marcada, y la novedad con `exenta_de_foto` no exige foto. Dos requisitos **nuevos al final**, tras RQ-RE-36 (`openspec/specs/remisiones/spec.md:1776`): la marca del catálogo y su siembra, y las casillas con su traza. La frase «como toda novedad marcada, exige su foto» de RQ-RE-34 (`openspec/specs/remisiones/spec.md:1649-1650`) deja de ser general; si se retoca, lo decide `sdd-spec`.
+- **Modificadas:** `remisiones`. RQ-RE-26 (`openspec/specs/remisiones/spec.md:1093` en `daea6d6`) cambia en sus puntos 2 y 3: la foto mínima de accesorios o de embalaje no se exige con su casilla marcada, y la novedad con `exenta_de_foto` no exige foto. Dos requisitos **nuevos al final**, tras RQ-RE-36 (`openspec/specs/remisiones/spec.md:1776` en `daea6d6`): la marca del catálogo y su siembra, y las casillas con su traza. La frase «como toda novedad marcada, exige su foto» de RQ-RE-34 (`openspec/specs/remisiones/spec.md:1649-1650` en `daea6d6`) deja de ser general; si se retoca, lo decide `sdd-spec`.
 
 ## Enfoque y reglas
 
