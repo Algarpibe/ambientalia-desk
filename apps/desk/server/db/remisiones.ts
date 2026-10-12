@@ -22,7 +22,7 @@ function toRemision(r: Record<string, unknown>): Remision {
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at ?? ''),
     empresa: (r.empresa as string) ?? null, personaContacto: (r.persona_contacto as string) ?? null,
     origen: String(r.origen ?? 'app'),
-    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null, hayNovedad: typeof r.hay_novedad === 'boolean' ? r.hay_novedad : null, novedades: typeof r.novedades === 'string' ? (JSON.parse(r.novedades) as NovedadMarcada[] | null) : ((r.novedades as NovedadMarcada[]) ?? null), novedadOtro: (r.novedad_otro as string) ?? null, rotuladoAt: isoOrNull(r.rotulado_at), rotuladoPor: (r.rotulado_por as string) ?? null,
+    anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null, hayNovedad: typeof r.hay_novedad === 'boolean' ? r.hay_novedad : null, novedades: typeof r.novedades === 'string' ? (JSON.parse(r.novedades) as NovedadMarcada[] | null) : ((r.novedades as NovedadMarcada[]) ?? null), novedadOtro: (r.novedad_otro as string) ?? null, rotuladoAt: isoOrNull(r.rotulado_at), rotuladoPor: (r.rotulado_por as string) ?? null, sinAccesoriosAt: isoOrNull(r.sin_accesorios_at), sinAccesoriosPor: (r.sin_accesorios_por as string) ?? null, sinEmbalajeAt: isoOrNull(r.sin_embalaje_at), sinEmbalajePor: (r.sin_embalaje_por as string) ?? null,
   }
 }
 
@@ -37,17 +37,17 @@ export interface CreateRemisionInput {
   observaciones: string | null
   creadoPor: string | null
   empresa: string | null
-  personaContacto: string | null; hayNovedad: boolean | null; recepcion: { novedades: NovedadMarcada[]; novedadOtro: string | null; rotuladoPor: string | null } | null
+  personaContacto: string | null; hayNovedad: boolean | null; recepcion: { novedades: NovedadMarcada[]; novedadOtro: string | null; rotuladoPor: string | null; sinAccesorios: boolean; sinEmbalaje: boolean } | null
 }
 
 /** Crea la remisión en estado `pendiente`: el flujo de n8n aún no ha respondido. */
 export async function createRemision(db: Queryable, input: CreateRemisionInput): Promise<string> {
-  const id = `rem-${randomUUID()}`
+  const id = `rem-${randomUUID()}`; const ahora = input.recepcion ? new Date() : null // un solo instante para el rotulado y las casillas
   await db.query(
-    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad, novedades, novedad_otro, rotulado_at, rotulado_por)
-     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13,$14,$15,$16,$17)`,
+    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad, novedades, novedad_otro, rotulado_at, rotulado_por, sin_accesorios_at, sin_accesorios_por, sin_embalaje_at, sin_embalaje_por)
+     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
     [id, input.ticketId, input.fecha, input.tipoServicio, input.perfil, input.equipoId, input.serial,
-      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad, /* sin J: J(null) escribiria el JSON null y no el NULL de SQL (marcador de legado) */ input.recepcion ? JSON.stringify(input.recepcion.novedades) : null, input.recepcion?.novedadOtro ?? null, input.recepcion ? new Date() : null, input.recepcion?.rotuladoPor ?? null],
+      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad, /* sin J: J(null) escribiria el JSON null y no el NULL de SQL (marcador de legado) */ input.recepcion ? JSON.stringify(input.recepcion.novedades) : null, input.recepcion?.novedadOtro ?? null, ahora, input.recepcion?.rotuladoPor ?? null, input.recepcion?.sinAccesorios ? ahora : null, input.recepcion?.sinAccesorios ? input.recepcion.rotuladoPor : null, input.recepcion?.sinEmbalaje ? ahora : null, input.recepcion?.sinEmbalaje ? input.recepcion.rotuladoPor : null],
   )
   return id
 }

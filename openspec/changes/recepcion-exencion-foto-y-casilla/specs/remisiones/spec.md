@@ -163,7 +163,7 @@ con `ALTER` calificado con esquema (`public.`), y `NovedadCatalogo` **SHALL** ex
   `sinAccesorios` y `sinEmbalaje`; cada una marcada con exactamente `true` **SHALL** guardar la hora del
   **servidor** y el usuario de la **sesión** en sus dos columnas. El cuerpo **MUST NOT** decidir ni la hora ni la
   persona (RQ-RE-24). Sin marcar, sus columnas **SHALL** quedar en `NULL`.
-- Cada casilla marcada **SHALL** añadir su frase a `observaciones`: «Llegó sin accesorios.» y «Llegó sin
+- Cada casilla marcada **SHALL** añadir su frase a `observaciones`: «Llegó sin accesorios» y «Llegó sin
   embalaje.».
 - «Llegó sin accesorios» con alguno de los accesorios marcados en «Incluye» **SHALL** responder `422` sin crear
   la remisión; «Llegó sin embalaje» no tiene esa incompatibilidad. Que el alta lo rechace es comportamiento del
@@ -189,7 +189,7 @@ con `ALTER` calificado con esquema (`public.`), y `NovedadCatalogo` **SHALL** ex
 #### Scenario: Cada casilla deja su frase en las observaciones
 - GIVEN un alta con las dos casillas marcadas
 - WHEN se crea la remisión
-- THEN `observaciones` contiene «Llegó sin accesorios.» y «Llegó sin embalaje.», y con una sola, solo su frase
+- THEN `observaciones` contiene «Llegó sin accesorios» y «Llegó sin embalaje», y con una sola, solo su frase
 
 #### Scenario: Sin accesorios y con accesorios marcados, el alta se rechaza
 - GIVEN un alta con `sinAccesorios: true` y un accesorio marcado en «Incluye»

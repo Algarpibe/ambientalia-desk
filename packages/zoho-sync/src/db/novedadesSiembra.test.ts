@@ -114,3 +114,49 @@ describe('F1B-04 · accesorio_fuera_de_lista tras migrar dos veces (RQ-RE-34)', 
     expect(Number(n.rows[0].n)).toBe(11)
   })
 })
+
+// recepcion-exencion-foto-y-casilla (F1B-04) · RQ-RE-37 y RQ-RE-38 · la marca de exencion y las cuatro columnas de traza.
+// Vigila `schema.sql` (regla de mutacion 2): se rompen ensuciando el fichero, no el guardian.
+describe('recepcion-exencion-foto-y-casilla · exenta_de_foto y casillas con traza (RQ-RE-37, RQ-RE-38)', () => {
+  it('PS-8 · sólo falta_accesorio nace exenta de foto; las otras diez siguen en false', async () => {
+    const db = await freshDb()
+    const r = await db.query('SELECT clave, exenta_de_foto FROM public.catalogo_novedades ORDER BY orden')
+    expect(r.rows).toHaveLength(11)
+    expect(r.rows.filter((f) => f.exenta_de_foto === true).map((f) => f.clave)).toEqual(['falta_accesorio'])
+    expect(r.rows.filter((f) => f.exenta_de_foto === false)).toHaveLength(10)
+  })
+
+  it('PS-9 · volver a migrar devuelve la marca a una fila desmarcada y no toca las otras diez', async () => {
+    const db = await freshDb()
+    await db.query("UPDATE public.catalogo_novedades SET exenta_de_foto = false WHERE clave = 'falta_accesorio'")
+    await db.query("UPDATE public.catalogo_novedades SET exenta_de_foto = true WHERE clave = 'otro'")
+    await migrate(db)
+    const r = await db.query('SELECT clave, exenta_de_foto FROM public.catalogo_novedades ORDER BY orden')
+    const por = (k: string) => r.rows.find((f) => f.clave === k)
+    expect(por('falta_accesorio')).toMatchObject({ exenta_de_foto: true })
+    // la migración no es un normalizador: una marca puesta a mano en otra fila se queda como está
+    expect(por('otro')).toMatchObject({ exenta_de_foto: true })
+    expect(r.rows.filter((f) => f.exenta_de_foto === false)).toHaveLength(9)
+    expect(r.rows).toHaveLength(11)
+  })
+
+  it('PS-10 · exactamente dos sentencias nombran exenta_de_foto, las dos calificadas y con su guarda de idempotencia', () => {
+    const nombran = schemaStatements().map(sinComentarios).filter((s) => /\bexenta_de_foto\b/i.test(s))
+    expect(nombran).toHaveLength(2)
+    expect(nombran[0]).toMatch(/^ALTER TABLE public\.catalogo_novedades ADD COLUMN IF NOT EXISTS exenta_de_foto boolean NOT NULL DEFAULT false$/)
+    expect(nombran[1]).toMatch(/^UPDATE public\.catalogo_novedades SET exenta_de_foto = true WHERE clave = 'falta_accesorio' AND exenta_de_foto IS NOT TRUE$/)
+  })
+
+  it('PS-11 · las cuatro columnas de traza existen NULL-ables y las crean cuatro ALTER calificadas, sin relleno', async () => {
+    const db = await freshDb()
+    const cols = ['sin_accesorios_at', 'sin_accesorios_por', 'sin_embalaje_at', 'sin_embalaje_por']
+    // pg-mem declara `is_nullable = 'NO'` para toda columna: la NULL-abilidad se prueba por comportamiento, con una fila que no las trae
+    await db.query("INSERT INTO public.remisiones (id, ticket_id, fecha) VALUES ('rem-ps11', 't1', '2026-10-12')")
+    const r = await db.query(`SELECT ${cols.join(', ')} FROM public.remisiones WHERE id = 'rem-ps11'`)
+    expect(r.rows).toHaveLength(1)
+    for (const c of cols) expect(r.rows[0][c], `${c} sin relleno`).toBeNull()
+    const nombran = schemaStatements().map(sinComentarios).filter((s) => /\bsin_(accesorios|embalaje)_(at|por)\b/i.test(s))
+    expect(nombran).toHaveLength(4)
+    for (const s of nombran) expect(s).toMatch(/^ALTER TABLE public\.remisiones ADD COLUMN IF NOT EXISTS sin_(accesorios|embalaje)_(at timestamptz|por text)$/)
+  })
+})

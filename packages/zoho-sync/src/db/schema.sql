@@ -816,3 +816,13 @@ CREATE TABLE IF NOT EXISTS public.provisional_books_avisados (
   avisos_creados integer NOT NULL,
   PRIMARY KEY (provisional_id, contacto_id)
 );
+-- recepcion-exencion-foto-y-casilla (F1B-04): novedad que NO exige foto porque lo que falta no se puede fotografiar. Molde de excluye_demas
+-- El UPDATE es siembra de DATO: su WHERE lo deja sin efecto desde la segunda pasada. Quitar la marca por SQL no persiste (S5)
+-- No es editable desde la pantalla de mantenimiento. AL FINAL para no desplazar citas. CALIFICADAS public.
+ALTER TABLE public.catalogo_novedades ADD COLUMN IF NOT EXISTS exenta_de_foto boolean NOT NULL DEFAULT false;
+UPDATE public.catalogo_novedades SET exenta_de_foto = true WHERE clave = 'falta_accesorio' AND exenta_de_foto IS NOT TRUE;
+-- Casillas de la recepcion con traza: quien y cuando marco que el equipo llego sin accesorios o sin embalaje. NULL-ables y SIN relleno
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_accesorios_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_accesorios_por text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_embalaje_at timestamptz;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_embalaje_por text;

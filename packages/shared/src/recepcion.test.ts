@@ -297,3 +297,123 @@ describe('lote 3 · fotos por categoría y puertas de envío', () => {
     expect(categoriaDeFoto(r, cuerpo)).toMatchObject({ ok: false, error: expect.any(String) })
   })
 })
+
+/**
+ * recepcion-exencion-foto-y-casilla (F1B-04) · RQ-RE-26 puntos 2 y 3, RQ-RE-37, RQ-RE-38. La exención de una novedad se
+ * decide por su MARCA (`exentaDeFoto`), nunca por la clave; cada casilla quita sólo la foto de su categoría y la del
+ * equipo se exige siempre.
+ */
+describe('PF · fotosQueFaltan y motivoNoEnviable con exención y casillas', () => {
+  const CAT_EXENTA: NovedadCatalogo[] = CATALOGO.map((n) => (n.clave === 'falta_accesorio' ? { ...n, exentaDeFoto: true } : n))
+  const m = (...claves: string[]): NovedadMarcada[] => claves.map((c) => ({ clave: c, etiqueta: CATALOGO.find((n) => n.clave === c)!.etiqueta }))
+  const rem = (claves: string[], extra: Record<string, unknown> = {}) =>
+    ({ hayNovedad: true, novedades: m(...claves), rotuladoAt: '2026-10-12T10:00:00Z', ...extra })
+  const f = (categoria: string | null, novedad: string | null = null) => ({ categoria, novedad })
+  const MINIMAS = [f('equipo'), f('accesorios'), f('embalaje')]
+
+  it('PF-1 · la novedad exenta no exige foto y la no exenta sí; la exención sigue a la marca y no a la clave', () => {
+    const claves = (r: ReturnType<typeof rem>, cat = CAT_EXENTA) => fotosQueFaltan(r, MINIMAS, cat).novedades.map((n) => n.clave)
+    expect(claves(rem(['falta_accesorio']))).toEqual([])
+    expect(claves(rem(['falta_accesorio', 'golpe_carcasa']))).toEqual(['golpe_carcasa'])
+    expect(claves(rem(['golpe_carcasa']))).toEqual(['golpe_carcasa'])
+    // sin la marca, la misma clave exige su foto
+    expect(claves(rem(['falta_accesorio']), CATALOGO)).toEqual(['falta_accesorio'])
+    // la marca en OTRA clave exime a esa y deja a `falta_accesorio` exigiendo
+    const otraMarca = CATALOGO.map((n) => (n.clave === 'rayon_estetico' ? { ...n, exentaDeFoto: true } : n))
+    expect(claves(rem(['rayon_estetico', 'falta_accesorio']), otraMarca)).toEqual(['falta_accesorio'])
+    // `exentaDeFoto: false` explícito se lee como no exenta
+    expect(claves(rem(['falta_accesorio']), CATALOGO.map((n) => ({ ...n, exentaDeFoto: false })))).toEqual(['falta_accesorio'])
+  })
+
+  it('PF-2 · una novedad exenta que hoy está inactiva sigue exenta; una inactiva sin marca sigue exigiendo', () => {
+    const inactiva = CAT_EXENTA.map((n) => (n.clave === 'falta_accesorio' ? { ...n, activo: false } : n))
+    expect(fotosQueFaltan(rem(['falta_accesorio']), MINIMAS, inactiva).novedades).toEqual([])
+    expect(fotosQueFaltan(rem(['sello_roto']), MINIMAS, inactiva).novedades.map((n) => n.clave)).toEqual(['sello_roto'])
+  })
+
+  it('PF-3 · cada casilla quita sólo la categoría de su foto; `equipo` falta siempre', () => {
+    const cat = (extra: Record<string, unknown>) => fotosQueFaltan(rem(['rayon_estetico'], extra), [], CATALOGO).categorias
+    expect(cat({})).toEqual(['equipo', 'accesorios', 'embalaje'])
+    expect(cat({ sinAccesoriosAt: '2026-10-12T10:01:00Z' })).toEqual(['equipo', 'embalaje'])
+    expect(cat({ sinEmbalajeAt: '2026-10-12T10:01:00Z' })).toEqual(['equipo', 'accesorios'])
+    expect(cat({ sinAccesoriosAt: '2026-10-12T10:01:00Z', sinEmbalajeAt: '2026-10-12T10:02:00Z' })).toEqual(['equipo'])
+    // `null` es «sin marcar»: lo mismo que ausente
+    expect(cat({ sinAccesoriosAt: null, sinEmbalajeAt: null })).toEqual(['equipo', 'accesorios', 'embalaje'])
+    // con las dos casillas y la foto del equipo no falta nada
+    const dos = rem(['rayon_estetico'], { sinAccesoriosAt: '2026-10-12T10:01:00Z', sinEmbalajeAt: '2026-10-12T10:02:00Z' })
+    expect(fotosQueFaltan(dos, [f('equipo')], CATALOGO).categorias).toEqual([])
+  })
+
+  it('PF-4 · el motivo de no enviable nombra sólo lo que no está eximido', () => {
+    const conCasilla = rem(['falta_accesorio', 'golpe_carcasa'], { sinAccesoriosAt: '2026-10-12T10:01:00Z' })
+    expect(motivoNoEnviable(conCasilla, [f('equipo')], CAT_EXENTA)).toBe('Faltan fotos obligatorias: del embalaje.')
+    const motivo = motivoNoEnviable(conCasilla, [f('equipo'), f('embalaje')], CAT_EXENTA)
+    expect(motivo).toBe('Falta la foto de cada novedad marcada: Golpe o abolladura en la carcasa.')
+    expect(motivo).not.toContain('Falta un accesorio')
+    expect(motivoNoEnviable(conCasilla, [f('equipo'), f('embalaje'), f('novedad', 'golpe_carcasa')], CAT_EXENTA)).toBeNull()
+    // sin la foto del equipo no hay envío aunque las dos casillas estén marcadas
+    const dos = rem(['falta_accesorio'], { sinAccesoriosAt: '2026-10-12T10:01:00Z', sinEmbalajeAt: '2026-10-12T10:02:00Z' })
+    expect(motivoNoEnviable(dos, [], CAT_EXENTA)).toBe('Faltan fotos obligatorias: del equipo.')
+  })
+})
+
+describe('PI · validarRecepcion con las casillas (paso 7 y orden interno)', () => {
+  const MSG_S4 = 'no admite accesorios marcados en «Incluye»'
+  const error = (r: ReturnType<typeof validarRecepcion>) => (r.ok ? 'OK' : r.error)
+  const con = (extra: Record<string, unknown>, catalogo = CATALOGO) => validarRecepcion(catalogo, { rotulado: true, ...extra } as never)
+
+  it('PI-7 · «Llegó sin accesorios» con accesorios marcados se rechaza, y los pasos (1) a (6) ganan al (7)', () => {
+    const S4 = { sinAccesorios: true, incluye: ['Cable'] }
+    expect(error(con({ novedades: ['rayon_estetico'], ...S4 }))).toContain(MSG_S4)
+    expect(error(con({ novedades: ['rayon_estetico'], ...S4 }))).toBe('«Llegó sin accesorios» no admite accesorios marcados en «Incluye»: desmarca la casilla o la lista.')
+    expect(error(con({ novedades: ['rayon_estetico'], ...S4 }, []))).toContain('La lista de novedades no está cargada')
+    expect(error(con({ novedades: [], ...S4 }))).toContain('Marca al menos una novedad')
+    expect(error(con({ novedades: ['zzz'], ...S4 }))).toContain('Novedades fuera de la lista')
+    expect(error(con({ novedades: ['sin_novedad', 'rayon_estetico'], ...S4 }))).toContain('no se puede marcar junto con otra novedad')
+    expect(error(con({ novedades: ['otro'], ...S4 }))).toContain('exige describir la novedad')
+    expect(error(con({ novedades: ['rayon_estetico'], rotulado: false, ...S4 }))).toContain('Confirma que el equipo quedó rotulado')
+  })
+
+  it('PI-8 · sin accesorios marcados el paso (7) no actúa; sólo `=== true` activa; «sin embalaje» no tiene esa incompatibilidad', () => {
+    for (const incluye of [[], undefined, null, 'Cable', 7, {}]) {
+      expect(error(con({ novedades: ['rayon_estetico'], sinAccesorios: true, incluye })), `incluye ${JSON.stringify(incluye)}`).toBe('OK')
+    }
+    expect(error(con({ novedades: ['rayon_estetico'], sinEmbalaje: true, incluye: ['Cable'] }))).toBe('OK')
+    // nace cerrado: lo que no es exactamente `true` no marca la casilla ni dispara el paso (7)
+    for (const casilla of ['true', 1, 'sí', null]) {
+      const r = con({ novedades: ['rayon_estetico'], sinAccesorios: casilla, incluye: ['Cable'] })
+      expect(error(r), `sinAccesorios ${JSON.stringify(casilla)}`).toBe('OK')
+      expect(r.ok && r.valor.sinAccesorios).toBe(false)
+    }
+  })
+
+  it('PI-8b · el valor devuelto trae las dos casillas ya normalizadas a booleano', () => {
+    const r = con({ novedades: ['rayon_estetico'], sinEmbalaje: true })
+    expect(r.ok && [r.valor.sinAccesorios, r.valor.sinEmbalaje]).toEqual([false, true])
+    const s = con({ novedades: ['rayon_estetico'], sinAccesorios: true, sinEmbalaje: true })
+    expect(s.ok && [s.valor.sinAccesorios, s.valor.sinEmbalaje]).toEqual([true, true])
+  })
+})
+
+describe('PO · observaciones con la frase de cada casilla (RQ-RE-38)', () => {
+  const ok = (extra: Record<string, unknown>) => {
+    const r = validarRecepcion(CATALOGO, { rotulado: true, ...extra } as never)
+    if (!r.ok) throw new Error(r.error)
+    return r.valor.observaciones
+  }
+
+  it('PO-1 · cada casilla añade su frase tras las novedades, en orden fijo (accesorios, embalaje), unidas por `; `', () => {
+    expect(ok({ novedades: ['rayon_estetico'] })).toBe('Rayón o daño estético')
+    expect(ok({ novedades: ['rayon_estetico'], sinAccesorios: true })).toBe('Rayón o daño estético; Llegó sin accesorios')
+    expect(ok({ novedades: ['rayon_estetico'], sinEmbalaje: true })).toBe('Rayón o daño estético; Llegó sin embalaje')
+    expect(ok({ novedades: ['rayon_estetico'], sinEmbalaje: true, sinAccesorios: true })).toBe('Rayón o daño estético; Llegó sin accesorios; Llegó sin embalaje')
+    expect(ok({ novedades: ['otro'], novedadOtro: 'Pantalla rota', sinAccesorios: true })).toBe('Otro: Pantalla rota; Llegó sin accesorios')
+  })
+
+  it('PO-1b · componerObservaciones directo: sin el cuarto parámetro nada cambia', () => {
+    const marcada = [{ clave: 'rayon_estetico', etiqueta: 'Rayón o daño estético' }]
+    expect(componerObservaciones(CATALOGO, marcada, null)).toBe('Rayón o daño estético')
+    expect(componerObservaciones(CATALOGO, marcada, null, {})).toBe('Rayón o daño estético')
+    expect(componerObservaciones(CATALOGO, marcada, null, { sinAccesorios: false, sinEmbalaje: true })).toBe('Rayón o daño estético; Llegó sin embalaje')
+  })
+})

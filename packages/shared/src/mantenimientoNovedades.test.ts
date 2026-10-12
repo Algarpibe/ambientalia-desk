@@ -87,3 +87,19 @@ describe('cambioNovedadDelCuerpo', () => {
     expect(cambioNovedadDelCuerpo({ etiqueta: 'SELLO O PRECINTO ROTO' }, sello, CAT)).toEqual({ ok: true, cambios: { etiqueta: 'SELLO O PRECINTO ROTO' } })
   })
 })
+
+// recepcion-exencion-foto-y-casilla (RQ-RE-37): la marca `exentaDeFoto` no se edita desde el mantenimiento. Caracteriza: nace verde y su
+// rojo es la mutación (añadir la clave a `CambiosNovedad` o al alta).
+describe('PM-1 · exentaDeFoto no entra por el mantenimiento', () => {
+  it('el alta ignora `exentaDeFoto`: la novedad nueva sale igual que sin ella, sin la clave', () => {
+    const base = altaNovedadDelCuerpo({ clave: 'tapa_suelta', etiqueta: 'Tapa suelta', orden: 95 }, CAT)
+    const conMarca = altaNovedadDelCuerpo({ clave: 'tapa_suelta', etiqueta: 'Tapa suelta', orden: 95, exentaDeFoto: true }, CAT)
+    expect(base).toMatchObject({ ok: true })
+    expect(conMarca).toEqual(base)
+    expect(conMarca.ok && 'exentaDeFoto' in conMarca.novedad).toBe(false)
+  })
+  it('el cambio ignora `exentaDeFoto`: no aparece en los cambios y, sola, no es un cambio', () => {
+    expect(cambioNovedadDelCuerpo({ exentaDeFoto: true, orden: 91 }, CAT[1], CAT)).toEqual({ ok: true, cambios: { orden: 91 } })
+    expect(cambioNovedadDelCuerpo({ exentaDeFoto: true }, CAT[1], CAT)).toMatchObject({ ok: false, tipo: 'contenido' })
+  })
+})

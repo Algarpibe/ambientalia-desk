@@ -10,36 +10,36 @@ Riesgo: medio-bajo. Punto de partición: si la medida al cerrar el lote 1 (tarea
 
 ## Lote 1 · 1. Rojo (D7)
 
-- [ ] 1.1 `packages/zoho-sync/src/db/migrate.test.ts`, en sitio (D1): índices desde el final +6 (líneas 796, 798, 839, 840, 879, 880, 882 y los ordinales de 794, 837, 877), recuento de `ALTER` 59 a 64, calificadas 33 a 38, e identidad `public.catalogo_novedades` en la línea 385. Con `schema.sql` intacto, anotar el rojo.
-- [ ] 1.2 `packages/zoho-sync/src/db/novedadesSiembra.test.ts`, al final: PS-8…PS-11. Correr `npx vitest run packages/zoho-sync/src/db/novedadesSiembra.test.ts`, anotar el rojo literal (columna inexistente) y si pg-mem acepta el `ADD COLUMN … NOT NULL DEFAULT false` (pregunta abierta 1 de D).
-- [ ] 1.3 `packages/shared/src/recepcion.test.ts`, al final: PF-1…PF-4, PI-7, PI-8, PO-1. `packages/shared/src/mantenimientoNovedades.test.ts`, al final: PM-1. Correr ambos y anotar el rojo de cada caso (PM-1 puede nacer verde: caracteriza, su rojo es una mutación).
-- [ ] 1.4 `apps/desk/server/recepcion.test.ts`, al final: PA-4…PA-6 (posición), PT-1…PT-3, PE-5…PE-8, PW-1. Correr y anotar el rojo caso a caso; PT-3 y PW-1 caracterizan y pueden nacer verdes.
+- [x] 1.1 `packages/zoho-sync/src/db/migrate.test.ts`, en sitio (D1): índices desde el final +6 (líneas 796, 798, 839, 840, 879, 880, 882 y los ordinales de 794, 837, 877), recuento de `ALTER` 59 a 64, calificadas 33 a 38, e identidad `public.catalogo_novedades` en la línea 385. Con `schema.sql` intacto, anotar el rojo.
+- [x] 1.2 `packages/zoho-sync/src/db/novedadesSiembra.test.ts`, al final: PS-8…PS-11. Correr `npx vitest run packages/zoho-sync/src/db/novedadesSiembra.test.ts`, anotar el rojo literal (columna inexistente) y si pg-mem acepta el `ADD COLUMN … NOT NULL DEFAULT false` (pregunta abierta 1 de D).
+- [x] 1.3 `packages/shared/src/recepcion.test.ts`, al final: PF-1…PF-4, PI-7, PI-8, PO-1. `packages/shared/src/mantenimientoNovedades.test.ts`, al final: PM-1. Correr ambos y anotar el rojo de cada caso (PM-1 puede nacer verde: caracteriza, su rojo es una mutación).
+- [x] 1.4 `apps/desk/server/recepcion.test.ts`, al final: PA-4…PA-6 (posición), PT-1…PT-3, PE-5…PE-8, PW-1. Correr y anotar el rojo caso a caso; PT-3 y PW-1 caracterizan y pueden nacer verdes.
 
 ## Lote 1 · 2. Verde (D1…D4)
 
-- [ ] 2.1 D1: añadir al final de `packages/zoho-sync/src/db/schema.sql` las seis sentencias calificadas (sin `;` en comentarios). PS-8…PS-11 y `migrate.test.ts` en verde; anotar si pg-mem aceptó la columna.
-- [ ] 2.2 D2: `packages/shared/src/recepcion.ts` en sitio (líneas 8, 18, 124, 139, 141), `apps/desk/server/db/novedades.ts` (líneas 13 y 21). PF-1…PF-4 en verde.
-- [ ] 2.3 D3/D4: `packages/shared/src/recepcion.ts` líneas 45, 57, 60, 70-73, 77, 102 (paso 7), 109, 110, y al final `CuerpoRecepcion`, `ETIQUETA_CASILLA`, `ERR_SIN_ACCESORIOS_CON_INCLUYE`; `packages/shared/src/types.ts:735`. PI-7, PI-8, PO-1 en verde.
-- [ ] 2.4 D3: `apps/desk/server/db/remisiones.ts` (líneas 25, 40, 45, 47-48, 50), `apps/desk/server/services/recepcion.ts:17`, `apps/desk/server/routes/remision.ts:250`. PA-4…PA-6, PT-1…PT-3, PE-5…PE-8, PW-1 en verde; PM-1 sin editar `mantenimientoNovedades.ts`.
-- [ ] 2.5 `npm run typecheck`; anotar si `ETIQUETA_CASILLA` y `ERR_SIN_ACCESORIOS_CON_INCLUYE` (declaradas al final y usadas antes) pasan typecheck y lint, y si algún `toEqual` exacto se rompió.
+- [x] 2.1 D1: añadir al final de `packages/zoho-sync/src/db/schema.sql` las seis sentencias calificadas (sin `;` en comentarios). PS-8…PS-11 y `migrate.test.ts` en verde; anotar si pg-mem aceptó la columna.
+- [x] 2.2 D2: `packages/shared/src/recepcion.ts` en sitio (líneas 8, 18, 124, 139, 141), `apps/desk/server/db/novedades.ts` (líneas 13 y 21). PF-1…PF-4 en verde.
+- [x] 2.3 D3/D4: `packages/shared/src/recepcion.ts` líneas 45, 57, 60, 70-73, 77, 102 (paso 7), 109, 110, y al final `CuerpoRecepcion`, `ETIQUETA_CASILLA`, `ERR_SIN_ACCESORIOS_CON_INCLUYE`; `packages/shared/src/types.ts:735`. PI-7, PI-8, PO-1 en verde.
+- [x] 2.4 D3: `apps/desk/server/db/remisiones.ts` (líneas 25, 40, 45, 47-48, 50), `apps/desk/server/services/recepcion.ts:17`, `apps/desk/server/routes/remision.ts:250`. PA-4…PA-6, PT-1…PT-3, PE-5…PE-8, PW-1 en verde; PM-1 sin editar `mantenimientoNovedades.ts`.
+- [x] 2.5 `npm run typecheck`; anotar si `ETIQUETA_CASILLA` y `ERR_SIN_ACCESORIOS_CON_INCLUYE` (declaradas al final y usadas antes) pasan typecheck y lint, y si algún `toEqual` exacto se rompió.
 
 ## Lote 1 · 3. Mutaciones (D7, reglas de mutación 1 y 2)
 
 Una a una. Copia previa de los ficheros en un directorio temporal **fuera del repositorio** (sin `git checkout --`). Tras cada una: correr las pruebas afectadas, anotar prueba a prueba, restaurar desde la copia y comprobar con `git diff`.
 
-- [ ] 3.1 M1a (regla 1): mover el paso (7) de `validarRecepcion` al principio. Esperado rojo: PI-7. Restaurar.
-- [ ] 3.2 M1b (regla 1): llevar la condición de S4 a la guarda del checklist, tras el `409`. Esperado rojo: PA-5. Restaurar.
-- [ ] 3.3 M2a (regla 2): escribir en `schema.sql` un `ALTER TABLE catalogo_novedades …` SIN calificar. Esperado rojo: `migrate.test.ts:332` y `:345`, y PS-10. Restaurar.
-- [ ] 3.4 M2b (regla 2): quitar el `UPDATE` de siembra (rojo PS-8 y PS-9); quitarle `AND exenta_de_foto = false` (rojo PS-10). Restaurar.
-- [ ] 3.5 M2c (regla 2): un `ALTER` de casilla sobre `remisiones` sin `public.`. Esperado rojo: `migrate.test.ts:345` y PS-11. Restaurar.
-- [ ] 3.6 M4: quitar de la línea 139 la condición de accesorios (rojo PF-3, PE-7), la de embalaje (PF-3, PE-8) e intercambiarlas (PF-3). M5: eximir también `equipo` (PF-3, PE-8). Restaurar tras cada una.
-- [ ] 3.7 M6: quitar `exentaDeFoto` de la línea 141 (rojo PF-1, PE-5); leer la exención por `excluyeDemas` (PF-1). M7: `...r` en el payload (PW-1). Restaurar.
+- [x] 3.1 M1a (regla 1): mover el paso (7) de `validarRecepcion` al principio. Esperado rojo: PI-7. Restaurar.
+- [x] 3.2 M1b (regla 1): llevar la condición de S4 a la guarda del checklist, tras el `409`. Esperado rojo: PA-5. Restaurar.
+- [x] 3.3 M2a (regla 2): escribir en `schema.sql` un `ALTER TABLE catalogo_novedades …` SIN calificar. Esperado rojo: `migrate.test.ts:332` y `:345`, y PS-10. Restaurar.
+- [x] 3.4 M2b (regla 2): quitar el `UPDATE` de siembra (rojo PS-8 y PS-9); quitarle `AND exenta_de_foto = false` (rojo PS-10). Restaurar.
+- [x] 3.5 M2c (regla 2): un `ALTER` de casilla sobre `remisiones` sin `public.`. Esperado rojo: `migrate.test.ts:345` y PS-11. Restaurar.
+- [x] 3.6 M4: quitar de la línea 139 la condición de accesorios (rojo PF-3, PE-7), la de embalaje (PF-3, PE-8) e intercambiarlas (PF-3). M5: eximir también `equipo` (PF-3, PE-8). Restaurar tras cada una.
+- [x] 3.7 M6: quitar `exentaDeFoto` de la línea 141 (rojo PF-1, PE-5); leer la exención por `excluyeDemas` (PF-1). M7: `...r` en el payload (PW-1). Restaurar.
 
 ## Lote 1 · 4. Cierre del lote
 
-- [ ] 4.1 Regla de mutación 3 en `apply-progress.md`: tabla «decisión del cliente → línea del servidor que la impone» de D5, comprobada línea a línea contra el código final; M3 (quitar la línea del servidor de cada fila, con la prueba de su fila en rojo); constatar la fila sin guarda (fotos descartadas del plan, RF-2) como comodidad.
-- [ ] 4.2 Medida intermedia: `git diff --shortstat --no-renames daea6d6` más `wc -l` de lo nuevo sin trackear. Anotar la cifra; **si pasa de 600, parar aquí y abrir el lote 2 en otro intento**.
-- [ ] 4.3 Regla de mutación 4: barrido `grep -rnoE "(remision|schema|migrate\.test|recepcion|types|remisiones|novedades)\.(ts|sql):[0-9]+(-[0-9]+)?"` fuera de `archive/`, cada resultado leído contra el fichero con caso A, B o C; segundo pase de abreviadas (`:NNN`) en los ficheros que citan el módulo. Comprobar que la línea 102 de `recepcion.ts` ya no está vacía y las 139 a 142 siguen diciendo lo que las citas afirman.
+- [x] 4.1 Regla de mutación 3 en `apply-progress.md`: tabla «decisión del cliente → línea del servidor que la impone» de D5, comprobada línea a línea contra el código final; M3 (quitar la línea del servidor de cada fila, con la prueba de su fila en rojo); constatar la fila sin guarda (fotos descartadas del plan, RF-2) como comodidad.
+- [x] 4.2 Medida intermedia: `git diff --shortstat --no-renames daea6d6` más `wc -l` de lo nuevo sin trackear. Anotar la cifra; **si pasa de 600, parar aquí y abrir el lote 2 en otro intento**.
+- [x] 4.3 Regla de mutación 4: barrido `grep -rnoE "(remision|schema|migrate\.test|recepcion|types|remisiones|novedades)\.(ts|sql):[0-9]+(-[0-9]+)?"` fuera de `archive/`, cada resultado leído contra el fichero con caso A, B o C; segundo pase de abreviadas (`:NNN`) en los ficheros que citan el módulo. Comprobar que la línea 102 de `recepcion.ts` ya no está vacía y las 139 a 142 siguen diciendo lo que las citas afirman.
 - [ ] 4.4 Los cuatro códigos de salida, MIRADOS uno a uno y anotados: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`, y tras el commit del orquestador `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` (código 0).
 
 ## Lote 2 · 5. Cliente (D5, D9)

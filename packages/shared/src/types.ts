@@ -732,7 +732,7 @@ export interface Remision {
   anuladaPor: string | null
   /** F1B-04, RQ-RE-17. `true`/`false` si se declaró al crear; `null` en cualquier otro caso —no
    * contestada, o anterior a esta columna—: se lee como «sin declarar» y no exige foto. */
-  hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; novedadOtro: string | null; rotuladoAt: string | null; rotuladoPor: string | null
+  hayNovedad: boolean | null; novedades: NovedadMarcada[] | null; novedadOtro: string | null; rotuladoAt: string | null; rotuladoPor: string | null; sinAccesoriosAt: string | null; sinAccesoriosPor: string | null; sinEmbalajeAt: string | null; sinEmbalajePor: string | null
 }
 
 /** Datos con los que el formulario de remisión de entrada llega prellenado desde el ticket. */

@@ -131,5 +131,5 @@ Ningún número cambia, pero cambia lo que **dicen** dos líneas: la 102 de `pac
 - [ ] ¿Acepta pg-mem `ADD COLUMN … NOT NULL DEFAULT false` sobre una tabla que ya tiene once filas? Hipótesis: sí (precedente `packages/zoho-sync/src/db/schema.sql:313`). Si no, PS-8 nace roja por otra causa y se consulta antes de relajar la columna.
 - [ ] ¿Pasan `npm run typecheck` y `npm run lint` con `ETIQUETA_CASILLA` y `ERR_SIN_ACCESORIOS_CON_INCLUYE` declaradas al final y usadas antes? Hipótesis: sí; si lint lo rechaza, los literales van en línea.
 - [ ] ¿Usa `toEqual` exacto alguna prueba de ruta sobre la forma de la remisión o del catálogo? Hipótesis: no, salvo `apps/desk/src/lib/recepcionForm.test.ts:115`.
-- [ ] Las frases de S3 sin punto final: lo confirma o corrige el delta de `remisiones`.
+- [x] Las frases de S3 sin punto final: confirmado por el orquestador el 2026-10-12; el delta de `remisiones` se corrigió para decir lo mismo.
 - [ ] «Llegó sin embalaje» junto con la novedad «Embalaje inadecuado o dañado» no se rechaza: fuera de alcance; si debe ser incompatible, es decisión de Gerencia.

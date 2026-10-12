@@ -79,7 +79,7 @@ Regla de las preguntas a Gerencia (E-237): Gerencia tiene **una semana, hasta el
 |---|---|---|
 | S1 | Son **dos** casillas independientes; cada una sustituye sólo la foto mínima de **su** categoría, y la del equipo se exige siempre | La decisión las nombra juntas, pero un equipo puede llegar con embalaje y sin accesorios |
 | S2 | La traza se toma en el **alta**, con la hora del servidor y el usuario de la sesión; cuatro columnas | Es el patrón del rotulado; no se inventa otro |
-| S3 | Cada casilla marcada añade su frase a `observaciones` («Llegó sin accesorios.» / «Llegó sin embalaje.») | Es el único canal hacia el documento sin tocar el contrato con n8n |
+| S3 | Cada casilla marcada añade su frase a `observaciones` («Llegó sin accesorios» / «Llegó sin embalaje») | Es el único canal hacia el documento sin tocar el contrato con n8n |
 | S4 | «Llegó sin accesorios» es incompatible con marcar accesorios en «Incluye»: el servidor lo rechaza. Se prefiere cambiar la condición de una guarda existente a añadir una nueva; **dónde, lo decide el diseño** | Las dos afirmaciones se contradicen. No se reordenan guardas (IV-12) |
 | S5 | `exenta_de_foto` **no** es editable desde la pantalla de mantenimiento, igual que `excluye_demas` (`apps/desk/server/db/novedades.ts:38`, `packages/shared/src/mantenimientoNovedades.ts:22`); una novedad nueva nace sin exención (`packages/shared/src/mantenimientoNovedades.ts:49`) | La decisión exime una sola novedad, por nombre |
 | S6 | «Accesorio fuera de lista» conserva su texto obligatorio y su foto | Sin el texto, el Director Técnico no sabría qué accesorio añadir. Si «nada de texto libre» la alcanza, lo decide Gerencia |

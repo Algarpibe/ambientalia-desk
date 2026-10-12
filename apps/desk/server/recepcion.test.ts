@@ -480,3 +480,252 @@ describe('RQ-RE-26 · orden interno y fotos sin categoría en /enviar (S3)', () 
     expect(r.status).toBe(422); expect(r.body.error).toMatch(/Faltan fotos obligatorias: .*equipo.*accesorios.*embalaje/i)
   }))
 })
+
+/**
+ * recepcion-exencion-foto-y-casilla (F1B-04, `cierra: no`) · RQ-RE-37 y RQ-RE-38 por la ruta. Posición de la incompatibilidad
+ * de «Llegó sin accesorios» (regla de mutación 1): cada prueba activa las DOS guardas a la vez. La condición vive en el paso (7)
+ * de `validarRecepcion` (`routes/remision.ts:158`, escalón C): A (serial) < C (S4) < D (remisión pendiente), y C (S4) antes del
+ * checklist (`:197`, también C).
+ */
+describe('PL · la lectura del catálogo sirve la marca de exención (RQ-RE-37)', () => {
+  it('PL-1 · `exentaDeFoto` viaja en cada novedad: true sólo en «Falta un accesorio», false en las otras diez', async () => {
+    const cookie = await adminCookie()
+    const { app } = appWith()
+    const r = await request(app).get('/api/novedades-remision').set('Cookie', cookie)
+    expect(r.status).toBe(200)
+    expect(r.body).toHaveLength(11)
+    expect(r.body.filter((n: { exentaDeFoto?: boolean }) => n.exentaDeFoto === true).map((n: { clave: string }) => n.clave)).toEqual(['falta_accesorio'])
+    expect(r.body.filter((n: { exentaDeFoto?: boolean }) => n.exentaDeFoto === false)).toHaveLength(10)
+  })
+})
+
+describe('PA · posición de la incompatibilidad «sin accesorios» + accesorios en «Incluye» (D4)', () => {
+  const S4 = /«Llegó sin accesorios» no admite accesorios marcados en «Incluye»/
+
+  it('PA-4 · sin serial y S4 a la vez → «Falta el serial» (A), no el de S4', async () => {
+    const cookie = await adminCookie(); await ticketSinSerial()
+    const { app } = appWith()
+    const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true, incluye: ['Cable'] }, 'tz')
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/Falta el serial/)
+    expect(await cuantas()).toBe(0)
+  })
+
+  it('PA-5 · remisión pendiente previa sin permitirSegunda y S4 a la vez → 422 de S4 (C), no 409 (D)', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    expect((await crear(app, cookie, { novedades: ['sin_novedad'], rotulado: true })).status).toBe(201)
+    const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true, incluye: ['Cable'] })
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(S4)
+    expect(await cuantas(), 'no se creó otra: sigue sólo la primera').toBe(1)
+  })
+
+  it('PA-6 · S4 e ítem fuera del checklist a la vez → el error es el de S4 (`:158` antes que `:197`)', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true, incluye: ['ÍTEM QUE NO EXISTE'] })
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(S4)
+    expect(r.body.error).not.toMatch(/fuera del checklist/)
+    expect(await cuantas()).toBe(0)
+    // sin la casilla, ese mismo ítem sí da el error del checklist: la guarda vecina sigue ahí
+    const sola = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, incluye: ['ÍTEM QUE NO EXISTE'] })
+    expect(sola.status).toBe(422)
+    expect(sola.body.error).toMatch(/fuera del checklist/)
+  })
+
+  it('«Llegó sin embalaje» con «Incluye» marcado no se rechaza por S4; «sin accesorios» con «Incluye» vacío se acepta', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const vacio = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true, incluye: [], permitirSegunda: true })
+    expect(vacio.status).toBe(201)
+    const embalaje = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinEmbalaje: true, incluye: ['ÍTEM QUE NO EXISTE'], permitirSegunda: true })
+    expect(embalaje.status, 'el error es el del checklist, no el de S4').toBe(422)
+    expect(embalaje.body.error).toMatch(/fuera del checklist/)
+  })
+})
+
+describe('PT · el alta guarda las casillas con su traza (RQ-RE-38)', () => {
+  const traza = async (id: string) => (await db.query(
+    'SELECT sin_accesorios_at, sin_accesorios_por, sin_embalaje_at, sin_embalaje_por, observaciones FROM remisiones WHERE id = $1', [id])).rows[0]
+
+  it('PT-1 · sinEmbalaje: true guarda hora del servidor y usuario de la sesión; las dos de accesorios quedan NULL', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const antes = Date.now()
+    const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinEmbalaje: true })
+    const despues = Date.now()
+    expect(r.status).toBe(201)
+    const fila = await traza(r.body.id)
+    expect(fila.sin_embalaje_por).toBe('Admin')
+    const t = new Date(fila.sin_embalaje_at).getTime()
+    expect(t).toBeGreaterThanOrEqual(antes); expect(t).toBeLessThanOrEqual(despues)
+    expect(fila.sin_accesorios_at).toBeNull(); expect(fila.sin_accesorios_por).toBeNull()
+    expect(r.body).toMatchObject({ sinEmbalajePor: 'Admin', sinAccesoriosAt: null, sinAccesoriosPor: null })
+    expect(new Date(r.body.sinEmbalajeAt).getTime()).toBe(t)
+    expect(fila.observaciones).toBe('Rayón o daño estético; Llegó sin embalaje')
+  })
+
+  it('PT-1b · las dos casillas: un solo instante para rotulado y casillas, y las dos frases en las observaciones', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true, sinEmbalaje: true })
+    expect(r.status).toBe(201)
+    const fila = await traza(r.body.id)
+    expect(fila.sin_accesorios_por).toBe('Admin'); expect(fila.sin_embalaje_por).toBe('Admin')
+    expect(new Date(fila.sin_accesorios_at).getTime()).toBe(new Date(fila.sin_embalaje_at).getTime())
+    expect(new Date(fila.sin_accesorios_at).getTime()).toBe(new Date(r.body.rotuladoAt).getTime())
+    expect(fila.observaciones).toBe('Rayón o daño estético; Llegó sin accesorios; Llegó sin embalaje')
+  })
+
+  it('PT-1c · una casilla que no vale exactamente `true` no marca nada', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: 'true', sinEmbalaje: 1 })
+    expect(r.status).toBe(201)
+    const fila = await traza(r.body.id)
+    expect([fila.sin_accesorios_at, fila.sin_accesorios_por, fila.sin_embalaje_at, fila.sin_embalaje_por]).toEqual([null, null, null, null])
+    expect(fila.observaciones).toBe('Rayón o daño estético')
+  })
+
+  it('PT-2 · sinAccesoriosPor y sinAccesoriosAt del cuerpo se ignoran: persona de la sesión y hora del servidor', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const antes = Date.now()
+    const r = await crear(app, cookie, {
+      novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true,
+      sinAccesoriosPor: 'Otra Persona', sinAccesoriosAt: '2020-01-01T00:00:00Z', sinEmbalajePor: 'Otra Persona', sinEmbalajeAt: '2020-01-01T00:00:00Z',
+    })
+    const despues = Date.now()
+    expect(r.status).toBe(201)
+    const fila = await traza(r.body.id)
+    expect(fila.sin_accesorios_por).toBe('Admin')
+    const t = new Date(fila.sin_accesorios_at).getTime()
+    expect(t).toBeGreaterThanOrEqual(antes); expect(t).toBeLessThanOrEqual(despues)
+    expect(fila.sin_embalaje_at, 'la casilla de embalaje no se marcó: sus valores del cuerpo no cuentan').toBeNull()
+    expect(fila.sin_embalaje_por).toBeNull()
+  })
+
+  it('PT-3 · alta de legado (sin `novedades`) con casillas: 201 como legado, cuatro NULL y observaciones sin la frase', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const r = await crear(app, cookie, { sinAccesorios: true, sinEmbalaje: true, observaciones: 'golpe en la tapa' })
+    expect(r.status).toBe(201)
+    expect(r.body).toMatchObject({ novedades: null, sinAccesoriosAt: null, sinAccesoriosPor: null, sinEmbalajeAt: null, sinEmbalajePor: null })
+    const fila = await traza(r.body.id)
+    expect([fila.sin_accesorios_at, fila.sin_accesorios_por, fila.sin_embalaje_at, fila.sin_embalaje_por]).toEqual([null, null, null, null])
+    expect(fila.observaciones).toBe('golpe en la tapa')
+  })
+
+  it('PT-3b · el legado ni siquiera lee S4: «sin accesorios» con «Incluye» marcado se trata como legado (error del checklist, no el de S4)', async () => {
+    const cookie = await adminCookie(); await preparar()
+    const { app } = appWith()
+    const r = await crear(app, cookie, { sinAccesorios: true, incluye: ['ÍTEM QUE NO EXISTE'] })
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/fuera del checklist/)
+  })
+})
+
+describe('PE · /enviar con novedad exenta y con cada casilla (RQ-RE-26 puntos 2 y 3)', () => {
+  const conN8n = async (prueba: (fetchMock: ReturnType<typeof vi.fn>) => Promise<void>) => {
+    const fetchMock = vi.fn(async (...args: [string, RequestInit]) => { void args; return new Response('{}', { status: 202 }) })
+    vi.stubGlobal('fetch', fetchMock)
+    try { await prueba(fetchMock) } finally { vi.unstubAllGlobals() }
+  }
+  const enviar = (app: App, cookie: string, id: string) => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
+  const URL_N8N = { remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' }
+  const conCasillas = async (app: App, cookie: string, novedades: string[], casillas: object) =>
+    (await crear(app, cookie, { novedades, rotulado: true, permitirSegunda: true, ...casillas })).body.id as string
+
+  it('PE-5 · sólo «Falta un accesorio», con las tres mínimas y sin su foto → 200', () => conN8n(async (n8n) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['falta_accesorio']); await subirTodas(app, cookie, id)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    expect(n8n).toHaveBeenCalledTimes(1)
+  }))
+
+  it('PE-5b · exenta y no exenta a la vez, sin foto de ninguna → 422 que nombra sólo la no exenta; subirla y reintentar → 200', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['falta_accesorio', 'golpe_carcasa']); await subirTodas(app, cookie, id)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/cada novedad marcada: Golpe o abolladura en la carcasa/)
+    expect(r.body.error).not.toMatch(/Falta un accesorio/)
+    expect((await subir(app, cookie, id, { categoria: 'novedad', novedad: 'golpe_carcasa' })).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('PE-6 · la exención sigue a la marca, no a la clave: marca en otra fila y apagada en «Falta un accesorio»', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    await db.query("UPDATE public.catalogo_novedades SET exenta_de_foto = false WHERE clave = 'falta_accesorio'")
+    await db.query("UPDATE public.catalogo_novedades SET exenta_de_foto = true WHERE clave = 'rayon_estetico'")
+    const a = await nueva(app, cookie, ['falta_accesorio']); await subirTodas(app, cookie, a)
+    const ra = await enviar(app, cookie, a)
+    expect(ra.status).toBe(422); expect(ra.body.error).toMatch(/cada novedad marcada: Falta un accesorio/)
+    const b = await nueva(app, cookie, ['rayon_estetico']); await subirTodas(app, cookie, b)
+    expect((await enviar(app, cookie, b)).status).toBe(200)
+  }))
+
+  it('PE-6b · una novedad exenta retirada después (activo = false) sigue exenta', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['falta_accesorio']); await subirTodas(app, cookie, id)
+    await db.query("UPDATE public.catalogo_novedades SET activo = false WHERE clave = 'falta_accesorio'")
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('PE-7 · la casilla de accesorios quita sólo la foto de accesorios: con foto de equipo, el 422 nombra sólo `embalaje`', () => conN8n(async (n8n) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await conCasillas(app, cookie, ['rayon_estetico'], { sinAccesorios: true })
+    expect((await subir(app, cookie, id, { categoria: 'equipo' })).status).toBe(201)
+    expect((await subir(app, cookie, id, { categoria: 'novedad', novedad: 'rayon_estetico' })).status).toBe(201)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/Faltan fotos obligatorias: del embalaje\./)
+    expect(r.body.error).not.toMatch(/accesorios/)
+    expect(n8n).not.toHaveBeenCalled(); expect((await db.query('SELECT enviado_at FROM remisiones WHERE id = $1', [id])).rows[0].enviado_at).toBeNull()
+    expect((await subir(app, cookie, id, { categoria: 'embalaje' })).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('PE-8 · la casilla de embalaje quita sólo la foto de embalaje: con foto de equipo, el 422 nombra sólo `accesorios`', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await conCasillas(app, cookie, ['sin_novedad'], { sinEmbalaje: true })
+    expect((await subir(app, cookie, id, { categoria: 'equipo' })).status).toBe(201)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/Faltan fotos obligatorias: de los accesorios\./)
+    expect(r.body.error).not.toMatch(/embalaje/)
+    expect((await subir(app, cookie, id, { categoria: 'accesorios' })).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('PE-8b · con las dos casillas y sin ninguna foto el 422 nombra sólo `equipo`; con una foto de equipo y reintento inmediato → 200', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await conCasillas(app, cookie, ['sin_novedad'], { sinAccesorios: true, sinEmbalaje: true })
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422)
+    expect(r.body.error).toMatch(/Faltan fotos obligatorias: del equipo\./)
+    expect((await subir(app, cookie, id, { categoria: 'equipo' })).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+  }))
+
+  it('PE-8c · una remisión creada antes del cambio (casillas NULL) sigue exigiendo las tres', () => conN8n(async () => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await nueva(app, cookie, ['sin_novedad'])
+    expect((await subir(app, cookie, id, { categoria: 'equipo' })).status).toBe(201)
+    const r = await enviar(app, cookie, id)
+    expect(r.status).toBe(422); expect(r.body.error).toMatch(/Faltan fotos obligatorias: de los accesorios, del embalaje\./)
+  }))
+
+  it('PW-1 · con las dos casillas el payload a n8n conserva sus diez claves; las frases sólo van dentro de `observaciones`', () => conN8n(async (n8n) => {
+    const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
+    const id = await conCasillas(app, cookie, ['sin_novedad'], { sinAccesorios: true, sinEmbalaje: true })
+    expect((await subir(app, cookie, id, { categoria: 'equipo' })).status).toBe(201)
+    expect((await enviar(app, cookie, id)).status).toBe(200)
+    const cuerpo = JSON.parse(String(n8n.mock.calls[0][1].body))
+    expect(Object.keys(cuerpo).sort()).toEqual(['cliente', 'equipo', 'fecha', 'fotos', 'incluye', 'observaciones', 'remisionId', 'tecnico', 'ticketNumero', 'tipoServicio'])
+    expect(cuerpo.observaciones).toBe('Sin novedad; Llegó sin accesorios; Llegó sin embalaje')
+    expect(JSON.stringify(Object.keys(cuerpo))).not.toMatch(/sin_?[Aa]ccesorios|sin_?[Ee]mbalaje/)
+  }))
+})

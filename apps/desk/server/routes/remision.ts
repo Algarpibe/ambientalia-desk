@@ -247,7 +247,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
       incluye: pedidos, observaciones: rec ? rec.observaciones : (b.observaciones ? String(b.observaciones) : null),
-      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, rotuladoPor: req.user?.name ?? null } : null,
+      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, rotuladoPor: req.user?.name ?? null, sinAccesorios: rec.sinAccesorios, sinEmbalaje: rec.sinEmbalaje } : null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
       // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
       // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos

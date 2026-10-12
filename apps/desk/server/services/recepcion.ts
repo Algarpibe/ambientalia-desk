@@ -1,5 +1,5 @@
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
-import { validarRecepcion, type RecepcionValidada } from '@ambientalia/shared'
+import { validarRecepcion, type RecepcionValidada, type CuerpoRecepcion } from '@ambientalia/shared'
 import { listNovedades } from '../db/novedades'
 
 /**
@@ -14,6 +14,6 @@ export async function resolverRecepcion(
   db: Queryable, cuerpo: Record<string, unknown>,
 ): Promise<null | { error: string } | RecepcionValidada> {
   if (cuerpo.novedades === undefined) return null
-  const r = validarRecepcion(await listNovedades(db), cuerpo as { novedades: unknown; novedadOtro?: unknown; rotulado?: unknown })
+  const r = validarRecepcion(await listNovedades(db), cuerpo as unknown as CuerpoRecepcion)
   return r.ok ? r.valor : { error: r.error }
 }
