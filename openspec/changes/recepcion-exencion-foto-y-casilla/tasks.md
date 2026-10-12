@@ -40,7 +40,7 @@ Una a una. Copia previa de los ficheros en un directorio temporal **fuera del re
 - [x] 4.1 Regla de mutación 3 en `apply-progress.md`: tabla «decisión del cliente → línea del servidor que la impone» de D5, comprobada línea a línea contra el código final; M3 (quitar la línea del servidor de cada fila, con la prueba de su fila en rojo); constatar la fila sin guarda (fotos descartadas del plan, RF-2) como comodidad.
 - [x] 4.2 Medida intermedia: `git diff --shortstat --no-renames daea6d6` más `wc -l` de lo nuevo sin trackear. Anotar la cifra; **si pasa de 600, parar aquí y abrir el lote 2 en otro intento**.
 - [x] 4.3 Regla de mutación 4: barrido `grep -rnoE "(remision|schema|migrate\.test|recepcion|types|remisiones|novedades)\.(ts|sql):[0-9]+(-[0-9]+)?"` fuera de `archive/`, cada resultado leído contra el fichero con caso A, B o C; segundo pase de abreviadas (`:NNN`) en los ficheros que citan el módulo. Comprobar que la línea 102 de `recepcion.ts` ya no está vacía y las 139 a 142 siguen diciendo lo que las citas afirman.
-- [ ] 4.4 Los cuatro códigos de salida, MIRADOS uno a uno y anotados: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`, y tras el commit del orquestador `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` (código 0).
+- [x] 4.4 Los cuatro códigos de salida, MIRADOS uno a uno y anotados: `npm test`, `npm run typecheck`, `npx eslint . --max-warnings 165`, y tras el commit del orquestador `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` (código 0).
 
 ## Lote 2 · 5. Cliente (D5, D9)
 
