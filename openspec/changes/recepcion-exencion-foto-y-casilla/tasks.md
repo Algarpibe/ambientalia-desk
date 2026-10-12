@@ -44,13 +44,13 @@ Una a una. Copia previa de los ficheros en un directorio temporal **fuera del re
 
 ## Lote 2 · 5. Cliente (D5, D9)
 
-- [ ] 5.1 Rojo: `apps/desk/src/lib/recepcionForm.test.ts`, línea 115 en sitio (el cuerpo gana tres claves) y al final RF-1…RF-4. Correr `npx vitest run apps/desk/src/lib/recepcionForm.test.ts` y anotar el rojo literal.
-- [ ] 5.2 Verde: `apps/desk/src/lib/recepcionForm.ts` (líneas 2, 56, 61, 78, 82, 83, 85, 86 y `selectoresDeFoto` al final) y `apps/desk/src/api/client.ts:535`. RF-1…RF-4 en verde.
-- [ ] 5.3 `apps/desk/src/components/CrearRemision.tsx` (líneas 60, 78, 116, 263 y 304-310; unas +7 desde la 311). Sin prueba (F0-00): sólo pinta lo que entrega `vistaDelFormulario`.
-- [ ] 5.4 Mutaciones del cliente: quitar `fotosQueFaltan` de `selectoresDeFoto` o la bandera de `incluye` y ver rojo RF-1 y RF-4; restaurar.
-- [ ] 5.5 Repetir 4.1 (fila de RF-3 en la tabla de D5), 4.3 (con `recepcionForm.ts`, `client.ts` y `CrearRemision.tsx`; caso B para las citas de `proposal.md` desde la 304) y los cuatro códigos de 4.4.
-- [ ] 5.6 Medida final del intento: `git diff --shortstat --no-renames daea6d6` más `wc -l` de lo nuevo sin trackear (techo 800, válvula 720). Binarios aparte.
-- [ ] 5.7 Escribir el texto de corrección para el maestro (línea 1241: registro «siempre obligatorio» con dos excepciones, RQ-RE-37 y RQ-RE-38) como sección del `archive-report.md` dentro de la carpeta del cambio. No se edita `docs/sdd/ENTRADA.md`, `openspec/config.yaml`, `CLAUDE.md`, el expediente del maestro ni `_to_delete/`.
+- [x] 5.1 Rojo: `apps/desk/src/lib/recepcionForm.test.ts`, línea 115 en sitio (el cuerpo gana tres claves) y al final RF-1…RF-4. Correr `npx vitest run apps/desk/src/lib/recepcionForm.test.ts` y anotar el rojo literal.
+- [x] 5.2 Verde: `apps/desk/src/lib/recepcionForm.ts` (líneas 2, 56, 61, 78, 82, 83, 85, 86 y `selectoresDeFoto` al final) y `apps/desk/src/api/client.ts:535`. RF-1…RF-4 en verde.
+- [x] 5.3 `apps/desk/src/components/CrearRemision.tsx` (líneas 60, 78, 116, 263 y 304-310; unas +7 desde la 311). Sin prueba (F0-00): sólo pinta lo que entrega `vistaDelFormulario`.
+- [x] 5.4 Mutaciones del cliente: quitar `fotosQueFaltan` de `selectoresDeFoto` o la bandera de `incluye` y ver rojo RF-1 y RF-4; restaurar.
+- [x] 5.5 Repetir 4.1 (fila de RF-3 en la tabla de D5), 4.3 (con `recepcionForm.ts`, `client.ts` y `CrearRemision.tsx`; caso B para las citas de `proposal.md` desde la 304) y los cuatro códigos de 4.4.
+- [x] 5.6 Medida final del intento: `git diff --shortstat --no-renames daea6d6` más `wc -l` de lo nuevo sin trackear (techo 800, válvula 720). Binarios aparte.
+- [x] 5.7 Escribir el texto de corrección para el maestro (línea 1241: registro «siempre obligatorio» con dos excepciones, RQ-RE-37 y RQ-RE-38) en `correccion-maestro.md`, fichero propio dentro de la carpeta del cambio (el `archive-report.md` lo referencia). No se edita `docs/sdd/ENTRADA.md`, `openspec/config.yaml`, `CLAUDE.md`, el expediente del maestro ni `_to_delete/`.
 
 ## Mapa tarea → requisito o decisión
 

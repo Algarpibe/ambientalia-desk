@@ -532,7 +532,7 @@ export interface CrearRemisionPayload {
    */
   salesOrderId?: string
   /** RQ-RE-23/24. La lista marcada, el texto de la que lo exige y la casilla de rotulado: el servidor deriva el resto. */
-  novedades?: string[]; novedadOtro?: string; rotulado?: boolean
+  novedades?: string[]; novedadOtro?: string; rotulado?: boolean; sinAccesorios?: boolean; sinEmbalaje?: boolean
 }
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {

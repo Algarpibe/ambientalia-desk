@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { RemisionNueva, SalesOrderLite } from '@ambientalia/shared'
-import { type NovedadCatalogo } from '@ambientalia/shared'
+import { ETIQUETA_CASILLA, type NovedadCatalogo } from '@ambientalia/shared'
 import { useAsync } from '../hooks/useAsync'
 import { fetchRemisionNueva, crearRemision, subirFotoRemision, enviarRemision, fetchRemisiones, fetchNovedadesRemision, type RemisionConFotos } from '../api/client'
 import { redimensionarImagen, hoyISO } from '../lib/imagen'
@@ -57,7 +57,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   const [envio, setEnvio] = useState<EstadoEnvio>({ remisionId: null, fotosSubidas: 0 })
   const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
   // RQ-RE-24. Parte sin marcar a propósito: confirmarlo lo exige el servidor, pero sin valor previo se ve que se decidió.
-  const [rotulado, setRotulado] = useState(false)
+  const [rotulado, setRotulado] = useState(false); const [sinAccesorios, setSinAccesorios] = useState(false); const [sinEmbalaje, setSinEmbalaje] = useState(false)
   const { data: catalogo, loading: cargandoLista, error: errLista } = useAsync<NovedadCatalogo[]>(fetchNovedadesRemision, [])
   // Qué es lo que está en vuelo, porque `busy` no lo distingue: crear una remisión nueva y reenviar la
   // que quedó pendiente lo encienden igual, y los avisos de salida dicen cosas distintas en cada caso.
@@ -75,8 +75,8 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
     try {
       const r = await ejecutarEnvio(estado, vista.plan.length, {
         crear: async () => {
-          const incluye = Object.entries(marcados).filter(([, v]) => v).map(([k]) => k)
-          const rem = await crearRemision({ ticketId, fecha, incluye, ...vista.cuerpo, permitirSegunda, salesOrderId: ordenVenta?.id })
+          // `incluye` y las casillas ya van en `vista.cuerpo` (RQ-RE-38: con «Llegó sin accesorios» `incluye` sale vacío).
+          const rem = await crearRemision({ ticketId, fecha, ...vista.cuerpo, permitirSegunda, salesOrderId: ordenVenta?.id })
           return rem.id
         },
         subirFoto: async (id, i) => { const p = vista.plan[i]; await subirFotoRemision(id, await redimensionarImagen(p.file), { categoria: p.categoria, novedad: p.novedad }) },
@@ -113,7 +113,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   }
 
   const creada = envio.remisionId !== null
-  const vista = vistaDelFormulario(catalogo ?? [], novedadesSel, otro, rotulado, fotosForm); const fotosPendientes = vista.plan.length - envio.fotosSubidas
+  const vista = vistaDelFormulario(catalogo ?? [], novedadesSel, otro, rotulado, fotosForm, { sinAccesorios, sinEmbalaje, incluye: Object.entries(marcados).filter(([, v]) => v).map(([k]) => k) }); const fotosPendientes = vista.plan.length - envio.fotosSubidas
 
   /**
    * Marca la ventana en la que ya puede existir una remisión en la base: `creada` no se enciende hasta
@@ -260,7 +260,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
                 <div className="mt-1 border border-slate-200 rounded p-2 max-h-52 overflow-auto grid grid-cols-2 gap-x-3 gap-y-1">
                   {data.incluyeDetalle.map(({ nombre: item, sku }) => (
                     <label key={item} className={`flex items-start gap-2 text-[12px] ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
-                      <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={!!marcados[item]} onChange={() => alternar(item)} disabled={congelado} />
+                      <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={vista.cuerpo.incluye.includes(item)} onChange={() => alternar(item)} disabled={congelado || sinAccesorios} />
                       <span>{item}{sku ? <span className="text-slate-400"> · {sku}</span> : null}</span>
                     </label>
                   ))}
@@ -301,10 +301,12 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
 
             <div className="flex flex-col gap-2">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico (obligatorio)</label>
-              <SelectorFotos etiqueta="Foto del equipo" archivos={fotosForm.equipo} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, equipo: a }))} />
-              <SelectorFotos etiqueta="Foto de los accesorios" archivos={fotosForm.accesorios} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, accesorios: a }))} />
-              <SelectorFotos etiqueta="Foto del embalaje" archivos={fotosForm.embalaje} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, embalaje: a }))} />
-              {vista.marcadas.filter((m) => !vista.lista.find((n) => n.clave === m.clave)?.excluyeDemas).map((m) => (
+              <label className="flex items-start gap-2 text-[13px] cursor-pointer"><input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={sinAccesorios} onChange={(e) => setSinAccesorios(e.target.checked)} disabled={congelado} /><span>{ETIQUETA_CASILLA.sinAccesorios}</span></label>
+              <label className="flex items-start gap-2 text-[13px] cursor-pointer"><input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={sinEmbalaje} onChange={(e) => setSinEmbalaje(e.target.checked)} disabled={congelado} /><span>{ETIQUETA_CASILLA.sinEmbalaje}</span></label>
+              {vista.selectores.categorias.includes('equipo') && <SelectorFotos etiqueta="Foto del equipo" archivos={fotosForm.equipo} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, equipo: a }))} />}
+              {vista.selectores.categorias.includes('accesorios') && <SelectorFotos etiqueta="Foto de los accesorios" archivos={fotosForm.accesorios} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, accesorios: a }))} />}
+              {vista.selectores.categorias.includes('embalaje') && <SelectorFotos etiqueta="Foto del embalaje" archivos={fotosForm.embalaje} disabled={congelado} onChange={(a) => setFotosForm((f) => ({ ...f, embalaje: a }))} />}
+              {vista.selectores.novedades.map((m) => (
                 <SelectorFotos key={m.clave} etiqueta={`Foto de: ${m.etiqueta}`} archivos={fotosForm.porNovedad[m.clave] ?? []} disabled={congelado}
                   onChange={(a) => setFotosForm((f) => ({ ...f, porNovedad: { ...f.porNovedad, [m.clave]: a } }))} />
               ))}
