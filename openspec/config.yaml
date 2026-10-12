@@ -4656,6 +4656,29 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "contenido de F1B-04 (remanente: dato explícito de «hay novedad» hacia n8n; aplicación y flujo a la vez)"
+  - clave: "decision/aplica-opcion-a-esta-semana-12-10"
+    fecha: "2026-10-12"
+    precisa: "decision/aplica-si-no-remision-12-10"
+    pregunta: |
+      Cuándo se construye la opción A de «decision/aplica-si-no-remision-12-10» (dato explícito hacia n8n), con qué
+      tanda, si cierra la fila, cuándo se publica y quién cambia el flujo de n8n.
+    respuesta_textual: |
+      «La opcion A se construye esta semana como siguiente cambio de F1B-04 y la cierra si no queda nada mas. Se publica en la proxima publicacion junto con n8n; la linea de n8n la cambio yo. Autorizo el encargo que pego»
+    consecuencias: |
+      (1) SUPERA dos frases de «decision/aplica-si-no-remision-12-10»: su «por ahora queda como está» (punto 2) y su
+      «no lleva fecha» (punto 3). La definición de «Sí» (punto 1) y las dos alternativas descartadas no cambian.
+      (2) LA OPCIÓN A SE CONSTRUYE ESTA SEMANA, como siguiente cambio de F1B-04, con tanda: F1B-04 y ciclo SDD
+      completo en su worktree, parando antes de fusionar.
+      (3) CIERRA LA FILA SÓLO SI NO QUEDA NADA MÁS. El cierra: lo decide el cambio leyendo la fila del plan; si E-167
+      (el momento del rotulado) o el recuento de modelos sin accesorios siguen abiertos, es «no», y el informe de
+      archivo dice qué falta exactamente.
+      (4) SE PUBLICA EN LA PRÓXIMA PUBLICACIÓN, la aplicación y el flujo de n8n A LA VEZ.
+      (5) LA LÍNEA DE N8N LA CAMBIA ALFONSO A MANO, con el texto exacto que deja la tanda. Ninguna sesión edita el
+      flujo. El código que se entregue tiene que ser compatible hacia atrás: si el dato no llega, vale la regla de hoy.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/aplica-opcion-a-esta-semana-12-10) · docs/sdd/TRASPASO_2026-10-08.md → sección final del 2026-10-12 (d)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-04 (dato «Aplica» resuelto hacia n8n; cierra la fila si no queda nada más)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
