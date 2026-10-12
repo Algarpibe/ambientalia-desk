@@ -164,7 +164,7 @@ con `ALTER` calificado con esquema (`public.`), y `NovedadCatalogo` **SHALL** ex
   **servidor** y el usuario de la **sesión** en sus dos columnas. El cuerpo **MUST NOT** decidir ni la hora ni la
   persona (RQ-RE-24). Sin marcar, sus columnas **SHALL** quedar en `NULL`.
 - Cada casilla marcada **SHALL** añadir su frase a `observaciones`: «Llegó sin accesorios» y «Llegó sin
-  embalaje.».
+  embalaje».
 - «Llegó sin accesorios» con alguno de los accesorios marcados en «Incluye» **SHALL** responder `422` sin crear
   la remisión; «Llegó sin embalaje» no tiene esa incompatibilidad. Que el alta lo rechace es comportamiento del
   servidor, no del formulario, y **MUST NOT** alterar el orden relativo de las demás respuestas del alta.

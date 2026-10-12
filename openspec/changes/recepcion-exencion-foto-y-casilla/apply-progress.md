@@ -73,7 +73,7 @@ Modo: Strict TDD. Ficheros: `apps/desk/src/lib/recepcionForm.ts`, `recepcionForm
 1. `recepcionForm.ts` NO se editó sólo en sitio como decía D9: `marcaCasillas` (+4 líneas desde la 48) y los cambios de `vistaDelFormulario` desplazan lo de debajo (`motivoNoCreable` 54→58, `puedeContinuarSinPendientes` 66→70, `vistaDelFormulario` 77→82). Barrido abajo: sólo `proposal.md:36` cita ese fichero con línea.
 2. `CrearRemision.tsx`: la inserción es de **+2** desde la línea 311 (no +7): el bloque 304-310 (7 líneas) pasa a 9; 311 pasa a 313. Nada cambia de sitio antes de la 304.
 3. Las casillas se pintan siempre, también con la remisión creada (deshabilitadas por `congelado`).
-4. 5.7 (texto para el maestro, sección del `archive-report.md`) NO se hizo: es de la fase archive; queda sin marcar.
+4. 5.7 (texto para el maestro): el lote 2 no lo escribió; lo escribió el orquestador el 2026-10-12 en `correccion-maestro.md`, dentro de la carpeta del cambio, y la casilla está marcada.
 
 ## Mutaciones del cliente (todas restauradas; `cmp` con la copia previa y `git diff --stat` idénticos)
 | Mut. | Rotura | Rojas |
