@@ -4605,6 +4605,33 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1B-07 (tiempo en la tarjeta de «Remisión creada»; cierra la fila)"
+  - clave: "decision/f1b04-remanente-confirmacion-12-10"
+    fecha: "2026-10-12"
+    precisa: "decision/accesorios-desde-el-catalogo"
+    pregunta: |
+      Si Gerencia confirma su respuesta del 06/10/2026 sobre los accesorios y los detalles de la recepción (panel,
+      apartado 06, `accesorios-desde-el-catalogo`), y si autoriza construir lo que de ella queda sin construir como
+      contenido de la fila F1B-04.
+    respuesta_textual: |
+      «Confirmo como Gerencia mi respuesta del 06/10 sobre los accesorios y los detalles de la recepcion, y autorizo construir el remanente de F1B-04 en su worktree con ciclo SDD completo, parando antes de fusionar»
+    consecuencias: |
+      (1) CONFIRMA `decision/accesorios-desde-el-catalogo` entera, incluido su párrafo «Detalles»: una foto por
+      novedad, salvo «Falta un accesorio», que queda exenta; una casilla «llegó sin accesorios / sin embalaje»
+      sustituye esa foto, con traza; el rotulado se confirma después de enviar si la etiqueta sale en el envío.
+      (2) ESA DECISIÓN ESTÁ SIN VERSIONAR a 2026-10-12: vive en el árbol de Supervisión, en
+      `decisiones_de_gerencia_panel` de este fichero, y no se copia ni se commitea aquí. Se cita por CLAVE, no por
+      línea. Mientras ese bloque no se versione, su texto NO es verificable desde el repositorio; lo que sí lo es,
+      es esta confirmación.
+      (3) AUTORIZA CONSTRUIR el remanente de F1B-04 en su propio worktree (regla del ciclo 3), con ciclo SDD
+      completo, `tanda: F1B-04`, y una sola parada antes de fusionar a `main`. Antes de proponer nada se mide lo ya
+      construido contra la respuesta, punto por punto; lo que ya cumpla no se toca.
+      (4) NO AUTORIZA mover el rotulado (E-167), que espera una comprobación de persona en el flujo de n8n, ni el
+      recuento de modelos sin accesorios, que es de persona contra producción. Tampoco autoriza cambiar el flujo de
+      n8n, que está en producción y fuera de este repositorio.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b04-remanente-confirmacion-12-10) · docs/sdd/ENTRADA.md → E-165, E-166"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-04 (remanente: exención de foto y casilla con traza)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
