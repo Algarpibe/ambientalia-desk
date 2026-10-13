@@ -76,12 +76,12 @@ describe('RQ-RE-23 · validarRecepcion — los seis rechazos, con su texto', () 
     expect(valida(['otro'], { novedadOtro: 42 })).toEqual(esperado)
   })
 
-  it('6 · el rotulado debe valer exactamente `true`', () => {
-    const esperado = { ok: false, error: 'Confirma que el equipo quedó rotulado y guardado.' }
-    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'] })).toEqual(esperado)
-    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'], rotulado: false })).toEqual(esperado)
-    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'], rotulado: 'true' })).toEqual(esperado)
-    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'], rotulado: 1 })).toEqual(esperado)
+  it('6 · retirado (rotulado-tras-enviar): el rotulado del cuerpo se ignora: ausente, false, "true" o 1 dan ok', () => {
+    const esperado = { ok: true }
+    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'] })).toMatchObject(esperado)
+    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'], rotulado: false })).toMatchObject(esperado)
+    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'], rotulado: 'true' })).toMatchObject(esperado)
+    expect(validarRecepcion(CATALOGO, { novedades: ['rayon_estetico'], rotulado: 1 })).toMatchObject(esperado)
   })
 })
 
@@ -96,7 +96,7 @@ describe('PA-3 · orden interno de validarRecepcion: cada par vecino activo a la
   const MSG3 = 'Novedades fuera de la lista'
   const MSG4 = 'no se puede marcar junto con otra novedad'
   const MSG5 = 'exige describir la novedad'
-  const MSG6 = 'Confirma que el equipo quedó rotulado'
+  // MSG6 RETIRADO (rotulado-tras-enviar): el paso (6) ya no existe, el rotulado se confirma tras el envío (RQ-RE-40).
   const error = (r: ReturnType<typeof validarRecepcion>) => (r.ok ? 'OK' : r.error)
 
   it('(1,2) catálogo vacío y lista vacía → el 1', () => {
@@ -114,21 +114,21 @@ describe('PA-3 · orden interno de validarRecepcion: cada par vecino activo a la
   it('(4,5) excluyente combinada y «Otro» sin texto → el 4', () => {
     expect(error(valida(['sin_novedad', 'otro']))).toContain(MSG4)
   })
-  it('(5,6) «Otro» sin texto y sin rotulado → el 5', () => {
+  it('(5,6) «Otro» sin texto y rotulado ausente → el 5 (el rotulado ya no es un paso)', () => {
     expect(error(valida(['otro'], { rotulado: undefined }))).toContain(MSG5)
   })
-  it('(2,6) lista vacía y sin rotulado → el 2', () => {
+  it('(2,6) lista vacía y rotulado falso → el 2 (el rotulado ya no es un paso)', () => {
     expect(error(valida([], { rotulado: false }))).toContain(MSG2)
   })
-  it('(4,6) excluyente combinada y sin rotulado → el 4', () => {
+  it('(4,6) excluyente combinada y rotulado falso → el 4 (el rotulado ya no es un paso)', () => {
     expect(error(valida(['sin_novedad', 'rayon_estetico'], { rotulado: false }))).toContain(MSG4)
   })
-  it('(3,6) clave desconocida y sin rotulado → el 3', () => {
+  it('(3,6) clave desconocida y rotulado falso → el 3 (el rotulado ya no es un paso)', () => {
     expect(error(valida(['zzz'], { rotulado: false }))).toContain(MSG3)
   })
-  it('sin ningún defecto, el último paso (6) es el único que queda y con `true` pasa', () => {
+  it('sin ningún defecto pasa, y con `rotulado: false` también: el rotulado se ignora', () => {
     expect(error(valida(['rayon_estetico']))).toBe('OK')
-    expect(error(valida(['rayon_estetico'], { rotulado: false }))).toContain(MSG6)
+    expect(error(valida(['rayon_estetico'], { rotulado: false }))).toBe('OK')
   })
 })
 
@@ -261,7 +261,7 @@ describe('lote 3 · fotos por categoría y puertas de envío', () => {
   })
 
   it('motivoNoEnviable: formulario nuevo, un motivo por rama y nombra todo lo que falta', () => {
-    expect(motivoNoEnviable(rem(['rayon_estetico'], { rotuladoAt: null }), MINIMAS, CATALOGO)).toMatch(/rotulado y guardado/)
+    expect(motivoNoEnviable(rem(['rayon_estetico'], { rotuladoAt: null }), MINIMAS, CATALOGO)).toMatch(/Falta la foto de cada novedad marcada: Rayón o daño estético/) // cambiada a propósito (rotulado-tras-enviar)
     expect(motivoNoEnviable(rem(['rayon_estetico']), [f('equipo')], CATALOGO)).toMatch(/Faltan fotos obligatorias: .*accesorios.*embalaje/)
     expect(motivoNoEnviable(rem(['golpe_carcasa', 'rayon_estetico']), MINIMAS, CATALOGO))
       .toMatch(/Falta la foto de cada novedad marcada: Golpe o abolladura en la carcasa, Rayón o daño estético/)
@@ -269,8 +269,8 @@ describe('lote 3 · fotos por categoría y puertas de envío', () => {
     expect(motivoNoEnviable(rem(['rayon_estetico']), [...MINIMAS, f('novedad', 'rayon_estetico')], CATALOGO)).toBeNull()
   })
 
-  it('PE-3 · el primer motivo del orden: rotulado antes que mínimas, mínimas antes que novedades', () => {
-    expect(motivoNoEnviable(rem(['rayon_estetico'], { rotuladoAt: null }), [], CATALOGO)).toMatch(/rotulado/)
+  it('PE-3 · el primer motivo del orden: mínimas antes que novedades; rotuladoAt nulo no interviene', () => {
+    expect(motivoNoEnviable(rem(['rayon_estetico'], { rotuladoAt: null }), [], CATALOGO)).toMatch(/Faltan fotos obligatorias/)
     expect(motivoNoEnviable(rem(['rayon_estetico']), [f('equipo'), f('accesorios')], CATALOGO)).toMatch(/Faltan fotos obligatorias: .*embalaje/)
   })
 
@@ -362,7 +362,7 @@ describe('PI · validarRecepcion con las casillas (paso 7 y orden interno)', () 
   const error = (r: ReturnType<typeof validarRecepcion>) => (r.ok ? 'OK' : r.error)
   const con = (extra: Record<string, unknown>, catalogo = CATALOGO) => validarRecepcion(catalogo, { rotulado: true, ...extra } as never)
 
-  it('PI-7 · «Llegó sin accesorios» con accesorios marcados se rechaza, y los pasos (1) a (6) ganan al (7)', () => {
+  it('PI-7 · «Llegó sin accesorios» con accesorios marcados se rechaza, y los pasos (1) a (5) ganan al (7)', () => {
     const S4 = { sinAccesorios: true, incluye: ['Cable'] }
     expect(error(con({ novedades: ['rayon_estetico'], ...S4 }))).toContain(MSG_S4)
     expect(error(con({ novedades: ['rayon_estetico'], ...S4 }))).toBe('«Llegó sin accesorios» no admite accesorios marcados en «Incluye»: desmarca la casilla o la lista.')
@@ -371,7 +371,7 @@ describe('PI · validarRecepcion con las casillas (paso 7 y orden interno)', () 
     expect(error(con({ novedades: ['zzz'], ...S4 }))).toContain('Novedades fuera de la lista')
     expect(error(con({ novedades: ['sin_novedad', 'rayon_estetico'], ...S4 }))).toContain('no se puede marcar junto con otra novedad')
     expect(error(con({ novedades: ['otro'], ...S4 }))).toContain('exige describir la novedad')
-    expect(error(con({ novedades: ['rayon_estetico'], rotulado: false, ...S4 }))).toContain('Confirma que el equipo quedó rotulado')
+    expect(error(con({ novedades: ['rayon_estetico'], rotulado: false, ...S4 }))).toContain(MSG_S4) // PI-7, cambiada a propósito: con rotulado falso responde el (7)
   })
 
   it('PI-8 · sin accesorios marcados el paso (7) no actúa; sólo `=== true` activa; «sin embalaje» no tiene esa incompatibilidad', () => {

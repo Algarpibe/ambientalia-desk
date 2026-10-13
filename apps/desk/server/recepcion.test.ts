@@ -62,7 +62,7 @@ const crear = (app: import('express').Express, cookie: string, extra: object, ti
   request(app).post('/api/remisiones').set('Cookie', cookie).send({ ticketId, fecha: '2026-08-03', incluye: [], ...extra })
 const cuantas = async () => Number((await db.query('SELECT count(*)::int AS n FROM remisiones')).rows[0].n)
 
-describe('RQ-RE-23 · el alta valida las novedades (los seis 422)', () => {
+describe('RQ-RE-23 · el alta valida las novedades (los 422 de las novedades; el rotulado ya no es uno)', () => {
   const casos: Array<[string, object, RegExp]> = [
     ['lista vacía', { novedades: [], rotulado: true }, /Marca al menos una novedad/],
     ['novedades null explícito (presente, no ausente)', { novedades: null, rotulado: true }, /Marca al menos una novedad/],
@@ -70,7 +70,7 @@ describe('RQ-RE-23 · el alta valida las novedades (los seis 422)', () => {
     ['clave desconocida', { novedades: ['zzz'], rotulado: true }, /fuera de la lista: zzz/],
     ['«Sin novedad» junto con otra', { novedades: ['sin_novedad', 'rayon_estetico'], rotulado: true }, /«Sin novedad» no se puede marcar junto con otra/],
     ['«Otro» sin texto', { novedades: ['otro'], rotulado: true }, /«Otro» exige describir/],
-    ['sin rotulado', { novedades: ['rayon_estetico'] }, /rotulado y guardado/],
+    ['un elemento que no es texto', { novedades: [1], rotulado: true }, /Marca al menos una novedad/], // cambiada a propósito (rotulado-tras-enviar): antes era «sin rotulado»
   ]
   for (const [nombre, cuerpo, texto] of casos) {
     it(`${nombre} → 422 con la causa y sin remisión`, async () => {
@@ -83,14 +83,14 @@ describe('RQ-RE-23 · el alta valida las novedades (los seis 422)', () => {
     })
   }
 
-  it('rotulado que no es exactamente true (false, "true", 1) → 422', async () => {
+  it('rotulado que no es exactamente true (false, "true", 1) → 201 y sin traza: el valor se ignora (cambiada a propósito, rotulado-tras-enviar)', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith()
     for (const rotulado of [false, 'true', 1]) {
-      const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado })
-      expect(r.status, `rotulado=${JSON.stringify(rotulado)}`).toBe(422)
+      const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado, permitirSegunda: true })
+      expect(r.status, `rotulado=${JSON.stringify(rotulado)}`).toBe(201)
     }
-    expect(await cuantas()).toBe(0)
+    expect([await cuantas(), Number((await db.query('SELECT count(*)::int AS n FROM remisiones WHERE rotulado_at IS NULL AND rotulado_por IS NULL')).rows[0].n)]).toEqual([3, 3])
   })
 
   it('una clave desactivada por SQL → 422 (D2)', async () => {
@@ -141,7 +141,7 @@ describe('RQ-RE-23 · el alta guarda la instantánea y deriva los campos', () =>
     expect(fila).toEqual({ hay_novedad: false, observaciones: 'Sin novedad', novedad_otro: null })
   })
 
-  it('el cuerpo no decide: observaciones, hayNovedad, rotuladoPor y rotuladoAt falsos se ignoran', async () => {
+  it('el cuerpo no decide: observaciones, hayNovedad, rotuladoPor y rotuladoAt falsos se ignoran, y el alta no escribe el rotulado', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith()
     const antes = Date.now()
@@ -154,12 +154,12 @@ describe('RQ-RE-23 · el alta guarda la instantánea y deriva los campos', () =>
     const fila = (await db.query('SELECT hay_novedad, observaciones, rotulado_por, rotulado_at FROM remisiones WHERE id = $1', [r.body.id])).rows[0]
     expect(fila.hay_novedad).toBe(true)
     expect(fila.observaciones).toBe('Rayón o daño estético')
-    expect(fila.rotulado_por, 'la persona es la de la sesión').toBe('Admin')
-    const t = new Date(fila.rotulado_at).getTime()
-    expect(t, 'la hora es la del servidor, no la del cuerpo').toBeGreaterThanOrEqual(antes)
-    expect(t).toBeLessThanOrEqual(despues)
-    expect(r.body.rotuladoPor).toBe('Admin')
-    expect(new Date(r.body.rotuladoAt).getTime()).toBe(t)
+    expect(fila.rotulado_por, 'el alta ya no escribe la traza del rotulado (cambiada a propósito)').toBeNull()
+    expect(fila.rotulado_at).toBeNull()
+    expect(r.body.rotuladoPor).toBeNull()
+    expect(r.body.rotuladoAt).toBeNull()
+    expect(despues).toBeGreaterThanOrEqual(antes)
+    expect(fila.hay_novedad).toBe(true)
   })
 
   it('la instantánea no cambia cuando se corrige la etiqueta del catálogo', async () => {
@@ -270,7 +270,7 @@ describe('Posición · serial (A) < novedades (C) < remisión pendiente (D)', ()
     expect(r.status).toBe(409)
   })
 
-  it('las novedades corren antes que el rotulado: lista inválida y `rotulado` ausente → el 422 es el de las novedades', async () => {
+  it('las novedades corren antes que cualquier otra cosa: el rotulado ya no es guarda; lista inválida y `rotulado` ausente → el 422 es el de las novedades', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith()
     const r = await crear(app, cookie, { novedades: ['zzz'] })
@@ -367,12 +367,12 @@ describe('RQ-RE-26 · /enviar del formulario nuevo', () => {
     expect(n8n).toHaveBeenCalledTimes(1)
   }))
 
-  it('rotulado_at anulado por SQL con todas las fotos → 422 de rotulado, sin n8n', () => conN8n(async (n8n) => {
+  it('rotulado_at anulado por SQL con todas las fotos → 200 y dispara a n8n: el rotulado ya no impide enviar (cambiada a propósito, rotulado-tras-enviar)', () => conN8n(async (n8n) => {
     const cookie = await adminCookie(); await preparar(); const { app } = appWith(URL_N8N)
     const id = await nueva(app, cookie, ['sin_novedad']); await subirTodas(app, cookie, id)
     await db.query('UPDATE remisiones SET rotulado_at = NULL WHERE id = $1', [id])
     const r = await enviar(app, cookie, id)
-    expect(r.status).toBe(422); expect(r.body.error).toMatch(/rotulado y guardado/); expect(n8n).not.toHaveBeenCalled()
+    expect(r.status).toBe(200); expect(n8n).toHaveBeenCalledTimes(1)
   }))
 
   it.each([
@@ -460,13 +460,13 @@ describe('RQ-RE-26 · orden interno y fotos sin categoría en /enviar (S3)', () 
   }
   const enviar = (app: App, cookie: string, id: string) => request(app).post(`/api/remisiones/${id}/enviar`).set('Cookie', cookie)
 
-  it('S3a · rotulado ausente y mínimas faltantes a la vez → gana el de rotulado; con rotulado y sin mínimas ni foto de novedad → gana el de mínimas', () => conN8n(async () => {
+  it('S3a · rotulado_at nulo y mínimas faltantes a la vez → gana el de mínimas, sin el de novedades (el rotulado ya no es guarda; cambiada a propósito)', () => conN8n(async () => {
     const cookie = await adminCookie(); await preparar(); const { app } = appWith({ remisionWebhookUrl: 'https://n8n/webhook/remision-entrada' })
     const id = await nueva(app, cookie, ['rayon_estetico'])
     await db.query('UPDATE remisiones SET rotulado_at = NULL WHERE id = $1', [id])
     const a = await enviar(app, cookie, id)
-    expect(a.status).toBe(422); expect(a.body.error).toMatch(/rotulado y guardado/)
-    await db.query("UPDATE remisiones SET rotulado_at = now(), rotulado_por = 'Ana Pérez' WHERE id = $1", [id])
+    expect(a.status).toBe(422); expect(a.body.error).toMatch(/Faltan fotos obligatorias/); expect(a.body.error).not.toMatch(/cada novedad/)
+    expect(a.body.error).not.toMatch(/rotulado y guardado/)
     const b = await enviar(app, cookie, id)
     expect(b.status).toBe(422); expect(b.body.error).toMatch(/Faltan fotos obligatorias/)
     expect(b.body.error).not.toMatch(/cada novedad/)
@@ -567,7 +567,7 @@ describe('PT · el alta guarda las casillas con su traza (RQ-RE-38)', () => {
     expect(fila.observaciones).toBe('Rayón o daño estético; Llegó sin embalaje')
   })
 
-  it('PT-1b · las dos casillas: un solo instante para rotulado y casillas, y las dos frases en las observaciones', async () => {
+  it('PT-1b · las dos casillas: un solo instante para las dos casillas (hora y usuario del alta), y las dos frases en las observaciones', async () => {
     const cookie = await adminCookie(); await preparar()
     const { app } = appWith()
     const r = await crear(app, cookie, { novedades: ['rayon_estetico'], rotulado: true, sinAccesorios: true, sinEmbalaje: true })
@@ -575,7 +575,7 @@ describe('PT · el alta guarda las casillas con su traza (RQ-RE-38)', () => {
     const fila = await traza(r.body.id)
     expect(fila.sin_accesorios_por).toBe('Admin'); expect(fila.sin_embalaje_por).toBe('Admin')
     expect(new Date(fila.sin_accesorios_at).getTime()).toBe(new Date(fila.sin_embalaje_at).getTime())
-    expect(new Date(fila.sin_accesorios_at).getTime()).toBe(new Date(r.body.rotuladoAt).getTime())
+    expect(r.body.rotuladoAt).toBeNull(); expect(r.body.rotuladoPor).toBeNull() // cambiada a propósito: el alta no escribe el rotulado (G2)
     expect(fila.observaciones).toBe('Rayón o daño estético; Llegó sin accesorios; Llegó sin embalaje')
   })
 

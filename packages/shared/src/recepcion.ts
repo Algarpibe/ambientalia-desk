@@ -62,14 +62,14 @@ export function componerObservaciones(
 
 const ERR_SIN_CATALOGO = 'La lista de novedades no está cargada: avisa a un administrador.'
 const ERR_SIN_MARCAS = 'Marca al menos una novedad, o «Sin novedad».'
-const ERR_SIN_ROTULADO = 'Confirma que el equipo quedó rotulado y guardado.'
+// ERR_SIN_ROTULADO RETIRADO (rotulado-tras-enviar): el alta ya no exige el rotulado; se confirma tras el envío (RQ-RE-40).
 
 /**
  * Valida lo que el alta trae de la recepción y deriva `hayNovedad` y `observaciones`.
  *
  * ORDEN INTERNO FIJO de los pasos (regla de mutación 1; la prueba PA-3 lo fija por pares): (1) catálogo sin
  * filas activas, (2) no es lista de textos o está vacía, (3) claves desconocidas o inactivas, (4) una que
- * excluye a las demás combinada con otra, (5) una que exige texto sin texto, (6) rotulado distinto de `true`, (7) «sin accesorios» con accesorios en `incluye`.
+ * excluye a las demás combinada con otra, (5) una que exige texto sin texto, (6) RETIRADO: el rotulado ya no se valida aquí, se confirma tras el envío (RQ-RE-40), (7) «sin accesorios» con accesorios en `incluye`.
  * Duplicados se pliegan; la salida va por `orden`. Se decide por las marcas del catálogo, nunca por la clave.
  */
 export function validarRecepcion(
@@ -98,7 +98,7 @@ export function validarRecepcion(
   const exigeTexto = marcadas.find((n) => n.exigeTexto)
   if (exigeTexto && !texto) return { ok: false, error: `«${exigeTexto.etiqueta}» exige describir la novedad.` }
 
-  if (cuerpo.rotulado !== true) return { ok: false, error: ERR_SIN_ROTULADO }
+  // paso (6) RETIRADO (rotulado-tras-enviar): cuerpo.rotulado se ignora; la confirmación va tras el envío (RQ-RE-24, RQ-RE-40).
   const sinAccesorios = cuerpo.sinAccesorios === true, sinEmbalaje = cuerpo.sinEmbalaje === true; if (sinAccesorios && Array.isArray(cuerpo.incluye) && cuerpo.incluye.length > 0) return { ok: false, error: ERR_SIN_ACCESORIOS_CON_INCLUYE }
   const novedades = marcadas.map((n) => ({ clave: n.clave, etiqueta: n.etiqueta }))
   const novedadOtro = exigeTexto ? texto : null
@@ -145,14 +145,14 @@ export function fotosQueFaltan(
 
 /**
  * Motivo por el que la remisión NO se puede enviar, o `null`. Legado: la regla anterior. Formulario nuevo, en
- * ORDEN FIJO (regla de mutación 1; PE-3): (a) rotulado, (b) fotos mínimas, (c) foto de cada novedad; cada motivo
+ * ORDEN FIJO (regla de mutación 1; PE-3): (a) RETIRADO: el rotulado no impide enviar (RQ-RE-26), (b) fotos mínimas, (c) foto de cada novedad; cada motivo
  * nombra TODO lo que falta de su paso.
  */
 export function motivoNoEnviable(
   rem: RemisionRecepcion, fotos: readonly FotoClasificada[], catalogo: readonly NovedadCatalogo[],
 ): string | null {
   if (!rem.novedades) return faltaFotoPorNovedad(rem.hayNovedad, fotos.length) ? MOTIVO_FOTO_LEGADO : null
-  if (!rem.rotuladoAt) return 'Falta confirmar que el equipo quedó rotulado y guardado.'
+  // paso (a) RETIRADO (rotulado-tras-enviar): rem.rotuladoAt no se lee aquí; el rotulado se confirma después (RQ-RE-40).
   const falta = fotosQueFaltan(rem, fotos, catalogo)
   if (falta.categorias.length) {
     return `Faltan fotos obligatorias: ${falta.categorias.map((c) => ETIQUETA_CATEGORIA_FOTO[c]).join(', ')}.`

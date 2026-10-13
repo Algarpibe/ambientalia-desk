@@ -37,17 +37,17 @@ export interface CreateRemisionInput {
   observaciones: string | null
   creadoPor: string | null
   empresa: string | null
-  personaContacto: string | null; hayNovedad: boolean | null; recepcion: { novedades: NovedadMarcada[]; novedadOtro: string | null; rotuladoPor: string | null; sinAccesorios: boolean; sinEmbalaje: boolean } | null
+  personaContacto: string | null; hayNovedad: boolean | null; recepcion: { novedades: NovedadMarcada[]; novedadOtro: string | null; por: string | null; sinAccesorios: boolean; sinEmbalaje: boolean } | null
 }
 
 /** Crea la remisión en estado `pendiente`: el flujo de n8n aún no ha respondido. */
 export async function createRemision(db: Queryable, input: CreateRemisionInput): Promise<string> {
-  const id = `rem-${randomUUID()}`; const ahora = input.recepcion ? new Date() : null // un solo instante para el rotulado y las casillas
+  const id = `rem-${randomUUID()}`; const ahora = input.recepcion ? new Date() : null // un solo instante para las casillas: hora y usuario del ALTA (G2)
   await db.query(
-    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad, novedades, novedad_otro, rotulado_at, rotulado_por, sin_accesorios_at, sin_accesorios_por, sin_embalaje_at, sin_embalaje_por)
-     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
+    `INSERT INTO remisiones (id, ticket_id, tipo, fecha, tipo_servicio, perfil, equipo_id, serial, incluye, observaciones, creado_por, estado, empresa, persona_contacto, hay_novedad, novedades, novedad_otro, sin_accesorios_at, sin_accesorios_por, sin_embalaje_at, sin_embalaje_por)
+     VALUES ($1,$2,'entrada',$3,$4,$5,$6,$7,$8,$9,$10,'pendiente',$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
     [id, input.ticketId, input.fecha, input.tipoServicio, input.perfil, input.equipoId, input.serial,
-      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad, /* sin J: J(null) escribiria el JSON null y no el NULL de SQL (marcador de legado) */ input.recepcion ? JSON.stringify(input.recepcion.novedades) : null, input.recepcion?.novedadOtro ?? null, ahora, input.recepcion?.rotuladoPor ?? null, input.recepcion?.sinAccesorios ? ahora : null, input.recepcion?.sinAccesorios ? input.recepcion.rotuladoPor : null, input.recepcion?.sinEmbalaje ? ahora : null, input.recepcion?.sinEmbalaje ? input.recepcion.rotuladoPor : null],
+      J(input.incluye), input.observaciones, input.creadoPor, input.empresa, input.personaContacto, input.hayNovedad, /* sin J: J(null) escribiria el JSON null y no el NULL de SQL (marcador de legado) */ input.recepcion ? JSON.stringify(input.recepcion.novedades) : null, input.recepcion?.novedadOtro ?? null, input.recepcion?.sinAccesorios ? ahora : null, input.recepcion?.sinAccesorios ? input.recepcion.por : null, input.recepcion?.sinEmbalaje ? ahora : null, input.recepcion?.sinEmbalaje ? input.recepcion.por : null],
   )
   return id
 }
@@ -126,8 +126,8 @@ export async function listRemisionesListado(db: Queryable, incluirAnuladas = fal
 }
 
 /**
- * Registra el desenlace que informa n8n. `ok_con_avisos` es un éxito: la remisión se generó pero
- * falló algún aviso (correo o Telegram), y por decisión de producto eso NO invalida la remisión.
+ * Registra el desenlace que informa n8n. `ok_con_avisos` es un éxito: la remisión se generó pero falló un paso no crítico
+ * (un aviso, o la etiqueta .dymo, según leyó el analista en el flujo el 2026-10-12); por decisión de producto NO la invalida.
  */
 export async function setResultadoRemision(
   db: Queryable,
@@ -167,23 +167,23 @@ export async function restaurarRemision(db: Queryable, id: string, quien: string
  * De paso deja el estado en `pendiente` y limpia el desenlace anterior: si quedara el `error` del
  * intento previo, el sondeo daría por fracasado un envío que acaba de empezar.
  */
-export async function reclamarEnvio(db: Queryable, id: string, ventanaSegundos = VENTANA_REENVIO_SEGUNDOS): Promise<boolean> {
+export async function reclamarEnvio(db: Queryable, id: string, ventanaSegundos = VENTANA_REENVIO_SEGUNDOS, enviadoPorId: string | null = null): Promise<boolean> {
   const corte = new Date(Date.now() - ventanaSegundos * 1000)
   const r = await db.query(
     `UPDATE remisiones
-        SET enviado_at = now(), estado = $2, resultado = NULL, resuelto_at = NULL
+        SET enviado_at = now(), estado = $2, resultado = NULL, resuelto_at = NULL, enviado_por_id = $4
       WHERE id = $1
         AND estado <> 'ok' AND estado <> 'ok_con_avisos'
         AND (enviado_at IS NULL OR resuelto_at IS NOT NULL OR enviado_at < $3)
       RETURNING id`,
-    [id, 'pendiente', corte],
+    [id, 'pendiente', corte, enviadoPorId],
   )
   return (r.rows?.length ?? 0) > 0
 }
 
 /** Suelta la reclamación cuando el disparo no llegó a salir, para no obligar a esperar la ventana entera. */
 export async function liberarEnvio(db: Queryable, id: string): Promise<void> {
-  await db.query('UPDATE remisiones SET enviado_at = NULL WHERE id = $1', [id])
+  await db.query('UPDATE remisiones SET enviado_at = NULL, enviado_por_id = NULL WHERE id = $1', [id])
 }
 
 export async function addFoto(

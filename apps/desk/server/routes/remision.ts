@@ -247,7 +247,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
       incluye: pedidos, observaciones: rec ? rec.observaciones : (b.observaciones ? String(b.observaciones) : null),
-      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, rotuladoPor: req.user?.name ?? null, sinAccesorios: rec.sinAccesorios, sinEmbalaje: rec.sinEmbalaje } : null,
+      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, por: req.user?.name ?? null, sinAccesorios: rec.sinAccesorios, sinEmbalaje: rec.sinEmbalaje } : null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
       // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
       // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos
@@ -285,7 +285,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       res.status(409).json({ error: 'Esta remisión ya se envió' }); return
     }
     // RQ-RE-08, sexta puerta (F1B-04): UNA sola, antes de reclamar (un 422 posterior a la reclamación dejaría la remisión
-    // bloqueada la ventana entera). Legado (novedades NULL): la regla anterior; formulario nuevo: rotulado, mínimas, novedades.
+    // bloqueada la ventana entera). Legado (novedades NULL): la regla anterior; formulario nuevo: mínimas, novedades.
     const fotos = await listFotos(db, id); const motivo = motivoNoEnviable(rem, fotos, await listNovedades(db))
     if (motivo) {
       res.status(422).json({ error: motivo })
@@ -294,7 +294,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // Reclamación atómica: cubre el reintento tras perder cobertura justo después de un disparo que
     // sí salió bien, y el doble clic o las dos pestañas. Leer el estado y decidir no es suficiente,
     // porque dos peticiones simultáneas pasarían las dos esa comprobación.
-    if (!(await reclamarEnvio(db, id))) {
+    if (!(await reclamarEnvio(db, id, undefined, req.user!.id))) {
       res.status(409).json({ error: 'Esta remisión se envió hace un momento; espera a que termine.' }); return
     }
     // `ticketId` es NULL-able en el tipo (las remisiones históricas pueden no tener ticket), y esta

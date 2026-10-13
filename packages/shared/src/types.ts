@@ -697,8 +697,8 @@ export interface ResumenEliminacion {
 
 /**
  * Remisión de entrada registrada en la app. `estado` refleja el desenlace del flujo n8n:
- * `pendiente` mientras no ha contestado, y `ok_con_avisos` cuando la remisión se generó pero falló
- * algún aviso (correo o Telegram) — eso cuenta como creada, no como fallo.
+ * `pendiente` mientras no ha contestado, y `ok_con_avisos` cuando la remisión se generó pero falló un paso no crítico
+ * (un aviso, o la etiqueta .dymo, según leyó el analista en el flujo el 2026-10-12): cuenta como creada, no como fallo.
  *
  * `ticketId` es NULL-able porque el histórico importado de la hoja de Google trae remisiones que no
  * casan con ningún ticket de Zoho — un estado legítimo, no un dato que falta. `empresa` y

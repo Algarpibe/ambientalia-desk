@@ -63,7 +63,7 @@ describe('motivoNoCreable', () => {
       .toBe('«Etiqueta libre» exige describir la novedad.')
   })
   it('sin rotulado', () => {
-    expect(motivoNoCreable(CAT, { novedades: ['ninguna'], rotulado: false }, planDeFotos(MIN, []))).toBe('Confirma que el equipo quedó rotulado y guardado.')
+    expect(motivoNoCreable(CAT, { novedades: ['ninguna'], rotulado: false }, planDeFotos(MIN, []))).toBeNull() // cambiada a propósito (rotulado-tras-enviar): el rotulado ya no es un motivo
   })
   it('lista no cargada', () => {
     expect(motivoNoCreable([], sel(['ninguna']), planDeFotos(MIN, []))).toBe('La lista de novedades no está cargada: avisa a un administrador.')
@@ -85,7 +85,7 @@ describe('motivoNoCreable', () => {
     expect(motivoNoCreable(CAT, sel(['golpe']), planDeFotos({ ...MIN, porNovedad: { golpe: [f('g')] } }, marcadas))).toBeNull()
   })
   it('el motivo del formulario precede al de las fotos', () => {
-    expect(motivoNoCreable(CAT, { novedades: ['ninguna'], rotulado: false }, [])).toBe('Confirma que el equipo quedó rotulado y guardado.')
+    expect(motivoNoCreable(CAT, { novedades: [], rotulado: false }, [])).toBe('Marca al menos una novedad, o «Sin novedad».') // cambiada a propósito (rotulado-tras-enviar): el motivo que precede es el de la lista vacía
   })
 })
 
