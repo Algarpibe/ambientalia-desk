@@ -1,12 +1,12 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
-import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena, motivoCargoOVI, motivoGarantiaSinOVI } from '@ambientalia/shared'
+import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena, motivoCargoOVI, motivoGarantiaSinOVI, puedeConfirmarRotulado } from '@ambientalia/shared'
 import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'; import { resolverRecepcion } from '../services/recepcion'; import { listNovedades } from '../db/novedades'; import { entrantesDeRemision } from '../services/guardasOVI'
 import { checklistDeRemision } from '../db/checklistRemision'
-import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision, confirmarRotulado } from '../db/remisiones'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'; import { obtenerCliente } from '../services/clientes'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
@@ -393,5 +393,28 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     res.set('Content-Type', c.contentType)
     res.set('X-Content-Type-Options', 'nosniff')
     res.send(Buffer.from(c.contentB64, 'base64'))
+  }))
+
+  /**
+   * Confirma el rotulado (F1B-04, `rotulado-tras-enviar`, RQ-RE-40): el técnico ya pegó la etiqueta DYMO y guardó el equipo.
+   * Va AL FINAL del grupo, sin mover ninguna ruta anterior. No lleva cuerpo que validar: persona y hora salen del servidor.
+   *
+   * ORDEN TOTAL de guardas (regla de mutación 1; cada par vecino lo fija una prueba de posición, R40-d1…d6):
+   * 401 sin sesión < 404 inexistente (A) < 403 permiso (B) < 409 anulada (B) < 422 de legado (B) < 422 sin envío con éxito (B)
+   * < 409 ya confirmada (D). El permiso lo decide el predicado compartido (regla invariable 13): el cliente lo consume.
+   */
+  app.post('/api/remisiones/:id/rotulado', requireAuth(db), asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    const rem = await getRemision(db, id)
+    if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    if (!puedeConfirmarRotulado(req.user!)) { res.status(403).json({ error: 'Confirmar el rotulado requiere el área Servicio Técnico' }); return }
+    if (rem.anuladaAt) { res.status(409).json({ error: 'Esta remisión fue anulada: no admite confirmar el rotulado' }); return }
+    if (!rem.novedades) { res.status(422).json({ error: 'Esta remisión es anterior al registro de recepción y no lleva confirmación de rotulado' }); return }
+    if (rem.estado !== 'ok' && rem.estado !== 'ok_con_avisos') { res.status(422).json({ error: 'El rotulado se confirma después de enviar: esta remisión todavía no se envió con éxito' }); return }
+    const ya = { error: 'El rotulado de esta remisión ya estaba confirmado' }
+    if (rem.rotuladoAt) { res.status(409).json(ya); return }
+    const hecha = await confirmarRotulado(db, id, req.user!.name)
+    if (!hecha) { res.status(409).json(ya); return }
+    res.json({ ...hecha, fotos: await listFotos(db, id) })
   }))
 }

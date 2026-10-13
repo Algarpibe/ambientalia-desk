@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { Remision, RemisionFoto, RemisionListado, RemisionParaVigencia, NovedadMarcada } from '@ambientalia/shared'
-import { VENTANA_REENVIO_SEGUNDOS } from '@ambientalia/shared'
+import { VENTANA_REENVIO_SEGUNDOS, pendienteDeRotular } from '@ambientalia/shared'
 
 const J = (v: unknown) => JSON.stringify(v ?? null)
 
@@ -9,7 +9,7 @@ const J = (v: unknown) => JSON.stringify(v ?? null)
 const isoOrNull = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : v ? String(v) : null)
 
 function toRemision(r: Record<string, unknown>): Remision {
-  return {
+  const m: Omit<Remision, 'pendienteRotular'> = {
     id: String(r.id), ticketId: (r.ticket_id as string) ?? null, tipo: String(r.tipo),
     fecha: r.fecha instanceof Date ? r.fecha.toISOString().slice(0, 10) : String(r.fecha ?? ''),
     tipoServicio: (r.tipo_servicio as string) ?? null, perfil: (r.perfil as string) ?? null,
@@ -23,7 +23,7 @@ function toRemision(r: Record<string, unknown>): Remision {
     empresa: (r.empresa as string) ?? null, personaContacto: (r.persona_contacto as string) ?? null,
     origen: String(r.origen ?? 'app'),
     anuladaAt: isoOrNull(r.anulada_at), anuladaPor: (r.anulada_por as string) ?? null, hayNovedad: typeof r.hay_novedad === 'boolean' ? r.hay_novedad : null, novedades: typeof r.novedades === 'string' ? (JSON.parse(r.novedades) as NovedadMarcada[] | null) : ((r.novedades as NovedadMarcada[]) ?? null), novedadOtro: (r.novedad_otro as string) ?? null, rotuladoAt: isoOrNull(r.rotulado_at), rotuladoPor: (r.rotulado_por as string) ?? null, sinAccesoriosAt: isoOrNull(r.sin_accesorios_at), sinAccesoriosPor: (r.sin_accesorios_por as string) ?? null, sinEmbalajeAt: isoOrNull(r.sin_embalaje_at), sinEmbalajePor: (r.sin_embalaje_por as string) ?? null,
-  }
+  }; return { ...m, pendienteRotular: pendienteDeRotular(m) }
 }
 
 export interface CreateRemisionInput {
@@ -237,4 +237,17 @@ export async function getFotoContent(db: Queryable, remisionId: string, fotoId: 
 export async function vigenciaDeRemisiones(db: Queryable, ticketId: string): Promise<RemisionParaVigencia[]> {
   const r = await db.query('SELECT tipo, anulada_at FROM remisiones WHERE ticket_id = $1', [ticketId])
   return r.rows.map((x: Record<string, unknown>) => ({ tipo: String(x.tipo), anuladaAt: isoOrNull(x.anulada_at) }))
+}
+
+/**
+ * Confirma el rotulado (F1B-04, RQ-RE-40): escribe `rotulado_at` (reloj del servidor) y `rotulado_por` UNA sola vez.
+ * El `UPDATE` es condicional a `rotulado_at IS NULL`, así que de dos confirmaciones simultáneas gana exactamente una;
+ * a la que pierde no le devuelve fila (`null`) y la ruta responde el `409`. No se deshace desde la aplicación (S2).
+ */
+export async function confirmarRotulado(db: Queryable, id: string, quien: string | null): Promise<Remision | null> {
+  const r = await db.query(
+    'UPDATE remisiones SET rotulado_at = now(), rotulado_por = $2 WHERE id = $1 AND rotulado_at IS NULL RETURNING *',
+    [id, quien],
+  )
+  return r.rows[0] ? toRemision(r.rows[0]) : null
 }
