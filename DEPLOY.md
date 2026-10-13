@@ -251,7 +251,7 @@ ORDER BY table_name, column_name;
 ```
 
 - **Qué se rompe si falta una columna de `public.remisiones`:** **toda** alta de remisión falla, también la de
-  legado, porque el `INSERT` de `createRemision` las nombra todas (`apps/desk/server/db/remisiones.ts:47`).
+  legado, porque el `INSERT` de `createRemision` nombra `novedades` y `novedad_otro` (`apps/desk/server/db/remisiones.ts:47`); desde `rotulado-tras-enviar` ya no nombra `rotulado_at` ni `rotulado_por`, que escribe la confirmación posterior al envío.
 - **Si falta una de `public.remision_fotos`:** falla la subida de fotos y la lectura de la remisión.
 - **Si la tabla tiene menos de once filas:** el formulario muestra una lista incompleta; con cero filas el alta de
   remisión responde `422` «La lista de novedades no está cargada».
@@ -691,3 +691,30 @@ está en curso o acaba de confirmarse y que ésta no escribió nada (lo fija una
 Si la ejecución llega después de otra ya confirmada, no se rechaza: no encuentra nada que migrar y no escribe. Cualquier otro fallo de la ruta sigue respondiendo `500` con «Error interno» (`apps/desk/server/app.ts:90-92`).
 
 **Qué NO hace este procedimiento.** No lanza la sincronización completa previa; no revierte (la reversión es el procedimiento SQL de RQ-ZS-18, `docs/sdd/Migracion_Tickets_Abiertos_F1F-01.sql`, que ejecuta una persona; volver al código anterior no deshace lo migrado, de ahí la copia previa); no nombra al suplente; y no sustituye al cotejo de la hoja de Google.
+
+## Comprobación de lectura tras desplegar F1B-04 (rotulado tras enviar)
+
+El cambio `rotulado-tras-enviar` añade **dos columnas** a `public.remisiones`, con dos sentencias al final de
+`packages/zoho-sync/src/db/schema.sql`. Son anulables y **no hay relleno de datos**. Sin interruptores nuevos: `.env.example` no cambia.
+
+```sql
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public' AND table_name = 'remisiones'
+  AND column_name IN ('enviado_por_id', 'aviso_sin_etiqueta_at')
+ORDER BY column_name;
+```
+
+Deben salir **dos filas**: `aviso_sin_etiqueta_at` (`timestamp with time zone`) y `enviado_por_id` (`text`), las dos anulables.
+
+- **Qué enciende cada una.** `enviado_por_id` guarda el id de quien envía la remisión, para dirigirle el aviso; `aviso_sin_etiqueta_at`
+  es la marca que impide repetir el aviso de «la etiqueta no se generó».
+- **Qué se rompe si falta `enviado_por_id`:** **todo** envío de remisión falla, porque la reclamación del envío la escribe
+  (`apps/desk/server/db/remisiones.ts:174`).
+- **Qué se rompe si falta `aviso_sin_etiqueta_at`:** el aviso no sale; el callback de n8n responde igual y el resultado se guarda.
+- **Remisiones anteriores:** las que ya tienen `rotulado_at` quedan como confirmadas. Las enviadas antes de este despliegue no tienen
+  `enviado_por_id`: si su etiqueta falla, el aviso va sólo al Director Técnico.
+- **Vuelta atrás, con un efecto:** basta revertir y redesplegar, y las dos columnas pueden quedarse. Pero una remisión creada con esta
+  versión y aún sin enviar no tiene `rotulado_at`, y la versión anterior no la deja enviar hasta rellenarlo a mano.
+- **No comprobado:** que n8n mande `dymoId` vacío cuando la etiqueta falla es dato del analista, leído en el flujo el 2026-10-12, sin
+  una ejecución real. Si llegara vacío en envíos buenos, el aviso saltaría en cada remisión: mirar las primeras tras desplegar.
