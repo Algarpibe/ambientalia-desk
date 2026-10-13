@@ -63,7 +63,7 @@ describe('motivoNoCreable', () => {
       .toBe('«Etiqueta libre» exige describir la novedad.')
   })
   it('sin rotulado', () => {
-    expect(motivoNoCreable(CAT, { novedades: ['ninguna'], rotulado: false }, planDeFotos(MIN, []))).toBe('Confirma que el equipo quedó rotulado y guardado.')
+    expect(motivoNoCreable(CAT, { novedades: ['ninguna'], rotulado: false }, planDeFotos(MIN, []))).toBeNull() // cambiada a propósito (rotulado-tras-enviar): el rotulado ya no es un motivo
   })
   it('lista no cargada', () => {
     expect(motivoNoCreable([], sel(['ninguna']), planDeFotos(MIN, []))).toBe('La lista de novedades no está cargada: avisa a un administrador.')
@@ -85,7 +85,7 @@ describe('motivoNoCreable', () => {
     expect(motivoNoCreable(CAT, sel(['golpe']), planDeFotos({ ...MIN, porNovedad: { golpe: [f('g')] } }, marcadas))).toBeNull()
   })
   it('el motivo del formulario precede al de las fotos', () => {
-    expect(motivoNoCreable(CAT, { novedades: ['ninguna'], rotulado: false }, [])).toBe('Confirma que el equipo quedó rotulado y guardado.')
+    expect(motivoNoCreable(CAT, { novedades: [], rotulado: false }, [])).toBe('Marca al menos una novedad, o «Sin novedad».') // cambiada a propósito (rotulado-tras-enviar): el motivo que precede es el de la lista vacía
   })
 })
 
@@ -108,25 +108,25 @@ describe('puedeContinuarSinPendientes', () => {
 
 describe('vistaDelFormulario', () => {
   it('une lista, marcadas por orden del catálogo, plan, cuerpo y motivo', () => {
-    const v = vistaDelFormulario(CAT, ['falta', 'golpe'], '', true, { ...MIN, porNovedad: { golpe: [f('g')] } })
+    const v = vistaDelFormulario(CAT, ['falta', 'golpe'], '', { ...MIN, porNovedad: { golpe: [f('g')] } })
     expect(v.lista.map((n) => n.clave)).toEqual(['ninguna', 'golpe', 'falta', 'libre'])
     expect(v.marcadas.map((m) => m.clave)).toEqual(['golpe', 'falta'])
     expect(v.plan.map((p) => p.file.name)).toEqual(['e', 'a', 'm', 'g'])
-    expect(v.cuerpo).toEqual({ novedades: ['falta', 'golpe'], novedadOtro: '', rotulado: true, sinAccesorios: false, sinEmbalaje: false, incluye: [] })
+    expect(v.cuerpo).toEqual({ novedades: ['falta', 'golpe'], novedadOtro: '', sinAccesorios: false, sinEmbalaje: false, incluye: [] })
     expect(v.motivo).toBe('Falta la foto de cada novedad marcada: Etiqueta falta.')
   })
   it('sin marcar nada: motivo de la lista y sin remisión para continuar', () => {
-    const v = vistaDelFormulario(CAT, [], '', false, MIN)
+    const v = vistaDelFormulario(CAT, [], '', MIN)
     expect(v.motivo).toBe('Marca al menos una novedad, o «Sin novedad».')
     expect(v.remision).toBeNull()
   })
   it('lista aún sin cargar: el motivo es el de lista no cargada', () => {
-    expect(vistaDelFormulario([], [], '', true, FOTOS_VACIAS).motivo).toBe('La lista de novedades no está cargada: avisa a un administrador.')
+    expect(vistaDelFormulario([], [], '', FOTOS_VACIAS).motivo).toBe('La lista de novedades no está cargada: avisa a un administrador.')
   })
   it('todo en orden: sin motivo y con la remisión derivada de validarRecepcion', () => {
-    const v = vistaDelFormulario(CAT, ['golpe'], '', true, { ...MIN, porNovedad: { golpe: [f('g')] } })
+    const v = vistaDelFormulario(CAT, ['golpe'], '', { ...MIN, porNovedad: { golpe: [f('g')] } })
     expect(v.motivo).toBeNull()
-    expect(v.remision).toEqual({ hayNovedad: true, novedades: [{ clave: 'golpe', etiqueta: 'Etiqueta golpe' }], rotuladoAt: 'rotulado' })
+    expect(v.remision).toEqual({ hayNovedad: true, novedades: [{ clave: 'golpe', etiqueta: 'Etiqueta golpe' }], rotuladoAt: null })
   })
 })
 
@@ -154,20 +154,20 @@ describe('selectoresDeFoto', () => {
 
 describe('vistaDelFormulario con casillas', () => {
   it('RF-2 el plan descarta las fotos de la categoría con casilla marcada', () => {
-    const v = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: true, sinEmbalaje: false, incluye: [] })
+    const v = vistaDelFormulario(CAT2, ['ninguna'], '', MIN, { sinAccesorios: true, sinEmbalaje: false, incluye: [] })
     expect(v.plan.map((p) => p.file.name)).toEqual(['e', 'm'])
-    const w = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: false, sinEmbalaje: true, incluye: [] })
+    const w = vistaDelFormulario(CAT2, ['ninguna'], '', MIN, { sinAccesorios: false, sinEmbalaje: true, incluye: [] })
     expect(w.plan.map((p) => p.file.name)).toEqual(['e', 'a'])
   })
   it('RF-3 con la casilla y sin esa foto no hay motivo; sin la casilla sí', () => {
     const sinFotoAcc = { ...MIN, accesorios: [] }
-    expect(vistaDelFormulario(CAT2, ['ninguna'], '', true, sinFotoAcc, { sinAccesorios: true, sinEmbalaje: false, incluye: [] }).motivo).toBeNull()
-    expect(vistaDelFormulario(CAT2, ['ninguna'], '', true, sinFotoAcc).motivo).toBe('Faltan fotos obligatorias: de los accesorios.')
+    expect(vistaDelFormulario(CAT2, ['ninguna'], '', sinFotoAcc, { sinAccesorios: true, sinEmbalaje: false, incluye: [] }).motivo).toBeNull()
+    expect(vistaDelFormulario(CAT2, ['ninguna'], '', sinFotoAcc).motivo).toBe('Faltan fotos obligatorias: de los accesorios.')
     const sinFotoEmb = { ...MIN, embalaje: [] }
-    expect(vistaDelFormulario(CAT2, ['ninguna'], '', true, sinFotoEmb, { sinAccesorios: false, sinEmbalaje: true, incluye: [] }).motivo).toBeNull()
+    expect(vistaDelFormulario(CAT2, ['ninguna'], '', sinFotoEmb, { sinAccesorios: false, sinEmbalaje: true, incluye: [] }).motivo).toBeNull()
   })
   it('RF-3 la novedad exenta marcada sin foto no impide crear', () => {
-    expect(vistaDelFormulario(CAT2, ['sinfoto'], '', true, MIN).motivo).toBeNull()
+    expect(vistaDelFormulario(CAT2, ['sinfoto'], '', MIN).motivo).toBeNull()
   })
   it('RF-3 «Llegó sin accesorios» con accesorios en «Incluye»: el motivo es el de validarRecepcion', () => {
     const m = motivoNoCreable(CAT2, { novedades: ['ninguna'], rotulado: true, sinAccesorios: true, incluye: ['Cable'] }, planDeFotos(MIN, []))
@@ -179,12 +179,12 @@ describe('vistaDelFormulario con casillas', () => {
     expect(motivoNoCreable(CAT2, { novedades: ['ninguna'], rotulado: true, sinEmbalaje: true }, planDeFotos({ ...MIN, embalaje: [] }, []))).toBeNull()
   })
   it('RF-4 el cuerpo lleva las casillas y vacía «Incluye» con «Llegó sin accesorios»', () => {
-    const v = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: true, sinEmbalaje: true, incluye: ['Cable', 'Fuente'] })
+    const v = vistaDelFormulario(CAT2, ['ninguna'], '', MIN, { sinAccesorios: true, sinEmbalaje: true, incluye: ['Cable', 'Fuente'] })
     expect(v.cuerpo.incluye).toEqual([])
     expect(v.cuerpo.sinAccesorios).toBe(true)
     expect(v.cuerpo.sinEmbalaje).toBe(true)
     expect(v.motivo).toBeNull()
-    const w = vistaDelFormulario(CAT2, ['ninguna'], '', true, MIN, { sinAccesorios: false, sinEmbalaje: false, incluye: ['Cable'] })
+    const w = vistaDelFormulario(CAT2, ['ninguna'], '', MIN, { sinAccesorios: false, sinEmbalaje: false, incluye: ['Cable'] })
     expect(w.cuerpo.incluye).toEqual(['Cable'])
   })
 })

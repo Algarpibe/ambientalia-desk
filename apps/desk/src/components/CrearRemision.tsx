@@ -57,7 +57,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   const [envio, setEnvio] = useState<EstadoEnvio>({ remisionId: null, fotosSubidas: 0 })
   const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
   // RQ-RE-24. Parte sin marcar a propósito: confirmarlo lo exige el servidor, pero sin valor previo se ve que se decidió.
-  const [rotulado, setRotulado] = useState(false); const [sinAccesorios, setSinAccesorios] = useState(false); const [sinEmbalaje, setSinEmbalaje] = useState(false)
+  const [sinAccesorios, setSinAccesorios] = useState(false); const [sinEmbalaje, setSinEmbalaje] = useState(false)
   const { data: catalogo, loading: cargandoLista, error: errLista } = useAsync<NovedadCatalogo[]>(fetchNovedadesRemision, [])
   // Qué es lo que está en vuelo, porque `busy` no lo distingue: crear una remisión nueva y reenviar la
   // que quedó pendiente lo encienden igual, y los avisos de salida dicen cosas distintas en cada caso.
@@ -113,7 +113,7 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
   }
 
   const creada = envio.remisionId !== null
-  const vista = vistaDelFormulario(catalogo ?? [], novedadesSel, otro, rotulado, fotosForm, { sinAccesorios, sinEmbalaje, incluye: Object.entries(marcados).filter(([, v]) => v).map(([k]) => k) }); const fotosPendientes = vista.plan.length - envio.fotosSubidas
+  const vista = vistaDelFormulario(catalogo ?? [], novedadesSel, otro, fotosForm, { sinAccesorios, sinEmbalaje, incluye: Object.entries(marcados).filter(([, v]) => v).map(([k]) => k) }); const fotosPendientes = vista.plan.length - envio.fotosSubidas
 
   /**
    * Marca la ventana en la que ya puede existir una remisión en la base: `creada` no se enciende hasta
@@ -292,12 +292,12 @@ export function CrearRemision({ ticketId, onClose, onCreada, recienCreado }: {
               )}
             </div>
 
-            {/* RQ-RE-24. La casilla parte sin marcar: confirmarla es una decisión de quien recibe el equipo, y el
-                servidor guarda quién y cuándo (no se manda desde aquí). */}
-            <label className={`flex items-start gap-2 text-[13px] ${congelado ? 'text-slate-500 cursor-default' : 'cursor-pointer'}`}>
-              <input type="checkbox" className="accent-blue-600 mt-0.5 disabled:opacity-50" checked={rotulado} onChange={(e) => setRotulado(e.target.checked)} disabled={congelado} />
-              <span><b>Rotulado y guardado:</b> el equipo quedó rotulado con el código del ticket y guardado</span>
-            </label>
+            {/* RQ-RE-19. Sin casilla de rotulado: se confirma después de enviar (RQ-RE-40), desde la pantalla de resultado y
+                la tarjeta de la remisión. El servidor guarda quién y cuándo; aquí no se decide nada. */}
+            <p className="text-[12px] text-slate-500">
+              El rotulado se confirma después de enviar, con la etiqueta DYMO ya impresa:
+              lo pedirá la pantalla de resultado.
+            </p>
 
             <div className="flex flex-col gap-2">
               <label className="text-[11px] font-bold text-slate-500 uppercase">Registro fotográfico (obligatorio)</label>

@@ -826,3 +826,7 @@ ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_accesorios_at timesta
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_accesorios_por text;
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_embalaje_at timestamptz;
 ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS sin_embalaje_por text;
+-- rotulado-tras-enviar (F1B-04, decision e167): quien envio la remision, por id de usuario y no por nombre (users.name no es unico), y la
+-- marca anti-duplicado del aviso de etiqueta no generada. NULL-ables y SIN relleno. AL FINAL para no desplazar citas. CALIFICADAS public.
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS enviado_por_id text;
+ALTER TABLE public.remisiones ADD COLUMN IF NOT EXISTS aviso_sin_etiqueta_at timestamptz;

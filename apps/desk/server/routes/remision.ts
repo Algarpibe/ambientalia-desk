@@ -1,19 +1,19 @@
 import type { Express } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import type { RemisionNueva } from '@ambientalia/shared'
-import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena, motivoCargoOVI, motivoGarantiaSinOVI } from '@ambientalia/shared'
+import { perfilChecklist, motivoNoEnviable, categoriaDeFoto, motivoCuarentena, motivoCargoOVI, motivoGarantiaSinOVI, puedeConfirmarRotulado } from '@ambientalia/shared'
 import { ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/repo'; import { getTicketWithRefs } from '../db/ticketsConCliente'; import { asociarOV } from '@ambientalia/zoho-sync/db/ovAsociaciones'; import { enTransaccion } from '../db/transaccion'; import { motivoContratoVencido } from '../db/contratos'
 import { getEquipoFull } from '../db/equipos'
 import { hayChecklist } from '../db/remisionChecklist'; import { resolverRecepcion } from '../services/recepcion'; import { listNovedades } from '../db/novedades'; import { entrantesDeRemision } from '../services/guardasOVI'
 import { checklistDeRemision } from '../db/checklistRemision'
-import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision } from '../db/remisiones'
+import { createRemision, getRemision, listRemisionesByTicket, listRemisionesListado, addFoto, listFotos, getFotoContent, setResultadoRemision, remisionPendienteDe, reclamarEnvio, liberarEnvio, listFotosConContenido, anularRemision, restaurarRemision, confirmarRotulado } from '../db/remisiones'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'; import { obtenerCliente } from '../services/clientes'
 import { buildRemisionPayload, dispararRemision } from '../remisionWebhook'
 import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
-import { sincronizarEstadoPorRemision } from '../db/estadoPorRemision'
+import { sincronizarEstadoPorRemision } from '../db/estadoPorRemision'; import { avisarEtiquetaNoGenerada } from '../services/avisoEtiquetaNoGenerada'
 import { TRANSITION_ACTOR } from '../transitionActor'
 
 // Mismo criterio que los adjuntos de resolución: solo imágenes, y SVG fuera (permite script embebido).
@@ -247,7 +247,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       ticketId, fecha, tipoServicio: found.row.tipo_servicio ?? null, perfil,
       equipoId: eq?.id ?? found.row.equipo_id ?? null, serial, // ya resuelto y recortado en la guarda de arriba: una sola resolución, un solo valor
       incluye: pedidos, observaciones: rec ? rec.observaciones : (b.observaciones ? String(b.observaciones) : null),
-      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, rotuladoPor: req.user?.name ?? null, sinAccesorios: rec.sinAccesorios, sinEmbalaje: rec.sinEmbalaje } : null,
+      creadoPor: req.user?.name ?? null, hayNovedad: rec ? rec.hayNovedad : (typeof b.hayNovedad === 'boolean' ? b.hayNovedad : null), recepcion: rec ? { novedades: rec.novedades, novedadOtro: rec.novedadOtro, por: req.user?.name ?? null, sinAccesorios: rec.sinAccesorios, sinEmbalaje: rec.sinEmbalaje } : null,
       // `companyName` con respaldo en `name`, no solo `companyName`: el histórico importado de la hoja
       // se llenó con el NOMBRE del cliente (así lo escribía el flujo de n8n, que solo usa `empresa` con
       // el mismo respaldo al armar el documento — ver `Code Parsing Datos Agente IA`), y muchos
@@ -285,7 +285,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
       res.status(409).json({ error: 'Esta remisión ya se envió' }); return
     }
     // RQ-RE-08, sexta puerta (F1B-04): UNA sola, antes de reclamar (un 422 posterior a la reclamación dejaría la remisión
-    // bloqueada la ventana entera). Legado (novedades NULL): la regla anterior; formulario nuevo: rotulado, mínimas, novedades.
+    // bloqueada la ventana entera). Legado (novedades NULL): la regla anterior; formulario nuevo: mínimas, novedades.
     const fotos = await listFotos(db, id); const motivo = motivoNoEnviable(rem, fotos, await listNovedades(db))
     if (motivo) {
       res.status(422).json({ error: motivo })
@@ -294,7 +294,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // Reclamación atómica: cubre el reintento tras perder cobertura justo después de un disparo que
     // sí salió bien, y el doble clic o las dos pestañas. Leer el estado y decidir no es suficiente,
     // porque dos peticiones simultáneas pasarían las dos esa comprobación.
-    if (!(await reclamarEnvio(db, id))) {
+    if (!(await reclamarEnvio(db, id, undefined, req.user!.id))) {
       res.status(409).json({ error: 'Esta remisión se envió hace un momento; espera a que termine.' }); return
     }
     // `ticketId` es NULL-able en el tipo (las remisiones históricas pueden no tener ticket), y esta
@@ -371,7 +371,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // propia remisión. Sin esto, el hilo de un ticket llevado por una sola persona enseñaba un
     // «Equipo Técnico» que parece un usuario y que nunca intervino. El marcador queda solo como
     // último recurso, para las remisiones históricas que no traen autor.
-    await sincronizarEstadoPorRemision(db, rem.ticketId, rem.creadoPor ?? TRANSITION_ACTOR)
+    await sincronizarEstadoPorRemision(db, rem.ticketId, rem.creadoPor ?? TRANSITION_ACTOR); await avisarEtiquetaNoGenerada(db, id, estado, b.resultado) // nunca lanza: aviso de etiqueta no generada (RQ-AV-22)
     res.json({ ok: true })
   }))
 
@@ -393,5 +393,28 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     res.set('Content-Type', c.contentType)
     res.set('X-Content-Type-Options', 'nosniff')
     res.send(Buffer.from(c.contentB64, 'base64'))
+  }))
+
+  /**
+   * Confirma el rotulado (F1B-04, `rotulado-tras-enviar`, RQ-RE-40): el técnico ya pegó la etiqueta DYMO y guardó el equipo.
+   * Va AL FINAL del grupo, sin mover ninguna ruta anterior. No lleva cuerpo que validar: persona y hora salen del servidor.
+   *
+   * ORDEN TOTAL de guardas (regla de mutación 1; cada par vecino lo fija una prueba de posición, R40-d1…d6):
+   * 401 sin sesión < 404 inexistente (A) < 403 permiso (B) < 409 anulada (B) < 422 de legado (B) < 422 sin envío con éxito (B)
+   * < 409 ya confirmada (D). El permiso lo decide el predicado compartido (regla invariable 13): el cliente lo consume.
+   */
+  app.post('/api/remisiones/:id/rotulado', requireAuth(db), asyncHandler(async (req, res) => {
+    const id = String(req.params.id)
+    const rem = await getRemision(db, id)
+    if (!rem) { res.status(404).json({ error: 'Remisión no encontrada' }); return }
+    if (!puedeConfirmarRotulado(req.user!)) { res.status(403).json({ error: 'Confirmar el rotulado requiere el área Servicio Técnico' }); return }
+    if (rem.anuladaAt) { res.status(409).json({ error: 'Esta remisión fue anulada: no admite confirmar el rotulado' }); return }
+    if (!rem.novedades) { res.status(422).json({ error: 'Esta remisión es anterior al registro de recepción y no lleva confirmación de rotulado' }); return }
+    if (rem.estado !== 'ok' && rem.estado !== 'ok_con_avisos') { res.status(422).json({ error: 'El rotulado se confirma después de enviar: esta remisión todavía no se envió con éxito' }); return }
+    const ya = { error: 'El rotulado de esta remisión ya estaba confirmado' }
+    if (rem.rotuladoAt) { res.status(409).json(ya); return }
+    const hecha = await confirmarRotulado(db, id, req.user!.name)
+    if (!hecha) { res.status(409).json(ya); return }
+    res.json({ ...hecha, fotos: await listFotos(db, id) })
   }))
 }

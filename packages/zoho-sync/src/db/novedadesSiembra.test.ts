@@ -160,3 +160,20 @@ describe('recepcion-exencion-foto-y-casilla · exenta_de_foto y casillas con tra
     for (const s of nombran) expect(s).toMatch(/^ALTER TABLE public\.remisiones ADD COLUMN IF NOT EXISTS sin_(accesorios|embalaje)_(at timestamptz|por text)$/)
   })
 })
+
+describe('rotulado-tras-enviar · enviado_por_id y aviso_sin_etiqueta_at (RQ-RE-42, R42-c)', () => {
+  it('PS-12 · las dos columnas existen NULL-ables y las crean exactamente dos ALTER calificadas sobre public.remisiones, sin relleno', async () => {
+    const db = await freshDb()
+    const cols = ['enviado_por_id', 'aviso_sin_etiqueta_at']
+    // por comportamiento (molde PS-11): pg-mem declara is_nullable = 'NO' para toda columna, así que se inserta una fila que no las trae
+    await db.query("INSERT INTO public.remisiones (id, ticket_id, fecha) VALUES ('rem-ps12', 't1', '2026-10-12')")
+    const r = await db.query(`SELECT ${cols.join(', ')} FROM public.remisiones WHERE id = 'rem-ps12'`)
+    expect(r.rows).toHaveLength(1)
+    for (const c of cols) expect(r.rows[0][c], `${c} sin relleno`).toBeNull()
+    // por el fichero vigilado (regla de mutación 2): exactamente dos sentencias las nombran, cada una calificada y de esa forma
+    const nombran = schemaStatements().map(sinComentarios).filter((s) => /\b(enviado_por_id|aviso_sin_etiqueta_at)\b/i.test(s))
+    expect(nombran).toHaveLength(2)
+    expect(nombran.filter((s) => /^ALTER TABLE public\.remisiones ADD COLUMN IF NOT EXISTS enviado_por_id text$/.test(s))).toHaveLength(1)
+    expect(nombran.filter((s) => /^ALTER TABLE public\.remisiones ADD COLUMN IF NOT EXISTS aviso_sin_etiqueta_at timestamptz$/.test(s))).toHaveLength(1)
+  })
+})

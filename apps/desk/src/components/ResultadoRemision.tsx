@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ESPERA_DESENLACE_SEGUNDOS, urlSegura } from '@ambientalia/shared'
 import { fetchRemision, enviarRemision, type RemisionConFotos } from '../api/client'
-import { pasos } from '../lib/remisionResultado'
+import { pasos } from '../lib/remisionResultado'; import { ConfirmarRotulado } from './ConfirmarRotulado'
 
 const INTERVALO_MS = 2000
 
@@ -149,7 +149,7 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
                 <li key={i}>No se pudo completar {a.paso}.{a.mensaje && <span className="opacity-70"> {a.mensaje}</span>}</li>
               ))}
             </ul>
-            <span>El documento sí se generó; solo falló el aviso.</span>
+            <span>El documento sí se generó; falló un paso que no lo invalida.</span>
             {carpeta}
           </div>
         )}
@@ -167,7 +167,7 @@ export function ResultadoRemision({ remisionId, errorEnvio, onCerrar }: {
             </ul>
           </div>
         )}
-
+        {rem && <ConfirmarRotulado rem={rem} onConfirmado={setRem} />}
         <div className="flex justify-end items-center gap-2">
           {puedeReintentar && (
             <button type="button" onClick={reintentar} disabled={reintentando}

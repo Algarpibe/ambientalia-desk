@@ -531,8 +531,8 @@ export interface CrearRemisionPayload {
    * y no el número: el servidor resuelve número y fecha contra Books, que es donde vive el dato.
    */
   salesOrderId?: string
-  /** RQ-RE-23/24. La lista marcada, el texto de la que lo exige y la casilla de rotulado: el servidor deriva el resto. */
-  novedades?: string[]; novedadOtro?: string; rotulado?: boolean; sinAccesorios?: boolean; sinEmbalaje?: boolean
+  /** RQ-RE-23/24. La lista marcada, el texto de la que lo exige; el servidor deriva el resto. */
+  novedades?: string[]; novedadOtro?: string; sinAccesorios?: boolean; sinEmbalaje?: boolean
 }
 
 export async function crearRemision(payload: CrearRemisionPayload): Promise<Remision> {
@@ -882,4 +882,11 @@ export function ampliarContrato(id: number, cuerpo: { fechaFin: string; motivo: 
   return fetch(`/api/contratos/${id}/ampliar`, {
     method: 'POST', credentials: 'include', headers: JSON_HEADERS, body: JSON.stringify(cuerpo),
   }).then((r) => json<{ contrato: Contrato; ampliaciones: import('@ambientalia/shared').AmpliacionContrato[]; fechaFinOriginal: string }>(r))
+}
+
+/** Confirma el rotulado de una remisión ya enviada (rotulado-tras-enviar, RQ-RE-40). No manda cuerpo: quién y cuándo los escribe el servidor. El permiso (403), el estado (409/422) y el repetido (409) los decide `routes/remision.ts` y su texto se enseña tal cual. Devuelve la remisión con la traza. */
+export async function confirmarRotulado(id: string): Promise<RemisionConFotos> {
+  const res = await fetch(`/api/remisiones/${encodeURIComponent(id)}/rotulado`, { method: 'POST', credentials: 'include' })
+  if (!res.ok) { const b = (await res.json().catch(() => ({}))) as { error?: string }; throw new Error(b.error || `HTTP ${res.status}`) }
+  return res.json() as Promise<RemisionConFotos>
 }
