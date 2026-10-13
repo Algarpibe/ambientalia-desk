@@ -52,7 +52,7 @@ Partida `38ffbeb`. Hechas 1b.1 a 1b.9 salvo lo que cierra el orquestador (commit
 
 **Verde**: 11 pruebas de `packages/shared/src/rotulado.test.ts`; 24 de `apps/desk/server/rotulado.test.ts` (4 del 1a + 20 nuevas: R40-a/b/c, R40-d1…d6, R40-e, R40-f, R41-b y ocho R41-c, una por fila de la tabla).
 
-**Tabla de guardas tal como quedó** (`apps/desk/server/routes/remision.ts`; el handler ocupa `:397-419`, la llave de cierre pasa a `:420`)
+**Tabla de guardas tal como quedó** (`apps/desk/server/routes/remision.ts`; el handler ocupa `apps/desk/server/routes/remision.ts:398-419`, la llave de cierre pasa a `:420`)
 | Orden | Línea | Guarda | Código | Texto |
 |---|---|---|---|---|
 | 0 | `:406` | `requireAuth(db)` | 401 | los de `auth/middleware.ts` |
@@ -87,7 +87,7 @@ Cada intercambio de vecinas pone roja exactamente su R40-dN: las pruebas de posi
 
 **Códigos de salida**: `npm test` 0 (269 ficheros pasan | 3 omitidos; 4504 pruebas pasan | 11 omitidas); `npm run typecheck` 0; `npx eslint . --max-warnings 165` 0 (165 avisos, 0 errores).
 
-**Regla de mutación 4**: `wc -l` partida→ahora: `routes/remision.ts` 397→420 (handler en `:397-419`, llave en `:420`; imports EN SITIO en `:4` y `:9`), `db/remisiones.ts` 240→253 (EN SITIO `:4`, `:12`, `:26`; función AL FINAL `:242-253`), `types.ts` 810→810 (EN SITIO `:735`), `index.ts` 42→43 (AL FINAL), `recepcion.ts` 206→206. `git diff -U0 38ffbeb` no muestra ningún otro hunk: ninguna línea existente cambió de número. Citas a `toRemision` (`:12`, `:26`) y a `types.ts:735` (archivo: `recepcion-rotulacion-foto-entrada/design.md:169`, `aplica-resuelto-hacia-n8n/design.md:30`, `recepcion-exencion-foto-y-casilla/design.md:41`): siguen ciertas, la línea conserva su contenido y gana un campo. Ninguna cita a la llave de cierre de `routes/remision.ts` (`:397` antes). Segundo pase de abreviadas `:396-399` en los ficheros que citan `routes/remision.ts`: ninguna se refiere a ese fichero. Citas que dejan de ser ciertas: ninguna.
+**Regla de mutación 4**: `wc -l` partida→ahora: `routes/remision.ts` 397→420 (handler en `apps/desk/server/routes/remision.ts:398-419`, llave en `:420`; imports EN SITIO en `:4` y `:9`), `db/remisiones.ts` 240→253 (EN SITIO `:4`, `:12`, `:26`; función AL FINAL `:242-253`), `types.ts` 810→810 (EN SITIO `:735`), `index.ts` 42→43 (AL FINAL), `recepcion.ts` 206→206. `git diff -U0 38ffbeb` no muestra ningún otro hunk: ninguna línea existente cambió de número. Citas a `toRemision` (`:12`, `:26`) y a `types.ts:735` (archivo: `openspec/changes/archive/2026-10-03-recepcion-rotulacion-foto-entrada/design.md:169`, `openspec/changes/archive/2026-10-12-aplica-resuelto-hacia-n8n/design.md:30`, `openspec/changes/archive/2026-10-12-recepcion-exencion-foto-y-casilla/design.md:41`): siguen ciertas, la línea conserva su contenido y gana un campo. Ninguna cita a la llave de cierre de `routes/remision.ts` (`:397` antes). Segundo pase de abreviadas `:396-399` en los ficheros que citan `routes/remision.ts`: ninguna se refiere a ese fichero. Citas que dejan de ser ciertas: ninguna.
 
 **Medida**: `git diff --shortstat --no-renames 38ffbeb` sobre lo trackeado, 239 (más este fichero); nuevos sin trackear: `packages/shared/src/rotulado.ts` 22 y `packages/shared/src/rotulado.test.ts` 34. Suma en los datos del informe, muy bajo la válvula de 720.
 
