@@ -13,7 +13,7 @@ import type { AppConfig } from '@ambientalia/zoho-sync/config'
 import { requireAuth, requireAdmin } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import { crearSubida } from '../util/subida'
-import { sincronizarEstadoPorRemision } from '../db/estadoPorRemision'
+import { sincronizarEstadoPorRemision } from '../db/estadoPorRemision'; import { avisarEtiquetaNoGenerada } from '../services/avisoEtiquetaNoGenerada'
 import { TRANSITION_ACTOR } from '../transitionActor'
 
 // Mismo criterio que los adjuntos de resolución: solo imágenes, y SVG fuera (permite script embebido).
@@ -371,7 +371,7 @@ export function registerRemisionRoutes(app: Express, deps: { db: Queryable; conf
     // propia remisión. Sin esto, el hilo de un ticket llevado por una sola persona enseñaba un
     // «Equipo Técnico» que parece un usuario y que nunca intervino. El marcador queda solo como
     // último recurso, para las remisiones históricas que no traen autor.
-    await sincronizarEstadoPorRemision(db, rem.ticketId, rem.creadoPor ?? TRANSITION_ACTOR)
+    await sincronizarEstadoPorRemision(db, rem.ticketId, rem.creadoPor ?? TRANSITION_ACTOR); await avisarEtiquetaNoGenerada(db, id, estado, b.resultado) // nunca lanza: aviso de etiqueta no generada (RQ-AV-22)
     res.json({ ok: true })
   }))
 

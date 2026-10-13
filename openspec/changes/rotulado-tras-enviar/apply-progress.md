@@ -92,3 +92,40 @@ Cada intercambio de vecinas pone roja exactamente su R40-dN: las pruebas de posi
 **Medida**: `git diff --shortstat --no-renames 38ffbeb` sobre lo trackeado, 239 (más este fichero); nuevos sin trackear: `packages/shared/src/rotulado.ts` 22 y `packages/shared/src/rotulado.test.ts` 34. Suma en los datos del informe, muy bajo la válvula de 720.
 
 **Desvíos del diseño**: (1) R40-e nace verde (no hay producto que lo haga rojo). (2) M8 necesitó mover `const ya` para no medir una zona muerta temporal, no una posición. (3) Nada más: `rotulado: true` sigue en el `nueva()` del 1a (se ignora) y no se quitó.
+
+## Lote 2 — aviso de etiqueta no generada
+
+Partida `38df0c4`. Hechas 2.1 a 2.8 (los trece escenarios AV22-a a AV22-m y AV22-t entran: la medida intermedia quedó en 341, muy bajo 600, así que NO hace falta lote 2b). Sin tocar `apps/desk/src`, `openspec/specs/`, `CLAUDE.md`, `config.yaml` ni `ENTRADA.md`. Sin migración: la columna `aviso_sin_etiqueta_at` es del lote 1a.
+
+**Barrido 2.1 (antes de escribir producto)**: ninguna prueba existente cuenta filas de `avisos` ni afirma su ausencia (`grep -rn "FROM avisos\|INTO avisos"` en `apps/desk/server/remisiones.test.ts`, `apps/desk/server/rotulado.test.ts` y `apps/desk/server/db/estadoPorRemision.test.ts`: 0). Las llamadas al callback con `ok`/`ok_con_avisos` sin `dymoId` están en `apps/desk/server/remisiones.test.ts` (383-384, 408, 411, 534-535, 861, 871, 890) y en `apps/desk/server/rotulado.test.ts` (R40-e): ahora pueden crear avisos, pero ninguna los mira. Antes → después: **0 líneas cambiadas**; las 108 pruebas de esos tres ficheros siguen verdes. Lo no cambiado es un hallazgo, no un descuido: no hay prueba que se vuelva falsa.
+
+**Rojo literal (por grupo, antes del producto)**
+- `packages/shared/src/rotulado.test.ts` (AV22-a a AV22-d): 12 failed | 11 passed, `etiquetaNoGenerada is not a function`.
+- `apps/desk/server/services/avisoEtiquetaNoGenerada.test.ts`: primero módulo inexistente (`Failed to load url ./avisoEtiquetaNoGenerada`); con un módulo vacío que sólo exporta un `textoAvisoSinEtiqueta` que devuelve `''`: 19 failed. «expected [] to have a length of 1 but got +0» (AV22-a, d, e, f, g, i), «expected '' to be 'Ticket #1234: la remisión de entrada …'» (AV22-t), «expected "noop" to be called at least once» (AV22-k, AV22-l). AV22-b y AV22-c nacen verdes (no-regresión: sin producto no hay aviso que sobre).
+
+**Verde**: 23 pruebas de `packages/shared/src/rotulado.test.ts` y 21 de `apps/desk/server/services/avisoEtiquetaNoGenerada.test.ts` (AV22-a a AV22-m y AV22-t, esta con las cuatro variantes más una por el callback).
+
+**Hunk del callback** (`apps/desk/server/routes/remision.ts`, 420 líneas antes y después; sólo cambian la 16 y la 374, EN SITIO y unidas con `;` como ya hace la línea 5): import `avisarEtiquetaNoGenerada` en la 16 y, en la 374, `await sincronizarEstadoPorRemision(...); await avisarEtiquetaNoGenerada(db, id, estado, b.resultado)`. Va DESPUÉS de guardar el resultado y de avanzar el ticket; el aislamiento está en el servicio (`try`/`catch` con `logger.error`), no en el callback.
+
+**Mutaciones** (copia previa en el directorio temporal; restauradas con `cmp`; las ejecutó `mut.cjs` en el directorio de trabajo de la sesión)
+| Mutación | Pruebas rojas | Restaurada |
+|---|---|---|
+| M11a `etiquetaNoGenerada` acepta `error` | AV22-c (2: la pura y la del callback) | sí |
+| M11b decide por el texto de `avisos[].paso` | AV22-d (pura) | sí |
+| trim: cadena vacía / espacios cuentan como etiqueta presente | AV22-a (4: pura ×2, callback ×2) | sí |
+| M12 quitar `AND aviso_sin_etiqueta_at IS NULL` | AV22-e (×2) y AV22-f | sí |
+| M13 quitar el `try`/`catch` del servicio | AV22-l (única) | sí |
+| M17 marcar antes de mirar destinatarios | AV22-k y otras 14 (la marca se pone aun sin avisos) | sí |
+| marcar aunque no haya destinatarios (quita el `return false`) | AV22-k (única) | sí |
+| no plegar remitente y cargo por id | AV22-g (×2) y AV22-j | sí |
+| remitente inactivo cuenta (quita `AND active = true`) | AV22-i (única) | sí |
+| el área se suma aunque haya cargo | AV22-h (única) | sí |
+Las diez pusieron algo rojo; ninguna necesitó prueba añadida. Antes de arreglar el analizador de salida, las diez salían «nada rojo»: era el mío (códigos de color de vitest en el patrón), no un hueco de las pruebas.
+
+**Medida**: intermedia (tras AV22-a a AV22-m, antes de cerrar) `git diff --shortstat --no-renames 38df0c4` = 3 ficheros, 49 inserciones, 3 borrados = 52; nuevos: servicio 69 y su prueba 220 = 289; total **341** (< 600). Final: ver el informe de la fase (suma con `tasks.md` y este trozo).
+
+**Códigos de salida**: `npm test` 0 (270 ficheros pasan | 3 omitidos; 4537 pruebas pasan | 11 omitidas); `npm run typecheck` 0; `npx eslint . --max-warnings 165` 0 (165 avisos, 0 errores).
+
+**Regla de mutación 4**: `wc -l` partida → ahora, sin cambio: `apps/desk/server/routes/remision.ts` 420, `apps/desk/server/db/remisiones.ts` 253, `packages/shared/src/types.ts` 810; `packages/shared/src/rotulado.ts` 22 → 35 (AL FINAL). `git diff -U0 38df0c4` sólo marca las líneas 16 y 374 de `apps/desk/server/routes/remision.ts`. Las citas a esas dos líneas (`openspec/specs/remisiones/spec.md:312`, `openspec/specs/trazas/spec.md:399`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md:546`) siguen ciertas: el avance del ticket sigue siendo la primera sentencia de la 374.
+
+**Desvíos del diseño**: (1) el servicio exporta además `DatosTextoAviso`; `textoAvisoSinEtiqueta` recibe un objeto `{ ticketNumber, fecha, serial, avisos }`. (2) Un serial de sólo espacios cuenta como «sin serial registrado». (3) AV22-l no puede afirmar «no queda marca» por filas: pg-mem no revierte un ROLLBACK (`apps/desk/server/db/transaccion.test.ts:25`); se afirma ningún aviso, resultado guardado, 200 y `logger.error`. (4) Hipótesis sin contrastar: que `dymoId` llegue vacío cuando la etiqueta falla son datos de segunda mano del analista.

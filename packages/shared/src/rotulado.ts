@@ -20,3 +20,16 @@ export function pendienteDeRotular(rem: { novedades: unknown; estado: string; an
 export function puedeConfirmarRotulado(s: { areas: string[]; isAdmin: boolean }): boolean {
   return canExecuteTransition(s.areas, s.isAdmin, 'Servicio Técnico')
 }
+
+/**
+ * ¿Hay que avisar de que la etiqueta DYMO no se generó? (F1B-04, `rotulado-tras-enviar`; `derivacion-avisos` RQ-AV-22, G1).
+ * Verdadero si el desenlace es `ok` u `ok_con_avisos` Y `resultado.dymoId` está vacío: ausente, `null`, cadena vacía o de
+ * sólo espacios, o `resultado` que no es un objeto. Con `error` NO avisa. No lee `avisos[].paso` ni ningún texto del flujo.
+ * Hipótesis: que `dymoId` llegue vacío cuando la etiqueta falla son datos de segunda mano del analista (nodo «Code Resumen
+ * Entrada» de n8n, leído el 2026-10-12), sin ejecución real contra la que contrastarlos.
+ */
+export function etiquetaNoGenerada(estado: string, resultado: unknown): boolean {
+  if (estado !== 'ok' && estado !== 'ok_con_avisos') return false
+  const dymoId = resultado !== null && typeof resultado === 'object' ? (resultado as { dymoId?: unknown }).dymoId : undefined
+  return typeof dymoId !== 'string' || dymoId.trim() === ''
+}
