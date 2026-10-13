@@ -2,14 +2,14 @@ import { useState } from 'react'
 import type { RemisionConFotos } from '../api/client'
 import { urlSegura } from '@ambientalia/shared'
 import { pasos, fmtFecha, ESTADO_REMISION, ESTADO_REMISION_DESCONOCIDA } from '../lib/remisionResultado'
-import { ResultadoRemision } from './ResultadoRemision'
+import { ResultadoRemision } from './ResultadoRemision'; import { ConfirmarRotulado } from './ConfirmarRotulado'
 
 // `ok` de una remisión histórica no pasó por el flujo de n8n —nunca hubo flujo que evaluar—, así que
 // no lleva el mismo distintivo que una remisión creada por la app. Por eso el histórico tiene su
 // propia marca ("Importada del histórico") y no entra en `ESTADO_REMISION` (compartido con
 // `RemisionesPage`, ver `lib/remisionResultado.ts`).
 
-function Tarjeta({ r, onReenviar }: { r: RemisionConFotos; onReenviar: (id: string) => void }) {
+function Tarjeta({ r, onReenviar, onCambio }: { r: RemisionConFotos; onReenviar: (id: string) => void; onCambio: () => void }) {
   const historica = r.origen === 'historico'
   // `resultado` es null en el histórico —nunca pasó por n8n— así que `pasos()`/`urlSegura()` devuelven
   // vacío/null por sí solos; no hace falta un `if (historica)` aparte para no pintar esas secciones.
@@ -68,7 +68,7 @@ function Tarjeta({ r, onReenviar }: { r: RemisionConFotos; onReenviar: (id: stri
           Reintentar el envío
         </button>
       )}
-
+      <ConfirmarRotulado rem={r} onConfirmado={onCambio} />
       <div className="text-[12px] text-slate-600">Equipo: <span className="font-medium">{r.serial ?? '—'}</span></div>
 
       <div className="text-[12px] text-slate-600">
@@ -127,7 +127,7 @@ export function PanelRemisiones({ items, loading, error, onCambio }: {
 
   return (
     <div className="p-4 flex flex-col gap-3 max-w-[820px]">
-      {lista.map((r) => <Tarjeta key={r.id} r={r} onReenviar={setReenviando} />)}
+      {lista.map((r) => <Tarjeta key={r.id} r={r} onReenviar={setReenviando} onCambio={onCambio} />)}
       {reenviando && (
         <ResultadoRemision
           key={reenviando}

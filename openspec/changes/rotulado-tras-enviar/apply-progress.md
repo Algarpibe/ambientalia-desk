@@ -129,3 +129,43 @@ Las diez pusieron algo rojo; ninguna necesitó prueba añadida. Antes de arregla
 **Regla de mutación 4**: `wc -l` partida → ahora, sin cambio: `apps/desk/server/routes/remision.ts` 420, `apps/desk/server/db/remisiones.ts` 253, `packages/shared/src/types.ts` 810; `packages/shared/src/rotulado.ts` 22 → 35 (AL FINAL). `git diff -U0 38df0c4` sólo marca las líneas 16 y 374 de `apps/desk/server/routes/remision.ts`. Las citas a esas dos líneas (`openspec/specs/remisiones/spec.md:312`, `openspec/specs/trazas/spec.md:399`, `docs/sdd/F0-01_Correcciones_para_el_maestro.md:546`) siguen ciertas: el avance del ticket sigue siendo la primera sentencia de la 374.
 
 **Desvíos del diseño**: (1) el servicio exporta además `DatosTextoAviso`; `textoAvisoSinEtiqueta` recibe un objeto `{ ticketNumber, fecha, serial, avisos }`. (2) Un serial de sólo espacios cuenta como «sin serial registrado». (3) AV22-l no puede afirmar «no queda marca» por filas: pg-mem no revierte un ROLLBACK (`apps/desk/server/db/transaccion.test.ts:25`); se afirma ningún aviso, resultado guardado, 200 y `logger.error`. (4) Hipótesis sin contrastar: que `dymoId` llegue vacío cuando la etiqueta falla son datos de segunda mano del analista.
+
+## Lote 3 — cliente
+
+Partida `c782f01`. Hechas 3.1 a 3.5; 3.6 salvo el detector de citas (lo corre el orquestador tras su commit). Sin tocar servidor, `packages/`, `openspec/specs/`, `CLAUDE.md`, `config.yaml` ni `ENTRADA.md`. Nombres: `vistaRotulado(rem, sesion)` en `apps/desk/src/lib/rotuladoVista.ts`; `ConfirmarRotulado`; `confirmarRotulado(id)` al final de `apps/desk/src/api/client.ts`.
+
+**Rojo → verde.** `apps/desk/src/lib/recepcionForm.test.ts` (llamadas sin el cuarto argumento, cuerpo sin `rotulado`, `rotuladoAt: null`): `npx vitest run` sobre los dos ficheros, 7 failed | 25 passed, «Cannot read properties of undefined (reading 'equipo')» y «reading 'map'» (la firma vieja recibe el objeto de fotos como `rotulado`). `apps/desk/src/lib/rotuladoVista.test.ts`: `Failed to load url ./rotuladoVista` (módulo inexistente). Verde: 40 pruebas (32 + 8).
+
+**Pruebas existentes cambiadas (antes → después, en sitio)**: `apps/desk/src/lib/recepcionForm.test.ts` 111, 119, 124, 127, 157, 159, 164, 165, 167, 170, 182 y 187: `vistaDelFormulario(cat, sel, '', true|false, fotos…)` → sin ese argumento (D10 nombraba cuatro; las otras ocho también lo pasaban); 115: el cuerpo esperado pierde `rotulado: true`; 129: `rotuladoAt: 'rotulado'` → `rotuladoAt: null`. Las líneas 65-66 y 88 del lote 1a no cambian.
+
+**Regla de mutación 3 — decisión del cliente → línea del servidor (comprobadas hoy en el worktree)**
+| Decisión del cliente | Línea del servidor que la impone | Prueba del servidor |
+|---|---|---|
+| Pinta «Pendiente de rotular» sólo si el servidor lo dice | `apps/desk/server/db/remisiones.ts:26` (`pendienteRotular: pendienteDeRotular(m)`) | R41-a, R41-b |
+| Ofrece el botón sólo a quien puede | `apps/desk/server/routes/remision.ts:410` (403) | R40-b, R40-d2, R40-d3 |
+| Sin permiso, ve la marca y «Lo confirma Servicio Técnico» | la misma `:410` | R40-b |
+| Ofrece el botón sólo si está pendiente | `apps/desk/server/routes/remision.ts:411`, `:412`, `:413`, `:415`, `:417` (409/422/409) | R40-c, R40-d4 a R40-d6, R41-c |
+| Da el rotulado por confirmado tras pulsar (usa la respuesta) | `apps/desk/server/routes/remision.ts:418` (200 con la remisión) y `apps/desk/server/db/remisiones.ts:247` | R40-a |
+| Quién y cuándo se enseña | lo escribe `apps/desk/server/db/remisiones.ts:247`; el cliente no lo manda | R40-a |
+| El alta ya no pide la casilla ni manda `rotulado` | `packages/shared/src/recepcion.ts:65`, `:101` y `:155` (pasos retirados) | `apps/desk/server/recepcion.test.ts:86-94`, PE-3, `apps/desk/server/recepcion.test.ts:370` |
+| La nota del formulario y el texto de D8 | ninguna: es texto, no decisión | — |
+Todas tienen línea: ninguna es guarda sólo de cliente. La guarda 2 era hipótesis en D9; hoy es `:410`.
+
+**Mutaciones** (restauradas; `git diff --stat` de los dos ficheros igual que antes)
+| Mutación | Prueba roja |
+|---|---|
+| botón a quien no puede (`puedeConfirmar: true`) | `RV-2 · pendiente: quien no tiene el área ve la marca sin botón` |
+| botón con `pendienteRotular: false` (cálculo propio sin estado) | `RV-1 · nada…` y `RV-4 · no recalcula…` |
+| M18 recalcula por estado en vez de leer el campo | `RV-4 · no recalcula…` y `RV-4 · no recalcula (al revés)…` |
+| el formulario vuelve a mandar `rotulado` | `vistaDelFormulario > une lista, marcadas por orden del catálogo, plan, cuerpo y motivo` |
+| el formulario vuelve a fijar `rotuladoAt: 'rotulado'` | `vistaDelFormulario > todo en orden: sin motivo y con la remisión derivada de validarRecepcion` |
+
+**Citas (regla de mutación 4), sin editar.** Todo en sitio o al final: `CrearRemision.tsx` 60, 116 y 295-300; `PanelRemisiones.tsx` 5, 12, 71, 130; `ResultadoRemision.tsx` 4, 152, 170; `client.ts` 534-535 y final. Ningún fichero cambió de longitud salvo `client.ts` (+7 al final). Dejan de ser ciertas (caso B, fechadas): `docs/sdd/Paquete_de_Despliegue_2026-10-04.md:585` y `:602`, `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:863` y `:919` (`CrearRemision.tsx:299` = la casilla); `openspec/changes/archive/2026-10-03-recepcion-rotulacion-foto-entrada/design.md:447` (`client.ts:534-535` con `rotulado?`); `openspec/changes/archive/2026-10-12-recepcion-exencion-foto-y-casilla/proposal.md:36` (`recepcionForm.ts:77-87`, la firma ya no lleva `rotulado`). Las abreviadas de `CrearRemision.tsx` (`:60`, `:61`) de los paquetes de despliegue de septiembre citan revisiones anteriores.
+
+**Códigos**: `npm test` 0 (271 ficheros pasan | 3 omitidos; 4545 pruebas pasan | 11 omitidas); `npm run typecheck` 0; `npx eslint . --max-warnings 165` 0 (165 avisos, 0 errores); `npm run build` 0 (`index-DFb6M5Q9.js`).
+
+**Medida**: ver el informe de la fase (diff trackeado + nuevos sin trackear + este trozo).
+
+**Desvíos**: (1) `recepcionForm.test.ts` tenía doce llamadas a ajustar, no cuatro. (2) Los tipos de `rotuladoVista.test.ts` se corrigieron tras el primer `typecheck` (el literal con campos de más); el `npm test` completo corrió antes de ese cambio de tipos y se repitió `npx vitest run apps/desk/src/lib` (220 pruebas, 0). (3) Si `rotuladoPor` viene vacío, el texto es «Rotulado y guardado el {fecha}» (sin persona).
+
+**Qué verá el técnico**: antes de enviar, el formulario no pide casilla y trae una nota que dice que el rotulado se confirma después. Tras enviar sin confirmar, la pantalla de resultado y la tarjeta del ticket dicen «Pendiente de rotular» y ofrecen «Confirmar rotulado y guardado». Tras confirmar, dicen «Rotulado y guardado: lo confirmó {nombre} el {fecha y hora}». Quien no tiene el área ve «Pendiente de rotular» y «Lo confirma Servicio Técnico», sin botón; si el servidor rechaza, se lee su texto, sin colores de error.
