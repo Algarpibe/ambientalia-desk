@@ -7,7 +7,7 @@ Medido sobre `a947b48`. Molde: RQ-AV-19 (`openspec/specs/derivacion-avisos/spec.
 ### Requirement: RQ-AV-22 · Aviso de «la etiqueta no se generó» al llegar el desenlace de una remisión de entrada, una sola vez por remisión
 
 El sistema **SHALL** crear un aviso cuando llega el callback de una remisión (`POST /api/remisiones/:id/callback`, `remisiones`
-RQ-RE-09) con estado `ok` u `ok_con_avisos` y `resultado.dymoId` **vacío**: ausente, `null` o cadena vacía, o sin `resultado`
+RQ-RE-09) con estado `ok` u `ok_con_avisos` y `resultado.dymoId` **vacío**: ausente, `null`, cadena vacía o de sólo espacios, o sin `resultado`
 (SUPUESTO G1, aprobado). La condición **MUST NOT** decidirse comparando el texto de `avisos[].paso` ni ningún otro texto del
 flujo. Con estado `error` **MUST NOT** avisar aunque falte la etiqueta. Aplica también a una remisión de legado (S10).
 
@@ -26,7 +26,7 @@ un `try` que sólo registra el fallo, el callback responde igual y el resultado 
 **Texto.** «Ticket #N: la remisión de entrada se generó, pero la etiqueta DYMO no quedó en su carpeta de Drive. El equipo (serial S)
 sigue sin etiqueta para rotular: hay que generarla a mano.» Si `resultado.avisos` trae algo, se añade «Lo que informó n8n: …» con
 cada entrada copiada tal cual, sin seleccionar por el texto del paso. Sin ticket asociado empieza por «La remisión de entrada del
-{fecha}». Es sólo de bandeja: `enviado_at` queda `NULL`, **MUST NOT** invocar el canal de correo (RQ-AV-09) y no hay interruptor nuevo
+{fecha}»; sin serial dice «El equipo (sin serial registrado)». Es sólo de bandeja: `enviado_at` queda `NULL`, **MUST NOT** invocar el canal de correo (RQ-AV-09) y no hay interruptor nuevo
 (S9). Lleva el `ticket_id` de la remisión.
 
 #### Scenario: [AV22-a] Las formas de vacío avisan

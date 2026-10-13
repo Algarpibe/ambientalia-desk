@@ -6,7 +6,7 @@ Medido sobre `a947b48`. Las líneas citadas de `openspec/specs/remisiones/spec.m
 
 ### Requirement: RQ-RE-40 · El rotulado se confirma después de enviar, una sola vez, con traza, y no bloquea nada
 
-Una acción del servidor, `POST /api/remisiones/:id/rotulado` (la ruta es hipótesis: la fija el diseño), **SHALL** confirmar el
+Una acción del servidor, `POST /api/remisiones/:id/rotulado`, **SHALL** confirmar el
 rotulado de una remisión de **entrada del formulario nuevo** (`novedades` no nulo, RQ-RE-27), **enviada con éxito** (`ok` u
 `ok_con_avisos`, RQ-RE-05) y no anulada. **SHALL** escribir `rotulado_at` (reloj del servidor) y `rotulado_por` (nombre del
 usuario de la sesión) con **un único `UPDATE` condicional** a `rotulado_at IS NULL`, y responder `200` con la remisión. No se
@@ -87,7 +87,7 @@ ni `rotulado_por`: confirmar o no confirmar no cambia qué transición se ofrece
 ### Requirement: RQ-RE-41 · «Pendiente de rotular» la calcula el servidor y no bloquea nada
 
 La remisión que devuelve la API —por ticket (`apps/desk/server/routes/remision.ts:97-102`) y por id (`:110-114`)— **SHALL** llevar un
-booleano `pendienteRotular` (el nombre es hipótesis: lo fija el diseño), calculado por una función pura de `packages/shared`
+booleano `pendienteRotular`, calculado por una función pura de `packages/shared`
 (regla invariable 13). Es **verdadero** si y sólo si la remisión es del formulario nuevo (`novedades` no nulo), está enviada con
 éxito (`ok` u `ok_con_avisos`), no está anulada y `rotulado_at` es `NULL`. El cliente **SHALL** pintarlo y **MUST NOT** recalcularlo.
 **MUST NOT** entrar en ninguna guarda ni alarma: informa, no alarma (S3).
@@ -111,6 +111,11 @@ booleano `pendienteRotular` (el nombre es hipótesis: lo fija el diseño), calcu
 - GIVEN una remisión nueva en `ok` sin confirmar
 - WHEN se lee por ticket y por id, se confirma (RQ-RE-40) y se lee otra vez
 - THEN las dos primeras lecturas traen `pendienteRotular = true` y la tercera `false`
+
+#### Scenario: [R41-c] La marca y la acción dicen lo mismo
+- GIVEN una remisión por cada fila de la tabla y un usuario del área Servicio Técnico
+- WHEN se lee su `pendienteRotular` y se intenta confirmar (RQ-RE-40)
+- THEN la acción responde `200` si y sólo si la marca era verdadera
 
 #### Scenario (MANUAL, de persona) · Lo que ve el técnico antes y después de enviar
 - GIVEN el formulario de entrada, tras desplegar · WHEN el técnico crea y envía una remisión · THEN no hay casilla de rotulado, la pantalla de resultado dice que el equipo está pendiente de rotular y ofrece «Confirmar rotulado y guardado»
@@ -137,6 +142,11 @@ de `ALTER TABLE` (`packages/zoho-sync/src/db/migrate.test.ts:322`) **SHALL** pon
 - GIVEN dos envíos simultáneos de personas distintas, y un envío al que le faltan fotos
 - WHEN se resuelven
 - THEN `enviado_por_id` es el de quien ganó, y el envío con el `422` no cambia el valor
+
+#### Scenario: [R42-d] Si el disparo no sale, no queda nadie como quien envió
+- GIVEN un envío que gana la reclamación y cuyo disparo a n8n falla, de modo que la reclamación se suelta
+- WHEN se lee la remisión
+- THEN `enviado_por_id` es `NULL`: se conserva sólo si el envío queda reclamado
 
 #### Scenario: [R42-c] El guardián ve una sentencia sin calificar en el fichero vigilado
 - GIVEN `schema.sql` con una de las dos sentencias escrita sin `public.`
