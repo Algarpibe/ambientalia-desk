@@ -2039,35 +2039,35 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Dueño:** quien tenga la consola de producción ejecuta la consulta; la sesión de supervisión recoge la cifra. **Qué desbloquea:** cerrar esta entrada. Si la consulta da sólo `object`, se cierra; si no, hay una decisión pendiente sobre esas filas, que es dato de producción.
 **Estado tras la actualización:** abierta sólo en ese cabo · **Destino:** punto abierto con dueño (R-3); la aceptación con servicios reales de F1F-03 ya no es donde volvería a verse lo probado.
 
-## E-207 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: ¿«Entregado» → «Finalizado» cierra el ticket, y con qué fecha de cierre?
+## E-207 · 2026-10-04 · pregunta · **CERRADA el 2026-10-14** — F1F-01: ¿«Entregado» → «Finalizado» cierra el ticket, y con qué fecha de cierre?
 **Qué:** aplicado como supuesto reversible (D-10 del diseño de `migracion-tickets-abiertos`): la herramienta pone `status_type` en `Closed` y no toca `closed_time`, que conserva lo que dijera Zoho. Ninguna decisión lo fija; E-097 sólo dice que pasa a «Finalizado».
 **Dueño:** Gerencia. **Qué desbloquea:** la ejecución de la migración.
-**Estado:** abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). Fecha de cierre: la de Zoho; si no la tiene, la de la migración marcada como tal. La herramienta hoy no escribe `closed_time`: rellenarlo es contenido nuevo de F1F-01 (XS), sin construir. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño; supuesto reversible (R-3).)*
 
-## E-208 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: ¿quién lanza la última sincronización completa antes de migrar, y cuándo?
+## E-208 · 2026-10-04 · pregunta · **CERRADA el 2026-10-14** — F1F-01: ¿quién lanza la última sincronización completa antes de migrar, y cuándo?
 **Qué:** marcar un ticket lo congela frente al sincronizador (`packages/zoho-sync/src/db/repo.ts:71`): lo que se edite en Zoho después ya no llega. La pasada incremental sólo traía los cien más recientes (`packages/zoho-sync/src/sync.ts:173-177` en `9822bd7`; lo superó `sync-tickets-por-modificacion`, que pide a `/tickets/search` los modificados desde la marca de agua), así que hace falta una sincronización completa justo antes, y hoy no tiene dueño.
 **Dueño:** Gerencia, que designa a la persona. **Qué desbloquea:** la ejecución de la migración.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). La lanza Gerencia, en la misma ventana y en este orden: Zoho en sólo lectura, sincronización completa, copia previa, migración. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño (R-3).)*
 
-## E-209 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: ¿qué se hace con los tickets que nazcan en Zoho después del corte?
+## E-209 · 2026-10-04 · pregunta · **CERRADA el 2026-10-14** — F1F-01: ¿qué se hace con los tickets que nazcan en Zoho después del corte?
 **Qué:** la herramienta los lista en el informe (`trasElCorte`) y no los toca. `decision/fecha-corte` dice que ningún ticket se registra en los dos sistemas, pero nada impide que alguien cree uno en Zoho, y el sincronizador lo traería.
 **Dueño:** Gerencia. **Qué desbloquea:** la ejecución; si hay que migrarlos también, una fila nueva.
-**Estado:** abierta · **Destino:** punto abierto con dueño; si se decide migrarlos, fila del §5 (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). Comercial los crea a mano en la aplicación, a diario, hasta el correo propio de enero. No se construye nada y no abre fila. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño; si se decide migrarlos, fila del §5 (R-3).)*
 
-## E-210 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: ¿debe apagarse la sincronización de tickets en el corte?
+## E-210 · 2026-10-04 · pregunta · **CERRADA el 2026-10-14** — F1F-01: ¿debe apagarse la sincronización de tickets en el corte?
 **Qué:** no existe interruptor para ello: la aplicación sincroniza siempre (`apps/desk/server/index.ts:88`). El supuesto aplicado (S-1) es dejarla encendida y proteger cada fila migrada con `managed_by_app`. La corrección de `decision/fecha-corte` mantiene la consulta a Zoho hasta enero, pero no dice si el sincronizador de tickets sigue.
 **Dueño:** Gerencia. **Qué desbloquea:** la ejecución; si la respuesta es apagarla, una fila nueva.
-**Estado:** abierta · **Destino:** punto abierto con dueño; si se decide, fila del §5 (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). La sincronización sigue encendida hasta enero; cada ticket migrado queda protegido por `managed_by_app` (`packages/zoho-sync/src/db/repo.ts:71`), que la migración pone (`apps/desk/server/db/migracionTicketsAbiertos.ts:86-87`). No abre fila. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño; si se decide, fila del §5 (R-3).)*
 
-## E-211 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: los estados de Zoho sin equivalencia, ¿a qué estado va cada uno?
+## E-211 · 2026-10-04 · pregunta · **CERRADA el 2026-10-14** — F1F-01: los estados de Zoho sin equivalencia, ¿a qué estado va cada uno?
 **Qué:** la herramienta sólo conoce dos reglas además de la identidad («Entregado» y «Pendiente» de servicio). Qué otros nombres de estado tienen hoy los tickets abiertos de producción es hipótesis: ninguna sesión puede leerla. La pasada en seco los lista, y con uno solo la pasada con `aplicar=true` responde `409` sin escribir nada.
 **Dueño:** Gerencia, tras la pasada en seco. **Qué desbloquea:** que la migración pueda aplicarse.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). La pasada en seco se hace ya; con la lista que salga, Gerencia decide el destino de cada estado sin equivalencia (tarea de persona pendiente). *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño (R-3).)*
 
-## E-212 · 2026-10-04 · pregunta · **ABIERTA** — F1F-01: los abiertos sin remisión de entrada vigente, ¿se les crea o esperan?
+## E-212 · 2026-10-04 · pregunta · **CERRADA el 2026-10-14** — F1F-01: los abiertos sin remisión de entrada vigente, ¿se les crea o esperan?
 **Qué:** un ticket migrado en «OV asignada» o «Ticket creado» sin remisión de entrada vigente no puede pasar por «Habilitar Servicio» (`apps/desk/server/services/ticketService.ts:273-277`). La herramienta los cuenta y los lista (`sinRemisionVigente`); no crea ninguna remisión.
 **Dueño:** Gerencia. **Qué desbloquea:** la ejecución.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/migracion-e207-e212` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`). Esperan: Servicio Técnico les crea la remisión el primer día con el botón existente. No se construye nada. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño (R-3).)*
 
 ## E-213 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: un «Entregado» migrado muestra la fecha de la migración como fecha de finalización en el informe de contrato
 **Qué:** el informe de contrato toma la primera fila con destino «Finalizado» (`apps/desk/server/db/informeContrato.ts:34`), y la fila marcador de la migración lo es. Comprobado por lectura, no por ejecución. No se corrige en este cambio.

@@ -4704,6 +4704,70 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1239 (la confirmación «obligatoria para completar la recepción»)"
     maestro_revision: "R08.4"
     tanda_que_abre: "F1B-04 (E-167: el rotulado se confirma tras el envío, con traza y aviso si no hay etiqueta)"
+  - clave: "decision/prefijo-de-que-se-deduce"
+    fecha: "2026-10-14"
+    pregunta: |
+      Pregunta `prefijo-de-que-se-deduce` (apartado 06 del panel), que bloqueaba el segundo cambio de F1B-03 (E-094,
+      supresión de los prefijos en tickets nuevos): ¿de qué se deduce el prefijo del código de servicio? La
+      clasificación tiene tres valores y los prefijos son cinco (`packages/shared/src/ticketCreate.ts:1`, `:5`), y la
+      única derivación que existe, `defaultPrefijoFor`, parte del tipo de servicio y sólo da CG o MT
+      (`packages/shared/src/ticketCreate.ts:46-49`).
+    respuesta_textual: |
+      «El código de servicio conserva el prefijo, deducido así: clasificación "Equipo nuevo" → HV; "Soporte remoto" → SR; "Equipo para servicio de mantenimiento" con tipo de servicio Calibración → CG, Protocolo → PRO, cualquier otro → MT. Se añade "Protocolo" a la lista de tipos de servicio. Los tickets existentes conservan su prefijo. Las carpetas e informes de Drive dependen de él (MT_, CG_, HV_, PRO_; PRO en uso, el último de agosto de 2025).»
+    consecuencias: |
+      (1) EL PREFIJO SE CONSERVA EN EL CÓDIGO DE SERVICIO, pero deja de ELEGIRSE: se DEDUCE de la clasificación y,
+      para «Equipo para servicio de mantenimiento», del tipo de servicio. Tabla completa: Equipo nuevo → HV ·
+      Soporte remoto → SR · Equipo para servicio de mantenimiento + Calibración → CG · + Protocolo → PRO · + cualquier
+      otro tipo → MT. Los cinco prefijos de `PREFIJOS` (`packages/shared/src/ticketCreate.ts:1`) siguen siendo
+      alcanzables, y ninguno sobra.
+      (2) REGLA 13: la deducción vive en `packages/shared` y la IMPONE el servidor en el alta; el cliente deja de
+      mandarla. Hoy el servidor exige el prefijo en el cuerpo (`apps/desk/server/services/ticketService.ts:87`).
+      (3) «PROTOCOLO» ENTRA EN LA LISTA DE TIPOS DE SERVICIO (`TIPOS_SERVICIO`,
+      `packages/shared/src/ticketCreate.ts:4`). Todo lo que enumere esa lista lo revisa el cambio que lo construya.
+      (4) LOS TICKETS EXISTENTES CONSERVAN SU PREFIJO: ninguna migración de datos; el código de servicio ya guardado
+      no se recalcula.
+      (5) DRIVE DEPENDE DEL PREFIJO: las carpetas y los informes se nombran con MT_, CG_, HV_ y PRO_. PRO está en uso
+      (el último, de agosto de 2025). Por eso el prefijo se conserva y no se suprime.
+      (6) DESBLOQUEA EL SEGUNDO CAMBIO DE F1B-03 (prefijos), con `tanda: F1B-03`, ciclo SDD completo en su worktree,
+      parando antes de fusionar.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/prefijo-de-que-se-deduce)"
+    maestro_pasaje: "docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1170 (procedencia de E-094, citada en la fila F1B-03 del plan R01.4)"
+    maestro_revision: "R08.4"
+    tanda_que_abre: "F1B-03 (segundo cambio: prefijo deducido e impuesto por el servidor; «Protocolo» en los tipos de servicio)"
+  - clave: "decision/migracion-e207-e212"
+    fecha: "2026-10-14"
+    pregunta: |
+      E-207 a E-212 (docs/sdd/ENTRADA.md), las seis preguntas de F1F-01 abiertas desde el 2026-10-04 por
+      `migracion-tickets-abiertos`: cierre de «Entregado», última sincronización completa, tickets que nazcan en Zoho
+      tras el corte, sincronización de tickets tras el corte, estados sin equivalencia y abiertos sin remisión de
+      entrada vigente.
+    respuesta_textual: |
+      «E-207: "Entregado" → "Finalizado", cerrado con la fecha de cierre de Zoho o, si no tiene, la de la migración marcada como tal. E-208: la última sincronización completa la lanza Gerencia, en la misma ventana y en este orden: Zoho en sólo lectura, sincronización completa, copia previa, migración. E-209: los tickets que entren a Zoho por correo los crea Comercial a mano en la aplicación, a diario, hasta el correo propio de enero; no se construye nada. E-210: la sincronización sigue encendida hasta enero, protegiendo cada ticket migrado. E-211: la pasada en seco se hace ya; los estados sin equivalencia los decide Gerencia con la lista que salga. E-212: los abiertos sin remisión de entrada vigente esperan; Servicio Técnico les crea la remisión el primer día con el botón existente.»
+    consecuencias: |
+      (1) E-207 · «Entregado» pasa a «Finalizado» y queda CERRADO. Fecha de cierre: la de Zoho; si no la tiene, la
+      de la migración, MARCADA como tal. Medido el 2026-10-14: la herramienta pone `status_type` y no escribe
+      `closed_time` en ningún sitio (`apps/desk/server/db/migracionTicketsAbiertos.ts:84-88`; `grep closed_time` en
+      ese fichero y en `packages/shared/src/migracionTickets.ts` da 0). Rellenar el `closed_time` vacío con la fecha
+      de la migración y dejar la marca es CONTENIDO NUEVO DE F1F-01 (XS), que esta decisión abre y no construye.
+      (2) E-208 · la última sincronización completa la lanza GERENCIA, en la misma ventana que la migración y en este
+      orden: Zoho en sólo lectura → sincronización completa → copia previa → migración. Es tarea de persona.
+      (3) E-209 · no se construye nada: los tickets que entren a Zoho por correo los crea Comercial A MANO en la
+      aplicación, a diario, hasta que haya correo propio en enero. No abre fila.
+      (4) E-210 · la sincronización de tickets SIGUE ENCENDIDA hasta enero, y cada ticket migrado queda protegido.
+      Medido el 2026-10-14: la protección existe —`upsertTicket` no escribe una fila con `managed_by_app = true`
+      (`packages/zoho-sync/src/db/repo.ts:71`)— y la migración la pone en cada ticket que migra
+      (`apps/desk/server/db/migracionTicketsAbiertos.ts:86-87`, fijado por
+      `apps/desk/server/db/migracionTicketsAbiertos.test.ts:82`). No abre fila.
+      (5) E-211 · la pasada en seco se hace YA, en producción y sin escribir. Con la lista de estados sin
+      equivalencia que salga, Gerencia decide el destino de cada uno; hasta entonces la ejecución con `aplicar=true`
+      sigue respondiendo `409` si queda alguno. Tarea de persona.
+      (6) E-212 · los abiertos sin remisión de entrada vigente ESPERAN: no se les crea remisión en la migración.
+      Servicio Técnico la crea el primer día con el botón que ya existe. No se construye nada.
+      (7) EL SUPLENTE DEL 12/12 QUEDA PENDIENTE (`DEPLOY.md:693`, «no nombra al suplente»): esta decisión no lo nombra.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/migracion-e207-e212) · docs/sdd/ENTRADA.md → E-207 a E-212"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-01 (E-207: fecha de cierre de la migración, marcada, cuando Zoho no la trae; XS, sin construir)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
