@@ -151,3 +151,110 @@ Nuevos: `packages/shared/src/indicadoresExportacion.ts`, `apps/desk/server/testi
 - Pruebas nuevas: **28** (todas en `leerExportacion.test.ts`; unitarias; 0 de integración; 1 lee la primera línea de un fichero del repositorio).
 - Pruebas verdes del fichero: 28/28; con la encuesta: 73/73; suite completa: 4573 verdes, 11 omitidas.
 - Funciones puras nuevas: `leerExportacion`, `filaMuestra`, `csvMuestra` (esta última sólo de prueba).
+
+---
+
+## Lote 2 · Cruce y consulta por ID (tareas 2.1 a 2.11; la 2.12 es del orquestador)
+
+Commit de partida del lote: `49a13fe` (el `HEAD` de la rama al empezar).
+
+### Estado de las tareas
+
+| Tarea | Estado | Nota |
+|---|---|---|
+| 2.1 | hecha | Partida `49a13fe`; el intento lo abrió el orquestador |
+| 2.2 | hecha | `apps/desk/server/comparacion/cruzarExportacion.test.ts`: 19 pruebas (RQ-KP-24 y RQ-KP-25) |
+| 2.3 | hecha | `apps/desk/server/db/ticketsPorId.test.ts`: 6 pruebas con pg-mem y `migrate`, hipótesis 5 incluida |
+| 2.4 | hecha | Rojo mirado (abajo) |
+| 2.5 | hecha | `apps/desk/server/comparacion/cruzarExportacion.ts` (41 líneas) |
+| 2.6 | hecha | `apps/desk/server/db/ticketsPorId.ts` (19 líneas); la hipótesis 5 se cumple, sin respaldo |
+| 2.7 | hecha | 25 pruebas verdes en los dos ficheros |
+| 2.8 | hecha | M11, M13, M14 y M15 ejecutadas, más tres mutaciones de la consulta (abajo); ninguna sobrevive |
+| 2.9 | hecha | Los tres códigos, abajo |
+| 2.10 | hecha | Medida, abajo |
+| 2.11 | hecha | Sólo ficheros nuevos; `git status` lo confirma |
+| 2.12 | **no es de este agente** | Commit, detector de citas y asentado son del orquestador |
+
+### Evidencia de ciclo TDD
+
+- **Rojo (2.4).** Las dos pruebas se escribieron antes que el código. Para que el rojo fuera de aserción y no de importación se crearon
+  antes dos esqueletos que compilan y devuelven vacío (`cruzarExportacion` y `repartirSinCruzar` con listas vacías; `numerosDeTickets` con
+  un mapa vacío). Resultado: 20 de 25 pruebas rojas, todas por aserción (`expected [] to deeply equal [ '111' ]`, `expected [] to have a length of 1 but got +0`,
+  `expected { camposZoho: {} } to deeply equal …`); las 5 verdes eran las de «vacío en los dos lados» y la de no mutar la entrada, que un esqueleto vacío cumple por construcción.
+- **Verde (2.7).** Con la implementación real: 25/25. Con el lote 1 (`apps/desk/server/comparacion` más `ticketsPorId.test.ts`): 53/53.
+
+### Hipótesis 5 del diseño — resuelta
+
+`id IN ($1,…)` sobre la clave de texto `tickets.id` **funciona en pg-mem**, con ID de 18 dígitos, sin respaldo: la prueba «hipótesis 5» guarda
+`123456789012345678` y `123456789012345679` y pide el primero. Se probó a propósito el reverso (mutación Mz): con `id = ANY (…)` caen 5 de las 6 pruebas
+de la consulta, así que el uso de `IN` está fijado por pruebas. El texto de la sentencia no contiene ningún ID (parámetros ligados) y es un único `SELECT`.
+
+### Mutaciones del lote (cada una ejecutada de verdad: editar, correr, mirar rojo, revertir)
+
+Cada mutación se aplicó con un script que sustituye el texto, corre `apps/desk/server/comparacion` y `apps/desk/server/db/ticketsPorId.test.ts`, y restaura el fichero original.
+
+| # | Mutación | Resultado |
+|---|---|---|
+| M11a | no listar `numeroDistinto` (condición `false`) | ROJAS (3): «número distinto…», «número del fichero ilegible…», «orden de delPeriodo» |
+| M11b | descartar el par cuando el número difiere (`continue` antes de `cruzados.push`) | ROJAS (3): las mismas |
+| M13a-1 | indexar las filas por número en vez de por «ID» | ROJAS (8) |
+| M13a-2 | buscar la fila por el número del ticket | ROJAS (8) |
+| M13a-3 | calcular `sinCruzar` contra los números del periodo | ROJAS (2): «cruce por ID» y «sólo en el fichero» |
+| M13b | el lector acepta una clave no numérica (rama `idNoDigitos` anulada) | ROJAS (2): «ID en notación científica…» y «no citan ninguna celda» (del lote 1) |
+| M14a | vaciar `soloEnDesk` | ROJAS (4) |
+| M14b | vaciar `sinCruzar` (el «sólo en el fichero») | ROJAS (5) |
+| M14c | fundir «fuera del periodo» con «sólo en el fichero» (todo a `soloEnFichero`) | ROJAS (2) |
+| M14d | el reverso: todo a «fuera del periodo» | ROJAS (2) |
+| M15 | `camposZoho: { ...t.camposZoho, ...f.campos }` | ROJA (1): «camposZoho es la bolsa de la fila y NO conserva ninguna clave sincronizada» |
+| Mx | `numerosDeTickets` ignora `trozo` | ROJA (1): «con trozo = 2 parte en bloques» |
+| My | `numerosDeTickets` sin quitar ID repetidos | ROJA (1): «los ID repetidos no repiten parámetros» |
+| Mz | `= ANY` en vez de `IN` | ROJAS (5), ver hipótesis 5 |
+
+Ninguna sobrevive; no hay equivalentes declarados en este lote. Tras restaurar, las 53 pruebas siguen verdes.
+
+### Códigos de salida (2.9), cada uno con `echo $?` justo después, salida a fichero y sin tuberías
+
+| Orden | Código | Recuento |
+|---|---|---|
+| `npm test` | **0** | `Test Files 274 passed | 3 skipped (277)`; `Tests 4598 passed | 11 skipped (4609)` (lote 1: 4573; +25 de este lote) |
+| `npm run typecheck` | **0** | sin errores |
+| `npm run lint` | **0** | `165 problems (0 errors, 165 warnings)`: el mismo número que la referencia; ninguno es de ficheros nuevos |
+
+### Medida (2.10)
+
+Contra la partida `49a13fe`. Ficheros binarios: ninguno.
+
+| Parte | Líneas |
+|---|---|
+| `git diff --shortstat --no-renames 49a13fe` (`tasks.md` 11+11 y esta sección 108+0) | 119 inserciones + 11 borrados = **130** |
+| `cruzarExportacion.ts` (nuevo) | 41 |
+| `cruzarExportacion.test.ts` (nuevo) | 134 |
+| `ticketsPorId.ts` (nuevo) | 19 |
+| `ticketsPorId.test.ts` (nuevo) | 66 |
+| **Total aproximado** | **390**, por debajo de la válvula de 720 y a ~420 del techo de 800 |
+
+El orquestador debe repetir la medida al cerrar el intento: `apply-progress.md` y `tasks.md` pueden variar unas líneas tras su propio asentado.
+
+### Barrido de citas (2.11)
+
+El lote sólo crea ficheros nuevos y toca `tasks.md` y este `apply-progress.md` (dentro de su propia carpeta de cambio). Ningún fichero existente con citas
+vivas cambió de línea: `git status --short` sólo lista cuatro ficheros nuevos sin trackear más los dos `.md` de este cambio. Las citas de este apartado
+son prosa; no se escribió ninguna `ruta:línea` nueva.
+
+### Desviaciones y dudas
+
+1. **Esqueletos para el rojo.** Antes de implementar se dejaron dos esqueletos vacíos (ver «Rojo»); se reemplazaron por la implementación en el mismo lote. No quedan restos.
+2. **`sinCruzar` se calcula contra los «ID» del periodo, no contra los cruzados.** Equivale (todo cruzado es del periodo) y evita una segunda pasada; lo fijan las mutaciones M13a-3 y M14b.
+3. **`numeroDistinto` sigue el orden de `delPeriodo`** (el de los cruzados); el diseño sólo fija ese orden para `delPeriodo`, y se eligió el de los cruzados para que coincida con la tabla de pares.
+4. **`numerosDeTickets` quita los ID repetidos** antes de partir en bloques (el diseño no lo decía; el lector ya rechaza repetidos, pero la función es general). Cubierto por la mutación My.
+5. Ninguna duda abierta que bloquee el lote 3.
+
+### Ficheros del lote 2
+
+Nuevos: `apps/desk/server/comparacion/cruzarExportacion.ts`, `apps/desk/server/comparacion/cruzarExportacion.test.ts`, `apps/desk/server/db/ticketsPorId.ts`, `apps/desk/server/db/ticketsPorId.test.ts`.
+Modificados: `openspec/changes/comparacion-exportacion-zoho/tasks.md` (casillas 2.1 a 2.11) y este `apply-progress.md`.
+
+### Resumen de pruebas del lote 2
+
+- Pruebas nuevas: **25** (19 unitarias del cruce, 6 de integración con pg-mem de la consulta).
+- Suite completa: 4598 verdes, 11 omitidas.

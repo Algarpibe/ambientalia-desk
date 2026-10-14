@@ -61,18 +61,18 @@ Dependencias: L2 de L1 (tipos); L3 de L1 y L2; L4 de L1 (tipos). Orden: L1 → L
 
 **Ficheros:** `apps/desk/server/comparacion/cruzarExportacion.ts`, `apps/desk/server/db/ticketsPorId.ts` y sus dos pruebas (todos nuevos). Sólo se leen: `apps/desk/server/indicadores.ts`, `apps/desk/server/db/encuestaRespuestas.ts:37`.
 
-- [ ] 2.1 Anotar el commit de partida y abrir el intento.
-- [ ] 2.2 **Rojo** `apps/desk/server/comparacion/cruzarExportacion.test.ts`: cruce por «ID» y «mismo número, otro ID» (RQ-KP-24); número distinto, también con número `null`; los cuatro escenarios de RQ-KP-25 (sólo en el fichero, sólo en Desk, fuera del periodo, los dos sentidos); el cruzado lleva `camposZoho = fila.campos` y NO conserva ninguna clave sincronizada; orden de `delPeriodo`.
-- [ ] 2.3 **Rojo** `apps/desk/server/db/ticketsPorId.test.ts` (pg-mem, `migrate(db)`): devuelve `Map<id, number>`; con `trozo = 2` parte en bloques; lista vacía sin sentencias; hipótesis 5 (`IN ($1,…)` sobre la clave de texto).
-- [ ] 2.4 **Ver el rojo:** `npx vitest run apps/desk/server/comparacion/cruzarExportacion.test.ts apps/desk/server/db/ticketsPorId.test.ts`.
-- [ ] 2.5 **Verde** `cruzarExportacion.ts` (D2): `cruzarExportacion` y `repartirSinCruzar`; clave por igualdad de texto, sin `custom_fields`.
-- [ ] 2.6 **Verde** `apps/desk/server/db/ticketsPorId.ts`: `numerosDeTickets(db, ids, trozo = 5000)` con `IN ($1,…)`. Si falla la hipótesis 5, aplicar el respaldo del molde de `encuestaRespuestas.ts` y anotarlo.
-- [ ] 2.7 **Ver el verde:** el comando de 2.4.
-- [ ] 2.8 **Mutaciones M11, M13, M14, M15** (mutar, ver rojo, revertir, anotar): M11 fixture con otro «ID de la solicitud» en una fila que cruza; M13 cruzar por número (y, aparte, aceptar clave no numérica en el lector); M14 vaciar `soloEnDesk`/`soloEnFichero` y fundir «fuera del periodo» con «sólo en el fichero»; M15 `{ ...t.camposZoho, ...fila.campos }`.
-- [ ] 2.9 Cierre, códigos 1 a 3: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), código MIRADO.
-- [ ] 2.10 Medir (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear); si pasa de 720, parar y partir.
-- [ ] 2.11 Barrido de citas: el lote sólo añade ficheros nuevos; comprobar con `git diff --name-only` que ningún fichero existente cambió y anotarlo.
-- [ ] 2.12 Commit del lote 2; `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0 MIRADO; asentar el intento.
+- [x] 2.1 Anotar el commit de partida y abrir el intento.
+- [x] 2.2 **Rojo** `apps/desk/server/comparacion/cruzarExportacion.test.ts`: cruce por «ID» y «mismo número, otro ID» (RQ-KP-24); número distinto, también con número `null`; los cuatro escenarios de RQ-KP-25 (sólo en el fichero, sólo en Desk, fuera del periodo, los dos sentidos); el cruzado lleva `camposZoho = fila.campos` y NO conserva ninguna clave sincronizada; orden de `delPeriodo`.
+- [x] 2.3 **Rojo** `apps/desk/server/db/ticketsPorId.test.ts` (pg-mem, `migrate(db)`): devuelve `Map<id, number>`; con `trozo = 2` parte en bloques; lista vacía sin sentencias; hipótesis 5 (`IN ($1,…)` sobre la clave de texto).
+- [x] 2.4 **Ver el rojo:** `npx vitest run apps/desk/server/comparacion/cruzarExportacion.test.ts apps/desk/server/db/ticketsPorId.test.ts`.
+- [x] 2.5 **Verde** `cruzarExportacion.ts` (D2): `cruzarExportacion` y `repartirSinCruzar`; clave por igualdad de texto, sin `custom_fields`.
+- [x] 2.6 **Verde** `apps/desk/server/db/ticketsPorId.ts`: `numerosDeTickets(db, ids, trozo = 5000)` con `IN ($1,…)`. Si falla la hipótesis 5, aplicar el respaldo del molde de `encuestaRespuestas.ts` y anotarlo.
+- [x] 2.7 **Ver el verde:** el comando de 2.4.
+- [x] 2.8 **Mutaciones M11, M13, M14, M15** (mutar, ver rojo, revertir, anotar): M11 fixture con otro «ID de la solicitud» en una fila que cruza; M13 cruzar por número (y, aparte, aceptar clave no numérica en el lector); M14 vaciar `soloEnDesk`/`soloEnFichero` y fundir «fuera del periodo» con «sólo en el fichero»; M15 `{ ...t.camposZoho, ...fila.campos }`.
+- [x] 2.9 Cierre, códigos 1 a 3: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), código MIRADO.
+- [x] 2.10 Medir (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear); si pasa de 720, parar y partir.
+- [x] 2.11 Barrido de citas: el lote sólo añade ficheros nuevos; comprobar con `git diff --name-only` que ningún fichero existente cambió y anotarlo.
+- [x] 2.12 Commit del lote 2; `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0 MIRADO; asentar el intento.
 
 ---
 
