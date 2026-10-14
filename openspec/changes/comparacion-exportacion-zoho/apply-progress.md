@@ -258,3 +258,136 @@ Modificados: `openspec/changes/comparacion-exportacion-zoho/tasks.md` (casillas 
 
 - Pruebas nuevas: **25** (19 unitarias del cruce, 6 de integración con pg-mem de la consulta).
 - Suite completa: 4598 verdes, 11 omitidas.
+
+---
+
+## Lote 3 · Ruta de comparación (tareas 3.1 a 3.15; la 3.16 es del orquestador)
+
+Commit de partida del lote: `4984aee`. `wc -l` de partida: `apps/desk/server/app.ts` **96**, `apps/desk/server/testing/appHarness.ts` **117**.
+
+### Estado de las tareas
+
+| Tarea | Estado | Nota |
+|---|---|---|
+| 3.1 | hecha | Partida `4984aee`; el intento lo abrió el orquestador. Moldes leídos: `apps/desk/server/routes/encuestaRespuestas.ts` y su prueba |
+| 3.2 | hecha | `estadoDePostGrande(app, ruta, cookie, bytes)` al FINAL de `apps/desk/server/testing/appHarness.ts` (117 a 141 líneas); el `import` de `node:http` es dinámico dentro de la función para no tocar la cabecera del fichero |
+| 3.3 a 3.5 | hechas | `apps/desk/server/routes/indicadoresComparacion.test.ts`: 34 pruebas (cuerpo 8, escalera y posición 23, escenario nuevo de RQ-KP-14/-17 1, privacidad 3; los `it.each` cuentan por caso) |
+| 3.6 | hecha | Rojo mirado (abajo) |
+| 3.7 | hecha | `apps/desk/server/routes/indicadoresComparacion.ts` (51 líneas) |
+| 3.8 | hecha | `apps/desk/server/app.ts`: la línea 22 gana el `import` y la 61 el registro, ambos al final de la línea; sigue en **96** líneas |
+| 3.9 | hecha | 34/34; con `apps/desk/server/routes`, `apps/desk/server/indicadores.test.ts`, `apps/desk/server/comparacion` y `apps/desk/server/db/ticketsPorId.test.ts`: **409 pruebas verdes** (el `GET` no se editó y sigue verde) |
+| 3.10 | hecha | Líneas reales, abajo |
+| 3.11 | hecha | M1 a M6 y M16 a M19 ejecutadas una a una (abajo); ninguna sobrevive |
+| 3.12 | hecha | `app.ts` 96 = 96; `appHarness.ts` 117 a 141, sólo crece al final (`git diff -U0`: un único bloque que añade 24 líneas tras la 117) |
+| 3.13 | hecha | Los tres códigos, abajo |
+| 3.14 | hecha | Medida, abajo |
+| 3.15 | hecha | Barrido, abajo |
+| 3.16 | **no es de este agente** | Commit, detector de citas y asentado son del orquestador |
+
+### Evidencia de ciclo TDD
+
+| Tarea | Fichero de prueba | Capa | Red de seguridad | ROJO | VERDE | TRIANGULAR | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 3.2 | (lo ejercita 3.4) | — | N/A (añadido al final) | sin rojo propio (lo exige el rojo de 3.4) | 34/34 | ➖ un único camino | ➖ |
+| 3.3 a 3.5 | `apps/desk/server/routes/indicadoresComparacion.test.ts` | Integración (supertest, pg-mem, espía de `Queryable`) | `app.ts` y las rutas existentes: la suite de 3.9 sin la prueba nueva estaba verde antes de registrar la ruta | 33 de 34 rojas | 34/34 | de 2 a 5 casos por escenario (ver abajo) | limpio |
+| 3.7, 3.8 | ídem | ídem | ídem | ídem | 34/34 y 409/409 | ver mutaciones | un comentario de la ruta se reescribió porque la prueba de pureza prohíbe la palabra de la consola en el fuente |
+
+**Cómo se vio el rojo (3.6).** Antes de la prueba se creó un esqueleto mínimo de la ruta (la constante `MENSAJE_SIN_EXPORTACION` y un registro vacío que no registra nada) para que el rojo fuera de aserción y no de importación; `app.ts` aún no se tocaba. Resultado: `Tests 33 failed | 1 passed (34)`. Los fallos son `AssertionError: expected 404 to be 200` (6), `to be 400` (5), `to be 401` (3), `to be 403` (2) y `to be 500` (1), más 3 `TypeError ... reading 'porColumna'` (el cuerpo de un `404` no trae `comparacion`: consecuencia de la misma causa) y 1 `ECONNRESET` (el `404` no lee el cuerpo de más de 10 MB; también consecuencia). Pasó en rojo UNA prueba, con motivo: «una columna de contacto no sale aunque se pida» (con un `404` no sale ninguna clave); su poder de detección se comprobó con M17d, que la pone roja.
+
+**Triangulación.** Los `it.each` de 401 (4 casos más sin fichero y sobre el límite), 403 (4 casos más sobre el límite) y 400 del lector (cero bytes, NUL, cabecera sin filas, columna repetida), los dos casos de «periodo inválido ↔ fichero», los dos del 54 («  Cumple  » coincide, «no cumple» difiere) y la tolerancia (1 día coincide, 3 días no) fuerzan la lógica real.
+
+### Hipótesis del diseño
+
+- **Hipótesis 3** (el corte de conexión de supertest con más de 10 MB para `401` y `403`): no se comprobó si supertest corta aquí; se usó `estadoDePostGrande` para esos dos casos por precaución, como en la encuesta. Con administrador, supertest sí entrega el `413` (prueba verde), como predecía la hipótesis.
+- **Hipótesis 4** (fichero de cero bytes): se cumple lo que la prueba afirma, un `400` con `error` de texto y ninguna consulta de tickets. Qué mensaje da (`vacio` o `MENSAJE_SIN_EXPORTACION`) no se determinó; la prueba no lo fija, a propósito.
+- **Hipótesis 6** (espiar el registro): CONFIRMADA. `vi.spyOn(logger, 'error')` captura lo que el manejador central le pasa: la prueba del `500` exige que lo capturado contenga «fallo simulado de lectura».
+- **Hallazgo nuevo:** un fichero de EXACTAMENTE `LIMITE_SUBIDA_BYTES` bytes también da `413` (multer marca el límite al alcanzarlo, no al superarlo); uno de `LIMITE_SUBIDA_BYTES - 1` pasa a la ruta. La prueba fija el segundo caso y el valor del límite (10 MB). No afecta al diseño; se anota por si «supera el límite» se lee como «mayor que».
+
+### Líneas reales de la ruta (3.10, leídas del fichero ya escrito)
+
+Todas en `apps/desk/server/routes/indicadoresComparacion.ts` salvo las de otros ficheros, que se nombran.
+
+| Paso de D3 | Dónde |
+|---|---|
+| 1 · `requireAuth` (`401`) | `apps/desk/server/routes/indicadoresComparacion.ts:25`, primer middleware; el `401` lo emiten `apps/desk/server/auth/middleware.ts:17` (sin cookie) y `apps/desk/server/auth/middleware.ts:19` (sesión inválida) |
+| 2 · `requireAdmin` (`403`) | `apps/desk/server/routes/indicadoresComparacion.ts:25`, segundo middleware; lo emite `apps/desk/server/auth/middleware.ts:27` |
+| 3 · multer `single('file')` | `apps/desk/server/routes/indicadoresComparacion.ts:25`, tercer middleware (límite en `apps/desk/server/util/subida.ts:6`); el `413` lo emite `apps/desk/server/app.ts:86` y el `400` de campo `apps/desk/server/app.ts:88` |
+| 4 · `validarPeriodo` (`400`) | `apps/desk/server/routes/indicadoresComparacion.ts:27` la llamada y `apps/desk/server/routes/indicadoresComparacion.ts:28` el `400` |
+| 5 · `!req.file` (`400`, `MENSAJE_SIN_EXPORTACION`) | `apps/desk/server/routes/indicadoresComparacion.ts:29` |
+| 6 · lector (`400`) | `apps/desk/server/routes/indicadoresComparacion.ts:30` la llamada y `apps/desk/server/routes/indicadoresComparacion.ts:31` el `400` |
+| 7 · primera consulta de tickets | `apps/desk/server/routes/indicadoresComparacion.ts:33` (`leerEntradasIndicadores`) |
+
+Los tres middlewares comparten la línea 25, así que el ORDEN entre ellos lo fijan las pruebas de posición (M1 a M3), no la numeración. Alimentan el 5.4 (pasos 4 a 6 de D5).
+
+### Mutaciones del lote (3.11)
+
+Cada una se aplicó con un script que sustituye el texto, corre `apps/desk/server/routes/indicadoresComparacion.test.ts` (34 pruebas) y restaura el fichero; al final `cmp` de la ruta y del lector contra su copia: idénticos.
+
+| # | Mutación | Resultado |
+|---|---|---|
+| M1 | multer delante de `requireAdmin` | ROJAS (2): 403 ↔ «intruso» y 403 ↔ límite |
+| M2 | multer delante de `requireAuth` | ROJAS (4): 401 ↔ «intruso», 401 ↔ límite, 403 ↔ «intruso», 403 ↔ límite |
+| M3 | `requireAdmin` delante de `requireAuth` | ROJAS (29): sin `req.user` nadie es administrador, así que casi todo da `403` |
+| M4 | `!req.file` delante de `validarPeriodo` | ROJA (1): periodo inválido sin fichero |
+| M5 | `leerExportacion` delante de `validarPeriodo` | ROJA (1): periodo inválido con fichero sin «ID» |
+| M6 | consulta de tickets delante de `leerExportacion` | ROJAS (7): los cinco casos «400 del lector ↔ consultas» y los dos de recuento de consultas |
+| M16 | pasar a la comparación los ausentes del fichero (`tickets: entradas.tickets`) | ROJAS (7), entre ellas la de los invariantes `comparados + sinComparar = cruzados` |
+| M17a | la lista de ilegibles devuelve la celda | ROJAS (2): «2.5» y centinela |
+| M17b | (lector) el motivo de la fila rechazada interpola la celda | ROJAS (3), entre ellas el centinela |
+| M17c | `fichero.filas` con las filas del lector | ROJAS (4), entre ellas el centinela |
+| M17d | (lector y ruta) una columna de contacto entra en `campos` y sale en la respuesta | ROJAS (5), entre ellas «una columna de contacto no sale aunque se pida» |
+| M18 | una sentencia `UPDATE` en la ruta | ROJA (1): «todo es lectura» |
+| M19a | el valor de Zoho del 59 se lee con `Number` en vez de `valorDeZoho` | ROJA (1): «2.5» |
+| M19b | `compararIndicadores(pares, 0)`: tolerancia cero, comparar a mano | ROJAS (2): tolerancia y los invariantes |
+
+Ninguna sobrevive; no hay equivalentes declarados en este lote.
+
+### Códigos de salida (3.13), cada uno con `echo $?` justo después, salida a fichero y sin tuberías
+
+| Orden | Código | Recuento |
+|---|---|---|
+| `npm test` | **0** | `Test Files 275 passed | 3 skipped (278)`; `Tests 4632 passed | 11 skipped (4643)` (lote 2: 4598; +34 de este lote) |
+| `npm run typecheck` | **0** | sin errores |
+| `npm run lint` | **0** | `165 problems (0 errors, 165 warnings)`: el mismo número que la referencia; ninguno es de ficheros nuevos |
+
+### Medida (3.14)
+
+Contra la partida `4984aee`, con `git diff --shortstat --no-renames` y `wc -l` de lo nuevo sin trackear. Ficheros binarios: ninguno.
+
+| Parte | Líneas |
+|---|---|
+| `git diff --shortstat --no-renames 4984aee` | 174 inserciones + 17 borrados = **191** (`app.ts` 2+2, `appHarness.ts` 24+0, `tasks.md` 15+15, esta sección 133+0) |
+| `indicadoresComparacion.ts` (nuevo) | 51 |
+| `indicadoresComparacion.test.ts` (nuevo) | 299 |
+| **Total** | **541**, por debajo de la válvula de 720 y del techo de 800 |
+
+El orquestador debe repetir la medida al cerrar el intento: `apply-progress.md` y `tasks.md` pueden variar unas líneas tras su propio asentado.
+
+### Barrido de citas (3.15, regla de mutación 4)
+
+`git diff -U0`: `app.ts` cambia sólo dos líneas, la 22 y la 61, por el final, y ninguna se mueve (el fichero sigue en 96 líneas); `appHarness.ts` sólo añade al final.
+
+- **`apps/desk/server/app.ts`**: las citas completas a las líneas 22 y 61 (decenas, en `docs/sdd/Paquete_de_Despliegue_*.md` y en `openspec/changes/archive/*`) hablan de «la línea de los registros» o «de las importaciones»; siguen siendo esas líneas, con un registro más al final. **Veredicto: ninguna afectada** (posición y papel intactos). `DEPLOY.md:620` cita `apps/desk/server/app.ts:86` (el `413`) y `DEPLOY.md:691` y `docs/sdd/Paquete_de_Despliegue_2026-10-09.md:267` citan `apps/desk/server/app.ts:90-92` (el `500` interno): leídas contra el fichero, la 86 es el `res.status(413)` y la 90 a la 92 son el `logger.error` y el `500`. **Ninguna afectada.**
+- **Segundo pase (abreviadas de las líneas 22 y 61)**: en los ficheros que citan `app.ts` aparecen sueltas las líneas 22 y 61 en los paquetes de despliegue de 29/09 a 01/10 y en archivados de `asociacion-ov-ticket`, `registro-contrato` y `prioridad-top5-cliente`, entre otros; todos se refieren a esas dos mismas líneas de `app.ts`. Misma conclusión: posición intacta. No se leyó una a una cada frase de los archivados; es lectura humana que el detector no cubre.
+- **`apps/desk/server/testing/appHarness.ts`**: 70 citas con la ruta completa; la única zona con extremo en la línea 117 es la de las líneas 105 a 117 (función `emularMezclaJsonb`), citada en `docs/sdd/Paquete_de_Despliegue_2026-10-04b.md:357`, `openspec/changes/prueba-integracion-mezcla-jsonb/proposal.md:18` y `packages/zoho-sync/src/db/liberacion.integration.test.ts:16`: sigue acabando en la 117. **Ninguna afectada.**
+- **Ficheros que no se pueden editar aquí** (`docs/sdd/ENTRADA.md`, `openspec/config.yaml`, `CLAUDE.md`, `docs/sdd/F0-05_*`, `docs/sdd/R08.4_Expediente_de_cambios.md`): ninguna queda afectada; nada que listar para Supervisión.
+
+### Desviaciones y dudas
+
+1. **Esqueleto para el rojo** (un registro vacío), reemplazado por la ruta real en el mismo lote.
+2. **`import` dinámico de `node:http`** en el auxiliar del arnés (el diseño dice «al final del fichero»): evita insertar una línea en la cabecera de `appHarness.ts`, que tiene citas vivas.
+3. **Una prueba de pureza lee el fuente** de la ruta, el lector, el cruce y `ticketsPorId.ts` y exige que no contengan `node:fs`, `from 'fs'` ni la palabra de la consola (RQ-KP-26 «sin fichero en disco», RQ-KP-27). Efecto: no se puede escribir esa palabra ni en un comentario de esos cuatro ficheros.
+4. **Hallazgo del límite exacto** (arriba): `LIMITE_SUBIDA_BYTES` bytes ya son `413`.
+5. **Las pruebas de «escalera» usan `it.each`**, así que el recuento de 34 cuenta los casos.
+6. **M3 rompe 29 pruebas** y no las pocas que prevé el diseño; es lo esperado: sin `req.user` ningún administrador pasa.
+7. Ninguna duda abierta que bloquee el lote 4.
+
+### Ficheros del lote 3
+
+Nuevos: `apps/desk/server/routes/indicadoresComparacion.ts`, `apps/desk/server/routes/indicadoresComparacion.test.ts`.
+Modificados: `apps/desk/server/app.ts` (líneas 22 y 61, por el final), `apps/desk/server/testing/appHarness.ts` (+24 al final), `openspec/changes/comparacion-exportacion-zoho/tasks.md` (casillas 3.1 a 3.15) y este `apply-progress.md`.
+
+### Resumen de pruebas del lote 3
+
+- Pruebas nuevas: **34** (todas de integración con supertest y pg-mem; una de ellas lee además el fuente de cuatro módulos).
+- Suite completa: 4632 verdes, 11 omitidas.

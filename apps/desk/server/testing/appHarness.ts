@@ -115,3 +115,27 @@ function emularMezclaJsonb(pool: ConPool): void {
   const c0 = pool.connect.bind(pool)
   pool.connect = async () => { const c = await c0(); c.query = envolver(c.query.bind(c)); return c }
 }
+
+/**
+ * Estado de un POST multipart con `bytes` bytes de fichero en el campo `file`, SIN pasar por supertest (F1F-05, hipótesis 3): cuando el
+ * servidor contesta 401 o 403 sin leer un cuerpo de más de 10 MB, cierra el socket y supertest da ECONNRESET en vez de entregar la
+ * respuesta. Aquí se guarda el estado y se ignora el error de socket que llega DESPUÉS de haberla recibido.
+ */
+export async function estadoDePostGrande(app: ReturnType<typeof appWith>['app'], ruta: string, cookie: string | null, bytes: number): Promise<number> {
+  const http = await import('node:http')
+  const servidor = app.listen(0)
+  try {
+    const { port } = servidor.address() as import('node:net').AddressInfo
+    const borde = 'borde-de-prueba'
+    const cabeza = Buffer.from(`--${borde}\r\nContent-Disposition: form-data; name="file"; filename="g.csv"\r\nContent-Type: text/csv\r\n\r\n`)
+    const cuerpo = Buffer.concat([cabeza, Buffer.alloc(bytes, 0x61), Buffer.from(`\r\n--${borde}--\r\n`)])
+    const headers: Record<string, string | number> = { 'Content-Type': `multipart/form-data; boundary=${borde}`, 'Content-Length': cuerpo.length }
+    if (cookie) headers.Cookie = cookie
+    return await new Promise<number>((resolve, reject) => {
+      let respondida = false
+      const req = http.request({ port, path: ruta, method: 'POST', headers }, (res) => { respondida = true; res.resume(); resolve(res.statusCode ?? 0) })
+      req.on('error', (e) => { if (!respondida) reject(e) })
+      req.end(cuerpo)
+    })
+  } finally { servidor.close() }
+}
