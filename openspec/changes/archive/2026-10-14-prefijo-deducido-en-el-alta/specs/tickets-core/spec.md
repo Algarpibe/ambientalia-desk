@@ -8,7 +8,7 @@ líneas citadas de la spec viva son las de `968bb53`.
 
 **Nota de fusión.** Los tres bloques de `## MODIFIED Requirements` (RQ-TC-03, RQ-TC-05 y RQ-TC-10) sustituyen
 **entero** el bloque de la spec viva con la misma cabecera: son completos, con todos sus escenarios existentes
-(RQ-TC-03 no tiene ninguno; RQ-TC-05 conserva sus 13; RQ-TC-10 sus 3). Los de `## ADDED Requirements`
+(RQ-TC-03 no tiene ninguno; RQ-TC-05 conserva sus 11; RQ-TC-10 sus 3). Los de `## ADDED Requirements`
 (RQ-TC-61, -62 y -63) se añaden **al final**, tras RQ-TC-60 (`spec.md:3577-3617`). Las tres filas de tablas se
 fusionan aparte (sección siguiente), sustituyendo la línea exacta.
 
