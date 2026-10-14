@@ -391,3 +391,149 @@ Modificados: `apps/desk/server/app.ts` (líneas 22 y 61, por el final), `apps/de
 
 - Pruebas nuevas: **34** (todas de integración con supertest y pg-mem; una de ellas lee además el fuente de cuatro módulos).
 - Suite completa: 4632 verdes, 11 omitidas.
+
+---
+
+## Lote 4 · Cliente y despliegue (tareas 4.1 a 4.12; la 4.13 es del orquestador)
+
+Commit de partida del lote: `b1ad028`. `wc -l` de partida: `apps/desk/src/api/client.ts` **892**, `apps/desk/src/components/Analisis.tsx` **116**, `DEPLOY.md` **720**.
+
+### Estado de las tareas
+
+| Tarea | Estado | Nota |
+|---|---|---|
+| 4.1 | hecha | Partida `b1ad028`; el intento lo abrió el orquestador |
+| 4.2 | hecha | `apps/desk/src/lib/comparacionExportacion.test.ts`: 28 pruebas |
+| 4.3 | hecha | Rojo mirado (abajo) |
+| 4.4 | hecha | `apps/desk/src/lib/comparacionExportacion.ts` (83 líneas) |
+| 4.5 | hecha | `compararConExportacion` al final de `apps/desk/src/api/client.ts` (892 a 903, sólo añade) |
+| 4.6 | hecha, con una desviación | `apps/desk/src/components/ComparacionExportacion.tsx` (73 líneas). `Analisis.tsx` sigue en **116** líneas (ver desviación 1) |
+| 4.7 | hecha | `DEPLOY.md` 720 a 752: sección nueva al final y puntero al FINAL de la línea 269; el §9 no gana líneas |
+| 4.8 | hecha | 28/28 y `npm run typecheck` con código 0 |
+| 4.9 | hecha | Tabla de la regla 13 y mutaciones, abajo |
+| 4.10 | hecha | Los cuatro códigos, abajo |
+| 4.11 | hecha | Medida, abajo |
+| 4.12 | hecha | Barrido, abajo |
+| 4.13 | **no es de este agente** | Commit, detector de citas y asentado son del orquestador |
+
+### Evidencia de ciclo TDD
+
+| Tarea | Fichero de prueba | Capa | Red de seguridad | ROJO | VERDE | TRIANGULAR | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 4.2 a 4.4 | `apps/desk/src/lib/comparacionExportacion.test.ts` | Unitaria | N/A (nuevo) | 23 de 28 rojas por aserción (esqueleto que compila y devuelve vacío) | 28/28 | 2 a 6 casos por función | limpio |
+| 4.5 | (sin prueba propia) | — | transporte de 11 líneas al final; lo decidible (`urlComparacion`, `mensajeDeError`) está probado en `lib` | N/A | typecheck verde | ➖ | ➖ |
+| 4.6 | (ninguna: los `.tsx` están fuera de la red de pruebas por decisión de Gerencia, F0-00) | — | N/A | N/A | typecheck y build verdes | ➖ | ➖ |
+
+**Cómo se vio el rojo (4.3).** Se creó un esqueleto de `comparacionExportacion.ts` que compila y devuelve valores vacíos. Resultado: `Tests 23 failed | 5 passed (28)`. Los fallos son de aserción (`expected '' to be '.csv'`, `expected '' to be 'HTTP 400'`, `expected [] to deeply equal [...]`) y tres `TypeError` por `porcentaje` o `total` indefinidos, porque la vista vacía del esqueleto no trae esas claves (misma causa). Pasaron en rojo 5 pruebas, con motivo: las que un esqueleto vacío cumple por construcción (la de que la URL no lleva `formato`, la de no mutar la respuesta, la de «ninguna clave nombra color, meta…» y dos casos de `puedeComparar` con resultado `false`); su poder de detección se comprobó con las mutaciones de abajo.
+
+### Mutaciones del lote sobre `lib` (cada una ejecutada de verdad: editar, correr, ver rojo, restaurar; al final `cmp` idéntico y 28/28)
+
+| Mutación | Resultado |
+|---|---|
+| `porcentaje` `null` pinta `0 %` en vez de `—` | ROJA (1) |
+| `desde` vacío se envía (`!== undefined` en vez de verdad) | ROJA (1) |
+| `mensajeDeError` ignora el `error` del servidor | ROJAS (2) |
+| un total se calcula (`tickets.length + 1`) en vez de repetir el del servidor | ROJAS (2) |
+| `puedeComparar` ignora `enviando` | ROJA (1) |
+| el nombre de la columna es la clave `'49'`, no `NOMBRES_ZOHO` | ROJA (1) |
+
+Ninguna sobrevive.
+
+### Tabla de la regla 13 (regla de mutación 3, M21)
+
+Líneas leídas del fichero ya escrito. Cada fila: la decisión que toma el cliente y la línea del servidor que la impone. «Mutación» es lo que se hizo con esa línea y lo que se quejó (corriendo `apps/desk/server/routes/indicadoresComparacion.test.ts`, 34 pruebas, salvo donde se dice).
+
+| # | Decisión del cliente (tipo) | Línea del servidor que la impone | Mutación de esa línea |
+|---|---|---|---|
+| C1 | Monta el panel sólo a administradores, con `mostrarDescargaIndicadores` (`apps/desk/src/lib/indicadoresUrl.ts:16`) (bloquea) | 403: `apps/desk/server/auth/middleware.ts:27`; el 401 de quien no tiene sesión: `apps/desk/server/auth/middleware.ts:17` (sin cookie) y `apps/desk/server/auth/middleware.ts:19` (sesión inválida); el orden de las tres guardas: `apps/desk/server/routes/indicadoresComparacion.ts:25` | `:27` con `if (false)`: ROJAS (5). `:17` a 200: ROJAS (6). `:19` a 200: **no la ve la prueba de la ruta** (no usa una cookie sin sesión), pero sí `apps/desk/server/permisos.test.ts` («401 con una cookie que no corresponde a ninguna sesión»), ROJA (1). Quitar `requireAdmin` de `:25`: ROJAS (5) |
+| C2 | Deshabilita «Comparar» sin fichero (bloquea) | 400 «falta el fichero»: `apps/desk/server/routes/indicadoresComparacion.ts:29` | `:29` con `if (false)`: ROJA (1) |
+| C2b | Deshabilita «Comparar» **mientras envía** (comodidad contra el doble clic) | **Sin línea de servidor, y a propósito:** no es una guarda. El servidor aceptaría los dos envíos y no pasaría nada, porque la ruta sólo lee (lo fija la prueba «todo es lectura» de la ruta) | N/A: no hay imposición que mutar |
+| C3 | Limita el selector a `.csv` con `accept` (rellena) | 400 del lector: `apps/desk/server/routes/indicadoresComparacion.ts:30` la llamada y `apps/desk/server/routes/indicadoresComparacion.ts:31` el `400` | `:31` con `if (false)`: ROJAS (6) |
+| C4 | Muestra el mensaje del `413` que el servidor devuelve (avisa) | `apps/desk/server/app.ts:86` (el `413`), con el límite en `apps/desk/server/util/subida.ts:6`; el 400 de un campo de fichero ajeno: `apps/desk/server/app.ts:88` | `app.ts:86` a 400: ROJA (1). `app.ts:88` a 500: ROJA (1). `subida.ts:6` a 100 KB: ROJA (1) |
+| C5 | Ofrece dos `input type="date"` y envía el periodo sin validarlo (rellena) | 400 del periodo: `apps/desk/server/routes/indicadoresComparacion.ts:27` la llamada y `apps/desk/server/routes/indicadoresComparacion.ts:28` el `400` | `:28` con `if (false)`: ROJAS (2) |
+| C6 | Pinta recuentos, porcentajes y listas sin color, meta ni veredicto | No decide: la respuesta no trae ninguno. La forma del resumen: `packages/shared/src/indicadoresComparacion.ts:40-47`; la respuesta se arma en `apps/desk/server/routes/indicadoresComparacion.ts:39-48` | Prueba de `lib`: «ninguna clave de la vista lo nombra» |
+| C7 | Muestra el `error` del servidor tal cual | No decide: los textos salen de `apps/desk/server/routes/indicadoresComparacion.ts:28`, `apps/desk/server/routes/indicadoresComparacion.ts:29`, `apps/desk/server/routes/indicadoresComparacion.ts:31` y `apps/desk/server/app.ts:86` | Mutación de `mensajeDeError` (arriba): ROJAS (2) |
+| C8 | Repite el recuento de «Filas rechazadas» como el largo de la lista `fichero.rechazadas` (el servidor no manda un total aparte) | No decide nada: es el largo de la lista que arma `apps/desk/server/routes/indicadoresComparacion.ts:41`. Es la única cifra que la vista no copia de un campo `total`; no hay umbral ni condición sobre ella | Cubierta por la prueba de `lib` «repite los recuentos» |
+
+**Decisiones del cliente sin línea de servidor:** sólo C2b, y no es un espejo de una regla: es comodidad cuya ausencia no cambia ningún resultado. Ninguna otra.
+**Hallazgo menor:** la prueba de la ruta no fija el 401 de «sesión inválida» (`apps/desk/server/auth/middleware.ts:19`); lo fija `apps/desk/server/permisos.test.ts`. No se tocó nada.
+
+### Códigos de salida (4.10 y 5.1), cada uno con `echo $?` justo después, salida a fichero y sin tuberías. Corridos sobre el ÁRBOL DE TRABAJO (el lote 4 aún sin commit)
+
+| Orden | Código | Recuento |
+|---|---|---|
+| `npm test` | **0** | `Test Files 276 passed | 3 skipped (279)`; `Tests 4660 passed | 11 skipped (4671)` (lote 3: 4632; +28 de este lote) |
+| `npm run typecheck` | **0** | sin errores |
+| `npm run lint` | **0** | `165 problems (0 errors, 165 warnings)`: el mismo número que la referencia; ninguno de los ficheros nuevos |
+| `npm run build` | **0** | `built in 2.06s` |
+
+### Medida (4.11)
+
+Contra la partida `b1ad028`, con `git diff --shortstat --no-renames` y `wc -l` de lo nuevo sin trackear. Ficheros binarios: ninguno. Las cifras de `tasks.md` y de esta sección se dan en el informe final, una vez escritas.
+
+| Parte | Líneas |
+|---|---|
+| código y `DEPLOY.md` (`Analisis.tsx` 2+2, `client.ts` 11+0, `DEPLOY.md` 33+1) | 46 inserciones + 3 borrados = **49** |
+| `comparacionExportacion.ts` (nuevo) | 83 |
+| `comparacionExportacion.test.ts` (nuevo) | 142 |
+| `ComparacionExportacion.tsx` (nuevo) | 73 |
+
+### Barrido de citas (4.12, regla de mutación 4)
+
+`git diff -U0`: `Analisis.tsx` cambia sólo las líneas 6 y 91, cada una sobre sí misma, y sigue en **116** líneas; `client.ts` sólo añade al final; `DEPLOY.md` cambia la línea 269 sobre sí misma y añade al final, pasa de 720 a 752 y ninguna línea existente se mueve.
+
+- **`Analisis.tsx`: 17 citas con ruta completa, todas leídas.** Las líneas 6 y 91 son las únicas con contenido nuevo (al FINAL de la línea) y ninguna cita ajena las nombra; sólo `openspec/changes/comparacion-exportacion-zoho/design.md:157` habla de la 6 y de «tras la 90» (ver la desviación 1). `:83` (enlace de descarga) y `:81-88` (cabecera con enlace y botones de rango) siguen en su sitio. `:70` (`docs/sdd/F0-00_Baseline_as-built.md:137` y archivados de `continuidad-indicadores`): la línea 70 de hoy está **vacía**, y lo estaba antes de este lote, así que **no la afecta**. `:95` (`docs/sdd/ENTRADA.md:1284`, anclada a `e27f9da`, caso B): la línea 95 es `<Kpi label="Activos (ahora)" …>`, idéntica antes y después de este lote. **Ninguna afectada por el lote.**
+- **`DEPLOY.md`**: las citas a la zona 234-298 (`:261`, `:263`, `:265-267`, `:270-271`, `:272-298`, `:276-298`, `:234-261`) no se mueven: la única línea tocada es la 269, a la que sólo se añade texto al final, y nadie la cita salvo `design.md:32` de este cambio. Por encima de la línea 720 no había citas. **Ninguna afectada.**
+- **`client.ts`**: ninguna cita con un extremo en la zona 892-903 (el barrido de `client.ts:89x` da 0). **Ninguna afectada.**
+- **Segundo pase (abreviadas)**: no se escribió ninguna cita abreviada nueva.
+- **Citas de la sección nueva de `DEPLOY.md`**: `apps/desk/server/auth/middleware.ts:17`, `:19` y `:27`, `apps/desk/server/routes/indicadoresComparacion.ts:25`, `:27-28`, `:29`, `:30-31`, `apps/desk/server/util/subida.ts:6`, `apps/desk/server/app.ts:86` y `:88`: todas leídas contra el fichero con `sed -n`, y dicen lo que la frase afirma.
+- **Para Supervisión:** nada. `docs/sdd/ENTRADA.md:1284` sigue válida.
+- **Sin diff contra `main`:** `docs/sdd/ENTRADA.md`, `openspec/config.yaml`, `CLAUDE.md`, `.env.example`, `packages/shared/src/indicadoresComparacion.ts`, `apps/desk/server/indicadores.ts`, `apps/desk/server/routes/indicadores.ts` (`git diff --name-only main`).
+
+### Qué verá el usuario (administrador) en «Análisis»
+
+Panel «Comparar con la exportación de Zoho», encima de los KPI: selector «Exportación de Zoho (.csv)», dos fechas «Desde» y «Hasta» y el botón **«Comparar»** («Comparando…» mientras envía; deshabilitado sin fichero). Tras responder: «Periodo: AAAA-MM-DD a AAAA-MM-DD» o «Sin periodo»; ocho recuentos («Filas leídas», «Filas rechazadas», «Tickets cruzados», «Sólo en el fichero», «Fuera del periodo», «Sólo en Desk», «Número de solicitud distinto», «Valores ilegibles»); tabla «Indicador / Comparados / Coinciden / Difieren / Sin comparar / Porcentaje» con una fila por columna y una de «Tickets»; seis listas desplegables con su total entre paréntesis; el mensaje y la nota del servidor. Un error se muestra tal cual en la franja roja que «Análisis» ya usa para sus errores.
+
+### Desviaciones y dudas
+
+1. **`Analisis.tsx`: el panel se monta al FINAL de la línea 91, no en una línea nueva tras la 90** (orden del orquestador, que corrige al diseño D10): el import al final de la línea 6 y `{mostrarDescargaIndicadores(user) && <ComparacionExportacion />}` al final de la línea 91 (la del «Cargando…»), dentro del contenedor con desplazamiento y antes de los KPI. El fichero sigue en 116. `design.md` (D5, D10) y `tasks.md` (4.6) siguen diciendo «una línea tras la 90»; no se editaron.
+2. **`client.ts`: el `import` va al final del fichero**, junto a la función, para no tocar la cabecera; es válido en TypeScript y ninguna regla de lint lo impide.
+3. **`DEPLOY.md`**: la sección nueva se llama «Comparación con la exportación de Zoho (F1F-05)»; los supuestos S-I a S-Q se resumen en prosa con el plazo «una semana desde la publicación de la lista». Sin menciones a reuniones.
+4. **C8**: «Filas rechazadas» usa el largo de la lista; el servidor no manda un total aparte. No hay decisión sobre esa cifra.
+5. **El 401 de «sesión inválida»** no lo fija la prueba de la ruta (sí `permisos.test.ts`); hallazgo del lote 3, no se corrige aquí.
+6. **No se ejecutó** el detector de citas sobre `HEAD` (4.13 y 5.2, del orquestador).
+7. Los cuatro comandos se corrieron sobre el árbol de trabajo, no sobre un `HEAD` con el lote 4 commiteado; repetir tras el commit si se exige a la letra.
+
+### Ficheros del lote 4
+
+Nuevos: `apps/desk/src/lib/comparacionExportacion.ts`, `apps/desk/src/lib/comparacionExportacion.test.ts`, `apps/desk/src/components/ComparacionExportacion.tsx`.
+Modificados: `apps/desk/src/api/client.ts` (+11 al final), `apps/desk/src/components/Analisis.tsx` (líneas 6 y 91, cada una sobre sí misma), `DEPLOY.md` (línea 269 y +32 al final), `openspec/changes/comparacion-exportacion-zoho/tasks.md` (casillas) y este `apply-progress.md`.
+
+### Resumen de pruebas del lote 4
+
+- Pruebas nuevas: **28** (unitarias, en `lib`). Suite completa: 4660 verdes, 11 omitidas.
+- Funciones puras nuevas: `urlComparacion`, `puedeComparar`, `mensajeDeError`, `vistaComparacion`.
+
+---
+
+## Cierre de apply
+
+| Tarea | Estado | Nota |
+|---|---|---|
+| 5.1 | hecha en el árbol de trabajo | Los cuatro códigos 0 (arriba); repetir sobre `HEAD` tras el commit si se exige a la letra |
+| 5.2 | **no es de este agente** | El detector sobre `HEAD` es del orquestador |
+| 5.3 | parcial | Barrido del lote 4 hecho (arriba); el de los lotes 1 a 3 está en sus secciones |
+| 5.4 | hecha | Tabla de la regla 13 arriba, con las líneas reales de los pasos 4 a 6 |
+| 5.5 | hecha | Ninguno de los siete ficheros tiene diff contra `main` |
+
+## Cierre del orquestador — lote 4 y cierre de apply
+
+Ejecutado por el orquestador sobre el árbol del lote 4 (el mismo que se commitea), mirando cada código de salida por separado:
+`npm test` 0 (276 ficheros pasan y 3 omitidos; 4.660 pruebas pasan y 11 omitidas), `npm run typecheck` 0, `npm run lint` 0
+(165 avisos, 0 errores) y `npm run build` 0. El detector de citas se pasa sobre el commit del lote antes de asentar.
+
+- La fila de `Analisis.tsx` de la tabla D10 del diseño se corrigió en sitio: el panel se monta al final de la línea 91 y el
+  fichero sigue en 116 líneas, no «una línea tras la 90».
+- La tarea 5.3 se da por hecha con los barridos de cada lote (1.14, el del lote 3 y 4.12); el lote 2 sólo creó ficheros.
+- Hallazgo que queda para el verify: el `401` de sesión inválida no lo fija la prueba de la ruta nueva; lo fija la prueba
+  general de permisos.

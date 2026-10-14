@@ -261,7 +261,7 @@ líneas de lo nuevo sin trackear; el que llegue a 720 se parte.
 | `apps/desk/server/app.ts` | líneas 22 y 61, en sitio | ninguna: las citas vivas a `apps/desk/server/app.ts:86` y `apps/desk/server/app.ts:90` no se mueven |
 | `apps/desk/server/encuesta/analizarRespuestas.ts` | línea 54, en sitio | ninguna |
 | `apps/desk/server/testing/appHarness.ts`, `apps/desk/src/api/client.ts`, `packages/shared/src/index.ts` | al final | ninguna |
-| `apps/desk/src/components/Analisis.tsx` | línea 6 en sitio; una línea tras la 90 | las posteriores a la 90: `docs/sdd/ENTRADA.md:1284` cita la línea 95 de ese fichero y se revisa en el cierre, leyendo qué afirma |
+| `apps/desk/src/components/Analisis.tsx` | línea 6 en sitio; final de la línea 91, sin insertar líneas (corregido en el apply: el fichero sigue en 116) | las posteriores a la 90: `docs/sdd/ENTRADA.md:1284` cita la línea 95 de ese fichero y se revisa en el cierre, leyendo qué afirma |
 | `DEPLOY.md` | línea 269 en sitio; sección nueva tras `DEPLOY.md:720` | ninguna |
 
 El barrido del cierre repite el `grep` por cada fichero de la tabla, con segundo pase para las abreviadas.

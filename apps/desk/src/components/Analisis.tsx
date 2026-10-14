@@ -3,7 +3,7 @@ import type { Analisis as AnalisisData, AnalisisPunto, AnalisisMes } from '@ambi
 import { useAsync } from '../hooks/useAsync'
 import { fetchAnalisis } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import { urlIndicadores, mostrarDescargaIndicadores } from '../lib/indicadoresUrl'
+import { urlIndicadores, mostrarDescargaIndicadores } from '../lib/indicadoresUrl'; import { ComparacionExportacion } from './ComparacionExportacion'
 
 const RANGOS: { key: string; label: string }[] = [
   { key: 'mes', label: 'Último mes' },
@@ -88,7 +88,7 @@ export function Analisis(props: { onClose: () => void }) {
       </div>
       {error && <div className="bg-red-50 text-red-700 text-[12px] px-4 py-2">{error}</div>}
       <div className="flex-1 overflow-auto p-6">
-        {loading && !data && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}
+        {loading && !data && <div className="text-center text-slate-400 text-[13px]">Cargando…</div>}{mostrarDescargaIndicadores(user) && <ComparacionExportacion />}
         {data && (
           <div className="max-w-[1100px] mx-auto flex flex-col gap-4">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

@@ -103,29 +103,29 @@ Dependencias: L2 de L1 (tipos); L3 de L1 y L2; L4 de L1 (tipos). Orden: L1 → L
 
 **Ficheros:** `apps/desk/src/lib/comparacionExportacion.ts` y su prueba (nuevos); `apps/desk/src/api/client.ts` (al final); `apps/desk/src/components/ComparacionExportacion.tsx` (nuevo); `apps/desk/src/components/Analisis.tsx` (línea 6 en sitio y una línea tras la 90); `DEPLOY.md` (línea 269 en sitio y sección nueva al final).
 
-- [ ] 4.1 Anotar el commit de partida, abrir el intento y anotar `wc -l` de `client.ts`, `Analisis.tsx` y `DEPLOY.md` (720).
-- [ ] 4.2 **Rojo** `apps/desk/src/lib/comparacionExportacion.test.ts`: periodo mal escrito enviado tal cual y `desde`/`hasta` omitidos si están vacíos; `puedeComparar`; `mensajeDeError` (el `error` del servidor tal cual; sin él, `HTTP nnn`; un `400` de columnas no se sustituye); `vistaComparacion` repite los números sin sumar ni dividir, `—` si `porcentaje` es `null`, sin color, meta ni veredicto.
-- [ ] 4.3 **Ver el rojo:** `npx vitest run apps/desk/src/lib/comparacionExportacion.test.ts`. Nota: `vitest.config.ts:17-20` incluye `apps/**/*.test.ts`; el `.ts` entra, los `.tsx` no.
-- [ ] 4.4 **Verde** `apps/desk/src/lib/comparacionExportacion.ts` (D5): `urlComparacion`, `ACEPTA_EXPORTACION`, `puedeComparar`, `mensajeDeError`, `vistaComparacion`.
-- [ ] 4.5 **Verde** `apps/desk/src/api/client.ts`, al final: `compararConExportacion(file, periodo)` (molde `client.ts:761-766`: `FormData`, campo `file`, sin `Content-Type`).
-- [ ] 4.6 `apps/desk/src/components/ComparacionExportacion.tsx` (nuevo; sin prueba por decisión F0-00): selector `.csv`, dos `input type="date"`, botón «Comparar», listas en `details`, tonos neutros. Y `Analisis.tsx`: importación en la línea 6 y una línea tras la 90 que monta el panel si `mostrarDescargaIndicadores(user)`.
-- [ ] 4.7 `DEPLOY.md` (documentación directa, sin rojo previo, decisión del 2026-09-10): puntero **en sitio** en la línea 269 del §9 y sección nueva **al final** (ruta `POST /api/indicadores/comparacion`, sólo administradores, límite 10 MB, no guarda nada, sin variable ni tabla ni migración, `.env.example` sin cambios, qué se ve si el fichero no trae las doce columnas). Sin menciones a reuniones. Confirmar que el §9 no gana líneas.
-- [ ] 4.8 **Ver el verde:** el comando de 4.3; después `npm run typecheck` (cubre los `.tsx`).
-- [ ] 4.9 **Tabla de la regla 13 (M21):** para C1 a C7 de D5, escribir en `apply-progress.md` la línea REAL del servidor (con las anotadas en 3.10) y comprobar, decisión a decisión, que la línea dice lo que la fila afirma. Mutar cada línea de la tabla (mover o quitar la guarda) y ver que alguna prueba de L3 se queja; si ninguna, la fila es una hipótesis y se anota así.
-- [ ] 4.10 Cierre, códigos 1 a 3: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), `npm run build`, los cuatro con código MIRADO.
-- [ ] 4.11 Medir (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear); si pasa de 720, parar y partir (cliente / `DEPLOY.md`).
-- [ ] 4.12 Barrido de citas de `client\.ts`, `Analisis\.tsx` y `DEPLOY\.md`: las posteriores a la línea 90 de `Analisis.tsx` (`docs/sdd/ENTRADA.md:1284` cita la 95) se leen contra lo que afirman; si quedan desfasadas, se listan para Supervisión (esta rama no toca `ENTRADA.md`). Segundo pase de las abreviadas.
-- [ ] 4.13 Commit del lote 4; `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0 MIRADO; asentar el intento.
+- [x] 4.1 Anotar el commit de partida, abrir el intento y anotar `wc -l` de `client.ts`, `Analisis.tsx` y `DEPLOY.md` (720).
+- [x] 4.2 **Rojo** `apps/desk/src/lib/comparacionExportacion.test.ts`: periodo mal escrito enviado tal cual y `desde`/`hasta` omitidos si están vacíos; `puedeComparar`; `mensajeDeError` (el `error` del servidor tal cual; sin él, `HTTP nnn`; un `400` de columnas no se sustituye); `vistaComparacion` repite los números sin sumar ni dividir, `—` si `porcentaje` es `null`, sin color, meta ni veredicto.
+- [x] 4.3 **Ver el rojo:** `npx vitest run apps/desk/src/lib/comparacionExportacion.test.ts`. Nota: `vitest.config.ts:17-20` incluye `apps/**/*.test.ts`; el `.ts` entra, los `.tsx` no.
+- [x] 4.4 **Verde** `apps/desk/src/lib/comparacionExportacion.ts` (D5): `urlComparacion`, `ACEPTA_EXPORTACION`, `puedeComparar`, `mensajeDeError`, `vistaComparacion`.
+- [x] 4.5 **Verde** `apps/desk/src/api/client.ts`, al final: `compararConExportacion(file, periodo)` (molde `client.ts:761-766`: `FormData`, campo `file`, sin `Content-Type`).
+- [x] 4.6 `apps/desk/src/components/ComparacionExportacion.tsx` (nuevo; sin prueba por decisión F0-00): selector `.csv`, dos `input type="date"`, botón «Comparar», listas en `details`, tonos neutros. Y `Analisis.tsx`: importación en la línea 6 y una línea tras la 90 que monta el panel si `mostrarDescargaIndicadores(user)`.
+- [x] 4.7 `DEPLOY.md` (documentación directa, sin rojo previo, decisión del 2026-09-10): puntero **en sitio** en la línea 269 del §9 y sección nueva **al final** (ruta `POST /api/indicadores/comparacion`, sólo administradores, límite 10 MB, no guarda nada, sin variable ni tabla ni migración, `.env.example` sin cambios, qué se ve si el fichero no trae las doce columnas). Sin menciones a reuniones. Confirmar que el §9 no gana líneas.
+- [x] 4.8 **Ver el verde:** el comando de 4.3; después `npm run typecheck` (cubre los `.tsx`).
+- [x] 4.9 **Tabla de la regla 13 (M21):** para C1 a C7 de D5, escribir en `apply-progress.md` la línea REAL del servidor (con las anotadas en 3.10) y comprobar, decisión a decisión, que la línea dice lo que la fila afirma. Mutar cada línea de la tabla (mover o quitar la guarda) y ver que alguna prueba de L3 se queja; si ninguna, la fila es una hipótesis y se anota así.
+- [x] 4.10 Cierre, códigos 1 a 3: `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores), `npm run build`, los cuatro con código MIRADO.
+- [x] 4.11 Medir (`git diff --shortstat --no-renames` más `wc -l` de lo nuevo sin trackear); si pasa de 720, parar y partir (cliente / `DEPLOY.md`).
+- [x] 4.12 Barrido de citas de `client\.ts`, `Analisis\.tsx` y `DEPLOY\.md`: las posteriores a la línea 90 de `Analisis.tsx` (`docs/sdd/ENTRADA.md:1284` cita la 95) se leen contra lo que afirman; si quedan desfasadas, se listan para Supervisión (esta rama no toca `ENTRADA.md`). Segundo pase de las abreviadas.
+- [x] 4.13 Commit del lote 4; `npx tsx apps/desk/server/citas/cli.ts --sha HEAD` con código 0 MIRADO; asentar el intento.
 
 ---
 
 ## Cierre de apply
 
-- [ ] 5.1 `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores) y `npm run build` sobre `HEAD` de la rama, cada código de salida MIRADO.
-- [ ] 5.2 `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`, código 0 MIRADO.
-- [ ] 5.3 Barrido de citas completo (regla de mutación 4) por cada fichero tocado en sitio: `git diff --name-only <partida de la rama>..HEAD`, `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` incluyendo `apps/`, `packages/` y `openspec/changes/archive/`; CADA resultado contra el fichero y contra lo que la frase afirma; segundo pase de las abreviadas. Resultado por fichero en `apply-progress.md`.
-- [ ] 5.4 Rellenar en `apply-progress.md` la tabla de la regla 13 con la línea real del servidor de cada decisión C1 a C7 (pasos 4 a 6 incluidos).
-- [ ] 5.5 Comprobar con `git diff --stat <partida>..HEAD` que NO tienen diff: `docs/sdd/ENTRADA.md`, `openspec/config.yaml`, `CLAUDE.md`, `.env.example`, `packages/shared/src/indicadoresComparacion.ts`, `apps/desk/server/indicadores.ts` y `apps/desk/server/routes/indicadores.ts`.
+- [x] 5.1 `npm test`, `npm run typecheck`, `npm run lint` (165 avisos, 0 errores) y `npm run build` sobre `HEAD` de la rama, cada código de salida MIRADO.
+- [x] 5.2 `npx tsx apps/desk/server/citas/cli.ts --sha HEAD`, código 0 MIRADO.
+- [x] 5.3 Barrido de citas completo (regla de mutación 4) por cada fichero tocado en sitio: `git diff --name-only <partida de la rama>..HEAD`, `grep -rnoE "<fichero>:[0-9]+(-[0-9]+)?"` incluyendo `apps/`, `packages/` y `openspec/changes/archive/`; CADA resultado contra el fichero y contra lo que la frase afirma; segundo pase de las abreviadas. Resultado por fichero en `apply-progress.md`.
+- [x] 5.4 Rellenar en `apply-progress.md` la tabla de la regla 13 con la línea real del servidor de cada decisión C1 a C7 (pasos 4 a 6 incluidos).
+- [x] 5.5 Comprobar con `git diff --stat <partida>..HEAD` que NO tienen diff: `docs/sdd/ENTRADA.md`, `openspec/config.yaml`, `CLAUDE.md`, `.env.example`, `packages/shared/src/indicadoresComparacion.ts`, `apps/desk/server/indicadores.ts` y `apps/desk/server/routes/indicadores.ts`.
 
 ---
 
