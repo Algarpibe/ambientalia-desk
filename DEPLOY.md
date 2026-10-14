@@ -266,7 +266,7 @@ ORDER BY table_name, column_name;
   `CREATE`, `ALTER` ni escritor y `GET /api/indicadores` sólo lee. Hoy hay una tabla y una ruta de carga: ver la sección final
   «Comprobación de lectura tras desplegar F1F-05». Reversión de la lectura: la ruta en `app.ts` y el enlace de `Analisis.tsx`.
 - **Quién la usa.** Sólo administradores: sin sesión responde 401, sin ser administrador 403. En la pantalla
-  «Análisis» aparece el enlace «Descargar indicadores (CSV)» (CSV con `;`, BOM UTF-8 y fin de línea CRLF).
+  «Análisis» aparece el enlace «Descargar indicadores (CSV)» (CSV con `;`, BOM UTF-8 y fin de línea CRLF). Junto a él, el panel «Comparar con la exportación de Zoho»: ver la sección final «Comparación con la exportación de Zoho (F1F-05)».
 - **Fecha límite: desplegar antes del viernes 13/11/2026** para medir las cuatro semanas desde el 16/11. El CI
   no despliega, sólo verifica.
 - **P-1 · consulta de SÓLO LECTURA, antes de fiarse de la comparación.** Base `desk`, tabla `desk.tickets`, columnas
@@ -718,3 +718,35 @@ Deben salir **dos filas**: `aviso_sin_etiqueta_at` (`timestamp with time zone`) 
   versión y aún sin enviar no tiene `rotulado_at`, y la versión anterior no la deja enviar hasta rellenarlo a mano.
 - **No comprobado:** que n8n mande `dymoId` vacío cuando la etiqueta falla es dato del analista, leído en el flujo el 2026-10-12, sin
   una ejecución real. Si llegara vacío en envíos buenos, el aviso saltaría en cada remisión: mirar las primeras tras desplegar.
+
+## Comparación con la exportación de Zoho (F1F-05)
+
+El cambio `comparacion-exportacion-zoho` añade **una ruta** y **un panel** que comparan los nueve indicadores de Desk con la exportación
+de tickets de Zoho Desk. **No hay migración, tabla, variable de entorno ni interruptor nuevos** (`.env.example` no cambia): la ruta está
+activa desde que se publica. **El fichero no se guarda**: se lee en memoria, se compara y se descarta; la ruta sólo ejecuta lecturas
+y no llama a Zoho.
+
+- **Qué es y quién la usa.** `POST /api/indicadores/comparacion`, **sólo administradores**: sin sesión responde 401
+  (`apps/desk/server/auth/middleware.ts:17` y `apps/desk/server/auth/middleware.ts:19`) y sin ser administrador 403
+  (`apps/desk/server/auth/middleware.ts:27`). El orden de las guardas está en `apps/desk/server/routes/indicadoresComparacion.ts:25`.
+- **Cómo se invoca.** Desde la pantalla «Análisis», panel «Comparar con la exportación de Zoho»: se elige el `.csv`, se escribe el periodo
+  (opcional) y se pulsa «Comparar». Por HTTP: `POST /api/indicadores/comparacion?desde=AAAA-MM-DD&hasta=AAAA-MM-DD`, `multipart/form-data`,
+  un único campo llamado `file`; el periodo es opcional y, si va mal escrito, responde 400
+  (`apps/desk/server/routes/indicadoresComparacion.ts:27-28`).
+- **Límite: 10 MB** (`apps/desk/server/util/subida.ts:6`); por encima responde 413 (`apps/desk/server/app.ts:86`). Un campo de
+  fichero con otro nombre responde 400 (`apps/desk/server/app.ts:88`).
+- **Probarlo con el fichero de enero.** `docs/analisis-tickets/Tickets.csv` es la exportación de enero (640 filas); sus tickets se
+  crearon hasta el 2026-01-30, así que el periodo tiene que **cubrir esas fechas o ir sin periodo**. Lo que no cruza **sale listado**
+  («Sólo en el fichero», «Fuera del periodo», «Sólo en Desk»), no en silencio.
+- **No abrir ni guardar la exportación con una hoja de cálculo.** Los «ID» de 18 dígitos pasan a notación científica y esas filas se
+  rechazan (salen en «Filas rechazadas», sin citar la celda). Se sube el fichero tal como lo entrega Zoho.
+- **Qué se rompe si se despliega mal.** Nada persiste, así que no hay nada que reparar en datos. Si el formato de la exportación cambia,
+  la ruta responde 400 nombrando las columnas que faltan (`apps/desk/server/routes/indicadoresComparacion.ts:30-31`); sin fichero,
+  400 (`apps/desk/server/routes/indicadoresComparacion.ts:29`). Si el panel no aparece, la cuenta no es de administrador.
+- **Vuelta atrás.** Revertir y redesplegar: la ruta en `apps/desk/server/app.ts` y el panel en `apps/desk/src/components/Analisis.tsx`
+  desaparecen sin efecto sobre los datos.
+- **Supuestos reversibles (S-I a S-Q de la especificación `kpis`).** La exportación trae las mismas 59 columnas que la muestra; el
+  fichero no se guarda; se exigen sólo las doce columnas que se leen; el valor de Zoho sale únicamente del fichero; un «ID» repetido
+  vale por la primera fila; lo que existe en Desk pero fuera del periodo se cuenta aparte; el periodo va por `desde` y `hasta`; una celda
+  de indicador ilegible se cuenta y se lista; los listados salen completos, sin paginar. Gerencia puede corregir cualquiera durante
+  **una semana desde la publicación de la lista**; lo no corregido queda aceptado.
