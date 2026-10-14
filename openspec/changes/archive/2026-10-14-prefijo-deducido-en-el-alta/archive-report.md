@@ -40,7 +40,9 @@ este cambio construye los prefijos según `decision/prefijo-de-que-se-deduce` (G
 
 Las primeras 3.617 líneas conservan su número: sólo once cambian lo que dicen (33, 80, 82, 86-87, 138, 165, 563-564, 1463 y
 1465). Las citas por línea a esas once están todas en los artefactos de este cambio, que declaran describir `968bb53`
-(caso B). No hay capacidad nueva, así que `capabilities` no cambia (R-2). Antes de fusionar se corrigió W-1 del verify: la nota
+(caso B). No hay capacidad nueva, así que `capabilities` no cambia (R-2). El guardián de la reconciliación sobre los ficheros reales
+(`apps/desk/server/reconciliacion/registro.test.ts`, «en curso son exactamente DIEZ») se puso rojo al archivar, como debe: con
+F1B-03 cerrada son NUEVE. Se actualizó en sitio, sin cambiar su recuento, como en los cierres de F1B-05, F1B-07 y F1B-11. Antes de fusionar se corrigió W-1 del verify: la nota
 de fusión del delta decía que RQ-TC-05 conservaba 13 escenarios; son 11.
 
 ## Registro de intentos
