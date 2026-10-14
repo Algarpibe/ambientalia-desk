@@ -1,13 +1,57 @@
 import { describe, it, expect } from 'vitest'
-import { buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor, extractServiceCode, TIPOS_SERVICIO } from './ticketCreate'
+import { buildCodigoServicio, buildSubject, parseCodigoFromPotential, prefijoDeducido, extractServiceCode, TIPOS_SERVICIO, PREFIJOS } from './ticketCreate'
 
-describe('defaultPrefijoFor', () => {
-  it('Calibración → CG; Diagnóstico/Mantenimiento/otros → MT', () => {
-    expect(defaultPrefijoFor('Calibración')).toBe('CG')
-    expect(defaultPrefijoFor('Diagnóstico')).toBe('MT')
-    expect(defaultPrefijoFor('Mantenimiento')).toBe('MT')
-    expect(defaultPrefijoFor('Garantía')).toBe('MT')
-    expect(defaultPrefijoFor('Reparación')).toBe('MT')
+describe('prefijoDeducido', () => {
+  // RQ-TC-61: la clasificación manda (HV, SR); si no, el tipo (CG, PRO); lo demás, MT.
+  it('Equipo nuevo → HV', () => {
+    expect(prefijoDeducido('Equipo nuevo', 'Mantenimiento')).toBe('HV')
+  })
+  it('Soporte remoto → SR', () => {
+    expect(prefijoDeducido('Soporte remoto', 'Mantenimiento')).toBe('SR')
+  })
+  it('Calibración → CG', () => {
+    expect(prefijoDeducido('Equipo para servicio de mantenimiento', 'Calibración')).toBe('CG')
+  })
+  it('Protocolo → PRO', () => {
+    expect(prefijoDeducido('Equipo para servicio de mantenimiento', 'Protocolo')).toBe('PRO')
+  })
+  it('el resto de tipos → MT', () => {
+    for (const t of ['Diagnóstico', 'Garantía', 'Mantenimiento', 'Reparación', 'No aplica', 'Otro']) {
+      expect(prefijoDeducido('Equipo para servicio de mantenimiento', t)).toBe('MT')
+    }
+  })
+  it('un tipo fuera de la lista → MT', () => {
+    expect(prefijoDeducido('Equipo para servicio de mantenimiento', 'Inspección')).toBe('MT')
+  })
+  it('la clasificación gana al tipo', () => {
+    expect(prefijoDeducido('Equipo nuevo', 'Calibración')).toBe('HV')
+    expect(prefijoDeducido('Soporte remoto', 'Protocolo')).toBe('SR')
+  })
+  it('clasificación desconocida o vacía: decide el tipo y nunca lanza', () => {
+    for (const c of ['Otra cosa', '', null, undefined]) {
+      expect(prefijoDeducido(c, 'Calibración')).toBe('CG')
+      expect(prefijoDeducido(c, 'Protocolo')).toBe('PRO')
+      expect(prefijoDeducido(c, 'Garantía')).toBe('MT')
+    }
+    expect(prefijoDeducido(null, null)).toBe('MT')
+  })
+  it('reconoce la clasificación con los mismos predicados que el grafo', () => {
+    expect(prefijoDeducido('equipo nuevo', 'Mantenimiento')).toBe('HV')
+    expect(prefijoDeducido(' Equipo   Nuevo ', 'Mantenimiento')).toBe('HV')
+    expect(prefijoDeducido('soporte REMOTO', 'Mantenimiento')).toBe('SR')
+    expect(prefijoDeducido('Equipo nuevo usado', 'Mantenimiento')).toBe('MT')
+  })
+  it('el tipo se compara por literal exacto', () => {
+    expect(prefijoDeducido('Equipo para servicio de mantenimiento', 'calibracion')).toBe('MT')
+    expect(prefijoDeducido('Equipo para servicio de mantenimiento', 'PROTOCOLO')).toBe('MT')
+  })
+  it('los cinco prefijos son alcanzables y no hay otro', () => {
+    const c = 'Equipo para servicio de mantenimiento'
+    const salidas = new Set([
+      prefijoDeducido('Equipo nuevo', 'Otro'), prefijoDeducido('Soporte remoto', 'Otro'),
+      prefijoDeducido(c, 'Calibración'), prefijoDeducido(c, 'Protocolo'), prefijoDeducido(c, 'Otro'),
+    ])
+    expect([...salidas].sort()).toEqual([...PREFIJOS].sort())
   })
 })
 
@@ -17,11 +61,16 @@ describe('TIPOS_SERVICIO', () => {
     expect(TIPOS_SERVICIO).toContain('Reparación')
     expect(TIPOS_SERVICIO.slice(-2)).toEqual(['No aplica', 'Otro'])
   })
+  // RQ-TC-61: «Protocolo» es el sexto tipo, antes de los comodines.
+  it('son ocho, en orden exacto, con Protocolo en el índice 5', () => {
+    expect([...TIPOS_SERVICIO]).toEqual(['Calibración', 'Diagnóstico', 'Garantía', 'Mantenimiento', 'Reparación', 'Protocolo', 'No aplica', 'Otro'])
+    expect(TIPOS_SERVICIO.indexOf('Protocolo')).toBe(5)
+  })
 })
 
 describe('buildCodigoServicio', () => {
   it('arma PREFIJO_serie_modelo_AAMMDD', () => {
-    expect(buildCodigoServicio({ prefijo: 'MT', serie: '18A20070', modelo: 'EDM180C', fecha: new Date(2026, 5, 4) }))
+    expect(buildCodigoServicio({ prefijo: 'MT', serie: '18A20070', modelo: 'EDM180C', fecha: new Date('2026-06-04T12:00:00-05:00') }))
       .toBe('MT_18A20070_EDM180C_260604')
   })
 })
@@ -85,5 +134,27 @@ describe('extractServiceCode', () => {
   it('null si no hay código', () => {
     expect(extractServiceCode('Servicio Técnico sin código')).toBeNull()
     expect(extractServiceCode(null)).toBeNull()
+  })
+})
+
+describe('AAMMDD del código: el día civil de Bogotá (RQ-TC-61)', () => {
+  const codigo = (iso: string) => buildCodigoServicio({ prefijo: 'MT', serie: 'S1', modelo: 'M1', fecha: new Date(iso) })
+
+  it('las 20:00 de Bogotá siguen siendo el mismo día, aunque en UTC ya sea el siguiente', () => {
+    expect(codigo('2026-10-14T20:00:00-05:00')).toBe('MT_S1_M1_261014')
+  })
+  it('las 00:30 de Bogotá ya son el día nuevo', () => {
+    expect(codigo('2026-10-14T00:30:00-05:00')).toBe('MT_S1_M1_261014')
+  })
+  it('no depende de la zona del proceso (TZ=America/Bogota)', () => {
+    const antes = process.env.TZ
+    process.env.TZ = 'America/Bogota'
+    try {
+      expect(codigo('2026-10-14T20:00:00-05:00')).toBe('MT_S1_M1_261014')
+      expect(codigo('2026-10-14T00:30:00-05:00')).toBe('MT_S1_M1_261014')
+    } finally {
+      if (antes === undefined) delete process.env.TZ
+      else process.env.TZ = antes
+    }
   })
 })

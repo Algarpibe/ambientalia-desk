@@ -1,12 +1,12 @@
 export const PREFIJOS = ['MT', 'CG', 'HV', 'SR', 'PRO'] as const
 // 'Reparación' viene del formulario de remisiones: al heredar la remisión el tipo de servicio del
-// ticket, ambas listas se unifican aquí. Va tras 'Mantenimiento' para dejar los comodines al final.
-export const TIPOS_SERVICIO = ['Calibración', 'Diagnóstico', 'Garantía', 'Mantenimiento', 'Reparación', 'No aplica', 'Otro'] as const
+// ticket, ambas listas se unifican aquí; 'Protocolo' es de donde se deduce PRO (RQ-TC-61). Van tras 'Mantenimiento', comodines al final.
+export const TIPOS_SERVICIO = ['Calibración', 'Diagnóstico', 'Garantía', 'Mantenimiento', 'Reparación', 'Protocolo', 'No aplica', 'Otro'] as const
 export const CLASIFICACIONES = ['Equipo para servicio de mantenimiento', 'Equipo nuevo', 'Soporte remoto'] as const
-
+import { diaEnZona } from './fechasDerivadas'; import { esClasificacionEquipoNuevo, esClasificacionSoporteRemoto } from './flujos'
 function yymmdd(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${p(d.getFullYear() % 100)}${p(d.getMonth() + 1)}${p(d.getDate())}`
+  const dia = diaEnZona(d) ?? ''
+  return dia.slice(2).replace(/-/g, '')
 }
 
 export function buildCodigoServicio(input: { prefijo: string; serie: string; modelo: string; fecha: Date }): string {
@@ -43,7 +43,10 @@ export function extractServiceCode(text: string | null | undefined): { serial: s
   return { serial: m[2], codigo: partes.join('_') }
 }
 
-/** El prefijo del Código Servicio se deriva del Tipo de Servicio (editable). Calibración → CG; el resto → MT. */
-export function defaultPrefijoFor(tipoServicio: string): string {
-  return tipoServicio === 'Calibración' ? 'CG' : 'MT'
+/** RQ-TC-61: la clasificación (mismos predicados que el grafo) y luego el tipo; nunca lanza. */
+export function prefijoDeducido(clasificacion: string | null | undefined, tipoServicio: string | null | undefined): (typeof PREFIJOS)[number] {
+  return esClasificacionEquipoNuevo(clasificacion) ? 'HV' : esClasificacionSoporteRemoto(clasificacion) ? 'SR' : tipoServicio === TIPO_CALIBRACION ? 'CG' : tipoServicio === TIPO_PROTOCOLO ? 'PRO' : 'MT'
 }
+// Tipadas contra TIPOS_SERVICIO: si el texto sale de la lista, rompe tsc (DD-5); se leen sólo al llamar.
+const TIPO_CALIBRACION: (typeof TIPOS_SERVICIO)[number] = 'Calibración'
+const TIPO_PROTOCOLO: (typeof TIPOS_SERVICIO)[number] = 'Protocolo'

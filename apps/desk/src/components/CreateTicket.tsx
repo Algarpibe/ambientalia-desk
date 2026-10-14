@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite, Catalogo } from '@ambientalia/shared'
-import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor, estadoGarantia } from '@ambientalia/shared'
+import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, prefijoDeducido, estadoGarantia } from '@ambientalia/shared'
 import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo, candidatosDelError, type CandidatoNit } from '../api/client'
 import { CrearRemision } from './CrearRemision'; import { DistintivoGarantia } from './DistintivoGarantia'; import { AltaManualCliente, AltaManualEquipo, CandidatosNit } from './AltaManual'; import { ALTA_MANUAL_VACIA, cuerpoAltaManual, modeloManual } from '../lib/altaManualEstado'
 
@@ -412,7 +412,7 @@ export function CreateTicket({ onClose, onCreated }: {
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <select className={field} value={tipoServicio} onChange={(e) => { setTipoServicio(e.target.value); setPrefijo(defaultPrefijoFor(e.target.value)); setCodigoOverride(null) }} required>
+          <select className={field} value={tipoServicio} onChange={(e) => { setTipoServicio(e.target.value); setPrefijo(prefijoDeducido(clasificaciones, e.target.value)); setCodigoOverride(null) }} required>
             <option value="">Tipo de Servicio *</option>
             {TIPOS_SERVICIO.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
