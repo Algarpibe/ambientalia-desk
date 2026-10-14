@@ -253,6 +253,13 @@ describe('RQ-KP-14, -17 y -18 · escenarios nuevos', () => {
     expect(despues.consultas).toBe(4)
     expect(despues.cuerpo.comparacion).toMatchObject({ comparable: false, mensaje: 'sin valor de Zoho con que comparar' })
   })
+  it('el POST ignora «formato» (DD-10): con ?formato=xml y un fichero válido responde 200, no el 400 del GET', async () => {
+    await sembrar('100000000000000001', 1001, '2026-12-03')
+    const res = await subir(appWith().app, await adminCookie(), VALIDO, { query: { ...PERIODO, formato: 'xml' } })
+    expect(validarPeriodo({ ...PERIODO, formato: 'xml' }).ok).toBe(false)   // el validador común sí lo rechazaría
+    expect(res.status).toBe(200)
+    expect(res.body.cruce.cruzados).toBe(1)
+  })
 })
 
 describe('RQ-KP-27 · privacidad', () => {
