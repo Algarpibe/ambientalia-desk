@@ -275,14 +275,14 @@ describe('createManagedTicket · cada guarda por separado', () => {
     await equipo()
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1' }, 'Admin'))
     expect(r.status).toBe(422)
-    expect(r.body.error).toBe('Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones, prefijo')
+    expect(r.body.error).toBe('Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones')
   })
 
-  it('un prefijo que no está en la lista cuenta como prefijo ausente', async () => {
+  it('un prefijo que no está en la lista ya no se rechaza: crea, con el código deducido', async () => {
     await equipo(); await cliente()
-    const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prefijo: 'XXX' }, 'Admin'))
-    expect(r.status).toBe(422)
-    expect(r.body.error).toBe('Faltan campos obligatorios: prefijo')
+    await createManagedTicket(db, { equipoId: 'eq-1', ...CAMPOS_OK, prefijo: 'XXX' }, 'Admin')
+    const t = (await db.query('SELECT codigo_servicio FROM tickets')).rows[0]
+    expect(t.codigo_servicio).toMatch(/^MT_/)
   })
 
   it('un cliente que no está en Books es 422', async () => {
@@ -345,12 +345,12 @@ describe('createManagedTicket · el ORDEN en que se evalúan las guardas', () =>
   it('los obligatorios que faltan ganan a la orden de venta ya usada: 422, no 409', async () => {
     await equipo()
     await ticket('ocupado', 'Ingresado', 8101, { orden_venta: 'OV-DUP' })
-    // Sin `clientId`, sin `tipoServicio`, sin `clasificaciones` y sin `prefijo`: el 422 de
+    // Sin `clientId`, sin `tipoServicio`, y sin `clasificaciones`: el 422 de
     // obligatorios está servido, y ahora gana porque el contenido (escalón C) precede a la unicidad
     // (escalón D).
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', ordenVenta: 'OV-DUP' }, 'Admin'))
     expect(r.status).toBe(422)
-    expect(r.body.error).toBe('Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones, prefijo')
+    expect(r.body.error).toBe('Faltan campos obligatorios: cliente, tipo de servicio, clasificaciones')
   })
 
   it('el cliente inexistente gana a la orden de venta ya usada: 422, no 409', async () => {
@@ -364,7 +364,7 @@ describe('createManagedTicket · el ORDEN en que se evalúan las guardas', () =>
   it('los obligatorios que faltan ganan al cliente inexistente: la lista, no «Cliente no encontrado»', async () => {
     await equipo()
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1', clientId: 'no-existe' }, 'Admin'))
-    expect(r.body.error).toBe('Faltan campos obligatorios: tipo de servicio, clasificaciones, prefijo')
+    expect(r.body.error).toBe('Faltan campos obligatorios: tipo de servicio, clasificaciones')
   })
 })
 
@@ -425,7 +425,7 @@ describe('createManagedTicket · la guarda equipo↔cliente', () => {
     await equipoConCliente('eq-1', 'cli-A')
     const r = await fallo(() => createManagedTicket(db, { equipoId: 'eq-1' }, 'Admin'))
     expect(r.status).toBe(422)
-    expect(r.body.error).toBe('Faltan campos obligatorios: tipo de servicio, clasificaciones, prefijo')
+    expect(r.body.error).toBe('Faltan campos obligatorios: tipo de servicio, clasificaciones')
   })
 
   // mensaje-422-cliente-duplicado — design §1. Las cuatro pruebas afirman con `toBe` sobre la cadena

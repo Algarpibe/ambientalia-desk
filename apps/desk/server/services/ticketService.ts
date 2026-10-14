@@ -3,7 +3,7 @@ import { applyTransition, ticketConOrdenVenta } from '@ambientalia/zoho-sync/db/
 import { rowToTicketDetail } from '@ambientalia/zoho-sync/db/mappers'
 import { getSalesOrder } from '@ambientalia/zoho-sync/books/repo'
 import { getEquipo } from '../db/equipos'; import { vigenciaDeRemisiones } from '../db/remisiones'; import { hayContratoVigente, motivoContratoVencido, erroresContratoVencido } from '../db/contratos'; import { prioridadTop5DelCliente, baseSiNaceBajoTop5 } from '../db/prioridadCliente'; import { leerContextoGas } from '../db/gasesPatron'
-import { buildSubject, buildCodigoServicio, PREFIJOS, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
+import { buildSubject, buildCodigoServicio, prefijoDeducido, PRIORIDAD_POR_DEFECTO, transicionPorId, fueraDeFlujo, catalogoDelTicket, canExecuteTransition, cargoQueFaltaParaTransicion, CLAVE_DERIVACION, modalidadDelAlta, motivoCuarentena, erroresCuarentena, prioridadAlNacer, cambiaPrioridadSinPermiso, erroresPrioridadPedida, MENSAJE_PRIORIDAD_BLOQUEADA, hoyEnZona, CLAVE_CERTIFICADO_FABRICA, veredictoLiberacion, erroresCertificado, recortarCertificado, valoresConMotivo, erroresLiberacionSinFactura, textoAutorizacionAGuardar, CLAVE_TEXTO_AUTORIZACION, primerConflictoUnicidad, esNitExento, motivoAltaPendiente, motivoSinRemisionVigente, erroresGarantiaSinOVI, type VeredictoLiberacion, type Transition, type TicketDeFlujo, type Cargo } from '@ambientalia/shared'
 import { valoresConFechasDerivadas } from './valoresDeTransicion'
 import { getUserById } from '../auth/users'
 import { avisoDerivacion } from './avisoDerivacion'
@@ -79,12 +79,12 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
   }
   const tipoServicio = b.tipoServicio ? String(b.tipoServicio) : ''
   const clasificaciones = b.clasificaciones ? String(b.clasificaciones) : ''
-  const prefijo = b.prefijo ? String(b.prefijo) : ''
+  const prefijo = prefijoDeducido(clasificaciones, tipoServicio) // RQ-TC-61; b.prefijo se ignora (RQ-TC-62)
   const missing: string[] = []
   if (!clientId) missing.push('cliente')
   if (!tipoServicio) missing.push('tipo de servicio')
   if (!clasificaciones) missing.push('clasificaciones')
-  if (!prefijo || !(PREFIJOS as readonly string[]).includes(prefijo)) missing.push('prefijo')
+  // «prefijo» ya no es obligatorio: se deduce en la línea 82 (RQ-TC-61) y el cuerpo no lo decide (RQ-TC-62)
   if (missing.length) throw new HttpError(422, { error: `Faltan campos obligatorios: ${missing.join(', ')}` })
   const cliente = prov ? { name: prov.razonSocial } : await obtenerCliente(db, clientId!)
   if (!cliente) throw new HttpError(422, { error: 'Cliente no encontrado' })
@@ -98,8 +98,8 @@ export async function createManagedTicket(db: Queryable, body: unknown, actorNam
     const cual = ordenVenta ? `La orden de venta ${ordenVenta}` : 'Esa orden de venta'
     throw new HttpError(409, { error: `${cual} ya está asociada al ticket #${conflicto.ticket.number}` })
   }
-  const codigoServicio = b.codigoServicio ? String(b.codigoServicio) : buildCodigoServicio({ prefijo, serie: equipo.serial, modelo: equipo.modelo ?? '', fecha: new Date() })
-  const subject = b.subject ? String(b.subject) : buildSubject({ cliente: cliente.name, tipoEquipo: equipo.tipo ?? '', codigo: codigoServicio })
+  const codigoServicio = buildCodigoServicio({ prefijo, serie: equipo.serial, modelo: equipo.modelo ?? '', fecha: new Date() })
+  const subject = buildSubject({ cliente: cliente.name, tipoEquipo: equipo.tipo ?? '', codigo: codigoServicio })
   const id = await crearTicketConEquipo(db, nuevo, cliente.name, {
     subject, codigoServicio, classification: clasificaciones, tipoServicio, equipo: equipo.tipo ?? null,
     marca: equipo.marca ?? null, modelo: equipo.modelo ?? null, serial: equipo.serial,
