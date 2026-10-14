@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientLite, SalesOrderLite, EquipoLite, Catalogo } from '@ambientalia/shared'
-import { PREFIJOS, TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, parseCodigoFromPotential, defaultPrefijoFor, estadoGarantia } from '@ambientalia/shared'
+import { TIPOS_SERVICIO, CLASIFICACIONES, MODALIDADES, esClasificacionSoporteRemoto, buildCodigoServicio, buildSubject, prefijoDeducido, estadoGarantia } from '@ambientalia/shared'
 import { searchClients, getClient, searchSalesOrders, searchEquipos, createTicket, fetchNextTicketNumber, getCatalogo, candidatosDelError, type CandidatoNit } from '../api/client'
 import { CrearRemision } from './CrearRemision'; import { DistintivoGarantia } from './DistintivoGarantia'; import { AltaManualCliente, AltaManualEquipo, CandidatosNit } from './AltaManual'; import { ALTA_MANUAL_VACIA, cuerpoAltaManual, modeloManual } from '../lib/altaManualEstado'
 
@@ -43,7 +43,7 @@ export function CreateTicket({ onClose, onCreated }: {
 
   const [tipoServicio, setTipoServicio] = useState('')
   const [clasificaciones, setClasificaciones] = useState(''); const [modalidad, setModalidad] = useState<string>('remoto'); const modalidadVisible = esClasificacionSoporteRemoto(clasificaciones) // F1B-06: sólo soporte remoto; el predicado es el de `shared`
-  const [prefijo, setPrefijo] = useState('MT')
+  const prefijo = prefijoDeducido(clasificaciones, tipoServicio) // RQ-TC-61: sólo lectura; el servidor lo deduce igual (`ticketService.ts:82`)
   // La prioridad ya no se elige en el alta: la asigna el servidor al nacer (prioridad-tres-niveles).
 
   /**
@@ -80,8 +80,8 @@ export function CreateTicket({ onClose, onCreated }: {
   const modeloNuevoElegido = catalogo?.modelos.find((m) => m.id === modeloNuevoId) ?? null
   const equipoNuevoCompleto = equipoNuevoVisible && !!serialNuevo.trim() && !!modeloNuevoId && !!fechaFacturaCompra
 
-  const [subjectOverride, setSubjectOverride] = useState<string | null>(null)
-  const [codigoOverride, setCodigoOverride] = useState<string | null>(null)
+  // RQ-TC-62: el código y el asunto ya no se editan ni viajan en el cuerpo; el servidor los construye
+  // siempre (`ticketService.ts:101-102`) y lo que se ve aquí es sólo una vista previa.
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false); const [candidatos, setCandidatos] = useState<CandidatoNit[]>([])
   // Previsión, no reserva: el número definitivo lo asigna la secuencia al crear.
@@ -151,15 +151,15 @@ export function CreateTicket({ onClose, onCreated }: {
   // avisa — bloquearlo ahí dejaría el formulario en un callejón sin salida (el alta exige clientId).
   const clienteBloqueado = !!clientId && (!!salesOrderId || !!equipo)
 
-  // Comodidad de vista previa (design.md §5): con el equipo nuevo, la serie y el modelo elegidos ya
-  // alcanzan para anticipar el código y el asunto. El servidor no deriva de aquí: acepta el valor
-  // recibido igual que hoy (`ticketService.ts:101-102`).
-  const codigo = codigoOverride ?? buildCodigoServicio({
+  // Vista previa (comodidad, RQ-TC-63): prefijo, código y asunto son lo que el servidor va a construir; el alta
+  // no los lee del cuerpo (`ticketService.ts:82`, `:101`, `:102`) y los recalcula con el día civil de Bogotá,
+  // así que este cálculo no decide nada. Con el equipo nuevo, la serie y el modelo elegidos ya anticipan el código.
+  const codigo = buildCodigoServicio({
     prefijo, serie: equipo?.serial ?? (serialNuevo.trim() || (equipoManualActivo ? manual.e.serial.trim() : '')), modelo: equipo?.modelo ?? modeloNuevoElegido?.nombre ?? (equipoManualActivo ? modeloManual(manual, catalogo).nombre : ''), fecha: new Date(),
   })
   const subject = useMemo(
-    () => subjectOverride ?? buildSubject({ cliente: clientName || (clienteManualActivo ? manual.c.razonSocial.trim() : ''), tipoEquipo: equipo?.tipo ?? modeloNuevoElegido?.tipoNombre ?? (equipoManualActivo ? modeloManual(manual, catalogo).tipo : ''), codigo }),
-    [subjectOverride, clientName, equipo, modeloNuevoElegido, codigo, manual, catalogo, clienteManualActivo, equipoManualActivo],
+    () => buildSubject({ cliente: clientName || (clienteManualActivo ? manual.c.razonSocial.trim() : ''), tipoEquipo: equipo?.tipo ?? modeloNuevoElegido?.tipoNombre ?? (equipoManualActivo ? modeloManual(manual, catalogo).tipo : ''), codigo }),
+    [clientName, equipo, modeloNuevoElegido, codigo, manual, catalogo, clienteManualActivo, equipoManualActivo],
   )
 
   function pickOv(ov: SalesOrderLite) {
@@ -169,8 +169,8 @@ export function CreateTicket({ onClose, onCreated }: {
     if (ov.clientId) setClientId(ov.clientId)
     if (ov.customerName) { setClientName(ov.customerName); setClientQuery(ov.customerName) }
     // El número de OV no se manda: el servidor lo deriva de `salesOrderId` (ticketService).
-    const parsed = parseCodigoFromPotential(ov.potentialName)
-    if (parsed) setPrefijo(parsed.prefijo)
+    // La oportunidad de CRM ya no fija el prefijo (RQ-TC-61, S-3): lo deduce `prefijoDeducido` de la
+    // clasificación y el tipo, y el servidor lo impone; `potentialName` se queda en el tipo, sin lector.
   }
   function pickClient(c: ClientLite) {
     setClientId(c.id); setClientName(c.name); setClientQuery(c.name); setClientResults([])
@@ -227,9 +227,9 @@ export function CreateTicket({ onClose, onCreated }: {
         salesOrderId: salesOrderId ?? undefined,
         clientId: clientId ?? undefined,
         equipoId: equipo?.id ?? '',
-        tipoServicio, clasificaciones, prefijo, ...(modalidadVisible ? { modalidad } : {}),
+        tipoServicio, clasificaciones, ...(modalidadVisible ? { modalidad } : {}),
         // Sin prioridad en el cuerpo: el servidor no la lee (prioridad-tres-niveles).
-        subject, codigoServicio: codigo, ...cuerpoAltaManual(manual, { cliente: clienteManualActivo, equipo: equipoManualActivo, enEquipoNuevo: clasificaciones === 'Equipo nuevo' }),
+        ...cuerpoAltaManual(manual, { cliente: clienteManualActivo, equipo: equipoManualActivo, enEquipoNuevo: clasificaciones === 'Equipo nuevo' }),
         ...(equipoNuevoCompleto ? { equipoNuevo: {
           serial: serialNuevo.trim(), modeloId: modeloNuevoId, fechaFacturaCompra,
           fechaAdquisicion: fechaAdquisicion || undefined, finGarantia: finGarantia || undefined,
@@ -412,7 +412,7 @@ export function CreateTicket({ onClose, onCreated }: {
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <select className={field} value={tipoServicio} onChange={(e) => { setTipoServicio(e.target.value); setPrefijo(defaultPrefijoFor(e.target.value)); setCodigoOverride(null) }} required>
+          <select className={field} value={tipoServicio} onChange={(e) => setTipoServicio(e.target.value)} required>
             <option value="">Tipo de Servicio *</option>
             {TIPOS_SERVICIO.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -420,9 +420,9 @@ export function CreateTicket({ onClose, onCreated }: {
             <option value="">Clasificaciones *</option>
             {CLASIFICACIONES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>{modalidadVisible && (<select className={field} value={modalidad} onChange={(e) => setModalidad(e.target.value)} aria-label="Modalidad">{MODALIDADES.map((m) => <option key={m} value={m}>Modalidad: {m.charAt(0).toUpperCase() + m.slice(1)}</option>)}</select>)}
-          <select className={field} value={prefijo} onChange={(e) => setPrefijo(e.target.value)}>
-            {PREFIJOS.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <span className={`${field} bg-slate-50 text-slate-500`}>
+            Prefijo: {prefijo} · lo deduce el sistema
+          </span>
           <span className={`${field} bg-slate-50 text-slate-500`}>
             Prioridad: la asigna el sistema
           </span>
@@ -431,9 +431,9 @@ export function CreateTicket({ onClose, onCreated }: {
 
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-bold text-slate-500 uppercase">Código Servicio</label>
-          <input className={field} value={codigo} onChange={(e) => setCodigoOverride(e.target.value)} />
+          <input className={`${field} bg-slate-50`} value={codigo} readOnly />
           <label className="text-[11px] font-bold text-slate-500 uppercase mt-1">Asunto</label>
-          <input className={field} value={subject} onChange={(e) => setSubjectOverride(e.target.value)} />
+          <input className={`${field} bg-slate-50`} value={subject} readOnly />
         </div>
 
         {error && <div className="text-[12px] text-red-600 bg-red-50 border border-red-100 rounded p-2">{error}</div>}<CandidatosNit candidatos={candidatos} onElegir={(c) => { pickClient({ id: c.id, name: c.name }); setManual((s) => ({ ...s, cliente: false })); setCandidatos([]); setError(null) }} />

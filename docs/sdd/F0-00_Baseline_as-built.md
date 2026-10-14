@@ -311,7 +311,7 @@ Auditoría completa de `debt.md` (903 líneas) contra el código al commit `a3a8
 | M-4 marca de agua `<=` en `syncRecent` | SE-ARRASTRA | Real: `packages/zoho-sync/src/booksHub/sync.ts:124`; `debt.md` cita `server/books/sync.ts` | Confirmado en código, con **ruta desactualizada** en `debt.md` tras el reorg a monorepo |
 | M-6 gap de número en rollback | NO-APLICA-AL-MVP | — | Aceptado por diseño; trade-off estándar de secuencias Postgres |
 | M-7 prioridad / tipo de servicio / clasificaciones sin whitelist | SE-ARRASTRA | `apps/desk/server/services/ticketService.ts:50-58` (sólo `prefijo` se valida contra `PREFIJOS`) | Confirmado vigente |
-| M-8 `buildCodigoServicio` con fecha local | SE-ARRASTRA | `packages/shared/src/ticketCreate.ts:7-9` (getters locales) | Confirmado vigente |
+| M-8 `buildCodigoServicio` con fecha local | SE-ARRASTRA | `packages/shared/src/ticketCreate.ts:7-9` en `968bb53` (getters locales) | Confirmado vigente en su fecha; **cerrado por `prefijo-deducido-en-el-alta`** (DD-6: `yymmdd` usa `diaEnZona`, día civil de Bogotá) |
 | M-11 «vence hoy» excluye lo ya vencido | NO-APLICA-AL-MVP | `apps/desk/src/board.ts:68` | Confirmado fiel al diseño; sin bug |
 | M-13 cobertura de ramas | SE-ARRASTRA | — | Mejora de pruebas, sin tanda |
 | `listEquiposManage` ordenado por `serial` | NO-APLICA-AL-MVP | — | Cosmético |
