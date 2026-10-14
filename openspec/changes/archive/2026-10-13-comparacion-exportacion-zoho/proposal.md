@@ -85,9 +85,9 @@ veredicto, semáforo o umbral del 95 % · las preguntas E-174 a E-180 y E-182 de
 
 | Requisito | Qué cambia |
 |---|---|
-| RQ-KP-14 (`openspec/specs/kpis/spec.md:492-497`) | «Ni leer ningún fichero» se acota al `GET`, que sigue igual: cuatro consultas, sólo lectura, ningún fichero |
-| RQ-KP-17 (`openspec/specs/kpis/spec.md:599-602`) | El `GET` sigue armando pares sólo con lo sincronizado. «**MUST NOT** leer ningún fichero ni cargar el export de Zoho» deja de valer para la capacidad: lo hace la ruta nueva |
-| RQ-KP-18 (`openspec/specs/kpis/spec.md:616`) | Cae «**MUST NOT** añadir pantalla de carga en el cliente» (`openspec/specs/kpis/spec.md:627`) y «el cliente **MUST** limitarse a un enlace de descarga» (`openspec/specs/kpis/spec.md:625-626`): enlace más carga de la comparación. Se mantiene todo lo demás: la única escritura admitida sigue siendo la de la encuesta |
+| RQ-KP-14 (`openspec/specs/kpis/spec.md:492-497` en `62181fc`) | «Ni leer ningún fichero» se acota al `GET`, que sigue igual: cuatro consultas, sólo lectura, ningún fichero |
+| RQ-KP-17 (`openspec/specs/kpis/spec.md:599-602` en `62181fc`) | El `GET` sigue armando pares sólo con lo sincronizado. «**MUST NOT** leer ningún fichero ni cargar el export de Zoho» deja de valer para la capacidad: lo hace la ruta nueva |
+| RQ-KP-18 (`openspec/specs/kpis/spec.md:616` en `62181fc`) | Cae «**MUST NOT** añadir pantalla de carga en el cliente» (`openspec/specs/kpis/spec.md:627` en `62181fc`) y «el cliente **MUST** limitarse a un enlace de descarga» (`openspec/specs/kpis/spec.md:625-626` en `62181fc`): enlace más carga de la comparación. Se mantiene todo lo demás: la única escritura admitida sigue siendo la de la encuesta |
 | Tabla de supuestos | SP-9 (`openspec/specs/kpis/spec.md:34`) se acota al `GET`; entran S1 a S9 |
 
 | Requisito nuevo | Contenido |
@@ -150,7 +150,7 @@ Gerencia**, agrupados bajo F1F-05. S1 y S2 son de quien encarga; S3 a S9, de est
 | S9 | Los listados salen completos, sin paginar | 640 filas en la muestra | Tope con recuento total |
 
 **Lo que NO es supuesto:** que la comparación se haga con la exportación es letra de la decisión; que
-no lleve veredicto es RQ-KP-16 (`openspec/specs/kpis/spec.md:567`).
+no lleve veredicto es RQ-KP-16 (`openspec/specs/kpis/spec.md:567` en `62181fc`).
 
 ## 6. Tareas de persona — fuera del recuento
 
