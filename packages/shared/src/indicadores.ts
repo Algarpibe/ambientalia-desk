@@ -260,3 +260,5 @@ function hitoEntrega(historial: PasoDelHistorial[]): Hito {
   const dia = diaEnZona(entregas[entregas.length - 1]?.performedAt ?? null)
   return dia === null ? { dia: null, fuente: 'ausente', escrituras: 0 } : { dia, fuente: 'transicion', escrituras: entregas.length }
 }
+/** La normalización de cabeceras de `valorDeZoho`, para que el lector de la exportación no tenga una segunda (F1F-05, DD-5). */
+export const normalizarNombreZoho = normalizar

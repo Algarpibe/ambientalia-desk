@@ -51,7 +51,7 @@ function elegirSeparador(texto: string): string {
 }
 
 /** Registros RFC 4180: comillas dobles, `""` es una comilla, separador y saltos dentro de comillas son contenido. */
-function leerRegistros(texto: string, sep: string): string[][] {
+export function leerRegistros(texto: string, sep: string): string[][] {
   const registros: string[][] = []
   let campos: string[] = []
   let campo = ''
