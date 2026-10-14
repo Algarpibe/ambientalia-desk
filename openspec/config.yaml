@@ -4711,7 +4711,7 @@ decisiones_de_gerencia_adenda:
       supresión de los prefijos en tickets nuevos): ¿de qué se deduce el prefijo del código de servicio? La
       clasificación tiene tres valores y los prefijos son cinco (`packages/shared/src/ticketCreate.ts:1`, `:5`), y la
       única derivación que existe, `defaultPrefijoFor`, parte del tipo de servicio y sólo da CG o MT
-      (`packages/shared/src/ticketCreate.ts:46-49`).
+      (`packages/shared/src/ticketCreate.ts:46-49` en `968bb53`).
     respuesta_textual: |
       «El código de servicio conserva el prefijo, deducido así: clasificación "Equipo nuevo" → HV; "Soporte remoto" → SR; "Equipo para servicio de mantenimiento" con tipo de servicio Calibración → CG, Protocolo → PRO, cualquier otro → MT. Se añade "Protocolo" a la lista de tipos de servicio. Los tickets existentes conservan su prefijo. Las carpetas e informes de Drive dependen de él (MT_, CG_, HV_, PRO_; PRO en uso, el último de agosto de 2025).»
     consecuencias: |
@@ -4721,7 +4721,7 @@ decisiones_de_gerencia_adenda:
       otro tipo → MT. Los cinco prefijos de `PREFIJOS` (`packages/shared/src/ticketCreate.ts:1`) siguen siendo
       alcanzables, y ninguno sobra.
       (2) REGLA 13: la deducción vive en `packages/shared` y la IMPONE el servidor en el alta; el cliente deja de
-      mandarla. Hoy el servidor exige el prefijo en el cuerpo (`apps/desk/server/services/ticketService.ts:87`).
+      mandarla. Hoy el servidor exige el prefijo en el cuerpo (`apps/desk/server/services/ticketService.ts:87` en `968bb53`).
       (3) «PROTOCOLO» ENTRA EN LA LISTA DE TIPOS DE SERVICIO (`TIPOS_SERVICIO`,
       `packages/shared/src/ticketCreate.ts:4`). Todo lo que enumere esa lista lo revisa el cambio que lo construya.
       (4) LOS TICKETS EXISTENTES CONSERVAN SU PREFIJO: ninguna migración de datos; el código de servicio ya guardado
