@@ -216,3 +216,21 @@ describe('pureza del lector (RQ-KP-23)', () => {
     for (const prohibida of [/node:/, /\bfetch\s*\(/, /process\.env/, /\bconsole\b/]) expect(prohibida.test(fuente), String(prohibida)).toBe(false)
   })
 })
+
+describe('remediación del verify (W1 · R15, S1 · R21)', () => {
+  it('W1 · BOM delante de una primera cabecera «ID» entrecomillada: se quita y la fila se lee', () => {
+    const t = texto([fila('777')])
+    const sinBom = t.startsWith(BOM) ? t.slice(1) : t
+    const contenido = `${BOM}"${COLUMNA_ID}"${sinBom.slice(sinBom.indexOf(','))}`
+    expect(contenido.startsWith(`${BOM}"ID",`)).toBe(true)
+    const l = leida(leerExportacion(contenido))
+    expect(l.rechazadas).toEqual([])
+    expect(l.filas.map((x) => x.id)).toEqual(['777'])
+  })
+
+  it('S1 · una celda de indicador con sólo espacios no es «valor ilegible» y la fila se conserva', () => {
+    const l = leida(leer([fila('1', { [SERVICIO]: '   ' })]))
+    expect(l.ilegibles).toEqual([])
+    expect(l.filas.map((x) => x.id)).toEqual(['1'])
+  })
+})

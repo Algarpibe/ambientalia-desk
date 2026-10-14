@@ -537,3 +537,20 @@ Ejecutado por el orquestador sobre el árbol del lote 4 (el mismo que se commite
 - La tarea 5.3 se da por hecha con los barridos de cada lote (1.14, el del lote 3 y 4.12); el lote 2 sólo creó ficheros.
 - Hallazgo que queda para el verify: el `401` de sesión inválida no lo fija la prueba de la ruta nueva; lo fija la prueba
   general de permisos.
+
+## Remediación del verify
+
+Sólo pruebas nuevas, al final de cada fichero; el código de producción no se tocó (`git diff` de los tres ficheros de producción, vacío tras cada mutación). Son pruebas de comportamiento existente: el «rojo» de TDD es el de la mutación, que se aplicó con `sed`, se miró y se revirtió con `git checkout`.
+
+| Hallazgo | Prueba (fichero de prueba) | Mutación aplicada | Rojo visto |
+|---|---|---|---|
+| W1 · R15 | «W1 · BOM delante de una primera cabecera «ID» entrecomillada» (`leerExportacion.test.ts`) | `leerExportacion.ts`: quitar la rama `startsWith(BOM) ? slice(1) : contenido` | 1 roja (esa) |
+| S1 · R21 | «S1 · una celda de indicador con sólo espacios…» (`leerExportacion.test.ts`) | `celda.trim() !== ''` → `celda !== ''` | 1 roja (esa) |
+| W3 · K6 | «el recuento «Fuera del periodo» es el total de `fueraDelPeriodo`» (`lib/comparacionExportacion.test.ts`) | recuento tomado de `soloEnFichero.total` | 2 rojas (la nueva y «repite los recuentos tal cual») |
+| W3 · K6c | «el total de la lista «Fuera del periodo»…» | total de la lista tomado de `soloEnDesk.total` | 1 roja (la nueva) |
+| W3 · K6d | «las líneas de la lista «Fuera del periodo»…» | líneas tomadas de `soloEnFichero.tickets` | 1 roja (la nueva) |
+| S2 · T1b | «sin `trozo`, 5001 ID distintos salen en dos sentencias» (`db/ticketsPorId.test.ts`, con un `Queryable` espía) | trozo por defecto 5000 → 4000, y → 6000 | 1 roja en cada sentido |
+
+Resultado con el código real: `npm test` código 0 (4666 pruebas pasan, 11 omitidas; 276 ficheros pasan, 3 omitidos), `npm run typecheck` código 0, `npm run lint` código 0 (165 avisos, 0 errores).
+
+Medida: `git diff --shortstat --no-renames HEAD` = 3 ficheros, 47 inserciones (sólo pruebas), más este bloque de `apply-progress.md`.

@@ -64,3 +64,13 @@ describe('numerosDeTickets · consulta por ID (DD-9)', () => {
     expect(sentencias[0].sql).not.toMatch(/\b(INSERT|UPDATE|DELETE)\b/i)
   })
 })
+
+describe('numerosDeTickets · trozo por defecto (S2 · T1b)', () => {
+  it('sin `trozo`, 5001 ID distintos salen en dos sentencias: 5000 parámetros y 1', async () => {
+    const ids = Array.from({ length: 5001 }, (_, i) => `x${i}`)
+    const espia = { query: async (sql: string, params?: unknown[]) => { sentencias.push({ sql, params: params ?? [] }); return { rows: [] } } } as unknown as Queryable
+    sentencias.length = 0
+    await numerosDeTickets(espia, ids)
+    expect(sentencias.map((s) => s.params.length)).toEqual([5000, 1])
+  })
+})

@@ -140,3 +140,22 @@ describe('vistaComparacion (RQ-KP-28: repite lo que el servidor devolvió, sin s
     expect(r).toEqual(copia)
   })
 })
+
+describe('remediación del verify (W3 · K6, K6c, K6d: «Fuera del periodo» sale sólo de `fueraDelPeriodo`)', () => {
+  function distinta(): ComparacionExportacion {
+    const r = respuesta()
+    r.cruce.soloEnFichero = { total: 11, tickets: [{ id: '111', numero: 1 }] }
+    r.cruce.fueraDelPeriodo = { total: 22, tickets: [{ id: '222', numero: 2 }, { id: '223', numero: null }] }
+    r.cruce.soloEnDesk = { total: 33, tickets: [{ id: '333', numero: 3 }] }
+    return r
+  }
+  it('el recuento «Fuera del periodo» es el total de `fueraDelPeriodo`', () => {
+    expect(vistaComparacion(distinta()).recuentos.find((f) => f.etiqueta === 'Fuera del periodo')?.valor).toBe('22')
+  })
+  it('el total de la lista «Fuera del periodo» es el de `fueraDelPeriodo`', () => {
+    expect(vistaComparacion(distinta()).listas.find((x) => x.titulo === 'Fuera del periodo')?.total).toBe('22')
+  })
+  it('las líneas de la lista «Fuera del periodo» son los tickets de `fueraDelPeriodo`', () => {
+    expect(vistaComparacion(distinta()).listas.find((x) => x.titulo === 'Fuera del periodo')?.lineas).toEqual(['222 · solicitud 2', '223 · solicitud ilegible'])
+  })
+})
