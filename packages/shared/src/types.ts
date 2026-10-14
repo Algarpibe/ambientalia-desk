@@ -319,11 +319,11 @@ export interface CreateTicketPayload {
   equipoId: string
   tipoServicio: string
   clasificaciones: string; modalidad?: string // sólo con «Soporte remoto» (RQ-SR-07/09)
-  prefijo: string
   ordenVenta?: string
   prioridad?: string
-  subject?: string
-  codigoServicio?: string
+  // RQ-TC-62: el cuerpo ya no lleva `prefijo`, `codigoServicio` ni `subject`; el servidor los deduce y construye.
+  // Si vuelven al literal de `createTicket`, `tsc` rechaza la propiedad sobrante (M-16). Un cliente viejo que
+  // los mande sigue siendo válido en la red: el alta los ignora (`ticketService.ts:82`, `:101`, `:102`).
   /** `alta-equipo-nuevo-en-ticket`, RQ-TC-15. Sólo se lee si `clasificaciones === 'Equipo nuevo'` y
    *  no viene `equipoId`; el servidor registra o reutiliza el equipo en el mismo paso. */
   equipoNuevo?: {

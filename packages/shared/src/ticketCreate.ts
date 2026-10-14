@@ -17,11 +17,11 @@ export function buildSubject(input: { cliente: string; tipoEquipo: string; codig
   return `Servicio Técnico ${input.cliente} ${input.tipoEquipo} ${input.codigo}`.replace(/\s+/g, ' ').trim()
 }
 
-export function parseCodigoFromPotential(potentialName: string | null | undefined): { prefijo: string; serie: string; modelo: string } | null {
-  if (!potentialName) return null
-  const m = potentialName.match(/\b(MT|CG|HV|SR|PRO)_([^_\s]+)_([^_\s]+)_(\d{6})\b/)
-  return m ? { prefijo: m[1], serie: m[2], modelo: m[3] } : null
-}
+// Retirada (RQ-TC-61, S-3): aquí vivía `parseCodigoFromPotential`, que leía el prefijo del nombre de la oportunidad
+// de CRM. Con el prefijo deducido de la clasificación y el tipo ya no tenía lector, y la oportunidad no manda sobre él.
+// Dejaba un código de otra época colarse en el formulario. Sus cinco líneas siguen en la revisión `968bb53`
+// (`git show 968bb53:packages/shared/src/ticketCreate.ts`); se sustituyen por este comentario para que
+// `extractServiceCode` y `prefijoDeducido` conserven su número de línea.
 
 /**
  * Extrae el código de servicio y su serial de un texto (p.ej. el asunto del ticket). Fecha opcional.

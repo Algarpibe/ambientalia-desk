@@ -1661,3 +1661,48 @@ producción: depende del despliegue y de la tarea P-1 (`docs/sdd/Paquete_de_Desp
 ajuste manual congele la fila entera frente a Zoho, que una prioridad fuera de la lista se rechace en la transición, entre otros): están como preguntas propuestas en
 la adenda de `docs/sdd/Paquete_de_Despliegue_2026-10-08.md`, sin número hasta que Supervisión las asigne. No define la «valoración del cliente»: por eso F1B-07
 no se cierra. No afirma que esté en producción: depende del despliegue y de las tareas P-1, P-2 y P-6 de esa adenda.
+
+## La de F1B-03, prefijo deducido (35)
+
+> **Esta entrada cita la R08.4**, la copia citable vigente. Procede del cambio `prefijo-deducido-en-el-alta`, `cierra: si`, y de la
+> respuesta de Gerencia del 2026-10-14, `decision/prefijo-de-que-se-deduce` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`).
+
+### 35 · M1.1, M1.2 y Anexo G — el prefijo NO se suprime: se deduce de la clasificación y el tipo de servicio, y «Protocolo» entra en la lista de tipos *(F1B-03)*
+
+**Dónde:** `docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1170` (decisión del 30/09 que suprime los cinco prefijos),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1171` (asunto «sin prefijo»),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1144` (aviso de M1.1 que remite a esa supresión),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:1208` (lista de tipos de servicio en M1.2),
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6183` (Anexo G.1, columna 27) y
+`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:6149` (Anexo G, nombre del ticket).
+
+**Texto actual:**
+
+- Línea 1170: «[DECIDIDO 30/09/2026 — R08.4] Se suprimen los cinco prefijos en los tickets nuevos. MT, CG, HV, SR y PRO dejan de existir en el alta: el campo
+  prefijo ya no se pide, no es obligatorio y no se genera automáticamente. La rama del ticket la indica solo el desplegable de clasificación (M1.2). El asunto
+  normalizado se mantiene, sin prefijo:»
+- Línea 1171: «Tipo de servicio + Nombre del cliente + Tipo de equipo + NúmeroSerie_Modelo_AAMMDD».
+- Línea 1144: «[R08.4] El 30/09 se suprimieron además los otros tres prefijos (ver «La convención de nombres y los prefijos», más abajo).»
+- Línea 1208: «Calibración · Diagnóstico · Garantía · Mantenimiento · No aplica · Otro».
+- Línea 6183: «Calibración · Diagnóstico · Garantía · Mantenimiento · No aplica · Otro. Segunda dimensión, distinta de la rama (M1.2).»
+- Línea 6149: «[R08.4] En los tickets nuevos el asunto normalizado va sin prefijo (corrección del 30/09, E-094); los existentes conservan el suyo.»
+
+**Texto propuesto:**
+
+1. En la línea 1170, marcar la decisión del 30/09 como **superada** y reescribirla: «[DECIDIDO 14/10/2026 — R08.4] El código de servicio conserva el prefijo, que
+   deja de elegirse y se deduce: clasificación «Equipo nuevo» → HV; «Soporte remoto» → SR; «Equipo para servicio de mantenimiento» con tipo de servicio
+   Calibración → CG, Protocolo → PRO y cualquier otro tipo → MT. El campo ya no se pide en el alta; lo deduce el servidor y la aplicación sólo lo muestra. Los
+   tickets existentes conservan su prefijo. Se conservan los cinco prefijos porque las carpetas y los informes de Google Drive se nombran con ellos (MT_, CG_,
+   HV_ y PRO_; PRO está en uso). [CONSTRUIDO] (F1B-03).» La frase sobre la verificación de Drive de la línea 1174 queda respondida por esa misma decisión.
+2. En la línea 1171, devolver el prefijo a la convención: «Tipo de servicio + Nombre del cliente + Tipo de equipo + Prefijo_NúmeroSerie_Modelo_AAMMDD», y añadir que
+   el código y el asunto no se teclean: los construye el servidor, con el AAMMDD del día civil de Bogotá.
+3. En la línea 1144, sustituir la frase por «[R08.4] El 14/10 se decidió conservar los cinco prefijos y deducirlos (ver «La convención de nombres y los
+   prefijos», más abajo).»
+4. En las líneas 1208 y 6183, la lista de tipos de servicio pasa a **ocho valores**: «Calibración · Diagnóstico · Garantía · Mantenimiento · Reparación · Protocolo ·
+   No aplica · Otro». «Reparación» ya estaba en la aplicación desde la remisión; «Protocolo» es nuevo y es de donde se deduce PRO.
+5. En la línea 6149, retirar la frase «En los tickets nuevos el asunto normalizado va sin prefijo (corrección del 30/09, E-094)» y dejar que el nombre del ticket
+   vuelva a ser el de la línea anterior de esa misma fila: con prefijo, deducido, y los existentes sin cambio.
+
+**Lo que esta entrada NO pide.** No toca los tickets ya creados (conservan su prefijo, sin migración). No cambia el prefijo que escribe la transición «Ingreso a
+Servicio» (`packages/shared/src/transitions.ts:191`), que sigue pudiendo reescribir el código con cualquier prefijo: es una segunda vía de escritura que queda como
+punto abierto para Gerencia. No afirma que esté en producción: depende del despliegue y de la tarea P-1 de `openspec/changes/prefijo-deducido-en-el-alta/tasks.md`.
