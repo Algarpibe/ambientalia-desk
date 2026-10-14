@@ -133,7 +133,7 @@ tocan.
 | S-2 | El asunto deja de ser editable: lo construye el servidor (el maestro lo quiere construido, `:1172`; RQ-TC-03 «no se teclean») | Volver a aceptar `subject` exigiendo que contenga el código impuesto |
 | S-3 | El prefijo de la oportunidad de CRM deja de leerse, sin aviso | Recuperar `parseCodigoFromPotential` y avisar si discrepa |
 | S-4 | AAMMDD = día civil en `America/Bogota` (precedente RQ-TC-58) | Pasar `new Date()` |
-| S-5 | Clasificación desconocida o con otra caja → rama de mantenimiento (MT/CG/PRO), como el grafo | Rechazar con `422` las que no estén en `CLASIFICACIONES` |
+| S-5 | Clasificación desconocida → rama de mantenimiento (MT/CG/PRO), como el grafo; la caja y los espacios se pliegan con `normalizar` (`packages/shared/src/flujos.ts:32-34`), así que «equipo nuevo» da HV | Rechazar con `422` las que no estén en `CLASIFICACIONES` |
 | S-6 | Tipo de servicio por literal exacto («Calibración», «Protocolo»), como `ordenOVI.ts:13` | Plegar caja y tilde |
 | S-7 | «Protocolo» va en la sexta posición, tras «Reparación» | Mover el literal |
 
