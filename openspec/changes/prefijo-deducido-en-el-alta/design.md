@@ -29,7 +29,7 @@ para una vista previa de sólo lectura. **Todos los ficheros tocados conservan s
 | DD-7 | `parseCodigoFromPotential` (`ticketCreate.ts:20-24`) se retira y sus **cinco** líneas se sustituyen por un comentario de cinco líneas que dice qué hubo, por qué se fue y en qué revisión está (`968bb53`) | Borrar las cinco líneas y barrer citas | Borrarlas desplaza `extractServiceCode` y `prefijoDeducido`, que la delta cita con los números de hoy. Precedente: los comentarios «al FINAL del fichero para no desplazar las citas» de `ticketService.ts:226-229` |
 | DD-8 | El alta **ignora** `prefijo`, `codigoServicio` y `subject` del cuerpo; ninguna guarda nueva | `422` si llegan | S-1/S-2 de la propuesta; RQ-TC-62. La deducción es total: no hay rechazo que añadir |
 | DD-9 | `CreateTicketPayload` (`packages/shared/src/types.ts:316`) pierde los tres campos **en sitio**: `:322-323` pasan a `ordenVenta` y `prioridad`, `:324-326` a un comentario de tres líneas | Borrar las tres líneas | Mismo recuento; y con los campos fuera del tipo, volver a mandarlos desde el cliente es error de `tsc` por propiedad sobrante del literal (`CreateTicket.tsx:226-239`). Hipótesis a confirmar por mutación en el lote 3 |
-| DD-10 | Pruebas nuevas del alta en fichero **nuevo**, `apps/desk/server/services/prefijoDeducidoAlta.test.ts`; en `ticketService.test.ts` sólo se reescriben en sitio las aserciones que nombran «prefijo» | Añadirlas a `ticketService.test.ts` | Ese fichero está citado por línea (`services/ticketService.test.ts:273` en la spec viva); añadir en medio lo desplaza |
+| DD-10 | Pruebas nuevas del alta en fichero **nuevo**, `apps/desk/server/services/prefijoDeducidoAlta.test.ts`; en `ticketService.test.ts` sólo se reescriben en sitio las aserciones que nombran «prefijo» | Añadirlas a `ticketService.test.ts` | Ese fichero está citado por línea (`services/ticketService.test.ts:273` en `ad65161`, en la spec viva); añadir en medio lo desplaza |
 | DD-11 | El día del alta en las pruebas de servidor se fija con `vi.useFakeTimers({ toFake: ['Date'] })` + `vi.setSystemTime`, y el código guardado se lee con `SELECT codigo_servicio, subject FROM tickets` | Leer de `rowToTicketDetail` | El detalle no expone `codigo_servicio` (`packages/zoho-sync/src/db/mappers.ts:199` sólo da `title`); sólo se falsifica `Date` para no tocar los temporizadores de pg-mem |
 
 ## 3. Cambios línea a línea — `packages/shared`
@@ -150,7 +150,7 @@ Ninguna prueba del servidor fija `codigo_servicio` ni `subject` de un alta (`gre
 | M-6 | Evaluar el tipo antes que la clasificación | «la clasificación gana al tipo» |
 | M-7 | Sustituir los predicados por `=== 'Equipo nuevo'` | «mismos predicados que el grafo» (` Equipo   Nuevo `) |
 | M-8 | Plegar caja/tilde del tipo | «literal exacto» (`calibracion` → `MT`) |
-| M-9 | `yymmdd` con getters locales (o `new Date()` sin zona) | AAMMDD de las `20:00-05:00` en `ticketCreate.test.ts` y en el alta |
+| M-9 | `yymmdd` con getters locales (o `new Date()` sin zona) | AAMMDD de las 20:00 de Bogotá (UTC-5) en `ticketCreate.test.ts` y en el alta |
 | M-10 | `:82` vuelve a leer `b.prefijo` | «el prefijo del cuerpo se ignora», «cliente viejo crea igual» |
 | M-11 | `:101` vuelve a leer `b.codigoServicio` | «el código del cuerpo se ignora» |
 | M-12 | `:102` vuelve a leer `b.subject` | «el asunto del cuerpo se ignora» |
