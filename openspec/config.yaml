@@ -4768,6 +4768,27 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-01 (E-207: fecha de cierre de la migración, marcada, cuando Zoho no la trae; XS, sin construir)"
+  - clave: "decision/medicion-garantias-acceso"
+    fecha: "2026-10-17"
+    pregunta: |
+      Supuesto S-4 de `medicion-garantias-por-marca` (F1B-13): quién puede ver la medición de garantías con el
+      proveedor por marca. El cambio archivado en `4e6a99d` la abría a todo usuario con sesión (`requireAuth`, sin más
+      permiso) y su tabla «Fallas repetidas» enseñaba los ids internos de Zoho de los tickets.
+    respuesta_textual: |
+      «La vista "Garantías" la ven sólo los administradores y los cargos Director Técnico y Director Comercial. El servidor rechaza la consulta a cualquier otro (403); no basta con ocultar el menú. La tabla "Fallas repetidas" muestra el número del ticket (por ejemplo "#996"), no el id interno de Zoho.»
+    consecuencias: |
+      (1) SUSTITUYE AL SUPUESTO S-4 de `medicion-garantias-por-marca`: la lectura ya no es para todo usuario con sesión.
+      (2) El permiso es un predicado de `packages/shared` (regla invariable 13) que IMPONE la ruta
+      `GET /api/medicion-garantia-proveedor`: sin sesión `401`, con sesión y sin permiso `403`. El botón de la cabecera
+      usa el mismo predicado y es sólo comodidad.
+      (3) El servidor devuelve el número del ticket (`desk.tickets.number`) de cada ficha repetida; el cliente sólo lo
+      formatea como «#996». El id interno deja de mostrarse.
+      (4) Lo construye la corrección de `medicion-garantias-por-marca` en su rama, antes de fusionar a `main`
+      (F1B-13, `cierra: no`). No abre fila.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/medicion-garantias-acceso) · sustituye a S-4 de openspec/changes/archive/2026-10-17-medicion-garantias-por-marca/proposal.md"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (corrige F1B-13 antes de fusionar)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
