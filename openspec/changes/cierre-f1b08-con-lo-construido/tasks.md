@@ -13,9 +13,9 @@ verify y archive. Cada intento se asienta sólo con TODOS sus códigos en 0.
 
 ## 2. Verify
 
-- [ ] 2.1 Contrastar cada cita de `proposal.md` contra el fichero (qué afirma, extremos inicial y final).
-- [ ] 2.2 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión.
-- [ ] 2.3 Escribir `verify-report.md` con veredicto; los cuatro códigos y el detector con código 0.
+- [x] 2.1 Contrastar cada cita de `proposal.md` contra el fichero (qué afirma, extremos inicial y final).
+- [x] 2.2 Comprobar que el cambio no toca código de producción, `openspec/specs/` ni ficheros de Supervisión.
+- [x] 2.3 Escribir `verify-report.md` con veredicto; los cuatro códigos y el detector con código 0.
 
 ## 3. Archive
 
