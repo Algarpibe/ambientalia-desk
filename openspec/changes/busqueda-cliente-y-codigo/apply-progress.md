@@ -36,3 +36,11 @@ este intento. En la caja cambian además el ancho, de `w-56` a `w-72` (`:23`), p
 `searchClients` no recorta los extremos: la ruta le pasa el texto tal cual (`apps/desk/server/routes/directory.ts:16`).
 La confrontación se lo pasa recortado para enfrentar sólo la regla del nombre, y fija esa diferencia en una prueba aparte.
 Es una diferencia del buscador de clientes, no de este cambio, y no se corrige aquí.
+
+## Medida del intento y bundle (W1 del verify, corregido en sitio)
+
+- Medida: `git diff --shortstat --no-renames f73be04 6b303b8` = 7 ficheros, 268 inserciones y 22 borrados, **290**; sin
+  ficheros nuevos sin trackear. Es la cifra que asentó el registro. Las 762 que cita el verify son `e99f361..6b303b8`, que
+  suman la planificación (502, asentada en su propio intento).
+- Bundle: `npm run build` en `6b303b8` da `index-DUWvYLlB.js` (416,69 kB); con la caja y `shared` de `f73be04` da
+  `index-BcnKpGtZ.js` (416,64 kB), el mismo nombre que tiene producción. Cambia sólo por el texto y el ancho de la caja.
