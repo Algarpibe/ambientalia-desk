@@ -4909,6 +4909,105 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "ninguna (tarea de persona en n8n, antes del 14/12)"
+  - clave: "decision/e223-anulacion-tres-flujos"
+    fecha: "2026-10-17"
+    pregunta: |
+      E-223 (`docs/sdd/ENTRADA.md`, B-2 de la auditoría F1B-09): ¿la anulación con motivo (`decision/c2-anulado`, del 23/09,
+      anterior a los dos flujos nuevos) alcanza también a equipo nuevo y soporte remoto?
+    respuesta_textual: |
+      «sí, la anulación con motivo alcanza también a equipo nuevo y soporte remoto.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 17/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Responde E-223: la anulación con motivo de `decision/c2-anulado` alcanza a los tres flujos (servicio técnico, equipo
+      nuevo y soporte remoto).
+      (2) Es alcance de F1C-01, que se construye después del corte: hoy ningún catálogo tiene estado ni transición de
+      anulación (E-223, «Qué»). Los motivos de `decision/c2-anulado` están escritos para servicio; adaptarlos a los otros dos
+      flujos es diseño de F1C-01.
+      (3) No cambia nada antes del 14/12.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e223-anulacion-tres-flujos) · docs/sdd/ENTRADA.md → E-223"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1C-01 (alcance: anulación en los tres flujos), después del corte"
+  - clave: "decision/e224-indicadores-como-zoho-y-por-flujo"
+    fecha: "2026-10-17"
+    pregunta: |
+      E-224 (`docs/sdd/ENTRADA.md`, B-3 de la auditoría F1B-09): los indicadores no distinguen el flujo del ticket y traen
+      también los de equipo nuevo y soporte remoto. ¿Qué tickets cuentan?
+    respuesta_textual: |
+      «antes del corte, los indicadores cuentan los mismos tickets que cuenta Zoho hoy, para que la comparación en paralelo coincida; confirmar qué cuenta Zoho. Además, cada indicador se puede filtrar por flujo (servicio técnico, equipo nuevo, soporte remoto).»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 17/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) Antes del corte, la población de cada indicador es la misma que cuenta Zoho hoy, para que la comparación en paralelo
+      de F1F-05 coincida.
+      (2) ⚠️ «Qué cuenta Zoho» está POR CONFIRMAR y NO se deduce: ni del código, ni de la réplica, ni de la definición de los
+      indicadores. Hasta que se confirme, ninguna tanda fija la población por supuesto.
+      (3) Cada indicador se puede filtrar por flujo (servicio técnico, equipo nuevo, soporte remoto): contenido de F1F-05.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e224-indicadores-como-zoho-y-por-flujo) · docs/sdd/ENTRADA.md → E-224"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-05 (población como Zoho, por confirmar, y filtro por flujo)"
+  - clave: "decision/e226-espera-y-areas-equipo-nuevo"
+    fecha: "2026-10-17"
+    pregunta: |
+      E-226 (`docs/sdd/ENTRADA.md`, B-5 de la auditoría F1B-09): clase de espera de `Pendiente`, `Verificación` y
+      `Solicitud Soporte` (hoy `sin_clasificar`), y área de las seis transiciones de equipo nuevo (hoy Servicio Técnico por
+      supuesto).
+    respuesta_textual: |
+      «es espera lo que depende de alguien de fuera (cliente, proveedor o fabricante). Pendiente: espera (sólo tickets antiguos). Verificación: no es espera. Solicitud Soporte: [no es espera si es cola nuestra / sí si espera al fabricante]. Las seis transiciones de equipo nuevo son de Servicio Técnico, salvo las de entrega o facturación al cliente, que son de Comercial; la lista con el área de cada una va a la lista semanal de supuestos.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 17/10 y se recoge tal cual, corchetes incluidos. Si Gerencia tiene otra
+      redacción, se sustituye.
+    consecuencias: |
+      (1) Criterio: es espera lo que depende de alguien de fuera (cliente, proveedor o fabricante).
+      (2) `Pendiente` es espera (sólo tickets antiguos); `Verificación` no es espera.
+      (3) ⚠️ Para `Solicitud Soporte` Gerencia dejó las dos opciones entre corchetes. Supuesto del analista: NO es espera,
+      porque es el estado de nacimiento del soporte remoto y es cola propia. Reversible, y va a la lista semanal de supuestos
+      (`decision/supuestos-semanales-aceptacion`).
+      (4) Las seis transiciones de equipo nuevo son de Servicio Técnico, salvo las de entrega o facturación al cliente, que son
+      de Comercial. La lista con el área de cada una va a la lista semanal de supuestos.
+      (5) Contenido de F1B-09: cada respuesta cambia un dato del registro (E-226, «Qué desbloquea»). Las áreas de soporte
+      remoto siguen en E-090, que esta respuesta no toca.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e226-espera-y-areas-equipo-nuevo) · docs/sdd/ENTRADA.md → E-226"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1B-09 (clase de espera de tres estados y áreas de equipo nuevo)"
+  - clave: "decision/e198-busqueda-cliente-y-codigo"
+    fecha: "2026-10-17"
+    pregunta: |
+      E-198 (`docs/sdd/ENTRADA.md`): ¿la búsqueda del tablero debe cubrir también asunto, cliente y contacto? Hoy busca sólo
+      número de ticket y serial (E-133).
+    respuesta_textual: |
+      «la búsqueda cubre número de ticket, serial, cliente y código de servicio; el contacto no. Entra antes del corte como pieza pequeña, por paridad con Zoho.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 17/10 y se recoge tal cual. Si Gerencia tiene otra redacción, se sustituye.
+    consecuencias: |
+      (1) La búsqueda cubre número de ticket, serial, cliente y código de servicio. El contacto queda fuera; el asunto,
+      también, porque la respuesta no lo nombra.
+      (2) Entra antes del corte como pieza pequeña, por paridad con Zoho: contenido de F1F-03 (`cierra: no`).
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e198-busqueda-cliente-y-codigo) · docs/sdd/ENTRADA.md → E-198"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "F1F-03 (búsqueda por cliente y código de servicio)"
+  - clave: "decision/supuestos-semanales-aceptacion"
+    fecha: "2026-10-17"
+    pregunta: |
+      La lista semanal de supuestos reversibles («Regla de las preguntas a Gerencia» de CLAUDE.md, E-237): ¿lo no corregido en
+      una semana queda aceptado?
+    respuesta_textual: |
+      «de acuerdo; lo que no corrija en una semana queda aceptado.»
+    nota_de_fuente: |
+      El texto llega en el encargo de la sesión del 17/10 y se recoge tal cual. La clave `decision/preguntas-de-detalle-sin-llegar`
+      está en la copia de trabajo de Supervisión, sin commitear, y por eso esta respuesta se registra en una clave propia.
+    consecuencias: |
+      (1) Gerencia confirma el plazo: un supuesto de la lista semanal que no corrige en una semana queda aceptado, con fecha.
+      (2) Entran en la lista de esta semana, entre otros, el supuesto de `Solicitud Soporte` y la lista de áreas de equipo nuevo
+      de `decision/e226-espera-y-areas-equipo-nuevo`.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/supuestos-semanales-aceptacion) · CLAUDE.md («Regla de las preguntas a Gerencia»)"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (regla de trabajo)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
