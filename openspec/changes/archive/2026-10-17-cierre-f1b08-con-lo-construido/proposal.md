@@ -2,7 +2,7 @@
 tanda: F1B-08
 motivo: ""
 capacidad: [reconciliacion]
-maestro: ["ítem 22", "M1.10", "Anexo D nº 3", "M1.7", "M7.5"]
+maestro: ["ítems 17, 22", "P44", "Decisiones 10/09 §3 y §7.1–7.2"]
 cierra: si
 toca_maestro: no
 origen_cabecera: declarada
@@ -94,7 +94,7 @@ al cerrar la épica») se declara aquí; `docs/sdd/ENTRADA.md` es de Supervisió
 
 | # | Supuesto | Alternativa |
 |---|---|---|
-| S-1 | `maestro:` lleva la unión de los pasajes que declararon los cinco cambios archivados de la fila; la fila del plan no nombra pasajes propios. «ítem 22» es del §3.2 `[EN REVISIÓN — R08]` y vale como procedencia, no como alcance | Dejar `maestro: []` |
+| S-1 | `maestro:` lleva los pasajes de la fila tal como los declara la R01.1 (`docs/sdd/Desk2.0_Plan_Fases_y_Tandas_ClaudeCode_R01.1.md:505`), que es la fuente que cruza el barrido; la R01.4 no nombra pasajes propios. Los ítems 17 y 22 son del §3.2 `[EN REVISIÓN — R08]` y valen como procedencia, no como alcance. Los cinco cambios de la fila declararon además «M1.10», «Anexo D nº 3», «M1.7» y «M7.5» | La unión de los pasajes de los cinco cambios |
 | S-2 | `capacidad: [reconciliacion]`, porque el único efecto es el recuento del barrido y la prueba que lo fija | Declarar las capacidades de los cambios de la fila |
 | S-3 | No se corrige `openspec/specs/reconciliacion/spec.md:347`, que dice «seis» en curso con una lista del 01/10 (hoy son nueve); corregirlo exige spec delta, y el encargo es sin delta | Un delta de RQ-RC-11 |
 
