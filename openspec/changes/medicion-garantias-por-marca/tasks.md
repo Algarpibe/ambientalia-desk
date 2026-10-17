@@ -21,19 +21,19 @@ Verify y archive abren intento propio (el informe que cada uno genera es sumando
 
 ## Lote 1 · `packages/shared` (RQ-TC-65, RQ-TC-66; D-1, D-5, D-6, D-9)
 
-- [ ] 1.1 **Rojo.** Crear `packages/shared/src/medicionGarantias.test.ts` con todos los escenarios de RQ-TC-65 y RQ-TC-66:
+- [x] 1.1 **Rojo.** Crear `packages/shared/src/medicionGarantias.test.ts` con todos los escenarios de RQ-TC-65 y RQ-TC-66:
   suma de cuatro estados (1000/250), rechazada (cociente 0), abierta/enviada sin recuperado, «no» fuera (M-1a), sin valor
   reclamado aparte (M-4), agrupación `Acme`/`  ACME ` con etiqueta determinista (M-6), `Müller`≠`Muller`, cociente `null`
   con reclamado 0 (M-8), entrada vacía sin error, umbral 1 ficha vs 2 (M-5), referencia vacía, otro fabricante, ficha «no»,
   orden determinista aunque se permute la entrada, `enviada` con recuperado 999 sintético que no suma (M-2) y
   `resultados` con las tres claves (M-3). Ver el rojo: `npx vitest run packages/shared/src/medicionGarantias.test.ts`
   (falla por ausencia del módulo).
-- [ ] 1.2 **Verde.** Crear `packages/shared/src/medicionGarantias.ts` según `design.md` §3: `UMBRAL_FALLA_REPETIDA`,
+- [x] 1.2 **Verde.** Crear `packages/shared/src/medicionGarantias.ts` según `design.md` §3: `UMBRAL_FALLA_REPETIDA`,
   `claveMedicion`, interfaces y `medirGarantias` (filtro `reclama`, sumas, cociente con guarda de 0, fallas repetidas, orden).
-- [ ] 1.3 **Verde.** Añadir UNA línea de export al final de `packages/shared/src/index.ts` (tras `:44`).
-- [ ] 1.4 **Refactor.** Sin cambiar el comportamiento; volver a correr la prueba del 1.1 y `npm run typecheck`.
-- [ ] 1.5 Comprobar con `git diff` que `index.ts` sólo gana la línea final y que `garantiaProveedor.ts` de shared no se toca.
-- [ ] 1.6 **Cierre del lote 1.** `npm test`, `npm run typecheck`, `npm run lint` (sin errores; base de 165 avisos),
+- [x] 1.3 **Verde.** Añadir UNA línea de export al final de `packages/shared/src/index.ts` (tras `:44`).
+- [x] 1.4 **Refactor.** Sin cambiar el comportamiento; volver a correr la prueba del 1.1 y `npm run typecheck`.
+- [x] 1.5 Comprobar con `git diff` que `index.ts` sólo gana la línea final y que `garantiaProveedor.ts` de shared no se toca.
+- [x] 1.6 **Cierre del lote 1.** `npm test`, `npm run typecheck`, `npm run lint` (sin errores; base de 165 avisos),
   `npm run build`, `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`; cada código mirado por separado.
   Medida del intento (estimación ~390): `git diff --shortstat --no-renames <partida>` + `wc -l` de lo nuevo sin trackear.
 
