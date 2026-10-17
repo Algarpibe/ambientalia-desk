@@ -58,7 +58,7 @@ El maestro R08.4 repite la decisión y añade el diccionario:
 | Ruta de administradores con sesión | `apps/desk/server/routes/analisis.ts:11`; `requireAuth` en `apps/desk/server/auth/middleware.ts:14-23` y `requireAdmin` en `:26-29` | molde de la ruta nueva |
 | Registro de rutas | `apps/desk/server/app.ts:56` | dónde se registra |
 | Lectura masiva de tickets en una consulta | `apps/desk/server/analisis.ts:11-32` | molde de la lectura |
-| Pestaña de análisis sólo para administradores | `apps/desk/src/components/Header.tsx:90`; cliente HTTP en `apps/desk/src/api/client.ts:426` | dónde va el enlace de descarga |
+| Pestaña de análisis sólo para administradores | `apps/desk/src/components/Header.tsx:90` en `ea9cb82`; cliente HTTP en `apps/desk/src/api/client.ts:426` | dónde va el enlace de descarga |
 
 **Lo que NO existe:** no hay módulo de indicadores ni `openspec/specs/kpis/spec.md` (el directorio
 `openspec/specs/` tiene dieciséis specs y ninguna es `kpis`). La capacidad sí está **declarada**:

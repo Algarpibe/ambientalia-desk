@@ -1,14 +1,14 @@
-import type { Express } from 'express'
+import type { Express, RequestHandler } from 'express'
 import type { Queryable } from '@ambientalia/zoho-sync/db/migrate'
 import {
-  esOVI, puedeGestionarReclamacion, MENSAJE_SIN_CARGO_RECLAMACION, motivoPasoNoPermitido,
-  validarRespuesta, validarDatosFicha, validarPaso, type EstadoReclamacion,
+  esOVI, puedeGestionarReclamacion, MENSAJE_SIN_CARGO_RECLAMACION, motivoPasoNoPermitido, MENSAJE_SIN_PERMISO_MEDICION,
+  validarRespuesta, validarDatosFicha, validarPaso, medirGarantias, conNumerosDeTicket, puedeVerMedicionGarantias, type EstadoReclamacion,
 } from '@ambientalia/shared'
 import { requireAuth } from '../auth/middleware'
 import { asyncHandler } from '../util/asyncHandler'
 import {
   asociacionPorId, respuestaDeAsociacion, registrarRespuesta, reclamacionPorId, editarFicha, avanzarFicha,
-  garantiaDelTicket, ReclamacionYaRespondidaError,
+  garantiaDelTicket, fichasReclamadas, numerosDeTickets, ReclamacionYaRespondidaError,
 } from '../db/garantiaProveedor'
 
 /**
@@ -104,4 +104,18 @@ export function registerGarantiaProveedorRoutes(app: Express, deps: { db: Querya
     }
     res.json(avanzada)
   }))
+
+  // Medición por marca (RQ-TC-67, RQ-TC-68): la sesión (401) ANTES que el permiso (403), `decision/medicion-garantias-acceso`.
+  // El orden lo fija «sin sesión da 401 y NO 403» de `medicionGarantias.test.ts`; cambiarlo da 403 a quien no tiene sesión.
+  app.get('/api/medicion-garantia-proveedor', requireAuth(db), exigeVerMedicion, asyncHandler(async (_req, res) => {
+    const medicion = medirGarantias(await fichasReclamadas(db))
+    const ids = [...new Set(medicion.fallasRepetidas.flatMap(f => f.ticketIds))]
+    res.json(conNumerosDeTicket(medicion, await numerosDeTickets(db, ids)))
+  }))
+}
+
+/** Impone `puedeVerMedicionGarantias` (`packages/shared`): con sesión y sin permiso, `403`. Va DETRÁS de `requireAuth`. */
+const exigeVerMedicion: RequestHandler = (req, res, next) => {
+  if (!puedeVerMedicionGarantias(req.user)) { res.status(403).json({ error: MENSAJE_SIN_PERMISO_MEDICION }); return }
+  next()
 }

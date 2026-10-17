@@ -159,7 +159,7 @@ Archivar el cambio **no las da por hechas** (regla del ciclo 1).
 
 | Decisión del cliente | Línea del servidor que la impone |
 |---|---|
-| Mostrar el enlace sólo a administradores (molde: `apps/desk/src/components/Header.tsx:90`) | `requireAuth` (`apps/desk/server/auth/middleware.ts:14-23`) y `requireAdmin` (`:26-29`), delante de la consulta, como en `apps/desk/server/routes/analisis.ts:11`. La línea de la ruta nueva se cita al construirla y la prueba el lote 3 |
+| Mostrar el enlace sólo a administradores (molde: `apps/desk/src/components/Header.tsx:90` en `ea9cb82`) | `requireAuth` (`apps/desk/server/auth/middleware.ts:14-23`) y `requireAdmin` (`:26-29`), delante de la consulta, como en `apps/desk/server/routes/analisis.ts:11`. La línea de la ruta nueva se cita al construirla y la prueba el lote 3 |
 
 El cliente no calcula, no filtra y no formatea nada.
 

@@ -159,3 +159,21 @@ export async function fichasSinResolverNiAvisar(db: Queryable): Promise<Garantia
     `SELECT ${COLUMNAS} FROM garantia_proveedor WHERE reclama = true AND estado <> 'resuelta' AND aviso_60_at IS NULL ORDER BY id`,
   )).rows)
 }
+
+/** Todas las fichas «sí», por `id`: la entrada de `medirGarantias` (RQ-TC-67). Un «no» no es ficha y no se lee. */
+export async function fichasReclamadas(db: Queryable): Promise<GarantiaProveedor[]> {
+  return filas((await db.query(`SELECT ${COLUMNAS} FROM garantia_proveedor WHERE reclama = true ORDER BY id`)).rows)
+}
+
+/**
+ * El número (`tickets.number`) de cada ticket, por id: lo que enseña «Fallas repetidas» en vez del id interno de Zoho
+ * (`decision/medicion-garantias-acceso`). Consulta aparte y no un JOIN en `fichasReclamadas`, para que la entrada de
+ * `medirGarantias` siga siendo `GarantiaProveedor` tal cual. Un ticket que ya no existe no sale en el mapa.
+ * `IN ($1,$2,…)` y no `= ANY($1)`: pg-mem no tipa los arrays enlazados (`eliminarTicket.ts:65`).
+ */
+export async function numerosDeTickets(db: Queryable, ids: readonly string[]): Promise<Map<string, number>> {
+  if (ids.length === 0) return new Map()
+  const marcas = ids.map((_, i) => `$${i + 1}`).join(', ')
+  const { rows } = await db.query(`SELECT id, number FROM tickets WHERE id IN (${marcas})`, [...ids])
+  return new Map(rows.map((r: { id: string; number: number }) => [String(r.id), Number(r.number)]))
+}

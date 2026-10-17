@@ -232,7 +232,7 @@ Pruebas de **posición** (regla de mutación 1), con una base espía pasada por 
 
 | Decisión del cliente | Línea del servidor que la impone |
 |---|---|
-| Enseñar el enlace sólo a administradores (`user?.isAdmin`, molde `apps/desk/src/components/Header.tsx:90`) | `requireAuth` y `requireAdmin` en la ruta nueva de `apps/desk/server/routes/indicadores.ts` (la línea se cita al construirla), probado por PG-1 y PG-2 |
+| Enseñar el enlace sólo a administradores (`user?.isAdmin`, molde `apps/desk/src/components/Header.tsx:90` en `ea9cb82`) | `requireAuth` y `requireAdmin` en la ruta nueva de `apps/desk/server/routes/indicadores.ts` (la línea se cita al construirla), probado por PG-1 y PG-2 |
 | Componer la dirección de descarga (formato, periodo) | `validarPeriodo` rechaza con 400 lo que no sea válido (PG-3) |
 
 El cliente no calcula, no filtra y no formatea ningún indicador.

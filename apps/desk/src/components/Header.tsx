@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import type { Aviso } from '@ambientalia/shared';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { puedeVerMedicionGarantias, type Aviso } from '@ambientalia/shared';
 import { useAuth } from '../auth/AuthContext';
 import { getAvisos, marcarAvisosLeidos } from '../api/client';
+
+const MedicionGarantias = lazy(() => import('./MedicionGarantias').then(m => ({ default: m.MedicionGarantias })))
 
 type SectionKey = 'tickets' | 'analisis' | 'clientes' | 'actividades' | 'remisiones'
 
@@ -137,12 +140,19 @@ export const Header: React.FC<{ onOpenUsers: () => void; onOpenRoles: () => void
 
 function UserMenu({ onOpenUsers, onOpenRoles, onOpenEquipos }: { onOpenUsers: () => void; onOpenRoles: () => void; onOpenEquipos: () => void }) {
   const { user, logout } = useAuth()
+  const [verGarantias, setVerGarantias] = useState(false)
   if (!user) return null
   return (
     <div className="flex items-center gap-3 ml-1">
       <button onClick={onOpenEquipos} title="Equipos" className="p-1.5 text-white/60 hover:text-white">
         <span className="material-symbols-outlined text-[20px]">precision_manufacturing</span>
       </button>
+      {/* Comodidad: quien no puede no ve el botón; lo IMPONE el servidor (403, `decision/medicion-garantias-acceso`). */}
+      {puedeVerMedicionGarantias(user) && (
+        <button onClick={() => setVerGarantias(true)} title="Garantías" className="p-1.5 text-white/60 hover:text-white">
+          <span className="material-symbols-outlined text-[20px]">verified_user</span>
+        </button>
+      )}
       {user.isAdmin && (
         <>
           <button onClick={onOpenUsers} title="Usuarios" className="p-1.5 text-white/60 hover:text-white">
@@ -157,6 +167,11 @@ function UserMenu({ onOpenUsers, onOpenRoles, onOpenEquipos }: { onOpenUsers: ()
       <button onClick={() => logout()} title="Cerrar sesión" className="p-1.5 text-white/60 hover:text-white">
         <span className="material-symbols-outlined text-[20px]">logout</span>
       </button>
+      {/* Portal a `document.body`: el `<header>` lleva `z-30` y atraparía el modal en su propio contexto de apilado. */}
+      {verGarantias && createPortal(
+        <Suspense fallback={null}><MedicionGarantias onClose={() => setVerGarantias(false)} /></Suspense>,
+        document.body,
+      )}
     </div>
   )
 }

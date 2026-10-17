@@ -3913,3 +3913,234 @@ no de una segunda implementación de la regla.
 - GIVEN dos llamadas con los mismos argumentos separadas en el tiempo
 - WHEN se comparan sus resultados
 - THEN son idénticos, porque el instante de la migración es un argumento y no se lee `Date.now()` ni `new Date()` dentro de la función
+
+### Requirement: RQ-TC-65 · Medición por fabricante: lo reclamado frente a lo recuperado, calculada sólo en `shared`
+
+El sistema **SHALL** calcular la medición por fabricante con **una única función pura** en `packages/shared`
+(regla invariable 13, puntos 1 y 3). La agrupación, la normalización y las sumas **MUST** vivir sólo ahí: ni el servidor
+ni el cliente las reescriben.
+
+**Qué fichas entran.** Sólo las fichas con `reclama = true`. Una respuesta «no» **MUST NOT** entrar en ninguna cifra, ni
+en ningún recuento.
+
+**Agrupación (SUPUESTO S-1, reversible).** «Por marca» es por el `fabricante` de la ficha, **recortado de espacios y sin
+distinguir mayúsculas**; no se pliegan acentos. Dos fichas cuyos fabricantes sólo difieren en mayúsculas o en espacios de
+los extremos **SHALL** caer en el mismo grupo. La etiqueta que se muestra del grupo **SHALL** ser determinista (no
+depender del orden de entrada de las fichas).
+
+**Reclamado.** La suma de `valor_reclamado` de **TODAS** las fichas «sí» que lo traen, **en cualquier estado**: abiertas,
+enviadas y resueltas.
+
+**Recuperado.** La suma de `valor_recuperado` de las fichas en estado «resuelta».
+
+**Casos que quedan escritos sin ambigüedad:**
+
+- Las reclamaciones **rechazadas** cuentan como **reclamadas** (con su `valor_reclamado`) y con **0 recuperado**.
+- Las fichas **abiertas** y **enviadas** cuentan como **reclamadas** y **NO** como recuperadas: no aportan nada a lo
+  recuperado mientras no estén resueltas.
+- Las fichas «sí» **sin `valor_reclamado`** **SHALL** contarse **aparte**, por fabricante, y **MUST NOT** sumar nada al
+  reclamado (ni un 0 en silencio). Su `valor_recuperado`, si estuviera resuelta, sí suma a lo recuperado.
+
+**Qué se da por fabricante, además de las dos sumas:** el número de fichas «sí»; cuántas siguen sin resolver (abiertas y
+enviadas); el desglose de resultados de las resueltas; y el recuento de fichas sin valor reclamado.
+
+**Cociente (SUPUESTO S-6, reversible).** El cociente recuperado/reclamado **SHALL** darse sólo cuando lo reclamado es
+mayor que 0; si lo reclamado es 0, el cociente es «no disponible» y **MUST NOT** ser 0, ni infinito, ni `NaN`. Los
+importes son pesos, sin conversión (SUPUESTO S-3, hipótesis heredada de la ficha); no se fijan umbrales (S-5).
+
+#### Scenario: lo reclamado suma todos los estados y lo recuperado sólo las resueltas — ROJO
+- GIVEN cuatro fichas «sí» de «Acme»: abierta con reclamado 100, enviada con 200, resuelta con 300 y recuperado 250,
+  y rechazada con 400 y recuperado 0
+- WHEN se calcula la medición
+- THEN «Acme» tiene reclamado 1000 y recuperado 250, con 4 fichas, 2 sin resolver (la abierta y la enviada) y el
+  desglose de resultados de las resueltas
+
+#### Scenario: la rechazada cuenta como reclamada con 0 recuperado — ROJO
+- GIVEN una única ficha «sí» de «Acme», rechazada, con `valor_reclamado` 500 y `valor_recuperado` 0
+- WHEN se calcula la medición
+- THEN «Acme» tiene reclamado 500, recuperado 0 y cociente 0 (porque lo reclamado es mayor que 0)
+
+#### Scenario: la abierta y la enviada cuentan como reclamadas y no como recuperadas — ROJO
+- GIVEN dos fichas «sí» de «Acme», una abierta con 100 y una enviada con 200, y ninguna resuelta
+- WHEN se calcula la medición
+- THEN «Acme» tiene reclamado 300 y recuperado 0, con 2 sin resolver
+
+#### Scenario: una ficha «no» no cuenta en nada — ROJO
+- GIVEN una respuesta «no» sobre una OVI de «Acme» y ninguna ficha «sí»
+- WHEN se calcula la medición con ese conjunto
+- THEN «Acme» no aparece, y ningún total ni recuento la incluye
+
+#### Scenario: una ficha «sí» sin valor reclamado se cuenta aparte y no suma — ROJO
+- GIVEN dos fichas «sí» de «Acme»: una con reclamado 100 y otra sin `valor_reclamado`
+- WHEN se calcula la medición
+- THEN «Acme» tiene reclamado 100, 2 fichas y 1 ficha sin valor reclamado; el reclamado no suma 0 por la segunda
+
+#### Scenario: el fabricante se agrupa recortado y sin distinguir mayúsculas — ROJO
+- GIVEN una ficha «sí» de `Acme` y otra de `  ACME ` con reclamados 100 y 50
+- WHEN se calcula la medición
+- THEN hay un solo grupo con reclamado 150 y 2 fichas; la etiqueta mostrada no depende del orden de entrada
+
+#### Scenario: los acentos no se pliegan (S-1) — ROJO
+- GIVEN una ficha «sí» de `Müller` y otra de `Muller`
+- WHEN se calcula la medición
+- THEN son dos grupos distintos
+
+#### Scenario: sin reclamado el cociente no está disponible (S-6) — ROJO
+- GIVEN un fabricante cuyas fichas «sí» no traen `valor_reclamado`, o lo traen en 0
+- WHEN se calcula la medición
+- THEN su cociente es «no disponible», no 0, ni infinito, ni `NaN`
+
+#### Scenario: sin fichas la medición es vacía — ROJO
+- GIVEN ninguna ficha «sí»
+- WHEN se calcula la medición
+- THEN el resultado no tiene fabricantes ni fallas repetidas y no lanza error
+
+### Requirement: RQ-TC-66 · Piezas con fallas repetidas, calculadas sólo en `shared`
+
+La misma función pura de `shared` **SHALL** devolver las piezas con fallas repetidas. La regla es un **SUPUESTO S-2,
+reversible** (se revierte añadiendo el modelo del ticket a la clave, una ventana de N meses, o cambiando el umbral):
+
+- La **clave** es el par (`fabricante`, `pieza_referencia`), **ambos recortados de espacios y sin distinguir
+  mayúsculas** (los mismos criterios de S-1).
+- Una pieza es **falla repetida** si su clave aparece en **2 o más** fichas «sí».
+- Cuentan fichas **en cualquier estado** (abierta, enviada o resuelta, con cualquier resultado, también «rechazada») y **sin ventana de tiempo**.
+- Una ficha **sin `pieza_referencia`** (ausente, vacía o sólo espacios) **MUST NOT** contar; el `pieza_serial` **no**
+  forma parte de la clave.
+- Una ficha «no» **MUST NOT** contar.
+
+Por cada pieza repetida **SHALL** darse el fabricante, la referencia, el número de fichas y la lista de los tickets de
+esas fichas, en un orden determinista (no dependiente del orden de entrada). Una pieza con una sola ficha **MUST NOT**
+aparecer. El resultado sólo se muestra: no escribe en ninguna taxonomía (nota de fuera de alcance).
+
+#### Scenario: frontera, una ficha no es repetida y dos sí — ROJO
+- GIVEN una ficha «sí» de «Acme» con referencia `X-100`
+- WHEN se calcula la medición
+- THEN `X-100` no aparece como falla repetida
+- AND al añadir una segunda ficha «sí» de «Acme» con `X-100` aparece con 2 fichas
+
+#### Scenario: mayúsculas y espacios no parten la clave — ROJO
+- GIVEN una ficha «sí» de `Acme` con referencia `x-100` y otra de ` ACME` con referencia ` X-100 `
+- WHEN se calcula la medición
+- THEN hay una falla repetida con 2 fichas
+
+#### Scenario: cualquier estado cuenta y no hay ventana — ROJO
+- GIVEN dos fichas «sí» de «Acme» con la misma referencia: una rechazada de hace dos años y otra abierta de hoy
+- WHEN se calcula la medición
+- THEN la pieza sale como falla repetida con 2 fichas
+
+#### Scenario: sin referencia no cuenta — ROJO
+- GIVEN dos fichas «sí» de «Acme», ambas sin `pieza_referencia` (una vacía y otra de sólo espacios)
+- WHEN se calcula la medición
+- THEN no hay falla repetida, aunque tengan el mismo `pieza_serial`
+
+#### Scenario: la misma referencia de otro fabricante no se junta — ROJO
+- GIVEN una ficha «sí» de «Acme» y otra de «Beta», ambas con la referencia `X-100`
+- WHEN se calcula la medición
+- THEN no hay falla repetida
+
+#### Scenario: una ficha «no» no cuenta — ROJO
+- GIVEN una ficha «sí» de «Acme» con `X-100` y una respuesta «no» sobre una OVI cuyo ticket tiene la misma pieza
+- WHEN se calcula la medición
+- THEN no hay falla repetida
+
+### Requirement: RQ-TC-67 · Lectura de la medición: `GET` de servidor con sesión y con permiso por cargo
+
+El servidor **SHALL** exponer un `GET` nuevo que sirve la medición de RQ-TC-65 y RQ-TC-66. La ruta **SHALL** pasar por
+dos guardas, en este orden: la sesión (`requireAuth`, `401`) y el predicado `puedeVerMedicionGarantias` de
+`packages/shared` (`403`). El predicado es verdadero para el administrador y para los cargos `Director Técnico` y
+`Director Comercial`, y falso para cualquier otro cargo o sin cargo, sin mirar el área. Lo decidió Gerencia el
+2026-10-17 (`decision/medicion-garantias-acceso`, que **sustituye al SUPUESTO S-4**, por el que la lectura era para todo
+usuario con sesión). Sin sesión **MUST** responder `401`, nunca `403`.
+
+El servidor **SHALL** leer todas las fichas «sí» en la capa de datos, entregarlas a la función de `shared` y devolver su
+resultado **con un solo cambio**, también de `shared` (`conNumerosDeTicket`): en cada falla repetida, la lista de ids
+de ticket se sustituye por la lista de **números de ticket** (`tickets.number`), en el mismo orden, y `null` cuando el
+ticket ya no existe. El id interno de Zoho **MUST NOT** salir en la respuesta. Los números se leen con una consulta aparte
+sobre `tickets`, no con un JOIN en la lectura de las fichas, para que la entrada de la función de `shared` no cambie.
+**MUST NOT** agrupar, sumar, normalizar ni decidir qué es repetido por su cuenta. Es lectura pura: **MUST NOT** escribir
+nada. La respuesta es la misma para todo usuario con permiso.
+
+#### Scenario: sin sesión, 401 y no 403 — ROJO
+- GIVEN una petición sin sesión, o con una cookie que no es una sesión
+- WHEN llama al `GET` de la medición
+- THEN responde `401`, no `403`, y no consulta las fichas
+- AND si se cambia el orden de las dos guardas, esta prueba se pone roja (regla de mutación 1)
+
+#### Scenario: con sesión y sin permiso, 403 — ROJO
+- GIVEN un usuario con sesión con cargo `Técnico`, `Coordinador Técnico` o sin cargo, y sin rol de administrador
+- WHEN llama al `GET` de la medición
+- THEN responde `403` con un mensaje que nombra quién puede verla
+
+#### Scenario: los dos directores y el administrador reciben la medición — ROJO
+- GIVEN un usuario `Director Técnico`, uno `Director Comercial` y un administrador sin cargo, y las mismas fichas
+- WHEN los tres llaman al `GET`
+- THEN los tres reciben éxito, y el administrador y un director reciben la misma medición
+
+#### Scenario: las fallas repetidas llevan el número del ticket — ROJO
+- GIVEN una falla repetida cuyas fichas son de un ticket con número 996 y de un ticket que ya no existe
+- WHEN se llama al `GET`
+- THEN la falla lleva `[996, null]` como números de ticket y la respuesta no contiene ningún id interno de ticket
+
+#### Scenario: el servidor sirve el resultado de `shared` sin recalcular — ROJO
+- GIVEN fichas «sí» de varios estados, con una «no» y una sin valor reclamado
+- WHEN se llama al `GET`
+- THEN el cuerpo es igual al que devuelven las funciones de `shared` sobre esas mismas fichas y esos mismos tickets
+- AND en la capa de servidor no existe suma ni agrupación propia (se comprueba al revisar el código, no por una prueba)
+
+#### Scenario: la lectura no escribe — ROJO
+- GIVEN fichas existentes
+- WHEN se llama al `GET`
+- THEN ninguna ficha ni respuesta cambia
+
+### Requirement: RQ-TC-68 · Vista de sólo lectura de la medición, para administradores y los dos directores
+
+El cliente **SHALL** ofrecer una vista nueva, accesible desde `apps/desk/src/components/Header.tsx`, que muestre lo que
+sirve el `GET` de RQ-TC-67: por fabricante, lo reclamado, lo recuperado, el cociente (o «no disponible»), el número de
+fichas, las sin resolver y las sin valor reclamado; y la lista de piezas con fallas repetidas, con el **número** de cada
+ticket formateado como «#996» y un texto claro cuando el ticket ya no existe, nunca el id interno. El acceso a la vista
+**SHALL** enseñarse sólo a quien cumple `puedeVerMedicionGarantias`, el MISMO predicado que impone el servidor; en el
+cliente es sólo comodidad (regla invariable 13, punto 3: la imposición del `403` está probada en RQ-TC-67).
+
+La vista **SHALL** ser de sólo lectura y pintar lo que sirve el servidor:
+
+- **MUST NOT** agrupar, sumar, normalizar ni decidir qué es una falla repetida (eso es RQ-TC-65 y RQ-TC-66).
+- **MUST NOT** fijar umbrales, porcentajes de alarma ni colores de semáforo (SUPUESTO S-5, reversible): ningún estado
+  de la medición se pinta como bueno o malo.
+- **MUST NOT** ofrecer ninguna escritura: ni botones de acción, ni formularios, ni exportación, ni filtros por fecha, ni
+  gráficos.
+- **SHALL** enseñar los recuentos junto a las sumas (riesgo: pocas fichas al principio hacen poco significativas las
+  cifras), y un estado vacío en español cuando no hay fichas «sí».
+- Todo texto visible **SHALL** estar en español.
+
+Al ser `.tsx`, queda fuera de la red de pruebas (F0-00); su criterio es de revisión: el fichero no contiene agrupaciones ni
+sumas propias.
+
+#### Scenario: sólo quien tiene permiso ve el acceso
+- GIVEN un usuario `Director Técnico`, `Director Comercial` o administrador, y otro `Técnico`
+- WHEN abren la aplicación
+- THEN el acceso a la vista aparece en la cabecera del primero y no en la del segundo
+
+#### Scenario: fallas repetidas con el número del ticket
+- GIVEN una falla repetida servida con los números `[996, null]`
+- WHEN se muestra en la vista
+- THEN se lee «#996» y un texto que dice que el otro ticket ya no existe, sin ningún id interno
+
+#### Scenario: la vista no calcula nada
+- GIVEN el código de la vista
+- WHEN se revisa
+- THEN no contiene `reduce`/sumas, agrupaciones ni normalización de fabricante o referencia: sólo pinta los campos del `GET`
+
+#### Scenario: sin umbrales ni semáforos
+- GIVEN un fabricante con cociente 0 y otro con cociente 1
+- WHEN se muestran en la vista
+- THEN ambos se pintan con el mismo estilo neutro, sin color de alerta
+
+#### Scenario: sin escrituras
+- GIVEN la vista abierta
+- WHEN se recorre
+- THEN no existe ningún control que cree, edite o borre una ficha ni una respuesta
+
+#### Scenario: sin fichas «sí», estado vacío
+- GIVEN que el `GET` devuelve ningún fabricante ni piezas repetidas
+- WHEN se abre la vista
+- THEN se enseña un texto en español que dice que aún no hay reclamaciones, sin tablas vacías ni error

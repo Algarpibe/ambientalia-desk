@@ -901,3 +901,8 @@ export async function compararConExportacion(file: File, periodo: { desde?: stri
   if (!res.ok) throw new Error(mensajeDeError(res.status, cuerpo))
   return cuerpo as RespuestaComparacion
 }
+
+/** Medición de las garantías con el proveedor por marca (F1B-13, RQ-TC-67). Sólo transporte: las cifras las calcula `medirGarantias` en el servidor. */
+export function getMedicionGarantias(): Promise<import('@ambientalia/shared').MedicionGarantiasConNumeros> {
+  return fetch('/api/medicion-garantia-proveedor', { credentials: 'include' }).then((r) => json<import('@ambientalia/shared').MedicionGarantiasConNumeros>(r))
+}
