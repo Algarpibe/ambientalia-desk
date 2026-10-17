@@ -2094,10 +2094,10 @@ Sigue el **precedente del 10/09 de la regla del ciclo 2** (1.718 imputadas frent
 **Dueño:** Gerencia. **Qué desbloquea:** alarmas con la antigüedad correcta para esos tickets.
 **Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
 
-## E-218 · 2026-10-04 · hallazgo · **ABIERTA** — F1F-01: la averiguación de la hoja de Google no tiene constancia de hecha, y su plazo venció
+## E-218 · 2026-10-04 · hallazgo · **CERRADA el 2026-10-14** — F1F-01: la averiguación de la hoja de Google no tiene constancia de hecha, y su plazo venció
 **Qué:** `decision/trabajo-del-30-09-sin-fila` adelantó a antes del 04/10 la averiguación de quién rellena la hoja de Google de remisiones y para qué (`decision/p14b-hoja-google`). No hay constancia de que se hiciera ni en esta bandeja, ni en los partes, ni en `openspec/config.yaml`, y ningún código lee hojas de Google. Por eso `migracion-tickets-abiertos` no construye el cotejo una a una del día del corte y lleva `cierra: no`.
 **Dueño:** Gerencia. **Qué desbloquea:** el cotejo de la hoja, que es lo que le falta a F1F-01 para cerrarse, y la decisión sobre F1B-16 y F1B-17.
-**Estado:** abierta · **Destino:** punto abierto con dueño (R-3).
+**Estado:** **cerrada el 2026-10-14** por `decision/e218-hoja-remisiones` (`openspec/config.yaml` → `decisiones_de_gerencia_adenda`; registrada el 2026-10-17). La hoja no la rellena nadie: la llena el flujo de n8n `Remisiones_ST_3.13`, con todas las remisiones. F1B-16 y F1B-17 siguen en 2027 y la hoja queda como registro automático, sin cerrarla el 14/12. Acompaña `decision/hoja-reactivar-nodo-desk`. *(Texto al abrirla: abierta · **Destino:** punto abierto con dueño (R-3).)*
 
 ## E-219 · 2026-10-05 · pregunta · **ABIERTA** — F1B-05: el actor que no es una persona no se distingue de una persona en el historial
 **Qué:** cuando no hay usuario identificado, los escritores usan un respaldo configurable por entorno (`apps/desk/server/transitionActor.ts:3`, valor por defecto «Equipo Técnico»), y desde `traspaso-y-trazas` también `restaurada_por` (`apps/desk/server/routes/remision.ts:344`) y `liberada_por` del borrado (`apps/desk/server/routes/tickets.ts:91`). Quedan escritos como un nombre más. No se marca al leer: el respaldo se compararía por nombre, así que una persona que se llame igual quedaría marcada y un valor antiguo distinto no. El maestro lo deja por decidir (`docs/Manifesto/Desk2.0_Documento_Maestro_Ideas_y_Funcionalidades_R08.4.md:2085`).

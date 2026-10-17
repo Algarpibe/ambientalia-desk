@@ -4842,9 +4842,8 @@ decisiones_de_gerencia_adenda:
       (2) ⚠️ TAL CUAL HOY ES INCUMPLIBLE EN TRES PUNTOS, que se anotan sin reinterpretar el criterio:
       (a) el servicio SR no lleva remisión ni etiqueta, así que «con remisión, etiqueta y documentos» no se puede cumplir
       para el SR;
-      (b) la salida se hace en n8n hasta 2027 (decisión del 14/10 sobre la hoja, según el encargo; hipótesis: no está
-      localizada en `openspec/config.yaml` de `HEAD`), así que «sin registrarlo en Zoho» y «con remisión» dependen de un
-      flujo que no es de la aplicación;
+      (b) la salida se hace en n8n hasta 2027 (`decision/e218-hoja-remisiones`, del 14/10, registrada el 17/10), así que
+      «sin registrarlo en Zoho» y «con remisión» dependen de un flujo que no es de la aplicación;
       (c) el indicador 55 (satisfacción) no se calcula en la aplicación en esas semanas: la encuesta va a mano
       (`decision/encuesta-entre-corte-e-independencia`), así que «reflejado en los nueve indicadores» no se cumple para él.
       Cómo se trata cada uno lo decide Gerencia: o se acepta por escrito, o se corrige el criterio.
@@ -4870,6 +4869,46 @@ decisiones_de_gerencia_adenda:
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
     tanda_que_abre: "F1F-01 (H-1: excluir de las cifras la fecha de la migración)"
+  - clave: "decision/e218-hoja-remisiones"
+    fecha: "2026-10-14"
+    pregunta: |
+      E-218 (`docs/sdd/ENTRADA.md`): ¿quién rellena la hoja de Google de remisiones, y para qué? (`decision/p14b-hoja-google`;
+      la averiguación tenía plazo antes del 04/10 y no tenía constancia de hecha). Decide también F1B-16 y F1B-17.
+    respuesta_textual: |
+      «No la rellena nadie: la llena automáticamente el flujo de n8n "Remisiones_ST_3.13". Se apuntan todas las remisiones (entrada, salida y sin ticket), unas 3-4 por semana. F1B-16 y F1B-17 siguen en 2027. Hasta entonces, las remisiones de salida y sin ticket se hacen como hoy por el flujo de n8n, y la hoja queda como registro automático, sin cerrarla el 14/12.»
+    nota_de_fuente: |
+      Decidida por Gerencia el 14/10 y no registrada entonces: se registra el 2026-10-17 con el texto con que llega en el
+      encargo de esa sesión.
+    consecuencias: |
+      (1) Cierra E-218: la hoja la llena el flujo de n8n `Remisiones_ST_3.13`, no una persona.
+      (2) F1B-16 y F1B-17 siguen en 2027. Hasta entonces la salida y la remisión sin ticket se hacen por n8n, como hoy.
+      (3) La hoja NO se cierra el 14/12: queda como registro automático.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/e218-hoja-remisiones) · docs/sdd/ENTRADA.md → E-218"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (F1B-16 y F1B-17 siguen en 2027)"
+  - clave: "decision/hoja-reactivar-nodo-desk"
+    fecha: "2026-10-14"
+    pregunta: |
+      La salida de n8n busca la remisión de entrada en la hoja, y el flujo `_Desk` ya no escribe en ella. ¿Se reactiva su
+      nodo de la hoja?
+    respuesta_textual: |
+      «Se reactiva el nodo "BBDD remisiones_entrada" del flujo _Desk antes del 14/12, con copia previa de la hoja, y se prueba con la siguiente remisión de entrada real.»
+    nota_de_fuente: |
+      Decidida por Gerencia el 14/10 y no registrada entonces: se registra el 2026-10-17 con el texto con que llega en el
+      encargo de esa sesión.
+    consecuencias: |
+      (1) Lo medido por el analista el 14/10, que es lo que la motiva: la salida de n8n busca la entrada en la hoja por
+      serial; el nodo «BBDD remisiones_entrada» del flujo `_Desk` está desactivado desde el 04/08 a propósito (Postgres como
+      única fuente); la hoja tiene la columna «Ticket» y el nodo «Parsea Items salida» lee «Número de Ticket», así que la
+      salida sale sin número de ticket (ejecución 63561 del 13/10); y el flujo viejo sigue escribiendo en la hoja entradas
+      que Postgres no tiene (fila 174, del 1/09).
+      (2) Antes del 14/12: copia previa de la hoja, reactivación del nodo y prueba con la siguiente remisión de entrada real.
+      (3) Lo hace una persona en n8n; no es tanda y no toca el repositorio.
+    registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/hoja-reactivar-nodo-desk) · acompaña a decision/e218-hoja-remisiones"
+    maestro_pasaje: "ninguno"
+    maestro_revision: "no aplica"
+    tanda_que_abre: "ninguna (tarea de persona en n8n, antes del 14/12)"
 
 trabajo_sin_ficha_declarado:
   # Commits de producto sin ficha que Gerencia manda declarar `fuera-del-plan` con motivo (R-5:
