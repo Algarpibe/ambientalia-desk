@@ -1701,7 +1701,7 @@ decisiones_de_gerencia:
       (2) `openspec/changes/F0-04/proposal.md:6` sigue diciendo `cierra: no`, y la supervisión NO
       toca `openspec/changes/`: hasta que una sesión de construcción lo cambie citando esta
       decisión, `npm run reconcile` no contará F0-04 por cabecera y la cifra derivable y la publicada
-      diferirán en 1, a propósito.
+      diferirán en 1, a propósito. **Registrado el 2026-10-17** por la sesión de construcción con un cambio nuevo, `cierre-f0-04-por-dictamen` (`tanda: F0-04`, `cierra: si`, archivado y fusionado en `a87422a`); `openspec/changes/F0-04/` conserva su `cierra: no` a propósito, porque era cierto en su fecha y moverla rompería citas. Desde ese día la cifra derivable y la publicada coinciden.
       (3) Precio aceptado por escrito: todo despliegue —y la mudanza de F1F-01, S50— se prueba sobre
       la aplicación que usa la gente. La única red que queda es el respaldo, que es `decision/p55-backup`
       (F1F-02, S51) y sigue pendiente: OBSERVACIÓN, no medición.
@@ -4826,7 +4826,7 @@ decisiones_de_gerencia_adenda:
     registro: "openspec/config.yaml → decisiones_de_gerencia_adenda (decision/f1b08-cierre-sin-capturas) · añade contenido a F1F-03"
     maestro_pasaje: "ninguno"
     maestro_revision: "no aplica"
-    tanda_que_abre: "F1F-03 (contenido nuevo: anotar lo que falte de Zoho Desk, corregir antes del 09/12) · pendiente: vía de registro del cierre de F1B-08"
+    tanda_que_abre: "F1F-03 (contenido nuevo: anotar lo que falte de Zoho Desk, corregir antes del 09/12) · vía de registro del cierre de F1B-08: RESUELTA el 2026-10-17 por `cierre-f1b08-con-lo-construido` (archivado con `cierra: si`, fusionado en `eacd7d1`)"
   - clave: "decision/f1f03-criterio-aceptacion"
     fecha: "2026-10-17"
     pregunta: |
