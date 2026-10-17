@@ -1,6 +1,6 @@
 # Reconciliación
 
-**Commit medido:** `0be7c3c` · **Fecha del commit:** 2026-10-14
+**Commit medido:** `03a1919` · **Fecha del commit:** 2026-10-17
 **Árbol de trabajo:** CON CAMBIOS SIN COMMITEAR
 
 La fecha es la del commit medido, no la del reloj: dos pasadas sobre un árbol quieto producen
@@ -61,7 +61,7 @@ Hallazgos (informativos, no bloquean):
 
 ## 6 · Ficheros de docs/sdd sin trackear
 
-  10 sin trackear
+  12 sin trackear
 
 Hallazgos (informativos, no bloquean):
   - `docs/sdd/Evidencia_Transporte_Tarea_Programada_2026-09-18.txt` — en disco y fuera del índice
@@ -74,6 +74,8 @@ Hallazgos (informativos, no bloquean):
   - `docs/sdd/Parte_2026-10-01c.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-10-06.md` — en disco y fuera del índice
   - `docs/sdd/Parte_2026-10-09.md` — en disco y fuera del índice
+  - `docs/sdd/Parte_2026-10-13.md` — en disco y fuera del índice
+  - `docs/sdd/Parte_2026-10-17.md` — en disco y fuera del índice
 
 ---
 
