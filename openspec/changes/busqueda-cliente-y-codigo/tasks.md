@@ -5,20 +5,20 @@ un fichero existente (diseño D2).
 
 ## Lote 1 · Búsqueda por código y cliente (diseño D1, D3, D5)
 
-- [ ] 1.1 **Rojo.** `packages/zoho-sync/src/db/busquedaClienteCodigo.test.ts` (nuevo) con los escenarios de RQ-VT-17:
+- [x] 1.1 **Rojo.** `packages/zoho-sync/src/db/busquedaClienteCodigo.test.ts` (nuevo) con los escenarios de RQ-VT-17:
   código, cuenta de Desk, cliente de Books, provisional no enlazado y enlazado, contacto fuera, número sin cambio, y la
   de posición (activos, cerrados y recuento). Verlos en rojo los que piden la vía nueva, y en verde los de «no sale».
-- [ ] 1.2 **Rojo.** `apps/desk/server/db/busquedaClienteConfrontacion.test.ts` (nuevo): la tabla de D3 contra
+- [x] 1.2 **Rojo.** `apps/desk/server/db/busquedaClienteConfrontacion.test.ts` (nuevo): la tabla de D3 contra
   `searchClients` y `normalizarNombreCliente`, y el provisional por `ticketsConCliente`.
-- [ ] 1.3 **Verde.** `packages/zoho-sync/src/db/busquedaTickets.ts:21` con las cinco vías; comentarios en sitio (`:4`,
+- [x] 1.3 **Verde.** `packages/zoho-sync/src/db/busquedaTickets.ts:21` con las cinco vías; comentarios en sitio (`:4`,
   `:9-11`); `packages/shared/src/busquedaTickets.ts:1-3`, `:11-13`, `:24-26` en sitio.
-- [ ] 1.4 **Mutaciones** de D5, cada una en rojo y restaurada; anotar qué prueba cae.
+- [x] 1.4 **Mutaciones** de D5, cada una en rojo y restaurada; anotar qué prueba cae.
 
 ## Lote 2 · La caja (diseño D4)
 
-- [ ] 2.1 `apps/desk/src/components/BuscadorTickets.tsx:6-8`, `:21-22` en sitio: «Buscar por número, serial, cliente o
+- [x] 2.1 `apps/desk/src/components/BuscadorTickets.tsx:6-8`, `:21-22` en sitio: «Buscar por número, serial, cliente o
   código». Sin prueba automatizada (F0-00).
-- [ ] 2.2 **Cierre del intento.** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD` en una
+- [x] 2.2 **Cierre del intento.** test, typecheck, lint (165 avisos como máximo), commit y detector `--sha HEAD` en una
   cadena; `wc -l` igual en los tres ficheros existentes; medida `git diff --shortstat --no-renames` contra el commit de
   partida; build para medir el bundle.
 
