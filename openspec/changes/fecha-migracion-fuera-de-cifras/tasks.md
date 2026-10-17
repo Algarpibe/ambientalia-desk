@@ -23,7 +23,7 @@ Un intento de aplicación con techo 800 (válvula 720). Cada intento se asienta 
 
 - [x] 3.1 Mutaciones M-1 a M-6 de `design.md` §7, cada una vista en rojo y restaurada.
 - [x] 3.2 Regla de mutación 4: barrido de citas a los ficheros tocados; ninguna línea insertada en los muy citados.
-- [ ] 3.3 `verify-report.md` contra spec, diseño y tareas.
+- [x] 3.3 `verify-report.md` contra spec, diseño y tareas.
 - [ ] 3.4 Archive: fusión del delta por script en `openspec/specs/tickets-core/spec.md`, `archive-report.md`; parte revisable
   medida ANTES; `git show --numstat` sólo del cambio.
 
