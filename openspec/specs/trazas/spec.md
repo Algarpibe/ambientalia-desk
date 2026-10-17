@@ -48,9 +48,9 @@ tabla pone por defecto.
 - El actor **SHALL** ser el usuario de la sesión, y **MAY** caer a `TRANSITION_ACTOR` sólo si la
   sesión no trae nombre (`apps/desk/server/services/ticketService.ts:111`;
   `apps/desk/server/transitionActor.ts:3`). El único camino que alcanza el respaldo hoy está en §4.1.
-- La cobertura **SHALL** ser de las 34 transiciones, ejercitando **todos** los `from` de cada una
-  —36 ejecuciones, porque `habilitar_servicio` tiene tres— y comprobando en cada una el estado destino
-  **y** la fila del historial (`apps/desk/server/transicionesEjecucion.test.ts:105-117`, `:272-285`).
+- La cobertura **SHALL** ser de las 41 transiciones de los tres flujos, ejercitando **todos** los `from` de cada una
+  —44 ejecuciones: 33 de servicio, porque `habilitar_servicio` tiene tres; 7 de equipo nuevo y 4 de soporte remoto— y comprobando en cada una el estado destino
+  **y** la fila del historial (`apps/desk/server/transicionesEjecucion.test.ts:105-117`, `:272-285`, `:365`, `:419`).
 - La escritura **SHALL** ser atómica con el resto de la transición: transacción cuando el pool lo
   permita, con `ROLLBACK` (`repo.ts:322-347`).
 
