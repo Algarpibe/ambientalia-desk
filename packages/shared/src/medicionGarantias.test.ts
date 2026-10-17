@@ -1,6 +1,7 @@
 // medicion-garantias-por-marca (F1B-13), lote 1: la medición pura por fabricante y las fallas repetidas.
 import { describe, it, expect } from 'vitest'
-import { medirGarantias, claveMedicion, UMBRAL_FALLA_REPETIDA } from './medicionGarantias'
+import { medirGarantias, claveMedicion, UMBRAL_FALLA_REPETIDA, conNumerosDeTicket } from './medicionGarantias'
+import { CARGOS, CARGOS_MEDICION_GARANTIAS, puedeVerMedicionGarantias } from './cargos'
 import type { GarantiaProveedor } from './garantiaProveedor'
 
 let siguienteId = 1
@@ -207,5 +208,38 @@ describe('medirGarantias · fallas repetidas (RQ-TC-66)', () => {
     const m = medirGarantias(fichas)
     expect(m.fallasRepetidas.map(f => f.piezaReferencia)).toEqual(['C-1', 'A-1', 'B-1'])
     expect(medirGarantias([...fichas].reverse())).toEqual(m)
+  })
+})
+
+// Corrección de `decision/medicion-garantias-acceso` (17/10): quién ve la medición y el número del ticket.
+describe('puedeVerMedicionGarantias (decision/medicion-garantias-acceso)', () => {
+  it('el admin pasa aunque no tenga cargo', () => {
+    expect(puedeVerMedicionGarantias({ isAdmin: true, cargoPermiso: null })).toBe(true)
+  })
+  it('pasan exactamente Director Técnico y Director Comercial; ningún otro cargo', () => {
+    expect([...CARGOS_MEDICION_GARANTIAS].sort()).toEqual(['Director Comercial', 'Director Técnico'])
+    for (const c of CARGOS) {
+      expect(puedeVerMedicionGarantias({ isAdmin: false, cargoPermiso: c })).toBe(CARGOS_MEDICION_GARANTIAS.includes(c))
+    }
+  })
+  it('sin cargo, con un cargo fuera de la lista o sin sujeto, no pasa', () => {
+    expect(puedeVerMedicionGarantias({ isAdmin: false, cargoPermiso: null })).toBe(false)
+    expect(puedeVerMedicionGarantias({ isAdmin: false })).toBe(false)
+    expect(puedeVerMedicionGarantias({ isAdmin: false, cargoPermiso: 'director técnico' as never })).toBe(false)
+    expect(puedeVerMedicionGarantias(null)).toBe(false)
+    expect(puedeVerMedicionGarantias(undefined)).toBe(false)
+  })
+})
+
+describe('conNumerosDeTicket', () => {
+  it('cambia los ids por el número del ticket, en el mismo orden, y null si el ticket ya no existe', () => {
+    const m = medirGarantias([
+      ficha({ id: 1, ticketId: 'z-1', piezaReferencia: 'P' }),
+      ficha({ id: 2, ticketId: 'z-2', piezaReferencia: 'P' }),
+    ])
+    const r = conNumerosDeTicket(m, new Map([['z-1', 996]]))
+    expect(r.fallasRepetidas).toEqual([{ fabricante: 'Acme', piezaReferencia: 'P', fichas: 2, numerosTicket: [996, null] }])
+    expect(r.porFabricante).toEqual(m.porFabricante)
+    expect(JSON.stringify(r)).not.toContain('z-1')
   })
 })

@@ -105,3 +105,20 @@ export function puedeAjustarPrioridadTicket(s: SujetoDePermiso): boolean {
   const cargo = cargoEfectivo(s)
   return puedeFijarPrioridadTop5(s) || (cargo !== null && CARGOS_AJUSTE_PRIORIDAD_TICKET.includes(cargo))
 }
+
+/** Los cargos que ven la medición de garantías (`decision/medicion-garantias-acceso`, 17/10; sustituye a S-4). Dato, no código. */
+export const CARGOS_MEDICION_GARANTIAS: readonly Cargo[] = ['Director Técnico', 'Director Comercial']
+
+export const MENSAJE_SIN_PERMISO_MEDICION =
+  'La medición de garantías sólo la ven los administradores y los cargos Director Técnico y Director Comercial'
+
+/**
+ * Quién ve la medición de garantías (F1B-13): el admin pasa; si no, uno de `CARGOS_MEDICION_GARANTIAS`, SIN área. Un
+ * sujeto ausente no puede. La IMPONE `GET /api/medicion-garantia-proveedor` (`403`); el botón de la cabecera es comodidad.
+ */
+export function puedeVerMedicionGarantias(s: Pick<SujetoDePermiso, 'isAdmin' | 'cargoPermiso'> | null | undefined): boolean {
+  if (!s) return false
+  if (s.isAdmin) return true
+  const cargo = cargoEfectivo(s)
+  return cargo !== null && CARGOS_MEDICION_GARANTIAS.includes(cargo)
+}

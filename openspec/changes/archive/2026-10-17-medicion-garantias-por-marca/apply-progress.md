@@ -47,13 +47,13 @@ Partida del intento: `6276080` (lote 1 commiteado). Mismo worktree.
 |---|---|---|
 | 2.1 Rojo | [x] | `routes/medicionGarantias.test.ts` (6 pruebas) |
 | 2.2 `fichasReclamadas` | [x] | `db/garantiaProveedor.ts:163-166`, `WHERE reclama = true ORDER BY id` |
-| 2.3 Ruta | [x] | `routes/garantiaProveedor.ts:108-111`, sólo `requireAuth`; imports añadidos en sitio (`:5`, `:11`) |
+| 2.3 Ruta | [x] | `routes/garantiaProveedor.ts:108-111` en `4e6a99d`, sólo `requireAuth`; imports añadidos en sitio (`:5`, `:11`) |
 | 2.4 Cliente | [x] | `getMedicionGarantias` al final de `client.ts`; `MedicionGarantias.tsx` nuevo; `Header.tsx`: `lazy`, estado, botón «Garantías» (icono `verified_user`) y `createPortal` en `UserMenu` |
 | 2.5 Refactor | [x] | sin cambios de comportamiento; prueba y typecheck verdes |
 | 2.6 Regla 3 | [x] | tabla abajo |
 | 2.7 Cierre lote 2 | [x] | cifras abajo |
 | 3.1 a 3.9 Mutaciones | [x] | tabla abajo; ninguna siguió verde, no hizo falta prueba extra |
-| 3.10 Regla 1 | [x] | la ruta tiene UNA sola guarda (`requireAuth`, `routes/garantiaProveedor.ts:109`): no hay par que ordenar; la prueba «admin y no admin reciben el MISMO cuerpo» fija que no hay un segundo permiso |
+| 3.10 Regla 1 | [x] | la ruta tiene UNA sola guarda (`requireAuth`, `routes/garantiaProveedor.ts:109` en `4e6a99d`): no hay par que ordenar; la prueba «admin y no admin reciben el MISMO cuerpo» fija que no hay un segundo permiso |
 | 3.11 Regla 2 | [x] | NO APLICA: ninguna guarda nueva vigila un fichero de datos |
 | 3.12 Barrido regla 4 | [x] | abajo |
 | 3.13 Cierre final | [x] | abajo |
@@ -89,14 +89,14 @@ comprobaciones de `length` y `toLocaleString` (formato).
 
 | # | Decisión del cliente | Línea que la impone |
 |---|---|---|
-| C-1 | Botón «Garantías» a todo usuario con sesión (`Header.tsx:150-152`, dentro de `UserMenu`, que no pinta nada sin `user`, `:144`) | `requireAuth(db)` en `apps/desk/server/routes/garantiaProveedor.ts:109`; sin sesión el servidor da 401 igual (M-7) |
+| C-1 | Botón «Garantías» a todo usuario con sesión (`Header.tsx:150-152` en `4e6a99d`, dentro de `UserMenu`, que no pinta nada sin `user`, `:144`) | `requireAuth(db)` en `apps/desk/server/routes/garantiaProveedor.ts:109` en `4e6a99d`; sin sesión el servidor da 401 igual (M-7) |
 | C-2 | Qué fichas cuentan (sólo «sí») | `apps/desk/server/db/garantiaProveedor.ts:165` (`WHERE reclama = true`) y `packages/shared/src/medicionGarantias.ts:54` (`filter`) |
 | C-3 | Agrupar por fabricante y la etiqueta del grupo | `packages/shared/src/medicionGarantias.ts:13-15` (`claveMedicion`), `:47-50` (`etiqueta`), `:54` (orden por `id`), `:58-67` |
 | C-4 | Reclamado, recuperado, sin valor, sin resolver, desglose | `packages/shared/src/medicionGarantias.ts:68-76` |
-| C-5 | Cociente, o «—» ante `null` (`MedicionGarantias.tsx:17`) | `packages/shared/src/medicionGarantias.ts:80` (`g.reclamado > 0 ? … : null`) |
+| C-5 | Cociente, o «—» ante `null` (`MedicionGarantias.tsx:17` en `4e6a99d`) | `packages/shared/src/medicionGarantias.ts:80` (`g.reclamado > 0 ? … : null`) |
 | C-6 | Qué es una falla repetida | `packages/shared/src/medicionGarantias.ts:10` (`UMBRAL_FALLA_REPETIDA`) y `:99` (`filter`) |
 | C-7 | Orden de filas | `packages/shared/src/medicionGarantias.ts:81` (por reclamado y clave) y `:100` |
-| C-8 | Lista vacía -> «Sin reclamaciones» (`MedicionGarantias.tsx:37-39`) | arrays vacíos que devuelve `routes/garantiaProveedor.ts:110`; el `.tsx` sólo mira `length`; la prueba V «un usuario sin cargo ni admin recibe éxito» fija `{ porFabricante: [], fallasRepetidas: [] }` |
+| C-8 | Lista vacía -> «Sin reclamaciones» (`MedicionGarantias.tsx:37-39` en `4e6a99d`) | arrays vacíos que devuelve `routes/garantiaProveedor.ts:110` en `4e6a99d`; el `.tsx` sólo mira `length`; la prueba V «un usuario sin cargo ni admin recibe éxito» fija `{ porFabricante: [], fallasRepetidas: [] }` |
 
 ### Barrido regla 4 (todo el repositorio, sin `node_modules`)
 Qué desplazó este cambio: `routes/garantiaProveedor.ts` (imports editados EN SITIO; la ruta nueva va antes del cierre, que pasa de `:107` a `:112`),

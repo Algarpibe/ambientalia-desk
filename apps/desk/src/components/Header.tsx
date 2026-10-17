@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { Aviso } from '@ambientalia/shared';
+import { puedeVerMedicionGarantias, type Aviso } from '@ambientalia/shared';
 import { useAuth } from '../auth/AuthContext';
 import { getAvisos, marcarAvisosLeidos } from '../api/client';
 
@@ -147,9 +147,12 @@ function UserMenu({ onOpenUsers, onOpenRoles, onOpenEquipos }: { onOpenUsers: ()
       <button onClick={onOpenEquipos} title="Equipos" className="p-1.5 text-white/60 hover:text-white">
         <span className="material-symbols-outlined text-[20px]">precision_manufacturing</span>
       </button>
-      <button onClick={() => setVerGarantias(true)} title="Garantías" className="p-1.5 text-white/60 hover:text-white">
-        <span className="material-symbols-outlined text-[20px]">verified_user</span>
-      </button>
+      {/* Comodidad: quien no puede no ve el botón; lo IMPONE el servidor (403, `decision/medicion-garantias-acceso`). */}
+      {puedeVerMedicionGarantias(user) && (
+        <button onClick={() => setVerGarantias(true)} title="Garantías" className="p-1.5 text-white/60 hover:text-white">
+          <span className="material-symbols-outlined text-[20px]">verified_user</span>
+        </button>
+      )}
       {user.isAdmin && (
         <>
           <button onClick={onOpenUsers} title="Usuarios" className="p-1.5 text-white/60 hover:text-white">

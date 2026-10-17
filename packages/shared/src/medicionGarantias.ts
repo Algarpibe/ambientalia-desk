@@ -102,3 +102,21 @@ export function medirGarantias(fichas: readonly GarantiaProveedor[]): MedicionGa
 
   return { porFabricante, fallasRepetidas }
 }
+
+export interface FallaRepetidaConNumeros extends Omit<FallaRepetida, 'ticketIds'> {
+  /** El número de cada ticket (`tickets.number`), en el orden de `ticketIds`; `null` si el ticket ya no existe. */
+  numerosTicket: (number | null)[]
+}
+
+export interface MedicionGarantiasConNumeros {
+  porFabricante: MedicionFabricante[]
+  fallasRepetidas: FallaRepetidaConNumeros[]
+}
+
+/** Lo que responde la ruta: el id interno de Zoho se cambia por el número del ticket y no sale del servidor. */
+export function conNumerosDeTicket(m: MedicionGarantias, numeros: ReadonlyMap<string, number>): MedicionGarantiasConNumeros {
+  return {
+    porFabricante: m.porFabricante,
+    fallasRepetidas: m.fallasRepetidas.map(({ ticketIds, ...f }) => ({ ...f, numerosTicket: ticketIds.map(id => numeros.get(id) ?? null) })),
+  }
+}

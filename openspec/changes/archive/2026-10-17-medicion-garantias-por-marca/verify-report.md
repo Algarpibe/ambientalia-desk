@@ -31,7 +31,7 @@ S = `packages/shared/src/medicionGarantias.test.ts`; V = `apps/desk/server/route
 | · la lectura no escribe | V:92 |
 | RQ-TC-68 · los 5 escenarios (acceso, no calcula, sin semáforos, sin escrituras, vacío) | **por lectura**: `.tsx` fuera de la red (F0-00, `vitest.config.ts:16`); ver §4 |
 
-Por lectura también: «no consulta las fichas» del 401 (V:54 sólo asevera el estado; el middleware corta antes, `routes/garantiaProveedor.ts:109`) y «en la capa de servidor no existe suma ni agrupación propia» (la spec ya lo remite a la revisión de código; confirmado: la ruta es una línea, `:109-111`).
+Por lectura también: «no consulta las fichas» del 401 (V:54 sólo asevera el estado; el middleware corta antes, `routes/garantiaProveedor.ts:109` en `4e6a99d`) y «en la capa de servidor no existe suma ni agrupación propia» (la spec ya lo remite a la revisión de código; confirmado: la ruta es una línea, `:109-111`).
 
 ## 2. Evidencia TDD (apply-progress)
 | Lote | Rojo registrado | Verde | Triangulación |
@@ -54,14 +54,14 @@ Tabla de tareas completa (1.1-3.13 todas `[x]`, coherente con el código). Fiche
 `MedicionGarantias.tsx` (101 líneas): `grep` de `reduce|filter|sort|toLowerCase|Math\.|/`-división sobre datos: 0. Sólo `.map` de columnas y filas (`:53,57,66,86`), `join` (`:91`), `length` (`:37,40,73`), `toLocaleString` (`:15,17`, formato). Sin `bg-red/green`, sin semáforo, sin `<form>`, `<input>` ni botón de acción salvo «Cerrar» (`:30`).
 | # | Decisión del cliente | Línea que la impone | Resultado |
 |---|---|---|---|
-| C-1 | Botón «Garantías» a todo usuario con sesión (`Header.tsx:150-152`; `if (!user) return null` `:144`; sin `isAdmin`) | `requireAuth` `routes/garantiaProveedor.ts:109`; V:54, V:58, V:64 | confirmada |
+| C-1 | Botón «Garantías» a todo usuario con sesión (`Header.tsx:150-152` en `4e6a99d`; `if (!user) return null` `:144`; sin `isAdmin`) | `requireAuth` `routes/garantiaProveedor.ts:109` en `4e6a99d`; V:54, V:58, V:64 | confirmada |
 | C-2 | Qué fichas cuentan | `db/garantiaProveedor.ts:165` y `medicionGarantias.ts:54` | confirmada |
 | C-3 | Agrupar y etiquetar | `medicionGarantias.ts:13-15,47-50,54,58-67` | confirmada |
 | C-4 | Sumas, sin resolver, desglose | `:68-76` | confirmada |
 | C-5 | «—» ante `null` (`.tsx:17`) | `:80` | confirmada: el `.tsx` sólo compara con `null` |
 | C-6 | Falla repetida | `:10`, `:99` | confirmada |
 | C-7 | Orden de filas | `:81`, `:100` | confirmada (el `.tsx` no ordena) |
-| C-8 | Vacío -> «Sin reclamaciones» (`.tsx:37-39`) | ambos arrays vacíos desde `routes/garantiaProveedor.ts:110`; V:58 | confirmada |
+| C-8 | Vacío -> «Sin reclamaciones» (`.tsx:37-39`) | ambos arrays vacíos desde `routes/garantiaProveedor.ts:110` en `4e6a99d`; V:58 | confirmada |
 Hallazgo: ninguna decisión sin línea. Los espejos son legítimos: la única imposición es la sesión y está probada (V:54).
 
 ## 5. Mutaciones reproducidas por mí (aplicar, correr las dos pruebas, restaurar)

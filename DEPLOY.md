@@ -489,7 +489,7 @@ WHERE table_schema = 'public' AND table_name = 'garantia_proveedor';
 - **Qué se rompe si la tabla falta:** responder, editar y avanzar una reclamación, y la lectura del panel de garantía de un ticket,
   fallan, porque sus consultas nombran la tabla (`apps/desk/server/db/garantiaProveedor.ts:144`, la de la lectura).
 - **Condición de persona, antes de publicar:** asignar el cargo Director Técnico. Sin él, sólo un administrador responde la pregunta
-  y el aviso de 60 días cae al área Servicio Técnico.
+  y el aviso de 60 días cae al área Servicio Técnico. **La vista «Garantías»** (medición por marca) la ven sólo los administradores y los cargos Director Técnico y Director Comercial; a cualquier otro el servidor le responde `403` (`decision/medicion-garantias-acceso`).
 - **Lo que se verá el día de publicar:** toda OVI ya asociada a un ticket aparece «Pendiente de respuesta», porque no hay relleno.
 - **Para volver atrás** basta revertir y redesplegar; la tabla queda sin uso y no se borra.
 

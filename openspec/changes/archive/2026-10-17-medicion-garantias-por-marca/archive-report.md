@@ -77,7 +77,7 @@ cambio: caso B, ancladas en `ea9cb82`, sin renumerar. Las citas del propio dise�
 
 S-1 «por marca» es por el `fabricante` de la ficha, recortado y sin mayúsculas, sin plegar acentos · S-2 falla repetida: misma
 referencia del mismo fabricante en 2 o más fichas «sí», cualquier estado, sin ventana · S-3 importes en pesos, sin conversión
-(hipótesis heredada) · S-4 la vista la lee todo usuario con sesión · S-5 sin umbrales ni colores · S-6 cociente sólo con reclamado
+(hipótesis heredada) · S-4 la vista la lee todo usuario con sesión (**sustituido** el 2026-10-17 por `decision/medicion-garantias-acceso`; ver la corrección al final) · S-5 sin umbrales ni colores · S-6 cociente sólo con reclamado
 mayor que 0 · D-5 la etiqueta del grupo es el fabricante de la ficha de menor `id` · D-7 el acceso es un botón del menú de usuario.
 Cómo se revierte cada uno: `proposal.md` §6 y `design.md`.
 
@@ -88,3 +88,21 @@ Cómo se revierte cada uno: `proposal.md` §6 y `design.md`.
 | P-1 | Verificar la vista en la aplicación tras desplegar | Quien despliega, con Gerencia |
 | P-2 | Revisar S-1 a S-6, D-5 y D-7 en la lista semanal (E-237) | Gerencia |
 | P-3 | Cargar las fallas repetidas en la taxonomía ISO 14224 | Gerencia sitúa la fila (`decision/anexo-56-taxonomia`) |
+
+## Corrección antes de fusionar — `decision/medicion-garantias-acceso` (Gerencia, 2026-10-17)
+
+Tras el verify y el archivo de `4e6a99d`, Gerencia decidió dos correcciones (`openspec/config.yaml` →
+`decisiones_de_gerencia_adenda` → `decision/medicion-garantias-acceso`, commit directo en `main`), y se hicieron en la rama, en un
+intento propio del registro, antes de fusionar:
+
+- **Acceso (sustituye a S-4).** Predicado `puedeVerMedicionGarantias` en `packages/shared/src/medicionGarantias.ts`: verdadero para el
+  administrador y para los cargos de `CARGOS_MEDICION_GARANTIAS` (`Director Técnico`, `Director Comercial`, tipados contra `Cargo`),
+  sin área. La ruta lo IMPONE con el middleware `exigeVerMedicion` DETRÁS de `requireAuth`: sin sesión `401`, con sesión y sin permiso
+  `403`. El botón «Garantías» de `Header.tsx` usa el mismo predicado y es sólo comodidad (regla 13, punto 3).
+- **Número de ticket.** `conNumerosDeTicket` (`shared`) cambia en cada falla repetida los ids por los números (`tickets.number`), con
+  `null` si el ticket ya no existe; los lee `numerosDeTickets` (`db/garantiaProveedor.ts`), una consulta aparte y no un JOIN, para que
+  la entrada de `medirGarantias` siga siendo `GarantiaProveedor` sin cambios. La vista sólo formatea «#996» o «ticket ya no existe».
+- **Spec viva:** RQ-TC-67 y RQ-TC-68 de `openspec/specs/tickets-core/spec.md` reescritos en sitio (dos guardas con orden, `403`,
+  números de ticket). **DEPLOY.md:** quién ve la vista, en la sección de F1B-13.
+- **Pruebas:** sin sesión `401` y no `403` (también con cookie inválida); `Técnico`, `Coordinador Técnico` y sin cargo `403`; los dos
+  directores `200`; administrador sin cargo `200` con el mismo cuerpo que un director; números `[996, null]` sin ids internos.

@@ -7,8 +7,9 @@ import { getMedicionGarantias } from '../api/client'
  *
  * REGLA 13 — este fichero sólo PINTA, y no decide nada: qué fichas cuentan, la agrupación, las sumas, el cociente, el orden
  * y qué es una falla repetida llegan ya calculados por `medirGarantias` (`packages/shared/src/medicionGarantias.ts`) vía
- * `GET /api/medicion-garantia-proveedor`, y la sesión la exige el servidor (`401`). Sin umbrales, sin colores de alerta,
- * sin escrituras. Lo único que se hace con un número es darle formato (`toLocaleString`, presentación).
+ * `GET /api/medicion-garantia-proveedor`, y la sesión (`401`) y el permiso (`403`, `puedeVerMedicionGarantias`) los exige
+ * el servidor. Sin umbrales, sin colores de alerta, sin escrituras. Lo único que se hace con un número es darle formato
+ * (`toLocaleString`, «#996»: presentación). El número del ticket llega del servidor; el id interno no llega.
  * Los `.tsx` de `apps/desk/src` están fuera de la red de pruebas por decisión de Gerencia (F0-00): sin rojo previo.
  */
 
@@ -16,6 +17,8 @@ const fmtValor = (v: number) => v.toLocaleString('es-CO')
 /** El cociente llega calculado; `null` (nada reclamado) se enseña «—» sin comparar nada. */
 const fmtCociente = (c: number | null) => (c === null ? '—' : c.toLocaleString('es-CO', { style: 'percent', maximumFractionDigits: 1 }))
 const SIN_MARCA = 'Sin fabricante'
+/** `null`: el ticket de la ficha ya no existe en la base. */
+const fmtNumeroTicket = (n: number | null) => (n === null ? 'ticket ya no existe' : `#${n}`)
 
 const TH = 'px-3 py-2 text-left text-[11px] font-bold uppercase text-slate-500'
 const TD = 'px-3 py-2 text-[12px] text-slate-700'
@@ -88,7 +91,7 @@ export function MedicionGarantias({ onClose }: { onClose: () => void }) {
                     <td className={TD}>{f.fabricante ?? SIN_MARCA}</td>
                     <td className={TD}>{f.piezaReferencia}</td>
                     <td className={TD}>{f.fichas}</td>
-                    <td className={TD}>{f.ticketIds.join(', ')}</td>
+                    <td className={TD}>{f.numerosTicket.map(fmtNumeroTicket).join(', ')}</td>
                   </tr>
                 ))}
               </tbody>

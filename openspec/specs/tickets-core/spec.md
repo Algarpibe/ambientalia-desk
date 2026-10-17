@@ -4043,38 +4043,48 @@ aparecer. El resultado sólo se muestra: no escribe en ninguna taxonomía (nota 
 - WHEN se calcula la medición
 - THEN no hay falla repetida
 
-### Requirement: RQ-TC-67 · Lectura de la medición: `GET` de servidor con sesión y sin más permiso
+### Requirement: RQ-TC-67 · Lectura de la medición: `GET` de servidor con sesión y con permiso por cargo
 
-El servidor **SHALL** exponer un `GET` nuevo que sirve la medición de RQ-TC-65 y RQ-TC-66. La ruta **SHALL** pasar
-sólo por `requireAuth` y **MUST NOT** exigir ningún permiso, cargo ni rol adicional (SUPUESTO S-4, reversible: se revierte
-añadiendo `requireAdmin` o un predicado de `shared` a la ruta y al acceso). Es el mismo nivel que la lectura de la ficha
-(`apps/desk/server/routes/garantiaProveedor.ts:18`, `:31`). **MUST NOT** copiarse el nivel de Análisis o Indicadores, que
-piden `requireAdmin` (`apps/desk/server/routes/analisis.ts:5`, `:11`; `apps/desk/server/routes/indicadores.ts:41`).
+El servidor **SHALL** exponer un `GET` nuevo que sirve la medición de RQ-TC-65 y RQ-TC-66. La ruta **SHALL** pasar por
+dos guardas, en este orden: la sesión (`requireAuth`, `401`) y el predicado `puedeVerMedicionGarantias` de
+`packages/shared` (`403`). El predicado es verdadero para el administrador y para los cargos `Director Técnico` y
+`Director Comercial`, y falso para cualquier otro cargo o sin cargo, sin mirar el área. Lo decidió Gerencia el
+2026-10-17 (`decision/medicion-garantias-acceso`, que **sustituye al SUPUESTO S-4**, por el que la lectura era para todo
+usuario con sesión). Sin sesión **MUST** responder `401`, nunca `403`.
 
-El servidor **SHALL** leer todas las fichas «sí» en la capa de datos, entregarlas a la función de `shared` y devolver
-**su resultado tal cual**. **MUST NOT** agrupar, sumar, normalizar ni decidir qué es repetido por su cuenta. Es lectura
-pura: **MUST NOT** escribir nada, y la única guarda de la ruta es la sesión (`401`); no hay pruebas de posición porque no
-hay otra guarda. La respuesta es la misma para todo usuario con sesión.
+El servidor **SHALL** leer todas las fichas «sí» en la capa de datos, entregarlas a la función de `shared` y devolver su
+resultado **con un solo cambio**, también de `shared` (`conNumerosDeTicket`): en cada falla repetida, la lista de ids
+de ticket se sustituye por la lista de **números de ticket** (`tickets.number`), en el mismo orden, y `null` cuando el
+ticket ya no existe. El id interno de Zoho **MUST NOT** salir en la respuesta. Los números se leen con una consulta aparte
+sobre `tickets`, no con un JOIN en la lectura de las fichas, para que la entrada de la función de `shared` no cambie.
+**MUST NOT** agrupar, sumar, normalizar ni decidir qué es repetido por su cuenta. Es lectura pura: **MUST NOT** escribir
+nada. La respuesta es la misma para todo usuario con permiso.
 
-#### Scenario: sin sesión, 401 — ROJO
-- GIVEN una petición sin sesión
+#### Scenario: sin sesión, 401 y no 403 — ROJO
+- GIVEN una petición sin sesión, o con una cookie que no es una sesión
 - WHEN llama al `GET` de la medición
-- THEN responde `401` y no consulta las fichas
+- THEN responde `401`, no `403`, y no consulta las fichas
+- AND si se cambia el orden de las dos guardas, esta prueba se pone roja (regla de mutación 1)
 
-#### Scenario: cualquier usuario con sesión recibe la medición — ROJO
-- GIVEN un usuario con sesión, sin cargo de Director Técnico ni rol de administrador
+#### Scenario: con sesión y sin permiso, 403 — ROJO
+- GIVEN un usuario con sesión con cargo `Técnico`, `Coordinador Técnico` o sin cargo, y sin rol de administrador
 - WHEN llama al `GET` de la medición
-- THEN responde éxito con el resultado de la función de `shared` sobre las fichas «sí»
+- THEN responde `403` con un mensaje que nombra quién puede verla
 
-#### Scenario: dos usuarios distintos reciben lo mismo — ROJO
-- GIVEN dos usuarios con sesión de roles distintos y las mismas fichas
-- WHEN ambos llaman al `GET`
-- THEN reciben la misma medición
+#### Scenario: los dos directores y el administrador reciben la medición — ROJO
+- GIVEN un usuario `Director Técnico`, uno `Director Comercial` y un administrador sin cargo, y las mismas fichas
+- WHEN los tres llaman al `GET`
+- THEN los tres reciben éxito, y el administrador y un director reciben la misma medición
+
+#### Scenario: las fallas repetidas llevan el número del ticket — ROJO
+- GIVEN una falla repetida cuyas fichas son de un ticket con número 996 y de un ticket que ya no existe
+- WHEN se llama al `GET`
+- THEN la falla lleva `[996, null]` como números de ticket y la respuesta no contiene ningún id interno de ticket
 
 #### Scenario: el servidor sirve el resultado de `shared` sin recalcular — ROJO
 - GIVEN fichas «sí» de varios estados, con una «no» y una sin valor reclamado
 - WHEN se llama al `GET`
-- THEN el cuerpo es igual al que devuelve la función de `shared` sobre esas mismas fichas
+- THEN el cuerpo es igual al que devuelven las funciones de `shared` sobre esas mismas fichas y esos mismos tickets
 - AND en la capa de servidor no existe suma ni agrupación propia (se comprueba al revisar el código, no por una prueba)
 
 #### Scenario: la lectura no escribe — ROJO
@@ -4082,13 +4092,14 @@ hay otra guarda. La respuesta es la misma para todo usuario con sesión.
 - WHEN se llama al `GET`
 - THEN ninguna ficha ni respuesta cambia
 
-### Requirement: RQ-TC-68 · Vista de sólo lectura de la medición, para todo usuario con sesión
+### Requirement: RQ-TC-68 · Vista de sólo lectura de la medición, para administradores y los dos directores
 
 El cliente **SHALL** ofrecer una vista nueva, accesible desde `apps/desk/src/components/Header.tsx`, que muestre lo que
 sirve el `GET` de RQ-TC-67: por fabricante, lo reclamado, lo recuperado, el cociente (o «no disponible»), el número de
-fichas, las sin resolver y las sin valor reclamado; y la lista de piezas con fallas repetidas. El acceso a la vista
-**SHALL** enseñarse a todo usuario con sesión; esa decisión no tiene otra imposición que la sesión del `GET`
-(RQ-TC-67, regla invariable 13, punto 3).
+fichas, las sin resolver y las sin valor reclamado; y la lista de piezas con fallas repetidas, con el **número** de cada
+ticket formateado como «#996» y un texto claro cuando el ticket ya no existe, nunca el id interno. El acceso a la vista
+**SHALL** enseñarse sólo a quien cumple `puedeVerMedicionGarantias`, el MISMO predicado que impone el servidor; en el
+cliente es sólo comodidad (regla invariable 13, punto 3: la imposición del `403` está probada en RQ-TC-67).
 
 La vista **SHALL** ser de sólo lectura y pintar lo que sirve el servidor:
 
@@ -4104,10 +4115,15 @@ La vista **SHALL** ser de sólo lectura y pintar lo que sirve el servidor:
 Al ser `.tsx`, queda fuera de la red de pruebas (F0-00); su criterio es de revisión: el fichero no contiene agrupaciones ni
 sumas propias.
 
-#### Scenario: cualquier usuario con sesión ve el acceso y la vista
-- GIVEN un usuario con sesión, sin cargo ni rol especial
-- WHEN abre la aplicación
-- THEN el acceso a la vista aparece en la cabecera y la vista muestra la medición servida
+#### Scenario: sólo quien tiene permiso ve el acceso
+- GIVEN un usuario `Director Técnico`, `Director Comercial` o administrador, y otro `Técnico`
+- WHEN abren la aplicación
+- THEN el acceso a la vista aparece en la cabecera del primero y no en la del segundo
+
+#### Scenario: fallas repetidas con el número del ticket
+- GIVEN una falla repetida servida con los números `[996, null]`
+- WHEN se muestra en la vista
+- THEN se lee «#996» y un texto que dice que el otro ticket ya no existe, sin ningún id interno
 
 #### Scenario: la vista no calcula nada
 - GIVEN el código de la vista
