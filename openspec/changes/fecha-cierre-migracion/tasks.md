@@ -83,7 +83,7 @@ Dentro de cada lote, rojo antes que verde. Ninguna tarea es paralelizable (un so
   - `npm run lint`
   - `npm run build`
   - `node_modules/.bin/tsx apps/desk/server/citas/cli.ts --sha HEAD`
-- [ ] 4.7 **Medida del intento.** `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear; registrar ESO en el intento (tope 800, válvula 720). Sin commit hasta que la orquestación lo pida.
+- [x] 4.7 **Medida del intento.** `git diff --shortstat --no-renames` contra el commit de partida más `wc -l` de lo nuevo sin trackear; registrar ESO en el intento (tope 800, válvula 720). Hecho por la orquestación: 302 líneas (+263 −39, sin ficheros nuevos sin trackear), registradas en el intento del apply (`6444b92`).
 
 ---
 
