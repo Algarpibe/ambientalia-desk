@@ -297,7 +297,7 @@ export const TRANSITIONS: Transition[] = TRANSICIONES_BASE.map((t) => ({
   fields: [...t.fields, derivacion(DERIVACION_POR_DEFECTO[t.id])],
 }))
 
-/** Sólo el catálogo de servicio, sin llamador de producción: el servidor resuelve por el registro de flujos. Para pruebas (E-227). */
+/** `transitionsForStatus` y `transitionById` (`:305`): sólo el catálogo de servicio, sin llamador de producción: el servidor resuelve por el registro de flujos. Para pruebas (E-227). */
 export function transitionsForStatus(status: string): Transition[] {
   return TRANSITIONS.filter((t) => t.from.includes(status))
 }
